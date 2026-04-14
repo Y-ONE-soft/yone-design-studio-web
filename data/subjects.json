@@ -44,7 +44,7 @@
     "section": "조판",
     "category": "특강교재",
     "items": [
-      {"name": "세서특필", "prefix": "세서특필", "engine_id": null}
+      {"name": "세서특필", "prefix": "세서특필", "engine_id": "seseospecial"}
     ]
   },
   {

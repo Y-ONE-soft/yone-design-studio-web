@@ -1,0 +1,14 @@
+{
+  "indd_output_dir": "/Users/nhj/Library/Mobile Documents/com~apple~CloudDocs/Documents/작업/Y.ONE STUDIO/조판/교재/특강교재/세서특필",
+  "indd_name_prefix": "세서특필",
+  "templates": {
+    "광문1": "/Users/nhj/Library/Mobile Documents/com~apple~CloudDocs/Documents/작업/Y.ONE STUDIO/조판/인디자인 원본/[원본]광문1_세서특필_내지.indd",
+    "광문2": "/Users/nhj/Library/Mobile Documents/com~apple~CloudDocs/Documents/작업/Y.ONE STUDIO/조판/인디자인 원본/[원본]광문2_세서특필_내지.indd"
+  },
+  "log_filename": "조판_로그.txt",
+  "part1_story_page": 6,
+  "part2_frame_width_mm": 167,
+  "verify": {
+    "max_overflow": 0
+  }
+}
