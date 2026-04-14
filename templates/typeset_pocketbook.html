@@ -1,0 +1,613 @@
+{% extends "base.html" %}
+{% block title %}포켓북{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <a href="/" class="back-link">&larr; 교재 선택</a>
+  <h1>포켓북</h1>
+  <p>분석본 .indd 파일에서 영어/한글을 추출하고, 리뷰테스트 해설지로 암기테스트를 배치합니다.</p>
+</div>
+
+<form id="typeset-form" class="upload-form" enctype="multipart/form-data">
+
+  <!-- ── 학교 선택 ─────────────────────────────────────────── -->
+  <div class="school-section">
+    <div class="section-label">학교 선택 <span class="required">*</span>
+      <button type="button" class="edit-schools-btn" onclick="toggleEditMode()">편집</button>
+    </div>
+
+    <div class="grade-tabs" id="grade-tabs">
+      {% for grade in schools %}
+      <button type="button" class="grade-tab {% if loop.first %}active{% endif %}"
+              data-grade="{{ grade }}" onclick="switchGrade(this)">{{ grade }}</button>
+      {% endfor %}
+    </div>
+
+    <div class="school-grids">
+      {% for grade, list in schools.items() %}
+      <div class="school-grid {% if not loop.first %}hidden{% endif %}" data-grade="{{ grade }}">
+        {% for school in list %}
+        <button type="button" class="school-btn" data-school="{{ school }}"
+                onclick="selectSchool(this)">{{ school }}</button>
+        {% endfor %}
+        <button type="button" class="school-btn school-btn--add" onclick="openAddSchool('{{ grade }}')">
+          + 추가
+        </button>
+      </div>
+      {% endfor %}
+    </div>
+
+    <input type="hidden" name="school" id="school-hidden">
+    <input type="hidden" name="grade" id="grade-hidden" value="1">
+  </div>
+
+  <!-- ── 파일명 미리보기 ───────────────────────────────────── -->
+  <div class="filename-preview-section">
+    <div class="section-label">생성될 파일명</div>
+    <div class="filename-preview" id="filename-preview">&mdash;</div>
+  </div>
+
+  <!-- ── 분석본 폴더 ────────────────────────────────────────── -->
+  <div class="section-label" style="margin-bottom:4px">분석본 폴더 <span class="required">*</span></div>
+  <div class="analysis-dir-section">
+    <input type="hidden" name="analysis_dir" id="input-analysis-dir">
+    <div class="multi-drop-zone" id="analysis-drop" onclick="openFolderBrowser()" style="cursor:pointer">
+      <div class="drop-label">
+        <span class="drop-icon">📁</span>
+        <span class="drop-text" id="analysis-drop-text">클릭하여 분석본 폴더 선택</span>
+      </div>
+    </div>
+    <div id="analysis-status" style="margin-top:6px;font-size:12px;color:#888;"></div>
+    <div id="analysis-files-preview" class="file-list" style="margin-top:6px;"></div>
+  </div>
+
+  <!-- ── 리뷰테스트 옵션 ──────────────────────────────────── -->
+  <div style="margin-top:16px;">
+    <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;">
+      <input type="checkbox" name="include_review_test" id="include-review-test" value="1" checked
+             onchange="toggleReviewSection()">
+      리뷰테스트(암기테스트) 포함
+    </label>
+  </div>
+
+  <!-- ── 리뷰테스트 해설지 (.docx) ────────────────────────── -->
+  <div style="margin-top:16px;" id="review-test-section">
+    <div class="section-label" style="margin-bottom:4px">리뷰테스트 해설지 (.docx) &mdash; 암기테스트용</div>
+    <div class="multi-drop-zone" id="multi-drop"
+         ondragover="event.preventDefault(); this.classList.add('dragover')"
+         ondragleave="this.classList.remove('dragover')"
+         ondrop="handleMultiDrop(event)">
+      <input type="file" name="review_tests" id="input-review-tests" multiple
+             accept=".docx"
+             onchange="handleMultiSelect(this)">
+      <div class="drop-label">
+        <span class="drop-icon">📄</span>
+        <span class="drop-text">리뷰테스트 해설지 파일을 드래그 또는 클릭 (여러 파일 가능, 선택 사항)</span>
+      </div>
+    </div>
+    <div class="file-list" id="file-list"></div>
+  </div>
+
+  <input type="hidden" name="include_review_test_flag" id="include-review-test-flag" value="1">
+
+  <!-- ── 듣기 옵션 ────────────────────────────────────────── -->
+  <div style="margin-top:8px;">
+    <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;">
+      <input type="checkbox" name="include_listening" id="include-listening" value="1"
+             onchange="toggleListeningSection()">
+      듣기 포함
+    </label>
+  </div>
+
+  <!-- ── 듣기 원고 (.hwpx) ─────────────────────────────────── -->
+  <div style="margin-top:16px;display:none;" id="listening-section">
+    <div class="section-label" style="margin-bottom:4px">듣기 원고 (.hwpx)</div>
+    <div class="multi-drop-zone" id="listening-drop"
+         ondragover="event.preventDefault(); this.classList.add('dragover')"
+         ondragleave="this.classList.remove('dragover')"
+         ondrop="handleListeningDrop(event)">
+      <input type="file" name="listening_file" id="input-listening"
+             accept=".hwpx"
+             onchange="handleListeningSelect(this)">
+      <div class="drop-label">
+        <span class="drop-icon">🎧</span>
+        <span class="drop-text">듣기 원고 파일(.hwpx)을 드래그 또는 클릭</span>
+      </div>
+    </div>
+    <div class="file-list" id="listening-file-list"></div>
+  </div>
+
+  <input type="hidden" name="include_listening_flag" id="include-listening-flag" value="0">
+
+  <button type="submit" class="run-btn" id="run-btn">
+    <span class="btn-icon">&#9654;</span> 조판 실행
+  </button>
+</form>
+
+<!-- ── 진행 상태 ──────────────────────────────────────────── -->
+<div id="progress-area" class="progress-area hidden">
+  <div class="progress-header">
+    <h2>진행 상태</h2>
+    <div class="step-indicators">
+      <span class="step" id="step-parse">&#9312; 파싱</span>
+      <span class="step-sep">&rarr;</span>
+      <span class="step" id="step-typeset">&#9313; 조판</span>
+      <span class="step-sep">&rarr;</span>
+      <span class="step" id="step-verify">&#9314; 검수</span>
+    </div>
+  </div>
+  <pre id="log-area" class="log-area"></pre>
+</div>
+
+<!-- ── 결과 ─────────────────────────────────────────────────── -->
+<div id="result-area" class="result-area hidden"></div>
+
+<!-- ── 폴더 브라우저 모달 ──────────────────────────────────── -->
+<div id="folder-modal-overlay" class="modal-overlay hidden" onclick="closeFolderBrowser()">
+  <div class="modal" onclick="event.stopPropagation()" style="width:480px;max-height:70vh;display:flex;flex-direction:column;">
+    <div class="modal-title">분석본 폴더 선택</div>
+    <div id="folder-path-bar" style="font-size:11px;color:#888;padding:4px 0 8px;word-break:break-all;"></div>
+    <div id="folder-list" style="flex:1;overflow-y:auto;min-height:200px;max-height:50vh;border:1px solid var(--border,#e5e7eb);border-radius:6px;"></div>
+    <div id="folder-indd-hint" style="margin-top:8px;font-size:12px;color:#22c55e;display:none;">이 폴더에 분석본 .indd 파일이 있습니다</div>
+    <div class="modal-actions" style="margin-top:12px;">
+      <button class="modal-btn modal-btn--cancel" onclick="closeFolderBrowser()">취소</button>
+      <button class="modal-btn modal-btn--ok" id="folder-select-btn" onclick="confirmFolderSelect()">이 폴더 선택</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 학교 추가 모달 ─────────────────────────────────────── -->
+<div id="modal-overlay" class="modal-overlay hidden" onclick="closeAddSchool()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">학교 추가</div>
+    <div class="modal-grade" id="modal-grade-label"></div>
+    <input type="text" id="modal-school-name" class="modal-input"
+           placeholder="학교 이름 (예: 신도1)" maxlength="10">
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn--cancel" onclick="closeAddSchool()">취소</button>
+      <button class="modal-btn modal-btn--ok" onclick="confirmAddSchool()">추가</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const MATERIAL_ID = "pocketbook";
+  const SUBJECT_PREFIX = "포켓북";
+  const schools = {{ schools | tojson }};
+
+  let editMode = false;
+  let addTargetGrade = null;
+  let activeGradeTab = Object.keys(schools)[0] || "고1";
+
+  // ── 학교 선택 ──────────────────────────────────────────────
+  function switchGrade(btn) {
+    document.querySelectorAll('#grade-tabs .grade-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeGradeTab = btn.dataset.grade;
+    document.querySelectorAll('.school-grid').forEach(g => {
+      g.classList.toggle('hidden', g.dataset.grade !== activeGradeTab);
+    });
+    const m = activeGradeTab.match(/(\d)/);
+    if (m) document.getElementById('grade-hidden').value = m[1];
+    updateFilenamePreview();
+  }
+
+  function selectSchool(btn) {
+    if (editMode) return;
+    document.querySelectorAll('.school-btn--selected').forEach(b => b.classList.remove('school-btn--selected'));
+    btn.classList.add('school-btn--selected');
+    document.getElementById('school-hidden').value = btn.dataset.school;
+    updateFilenamePreview();
+  }
+
+  // ── 파일명 미리보기 ──────────────────────────────────────────
+  function updateFilenamePreview() {
+    const school = document.getElementById('school-hidden').value;
+    if (!school) {
+      document.getElementById('filename-preview').textContent = '\u2014';
+      return;
+    }
+    document.getElementById('filename-preview').textContent =
+      school + '_' + SUBJECT_PREFIX + '_내지.indd';
+  }
+
+  // ── 폴더 브라우저 ──────────────────────────────────────────
+  let folderBrowserPath = '';
+
+  function openFolderBrowser() {
+    document.getElementById('folder-modal-overlay').classList.remove('hidden');
+    browseTo('');
+  }
+  function closeFolderBrowser() {
+    document.getElementById('folder-modal-overlay').classList.add('hidden');
+  }
+
+  async function browseTo(path) {
+    var list = document.getElementById('folder-list');
+    var pathBar = document.getElementById('folder-path-bar');
+    var hint = document.getElementById('folder-indd-hint');
+    list.innerHTML = '<div style="padding:16px;color:#888;">불러오는 중...</div>';
+    hint.style.display = 'none';
+
+    try {
+      var res = await fetch('/api/browse-folder', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({path: path})
+      });
+      var data = await res.json();
+      if (data.error) {
+        list.innerHTML = '<div style="padding:16px;color:#f87171;">' + data.error + '</div>';
+        return;
+      }
+
+      folderBrowserPath = data.path;
+      pathBar.textContent = data.path;
+
+      var html = '';
+      if (data.parent) {
+        html += '<div class="fb-item fb-parent" onclick="browseTo(\'' + escPath(data.parent) + '\')">' +
+                '<span class="fb-icon">&#8593;</span> 상위 폴더</div>';
+      }
+      for (var i = 0; i < data.dirs.length; i++) {
+        var d = data.dirs[i];
+        var full = data.path + '/' + d;
+        html += '<div class="fb-item" onclick="browseTo(\'' + escPath(full) + '\')">' +
+                '<span class="fb-icon">📁</span> ' + d + '</div>';
+      }
+      if (!data.dirs.length && !data.parent) {
+        html += '<div style="padding:16px;color:#888;">빈 폴더</div>';
+      }
+      list.innerHTML = html;
+
+      if (data.has_indd) {
+        hint.style.display = 'block';
+        document.getElementById('folder-select-btn').classList.add('modal-btn--highlight');
+      } else {
+        hint.style.display = 'none';
+        document.getElementById('folder-select-btn').classList.remove('modal-btn--highlight');
+      }
+    } catch(e) {
+      list.innerHTML = '<div style="padding:16px;color:#f87171;">서버 연결 오류</div>';
+    }
+  }
+
+  function escPath(p) { return p.replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
+
+  function confirmFolderSelect() {
+    if (!folderBrowserPath) return;
+    document.getElementById('input-analysis-dir').value = folderBrowserPath;
+    var folderName = folderBrowserPath.split('/').pop();
+    var dropText = document.getElementById('analysis-drop-text');
+    dropText.textContent = '📁 ' + folderName;
+    document.getElementById('analysis-drop').classList.add('has-file');
+    closeFolderBrowser();
+    scanAnalysisDir(folderBrowserPath);
+  }
+
+  // ── 분석본 폴더 스캔 ──────────────────────────────────────
+  async function scanAnalysisDir(dir) {
+    if (!dir) dir = document.getElementById('input-analysis-dir').value.trim();
+    const status = document.getElementById('analysis-status');
+    const preview = document.getElementById('analysis-files-preview');
+    if (!dir) { status.textContent = ''; preview.innerHTML = ''; return; }
+
+    status.textContent = '스캔 중...';
+    status.style.color = '#888';
+
+    try {
+      const res = await fetch('/api/pocketbook/scan-dir', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ path: dir })
+      });
+      const data = await res.json();
+
+      if (data.files && data.files.length > 0) {
+        const folderName = dir.split('/').pop();
+        status.textContent = '분석본 ' + data.files.length + '개 (' + folderName + ')';
+        status.style.color = '#22c55e';
+
+        preview.innerHTML = data.files.map(function(f) {
+          var badge = f.type === '모의고사' ? '🔵' : f.type === 'EBS' ? '🟢' : '🟡';
+          return '<div class="file-item"><span class="file-item-name">' + badge + ' ' + f.name + '</span><span class="file-item-size">' + f.type + '</span></div>';
+        }).join('');
+      } else {
+        status.textContent = '분석본 파일 없음';
+        status.style.color = '#f87171';
+        preview.innerHTML = '';
+      }
+    } catch(e) {
+      status.textContent = '서버 연결 오류';
+      status.style.color = '#f87171';
+    }
+  }
+
+  // ── 편집 모드 ──────────────────────────────────────────────
+  function toggleEditMode() {
+    editMode = !editMode;
+    document.querySelector('.edit-schools-btn').textContent = editMode ? '완료' : '편집';
+    document.querySelectorAll('.school-btn:not(.school-btn--add)').forEach(btn => {
+      let x = btn.querySelector('.del-x');
+      if (editMode) {
+        if (!x) {
+          x = document.createElement('span');
+          x.className = 'del-x'; x.textContent = '\u00d7';
+          x.onclick = e => { e.stopPropagation(); deleteSchool(btn); };
+          btn.appendChild(x);
+        }
+      } else { if (x) x.remove(); }
+    });
+  }
+
+  async function deleteSchool(btn) {
+    const school = btn.dataset.school;
+    const grade = btn.closest('.school-grid').dataset.grade;
+    const res = await fetch('/api/schools/' + encodeURIComponent(grade) + '/' + encodeURIComponent(school), {method:'DELETE'});
+    if (res.ok) btn.remove();
+  }
+
+  function openAddSchool(grade) {
+    addTargetGrade = grade;
+    document.getElementById('modal-grade-label').textContent = grade;
+    document.getElementById('modal-school-name').value = '';
+    document.getElementById('modal-overlay').classList.remove('hidden');
+    setTimeout(function() { document.getElementById('modal-school-name').focus(); }, 50);
+  }
+  function closeAddSchool() { document.getElementById('modal-overlay').classList.add('hidden'); }
+
+  document.getElementById('modal-school-name').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') confirmAddSchool();
+    if (e.key === 'Escape') closeAddSchool();
+  });
+
+  async function confirmAddSchool() {
+    const name = document.getElementById('modal-school-name').value.trim();
+    if (!name) return;
+    const res = await fetch('/api/schools', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({grade: addTargetGrade, name: name})
+    });
+    if (res.ok) {
+      const grid = document.querySelector('.school-grid[data-grade="' + addTargetGrade + '"]');
+      const addBtn = grid.querySelector('.school-btn--add');
+      const btn = document.createElement('button');
+      btn.type='button'; btn.className='school-btn';
+      btn.dataset.school=name; btn.textContent=name;
+      btn.onclick = function() { selectSchool(btn); };
+      grid.insertBefore(btn, addBtn);
+      closeAddSchool();
+    }
+  }
+
+  // ── 리뷰테스트 토글 ────────────────────────────────────────
+  function toggleReviewSection() {
+    var checked = document.getElementById('include-review-test').checked;
+    document.getElementById('review-test-section').style.display = checked ? '' : 'none';
+    document.getElementById('include-review-test-flag').value = checked ? '1' : '0';
+  }
+
+  // ── 듣기 토글 ──────────────────────────────────────────────
+  function toggleListeningSection() {
+    var checked = document.getElementById('include-listening').checked;
+    document.getElementById('listening-section').style.display = checked ? '' : 'none';
+    document.getElementById('include-listening-flag').value = checked ? '1' : '0';
+  }
+
+  let listeningFile = null;
+
+  function handleListeningSelect(input) {
+    if (input.files.length > 0) setListeningFile(input.files[0]);
+  }
+  function handleListeningDrop(e) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('dragover');
+    if (e.dataTransfer.files.length > 0) setListeningFile(e.dataTransfer.files[0]);
+  }
+
+  function setListeningFile(f) {
+    listeningFile = f;
+    var list = document.getElementById('listening-file-list');
+    list.innerHTML = '<div class="file-item">' +
+      '<span class="file-item-name">' + f.name + '</span>' +
+      '<span class="file-item-size">' + (f.size/1024).toFixed(0) + ' KB</span>' +
+      '<button type="button" class="file-item-remove" onclick="removeListeningFile()">x</button>' +
+      '</div>';
+    document.getElementById('listening-drop').classList.add('has-file');
+    // sync input
+    var dt = new DataTransfer();
+    dt.items.add(f);
+    document.getElementById('input-listening').files = dt.files;
+  }
+
+  function removeListeningFile() {
+    listeningFile = null;
+    document.getElementById('listening-file-list').innerHTML = '';
+    document.getElementById('listening-drop').classList.remove('has-file');
+    document.getElementById('input-listening').value = '';
+  }
+
+  // ── 멀티파일 업로드 (리뷰테스트 해설지) ────────────────────
+  let selectedFiles = [];
+
+  function handleMultiSelect(input) { addFiles(Array.from(input.files)); }
+  function handleMultiDrop(e) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('dragover');
+    addFiles(Array.from(e.dataTransfer.files));
+  }
+
+  function addFiles(files) {
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      if (!selectedFiles.find(sf => sf.name === f.name && sf.size === f.size))
+        selectedFiles.push(f);
+    }
+    renderFileList(); syncInputFiles();
+  }
+
+  function removeFile(idx) {
+    selectedFiles.splice(idx, 1);
+    renderFileList(); syncInputFiles();
+  }
+
+  function renderFileList() {
+    const list = document.getElementById('file-list');
+    if (!selectedFiles.length) { list.innerHTML = ''; return; }
+    list.innerHTML = selectedFiles.map(function(f, i) {
+      return '<div class="file-item">' +
+        '<span class="file-item-name">' + f.name + '</span>' +
+        '<span class="file-item-size">' + (f.size/1024).toFixed(0) + ' KB</span>' +
+        '<button type="button" class="file-item-remove" onclick="removeFile(' + i + ')">×</button>' +
+        '</div>';
+    }).join('');
+    document.getElementById('multi-drop').classList.add('has-file');
+  }
+
+  function syncInputFiles() {
+    const dt = new DataTransfer();
+    selectedFiles.forEach(f => dt.items.add(f));
+    document.getElementById('input-review-tests').files = dt.files;
+    if (!selectedFiles.length) document.getElementById('multi-drop').classList.remove('has-file');
+  }
+
+  // ── 폼 제출 ────────────────────────────────────────────────
+  document.getElementById('typeset-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const runBtn = document.getElementById('run-btn');
+
+    if (!formData.get('school')) {
+      alert('학교를 선택해주세요.');
+      return;
+    }
+    if (!formData.get('analysis_dir')) {
+      alert('분석본 폴더가 감지되지 않았습니다. 학교를 다시 선택해주세요.');
+      return;
+    }
+
+    runBtn.disabled = true;
+    runBtn.textContent = '실행 중...';
+
+    document.getElementById('progress-area').classList.remove('hidden');
+    document.getElementById('result-area').classList.add('hidden');
+    document.getElementById('result-area').innerHTML = '';
+    document.getElementById('log-area').textContent = '';
+    setStep(null);
+
+    try {
+      const res = await fetch('/api/run/' + MATERIAL_ID, {method:'POST', body: formData});
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        appendLog('[오류] ' + (data.error || '서버 오류'));
+        resetBtn(); return;
+      }
+      startStream(data.job_id);
+    } catch (err) {
+      appendLog('[오류] ' + err.message);
+      resetBtn();
+    }
+  });
+
+  // ── SSE ────────────────────────────────────────────────────
+  function startStream(jobId) {
+    const src = new EventSource('/api/stream/' + jobId);
+    src.onmessage = function(e) {
+      const msg = e.data;
+      if (msg === '[DONE]') { src.close(); fetchResult(jobId); return; }
+      if (msg === '[PING]') return;
+      appendLog(msg);
+      updateStepFromLog(msg);
+    };
+    src.onerror = function() { src.close(); appendLog('[연결 끊김]'); fetchResult(jobId); };
+  }
+
+  function updateStepFromLog(msg) {
+    if (msg.indexOf('[1/3]') >= 0) setStep('parse');
+    else if (msg.indexOf('[2/3]') >= 0) setStep('typeset');
+    else if (msg.indexOf('[3/3]') >= 0) setStep('verify');
+  }
+
+  function setStep(active) {
+    ['parse','typeset','verify'].forEach(function(s) {
+      const el = document.getElementById('step-' + s);
+      el.classList.toggle('active', s === active);
+      el.classList.toggle('done',
+        (active==='typeset' && s==='parse') ||
+        (active==='verify' && (s==='parse'||s==='typeset'))
+      );
+    });
+  }
+
+  // ── 결과 ───────────────────────────────────────────────────
+  async function fetchResult(jobId) {
+    resetBtn();
+    try {
+      const res = await fetch('/api/result/' + jobId);
+      const data = await res.json();
+      if (data.status==='error' || !data.result) { showErrorCard((data.result && data.result.error) || '알 수 없는 오류'); return; }
+      showResultCard(jobId, data.result);
+    } catch (err) { showErrorCard(err.message); }
+  }
+
+  function showResultCard(jobId, result) {
+    const area = document.getElementById('result-area');
+    area.classList.remove('hidden');
+    const ok = result.ok;
+    const overflow = result.overflow || 0;
+    const gradeLabel = result.grade_label || '';
+    const warnings = result.warnings || [];
+
+    let storyRows = '';
+    const stories = result.stories || {};
+    for (const key in stories) {
+      if (stories.hasOwnProperty(key)) {
+        const v = stories[key];
+        storyRows += '<tr><td>' + key + '</td><td>' + (v.actual != null ? v.actual : '?') + '개</td></tr>';
+      }
+    }
+    const warnHtml = warnings.length
+      ? '<ul class="warn-list">' + warnings.map(function(w) { return '<li>' + w + '</li>'; }).join('') + '</ul>' : '';
+
+    area.innerHTML =
+      '<div class="result-card ' + (ok ? 'ok' : 'warn') + '">' +
+        '<div class="result-header">' +
+          '<span class="result-badge">' + (ok ? '&#10003; 조판 완료' : '&#9888; 확인 필요') + '</span>' +
+          '<span class="overflow-badge ' + (overflow > 0 ? 'bad' : '') + '">오버플로우 ' + overflow + '개</span>' +
+          '<span class="overflow-badge" style="border-color:var(--accent);color:var(--accent);">' + gradeLabel + '</span>' +
+        '</div>' +
+        '<table class="story-table">' +
+          '<thead><tr><th>항목</th><th>수량</th></tr></thead>' +
+          '<tbody>' + storyRows + '</tbody>' +
+        '</table>' +
+        warnHtml +
+        (result.pdf_path
+          ? '<div class="action-row">' +
+              '<a href="/download/' + jobId + '/pdf" class="download-btn">📥 PDF 다운로드</a>' +
+            '</div>'
+          : '<p class="no-pdf">PDF가 생성되지 않았습니다.</p>') +
+      '</div>';
+    setStep('verify');
+  }
+
+  function showErrorCard(msg) {
+    const area = document.getElementById('result-area');
+    area.classList.remove('hidden');
+    area.innerHTML = '<div class="result-card error"><p>오류: ' + msg + '</p></div>';
+  }
+
+  function appendLog(msg) {
+    const pre = document.getElementById('log-area');
+    pre.textContent += msg + '\n';
+    pre.scrollTop = pre.scrollHeight;
+  }
+
+  function resetBtn() {
+    const btn = document.getElementById('run-btn');
+    btn.disabled = false;
+    btn.innerHTML = '<span class="btn-icon">&#9654;</span> 조판 실행';
+  }
+</script>
+{% endblock %}

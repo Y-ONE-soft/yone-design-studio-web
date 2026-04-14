@@ -1,0 +1,65 @@
+{
+  "indd_template": "조판/인디자인 원본/[원본]포켓북_내지.indd",
+  "indd_output_dir": "조판/교재/포켓북",
+  "first_page_image": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/인디자인 파일/이미지/포켓북/C버전/포켓북_1P.ai",
+  "last_page_image": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/인디자인 파일/이미지/포켓북/C버전/포켓북_마지막P.ai",
+  "illustrations_base": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/포켓북 삽화정리",
+  "review_test_base": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비",
+  "existing_pocketbooks": {
+    "고1 모의고사": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/인디자인 파일/포켓북/고1 모의고사",
+    "고2 모의고사": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/인디자인 파일/포켓북/고2 모의고사",
+    "공통영어1": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/인디자인 파일/포켓북/공통영어1",
+    "공통영어2": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/인디자인 파일/포켓북/공통영어2",
+    "올림포스": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/인디자인 파일/포켓북/올림포스(고1)",
+    "영어1": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/인디자인 파일/포켓북/영어1",
+    "영어2": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/인디자인 파일/포켓북/영어2"
+  },
+  "log_filename": "typeset_log.txt",
+  "masters": {
+    "textbook": "A-마스터",
+    "ebs": "E-마스터",
+    "mockexam_illust": "C-마스터",
+    "mockexam_noillust": "A-마스터",
+    "memtest_question": "B-마스터",
+    "memtest_answer": "D-마스터"
+  },
+  "styles": {
+    "body": "본문",
+    "korean": "한글",
+    "memtest": "암기테스트",
+    "memtest_copy": "암기테스트_문제 사본",
+    "flownote": "플로우노트",
+    "synonym": "동반의어",
+    "topic": "주제/요약문"
+  },
+  "left_page_frames": {
+    "A": {
+      "category":   {"bounds": [-12.7, 20.5, 0, 57]},
+      "passage_no": {"bounds": [15, 15, 20.5, 33], "style": "암기테스트"},
+      "english":    {"bounds": [24, 15, 151, 130], "style": "본문"},
+      "korean":     {"bounds": [159, 15, 202, 130], "style": "한글"}
+    },
+    "C": {
+      "category":   {"bounds": [-12.7, 20.5, 0, 57]},
+      "passage_no": {"bounds": [15, 15, 20.5, 33], "style": "암기테스트"},
+      "english":    {"bounds": [24, 15, 142, 130], "style": "본문"},
+      "korean":     {"bounds": [151, 74, 195, 130], "style": "한글"}
+    },
+    "E": {
+      "category":   {"bounds": [-12.7, 20.5, 0, 57]},
+      "passage_no": {"bounds": [15, 15, 20.5, 33], "style": "암기테스트"},
+      "english":    {"bounds": [24, 15, 155, 130], "style": "본문"},
+      "korean":     {"bounds": [162, 15, 195, 130], "style": "한글"}
+    }
+  },
+  "memtest_frames": {
+    "B": {
+      "question": {"bounds": [20.4, 15, 195, 130], "style": "암기테스트_문제 사본"},
+      "label":    {"bounds": [15, 15, 20.5, 44], "style": "암기테스트"}
+    },
+    "D": {
+      "answer":   {"bounds": [16.4, 15, 195, 130], "style": "암기테스트"},
+      "label":    {"bounds": [11, 15, 16.5, 55], "style": "암기테스트"}
+    }
+  }
+}

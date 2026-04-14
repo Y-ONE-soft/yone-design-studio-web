@@ -1,0 +1,19 @@
+{
+  "indd_output_dir": "조판/교재/프리미엄북/화이트북",
+  "indd_name_prefix": "화이트북",
+  "indd_original": "조판/인디자인 원본/배재1_화이트북01_내지.indd",
+  "parse_script": "조판/교재/프리미엄북/화이트북/auto/parse_whitebook.py",
+  "log_filename": "조판_로그.txt",
+  "verify": {
+    "expected_stories": {
+      "A어휘": 10,
+      "B문장": 10,
+      "C영영사전": 10,
+      "D보기": 10,
+      "D항목(D단어new)": 8,
+      "E전치사": 10,
+      "정답": 10
+    },
+    "max_overflow": 0
+  }
+}

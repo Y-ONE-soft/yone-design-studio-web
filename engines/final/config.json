@@ -1,0 +1,42 @@
+{
+  "exam_period": "26-1-중간",
+  "gdrive_base": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/인디자인 파일",
+  "gdrive_content_base": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비",
+  "template_vol1": "조판/인디자인 원본/[원본]파이널(Vol1)_내지.indd",
+  "template_vol2": "조판/인디자인 원본/[원본]파이널(Vol2)_내지.indd",
+  "log_filename": "typeset_log.txt",
+  "grades": ["고1", "고2"],
+  "extract_styles": [
+    "문장 배열 그랩",
+    "C1_문장 배열",
+    "하단 문제",
+    "C1_문장 배열 하단",
+    "C1_문장 배열 하단 지문",
+    "문장 배열 하단 ",
+    "문장 배열 하단 문제",
+    "A_어법 수정",
+    "C_영작 배열 번호",
+    "영작 배열 보기",
+    "C2_영작 배열 번호",
+    "C2_영작 배열 보기"
+  ],
+  "school_textbook_map": {
+    "26-1-중간": {
+      "강동1": {"subject": "공통영어1", "publisher": "미래엔(김)", "lessons": ["3과"]},
+      "광문1": {"subject": "공통영어1", "publisher": "능률(오)", "lessons": ["1과"]},
+      "명일1": {"subject": "공통영어1", "publisher": "능률(민)", "lessons": ["1과", "4과"]},
+      "배재1": {"subject": "공통영어1", "publisher": "능률(민)", "lessons": ["1과", "2과", "S1과"]},
+      "상일1": {"subject": "공통영어1", "publisher": "미래엔(김)", "lessons": ["1과", "2과"]},
+      "성덕1": {"subject": "공통영어1", "publisher": "YBM(김)", "lessons": ["1과", "2과"]},
+      "한영1": {"subject": "공통영어1", "publisher": "능률(민)", "lessons": ["1과"]},
+      "강동2": {"subject": "영어Ⅰ", "publisher": "YBM(박)", "lessons": ["1과"]},
+      "광문2": {"subject": "영어Ⅰ", "publisher": "미래엔(김)", "lessons": ["3과"]},
+      "명일2": {"subject": "영어Ⅰ", "publisher": "동아(박)", "lessons": ["1과", "3과"]},
+      "배재2": {"subject": "영어Ⅰ", "publisher": "YBM(박)", "lessons": ["1과", "2과", "3과"]},
+      "상일2": {"subject": "영어Ⅰ", "publisher": "미래엔(김)", "lessons": ["2과", "3과"]},
+      "성덕2": {"subject": "영어Ⅰ", "publisher": "YBM(박)", "lessons": ["1과", "2과"]},
+      "한영2": {"subject": "영어Ⅰ", "publisher": "YBM(박)", "lessons": ["1과"]}
+    }
+  },
+  "scope_sheet_url": "https://docs.google.com/spreadsheets/d/1oyY9NH1T6pkeG_RRSzCW5gpod60oXuEz-2sM6NaDcQc/edit?gid=1967472064"
+}

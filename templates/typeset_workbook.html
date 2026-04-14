@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}{{ engine.display_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <a href="/" class="back-link">← 교재 선택</a>
+  <h1>{{ engine.display_name }}</h1>
+</div>
+
+<form id="typeset-form" class="upload-form" enctype="multipart/form-data">
+
+  <!-- ── 학년 선택 ─────────────────────────────────────────── -->
+  <div class="school-section">
+    <div class="section-label">학년 선택 <span class="required">*</span></div>
+    <div class="grade-tabs" id="grade-tabs">
+      <button type="button" class="grade-tab" data-grade="고1" onclick="selectGrade(this)">고1</button>
+      <button type="button" class="grade-tab" data-grade="고2" onclick="selectGrade(this)">고2</button>
+    </div>
+    <input type="hidden" name="grade" id="grade-hidden">
+  </div>
+
+  <!-- ── 시험 연도/월 + 파일명 미리보기 ──────────────────────── -->
+  <div class="issue-row">
+    <div class="issue-input-wrap">
+      <label class="section-label">시험 연도 <span class="required">*</span></label>
+      <input type="text" name="year" id="exam-year" class="issue-input"
+             placeholder="25" maxlength="2" required
+             oninput="updateFilenamePreview()" style="width:60px">
+    </div>
+    <div class="issue-input-wrap" style="margin-left:12px">
+      <label class="section-label">시험 월 <span class="required">*</span></label>
+      <select name="month" id="exam-month" class="issue-input" onchange="updateFilenamePreview()" style="width:80px">
+        <option value="">선택</option>
+        <option value="3">3월</option>
+        <option value="6">6월</option>
+        <option value="9">9월</option>
+        <option value="10">10월</option>
+        <option value="11">11월</option>
+      </select>
+    </div>
+    <div class="filename-preview-wrap" style="margin-left:20px">
+      <label class="section-label">생성될 파일명</label>
+      <div class="filename-preview" id="filename-preview">—</div>
+    </div>
+  </div>
+
+  <!-- ── 원고 업로드 ────────────────────────────────────────── -->
+  <div class="section-label" style="margin-bottom:4px">원고 파일 <span class="required">*</span></div>
+  <div class="slot-grid">
+    <div class="slot" id="slot-manuscripts" data-key="manuscripts" style="grid-column: 1/-1">
+      <label>원고 파일 (Step1~3 전체 — docx, hwp)</label>
+      <div class="drop-zone" ondragover="event.preventDefault()"
+           ondrop="handleDrop(event, 'manuscripts')">
+        <input type="file" name="manuscripts"
+               id="input-manuscripts" multiple
+               onchange="handleFileSelect(this, 'manuscripts')">
+        <div class="drop-label">
+          <span class="drop-icon">📄</span>
+          <span class="drop-text">드래그하거나 클릭해서 선택 (여러 파일 가능)</span>
+          <span class="file-name" id="name-manuscripts"></span>
+        </div>
+      </div>
+      <div id="file-list-manuscripts" class="file-list"></div>
+    </div>
+  </div>
+
+  <button type="submit" class="run-btn" id="run-btn">
+    <span class="btn-icon">▶</span> 조판 실행
+  </button>
+</form>
+
+<!-- ── 진행 상태 ──────────────────────────────────────────── -->
+<div id="progress-area" class="progress-area hidden">
+  <div class="progress-header">
+    <h2>진행 상태</h2>
+    <button type="button" id="cancel-btn" class="cancel-btn" onclick="cancelJob()" style="display:none">
+      ✕ 취소
+    </button>
+    <div class="step-indicators">
+      <span class="step" id="step-parse">① 파싱</span>
+      <span class="step-sep">→</span>
+      <span class="step" id="step-typeset">② 조판</span>
+      <span class="step-sep">→</span>
+      <span class="step" id="step-verify">③ 검수</span>
+    </div>
+  </div>
+  <pre id="log-area" class="log-area"></pre>
+</div>
+
+<!-- ── 결과 ─────────────────────────────────────────────────── -->
+<div id="result-area" class="result-area hidden"></div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // ── 학년 선택 ────────────────────────────────────────────────
+  function selectGrade(btn) {
+    document.querySelectorAll('.grade-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('grade-hidden').value = btn.dataset.grade;
+    updateFilenamePreview();
+  }
+
+  // ── 파일명 미리보기 ──────────────────────────────────────────
+  function updateFilenamePreview() {
+    const grade = document.getElementById('grade-hidden').value;
+    const year = document.getElementById('exam-year').value || '';
+    const month = document.getElementById('exam-month').value || '';
+
+    if (!grade || !year || !month) {
+      document.getElementById('filename-preview').textContent = '—';
+      return;
+    }
+    document.getElementById('filename-preview').textContent =
+      `${grade}_${year}년_${month}월_전체(C).indd`;
+  }
+  // handleFileSelect / handleDrop → typeset.js에서 멀티파일 지원으로 통합 정의
+</script>
+<script src="{{ url_for('static', filename='js/typeset.js') }}"
+        data-material="{{ engine.material_id }}"></script>
+{% endblock %}

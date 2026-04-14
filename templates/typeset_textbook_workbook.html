@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+{% block title %}{{ engine.display_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <a href="/" class="back-link">&larr; 교재 선택</a>
+  <h1>{{ engine.display_name }}</h1>
+</div>
+
+<form id="typeset-form" class="upload-form" enctype="multipart/form-data">
+
+  <!-- ── 과목 선택 ─────────────────────────────────────────── -->
+  <div class="school-section">
+    <div class="section-label">과목 선택 <span class="required">*</span></div>
+    <div class="grade-tabs" id="subject-tabs">
+      <!-- JS에서 API 호출 후 동적으로 채움 -->
+    </div>
+    <input type="hidden" name="subject" id="subject-hidden">
+  </div>
+
+  <!-- ── 출판사 / 과 선택 + 파일명 미리보기 ──────────────────── -->
+  <div class="issue-row">
+    <div class="issue-input-wrap">
+      <label class="section-label">출판사 <span class="required">*</span></label>
+      <select name="publisher" id="publisher-select" class="issue-input"
+              onchange="onPublisherChange()" style="width:200px" disabled>
+        <option value="">과목을 먼저 선택</option>
+      </select>
+    </div>
+    <div class="issue-input-wrap" style="margin-left:12px">
+      <label class="section-label">과 <span class="required">*</span></label>
+      <select name="lesson" id="lesson-select" class="issue-input"
+              onchange="onLessonChange()" style="width:120px" disabled>
+        <option value="">출판사를 먼저 선택</option>
+      </select>
+      <input type="hidden" name="lesson_folder" id="lesson-folder-hidden">
+    </div>
+    <div class="filename-preview-wrap" style="margin-left:20px">
+      <label class="section-label">생성될 파일명</label>
+      <div class="filename-preview" id="filename-preview">&mdash;</div>
+    </div>
+  </div>
+
+  <!-- ── 원고 파일 (자동 수집) ──────────────────────────────── -->
+  <div id="auto-files-section" style="display:none">
+    <div class="section-label" style="margin-bottom:4px">워크북 폴더 원고</div>
+    <div class="file-list" id="auto-file-list"
+         style="background:#f8f9fa; border:1px solid #e0e0e0; border-radius:6px; padding:8px 12px; margin-bottom:12px; max-height:200px; overflow-y:auto">
+      <span style="color:#999">과를 선택하면 자동으로 파일 목록이 표시됩니다</span>
+    </div>
+    <input type="hidden" name="manuscript_folder" id="manuscript-folder-hidden">
+    <input type="hidden" name="workbook_type" value="교과서">
+  </div>
+
+  <!-- ── 추가 원고 업로드 ──────────────────────────────────── -->
+  <div class="section-label" style="margin-bottom:4px">추가 원고 파일 (선택)</div>
+  <div class="slot-grid">
+    <div class="slot" id="slot-manuscripts" data-key="manuscripts" style="grid-column: 1/-1">
+      <label>추가 업로드 (워크북 폴더에 없는 파일)</label>
+      <div class="drop-zone" ondragover="event.preventDefault()"
+           ondrop="handleDrop(event, 'manuscripts')">
+        <input type="file" name="manuscripts"
+               id="input-manuscripts" multiple
+               onchange="handleFileSelect(this, 'manuscripts')">
+        <div class="drop-label">
+          <span class="drop-icon">+</span>
+          <span class="drop-text">드래그하거나 클릭해서 추가 (여러 파일 가능)</span>
+          <span class="file-name" id="name-manuscripts"></span>
+        </div>
+      </div>
+      <div id="file-list-manuscripts" class="file-list"></div>
+    </div>
+  </div>
+
+  <button type="submit" class="run-btn" id="run-btn">
+    <span class="btn-icon">&#9654;</span> 조판 실행
+  </button>
+</form>
+
+<!-- ── 진행 상태 ──────────────────────────────────────────── -->
+<div id="progress-area" class="progress-area hidden">
+  <div class="progress-header">
+    <h2>진행 상태</h2>
+    <button type="button" id="cancel-btn" class="cancel-btn" onclick="cancelJob()" style="display:none">
+      &#10005; 취소
+    </button>
+    <div class="step-indicators">
+      <span class="step" id="step-parse">&#9312; 파싱</span>
+      <span class="step-sep">&rarr;</span>
+      <span class="step" id="step-typeset">&#9313; 조판</span>
+      <span class="step-sep">&rarr;</span>
+      <span class="step" id="step-verify">&#9314; 검수</span>
+    </div>
+  </div>
+  <pre id="log-area" class="log-area"></pre>
+</div>
+
+<!-- ── 결과 ─────────────────────────────────────────────────── -->
+<div id="result-area" class="result-area hidden"></div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // ── 상태 ────────────────────────────────────────────────────
+  var _selectedSubject = '';
+  var _selectedPublisher = '';
+  var _lessonFolders = {};  // label -> folder name
+
+  // ── 과목 탭 로드 ───────────────────────────────────────────
+  (async function loadSubjects() {
+    try {
+      const res = await fetch('/api/textbook-workbook/subjects');
+      const subjects = await res.json();
+      const tabs = document.getElementById('subject-tabs');
+      tabs.innerHTML = '';
+      subjects.forEach(function(s) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'grade-tab';
+        btn.dataset.subject = s;
+        btn.textContent = s;
+        btn.onclick = function() { selectSubject(this); };
+        tabs.appendChild(btn);
+      });
+    } catch(e) {
+      console.error('과목 로드 실패:', e);
+    }
+  })();
+
+  function selectSubject(btn) {
+    document.querySelectorAll('#subject-tabs .grade-tab').forEach(function(b) {
+      b.classList.remove('active');
+    });
+    btn.classList.add('active');
+    _selectedSubject = btn.dataset.subject;
+    document.getElementById('subject-hidden').value = _selectedSubject;
+
+    // 출판사 초기화
+    var pubSel = document.getElementById('publisher-select');
+    pubSel.innerHTML = '<option value="">불러오는 중...</option>';
+    pubSel.disabled = true;
+
+    // 과 초기화
+    var lessonSel = document.getElementById('lesson-select');
+    lessonSel.innerHTML = '<option value="">출판사를 먼저 선택</option>';
+    lessonSel.disabled = true;
+
+    clearAutoFiles();
+    updateFilenamePreview();
+
+    // 출판사 로드
+    fetch('/api/textbook-workbook/publishers?subject=' + encodeURIComponent(_selectedSubject))
+      .then(function(r) { return r.json(); })
+      .then(function(pubs) {
+        pubSel.innerHTML = '<option value="">선택</option>';
+        pubs.forEach(function(p) {
+          var opt = document.createElement('option');
+          opt.value = p;
+          opt.textContent = p;
+          pubSel.appendChild(opt);
+        });
+        pubSel.disabled = false;
+      });
+  }
+
+  function onPublisherChange() {
+    _selectedPublisher = document.getElementById('publisher-select').value;
+
+    // 과 초기화
+    var lessonSel = document.getElementById('lesson-select');
+    lessonSel.innerHTML = '<option value="">불러오는 중...</option>';
+    lessonSel.disabled = true;
+
+    clearAutoFiles();
+    updateFilenamePreview();
+
+    if (!_selectedPublisher) {
+      lessonSel.innerHTML = '<option value="">출판사를 먼저 선택</option>';
+      return;
+    }
+
+    // 과 로드
+    fetch('/api/textbook-workbook/lessons?subject=' + encodeURIComponent(_selectedSubject)
+          + '&publisher=' + encodeURIComponent(_selectedPublisher))
+      .then(function(r) { return r.json(); })
+      .then(function(lessons) {
+        _lessonFolders = {};
+        lessonSel.innerHTML = '<option value="">선택</option>';
+        lessons.forEach(function(l) {
+          _lessonFolders[l.label] = l.folder;
+          var opt = document.createElement('option');
+          opt.value = l.label;
+          opt.textContent = l.label;
+          lessonSel.appendChild(opt);
+        });
+        lessonSel.disabled = false;
+      });
+  }
+
+  function onLessonChange() {
+    var lessonLabel = document.getElementById('lesson-select').value;
+    var lessonFolder = _lessonFolders[lessonLabel] || '';
+    document.getElementById('lesson-folder-hidden').value = lessonFolder;
+
+    clearAutoFiles();
+    updateFilenamePreview();
+
+    if (!lessonLabel || !lessonFolder) return;
+
+    // 파일 목록 로드
+    fetch('/api/textbook-workbook/files?subject=' + encodeURIComponent(_selectedSubject)
+          + '&publisher=' + encodeURIComponent(_selectedPublisher)
+          + '&lesson_folder=' + encodeURIComponent(lessonFolder))
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var section = document.getElementById('auto-files-section');
+        var listEl = document.getElementById('auto-file-list');
+        section.style.display = '';
+
+        if (data.workbook_dir) {
+          document.getElementById('manuscript-folder-hidden').value = data.workbook_dir;
+        }
+
+        if (data.files.length === 0) {
+          listEl.innerHTML = '<span style="color:#e74c3c">워크북 폴더에 원고 파일이 없습니다</span>';
+          return;
+        }
+
+        var usedCount = 0;
+        var html = '';
+        data.files.forEach(function(f) {
+          if (f.used) {
+            usedCount++;
+            html += '<div style="padding:2px 0;color:#2c3e50">&#9989; ' + f.name + '</div>';
+          } else {
+            html += '<div style="padding:2px 0;color:#aaa;text-decoration:line-through">&#10060; ' + f.name + ' <span style="font-size:11px;text-decoration:none">(미사용)</span></div>';
+          }
+        });
+        html = '<div style="margin-bottom:6px;font-size:12px;color:#666">사용 ' + usedCount + '개 / 전체 ' + data.files.length + '개</div>' + html;
+        listEl.innerHTML = html;
+      });
+  }
+
+  function clearAutoFiles() {
+    document.getElementById('auto-files-section').style.display = 'none';
+    document.getElementById('auto-file-list').innerHTML =
+      '<span style="color:#999">과를 선택하면 자동으로 파일 목록이 표시됩니다</span>';
+    document.getElementById('manuscript-folder-hidden').value = '';
+  }
+
+  // ── 파일명 미리보기 ──────────────────────────────────────────
+  function updateFilenamePreview() {
+    var subject = _selectedSubject;
+    var publisher = _selectedPublisher;
+    var lesson = document.getElementById('lesson-select').value || '';
+
+    if (!subject || !publisher || !lesson) {
+      document.getElementById('filename-preview').textContent = '\u2014';
+      return;
+    }
+    // publisher에서 과목명 제거
+    var pubShort = publisher;
+    if (publisher.indexOf(subject) === 0) {
+      pubShort = publisher.substring(subject.length).replace(/^\s+/, '');
+    }
+    document.getElementById('filename-preview').textContent =
+      subject + '_' + pubShort + '_' + lesson + '_전체(C).indd';
+  }
+</script>
+<script src="{{ url_for('static', filename='js/typeset.js') }}"
+        data-material="{{ engine.material_id }}"></script>
+{% endblock %}

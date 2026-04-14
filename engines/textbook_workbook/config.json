@@ -1,0 +1,42 @@
+{
+  "indd_output_dir": "조판/교재/워크북",
+  "indd_original": "조판/인디자인 원본/[원본]워크북_C(모의고사)_내지.indd",
+  "textbook_base": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/교과서 작업",
+  "log_filename": "조판_로그.txt",
+  "subject_grade_map": {
+    "공통영어1": 1,
+    "공통영어2": 1,
+    "영어Ⅰ": 2,
+    "영어Ⅱ": 2,
+    "영어 독해와 작문": 3
+  },
+  "exclude_folders": ["이전 파일(15개정)"],
+  "step_order": [
+    "step1_a1", "step1_a2", "step1_b1", "step1_b2",
+    "step1_c1", "step1_c2",
+    "step2_a1", "step2_b1", "step2_c1", "step2_c2",
+    "step3", "step3_short"
+  ],
+  "manuscript_file_map": {
+    "step1_a1": "Step1 A1 어휘선택.docx",
+    "step1_a2": "Step1 A2 본문OX.docx",
+    "step1_b1": "Step1 B1 본문정리.hwp",
+    "step1_b2": "Step1 B2 내용종합.docx",
+    "step1_c1": "Step1 C1 문장배열.docx",
+    "step1_c2": "Step1 C2 빈칸어휘 정답지.docx",
+    "step2_a1": "Step2 A1 어법선택.docx",
+    "step2_a1_btm": "Step2 A1 어법선택(객관식).docx",
+    "step2_b1": "Step2 B1 어법OX.docx",
+    "step2_c1": "Step2 C1 빈칸어법 정답지.docx",
+    "step2_c2": "Step2 C2 영작배열(서술형).hwpx"
+  },
+  "manuscript_file_alternatives": {
+    "Step2 A1 어법선택(문법 기본 문제).docx": "Step2 A1 어법선택(객관식).docx"
+  },
+  "needs_underline": ["step2_a1", "step2_a1_btm", "step3"],
+  "mockexam": {},
+  "verify": {
+    "expected_steps": 12,
+    "max_overflow": 0
+  }
+}

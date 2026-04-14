@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+{% block title %}세네카 조정{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <a href="/cover" class="back-link">← 표지 메뉴</a>
+  <h1>세네카 조정</h1>
+  <p>표지 AI 파일을 업로드하고 세네카를 입력하면 자동으로 조정 후 PDF를 출력합니다.</p>
+</div>
+
+<form id="typeset-form" class="upload-form" enctype="multipart/form-data">
+
+  <!-- ── 세네카 계산기 ─────────────────────────────────────── -->
+  <div class="cover-calc-section">
+    <div class="section-label">세네카 계산기 <span class="calc-hint">(미색모조 80g · 무선제본)</span></div>
+    <div class="calc-row">
+      <label class="calc-label">내지 페이지 수</label>
+      <input type="number" id="page-count" class="calc-input" placeholder="예: 120" min="1">
+      <button type="button" class="calc-btn" onclick="calcSpine()">계산</button>
+    </div>
+    <div class="calc-result" id="calc-result">→ 페이지 수를 입력하세요</div>
+  </div>
+
+  <!-- ── 세네카 입력 ───────────────────────────────────────── -->
+  <div class="spine-input-section">
+    <div class="section-label">세네카 (mm) <span class="required">*</span></div>
+    <div class="spine-row">
+      <input type="number" name="spine_mm" id="spine-input" class="spine-input"
+             placeholder="예: 8" min="0" max="50" step="0.5" required>
+      <span class="spine-unit">mm</span>
+      <span class="spine-note" id="spine-note"></span>
+    </div>
+  </div>
+
+  <!-- ── 출력 파일명 ───────────────────────────────────────── -->
+  <div class="spine-input-section">
+    <div class="section-label">교재명 <span class="calc-hint">(예: 배재1_블랙북)</span></div>
+    <input type="text" name="out_name" id="out-name" class="text-input"
+           placeholder="예: 배재1_블랙북" style="margin-bottom:16px">
+  </div>
+  <div class="spine-input-section">
+    <div class="section-label">주차수</div>
+    <div class="spine-row">
+      <input type="number" name="issue_num" id="issue-input" class="spine-input"
+             placeholder="예: 4" min="1" max="99" step="1">
+      <span class="spine-unit">주차</span>
+      <span class="spine-note" id="filename-preview"></span>
+    </div>
+  </div>
+
+  <!-- ── AI 파일 업로드 ────────────────────────────────────── -->
+  <div class="section-label" style="margin-bottom:4px">표지 파일 <span class="required">*</span></div>
+  <div class="drop-zone" id="ai-drop"
+       ondragover="event.preventDefault(); this.classList.add('dragover')"
+       ondragleave="this.classList.remove('dragover')"
+       ondrop="handleDrop(event)">
+    <input type="file" name="ai_file" id="input-ai" accept=".ai"
+           onchange="handleFileSelect(this)">
+    <div class="drop-label" id="drop-label">
+      <span class="drop-icon">📎</span>
+      <span class="drop-text">AI 파일을 드래그하거나 클릭해서 선택</span>
+    </div>
+  </div>
+
+  <button type="submit" class="run-btn" id="run-btn">
+    <span class="btn-icon">▶</span> 세네카 조정 실행
+  </button>
+</form>
+
+<!-- ── 진행 상태 ──────────────────────────────────────────── -->
+<div id="progress-area" class="progress-area hidden">
+  <div class="progress-header">
+    <h2>진행 상태</h2>
+    <div class="step-indicators">
+      <span class="step" id="step-parse">① 조정</span>
+      <span class="step-sep">→</span>
+      <span class="step" id="step-verify">② 검수</span>
+    </div>
+  </div>
+  <pre id="log-area" class="log-area"></pre>
+</div>
+
+<!-- ── 결과 ─────────────────────────────────────────────────── -->
+<div id="result-area" class="result-area hidden"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const MATERIAL_ID = "cover";
+
+  // ── 세네카 계산기 ──────────────────────────────────────────
+  function calcSpine() {
+    const pages = parseInt(document.getElementById('page-count').value);
+    if (!pages || pages <= 0) {
+      document.getElementById('calc-result').textContent = '→ 올바른 숫자를 입력하세요';
+      return;
+    }
+    const raw = (pages / 2) * 0.11;
+    const halfUp = Math.ceil(raw * 2) / 2;
+    const recommended = Math.ceil(halfUp + 0.5);
+    document.getElementById('calc-result').textContent =
+      `→ 계산: ${raw.toFixed(1)}mm → 권장: ${recommended}mm (여유 포함)`;
+    document.getElementById('spine-input').value = recommended;
+    updateSpineNote(recommended);
+  }
+
+  document.getElementById('spine-input').addEventListener('input', function() {
+    updateSpineNote(parseFloat(this.value));
+  });
+
+  function updateSpineNote(mm) {
+    const note = document.getElementById('spine-note');
+    if (!mm || mm < 0) { note.textContent = ''; return; }
+    if (mm <= 3) note.textContent = '⚠ 3mm 이하: 세네카 내용 자동 삭제';
+    else note.textContent = '';
+  }
+
+  // ── 파일명 미리보기 ────────────────────────────────────────
+  document.getElementById('out-name').addEventListener('input', updateFilenamePreview);
+  document.getElementById('issue-input').addEventListener('input', updateFilenamePreview);
+
+  function updateFilenamePreview() {
+    var el = document.getElementById('filename-preview');
+    var name = document.getElementById('out-name').value.trim();
+    var issue = document.getElementById('issue-input').value;
+    if (!name && !issue) { el.textContent = ''; return; }
+    var padded = issue ? String(issue).padStart(2, '0') : '';
+    // 괄호 앞에 주차수 삽입: 워크북(자이스토리3강) → 워크북04(자이스토리3강)
+    var base = name || '교재명';
+    var paren = '';
+    var m = base.match(/(\([^)]*\))$/);
+    if (m) {
+      paren = m[1];
+      base = base.substring(0, base.length - paren.length);
+    }
+    el.textContent = '\u2192 ' + base + padded + paren + '_표지';
+  }
+
+  // ── 파일 업로드 ────────────────────────────────────────────
+  function handleFileSelect(input) {
+    if (input.files.length > 0) showFile(input.files[0]);
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('dragover');
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      document.getElementById('input-ai').files = files;
+      showFile(files[0]);
+    }
+  }
+
+  function showFile(file) {
+    const label = document.getElementById('drop-label');
+    const size = (file.size / (1024 * 1024)).toFixed(1);
+    label.innerHTML = `<span class="drop-icon">✅</span>
+      <span class="drop-text">${file.name} (${size}MB)</span>`;
+    document.getElementById('ai-drop').classList.add('has-file');
+  }
+
+  // ── 폼 제출 ────────────────────────────────────────────────
+  document.getElementById('typeset-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+    const runBtn = document.getElementById('run-btn');
+
+    runBtn.disabled = true;
+    runBtn.textContent = '실행 중...';
+
+    document.getElementById('progress-area').classList.remove('hidden');
+    document.getElementById('result-area').classList.add('hidden');
+    document.getElementById('result-area').innerHTML = '';
+    document.getElementById('log-area').textContent = '';
+    setStep(null);
+
+    try {
+      const res = await fetch(`/api/run/${MATERIAL_ID}`, { method: 'POST', body: formData });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        appendLog(`[오류] ${data.error || '서버 오류'}`);
+        resetBtn();
+        return;
+      }
+      startStream(data.job_id);
+    } catch (err) {
+      appendLog(`[오류] ${err.message}`);
+      resetBtn();
+    }
+  });
+
+  // ── SSE ────────────────────────────────────────────────────
+  function startStream(jobId) {
+    const evtSource = new EventSource(`/api/stream/${jobId}`);
+    evtSource.onmessage = (e) => {
+      const msg = e.data;
+      if (msg === '[DONE]') { evtSource.close(); fetchResult(jobId); return; }
+      if (msg === '[PING]') return;
+      appendLog(msg);
+      updateStepFromLog(msg);
+    };
+    evtSource.onerror = () => {
+      evtSource.close();
+      appendLog('[연결 끊김] 결과를 확인합니다...');
+      fetchResult(jobId);
+    };
+  }
+
+  function updateStepFromLog(msg) {
+    if (msg.includes('[1/2]')) setStep('parse');
+    else if (msg.includes('[2/2]')) setStep('verify');
+  }
+
+  function setStep(active) {
+    ['parse', 'verify'].forEach(s => {
+      const el = document.getElementById(`step-${s}`);
+      if (!el) return;
+      el.classList.toggle('active', s === active);
+      el.classList.toggle('done', active === 'verify' && s === 'parse');
+    });
+  }
+
+  // ── 결과 ───────────────────────────────────────────────────
+  async function fetchResult(jobId) {
+    resetBtn();
+    try {
+      const res = await fetch(`/api/result/${jobId}`);
+      const { status, result } = await res.json();
+      if (status === 'error' || !result) { showErrorCard(result?.error || '알 수 없는 오류'); return; }
+      showResultCard(jobId, result);
+    } catch (err) { showErrorCard(err.message); }
+  }
+
+  function showResultCard(jobId, result) {
+    const area = document.getElementById('result-area');
+    area.classList.remove('hidden');
+    const ok = result.ok;
+    const warnings = result.warnings || [];
+
+    const warnHtml = warnings.length
+      ? `<ul class="warn-list">${warnings.map(w => `<li>${w}</li>`).join('')}</ul>` : '';
+
+    area.innerHTML = `
+      <div class="result-card ${ok ? 'ok' : 'warn'}">
+        <div class="result-header">
+          <span class="result-badge">${ok ? '✅ 세네카 조정 완료' : '⚠️ 확인 필요'}</span>
+        </div>
+        ${warnHtml}
+        ${result.pdf_path
+          ? `<div class="action-row">
+               <a href="/download/${jobId}/pdf" class="download-btn">📥 PDF 다운로드</a>
+             </div>`
+          : '<p class="no-pdf">PDF가 생성되지 않았습니다.</p>'}
+      </div>`;
+    setStep('verify');
+  }
+
+  function showErrorCard(msg) {
+    const area = document.getElementById('result-area');
+    area.classList.remove('hidden');
+    area.innerHTML = `<div class="result-card error"><p>❌ 오류: ${msg}</p></div>`;
+  }
+
+  function appendLog(msg) {
+    const pre = document.getElementById('log-area');
+    pre.textContent += msg + '\n';
+    pre.scrollTop = pre.scrollHeight;
+  }
+
+  function resetBtn() {
+    const btn = document.getElementById('run-btn');
+    btn.disabled = false;
+    btn.innerHTML = '<span class="btn-icon">▶</span> 세네카 조정 실행';
+  }
+</script>
+{% endblock %}

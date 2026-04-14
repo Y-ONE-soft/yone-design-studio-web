@@ -1,0 +1,58 @@
+[
+  {
+    "section": "조판",
+    "category": "프리미엄북",
+    "items": [
+      {"name": "화이트북 워크북",   "prefix": "화이트북",     "engine_id": "whitebook"},
+      {"name": "화이트북 실전문제", "prefix": "화이트북실전",  "engine_id": null},
+      {"name": "블랙북",            "prefix": "블랙북",       "engine_id": "blackbook"},
+      {"name": "배N제",             "prefix": "배N제",        "engine_id": "baenje"}
+    ]
+  },
+  {
+    "section": "조판",
+    "category": "워크북",
+    "items": [
+      {"name": "교과서 워크북",  "prefix": "교과서워크북",  "engine_id": "textbook_workbook"},
+      {"name": "모의고사 워크북","prefix": "모의고사워크북", "engine_id": "workbook"},
+      {"name": "부교재 워크북",  "prefix": "부교재워크북",  "engine_id": null}
+    ]
+  },
+  {
+    "section": "조판",
+    "category": "포켓북",
+    "items": [
+      {"name": "포켓북", "prefix": "포켓북", "engine_id": "pocketbook"}
+    ]
+  },
+  {
+    "section": "조판",
+    "category": "직전보충",
+    "items": [
+      {"name": "파이널 직전보충", "prefix": "파이널", "engine_id": "final"}
+    ]
+  },
+  {
+    "section": "조판",
+    "category": "단어장",
+    "items": [
+      {"name": "배재보카", "prefix": "배재보카", "engine_id": null},
+      {"name": "한영보카", "prefix": "한영보카", "engine_id": "hanyoung"}
+    ]
+  },
+  {
+    "section": "조판",
+    "category": "특강교재",
+    "items": [
+      {"name": "세서특필", "prefix": "세서특필", "engine_id": null}
+    ]
+  },
+  {
+    "section": "표지",
+    "category": "표지 제작",
+    "items": [
+      {"name": "세네카 조정", "prefix": "표지", "engine_id": "cover"},
+      {"name": "포켓북 표지", "prefix": "포켓북표지", "engine_id": "cover_pocketbook"}
+    ]
+  }
+]

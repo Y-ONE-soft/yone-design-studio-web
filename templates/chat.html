@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% block title %}Claude 채팅{% endblock %}
+
+{% block content %}
+<div id="chat-layout" style="display:flex;height:calc(100vh - 60px);">
+  <!-- 대화 목록 -->
+  <div id="conv-list" style="width:240px;border-right:1px solid #333;overflow-y:auto;padding:8px;flex-shrink:0;">
+    <button id="new-conv-btn" style="width:100%;padding:10px;margin-bottom:8px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;">+ 새 대화</button>
+    <div id="convs"></div>
+  </div>
+
+  <!-- 채팅 영역 -->
+  <div id="chat-wrap" style="flex:1;display:flex;flex-direction:column;max-width:720px;margin:0 auto;">
+    <div id="messages" style="flex:1;overflow-y:auto;padding:16px 8px;"></div>
+    <form id="chat-form" style="display:flex;gap:8px;padding:12px 8px;border-top:1px solid #333;">
+      <select id="folder-select" style="background:#1e1e1e;color:#ccc;border:1px solid #444;border-radius:8px;padding:8px;font-size:12px;max-width:100px;">
+        <option value="">폴더</option>
+      </select>
+      <input id="msg-input" type="text" placeholder="메시지 입력..." autocomplete="off"
+        style="flex:1;background:#1e1e1e;color:#fff;border:1px solid #444;border-radius:8px;padding:10px 14px;font-size:14px;outline:none;">
+      <button type="submit" style="background:#6366f1;color:#fff;border:none;border-radius:8px;padding:10px 16px;font-size:14px;cursor:pointer;">전송</button>
+    </form>
+  </div>
+</div>
+
+<style>
+  .msg{margin:6px 0;padding:10px 14px;border-radius:12px;max-width:85%;white-space:pre-wrap;word-break:break-word;font-size:13px;line-height:1.6}
+  .msg-user{background:#6366f1;color:#fff;margin-left:auto;border-bottom-right-radius:4px}
+  .msg-assistant{background:#2a2a2a;color:#e0e0e0;margin-right:auto;border-bottom-left-radius:4px}
+  .msg-streaming{border-left:2px solid #4ade80}
+  #messages{display:flex;flex-direction:column}
+  .conv-btn{width:100%;text-align:left;padding:8px 10px;margin:2px 0;background:none;color:#ccc;border:1px solid transparent;border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .conv-btn:hover{background:#2a2a2a}
+  .conv-btn.active{background:#6366f1;color:#fff;border-color:#6366f1}
+  .conv-folder{font-size:10px;color:#888;margin-top:2px}
+  @media(max-width:600px){
+    #conv-list{width:60px;padding:4px}
+    .conv-btn{font-size:10px;padding:6px 4px}
+    .conv-folder{display:none}
+    #new-conv-btn{font-size:11px;padding:8px 4px}
+  }
+</style>
+
+<script>
+const msgs = document.getElementById('messages');
+const form = document.getElementById('chat-form');
+const input = document.getElementById('msg-input');
+const folderSelect = document.getElementById('folder-select');
+const convsEl = document.getElementById('convs');
+let sessionId = null;
+let activeConvId = null;
+let isSending = false; // 전송 중 watcher 무시 플래그
+
+// 폴더 목록 로드
+fetch('/chat/folders').then(r=>r.json()).then(dirs=>{
+  dirs.forEach(d=>{
+    const o=document.createElement('option');
+    o.value=d.path; o.textContent=d.name;
+    folderSelect.appendChild(o);
+  });
+});
+
+// 대화 목록 로드
+function loadConvs() {
+  fetch('/chat/conversations').then(r=>r.json()).then(convs=>{
+    convsEl.innerHTML='';
+    convs.forEach(c=>{
+      const btn=document.createElement('button');
+      btn.className='conv-btn'+(c.id===activeConvId?' active':'');
+      btn.innerHTML=c.title.slice(0,30)+'<div class="conv-folder">'+(c.workingDir?c.workingDir.split('/').pop():'')+'</div>';
+      btn.onclick=()=>openConv(c.id, c.sessionId);
+      convsEl.appendChild(btn);
+    });
+  });
+}
+loadConvs();
+
+// 실시간 감지 SSE
+let watcher = null;
+let loadedMsgCount = 0;
+
+function openConv(convId, sid) {
+  activeConvId=convId;
+  sessionId=sid;
+  msgs.innerHTML='';
+  loadedMsgCount=0;
+  loadConvs();
+  // 기존 watcher 종료
+  if(watcher){watcher.close();watcher=null;}
+
+  fetch('/chat/conversations/'+convId+'/messages').then(r=>r.json()).then(data=>{
+    if(data.sessionId) sessionId=data.sessionId;
+    if(data.workingDir) {
+      for(let o of folderSelect.options){if(o.value===data.workingDir){folderSelect.value=o.value;break;}}
+    }
+    (data.messages||[]).forEach(m=>addMsg(m.role, m.content));
+    loadedMsgCount=data.messages?.length||0;
+    msgs.scrollTop=msgs.scrollHeight;
+
+    // SSE watcher 시작 — 컴퓨터에서 새 메시지 오면 실시간 표시
+    watcher = new EventSource('/chat/watch/'+convId);
+    watcher.onmessage = (e) => {
+      if(isSending) return; // 내가 보내는 중이면 무시 (중복 방지)
+      try {
+        const m = JSON.parse(e.data);
+        addMsg(m.role, m.content);
+      } catch{}
+    };
+  });
+}
+
+// 새 대화
+document.getElementById('new-conv-btn').onclick=()=>{
+  if(watcher){watcher.close();watcher=null;}
+  activeConvId=null; sessionId=null;
+  msgs.innerHTML=''; loadedMsgCount=0;
+  loadConvs();
+  input.focus();
+};
+
+function addMsg(role, text, id) {
+  const div = document.createElement('div');
+  div.className = 'msg msg-' + role;
+  if (id) div.id = id;
+  div.textContent = text;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  addMsg('user', text);
+  isSending = true;
+
+  // 새 대화면 먼저 생성
+  if(!activeConvId){
+    const res2 = await fetch('/chat/conversations/create',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({title:text.slice(0,40), workingDir:folderSelect.value||null})
+    });
+    const created = await res2.json();
+    activeConvId = created.id;
+    loadConvs();
+  }
+  // 데스크탑 앱에도 메시지 기록
+  fetch('/chat/conversations/'+activeConvId+'/append',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({role:'user',content:text,timestamp:Date.now()})
+  });
+
+  const resDiv = addMsg('assistant', '', 'streaming-msg');
+  resDiv.classList.add('msg-streaming');
+  let fullResponse = '';
+
+  try {
+    const res = await fetch('/chat/send', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        message: text,
+        sessionId: sessionId,
+        workingDir: folderSelect.value || null,
+      }),
+    });
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, {stream: true});
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const data = line.slice(6);
+        if (data === '[DONE]') break;
+        try {
+          const ev = JSON.parse(data);
+          if (ev.type === 'text') {
+            fullResponse += ev.content;
+            resDiv.textContent = fullResponse;
+            msgs.scrollTop = msgs.scrollHeight;
+          } else if (ev.type === 'session') {
+            sessionId = ev.sessionId;
+          } else if (ev.type === 'error') {
+            fullResponse += '\n[오류] ' + ev.content;
+            resDiv.textContent = fullResponse;
+          }
+        } catch {}
+      }
+    }
+
+    // 데스크탑 앱에도 응답 기록
+    if(activeConvId && fullResponse){
+      fetch('/chat/conversations/'+activeConvId+'/append',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({role:'assistant',content:fullResponse,timestamp:Date.now(),sessionId:sessionId})
+      });
+    }
+  } catch (err) {
+    resDiv.textContent += '\n[연결 오류] ' + err.message;
+  }
+  resDiv.classList.remove('msg-streaming');
+  resDiv.id='';
+  isSending = false;
+  loadConvs();
+});
+
+input.focus();
+// 자동 새로고침 (30초마다 대화 목록 갱신)
+setInterval(loadConvs, 30000);
+</script>
+{% endblock %}

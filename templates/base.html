@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}조판 자동화{% endblock %} — Y.ONE STUDIO</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+  <header class="top-bar">
+    <a href="/" class="logo">Y.ONE <span>스튜디오</span></a>
+    <nav class="top-nav">
+      <a href="/" class="nav-link{% if active_nav == '조판' %} nav-active{% endif %}">조판</a>
+      <a href="/cover" class="nav-link nav-link--cover{% if active_nav == '표지' %} nav-active{% endif %}">표지</a>
+      <a href="/mockup" class="nav-link nav-link--mockup{% if active_nav == '목업' %} nav-active{% endif %}">목업</a>
+      <a href="/chat" class="nav-link{% if active_nav == '채팅' %} nav-active{% endif %}">채팅</a>
+    </nav>
+  </header>
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
