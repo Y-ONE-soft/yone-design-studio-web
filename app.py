@@ -92,10 +92,12 @@ shutil.copyfile = _patched_copyfile
 
 
 # ── 인증 설정 ──────────────────────────────────────────────────────
-# 사용자 계정 (필요 시 비밀번호/아이디 변경)
+# 사용자 계정. 비밀번호는 환경변수에서 우선 읽고, 없으면 fallback 값 사용.
+#   YONE_ADMIN_PASSWORD     → admin 비밀번호 (운영 시 .env 또는 launchd로 등록 권장)
+#   YONE_ASSISTANT_PASSWORD → assistant 비밀번호
 USERS = {
-    "admin":     {"password": "gPwlsldnjs.",    "role": "admin"},
-    "assistant": {"password": "assistant2026",  "role": "assistant"},
+    "admin":     {"password": os.environ.get("YONE_ADMIN_PASSWORD",     "gPwlsldnjs."),   "role": "admin"},
+    "assistant": {"password": os.environ.get("YONE_ASSISTANT_PASSWORD", "assistant2026"), "role": "assistant"},
 }
 
 # 조교(assistant)가 접근할 수 없는 경로 — 목업/채팅
