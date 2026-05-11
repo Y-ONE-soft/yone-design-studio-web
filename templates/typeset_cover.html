@@ -12,7 +12,7 @@
 
   <!-- ── 세네카 계산기 ─────────────────────────────────────── -->
   <div class="cover-calc-section">
-    <div class="section-label">세네카 계산기 <span class="calc-hint">(미색모조 80g · 무선제본)</span></div>
+    <div class="section-label">세네카 계산기 <span class="calc-hint">(뉴플러스 미색 80g · 무선제본)</span></div>
     <div class="calc-row">
       <label class="calc-label">내지 페이지 수</label>
       <input type="number" id="page-count" class="calc-input" placeholder="예: 120" min="1">
@@ -95,7 +95,7 @@
       document.getElementById('calc-result').textContent = '→ 올바른 숫자를 입력하세요';
       return;
     }
-    const raw = (pages / 2) * 0.11;
+    const raw = (pages / 2) * 0.08;
     const halfUp = Math.ceil(raw * 2) / 2;
     const recommended = Math.ceil(halfUp + 0.5);
     document.getElementById('calc-result').textContent =

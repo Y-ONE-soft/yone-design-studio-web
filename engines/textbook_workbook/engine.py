@@ -26,6 +26,16 @@ def _nfc(s):
     return unicodedata.normalize("NFC", s)
 
 
+def _is_step3_name(name_nfc: str) -> bool:
+    """파일명에 Step3/스텝3 토큰이 포함되어 있는지 (확장자 무관)."""
+    return bool(re.search(r'(?:[Ss]tep\s*3|스텝\s*3)', name_nfc))
+
+
+def _is_answer_or_explanation(name_nfc: str) -> bool:
+    """파일명에 정답/해설 토큰이 포함되어 있는지."""
+    return ("정답" in name_nfc) or ("해설" in name_nfc)
+
+
 class TextbookWorkbookEngine(BaseEngine):
 
     @property
@@ -200,17 +210,37 @@ class TextbookWorkbookEngine(BaseEngine):
             if os.path.isfile(full):
                 ext = os.path.splitext(name)[1].lower()
                 if ext in (".docx", ".hwp", ".hwpx"):
-                    files.append({"name": name, "used": name in used_files})
+                    used = (name in used_files) or (
+                        _is_step3_name(name) and not _is_answer_or_explanation(name)
+                    )
+                    files.append({"name": name, "used": used})
             elif os.path.isdir(full):
                 lower = name.lower()
                 if "step3" in lower or "스텝3" in _nfc(lower):
+                    # Step3 폴더 내 후보 파일 수집 (정답해설 제외)
+                    step3_candidates = []
+                    for raw2 in sorted(os.listdir(full)):
+                        name2 = _nfc(raw2)
+                        if name2.startswith("."):
+                            continue
+                        ext2 = os.path.splitext(name2)[1].lower()
+                        if ext2 not in (".docx", ".hwp", ".hwpx"):
+                            continue
+                        if _is_answer_or_explanation(name2):
+                            continue
+                        step3_candidates.append(name2)
+                    # MIXED 파일이 있으면 그것만 used=True (파서 동작과 일치)
+                    mixed_set = {n for n in step3_candidates if "MIXED" in n.upper()}
+                    used_step3 = mixed_set if mixed_set else set(step3_candidates)
+                    # 모든 파일 표시 (used 여부만 차별)
                     for raw2 in sorted(os.listdir(full)):
                         name2 = _nfc(raw2)
                         if name2.startswith("."):
                             continue
                         ext2 = os.path.splitext(name2)[1].lower()
                         if ext2 in (".docx", ".hwp", ".hwpx"):
-                            files.append({"name": f"[Step3] {name2}", "used": True})
+                            used2 = name2 in used_step3
+                            files.append({"name": f"[Step3] {name2}", "used": used2})
 
         return {"workbook_dir": workbook_dir, "files": files}
 
@@ -256,6 +286,10 @@ class TextbookWorkbookEngine(BaseEngine):
                 if os.path.isfile(src):
                     ext = os.path.splitext(name)[1].lower()
                     if ext in (".docx", ".hwp", ".hwpx"):
+                        # Step3 원고 파일은 step3_dir로 (정답/해설은 제외)
+                        if _is_step3_name(name) and not _is_answer_or_explanation(name):
+                            shutil.copy2(src, os.path.join(step3_dir, name))
+                            continue
                         # 대체 파일명이면 기대 파일명으로 rename (기대 파일이 없을 때만)
                         dest_name = name
                         if name in alternatives:
@@ -277,6 +311,8 @@ class TextbookWorkbookEngine(BaseEngine):
                                 continue
                             ext2 = os.path.splitext(name2)[1].lower()
                             if ext2 in (".docx", ".hwp", ".hwpx"):
+                                if _is_answer_or_explanation(name2):
+                                    continue
                                 shutil.copy2(src2, os.path.join(step3_dir, name2))
             log(f"[파서] 원고 복사 완료")
         else:
@@ -290,9 +326,11 @@ class TextbookWorkbookEngine(BaseEngine):
                 if fname.startswith("manuscripts_"):
                     fname = fname[len("manuscripts_"):]
                 fname_nfc = _nfc(fname)
-                is_step3 = ("번.hwp" in fname_nfc or "번.hwpx" in fname_nfc or
-                            "번.docx" in fname_nfc or
-                            bool(re.search(r'(?:스텝3|[Ss]tep\s*3)\.(?:hwpx?|docx)$', fname_nfc)))
+                is_step3 = (
+                    (_is_step3_name(fname_nfc) and not _is_answer_or_explanation(fname_nfc))
+                    or "번.hwp" in fname_nfc or "번.hwpx" in fname_nfc
+                    or "번.docx" in fname_nfc
+                )
                 if is_step3:
                     dest = os.path.join(step3_dir, fname)
                 else:

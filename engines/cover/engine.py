@@ -13,6 +13,12 @@ _DIR = os.path.dirname(os.path.abspath(__file__))
 _JSX_TEMPLATE = os.path.join(_DIR, "cover_spine.jsx")
 _COVER_OUTPUT_DIR = "/Users/nhj/Documents/작업/Y.ONE STUDIO/디자인/표지"
 
+# 모듈 로드 시점에 JSX 템플릿을 1회만 읽어 메모리에 캐시.
+# per-request 파일 I/O를 제거하여 macOS EDEADLK(Errno 11) 회피.
+# 템플릿 변경 시 Flask 서버 재시작 필요.
+with open(_JSX_TEMPLATE, encoding="utf-8") as _f:
+    _JSX_TEMPLATE_CONTENT = _f.read()
+
 # 파일명 키워드 → 하위 폴더 매핑
 _SUBFOLDER_RULES = [
     (["워크북", "WORKBOOK"], "워크북"),
@@ -259,10 +265,8 @@ class CoverEngine(BaseEngine):
         with open(settings_path, "w", encoding="utf-8") as f:
             json.dump(settings, f, ensure_ascii=False, indent=2)
 
-        # JSX 사본 생성 (settings 경로 삽입)
-        with open(_JSX_TEMPLATE, encoding="utf-8") as f:
-            jsx_content = f.read()
-        jsx_content = jsx_content.replace("%%SETTINGS_PATH%%", settings_path.replace("\\", "/"))
+        # JSX 사본 생성 (settings 경로 삽입) — 템플릿은 모듈 로드 시 캐시됨
+        jsx_content = _JSX_TEMPLATE_CONTENT.replace("%%SETTINGS_PATH%%", settings_path.replace("\\", "/"))
         jsx_path = os.path.join(job_dir, "cover_spine.jsx")
         with open(jsx_path, "w", encoding="utf-8") as f:
             f.write(jsx_content)

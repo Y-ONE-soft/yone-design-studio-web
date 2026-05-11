@@ -1,0 +1,1625 @@
+{
+  "school": "강동고",
+  "grade": "고1",
+  "round": 1,
+  "ms_paras": 127,
+  "indd_paras": 187,
+  "matched": 94,
+  "unmatched_ms": 33,
+  "extra_indd": 93,
+  "matches": [
+    {
+      "ms": {
+        "q": 0,
+        "p": 0,
+        "pstyle": "다음 글을 읽고",
+        "text": "다음 글을 읽고 물음에 답하시오. "
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 1,
+        "pstyle": "지문",
+        "text": " Sound is produced through vibrations that occur from a sound source, when the s"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " Sound is produced through vibrations that occur from a sound source, when the s"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 2,
+        "pstyle": "문제 번호",
+        "text": "윗글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 3,
+        "pstyle": "지문",
+        "text": "There are two types of interference: constructive and destructive."
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "테두리",
+        "tf_label": "",
+        "text": "There are two types of interference: constructive and destructive.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 4,
+        "pstyle": "선지",
+        "text": "① (A)     ② (B)     ③ (C)     ④ (D)     ⑤ (E)"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① (A)     ② (B)     ③ (C)     ④ (D)     ⑤ (E)\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 5,
+        "pstyle": "문제 번호",
+        "text": "윗글의 주제로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 6,
+        "pstyle": "선지",
+        "text": "① The principle of how sound is produced and the interference between sound wave"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① The principle of how sound is produced and the interference between sound wave"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 7,
+        "pstyle": "선지",
+        "text": "② The characteristics of sounds produced by various musical instruments"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② The characteristics of sounds produced by various musical instruments\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 8,
+        "pstyle": "선지",
+        "text": "③ How the brain distinguishes different types of sounds"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ How the brain distinguishes different types of sounds\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 9,
+        "pstyle": "선지",
+        "text": "④ The spreading of ripples and their visual similarity to sound waves"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ The spreading of ripples and their visual similarity to sound waves\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 10,
+        "pstyle": "선지",
+        "text": "⑤ Ways to reduce noise in everyday life"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ Ways to reduce noise in everyday life\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 11,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 제목으로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 12,
+        "pstyle": "지문",
+        "text": " Assuming gene editing in humans proves to be safe and effective, it might seem "
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " Assuming gene editing in humans proves to be safe and effective, it might seem "
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 13,
+        "pstyle": "선지",
+        "text": "① Genetic Disorders and How to Prevent Them"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① Genetic Disorders and How to Prevent Them\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 14,
+        "pstyle": "선지",
+        "text": "② Why Babies Are Born with Genetic Problems"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② Why Babies Are Born with Genetic Problems\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 15,
+        "pstyle": "선지",
+        "text": "③ Changing Our Future: The Wonders of Genetic Science"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ Changing Our Future: The Wonders of Genetic Science\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 16,
+        "pstyle": "선지",
+        "text": "④ Ethical Dilemmas of Gene Editing in Unborn Children"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ Ethical Dilemmas of Gene Editing in Unborn Children\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 17,
+        "pstyle": "선지",
+        "text": "⑤ Building Smarter and Stronger Humans with Gene Editing"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ Building Smarter and Stronger Humans with Gene Editing\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 18,
+        "pstyle": "문제 번호",
+        "text": "밑줄 친 cognitive misers가 다음 글에서 의미하는 바로 가장 적절한 것은?"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "문제 번호",
+        "tf_label": "",
+        "text": "밑줄 친 cognitive misers가 다음 글에서 의미하는 바로 가장 적절한 것은? [3.3점]\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 19,
+        "pstyle": "지문",
+        "text": " There is a natural assumption of truth, or a truth bias when humans communicate"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " There is a natural assumption of truth, or a truth bias when humans communicate"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 20,
+        "pstyle": "선지",
+        "text": "① People tend to use complex reasoning when facing problems."
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① People tend to use complex reasoning when facing problems.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 21,
+        "pstyle": "선지",
+        "text": "② We are easily fooled by false information despite our efforts."
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② We are easily fooled by false information despite our efforts.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 22,
+        "pstyle": "선지",
+        "text": "③ Lying leads to errors in how we process information cognitively."
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ Lying leads to errors in how we process information cognitively.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 23,
+        "pstyle": "선지",
+        "text": "④ Humans always analyze every piece of information before accepting it as true."
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ Humans always analyze every piece of information before accepting it as true.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 24,
+        "pstyle": "선지",
+        "text": "⑤ We typically don't expend more mental effort than seems necessary in a given s"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 25,
+        "pstyle": "문제 번호",
+        "text": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 26,
+        "pstyle": "지문",
+        "text": " Science is concerned with accumulating and understanding observations of the ph"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "테두리",
+        "tf_label": "",
+        "text": " Science is concerned with accumulating and understanding observations of the ph"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 27,
+        "pstyle": "지문_순서",
+        "text": "(A) Knowing this fact is interesting, but it will do nothing for your personal h"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "지문_순서",
+        "tf_label": "",
+        "text": "(A) Knowing this fact is interesting, but it will do nothing for your personal h"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 28,
+        "pstyle": "지문_순서",
+        "text": "(B) In this sense, science really solves no problems at all. Problems are only s"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "지문_순서",
+        "tf_label": "",
+        "text": "(B) In this sense, science really solves no problems at all. Problems are only s"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 29,
+        "pstyle": "지문_순서",
+        "text": "(C) That understanding alone solves no problems. Individual people have to act o"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "지문_순서",
+        "tf_label": "",
+        "text": "(C) That understanding alone solves no problems. Individual people have to act o"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 30,
+        "pstyle": "선지",
+        "text": "① (A) - (C) - (B)\t\t② (B) - (A) - (C) "
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① (A) - (C) - (B)\t\t② (B) - (A) - (C) \r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 31,
+        "pstyle": "선지",
+        "text": "③ (B) - (C) - (A)\t\t④ (C) - (A) - (B)\t"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ (B) - (C) - (A)\t\t④ (C) - (A) - (B)\t\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 32,
+        "pstyle": "선지",
+        "text": "⑤ (C) - (B) - (A)\t"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ (C) - (B) - (A)\t\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 33,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "문제 번호",
+        "tf_label": "",
+        "text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은? [3.1점]\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 34,
+        "pstyle": "지문",
+        "text": " What does it mean for a character to be a hero as opposed to a villain? In arti"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " What does it mean for a character to be a hero as opposed to a villain? In arti"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 35,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 내용을 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은?"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "문제 번호",
+        "tf_label": "",
+        "text": "다음 글의 내용을 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은? [3.5점]\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 36,
+        "pstyle": "지문",
+        "text": " Most entrepreneurs put in tremendous amounts of time and effort in creating and"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " Most entrepreneurs put in tremendous amounts of time and effort in creating and"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 37,
+        "pstyle": "지문",
+        "text": "↓"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 38,
+        "pstyle": "지문",
+        "text": " Entrepreneurs often overprice their new products due to emotional attachment, w"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "테두리",
+        "tf_label": "",
+        "text": " Entrepreneurs often overprice their new products due to emotional attachment, w"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 39,
+        "pstyle": "선지",
+        "text": "      (A)\t \t(B)"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "      (A)\t \t(B)\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 40,
+        "pstyle": "선지",
+        "text": "① facilitate\t       sacrificing"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① facilitate\t       sacrificing\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 41,
+        "pstyle": "선지",
+        "text": "② obstruct\t       reducing"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② obstruct\t       reducing\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 42,
+        "pstyle": "선지",
+        "text": "③ facilitate\t       lowering"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ facilitate\t       lowering\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 43,
+        "pstyle": "선지",
+        "text": "④ obstruct\t       enhancing"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ obstruct\t       enhancing\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 44,
+        "pstyle": "선지",
+        "text": "⑤ hinder\t       promoting"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ hinder\t       promoting\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 45,
+        "pstyle": "문제 번호",
+        "text": "다음 빈칸에 들어갈 말로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 46,
+        "pstyle": "지문",
+        "text": " Stanford psychology professor Dr. Carol Dweck is the internationally recognized"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " Stanford psychology professor Dr. Carol Dweck is the internationally recognized"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 47,
+        "pstyle": "선지",
+        "text": "① providing that they are smart"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① providing that they are smart\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 48,
+        "pstyle": "선지",
+        "text": "② taking on more demanding work"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② taking on more demanding work\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 49,
+        "pstyle": "선지",
+        "text": "③ pursuing tasks with lower difficulty"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ pursuing tasks with lower difficulty\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 50,
+        "pstyle": "선지",
+        "text": "④ overlooking the value of their effort"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ overlooking the value of their effort\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 51,
+        "pstyle": "선지",
+        "text": "⑤ trusting in their innate cognitive abilities"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ trusting in their innate cognitive abilities\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 52,
+        "pstyle": "문제 번호",
+        "text": "다음 글에서 전체 흐름과 관계 없는 문장은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 53,
+        "pstyle": "지문",
+        "text": " Studies of experts provide insight into what it means to have deep and flexible"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " Studies of experts provide insight into what it means to have deep and flexible"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 54,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것을 2개 고르면?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 55,
+        "pstyle": "지문",
+        "text": " We are now at a point of unprecedented genetic, cultural, and environmental pow"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " We are now at a point of unprecedented genetic, cultural, and environmental pow"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 56,
+        "pstyle": "문제 번호",
+        "text": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 57,
+        "pstyle": "지문",
+        "text": "This doesn't imply that squirrels lack concepts, simply that they don't need the"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 58,
+        "pstyle": "지문",
+        "text": " Let's assume that at least some animals are capable of thinking despite lacking"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 59,
+        "pstyle": "문제 번호",
+        "text": "다음 빈칸에 들어갈 말로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 60,
+        "pstyle": "지문",
+        "text": " Noise-cancelling technology is not only used in music devices. Other fields als"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " Noise-cancelling technology is not only used in music devices. Other fields als"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 61,
+        "pstyle": "선지",
+        "text": "① increasing the number of drive-through lanes"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① increasing the number of drive-through lanes\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 62,
+        "pstyle": "선지",
+        "text": "② eliminating vehicle noise"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② eliminating vehicle noise\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 63,
+        "pstyle": "선지",
+        "text": "③ greeting customers more politely"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ greeting customers more politely\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 64,
+        "pstyle": "선지",
+        "text": "④ speeding up the cooking process"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ speeding up the cooking process\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 65,
+        "pstyle": "선지",
+        "text": "⑤ adjusting the temperature of the food"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ adjusting the temperature of the food\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 66,
+        "pstyle": "다음 글을 읽고",
+        "text": "다음 글을 읽고 물음에 답하시오. "
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 67,
+        "pstyle": "지문",
+        "text": " Destructive interference is used in the noise-cancelling feature of headphones "
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " Destructive interference is used in the noise-cancelling feature of headphones "
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 68,
+        "pstyle": "문제 번호",
+        "text": "윗글에서 전체 흐름과 관계 없는 문장은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 69,
+        "pstyle": "선지",
+        "text": "① (A)     ② (B)     ③ (C)     ④ (D)     ⑤ (E)"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① (A)     ② (B)     ③ (C)     ④ (D)     ⑤ (E)\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 70,
+        "pstyle": "문제 번호",
+        "text": "윗글에 관한 다음 글의 내용과 일치하는 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 71,
+        "pstyle": "선지",
+        "text": "① The noise-cancelling circuit receives external noise and then produces the sam"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① The noise-cancelling circuit receives external noise and then produces the sam"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 72,
+        "pstyle": "선지",
+        "text": "② The noise-cancelling function is able to completely block out the sound of con"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② The noise-cancelling function is able to completely block out the sound of con"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 73,
+        "pstyle": "선지",
+        "text": "③ The noise-cancelling technology can analyze and eliminate all kinds of noise i"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ The noise-cancelling technology can analyze and eliminate all kinds of noise i"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 74,
+        "pstyle": "선지",
+        "text": "④ The noise-cancelling circuit converts music into digital signals and sends the"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ The noise-cancelling circuit converts music into digital signals and sends the"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 75,
+        "pstyle": "선지",
+        "text": "⑤ Noise-cancelling headphones are more effective for predictable sounds."
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ Noise-cancelling headphones are more effective for predictable sounds.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 76,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 내용과 일치하지 않는 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 77,
+        "pstyle": "지문",
+        "text": " Paying with plastic fundamentally changes the way we spend money, altering the "
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " Paying with plastic fundamentally changes the way we spend money, altering the "
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 78,
+        "pstyle": "지문",
+        "text": " Consider this experiment: Drazen Prelec and Duncan Simester, two business profe"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " Consider this experiment: Drazen Prelec and Duncan Simester, two business profe"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 79,
+        "pstyle": "선지",
+        "text": "① When you pay cash, you can feel the money leaving your hand."
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① When you pay cash, you can feel the money leaving your hand.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 80,
+        "pstyle": "선지",
+        "text": "② When you pay with plastic, the purchase is made abstract."
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② When you pay with plastic, the purchase is made abstract.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 81,
+        "pstyle": "선지",
+        "text": "③ Brain-imaging experiments imply that paying with a credit card makes our insul"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ Brain-imaging experiments imply that paying with a credit card makes our insul"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 82,
+        "pstyle": "선지",
+        "text": "④ Credit cards anesthetizethe pain of paying."
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ Credit cards anesthetizethe pain of paying.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 83,
+        "pstyle": "선지",
+        "text": "⑤ In the experiment of the Celtics auction, the average bid on a credit card was"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ In the experiment of the Celtics auction, the average bid on a credit card was"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 84,
+        "pstyle": "서술형 번호",
+        "text": "다음 글의 밑줄 친 ⓐ~ⓔ 중 어법상 틀린 표현을 2개 골라 옳은 표현으로 수정하시오."
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "서술형 번호",
+        "tf_label": "",
+        "text": "다음 글의 밑줄 친 ⓐ~ⓔ 중 어법상 틀린 표현을 2개 골라 옳은 표현으로 수정하시오. [6점, 각 3점]\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 85,
+        "pstyle": "지문",
+        "text": " Promotion deals with consumer psychology. We can't force people to think one wa"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " Promotion deals with consumer psychology. We can’t force people to think one wa"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 86,
+        "pstyle": "지문",
+        "text": "(1)_________________ → _________________"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "(1)_________________ → _________________\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 87,
+        "pstyle": "지문",
+        "text": "(2)_________________ → _________________"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "(2)_________________ → _________________\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 88,
+        "pstyle": "테두리_보기",
+        "text": "다음 빈칸 ⓐ, ⓑ에 각각 들어갈 적절한 표현만을 <보기>에서 있는 대로 골라 쓰시오. [25년 3월 32번]"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "서술형 번호",
+        "tf_label": "",
+        "text": "다음 빈칸 ⓐ, ⓑ에 각각 들어갈 적절한 표현만을 <보기>에서 있는 대로 골라 쓰시오.  [4점, 부분점수 없음]\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 89,
+        "pstyle": "테두리_보기",
+        "text": " As you listen to your child in an emotional moment, be aware that sharing simpl"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " As you listen to your child in an emotional moment, be aware that sharing simpl"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 90,
+        "pstyle": "테두리_보기",
+        "text": "<보기>"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 91,
+        "pstyle": "테두리_보기",
+        "text": "a. Why are you so upset?"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "테두리_보기",
+        "tf_label": "",
+        "text": "a. Why are you so upset?\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 92,
+        "pstyle": "테두리_보기",
+        "text": "b. Your shoulders dropped when you came in."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 93,
+        "pstyle": "테두리_보기",
+        "text": "c. You're just overreacting."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 94,
+        "pstyle": "테두리_보기",
+        "text": "d. You didn't eat much dinner."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 95,
+        "pstyle": "테두리_보기",
+        "text": "e. I noticed that you frowned when I mentioned the recital."
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "테두리_보기",
+        "tf_label": "",
+        "text": "e. I noticed that you frowned when I mentioned the recital.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 96,
+        "pstyle": "테두리_보기",
+        "text": "f. Come on, it's not a big deal."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 97,
+        "pstyle": "테두리_보기",
+        "text": "ⓐ ____________________________________, ⓑ ____________________________________"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 98,
+        "pstyle": "서술형 번호",
+        "text": "다음 글을 토대로 주어진 질문에 적절한 답이 되도록 빈칸 ⓐ, ⓑ에 들어갈 말을 주어진 글에서 변형없이 그대로 찾아 쓰시오. (ⓐ는 연이은 3단"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "서술형 번호",
+        "tf_label": "",
+        "text": "다음 글을 토대로 주어진 질문에 적절한 답이 되도록 빈칸 ⓐ, ⓑ에 들어갈 말을 주어진 글에서 변형없이 그대로 찾아 쓰시오. (ⓐ는 연이은 3단"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 99,
+        "pstyle": "지문",
+        "text": " To monitor our surroundings is to focus on what's outside of ourselves: what we"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " To monitor our surroundings is to focus on what’s outside of ourselves: what we"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 100,
+        "pstyle": "지문",
+        "text": "Q: Why might riders choose to stand near the doors even when there is space else"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "테두리",
+        "tf_label": "",
+        "text": "Q: Why might riders choose to stand near the doors even when there is space else"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 101,
+        "pstyle": "지문",
+        "text": "A: It's because they seek both to ⓐ__________ and to ⓑ__________ of making eye c"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 102,
+        "pstyle": "지문",
+        "text": "ⓐ _____________________________________________________"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "서답형_선지",
+        "tf_label": "",
+        "text": "ⓐ _____________________________________________________\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 103,
+        "pstyle": "지문",
+        "text": "ⓑ _____________________________________________________"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "서답형_선지",
+        "tf_label": "",
+        "text": "ⓑ _____________________________________________________\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 104,
+        "pstyle": "테두리_보기",
+        "text": "다음 우리말 표현과 같은 의미가 되도록 <보기>의 단어를 배열하시오. (단, 주어진 표현만 한 번씩 사용하며, 변형 금지) [26년 3월 41~"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "서술형 번호",
+        "tf_label": "",
+        "text": "다음 우리말 표현과 같은 의미가 되도록 <보기>의 단어를 배열하시오. (단, 주어진 표현만 한 번씩 사용하며, 변형 금지)  [6점]\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 105,
+        "pstyle": "테두리_보기",
+        "text": "<보기>"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 106,
+        "pstyle": "테두리_보기",
+        "text": "told / unattractive / have / anything / of / will / require / doing / simply see"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "테두리_보기",
+        "tf_label": "",
+        "text": "told / unattractive / have / anything / ￼of / will / require / doing / simply se"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 107,
+        "pstyle": "테두리_보기",
+        "text": "우선 한 가지는, 인내심을 요구할 것이라고 들은 어떤 일을 여러분이 한다는 예상은 정말로 매력 없어 보인다."
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "테두리_지문",
+        "tf_label": "",
+        "text": "우선 한 가지는, 인내심을 요구할 것이라고 들은 어떤 일을 여러분이 한다는 예상은 정말로 매력 없어 보인다.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 108,
+        "pstyle": "테두리_보기",
+        "text": "↓"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 109,
+        "pstyle": "테두리_보기",
+        "text": "For one thing, ______________________________________________________________."
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "서답형_선지",
+        "tf_label": "",
+        "text": "For one thing, ______________________________________________________________.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 110,
+        "pstyle": "서술형 번호",
+        "text": "다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 ⓐ~ⓒ에 들어갈 말을 본문의 단어를 활용하여 쓰시오."
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "서술형 번호",
+        "tf_label": "",
+        "text": "다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 ⓐ~ⓒ에 들어갈 말을 본문의 단어를 활용하여 쓰시오. [9점, 각 3점]\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 111,
+        "pstyle": "지문",
+        "text": " The emphasis on learning from the ingroup takes little account of individuals. "
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " The emphasis on learning from the ingroup takes little account of individuals. "
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 112,
+        "pstyle": "지문",
+        "text": "↓"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 113,
+        "pstyle": "지문",
+        "text": " The study indicates that children's ⓐ___________ to their group persists even w"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 114,
+        "pstyle": "테두리_조건",
+        "text": "<조건>"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 115,
+        "pstyle": "테두리_보기",
+        "text": "- 한 칸당 하나의 단어를 적을 것"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 116,
+        "pstyle": "테두리_보기",
+        "text": "- 본문에 쓰인 단어만 사용할 것"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "테두리_조건",
+        "tf_label": "",
+        "text": "- 본문에 쓰인 단어만 사용할 것\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 117,
+        "pstyle": "테두리_보기",
+        "text": "- 필요시 단어의 형태를 어법에 맞게 변화시킬 것"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "테두리_조건",
+        "tf_label": "",
+        "text": "- 필요시 단어의 형태를 어법에 맞게 변화시킬 것\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 118,
+        "pstyle": "테두리_보기",
+        "text": "ⓐ _______________"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "서답형_선지",
+        "tf_label": "",
+        "text": "ⓐ _______________\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 119,
+        "pstyle": "테두리_보기",
+        "text": "ⓑ _______________"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "서답형_선지",
+        "tf_label": "",
+        "text": "ⓑ _______________\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 120,
+        "pstyle": "테두리_보기",
+        "text": "ⓒ _______________"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "서답형_선지",
+        "tf_label": "",
+        "text": "ⓒ _______________\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 121,
+        "pstyle": "서술형 번호",
+        "text": "다음 글의 밑줄 친 the opposite is the case를 설명하는 내용이 되도록 빈칸 ⓐ~ⓒ에 각각 가장 적절한 한 단어를 쓰시오. ("
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "서술형 번호",
+        "tf_label": "",
+        "text": "다음 글의 밑줄 친 the opposite is the case를 설명하는 내용이 되도록 빈칸 ⓐ~ⓒ에 각각 가장 적절한 한 단어를 쓰시오. ("
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 122,
+        "pstyle": "지문",
+        "text": " We think we're being logical, objective, and rational – and therefore accurate "
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 123,
+        "pstyle": "지문",
+        "text": "We can't see the picture that forms in the ⓐm___________ of the other person. So"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 124,
+        "pstyle": "지문",
+        "text": "ⓐ ________________________"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "서답형_선지",
+        "tf_label": "",
+        "text": "ⓐ ________________________\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 125,
+        "pstyle": "지문",
+        "text": "ⓑ ________________________"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "서답형_선지",
+        "tf_label": "",
+        "text": "ⓑ ________________________\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 126,
+        "pstyle": "지문",
+        "text": "ⓒ ________________________"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "서답형_선지",
+        "tf_label": "",
+        "text": "ⓒ ________________________"
+      }
+    }
+  ]
+}

@@ -2,186 +2,95 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+> 이 디렉터리(`조판_자동화/`)는 `통합웹사이트/` 심볼릭 링크와 동일합니다. launchd가 `통합웹사이트/app.py` 경로로 Flask를 spawn하므로 두 경로 어느 쪽으로 작업해도 같은 파일을 수정하는 것입니다.
+
 ## 프로젝트 개요
 
-영어 워크북 조판 자동화를 위한 **InDesign ExtendScript (.jsx)** 스크립트 모음입니다.
-스크립트는 Adobe InDesign의 Scripts 패널 또는 `File > Scripts`에서 직접 실행됩니다.
-빌드 도구, 패키지 매니저, 테스트 프레임워크가 없으며, 스크립트 자체가 곧 실행 단위입니다.
+영어 교재 조판을 자동화하는 Flask 웹앱입니다. 사용자가 브라우저(localhost:5010 또는 yonestudio.com)에서 교재/단원/원고를 선택하면, 엔진이 원고를 파싱해 content.json을 만들고, JSX(ExtendScript)를 InDesign에 전달해 스타일을 적용한 .indd를 생성합니다. 빌드 도구나 테스트 프레임워크는 없고, 모든 동작은 Flask 라우트와 엔진 메소드의 호출로 이뤄집니다.
 
-## 실행 환경
+## 핵심 명령
 
-- **런타임**: Adobe InDesign ExtendScript (ES3 호환 JavaScript)
-- **실행 방법**: InDesign 내 `Window > Utilities > Scripts` 패널에서 스크립트 더블클릭
-- **디버그**: `#target indesign` 지시어가 있는 스크립트는 ExtendScript Toolkit(ESTK)에서도 실행 가능
-- `.claude/settings.local.json`에 `osascript`, `python3` Bash 권한 허용됨
-
-## 디렉터리 구조
-
-```
-워크북 조판 자동화/
-├── 인디자인 스크립트/   ← 모든 .jsx 스크립트 (편집 대상)
-├── 인디자인 파일/        ← .indd 소스 파일 (스크립트 실행 대상)
-├── 원고/                 ← 원고 텍스트 파일
-└── 테스트 파일/          ← 테스트용 PDF
-```
-
-## 스크립트 명명 규칙
-
-`STEP{단계}{유형}{번호}.jsx`
-
-- **단계**: `1` = STEP 01 단원, `2` = STEP 02 단원
-- **유형**: `A`=어휘/어법 선택, `B`=내용정리/OX, `C`=빈칸/문장배열/영작
-- 단락 스타일 그룹과 대응: `STEP 01` / `STEP 02`
-
-## 스크립트별 역할
-
-### STEP 1
-
-| 스크립트 | 적용 스타일 그룹 | 주요 동작 |
-|---|---|---|
-| `STEP1A1.jsx` | STEP 01 | ❮/❯ 기호 → \[\], 프레임 브레이크, `A1_어휘 선택` 스타일 |
-| `STEP1A2.jsx` | STEP 01 | `A2_OX문제` / `A2_본문 박스` + TF버튼 인라인 삽입 |
-| `STEP1B1.jsx` | STEP 01 | `B1_내용 정리` 전체 적용, 하단 문제/선지/지문, 아이콘 인라인 |
-| `STEP1B2.jsx` | STEP 01 | `B2_내용 종합 번호` / `B2_내용 종합 선지` / `A2_본문 박스` |
-| `STEP1C1.jsx` | STEP 01 | 헤더 정규화, 문장 배열/하단/하단 지문 스타일, 화살표 아이콘 (완전판) |
-| `STEP1C1_New.jsx` | STEP 01 | C1 간소판 — 하단·지문 처리 없이 배열 스타일 + 화살표만 |
-| `STEP1C2.jsx` | STEP 01 | 머리말 제거 + 프레임 브레이크, `C2_빈칸 어휘` / `C2_빈칸 어휘 한글` |
-
-### STEP 2
-
-| 스크립트 | 적용 스타일 그룹 | 주요 동작 |
-|---|---|---|
-| `STEP2A1.jsx` | STEP 02 | 헤더 → `{…}` 형식 변환 + 프레임 브레이크, `A1_어법 선택` |
-| `STEP2A1Practice.jsx` | STEP 02 | 헤더 삭제(변환 없음) + 프레임 브레이크, `A1_어법 선택 하단` |
-| `STEP2B1.jsx` | STEP 02 | `B1_어법 OX` 전체 적용, 프레임 브레이크, TF버튼 인라인(링크 파일 방식) |
-| `STEP2C1.jsx` | STEP 02 | 머리말 제거, `C1_빈칸 어법` / `C2_빈칸 어휘 한글` |
-| `STEP2C2.jsx` | STEP 02 | `C2_영작 배열 번호` / `C2_영작 배열 보기`, 슬래시 기반 분류, 아이콘 |
-
-### 유틸리티
-
-| 스크립트 | 주요 동작 |
+| 작업 | 명령 |
 |---|---|
-| `MergeTextbook.jsx` | .indd 파일 여러 개 페이지 병합 → PDF 내보내기 (UI 다이얼로그, `#target indesign`) |
-| `MergeMockExam.jsx` | 모의고사 세로버전에서 6자리 문제코드(YYMMQQ) 기준 페이지 추출 → PDF |
-| `_Debug_FolderCheck.jsx` | MergeMockExam 진단용 — 폴더 내 .indd 파일 파싱 결과 출력 |
+| Flask 재시작 (코드 변경 반영) | `launchctl kickstart -k gui/$(id -u)/com.yonestudio.flask` |
+| Flask 로그 (stdout/stderr) | `~/Library/Logs/yonestudio-flask.log` / `-error.log` |
+| iCloud dataless 파일 강제 materialize | `find <dir> -type f -exec cat {} > /dev/null \;` |
+| 의존성 설치 | `pip install -r requirements.txt` (현재 `flask>=2.3`만 명시) |
+| 파서 단독 테스트 | `python3 -c "from engines.<id>.engine import <Cls>; ..."` |
+| InDesign에 JSX 직접 전송 | `osascript -e 'tell application "Adobe InDesign 2026" to do script POSIX file "/path.jsx" language javascript'` (또는 `run-jsx-local` skill) |
 
-## 공통 코딩 패턴
+코드가 변경됐는데 반영이 안 보이면 99%는 (a) Flask가 모듈 로드 시 캐시한 JSX/JSON이 stale, 또는 (b) iCloud Documents가 정적 파일을 dataless 상태로 evict했기 때문입니다. 위 두 명령(kickstart + materialize)을 같이 돌리면 해결됩니다.
 
-### 스토리 확보
-모든 처리 단위는 InDesign Story입니다. 스크립트 진입부에서 반드시 확인:
-```js
-var story = app.selection[0].parentStory;
-```
+## 아키텍처 빅 픽처
 
-### Undo 그룹화
-모든 변경은 단일 Undo 단위로 묶어야 합니다:
-```js
-app.doScript(function(){ /* 작업 */ },
-    ScriptLanguage.JAVASCRIPT, undefined,
-    UndoModes.ENTIRE_SCRIPT, "작업 이름");
-```
+### 요청 흐름 (`/api/run/<material_id>` POST)
+`app.py:_run_pipeline`이 백그라운드 스레드로 다음을 순차 호출합니다:
 
-### GREP 초기화 — 반드시 전후로 리셋
-```js
-app.findGrepPreferences = app.changeGrepPreferences = NothingEnum.NOTHING;
-app.findGrepPreferences.findWhat = "...";
-app.changeGrepPreferences.changeTo = "...";
-story.changeGrep();
-app.findGrepPreferences = app.changeGrepPreferences = NothingEnum.NOTHING;
-```
+1. `engine.parse(uploaded, job_dir, log)` → 원고 → `content.json` + `step_*.json`
+2. `engine.prepare_jsx(json_path, job_dir, log)` → 원본 .indd 복사 + `.settings.json` + `run.jsx` 임시 사본
+3. `engine.run_indesign(job_dir, log)`가 있으면 호출, 없으면 `core.indesign.runner.run_jsx(jsx_path, ...)` — JSX는 osascript로 InDesign에 전달
+4. `engine.verify(job_dir, log)` → 조판_로그.txt 파싱해 overflow/PDF 결과 반환
 
-### 단락 스타일 참조
-```js
-var g = doc.paragraphStyleGroups.itemByName("STEP 01");
-var st = g.paragraphStyles.itemByName("A1_어휘 선택");
-```
+`core.job_manager`가 작업 ID 발급 + SSE 로그 스트리밍(`/api/stream/<job_id>`) + 결과 조회(`/api/result/<job_id>`)를 담당합니다.
 
-### 기본 단락 스타일 (로케일 안전)
-한국어/영문 InDesign 양쪽 지원이 필요하므로 여러 이름으로 순차 탐색:
-```js
-// "$ID/NormalParagraphStyle" → "[기본 단락]" → "[Basic Paragraph]" 순으로 시도
-```
+### 엔진 시스템 (`engines/`)
+모든 엔진은 `core.base.BaseEngine`을 상속하고 `engines/registry.py`에 한 줄 추가하면 등록됩니다. 각 엔진 디렉터리는 보통 `engine.py` + `config.json` + (옵션) `jsx/run.jsx`를 가집니다. config.json의 경로 키들은 `core.paths.resolve_config`가 STUDIO_ROOT 기준 절대경로로 변환합니다.
 
-### 문자 스타일 초기화
-```js
-story.characters.everyItem().appliedCharacterStyle = doc.characterStyles[0]; // [없음]
-```
+현재 등록 엔진(2026-05 기준): whitebook, blackbook, baenje, hanyoung, cover, cover_pocketbook, pocketbook, final, workbook, textbook_workbook, ebs_workbook, suneungteukgang_workbook, seseospecial, mockexam.
 
-### 인라인 아이콘 삽입 패턴
-문서 내 숨김 객체(`.label` 속성으로 식별)를 복제해 앵커로 삽입:
-```js
-var src = doc.allPageItems[i]; // label 확인
-var clone = src.duplicate();
-clone.anchoredObjectSettings.insertAnchoredObject(ip, AnchorPosition.INLINE_POSITION);
-```
-삽입 전 반드시 `src.locked = false`, 레이어 잠금 해제 후 복구 패턴 사용.
+### 워크북 계열의 JSX 공유 구조
+`workbook` / `textbook_workbook` / `ebs_workbook` / `suneungteukgang_workbook` 네 엔진은 **같은 `engines/workbook/jsx/run.jsx`를 공유**합니다. 차이는 `prepare_jsx`가 만드는 `.settings.json`의 내용 — 특히 `stepStoryMap`(각 STEP을 어느 페이지/마커의 스토리에 매핑할지)과 `workbook_type`("모의고사" / "교과서" / "EBS")으로 분기됩니다. JSX는 ExtendScript ES3이므로 `let`/`const`/화살표/템플릿 리터럴 사용 불가, JSON.parse는 `eval("(" + str + ")")`로 대체.
 
-### 프레임 브레이크 삽입
-```js
-para.insertionPoints[0].contents = SpecialCharacters.FRAME_BREAK;
-```
-문단 배열은 삽입 후 인덱스가 변동되므로 **뒤에서 앞으로(역순)** 처리.
+수능특강 엔진은 자체 `run_indesign`을 정의해 분석본(step1~2) + 문제본(step3) **두 단계로 순차 조판**하며, 다중 강 통합 시 `merge_lessons`가 두 번째 강 이후의 spread를 첫 강 indd 끝에 `spread.duplicate(LocationOptions.AT_END, dst)`로 추가합니다.
 
-## 템플릿 레이블 목록
+### 워크북 파서 (`engines/workbook/parser.py`)
+docx/hwp/hwpx에서 단락 + 밑줄 정보를 추출하고, 발문/지문/선지/조건/보기 구조를 식별합니다. 핵심 정규식 `_RE_HEADER_NUM`은 의도적으로 라벨에 의존하지 않도록 일반화되어 있어(`p<page>` + 임의 영문 토큰 + 지문 번호), 새 발문 표현이 와도 패턴 매칭 룰을 추가할 필요가 거의 없습니다. Step3에서 footnote vs 표 셀 구분은 `step3_exclude_footnotes` cfg 옵션으로 제어 — 수능특강은 false (표 셀 본문 보존), 다른 엔진은 true (정답해설 footnote 제거).
 
-스크립트가 인라인 삽입에 사용하는 문서 내 숨김 객체의 `.label`:
+### iCloud Documents / GDrive EDEADLK 회피
+이 코드베이스의 모든 파일 I/O는 launchd-spawned Flask 컨텍스트에서 macOS APFS / iCloud Drive / Google Drive Stream의 EDEADLK(Errno 11)에 빠질 위험이 있습니다. 다음 패턴들이 적용되어 있습니다:
 
-| 레이블 | 사용 스크립트 | 용도 |
-|---|---|---|
-| `"TF 버튼"` | STEP1A2, STEP2B1 | T/F 버튼 이미지 (PNG 또는 링크 파일) |
-| `"STEP1 문제아이콘"` | STEP1B1, STEP1C1 | 문제 번호 아이콘 |
-| `"화살표 답지"` | STEP1C1, STEP1C1_New | 화살표 답지 아이콘 |
-| `"STEP2 영작 답지"` | STEP2C2 | 영작 답지 아이콘 |
+- **`app.py`의 JSON 캐시**: `_read_json_cached`로 한 번만 디스크 read 후 메모리 보관, `_save_*`에서 직접 캐시 갱신. EDEADLK/EAGAIN/EINTR은 5회 backoff 재시도.
+- **`_RetryingFileSystemLoader`**: Jinja `get_source`도 동일한 retry로 감쌈 (TEMPLATES_AUTO_RELOAD=True 환경에서 동시 요청이 .html을 동시에 읽을 때).
+- **`core.base.safe_copy_indd`**: 원본 .indd 복사 (raw read/write → /bin/cp -c → /tmp 경유 폴백).
+- **`engines.final.extractor._gdrive_safe_copy`**: GDrive Stream 파일용 7-경로 syscall 폴백(python rw / cat / dd / cp / ditto / rsync / py-subproc) + 지수 백오프(5+15+30+45초). 새 GDrive 복사가 필요하면 `shutil.copy2` 대신 이 함수를 사용해야 합니다.
+- **JSX 템플릿 모듈 캐시**: `engines/cover/engine.py`, `engines/ebs_workbook/engine.py` 등은 모듈 로드 시 1회만 `_JSX_TEMPLATE_CONTENT`로 읽어 메모리에 보관. 템플릿 변경 시 Flask 재시작 필요.
 
-## 헤더 패턴 (머리말 정규식)
+자세한 건 `.claude/rules/gdrive_copy_robust.md` 참조 (자동 주입됨).
 
-스크립트들이 공통으로 감지해 프레임 브레이크 후 삭제하는 머리말 형식:
-- `1. L3-본문2` / `2. L1-p.17`
-- `3. p22-no.01` / `4. p38-논술형 Practice`
-- `5. p46-수능 대비 ANALYSIS`
-- `Supplementary Reading`
+## 새 엔진 추가 절차
 
-STEP1C1/STEP2A1은 헤더를 **삭제하지 않고 `{본문1}` 형식으로 변환**합니다.
+1. `engines/<id>/engine.py` — `BaseEngine` 상속, `material_id` / `display_name` / `upload_spec` / `parse` / `prepare_jsx` / `verify` 구현
+2. `engines/<id>/config.json` — 경로 + 파일 매핑
+3. `engines/<id>/__init__.py` (빈 파일)
+4. `templates/typeset_<id>.html` — UI (slot 자동 생성은 `typeset.js`)
+5. `engines/registry.py` — `_ENGINE_LIST`에 한 줄 추가 (기존 등록은 절대 삭제 안 함)
+6. `data/subjects.json` — 인덱스 페이지에 카드 추가 (Read 후 Edit으로 append, 기존 항목 유지)
+7. (필요 시) `app.py`에 폴더 탐색용 `/api/<id>/...` 엔드포인트 추가
 
-## 알려진 특이사항
+`templates/typeset.html`(공용)을 그대로 쓰면 `engine.upload_spec`만으로 폼이 생성되고, 엔진별 자체 UI가 필요하면 `template_name` property로 별도 템플릿 지정.
 
-- **`STEP1C2.jsx`**: 파일 내 동일 코드가 185번째 줄부터 중복 삽입되어 있음 (스크립트 실행에는 문제 없으나 관리상 주의)
-- **`STEP1C1.jsx` vs `STEP1C1_New.jsx`**: 두 버전이 공존. `STEP1C1_New.jsx`는 하단/지문/발문 처리를 제거한 간소 버전
-- **`STEP2B1.jsx`**: TF버튼을 `src.duplicate()` 방식이 아닌 `story.insertionPoints[ip.index].place(File(tfLinkPath))` 링크 배치 방식 사용 (다른 스크립트와 다름)
-- ExtendScript는 ES3이므로 `let`/`const`/화살표 함수/템플릿 리터럴 사용 불가
+## 데이터 파일 + 등록 수정 규칙 (필수)
 
----
+- `data/subjects.json`, `data/schools.json`은 **Read 후 Edit**으로 부분 수정 — 전체 재작성 금지.
+- 새 엔진을 추가할 때 `engines/registry.py`의 `_ENGINE_LIST`에서 기존 엔진을 삭제하지 않는다.
+- subjects.json의 `engine_id`는 `material_id`와 정확히 일치해야 인덱스 카드 → 페이지 이동이 동작.
 
-## 데이터 파일 수정 규칙 (필수)
+## 운영 규칙 (상위 CLAUDE.md에서 강제 — 자동 주입됨)
 
-- `data/subjects.json`, `data/schools.json` 등 데이터 파일은 반드시 **기존 내용을 Read한 후** 수정
-- 새 항목 추가 시 기존 항목을 **반드시 유지**하고 append만 허용
-- 데이터 파일 전체를 Write로 새로 작성하지 않고, Edit으로 필요한 부분만 수정
-- `engines/registry.py`에 엔진 추가 시에도 기존 등록 목록을 삭제하지 않음
+- **yonestudio.com**은 Cloudflare Tunnel로 localhost:5010에 묶여 있어 **Flask 재시작 = 즉시 실서비스 배포**. 코드 수정 → Flask 재시작 → localhost와 yonestudio.com 양쪽 모두 동작 확인까지가 작업 완료의 정의.
+- **구글 드라이브 파일은 직접 수정 금지** — 반드시 로컬로 복사 후 작업 (`_gdrive_safe_copy` 사용).
+- **버그 수정 격리**: A 케이스 수정이 B 케이스를 깨뜨리지 않도록 영향 범위를 최소화. 요청 범위 외 리팩터링 금지.
 
-## 수정 시 기존 로직 영향 금지 (필수)
+## 디버깅 팁
 
-**버그 수정 시 해당 문제 외의 기존 로직에 영향을 줘서는 안 된다.**
+- 엔진 실행 후 `jobs/<job_id>/`에 `.settings.json`, `run.jsx`, `content.json`, `조판_로그.txt`가 남아있어 그대로 검사 가능.
+- JSX 자체 디버깅이 필요하면 JSX 안에 `var f = File("/tmp/debug.txt"); f.encoding="UTF-8"; f.open("a"); f.writeln(...); f.close();` 패턴으로 로그 남기는 게 가장 안정적 (alert는 다이얼로그 떠서 자동화 막힘).
+- `engines/workbook/jsx/run.jsx`의 `mapStepToStory`는 `settings.stepStoryMap`을 우선 사용, 없으면 모의고사 디폴트 매핑으로 fallback. 새 indd 템플릿은 `prepare_jsx`에서 stepStoryMap을 명시해 분기.
 
-- 전체 로직을 재계획하는 경우가 아니라면, 현재 발생한 문제에 대한 수정만 추가
-- 수정 전후로 다른 케이스(다른 원고, 다른 스크립트)가 영향받지 않는지 확인 후 적용
-- A 원고로 동작하던 로직이 B 원고 수정으로 깨지는 패턴을 반복하지 않는다
-- 수정 범위를 넘어서는 리팩터링/구조 변경은 사용자 승인 없이 금지
+## 별도 JSX 모음 (참조)
 
-## 조판 엔진 개발 가이드라인
+`/조판/인디자인 스크립트/` 폴더에는 InDesign Scripts 패널에서 직접 더블클릭해 실행하는 단독 .jsx 파일들(`STEP1A1.jsx`, `MergeMockExam.jsx` 등)이 따로 있습니다. 이쪽은 Flask 시스템과 무관하며, 기존 운영자가 손으로 돌리던 흐름입니다. 단독 .jsx의 코딩 패턴(스토리 확보, Undo 그룹화, GREP 초기화, 기본 단락 스타일 로케일 처리, 인라인 아이콘 삽입, 프레임 브레이크 역순 처리)은 `engines/workbook/jsx/run.jsx`도 동일하게 따릅니다 — 둘 다 ExtendScript ES3이라 제약이 같습니다.
 
-> 상세 가이드라인은 `/조판/CLAUDE.md`에 있음. 여기서는 핵심만 기술.
+## 회고 / 가이드라인
 
-### 필수 순서
-
-1. **원본 분석** → InDesign 원본 열어서 스타일/스토리 확인 (추측 금지)
-2. **샘플 3개 프로토타입** → 전체가 아닌 소량으로 한 사이클 검증
-3. **Phase 분할 개발** → 한 번에 전체 구현하지 않음
-4. **수정 시 영향 확인** → 한 곳 고치면 다른 곳 깨지는지 확인
-
-### 완료 후 회고 (필수)
-
-모든 엔진 완료 시 대화 내역을 분석하여:
-- 병목/반복 오류 → `/조판/CLAUDE.md`의 "과거 반복된 실수 목록"에 추가
-- 효과적이었던 접근법 → 가이드라인에 반영
-- 검증 기준 기록 (overflow, 페이지 수, 실행 시간, 수정 횟수)
+새 엔진이 완성되거나 큰 버그를 잡았으면 `.claude/rules/development-guide.md`의 "과거 반복된 실수 목록" 섹션에 패턴을 추가합니다 (자동 주입됨). 다음 세션에서 같은 실수를 반복하지 않게 하기 위함.

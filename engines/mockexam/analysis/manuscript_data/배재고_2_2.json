@@ -1,0 +1,3024 @@
+{
+  "school": "배재고",
+  "grade": "고2",
+  "exam_period": "26-1-중간",
+  "exam_date": "",
+  "exam_type": "",
+  "round": 2,
+  "meta": {},
+  "questions": [
+    {
+      "source": "",
+      "paragraphs": [
+        {
+          "text": "배재고2 동형 모의고사 2회 원고",
+          "runs": [
+            {
+              "t": "배재고2 동형 모의고사 2회 원고",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "선택형: 30문항",
+          "runs": [
+            {
+              "t": "선택형: 30문항",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "서술형: 4문항",
+          "runs": [
+            {
+              "t": "서술형: 4문항",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "다음 단어의 영영풀이로 적절하지 않은 것은?",
+          "runs": [
+            {
+              "t": "다음 단어의 영영풀이로 적절하지 ",
+              "ul": false
+            },
+            {
+              "t": "않은",
+              "ul": true
+            },
+            {
+              "t": " 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "① inspire : to take away somenone’s motivation",
+          "runs": [
+            {
+              "t": "① inspire : to take away somenone’s motivation",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② finance : the management of large amounts of money",
+          "runs": [
+            {
+              "t": "② finance : the management of large amounts of money",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ stretchy : able to become longer or wider when pulled",
+          "runs": [
+            {
+              "t": "③ stretchy : able to become longer or wider when pulled",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ trait : a particular characteristic or quality that someone has",
+          "runs": [
+            {
+              "t": "④ trait : a particular characteristic or quality that someone has",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ hesitate : to pause before doing something through uncertainty",
+          "runs": [
+            {
+              "t": "⑤ hesitate : to pause before doing something through uncertainty",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 문장의 밑줄 친 부분 중, 문맥상 적절하지 않은 것은?",
+          "runs": [
+            {
+              "t": "다음 문장의 밑줄 친 부분 중, 문맥상 적절하지 ",
+              "ul": false
+            },
+            {
+              "t": "않은",
+              "ul": true
+            },
+            {
+              "t": " 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "① The company reported record profit after launching its new product line.",
+          "runs": [
+            {
+              "t": "① The company reported record ",
+              "ul": false
+            },
+            {
+              "t": "profit",
+              "ul": true
+            },
+            {
+              "t": " after launching its new product line.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② Her expertise in marine biology helped her win the national science award.",
+          "runs": [
+            {
+              "t": "② Her ",
+              "ul": false
+            },
+            {
+              "t": "expertise",
+              "ul": true
+            },
+            {
+              "t": " in marine biology helped her win the national science award.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ Young workers today face many challenges when searching for affordable housing.",
+          "runs": [
+            {
+              "t": "③ Young workers today ",
+              "ul": false
+            },
+            {
+              "t": "face",
+              "ul": true
+            },
+            {
+              "t": " many challenges when searching for affordable housing.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ Modern smartphones constantly receive software updates to improve performance.",
+          "runs": [
+            {
+              "t": "④ Modern smartphones ",
+              "ul": false
+            },
+            {
+              "t": "constantly",
+              "ul": true
+            },
+            {
+              "t": " receive software updates to improve performance.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ The new library was completely inaccessible, so thousands of visitors came every day.",
+          "runs": [
+            {
+              "t": "⑤ The new library was completely ",
+              "ul": false
+            },
+            {
+              "t": "inaccessible",
+              "ul": true
+            },
+            {
+              "t": ", so thousands of visitors came every day.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 문장의 밑줄 친 부분 중, 문맥상 적절하지 않은 것은?",
+          "runs": [
+            {
+              "t": "다음 문장의 밑줄 친 부분 중, 문맥상 적절하지 ",
+              "ul": false
+            },
+            {
+              "t": "않은",
+              "ul": true
+            },
+            {
+              "t": " 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "① The team decided to incorporate user feedback into the new app design.",
+          "runs": [
+            {
+              "t": "① The team decided to ",
+              "ul": false
+            },
+            {
+              "t": "incorporate",
+              "ul": true
+            },
+            {
+              "t": " user feedback into the new app design.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② The field of artificial intelligence continues to advance rapidly every year.",
+          "runs": [
+            {
+              "t": "② The field of artificial intelligence continues to ",
+              "ul": false
+            },
+            {
+              "t": "advance",
+              "ul": true
+            },
+            {
+              "t": " rapidly every year.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ Every investment carries some risk that investors must carefully consider.",
+          "runs": [
+            {
+              "t": "③ Every investment carries some ",
+              "ul": false
+            },
+            {
+              "t": "risk",
+              "ul": true
+            },
+            {
+              "t": " that investors must carefully consider.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ The founder of the charity organization dedicated her life to helping children.",
+          "runs": [
+            {
+              "t": "④ The ",
+              "ul": false
+            },
+            {
+              "t": "founder",
+              "ul": true
+            },
+            {
+              "t": " of the charity organization dedicated her life to helping children.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ The school hired a temporary teacher who has been working there for over twenty years.",
+          "runs": [
+            {
+              "t": "⑤ The school hired a ",
+              "ul": false
+            },
+            {
+              "t": "temporary",
+              "ul": true
+            },
+            {
+              "t": " teacher who has been working there for over twenty years.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글을 읽고 물음에 답하시오.",
+          "runs": [
+            {
+              "t": "다음 글을 읽고 물음에 답하시오.",
+              "ul": false
+            }
+          ],
+          "pstyle": "다음 글을 읽고"
+        },
+        {
+          "text": "Is it impossible to build an environment where everyone can use products and facilities conveniently and without limitations? It was Ronald Mace who sought the answer to this question. He ①contracted polio at the age of nine and spent the rest of his life in a wheelchair. When studying architecture at university, he struggled to access some campus facilities due to inaccessible building designs. This experience later inspired him to invent the term universal design, which refers to design for all. As an architect and product designer, he pursued a world in which all products and environments were designed to be artistic and usable to the greatest extent possible by everyone, regardless of their age, size, disability, nationality, or language. According to the principles of universal design, the design must be able to be used equitably, flexibly, simply, and ②intuitively by a wide variety of people. In addition, it should be cognitively accessible and minimize users' physical efforts. Finally, it requires the providing of sufficient space for all users while reducing potential hazards and ③adverse consequences from accidental or unintended actions. A key feature of universal design is that ________________________________________________. If an environment is accessible, usable, convenient, and a pleasure to use, everyone in the community benefits. How has universal design been incorporated into modern architecture? One of the most representative examples of universal design being used to improve accessibility is the ramps installed in front of buildings. Ramps, not stairs, are necessary for people with disabilities who use wheelchairs, and they are also beneficial for parents pushing strollers and the elderly. Another example is automatic doors. They are ④invaluable for those who rely on assistive devices such as wheelchairs and crutches. They also provide convenience for adults who have their hands full and children who are not tall enough to open the doors themselves. A further example is tactile paving. These textured surfaces, often found on sidewalks, steps, and crosswalks, assist visually ⑤impaired individuals by guiding them through urban spaces.",
+          "runs": [
+            {
+              "t": "Is it impossible to build an environment where everyone can use products and facilities conveniently and without limitations? It was Ronald Mace who sought the answer to this question. He ①",
+              "ul": false
+            },
+            {
+              "t": "contract",
+              "ul": true
+            },
+            {
+              "t": "ed polio at the age of nine and spent the rest of his life in a wheelchair. When studying architecture at university, he struggled to access some campus facilities due to inaccessible building designs. This experience later inspired him to invent the term universal design, which refers to design for all. As an architect and product designer, he pursued a world in which all products and environments were designed to be artistic and usable to the greatest extent possible by everyone, regardless of their age, size, disability, nationality, or language. According to the principles of universal design, the design must be able to be used equitably, flexibly, simply, and ②",
+              "ul": false
+            },
+            {
+              "t": "intuitively",
+              "ul": true
+            },
+            {
+              "t": " by a wide variety of people. In addition, it should be cognitively accessible and minimize users' physical efforts. Finally, it requires the providing of sufficient space for all users while reducing potential hazards and ③",
+              "ul": false
+            },
+            {
+              "t": "adverse",
+              "ul": true
+            },
+            {
+              "t": " consequences from accidental or unintended actions. A key feature of universal design is that ________________________________________________. If an environment is accessible, usable, convenient, and a pleasure to use, everyone in the community benefits. How has universal design been incorporated into modern architecture? One of the most representative examples of universal design being used to improve accessibility is the ramps installed in front of buildings. Ramps, not stairs, are necessary for people with disabilities who use wheelchairs, and they are also beneficial for parents pushing strollers and the elderly. Another example is automatic doors. They are ④",
+              "ul": false
+            },
+            {
+              "t": "invaluable",
+              "ul": true
+            },
+            {
+              "t": " for those who rely on assistive devices such as wheelchairs and crutches. They also provide convenience for adults who have their hands full and children who are not tall enough to open the doors themselves. A further example is tactile paving. These textured surfaces, often found on sidewalks, steps, and crosswalks, assist visually ⑤",
+              "ul": false
+            },
+            {
+              "t": "impaired",
+              "ul": true
+            },
+            {
+              "t": " individuals by guiding them through urban spaces.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "윗글의 주제로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "윗글의 주제로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "① the origin and guiding principles of universal design as an inclusive approach benefiting all members of society",
+          "runs": [
+            {
+              "t": "① the origin and guiding principles of universal design as an inclusive approach benefiting all members of society",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② universal design's targeted efforts to address the mobility challenges faced by people with disabilities",
+          "runs": [
+            {
+              "t": "② universal design's targeted efforts to address the mobility challenges faced by people with disabilities",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ Ronald Mace's personal journey of overcoming physical limitations to become a renowned architect",
+          "runs": [
+            {
+              "t": "③ Ronald Mace's personal journey of overcoming physical limitations to become a renowned architect",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ the technical innovations in modern architecture that comply with international accessibility regulations",
+          "runs": [
+            {
+              "t": "④ the technical innovations in modern architecture that comply with international accessibility regulations",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ the economic advantages of incorporating universal design into large-scale public infrastructure projects",
+          "runs": [
+            {
+              "t": "⑤ the economic advantages of incorporating universal design into large-scale public infrastructure projects",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "윗글의 밑줄 친 ①~⑤의 문맥상 영영풀이로 적절하지 않은 것을 2개 고르면?",
+          "runs": [
+            {
+              "t": "윗글의 밑줄 친 ①~⑤의 문맥상 영영풀이로 적절하지 ",
+              "ul": false
+            },
+            {
+              "t": "않은",
+              "ul": true
+            },
+            {
+              "t": " 것을 ",
+              "ul": false
+            },
+            {
+              "t": "2개",
+              "ul": true
+            },
+            {
+              "t": " 고르면?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "① contract: to become tighter in size or amount",
+          "runs": [
+            {
+              "t": "① contract: to become tighter in size or amount",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② intuitively: by using feelings to understand something without needing facts",
+          "runs": [
+            {
+              "t": "② intuitively: by using feelings to understand something without needing facts",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ adverse: having a harmful effect on something",
+          "runs": [
+            {
+              "t": "③ adverse: having a harmful effect on something",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ invaluable: having little real usefulness in a specific context",
+          "runs": [
+            {
+              "t": "④ invaluable: having little real usefulness in a specific context",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ impaired: weakened in a way that reduces functional ability",
+          "runs": [
+            {
+              "t": "⑤ impaired: weakened in a way that reduces functional ability",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "윗글의 빈칸에 들어갈 말로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "윗글의 빈칸에 들어갈 말로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "① the advantages it brings extend beyond particular user groups to enhance the lives of every member of the community",
+          "runs": [
+            {
+              "t": "① the advantages it brings extend beyond particular user groups to enhance the lives of every member of the community",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② its adoption invariably requires substantial financial investment from governmental and private institutions",
+          "runs": [
+            {
+              "t": "② its adoption invariably requires substantial financial investment from governmental and private institutions",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ its implementation is intended primarily to accommodate the physical limitations of elderly and disabled populations",
+          "runs": [
+            {
+              "t": "③ its implementation is intended primarily to accommodate the physical limitations of elderly and disabled populations",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ its effectiveness depends on individual users adapting themselves to predetermined design standards",
+          "runs": [
+            {
+              "t": "④ its effectiveness depends on individual users adapting themselves to predetermined design standards",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ its principles apply exclusively to architectural decisions rather than to consumer product development",
+          "runs": [
+            {
+              "t": "⑤ its principles apply exclusively to architectural decisions rather than to consumer product development",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글을 읽고 물음에 답하시오.",
+          "runs": [
+            {
+              "t": "다음 글을 읽고 물음에 답하시오.",
+              "ul": false
+            }
+          ],
+          "pstyle": "다음 글을 읽고"
+        },
+        {
+          "text": "Sabermetrics was created in the late 1970s. It tries to use large amounts of information to discover patterns, trends, and insights that are difficult to find with traditional ways of studying statistics. Normally, coaches and managers ①favor players who can hit the ball hard and far, for such players tend to hit more home runs and extra-base hits. Sabermetrics suggests that players' offensive skills can be better measured by the frequency with which they safely reach base. It does not matter whether this is achieved through hits, walks, or hits by pitch. Sabermetrics had not been widely used until the Athletics adopted it in 2002. With sabermetrics, the Athletics were able to identify underrated players with ②substantial contributions to winning and built a strong team on a small budget. The success of the Athletics ③induced other teams to quickly adopt sabermetrics, sparking a movement to utilize data not only in baseball but also in other sports. Thus, sports data analytics emerged as a systematic approach to predict game outcomes. In soccer, the Liverpool Football Club of the English Premier League is similar to the Oakland Athletics in baseball. In 2010, Liverpool underwent a change in ownership. While data analysis was already ④diminishing in the Premier League at that time, the new owner of the club, who also owned a baseball team in the United States, aimed to push data analysis in soccer to new heights. So he demanded that the club form a new data team. The new team included a physicist from Cambridge, a nuclear scientist from Harvard, and a former chess champion. What they had in common was significant expertise in data. The team started to apply data analysis in key areas of club management, including player recruitment, injury prevention, and strategy during the game. The team analyzed large amounts of data to recruit players who fit the team's style of play. In training, they collected data on players' movement patterns, heart rates, and vital signs by using GPS trackers and sensors to prevent injuries. During games, they used live data to make tactical decisions such as substitutions and formations. The data team was ⑤praised for its efforts when the Liverpool Football Club won the league championship for the first time in 30 years in 2020.",
+          "runs": [
+            {
+              "t": "Sabermetrics was created in the late 1970s. It tries to use large amounts of information to discover patterns, trends, and insights that are difficult to find with traditional ways of studying statistics. Normally, coaches and managers ①",
+              "ul": false
+            },
+            {
+              "t": "favor",
+              "ul": true
+            },
+            {
+              "t": " players who can hit the ball hard and far, for such players tend to hit more home runs and extra-base hits. Sabermetrics suggests that players' offensive skills can be better measured by the frequency with which they safely reach base. It does not matter whether this is achieved through hits, walks, or hits by pitch. Sabermetrics had not been widely used until the Athletics adopted it in 2002. With sabermetrics, the Athletics were able to identify underrated players with ②",
+              "ul": false
+            },
+            {
+              "t": "substantial",
+              "ul": true
+            },
+            {
+              "t": " contributions to winning and built a strong team on a small budget. The success of the Athletics ③",
+              "ul": false
+            },
+            {
+              "t": "induced",
+              "ul": true
+            },
+            {
+              "t": " other teams to quickly adopt sabermetrics, sparking a movement to utilize data not only in baseball but also in other sports. Thus, sports data analytics emerged as a systematic approach to predict game outcomes. In soccer, the Liverpool Football Club of the English Premier League is similar to the Oakland Athletics in baseball. In 2010, Liverpool underwent a change in ownership. While data analysis was already ④",
+              "ul": false
+            },
+            {
+              "t": "diminishing",
+              "ul": true
+            },
+            {
+              "t": " in the Premier League at that time, the new owner of the club, who also owned a baseball team in the United States, aimed to push data analysis in soccer to new heights. So he demanded that the club form a new data team. The new team included a physicist from Cambridge, a nuclear scientist from Harvard, and a former chess champion. What they had in common was significant expertise in data. The team started to apply data analysis in key areas of club management, including player recruitment, injury prevention, and strategy during the game. The team analyzed large amounts of data to recruit players who fit the team's style of play. In training, they collected data on players' movement patterns, heart rates, and vital signs by using GPS trackers and sensors to prevent injuries. During games, they used live data to make tactical decisions such as substitutions and formations. The data team was ⑤",
+              "ul": false
+            },
+            {
+              "t": "praised",
+              "ul": true
+            },
+            {
+              "t": " for its efforts when the Liverpool Football Club won the league championship for the first time in 30 years in 2020.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "윗글의 주제로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "윗글의 주제로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "① the strategic recruitment methods used by small-budget sports teams to compete with wealthy rivals",
+          "runs": [
+            {
+              "t": "① the strategic recruitment methods used by small-budget sports teams to compete with wealthy rivals",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② the life and career of baseball analyst Bill James and his revolutionary sabermetrics methodology",
+          "runs": [
+            {
+              "t": "② the life and career of baseball analyst Bill James and his revolutionary sabermetrics methodology",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ the evolution of data analytics from baseball sabermetrics to its successful implementation in other sports",
+          "runs": [
+            {
+              "t": "③ the evolution of data analytics from baseball sabermetrics to its successful implementation in other sports",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ the technological tools and devices used to monitor athletes' physical conditions during training",
+          "runs": [
+            {
+              "t": "④ the technological tools and devices used to monitor athletes' physical conditions during training",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ the economic impact of data analytics on professional sports leagues and team ownership structures",
+          "runs": [
+            {
+              "t": "⑤ the economic impact of data analytics on professional sports leagues and team ownership structures",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "윗글의 밑줄 친 ①~⑤ 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+          "runs": [
+            {
+              "t": "윗글의 밑줄 친 ①~⑤ 중, 문맥상 낱말의 쓰임이 적절하지 ",
+              "ul": false
+            },
+            {
+              "t": "않은",
+              "ul": true
+            },
+            {
+              "t": " 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "윗글의 내용과 일치하지 않는 것을 2개 고르면?",
+          "runs": [
+            {
+              "t": "윗글의 내용과 일치하지 ",
+              "ul": false
+            },
+            {
+              "t": "않는",
+              "ul": true
+            },
+            {
+              "t": " 것을 ",
+              "ul": false
+            },
+            {
+              "t": "2개",
+              "ul": true
+            },
+            {
+              "t": " 고르면?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "① Sabermetrics measures a player's offensive skill based on how frequently they safely reach base through hits, walks, or being hit by a pitch.",
+          "runs": [
+            {
+              "t": "① Sabermetrics measures a player's offensive skill based on how frequently they safely reach base through hits, walks, or being hit by a pitch.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② Sabermetrics became widely used throughout Major League Baseball immediately after its creation in the late 1970s.",
+          "runs": [
+            {
+              "t": "② Sabermetrics became widely used throughout Major League Baseball immediately after its creation in the late 1970s.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ The Oakland Athletics used sabermetrics to identify undervalued players and build a competitive team without a large financial budget.",
+          "runs": [
+            {
+              "t": "③ The Oakland Athletics used sabermetrics to identify undervalued players and build a competitive team without a large financial budget.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ Liverpool's new data team members included experts with backgrounds in physics, nuclear science, and chess, all sharing expertise in data.",
+          "runs": [
+            {
+              "t": "④ Liverpool's new data team members included experts with backgrounds in physics, nuclear science, and chess, all sharing expertise in data.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ During games, the Liverpool data team analyzed archived footage from previous seasons to design long-term formations.",
+          "runs": [
+            {
+              "t": "⑤ During games, the Liverpool data team analyzed archived footage from previous seasons to design long-term formations.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글을 읽고 물음에 답하시오.",
+          "runs": [
+            {
+              "t": "다음 글을 읽고 물음에 답하시오.",
+              "ul": false
+            }
+          ],
+          "pstyle": "다음 글을 읽고"
+        },
+        {
+          "text": " Stock market movement ①can be divided into two major trends: bull market vs. bear market.",
+          "runs": [
+            {
+              "t": " Stock market movement ①",
+              "ul": false
+            },
+            {
+              "t": "can be divided into two major trends",
+              "ul": true
+            },
+            {
+              "t": ": bull market vs. bear market.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "□ BULL MARKET",
+          "runs": [
+            {
+              "t": "□ BULL MARKET",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "A bull market is a rising stock market situation ②which economic conditions are favorable to investors. They include high employment rates, GDP increases, and other positive economic indicators. Think of a charging bull in a field raising its horns. In a bull market, investors often believe in the market's present and future performance. As such, they increase their stock purchases and maintain their investments.",
+          "runs": [
+            {
+              "t": "A bull market is a rising stock market situation ②",
+              "ul": false
+            },
+            {
+              "t": "which economic conditions are favorable",
+              "ul": true
+            },
+            {
+              "t": " to investors. They include high employment rates, GDP increases, and other positive economic indicators. Think of a charging bull in a field raising its horns. In a bull market, investors often believe in the market's present and future performance. As such, they increase their stock purchases and maintain their investments.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "□ BEAR MARKET",
+          "runs": [
+            {
+              "t": "□ BEAR MARKET",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "Like ③a standing bear having lowered its front legs, a bear market implies a decline in stock values. It occurs when economic conditions are not favorable, and most stocks experience decreases in value. Factors like low GDP growth, rising unemployment, and low wages ④is possible conditions for a bear market. In difficult economic situations, investors frequently have negative views of the stock market, ⑤which may lead them to sell their stocks.",
+          "runs": [
+            {
+              "t": "Like ③",
+              "ul": false
+            },
+            {
+              "t": "a standing bear having lowered its front legs",
+              "ul": true
+            },
+            {
+              "t": ", a bear market implies a decline in stock values. It occurs when economic conditions are not favorable, and most stocks experience decreases in value. Factors like low GDP growth, rising unemployment, and low wages ④",
+              "ul": false
+            },
+            {
+              "t": "is possible conditions for a bear market",
+              "ul": true
+            },
+            {
+              "t": ". In difficult economic situations, investors frequently have negative views of the stock market, ⑤",
+              "ul": false
+            },
+            {
+              "t": "which may lead them to sell their stocks",
+              "ul": true
+            },
+            {
+              "t": ".",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "윗글의 밑줄 친 ①~⑤ 중, 어법상 틀린 것을 2개 고르면?",
+          "runs": [
+            {
+              "t": "윗글의 밑줄 친 ①~⑤ 중, 어법상 ",
+              "ul": false
+            },
+            {
+              "t": "틀린",
+              "ul": true
+            },
+            {
+              "t": " 것을 ",
+              "ul": false
+            },
+            {
+              "t": "2개",
+              "ul": true
+            },
+            {
+              "t": " 고르면?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "윗글에 근거할 때, BULL MARKET의 특징에 해당하는 상황만을 <보기>에서 있는 대로 고른 것은?",
+          "runs": [
+            {
+              "t": "윗글에 근거할 때, BULL MARKET의 특징에 해당하는 상황만을 <보기>에서 ",
+              "ul": false
+            },
+            {
+              "t": "있는 대로",
+              "ul": true
+            },
+            {
+              "t": " 고른 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "<보기>",
+          "runs": [
+            {
+              "t": "<보기>",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "(a) Unemployment has dropped to its lowest level in a decade as stock prices steadily climb across major exchanges.",
+          "runs": [
+            {
+              "t": "(a) Unemployment has dropped to its lowest level in a decade as stock prices steadily climb across major exchanges.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(b) GDP has contracted for three consecutive quarters, prompting investors to liquidate a substantial portion of their holdings.",
+          "runs": [
+            {
+              "t": "(b) GDP has contracted for three consecutive quarters, prompting investors to liquidate a substantial portion of their holdings.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(c) Corporate earnings consistently exceed forecasts, leading shareholders to expand their existing positions in the market.",
+          "runs": [
+            {
+              "t": "(c) Corporate earnings consistently exceed forecasts, leading shareholders to expand their existing positions in the market.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(d) Nationwide layoffs and stagnant wages have triggered widespread sell-offs across equity markets.",
+          "runs": [
+            {
+              "t": "(d) Nationwide layoffs and stagnant wages have triggered widespread sell-offs across equity markets.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(e) A surge in new hiring across major industries accompanies sustained gains in the leading market indices.",
+          "runs": [
+            {
+              "t": "(e) A surge in new hiring across major industries accompanies sustained gains in the leading market indices.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(f) Falling household incomes and persistent inflation have pushed major market indices to new lows.",
+          "runs": [
+            {
+              "t": "(f) Falling household incomes and persistent inflation have pushed major market indices to new lows.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① (a), (d)",
+          "runs": [
+            {
+              "t": "① (a), (d)",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② (a), (c), (e)",
+          "runs": [
+            {
+              "t": "② (a), (c), (e)",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ (a), (d), (f)",
+          "runs": [
+            {
+              "t": "③ (a), (d), (f)",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ (b), (c), (e)",
+          "runs": [
+            {
+              "t": "④ (b), (c), (e)",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ (b), (d), (f)",
+          "runs": [
+            {
+              "t": "⑤ (b), (d), (f)",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 ",
+              "ul": false
+            },
+            {
+              "t": "않은",
+              "ul": true
+            },
+            {
+              "t": " 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " One cannot validly ①contend that humans are morally superior beings on the ground that they possess, while others lack, the capacities of a moral agent. The reason is that, as far as moral standards are ②concerned, only beings that have the capacities of a moral agent can meaningfully be said to be either morally good or morally bad. Only moral agents can be ③ignored to be morally better or worse than others, and the others in question must be moral agents themselves. Judgments of moral superiority are based on the ④relative merits or deficiencies of the entities being judged, and these merits and deficiencies are all moral ones, that is, ones determined by moral standards. One entity is correctly judged morally superior to another if it is the case that, when valid moral standards are applied to both entities, the first ⑤meets them to a greater degree than the second. Both entities, therefore, must fall within the range of application of moral standards. This would not be the case, however, if humans were being judged superior to animals and plants, since the latter are not moral agents.",
+          "runs": [
+            {
+              "t": " One cannot validly ①",
+              "ul": false
+            },
+            {
+              "t": "contend",
+              "ul": true
+            },
+            {
+              "t": " that humans are morally superior beings on the ground that they possess, while others lack, the capacities of a moral agent. The reason is that, as far as moral standards are ②",
+              "ul": false
+            },
+            {
+              "t": "concerned",
+              "ul": true
+            },
+            {
+              "t": ", only beings that have the capacities of a moral agent can meaningfully be said to be either morally good or morally bad. Only moral agents can be ③",
+              "ul": false
+            },
+            {
+              "t": "ignored",
+              "ul": true
+            },
+            {
+              "t": " to be morally better or worse than others, and the others in question must be moral agents themselves. Judgments of moral superiority are based on the ④",
+              "ul": false
+            },
+            {
+              "t": "relative",
+              "ul": true
+            },
+            {
+              "t": " merits or deficiencies of the entities being judged, and these merits and deficiencies are all moral ones, that is, ones determined by moral standards. One entity is correctly judged morally superior to another if it is the case that, when valid moral standards are applied to both entities, the first ⑤",
+              "ul": false
+            },
+            {
+              "t": "meets",
+              "ul": true
+            },
+            {
+              "t": " them to a greater degree than the second. Both entities, therefore, must fall within the range of application of moral standards. This would not be the case, however, if humans were being judged superior to animals and plants, since the latter are not moral agents.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 밑줄 친 부분 중, 어법상 ",
+              "ul": false
+            },
+            {
+              "t": "틀린",
+              "ul": true
+            },
+            {
+              "t": " 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " ①Beethoven's drive to create something novel is a reflection of his state of curiosity. Our brains experience a sense of reward when we create something new in the process of exploring something uncertain, such as a musical phrase that we've never played or heard before. ②When our curiosity leads to something novel, the resulting reward brings us a sense of pleasure. ③A number of investigators has modeled how curiosity influences musical composition. In the case of Beethoven, computer modeling focused on the thirty-two piano sonatas written after age thirteen revealed that the musical patterns found in all of Beethoven's music decreased in later sonatas, while novel patterns, including patterns that were unique to a particular sonata, increased. In other words, ④Beethoven's music became less predictable over time as his curiosity drove the exploration of new musical ideas. In conclusion, ⑤it is curiosity that is a powerful driver of human creativity.",
+          "runs": [
+            {
+              "t": " ①",
+              "ul": false
+            },
+            {
+              "t": "Beethoven's drive to create something novel is a reflection of his state of curiosity",
+              "ul": true
+            },
+            {
+              "t": ". Our brains experience a sense of reward when we create something new in the process of exploring something uncertain, such as a musical phrase that we've never played or heard before. ②",
+              "ul": false
+            },
+            {
+              "t": "When our curiosity leads to something novel, the resulting reward brings us a sense of pleasure",
+              "ul": true
+            },
+            {
+              "t": ". ③",
+              "ul": false
+            },
+            {
+              "t": "A number of investigators has modeled how curiosity influences musical composition",
+              "ul": true
+            },
+            {
+              "t": ". In the case of Beethoven, computer modeling focused on the thirty-two piano sonatas written after age thirteen revealed that the musical patterns found in all of Beethoven's music decreased in later sonatas, while novel patterns, including patterns that were unique to a particular sonata, increased. ",
+              "ul": false
+            },
+            {
+              "t": "In other words, ",
+              "ul": false
+            },
+            {
+              "t": "④",
+              "ul": false
+            },
+            {
+              "t": "Beethoven's music became less predictable over time as his curiosity drove the exploration of new musical ideas",
+              "ul": true
+            },
+            {
+              "t": ". ",
+              "ul": false
+            },
+            {
+              "t": "In conclusion,",
+              "ul": false
+            },
+            {
+              "t": " ",
+              "ul": true
+            },
+            {
+              "t": "⑤",
+              "ul": false
+            },
+            {
+              "t": "it is curiosity that is a powerful driver of human creativity",
+              "ul": true
+            },
+            {
+              "t": ".",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글의 주제와 일치하는 반응을 보이고 있는 학생은?",
+          "runs": [
+            {
+              "t": "다음 글의 주제와 일치하는 반응을 보이고 있는 학생은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " A focus on optimization can lead technologists to believe that increasing efficiency is inherently a good thing. There's something tempting about this view. Given a choice between doing something efficiently or inefficiently, who would choose the slower, more wasteful, more energy-intensive path? Yet a moment's reflection reveals other ways of approaching problems. We put speed bumps onto roads near schools to protect children. Is this only possible with the pursuit of efficiency? The quest to make something more efficient is not an inherently good thing. Everything depends on the goal. Technologists with a single-minded focus on efficiency frequently believe that the goals they pursue are worth pursuing. The problem here is that goals such as connecting people or promoting freedom, equality, and democracy are not goals that are computationally controllable. Technologists are always on the lookout for quantifiable metrics. Measurable inputs to a model are their lifeblood, and the need to quantify produces a bias toward measuring things that are easy to quantify. But simple metrics can take us further away from the important goals we really care about, which may require multiple or more complicated metrics or, more fundamentally, may not lend themselves to straightforward quantification. This results in technologists frequently substituting what is measurable for what is meaningful.",
+          "runs": [
+            {
+              "t": " A focus on optimization can lead technologists to believe that increasing efficiency is inherently a good thing. There's something tempting about this view. Given a choice between doing something efficiently or inefficiently, who would choose the slower, more wasteful, more energy-intensive path? Yet a moment's reflection reveals other ways of approaching problems. We put speed bumps onto roads near schools to protect children. Is this only possible with the pursuit of efficiency? The quest to make something more efficient is not an inherently good thing. Everything depends on the goal. Technologists with a single-minded focus on efficiency frequently believe that the goals they pursue are worth pursuing. The problem here is that goals such as connecting people or promoting freedom, equality, and democracy are not goals that are computationally controllable. Technologists are always on the lookout for quantifiable metrics. Measurable inputs to a model are their lifeblood, and the need to quantify produces a bias toward measuring things that are easy to quantify. But simple metrics can take us further away from the important goals we really care about, which may require multiple or more complicated metrics or, more fundamentally, may not lend themselves to straightforward quantification. This results in technologists frequently substituting what is measurable for what is meaningful.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① 철우: Through this passage, it can be discovered that using supercomputers can make quantification tasks easier. This belief leads to the possibility of finding solutions to difficult problems that humanity has not been able to solve.",
+          "runs": [
+            {
+              "t": "① 철우: Through this passage, it can be discovered that using supercomputers can make quantification tasks easier. This belief leads to the possibility of finding solutions to difficult problems that humanity has not been able to solve.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② 상원: The passage criticizes technologists' sole focus on efficiency and measurable outcomes, noting that this approach doesn't always support broader goals such as promoting freedom and equality. It advocates for a more balanced approach that considers both qualitative and quantitative factors in decision-making.",
+          "runs": [
+            {
+              "t": "② 상원: The passage criticizes technologists' sole focus on efficiency and measurable outcomes, noting that this approach doesn't always support broader goals such as promoting freedom and equality. It advocates for a more balanced approach that considers both qualitative and quantitative factors in decision-making.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ 현우: According to this passage, it can be seen that optimization pursued by technologists is a highly valued aspect in their field. Therefore, the development of innovative technologies or programs that can quantify almost every aspect of daily life is highly necessary, requiring significant social attention.",
+          "runs": [
+            {
+              "t": "③ 현우: ",
+              "ul": false
+            },
+            {
+              "t": "According to this passage, it can be seen that optimization pursued by technologists is a highly valued aspect in their field. Therefore, the development of innovative technologies or programs that can quantify almost every aspect of daily life is highly necessary, requiring significant social attention.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ 준혁: The passage supports technologists' focus on efficiency and measuring success, saying it always helps achieve good results, even for big goals like fairness and freedom. It suggests we don't need to think about other factors much, just numbers, for technology to improve.",
+          "runs": [
+            {
+              "t": "④ 준혁: ",
+              "ul": false
+            },
+            {
+              "t": "The passage supports technologists' focus on efficiency and measuring success, saying it always helps achieve good results, even for big goals like fairness and freedom. It suggests we don't need to think about other factors much, just numbers, for technology to improve.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ 한결: This passage describes the positive aspects of pursuing efficiency. A good example is a simple beverage that contains all essential nutrients rather than consuming food. This utility is expected to revolutionize the quality of human life significantly.",
+          "runs": [
+            {
+              "t": "⑤ 한결: ",
+              "ul": false
+            },
+            {
+              "t": "This passage describes the positive aspects of pursuing efficiency. A good example is a simple beverage that contains all essential nutrients rather than consuming food. This utility is expected to revolutionize the quality of human life significantly.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글의 내용과 일치하지 않는 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 내용과 일치하지 ",
+              "ul": false
+            },
+            {
+              "t": "않는",
+              "ul": true
+            },
+            {
+              "t": " 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " The fast-growing, tremendous amount of data, collected and stored in large and numerous data repositories, has far exceeded our human ability for understanding without powerful tools. As a result, data collected in large data repositories become “data tombs” – data archives that are hardly visited. Important decisions are often made based not on the information-rich data stored in data repositories but rather on a decision maker’s instinct, simply because the decision maker does not have the tools to extract the valuable knowledge hidden in the vast amounts of data. Efforts have been made to develop expert system and knowledge-based technologies, which typically rely on users or domain experts to manually input knowledge into knowledge bases. However, this procedure is likely to cause biases and errors and is extremely costly and time consuming. The widening gap between data and information urgently calls for the systematic development of tools that can turn data tombs into “golden nuggets” of knowledge.",
+          "runs": [
+            {
+              "t": " The fast-growing, tremendous amount of data, collected and stored in large and numerous data repositories, has far exceeded our human ability for understanding without powerful tools. As a result, data collected in large data repositories become “data tombs” – data archives that are hardly visited. Important decisions are often made based not on the information-rich data stored in data repositories but rather on a decision maker’s instinct, simply because the decision maker does not have the tools to extract the valuable knowledge hidden in the vast amounts of data. Efforts have been made to develop expert system and knowledge-based technologies, which typically rely on users or domain experts to manually input knowledge into knowledge bases. However, this procedure is likely to cause biases and errors and is extremely costly and time consuming. The widening gap between data and information urgently calls for the systematic development of tools that can turn data tombs into “golden nuggets” of knowledge.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① The rapid growth of data far exceeds human capacity to understand it without advanced tools.",
+          "runs": [
+            {
+              "t": "① The rapid growth of data far exceeds human capacity to understand it without advanced tools.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② Consequently, vast data repositories often go unused, becoming “data tombs”.",
+          "runs": [
+            {
+              "t": "② Consequently, vast data repositories often go unused, becoming “data tombs”.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ Decision-makers frequently rely on their rational decision rather than the rich data available because they lack the tools to extract valuable insights.",
+          "runs": [
+            {
+              "t": "③ Decision-makers frequently rely on their rational decision rather than the rich data available because they lack the tools to extract valuable insights.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ Although experts systems and knowledge-based technologies have been developed, they require manual input from users or experts, leading to potential biases, errors, and high costs.",
+          "runs": [
+            {
+              "t": "④ Although experts systems and knowledge-based technologies have been developed, they require manual input from users or experts, leading to potential biases, errors, and high costs.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ There is a pressing need for systematic development of tools that can transform data tombs into valuable knowledge.",
+          "runs": [
+            {
+              "t": "⑤ There is a pressing need for systematic development of tools that can transform data tombs into valuable knowledge.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글의 내용과 일치하지 않는 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 내용과 일치하지 ",
+              "ul": false
+            },
+            {
+              "t": "않는",
+              "ul": true
+            },
+            {
+              "t": " 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " For years, many psychologists have held strongly to the belief that the key to addressing negative health habits is to change behavior. This, more than values and attitudes, is the part of personality that is easiest to change. Ingestive habits such as smoking, drinking and various eating behaviors are the most common health concerns targeted for behavioral changes. Process-addiction behaviors (workaholism, shopaholism, and the like) fall into this category as well. Mental imagery combined with power of suggestion was taken up as the premise of behavioral medicine to help people change negative health behaviors into positive ones. Although this technique alone will not produce changes, when used alongside other behavior modification tactics and coping strategies, behavioral changes have proved effective for some people. What mental imagery does is reinforce a new desired behavior. Repeated use of images reinforces the desired behavior more strongly over time.",
+          "runs": [
+            {
+              "t": " For years, many psychologists have held strongly to the belief that the key to addressing negative health habits is to change behavior. This, more than values and attitudes, is the part of personality that is easiest to change. Ingestive habits such as smoking, drinking and various eating behaviors are the most common health concerns targeted for behavioral changes. Process-addiction behaviors (workaholism, shopaholism, and the like) fall into this category as well. Mental imagery combined with power of suggestion was taken up as the premise of behavioral medicine to help people change negative health behaviors into positive ones. Although this technique alone will not produce changes, when used alongside other behavior modification tactics and coping strategies, behavioral changes have proved effective for some people. What mental imagery does is reinforce a new desired behavior. Repeated use of images reinforces the desired behavior more strongly over time.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① It is believed that changing behavior is critical to tackling unhealthy habits and it is simpler to modify behavior than values and attitudes.",
+          "runs": [
+            {
+              "t": "① It is believed that changing behavior is critical to tackling unhealthy habits and it is simpler to modify behavior than values and attitudes.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② Ingestive habits and process-addiction behaviors are the most prevalent health issues that are the focus of behavioral modifications.",
+          "runs": [
+            {
+              "t": "② Ingestive habits and process-addiction behaviors are the most prevalent health issues that are the focus of behavioral modifications.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ Using mental images in conjunction with suggestion is founded on the idea that people may transform unhealthy habits into healthier ones.",
+          "runs": [
+            {
+              "t": "③ Using mental images in conjunction with suggestion is founded on the idea that people may transform unhealthy habits into healthier ones.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ Behavioral modifications have been shown to be successful when mental images are throughly turned into other behavior modification techniques and coping mechanisms.",
+          "runs": [
+            {
+              "t": "④ Behavioral modifications have been shown to be successful when mental images are throughly turned into other behavior modification techniques and coping mechanisms.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ A new, desirable behavior is reinforced via mental imagery, and it gradually strengthens the intended behavior when images are used frequently.",
+          "runs": [
+            {
+              "t": "⑤ A new, desirable behavior is reinforced via mental imagery, and it gradually strengthens the intended behavior when images are used frequently.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글의 내용과 일치하지 않는 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 내용과 일치하지 ",
+              "ul": false
+            },
+            {
+              "t": "않는",
+              "ul": true
+            },
+            {
+              "t": " 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " Dictionaries are relatively good resources for anyone interested in finding out what a word means. Using one set of words to define another word is called a lexical definition. But it's important to understand the limits of dictionary definitions. More often than not, a definition in a dictionary requires readers to have a fairly robust understanding of the language already at their disposal. In other words, a dictionary functions in many cases as a cross-reference or translator between words one knows and words that one doesn't yet know. Even the most obscure words in a dictionary, say, for example, \"pulchritudinous\" or \"kalokagathia,\" must be defined using words that the reader already knows and understands. Otherwise, the dictionary isn't very helpful. Another potential problem with dictionaries is that they often simply report on the way a word is commonly used, which can nevertheless be conceptually problematic and can change significantly over time. Critical thinkers and other inquirers, in contrast, are often interested in more precise, more accurate, and often more enduring definitions; and so sometimes a new or more precise meaning for a term is simply stipulated in what's called, obviously enough, a stimulative definition.",
+          "runs": [
+            {
+              "t": " Dictionaries are relatively good resources for anyone interested in finding out what a word means. Using one set of words to define another word is called a lexical definition. But it's important to understand the limits of dictionary definitions. More often than not, a definition in a dictionary requires readers to have a fairly robust understanding of the language already at their disposal. In other words, a dictionary functions in many cases as a cross-reference or translator between words one knows and words that one doesn't yet know. Even the most obscure words in a dictionary, say, for example, \"pulchritudinous\" or \"kalokagathia,\" must be defined using words that the reader already knows and understands. Otherwise, the dictionary isn't very helpful. Another potential problem with dictionaries is that they often simply report on the way a word is commonly used, which can nevertheless be conceptually problematic and can change significantly over time. Critical thinkers and other inquirers, in contrast, are often interested in more precise, more accurate, and often more enduring definitions; and so sometimes a new or more precise meaning for a term is simply stipulated in what's called, obviously enough, a stimulative definition.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① Lexical definitions are based on explaining one word using other words.",
+          "runs": [
+            {
+              "t": "① Lexical definitions are based on explaining one word using other words.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② Understanding a dictionary definition often requires pretty solid prior knowledge of the language.",
+          "runs": [
+            {
+              "t": "② Understanding a dictionary definition often requires pretty solid prior knowledge of the language.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ The meaning of a word in a dictionary can shift over time based on how people use it.",
+          "runs": [
+            {
+              "t": "③ The meaning of a word in a dictionary can shift over time based on how people use it.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ Critical thinkers rely on dictionary definitions because they are fixed and universally precise.",
+          "runs": [
+            {
+              "t": "④ Critical thinkers rely on dictionary definitions because they are fixed and universally precise.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ Sometimes a term is given a clearer meaning using a stimulative definition.",
+          "runs": [
+            {
+              "t": "⑤ Sometimes a term is given a clearer meaning using a stimulative definition.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글의 밑줄 친 ⓐ~ⓔ 중 영영풀이가 틀린 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 밑줄 친 ⓐ~ⓔ 중 영영풀이가 ",
+              "ul": false
+            },
+            {
+              "t": "틀린",
+              "ul": true
+            },
+            {
+              "t": " 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " When self-experimentation and conventional experiments are both possible, the difference between them often resembles the difference between learning and showing: Self-experiments are better for ⓐdiscovery but worse for convincing others that the solution is helpful or the answer is correct. Of course, most scientists want to do both — discover something and convince others of their discovery. Thus, psychologists should consider doing both self-experiments and conventional ones. The best use of resources may often be self-experiments followed by conventional ones. The researcher begins with self-experiments that, if all goes well, find large effects and / or generate and ⓑeliminate many hypotheses. This ⓒexploratory and theory-building phase lasts until a convenient solution or large effect is found. Then the researcher uses self-experiments to find the procedural parameters (e.g., duration, time of day, intensity) that ⓓoptimize the solution or maximize the effect. Only then would the researcher begin ⓔconventional experiments, using the optimized parameters.",
+          "runs": [
+            {
+              "t": " When self-experimentation and conventional experiments are both possible, the difference between them often resembles the difference between learning and showing: Self-experiments are better for ⓐ",
+              "ul": false
+            },
+            {
+              "t": "discovery",
+              "ul": true
+            },
+            {
+              "t": " but worse for convincing others that the solution is helpful or the answer is correct. Of course, most scientists want to do both — discover something and convince others of their discovery. Thus, psychologists should consider doing both self-experiments and conventional ones. The best use of resources may often be self-experiments followed by conventional ones. The researcher begins with self-experiments that, if all goes well, find large effects and / or generate and ⓑ",
+              "ul": false
+            },
+            {
+              "t": "eliminate",
+              "ul": true
+            },
+            {
+              "t": " many hypotheses. This ⓒ",
+              "ul": false
+            },
+            {
+              "t": "exploratory",
+              "ul": true
+            },
+            {
+              "t": " and theory-building phase lasts until a convenient solution or large effect is found. Then the researcher uses self-experiments to find the procedural parameters (e.g., duration, time of day, intensity) that ⓓ",
+              "ul": false
+            },
+            {
+              "t": "optimize",
+              "ul": true
+            },
+            {
+              "t": " the solution or maximize the effect. Only then would the researcher begin ⓔ",
+              "ul": false
+            },
+            {
+              "t": "conventional",
+              "ul": true
+            },
+            {
+              "t": " experiments, using the optimized parameters.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① ⓐ: the process of finding information or a fact that was not known before",
+          "runs": [
+            {
+              "t": "① ⓐ: the process of finding information or a fact that was not known before",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② ⓑ: to remove or get rid of something that is not needed or wanted",
+          "runs": [
+            {
+              "t": "② ⓑ: to remove or get rid of something that is not needed or wanted",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ ⓒ: done in order to investigate or learn more about something unknown",
+          "runs": [
+            {
+              "t": "③ ⓒ: done in order to investigate or learn more about something unknown",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ ⓓ: to make something as effective or as perfect as possible",
+          "runs": [
+            {
+              "t": "④ ⓓ: to make something as effective or as perfect as possible",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ ⓔ: based on what is extremely atypical",
+          "runs": [
+            {
+              "t": "⑤ ⓔ: based on what is extremely atypical",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글의 제목으로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 제목으로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " There are reasons why science is not fully trusted and why healthy skepticism and critical thinking are essential. In spite of professional standards, claims of objectivity, and the peer review process, the conduct of science can be biased. All experts are not the same, nor do they submit their work to the same scrutiny. Knowing the source of funding can be important in evaluating scientific claims. For example, the Harvard researchers who made claims in the late 1960s about the problems with dietary fat, leading the nation away from perceiving sugar as one of the main causes in health problems, were funded in part by the sugar industry. The authors did not reveal their funding source to the New England Journal of Medicine, where their influential article appeared. Their article shaped a generation of changes in eating patterns that appears to have fostered higher use of sugar, now widely implicated as a source of the rise in obesity and diabetes. Stories such as this one fuel suspicion ─ but also lead to further safeguards in the scientific process. Funding disclosures, although not required five decades ago, have since been made compulsory.",
+          "runs": [
+            {
+              "t": " There are reasons why science is not fully trusted and why healthy skepticism and critical thinking are essential. In spite of professional standards, claims of objectivity, and the peer review process, the conduct of science can be biased. All experts are not the same, nor do they submit their work to the same scrutiny. Knowing the source of funding can be important in evaluating scientific claims. For example, the Harvard researchers who made claims in the late 1960s about the problems with dietary fat, leading the nation away from perceiving sugar as one of the main causes in health problems, were funded in part by the sugar industry. The authors did not reveal their funding source to the ",
+              "ul": false
+            },
+            {
+              "t": "New England Journal of Medicine",
+              "ul": false
+            },
+            {
+              "t": ", where their influential article appeared. Their article shaped a generation of changes in eating patterns that appears to have fostered higher use of sugar, now widely implicated as a source of the rise in obesity and diabetes. Stories such as this one fuel suspicion ─ but also lead to further safeguards in the scientific process. Funding disclosures, although not required five decades ago, have since been made compulsory.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① Skepticism and Science: Unveiling Hidden Bias in Research",
+          "runs": [
+            {
+              "t": "① Skepticism and Science: Unveiling Hidden Bias in Research",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② The Role of Experts in Influencing Public Health Policies",
+          "runs": [
+            {
+              "t": "② The Role of Experts in Influencing Public Health Policies",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ Funding: The Invisible Hand Guiding Scientific Progress",
+          "runs": [
+            {
+              "t": "③ Funding: The Invisible Hand Guiding Scientific Progress",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ Why We Trust Scientific Agreement: The Power of Evidence",
+          "runs": [
+            {
+              "t": "④ Why We Trust Scientific Agreement: The Power of Evidence",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ Peer Review: The Unbreakable Shield of Scientific Truth",
+          "runs": [
+            {
+              "t": "⑤ Peer Review: The Unbreakable Shield of Scientific Truth",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " Great scientists are seldom one-hit wonders. Newton is a prime example: beyond the Newtonian mechanics, he developed the theory of gravitation, calculus, laws of motion, and optimization.",
+          "runs": [
+            {
+              "t": " Great scientists are seldom one-hit wonders. Newton is a prime example: beyond the Newtonian mechanics, he developed the theory of gravitation, calculus, laws of motion, and optimization.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(A) The Matthew effect posits that success alone increases the future probability of success, raising the question: Does status dictate outcomes, or does it simply reflect an underlying talent or quality? In other words, is there really a Matthew effect after all?",
+          "runs": [
+            {
+              "t": "(A) The Matthew effect posits that success alone increases the future probability of success, raising the question: Does status dictate outcomes, or does it simply reflect an underlying talent or quality? In other words, is there really a Matthew effect after all?",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "(B) Many renowned scientists are often involved in multiple discoveries, a phenomenon potentially explained by the Matthew effect. Indeed, an initial success may offer a scientist legitimacy, improve peer perception, provide knowledge of how to score and win, enhance social status, and attract resources and quality collaborators, each of these payoffs further increasing her odds of scoring another win.",
+          "runs": [
+            {
+              "t": "(B) Many renowned scientists are often involved in multiple discoveries, a phenomenon potentially explained by the Matthew effect. Indeed, an initial success may offer a scientist legitimacy, improve peer perception, provide knowledge of how to score and win, enhance social status, and attract resources and quality collaborators, each of these payoffs further increasing her odds of scoring another win.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "(C) Another compelling explanation, however, suggests that great scientists have multiple hits and consistently succeed in their scientific endeavors simply because they're exceptionally talented. Therefore, future success again goes to those who have had success earlier, not because of advantages offered by the previous success, but because the earlier success was indicative of a hidden talent.",
+          "runs": [
+            {
+              "t": "(C) Another compelling explanation, however, suggests that great scientists have multiple hits and consistently succeed in their scientific endeavors simply because they're exceptionally talented. Therefore, future success again goes to those who have had success earlier, not because of advantages offered by the previous success, but because the earlier success was indicative of a hidden talent.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "① (A) – (C) – (B)\t② (B) – (A) – (C)",
+          "runs": [
+            {
+              "t": "① (A) – (C) – (B)\t② (B) – (A) – (C)",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ (B) – (C) – (A)\t④ (C) – (A) – (B)",
+          "runs": [
+            {
+              "t": "③ (B) – (C) – (A)\t④ (C) – (A) – (B)",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ (C) – (B) – (A)",
+          "runs": [
+            {
+              "t": "⑤ (C) – (B) – (A)",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " Dancers often strive to push their bodies to their limits, seeking to achieve feats that challenge their physical capabilities.",
+          "runs": [
+            {
+              "t": " Dancers often strive to push their bodies to their limits, seeking to achieve feats that challenge their physical capabilities.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(A) However, that drive becomes misguided when it is aimed at accomplishing tasks that are physically impossible. For instance, consider a tall dancer with long feet attempting to perform repetitive vertical jumps to fast-paced music, extending their feet while airborne and landing with their heels touching the ground between jumps.",
+          "runs": [
+            {
+              "t": "(A) However, that drive becomes misguided when it is aimed at accomplishing tasks that are physically impossible. For instance, consider a tall dancer with long feet attempting to perform repetitive vertical jumps to fast-paced music, extending their feet while airborne and landing with their heels touching the ground between jumps.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "(B) By understanding the correlation between a swift turn rate and aligning the body closely to the rotation axis, they can learn the technique necessary to execute the turn successfully. In both scenarios, grasping and respecting the limitations dictated by nature and governed by physical laws empowers dancers to perform effectively while minimizing the risk of injury.",
+          "runs": [
+            {
+              "t": "(B) By understanding the correlation between a swift turn rate and aligning the body closely to the rotation axis, they can learn the technique necessary to execute the turn successfully. In both scenarios, grasping and respecting the limitations dictated by nature and governed by physical laws empowers dancers to perform effectively while minimizing the risk of injury.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "(C) That may be impossible however strong the dancer is. Conversely, a dancer with shorter feet may find this task manageable. Meanwhile, another dancer might encounter difficulties while attempting to execute a half-turn in midair.",
+          "runs": [
+            {
+              "t": "(C) That may be impossible however strong the dancer is. Conversely, a dancer with shorter feet may find this task manageable. Meanwhile, another dancer might encounter difficulties while attempting to execute a half-turn in midair.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "① (A)-(B)-(C)\t② (A)-(C)-(B)\t③ (B)-(A)-(C)",
+          "runs": [
+            {
+              "t": "① (A)-(B)-(C)\t② (A)-(C)-(B)\t③ (B)-(A)-(C)",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ (B)-(C)-(A)\t⑤ (C)-(A)-(B)",
+          "runs": [
+            {
+              "t": "④ (B)-(C)-(A)\t⑤ (C)-(A)-(B)",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " The prominence of the social dimension in food writing might suggest that the flavor of food is taking a back seat. I suspect that most people view flavor as of secondary importance in social settings where food is served.",
+          "runs": [
+            {
+              "t": " The prominence of the social dimension in food writing might suggest that the flavor of food is taking a back seat. I suspect that most people view flavor as of secondary importance in social settings where food is served.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(A) Therefore, giving too much attention to taste may lead to reducing the deeper social value of these gatherings by shifting focus away from the relationships and connections that truly make them meaningful.",
+          "runs": [
+            {
+              "t": "(A) Therefore, giving too much attention to taste may lead to reducing the deeper social value of these gatherings by shifting focus away from the relationships and connections that truly make them meaningful.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "(B) Even though food is essential to our social gatherings, the true meaning of these events doesn't seem to depend on how the food tastes. Flavor performs the role of taking care of hunger.",
+          "runs": [
+            {
+              "t": "(B) Even though food is essential to our social gatherings, the true meaning of these events doesn't seem to depend on how the food tastes. Flavor performs the role of taking care of hunger.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "(C) Beyond that, it simply becomes the backdrop for the social relations that characterize the gathering. Since taste is often personal and subjective, the meaning of food traditions comes more from social experiences than from the actual flavor of the food.",
+          "runs": [
+            {
+              "t": "(C) Beyond that, it simply becomes the backdrop for the social relations that characterize the gathering. Since taste is often personal and subjective, the meaning of food traditions comes more from social experiences than from the actual flavor of the food.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "① (A)-(C)-(B)\t② (B)-(C)-(A)\t③ (B)-(A)-(C)",
+          "runs": [
+            {
+              "t": "① (A)-(C)-(B)\t② (B)-(C)-(A)\t③ (B)-(A)-(C)",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ (C)-(A)-(B)\t⑤ (C)-(B)-(A)",
+          "runs": [
+            {
+              "t": "④ (C)-(A)-(B)\t⑤ (C)-(B)-(A)",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "밑줄 친 the historian has the benefit of hindsight가 다음 글에서 의미하는 바로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "밑줄 친 ",
+              "ul": false
+            },
+            {
+              "t": "the historian has the benefit of hindsight",
+              "ul": true
+            },
+            {
+              "t": "가 다음 글에서 의미하는 바로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " Despite the difference between the past and the future, between what has happened and what is to come, it can be suggested, that our sense of the past has always been influenced by our view of the future. Revolutionaries have always looked to the past to frame their future cause, as is amply illustrated by examples from nationalism to communism. The future has often been seen as variously a recovery of a lost time, as a replication of what is established, or as a model bequeathed by a heroic age long gone. The writing of history is based on understanding or explaining future outcomes that were not known to contemporaries, since the historian has the benefit of hindsight and the past is nothing more than the accumulation of futures that are now our past. So, rather than see the hand of the past always shaping the future, perhaps it can be seen in reversal, with the past – in the sense of our understanding of it – being shaped by our orientation to the future.",
+          "runs": [
+            {
+              "t": " Despite the difference between the past and the future, between what has happened and what is to come, it can be suggested, that our sense of the past has always been influenced by our view of the future. Revolutionaries have always looked to the past to frame their future cause, as is amply illustrated by examples from nationalism to communism. The future has often been seen as variously a recovery of a lost time, as a replication of what is established, or as a model bequeathed by a heroic age long gone. The writing of history is based on understanding or explaining future outcomes that were not known to contemporaries, since ",
+              "ul": false
+            },
+            {
+              "t": "the historian has the benefit of hindsight",
+              "ul": true
+            },
+            {
+              "t": " and the past is nothing more than the accumulation of futures that are now our past. So, rather than see the hand of the past always shaping the future, perhaps it can be seen in reversal, with the past – in the sense of our understanding of it – being shaped by our orientation to the future.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① historians always write about the past based only on documented facts",
+          "runs": [
+            {
+              "t": "① historians always write about the past based only on documented facts",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② historians can predict the future better than people who lived in the past",
+          "runs": [
+            {
+              "t": "② historians can predict the future better than people who lived in the past",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ historians interpret past events with knowledge of the outcomes that followed",
+          "runs": [
+            {
+              "t": "③ historians interpret past events with knowledge of the outcomes that followed",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ historians use their imagination to reconstruct forgotten historical periods",
+          "runs": [
+            {
+              "t": "④ historians use their imagination to reconstruct forgotten historical periods",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ historians create new versions of history based on future possibilities",
+          "runs": [
+            {
+              "t": "⑤ historians create new versions of history based on future possibilities",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은?",
+          "runs": [
+            {
+              "t": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "Food security, however, does not depend on self-sufficiency, since nations can acquire food products that are difficult to produce domestically through imports.",
+          "runs": [
+            {
+              "t": "Food security, however, does not depend on self-sufficiency, since nations can acquire food products that are difficult to produce domestically through imports.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": " The governments of virtually every country on the planet attach great importance to achieving food security and a wide variety of mechanisms have been developed to realize this goal. ( ① ) The first issue governments face in achieving national food security is the problem of insuring that adequate amounts of food are available to the resident population. ( ② ) Some governments have set goals of food self-sufficiency, which means most if not all of the food available in a country comes from the domestic farming system. ( ③ ) In terms of agricultural products, they are, after all, highly sensitive to climatic, soil and other conditions that tend to vary around the world. ( ④ ) Even countries with extremely productive agricultural sectors are not fully self-sufficient in all food items. ( ⑤ ) The United States, for example, depends on imports for its supply of coffee, tea, bananas and other tropical products. In general, the problem of assuring adequate food supplies is solved by relying on both domestic production and imports.",
+          "runs": [
+            {
+              "t": " The governments of virtually every country on the planet attach great importance to achieving food security and a wide variety of mechanisms have been developed to realize this goal. ( ① ) The first issue governments face in achieving national food security is the problem of insuring that adequate amounts of food are available to the resident population. ( ② ) Some governments have set goals of food self-sufficiency, which means most if not all of the food available in a country comes from the domestic farming system. ( ③ ) In terms of agricultural products, they are, after all, highly sensitive to climatic, soil and other conditions that tend to vary around the world. ( ④ ) Even countries with extremely productive agricultural sectors are not fully self-sufficient in all food items. ( ⑤ ) The United States, for example, depends on imports for its supply of coffee, tea, bananas and other tropical products. In general, the problem of assuring adequate food supplies is solved by relying on both domestic production and imports.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "다음 빈칸에 들어갈 말로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "다음 빈칸에 들어갈 말로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "  In a thesis-based doctoral programme, students typically spend a significant amount of time and effort researching a specific topic. While this deep dive into a particular area allows for thorough exploration and understanding, it can also result in narrowing the focus. As students become deeply absorbed in their research, they may spend less time exploring related fields or acquiring skills outside their immediate area of study. Consequently, this singular focus may    _________________________________________ developed during the programme, potentially hindering students’ ability to adapt to diverse career paths or address interdisciplinary challenges. Some universities in Europe have recognised the limitations of traditional thesis-based doctoral programmes and have started to implement more structured approaches. These structured programmes often combine research with coursework and training in transferable skills. By incorporating coursework, seminars, workshops and internships into the curriculum, they aim to provide students with a broader skill set and better prepare them for a variety of career paths beyond academia.",
+          "runs": [
+            {
+              "t": "  In a thesis-based doctoral programme, students typically spend a significant amount of time and effort researching a specific topic. While this deep dive into a particular area allows for thorough exploration and understanding, it can also result in narrowing the focus. As students become deeply absorbed in their research, they may spend less time exploring related fields or acquiring skills outside their immediate area of study. Consequently, this singular focus may    _________________________________________ developed during the programme, potentially hindering students’ ability to adapt to diverse career paths or address interdisciplinary challenges. Some universities in Europe have recognised the limitations of traditional thesis-based doctoral programmes and have started to implement more structured approaches. These structured programmes often combine research with coursework and training in transferable skills. By incorporating coursework, seminars, workshops and internships into the curriculum, they aim to provide students with a broader skill set and better prepare them for a variety of career paths beyond academia.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① narrow the range of knowledge and abilities",
+          "runs": [
+            {
+              "t": "① narrow the range of knowledge and abilities",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② be limited by the breadth of knowledge and skills",
+          "runs": [
+            {
+              "t": "② be limited by the breadth of knowledge and skills",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ broaden the comprehensive scope of knowledge and expertise",
+          "runs": [
+            {
+              "t": "③ broaden the comprehensive scope of knowledge and expertise",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ encourage the balanced growth of knowledge and skills",
+          "runs": [
+            {
+              "t": "④ encourage the balanced growth of knowledge and skills",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ entirely determine every aspect of knowledge and skills",
+          "runs": [
+            {
+              "t": "⑤ entirely determine every aspect of knowledge and skills",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 빈칸에 들어갈 말로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "다음 빈칸에 들어갈 말로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " In order to bring the ever-increasing costs of home care for elderly and needy persons under control, managers of home care providers have introduced management systems. These systems specify tasks of home care workers and the time and budget available to perform these tasks. Electronic reporting systems require home care workers to report on their activities and the time spent, thus making the distribution of time and money visible and, in the perception of managers, controllable. This, in the view of managers, has contributed to the resolution of the problem. The home care workers, on the other hand, may perceive their work not as a set of separate tasks to be performed as efficiently as possible, but as a service to be provided to a client with whom they may have developed a relationship. This includes having conversations with clients and enquiring about the person’s well-being. Restricted time and the requirement to report may be perceived as obstacles that make it impossible to deliver the service that is needed. If the management systems are too rigid to the extent the workers need to report every detail of what they did and said electronically, _________________________________.",
+          "runs": [
+            {
+              "t": " In order to bring the ever-increasing costs of home care for elderly and needy persons under control, managers of home care providers have introduced management systems. These systems specify tasks of home care workers and the time and budget available to perform these tasks. Electronic reporting systems require home care workers to report on their activities and the time spent, thus making the distribution of time and money visible and, in the perception of managers, controllable. This, in the view of managers, has contributed to the resolution of the problem. The home care workers, on the other hand, may perceive their work not as a set of separate tasks to be performed as efficiently as possible, but as a service to be provided to a client with whom they may have developed a relationship. This includes having conversations with clients and enquiring about the person’s well-being. Restricted time and the requirement to report may be perceived as obstacles that make it impossible to deliver the service that is needed. If the management systems are too rigid to the extent the workers need to report every detail of what they did and said electronically, _________________________________.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① the workers may be overwhelmed with the amount of responsibilities, making it difficult to respond effectively",
+          "runs": [
+            {
+              "t": "① the workers may be overwhelmed with the amount of responsibilities, making it difficult to respond effectively",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② higher job satisfaction would be achieved through higher level of autonomy in their role",
+          "runs": [
+            {
+              "t": "② higher job satisfaction would be achieved through higher level of autonomy in their role",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ employees may be inclined to think outside the box due to their extended time to spare",
+          "runs": [
+            {
+              "t": "③ employees may be inclined to think outside the box due to their extended time to spare",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ they would best be utilized with mobile accountant applications",
+          "runs": [
+            {
+              "t": "④ they would best be utilized with mobile accountant applications",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ trust between managers and employees will be escalated",
+          "runs": [
+            {
+              "t": "⑤ trust between managers and employees will be escalated",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글에서 전체 흐름과 관계 없는 문장은?",
+          "runs": [
+            {
+              "t": "다음 글에서 전체 흐름과 관계 ",
+              "ul": false
+            },
+            {
+              "t": "없는",
+              "ul": true
+            },
+            {
+              "t": " 문장은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "  Archaeological evidence suggests that various crops were being cultivated as early as 9500 BC in the Levant. ①The hues of Neolithic pottery fragments offer the most precise indicators of exchange networks among early farming communities. ②Over the millennia, continuous innovations have boosted agricultural productivity while reducing manual labor. ③However, the growing global population will always demand more food. ④It is projected that by 2050, the world’s population will increase to 9.7 billion, which will require global food production to rise by at least 70% to meet demand. ⑤Despite this need, only a small portion of the Earth’s surface is suitable for farming due to limitations such as climate, topography, soil quality, and technology. Political and economic factors, including land ownership patterns, environmental laws, and population density, also influence agricultural land use. In fact, the amount of land used for agriculture has been declining. In 2013, around 18.6 million square miles was used for food production, compared to 19.5 million square miles in 1991.",
+          "runs": [
+            {
+              "t": "  Archaeological evidence suggests that various crops were being cultivated as early as 9500 BC in the Levant. ①",
+              "ul": false
+            },
+            {
+              "t": "The hues of Neolithic pottery fragments offer the most precise indicators of exchange networks among early farming communities.",
+              "ul": true
+            },
+            {
+              "t": " ②",
+              "ul": false
+            },
+            {
+              "t": "Over the millennia, continuous innovations have boosted agricultural productivity while reducing manual labor.",
+              "ul": true
+            },
+            {
+              "t": " ③",
+              "ul": false
+            },
+            {
+              "t": "However, the growing global population will always demand more food.",
+              "ul": true
+            },
+            {
+              "t": " ④",
+              "ul": false
+            },
+            {
+              "t": "It is projected that by 2050, the world’s population will increase to 9.7 billion, which will require global food production to rise by at least 70% to meet demand.",
+              "ul": true
+            },
+            {
+              "t": " ⑤",
+              "ul": false
+            },
+            {
+              "t": "Despite this need, only a small portion of the Earth’s surface is suitable for farming due to limitations such as climate, topography, soil quality, and technology.",
+              "ul": true
+            },
+            {
+              "t": " Political and economic factors, including land ownership patterns, environmental laws, and population density, also influence agricultural land use. In fact, the amount of land used for agriculture has been declining. In 2013, around 18.6 million square miles was used for food production, compared to 19.5 million square miles in 1991.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "다음 글 (A)를 대화문 (B)로 바꾸었다. (B)의 밑줄 친 부분 중, 글 (A)를 제대로 이해하지 못한 것은?",
+          "runs": [
+            {
+              "t": "다음 글 (A)를 대화문 (B)로 바꾸었다. (B)의 밑줄 친 부분 중, 글 (A)를 제대로 이해하지 ",
+              "ul": false
+            },
+            {
+              "t": "못한",
+              "ul": true
+            },
+            {
+              "t": " 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "(A) When we realize we've said something in error and we pause to go back to correct it, we stop gesturing a couple of hundred milliseconds before we stop speaking. Such sequences suggest the startling notion that our hands \"know\" what we're going to say before our conscious minds do, and in fact this is often the case. Gesture can mentally prime a word so that the right term comes to our lips. When people are prevented from gesturing, they talk less fluently; their speech becomes halting because their hands are no longer able to supply them with the next word, and the next. Not being able to gesture has other deleterious effects: without gesture to help our mental processes along, we remember less useful information, we solve problems less well, and we are less able to explain our thinking. Far from tagging along as speech's clumsy companion, gesture represents the leading edge of our thought.",
+          "runs": [
+            {
+              "t": "(A) When we realize we've said something in error and we pause to go back to correct it, we stop gesturing a couple of hundred milliseconds before we stop speaking. Such sequences suggest the startling notion that our hands \"know\" what we're going to say before our conscious minds do, and in fact this is often the case. Gesture can mentally prime a word so that the right term comes to our lips. When people are prevented from gesturing, they talk less fluently; their speech becomes halting because their hands are no longer able to supply them with the next word, and the next. Not being able to gesture has other deleterious effects: without gesture to help our mental processes along, we remember less useful information, we solve problems less well, and we are less able to explain our thinking. Far from tagging along as speech's clumsy companion, gesture represents the leading edge of our thought.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "↓",
+          "runs": [
+            {
+              "t": "↓",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(B)",
+          "runs": [
+            {
+              "t": "(B)",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "A: Have you ever noticed how we use hand gestures when we're explaining something?",
+          "runs": [
+            {
+              "t": "A: Have you ever noticed how we use hand gestures when we're explaining something?",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "B: Yeah, I've always assumed it was just a habit, but is there more to it than that?",
+          "runs": [
+            {
+              "t": "B: Yeah, I've always assumed it was just a habit, but is there more to it than that?",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "A: Exactly! Research shows that gestures actually help us mentally prepare the words we want to say. It's like ①our hands give our brain a little nudge to bring the right words to mind.",
+          "runs": [
+            {
+              "t": "A: Exactly! Research shows that gestures actually help us mentally prepare the words we want to say. It's like ①",
+              "ul": false
+            },
+            {
+              "t": "our hands give our brain a little nudge to bring the right words to mind",
+              "ul": true
+            },
+            {
+              "t": ".",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "B: Wow, so our gestures are kind of like ②a preview of what we're thinking?",
+          "runs": [
+            {
+              "t": "B: Wow, so our gestures are kind of like ②",
+              "ul": false
+            },
+            {
+              "t": "a preview of what we're thinking",
+              "ul": true
+            },
+            {
+              "t": "?",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "A: Precisely! And it's not just about helping us speak more fluently. ③When people can't gesture, they tend to talk less smoothly and remember less.",
+          "runs": [
+            {
+              "t": "A: Precisely! And it's not just about helping us speak more fluently. ③",
+              "ul": false
+            },
+            {
+              "t": "When people can't gesture, they tend to talk less smoothly and remember less",
+              "ul": true
+            },
+            {
+              "t": ".",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "B: Really? So, our gestures are more than just extra movements then?",
+          "runs": [
+            {
+              "t": "B: Really? So, our gestures are more than just extra movements then?",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "A: Right. Instead of just tagging along with speech, gestures actually make our communication more effective. ④They serve as a subordinate accessory to talking; they're a key part of how we think and communicate.",
+          "runs": [
+            {
+              "t": "A: Right. Instead of just tagging along with speech, gestures actually make our communication more effective. ④",
+              "ul": false
+            },
+            {
+              "t": "They serve as a subordinate accessory to talking",
+              "ul": true
+            },
+            {
+              "t": "; they're a key part of how we think and communicate.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "B: That makes sense. I guess I've been using my hands to help me think all along!",
+          "runs": [
+            {
+              "t": "B: That makes sense. I guess I've been using my hands to help me think all along!",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "A: Exactly! Our gestures are like a key player for our thinking, ⑤playing a crucial role in shaping our ideas.",
+          "runs": [
+            {
+              "t": "A: Exactly! Our gestures are like a key player for our thinking, ⑤",
+              "ul": false
+            },
+            {
+              "t": "playing a crucial role in shaping our ideas",
+              "ul": true
+            },
+            {
+              "t": ".",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "B: I never looked at it that way. I'll pay more attention to my own gestures from now on.",
+          "runs": [
+            {
+              "t": "B: I never looked at it that way. I'll pay more attention to my own gestures from now on.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "다음 글 속의 표현에 대한 설명으로 적절하지 않은 것은?",
+          "runs": [
+            {
+              "t": "다음 글 속의 표현에 대한 설명으로 적절하지 ",
+              "ul": false
+            },
+            {
+              "t": "않은",
+              "ul": true
+            },
+            {
+              "t": " 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "Rooms have their own “sound” because they impose their own characteristics on audio signals contained within them. It is actually kind of remarkable. Sound such as music coming from headphones will sound the same everywhere. No matter what acoustical environment we are in, the headphones sound the same. That is because the room is not part of that playback signal path. But sound such as music from a loudspeaker will sound different in every acoustical environment. Every room where you set up the loudspeaker will cause the sound you hear to be different—sometimes dramatically different; that is because the room is now part of the signal path. Also, in the same room, the loudspeaker will sound different when it is placed in different locations in the room and it will sound different as you move around the room. Similarly, when you are recording a musical instrument, the sound you receive at the microphone will be different in every room and the recorded sound will sound different as the instrument or the microphone is moved.",
+          "runs": [
+            {
+              "t": "Rooms have their own “sound” because they impose their own characteristics on audio signals contained within them. It is actually kind of remarkable. Sound such as music coming from headphones will sound the same everywhere. No matter what acoustical environment we are in, the headphones sound the same. That is because the room is not part of that playback signal path. But sound such as music from a loudspeaker will sound different in every acoustical environment. Every room where you set up the loudspeaker will cause the sound you hear to be different—sometimes dramatically different; that is because the room is now part of the signal path. Also, in the same room, the loudspeaker will sound different when it is placed in different locations in the room and it will sound different as you move around the room. Similarly, when you are recording a musical instrument, the sound you receive at the microphone will be different in every room and the recorded sound will sound different as the instrument or the microphone is moved.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① 'impose their own characteristics' indicates that the physical space modifies the audio signal by adding its unique acoustic traits.",
+          "runs": [
+            {
+              "t": "① 'impose their own characteristics' indicates that the physical space modifies the audio signal by adding its unique acoustic traits.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② 'not part of that playback signal path' means the environment does not interfere with or change the sound reaching the listener's ears.",
+          "runs": [
+            {
+              "t": "② 'not part of that playback signal path' means the environment does not interfere with or change the sound reaching the listener's ears.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ 'now part of the signal path' suggests the acoustic properties of the room are excluded from the sound heard through a loudspeaker.",
+          "runs": [
+            {
+              "t": "③ 'now part of the signal path' suggests the acoustic properties of the room are excluded from the sound heard through a loudspeaker.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ 'placed in different locations' shows that even within a single room, the physical position of the speaker affects the resulting sound quality.",
+          "runs": [
+            {
+              "t": "④ 'placed in different locations' shows that even within a single room, the physical position of the speaker affects the resulting sound quality.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ 'Similarly' implies that the interaction between sound and space applies to the recording process just as it does to sound playback.",
+          "runs": [
+            {
+              "t": "⑤ 'Similarly' implies that the interaction between sound and space applies to the recording process just as it does to sound playback.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글의 내용을 읽고 <보기>의 질문 중 답할 수 있는 질문만을 있는 대로 고른 것은? [24년 3월 36번]",
+          "runs": [
+            {
+              "t": "다음 글의 내용을 읽고 <보기>의 질문 중 답할 수 있는 질문만을 ",
+              "ul": false
+            },
+            {
+              "t": "있는 대로",
+              "ul": true
+            },
+            {
+              "t": " 고른 것은?",
+              "ul": false
+            },
+            {
+              "t": " [",
+              "ul": false
+            },
+            {
+              "t": "24년 3월 36번",
+              "ul": false
+            },
+            {
+              "t": "]",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": " Development of the human body from a single cell provides many examples of the structural richness that is possible when the repeated production of random variation is combined with nonrandom selection. All phases of body development from embryo to adult exhibit random activities at the cellular level, and body formation depends on the new possibilities generated by these activities coupled with selection of those outcomes that satisfy previously built-in criteria. Always new structure is based on old structure, and at every stage selection favors some cells and eliminates others. The survivors serve to produce new cells that undergo further rounds of selection. Except in the immune system, cells and extensions of cells are not genetically selected during development, but rather, are positionally selected. Those in the right place that make the right connections are stimulated, and those that don't are eliminated. This process is much like sculpting. A natural consequence of the strategy is great variability from individual to individual at the cell and molecular levels, even though large-scale structures are quite similar.",
+          "runs": [
+            {
+              "t": " Development of the human body from a single cell provides many examples of the structural richness that is possible when the repeated production of random variation is combined with nonrandom selection. All phases of body development from embryo to adult exhibit random activities at the cellular level, and body formation depends on the new possibilities generated by these activities coupled with selection of those outcomes that satisfy previously built-in criteria. Always new structure is based on old structure, and at every stage selection favors some cells and eliminates others. The survivors serve to produce new cells that undergo further rounds of selection. Except in the immune system, cells and extensions of cells are not genetically selected during development, but rather, are positionally selected. Those in the right place that make the right connections are stimulated, and those that don't are eliminated. This process is much like sculpting. A natural consequence of the strategy is great variability from individual to individual at the cell and molecular levels, even though large-scale structures are quite similar.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "<보기>",
+          "runs": [
+            {
+              "t": "<보기>",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "ⓐ How many different types of cells are in a human body to play their roles in selection?",
+          "runs": [
+            {
+              "t": "ⓐ How many different types of cells are in a human body to play their roles in selection?",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "ⓑ What is the role of the surviving cells?",
+          "runs": [
+            {
+              "t": "ⓑ What is the role of the surviving cells?",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "ⓒ What are some examples of \"previously built-in criteria\" that determine cell selection?",
+          "runs": [
+            {
+              "t": "ⓒ What are some examples of \"previously built-in criteria\" that determine cell selection?",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "ⓓ How are cells chosen during body development, according to the text?",
+          "runs": [
+            {
+              "t": "ⓓ How are cells chosen during body development, according to the text?",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "ⓔ How does positional selection differ among individuals?",
+          "runs": [
+            {
+              "t": "ⓔ How does positional selection differ among individuals?",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "ⓕ What happens to the cells that don't make the right connections?",
+          "runs": [
+            {
+              "t": "ⓕ What happens to the cells that don't make the right connections?",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① ⓐ, ⓑ\t\t② ⓐ, ⓒ, ⓔ",
+          "runs": [
+            {
+              "t": "① ⓐ, ⓑ\t\t② ⓐ, ⓒ, ⓔ",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ ⓑ, ⓓ, ⓕ\t\t④ ⓑ, ⓓ, ⓔ, ⓕ",
+          "runs": [
+            {
+              "t": "③ ⓑ, ⓓ, ⓕ\t\t④ ⓑ, ⓓ, ⓔ, ⓕ",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ ⓒ, ⓓ, ⓔ, ⓕ",
+          "runs": [
+            {
+              "t": "⑤ ⓒ, ⓓ, ⓔ, ⓕ",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글의 요약문을 완성하고자 할 때, <보기>의 표현만을 모두 사용하여 빈칸을 채우시오. [24년 3월 22번]",
+          "runs": [
+            {
+              "t": "다음 글의 요약문을 완성하고자 할 때, <보기>의 표현만을 모두 사용하여 빈칸을 채우시오.",
+              "ul": false
+            },
+            {
+              "t": " [24년 3월 22번]",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": " We tend to overrate the impact of new technologies in part because older technologies have become absorbed into the furniture of our lives, so as to be almost invisible. Take the baby bottle. Here is a simple implement that has transformed a fundamental human experience for vast numbers of infants and mothers, yet it finds no place in our histories of technology. This technology might be thought of as a classic time-shifting device, as it enables mothers to exercise more control over the timing of feeding. It can also function to save time, as bottle feeding allows for someone else to substitute for the mother’s time. Potentially, therefore, it has huge implications for the management of time in everyday life, yet it is entirely overlooked in discussions of high-speed society.",
+          "runs": [
+            {
+              "t": " We tend to overrate the impact of new technologies in part because older technologies have become absorbed into the furniture of our lives, so as to be almost invisible. Take the baby bottle. Here is a simple implement that has transformed a fundamental human experience for vast numbers of infants and mothers, yet it finds no place in our histories of technology. This technology might be thought of as a classic time-shifting device, as it enables mothers to exercise more control over the timing of feeding. It can also function to save time, as bottle feeding allows for someone else to substitute for the mother’s time. Potentially, therefore, it has huge implications for the management of time in everyday life, yet it is entirely overlooked in discussions of high-speed society.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "↓",
+          "runs": [
+            {
+              "t": "↓",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "We tend to overrate new technologies while (A) ____________________________________________________________ such as the baby bottle.",
+          "runs": [
+            {
+              "t": "We tend to overrate new technologies while (A) ____________________________________________________________ such as the baby bottle.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "<보기>",
+          "runs": [
+            {
+              "t": "<보기>",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "the contribution / of / to / overlook / everyday life / older ones / management / time",
+          "runs": [
+            {
+              "t": "the contribution / of / to / overlook / everyday life / older ones / management / time",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "[정답 작성 안내]",
+          "runs": [
+            {
+              "t": "[정답 작성 안내]",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(1) <보기>에 주어진 단어(표현)들을 한 번씩만 다 사용할 것",
+          "runs": [
+            {
+              "t": "(1) <보기>에 주어진 단어(표현)들을 한 번씩만 다 사용할 것",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "(2) 필요시 단어의 형태를 변형할 것",
+          "runs": [
+            {
+              "t": "(2) 필요시 단어의 형태를 변형할 것",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(A) ________________________",
+          "runs": [
+            {
+              "t": "(A) ________________________",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "다음 글의 내용상 가장 적절한 주제를 <보기>의 표현들만 한 번씩 모두 사용하여 쓰시오. [25년 3월 37번]",
+          "runs": [
+            {
+              "t": "다음 글의 내용상 가장 적절한 주제를 <보기>의 표현들만 한 번씩 모두 사용하여 쓰시오.",
+              "ul": false
+            },
+            {
+              "t": " [25년 3월 37번]",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": " Stress not only affects physical disease but also the very structure of our brains, making us even more likely to experience a drained brain. A number of studies have been done to reveal what happens in healthy people's brains when they go through something stressful. One study demonstrated a link between a smaller hippocampus and people who had experienced long-lasting stress. Why does this matter? This part of the brain helps you remain resilient in the face of stress and is involved in mood regulation. It also helps you to monitor the safety of your environment and store dangerous images in your long-term memory so you can avoid them in the future. It does all these things as part of its duties of regulating your sympathetic and parasympathetic nervous systems. But chronic stress can confuse the hippocampus and lead to turning signals for cortisol \"on\" instead of \"off,\" which can trap you in a constant state of fight, flight, or freeze.",
+          "runs": [
+            {
+              "t": " Stress not only affects physical disease but also the very structure of our brains, making us even more likely to experience a drained brain. A number of studies have been done to reveal what happens in healthy people's brains when they go through something stressful. One study demonstrated a link between a smaller hippocampus and people who had experienced long-lasting stress. Why does this matter? This part of the brain helps you remain resilient in the face of stress and is involved in mood regulation. It also helps you to monitor the safety of your environment and store dangerous images in your long-term memory so you can avoid them in the future. It does all these things as part of its duties of regulating your sympathetic and parasympathetic nervous systems. But chronic stress can confuse the hippocampus and lead to turning signals for cortisol \"on\" instead of \"off,\" which can trap you in a constant state of fight, flight, or freeze.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "<보기>",
+          "runs": [
+            {
+              "t": "<보기>",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "on / stress / negative / the hippocampus / of / effect",
+          "runs": [
+            {
+              "t": "on / stress / negative / the hippocampus / of / effect",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "[정답 작성 안내]",
+          "runs": [
+            {
+              "t": "[정답 작성 안내]",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(1) 단어의 형태를 변형하지 말 것",
+          "runs": [
+            {
+              "t": "(1) 단어의 형태를 변형하지 말 것",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(2) 명사구의 형태로 쓸 것",
+          "runs": [
+            {
+              "t": "(2) 명사구의 형태로 쓸 것",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "답: _____________________________________________________",
+          "runs": [
+            {
+              "t": "답: _____________________________________________________",
+              "ul": false
+            }
+          ],
+          "pstyle": "서술형답지"
+        },
+        {
+          "text": "다음 글의 밑줄 친 (a)~(c)에서 주어진 어휘를 어법에 맞도록 변형하여 각각 한 단어로 쓰시오.",
+          "runs": [
+            {
+              "t": "다음 글의 밑줄 친 (a)~(c)에서 주어진 어휘를 어법에 맞도록 변형하여 각각 한 단어로 쓰시오.",
+              "ul": false
+            }
+          ],
+          "pstyle": "서술형 번호"
+        },
+        {
+          "text": "We are the only species that seasons its food, deliberately (a)alter it with the highly flavored plant parts we call herbs and spices. It’s quite possible that our taste for spices has an evolutionary root. Many spices have antibacterial properties – in fact, common seasonings such as garlic, onion, and oregano inhibit the growth of almost every bacterium (b)test. And the cultures that make the heaviest use of spices – think of the garlic and black pepper of Thai food, the ginger and coriander of India, the chili peppers of Mexico – come from warmer climates, where bacterial spoilage is a bigger issue. Our uniquely human attention to flavor, in this case the flavor of spices, (c)turn out to have arisen as a matter of life and death.",
+          "runs": [
+            {
+              "t": "We are the only species that seasons its food, deliberately (a)",
+              "ul": false
+            },
+            {
+              "t": "alter",
+              "ul": true
+            },
+            {
+              "t": " it with the highly flavored plant parts we call herbs and spices. It’s quite possible that our taste for spices has an evolutionary root. Many spices have antibacterial properties – in fact, common seasonings such as garlic, onion, and oregano inhibit the growth of almost every bacterium (b)",
+              "ul": false
+            },
+            {
+              "t": "test",
+              "ul": true
+            },
+            {
+              "t": ". And the cultures that make the heaviest use of spices – think of the garlic and black pepper of Thai food, the ginger and coriander of India, the chili peppers of Mexico – come from warmer climates, where bacterial spoilage is a bigger issue. Our uniquely human attention to flavor, in this case the flavor of spices, (c)",
+              "ul": false
+            },
+            {
+              "t": "turn",
+              "ul": true
+            },
+            {
+              "t": " out to have arisen as a matter of life and death.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(a) ______________________",
+          "runs": [
+            {
+              "t": "(a) ______________________",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(b) ______________________",
+          "runs": [
+            {
+              "t": "(b) ______________________",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(c) ______________________",
+          "runs": [
+            {
+              "t": "(c) ______________________",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "다음 글의 요지가 되도록 밑줄 친 (A)를 10단어로 쓰시오.",
+          "runs": [
+            {
+              "t": "다음 글의 요지가 되도록 밑줄 친 (A)를 10단어로 쓰시오.",
+              "ul": false
+            }
+          ],
+          "pstyle": "서술형 번호"
+        },
+        {
+          "text": " We must explore the relationship between children's film production and consumption habits. The term \"children's film\" implies ownership by children - their cinema - but films supposedly made for children have always been consumed by audiences of all ages, particularly in commercial cinemas. The considerable crossover in audience composition for children's films can be shown by the fact that, in 2007, eleven Danish children's and youth films attracted 59 per cent of theatrical admissions, and in 2014, German children's films comprised seven out of the top twenty films at the national box office. This phenomenon corresponds with a broader, international embrace of what is seemingly children's culture among audiences of diverse ages. The old prejudice that children's film is some other realm, separate from (and forever subordinate to) a more legitimate cinema for adults is not supported by the realities of consumption: (A)__________________________________.",
+          "runs": [
+            {
+              "t": " We must explore the relationship between children's film production and consumption habits. The term \"children's film\" implies ownership by children - their cinema - but films supposedly made for children have always been consumed by audiences of all ages, particularly in commercial cinemas. The considerable crossover in audience composition for children's films can be shown by the fact that, in 2007, eleven Danish children's and youth films attracted 59 per cent of theatrical admissions, and in 2014, German children's films comprised seven out of the top twenty films at the national box office. This phenomenon corresponds with a broader, international embrace of what is seemingly children's culture among audiences of diverse ages. The old prejudice that children's film is some other realm, separate from (and forever subordinate to) a more legitimate cinema for adults is not supported by the realities of consumption: (A)__________________________________.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "<보기>",
+          "runs": [
+            {
+              "t": "<보기>",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "heart / children’s film / popular / contemporary / be / the / culture / on / at / of / for",
+          "runs": [
+            {
+              "t": "heart / children’s film / popular / contemporary / be / the / culture / on / at / of / for",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "[정답 작성 안내]",
+          "runs": [
+            {
+              "t": "[정답 작성 안내]",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "(1) <보기>의 단어 중 일부를 사용할 것",
+          "runs": [
+            {
+              "t": "(1) <보기>의 단어 중 일부를 사용할 것",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "(2) 필요한 경우 단어의 형태를 변형할 것",
+          "runs": [
+            {
+              "t": "(2) 필요한 경우 단어의 형태를 변형할 것",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "답: ________________________________________________________",
+          "runs": [
+            {
+              "t": "답: ________________________________________________________",
+              "ul": false
+            }
+          ],
+          "pstyle": "서술형답지"
+        }
+      ]
+    }
+  ]
+}

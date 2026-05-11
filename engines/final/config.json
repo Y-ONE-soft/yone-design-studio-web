@@ -5,9 +5,10 @@
   "template_vol1": "조판/인디자인 원본/[원본]파이널(Vol1)_내지.indd",
   "template_vol2": "조판/인디자인 원본/[원본]파이널(Vol2)_내지.indd",
   "log_filename": "typeset_log.txt",
-  "grades": ["고1", "고2"],
+  "grades": ["고1", "고2", "고3"],
   "extract_styles": [
     "문장 배열 그랩",
+    "C_문장배열",
     "C1_문장 배열",
     "하단 문제",
     "C1_문장 배열 하단",
@@ -20,6 +21,28 @@
     "C2_영작 배열 번호",
     "C2_영작 배열 보기"
   ],
+  "고3_extract_styles": [
+    "C1_문장 배열",
+    "C1_문장 배열 하단",
+    "문장 배열 그랩",
+    "C2_빈칸 어휘",
+    "C2_빈칸 어휘 한글",
+    "C_빈칸 어법 번호",
+    "A1_어법 선택",
+    "어휘 선택 그랩",
+    "C2_영작 배열 번호",
+    "C2_영작 배열 보기",
+    "C_영작 배열 번호",
+    "C_영작 배열 번호_",
+    "영작 배열 보기"
+  ],
+  "고3_workbook_base": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/인디자인 파일/워크북/고3 EBS 수능특강/2027",
+  "고3_pages_per_lecture": 28,
+  "고1_올포_공용_base": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/인디자인 파일/워크북/고1 EBS 독해기본1",
+  "mothertongue_map_paths": {
+    "고1": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/2026년/고1/한영고1/2026 마더텅 고1 영어 독해 지문 출처.xlsx"
+  },
+  "mockexam_insert_base": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/인디자인 파일/워크북/모의고사",
   "school_textbook_map": {
     "26-1-중간": {
       "강동1": {"subject": "공통영어1", "publisher": "미래엔(김)", "lessons": ["3과"]},
@@ -35,7 +58,11 @@
       "배재2": {"subject": "영어Ⅰ", "publisher": "YBM(박)", "lessons": ["1과", "2과", "3과"]},
       "상일2": {"subject": "영어Ⅰ", "publisher": "미래엔(김)", "lessons": ["2과", "3과"]},
       "성덕2": {"subject": "영어Ⅰ", "publisher": "YBM(박)", "lessons": ["1과", "2과"]},
-      "한영2": {"subject": "영어Ⅰ", "publisher": "YBM(박)", "lessons": ["1과"]}
+      "한영2": {"subject": "영어Ⅰ", "publisher": "YBM(박)", "lessons": ["1과"]},
+      "강동3": {"subject": "수능특강", "publisher": "EBS", "lessons": []},
+      "광문3": {"subject": "수능특강", "publisher": "EBS", "lessons": []},
+      "명일3": {"subject": "수능특강", "publisher": "EBS", "lessons": []},
+      "한영3": {"subject": "수능특강", "publisher": "EBS", "lessons": []}
     }
   },
   "scope_sheet_url": "https://docs.google.com/spreadsheets/d/1oyY9NH1T6pkeG_RRSzCW5gpod60oXuEz-2sM6NaDcQc/edit?gid=1967472064"

@@ -167,11 +167,23 @@ function main() {
         }
 
         // PDF 저장
+        // PDF/X-1a:2001 (Japan) \uC778\uC1C4\uC6A9 \u2014 CMYK + 3mm \uB3C4\uB828 + OutputIntent
+        if (doc.documentColorSpace !== DocumentColorSpace.CMYK) {
+            try { doc.documentColorSpace = DocumentColorSpace.CMYK; } catch (e) {}
+        }
         var pdfOpts = new PDFSaveOptions();
-        pdfOpts.compatibility = PDFCompatibility.ACROBAT5;
+        try {
+            pdfOpts.pDFPreset = "[PDF/X-1a:2001 (Japan)]";
+        } catch (e1) {
+            try { pdfOpts.pDFPreset = "[PDF/X-1a:2001]"; } catch (e2) {
+                pdfOpts.compatibility = PDFCompatibility.ACROBAT5;
+            }
+        }
         pdfOpts.preserveEditability = false;
         pdfOpts.generateThumbnails = true;
         pdfOpts.optimization = true;
+        // PDF/X-1a 프리셋이 bleedOffsetRect를 정수 pt로 반올림하므로 9pt(3.18mm)로 약간 초과 설정
+        pdfOpts.bleedOffsetRect = [9, 9, 9, 9];
 
         var pdfPath = outputDir + "/" + schoolKey + "_\uD3EC\uCF13\uBD81_\uD45C\uC9C0.pdf";
         var pdfFile = new File(pdfPath);

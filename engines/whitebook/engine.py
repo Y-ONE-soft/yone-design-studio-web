@@ -108,6 +108,7 @@ class WhitebookEngine(BaseEngine):
             "json_path": json_path,
             "indd_path": indd_path,
             "output_dir": job_dir,
+            "issue_num": issue_num,
         }
         with open(settings_path, "w", encoding="utf-8") as f:
             json.dump(settings, f, ensure_ascii=False)

@@ -1,0 +1,2660 @@
+{
+  "school": "한영고",
+  "grade": "고3",
+  "exam_period": "26-1-중간",
+  "exam_date": "",
+  "exam_type": "",
+  "round": 1,
+  "meta": {
+    "objective": 27
+  },
+  "questions": [
+    {
+      "source": "",
+      "paragraphs": [
+        {
+          "text": "밑줄 친 부분이 다음 글에서 의미하는 바로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "밑줄 친 부분이 다음 글에서 의미하는 바로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "... Entering the room, the drunkard started hollering very loudly before even putting the seollontang down in a corner. \"Stupid woman, lying there day and night! Why can't you get up and greet your husband?\" He kicked her legs. However, what he hit had not the feeling of human flesh but of a tree stump. At that moment, the sucking sounds turned into a baby's crying. Gaeddong let go of the breast and cried loudly.",
+          "runs": [
+            {
+              "t": "... Entering the room, the drunkard started hollering very loudly before even putting the seollontang down in a corner. \"",
+              "ul": false
+            },
+            {
+              "t": "Stupid woman, lying there day and night! Why can't you get up and greet your husband?",
+              "ul": true
+            },
+            {
+              "t": "\" He kicked her legs. However, what he hit had not the feeling of human flesh but of a tree stump. At that moment, the sucking sounds turned into a baby's crying. Gaeddong let go of the breast and cried loudly.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "When he realized kicking wasn't working, he rushed to her bedside and shook her head, which resembled a magpie's nest.",
+          "runs": [
+            {
+              "t": "When he realized kicking wasn't working, he rushed to her bedside and shook her head, which resembled a magpie's nest.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "\"Hey, talk to me! Talk! Is your mouth stuck, you moron!\" ... \"Are you dead? Why won't you speak?\" \"...\" \"No answer again. You must really be dead.\"",
+          "runs": [
+            {
+              "t": "\"Hey, talk to me! Talk! Is your mouth stuck, you moron!\" ... \"Are you dead? Why won't you speak?\" \"...\" \"No answer again. You must really be dead.\"",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "When he noticed her lifted eyes, the whites of her eyes covered, he choked, \"Your eyes! Your eyes! Why can't you see me and see only the ceiling, why?\"",
+          "runs": [
+            {
+              "t": "When he noticed her lifted eyes, the whites of her eyes covered, he choked, \"Your eyes! Your eyes! Why can't you see me and see only the ceiling, why?\"",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "Then, the tears of the living spotted and wet the stiff face of the dead. Unexpectedly, he started to madly rub her face with his, murmuring, \"Why can't you eat seollontang I brought you, why... Today was a strangely lucky day, such a lucky day....“",
+          "runs": [
+            {
+              "t": "Then, the tears of the living spotted and wet the stiff face of the dead. Unexpectedly, he started to madly rub her face with his, murmuring, \"Why can't you eat seollontang I brought you, why... Today was a strangely lucky day, such a lucky day....“",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① He is the kind of man who is always mean and heartless. ",
+          "runs": [
+            {
+              "t": "① He is the kind of man who is always mean and heartless. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② He firmly believed that his wife had already passed away. ",
+          "runs": [
+            {
+              "t": "② He firmly believed that his wife had already passed away. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ He felt annoyed to know that his wife didn't feed their baby at all. ",
+          "runs": [
+            {
+              "t": "③ He felt annoyed to know that his wife didn't feed their baby at all. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ This is from a drunkard who was enraged at his deceivingly bed-ridden wife. ",
+          "runs": [
+            {
+              "t": "④ This is from a drunkard who was enraged at his deceivingly bed-ridden wife. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ This yell is only false bravado to drive away the abrupt fear that enveloped his body.",
+          "runs": [
+            {
+              "t": "⑤ This yell is only false bravado to drive away the abrupt fear that enveloped his body.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 밑줄 친 부분 중, 어법상 ",
+              "ul": false
+            },
+            {
+              "t": "틀린",
+              "ul": true
+            },
+            {
+              "t": " 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "Bir Tawil is a strange place. In January 1899, administrators of the British Empire decided to finalize a border between the countries of Egypt and Sudan. In colonial fashion, they decided to use the conveniently straight line of the twenty- second parallel of latitude. Unsurprisingly, this new international border arbitrarily tore through local tribes and communities, and in 1902, the British drew a new line ① reflected tribal territories. The combination of these two intersecting lines brought about the creation of two new areas: the large, inhabitable coastal area called the Hala’ib Triangle and an empty, landlocked patch of desert, which is Bir Tawil. ② To keep the desirable Hala’ib, Egypt understandably claimed the original, straight border of 1899, ③ whereas Sudan — with the same goal in mind — claimed the new 1902 line. The strange result of this long-standing conflict is that, to this day, both countries refuse to claim Bir Tawil, an area of land roughly the size of London, as it would mean ④ giving up a greater prize. This makes Bir Tawil the largest — perhaps the only — piece of land ⑤ that no country wants. ",
+          "runs": [
+            {
+              "t": "Bir Tawil is a strange place. In January 1899, administrators of the British Empire decided to finalize a border between the countries of Egypt and Sudan. In colonial fashion, they decided to use the conveniently straight line of the twenty- second parallel of latitude. Unsurprisingly, this new international border arbitrarily tore through local tribes and communities, and in 1902, the British drew a new line ",
+              "ul": false
+            },
+            {
+              "t": "①",
+              "ul": false
+            },
+            {
+              "t": " ",
+              "ul": false
+            },
+            {
+              "t": "reflected",
+              "ul": true
+            },
+            {
+              "t": " tribal territories. The combination of these two intersecting lines brought about the creation of two new areas: the large, inhabitable coastal area called the Hala’ib Triangle and an empty, landlocked patch of desert, which is Bir Tawil. ",
+              "ul": false
+            },
+            {
+              "t": "② ",
+              "ul": false
+            },
+            {
+              "t": "T",
+              "ul": true
+            },
+            {
+              "t": "o keep",
+              "ul": true
+            },
+            {
+              "t": " the desirable Hala’ib, Egypt understandably claimed the original, straight border of 1899, ",
+              "ul": false
+            },
+            {
+              "t": "③ ",
+              "ul": false
+            },
+            {
+              "t": "w",
+              "ul": true
+            },
+            {
+              "t": "hereas",
+              "ul": true
+            },
+            {
+              "t": " Sudan — with the same goal in mind — claimed the new 1902 line. The strange result of this long-standing conflict is that, to this day, both countries refuse to claim Bir Tawil, an area of land roughly the size of London, as it would mean ",
+              "ul": false
+            },
+            {
+              "t": "④ ",
+              "ul": false
+            },
+            {
+              "t": "g",
+              "ul": true
+            },
+            {
+              "t": "iving",
+              "ul": true
+            },
+            {
+              "t": " up a greater prize. This makes Bir Tawil the largest — perhaps the only — piece of land ",
+              "ul": false
+            },
+            {
+              "t": "⑤ ",
+              "ul": false
+            },
+            {
+              "t": "t",
+              "ul": true
+            },
+            {
+              "t": "hat",
+              "ul": true
+            },
+            {
+              "t": " no country wants. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 밑줄 친 부분 중, 어법상 ",
+              "ul": false
+            },
+            {
+              "t": "틀린",
+              "ul": true
+            },
+            {
+              "t": " 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "Dietary supplements are not drugs. A drug is intended to diagnose, cure, mitigate, treat, or prevent disease. Before marketing, drugs must undergo extensive studies of effectiveness, safety, interactions with other substances, and dosing. The FDA gives formal premarket approval to a drug and monitors its safety after the drug is on the market. If a drug is subsequently ① showing to be dangerous, the FDA can act quickly to have it removed from the market. None of this is true for dietary supplements. The current law gives the FDA only ② limited authority over supplements. This makes it difficult for the government ③ to remove unsafe supplements from the marketplace. The FDA does not evaluate the safety and effectiveness of supplements before they hit the marketplace. There are some legislators in Congress who want to improve the law by requiring supplement makers ④ to put safer products on the shelves and label products more clearly. The objective is to ensure that consumers can tell the difference between dietary supplements that are safe and those ⑤ that have potentially serious side effects or drug interactions. ",
+          "runs": [
+            {
+              "t": "Dietary supplements are not drugs. A drug is intended to diagnose, cure, mitigate, treat, or prevent disease. Before marketing, drugs must undergo extensive studies of effectiveness, safety, interactions with other substances, and dosing. The FDA gives formal premarket approval to a drug and monitors its safety after the drug is on the market. If a drug is subsequently ",
+              "ul": false
+            },
+            {
+              "t": "①",
+              "ul": false
+            },
+            {
+              "t": " ",
+              "ul": false
+            },
+            {
+              "t": "showing",
+              "ul": true
+            },
+            {
+              "t": " to be dangerous, the FDA can act quickly to have it removed from the market. None of this is true for dietary supplements. The current law gives the FDA only ",
+              "ul": false
+            },
+            {
+              "t": "② ",
+              "ul": false
+            },
+            {
+              "t": "l",
+              "ul": true
+            },
+            {
+              "t": "imited",
+              "ul": true
+            },
+            {
+              "t": " authority over supplements. This makes it difficult for the government ",
+              "ul": false
+            },
+            {
+              "t": "③ ",
+              "ul": false
+            },
+            {
+              "t": "t",
+              "ul": true
+            },
+            {
+              "t": "o remove",
+              "ul": true
+            },
+            {
+              "t": " unsafe supplements from the marketplace. The FDA does not evaluate the safety and effectiveness of supplements before they hit the marketplace. There are some legislators in Congress who want to improve the law by requiring supplement makers ",
+              "ul": false
+            },
+            {
+              "t": "④ ",
+              "ul": false
+            },
+            {
+              "t": "t",
+              "ul": true
+            },
+            {
+              "t": "o put",
+              "ul": true
+            },
+            {
+              "t": " safer products on the shelves and label products more clearly. The objective is to ensure that consumers can tell the difference between dietary supplements that are safe and those ",
+              "ul": false
+            },
+            {
+              "t": "⑤ ",
+              "ul": false
+            },
+            {
+              "t": "t",
+              "ul": true
+            },
+            {
+              "t": "hat",
+              "ul": true
+            },
+            {
+              "t": " have potentially serious side effects or drug interactions. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 밑줄 친 부분 중, 어법상 ",
+              "ul": false
+            },
+            {
+              "t": "틀린",
+              "ul": true
+            },
+            {
+              "t": " 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "A detailed anthropological study of daily scientific practice in the Salk Institute laboratory in La Jolla, California shows ① how difficult it is to assign credit and dates. Bruno Latour describes how scientists arrived at the elucidation of TRF (thyrotropin- releasing factor), a hormone ② that is secreted by the brain. He says that his observations led him to “the conviction ③ that a body of practices widely regarded by outsiders as well organized, logical, and coherent, in fact consists of a disordered array of observations with which scientists struggle to produce order.” The final consensus formulation of TRF (i.e., when it became a scientific “fact”) ④ emerging some time between January 1968 and January 1970. Half of the Nobel Prize in Medicine for 1977 for this discovery was shared between the Salk group and another competing group in New Orleans (the other half went to Rosalind Yalow for the techniques she developed that were used in these studies), but each of these two competing groups strongly felt that they deserved sole credit and ⑤ that the other did not deserve even a share of the award. ",
+          "runs": [
+            {
+              "t": "A detailed anthropological study of daily scientific practice in the Salk Institute laboratory in La Jolla, California shows ",
+              "ul": false
+            },
+            {
+              "t": "①",
+              "ul": false
+            },
+            {
+              "t": " ",
+              "ul": false
+            },
+            {
+              "t": "how",
+              "ul": true
+            },
+            {
+              "t": " difficult it is to assign credit and dates. Bruno Latour describes how scientists arrived at the elucidation of TRF (thyrotropin- releasing factor), a hormone ",
+              "ul": false
+            },
+            {
+              "t": "② ",
+              "ul": false
+            },
+            {
+              "t": "t",
+              "ul": true
+            },
+            {
+              "t": "hat",
+              "ul": true
+            },
+            {
+              "t": " is secreted by the brain. He says that his observations led him to “the conviction ",
+              "ul": false
+            },
+            {
+              "t": "③ ",
+              "ul": false
+            },
+            {
+              "t": "t",
+              "ul": true
+            },
+            {
+              "t": "hat",
+              "ul": true
+            },
+            {
+              "t": " a body of practices widely regarded by outsiders as well organized, logical, and coherent, in fact consists of a disordered array of observations with which scientists struggle to produce order.” The final consensus formulation of TRF (i.e., when it became a scientific “fact”) ",
+              "ul": false
+            },
+            {
+              "t": "④ ",
+              "ul": false
+            },
+            {
+              "t": "e",
+              "ul": true
+            },
+            {
+              "t": "merging",
+              "ul": true
+            },
+            {
+              "t": " some time between January 1968 and January 1970. Half of the Nobel Prize in Medicine for 1977 for this discovery was shared between the Salk group and another competing group in New Orleans (the other half went to Rosalind Yalow for the techniques she developed that were used in these studies), but each of these two competing groups strongly felt that they deserved sole credit and ",
+              "ul": false
+            },
+            {
+              "t": "⑤ ",
+              "ul": false
+            },
+            {
+              "t": "t",
+              "ul": true
+            },
+            {
+              "t": "hat",
+              "ul": true
+            },
+            {
+              "t": " the other did not deserve even a share of the award. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "다음 빈칸에 들어갈 말로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "다음 빈칸에 들어갈 말로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "Even outdoors, although climate (including temperature) is usually regarded as beyond the control of man, ____________________ is sometimes effective on a micro-climate scale. Vancouver, Canada, is a few miles north of the 49th parallel, about 60 miles farther north than Minot, North Dakota, with its legendary harsh winter temperatures. But constant foehn winds off the Pacific Ocean make Vancouver winters mild and wet, although sunshine is scant. When I had a garden there in the late 1940s, a neighbor used to say that I “cheated God” to bring in my lettuce and tomatoes earlier than anyone else. The bed in which the vegetables grew was banked toward the south at approximately 50 degrees, and the area between the plants was covered with flat stones, gathered from the nearby beach, to maximize soil heating from the weak late winter-early spring sun.",
+          "runs": [
+            {
+              "t": "Even outdoors, although climate (including temperature) is usually regarded as beyond the control of man, ",
+              "ul": false
+            },
+            {
+              "t": "____________________",
+              "ul": false
+            },
+            {
+              "t": " is sometimes effective on a micro-climate scale. Vancouver, Canada, is a few miles north of the 49th parallel, about 60 miles farther north than Minot, North Dakota, with its legendary harsh winter temperatures. But constant foehn winds off the Pacific Ocean make Vancouver winters mild and wet, although sunshine is scant. When I had a garden there in the late 1940s, a neighbor used to say that I “cheated God” to bring in my lettuce and tomatoes earlier than anyone else. The bed in which the vegetables grew was banked toward the south at approximately 50 degrees, and the area between the plants was covered with flat stones, gathered from the nearby beach, to maximize soil heating from the weak late winter-early spring sun.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① predicting weather patterns accurately",
+          "runs": [
+            {
+              "t": "① predicting weather patterns accurately",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② preventing all climate variations",
+          "runs": [
+            {
+              "t": "② preventing all climate variations",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ avoiding natural wind patterns",
+          "runs": [
+            {
+              "t": "③ avoiding natural wind patterns",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ localized temperature control",
+          "runs": [
+            {
+              "t": "④ localized temperature control",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ eliminating seasonal changes",
+          "runs": [
+            {
+              "t": "⑤ eliminating seasonal changes",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 빈칸에 들어갈 말로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "다음 빈칸에 들어갈 말로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "Energy can always be injected into an organization to motivate people to do things. Bonuses, promotions, other carrots, and even a few sticks can get people to work harder, for sure, but the gains are, like all manipulations, short-term. Over time, such tactics cost more money and increase stress for employee and employer alike, and eventually will become the main reason people show up for work every day. That’s not loyalty. That’s the employee version of repeat business. Loyalty among employees is when they turn down more money or benefits to continue working at the same company. Loyalty to a company trumps pay and benefits. And unless you’re an astronaut, it’s not the work we do that inspires us either. It’s ________________. We don’t want to come to work to build a wall; we want to come to work to build a cathedral.",
+          "runs": [
+            {
+              "t": "Energy can always be injected into an organization to motivate people to do things. Bonuses, promotions, other carrots, and even a few sticks can get people to work harder, for sure, but the gains are, like all manipulations, short-term. Over time, such tactics cost more money and increase stress for employee and employer alike, and eventually will become the main reason people show up for work every day. That’s not loyalty. That’s the employee version of repeat business. Loyalty among employees is when they turn down more money or benefits to continue working at the same company. Loyalty to a company trumps pay and benefits. And unless you’re an astronaut, it’s not the work we do that inspires us either. It’s ",
+              "ul": false
+            },
+            {
+              "t": "________________",
+              "ul": false
+            },
+            {
+              "t": ". We don’t want to come to work to build a wall; we want to come to work to build a cathedral.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① the salary that we receive",
+          "runs": [
+            {
+              "t": "① the salary that we receive",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② the reputation of the company",
+          "runs": [
+            {
+              "t": "② the reputation of the company",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ the relationships with colleagues",
+          "runs": [
+            {
+              "t": "③ the relationships with colleagues",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ the cause that we come to work for",
+          "runs": [
+            {
+              "t": "④ the cause that we come to work for",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ the comfortable working environment",
+          "runs": [
+            {
+              "t": "⑤ the comfortable working environment",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 빈칸에 들어갈 말로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "다음 빈칸에 들어갈 말로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "In academia, you are taught to write up your results thus: “I came up with a hypothesis, then I did this experiment, and then I did another experiment, then I tested my ideas some more, and so on until [dramatic fanfare] ta-da! I proved this.” If you wrote this way online, very few of your readers would make it to your dramatic conclusion, no matter how exciting or groundbreaking it was. Online, we don’t have the patience to wait for your big reveal at the end. Instead, you need to tell us up front: “I proved this! And here’s how I know it...” Your readership may still dwindle and trail off over the course of your writing, but at least the vast majority know what it is you’ve achieved from the very beginning. A few more of them may stay along for the ride if the opening line — the “hook,” in journalistic terms — is particularly interesting. If ________________, you can more likely convince more readers to stay for the whole story.",
+          "runs": [
+            {
+              "t": "In academia, you are taught to write up your results thus: “I came up with a hypothesis, then I did this experiment, and then I did another experiment, then I tested my ideas some more, and so on until [dramatic fanfare] ta-da! I proved this.” If you wrote this way online, very few of your readers would make it to your dramatic conclusion, no matter how exciting or groundbreaking it was. Online, we don’t have the patience to wait for your big reveal at the end. Instead, you need to tell us up front: “I proved this! And here’s how I know it...” Your readership may still dwindle and trail off over the course of your writing, but at least the vast majority know what it is you’ve achieved from the very beginning. A few more of them may stay along for the ride if the opening line — the “hook,” in journalistic terms — is particularly interesting. If ",
+              "ul": false
+            },
+            {
+              "t": "________________",
+              "ul": false
+            },
+            {
+              "t": ", you can more likely convince more readers to stay for the whole story.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① you save all conclusions for the dramatic end",
+          "runs": [
+            {
+              "t": "① you save all conclusions for the dramatic end",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② readers prefer complex academic terminology",
+          "runs": [
+            {
+              "t": "② readers prefer complex academic terminology",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ the methodology section comes first",
+          "runs": [
+            {
+              "t": "③ the methodology section comes first",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ you maintain suspense throughout",
+          "runs": [
+            {
+              "t": "④ you maintain suspense throughout",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ you grab their attention early",
+          "runs": [
+            {
+              "t": "⑤ you grab their attention early",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 빈칸에 들어갈 말로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "다음 빈칸에 들어갈 말로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "Becoming aware of our internal sensations can help us handle our own emotions. Perhaps more surprisingly, the body’s interoceptive faculty can also bring us into closer contact with other people’s emotions. That’s because the brain, on its own, has no direct access to the contents of other people’s minds, no way to feel what others are feeling. Interpreting others’ spoken words and facial expressions may yield only a coolly abstract sense of the emotions that stir within. ______________, supplying the brain with the visceral information it lacks. It does so in this way: When interacting with other people, we subtly and unconsciously mimic their facial expressions, gestures, posture, and vocal pitch. Then, via the interoception of our own bodies’ signals, we perceive what the other person is feeling because we feel it in ourselves. We bring other people’s feelings onboard, and the body is the bridge. In an act similar to taking a bite off our partner’s plate, or borrowing an earbud to hear the song our friend is listening to, we are sampling their emotions.",
+          "runs": [
+            {
+              "t": "Becoming aware of our internal sensations can help us handle our own emotions. Perhaps more surprisingly, the body’s interoceptive faculty can also bring us into closer contact with other people’s emotions. That’s because the brain, on its own, has no direct access to the contents of other people’s minds, no way to feel what others are feeling. Interpreting others’ spoken words and facial expressions may yield only a coolly abstract sense of the emotions that stir within. ",
+              "ul": false
+            },
+            {
+              "t": "______________",
+              "ul": false
+            },
+            {
+              "t": ", supplying the brain with the visceral information it lacks. It does so in this way: When interacting with other people, we subtly and unconsciously mimic their facial expressions, gestures, posture, and vocal pitch. Then, via the interoception of our own bodies’ signals, we perceive what the other person is feeling because we feel it in ourselves. We bring other people’s feelings onboard, and the body is the bridge. In an act similar to taking a bite off our partner’s plate, or borrowing an earbud to hear the song our friend is listening to, we are sampling their emotions.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① The body acts as a critical conduit",
+          "runs": [
+            {
+              "t": "① The body acts as a critical conduit",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② Language serves as the only bridge",
+          "runs": [
+            {
+              "t": "② Language serves as the only bridge",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ Vision offers direct emotional access",
+          "runs": [
+            {
+              "t": "③ Vision offers direct emotional access",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ The mind acts as the sole interpreter",
+          "runs": [
+            {
+              "t": "④ The mind acts as the sole interpreter",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ Reason provides complete understandingegularity / purposefulness",
+          "runs": [
+            {
+              "t": "⑤ Reason provides complete understandingegularity / purposefulness",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글을 읽고 물음에 답하시오 ",
+          "runs": [
+            {
+              "t": "다음 글을 읽고 물음에 답하시오 ",
+              "ul": false
+            }
+          ],
+          "pstyle": "다음 글을 읽고"
+        },
+        {
+          "text": "The reliance on the computer as a model for the operations of the human mind may well prove to be as ① limited as an earlier fascination with behaviorism. Psychologists have already begun to recognize the flaws of the mind-as-computer metaphor. Some have turned to cultural anthropology as a way of understanding the factors outside any particular individual’s brain that help the individual ② making sense out of the world. Others, such as Jerome Bruner, one of the founders of cognitive psychology, ③ find that the computer analogy carries with ④ them an unfortunate shift “from the construction of meaning to the processing of information.” Bruner’s reflections on the limits of the machine model lead him back ⑤ to a humanistic emphasis on narrative and story-telling as essential ingredients in understanding human cognition, a fascinating intellectual journey that reveals both the power and the limits of computers as guides to the way we think. ",
+          "runs": [
+            {
+              "t": "The reliance on the computer as a model for the operations of the human mind may well prove to be as ① ",
+              "ul": false
+            },
+            {
+              "t": "limited",
+              "ul": true
+            },
+            {
+              "t": " as an earlier fascination with behaviorism. Psychologists have already begun to recognize the flaws of the mind-as-computer metaphor. Some have turned to cultural anthropology as a way of understanding the factors outside any particular individual’s brain that help the individual ② ",
+              "ul": false
+            },
+            {
+              "t": "making",
+              "ul": true
+            },
+            {
+              "t": " sense out of the world. Others, such as Jerome Bruner, one of the founders of cognitive psychology, ③ ",
+              "ul": false
+            },
+            {
+              "t": "find",
+              "ul": true
+            },
+            {
+              "t": " that the computer analogy carries with ④ ",
+              "ul": false
+            },
+            {
+              "t": "them",
+              "ul": true
+            },
+            {
+              "t": " an unfortunate shift “from the construction of meaning to the processing of information.” Bruner’s reflections on the limits of the machine model lead him back ⑤ ",
+              "ul": false
+            },
+            {
+              "t": "to",
+              "ul": true
+            },
+            {
+              "t": " a humanistic emphasis on narrative and story-telling as essential ingredients in understanding human cognition, a fascinating intellectual journey that reveals ",
+              "ul": false
+            },
+            {
+              "t": "both",
+              "ul": false
+            },
+            {
+              "t": " the power and the limits of computers as guides to the way we think. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": " 윗글의 ①~⑤ 중에서 어법상 쓰임이 적절하지 않은 것을 2개 고르시오. ",
+          "runs": [
+            {
+              "t": " ",
+              "ul": false
+            },
+            {
+              "t": "윗글의 ①~⑤ 중에서 어법상 쓰임이 적절하지 ",
+              "ul": false
+            },
+            {
+              "t": "않은",
+              "ul": true
+            },
+            {
+              "t": " 것을 ",
+              "ul": false
+            },
+            {
+              "t": "2개",
+              "ul": true
+            },
+            {
+              "t": " 고르시오. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " 윗글의 제목으로 가장 알맞은 것을 고르시오. ",
+          "runs": [
+            {
+              "t": " 윗글의 제목으로 가장 알맞은 것을 고르시오. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "① The Rise of Behaviorism in Modern Psychology",
+          "runs": [
+            {
+              "t": "① The Rise of Behaviorism in Modern Psychology",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② How Computers Fully Explain Human Cognition",
+          "runs": [
+            {
+              "t": "② How Computers Fully Explain Human Cognition",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ The Superiority of Information Processing Models",
+          "runs": [
+            {
+              "t": "③ The Superiority of Information Processing Models",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ Cultural Anthropology and Brain Function",
+          "runs": [
+            {
+              "t": "④ Cultural Anthropology and Brain Function",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ Beyond the Computer Model: Toward Meaning and Narrative",
+          "runs": [
+            {
+              "t": "⑤ Beyond the Computer Model: Toward Meaning and Narrative",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "In 2012, the Yale School of Architecture held a symposium called “Is Drawing Dead?” The bold title reflects a growing sense that the architect’s freehand sketch is being displaced by the computer. ",
+          "runs": [
+            {
+              "t": "In 2012, the Yale School of Architecture held a symposium called “Is Drawing Dead?” The bold title reflects a growing sense that the architect’s freehand sketch is being displaced by the computer. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(A) He bypasses much of the reflective and exploratory playfulness that springs from the uncertainty and ambiguity of sketching. Researchers term this phenomenon “premature fixation” and trace its cause to “the disincentive for design changes once a large amount of detail and interconnectedness is built too quickly into a CAD (Computer-Aided Design) model.” The designer at the computer also tends to emphasize formal experimentation at the expense of expressiveness. ",
+          "runs": [
+            {
+              "t": "(A)",
+              "ul": false
+            },
+            {
+              "t": " He bypasses much of the reflective and exploratory playfulness that springs from the uncertainty and ambiguity of sketching. Researchers term this phenomenon “premature fixation” and trace its cause to “the disincentive for design changes once a large amount of detail and interconnectedness is built too quickly into a CAD (Computer-Aided Design) model.” The designer at the computer also tends to emphasize formal experimentation at the expense of expressiveness. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "(B) The transition from sketchpad to screen entails, many architects believe, a loss of creativity, of adventurousness. Thanks to the precision and apparent completeness of screen renderings, a designer working at a computer has a tendency to lock in, visually and cognitively, on a design at an early stage. ",
+          "runs": [
+            {
+              "t": "(B)",
+              "ul": false
+            },
+            {
+              "t": " The transition from sketchpad to screen entails, many architects believe, a loss of creativity, of adventurousness. Thanks to the precision and apparent completeness of screen renderings, a designer working at a computer has a tendency to lock in, visually and cognitively, on a design at an early stage. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "(C) By weakening an architect’s “personal, emotional connection with the work,” a renowned American architect and designer Michael Graves argues, CAD software produces designs that, “while complex and interesting in their own way,” often “lack the emotional content of a design derived from hand.”",
+          "runs": [
+            {
+              "t": "(C)",
+              "ul": false
+            },
+            {
+              "t": " By weakening an architect’s “personal, emotional connection with the work,” a renowned American architect and designer Michael Graves argues, CAD software produces designs that, “while complex and interesting in their own way,” often “lack the emotional content of a design derived from hand.”",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "① (A)-(C)-(B) \t② (B)-(A)-(C) \t③ (B)-(C)-(A) ",
+          "runs": [
+            {
+              "t": "① (A)-(C)-(B) \t② (B)-(A)-(C) \t③ (B)-(C)-(A) ",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ (C)-(A)-(B) \t⑤ (C)-(B)-(A)  ",
+          "runs": [
+            {
+              "t": "④ (C)-(A)-(B) \t⑤ (C)-(B)-(A)  ",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "Moral outrage is the psychological tool that motivates people to punish wrongdoers, even at cost or risk to themselves. It is a “commitment device,” something that commits people to punishment, even though trying to punish someone can be dangerous. ",
+          "runs": [
+            {
+              "t": "Moral outrage is the psychological tool that motivates people to punish wrongdoers, even at cost or risk to themselves. It is a “commitment device,” something that commits people to punishment, even though trying to punish someone can be dangerous. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(A) Outrage leads us to ignore the irrationality of risking our own safety to punish someone. In any single situation, there is rarely an immediate personal benefit for meting out punishment, and often there is real risk, because the person you are serving justice against could lash out at you or get revenge in the future. ",
+          "runs": [
+            {
+              "t": "(A)",
+              "ul": false
+            },
+            {
+              "t": " Outrage leads us to ignore the irrationality of risking our own safety to punish someone. In any single situation, there is rarely an immediate personal benefit for meting out punishment, and often there is real risk, because the person you are serving justice against could lash out at you or get revenge in the future. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "(B) When we witness unjust harm, whether someone committing interpersonal violence or obvious cheating, we have an embodied physical reaction. We get angry, our blood pressure spikes, our heart beats faster; we thirst for retribution. ",
+          "runs": [
+            {
+              "t": "(B)",
+              "ul": false
+            },
+            {
+              "t": " When we witness unjust harm, whether someone committing interpersonal violence or obvious cheating, we have an embodied physical reaction. We get angry, our blood pressure spikes, our heart beats faster; we thirst for retribution. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "(C) But the powerful feeling of outrage leads us to momentarily forget this unfavorable evaluation and get involved in a situation we would be better off avoiding, and science reveals how this feeling and forgetting is essential for maintaining a cooperative society. ",
+          "runs": [
+            {
+              "t": "(C)",
+              "ul": false
+            },
+            {
+              "t": " But the powerful feeling of outrage leads us to momentarily forget this unfavorable evaluation and get involved in a situation we would be better off avoiding, and science reveals how this feeling and forgetting is essential for maintaining a cooperative society. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "① (A)-(C)-(B) \t② (B)-(A)-(C) \t③ (B)-(C)-(A) ",
+          "runs": [
+            {
+              "t": "① (A)-(C)-(B) \t② (B)-(A)-(C) \t③ (B)-(C)-(A) ",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ (C)-(A)-(B) \t⑤ (C)-(B)-(A)  ",
+          "runs": [
+            {
+              "t": "④ (C)-(A)-(B) \t⑤ (C)-(B)-(A)  ",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글을 읽고 물음에 답하시오 ",
+          "runs": [
+            {
+              "t": "다음 글을 읽고 물음에 답하시오 ",
+              "ul": false
+            }
+          ],
+          "pstyle": "다음 글을 읽고"
+        },
+        {
+          "text": "Sharing meanings and experiences is not a simple, automatic process: whenever two or more people observe or participate in the same ongoing event they experience it from different perspectives, with different histories, with different background knowledge. These differences are most ① glaring when the individuals involved include an infant or very young child and an adult, although an adult arranging an event for an infant may find it difficult to keep these differences in mind. When giving a bath, for example, a parent ② whose experience with water play has been fun, ③ which knowledge about the source of the water and its disposition provides confidence, and ④ whose body control ensures that the baby is safely held and not in danger, expects the infant to enjoy ⑤ to splash water. Yet the baby may make it clear (perhaps by terrified crying) that her perspective is quite different from that of the adult. The two share an experience, but not a meaning.",
+          "runs": [
+            {
+              "t": "Sharing meanings and experiences is not a simple, automatic process: whenever two or more people observe or participate in the same ongoing event they experience it from different perspectives, with different histories, with different background knowledge. These differences are most ① ",
+              "ul": false
+            },
+            {
+              "t": "glaring",
+              "ul": true
+            },
+            {
+              "t": " when the individuals involved include an infant or very young child and an adult, although an adult ",
+              "ul": false
+            },
+            {
+              "t": "arranging",
+              "ul": false
+            },
+            {
+              "t": " an event for an infant may find it difficult to keep these differences in mind. When giving a bath, for example, a parent ② ",
+              "ul": false
+            },
+            {
+              "t": "whose",
+              "ul": true
+            },
+            {
+              "t": " experience with water play has been fun, ③ ",
+              "ul": false
+            },
+            {
+              "t": "which",
+              "ul": true
+            },
+            {
+              "t": " knowledge about the source of the water and its disposition provides confidence, and ④ ",
+              "ul": false
+            },
+            {
+              "t": "whose",
+              "ul": true
+            },
+            {
+              "t": " body control ensures that the baby is safely held and not in danger, expects the infant to enjoy ⑤ ",
+              "ul": false
+            },
+            {
+              "t": "to splash",
+              "ul": true
+            },
+            {
+              "t": " water. Yet the baby may make it clear (perhaps by terrified crying) that her perspective is quite different from that of the adult. The two share an experience, but not a meaning.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": " 윗글의 ①~⑤ 중에서 어법상 쓰임이 적절하지 않은 것을 2개 고르시오. ",
+          "runs": [
+            {
+              "t": " ",
+              "ul": false
+            },
+            {
+              "t": "윗글의 ①~⑤ 중에서 어법상 쓰임이 적절하지 ",
+              "ul": false
+            },
+            {
+              "t": "않은",
+              "ul": true
+            },
+            {
+              "t": " 것을 ",
+              "ul": false
+            },
+            {
+              "t": "2개",
+              "ul": true
+            },
+            {
+              "t": " 고르시오. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " 윗글의 제목으로 가장 알맞은 것을 고르시오 ",
+          "runs": [
+            {
+              "t": " 윗글의 제목으로 가장 알맞은 것을 고르시오 ",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " ① Why Shared Experiences Always Lead to Shared Understanding",
+          "runs": [
+            {
+              "t": " ① Why Shared Experiences Always Lead to Shared Understanding",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② The Gap Between Shared Experiences and Shared Meanings",
+          "runs": [
+            {
+              "t": "② The Gap Between Shared Experiences and Shared Meanings",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ The Importance of Early Childhood Development",
+          "runs": [
+            {
+              "t": "③ The Importance of Early Childhood Development",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ How Adults Accurately Predict Infants’ Reactions",
+          "runs": [
+            {
+              "t": "④ How Adults Accurately Predict Infants’ Reactions",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ The Role of Knowledge in Building Confidence",
+          "runs": [
+            {
+              "t": "⑤ The Role of Knowledge in Building Confidence",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은?",
+          "runs": [
+            {
+              "t": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "Historical evidence that race has always been an issue is hard to find. ",
+          "runs": [
+            {
+              "t": "Historical evidence that race has always been an issue is hard to find. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "There is no scientific basis for the term “race”. Most humans are genetically very similar and there is so little variation amongst us that it is not possible to draw neat boundaries around people and label them as a distinct racial group. ( ① ) Race is an example of social construction, in which social processes create something that essentially does not exist but takes on real force in people’s lives. ( ② ) Sociologists prefer to call these processes “racialization”. ( ③ ) For example, in ancient Rome there were various leading figures, such as Emperor Septimius Severus (ruled C.E. 193–211), who were black. ( ④ ) Little is said of their skin colour in accounts written at the time, because the ancient Romans did not think it made any difference. ( ⑤ ) They thought more in terms of judging people as being civilized or a barbarian.",
+          "runs": [
+            {
+              "t": "There is no scientific basis for the term “race”. Most humans are genetically very similar and there is so little variation amongst us that it is not possible to draw neat boundaries around people and label them as a distinct racial group. ",
+              "ul": false
+            },
+            {
+              "t": "( ① ) ",
+              "ul": false
+            },
+            {
+              "t": "Race is an example of social construction, in which social processes create something that essentially does not exist but takes on real force in people’s lives. ",
+              "ul": false
+            },
+            {
+              "t": "( ② ) ",
+              "ul": false
+            },
+            {
+              "t": "Sociologists prefer to call these processes “racialization”. ",
+              "ul": false
+            },
+            {
+              "t": "( ③ ) ",
+              "ul": false
+            },
+            {
+              "t": "For example, in ancient Rome there were various leading figures, such as Emperor Septimius Severus (ruled C.E. 193–211), who were black. ",
+              "ul": false
+            },
+            {
+              "t": "( ④ ) ",
+              "ul": false
+            },
+            {
+              "t": "Little is said of their skin colour in accounts written at the time, because the ancient Romans did not think it made any difference. ",
+              "ul": false
+            },
+            {
+              "t": "( ⑤ ) ",
+              "ul": false
+            },
+            {
+              "t": "They thought more in terms of judging people as being civilized or a barbarian.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은?",
+          "runs": [
+            {
+              "t": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "This is not to say that when an orchestra plays alone the audience members’ eyes are not fixed on the conductor for the majority of the time; they probably are. ",
+          "runs": [
+            {
+              "t": "This is not to say that when an orchestra plays alone the audience members’ eyes are not fixed on the conductor for the majority of the time; they probably are. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "The idea of music direction, in the sense of someone shaping and leading a musical performance, goes back to the beginnings of music. ( ① ) Even the gamelans of ancient Indonesia had leaders who would signal to the group changes of meter and tempo, beginnings and endings, and transitions from piece to piece. ( ② ) Yet listening audiences are rarely aware of any musical leadership, and for good aesthetic reason. ( ③ ) They need not be aware to fulfill their experience; indeed, the unnecessarily conspicuous presence of a musical leader will detract from it. ( ④ ) An audience is better off, for the most part, taking in the whole of a stage work rather than being party to the techniques that go into realizing it. ( ⑤ ) When music is accompanying something happening on stage, however, all eyes turn to the stage, and so do everyone’s ears, too (including the music director’s).",
+          "runs": [
+            {
+              "t": "The idea of music direction, in the sense of someone shaping and leading a musical performance, goes back to the beginnings of music. ",
+              "ul": false
+            },
+            {
+              "t": "( ① ) ",
+              "ul": false
+            },
+            {
+              "t": "Even the gamelans of ancient Indonesia had leaders who would signal to the group changes of meter and tempo, beginnings and endings, and transitions from piece to piece. ",
+              "ul": false
+            },
+            {
+              "t": "( ② ) ",
+              "ul": false
+            },
+            {
+              "t": "Yet listening audiences are rarely aware of any musical leadership, and for good aesthetic reason. ",
+              "ul": false
+            },
+            {
+              "t": "( ③ ) ",
+              "ul": false
+            },
+            {
+              "t": "They need not be aware to fulfill their experience; indeed, the unnecessarily conspicuous presence of a musical leader will detract from it. ",
+              "ul": false
+            },
+            {
+              "t": "( ④ ) ",
+              "ul": false
+            },
+            {
+              "t": "An audience is better off, for the most part, taking in the whole of a stage work rather than being party to the techniques that go into realizing it. ",
+              "ul": false
+            },
+            {
+              "t": "( ⑤ ) ",
+              "ul": false
+            },
+            {
+              "t": "When music is accompanying something happening on stage, however, all eyes turn to the stage, and so do everyone’s ears, too (including the music director’s).",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은?",
+          "runs": [
+            {
+              "t": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "Similarly, in some of Bach’s famous solo music for violin, the violinist essentially creates two streams of music by simultaneously playing both high and lower notes. ",
+          "runs": [
+            {
+              "t": "Similarly, in some of Bach’s famous solo music for violin, the violinist essentially creates two streams of music by simultaneously playing both high and lower notes. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "In music, proximity may refer to elements’ being close together in pitch, time, or space. For example, notes that are similar in pitch may be grouped together. Notes are also grouped together if they are played together in time or if they come from the same instrument or section of a larger musical group. ( ① ) To get a sense of the idea of proximity, imagine a person playing a piano. ( ② ) Typically, the right hand plays notes that are higher in pitch than the left hand. ( ③ ) Also, most often, it is the right hand that plays the melody, whereas the left hand plays the bass line or accompaniment. ( ④ ) Even though all of the notes are played in close spatial proximity and at approximately the same time, we hear the notes from the right hand emerging as melody because they are grouped together with respect to pitch. ( ⑤ ) Perceptually, we group the high notes together and group the low notes together, so we hear it as polyphonic or as two lines of music.",
+          "runs": [
+            {
+              "t": "In music, proximity may refer to elements’ being close together in pitch, time, or space. For example, notes that are similar in pitch may be grouped together. Notes are also grouped together if they are played together in time or if they come from the same instrument or section of a larger musical group. ",
+              "ul": false
+            },
+            {
+              "t": "( ① ) ",
+              "ul": false
+            },
+            {
+              "t": "To get a sense of the idea of proximity, imagine a person playing a piano. ",
+              "ul": false
+            },
+            {
+              "t": "( ② ) ",
+              "ul": false
+            },
+            {
+              "t": "Typically, the right hand plays notes that are higher in pitch than the left hand. ",
+              "ul": false
+            },
+            {
+              "t": "( ③ ) ",
+              "ul": false
+            },
+            {
+              "t": "Also, most often, it is the right hand that plays the melody, whereas the left hand plays the bass line or accompaniment. ",
+              "ul": false
+            },
+            {
+              "t": "( ④ ) ",
+              "ul": false
+            },
+            {
+              "t": "Even though all of the notes are played in close spatial proximity and at approximately the same time, we hear the notes from the right hand emerging as melody because they are grouped together with respect to pitch. ",
+              "ul": false
+            },
+            {
+              "t": "( ⑤ ) ",
+              "ul": false
+            },
+            {
+              "t": "Perceptually, we group the high notes together and group the low notes together, so we hear it as polyphonic or as two lines of music.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 ",
+              "ul": false
+            },
+            {
+              "t": "않은",
+              "ul": true
+            },
+            {
+              "t": " 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "Depression is terrible, and it is common. Roughly one in seven people will experience at least one full-blown ① depressive episode in their lifetime. It is a tragedy on an individual and a societal level, yet we — and by we, I mean all of us, including doctors — struggle to grasp it. This is because depression is not one disease; it is a ② collection of symptoms that appears similar across sufferers, despite resulting from a melting pot of diverse causes and mechanisms. There is no single reason for depression: one person’s depressive episode seems to clearly stem from recent life events, another from historic trauma and loss, yet another out of the blue, with no clear psychological or social cause whatsoever. There is also no one ③ presentation of depression: in fact, there are 227 possible symptom combinations that meet the diagnostic criteria for major depressive ④ disorder. Perhaps understandably, there is no one treatment for this condition, either. Antidepressants lead to improvement in roughly a third of patients, offer some kind of ⑤ regression in another third, while a final third remain completely unaffected.",
+          "runs": [
+            {
+              "t": "Depression is terrible, and it is common. Roughly one in seven people will experience at least one full-blown ",
+              "ul": false
+            },
+            {
+              "t": "①",
+              "ul": false
+            },
+            {
+              "t": " ",
+              "ul": false
+            },
+            {
+              "t": "depressive",
+              "ul": true
+            },
+            {
+              "t": " episode in their lifetime. It is a tragedy on an individual and a societal level, yet we — and by we, I mean all of us, including doctors — struggle to grasp it. This is because depression is not one disease; it is a ",
+              "ul": false
+            },
+            {
+              "t": "② ",
+              "ul": false
+            },
+            {
+              "t": "c",
+              "ul": true
+            },
+            {
+              "t": "ollection",
+              "ul": true
+            },
+            {
+              "t": " of symptoms that appears similar across sufferers, despite resulting from a melting pot of diverse causes and mechanisms. There is no single reason for depression: one person’s depressive episode seems to clearly stem from recent life events, another from historic trauma and loss, yet another out of the blue, with no clear psychological or social cause whatsoever. There is also no one ",
+              "ul": false
+            },
+            {
+              "t": "③ ",
+              "ul": false
+            },
+            {
+              "t": "p",
+              "ul": true
+            },
+            {
+              "t": "resentation",
+              "ul": true
+            },
+            {
+              "t": " of depression: in fact, there are 227 possible symptom combinations that meet the diagnostic criteria for major depressive ",
+              "ul": false
+            },
+            {
+              "t": "④ ",
+              "ul": false
+            },
+            {
+              "t": "d",
+              "ul": true
+            },
+            {
+              "t": "isorder",
+              "ul": true
+            },
+            {
+              "t": ". Perhaps understandably, there is no one treatment for this condition, either. Antidepressants lead to improvement in roughly a third of patients, offer some kind of ",
+              "ul": false
+            },
+            {
+              "t": "⑤ ",
+              "ul": false
+            },
+            {
+              "t": "r",
+              "ul": true
+            },
+            {
+              "t": "egression",
+              "ul": true
+            },
+            {
+              "t": " in another third, while a final third remain completely unaffected.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 ",
+              "ul": false
+            },
+            {
+              "t": "않은",
+              "ul": true
+            },
+            {
+              "t": " 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "AI is a prolific idea generator. Human brainstorming groups tend to focus on the quality of ① creative ideas and almost immediately lean into variations of first suggestions, but good ideas are more likely when groups focus first on quantity. As Linus Pauling put it, “The best way to have a good idea is to have lots of ideas.” Psychologist Dean Keith Simonton called this the “equal odds rule” arguing that creative success is ② correlated to the total number of works created. Many studies have confirmed that creative quality comes from ③ quantity of ideas (what Bob Sutton at a design and innovation consulting company called “idea ratio”), and one Stanford study pegged the number of ideas that distinguish a ④ successive product from a failure at more than two thousand. This is why design thinking and innovation are so focused on the processes (what Utley and Klebahn call “idea flow”) of creating ⑤ possibilities without judgment.",
+          "runs": [
+            {
+              "t": "AI is a prolific idea generator. Human brainstorming groups tend to focus on the quality of ",
+              "ul": false
+            },
+            {
+              "t": "①",
+              "ul": false
+            },
+            {
+              "t": " ",
+              "ul": false
+            },
+            {
+              "t": "creative",
+              "ul": true
+            },
+            {
+              "t": " ideas and almost immediately lean into variations of first suggestions, but good ideas are more likely when groups focus first on quantity. As Linus Pauling put it, “The best way to have a good idea is to have lots of ideas.” Psychologist Dean Keith Simonton called this the “equal odds rule” arguing that creative success is ",
+              "ul": false
+            },
+            {
+              "t": "② ",
+              "ul": false
+            },
+            {
+              "t": "c",
+              "ul": true
+            },
+            {
+              "t": "orrelated",
+              "ul": true
+            },
+            {
+              "t": " to the total number of works created. Many studies have confirmed that creative quality comes from ",
+              "ul": false
+            },
+            {
+              "t": "③ ",
+              "ul": false
+            },
+            {
+              "t": "q",
+              "ul": true
+            },
+            {
+              "t": "uantity",
+              "ul": true
+            },
+            {
+              "t": " of ideas (what Bob Sutton at a design and innovation consulting company called “idea ratio”), and one Stanford study pegged the number of ideas that distinguish a ",
+              "ul": false
+            },
+            {
+              "t": "④ ",
+              "ul": false
+            },
+            {
+              "t": "s",
+              "ul": true
+            },
+            {
+              "t": "uccessive",
+              "ul": true
+            },
+            {
+              "t": " product from a failure at more than two thousand. This is why design thinking and innovation are so focused on the processes (what Utley and Klebahn call “idea flow”) of creating ",
+              "ul": false
+            },
+            {
+              "t": "⑤ ",
+              "ul": false
+            },
+            {
+              "t": "p",
+              "ul": true
+            },
+            {
+              "t": "ossibilities",
+              "ul": true
+            },
+            {
+              "t": " without judgment.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 ",
+              "ul": false
+            },
+            {
+              "t": "않은",
+              "ul": true
+            },
+            {
+              "t": " 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "In the United States, the practice of ① permitting aliens to vote could be seen as compatible with the idea of an exclusionary citizenship, but that is a hard balance to maintain. If the vote, of all rights, is in the hands of noncitizens, why should they not count as citizens, and the entire ② distinction between resident alien and citizen be abandoned? Indeed, something like this thought probably lay behind the ③ appearance of alien voting: with universal adult citizen suffrage after 1920, the only way to maintain an exclusionary kind of citizenship was to restrict the vote to citizens and not residents. But no theory of “active” democracy can ④ countenance this distinction: the laws concerning our common life must be made by all those who are taking part in it, and residence is the only convincing test of whether someone is taking part — as is understood almost ⑤ universally when it comes to questions of which citizens should have a voice in local government.",
+          "runs": [
+            {
+              "t": "In the United States, the practice of ",
+              "ul": false
+            },
+            {
+              "t": "①",
+              "ul": false
+            },
+            {
+              "t": " ",
+              "ul": false
+            },
+            {
+              "t": "permitting",
+              "ul": true
+            },
+            {
+              "t": " aliens to vote could be seen as compatible with the idea of an exclusionary citizenship, but that is a hard balance to maintain. If the vote, of all rights, is in the hands of noncitizens, why should they not count as citizens, and the entire ",
+              "ul": false
+            },
+            {
+              "t": "② ",
+              "ul": false
+            },
+            {
+              "t": "d",
+              "ul": true
+            },
+            {
+              "t": "istinction",
+              "ul": true
+            },
+            {
+              "t": " between resident alien and citizen be abandoned? Indeed, something like this thought probably lay behind the ",
+              "ul": false
+            },
+            {
+              "t": "③ ",
+              "ul": false
+            },
+            {
+              "t": "a",
+              "ul": true
+            },
+            {
+              "t": "ppearance",
+              "ul": true
+            },
+            {
+              "t": " of alien voting: with universal adult citizen suffrage after 1920, the only way to maintain an exclusionary kind of citizenship was to restrict the vote to citizens and not residents. But no theory of “active” democracy can ",
+              "ul": false
+            },
+            {
+              "t": "④ ",
+              "ul": false
+            },
+            {
+              "t": "c",
+              "ul": true
+            },
+            {
+              "t": "ountenance",
+              "ul": true
+            },
+            {
+              "t": " this distinction: the laws concerning our common life must be made by all those who are taking part in it, and residence is the only convincing test of whether someone is taking part — as is understood almost ",
+              "ul": false
+            },
+            {
+              "t": "⑤ ",
+              "ul": false
+            },
+            {
+              "t": "u",
+              "ul": true
+            },
+            {
+              "t": "niversally",
+              "ul": true
+            },
+            {
+              "t": " when it comes to questions of which citizens should have a voice in local government.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "다음 글을 읽고 물음에 답하시오 ",
+          "runs": [
+            {
+              "t": "다음 글을 읽고 물음에 답하시오 ",
+              "ul": false
+            }
+          ],
+          "pstyle": "다음 글을 읽고"
+        },
+        {
+          "text": "Focal points are the little things that make a big difference — the difference between reaching one equilibrium and reaching another. If a local soccer team comes to practice near the playground of the park every Saturday morning or a group of stayat-home parents ①arranges a regular trip at 3 P.M. on a Wednesday afternoon, ②which can create a focal point around which others coordinate. With the team at practice, the park will feel ③safe from muggers and there will be something to look at, so families will come along to use the park. Other families will come because the first families will be there; after the soccer season is over and the team no longer comes to practice, Saturday mornings can still be ④lively at the playground simply because everybody expects that they will be. A lively park playground can be created by a soccer practice that doesn’t even take place any longer: That is an indication of how ⑤whimsical unpredictable these multiple equilibria can be. Yet while the outcome is whimsical, the causes are rational.",
+          "runs": [
+            {
+              "t": "Focal points are the little things that make a big difference — the difference between reaching one equilibrium and reaching another. If a local soccer team comes to practice near the playground of the park every Saturday morning or a group of stayat-home parents ①",
+              "ul": false
+            },
+            {
+              "t": "arranges",
+              "ul": true
+            },
+            {
+              "t": " a regular trip at 3 P.M. on a Wednesday afternoon, ②",
+              "ul": false
+            },
+            {
+              "t": "which",
+              "ul": true
+            },
+            {
+              "t": " can create a focal point around which others coordinate. With the team at practice, the park will feel ③",
+              "ul": false
+            },
+            {
+              "t": "safe",
+              "ul": true
+            },
+            {
+              "t": " from muggers and there will be something to look at, so families will come along to use the park. Other families will come because the first families will be there; after the soccer season is over and the team no longer comes to practice, Saturday mornings can still be ④",
+              "ul": false
+            },
+            {
+              "t": "lively",
+              "ul": true
+            },
+            {
+              "t": " at the playground simply because everybody expects that they will be. A lively park playground can be created by a soccer practice ",
+              "ul": false
+            },
+            {
+              "t": "that",
+              "ul": false
+            },
+            {
+              "t": " doesn’t even take place any longer: That is an indication of how ⑤",
+              "ul": false
+            },
+            {
+              "t": "whimsical",
+              "ul": true
+            },
+            {
+              "t": " unpredictable these multiple equilibria can be. Yet while the outcome is whimsical, the causes are rational.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": " 윗글의 ①~⑤ 중에서 어법상 쓰임이 적절하지 않은 것을 2개 고르시오. ",
+          "runs": [
+            {
+              "t": " ",
+              "ul": false
+            },
+            {
+              "t": "윗글의 ①~⑤ 중에서 어법상 쓰임이 적절하지 ",
+              "ul": false
+            },
+            {
+              "t": "않은",
+              "ul": true
+            },
+            {
+              "t": " 것을 ",
+              "ul": false
+            },
+            {
+              "t": "2개",
+              "ul": true
+            },
+            {
+              "t": " 고르시오. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " 윗글의 제목으로 가장 알맞은 것을 고르시오 ",
+          "runs": [
+            {
+              "t": " 윗글의 제목으로 가장 알맞은 것을 고르시오 ",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "① The Decline of Community Activities in Public Spaces",
+          "runs": [
+            {
+              "t": "① The Decline of Community Activities in Public Spaces",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② How Expectations Shape Social Behavior",
+          "runs": [
+            {
+              "t": "② How Expectations Shape Social Behavior",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ The Role of Small Triggers in Coordinating Collective Outcomes",
+          "runs": [
+            {
+              "t": "③ The Role of Small Triggers in Coordinating Collective Outcomes",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ Why Public Parks Become Unsafe Over Time",
+          "runs": [
+            {
+              "t": "④ Why Public Parks Become Unsafe Over Time",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ The Importance of Regular Schedules in Daily Life",
+          "runs": [
+            {
+              "t": "⑤ The Importance of Regular Schedules in Daily Life",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "There are estimated to be more than 160,000 farms spread across Northern Ireland and the Republic of Ireland combined. On all of those farms, you will find barns, and in some of those barns, you might be fortunate enough to stumble across a classic tractor like the Massey Ferguson 35. Production of the Massey Ferguson 35 in the UK and the USA stopped in 1964. If you were to strike up a conversation with a farmer who still owns one, she might well give the chassis of her Massey Ferguson 35 an affectionate tap and nostalgically remark, ‘They don’t make ’em like that anymore.’ The fact that the tractor has survived at least fifty-eight years seems to provide evidence of its superior build quality. But wait — how long did the other 388,381 Massey Ferguson 35 tractors produced between 1956 and 1964 last before they went for scrap? Rather than build quality, it might well be the fondness that people in Ireland have for the little red tractor (Harry Ferguson, who developed it, was born in Ireland) that has led farmers there to hold on to their Massey Fergusons and take care of them as well as they have. ",
+          "runs": [
+            {
+              "t": "There are estimated to be more than 160,000 farms spread across Northern Ireland and the Republic of Ireland combined. On all of those farms, you will find barns, and in some of those barns, you might be fortunate enough to stumble across a classic tractor like the Massey Ferguson 35. Production of the Massey Ferguson 35 in the UK and the USA stopped in 1964. If you were to strike up a conversation with a farmer who still owns one, she might well give the chassis of her Massey Ferguson 35 an affectionate tap and nostalgically remark, ‘They don’t make ’em like that anymore.’ The fact that the tractor has survived at least fifty-eight years seems to provide evidence of its superior build quality. But wait — how long did the other 388,381 Massey Ferguson 35 tractors produced between 1956 and 1964 last before they went for scrap? Rather than build quality, it might well be the fondness that people in Ireland have for the little red tractor (Harry Ferguson, who developed it, was born in Ireland) that has led farmers there to hold on to their Massey Fergusons and take care of them as well as they have. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "󰀻",
+          "runs": [
+            {
+              "t": "󰀻",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "The tractors' longevity may indicate ____(A)____ attachment rather than objective ____(B)____ superiority.",
+          "runs": [
+            {
+              "t": "The tractors' longevity may indicate ",
+              "ul": false
+            },
+            {
+              "t": "____(A)____",
+              "ul": false
+            },
+            {
+              "t": " attachment rather than objective ",
+              "ul": false
+            },
+            {
+              "t": "____(B)____ ",
+              "ul": false
+            },
+            {
+              "t": "superiority.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "        (A) \t  (B) ",
+          "runs": [
+            {
+              "t": "        (A) \t  (B) ",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "① emotional \tquality",
+          "runs": [
+            {
+              "t": "① emotional \tquality",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② rational \tperformance",
+          "runs": [
+            {
+              "t": "② rational \tperformance",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ temporary \tdurability",
+          "runs": [
+            {
+              "t": "③ temporary \tdurability",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ logical \tengineering",
+          "runs": [
+            {
+              "t": "④ logical \tengineering",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ casual \tconstruction",
+          "runs": [
+            {
+              "t": "⑤ casual \tconstruction",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글의 제목으로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 제목으로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "Limited animation is a process of making animated cartoons that does not follow a “realistic” approach. The short cartoons and feature films of Walt Disney from the 1930s and 1940s are widely acclaimed for depicting animated simulations of reality, with exquisite detail in every frame. However, this style of animation is very time-consuming and expensive. “Limited” animation creates an image that uses abstract art, symbolism, and limited movement to create the same effect, but at a much lower production cost. This style of animation depends more upon suspension of disbelief to tell a story; the story exists more in the viewer’s imagination. It also encourages the animators to indulge in artistic styles that are not necessarily bound to the limits of the real world. The result is a new artistic style that could not have developed if animation was solely devoted to producing simulations of reality. Without limited animation, such ground-breaking films as Yellow Submarine, Chuck Jones’ The Dot and the Line, and many others could never have been produced.",
+          "runs": [
+            {
+              "t": "Limited animation is a process of making animated cartoons that does not follow a “realistic” approach. The short cartoons and feature films of Walt Disney from the 1930s and 1940s are widely acclaimed for depicting animated simulations of reality, with exquisite detail in every frame. However, this style of animation is very time-consuming and expensive. “Limited” animation creates an image that uses abstract art, symbolism, and limited movement to create the same effect, but at a much lower production cost. This style of animation depends more upon suspension of disbelief to tell a story; the story exists more in the viewer’s imagination. It also encourages the animators to indulge in artistic styles that are not necessarily bound to the limits of the real world. The result is a new artistic style that could not have developed if animation was solely devoted to producing simulations of reality. Without limited animation, such ground-breaking films as Yellow Submarine, Chuck Jones’ The Dot and the Line, and many others could never have been produced.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① Disney's Monopoly on Quality Animation",
+          "runs": [
+            {
+              "t": "① Disney's Monopoly on Quality Animation",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② Why Realistic Animation Is Always Better",
+          "runs": [
+            {
+              "t": "② Why Realistic Animation Is Always Better",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ How Cost-Cutting Damages Artistic Integrity",
+          "runs": [
+            {
+              "t": "③ How Cost-Cutting Damages Artistic Integrity",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ The Failure of Abstract Animation Techniques",
+          "runs": [
+            {
+              "t": "④ The Failure of Abstract Animation Techniques",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ Limited Animation: Freedom from Reality's Constraints",
+          "runs": [
+            {
+              "t": "⑤ Limited Animation: Freedom from Reality's Constraints",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글의 주제로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 주제로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "Recovery can be considered a process as well as an outcome. Recovery as an outcome refers to one’s physiological and psychological state after a certain recovery period, which can be, for instance, at the end of the day, after engaging in a certain activity, or after waking up. Physiological recovery outcomes involve the restoration of physiological resources such as muscle strength, heart rate, and the absence of physical fatigue (e.g., muscle soreness, heavy arms and legs). Psychological recovery outcomes relate to the restoration of mental resources such as attention, motivation, mental energy, and mood. As such, one’s physiological and psychological states act as a resource that functions as a stress-buffer for upcoming activities as well. Recovery as a process refers to those activities and experiences that result in a change in one’s physiological and psychological state. Accordingly, recovery processes precede recovery outcomes and, consequently, determine whether adequate recovery is obtained. Regarding recovery processes, physical inactivity is generally considered the most effective way to restore physiological resources. ",
+          "runs": [
+            {
+              "t": "Recovery can be considered a process as well as an outcome. Recovery as an outcome refers to one’s physiological and psychological state after a certain recovery period, which can be, for instance, at the end of the day, after engaging in a certain activity, or after waking up. Physiological recovery outcomes involve the restoration of physiological resources such as muscle strength, heart rate, and the absence of physical fatigue (e.g., muscle soreness, heavy arms and legs). Psychological recovery outcomes relate to the restoration of mental resources such as attention, motivation, mental energy, and mood. As such, one’s physiological and psychological states act as a resource that functions as a stress-buffer for upcoming activities as well. Recovery as a process refers to those activities and experiences that result in a change in one’s physiological and psychological state. Accordingly, recovery processes precede recovery outcomes and, consequently, determine whether adequate recovery is obtained. Regarding recovery processes, physical inactivity is generally considered the most effective way to restore physiological resources. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① why physiological recovery always precedes psychological recovery",
+          "runs": [
+            {
+              "t": "① why physiological recovery always precedes psychological recovery",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② the identical nature of processes and outcomes in recovery",
+          "runs": [
+            {
+              "t": "② the identical nature of processes and outcomes in recovery",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ the distinction between recovery as process and outcome",
+          "runs": [
+            {
+              "t": "③ the distinction between recovery as process and outcome",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ the lack of importance of mental resource restoration",
+          "runs": [
+            {
+              "t": "④ the lack of importance of mental resource restoration",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ activity as more effective than rest for restoration",
+          "runs": [
+            {
+              "t": "⑤ activity as more effective than rest for restoration",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글의 주제로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 주제로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "Reformist approaches assume that markets could operate in more equitable and environmentally reasonable ways, and that a market is the most efficient option available. Yet the logic of market efficiencies generally rotates on purely monetary calculations, effectively reasoning in a hall of mirrors and marginalising real social and environmental values. Familiar examples are conventional food retailers, such as supermarkets, which purchase fruit and vegetables as cheaply as possible. Inexpensive produce might be grown using soil- and water-damaging fertilisers, by poorly paid illegal migrant workers, and transported long distances using more cheap labour and environmentally damaging practices. However, organic farmers can only follow ecologically sound practices and make sure they pay their workers fair wages if the food costs more, meaning supply for an elite demand. By its very nature, one never manages to escape the conundrums that production for trade entails. Real social and environmental values involved in caring for people and Earth highlight the inequities and damage of market-oriented activities.",
+          "runs": [
+            {
+              "t": "Reformist approaches assume that markets could operate in more equitable and environmentally reasonable ways, and that a market is the most efficient option available. Yet the logic of market efficiencies generally rotates on purely monetary calculations, effectively reasoning in a hall of mirrors and marginalising real social and environmental values. Familiar examples are conventional food retailers, such as supermarkets, which purchase fruit and vegetables as cheaply as possible. Inexpensive produce might be grown using soil- and water-damaging fertilisers, by poorly paid illegal migrant workers, and transported long distances using more cheap labour and environmentally damaging practices. However, organic farmers can only follow ecologically sound practices and make sure they pay their workers fair wages if the food costs more, meaning supply for an elite demand. By its very nature, one never manages to escape the conundrums that production for trade entails. Real social and environmental values involved in caring for people and Earth highlight the inequities and damage of market-oriented activities.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① the economic challenges facing small-scale organic farmers",
+          "runs": [
+            {
+              "t": "① the economic challenges facing small-scale organic farmers",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② why supermarkets fail to provide affordable healthy food options",
+          "runs": [
+            {
+              "t": "② why supermarkets fail to provide affordable healthy food options",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ how monetary efficiency marginalizes environmental sustainability",
+          "runs": [
+            {
+              "t": "③ how monetary efficiency marginalizes environmental sustainability",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ the inherent contradictions in market-based environmental reform",
+          "runs": [
+            {
+              "t": "④ the inherent contradictions in market-based environmental reform",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ the conflict between organic farming and conventional agriculture",
+          "runs": [
+            {
+              "t": "⑤ the conflict between organic farming and conventional agriculture",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "An in-group can become a reference group, a group that is used as the frame of reference for evaluating one’s own behavior. Members of a volunteer organization, for example, may evaluate themselves by the standards of the group and feel proud about their contribution to a community service project. This positive self-evaluation reflects the normative effect of a reference group whose members share the same view of themselves. If other members of your reference group (say, your parents) have high self-esteem, you, too, are likely to share that norm and have high self-esteem. The normative effect basically involves imitating the reference group. However, reference groups can also have comparison effects and associative effects on self- appraisals. If most of your classmates shine in academic achievement, you are likely to compare yourself with them. As a result, you may have a negative self-evaluation, feeling that your academic performance is not up to par. Being associated with the brilliant group, though, makes you feel proud of yourself, “basking in reflected glory.” ",
+          "runs": [
+            {
+              "t": "An in-group can become a reference group, a group that is used as the frame of reference for evaluating one’s own behavior. Members of a volunteer organization, for example, may evaluate themselves by the standards of the group and feel proud about their contribution to a community service project. This positive self-evaluation reflects the normative effect of a reference group whose members share the same view of themselves. If other members of your reference group (say, your parents) have high self-esteem, you, too, are likely to share that norm and have high self-esteem. The normative effect basically involves imitating the reference group. However, reference groups can also have comparison effects and associative effects on self- appraisals. If most of your classmates shine in academic achievement, you are likely to compare yourself with them. As a result, you may have a negative self-evaluation, feeling that your academic performance is not up to par. Being associated with the brilliant group, though, makes you feel proud of yourself, “basking in reflected glory.” ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "󰀻",
+          "runs": [
+            {
+              "t": "󰀻",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "Reference groups influence self-appraisal through  ____(A)____ imitation, personal ____(B)____, and group association.",
+          "runs": [
+            {
+              "t": "Reference groups influence self-appraisal through  ",
+              "ul": false
+            },
+            {
+              "t": "____(A)____ ",
+              "ul": false
+            },
+            {
+              "t": "imitation, personal ",
+              "ul": false
+            },
+            {
+              "t": "____(B)____",
+              "ul": false
+            },
+            {
+              "t": ", and group association.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "      (A) \t   (B) ",
+          "runs": [
+            {
+              "t": "      (A) \t   (B) ",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "① avoiding\tisolation",
+          "runs": [
+            {
+              "t": "① avoiding\tisolation",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② rejecting\tseparation",
+          "runs": [
+            {
+              "t": "② rejecting\tseparation",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ normative \tcomparison",
+          "runs": [
+            {
+              "t": "③ normative \tcomparison",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ negative \topposition",
+          "runs": [
+            {
+              "t": "④ negative \topposition",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ resistant \tconfrontation",
+          "runs": [
+            {
+              "t": "⑤ resistant \tconfrontation",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "[서술형 1] 밑줄 친 (A)가 이 글에서 의미하는 바를 한글 30자 이내로 서술하시오.",
+          "runs": [
+            {
+              "t": "[서술형 1] 밑줄 친 (A)가 이 글에서 의미하는 바를 한글 30자 이내로 서술하시오.",
+              "ul": false
+            }
+          ],
+          "pstyle": "서술형 번호"
+        },
+        {
+          "text": "In the early 1960s the great American writer James Baldwin wrote: “People are trapped in history, and history is trapped in them.” He was speaking to race when he penned those words. But the statement is equally true if the word “people” is replaced with “all of life on Earth, present and past,” for each strand of DNA, in each of our cells, is an ancient record of biological history, written in simple code and passed down from generation to generation. One could say that DNA is nothing but history, one with a physical manifestation that was slowly blended and accumulated over countless eons by (A) the most pitiless of all phenomena — natural selection. DNA is a history that is inside us — and yet one that is our master as well, the blueprint for our bodies, and dictator of what we will pass on to our children, gifts that can be blessings — or deadly time bombs. We are indeed trapped in this particular vehicle of history as much as it is trapped in us.",
+          "runs": [
+            {
+              "t": "In the early 1960s the great American writer James Baldwin wrote: “People are trapped in history, and history is trapped in them.” He was speaking to race when he penned those words. But the statement is equally true if the word “people” is replaced with “all of life on Earth, present and past,” for each strand of DNA, in each of our cells, is an ancient record of biological history, written in simple code and passed down from generation to generation. One could say that DNA is nothing but history, one with a physical manifestation that was slowly blended and accumulated over countless eons by (A) ",
+              "ul": false
+            },
+            {
+              "t": "the most pitiless of all phenomena",
+              "ul": true
+            },
+            {
+              "t": " — natural selection. DNA is a history that is inside us — and yet one that is our master as well, the blueprint for our bodies, and dictator of what we will pass on to our children, gifts that can be blessings — or deadly time bombs. We are indeed trapped in this particular vehicle of history as much as it is trapped in us.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "[서술형 2] 다음 글의 요약문을 완성할 때, 빈칸에 적절한 단어를 쓰시오. (주어진 첫 철자로 완성)",
+          "runs": [
+            {
+              "t": "[서술형 2] 다음 글의 요약문을 완성할 때, 빈칸에 적절한 단어를 쓰시오. (주어진 첫 철자로 완성)",
+              "ul": false
+            }
+          ],
+          "pstyle": "서술형 번호"
+        },
+        {
+          "text": "You’ve probably heard that it takes about ten thousand hours of practice to become an expert in anything — a musical instrument, a sport, chess, cooking, or a foreign language. The research by K. Anders Ericsson on this topic has been written about many times, and it was made even more famous when Malcolm Gladwell described it in his bestselling book Outliers. However, recently, a cohort of researchers reexamined the studies and research behind the 10K figure and said, quite dramatically, that the ten-thousand-hour rule was utter nonsense. Specifically, there is nothing particularly special about ten thousand hours, and while practice is clearly important to boost performance, other factors may play an even more important role. What are those other factors that get us to expert levels of performance? Pure innate talent? Intelligence? Luck of the draw? Perseverance? Hard work? Yes, it’s all of that... and more. Age, experience, and environment all play a role. In other words, there’s no one certain factor that can predict or ensure mastery or optimal performance of anything. ",
+          "runs": [
+            {
+              "t": "You’ve probably heard that it takes about ten thousand hours of practice to become an expert in anything — a musical instrument, a sport, chess, cooking, or a foreign language. The research by K. Anders Ericsson on this topic has been written about many times, and it was made even more famous when Malcolm Gladwell described it in his bestselling book Outliers. However, recently, a cohort of researchers reexamined the studies and research behind the 10K figure and said, quite dramatically, that the ten-thousand-hour rule was utter nonsense. Specifically, there is nothing particularly special about ten thousand hours, and while practice is clearly important to boost performance, other factors may play an even more important role. What are those other factors that get us to expert levels of performance? Pure innate talent? Intelligence? Luck of the draw? Perseverance? Hard work? Yes, it’s all of that... and more. Age, experience, and environment all play a role. In other words, there’s no one certain factor that can predict or ensure mastery or optimal performance of anything. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "󰀻",
+          "runs": [
+            {
+              "t": "󰀻",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "While the ten-thousand-hour rule suggests p_______ t_______ is the key to expertise, research shows that m_______ f_______ determine mastery.",
+          "runs": [
+            {
+              "t": "While the ten-thousand-hour rule suggests p",
+              "ul": false
+            },
+            {
+              "t": "_______",
+              "ul": false
+            },
+            {
+              "t": " t",
+              "ul": false
+            },
+            {
+              "t": "_______ ",
+              "ul": false
+            },
+            {
+              "t": "is the key to expertise, research shows that m",
+              "ul": false
+            },
+            {
+              "t": "_______",
+              "ul": false
+            },
+            {
+              "t": " f",
+              "ul": false
+            },
+            {
+              "t": "_______ ",
+              "ul": false
+            },
+            {
+              "t": "determine mastery.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "[서술형 3] 밑줄 친 (A)가 이 글에서 의미하는 바를 한글 30자 이내로 서술하시오.",
+          "runs": [
+            {
+              "t": "[서술형 3] 밑줄 친 (A)가 이 글에서 의미하는 바를 한글 30자 이내로 서술하시오.",
+              "ul": false
+            }
+          ],
+          "pstyle": "서술형 번호"
+        },
+        {
+          "text": "Here’s an application of metaphors to research papers: Below-grade-level readers in my urban middle school have a great deal of difficulty doing research. Their answer when assigned to do “a report” is to come to the media center and copy verbatim everything in the encyclopedia article or whatever source they have located, be it Internet, print, or whatever. To try to get the students to understand why it isn’t necessary to copy everything in the articles, I use a comparison to a supermarket. I ask them if everything in the supermarket is useful, and we discuss this, with the usual conclusion being that it is, but we don’t buy everything all the time. Then I ask them why they don’t buy everything each time they go and how they determine what to buy when they go with their parents. Someone usually mentions that they have a list. From that point on, I lead a discussion about how whatever their teachers have asked for is their (A) “shopping list” for their research, and they should just read for that information and write it down in note format. It sometimes helps them to understand that copying everything is a wasteful endeavor.",
+          "runs": [
+            {
+              "t": "Here’s an application of metaphors to research papers: Below-grade-level readers in my urban middle school have a great deal of difficulty doing research. Their answer when assigned to do “a report” is to come to the media center and copy verbatim everything in the encyclopedia article or whatever source they have located, be it Internet, print, or whatever. To try to get the students to understand why it isn’t necessary to copy everything in the articles, I use a comparison to a supermarket. I ask them if everything in the supermarket is useful, and we discuss this, with the usual conclusion being that it is, but we don’t buy everything all the time. Then I ask them why they don’t buy everything each time they go and how they determine what to buy when they go with their parents. Someone usually mentions that they have a list. From that point on, I lead a discussion about how whatever their teachers have asked for is their",
+              "ul": false
+            },
+            {
+              "t": " (A) “",
+              "ul": false
+            },
+            {
+              "t": "shopping list",
+              "ul": true
+            },
+            {
+              "t": "”",
+              "ul": false
+            },
+            {
+              "t": " for their research, and they should just read for that information and write it down in note format. It sometimes helps them to understand that copying everything is a wasteful endeavor.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "[",
+          "runs": [
+            {
+              "t": "[",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "[서술형 4] 다음 글의 요약문을 완성할 때, 빈칸에 적절한 단어를 쓰시오. (주어진 첫 철자로 완성)",
+          "runs": [
+            {
+              "t": "[서술형 4] 다음 글의 요약문을 완성할 때, 빈칸에 적절한 단어를 쓰시오. (주어진 첫 철자로 완성)",
+              "ul": false
+            }
+          ],
+          "pstyle": "서술형 번호"
+        },
+        {
+          "text": "In the Physics, Aristotle asks whether nature acts for the sake of something. He offers an account of rain as water that rises when heated by the Sun, then cools, condenses, and falls to Earth, but is not particularly concerned with explaining rain as such. Rather, he addresses a more general question: how to account for natural objects, events, and processes that appear with regularity. He queries whether the sharpness of front teeth and the bluntness of molars is coincidental and rejects that possibility, because this arrangement occurs with regularity and that regularity is linked to purposefulness. The sharpness of front teeth allows them to tear while the bluntness of those in the back enables them to crush food; both are useful for eating. In Aristotle’s view, all natural things happen in a given way and occur for the sake of something; that is the final cause. ",
+          "runs": [
+            {
+              "t": "In the Physics, Aristotle asks whether nature acts for the sake of something. He offers an account of rain as water that rises when heated by the Sun, then cools, condenses, and falls to Earth, but is not particularly concerned with explaining rain as such. Rather, he addresses a more general question: how to account for natural objects, events, and processes that appear with regularity. He queries whether the sharpness of front teeth and the bluntness of molars is coincidental and rejects that possibility, because this arrangement occurs with regularity and that regularity is linked to purposefulness. The sharpness of front teeth allows them to tear while the bluntness of those in the back enables them to crush food; both are useful for eating. In Aristotle’s view, all natural things happen in a given way and occur for the sake of something; that is the final cause. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "󰀻",
+          "runs": [
+            {
+              "t": "󰀻",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "Aristotle argues that natural phenomena exhibiting r_______ are not coincidental but instead reflect p_______, which he identifies as the final cause.",
+          "runs": [
+            {
+              "t": "Aristotle argues that natural phenomena exhibiting r",
+              "ul": false
+            },
+            {
+              "t": "_______ ",
+              "ul": false
+            },
+            {
+              "t": "are not coincidental but instead reflect p",
+              "ul": false
+            },
+            {
+              "t": "_______",
+              "ul": false
+            },
+            {
+              "t": ", which he identifies as the final cause.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "[서술형 5] 다음 글의 요약문을 완성할 때, 빈칸에 적절한 단어를 쓰시오. (주어진 첫 철자로 완성)",
+          "runs": [
+            {
+              "t": "[서술형 5] 다음 글의 요약문을 완성할 때, 빈칸에 적절한 단어를 쓰시오. (주어진 첫 철자로 완성)",
+              "ul": false
+            }
+          ],
+          "pstyle": "서술형 번호"
+        },
+        {
+          "text": "Deep work is when you perform an activity with deep concentration that pushes your cognitive capabilities, and by doing so create new value and improve your skills. These efforts are hard to replicate; and to be able to do deep work, we need a distraction- free environment. For many people though, we spend far too much time on the other end of the scale, doing what is referred to as shallow work. This style of working is not cognitively demanding but is rather an execution of logical-type tasks that rarely create new value (although they may still be important). We often perform these tasks while we are distracted. Shallow work has its place, both because routine-type tasks need to be done and because we cannot spend our entire time doing deep work. The problem with too much shallow work is that we feel busy, maybe even stressed, but we rarely see any output reflecting our experienced effort.",
+          "runs": [
+            {
+              "t": "Deep work is when you perform an activity with deep concentration that pushes your cognitive capabilities, and by doing so create new value and improve your skills. These efforts are hard to replicate; and to be able to do deep work, we need a distraction- free environment. For many people though, we spend far too much time on the other end of the scale, doing what is referred to as shallow work. This style of working is not cognitively demanding but is rather an execution of logical-type tasks that rarely create new value (although they may still be important). We often perform these tasks while we are distracted. Shallow work has its place, both because routine-type tasks need to be done and because we cannot spend our entire time doing deep work. The problem with too much shallow work is that we feel busy, maybe even stressed, but we rarely see any output reflecting our experienced effort.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "󰀻",
+          "runs": [
+            {
+              "t": "󰀻",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "Deep work requires d_______ c_______and creates new value, while excessive shallow work leads to stress without m_______ o_______.",
+          "runs": [
+            {
+              "t": "Deep work requires d",
+              "ul": false
+            },
+            {
+              "t": "_______",
+              "ul": false
+            },
+            {
+              "t": " c",
+              "ul": false
+            },
+            {
+              "t": "_______",
+              "ul": false
+            },
+            {
+              "t": "and creates new value, while excessive shallow work leads to stress without m",
+              "ul": false
+            },
+            {
+              "t": "_______",
+              "ul": false
+            },
+            {
+              "t": " o",
+              "ul": false
+            },
+            {
+              "t": "_______",
+              "ul": false
+            },
+            {
+              "t": ".",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        }
+      ]
+    }
+  ]
+}

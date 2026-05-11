@@ -15,6 +15,8 @@
     "items": [
       {"name": "교과서 워크북",  "prefix": "교과서워크북",  "engine_id": "textbook_workbook"},
       {"name": "모의고사 워크북","prefix": "모의고사워크북", "engine_id": "workbook"},
+      {"name": "리딩파워 워크북","prefix": "리딩파워워크북", "engine_id": "ebs_workbook"},
+      {"name": "수능특강 워크북","prefix": "수능특강워크북", "engine_id": "suneungteukgang_workbook"},
       {"name": "부교재 워크북",  "prefix": "부교재워크북",  "engine_id": null}
     ]
   },
@@ -29,7 +31,8 @@
     "section": "조판",
     "category": "직전보충",
     "items": [
-      {"name": "파이널 직전보충", "prefix": "파이널", "engine_id": "final"}
+      {"name": "파이널 직전보충", "prefix": "파이널", "engine_id": "final"},
+      {"name": "동형모의고사",   "prefix": "동형",   "engine_id": "mockexam"}
     ]
   },
   {

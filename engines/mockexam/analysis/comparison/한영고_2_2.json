@@ -1,0 +1,2334 @@
+{
+  "school": "한영고",
+  "grade": "고2",
+  "round": 2,
+  "ms_paras": 183,
+  "indd_paras": 198,
+  "matched": 135,
+  "unmatched_ms": 48,
+  "extra_indd": 63,
+  "matches": [
+    {
+      "ms": {
+        "q": 0,
+        "p": 0,
+        "pstyle": "다음 글을 읽고",
+        "text": "다음 글을 읽고 물음에 답하시오."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 1,
+        "pstyle": "지문",
+        "text": "Universal design is not only applied in modern architecture but also extends to "
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "Universal design is not only applied in modern architecture but also extends to "
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 2,
+        "pstyle": "문제 번호",
+        "text": "윗글의 밑줄 친 ⓐ~ⓔ중 어법상 어색한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 3,
+        "pstyle": "선지",
+        "text": "① ⓐ     ② ⓑ     ③ ⓒ     ④ ⓓ      ⑤ ⓔ"
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① ⓐ     ② ⓑ     ③ ⓒ     ④ ⓓ      ⑤ ⓔ\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 4,
+        "pstyle": "문제 번호",
+        "text": "윗글에 관한 다음 글의 내용과 일치하지 않는 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 5,
+        "pstyle": "선지",
+        "text": "① Subway maps mainly rely on auditory information to distinguish routes."
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① Subway maps mainly rely on auditory information to distinguish routes.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 6,
+        "pstyle": "선지",
+        "text": "② A low-floor design on buses is intended to improve accessibility for passenger"
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② A low-floor design on buses is intended to improve accessibility for passenger"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 7,
+        "pstyle": "선지",
+        "text": "③ Subway maps distinguish lines by using color, brightness, and line thickness."
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ Subway maps distinguish lines by using color, brightness, and line thickness.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 8,
+        "pstyle": "선지",
+        "text": "④ Pictograms help people who are not familiar with the local language."
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ Pictograms help people who are not familiar with the local language.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 9,
+        "pstyle": "선지",
+        "text": "⑤ Road signs help drivers recognize important information quickly."
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ Road signs help drivers recognize important information quickly.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 10,
+        "pstyle": "문제 번호",
+        "text": "밑줄 친 (A), (B), (C)에 들어갈 말로 가장 잘 짝지어진 것은?"
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "문제 번호",
+        "tf_label": "",
+        "text": "밑줄 친 (A), (B), (C)에 들어갈 말로 가장 잘 짝지어진 것은? [2.6점]\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 11,
+        "pstyle": "지문",
+        "text": "Winning turns on a self‑conscious awareness that others are watching. It's a lot"
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "Winning turns on a self‑conscious awareness that others are watching. It's a lot"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 12,
+        "pstyle": "선지",
+        "text": "(A)   (B)        (C)"
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "\t(A)   \t(B)        \t(C)\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 13,
+        "pstyle": "선지",
+        "text": "① no one  hidinglong"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 14,
+        "pstyle": "선지",
+        "text": "② no one  hidingshort"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 15,
+        "pstyle": "선지",
+        "text": "③ no one  revealingshort"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 16,
+        "pstyle": "선지",
+        "text": "④ everyone  revealinglong"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 17,
+        "pstyle": "선지",
+        "text": "⑤ everyone  hidinglong"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 18,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은?"
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "문제 번호",
+        "tf_label": "",
+        "text": "다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은? [2.6점]\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 19,
+        "pstyle": "지문",
+        "text": "Robert Blattberg and Steven Hoch noted that, in a changing environment, it is no"
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "Robert Blattberg and Steven Hoch noted that, in a changing environment, it is no"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 20,
+        "pstyle": "지문",
+        "text": "↓"
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "↓\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 21,
+        "pstyle": "지문",
+        "text": "In (A)____________ environments, the composite of human judgment and statistical"
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "테두리",
+        "tf_label": "",
+        "text": "In (A)____________ environments, the composite of human judgment and statistical"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 22,
+        "pstyle": "선지",
+        "text": "(A)         (B)"
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "\t(A)         \t\t(B)\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 23,
+        "pstyle": "선지",
+        "text": "① unstabledesirable"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 24,
+        "pstyle": "선지",
+        "text": "② comfortableharmful"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 25,
+        "pstyle": "선지",
+        "text": "③ naturalprofitable"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 26,
+        "pstyle": "선지",
+        "text": "④ inconstantdamaging"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 27,
+        "pstyle": "선지",
+        "text": "⑤ familiarbeneficial"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 28,
+        "pstyle": "문제 번호",
+        "text": "다음 중 글의 내용을 잘못 이해한 학생은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 29,
+        "pstyle": "지문",
+        "text": "Many early dot-com investors focused almost entirely on revenue growth instead o"
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "Many early dot-com investors focused almost entirely on revenue growth instead o"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 30,
+        "pstyle": "선지",
+        "text": "① Liam: Early dot-com investors were often more interested in seeing a rise in t"
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① Liam: Early dot-com investors were often more interested in seeing a rise in t"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 31,
+        "pstyle": "선지",
+        "text": "② Sophia: Some dot-com companies used the exchange of advertising space as a str"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② Sophia: Some dot-com companies used the exchange of advertising space as a str"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 32,
+        "pstyle": "선지",
+        "text": "③ Noah: According to the passage, companies recorded the value of the swapped ad"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ Noah: According to the passage, companies recorded the value of the swapped ad"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 33,
+        "pstyle": "선지",
+        "text": "④ Olivia: Swapping advertising space was an effective way for early dot-coms to "
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ Olivia: Swapping advertising space was an effective way for early dot-coms to "
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 34,
+        "pstyle": "선지",
+        "text": "⑤ Mason: The practice of exchanging ad space eventually ceased because it was ju"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ Mason: The practice of exchanging ad space eventually ceased because it was ju"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 35,
+        "pstyle": "문제 번호",
+        "text": "[9~10] 다음 글의 흐름으로 보아 주어진 문장이 들어가기에 가장 적절한 것을 고르시오."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 1,
+        "p": 0,
+        "pstyle": "지문",
+        "text": "But this only means that these conditions are extreme for us, given our particul"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "테두리",
+        "tf_label": "",
+        "text": "But this only means that these conditions are extreme for us, given our particul"
+      }
+    },
+    {
+      "ms": {
+        "q": 1,
+        "p": 1,
+        "pstyle": "지문",
+        "text": "It seems natural to describe certain. environmental conditions as 'extreme', 'ha"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 1,
+        "p": 2,
+        "pstyle": "선지",
+        "text": "①      ②      ③       ④      ⑤"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 2,
+        "p": 0,
+        "pstyle": "지문",
+        "text": "Although this technique alone will not produce changes, when used alongside othe"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "테두리",
+        "tf_label": "",
+        "text": "Although this technique alone will not produce changes, when used alongside othe"
+      }
+    },
+    {
+      "ms": {
+        "q": 2,
+        "p": 1,
+        "pstyle": "지문",
+        "text": "For years, many psychologists have held strongly to the belief that the key to a"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "For years, many psychologists have held strongly to the belief that the key to a"
+      }
+    },
+    {
+      "ms": {
+        "q": 2,
+        "p": 2,
+        "pstyle": "선지",
+        "text": "①     ②     ③     ④      ⑤"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 2,
+        "p": 3,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 전체 흐름과 관계없는 문장은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 2,
+        "p": 4,
+        "pstyle": "지문",
+        "text": "The fast-growing, tremendous amount of data, collected and stored in large and n"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "The fast-growing, tremendous amount of data, collected and stored in large and n"
+      }
+    },
+    {
+      "ms": {
+        "q": 2,
+        "p": 5,
+        "pstyle": "선지",
+        "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 2,
+        "p": 6,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 내용과 일치하는 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 2,
+        "p": 7,
+        "pstyle": "지문",
+        "text": "Electric communication is mainly known in fish. The electric signals are produce"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "Electric communication is mainly known in fish. The electric signals are produce"
+      }
+    },
+    {
+      "ms": {
+        "q": 2,
+        "p": 8,
+        "pstyle": "선지",
+        "text": "① An electric field around the fish helps discharge electric signals."
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① An electric field around the fish helps discharge electric signals.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 2,
+        "p": 9,
+        "pstyle": "선지",
+        "text": "② The fish has special electric organs which produce electric signals."
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② The fish has special electric organs which produce electric signals.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 2,
+        "p": 10,
+        "pstyle": "선지",
+        "text": "③ The fish varies the electric signals by changing colors of its organs."
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ The fish varies the electric signals by changing colors of its organs.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 2,
+        "p": 11,
+        "pstyle": "선지",
+        "text": "④ The short range signal system of the fish is advantageous as it lives in tiny "
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ The short range signal system of the fish is advantageous as it lives in tiny "
+      }
+    },
+    {
+      "ms": {
+        "q": 2,
+        "p": 12,
+        "pstyle": "선지",
+        "text": "⑤ The muscles cells in the electric organ are the only cells where an electric c"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ The muscles cells in the electric organ are the only cells where an electric c"
+      }
+    },
+    {
+      "ms": {
+        "q": 2,
+        "p": 13,
+        "pstyle": "다음 글을 읽고",
+        "text": "다음 글을 읽고 물음에 답하시오."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 2,
+        "p": 14,
+        "pstyle": "지문",
+        "text": "Brands failing to grow and ⓐdevelop lose their relevance. Think about the person"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "Brands failing to grow and ⓐdevelop lose their relevance. Think about the person"
+      }
+    },
+    {
+      "ms": {
+        "q": 2,
+        "p": 15,
+        "pstyle": "문제 번호",
+        "text": "위 글의 밑줄 친 ⓐ~ⓔ 중에서 어법상 어색한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 2,
+        "p": 16,
+        "pstyle": "선지",
+        "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 2,
+        "p": 17,
+        "pstyle": "문제 번호",
+        "text": "위 글의 괄호 (A), (B), (C) 안에서 문맥에 맞는 표현으로 가장 적절한 것은?"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "문제 번호",
+        "tf_label": "",
+        "text": "위 글의 괄호 (A), (B), (C) 안에서 문맥에 맞는 표현으로 가장 적절한 것은? [2.6점]\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 2,
+        "p": 18,
+        "pstyle": "선지",
+        "text": "(A)   (B)                (C)"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "\t(A)   \t  (B)             (C)\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 2,
+        "p": 19,
+        "pstyle": "선지",
+        "text": "① better resistedimprove"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 2,
+        "p": 20,
+        "pstyle": "선지",
+        "text": "② worse insistedimprove"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 2,
+        "p": 21,
+        "pstyle": "선지",
+        "text": "③ worse resisteddegrade"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 2,
+        "p": 22,
+        "pstyle": "선지",
+        "text": "④ better resisteddegrade"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 2,
+        "p": 23,
+        "pstyle": "선지",
+        "text": "⑤ better insisteddegrade"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 2,
+        "p": 24,
+        "pstyle": "문제 번호",
+        "text": "[13~14] 다음 글의 밑줄 친 부분 중 어법상 어색한 것을 고르시오."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 3,
+        "p": 0,
+        "pstyle": "지문",
+        "text": "Commitment is the glue ⓐholding together characteristically human forms of socia"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "Commitment is the glue ⓐholding together characteristically human forms of socia"
+      }
+    },
+    {
+      "ms": {
+        "q": 3,
+        "p": 1,
+        "pstyle": "선지",
+        "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 4,
+        "p": 0,
+        "pstyle": "지문",
+        "text": "It is a common assumption that most vagrant birds are ultimately doomed, aside f"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "It is a common assumption that most vagrant birds are ultimately doomed, aside f"
+      }
+    },
+    {
+      "ms": {
+        "q": 4,
+        "p": 1,
+        "pstyle": "선지",
+        "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 4,
+        "p": 2,
+        "pstyle": "문제 번호",
+        "text": "[15~16] 다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것을 고르시오."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 5,
+        "p": 0,
+        "pstyle": "지문",
+        "text": "There are reasons why science is not fully trusted and why healthy skepticism an"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "There are reasons why science is not fully trusted and why healthy skepticism an"
+      }
+    },
+    {
+      "ms": {
+        "q": 5,
+        "p": 1,
+        "pstyle": "선지",
+        "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 0,
+        "pstyle": "지문",
+        "text": "Development of the human body from a single cell provides many examples of the s"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "Development of the human body from a single cell provides many examples of the s"
+      }
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 1,
+        "pstyle": "선지",
+        "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 2,
+        "pstyle": "문제 번호",
+        "text": "다음 글 (A)를 바탕으로 (B)의 문제 상황을 해결하려는 부모가 아이에게 할 말로 가장 적절한 것은?"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "문제 번호",
+        "tf_label": "",
+        "text": "다음 글 (A)를 바탕으로 (B)의 문제 상황을 해결하려는 부모가 아이에게 할 말로 가장 적절한 것은? [2.6점]\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 3,
+        "pstyle": "지문_순서",
+        "text": "(A) Empathy is frequently listed as one of the most desired skills in child-rear"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "지문_순서",
+        "tf_label": "",
+        "text": "(A) Empathy is frequently listed as one of the most desired skills in child-rear"
+      }
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 4,
+        "pstyle": "지문_순서",
+        "text": "(B) The most prevalent problem kids report is that they feel like they need to b"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "지문_순서",
+        "tf_label": "",
+        "text": "(B) The most prevalent problem kids report is that they feel like they need to b"
+      }
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 5,
+        "pstyle": "선지",
+        "text": "① Picture your friend busy doing something and you’ll realize he just can’t get "
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① Picture your friend busy doing something and you’ll realize he just can’t get "
+      }
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 6,
+        "pstyle": "선지",
+        "text": "② Stop texting your friend and leave your phone turned off so that you don’t get"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② Stop texting your friend and leave your phone turned off so that you don’t get"
+      }
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 7,
+        "pstyle": "선지",
+        "text": "③ If you want your friend’s attention, make sure you are also connected to tech "
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ If you want your friend’s attention, make sure you are also connected to tech "
+      }
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 8,
+        "pstyle": "선지",
+        "text": "④ Let me install some apps on your phone and it’ll limit your sending texts effi"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ Let me install some apps on your phone and it’ll limit your sending texts effi"
+      }
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 9,
+        "pstyle": "선지",
+        "text": "⑤ If you keep sending texts again, I’ll deprive you of your mobile devices."
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ If you keep sending texts again, I’ll deprive you of your mobile devices.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 10,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 주제로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 11,
+        "pstyle": "지문",
+        "text": "Despite the difference between the past and the future, between what has happene"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "Despite the difference between the past and the future, between what has happene"
+      }
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 12,
+        "pstyle": "선지",
+        "text": "① interpretation of the past through a future-oriented lens"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① interpretation of the past through a future-oriented lens\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 13,
+        "pstyle": "선지",
+        "text": "② tendency towards prioritizing the past over the future"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② tendency towards prioritizing the past over the future\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 14,
+        "pstyle": "선지",
+        "text": "③ role of recurring past events in understanding our historical experiences"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ role of recurring past events in understanding our historical experiences\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 15,
+        "pstyle": "선지",
+        "text": "④ necessity of changes to overcome the limitation of outdated view in research"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ necessity of changes to overcome the limitation of outdated view in research\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 16,
+        "pstyle": "선지",
+        "text": "⑤ importance of in-depth analyses of accumulated past and upcoming futures"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ importance of in-depth analyses of accumulated past and upcoming futures\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 17,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 제목으로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 18,
+        "pstyle": "지문",
+        "text": "We must explore the relationship between children's film production and consumpt"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "We must explore the relationship between children's film production and consumpt"
+      }
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 19,
+        "pstyle": "선지",
+        "text": "① Children as High-end Customers in Contemporary Film Culture"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① Children as High-end Customers in Contemporary Film Culture\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 20,
+        "pstyle": "선지",
+        "text": "② Universal Appeal of Children’s Films Beyond Young Audiences"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② Universal Appeal of Children’s Films Beyond Young Audiences\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 21,
+        "pstyle": "선지",
+        "text": "③ Evolution of Children’s Films: Global Impact on Lifelong Education"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ Evolution of Children’s Films: Global Impact on Lifelong Education\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 22,
+        "pstyle": "선지",
+        "text": "④ An Exceptional Sense of Mastery In Producing Children’s Cinemas"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ An Exceptional Sense of Mastery In Producing Children’s Cinemas\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 23,
+        "pstyle": "선지",
+        "text": "⑤ More Attention to Children’s Films from the Critics and Mainstream Media"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ More Attention to Children’s Films from the Critics and Mainstream Media\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 24,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 요지로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 25,
+        "pstyle": "지문",
+        "text": "It is important to recognize that although science is a rule based procedure, it"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "It is important to recognize that although science is a rule based procedure, it"
+      }
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 26,
+        "pstyle": "선지",
+        "text": "① Scientific knowledge becomes more refined and useful through repeated testing "
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① Scientific knowledge becomes more refined and useful through repeated testing "
+      }
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 27,
+        "pstyle": "선지",
+        "text": "② Once a hypothesis is formed, it can be considered scientific knowledge regardl"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② Once a hypothesis is formed, it can be considered scientific knowledge regardl"
+      }
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 28,
+        "pstyle": "선지",
+        "text": "③ Science is purely a logical and procedural discipline without any role for cre"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ Science is purely a logical and procedural discipline without any role for cre"
+      }
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 29,
+        "pstyle": "선지",
+        "text": "④ Bayes' Rule explains how scientific knowledge is created instantly through log"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ Bayes' Rule explains how scientific knowledge is created instantly through log"
+      }
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 30,
+        "pstyle": "선지",
+        "text": "⑤ Scientific theories do not change unless they are proven entirely false."
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ Scientific theories do not change unless they are proven entirely false.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 31,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 밑줄 친 부분 중, 어법상 틀린 부분이 포함된 문장을 두 개 고르면?"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "문제 번호",
+        "tf_label": "",
+        "text": "다음 글의 밑줄 친 부분 중, 어법상 틀린 부분이 포함된 문장을 두 개 고르면? [2.8점]\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 32,
+        "pstyle": "선지",
+        "text": "① If you had wanted to create a “self-driving” car in the 1950s, your best optio"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "① If you had wanted to create a “self-driving” car in the 1950s, your best optio"
+      }
+    },
+    {
+      "ms": {
+        "q": 6,
+        "p": 33,
+        "pstyle": "문제 번호",
+        "text": "[21~22] 주어진 글 다음에 이어질 글의 순서로 가장 적절한 것을 고르시오."
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "다음 글을 읽고",
+        "tf_label": "",
+        "text": "[21~22] 주어진 글 다음에 이어질 글의 순서로 가장 적절한 것을 고르시오.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 7,
+        "p": 0,
+        "pstyle": "지문",
+        "text": "Creativity can have an effect on productivity. Creativity leads some individuals"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "테두리",
+        "tf_label": "",
+        "text": "Creativity can have an effect on productivity. Creativity leads some individuals"
+      }
+    },
+    {
+      "ms": {
+        "q": 7,
+        "p": 1,
+        "pstyle": "지문_순서",
+        "text": "(A) We can see an example in the development of the polymerase chain reaction (P"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "지문_순서",
+        "tf_label": "",
+        "text": "(A) We can see an example in the development of the polymerase chain reaction (P"
+      }
+    },
+    {
+      "ms": {
+        "q": 7,
+        "p": 2,
+        "pstyle": "지문_순서",
+        "text": "(B) In such cases creativity may actually decrease productivity (as measured by "
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "지문_순서",
+        "tf_label": "",
+        "text": "(B) In such cases creativity may actually decrease productivity (as measured by "
+      }
+    },
+    {
+      "ms": {
+        "q": 7,
+        "p": 3,
+        "pstyle": "지문_순서",
+        "text": "(C) Charles Darwin's approach to the speciation problem is a good example of thi"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "지문_순서",
+        "tf_label": "",
+        "text": "(C) Charles Darwin's approach to the speciation problem is a good example of thi"
+      }
+    },
+    {
+      "ms": {
+        "q": 7,
+        "p": 4,
+        "pstyle": "선지",
+        "text": "① (A)-(B)-(C)② (A)-(C)-(B)③ (B)-(A)-(C)"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 7,
+        "p": 5,
+        "pstyle": "선지",
+        "text": "④ (C)-(A)-(B)⑤ (C)-(B)-(A)"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 8,
+        "p": 0,
+        "pstyle": "지문",
+        "text": "Scholars of myth have long argued that myth gives structure and meaning to human"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "테두리",
+        "tf_label": "",
+        "text": "Scholars of myth have long argued that myth gives structure and meaning to human"
+      }
+    },
+    {
+      "ms": {
+        "q": 8,
+        "p": 1,
+        "pstyle": "지문_순서",
+        "text": "(A) For a virtual world to provide lasting, wide‑ranging value, its participants"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "지문_순서",
+        "tf_label": "",
+        "text": "(A) For a virtual world to provide lasting, wide‑ranging value, its participants"
+      }
+    },
+    {
+      "ms": {
+        "q": 8,
+        "p": 2,
+        "pstyle": "지문_순서",
+        "text": "(B) My game might be a great game, one that is completely immersive, one that co"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "지문_순서",
+        "tf_label": "",
+        "text": "(B) My game might be a great game, one that is completely immersive, one that co"
+      }
+    },
+    {
+      "ms": {
+        "q": 8,
+        "p": 3,
+        "pstyle": "지문_순서",
+        "text": "(C) Conversely, a virtual world cannot be long sustained by a mere handful of ad"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "지문_순서",
+        "tf_label": "",
+        "text": "(C) Conversely, a virtual world cannot be long sustained by a mere handful of ad"
+      }
+    },
+    {
+      "ms": {
+        "q": 8,
+        "p": 4,
+        "pstyle": "선지",
+        "text": "① (A)-(C)-(B)② (B)-(A)-(C)"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 8,
+        "p": 5,
+        "pstyle": "선지",
+        "text": "③ (B)-(C)-(A)④ (C)-(A)-(B)"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 8,
+        "p": 6,
+        "pstyle": "선지",
+        "text": "⑤ (C)-(B)-(A)"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ (C)-(B)-(A)\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 8,
+        "p": 7,
+        "pstyle": "문제 번호",
+        "text": "[23~25] 다음 빈칸에 들어갈 말로 가장 적절한 것을 고르시오."
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "다음 글을 읽고",
+        "tf_label": "",
+        "text": "[23~25] 다음 빈칸에 들어갈 말로 가장 적절한 것을 고르시오.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 9,
+        "p": 0,
+        "pstyle": "지문",
+        "text": "The governments of virtually every country on the planet attach great importance"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "The governments of virtually every country on the planet attach great importance"
+      }
+    },
+    {
+      "ms": {
+        "q": 9,
+        "p": 1,
+        "pstyle": "선지",
+        "text": "① limiting imports to rare food items"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① limiting imports to rare food items\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 9,
+        "p": 2,
+        "pstyle": "선지",
+        "text": "② relying on both domestic production and imports"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② relying on both domestic production and imports\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 9,
+        "p": 3,
+        "pstyle": "선지",
+        "text": "③ prioritizing food security over economic concerns"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ prioritizing food security over economic concerns\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 9,
+        "p": 4,
+        "pstyle": "선지",
+        "text": "④ addressing the issue through government intervention alone"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ addressing the issue through government intervention alone\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 9,
+        "p": 5,
+        "pstyle": "선지",
+        "text": "⑤ focusing solely on self-sufficiency as the primary solution"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ focusing solely on self-sufficiency as the primary solution\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 10,
+        "p": 0,
+        "pstyle": "지문",
+        "text": "Since their start in the early 1950s U.S. television sitcoms have charted many o"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "Since their start in the early 1950s U.S. television sitcoms have charted many o"
+      }
+    },
+    {
+      "ms": {
+        "q": 10,
+        "p": 1,
+        "pstyle": "선지",
+        "text": "① a mirror reflecting our society's traditions established long before"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① a mirror reflecting our society's traditions established long before\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 10,
+        "p": 2,
+        "pstyle": "선지",
+        "text": "② an instrument to maintain hidden hierarchies in the U.S. cultures"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② an instrument to maintain hidden hierarchies in the U.S. cultures\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 10,
+        "p": 3,
+        "pstyle": "선지",
+        "text": "③ an agent of social change by making outdated beliefs appear absurd"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ an agent of social change by making outdated beliefs appear absurd\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 10,
+        "p": 4,
+        "pstyle": "선지",
+        "text": "④ an effective entertainment tool that spreads previous values throughout societ"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ an effective entertainment tool that spreads previous values throughout societ"
+      }
+    },
+    {
+      "ms": {
+        "q": 10,
+        "p": 5,
+        "pstyle": "선지",
+        "text": "⑤ an open stage for people to express their skepticism about progressive thought"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ an open stage for people to express their skepticism about progressive thought"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 0,
+        "pstyle": "지문",
+        "text": "We tend to overrate the impact of new technologies in part because older technol"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "We tend to overrate the impact of new technologies in part because older technol"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 1,
+        "pstyle": "지문",
+        "text": "→ According to the passage, older technologies are often undervalued because of "
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "→ According to the passage, older technologies are often undervalued because of "
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 2,
+        "pstyle": "선지",
+        "text": "① failure to compete with the efficiency of modern high-speed inventions"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① failure to compete with the efficiency of modern high-speed inventions\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 3,
+        "pstyle": "선지",
+        "text": "② tendency to complicate the fundamental experiences of human beings"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② tendency to complicate the fundamental experiences of human beings\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 4,
+        "pstyle": "선지",
+        "text": "③ significant role in reshaping the temporal organization of our routines"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ significant role in reshaping the temporal organization of our routines\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 5,
+        "pstyle": "선지",
+        "text": "④ contribution to increasing the social pressure on mothers to work"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ contribution to increasing the social pressure on mothers to work\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 6,
+        "pstyle": "선지",
+        "text": "⑤ potential to replace the emotional bond between infants and caregivers"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ potential to replace the emotional bond between infants and caregivers\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 7,
+        "pstyle": "문제 번호",
+        "text": "다음 글을 읽고 알 수 없는 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 8,
+        "pstyle": "지문",
+        "text": "Human beings like certainty. This liking stems from our ancient ancestors who ne"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "Human beings like certainty. This liking stems from our ancient ancestors who ne"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 9,
+        "pstyle": "선지",
+        "text": "① Ancient humans preferred certainty to increase their chances of survival."
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① Ancient humans preferred certainty to increase their chances of survival.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 10,
+        "pstyle": "선지",
+        "text": "② The brain sends a danger alert when it encounters something uncertain or vague"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② The brain sends a danger alert when it encounters something uncertain or vague"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 11,
+        "pstyle": "선지",
+        "text": "③ Relying on certainty allows the brain to make right choices more effectively."
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ Relying on certainty allows the brain to make right choices more effectively.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 12,
+        "pstyle": "선지",
+        "text": "④ Modern humans have evolved to no longer feel threatened by unpredictable event"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ Modern humans have evolved to no longer feel threatened by unpredictable event"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 13,
+        "pstyle": "선지",
+        "text": "⑤ The brain creates action plans to keep us safe from elements it labels as unce"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ The brain creates action plans to keep us safe from elements it labels as unce"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 14,
+        "pstyle": "문제 번호",
+        "text": "다음 글을 읽고 올바르게 추론한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 15,
+        "pstyle": "지문",
+        "text": "Intuition can be great, but it ought to be hard-earned. Experts, for example, ar"
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "Intuition can be great, but it ought to be hard-earned. Experts, for example, ar"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 16,
+        "pstyle": "선지",
+        "text": "① True intuition is an innate ability that functions independently of accumulate"
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① True intuition is an innate ability that functions independently of accumulate"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 17,
+        "pstyle": "선지",
+        "text": "② Social media platforms discourage users from expressing opinions without profe"
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② Social media platforms discourage users from expressing opinions without profe"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 18,
+        "pstyle": "선지",
+        "text": "③ AI algorithms can contribute to narrowing a person's perspective by confirming"
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ AI algorithms can contribute to narrowing a person's perspective by confirming"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 19,
+        "pstyle": "선지",
+        "text": "④ People tend to perceive those with opposing viewpoints as more rational and in"
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ People tend to perceive those with opposing viewpoints as more rational and in"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 20,
+        "pstyle": "선지",
+        "text": "⑤ Fast and confident decision-making on social media is a reliable indicator of "
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ Fast and confident decision-making on social media is a reliable indicator of "
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 21,
+        "pstyle": "서술형 번호",
+        "text": "서답형1. 다음 글의 밑줄 친 ⓐ가 지칭하는 두 가지를 본문에서 찾아 각각 3개 이하의 영어 단어로 쓰시오."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 22,
+        "pstyle": "지문",
+        "text": "Like positive habits, bad habits exist on a continuum of easy‑to‑change and hard"
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "Like positive habits, bad habits exist on a continuum of easy‑to‑change and hard"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 23,
+        "pstyle": "지문",
+        "text": "(1) ____________________________________"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 24,
+        "pstyle": "지문",
+        "text": "(2) ____________________________________"
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "서술형 답지",
+        "tf_label": "",
+        "text": "\t\t(2) ____________________________________\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 25,
+        "pstyle": "테두리_조건",
+        "text": "서답형2. 다음 글을 한 문장으로 표현하고자 한다. <보기>의 제시어를 이용하여 <조건>에 맞게 작성하시오. [23년 3월 40번]"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 26,
+        "pstyle": "테두리_보기",
+        "text": "A young child may be puzzled when asked to distinguish between the directions of"
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "A young child may be puzzled when asked to distinguish between the directions of"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 27,
+        "pstyle": "테두리_보기",
+        "text": "<보기>"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 28,
+        "pstyle": "테두리_보기",
+        "text": "is / dimensions / as / and / the front-back /"
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "테두리_보기",
+        "tf_label": "",
+        "text": "is / dimensions / as / and / the front-back /￼\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 29,
+        "pstyle": "테두리_보기",
+        "text": "not / vertical / the left-right / axis / as"
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "테두리_보기",
+        "tf_label": "",
+        "text": "not / vertical / the left-right / axis / as\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 30,
+        "pstyle": "테두리_조건",
+        "text": "<조건>"
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "테두리_조건",
+        "tf_label": "",
+        "text": "<조건>\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 31,
+        "pstyle": "테두리_보기",
+        "text": "ㆍ<보기>의 제시어를 모두 사용하되, 단, 본문에서 한 단어를 추가할 것"
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "테두리_조건",
+        "tf_label": "",
+        "text": "ㆍ<보기>의 제시어를 모두 사용하되, 단, 본문에서 한 단어를 추가할 것\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 32,
+        "pstyle": "테두리_보기",
+        "text": "ㆍ형태 변화 없이 그대로 쓸 것"
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "테두리_조건",
+        "tf_label": "",
+        "text": "ㆍ형태 변화 없이 그대로 쓸 것\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 33,
+        "pstyle": "테두리_보기",
+        "text": "ㆍ어법에 맞게 쓸 것"
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "테두리_조건",
+        "tf_label": "",
+        "text": "ㆍ어법에 맞게 쓸 것\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 34,
+        "pstyle": "테두리_보기",
+        "text": "정답: In nature, _________________________________________________________."
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "서술형 답지",
+        "tf_label": "",
+        "text": "정답: In nature, _________________________________________________________________"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 35,
+        "pstyle": "서술형 번호",
+        "text": "서답형3. 다음 글의 ⓐ~ⓔ중 어법상 틀린 3개를 찾아 각각 바르게 고치시오."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 36,
+        "pstyle": "지문",
+        "text": "The explosion of popular music in the second half of the twentieth century as we"
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "The explosion of popular music in the second half of the twentieth century as we"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 37,
+        "pstyle": "서술형답지",
+        "text": "답: (1) 기호: _______ → ____________________"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 38,
+        "pstyle": "지문",
+        "text": "(2) 기호: _______ → ____________________"
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "서술형 답지",
+        "tf_label": "",
+        "text": "\t\t(2) 기호: _______ → ____________________\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 39,
+        "pstyle": "지문",
+        "text": "(3) 기호: _______ → ____________________"
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "서술형 답지",
+        "tf_label": "",
+        "text": "\t\t(3) 기호: _______ → ____________________\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 40,
+        "pstyle": "지문",
+        "text": "서답형4. 다음 글을 읽고 아래와 같이 요약한다고 할 때, 빈칸에 들어갈 말을 본문에서 찾아서 완성하시오. (빈칸 (A)를 한 단어로 변형하지 "
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 41,
+        "pstyle": "지문",
+        "text": "Technologists are always on the lookout for quantifiable metrics. Measurable inp"
+      },
+      "final": {
+        "page": "8",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "Technologists are always on the lookout for quantifiable metrics. Measurable inp"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 42,
+        "pstyle": "지문",
+        "text": "When technologists rely heavily on (A)__________ __________, they may fail to ac"
+      },
+      "final": {
+        "page": "8",
+        "pstyle": "테두리",
+        "tf_label": "",
+        "text": "When technologists rely heavily on (A)__________ __________, they may fail to ac"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 43,
+        "pstyle": "서술형 번호",
+        "text": "서답형5. 다음 글의 내용을 요약하고자 한다. 빈칸 (A)~(C)에 들어갈 말을 본문에서 찾아 쓰시오."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 44,
+        "pstyle": "지문",
+        "text": "Great scientists are seldom one-hit wonders. Newton is a prime example: beyond t"
+      },
+      "final": {
+        "page": "8",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "Great scientists are seldom one-hit wonders. Newton is a prime example: beyond t"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 45,
+        "pstyle": "지문",
+        "text": "Great scientists rarely achieve success just once, as seen in Newton, who contri"
+      },
+      "final": {
+        "page": "8",
+        "pstyle": "테두리",
+        "tf_label": "",
+        "text": "Great scientists rarely achieve success just once, as seen in Newton, who contri"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 46,
+        "pstyle": "지문_순서",
+        "text": "(A) ________________________"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 47,
+        "pstyle": "지문_순서",
+        "text": "(B) ________________________"
+      },
+      "final": {
+        "page": "8",
+        "pstyle": "서술형 답지",
+        "tf_label": "",
+        "text": "\t\t(B) ________________________\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 48,
+        "pstyle": "지문_순서",
+        "text": "(C) ________________________"
+      },
+      "final": {
+        "page": "8",
+        "pstyle": "서술형 답지",
+        "tf_label": "",
+        "text": "\t\t(C) ________________________\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 49,
+        "pstyle": "서술형 번호",
+        "text": "서답형6. 다음 글의 주제를 아래와 같이 작성할 때, 빈칸에 들어갈 알맞은 단어를 본문에서 찾아 변형없이 그대로 작성하시오. (각 빈칸에 한 단"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 50,
+        "pstyle": "지문",
+        "text": "Quite often the interaction between groups is socially unequal, and this is refl"
+      },
+      "final": {
+        "page": "8",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "Quite often the interaction between groups is socially unequal, and this is refl"
+      }
+    },
+    {
+      "ms": {
+        "q": 11,
+        "p": 51,
+        "pstyle": "지문",
+        "text": "Due to the _______________ _______________ relationship between groups, linguist"
+      },
+      "final": {
+        "page": "8",
+        "pstyle": "테두리",
+        "tf_label": "",
+        "text": "Due to the _______________ _______________ relationship between groups, linguist"
+      }
+    }
+  ]
+}

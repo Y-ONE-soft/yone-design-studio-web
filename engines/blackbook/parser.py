@@ -180,13 +180,20 @@ def _classify(text: str, in_condition: bool) -> str:
     # 기타 대괄호 조건 레이블
     if _RE_CONDITION.match(text):
         return 'condition'
+    # 문제 단락 판별 (condition 내부에서도 실제 문제는 problem으로 분류)
+    if _RE_PROBLEM.match(text):
+        # 조건 구간 내부라도 실제 시험 문제 패턴이면 problem으로 분류
+        if not in_condition or re.match(r'^\d+\.\s*다음', text):
+            return 'problem'
+        # 조건 구간 내 작은 번호 항목이면 condition_item
+        if _is_condition_content(text):
+            return 'condition_item'
+        return 'problem'
     # in_condition 상태에서는 ①②③ 등을 choice보다 먼저 확인
     if in_condition and _is_condition_content(text):
         return 'condition_item'
     if _RE_CHOICE.match(text):
         return 'choice'
-    if _RE_PROBLEM.match(text):
-        return 'problem'
     return 'passage'
 
 

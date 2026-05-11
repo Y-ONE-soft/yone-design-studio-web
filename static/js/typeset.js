@@ -1,6 +1,8 @@
 /* typeset.js — 파일 업로드 + SSE 실시간 로그 + 결과 카드 */
 
-const materialId = document.currentScript.dataset.material;
+const materialId = (document.currentScript && document.currentScript.dataset.material)
+  || document.querySelector('script[data-material]')?.dataset.material
+  || '';
 
 // ── 파일 선택/드롭 (multiple input 누적 지원) ─────────────────────────────
 
@@ -105,6 +107,7 @@ function updateSlot(key, filename) {
 
 let _currentJobId = null;
 let _currentEvtSource = null;
+let _resultRetryTimer = null;
 
 function _showCancelBtn(show) {
   const btn = document.getElementById('cancel-btn');
@@ -137,12 +140,23 @@ document.getElementById('typeset-form').addEventListener('submit', async (e) => 
   runBtn.disabled = true;
   runBtn.textContent = '실행 중...';
 
+  // 이전 작업 정리
+  if (_currentEvtSource) { _currentEvtSource.close(); _currentEvtSource = null; }
+  if (_resultRetryTimer) { clearTimeout(_resultRetryTimer); _resultRetryTimer = null; }
+  _currentJobId = null;
+
   // 진행 영역 표시
   document.getElementById('progress-area').classList.remove('hidden');
   document.getElementById('result-area').classList.add('hidden');
   document.getElementById('result-area').innerHTML = '';
   document.getElementById('log-area').textContent = '';
   setStep(null);
+
+  if (!materialId) {
+    appendLog('[오류] 교재 ID를 찾을 수 없습니다. 페이지를 새로고침해주세요.');
+    resetBtn();
+    return;
+  }
 
   try {
     const res = await fetch(`/api/run/${materialId}`, {
@@ -152,7 +166,12 @@ document.getElementById('typeset-form').addEventListener('submit', async (e) => 
     const data = await res.json();
 
     if (!res.ok || data.error) {
-      appendLog(`[오류] ${data.error || '서버 오류'}`);
+      const errMsg = data.error || '서버 오류';
+      appendLog(`[오류] ${errMsg}`);
+      if (res.status === 401 || errMsg === 'unauthorized') {
+        appendLog('세션이 만료되었습니다. 페이지를 새로고침합니다...');
+        setTimeout(() => location.reload(), 1500);
+      }
       resetBtn();
       return;
     }
@@ -226,7 +245,7 @@ async function fetchResult(jobId, retries) {
     // 아직 실행 중이면 재시도 (3초 간격)
     if ((status === 'pending' || status === 'running' || !result) && retries > 0) {
       appendLog('[대기] 작업 진행 중... 결과 확인 재시도');
-      setTimeout(() => fetchResult(jobId, retries - 1), 3000);
+      _resultRetryTimer = setTimeout(() => fetchResult(jobId, retries - 1), 3000);
       return;
     }
 
@@ -237,7 +256,7 @@ async function fetchResult(jobId, retries) {
     showResultCard(jobId, result);
   } catch (err) {
     if (retries > 0) {
-      setTimeout(() => fetchResult(jobId, retries - 1), 3000);
+      _resultRetryTimer = setTimeout(() => fetchResult(jobId, retries - 1), 3000);
       return;
     }
     showErrorCard(err.message);

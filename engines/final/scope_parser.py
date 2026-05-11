@@ -54,6 +54,14 @@ def classify_scope(scope):
         return "zaistory"
     if "TED" in scope or "외부" in scope:
         return "external"
+    # 고3 수능특강/파이널엣지 분석편
+    if re.search(r"(FINALEDGE|수능특강|파이널엣지)", scope, re.IGNORECASE):
+        return "ebs_suneung"
+    # 강 번호만 있는 경우 (예: "3,4,5,6,7,9강")
+    if re.match(r"^[\d,\s]+강$", scope):
+        return "ebs_suneung"
+    if scope == "test1" or re.match(r"^test\d+", scope, re.IGNORECASE):
+        return "ebs_suneung"
 
     return "unknown"
 
@@ -67,11 +75,53 @@ def get_grammar_source(scope_type):
         "word_file" — 교과서/모의고사/EBS 어법수정 Word
         "workbook_a1" — 워크북 STEP2 A1 추출 (마더텅, 올림포스 고2 기출만)
     """
-    if scope_type in ("mothertongue",):
+    if scope_type in ("mothertongue", "ebs_suneung"):
         return "workbook_a1"
     # 올림포스 고2 기출도 workbook_a1 — 별도 처리 필요시 여기서 분기
     # 나머지는 전부 Word 파일
     return "word_file"
+
+
+def parse_lectures_from_filename(filename):
+    """분석편 파일명에서 강 번호 리스트 추출.
+
+    Args:
+        filename: 분석편 파일명 (예: "고3_FINALEDGE분석편(3,4,5,6,7,9강)_내지.indd")
+
+    Returns:
+        리스트: ["3", "4", "5", "6", "7", "9"] 또는 ["test1"]
+    """
+    fn = _nfc(filename)
+    # 파일명 내 모든 괄호를 훑어 첫 번째 매치되는 강 목록 패턴을 찾는다.
+    # (학교 분석편 파일: "(분석01)3,6,7,11,12강" 처럼 괄호 밖에 목록이 있는 경우 대응)
+    candidates = re.findall(r"\(([^)]+)\)", fn) + [fn]
+    for inner in candidates:
+        # "test1" 등 테스트 패턴
+        if re.match(r"^test\d+", inner.strip(), re.IGNORECASE):
+            return [inner.strip()]
+        # "분석01", "분석편02" 같은 파일 번호 표기는 스킵
+        if re.match(r"^\ubd84\uc11d(?:\ud3b8)?\s*\d+\s*$", inner.strip()):
+            continue
+        # 쉼표 + 범위 혼합 표기 지원: "7,11-14", "3,4,5", "11-16", "11"
+        # 예: "7,11-14강" → [7, 11, 12, 13, 14]
+        m = re.search(
+            r"((?:\d+\s*[-~\u2013\u2014]\s*\d+|\d+)(?:\s*,\s*(?:\d+\s*[-~\u2013\u2014]\s*\d+|\d+))*)\s*\uac15",
+            inner,
+        )
+        if m:
+            result = []
+            for part in m.group(1).split(","):
+                part = part.strip()
+                rm = re.match(r"(\d+)\s*[-~\u2013\u2014]\s*(\d+)$", part)
+                if rm:
+                    s_n, e_n = int(rm.group(1)), int(rm.group(2))
+                    if s_n <= e_n and e_n - s_n < 50:
+                        result.extend(str(n) for n in range(s_n, e_n + 1))
+                elif part.isdigit():
+                    result.append(part)
+            if result:
+                return result
+    return []
 
 
 def parse_all_scopes(workbook_files):
@@ -84,6 +134,9 @@ def parse_all_scopes(workbook_files):
     for f in workbook_files:
         basename = _nfc(os.path.basename(f))
         scope = parse_scope_from_filename(basename)
+        # 공용 올포 파일 (고1_올림포스독해기본(N-M강)): scope 앞에 "올포" 접두어 부여
+        if "올림포스독해기본" in basename and scope and "올포" not in scope:
+            scope = "올포" + scope
         scope_type = classify_scope(scope)
         grammar_src = get_grammar_source(scope_type)
         results.append({

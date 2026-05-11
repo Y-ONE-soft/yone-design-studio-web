@@ -14,6 +14,7 @@
     var jsonPath = settings.json_path;
     var outputDir = settings.output_dir;
     var inddPath = settings.indd_path; // settings 기준 작업 파일 경로
+    var issueNum = settings.issue_num ? String(settings.issue_num) : '';
 
     var f = new File(jsonPath);
     f.encoding = 'UTF-8'; f.open('r');
@@ -436,6 +437,27 @@
     }
 
     app.doScript(function() {
+
+        // ── 주차 텍스트 치환 ("\d+주 차" → issueNum + "주 차") ────────────
+        if (issueNum) {
+            var weekText = issueNum + '\uC8FC \uCC28'; // "N주 차"
+            app.findGrepPreferences = app.changeGrepPreferences = NothingEnum.NOTHING;
+            app.findGrepPreferences.findWhat = '\\d+\uC8FC.?\uCC28';
+            app.changeGrepPreferences.changeTo = weekText;
+            for (var mi = 0; mi < doc.masterSpreads.length; mi++) {
+                var ms = doc.masterSpreads[mi];
+                for (var mp = 0; mp < ms.pages.length; mp++) {
+                    var mtfs = ms.pages[mp].textFrames;
+                    for (var mt = 0; mt < mtfs.length; mt++) {
+                        try { mtfs[mt].parentStory.changeGrep(); } catch(e) {}
+                    }
+                }
+            }
+            doc.changeGrep();
+            app.findGrepPreferences = app.changeGrepPreferences = NothingEnum.NOTHING;
+            log.push('\uC8FC\uCC28 \uD14D\uC2A4\uD2B8 \uCE58\uD658: ' + weekText);
+        }
+
         var dItemIdx = 0;  // Days 3-10용 D item 스토리 인덱스
 
         for (var di = 0; di < data.days.length; di++) {

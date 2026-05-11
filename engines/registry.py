@@ -8,7 +8,10 @@ from engines.final.engine import FinalEngine
 from engines.workbook.engine import WorkbookEngine
 from engines.baenje.engine import BaenjeEngine
 from engines.textbook_workbook.engine import TextbookWorkbookEngine
+from engines.ebs_workbook.engine import EbsWorkbookEngine
+from engines.suneungteukgang_workbook.engine import SuneungteukgangWorkbookEngine
 from engines.seseospecial.engine import SeseoSpecialEngine
+from engines.mockexam.engine import MockexamEngine
 
 # ── 새 교재 추가 시 여기에 한 줄만 추가 ──────────────────────────────────
 _ENGINE_LIST = [
@@ -22,7 +25,10 @@ _ENGINE_LIST = [
     FinalEngine(),
     WorkbookEngine(),
     TextbookWorkbookEngine(),
+    EbsWorkbookEngine(),
+    SuneungteukgangWorkbookEngine(),
     SeseoSpecialEngine(),
+    MockexamEngine(),
 ]
 # ────────────────────────────────────────────────────────────────────────
 

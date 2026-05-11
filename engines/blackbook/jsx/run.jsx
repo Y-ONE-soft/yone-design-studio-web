@@ -216,6 +216,7 @@
                 tmplBounds.push([b[0], b[1], b[2], b[3]]);
             }
         }
+        tmplBounds.sort(function(a, b) { return a[1] - b[1]; });
         var fpp = tmplBounds.length || 1;
         var masterPage = lastPage.appliedMaster;
         var insertAfter = lastPage;
@@ -389,13 +390,14 @@
         var safetyCount = 0;
         while (lastFrame.overflows && safetyCount < 3) {
             var lastPage = lastFrame.parentPage;
-            // 같은 페이지의 프레임 바운드를 템플릿으로 사용
+            // 같은 페이지의 프레임 바운드를 템플릿으로 사용 (왼쪽→오른쪽 정렬)
             var tmplBounds = [];
             var pageTFs = lastPage.textFrames;
             for (var ti = 0; ti < pageTFs.length; ti++) {
                 var b = pageTFs[ti].geometricBounds;
                 tmplBounds.push([b[0], b[1], b[2], b[3]]);
             }
+            tmplBounds.sort(function(a, b) { return a[1] - b[1]; });
             var fpp = tmplBounds.length || 2;  // 정답 페이지는 기본 2프레임/페이지
 
             var newPage = doc.pages.add(LocationOptions.AFTER, lastPage);

@@ -48,9 +48,9 @@ def find_indesign_app() -> str:
         ["open", "-a", f"/Applications/{app}"],
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
     )
-    # 실행 대기 (최대 60초)
-    for _ in range(30):
-        time.sleep(2)
+    # 실행 대기 (최대 120초 — InDesign 콜드 스타트는 느림)
+    for _ in range(40):
+        time.sleep(3)
         if _is_indesign_running(app):
             return app
     raise RuntimeError(f"{app} 실행 실패 — 수동으로 InDesign을 켜주세요")
@@ -79,15 +79,18 @@ def run_jsx(jsx_path: str, log, poll_log_path: str = None, timeout: int = 1200,
 
     cancel_check: 콜백 함수. True 반환 시 작업 중단.
     """
-    # InDesign 실행 락 획득 (다른 작업 완료까지 대기)
     job_name = os.path.basename(jsx_path)
+
+    # InDesign 실행 확인을 락 획득 전에 수행 (대기 중 락 점유 방지)
+    log("[InDesign] InDesign 실행 확인 중...")
+    app = find_indesign_app()
+    log(f"[InDesign] {app} 확인 완료")
+
+    # InDesign 실행 락 획득 (다른 작업 완료까지 대기)
     lock_acquire(job_name)
     log(f"[InDesign] 락 획득 — {job_name}")
 
     try:
-        app = find_indesign_app()
-        log(f"[InDesign] {app} 사용")
-
         # settings.json 경로 추출 (JSX 파일에서)
         with open(jsx_path, encoding="utf-8") as f:
             jsx_content = f.read()

@@ -41,7 +41,14 @@ def resolve(path):
         return path
 
     # 상대경로 -> STUDIO_ROOT 기준
-    return os.path.join(config.STUDIO_ROOT, path)
+    resolved = os.path.join(config.STUDIO_ROOT, path)
+    if not os.path.exists(resolved):
+        # 로컬 Documents에서 실행된 경우 iCloud 경로로 폴백
+        icloud_studio = os.path.join(_ICLOUD_DOCS, "작업", "Y.ONE STUDIO")
+        icloud_resolved = os.path.join(icloud_studio, path)
+        if os.path.exists(icloud_resolved):
+            return icloud_resolved
+    return resolved
 
 
 def resolve_config(cfg, keys):

@@ -1,0 +1,2390 @@
+{
+  "school": "상일여고",
+  "grade": "고2",
+  "round": 2,
+  "ms_paras": 187,
+  "indd_paras": 205,
+  "matched": 139,
+  "unmatched_ms": 48,
+  "extra_indd": 66,
+  "matches": [
+    {
+      "ms": {
+        "q": 0,
+        "p": 0,
+        "pstyle": "문제 번호",
+        "text": "다음 단어의 영영풀이로 적절하지 않은 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 1,
+        "pstyle": "선지",
+        "text": "① identify : to recognize or confirm who someone is"
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① identify : to recognize or confirm who someone is\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 2,
+        "pstyle": "선지",
+        "text": "② sociable : friendly and enjoying spending time with other people"
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② sociable : friendly and enjoying spending time with other people\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 3,
+        "pstyle": "선지",
+        "text": "③ imminent : well-known and respected in a particular field"
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ imminent : well-known and respected in a particular field\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 4,
+        "pstyle": "선지",
+        "text": "④ obstacle : something that blocks the way or makes progress difficult"
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ obstacle : something that blocks the way or makes progress difficult\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 5,
+        "pstyle": "선지",
+        "text": "⑤ pursuit : the act of trying to achieve or get something"
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ pursuit : the act of trying to achieve or get something\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 6,
+        "pstyle": "문제 번호",
+        "text": "다음 문장의 밑줄 친 부분 중, 문맥상 적절하지 않은 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 7,
+        "pstyle": "선지",
+        "text": "① Each culture has its own distinct traditions and customs."
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① Each culture has its own distinct traditions and customs.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 8,
+        "pstyle": "선지",
+        "text": "② The new classification system helps researchers organize data quickly."
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② The new classification system helps researchers organize data quickly.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 9,
+        "pstyle": "선지",
+        "text": "③ The country's most prominent university attracts many international students."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 10,
+        "pstyle": "선지",
+        "text": "④ The road construction was obstructed by strong support of the community."
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ The road construction was obstructed by strong support of the community.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 11,
+        "pstyle": "선지",
+        "text": "⑤ Physical therapy helped her recover fully from the knee injury."
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ Physical therapy helped her recover fully from the knee injury.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 12,
+        "pstyle": "문제 번호",
+        "text": "다음 주어진 해석에 대한 영작에서 밑줄 친 부분이 적절하지 않은 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 13,
+        "pstyle": "선지",
+        "text": "① 그녀는 상담을 위해 일주일에 한 번 심리치료사를 방문한다."
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① 그녀는 상담을 위해 일주일에 한 번 심리치료사를 방문한다.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 14,
+        "pstyle": "지문",
+        "text": "→ She visits a psychiatrist once a week for counseling."
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "→ She visits a psychiatrist once a week for counseling.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 15,
+        "pstyle": "선지",
+        "text": "② 전문가들은 시민의 개인 데이터를 보호하기 위해 강력한 법적 체계가 필요하다고 말한다."
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② 전문가들은 시민의 개인 데이터를 보호하기 위해 강력한 법적 체계가 필요하다고 말한다.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 16,
+        "pstyle": "지문",
+        "text": "→ Experts say that a strong legal framework is needed to protect citizens' perso"
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "→ Experts say that a strong legal framework is needed to protect citizens’ perso"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 17,
+        "pstyle": "선지",
+        "text": "③ 균형 잡힌 삶을 유지하기 위해 일보다 건강을 우선시하는 것이 중요하다."
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ 균형 잡힌 삶을 유지하기 위해 일보다 건강을 우선시하는 것이 중요하다.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 18,
+        "pstyle": "지문",
+        "text": "→ It is important to prioritize health over work to maintain a balanced life."
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "→ It is important to prioritize health over work to maintain a balanced life.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 19,
+        "pstyle": "선지",
+        "text": "④ 학생의 고집 센 규칙 따르기 거부는 교장 선생님과의 면담으로 이어졌다."
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ 학생의 고집 센 규칙 따르기 거부는 교장 선생님과의 면담으로 이어졌다.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 20,
+        "pstyle": "지문",
+        "text": "→ The student's obstinate refusal to follow the rules led to a meeting with the "
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 21,
+        "pstyle": "선지",
+        "text": "⑤ 기후 변화는 지구의 모든 나라에 영향을 미치는 전 세계적 현상이다."
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ 기후 변화는 지구의 모든 나라에 영향을 미치는 전 세계적 현상이다.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 22,
+        "pstyle": "지문",
+        "text": "→ Climate change is a global phenomenon that affects all countries on Earth."
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "→ Climate change is a global phenomenon that affects all countries on Earth.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 23,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 요지로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 24,
+        "pstyle": "지문",
+        "text": " The arts and aesthetics offer emotional connection to the full range of human e"
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " The arts and aesthetics offer emotional connection to the full range of human e"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 25,
+        "pstyle": "선지",
+        "text": "① 예술과 미학은 다양한 인간 경험에 대한 정서적인 연결을 제공한다."
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① 예술과 미학은 다양한 인간 경험에 대한 정서적인 연결을 제공한다.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 26,
+        "pstyle": "선지",
+        "text": "② 인생에서 만족감은 설탕과 같은 단맛을 느끼게 해주는 미각과 같다."
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② 인생에서 만족감은 설탕과 같은 단맛을 느끼게 해주는 미각과 같다.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 27,
+        "pstyle": "선지",
+        "text": "③ 예술가는 배고픔과 같은 삶의 어려움을 극복하면서 성장해야 한다."
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ 예술가는 배고픔과 같은 삶의 어려움을 극복하면서 성장해야 한다.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 28,
+        "pstyle": "선지",
+        "text": "④ 인종차별, 불평등과 같은 문제들이 예술 작품의 소재가 되어야 한다."
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ 인종차별, 불평등과 같은 문제들이 예술 작품의 소재가 되어야 한다.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 29,
+        "pstyle": "선지",
+        "text": "⑤ 전쟁과 같은 가슴 아픈 상황을 극복하면서 예술 작품이 만들어져야 한다."
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ 전쟁과 같은 가슴 아픈 상황을 극복하면서 예술 작품이 만들어져야 한다.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 30,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 밑줄 친 ⓐ~ⓔ 중, 어법상 어색한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 31,
+        "pstyle": "지문",
+        "text": " Too many times people, especially in today's generation, expect things to just "
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " Too many times people, especially in today’s generation, expect things to just "
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 32,
+        "pstyle": "선지",
+        "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ"
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 33,
+        "pstyle": "다음 글을 읽고",
+        "text": "다음 글을 읽고 물음에 답하시오."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 34,
+        "pstyle": "지문",
+        "text": "Do Gen Xers only care about job stability while Gen Zers are entirely selfish? S"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "Do Gen Xers only care about job stability while Gen Zers are entirely selfish? S"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 35,
+        "pstyle": "지문",
+        "text": "A case in point is the assessment of millennials in the workplace. ( C )In the e"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "A case in point is the assessment of millennials in the workplace. ( C )In the e"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 36,
+        "pstyle": "문제 번호",
+        "text": "윗글에서 전체 흐름과 관계없는 문장은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 37,
+        "pstyle": "선지",
+        "text": "① (A)     ② (B)     ③ (C)     ④ (D)     ⑤ (E)"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① (A)     ② (B)     ③ (C)     ④ (D)     ⑤ (E)\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 38,
+        "pstyle": "문제 번호",
+        "text": "다음 중 윗글을 읽고 답할 수 없는 질문은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 39,
+        "pstyle": "선지",
+        "text": "① How does the degree to which people’s values and attitudes change differ accor"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① How does the degree to which people’s values and attitudes change differ accor"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 40,
+        "pstyle": "선지",
+        "text": "② What tendency is mentioned in the passage as being common among people during "
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② What tendency is mentioned in the passage as being common among people during "
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 41,
+        "pstyle": "선지",
+        "text": "③ What two changes in behavior are presented as occurring after marriage and hav"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ What two changes in behavior are presented as occurring after marriage and hav"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 42,
+        "pstyle": "선지",
+        "text": "④ How were millennials evaluated when they first entered the job market?"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ How were millennials evaluated when they first entered the job market?\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 43,
+        "pstyle": "선지",
+        "text": "⑤ How did millennials come to be evaluated in the workplace over time?"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ How did millennials come to be evaluated in the workplace over time?\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 44,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 빈칸에 들어갈 말로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 45,
+        "pstyle": "지문",
+        "text": " If you had wanted to create a \"selfdriving\" car in the 1950s, your best option "
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 46,
+        "pstyle": "선지",
+        "text": "① Medical systems are still need to be developed"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① Medical systems are still need to be developed\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 47,
+        "pstyle": "선지",
+        "text": "② Customizing vehicles for drivers is not yet possible"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② Customizing vehicles for drivers is not yet possible\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 48,
+        "pstyle": "선지",
+        "text": "③ We do not face challenges anymore when it comes to vehicles"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ We do not face challenges anymore when it comes to vehicles\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 49,
+        "pstyle": "선지",
+        "text": "④ We need to develop our understanding about the accelerator"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ We need to develop our understanding about the accelerator\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 50,
+        "pstyle": "선지",
+        "text": "⑤ The field of medicine has gone through the similar process as well"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ The field of medicine has gone through the similar process as well\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 51,
+        "pstyle": "문제 번호",
+        "text": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 52,
+        "pstyle": "지문",
+        "text": " Most people resist the idea of a true self estimate, probably because they fear"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "테두리",
+        "tf_label": "",
+        "text": " Most people resist the idea of a true self estimate, probably because they fear"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 53,
+        "pstyle": "지문_순서",
+        "text": "(A) The second half of Goethe’s maxim is important too. He states that it is equ"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "지문_순서",
+        "tf_label": "",
+        "text": "(A) The second half of Goethe’s maxim is important too. He states that it is equ"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 54,
+        "pstyle": "지문_순서",
+        "text": "(B) We underestimate our capabilities just as much and just as dangerously as we"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "지문_순서",
+        "tf_label": "",
+        "text": "(B) We underestimate our capabilities just as much and just as dangerously as we"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 55,
+        "pstyle": "지문_순서",
+        "text": "(C) As Goethe’s maxim goes, it is a great failing “to see yourself as more than "
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "지문_순서",
+        "tf_label": "",
+        "text": "(C) As Goethe’s maxim goes, it is a great failing “to see yourself as more than "
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 56,
+        "pstyle": "선지",
+        "text": "① (A) - (C) - (B)\t\t② (B) - (A) - (C) "
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① (A) - (C) - (B)\t\t② (B) - (A) - (C) \r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 57,
+        "pstyle": "선지",
+        "text": "③ (B) - (C) - (A)\t\t④ (C) - (A) - (B)\t"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ (B) - (C) - (A)\t\t④ (C) - (A) - (B)\t\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 58,
+        "pstyle": "선지",
+        "text": "⑤ (C) - (B) - (A)\t"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ (C) - (B) - (A)\t\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 59,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 제목으로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 60,
+        "pstyle": "지문",
+        "text": "\"Tactics\" is a term drawn from military usage. Strategies are plans of action di"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 61,
+        "pstyle": "선지",
+        "text": "① Military Strategies for Overcoming Daily Time Constraints "
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① Military Strategies for Overcoming Daily Time Constraints \r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 62,
+        "pstyle": "선지",
+        "text": "② Why Modern Technologies Make Us Impatient in Waiting "
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② Why Modern Technologies Make Us Impatient in Waiting \r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 63,
+        "pstyle": "선지",
+        "text": "③ From Burden to Springboard: Tactics for Reorienting Waiting "
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ From Burden to Springboard: Tactics for Reorienting Waiting \r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 64,
+        "pstyle": "선지",
+        "text": "④ The Finite Nature of Time: A Sociological and Cultural View "
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ The Finite Nature of Time: A Sociological and Cultural View \r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 65,
+        "pstyle": "선지",
+        "text": "⑤ How to Eliminate Waiting Times Through Advanced Tactics"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ How to Eliminate Waiting Times Through Advanced Tactics\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 66,
+        "pstyle": "다음 글을 읽고",
+        "text": "다음 글을 읽고 물음에 답하시오."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 67,
+        "pstyle": "지문",
+        "text": "The cohort effect and the traditional notion of a generation are closely related"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "The cohort effect and the traditional notion of a generation are closely related"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 68,
+        "pstyle": "지문",
+        "text": "The cohort effect results in characteristic differences between generations. For"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "The cohort effect results in characteristic differences between generations. For"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 69,
+        "pstyle": "문제 번호",
+        "text": "윗글의 빈칸 (A)에 들어갈 말로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 70,
+        "pstyle": "선지",
+        "text": "① which differ greatly from one individual to another"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① which differ greatly from one individual to another\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 71,
+        "pstyle": "선지",
+        "text": "② which shape their beliefs, values, and behaviors in similar ways"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② which shape their beliefs, values, and behaviors in similar ways\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 72,
+        "pstyle": "선지",
+        "text": "③ that limit their access to social resources"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ that limit their access to social resources\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 73,
+        "pstyle": "선지",
+        "text": "④ which weaken their ability to adapt to change"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ which weaken their ability to adapt to change\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 74,
+        "pstyle": "선지",
+        "text": "⑤ that determine their future income levels"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ that determine their future income levels\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 75,
+        "pstyle": "문제 번호",
+        "text": "윗글에 관한 다음 글의 내용과 일치하는 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 76,
+        "pstyle": "선지",
+        "text": "① Members of the same generation experience similar social events during their f"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① Members of the same generation experience similar social events during their f"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 77,
+        "pstyle": "선지",
+        "text": "② All generations are socialized under the same social conditions."
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② All generations are socialized under the same social conditions.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 78,
+        "pstyle": "선지",
+        "text": "③ Gen X was socialized after the widespread adoption of smartphones."
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ Gen X was socialized after the widespread adoption of smartphones.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 79,
+        "pstyle": "선지",
+        "text": "④ Gen Z grew up while directly experiencing an economic crisis."
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ Gen Z grew up while directly experiencing an economic crisis.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 80,
+        "pstyle": "선지",
+        "text": "⑤ Differences between generations arise solely from individual personality diffe"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ Differences between generations arise solely from individual personality diffe"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 81,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 밑줄 친 부분 중 어법상 어색한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 82,
+        "pstyle": "지문",
+        "text": " All of the restaurants are using carefully chosen words ① to evoke vivid mental"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " All of the restaurants are using carefully chosen words ① to evoke vivid mental"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 83,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 내용을 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은?"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "문제 번호",
+        "tf_label": "",
+        "text": "다음 글의 내용을 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은? (1점)\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 84,
+        "pstyle": "지문",
+        "text": " If a firm is going to be saved by the government, it might be easier to concent"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " If a firm is going to be saved by the government, it might be easier to concent"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 85,
+        "pstyle": "지문",
+        "text": "↓"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "↓\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 86,
+        "pstyle": "지문",
+        "text": " Government supports can lead to moral hazard, where firms (A)__________ lobbyin"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "테두리_일반",
+        "tf_label": "",
+        "text": " Government supports can lead to moral hazard, where firms (A)__________ lobbyin"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 87,
+        "pstyle": "선지",
+        "text": "      (A)\t            (B) "
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "      (A)\t           \t\t (B) \r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 88,
+        "pstyle": "선지",
+        "text": "① carry out\t\tprudent"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① carry out\t\tprudent\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 89,
+        "pstyle": "선지",
+        "text": "② rely on\t\tirrational"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② rely on\t\tirrational\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 90,
+        "pstyle": "선지",
+        "text": "③ agree on\t\tinformed"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ agree on\t\tinformed\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 91,
+        "pstyle": "선지",
+        "text": "④ object to\t\tunfair"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ object to\t\tunfair\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 92,
+        "pstyle": "선지",
+        "text": "⑤ stamp out\t\tunwise"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ stamp out\t\tunwise\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 93,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "문제 번호",
+        "tf_label": "",
+        "text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은? (0.8점)\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 94,
+        "pstyle": "지문",
+        "text": " Merely convincing your children that worry is senseless and that they would be "
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " Merely convincing your children that worry is senseless and that they would be "
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 95,
+        "pstyle": "선지",
+        "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 96,
+        "pstyle": "문제 번호",
+        "text": "다음 글에서 전체 흐름과 관계없는 문장은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 97,
+        "pstyle": "지문",
+        "text": " To be mathematically literate means to be able to think critically about issues"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " To be mathematically literate means to be able to think critically about issues"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 98,
+        "pstyle": "선지",
+        "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 99,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 100,
+        "pstyle": "지문",
+        "text": "Moreover, commitments make people willing to perform actions that they would not"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "테두리",
+        "tf_label": "",
+        "text": "Moreover, commitments make people willing to perform actions that they would not"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 101,
+        "pstyle": "지문",
+        "text": " Commitment is the glue holding together characteristically human forms of socia"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " Commitment is the glue holding together characteristically human forms of socia"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 102,
+        "pstyle": "선지",
+        "text": "① (A)     ② (B)     ③ (C)     ④ (D)     ⑤ (E)"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① (A)     ② (B)     ③ (C)     ④ (D)     ⑤ (E)\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 103,
+        "pstyle": "다음 글을 읽고",
+        "text": "다음 글을 읽고 물음에 답하시오."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 104,
+        "pstyle": "지문",
+        "text": "Often considered the father of modern computer science, Alan Turing was famous f"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "Often considered the father of modern computer science, Alan Turing was famous f"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 105,
+        "pstyle": "문제 번호",
+        "text": "윗글의 밑줄 친 ⓐThis research paper가 가리키는 대상으로 가장 적절한 것은?"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "문제 번호",
+        "tf_label": "",
+        "text": "윗글의 밑줄 친 ⓐThis research paper가 가리키는 대상으로 가장 적절한 것은? (0.8점)\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 106,
+        "pstyle": "선지",
+        "text": "① A lecture in which Alan Turing explained the concept of computer memory"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① A lecture in which Alan Turing explained the concept of computer memory\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 107,
+        "pstyle": "선지",
+        "text": "② A technical report in which Alan Turing designed an electronic stored program"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② A technical report in which Alan Turing designed an electronic stored program\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 108,
+        "pstyle": "선지",
+        "text": "③ A research paper titled “Computing Machinery and Intelligence”"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ A research paper titled “Computing Machinery and Intelligence”\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 109,
+        "pstyle": "선지",
+        "text": "④ A psychological study analyzing the interaction between humans and computers"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ A psychological study analyzing the interaction between humans and computers\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 110,
+        "pstyle": "선지",
+        "text": "⑤ An engineering paper introducing the structure of early computer hardware"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ An engineering paper introducing the structure of early computer hardware\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 111,
+        "pstyle": "문제 번호",
+        "text": "윗글의 목적으로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 112,
+        "pstyle": "선지",
+        "text": "① to warn about the risks of artificial intelligence"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① to warn about the risks of artificial intelligence\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 113,
+        "pstyle": "선지",
+        "text": "② to explain how computer memory works"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② to explain how computer memory works\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 114,
+        "pstyle": "선지",
+        "text": "③ to compare the historical development of computer science"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ to compare the historical development of computer science\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 115,
+        "pstyle": "선지",
+        "text": "④ to emphasize the economic value of artificial intelligence research"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ to emphasize the economic value of artificial intelligence research\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 116,
+        "pstyle": "선지",
+        "text": "⑤ to introduce Alan Turing’s research and his question about machine intelligenc"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ to introduce Alan Turing’s research and his question about machine intelligenc"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 117,
+        "pstyle": "다음 글을 읽고",
+        "text": "다음 글을 읽고 물음에 답하시오."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 118,
+        "pstyle": "지문",
+        "text": "Suppose that you find information about something on the internet. Among the man"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "Suppose that you find information about something on the internet. Among the man"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 119,
+        "pstyle": "문제 번호",
+        "text": "윗글의 빈칸 (A)에 들어갈 말로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 120,
+        "pstyle": "선지",
+        "text": "① what you and others have clicked on before"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① what you and others have clicked on before\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 121,
+        "pstyle": "선지",
+        "text": "② the accuracy of the information"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② the accuracy of the information\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 122,
+        "pstyle": "선지",
+        "text": "③ the popularity of search engines"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ the popularity of search engines\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 123,
+        "pstyle": "선지",
+        "text": "④ the number of internet users"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ the number of internet users\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 124,
+        "pstyle": "선지",
+        "text": "⑤ the development of online platforms"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ the development of online platforms\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 125,
+        "pstyle": "문제 번호",
+        "text": "윗글의 제목으로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 126,
+        "pstyle": "선지",
+        "text": "① How Online Algorithms Improve the Accuracy of Information"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① How Online Algorithms Improve the Accuracy of Information\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 127,
+        "pstyle": "선지",
+        "text": "② Why Click-Based Algorithms Deliver More Reliable Information"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② Why Click-Based Algorithms Deliver More Reliable Information\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 128,
+        "pstyle": "선지",
+        "text": "③ How Users’ Clicks Help Algorithms Find Accurate Information"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ How Users’ Clicks Help Algorithms Find Accurate Information\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 129,
+        "pstyle": "선지",
+        "text": "④ Why Online Algorithms Need More Click Data to Improve Search Results"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ Why Online Algorithms Need More Click Data to Improve Search Results\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 130,
+        "pstyle": "선지",
+        "text": "⑤ How Click-Based Algorithms Spread Misinformation"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ How Click-Based Algorithms Spread Misinformation\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 131,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 주제로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 132,
+        "pstyle": "지문",
+        "text": "Mirror neurons are the hardware of empathy, and so what would make more sense th"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "Mirror neurons are the hardware of empathy, and so what would make more sense th"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 133,
+        "pstyle": "선지",
+        "text": "① difficulties in identifying mirror neurons in aquatic species "
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① difficulties in identifying mirror neurons in aquatic species \r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 134,
+        "pstyle": "선지",
+        "text": "② the necessity of mirror neurons for the survival of individual animals "
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② the necessity of mirror neurons for the survival of individual animals \r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 135,
+        "pstyle": "선지",
+        "text": "③ the potential universality of mirror neurons in social animal groups "
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ the potential universality of mirror neurons in social animal groups \r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 136,
+        "pstyle": "선지",
+        "text": "④ evolutionary differences between humans and other herd-living animals "
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ evolutionary differences between humans and other herd-living animals \r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 137,
+        "pstyle": "선지",
+        "text": "⑤ roles of mirror neurons in enhancing physical movements of social units"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ roles of mirror neurons in enhancing physical movements of social units\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 138,
+        "pstyle": "다음 글을 읽고",
+        "text": "다음 글을 읽고 물음에 답하시오."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 139,
+        "pstyle": "지문",
+        "text": "In 2011, computer engineer Jeff Dean and Stanford University computer science pr"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "In 2011, computer engineer Jeff Dean and Stanford University computer science pr"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 140,
+        "pstyle": "문제 번호",
+        "text": "윗글의 내용을 한 문장으로 요약하고자 한다. 빈칸(A), (B)에 들어갈 말로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 141,
+        "pstyle": "지문",
+        "text": "A large neural network processed millions of images and learned to recognize pat"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 142,
+        "pstyle": "선지",
+        "text": "     (A)\t\t (B)"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "     (A)\t\t\t (B)\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 143,
+        "pstyle": "선지",
+        "text": "① instruction\t\temotional"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① instruction\t\temotional\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 144,
+        "pstyle": "선지",
+        "text": "② instruction\t\tunsupervised"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② instruction\t\tunsupervised\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 145,
+        "pstyle": "선지",
+        "text": "③ training\t\tcommercial"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ training\t\tcommercial\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 146,
+        "pstyle": "선지",
+        "text": "④ training\t\tlinguistic"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ training\t\tlinguistic\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 147,
+        "pstyle": "선지",
+        "text": "⑤ analysis       \tintelligent"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ analysis       \tintelligent\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 148,
+        "pstyle": "서술형 번호",
+        "text": "다음 글의 밑줄 친 “virtues\"에 해당하는 표현을 네 개 찾아 쓰시오."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 149,
+        "pstyle": "지문",
+        "text": " Imagine that your usually stingy friend delights in buying you a Christmas pres"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " Imagine that your usually stingy friend delights in buying you a Christmas pres"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 150,
+        "pstyle": "테두리_조건",
+        "text": "<조건>"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 151,
+        "pstyle": "테두리_보기",
+        "text": "• 정답은 모두 2단어 이상 10단어 이하의 연속된 표현임."
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "테두리_조건",
+        "tf_label": "",
+        "text": "• 정답은 모두 2단어 이상 10단어 이하의 연속된 표현임.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 152,
+        "pstyle": "테두리_보기",
+        "text": "• 정답은 모두 명사구임."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 153,
+        "pstyle": "테두리_보기",
+        "text": "• 다른 단어를 추가하거나 어형을 변화시키지 말 것."
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "테두리_조건",
+        "tf_label": "",
+        "text": "• 다른 단어를 추가하거나 어형을 변화시키지 말 것.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 154,
+        "pstyle": "테두리_보기",
+        "text": "(1) _____________________________________________________"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "서술형답지",
+        "tf_label": "",
+        "text": "(1) ____________________________________________\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 155,
+        "pstyle": "테두리_보기",
+        "text": "(2) _____________________________________________________"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "서술형답지 사본",
+        "tf_label": "",
+        "text": "(2) ____________________________________________\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 156,
+        "pstyle": "테두리_보기",
+        "text": "(3) _____________________________________________________"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "서술형답지 사본",
+        "tf_label": "",
+        "text": "(3) ____________________________________________\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 157,
+        "pstyle": "테두리_보기",
+        "text": "(4) _____________________________________________________"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "서술형답지 사본",
+        "tf_label": "",
+        "text": "(4) ____________________________________________\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 158,
+        "pstyle": "서술형 번호",
+        "text": "다음 글의 밑줄 친 ⓐ가 의미하는 바를 나타내는 다음 문장 속 빈칸 (A)와 (B)에 각각 들어갈 한 단어를 본문 내에서 찾아 쓰시오."
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "서술형 번호",
+        "tf_label": "",
+        "text": "다음 글의 밑줄 친 ⓐ가 의미하는 바를 나타내는 다음 문장 속 빈칸 (A)와 (B)에 각각 들어갈 한 단어를 본문 내에서 찾아 쓰시오.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 159,
+        "pstyle": "지문",
+        "text": " Take a look at some of the most powerful, rich, and famous people in the world."
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " Take a look at some of the most powerful, rich, and famous people in the world."
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 160,
+        "pstyle": "지문",
+        "text": " Your (A)__________ is required in return for your (B)__________ and fame."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 161,
+        "pstyle": "서술형답지",
+        "text": "답: (A)_________________________"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 162,
+        "pstyle": "지문",
+        "text": "   (B)_________________________"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 163,
+        "pstyle": "다음 글을 읽고",
+        "text": "다음 글을 읽고 물음에 답하시오. "
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 164,
+        "pstyle": "지문",
+        "text": "Apart from when a person is born or which life stage they are going through, som"
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "Apart from when a person is born or which life stage they are going through, som"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 165,
+        "pstyle": "서술형 번호",
+        "text": "윗글의 내용을 한 문장으로 요약하고자 한다. 빈칸(A), (B)에 들어갈 단어를 본문에서 찾아 쓰시오."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 166,
+        "pstyle": "지문",
+        "text": "Radical social changes such as the climate crisis affect people across generatio"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 167,
+        "pstyle": "지문_순서",
+        "text": "(A) _______________________"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 168,
+        "pstyle": "지문_순서",
+        "text": "(B) _______________________"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 169,
+        "pstyle": "서술형 번호",
+        "text": "다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A) ~ (C)에 들어갈 말을 본문의 단어를 활용하여 쓰시오."
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "서술형 번호",
+        "tf_label": "",
+        "text": "다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A) ~ (C)에 들어갈 말을 본문의 단어를 활용하여 쓰시오.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 170,
+        "pstyle": "지문",
+        "text": "To determine the mass of my bowling ball, I might put it onto a balance and comp"
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "To determine the mass of my bowling ball, I might put it onto a balance and comp"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 171,
+        "pstyle": "지문",
+        "text": "Unlike (A)__________ the mass of everyday objects through direct comparison, det"
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "테두리_요약",
+        "tf_label": "",
+        "text": "Unlike (A)__________ the mass of everyday objects through direct comparison, det"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 172,
+        "pstyle": "지문",
+        "text": "<조 건>"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 173,
+        "pstyle": "지문",
+        "text": "한 칸당 하나의 단어를 적을 것"
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "테두리_조건",
+        "tf_label": "",
+        "text": "한 칸당 하나의 단어를 적을 것\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 174,
+        "pstyle": "지문",
+        "text": "본문에 쓰인 단어만 사용할 것"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 175,
+        "pstyle": "지문",
+        "text": "필요시 단어의 형태를 어법에 맞게 변화시킬 것 "
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "테두리_조건",
+        "tf_label": "",
+        "text": "필요시 단어의 형태를 어법에 맞게 변화시킬 것 \r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 176,
+        "pstyle": "지문_순서",
+        "text": "(A) : _______________ (B) : _______________ (C) : _______________"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 177,
+        "pstyle": "서술형 번호",
+        "text": "다음 글의 요지를 주어진 단어들만 가지고 재배열하시오."
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "서술형 번호",
+        "tf_label": "",
+        "text": "다음 글의 요지를 주어진 단어들만 가지고 재배열하시오.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 178,
+        "pstyle": "지문",
+        "text": " Fans who are inclined to spend a lot of time thinking about what athletes owe t"
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " Fans who are inclined to spend a lot of time thinking about what athletes owe t"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 179,
+        "pstyle": "지문",
+        "text": "요지: 팬은 그들이 선수로부터 여러 가지를 요구하는 것과 같이 의무를 가지고 있다."
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "테두리_요약",
+        "tf_label": "",
+        "text": "요지: 팬은 그들이 선수로부터 여러 가지를 요구하는 것과 같이 의무를 가지고 있다.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 180,
+        "pstyle": "지문",
+        "text": "duties / they / the players / just / expect /"
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "테두리_보기",
+        "tf_label": "",
+        "text": "duties / they / the players / just / expect /\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 181,
+        "pstyle": "지문",
+        "text": "as / from / fans / have / things"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 182,
+        "pstyle": "지문",
+        "text": "→ _____________________________________________________"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 183,
+        "pstyle": "서술형 번호",
+        "text": "다음 글의 (A), (B)에 해당하는 밭의 모습을 본문에서 찾아 우리말로 쓰시오."
+      },
+      "final": {
+        "page": "8",
+        "pstyle": "서술형 번호",
+        "tf_label": "",
+        "text": "다음 글의 (A), (B)에 해당하는 밭의 모습을 본문에서 찾아 우리말로 쓰시오.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 184,
+        "pstyle": "지문",
+        "text": " The concept of ecosystem states should be familiar to anyone with a home vegeta"
+      },
+      "final": {
+        "page": "8",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " The concept of ecosystem states should be familiar to anyone with a home vegeta"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 185,
+        "pstyle": "지문",
+        "text": "(A)______________________________________________________"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 186,
+        "pstyle": "지문",
+        "text": "(B)______________________________________________________"
+      },
+      "final": null
+    }
+  ]
+}

@@ -1,0 +1,2014 @@
+{
+  "school": "명일여고",
+  "grade": "고2",
+  "exam_period": "26-1-중간",
+  "exam_date": "",
+  "exam_type": "",
+  "round": 2,
+  "meta": {},
+  "questions": [
+    {
+      "source": "",
+      "paragraphs": [
+        {
+          "text": "선택형 20 서논술형 6 ",
+          "runs": [
+            {
+              "t": "선택형 20 서논술형 6 ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "다음 중 밑줄 친 단어의 쓰임이 적절하지 않은 것은? ",
+          "runs": [
+            {
+              "t": "다음 중 밑줄 친 단어의 쓰임이 적절하지 ",
+              "ul": false
+            },
+            {
+              "t": "않은",
+              "ul": true
+            },
+            {
+              "t": " 것은?",
+              "ul": false
+            },
+            {
+              "t": " ",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "① Newborn babies are extremely vulnerable to infections because their immune systems are still developing.",
+          "runs": [
+            {
+              "t": "① Newborn babies are extremely ",
+              "ul": false
+            },
+            {
+              "t": "vulnerable",
+              "ul": true
+            },
+            {
+              "t": " to infections because their immune systems are still developing.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② In ancient Greek mythology, Zeus is often depicted as the king of all the gods on Mount Olympus.",
+          "runs": [
+            {
+              "t": "② In ancient Greek ",
+              "ul": false
+            },
+            {
+              "t": "mythology",
+              "ul": true
+            },
+            {
+              "t": ", Zeus is often depicted as the king of all the gods on Mount Olympus.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ My trusted colleague has been helping me prepare for the important presentation next week.",
+          "runs": [
+            {
+              "t": "③ My trusted ",
+              "ul": false
+            },
+            {
+              "t": "colleague",
+              "ul": true
+            },
+            {
+              "t": " has been helping me prepare for the important presentation next week.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ The generous king tormented his loyal subjects with lavish feasts, valuable gifts, and significant tax reductions.",
+          "runs": [
+            {
+              "t": "④ The generous king ",
+              "ul": false
+            },
+            {
+              "t": "tormented",
+              "ul": true
+            },
+            {
+              "t": " his loyal subjects with lavish feasts, valuable gifts, and significant tax reductions.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ Out of a deep sense of loyalty to her company, Sarah refused to accept the offer from a rival firm.",
+          "runs": [
+            {
+              "t": "⑤ Out of a deep sense of ",
+              "ul": false
+            },
+            {
+              "t": "loyalty",
+              "ul": true
+            },
+            {
+              "t": " to her company, Sarah refused to accept the offer from a rival firm.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글의 밑줄 친 부분 중 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 밑줄 친 부분 중 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " Human beings like certainty. This liking stems from our ancient ancestors who needed to ⓐremain alive alongside saber-toothed tigers and poisonous berries. Our brains evolved to help us attend to threats, keep away from them, and survive afterward. In fact, we learned that the more certain we were about something, the ⓑmore chances we had of making the right choice. Is this berry the same shape as last time? The same size? If I know for certain it is, my brain will direct me to eat it because I know it's safe. And if I'm uncertain, my brain will send out a danger alert to protect me. The ⓒavoidance of uncertainty all those millennia ago ensured our survival to the present day, and the danger alert system continues to protect us. This is achieved by our brains labeling new, vague, or unpredictable everyday events and experiences as ⓓinvariable. Our brains then generate sensations, thoughts, and action plans to keep us safe from the ⓔobscure element, and we live to see another day.",
+          "runs": [
+            {
+              "t": " Human beings like certainty. This liking stems from our ancient ancestors who needed to ⓐ",
+              "ul": false
+            },
+            {
+              "t": "remain",
+              "ul": true
+            },
+            {
+              "t": " alive alongside saber-toothed tigers and poisonous berries. Our brains evolved to help us attend to threats, keep away from them, and survive afterward. In fact, we learned that the more certain we were about something, the ⓑ",
+              "ul": false
+            },
+            {
+              "t": "more",
+              "ul": true
+            },
+            {
+              "t": " chances we had of making the right choice. Is this berry the same shape as last time? The same size? If I know for certain it is, my brain will direct me to eat it because I know it's safe. And if I'm uncertain, my brain will send out a danger alert to protect me. The ⓒ",
+              "ul": false
+            },
+            {
+              "t": "avoidance",
+              "ul": true
+            },
+            {
+              "t": " of uncertainty all those millennia ago ensured our survival to the present day, and the danger alert system continues to protect us. This is achieved by our brains labeling new, vague, or unpredictable everyday events and experiences as ⓓ",
+              "ul": false
+            },
+            {
+              "t": "invariable",
+              "ul": true
+            },
+            {
+              "t": ". Our brains then generate sensations, thoughts, and action plans to keep us safe from the ⓔ",
+              "ul": false
+            },
+            {
+              "t": "obscure",
+              "ul": true
+            },
+            {
+              "t": " element, and we live to see another day.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ",
+          "runs": [
+            {
+              "t": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 ",
+              "ul": false
+            },
+            {
+              "t": "않은",
+              "ul": true
+            },
+            {
+              "t": " 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "There're a few things that I learned while doing these 30 days challenges. The first was, instead of the months flying by, ① unnoticed, the time was much more ② vivid. This was part of the challenge I did to take a picture every day for a month, and I remember exactly where I was and what I was doing that day. I also noticed that as I started to do more and harder 30-day challenges, my self-confidence ③ increased. I went from desk-dwelling computer nerd to the kind of guy who bikes to work. For fun! Even last year I ended up hiking up Mt. Kilimanjaro, the highest mountain in Africa. I would never have been that ④ timid before I ⑤ began my 30-day challenges.",
+          "runs": [
+            {
+              "t": "There're a few things that I learned while doing these 30 days challenges. The first was, instead of the months flying by, ① ",
+              "ul": false
+            },
+            {
+              "t": "unnoticed",
+              "ul": true
+            },
+            {
+              "t": ", the time was much more ② ",
+              "ul": false
+            },
+            {
+              "t": "vivid",
+              "ul": true
+            },
+            {
+              "t": ". This was part of the challenge I did to take a picture every day for a month, and I remember exactly where I was and what I was doing that day. I also noticed that as I started to do more and harder 30-day challenges, my self-confidence ③ ",
+              "ul": false
+            },
+            {
+              "t": "increased",
+              "ul": true
+            },
+            {
+              "t": ". I went from desk-dwelling computer nerd to the kind of guy who bikes to work. For fun! Even last year I ended up hiking up Mt. Kilimanjaro, the highest mountain in Africa. I would never have been that ④ ",
+              "ul": false
+            },
+            {
+              "t": "timid",
+              "ul": true
+            },
+            {
+              "t": " before I ⑤ ",
+              "ul": false
+            },
+            {
+              "t": "began",
+              "ul": true
+            },
+            {
+              "t": " my 30-day challenges.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "다음 글을 읽고 물음에 답하시오.",
+          "runs": [
+            {
+              "t": "다음 글을 읽고 물음에 답하시오.",
+              "ul": false
+            }
+          ],
+          "pstyle": "다음 글을 읽고"
+        },
+        {
+          "text": " The more people have to do unwanted things the more chances are that they create unpleasant environment for themselves and others. (A)[If / Unless] you hate the thing you do but have to do it nonetheless, you have choice between hating the thing and accepting that it needs to be done. (B)[Either / Neither] way you will do it. Doing it from place of hatred will develop hatred towards the self and others around you; doing it from the place of acceptance will create compassion towards the self and allow for opportunities to find  more suitable way of accomplishing the task. If you decide to accept the fact that your task has to be done, start from (C)[recognising / avoiding] that your situation is a gift from life; this will help you to see it as a lesson in acceptance.",
+          "runs": [
+            {
+              "t": " The more people have to do unwanted things the more chances are that they create unpleasant environment for themselves and others. (A)[If / Unless] you hate the thing you do but have to do it nonetheless, you have choice between hating the thing and accepting that it needs to be done. (B)[Either / Neither] way you will do it. Doing it from place of hatred will develop hatred towards the self and others around you; doing it from the place of acceptance will create compassion towards the self and allow for opportunities to find  more suitable way of accomplishing the task. If you decide to accept the fact that your task has to be done, start from (C)[recognising / avoiding] that your situation is a gift from life; this will help you to see it as a lesson in acceptance.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "위 글의 요지로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "위 글의 요지로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "① Focusing on tasks that you desire is efficient.",
+          "runs": [
+            {
+              "t": "① Focusing on tasks that you desire is efficient.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② People have a tendency to choose only what they want.",
+          "runs": [
+            {
+              "t": "② People have a tendency to choose only what they want.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ Adopting an accepting attitude towards unwanted tasks is crucial.",
+          "runs": [
+            {
+              "t": "③ Adopting an accepting attitude towards unwanted tasks is crucial.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ Recognising that one’s own choice may not always be the best is necessary.",
+          "runs": [
+            {
+              "t": "④ Recognising that one’s own choice may not always be the best is necessary.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ There can be difficulty in choosing between what you want and what you have to do.",
+          "runs": [
+            {
+              "t": "⑤ There can be difficulty in choosing between what you want and what you have to do.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "위 글의 괄호 (A), (B), (C) 안에서 들어갈 문맥에 맞는 낱말로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "위 글의 괄호 (A), (B), (C) 안에서 들어갈 문맥에 맞는 낱말로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "     (A)             (B)               (C)",
+          "runs": [
+            {
+              "t": "     (A)             (B)               (C)",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "① If\t\t  Either\t\trecognising",
+          "runs": [
+            {
+              "t": "① If\t\t  Either\t\trecognising",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② If\t\t  Either\t\tavoiding",
+          "runs": [
+            {
+              "t": "② If\t\t  Either\t\tavoiding",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ If\t\t  Neither\t\tavoiding",
+          "runs": [
+            {
+              "t": "③ If\t\t  Neither\t\tavoiding",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ Unless\t  Neither\t\tavoiding",
+          "runs": [
+            {
+              "t": "④ Unless\t  Neither\t\tavoiding",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ Unless\t  Neither\t\trecognising",
+          "runs": [
+            {
+              "t": "⑤ Unless\t  Neither\t\trecognising",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " Research psychologists often work with self-report data, made up of participants’ verbal accounts of their behavior.",
+          "runs": [
+            {
+              "t": " Research psychologists often work with self-report data, made up of participants’ verbal accounts of their behavior.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(A) However, self-reports can be plagued by several kinds of distortion. One of the most problematic of these distortions is the social desirability bias, which is a tendency to give socially approved answers to questions about oneself. Subjects who are influenced by this bias work overtime trying to create a favorable impression, especially when subjects are asked about sensitive issues.",
+          "runs": [
+            {
+              "t": "(A) However, self-reports can be plagued by several kinds of distortion. One of the most problematic of these distortions is the social desirability bias, which is a tendency to give socially approved answers to questions about oneself. Subjects who are influenced by this bias work overtime trying to create a favorable impression, especially when subjects are asked about sensitive issues.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "(B) This is the case whenever questionnaires, interviews, or personality inventories are used to measure variables. Self-report methods can be quite useful. They take advantage of the fact that people have a unique opportunity to observe themselves full-time.",
+          "runs": [
+            {
+              "t": "(B) This is the case whenever questionnaires, interviews, or personality inventories are used to measure variables. Self-report methods can be quite useful. They take advantage of the fact that people have a unique opportunity to observe themselves full-time.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "(C) For example, many survey respondents will report that they voted in an election or gae to a charity when in fact it is possible to determine that they did not.",
+          "runs": [
+            {
+              "t": "(C) For example, many survey respondents will report that they voted in an election or gae to a charity when in fact it is possible to determine that they did not.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "① (A) - (B) - (C)\t\t② (B) - (A) - (C) ",
+          "runs": [
+            {
+              "t": "① (A) - (B) - (C)\t\t② (B) - (A) - (C) ",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ (B) - (C) - (A)\t\t④ (C) - (A) - (B)\t",
+          "runs": [
+            {
+              "t": "③ (B) - (C) - (A)\t\t④ (C) - (A) - (B)\t",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ (C) - (B) - (A)\t",
+          "runs": [
+            {
+              "t": "⑤ (C) - (B) - (A)\t",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글을 읽고 물음에 답하시오.",
+          "runs": [
+            {
+              "t": "다음 글을 읽고 물음에 답하시오.",
+              "ul": false
+            }
+          ],
+          "pstyle": "다음 글을 읽고"
+        },
+        {
+          "text": "My creative process isn’t as dramatic as hers. I have to get up at the same time and work on my laptop for hours every day. Yet, even in this rather boring routine, I do get ideas coming from a source I can’t identify. Typically, it happens when I’m deeply engaged in my work. Several hours or even days can pass, and I completely immerse myself in my creative process. It’s at those moments that a brilliant idea strikes me somewhat mysteriously. I’m sure that’s my genius.",
+          "runs": [
+            {
+              "t": "My creative process isn’t as dramatic as hers. I have to get up at the same time and work on my laptop for hours every day. Yet, even in this rather boring routine, I do get ideas coming from a source I can’t identify. Typically, it happens when I’m deeply engaged in my work. Several hours or even days can pass, and I completely immerse myself in my creative process. It’s at those moments that a brilliant idea strikes me somewhat mysteriously. I’m sure that’s my genius.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "Remember that you too have a magical genius that is willing to help you. But first, you must put your heart and soul into your work. Immerse yourself in your work and try to enjoy the creative process itself. If you do, your genius will come for sure.",
+          "runs": [
+            {
+              "t": "Remember that you too have a magical genius that is willing to help you. But first, you must put your heart and soul into your work. Immerse yourself in your work and try to enjoy the creative process itself. If you do, your genius will come for sure.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "다음 중 윗글을 읽고 답할 수 없는 질문은?",
+          "runs": [
+            {
+              "t": "다음 중 윗글을 읽고 답할 수 ",
+              "ul": false
+            },
+            {
+              "t": "없는",
+              "ul": true
+            },
+            {
+              "t": " 질문은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "① Under what circumstances does the writer come up with creative ideas?  ② Where does the writer say the source of creative ideas is?  ",
+          "runs": [
+            {
+              "t": "① Under what circumstances does the writer come up with creative ideas?  ② Where does the writer say the source of creative ideas is?  ",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ Why does the writer say that his creative process is not dramatic?      ④ When does the writer say that his genius appears?    ",
+          "runs": [
+            {
+              "t": "③ Why does the writer say that his creative process is not dramatic?      ④ When does the writer say that his genius appears?    ",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ What kind of work attitude does the writer require of readers?    ",
+          "runs": [
+            {
+              "t": "⑤ What kind of work attitude does the writer require of readers?    ",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "윗글의 요지로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "윗글의 요지로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "① Genius originates from dramatic events or extraordinary experiences.",
+          "runs": [
+            {
+              "t": "① Genius originates from dramatic events or extraordinary experiences.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② A regular daily routine interferes with the development of genius.",
+          "runs": [
+            {
+              "t": "② A regular daily routine interferes with the development of genius.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ Genius is largely determined by innate talent.",
+          "runs": [
+            {
+              "t": "③ Genius is largely determined by innate talent.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ Genius emerges when one is deeply immersed in work within a steady daily routine.",
+          "runs": [
+            {
+              "t": "④ Genius emerges when one is deeply immersed in work within a steady daily routine.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ The source of genius can be clearly explained in scientific terms.",
+          "runs": [
+            {
+              "t": "⑤ The source of genius can be clearly explained in scientific terms.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글의 흐름으로 보아 주어진 문장이 들어가기에 가장 적절한 곳은?",
+          "runs": [
+            {
+              "t": "다음 글의 흐름으로 보아 주어진 문장이 들어가기에 가장 적절한 곳은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "Not only their bodies but also their brains would have been changed with more energy.",
+          "runs": [
+            {
+              "t": "Not only their bodies but also their brains would have been changed with more energy.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": " The first human beings probably evolved in tropical regions where survival was possible without clothing. (A) It is likely that they had very dark skin because light skin would have given little protection against the burning rays of the sun. There is a debate about whether these people spread into other parts of the world or, instead, whether people developed independently in various parts of the world. (B) Whichever the case, it is believed that in time they became capable of spreading out from Africa, eventually to most of the world. This was probably because their physical characteristics changed. (C) For instance, early hominids probably did not walk upright, but when they developed that ability, they could travel more efficiently. (D) More important, perhaps, was their development of tool making. With tools, they could hunt other animals, so they could consume more protein and fat than their low-energy vegetarian diet would have provided. (E) The brain needs lots of energy to grow. As their diet expanded, hominids could physically and intellectually expand their territory.",
+          "runs": [
+            {
+              "t": " The first human beings probably evolved in tropical regions where survival was possible without clothing. (A) It is likely that they had very dark skin because light skin would have given little protection against the burning rays of the sun. There is a debate about whether these people spread into other parts of the world or, instead, whether people developed independently in various parts of the world. (B) Whichever the case, it is believed that in time they became capable of spreading out from Africa, eventually to most of the world. This was probably because their physical characteristics changed. (C) For instance, early hominids probably did not walk upright, but when they developed that ability, they could travel more efficiently. (D) More important, perhaps, was their development of tool making. With tools, they could hunt other animals, so they could consume more protein and fat than their low-energy vegetarian diet would have provided. (E) The brain needs lots of energy to grow. As their diet expanded, hominids could physically and intellectually expand their territory.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① (A)     ② (B)     ③ (C)     ④ (D)     ⑤ (E)",
+          "runs": [
+            {
+              "t": "① (A)     ② (B)     ③ (C)     ④ (D)     ⑤ (E)",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글의 흐름으로 보아 주어진 문장이 들어가기에 가장 적절한 곳은?",
+          "runs": [
+            {
+              "t": "다음 글의 흐름으로 보아 주어진 문장이 들어가기에 가장 적절한 곳은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "Rather, they evaluate this information, comparing it with their own knowledge of the surroundings.",
+          "runs": [
+            {
+              "t": "Rather, they evaluate this information, comparing it with their own knowledge of the surroundings.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": " A computational algorithm that takes input data and generates some output from it doesn't really embody any notion of meaning. Certainly, such a computation does not generally have as its purpose its own survival and well-being. It does not, in general, assign value to the inputs. (A) Compare, for example, a computer algorithm with the waggle dance of the honeybee, by which means a foraging bee conveys to others in the hive information about the source of food (such as nectar) it has located. (B) The \"dance\" - a series of stylized movements on the comb - shows the bees how far away the food is and in which direction. (C) But this input does not simply program other bees to go out and look for it. (D) Some bees might not bother to make the journey, considering it not worthwhile. (E) The input, such as it is, is processed in the light of the organism's own internal states and history; there is nothing prescriptive about its effects.",
+          "runs": [
+            {
+              "t": " A computational algorithm that takes input data and generates some output from it doesn't really embody any notion of meaning. Certainly, such a computation does not generally have as its purpose its own survival and well-being. It does not, in general, assign value to the inputs. (A) Compare, for example, a computer algorithm with the waggle dance of the honeybee, by which means a foraging bee conveys to others in the hive information about the source of food (such as nectar) it has located. (B) The \"dance\" - a series of stylized movements on the comb - shows the bees how far away the food is and in which direction. (C) But this input does not simply program other bees to go out and look for it. (D) Some bees might not bother to make the journey, considering it not worthwhile. (E) The input, such as it is, is processed in the light of the organism's own internal states and history; there is nothing prescriptive about its effects.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① (A)     ② (B)     ③ (C)     ④ (D)     ⑤ (E)",
+          "runs": [
+            {
+              "t": "① (A)     ② (B)     ③ (C)     ④ (D)     ⑤ (E)",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글의 내용과 일치하지 않는 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 내용과 일치하지 않는 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " The concept of ecosystem states should be familiar to anyone with a home vegetable garden. The garden is a small ecosystem that the grower attempts to keep in a specific state, namely the maximization of fruit and vegetable production. To achieve this, the grower is almost always intervening in the dynamics of the ecosystem; they remove unwanted plants that begin to grow and perhaps spray insecticides and fence off the patch to stop insects and other animals from consuming the vegetables. Since maximizing vegetable growth is an inherently unstable state for the ecosystem, the grower is effectively keeping the ball on a slope. If the grower stops intervening, even for a day, the ecosystem, that small patch of ground, will naturally begin to shift to a more stable state. Vegetables may still grow, but yield will almost certainly be lower as other plants crowd out the vegetables and wildlife consume the produce.",
+          "runs": [
+            {
+              "t": " The concept of ecosystem states should be familiar to anyone with a home vegetable garden. The garden is a small ecosystem that the grower attempts to keep in a specific state, namely the maximization of fruit and vegetable production. To achieve this, the grower is almost always intervening in the dynamics of the ecosystem; they remove unwanted plants that begin to grow and perhaps spray insecticides and fence off the patch to stop insects and other animals from consuming the vegetables. Since maximizing vegetable growth is an inherently unstable state for the ecosystem, the grower is effectively keeping the ball on a slope. If the grower stops intervening, even for a day, the ecosystem, that small patch of ground, will naturally begin to shift to a more stable state. Vegetables may still grow, but yield will almost certainly be lower as other plants crowd out the vegetables and wildlife consume the produce.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① The natural state of the garden favors maximum vegetable yield.",
+          "runs": [
+            {
+              "t": "① The natural state of the garden favors maximum vegetable yield.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② Wildlife and weeds would likely reduce the amount of vegetables grown.",
+          "runs": [
+            {
+              "t": "② Wildlife and weeds would likely reduce the amount of vegetables grown.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ Removing weeds and using insecticides are examples of altering the garden's natural dynamics.",
+          "runs": [
+            {
+              "t": "③ Removing weeds and using insecticides are examples of altering the garden's natural dynamics.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ The gardener's interventions help maintain a desired but unstable ecosystem state.",
+          "runs": [
+            {
+              "t": "④ The gardener's interventions help maintain a desired but unstable ecosystem state.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ Without intervention, the garden would return to a more stable ecosystem.",
+          "runs": [
+            {
+              "t": "⑤ Without intervention, the garden would return to a more stable ecosystem.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글을 읽고 물음에 답하시오.",
+          "runs": [
+            {
+              "t": "다음 글을 읽고 물음에 답하시오.",
+              "ul": false
+            }
+          ],
+          "pstyle": "다음 글을 읽고"
+        },
+        {
+          "text": " Robert Blattberg and Steven Hoch noted that, in a changing environment, it is not clear that consistency is always a virtue and ⓐthat one of the advantages of human judgment is the ability to detect change. Thus, in changing environments, it might be advantageous ⓑto combine human judgment and statistical models. Blattberg and Hoch examined this possibility by having supermarket managers forecast demand for certain products and then creating a composite forecast by averaging these judgments with the forecasts of statistical models based on past data. The logic was ⓒwhat statistical models assume stable conditions and therefore cannot account for the effects on demand of novel events such as actions ⓓtaken by competitors or the introduction of new products. Humans, however, can incorporate these novel factors in ⓔtheir judgments. The composite ─ or average of human judgments and statistical models ─ proved to be more accurate than either the statistical models or the managers working alone.",
+          "runs": [
+            {
+              "t": " Robert Blattberg and Steven Hoch noted that, in a changing environment, it is not clear that consistency is always a virtue and ⓐ",
+              "ul": false
+            },
+            {
+              "t": "that",
+              "ul": true
+            },
+            {
+              "t": " one of the advantages of human judgment is the ability to detect change. Thus, in changing environments, it might be advantageous ⓑ",
+              "ul": false
+            },
+            {
+              "t": "to combine",
+              "ul": true
+            },
+            {
+              "t": " human judgment and statistical models. Blattberg and Hoch examined this possibility by having supermarket managers forecast demand for certain products and then creating a composite forecast by averaging these judgments with the forecasts of statistical models based on past data. The logic was ⓒ",
+              "ul": false
+            },
+            {
+              "t": "what",
+              "ul": true
+            },
+            {
+              "t": " statistical models assume stable conditions and therefore cannot account for the effects on demand of novel events such as actions ⓓ",
+              "ul": false
+            },
+            {
+              "t": "taken",
+              "ul": true
+            },
+            {
+              "t": " by competitors or the introduction of new products. Humans, however, can incorporate these novel factors in ⓔ",
+              "ul": false
+            },
+            {
+              "t": "their",
+              "ul": true
+            },
+            {
+              "t": " judgments. The composite ─ or average of human judgments and statistical models ─ proved to be more accurate than either the statistical models or the managers working alone.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "위 글의 밑줄 친 부분 중 어법상 어색한 것은? ",
+          "runs": [
+            {
+              "t": "위 글의 밑줄 친 부분 중 어법상 어색한 것은?",
+              "ul": false
+            },
+            {
+              "t": " ",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ",
+          "runs": [
+            {
+              "t": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "위 글의 제목으로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "위 글의 제목으로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "① The Importance of Consistency in Marketing",
+          "runs": [
+            {
+              "t": "① The Importance of Consistency in Marketing",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② The Relationship Between Supply and Demand",
+          "runs": [
+            {
+              "t": "② The Relationship Between Supply and Demand",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ Unpredictable Conditions of Changing Environment",
+          "runs": [
+            {
+              "t": "③ Unpredictable Conditions of Changing Environment",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ The Accurate Way of Estimating in Changing Environment",
+          "runs": [
+            {
+              "t": "④ The Accurate Way of Estimating in Changing Environment",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ The Average of Supermarket Managers’ Composite Forecasts",
+          "runs": [
+            {
+              "t": "⑤ The Average of Supermarket Managers’ Composite Forecasts",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글을 요약한 내용의 빈칸 (A), (B)에 들어갈 표현으로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "다음 글을 요약한 내용의 빈칸 (A), (B)에 들어갈 표현으로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " The prominence of the social dimension in food writing might suggest that the flavor of food is taking a back seat. I suspect that most people view flavor as of secondary importance in social settings where food is served. Although our social gatherings coalesce around food, the meaning of these gatherings does not seem to depend on flavor. Flavor assists with the narrow purpose of filling the belly, and once that is accomplished it provides the backdrop for whatever social dynamics characterize the gathering. These can be understood independently of the flavor of the food on offer, the appreciation of which is understood to be personal and subjective. According to this conventional wisdom, the ceremonies and rituals around food, the social events that supply food with its meaning, do not depend on the quality of sensations provided by the food. To focus excessively on flavor is to miss the larger significance of these social relations.",
+          "runs": [
+            {
+              "t": " The prominence of the social dimension in food writing might suggest that the flavor of food is taking a back seat. I suspect that most people view flavor as of secondary importance in social settings where food is served. Although our social gatherings coalesce around food, the meaning of these gatherings does not seem to depend on flavor. Flavor assists with the narrow purpose of filling the belly, and once that is accomplished it provides the backdrop for whatever social dynamics characterize the gathering. These can be understood independently of the flavor of the food on offer, the appreciation of which is understood to be personal and subjective. According to this conventional wisdom, the ceremonies and rituals around food, the social events that supply food with its meaning, do not depend on the quality of sensations provided by the food. To focus excessively on flavor is to miss the larger significance of these social relations.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "↓",
+          "runs": [
+            {
+              "t": "↓",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "The text suggests that in social contexts, the flavor of food is often deemed (A)___________ to the social interactions it facilitates. Overemphasis on taste, the author argues, may (B)___________ the deeper communal significance of shared meals.",
+          "runs": [
+            {
+              "t": "The text suggests that in social contexts, the flavor of food is often deemed (A)___________ to the social interactions it facilitates. Overemphasis on taste, the author argues, may (B)___________ the deeper communal significance of shared meals.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "       (A)\t\t   (B)",
+          "runs": [
+            {
+              "t": "       (A)\t\t   (B)",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "① secondary\t\tdiminish",
+          "runs": [
+            {
+              "t": "① secondary\t\tdiminish",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② primary\t\tdiminish",
+          "runs": [
+            {
+              "t": "② primary\t\tdiminish",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ principal\t\tundermine",
+          "runs": [
+            {
+              "t": "③ principal\t\tundermine",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ principal\t\tovershadow",
+          "runs": [
+            {
+              "t": "④ principal\t\tovershadow",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ secondary\t\tintensify",
+          "runs": [
+            {
+              "t": "⑤ secondary\t\tintensify",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글을 읽고 물음에 답하시오.",
+          "runs": [
+            {
+              "t": "다음 글을 읽고 물음에 답하시오.",
+              "ul": false
+            }
+          ],
+          "pstyle": "다음 글을 읽고"
+        },
+        {
+          "text": "Well, we are ⓐ living examples of the Ship of Theseus. Every day, we are changing and growing to become new versions of ourselves. This means ⓑ that our future selves may be very different from who we are now. Then how can we create a future we’ll be proud of? I have some advice for you.",
+          "runs": [
+            {
+              "t": "Well, we are ⓐ ",
+              "ul": false
+            },
+            {
+              "t": "living",
+              "ul": true
+            },
+            {
+              "t": " examples of the Ship of Theseus. Every day, we are changing and growing to become new versions of ourselves. This means ⓑ ",
+              "ul": false
+            },
+            {
+              "t": "that",
+              "ul": true
+            },
+            {
+              "t": " our future selves may be very different from who we are now. Then how can we create a future we’ll be proud of? I have some advice for you.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "First, actively envision the kind of person you want ⓒ to become in the future. To do this, spend time with different kinds of people to learn more and stay ⓓ curiously. Second, when expressing your views online or with friends, remember that your future self might disagree with your current opinions. So, be respectful of other people’s opinions and don’t just assume ⓔ that you are always right. Finally, your future self will have strengths and wisdom that you may lack today. Even if you can’t do something now, you might be able to in the future. So, don’t be afraid of new challenges. Be brave!",
+          "runs": [
+            {
+              "t": "First, actively envision the kind of person you want ⓒ ",
+              "ul": false
+            },
+            {
+              "t": "to become",
+              "ul": true
+            },
+            {
+              "t": " in the future. To do this, spend time with different kinds of people to learn more and stay ⓓ ",
+              "ul": false
+            },
+            {
+              "t": "curiously",
+              "ul": true
+            },
+            {
+              "t": ". Second, when expressing your views online or with friends, remember that your future self might disagree with your current opinions. So, be respectful of other people’s opinions and don’t just assume ⓔ ",
+              "ul": false
+            },
+            {
+              "t": "that",
+              "ul": true
+            },
+            {
+              "t": " you are always right. Finally, your future self will have strengths and wisdom that you may lack today. Even if you can’t do something now, you might be able to in the future. So, don’t be afraid of new challenges. Be brave!",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "윗글의 밑줄 친 ⓐ~ⓔ중 어법상 어색한 것은?",
+          "runs": [
+            {
+              "t": "윗글의 밑줄 친 ⓐ~ⓔ중 어법상 어색한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "① ⓐ     ② ⓑ     ③ ⓒ     ④ ⓓ      ⑤ ⓔ",
+          "runs": [
+            {
+              "t": "① ⓐ     ② ⓑ     ③ ⓒ     ④ ⓓ      ⑤ ⓔ",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "윗글에 관한 다음 글의 내용과 일치하지 않는 것은?",
+          "runs": [
+            {
+              "t": "윗글에 관한 다음 글의 내용과 일치하지 않는 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "① Humans change every day and can become different from who they are now over time.",
+          "runs": [
+            {
+              "t": "① Humans change every day and can become different from who they are now over time.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② One’s future self can hold views or opinions different from those held in the present.",
+          "runs": [
+            {
+              "t": "② One’s future self can hold views or opinions different from those held in the present.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ Interacting with a wide range of people helps clarify the kind of person one may become in the future.",
+          "runs": [
+            {
+              "t": "③ Interacting with a wide range of people helps clarify the kind of person one may become in the future.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ What one cannot do at present is likely to remain impossible in the future.",
+          "runs": [
+            {
+              "t": "④ What one cannot do at present is likely to remain impossible in the future.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ Having courage rather than fearing new challenges is necessary.",
+          "runs": [
+            {
+              "t": "⑤ Having courage rather than fearing new challenges is necessary.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "윗글의 목적으로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "윗글의 목적으로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "① to introduce an ancient Roman view of creativity to ease anxiety",
+          "runs": [
+            {
+              "t": "① to introduce an ancient Roman view of creativity to ease anxiety",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② to emphasize the importance of improving artists’ working environments",
+          "runs": [
+            {
+              "t": "② to emphasize the importance of improving artists’ working environments",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ to explain how roles should be divided in group projects",
+          "runs": [
+            {
+              "t": "③ to explain how roles should be divided in group projects",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ to criticize religious beliefs in ancient societies",
+          "runs": [
+            {
+              "t": "④ to criticize religious beliefs in ancient societies",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ to point out problems in modern art education",
+          "runs": [
+            {
+              "t": "⑤ to point out problems in modern art education",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글의 빈칸에 들어갈 말로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 빈칸에 들어갈 말로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " If the brain has already stored someone's face and name, why do we still end up remembering one and not the other? This is because the brain has something of a two-tier memory system at work when it comes to retrieving memories, and this gives rise to a common yet infuriating sensation: recognising someone, but not being able to remember how or why, or what their name is. This happens because ______________________________________. To clarify, familiarity (or recognition) is when you encounter someone or something and you know you've done so before. But beyond that, you've got nothing; all you can say is this person/thing is already in your memories. Recall is when you can access the original memory of how and why you know this person; recognition is just flagging up the fact that the memory exists.",
+          "runs": [
+            {
+              "t": " If the brain has already stored someone's face and name, why do we still end up remembering one and not the other? This is because the brain has something of a two-tier memory system at work when it comes to retrieving memories, and this gives rise to a common yet infuriating sensation: recognising someone, but not being able to remember how or why, or what their name is. This happens because ______________________________________. To clarify, familiarity (or recognition) is when you encounter someone or something and you know you've done so before. But beyond that, you've got nothing; all you can say is this person/thing is already in your memories. Recall is when you can access the original memory of how and why you know this person; recognition is just flagging up the fact that the memory exists.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① the brain differentiates between familiarity and recall",
+          "runs": [
+            {
+              "t": "① the brain differentiates between familiarity and recall",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② cues help retrieve information stored in different systems",
+          "runs": [
+            {
+              "t": "② cues help retrieve information stored in different systems",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ we often mistake an unknown person for a familiar person",
+          "runs": [
+            {
+              "t": "③ we often mistake an unknown person for a familiar person",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ the brain is receiving confused signals from different senses",
+          "runs": [
+            {
+              "t": "④ the brain is receiving confused signals from different senses",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ we expect that the wording is correct at the first occurrence",
+          "runs": [
+            {
+              "t": "⑤ we expect that the wording is correct at the first occurrence",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " The explosion of popular music in the second half of the twentieth century as well as the global circulation and dissemination of music by the creative industries ⓐfueled a new understanding of accessibility in relation to music. Suddenly, in the 1950s, anyone could pick up spoons, a couple of pans, a second-hand guitar and start a band. This led to specific genres such as skiffle, but also, more generally, reflected a much more ⓑwelcoming attitude to music making. While ordinary people had always sung and made music, the popular music movement was driven by a spirit of rebellion and freedom. This approach led to the punk movement, whose musicians even made it a condition for their music to be ⓒrestrictive in the 1970s. Groups who had been entirely excluded from music ⓓcelebrated the chance to create. This led to a sense of ⓔautonomy in and beyond the music sphere.",
+          "runs": [
+            {
+              "t": " The explosion of popular music in the second half of the twentieth century as well as the global circulation and dissemination of music by the creative industries ⓐ",
+              "ul": false
+            },
+            {
+              "t": "fueled",
+              "ul": true
+            },
+            {
+              "t": " a new understanding of accessibility in relation to music. Suddenly, in the 1950s, anyone could pick up spoons, a couple of pans, a second-hand guitar and start a band. This led to specific genres such as skiffle, but also, more generally, reflected a much more ⓑ",
+              "ul": false
+            },
+            {
+              "t": "welcoming",
+              "ul": true
+            },
+            {
+              "t": " attitude to music making. While ordinary people had always sung and made music, the popular music movement was driven by a spirit of rebellion and freedom. This approach led to the punk movement, whose musicians even made it a condition for their music to be ⓒ",
+              "ul": false
+            },
+            {
+              "t": "restrictive",
+              "ul": true
+            },
+            {
+              "t": " in the 1970s. Groups who had been entirely excluded from music ⓓ",
+              "ul": false
+            },
+            {
+              "t": "celebrated",
+              "ul": true
+            },
+            {
+              "t": " the chance to create. This led to a sense of ⓔ",
+              "ul": false
+            },
+            {
+              "t": "autonomy",
+              "ul": true
+            },
+            {
+              "t": " in and beyond the music sphere.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ",
+          "runs": [
+            {
+              "t": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글을 읽고 물음에 답하시오.",
+          "runs": [
+            {
+              "t": "다음 글을 읽고 물음에 답하시오.",
+              "ul": false
+            }
+          ],
+          "pstyle": "다음 글을 읽고"
+        },
+        {
+          "text": "Over the past two centuries, human activities have generated a significant amount of carbon dioxide, commonly referred to as CO2. This gas itself is not dangerous when we encounter it in everyday situations. However, excessive amounts of this gas in the atmosphere have contributed to the greenhouse effect, resulting in a gradual increase in the Earth's surface temperature. To make matters worse, this increase has sped up in recent years and is seriously threatening life on our planet. We must act immediately to stop any further climate change. ",
+          "runs": [
+            {
+              "t": "Over the past two centuries, human activities have generated a significant amount of carbon dioxide, commonly referred to as CO2. This gas itself is not dangerous when we encounter it in everyday situations. However, excessive amounts of this gas in the atmosphere have contributed to the greenhouse effect, resulting in a gradual increase in the Earth's surface temperature. To make matters worse, this increase has sped up in recent years and is seriously threatening life on our planet. We must act immediately to stop any further climate change. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "While many high-tech solutions such as carbon capture have been proposed, they are often too expensive to be used widely. Fortunately, there are also low-tech, economical, and even long-lasting solutions available. In this report, we will focus on one of the most powerful nature-based solutions to climate change: whales, the giant helpers living under the sea.",
+          "runs": [
+            {
+              "t": "While many high-tech solutions such as carbon capture have been proposed, they are often too expensive to be used widely. Fortunately, there are also low-tech, economical, and even long-lasting solutions available. In this report, we will focus on one of the most powerful nature-based solutions to climate change: whales, the giant helpers living under the sea.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "다음 중 필자가 고래를 기후 변화 해결책으로 제시한 이유로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "다음 중 필자가 고래를 기후 변화 해결책으로 제시한 이유로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "① Whales have such high industrial efficiency that they can replace advanced technology.",
+          "runs": [
+            {
+              "t": "① Whales have such high industrial efficiency that they can replace advanced technology.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② Unlike costly technological solutions, whales can be used as a low-cost, nature-based, and long-term alternative.",
+          "runs": [
+            {
+              "t": "② Unlike costly technological solutions, whales can be used as a low-cost, nature-based, and long-term alternative.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ Whales can immediately solve all problems in marine ecosystems.",
+          "runs": [
+            {
+              "t": "③ Whales can immediately solve all problems in marine ecosystems.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ Whales can completely remove greenhouse gases without direct human intervention.",
+          "runs": [
+            {
+              "t": "④ Whales can completely remove greenhouse gases without direct human intervention.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ Whales can resolve climate-related conflicts between countries without international agreements.",
+          "runs": [
+            {
+              "t": "⑤ Whales can resolve climate-related conflicts between countries without international agreements.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "윗글의 내용을 한 문장으로 요약하고자 한다. 빈칸(A), (B)에 들어갈 단어를 본문에서 찾아 쓰시오.",
+          "runs": [
+            {
+              "t": "윗글의 내용을 한 문장으로 요약하고자 한다. 빈칸(A), (B)에 들어갈 단어를 본문에서 찾아 쓰시오.",
+              "ul": false
+            }
+          ],
+          "pstyle": "서술형 번호"
+        },
+        {
+          "text": "Rising levels of atmospheric CO2 have intensified climate change, and ___(A)___ are presented as a low-cost, long-lasting ___(B)___ to address this global challenge.",
+          "runs": [
+            {
+              "t": "Rising levels of atmospheric CO2 have intensified climate change, and ___(A)___ are presented as a low-cost, long-lasting ___(B)___ to address this global challenge.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(A) _______________________",
+          "runs": [
+            {
+              "t": "(A) _______________________",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "(B) _______________________",
+          "runs": [
+            {
+              "t": "(B) _______________________",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "다음 글을 읽고 밑줄 친 ⓐ~ⓔ 중 어법상 어색한 부분이 있는 것 3개를 골라 바르게 고쳐 쓰시오. (단 해당 기호, 어색한 단어, 그리고 바르게 고친 단어를 각각 쓸 것)",
+          "runs": [
+            {
+              "t": "다음 글을 읽고 밑줄 친 ⓐ~ⓔ 중 어법상 어색한 부분이 있는 것 3개를 골라 바르게 고쳐 쓰시오. (단 해당 기호, 어색한 단어, 그리고 바르게 고친 단어를 각각 쓸 것)",
+              "ul": false
+            }
+          ],
+          "pstyle": "서술형 번호"
+        },
+        {
+          "text": " Everyone's heard the expression don't let the perfect become the enemy of the good. If you want to get over an obstacle so that ⓐyour idea can become the solution-based policy you've long dreamed of, you can't have an all-or-nothing mentality. You have to be willing to alter your idea and let others influence its outcome. ⓑYou have to be okay with the outcome is a little different, even a little less, than you wanted. Say you're pushing for a clean water act. ⓒEven if what emerges isn't as well-funded as you wished, or doesn't match how you originally conceiving the bill, you'll have still succeeded in ensuring that kids in troubled areas have access to clean water. ⓓThat's what counts, that they will be safer because of your idea and your effort. Is it perfect? No. Is there more work to be done? Absolutely. ⓔBut in almost every case, helping move the needle forward is vastly better than not help at all.",
+          "runs": [
+            {
+              "t": " Everyone's heard the expression ",
+              "ul": false
+            },
+            {
+              "t": "don't let the perfect become the enemy of the good",
+              "ul": false
+            },
+            {
+              "t": ". If you want to get over an obstacle so that ⓐ",
+              "ul": false
+            },
+            {
+              "t": "your idea can become the solution-based policy you've long dreamed of, you can't have an all-or-nothing mentality",
+              "ul": true
+            },
+            {
+              "t": ". You have to be willing to alter your idea and let others influence its outcome. ⓑ",
+              "ul": false
+            },
+            {
+              "t": "You have to be okay with the outcome is a little different, even a little less, than you wanted",
+              "ul": true
+            },
+            {
+              "t": ". Say you're pushing for a clean water act. ⓒ",
+              "ul": false
+            },
+            {
+              "t": "Even if what emerges isn't as well-funded as you wished, or doesn't match how you originally conceiving the bill, you'll have still succeeded in ensuring that kids in troubled areas have access to clean water",
+              "ul": true
+            },
+            {
+              "t": ". ⓓ",
+              "ul": false
+            },
+            {
+              "t": "That's what counts, that they will be safer because of your idea and your effort",
+              "ul": true
+            },
+            {
+              "t": ". Is it perfect? No. Is there more work to be done? Absolutely. ⓔ",
+              "ul": false
+            },
+            {
+              "t": "But in almost every case, helping move the needle forward is vastly better than not help at all",
+              "ul": true
+            },
+            {
+              "t": ".",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "\t\t기호\t\t\t어색한 단어\t\t\t 바르게 고친 단어",
+          "runs": [
+            {
+              "t": "\t\t기호\t\t\t어색한 단어\t\t\t 바르게 고친 단어",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(1): _______, __________________ → __________________",
+          "runs": [
+            {
+              "t": "(1): _______, __________________ → __________________",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(2): _______, __________________ → __________________",
+          "runs": [
+            {
+              "t": "(2): _______, __________________ → __________________",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(3): _______, __________________ → __________________",
+          "runs": [
+            {
+              "t": "(3): _______, __________________ → __________________",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "다음 글의 빈칸 (A)~(D)에 알맞은 말을 아래 주어진 영어 뜻풀이를 참고하여 주어진 글자로 시작하는 영어단어를 쓰시오. (필요할 경우 어법에 맞게 형태를 변경할 것)",
+          "runs": [
+            {
+              "t": "다음 글의 빈칸 (A)~(D)에 알맞은 말을 아래 주어진 영어 뜻풀이를 참고하여 주어진 글자로 시작하는 영어단어를 쓰시오. (필요할 경우 어법에 맞게 형태를 변경할 것)",
+              "ul": false
+            }
+          ],
+          "pstyle": "서술형 번호"
+        },
+        {
+          "text": " In the course of his research on business strategy and the environment, Michael Porter noticed a (A)p__________ pattern: Businesses seemed to be profiting from regulation. He also discovered that the stricter regulations were prompting more innovation than the weaker ones. The Dutch flower industry provides an (B)i__________. For many years, the companies producing Holland's world-renowned tulips and other cut flowers were also (C)c__________ the country's water and soil with fertilizers and pesticides. In 1991, the Dutch government adopted a policy designed to cut pesticide use in half by 2000 ― a goal they ultimately achieved. Facing increasingly strict regulation, greenhouse growers realized they had to develop new methods if they were going to maintain product quality with fewer pesticides. In response, they shifted to a (D)c__________ method that circulates water in closed-loop systems and grows flowers in a rock wool substrate. The new system not only reduced the pollution released into the environment; it also increased profits by giving companies greater control over growing conditions.",
+          "runs": [
+            {
+              "t": " In the course of his research on business strategy and the environment, Michael Porter noticed a (A)p__________ pattern: Businesses seemed to be profiting from regulation. He also discovered that the stricter regulations were prompting more innovation than the weaker ones. The Dutch flower industry provides an (B)i__________. For many years, the companies producing Holland's world-renowned tulips and other cut flowers were also (C)c__________ the country's water and soil with fertilizers and pesticides. In 1991, the Dutch government adopted a policy designed to cut pesticide use in half by 2000 ― a goal they ultimately achieved. Facing increasingly strict regulation, greenhouse growers realized they had to develop new methods if they were going to maintain product quality with fewer pesticides. In response, they shifted to a (D)c__________ method that circulates water in closed-loop systems and grows flowers in a rock wool substrate. The new system not only reduced the pollution released into the environment; it also increased profits by giving companies greater control over growing conditions.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(A): strange, unfamiliar, or a little surprising",
+          "runs": [
+            {
+              "t": "(A): strange, unfamiliar, or a little surprising",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(B): an example or story that is used to make something easier to understand",
+          "runs": [
+            {
+              "t": "(B): an example or story that is used to make something easier to understand",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(C): to make a place or substance dirty or harmful by putting something such as chemicals or poison in it",
+          "runs": [
+            {
+              "t": "(C): to make a place or substance dirty or harmful by putting something such as chemicals or poison in it",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(D): the planting and growing of plants and crops",
+          "runs": [
+            {
+              "t": "(D): the planting and growing of plants and crops",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(A): p____________________ (B): i____________________",
+          "runs": [
+            {
+              "t": "(A): p____________________ (B): i____________________",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(C): c____________________ (D): c____________________",
+          "runs": [
+            {
+              "t": "(C): c____________________ (D): c____________________",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "다음 글의 빈칸에 들어갈 알맞은 말을 <조건>에 맞게 쓰시오. [23년 6월 36번]",
+          "runs": [
+            {
+              "t": "다음 글의 빈칸에 들어갈 알맞은 말을 <조건>에 맞게 쓰시오.",
+              "ul": false
+            },
+            {
+              "t": " [23년 6월 36번]",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_조건"
+        },
+        {
+          "text": " When evaluating a policy, people tend to concentrate on how the policy will fix some particular problem _________________________ may have. Economists often refer to this situation as The Law of Unintended Consequences. For instance, suppose that you impose a tariff on imported steel in order to protect the jobs of domestic steelworkers. If you impose a high enough tariff, their jobs will indeed be protected from competition by foreign steel companies. But an unintended consequence is that the jobs of some autoworkers will be lost to foreign competition. Why? The tariff that protects steelworkers raises the price of the steel that domestic automobile makers need to build their cars. As a result, domestic automobile manufacturers have to raise the prices of their cars, making them relatively less attractive than foreign cars. Raising prices tends to reduce domestic car sales, so some domestic autoworkers lose their jobs.",
+          "runs": [
+            {
+              "t": " When evaluating a policy, people tend to concentrate on how the policy will fix some particular problem _________________________ may have. Economists often refer to this situation as The Law of Unintended Consequences. For instance, suppose that you impose a tariff on imported steel in order to protect the jobs of domestic steelworkers. If you impose a high enough tariff, their jobs will indeed be protected from competition by foreign steel companies. But an unintended consequence is that the jobs of some autoworkers will be lost to foreign competition. Why? The tariff that protects steelworkers raises the price of the steel that domestic automobile makers need to build their cars. As a result, domestic automobile manufacturers have to raise the prices of their cars, making them relatively less attractive than foreign cars. Raising prices tends to reduce domestic car sales, so some domestic autoworkers lose their jobs.",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "<조건>",
+          "runs": [
+            {
+              "t": "<조건>",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_조건"
+        },
+        {
+          "text": "· 주어진 단어들 중에서 고른 5단어로만 작성하시오.",
+          "runs": [
+            {
+              "t": "· 주어진 단어들 중에서 고른 5단어로만 작성하시오.",
+              "ul": false
+            }
+          ],
+          "pstyle": "서술형 번호"
+        },
+        {
+          "text": "  : ignore / emphasize / while / it / protect /",
+          "runs": [
+            {
+              "t": "  : ignore / emphasize / while / it / protect /",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "    effects / dispose / other",
+          "runs": [
+            {
+              "t": "    effects / dispose / other",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "· 어법에 맞게 하기 위해서 주어진 어휘를 변형하여 사용해야 함.",
+          "runs": [
+            {
+              "t": "· 어법에 맞게 하기 위해서 주어진 어휘를 변형하여 사용해야 함.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "· 위 조건 중 하나라도 어길 시 0점 처리함",
+          "runs": [
+            {
+              "t": "· 위 조건 중 하나라도 어길 시 0점 처리함",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "→ ______________________________________________________",
+          "runs": [
+            {
+              "t": "→ ______________________________________________________",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "다음 글의 빈칸 (A)를 문맥에 맞게 완성하고자 한다. <보기>의 단어를 사용하여 주어진 <조건>에 따라 영작하시오. [23년 6월 39번]",
+          "runs": [
+            {
+              "t": "다음 글의 빈칸 (A)를 문맥에 맞게 완성하고자 한다. <보기>의 단어를 사용하여 주어진 <조건>에 따라 영작하시오.",
+              "ul": false
+            },
+            {
+              "t": " [",
+              "ul": false
+            },
+            {
+              "t": "23년 6월 39번]",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_조건"
+        },
+        {
+          "text": " Why do people in the Mediterranean live longer and have a lower incidence of disease? Some people say it's because of what they eat. Their diet is full of fresh fruits, fish, vegetables, whole grains, and nuts. Individuals in these cultures drink red wine and use great amounts of olive oil. Why is that food pattern healthy? One reason is that they are eating a palette of colors. More and more research is surfacing that shows us the benefits of the thousands of colorful \"phytochemicals\"(phyto=plant) that exist in foods. These healthful, non‑nutritive compounds in plants provide color and function to the plant and add to the health of the human body. (A)________________________________________. For example, if you don't eat purple foods, you are probably missing out on anthocyanins, important brain protection compounds. Similarly, if you avoid green‑colored foods, you may be lacking chlorophyll, a plant antioxidant that guards your cells from damage.",
+          "runs": [
+            {
+              "t": " Why do people in the Mediterranean live longer and have a lower incidence of disease? Some people say it's because of what they eat. Their diet is full of fresh fruits, fish, vegetables, whole grains, and nuts. Individuals in these cultures drink red wine and use great amounts of olive oil. Why is that food pattern healthy? One reason is that they are eating ",
+              "ul": false
+            },
+            {
+              "t": "a palette of colors",
+              "ul": false
+            },
+            {
+              "t": ". More and more research is surfacing that shows us the benefits of ",
+              "ul": false
+            },
+            {
+              "t": "the thousands of colorful \"phytochemicals\"(phyto=plant) that exist in foods. ",
+              "ul": false
+            },
+            {
+              "t": "These healthful, non‑nutritive compounds in plants provide color and function to the plant and add to the health of the human body. (A)________________________________________. For example, if you don't eat purple foods, you are probably missing out on anthocyanins, important brain protection compounds. Similarly, if you avoid green‑colored foods, you may be lacking chlorophyll, a plant antioxidant that guards your cells from damage.",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "<보기>",
+          "runs": [
+            {
+              "t": "<보기>",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "color / a particular / perform / the body / that /",
+          "runs": [
+            {
+              "t": "color / a particular / perform / the body / that /",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "within / each / compound / function /",
+          "runs": [
+            {
+              "t": "within / each / compound / function /",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "connect to / a specific",
+          "runs": [
+            {
+              "t": "connect to / a specific",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "<조건>",
+          "runs": [
+            {
+              "t": "<조건>",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_조건"
+        },
+        {
+          "text": "• <보기>에 주어진 단어를 반드시 한 번씩 이용할 것.",
+          "runs": [
+            {
+              "t": "• <보기>에 주어진 단어를 반드시 한 번씩 이용할 것.",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "• 필요시 단어의 형태를 바꿀 수 있음.",
+          "runs": [
+            {
+              "t": "• 필요시 단어의 형태를 바꿀 수 있음.",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "→ ______________________________________________________",
+          "runs": [
+            {
+              "t": "→ ______________________________________________________",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "   ______________________________________________________",
+          "runs": [
+            {
+              "t": "   ______________________________________________________",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "다음 글의 빈칸 (A), (B)에 들어갈 말을 주어진 조건에 맞게 쓰시오. ",
+          "runs": [
+            {
+              "t": "다음 글의 빈칸 (A), (B)에 들어갈 말을 주어진 조건에 맞게 쓰시오.",
+              "ul": false
+            },
+            {
+              "t": " ",
+              "ul": false
+            }
+          ],
+          "pstyle": "서술형 번호"
+        },
+        {
+          "text": "Many popular expressions in our language have interesting backgrounds. When we refer to a person's weak spot as his Achilles heel, we are recalling the story of the mighty Greek hero of the Trojan War, Achilles, a warrior of unusual strength and valor. The mother of Achilles, in whose veins flowed the blood of the gods, was warned at his birth that her son would die in battle. In great distress, she sought to save her son. In order to (A) ___________ his chances of being hurt and to give him (B) ___________ protection in combat, she dipped the infant in the river Styx. The magic waters touched every part of the child's body except the heel that she held in her hand. Thus it happened many years later that as Achilles started to flee from an attack, a poisoned arrow struck him in the heel, the only spot where he was vulnerable.",
+          "runs": [
+            {
+              "t": "Many popular expressions in our language have interesting backgrounds. When we refer to a person's weak spot as his Achilles heel, we are recalling the story of the mighty Greek hero of the Trojan War, Achilles, a warrior of unusual strength and valor. The mother of Achilles, in whose veins flowed the blood of the gods, was warned at his birth that her son would die in battle. In great distress, she sought to save her son. In order ",
+              "ul": false
+            },
+            {
+              "t": "to (A) ___________ his chances of being hurt and to give him (B) ___________ protection in combat",
+              "ul": false
+            },
+            {
+              "t": ", she dipped the infant in the river Styx. The magic waters touched every part of the child's body except the heel that she held in her hand. Thus it happened many years later that as Achilles started to flee from an attack, a poisoned arrow struck him in the heel, the only spot where he was vulnerable.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "<조건>",
+          "runs": [
+            {
+              "t": "<조건>",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_조건"
+        },
+        {
+          "text": "· (A)는 d로 시작하는 한 단어로 쓸 것",
+          "runs": [
+            {
+              "t": "· ",
+              "ul": false
+            },
+            {
+              "t": "(A)는 d로 시작하는 한 단어로 쓸 것",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "· (B)는 m으로 시작하는 한 단어로 쓸 것",
+          "runs": [
+            {
+              "t": "· ",
+              "ul": false
+            },
+            {
+              "t": "(B)는 m으로 시작하는 한 단어로 쓸 것",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "(A) _____________________________ (B) _____________________________ ",
+          "runs": [
+            {
+              "t": "(A) _____________________________ (B) _____________________________ ",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        }
+      ]
+    }
+  ]
+}

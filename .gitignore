@@ -4,3 +4,13 @@ __pycache__/
 jobs/
 .claude/
 18fe636a-*.json
+
+# 업로드 / 환경변수 / 로그
+uploads/
+*.log
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/

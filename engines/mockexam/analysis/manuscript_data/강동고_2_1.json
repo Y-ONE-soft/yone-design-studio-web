@@ -1,0 +1,2247 @@
+{
+  "school": "강동고",
+  "grade": "고2",
+  "exam_period": "26-1-중간",
+  "exam_date": "",
+  "exam_type": "",
+  "round": 1,
+  "meta": {},
+  "questions": [
+    {
+      "source": "",
+      "paragraphs": [
+        {
+          "text": "강동고2 동형 1회",
+          "runs": [
+            {
+              "t": "강동고2 동형 1회",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "선택형: 27문항",
+          "runs": [
+            {
+              "t": "선택형: 27문항",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "서술형: 8문항",
+          "runs": [
+            {
+              "t": "서술형: 8문항",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(1~3) 다음 해석을 보고, 빈칸에 들어갈 가장 알맞은 단어를 고르시오.",
+          "runs": [
+            {
+              "t": "(1~3) 다음 해석을 보고, 빈칸에 들어갈 가장 알맞은 단어를 고르시오.",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "1. In the highly competitive academic landscape, researchers often face significant challenges to _____________ the necessary grants required to advance their sophisticated experimental projects.",
+          "runs": [
+            {
+              "t": "1. In the highly competitive academic landscape, researchers often face significant challenges to _____________ the necessary grants required to advance their sophisticated experimental projects.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "[매우 경쟁적인 학계 환경에서, 연구자들은 종종 자신들의 정교한 실험 프로젝트를 진전시키기 위해 필요한 보조금을 얻는 데 상당한 어려움에 직면한다.]",
+          "runs": [
+            {
+              "t": "[매우 경쟁적인 학계 환경에서, 연구자들은 종종 자신들의 정교한 실험 프로젝트를 진전시키기 위해 필요한 보조금을 얻는 데 상당한 어려움에 직면한다.]",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① retain ② attain ③ obtain ④ contain ⑤ sustain",
+          "runs": [
+            {
+              "t": "① retain ② attain ③ obtain ④ contain ⑤ sustain",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "2. The professional basketball team has surprisingly managed to win five games in a _________, significantly boosting their chances of making it to the playoffs.",
+          "runs": [
+            {
+              "t": "2. The professional basketball team has surprisingly managed to win five games in a _________, significantly boosting their chances of making it to the playoffs.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        }
+      ]
+    },
+    {
+      "source": "[그 프로 농구팀은 놀랍게도 5경기 연속으로 승리를 거두며 플레이오프 진출 가능성을 크게 높였다.]",
+      "paragraphs": [
+        {
+          "text": "① take ② low ③ file ④ gap ⑤ spot",
+          "runs": [
+            {
+              "t": "① take ② low ③ file ④ gap ⑤ spot",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "3. The whistleblower confessed that his decision to reveal the company's illegal activities was driven by a deep sense of __________, despite the personal risks involved.",
+          "runs": [
+            {
+              "t": "3. The whistleblower confessed that his decision to reveal the company's illegal activities was driven by a deep sense of __________, despite the personal risks involved.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "[내부 고발자는 개인적인 위험에도 불구하고 회사의 불법 행위를 밝히기로 한 자신의 결정이 깊은 양심의 가책에 따른 것이었다고 고백했다.]",
+          "runs": [
+            {
+              "t": "[내부 고발자는 개인적인 위험에도 불구하고 회사의 불법 행위를 밝히기로 한 자신의 결정이 깊은 양심의 가책에 따른 것이었다고 고백했다.]",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① convenience ② confidence ③ conscience ④ consequence ⑤ consciousness",
+          "runs": [
+            {
+              "t": "① convenience ② confidence ③ conscience ④ consequence ⑤ consciousness",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "(4~7) 아래 문장의 빈칸에 들어갈 가장 적절한 단어를 고르시오.",
+          "runs": [
+            {
+              "t": "(4~7) 아래 문장의 빈칸에 들어갈 가장 적절한 단어를 고르시오.",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "4. The primary objective of the national park’s new policy is to _________ the delicate ecosystem by strictly limiting the number of visitors allowed in the core wilderness areas.",
+          "runs": [
+            {
+              "t": "4. The primary objective of the national park’s new policy is to _________ the delicate ecosystem by strictly limiting the number of visitors allowed in the core wilderness areas.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① neglect ② preserve ③ transform ④ contaminate ⑤ terminate",
+          "runs": [
+            {
+              "t": "① neglect ② preserve ③ transform ④ contaminate ⑤ terminate",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "5. To achieve long-term success, a leader must learn how to _________ the immediate demands of shareholders with the long-term well-being of the employees.",
+          "runs": [
+            {
+              "t": "5. To achieve long-term success, a leader must learn how to _________ the immediate demands of shareholders with the long-term well-being of the employees.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① confuse ② ignore ③ separate ④ balance ⑤ exaggerate",
+          "runs": [
+            {
+              "t": "① confuse ② ignore ③ separate ④ balance ⑤ exaggerate",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "6. The researcher noted that although the theoretical framework was solid, there was no _________ data at the time to empirically prove the hypothesis.",
+          "runs": [
+            {
+              "t": "6. The researcher noted that although the theoretical framework was solid, there was no _________ data at the time to empirically prove the hypothesis.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① available ② artificial ③ ambiguous ④ incredible ⑤ athletic",
+          "runs": [
+            {
+              "t": "① available ② artificial ③ ambiguous ④ incredible ⑤ athletic",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "7. After years of relentless dedication to environmental conservation, the activist finally received the national award, which many experts agreed she _________ for her outstanding contributions to society.",
+          "runs": [
+            {
+              "t": "7. After years of relentless dedication to environmental conservation, the activist finally received the national award, which many experts agreed she _________ for her outstanding contributions to society.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① conversed ② delayed ③ deserved ④ conserved ⑤ preserved",
+          "runs": [
+            {
+              "t": "① conversed ② delayed ③ deserved ④ conserved ⑤ preserved",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "(8~9) 아래 문장의 밑줄 친 표현과 가장 유사한 뜻을 가진 단어를 고르시오.",
+          "runs": [
+            {
+              "t": "(8~9) 아래 문장의 밑줄 친 표현과 가장 ",
+              "ul": false
+            },
+            {
+              "t": "유사한",
+              "ul": true
+            },
+            {
+              "t": " 뜻을 가진 단어를 고르시오.",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "8. Despite the initial atmosphere of deep suspicion, the lead counsel managed to convince the jury of her client’s innocence by providing a series of unambiguous alibis.",
+          "runs": [
+            {
+              "t": "8. Despite the initial atmosphere of deep suspicion, the lead counsel managed to ",
+              "ul": false
+            },
+            {
+              "t": "convince",
+              "ul": true
+            },
+            {
+              "t": " the jury of her client’s innocence by providing a series of unambiguous alibis.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① dismiss ② assure ③ presume ④ suspect ⑤ analyze",
+          "runs": [
+            {
+              "t": "① dismiss ② assure ③ presume ④ suspect ⑤ analyze",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "9. The new legislation aims to empower local committee to manage their own environmental policies.",
+          "runs": [
+            {
+              "t": "9. The new legislation aims to ",
+              "ul": false
+            },
+            {
+              "t": "empower",
+              "ul": true
+            },
+            {
+              "t": " local committee to manage their own environmental policies.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① authenticate ② accomplish ③ automate ④ authorize ⑤ authentic",
+          "runs": [
+            {
+              "t": "① authenticate ② accomplish ③ automate ④ authorize ⑤ authentic",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "10 아래 문장의 밑줄 친 표현과 반대되는 뜻을 가진 단어는?",
+          "runs": [
+            {
+              "t": "10 아래 문장의 밑줄 친 표현과 ",
+              "ul": false
+            },
+            {
+              "t": "반대",
+              "ul": true
+            },
+            {
+              "t": "되는 뜻을 가진 단어는?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "The philosopher attempted to turn concrete experiences into a universal theory of human behavior.",
+          "runs": [
+            {
+              "t": "The philosopher attempted to turn ",
+              "ul": false
+            },
+            {
+              "t": "concrete",
+              "ul": true
+            },
+            {
+              "t": " experiences into a universal theory of human behavior.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① abstract ② attract ③ distract ④ contract ⑤ extract",
+          "runs": [
+            {
+              "t": "① abstract ② attract ③ distract ④ contract ⑤ extract",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글을 읽고 물음에 답하시오.",
+          "runs": [
+            {
+              "t": "다음 글을 읽고 물음에 답하시오.",
+              "ul": false
+            }
+          ],
+          "pstyle": "다음 글을 읽고"
+        },
+        {
+          "text": "Is it impossible to build an environment where everyone can use products and facilities conveniently and without limitations? It was Ronald Mace who sought the answer to this question. He ①contracted polio at the age of nine and spent the rest of his life in a wheelchair. When studying architecture at university, he struggled to access some campus facilities due to inaccessible building designs. This experience later inspired him to invent the term universal design, which refers to design for all. As an architect and product designer, he pursued a world in which all products and environments were designed to be artistic and usable to the greatest extent possible by everyone, regardless of their age, size, disability, nationality, or language. According to the principles of universal design, the design must be able to be used equitably, flexibly, simply, and ②intuitively by a wide variety of people. In addition, it should be cognitively accessible and minimize users' physical efforts. Finally, it requires the providing of sufficient space for all users while reducing potential hazards and ③adverse consequences from accidental or unintended actions. A key feature of universal design is that ________________________________________________. If an environment is accessible, usable, convenient, and a pleasure to use, everyone in the community benefits. How has universal design been incorporated into modern architecture? One of the most representative examples of universal design being used to improve accessibility is the ramps installed in front of buildings. Ramps, not stairs, are necessary for people with disabilities who use wheelchairs, and they are also beneficial for parents pushing strollers and the elderly. Another example is automatic doors. They are ④invaluable for those who rely on assistive devices such as wheelchairs and crutches. They also provide convenience for adults who have their hands full and children who are not tall enough to open the doors themselves. A further example is tactile paving. These textured surfaces, often found on sidewalks, steps, and crosswalks, assist visually ⑤impaired individuals by guiding them through urban spaces.",
+          "runs": [
+            {
+              "t": "Is it impossible to build an environment where everyone can use products and facilities conveniently and without limitations? It was Ronald Mace who sought the answer to this question. He ①",
+              "ul": false
+            },
+            {
+              "t": "contract",
+              "ul": true
+            },
+            {
+              "t": "ed polio at the age of nine and spent the rest of his life in a wheelchair. When studying architecture at university, he struggled to access some campus facilities due to inaccessible building designs. This experience later inspired him to invent the term universal design, which refers to design for all. As an architect and product designer, he pursued a world in which all products and environments were designed to be artistic and usable to the greatest extent possible by everyone, regardless of their age, size, disability, nationality, or language. According to the principles of universal design, the design must be able to be used equitably, flexibly, simply, and ②",
+              "ul": false
+            },
+            {
+              "t": "intuitively",
+              "ul": true
+            },
+            {
+              "t": " by a wide variety of people. In addition, it should be cognitively accessible and minimize users' physical efforts. Finally, it requires the providing of sufficient space for all users while reducing potential hazards and ③",
+              "ul": false
+            },
+            {
+              "t": "adverse",
+              "ul": true
+            },
+            {
+              "t": " consequences from accidental or unintended actions. A key feature of universal design is that ________________________________________________. If an environment is accessible, usable, convenient, and a pleasure to use, everyone in the community benefits. How has universal design been incorporated into modern architecture? One of the most representative examples of universal design being used to improve accessibility is the ramps installed in front of buildings. Ramps, not stairs, are necessary for people with disabilities who use wheelchairs, and they are also beneficial for parents pushing strollers and the elderly. Another example is automatic doors. They are ④",
+              "ul": false
+            },
+            {
+              "t": "invaluable",
+              "ul": true
+            },
+            {
+              "t": " for those who rely on assistive devices such as wheelchairs and crutches. They also provide convenience for adults who have their hands full and children who are not tall enough to open the doors themselves. A further example is tactile paving. These textured surfaces, often found on sidewalks, steps, and crosswalks, assist visually ⑤",
+              "ul": false
+            },
+            {
+              "t": "impaired",
+              "ul": true
+            },
+            {
+              "t": " individuals by guiding them through urban spaces.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "윗글의 주제로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "윗글의 주제로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "① the origin and guiding principles of universal design as an inclusive approach benefiting all members of society",
+          "runs": [
+            {
+              "t": "① the origin and guiding principles of universal design as an inclusive approach benefiting all members of society",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② universal design's targeted efforts to address the mobility challenges faced by people with disabilities",
+          "runs": [
+            {
+              "t": "② universal design's targeted efforts to address the mobility challenges faced by people with disabilities",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ Ronald Mace's personal journey of overcoming physical limitations to become a renowned architect",
+          "runs": [
+            {
+              "t": "③ Ronald Mace's personal journey of overcoming physical limitations to become a renowned architect",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ the technical innovations in modern architecture that comply with international accessibility regulations",
+          "runs": [
+            {
+              "t": "④ the technical innovations in modern architecture that comply with international accessibility regulations",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ the economic advantages of incorporating universal design into large-scale public infrastructure projects",
+          "runs": [
+            {
+              "t": "⑤ the economic advantages of incorporating universal design into large-scale public infrastructure projects",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "윗글의 밑줄 친 ①~⑤의 문맥상 영영풀이로 적절하지 않은 것을 2개 고르면?",
+          "runs": [
+            {
+              "t": "윗글의 밑줄 친 ①~⑤의 문맥상 영영풀이로 적절하지 ",
+              "ul": false
+            },
+            {
+              "t": "않은",
+              "ul": true
+            },
+            {
+              "t": " 것을 ",
+              "ul": false
+            },
+            {
+              "t": "2개",
+              "ul": true
+            },
+            {
+              "t": " 고르면?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "① contract: to become tighter in size or amount",
+          "runs": [
+            {
+              "t": "① contract: to become tighter in size or amount",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② intuitively: by using feelings to understand something without needing facts",
+          "runs": [
+            {
+              "t": "② intuitively: by using feelings to understand something without needing facts",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ adverse: having a harmful effect on something",
+          "runs": [
+            {
+              "t": "③ adverse: having a harmful effect on something",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ invaluable: having little real usefulness in a specific context",
+          "runs": [
+            {
+              "t": "④ invaluable: having little real usefulness in a specific context",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ impaired: weakened in a way that reduces functional ability",
+          "runs": [
+            {
+              "t": "⑤ impaired: weakened in a way that reduces functional ability",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "윗글의 빈칸에 들어갈 말로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "윗글의 빈칸에 들어갈 말로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "① the advantages it brings extend beyond particular user groups to enhance the lives of every member of the community",
+          "runs": [
+            {
+              "t": "① the advantages it brings extend beyond particular user groups to enhance the lives of every member of the community",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② its adoption invariably requires substantial financial investment from governmental and private institutions",
+          "runs": [
+            {
+              "t": "② its adoption invariably requires substantial financial investment from governmental and private institutions",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ its implementation is intended primarily to accommodate the physical limitations of elderly and disabled populations",
+          "runs": [
+            {
+              "t": "③ its implementation is intended primarily to accommodate the physical limitations of elderly and disabled populations",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ its effectiveness depends on individual users adapting themselves to predetermined design standards",
+          "runs": [
+            {
+              "t": "④ its effectiveness depends on individual users adapting themselves to predetermined design standards",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ its principles apply exclusively to architectural decisions rather than to consumer product development",
+          "runs": [
+            {
+              "t": "⑤ its principles apply exclusively to architectural decisions rather than to consumer product development",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글의 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " The concept of ecosystem states should be familiar to anyone with a home vegetable garden. The garden is a small ecosystem that the grower attempts to keep in a specific state, namely the maximization of fruit and vegetable production. To achieve this, the grower is almost always intervening in the dynamics of the ecosystem; they remove unwanted plants that begin to grow and perhaps spray insecticides and fence off the patch to stop insects and other animals from consuming the vegetables. Since maximizing vegetable growth is an inherently (A)__________ state for the ecosystem, the grower is effectively keeping the ball on a slope. If the grower stops intervening, even for a day, the ecosystem, that small patch of ground, will naturally begin to shift to a more stable state. Vegetables may still grow, but yield will almost certainly be (B)__________ as other plants crowd out the vegetables and wildlife consume the produce.",
+          "runs": [
+            {
+              "t": " The concept of ecosystem states should be familiar to anyone with a home vegetable garden. The garden is a small ecosystem that the grower attempts to keep in a specific state, namely the maximization of fruit and vegetable production. To achieve this, the grower is almost always intervening in the dynamics of the ecosystem; they remove unwanted plants that begin to grow and perhaps spray insecticides and fence off the patch to stop insects and other animals from consuming the vegetables. Since maximizing vegetable growth is an inherently (A)__________ state for the ecosystem, the grower is effectively keeping the ball on a slope. If the grower stops intervening, even for a day, the ecosystem, that small patch of ground, will naturally begin to shift to a more stable state. Vegetables may still grow, but yield will almost certainly be (B)__________ as other plants crowd out the vegetables and wildlife consume the produce.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "      (A)\t \t(B)",
+          "runs": [
+            {
+              "t": "      (A)\t \t(B)",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "① idealistic\t\tslower",
+          "runs": [
+            {
+              "t": "① ",
+              "ul": false
+            },
+            {
+              "t": "idealistic\t\tslower",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② unstable\t\thigher",
+          "runs": [
+            {
+              "t": "② ",
+              "ul": false
+            },
+            {
+              "t": "unstable\t\thigher",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ unstable\t\tlower",
+          "runs": [
+            {
+              "t": "③ ",
+              "ul": false
+            },
+            {
+              "t": "unstable\t\tlower",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ idealistic\t\tlower",
+          "runs": [
+            {
+              "t": "④ ",
+              "ul": false
+            },
+            {
+              "t": "idealistic\t\tlower",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ controlled\t\thigher",
+          "runs": [
+            {
+              "t": "⑤ ",
+              "ul": false
+            },
+            {
+              "t": "controlled\t\thigher",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글의 주제로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 주제로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " There are reasons why science is not fully trusted and why healthy skepticism and critical thinking are essential. In spite of professional standards, claims of objectivity, and the peer review process, the conduct of science can be biased. All experts are not the same, nor do they submit their work to the same scrutiny. Knowing the source of funding can be important in evaluating scientific claims. For example, the Harvard researchers who made claims in the late 1960s about the problems with dietary fat, leading the nation away from perceiving sugar as one of the main causes in health problems, were funded in part by the sugar industry. The authors did not reveal their funding source to the New England Journal of Medicine, where their influential article appeared. Their article shaped a generation of changes in eating patterns that appears to have fostered higher use of sugar, now widely implicated as a source of the rise in obesity and diabetes. Stories such as this one fuel suspicion – but also lead to further safeguards in the scientific process. Funding disclosures, although not required five decades ago, have since been made compulsory.",
+          "runs": [
+            {
+              "t": " There are reasons why science is not fully trusted and why healthy skepticism and critical thinking are essential. In spite of professional standards, claims of objectivity, and the peer review process, the conduct of science can be biased. All experts are not the same, nor do they submit their work to the same scrutiny. Knowing the source of funding can be important in evaluating scientific claims. For example, the Harvard researchers who made claims in the late 1960s about the problems with dietary fat, leading the nation away from perceiving sugar as one of the main causes in health problems, were funded in part by the sugar industry. The authors did not reveal their funding source to the New England Journal of Medicine, where their influential article appeared. Their article shaped a generation of changes in eating patterns that appears to have fostered higher use of sugar, now widely implicated as a source of the rise in obesity and diabetes. Stories such as this one fuel suspicion – but also lead to further safeguards in the scientific process. Funding disclosures, although not required five decades ago, have since been made compulsory.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① reasons for the rise in obesity and diabetes today",
+          "runs": [
+            {
+              "t": "① reasons for the rise in obesity and diabetes today",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② benefits of the peer review process in scientific work",
+          "runs": [
+            {
+              "t": "② benefits of the peer review process in scientific work",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ impact of professional standards in scientific research",
+          "runs": [
+            {
+              "t": "③ impact of professional standards in scientific research",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ need for critical thinking in evaluating scientific research",
+          "runs": [
+            {
+              "t": "④ need for critical thinking in evaluating scientific research",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ different views on what makes science trustworthy today",
+          "runs": [
+            {
+              "t": "⑤ different views on what makes science trustworthy today",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " The explosion of popular music in the second half of the twentieth century as well as the global circulation and dissemination of music by the creative industries propelled a new understanding of accessibility in relation to music.",
+          "runs": [
+            {
+              "t": " The explosion of popular music in the second half of the twentieth century as well as the global circulation and dissemination of music by the creative industries propelled a new understanding of accessibility in relation to music.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(A) These music movements allowed previously excluded groups to revel in opportunities to create. This new accessibility led to novelty and empowerment in and beyond the music sphere.",
+          "runs": [
+            {
+              "t": "(A) These music movements allowed previously excluded groups to revel in opportunities to create. This new accessibility led to novelty and empowerment in and beyond the music sphere.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "(B) In the 1950s, anyone could pick up spoons, a couple of pans, a second-hand guitar and start a band. This led to specific genres such as skiffle and a more relaxed attitude to music making.",
+          "runs": [
+            {
+              "t": "(B) In the 1950s, anyone could pick up spoons, a couple of pans, a second-hand guitar and start a band. This led to specific genres such as skiffle and a more relaxed attitude to music making.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "(C) Then, the popular music movement that followed these was driven by rebellion and freedom. This approach led to the punk movement, whose musicians made it a condition for their music to be accessible to all.",
+          "runs": [
+            {
+              "t": "(C) Then, the popular music movement that followed these was driven by rebellion and freedom. This approach led to the punk movement, whose musicians made it a condition for their music to be accessible to all.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "① (A) - (B) - (C)\t\t② (A) - (C) - (B)",
+          "runs": [
+            {
+              "t": "① (A) - (B) - (C)\t\t② (A) - (C) - (B)",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ (B) - (C) - (A)\t\t④ (C) - (A) - (B)\t",
+          "runs": [
+            {
+              "t": "③ (B) - (C) - (A)\t\t④ (C) - (A) - (B)\t",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ (C) - (B) - (A)\t",
+          "runs": [
+            {
+              "t": "⑤ (C) - (B) - (A)\t",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글의 내용과 일치하지 않는 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 내용과 일치하지 ",
+              "ul": false
+            },
+            {
+              "t": "않는",
+              "ul": true
+            },
+            {
+              "t": " 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " Quite often the interaction between groups is socially unequal, and this is reflected in the fact that in many cases borrowing of words or constructions goes mostly or entirely in one direction, from the more powerful or prestigious group to the less favored one. The languages of socially subordinated groups may from quite an early period of contact provide terminology for objects or practices with which speakers of the more powerful group were previously unfamiliar, but the effects of contact in that direction may not progress any further than this. In some cases, as with the Dharug language of Sydney, Australia, the source of some of the earliest loans from Indigenous Australian languages into English, the fate of the language system is extinction after the obliteration of many of its speakers. The remainder shifted to varieties of English, the language of the people who had suppressed them.",
+          "runs": [
+            {
+              "t": " Quite often the interaction between groups is socially unequal, and this is reflected in the fact that in many cases borrowing of words or constructions goes mostly or entirely in one direction, from the more powerful or prestigious group to the less favored one. The languages of socially subordinated groups may from quite an early period of contact provide terminology for objects or practices with which speakers of the more powerful group were previously unfamiliar, but the effects of contact in that direction may not progress any further than this. In some cases, as with the Dharug language of Sydney, Australia, the source of some of the earliest loans from Indigenous Australian languages into English, the fate of the language system is extinction after the obliteration of many of its speakers. The remainder shifted to varieties of English, the language of the people who had suppressed them.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① Power dynamics between linguistic groups often influence the direction of vocabulary adoption.",
+          "runs": [
+            {
+              "t": "① Power dynamics between linguistic groups often influence the direction of vocabulary adoption.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② Subordinate languages may initially contribute useful terms but do not usually influence dominant ones deeply.",
+          "runs": [
+            {
+              "t": "② Subordinate languages may initially contribute useful terms but do not usually influence dominant ones deeply.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ When two languages come into contact, mutual exchange of vocabulary is rarely maintained.",
+          "runs": [
+            {
+              "t": "③ When two languages come into contact, mutual exchange of vocabulary is rarely maintained.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ Dharug is a language that shows early lexical borrowing from English spoken in Australia.",
+          "runs": [
+            {
+              "t": "④ Dharug is a language that shows early lexical borrowing from English spoken in Australia.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ Some Indigenous languages, like Dharug, stopped being used as their speakers disappeared.",
+          "runs": [
+            {
+              "t": "⑤ Some Indigenous languages, like Dharug, stopped being used as their speakers disappeared.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " It is important to recognize that although science is a rule-based procedure, it is very much a creative process. A conjecture is a philosophical invention, cooked up rather mystically by the mind through the mental computation we call careful contemplation. However, until the hypothesis is tested against reality, it is not yet truly knowledge; it is just information that represents speculation. Knowledge is information that has demonstrated its usefulness. It is what is left over after cycles of experimental testing have eliminated false theories. As scientists continually test their hypotheses and modify their models to account for new and surprising data, a kind of \"learning loop\" emerges that statisticians call Bayesian updating. Based on Bayes' Rule, developed by eighteenth-century English statistician and philosopher Thomas Bayes, Bayesian updating refers to a mathematical process whereby an accepted theory or predictive model gets increasingly accurate through the repetitive testing of competing variants of that theory.",
+          "runs": [
+            {
+              "t": " It is important to recognize that although science is a rule-based procedure, it is very much a creative process. A conjecture is a philosophical invention, cooked up rather mystically by the mind through the mental computation we call careful contemplation. However, until the hypothesis is tested against reality, it is not yet truly knowledge; it is just information that represents speculation. Knowledge is information that has demonstrated its usefulness. It is what is left over after cycles of experimental testing have eliminated false theories. As scientists continually test their hypotheses and modify their models to account for new and surprising data, a kind of \"learning loop\" emerges that statisticians call Bayesian updating. Based on Bayes' Rule, developed by eighteenth-century English statistician and philosopher Thomas Bayes, Bayesian updating refers to a mathematical process whereby an accepted theory or predictive model gets increasingly accurate through the repetitive testing of competing variants of that theory.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "↓",
+          "runs": [
+            {
+              "t": "↓",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": " Although science (A)___________ a rule-based procedure, it is a creative process where conjectures that are formed through contemplation become knowledge only after cycles of experimental testing, speculation elimination, and Bayesian updating test and improve models into continually more (B)___________ representations of reality.",
+          "runs": [
+            {
+              "t": " Although science (A)___________ a rule-based procedure, it is a creative process where conjectures that are formed through contemplation become knowledge only after cycles of experimental testing, speculation elimination, and Bayesian updating test and improve models into continually more (B)___________ representations of reality.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "      (A)\t\t   (B)",
+          "runs": [
+            {
+              "t": "      (A)\t\t   (B)",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "① follows\t\taccurate",
+          "runs": [
+            {
+              "t": "① follows\t\taccurate",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② modifies\t\tnovel",
+          "runs": [
+            {
+              "t": "② modifies\t\tnovel",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ tests\t\t\tsurprising",
+          "runs": [
+            {
+              "t": "③ tests\t\t\tsurprising",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ speculates\t\tpredictive",
+          "runs": [
+            {
+              "t": "④ speculates\t\tpredictive",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ emerges\t\trepetitive",
+          "runs": [
+            {
+              "t": "⑤ emerges\t\trepetitive",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "글의 흐름으로 보아 주어진 문장이 들어가기에 가장 적절한 곳은?",
+          "runs": [
+            {
+              "t": "글의 흐름으로 보아 주어진 문장이 들어가기에 가장 적절한 곳은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "Yet, there is an appealing alternative explanation: Great scientists have multiple hits and consistently succeed in their scientific endeavors simply because they're exceptionally talented.",
+          "runs": [
+            {
+              "t": "Yet, there is an appealing alternative explanation: Great scientists have multiple hits and consistently succeed in their scientific endeavors simply because they're exceptionally talented.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": " Great scientists are seldom one-hit wonders. ( ① ) Newton is a prime example: beyond the Newtonian mechanics, he developed the theory of gravitation, calculus, laws of motion, and optimization. ( ② ) In fact, well-known scientists are often involved in multiple discoveries, a phenomenon potentially explained by the Matthew effect. ( ③ ) Indeed, an initial success may offer a scientist legitimacy, improve peer perception, provide knowledge of how to score and win, enhance social status, and attract resources and quality collaborators, each of these payoffs further increasing her odds of scoring another win. ( ④ ) Therefore, future success again goes to those who have had success earlier, not because of advantages offered by the previous success, but because the earlier success was indicative of a hidden talent. ( ⑤ ) The Matthew effect posits that success alone increases the future probability of success, raising the question: Does status dictate outcomes, or does it simply reflect an underlying talent or quality? In other words, is there really a Matthew effect after all?",
+          "runs": [
+            {
+              "t": " Great scientists are seldom one-hit wonders. ( ① ) Newton is a prime example: beyond the Newtonian mechanics, he developed the theory of gravitation, calculus, laws of motion, and optimization. ( ② ) In fact, well-known scientists are often involved in multiple discoveries, a phenomenon potentially explained by the Matthew effect. ( ③ ) Indeed, an initial success may offer a scientist legitimacy, improve peer perception, provide knowledge of how to score and win, enhance social status, and attract resources and quality collaborators, each of these payoffs further increasing her odds of scoring another win. ( ④ ) Therefore, future success again goes to those who have had success earlier, not because of advantages offered by the previous success, but because the earlier success was indicative of a hidden talent. ( ⑤ ) The Matthew effect posits that success alone increases the future probability of success, raising the question: Does status dictate outcomes, or does it simply reflect an underlying talent or quality? In other words, is there really a Matthew effect after all?",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 ",
+              "ul": false
+            },
+            {
+              "t": "않은",
+              "ul": true
+            },
+            {
+              "t": " 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " Since their start in the early 1950s U.S. television sitcoms have ①shown many of the social conflicts in U.S. society: civil rights, women's rights in the home and in the workplace, children's rights, immigration and multiculturalism, as well as ②shifting conceptions of the family. Each of these issues has been addressed through humour in a way that has helped to make more progressive values more acceptable than previously. Often a character, usually someone marked as a bigot, ③rejected one or more of these developments and was then made to look ④evolving. They were cut down either through their own stupidity, a brief scolding from others, or both. In this way, the humour of sitcoms acted as a cost-effective tool for ⑤promoting acceptance of a more pluralistic and tolerant society.",
+          "runs": [
+            {
+              "t": " Since their start in the early 1950s U.S. television sitcoms have ①",
+              "ul": false
+            },
+            {
+              "t": "shown",
+              "ul": true
+            },
+            {
+              "t": " many of the social conflicts in U.S. society: civil rights, women's rights in the home and in the workplace, children's rights, immigration and multiculturalism, as well as ②",
+              "ul": false
+            },
+            {
+              "t": "shifting",
+              "ul": true
+            },
+            {
+              "t": " conceptions of the family. Each of these issues has been addressed through humour in a way that has helped to make more progressive values more acceptable than previously. Often a character, usually someone marked as a bigot, ③",
+              "ul": false
+            },
+            {
+              "t": "rejected",
+              "ul": true
+            },
+            {
+              "t": " one or more of these developments and was then made to look ④",
+              "ul": false
+            },
+            {
+              "t": "evolving",
+              "ul": true
+            },
+            {
+              "t": ". They were cut down either through their own stupidity, a brief scolding from others, or both. In this way, the humour of sitcoms acted as a cost-effective tool for ⑤",
+              "ul": false
+            },
+            {
+              "t": "promoting",
+              "ul": true
+            },
+            {
+              "t": " acceptance of a more pluralistic and tolerant society.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "다음 글의 제목으로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 제목으로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " When we realize we've said something in error and we pause to go back to correct it, we stop gesturing a couple of hundred milliseconds before we stop speaking. Such sequences suggest the startling notion that our hands \"know\" what we're going to say before our conscious minds do, and in fact this is often the case. Gesture can mentally prime a word so that the right term comes to our lips. When people are prevented from gesturing, they talk less fluently; their speech becomes halting because their hands are no longer able to supply them with the next word, and the next. Not being able to gesture has other deleterious effects: without gesture to help our mental processes along, we remember less useful information, we solve problems less well, and we are less able to explain our thinking. Far from tagging along as speech's clumsy companion, gesture represents the leading edge of our thought.",
+          "runs": [
+            {
+              "t": " When we realize we've said something in error and we pause to go back to correct it, we stop gesturing a couple of hundred milliseconds before we stop speaking. Such sequences suggest the startling notion that our hands \"know\" what we're going to say before our conscious minds do, and in fact this is often the case. Gesture can mentally prime a word so that the right term comes to our lips. When people are prevented from gesturing, they talk less fluently; their speech becomes halting because their hands are no longer able to supply them with the next word, and the next. Not being able to gesture has other deleterious effects: without gesture to help our mental processes along, we remember less useful information, we solve problems less well, and we are less able to explain our thinking. Far from tagging along as speech's clumsy companion, gesture represents the leading edge of our thought.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① The Less You Move, The Better",
+          "runs": [
+            {
+              "t": "① The Less You Move, The Better",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② An Efficient Error Correcting Mechanism",
+          "runs": [
+            {
+              "t": "② An Efficient Error Correcting Mechanism",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ The Importance of Thinking Before Acting",
+          "runs": [
+            {
+              "t": "③ The Importance of Thinking Before Acting",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ Thinking with Gesture: A Gesture Foreshadowing",
+          "runs": [
+            {
+              "t": "④ Thinking with Gesture: A Gesture Foreshadowing",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ How Gestures Hinder the Language Development of Late Talkers",
+          "runs": [
+            {
+              "t": "⑤ How Gestures Hinder the Language Development of Late Talkers",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글의 내용과 일치하는 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 내용과 일치하는 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " Despite the difference between the past and the future, between what has happened and what is to come, it can be suggested, that our sense of the past has always been influenced by our view of the future. Revolutionaries have always looked to the past to frame their future cause, as is amply illustrated by examples from nationalism to communism. The future has often been seen as variously a recovery of a lost time, as a replication of what is established, or as a model bequeathed by a heroic age long gone. The writing of history is based on understanding or explaining future outcomes that were not known to contemporaries, since the historian has the benefit of hindsight and the past is nothing more than the accumulation of futures that are now our past. So, rather than see the hand of the past always shaping the future, perhaps it can be seen in reverse, with the past – in the sense of our understanding of it – being shaped by our orientation to the future.",
+          "runs": [
+            {
+              "t": " Despite the difference between the past and the future, between what has happened and what is to come, it can be suggested, that our sense of the past has always been influenced by our view of the future. Revolutionaries have always looked to the past to frame their future cause, as is amply illustrated by examples from nationalism to communism. The future has often been seen as variously a recovery of a lost time, as a replication of what is established, or as a model bequeathed by a heroic age long gone. The writing of history is based on understanding or explaining future outcomes that were not known to contemporaries, since the historian has the benefit of hindsight and the past is nothing more than the accumulation of futures that are now our past. So, rather than see the hand of the past always shaping the future, perhaps it can be seen in reverse, with the past – in the sense of our understanding of it – being shaped by our orientation to the future.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① Revolutionaries tend to ignore the past and focus solely on the future.",
+          "runs": [
+            {
+              "t": "① Revolutionaries tend to ignore the past and focus solely on the future.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② The future is seen as something completely disconnected from the past.",
+          "runs": [
+            {
+              "t": "② The future is seen as something completely disconnected from the past.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ Our understanding of the past can be shaped by how we view the future.",
+          "runs": [
+            {
+              "t": "③ Our understanding of the past can be shaped by how we view the future.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ The past always determines the future, regardless of how we view it.",
+          "runs": [
+            {
+              "t": "④ The past always determines the future, regardless of how we view it.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ Historians rely entirely on the perspectives of people who lived through past events.",
+          "runs": [
+            {
+              "t": "⑤ Historians rely entirely on the perspectives of people who lived through past events.",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "밑줄 친 taking a back seat이 다음 글에서 의미하는 바로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "밑줄 친 ",
+              "ul": false
+            },
+            {
+              "t": "taking a back seat",
+              "ul": true
+            },
+            {
+              "t": "이 다음 글에서 의미하는 바로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " The prominence of the social dimension in food writing might suggest that the flavor of food is taking a back seat. I suspect that most people view flavor as of secondary importance in social settings where food is served. Although our social gatherings coalesce around food, the meaning of these gatherings does not seem to depend on flavor. Flavor assists with the narrow purpose of filling the belly, and once that is accomplished it provides the backdrop for whatever social dynamics characterize the gathering. These can be understood independently of the flavor of the food on offer, the appreciation of which is understood to be personal and subjective. According to this conventional wisdom, the ceremonies and rituals around food, the social events that supply food with its meaning, do not depend on the quality of sensations provided by the food. To focus excessively on flavor is to miss the larger significance of these social relations.",
+          "runs": [
+            {
+              "t": " The prominence of the social dimension in food writing might suggest that the flavor of food is ",
+              "ul": false
+            },
+            {
+              "t": "taking a back seat",
+              "ul": true
+            },
+            {
+              "t": ". I suspect that most people view flavor as of secondary importance in social settings where food is served. Although our social gatherings coalesce around food, the meaning of these gatherings does not seem to depend on flavor. Flavor assists with the narrow purpose of filling the belly, and once that is accomplished it provides the backdrop for whatever social dynamics characterize the gathering. These can be understood independently of the flavor of the food on offer, the appreciation of which is understood to be personal and subjective. According to this conventional wisdom, the ceremonies and rituals around food, the social events that supply food with its meaning, do not depend on the quality of sensations provided by the food. To focus excessively on flavor is to miss the larger significance of these social relations.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① the key factor in ceremonial food practices",
+          "runs": [
+            {
+              "t": "① the key factor in ceremonial food practices",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② valued more than the act of gathering itself",
+          "runs": [
+            {
+              "t": "② valued more than the act of gathering itself",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ being well-regarded due to personal preferences",
+          "runs": [
+            {
+              "t": "③ being well-regarded due to personal preferences",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ subjective and thus peripheral to collective gatherings",
+          "runs": [
+            {
+              "t": "④ subjective and thus peripheral to collective gatherings",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ becoming importance taking into account cultural expectations",
+          "runs": [
+            {
+              "t": "⑤ becoming importance taking into account cultural expectations",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 밑줄 친 부분 중, 어법상 ",
+              "ul": false
+            },
+            {
+              "t": "틀린",
+              "ul": true
+            },
+            {
+              "t": " 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " The governments of virtually every country on the planet attach great importance to achieving food security and a wide variety of mechanisms have been developed to realize this goal. The first issue governments face in achieving national food security ①are the problem of insuring that adequate amounts of food are available to the resident population. Some governments have set goals of food self-sufficiency, ②which means most if not all of the food available in a country comes from the domestic farming system. However, food security does not require food self-sufficiency because countries can import food items not easily produced within the country. Agricultural products are, after all, highly sensitive to climatic, soil and other conditions that ③tend to vary around the world. Even every country with extremely productive agricultural sectors is not fully ⓓself-sufficient in all food items. The United States, for example, depends on imports for its supply of coffee, tea, bananas and other tropical products. In general, the problem of assuring adequate food supplies ⑤is solved by relying on both domestic production and imports.",
+          "runs": [
+            {
+              "t": " The governments of virtually every country on the planet attach great importance to achieving food security and a wide variety of mechanisms have been developed to realize this goal. The first issue governments face in achieving national food security ①",
+              "ul": false
+            },
+            {
+              "t": "are",
+              "ul": true
+            },
+            {
+              "t": " the problem of insuring that adequate amounts of food are available to the resident population. Some governments have set goals of food self-sufficiency, ②",
+              "ul": false
+            },
+            {
+              "t": "which",
+              "ul": true
+            },
+            {
+              "t": " means most if not all of the food available in a country comes from the domestic farming system. However, food security does not require food self-sufficiency because countries can import food items not easily produced within the country. Agricultural products are, after all, highly sensitive to climatic, soil and other conditions that ③",
+              "ul": false
+            },
+            {
+              "t": "tend",
+              "ul": true
+            },
+            {
+              "t": " to vary",
+              "ul": true
+            },
+            {
+              "t": " around the world. Even every country with extremely productive agricultural sectors ",
+              "ul": false
+            },
+            {
+              "t": "is",
+              "ul": false
+            },
+            {
+              "t": " not fully ⓓ",
+              "ul": false
+            },
+            {
+              "t": "self-sufficient",
+              "ul": true
+            },
+            {
+              "t": " in all food items. The United States, for example, depends on imports for its supply of coffee, tea, bananas and other tropical products. In general, the problem of assuring adequate food supplies ⑤",
+              "ul": false
+            },
+            {
+              "t": "is",
+              "ul": true
+            },
+            {
+              "t": " solved",
+              "ul": true
+            },
+            {
+              "t": " by relying on both domestic production and imports.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은?",
+          "runs": [
+            {
+              "t": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "Commuters, on the other hand, are familiar with the route through the station, have little or no luggage, and are usually in a hurry.",
+          "runs": [
+            {
+              "t": "Commuters, on the other hand, are familiar with the route through the station, have little or no luggage, and are usually in a hurry.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "The usual intercity traveler moves slowly through the station area. The passenger may not be familiar with the routine, have baggage to handle and check or retrieve, have a long wait for connections or delayed trains, and may require information, food, and a comfortable place to sit. ( ① ) They want direct access to or from local streets and transport. ( ② ) These two types of traffic should be kept separate to avoid conflict and confusion. ( ③ ) In some large stations such as Grand Central Terminal in New York City, commuter and intercity trains arrive and depart on different levels. ( ④ ) In smaller stations, separate platforms should be used and traffic routed so that the two lines of movement do not cross. ( ⑤ ) In some instances, separate stations are in use. Clear and concise direction and routing signs and other means of channelization are desirable. ",
+          "runs": [
+            {
+              "t": "The usual intercity traveler moves slowly through the station area. The passenger may not be familiar with the routine, have baggage to handle and check or retrieve, have a long wait for connections or delayed trains, and may require information, food, and a comfortable place to sit. ( ① ) They want direct access to or from local streets and transport. ( ② ) These two types of traffic should be kept separate to avoid conflict and confusion. ( ③ ) In some large stations such as Grand Central Terminal in New York City, commuter and intercity trains arrive and depart on different levels. ( ④ ) In smaller stations, separate platforms should be used and traffic routed so that the two lines of movement do not cross. ( ⑤ ) In some instances, separate stations are in use. Clear and concise direction and routing signs and other means of channelization are desirable. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "다음 글의 빈칸에 들어갈 말로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 빈칸에 들어갈 말로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " Stress not only affects physical disease but also the very structure of our brains, making us even more likely to experience a drained brain. A number of studies have been done to reveal what happens in healthy people's brains when they go through something stressful. One study demonstrated a link between a smaller hippocampus and people who had experienced long-lasting stress. Why does this matter? This part of the brain helps you remain resilient in the face of stress and is involved in mood regulation. It also helps you to monitor the safety of your environment and store dangerous images in your long-term memory so you can avoid them in the future. It does all these things as part of its duties of regulating your sympathetic and parasympathetic nervous systems. But chronic stress can confuse the hippocampus and lead to turning signals for cortisol \"on\" instead of \"off,\" which can keep you in a continuous state of ____________.",
+          "runs": [
+            {
+              "t": " Stress not only affects physical disease but also the very structure of our brains, making us even more likely to experience a drained brain. A number of studies have been done to reveal what happens in healthy people's brains when they go through something stressful. One study demonstrated a link between a smaller hippocampus and people who had experienced long-lasting stress. Why does this matter? This part of the brain helps you remain resilient in the face of stress and is involved in mood regulation. It also helps you to monitor the safety of your environment and store dangerous images in your long-term memory so you can avoid them in the future. It does all these things as part of its duties of regulating your sympathetic and parasympathetic nervous systems. But chronic stress can confuse the hippocampus and lead to turning signals for cortisol \"on\" instead of \"off,\" which can keep you in a continuous state of ____________.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① balance\t② relaxation\t③ danger",
+          "runs": [
+            {
+              "t": "① balance\t② relaxation\t③ danger",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ motivation\t⑤ recovery",
+          "runs": [
+            {
+              "t": "④ motivation\t⑤ recovery",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "다음 글에서 전체 흐름과 관계 없는 문장은?",
+          "runs": [
+            {
+              "t": "다음 글에서 전체 흐름과 관계 ",
+              "ul": false
+            },
+            {
+              "t": "없는",
+              "ul": true
+            },
+            {
+              "t": " 문장은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": " As a general rule, it's better if your definition corresponds as closely as possible to the way in which the term is ordinarily used in the kinds of debates to which your claims are pertinent. There will be, however, occasions where it is appropriate, even necessary, to coin special uses through what philosophers call stimulative definition. ① This would be the case where the current lexicon is not able to make distinctions that you think are philosophically important. ② For example, we do not have a term in ordinary language that describes a memory that is not necessarily a memory of something the person having it has experienced. ③ In recent years, advances in neuroscience have provided new insights into how the brain stores and retrieves memories. ④ Such a thing would occur, for example, if I could somehow share your memories: I would have a memory-type experience, but this would not be of something that I had actually experienced. ⑤ To call this a memory would be misleading. For this reason, philosophers have coined the special term 'quasi-memory' to refer to these hypothetical memory-like experiences.",
+          "runs": [
+            {
+              "t": " As a general rule, it's better if your definition corresponds as closely as possible to the way in which the term is ordinarily used in the kinds of debates to which your claims are pertinent. There will be, however, occasions where it is appropriate, even necessary, to coin special uses through what philosophers call stimulative definition. ① This would be the case where the current lexicon is not able to make distinctions that you think are philosophically important. ② For example, we do not have a term in ordinary language that describes a memory that is not necessarily a memory of something the person having it has experienced. ③ In recent years, advances in neuroscience have provided new insights into how the brain stores and retrieves memories. ④ Such a thing would occur, for example, if I could somehow share your memories: I would have a memory-type experience, but this would not be of something that I had actually experienced. ⑤ To call this a memory would be misleading. For this reason, philosophers have coined the special term 'quasi-memory' to refer to these hypothetical memory-like experiences.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "다음 우리말 표현과 같은 의미가 되도록 <보기>의 단어를 배열하시오. (단, 주어진 표현만 한 번씩 사용하며, 필요시 변형 가능)",
+          "runs": [
+            {
+              "t": "다음 우리말 표현과 같은 의미가 되도록 <보기>의 단어를 배열하시오. (단, 주어진 표현만 한 번씩 사용하며, 필요시 변형 가능)",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "<보기>",
+          "runs": [
+            {
+              "t": "<보기>",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "by / in which / were / the greatest extent possible / regardless of / artistic and usable / design / to / to be / all products and environments / their age, size, disability, nationality, or language / everyone",
+          "runs": [
+            {
+              "t": "by / in which / were / the greatest extent possible / regardless of / artistic and usable / design / to / to be / all products and environments / their age, size, disability, nationality, or language / everyone",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "건축가이자 제품 디자이너로서, 그는 모든 제품과 환경이 예술적으로 디자인되고, 나이, 체격, 장애, 국적, 언어에 상관없이 가능한 한 많은 사람들에게 사용 가능하도록 설계된 세상을 추구했다.",
+          "runs": [
+            {
+              "t": "건축가이자 제품 디자이너로서, 그는 모든 제품과 환경이 예술적으로 디자인되고, 나이, 체격, 장애, 국적, 언어에 상관없이 가능한 한 많은 사람들에게 사용 가능하도록 설계된 세상을 추구했다.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "↓",
+          "runs": [
+            {
+              "t": "↓",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "As an architect and product designer, he pursued a world _________________________________________________________________________________________________________________________________________________________.",
+          "runs": [
+            {
+              "t": "As an architect and product designer, he pursued a world _________________________________________________________________________________________________________________________________________________________.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "다음 글에서 어법상 틀린 부분을 하나 찾아, 이를 바르게 고쳐 쓰시오.",
+          "runs": [
+            {
+              "t": "다음 글에서 어법상 ",
+              "ul": false
+            },
+            {
+              "t": "틀린",
+              "ul": true
+            },
+            {
+              "t": " 부분을 하나 찾아, 이를 바르게 고쳐 쓰시오.",
+              "ul": false
+            }
+          ],
+          "pstyle": "서술형 번호"
+        },
+        {
+          "text": " If the brain has already stored someone's face and name, why do we still end up remembering one and not the other? This is because the brain has something of a two-tier memory system at work when it comes to retrieve memories, and this gives rise to a common yet infuriating sensation: recognising someone, but not being able to remember how or why, or what their name is. This happens because the brain differentiates between familiarity and recall. To clarify, familiarity (or recognition) is when you encounter someone or something and you know you've done so before. But beyond that, you've got nothing; all you can say is this person/thing is already in your memories. Recall is when you can access the original memory of how and why you know this person; recognition is just flagging up the fact that the memory exists.",
+          "runs": [
+            {
+              "t": " If the brain has already stored someone's face and name, why do we still end up remembering one and not the other? This is because the brain has something of a two-tier memory system at work when it comes to retrieve memories, and this gives rise to a common yet infuriating sensation: recognising someone, but not being able to remember how or why, or what their name is. This happens because the brain differentiates between familiarity and recall. To clarify, familiarity (or recognition) is when you encounter someone or something and you know you've done so before. But beyond that, you've got nothing; all you can say is this person/thing is already in your memories. Recall is when you can access the original memory of how and why you know this person; recognition is just flagging up the fact that the memory exists.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "답: ________________ → ________________",
+          "runs": [
+            {
+              "t": "답: ________________ → ________________",
+              "ul": false
+            }
+          ],
+          "pstyle": "서술형답지"
+        },
+        {
+          "text": "밑줄 친 otherwise가 다음 글에서 의미하는 바를 ‘if’로 시작하여 쓰시오.",
+          "runs": [
+            {
+              "t": "밑줄 친 ",
+              "ul": false
+            },
+            {
+              "t": "otherwise",
+              "ul": true
+            },
+            {
+              "t": "가 다음 글에서 의미하는 바를 ‘if’로 시작하여 쓰시오.",
+              "ul": false
+            }
+          ],
+          "pstyle": "서술형 번호"
+        },
+        {
+          "text": " Commitment is the glue holding together characteristically human forms of social life. Commitments make individuals' behavior predictable in the face of fluctuations in their desires and interests, thereby facilitating the planning and coordination of joint actions involving multiple agents. Moreover, commitments make people willing to perform actions that they would not otherwise perform. For example, a taxi driver picks up his clients and transports them to their desired destination because they are committed to paying him afterwards for the service, and a construction worker performs her job every day because her employer has made a credible commitment to pay her at the end of the month. Indeed, the taxi driver and the construction worker are willing to accept money as payment only because a network of other agents (notably the central bank) is committed to taking various measures to sustain the currency in question. Thus, social objects and institutions such as jobs, money, government, scientific collaborations and marriage depend for their origin and stability upon the credibility of commitments.",
+          "runs": [
+            {
+              "t": " Commitment is the glue holding together characteristically human forms of social life. Commitments make individuals' behavior predictable in the face of fluctuations in their desires and interests, thereby facilitating the planning and coordination of joint actions involving multiple agents. Moreover, commitments make people willing to perform actions that they would not ",
+              "ul": false
+            },
+            {
+              "t": "otherwise",
+              "ul": true
+            },
+            {
+              "t": " perform. For example, a taxi driver picks up his clients and transports them to their desired destination because they are committed to paying him afterwards for the service, and a construction worker performs her job every day because her employer has made a credible commitment to pay her at the end of the month. Indeed, the taxi driver and the construction worker are willing to accept money as payment only because a network of other agents (notably the central bank) is committed to taking various measures to sustain the currency in question. Thus, social objects and institutions such as jobs, money, government, scientific collaborations and marriage depend for their origin and stability upon the credibility of commitments.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "답: ______________________________________________________________",
+          "runs": [
+            {
+              "t": "답: ______________________________________________________________",
+              "ul": false
+            }
+          ],
+          "pstyle": "서술형답지"
+        },
+        {
+          "text": "다음 글 [A]와 그림 [B]를 탐구한 후, 글 [C]를 작성하려고 한다. 글 [C]의 빈칸 ⓐ~ⓒ에 들어갈 말을 글 [A]에서 각각 찾아 한 단어로 쓰시오. (어형 변형 가능)",
+          "runs": [
+            {
+              "t": "다음 글 [A]와 그림 [B]를 탐구한 후, 글 [C]를 작성하려고 한다. 글 [C]의 빈칸 ⓐ~ⓒ에 들어갈 말을 글 [A]에서 각각 찾아 한 단어로 쓰시오. (어형 변형 가능)",
+              "ul": false
+            }
+          ],
+          "pstyle": "서술형 번호"
+        },
+        {
+          "text": "[A]",
+          "runs": [
+            {
+              "t": "[A]",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": " Our intuition about states of matter comes from our experience on Earth's surface, where the pressure is uniformly low and variations in temperature cause changes in the state of matter from solid to liquid to gas. Therefore, when we think of melting or boiling or the creation of plasma, we intuitively assume it reflects an increase in temperature. This bias comes from the fact that we live in a very constant pressure environment. Even small changes in pressure, such as those we experience when under water or on high mountaintops, can have very large effects on our metabolism. But the pressure changes we experience are trivial compared to the pressure range of the overall planetary environment. Since pressure is controlled by the weight of overlying material, pressures increase rapidly with depth. Imagine the pressures generated by the weight of rock a mile thick! For this reason a planet's pressure ranges are enormous ─ from essentially zero pressure in space to pressures of millions of atmospheres in planetary interiors.",
+          "runs": [
+            {
+              "t": " Our intuition about states of matter comes from our experience on Earth's surface, where the pressure is uniformly low and variations in temperature cause changes in the state of matter from solid to liquid to gas. Therefore, when we think of melting or boiling or the creation of plasma, we intuitively assume it reflects an increase in temperature. This bias comes from the fact that we live in a very constant pressure environment. Even small changes in pressure, such as those we experience when under water or on high mountaintops, can have very large effects on our metabolism. But the pressure changes we experience are trivial compared to the pressure range of the overall planetary environment. Since pressure is controlled by the weight of overlying material, pressures increase rapidly with depth. Imagine the pressures generated by the weight of rock a mile thick! For this reason a planet's pressure ranges are enormous ─ from essentially zero pressure in space to pressures of millions of atmospheres in planetary interiors.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "[B]",
+          "runs": [
+            {
+              "t": "[B]",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "[C]",
+          "runs": [
+            {
+              "t": "[C]",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": " [A] argues that our ⓐ_______________ understanding of states of matter is distorted by the narrow pressure range we ⓑ_______________ inhabit. [B] makes this concrete by marking three distinct zones — (A), (B), and (C) — along the full planetary pressure spectrum.",
+          "runs": [
+            {
+              "t": " [A] argues that our ⓐ_______________ understanding of states of matter is distorted by the narrow pressure range we ⓑ_______________ inhabit. [B] makes this concrete by marking three distinct zones — (A), (B), and (C) — along the full planetary pressure spectrum.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": " (A) is sea level, where pressure stays near one atmosphere. This is the stable baseline that makes pressure differences feel ⓒ_______________ in daily life, leading us to attribute phase changes to temperature alone. (B) is the upper atmosphere up to about 50 km, where pressure drops sharply. It marks the outermost edge of what humans can indirectly experience, yet even this span is a thin shell around the planet. (C) is the Earth's deep interior, where pressure reaches hundreds of gigapascals and temperatures approach 7,000 K, since the weight of ⓓ_______________ rock compresses everything below.",
+          "runs": [
+            {
+              "t": " (A) is sea level, where pressure stays near one atmosphere. This is the stable baseline that makes pressure differences feel ⓒ_______________ in daily life, leading us to attribute phase changes to temperature alone. (B) is the upper atmosphere up to about 50 km, where pressure drops sharply. It marks the outermost edge of what humans can indirectly experience, yet even this span is a thin shell around the planet. (C) is the Earth's deep interior, where pressure reaches hundreds of gigapascals and temperatures approach 7,000 K, since the weight of ⓓ_______________ rock compresses everything below.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": " By placing the thin atmospheric layer beside the massive planetary cross-section, [B] reveals how small (A)–(B) is compared to (C), exposing just how narrow the experiential basis of human reasoning really is.",
+          "runs": [
+            {
+              "t": " By placing the thin atmospheric layer beside the massive planetary cross-section, [B] reveals how small (A)–(B) is compared to (C), exposing just how narrow the experiential basis of human reasoning really is.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "ⓐ___________________, ⓑ___________________",
+          "runs": [
+            {
+              "t": "ⓐ___________________, ⓑ___________________",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "ⓒ___________________, ⓓ___________________",
+          "runs": [
+            {
+              "t": "ⓒ___________________, ⓓ___________________",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "<보기>는 다음 글을 읽고 우솔T가 진행한 실험 과정의 일부이다. 다음 글의 ①~④ 단계 중 <보기>의 빈칸에 해당하는 단계를 각각 쓰시오. [26년 3월 40번] ",
+          "runs": [
+            {
+              "t": "<보기>는 다음 글을 읽고 우솔T가 진행한 실험 과정의 일부이다. 다음 글의 ①~④ 단계 중 <보기>의 빈칸에 해당하는 단계를 각각 쓰시오.",
+              "ul": false
+            },
+            {
+              "t": " [26년 3월 40번] ",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": " When self-experimentation and conventional experiments are both possible, the difference between them often resembles the difference between learning and showing: Self-experiments are better for discovery but worse for convincing others that the solution is helpful or the answer is correct. Of course, most scientists want to do both ─ discover something and convince others of their discovery. Thus, psychologists should consider doing both self-experiments and conventional ones. The best use of resources may often be self-experiments followed by conventional ones. ①The researcher begins with self-experiments that, if all goes well, find large effects and / or generate and eliminate many hypotheses. ②This exploratory and theory-building phase lasts until a convenient solution or large effect is found. ③Then the researcher uses self-experiments to find the procedural parameters (e.g., duration, time of day, intensity) that optimize the solution or maximize the effect. ④Only then would the researcher begin conventional experiments, using the optimized parameters.",
+          "runs": [
+            {
+              "t": " When self-experimentation and conventional experiments are both possible, the difference between them often resembles the difference between learning and showing: Self-experiments are better for discovery but worse for convincing others that the solution is helpful or the answer is correct. Of course, most scientists want to do both ─ discover something and convince others of their discovery. Thus, psychologists should consider doing both self-experiments and conventional ones. The best use of resources may often be self-experiments followed by conventional ones. ①",
+              "ul": false
+            },
+            {
+              "t": "The researcher begins with self-experiments that, if all goes well, find large effects and / or generate and eliminate many hypotheses.",
+              "ul": true
+            },
+            {
+              "t": " ②",
+              "ul": false
+            },
+            {
+              "t": "This exploratory and theory-building phase lasts until a convenient solution or large effect is found.",
+              "ul": true
+            },
+            {
+              "t": " ③",
+              "ul": false
+            },
+            {
+              "t": "Then the researcher uses self-experiments to find the procedural parameters (e.g., duration, time of day, intensity) that optimize the solution or maximize the effect.",
+              "ul": true
+            },
+            {
+              "t": " ④",
+              "ul": false
+            },
+            {
+              "t": "Only then would the researcher begin conventional experiments, using the optimized parameters.",
+              "ul": true
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "<보기>",
+          "runs": [
+            {
+              "t": "<보기>",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "우솔T wants to answer this question: “What is the best way to improve sleep quality?”",
+          "runs": [
+            {
+              "t": "우솔T wants to answer this question: “What is the best way to improve sleep quality?”",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "(a) 우솔T tries different methods on himself: ----- (    )",
+          "runs": [
+            {
+              "t": "(a) 우솔T tries different methods on himself: ----- (    )",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": " * Drinking chamomile tea",
+          "runs": [
+            {
+              "t": " * Drinking chamomile tea",
+              "ul": false
+            }
+          ],
+          "pstyle": "영단어"
+        },
+        {
+          "text": " * Reading a paper book",
+          "runs": [
+            {
+              "t": " * Reading a paper book",
+              "ul": false
+            }
+          ],
+          "pstyle": "영단어"
+        },
+        {
+          "text": " * Taking a warm shower",
+          "runs": [
+            {
+              "t": " * Taking a warm shower",
+              "ul": false
+            }
+          ],
+          "pstyle": "영단어"
+        },
+        {
+          "text": " * Practicing deep breathing",
+          "runs": [
+            {
+              "t": " * Practicing deep breathing",
+              "ul": false
+            }
+          ],
+          "pstyle": "영단어"
+        },
+        {
+          "text": " * Avoiding screens ",
+          "runs": [
+            {
+              "t": " * Avoiding screens ",
+              "ul": false
+            }
+          ],
+          "pstyle": "영단어"
+        },
+        {
+          "text": "(b) 우솔T tests on his students: ----- (    )",
+          "runs": [
+            {
+              "t": "(b) 우솔T tests on his students: ----- (    )",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": " * Group A: takes a 15-minute warm shower 1 hour before bed",
+          "runs": [
+            {
+              "t": " * Group A: takes a 15-minute warm shower 1 hour before bed",
+              "ul": false
+            }
+          ],
+          "pstyle": "영단어"
+        },
+        {
+          "text": " * Group B: follows their usual routine",
+          "runs": [
+            {
+              "t": " * Group B: follows their usual routine",
+              "ul": false
+            }
+          ],
+          "pstyle": "영단어"
+        },
+        {
+          "text": " * Result: Group A falls asleep faster and reports deeper sleep.",
+          "runs": [
+            {
+              "t": " * Result: Group A falls asleep faster and reports deeper sleep.",
+              "ul": false
+            }
+          ],
+          "pstyle": "영단어"
+        },
+        {
+          "text": "(c) 우솔T finds that taking a warm shower improves his sleep quality the most. ----- (    )",
+          "runs": [
+            {
+              "t": "(c) 우솔T finds that taking a warm shower improves his sleep quality the most. ----- (    )",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(d) 우솔T tests more specific conditions on himself: ----- (    )",
+          "runs": [
+            {
+              "t": "(d) 우솔T tests more specific conditions on himself: ----- (    )",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": " * Duration: 5 min vs 15 min vs 30 min",
+          "runs": [
+            {
+              "t": " * Duration: 5 min vs 15 min vs 30 min",
+              "ul": false
+            }
+          ],
+          "pstyle": "영단어"
+        },
+        {
+          "text": " * Water temperature: lukewarm vs warm vs hot",
+          "runs": [
+            {
+              "t": " * Water temperature: lukewarm vs warm vs hot",
+              "ul": false
+            }
+          ],
+          "pstyle": "영단어"
+        },
+        {
+          "text": " * Timing: 30 min vs 1 hour vs 2 hours before bed",
+          "runs": [
+            {
+              "t": " * Timing: 30 min vs 1 hour vs 2 hours before bed",
+              "ul": false
+            }
+          ],
+          "pstyle": "영단어"
+        },
+        {
+          "text": "다음 글 (A)를 읽고 (B)의 각 빈칸 ⓐ~ⓓ에 들어갈 가장 적절한 한 단어를 (A)에서 찾아 쓰시오. (단, 필요시 변형 가능)",
+          "runs": [
+            {
+              "t": "다음 글 (A)를 읽고 (B)의 각 빈칸 ⓐ~ⓓ에 들어갈 가장 적절한 한 단어를 (A)에서 찾아 쓰시오. (단, 필요시 변형 가능)",
+              "ul": false
+            }
+          ],
+          "pstyle": "서술형 번호"
+        },
+        {
+          "text": "(A)",
+          "runs": [
+            {
+              "t": "(A)",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": " A first step toward establishing a respectful classroom learning community is acceptance of all ideas and answers ─ regardless of any obvious errors. Rich mathematical discussions cannot occur if this expectation is not in place. We must remember that wrong answers are often rooted in misconceptions, and unless these ideas are allowed to be brought to the forefront, we cannot help students confront their thinking. Students who are in safe learning environments are willing to risk sharing an incorrect answer with their peers in order to grow mathematically. It is important to model and expect the acceptance of all ideas without derogatory comments. As educators we can model this by recording all answers to be considered without giving any verbal or physical expressions that indicate agreement or disagreement with any answer. The teacher may need to practice having a \"blank face.\" Students look to teachers as the source of correct answers. Part of building a safe learning community is to shift this source of knowledge to the students by equipping them to defend the thinking behind their solutions.",
+          "runs": [
+            {
+              "t": " A first step toward establishing a respectful classroom learning community is acceptance of all ideas and answers ─ regardless of any obvious errors. Rich mathematical discussions cannot occur if this expectation is not in place. We must remember that wrong answers are often rooted in misconceptions, and unless these ideas are allowed to be brought to the forefront, we cannot help students confront their thinking. Students who are in safe learning environments are willing to risk sharing an incorrect answer with their peers in order to grow mathematically. It is important to model and expect the acceptance of all ideas without derogatory comments. As educators we can model this by recording all answers to be considered without giving any verbal or physical expressions that indicate agreement or disagreement with any answer. The teacher may need to practice having a \"blank face.\" Students look to teachers as the source of correct answers. Part of building a safe learning community is to shift this source of knowledge to the students by equipping them to defend the thinking behind their solutions.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(B)",
+          "runs": [
+            {
+              "t": "(B)",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(The following is a conversation between students about the last class.)",
+          "runs": [
+            {
+              "t": "(The following is a conversation between students about the last class.)",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "S1: Hey, did you finish reviewing today's lesson — the one about how to build a respectful classroom learning community?",
+          "runs": [
+            {
+              "t": "S1: Hey, did you finish reviewing today's lesson — the one about how to build a respectful classroom learning community?",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "S2: Yeah, I did. What really stood out was that incorrect answers often arise from ⓐ__________ that students hold, and unless those are brought out into the open, teachers can't help them rethink their understanding.",
+          "runs": [
+            {
+              "t": "S2: Yeah, I did. What really stood out was that incorrect answers often arise from ⓐ__________ that students hold, and unless those are brought out into the open, teachers can't help them rethink their understanding.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "S1: Exactly. And the article pointed out that when students feel their classroom is a secure environment, they become more likely to ⓑ__________ sharing a wrong answer with their classmates because it helps them grow.",
+          "runs": [
+            {
+              "t": "S1: Exactly. And the article pointed out that when students feel their classroom is a secure environment, they become more likely to ⓑ__________ sharing a wrong answer with their classmates because it helps them grow.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "S2: True. It also emphasized that it's important for teachers to accept all ideas without making any ⓒ__________ comments toward students.",
+          "runs": [
+            {
+              "t": "S2: True. It also emphasized that it's important for teachers to accept all ideas without making any ⓒ__________ comments toward students.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "S1: Right. And instead of students always looking to the teacher for correct answers, they should be ⓓ__________ with the ability to defend the thinking behind their own solutions.",
+          "runs": [
+            {
+              "t": "S1: Right. And instead of students always looking to the teacher for correct answers, they should be ⓓ__________ with the ability to defend the thinking behind their own solutions.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "S2: Definitely. When students learn to support their own reasoning, they become much more confident and independent.",
+          "runs": [
+            {
+              "t": "S2: Definitely. When students learn to support their own reasoning, they become much more confident and independent.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "ⓐ___________________, ⓑ___________________",
+          "runs": [
+            {
+              "t": "ⓐ___________________, ⓑ___________________",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "ⓒ___________________, ⓓ___________________",
+          "runs": [
+            {
+              "t": "ⓒ___________________, ⓓ___________________",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "다음 글은 Universal Design의 한 사례이다. 글을 읽고 빈칸 (A), (B)에 들어갈 말을 <보기>에서 골라 쓰시오.",
+          "runs": [
+            {
+              "t": "다음 글은 Universal Design의 한 사례이다. 글을 읽고 빈칸 (A), (B)에 들어갈 말을 <보기>에서 골라 쓰시오.",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "Smart Lighting Systems",
+          "runs": [
+            {
+              "t": "Smart Lighting Systems",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "Smart lighting systems are a great example of universal design. These systems allow users to adjust the brightness and color of light using various methods, such as voice commands, smartphone apps, or physical switches. This makes the space (A)__________ for everyone, including people with limited mobility or visual impairments.",
+          "runs": [
+            {
+              "t": "Smart lighting systems are a great example of universal design. These systems allow users to adjust the brightness and color of light using various methods, such as voice commands, smartphone apps, or physical switches. This makes the space (A)__________ for everyone, including people with limited mobility or visual impairments.",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "Furthermore, these lights can automatically dim or brighten based on the amount of natural sunlight. This automation helps reduce the (B)__________ required to constantly adjust switches manually, allowing users to maintain a comfortable environment with minimal strain. By providing multiple ways to control the environment, smart lighting ensures that the space is usable by people with diverse abilities.",
+          "runs": [
+            {
+              "t": "Furthermore, these lights can automatically dim or brighten based on the amount of natural sunlight. This automation helps reduce the (B)__________ required to constantly adjust switches manually, allowing users to maintain a comfortable environment with minimal strain. By providing multiple ways to control the environment, smart lighting ensures that the space is usable by people with diverse abilities.",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "<보기>",
+          "runs": [
+            {
+              "t": "<보기>",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "fatigue / accommodate / intuition / effort / implementing / appropriate / error",
+          "runs": [
+            {
+              "t": "fatigue / accommodate / intuition / effort / implementing / appropriate / error",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "(A): ____________________",
+          "runs": [
+            {
+              "t": "(A): ____________________",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "(B): ____________________",
+          "runs": [
+            {
+              "t": "(B): ____________________",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "위 지문의 (A)와 (B) 부분에 적용된 유니버설 디자인의 원칙을 학생의 필기 내용에서 골라 적으시오.",
+          "runs": [
+            {
+              "t": "위 지문의 (A)와 (B) 부분에 적용된 유니버설 디자인의 원칙을 학생의 필기 내용에서 골라 적으시오.",
+              "ul": false
+            }
+          ],
+          "pstyle": "서술형 번호"
+        },
+        {
+          "text": "(A)가 포함된 문장: ______________________________",
+          "runs": [
+            {
+              "t": "(A)가 포함된 문장: ______________________________",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(B)가 포함된 문장: ______________________________",
+          "runs": [
+            {
+              "t": "(B)가 포함된 문장: ______________________________",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        }
+      ]
+    }
+  ]
+}

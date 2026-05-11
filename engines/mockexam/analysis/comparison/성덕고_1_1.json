@@ -1,0 +1,2159 @@
+{
+  "school": "성덕고",
+  "grade": "고1",
+  "round": 1,
+  "ms_paras": 173,
+  "indd_paras": 255,
+  "matched": 118,
+  "unmatched_ms": 55,
+  "extra_indd": 137,
+  "matches": [
+    {
+      "ms": {
+        "q": 0,
+        "p": 0,
+        "pstyle": "지문",
+        "text": "성덕고1 동형 1회"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 1,
+        "pstyle": "지문",
+        "text": "선택형: 22문항"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 2,
+        "pstyle": "지문",
+        "text": "서술형: 5문항"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 3,
+        "pstyle": "지문",
+        "text": "총계: 27문항"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 4,
+        "pstyle": "다음 글을 읽고",
+        "text": "다음 글을 읽고 물음에 답하시오. "
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 5,
+        "pstyle": "지문",
+        "text": " Vincent painted the world-famous Cafe Terrace at Night in September 1888. He cr"
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " Vincent painted the world-famous Cafe Terrace at Night in September 1888. He cr"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 6,
+        "pstyle": "문제 번호",
+        "text": "윗글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 7,
+        "pstyle": "지문",
+        "text": "Vincent, However, believed that night scenes contained diverse and vibrant color"
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "테두리",
+        "tf_label": "",
+        "text": "Vincent, However, believed that night scenes contained diverse and vibrant color"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 8,
+        "pstyle": "선지",
+        "text": "① (A)     ② (B)     ③ (C)     ④ (D)     ⑤ (E)"
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① (A)     ② (B)     ③ (C)     ④ (D)     ⑤ (E)\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 9,
+        "pstyle": "문제 번호",
+        "text": "윗글의 주제로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 10,
+        "pstyle": "선지",
+        "text": "① The background and historical significance of Cafe Terrace at Night."
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① The background and historical significance of Cafe Terrace at Night.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 11,
+        "pstyle": "선지",
+        "text": "② Vincent van Gogh's unique way of depicting night scenes."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 12,
+        "pstyle": "선지",
+        "text": "③ The debate over the original color of the cafe in the painting."
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ The debate over the original color of the cafe in the painting.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 13,
+        "pstyle": "선지",
+        "text": "④ The renovation process of the cafe in the 1900s "
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ The renovation process of the cafe in the 1900s \r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 14,
+        "pstyle": "선지",
+        "text": "⑤ The reason why black paint was not used in night scenes."
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ The reason why black paint was not used in night scenes.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 15,
+        "pstyle": "다음 글을 읽고",
+        "text": "다음 글을 읽고 물음에 답하시오. "
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 16,
+        "pstyle": "지문",
+        "text": "ⓐ You may have the idea that this is simply a fictional tale. However, this is t"
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "ⓐ You may have the idea that this is simply a fictional tale. However, this is t"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 17,
+        "pstyle": "문제 번호",
+        "text": "윗글의 밑줄 친 ⓐ~ⓔ중 어법상 틀린 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 18,
+        "pstyle": "선지",
+        "text": "① ⓐ     ② ⓑ     ③ ⓒ     ④ ⓓ      ⑤ ⓔ"
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① ⓐ     ② ⓑ     ③ ⓒ     ④ ⓓ      ⑤ ⓔ\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 19,
+        "pstyle": "문제 번호",
+        "text": "윗글에 관한 다음 글의 내용과 일치하지 않는 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 20,
+        "pstyle": "선지",
+        "text": "① Matthew Syed was a former member of the British national table-tennis team."
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① Matthew Syed was a former member of the British national table-tennis team.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 21,
+        "pstyle": "선지",
+        "text": "② Matthew Syed developed his passion for table tennis and became a national cham"
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② Matthew Syed developed his passion for table tennis and became a national cham"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 22,
+        "pstyle": "선지",
+        "text": "③ With a growth mindset, Matthew became tough when faced with difficult tasks."
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ With a growth mindset, Matthew became tough when faced with difficult tasks.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 23,
+        "pstyle": "선지",
+        "text": "④ Matthew Syed became a national champion thanks to his natural talent."
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ Matthew Syed became a national champion thanks to his natural talent.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 24,
+        "pstyle": "선지",
+        "text": "⑤ A growth mindset helps in trying new things and discovering one’s passion."
+      },
+      "final": {
+        "page": "1",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ A growth mindset helps in trying new things and discovering one’s passion.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 25,
+        "pstyle": "다음 글을 읽고",
+        "text": "다음 글을 읽고 물음에 답하시오. "
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 26,
+        "pstyle": "지문",
+        "text": "Let’s start with the path of avoidance. The boy waits for his dad and concentrat"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "테두리",
+        "tf_label": "",
+        "text": "Let’s start with the path of avoidance. The boy waits for his dad and concentrat"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 27,
+        "pstyle": "문제 번호",
+        "text": "윗글에서 전체 흐름과 관계없는 문장은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 28,
+        "pstyle": "선지",
+        "text": "① (A)     ② (B)     ③ (C)     ④ (D)     ⑤ (E)"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① (A)     ② (B)     ③ (C)     ④ (D)     ⑤ (E)\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 29,
+        "pstyle": "문제 번호",
+        "text": "윗글을 읽고 답할 수 없는 질문을 모두 고르시오."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 30,
+        "pstyle": "선지",
+        "text": "① What was the boy's reaction when the ball hit and bruised his elbow?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 31,
+        "pstyle": "선지",
+        "text": "② Why did the boy refuse to play a table tennis match against his older brother?"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② Why did the boy refuse to play a table tennis match against his older brother?"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 32,
+        "pstyle": "선지",
+        "text": "③ Why did the boy's older brother suggest playing table tennis with him?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 33,
+        "pstyle": "선지",
+        "text": "④ What did the boy do after quitting table tennis and going to his room?"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ What did the boy do after quitting table tennis and going to his room?\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 34,
+        "pstyle": "선지",
+        "text": "⑤ What advice did the boy's father give him?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 35,
+        "pstyle": "다음 글을 읽고",
+        "text": "다음 글을 읽고 물음에 답하시오. "
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 36,
+        "pstyle": "지문",
+        "text": "Let’s rewind to the point when the boy first faces his dad across the net. His f"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "Let’s rewind to the point when the boy first faces his dad across the net. His f"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 37,
+        "pstyle": "지문",
+        "text": "An hour later, his dad still keeps winning easily, but the boy is learning from "
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "An hour later, his dad still keeps winning easily, but the boy is learning from "
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 38,
+        "pstyle": "문제 번호",
+        "text": "윗글의 빈칸에 들어갈 말로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 39,
+        "pstyle": "선지",
+        "text": "① support his older brother"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① support his older brother\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 40,
+        "pstyle": "선지",
+        "text": "② avoid his older brother"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② avoid his older brother\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 41,
+        "pstyle": "선지",
+        "text": "③ imitate his older brother"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ imitate his older brother\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 42,
+        "pstyle": "선지",
+        "text": "④ apologize to his older brother"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ apologize to his older brother\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 43,
+        "pstyle": "선지",
+        "text": "⑤ challenge his older brother"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ challenge his older brother\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 44,
+        "pstyle": "문제 번호",
+        "text": "윗글의 제목으로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 45,
+        "pstyle": "선지",
+        "text": "① Overcoming the Fear of Failure"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① Overcoming the Fear of Failure\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 46,
+        "pstyle": "선지",
+        "text": "② The Boy Who Embraces the Challenge"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② The Boy Who Embraces the Challenge\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 47,
+        "pstyle": "선지",
+        "text": "③ Lessons from a Skilled Father"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ Lessons from a Skilled Father\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 48,
+        "pstyle": "선지",
+        "text": "④ How to Win in Table Tennis"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ How to Win in Table Tennis\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 49,
+        "pstyle": "선지",
+        "text": "⑤ The Struggles of Sibling Rivalry"
+      },
+      "final": {
+        "page": "2",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ The Struggles of Sibling Rivalry\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 50,
+        "pstyle": "다음 글을 읽고",
+        "text": "다음 글을 읽고 물음에 답하시오. "
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 51,
+        "pstyle": "지문",
+        "text": " Sunlight offers numerous health benefits. In small amounts, it boosts vitamin D"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "테두리",
+        "tf_label": "",
+        "text": " Sunlight offers numerous health benefits. In small amounts, it boosts vitamin D"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 52,
+        "pstyle": "지문_순서",
+        "text": "(A) However, the impact of light extends beyond sunlight. Colors created by ⓐ ar"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "순서",
+        "tf_label": "",
+        "text": "(A) However, the impact of light extends beyond sunlight. Colors created by ⓐ ar"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 53,
+        "pstyle": "지문_순서",
+        "text": "(B) In contrast, red and yellow light are the least likely to impact our bodies."
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "순서",
+        "tf_label": "",
+        "text": "(B) In contrast, red and yellow light are the least likely to impact our bodies."
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 54,
+        "pstyle": "지문_순서",
+        "text": "(C) Sunlight also affects mental health. Natural light causes the release of ser"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "순서",
+        "tf_label": "",
+        "text": "(C) Sunlight also affects mental health. Natural light causes the release of ser"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 55,
+        "pstyle": "문제 번호",
+        "text": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것을 고르시오."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 56,
+        "pstyle": "선지",
+        "text": "① (A) - (C) - (B)          ② (B) - (A) - (C) "
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① (A) - (C) - (B)          ② (B) - (A) - (C) \r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 57,
+        "pstyle": "선지",
+        "text": "③ (C) - (A) - (B)          ④ (C) - (B) - (A)"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ (C) - (A) - (B)          ④ (C) - (B) - (A)\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 58,
+        "pstyle": "선지",
+        "text": "⑤ (B) - (C) - (A)"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ (B) - (C) - (A)\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 59,
+        "pstyle": "문제 번호",
+        "text": "윗글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 60,
+        "pstyle": "선지",
+        "text": "① ⓐ     ② ⓑ     ③ ⓒ     ④ ⓓ      ⑤ ⓔ"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 61,
+        "pstyle": "문제 번호",
+        "text": "다음 빈칸에 들어갈 말로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 62,
+        "pstyle": "지문",
+        "text": " There is a wealth of evidence that when parents, teachers, supervisors, and coa"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " There is a wealth of evidence that when parents, teachers, supervisors, and coa"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 63,
+        "pstyle": "선지",
+        "text": "① worshipped by successors"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① worshipped by successors\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 64,
+        "pstyle": "선지",
+        "text": "② deceived into superstition"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② deceived into superstition\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 65,
+        "pstyle": "선지",
+        "text": "③ excluded from community"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ excluded from community\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 66,
+        "pstyle": "선지",
+        "text": "④ symbolized as the repressed"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ symbolized as the repressed\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 67,
+        "pstyle": "선지",
+        "text": "⑤ perceived as involved and caring"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ perceived as involved and caring\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 68,
+        "pstyle": "문제 번호",
+        "text": "주어진 글에 이어질 글의 순서로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 69,
+        "pstyle": "지문",
+        "text": " The shed is cold and damp, the air thick with the smell of old wood and earth. "
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "테두리",
+        "tf_label": "",
+        "text": " The shed is cold and damp, the air thick with the smell of old wood and earth. "
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 70,
+        "pstyle": "지문_순서",
+        "text": "(A) The rabbit pauses for a moment, then hops away, disappearing back into the s"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "순서",
+        "tf_label": "",
+        "text": "(A) The rabbit pauses for a moment, then hops away, disappearing back into the s"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 71,
+        "pstyle": "지문_순서",
+        "text": "(B) \"Who's there?\" I ask, my voice shaking with fear. The shadow moves closer, a"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 72,
+        "pstyle": "지문_순서",
+        "text": "(C) A rabbit. A laugh escapes my lips as it stares at me with wide, curious eyes"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "순서",
+        "tf_label": "",
+        "text": "(C) A rabbit. A laugh escapes my lips as it stares at me with wide, curious eyes"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 73,
+        "pstyle": "선지",
+        "text": "① (A) – (C) – (B)\t② (B) – (A) – (C)"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① (A) – (C) – (B)\t② (B) – (A) – (C)\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 74,
+        "pstyle": "선지",
+        "text": "③ (B) – (C) – (A)\t④ (C) – (A) – (B)"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ (B) – (C) – (A)\t④ (C) – (A) – (B)\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 75,
+        "pstyle": "선지",
+        "text": "⑤ (C) – (B) – (A)"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ (C) – (B) – (A)\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 76,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "문제 번호",
+        "tf_label": "",
+        "text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은? [3.1점]\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 77,
+        "pstyle": "지문",
+        "text": " Assuming gene editing in humans proves to be safe and effective, it might seem "
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " Assuming gene editing in humans proves to be safe and effective, it might seem "
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 78,
+        "pstyle": "선지",
+        "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① ⓐ     ② ⓑ     ③ ⓒ     ④ ⓓ      ⑤ ⓔ\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 79,
+        "pstyle": "문제 번호",
+        "text": "다음 도표의 내용과 일치하지 않는 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 80,
+        "pstyle": "지문",
+        "text": " The above graph shows how often people in America consumed fast food in 2023, s"
+      },
+      "final": {
+        "page": "3",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " The above graph shows how often people in America consume￼d fast food in 2023, "
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 81,
+        "pstyle": "문제 번호",
+        "text": "다음 Blackwood Zoo에 관한 안내문의 내용과 일치하는 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 82,
+        "pstyle": "지문",
+        "text": "Welcome to Blackwood Zoo"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "Welcome to Blackwood Zoo\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 83,
+        "pstyle": "지문",
+        "text": "Get ready to explore! You can watch amazing animals on our 10 km walking path."
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "Get ready to explore! You can watch amazing animals on our 10 km walking path.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 84,
+        "pstyle": "지문",
+        "text": "Hours of Operation"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "Hours of Operation\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 85,
+        "pstyle": "지문",
+        "text": " Every day, all year round!"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 86,
+        "pstyle": "지문",
+        "text": " Summer - 8:30 a.m. - 5:30 p.m. (Last admission at 4:30 p.m.)"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 87,
+        "pstyle": "지문",
+        "text": "  Winter - 9:30 a.m. - 4:30 p.m. (Last admission at 3:30 p.m.)"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "  Winter - 9:30 a.m. - 4:30 p.m. (Last admission at 3:30 p.m.)\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 88,
+        "pstyle": "지문",
+        "text": "Ticket Prices"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "Ticket Prices\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 89,
+        "pstyle": "지문",
+        "text": " Age 13 - 64: $20"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 90,
+        "pstyle": "지문",
+        "text": " Age 3 - 12: $10"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 91,
+        "pstyle": "지문",
+        "text": " Others: Free"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 92,
+        "pstyle": "지문",
+        "text": "Seasonal Note"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "Seasonal Note\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 93,
+        "pstyle": "지문",
+        "text": "Since the weather is still cold, some animals like snakes and turtles will stay "
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "Since the weather is still cold, some animals like snakes and turtles will stay "
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 94,
+        "pstyle": "지문",
+        "text": "※ Free shuttle bus departs from Blackwood Subway Station every 20 minutes."
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "※ Free shuttle bus departs from Blackwood Subway Station every 20 minutes.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 95,
+        "pstyle": "선지",
+        "text": "① 주중에 운영하며 연중무휴이다."
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① 주중에 운영하며 연중무휴이다.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 96,
+        "pstyle": "선지",
+        "text": "② 언제나 똑같은 시간에 운영된다."
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② 언제나 똑같은 시간에 운영된다.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 97,
+        "pstyle": "선지",
+        "text": "③ 무료입장이 가능한 연령대는 없다."
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ 무료입장이 가능한 연령대는 없다.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 98,
+        "pstyle": "선지",
+        "text": "④ 실내에 머무는 일부 동물이 있다."
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ 실내에 머무는 일부 동물이 있다.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 99,
+        "pstyle": "선지",
+        "text": "⑤ 무료 셔틀버스가 30분마다 출발한다."
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ 무료 셔틀버스가 30분마다 출발한다.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 100,
+        "pstyle": "문제 번호",
+        "text": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 101,
+        "pstyle": "지문",
+        "text": "Routines also enable athletes to adjust and fine-tune their preparations based o"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "테두리",
+        "tf_label": "",
+        "text": "Routines also enable athletes to adjust and fine-tune their preparations based o"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 102,
+        "pstyle": "지문",
+        "text": " Routines enable athletes to evaluate competition conditions. (A) For example, b"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " Routines enable athletes to evaluate competition conditions. (A) For example, b"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 103,
+        "pstyle": "선지",
+        "text": "① (A)     ② (B)     ③ (C)     ④ (D)     ⑤ (E)"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① (A)     ② (B)     ③ (C)     ④ (D)     ⑤ (E)\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 104,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 내용과 일치하지 않는 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 105,
+        "pstyle": "지문",
+        "text": " Robert E. Lucas, Jr. was born on September 15, 1937, in Yakima, Washington. Dur"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " Robert E. Lucas, Jr. was born on September 15, 1937, in Yakima, Washington. Dur"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 106,
+        "pstyle": "선지",
+        "text": "① Lucas began his teaching career before completing his doctoral degree."
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① Lucas began his teaching career before completing his doctoral degree.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 107,
+        "pstyle": "선지",
+        "text": "② Lucas studied history as an undergraduate at the University of Chicago."
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② Lucas studied history as an undergraduate at the University of Chicago.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 108,
+        "pstyle": "선지",
+        "text": "③ Lucas developed an interest in economics while at UC Berkeley."
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ Lucas developed an interest in economics while at UC Berkeley.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 109,
+        "pstyle": "선지",
+        "text": "④ Lucas taught at the University of Chicago before moving to Carnegie Mellon Uni"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ Lucas taught at the University of Chicago before moving to Carnegie Mellon Uni"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 110,
+        "pstyle": "선지",
+        "text": "⑤ Lucas received the Nobel Prize in Economic Sciences after many years as an eco"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ Lucas received the Nobel Prize in Economic Sciences after many years as an eco"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 111,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 내용과 일치하지 않는 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 112,
+        "pstyle": "지문",
+        "text": " Our skin conducts electricity more or less efficiently, depending on our emotio"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " Our skin conducts electricity more or less efficiently, depending on our emotio"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 113,
+        "pstyle": "선지",
+        "text": "① Emotional stimulation can cause our bodies to sweat a bit without us noticing."
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① Emotional stimulation can cause our bodies to sweat a bit without us noticing."
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 114,
+        "pstyle": "선지",
+        "text": "② When a small amount of sweat forms, our skin becomes better at conducting elec"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② When a small amount of sweat forms, our skin becomes better at conducting elec"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 115,
+        "pstyle": "선지",
+        "text": "③ If you feel highly emotional, your sweat glands actually become less active."
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ If you feel highly emotional, your sweat glands actually become less active.\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 116,
+        "pstyle": "선지",
+        "text": "④ With a scientific approach, feelings can be given objective figures through sk"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ With a scientific approach, feelings can be given objective figures through sk"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 117,
+        "pstyle": "선지",
+        "text": "⑤ Your emotional ups and downs can influence the measured values of skin conduct"
+      },
+      "final": {
+        "page": "4",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ Your emotional ups and downs can influence the measured values of skin conduct"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 118,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "문제 번호",
+        "tf_label": "",
+        "text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은? [3.5점]\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 119,
+        "pstyle": "지문",
+        "text": " What does it mean for a character to be a hero as opposed to a villain? In arti"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " What does it mean for a character to be a hero as opposed to a villain? In arti"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 120,
+        "pstyle": "선지",
+        "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 121,
+        "pstyle": "문제 번호",
+        "text": "다음 글에서 전체 흐름과 관계없는 문장은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 122,
+        "pstyle": "지문",
+        "text": " Cartilage is extremely important for the healthy functioning of a joint, especi"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " Cartilage is extremely important for the healthy functioning of a joint, especi"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 123,
+        "pstyle": "선지",
+        "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 124,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 제목으로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 125,
+        "pstyle": "지문",
+        "text": " The rise of air-conditioning accelerated the construction of sealed boxes, wher"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " The rise of air-conditioning accelerated the construction of sealed boxes, wher"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 126,
+        "pstyle": "선지",
+        "text": "① The Myth of Cool: Why Traditional Buildings Were Never Truly Comfortable"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① The Myth of Cool: Why Traditional Buildings Were Never Truly Comfortable\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 127,
+        "pstyle": "선지",
+        "text": "② From Mudbrick to Metal: Evolution of Urban Building Techniques"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "② From Mudbrick to Metal: Evolution of Urban Building Techniques\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 128,
+        "pstyle": "선지",
+        "text": "③ Ancient Wisdom in Modern Design: The Return of Traditional Cooling"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ Ancient Wisdom in Modern Design: The Return of Traditional Cooling\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 129,
+        "pstyle": "선지",
+        "text": "④ The Rise of Architecture: How Modern Buildings Reflect Efficiency and Elegance"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "④ The Rise of Architecture: How Modern Buildings Reflect Efficiency and Elegance"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 130,
+        "pstyle": "선지",
+        "text": "⑤ The Comfort Trap: How Air Conditioning Made Us Forget Smarter Ways to Stay Coo"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ The Comfort Trap: How Air Conditioning Made Us Forget Smarter Ways to Stay Coo"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 131,
+        "pstyle": "문제 번호",
+        "text": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 132,
+        "pstyle": "지문",
+        "text": " Plato argued that when you see something that strikes you as beautiful, you are"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "테두리",
+        "tf_label": "",
+        "text": " Plato argued that when you see something that strikes you as beautiful, you are"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 133,
+        "pstyle": "지문_순서",
+        "text": "(A) You can make drawings of the number five in blue or red ink, big or small, b"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "순서",
+        "tf_label": "",
+        "text": "(A) You can make drawings of the number five in blue or red ink, big or small, b"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 134,
+        "pstyle": "지문_순서",
+        "text": "(B) True beauty, or what Plato calls the Form of Beauty, has no particular color"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "순서",
+        "tf_label": "",
+        "text": "(B) True beauty, or what Plato calls the Form of Beauty, has no particular color"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 135,
+        "pstyle": "지문_순서",
+        "text": "(C) Although it has no particular color or size, it somehow lies within each and"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "순서",
+        "tf_label": "",
+        "text": "(C) Although it has no particular color or size, it somehow lies within each and"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 136,
+        "pstyle": "선지",
+        "text": "① (A) - (C) - (B)\t\t② (B) - (A) - (C) "
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "① (A) - (C) - (B)\t\t② (B) - (A) - (C) \r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 137,
+        "pstyle": "선지",
+        "text": "③ (B) - (C) - (A)\t\t④ (C) - (A) - (B)\t"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "③ (B) - (C) - (A)\t\t④ (C) - (A) - (B)\t\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 138,
+        "pstyle": "선지",
+        "text": "⑤ (C) - (B) - (A)\t"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "선지",
+        "tf_label": "",
+        "text": "⑤ (C) - (B) - (A)\t\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 139,
+        "pstyle": "서술형 번호",
+        "text": "다음 (A), (B)의 우리말을 아래의 조건에 맞추어 괄호 안의 단어를 활용하여 영작하시오."
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "서술형 번호",
+        "tf_label": "",
+        "text": "다음 (A), (B)의 우리말을 아래의 조건에 맞추어 괄호 안의 단어를 활용하여 영작하시오. [6점, 부분점수 있음]\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 140,
+        "pstyle": "테두리_조건",
+        "text": "<조건>"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 141,
+        "pstyle": "테두리_보기",
+        "text": "주어진 단어만을 모두 사용할 것(필요시 어형 변형)"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 142,
+        "pstyle": "테두리_보기",
+        "text": "완성된 한 문장으로 영작할 것"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 143,
+        "pstyle": "테두리_보기",
+        "text": "(A) 지쳤지만 그녀는 그녀의 프로젝트를 계속했다."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 144,
+        "pstyle": "테두리_보기",
+        "text": "(her project / continue / feel / despite / she / work on / exhausted)"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 145,
+        "pstyle": "테두리_보기",
+        "text": "→ _____________________________________________________"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "!선지",
+        "tf_label": "",
+        "text": "→ ______________________________________________________________________________"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 146,
+        "pstyle": "테두리_보기",
+        "text": "(B) 규칙적인 운동이 좋은 건강에 필수적이라는 사실을 잊지 마라."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 147,
+        "pstyle": "테두리_보기",
+        "text": "(the fact / is / regular exercise / that / essential / forget / Don’t / for good"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 148,
+        "pstyle": "테두리_보기",
+        "text": "→ _____________________________________________________"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "!선지",
+        "tf_label": "",
+        "text": "→ _____________________________________________________\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 149,
+        "pstyle": "서술형 번호",
+        "text": "다음 우리말을 아래의 조건에 맞추어 주어진 <단어>를 활용하여 영작하시오."
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "서술형 번호",
+        "tf_label": "",
+        "text": "다음 우리말을 아래의 조건에 맞추어 주어진 <단어>를 활용하여 영작하시오. [6점, 부분점수 있음]\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 150,
+        "pstyle": "지문",
+        "text": "오천만 명이 넘는 사람들이 지난 십 년 동안 그 놀이공원을 방문해 왔다."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 151,
+        "pstyle": "테두리_조건",
+        "text": "<조건>"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 152,
+        "pstyle": "테두리_보기",
+        "text": "주어진 단어만을 모두 사용할 것(필요시 어형 변형)"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 153,
+        "pstyle": "테두리_보기",
+        "text": "완성된 한 문장으로 영작할 것"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 154,
+        "pstyle": "테두리_보기",
+        "text": "<단어>"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 155,
+        "pstyle": "테두리_보기",
+        "text": "have / over / visited by / fifty million / be / the amusement park / more than /"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "테두리_보기",
+        "tf_label": "",
+        "text": "have / over / visited by / fifty million / be / the amusement park / more than /"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 156,
+        "pstyle": "테두리_보기",
+        "text": "→ _____________________________________________________"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "!선지",
+        "tf_label": "",
+        "text": "→ _____________________________________________________\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 157,
+        "pstyle": "테두리_보기",
+        "text": "다음 글의 요지로 가장 적절한 것을 주어진 뜻과 낱말을 활용하여 완성하시오. (단, <보기> 안의 단어만을 모두 사용하되 변형하지 말 것) [2"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "서술형 번호",
+        "tf_label": "",
+        "text": "다음 글의 요지로 가장 적절한 것을 주어진 뜻과 낱말을 활용하여 완성하시오. (단, <보기> 안의 단어만을 모두 사용하되 변형하지 말 것) [2"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 158,
+        "pstyle": "테두리_보기",
+        "text": " The science we learn in grade school is a collection of certainties about the n"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " The science we learn in grade school is a collection of certainties about the n"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 159,
+        "pstyle": "테두리_보기",
+        "text": "<보기>"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 160,
+        "pstyle": "테두리_보기",
+        "text": "is / about / uncertainties / collecting / science / more / reducing / than / kno"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 161,
+        "pstyle": "테두리_보기",
+        "text": "과학은 지식을 모으는 것보다 좀 더 불확실성들을 줄여가는 것에 관한 것이다."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 162,
+        "pstyle": "테두리_보기",
+        "text": "→ ______________________________________________________________________________"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "!선지",
+        "tf_label": "",
+        "text": "→ _____________________________________________________\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 163,
+        "pstyle": "서술형 번호",
+        "text": "다음 글의 밑줄 친 ⓐ~ⓔ 중 어법상 어색한 표현을 모두 골라 옳은 표현으로 수정하시오."
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "서술형 번호",
+        "tf_label": "",
+        "text": "다음 글의 밑줄 친 ⓐ~ⓔ 중 어법상 어색한 표현을 모두 골라 옳은 표현으로 수정하시오. [6점, 부분점수 있음]\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 164,
+        "pstyle": "지문",
+        "text": " Promotion deals with consumer psychology. We can't force people to think one wa"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " Promotion deals with consumer psychology. We can’t force people to think one wa"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 165,
+        "pstyle": "지문",
+        "text": "(1)_________________ → _________________"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "!선지",
+        "tf_label": "",
+        "text": "(1)_________________ → _________________\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 166,
+        "pstyle": "지문",
+        "text": "(2)_________________ → _________________"
+      },
+      "final": {
+        "page": "6",
+        "pstyle": "!선지",
+        "tf_label": "",
+        "text": "(2)_________________ → _________________\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 167,
+        "pstyle": "서술형 번호",
+        "text": "다음 글을 읽고, 아래 요약문의 (A)~(D)에 들어갈 한 단어를 각각 문맥과 어법에 맞게 본문에서 찾아 쓰시오. (필요시 어형 변형 가능)"
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "서술형 번호",
+        "tf_label": "",
+        "text": "다음 글을 읽고, 아래 요약문의 (A)~(D)에 들어갈 한 단어를 각각 문맥과 어법에 맞게 본문에서 찾아 쓰시오. (필요시 어형 변형 가능) ["
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 168,
+        "pstyle": "지문",
+        "text": " Piaget put the same amount of water into two different glasses: a tall narrow g"
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": " Piaget put the same amount of water into two different glasses: a tall narrow g"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 169,
+        "pstyle": "지문",
+        "text": "↓"
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "지문",
+        "tf_label": "",
+        "text": "↓\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 170,
+        "pstyle": "지문",
+        "text": "Piaget argued that children's understanding of (A)___________, like their grasp "
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 171,
+        "pstyle": "지문",
+        "text": "(A)________________ (B)________________"
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "!선지",
+        "tf_label": "",
+        "text": "(A)________________ (B)________________\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 172,
+        "pstyle": "지문",
+        "text": "(C)________________ (D)________________"
+      },
+      "final": {
+        "page": "7",
+        "pstyle": "!선지",
+        "tf_label": "",
+        "text": "(C)________________ (D)________________"
+      }
+    }
+  ]
+}

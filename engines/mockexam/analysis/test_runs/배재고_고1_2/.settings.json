@@ -1,0 +1,2584 @@
+{
+  "jobs": [
+    {
+      "round": 2,
+      "indd_path": "/Users/nhj/Documents/작업/Y.ONE STUDIO/조판/조판/교재/동형모의고사/고1/26-1-중간/배재고/배재1_동형모의고사(2회).indd",
+      "data": {
+        "school": "배재고",
+        "grade": "고1",
+        "exam_period": "26-1-중간",
+        "exam_date": "2026.5.7(목)",
+        "exam_type": "1학기 중간고사",
+        "round": 2,
+        "meta": {},
+        "questions": [
+          {
+            "source": "",
+            "paragraphs": [
+              {
+                "text": "배재고1 동형 2회",
+                "runs": [
+                  {
+                    "t": "배재고1 동형 2회",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "선택형: 22문항",
+                "runs": [
+                  {
+                    "t": "선택형: 22문항",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "서술형: 4문항",
+                "runs": [
+                  {
+                    "t": "서술형: 4문항",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "다음 중 밑줄 친 단어의 쓰임이 의미상 알맞지 않은 것은?",
+                "runs": [
+                  {
+                    "t": "다음 중 밑줄 친 단어의 쓰임이 의미상 알맞지 ",
+                    "ul": false
+                  },
+                  {
+                    "t": "않은",
+                    "ul": true
+                  },
+                  {
+                    "t": " 것은?",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "문제 번호"
+              },
+              {
+                "text": "① I prefer my steak rear so that it stays juicy and tender on the inside.",
+                "runs": [
+                  {
+                    "t": "① I prefer my steak ",
+                    "ul": false
+                  },
+                  {
+                    "t": "rear",
+                    "ul": true
+                  },
+                  {
+                    "t": " so that it stays juicy and tender on the inside.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "② Achieving success is by no means an easy task that happens overnight.",
+                "runs": [
+                  {
+                    "t": "② Achieving success is ",
+                    "ul": false
+                  },
+                  {
+                    "t": "by no means",
+                    "ul": true
+                  },
+                  {
+                    "t": " an easy task that happens overnight.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "③ I think I am coming down with a cold because my throat feels very sore today.",
+                "runs": [
+                  {
+                    "t": "③ I think I am ",
+                    "ul": false
+                  },
+                  {
+                    "t": "coming down with",
+                    "ul": true
+                  },
+                  {
+                    "t": " a cold because my throat feels very sore today.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "④ A judge must remain objective and base their decision solely on the evidence provided.",
+                "runs": [
+                  {
+                    "t": "④ A judge must remain ",
+                    "ul": false
+                  },
+                  {
+                    "t": "objective",
+                    "ul": true
+                  },
+                  {
+                    "t": " and base their decision solely on the evidence provided.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "⑤ The company rules clearly prescribe the procedures for handling customer complaints.",
+                "runs": [
+                  {
+                    "t": "⑤ The company rules clearly ",
+                    "ul": false
+                  },
+                  {
+                    "t": "prescribe",
+                    "ul": true
+                  },
+                  {
+                    "t": " the procedures for handling customer complaints.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "다음 중 ‘suspension’의 사전적 의미에 해당하지 않는 것을 2개 고르면?",
+                "runs": [
+                  {
+                    "t": "다음 중 ‘suspension’의 사전적 의미에 해당하지 ",
+                    "ul": false
+                  },
+                  {
+                    "t": "않는",
+                    "ul": true
+                  },
+                  {
+                    "t": " 것을 ",
+                    "ul": false
+                  },
+                  {
+                    "t": "2개",
+                    "ul": true
+                  },
+                  {
+                    "t": " 고르면?",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "문제 번호"
+              },
+              {
+                "text": "① the state of being stretched tight",
+                "runs": [
+                  {
+                    "t": "① the state of being stretched tight",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "② the state of being hung from a high place",
+                "runs": [
+                  {
+                    "t": "② the state of being hung from a high place",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "③ the act of stopping something from happening for a period of time",
+                "runs": [
+                  {
+                    "t": "③ the act of stopping something from happening for a period of time",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "④ the act of officially forcing a student to leave a school permanently",
+                "runs": [
+                  {
+                    "t": "④ the act of officially forcing a student to leave a school permanently",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "⑤ the temporary removal of a student from school as a form of punishment",
+                "runs": [
+                  {
+                    "t": "⑤ the temporary removal of a student from school as a form of punishment",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "다음 중 밑줄 친 단어의 유의어로 알맞지 않은 것은?",
+                "runs": [
+                  {
+                    "t": "다음 중 밑줄 친 단어의 유의어로 알맞지 ",
+                    "ul": false
+                  },
+                  {
+                    "t": "않은",
+                    "ul": true
+                  },
+                  {
+                    "t": " 것은?",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "문제 번호"
+              },
+              {
+                "text": "① Adding a pinch of cinnamon can greatly enhance the overall flavor of the apple pie. (= savor)",
+                "runs": [
+                  {
+                    "t": "① Adding a pinch of cinnamon can greatly enhance the overall ",
+                    "ul": false
+                  },
+                  {
+                    "t": "flavor",
+                    "ul": true
+                  },
+                  {
+                    "t": " of the apple pie. (= savor)",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "② Her years of dedicated practice finally started to pay off when she won the first prize. (= bear fruit)",
+                "runs": [
+                  {
+                    "t": "② Her years of dedicated practice finally started to ",
+                    "ul": false
+                  },
+                  {
+                    "t": "pay off",
+                    "ul": true
+                  },
+                  {
+                    "t": " when she won the first prize. (= bear fruit)",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "③ The committee will ensure that every applicant receives due consideration for the position. (= appropriate)",
+                "runs": [
+                  {
+                    "t": "③ The committee will ensure that every applicant receives ",
+                    "ul": false
+                  },
+                  {
+                    "t": "due",
+                    "ul": true
+                  },
+                  {
+                    "t": " consideration for the position. (= appropriate)",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "④ The school hired a new sweeper to ensure the hallways were kept clean throughout the day. (= janitor)",
+                "runs": [
+                  {
+                    "t": "④ The school hired a new ",
+                    "ul": false
+                  },
+                  {
+                    "t": "sweeper",
+                    "ul": true
+                  },
+                  {
+                    "t": " to ensure the hallways were kept clean throughout the day. (= janitor)",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "⑤ The hikers struggled to navigate through the dense forest where the sunlight could barely reach the ground. (= sparse)",
+                "runs": [
+                  {
+                    "t": "⑤ The hikers struggled to navigate through the ",
+                    "ul": false
+                  },
+                  {
+                    "t": "dense",
+                    "ul": true
+                  },
+                  {
+                    "t": " forest where the sunlight could barely reach the ground. (= sparse)",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "다음 중 밑줄 친 부분이 옳지 않게 쓰인 것을 2개 고르면?",
+                "runs": [
+                  {
+                    "t": "다음 중 밑줄 친 부분이 옳지 ",
+                    "ul": false
+                  },
+                  {
+                    "t": "않게",
+                    "ul": true
+                  },
+                  {
+                    "t": " 쓰인 것을 ",
+                    "ul": false
+                  },
+                  {
+                    "t": "2개",
+                    "ul": true
+                  },
+                  {
+                    "t": " 고르면?",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "문제 번호"
+              },
+              {
+                "text": "① Bad weather conditions account for nearly half of the flight delays this morning.",
+                "runs": [
+                  {
+                    "t": "① Bad weather conditions ",
+                    "ul": false
+                  },
+                  {
+                    "t": "account for",
+                    "ul": true
+                  },
+                  {
+                    "t": " nearly half of the flight delays this morning.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "② The local bank was recently merged with a much larger national financial group.",
+                "runs": [
+                  {
+                    "t": "② The local bank was recently ",
+                    "ul": false
+                  },
+                  {
+                    "t": "merged with",
+                    "ul": true
+                  },
+                  {
+                    "t": " a much larger national financial group.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "③ The laboratory is equipped into the latest technology to ensure high-precision results.",
+                "runs": [
+                  {
+                    "t": "③ The laboratory ",
+                    "ul": false
+                  },
+                  {
+                    "t": "is equipped into",
+                    "ul": true
+                  },
+                  {
+                    "t": " the latest technology to ensure high-precision results.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "④ Parents are advised to keep small objects away from young children to prevent choking.",
+                "runs": [
+                  {
+                    "t": "④ Parents are advised to ",
+                    "ul": false
+                  },
+                  {
+                    "t": "keep small objects away from",
+                    "ul": true
+                  },
+                  {
+                    "t": " young children to prevent choking.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "⑤ The high cost of tuition might discourage some students from applying to private universities.",
+                "runs": [
+                  {
+                    "t": "⑤ The high cost of tuition might ",
+                    "ul": false
+                  },
+                  {
+                    "t": "discourage some students from applying",
+                    "ul": true
+                  },
+                  {
+                    "t": " to private universities.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "다음 우리말에 대한 영작에서 밑줄 친 부분이 적절하지 않은 것은?",
+                "runs": [
+                  {
+                    "t": "다음 우리말에 대한 영작에서 밑줄 친 부분이 적절하지 ",
+                    "ul": false
+                  },
+                  {
+                    "t": "않은",
+                    "ul": true
+                  },
+                  {
+                    "t": " 것은?",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "문제 번호"
+              },
+              {
+                "text": "① 그녀는 거울에 비친 자신의 상을 보며 헝클어진 머리를 정돈했다. ",
+                "runs": [
+                  {
+                    "t": "① 그녀는 거울에 비친 자신의 상을 보며 헝클어진 머리를 정돈했다. ",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "→ She looked at her reflection in the mirror and straightened her messy hair.",
+                "runs": [
+                  {
+                    "t": "→ She looked at her ",
+                    "ul": false
+                  },
+                  {
+                    "t": "reflection",
+                    "ul": true
+                  },
+                  {
+                    "t": " in the mirror and straightened her messy hair.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "② 마지막으로 중요한 것은, 우리는 이번 프로젝트의 환경적 영향을 고려해야 한다는 것이다. ",
+                "runs": [
+                  {
+                    "t": "② 마지막으로 중요한 것은, 우리는 이번 프로젝트의 환경적 영향을 고려해야 한다는 것이다. ",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "→ Last but not least, we must consider the environmental impact of this project.",
+                "runs": [
+                  {
+                    "t": "→ ",
+                    "ul": false
+                  },
+                  {
+                    "t": "Last but not least",
+                    "ul": true
+                  },
+                  {
+                    "t": ", we must consider the environmental impact of this project.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "③ 서기는 다음 모임에서 검토될 수 있도록 지난 회의의 회의록을 작성했다. ",
+                "runs": [
+                  {
+                    "t": "③ 서기는 다음 모임에서 검토될 수 있도록 지난 회의의 회의록을 작성했다. ",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "→ The secretary prepared the minutes of the last meeting to be reviewed at the next session.",
+                "runs": [
+                  {
+                    "t": "→ The secretary prepared the ",
+                    "ul": false
+                  },
+                  {
+                    "t": "minutes",
+                    "ul": true
+                  },
+                  {
+                    "t": " of the last meeting to be reviewed at the next session.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "④ 호수 바닥에 자라난 수초는 작은 물고기들에게 훌륭한 은신처를 제공한다. ",
+                "runs": [
+                  {
+                    "t": "④ 호수 바닥에 자라난 수초는 작은 물고기들에게 훌륭한 은신처를 제공한다. ",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "→ The weeds growing at the bottom of the lake provide a great hiding place for small fish.",
+                "runs": [
+                  {
+                    "t": "→ The ",
+                    "ul": false
+                  },
+                  {
+                    "t": "weeds",
+                    "ul": true
+                  },
+                  {
+                    "t": " growing at the bottom of the lake provide a great hiding place for small fish.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "⑤ 그는 자신의 성과에 만족한 미소를 지으며 회의실을 나섰다. ",
+                "runs": [
+                  {
+                    "t": "⑤ 그는 자신의 성과에 만족한 미소를 지으며 회의실을 나섰다. ",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "→ He left the meeting room with a consent smile on his face after his successful presentation.",
+                "runs": [
+                  {
+                    "t": "→ He left the meeting room with a ",
+                    "ul": false
+                  },
+                  {
+                    "t": "consent",
+                    "ul": true
+                  },
+                  {
+                    "t": " smile on his face after his successful presentation.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은? ",
+                "runs": [
+                  {
+                    "t": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은?",
+                    "ul": false
+                  },
+                  {
+                    "t": " ",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "문제 번호"
+              },
+              {
+                "text": "For instance, if you walk into a test thinking you are bad at taking tests, your anxiety will be increased.",
+                "runs": [
+                  {
+                    "t": "For instance, if you walk into a test thinking you are bad at taking tests, your anxiety will be increased.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "테두리_순서삽입"
+              },
+              {
+                "text": " Despite the cultural trope depicting emotions as the opposite of rational thought, cognition ― what we commonly refer to as thinking ― is actually a key building block of emotion. ( ① ) How we think about our circumstances shapes the emotions we experience; then those emotions echo back to influence how we think. ( ② ) Then you don't feel good about your performance on the test, and that becomes evidence for continuing to think that you're bad at test taking. ( ③ ) In this way there's simply no pulling emotion and cognition apart. ( ④ ) This bi-directionality of cognition and emotion allows us to adjust difficult emotions by changing the way we think. ( ⑤ ) By thinking differently ― I get nervous sometimes, but I'm still a good test taker, or that nervous feeling is just excitement and anticipation, it means I'm ready ― you can work those pathways to your advantage.",
+                "runs": [
+                  {
+                    "t": " Despite the cultural trope depicting emotions as the opposite of rational thought, cognition ― what we commonly refer to as thinking ― is actually a key building block of emotion. ( ① ) How we think about our circumstances shapes the emotions we experience; then those emotions echo back to influence how we think. ( ② ) Then you don't feel good about your performance on the test, and that becomes evidence for continuing to think that you're bad at test taking. ( ③ ) In this way there's simply no pulling emotion and cognition apart. ( ④ ) This bi-directionality of cognition and emotion allows us to adjust difficult emotions by changing the way we think. ( ⑤ ) By thinking differently ― I get nervous sometimes, but I'm still a good test taker, or that nervous feeling is just excitement and anticipation, it means I'm ready ― you can work those pathways to your advantage.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "[7~9] 다음 글을 읽고, 물음에 답하시오. ",
+                "runs": [
+                  {
+                    "t": "[7~9] 다음 글을 읽고, 물음에 답하시오. ",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "다음 글을 읽고"
+              },
+              {
+                "text": " ⓐDo you ever find yourself suddenly feeling angry? One moment you're fine, and the next moment you're slamming doors or rolling your eyes at your parents. Some people may think you just have a bad attitude or are getting too upset about a small problem. However, these feelings don't simply come from stress about everyday life.",
+                "runs": [
+                  {
+                    "t": " ⓐ",
+                    "ul": false
+                  },
+                  {
+                    "t": "Do you ever find yourself suddenly feeling angry?",
+                    "ul": true
+                  },
+                  {
+                    "t": " One moment you're fine, and the next moment you're slamming doors or rolling your eyes at your parents. Some people may think you just have a bad attitude or are getting too upset about a small problem. However, these feelings don't simply come from stress about everyday life.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": " As a teen, you may feel like an adult, but your brain is still growing. In your brain, ⓑthere is an area in the brain that it manages problem-solving and emotional regulation. In your teen years, this part is still in development. The changes in your brain lead you toward independence, social engagement, and creativity. At the same time, however, you may feel confused about who you are. You may also be more sensitive to unfairness. Furthermore, your body is flowing with hormones. This (A)___________ affects your mood. ⓒThe combination of these factors intensify your strong emotions.",
+                "runs": [
+                  {
+                    "t": " As a teen, you may feel like an adult, but your brain is still growing. In your brain, ⓑ",
+                    "ul": false
+                  },
+                  {
+                    "t": "there is an area in the brain that it manages problem-solving and emotional regulation",
+                    "ul": true
+                  },
+                  {
+                    "t": ". In your teen years, this part is still in development. The changes in your brain lead you toward independence, social engagement, and creativity. At the same time, however, you may feel confused about who you are. You may also be more sensitive to unfairness. Furthermore, your body is flowing with hormones. This (A)___________ affects your mood. ⓒ",
+                    "ul": false
+                  },
+                  {
+                    "t": "The combination of these factors intensify your strong emotions.",
+                    "ul": true
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "Getting to Know Your Anger",
+                "runs": [
+                  {
+                    "t": "Getting to Know Your Anger",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": " It is (B)___________ to feel angry from time to time; it doesn't mean there is something wrong with you. Anger can sometimes be a useful tool. For example, an angry but open conversation can resolve a conflict between friends. ⓓIt's important to manage your anger so that it doesn't lead to aggressive or violent behavior. This does not mean you shouldn't (C)___________ yourself to feel angry. Rather, you should express it in a productive way. Ask yourself some questions about your angry feelings. ⓔHaving a better understanding of your anger can help you deal with it more effectively.",
+                "runs": [
+                  {
+                    "t": " It is (B)___________ to feel angry from time to time; it doesn't mean there is something wrong with you. Anger can sometimes be a useful tool. For example, an angry but open conversation can resolve a conflict between friends. ⓓ",
+                    "ul": false
+                  },
+                  {
+                    "t": "It's important to manage your anger so that it doesn't lead to aggressive or violent behavio",
+                    "ul": true
+                  },
+                  {
+                    "t": "r. This does not mean you shouldn't (C)___________ yourself to feel angry. Rather, you should express it in a productive way. Ask yourself some questions about your angry feelings. ⓔ",
+                    "ul": false
+                  },
+                  {
+                    "t": "Having a better understanding of your anger can help you deal with it more effectively",
+                    "ul": true
+                  },
+                  {
+                    "t": ".",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "윗글에 대한 <보기>의 설명 중 옳은 것의 개수는?",
+                "runs": [
+                  {
+                    "t": "윗글에 대한 <보기>의 설명 중 옳은 것의 개수는?",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "문제 번호"
+              },
+              {
+                "text": "<보기>",
+                "runs": [
+                  {
+                    "t": "<보기>",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "테두리_보기"
+              },
+              {
+                "text": "ㄱ. Teens can experience sudden outbursts of anger, which are mainly caused by everyday stress from school and family life.",
+                "runs": [
+                  {
+                    "t": "ㄱ. Teens can experience sudden outbursts of anger, which are mainly caused by everyday stress from school and family life.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "테두리_보기"
+              },
+              {
+                "text": "ㄴ. Although teenagers see themselves as adults, their brains are still developing, especially in areas related to physical control and problem-solving.",
+                "runs": [
+                  {
+                    "t": "ㄴ. Although teenagers see themselves as adults, their brains are still developing, especially in areas related to physical control and problem-solving.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "테두리_보기"
+              },
+              {
+                "text": "ㄷ. During adolescence, the brain undergoes changes that promote independence, social engagement, and creativity.",
+                "runs": [
+                  {
+                    "t": "ㄷ. During adolescence, the brain undergoes changes that promote independence, social engagement, and creativity.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "테두리_보기"
+              },
+              {
+                "text": "ㄹ. Teenagers can experience confusion about their identity, which may result from their strong anger.",
+                "runs": [
+                  {
+                    "t": "ㄹ. Teenagers can experience confusion about their identity, which may result from their strong anger.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "테두리_보기"
+              },
+              {
+                "text": "ㅁ. Reflecting on your angry feelings can be useful for better understanding your anger.",
+                "runs": [
+                  {
+                    "t": "ㅁ. Reflecting on your angry feelings can be useful for better understanding your anger.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "테두리_보기"
+              },
+              {
+                "text": "① 1개    ② 2개    ③ 3개    ④ 4개    ⑤ 5개",
+                "runs": [
+                  {
+                    "t": "① 1개    ② 2개    ③ 3개    ④ 4개    ⑤ 5개",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "윗글의 밑줄 친 ⓐ~ⓔ 중, 어법상 틀린 것만을 있는 대로 고른 것은?",
+                "runs": [
+                  {
+                    "t": "윗글의 밑줄 친 ⓐ~ⓔ 중, 어법상 ",
+                    "ul": false
+                  },
+                  {
+                    "t": "틀린",
+                    "ul": true
+                  },
+                  {
+                    "t": " 것만을 ",
+                    "ul": false
+                  },
+                  {
+                    "t": "있는 대로",
+                    "ul": true
+                  },
+                  {
+                    "t": " 고른 것은?",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "문제 번호"
+              },
+              {
+                "text": "① ⓐ, ⓑ\t\t② ⓑ, ⓒ",
+                "runs": [
+                  {
+                    "t": "① ⓐ, ⓑ\t\t② ⓑ, ⓒ",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "③ ⓐ, ⓓ, ⓔ\t\t④ ⓑ, ⓒ, ⓔ",
+                "runs": [
+                  {
+                    "t": "③ ⓐ, ⓓ, ⓔ\t\t④ ⓑ, ⓒ, ⓔ",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "⑤ ⓒ, ⓓ, ⓔ",
+                "runs": [
+                  {
+                    "t": "⑤ ⓒ, ⓓ, ⓔ",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "윗글의 문맥상 (A), (B), (C)에 들어갈 말로 바르게 짝지어진 것은?",
+                "runs": [
+                  {
+                    "t": "윗글의 문맥상 (A), (B), (C)에 들어갈 말로 바르게 짝지어진 것은?",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "문제 번호"
+              },
+              {
+                "text": "       (A)           (B)            (C)",
+                "runs": [
+                  {
+                    "t": "       (A)           (B)            (C)",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "① considerably\t    normal\t   allow",
+                "runs": [
+                  {
+                    "t": "① considerably\t    normal\t   allow",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "② rarely\t    natural\t   damage",
+                "runs": [
+                  {
+                    "t": "② rarely\t    natural\t   damage",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "③ significantly\t    unnatural\t   expect",
+                "runs": [
+                  {
+                    "t": "③ significantly\t    unnatural\t   expect",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "④ seldom\t    uncommon\t   allow",
+                "runs": [
+                  {
+                    "t": "④ seldom\t    uncommon\t   allow",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "⑤ slightly\t    normal\t   expect",
+                "runs": [
+                  {
+                    "t": "⑤ slightly\t    normal\t   expect",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "[10~11] 다음 글을 읽고 물음에 답하시오. ",
+                "runs": [
+                  {
+                    "t": "[10~11] 다음 글을 읽고 물음에 답하시오. ",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "다음 글을 읽고"
+              },
+              {
+                "text": " Before beginning your campaign, be sure to plan all the production details. How many products will you make? How long will it take to make the product? This planning is important because your (A)__________ investors will want to see a clear schedule. Once your plan is complete, remember to set your funding goal. It should be enough to complete the project and (B)__________ the rewards for the investors. Consider all the necessary costs before deciding on the amount. After doing some calculations, we decided on an 8-by-12-foot greenhouse. We thought it would cost approximately $4,000. Once it was built, we could fill it with strawberry plants and expect a harvest within about four months. Then it would take a few weeks to turn the strawberries into delicious jam. We decided to set our funding goal at $5,000 to (C)__________ all the costs. Also, we planned to (D)__________ the campaign for three months. I was really excited when I filled out the form to (E)__________ the campaign. In less than a week, our application was accepted and funding began!",
+                "runs": [
+                  {
+                    "t": " Before beginning your campaign, be sure to plan all the production details. How many products will you make? How long will it take to make the product? This planning is important because your (A)__________ investors will want to see a clear schedule. Once your plan is complete, remember to set your funding goal. It should be enough to complete the project and (B)__________ the rewards for the investors. Consider all the necessary costs before deciding on the amount. After doing some calculations, we decided on an 8-by-12-foot greenhouse. We thought it would cost approximately $4,000. Once it was built, we could fill it with strawberry plants and expect a harvest within about four months. Then it would take a few weeks to turn the strawberries into delicious jam. We decided to set our funding goal at $5,000 to (C)__________ all the costs. Also, we planned to (D)__________ the campaign for three months. I was really excited when I filled out the form to (E)__________ the campaign. In less than a week, our application was accepted and funding began!",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "윗글을 읽고 안내문을 작성하고자 한다. 윗글의 내용과 일치하지 않은 것은?",
+                "runs": [
+                  {
+                    "t": "윗글을 읽고 안내문을 작성하고자 한다. 윗글의 내용과 일치하지 ",
+                    "ul": false
+                  },
+                  {
+                    "t": "않은",
+                    "ul": true
+                  },
+                  {
+                    "t": " 것은?",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "문제 번호"
+              },
+              {
+                "text": "Guide to Planning",
+                "runs": [
+                  {
+                    "t": "Guide to Planning",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "Your Crowdfunding Campaign",
+                "runs": [
+                  {
+                    "t": "Your Crowdfunding Campaign",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "· Plan Your Product Production",
+                "runs": [
+                  {
+                    "t": "· Plan Your Product Production",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "  - ①Product Quantity",
+                "runs": [
+                  {
+                    "t": "  - ①",
+                    "ul": false
+                  },
+                  {
+                    "t": "Product Quantity",
+                    "ul": true
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "  - Production Time",
+                "runs": [
+                  {
+                    "t": "  - Production Time",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "· Set Your Funding Goal",
+                "runs": [
+                  {
+                    "t": "· Set Your Funding Goal",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "  - ②Size of the Greenhouse: 8-by-12-foot",
+                "runs": [
+                  {
+                    "t": "  - ②",
+                    "ul": false
+                  },
+                  {
+                    "t": "Size of the Greenhouse: 8-by-12-foot",
+                    "ul": true
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "  - ③Goal Amount: ranged from $4,000 to $5,000",
+                "runs": [
+                  {
+                    "t": "  - ③",
+                    "ul": false
+                  },
+                  {
+                    "t": "Goal Amount: ranged from $4,000 to $5,000",
+                    "ul": true
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "· ④Campaign Duration: three months",
+                "runs": [
+                  {
+                    "t": "· ④",
+                    "ul": false
+                  },
+                  {
+                    "t": "Campaign Duration: three months",
+                    "ul": true
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "* To start your campaign, ⑤complete the application.",
+                "runs": [
+                  {
+                    "t": "* To start your campaign, ⑤",
+                    "ul": false
+                  },
+                  {
+                    "t": "complete the application.",
+                    "ul": true
+                  }
+                ],
+                "pstyle": "영단어"
+              },
+              {
+                "text": "윗글의 빈칸 (A)~(E)에 들어갈 단어로 영영 뜻풀이로 어색한 것은?",
+                "runs": [
+                  {
+                    "t": "윗글의 빈칸 (A)~(E)에 들어갈 단어로 영영 뜻풀이로 ",
+                    "ul": false
+                  },
+                  {
+                    "t": "어색한",
+                    "ul": true
+                  },
+                  {
+                    "t": " 것은?",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "문제 번호"
+              },
+              {
+                "text": "① (A): having or showing the capability of developing into something in the future",
+                "runs": [
+                  {
+                    "t": "① (A): having or showing the capability of developing into something in the future",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "② (B): to do something that is required or necessary",
+                "runs": [
+                  {
+                    "t": "② (B): to do something that is required or necessary",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "③ (C): to have enough money to pay for something",
+                "runs": [
+                  {
+                    "t": "③ (C): to have enough money to pay for something",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "④ (D): to be in charge or manage something",
+                "runs": [
+                  {
+                    "t": "④ (D): to be in charge or manage something",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "⑤ (E): to bring an activity, process, or motion to an end",
+                "runs": [
+                  {
+                    "t": "⑤ (E): to bring an activity, process, or motion to an end",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "다음 글의 제목으로 가장 적절한 것은? ",
+                "runs": [
+                  {
+                    "t": "다음 글의 제목으로 가장 적절한 것은?",
+                    "ul": false
+                  },
+                  {
+                    "t": " ",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "문제 번호"
+              },
+              {
+                "text": " While convenience and technology are crucial, they are not the only factors driving Gen Z's financial decisions. This generation is incredibly values-driven, and they want to bank with institutions that match their personal beliefs and values. Transparency is vital. Gen Z is skeptical of large corporations and institutions that lack accountability. They have grown up in a world where information is freely available, and they expect complete transparency from the brands they support. Banks, for example, must clearly communicate fees, terms, and conditions, as well as how they handle customers' data. Moreover, ethical banking practices are more important than ever. Gen Z cares about the environment, social justice, and the ethical implications of their financial decisions. They are interested in sustainable investing, supporting businesses that match their values, and ensuring that their money is not being used to fund harmful practices. Banks that offer socially responsible investment opportunities and are committed to environmental sustainability will attract Gen Z's attention.",
+                "runs": [
+                  {
+                    "t": " While convenience and technology are crucial, they are not the only factors driving Gen Z's financial decisions. This generation is incredibly values-driven, and they want to bank with institutions that match their personal beliefs and values. Transparency is vital. Gen Z is skeptical of large corporations and institutions that lack accountability. They have grown up in a world where information is freely available, and they expect complete transparency from the brands they support. Banks, for example, must clearly communicate fees, terms, and conditions, as well as how they handle customers' data. Moreover, ethical banking practices are more important than ever. Gen Z cares about the environment, social justice, and the ethical implications of their financial decisions. They are interested in sustainable investing, supporting businesses that match their values, and ensuring that their money is not being used to fund harmful practices. Banks that offer socially responsible investment opportunities and are committed to environmental sustainability will attract Gen Z's attention.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "① The Rise of Digital Banking in Younger Generations",
+                "runs": [
+                  {
+                    "t": "① The Rise of Digital Banking in Younger Generations",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "② Gen Z : Cannot Live Without Banks",
+                "runs": [
+                  {
+                    "t": "② Gen Z : Cannot Live Without Banks",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "③ A Generation that Choose Profit over Ethics",
+                "runs": [
+                  {
+                    "t": "③ A Generation that Choose Profit over Ethics",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "④ What Drives Gen Z's Financial Decisions",
+                "runs": [
+                  {
+                    "t": "④ What Drives Gen Z's Financial Decisions",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "⑤ Corporate Ethics and Its Financial Consequences",
+                "runs": [
+                  {
+                    "t": "⑤ Corporate Ethics and Its Financial Consequences",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은? ",
+                "runs": [
+                  {
+                    "t": "다음 글의 밑줄 친 부분 중, 어법상 ",
+                    "ul": false
+                  },
+                  {
+                    "t": "틀린",
+                    "ul": true
+                  },
+                  {
+                    "t": " 것은?",
+                    "ul": false
+                  },
+                  {
+                    "t": " ",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "문제 번호"
+              },
+              {
+                "text": " The laws and constants of physics and the fundamental forces in our universe have very precise forms and values. This means ①that, if they were only very slightly different, life would not have been possible. For instance, the precise value of gravity has enabled our universe to arise by permitting the aggregation of dust and gas particles to proto-stars ②around which planets later came to orbit, including the Earth around the Sun. ③If the value of the electron had been ever so slightly larger or smaller, chemistry, as we know it, would not have been possible and life, which is based on organic chemistry, could not have started. The universe ④was not designed for us to evolve, we have no privileged position in the universe. However, the laws and constants of physics ⑤allowed advanced life to evolving.",
+                "runs": [
+                  {
+                    "t": " The laws and constants of physics and the fundamental forces in our universe have very precise forms and values. This means ①",
+                    "ul": false
+                  },
+                  {
+                    "t": "that",
+                    "ul": true
+                  },
+                  {
+                    "t": ", if they were only very slightly different, life would not have been possible. For instance, the precise value of gravity has enabled our universe to arise by permitting the aggregation of dust and gas particles to proto-stars ②",
+                    "ul": false
+                  },
+                  {
+                    "t": "around ",
+                    "ul": true
+                  },
+                  {
+                    "t": "which",
+                    "ul": true
+                  },
+                  {
+                    "t": " planets later came to orbit",
+                    "ul": true
+                  },
+                  {
+                    "t": ", including the Earth around the Sun. ③",
+                    "ul": false
+                  },
+                  {
+                    "t": "If the value of the electron ",
+                    "ul": true
+                  },
+                  {
+                    "t": "had been",
+                    "ul": true
+                  },
+                  {
+                    "t": " ever so slightly larger or smaller",
+                    "ul": true
+                  },
+                  {
+                    "t": ", chemistry, as we know it, would not have been possible and life, which is based on organic chemistry, could not have started. The universe ④",
+                    "ul": false
+                  },
+                  {
+                    "t": "was not designed ",
+                    "ul": true
+                  },
+                  {
+                    "t": "for us",
+                    "ul": true
+                  },
+                  {
+                    "t": " to evolve",
+                    "ul": true
+                  },
+                  {
+                    "t": ", we have no privileged position in the universe. However, the laws and constants of physics ⑤",
+                    "ul": false
+                  },
+                  {
+                    "t": "allowed advanced life ",
+                    "ul": true
+                  },
+                  {
+                    "t": "to evolving",
+                    "ul": true
+                  },
+                  {
+                    "t": ".",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "다음 글의 주장에 반대하는 근거로 적절하지 않은 것은? ",
+                "runs": [
+                  {
+                    "t": "다음 글의 주장에 반대하는 근거로 적절하지 ",
+                    "ul": false
+                  },
+                  {
+                    "t": "않은",
+                    "ul": true
+                  },
+                  {
+                    "t": " 것은?",
+                    "ul": false
+                  },
+                  {
+                    "t": " ",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "문제 번호"
+              },
+              {
+                "text": " Currently, urban regeneration projects in degraded areas have been promoted as improving the wellbeing of residents and solving environmental injustice problems. However, such environmental improvements in ethnic communities and/or low-income households can create an urban green space paradox. The creation of new, high-quality green spaces can increase attractiveness, making these neighbourhood more desirable. By contrast, the cost of housing can rise, and residents may not be able to afford the rent. This results in the exclusion or displacement of the poor neighbourhood's residents, who were intended to benefit from the ecosystem services provided by the new green space. In turn, the residents may only be able to afford to live in a similar degraded neighbourhood to the one they left, with low access to green infrastructure.",
+                "runs": [
+                  {
+                    "t": " Currently, urban regeneration projects in degraded areas have been promoted as improving the wellbeing of residents and solving environmental injustice problems. However, such environmental improvements in ethnic communities and/or low-income households can create an urban green space paradox. The creation of new, high-quality green spaces can increase attractiveness, making these neighbourhood more desirable. By contrast, the cost of housing can rise, and residents may not be able to afford the rent. This results in the exclusion or displacement of the poor neighbourhood's residents, who were intended to benefit from the ecosystem services provided by the new green space. In turn, the residents may only be able to afford to live in a similar degraded neighbourhood to the one they left, with low access to green infrastructure.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "① Access to nature tends to reduce stress among residents.",
+                "runs": [
+                  {
+                    "t": "① Access to nature tends to reduce stress among residents.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "② Green regeneration often contributes to economic revitalization and job creation.",
+                "runs": [
+                  {
+                    "t": "② Green regeneration often contributes to economic revitalization and job creation.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "③ Extensive resident participation in green projects has been linked to inclusive growth.",
+                "runs": [
+                  {
+                    "t": "③ Extensive resident participation in green projects has been linked to inclusive growth.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "④ The increase in living costs has nearly pushed low-income residents out of the area.",
+                "runs": [
+                  {
+                    "t": "④ The increase in living costs has nearly pushed low-income residents out of the area.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "⑤ The displacement of low-income residents results from weak housing policies rather than green development itself.",
+                "runs": [
+                  {
+                    "t": "⑤ The displacement of low-income residents results from weak housing policies rather than green development itself.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "다음 2025 Britt High School Character Design Contest에 관한 안내문의 내용과 일치하지 않는 것은?",
+                "runs": [
+                  {
+                    "t": "다음 2025 Britt High School Character Design Contest에 관한 안내문의 내용과 일치하지 ",
+                    "ul": false
+                  },
+                  {
+                    "t": "않는",
+                    "ul": true
+                  },
+                  {
+                    "t": " 것은?",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "문제 번호"
+              },
+              {
+                "text": "2025 Britt High School Character Design Contest",
+                "runs": [
+                  {
+                    "t": "2025 Britt High School Character Design Contest",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": " Britt High Sehool holds our first Character Design Contest. Join the contest and create a character that symbolizes our school.",
+                "runs": [
+                  {
+                    "t": " Britt High Sehool holds our first Character Design Contest. Join the contest and create a character that symbolizes our school.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "Submission",
+                "runs": [
+                  {
+                    "t": "Submission",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "⦁Deadline: October 24, 5 p.m.",
+                "runs": [
+                  {
+                    "t": "⦁Deadline: October 24, 5 p.m.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "⦁Entries should be sent by email to cdebritt@bhs.edu.",
+                "runs": [
+                  {
+                    "t": "⦁Entries should be sent by email to cdebritt@bhs.edu.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "Judging Criteria",
+                "runs": [
+                  {
+                    "t": "Judging Criteria",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "⦁Concept\t⦁Creativity\t⦁Illustration",
+                "runs": [
+                  {
+                    "t": "⦁Concept\t⦁Creativity\t⦁Illustration",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "Prizes",
+                "runs": [
+                  {
+                    "t": "Prizes",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "Number of winners",
+                "runs": [
+                  {
+                    "t": "Number of winners",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "Prize (per winner)",
+                "runs": [
+                  {
+                    "t": "Prize (per winner)",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "1st prize",
+                "runs": [
+                  {
+                    "t": "1st prize",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "1",
+                "runs": [
+                  {
+                    "t": "1",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "$50 gift card",
+                "runs": [
+                  {
+                    "t": "$50 gift card",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "2nd prize",
+                "runs": [
+                  {
+                    "t": "2nd prize",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "2",
+                "runs": [
+                  {
+                    "t": "2",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "$30 gift card",
+                "runs": [
+                  {
+                    "t": "$30 gift card",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "3rd prize",
+                "runs": [
+                  {
+                    "t": "3rd prize",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "3",
+                "runs": [
+                  {
+                    "t": "3",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "$10 gift card",
+                "runs": [
+                  {
+                    "t": "$10 gift card",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "※ Winners will be announced on our school's website on October 31. No personal contact will be made.",
+                "runs": [
+                  {
+                    "t": "※ Winners will be announced on our school's website on October 31. No personal contact will be made.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "① Britt 고등학교에서 처음으로 개최되는 대회이다.",
+                "runs": [
+                  {
+                    "t": "① Britt 고등학교에서 처음으로 개최되는 대회이다.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "② 출품작은 이메일로 제출되어야 한다.",
+                "runs": [
+                  {
+                    "t": "② 출품작은 이메일로 제출되어야 한다.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "③ 평가 기준에 창의성이 포함된다.",
+                "runs": [
+                  {
+                    "t": "③ 평가 기준에 창의성이 포함된다.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "④ 2등은 2명이며 각각 10달러 기프트카드를 받는다.",
+                "runs": [
+                  {
+                    "t": "④ 2등은 2명이며 각각 10달러 기프트카드를 받는다.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "⑤ 수상자는 학교 웹사이트를 통해 발표된다.",
+                "runs": [
+                  {
+                    "t": "⑤ 수상자는 학교 웹사이트를 통해 발표된다.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은? ",
+                "runs": [
+                  {
+                    "t": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 ",
+                    "ul": false
+                  },
+                  {
+                    "t": "않은",
+                    "ul": true
+                  },
+                  {
+                    "t": " 것은?",
+                    "ul": false
+                  },
+                  {
+                    "t": " ",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "문제 번호"
+              },
+              {
+                "text": " The technical term often used to describe animals' judgement of numbers is the approximate number system. What it does not provide is precision. It shows ― and this is ①uniform in every species tested ― a characteristic pattern of errors. Discrimination becomes ②less accurate as the quantities get bigger. Rhesus monkeys can tell one from two, two from three, three from four, four from five … but start to have ③difficulty from five upwards. Rats that learned to press a lever a given number of times, from four up to twenty-four, became markedly less and less precise in their responses as the number ④dropped: by the top end of the range they would merely produce a spread of numbers around the target. It is a ⑤common observation that when testing the accuracy of animals' number sense, the size of the numbers matters.",
+                "runs": [
+                  {
+                    "t": " The technical term often used to describe animals' judgement of numbers is the ",
+                    "ul": false
+                  },
+                  {
+                    "t": "approximate number system",
+                    "ul": false
+                  },
+                  {
+                    "t": ". What it does not provide is precision. It shows ― and this is ①",
+                    "ul": false
+                  },
+                  {
+                    "t": "uniform",
+                    "ul": true
+                  },
+                  {
+                    "t": " in every species tested ― a characteristic pattern of errors. Discrimination becomes ②",
+                    "ul": false
+                  },
+                  {
+                    "t": "less",
+                    "ul": true
+                  },
+                  {
+                    "t": " accurate as the quantities get bigger. Rhesus monkeys can tell one from two, two from three, three from four, four from five … but start to ",
+                    "ul": false
+                  },
+                  {
+                    "t": "have",
+                    "ul": false
+                  },
+                  {
+                    "t": " ③",
+                    "ul": false
+                  },
+                  {
+                    "t": "difficulty",
+                    "ul": true
+                  },
+                  {
+                    "t": " from five upwards. Rats that learned to press a lever a given number of times, from four up to twenty-four, became markedly less and less precise in their responses as the number ④",
+                    "ul": false
+                  },
+                  {
+                    "t": "dropped",
+                    "ul": true
+                  },
+                  {
+                    "t": ": by the top end of the range they would merely produce a spread of numbers around the target. It is a ⑤",
+                    "ul": false
+                  },
+                  {
+                    "t": "common",
+                    "ul": true
+                  },
+                  {
+                    "t": " observation that when testing the accuracy of animals' number sense, the size of the numbers matters.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?",
+                "runs": [
+                  {
+                    "t": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "문제 번호"
+              },
+              {
+                "text": " Humans are not the most social animal. Ants, bees, and termites put humanity to shame on many metrics of sociality. A wide variety of relatives live together with perfectly harmonious behavior and collectively care for their young.",
+                "runs": [
+                  {
+                    "t": " Humans are not the most social animal. Ants, bees, and termites put humanity to shame on many metrics of sociality. A wide variety of relatives live together with perfectly harmonious behavior and collectively care for their young.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "테두리_순서"
+              },
+              {
+                "text": "(A) Every group dances a slightly different dance, and these choreographies change across generations. We still think and act in ways that are in harmony with others around us, but it is through patterns that are more shaped by nurture, not just nature.",
+                "runs": [
+                  {
+                    "t": "(A) Every group dances a slightly different dance, and these choreographies change across generations. We still think and act in ways that are in harmony with others around us, but it is through patterns that are more shaped by nurture, not just nature.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문_순서"
+              },
+              {
+                "text": "(B) But while insect colonies are impressively social places, it's not our kind of social life. Bees always build hexagonal hives, ants march in lines, and termites move in zigzag formations.",
+                "runs": [
+                  {
+                    "t": "(B) But while insect colonies are impressively social places, it's not our kind of social life. Bees always build hexagonal hives, ants march in lines, and termites move in zigzag formations.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문_순서"
+              },
+              {
+                "text": "(C) These patterns recur predictably because they are tightly programmed genetically and propelled pheromonally. We humans are more free, less tightly programmed genetically, so our social patterns can be more diverse and dynamic.",
+                "runs": [
+                  {
+                    "t": "(C) These patterns recur predictably because they are tightly programmed genetically and propelled pheromonally. We humans are more free, less tightly programmed genetically, so our social patterns can be more diverse and dynamic.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문_순서"
+              },
+              {
+                "text": "① (A)-(B)-(C)\t② (A)-(C)-(B)\t③ (B)-(C)-(A)",
+                "runs": [
+                  {
+                    "t": "① (A)-(B)-(C)\t② (A)-(C)-(B)\t③ (B)-(C)-(A)",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "④ (B)-(A)-(C)\t⑤ (C)-(B)-(A)",
+                "runs": [
+                  {
+                    "t": "④ (B)-(A)-(C)\t⑤ (C)-(B)-(A)",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "다음 글의 내용과 일치하는 것은? ",
+                "runs": [
+                  {
+                    "t": "다음 글의 내용과 일치하는 것은?",
+                    "ul": false
+                  },
+                  {
+                    "t": " ",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "문제 번호"
+              },
+              {
+                "text": " Those who purchase the goods of a company are called customers. Individuals who purchase goods for personal use are called consumers: beings who consume. Therefore, companies have invented multiple ways to ensure that their customers consume the produced items in larger and larger quantities and more and more frequently. Those who sell food have an easy time, for food is literally consumed, so there is always a need to purchase new food. But with more permanent things, companies must invent reasons for their customers to continue to consume them. One approach is to make the stuff that people already have outdated by convincing them that it is no longer fashionable. The entire fashion industry is built to convince people that fashion matters, so they must purchase new clothing, even though the old is still perfectly functionable. Fashion today extends to far more things than clothes: automobiles, mobile phones, computers ― the list is extended indefinitely, limited only by the limits of the creative minds of the marketing divisions of companies.",
+                "runs": [
+                  {
+                    "t": " Those who purchase the goods of a company are called customers. Individuals who purchase goods for personal use are called consumers: beings who consume. Therefore, companies have invented multiple ways to ensure that their customers consume the produced items in larger and larger quantities and more and more frequently. Those who sell food have an easy time, for food is literally consumed, so there is always a need to purchase new food. But with more permanent things, companies must invent reasons for their customers to continue to consume them. One approach is to make the stuff that people already have outdated by convincing them that it is no longer fashionable. The entire fashion industry is built to convince people that fashion matters, so they must purchase new clothing, even though the old is still perfectly functionable. Fashion today extends to far more things than clothes: automobiles, mobile phones, computers ― the list is extended indefinitely, limited only by the limits of the creative minds of the marketing divisions of companies.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "① Because fashion is important, it is worth it for customers to buy new clothes even if their old ones are still functional.",
+                "runs": [
+                  {
+                    "t": "① Because fashion is important, it is worth it for customers to buy new clothes even if their old ones are still functional.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "② Marketing divisions within companies should overcome the limits of their creativity.",
+                "runs": [
+                  {
+                    "t": "② Marketing divisions within companies should overcome the limits of their creativity.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "③ Sales strategies for food and clothing should be different from each other.",
+                "runs": [
+                  {
+                    "t": "③ Sales strategies for food and clothing should be different from each other.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "④ Customers are individuals who purchase goods for personal use.",
+                "runs": [
+                  {
+                    "t": "④ Customers are individuals who purchase goods for personal use.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "⑤ Selling food amounts to selling a permanent service.",
+                "runs": [
+                  {
+                    "t": "⑤ Selling food amounts to selling a permanent service.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은? ",
+                "runs": [
+                  {
+                    "t": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 ",
+                    "ul": false
+                  },
+                  {
+                    "t": "않은",
+                    "ul": true
+                  },
+                  {
+                    "t": " 것은?",
+                    "ul": false
+                  },
+                  {
+                    "t": " ",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "문제 번호"
+              },
+              {
+                "text": " After a long journey, the boy reached a high green hill, and the house was at the top. He was very excited at the thought of finally seeing the house with golden windows. However, it seemed that the shutters were ①shut, for he could not see the golden windows. He came up to the house and was ②disappointed to find that the windows were made of clear glass like any others, and there was no gold anywhere around them.",
+                "runs": [
+                  {
+                    "t": " After a long journey, the boy reached a high green hill, and the house was at the top. He was very excited at the thought of finally seeing the house with golden windows. However, it seemed that the shutters were ①",
+                    "ul": false
+                  },
+                  {
+                    "t": "shut",
+                    "ul": true
+                  },
+                  {
+                    "t": ", for he could not see the golden windows. He came up to the house and was ②",
+                    "ul": false
+                  },
+                  {
+                    "t": "disappointed",
+                    "ul": true
+                  },
+                  {
+                    "t": " to find that the windows were made of clear glass like any others, and there was no gold anywhere around them.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": " A woman came to the door looked kindly at the boy, and asked him what he wanted. “I saw the golden windows from the top of our hill,” he said, “and I came to see them, but now they are only glass.” The woman shook her head and smiled. “We are poor farmers,” she said, “and are ③likely to have windows made of gold. But glass is ④better to see through than gold.” She spoke ⑤gently to the boy, making sure not to hurt his feelings.",
+                "runs": [
+                  {
+                    "t": " A woman came to the door looked kindly at the boy, and asked him what he wanted. “I saw the golden windows from the top of our hill,” he said, “and I came to see them, but now they are only glass.” The woman shook her head and smiled. “We are poor farmers,” she said, “and ",
+                    "ul": false
+                  },
+                  {
+                    "t": "are ③",
+                    "ul": false
+                  },
+                  {
+                    "t": "likely",
+                    "ul": true
+                  },
+                  {
+                    "t": " to",
+                    "ul": false
+                  },
+                  {
+                    "t": " have windows made of gold. But glass is ④",
+                    "ul": false
+                  },
+                  {
+                    "t": "better",
+                    "ul": true
+                  },
+                  {
+                    "t": " to see through than gold.” She spoke ⑤",
+                    "ul": false
+                  },
+                  {
+                    "t": "gently",
+                    "ul": true
+                  },
+                  {
+                    "t": " to the boy, making sure not to hurt his feelings.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "[20~21] 다음 글을 읽고 물음에 답하시오. ",
+                "runs": [
+                  {
+                    "t": "[20~21] 다음 글을 읽고 물음에 답하시오. ",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "다음 글을 읽고"
+              },
+              {
+                "text": " My grandparents sell their delicious organic jam at the local market every weekend. I went to help them last weekend. However, they had already sold all of their jam! ⓐThey didn't have enough strawberries to make any more jam. That evening, ⓑI sat by the window and stare out at the empty field behind their house. Suddenly, I got an idea. The field would be the perfect place for a larger greenhouse. Then they could grow more strawberries! ⓒI immediately started searching for a way, and I found the perfect solution. I would start a crowdfunding campaign!",
+                "runs": [
+                  {
+                    "t": " My grandparents sell their delicious organic jam at the local market every weekend. I went to help them last weekend. However, they had already sold all of their jam! ⓐ",
+                    "ul": false
+                  },
+                  {
+                    "t": "They didn't have enough strawberries to make any more jam.",
+                    "ul": true
+                  },
+                  {
+                    "t": " That evening, ⓑ",
+                    "ul": false
+                  },
+                  {
+                    "t": "I sat by the window and stare out at the empty field behind their house.",
+                    "ul": true
+                  },
+                  {
+                    "t": " Suddenly, I got an idea. The field would be the perfect place for a larger greenhouse. Then they could grow more strawberries! ",
+                    "ul": false
+                  },
+                  {
+                    "t": "ⓒI immediately started searching for a way",
+                    "ul": true
+                  },
+                  {
+                    "t": ", and I found the perfect solution. I would start a crowdfunding campaign!",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "What Is Crowdfunding?",
+                "runs": [
+                  {
+                    "t": "What Is Crowdfunding?",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": " ⓓCrowdfunding is a way of raised money for a product, company, or charity. These days, people can ⓔuse crowdfunding websites collect money. Crowdfunding is especially advantageous for individuals or small companies ⓕwhat can't attract big investors. If the campaign is successful, the investors receive direct rewards for their contribution.",
+                "runs": [
+                  {
+                    "t": " ⓓ",
+                    "ul": false
+                  },
+                  {
+                    "t": "Crowdfunding is a way of raised money for a product, company, or charity.",
+                    "ul": true
+                  },
+                  {
+                    "t": " These days, people can ⓔ",
+                    "ul": false
+                  },
+                  {
+                    "t": "use crowdfunding websites collect money",
+                    "ul": true
+                  },
+                  {
+                    "t": ". Crowdfunding is especially advantageous for individuals or small companies ⓕ",
+                    "ul": false
+                  },
+                  {
+                    "t": "what can't attract big investors",
+                    "ul": true
+                  },
+                  {
+                    "t": ". If the campaign is successful, the investors receive direct rewards for their contribution.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "윗글의 밑줄 친 ⓐ~ⓕ 중, 어법상 틀린 부분이 있는 것의 개수는?",
+                "runs": [
+                  {
+                    "t": "윗글의 밑줄 친 ⓐ~ⓕ 중, 어법상 ",
+                    "ul": false
+                  },
+                  {
+                    "t": "틀린",
+                    "ul": true
+                  },
+                  {
+                    "t": " 부분이 있는 것의 개수는?",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "문제 번호"
+              },
+              {
+                "text": "① 2개    ② 3개    ③ 4개    ④ 5개    ⑤ 6개",
+                "runs": [
+                  {
+                    "t": "① 2개    ② 3개    ③ 4개    ④ 5개    ⑤ 6개",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "윗글의 내용과 일치하지 않는 것은?",
+                "runs": [
+                  {
+                    "t": "윗글의 내용과 일치하지 ",
+                    "ul": false
+                  },
+                  {
+                    "t": "않는",
+                    "ul": true
+                  },
+                  {
+                    "t": " 것은?",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "문제 번호"
+              },
+              {
+                "text": "① The writer's grandparents go to the local market to sell their organic jam every weekend.",
+                "runs": [
+                  {
+                    "t": "① ",
+                    "ul": false
+                  },
+                  {
+                    "t": "The writer's grandparents go to the local market to sell their organic jam every weekend.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "② The writer's solution to the problem is a crowdfunding campaign.",
+                "runs": [
+                  {
+                    "t": "② ",
+                    "ul": false
+                  },
+                  {
+                    "t": "The writer's solution to the problem is a crowdfunding campaign.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "③ At the field behind the writer's grandparents' house, there is a perfect large greenhouse.",
+                "runs": [
+                  {
+                    "t": "③ ",
+                    "ul": false
+                  },
+                  {
+                    "t": "At the field behind the writer's grandparents' house, there is a perfect large greenhouse.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "④ The crowdfunding is helpful to the people neglected by big investors.",
+                "runs": [
+                  {
+                    "t": "④ ",
+                    "ul": false
+                  },
+                  {
+                    "t": "The crowdfunding is helpful to the people neglected by big investors.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "⑤ The investors get rewards for their contribution directly when the campaign is successful.",
+                "runs": [
+                  {
+                    "t": "⑤ ",
+                    "ul": false
+                  },
+                  {
+                    "t": "The investors get rewards for their contribution directly when the campaign is successful.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "다음 글로부터 추론할 수 있는 것은?",
+                "runs": [
+                  {
+                    "t": "다음 글로부터 추론할 수 있는 것은?",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "문제 번호"
+              },
+              {
+                "text": " Multisensory experiences are a central part of our daily lives, yet we often overlook how deeply our senses work together-especially when they function normally or are corrected by simple tools like glasses. A closer look at even the most ordinary activities reveals just how richly multisensory they are. Eating a meal, for instance, may seem straightforward, but it actually involves a blend of visual cues, textures, tastes, and smells. Sounds in the environment, along with the noises produced by chewing or using utensils, also shape how we perceive and enjoy food. Ordinary experiences, in other words, are far more multisensory than we tend to realize. Recent experiments show that background sounds can alter taste perception itself. In one study, participants judged identical foods as sweeter when exposed to high-pitched tones and more bitter when listening to low-pitched ones. Importantly, the food's chemical composition never changed; only the auditory environment did. Researchers concluded that the brain integrates sensory inputs so strongly that minor cues ― such as ambient sound ― can meaningfully shift how people interpret even simple sensory experiences like taste.",
+                "runs": [
+                  {
+                    "t": " Multisensory experiences are a central part of our daily lives, yet we often overlook how deeply our senses work together-especially when they function normally or are corrected by simple tools like glasses. A closer look at even the most ordinary activities reveals just how richly multisensory they are. Eating a meal, for instance, may seem straightforward, but it actually involves a blend of visual cues, textures, tastes, and smells. Sounds in the environment, along with the noises produced by chewing or using utensils, also shape how we perceive and enjoy food. Ordinary experiences, in other words, are far more multisensory than we tend to realize. Recent experiments show that background sounds can alter taste perception itself. In one study, participants judged identical foods as sweeter when exposed to high-pitched tones and more bitter when listening to low-pitched ones. Importantly, the food's chemical composition never changed; only the auditory environment did. Researchers concluded that the brain integrates sensory inputs so strongly that minor cues ― such as ambient sound ― can meaningfully shift how people interpret even simple sensory experiences like taste.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "① If one sensory channel becomes weakened, the remaining senses are assumed to function in isolation rather than interacting or influencing one another in any meaningful way.",
+                "runs": [
+                  {
+                    "t": "① ",
+                    "ul": false
+                  },
+                  {
+                    "t": "If one sensory channel becomes weakened, the remaining senses are assumed to function in isolation rather than interacting or influencing one another in any meaningful way.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "② Perceived taste results from the brain's integration of multiple sensory inputs, meaning that even subtle changes in secondary cues can significantly reshape the experience.",
+                "runs": [
+                  {
+                    "t": "② ",
+                    "ul": false
+                  },
+                  {
+                    "t": "Perceived taste results from the brain's integration of multiple sensory inputs, meaning that even subtle changes in secondary cues can significantly reshape the experience.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "③ In ordinary sensory experiences, each sense is believed to contribute separately to perception, with cross-sensory effects considered rare and lacking significant influence on the final interpretation.",
+                "runs": [
+                  {
+                    "t": "③ ",
+                    "ul": false
+                  },
+                  {
+                    "t": "In ordinary sensory experiences, each sense is believed to contribute separately to perception, with cross-sensory effects considered rare and lacking significant influence on the final interpretation.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "④ Because the auditory environment is considered largely irrelevant during eating, background sounds are believed to have only a negligible influence on flavor, far weaker than the sensory information coming directly from the food itself.",
+                "runs": [
+                  {
+                    "t": "④ ",
+                    "ul": false
+                  },
+                  {
+                    "t": "Because the auditory environment is considered largely irrelevant during eating, background sounds are believed to have only a negligible influence on flavor, far weaker than the sensory information coming directly from the food itself.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "⑤ Even when people encounter changes in background sound, the flavor they perceive is assumed to remain entirely determined by the food's chemical composition, with auditory cues having no real effect on how sweet or bitter it tastes.",
+                "runs": [
+                  {
+                    "t": "⑤ ",
+                    "ul": false
+                  },
+                  {
+                    "t": "Even when people encounter changes in background sound, the flavor they perceive is assumed to remain entirely determined by the food's chemical composition, with auditory cues having no real effect on how sweet or bitter it tastes.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "선지"
+              },
+              {
+                "text": "다음 글을 읽고, <요약문>의 빈칸 (A), (B)에 들어갈 가장 적절한 단어를 지문에서 찾아 쓰시오.",
+                "runs": [
+                  {
+                    "t": "다음 글을 읽고, <요약문>의 빈칸 (A), (B)에 들어갈 가장 적절한 단어를 지문에서 찾아 쓰시오.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "서술형 번호"
+              },
+              {
+                "text": "  Creativity is the ability to generate novel and valuable ideas. It involves divergent thinking, imagination, and a willingness to experiment and take risks. While AI can be a powerful tool for creative efforts, it also carries the risk of limiting originality and innovation. AI algorithms are trained on existing datasets, often identifying patterns and trends in past creations. While this can be useful for generating new content in similar styles or formats, it can also lead to derivative works that lack genuine originality. If artists and designers rely too heavily on AI for inspiration and content generation, they may find themselves trapped in a cycle of imitation, being not able to break free from the constraints of the AI's training data. Moreover, the ease with which AI can generate content can discourage the kind of struggle and experimentation that often leads to breakthroughs. The creative process is often messy and repetitive, involving numerous failures and setbacks. It is through these challenges that we refine our skills, develop our unique perspectives, and push the boundaries of what is possible. If AI provides instant solutions, it can bypass this essential process of learning through trial and error, ultimately inhibiting the development of true creative talent.",
+                "runs": [
+                  {
+                    "t": "  Creativity is the ability to generate novel and valuable ideas. It involves divergent thinking, imagination, and a willingness to experiment and take risks. While AI can be a powerful tool for creative efforts, it also carries the risk of limiting originality and innovation. AI algorithms are trained on existing datasets, often identifying patterns and trends in past creations. While this can be useful for generating new content in similar styles or formats, it can also lead to derivative works that lack genuine originality. If artists and designers rely too heavily on AI for inspiration and content generation, they may find themselves trapped in a cycle of imitation, being not able to break free from the constraints of the AI's training data. Moreover, the ease with which AI can generate content can discourage the kind of struggle and experimentation that often leads to breakthroughs. The creative process is often messy and repetitive, involving numerous failures and setbacks. It is through these challenges that we refine our skills, develop our unique perspectives, and push the boundaries of what is possible. If AI provides instant solutions, it can bypass this essential process of learning through trial and error, ultimately inhibiting the development of true creative talent.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "<요약문>",
+                "runs": [
+                  {
+                    "t": "<요약문>",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "  Replacing the rigorous struggle and experimentation inherent in the human creative process with a heavy dependence on AI-driven patterns and instant solutions (A)i____________ the cultivation of genuine innovation and leaves creators (B)u____________ to transcend the derivative constraints of existing datasets.",
+                "runs": [
+                  {
+                    "t": "  Replacing the rigorous struggle and experimentation inherent in the human creative process with a heavy dependence on AI-driven patterns and instant solutions (A)i____________ the cultivation of genuine innovation and leaves creators (B)u____________ to transcend the derivative constraints of existing datasets.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "[정답 작성 안내]",
+                "runs": [
+                  {
+                    "t": "[정답 작성 안내]",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "(1) 정답은 각각 주어진 철자로 시작할 것",
+                "runs": [
+                  {
+                    "t": "(1) 정답은 각각 주어진 철자로 시작할 것",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "(2) (A), (B)는 단어의 형태를 문맥에 맞게 변형해서 작성할 것",
+                "runs": [
+                  {
+                    "t": "(2) (A), (B)는 단어의 형태를 문맥에 맞게 변형해서 작성할 것",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "(A) ___________________, (B) ___________________",
+                "runs": [
+                  {
+                    "t": "(A) ___________________, (B) ___________________",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "서술형답지"
+              },
+              {
+                "text": "다음 글의 내용과 어법에 맞도록 <보기>에 주어진 어휘들을 필요 시 적절히 변형하여 빈칸 (A)를 완성하시오.",
+                "runs": [
+                  {
+                    "t": "다음 글의 내용과 어법에 맞도록 <보기>에 주어진 어휘들을 ",
+                    "ul": false
+                  },
+                  {
+                    "t": "필요 시 적절히 변형하여",
+                    "ul": true
+                  },
+                  {
+                    "t": " 빈칸 (A)를 완성하시오.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "서술형 번호"
+              },
+              {
+                "text": " Rome was said to have been a melting pot from the very start. The historian Livy claimed the city's original population was comprised of immigrants flooding in from all directions, attracted by Romulus's deliberate policy of nondiscrimination. It was this initial openness that laid the foundations for the later strength and success of the city. Romans described their city as multicultural in the generations after its foundation. Tradition held that only a minority of the city's legendary kings were Roman-born, (A)_____________________ before being chosen for the throne for their virtues and merits. As the empire expanded across three continents, Rome eagerly adopted new cultural influences and absorbed incoming groups – perhaps a little too eagerly for some, who, like the poet Juvenal, complained about the rapid rate of cultural change.",
+                "runs": [
+                  {
+                    "t": " Rome was said to have been a melting pot from the very start. The historian Livy claimed the city's original population was comprised of immigrants flooding in from all directions, attracted by Romulus's deliberate policy of nondiscrimination. It was this initial openness that laid the foundations for the later strength and success of the city. Romans described their city as multicultural in the generations after its foundation. Tradition held that only a minority of the city's legendary kings were Roman-born, (A)_____________________ before being chosen for the throne for their virtues and merits. As the empire expanded across three continents, Rome eagerly adopted new cultural influences and absorbed incoming groups – perhaps a little too eagerly for some, who, like the poet Juvenal, complained about the rapid rate of cultural change.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "<보기>",
+                "runs": [
+                  {
+                    "t": "<보기>",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "테두리_보기"
+              },
+              {
+                "text": "others, as, with, arrive, immigrants, the, all",
+                "runs": [
+                  {
+                    "t": "others, as, with, arrive, immigrants, the, all",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "테두리_보기"
+              },
+              {
+                "text": "답: ______________________________________________________",
+                "runs": [
+                  {
+                    "t": "답: ______________________________________________________",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "서술형답지"
+              },
+              {
+                "text": "다음 글을 읽고, 빈칸 (A)에 들어갈 말을 주어진 표현을 배열하여 완성하시오.",
+                "runs": [
+                  {
+                    "t": "다음 글을 읽고, 빈칸 (A)에 들어갈 말을 주어진 표현을 배열하여 완성하시오.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "서술형 번호"
+              },
+              {
+                "text": "  Kivetz, Urminsky, and Zheng partnered with a cafe to test the motivating effect of illusory progress in an experiment. Customers received a reward card that offered one free coffee after they'd bought ten. While half of the customers received a card with ten open slots, the other half got a card with twelve open slots. Yet the twelve-slot card had two preexisting \"bonus\" stamps, so, strictly speaking, these were identical reward programs. Every customer who got a card needed to make ten coffee purchases (and collect ten stamps) to get their free coffee. But the appeal of the free stamps was high. People who thought they'd gotten a head start came back to the cafe more often, filling in their reward card more quickly than the others. When the card came with two out of twelve slots already filled, it felt to customers like they were already 16 percent finished with the goal before they'd even started. Believing they were closer to the reward, (A)____________________________________________.",
+                "runs": [
+                  {
+                    "t": "  Kivetz, Urminsky, and Zheng partnered with a cafe to test the motivating effect of illusory progress in an experiment. Customers received a reward card that offered one free coffee after they'd bought ten. While half of the customers received a card with ten open slots, the other half got a card with twelve open slots. Yet the twelve-slot card had two preexisting \"bonus\" stamps, so, strictly speaking, these were identical reward programs. Every customer who got a card needed to make ten coffee purchases (and collect ten stamps) to get their free coffee. But the appeal of the free stamps was high. People who thought they'd gotten a head start came back to the cafe more often, filling in their reward card more quickly than the others. When the card came with two out of twelve slots already filled, it felt to customers like they were already 16 percent finished with the goal before they'd even started. Believing they were closer to the reward, (A)____________________________________________.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "<보기>",
+                "runs": [
+                  {
+                    "t": "<보기>",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "테두리_보기"
+              },
+              {
+                "text": "the, reach, motivated, to, line, they, finish, more, were",
+                "runs": [
+                  {
+                    "t": "the, reach, motivated, to, line, they, finish, more, were",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "테두리_보기"
+              },
+              {
+                "text": "답: ______________________________________________________",
+                "runs": [
+                  {
+                    "t": "답: ______________________________________________________",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "서술형답지"
+              },
+              {
+                "text": "(가)를 읽고, (나)의 빈칸 (A)에 들어갈 가장 적절한 표현을 (가)에서 찾아 쓰시오.",
+                "runs": [
+                  {
+                    "t": "(가)를 읽고, (나)의 빈칸 (A)에 들어갈 가장 적절한 표현을 (가)에서 찾아 쓰시오.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "서술형 번호"
+              },
+              {
+                "text": "(가) As children, the principle of opposites is foreign. Children perceive words and their meanings separately from each other. It is only in later development that we understood that individual words directly connect to one another. For many children, for instance, it is not clear that 'Right' is the opposite of 'Left'. A vivid example of this can be seen when children learn to ride a bicycle. If parents tell their child \"Don't go to the left,\" they will often find that the child will continue riding straight ahead and not automatically turn to the right. The same applies to the logical connection between 'Yes' and 'No' as perceived by parents. When we were children and were told, for example, \"No, don't eat with your hands,\" we were confused and didn't know what our parents expected from us. Our confusion was about whether we should continue eating or not and if so, how? Only later did we recognize the connection and understand that we should continue eating, but not with our hands but with a fork or a spoon.",
+                "runs": [
+                  {
+                    "t": "(가) As children, the principle of opposites is foreign. Children perceive words and their meanings separately from each other. It is only in later development that we understood that individual words directly connect to one another. For many children, for instance, it is not clear that 'Right' is the opposite of 'Left'. A vivid example of this can be seen when children learn to ride a bicycle. If parents tell their child \"Don't go to the left,\" they will often find that the child will continue riding straight ahead and not automatically turn to the right. The same applies to the logical connection between 'Yes' and 'No' as perceived by parents. When we were children and were told, for example, \"No, don't eat with your hands,\" we were confused and didn't know what our parents expected from us. Our confusion was about whether we should continue eating or not and if so, how? Only later did we recognize the connection and understand that we should continue eating, but not with our hands but with a fork or a spoon.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "(나) ",
+                "runs": [
+                  {
+                    "t": "(나) ",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "Mother: I told my son not to go to the left while he was riding his bike, but he just kept going straight instead of turning right.",
+                "runs": [
+                  {
+                    "t": "Mother: I told my son not to go to the left while he was riding his bike, but he just kept going straight instead of turning right.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "Teacher: That is actually a very typical reaction for a young child. They don't automatically see 'right' as the linked alternative to 'left'.",
+                "runs": [
+                  {
+                    "t": "Teacher: That is actually a very typical reaction for a young child. They don't automatically see 'right' as the linked alternative to 'left'.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "Mother: I see. So they don't understand that certain words are logically connected as pairs?",
+                "runs": [
+                  {
+                    "t": "Mother: I see. So they don't understand that certain words are logically connected as pairs?",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "Teacher: Exactly. For young children, (A)_________________________ is something that they have not yet mastered. They process each word independently rather than recognizing how they relate to one another as contrasting ideas.",
+                "runs": [
+                  {
+                    "t": "Teacher: Exactly. For young children, (A)_________________________ is something that they have not yet mastered. They process each word independently rather than recognizing how they relate to one another as contrasting ideas.",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "지문"
+              },
+              {
+                "text": "답: ______________________________________________________",
+                "runs": [
+                  {
+                    "t": "답: ______________________________________________________",
+                    "ul": false
+                  }
+                ],
+                "pstyle": "서술형답지"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "output_dir": "/Users/nhj/Documents/작업/Y.ONE STUDIO/조판/조판/교재/동형모의고사/고1/26-1-중간/배재고",
+  "school": "배재고",
+  "grade": "고1",
+  "exam_period": "26-1-중간"
+}

@@ -267,15 +267,29 @@ class PocketbookEngine(BaseEngine):
                 matches.append({"category": sub_cat, "file": found, "lesson": lesson_num})
         return matches
 
+    @staticmethod
+    def _sync_rt_map_keys(rt_map, old_categories, new_categories):
+        """settings.json의 categories가 content.json과 다를 때 review_test_map에 alias 추가.
+        예: content "동아박1,2과" → settings "동아박2과"이면, rt_map["동아박2과"] = rt_map["동아박1,2과"]
+        """
+        for idx, new_cat in enumerate(new_categories):
+            old_cat = old_categories[idx] if idx < len(old_categories) else ""
+            if new_cat != old_cat and old_cat in rt_map and new_cat not in rt_map:
+                rt_map[new_cat] = rt_map[old_cat]
+        return rt_map
+
     def _discover_review_tests(self, categories, file_types, grade, job_dir, log, semester="", analysis_files=None):
         """카테고리 기반으로 구글드라이브에서 리뷰테스트 해설지 자동 탐색.
-        Returns: { "2503": { "passages": [...] }, ... }
+        Returns: (rt_map, missing_tb_cats)
+          rt_map: { "2503": { "passages": [...] }, ... }
+          missing_tb_cats: 탐색 실패한 교과서 카테고리 목록
         """
         import unicodedata
         cfg = _load_config()
         rt_base = cfg.get("review_test_base", "")
         if not rt_base or not os.path.isdir(rt_base):
-            return {}
+            missing = [c for i, c in enumerate(categories) if i < len(file_types) and file_types[i] == "textbook"]
+            return {}, missing
 
         # 분석본 파일명에서 출판사 추출 (예: "영어1 분석본 YBM(박)" → "YBM")
         publisher = ""
@@ -291,6 +305,7 @@ class PocketbookEngine(BaseEngine):
 
         rt_map = {}
         seen_keys = set()
+        missing_tb_cats = []
 
         for idx, cat in enumerate(categories):
             ft = file_types[idx] if idx < len(file_types) else "textbook"
@@ -436,22 +451,37 @@ class PocketbookEngine(BaseEngine):
                             # "영어1" 검색 시 "공통영어1" 제외
                             if "공통" not in subj_exact and "공통" in norm_subj:
                                 continue
-                        cat_core = re.sub(r"[^\w]", "", nfc_cat)
+                        # 카테고리에서 출판사와 과 번호 분리: "동아박1,2과" → pub="동아박", lessons=[1,2]
+                        cat_pub_m = re.match(r"(.+?)(\d[\d,]*과)$", nfc_cat)
+                        if cat_pub_m:
+                            cat_pub_core = re.sub(r"[^\w]", "", cat_pub_m.group(1))
+                            cat_lesson_nums = [int(n) for n in re.findall(r"\d+", cat_pub_m.group(2))]
+                        else:
+                            cat_pub_core = re.sub(r"[^\w]", "", nfc_cat)
+                            cat_lesson_nums = []
                         for pub_raw in os.listdir(subj_dir):
                             pub_dir = os.path.join(subj_dir, pub_raw)
                             if not os.path.isdir(pub_dir):
                                 continue
-                            # 출판사 폴더명에 카테고리 + 출판사명 포함 여부 확인
+                            # 출판사 폴더명에 출판사명 포함 여부 확인 (과 번호 제외)
                             nfc_pub = unicodedata.normalize("NFC", pub_raw)
                             pub_core = re.sub(r"[^\w]", "", nfc_pub)
-                            if cat_core and cat_core not in pub_core:
+                            if cat_pub_core and cat_pub_core not in pub_core:
                                 continue
                             # 출판사명 필터 (분석본에서 추출한 출판사와 일치해야 함)
                             if publisher and publisher.upper() not in nfc_pub.upper():
                                 continue
                             for les_raw in os.listdir(pub_dir):
                                 full = os.path.join(pub_dir, les_raw)
-                                if os.path.isdir(full):
+                                if not os.path.isdir(full):
+                                    continue
+                                # 과 번호 필터: 카테고리에 과 번호가 있으면 해당 과만 추가
+                                if cat_lesson_nums:
+                                    nfc_les = unicodedata.normalize("NFC", les_raw)
+                                    les_m = re.search(r"(\d+)과", nfc_les)
+                                    if les_m and int(les_m.group(1)) in cat_lesson_nums:
+                                        search_dirs.append(full)
+                                else:
                                     search_dirs.append(full)
 
             if not rt_key or not search_dirs:
@@ -503,8 +533,10 @@ class PocketbookEngine(BaseEngine):
                         break
 
             if not docx_paths:
-                log(f"  [리뷰테스트] {nfc_cat} -> 해설지/정답지 못 찾음 (빈 페이지 생성)")
+                log(f"  [리뷰테스트] {nfc_cat} -> 해설지/정답지 못 찾음")
                 rt_map[rt_key] = {"passages": []}
+                if ft == "textbook":
+                    missing_tb_cats.append(nfc_cat)
                 continue
 
             # 구글드라이브면 로컬 복사 후 파싱 (모든 docx)
@@ -540,7 +572,7 @@ class PocketbookEngine(BaseEngine):
             fnames = [os.path.basename(p) for p in docx_paths]
             log(f"  [리뷰테스트] {nfc_cat} -> {len(all_passages)}개 ({', '.join(fnames)})")
 
-        return rt_map
+        return rt_map, missing_tb_cats
 
     # ── 1단계: 파싱 (파일 목록 + 메타데이터 준비) ────────────────────
 
@@ -856,9 +888,21 @@ class PocketbookEngine(BaseEngine):
         all_categories = content.get("categories", [])
         all_file_types = content.get("file_types", [])
         all_analysis = content.get("analysis_files", [])
-        review_test_map = self._discover_review_tests(
+        review_test_map, missing_tb_cats = self._discover_review_tests(
             all_categories, all_file_types, grade, job_dir, log, semester, all_analysis
         )
+
+        # 리뷰테스트 포함인데 교과서 리뷰테스트 파일 못 찾으면 에러
+        # (단, 사용자가 직접 업로드한 memtest가 있으면 허용)
+        include_review_test = self._get_meta(job_dir, "include_review_test_flag", "1") == "1"
+        has_uploaded_memtest = len(content.get("memtest", [])) > 0
+        if include_review_test and missing_tb_cats and not has_uploaded_memtest:
+            cats_str = ", ".join(missing_tb_cats)
+            raise RuntimeError(
+                f"교과서 리뷰테스트 해설지를 찾을 수 없습니다: {cats_str}\n"
+                f"리뷰테스트 해설지(.docx)를 직접 업로드하거나, "
+                f"리뷰테스트 포함을 해제해 주세요."
+            )
 
         # 고2 올포 → 모의고사 리뷰테스트 전체 수집
         # 올포 카테고리("올포14강")로는 모의고사 년월을 모르므로,
@@ -1070,7 +1114,7 @@ class PocketbookEngine(BaseEngine):
             "file_types": new_file_types,
             "categories": new_categories,
             "memtest": content.get("memtest", []) if include_review_test else [],
-            "review_test_map": review_test_map if include_review_test else {},
+            "review_test_map": self._sync_rt_map_keys(review_test_map, all_categories, new_categories) if include_review_test else {},
             "include_review_test": include_review_test,
             "illustrations_base": illustrations_base,
             "grade": grade,

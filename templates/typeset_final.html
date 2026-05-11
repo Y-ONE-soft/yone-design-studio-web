@@ -87,15 +87,20 @@
     document.querySelectorAll('.grade-tab').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     activeGradeTab = btn.dataset.grade;
-    document.querySelectorAll('.school-grid').forEach(g => {
+    document.querySelectorAll('.school-grid[data-grade]').forEach(g => {
       g.classList.toggle('hidden', g.dataset.grade !== activeGradeTab);
     });
     document.getElementById('grade-hidden').value = activeGradeTab;
+
+    // 초기화
+    document.getElementById('school-hidden').value = '';
+    document.getElementById('workbook-status').textContent = '학교를 선택하세요';
     updateFilenamePreview();
   }
 
   function selectSchool(btn) {
-    document.querySelectorAll('.school-btn--selected').forEach(b => b.classList.remove('school-btn--selected'));
+    // 같은 그리드 내에서만 선택 해제
+    btn.closest('.school-grid').querySelectorAll('.school-btn--selected').forEach(b => b.classList.remove('school-btn--selected'));
     btn.classList.add('school-btn--selected');
     document.getElementById('school-hidden').value = btn.dataset.school;
     updateFilenamePreview();
@@ -128,12 +133,12 @@
       });
       const data = await res.json();
       if (data.count > 0) {
-        let html = `<span style="color:#22c55e">&#10003;</span> <b>${data.count}개 워크북</b>\n`;
+        let html = `<span style="color:#22c55e">&#10003;</span> <b>${data.count}개 ${grade === '고3' ? '분석편' : '워크북'}</b>\n`;
         // 시험범위 표시
         if (data.scopes && data.scopes.length) {
           html += '\n';
           for (const s of data.scopes) {
-            const srcLabel = s.grammar_source === 'word_file' ? '교과서 Word' : '워크북 A1';
+            const srcLabel = s.grammar_source === 'word_file' ? '교과서 Word' : '워크북 추출';
             const srcColor = s.grammar_source === 'word_file' ? '#3b82f6' : '#8b5cf6';
             html += `<small>${s.scope}</small> <span style="color:${srcColor};font-size:11px">[어법: ${srcLabel}]</span>\n`;
           }
@@ -144,7 +149,7 @@
         }
         status.innerHTML = html;
       } else {
-        status.innerHTML = `<span style="color:#ef4444">&#10007;</span> 워크북 없음\n<small style="color:#888">${data.path}</small>`;
+        status.innerHTML = `<span style="color:#ef4444">&#10007;</span> ${grade === '고3' ? '분석편' : '워크북'} 없음\n<small style="color:#888">${data.path}</small>`;
       }
     } catch (err) {
       status.textContent = '감지 실패: ' + err.message;
@@ -237,33 +242,67 @@
     const overflow = result.overflow ?? 0;
     const warnings = result.warnings || [];
     const pdfPaths = result.pdf_paths || [];
+    const bs = result.block_summary || {};
+    const valWarnings = result.validation_warnings || [];
 
-    let storyRows = '';
-    for (const [key, v] of Object.entries(result.stories || {})) {
-      storyRows += `<tr><td>${key}</td><td>${v.actual ?? '?'}개</td></tr>`;
+    // 블록 요약 테이블
+    let summaryRows = '';
+    if (bs['문장배열']) {
+      const a = bs['문장배열'];
+      summaryRows += `<tr><td>문장배열</td><td>${a.blocks}개 블록</td><td>${a.items}개 항목</td><td class="hdr-preview">${(a.headers||[]).join(', ')}${a.blocks > 5 ? ' ...' : ''}</td></tr>`;
+    }
+    if (bs['문장삽입']) {
+      const n = bs['문장삽입'];
+      const emptyBadge = n.empty > 0 ? ` <span class="inline-warn">(빈 ${n.empty}개)</span>` : '';
+      summaryRows += `<tr class="${n.empty > 0 ? 'mismatch' : ''}"><td>문장삽입</td><td>${n.blocks}개 블록</td><td>${emptyBadge}</td><td></td></tr>`;
+    }
+    if (bs['어법수정']) {
+      const g = bs['어법수정'];
+      summaryRows += `<tr><td>어법수정</td><td>${g.headers}개 지문</td><td>${g.lines}줄</td><td></td></tr>`;
+    }
+    if (bs['서술형영작']) {
+      const w = bs['서술형영작'];
+      summaryRows += `<tr><td>서술형영작</td><td>${w.headers}개 지문</td><td>${w.pairs}쌍</td><td></td></tr>`;
+    }
+    if (bs['중요어휘']) {
+      const v = bs['중요어휘'];
+      const mismatch = v.left !== v.right;
+      summaryRows += `<tr class="${mismatch ? 'mismatch' : ''}"><td>중요어휘</td><td>왼 ${v.left}개</td><td>오 ${v.right}개</td><td>${mismatch ? '<span class="inline-warn">좌우 불일치</span>' : ''}</td></tr>`;
     }
 
-    const warnHtml = warnings.length
-      ? `<ul class="warn-list">${warnings.map(w => `<li>${w}</li>`).join('')}</ul>` : '';
+    // 검증 경고 (validation_warnings)
+    const valWarnHtml = valWarnings.length
+      ? `<div class="validation-warnings">
+           <div class="vw-title">검증 경고 (${valWarnings.length}건)</div>
+           <ul class="warn-list">${valWarnings.map(w => `<li>${w}</li>`).join('')}</ul>
+         </div>` : '';
+
+    // 오버플로우 경고
+    const overflowWarn = overflow > 0
+      ? `<ul class="warn-list"><li>오버플로우 ${overflow}개</li></ul>` : '';
 
     const downloadLinks = pdfPaths.length
       ? pdfPaths.map((p, i) =>
-          `<a href="/download/${jobId}/pdf?idx=${i}" class="download-btn">📥 PDF ${i+1} 다운로드</a>`
+          `<a href="/download/${jobId}/pdf?idx=${i}" class="download-btn">PDF ${i+1} 다운로드</a>`
         ).join('')
       : '<p class="no-pdf">PDF가 생성되지 않았습니다.</p>';
 
+    const hasWarnings = valWarnings.length > 0 || overflow > 0;
+    const cardClass = ok && !hasWarnings ? 'ok' : 'warn';
+
     area.innerHTML = `
-      <div class="result-card ${ok ? 'ok' : 'warn'}">
+      <div class="result-card ${cardClass}">
         <div class="result-header">
-          <span class="result-badge">${ok ? '✅ 조판 완료' : '⚠️ 확인 필요'}</span>
+          <span class="result-badge">${ok && !hasWarnings ? '조판 완료' : '확인 필요'}</span>
           <span class="overflow-badge ${overflow > 0 ? 'bad' : ''}">오버플로우 ${overflow}개</span>
           <span class="overflow-badge" style="border-color:var(--accent);color:var(--accent);">${gradeLabel}</span>
         </div>
-        <table class="story-table">
-          <thead><tr><th>항목</th><th>수량</th></tr></thead>
-          <tbody>${storyRows}</tbody>
+        <table class="story-table block-summary">
+          <thead><tr><th>섹션</th><th>블록</th><th>상세</th><th>미리보기</th></tr></thead>
+          <tbody>${summaryRows}</tbody>
         </table>
-        ${warnHtml}
+        ${valWarnHtml}
+        ${overflowWarn}
         <div class="action-row">${downloadLinks}</div>
       </div>`;
     setStep('verify');

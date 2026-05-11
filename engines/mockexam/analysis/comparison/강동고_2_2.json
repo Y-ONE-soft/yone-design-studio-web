@@ -1,0 +1,1651 @@
+{
+  "school": "강동고",
+  "grade": "고2",
+  "round": 2,
+  "ms_paras": 181,
+  "indd_paras": 191,
+  "matched": 2,
+  "unmatched_ms": 179,
+  "extra_indd": 189,
+  "matches": [
+    {
+      "ms": {
+        "q": 0,
+        "p": 0,
+        "pstyle": "지문",
+        "text": "강동고2 동형 2회 원고"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 1,
+        "pstyle": "지문",
+        "text": "선택형: 27문항"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 2,
+        "pstyle": "지문",
+        "text": "서술형: 8문항"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 3,
+        "pstyle": "문제 번호",
+        "text": "(1~3) 다음 해석을 보고, 빈칸에 들어갈 가장 알맞은 단어를 고르시오."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 4,
+        "pstyle": "지문",
+        "text": "1. The author utilized vivid metaphors as a potent means of _____________ to bri"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 5,
+        "pstyle": "지문",
+        "text": "[그 작가는 자신의 급진적인 비전과 독자들의 전통적인 기대 사이의 간극을 메우기 위한 강력한 설득의 수단으로 생생한 은유를 활용했다.]"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 6,
+        "pstyle": "선지",
+        "text": "① perception ② provision ③ reception ④ permission ⑤ persuasion"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 7,
+        "pstyle": "지문",
+        "text": "2. The new policy aimed to open a _____________ for young entrepreneurs by provi"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 8,
+        "pstyle": "지문",
+        "text": "[새로운 정책은 대기업이 장악한 시장에서 청년 기업가들에게 스타트업 자금에 대한 더 쉬운 접근성을 제공함으로써 그들에게 기회를 주는 것을 목표로"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 9,
+        "pstyle": "선지",
+        "text": "① path ② gap ③ leap ④ push ⑤ lead"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 10,
+        "pstyle": "지문",
+        "text": "3. While there were several contributing factors to the project's failure, the _"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 11,
+        "pstyle": "지문",
+        "text": "[프로젝트 실패에는 여러 기여 요인이 있었지만, 주요한 이유는 디자인 팀과 엔지니어링 팀 사이의 소통 부족이었다.]"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 12,
+        "pstyle": "선지",
+        "text": "① proficient ② priority ③ principle ④ primitive ⑤ principal"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 13,
+        "pstyle": "문제 번호",
+        "text": "(4~7) 아래 문장의 빈칸에 들어갈 가장 적절한 단어를 고르시오."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 14,
+        "pstyle": "지문",
+        "text": "4. Although the initial proposal seemed ideal in theory, the committee had to re"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 15,
+        "pstyle": "선지",
+        "text": "① imaginary  ② artificial  ③ realistic  ④ subjective  ⑤ temporary"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 16,
+        "pstyle": "지문",
+        "text": "5. Unlike the fleeting trends of social media that disappear within weeks, the c"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 17,
+        "pstyle": "선지",
+        "text": "① permanent ② voluntary  ③ universal  ④ plain  ⑤ incidental"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 18,
+        "pstyle": "지문",
+        "text": "6. With years of experience in the field, the expert tracker was able to _______"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 19,
+        "pstyle": "선지",
+        "text": "① ignore  ② imitate  ③ distort  ④ spot  ⑤ criticize"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 20,
+        "pstyle": "지문",
+        "text": "7. The research facility is strictly restricted to the public, _________ for a f"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 21,
+        "pstyle": "선지",
+        "text": "① including  ② regarding  ③ despite  ④ except  ⑤ provided"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 22,
+        "pstyle": "문제 번호",
+        "text": "(8~9) 아래 문장의 밑줄 친 표현과 가장 유사한 뜻을 가진 단어를 고르시오."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 23,
+        "pstyle": "지문",
+        "text": "8. After months of intense negotiation and internal conflict, the board of direc"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 24,
+        "pstyle": "선지",
+        "text": "① postpone  ② attach  ③ resolve  ④ overlook  ⑤ modify"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 25,
+        "pstyle": "지문",
+        "text": "9. To ensure the safety of the new infrastructure, the government commissioned a"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 26,
+        "pstyle": "선지",
+        "text": "① consult  ② acquire  ③ arrange  ④ occupy  ⑤ investigate"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 27,
+        "pstyle": "문제 번호",
+        "text": "10. 아래 문장의 밑줄 친 표현과 반대되는 뜻을 가진 단어는?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 28,
+        "pstyle": "지문",
+        "text": "While some activists demonstrated incredible passion for environmental reform, t"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 29,
+        "pstyle": "선지",
+        "text": "① enthusiasm  ② curiosity  ③ affection  ④ indifference ⑤ patience"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 30,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 요지로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 31,
+        "pstyle": "지문",
+        "text": " Another example is automatic doors. They are invaluable for those who rely on a"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 32,
+        "pstyle": "선지",
+        "text": "① Public facilities should be designed separately according to different types o"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 33,
+        "pstyle": "선지",
+        "text": "② Automation technology is a fundamental solution to urban problems."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 34,
+        "pstyle": "선지",
+        "text": "③ Urban pedestrian environments should prioritize the visually impaired."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 35,
+        "pstyle": "선지",
+        "text": "④ Children’s physical conditions are secondary considerations in public facility"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 36,
+        "pstyle": "선지",
+        "text": "⑤ Everyday design elements help people of various backgrounds move and use space"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 37,
+        "pstyle": "문제 번호",
+        "text": "밑줄 친 further safeguards가 다음 글에서 의미하는 바로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 38,
+        "pstyle": "지문",
+        "text": " There are reasons why science is not fully trusted and why healthy skepticism a"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 39,
+        "pstyle": "선지",
+        "text": "① Mandating of disclosing the source of funds"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 40,
+        "pstyle": "선지",
+        "text": "② Raising funds through transparent processes"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 41,
+        "pstyle": "선지",
+        "text": "③ Raising research funds from various companies"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 42,
+        "pstyle": "선지",
+        "text": "④ Developing accurate research assessment tools"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 43,
+        "pstyle": "선지",
+        "text": "⑤ Announcing the danger of excessive sugar consumption"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 44,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 45,
+        "pstyle": "지문",
+        "text": " Commitment is the glue holding together characteristically human forms of socia"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 46,
+        "pstyle": "문제 번호",
+        "text": "다음 빈칸에 들어갈 말로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 47,
+        "pstyle": "지문",
+        "text": " If the brain has already stored someone's face and name, why do we still end up"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 48,
+        "pstyle": "선지",
+        "text": "① distinguishes familiarity from recall"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 49,
+        "pstyle": "선지",
+        "text": "② recalls details from partial memories"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 50,
+        "pstyle": "선지",
+        "text": "③ retrieves memories through emotional triggers"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 51,
+        "pstyle": "선지",
+        "text": "④ makes an association between names and faces"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 52,
+        "pstyle": "선지",
+        "text": "⑤ transfers data from short-term memory to long-term storage"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 53,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 주제로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 54,
+        "pstyle": "지문",
+        "text": " The prominence of the social dimension in food writing might suggest that the f"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 55,
+        "pstyle": "선지",
+        "text": "① flavor as a primary element in social during"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 56,
+        "pstyle": "선지",
+        "text": "② different roles of flavor in various social settings"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 57,
+        "pstyle": "선지",
+        "text": "③ the influence of social setting on the perception of food"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 58,
+        "pstyle": "선지",
+        "text": "④ evolution of taste according to its shifting roles in social contexts"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 59,
+        "pstyle": "선지",
+        "text": "⑤ the appreciation of food more for its social role than its sensory quality"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 60,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 61,
+        "pstyle": "지문",
+        "text": " When self-experimentation and conventional experiments are both possible, the d"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 62,
+        "pstyle": "문제 번호",
+        "text": "다음 빈칸에 들어갈 말로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 63,
+        "pstyle": "지문",
+        "text": " The governments of virtually every country on the planet attach great importanc"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 64,
+        "pstyle": "선지",
+        "text": "① reforming the domestic farming system"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 65,
+        "pstyle": "선지",
+        "text": "② developing a variety of agricultural technology"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 66,
+        "pstyle": "선지",
+        "text": "③ relying on both domestic production and imports"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 67,
+        "pstyle": "선지",
+        "text": "④ imposing high duties on imported agricultural products"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 68,
+        "pstyle": "선지",
+        "text": "⑤ staying neutral to avoid conflict with neighboring countries"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 69,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 제목으로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 70,
+        "pstyle": "지문",
+        "text": " Despite the difference between the past and the future, between what has happen"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 71,
+        "pstyle": "선지",
+        "text": "① How Does Our Evolutionary Makeup Influence Our Modern-Day Habits?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 72,
+        "pstyle": "선지",
+        "text": "② How to Stop Recreating History and Start Creating Our Future"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 73,
+        "pstyle": "선지",
+        "text": "③ Why Reflecting on The Past Is Important for Future"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 74,
+        "pstyle": "선지",
+        "text": "④ Retrocausality – The Future Can Influence the Past"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 75,
+        "pstyle": "선지",
+        "text": "⑤ Why Predicting Our Future Feelings Is So Difficult"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 76,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 요지로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 77,
+        "pstyle": "지문",
+        "text": " Dictionaries are relatively good resources for anyone interested in finding out"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 78,
+        "pstyle": "선지",
+        "text": "① Dictionaries rely on a reader's existing knowledge of language to be effective"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 79,
+        "pstyle": "선지",
+        "text": "② Vocabulary plays a important role in understanding a language."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 80,
+        "pstyle": "선지",
+        "text": "③ The usefulness of a dictionary depends on how often the user uses it."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 81,
+        "pstyle": "선지",
+        "text": "④ A dictionary is the best tool for satisfying a learner's linguistic curiosity."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 82,
+        "pstyle": "선지",
+        "text": "⑤ To understand the meaning of an ambiguous word, one should consult multiple di"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 83,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 84,
+        "pstyle": "지문",
+        "text": " Stress not only affects physical disease but also the very structure of our bra"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 85,
+        "pstyle": "문제 번호",
+        "text": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 86,
+        "pstyle": "지문",
+        "text": " As a general rule, it's better if your definition corresponds as closely as pos"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 87,
+        "pstyle": "지문_순서",
+        "text": "(A) To call this a memory would be misleading. So instead of calling it a memory"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 88,
+        "pstyle": "지문_순서",
+        "text": "(B) There will be, however, occasions where it is appropriate, even necessary, t"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 89,
+        "pstyle": "지문_순서",
+        "text": "(C) A case like this is one where we don't have a term in ordinary language that"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 90,
+        "pstyle": "선지",
+        "text": "① (B) - (C) - (A)\t\t② (B) - (A) - (C) "
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 91,
+        "pstyle": "선지",
+        "text": "③ (C) - (B) - (A)\t\t④ (C) - (A) - (B)\t"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 92,
+        "pstyle": "선지",
+        "text": "⑤ (A) - (C) - (B)\t"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 93,
+        "pstyle": "문제 번호",
+        "text": "다음 빈칸에 들어갈 말로 가장 적절한 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 94,
+        "pstyle": "지문",
+        "text": " While universal design has been utilized in architecture and transportation sys"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 95,
+        "pstyle": "선지",
+        "text": "① prioritizes aesthetic appeal over practical usability"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 96,
+        "pstyle": "선지",
+        "text": "② promotes increased comfort, convenience, and independence"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 97,
+        "pstyle": "선지",
+        "text": "③ limits mobility to ensure standardized sizing"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 98,
+        "pstyle": "선지",
+        "text": "④ targets only individuals with permanent disabilities"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 99,
+        "pstyle": "선지",
+        "text": "⑤ reduces manufacturing complexity rather than user benefits"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 100,
+        "pstyle": "문제 번호",
+        "text": "다음 글에서 전체 흐름과 관계 없는 문장은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 101,
+        "pstyle": "지문",
+        "text": " Quite often the interaction between groups is socially unequal, and this is ref"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 102,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 103,
+        "pstyle": "지문",
+        "text": " Universal design is not only applied in modern architecture but also extends to"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 104,
+        "pstyle": "문제 번호",
+        "text": "다음 글에서 전체 흐름과 관계 없는 문장은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 105,
+        "pstyle": "지문",
+        "text": " Our intuition about states of matter comes from our experience on Earth’s surfa"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 106,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 107,
+        "pstyle": "지문",
+        "text": " It is important to recognize that although science is a rule-based procedure, i"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 108,
+        "pstyle": "문제 번호",
+        "text": "다음 글의 내용과 일치하지 않는 것을 2개 고르면?"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 109,
+        "pstyle": "지문",
+        "text": " Great scientists are seldom one-hit wonders. Newton is a prime example: beyond "
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 110,
+        "pstyle": "선지",
+        "text": "① Famous scientists often achieve multiple breakthroughs rather than being known"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 111,
+        "pstyle": "선지",
+        "text": "② Newton is described as an exception to the pattern of scientists making multip"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 112,
+        "pstyle": "선지",
+        "text": "③ According to the Matthew effect, initial success can increase a scientist's ch"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 113,
+        "pstyle": "선지",
+        "text": "④ One alternative to the Matthew effect is the idea that consistent success resu"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 114,
+        "pstyle": "선지",
+        "text": "⑤ The passage fully supports the Matthew effect, stating that early success alon"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 115,
+        "pstyle": "테두리_보기",
+        "text": "다음 우리말 표현과 같은 의미가 되도록 <보기>의 단어를 배열하시오. (단, 주어진 표현만 한 번씩 사용하며, 변형 불가) [25년 3월 33번"
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "서술형 번호",
+        "tf_label": "",
+        "text": "다음 우리말 표현과 같은 의미가 되도록 <보기>의 단어를 배열하시오. (단, 주어진 표현만 한 번씩 사용하며, 변형 금지) [9점]\r"
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 116,
+        "pstyle": "테두리_보기",
+        "text": "<보기>"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 117,
+        "pstyle": "지문",
+        "text": "the / prime / comes / gesture / can / our lips / right / mentally / so that / te"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 118,
+        "pstyle": "지문",
+        "text": "손짓은 그 정확한 용어가 우리의 입술에 도달하도록 정신적으로 단어를 준비시킬 수 있다."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 119,
+        "pstyle": "지문",
+        "text": "↓"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 120,
+        "pstyle": "지문",
+        "text": "__________________________________________________________________________."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 121,
+        "pstyle": "서술형 번호",
+        "text": "다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 ⓐ, ⓑ에 들어갈 말로 가장 적절한 것을 지문에서 찾아 각각 한 단어로 쓰시오."
+      },
+      "final": {
+        "page": "5",
+        "pstyle": "서술형 번호",
+        "tf_label": "",
+        "text": "다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 ⓐ, ⓑ에 들어갈 단어를 <조건>에 맞게 작성하시오. [25년 6월 37번] [6점, 각 "
+      }
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 122,
+        "pstyle": "지문",
+        "text": " The explosion of popular music in the second half of the twentieth century as w"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 123,
+        "pstyle": "지문",
+        "text": "↓"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 124,
+        "pstyle": "지문",
+        "text": " The rise of popular music in the 20th century made music more ⓐ___________, cre"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 125,
+        "pstyle": "지문",
+        "text": "ⓐ_______________________ "
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 126,
+        "pstyle": "지문",
+        "text": "ⓑ_______________________"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 127,
+        "pstyle": "서술형 번호",
+        "text": "다음 글 (A)를 읽고 (B)의 각 빈칸 ⓐ~ⓓ에 들어갈 가장 적절한 한 단어를 (A)에서 찾아 쓰시오. (단, 필요시 변형 가능)"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 128,
+        "pstyle": "지문",
+        "text": "(A)"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 129,
+        "pstyle": "지문",
+        "text": " The usual intercity traveler moves slowly through the station area. The passeng"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 130,
+        "pstyle": "지문",
+        "text": "(B)"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 131,
+        "pstyle": "지문",
+        "text": "(The following is a conversation between students about the last class.)"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 132,
+        "pstyle": "지문",
+        "text": "S1: Hey, did you finish reading today's article — the one about how train statio"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 133,
+        "pstyle": "지문",
+        "text": "S2: Yeah, I did. The key point was that commuters have a strong ⓐ__________ with"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 134,
+        "pstyle": "지문",
+        "text": "S1: Right. And because their needs are so different, mixing them together could "
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 135,
+        "pstyle": "지문",
+        "text": "S2: Exactly. The article mentioned that in large stations like Grand Central Ter"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 136,
+        "pstyle": "지문",
+        "text": "S1: That makes sense. And the article concluded that it's ⓓ__________ to have cl"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 137,
+        "pstyle": "지문",
+        "text": "S2: Definitely. Good station design really comes down to keeping the two types o"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 138,
+        "pstyle": "지문",
+        "text": "ⓐ___________________, ⓑ___________________"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 139,
+        "pstyle": "지문",
+        "text": "ⓒ___________________, ⓓ___________________"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 140,
+        "pstyle": "서술형 번호",
+        "text": "다음 글 (A)를 읽고 (B)의 각 빈칸 ⓐ~ⓓ에 들어갈 가장 적절한 한 단어를 (A)에서 찾아 쓰시오. (단 필요시 변형 가능)"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 141,
+        "pstyle": "지문",
+        "text": "(A)"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 142,
+        "pstyle": "지문",
+        "text": " Rooms have their own \"sound\" because they impose their own characteristics on a"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 143,
+        "pstyle": "지문",
+        "text": "(B)"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 144,
+        "pstyle": "지문",
+        "text": "(The following is a conversation between students about the last class.)"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 145,
+        "pstyle": "지문",
+        "text": "S1: Hey, did you finish reviewing today's lesson — the one about how rooms affec"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 146,
+        "pstyle": "지문",
+        "text": "S2: Yeah, I did. What I found fascinating was that every room has its own unique"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 147,
+        "pstyle": "지문",
+        "text": "S1: Right. And the interesting thing is that headphones always produce the same "
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 148,
+        "pstyle": "지문",
+        "text": "S2: Exactly. But with loudspeakers, it's a completely different story. The room "
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 149,
+        "pstyle": "지문",
+        "text": "S1: That applies to recording as well. The article said that the recorded sound "
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 150,
+        "pstyle": "지문",
+        "text": "S2: Definitely. It really shows how much the physical space matters when it come"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 151,
+        "pstyle": "지문",
+        "text": "ⓐ___________________, ⓑ___________________"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 152,
+        "pstyle": "지문",
+        "text": "ⓒ___________________, ⓓ___________________"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 153,
+        "pstyle": "서술형 번호",
+        "text": "다음 글을 읽고, (A)~(E) 중 어법상 틀린 것 2개를 골라, 밑줄 친 부분을 올바르게 다시 쓰시오."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 154,
+        "pstyle": "지문",
+        "text": " Since their start in the early 1950s U.S., (A)television sitcoms have been char"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 155,
+        "pstyle": "테두리_조건",
+        "text": "<조건>"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 156,
+        "pstyle": "테두리_보기",
+        "text": "(1) 문장 기호를 쓰고, 밑줄 전체를 쓸 것."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 157,
+        "pstyle": "테두리_보기",
+        "text": "(2) 문장 형식과 의미는 그대로 유지하며, 밑줄 친 부분 중 어법상 어색한 부분만을 수정할 것."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 158,
+        "pstyle": "테두리_보기",
+        "text": "(1) 문장 기호: ________"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 159,
+        "pstyle": "테두리_보기",
+        "text": "수정된 문장: _________________________________________________________________"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 160,
+        "pstyle": "테두리_보기",
+        "text": "(2) 문장 기호: ________"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 161,
+        "pstyle": "테두리_보기",
+        "text": "수정된 문장: _________________________________________________________________"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 162,
+        "pstyle": "서술형 번호",
+        "text": "다음 글의 밑줄 친 ecosystem states를 <그림>과 같이 표현하였다. 다음 글에 근거하여 <그림>을 바르게 이해하지 않은 학생의 이름"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 163,
+        "pstyle": "지문",
+        "text": " The concept of ecosystem states should be familiar to anyone with a home vegeta"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 164,
+        "pstyle": "지문",
+        "text": "<그림>"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 165,
+        "pstyle": "지문",
+        "text": "찬의: 정원의 상태가 A 지점에 있을 때 정원이 가장 안정적이구나."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 166,
+        "pstyle": "지문",
+        "text": "우솔: 만약 재배자가 살충제와 울타리를 계속 사용하면 정원은 계속 B 상태에 머물겠구나."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 167,
+        "pstyle": "지문",
+        "text": "성훈: 재배자가 개입을 멈추면, 경사면 위의 공이 아래로 굴러 내려가듯 생태계는 A 지점에서 B 지점으로 자연스럽게 이동하겠구나."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 168,
+        "pstyle": "지문",
+        "text": "희건: 재배자의 개입이 사라지면, 정원에는 채소뿐 아니라 다른 식물과 야생동물로 가득하게 되어 B 상태에서 C 상태로 향할 거야."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 169,
+        "pstyle": "서술형답지",
+        "text": "답: __________________________________________________________"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 170,
+        "pstyle": "테두리_보기",
+        "text": "다음 글의 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것을 <보기>에서 골라 쓰시오. (필요시 변형 가능) "
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 171,
+        "pstyle": "테두리_보기",
+        "text": "Emergency Exit Systems in Public Buildings"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 172,
+        "pstyle": "테두리_보기",
+        "text": "Emergency exits are essential safety features that must be accessible to everyon"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 173,
+        "pstyle": "테두리_보기",
+        "text": "Furthermore, the \"push-bar\" (panic bar) on the door is a key element of universa"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 174,
+        "pstyle": "테두리_보기",
+        "text": "<보기>"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 175,
+        "pstyle": "테두리_보기",
+        "text": "intuitive / fatigue / minimize / unintended / appropriate / flexibility / intens"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 176,
+        "pstyle": "테두리_보기",
+        "text": "(A): ____________________"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 177,
+        "pstyle": "테두리_보기",
+        "text": "(B): ____________________"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 178,
+        "pstyle": "서술형 번호",
+        "text": "위 지문의 (A)와 (B) 부분에 적용된 유니버설 디자인의 원칙을 학생의 필기 내용에서 골라 적으시오."
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 179,
+        "pstyle": "지문",
+        "text": "(A)가 포함된 문장: __________________________________________________"
+      },
+      "final": null
+    },
+    {
+      "ms": {
+        "q": 0,
+        "p": 180,
+        "pstyle": "지문",
+        "text": "(B)가 포함된 문장: ____________________________________________________"
+      },
+      "final": null
+    }
+  ]
+}

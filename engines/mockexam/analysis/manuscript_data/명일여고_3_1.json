@@ -1,0 +1,2601 @@
+{
+  "school": "명일여고",
+  "grade": "고3",
+  "exam_period": "26-1-중간",
+  "exam_date": "",
+  "exam_type": "",
+  "round": 1,
+  "meta": {
+    "objective": 25,
+    "descriptive": 6
+  },
+  "questions": [
+    {
+      "source": "[14강 4번]",
+      "paragraphs": [
+        {
+          "text": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "The importance of what a reader brings to the page is highlighted in a study discussed by Hirsch in The Knowledge Deficit. ",
+          "runs": [
+            {
+              "t": "The importance of what a reader brings to the page is highlighted in a study discussed by Hirsch in The Knowledge Deficit. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(A) After reading the passage, students in each group had their comprehension tested. Guess which group scored higher? The struggling readers. Having strong reading skills was not enough for the students who came to the page with a knowledge deficit about the topic. ",
+          "runs": [
+            {
+              "t": "(A)",
+              "ul": false
+            },
+            {
+              "t": " After reading the passage, students in each group had their comprehension tested. Guess which group scored higher? The struggling readers. Having strong reading skills was not enough for the students who came to the page with a knowledge deficit about the topic. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "(B) Though the second group of readers were not strong readers, their prior knowledge enabled them to outscore readers with far better abilities. Prior knowledge, or, in the case of the good readers, the lack of prior knowledge, was the x-factor. ",
+          "runs": [
+            {
+              "t": "(B)",
+              "ul": false
+            },
+            {
+              "t": " Though the second group of readers were not strong readers, their prior knowledge enabled them to outscore readers with far better abilities. Prior knowledge, or, in the case of the good readers, the lack of prior knowledge, was the x-factor. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "(C) This study consisted of two groups of students who were asked to read a passage about baseball. The first group was made up of strong readers who knew little about baseball. The second group was composed of struggling readers who were knowledgeable about baseball. ",
+          "runs": [
+            {
+              "t": "(C)",
+              "ul": false
+            },
+            {
+              "t": " This study consisted of two groups of students who were asked to read a passage about baseball. The first group was made up of strong readers who knew little about baseball. The second group was composed of struggling readers who were knowledgeable about baseball. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "① (A)-(C)-(B) \t② (B)-(A)-(C) \t③ (B)-(C)-(A) ",
+          "runs": [
+            {
+              "t": "① (A)-(C)-(B) \t② (B)-(A)-(C) \t③ (B)-(C)-(A) ",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ (C)-(A)-(B) \t⑤ (C)-(B)-(A)  ",
+          "runs": [
+            {
+              "t": "④ (C)-(A)-(B) \t⑤ (C)-(B)-(A)  ",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        }
+      ]
+    },
+    {
+      "source": "[6강 4번]",
+      "paragraphs": [
+        {
+          "text": "다음 글의 제목으로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 제목으로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "In the escape that reading literature provides through vicarious identification and comparison with other lives, places, and times, we activate our imagination, that uniquely human ability to explore an alternative set of ideas and experiences that are outside our present environment and that may not even be real. As opposed to perception that receives and processes information from the outside world — light, sound, shape — and finds meaning in it — a sunset, a symphony, a house — in imagination, the process is reversed. Translating the words we read into what they signify, we populate an inner world in which imagery is created from the memory. For example, we read “house” and picture a representation of a house from memory. It is our imagination, the complex interweaving of perception and memory that literature activates, releasing a latent creativity that pleases. The writer may provide the blueprint, but the reader builds literature’s many rooms, and like any satisfying occupation, literature gratifies our imaginative and creative abilities.",
+          "runs": [
+            {
+              "t": "In the escape that reading literature provides through vicarious identification and comparison with other lives, places, and times, we activate our imagination, that uniquely human ability to explore an alternative set of ideas and experiences that are outside our present environment and that may not even be real. As opposed to perception that receives and processes information from the outside world — light, sound, shape — and finds meaning in it — a sunset, a symphony, a house — in imagination, the process is reversed. Translating the words we read into what they signify, we populate an inner world in which imagery is created from the memory. For example, we read “house” and picture a representation of a house from memory. It is our imagination, the complex interweaving of perception and memory that literature activates, releasing a latent creativity that pleases. The writer may provide the blueprint, but the reader builds literature’s many rooms, and like any satisfying occupation, literature gratifies our imaginative and creative abilities.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① How Literature Suppresses Creative Abilities",
+          "runs": [
+            {
+              "t": "① How Literature Suppresses Creative Abilities",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② The Passivity of Reading Compared to Writing",
+          "runs": [
+            {
+              "t": "② The Passivity of Reading Compared to Writing",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ Why Writers Alone Determine Literary Meaning",
+          "runs": [
+            {
+              "t": "③ Why Writers Alone Determine Literary Meaning",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ Perception vs. Imagination: An Insurmountable Divide",
+          "runs": [
+            {
+              "t": "④ Perception vs. Imagination: An Insurmountable Divide",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ Reading as Creation: How Imagination Builds Literature's Rooms",
+          "runs": [
+            {
+              "t": "⑤ Reading as Creation: How Imagination Builds Literature's Rooms",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        }
+      ]
+    },
+    {
+      "source": "[11강 2번]",
+      "paragraphs": [
+        {
+          "text": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은?",
+          "runs": [
+            {
+              "t": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "By its very nature, one never manages to escape the conundrums that production for trade entails. ",
+          "runs": [
+            {
+              "t": "By its very nature, one never manages to escape the conundrums that production for trade entails. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "Reformist approaches assume that markets could operate in more equitable and environmentally reasonable ways, and that a market is the most efficient option available. ( ① ) Yet the logic of market efficiencies generally rotates on purely monetary calculations, effectively reasoning in a hall of mirrors and marginalising real social and environmental values. ( ② ) Familiar examples are conventional food retailers, such as supermarkets, which purchase fruit and vegetables as cheaply as possible. ( ③ ) Inexpensive produce might be grown using soil- and water-damaging fertilisers, by poorly paid illegal migrant workers, and transported long distances using more cheap labour and environmentally damaging practices. ( ④ ) However, organic farmers can only follow ecologically sound practices and make sure they pay their workers fair wages if the food costs more, meaning supply for an elite demand. ( ⑤ ) Real social and environmental values involved in caring for people and Earth highlight the inequities and damage of market-oriented activities.",
+          "runs": [
+            {
+              "t": "Reformist approaches assume that markets could operate in more equitable and environmentally reasonable ways, and that a market is the most efficient option available. ",
+              "ul": false
+            },
+            {
+              "t": "( ① ) ",
+              "ul": false
+            },
+            {
+              "t": "Yet the logic of market efficiencies generally rotates on purely monetary calculations, effectively reasoning in a hall of mirrors and marginalising real social and environmental values. ",
+              "ul": false
+            },
+            {
+              "t": "( ② ) ",
+              "ul": false
+            },
+            {
+              "t": "Familiar examples are conventional food retailers, such as supermarkets, which purchase fruit and vegetables as cheaply as possible. ",
+              "ul": false
+            },
+            {
+              "t": "( ③ ) ",
+              "ul": false
+            },
+            {
+              "t": "Inexpensive produce might be grown using soil- and water-damaging fertilisers, by poorly paid illegal migrant workers, and transported long distances using more cheap labour and environmentally damaging practices. ",
+              "ul": false
+            },
+            {
+              "t": "( ④ ) ",
+              "ul": false
+            },
+            {
+              "t": "However, organic farmers can only follow ecologically sound practices and make sure they pay their workers fair wages if the food costs more, meaning supply for an elite demand. ",
+              "ul": false
+            },
+            {
+              "t": "( ⑤ ) ",
+              "ul": false
+            },
+            {
+              "t": "Real social and environmental values involved in caring for people and Earth highlight the inequities and damage of market-oriented activities.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        }
+      ]
+    },
+    {
+      "source": "[11강 4번]",
+      "paragraphs": [
+        {
+          "text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "Many factors contribute to Americans’ growing waistlines, but one ① observation in particular cannot be overlooked: The incidence of obesity has increased in parallel with increasing portion sizes. Consider this: Adults today ② consume an average of 300 more calories per day than they did in the year 1985. Is this just a coincidence, or do larger portion sizes have something to do with it? In almost every eating situation, we are now confronted by huge portions, which are ③ perceived as “normal” or “a great value.” Americans have created the perception that large portion sizes are appropriate, creating an environment of portion distortion. We find portion distortions in restaurants, where the jumbo-sized portions are consistently 250 percent larger than the regular portions. We even find portion distortions in our homes, where the sizes of our bowls and glasses have steadily ④ decreased and where the surface area of the average dinner plate has increased 36 percent since 1960. Research shows that people unintentionally consume more calories when offered larger portions. Consuming ⑤ larger portion sizes can contribute to positive energy balance, which, over time, leads to weight gain and ultimately can result in obesity.",
+          "runs": [
+            {
+              "t": "Many factors contribute to Americans’ growing waistlines, but one ",
+              "ul": false
+            },
+            {
+              "t": "①",
+              "ul": false
+            },
+            {
+              "t": " ",
+              "ul": false
+            },
+            {
+              "t": "observation",
+              "ul": true
+            },
+            {
+              "t": " in particular cannot be overlooked: The incidence of obesity has increased in parallel with increasing portion sizes. Consider this: Adults today ",
+              "ul": false
+            },
+            {
+              "t": "② ",
+              "ul": false
+            },
+            {
+              "t": "c",
+              "ul": true
+            },
+            {
+              "t": "onsume",
+              "ul": true
+            },
+            {
+              "t": " an average of 300 more calories per day than they did in the year 1985. Is this just a coincidence, or do larger portion sizes have something to do with it? In almost every eating situation, we are now confronted by huge portions, which are ",
+              "ul": false
+            },
+            {
+              "t": "③ ",
+              "ul": false
+            },
+            {
+              "t": "p",
+              "ul": true
+            },
+            {
+              "t": "erceived",
+              "ul": true
+            },
+            {
+              "t": " as “normal” or “a great value.” Americans have created the perception that large portion sizes are appropriate, creating an environment of portion distortion. We find portion distortions in restaurants, where the jumbo-sized portions are consistently 250 percent larger than the regular portions. We even find portion distortions in our homes, where the sizes of our bowls and glasses have steadily ",
+              "ul": false
+            },
+            {
+              "t": "④ ",
+              "ul": false
+            },
+            {
+              "t": "d",
+              "ul": true
+            },
+            {
+              "t": "ecreased",
+              "ul": true
+            },
+            {
+              "t": " and where the surface area of the average dinner plate has increased 36 percent since 1960. Research shows that people unintentionally consume more calories when offered larger portions. Consuming ",
+              "ul": false
+            },
+            {
+              "t": "⑤ ",
+              "ul": false
+            },
+            {
+              "t": "l",
+              "ul": true
+            },
+            {
+              "t": "arger",
+              "ul": true
+            },
+            {
+              "t": " portion sizes can contribute to positive energy balance, which, over time, leads to weight gain and ultimately can result in obesity.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        }
+      ]
+    },
+    {
+      "source": "[17강 4번]",
+      "paragraphs": [
+        {
+          "text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "Analogies can serve two ① different functions in philosophy. Sometimes, as seems often the case in Plato, for example, they serve simply to illustrate. When Socrates ② compares the Good with the sun, he may simply be using the image of the sun to help bring to life his arguments about the Good. On other occasions, however, the analogy can be an integral part of an argument. Consider one of the most popular arguments for the ③ existence of God, the ‘argument from design’, which has been advanced by many thinkers, from the ancient Stoics to British theologian William Paley. The argument holds that just as an artefact such as a watch implies the existence of an artisan, so the universe ④ denies the existence of a divine creator. Here the analogy with the watch is not meant simply to illustrate a point. Rather, the analogy is ⑤ supposed to show why we should conclude that the universe has a creator.",
+          "runs": [
+            {
+              "t": "Analogies can serve two ",
+              "ul": false
+            },
+            {
+              "t": "①",
+              "ul": false
+            },
+            {
+              "t": " ",
+              "ul": false
+            },
+            {
+              "t": "different",
+              "ul": true
+            },
+            {
+              "t": " functions in philosophy. Sometimes, as seems often the case in Plato, for example, they serve simply to illustrate. When Socrates ",
+              "ul": false
+            },
+            {
+              "t": "② ",
+              "ul": false
+            },
+            {
+              "t": "c",
+              "ul": true
+            },
+            {
+              "t": "ompares",
+              "ul": true
+            },
+            {
+              "t": " the Good with the sun, he may simply be using the image of the sun to help bring to life his arguments about the Good. On other occasions, however, the analogy can be an integral part of an argument. Consider one of the most popular arguments for the ",
+              "ul": false
+            },
+            {
+              "t": "③ ",
+              "ul": false
+            },
+            {
+              "t": "e",
+              "ul": true
+            },
+            {
+              "t": "xistence",
+              "ul": true
+            },
+            {
+              "t": " of God, the ‘argument from design’, which has been advanced by many thinkers, from the ancient Stoics to British theologian William Paley. The argument holds that just as an artefact such as a watch implies the existence of an artisan, so the universe ",
+              "ul": false
+            },
+            {
+              "t": "④ ",
+              "ul": false
+            },
+            {
+              "t": "d",
+              "ul": true
+            },
+            {
+              "t": "enies",
+              "ul": true
+            },
+            {
+              "t": " the existence of a divine creator. Here the analogy with the watch is not meant simply to illustrate a point. Rather, the analogy is ",
+              "ul": false
+            },
+            {
+              "t": "⑤ ",
+              "ul": false
+            },
+            {
+              "t": "s",
+              "ul": true
+            },
+            {
+              "t": "upposed",
+              "ul": true
+            },
+            {
+              "t": " to show why we should conclude that the universe has a creator.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        }
+      ]
+    },
+    {
+      "source": "[12강 2번]",
+      "paragraphs": [
+        {
+          "text": "다음 글의 주제로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 주제로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "Why do humans have the counterproductive instinct to favor natural products in the absence of knowledge of their benefits or their potential for harm? The answer likely lies in our genes. Our species, through most of its evolutionary history, relied heavily upon experience to judge whether ingestion of something was beneficial (i.e., nutritional or medicinal) versus whether it was dangerous (i.e., poisonous). We evolved the instinct to avoid plants that made us sick and favored those that made us well. Treating unknowns with great caution provided a terrific survival advantage. Today, we trust that products of nature are safe to consume. But those pills coming off a pharmaceutical production line look nothing like what our instincts tell us is safe to eat. The ingredients remind us of a high school chemistry lab. Yet we are expected to consume them. Thus, we treat them with caution just as our distant ancestors regarded a new plant. When in need of a remedy, we are drawn to derivatives of our food, plant products, which we perceive to be safe, and not artificial products of science.",
+          "runs": [
+            {
+              "t": "Why do humans have the counterproductive instinct to favor natural products in the absence of knowledge of their benefits or their potential for harm? The answer likely lies in our genes. Our species, through most of its evolutionary history, relied heavily upon experience to judge whether ingestion of something was beneficial (i.e., nutritional or medicinal) versus whether it was dangerous (i.e., poisonous). We evolved the instinct to avoid plants that made us sick and favored those that made us well. Treating unknowns with great caution provided a terrific survival advantage. Today, we trust that products of nature are safe to consume. But those pills coming off a pharmaceutical production line look nothing like what our instincts tell us is safe to eat. The ingredients remind us of a high school chemistry lab. Yet we are expected to consume them. Thus, we treat them with caution just as our distant ancestors regarded a new plant. When in need of a remedy, we are drawn to derivatives of our food, plant products, which we perceive to be safe, and not artificial products of science.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① the evolutionary basis for favoring natural products over artificial ones",
+          "runs": [
+            {
+              "t": "① the evolutionary basis for favoring natural products over artificial ones",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② why pharmaceutical products exceed plant derivatives in safety",
+          "runs": [
+            {
+              "t": "② why pharmaceutical products exceed plant derivatives in safety",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ the obsolescence of evolutionary instincts in modern medicine",
+          "runs": [
+            {
+              "t": "③ the obsolescence of evolutionary instincts in modern medicine",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ the irrationality of trusting natural substances",
+          "runs": [
+            {
+              "t": "④ the irrationality of trusting natural substances",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ the equal safety of all chemical compounds",
+          "runs": [
+            {
+              "t": "⑤ the equal safety of all chemical compounds",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        }
+      ]
+    },
+    {
+      "source": "[16강 2번]",
+      "paragraphs": [
+        {
+          "text": "다음 빈칸에 들어갈 말로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "다음 빈칸에 들어갈 말로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "The human perceptual system is designed to recognize objects under changing illuminations, situations, and contexts. It is _______________. To deal with this uncertainty, the brain uses not one, but multiple routes. If one is blocked, it takes another route. This immense flexibility of the brain to rely on changing cues, according to whatever is available, is known as vicarious functioning. It can be found in most biological systems. For instance, migrating birds fly thousands of miles and may rely on the stars to navigate. But if it’s a cloudy day, they may instead rely on landmarks or their magnetic sense. Similarly, the brain can recognize a face by the shape of the eyes, nose, and mouth. In extreme cases, only a few lines are sufficient, as when we recognize the face of a celebrity in caricatures made with just a few pencil strokes. Face recognition also functions even when parts of a face are covered and internal features such as eyes are hardly visible. In this case, the brain relies on external features such as hair and head shape.",
+          "runs": [
+            {
+              "t": "The human perceptual system is designed to recognize objects under changing illuminations, situations, and contexts. It is ",
+              "ul": false
+            },
+            {
+              "t": "_______________",
+              "ul": false
+            },
+            {
+              "t": ". To deal with this uncertainty, the brain uses not one, but multiple routes. If one is blocked, it takes another route. This immense flexibility of the brain to rely on changing cues, according to whatever is available, is known as vicarious functioning. It can be found in most biological systems. For instance, migrating birds fly thousands of miles and may rely on the stars to navigate. But if it’s a cloudy day, they may instead rely on landmarks or their magnetic sense. Similarly, the brain can recognize a face by the shape of the eyes, nose, and mouth. In extreme cases, only a few lines are sufficient, as when we recognize the face of a celebrity in caricatures made with just a few pencil strokes. Face recognition also functions even when parts of a face are covered and internal features such as eyes are hardly visible. In this case, the brain relies on external features such as hair and head shape.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① designed primarily for rigid and inflexible processing methods",
+          "runs": [
+            {
+              "t": "① designed primarily for rigid and inflexible processing methods",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② entirely dependent on perfect environmental conditions",
+          "runs": [
+            {
+              "t": "② entirely dependent on perfect environmental conditions",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ fundamentally unable to handle any form of uncertainty",
+          "runs": [
+            {
+              "t": "③ fundamentally unable to handle any form of uncertainty",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ extraordinarily adapted to a constantly changing world",
+          "runs": [
+            {
+              "t": "④ extraordinarily adapted to a constantly changing world",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ strictly limited to single fixed pathways of perception",
+          "runs": [
+            {
+              "t": "⑤ strictly limited to single fixed pathways of perception",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        }
+      ]
+    },
+    {
+      "source": "[12강 4번]",
+      "paragraphs": [
+        {
+          "text": "다음 빈칸에 들어갈 말로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "다음 빈칸에 들어갈 말로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "Literature is not a disposable carrier of nuggets of information. Literature (as opposed to everyday reading) invites us back again and again to re-experience what it offers and to reassess its meanings. Literature continues to communicate meaning and significance over time, and, most remarkably, to shift its meaning based on our perspective. We have all had the experience of taking up a classic work of literature after several years and finding in it details and significance we missed the first (or fifth) time through. What has changed is not the work of literature exactly but our experiences that are now reflected in the text. One’s perception of Shakespeare’s grand drama on aging under existential threat, King Lear, is a different experience read in one’s twenties than it is in one’s seventies. This is true because reading literature, as opposed to everyday reading, requires full reader participation, activating not just our informational processing skills but our analysis, imagination, and emotions. These change over time in every person, and those changes explain _________________.",
+          "runs": [
+            {
+              "t": "Literature is not a disposable carrier of nuggets of information. Literature (as opposed to everyday reading) invites us back again and again to re-experience what it offers and to reassess its meanings. Literature continues to communicate meaning and significance over time, and, most remarkably, to shift its meaning based on our perspective. We have all had the experience of taking up a classic work of literature after several years and finding in it details and significance we missed the first (or fifth) time through. What has changed is not the work of literature exactly but our experiences that are now reflected in the text. One’s perception of Shakespeare’s grand drama on aging under existential threat, King Lear, is a different experience read in one’s twenties than it is in one’s seventies. This is true because reading literature, as opposed to everyday reading, requires full reader participation, activating not just our informational processing skills but our analysis, imagination, and emotions. These change over time in every person, and those changes explain ",
+              "ul": false
+            },
+            {
+              "t": "_________________",
+              "ul": false
+            },
+            {
+              "t": ".",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① how much reader participation is unnecessary",
+          "runs": [
+            {
+              "t": "① how much reader participation is unnecessary",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② the reason that literature should be read only once",
+          "runs": [
+            {
+              "t": "② the reason that literature should be read only once",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ why literature should remain completely unchanging",
+          "runs": [
+            {
+              "t": "③ why literature should remain completely unchanging",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ the testament that everyday reading surpasses literary works",
+          "runs": [
+            {
+              "t": "④ the testament that everyday reading surpasses literary works",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ how works of literature are more dynamic than everyday reading",
+          "runs": [
+            {
+              "t": "⑤ how works of literature are more dynamic than everyday reading",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        }
+      ]
+    },
+    {
+      "source": "[14강 2번]",
+      "paragraphs": [
+        {
+          "text": "다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "A detailed anthropological study of daily scientific practice in the Salk Institute laboratory in La Jolla, California shows how difficult it is to assign credit and dates. Bruno Latour describes how scientists arrived at the elucidation of TRF (thyrotropin- releasing factor), a hormone that is secreted by the brain. He says that his observations led him to “the conviction that a body of practices widely regarded by outsiders as well organized, logical, and coherent, in fact consists of a disordered array of observations with which scientists struggle to produce order.” The final consensus formulation of TRF (i.e., when it became a scientific “fact”) emerged some time between January 1968 and January 1970. Half of the Nobel Prize in Medicine for 1977 for this discovery was shared between the Salk group and another competing group in New Orleans (the other half went to Rosalind Yalow for the techniques she developed that were used in these studies), but each of these two competing groups strongly felt that they deserved sole credit and that the other did not deserve even a share of the award. ",
+          "runs": [
+            {
+              "t": "A detailed anthropological study of daily scientific practice in the Salk Institute laboratory in La Jolla, California shows how difficult it is to assign credit and dates. Bruno Latour describes how scientists arrived at the elucidation of TRF (thyrotropin- releasing factor), a hormone that is secreted by the brain. He says that his observations led him to “the conviction that a body of practices widely regarded by outsiders as well organized, logical, and coherent, in fact consists of a disordered array of observations with which scientists struggle to produce order.” The final consensus formulation of TRF (i.e., when it became a scientific “fact”) emerged some time between January 1968 and January 1970. Half of the Nobel Prize in Medicine for 1977 for this discovery was shared between the Salk group and another competing group in New Orleans (the other half went to Rosalind Yalow for the techniques she developed that were used in these studies), but each of these two competing groups strongly felt that they deserved sole credit and that the other did not deserve even a share of the award. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "󰀻",
+          "runs": [
+            {
+              "t": "󰀻",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "The scientific process is more ____(A)____ than it appears, and credit attribution remains ____(B)____ even after discoveries are established.",
+          "runs": [
+            {
+              "t": "The scientific process is more ",
+              "ul": false
+            },
+            {
+              "t": "____(A)____",
+              "ul": false
+            },
+            {
+              "t": " than it appears, and credit attribution remains ",
+              "ul": false
+            },
+            {
+              "t": "____(B)____ ",
+              "ul": false
+            },
+            {
+              "t": "even after discoveries are established.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "      (A) \t  (B) ",
+          "runs": [
+            {
+              "t": "      (A) \t  (B) ",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "① organized \tsimple",
+          "runs": [
+            {
+              "t": "① organized \tsimple",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② chaotic\tcontentious",
+          "runs": [
+            {
+              "t": "② chaotic\tcontentious",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ systematic \tunanimous",
+          "runs": [
+            {
+              "t": "③ systematic \tunanimous",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ efficient \tstraightforward",
+          "runs": [
+            {
+              "t": "④ efficient \tstraightforward",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ predictable \tclear",
+          "runs": [
+            {
+              "t": "⑤ predictable \tclear",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        }
+      ]
+    },
+    {
+      "source": "[13강 4번]",
+      "paragraphs": [
+        {
+          "text": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 밑줄 친 부분 중, 어법상 ",
+              "ul": false
+            },
+            {
+              "t": "틀린",
+              "ul": true
+            },
+            {
+              "t": " 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "The strongest criticisms of the overextension of technology involve claims of dehumanization, and these arguments are not new. Canadian philosopher of the electronic age, Marshall McLuhan was primarily a techno-utopian, but he was also a critical thinker, who ① cautioned decades ago against too much human extension into technology. McLuhan famously claimed ② that every media extension of man is an amputation. For example, once we have a car, we don’t walk to the shops any more; once we have a computer hard-drive, we don’t have to remember things; and now ③ what we have personal GPS (Global Positioning System) on our cell phones, no one can find their way about without it. Based on McLuhan’s philosophy, we ④ are becoming post-literate because we rely on screens full of pictures, rather than print media, such as books. It is thus possible that extensions of human faculties, through techno- and bio-enhancement, will bring about ⑤ arrested development in the natural evolution of higher human faculties.",
+          "runs": [
+            {
+              "t": "The strongest criticisms of the overextension of technology involve claims of dehumanization, and these arguments are not new. Canadian philosopher of the electronic age, Marshall McLuhan was primarily a techno-utopian, but he was also a critical thinker, who ",
+              "ul": false
+            },
+            {
+              "t": "①",
+              "ul": false
+            },
+            {
+              "t": " ",
+              "ul": false
+            },
+            {
+              "t": "cautioned",
+              "ul": true
+            },
+            {
+              "t": " decades ago against too much human extension into technology. McLuhan famously claimed ",
+              "ul": false
+            },
+            {
+              "t": "② ",
+              "ul": false
+            },
+            {
+              "t": "t",
+              "ul": true
+            },
+            {
+              "t": "hat",
+              "ul": true
+            },
+            {
+              "t": " every media extension of man is an amputation. For example, once we have a car, we don’t walk to the shops any more; once we have a computer hard-drive, we don’t have to remember things; and now ",
+              "ul": false
+            },
+            {
+              "t": "③ ",
+              "ul": false
+            },
+            {
+              "t": "w",
+              "ul": true
+            },
+            {
+              "t": "hat",
+              "ul": true
+            },
+            {
+              "t": " we have personal GPS (Global Positioning System) on our cell phones, no one can find their way about without it. Based on McLuhan’s philosophy, we ",
+              "ul": false
+            },
+            {
+              "t": "④ ",
+              "ul": false
+            },
+            {
+              "t": "a",
+              "ul": true
+            },
+            {
+              "t": "re becoming",
+              "ul": true
+            },
+            {
+              "t": " post-literate because we rely on screens full of pictures, rather than print media, such as books. It is thus possible that extensions of human faculties, through techno- and bio-enhancement, will bring about ",
+              "ul": false
+            },
+            {
+              "t": "⑤ ",
+              "ul": false
+            },
+            {
+              "t": "a",
+              "ul": true
+            },
+            {
+              "t": "rrested",
+              "ul": true
+            },
+            {
+              "t": " development in the natural evolution of higher human faculties.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        }
+      ]
+    },
+    {
+      "source": "[7강 4번]",
+      "paragraphs": [
+        {
+          "text": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 밑줄 친 부분 중, 어법상 ",
+              "ul": false
+            },
+            {
+              "t": "틀린",
+              "ul": true
+            },
+            {
+              "t": " 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "Limited animation is a process of making animated cartoons ① that does not follow a “realistic” approach. The short cartoons and feature films of Walt Disney from the 1930s and 1940s are widely acclaimed for ② depicting animated simulations of reality, with exquisite detail in every frame. However, this style of animation is very time-consuming and expensive. “Limited” animation creates an image ③ that uses abstract art, symbolism, and limited movement to create the same effect, but at a much lower production cost. This style of animation depends more upon suspension of disbelief to tell a story; the story exists more in the viewer’s imagination. It also encourages the animators ④ to indulge in artistic styles that are not necessarily bound to the limits of the real world. The result is a new artistic style that could not have developed if animation was solely devoted ⑤ to produce simulations of reality. Without limited animation, such ground-breaking films as Yellow Submarine, Chuck Jones’ The Dot and the Line, and many others could never have been produced.",
+          "runs": [
+            {
+              "t": "Limited animation is a process of making animated cartoons ",
+              "ul": false
+            },
+            {
+              "t": "①",
+              "ul": false
+            },
+            {
+              "t": " ",
+              "ul": false
+            },
+            {
+              "t": "that",
+              "ul": true
+            },
+            {
+              "t": " does not follow a “realistic” approach. The short cartoons and feature films of Walt Disney from the 1930s and 1940s are widely acclaimed for ",
+              "ul": false
+            },
+            {
+              "t": "② ",
+              "ul": false
+            },
+            {
+              "t": "d",
+              "ul": true
+            },
+            {
+              "t": "epicting",
+              "ul": true
+            },
+            {
+              "t": " animated simulations of reality, with exquisite detail in every frame. However, this style of animation is very time-consuming and expensive. “Limited” animation creates an image ",
+              "ul": false
+            },
+            {
+              "t": "③ ",
+              "ul": false
+            },
+            {
+              "t": "t",
+              "ul": true
+            },
+            {
+              "t": "hat",
+              "ul": true
+            },
+            {
+              "t": " uses abstract art, symbolism, and limited movement to create the same effect, but at a much lower production cost. This style of animation depends more upon suspension of disbelief to tell a story; the story exists more in the viewer’s imagination. It also encourages the animators ",
+              "ul": false
+            },
+            {
+              "t": "④ ",
+              "ul": false
+            },
+            {
+              "t": "t",
+              "ul": true
+            },
+            {
+              "t": "o indulge",
+              "ul": true
+            },
+            {
+              "t": " in artistic styles that are not necessarily bound to the limits of the real world. The result is a new artistic style that could not have developed if animation was solely devoted ",
+              "ul": false
+            },
+            {
+              "t": "⑤ ",
+              "ul": false
+            },
+            {
+              "t": "t",
+              "ul": true
+            },
+            {
+              "t": "o produce",
+              "ul": true
+            },
+            {
+              "t": " simulations of reality. Without limited animation, such ground-breaking films as Yellow Submarine, Chuck Jones’ The Dot and the Line, and many others could never have been produced.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        }
+      ]
+    },
+    {
+      "source": "[Test 1 13번]",
+      "paragraphs": [
+        {
+          "text": "다음 글의 주제로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 주제로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "Things become complicated when we consider a task that involves multiple processes differing in automaticity. In a psychological task, people are required to name aloud the color of words while ignoring the words themselves. Sometimes, the words are compatible with the color with which they are printed (e.g., “red” printed with red ink). In other conditions, the words are incompatible with their color (e.g., “red” printed in blue). People usually complete this task more slowly in incompatible than compatible conditions. On incompatible trials, people do not intend to respond to the meaning of the word (the task is to name the ink color, not the word), but they typically become aware that it is easier said than done. They realize their attention is being drawn to the content of the words, despite its irrelevance to the task at hand and their intention to ignore it. To overcome this automatic draw on attention, people must assert control to report a judgment that has been made challenging by a competing automatic process. So, in this case, people are aware of an automatic process, but they cannot stop it and have difficulty correcting its influence. ",
+          "runs": [
+            {
+              "t": "Things become complicated when we consider a task that involves multiple processes differing in automaticity. In a psychological task, people are required to name aloud the color of words while ignoring the words themselves. Sometimes, the words are compatible with the color with which they are printed (e.g., “red” printed with red ink). In other conditions, the words are incompatible with their color (e.g., “red” printed in blue). People usually complete this task more slowly in incompatible than compatible conditions. On incompatible trials, people do not intend to respond to the meaning of the word (the task is to name the ink color, not the word), but they typically become aware that it is easier said than done. They realize their attention is being drawn to the content of the words, despite its irrelevance to the task at hand and their intention to ignore it. To overcome this automatic draw on attention, people must assert control to report a judgment that has been made challenging by a competing automatic process. So, in this case, people are aware of an automatic process, but they cannot stop it and have difficulty correcting its influence. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① the awareness of automatic processes resisting conscious control",
+          "runs": [
+            {
+              "t": "① the awareness of automatic processes resisting conscious control",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② how incompatible conditions may promote task performance",
+          "runs": [
+            {
+              "t": "② how incompatible conditions may promote task performance",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ complete conscious control over all automatic processes",
+          "runs": [
+            {
+              "t": "③ complete conscious control over all automatic processes",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ word meaning as unrelated to color naming tasks",
+          "runs": [
+            {
+              "t": "④ word meaning as unrelated to color naming tasks",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ why ignoring irrelevant information is effortless",
+          "runs": [
+            {
+              "t": "⑤ why ignoring irrelevant information is effortless",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        }
+      ]
+    },
+    {
+      "source": "[test 1 15번]",
+      "paragraphs": [
+        {
+          "text": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 밑줄 친 부분 중, 어법상 ",
+              "ul": false
+            },
+            {
+              "t": "틀린",
+              "ul": true
+            },
+            {
+              "t": " 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "The issue of cultural variation in emotions has been controversial. At first, it was widely believed ① that different cultures produced radically different emotional states, so that a person from one culture could not even begin to understand ② what someone from another culture was feeling. This view received a severe blow from evidence that people from very different cultures could translate emotion words effectively and even recognize facial expressions of emotion. A ③ highly influential research program by Paul Ekman and his associates began with photographs of facial expressions that Americans would easily recognize as expressing different basic emotions: angry, sad, happy, and the like. Ekman and his group traveled all over the world ④ showing the photographs to people in widely different cultures, including even some distant tribes that had had almost no contact with Western civilization. By and large, most people in every culture recognized the emotions ⑤ expressing in those American faces. These results convinced most doubters that some aspects of emotions are innate and universal.",
+          "runs": [
+            {
+              "t": "The issue of cultural variation in emotions has been controversial. At first, it was widely believed ",
+              "ul": false
+            },
+            {
+              "t": "①",
+              "ul": false
+            },
+            {
+              "t": " ",
+              "ul": false
+            },
+            {
+              "t": "that",
+              "ul": true
+            },
+            {
+              "t": " different cultures produced radically different emotional states, so that a person from one culture could not even begin to understand ",
+              "ul": false
+            },
+            {
+              "t": "② ",
+              "ul": false
+            },
+            {
+              "t": "w",
+              "ul": true
+            },
+            {
+              "t": "hat",
+              "ul": true
+            },
+            {
+              "t": " someone from another culture was feeling. This view received a severe blow from evidence that people from very different cultures could translate emotion words effectively and even recognize facial expressions of emotion. A ",
+              "ul": false
+            },
+            {
+              "t": "③ ",
+              "ul": false
+            },
+            {
+              "t": "h",
+              "ul": true
+            },
+            {
+              "t": "ighly",
+              "ul": true
+            },
+            {
+              "t": " influential research program by Paul Ekman and his associates began with photographs of facial expressions that Americans would easily recognize as expressing different basic emotions: angry, sad, happy, and the like. Ekman and his group traveled all over the world ",
+              "ul": false
+            },
+            {
+              "t": "④ ",
+              "ul": false
+            },
+            {
+              "t": "s",
+              "ul": true
+            },
+            {
+              "t": "howing",
+              "ul": true
+            },
+            {
+              "t": " the photographs to people in widely different cultures, including even some distant tribes that had had almost no contact with Western civilization. By and large, most people in every culture recognized the emotions ",
+              "ul": false
+            },
+            {
+              "t": "⑤ ",
+              "ul": false
+            },
+            {
+              "t": "e",
+              "ul": true
+            },
+            {
+              "t": "xpressing",
+              "ul": true
+            },
+            {
+              "t": " in those American faces. These results convinced most doubters that some aspects of emotions are innate and universal.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        }
+      ]
+    },
+    {
+      "source": "[test 1 17번]",
+      "paragraphs": [
+        {
+          "text": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "Accustomed to bargains and overwhelmed with options, consumers must have a reason to buy now. In addition to the actual product they’re buying, consumers expect something more, an incentive that will give them an extra emotional charge. ",
+          "runs": [
+            {
+              "t": "Accustomed to bargains and overwhelmed with options, consumers must have a reason to buy now. In addition to the actual product they’re buying, consumers expect something more, an incentive that will give them an extra emotional charge. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(A) Customization, an event, multiple uses for the product, entertaining pop-up stores, or a great story (such as a special product heritage or theme) are more examples of plus-one incentives that result in purchases. ",
+          "runs": [
+            {
+              "t": "(A)",
+              "ul": false
+            },
+            {
+              "t": " Customization, an event, multiple uses for the product, entertaining pop-up stores, or a great story (such as a special product heritage or theme) are more examples of plus-one incentives that result in purchases. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "(B)  Thus, in addition to their purchase, consumers also get to see themselves in a more positive light; they feel less wary about these businesses, which have been humanized through a compelling story of need; and they have the rationalization of giving rather than spending.",
+          "runs": [
+            {
+              "t": "(B)",
+              "ul": false
+            },
+            {
+              "t": "  Thus, in addition to their purchase, consumers also get to see themselves in a more positive light; they feel less wary about these businesses, which have been humanized through a compelling story of need; and they have the rationalization of giving rather than spending.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "(C) “Do-good” products such as those that tout being environmentally conscious or supporting communities offer not just one but three plus-one purchasing incentives: a compelling and human story, rationalization, and an emotional boost for the consumer who feels altruistic while spending. For example, consumers who purchase Tom’s Shoes or Walgreen’s flu shots are told that their purchase will result in a pair of shoes or a flu shot being donated to someone in need through each company’s one-to-one matching program.",
+          "runs": [
+            {
+              "t": "(C)",
+              "ul": false
+            },
+            {
+              "t": " “Do-good” products such as those that tout being environmentally conscious or supporting communities offer not just one but three plus-one purchasing incentives: a compelling and human story, rationalization, and an emotional boost for the consumer who feels altruistic while spending. For example, consumers who purchase Tom’s Shoes or Walgreen’s flu shots are told that their purchase will result in a pair of shoes or a flu shot being donated to someone in need through each company’s one-to-one matching program.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "① (A)-(C)-(B) \t② (B)-(A)-(C) \t③ (B)-(C)-(A) ",
+          "runs": [
+            {
+              "t": "① (A)-(C)-(B) \t② (B)-(A)-(C) \t③ (B)-(C)-(A) ",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ (C)-(A)-(B) \t⑤ (C)-(B)-(A)  ",
+          "runs": [
+            {
+              "t": "④ (C)-(A)-(B) \t⑤ (C)-(B)-(A)  ",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        }
+      ]
+    },
+    {
+      "source": "[test 1 19번]",
+      "paragraphs": [
+        {
+          "text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "There’s a difference between a story and a plot. They may seem to be the same thing (a narrative account of some action with a beginning, middle, and end), but they aren’t. A story, as opposed to a plot, is the ① straightforward account of everything that happens in the order that it happens. A plot is the way events are selected and arranged with an emphasis not only on what happened but on why it happened. In other words, plots ② exclude cause and effect, not just one event following another. The English novelist E. M. Forster illustrated the ③ difference between story and plot by this example. Here’s a story: The king died and then the queen died. This is a succession of events, simply organized ④ temporally: this happened and then this happened. Here’s a plot: The king died and then the queen died of grief. Events are now ⑤ connected by cause and effect: the death of the king led to the death of the queen from grief. For Forster, a story asks “And then?” (X happens and then Y happens). A plot asks “Why?”",
+          "runs": [
+            {
+              "t": "There’s a difference between a story and a plot. They may seem to be the same thing (a narrative account of some action with a beginning, middle, and end), but they aren’t. A story, as opposed to a plot, is the ",
+              "ul": false
+            },
+            {
+              "t": "①",
+              "ul": false
+            },
+            {
+              "t": " ",
+              "ul": false
+            },
+            {
+              "t": "straightforward",
+              "ul": true
+            },
+            {
+              "t": " account of everything that happens in the order that it happens. A plot is the way events are selected and arranged with an emphasis not only on what happened but on why it happened. In other words, plots ",
+              "ul": false
+            },
+            {
+              "t": "② ",
+              "ul": false
+            },
+            {
+              "t": "e",
+              "ul": true
+            },
+            {
+              "t": "xclude",
+              "ul": true
+            },
+            {
+              "t": " cause and effect, not just one event following another. The English novelist E. M. Forster illustrated the ",
+              "ul": false
+            },
+            {
+              "t": "③ ",
+              "ul": false
+            },
+            {
+              "t": "d",
+              "ul": true
+            },
+            {
+              "t": "ifference",
+              "ul": true
+            },
+            {
+              "t": " between story and plot by this example. Here’s a story: The king died and then the queen died. This is a succession of events, simply organized ",
+              "ul": false
+            },
+            {
+              "t": "④ ",
+              "ul": false
+            },
+            {
+              "t": "t",
+              "ul": true
+            },
+            {
+              "t": "emporally",
+              "ul": true
+            },
+            {
+              "t": ": this happened and then this happened. Here’s a plot: The king died and then the queen died of grief. Events are now ",
+              "ul": false
+            },
+            {
+              "t": "⑤ ",
+              "ul": false
+            },
+            {
+              "t": "c",
+              "ul": true
+            },
+            {
+              "t": "onnected",
+              "ul": true
+            },
+            {
+              "t": " by cause and effect: the death of the king led to the death of the queen from grief. For Forster, a story asks “And then?” (X happens and then Y happens). A plot asks “Why?”",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": " 글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳을 고르시오.  ",
+          "runs": [
+            {
+              "t": " ",
+              "ul": false
+            },
+            {
+              "t": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장",
+              "ul": false
+            },
+            {
+              "t": " 적절한 곳을 고르시오. ",
+              "ul": false
+            },
+            {
+              "t": " ",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "The switch in the production network of work happens by simply sending some emails or clicking some buttons on a digital work platform.",
+          "runs": [
+            {
+              "t": "The switch in the production network of work happens by simply sending some emails or clicking some buttons on a digital work platform.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "Digital platforms have made. A lot of work less sticky. (①) As work becomes ever more modularised, commoditised and standardised, and as markets for digital work are created, ties between service work and particular places can be disconnected. (②) While the business process of outsourcing that emerged in the 1990s allowed large companies to take advantage of a ‘global reserve army’ by moving their call centres to cheap and distant labour markets, cloudwork changes the volume and granularity at which geographically non-proximate work can take place. (③) A small business in New York can hire a freelance transcriber in Nairobi one day. And New Delhi the next. No offices or factories need to be built, no local regulations are observed, and—in most cases—no local taxes are paid. (④) And, in this way, the employer leaves behind no material traces in the places where it was once an employer. (⑤). This suggests that the idea continues to develop in a consistent direction.",
+          "runs": [
+            {
+              "t": "Digital platforms have made. A lot of work less sticky. (①) As work becomes ever more modularised, commoditised and standardised, and as markets for digital work are created, ties between service work and particular places can be disconnected. (②) While the business process of outsourcing that emerged in the 1990s allowed large companies to take advantage of a ‘global reserve army’ by moving their call centres to cheap and distant labour markets, cloudwork changes the volume and granularity at which geographically non-proximate work can take place. (③) A small business in New York can hire a freelance transcriber in Nairobi one day. And New Delhi the next. No offices or factories need to be built, no local regulations are observed, and—in most cases—no local taxes are paid. (④) And, in this way, the employer leaves behind no material traces in the places where it was once an employer. (⑤). This suggests that the idea continues to develop in a consistent direction.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        }
+      ]
+    },
+    {
+      "source": "[2027수능특강(영어) 3강 1번]",
+      "paragraphs": [
+        {
+          "text": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "Even outdoors, although climate (including temperature) is usually regarded as beyond the control of man, localized temperature control is sometimes effective on a micro-climate scale. ",
+          "runs": [
+            {
+              "t": "Even outdoors, although climate (including temperature) is usually regarded as beyond the control of man, localized temperature control is sometimes effective on a micro-climate scale. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(A) When I had a garden there in the late 1940s, a neighbor used to say that I “cheated God” to bring in my lettuce and tomatoes earlier than anyone else. ",
+          "runs": [
+            {
+              "t": "(A)",
+              "ul": false
+            },
+            {
+              "t": " When I had a garden there in the late 1940s, a neighbor used to say that I “cheated God” to bring in my lettuce and tomatoes earlier than anyone else. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "(B) Vancouver, Canada, is a few miles north of the 49th parallel, about 60 miles farther north than Minot, North Dakota, with its legendary harsh winter temperatures. But constant foehn winds off the Pacific Ocean make Vancouver winters mild and wet, although sunshine is scant. ",
+          "runs": [
+            {
+              "t": "(B)",
+              "ul": false
+            },
+            {
+              "t": " Vancouver, Canada, is a few miles north of the 49th parallel, about 60 miles farther north than Minot, North Dakota, with its legendary harsh winter temperatures. But constant foehn winds off the Pacific Ocean make Vancouver winters mild and wet, although sunshine is scant. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "(C) The bed in which the vegetables grew was banked toward the south at approximately 50 degrees, and the area between the plants was covered with flat stones, gathered from the nearby beach, to maximize soil heating from the weak late winter-early spring sun.",
+          "runs": [
+            {
+              "t": "(C)",
+              "ul": false
+            },
+            {
+              "t": " The bed in which the vegetables grew was banked toward the south at approximately 50 degrees, and the area between the plants was covered with flat stones, gathered from the nearby beach, to maximize soil heating from the weak late winter-early spring sun.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "① (A)-(C)-(B) \t② (B)-(A)-(C) \t③ (B)-(C)-(A) ",
+          "runs": [
+            {
+              "t": "① (A)-(C)-(B) \t② (B)-(A)-(C) \t③ (B)-(C)-(A) ",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ (C)-(A)-(B) \t⑤ (C)-(B)-(A)  ",
+          "runs": [
+            {
+              "t": "④ (C)-(A)-(B) \t⑤ (C)-(B)-(A)  ",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        }
+      ]
+    },
+    {
+      "source": "[2027수능특강(영어) 4강 2번]",
+      "paragraphs": [
+        {
+          "text": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 밑줄 친 부분 중, 어법상 ",
+              "ul": false
+            },
+            {
+              "t": "틀린",
+              "ul": true
+            },
+            {
+              "t": " 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "Increased community engagement by professional journalists, on their own, will not solve the problem of ① making the news more relevant to everyone because traditional news organizations already have abandoned many communities, ② leaving behind news deserts. In those places, citizens must take up the responsibility for discovering information, holding the powerful accountable, and telling the news for themselves and their neighbors. The democratization of information — through the disruptions caused by computers and the internet — allows citizens to retake control of local news in ways ③ that never have existed before, and it calls them to take greater care in the gathering and dissemination of what they discover or think they know. Journalism, perhaps like never before, belongs to the people rather than to professional journalists, wealthy publishers, or even corporate shareholders. The same technology ④ that has shifted the balance of power toward the people gives them the tools to act as broadcasters and publishers of information essential to their immediate community — and, more critically, ⑤ serving as gatekeepers to information for other people around them. ",
+          "runs": [
+            {
+              "t": "Increased community engagement by professional journalists, on their own, will not solve the problem of ",
+              "ul": false
+            },
+            {
+              "t": "①",
+              "ul": false
+            },
+            {
+              "t": " ",
+              "ul": false
+            },
+            {
+              "t": "making",
+              "ul": true
+            },
+            {
+              "t": " the news more relevant to everyone because traditional news organizations already have abandoned many communities, ",
+              "ul": false
+            },
+            {
+              "t": "② ",
+              "ul": false
+            },
+            {
+              "t": "l",
+              "ul": true
+            },
+            {
+              "t": "eaving",
+              "ul": true
+            },
+            {
+              "t": " behind news deserts. In those places, citizens must take up the responsibility for discovering information, holding the powerful accountable, and telling the news for themselves and their neighbors. The democratization of information — through the disruptions caused by computers and the internet — allows citizens to retake control of local news in ways ",
+              "ul": false
+            },
+            {
+              "t": "③ ",
+              "ul": false
+            },
+            {
+              "t": "t",
+              "ul": true
+            },
+            {
+              "t": "hat",
+              "ul": true
+            },
+            {
+              "t": " never have existed before, and it calls them to take greater care in the gathering and dissemination of what they discover or think they know. Journalism, perhaps like never before, belongs to the people rather than to professional journalists, wealthy publishers, or even corporate shareholders. The same technology ",
+              "ul": false
+            },
+            {
+              "t": "④ ",
+              "ul": false
+            },
+            {
+              "t": "t",
+              "ul": true
+            },
+            {
+              "t": "hat",
+              "ul": true
+            },
+            {
+              "t": " has shifted the balance of power toward the people gives them the tools to act as broadcasters and publishers of information essential to their immediate community — and, more critically, ",
+              "ul": false
+            },
+            {
+              "t": "⑤ ",
+              "ul": false
+            },
+            {
+              "t": "s",
+              "ul": true
+            },
+            {
+              "t": "erving",
+              "ul": true
+            },
+            {
+              "t": " as gatekeepers to information for other people around them. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        }
+      ]
+    },
+    {
+      "source": "[2027수능특강(영어) 4강 4번]",
+      "paragraphs": [
+        {
+          "text": "다음 빈칸에 들어갈 말로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "다음 빈칸에 들어갈 말로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "If you suffer from social angst, awkwardness, or dread, know that this is a perfectly normal response. No matter what it looks like, a lot of people are dealing with internal anxiety in social situations. But it is actually possible to build your social muscle and use it to boost your connections — and your anxiety is giving you clues to what icebreakers and lifelines other people might be grateful for you to extend. Truly listen to what your anxiety is signaling to you about where you feel uncertain or insecure, and practice empathy by offering a hand to others who might be in the same boat. Remember that _______________ is something inherent in you — it is, in fact, what your anxiety was designed to do for you. Together, compassion and empathy can buffer against bad anxiety. You can use your anxiety to be more outward-facing. The outcome? The spread of compassion for your fellow human beings, other species, and the planet! ",
+          "runs": [
+            {
+              "t": "If you suffer from social angst, awkwardness, or dread, know that this is a perfectly normal response. No matter what it looks like, a lot of people are dealing with internal anxiety in social situations. But it is actually possible to build your social muscle and use it to boost your connections — and your anxiety is giving you clues to what icebreakers and lifelines other people might be grateful for you to extend. Truly listen to what your anxiety is signaling to you about where you feel uncertain or insecure, and practice empathy by offering a hand to others who might be in the same boat. Remember that ",
+              "ul": false
+            },
+            {
+              "t": "_______________",
+              "ul": false
+            },
+            {
+              "t": " is something inherent in you — it is, in fact, what your anxiety was designed to do for you. Together, compassion and empathy can buffer against bad anxiety. You can use your anxiety to be more outward-facing. The outcome? The spread of compassion for your fellow human beings, other species, and the planet! ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① maintaining emotional distance from others",
+          "runs": [
+            {
+              "t": "① maintaining emotional distance from others",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② suppressing all uncomfortable feelings",
+          "runs": [
+            {
+              "t": "② suppressing all uncomfortable feelings",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ avoiding challenging social situations",
+          "runs": [
+            {
+              "t": "③ avoiding challenging social situations",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ flipping anxiety into compassion",
+          "runs": [
+            {
+              "t": "④ flipping anxiety into compassion",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ eliminating anxiety completely",
+          "runs": [
+            {
+              "t": "⑤ eliminating anxiety completely",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        }
+      ]
+    },
+    {
+      "source": "[2027수능특강(영어) 5강 2번]",
+      "paragraphs": [
+        {
+          "text": "다음 글의 주제로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 주제로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "Consumer surveys indicate that the majority of Americans (91%) believe they have some control over their health, and 72% believe that food and nutrition play the greatest role. However, 75% of consumers rely on media outlets including the Internet as their major sources of health and nutrition information, and only half use medical sources. A Google search for “nutrition listservs” yielded over 100,000 sites, but it is likely that many of these writings are not reviewed by nutrition experts. Internet sites marketing herbs, drugs, and health devices are not monitored by government regulatory agencies and often contain misleading information. Reputable food companies provide helpful facts about the nutrient content of their products, but commercial sites devoted to sales often post misleading health claims. Internet sites maintained by government agencies, universities, state extension services, and medical facilities provide evidence-based information and should be the first source for public information on foods, nutrition, and health.",
+          "runs": [
+            {
+              "t": "Consumer surveys indicate that the majority of Americans (91%) believe they have some control over their health, and 72% believe that food and nutrition play the greatest role. However, 75% of consumers rely on media outlets including the Internet as their major sources of health and nutrition information, and only half use medical sources. A Google search for “nutrition listservs” yielded over 100,000 sites, but it is likely that many of these writings are not reviewed by nutrition experts. Internet sites marketing herbs, drugs, and health devices are not monitored by government regulatory agencies and often contain misleading information. Reputable food companies provide helpful facts about the nutrient content of their products, but commercial sites devoted to sales often post misleading health claims. Internet sites maintained by government agencies, universities, state extension services, and medical facilities provide evidence-based information and should be the first source for public information on foods, nutrition, and health.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① why internet sources outperform medical professionals",
+          "runs": [
+            {
+              "t": "① why internet sources outperform medical professionals",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② the need to rely on credible sources for nutrition information",
+          "runs": [
+            {
+              "t": "② the need to rely on credible sources for nutrition information",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ the unnecessary regulation of health-related websites",
+          "runs": [
+            {
+              "t": "③ the unnecessary regulation of health-related websites",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ the equal reliability of all online nutrition information",
+          "runs": [
+            {
+              "t": "④ the equal reliability of all online nutrition information",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ the obsolescence of government health agencies",
+          "runs": [
+            {
+              "t": "⑤ the obsolescence of government health agencies",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        }
+      ]
+    },
+    {
+      "source": "[2027수능특강(영어) 5강 4번]",
+      "paragraphs": [
+        {
+          "text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "Training and competition ① naturally speed the breath, which activates the sympathetic nervous system. In performance, this is acceptable because an athlete wants to ② produce adrenaline and compete and train in an aroused state. However, it is equally important for an athlete to learn how to mentally and physically downshift from the acute sympathetic activity experienced in sport, and outside of performance focus their attention on slow breathing to reduce the ③ sympathetic activity and resolve the fight-or-flight state. In the Feinstein Institutes study, participants were able to use the pace of their breathing to activate ④ specific regions of the brain. In a performance realm, this means athletes can use breathing pace to manage their state of arousal. During training and competition, the breathing rate increases with the introduction of adrenaline, and athletes must be able to ⑤ disregard this to be able to adapt and recover. One way is to practice slower breathing protocols outside of training and competition.",
+          "runs": [
+            {
+              "t": "Training and competition ",
+              "ul": false
+            },
+            {
+              "t": "①",
+              "ul": false
+            },
+            {
+              "t": " ",
+              "ul": false
+            },
+            {
+              "t": "naturally",
+              "ul": true
+            },
+            {
+              "t": " speed the breath, which activates the sympathetic nervous system. In performance, this is acceptable because an athlete wants to ",
+              "ul": false
+            },
+            {
+              "t": "② ",
+              "ul": false
+            },
+            {
+              "t": "p",
+              "ul": true
+            },
+            {
+              "t": "roduce",
+              "ul": true
+            },
+            {
+              "t": " adrenaline and compete and train in an aroused state. However, it is equally important for an athlete to learn how to mentally and physically downshift from the acute sympathetic activity experienced in sport, and outside of performance focus their attention on slow breathing to reduce the ",
+              "ul": false
+            },
+            {
+              "t": "③ ",
+              "ul": false
+            },
+            {
+              "t": "s",
+              "ul": true
+            },
+            {
+              "t": "ympathetic",
+              "ul": true
+            },
+            {
+              "t": " activity and resolve the fight-or-flight state. In the Feinstein Institutes study, participants were able to use the pace of their breathing to activate ",
+              "ul": false
+            },
+            {
+              "t": "④ ",
+              "ul": false
+            },
+            {
+              "t": "s",
+              "ul": true
+            },
+            {
+              "t": "pecific",
+              "ul": true
+            },
+            {
+              "t": " regions of the brain. In a performance realm, this means athletes can use breathing pace to manage their state of arousal. During training and competition, the breathing rate increases with the introduction of adrenaline, and athletes must be able to ",
+              "ul": false
+            },
+            {
+              "t": "⑤ ",
+              "ul": false
+            },
+            {
+              "t": "d",
+              "ul": true
+            },
+            {
+              "t": "isregard",
+              "ul": true
+            },
+            {
+              "t": " this to be able to adapt and recover. One way is to practice slower breathing protocols outside of training and competition.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        }
+      ]
+    },
+    {
+      "source": "[2027수능특강(영어) 7강 2번]",
+      "paragraphs": [
+        {
+          "text": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 밑줄 친 부분 중, 어법상 ",
+              "ul": false
+            },
+            {
+              "t": "틀린",
+              "ul": true
+            },
+            {
+              "t": " 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "In the old Soviet Union, a famous U.S. beverage company wanted to set up a bottling plant and distribution network. The prevailing ideology in the old Soviet Union at the time ① stressed the importance of the group over the individual and the need to develop industrial capacity at the expense of consumer goods. Soft drinks hardly seemed ② to fit the country’s ideological priorities. Indeed, one government official dismissed the product as a “useless drink.” Eventually, the two sides struck a deal, but not on the basis ③ that the drink would quench the local population’s thirst. Instead, the U.S. negotiators justified the project on the grounds that it would contribute to the country’s industrial development. They restructured the project ④ to include a heavy training component for local workers and managers, as well as a farm that would grow certain of the drink’s ingredients. In addition, the company promised to make efforts ⑤ persuade other American companies to consider investments in the country.",
+          "runs": [
+            {
+              "t": "In the old Soviet Union, a famous U.S. beverage company wanted to set up a bottling plant and distribution network. The prevailing ideology in the old Soviet Union at the time ",
+              "ul": false
+            },
+            {
+              "t": "①",
+              "ul": false
+            },
+            {
+              "t": " ",
+              "ul": false
+            },
+            {
+              "t": "stressed",
+              "ul": true
+            },
+            {
+              "t": " the importance of the group over the individual and the need to develop industrial capacity at the expense of consumer goods. Soft drinks hardly seemed ",
+              "ul": false
+            },
+            {
+              "t": "② ",
+              "ul": false
+            },
+            {
+              "t": "t",
+              "ul": true
+            },
+            {
+              "t": "o fit",
+              "ul": true
+            },
+            {
+              "t": " the country’s ideological priorities. Indeed, one government official dismissed the product as a “useless drink.” Eventually, the two sides struck a deal, but not on the basis ",
+              "ul": false
+            },
+            {
+              "t": "③ ",
+              "ul": false
+            },
+            {
+              "t": "t",
+              "ul": true
+            },
+            {
+              "t": "hat",
+              "ul": true
+            },
+            {
+              "t": " the drink would quench the local population’s thirst. Instead, the U.S. negotiators justified the project on the grounds that it would contribute to the country’s industrial development. They restructured the project ",
+              "ul": false
+            },
+            {
+              "t": "④ ",
+              "ul": false
+            },
+            {
+              "t": "t",
+              "ul": true
+            },
+            {
+              "t": "o include",
+              "ul": true
+            },
+            {
+              "t": " a heavy training component for local workers and managers, as well as a farm that would grow certain of the drink’s ingredients. In addition, the company promised to make efforts ",
+              "ul": false
+            },
+            {
+              "t": "⑤ ",
+              "ul": false
+            },
+            {
+              "t": "p",
+              "ul": true
+            },
+            {
+              "t": "ersuade",
+              "ul": true
+            },
+            {
+              "t": " other American companies to consider investments in the country.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        }
+      ]
+    },
+    {
+      "source": "[2027수능특강(영어) 15강 2번]",
+      "paragraphs": [
+        {
+          "text": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "The most fundamental rule regarding the use of any measuring device is that the device should always be read to its optimum capability with regard to precision. ",
+          "runs": [
+            {
+              "t": "The most fundamental rule regarding the use of any measuring device is that the device should always be read to its optimum capability with regard to precision. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "(A) Precision is reflected in the number of digits in a measurement; the more digits this measurement has, the more precise it is. For example, the measurement 345.2 inches is more precise than the measurement 345 inches. ",
+          "runs": [
+            {
+              "t": "(A)",
+              "ul": false
+            },
+            {
+              "t": " Precision is reflected in the number of digits in a measurement; the more digits this measurement has, the more precise it is. For example, the measurement 345.2 inches is more precise than the measurement 345 inches. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "(B) Thus, a laboratory worker should endeavor to obtain the most digits possible from whatever device is being used whether it is digital or nondigital.",
+          "runs": [
+            {
+              "t": "(B)",
+              "ul": false
+            },
+            {
+              "t": " Thus, a laboratory worker should endeavor to obtain the most digits possible from whatever device is being used whether it is digital or nondigital.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "(C) If it is possible to obtain the first digit to the right of the decimal point from a device, then that digit should be recorded; if it is possible to obtain the second digit to the right of a decimal point, then that digit should be recorded, and so on. ",
+          "runs": [
+            {
+              "t": "(C)",
+              "ul": false
+            },
+            {
+              "t": " If it is possible to obtain the first digit to the right of the decimal point from a device, then that digit should be recorded; if it is possible to obtain the second digit to the right of a decimal point, then that digit should be recorded, and so on. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문_순서"
+        },
+        {
+          "text": "① (A)-(C)-(B) \t② (B)-(A)-(C) \t③ (B)-(C)-(A) ",
+          "runs": [
+            {
+              "t": "① (A)-(C)-(B) \t② (B)-(A)-(C) \t③ (B)-(C)-(A) ",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ (C)-(A)-(B) \t⑤ (C)-(B)-(A)  ",
+          "runs": [
+            {
+              "t": "④ (C)-(A)-(B) \t⑤ (C)-(B)-(A)  ",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        }
+      ]
+    },
+    {
+      "source": "[2027수능특강(영어) TEST 1 3번]",
+      "paragraphs": [
+        {
+          "text": "다음 빈칸에 들어갈 말로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "다음 빈칸에 들어갈 말로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "Employees who are not privacy “literate” represent a vulnerability for businesses. They may compromise privacy and security measures and expose personal or confidential information without realizing it. Employee online access rights can and should be limited to what each employee needs to perform his or her job. However, while physical barriers, firewalls, passwords, and other security measures are useful, for most organizations access to large amounts of sensitive information by employees is necessary to do business. The key to ensuring employee adherence to privacy and security measures is to educate them and to develop a practice of ongoing education and other opportunities for reinforcement of the role that all employees play in securing critical information privacy by adhering to proper privacy and security protocols. Employees may have differing levels of access to information, but all should understand the importance of protecting private or confidential information and how their actions affect the security of this information. The very nature of private or commercially confidential information means that ________________________.",
+          "runs": [
+            {
+              "t": "Employees who are not privacy “literate” represent a vulnerability for businesses. They may compromise privacy and security measures and expose personal or confidential information without realizing it. Employee online access rights can and should be limited to what each employee needs to perform his or her job. However, while physical barriers, firewalls, passwords, and other security measures are useful, for most organizations access to large amounts of sensitive information by employees is necessary to do business. The key to ensuring employee adherence to privacy and security measures is to educate them and to develop a practice of ongoing education and other opportunities for reinforcement of the role that all employees play in securing critical information privacy by adhering to proper privacy and security protocols. Employees may have differing levels of access to information, but all should understand the importance of protecting private or confidential information and how their actions affect the security of this information. The very nature of private or commercially confidential information means that ",
+              "ul": false
+            },
+            {
+              "t": "________________________",
+              "ul": false
+            },
+            {
+              "t": ".",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① it should not be made publicly available",
+          "runs": [
+            {
+              "t": "① it should not be made publicly available",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② it should be shared widely for transparency",
+          "runs": [
+            {
+              "t": "② it should be shared widely for transparency",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ all employees require unlimited access to it",
+          "runs": [
+            {
+              "t": "③ all employees require unlimited access to it",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ education about it is generally unnecessary",
+          "runs": [
+            {
+              "t": "④ education about it is generally unnecessary",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ physical barriers alone can protect it adequately",
+          "runs": [
+            {
+              "t": "⑤ physical barriers alone can protect it adequately",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        }
+      ]
+    },
+    {
+      "source": "[2027수능특강(영어) TEST 1 4번]",
+      "paragraphs": [
+        {
+          "text": "다음 글의 주제로 가장 적절한 것은?",
+          "runs": [
+            {
+              "t": "다음 글의 주제로 가장 적절한 것은?",
+              "ul": false
+            }
+          ],
+          "pstyle": "문제 번호"
+        },
+        {
+          "text": "An odd, but interesting trigger I ran across while researching, was introduced by a man called Robert who had already recovered about 75 percent from RSI after reading Dr. Sarno’s second book. He would have been nearly 100 percent recovered but he could not change the pattern of pain that occurred when using his right index finger to click the computer’s mouse. In Robert’s own words, “The strange part is that my finger and hand don’t hurt when I close my eyes and move/click the mouse. It’s as if the screen (and software) is the trigger for the pain!” He reduces his visual acuity when he closes his eyes, one of his senses. So, closing his eyes allegorically opens them by removing the sensory trigger. If he unconsciously despises staring at his computer screen because staring at it is in conflict with his unconscious wants and needs, then closing his eyes “cuts out” the source of information that triggers his anger, i.e., his eyesight. Sight is one of the senses that blinds us (Lao Tzu).",
+          "runs": [
+            {
+              "t": "An odd, but interesting trigger I ran across while researching, was introduced by a man called Robert who had already recovered about 75 percent from RSI after reading Dr. Sarno’s second book. He would have been nearly 100 percent recovered but he could not change the pattern of pain that occurred when using his right index finger to click the computer’s mouse. In Robert’s own words, “The strange part is that my finger and hand don’t hurt when I close my eyes and move/click the mouse. It’s as if the screen (and software) is the trigger for the pain!” He reduces his visual acuity when he closes his eyes, one of his senses. So, closing his eyes allegorically opens them by removing the sensory trigger. If he unconsciously despises staring at his computer screen because staring at it is in conflict with his unconscious wants and needs, then closing his eyes “cuts out” the source of information that triggers his anger, i.e., his eyesight. Sight is one of the senses that blinds us (Lao Tzu).",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "① the need to eliminate sensory trigger",
+          "runs": [
+            {
+              "t": "① the need to eliminate sensory trigger",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "② how visual cues can trigger unconscious pain",
+          "runs": [
+            {
+              "t": "② how visual cues can trigger unconscious pain",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "③ the purely physical origin of all RSI symptoms",
+          "runs": [
+            {
+              "t": "③ the purely physical origin of all RSI symptoms",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "④ why closing eyes always worsens computer pain",
+          "runs": [
+            {
+              "t": "④ why closing eyes always worsens computer pain",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        },
+        {
+          "text": "⑤ unconscious conflicts as unrelated to symptoms",
+          "runs": [
+            {
+              "t": "⑤ unconscious conflicts as unrelated to symptoms",
+              "ul": false
+            }
+          ],
+          "pstyle": "선지"
+        }
+      ]
+    },
+    {
+      "source": "[6강 2번]",
+      "paragraphs": [
+        {
+          "text": "다음 글의 요약문을 완성할 때, 빈칸에 적절한 단어를 쓰시오. (주어진 첫 철자로 완성)",
+          "runs": [
+            {
+              "t": "다음 글의 요약문을 완성할 때, 빈칸에 적절한 단어를 쓰시오. (주어진 첫 철자로 완성)",
+              "ul": false
+            }
+          ],
+          "pstyle": "서술형 번호"
+        },
+        {
+          "text": "When people are asked what any painting hanging on a gallery wall means, no matter how strange it might appear, as is the case with most abstract-expressionist paintings, they tend to find meaning in it because it is located in a gallery. Consider a soda can found thrown away on a city street. If we were to come across this item on the street, we would no doubt view it as a piece of garbage or rubbish. But if we saw the very same object on a pedestal, displayed in an art gallery, signed by some artist, and given a title such as “Waste,” then we would interpret its meaning in a vastly different way. We would, in fact, be inclined to interpret it as an artistic form, descrying a throw-away or materialistic society. Clearly, the can’s location on a sidewalk versus its display on a pedestal in an art gallery will influence how we will interpret it. ",
+          "runs": [
+            {
+              "t": "When people are asked what any painting hanging on a gallery wall means, no matter how strange it might appear, as is the case with most abstract-expressionist paintings, they tend to find meaning in it because it is located in a gallery. Consider a soda can found thrown away on a city street. If we were to come across this item on the street, we would no doubt view it as a piece of garbage or rubbish. But if we saw the very same object on a pedestal, displayed in an art gallery, signed by some artist, and given a title such as “Waste,” then we would interpret its meaning in a vastly different way. We would, in fact, be inclined to interpret it as an artistic form, descrying a throw-away or materialistic society. Clearly, the can’s location on a sidewalk versus its display on a pedestal in an art gallery will influence how we will interpret it. ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "󰀻",
+          "runs": [
+            {
+              "t": "󰀻",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "Objects are interpreted as  t_______ or r_______ in ordinary contexts but as a_______ f_______ when displayed in gallery settings, showing that location shapes meaning.",
+          "runs": [
+            {
+              "t": "Objects are interpreted as  t",
+              "ul": false
+            },
+            {
+              "t": "_______",
+              "ul": false
+            },
+            {
+              "t": " or r",
+              "ul": false
+            },
+            {
+              "t": "_______ ",
+              "ul": false
+            },
+            {
+              "t": "in ordinary contexts but as a",
+              "ul": false
+            },
+            {
+              "t": "_______",
+              "ul": false
+            },
+            {
+              "t": " f",
+              "ul": false
+            },
+            {
+              "t": "_______ ",
+              "ul": false
+            },
+            {
+              "t": "when displayed in gallery settings, showing that location shapes meaning.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        }
+      ]
+    },
+    {
+      "source": "[13강 2번]",
+      "paragraphs": [
+        {
+          "text": "밑줄 친 (A)가 이 글에서 의미하는 바를 한글 30자 이내로 서술하시오.",
+          "runs": [
+            {
+              "t": "밑줄 친 (A)가 이 글에서 의미하는 바를 한글 30자 이내로 서술하시오.",
+              "ul": false
+            }
+          ],
+          "pstyle": "서술형 번호"
+        },
+        {
+          "text": "AI is a prolific idea generator. Human brainstorming groups tend to focus on the quality of creative ideas and almost immediately lean into variations of first suggestions, but good ideas are more likely when groups focus first on quantity. As Linus Pauling put it, “The best way to have a good idea is to have lots of ideas.” Psychologist Dean Keith Simonton called this the “equal odds rule” arguing that creative success is correlated to the total number of works created. Many studies have confirmed that creative quality comes from quantity of ideas (what Bob Sutton at a design and innovation consulting company called (A) “idea ratio”), and one Stanford study pegged the number of ideas that distinguish a successful product from a failure at more than two thousand. This is why design thinking and innovation are so focused on the processes (what Utley and Klebahn call “idea flow”) of creating possibilities without judgment.",
+          "runs": [
+            {
+              "t": "AI is a prolific idea generator. Human brainstorming groups tend to focus on the quality of creative ideas and almost immediately lean into variations of first suggestions, but good ideas are more likely when groups focus first on quantity. As Linus Pauling put it, “The best way to have a good idea is to have lots of ideas.” Psychologist Dean Keith Simonton called this the “equal odds rule” arguing that creative success is correlated to the total number of works created. Many studies have confirmed that creative quality comes from quantity of ideas (what Bob Sutton at a design and innovation consulting company called (A) “",
+              "ul": false
+            },
+            {
+              "t": "idea ratio”",
+              "ul": true
+            },
+            {
+              "t": "), and one Stanford study pegged the number of ideas that distinguish a successful product from a failure at more than two thousand. This is why design thinking and innovation are so focused on the processes (what Utley and Klebahn call “idea flow”) of creating possibilities without judgment.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        }
+      ]
+    },
+    {
+      "source": "[16강 4번]",
+      "paragraphs": [
+        {
+          "text": "밑줄 친 (A)가 이 글에서 의미하는 바를 한글 30자 이내로 서술하시오.",
+          "runs": [
+            {
+              "t": "밑줄 친 (A)가 이 글에서 의미하는 바를 한글 30자 이내로 서술하시오.",
+              "ul": false
+            }
+          ],
+          "pstyle": "서술형 번호"
+        },
+        {
+          "text": "An in-group can become a reference group, a group that is used as the frame of reference for evaluating one’s own behavior. Members of a volunteer organization, for example, may evaluate themselves by the standards of the group and feel proud about their contribution to a community service project. This positive self-evaluation reflects the normative effect of a reference group whose members share the same view of themselves. If other members of your reference group (say, your parents) have high self-esteem, you, too, are likely to share that norm and have high self-esteem. The normative effect basically involves imitating the reference group. However, reference groups can also have comparison effects and associative effects on self- appraisals. If most of your classmates shine in academic achievement, you are likely to compare yourself with them. As a result, you may have a negative self-evaluation, feeling that your academic performance is not up to par. Being associated with the brilliant group, though, makes you feel proud of yourself, (A) “basking in reflected glory.” ",
+          "runs": [
+            {
+              "t": "An in-group can become a reference group, a group that is used as the frame of reference for evaluating one’s own behavior. Members of a volunteer organization, for example, may evaluate themselves by the standards of the group and feel proud about their contribution to a community service project. This positive self-evaluation reflects the normative effect of a reference group whose members share the same view of themselves. If other members of your reference group (say, your parents) have high self-esteem, you, too, are likely to share that norm and have high self-esteem. The normative effect basically involves imitating the reference group. However, reference groups can also have comparison effects and associative effects on self- appraisals. If most of your classmates shine in academic achievement, you are likely to compare yourself with them. As a result, you may have a negative self-evaluation, feeling that your academic performance is not up to par. Being associated with the brilliant group, though, makes you feel proud of yourself, (A) “",
+              "ul": false
+            },
+            {
+              "t": "basking in reflected glory",
+              "ul": true
+            },
+            {
+              "t": ".” ",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        }
+      ]
+    },
+    {
+      "source": "[2027수능특강(영어) 17강 2번]",
+      "paragraphs": [
+        {
+          "text": "다음 글의 밑줄 친 (A)의 우리말을 다음과 같이 쓸 때, 주어진 <조건>에 알맞게 문장을 완성하시오.",
+          "runs": [
+            {
+              "t": "다음 글의 밑줄 친 (A)의 우리말을 다음과 같이 쓸 때, 주어진 <조건>에 알맞게 문장을 완성하시오.",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_조건"
+        },
+        {
+          "text": "Symbols are instrumental in helping people derive meanings from social situations. In social encounters, each person's interpretation or definition of a given situation becomes a subjective reality from that person's viewpoint. We often assume that what we consider to be \"reality\" is shared by others; however, this assumption is often incorrect. Subjective reality is acquired and shared through agreed-upon symbols, especially language. If a person shouts \"Fire!\" in a crowded movie theater, for example, that language produces the same response (attempting to escape) in all of those who hear and understand it. When people in a group do not share the same meaning for a given symbol, however, confusion results; for example, people who did not know the meaning of the word fire would not know what the commotion was about. (A) 사람들이 자신이 받는 메시지와 자신이 마주하는 상황을 어떻게 해석하는지는 그들의 주관적 현실이 되고, 그들의 행동에 강하게 영향을 미칠 수도 있다.",
+          "runs": [
+            {
+              "t": "Symbols are instrumental in helping people derive meanings from social situations. In social encounters, each person's interpretation or definition of a given situation becomes a subjective reality from that person's viewpoint. We often assume that what we consider to be \"reality\" is shared by others; however, this assumption is often incorrect. Subjective reality is acquired and shared through agreed-upon symbols, especially language. If a person shouts \"Fire!\" in a crowded movie theater, for example, that language produces the same response (attempting to escape) in all of those who hear and understand it. When people in a group do not share the same meaning for a given symbol, however, confusion results; for example, people who did not know the meaning of the word fire would not know what the commotion was about. (A) ",
+              "ul": false
+            },
+            {
+              "t": "사람들이 자신이 받는 메시지와 자신이 마주하는 상황을 어떻게 해석하는지는 그들의 주관적 현실이 되고, 그들의 행동에 강하게 영향을 미칠 수도 있다",
+              "ul": true
+            },
+            {
+              "t": ".",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "<조건>",
+          "runs": [
+            {
+              "t": "<조건>",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_조건"
+        },
+        {
+          "text": "<보기>의 단어를 반드시 사용할 것 (필요 시 변형 가능)",
+          "runs": [
+            {
+              "t": "<보기>의 단어를 반드시 사용할 것 (필요 시 변형 가능)",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "주어진 어구를 제외하고 12단어로 영작할 것",
+          "runs": [
+            {
+              "t": "주어진 어구를 제외하고 12단어로 영작할 것",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "<보기> interpret / the message / receive / the situations / encounter / how",
+          "runs": [
+            {
+              "t": "<보기> interpret / the message / receive / the situations / encounter / how",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "___________________________________________________________ becomes their subjective reality and may strongly influence their behavior.",
+          "runs": [
+            {
+              "t": "___________________________________________________________ becomes their subjective reality and may strongly influence their behavior.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        }
+      ]
+    },
+    {
+      "source": "[15강 4번]",
+      "paragraphs": [
+        {
+          "text": "다음 글의 밑줄 친 (A)의 우리말을 다음과 같이 쓸 때, 주어진 <조건>에 알맞게 문장을 완성하시오.",
+          "runs": [
+            {
+              "t": "다음 글의 밑줄 친 (A)의 우리말을 다음과 같이 쓸 때, 주어진 <조건>에 알맞게 문장을 완성하시오.",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_조건"
+        },
+        {
+          "text": "Because belief is so crucial in the placebo effect, it would seem that deception is necessary in order to trigger a patient's trust in the actual drug he might be taking. But Ted Kaptchuk, a leading placebo researcher at Harvard, is investigating the possibility of doing away with the element of deception. He tells patients up front that they will be taking a placebo, but he also informs them about how powerful and effective placebos can be. In one trial with irritable bowel syndrome, it was found that roughly 59 percent of those on an open placebo treatment reported improvements, as compared with 35 percent of the control group that received no treatment. (A) 이 결과는 대단해 보이지 않을 수도 있지만, 위약을 투여하는 것이 아무것도 하지 않는 것과 같지 않다는 점을 분명히 보여준다.",
+          "runs": [
+            {
+              "t": "Because belief is so crucial in the placebo effect, it would seem that deception is necessary in order to trigger a patient's trust in the actual drug he might be taking. But Ted Kaptchuk, a leading placebo researcher at Harvard, is investigating the possibility of doing away with the element of deception. He tells patients up front that they will be taking a placebo, but he also informs them about how powerful and effective placebos can be. In one trial with irritable bowel syndrome, it was found that roughly 59 percent of those on an open placebo treatment reported improvements, as compared with 35 percent of the control group that received no treatment. (A) ",
+              "ul": false
+            },
+            {
+              "t": "이 결과는 대단해 보이지 않을 수도 있지만, 위약을 투여하는 것이 아무것도 하지 않는 것과 같지 않다는 점을 분명히 보여준다",
+              "ul": true
+            },
+            {
+              "t": ".",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "<조건>",
+          "runs": [
+            {
+              "t": "<조건>",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_조건"
+        },
+        {
+          "text": "<보기>의 단어를 반드시 사용할 것 (필요 시 변형 가능)",
+          "runs": [
+            {
+              "t": "<보기>의 단어를 반드시 사용할 것 (필요 시 변형 가능)",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "주어진 어구를 제외하고 13단어로 영작할 것",
+          "runs": [
+            {
+              "t": "주어진 어구를 제외하고 13단어로 영작할 것",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        },
+        {
+          "text": "<보기> the point / nothing / do / the same / give / a placebo",
+          "runs": [
+            {
+              "t": "<보기> the point / nothing / do / the same / give / a placebo",
+              "ul": false
+            }
+          ],
+          "pstyle": "테두리_보기"
+        },
+        {
+          "text": "The results may seem modest, but they ______________________________________________________________.",
+          "runs": [
+            {
+              "t": "The results may seem modest, but they ______________________________________________________________.",
+              "ul": false
+            }
+          ],
+          "pstyle": "지문"
+        }
+      ]
+    }
+  ]
+}

@@ -5,7 +5,7 @@ import shutil
 
 from core.base import BaseEngine, safe_copy_indd
 from core.paths import resolve_config
-from engines.baenje.parser import hwpx_to_rtf
+from engines.baenje.parser import hwpx_to_rtf, docx_to_rtf
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
 _CONFIG_PATH = os.path.join(_DIR, "config.json")
@@ -30,6 +30,8 @@ def _make_indd_path(cfg, school, issue_num):
 
 class BaenjeEngine(BaseEngine):
 
+    jsx_timeout = 900  # 원고 1000+ 단락 처리에 충분한 시간
+
     @property
     def material_id(self):
         return "baenje"
@@ -40,7 +42,7 @@ class BaenjeEngine(BaseEngine):
 
     @property
     def description(self):
-        return "프리미엄북 배N제 조판 자동화 (HWPX → RTF → InDesign)"
+        return "프리미엄북 배N제 조판 자동화 (HWPX/DOCX → RTF → InDesign)"
 
     @property
     def subject_prefix(self):
@@ -52,30 +54,59 @@ class BaenjeEngine(BaseEngine):
             "slots": [
                 {
                     "key": "manuscript",
-                    "label": "원고 .hwpx",
+                    "label": "원고 .hwpx / .docx",
                     "required": True,
+                },
+                {
+                    "key": "answers",
+                    "label": "정답지 .hwpx / .docx",
+                    "required": False,
                 },
             ]
         }
 
     # ── 1단계: hwpx → RTF ────────────────────────────────────────────────
 
+    def _convert_to_rtf(self, src_path, rtf_path, label, log):
+        """HWPX 또는 DOCX → RTF 변환."""
+        ext = os.path.splitext(src_path)[1].lower()
+        if ext == ".docx":
+            log(f"[파서] {label} DOCX → RTF: {os.path.basename(src_path)}")
+            docx_to_rtf(src_path, rtf_path)
+        else:
+            log(f"[파서] {label} HWPX → RTF: {os.path.basename(src_path)}")
+            hwpx_to_rtf(src_path, rtf_path)
+        size = os.path.getsize(rtf_path)
+        log(f"[파서] {label} RTF 완료 ({size:,} bytes)")
+
     def parse(self, uploaded_files, job_dir, log):
-        hwpx_path = uploaded_files.get("manuscript")
-        if not hwpx_path:
-            raise ValueError("원고 hwpx 파일이 없습니다.")
+        ms_path = uploaded_files.get("manuscript")
+        if not ms_path:
+            raise ValueError("원고 파일이 없습니다.")
 
         rtf_path = os.path.join(job_dir, "manuscript.rtf")
-        log(f"[파서] HWPX → RTF 변환 중: {os.path.basename(hwpx_path)}")
-        hwpx_to_rtf(hwpx_path, rtf_path)
+        self._convert_to_rtf(ms_path, rtf_path, "원고", log)
 
-        size = os.path.getsize(rtf_path)
-        log(f"[파서] RTF 생성 완료 ({size:,} bytes)")
-        return rtf_path
+        # 정답지 (선택)
+        ans_path = uploaded_files.get("answers")
+        answers_rtf = None
+        if ans_path:
+            answers_rtf = os.path.join(job_dir, "answers.rtf")
+            self._convert_to_rtf(ans_path, answers_rtf, "정답지", log)
+
+        return {"manuscript": rtf_path, "answers": answers_rtf}
 
     # ── 2단계: JSX 임시 사본 생성 + settings.json 작성 ──────────────────
 
-    def prepare_jsx(self, rtf_path, job_dir, log):
+    def prepare_jsx(self, parse_result, job_dir, log):
+        # parse_result: dict {"manuscript": rtf_path, "answers": rtf_path|None}
+        if isinstance(parse_result, dict):
+            rtf_path = parse_result["manuscript"]
+            answers_rtf = parse_result.get("answers")
+        else:
+            rtf_path = parse_result
+            answers_rtf = None
+
         cfg = _load_config()
 
         issue_num = self._get_meta(job_dir, "issue_num") or "01"
@@ -95,6 +126,7 @@ class BaenjeEngine(BaseEngine):
         settings_path = os.path.join(job_dir, ".settings.json")
         settings = {
             "rtf_path": rtf_path,
+            "answers_rtf_path": answers_rtf or "",
             "indd_path": indd_path,
             "output_dir": job_dir,
             "school": school,

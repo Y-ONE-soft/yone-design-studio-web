@@ -260,7 +260,9 @@
     }
 
     // Header patterns for STEP detection
-    var reHeader = /^\s*[A-Za-z0-9]+\s*[.)]?\s*(?:L\d+\s*[-\u2013\u2014]?\s*\uBCF8\uBB38\s*\d+(?:\s*\([^\)]*\))?|L\d+\s*[-\u2013\u2014]?\s*[A-Za-z][A-Za-z\s]+(?:\s*\([^\)]*\))?|L\d+\s*[-\u2013\u2014]?\s*p\.?\s*\d+(?:\s*~\s*\d+)?(?:\s+[A-Za-z\s]+)?|p\d+\s*[-\u2013\u2014]?\s*no\.?\s*\d+(?:~\d+)?|p\d+\s*[-\u2013\u2014]?\s*(?:\uC11C\uC220\uD615|\uB17C\uC220\uD615)\s*Prac(?:tice|ice)|p\d+\s*[-\u2013\u2014]+\s*\uC218\uB2A5\s*\uB300\uBE44\s*ANALYSIS)\s*$/i;
+    // \uC120\uD589 \uC21C\uBC88(N. / N))\uC740 \uC120\uD0DD. \uD398\uC774\uC9C0 \uB9C8\uCEE4(p<page> \uB610\uB294 L<lesson>) \uB4A4\uC5D0 \uB77C\uBCA8 + \uC9C0\uBB38\uBC88\uD638.
+    // \uB77C\uBCA8\uC740 no./Example/\uC784\uC758 \uC601\uBB38 \uD1A0\uD070 \uBAA8\uB450 \uD5C8\uC6A9. \uD2B8\uB808\uC77C\uB9C1 "(\uC815\uB2F5 1\uAC1C)" \uAC19\uC740 \uBD80\uAC00\uC815\uBCF4\uB3C4 \uD5C8\uC6A9.
+    var reHeader = /^\s*(?:[A-Za-z0-9]+\s*[.)]?\s*)?(?:L\d+\s*[-\u2013\u2014]?\s*\uBCF8\uBB38\s*\d+(?:\s*\([^\)]*\))?|L\d+\s*[-\u2013\u2014]?\s*[A-Za-z][A-Za-z\s]+(?:\s*\([^\)]*\))?|L\d+\s*[-\u2013\u2014]?\s*p\.?\s*\d+(?:\s*~\s*\d+)?(?:\s+[A-Za-z\s]+)?|p\d+\s*[-\u2013\u2014\.]?\s*(?:no\.\s*|Example\s+|[A-Za-z]+\.?\s*)?\d+(?:~\d+)?(?:\s*\([^\)]*\))?|p\d+\s*[-\u2013\u2014]?\s*(?:\uC11C\uC220\uD615|\uB17C\uC220\uD615)\s*Prac(?:tice|ice)|p\d+\s*[-\u2013\u2014]+\s*\uC218\uB2A5\s*\uB300\uBE44\s*ANALYSIS)\s*$/i;
     var reSupp = /^\s*Supplementary Reading\s*$/i;
 
     function normHeader(s) {
@@ -1083,6 +1085,9 @@
 
             // Header normalization: convert headers to {본문N} format
             grepChange(story, "\\bno\\.\\s*(\\d{1,3}(?:~\\d{1,3})?)", "{$1}");
+            // EBS \uB9AC\uB529\uD30C\uC6CC \uB4F1\uC758 "Example N" \uB77C\uBCA8\uB3C4 \uB3D9\uC77C\uD558\uAC8C {N}\uC73C\uB85C \uBCC0\uD658
+            // (\uB77C\uBCA8 \uC885\uB958\uC5D0 \uBB34\uAD00\uD558\uAC8C \uD5E4\uB354 \uB77C\uC778 \uB05D\uC758 \uC9C0\uBB38 \uBC88\uD638\uB97C {N}\uC73C\uB85C \uC815\uADDC\uD654)
+            grepChange(story, "\\bExample\\s+(\\d{1,3})", "{$1}");
             grepChange(story, "\\bANALYSIS\\b", "{\uBD84\uC11D}");
             grepChange(story, "\\b\\d+\\.\\s*L\\d+\\s*[-\u2013\u2014\\.]?\\s*p\\.?\\s*\\d+[^\\r\\n]*?\uBCF8\uBB38\\s*(\\d+)\\b", "{\uBCF8\uBB38$1}");
             grepChange(story, "L\\d+\\s*[-\u2013\u2014\\.]?\\s*p\\.?\\s*\\d+[^\\r\\n]*?\uBCF8\uBB38\\s*(\\d+)\\b", "{\uBCF8\uBB38$1}");
@@ -1099,24 +1104,48 @@
                 grepChange(story, "(^|,)\\s+(\\{)", "$1$2");
             }
 
-            // Frame breaks at {…} headers (skip first)
+            // 구조 기반 frame 분리:
+            // (1) 헤더({...}) = 새 본문 = 페이지 시작 (startParagraph = NEXT_PAGE)
+            // (2) 조건(주어진 문장) = 같은 본문 안 하단 영역 = 새 frame (startParagraph = NEXT_FRAME)
+            //
+            // SpecialCharacters.FRAME_BREAK character 삽입은 동아박 마스터 구조에서
+            // silent fail 또는 효과 없음이 확인되어 startParagraph 속성 방식으로 변경.
+            //
+            // 조건 식별 시퀀스: 헤더 블록 안에서 (X) 선지 시퀀스가 끝난 직후
+            // 첫 영문 알파벳으로 시작하는(한글 미포함) 단락
             var parasAll = parasOf(story);
             var headerIdx = [];
             for (var i = 0; i < parasAll.length; i++) {
-                var t = ptxt(parasAll[i]);
-                if (/^\s*\{[^}]+\}/.test(t)) headerIdx.push(i);
-            }
-            for (var h = headerIdx.length - 1; h >= 1; h--) {
-                try { parasAll[headerIdx[h]].insertionPoints[0].contents = SpecialCharacters.FRAME_BREAK; } catch(_){}
+                if (/^\s*\{[^}]+\}/.test(ptxt(parasAll[i]))) headerIdx.push(i);
             }
 
-            // 하단문제(3+칸 띄기 = 발문) 앞에 프레임브레이크 삽입
-            parasAll = parasOf(story);
-            for (var iFB = parasAll.length - 1; iFB >= 1; iFB--) {
-                var tFB = ptxt(parasAll[iFB]);
-                if (has3PlusGaps(tFB)) {
-                    try { parasAll[iFB].insertionPoints[0].contents = SpecialCharacters.FRAME_BREAK; } catch(_){}
+            var conditionIdxList = [];
+            var headerEnds = headerIdx.concat([parasAll.length]);
+            for (var iBl = 0; iBl < headerEnds.length - 1; iBl++) {
+                var bStart = headerEnds[iBl];
+                var bEnd = headerEnds[iBl + 1];
+                var sawChoice = false;
+                for (var iPB = bStart + 1; iPB < bEnd; iPB++) {
+                    var pTxtB = ptxt(parasAll[iPB]);
+                    var pTrim = pTxtB.replace(/^[\s　]+|[\s　]+$/g, "");
+                    if (!pTrim) continue;
+                    if (/^\s*\([A-Z]\)/.test(pTxtB)) { sawChoice = true; continue; }
+                    // 영문 알파벳으로 시작 + 한글 미포함 → 조건(주어진 문장)
+                    // (￼ 앵커, 한글 발문, 빈줄 등은 모두 skip)
+                    if (sawChoice && /^[A-Za-z]/.test(pTrim) && !/[가-힣]/.test(pTrim)) {
+                        conditionIdxList.push(iPB);
+                        break;
+                    }
                 }
+            }
+
+            // 헤더 (첫 번째 제외) → NEXT_PAGE: 본문 1개 = 페이지 1개 강제
+            for (var h = 1; h < headerIdx.length; h++) {
+                try { parasAll[headerIdx[h]].startParagraph = StartParagraph.NEXT_PAGE; } catch(_){}
+            }
+            // 조건 → NEXT_FRAME: 같은 페이지 안 하단 영역으로 강제 분리
+            for (var ic = 0; ic < conditionIdxList.length; ic++) {
+                try { parasAll[conditionIdxList[ic]].startParagraph = StartParagraph.NEXT_FRAME; } catch(_){}
             }
 
             // {…} headers + [N] bracket → [기본 단락] (전체 단락에 스타일 적용)
@@ -1129,6 +1158,26 @@
                 }
                 if (/^\s*\{[^}]+\}/.test(tt)) {
                     try { parasAll[iFx].appliedParagraphStyle = BASIC_PARA; } catch(_){}
+                }
+            }
+
+            // 모든 {header} 다음 첫 비빈 단락 → C1_BTM
+            // (지문번호 다음 오는 지문 본문 — EBS 등 본문이 별도 줄로 있는 원고 처리)
+            // mockexam의 (A) 같은 경우는 다음 (A)~(Z) → C1 단계에서 다시 덮어씌워짐
+            if (S1_C1_BTM) {
+                var hParas = parasOf(story);
+                for (var hi = 0; hi < hParas.length - 1; hi++) {
+                    var hTxt = ptxt(hParas[hi]);
+                    if (!/^\s*\{[^}]+\}/.test(hTxt)) continue;
+                    // 다음 비빈 단락 찾기 — 공백/탭/특수공백/ZWSP만 있는 단락은 건너뜀
+                    var hn = hi + 1;
+                    while (hn < hParas.length &&
+                           /^[\s\u00A0\u2000-\u200B\u202F\u205F\u3000]*$/.test(ptxt(hParas[hn]))) {
+                        hn++;
+                    }
+                    if (hn < hParas.length) {
+                        try { hParas[hn].appliedParagraphStyle = S1_C1_BTM; } catch(_){}
+                    }
                 }
             }
 
@@ -1170,12 +1219,16 @@
             }
 
             // After bottom, (A|B|C) → C1_문장 배열 하단 지문
+            // BTM 라인이 3+ space gaps 패턴(mockexam의 "주어진 문장")일 때만 적용.
+            // EBS처럼 헤더 다음 본문이 BTM이 된 케이스는 (A)(B)(C)도 일반 선지여야 하므로 건너뜀.
             if (S1_C1_BTM_T) {
                 paras2 = parasOf(story);
                 for (var i4 = 0; i4 < paras2.length; i4++) {
                     try {
                         var pStyle = paras2[i4].appliedParagraphStyle;
                         if (!(pStyle === S1_C1_BTM || (pStyle && S1_C1_BTM && pStyle.name === S1_C1_BTM.name))) continue;
+                        // mockexam 주어진 문장 식별: 3+ space gaps 또는 탭 패턴
+                        if (!has3PlusGaps(ptxt(paras2[i4]))) continue;
                         var j2 = i4 + 1;
                         while (j2 < paras2.length && /^[\u0009\u0020\u00A0\u2000-\u200B\u202F\u205F\u3000]*$/.test(ptxt(paras2[j2]))) j2++;
                         if (j2 >= paras2.length) continue;
@@ -1198,61 +1251,87 @@
                 for (var i5 = 0; i5 < hits7.length; i5++) {
                     try { hits7[i5].paragraphs[0].appliedParagraphStyle = S1_C1_BTM_T; } catch(_){}
                 }
+
+                // BTM(주어진 문장) → 빈 단락 → BTM_T(하단 본문) 사이의 [기본 단락] 빈 줄 한 개 제거
+                var parasGap = parasOf(story);
+                for (var iG = parasGap.length - 2; iG >= 1; iG--) {
+                    var prevStyG = parasGap[iG - 1].appliedParagraphStyle;
+                    var isPrevBTM = (prevStyG === S1_C1_BTM || (prevStyG && S1_C1_BTM && prevStyG.name === S1_C1_BTM.name));
+                    if (!isPrevBTM) continue;
+                    var curTG = ptxt(parasGap[iG]);
+                    if (!/^[\s\u00A0\u2000-\u200B\u202F\u205F\u3000]*$/.test(curTG)) continue;
+                    var nextStyG = parasGap[iG + 1].appliedParagraphStyle;
+                    var isNextBTM_T = (nextStyG === S1_C1_BTM_T || (nextStyG && S1_C1_BTM_T && nextStyG.name === S1_C1_BTM_T.name));
+                    if (!isNextBTM_T) continue;
+                    try { parasGap[iG].remove(); } catch(_){}
+                }
             }
 
             // Arrow icon insertion after C1 blocks (원본 STEP1C1.jsx 방식)
             var arrowSrc = findLabeledItem("\uD654\uC0B4\uD45C \uB2F5\uC9C0");
             if (arrowSrc && S1_C1) {
                 var arrowState = unlockItem(arrowSrc);
+                // STEP1C1_New.jsx 방식: 블록 마지막 C1 단락 끝에 \\r\\r 삽입 → 두 번째 빈 줄에 화살표
+                // 기존 빈 줄 의존하지 않아 EBS 등 빈 줄이 없거나 불규칙해도 안정적으로 동작
                 var paras3 = parasOf(story);
                 for (var ia = 0; ia < paras3.length; ia++) {
                     var pa = paras3[ia].appliedParagraphStyle;
-                    var isC1 = (pa === S1_C1 || (pa && S1_C1 && pa.name === S1_C1.name));
-                    if (!isC1) continue;
-                    // 블록 시작만 처리
-                    if (ia > 0) {
-                        var prevA = paras3[ia - 1].appliedParagraphStyle;
-                        if (prevA === S1_C1 || (prevA && S1_C1 && prevA.name === S1_C1.name)) continue;
+                    var isC1Cur = (pa === S1_C1 || (pa && S1_C1 && pa.name === S1_C1.name));
+                    if (!isC1Cur) continue;
+                    // 다음 단락도 C1이면 블록 내부 → 마지막 단락이 아님
+                    if (ia + 1 < paras3.length) {
+                        var na = paras3[ia + 1].appliedParagraphStyle;
+                        var nextIsC1 = (na === S1_C1 || (na && S1_C1 && na.name === S1_C1.name));
+                        if (nextIsC1) continue;
                     }
-                    // 블록 끝 찾기
-                    var jb = ia;
-                    while (jb < paras3.length) {
-                        var pb = paras3[jb].appliedParagraphStyle;
-                        if (!(pb === S1_C1 || (pb && S1_C1 && pb.name === S1_C1.name))) break;
-                        jb++;
-                    }
-                    // 블록 뒤에 빈 줄 2개 보장
-                    var blanks = 0;
-                    for (var bb = jb; bb < paras3.length && bb < jb + 3; bb++) {
-                        var bt = ptxt(paras3[bb]).replace(/[\r\n]/g, '');
-                        if (bt === '') blanks++;
-                        else break;
-                    }
-                    // 부족한 빈 줄 역순 삽입
-                    var need = 2 - blanks;
-                    if (need > 0 && jb - 1 >= 0 && jb - 1 < paras3.length) {
-                        for (var nb = 0; nb < need; nb++) {
-                            try { paras3[jb - 1].insertionPoints[-1].contents = '\r'; } catch(_){}
+                    // 여기서 ia = 블록 마지막 C1 단락
+                    var lastP = paras3[ia];
+                    // 이미 화살표가 있으면 건너뜀 (재실행 안전성)
+                    var hasArrow = false;
+                    try {
+                        var chsA = lastP.characters;
+                        for (var ccA = 0; ccA < chsA.length; ccA++) {
+                            if (chsA[ccA].contents === SpecialCharacters.ANCHOR_MARKER) {
+                                var piA = chsA[ccA].pageItems[0];
+                                if (piA && piA.label === "\uD654\uC0B4\uD45C \uB2F5\uC9C0") { hasArrow = true; break; }
+                            }
                         }
-                        paras3 = parasOf(story); // 재취득
-                    }
-                    // 두 번째 빈 줄에 화살표 삽입
-                    // 블록 끝 재계산
-                    var jb2 = ia;
-                    while (jb2 < paras3.length) {
-                        var pb2 = paras3[jb2].appliedParagraphStyle;
-                        if (!(pb2 === S1_C1 || (pb2 && S1_C1 && pb2.name === S1_C1.name))) break;
-                        jb2++;
-                    }
-                    var arrowIdx = jb2 + 1; // 두 번째 빈 줄
-                    if (arrowIdx < paras3.length) {
-                        var tc = ("" + paras3[arrowIdx].contents).replace(/[\r\n]/g, '');
-                        if (tc === '') {
-                            insertInlineIcon(arrowSrc, paras3[arrowIdx].insertionPoints[0]);
+                        for (var na2 = 1; na2 <= 2 && !hasArrow && ia + na2 < paras3.length; na2++) {
+                            var chsB = paras3[ia + na2].characters;
+                            for (var ccB = 0; ccB < chsB.length; ccB++) {
+                                if (chsB[ccB].contents === SpecialCharacters.ANCHOR_MARKER) {
+                                    var piB = chsB[ccB].pageItems[0];
+                                    if (piB && piB.label === "\uD654\uC0B4\uD45C \uB2F5\uC9C0") { hasArrow = true; break; }
+                                }
+                            }
+                        }
+                    } catch(_){}
+                    if (hasArrow) continue;
+
+                    try {
+                        var ipL = lastP.insertionPoints[-1];
+                        ipL.contents = "\r\r";
+                        paras3 = parasOf(story);
+                        if (ia + 1 < paras3.length) {
+                            try { paras3[ia + 1].appliedParagraphStyle = BASIC_PARA; } catch(_){}
+                        }
+                        if (ia + 2 < paras3.length) {
+                            var newPara = paras3[ia + 2];
+                            var icon = arrowSrc.duplicate();
+                            try {
+                                icon.anchoredObjectSettings.anchoredPosition = AnchorPosition.INLINE_POSITION;
+                                icon.textWrapPreferences.textWrapMode = TextWrapModes.NONE;
+                            } catch(_){}
+                            try { icon.label = "\uD654\uC0B4\uD45C \uB2F5\uC9C0"; } catch(_){}
+                            icon.anchoredObjectSettings.insertAnchoredObject(
+                                newPara.insertionPoints[0], AnchorPosition.INLINE_POSITION
+                            );
+                            try { newPara.appliedParagraphStyle = BASIC_PARA; } catch(_){}
+                            try { icon.fit(FitOptions.FRAME_TO_CONTENT); } catch(_){}
                             paras3 = parasOf(story);
+                            ia += 2;
                         }
-                    }
-                    ia = jb2; // 다음 블록으로 건너뛰기
+                    } catch(_){}
                 }
                 relockItem(arrowSrc, arrowState);
             }
@@ -1465,94 +1544,47 @@
         stepsDone++;
     }
 
-    // ---- STEP 2 A1 BTM (하단): 어법 선택 하단 (STEP2A1Practice.jsx 방식) ----
+    // ---- STEP 2 A1 BTM (하단): 어법 선택 객관식 ----
+    // 원고 구조: 각 프레임에 "지문 1개"만 들어간다.
+    //   - 어법선택 객관식의 지문은 본문 내 5개 보기를 ①②③④⑤로 표시
+    //     → 지문 단락에는 반드시 ①(U+2460)~⑳ circled-digit 1개 이상 포함됨.
+    //   - 그 외(책 제목/발문/섹션 라벨/부제목/지문번호 헤더/빈 단락)는 모두 삭제 대상.
+    // 헤더 형식 정규식 매칭이 아니라 "이 단락이 지문인가?"의 구조 판단을 사용한다 (헤더 형식 변동 무관).
     function processStep2A1Btm(story, paragraphs) {
         addLog("STEP2 A1 하단 처리 시작");
         // 밑줄은 지문 밑줄 문자스타일로
         insertContent(story, paragraphs, CS_PASSAGE_UL);
 
         app.doScript(function() {
-            // 지문번호 패턴: "1. p2-no.20  (정답 1개)" 또는 "틀린어법(문제지)"
-            var reNumHdr = /^\s*\d+\.\s*p\d+\s*[-\u2013\u2014]?\s*(?:no\.?)?\s*\d+(?:~\d+)?(?:\s*\([^)]*\))?\s*$/i;
-            var reTitleHdr = /^\s*(?:\uD2C0\uB9B0\uC5B4\uBC95|\uC5B4\uBC95\uC218\uC815)\s*\([^)]*\)\s*$/;
-            var reHdr = /^\s*(?:\d+\s*[.)]?\s*)?(?:L\d+\s*[-\u2013\u2014\s].*|p\d+\s*[-\u2013\u2014]\s*(?:no\.?)?\s*\d+.*)(?:\s*\([^)]*\))?\s*$/i;
-            var reSupp = /^\s*Supplementary Reading\s*$/i;
+            function isPassage(txt) {
+                if (!txt) return false;
+                for (var k = 0; k < txt.length; k++) {
+                    var c = txt.charCodeAt(k);
+                    if (c >= 0x2460 && c <= 0x2473) return true; // ①~⑳ (circled 1~20)
+                }
+                return false;
+            }
 
-            // 원본 STEP2A1Practice.jsx 방식: 헤더 위 본문 끝에 FB → 헤더+빈줄 삭제
+            // 1) 비지문 단락 모두 삭제 (역순)
             var paras = parasOf(story);
             for (var i = paras.length - 1; i >= 0; i--) {
-                paras = parasOf(story);
                 if (i >= paras.length) continue;
-                var htxt = (paras[i].contents || "").replace(/[\r\n]+$/, "");
-                if (!(reNumHdr.test(htxt) || reTitleHdr.test(htxt) || reSupp.test(htxt))) continue;
-
-                // 헤더 위에서 비어있지 않은 단락 찾기
-                var top = i - 1;
-                while (top >= 0 && isBlankPara(paras[top])) top--;
-
-                if (top >= 0) {
-                    // 프레임브레이크: top 단락의 마지막 문자 앞에 삽입 (완성본과 동일)
-                    try {
-                        paras[top].insertionPoints[-2].contents = SpecialCharacters.FRAME_BREAK;
-                    } catch(_){}
-
-                    // top~header 사이 빈 단락 삭제
-                    paras = parasOf(story);
-                    for (var k = top + 1; k < i && k < paras.length; k++) {
-                        if (isBlankPara(paras[k])) {
-                            try { paras[k].remove(); k--; i--; } catch(_){}
-                            paras = parasOf(story);
-                        }
-                    }
-                    // 헤더 삭제
-                    paras = parasOf(story);
-                    if (i < paras.length) { try { paras[i].remove(); } catch(_){} }
-                } else {
-                    // 첫 단락이 헤더
+                var t = (paras[i].contents || "").replace(/[\r\n]+$/, "");
+                if (!isPassage(t)) {
                     try { paras[i].remove(); } catch(_){}
-                }
-
-                // 헤더 아래 빈 단락 삭제 (프레임브레이크 포함 단락은 보호)
-                paras = parasOf(story);
-                var down = Math.min(i, paras.length - 1);
-                while (down >= 0 && down < paras.length) {
-                    var dContent = (paras[down].contents || "").replace(/[\s\r\n]+/g, "");
-                    // 프레임브레이크만 있는 단락도 보호
-                    if (dContent.length > 0) break;
-                    // 완전히 빈 단락만 삭제
-                    try { paras[down].remove(); } catch(_){ break; }
                     paras = parasOf(story);
                 }
             }
 
-            // 연속 빈줄 정리 (프레임브레이크 보호)
-            // grepChange로 \r{2,} 정리하면 FB 뒤의 줄바꿈이 합쳐질 수 있으므로 주의
-            // 빈 단락만 수동 삭제
+            // 2) 두 번째 지문부터 단락 시작 위치에 프레임 브레이크 (첫 지문은 첫 프레임)
             paras = parasOf(story);
-            for (var cc0 = paras.length - 1; cc0 >= 0; cc0--) {
-                if (isBlankPara(paras[cc0])) {
-                    try { paras[cc0].remove(); } catch(_){}
-                    paras = parasOf(story);
-                }
+            for (var j = paras.length - 1; j >= 1; j--) {
+                try {
+                    paras[j].insertionPoints[0].contents = SpecialCharacters.FRAME_BREAK;
+                } catch(_){}
             }
 
-            // 4) 불필요 텍스트 GREP 제거 (프레임브레이크 후)
-            grepChange(story, "^\\s*\uD2C0\uB9B0\uC5B4\uBC95\\s*\\([^\uFF09\\)]*\\)\\s*$", "");
-            grepChange(story, "^\\s*\uC5B4\uBC95\uC218\uC815\\s*\\([^\uFF09\\)]*\\)\\s*$", "");
-            // 잔여 지문번호 제거
-            grepChange(story, "^\\s*\\d+\\.?\\s*p\\d+\\s*[-\u2013\u2014]?\\s*(?:no\\.?)?\\s*\\d+(?:~\\d+)?(?:\\s*\\([^)]*\\))?\\s*$", "");
-
-            // 5) 빈 단락 제거 (프레임브레이크 없는 것만)
-            var parasClean = parasOf(story);
-            for (var cc = parasClean.length - 1; cc >= 0; cc--) {
-                var ccTxt = (parasClean[cc].contents || "").replace(/[\s\r\n]+/g, "");
-                if (ccTxt.length === 0) {
-                    try { parasClean[cc].remove(); } catch(_){}
-                    parasClean = parasOf(story);
-                }
-            }
-
-            // 6) A1_어법 선택 하단 스타일 적용
+            // 3) A1_어법 선택 하단 스타일 적용
             if (S2_A1_BTM) {
                 try { story.paragraphs.everyItem().appliedParagraphStyle = S2_A1_BTM; } catch(_){}
             }
@@ -1838,6 +1870,7 @@
             } catch(_){}
 
             // 9단계: Frame breaks at brackets (skip first) + bracket → basic
+            // EBS 리딩파워는 영작 배열 문제들이 연속해서 흐르도록 하므로 프레임 브레이크 생략
             try {
                 var pBr = parasOf(story);
                 var bracketIdxC2 = [];
@@ -1847,15 +1880,17 @@
                         bracketIdxC2.push(bi);
                     }
                 }
-                for (var bk = bracketIdxC2.length - 1; bk >= 1; bk--) {
-                    try { pBr[bracketIdxC2[bk]].insertionPoints[0].contents = SpecialCharacters.FRAME_BREAK; } catch(_){}
-                    pBr = parasOf(story);
-                    // 재색인
-                    bracketIdxC2 = [];
-                    for (var br2 = 0; br2 < pBr.length; br2++) {
-                        var br2Txt = ptxt(pBr[br2]);
-                        if (br2Txt.indexOf("[") !== -1 && br2Txt.indexOf("]") !== -1 && /^\s*\[/.test(br2Txt)) {
-                            bracketIdxC2.push(br2);
+                if (workbookType !== "EBS") {
+                    for (var bk = bracketIdxC2.length - 1; bk >= 1; bk--) {
+                        try { pBr[bracketIdxC2[bk]].insertionPoints[0].contents = SpecialCharacters.FRAME_BREAK; } catch(_){}
+                        pBr = parasOf(story);
+                        // 재색인
+                        bracketIdxC2 = [];
+                        for (var br2 = 0; br2 < pBr.length; br2++) {
+                            var br2Txt = ptxt(pBr[br2]);
+                            if (br2Txt.indexOf("[") !== -1 && br2Txt.indexOf("]") !== -1 && /^\s*\[/.test(br2Txt)) {
+                                bracketIdxC2.push(br2);
+                            }
                         }
                     }
                 }
@@ -1923,6 +1958,29 @@
             grepChange(story, "<\\s*\uC870\\s*\uAC74\\s*>", "<\uC870\uAC74>");
             grepChange(story, "\\[\\s*\uBCF4\uAE30\\s*\\]", "<\uBCF4\uAE30>");
             grepChange(story, "\\[\\s*\uC870\uAC74\\s*\\]", "<\uC870\uAC74>");
+
+            // ── 2.5. 보기 박스 순서 정규화 ─────────────────────────────────
+            // hwpx 보기 박스 컨테이너에서 본문 rect가 보기 라벨 rect보다 먼저 들어있어
+            // 파싱 시 [본문, 보기] 순서로 추출됨. "보기" 단락 직전이 한글 없는 본문이면
+            // (= 발문이 아니면) 보기 라벨을 본문 위로 이동.
+            // swap된 본문에는 ZWSP(​, U+200B) 임시 마커 삽입 → 보기 propagation 단계에서
+            // skip되도록 함 (기존 default 스타일 유지). propagation 후 ZWSP 제거.
+            var swParas = story.paragraphs;
+            for (var sw = swParas.length - 1; sw >= 1; sw--) {
+                var swCur = (swParas[sw].contents || "").replace(/[\r\n]+$/, "").replace(/^[\s　]+|[\s　]+$/g, "");
+                if (swCur !== "보기") continue;
+                var swPrev = (swParas[sw-1].contents || "").replace(/[\r\n]+$/, "").replace(/^[\s　]+|[\s　]+$/g, "");
+                if (swPrev === "" || swPrev === "보기") continue;
+                if (/[가-힣]/.test(swPrev)) continue;
+                swParas[sw].move(LocationOptions.BEFORE, swParas[sw-1]);
+                // swap 후 sw 위치 = 본문 단락. ZWSP(U+200B) 마커로 propagation skip 표시.
+                try {
+                    var movedPara = swParas[sw];
+                    if (movedPara && movedPara.contents.length > 0 && movedPara.contents.charAt(0) !== "​") {
+                        movedPara.insertionPoints[0].contents = "​";
+                    }
+                } catch (e1) {}
+            }
 
             // ── 3. 기본 스타일 일괄 적용 ─────────────────────────────────────
             if (S3_DEFAULT) {
@@ -2016,6 +2074,58 @@
                 }
             }
 
+            // ── 7.5. 발문 블록 단위 의미 분류: "배경(컨텍스트)" 단락 결정 ──────
+            // 각 발문(S3_NUM)을 시작점으로 하나의 "문제 블록"이라 보고, 첫 비빈 단락 X와
+            // 그 다음 비빈 단락 Y를 검사한다.
+            //   - Y가 "(A)"로 시작 → 순서배열 패턴 → X는 씨앗문장(배경)
+            //   - 발문에 "주어진 문장/글" 또는 "들어갈 위치" → 문장삽입 패턴 → X는 주어진 문장(배경)
+            // 이 한 곳에서 모든 "배경" 결정. 일반 발문(주제/요지/빈칸 등)은 Y가 ①②③④⑤이므로
+            // (A) 검사가 안 걸려 X는 지문(DEFAULT)으로 유지된다.
+            paras = story.paragraphs;
+            for (var bgi = 0; bgi < paras.length; bgi++) {
+                if (paras[bgi].appliedParagraphStyle != S3_NUM) continue;
+                var qText = (paras[bgi].contents || "").replace(/[\r\n]+$/, "");
+                // 다음 발문 또는 스토리 끝까지가 한 블록
+                var blockEnd = paras.length;
+                for (var bj = bgi + 1; bj < paras.length; bj++) {
+                    if (paras[bj].appliedParagraphStyle == S3_NUM) { blockEnd = bj; break; }
+                }
+                // X = 발문 다음 첫 비빈 단락 (지문번호 코드 마커 {YYMMNN}/{1234} 건너뜀)
+                var xi = bgi + 1;
+                while (xi < blockEnd) {
+                    var xt = (paras[xi].contents || "").replace(/[\r\n]+$/, "")
+                              .replace(/^[\s　]+|[\s　]+$/g, "");
+                    if (xt && !/^\{\d{4,6}\}$/.test(xt)) break;
+                    xi++;
+                }
+                if (xi >= blockEnd) continue;
+                if (paras[xi].appliedParagraphStyle != S3_DEFAULT) continue; // 이미 다른 분류됨
+                // Y = X 다음 비빈 단락
+                var yi = xi + 1;
+                while (yi < blockEnd) {
+                    var yt = (paras[yi].contents || "").replace(/[\r\n]+$/, "")
+                              .replace(/^[\s　]+|[\s　]+$/g, "");
+                    if (yt) break;
+                    yi++;
+                }
+                var isContext = false;
+                // 패턴 1: 순서배열 — Y가 "(A) <영문단어>"로 시작
+                // (A) 다음에 알파벳 단어가 와야 진짜 순서배열의 구성요소.
+                // "(A)     (B)       (C)" 같은 어법 네모 헤더(공백/괄호 연속)는 제외.
+                if (yi < blockEnd) {
+                    var yt2 = (paras[yi].contents || "").replace(/[\r\n]+$/, "")
+                              .replace(/^[\s　]+/, "");
+                    if (/^\(A\)\s+[A-Za-z]/.test(yt2)) isContext = true;
+                }
+                // 패턴 2: 문장삽입 — 발문에 "주어진 문장/글" / "들어갈 위치"
+                if (!isContext && (/주어진\s*(문장|글)/.test(qText) || /들어갈\s*위치/.test(qText))) {
+                    isContext = true;
+                }
+                if (isContext && S3_BG) {
+                    try { paras[xi].appliedParagraphStyle = S3_BG; } catch(_){}
+                }
+            }
+
             // ── 8. 보기 propagation (먼저, 쉼표 3개 이상, 한글 포함 시 중단) ──
             paras = story.paragraphs;
             for (var m = 0; m < paras.length - 1; m++) {
@@ -2025,6 +2135,8 @@
                         var p3 = paras[n3];
                         if (p3.appliedParagraphStyle != S3_DEFAULT) break;
                         var p3Txt = (p3.contents || "").replace(/[\r\n]+$/, "");
+                        // 2.5에서 swap된 본문(ZWSP 마커)은 보기 propagation 대상 아님
+                        if (p3Txt.charAt(0) === "​") break;
                         // 한글이 포함된 단락은 보기로 변경하지 않음
                         if (/[\uAC00-\uD7A3]/.test(p3Txt)) break;
                         // 슬래시 포함 또는 쉼표 3개 이상이면 보기 계속
@@ -2041,6 +2153,9 @@
                 }
             }
 
+            // ── 8.5. swap 본문 마커(ZWSP) 제거 ──────────────────────────────
+            grepChange(story, "\\x{200B}", "");
+
             // ── 9. 조건 propagation (보기 뒤) ────────────────────────────────
             paras = story.paragraphs;
             for (var m2 = 0; m2 < paras.length - 1; m2++) {
@@ -2048,7 +2163,15 @@
                     var n2 = m2 + 1;
                     while (n2 < paras.length) {
                         var p2 = paras[n2];
-                        if (p2.appliedParagraphStyle != S3_DEFAULT) break;
+                        var p2Sty = p2.appliedParagraphStyle;
+                        // DEFAULT \ub610\ub294 (\uc624\ubd84\ub958\ub41c) CHOICE \ub9cc \uc7ac\ubd84\ub958 \ub300\uc0c1.
+                        // ExtendScript\uc758 \uac1d\uccb4 \ube44\uad50\uac00 reference \uc77c\uce58\ub9cc \ubcf4\uc9c0 \uc54a\uc744 \ub54c\ub97c \ub300\ube44,
+                        // name \uae30\ubc18 fallback \ube44\uad50 \ucd94\uac00.
+                        var isDefault = (p2Sty === S3_DEFAULT) ||
+                                        (p2Sty && S3_DEFAULT && p2Sty.name === S3_DEFAULT.name);
+                        var isChoice  = (p2Sty === S3_CHOICE) ||
+                                        (p2Sty && S3_CHOICE && p2Sty.name === S3_CHOICE.name);
+                        if (!isDefault && !isChoice) break;
                         var pTrim = (p2.contents || "").replace(/[\r\n]+$/, "").replace(/^[\s\u3000]+/, "");
                         if (!/^(\u2022|\u2981|-|<|\d+\.|[\u2460-\u2473]|\(\d+\))/.test(pTrim)) break;
                         if (S3_COND) p2.appliedParagraphStyle = S3_COND;
@@ -2469,7 +2592,8 @@
     function mapStepToStory(stepKey) {
         // Page-based story mapping (from template analysis)
         // Each STEP has a known start page and marker text
-        var stepConfig = {
+        // settings.stepStoryMap\uC774 \uC788\uC73C\uBA74 \uADF8\uAC78 \uC6B0\uC120 \uC0AC\uC6A9 (EBS \uB4F1 \uB2E4\uB978 \uC6D0\uBCF8 .indd\uC6A9)
+        var stepConfig = settings.stepStoryMap || {
             "step1_a1":   { page: "4",   marker: "\uC5B4\uD718 \uC120\uD0DD 1" }, // 어휘 선택 1
             "step1_a1_2": { page: "13",  marker: "\uC5B4\uD718 \uC120\uD0DD 2" }, // 어휘 선택 2
             "step1_a2":   { page: "22",  marker: "\uBCF8\uBB38 O/X" },             // 본문 O/X
@@ -2485,7 +2609,10 @@
         };
 
         if (stepKey === "step3") {
-            return findMainStoryOnMaster("O");
+            // step3 마스터 prefix는 settings.stepStoryMap.step3.master 우선 (수능특강 분석/문제 분리용)
+            var step3Cfg = settings.stepStoryMap && settings.stepStoryMap.step3;
+            var step3Master = (step3Cfg && step3Cfg.master) || "O";
+            return findMainStoryOnMaster(step3Master);
         }
 
         var cfg = stepConfig[stepKey];

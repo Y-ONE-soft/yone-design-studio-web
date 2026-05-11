@@ -72,125 +72,218 @@
         doc.layers[li].locked = false;
     }
 
-    var movedFront = 0, movedSpine = 0, deletedSpine = 0, skippedBG = 0;
+    var movedFront = 0, movedSpine = 0, resizedSpine = 0, deletedSpine = 0, skippedBG = 0;
+    var SPINE_BOX_WIDTH_TOL = 2 * MM;       // 세네카 박스 폭 허용오차
+    var SPINE_BOX_HEIGHT_RATIO = 0.6;       // 박스로 인정할 최소 높이 (대지 대비)
 
-    if (hasSpineChange) {
-        var spineLeftX = abLeft + COVER_W;
-        var spineRightX = spineLeftX + currentSpine;
-        var spineShift = diff / 2;
+    var spineLeftX = abLeft + COVER_W;
+    var spineRightX = spineLeftX + currentSpine;
+    var newSpineCenterX = spineLeftX + newSpine / 2;
+    var abHeight = abTop - abBottom;
 
-        // 작업 대상 수집
-        var topItems = [];
-        for (var i = 0; i < doc.pageItems.length; i++) {
-            if (doc.pageItems[i].parent.typename === "Layer") {
-                topItems.push(doc.pageItems[i]);
+    // 그룹 안에 세네카 박스 후보(폭이 현재 세네카와 비슷하고 높이가 충분한 path/image)가 있는지 검사.
+    // 컨테이너 그룹(BG + 텍스트 묶음) → true: 재귀해서 박스 리사이즈, 텍스트 개별 정렬
+    // 단위 그룹(로고/장식) → false: 그룹째 중앙정렬, 내부 분해 안 함
+    function hasSpineBGCandidate(group) {
+        if (!group.pageItems || group.pageItems.length === 0) return false;
+        for (var hi = 0; hi < group.pageItems.length; hi++) {
+            var hc = group.pageItems[hi];
+            var hb = hc.geometricBounds;
+            var hw = hb[2] - hb[0];
+            var hh = hb[1] - hb[3];
+            var hisPath = (hc.typename === "PathItem"
+                           || hc.typename === "CompoundPathItem"
+                           || hc.typename === "PlacedItem"
+                           || hc.typename === "RasterItem");
+            if (hisPath
+                && Math.abs(hw - currentSpine) < SPINE_BOX_WIDTH_TOL
+                && hh > abHeight * SPINE_BOX_HEIGHT_RATIO) {
+                return true;
+            }
+            if (hc.typename === "GroupItem" && hasSpineBGCandidate(hc)) {
+                return true;
             }
         }
+        return false;
+    }
 
-        var realItems = [], guideItems = [];
-        for (var i = 0; i < topItems.length; i++) {
-            var b = topItems[i].geometricBounds;
-            if ((b[2] - b[0]) < 0.1) guideItems.push(topItems[i]);
-            else realItems.push(topItems[i]);
+    // 재귀 처리:
+    //   - 와이드(>189mm) 그룹 → 자식 재귀 (각 영역 개별 분류)
+    //   - 세네카 영역 컨테이너 그룹(BG 포함) → 자식 재귀
+    //   - 세네카 영역 단위 그룹(로고/장식) → 그룹째 중앙정렬
+    //   - 앞표지 그룹 / 뒤표지 그룹 → 통째로 이동 (또는 고정)
+    //   - 단일 아이템 → 세네카 박스 감지 후 리사이즈 또는 강제 중앙정렬
+    function processItemRecursive(item) {
+        var wasLocked = item.locked;
+        if (wasLocked) item.locked = false;
+
+        var bounds = item.geometricBounds;
+        var itemLeft = bounds[0];
+        var itemRight = bounds[2];
+        var itemWidth = itemRight - itemLeft;
+        var itemHeight = bounds[1] - bounds[3];
+        var itemCenterX = (itemLeft + itemRight) / 2;
+        var isGroup = (item.typename === "GroupItem" && item.pageItems.length > 0);
+
+        // 와이드 (>189mm) — 전폭 배경 또는 다중 영역 그룹
+        // 그룹/단일 모두 통째 처리 — 통짜 배경의 분해 방지
+        if (itemWidth > COVER_W * 0.9) {
+            if (itemCenterX >= spineRightX) {
+                // 앞표지 영역: 통째로 이동
+                item.translate(diff, 0);
+                movedFront++;
+            } else if (diff > 0) {
+                if (isGroup) {
+                    // 와이드 그룹 가로 확대는 자식 모두 같이 확대돼 디자인 깨짐 → 스킵.
+                    // 뒤표지 배경 확장이 필요하면 보통 별도 와이드 단일 path로 존재.
+                    skippedBG++;
+                } else {
+                    var bgScale = (itemWidth + diff) / itemWidth * 100;
+                    item.resize(bgScale, 100, true, true, true, true, true, Transformation.TOPLEFT);
+                    skippedBG++;
+                }
+            } else {
+                skippedBG++;
+            }
+            if (wasLocked) item.locked = true;
+            return;
         }
 
-        var workItems = [];
-        if (realItems.length === 1 && realItems[0].typename === "GroupItem") {
-            var mainGroup = realItems[0];
-            for (var i = 0; i < mainGroup.pageItems.length; i++) workItems.push(mainGroup.pageItems[i]);
-            for (var i = 0; i < guideItems.length; i++) workItems.push(guideItems[i]);
-            log("구조: 단일 그룹 (" + workItems.length + "개)");
-        } else {
-            for (var i = 0; i < topItems.length; i++) workItems.push(topItems[i]);
-            log("구조: 플랫 (" + workItems.length + "개)");
-        }
+        // 분류 (OLD 세네카 경계 기준)
+        if (itemCenterX >= spineLeftX && itemCenterX < spineRightX) {
+            // ── 세네카 영역 ──
+            if (deleteSpine && newSpineMM <= 3) {
+                item.remove();
+                deletedSpine++;
+                return;
+            }
+            if (isGroup) {
+                if (hasSpineBGCandidate(item)) {
+                    // 컨테이너 그룹 (BG + 텍스트 묶음): 자식 재귀
+                    var scs = [];
+                    for (var ck = 0; ck < item.pageItems.length; ck++) scs.push(item.pageItems[ck]);
+                    for (var cl = scs.length - 1; cl >= 0; cl--) processItemRecursive(scs[cl]);
+                } else {
+                    // 단위 그룹 (로고/장식): 그룹째 중앙정렬 (내부 분해 X)
+                    var udx = newSpineCenterX - itemCenterX;
+                    if (Math.abs(udx) > 0.001) item.translate(udx, 0);
+                    movedSpine++;
+                    log("  세네카 단위 그룹 중앙정렬: " + item.typename
+                         + " (" + item.pageItems.length + "개 자식)");
+                }
+            } else {
+                // 단일 아이템: 세네카 박스(바탕) 감지
+                var isPath = (item.typename === "PathItem"
+                              || item.typename === "CompoundPathItem"
+                              || item.typename === "PlacedItem"
+                              || item.typename === "RasterItem");
+                var widthMatchesSpine = Math.abs(itemWidth - currentSpine) < SPINE_BOX_WIDTH_TOL;
+                var heightMatchesCover = itemHeight > abHeight * SPINE_BOX_HEIGHT_RATIO;
+                var isSpineBox = isPath && widthMatchesSpine && heightMatchesCover;
 
-        for (var i = workItems.length - 1; i >= 0; i--) {
-            var item = workItems[i];
+                if (isSpineBox && hasSpineChange) {
+                    // 세네카 박스 → 왼쪽을 spineLeftX에 스냅하고 새 세네카 폭으로 리사이즈
+                    var dxToLeft = spineLeftX - bounds[0];
+                    if (Math.abs(dxToLeft) > 0.001) item.translate(dxToLeft, 0);
+                    var sx = (newSpine / itemWidth) * 100;
+                    item.resize(sx, 100, true, true, true, true, false, Transformation.LEFT);
+                    resizedSpine++;
+                    log("  세네카 박스 리사이즈: " + item.typename
+                         + " (" + Math.round(itemWidth/MM*10)/10 + "mm → " + Math.round(newSpine/MM*10)/10 + "mm)");
+                } else {
+                    // 일반 세네카 아이템(텍스트/로고/장식) → 새 세네카 중앙으로 강제 정렬
+                    var dx = newSpineCenterX - itemCenterX;
+                    if (Math.abs(dx) > 0.001) item.translate(dx, 0);
+                    movedSpine++;
+                }
+            }
+        } else if (itemCenterX >= spineRightX) {
+            // ── 앞표지: 통째로 이동 ──
+            item.translate(diff, 0);
+            movedFront++;
+        }
+        // ── 뒤표지: 고정 ──
+
+        if (wasLocked) item.locked = true;
+    }
+
+    // 아웃라인 후 재중앙정렬 (PDF 출력 직전에 호출) — 글리프 바운드 기준 정확 정렬
+    function recenterSpineItemsRecursive(newLeft, newRight, newCenter) {
+        function recurse(item) {
             var wasLocked = item.locked;
             if (wasLocked) item.locked = false;
 
             var bounds = item.geometricBounds;
-            var itemLeft = bounds[0], itemRight = bounds[2];
-            var itemWidth = itemRight - itemLeft;
-            var itemCenterX = (itemLeft + itemRight) / 2;
+            var iw = bounds[2] - bounds[0];
+            var icx = (bounds[0] + bounds[2]) / 2;
+            var isGroup = (item.typename === "GroupItem" && item.pageItems.length > 0);
 
-            if (itemWidth > COVER_W * 0.9) {
-                if (itemCenterX >= spineRightX) {
-                    // 앞표지 쪽 배경 → 이동
-                    item.translate(diff, 0);
-                    movedFront++;
-                } else if (diff > 0) {
-                    // 뒤표지/전체 배경 + 세네카 넓어짐 → 오른쪽으로 확장
-                    var scaleX = (itemWidth + diff) / itemWidth * 100;
-                    item.resize(scaleX, 100, true, true, true, true, true, Transformation.TOPLEFT);
-                    skippedBG++;
-                } else {
-                    skippedBG++;
+            // 와이드: 그룹이면 자식 재귀, 아니면 스킵 (메인 패스에서 이미 처리)
+            if (iw > COVER_W * 0.9) {
+                if (isGroup) {
+                    var wch = [];
+                    for (var ri = 0; ri < item.pageItems.length; ri++) wch.push(item.pageItems[ri]);
+                    for (var rj = wch.length - 1; rj >= 0; rj--) recurse(wch[rj]);
                 }
                 if (wasLocked) item.locked = true;
-                continue;
+                return;
             }
 
-            if (itemCenterX >= spineLeftX && itemCenterX < spineRightX) {
-                if (deleteSpine && newSpineMM <= 3) {
-                    item.remove(); deletedSpine++;
-                } else {
-                    // 세네카 오브젝트: 배경 vs 텍스트/로고 구분
-                    // 배경 판별: 대지 높이의 90% 이상 + 단순 도형(앵커 6개 이하) 또는 이미지
-                    var itemHeight = bounds[1] - bounds[3]; // top - bottom
-                    var abHeight = abTop - abBottom;
-                    var isSpineBG = false;
-
-                    if (itemHeight >= abHeight * 0.9) {
-                        // 높이가 대지 전체를 채움 → 후보
-                        if (item.typename === "PathItem" && item.pathPoints.length <= 6) {
-                            isSpineBG = true; // 단순 도형 (사각형 등)
-                        } else if (item.typename === "PlacedItem" || item.typename === "RasterItem") {
-                            isSpineBG = true; // 이미지
-                        } else if (item.typename === "GroupItem") {
-                            // 그룹 내부가 단순한지 확인 (자식 3개 이하 + 첫 자식이 단순 도형)
-                            if (item.pageItems.length <= 3) {
-                                var first = item.pageItems[0];
-                                if (first && first.typename === "PathItem" && first.pathPoints.length <= 6) {
-                                    isSpineBG = true;
-                                }
-                                if (first && (first.typename === "PlacedItem" || first.typename === "RasterItem")) {
-                                    isSpineBG = true;
-                                }
-                            }
-                        }
-                    }
-
-                    if (isSpineBG && currentSpine > 0) {
-                        // 배경 → 세네카 폭 비율로 리사이즈 + 새 중앙 정렬
-                        var spineScale = newSpine / currentSpine * 100;
-                        var newSpineCenter = spineLeftX + newSpine / 2;
-                        item.resize(spineScale, 100, true, true, true, true, true, Transformation.CENTER);
-                        var nb = item.geometricBounds;
-                        item.translate(newSpineCenter - (nb[0] + nb[2]) / 2, 0);
-                        log("  세네카 배경 리사이즈: " + item.typename);
+            // 새 세네카 영역 안: 재중앙정렬 또는 그룹 재귀
+            if (icx >= newLeft && icx < newRight) {
+                if (isGroup) {
+                    if (hasSpineBGCandidate(item)) {
+                        // 컨테이너 그룹: 자식 재귀
+                        var sch = [];
+                        for (var rk = 0; rk < item.pageItems.length; rk++) sch.push(item.pageItems[rk]);
+                        for (var rl = sch.length - 1; rl >= 0; rl--) recurse(sch[rl]);
                     } else {
-                        // 텍스트/로고 → 중앙 이동만
-                        item.translate(spineShift, 0);
+                        // 단위 그룹 (로고/아웃라인된 텍스트): 그룹째 재중앙정렬
+                        var rgdx = newCenter - icx;
+                        if (Math.abs(rgdx) > 0.001) item.translate(rgdx, 0);
                     }
-                    movedSpine++;
-                    if (wasLocked) item.locked = true;
+                } else {
+                    var rdx = newCenter - icx;
+                    if (Math.abs(rdx) > 0.001) item.translate(rdx, 0);
                 }
-            } else if (itemCenterX >= spineRightX) {
-                item.translate(diff, 0); movedFront++;
-                if (wasLocked) item.locked = true;
-            } else {
-                if (wasLocked) item.locked = true;
             }
+            // 앞표지/뒤표지 영역: 메인 패스에서 처리 완료, 건드리지 않음
+
+            if (wasLocked) item.locked = true;
         }
 
+        var rti = [];
+        for (var ri2 = 0; ri2 < doc.pageItems.length; ri2++) {
+            if (doc.pageItems[ri2].parent.typename === "Layer") {
+                rti.push(doc.pageItems[ri2]);
+            }
+        }
+        for (var rj2 = rti.length - 1; rj2 >= 0; rj2--) {
+            recurse(rti[rj2]);
+        }
+    }
+
+    // 최상위 아이템 (Layer 직속) 수집 후 재귀 처리
+    // hasSpineChange와 무관하게 항상 실행 (세네카 변경 없을 때도 중앙정렬 보정)
+    var topLevelItems = [];
+    for (var ti = 0; ti < doc.pageItems.length; ti++) {
+        if (doc.pageItems[ti].parent.typename === "Layer") {
+            topLevelItems.push(doc.pageItems[ti]);
+        }
+    }
+    log("최상위 아이템: " + topLevelItems.length + "개");
+    for (var tj = topLevelItems.length - 1; tj >= 0; tj--) {
+        processItemRecursive(topLevelItems[tj]);
+    }
+
+    // 대지 크기 변경
+    if (hasSpineChange) {
         var newRight = abLeft + (2 * COVER_W) + newSpine;
         ab.artboardRect = [abLeft, abTop, newRight, abBottom];
         log("대지 변경: " + Math.round(currentWidth / MM) + "mm -> " + Math.round((newRight - abLeft) / MM) + "mm");
     }
 
-    log("앞표지 이동: " + movedFront + "개, 세네카: " + movedSpine + "개, 삭제: " + deletedSpine + "개, 배경: " + skippedBG + "개");
+    log("앞표지 이동: " + movedFront + "개, 세네카 정렬: " + movedSpine + "개, 박스 리사이즈: " + resizedSpine + "개, 삭제: " + deletedSpine + "개, 배경: " + skippedBG + "개");
 
     // 주차수 변경 (아웃라인 전에 실행)
     // 글자 단위 교체로 폰트/스타일 보존
@@ -290,25 +383,50 @@
             try { tf[i].createOutline(); outlineCount++; } catch (e) {}
         }
         log("아웃라인: " + outlineCount + "개");
+
+        // 아웃라인 후 재중앙정렬 — 글리프 바운드 기준으로 PDF에서 정확한 중앙정렬
+        var newSpineLeftXout = abLeft + COVER_W;
+        var newSpineRightXout = newSpineLeftXout + newSpine;
+        recenterSpineItemsRecursive(newSpineLeftXout, newSpineRightXout, newSpineCenterX);
+        log("아웃라인 후 재중앙정렬 완료");
     }
 
-    // PDF 저장 — 고품질 인쇄 프리셋 + 도련 3mm
+    // PDF 저장 — PDF/X-1a:2001 (Japan) 인쇄용 출력
+    // CMYK 강제 + 3mm 도련 (bleedOffsetRect) + OutputIntent (프리셋이 자동 삽입)
+    // TrimBox = 원본 artboard, BleedBox = TrimBox + 3mm
     var pdfFile = new File(outPdfPath);
+
+    // 색상 모드 CMYK 강제 변환 (RGB AI 업로드 시 인쇄용 변환)
+    if (doc.documentColorSpace !== DocumentColorSpace.CMYK) {
+        try {
+            doc.documentColorSpace = DocumentColorSpace.CMYK;
+            log("색상 모드: RGB → CMYK 변환");
+        } catch (e) {
+            log("[경고] CMYK 변환 실패: " + e);
+        }
+    }
+
     var pdfOpts = new PDFSaveOptions();
     try {
-        pdfOpts.pDFPreset = "[고품질 인쇄]";
+        pdfOpts.pDFPreset = "[PDF/X-1a:2001 (Japan)]";
     } catch (e1) {
         try {
-            pdfOpts.pDFPreset = "[High Quality Print]";
+            pdfOpts.pDFPreset = "[PDF/X-1a:2001]";
         } catch (e2) {
-            // 프리셋 없으면 기본값 사용
+            log("[경고] PDF/X-1a 프리셋 없음 — 고품질 인쇄로 폴백");
+            try { pdfOpts.pDFPreset = "[고품질 인쇄]"; } catch (e3) {
+                try { pdfOpts.pDFPreset = "[High Quality Print]"; } catch (e4) {}
+            }
         }
     }
     pdfOpts.preserveEditability = false;
     pdfOpts.generateThumbnails = true;
     pdfOpts.viewAfterSaving = false;
+    // 도련 3mm. 원본 AI 아트워크가 3mm(=8.5039pt)까지만 확장되어 있으므로
+    // BleedBox를 그보다 크게 잡으면(예: 9pt) 아트워크 외곽에 0.5pt 흰 띠가 노출됨.
     pdfOpts.bleedOffsetRect = [BLEED, BLEED, BLEED, BLEED];
     doc.saveAs(pdfFile, pdfOpts);
+
     log("PDF: " + pdfFile.fsName);
 
     // 레이어 잠금 복원 후 닫기

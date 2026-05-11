@@ -146,9 +146,9 @@ def _hwpx_extract_paragraphs(hwpx_path, extract_underline=False, exclude_footnot
 
     ul_ids = _parse_underline_ids(header_xml) if (extract_underline and header_xml) else set()
 
-    # 미주/각주 제거
+    # 미주/각주 제거 (hwpx 실제 태그명: hp:endNote, hp:footNote — 대문자 N)
     section_xml = re.sub(r'<hp:endNote\b.*?</hp:endNote>', '', section_xml, flags=re.DOTALL)
-    section_xml = re.sub(r'<hp:footnote\b.*?</hp:footnote>', '', section_xml, flags=re.DOTALL)
+    section_xml = re.sub(r'<hp:footNote\b.*?</hp:footNote>', '', section_xml, flags=re.DOTALL)
 
     paragraphs = []
     for m in re.finditer(r'<hp:p\b([^>]*)>(.*?)</hp:p>', section_xml, re.DOTALL):
@@ -390,7 +390,9 @@ def _hwp_extract_paragraphs(hwp_path, extract_underline=False, exclude_footnotes
             j = 0
             while j < len(payload) - 1:
                 code = struct.unpack_from('<H', payload, j)[0]
-                if code in (11, 12):
+                # HWP 5.0 ControlChar: 11=TABLE, 12=GSO(그림), 17=FOOTNOTE, 18=ENDNOTE
+                # 표/그림은 본문 일부이므로 제외 대상이 아님. 진짜 각주/미주만 17/18.
+                if code in (17, 18):
                     has_footnote = True
                     break
                 if code < 0x20 and code not in (10, 13):
@@ -405,6 +407,25 @@ def _hwp_extract_paragraphs(hwp_path, extract_underline=False, exclude_footnotes
                             break  # 다음 level 1 만나면 중단
                         if all_recs[rj].get('level') == 3:
                             footnote_l3_set.add(rj)
+
+        # CTRL 11/12 는 footnote/endnote뿐 아니라 표/그림 같은 inline 컨트롤도 포함하는 듯.
+        # 표 셀 안에 영문 본문이 들어있는 케이스(예: 수능특강 21강+)를 보호:
+        # footnote_l3_set 안의 단락 중 "한국어 없는 긴 영문 단락"은 본문으로 간주하여 set에서 제외.
+        _protect = set()
+        for rj in footnote_l3_set:
+            payload = all_recs[rj].get('payload', b'')
+            try:
+                txt = _hwp_decode_paratext(payload)
+            except Exception:
+                continue
+            if len(txt) < 60:
+                continue
+            if re.search(r'[가-힣]', txt):
+                continue
+            alpha = sum(1 for c in txt if c.isalpha() and ord(c) < 128)
+            if alpha >= 30:
+                _protect.add(rj)
+        footnote_l3_set -= _protect
 
     paragraphs = []
     i = 0
@@ -465,32 +486,240 @@ _RE_MANUSCRIPT_HEADER = re.compile(
     r'|빈칸어'                  # "빈칸어휘(문제지)"
     r'|낱말배열'                # "낱말배열(문제지)"
     r'|문장배열'                # "문장배열(문제지)"
+    r'|틀린어법'                # "틀린어법(문제지)" — EBS A1 객관식
     r'|\d+\.\s+어휘\d+단계'    # "1. 어휘1단계_Hard"
     r'|\d+\.\s+내용[일종]'     # "1. 내용일치_Normal", "1. 내용종합_Normal"
+    r'|마더텅\s+고[12]'        # "마더텅 고1 6강 옛날지문" (옛날 워크북 식별 헤더)
+    r'|Reading\s*Power'        # "ReadingPower 유형편완성..." — EBS 리딩파워
+    r'|\d{4}\s*수능특강'        # "2027수능특강 영어(2026) - ..." — EBS 수능특강
+    r'|Exercises\s*$'          # 수능특강 발문 직후 "Exercises" 단독 줄
     r')'
 )
 
 # 지문 번호 구분자
 _RE_BRACKET_NUM = re.compile(r'^\s*\[(\d+)\]\s*$')           # [20]
-_RE_HEADER_NUM = re.compile(r'^\s*\d+\.\s*p\d+-(?:no\.)?(\d+(?:~\d+)?)')  # "1. p2-no.18" or "18. p8-no.41~42"
+# 한글이 들어간 대괄호 발문: "[본문1]", "[다음 글의 ...]"
+_RE_KOREAN_BRACKET = re.compile(r'^\s*\[[^\]]+\]\s*$')
+# 페이지/레슨 마커: 출판사·교재 종류 무관하게 다양한 형식 매칭
+#   p<n>, p.<n>           (모의고사/EBS:  p2, p.82)
+#   L<n>                  (교과서 단순:  L1)
+#   L<n>-p<n>, L<n>-p.<n> (교과서:       L4-p.82)
+#   L<n>-본문<n>           (교과서:       L1-본문1)
+#   U<n>                  (EBS Unit:     U6)
+_RE_PAGE_MARKER = (
+    r'(?:'
+    r'L\d+(?:\s*[-–—]\s*(?:p\.?\d+|본문\d+))?'
+    r'|p\.?\d+'
+    r'|U\d+'
+    r')'
+)
+# 지문 헤더: "[순서.] <페이지/레슨 마커>[-/구분자] [라벨] [<지문번호>][(부가정보)]"
+#   예) "1. p2-no.18", "18. p8-no.41~42",
+#       "1. p8-Example 1", "p66-Example 1",
+#       "3. p86-no.1", "1. p8-Example 1  (정답 1개)",
+#       "1. L4-p.82", "1. L4-p.82  (정답 1개)",
+#       "1. L1-본문1  (정답 1개)"
+# 라벨은 no., Example, Test 등 임의의 영문 토큰 허용 (특정 단어에 의존하지 않음).
+_RE_HEADER_NUM = re.compile(
+    r'^\s*'
+    r'(?:\d+\s*[\.\)]\s*)?'                                  # 선행 순번 "N." 또는 "N)" (있으면)
+    + _RE_PAGE_MARKER +                                       # 페이지/레슨 마커
+    r'\s*[-–—\.]?\s*'                                        # 구분자 (선택)
+    r'(?:no\.\s*|Example\s+|Practice\s+|[A-Za-z]+\.?\s*)?'   # 라벨 (선택)
+    r'(\d+(?:\s*~\s*\d+)?)?'                                 # 지문 번호 (캡처, 선택)
+    r'(?:\s*\([^\)]*\))?'                                    # 트레일링 부가정보 "(정답 1개)" 등 (선택)
+    r'\s*$'
+)
+# Chapter 구분선 (EBS 등): "Chapter 03. 추론적 이해 - 09 빈칸 추론 (1)"
+_RE_CHAPTER_DIVIDER = re.compile(r'^\s*Chapter\s+\d+\.\s', re.IGNORECASE)
+
+# 옛 형식 워크북 헤더 (마더텅 옛 기출 등)
+# "9번" 단독 줄 + "17년 11월 21번" 단독 줄 → "9. p0-no.21" 표준 형식으로 정규화
+_RE_OLD_WB_NUM = re.compile(r'^\s*(\d+)\s*번\s*$')
+_RE_OLD_WB_SOURCE = re.compile(r'^\s*\d+\s*년\s*\d+\s*월\s*(\d+)\s*번\s*$')
+
+
+def _normalize_old_workbook_headers(paragraphs):
+    """
+    옛 마더텅 워크북 형식 헤더를 표준 형식으로 정규화.
+
+    변환:
+        "9번"               → 두 줄 합쳐 "9. p0-no.21" 한 줄로
+        "17년 11월 21번"
+
+    빈 단락이 사이에 끼어있어도 처리. 정상 원고(이미 "1. p2-no.20" 형식)에는
+    매치되지 않으므로 영향 없음.
+    """
+    result = []
+    i = 0
+    n = len(paragraphs)
+    while i < n:
+        m_num = _RE_OLD_WB_NUM.match(paragraphs[i]['text'].strip())
+        if m_num:
+            # 다음 비빈 단락에서 출처(YY년 M월 K번) 패턴 찾기
+            j = i + 1
+            while j < n and not paragraphs[j]['text'].strip():
+                j += 1
+            if j < n:
+                m_src = _RE_OLD_WB_SOURCE.match(paragraphs[j]['text'].strip())
+                if m_src:
+                    wb_num = m_num.group(1)
+                    mock_num = m_src.group(1)
+                    new_text = "%s. p0-no.%s" % (wb_num, mock_num)
+                    result.append({
+                        "text": new_text,
+                        "runs": [{"t": new_text, "ul": False}],
+                    })
+                    i = j + 1
+                    continue
+        result.append(paragraphs[i])
+        i += 1
+    return result
+
+
+# 옛 헤더 정규화 산출물 패턴 ("9. p0-no.21")
+_RE_OLD_NORMALIZED_HEADER = re.compile(r'^\s*\d+\.\s*p0-no\.\d+', re.UNICODE)
+# 정상(잡) 헤더 패턴 ("1. p3-no.21" 등, p0이 아닌 페이지 번호)
+_RE_PRIMARY_HEADER_NONZERO = re.compile(r'^\s*\d+\.\s*p[1-9]\d*-no\.\d+', re.UNICODE)
+
+
+def _strip_secondary_headers_after_old(paragraphs):
+    """
+    옛 헤더가 변환된 이후 본문 안에 끼어있는 정상 형식 헤더("1. p3-no.21" 등)를 제거.
+
+    옛 마더텅 원고에는 본 보기 다음에 의미 없는 추가 헤더가 끼어있어 두 번째
+    프레임브레이크가 잘못 들어가는 문제가 있다. 옛 헤더가 한 번이라도 변환된
+    원고에서만 동작하므로 정상 원고("1. p2-no.20" 형식만 있음)에는 매치되지 않음.
+    """
+    has_old = False
+    result = []
+    for p in paragraphs:
+        text = p['text'].strip()
+        if _RE_OLD_NORMALIZED_HEADER.match(text):
+            has_old = True
+            result.append(p)
+            continue
+        if has_old and _RE_PRIMARY_HEADER_NONZERO.match(text):
+            # 옛 블록 안에 끼어있는 잡 헤더 제거
+            continue
+        result.append(p)
+    return result
+
+
+# 본 보기 (A)~(Z) 패턴
+_RE_CHOICE = re.compile(r'^\s*\([A-Z]\)\s')
+# 원문자 ① ~ ⑳ 시작 또는 포함
+_RE_CIRCLED_START = re.compile(r'^[\s\(]*[①-⑳⓵-⓿❶-❿]')
+
+
+def _wrap_hadan_with_spaces(paragraphs):
+    """
+    옛 헤더 변환된 원고에서 본 보기 블록이 끝난 직후의 첫 비빈 영어 단락
+    (= 문장 배열 하단의 '주어진 문장')에 양쪽 9칸 공백을 둘러싼다.
+
+    정상 원고는 원본 .docx 단계에서 이미 양쪽 공백이 있어 has3PlusGaps을 트리거
+    하지만, 옛 마더텅 원고는 공백 없이 평문으로 들어있어 BTM 인식이 안 된다.
+    이 함수는 옛 헤더가 한 번이라도 변환된 원고에서만 동작하므로 정상 원고에
+    영향이 없다.
+
+    상태:
+        IDLE / AFTER_HEADER / IN_CHOICES / AFTER_CHOICES
+    """
+    if not any(_RE_OLD_NORMALIZED_HEADER.match(p['text'].strip()) for p in paragraphs):
+        return paragraphs
+
+    result = []
+    state = 'IDLE'
+
+    for p in paragraphs:
+        text = p['text'].strip()
+        is_header = bool(_RE_OLD_NORMALIZED_HEADER.match(text)) or \
+                    bool(_RE_PRIMARY_HEADER_NONZERO.match(text))
+        is_choice = bool(_RE_CHOICE.match(text))
+        is_empty = not text
+        is_circled_start = bool(_RE_CIRCLED_START.match(text))
+
+        if is_header:
+            state = 'AFTER_HEADER'
+            result.append(p)
+            continue
+
+        if state == 'AFTER_HEADER' and is_choice:
+            state = 'IN_CHOICES'
+            result.append(p)
+            continue
+
+        if state == 'IN_CHOICES':
+            if is_choice:
+                result.append(p)
+                continue
+            if is_empty:
+                state = 'AFTER_CHOICES'
+                result.append(p)
+                continue
+            # 보기 블록 안에 갑자기 다른 패턴 → 안전하게 종료
+            state = 'AFTER_CHOICES'
+
+        if state == 'AFTER_CHOICES':
+            if is_empty:
+                result.append(p)
+                continue
+            # 헤더면 다음 지문 시작 — wrap 없이 통과
+            if is_header:
+                state = 'AFTER_HEADER'
+                result.append(p)
+                continue
+            # 원문자(①②) 시작 단락은 주어진 문장 아니라 BTM_T 본문 — 그대로
+            if is_circled_start:
+                state = 'IDLE'
+                result.append(p)
+                continue
+            # (A)~(Z) — 주어진 문장 없이 바로 변형 보기 시작 — 그대로 BTM_T 처리에 맡김
+            if is_choice:
+                state = 'IDLE'
+                result.append(p)
+                continue
+            # 그 외 영어 평문 단락 → 주어진 문장. 양쪽 9칸 공백 추가해 has3PlusGaps 트리거
+            wrapped_text = "         " + p['text'] + "        "
+            new_runs = ([{"t": "         ", "ul": False}] +
+                        list(p.get('runs', [])) +
+                        [{"t": "        ", "ul": False}])
+            result.append({"text": wrapped_text, "runs": new_runs})
+            state = 'IDLE'
+            continue
+
+        result.append(p)
+
+    return result
 
 
 def _strip_manuscript_headers(paragraphs):
-    """원고 앞부분의 헤더 줄 제거. 첫 지문 시작([N] 또는 번호 헤더)까지 스킵."""
+    """원고 앞부분의 헤더 줄 제거.
+
+    원고 구조: [책 제목 + 발문 + 섹션 라벨 + (선택적 부제목)] → [본문 마커 + 본문] 반복
+    본문 마커 = 지문 헤더(`1. L4-p.82`, `1. p2-no.20`, `1. L1-본문1` 등) 또는 대괄호 발문(`[본문1]`, `[20]`).
+
+    첫 본문 마커가 나오기 전까지의 모든 단락 = 헤더 영역으로 간주하고 제거.
+    이렇게 단순화하면 책 제목/발문/섹션 라벨/부제목이 어떤 형식이든 (출판사/교재 변경 무관) 자동 처리됨.
+    본문 마커가 끝까지 없는 STEP은 fallback으로 헤더 패턴 매칭을 사용.
+    """
+    # 1) 첫 본문 마커 찾기 → 그 앞 모두 헤더 영역으로 간주
+    for i, p in enumerate(paragraphs):
+        text = p['text'].strip()
+        if not text:
+            continue
+        if _RE_BRACKET_NUM.match(text) or _RE_HEADER_NUM.match(text) or _RE_KOREAN_BRACKET.match(text):
+            return paragraphs[i:]
+
+    # 2) 본문 마커가 끝까지 없음 → fallback: 헤더 패턴 매칭으로 스킵
     start_idx = 0
     for i, p in enumerate(paragraphs):
         text = p['text'].strip()
         if not text:
             continue
-        # 지문 시작 감지
-        if _RE_BRACKET_NUM.match(text) or _RE_HEADER_NUM.match(text):
-            start_idx = i
-            break
-        # 헤더 패턴이면 스킵
         if _RE_MANUSCRIPT_HEADER.match(text):
             start_idx = i + 1
             continue
-        # 헤더도 아니고 지문 시작도 아닌 첫 줄 → 여기서 시작
         start_idx = i
         break
 
@@ -508,9 +737,11 @@ def _extract_question_numbers(paragraphs, step_key):
             continue
         m = _RE_HEADER_NUM.match(text)
         if m:
-            # "41~42" 같은 범위는 첫 번호만 사용
-            num_str = m.group(1).split('~')[0]
-            numbers.append(int(num_str))
+            captured = m.group(1)
+            if captured:
+                # "41~42" 같은 범위는 첫 번호만 사용
+                num_str = captured.split('~')[0]
+                numbers.append(int(num_str))
     return numbers
 
 
@@ -533,6 +764,15 @@ _RE_LESSON_MARKER = re.compile(r'^\s*\[L\d+[-—]\d+\]\s*$')  # [L1-9], [L2-3] �
 def _strip_lesson_markers(paras):
     """교과서 원고의 [L1-9] 형식 단원 구분 마커 제거."""
     return [p for p in paras if not _RE_LESSON_MARKER.match(p['text'])]
+
+
+def _strip_chapter_dividers(paras):
+    """EBS 리딩파워 등의 챕터 구분선("Chapter 03. ...")을 모두 제거.
+
+    원고 곳곳에 끼어있는 단순 구분선이며 지문 본문이 아니라서 그대로 두면
+    프레임 브레이크가 잘못 들어가거나 본문에 흡수된다.
+    """
+    return [p for p in paras if not _RE_CHAPTER_DIVIDER.match(p['text'])]
 
 
 # 정답 구간 감지 패턴
@@ -608,10 +848,15 @@ def _filter_short_questions(paras, short_numbers):
                 result.append(p)
                 continue
 
-        # 헤더 패턴: "1. p2-no.18" 또는 "25. p8-no.43~45"
-        m2 = re.match(r'^\s*\d+\.\s*p\d+-(?:no\.)?(\d+(?:~\d+)?)', text)
+        # 헤더 패턴: "1. p2-no.18", "25. p8-no.43~45", "1. p8-Example 1" 등
+        m2 = _RE_HEADER_NUM.match(text)
         if m2:
             num_str = m2.group(1)
+            if num_str is None:
+                # 지문 번호가 캡처되지 않는 새 형식 헤더 (예: "1. L4-p.82") — 짤지문 매칭 대상 아님
+                skip = False
+                result.append(p)
+                continue
             if '~' in num_str:
                 first_num = int(num_str.split('~')[0])
             else:
@@ -696,15 +941,62 @@ _RE_STEP3_SINGLE_ANSWER = re.compile(
     r'^\s*[①②③④⑤](?:\s*,\s*[①②③④⑤])*\s*$'
 )
 
+# Step3 유형 태그: "[유형 1] 내용파악 & 대의파악" / "[유형 3] 빈칸추론" 등 섹션 라벨
+_RE_STEP3_TYPE_TAG = re.compile(r'^\s*\[\s*유형\s*\d+\s*\]')
+# 유형 부제: "(심경, 분위기, 지칭, 주제, ...)" 같이 한글 콤마 나열만 있는 한 줄
+# - 괄호로 둘러싸이고
+# - 한글 + 콤마(,)로만 구성된 부제
+_RE_STEP3_TYPE_SUBTAG = re.compile(
+    r'^\s*\(\s*[가-힣\s,/&·]+\s*\)\s*$'
+)
+
+
+def _strip_step3_type_tags(paras):
+    """Step3 원고에서 유형 섹션 태그/부제를 모두 제거.
+
+    예) "[유형 1] 내용파악 & 대의파악", "(심경, 분위기, 지칭, 주제, 제목, 주장, 요지, 내용일치)",
+         "[유형 4] 지문 흐름파악", "(순서배열, 문장넣기, 무관한문장)" 등.
+    이 줄들은 문제와 무관한 분류 라벨이므로 발문/지문/선지/조건/보기 구조에 끼어
+    잘못된 단락스타일이 매핑되지 않도록 사전에 제거한다.
+    """
+    out = []
+    for p in paras:
+        text = p['text'].strip()
+        if _RE_STEP3_TYPE_TAG.match(text):
+            continue
+        if _RE_STEP3_TYPE_SUBTAG.match(text):
+            # 단, 짧고 (괄호 안에 한글 토큰 2개 이상 콤마로 나열) 구조여야만 부제로 간주
+            inner = text.strip()[1:-1]
+            tokens = [t.strip() for t in inner.replace('/', ',').split(',') if t.strip()]
+            # 한글 토큰이 두 개 이상이면 부제로 판단 (단일 어휘 주석은 보존)
+            kor_tokens = [t for t in tokens if any('가' <= c <= '힣' for c in t)]
+            if len(kor_tokens) >= 2:
+                continue
+        out.append(p)
+    return out
+
 
 def _strip_step3_answers(paras):
     """
     Step3 hwp에서 정답+해설 줄 제거.
     제거 대상:
-    1. "②: ⓑ making → make (해설...)" — 원문자+콜론+해설
-    2. ": (B) broken → alive..." — 콜론으로 시작하는 해설 이어짐
-    3. "⑤" 또는 "②, ③" — 단독 정답번호 (문제 바로 다음 줄)
+    1. "정답 및 해설" / "빠른 정답 찾기" / "정답지" 단독 헤더 → 그 이후 모든 단락 cut
+       (MIXED 원고는 후반부에 정답해설 섹션이 통째로 붙어 있음)
+    2. "②: ⓑ making → make (해설...)" — 원문자+콜론+해설
+    3. ": (B) broken → alive..." — 콜론으로 시작하는 해설 이어짐
+    4. "⑤" 또는 "②, ③" — 단독 정답번호 (문제 바로 다음 줄)
     """
+    # 섹션 절단: 정답해설 섹션 헤더 발견 시 그 위치부터 끝까지 drop
+    section_headers = ('정답 및 해설', '빠른 정답 찾기', '정답지')
+    cut_idx = None
+    for i, p in enumerate(paras):
+        text = p['text'].strip()
+        if text in section_headers:
+            cut_idx = i
+            break
+    if cut_idx is not None:
+        paras = paras[:cut_idx]
+
     result = []
     for p in paras:
         text = p['text'].strip()
@@ -718,13 +1010,103 @@ def _strip_step3_answers(paras):
     return result
 
 
+# Step3 5지선다 발문 패턴: '... 것은?' / '... 것을 두 개 고르시오' / '... 옳은 것은?' 등
+_RE_STEP3_CHOICE_QUESTION = re.compile(
+    r'^\s*\d+\.\s.*?(?:것은\??|것을\s+두\s*개\s*고르시오\.?|옳은\s*것은\??|적절한\s*곳은\??)\s*$'
+)
+# 5지선다에서 제외할 발문 (빈칸 채우기/영작 서술형/어법 객관식)
+_RE_STEP3_NON_CHOICE = re.compile(
+    r'요약하고자\s*한다|영어로\s*완성|찾아\s*쓰시오|바르게\s*고치시오|어형\s*변화'
+)
+# 선지가 지문 inline에 ①②③④⑤로 박혀 있는 발문 (자동 prepend skip)
+# - "다음 글의 밑줄 친 부분 중 ... 어법상/문맥상 ... 적절하지 않은 것은?"
+# - "다음 글의 흐름과 관계 없는 문장은?"
+# 이런 발문은 파서가 자동으로 ①~⑤를 추가하면 지문 첫 글자에 ① 중복 발생
+_RE_STEP3_INLINE_CHOICE = re.compile(
+    r'밑줄\s*친\s*부분\s*중|흐름과\s*관계\s*없는\s*문장|어법상\s*틀린\s*것'
+)
+# 단순 번호 발문 감지 (다음 발문 만나면 중단)
+_RE_STEP3_QUESTION_LIKE = re.compile(r'^\s*\d+\.\s')
+_CIRCLED_DIGITS = ['①', '②', '③', '④', '⑤']
+
+
+def _add_step3_choice_numbers(paras):
+    """Step3 hwp의 5지선다 자동번호(①②③④⑤) 텍스트화.
+
+    hwp 파일은 5지선다 선지에 ①②③④⑤를 AutoNumbering 컨트롤로 표시하므로
+    텍스트만 추출하면 번호가 누락된다 (어법 객관식처럼 본문에 직접 타이핑한 경우는
+    이미 텍스트에 ①이 들어와 있어 영향 없음).
+
+    구조 인식 방식:
+    1. "밑줄 친 부분 중" / "흐름과 관계 없는 문장" 류 발문 → 선지가 지문 inline에
+       ①~⑤로 박혀 있음 → 자동 prepend skip (지문 첫 글자에 ① 중복 방지)
+    2. 그 외 5지선다 발문 → 발문 직후 시퀀스: 지문(영문 통문장) + 선지×5
+       → 첫 영문 단락(지문)은 skip, 그 다음 5개 단락에 ①②③④⑤ prepend
+    3. 빈칸 요약/영작 서술형/어법 고치기 등은 제외.
+    """
+    i = 0
+    n = len(paras)
+    while i < n:
+        text = (paras[i].get('text', '') or '').strip()
+        if not _RE_STEP3_CHOICE_QUESTION.match(text):
+            i += 1
+            continue
+        if _RE_STEP3_NON_CHOICE.search(text):
+            i += 1
+            continue
+        # 선지가 지문 inline에 박힌 발문 → 자동 prepend skip
+        if _RE_STEP3_INLINE_CHOICE.search(text):
+            i += 1
+            continue
+
+        # 발문 직후 첫 영문 단락(지문) skip 후 5개 단락에 ①②③④⑤ prepend
+        # (지문은 영문 알파벳 시작 + 한글 미포함 단락. 단락 1개만 skip)
+        saw_passage = False
+        added = 0
+        j = i + 1
+        while j < n and added < 5:
+            t_j = (paras[j].get('text', '') or '').strip()
+            if not t_j:
+                j += 1
+                continue
+            # 이미 ①~⑤로 시작하면 중단 (어법 객관식이거나 정상 입력된 경우)
+            if t_j[0] in _CIRCLED_DIGITS:
+                break
+            # 다음 발문, 본문 마커([Gateway]/[숫자]), 본문 시작 ※ 만나면 중단
+            if _RE_STEP3_QUESTION_LIKE.match(t_j):
+                break
+            if re.match(r'^\[(?:[Gg]ateway|\d+)\]$', t_j):
+                break
+            if t_j.startswith('※'):
+                break
+            # 첫 영문 단락 = 지문 → 1회 skip
+            if not saw_passage and re.match(r'^[A-Za-z]', t_j) and not re.search(r'[가-힣]', t_j):
+                saw_passage = True
+                j += 1
+                continue
+            mark = _CIRCLED_DIGITS[added]
+            paras[j]['text'] = mark + paras[j]['text']
+            runs = paras[j].get('runs')
+            if isinstance(runs, list):
+                runs.insert(0, {'t': mark, 'ul': False})
+            added += 1
+            j += 1
+        i = j if added > 0 else i + 1
+    return paras
+
+
 def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
-                        short_questions, combined_questions, extract_underline=True):
+                        short_questions, combined_questions, extract_underline=True,
+                        step3_exclude_footnotes=True):
     """
     Step3 폴더 → 지문별 단락 목록.
     파일명: "고1 25년 9월 20번.hwp" 형태.
     반환: {"normal": [...], "short": [...]}
     각 항목: {"question_num": "20", "code": "250920", "paragraphs": [...]}
+
+    step3_exclude_footnotes: True(기본) → level 1만 (정답/해설 footnote 완전 제거).
+                             False → footnote_l3_set만 제외하고 level 3 (표 셀 본문 등) 유지.
+                             수능특강 21강+처럼 표 셀에 본문이 있는 케이스에 False 사용.
     """
     if not os.path.isdir(step3_dir):
         return {"normal": [], "short": []}
@@ -778,9 +1160,14 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
         if fpath.lower().endswith('.docx'):
             paras = _docx_extract_paragraphs(fpath, extract_underline)
         else:
-            paras = _hwp_extract_paragraphs(fpath, extract_underline, exclude_footnotes=True)
+            paras = _hwp_extract_paragraphs(fpath, extract_underline,
+                                            exclude_footnotes=step3_exclude_footnotes)
         # Step3 정답/해설 줄 제거 (level 3 제외 후에도 level 1에 남은 정답 줄 처리)
         paras = _strip_step3_answers(paras)
+        # Step3 유형 섹션 태그 제거 ("[유형 1] ...", "(심경, 분위기, ...)")
+        paras = _strip_step3_type_tags(paras)
+        # 5지선다 자동번호(①②③④⑤) 텍스트화 — hwp AutoNumbering 누락 보완
+        paras = _add_step3_choice_numbers(paras)
         code = f"{yy}{mm}{str(q_num).zfill(2)}"
 
         target_list.append({
@@ -797,7 +1184,8 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
 
     # 교과서 Step3: 번호 없는 hwpx 파일 처리 (normal/short가 모두 비어있을 때)
     if not normal_items and not short_items:
-        textbook_paras = []
+        # 후보 파일 수집
+        candidate_files = []
         for fname_raw in sorted(os.listdir(step3_dir)):
             fname = _nfc(fname_raw)
             if not fname.endswith('.hwp') and not fname.endswith('.hwpx') and not fname.endswith('.docx'):
@@ -806,12 +1194,23 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
                 continue  # 이미 위에서 처리 대상이었던 파일
             if fname_raw.startswith('.'):
                 continue
+            candidate_files.append(fname_raw)
+        # MIXED 파일이 있으면 그것만 사용 (통합본 우선)
+        mixed_files = [f for f in candidate_files if 'MIXED' in _nfc(f).upper()]
+        if mixed_files:
+            candidate_files = mixed_files
+
+        textbook_paras = []
+        for fname_raw in candidate_files:
             fpath = os.path.join(step3_dir, fname_raw)
             if fpath.lower().endswith('.docx'):
                 paras = _docx_extract_paragraphs(fpath, extract_underline)
             else:
-                paras = _hwp_extract_paragraphs(fpath, extract_underline, exclude_footnotes=True)
+                paras = _hwp_extract_paragraphs(fpath, extract_underline,
+                                                exclude_footnotes=step3_exclude_footnotes)
             paras = _strip_step3_answers(paras)
+            paras = _strip_step3_type_tags(paras)
+            paras = _add_step3_choice_numbers(paras)
             textbook_paras.extend(paras)
         if textbook_paras:
             normal_items.append({
@@ -926,6 +1325,16 @@ def parse_manuscript_folder(manuscript_dir, config, grade, year, month, log=None
             log(f"[파서] 미지원 형식: {ext}")
             continue
 
+        # 옛 형식 워크북 헤더("9번"/"17년 11월 21번") → 표준 형식으로 정규화
+        # 정상 원고에는 매치되지 않으므로 안전
+        paras = _normalize_old_workbook_headers(paras)
+        # 옛 헤더 변환 후 본문에 끼어있는 잡 헤더 제거
+        paras = _strip_secondary_headers_after_old(paras)
+        # 챕터 구분선 제거 (EBS 리딩파워 등). 다른 원고에는 매치되지 않음
+        paras = _strip_chapter_dividers(paras)
+        # 본 보기 다음 주어진 문장에 양쪽 공백 둘러싸기 (정상 원고 형태 매칭)
+        paras = _wrap_hadan_with_spaces(paras)
+
         short_nums = mockexam.get('short_questions', [])
 
         # A1 특수 처리: "어휘1단계" / "어휘2단계" 로 분리
@@ -981,6 +1390,7 @@ def parse_manuscript_folder(manuscript_dir, config, grade, year, month, log=None
             mockexam.get('normal_questions', []),
             mockexam.get('short_questions', []),
             mockexam.get('combined_questions', {}),
+            step3_exclude_footnotes=config.get('step3_exclude_footnotes', True),
         )
         result["steps"]["step3"] = {
             "normal": step3_data["normal"],

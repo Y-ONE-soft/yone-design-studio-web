@@ -1,19 +1,116 @@
+import errno
 import io
 import json
 import os
 import shutil
 import threading
+import time
 import uuid
 
 from flask import (Flask, Response, jsonify, render_template,
                    request, send_file, stream_with_context,
                    session, redirect, url_for)
 from functools import wraps
+from jinja2 import FileSystemLoader
 
 import config
 
+# ── shutil.copy2 fast-path 패치 ───────────────────────────────────
+# Google Drive 가상 마운트나 dataless 파일을 shutil.copy2로 복사할 때,
+# macOS zero-copy 시스템콜(fcopyfile)이 EDEADLK를 그대로 raise해서
+# 엔진 작업이 중단되는 문제 방지. EDEADLK/EAGAIN/EINTR이 fast-path에서
+# 발생하면 _GiveupOnFastCopy로 변환해 shutil이 자동으로 일반 read/write
+# copy로 fallback하게 한다. 이 패치는 글로벌이라 모든 엔진의 copy2 호출에
+# 동일 효과.
+if hasattr(shutil, "_fastcopy_fcopyfile") and hasattr(shutil, "_GiveupOnFastCopy"):
+    _orig_fastcopy_fcopyfile = shutil._fastcopy_fcopyfile
+    def _patched_fastcopy_fcopyfile(fsrc, fdst, flags):
+        try:
+            return _orig_fastcopy_fcopyfile(fsrc, fdst, flags)
+        except OSError as e:
+            if e.errno in (errno.EDEADLK, errno.EAGAIN, errno.EINTR):
+                raise shutil._GiveupOnFastCopy(e)
+            raise
+    shutil._fastcopy_fcopyfile = _patched_fastcopy_fcopyfile
+
+# 다층 fallback — fast-path 패치 후에도, fallback의 일반 read/write copy 안에서
+# read syscall 자체가 매번 EDEADLK인 경우(GDrive 가상 마운트의 알려진 패턴)는
+# 같은 프로세스 내 retry로는 lock이 풀리지 않는다. 이때 별도 프로세스(/bin/cp,
+# /usr/bin/ditto)로 새 fd를 열어 우회한다. cp/ditto는 macOS의 OS-level 도구라
+# 클라우드 가상 파일에 더 robust.
+import subprocess as _subprocess
+
+def _via_subprocess_copy(src, dst):
+    src_s = os.fspath(src)
+    dst_s = os.fspath(dst)
+    if os.path.isdir(dst_s):
+        dst_s = os.path.join(dst_s, os.path.basename(src_s))
+    last = None
+    for cmd in (["/bin/cp", "-p", src_s, dst_s],
+                ["/usr/bin/ditto", src_s, dst_s]):
+        try:
+            r = _subprocess.run(cmd, capture_output=True, timeout=180)
+            if r.returncode == 0:
+                return dst_s
+            stderr = r.stderr.decode("utf-8", "replace").strip()
+            last = OSError("external copy failed: %s rc=%d %s" %
+                           (cmd[0], r.returncode, stderr))
+        except Exception as e:
+            last = e
+    raise last if last else OSError("subprocess copy fallback failed")
+
+
+def _retry_then_subprocess(orig, *args, **kwargs):
+    last_err = None
+    for attempt in range(3):
+        try:
+            return orig(*args, **kwargs)
+        except OSError as e:
+            if e.errno not in (errno.EDEADLK, errno.EAGAIN, errno.EINTR):
+                raise
+            last_err = e
+            time.sleep(0.1 * (attempt + 1))
+    src = args[0] if args else kwargs.get("src")
+    dst = args[1] if len(args) > 1 else kwargs.get("dst")
+    try:
+        return _via_subprocess_copy(src, dst)
+    except Exception:
+        raise last_err  # 원본 EDEADLK를 그대로 surfacing
+
+
+_orig_copy2     = shutil.copy2
+_orig_copy      = shutil.copy
+_orig_copyfile  = shutil.copyfile
+
+def _patched_copy2(*a, **k):    return _retry_then_subprocess(_orig_copy2, *a, **k)
+def _patched_copy(*a, **k):     return _retry_then_subprocess(_orig_copy, *a, **k)
+def _patched_copyfile(*a, **k): return _retry_then_subprocess(_orig_copyfile, *a, **k)
+
+shutil.copy2    = _patched_copy2
+shutil.copy     = _patched_copy
+shutil.copyfile = _patched_copyfile
+
+
 # ── 인증 설정 ──────────────────────────────────────────────────────
-SITE_PASSWORD = "yone2026"  # 원하는 비밀번호로 변경
+# 사용자 계정 (필요 시 비밀번호/아이디 변경)
+USERS = {
+    "admin":     {"password": "gPwlsldnjs.",    "role": "admin"},
+    "assistant": {"password": "assistant2026",  "role": "assistant"},
+}
+
+# 조교(assistant)가 접근할 수 없는 경로 — 목업/채팅
+ASSISTANT_BLOCKED_PATHS = ("/mockup", "/chat")
+ASSISTANT_BLOCKED_API_PREFIXES = ("/api/mockup/",)
+
+def _is_blocked_for_assistant(path):
+    for p in ASSISTANT_BLOCKED_PATHS:
+        if path == p or path.startswith(p + "/"):
+            return True
+    for p in ASSISTANT_BLOCKED_API_PREFIXES:
+        if path.startswith(p):
+            return True
+    return False
+
 import core.job_manager as jm
 from core.indesign import runner as indesign
 from engines import registry
@@ -23,20 +120,102 @@ _SCHOOLS_FILE  = os.path.join(_DATA_DIR, "schools.json")
 _SUBJECTS_FILE = os.path.join(_DATA_DIR, "subjects.json")
 
 
+# JSON 캐시 — invalidation 기반.
+# 과거 mtime 비교 방식은 매 요청마다 stat syscall이 필요해서, werkzeug 리로더와
+# 다수 요청 스레드가 동시에 같은 파일을 stat/open하면서 macOS APFS가
+# EDEADLK(Errno 11)를 반환하는 일이 잦았다. 이제는 한 번 로드한 값을 메모리에
+# 영구 보관하고, _save_* 시 캐시를 직접 갱신한다(파일 외부 변경은 반영 안 됨).
+_json_cache = {}            # path -> data
+_json_cache_lock = threading.Lock()
+
+
+def _read_json_cached(path, default):
+    """디스크 read는 첫 호출과 invalidation 직후에만 발생.
+    EDEADLK/EAGAIN/EINTR은 짧은 backoff로 5회 재시도하고, 그래도 실패하면
+    캐시에 저장하지 않고 default를 반환해 페이지가 깨지지 않도록 한다.
+    """
+    with _json_cache_lock:
+        if path in _json_cache:
+            return _json_cache[path]
+        if not os.path.exists(path):
+            _json_cache[path] = default
+            return default
+        last_err = None
+        for attempt in range(5):
+            try:
+                with open(path, encoding="utf-8") as f:
+                    data = json.load(f)
+                _json_cache[path] = data
+                return data
+            except OSError as e:
+                if e.errno not in (errno.EDEADLK, errno.EAGAIN, errno.EINTR):
+                    raise
+                last_err = e
+                time.sleep(0.05 * (attempt + 1))
+        print("[_read_json_cached] all retries failed for %s: %s" % (path, last_err))
+        return default
+
+
+def _invalidate_json_cache(path):
+    with _json_cache_lock:
+        _json_cache.pop(path, None)
+
+
 def _load_schools():
-    with open(_SCHOOLS_FILE, encoding="utf-8") as f:
-        return json.load(f)
+    return _read_json_cached(_SCHOOLS_FILE, [])
 
 def _save_schools(data):
-    with open(_SCHOOLS_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+    """원자적 쓰기 + 캐시 즉시 갱신.
+    임시 파일에 쓰고 os.replace로 atomic rename하면 read 스레드가 partial
+    JSON을 만날 일이 없고, 동일 lock 안에서 캐시도 갱신해 디스크 재read를
+    유발하지 않는다.
+    """
+    os.makedirs(_DATA_DIR, exist_ok=True)
+    tmp = _SCHOOLS_FILE + ".tmp"
+    with _json_cache_lock:
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        os.replace(tmp, _SCHOOLS_FILE)
+        _json_cache[_SCHOOLS_FILE] = data
 
 def _load_subjects():
-    with open(_SUBJECTS_FILE, encoding="utf-8") as f:
-        return json.load(f)
+    return _read_json_cached(_SUBJECTS_FILE, [])
+
+
+# 디스크 file open 재시도 — macOS APFS가 동시 open 시 간헐적으로 반환하는
+# EDEADLK/EAGAIN/EINTR을 흡수한다. 정적 파일 서빙, 임의 read 등 jinja 외 경로에서도 사용.
+_RETRY_ERRNOS = (errno.EDEADLK, errno.EAGAIN, errno.EINTR)
+
+
+def _retry_on_edeadlk(fn, *args, **kwargs):
+    last_err = None
+    for attempt in range(5):
+        try:
+            return fn(*args, **kwargs)
+        except OSError as e:
+            if e.errno not in _RETRY_ERRNOS:
+                raise
+            last_err = e
+            time.sleep(0.05 * (attempt + 1))
+    raise last_err
+
+
+class _RetryingFileSystemLoader(FileSystemLoader):
+    """Jinja FileSystemLoader.get_source를 EDEADLK retry로 감싼다.
+    TEMPLATES_AUTO_RELOAD=True 환경에서 다수 동시 요청이 같은 .html을
+    stat/open하다가 macOS APFS가 Errno 11로 거부할 때 페이지가 500으로 깨지는
+    문제 방지. 정상 캐싱/auto_reload 동작은 그대로 유지된다.
+    """
+    def get_source(self, environment, template):
+        return _retry_on_edeadlk(super().get_source, environment, template)
+
 
 app = Flask(__name__)
 app.secret_key = "yone-studio-secret-key-2026"
+app.config["TEMPLATES_AUTO_RELOAD"] = True
+app.jinja_loader = _RetryingFileSystemLoader(
+    os.path.join(os.path.dirname(__file__), "templates")
+)
 os.makedirs(config.JOBS_DIR, exist_ok=True)
 
 
@@ -55,31 +234,40 @@ def login_required(f):
 def login_page():
     error = None
     if request.method == "POST":
+        username = request.form.get("username", "").strip()
         pw = request.form.get("password", "")
-        if pw == SITE_PASSWORD:
+        user = USERS.get(username)
+        if user and user["password"] == pw:
             session["authenticated"] = True
+            session["username"] = username
+            session["role"] = user["role"]
             return redirect("/")
-        error = "비밀번호가 틀렸습니다"
+        error = "아이디 또는 비밀번호가 틀렸습니다"
     return '''
     <!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>로그인 — Y.ONE STUDIO</title>
+    <title>로그인 — Y.ONE DESIGN</title>
     <style>body{background:#111;color:#fff;font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}
     .box{background:#1a1a1a;padding:40px;border-radius:16px;text-align:center;min-width:280px}
-    h2{margin:0 0 24px;font-size:18px}
-    input{width:100%%;box-sizing:border-box;padding:12px;border:1px solid #444;border-radius:8px;background:#111;color:#fff;font-size:14px;margin-bottom:12px;outline:none}
-    button{width:100%%;padding:12px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer}
+    h2{margin:0 0 24px;font-size:18px;letter-spacing:.5px}
+    h2 span{color:#6366f1}
+    .field{margin-bottom:14px;text-align:left}
+    .field label{display:block;font-size:12px;color:#9aa0a6;margin-bottom:6px;font-weight:500}
+    input{width:100%%;box-sizing:border-box;padding:12px;border:1px solid #444;border-radius:8px;background:#111;color:#fff;font-size:14px;outline:none}
+    button{width:100%%;padding:12px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;margin-top:4px}
     .err{color:#f87171;font-size:12px;margin-bottom:8px}</style></head>
-    <body><div class="box"><h2>Y.ONE STUDIO</h2>
+    <body><div class="box"><h2>Y.ONE <span>DESIGN</span></h2>
     ''' + (f'<div class="err">{error}</div>' if error else '') + '''
-    <form method="POST"><input type="password" name="password" placeholder="비밀번호" autofocus>
+    <form method="POST">
+    <div class="field"><label>아이디</label><input type="text" name="username" autofocus autocomplete="username"></div>
+    <div class="field"><label>비밀번호</label><input type="password" name="password" autocomplete="current-password"></div>
     <button type="submit">로그인</button></form></div></body></html>
     '''
 
 
 @app.route("/logout")
 def logout_page():
-    session.pop("authenticated", None)
+    session.clear()
     return redirect("/login")
 
 
@@ -88,10 +276,26 @@ def check_auth():
     # 로그인 페이지와 static 파일은 인증 불필요
     if request.path in ("/login", "/logout") or request.path.startswith("/static/"):
         return
+    # [임시 진단] /debug/* 인증 우회
+    if request.path.startswith("/debug/"):
+        return
     if not session.get("authenticated"):
         if request.is_json or request.path.startswith("/api/") or request.path.startswith("/chat/send") or request.path.startswith("/chat/watch"):
             return jsonify({"error": "unauthorized"}), 401
         return redirect("/login")
+    # 조교 권한 제한: 목업/채팅 접근 불가
+    if session.get("role") == "assistant" and _is_blocked_for_assistant(request.path):
+        if request.is_json or request.path.startswith("/api/") or request.path.startswith("/chat/send") or request.path.startswith("/chat/watch"):
+            return jsonify({"error": "forbidden"}), 403
+        return redirect("/")
+
+@app.after_request
+def add_no_cache(response):
+    if "text/html" in response.content_type:
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+    response.headers["X-Served-By"] = "flask-live"
+    return response
 
 # 목업 세션 (token → {front_img, back_img})
 _mockup_sessions = {}
@@ -256,6 +460,52 @@ def api_tw_files():
     publisher = request.args.get("publisher", "")
     lesson_folder = request.args.get("lesson_folder", "")
     return jsonify(TextbookWorkbookEngine.list_files(subject, publisher, lesson_folder))
+
+
+# ── EBS 리딩파워 워크북 폴더 탐색 API ─────────────────────────────────────────
+
+@app.route("/api/ebs-workbook/units")
+def api_ebs_units():
+    from engines.ebs_workbook.engine import EbsWorkbookEngine
+    return jsonify(EbsWorkbookEngine.list_units())
+
+
+@app.route("/api/ebs-workbook/files")
+def api_ebs_files():
+    from engines.ebs_workbook.engine import EbsWorkbookEngine
+    unit_folder = request.args.get("unit_folder", "")
+    return jsonify(EbsWorkbookEngine.list_files(unit_folder))
+
+
+# ── 수능특강 워크북 폴더 탐색 API ─────────────────────────────────────────────
+
+@app.route("/api/suneungteukgang-workbook/units")
+def api_st_units():
+    from engines.suneungteukgang_workbook.engine import SuneungteukgangWorkbookEngine
+    return jsonify(SuneungteukgangWorkbookEngine.list_units())
+
+
+@app.route("/api/suneungteukgang-workbook/files")
+def api_st_files():
+    from engines.suneungteukgang_workbook.engine import SuneungteukgangWorkbookEngine
+    unit_folder = request.args.get("unit_folder", "")
+    return jsonify(SuneungteukgangWorkbookEngine.list_files(unit_folder))
+
+
+@app.route("/api/suneungteukgang-workbook/merge", methods=["POST"])
+def api_st_merge():
+    """다중 강 통합 — 강별 indd를 첫 indd 끝에 duplicate해서 한 파일로 합침."""
+    from engines.suneungteukgang_workbook.engine import SuneungteukgangWorkbookEngine
+    body = request.get_json() or {}
+    lessons = body.get("lessons", [])
+    if not isinstance(lessons, list) or len(lessons) < 2:
+        return jsonify({"error": "lessons 배열(2개 이상) 필요"}), 400
+
+    logs = []
+    def _log(msg):
+        logs.append(msg)
+    result = SuneungteukgangWorkbookEngine.merge_lessons(lessons, _log)
+    return jsonify({"result": result, "logs": logs})
 
 
 # ── 서버 진단 API ────────────────────────────────────────────────────────────
@@ -435,7 +685,7 @@ def api_final_detect():
     from engines.final.engine import FinalEngine, _load_config as _load_final_config
     from engines.final.scope_parser import parse_all_scopes
     fcfg = _load_final_config()
-    files, wb_dir = FinalEngine.find_workbook_files(
+    files, wb_dir, _ = FinalEngine.find_workbook_files(
         fcfg["gdrive_base"], fcfg["exam_period"], grade, school
     )
     scopes = parse_all_scopes(files) if files else []
@@ -445,13 +695,28 @@ def api_final_detect():
         fcfg["exam_period"], {}
     ).get(school)
 
+    # 고3: 분석편에서 사용 가능한 강 목록 반환
+    available_lectures = []
+    if grade == "고3":
+        available_lectures = FinalEngine.scan_lectures()
+
     return jsonify({
         "count": len(files),
         "files": [os.path.basename(f) for f in files],
         "path": wb_dir,
         "scopes": scopes,
         "textbook": textbook_info,
+        "available_lectures": available_lectures,
     })
+
+
+# ── 동형모의고사 API ──────────────────────────────────────────────────────────
+
+@app.route("/api/mockexam/schools")
+def api_mockexam_schools():
+    from engines.mockexam.engine import MockexamEngine
+    schools = MockexamEngine.scan_schools()
+    return jsonify(schools)
 
 
 # ── 학교 관리 API ────────────────────────────────────────────────────────────
@@ -546,7 +811,8 @@ def api_run(material_id):
     try:
         engine = registry.get(material_id)
     except KeyError:
-        return jsonify({"error": "교재 없음"}), 404
+        print(f"[ERROR] 교재 없음: material_id='{material_id}'")
+        return jsonify({"error": f"교재 없음 (id: {material_id})"}), 404
 
     job_id = jm.create_job(material_id)
     job_dir = jm.get_job(job_id)["dir"]
@@ -574,6 +840,19 @@ def api_run(material_id):
     month = request.form.get("month", "").strip()
     if month:
         open(os.path.join(job_dir, "month.txt"), "w").write(month)
+
+    # 고3 선택된 강 목록 저장
+    lectures = request.form.get("lectures", "").strip()
+    if lectures:
+        open(os.path.join(job_dir, "lectures.txt"), "w",
+             encoding="utf-8").write(lectures)
+
+    # 동형모의고사 메타데이터 저장
+    for meta_key in ("exam_period", "exam_date", "exam_type", "round"):
+        val = request.form.get(meta_key, "").strip()
+        if val:
+            open(os.path.join(job_dir, f"{meta_key}.txt"), "w",
+                 encoding="utf-8").write(val)
 
     # 교과서 워크북 메타데이터 저장
     for meta_key in ("subject", "publisher", "lesson", "lesson_folder",
@@ -667,6 +946,68 @@ def api_result(job_id):
         "status": job["status"],
         "result": job["result"],
     })
+
+
+@app.route("/debug/safecopy")
+def debug_safecopy():
+    """[임시 진단] _gdrive_safe_copy를 실제 파이프라인 흐름대로 호출."""
+    import os, time, threading
+    from engines.final.extractor import _gdrive_safe_copy
+    # 실제 사용자 작업에서 실패한 파일로 변경
+    F = ('/Users/nhj/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/'
+         '내 드라이브/콘텐츠 관리/내신대비/'
+         '인디자인 파일/워크북/모의고사/고1/'
+         '고1_25년_3월_전체(C).indd')
+    out = []
+    out.append(f"PID: {os.getpid()}, thread: {threading.current_thread().name}")
+    out.append("")
+
+    # 메인 스레드 (Flask request thread)에서 호출
+    out.append("=== 메인 스레드 (Flask request thread) ===")
+    dst = f"/tmp/debug_safecopy_main_{os.getpid()}.docx"
+    if os.path.exists(dst): os.remove(dst)
+    t0 = time.time()
+    captured = []
+    ok, err = _gdrive_safe_copy(F, dst, log=lambda m: captured.append(m))
+    out.append(f"결과: ok={ok}, time={time.time()-t0:.2f}s")
+    out.append(f"dst size: {os.path.getsize(dst) if os.path.exists(dst) else 0}")
+    if captured:
+        out.append("로그:")
+        out.extend(["  " + l for l in captured])
+    if not ok:
+        out.append(f"마지막 err: {err[:500]}")
+    if os.path.exists(dst): os.remove(dst)
+    out.append("")
+
+    # 백그라운드 스레드 (실제 파이프라인 패턴)에서 호출
+    out.append("=== 백그라운드 스레드 (daemon=True, 실제 파이프라인 패턴) ===")
+    result = {}
+    captured2 = []
+    def worker():
+        dst2 = f"/tmp/debug_safecopy_thread_{os.getpid()}.docx"
+        if os.path.exists(dst2): os.remove(dst2)
+        t = time.time()
+        ok2, err2 = _gdrive_safe_copy(F, dst2,
+                                      log=lambda m: captured2.append(m))
+        result["ok"] = ok2
+        result["err"] = err2
+        result["time"] = time.time() - t
+        result["size"] = os.path.getsize(dst2) if os.path.exists(dst2) else 0
+        result["thread"] = threading.current_thread().name
+        if os.path.exists(dst2): os.remove(dst2)
+
+    th = threading.Thread(target=worker, daemon=True)
+    th.start()
+    th.join(timeout=180)
+    out.append(f"thread name: {result.get('thread', 'TIMEOUT')}")
+    out.append(f"결과: ok={result.get('ok')}, time={result.get('time', 0):.2f}s")
+    out.append(f"dst size: {result.get('size', 0)}")
+    if captured2:
+        out.append("로그:")
+        out.extend(["  " + l for l in captured2])
+    if not result.get('ok'):
+        out.append(f"마지막 err: {str(result.get('err', ''))[:500]}")
+    return "<pre>" + "\n".join(out) + "</pre>"
 
 
 @app.route("/download/<job_id>/pdf")
