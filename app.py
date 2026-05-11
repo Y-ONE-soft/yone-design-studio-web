@@ -6,6 +6,7 @@ import shutil
 import threading
 import time
 import uuid
+from datetime import timedelta
 
 from flask import (Flask, Response, jsonify, render_template,
                    request, send_file, stream_with_context,
@@ -213,7 +214,16 @@ class _RetryingFileSystemLoader(FileSystemLoader):
 
 
 app = Flask(__name__)
-app.secret_key = "yone-studio-secret-key-2026"
+# secret_key: 환경변수 우선, 없으면 fallback. fallback 값을 갈면 기존 모든 세션이 즉시 무효화됨.
+app.secret_key = os.environ.get(
+    "YONE_SECRET_KEY",
+    "7bacdd55d7e584902d3f019e96e9352d26846dab3cf55ea8f6421e6e0fa3d32d",
+)
+# 세션 정책: 브라우저 종료 시 만료 (브라우저 세션 쿠키). 추가 안전망으로 12시간 절대 만료.
+app.config["SESSION_PERMANENT"] = False
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=12)
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 app.jinja_loader = _RetryingFileSystemLoader(
     os.path.join(os.path.dirname(__file__), "templates")
