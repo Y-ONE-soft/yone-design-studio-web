@@ -93,12 +93,13 @@ shutil.copyfile = _patched_copyfile
 
 
 # ── 인증 설정 ──────────────────────────────────────────────────────
-# 사용자 계정. 비밀번호는 환경변수에서 우선 읽고, 없으면 fallback 값 사용.
-#   YONE_ADMIN_PASSWORD     → admin 비밀번호 (운영 시 .env 또는 launchd로 등록 권장)
+# 사용자 계정. 비밀번호는 반드시 환경변수(.env 또는 launchd)에서만 주입.
+#   YONE_ADMIN_PASSWORD     → admin 비밀번호
 #   YONE_ASSISTANT_PASSWORD → assistant 비밀번호
+# 환경변수 미설정 시 fallback은 빈 문자열 → 어떤 비밀번호로도 로그인 불가 (보안 정책).
 USERS = {
-    "admin":     {"password": os.environ.get("YONE_ADMIN_PASSWORD",     "gPwlsldnjs."),   "role": "admin"},
-    "assistant": {"password": os.environ.get("YONE_ASSISTANT_PASSWORD", "assistant2026"), "role": "assistant"},
+    "admin":     {"password": os.environ.get("YONE_ADMIN_PASSWORD",     ""), "role": "admin"},
+    "assistant": {"password": os.environ.get("YONE_ASSISTANT_PASSWORD", ""), "role": "assistant"},
 }
 
 # 조교(assistant)가 접근할 수 없는 경로 — 목업/채팅
@@ -214,11 +215,14 @@ class _RetryingFileSystemLoader(FileSystemLoader):
 
 
 app = Flask(__name__)
-# secret_key: 환경변수 우선, 없으면 fallback. fallback 값을 갈면 기존 모든 세션이 즉시 무효화됨.
-app.secret_key = os.environ.get(
-    "YONE_SECRET_KEY",
-    "7bacdd55d7e584902d3f019e96e9352d26846dab3cf55ea8f6421e6e0fa3d32d",
-)
+# secret_key: 환경변수에서만 주입. 미설정 시 시작 실패 (보안 정책).
+_secret = os.environ.get("YONE_SECRET_KEY", "")
+if not _secret:
+    raise RuntimeError(
+        "YONE_SECRET_KEY 환경변수가 설정되지 않았습니다. "
+        ".env 파일 또는 launchd 환경변수로 등록하세요."
+    )
+app.secret_key = _secret
 # 세션 정책: 브라우저 종료 시 만료 (브라우저 세션 쿠키). 추가 안전망으로 12시간 절대 만료.
 app.config["SESSION_PERMANENT"] = False
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=12)
