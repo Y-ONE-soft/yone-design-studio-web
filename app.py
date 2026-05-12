@@ -1099,6 +1099,19 @@ def _run_pipeline(engine, job_id: str, job_dir: str, uploaded: dict):
 
         jm.done(job_id, result)
 
+        # 조교 공유 폴더로 비동기 복사 (ASSISTANT_SHARE_DIR 환경변수 설정 시).
+        # 별도 thread라 GDrive 지연/실패가 메인 pipeline에 영향 없음.
+        try:
+            from core.sharing import share_job_async
+            school = ""
+            school_path = os.path.join(job_dir, "school.txt")
+            if os.path.exists(school_path):
+                with open(school_path, encoding="utf-8") as _sf:
+                    school = _sf.read().strip()
+            share_job_async(job_id, job_dir, school, log)
+        except Exception as _e:
+            log(f"[공유] 시작 실패 (무시): {_e}")
+
     except Exception as e:
         log(f"[오류] {e}")
         import traceback
