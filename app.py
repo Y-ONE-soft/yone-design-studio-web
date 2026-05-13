@@ -290,7 +290,7 @@ def logout_page():
 @app.before_request
 def check_auth():
     # 로그인 페이지와 static 파일은 인증 불필요
-    if request.path in ("/login", "/logout") or request.path.startswith("/static/"):
+    if request.path in ("/login", "/logout", "/api/health") or request.path.startswith("/static/"):
         return
     # [임시 진단] /debug/* 인증 우회
     if request.path.startswith("/debug/"):
@@ -576,6 +576,60 @@ def diagnose_page():
     }
     load();
     </script></body></html>'''
+
+
+@app.route("/api/health")
+def api_health():
+    """간단한 헬스체크 — 인증 없이 접근 가능. 외부 모니터링/Tailscale 등에서 사용."""
+    import subprocess as _hsp, time as _htime
+    info = {"ok": True}
+
+    # InDesign 가동 여부 (3초 timeout)
+    info["indesign_running"] = False
+    for ver in ("2026", "2025", "2024"):
+        try:
+            r = _hsp.run(
+                ["osascript", "-e", f'tell application "Adobe InDesign {ver}" to return running'],
+                capture_output=True, text=True, timeout=3
+            )
+            if "true" in r.stdout.lower():
+                info["indesign_running"] = True
+                info["indesign_version"] = ver
+                break
+        except Exception:
+            continue
+
+    # 활성 작업 (jobs/ 5분 내 수정된 폴더 수)
+    jobs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "jobs")
+    active = 0
+    if os.path.isdir(jobs_dir):
+        cutoff = _htime.time() - 300
+        try:
+            for d in os.listdir(jobs_dir):
+                full = os.path.join(jobs_dir, d)
+                if os.path.isdir(full) and os.path.getmtime(full) > cutoff:
+                    active += 1
+        except Exception:
+            pass
+    info["active_jobs"] = active
+
+    # 마지막 자동 git pull
+    pull_log = os.path.expanduser("~/Library/Logs/yone-auto-pull.log")
+    if os.path.exists(pull_log):
+        info["last_auto_pull"] = _htime.strftime(
+            "%Y-%m-%d %H:%M:%S", _htime.localtime(os.path.getmtime(pull_log))
+        )
+
+    # 주요 환경변수 (값은 노출 X, 설정 여부만)
+    info["env"] = {
+        "YONE_STUDIO_ROOT": bool(os.environ.get("YONE_STUDIO_ROOT")),
+        "YONE_ADMIN_PASSWORD": bool(os.environ.get("YONE_ADMIN_PASSWORD")),
+        "YONE_ASSISTANT_PASSWORD": bool(os.environ.get("YONE_ASSISTANT_PASSWORD")),
+        "YONE_SECRET_KEY": bool(os.environ.get("YONE_SECRET_KEY")),
+        "ASSISTANT_SHARE_DIR": bool(os.environ.get("ASSISTANT_SHARE_DIR")),
+    }
+
+    return jsonify(info)
 
 
 @app.route("/api/diagnose")
@@ -1108,7 +1162,11 @@ def _run_pipeline(engine, job_id: str, job_dir: str, uploaded: dict):
             if os.path.exists(school_path):
                 with open(school_path, encoding="utf-8") as _sf:
                     school = _sf.read().strip()
-            share_job_async(job_id, job_dir, school, log)
+            # result에서 .indd 경로 힌트 추출 (settings.json fallback보다 정확함)
+            _indd_hint = None
+            if isinstance(result, dict):
+                _indd_hint = result.get("indd_path") or result.get("indd_paths")
+            share_job_async(job_id, job_dir, school, log, indd_path=_indd_hint)
         except Exception as _e:
             log(f"[공유] 시작 실패 (무시): {_e}")
 
