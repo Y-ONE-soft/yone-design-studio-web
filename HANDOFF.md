@@ -20,6 +20,24 @@
 
 ## 최근 인계 메모 (최신이 위)
 
+### 2026-05-14 03:30 (아이맥) — Claude Code (2차)
+
+추가 자동 진행 완료:
+
+- [x] **sharing.py 견고화** (commit `34c6644`):
+  - `_run_pipeline`이 verify result의 `indd_path`를 직접 전달 → settings.json fallback 의존도 줄어듦
+  - `.indd` 같은 폴더의 `Links/`, `Fonts/`, `Document fonts/` 폴더도 함께 복사
+  - → 조교 PC에서 InDesign 열 때 링크 깨지지 않음
+- [x] **/api/health 엔드포인트** (commit `e012440`):
+  - 인증 우회 (외부 모니터링/Tailscale 폰 접속에서 사용)
+  - 응답: `indesign_running`, `active_jobs`, `last_auto_pull`, env 설정 여부
+  - 비밀번호 값은 노출 X (`bool`로만)
+
+다음 액션 (사용자 결정 필요):
+- Tailscale + macOS 화면 공유 (외부에서 아이맥 접속)
+- Anthropic Remote Control (폰에서 Claude 세션 이어가기)
+- 조교 온보딩 (구글드라이브 폴더 공유 + 조교 PC 설치)
+
 ### 2026-05-14 03:00 (아이맥) — Claude Code
 
 조교 공유 폴더 핵심 수정 완료 (사용자님 자는 동안 진행):
