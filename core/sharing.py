@@ -54,7 +54,32 @@ def _find_indd_paths(job_dir, log_fn):
     return []
 
 
-def _share_worker(job_id, job_dir, dest_root, label, log_fn):
+def _copy_linked_assets(indd_path, dest_dir, log_fn):
+    """`.indd`와 같은 폴더에 있는 Links/Fonts 같은 패키지 자료를 함께 복사.
+
+    InDesign Package 관습:
+      - Links/  (이미지/외부 자료)
+      - Fonts/ 또는 'Document fonts'/  (커스텀 폰트)
+    이런 폴더가 있으면 조교 PC에서 .indd 열 때 링크 깨지지 않음.
+    """
+    indd_dir = os.path.dirname(indd_path)
+    candidates = ("Links", "Fonts", "Document fonts", "Document Fonts",
+                  "links", "fonts")
+    for name in candidates:
+        src = os.path.join(indd_dir, name)
+        if not os.path.isdir(src):
+            continue
+        try:
+            dst = os.path.join(dest_dir, name)
+            if os.path.isdir(dst):
+                continue  # 이미 복사됨 (여러 .indd 같은 폴더일 때)
+            shutil.copytree(src, dst, dirs_exist_ok=True)
+            log_fn(f"[공유] linked → {name}/")
+        except Exception as e:
+            log_fn(f"[공유] linked 복사 실패 ({name}): {e}")
+
+
+def _share_worker(job_id, job_dir, dest_root, label, log_fn, hint_indd_path=None):
     try:
         if not os.path.isdir(job_dir):
             log_fn(f"[공유] 소스 폴더 없음: {job_dir}")
@@ -74,13 +99,29 @@ def _share_worker(job_id, job_dir, dest_root, label, log_fn):
 
         copied = 0
 
-        # 1) .indd 파일 — settings에서 경로 추출 후 복사
-        indd_paths = _find_indd_paths(job_dir, log_fn)
+        # 1) .indd 경로 수집 — hint(verify result) 우선, settings.json fallback, 중복 제거
+        candidate_paths = []
+        if hint_indd_path:
+            if isinstance(hint_indd_path, (list, tuple)):
+                candidate_paths.extend(hint_indd_path)
+            else:
+                candidate_paths.append(hint_indd_path)
+        candidate_paths.extend(_find_indd_paths(job_dir, log_fn))
+
+        # 중복 제거 (순서 유지)
+        seen = set()
+        indd_paths = []
+        for p in candidate_paths:
+            if p and p not in seen:
+                seen.add(p)
+                indd_paths.append(p)
+
         if not indd_paths:
-            log_fn("[공유] .indd 경로 찾을 수 없음 (settings.json 미존재 또는 indd_path 없음)")
+            log_fn("[공유] .indd 경로 찾을 수 없음 (verify result + settings.json 모두 indd_path 없음)")
         else:
+            assets_copied_dirs = set()
             for indd_path in indd_paths:
-                if not indd_path or not os.path.exists(indd_path):
+                if not os.path.exists(indd_path):
                     log_fn(f"[공유] .indd 파일 없음: {indd_path}")
                     continue
                 try:
@@ -89,6 +130,13 @@ def _share_worker(job_id, job_dir, dest_root, label, log_fn):
                     log_fn(f"[공유] .indd → {os.path.basename(indd_path)}")
                 except Exception as e:
                     log_fn(f"[공유] .indd 복사 실패 ({os.path.basename(indd_path)}): {e}")
+                    continue
+
+                # 같은 디렉토리의 linked assets 한 번만 복사
+                indd_dir = os.path.dirname(indd_path)
+                if indd_dir not in assets_copied_dirs:
+                    _copy_linked_assets(indd_path, dest_dir, log_fn)
+                    assets_copied_dirs.add(indd_dir)
 
         # 2) 결과 PDF (job_dir 최상위)
         for entry in os.listdir(job_dir):
@@ -120,8 +168,13 @@ def _share_worker(job_id, job_dir, dest_root, label, log_fn):
         log_fn(traceback.format_exc())
 
 
-def share_job_async(job_id, job_dir, school, log_fn):
-    """작업 결과(.indd + PDF + 핵심 메타)를 ASSISTANT_SHARE_DIR로 비동기 복사.
+def share_job_async(job_id, job_dir, school, log_fn, indd_path=None):
+    """작업 결과(.indd + PDF + 핵심 메타 + linked assets)를 ASSISTANT_SHARE_DIR로 비동기 복사.
+
+    Args:
+        indd_path: 운영자가 명시 전달한 .indd 경로. verify result에서 가져오면 우선 사용.
+                   None이면 job_dir/.settings.json에서 fallback 추출.
+                   list로 여러 .indd 전달 가능.
 
     환경변수 ASSISTANT_SHARE_DIR이 없으면 아무 동작 안 함 (선택 기능).
     복사 실패는 메인 pipeline에 영향 없음 (로그만 남음).
@@ -135,7 +188,7 @@ def share_job_async(job_id, job_dir, school, log_fn):
 
     t = threading.Thread(
         target=_share_worker,
-        args=(job_id, job_dir, dest_root, label, log_fn),
+        args=(job_id, job_dir, dest_root, label, log_fn, indd_path),
         daemon=True,
         name=f"share-{job_id}",
     )
