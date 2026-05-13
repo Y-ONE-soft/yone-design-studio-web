@@ -20,6 +20,25 @@
 
 ## 최근 인계 메모 (최신이 위)
 
+### 2026-05-14 03:00 (아이맥) — Claude Code
+
+조교 공유 폴더 핵심 수정 완료 (사용자님 자는 동안 진행):
+
+- [x] 옛 33개 메타데이터 폴더 모두 삭제 (조판결과 폴더 깨끗하게 비움. 매니페스트 백업: `~/Backups/share_metadata_backup_20260514_*`)
+- [x] `core/sharing.py` 수정 (commit `3167d14`):
+  - `.settings.json`에서 `indd_path` 추출 → 실제 `.indd` 복사
+  - PDF 복사
+  - 핵심 메타 (school, issue_num, grade 등)만 복사
+  - 노이즈 (content.json, run.jsx, 조판_로그.txt, uploads/) 제외
+- [x] 단위 테스트 PASS, Flask 정상
+
+**다음 작업 시 확인할 것**: 통합웹으로 새 조판 1건 트리거 → `Y.ONE WEB/조판결과/[학교]_[jobid]/` 폴더에:
+- `*.indd` (조판된 인디자인 파일) ← 핵심
+- `*.pdf`
+- `school.txt`, `issue_num.txt` 등 1-2개 메타
+
+가 잘 들어오는지 확인. 안 들어오면 settings.json에 indd_path 없는 엔진이라는 뜻 (현재 코드의 한계).
+
 ### 2026-05-12 14:10 (아이맥) — Claude Code
 
 마스터 계획 자동 진행분 모두 완료. 진행한 것:
