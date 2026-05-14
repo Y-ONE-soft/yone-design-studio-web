@@ -19,10 +19,35 @@ _ICLOUD_DOCS = os.path.join(
 )
 
 
+_INDD_ORIGINAL_MARKER = "조판/인디자인 원본/"
+
+
+def _try_indd_redirect(path):
+    """INDD_ORIGINAL_BASE 환경변수가 있으면, '조판/인디자인 원본/' 접두사를
+    그 경로로 redirect한다. macOS iCloud Drive의 dataless(EDEADLK) 회피용 —
+    인디자인 원본 폴더를 GDrive 등 안전한 위치로 옮긴 환경에서 사용.
+
+    환경변수 미설정 또는 새 경로에 파일 없으면 None 반환 → 옛 경로 fallback.
+    """
+    indd_base = os.environ.get("INDD_ORIGINAL_BASE", "").strip()
+    if not indd_base or _INDD_ORIGINAL_MARKER not in path:
+        return None
+    rest = path.split(_INDD_ORIGINAL_MARKER, 1)[1]
+    if indd_base.startswith("~"):
+        indd_base = os.path.expanduser(indd_base)
+    candidate = os.path.join(indd_base, rest)
+    return candidate if os.path.exists(candidate) else None
+
+
 def resolve(path):
     """config.json 경로값을 실제 절대경로로 변환한다."""
     if not path:
         return path
+
+    # INDD_ORIGINAL_BASE redirect (인디자인 원본 폴더가 GDrive 등으로 이동된 환경)
+    redirected = _try_indd_redirect(path)
+    if redirected:
+        return redirected
 
     # ~/... 형식
     if path.startswith("~"):
