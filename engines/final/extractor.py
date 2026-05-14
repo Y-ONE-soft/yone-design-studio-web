@@ -13,6 +13,76 @@ import time
 import unicodedata
 
 
+# ── 로컬 미러 redirect — EDEADLK 원천 차단 ─────────────────────────────────
+# 자주 쓰는 GDrive 폴더를 ~/Documents/yone-content-mirror/ 아래로 복사해두면
+# NSFileProvider 데몬을 거치지 않아 deadlock 자체가 발생하지 않는다.
+# 미러가 있으면 우회, 없으면 원본 그대로 사용.
+_LOCAL_MIRROR_BASE = os.path.expanduser("~/Documents/yone-content-mirror")
+_GDRIVE_CONTENT_MARKER = "/내 드라이브/콘텐츠 관리/내신대비/"
+
+
+def _resolve_local_mirror(src, log=None):
+    """GDrive 경로를 로컬 미러로 redirect (미러가 존재할 때만)."""
+    nfc_src = unicodedata.normalize("NFC", src)
+    if _GDRIVE_CONTENT_MARKER not in nfc_src:
+        return src
+    rest = nfc_src.split(_GDRIVE_CONTENT_MARKER, 1)[1]
+    mirror_path = os.path.join(_LOCAL_MIRROR_BASE, rest)
+    for cand in [
+        mirror_path,
+        unicodedata.normalize("NFC", mirror_path),
+        unicodedata.normalize("NFD", mirror_path),
+    ]:
+        if os.path.exists(cand):
+            if log:
+                log(f"  [로컬 미러] GDrive 우회 → {os.path.basename(cand)}")
+            return cand
+    return src
+
+
+# ── Drive 데몬 자동 회복 ─────────────────────────────────────────────────
+# 8가지 syscall이 모두 EDEADLK이면 NSFileProvider 데몬 stuck 상태.
+# Drive 앱 강제 재시작으로 데몬을 fresh 세션으로 회복.
+# Flask 프로세스 라이프타임 안에서 30분 간격으로만 재시도 (무한 재시작 방지).
+_LAST_DRIVE_RESTART = 0.0
+_DRIVE_RESTART_COOLDOWN = 1800  # 30분
+
+
+def _restart_google_drive(log):
+    """Drive 앱 강제 재시작 — File Provider 데몬 stuck 회복용."""
+    global _LAST_DRIVE_RESTART
+    now = time.time()
+    if now - _LAST_DRIVE_RESTART < _DRIVE_RESTART_COOLDOWN:
+        if log:
+            log("  [복구] 최근 30분 이내 이미 Drive 재시작함 → 스킵")
+        return False
+    _LAST_DRIVE_RESTART = now
+    try:
+        if log:
+            log("  [복구] 모든 syscall EDEADLK 감지 → Google Drive 자동 재시작...")
+        subprocess.run(["killall", "Google Drive"],
+                       capture_output=True, timeout=10)
+        time.sleep(3)
+        ck = subprocess.run(["pgrep", "-x", "Google Drive"],
+                            capture_output=True, timeout=5)
+        if ck.returncode == 0:
+            subprocess.run(["killall", "-9", "Google Drive"],
+                           capture_output=True, timeout=10)
+            time.sleep(2)
+        subprocess.run(["open", "-a", "Google Drive"],
+                       capture_output=True, timeout=10)
+        if log:
+            log("  [복구] Drive 재마운트 대기 (15초)...")
+        time.sleep(15)
+        if log:
+            log("  [복구] Google Drive 재시작 완료 → 복사 재시도")
+        return True
+    except Exception as e:
+        if log:
+            log(f"  [복구] Drive 재시작 실패: {e}")
+        return False
+
+
 def _gdrive_safe_copy(src, dst, log=None, retries=5):
     """Google Drive Stream 파일을 dst로 안정적으로 복사.
 
@@ -21,12 +91,16 @@ def _gdrive_safe_copy(src, dst, log=None, retries=5):
     또는 EBUSY를 반환한다. Drive 내부 백오프 한도가 30초이므로 외부 재시도도
     그 이상 대기해야 한다.
 
-    한 번의 시도에서 6가지 syscall 경로(python rw / cat / dd / cp / ditto / rsync)를
-    순차 시도하고, 실패 시 점진적으로 늘어나는 백오프(최대 90초)로 재시도한다.
-    모든 시도가 EDEADLK이면 Drive 데몬 문제일 수 있음을 진단 메시지로 표시한다.
+    근본 처방:
+      1) 로컬 미러 redirect — ~/Documents/yone-content-mirror/에 미러가 있으면 우회
+      2) 첫 시도 모든 syscall EDEADLK 감지 시 Google Drive 앱 자동 재시작
+      3) 8가지 syscall 폴백 + 지수 백오프 재시도 (기존)
 
     Returns: (ok: bool, last_err: str)
     """
+    # 1) 로컬 미러 우선 (EDEADLK 원천 차단)
+    src = _resolve_local_mirror(src, log)
+
     # NFD/NFC 후보 모두 시도 (macOS APFS는 NFD)
     src_candidates = [src]
     nfc = unicodedata.normalize("NFC", src)
@@ -171,6 +245,14 @@ def _gdrive_safe_copy(src, dst, log=None, retries=5):
         ("py-subproc", lambda: _try_subprocess(
             "py-subproc",
             [_sys.executable, "-c", _py_copy_script, src_resolved, dst])),
+        # 8경로: launchctl asuser — 사용자 GUI(Aqua) 세션 bootstrap에 직접 위임.
+        # Flask 가 launchd LaunchAgent 컨텍스트에서 실행될 때 NSFileProvider
+        # (Drive Stream) 가 read 를 거부하는 케이스 우회. 같은 UID 의 user-aqua
+        # 컨텍스트는 풀-access 라 cold-materialize 가능.
+        ("launchctl-asuser", lambda: _try_subprocess(
+            "launchctl-asuser",
+            ["launchctl", "asuser", str(os.getuid()),
+             _sys.executable, "-c", _py_copy_script, src_resolved, dst])),
     ]
 
     # 지수 백오프 (초). Drive 내부 백오프 한도(30s) 이상으로 설정.
@@ -184,6 +266,7 @@ def _gdrive_safe_copy(src, dst, log=None, retries=5):
     last_err = ""
     deadlock_attempts = 0
     prev_err_signature = None
+    drive_restart_tried = False
     for attempt in range(retries):
         attempt_errs = []
         attempt_all_deadlock = True
@@ -212,6 +295,15 @@ def _gdrive_safe_copy(src, dst, log=None, retries=5):
                 log(f"  [GDrive 복사] 실패 ({attempt+1}/{retries}): 동일 EDEADLK 패턴 반복")
         prev_err_signature = err_signature
 
+        # 첫 시도(attempt=0)에서 모든 syscall이 EDEADLK이면 데몬 stuck 확정 →
+        # Drive 앱 자동 재시작 후 백오프 스킵하고 즉시 재시도.
+        # (이게 진짜 근본 처방. 폴백 다양성으론 stuck 데몬을 못 풀음)
+        if (attempt == 0 and attempt_all_deadlock and not drive_restart_tried
+                and attempt < retries - 1):
+            drive_restart_tried = True
+            if _restart_google_drive(log):
+                continue  # 백오프 wait 스킵
+
         if attempt < retries - 1:
             wait = backoffs[min(attempt, len(backoffs) - 1)]
             time.sleep(wait)
@@ -219,13 +311,12 @@ def _gdrive_safe_copy(src, dst, log=None, retries=5):
     # 모든 시도(또는 거의 모두)가 deadlock이면 Drive 데몬/Flask 프로세스 stuck 가능성
     if log and deadlock_attempts >= retries - 1:
         log("")
-        log("  [진단] 모든 시도가 EDEADLK 반환 — 다음 중 하나 시도 필요:")
-        log("    1) Flask 서버 재시작 (가장 빠름):")
-        log("       장기 실행 Flask 프로세스가 Drive 클라이언트 세션 stale 상태일 수 있음")
-        log("    2) Google Drive 앱 재시작:")
-        log("       killall \"Google Drive\"; sleep 2; open -a \"Google Drive\"")
-        log("    3) Finder에서 해당 폴더 우클릭 → '오프라인 사용 가능' 체크")
-        log("       (이 폴더의 모든 파일을 로컬에 사전 적재 → deadlock 원천 차단)")
+        log("  [진단] Drive 자동 재시작 후에도 EDEADLK 지속 — 다음 단계 필요:")
+        log("    1) Flask 서버 재시작:")
+        log("       launchctl kickstart -k gui/$(id -u)/com.yonestudio.flask")
+        log("    2) 이 파일을 ~/Documents/yone-content-mirror/ 미러에 추가:")
+        log(f"       소스: {src_resolved}")
+        log("       (코드는 미러가 있으면 자동으로 GDrive 우회)")
 
     return False, last_err
 
