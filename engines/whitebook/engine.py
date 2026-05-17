@@ -52,33 +52,75 @@ class WhitebookEngine(BaseEngine):
     def upload_spec(self) -> dict:
         return {
             "slots": [
-                {"key": "week2", "label": "Week2 원고 (Day1~3) .hwpx", "required": True},
-                {"key": "week3", "label": "Week3 원고 (Day4~6) .hwpx", "required": True},
-                {"key": "week4", "label": "Week4 원고 (Day7~10) .hwpx", "required": True},
-                {"key": "ans2",  "label": "Week2 정답 .hwpx", "required": False},
-                {"key": "ans3",  "label": "Week3 정답 .hwpx", "required": False},
-                {"key": "ans4",  "label": "Week4 정답 .hwpx", "required": False},
+                {"key": "w1_main",     "label": "WEEK1 원고 .hwpx",          "required": True},
+                {"key": "w1_practice", "label": "WEEK1 연습문제 .docx",       "required": False},
+                {"key": "w1_main_ans", "label": "WEEK1 원고 답지 .hwpx",      "required": False},
+                {"key": "w1_prac_ans", "label": "WEEK1 연습문제 답지 .docx",  "required": False},
+
+                {"key": "w2_main",     "label": "WEEK2 원고 .hwpx",          "required": True},
+                {"key": "w2_practice", "label": "WEEK2 연습문제 .docx",       "required": False},
+                {"key": "w2_main_ans", "label": "WEEK2 원고 답지 .hwpx",      "required": False},
+                {"key": "w2_prac_ans", "label": "WEEK2 연습문제 답지 .docx",  "required": False},
+
+                {"key": "w3_main",     "label": "WEEK3 원고 .hwpx",          "required": True},
+                {"key": "w3_practice", "label": "WEEK3 연습문제 .docx",       "required": False},
+                {"key": "w3_main_ans", "label": "WEEK3 원고 답지 .hwpx",      "required": False},
+                {"key": "w3_prac_ans", "label": "WEEK3 연습문제 답지 .docx",  "required": False},
             ]
         }
 
-    # ── 1단계: hwpx → content.json ──────────────────────────────────────
+    # ── 1단계: hwpx + docx → content.json ────────────────────────────────
 
     def parse(self, uploaded_files: dict, job_dir: str, log) -> str:
+        import json as _json
         cfg = _load_config()
 
-        hwpx = [uploaded_files[k] for k in ("week2", "week3", "week4")
+        # 워크북 hwpx (Week1, 2, 3 순)
+        hwpx = [uploaded_files[k] for k in ("w1_main", "w2_main", "w3_main")
                 if k in uploaded_files]
-        answers = [uploaded_files[k] for k in ("ans2", "ans3", "ans4")
-                   if k in uploaded_files]
+        main_ans = [uploaded_files[k] for k in ("w1_main_ans", "w2_main_ans", "w3_main_ans")
+                    if k in uploaded_files]
 
         if not hwpx:
             raise ValueError("원고 hwpx 파일이 없습니다.")
 
+        # 1) 워크북 파서 → content.json (Day별 A~E)
         json_path = os.path.join(job_dir, "content.json")
-        run_parse(cfg["parse_script"], hwpx, answers, json_path, log)
+        run_parse(cfg["parse_script"], hwpx, main_ans, json_path, log)
 
         if not os.path.exists(json_path):
             raise RuntimeError("content.json 생성 실패")
+
+        # 2) 연습문제(.docx) 파서 → content.json에 'practices' 추가
+        from engines.whitebook.practice_parser import parse_practice_docx, parse_practice_answer_docx
+
+        with open(json_path, encoding="utf-8") as f:
+            data = _json.load(f)
+
+        practices = []
+        for week_idx, (pkey, akey) in enumerate(
+            [("w1_practice", "w1_prac_ans"),
+             ("w2_practice", "w2_prac_ans"),
+             ("w3_practice", "w3_prac_ans")], start=1
+        ):
+            entry = {"week": week_idx, "questions": [], "answers": []}
+            if pkey in uploaded_files:
+                try:
+                    entry["questions"] = parse_practice_docx(uploaded_files[pkey])
+                    log(f"[연습] WEEK{week_idx} 문제: {len(entry['questions'])}개")
+                except Exception as e:
+                    log(f"[연습] WEEK{week_idx} 문제 파싱 실패: {e}")
+            if akey in uploaded_files:
+                try:
+                    entry["answers"] = parse_practice_answer_docx(uploaded_files[akey])
+                    log(f"[연습] WEEK{week_idx} 답지: {len(entry['answers'])}개")
+                except Exception as e:
+                    log(f"[연습] WEEK{week_idx} 답지 파싱 실패: {e}")
+            practices.append(entry)
+        data["practices"] = practices
+
+        with open(json_path, "w", encoding="utf-8") as f:
+            _json.dump(data, f, ensure_ascii=False, indent=2)
 
         log(f"[파서] content.json 생성 완료 ({os.path.getsize(json_path):,} bytes)")
         return json_path

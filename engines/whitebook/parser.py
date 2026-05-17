@@ -1,3 +1,4 @@
+import os
 import subprocess
 import sys
 
@@ -17,6 +18,11 @@ def run_parse(parse_script: str, hwpx_files: list, answer_files: list,
 
     log(f"[파서] 실행: {' '.join(cmd)}")
 
+    sub_env = dict(os.environ)
+    sub_env.setdefault("LANG", "ko_KR.UTF-8")
+    sub_env.setdefault("LC_CTYPE", "UTF-8")
+    sub_env.setdefault("LC_ALL", "ko_KR.UTF-8")
+
     proc = subprocess.Popen(
         cmd,
         stdout=subprocess.PIPE,
@@ -24,10 +30,14 @@ def run_parse(parse_script: str, hwpx_files: list, answer_files: list,
         text=True,
         encoding="utf-8",
         errors="replace",
+        env=sub_env,
     )
+    line_count = 0
     for line in proc.stdout:
+        line_count += 1
         log(f"[파서] {line.rstrip()}")
     proc.wait()
+    log(f"[파서] 종료 (returncode={proc.returncode}, 출력 {line_count}줄)")
 
     if proc.returncode != 0:
         raise RuntimeError(f"parse_whitebook.py 실패 (exit {proc.returncode})")
