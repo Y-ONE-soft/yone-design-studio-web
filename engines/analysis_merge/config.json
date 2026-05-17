@@ -1,0 +1,8 @@
+{
+  "template_path": "조판/인디자인 원본/[원본]분석본_내지(마스터).indd",
+  "gdrive_base": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/모의고사 작업",
+  "output_base": "조판/교재/분석본결합",
+  "log_filename": "merge_log.txt",
+  "keep_head": 1,
+  "file_patterns": ["분석본"]
+}

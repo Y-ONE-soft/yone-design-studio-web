@@ -51,6 +51,15 @@
     ]
   },
   {
+    "section": "조판",
+    "category": "결합 도구",
+    "items": [
+      {"name": "모의고사 세로 결합", "prefix": "세로결합", "engine_id": "mockexam_sero_merge"},
+      {"name": "분석본 결합", "prefix": "분석본결합", "engine_id": "analysis_merge"},
+      {"name": "마더텅 결합", "prefix": "마더텅결합", "engine_id": "mothertongue_merge"}
+    ]
+  },
+  {
     "section": "표지",
     "category": "표지 제작",
     "items": [

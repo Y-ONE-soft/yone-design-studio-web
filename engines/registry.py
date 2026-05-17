@@ -12,6 +12,9 @@ from engines.ebs_workbook.engine import EbsWorkbookEngine
 from engines.suneungteukgang_workbook.engine import SuneungteukgangWorkbookEngine
 from engines.seseospecial.engine import SeseoSpecialEngine
 from engines.mockexam.engine import MockexamEngine
+from engines.mockexam_sero_merge.engine import MockexamSeroMergeEngine
+from engines.analysis_merge.engine import AnalysisMergeEngine
+from engines.mothertongue_merge.engine import MothertongueMergeEngine
 
 # ── 새 교재 추가 시 여기에 한 줄만 추가 ──────────────────────────────────
 _ENGINE_LIST = [
@@ -29,6 +32,9 @@ _ENGINE_LIST = [
     SuneungteukgangWorkbookEngine(),
     SeseoSpecialEngine(),
     MockexamEngine(),
+    MockexamSeroMergeEngine(),
+    AnalysisMergeEngine(),
+    MothertongueMergeEngine(),
 ]
 # ────────────────────────────────────────────────────────────────────────
 
