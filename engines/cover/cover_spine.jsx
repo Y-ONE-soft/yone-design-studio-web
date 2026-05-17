@@ -73,7 +73,7 @@
     }
 
     var movedFront = 0, movedSpine = 0, resizedSpine = 0, deletedSpine = 0, skippedBG = 0;
-    var SPINE_BOX_WIDTH_TOL = 2 * MM;       // 세네카 박스 폭 허용오차
+    var SPINE_BOX_WIDTH_TOL = 5 * MM;       // 세네카 박스 폭 허용오차 (5mm — 박스가 currentSpine과 다소 달라도 인식)
     var SPINE_BOX_HEIGHT_RATIO = 0.6;       // 박스로 인정할 최소 높이 (대지 대비)
 
     var spineLeftX = abLeft + COVER_W;
@@ -107,6 +107,59 @@
         return false;
     }
 
+    // 그룹의 자식들이 여러 영역(앞/세네카/뒤)에 걸쳐 있는지 검사.
+    // 다영역 그룹 → 자식 재귀해서 영역별 분류
+    // 한 영역에 몰린 그룹 → 통째 처리 (그림/디자인 분해 방지)
+    function spansMultipleRegions(group) {
+        if (!group.pageItems || group.pageItems.length === 0) return false;
+        var regions = {};
+        for (var i = 0; i < group.pageItems.length; i++) {
+            var ch = group.pageItems[i];
+            var b = ch.geometricBounds;
+            var cx = (b[0] + b[2]) / 2;
+            var r;
+            if (cx < spineLeftX) r = "back";
+            else if (cx < spineRightX) r = "spine";
+            else r = "front";
+            regions[r] = true;
+        }
+        var count = 0;
+        for (var k in regions) count++;
+        return count >= 2;
+    }
+
+    // 그룹 자식 중 폭이 currentSpine과 비슷한 path를 찾아 newSpine 폭으로 리사이즈.
+    // 단위 그룹 안의 세네카 배경 박스 처리 — height 조건 필수 (글자/장식 path 제외).
+    function resizeSpineBoxesInGroup(group) {
+        if (!group.pageItems || group.pageItems.length === 0) return 0;
+        var count = 0;
+        for (var bi = 0; bi < group.pageItems.length; bi++) {
+            var bc = group.pageItems[bi];
+            var bb = bc.geometricBounds;
+            var bw = bb[2] - bb[0];
+            var bh = bb[1] - bb[3];
+            var bisPath = (bc.typename === "PathItem"
+                           || bc.typename === "CompoundPathItem"
+                           || bc.typename === "PlacedItem"
+                           || bc.typename === "RasterItem");
+            // 박스 인정: widthMatches + height >= 표지 절반 (글자/장식 path 비율 깨짐 방지)
+            if (bisPath
+                && Math.abs(bw - currentSpine) < SPINE_BOX_WIDTH_TOL
+                && bh > abHeight * 0.5) {
+                // 박스 발견 → 새 세네카 중앙 + newSpine 폭으로 리사이즈
+                var bcx = (bb[0] + bb[2]) / 2;
+                var bdx = newSpineCenterX - bcx;
+                if (Math.abs(bdx) > 0.001) bc.translate(bdx, 0);
+                var bsx = (newSpine / bw) * 100;
+                bc.resize(bsx, 100, true, true, true, true, false, Transformation.CENTER);
+                count++;
+            } else if (bc.typename === "GroupItem") {
+                count += resizeSpineBoxesInGroup(bc);
+            }
+        }
+        return count;
+    }
+
     // 재귀 처리:
     //   - 와이드(>189mm) 그룹 → 자식 재귀 (각 영역 개별 분류)
     //   - 세네카 영역 컨테이너 그룹(BG 포함) → 자식 재귀
@@ -126,24 +179,31 @@
         var isGroup = (item.typename === "GroupItem" && item.pageItems.length > 0);
 
         // 와이드 (>189mm) — 전폭 배경 또는 다중 영역 그룹
-        // 그룹/단일 모두 통째 처리 — 통짜 배경의 분해 방지
         if (itemWidth > COVER_W * 0.9) {
-            if (itemCenterX >= spineRightX) {
-                // 앞표지 영역: 통째로 이동
-                item.translate(diff, 0);
-                movedFront++;
-            } else if (diff > 0) {
-                if (isGroup) {
-                    // 와이드 그룹 가로 확대는 자식 모두 같이 확대돼 디자인 깨짐 → 스킵.
-                    // 뒤표지 배경 확장이 필요하면 보통 별도 와이드 단일 path로 존재.
-                    skippedBG++;
+            if (isGroup && spansMultipleRegions(item)) {
+                // 다영역 와이드 그룹 (예: 표지 전체 컨테이너) → 자식 재귀로 영역별 분류
+                // 각 자식은 자기 영역에서 처리됨 (세네카 박스 리사이즈, 텍스트 정렬, 앞표지 평행이동 등)
+                var wcs = [];
+                for (var ci = 0; ci < item.pageItems.length; ci++) wcs.push(item.pageItems[ci]);
+                for (var cj = wcs.length - 1; cj >= 0; cj--) processItemRecursive(wcs[cj]);
+            } else {
+                // 한 영역에 몰린 와이드 그룹 또는 단일 와이드 path → 통째 처리
+                if (itemCenterX >= spineRightX) {
+                    // 앞표지 영역: 통째로 이동
+                    item.translate(diff, 0);
+                    movedFront++;
+                } else if (diff > 0) {
+                    if (isGroup) {
+                        // 그룹 가로 확대는 자식 모두 같이 확대돼 디자인 깨짐 → 스킵
+                        skippedBG++;
+                    } else {
+                        var bgScale = (itemWidth + diff) / itemWidth * 100;
+                        item.resize(bgScale, 100, true, true, true, true, true, Transformation.TOPLEFT);
+                        skippedBG++;
+                    }
                 } else {
-                    var bgScale = (itemWidth + diff) / itemWidth * 100;
-                    item.resize(bgScale, 100, true, true, true, true, true, Transformation.TOPLEFT);
                     skippedBG++;
                 }
-            } else {
-                skippedBG++;
             }
             if (wasLocked) item.locked = true;
             return;
@@ -164,12 +224,20 @@
                     for (var ck = 0; ck < item.pageItems.length; ck++) scs.push(item.pageItems[ck]);
                     for (var cl = scs.length - 1; cl >= 0; cl--) processItemRecursive(scs[cl]);
                 } else {
-                    // 단위 그룹 (로고/장식): 그룹째 중앙정렬 (내부 분해 X)
+                    // 단위 그룹 (로고/장식 또는 박스+텍스트): 그룹째 중앙정렬 (내부 분해 X)
                     var udx = newSpineCenterX - itemCenterX;
                     if (Math.abs(udx) > 0.001) item.translate(udx, 0);
                     movedSpine++;
                     log("  세네카 단위 그룹 중앙정렬: " + item.typename
                          + " (" + item.pageItems.length + "개 자식)");
+                    // 그룹 안에 widthMatches인 박스 path가 있으면 newSpine 폭으로 리사이즈
+                    if (hasSpineChange) {
+                        var groupBoxes = resizeSpineBoxesInGroup(item);
+                        if (groupBoxes > 0) {
+                            resizedSpine += groupBoxes;
+                            log("  단위 그룹 안 박스 리사이즈: " + groupBoxes + "개");
+                        }
+                    }
                 }
             } else {
                 // 단일 아이템: 세네카 박스(바탕) 감지
@@ -177,16 +245,17 @@
                               || item.typename === "CompoundPathItem"
                               || item.typename === "PlacedItem"
                               || item.typename === "RasterItem");
+                // width tol 5mm — currentSpine과 가까우면 박스로 인정 (좁은 박스도 포함)
                 var widthMatchesSpine = Math.abs(itemWidth - currentSpine) < SPINE_BOX_WIDTH_TOL;
                 var heightMatchesCover = itemHeight > abHeight * SPINE_BOX_HEIGHT_RATIO;
                 var isSpineBox = isPath && widthMatchesSpine && heightMatchesCover;
 
                 if (isSpineBox && hasSpineChange) {
-                    // 세네카 박스 → 왼쪽을 spineLeftX에 스냅하고 새 세네카 폭으로 리사이즈
-                    var dxToLeft = spineLeftX - bounds[0];
-                    if (Math.abs(dxToLeft) > 0.001) item.translate(dxToLeft, 0);
+                    // 세네카 박스 → 새 세네카 중앙에 맞추고 newSpine 폭으로 리사이즈
+                    var boxCenterDx = newSpineCenterX - itemCenterX;
+                    if (Math.abs(boxCenterDx) > 0.001) item.translate(boxCenterDx, 0);
                     var sx = (newSpine / itemWidth) * 100;
-                    item.resize(sx, 100, true, true, true, true, false, Transformation.LEFT);
+                    item.resize(sx, 100, true, true, true, true, false, Transformation.CENTER);
                     resizedSpine++;
                     log("  세네카 박스 리사이즈: " + item.typename
                          + " (" + Math.round(itemWidth/MM*10)/10 + "mm → " + Math.round(newSpine/MM*10)/10 + "mm)");
@@ -218,9 +287,9 @@
             var icx = (bounds[0] + bounds[2]) / 2;
             var isGroup = (item.typename === "GroupItem" && item.pageItems.length > 0);
 
-            // 와이드: 그룹이면 자식 재귀, 아니면 스킵 (메인 패스에서 이미 처리)
+            // 와이드: 다영역 그룹만 자식 재귀, 그 외는 통째 유지 (메인 패스에서 위치 처리됨)
             if (iw > COVER_W * 0.9) {
-                if (isGroup) {
+                if (isGroup && spansMultipleRegions(item)) {
                     var wch = [];
                     for (var ri = 0; ri < item.pageItems.length; ri++) wch.push(item.pageItems[ri]);
                     for (var rj = wch.length - 1; rj >= 0; rj--) recurse(wch[rj]);
