@@ -324,12 +324,14 @@ _SECTION_CONFIG = {
         "title": "조판",
         "hero_title": "Y.ONE 조판",
         "hero_desc": "교재를 선택하고 원고를 업로드하면 InDesign 조판 → PDF까지 자동으로 처리됩니다.",
+        "hero_tip": "원하는 <strong>교재 카드</strong>를 클릭하면 원고 업로드 화면으로 이동합니다.",
         "cta_text": "조판 시작",
     },
     "표지": {
         "title": "표지",
         "hero_title": "Y.ONE 표지",
         "hero_desc": "세네카 조정, 아웃라인 변환, PDF 출력까지 표지 작업을 자동화합니다.",
+        "hero_tip": "원하는 <strong>표지 종류</strong>를 선택하면 작업 화면으로 이동합니다.",
         "cta_text": "시작",
     },
 }
@@ -348,6 +350,7 @@ def index():
                            section_title=cfg["title"],
                            hero_title=cfg["hero_title"],
                            hero_desc=cfg["hero_desc"],
+                           hero_tip=cfg.get("hero_tip"),
                            cta_text=cfg["cta_text"])
 
 
@@ -360,6 +363,7 @@ def cover_index():
                            section_title=cfg["title"],
                            hero_title=cfg["hero_title"],
                            hero_desc=cfg["hero_desc"],
+                           hero_tip=cfg.get("hero_tip"),
                            cta_text=cfg["cta_text"])
 
 
@@ -789,6 +793,16 @@ def api_mockexam_schools():
     return jsonify(schools)
 
 
+# ── 마더텅 결합 API ──────────────────────────────────────────────────────────
+
+@app.route("/api/mothertongue/lessons")
+def api_mothertongue_lessons():
+    from engines.mothertongue_merge.engine import MothertongueMergeEngine
+    grade = request.args.get("grade", "고1")
+    school = request.args.get("school", "한영고1")
+    return jsonify(MothertongueMergeEngine.list_lessons(grade, school))
+
+
 # ── 학교 관리 API ────────────────────────────────────────────────────────────
 
 @app.route("/api/schools")
@@ -931,6 +945,12 @@ def api_run(material_id):
         if val:
             open(os.path.join(job_dir, f"{meta_key}.txt"), "w",
                  encoding="utf-8").write(val)
+
+    # 워크북 조판 제외 섹션 (체크박스 그룹 — multi-value)
+    exclude_list = request.form.getlist("exclude")
+    if exclude_list:
+        open(os.path.join(job_dir, "exclude.txt"), "w",
+             encoding="utf-8").write(",".join(exclude_list))
 
     # 업로드 파일 및 텍스트 필드 저장
     uploaded = {}

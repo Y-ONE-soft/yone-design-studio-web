@@ -95,11 +95,13 @@ def run_jsx(jsx_path: str, log, poll_log_path: str = None, timeout: int = 1200,
         with open(jsx_path, encoding="utf-8") as f:
             jsx_content = f.read()
 
-        # settingsPath 추출
+        # settingsPath 추출 (camelCase + UPPER_CASE 모두 지원)
+        # camelCase: workbook/pocketbook/mockexam/hanyoung 등
+        # UPPER_CASE: analysis_merge/mothertongue_merge/mockexam_sero_merge
         import re
-        m = re.search(r'var settingsPath = "([^"]+)"', jsx_content)
+        m = re.search(r'var (?:settingsPath|SETTINGS_PATH) = "([^"]+)"', jsx_content)
         if not m:
-            log("[오류] settingsPath를 찾을 수 없습니다")
+            log("[오류] settingsPath/SETTINGS_PATH 변수를 찾을 수 없습니다")
             return
         settings_path = m.group(1)
 
