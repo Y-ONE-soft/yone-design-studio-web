@@ -221,10 +221,22 @@ def _hwp_decode_paratext(payload):
                 i += 16  # 8워드 = 16바이트
             else:
                 i += 2
+        elif 0xD800 <= code <= 0xDBFF and i + 3 < len(payload):
+            # High surrogate — UTF-16 surrogate pair 결합 (supplementary plane: PUA U+F0000+ 등)
+            low = struct.unpack_from('<H', payload, i + 2)[0]
+            if 0xDC00 <= low <= 0xDFFF:
+                combined = ((code - 0xD800) << 10) + (low - 0xDC00) + 0x10000
+                result.append(chr(combined))
+                i += 4
+            else:
+                i += 2  # 짝 안 맞는 단독 high surrogate 건너뜀
+        elif 0xDC00 <= code <= 0xDFFF:
+            i += 2  # 단독 low surrogate 건너뜀
         else:
             result.append(chr(code))
             i += 2
-    return ''.join(result).strip()
+    # trailing 줄바꿈만 제거 (공백은 보존 — HWP 빈칸이 공백+밑줄 스타일로 입력되는 경우 보존 필수)
+    return ''.join(result).rstrip('\n\r')
 
 
 def _hwp_decode_para_charshape(payload):
@@ -308,6 +320,26 @@ def _hwp_text_with_underline(para_text_payload, charshape_pairs, ul_map):
             else:
                 char_idx += 1
                 i += 2
+        elif 0xD800 <= code <= 0xDBFF and i + 3 < len(para_text_payload):
+            # High surrogate — surrogate pair 결합 (supplementary plane 문자)
+            low = struct.unpack_from('<H', para_text_payload, i + 2)[0]
+            if 0xDC00 <= low <= 0xDFFF:
+                combined = ((code - 0xD800) << 10) + (low - 0xDC00) + 0x10000
+                ul = pos_ul.get(char_idx, cur_ul)
+                ch = chr(combined)
+                if ul != cur_ul and cur_text:
+                    runs.append({"t": cur_text, "ul": cur_ul})
+                    cur_text = ""
+                cur_ul = ul
+                cur_text += ch
+                char_idx += 2  # surrogate pair는 원본에서 2 word 차지
+                i += 4
+            else:
+                char_idx += 1
+                i += 2  # 짝 안 맞는 단독 high surrogate 건너뜀
+        elif 0xDC00 <= code <= 0xDFFF:
+            char_idx += 1
+            i += 2  # 단독 low surrogate 건너뜀
         else:
             ul = pos_ul.get(char_idx, cur_ul)
             ch = chr(code)
@@ -322,11 +354,10 @@ def _hwp_text_with_underline(para_text_payload, charshape_pairs, ul_map):
     if cur_text:
         runs.append({"t": cur_text, "ul": cur_ul})
 
-    text = ''.join(r['t'] for r in runs).strip()
-    # strip 후 runs도 정리
+    # trailing 줄바꿈만 제거 (공백 보존 — HWP 빈칸이 공백+밑줄 스타일인 케이스 보존)
+    text = ''.join(r['t'] for r in runs).rstrip('\n\r')
     if runs:
-        runs[0]['t'] = runs[0]['t'].lstrip()
-        runs[-1]['t'] = runs[-1]['t'].rstrip()
+        runs[-1]['t'] = runs[-1]['t'].rstrip('\n\r')
         runs = [r for r in runs if r['t']]
 
     return text, runs or [{"t": text, "ul": False}]
@@ -1021,9 +1052,13 @@ _RE_STEP3_NON_CHOICE = re.compile(
 # 선지가 지문 inline에 ①②③④⑤로 박혀 있는 발문 (자동 prepend skip)
 # - "다음 글의 밑줄 친 부분 중 ... 어법상/문맥상 ... 적절하지 않은 것은?"
 # - "다음 글의 흐름과 관계 없는 문장은?"
-# 이런 발문은 파서가 자동으로 ①~⑤를 추가하면 지문 첫 글자에 ① 중복 발생
+# - "글의 흐름상 주어진 문장이 들어가기에 가장 적절한 곳은?" (문장삽입: 주어진 문장은 보기, 선지 ①②③④⑤는 지문 inline 위치 마커)
+# - "윗글의 (A), (B)에 들어갈 ... 바른 것은?" ((A)/(B) 매칭형: 선지가 표 형태 2개씩 짝)
+# 이런 발문은 파서가 자동으로 ①~⑤를 추가하면 지문/보기/표 헤더 첫 글자에 ① 중복 발생
 _RE_STEP3_INLINE_CHOICE = re.compile(
     r'밑줄\s*친\s*부분\s*중|흐름과\s*관계\s*없는\s*문장|어법상\s*틀린\s*것'
+    r'|주어진\s*(?:문장|글)|들어갈\s*위치'
+    r'|\(\s*A\s*\).{0,5}\(\s*B\s*\)'
 )
 # 단순 번호 발문 감지 (다음 발문 만나면 중단)
 _RE_STEP3_QUESTION_LIKE = re.compile(r'^\s*\d+\.\s')
@@ -1059,9 +1094,22 @@ def _add_step3_choice_numbers(paras):
             i += 1
             continue
 
+        # 발문 위에 묶음 마커(※/[Gateway]/[숫자])가 있으면 지문은 마커 아래에
+        # 이미 존재 → 발문 직후는 바로 선지. 다른 발문은 건너뛰며 마커까지 거슬러 올라감.
+        # 마커가 없으면 (예: 동아박 MIXED) 발문 직후 첫 영문 단락이 자기 지문.
+        passage_above = False
+        for k in range(i - 1, -1, -1):
+            t_k = (paras[k].get('text', '') or '').strip()
+            if not t_k:
+                continue
+            if t_k.startswith('※') or re.match(r'^\[(?:[Gg]ateway|\d+)\]$', t_k):
+                passage_above = True
+                break
+
         # 발문 직후 첫 영문 단락(지문) skip 후 5개 단락에 ①②③④⑤ prepend
         # (지문은 영문 알파벳 시작 + 한글 미포함 단락. 단락 1개만 skip)
-        saw_passage = False
+        # passage_above=True면 지문은 발문 위에 이미 있으므로 skip 단계 우회.
+        saw_passage = passage_above
         added = 0
         j = i + 1
         while j < n and added < 5:
@@ -1093,6 +1141,211 @@ def _add_step3_choice_numbers(paras):
             j += 1
         i = j if added > 0 else i + 1
     return paras
+
+
+# Step3 책 헤더 / 묶음 마커 — 출력에서 제거
+# - "2027년 수능특강 영어    더변형문제    27강 컴퓨터,인터넷" 류 책 제목 라인
+# - "[Gateway]" 묶음 마커 (passage_above 판정에 사용된 후 출력에서 제거)
+_RE_STEP3_BOOK_HEADER = re.compile(r'^\d{4}\s*년?\s*수능특강')
+_RE_STEP3_GROUP_MARKER = re.compile(r'^\[\s*Gateway\s*\]$', re.I)
+
+
+def _strip_step3_book_markers(paras):
+    """수능특강 책 헤더 + [Gateway] 묶음 마커 단락 제거.
+
+    원고 구조 예:
+        2027년 수능특강 영어    더변형문제    27강 컴퓨터,인터넷    ← 책 헤더
+        [Gateway]                                                ← 묶음 마커
+        <지문 본문>
+        1. 발문?
+        ...
+
+    [Gateway]는 _add_step3_choice_numbers의 passage_above 판정에 사용된 후
+    이 단계에서 제거되어 최종 출력은 바로 발문부터 시작.
+    """
+    out = []
+    for p in paras:
+        text = (p.get('text', '') or '').strip()
+        if _RE_STEP3_GROUP_MARKER.match(text):
+            continue
+        if _RE_STEP3_BOOK_HEADER.match(text):
+            continue
+        out.append(p)
+    return out
+
+
+# (A)/(B) 매칭형 발문 직후의 표 평탄 단락을 5쌍으로 합치기
+_RE_STEP3_AB_QUESTION = re.compile(r'\(\s*A\s*\).{0,5}\(\s*B\s*\)')
+_RE_STEP3_AB_HEADER = re.compile(r'^\(\s*[AB]\s*\)$')
+
+# 순서배열 발문 — "주어진 글 다음에 이어질 글의 순서로 적절한 것은?"
+_RE_STEP3_ORDER_QUESTION = re.compile(r'순서로\s*(?:가장\s*)?적절한|이어질\s*글의\s*순서')
+
+
+def _fix_step3_order_label_position(paras):
+    """순서배열 본문에서 (A) 라벨이 도입부 박스 위로 잘못 추출된 케이스 수정.
+
+    HWP 박스 추출이 박스 구조를 인식 못하면서 첫 (A) 라벨이 시각 순서와 다르게
+    도입부 박스 *위*로 추출되는 케이스:
+
+    추출:
+        ※ 다음 글을 읽고 물음에 답하시오.
+        (A)               ← 잘못된 위치 (도입부 박스 위)
+        <도입부 박스>
+        <(A) 박스>        ← 라벨 누락된 채 등장
+        (B)
+        <(B) 박스>
+        (C)
+        <(C) 박스>
+        7. ... 순서로 적절한 것은?
+
+    수정:
+        ※ 다음 글을 읽고 물음에 답하시오.
+        <도입부 박스>     ← 라벨 없음 (도입부)
+        (A)               ← (A) 박스 위로 이동
+        <(A) 박스>
+        (B)
+        ...
+
+    조건 (모두 만족 시에만):
+    - (A) 라벨 직전 비빈 단락이 ※/[Gateway]/번호발문
+    - 30단락 이내에 (B)/(C) 라벨 + 영문 박스 본문 4개 이상 + 순서배열 발문 모두 존재
+    """
+    if not paras:
+        return paras
+    out = list(paras)
+    i = 0
+    while i < len(out):
+        text = (out[i].get('text') or '').strip()
+        if text != '(A)':
+            i += 1
+            continue
+        # 직전 비빈 단락이 발문/Gateway/※ 인지
+        prev_marker = False
+        for jj in range(i - 1, -1, -1):
+            pt = (out[jj].get('text') or '').strip()
+            if not pt:
+                continue
+            if pt.startswith('※') or pt == '[Gateway]' or _RE_STEP3_QUESTION_LIKE.match(pt):
+                prev_marker = True
+            break
+        if not prev_marker:
+            i += 1
+            continue
+        # 후속 30단락 이내: (B)/(C) 라벨 + 영문 본문 4개 이상 + 순서배열 발문
+        scan_end = min(len(out), i + 30)
+        b_idx = c_idx = first_body_idx = -1
+        body_count = 0
+        order_q_found = False
+        for k in range(i + 1, scan_end):
+            tk = (out[k].get('text') or '').strip()
+            if not tk:
+                continue
+            if tk == '(B)' and b_idx < 0:
+                b_idx = k
+                continue
+            if tk == '(C)' and c_idx < 0:
+                c_idx = k
+                continue
+            if _RE_STEP3_ORDER_QUESTION.search(tk):
+                order_q_found = True
+                break
+            if re.match(r'^[A-Za-z]', tk) and not re.search(r'[가-힣]', tk):
+                body_count += 1
+                if first_body_idx < 0:
+                    first_body_idx = k
+        if not (order_q_found and b_idx > 0 and c_idx > 0 and body_count >= 4 and first_body_idx > 0):
+            i += 1
+            continue
+        # (A) 라벨을 첫 박스 본문 *다음* 위치로 이동
+        a_para = out.pop(i)
+        # pop으로 first_body_idx는 1 감소 → 새 인덱스 (first_body_idx - 1)이 도입부 박스 위치
+        # 그 *다음*에 (A) 삽입 → insert(first_body_idx)
+        out.insert(first_body_idx, a_para)
+        i = first_body_idx + 1
+    return out
+
+
+def _merge_step3_ab_pairs(paras):
+    """(A)/(B) 매칭 발문 직후의 표 평탄 단락을 5쌍으로 합쳐 ①~⑤ 부여.
+
+    hwp/hwpx 표는 셀 단위로 평탄화되어 추출됨:
+        입력:
+            10. 윗글의 ... (A), (B)에 들어갈 연결사로 바른 것은?
+            (A)                ← 컬럼 헤더 (제거)
+            (B)                ← 컬럼 헤더 (제거)
+            However            ← 1쌍 (A)값
+            As a result        ← 1쌍 (B)값
+            However
+            Otherwise
+            ...
+            Therefore
+            What is worse
+        출력:
+            10. ... 바른 것은?
+            ①However\\tAs a result
+            ②However\\tOtherwise
+            ③For example\\tLikewise
+            ④For example\\tNevertheless
+            ⑤Therefore\\tWhat is worse
+
+    영문 단락이 정확히 10개 모이지 않으면(추출 누락 등) 안전하게 원본 그대로 반환.
+    """
+    out = []
+    i = 0
+    n = len(paras)
+    while i < n:
+        text = (paras[i].get('text', '') or '').strip()
+        # 5지선다 발문("…것은?")이고 (A)/(B) 매칭 패턴 포함 + NON_CHOICE(쓰시오/요약/영작/어법) 아닐 때만 처리.
+        # 빈칸 채우기 서술형 발문에는 적용하면 안 됨 (그 발문에도 (A)/(B) 라벨이 등장하지만
+        # 표 매칭이 아니라 본문 안 빈칸 표시이므로).
+        is_match = (_RE_STEP3_CHOICE_QUESTION.match(text)
+                    and _RE_STEP3_AB_QUESTION.search(text)
+                    and not _RE_STEP3_NON_CHOICE.search(text))
+        if not is_match:
+            out.append(paras[i])
+            i += 1
+            continue
+        # (A)/(B) 매칭 5지선다 발문 — 발문 단락은 그대로 유지
+        out.append(paras[i])
+        i += 1
+        # 후속 단락 수집: 빈 줄/(A)·(B) 헤더는 따로 보관, 영문 셀만 cells에 모음
+        cells = []
+        passed = []  # 매칭 실패 시 복원용 (빈 줄 + (A)/(B) 헤더)
+        while i < n and len(cells) < 10:
+            tj = (paras[i].get('text', '') or '').strip()
+            if not tj:
+                passed.append(paras[i])
+                i += 1
+                continue
+            if _RE_STEP3_AB_HEADER.match(tj):
+                # (A) 또는 (B) 단독 헤더 — 5쌍 매칭 성공 시 제거, 실패 시 복원
+                passed.append(paras[i])
+                i += 1
+                continue
+            if _RE_STEP3_QUESTION_LIKE.match(tj):
+                break  # 다음 발문 만나면 중단
+            cells.append(paras[i])
+            i += 1
+        if len(cells) < 10:
+            # 매칭 실패 — (A)/(B) 헤더 + 빈 줄 + cells 모두 복원
+            out.extend(passed)
+            out.extend(cells)
+            continue
+        # 5쌍 합치기: ① + (A)값 + 탭 + (B)값
+        for k in range(5):
+            t1 = (cells[2 * k].get('text') or '').rstrip()
+            t2 = (cells[2 * k + 1].get('text') or '').rstrip()
+            mark = _CIRCLED_DIGITS[k]
+            merged_text = mark + t1 + '\t' + t2
+            runs_a = cells[2 * k].get('runs') or [{"t": t1, "ul": False}]
+            runs_b = cells[2 * k + 1].get('runs') or [{"t": t2, "ul": False}]
+            new_runs = [{"t": mark, "ul": False}]
+            new_runs.extend(runs_a)
+            new_runs.append({"t": "\t", "ul": False})
+            new_runs.extend(runs_b)
+            out.append({"text": merged_text, "runs": new_runs})
+    return out
 
 
 def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
@@ -1168,6 +1421,14 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
         paras = _strip_step3_type_tags(paras)
         # 5지선다 자동번호(①②③④⑤) 텍스트화 — hwp AutoNumbering 누락 보완
         paras = _add_step3_choice_numbers(paras)
+        # 책 헤더("2027년 수능특강 ...") + [Gateway] 묶음 마커 제거
+        # ※ _add_step3_choice_numbers의 passage_above 판정이 [Gateway]를 참조하므로
+        #   반드시 그 호출 *후*에 실행해야 함
+        paras = _strip_step3_book_markers(paras)
+        # 순서배열 본문: (A) 라벨이 도입부 박스 위로 잘못 추출된 경우 정규화
+        paras = _fix_step3_order_label_position(paras)
+        # (A)/(B) 매칭 발문 → 표 5쌍 합치기 (①단어A\t단어B 형식)
+        paras = _merge_step3_ab_pairs(paras)
         code = f"{yy}{mm}{str(q_num).zfill(2)}"
 
         target_list.append({
@@ -1211,6 +1472,9 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
             paras = _strip_step3_answers(paras)
             paras = _strip_step3_type_tags(paras)
             paras = _add_step3_choice_numbers(paras)
+            paras = _strip_step3_book_markers(paras)
+            paras = _fix_step3_order_label_position(paras)
+            paras = _merge_step3_ab_pairs(paras)
             textbook_paras.extend(paras)
         if textbook_paras:
             normal_items.append({
@@ -1225,47 +1489,90 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
 def _find_manuscript_file(manuscript_dir, expected_filename):
     """config에 지정된 파일명이 없을 때 유사 파일을 찾는 fallback.
 
-    전략:
-    1. 정확 매칭 (공백/NFD 차이 허용)
-    2. 확장자만 다른 파일 (.docx↔.hwp↔.hwpx)
-    3. 접미사 차이 허용 (예: '영작배열' vs '영작배열(서술형)')
+    매칭 전략 — 파일명의 구조(의미 토큰)를 기준으로 비교:
+    1. 정규화: 영문/숫자/한글만 남기고 공백·괄호·특수문자 모두 제거, 소문자, NFC
+       (예: 'Step2 A1 어법선택(객관식).docx' → 'step2a1어법선택객관식')
+    2. 정확 매칭 우선
+    3. 한쪽 정규화 문자열이 다른 쪽의 subsequence면 부분 매칭으로 인정
+       (예: '어법객관식'은 '어법선택객관식'의 subsequence → 매칭)
+    4. 부분 매칭 후보들은 LCS(공통 부분 수열) 길이가 긴 것 우선
+       (예: 기대 '빈칸어법정답지' → 후보 '빈칸어법정답'(LCS=9) > '빈칸어법'(LCS=7))
+    5. 동일 LCS면 확장자 일치 우선
     """
     import unicodedata
+    import re
 
-    base, ext = os.path.splitext(expected_filename)
-    norm_base = unicodedata.normalize("NFC", base.replace(" ", "").lower())
+    def _normalize(name):
+        nfc = unicodedata.normalize("NFC", name)
+        base = os.path.splitext(nfc)[0]
+        cleaned = re.sub(r'[^A-Za-z0-9가-힣]', '', base).lower()
+        return cleaned
+
+    def _is_subseq(short, long_):
+        if not short:
+            return True
+        i = 0
+        slen = len(short)
+        for ch in long_:
+            if short[i] == ch:
+                i += 1
+                if i == slen:
+                    return True
+        return False
+
+    def _lcs_len(a, b):
+        if not a or not b:
+            return 0
+        la, lb = len(a), len(b)
+        if la > lb:
+            a, b = b, a
+            la, lb = lb, la
+        prev = [0] * (la + 1)
+        for j in range(1, lb + 1):
+            curr = [0] * (la + 1)
+            bj = b[j-1]
+            for i in range(1, la + 1):
+                if a[i-1] == bj:
+                    curr[i] = prev[i-1] + 1
+                else:
+                    curr[i] = max(prev[i], curr[i-1])
+            prev = curr
+        return prev[la]
+
+    ext_expected = os.path.splitext(expected_filename)[1].lower()
+    norm_expected = _normalize(expected_filename)
 
     exact = []
-    partial = []
+    partial = []  # (file_path, lcs_score)
     for f in os.listdir(manuscript_dir):
         fp = os.path.join(manuscript_dir, f)
         if not os.path.isfile(fp):
             continue
-        f_base, f_ext = os.path.splitext(f)
-        if f_ext.lower() not in ('.docx', '.hwp', '.hwpx'):
+        f_ext = os.path.splitext(f)[1].lower()
+        if f_ext not in ('.docx', '.hwp', '.hwpx'):
             continue
-        f_norm = unicodedata.normalize("NFC", f_base.replace(" ", "").lower())
-        if f_norm == norm_base:
+        f_norm = _normalize(f)
+        if not f_norm:
+            continue
+        if f_norm == norm_expected:
             exact.append(fp)
-        # 부분 매칭: 기대 이름이 실제 파일명의 시작부분과 일치
-        elif f_norm.startswith(norm_base):
-            partial.append(fp)
-        # 역방향: 실제 파일명이 기대 이름의 시작부분
-        elif norm_base.startswith(f_norm):
-            partial.append(fp)
+        elif _is_subseq(f_norm, norm_expected) or _is_subseq(norm_expected, f_norm):
+            partial.append((fp, _lcs_len(f_norm, norm_expected)))
 
-    # 정확 매칭 우선
     if exact:
         for c in exact:
-            if os.path.splitext(c)[1].lower() == ext.lower():
+            if os.path.splitext(c)[1].lower() == ext_expected:
                 return c
         return exact[0]
-    # 부분 매칭
     if partial:
-        for c in partial:
-            if os.path.splitext(c)[1].lower() == ext.lower():
-                return c
-        return partial[0]
+        partial.sort(key=lambda x: (
+            -x[1],
+            0 if os.path.splitext(x[0])[1].lower() == ext_expected else 1,
+        ))
+        for fp, _ in partial:
+            if os.path.splitext(fp)[1].lower() == ext_expected:
+                return fp
+        return partial[0][0]
     return None
 
 

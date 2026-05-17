@@ -26,6 +26,14 @@
     var tbPublisher = settings.publisher || "";
     var tbLesson    = settings.lesson    || "";
 
+    // 사용자가 UI에서 체크한 제외 섹션 (예: ["step1_b2", "step2_a1", "step2_a1_btm"])
+    var excludeSet = {};
+    if (settings.exclude && settings.exclude.length) {
+        for (var ex = 0; ex < settings.exclude.length; ex++) {
+            excludeSet[settings.exclude[ex]] = true;
+        }
+    }
+
     // content_meta.json (lightweight) + lazy-load per step
     function loadJSON(path) {
         var f = new File(path);
@@ -260,17 +268,38 @@
     }
 
     // Header patterns for STEP detection
-    // \uC120\uD589 \uC21C\uBC88(N. / N))\uC740 \uC120\uD0DD. \uD398\uC774\uC9C0 \uB9C8\uCEE4(p<page> \uB610\uB294 L<lesson>) \uB4A4\uC5D0 \uB77C\uBCA8 + \uC9C0\uBB38\uBC88\uD638.
-    // \uB77C\uBCA8\uC740 no./Example/\uC784\uC758 \uC601\uBB38 \uD1A0\uD070 \uBAA8\uB450 \uD5C8\uC6A9. \uD2B8\uB808\uC77C\uB9C1 "(\uC815\uB2F5 1\uAC1C)" \uAC19\uC740 \uBD80\uAC00\uC815\uBCF4\uB3C4 \uD5C8\uC6A9.
-    var reHeader = /^\s*(?:[A-Za-z0-9]+\s*[.)]?\s*)?(?:L\d+\s*[-\u2013\u2014]?\s*\uBCF8\uBB38\s*\d+(?:\s*\([^\)]*\))?|L\d+\s*[-\u2013\u2014]?\s*[A-Za-z][A-Za-z\s]+(?:\s*\([^\)]*\))?|L\d+\s*[-\u2013\u2014]?\s*p\.?\s*\d+(?:\s*~\s*\d+)?(?:\s+[A-Za-z\s]+)?|p\d+\s*[-\u2013\u2014\.]?\s*(?:no\.\s*|Example\s+|[A-Za-z]+\.?\s*)?\d+(?:~\d+)?(?:\s*\([^\)]*\))?|p\d+\s*[-\u2013\u2014]?\s*(?:\uC11C\uC220\uD615|\uB17C\uC220\uD615)\s*Prac(?:tice|ice)|p\d+\s*[-\u2013\u2014]+\s*\uC218\uB2A5\s*\uB300\uBE44\s*ANALYSIS)\s*$/i;
-    var reSupp = /^\s*Supplementary Reading\s*$/i;
+    // Safe patterns split into multiple simple regexes to avoid ExtendScript ReDoS.
+    // Pre-step: strip "N." prefix and remove all whitespace, then test compact form.
+    var headerPatterns = [
+        /^L\d+[-\u2013\u2014]\uBCF8\uBB38\d+(?:\([^\)]{0,40}\))?$/,
+        /^L\d+[-\u2013\u2014][A-Za-z]{1,30}(?:\([^\)]{0,40}\))?$/,
+        /^L\d+[-\u2013\u2014]p\.?\d+(?:~\d+)?(?:[A-Za-z]{1,20})?$/i,
+        /^p\d+[-\u2013\u2014\.]?(?:no\.)?\d+(?:~\d+)?(?:\([^\)]{0,40}\))?$/i,
+        /^p\d+[-\u2013\u2014]?Example\d*$/i,
+        /^p\d+[-\u2013\u2014]?Example\d+$/i,
+        /^p\d+[-\u2013\u2014][A-Za-z]{1,15}\.?\d+(?:~\d+)?$/i,
+        /^p\d+[-\u2013\u2014](?:\uC11C\uC220\uD615|\uB17C\uC220\uD615)Practice$/i,
+        /^p\d+[-\u2013\u2014]+\uC218\uB2A5\uB300\uBE44ANALYSIS$/i
+    ];
+    var reSupp = /^Supplementary Reading$/i;
 
     function normHeader(s) {
         return (s || "").replace(/\uFEFF/g, "").replace(/[\u00A0\u2000-\u200B\u202F\u205F\u3000]/g, " ").replace(/[ \t]+/g, " ").replace(/^\s+|\s+$/g, "");
     }
+    function _matchAnyHeader(s) {
+        for (var pi = 0; pi < headerPatterns.length; pi++) {
+            if (headerPatterns[pi].test(s)) return true;
+        }
+        return false;
+    }
     function isHeaderLine(txt) {
         var hn = normHeader(txt);
-        return reHeader.test(hn) || reSupp.test(hn);
+        if (hn.length > 60) return false;
+        if (reSupp.test(hn)) return true;
+        var body = hn.replace(/^\d+\s*[.)]?\s*/, "");
+        if (body.length === 0 || body.length > 50) return false;
+        var compact = body.replace(/\s+/g, "");
+        return _matchAnyHeader(compact);
     }
 
     // ========================================================================
@@ -444,51 +473,75 @@
     }
 
     function insertHeaderBreaks(story) {
-        // For steps that use header patterns (L1-본문1, p2-no.18, etc.)
-        // Insert frame breaks before headers and remove headers
-        var paras = story.paragraphs;
-        for (var i = paras.length - 1; i >= 0; i--) {
-            paras = story.paragraphs;
-            if (i >= paras.length) continue;
-            var header = paras[i];
-            if (header.parentStory !== story) continue;
-            var htxt = header.contents || "";
-            var hnorm = normHeader(htxt);
-            if (!(reHeader.test(hnorm) || reSupp.test(hnorm))) continue;
+        // 헤더 패턴이 있는 단락을 찾아 frame break 삽입 후 헤더 자체를 제거.
+        // 알고리즘 — 두 패스:
+        //   1) 사전 패스: 헤더 후보 단락 인덱스만 수집 (길이/정규식으로 빠르게 거름)
+        //   2) 처리 패스: 인덱스 역순으로 각 헤더 처리 (인덱스 안정성 보장)
+        var _hbStart = (new Date()).getTime();
+        var paras = story.paragraphs.everyItem().getElements();
+        try { addLog("insertHeaderBreaks: 진입 paras.length=" + paras.length); } catch(_){}
 
-            // Find nearest non-blank paragraph above
-            var top = i - 1;
-            while (top >= 0 && paras[top].parentStory === story && isBlankPara(paras[top])) top--;
+        // 1) 헤더 인덱스 수집
+        var headerIdx = [];
+        for (var i = 0; i < paras.length; i++) {
+            var t = "";
+            try { t = paras[i].contents || ""; } catch(_){ continue; }
+            if (t.length > 80) continue;  // 헤더는 짧음
+            if (isHeaderLine(t)) headerIdx.push(i);
+        }
+        try { addLog("insertHeaderBreaks: 헤더 " + headerIdx.length + "개 발견 elapsed=" + ((new Date()).getTime() - _hbStart) + "ms"); } catch(_){}
+
+        if (headerIdx.length === 0) {
+            try { addLog("insertHeaderBreaks: 완료 (헤더 없음) elapsed=" + ((new Date()).getTime() - _hbStart) + "ms"); } catch(_){}
+            return;
+        }
+
+        // 2) 역순 처리. 각 헤더 단락 객체를 직접 가지고 처리 → 인덱스 변동 무관.
+        for (var hi = headerIdx.length - 1; hi >= 0; hi--) {
+            var hIdx = headerIdx[hi];
+            if (hIdx >= paras.length) continue;
+            var header = paras[hIdx];
+
+            // 헤더 위의 가장 가까운 non-blank 단락 찾기 (초기 paras 기준)
+            var top = hIdx - 1;
+            while (top >= 0 && isBlankPara(paras[top])) top--;
 
             if (top >= 0) {
-                // Insert frame break at end of paragraph above header
+                // frame break 삽입
                 try {
-                    var ipBeforeCR = paras[top].insertionPoints[-2];
-                    var lastBeforeCR = paras[top].characters.length > 1 ? paras[top].characters[-2] : null;
-                    var already = (lastBeforeCR && lastBeforeCR.contents === SpecialCharacters.FRAME_BREAK);
-                    if (!already) ipBeforeCR.contents = SpecialCharacters.FRAME_BREAK;
+                    var topPara = paras[top];
+                    if (topPara.isValid && topPara.characters.length > 0) {
+                        var ipBeforeCR = topPara.insertionPoints[-2];
+                        var lastChar = topPara.characters.length > 1 ? topPara.characters[-2] : null;
+                        var hasBreak = false;
+                        try { hasBreak = (lastChar && lastChar.contents === SpecialCharacters.FRAME_BREAK); } catch(_){}
+                        if (!hasBreak) ipBeforeCR.contents = SpecialCharacters.FRAME_BREAK;
+                    }
                 } catch(_){}
 
-                // Remove blank paragraphs between top and header
-                for (var k = top + 1; k < i; k++) {
-                    if (k >= story.paragraphs.length) break;
-                    var mid = story.paragraphs[k];
-                    if (mid.parentStory !== story) break;
-                    if (isBlankPara(mid)) { try { mid.remove(); k--; i--; } catch(_){ break; } }
+                // top과 header 사이 blank 단락 제거
+                for (var k = top + 1; k < hIdx; k++) {
+                    try {
+                        if (paras[k].isValid && isBlankPara(paras[k])) {
+                            paras[k].contents = "";  // 내용만 비움 (.remove() silent-fail 회피)
+                        }
+                    } catch(_){}
                 }
             }
 
-            // Remove header paragraph
-            try { header.remove(); } catch(_){}
-
-            // Remove blank paragraphs below
-            paras = story.paragraphs;
-            var down = Math.min(i, paras.length - 1);
-            while (down < paras.length && paras[down].parentStory === story && isBlankPara(paras[down])) {
-                try { paras[down].remove(); } catch(_){ break; }
-                paras = story.paragraphs;
-            }
+            // 헤더 단락의 내용 비움 (paragraph 객체는 유지)
+            try {
+                if (header.isValid) header.contents = "";
+            } catch(_){}
         }
+
+        // 3) 정리: 빈 단락 일괄 제거 (GREP — 안정적, 무한 루프 없음)
+        try {
+            grepChange(story, "^\\s*\\r", "");      // 빈 라인 제거
+            grepChange(story, "\\r{2,}", "\\r");    // 연속 줄바꿈 정리
+        } catch(_){}
+
+        try { addLog("insertHeaderBreaks: 완료 elapsed=" + ((new Date()).getTime() - _hbStart) + "ms"); } catch(_){}
     }
 
     // ========================================================================
@@ -1088,6 +1141,8 @@
             // EBS \uB9AC\uB529\uD30C\uC6CC \uB4F1\uC758 "Example N" \uB77C\uBCA8\uB3C4 \uB3D9\uC77C\uD558\uAC8C {N}\uC73C\uB85C \uBCC0\uD658
             // (\uB77C\uBCA8 \uC885\uB958\uC5D0 \uBB34\uAD00\uD558\uAC8C \uD5E4\uB354 \uB77C\uC778 \uB05D\uC758 \uC9C0\uBB38 \uBC88\uD638\uB97C {N}\uC73C\uB85C \uC815\uADDC\uD654)
             grepChange(story, "\\bExample\\s+(\\d{1,3})", "{$1}");
+            // "N. p<page>-Example" (Example \uB4A4 \uC22B\uC790 \uC5C6\uC74C) \u2014 prefix \uBC88\uD638\uB97C \uBCF8\uBB38\uBC88\uD638\uB85C \uC0AC\uC6A9 (\uC608: 13\uB144 3\uC6D4 \uBAA8\uC758\uACE0\uC0AC)
+            grepChange(story, "\\b(\\d+)\\.\\s*p\\d+\\s*[-\u2013\u2014]?\\s*Example\\b", "{$1}");
             grepChange(story, "\\bANALYSIS\\b", "{\uBD84\uC11D}");
             grepChange(story, "\\b\\d+\\.\\s*L\\d+\\s*[-\u2013\u2014\\.]?\\s*p\\.?\\s*\\d+[^\\r\\n]*?\uBCF8\uBB38\\s*(\\d+)\\b", "{\uBCF8\uBB38$1}");
             grepChange(story, "L\\d+\\s*[-\u2013\u2014\\.]?\\s*p\\.?\\s*\\d+[^\\r\\n]*?\uBCF8\uBB38\\s*(\\d+)\\b", "{\uBCF8\uBB38$1}");
@@ -1139,9 +1194,22 @@
                 }
             }
 
-            // 헤더 (첫 번째 제외) → NEXT_PAGE: 본문 1개 = 페이지 1개 강제
+            // 헤더 (첫 번째 제외) → 본문 1개당 새 프레임/페이지
+            // EBS 리딩파워: 페이지당 2 프레임이라 NEXT_FRAME (페이지 안 다음 프레임), 동아박: NEXT_PAGE
+            var headerStart = (workbookType === "EBS") ? StartParagraph.NEXT_FRAME : StartParagraph.NEXT_PAGE;
             for (var h = 1; h < headerIdx.length; h++) {
-                try { parasAll[headerIdx[h]].startParagraph = StartParagraph.NEXT_PAGE; } catch(_){}
+                try { parasAll[headerIdx[h]].startParagraph = headerStart; } catch(_){}
+            }
+            // EBS: startParagraph만으로 frame 분리가 깨지는 케이스 대비 GREP로 FRAME_BREAK 메타시퀀스(~M) 추가
+            // 첫 번째 헤더(스토리 시작)는 제외하기 위해 lookbehind로 \r(paragraph break) 다음만 매칭
+            if (workbookType === "EBS") {
+                try {
+                    resetGrep();
+                    app.findGrepPreferences.findWhat = "(?<=\\r)(\\{[^}]+\\})";
+                    app.changeGrepPreferences.changeTo = "~M$1";
+                    story.changeGrep();
+                    resetGrep();
+                } catch(_){}
             }
             // 조건 → NEXT_FRAME: 같은 페이지 안 하단 영역으로 강제 분리
             for (var ic = 0; ic < conditionIdxList.length; ic++) {
@@ -1310,13 +1378,32 @@
 
                     try {
                         var ipL = lastP.insertionPoints[-1];
-                        ipL.contents = "\r\r";
-                        paras3 = parasOf(story);
-                        if (ia + 1 < paras3.length) {
-                            try { paras3[ia + 1].appliedParagraphStyle = BASIC_PARA; } catch(_){}
+                        var arrowParaIdx = -1;
+                        if (workbookType === "EBS") {
+                            // EBS: \uC6D0\uACE0 \uAD6C\uC870\uC0C1 \uB9C8\uC9C0\uB9C9 \uC120\uC9C0 \uB2E4\uC74C \uBE48 \uB2E8\uB77D\uC774 \uC774\uBBF8 \uC788\uC74C \u2192 \uAC70\uAE30\uC5D0 \uD654\uC0B4\uD45C \uC0BD\uC785
+                            // \r\r\uB85C \uBE48 \uC904 \uCD94\uAC00\uD558\uBA74 \uD654\uC0B4\uD45C\uAC00 \uB2E4\uC74C \uD398\uC774\uC9C0\uB85C \uD758\uB7EC\uAC00 frame break \uC704\uCE58\uAC00 \uC5B4\uAE0B\uB0A8
+                            if (ia + 1 < paras3.length) {
+                                var nextTxt = ptxt(paras3[ia + 1]);
+                                if (/^[\s\u00A0\u2000-\u200B\u202F\u205F\u3000\r\n]*$/.test(nextTxt)) {
+                                    arrowParaIdx = ia + 1;
+                                }
+                            }
+                            if (arrowParaIdx < 0) {
+                                ipL.contents = "\r";
+                                paras3 = parasOf(story);
+                                if (ia + 1 < paras3.length) arrowParaIdx = ia + 1;
+                            }
+                        } else {
+                            // \uB3D9\uC544\uBC15/\uAD50\uACFC\uC11C \uAE30\uC874 \uBC29\uC2DD \u2014 \r\r\uB85C \uBE48 \uB2E8\uB77D 2\uAC1C \uB9CC\uB4E4\uACE0 \uB450 \uBC88\uC9F8\uC5D0 \uD654\uC0B4\uD45C
+                            ipL.contents = "\r\r";
+                            paras3 = parasOf(story);
+                            if (ia + 1 < paras3.length) {
+                                try { paras3[ia + 1].appliedParagraphStyle = BASIC_PARA; } catch(_){}
+                            }
+                            if (ia + 2 < paras3.length) arrowParaIdx = ia + 2;
                         }
-                        if (ia + 2 < paras3.length) {
-                            var newPara = paras3[ia + 2];
+                        if (arrowParaIdx >= 0 && arrowParaIdx < paras3.length) {
+                            var newPara = paras3[arrowParaIdx];
                             var icon = arrowSrc.duplicate();
                             try {
                                 icon.anchoredObjectSettings.anchoredPosition = AnchorPosition.INLINE_POSITION;
@@ -1329,7 +1416,7 @@
                             try { newPara.appliedParagraphStyle = BASIC_PARA; } catch(_){}
                             try { icon.fit(FitOptions.FRAME_TO_CONTENT); } catch(_){}
                             paras3 = parasOf(story);
-                            ia += 2;
+                            ia = arrowParaIdx;
                         }
                     } catch(_){}
                 }
@@ -1410,6 +1497,25 @@
             // Clean up header remnants
             grepChange(story, "(\\{\uBCF8\uBB38\\d+\\})\\([^\\)]*\\)", "$1");
             grepChange(story, "(\\{[A-Za-z][A-Za-z\\s]+\\})\\([^\\)]*\\)", "$1");
+
+            // c1_btm\uB9CC \uC81C\uC678: \uD558\uB2E8 \uB2E8\uB77D(BTM/BTM_T/HADAN) \uC0AD\uC81C \u2192 \uD558\uB2E8 frame\uC740 \uBE48 \uCC44\uB85C \uB0A8\uACE0 \uC0C1\uB2E8\uC740 \uC720\uC9C0
+            if (excludeSet["step1_c1_btm"]) {
+                var btmName  = S1_C1_BTM   ? S1_C1_BTM.name   : null;
+                var btmTName = S1_C1_BTM_T ? S1_C1_BTM_T.name : null;
+                var hadanName= S1_HADAN    ? S1_HADAN.name    : null;
+                var parasDel = parasOf(story);
+                for (var iDel = parasDel.length - 1; iDel >= 0; iDel--) {
+                    try {
+                        var styDel = parasDel[iDel].appliedParagraphStyle;
+                        if (!styDel) continue;
+                        var snm = styDel.name;
+                        if (snm === btmName || snm === btmTName || snm === hadanName) {
+                            parasDel[iDel].remove();
+                        }
+                    } catch(_){}
+                }
+                try { story.recompose(); } catch(_){}
+            }
 
         }, ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, "STEP1C1");
 
@@ -1665,35 +1771,42 @@
     // ---- STEP 2 C1: 빈칸 어법 ----
     function processStep2C1(story, paragraphs) {
         addLog("STEP2 C1 처리 시작");
+        addLog("STEP2 C1: insertContent 시작 (paragraphs=" + paragraphs.length + ")");
         insertContent(story, paragraphs);
+        addLog("STEP2 C1: insertContent 완료");
 
         app.doScript(function() {
-            // Character style reset
-            // char style reset skipped (story.contents already clean)
-
-            // Remove headers and insert frame breaks
+            addLog("STEP2 C1: insertHeaderBreaks 시작");
             insertHeaderBreaks(story);
+            addLog("STEP2 C1: insertHeaderBreaks 완료");
 
-            // Tab → return
+            addLog("STEP2 C1: grepChange(tab->return) 시작");
             grepChange(story, "\\t", "\\r");
+            addLog("STEP2 C1: grepChange 완료");
 
-            // All paragraphs → C1_빈칸 어법
             if (S2_C1) {
                 var parasAll = story.paragraphs;
+                addLog("STEP2 C1: applyStyle S2_C1 시작 (count=" + parasAll.length + ")");
                 for (var i = 0; i < parasAll.length; i++) {
                     try { parasAll[i].applyParagraphStyle(S2_C1, true); } catch(_){}
                 }
+                addLog("STEP2 C1: applyStyle S2_C1 완료");
+            } else {
+                addLog("STEP2 C1: S2_C1 스타일 없음, 건너뜀");
             }
 
-            // Korean 2+ → 빈칸 어휘 한글
             if (S1_C2_KOR) {
                 var paras2 = story.paragraphs;
+                addLog("STEP2 C1: applyStyle S1_C2_KOR 시작 (count=" + paras2.length + ")");
                 for (var j = 0; j < paras2.length; j++) {
                     var txt = paras2[j].contents || "";
                     if (hasKorean2(txt)) {
                         try { paras2[j].applyParagraphStyle(S1_C2_KOR, true); } catch(_){}
                     }
                 }
+                addLog("STEP2 C1: applyStyle S1_C2_KOR 완료");
+            } else {
+                addLog("STEP2 C1: S1_C2_KOR 스타일 없음, 건너뜀");
             }
         }, ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, "STEP2C1");
 
@@ -2467,73 +2580,58 @@
             }
         }
 
-        // ── 오버플로우 해결: O 마스터 페이지 복제 + 스토리 연결 ─────────
-        // 스토리 마지막 프레임이 오버플로우면 페이지를 추가해서 해결
+        // ── 오버플로우 해결: 기존 STEP3 페이지를 통째로 복제 후 메인 프레임만 연결 ──
+        // 페이지 추가 + 마스터 override 방식은 페이지 헤더/번호 영역까지 깨지므로 페이지 복제 사용.
+        // 복제된 페이지는 마스터/페이지헤더/메인콘텐츠 프레임이 모두 동일 위치/크기로 복사됨.
         try { story.recompose(); } catch(_){}
+
         var maxOverflowTries = 20;
         for (var ofTry = 0; ofTry < maxOverflowTries; ofTry++) {
-            // 마지막 컨테이너의 오버플로우 확인
             var lastTF = story.textContainers[story.textContainers.length - 1];
-            if (!lastTF.overflows) break; // 오버플로우 없으면 종료
+            if (!lastTF.overflows) break;
 
-            addLog("STEP3 오버플로우 감지 — 페이지 추가 (시도 " + (ofTry + 1) + ")");
+            addLog("STEP3 오버플로우 감지 — 페이지 복제 (시도 " + (ofTry + 1) + ")");
 
-            // 마지막 프레임이 있는 페이지의 다음 위치에 스프레드 추가
             var lastPage = null;
             try { lastPage = lastTF.parentPage; } catch(_){}
-
-            // O 마스터 기반 새 페이지 추가
-            var newPage = null;
-            try {
-                if (lastPage) {
-                    newPage = doc.pages.add(LocationOptions.AFTER, lastPage);
-                } else {
-                    newPage = doc.pages.add(LocationOptions.AT_END);
-                }
-                if (MASTER_O) newPage.appliedMaster = MASTER_O;
-            } catch(e) {
-                addLog("페이지 추가 실패: " + e.message);
+            if (!lastPage) {
+                addLog("마지막 페이지 식별 실패");
                 break;
             }
 
-            // 새 페이지의 텍스트 프레임을 스토리 마지막 프레임에 연결
+            // 마지막 STEP3 페이지를 복제 (마스터 + 모든 항목 그대로 복사)
+            var newPage = null;
+            try {
+                newPage = lastPage.duplicate(LocationOptions.AFTER, lastPage);
+            } catch(e) {
+                addLog("페이지 복제 실패: " + e.message);
+                break;
+            }
+
             if (newPage) {
+                // 복제된 페이지에서 메인 콘텐츠 프레임 식별 (가장 큰 텍스트 프레임)
+                // 페이지 헤더/번호 같은 작은 프레임은 자동 제외
                 var newTFs = newPage.textFrames;
-                // 마스터 프레임 오버라이드 (마스터에서 가져온 프레임이 로컬로 없으면)
-                if (newTFs.length === 0) {
-                    try {
-                        // 마스터 페이지의 프레임을 오버라이드
-                        var masterItems = newPage.appliedMaster.pages[0].textFrames;
-                        for (var mi2 = 0; mi2 < masterItems.length; mi2++) {
-                            try { masterItems[mi2].override(newPage); } catch(_){}
-                        }
-                        // 두 번째 마스터 페이지도 (스프레드)
-                        if (newPage.appliedMaster.pages.length > 1) {
-                            var mp2 = newPage.appliedMaster.pages[1];
-                            for (var mi3 = 0; mi3 < mp2.textFrames.length; mi3++) {
-                                try { mp2.textFrames[mi3].override(newPage); } catch(_){}
-                            }
-                        }
-                        newTFs = newPage.textFrames;
-                    } catch(_){}
-                }
-
-                // 새 프레임들을 x 좌표 순서로 정렬해서 스토리에 연결
-                var sortedTFs = [];
+                var bestTF = null;
+                var bestArea = 0;
                 for (var nt = 0; nt < newTFs.length; nt++) {
-                    sortedTFs.push({ tf: newTFs[nt], x: newTFs[nt].geometricBounds[1] });
-                }
-                sortedTFs.sort(function(a, b) { return a.x - b.x; });
-
-                var prevTF = lastTF;
-                for (var st = 0; st < sortedTFs.length; st++) {
                     try {
-                        // 이미 다른 스토리에 연결된 프레임은 건너뛰기
-                        if (sortedTFs[st].tf.parentStory !== story) {
-                            prevTF.nextTextFrame = sortedTFs[st].tf;
+                        var b = newTFs[nt].geometricBounds;
+                        var area = (b[3] - b[1]) * (b[2] - b[0]);
+                        if (area > bestArea) {
+                            bestArea = area;
+                            bestTF = newTFs[nt];
                         }
-                        prevTF = sortedTFs[st].tf;
                     } catch(_){}
+                }
+
+                if (bestTF) {
+                    // 메인 콘텐츠 프레임의 복제된 텍스트 비우고 STEP3 스토리에 연결
+                    try { bestTF.parentStory.contents = ""; } catch(_){}
+                    try { lastTF.nextTextFrame = bestTF; } catch(_){}
+                } else {
+                    addLog("복제 페이지에서 메인 프레임 식별 실패");
+                    break;
                 }
             }
 
@@ -2659,6 +2757,10 @@
     // ── STEP 3 first (p178+, farthest back) — 텍스트/스타일만, 프레임브레이크는 나중에
     var step3Data = loadStepData("step3");
     var step3Story = null;
+    if (excludeSet["step3"]) {
+        addLog("step3: 사용자 제외, 건너뜀");
+        step3Data = null;
+    }
     if (step3Data) {
         step3Story = mapStepToStory("step3");
         if (step3Story) {
@@ -2703,6 +2805,10 @@
     // Process STEP 1 & 2
     for (var si = 0; si < stepOrder.length; si++) {
         var stepKey = stepOrder[si];
+        if (excludeSet[stepKey]) {
+            addLog(stepKey + ": 사용자 제외, 건너뜀");
+            continue;
+        }
         var stepData = loadStepData(stepKey);
 
         if (!stepData || !stepData.paragraphs || stepData.paragraphs.length === 0) {

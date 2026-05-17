@@ -161,6 +161,15 @@ class WorkbookEngine(BaseEngine):
         elif not os.path.exists(indd_path):
             raise FileNotFoundError(f"내지 파일 없음: {indd_path}")
 
+        # 제외 섹션 (UI 체크박스로 전달됨)
+        exclude_path = os.path.join(job_dir, "exclude.txt")
+        exclude = []
+        if os.path.exists(exclude_path):
+            raw = open(exclude_path, encoding="utf-8").read().strip()
+            exclude = [s.strip() for s in raw.split(",") if s.strip()]
+            if exclude:
+                log(f"[JSX] 제외 섹션: {', '.join(exclude)}")
+
         # settings.json 작성
         settings_path = os.path.join(job_dir, ".settings.json")
         settings = {
@@ -170,6 +179,7 @@ class WorkbookEngine(BaseEngine):
             "grade": grade,
             "year": year,
             "month": month,
+            "exclude": exclude,
         }
         with open(settings_path, "w", encoding="utf-8") as f:
             json.dump(settings, f, ensure_ascii=False)
