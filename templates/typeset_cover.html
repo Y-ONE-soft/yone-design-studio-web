@@ -12,7 +12,15 @@
 
   <!-- ── 세네카 계산기 ─────────────────────────────────────── -->
   <div class="cover-calc-section">
-    <div class="section-label">세네카 계산기 <span class="calc-hint">(뉴플러스 미색 80g · 무선제본)</span></div>
+    <div class="section-label">세네카 계산기 <span class="calc-hint">(무선제본)</span></div>
+    <div class="paper-row">
+      <label class="paper-option">
+        <input type="radio" name="paper_type" value="newplus" checked onchange="onPaperChange()"> 뉴플러스 80g
+      </label>
+      <label class="paper-option">
+        <input type="radio" name="paper_type" value="mojo" onchange="onPaperChange()"> 모조지 80g
+      </label>
+    </div>
     <div class="calc-row">
       <label class="calc-label">내지 페이지 수</label>
       <input type="number" id="page-count" class="calc-input" placeholder="예: 120" min="1">
@@ -35,8 +43,8 @@
   <!-- ── 출력 파일명 ───────────────────────────────────────── -->
   <div class="spine-input-section">
     <div class="section-label">교재명 <span class="calc-hint">(예: 배재1_블랙북)</span></div>
-    <input type="text" name="out_name" id="out-name" class="text-input"
-           placeholder="예: 배재1_블랙북" style="margin-bottom:16px">
+    <input type="text" name="out_name" id="out-name" class="text-input u-mb-16"
+           placeholder="예: 배재1_블랙북">
   </div>
   <div class="spine-input-section">
     <div class="section-label">주차수</div>
@@ -49,7 +57,7 @@
   </div>
 
   <!-- ── AI 파일 업로드 ────────────────────────────────────── -->
-  <div class="section-label" style="margin-bottom:4px">표지 파일 <span class="required">*</span></div>
+  <div class="section-label u-mb-4">표지 파일 <span class="required">*</span></div>
   <div class="drop-zone" id="ai-drop"
        ondragover="event.preventDefault(); this.classList.add('dragover')"
        ondragleave="this.classList.remove('dragover')"
@@ -89,17 +97,32 @@
   const MATERIAL_ID = "cover";
 
   // ── 세네카 계산기 ──────────────────────────────────────────
+  const PAPER_SPEC = {
+    newplus: { mult: 0.08, name: '뉴플러스 80g' },
+    mojo:    { mult: 0.11, name: '모조지 80g' }
+  };
+
+  function getPaperSpec() {
+    const el = document.querySelector('input[name="paper_type"]:checked');
+    return PAPER_SPEC[el ? el.value : 'newplus'];
+  }
+
+  function onPaperChange() {
+    if (document.getElementById('page-count').value) calcSpine();
+  }
+
   function calcSpine() {
     const pages = parseInt(document.getElementById('page-count').value);
     if (!pages || pages <= 0) {
       document.getElementById('calc-result').textContent = '→ 올바른 숫자를 입력하세요';
       return;
     }
-    const raw = (pages / 2) * 0.08;
+    const spec = getPaperSpec();
+    const raw = (pages / 2) * spec.mult;
     const halfUp = Math.ceil(raw * 2) / 2;
     const recommended = Math.ceil(halfUp + 0.5);
     document.getElementById('calc-result').textContent =
-      `→ 계산: ${raw.toFixed(1)}mm → 권장: ${recommended}mm (여유 포함)`;
+      `→ ${spec.name}: ${raw.toFixed(1)}mm → 권장: ${recommended}mm (여유 포함)`;
     document.getElementById('spine-input').value = recommended;
     updateSpineNote(recommended);
   }

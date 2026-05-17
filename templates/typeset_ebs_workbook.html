@@ -13,33 +13,32 @@
   <div class="issue-row">
     <div class="issue-input-wrap">
       <label class="section-label">단원 <span class="required">*</span></label>
-      <select name="lesson" id="unit-select" class="issue-input"
-              onchange="onUnitChange()" style="width:240px">
+      <select name="lesson" id="unit-select" class="issue-input u-w-240"
+              onchange="onUnitChange()">
         <option value="">불러오는 중...</option>
       </select>
       <input type="hidden" name="lesson_folder" id="unit-folder-hidden">
     </div>
-    <div class="filename-preview-wrap" style="margin-left:20px">
+    <div class="filename-preview-wrap u-ml-20">
       <label class="section-label">생성될 파일명</label>
       <div class="filename-preview" id="filename-preview">&mdash;</div>
     </div>
   </div>
 
   <!-- ── 원고 파일 (자동 수집) ──────────────────────────────── -->
-  <div id="auto-files-section" style="display:none">
-    <div class="section-label" style="margin-bottom:4px">단원 폴더 원고</div>
-    <div class="file-list" id="auto-file-list"
-         style="background:#f8f9fa; border:1px solid #e0e0e0; border-radius:6px; padding:8px 12px; margin-bottom:12px; max-height:240px; overflow-y:auto">
-      <span style="color:#999">단원을 선택하면 자동으로 파일 목록이 표시됩니다</span>
+  <div id="auto-files-section" class="hidden">
+    <div class="section-label u-mb-4">단원 폴더 원고</div>
+    <div class="file-list info-box" id="auto-file-list">
+      <span class="info-box-empty">단원을 선택하면 자동으로 파일 목록이 표시됩니다</span>
     </div>
     <input type="hidden" name="manuscript_folder" id="manuscript-folder-hidden">
     <input type="hidden" name="workbook_type" value="EBS">
   </div>
 
   <!-- ── 추가 원고 업로드 ──────────────────────────────────── -->
-  <div class="section-label" style="margin-bottom:4px">추가 원고 파일 (선택)</div>
+  <div class="section-label u-mb-4">추가 원고 파일 (선택)</div>
   <div class="slot-grid">
-    <div class="slot" id="slot-manuscripts" data-key="manuscripts" style="grid-column: 1/-1">
+    <div class="slot u-grid-full" id="slot-manuscripts" data-key="manuscripts">
       <label>추가 업로드 (단원 폴더에 없는 파일)</label>
       <div class="drop-zone" ondragover="event.preventDefault()"
            ondrop="handleDrop(event, 'manuscripts')">
@@ -65,7 +64,7 @@
 <div id="progress-area" class="progress-area hidden">
   <div class="progress-header">
     <h2>진행 상태</h2>
-    <button type="button" id="cancel-btn" class="cancel-btn" onclick="cancelJob()" style="display:none">
+    <button type="button" id="cancel-btn" class="cancel-btn hidden" onclick="cancelJob()">
       &#10005; 취소
     </button>
     <div class="step-indicators">
@@ -126,14 +125,14 @@
       .then(function(data) {
         var section = document.getElementById('auto-files-section');
         var listEl = document.getElementById('auto-file-list');
-        section.style.display = '';
+        section.classList.remove('hidden');
 
         if (data.workbook_dir) {
           document.getElementById('manuscript-folder-hidden').value = data.workbook_dir;
         }
 
         if (!data.files || data.files.length === 0) {
-          listEl.innerHTML = '<span style="color:#e74c3c">단원 폴더에 원고 파일이 없습니다</span>';
+          listEl.innerHTML = '<span class="status-text status-text--err">단원 폴더에 원고 파일이 없습니다</span>';
           return;
         }
 
@@ -142,20 +141,20 @@
         data.files.forEach(function(f) {
           if (f.used) {
             usedCount++;
-            html += '<div style="padding:2px 0;color:#2c3e50">&#9989; ' + f.name + '</div>';
+            html += '<div class="info-box-row info-box-row--ok">&#9989; ' + f.name + '</div>';
           } else {
-            html += '<div style="padding:2px 0;color:#aaa;text-decoration:line-through">&#10060; ' + f.name + ' <span style="font-size:11px;text-decoration:none">(미사용)</span></div>';
+            html += '<div class="info-box-row info-box-row--off">&#10060; ' + f.name + ' <span class="off-tag">(미사용)</span></div>';
           }
         });
-        html = '<div style="margin-bottom:6px;font-size:12px;color:#666">사용 ' + usedCount + '개 / 전체 ' + data.files.length + '개</div>' + html;
+        html = '<div class="info-box-summary">사용 ' + usedCount + '개 / 전체 ' + data.files.length + '개</div>' + html;
         listEl.innerHTML = html;
       });
   }
 
   function clearAutoFiles() {
-    document.getElementById('auto-files-section').style.display = 'none';
+    document.getElementById('auto-files-section').classList.add('hidden');
     document.getElementById('auto-file-list').innerHTML =
-      '<span style="color:#999">단원을 선택하면 자동으로 파일 목록이 표시됩니다</span>';
+      '<span class="info-box-empty">단원을 선택하면 자동으로 파일 목록이 표시됩니다</span>';
     document.getElementById('manuscript-folder-hidden').value = '';
   }
 

@@ -2,44 +2,25 @@
 {% block title %}Claude 채팅{% endblock %}
 
 {% block content %}
-<div id="chat-layout" style="display:flex;height:calc(100vh - 60px);">
+<div id="chat-layout" class="chat-layout">
   <!-- 대화 목록 -->
-  <div id="conv-list" style="width:240px;border-right:1px solid #333;overflow-y:auto;padding:8px;flex-shrink:0;">
-    <button id="new-conv-btn" style="width:100%;padding:10px;margin-bottom:8px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;">+ 새 대화</button>
+  <div id="conv-list" class="chat-conv-list">
+    <button id="new-conv-btn" class="chat-new-conv-btn">+ 새 대화</button>
     <div id="convs"></div>
   </div>
 
   <!-- 채팅 영역 -->
-  <div id="chat-wrap" style="flex:1;display:flex;flex-direction:column;max-width:720px;margin:0 auto;">
-    <div id="messages" style="flex:1;overflow-y:auto;padding:16px 8px;"></div>
-    <form id="chat-form" style="display:flex;gap:8px;padding:12px 8px;border-top:1px solid #333;">
-      <select id="folder-select" style="background:#1e1e1e;color:#ccc;border:1px solid #444;border-radius:8px;padding:8px;font-size:12px;max-width:100px;">
+  <div id="chat-wrap" class="chat-wrap">
+    <div id="messages" class="chat-messages"></div>
+    <form id="chat-form" class="chat-form">
+      <select id="folder-select" class="chat-folder-select">
         <option value="">폴더</option>
       </select>
-      <input id="msg-input" type="text" placeholder="메시지 입력..." autocomplete="off"
-        style="flex:1;background:#1e1e1e;color:#fff;border:1px solid #444;border-radius:8px;padding:10px 14px;font-size:14px;outline:none;">
-      <button type="submit" style="background:#6366f1;color:#fff;border:none;border-radius:8px;padding:10px 16px;font-size:14px;cursor:pointer;">전송</button>
+      <input id="msg-input" class="chat-input" type="text" placeholder="메시지 입력..." autocomplete="off">
+      <button type="submit" class="chat-send-btn">전송</button>
     </form>
   </div>
 </div>
-
-<style>
-  .msg{margin:6px 0;padding:10px 14px;border-radius:12px;max-width:85%;white-space:pre-wrap;word-break:break-word;font-size:13px;line-height:1.6}
-  .msg-user{background:#6366f1;color:#fff;margin-left:auto;border-bottom-right-radius:4px}
-  .msg-assistant{background:#2a2a2a;color:#e0e0e0;margin-right:auto;border-bottom-left-radius:4px}
-  .msg-streaming{border-left:2px solid #4ade80}
-  #messages{display:flex;flex-direction:column}
-  .conv-btn{width:100%;text-align:left;padding:8px 10px;margin:2px 0;background:none;color:#ccc;border:1px solid transparent;border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .conv-btn:hover{background:#2a2a2a}
-  .conv-btn.active{background:#6366f1;color:#fff;border-color:#6366f1}
-  .conv-folder{font-size:10px;color:#888;margin-top:2px}
-  @media(max-width:600px){
-    #conv-list{width:60px;padding:4px}
-    .conv-btn{font-size:10px;padding:6px 4px}
-    .conv-folder{display:none}
-    #new-conv-btn{font-size:11px;padding:8px 4px}
-  }
-</style>
 
 <script>
 const msgs = document.getElementById('messages');

@@ -48,7 +48,7 @@
   </div>
 
   <!-- ── 원고 업로드 (멀티파일) ────────────────────────────── -->
-  <div class="section-label" style="margin-bottom:4px">원고 파일 <span class="required">*</span></div>
+  <div class="section-label u-mb-4">원고 파일 <span class="required">*</span></div>
   <div class="multi-drop-zone" id="multi-drop"
        ondragover="event.preventDefault(); this.classList.add('dragover')"
        ondragleave="this.classList.remove('dragover')"
@@ -353,7 +353,7 @@
         <div class="result-header">
           <span class="result-badge">${ok ? '✅ 조판 완료' : '⚠️ 확인 필요'}</span>
           <span class="overflow-badge ${overflow > 0 ? 'bad' : ''}">오버플로우 ${overflow}개</span>
-          <span class="overflow-badge" style="border-color:var(--accent);color:var(--accent);">${gradeLabel} · ${total}개 단어</span>
+          <span class="overflow-badge overflow-badge--grade">${gradeLabel} · ${total}개 단어</span>
         </div>
         <table class="story-table">
           <thead><tr><th>소스</th><th>단어 수</th></tr></thead>

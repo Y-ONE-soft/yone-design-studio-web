@@ -5,230 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>목업 — Y.ONE DESIGN</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-  <style>
-    html, body { height: 100%; overflow: hidden; }
-
-    /* ── 레이아웃 ── */
-    .mockup-layout {
-      display: flex;
-      height: calc(100vh - 53px);
-    }
-
-    /* ── 왼쪽 패널 ── */
-    .mockup-panel {
-      width: 280px;
-      min-width: 280px;
-      background: var(--surface);
-      border-right: 1px solid var(--border);
-      overflow-y: auto;
-      padding: 20px 16px 32px;
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-    }
-    .mockup-panel::-webkit-scrollbar { width: 4px; }
-    .mockup-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-    /* ── 업로드 영역 ── */
-    .cover-upload-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-bottom: 20px;
-    }
-    .cover-upload-item label.cover-label {
-      display: block;
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 5px;
-    }
-    .cover-drop {
-      position: relative;
-      background: var(--surface2);
-      border: 1.5px dashed var(--border);
-      border-radius: 8px;
-      height: 90px;
-      display: flex; align-items: center; justify-content: center;
-      flex-direction: column; gap: 4px;
-      cursor: pointer;
-      transition: border-color .2s, background .2s;
-      overflow: hidden;
-    }
-    .cover-drop:hover, .cover-drop.has-file { border-color: var(--accent); background: #1e1e2a; }
-    .cover-drop input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-    .cover-drop-icon { font-size: 20px; pointer-events: none; }
-    .cover-drop-text { font-size: 10px; color: var(--muted); pointer-events: none; }
-    .cover-drop-name { font-size: 10px; color: var(--accent2); max-width: 90px;
-                       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-                       pointer-events: none; }
-    .cover-preview-thumb {
-      position: absolute; inset: 0;
-      object-fit: cover; border-radius: 6px;
-      opacity: 0.6;
-    }
-
-    /* ── 섹션 헤더 ── */
-    .panel-section {
-      margin-top: 4px;
-    }
-    .panel-section-title {
-      font-size: 10px;
-      font-weight: 700;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      padding: 10px 0 6px;
-      border-top: 1px solid var(--border);
-      margin-top: 12px;
-    }
-
-    /* ── 슬라이더 행 ── */
-    .slider-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-    .slider-label {
-      font-size: 11.5px;
-      color: var(--muted);
-      width: 72px;
-      flex-shrink: 0;
-    }
-    .slider-row input[type=range] {
-      flex: 1;
-      -webkit-appearance: none;
-      height: 3px;
-      background: var(--border);
-      border-radius: 2px;
-      outline: none;
-      cursor: pointer;
-    }
-    .slider-row input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 13px; height: 13px;
-      border-radius: 50%;
-      background: var(--accent);
-      cursor: pointer;
-    }
-    .slider-row input[type=number] {
-      width: 46px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 5px;
-      color: var(--text);
-      font-size: 11px;
-      padding: 3px 5px;
-      text-align: right;
-      -moz-appearance: textfield;
-    }
-    .slider-row input[type=number]::-webkit-inner-spin-button { display: none; }
-    .slider-row input[type=number]:focus { outline: none; border-color: var(--accent); }
-
-    /* ── 토글 / 색상 ── */
-    .toggle-row {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 8px;
-    }
-    .toggle-row label { font-size: 11.5px; color: var(--muted); }
-    .toggle-row input[type=checkbox] { cursor: pointer; }
-    .color-row {
-      display: flex; align-items: center; gap: 8px;
-      margin-bottom: 8px;
-    }
-    .color-row label { font-size: 11.5px; color: var(--muted); flex: 1; }
-    .color-row input[type=color] {
-      width: 36px; height: 24px; border: none;
-      border-radius: 4px; cursor: pointer; padding: 0;
-      background: none;
-    }
-
-    /* ── 액션 버튼 ── */
-    .panel-actions {
-      margin-top: 20px;
-      display: flex; flex-direction: column; gap: 8px;
-    }
-    .render-btn {
-      width: 100%;
-      background: var(--accent);
-      color: #fff; border: none;
-      border-radius: 8px;
-      padding: 11px;
-      font-size: 13px; font-weight: 600;
-      cursor: pointer; transition: opacity .2s;
-    }
-    .render-btn:hover { opacity: .88; }
-    .render-btn:disabled { opacity: .45; cursor: not-allowed; }
-    .dl-row { display: flex; gap: 6px; }
-    .dl-btn {
-      flex: 1;
-      background: var(--surface2);
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      padding: 9px;
-      font-size: 12px; font-weight: 600;
-      cursor: pointer; transition: border-color .2s;
-      text-align: center;
-    }
-    .dl-btn:hover { border-color: var(--accent2); color: var(--accent2); }
-    .dl-btn:disabled { opacity: .4; cursor: not-allowed; }
-
-    /* ── 크롭 캔버스 ── */
-    .crop-canvas-wrap {
-      margin-bottom: 10px;
-      line-height: 0;
-      border-radius: 6px;
-      overflow: hidden;
-      background: #111;
-    }
-    .crop-canvas-wrap canvas {
-      display: block;
-      cursor: crosshair;
-    }
-
-    /* ── 프리뷰 영역 ── */
-    .mockup-preview {
-      flex: 1;
-      background: var(--bg);
-      display: flex; align-items: center; justify-content: center;
-      position: relative;
-      overflow: hidden;
-    }
-    .mockup-preview img {
-      max-width: 100%; max-height: 100%;
-      object-fit: contain;
-      border-radius: 8px;
-    }
-    .preview-placeholder {
-      display: flex; flex-direction: column;
-      align-items: center; gap: 12px;
-      color: var(--muted); font-size: 14px;
-    }
-    .preview-placeholder-icon { font-size: 48px; opacity: .3; }
-    .preview-spinner {
-      display: none;
-      position: absolute; inset: 0;
-      background: rgba(15,15,19,.7);
-      align-items: center; justify-content: center;
-      font-size: 13px; color: var(--muted);
-    }
-    .preview-spinner.active { display: flex; }
-    .spinner-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--accent); margin: 0 3px;
-      animation: bounce .8s infinite alternate;
-    }
-    .spinner-dot:nth-child(2) { animation-delay: .2s; }
-    .spinner-dot:nth-child(3) { animation-delay: .4s; }
-    @keyframes bounce { from { opacity: .3; transform: translateY(0); }
-                        to   { opacity: 1;  transform: translateY(-6px); } }
-  </style>
 </head>
-<body>
+<body class="mockup-body">
   <header class="top-bar">
     <a href="/" class="logo">Y.ONE <span>DESIGN</span></a>
     <nav class="top-nav">
@@ -270,7 +48,7 @@
       </div>
 
       <!-- 앞표지 크롭 -->
-      <div class="panel-section" id="crop-front-section" style="display:none">
+      <div class="panel-section hidden" id="crop-front-section">
         <div class="panel-section-title">앞표지 위치 조정</div>
         <div class="crop-canvas-wrap"><canvas id="crop-canvas-front"></canvas></div>
         <div class="slider-row">
@@ -297,7 +75,7 @@
       </div>
 
       <!-- 뒷표지 크롭 -->
-      <div class="panel-section" id="crop-back-section" style="display:none">
+      <div class="panel-section hidden" id="crop-back-section">
         <div class="panel-section-title">뒷표지 위치 조정</div>
         <div class="crop-canvas-wrap"><canvas id="crop-canvas-back"></canvas></div>
         <div class="slider-row">
@@ -420,7 +198,7 @@
         <span class="preview-placeholder-icon">📚</span>
         <span>앞표지를 업로드하면 미리보기가 표시됩니다</span>
       </div>
-      <img id="preview-img" style="display:none" alt="목업 미리보기">
+      <img id="preview-img" class="hidden" alt="목업 미리보기">
       <div class="preview-spinner" id="preview-spinner">
         <div class="spinner-dot"></div>
         <div class="spinner-dot"></div>

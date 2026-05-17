@@ -11,7 +11,7 @@
 <form id="typeset-form" class="upload-form" enctype="multipart/form-data">
 
   <!-- PDF 업로드 -->
-  <div class="section-label" style="margin-bottom:4px">분석본 PDF <span class="required">*</span></div>
+  <div class="section-label u-mb-4">분석본 PDF <span class="required">*</span></div>
   <div class="drop-zone" id="pdf-drop"
        ondragover="event.preventDefault(); this.classList.add('dragover')"
        ondragleave="this.classList.remove('dragover')"
@@ -23,7 +23,7 @@
       <span class="drop-text">분석본 PDF를 드래그하거나 클릭해서 선택 (여러 파일 가능)</span>
     </div>
   </div>
-  <div id="file-list" class="file-list" style="margin-top:8px;font-size:14px;color:#666"></div>
+  <div id="file-list" class="file-list"></div>
 
   <button type="submit" class="run-btn" id="run-btn">
     <span class="btn-icon">&#9654;</span> 포켓북 표지 생성

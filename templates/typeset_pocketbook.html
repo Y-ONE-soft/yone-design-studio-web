@@ -48,22 +48,22 @@
   </div>
 
   <!-- ── 분석본 폴더 ────────────────────────────────────────── -->
-  <div class="section-label" style="margin-bottom:4px">분석본 폴더 <span class="required">*</span></div>
+  <div class="section-label u-mb-4">분석본 폴더 <span class="required">*</span></div>
   <div class="analysis-dir-section">
     <input type="hidden" name="analysis_dir" id="input-analysis-dir">
-    <div class="multi-drop-zone" id="analysis-drop" onclick="openFolderBrowser()" style="cursor:pointer">
+    <div class="multi-drop-zone u-cursor-pointer" id="analysis-drop" onclick="openFolderBrowser()">
       <div class="drop-label">
         <span class="drop-icon">📁</span>
         <span class="drop-text" id="analysis-drop-text">클릭하여 분석본 폴더 선택</span>
       </div>
     </div>
-    <div id="analysis-status" style="margin-top:6px;font-size:12px;color:#888;"></div>
-    <div id="analysis-files-preview" class="file-list" style="margin-top:6px;"></div>
+    <div id="analysis-status" class="status-text"></div>
+    <div id="analysis-files-preview" class="file-list"></div>
   </div>
 
   <!-- ── 리뷰테스트 옵션 ──────────────────────────────────── -->
-  <div style="margin-top:16px;">
-    <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;">
+  <div class="u-mt-16">
+    <label class="checkbox-label">
       <input type="checkbox" name="include_review_test" id="include-review-test" value="1" checked
              onchange="toggleReviewSection()">
       리뷰테스트(암기테스트) 포함
@@ -71,8 +71,8 @@
   </div>
 
   <!-- ── 리뷰테스트 해설지 (.docx) ────────────────────────── -->
-  <div style="margin-top:16px;" id="review-test-section">
-    <div class="section-label" style="margin-bottom:4px">리뷰테스트 해설지 (.docx) &mdash; 암기테스트용</div>
+  <div class="u-mt-16" id="review-test-section">
+    <div class="section-label u-mb-4">리뷰테스트 해설지 (.docx) &mdash; 암기테스트용</div>
     <div class="multi-drop-zone" id="multi-drop"
          ondragover="event.preventDefault(); this.classList.add('dragover')"
          ondragleave="this.classList.remove('dragover')"
@@ -91,8 +91,8 @@
   <input type="hidden" name="include_review_test_flag" id="include-review-test-flag" value="1">
 
   <!-- ── 듣기 옵션 ────────────────────────────────────────── -->
-  <div style="margin-top:8px;">
-    <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;">
+  <div class="u-mt-8">
+    <label class="checkbox-label">
       <input type="checkbox" name="include_listening" id="include-listening" value="1"
              onchange="toggleListeningSection()">
       듣기 포함
@@ -100,8 +100,8 @@
   </div>
 
   <!-- ── 듣기 원고 (.hwpx) ─────────────────────────────────── -->
-  <div style="margin-top:16px;display:none;" id="listening-section">
-    <div class="section-label" style="margin-bottom:4px">듣기 원고 (.hwpx)</div>
+  <div class="u-mt-16 hidden" id="listening-section">
+    <div class="section-label u-mb-4">듣기 원고 (.hwpx)</div>
     <div class="multi-drop-zone" id="listening-drop"
          ondragover="event.preventDefault(); this.classList.add('dragover')"
          ondragleave="this.classList.remove('dragover')"
@@ -144,12 +144,12 @@
 
 <!-- ── 폴더 브라우저 모달 ──────────────────────────────────── -->
 <div id="folder-modal-overlay" class="modal-overlay hidden" onclick="closeFolderBrowser()">
-  <div class="modal" onclick="event.stopPropagation()" style="width:480px;max-height:70vh;display:flex;flex-direction:column;">
+  <div class="modal modal--folder-browser" onclick="event.stopPropagation()">
     <div class="modal-title">분석본 폴더 선택</div>
-    <div id="folder-path-bar" style="font-size:11px;color:#888;padding:4px 0 8px;word-break:break-all;"></div>
-    <div id="folder-list" style="flex:1;overflow-y:auto;min-height:200px;max-height:50vh;border:1px solid var(--border,#e5e7eb);border-radius:6px;"></div>
-    <div id="folder-indd-hint" style="margin-top:8px;font-size:12px;color:#22c55e;display:none;">이 폴더에 분석본 .indd 파일이 있습니다</div>
-    <div class="modal-actions" style="margin-top:12px;">
+    <div id="folder-path-bar" class="folder-path-bar"></div>
+    <div id="folder-list" class="folder-list"></div>
+    <div id="folder-indd-hint" class="folder-indd-hint hidden">이 폴더에 분석본 .indd 파일이 있습니다</div>
+    <div class="modal-actions u-mt-12">
       <button class="modal-btn modal-btn--cancel" onclick="closeFolderBrowser()">취소</button>
       <button class="modal-btn modal-btn--ok" id="folder-select-btn" onclick="confirmFolderSelect()">이 폴더 선택</button>
     </div>
@@ -228,8 +228,8 @@
     var list = document.getElementById('folder-list');
     var pathBar = document.getElementById('folder-path-bar');
     var hint = document.getElementById('folder-indd-hint');
-    list.innerHTML = '<div style="padding:16px;color:#888;">불러오는 중...</div>';
-    hint.style.display = 'none';
+    list.innerHTML = '<div class="folder-list-msg">불러오는 중...</div>';
+    hint.classList.add('hidden');
 
     try {
       var res = await fetch('/api/browse-folder', {
@@ -239,7 +239,7 @@
       });
       var data = await res.json();
       if (data.error) {
-        list.innerHTML = '<div style="padding:16px;color:#f87171;">' + data.error + '</div>';
+        list.innerHTML = '<div class="folder-list-msg folder-list-msg--err">' + data.error + '</div>';
         return;
       }
 
@@ -258,19 +258,19 @@
                 '<span class="fb-icon">📁</span> ' + d + '</div>';
       }
       if (!data.dirs.length && !data.parent) {
-        html += '<div style="padding:16px;color:#888;">빈 폴더</div>';
+        html += '<div class="folder-list-msg">빈 폴더</div>';
       }
       list.innerHTML = html;
 
       if (data.has_indd) {
-        hint.style.display = 'block';
+        hint.classList.remove('hidden');
         document.getElementById('folder-select-btn').classList.add('modal-btn--highlight');
       } else {
-        hint.style.display = 'none';
+        hint.classList.add('hidden');
         document.getElementById('folder-select-btn').classList.remove('modal-btn--highlight');
       }
     } catch(e) {
-      list.innerHTML = '<div style="padding:16px;color:#f87171;">서버 연결 오류</div>';
+      list.innerHTML = '<div class="folder-list-msg folder-list-msg--err">서버 연결 오류</div>';
     }
   }
 
@@ -295,7 +295,7 @@
     if (!dir) { status.textContent = ''; preview.innerHTML = ''; return; }
 
     status.textContent = '스캔 중...';
-    status.style.color = '#888';
+    status.className = 'status-text';
 
     try {
       const res = await fetch('/api/pocketbook/scan-dir', {
@@ -308,7 +308,7 @@
       if (data.files && data.files.length > 0) {
         const folderName = dir.split('/').pop();
         status.textContent = '분석본 ' + data.files.length + '개 (' + folderName + ')';
-        status.style.color = '#22c55e';
+        status.className = 'status-text status-text--ok';
 
         preview.innerHTML = data.files.map(function(f) {
           var badge = f.type === '모의고사' ? '🔵' : f.type === 'EBS' ? '🟢' : '🟡';
@@ -316,12 +316,12 @@
         }).join('');
       } else {
         status.textContent = '분석본 파일 없음';
-        status.style.color = '#f87171';
+        status.className = 'status-text status-text--err';
         preview.innerHTML = '';
       }
     } catch(e) {
       status.textContent = '서버 연결 오류';
-      status.style.color = '#f87171';
+      status.className = 'status-text status-text--err';
     }
   }
 
@@ -385,14 +385,14 @@
   // ── 리뷰테스트 토글 ────────────────────────────────────────
   function toggleReviewSection() {
     var checked = document.getElementById('include-review-test').checked;
-    document.getElementById('review-test-section').style.display = checked ? '' : 'none';
+    document.getElementById('review-test-section').classList.toggle('hidden', !checked);
     document.getElementById('include-review-test-flag').value = checked ? '1' : '0';
   }
 
   // ── 듣기 토글 ──────────────────────────────────────────────
   function toggleListeningSection() {
     var checked = document.getElementById('include-listening').checked;
-    document.getElementById('listening-section').style.display = checked ? '' : 'none';
+    document.getElementById('listening-section').classList.toggle('hidden', !checked);
     document.getElementById('include-listening-flag').value = checked ? '1' : '0';
   }
 
@@ -576,7 +576,7 @@
         '<div class="result-header">' +
           '<span class="result-badge">' + (ok ? '&#10003; 조판 완료' : '&#9888; 확인 필요') + '</span>' +
           '<span class="overflow-badge ' + (overflow > 0 ? 'bad' : '') + '">오버플로우 ' + overflow + '개</span>' +
-          '<span class="overflow-badge" style="border-color:var(--accent);color:var(--accent);">' + gradeLabel + '</span>' +
+          '<span class="overflow-badge overflow-badge--grade">' + gradeLabel + '</span>' +
         '</div>' +
         '<table class="story-table">' +
           '<thead><tr><th>항목</th><th>수량</th></tr></thead>' +

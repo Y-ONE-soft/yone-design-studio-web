@@ -23,13 +23,13 @@
   <div class="issue-row">
     <div class="issue-input-wrap">
       <label class="section-label">시험 연도 <span class="required">*</span></label>
-      <input type="text" name="year" id="exam-year" class="issue-input"
+      <input type="text" name="year" id="exam-year" class="issue-input u-w-60"
              placeholder="25" maxlength="2" required
-             oninput="updateFilenamePreview()" style="width:60px">
+             oninput="updateFilenamePreview()">
     </div>
-    <div class="issue-input-wrap" style="margin-left:12px">
+    <div class="issue-input-wrap u-ml-12">
       <label class="section-label">시험 월 <span class="required">*</span></label>
-      <select name="month" id="exam-month" class="issue-input" onchange="updateFilenamePreview()" style="width:80px">
+      <select name="month" id="exam-month" class="issue-input u-w-80" onchange="updateFilenamePreview()">
         <option value="">선택</option>
         <option value="3">3월</option>
         <option value="6">6월</option>
@@ -38,16 +38,16 @@
         <option value="11">11월</option>
       </select>
     </div>
-    <div class="filename-preview-wrap" style="margin-left:20px">
+    <div class="filename-preview-wrap u-ml-20">
       <label class="section-label">생성될 파일명</label>
       <div class="filename-preview" id="filename-preview">—</div>
     </div>
   </div>
 
   <!-- ── 원고 업로드 ────────────────────────────────────────── -->
-  <div class="section-label" style="margin-bottom:4px">원고 파일 <span class="required">*</span></div>
+  <div class="section-label u-mb-4">원고 파일 <span class="required">*</span></div>
   <div class="slot-grid">
-    <div class="slot" id="slot-manuscripts" data-key="manuscripts" style="grid-column: 1/-1">
+    <div class="slot u-grid-full" id="slot-manuscripts" data-key="manuscripts">
       <label>원고 파일 (Step1~3 전체 — docx, hwp)</label>
       <div class="drop-zone" ondragover="event.preventDefault()"
            ondrop="handleDrop(event, 'manuscripts')">
@@ -64,6 +64,54 @@
     </div>
   </div>
 
+  <!-- ── 제외할 섹션 (선택) ──────────────────────────────────── -->
+  <details class="exclude-section">
+    <summary>제외할 섹션 선택 (학교별 커스텀 조판)</summary>
+    <div class="option-box">
+      <div class="option-box-desc">
+        체크한 섹션은 조판에서 빠집니다. STEP 전체 제외 시 페이지도 함께 삭제됩니다.
+      </div>
+
+      <div class="exclude-group option-group">
+        <div class="option-group-title">STEP1</div>
+        <label><input type="checkbox" name="exclude" value="step1_a1"> A1 어휘 선택 1 (p.4~)</label>
+        <label><input type="checkbox" name="exclude" value="step1_a1_2"> A1 어휘 선택 2 (p.13~)</label>
+        <label><input type="checkbox" name="exclude" value="step1_a2"> A2 본문 O/X (p.22~)</label>
+        <label><input type="checkbox" name="exclude" value="step1_b1"> B1 본문 정리 (p.40~)</label>
+        <label><input type="checkbox" name="exclude" value="step1_b2"> B2 내용 종합 (p.58~)</label>
+        <label>
+          <input type="checkbox" name="exclude" value="step1_c1"
+                 onchange="syncPair(this, 'step1_c1_btm')"> C1 문장 배열 (p.76~)
+        </label>
+        <label class="is-child">
+          <input type="checkbox" name="exclude" value="step1_c1_btm" id="cb-step1_c1_btm">
+          ↳ C1 문장 배열 하단만 제외
+        </label>
+        <label><input type="checkbox" name="exclude" value="step1_c2"> C2 빈칸 어휘 (p.94~)</label>
+      </div>
+
+      <div class="exclude-group option-group">
+        <div class="option-group-title">STEP2</div>
+        <label>
+          <input type="checkbox" name="exclude" value="step2_a1"
+                 onchange="syncPair(this, 'step2_a1_btm')"> A1 어법 선택 (p.114~)
+        </label>
+        <label class="is-child">
+          <input type="checkbox" name="exclude" value="step2_a1_btm" id="cb-step2_a1_btm">
+          ↳ A1 어법 선택 하단만 제외
+        </label>
+        <label><input type="checkbox" name="exclude" value="step2_b1"> B1 어법 O/X (p.132~)</label>
+        <label><input type="checkbox" name="exclude" value="step2_c1"> C1 빈칸 어법 (p.150~)</label>
+        <label><input type="checkbox" name="exclude" value="step2_c2"> C2 영작 배열 (p.168~)</label>
+      </div>
+
+      <div class="exclude-group option-group">
+        <div class="option-group-title">STEP3</div>
+        <label><input type="checkbox" name="exclude" value="step3"> STEP3 전체 (수능특강 p.178~)</label>
+      </div>
+    </div>
+  </details>
+
   <button type="submit" class="run-btn" id="run-btn">
     <span class="btn-icon">▶</span> 조판 실행
   </button>
@@ -73,7 +121,7 @@
 <div id="progress-area" class="progress-area hidden">
   <div class="progress-header">
     <h2>진행 상태</h2>
-    <button type="button" id="cancel-btn" class="cancel-btn" onclick="cancelJob()" style="display:none">
+    <button type="button" id="cancel-btn" class="cancel-btn hidden" onclick="cancelJob()">
       ✕ 취소
     </button>
     <div class="step-indicators">
@@ -100,6 +148,15 @@
     btn.classList.add('active');
     document.getElementById('grade-hidden').value = btn.dataset.grade;
     updateFilenamePreview();
+  }
+
+  // ── 제외 섹션 페어 연동 (a1 체크 시 a1_btm 자동 체크) ──
+  // disabled를 쓰면 FormData에 포함 안 되므로, .is-locked 클래스로 시각적 비활성화만
+  function syncPair(parentCb, childId) {
+    const child = document.getElementById('cb-' + childId);
+    if (!child) return;
+    child.checked = parentCb.checked;
+    child.parentElement.classList.toggle('is-locked', parentCb.checked);
   }
 
   // ── 파일명 미리보기 ──────────────────────────────────────────

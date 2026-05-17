@@ -22,7 +22,7 @@
   <!-- 시험 정보 -->
   <div class="school-section">
     <div class="section-label">시험 정보 <span class="required">*</span></div>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:8px;">
+    <div class="field-grid-2">
       <div>
         <label class="input-label">시험 기간</label>
         <select name="exam_period" id="exam-period" class="form-select">
@@ -68,7 +68,7 @@
         <p>hwpx / docx 파일을 드래그하거나 클릭하여 선택</p>
         <p class="drop-hint">여러 파일 선택 가능 (1회, 2회 등)</p>
       </div>
-      <div id="file-list" class="file-list"></div>
+      <div id="file-list" class="file-chip-list"></div>
     </div>
   </div>
 
@@ -103,59 +103,6 @@
 {% endblock %}
 
 {% block scripts %}
-<style>
-  .form-select, .form-input {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    font-size: 14px;
-    background: var(--card);
-    color: var(--fg);
-  }
-  .input-label {
-    display: block;
-    font-size: 12px;
-    color: var(--muted);
-    margin-bottom: 4px;
-  }
-  .file-drop-zone {
-    border: 2px dashed var(--border);
-    border-radius: 8px;
-    padding: 24px;
-    text-align: center;
-    cursor: pointer;
-    transition: border-color 0.2s;
-    position: relative;
-    margin-top: 8px;
-  }
-  .file-drop-zone:hover, .file-drop-zone.dragover {
-    border-color: var(--accent);
-  }
-  .file-input {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    cursor: pointer;
-  }
-  .drop-icon { font-size: 32px; }
-  .drop-hint { font-size: 12px; color: var(--muted); }
-  .file-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 12px;
-    justify-content: center;
-  }
-  .file-chip {
-    background: var(--accent);
-    color: #fff;
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 13px;
-  }
-</style>
-
 <script>
   const MATERIAL_ID = "mockexam";
   let schoolsData = {};
