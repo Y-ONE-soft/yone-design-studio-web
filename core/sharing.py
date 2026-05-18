@@ -112,14 +112,34 @@ def _wait_for_stable_file(path, log_fn, timeout=300, check_interval=3, stable_re
 
 
 def _find_indd_paths(job_dir, log_fn):
-    """job_dir의 settings.json 또는 .settings.json에서 indd_path 추출.
+    """job_dir의 settings*.json 파일들에서 indd_path 추출.
 
-    반환: list of paths (single 또는 multi). 못 찾으면 빈 리스트.
+    지원하는 파일 패턴:
+      - .settings.json, settings.json (단일)
+      - .settings_analysis.json, .settings_problem.json (수능특강: 분석/문제 2개)
+      - settings_*.json 등 (확장)
+
+    반환: list of paths (단일 또는 여러 개). 못 찾으면 빈 리스트.
     """
-    for fname in (".settings.json", "settings.json"):
-        p = os.path.join(job_dir, fname)
-        if not os.path.exists(p):
+    import re
+
+    paths = []
+    seen_files = set()
+
+    try:
+        candidates = os.listdir(job_dir)
+    except OSError:
+        return []
+
+    # settings 관련 모든 json 검색
+    pattern = re.compile(r"^\.?settings.*\.json$")
+    for fname in candidates:
+        if not pattern.match(fname):
             continue
+        if fname in seen_files:
+            continue
+        seen_files.add(fname)
+        p = os.path.join(job_dir, fname)
         try:
             with open(p, encoding="utf-8") as f:
                 data = json.load(f)
@@ -127,7 +147,6 @@ def _find_indd_paths(job_dir, log_fn):
             log_fn(f"[공유] {fname} 파싱 실패: {e}")
             continue
 
-        paths = []
         if isinstance(data, dict):
             single = data.get("indd_path")
             if single and isinstance(single, str):
@@ -139,9 +158,8 @@ def _find_indd_paths(job_dir, log_fn):
                         ip = j.get("indd_path")
                         if ip and isinstance(ip, str):
                             paths.append(ip)
-        if paths:
-            return paths
-    return []
+
+    return paths
 
 
 def _copy_linked_assets(indd_path, dest_dir, log_fn):
