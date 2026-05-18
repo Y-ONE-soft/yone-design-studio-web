@@ -52,7 +52,7 @@ docx/hwp/hwpx에서 단락 + 밑줄 정보를 추출하고, 발문/지문/선지
 - **`app.py`의 JSON 캐시**: `_read_json_cached`로 한 번만 디스크 read 후 메모리 보관, `_save_*`에서 직접 캐시 갱신. EDEADLK/EAGAIN/EINTR은 5회 backoff 재시도.
 - **`_RetryingFileSystemLoader`**: Jinja `get_source`도 동일한 retry로 감쌈 (TEMPLATES_AUTO_RELOAD=True 환경에서 동시 요청이 .html을 동시에 읽을 때).
 - **`core.base.safe_copy_indd`**: 원본 .indd 복사 (raw read/write → /bin/cp -c → /tmp 경유 폴백).
-- **`engines.final.extractor._gdrive_safe_copy`**: GDrive Stream 파일용 7-경로 syscall 폴백(python rw / cat / dd / cp / ditto / rsync / py-subproc) + 지수 백오프(5+15+30+45초). 새 GDrive 복사가 필요하면 `shutil.copy2` 대신 이 함수를 사용해야 합니다.
+- **`engines.final.extractor._gdrive_safe_copy`**: GDrive Stream 파일 안전 복사 — 로컬 미러 redirect(`~/Documents/yone-content-mirror/`) → `shutil.copy2` 단일 호출 + 지수 백오프(1+3+8+15+30초) 재시도. 새 GDrive 복사가 필요하면 직접 `shutil.copy2` 대신 이 함수를 사용해야 합니다.
 - **JSX 템플릿 모듈 캐시**: `engines/cover/engine.py`, `engines/ebs_workbook/engine.py` 등은 모듈 로드 시 1회만 `_JSX_TEMPLATE_CONTENT`로 읽어 메모리에 보관. 템플릿 변경 시 Flask 재시작 필요.
 
 자세한 건 `.claude/rules/gdrive_copy_robust.md` 참조 (자동 주입됨).
