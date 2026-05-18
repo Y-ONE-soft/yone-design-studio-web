@@ -90,4 +90,51 @@ echo "[셋업 완료]"
 echo "  미러 위치: $MIRROR_BASE"
 du -sh "$MIRROR_BASE"
 echo ""
-echo "추후 GDrive 원본이 변경되면 같은 스크립트 재실행하여 sync 갱신."
+
+# 5) launchd 자동 sync 등록 (30분 간격)
+PLIST="$HOME/Library/LaunchAgents/com.yonestudio.mirror-sync.plist"
+SYNC_SCRIPT="$HOME/dev/yone-design-web/scripts/mirror-sync.sh"
+
+if [ ! -f "$SYNC_SCRIPT" ]; then
+    echo "[안내] mirror-sync.sh 미설치 — 자동 sync launchd 등록 skip"
+    echo "       git pull 후 재실행하면 launchd 자동 등록됨"
+    exit 0
+fi
+
+mkdir -p "$HOME/Library/LaunchAgents"
+mkdir -p "$HOME/Library/Logs"
+
+cat > "$PLIST" << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key><string>com.yonestudio.mirror-sync</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>$SYNC_SCRIPT</string>
+    </array>
+    <key>WorkingDirectory</key><string>$HOME/dev/yone-design-web</string>
+    <key>StartInterval</key><integer>1800</integer>
+    <key>RunAtLoad</key><false/>
+    <key>StandardOutPath</key><string>$HOME/Library/Logs/yone-mirror-sync-stdout.log</string>
+    <key>StandardErrorPath</key><string>$HOME/Library/Logs/yone-mirror-sync-stderr.log</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key><string>$HOME</string>
+        <key>PATH</key><string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+</dict>
+</plist>
+EOF
+
+launchctl unload "$PLIST" 2>/dev/null || true
+launchctl load "$PLIST"
+
+echo "[자동 sync] 30분 간격 launchd 등록 완료"
+echo "  plist: $PLIST"
+echo "  log:   ~/Library/Logs/yone-mirror-sync.log"
+echo "  중지:  launchctl unload $PLIST"
+echo ""
+echo "추후 GDrive 원본이 변경되면 30분 안에 자동 sync. 수동 갱신 불필요."
