@@ -6,6 +6,7 @@ import unicodedata
 
 from core.base import BaseEngine, safe_copy_indd
 from core.paths import resolve_config
+from engines.final.extractor import _gdrive_safe_copy
 from engines.workbook.parser import parse_manuscript_folder
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
@@ -274,6 +275,16 @@ class TextbookWorkbookEngine(BaseEngine):
         # 대체 파일명 매핑 (원본명 -> 기대 파일명으로 rename)
         alternatives = cfg.get("manuscript_file_alternatives", {})
 
+        # GDrive Stream EDEADLK 회피 안전 복사 — _gdrive_safe_copy 직접 호출로
+        # app.py monkey-patch 의존성 제거 (worker 등 monkey-patch 미적용 경로 포함).
+        def _safe_copy(src_path, dst_path):
+            ok, err = _gdrive_safe_copy(src_path, dst_path, log=log)
+            if not ok:
+                raise RuntimeError(
+                    f"GDrive 복사 실패: {os.path.basename(src_path)} -> "
+                    f"{os.path.basename(dst_path)} ({err[:200]})"
+                )
+
         # 1) 구글 드라이브 워크북 폴더에서 파일 복사
         gdrive_workbook = self._read_meta_str(job_dir, "manuscript_folder", "")
         if gdrive_workbook and os.path.isdir(gdrive_workbook):
@@ -288,7 +299,7 @@ class TextbookWorkbookEngine(BaseEngine):
                     if ext in (".docx", ".hwp", ".hwpx"):
                         # Step3 원고 파일은 step3_dir로 (정답/해설은 제외)
                         if _is_step3_name(name) and not _is_answer_or_explanation(name):
-                            shutil.copy2(src, os.path.join(step3_dir, name))
+                            _safe_copy(src, os.path.join(step3_dir, name))
                             continue
                         # 대체 파일명이면 기대 파일명으로 rename (기대 파일이 없을 때만)
                         dest_name = name
@@ -299,7 +310,7 @@ class TextbookWorkbookEngine(BaseEngine):
                             if not os.path.exists(target_path) and not os.path.exists(orig_path):
                                 dest_name = target
                                 log(f"[파서] 대체 파일명: {name} -> {target}")
-                        shutil.copy2(src, os.path.join(manuscript_dir, dest_name))
+                        _safe_copy(src, os.path.join(manuscript_dir, dest_name))
                 elif os.path.isdir(src):
                     # Step3/스텝3 서브폴더 복사
                     lower = name.lower()
@@ -313,7 +324,7 @@ class TextbookWorkbookEngine(BaseEngine):
                             if ext2 in (".docx", ".hwp", ".hwpx"):
                                 if _is_answer_or_explanation(name2):
                                     continue
-                                shutil.copy2(src2, os.path.join(step3_dir, name2))
+                                _safe_copy(src2, os.path.join(step3_dir, name2))
             log(f"[파서] 원고 복사 완료")
         else:
             log(f"[파서] 워크북 폴더 없음, 업로드 파일만 사용")
@@ -336,7 +347,7 @@ class TextbookWorkbookEngine(BaseEngine):
                 else:
                     dest = os.path.join(manuscript_dir, fname)
                 if fpath != dest:
-                    shutil.copy2(fpath, dest)
+                    _safe_copy(fpath, dest)
 
         # 파서 실행 (기존 워크북 파서 재사용)
         log(f"[파서] 파싱 시작")
