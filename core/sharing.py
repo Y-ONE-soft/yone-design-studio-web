@@ -19,6 +19,7 @@ import json
 import os
 import shutil
 import threading
+import time
 import traceback
 
 
@@ -55,6 +56,42 @@ def _resolve_category(material_id):
         return "기타"
     mapping = _load_category_map()
     return mapping.get(material_id) or "기타"
+
+
+def _wait_for_stable_file(path, log_fn, timeout=60, check_interval=2):
+    """파일 mtime·크기가 N초간 변경 없을 때까지 대기 (InDesign 저장 완료 신호).
+
+    InDesign이 .indd 저장은 비동기라 sharing.py가 너무 빨리 실행되면
+    옛 .indd 그대로 복사될 수 있음. 이걸 방지.
+
+    반환: True(안정 도달) / False(파일 없음 또는 timeout)
+    """
+    last_sig = None
+    elapsed = 0
+    stable_required = 4  # 4초간 변화 없으면 안정
+
+    while elapsed < timeout:
+        if not os.path.exists(path):
+            time.sleep(check_interval)
+            elapsed += check_interval
+            continue
+        try:
+            st = os.stat(path)
+            sig = (st.st_size, int(st.st_mtime))
+        except OSError:
+            time.sleep(check_interval)
+            elapsed += check_interval
+            continue
+
+        if last_sig == sig:
+            # mtime/size 변화 없음 → 안정 도달
+            return True
+        last_sig = sig
+        time.sleep(check_interval)
+        elapsed += check_interval
+
+    log_fn(f"[공유] 안정 대기 timeout ({timeout}s) — 일단 복사 시도: {os.path.basename(path)}")
+    return last_sig is not None
 
 
 def _find_indd_paths(job_dir, log_fn):
@@ -158,6 +195,8 @@ def _share_worker(job_id, job_dir, dest_root, category, log_fn, hint_indd_path=N
                 if not os.path.exists(indd_path):
                     log_fn(f"[공유] .indd 파일 없음: {indd_path}")
                     continue
+                # InDesign 저장 완료까지 대기 (mtime/size 안정화)
+                _wait_for_stable_file(indd_path, log_fn)
                 try:
                     shutil.copy2(indd_path, dest_dir)
                     copied += 1
@@ -175,6 +214,7 @@ def _share_worker(job_id, job_dir, dest_root, category, log_fn, hint_indd_path=N
         for entry in os.listdir(job_dir):
             if entry.lower().endswith(".pdf"):
                 src_pdf = os.path.join(job_dir, entry)
+                _wait_for_stable_file(src_pdf, log_fn)
                 try:
                     shutil.copy2(src_pdf, dest_dir)
                     copied += 1
