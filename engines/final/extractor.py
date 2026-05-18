@@ -6,7 +6,6 @@
 
 import json
 import os
-import shlex
 import shutil
 import subprocess
 import time
@@ -40,65 +39,19 @@ def _resolve_local_mirror(src, log=None):
     return src
 
 
-# ── Drive 데몬 자동 회복 ─────────────────────────────────────────────────
-# 8가지 syscall이 모두 EDEADLK이면 NSFileProvider 데몬 stuck 상태.
-# Drive 앱 강제 재시작으로 데몬을 fresh 세션으로 회복.
-# Flask 프로세스 라이프타임 안에서 30분 간격으로만 재시도 (무한 재시작 방지).
-_LAST_DRIVE_RESTART = 0.0
-_DRIVE_RESTART_COOLDOWN = 1800  # 30분
-
-
-def _restart_google_drive(log):
-    """Drive 앱 강제 재시작 — File Provider 데몬 stuck 회복용."""
-    global _LAST_DRIVE_RESTART
-    now = time.time()
-    if now - _LAST_DRIVE_RESTART < _DRIVE_RESTART_COOLDOWN:
-        if log:
-            log("  [복구] 최근 30분 이내 이미 Drive 재시작함 → 스킵")
-        return False
-    _LAST_DRIVE_RESTART = now
-    try:
-        if log:
-            log("  [복구] 모든 syscall EDEADLK 감지 → Google Drive 자동 재시작...")
-        subprocess.run(["killall", "Google Drive"],
-                       capture_output=True, timeout=10)
-        time.sleep(3)
-        ck = subprocess.run(["pgrep", "-x", "Google Drive"],
-                            capture_output=True, timeout=5)
-        if ck.returncode == 0:
-            subprocess.run(["killall", "-9", "Google Drive"],
-                           capture_output=True, timeout=10)
-            time.sleep(2)
-        subprocess.run(["open", "-a", "Google Drive"],
-                       capture_output=True, timeout=10)
-        if log:
-            log("  [복구] Drive 재마운트 대기 (15초)...")
-        time.sleep(15)
-        if log:
-            log("  [복구] Google Drive 재시작 완료 → 복사 재시도")
-        return True
-    except Exception as e:
-        if log:
-            log(f"  [복구] Drive 재시작 실패: {e}")
-        return False
-
-
 def _gdrive_safe_copy(src, dst, log=None, retries=5):
     """Google Drive Stream 파일을 dst로 안정적으로 복사.
 
-    Drive Stream FS는 File Provider extension 기반으로, 파일이 로컬에 미적재된
-    상태에서 동시 read 요청이 들어오면 EDEADLK(Errno 11, Resource deadlock avoided)
-    또는 EBUSY를 반환한다. Drive 내부 백오프 한도가 30초이므로 외부 재시도도
-    그 이상 대기해야 한다.
+    Drive Stream FS는 File Provider extension 기반으로, 동시 read 요청 시
+    EDEADLK(Errno 11, Resource deadlock avoided) 등 일시적 락 오류를
+    반환할 수 있다. 단일 shutil.copy2 + 지수 백오프 재시도로 처리한다.
 
-    근본 처방:
+    처방:
       1) 로컬 미러 redirect — ~/Documents/yone-content-mirror/에 미러가 있으면 우회
-      2) 첫 시도 모든 syscall EDEADLK 감지 시 Google Drive 앱 자동 재시작
-      3) 8가지 syscall 폴백 + 지수 백오프 재시도 (기존)
+      2) shutil.copy2 단일 호출 + 지수 백오프(1+3+8+15+30초, 누적 57초) 재시도
 
     Returns: (ok: bool, last_err: str)
     """
-    # 1) 로컬 미러 우선 (EDEADLK 원천 차단)
     src = _resolve_local_mirror(src, log)
 
     # NFD/NFC 후보 모두 시도 (macOS APFS는 NFD)
@@ -117,206 +70,28 @@ def _gdrive_safe_copy(src, dst, log=None, retries=5):
     if src_resolved is None:
         return False, f"소스 파일 없음: {src}"
 
-    # subprocess 환경: Flask 등 LANG=unset 컨텍스트에서 시작돼도 UTF-8로 강제.
-    # 이렇게 안 하면 rsync/cat 등이 한글 파일명을 비-UTF8로 출력해
-    # capture_output 디코딩 단계에서 UnicodeDecodeError 발생.
-    sub_env = dict(os.environ)
-    sub_env.setdefault("LANG", "ko_KR.UTF-8")
-    sub_env.setdefault("LC_CTYPE", "UTF-8")
-    sub_env.setdefault("LC_ALL", "ko_KR.UTF-8")
+    expected_size = os.path.getsize(src_resolved)
+    backoffs = [1, 3, 8, 15, 30]
+    last_err = ""
 
-    # warm-up: Spotlight metadata 조회로 Drive에 파일 위치 hint 전달 + 전체 read로
-    # 로컬 캐시 적재. 둘 다 deadlock일 수 있으므로 짧은 타임아웃.
-    try:
-        subprocess.run(
-            ["mdls", "-name", "kMDItemFSName", src_resolved],
-            capture_output=True, timeout=5, env=sub_env
-        )
-    except Exception:
-        pass
-    try:
-        subprocess.run(
-            ["/bin/bash", "-c", f"cat {shlex.quote(src_resolved)} > /dev/null"],
-            capture_output=True, timeout=30, env=sub_env
-        )
-        time.sleep(0.5)
-    except Exception:
-        pass
-
-    def _remove_dst():
+    for attempt in range(retries):
         try:
             if os.path.exists(dst):
                 os.remove(dst)
-        except Exception:
-            pass
-
-    # 원본 사이즈 — 모든 메서드의 부분 복사 검증 기준
-    # Drive Stream이 큰 파일을 fetch 중 deadlock → 부분 read만 되는데
-    # rc=0 + dst>0으로 잘못 성공 판정되는 버그 방지
-    expected_size = os.path.getsize(src_resolved)
-
-    def _is_complete(dst_path):
-        """dst가 src와 같은 크기인지 검증 (부분 복사 감지)."""
-        if not os.path.exists(dst_path):
-            return False, "dst 미생성"
-        actual = os.path.getsize(dst_path)
-        if actual == 0:
-            return False, "dst size=0"
-        if actual != expected_size:
-            return False, f"부분 복사: src={expected_size}B dst={actual}B " \
-                          f"({100*actual/expected_size:.1f}%)"
-        return True, ""
-
-    def _try_python_rw():
-        try:
-            _remove_dst()
-            with open(src_resolved, "rb") as fsrc, open(dst, "wb") as fdst:
-                while True:
-                    chunk = fsrc.read(256 * 1024)
-                    if not chunk:
-                        break
-                    fdst.write(chunk)
-            ok_size, reason = _is_complete(dst)
-            if ok_size:
+            shutil.copy2(src_resolved, dst)
+            actual = os.path.getsize(dst)
+            if actual == expected_size:
+                if log and attempt > 0:
+                    log(f"  [GDrive 복사] 성공 ({attempt+1}회차)")
                 return True, ""
-            return False, f"python rw: {reason}"
-        except Exception as e:
-            return False, f"python rw: {type(e).__name__}: {e}"
+            last_err = f"부분 복사: src={expected_size}B dst={actual}B"
+        except OSError as e:
+            last_err = f"{type(e).__name__}: {e}"
 
-    def _try_subprocess(name, argv):
-        try:
-            _remove_dst()
-            # text=False로 binary 수신 — Flask 등 LANG=unset 환경에서
-            # 비-UTF8 바이트(한글 파일명 등)로 인한 UnicodeDecodeError 회피.
-            # env=sub_env로 자식에 UTF-8 로케일 강제 (이중 안전망).
-            res = subprocess.run(argv, capture_output=True, timeout=120,
-                                 env=sub_env)
-            ok_size, reason = _is_complete(dst)
-            # rc=0이고 사이즈 일치하면 성공
-            if res.returncode == 0 and ok_size:
-                return True, ""
-            # rc!=0이라도 사이즈가 완전 일치하면 성공
-            # (rsync 등이 stderr 경고 출력해도 실제 복사 완료 케이스)
-            if ok_size:
-                return True, ""
-            # 부분 복사 감지 — 실패로 분류해 다음 폴백 시도
-            stderr_str = res.stderr.decode("utf-8", errors="replace").strip()
-            if reason.startswith("부분 복사"):
-                return False, f"{name} rc={res.returncode} {reason}"
-            return False, (f"{name} rc={res.returncode}, "
-                           f"{reason}, stderr={stderr_str!r}")
-        except Exception as e:
-            return False, f"{name}: {type(e).__name__}: {e}"
-
-    # 7가지 syscall 경로 (다양성 + 프로세스 격리 동시 확보):
-    #   python rw  : 현재 프로세스에서 open/read/write
-    #   cat        : shell read+redirect (POSIX read)
-    #   dd         : block-mode read (다른 read 패턴)
-    #   cp         : fcopyfile syscall
-    #   ditto      : Apple copyfile() API
-    #   rsync      : 자체 청크 read+write
-    #   py-subproc : 별도 Python 인터프리터 — Flask 장기 프로세스의
-    #                stale Drive 클라이언트 세션을 회피 (새 PID = 새 세션)
-    import sys as _sys
-    _py_copy_script = (
-        "import sys\n"
-        "src, dst = sys.argv[1], sys.argv[2]\n"
-        "with open(src, 'rb') as fsrc, open(dst, 'wb') as fdst:\n"
-        "    while True:\n"
-        "        chunk = fsrc.read(262144)\n"
-        "        if not chunk: break\n"
-        "        fdst.write(chunk)\n"
-    )
-    methods = [
-        ("python rw", _try_python_rw),
-        ("cat", lambda: _try_subprocess(
-            "cat",
-            ["/bin/bash", "-c",
-             f"cat {shlex.quote(src_resolved)} > {shlex.quote(dst)}"])),
-        ("dd", lambda: _try_subprocess(
-            "dd",
-            ["dd", f"if={src_resolved}", f"of={dst}", "bs=1m"])),
-        ("cp", lambda: _try_subprocess(
-            "cp", ["cp", src_resolved, dst])),
-        ("ditto", lambda: _try_subprocess(
-            "ditto", ["ditto", src_resolved, dst])),
-        ("rsync", lambda: _try_subprocess(
-            "rsync", ["rsync", "-t", src_resolved, dst])),
-        ("py-subproc", lambda: _try_subprocess(
-            "py-subproc",
-            [_sys.executable, "-c", _py_copy_script, src_resolved, dst])),
-        # 8경로: launchctl asuser — 사용자 GUI(Aqua) 세션 bootstrap에 직접 위임.
-        # Flask 가 launchd LaunchAgent 컨텍스트에서 실행될 때 NSFileProvider
-        # (Drive Stream) 가 read 를 거부하는 케이스 우회. 같은 UID 의 user-aqua
-        # 컨텍스트는 풀-access 라 cold-materialize 가능.
-        ("launchctl-asuser", lambda: _try_subprocess(
-            "launchctl-asuser",
-            ["launchctl", "asuser", str(os.getuid()),
-             _sys.executable, "-c", _py_copy_script, src_resolved, dst])),
-    ]
-
-    # 지수 백오프 (초). Drive 내부 백오프 한도(30s) 이상으로 설정.
-    # 누적: 5+15+30+45 = 95초 (마지막 시도 후엔 안 잼)
-    backoffs = [5, 15, 30, 45]
-
-    def _is_deadlock(msg):
-        m = msg.lower()
-        return ("deadlock" in m) or ("errno 11" in m) or ("resource busy" in m)
-
-    last_err = ""
-    deadlock_attempts = 0
-    prev_err_signature = None
-    drive_restart_tried = False
-    for attempt in range(retries):
-        attempt_errs = []
-        attempt_all_deadlock = True
-        for name, fn in methods:
-            ok, err = fn()
-            if ok:
-                if log and (attempt > 0 or name != "python rw"):
-                    log(f"  [GDrive 복사] 성공 ({attempt+1}회차, {name})")
-                return True, ""
-            attempt_errs.append(err)
-            if not _is_deadlock(err):
-                attempt_all_deadlock = False
-
-        if attempt_all_deadlock:
-            deadlock_attempts += 1
-
-        last_err = " | ".join(attempt_errs)
-        # 같은 패턴 반복은 요약 로그 (첫 시도만 상세, 이후는 요약)
-        err_signature = "|".join(e.split(":")[0] for e in attempt_errs)
         if log:
-            if attempt == 0:
-                log(f"  [GDrive 복사] 실패 ({attempt+1}/{retries}): {last_err}")
-            elif err_signature != prev_err_signature:
-                log(f"  [GDrive 복사] 실패 ({attempt+1}/{retries}, 패턴 변화): {last_err}")
-            else:
-                log(f"  [GDrive 복사] 실패 ({attempt+1}/{retries}): 동일 EDEADLK 패턴 반복")
-        prev_err_signature = err_signature
-
-        # 첫 시도(attempt=0)에서 모든 syscall이 EDEADLK이면 데몬 stuck 확정 →
-        # Drive 앱 자동 재시작 후 백오프 스킵하고 즉시 재시도.
-        # (이게 진짜 근본 처방. 폴백 다양성으론 stuck 데몬을 못 풀음)
-        if (attempt == 0 and attempt_all_deadlock and not drive_restart_tried
-                and attempt < retries - 1):
-            drive_restart_tried = True
-            if _restart_google_drive(log):
-                continue  # 백오프 wait 스킵
-
+            log(f"  [GDrive 복사] 실패 ({attempt+1}/{retries}): {last_err}")
         if attempt < retries - 1:
-            wait = backoffs[min(attempt, len(backoffs) - 1)]
-            time.sleep(wait)
-
-    # 모든 시도(또는 거의 모두)가 deadlock이면 Drive 데몬/Flask 프로세스 stuck 가능성
-    if log and deadlock_attempts >= retries - 1:
-        log("")
-        log("  [진단] Drive 자동 재시작 후에도 EDEADLK 지속 — 다음 단계 필요:")
-        log("    1) Flask 서버 재시작:")
-        log("       launchctl kickstart -k gui/$(id -u)/com.yonestudio.flask")
-        log("    2) 이 파일을 ~/Documents/yone-content-mirror/ 미러에 추가:")
-        log(f"       소스: {src_resolved}")
-        log("       (코드는 미러가 있으면 자동으로 GDrive 우회)")
+            time.sleep(backoffs[min(attempt, len(backoffs) - 1)])
 
     return False, last_err
 
