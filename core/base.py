@@ -15,6 +15,27 @@ def _exists_nonempty(path):
         return False
 
 
+def safe_copy(src, dst, log=None):
+    """모든 엔진의 통합 안전 복사.
+
+    GDrive 경로면 자동으로 로컬 미러 redirect (EDEADLK 회피).
+    비 GDrive 경로면 shutil.copy2와 동일하게 동작.
+
+    Returns: 저장된 dst 경로
+    Raises: RuntimeError (5회 재시도 후에도 실패 시)
+    """
+    # 지연 import (engines.final 모듈 의존성 회피)
+    from engines.final.extractor import _gdrive_safe_copy
+    log_fn = log if log is not None else (lambda x: None)
+    ok, err = _gdrive_safe_copy(src, dst, log=log_fn)
+    if not ok:
+        raise RuntimeError(
+            f"복사 실패: {os.path.basename(src)} -> "
+            f"{os.path.basename(dst)} ({err[:200]})"
+        )
+    return dst
+
+
 def _is_deadlock(err):
     return isinstance(err, OSError) and err.errno == errno.EDEADLK
 
