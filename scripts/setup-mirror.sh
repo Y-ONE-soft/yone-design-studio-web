@@ -24,6 +24,8 @@ MIRROR_BASE="$HOME/Documents/yone-content-mirror"
 SUBPATHS=(
     "모의고사 작업/고1"
     "모의고사 작업/고2"
+    "EBS 작업"
+    "교과서 작업"
 )
 
 # 1) GDrive 마운트 확인
