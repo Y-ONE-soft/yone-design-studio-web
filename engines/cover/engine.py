@@ -2,6 +2,7 @@ import json
 import os
 import re
 import shutil
+from core.base import safe_copy
 import subprocess
 import threading
 import time
@@ -279,7 +280,7 @@ class CoverEngine(BaseEngine):
 
         # PDF를 표지 폴더에도 복사
         if os.path.exists(pdf_path):
-            shutil.copy2(pdf_path, pdf_out_path)
+            safe_copy(pdf_path, pdf_out_path)
             log(f"표지 폴더 저장: {os.path.basename(pdf_out_path)}")
 
         return settings_path

@@ -4,7 +4,7 @@ import re
 import shutil
 import unicodedata
 
-from core.base import BaseEngine, safe_copy_indd
+from core.base import BaseEngine, safe_copy_indd, safe_copy
 from core.paths import resolve_config
 from engines.workbook.parser import parse_manuscript_folder
 
@@ -89,7 +89,7 @@ class WorkbookEngine(BaseEngine):
                 else:
                     dest = os.path.join(manuscript_dir, fname)
                 if fpath != dest:
-                    shutil.copy2(fpath, dest)
+                    safe_copy(fpath, dest)
         elif isinstance(manuscripts, str) and os.path.isdir(manuscripts):
             manuscript_dir = manuscripts
         else:

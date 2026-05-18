@@ -4,7 +4,7 @@ import re
 import shutil
 import unicodedata
 
-from core.base import BaseEngine, safe_copy_indd
+from core.base import BaseEngine, safe_copy_indd, safe_copy
 from core.paths import resolve_config
 from engines.workbook.parser import parse_manuscript_folder
 from engines.final.extractor import _gdrive_safe_copy
@@ -298,7 +298,7 @@ class EbsWorkbookEngine(BaseEngine):
                 else:
                     dest = os.path.join(manuscript_dir, fname)
                 if fpath != dest:
-                    shutil.copy2(fpath, dest)
+                    safe_copy(fpath, dest)
 
         log(f"[파서] 파싱 시작")
         data = parse_manuscript_folder(manuscript_dir, cfg, grade, year, month, log)

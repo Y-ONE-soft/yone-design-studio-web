@@ -10,7 +10,7 @@ import json
 import os
 import re
 
-from core.base import BaseEngine
+from core.base import BaseEngine, safe_copy
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
 _CONFIG_PATH = os.path.join(_DIR, "config.json")
@@ -721,7 +721,7 @@ class PocketbookEngine(BaseEngine):
         # 템플릿을 /tmp로 복사 (iCloud/한글 경로 회피)
         local_template = os.path.join(jsx_work_dir, "template.indd")
         if not os.path.exists(local_template):
-            shutil.copy2(template_path, local_template)
+            safe_copy(template_path, local_template)
         template_path = local_template
 
         # 학년 추출 (학교명 끝 숫자: 광문1→고1, 배재2→고2)
@@ -1013,7 +1013,7 @@ class PocketbookEngine(BaseEngine):
                 if any(m in src for m in gdrive_markers):
                     self._gdrive_cp(src, dst)
                 else:
-                    shutil.copy2(src, dst)
+                    safe_copy(src, dst)
             return dst
 
         tmp_analysis = [_to_tmp(f) for f in new_analysis]
@@ -1034,7 +1034,7 @@ class PocketbookEngine(BaseEngine):
                 if any(m in src_path for m in gdrive_markers):
                     self._gdrive_cp(src_path, eng_dst)
                 else:
-                    shutil.copy2(src_path, eng_dst)
+                    safe_copy(src_path, eng_dst)
             pno_lookup_files.append({"file": eng_dst, "ym": ym_key})
 
         # 모든 완성본 폴더에서 파일 수집
@@ -1173,7 +1173,7 @@ class PocketbookEngine(BaseEngine):
 
         # /tmp 로그를 job_dir에도 복사 (디버그용)
         if tmp_output_dir and os.path.exists(os.path.join(tmp_output_dir, log_filename)):
-            _shutil.copy2(os.path.join(tmp_output_dir, log_filename),
+            _safe_copy(os.path.join(tmp_output_dir, log_filename),
                           os.path.join(job_dir, log_filename))
 
         content = {}
@@ -1216,7 +1216,7 @@ class PocketbookEngine(BaseEngine):
                     final_candidate = final_output.replace(".indd", ext) if ext == ".pdf" else final_output
                     if tmp_candidate and os.path.exists(tmp_candidate) and final_candidate:
                         os.makedirs(os.path.dirname(final_candidate), exist_ok=True)
-                        _shutil.copy2(tmp_candidate, final_candidate)
+                        _safe_copy(tmp_candidate, final_candidate)
                         if ext == ".pdf":
                             pdf_path = final_candidate
                 # /tmp pdf 폴백

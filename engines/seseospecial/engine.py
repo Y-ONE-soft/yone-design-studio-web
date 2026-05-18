@@ -9,7 +9,7 @@ import os
 import re
 import shutil
 
-from core.base import BaseEngine
+from core.base import BaseEngine, safe_copy
 from engines.seseospecial.parser import parse_all
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
@@ -94,7 +94,7 @@ class SeseoSpecialEngine(BaseEngine):
         key = _school_key(school)
         template_path = cfg["templates"].get(key, "")
         if os.path.exists(template_path):
-            shutil.copy2(template_path, indd_path)
+            safe_copy(template_path, indd_path)
             log(f"[내지] 원본 복사: {os.path.basename(template_path)} -> {os.path.basename(indd_path)}")
         elif not os.path.exists(indd_path):
             raise FileNotFoundError(

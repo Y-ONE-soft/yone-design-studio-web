@@ -8,6 +8,7 @@ import json
 import os
 import re
 import shutil
+from core.base import safe_copy
 import subprocess
 import time
 import unicodedata
@@ -332,7 +333,7 @@ class CoverPocketbookEngine(BaseEngine):
             src = os.path.join(_OUTPUT_DIR, pdf_name)
             if os.path.exists(src):
                 dst = os.path.join(job_dir, pdf_name)
-                shutil.copy2(src, dst)
+                safe_copy(src, dst)
                 generated.append(dst)
 
         log(f"[완료] {len(generated)}/{len(schools_data)}개 PDF 생성")
