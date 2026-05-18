@@ -58,17 +58,25 @@ def _resolve_category(material_id):
     return mapping.get(material_id) or "기타"
 
 
-def _wait_for_stable_file(path, log_fn, timeout=60, check_interval=2):
+def _wait_for_stable_file(path, log_fn, timeout=300, check_interval=3, stable_required_seconds=20):
     """파일 mtime·크기가 N초간 변경 없을 때까지 대기 (InDesign 저장 완료 신호).
 
     InDesign이 .indd 저장은 비동기라 sharing.py가 너무 빨리 실행되면
-    옛 .indd 그대로 복사될 수 있음. 이걸 방지.
+    옛 .indd(원본 .indd 등) 그대로 복사될 수 있음.
+
+    또한 운영 코드의 .indd가 indd_output_dir로 복사되는 데 1~2분 걸릴 수 있어서
+    초반에 옛 .indd가 안정 상태로 보일 수 있음. 이걸 방지하기 위해 시작 시 sleep.
 
     반환: True(안정 도달) / False(파일 없음 또는 timeout)
     """
+    # 시작 시 운영 코드의 .indd 저장 완료 대기 (옛 .indd 안정으로 잘못 인식 방지)
+    initial_wait = 45
+    log_fn(f"[공유] {initial_wait}초 초기 대기 (운영 .indd 저장 완료 대기)")
+    time.sleep(initial_wait)
+
     last_sig = None
+    last_change_at = time.time()
     elapsed = 0
-    stable_required = 4  # 4초간 변화 없으면 안정
 
     while elapsed < timeout:
         if not os.path.exists(path):
@@ -83,10 +91,19 @@ def _wait_for_stable_file(path, log_fn, timeout=60, check_interval=2):
             elapsed += check_interval
             continue
 
-        if last_sig == sig:
-            # mtime/size 변화 없음 → 안정 도달
-            return True
-        last_sig = sig
+        if last_sig is None:
+            last_sig = sig
+            last_change_at = time.time()
+        elif last_sig != sig:
+            # 변화 발생 → 다시 대기
+            last_sig = sig
+            last_change_at = time.time()
+        else:
+            # 변화 없음 → 안정 시간 누적
+            stable_for = time.time() - last_change_at
+            if stable_for >= stable_required_seconds:
+                return True
+
         time.sleep(check_interval)
         elapsed += check_interval
 
