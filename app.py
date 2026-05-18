@@ -34,49 +34,22 @@ if hasattr(shutil, "_fastcopy_fcopyfile") and hasattr(shutil, "_GiveupOnFastCopy
             raise
     shutil._fastcopy_fcopyfile = _patched_fastcopy_fcopyfile
 
-# 다층 fallback — fast-path 패치 후에도, fallback의 일반 read/write copy 안에서
-# read syscall 자체가 매번 EDEADLK인 경우(GDrive 가상 마운트의 알려진 패턴)는
-# 같은 프로세스 내 retry로는 lock이 풀리지 않는다. 이때 별도 프로세스(/bin/cp,
-# /usr/bin/ditto)로 새 fd를 열어 우회한다. cp/ditto는 macOS의 OS-level 도구라
-# 클라우드 가상 파일에 더 robust.
-import subprocess as _subprocess
-
-def _via_subprocess_copy(src, dst):
-    src_s = os.fspath(src)
-    dst_s = os.fspath(dst)
-    if os.path.isdir(dst_s):
-        dst_s = os.path.join(dst_s, os.path.basename(src_s))
-    last = None
-    for cmd in (["/bin/cp", "-p", src_s, dst_s],
-                ["/usr/bin/ditto", src_s, dst_s]):
-        try:
-            r = _subprocess.run(cmd, capture_output=True, timeout=180)
-            if r.returncode == 0:
-                return dst_s
-            stderr = r.stderr.decode("utf-8", "replace").strip()
-            last = OSError("external copy failed: %s rc=%d %s" %
-                           (cmd[0], r.returncode, stderr))
-        except Exception as e:
-            last = e
-    raise last if last else OSError("subprocess copy fallback failed")
-
-
+# GDrive Stream FS의 일시적 EDEADLK는 시간으로만 풀린다. 단일 orig 호출 +
+# 지수 백오프(1+3+8+15+30초, 누적 57초) 재시도. 과거 cp/ditto subprocess 폴백은
+# EDEADLK 클래스에 무력하고 자기 경합만 유발했기에 제거.
 def _retry_then_subprocess(orig, *args, **kwargs):
+    backoffs = [1, 3, 8, 15, 30]
     last_err = None
-    for attempt in range(3):
+    for attempt in range(5):
         try:
             return orig(*args, **kwargs)
         except OSError as e:
             if e.errno not in (errno.EDEADLK, errno.EAGAIN, errno.EINTR):
                 raise
             last_err = e
-            time.sleep(0.1 * (attempt + 1))
-    src = args[0] if args else kwargs.get("src")
-    dst = args[1] if len(args) > 1 else kwargs.get("dst")
-    try:
-        return _via_subprocess_copy(src, dst)
-    except Exception:
-        raise last_err  # 원본 EDEADLK를 그대로 surfacing
+        if attempt < 4:
+            time.sleep(backoffs[attempt])
+    raise last_err
 
 
 _orig_copy2     = shutil.copy2
