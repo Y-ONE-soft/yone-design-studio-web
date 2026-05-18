@@ -1186,7 +1186,7 @@ def _run_pipeline(engine, job_id: str, job_dir: str, uploaded: dict):
             _indd_hint = None
             if isinstance(result, dict):
                 _indd_hint = result.get("indd_path") or result.get("indd_paths")
-            share_job_async(job_id, job_dir, school, log, indd_path=_indd_hint)
+            share_job_async(job_id, job_dir, school, log, indd_path=_indd_hint, material_id=getattr(engine, "material_id", None))
         except Exception as _e:
             log(f"[공유] 시작 실패 (무시): {_e}")
 
