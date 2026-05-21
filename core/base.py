@@ -69,8 +69,17 @@ def _stream_copy(src, dst):
     """Google Drive File Stream / iCloud Drive 교착 회피.
 
     원본이 클라우드 관리 파일인 경우 read(2) 호출이 간헐적으로 EDEADLK를 던진다.
-    전략: (1) 지수백오프 재시도 → (2) 실패 시 /bin/cp 폴백 → (3) /tmp 경유 폴백.
-    .tmp 파일 + os.rename 으로 원자성 확보. 복사 실패 시 .tmp 제거."""
+    전략: (0) 로컬 미러 redirect → (1) 지수백오프 재시도 → (2) /bin/cp 폴백
+         → (3) /tmp 경유 폴백.
+    .tmp 파일 + os.rename 으로 원자성 확보. 복사 실패 시 .tmp 제거.
+
+    (0) 로컬 미러 — ~/Documents/yone-content-mirror/에 미러가 있으면 GDrive 우회.
+    NSFileProvider 데몬을 거치지 않아 EDEADLK 자체가 발생하지 않음.
+    safe_copy_indd를 거치는 13개 엔진(blackbook, mockexam, whitebook 등)이 모두 혜택."""
+    # 지연 import — engines.final 모듈 순환 의존 회피
+    from engines.final.extractor import _resolve_local_mirror
+    src = _resolve_local_mirror(src, log=None)
+
     tmp = dst + ".tmp"
 
     def _cleanup_tmp():
