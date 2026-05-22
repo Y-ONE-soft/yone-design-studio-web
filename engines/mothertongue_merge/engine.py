@@ -19,6 +19,7 @@ import os
 import re
 import unicodedata
 
+from config import STUDIO_ROOT
 from core.base import BaseEngine, safe_copy_indd
 
 
@@ -114,6 +115,9 @@ def _find_fallback_file(fallback_base, lesson_num):
     """fallback_base 안에서 {N}강... 시작 폴더 → 안의 .indd 첫 후보 반환."""
     if not fallback_base or not os.path.isdir(fallback_base):
         return None
+    # 미러 redirect — Drive zombie 시 GDrive listdir EDEADLK 회피
+    from engines.final.extractor import _resolve_local_mirror as _rlm
+    fallback_base = _rlm(fallback_base, None)
     lesson_int = int(lesson_num)
     # 폴더명: "{N}강 {lesson_name}" — N 은 0-padded 가 아니므로 lesson_int 와 매칭
     target_prefixes = [f"{lesson_int}강", f"{lesson_int:02d}강"]
@@ -140,6 +144,9 @@ def _find_fallback_file(fallback_base, lesson_num):
 
 def _find_month_folder(gdrive_base, grade_num, year, month):
     grade_dir = os.path.join(gdrive_base, f"고{grade_num}")
+    # 미러 redirect — Drive zombie 시 GDrive listdir EDEADLK 회피
+    from engines.final.extractor import _resolve_local_mirror as _rlm
+    grade_dir = _rlm(grade_dir, None)
     if not os.path.isdir(grade_dir):
         return None
 
@@ -166,6 +173,9 @@ def _find_month_folder(gdrive_base, grade_num, year, month):
 def _find_analysis_files(month_folder, patterns=None):
     if not month_folder or not os.path.isdir(month_folder):
         return []
+    # 미러 redirect — Drive zombie 시 GDrive listdir EDEADLK 회피
+    from engines.final.extractor import _resolve_local_mirror as _rlm
+    month_folder = _rlm(month_folder, None)
     patterns = patterns or ["분석본"]
     results = []
     for raw in os.listdir(month_folder):
@@ -440,11 +450,8 @@ class MothertongueMergeEngine(BaseEngine):
         if not result_name:
             raise ValueError("결과 파일명을 입력하세요.")
 
-        _studio = os.path.dirname(os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-        ))
         output_dir = os.path.join(
-            _studio, "조판", "교재", "마더텅결합",
+            STUDIO_ROOT, "조판", "교재", "마더텅결합",
             grade, exam_period, school
         )
         os.makedirs(output_dir, exist_ok=True)
