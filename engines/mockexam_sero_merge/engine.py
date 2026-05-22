@@ -19,6 +19,7 @@ import os
 import re
 import unicodedata
 
+from config import STUDIO_ROOT
 from core.base import BaseEngine, safe_copy_indd
 
 
@@ -112,6 +113,9 @@ class MockexamSeroMergeEngine(BaseEngine):
         """GDrive 폴더에서 vertical .indd 매칭 (JSX 와 동일 규칙)."""
         if not os.path.isdir(folder):
             return None
+        # 미러 redirect — Drive zombie 시 GDrive listdir EDEADLK 회피
+        from engines.final.extractor import _resolve_local_mirror as _rlm
+        folder = _rlm(folder, None)
 
         month_int = int(month)
         month_variants = [str(month_int)]
@@ -235,12 +239,8 @@ class MockexamSeroMergeEngine(BaseEngine):
             raise ValueError("결과 파일명을 입력하세요.")
 
         # 출력 디렉터리 — 조판/교재/모의고사세로결합/{학년}/{시험기간}/{학교}/
-        # realpath 로 심볼릭 링크(조판_자동화 → 통합웹사이트) 통과
-        _studio = os.path.dirname(os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-        ))
         output_dir = os.path.join(
-            _studio, "조판", "교재", "모의고사세로결합",
+            STUDIO_ROOT, "조판", "교재", "모의고사세로결합",
             grade, exam_period, school
         )
         os.makedirs(output_dir, exist_ok=True)
