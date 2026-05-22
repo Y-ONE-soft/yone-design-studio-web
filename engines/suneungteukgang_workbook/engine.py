@@ -236,6 +236,8 @@ class SuneungteukgangWorkbookEngine(BaseEngine):
                 )
 
         unit_dir = self._read_meta_str(job_dir, "manuscript_folder", "")
+        # 미러 redirect 모듈 사용 — Drive zombie 시 GDrive listdir EDEADLK 회피
+        from engines.final.extractor import _resolve_local_mirror as _rlm
         # manuscript_folder가 비어있고 lesson_folder만 있는 경우 (다중 선택 시 UI가 hidden 안 채움) → 자동 계산
         if not unit_dir or not os.path.isdir(unit_dir):
             lesson_folder = self._read_meta_str(job_dir, "lesson_folder", "")
@@ -244,6 +246,7 @@ class SuneungteukgangWorkbookEngine(BaseEngine):
                 subdir = cfg.get("series_subdir", "")
                 if subdir:
                     base = os.path.join(base, subdir)
+                base = _rlm(base, log)  # base도 미러로 우회
                 candidate = os.path.join(base, lesson_folder)
                 if os.path.isdir(candidate):
                     unit_dir = candidate
@@ -258,8 +261,7 @@ class SuneungteukgangWorkbookEngine(BaseEngine):
                             unit_dir = actual
                             log(f"[파서] manuscript_folder 자동 계산: '{entry}' (정규화 매칭: '{lesson_folder}')")
                             break
-        # 폴더 listing도 미러로 우회 — Drive zombie 시 GDrive listdir EDEADLK 회피.
-        from engines.final.extractor import _resolve_local_mirror as _rlm
+        # unit_dir도 미러로 redirect (위 if 블록 거치지 않은 경우)
         unit_dir = _rlm(unit_dir, log)
         if unit_dir and os.path.isdir(unit_dir):
             log(f"[파서] 단원 폴더: {os.path.basename(unit_dir)}")
