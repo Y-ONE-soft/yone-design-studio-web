@@ -92,6 +92,9 @@ class EbsWorkbookEngine(BaseEngine):
         """리딩파워(고정 시리즈) 안의 워크북 단원 목록."""
         cfg = _load_config()
         base = EbsWorkbookEngine._series_path()
+        # 미러 redirect — Drive zombie 시 GDrive listdir EDEADLK 회피
+        from engines.final.extractor import _resolve_local_mirror as _rlm
+        base = _rlm(base, None)
         excludes = set(cfg.get("exclude_folders", []))
         if not os.path.isdir(base):
             return []
@@ -123,6 +126,9 @@ class EbsWorkbookEngine(BaseEngine):
         """단원 폴더 안의 원고 파일 목록 + 사용 여부 표시."""
         cfg = _load_config()
         unit_path = os.path.join(EbsWorkbookEngine._series_path(), unit_folder)
+        # 미러 redirect — Drive zombie 시 GDrive listdir EDEADLK 회피
+        from engines.final.extractor import _resolve_local_mirror as _rlm
+        unit_path = _rlm(unit_path, None)
         if not os.path.isdir(unit_path):
             return {"workbook_dir": None, "files": []}
 
