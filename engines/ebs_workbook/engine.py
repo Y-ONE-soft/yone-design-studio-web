@@ -235,6 +235,9 @@ class EbsWorkbookEngine(BaseEngine):
 
         # 1) 단원 폴더에서 파일 복사
         unit_dir = self._read_meta_str(job_dir, "manuscript_folder", "")
+        # 폴더 listing도 미러로 우회 — Drive zombie 시 GDrive listdir EDEADLK 회피.
+        from engines.final.extractor import _resolve_local_mirror as _rlm
+        unit_dir = _rlm(unit_dir, log)
         if unit_dir and os.path.isdir(unit_dir):
             log(f"[파서] 단원 폴더: {os.path.basename(unit_dir)}")
             for raw in os.listdir(unit_dir):

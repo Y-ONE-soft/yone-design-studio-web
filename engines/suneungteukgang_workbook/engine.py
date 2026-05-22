@@ -258,6 +258,9 @@ class SuneungteukgangWorkbookEngine(BaseEngine):
                             unit_dir = actual
                             log(f"[파서] manuscript_folder 자동 계산: '{entry}' (정규화 매칭: '{lesson_folder}')")
                             break
+        # 폴더 listing도 미러로 우회 — Drive zombie 시 GDrive listdir EDEADLK 회피.
+        from engines.final.extractor import _resolve_local_mirror as _rlm
+        unit_dir = _rlm(unit_dir, log)
         if unit_dir and os.path.isdir(unit_dir):
             log(f"[파서] 단원 폴더: {os.path.basename(unit_dir)}")
             for raw in os.listdir(unit_dir):

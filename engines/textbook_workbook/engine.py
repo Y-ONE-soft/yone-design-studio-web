@@ -287,6 +287,10 @@ class TextbookWorkbookEngine(BaseEngine):
 
         # 1) 구글 드라이브 워크북 폴더에서 파일 복사
         gdrive_workbook = self._read_meta_str(job_dir, "manuscript_folder", "")
+        # 폴더 listing도 미러로 우회 — Drive zombie 시 GDrive listdir이 EDEADLK 유발 회피.
+        # 미러 폴더 안에 같은 구조로 존재하면 GDrive 데몬을 완전히 거치지 않음.
+        from engines.final.extractor import _resolve_local_mirror as _rlm
+        gdrive_workbook = _rlm(gdrive_workbook, log)
         if gdrive_workbook and os.path.isdir(gdrive_workbook):
             log(f"[파서] 원고 폴더: {os.path.basename(gdrive_workbook)}")
             for raw in os.listdir(gdrive_workbook):
