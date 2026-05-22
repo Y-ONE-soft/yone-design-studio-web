@@ -21,6 +21,7 @@ import os
 import re
 import unicodedata
 
+from config import STUDIO_ROOT
 from core.base import BaseEngine, safe_copy_indd
 
 
@@ -116,6 +117,9 @@ class AnalysisMergeEngine(BaseEngine):
         폴더명 패턴: `고{N} {YY}년 {M}월` (또는 0-padded M)
         """
         grade_dir = os.path.join(gdrive_base, f"고{grade_num}")
+        # 미러 redirect — Drive zombie 시 GDrive listdir EDEADLK 회피
+        from engines.final.extractor import _resolve_local_mirror as _rlm
+        grade_dir = _rlm(grade_dir, None)
         if not os.path.isdir(grade_dir):
             return None
 
@@ -146,6 +150,9 @@ class AnalysisMergeEngine(BaseEngine):
         """
         if not month_folder or not os.path.isdir(month_folder):
             return []
+        # 미러 redirect — Drive zombie 시 GDrive listdir EDEADLK 회피
+        from engines.final.extractor import _resolve_local_mirror as _rlm
+        month_folder = _rlm(month_folder, None)
         patterns = patterns or ["분석본"]
         results = []
         for raw in os.listdir(month_folder):
@@ -295,11 +302,8 @@ class AnalysisMergeEngine(BaseEngine):
             raise ValueError("결과 파일명을 입력하세요.")
 
         # 출력 디렉터리 — 조판/교재/분석본결합/{학년}/{시험기간}/{학교}/
-        _studio = os.path.dirname(os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-        ))
         output_dir = os.path.join(
-            _studio, "조판", "교재", "분석본결합",
+            STUDIO_ROOT, "조판", "교재", "분석본결합",
             grade, exam_period, school
         )
         os.makedirs(output_dir, exist_ok=True)
