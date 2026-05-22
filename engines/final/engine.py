@@ -7,7 +7,10 @@ import shutil
 import subprocess
 import unicodedata
 
+from config import STUDIO_ROOT
 from core.base import BaseEngine, safe_copy_indd
+# GDrive 폴더 listing 시 미러 redirect — Drive zombie 시 EDEADLK 회피
+from engines.final.extractor import _resolve_local_mirror as _rlm
 
 
 def _nfc(s):
@@ -192,6 +195,7 @@ class FinalEngine(BaseEngine):
             cfg = _load_config()
             # 학교 폴더 (교과서 분석편 포함 가능)
             school_dir = os.path.join(gdrive_base, "워크북", exam_period, grade, school)
+            school_dir = _rlm(school_dir, None)
             school_files = []
             if os.path.isdir(school_dir):
                 for f in sorted(os.listdir(school_dir)):
@@ -214,6 +218,7 @@ class FinalEngine(BaseEngine):
 
             # fallback: 공유 EBS 분석편
             wb_dir = os.path.expanduser(cfg.get("고3_workbook_base", ""))
+            wb_dir = _rlm(wb_dir, None)
             if not os.path.isdir(wb_dir):
                 return [], wb_dir, set()
             files = sorted([
@@ -222,6 +227,7 @@ class FinalEngine(BaseEngine):
             ])
             return files, wb_dir, set()
         wb_dir = os.path.join(gdrive_base, "워크북", exam_period, grade, school)
+        wb_dir = _rlm(wb_dir, None)
         if not os.path.isdir(wb_dir):
             return [], wb_dir, set()
         all_files = sorted([
@@ -259,6 +265,7 @@ class FinalEngine(BaseEngine):
         if grade == "고1" and olpo_lectures_needed:
             cfg = _load_config()
             olpo_base = os.path.expanduser(cfg.get("고1_올포_공용_base", ""))
+            olpo_base = _rlm(olpo_base, None)
             if os.path.isdir(olpo_base):
                 for f in sorted(os.listdir(olpo_base)):
                     if not f.endswith(".indd"):
@@ -285,6 +292,7 @@ class FinalEngine(BaseEngine):
         result = {}
         for grade in ["고1", "고2"]:
             grade_dir = os.path.join(gdrive_base, "워크북", exam_period, grade)
+            grade_dir = _rlm(grade_dir, None)
             if not os.path.isdir(grade_dir):
                 continue
             schools = sorted([
@@ -1481,9 +1489,8 @@ class FinalEngine(BaseEngine):
             content = json.load(f)
 
         # 출력 디렉터리: 조판/교재/파이널 직전보충/{학년}/{시험기간}/{학교명}/
-        _studio = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
         output_dir = os.path.join(
-            _studio, "조판", "교재", "파이널 직전보충",
+            STUDIO_ROOT, "조판", "교재", "파이널 직전보충",
             grade, exam_period, school
         )
         os.makedirs(output_dir, exist_ok=True)
