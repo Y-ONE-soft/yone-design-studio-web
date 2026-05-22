@@ -27,6 +27,9 @@ def find_grammar_word_files(content_base, subject, publisher, lessons, log=None)
         발견된 .docx 파일 경로 리스트
     """
     textbook_base = os.path.join(content_base, "교과서 작업")
+    # 미러 redirect — Drive zombie 시 GDrive listdir EDEADLK 회피
+    from engines.final.extractor import _resolve_local_mirror as _rlm
+    textbook_base = _rlm(textbook_base, None)
 
     # 과목 폴더 찾기 (NFD 대응)
     subject_dir = None
@@ -141,6 +144,9 @@ def find_mockexam_grammar_files(content_base, scope_text, grade, log=None):
         return []
 
     mock_base = os.path.join(content_base, "모의고사 작업", grade)
+    # 미러 redirect — Drive zombie 시 GDrive listdir EDEADLK 회피
+    from engines.final.extractor import _resolve_local_mirror as _rlm
+    mock_base = _rlm(mock_base, None)
     if not os.path.isdir(mock_base):
         if log:
             log(f"  [어법수정] 모의고사 폴더 없음: {mock_base}")
@@ -200,6 +206,9 @@ def find_mothertongue_grammar_files(content_base, grade, log=None):
     """
     grade_num = grade.replace("\uace0", "") if grade else ""
     mt_base = os.path.join(content_base, "\ubaa8\uc758\uace0\uc0ac \uc791\uc5c5", grade)
+    # \ubbf8\ub7ec redirect \u2014 Drive zombie \uc2dc GDrive listdir EDEADLK \ud68c\ud53c
+    from engines.final.extractor import _resolve_local_mirror as _rlm
+    mt_base = _rlm(mt_base, None)
     if not os.path.isdir(mt_base):
         return []
     target_folder = None
