@@ -289,6 +289,9 @@ def find_olpo_xlsx_path(content_base):
     경로: EBS 작업/올림포스 고2 기출/고2 올림포스 기출 지문 출처 *.xlsx
     """
     base = os.path.join(content_base, "EBS 작업", "올림포스 고2 기출")
+    # 미러 redirect — Drive zombie 시 GDrive listdir EDEADLK 회피
+    from engines.final.extractor import _resolve_local_mirror as _rlm
+    base = _rlm(base, None)
     if not os.path.isdir(base):
         return None
     for f in os.listdir(base):
