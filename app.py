@@ -90,6 +90,7 @@ def _is_blocked_for_assistant(path):
 
 import core.job_manager as jm
 from core.indesign import runner as indesign
+from core import workbook_edit as wb_edit
 from engines import registry
 
 _DATA_DIR      = os.path.join(os.path.dirname(__file__), "data")
@@ -202,6 +203,10 @@ app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=12)
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["TEMPLATES_AUTO_RELOAD"] = True
+# Werkzeug 3.0+ form parsing 보안 한도 — 멀티 파일 업로드용으로 크게.
+app.config["MAX_CONTENT_LENGTH"] = 1024 * 1024 * 1024   # 1 GB 요청 전체 크기
+app.config["MAX_FORM_MEMORY_SIZE"] = 64 * 1024 * 1024   # 64 MB 텍스트 필드 합
+app.config["MAX_FORM_PARTS"] = 10000                     # 멀티파트 part 수
 app.jinja_loader = _RetryingFileSystemLoader(
     os.path.join(os.path.dirname(__file__), "templates")
 )
@@ -284,6 +289,45 @@ def add_no_cache(response):
         response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
         response.headers["Pragma"] = "no-cache"
     response.headers["X-Served-By"] = "flask-live"
+    # ── 보안 헤더 ──
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["Permissions-Policy"] = (
+        "geolocation=(), microphone=(), camera=(), interest-cohort=(), "
+        "payment=(), usb=(), accelerometer=(), gyroscope=(), magnetometer=(), "
+        "midi=(), fullscreen=(self), display-capture=()"
+    )
+    response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload"
+    response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+    response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
+    response.headers["Cross-Origin-Embedder-Policy"] = "credentialless"
+    # ── Content Security Policy (인라인 스크립트/스타일 사용 중이라 unsafe-inline 허용) ──
+    # localhost/127.0.0.1 접근 시에는 upgrade-insecure-requests 제외 — 로컬은 HTTP라
+    # 이 지시문이 켜지면 fetch가 https://localhost:5010 으로 강제 업그레이드되어 실패.
+    _host = (request.host or "").split(":")[0]
+    _is_local = _host in ("localhost", "127.0.0.1", "::1")
+    _csp = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data: blob:; "
+        "font-src 'self' data:; "
+        "connect-src 'self'; "
+        "media-src 'self' blob:; "
+        "object-src 'none'; "
+        "frame-ancestors 'none'; "
+        "form-action 'self'; "
+        "base-uri 'self'"
+    )
+    if not _is_local:
+        _csp += "; upgrade-insecure-requests"
+    response.headers["Content-Security-Policy"] = _csp
+    # 캐시된 자격증명으로 뒤로가기 방지
+    response.headers["Clear-Site-Data"] = '"cache"' if response.status_code == 401 else response.headers.get("Clear-Site-Data", "")
+    if not response.headers["Clear-Site-Data"]:
+        del response.headers["Clear-Site-Data"]
     return response
 
 # 목업 세션 (token → {front_img, back_img})
@@ -298,13 +342,20 @@ _SECTION_CONFIG = {
         "hero_title": "Y.ONE 조판",
         "hero_desc": "교재를 선택하고 원고를 업로드하면 InDesign 조판 → PDF까지 자동으로 처리됩니다.",
         "hero_tip": "원하는 <strong>교재 카드</strong>를 클릭하면 원고 업로드 화면으로 이동합니다.",
-        "cta_text": "조판 시작",
+        "cta_text": "시작",
     },
     "표지": {
         "title": "표지",
         "hero_title": "Y.ONE 표지",
         "hero_desc": "세네카 조정, 아웃라인 변환, PDF 출력까지 표지 작업을 자동화합니다.",
         "hero_tip": "원하는 <strong>표지 종류</strong>를 선택하면 작업 화면으로 이동합니다.",
+        "cta_text": "시작",
+    },
+    "가공": {
+        "title": "가공",
+        "hero_title": "Y.ONE 가공",
+        "hero_desc": "조판이 완료된 교재에서 시험범위 외 회차/유형별 문항을 일괄 정리합니다.",
+        "hero_tip": "가공할 <strong>교재 종류</strong>를 선택하세요.",
         "cta_text": "시작",
     },
 }
@@ -340,12 +391,139 @@ def cover_index():
                            cta_text=cfg["cta_text"])
 
 
+@app.route("/processing")
+def processing_index():
+    cfg = _SECTION_CONFIG["가공"]
+    subjects = _subjects_by_section("가공")
+    # "가공" 섹션은 engine_id 카드를 직접 라우트로 사용 (typeset이 아닌 processing)
+    return render_template("index.html",
+                           subjects=subjects,
+                           active_nav="가공",
+                           section_title=cfg["title"],
+                           hero_title=cfg["hero_title"],
+                           hero_desc=cfg["hero_desc"],
+                           hero_tip=cfg.get("hero_tip"),
+                           cta_text=cfg["cta_text"],
+                           card_url_prefix="/processing/")
+
+
 def _section_for_engine(material_id):
     for cat in _load_subjects():
         for item in cat.get("items", []):
             if item.get("engine_id") == material_id:
                 return cat.get("section", "조판")
     return "조판"
+
+
+# ── 가공: 워크북 가공 페이지 + API ──────────────────────────────────────
+
+@app.route("/processing/workbook_edit")
+def processing_workbook_edit():
+    return render_template("processing_workbook_edit.html",
+                           active_nav="가공",
+                           section_title="워크북 가공")
+
+
+@app.route("/api/processing/workbook/upload", methods=["POST"])
+def api_wb_upload():
+    f = request.files.get("file")
+    if not f:
+        return jsonify({"status": "err", "msg": "file 필드가 없습니다"})
+    r = wb_edit.save_upload(f)
+    return jsonify(r)
+
+
+@app.route("/api/processing/workbook/job-files")
+def api_wb_job_files():
+    job_dir = request.args.get("jobDir", "")
+    if not job_dir or not os.path.isdir(job_dir):
+        return jsonify({"status": "err", "msg": "잡 폴더 없음"})
+    return jsonify({"status": "ok", "files": wb_edit.list_job_files(job_dir)})
+
+
+@app.route("/api/processing/workbook/active-info", methods=["POST"])
+def api_wb_active_info():
+    return jsonify(wb_edit.active_info())
+
+
+@app.route("/api/processing/workbook/list-candidates", methods=["POST"])
+def api_wb_list_candidates():
+    data = request.get_json(silent=True) or {}
+    return jsonify(wb_edit.list_candidates(doc_path=data.get("docPath")))
+
+
+@app.route("/api/processing/workbook/identify-rounds", methods=["POST"])
+def api_wb_identify_rounds():
+    data = request.get_json(silent=True) or {}
+    return jsonify(wb_edit.identify_rounds(
+        doc_path=data.get("docPath"),
+        story_index=data.get("storyIndex"),
+    ))
+
+
+@app.route("/api/processing/workbook/remove-seo", methods=["POST"])
+def api_wb_remove_seo():
+    data = request.get_json(silent=True) or {}
+    return jsonify(wb_edit.remove_seo(
+        doc_path=data.get("docPath"),
+        backup=bool(data.get("backup", True)),
+        extract=bool(data.get("extract", True)),
+        story_index=data.get("storyIndex"),
+    ))
+
+
+@app.route("/api/processing/workbook/remove-rounds", methods=["POST"])
+def api_wb_remove_rounds():
+    data = request.get_json(silent=True) or {}
+    indices = data.get("roundIndices") or []
+    if not isinstance(indices, list) or not indices:
+        return jsonify({"status": "err", "msg": "roundIndices 필요"})
+    return jsonify(wb_edit.remove_rounds(
+        round_indices=[int(i) for i in indices],
+        doc_path=data.get("docPath"),
+        backup=bool(data.get("backup", True)),
+        extract=bool(data.get("extract", True)),
+        story_index=data.get("storyIndex"),
+    ))
+
+
+@app.route("/api/processing/workbook/compare", methods=["POST"])
+def api_wb_compare():
+    data = request.get_json(silent=True) or {}
+    return jsonify(wb_edit.compare(
+        doc_path=data.get("docPath"),
+        orig_path=data.get("origPath", ""),
+    ))
+
+
+@app.route("/api/processing/workbook/save", methods=["POST"])
+def api_wb_save():
+    data = request.get_json(silent=True) or {}
+    return jsonify(wb_edit.save_doc(doc_path=data.get("docPath")))
+
+
+@app.route("/api/processing/workbook/convert-docx", methods=["POST"])
+def api_wb_convert_docx():
+    data = request.get_json(silent=True) or {}
+    txt_path = data.get("txtPath", "")
+    return jsonify(wb_edit.convert_txt_to_docx(txt_path))
+
+
+@app.route("/api/processing/workbook/download")
+def api_wb_download():
+    """가공 결과 파일 다운로드. path는 절대경로 (작업 폴더 한정)."""
+    path = request.args.get("path", "")
+    if not path or not os.path.isfile(path):
+        return "파일 없음", 404
+    # 경로 보호: 워크북가공 작업 폴더 또는 _local 폴더만 허용
+    real = os.path.realpath(path)
+    allowed_prefixes = [
+        os.path.expanduser("~/Documents/작업/Y.ONE STUDIO/"),
+        "/tmp/",
+    ]
+    if not any(real.startswith(p) for p in allowed_prefixes):
+        return "허용되지 않은 경로", 403
+    return send_file(real, as_attachment=True, download_name=os.path.basename(real))
 
 
 @app.route("/typeset/<material_id>")
@@ -919,6 +1097,12 @@ def api_run(material_id):
             open(os.path.join(job_dir, f"{meta_key}.txt"), "w",
                  encoding="utf-8").write(val)
 
+    # 부교재 워크북: 파일명 stem (학교명_{stem}_내지.indd 의 stem 부분)
+    filename_stem = request.form.get("filename_stem", "").strip()
+    if filename_stem:
+        open(os.path.join(job_dir, "filename_stem.txt"), "w",
+             encoding="utf-8").write(filename_stem)
+
     # 워크북 조판 제외 섹션 (체크박스 그룹 — multi-value)
     exclude_list = request.form.getlist("exclude")
     if exclude_list:
@@ -926,6 +1110,17 @@ def api_run(material_id):
              encoding="utf-8").write(",".join(exclude_list))
 
     # 업로드 파일 및 텍스트 필드 저장
+    # — 진단 로그: multipart 파싱 결과 (Werkzeug 3.x form 한도 디버그용)
+    try:
+        _form_keys = list(request.form.keys())
+        _file_keys = list(request.files.keys())
+        _file_counts = {k: len(request.files.getlist(k)) for k in _file_keys}
+        print(f"[upload-debug] job={job_id} form_keys={_form_keys} "
+              f"file_keys={_file_keys} file_counts={_file_counts} "
+              f"content_length={request.content_length}", flush=True)
+    except Exception as _e:
+        print(f"[upload-debug-error] {_e}", flush=True)
+
     uploaded = {}
     for slot in engine.upload_spec["slots"]:
         key = slot["key"]
