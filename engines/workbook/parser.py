@@ -40,12 +40,26 @@ def _docx_extract_paragraphs(docx_path, extract_underline=False):
     """
     docx → [{"text": str, "runs": [{"t": str, "ul": bool}]}]
     extract_underline=False면 runs는 단일 {"t": text, "ul": False}로 통합.
+
+    paragraph 내부의 <w:br/> (soft return, Shift+Enter)는 paragraph break로
+    승격: 한 paragraph 안에 br이 있으면 그 위치에서 paragraph를 분할.
+    원고에 줄바꿈 의도가 있는 부분이 본문/요약/추가문장으로 합쳐지는 사고 방지.
     """
     with zipfile.ZipFile(docx_path) as z:
         xml_content = z.read('word/document.xml')
 
     import xml.etree.ElementTree as ET
     root = ET.fromstring(xml_content)
+
+    _T_TAG = f'{{{_NS_W}}}t'
+    _BR_TAG = f'{{{_NS_W}}}br'
+
+    def _flush(paragraphs, runs):
+        full_text = ''.join(r['t'] for r in runs)
+        paragraphs.append({
+            "text": full_text,
+            "runs": runs if runs else [{"t": "", "ul": False}],
+        })
 
     paragraphs = []
     for p_elem in root.iter(f'{{{_NS_W}}}p'):
@@ -54,15 +68,6 @@ def _docx_extract_paragraphs(docx_path, extract_underline=False):
             # 각주/미주 참조 마커가 포함된 run 스킵
             if (r_elem.find(f'{{{_NS_W}}}footnoteReference') is not None or
                     r_elem.find(f'{{{_NS_W}}}endnoteReference') is not None):
-                continue
-
-            # 텍스트 수집
-            text_parts = []
-            for t_elem in r_elem.iter(f'{{{_NS_W}}}t'):
-                if t_elem.text:
-                    text_parts.append(t_elem.text)
-            text = ''.join(text_parts)
-            if not text:
                 continue
 
             # 밑줄 확인
@@ -76,14 +81,24 @@ def _docx_extract_paragraphs(docx_path, extract_underline=False):
                         if val and val != 'none':
                             is_ul = True
 
-            runs.append({"t": text, "ul": is_ul})
+            # run 내부 직계 children을 순서대로: w:t는 텍스트, w:br은 paragraph 분할
+            buf = []
+            for child in r_elem:
+                tag = child.tag
+                if tag == _T_TAG:
+                    if child.text:
+                        buf.append(child.text)
+                elif tag == _BR_TAG:
+                    # br 직전까지의 텍스트를 현재 run으로, 그 후 paragraph 분할
+                    if buf:
+                        runs.append({"t": ''.join(buf), "ul": is_ul})
+                        buf = []
+                    _flush(paragraphs, runs)
+                    runs = []
+            if buf:
+                runs.append({"t": ''.join(buf), "ul": is_ul})
 
-        # 빈 단락도 포함 (구분자 역할)
-        full_text = ''.join(r['t'] for r in runs)
-        paragraphs.append({
-            "text": full_text,
-            "runs": runs if runs else [{"t": "", "ul": False}],
-        })
+        _flush(paragraphs, runs)
 
     return paragraphs
 
@@ -1094,6 +1109,29 @@ def _add_step3_choice_numbers(paras):
             i += 1
             continue
 
+        # 발문 직후 후보 단락에 이미 ①~⑤로 시작하는 단락이 있으면 prepend skip.
+        # (안내문/도표/광고 류 — 영문 본문 여러 단락 + 한국어 선지가 ①로 시작.
+        # 기존 "첫 영문 단락만 skip" 로직은 영문 본문 2번째부터를 선지로 오인해 본문에
+        # ②③④⑤를 잘못 prepend함. 이미 텍스트에 ①가 있으면 hwp AutoNumbering 누락
+        # 케이스가 아니므로 자동 prepend 불필요.)
+        already_has_circled = False
+        for j_peek in range(i + 1, min(n, i + 30)):
+            t_peek = (paras[j_peek].get('text', '') or '').strip()
+            if not t_peek:
+                continue
+            if _RE_STEP3_QUESTION_LIKE.match(t_peek):
+                break
+            if re.match(r'^\[(?:[Gg]ateway|\d+)\]$', t_peek):
+                break
+            if t_peek.startswith('※'):
+                break
+            if t_peek[0] in _CIRCLED_DIGITS:
+                already_has_circled = True
+                break
+        if already_has_circled:
+            i += 1
+            continue
+
         # 발문 위에 묶음 마커(※/[Gateway]/[숫자])가 있으면 지문은 마커 아래에
         # 이미 존재 → 발문 직후는 바로 선지. 다른 발문은 건너뛰며 마커까지 거슬러 올라감.
         # 마커가 없으면 (예: 동아박 MIXED) 발문 직후 첫 영문 단락이 자기 지문.
@@ -1348,6 +1386,100 @@ def _merge_step3_ab_pairs(paras):
     return out
 
 
+_STEP3_ANS_SECTION_PATTERNS = [
+    re.compile(r'^\s*\[\s*정답\s*\]\s*$'),
+    re.compile(r'^\s*【\s*정답\s*】\s*$'),
+    re.compile(r'^\s*<\s*정답\s*>\s*$'),
+    re.compile(r'^\s*정답\s*및\s*해설\s*$'),
+]
+
+
+def _strip_step3_answers_section(paras):
+    """[정답] 류 헤더 이후 모든 paragraphs 제거."""
+    if not paras:
+        return paras
+    cut_idx = None
+    for i, p in enumerate(paras):
+        t = (p.get("text", "") if isinstance(p, dict) else str(p)).strip()
+        if any(pat.match(t) for pat in _STEP3_ANS_SECTION_PATTERNS):
+            cut_idx = i
+            break
+    if cut_idx is not None:
+        return paras[:cut_idx]
+    return paras
+
+
+_STEP3_INSERT_PATTERN = re.compile(
+    r'주어진\s*(?:문장|글)|들어갈\s*위치|이어질\s*순서|다음에\s*이어질'
+)
+
+
+def _split_step3_insert_passage_inline(paras):
+    """문장삽입 발문 다음 paragraph가 "주어진 문장" + 본문 한 paragraph로 합쳐 추출된
+    경우 두 paragraph로 split. (docx 줄바꿈 누락 케이스 대응)."""
+    out = []
+    i = 0
+    while i < len(paras):
+        p = paras[i]
+        text = p.get("text", "") if isinstance(p, dict) else str(p)
+        out.append(p)
+        if _STEP3_INSERT_PATTERN.search(text) and i + 1 < len(paras):
+            next_p = paras[i + 1]
+            next_text = (next_p.get("text", "") if isinstance(next_p, dict) else str(next_p))
+            m = re.match(r'^\s*("[^"]+")\s*([A-Za-z(].*)$', next_text, re.DOTALL)
+            if m:
+                first_text = m.group(1)
+                rest_text = m.group(2)
+                out.append({"text": first_text, "runs": []})
+                out.append({"text": rest_text, "runs": []})
+                i += 2
+                continue
+        i += 1
+    return out
+
+
+def _augment_step1_c1_passage(paras):
+    """step1_c1 본문 도입부 paragraph에 trailing 3+ space 추가.
+
+    가로 워크북의 processStep1C1이 has3PlusGaps 매치 → S1_C1_BTM → 다음 (A)(B)(C)에
+    S1_C1_BTM_T 적용 → 발문 자동 삽입. 마더텅처럼 (A)(B)(C) 분할 본문 케이스 대응.
+
+    식별: 영문/한글없음 paragraph + 그 다음 비빈 paragraph가 "(A)" 시작이면 도입부.
+    paragraph 안에 이미 3+ space 있으면 skip.
+    """
+    if not paras:
+        return paras
+    out = list(paras)
+    for i in range(len(out) - 1):
+        p = out[i]
+        text = (p.get("text", "") if isinstance(p, dict) else str(p))
+        stripped = text.strip()
+        if not stripped:
+            continue
+        if not re.match(r'^[A-Za-z]', stripped):
+            continue
+        if re.search(r'[가-힣]', stripped):
+            continue
+        if re.match(r'^\([A-Z]\)', stripped):
+            continue
+        # 이미 3+ space 있으면 skip (정규 모의고사 형식)
+        if re.search(r' {3,}', text) or '\t' in text:
+            continue
+        # 다음 비빈 paragraph가 (A)인지
+        for j in range(i + 1, len(out)):
+            next_text = (out[j].get("text", "") if isinstance(out[j], dict) else str(out[j])).strip()
+            if not next_text:
+                continue
+            if re.match(r'^\(A\)', next_text):
+                new_p = dict(p)
+                new_p["text"] = text + "   "
+                if isinstance(new_p.get("runs"), list) and new_p["runs"]:
+                    new_p["runs"] = list(new_p["runs"]) + [{"t": "   ", "ul": False}]
+                out[i] = new_p
+            break
+    return out
+
+
 def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
                         short_questions, combined_questions, extract_underline=True,
                         step3_exclude_footnotes=True):
@@ -1375,7 +1507,8 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
         if not fname.endswith('.hwp') and not fname.endswith('.hwpx') and not fname.endswith('.docx'):
             continue
         # "고1 25년 9월 20번.hwp" 또는 "고1 25년 9월 41~42번.docx"
-        m = re.search(r'(\d+(?:~\d+)?)번\.(?:hwpx?|docx)', fname, re.I)
+        # "번" 뒤 공백 허용 (예: "18번 .hwpx" 사용자 입력 오타 대응)
+        m = re.search(r'(\d+(?:~\d+)?)번\s*\.(?:hwpx?|docx)', fname, re.I)
         if m:
             num_str = m.group(1)
             files[num_str] = os.path.join(step3_dir, fname_raw)  # 원본 경로 사용
@@ -1443,6 +1576,47 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
     for q in sorted(short_questions):
         _process_question(q, short_items)
 
+    # 마더텅 Step3: 파일명에 "N강 M번 YYMMQQ" 형태 (한영고1 마더텅 예전 기출)
+    # — 정규 모의고사 normal/short 매칭에 안 잡혔지만 파일은 있을 때
+    if not normal_items and not short_items:
+        for fname_raw in sorted(os.listdir(step3_dir)):
+            fname = _nfc(fname_raw)
+            if not (fname.endswith('.hwp') or fname.endswith('.hwpx') or fname.endswith('.docx')):
+                continue
+            m = re.search(r'(\d+)\s*강\s*(\d+)(?:~(\d+))?\s*번(?:\s*(\d{6}))?', fname)
+            if not m:
+                continue
+            q_num_lesson = m.group(2)
+            q_end_lesson = m.group(3)
+            file_code = m.group(4) or ""
+            fpath = os.path.join(step3_dir, fname_raw)
+            if fpath.lower().endswith('.docx'):
+                paras = _docx_extract_paragraphs(fpath, extract_underline)
+            else:
+                paras = _hwp_extract_paragraphs(fpath, extract_underline,
+                                                exclude_footnotes=step3_exclude_footnotes)
+            # 첫 단락 "N강 M번 YYMMQQ" 헤더 제거
+            if paras:
+                first_text = (paras[0].get("text", "") if isinstance(paras[0], dict) else str(paras[0])).strip()
+                if re.match(r'^\d+\s*강\s*\d+(?:~\d+)?\s*번(?:\s*\d{6})?\s*(?:\([^)]*\))?$', first_text):
+                    paras = paras[1:]
+            # [정답] 이후 cut
+            paras = _strip_step3_answers_section(paras)
+            paras = _strip_step3_answers(paras)
+            paras = _strip_step3_type_tags(paras)
+            # 문장삽입 paragraph 합쳐짐 split
+            paras = _split_step3_insert_passage_inline(paras)
+            # docx 원고는 이미 ① 포함이므로 자동 prepend skip (가로/마더텅 공통)
+            # paras = _add_step3_choice_numbers(paras)
+            paras = _strip_step3_book_markers(paras)
+            paras = _fix_step3_order_label_position(paras)
+            paras = _merge_step3_ab_pairs(paras)
+            normal_items.append({
+                "question_num": q_num_lesson,
+                "code": file_code,
+                "paragraphs": paras,
+            })
+
     # 교과서 Step3: 번호 없는 hwpx 파일 처리 (normal/short가 모두 비어있을 때)
     if not normal_items and not short_items:
         # 후보 파일 수집
@@ -1486,18 +1660,24 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
     return {"normal": normal_items, "short": short_items}
 
 
-def _find_manuscript_file(manuscript_dir, expected_filename):
+def _find_manuscript_file(manuscript_dir, expected_filename, used_files=None):
     """config에 지정된 파일명이 없을 때 유사 파일을 찾는 fallback.
 
     매칭 전략 — 파일명의 구조(의미 토큰)를 기준으로 비교:
     1. 정규화: 영문/숫자/한글만 남기고 공백·괄호·특수문자 모두 제거, 소문자, NFC
        (예: 'Step2 A1 어법선택(객관식).docx' → 'step2a1어법선택객관식')
     2. 정확 매칭 우선
-    3. 한쪽 정규화 문자열이 다른 쪽의 subsequence면 부분 매칭으로 인정
+    3. 괄호 변형(양쪽 다 괄호 있고 base 동일)
+    4. 한쪽 정규화 문자열이 다른 쪽의 subsequence면 부분 매칭으로 인정
        (예: '어법객관식'은 '어법선택객관식'의 subsequence → 매칭)
-    4. 부분 매칭 후보들은 LCS(공통 부분 수열) 길이가 긴 것 우선
+    5. 부분 매칭 후보들은 LCS(공통 부분 수열) 길이가 긴 것 우선
        (예: 기대 '빈칸어법정답지' → 후보 '빈칸어법정답'(LCS=9) > '빈칸어법'(LCS=7))
-    5. 동일 LCS면 확장자 일치 우선
+    6. 동일 LCS면 확장자 일치 우선
+    7. 위 모두 실패 시 LCS 비율 (LCS_len / max(len_a, len_b)) ≥ 0.70 매칭
+       (예: '어법 객관식 문제' ↔ '어법선택(객관식)' — '선택'/'문제'가 비공통이어도
+        공통 토큰이 충분하면 매칭. 토씨가 빠지거나 바뀐 변형 대응.)
+
+    used_files: 이미 다른 step_key에 매칭된 파일 경로 set. 후보에서 제외.
     """
     import unicodedata
     import re
@@ -1539,14 +1719,37 @@ def _find_manuscript_file(manuscript_dir, expected_filename):
             prev = curr
         return prev[la]
 
+    def _split_paren(name):
+        """파일명을 (괄호 빼고 정규화된 base, 괄호 존재 여부)로 분리.
+        예: 'Step2 A1 어법선택(객관식).docx' → ('step2a1어법선택', True)
+        예: 'Step2 A1 어법선택.docx'         → ('step2a1어법선택', False)
+        예: ' Step2 A1 어법선택(문법 기본 문제).docx' → ('step2a1어법선택', True)
+        괄호 안 내용이 달라도 base가 같고 둘 다 괄호 있으면 변형으로 간주 가능.
+        """
+        nfc = unicodedata.normalize("NFC", name)
+        stem = os.path.splitext(nfc)[0]
+        has_paren = bool(re.search(r'\([^)]+\)', stem))
+        stem_no_paren = re.sub(r'\([^)]*\)', '', stem)
+        base = re.sub(r'[^A-Za-z0-9가-힣]', '', stem_no_paren).lower()
+        return base, has_paren
+
+    used_files = used_files or set()
+    # macOS APFS/GDrive는 한글 파일명을 NFD로 저장. listdir 결과(NFD)와
+    # used_files에 등록된 경로(NFC)를 비교하려면 양쪽 다 NFC로 통일.
+    used_files_nfc = {unicodedata.normalize("NFC", p) for p in used_files}
     ext_expected = os.path.splitext(expected_filename)[1].lower()
     norm_expected = _normalize(expected_filename)
+    exp_base, exp_has_paren = _split_paren(expected_filename)
 
     exact = []
-    partial = []  # (file_path, lcs_score)
+    partial = []        # (file_path, lcs_score)
+    paren_variant = []  # base 동일 + 양쪽 다 괄호 있는 변형 (괄호 안 내용은 달라도 OK)
+    ratio_match = []    # (file_path, lcs_score, lcs_ratio) — subseq/paren 실패 시 fallback
     for f in os.listdir(manuscript_dir):
         fp = os.path.join(manuscript_dir, f)
         if not os.path.isfile(fp):
+            continue
+        if unicodedata.normalize("NFC", fp) in used_files_nfc:
             continue
         f_ext = os.path.splitext(f)[1].lower()
         if f_ext not in ('.docx', '.hwp', '.hwpx'):
@@ -1556,14 +1759,42 @@ def _find_manuscript_file(manuscript_dir, expected_filename):
             continue
         if f_norm == norm_expected:
             exact.append(fp)
-        elif _is_subseq(f_norm, norm_expected) or _is_subseq(norm_expected, f_norm):
+            continue
+        if _is_subseq(f_norm, norm_expected) or _is_subseq(norm_expected, f_norm):
             partial.append((fp, _lcs_len(f_norm, norm_expected)))
+            continue
+        # 괄호 변형 — base가 같고 둘 다 괄호 있을 때
+        cand_base, cand_has_paren = _split_paren(f)
+        if exp_has_paren and cand_has_paren and cand_base and cand_base == exp_base:
+            paren_variant.append(fp)
+            continue
+        # LCS 비율 매칭 (위 모두 실패 시 fallback 후보로만 보관).
+        # 정답지 휴리스틱: expected에 '정답/해설/답안' 토큰이 없고 후보에는 있으면 제외.
+        # (정답지 파일을 본 파일 슬롯에 잘못 매칭하는 것을 막음)
+        _ANSWER_TOKENS = ('정답', '해설', '답안')
+        exp_has_ans = any(t in norm_expected for t in _ANSWER_TOKENS)
+        cand_has_ans = any(t in f_norm for t in _ANSWER_TOKENS)
+        if cand_has_ans and not exp_has_ans:
+            continue
+        lcs = _lcs_len(f_norm, norm_expected)
+        denom = max(len(f_norm), len(norm_expected))
+        ratio = lcs / denom if denom else 0.0
+        if ratio >= 0.70:
+            ratio_match.append((fp, lcs, ratio))
 
     if exact:
         for c in exact:
             if os.path.splitext(c)[1].lower() == ext_expected:
                 return c
         return exact[0]
+    # 괄호 변형(같은 base + 양쪽 괄호 있음)을 subsequence partial보다 우선.
+    # 예: expected '...(객관식)' 있을 때 폴더에 '...(문법 기본 문제)'와 '...어법선택(괄호 없음)' 둘 다
+    # 있으면, 괄호 변형인 '(문법 기본 문제)'가 정답이지 괄호 없는 본체가 아님.
+    if paren_variant:
+        for fp in paren_variant:
+            if os.path.splitext(fp)[1].lower() == ext_expected:
+                return fp
+        return paren_variant[0]
     if partial:
         partial.sort(key=lambda x: (
             -x[1],
@@ -1573,6 +1804,18 @@ def _find_manuscript_file(manuscript_dir, expected_filename):
             if os.path.splitext(fp)[1].lower() == ext_expected:
                 return fp
         return partial[0][0]
+    # LCS 비율 매칭 — 파일명에 토씨/공백/단어가 빠지거나 바뀌어도 의미 토큰이 충분히 겹치면 매칭.
+    # 예: 기대 '어법선택(객관식)' ↔ 후보 '어법 객관식 문제' (공통 '어법객관식', 비율 86%)
+    if ratio_match:
+        ratio_match.sort(key=lambda x: (
+            -x[2],
+            -x[1],
+            0 if os.path.splitext(x[0])[1].lower() == ext_expected else 1,
+        ))
+        for fp, _, _ in ratio_match:
+            if os.path.splitext(fp)[1].lower() == ext_expected:
+                return fp
+        return ratio_match[0][0]
     return None
 
 
@@ -1606,15 +1849,26 @@ def parse_manuscript_folder(manuscript_dir, config, grade, year, month, log=None
         "steps": {},
     }
 
+    # 1차 pre-scan: file_map의 expected와 정확히 일치하는 파일을 used에 미리 등록.
+    # fallback 매칭이 정확 매칭 대상 파일을 빼앗아가지 못하게 함.
+    # 예: step2_a1=어법선택.docx가 폴더에 있고 step2_a1_btm=어법선택(객관식).docx의
+    # fallback 후보로 어법선택.docx가 잡힐 수 있는데, 1차 pre-scan으로 차단.
+    used_files = set()
+    for _sk, _fn in file_map.items():
+        _fp = os.path.join(manuscript_dir, _fn)
+        if os.path.exists(_fp):
+            used_files.add(_fp)
+
     # STEP1, STEP2 파싱
     for step_key, filename in file_map.items():
         fpath = os.path.join(manuscript_dir, filename)
         if not os.path.exists(fpath):
-            # fallback: 파일명 공백/확장자 유연 매칭
-            found = _find_manuscript_file(manuscript_dir, filename)
+            # fallback: 파일명 공백/확장자 유연 매칭 (used_files 제외)
+            found = _find_manuscript_file(manuscript_dir, filename, used_files)
             if found:
                 fpath = found
                 filename = os.path.basename(found)
+                used_files.add(found)
             else:
                 log(f"[파서] 파일 없음, 건너뜀: {filename}")
                 continue
@@ -1676,6 +1930,11 @@ def parse_manuscript_folder(manuscript_dir, config, grade, year, month, log=None
 
         # 빈 단락 필터
         cleaned = _clean_empty_lines(paras)
+
+        # step1_c1: 마더텅 형태(본문 도입부 + (A)(B)(C) 분할 본문)에서 도입부 paragraph에
+        # trailing 3+ space 추가 → processStep1C1이 BTM/BTM_T 분류 + 발문 자동 삽입
+        if step_key == "step1_c1":
+            cleaned = _augment_step1_c1_passage(cleaned)
 
         # 지문번호 추출
         q_nums = _extract_question_numbers(cleaned, step_key)
