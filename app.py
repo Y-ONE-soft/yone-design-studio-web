@@ -457,7 +457,7 @@ def api_wb_identify_rounds():
     data = request.get_json(silent=True) or {}
     return jsonify(wb_edit.identify_rounds(
         doc_path=data.get("docPath"),
-        story_index=data.get("storyIndex"),
+        story_indices=data.get("storyIndices"),
     ))
 
 
@@ -468,22 +468,21 @@ def api_wb_remove_seo():
         doc_path=data.get("docPath"),
         backup=bool(data.get("backup", True)),
         extract=bool(data.get("extract", True)),
-        story_index=data.get("storyIndex"),
+        story_indices=data.get("storyIndices"),
     ))
 
 
 @app.route("/api/processing/workbook/remove-rounds", methods=["POST"])
 def api_wb_remove_rounds():
     data = request.get_json(silent=True) or {}
-    indices = data.get("roundIndices") or []
-    if not isinstance(indices, list) or not indices:
-        return jsonify({"status": "err", "msg": "roundIndices 필요"})
+    spec = data.get("roundSpec") or {}
+    if not isinstance(spec, dict) or not spec:
+        return jsonify({"status": "err", "msg": "roundSpec 필요"})
     return jsonify(wb_edit.remove_rounds(
-        round_indices=[int(i) for i in indices],
+        round_spec=spec,
         doc_path=data.get("docPath"),
         backup=bool(data.get("backup", True)),
         extract=bool(data.get("extract", True)),
-        story_index=data.get("storyIndex"),
     ))
 
 
