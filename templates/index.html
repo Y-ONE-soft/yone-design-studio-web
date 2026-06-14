@@ -10,15 +10,16 @@
   {% endif %}
 </section>
 
+{% set base_url = card_url_prefix or '/typeset/' %}
 {% for cat in subjects %}
 <section class="subject-category">
   <h2 class="cat-title">{{ cat.category }}</h2>
   <div class="subject-grid">
     {% for item in cat['items'] %}
     {% if item.engine_id %}
-    <a href="/typeset/{{ item.engine_id }}" class="subject-card subject-card--on">
+    <a href="{{ base_url }}{{ item.engine_id }}" class="subject-card subject-card--on">
       <span class="subject-name">{{ item.name }}</span>
-      <span class="subject-arrow">{{ cta_text }} →</span>
+      <span class="subject-arrow">{{ cta_text }}</span>
     </a>
     {% else %}
     <div class="subject-card subject-card--off">

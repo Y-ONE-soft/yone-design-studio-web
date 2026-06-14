@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% block title %}{{ engine.display_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <a href="/" class="back-link">교재 선택</a>
+  <h1>{{ engine.display_name }}</h1>
+</div>
+
+<form id="typeset-form" class="upload-form" enctype="multipart/form-data">
+
+  <!-- ── 학년 선택 ─────────────────────────────────────────── -->
+  <div class="school-section">
+    <div class="section-label">학년 선택 <span class="required">*</span></div>
+    <div class="grade-tabs" id="grade-tabs">
+      <button type="button" class="grade-tab" data-grade="고1" onclick="selectGrade(this)">고1</button>
+      <button type="button" class="grade-tab" data-grade="고2" onclick="selectGrade(this)">고2</button>
+    </div>
+    <input type="hidden" name="grade" id="grade-hidden">
+  </div>
+
+  <!-- ── 학교 + 파일명 + 미리보기 ──────────────────────────── -->
+  <div class="issue-row">
+    <div class="issue-input-wrap">
+      <label class="section-label">학교 (전용 내지 사용 시)</label>
+      <select name="school" id="school-select" class="issue-input u-w-200"
+              onchange="updateFilenamePreview()">
+        <option value="">기본 (전체 공용)</option>
+      </select>
+    </div>
+    <div class="issue-input-wrap u-ml-12">
+      <label class="section-label">파일명 (워크북 뒤) <span class="required">*</span></label>
+      <input type="text" name="filename_stem" id="filename-stem" class="issue-input u-w-200"
+             placeholder="01" required
+             oninput="updateFilenamePreview()">
+    </div>
+    <div class="filename-preview-wrap u-ml-20">
+      <label class="section-label">생성될 파일명</label>
+      <div class="filename-preview" id="filename-preview">—</div>
+    </div>
+  </div>
+
+  <!-- ── 원고 업로드 ────────────────────────────────────────── -->
+  <div class="section-label u-mb-4">원고 파일 <span class="required">*</span></div>
+  <div class="slot-grid">
+    <div class="slot u-grid-full" id="slot-manuscripts" data-key="manuscripts">
+      <label>원고 파일 (Step1~3 전체 — docx, hwp)</label>
+      <div class="drop-zone" ondragover="event.preventDefault()"
+           ondrop="handleDrop(event, 'manuscripts')">
+        <input type="file" name="manuscripts"
+               id="input-manuscripts" multiple
+               onchange="handleFileSelect(this, 'manuscripts')">
+        <div class="drop-label">
+          <span class="drop-icon">📄</span>
+          <span class="drop-text">드래그하거나 클릭해서 선택 (여러 파일 가능)</span>
+          <span class="file-name" id="name-manuscripts"></span>
+        </div>
+      </div>
+      <div id="file-list-manuscripts" class="file-list"></div>
+    </div>
+  </div>
+
+  <!-- ── 제외할 섹션 (선택) ──────────────────────────────────── -->
+  <details class="exclude-section">
+    <summary>제외할 섹션 선택 (학교별 커스텀 조판)</summary>
+    <div class="option-box">
+      <div class="option-box-desc">
+        체크한 섹션은 조판에서 빠집니다. STEP 전체 제외 시 페이지도 함께 삭제됩니다.
+      </div>
+
+      <div class="exclude-group option-group">
+        <div class="option-group-title">STEP1</div>
+        <label><input type="checkbox" name="exclude" value="step1_a1"> A1 어휘 선택 1 (p.4~)</label>
+        <label><input type="checkbox" name="exclude" value="step1_a1_2"> A1 어휘 선택 2 (p.13~)</label>
+        <label><input type="checkbox" name="exclude" value="step1_a2"> A2 본문 O/X (p.22~)</label>
+        <label><input type="checkbox" name="exclude" value="step1_b1"> B1 본문 정리 (p.40~)</label>
+        <label><input type="checkbox" name="exclude" value="step1_b2"> B2 내용 종합 (p.58~)</label>
+        <label>
+          <input type="checkbox" name="exclude" value="step1_c1"
+                 onchange="syncPair(this, 'step1_c1_btm')"> C1 문장 배열 (p.76~)
+        </label>
+        <label class="is-child">
+          <input type="checkbox" name="exclude" value="step1_c1_btm" id="cb-step1_c1_btm">
+          ↳ C1 문장 배열 하단만 제외
+        </label>
+        <label><input type="checkbox" name="exclude" value="step1_c2"> C2 빈칸 어휘 (p.94~)</label>
+      </div>
+
+      <div class="exclude-group option-group">
+        <div class="option-group-title">STEP2</div>
+        <label>
+          <input type="checkbox" name="exclude" value="step2_a1"
+                 onchange="syncPair(this, 'step2_a1_btm')"> A1 어법 선택 (p.114~)
+        </label>
+        <label class="is-child">
+          <input type="checkbox" name="exclude" value="step2_a1_btm" id="cb-step2_a1_btm">
+          ↳ A1 어법 선택 하단만 제외
+        </label>
+        <label><input type="checkbox" name="exclude" value="step2_b1"> B1 어법 O/X (p.132~)</label>
+        <label><input type="checkbox" name="exclude" value="step2_c1"> C1 빈칸 어법 (p.150~)</label>
+        <label><input type="checkbox" name="exclude" value="step2_c2"> C2 영작 배열 (p.168~)</label>
+      </div>
+
+      <div class="exclude-group option-group">
+        <div class="option-group-title">STEP3</div>
+        <label><input type="checkbox" name="exclude" value="step3"> STEP3 전체 (수능특강 p.178~)</label>
+      </div>
+    </div>
+  </details>
+
+  <button type="submit" class="run-btn" id="run-btn">
+    <span class="btn-icon">▶</span> 조판 실행
+  </button>
+</form>
+
+<!-- ── 진행 상태 ──────────────────────────────────────────── -->
+<div id="progress-area" class="progress-area hidden">
+  <div class="progress-header">
+    <h2>진행 상태</h2>
+    <button type="button" id="cancel-btn" class="cancel-btn hidden" onclick="cancelJob()">
+      취소
+    </button>
+    <div class="step-indicators">
+      <span class="step" id="step-parse">① 파싱</span>
+      <span class="step-sep">→</span>
+      <span class="step" id="step-typeset">② 조판</span>
+      <span class="step-sep">→</span>
+      <span class="step" id="step-verify">③ 검수</span>
+    </div>
+  </div>
+  <pre id="log-area" class="log-area"></pre>
+</div>
+
+<!-- ── 결과 ─────────────────────────────────────────────────── -->
+<div id="result-area" class="result-area hidden"></div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // schools.json 기반 학교 목록 + 학년별 추가 학교
+  const EXTRA_SCHOOLS_BY_GRADE = {
+    '고1': ['세종1'],
+    '고2': [],
+  };
+  let SCHOOLS_BY_GRADE = {};
+
+  async function loadSchools() {
+    try {
+      const res = await fetch('/api/schools');
+      SCHOOLS_BY_GRADE = await res.json();
+    } catch (e) {
+      console.error('학교 목록 로드 실패:', e);
+      SCHOOLS_BY_GRADE = {};
+    }
+  }
+  loadSchools();
+
+  function refreshSchoolOptions(grade) {
+    const sel = document.getElementById('school-select');
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">기본 (전체 공용)</option>';
+    const list = (SCHOOLS_BY_GRADE[grade] || []).concat(EXTRA_SCHOOLS_BY_GRADE[grade] || []);
+    for (const s of list) {
+      const opt = document.createElement('option');
+      opt.value = s;
+      opt.textContent = s;
+      sel.appendChild(opt);
+    }
+    // 이전 선택 복원 (가능하면)
+    if (Array.from(sel.options).some(o => o.value === prev)) {
+      sel.value = prev;
+    }
+    updateFilenamePreview();
+  }
+
+  function selectGrade(btn) {
+    document.querySelectorAll('.grade-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('grade-hidden').value = btn.dataset.grade;
+    refreshSchoolOptions(btn.dataset.grade);
+    updateFilenamePreview();
+  }
+
+  function syncPair(parentCb, childId) {
+    const child = document.getElementById('cb-' + childId);
+    if (!child) return;
+    child.checked = parentCb.checked;
+    child.parentElement.classList.toggle('is-locked', parentCb.checked);
+  }
+
+  function updateFilenamePreview() {
+    const school = document.getElementById('school-select').value || '';
+    const stem = (document.getElementById('filename-stem').value || '').trim();
+
+    if (!stem) {
+      document.getElementById('filename-preview').textContent = '—';
+      return;
+    }
+    document.getElementById('filename-preview').textContent =
+      school ? `${school}_워크북${stem}_내지.indd` : `워크북${stem}_내지.indd`;
+  }
+</script>
+<script src="{{ url_for('static', filename='js/typeset.js') }}"
+        data-material="{{ engine.material_id }}"></script>
+{% endblock %}

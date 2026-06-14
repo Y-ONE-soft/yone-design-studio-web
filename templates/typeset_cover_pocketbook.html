@@ -3,24 +3,24 @@
 
 {% block content %}
 <div class="page-header">
-  <a href="/cover" class="back-link">&larr; 표지 메뉴</a>
+  <a href="/cover" class="back-link">표지 메뉴</a>
   <h1>포켓북 표지</h1>
-  <p>분석본 PDF를 업로드하면 색상/삽화를 추출하여 포켓북 표지 PDF를 자동 생성합니다.</p>
+  <p>분석본 일러스트(.ai)를 업로드하면 색상/풍경을 추출하여 포켓북 표지 PDF를 자동 생성합니다.</p>
 </div>
 
 <form id="typeset-form" class="upload-form" enctype="multipart/form-data">
 
-  <!-- PDF 업로드 -->
-  <div class="section-label u-mb-4">분석본 PDF <span class="required">*</span></div>
+  <!-- 분석본 .ai 업로드 -->
+  <div class="section-label u-mb-4">분석본 일러스트 (.ai) <span class="required">*</span></div>
   <div class="drop-zone" id="pdf-drop"
        ondragover="event.preventDefault(); this.classList.add('dragover')"
        ondragleave="this.classList.remove('dragover')"
        ondrop="handleDrop(event)">
-    <input type="file" name="analysis_pdfs" id="input-pdfs" accept=".pdf" multiple
+    <input type="file" name="analysis_pdfs" id="input-pdfs" accept=".ai" multiple
            onchange="handleFileSelect(this)">
     <div class="drop-label" id="drop-label">
       <span class="drop-icon">📎</span>
-      <span class="drop-text">분석본 PDF를 드래그하거나 클릭해서 선택 (여러 파일 가능)</span>
+      <span class="drop-text">분석본 .ai 파일을 드래그하거나 클릭해서 선택 (여러 파일 가능)</span>
     </div>
   </div>
   <div id="file-list" class="file-list"></div>

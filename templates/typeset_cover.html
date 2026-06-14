@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="page-header">
-  <a href="/cover" class="back-link">← 표지 메뉴</a>
+  <a href="/cover" class="back-link">표지 메뉴</a>
   <h1>세네카 조정</h1>
   <p>표지 AI 파일을 업로드하고 세네카를 입력하면 자동으로 조정 후 PDF를 출력합니다.</p>
 </div>
@@ -16,6 +16,9 @@
     <div class="paper-row">
       <label class="paper-option">
         <input type="radio" name="paper_type" value="newplus" checked onchange="onPaperChange()"> 뉴플러스 80g
+      </label>
+      <label class="paper-option">
+        <input type="radio" name="paper_type" value="newplus_100" onchange="onPaperChange()"> 뉴플러스 100g
       </label>
       <label class="paper-option">
         <input type="radio" name="paper_type" value="mojo" onchange="onPaperChange()"> 모조지 80g
@@ -98,8 +101,9 @@
 
   // ── 세네카 계산기 ──────────────────────────────────────────
   const PAPER_SPEC = {
-    newplus: { mult: 0.08, name: '뉴플러스 80g' },
-    mojo:    { mult: 0.11, name: '모조지 80g' }
+    newplus:     { mult: 0.08, name: '뉴플러스 80g' },
+    newplus_100: { mult: 0.10, name: '뉴플러스 100g' },
+    mojo:        { mult: 0.11, name: '모조지 80g' }
   };
 
   function getPaperSpec() {

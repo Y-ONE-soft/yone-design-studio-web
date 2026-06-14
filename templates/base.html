@@ -3,15 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
   <title>{% block title %}조판 자동화{% endblock %} — Y.ONE DESIGN</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <script>
+    // ── iframe 임베드 차단 (clickjacking) ──
+    if (window.top !== window.self) { window.top.location = window.self.location; }
+  </script>
 </head>
 <body>
+  <div class="bg-canvas" aria-hidden="true">
+    <div class="bg-orb bg-orb--1"></div>
+    <div class="bg-orb bg-orb--2"></div>
+    <div class="bg-orb bg-orb--3"></div>
+    <div class="bg-noise"></div>
+  </div>
   <header class="top-bar">
     <a href="/" class="logo">Y.ONE <span>DESIGN</span></a>
     <nav class="top-nav">
       <a href="/" class="nav-link{% if active_nav == '조판' %} nav-active{% endif %}">조판</a>
       <a href="/cover" class="nav-link nav-link--cover{% if active_nav == '표지' %} nav-active{% endif %}">표지</a>
+      <a href="/processing" class="nav-link nav-link--processing{% if active_nav == '가공' %} nav-active{% endif %}">가공</a>
       {% if session.get('role') != 'assistant' %}
       <a href="/mockup" class="nav-link nav-link--mockup{% if active_nav == '목업' %} nav-active{% endif %}">목업</a>
       <a href="/chat" class="nav-link{% if active_nav == '채팅' %} nav-active{% endif %}">채팅</a>
@@ -21,6 +34,108 @@
   <main class="container">
     {% block content %}{% endblock %}
   </main>
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <span class="copyright">© 2026 Y.ONE DESIGN</span>
+      <span class="copyright-sep">·</span>
+      <span class="copyright-note">All rights reserved.</span>
+    </div>
+  </footer>
+  <script>
+    // Liquid Glass: 카드 위 마우스 위치에 specular highlight 추적
+    (function () {
+      function bind() {
+        document.querySelectorAll('.subject-card--on, .material-card').forEach(function (el) {
+          if (el.dataset.glassBound) return;
+          el.dataset.glassBound = '1';
+          el.addEventListener('pointermove', function (e) {
+            var r = el.getBoundingClientRect();
+            el.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
+            el.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
+          });
+          el.addEventListener('pointerleave', function () {
+            el.style.removeProperty('--mx');
+            el.style.removeProperty('--my');
+          });
+        });
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bind);
+      } else {
+        bind();
+      }
+    })();
+  </script>
+  <script>
+    // ═══════════════════════════════════════════════════════════════════
+    // 클라이언트 보안 (심리적 차단 / 비전문가 우회 방지용)
+    // ※ 실제 보안은 서버측 헤더 + 인증으로 처리. 이건 보조 수단.
+    // ═══════════════════════════════════════════════════════════════════
+    (function () {
+      function isEditable(t) {
+        if (!t) return false;
+        var tag = (t.tagName || '').toUpperCase();
+        return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT'
+          || t.isContentEditable;
+      }
+
+      // 우클릭 차단 (입력 필드 제외)
+      document.addEventListener('contextmenu', function (e) {
+        if (!isEditable(e.target)) e.preventDefault();
+      });
+
+      // 드래그 시작 차단 (이미지/링크 드래그 방지, 입력 필드 제외)
+      document.addEventListener('dragstart', function (e) {
+        if (!isEditable(e.target)) e.preventDefault();
+      });
+
+      // 텍스트 선택 차단 (입력 필드 제외 — CSS로 처리, JS는 selectstart로 보강)
+      document.addEventListener('selectstart', function (e) {
+        if (!isEditable(e.target) && !e.target.closest('.log-area, .filename-preview, .file-name, .file-list-name, .file-item-name, .info-box, .calc-result, .msg')) {
+          e.preventDefault();
+        }
+      });
+
+      // 키 조합 차단
+      document.addEventListener('keydown', function (e) {
+        var k = e.key;
+        var key = (k || '').toLowerCase();
+
+        // F12 (개발자 도구)
+        if (k === 'F12') { e.preventDefault(); return false; }
+
+        // Ctrl/Cmd 조합
+        if (e.ctrlKey || e.metaKey) {
+          // Ctrl+U (소스 보기), Ctrl+S (저장), Ctrl+P (인쇄)
+          if (key === 'u' || key === 's' || key === 'p') {
+            e.preventDefault(); return false;
+          }
+          // Ctrl+Shift+I/J/C (개발자 도구), Ctrl+Shift+K
+          if (e.shiftKey && (key === 'i' || key === 'j' || key === 'c' || key === 'k')) {
+            e.preventDefault(); return false;
+          }
+        }
+      });
+
+      // 인쇄 시도 차단
+      window.addEventListener('beforeprint', function (e) {
+        if (e.preventDefault) e.preventDefault();
+        document.body.classList.add('print-blocked');
+      });
+      window.addEventListener('afterprint', function () {
+        document.body.classList.remove('print-blocked');
+      });
+
+      // 콘솔 경고 (1회만 표시 — 가만히 있어도 뜨는 false-positive 없음)
+      try {
+        var warnStyle = 'color:#ff5577; font-size:22px; font-weight:700; text-shadow:0 1px 0 #000';
+        var msgStyle  = 'color:#aaa; font-size:13px';
+        console.log('%c⚠ STOP', warnStyle);
+        console.log('%cY.ONE DESIGN 내부 시스템입니다. 이 콘솔에 코드를 붙여 넣으면 계정이 탈취되거나 데이터가 유출될 수 있습니다.', msgStyle);
+        console.log('%c© 2026 Y.ONE DESIGN — All rights reserved.', msgStyle);
+      } catch (_) {}
+    })();
+  </script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

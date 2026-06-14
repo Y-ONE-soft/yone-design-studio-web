@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="page-header">
-  <a href="/" class="back-link">&larr; 교재 선택</a>
+  <a href="/" class="back-link">교재 선택</a>
   <h1>포켓북</h1>
   <p>분석본 .indd 파일에서 영어/한글을 추출하고, 리뷰테스트 해설지로 암기테스트를 배치합니다.</p>
 </div>
@@ -128,6 +128,9 @@
 <div id="progress-area" class="progress-area hidden">
   <div class="progress-header">
     <h2>진행 상태</h2>
+    <button type="button" id="cancel-btn" class="cancel-btn hidden" onclick="cancelJob()">
+      취소
+    </button>
     <div class="step-indicators">
       <span class="step" id="step-parse">&#9312; 파싱</span>
       <span class="step-sep">&rarr;</span>
@@ -473,6 +476,30 @@
     if (!selectedFiles.length) document.getElementById('multi-drop').classList.remove('has-file');
   }
 
+  // ── 취소 ───────────────────────────────────────────────────
+  let _currentJobId = null;
+  let _currentEvtSource = null;
+
+  function _showCancelBtn(show) {
+    const btn = document.getElementById('cancel-btn');
+    if (btn) {
+      btn.classList.toggle('hidden', !show);
+      if (show) { btn.disabled = false; btn.innerHTML = '취소'; }
+    }
+  }
+
+  async function cancelJob() {
+    if (!_currentJobId) return;
+    const btn = document.getElementById('cancel-btn');
+    if (btn) { btn.disabled = true; btn.textContent = '취소 중...'; }
+    if (_currentEvtSource) { _currentEvtSource.close(); _currentEvtSource = null; }
+    try { await fetch('/api/cancel/' + _currentJobId, { method: 'POST' }); } catch (_) {}
+    appendLog('[취소] 조판이 취소되었습니다.');
+    _showCancelBtn(false);
+    resetBtn();
+    _currentJobId = null;
+  }
+
   // ── 폼 제출 ────────────────────────────────────────────────
   document.getElementById('typeset-form').addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -491,6 +518,9 @@
     runBtn.disabled = true;
     runBtn.textContent = '실행 중...';
 
+    if (_currentEvtSource) { _currentEvtSource.close(); _currentEvtSource = null; }
+    _currentJobId = null;
+
     document.getElementById('progress-area').classList.remove('hidden');
     document.getElementById('result-area').classList.add('hidden');
     document.getElementById('result-area').innerHTML = '';
@@ -504,6 +534,8 @@
         appendLog('[오류] ' + (data.error || '서버 오류'));
         resetBtn(); return;
       }
+      _currentJobId = data.job_id;
+      _showCancelBtn(true);
       startStream(data.job_id);
     } catch (err) {
       appendLog('[오류] ' + err.message);
@@ -514,14 +546,27 @@
   // ── SSE ────────────────────────────────────────────────────
   function startStream(jobId) {
     const src = new EventSource('/api/stream/' + jobId);
+    _currentEvtSource = src;
     src.onmessage = function(e) {
       const msg = e.data;
-      if (msg === '[DONE]') { src.close(); fetchResult(jobId); return; }
+      if (msg === '[DONE]') {
+        src.close();
+        _currentEvtSource = null;
+        _showCancelBtn(false);
+        fetchResult(jobId);
+        return;
+      }
       if (msg === '[PING]') return;
       appendLog(msg);
       updateStepFromLog(msg);
     };
-    src.onerror = function() { src.close(); appendLog('[연결 끊김]'); fetchResult(jobId); };
+    src.onerror = function() {
+      src.close();
+      _currentEvtSource = null;
+      _showCancelBtn(false);
+      appendLog('[연결 끊김]');
+      fetchResult(jobId);
+    };
   }
 
   function updateStepFromLog(msg) {
@@ -583,11 +628,6 @@
           '<tbody>' + storyRows + '</tbody>' +
         '</table>' +
         warnHtml +
-        (result.pdf_path
-          ? '<div class="action-row">' +
-              '<a href="/download/' + jobId + '/pdf" class="download-btn">📥 PDF 다운로드</a>' +
-            '</div>'
-          : '<p class="no-pdf">PDF가 생성되지 않았습니다.</p>') +
       '</div>';
     setStep('verify');
   }

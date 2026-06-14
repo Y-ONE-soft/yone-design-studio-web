@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="page-header">
-  <a href="/" class="back-link">← 교재 선택</a>
+  <a href="/" class="back-link">교재 선택</a>
   <h1>{{ engine.display_name }}</h1>
 </div>
 
@@ -67,13 +67,17 @@
            ondrop="handleDrop(event, '{{ slot.key }}')">
         <input type="file" name="{{ slot.key }}" accept="{{ slot.accept | default('.hwp,.hwpx,.docx,.doc,.rtf,.txt') }}"
                id="input-{{ slot.key }}"
+               {% if slot.multiple %}multiple{% endif %}
                onchange="handleFileSelect(this, '{{ slot.key }}')">
         <div class="drop-label">
           <span class="drop-icon">📄</span>
-          <span class="drop-text">드래그하거나 클릭해서 선택</span>
+          <span class="drop-text">{% if slot.multiple %}여러 파일을 드래그하거나 클릭해서 선택{% else %}드래그하거나 클릭해서 선택{% endif %}</span>
           <span class="file-name" id="name-{{ slot.key }}"></span>
         </div>
       </div>
+      {% if slot.multiple %}
+      <div class="file-list" id="file-list-{{ slot.key }}"></div>
+      {% endif %}
     </div>
     {% endif %}
     {% endfor %}
@@ -88,6 +92,9 @@
 <div id="progress-area" class="progress-area hidden">
   <div class="progress-header">
     <h2>진행 상태</h2>
+    <button type="button" id="cancel-btn" class="cancel-btn hidden" onclick="cancelJob()">
+      취소
+    </button>
     <div class="step-indicators">
       <span class="step" id="step-parse">① 파싱</span>
       <span class="step-sep">→</span>

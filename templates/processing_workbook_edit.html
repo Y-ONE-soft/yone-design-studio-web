@@ -1,0 +1,466 @@
+{% extends "base.html" %}
+{% block title %}워크북 가공{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <a href="/processing" class="back-link">가공 메뉴</a>
+  <h1>워크북 가공</h1>
+  <p class="page-desc">워크북 .indd를 업로드하면 서버 작업 폴더에 격리해서 처리합니다. 다른 InDesign 작업과 섞이지 않습니다.</p>
+</div>
+
+<section class="wb-section">
+  <h2>1. 워크북 파일 업로드</h2>
+  <p class="wb-help">.indd 파일 하나를 업로드하세요. 업로드된 파일은 <code>워크북가공/uploads/&lt;타임스탬프&gt;_&lt;파일명&gt;/</code> 폴더에 저장되며, 작업 후 백업·추출 결과도 같은 폴더에 모입니다.</p>
+  <input type="file" id="file-input" accept=".indd" class="wb-file-input">
+  <button type="button" class="wb-btn" id="btn-upload">업로드 + 후보 스토리 분석</button>
+  <div class="wb-result" id="upload-result"></div>
+  <div class="wb-result hidden" id="cand-result"></div>
+</section>
+
+<section class="wb-section">
+  <h2>2. 작업 모드</h2>
+  <div class="wb-modes">
+    <label><input type="radio" name="mode" value="seo" checked> 서술형 제거 (자동)</label>
+    <label><input type="radio" name="mode" value="rounds"> 회차 선택 제거</label>
+    <label><input type="radio" name="mode" value="compare"> 원본과 비교 검수</label>
+  </div>
+
+  <div class="wb-options">
+    <label><input type="checkbox" id="opt-backup" checked> 작업 전 자동 백업 (같은 폴더)</label>
+    <label><input type="checkbox" id="opt-extract" checked> 삭제된 텍스트 .txt로 추출</label>
+  </div>
+
+  <div class="wb-options wb-options--block">
+    <div class="wb-field-label">대상 스토리 <small>(복수 선택 가능)</small></div>
+    <div id="story-list" class="story-list"><i>업로드하면 후보 스토리가 표시됩니다.</i></div>
+    <div class="wb-row">
+      <button type="button" class="wb-btn wb-btn--mini" id="btn-stories-all">전체 선택</button>
+      <button type="button" class="wb-btn wb-btn--mini" id="btn-stories-none">전체 해제</button>
+    </div>
+  </div>
+</section>
+
+<!-- 모드: 서술형 제거 -->
+<section class="wb-section" id="panel-seo">
+  <h2>3. 서술형 제거 실행</h2>
+  <p class="wb-help">선택 스토리에서 서술형 발문 묶음(발문+지문+답란)을 모두 삭제합니다.</p>
+  <button type="button" class="wb-btn wb-btn--run" id="btn-run-seo">서술형 제거 실행</button>
+  <div class="wb-result" id="result-seo"></div>
+</section>
+
+<!-- 모드: 회차 선택 제거 -->
+<section class="wb-section hidden" id="panel-rounds">
+  <h2>3. 회차 식별</h2>
+  <button type="button" class="wb-btn" id="btn-identify-rounds">회차 목록 가져오기</button>
+  <div class="wb-result" id="result-identify"></div>
+
+  <h2>4. 삭제할 회차 선택</h2>
+  <div id="rounds-list" class="rounds-list"></div>
+  <div class="wb-row">
+    <button type="button" class="wb-btn wb-btn--mini" id="btn-rounds-all">전체 선택</button>
+    <button type="button" class="wb-btn wb-btn--mini" id="btn-rounds-none">전체 해제</button>
+  </div>
+  <button type="button" class="wb-btn wb-btn--run" id="btn-run-rounds">선택한 회차 제거</button>
+  <div class="wb-result" id="result-rounds"></div>
+</section>
+
+<!-- 모드: 비교 검수 -->
+<section class="wb-section hidden" id="panel-compare">
+  <h2>3. 원본 파일 경로</h2>
+  <input type="text" id="orig-path" class="wb-input"
+         placeholder="/Users/.../배재2_워크북03_삭제전백업.indd">
+  <p class="wb-help">방금 업로드한 파일을 가공본으로 보고, 위 경로의 원본과 회차/발문 단위로 비교합니다.</p>
+  <button type="button" class="wb-btn wb-btn--run" id="btn-run-compare">비교 실행</button>
+  <div class="wb-result" id="result-compare"></div>
+</section>
+
+<!-- 결과 파일 목록 -->
+<section class="wb-section hidden" id="panel-files">
+  <h2>작업 폴더 결과물</h2>
+  <button type="button" class="wb-btn wb-btn--mini" id="btn-refresh-files">새로고침</button>
+  <div id="files-list" class="files-list"></div>
+</section>
+
+<style>
+.wb-section { margin: 24px 0; padding: 16px 20px; background: rgba(255,255,255,0.04);
+              border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; }
+.wb-section h2 { font-size: 16px; margin: 0 0 10px 0; color: #ddd; }
+.wb-help { font-size: 13px; color: #999; margin: 0 0 12px 0; }
+.wb-help code { background: rgba(0,0,0,0.4); padding: 1px 4px; border-radius: 3px;
+                font-family: ui-monospace, monospace; font-size: 11px; }
+.wb-btn { background: #2e86ab; color: white; border: none; padding: 8px 16px;
+          border-radius: 6px; cursor: pointer; font-size: 14px; margin-right: 6px; }
+.wb-btn:hover { background: #3a9ec6; }
+.wb-btn--run { background: #c0392b; padding: 10px 20px; font-weight: 600; }
+.wb-btn--run:hover { background: #e04a3a; }
+.wb-btn--mini { font-size: 12px; padding: 4px 10px; background: #555; }
+.wb-result { margin-top: 12px; padding: 10px 14px; background: rgba(0,0,0,0.3);
+             border-radius: 6px; font-family: ui-monospace, monospace;
+             font-size: 12px; color: #ccc; white-space: pre-wrap; min-height: 1em; }
+.wb-result.error { color: #ff6b6b; }
+.wb-result.success { color: #90ee90; }
+.wb-modes label, .wb-options label { display: inline-block; margin-right: 16px;
+                                       color: #ddd; font-size: 14px; }
+.wb-input { width: 100%; padding: 8px 12px; border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(0,0,0,0.3); color: #eee; border-radius: 6px;
+            font-family: ui-monospace, monospace; font-size: 13px; }
+.wb-file-input { color: #ccc; margin-right: 12px; }
+.wb-select { background: rgba(0,0,0,0.4); color: #eee; border: 1px solid rgba(255,255,255,0.15);
+             padding: 6px 10px; border-radius: 6px; font-size: 13px; }
+.wb-row { margin: 10px 0; }
+.wb-options--block { display: block; }
+.wb-field-label { color: #ddd; font-size: 14px; margin-bottom: 8px; }
+.wb-field-label small { color: #999; font-weight: 400; }
+.story-list { max-height: 220px; overflow-y: auto; padding: 8px;
+              background: rgba(0,0,0,0.2); border-radius: 6px; margin: 4px 0; }
+.story-item { display: block; padding: 4px 2px; color: #ccc; font-size: 13px;
+              font-family: ui-monospace, monospace; cursor: pointer; }
+.story-item input { margin-right: 8px; }
+.rounds-list { max-height: 460px; overflow-y: auto; padding: 8px;
+               background: rgba(0,0,0,0.2); border-radius: 6px; margin: 10px 0; }
+.round-item { display: block; padding: 4px 0 4px 24px; color: #ccc; font-size: 13px;
+              font-family: ui-monospace, monospace; cursor: pointer; }
+.round-item input { margin-right: 8px; }
+.passage-group { margin: 4px 0 12px 0; border: 1px solid rgba(255,255,255,0.08);
+                 border-radius: 6px; overflow: hidden; }
+.passage-head { padding: 7px 10px; background: rgba(46,134,171,0.18); cursor: pointer; }
+.passage-head label { display: block; color: #eee; font-size: 13px; cursor: pointer; }
+.passage-head input { margin-right: 8px; }
+.passage-head .eng { color: #9fd0e6; font-style: italic; }
+.passage-head .cnt { color: #ffd479; font-weight: 600; }
+.passage-rounds { padding: 6px 10px 8px 10px; }
+.files-list { margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 6px; }
+.file-row { padding: 4px 0; font-size: 13px; color: #ccc; display: flex; justify-content: space-between; }
+.file-name { font-family: ui-monospace, monospace; }
+.file-actions a { color: #6bb6ff; text-decoration: underline; margin-left: 10px; cursor: pointer; }
+.file-actions a:hover { color: #99d0ff; }
+.hidden { display: none; }
+.dl-link { display: inline-block; margin: 4px 8px 4px 0; color: #6bb6ff;
+           text-decoration: underline; cursor: pointer; }
+.dl-link:hover { color: #99d0ff; }
+</style>
+
+<script>
+(function() {
+  const $ = (id) => document.getElementById(id);
+  let currentDocPath = null;
+  let currentJobDir = null;
+  let activeRounds = [];
+
+  // ── 모드 전환 ──
+  document.querySelectorAll('input[name="mode"]').forEach(r => {
+    r.addEventListener('change', () => {
+      const m = document.querySelector('input[name="mode"]:checked').value;
+      $('panel-seo').classList.toggle('hidden', m !== 'seo');
+      $('panel-rounds').classList.toggle('hidden', m !== 'rounds');
+      $('panel-compare').classList.toggle('hidden', m !== 'compare');
+    });
+  });
+
+  // ── 공통 API ──
+  async function call(url, body) {
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body || {})
+    });
+    return await r.json();
+  }
+
+  function setResult(el, data, fmt) {
+    el.classList.remove('error', 'success');
+    el.classList.remove('hidden');
+    if (data.status === 'err') {
+      el.classList.add('error');
+      el.textContent = '오류: ' + (data.msg || '알 수 없음');
+      return false;
+    }
+    el.classList.add('success');
+    el.innerHTML = fmt(data);
+    return true;
+  }
+
+  function dlLink(path, label) {
+    if (!path) return '';
+    return ` <a class="dl-link" href="/api/processing/workbook/download?path=${encodeURIComponent(path)}">${label || '↓ 다운로드'}</a>`;
+  }
+
+  function fmtSize(n) {
+    if (n < 1024) return n + ' B';
+    if (n < 1024*1024) return (n/1024).toFixed(1) + ' KB';
+    return (n/1024/1024).toFixed(1) + ' MB';
+  }
+
+  // ── 업로드 ──
+  $('btn-upload').addEventListener('click', async () => {
+    const f = $('file-input').files[0];
+    if (!f) { alert('파일을 선택하세요'); return; }
+    if (!f.name.toLowerCase().endsWith('.indd')) { alert('.indd 파일만 가능'); return; }
+
+    $('upload-result').classList.remove('hidden');
+    $('upload-result').textContent = '업로드 중... (' + fmtSize(f.size) + ')';
+
+    const fd = new FormData();
+    fd.append('file', f);
+    const r = await fetch('/api/processing/workbook/upload', {method: 'POST', body: fd});
+    const data = await r.json();
+    const ok = setResult($('upload-result'), data, (d) => {
+      currentDocPath = d.docPath;
+      currentJobDir = d.jobDir;
+      let html = `<b>업로드 완료:</b> ${d.fileName} (${fmtSize(d.fileSize)})<br>`;
+      html += `<b>작업 폴더:</b> ${d.jobDir}<br>`;
+      html += `<b>경로:</b> ${d.docPath}`;
+      return html;
+    });
+    if (!ok) return;
+
+    // 후보 스토리 자동 분석
+    $('cand-result').textContent = '대상 스토리 분석 중... (InDesign이 파일을 엽니다)';
+    const cr = await call('/api/processing/workbook/list-candidates', {docPath: currentDocPath});
+    setResult($('cand-result'), cr, (d) => {
+      renderStoryList(d.candidates || []);
+      return `<b>후보 스토리 ${d.count}개</b> 검출. 1위가 자동 선택됐습니다 (필요시 복수 선택).`;
+    });
+    refreshFiles();
+  });
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function renderStoryList(cands) {
+    const root = $('story-list');
+    if (!cands.length) { root.innerHTML = '<i>후보 스토리가 없습니다.</i>'; return; }
+    root.innerHTML = cands.map((c, i) => {
+      const label = `[${c.idx+1}] p${c.firstPage}  프레임 ${c.frameCount}  발문 ${c.promptCount}  PASSAGE ${c.passageCount}`;
+      const checked = i === 0 ? 'checked' : '';
+      return `<label class="story-item"><input type="checkbox" class="story-check" value="${c.idx}" ${checked}> ${escapeHtml(label)}</label>`;
+    }).join('');
+  }
+
+  // 선택된 스토리 인덱스 배열. 아무것도 없으면 null (서버에서 자동 1위).
+  function getStoryIndices() {
+    const sel = Array.from(document.querySelectorAll('#story-list .story-check:checked'))
+      .map(c => parseInt(c.value, 10));
+    return sel.length ? sel : null;
+  }
+
+  $('btn-stories-all').addEventListener('click', () => {
+    document.querySelectorAll('#story-list .story-check').forEach(c => c.checked = true);
+  });
+  $('btn-stories-none').addEventListener('click', () => {
+    document.querySelectorAll('#story-list .story-check').forEach(c => c.checked = false);
+  });
+
+  // ── 서술형 제거 ──
+  $('btn-run-seo').addEventListener('click', async () => {
+    if (!currentDocPath) { alert('먼저 파일을 업로드하세요'); return; }
+    if (!confirm('서술형 제거를 실행합니다. 진행할까요?')) return;
+    $('result-seo').textContent = '실행 중... (최대 10분)';
+    const r = await call('/api/processing/workbook/remove-seo', {
+      docPath: currentDocPath,
+      backup: $('opt-backup').checked,
+      extract: $('opt-extract').checked,
+      storyIndices: getStoryIndices(),
+    });
+    setResult($('result-seo'), r, (d) => {
+      let html = `<b>서술형 묶음:</b> ${d.seoCount}개 삭제<br>`;
+      if (parseInt(d.orphanCount) > 0) html += `<b>고아 지문:</b> ${d.orphanCount}개 삭제<br>`;
+      html += `<b>객관식 묶음:</b> ${d.objCount}개 유지<br>`;
+      html += `<b>삭제 단락:</b> ${d.deleted} / ${d.attempted}<br>`;
+      html += `<b>남은 단락:</b> ${d.remainingParas}<br>`;
+      html += `<b>작업본:</b> ${d.docPath}${dlLink(d.docPath)}<br>`;
+      if (d.backupPath) html += `<b>백업:</b> ${d.backupPath}${dlLink(d.backupPath)}<br>`;
+      if (d.extractPath) {
+        html += `<b>추출 텍스트:</b> ${d.extractPath}${dlLink(d.extractPath)} `;
+        html += `<a class="dl-link" data-act="todocx" data-path="${d.extractPath}">→ docx로 변환</a>`;
+      }
+      return html;
+    });
+    bindDocxLinks($('result-seo'));
+    refreshFiles();
+  });
+
+  // ── 회차 식별 ──
+  $('btn-identify-rounds').addEventListener('click', async () => {
+    if (!currentDocPath) { alert('먼저 파일을 업로드하세요'); return; }
+    const sIdxs = getStoryIndices();
+    const hasCandidates = document.querySelectorAll('#story-list .story-check').length > 0;
+    if (hasCandidates && !sIdxs) { alert('대상 스토리를 1개 이상 선택하세요.'); return; }
+    $('result-identify').textContent = '회차 식별 중...';
+    const r = await call('/api/processing/workbook/identify-rounds', {
+      docPath: currentDocPath,
+      storyIndices: sIdxs,
+    });
+    setResult($('result-identify'), r, (d) =>
+      `<b>${d.count}개 회차 검출</b> (스토리 ${d.storyCount}개, 문서: ${d.docName})`);
+    if (r.status === 'ok' && Array.isArray(r.rounds)) {
+      activeRounds = r.rounds;
+      renderRoundsList();
+    }
+  });
+
+  function normEng(s) {
+    return String(s == null ? '' : s).replace(/\s+/g, ' ').trim().toLowerCase();
+  }
+
+  function renderRoundsList() {
+    const root = $('rounds-list');
+    if (!activeRounds.length) { root.innerHTML = '<i>회차를 먼저 식별하세요</i>'; return; }
+    // 같은 영어 본문(engStart)끼리 지문 그룹으로 묶기
+    const groups = [];
+    const map = {};
+    activeRounds.forEach(r => {
+      let key = normEng(r.engStart);
+      if (!key) key = '__empty_' + r.storyIdx + '_' + r.idx;  // 본문 미검출은 개별 그룹
+      if (!(key in map)) {
+        map[key] = groups.length;
+        groups.push({eng: r.engStart || '(영어 본문 미검출)', rounds: []});
+      }
+      groups[map[key]].rounds.push(r);
+    });
+    root.innerHTML = groups.map((g, gi) => {
+      const engShort = escapeHtml(g.eng).slice(0, 90);
+      const head = `<div class="passage-head">
+        <label><input type="checkbox" class="grp-check" data-grp="${gi}">
+        <b>지문 ${gi+1}</b> · <span class="cnt">회차 ${g.rounds.length}개</span> · <span class="eng">${engShort}</span></label>
+      </div>`;
+      const items = g.rounds.map(r => {
+        const label = `[스토리 ${r.storyIdx+1}·회차 ${r.idx+1}]  p${r.page}  OBJ=${r.objCount} SEO=${r.seoCount}`;
+        return `<label class="round-item"><input type="checkbox" class="round-check" data-grp="${gi}" data-story="${r.storyIdx}" data-round="${r.idx}"> ${escapeHtml(label)}</label>`;
+      }).join('');
+      return `<div class="passage-group">${head}<div class="passage-rounds">${items}</div></div>`;
+    }).join('');
+    // 그룹 헤더 체크 → 그룹 내 회차 일괄 토글
+    root.querySelectorAll('.grp-check').forEach(gc => {
+      gc.addEventListener('change', () => {
+        root.querySelectorAll('.round-check[data-grp="' + gc.dataset.grp + '"]')
+            .forEach(rc => rc.checked = gc.checked);
+      });
+    });
+    // 개별 회차 체크 변경 → 그룹 헤더 상태(전체/일부) 반영
+    root.querySelectorAll('.round-check').forEach(rc => {
+      rc.addEventListener('change', () => syncGroupCheck(root, rc.dataset.grp));
+    });
+  }
+
+  function syncGroupCheck(root, grp) {
+    const items = Array.from(root.querySelectorAll('.round-check[data-grp="' + grp + '"]'));
+    const gc = root.querySelector('.grp-check[data-grp="' + grp + '"]');
+    if (!gc || !items.length) return;
+    const checkedCount = items.filter(i => i.checked).length;
+    gc.checked = checkedCount === items.length;
+    gc.indeterminate = checkedCount > 0 && checkedCount < items.length;
+  }
+
+  function setAllRounds(checked) {
+    $('rounds-list').querySelectorAll('input').forEach(c => {
+      c.checked = checked;
+      c.indeterminate = false;
+    });
+  }
+  $('btn-rounds-all').addEventListener('click', () => setAllRounds(true));
+  $('btn-rounds-none').addEventListener('click', () => setAllRounds(false));
+
+  // ── 회차 제거 ──
+  $('btn-run-rounds').addEventListener('click', async () => {
+    if (!currentDocPath) { alert('먼저 파일을 업로드하세요'); return; }
+    const checked = Array.from($('rounds-list').querySelectorAll('.round-check:checked'));
+    if (checked.length === 0) { alert('선택된 회차가 없습니다.'); return; }
+    // roundSpec: { storyIdx: [roundIdx, ...] }
+    const spec = {};
+    checked.forEach(c => {
+      const s = c.dataset.story;
+      (spec[s] = spec[s] || []).push(parseInt(c.dataset.round, 10));
+    });
+    if (!confirm(`${checked.length}개 회차를 삭제합니다. 진행할까요?`)) return;
+    $('result-rounds').textContent = '실행 중... (최대 10분)';
+    const r = await call('/api/processing/workbook/remove-rounds', {
+      docPath: currentDocPath,
+      roundSpec: spec,
+      backup: $('opt-backup').checked,
+      extract: $('opt-extract').checked,
+    });
+    setResult($('result-rounds'), r, (d) => {
+      let html = `<b>회차 삭제:</b> ${d.roundsRemoved}개 (남은: ${d.roundsRemaining}개)<br>`;
+      html += `<b>삭제 단락:</b> ${d.deleted} / ${d.attempted}<br>`;
+      html += `<b>남은 단락:</b> ${d.remainingParas}<br>`;
+      html += `<b>작업본:</b> ${d.docPath}${dlLink(d.docPath)}<br>`;
+      if (d.backupPath) html += `<b>백업:</b> ${d.backupPath}${dlLink(d.backupPath)}<br>`;
+      if (d.extractPath) {
+        html += `<b>추출 텍스트:</b> ${d.extractPath}${dlLink(d.extractPath)} `;
+        html += `<a class="dl-link" data-act="todocx" data-path="${d.extractPath}">→ docx로 변환</a>`;
+      }
+      return html;
+    });
+    bindDocxLinks($('result-rounds'));
+    refreshFiles();
+  });
+
+  // ── 비교 검수 ──
+  $('btn-run-compare').addEventListener('click', async () => {
+    if (!currentDocPath) { alert('먼저 파일을 업로드하세요'); return; }
+    const orig = $('orig-path').value.trim();
+    if (!orig) { alert('원본 경로를 입력하세요.'); return; }
+    $('result-compare').textContent = '비교 중... (원본 파일을 InDesign이 엽니다)';
+    const sIdxs = getStoryIndices();
+    const r = await call('/api/processing/workbook/compare', {
+      docPath: currentDocPath,
+      origPath: orig,
+      storyIndex: sIdxs ? sIdxs[0] : null,
+    });
+    setResult($('result-compare'), r, (d) => {
+      let html = `<b>발문 합계:</b> 객관식 ${d.origOBJ}→${d.workOBJ}, 서술형 ${d.origSEO}→${d.workSEO}<br>`;
+      html += `<b>회차:</b> 원본 ${d.origRounds} → 가공본 ${d.workRounds}<br><br>`;
+      html += (d.body || '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+      return html;
+    });
+  });
+
+  // ── 결과 파일 목록 ──
+  async function refreshFiles() {
+    if (!currentJobDir) return;
+    $('panel-files').classList.remove('hidden');
+    const r = await fetch('/api/processing/workbook/job-files?jobDir=' + encodeURIComponent(currentJobDir));
+    const d = await r.json();
+    const root = $('files-list');
+    if (d.status !== 'ok') { root.textContent = '오류: ' + (d.msg || ''); return; }
+    if (!d.files.length) { root.textContent = '(파일 없음)'; return; }
+    root.innerHTML = d.files.map(f => `
+      <div class="file-row">
+        <span class="file-name">${f.name} <small style="color:#888">(${fmtSize(f.size)})</small></span>
+        <span class="file-actions">
+          <a href="/api/processing/workbook/download?path=${encodeURIComponent(f.path)}">↓ 다운로드</a>
+          ${f.name.endsWith('.txt') ? `<a data-act="todocx" data-path="${f.path}">→ docx</a>` : ''}
+        </span>
+      </div>
+    `).join('');
+    bindDocxLinks(root);
+  }
+
+  $('btn-refresh-files').addEventListener('click', refreshFiles);
+
+  // ── docx 변환 ──
+  function bindDocxLinks(root) {
+    root.querySelectorAll('a[data-act="todocx"]').forEach(a => {
+      if (a.dataset.bound) return;
+      a.dataset.bound = '1';
+      a.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const orig = a.textContent;
+        a.textContent = '변환 중...';
+        const r = await call('/api/processing/workbook/convert-docx', {txtPath: a.dataset.path});
+        if (r.status === 'ok') {
+          a.outerHTML = `<a class="dl-link" href="/api/processing/workbook/download?path=${encodeURIComponent(r.docxPath)}">↓ ${r.docxPath.split('/').pop()}</a>`;
+          refreshFiles();
+        } else {
+          a.textContent = '변환 실패: ' + (r.msg || '');
+          a.style.color = '#ff6b6b';
+        }
+      });
+    });
+  }
+})();
+</script>
+{% endblock %}

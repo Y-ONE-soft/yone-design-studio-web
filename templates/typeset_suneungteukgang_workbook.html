@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="page-header">
-  <a href="/" class="back-link">&larr; 교재 선택</a>
+  <a href="/" class="back-link">교재 선택</a>
   <h1>{{ engine.display_name }}</h1>
 </div>
 
@@ -61,7 +61,7 @@
   <div class="progress-header">
     <h2>진행 상태</h2>
     <button type="button" id="cancel-btn" class="cancel-btn hidden" onclick="cancelJob()">
-      &#10005; 취소
+      취소
     </button>
     <div class="step-indicators">
       <span class="step" id="step-parse">&#9312; 파싱</span>
@@ -211,21 +211,33 @@
       resultArea.classList.add('hidden');
       resultArea.innerHTML = '';
       logArea.textContent = '';
+      window._tsCancelled = false;
 
       var totalOk = 0, totalFail = 0;
       for (var i = 0; i < labels.length; i++) {
+        if (window._tsCancelled) break;
         var label = labels[i];
         var folder = _unitFolders[label] || '';
         logArea.textContent += '\n━━━━━ [' + (i + 1) + '/' + labels.length + '] ' + label + ' ━━━━━\n';
         logArea.scrollTop = logArea.scrollHeight;
         try {
           var jobId = await _runOne(label, folder);
+          if (window._tsCancelled) break;
+          if (window._tsSetCurrent) window._tsSetCurrent(jobId, null);
           var ok = await _streamJob(jobId, logArea);
+          if (window._tsSetCurrent) window._tsSetCurrent(null, null);
+          if (window._tsCancelled) break;
           if (ok) totalOk++; else totalFail++;
         } catch (err) {
           logArea.textContent += '[오류] ' + err.message + '\n';
           totalFail++;
         }
+      }
+
+      if (window._tsCancelled) {
+        runBtn.disabled = false;
+        runBtn.innerHTML = '<span class="btn-icon"></span> 조판 실행';
+        return;
       }
 
       logArea.textContent += '\n━━━━━ 강별 조판 완료: 성공 ' + totalOk + '개, 실패 ' + totalFail + '개 ━━━━━\n';
@@ -265,7 +277,7 @@
       }
 
       runBtn.disabled = false;
-      runBtn.textContent = '▶ 조판 실행';
+      runBtn.innerHTML = '<span class="btn-icon"></span> 조판 실행';
     }, false);  // bubble (default), but registered before typeset.js handler
   })();
 
@@ -283,6 +295,7 @@
   function _streamJob(jobId, logArea) {
     return new Promise(function(resolve) {
       var es = new EventSource('/api/stream/' + jobId);
+      if (window._tsSetCurrent) window._tsSetCurrent(jobId, es);
       es.onmessage = function(e) {
         var msg = e.data;
         if (msg === '[DONE]') {

@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="page-header">
-  <a href="/" class="back-link">← 교재 선택</a>
+  <a href="/" class="back-link">교재 선택</a>
   <h1>{{ engine.display_name }}</h1>
 </div>
 
@@ -17,6 +17,15 @@
       <button type="button" class="grade-tab" data-grade="고2" onclick="selectGrade(this)">고2</button>
     </div>
     <input type="hidden" name="grade" id="grade-hidden">
+  </div>
+
+  <!-- ── 학교 선택 (전용 내지 사용 시) ─────────────────────── -->
+  <div class="school-section">
+    <div class="section-label">학교 (전용 내지 사용 시)</div>
+    <select name="school" id="school-select" class="issue-input u-w-200">
+      <option value="">기본 (전체 공용)</option>
+      <option value="세종고">세종고</option>
+    </select>
   </div>
 
   <!-- ── 시험 연도/월 + 파일명 미리보기 ──────────────────────── -->
@@ -112,9 +121,18 @@
     </div>
   </details>
 
-  <button type="submit" class="run-btn" id="run-btn">
-    <span class="btn-icon">▶</span> 조판 실행
-  </button>
+  <input type="hidden" name="_target_material" id="target-material" value="">
+
+  <div class="button-row" style="display:flex; gap:10px;">
+    <button type="submit" class="run-btn" id="run-btn">
+      <span class="btn-icon">▶</span> 조판 실행
+    </button>
+    <button type="submit" class="run-btn" id="run-btn-sero"
+            onclick="document.getElementById('target-material').value='workbook_sero'"
+            style="background:#5b6ee1">
+      <span class="btn-icon">▶</span> 세로버전 조판하기
+    </button>
+  </div>
 </form>
 
 <!-- ── 진행 상태 ──────────────────────────────────────────── -->
@@ -122,7 +140,7 @@
   <div class="progress-header">
     <h2>진행 상태</h2>
     <button type="button" id="cancel-btn" class="cancel-btn hidden" onclick="cancelJob()">
-      ✕ 취소
+      취소
     </button>
     <div class="step-indicators">
       <span class="step" id="step-parse">① 파싱</span>
@@ -174,6 +192,6 @@
   }
   // handleFileSelect / handleDrop → typeset.js에서 멀티파일 지원으로 통합 정의
 </script>
-<script src="{{ url_for('static', filename='js/typeset.js') }}"
+<script src="{{ url_for('static', filename='js/typeset.js') }}?v=sero1"
         data-material="{{ engine.material_id }}"></script>
 {% endblock %}

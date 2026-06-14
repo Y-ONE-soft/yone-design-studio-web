@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="page-header">
-  <a href="/" class="back-link">&larr; 교재 선택</a>
+  <a href="/" class="back-link">교재 선택</a>
   <h1>분석본 결합</h1>
   <p>여러 회차 분석본에서 문제 코드(YYMMQQ) 기준으로 페이지만 추출 &rarr; 결합 .indd + PDF</p>
 </div>
@@ -49,14 +49,19 @@
   <div class="school-section">
     <div class="section-label">문제 코드 <span class="required">*</span></div>
     <div class="input-label u-mt-4">
-      한 줄에 하나씩, 6자리 YYMMQQ (예: 250320 = 25년 3월 20번)
+      6자리 코드 또는 자연어로 입력 &middot; 줄바꿈 또는 쉼표로 구분 (학년은 위에서 선택)<br>
+      예) <code>250320</code> &middot; <code>25년 3월 20번</code> &middot;
+      <code>25년 3월 32,33번</code> &middot; <code>25년 3월 20-23번, 29번</code> &middot;
+      <code>25년 3월 20~21, 29~30</code> &middot;
+      <code>25년 3월 20번, 25년 9월 31번</code>
     </div>
     <textarea name="codes" id="codes-input" rows="8"
               class="form-input code-textarea"
-              placeholder="250320&#10;250321&#10;240942"></textarea>
+              placeholder="25년 3월 20-23번, 29번&#10;25년 9월 31~34&#10;250320"></textarea>
     <div class="input-hint">
-      <span id="code-count">0</span>개 코드
+      <span id="code-count">0</span>개 문항
     </div>
+    <div id="codes-recognized" class="input-hint"></div>
   </div>
 
   <!-- 결과 파일명 -->
@@ -82,6 +87,9 @@
 <div id="progress-area" class="progress-area hidden">
   <div class="progress-header">
     <h2>진행 상태</h2>
+    <button type="button" id="cancel-btn" class="cancel-btn hidden" onclick="cancelJob()">
+      취소
+    </button>
     <div class="step-indicators">
       <span class="step" id="step-parse">&#9312; 코드/파일 매칭</span>
       <span class="step-sep">&rarr;</span>
@@ -137,17 +145,123 @@
     r.addEventListener('change', renderSchoolOptions);
   });
 
-  function countCodes() {
+  // ── 입력 파서 (Python engine._parse_line 과 동일 규칙) ──────────────
+  const _RANGE_SEP = '[\\-~–—－～∼]';
+  const _YM_RE = /(\d{2,4})\s*년\s*(\d{1,2})\s*월/g;
+  const _QTOK_RE = new RegExp('(\\d{1,2})\\s*' + _RANGE_SEP + '\\s*(\\d{1,2})|(\\d{1,2})', 'g');
+
+  function _yy(y) { y = String(y); return ('0' + y).slice(-2); }
+  function _mkCode(yy, mo, q, fromRange) {
+    const moStr = ('0' + mo).slice(-2);
+    const qStr = ('0' + q).slice(-2);
+    return { raw: '' + yy + moStr + qStr,
+             display: yy + '년 ' + mo + '월 ' + q + '번',
+             from_range: !!fromRange };
+  }
+
+  function _parseLine(line) {
+    // '년/월' 글자가 없으면 6자리 코드 모드 (콤마/공백 다중)
+    if (line.indexOf('년') === -1 && line.indexOf('월') === -1) {
+      const out = [];
+      for (const tok of line.trim().split(/[,\s]+/)) {
+        if (!tok) continue;
+        const t = tok.replace(/\s/g, '');
+        if (!/^\d{6}$/.test(t)) {
+          throw new Error("잘못된 입력: '" + tok + "' — 6자리 코드 또는 '25년 6월 32번' 형식");
+        }
+        out.push(_mkCode(t.slice(0, 2), parseInt(t.slice(2, 4), 10), parseInt(t.slice(4, 6), 10), false));
+      }
+      return out;
+    }
+    // 자연어 — 년/월 앵커로 회차 분할
+    const anchors = [];
+    let m; _YM_RE.lastIndex = 0;
+    while ((m = _YM_RE.exec(line)) !== null) {
+      anchors.push({ idx: m.index, end: _YM_RE.lastIndex, y: m[1], mo: m[2] });
+    }
+    if (!anchors.length) throw new Error('년/월을 인식하지 못했습니다: ' + line);
+    const out = [];
+    for (let i = 0; i < anchors.length; i++) {
+      const a = anchors[i];
+      const yy = _yy(a.y);
+      const mo = parseInt(a.mo, 10);
+      if (mo < 1 || mo > 12) throw new Error('잘못된 월: ' + a.mo + '월');
+      const segEnd = (i + 1 < anchors.length) ? anchors[i + 1].idx : line.length;
+      const seg = line.slice(a.end, segEnd).replace(/번/g, ' ');
+      let q, any = false; _QTOK_RE.lastIndex = 0;
+      while ((q = _QTOK_RE.exec(seg)) !== null) {
+        if (q[1] !== undefined) {            // a~b 범위
+          let aa = parseInt(q[1], 10), bb = parseInt(q[2], 10);
+          const step = aa <= bb ? 1 : -1;
+          for (let n = aa; step > 0 ? n <= bb : n >= bb; n += step) {
+            if (n < 1 || n > 99) throw new Error('문제 번호 범위 오류: ' + n);
+            out.push(_mkCode(yy, mo, n, true)); any = true;
+          }
+        } else {                              // 단일
+          const n = parseInt(q[3], 10);
+          if (n < 1 || n > 99) throw new Error('문제 번호 범위 오류: ' + n);
+          out.push(_mkCode(yy, mo, n, false)); any = true;
+        }
+      }
+      if (!any) throw new Error('문제 번호를 인식하지 못했습니다: ' + line);
+    }
+    return out;
+  }
+
+  // 줄바꿈 + 콤마 모두 회차/코드 구분자로 — 회차 앵커와 6자리 코드 앞에 경계 삽입
+  function _splitEntries(text) {
+    text = text.replace(/고\s*[123]/g, ' ');                 // 중복 학년 토큰 제거
+    text = text.replace(_YM_RE, m => '\n' + m);              // 회차 앞 경계
+    text = text.replace(/(^|[^\d])(\d{6})(?!\d)/g, (m, p1, p2) => p1 + '\n' + p2); // 6자리 앞 경계
+    return text.split('\n');
+  }
+
+  function parseCodes() {
     const txt = document.getElementById('codes-input').value;
-    const lines = txt.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
-    const valid = lines.filter(l => /^\d{6}$/.test(l));
-    return { total: lines.length, valid: valid.length };
+    const items = [], errors = [], seen = new Set();
+    for (const rawPiece of _splitEntries(txt)) {
+      const line = rawPiece.trim().replace(/^,+|,+$/g, '').trim();
+      if (!line) continue;
+      try {
+        for (const it of _parseLine(line)) {
+          if (seen.has(it.raw)) continue;
+          seen.add(it.raw); items.push(it);
+        }
+      } catch (e) { errors.push(e.message); }
+    }
+    return { items, errors };
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
   }
 
   function updatePreview() {
-    const c = countCodes();
-    document.getElementById('code-count').textContent =
-      c.valid === c.total ? `${c.total}` : `${c.valid}/${c.total} (유효)`;
+    const { items, errors } = parseCodes();
+    document.getElementById('code-count').textContent = `${items.length}`;
+
+    // 인식 결과 — 회차별로 묶어서 표시
+    const rec = document.getElementById('codes-recognized');
+    if (rec) {
+      if (errors.length) {
+        rec.innerHTML = '<span style="color:#c0392b">인식 실패: ' +
+          errors.map(escapeHtml).join(' · ') + '</span>';
+      } else if (items.length) {
+        const order = [], byKey = {};
+        for (const it of items) {
+          const key = it.raw.slice(0, 4); // YYMM
+          if (!byKey[key]) { byKey[key] = []; order.push(key); }
+          byKey[key].push(parseInt(it.raw.slice(4, 6), 10));
+        }
+        const parts = order.map(k => {
+          const yy = k.slice(0, 2), mo = parseInt(k.slice(2, 4), 10);
+          return `${yy}년 ${mo}월 ` + byKey[k].join(',') + '번';
+        });
+        rec.innerHTML = '인식됨 → ' + escapeHtml(parts.join('  /  '));
+      } else {
+        rec.innerHTML = '';
+      }
+    }
 
     const name = document.getElementById('result-name').value.trim();
     const preview = document.getElementById('filename-preview');
@@ -168,21 +282,52 @@
   document.getElementById('school-select').addEventListener('change', updatePreview);
   document.getElementById('exam-period').addEventListener('change', updatePreview);
 
+  let _currentJobId = null;
+  let _currentEvtSource = null;
+
+  function _showCancelBtn(show) {
+    const btn = document.getElementById('cancel-btn');
+    if (btn) {
+      btn.classList.toggle('hidden', !show);
+      if (show) { btn.disabled = false; btn.innerHTML = '취소'; }
+    }
+  }
+
+  async function cancelJob() {
+    if (!_currentJobId) return;
+    const btn = document.getElementById('cancel-btn');
+    if (btn) { btn.disabled = true; btn.textContent = '취소 중...'; }
+    if (_currentEvtSource) { _currentEvtSource.close(); _currentEvtSource = null; }
+    try { await fetch(`/api/cancel/${_currentJobId}`, { method: 'POST' }); } catch (_) {}
+    appendLog('[취소] 조판이 취소되었습니다.');
+    _showCancelBtn(false);
+    resetBtn();
+    _currentJobId = null;
+  }
+
   document.getElementById('typeset-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const form = e.target;
     const formData = new FormData(form);
     const runBtn = document.getElementById('run-btn');
 
-    const c = countCodes();
-    if (c.valid === 0) { alert('유효한 6자리 코드를 입력하세요.'); return; }
-    if (c.valid !== c.total) {
-      if (!confirm(`유효하지 않은 코드가 ${c.total - c.valid}개 있습니다. 계속할까요?`)) return;
+    const parsed = parseCodes();
+    if (parsed.errors.length) {
+      alert('인식하지 못한 줄이 있습니다. 수정 후 다시 시도하세요:\n\n' +
+            parsed.errors.join('\n'));
+      return;
+    }
+    if (parsed.items.length === 0) {
+      alert('인식된 문제가 없습니다.\n예: 25년 3월 20번  또는  250320');
+      return;
     }
     if (!formData.get('result_name').trim()) { alert('결과 파일명을 입력하세요.'); return; }
 
     runBtn.disabled = true;
     runBtn.textContent = '실행 중...';
+
+    if (_currentEvtSource) { _currentEvtSource.close(); _currentEvtSource = null; }
+    _currentJobId = null;
 
     document.getElementById('progress-area').classList.remove('hidden');
     document.getElementById('result-area').classList.add('hidden');
@@ -197,6 +342,8 @@
         appendLog(`[오류] ${data.error || '서버 오류'}`);
         resetBtn(); return;
       }
+      _currentJobId = data.job_id;
+      _showCancelBtn(true);
       startStream(data.job_id);
     } catch (err) {
       appendLog(`[오류] ${err.message}`);
@@ -206,15 +353,24 @@
 
   function startStream(jobId) {
     const evtSource = new EventSource(`/api/stream/${jobId}`);
+    _currentEvtSource = evtSource;
     evtSource.onmessage = (e) => {
       const msg = e.data;
-      if (msg === '[DONE]') { evtSource.close(); fetchResult(jobId); return; }
+      if (msg === '[DONE]') {
+        evtSource.close();
+        _currentEvtSource = null;
+        _showCancelBtn(false);
+        fetchResult(jobId);
+        return;
+      }
       if (msg === '[PING]') return;
       appendLog(msg);
       updateStepFromLog(msg);
     };
     evtSource.onerror = () => {
       evtSource.close();
+      _currentEvtSource = null;
+      _showCancelBtn(false);
       appendLog('[연결 끊김] 결과를 확인합니다...');
       fetchResult(jobId);
     };
@@ -253,23 +409,14 @@
     area.classList.remove('hidden');
     const ok = result.ok;
     const warnings = result.warnings || [];
-    const pdfPaths = result.pdf_paths || [];
-
-    const downloadLinks = pdfPaths.length
-      ? pdfPaths.map((p, i) =>
-          `<a href="/download/${jobId}/pdf?idx=${i}" class="download-btn">PDF 다운로드</a>`
-        ).join('')
-      : '<p class="no-pdf">PDF가 생성되지 않았습니다.</p>';
 
     const cardClass = ok ? 'ok' : 'warn';
     area.innerHTML = `
       <div class="result-card ${cardClass}">
         <div class="result-header">
           <span class="result-badge">${ok ? '결합 완료' : '확인 필요'}</span>
-          <span class="overflow-badge">PDF ${pdfPaths.length}개</span>
         </div>
         ${warnings.length ? `<ul class="warn-list">${warnings.map(w => '<li>' + w + '</li>').join('')}</ul>` : ''}
-        <div class="action-row">${downloadLinks}</div>
       </div>`;
     setStep('verify');
   }

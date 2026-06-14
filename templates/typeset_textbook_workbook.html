@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="page-header">
-  <a href="/" class="back-link">&larr; 교재 선택</a>
+  <a href="/" class="back-link">교재 선택</a>
   <h1>{{ engine.display_name }}</h1>
 </div>
 
@@ -18,9 +18,17 @@
     <input type="hidden" name="subject" id="subject-hidden">
   </div>
 
-  <!-- ── 출판사 / 과 선택 + 파일명 미리보기 ──────────────────── -->
+  <!-- ── 학교 / 출판사 / 과 선택 + 파일명 미리보기 ──────────────── -->
   <div class="issue-row">
     <div class="issue-input-wrap">
+      <label class="section-label">학교 (내지 분류)</label>
+      <select name="school" id="school-select" class="issue-input u-w-120"
+              onchange="updateFilenamePreview()">
+        <option value="">공통 (전체 공용)</option>
+        <option value="세종">세종</option>
+      </select>
+    </div>
+    <div class="issue-input-wrap u-ml-12">
       <label class="section-label">출판사 <span class="required">*</span></label>
       <select name="publisher" id="publisher-select" class="issue-input u-w-200"
               onchange="onPublisherChange()" disabled>
@@ -81,7 +89,7 @@
   <div class="progress-header">
     <h2>진행 상태</h2>
     <button type="button" id="cancel-btn" class="cancel-btn hidden" onclick="cancelJob()">
-      &#10005; 취소
+      취소
     </button>
     <div class="step-indicators">
       <span class="step" id="step-parse">&#9312; 파싱</span>
@@ -263,8 +271,11 @@
     if (publisher.indexOf(subject) === 0) {
       pubShort = publisher.substring(subject.length).replace(/^\s+/, '');
     }
+    // 세종 등 학교 선택 시 끝에 (학교) 접미사
+    var school = document.getElementById('school-select').value || '';
+    var schoolSuffix = school ? '(' + school + ')' : '';
     document.getElementById('filename-preview').textContent =
-      subject + '_' + pubShort + '_' + lesson + '_전체(C).indd';
+      subject + '_' + pubShort + '_' + lesson + '_전체(C)' + schoolSuffix + '.indd';
   }
 </script>
 <script src="{{ url_for('static', filename='js/typeset.js') }}"
