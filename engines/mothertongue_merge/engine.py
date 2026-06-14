@@ -113,19 +113,16 @@ def _parse_excel_lessons(excel_path, header_row=3, first_data_row=4):
 
 def _find_fallback_file(fallback_base, lesson_num):
     """fallback_base 안에서 {N}강... 시작 폴더 → 안의 .indd 첫 후보 반환."""
-    if not fallback_base or not os.path.isdir(fallback_base):
+    if not fallback_base:
         return None
-    # 미러 redirect — Drive zombie 시 GDrive listdir EDEADLK 회피
-    from engines.final.extractor import _resolve_local_mirror as _rlm
-    fallback_base = _rlm(fallback_base, None)
+    # 미러 ∪ GDrive 합집합 — 미러가 stale해도 강 폴더 누락 방지
+    from engines.final.extractor import list_manuscript_entries
     lesson_int = int(lesson_num)
     # 폴더명: "{N}강 {lesson_name}" — N 은 0-padded 가 아니므로 lesson_int 와 매칭
     target_prefixes = [f"{lesson_int}강", f"{lesson_int:02d}강"]
-    for raw in os.listdir(fallback_base):
-        nfc = _nfc(raw)
+    for nfc, full in list_manuscript_entries(fallback_base, None):
         if not any(nfc.startswith(p) for p in target_prefixes):
             continue
-        full = os.path.join(fallback_base, raw)
         if not os.path.isdir(full):
             continue
         # 해당 폴더 안에서 .indd 후보 (마더텅 강 파일)
@@ -144,10 +141,10 @@ def _find_fallback_file(fallback_base, lesson_num):
 
 def _find_month_folder(gdrive_base, grade_num, year, month):
     grade_dir = os.path.join(gdrive_base, f"고{grade_num}")
-    # 미러 redirect — Drive zombie 시 GDrive listdir EDEADLK 회피
-    from engines.final.extractor import _resolve_local_mirror as _rlm
-    grade_dir = _rlm(grade_dir, None)
-    if not os.path.isdir(grade_dir):
+    # 미러 ∪ GDrive 합집합 — 미러가 stale해도(월 폴더가 GDrive에만 있어도) 누락 방지
+    from engines.final.extractor import list_manuscript_entries
+    entries = list_manuscript_entries(grade_dir, None)
+    if not entries:
         return None
 
     month_int = int(month)
@@ -156,37 +153,33 @@ def _find_month_folder(gdrive_base, grade_num, year, month):
         month_variants.append(f"0{month_int}")
 
     prefix = f"고{grade_num} "
-    for raw in os.listdir(grade_dir):
-        nfc = _nfc(raw)
+    for nfc, full in entries:
         if not nfc.startswith(prefix):
             continue
         if f"{year}년" not in nfc:
             continue
         if not any(f"{mv}월" in nfc for mv in month_variants):
             continue
-        full = os.path.join(grade_dir, raw)
         if os.path.isdir(full):
             return full
     return None
 
 
 def _find_analysis_files(month_folder, patterns=None):
-    if not month_folder or not os.path.isdir(month_folder):
+    if not month_folder:
         return []
-    # 미러 redirect — Drive zombie 시 GDrive listdir EDEADLK 회피
-    from engines.final.extractor import _resolve_local_mirror as _rlm
-    month_folder = _rlm(month_folder, None)
+    # 미러 ∪ GDrive 합집합 — 미러가 stale해도 분석본 .indd 누락 방지
+    from engines.final.extractor import list_manuscript_entries
     patterns = patterns or ["분석본"]
     results = []
-    for raw in os.listdir(month_folder):
-        nfc = _nfc(raw)
+    for nfc, full in list_manuscript_entries(month_folder, None):
         if not nfc.lower().endswith(".indd"):
             continue
         if not any(pat in nfc for pat in patterns):
             continue
         if nfc.startswith("~") or "idlk" in nfc.lower():
             continue
-        results.append(os.path.join(month_folder, raw))
+        results.append(full)
     results.sort(key=lambda p: (len(os.path.basename(p)), os.path.basename(p)))
     return results
 
