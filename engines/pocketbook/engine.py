@@ -63,7 +63,10 @@ class PocketbookEngine(BaseEngine):
 
     @property
     def jsx_timeout(self):
-        return 600
+        # 광문1 분석본 4개+ 큰 케이스는 12분(720초+) 걸림 — 600은 부족.
+        # 1800초(30분)면 _wait_for_completion이 PDF 완료 전 timeout 안 남.
+        # stall 감지(STALL_LIMIT=300초)가 따로 있어 진짜 hang은 timeout 늘려도 자동 종료됨.
+        return 1800
 
     @property
     def upload_spec(self):
@@ -180,7 +183,7 @@ class PocketbookEngine(BaseEngine):
         name = unicodedata.normalize("NFC", os.path.basename(filepath))
         if "모의" in name or "마더텅" in name or re.search(r"\d{2}년\s*\d{1,2}월", name):
             return "mockexam"
-        if "올포" in name or "올림" in name:
+        if "올포" in name or "올림" in name or "리딩파워" in name or "리파" in name:
             return "ebs"
         return "textbook"
 
@@ -193,10 +196,19 @@ class PocketbookEngine(BaseEngine):
         m2 = re.search(r"(\d{2}년)\s*(\d{1,2}월)", name)
         if m2:
             return m2.group(1) + m2.group(2)
-        # 교과서/EBS: 괄호 안 카테고리
+        # 교과서/EBS: 괄호 안 카테고리. 단 "(1)" 같은 단순 숫자(중복 파일 마커)는 제외.
         m = re.search(r"\(([^)]+)\)", name)
         if m:
-            return m.group(1)
+            paren = m.group(1).strip()
+            if re.search(r"[^\d\s,~\-]", paren):  # 강·과·한글 등 카테고리성 문자 포함
+                return paren
+        # 괄호 없는 올림포스/올포 EBS: 본문에서 "올림포스N강" 추출
+        # (예 "분석본01_올림포스 독해기본1 15강" -> "올림포스15강",
+        #  "...16강 (1)"의 (1)은 위에서 걸러지고 여기서 "올림포스16강")
+        if "올림" in name or "올포" in name:
+            gm = re.search(r"(\d+)\s*강", name)
+            if gm:
+                return "올림포스" + gm.group(1) + "강"
         return ""
 
     @staticmethod
@@ -226,6 +238,78 @@ class PocketbookEngine(BaseEngine):
         if ',' in cat:
             return [c.strip() for c in cat.split(',') if c.strip()]
         return [cat]
+
+    @staticmethod
+    def _parse_gang_spec(cat):
+        """올림포스 카테고리에서 강 번호 목록 추출 (범위 포함, 등장 순서 유지).
+        '올림포스10,11,12,14강' → [10,11,12,14]
+        '올림포스10-12,14-16강' → [10,11,12,14,15,16]
+        '올림포스15,16,17,18강,미래앤3,4과DL' → [15,16,17,18]
+        """
+        import unicodedata
+        nfc = unicodedata.normalize("NFC", cat) if cat else ""
+        m = re.search(r"(?:올림포스|올포)\s*([\d,\-~]+)강", nfc)
+        if not m:
+            return []
+        spec = m.group(1)
+        nums = []
+        for part in spec.split(","):
+            part = part.strip()
+            if not part:
+                continue
+            rng = re.match(r"^(\d+)\s*[-~]\s*(\d+)$", part)
+            if rng:
+                a, b = int(rng.group(1)), int(rng.group(2))
+                if a <= b:
+                    nums.extend(range(a, b + 1))
+            elif part.isdigit():
+                nums.append(int(part))
+        # 중복 제거 (등장 순서 유지)
+        seen = set()
+        result = []
+        for n in nums:
+            if n not in seen:
+                seen.add(n)
+                result.append(n)
+        return result
+
+    @staticmethod
+    def _review_canon_type(header):
+        """리뷰테스트 header에서 유형 추출 → olymposCanonKey와 같은 표기.
+        '1. p68-수능 대비 ANALYSIS' → '분석', '2. p70-no.01' → '01',
+        '2. p116-no.01~02' → '01'(범위 첫 번호), '서술형 Practice' → '서술'.
+        """
+        if not header:
+            return None
+        if "ANALYSIS" in header or "분석" in header:
+            return "분석"
+        if "서술" in header:
+            return "서술"
+        if "논술" in header:
+            return "논술"
+        nm = re.search(r"no\.?\s*(\d+)", header, re.IGNORECASE)
+        if nm:
+            n = int(nm.group(1))
+            return ("0" if n < 10 else "") + str(n)
+        return None
+
+    @staticmethod
+    def _assign_olpo_review_canon(passages, gang_list):
+        """올림포스 리뷰 passages에 canon 키('강-유형') 부여.
+        강 번호는 header에 없으므로 'ANALYSIS(분석)'마다 새 강으로 보고
+        gang_list(등장 순서)에서 순차 할당한다.
+        """
+        if not gang_list:
+            return
+        gang_idx = -1
+        for p in passages:
+            t = PocketbookEngine._review_canon_type(p.get("header", ""))
+            if t == "분석":
+                gang_idx += 1
+            if gang_idx < 0:
+                gang_idx = 0
+            if t and gang_idx < len(gang_list):
+                p["canon"] = str(gang_list[gang_idx]) + "-" + t
 
     @staticmethod
     def _match_categories_to_files(categories, completed_files):
@@ -366,13 +450,8 @@ class PocketbookEngine(BaseEngine):
                 if rt_key in seen_keys:
                     continue
                 seen_keys.add(rt_key)
-                # 강 번호 목록 추출
-                expanded = self._expand_category(nfc_cat)
-                lesson_nums = []
-                for ec in expanded:
-                    lm = re.search(r"(\d+)강", ec)
-                    if lm:
-                        lesson_nums.append(int(lm.group(1)))
+                # 강 번호 목록 추출 (범위 "10-12,14-16강" 포함)
+                lesson_nums = self._parse_gang_spec(nfc_cat)
                 if not lesson_nums:
                     continue
                 # EBS 작업 하위에서 올림포스 폴더 탐색
@@ -568,6 +647,10 @@ class PocketbookEngine(BaseEngine):
                 except Exception as e:
                     log(f"  [리뷰테스트] 파싱 실패 ({os.path.basename(docx_path)}): {e}")
 
+            # 올림포스(EBS): 리뷰에 canon 키('강-유형') 부여 → run.jsx에서 지문과 매칭
+            if ft == "ebs":
+                self._assign_olpo_review_canon(all_passages, lesson_nums)
+
             rt_map[rt_key] = {"passages": all_passages}
             fnames = [os.path.basename(p) for p in docx_paths]
             log(f"  [리뷰테스트] {nfc_cat} -> {len(all_passages)}개 ({', '.join(fnames)})")
@@ -646,11 +729,8 @@ class PocketbookEngine(BaseEngine):
                 hwpx_path = listening_files[0]
                 listening_text_file = os.path.join(job_dir, "listening_parsed.txt")
                 import subprocess
-                # 조판/인디자인 스크립트/ 경로 (통합웹사이트 = 조판/조판_자동화 심볼릭링크)
-                _studio_root = os.path.dirname(os.path.dirname(os.path.dirname(_DIR)))
-                parser_script = os.path.join(
-                    _studio_root, "조판", "인디자인 스크립트", "parse_listening_hwpx.py"
-                )
+                # 파서는 엔진 패키지 내부(_DIR)에 위치 — git에 포함되고 경로가 일관됨
+                parser_script = os.path.join(_DIR, "parse_listening_hwpx.py")
                 r = subprocess.run(
                     ["python3", parser_script, hwpx_path, listening_text_file],
                     capture_output=True, text=True
@@ -753,6 +833,15 @@ class PocketbookEngine(BaseEngine):
         if sem_match:
             semester = sem_match.group(1)  # "1" or "2"
 
+        # 올림포스 완성본 책 구분: 1학기 → 독해기본1, 2학기 → 독해기본2
+        # (올림포스 폴더에 두 책이 섞여 있고 강 범위가 겹치므로, 학기로 책을 골라야
+        #  다른 지문이 들어가는 것을 막는다)
+        olympos_book = ""
+        if semester == "1":
+            olympos_book = "독해기본1"
+        elif semester == "2":
+            olympos_book = "독해기본2"
+
         # 학년+학기 → 검색할 완성 포켓북 폴더 결정
         # 모의고사: 고1 모의고사 / 고2 모의고사
         # 교과서: 고1+1학기→공통영어1, 고1+2학기→공통영어2, 고2+1학기→영어1, 고2+2학기→영어2
@@ -803,10 +892,20 @@ class PocketbookEngine(BaseEngine):
         if text_folder_key and text_folder_key in all_pocketbooks:
             search_keys.append(text_folder_key)
 
-        # EBS 타입이 있으면 올림포스 폴더도 검색
+        # EBS 타입이 있으면 학년별 EBS 완성본 폴더도 검색
+        # 고1: 올림포스(고1) — config의 "올림포스" 키로 매핑됨
+        # 고2: 리딩파워(고2)
+        # 분석본 카테고리에 "리딩파워"가 있으면 학년 무관하게 리딩파워 폴더 검색
         file_types_set = set(content.get("file_types", []))
-        if "ebs" in file_types_set and "올림포스" in all_pocketbooks:
-            search_keys.append("올림포스")
+        all_cats_str = " ".join(content.get("categories", []))
+        if "ebs" in file_types_set:
+            if "올림" in all_cats_str or "올포" in all_cats_str:
+                if "올림포스" in all_pocketbooks:
+                    search_keys.append("올림포스")
+            if "리딩파워" in all_cats_str or "리파" in all_cats_str:
+                rp_key = f"리딩파워(고{grade_num})" if grade_num else ""
+                if rp_key and rp_key in all_pocketbooks:
+                    search_keys.append(rp_key)
 
         for key in search_keys:
             _collect_completed(all_pocketbooks[key], recursive=True)
@@ -840,11 +939,14 @@ class PocketbookEngine(BaseEngine):
             # 완성본에 없는 지문만 새로 조판됨
             new_analysis.append(af)
             new_file_types.append(ft)
-            if unmatched:
-                new_categories.append(",".join(unmatched))
-                log(f"  [신규] {','.join(unmatched)} <- {os.path.basename(af)}")
-            else:
-                new_categories.append(cat)
+            # 카테고리는 항상 원본 유지: 매칭된 강을 빼버리면 run.jsx의 복사 경로
+            # 트리거(카테고리 내 "올림"/"올포" 등)가 사라져 완성본에 있는 지문까지
+            # 전부 신규 조판된다. (예: "올림포스15,16,17,18강,미래앤3,4과DL"에서
+            # 15~18강이 매칭되면 "미래앤3,4과DL"만 남아 올림포스 복사가 죽음)
+            # 복사 여부는 run.jsx가 passageNo로 판단하므로 원본 유지가 안전하다.
+            new_categories.append(cat)
+            if unmatched and len(unmatched) != len(expanded):
+                log(f"  [부분매칭] {os.path.basename(af)}: 완성본 {len(matched_cats)}개 + 신규 {','.join(unmatched)}")
 
         # 같은 파일에 매칭된 카테고리 그룹화 (범위 파일 중복 복제 방지)
         grouped_sources = {}
@@ -1037,6 +1139,19 @@ class PocketbookEngine(BaseEngine):
                     safe_copy(src_path, eng_dst)
             pno_lookup_files.append({"file": eng_dst, "ym": ym_key})
 
+        def _olympos_book_ok(nfc_name):
+            """올림포스 완성본은 학기에 맞는 독해기본N '포켓북'만 사용 (책 혼입 방지).
+            책 구분이 없는 파일(교과서/모의고사 등)은 그대로 통과."""
+            if not olympos_book:
+                return True
+            bm = re.search(r"독해기본\s*(\d)", nfc_name)
+            if not bm:
+                return True
+            # 올림포스 파일: 학기에 맞는 책 + 실제 포켓북 파일만 (analysis/원본 제외)
+            if ("독해기본" + bm.group(1)) != olympos_book:
+                return False
+            return "포켓북" in nfc_name
+
         # 모든 완성본 폴더에서 파일 수집
         for key in search_keys:
             folder = all_pocketbooks.get(key, "")
@@ -1045,6 +1160,8 @@ class PocketbookEngine(BaseEngine):
             for fn in os.listdir(folder):
                 nfc = unicodedata.normalize("NFC", fn)
                 if not nfc.endswith(".indd") or "분석본" in nfc or "작업전" in nfc:
+                    continue
+                if not _olympos_book_ok(nfc):
                     continue
                 src_path = os.path.join(folder, fn)
                 # 파일명에서 식별자 추출
@@ -1073,6 +1190,8 @@ class PocketbookEngine(BaseEngine):
                 for fn in os.listdir(sub_path):
                     nfc = unicodedata.normalize("NFC", fn)
                     if not nfc.endswith(".indd") or "분석본" in nfc or "작업전" in nfc:
+                        continue
+                    if not _olympos_book_ok(nfc):
                         continue
                     src_path = os.path.join(sub_path, fn)
                     ym_match = re.search(r"\((\d{2})\D+(\d{1,2})월\)", nfc)
@@ -1173,7 +1292,7 @@ class PocketbookEngine(BaseEngine):
 
         # /tmp 로그를 job_dir에도 복사 (디버그용)
         if tmp_output_dir and os.path.exists(os.path.join(tmp_output_dir, log_filename)):
-            _safe_copy(os.path.join(tmp_output_dir, log_filename),
+            safe_copy(os.path.join(tmp_output_dir, log_filename),
                           os.path.join(job_dir, log_filename))
 
         content = {}
@@ -1216,7 +1335,7 @@ class PocketbookEngine(BaseEngine):
                     final_candidate = final_output.replace(".indd", ext) if ext == ".pdf" else final_output
                     if tmp_candidate and os.path.exists(tmp_candidate) and final_candidate:
                         os.makedirs(os.path.dirname(final_candidate), exist_ok=True)
-                        _safe_copy(tmp_candidate, final_candidate)
+                        safe_copy(tmp_candidate, final_candidate)
                         if ext == ".pdf":
                             pdf_path = final_candidate
                 # /tmp pdf 폴백
@@ -1239,6 +1358,17 @@ class PocketbookEngine(BaseEngine):
 
         ok = pdf_path is not None and overflow == 0 and not warnings
 
+        # 조교 공유 폴더(ASSISTANT_SHARE_DIR)로 .indd가 넘어가도록 경로 노출.
+        # 다른 엔진은 verify result에 indd_path를 넣지만 포켓북만 빠져 있어,
+        # 공유 worker가 복사할 파일을 못 찾고 카테고리 폴더만 생성되던 문제 수정.
+        # 포켓북 결과물은 job_dir 밖 최종 경로(/조판/교재/포켓북/)에 있음. PDF는 공유 제외.
+        indd_out = None
+        _fop = os.path.join(job_dir, ".final_output_path")
+        if os.path.exists(_fop):
+            _cand = open(_fop, encoding="utf-8").read().strip()
+            if _cand and os.path.exists(_cand):
+                indd_out = _cand
+
         result = {
             "ok": ok,
             "overflow": overflow,
@@ -1246,6 +1376,7 @@ class PocketbookEngine(BaseEngine):
                 "지문": {"actual": total_passages, "expected": total_passages},
             },
             "pdf_path": pdf_path,
+            "indd_path": indd_out,
             "warnings": warnings,
             "grade_label": f"분석본 {total_files}개 → 지문 {total_passages}개",
         }

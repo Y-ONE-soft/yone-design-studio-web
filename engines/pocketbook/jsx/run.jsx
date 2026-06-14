@@ -577,6 +577,7 @@ var settingsPath = "__SETTINGS_PATH__";
         var pnoLookupFiles = S.pno_lookup_files || [];
         var pnoLookupDocCache = {}; // ym -> Document (열린 문서 캐시)
         var pnoLookupSpreadCache = {}; // ym -> { pno: spreadIdx, ... }
+        var pnoLookupCanonCache = {}; // ym -> { canonKey: spreadIdx } (올림포스 정규화 매칭)
 
         function buildSpreadPnoMap(srcDoc) {
             var map = {};
@@ -606,8 +607,201 @@ var settingsPath = "__SETTINGS_PATH__";
             return map;
         }
 
+        // ── 올림포스 정규화 매칭 헬퍼 ──
+        // 분석본 라벨 "11강 짧은 어구 빈칸 추론 1번" 과
+        // 완성본 라벨 "올포 11강 01" 의 표기가 달라도 같은 지문을 매칭하기 위해
+        // "강번호-유형"(예: "11-01", "16-서술") 정규화 키로 환원한다.
+        function olymposCanonKey(label) {
+            if (!label) return null;
+            var gm = String(label).match(/(\d+)\s*강/); // "11강"
+            if (!gm) return null;
+            var gang = parseInt(gm[1], 10);
+            var rest = String(label).substring(String(label).indexOf(gm[0]) + gm[0].length);
+            var t;
+            if (rest.indexOf("분석") >= 0) t = "분석";              // 분석
+            else if (rest.indexOf("서술형") >= 0) t = "서술"; // 서술형 -> 서술
+            else if (rest.indexOf("논술형") >= 0) t = "논술"; // 논술형 -> 논술
+            else {
+                // 첫 번호 사용: "1번"→1, 범위 "1~2번"→1, 완성본 "1~2"/"01"→1.
+                // (장문 "장문Ⅰ 1~2번"에서 끝 숫자(2)를 잡아 17-02로 만들면
+                //  완성본 "17강 1~2"(17-01)와 어긋나 매칭 실패 → 빈 페이지가 됐음)
+                var nm = rest.match(/(\d+)/);
+                if (!nm) return null;
+                var n = parseInt(nm[1], 10);
+                t = (n < 10 ? "0" : "") + n;
+            }
+            return gang + "-" + t;
+        }
+
+        // 완성본 문서의 지문번호 프레임 -> 정규화 키 -> 스프레드 인덱스 맵.
+        // 일부 완성본은 지문번호 태그가 비어 있는 스프레드가 있음(데이터 누락).
+        // 그 경우 같은 스프레드의 "올포 N강 ..." 헤딩(짧은 라벨)으로 폴백 매칭한다.
+        function buildCanonMap(srcDoc) {
+            var map = {};
+            for (var si = 0; si < srcDoc.spreads.length; si++) {
+                try {
+                    var primary = null;  // 지문번호 위치 프레임
+                    var fallback = null; // "올포 N강 ..." 헤딩 (지문번호 비었을 때만)
+                    var spPages = srcDoc.spreads[si].pages.everyItem().getElements();
+                    for (var spi = 0; spi < spPages.length; spi++) {
+                        var spTFs = spPages[spi].textFrames.everyItem().getElements();
+                        for (var sti = 0; sti < spTFs.length; sti++) {
+                            var raw = String(spTFs[sti].contents).replace(/[\r\n]/g, " ");
+                            if (raw.replace(/\s/g, "") === "") continue;
+                            var gb = spTFs[sti].geometricBounds;
+                            if (gb[0] >= 13 && gb[0] <= 17 && gb[2] <= 22 && gb[1] >= 13 && gb[1] <= 17) {
+                                if (primary === null) primary = raw;
+                            } else if (fallback === null) {
+                                // 짧은 "올포..." 라벨만 폴백 후보 (본문/긴 텍스트 제외 → 오매칭 방지)
+                                var st = raw.replace(/\s/g, "");
+                                if (st.length <= 25 && st.indexOf("올포") === 0 && olymposCanonKey(raw)) {
+                                    fallback = raw;
+                                }
+                            }
+                        }
+                    }
+                    var ck = olymposCanonKey(primary);
+                    if (!ck && fallback) ck = olymposCanonKey(fallback);
+                    if (ck && map[ck] === undefined) map[ck] = si;
+                } catch(e) {}
+            }
+            return map;
+        }
+
+        // ym 키("11-16강","11강" 등)가 해당 강 번호를 포함하는지
+        function ymRangeHasGang(lym, gNum) {
+            if (!lym) return false;
+            var rng = String(lym).match(/(\d+)\s*[~\-]\s*(\d+)\s*강/); // "11-16강"
+            if (rng) return gNum >= parseInt(rng[1], 10) && gNum <= parseInt(rng[2], 10);
+            var one = String(lym).match(/(\d+)\s*강/); // "11강"
+            if (one) return parseInt(one[1], 10) === gNum;
+            return false;
+        }
+
+        // ym으로 완성본 파일을 찾아 연다 (이미 열려 있으면 재사용)
+        function openLookupDocByYm(ym) {
+            var targetFile = null;
+            for (var li = 0; li < pnoLookupFiles.length; li++) {
+                if (pnoLookupFiles[li].ym === ym) { targetFile = pnoLookupFiles[li].file; break; }
+            }
+            if (!targetFile) return null;
+            var f = new File(targetFile);
+            if (!f.exists) return null;
+            for (var dd = 0; dd < app.documents.length; dd++) {
+                if (app.documents[dd].name === f.name) return app.documents[dd];
+            }
+            var prevIA = app.scriptPreferences.userInteractionLevel;
+            try {
+                app.scriptPreferences.userInteractionLevel = UserInteractionLevels.NEVER_INTERACT;
+                var sd = app.open(f);
+                app.scriptPreferences.userInteractionLevel = prevIA;
+                return sd;
+            } catch(e) {
+                app.scriptPreferences.userInteractionLevel = prevIA;
+                return null;
+            }
+        }
+
+        // 완성본 스프레드를 결과 문서로 복제 (+리뷰테스트 동반 복제). 반환: 2/1/false
+        function copySpreadAt(srcDoc, spreadIdx, pno) {
+            try {
+                srcDoc.spreads[spreadIdx].duplicate(LocationOptions.AFTER, doc.spreads[-1]);
+                existingPassageNos[pno] = true;
+                var nextIdx = spreadIdx + 1;
+                var isMemtest = false;
+                var srcSpreadCount = srcDoc.spreads.length;
+                if (includeReviewTest && nextIdx < srcSpreadCount) {
+                    try {
+                        var nextPages = srcDoc.spreads[nextIdx].pages.everyItem().getElements();
+                        for (var npi = 0; npi < nextPages.length; npi++) {
+                            var am = nextPages[npi].appliedMaster;
+                            var mName = (am && am.isValid) ? am.name : "";
+                            if (mName.length > 0 && (mName.charAt(0) === "B" || mName.charAt(0) === "D") && mName.charAt(1) === "-") {
+                                isMemtest = true; break;
+                            }
+                        }
+                    } catch(e) {}
+                    if (isMemtest) {
+                        try { srcDoc.spreads[nextIdx].duplicate(LocationOptions.AFTER, doc.spreads[-1]); }
+                        catch(e2) { isMemtest = false; }
+                    }
+                }
+                return isMemtest ? 2 : 1;
+            } catch(e) {
+                return false;
+            }
+        }
+
+        // 미래엔 DL(딥러닝 장문): "N과 DL" 지문/리뷰를 미래엔N과 완성본에서 찾는다.
+        // 반환: {doc, passageIdx, reviewIdx} 또는 null. (reviewIdx = 마지막 F-마스터)
+        function findDLInTextbook(lessonNum) {
+            for (var di = 0; di < pnoLookupFiles.length; di++) {
+                var dym = pnoLookupFiles[di].ym;
+                if (!dym || dym.indexOf("미래") < 0) continue;       // 미래엔/미래앤 완성본만
+                var dm = dym.match(/(\d+)과$/);                       // "...N과"
+                if (!dm || dm[1] !== String(lessonNum)) continue;
+                var dd = openLookupDocByYm(dym);
+                if (!dd) continue;
+                if (!pnoLookupSpreadCache[dym]) pnoLookupSpreadCache[dym] = buildSpreadPnoMap(dd);
+                var pIdx = pnoLookupSpreadCache[dym][lessonNum + "과DL"];
+                if (pIdx === undefined) continue;
+                var rIdx = -1; // DL 리뷰 = 마지막 F-마스터 스프레드
+                for (var si = 0; si < dd.spreads.length; si++) {
+                    try {
+                        var pgs = dd.spreads[si].pages.everyItem().getElements();
+                        for (var pi = 0; pi < pgs.length; pi++) {
+                            var am = pgs[pi].appliedMaster;
+                            var mn = (am && am.isValid) ? am.name : "";
+                            if (mn.charAt(0) === "F" && mn.charAt(1) === "-") { rIdx = si; break; }
+                        }
+                    } catch(e) {}
+                }
+                pnoLookupDocCache[dym] = dd;
+                return { doc: dd, passageIdx: pIdx, reviewIdx: rIdx };
+            }
+            return null;
+        }
+
         function copySpreadByPassageNo(pno, fileCategory) {
             if (!pno || pnoLookupFiles.length === 0) return false;
+
+            // ══ 미래엔 DL: "N과 DL" → 미래엔N과 완성본의 "N과 DL" 스프레드 복사 ══
+            var _dlm = pno.match(/^(\d+)과\s*DL/i);
+            if (_dlm) {
+                var _dlInfo = findDLInTextbook(parseInt(_dlm[1], 10));
+                if (_dlInfo) return copySpreadAt(_dlInfo.doc, _dlInfo.passageIdx, pno);
+                return false;
+            }
+
+            // ══ 올림포스(강 기반) 정규화 매칭 ══
+            // 분석본 "11강 ... 1번" 과 완성본 "올포 11강 01" 은 표기 규칙이 달라
+            // 공백 제거 문자열 비교로는 매칭 불가. 강번호+유형 정규화 키로 매칭한다.
+            // 책 구분(독해기본1/2)은 engine.py가 학기에 맞는 파일만 pno_lookup에 넣어 보장.
+            // 올림포스 카테고리에만 적용 (모의고사/교과서/리딩파워 경로는 영향 없음).
+            if (fileCategory && (fileCategory.indexOf("올림") >= 0 || fileCategory.indexOf("올포") >= 0)) {
+                var _g = pno.match(/(\d+)\s*강/);
+                var _isMock6 = (pno.length >= 6 && /^\d{6}/.test(pno));
+                if (_g && !_isMock6) {
+                    var _ck = olymposCanonKey(pno);
+                    if (!_ck) return false;
+                    var _gNum = parseInt(_g[1], 10);
+                    for (var _oi = 0; _oi < pnoLookupFiles.length; _oi++) {
+                        var _lym = pnoLookupFiles[_oi].ym;
+                        if (!ymRangeHasGang(_lym, _gNum)) continue;
+                        if (!pnoLookupDocCache[_lym]) {
+                            var _od = openLookupDocByYm(_lym);
+                            if (!_od) continue;
+                            pnoLookupDocCache[_lym] = _od;
+                            pnoLookupCanonCache[_lym] = buildCanonMap(_od);
+                        }
+                        var _sidx = pnoLookupCanonCache[_lym] ? pnoLookupCanonCache[_lym][_ck] : undefined;
+                        if (_sidx !== undefined) {
+                            return copySpreadAt(pnoLookupDocCache[_lym], _sidx, pno);
+                        }
+                    }
+                    return false; // 완성본에 없는 강 지문 -> 안전하게 신규 조판
+                }
+            }
 
             // ym 키 결정: 모의고사(6자리)는 앞 4자리(YYMM), 교과서/EBS는 fileCategory
             var ym = "";
@@ -732,6 +926,242 @@ var settingsPath = "__SETTINGS_PATH__";
             }
         }
 
+        // ─────────────────────────────────────────────────────────
+        // 교과서 과(lesson) 단위 처리
+        // 분석본에 있는 지문만 기준으로, 각 지문의 본문 + 위치대응 리뷰테스트를
+        // 완성본에서 선별 복사한다(완성본 통째 복제가 아님).
+        // 완성본 구조: [표지] 본문들(content 마스터, 지문번호 있음)
+        //              리뷰들(memtest 마스터 B/D/F/L, 지문번호 없음) [끝]
+        // 본문 N개 ↔ 리뷰 N개가 스프레드 순서로 1:1 대응하므로,
+        // 리뷰 마스터 종류(F/D 등)와 무관하게 같은 순번끼리 짝짓는다.
+        // ─────────────────────────────────────────────────────────
+
+        // catPrefix+token 으로 완성본 ym 키 찾기 ("능률민"+"3과"→"능률민3과")
+        function findLessonYm(catPrefix, token) {
+            if (!token) return null;
+            var want = catPrefix + token;
+            for (var i = 0; i < pnoLookupFiles.length; i++) {
+                if (pnoLookupFiles[i].ym === want) return want;
+            }
+            // 폴백: catPrefix로 시작하고 token으로 끝나는 ym
+            for (var fi = 0; fi < pnoLookupFiles.length; fi++) {
+                var y = pnoLookupFiles[fi].ym;
+                if (catPrefix && y.indexOf(catPrefix) === 0 &&
+                    y.length >= token.length &&
+                    y.substring(y.length - token.length) === token) return y;
+            }
+            return null;
+        }
+
+        // 완성본 한 스프레드의 지문번호 텍스트 (buildSpreadPnoMap과 동일한 위치 규칙)
+        function getSpreadPnoText(srcDoc, si) {
+            try {
+                var spPages = srcDoc.spreads[si].pages.everyItem().getElements();
+                for (var spi = 0; spi < spPages.length; spi++) {
+                    var tfs = spPages[spi].textFrames.everyItem().getElements();
+                    for (var ti = 0; ti < tfs.length; ti++) {
+                        var gb = tfs[ti].geometricBounds;
+                        if (gb[0] >= 13 && gb[0] <= 17 && gb[2] <= 22 && gb[1] >= 13 && gb[1] <= 17) {
+                            var t = String(tfs[ti].contents).replace(/[\r\n\s]/g, "");
+                            if (t) return t;
+                        }
+                    }
+                }
+            } catch(e) {}
+            return "";
+        }
+
+        // 완성본을 본문/리뷰 스프레드 배열로 분류 (스프레드 순서 보존)
+        function scanCompletedLesson(srcDoc) {
+            var bodies = [];   // [{idx, pno}]
+            var reviews = [];  // [스프레드 idx]
+            for (var s = 0; s < srcDoc.spreads.length; s++) {
+                try {
+                    var pgs = srcDoc.spreads[s].pages.everyItem().getElements();
+                    var hasMaster = false, isRev = false;
+                    for (var pi = 0; pi < pgs.length; pi++) {
+                        var am = pgs[pi].appliedMaster;
+                        var nm = (am && am.isValid) ? am.name : "";
+                        if (nm) { hasMaster = true; if (isMemtestMaster(nm)) isRev = true; }
+                    }
+                    if (!hasMaster) continue;   // 표지/끝 등 마스터 없는 스프레드 제외
+                    if (isRev) reviews.push(s);
+                    else bodies.push({ idx: s, pno: getSpreadPnoText(srcDoc, s) });
+                } catch(e) {}
+            }
+            return { bodies: bodies, reviews: reviews };
+        }
+
+        // 지문 하나 신규 조판 (짤지문/일반 분기)
+        function buildOneNew(passage, fileCategory) {
+            var npno = (passage.passageNo || "").replace(/\s/g, "");
+            var catR;
+            if (passage.isPair) {
+                catR = createPairSpread(doc, refDoc, templateSpreads, passage, "textbook", fileCategory, masters, styleMap, stBody, stMemtest, basicPara, iconSrc, csYellow);
+                if (passage.rightPassage && passage.rightPassage.passageNo) {
+                    existingPassageNos[passage.rightPassage.passageNo] = true;
+                }
+            } else {
+                catR = createNewSpread(doc, refDoc, templateSpreads, passage, "textbook", fileCategory, (masterMap.textbook).content, masters, styleMap, stBody, stKorean, stMemtest, stTopic, basicPara, csLesson, csPassNo, illustBase, grade, iconSrc, csYellow);
+            }
+            if (catR && catR.illustPlaced) illustCount++;
+            if (npno) existingPassageNos[npno] = true;
+            newCount++;
+        }
+
+        // 완성본이 있는 과: 분석본 지문 본문 복사 + 같은 순번 리뷰 복사
+        function copyLessonFromCompleted(grp, ym, fileCategory) {
+            var srcDoc = openLookupDocByYm(ym);
+            if (!srcDoc) { buildLessonNew(grp, fileCategory); return; }
+            var scan = scanCompletedLesson(srcDoc);
+            var bodies = scan.bodies;
+            var nItems = grp.items.length, mBodies = bodies.length;
+
+            // ── 분석본 항목 ↔ 완성본 본문 정렬 (지문번호 표기 차이에 robust) ──
+            // 1단계: 지문번호 정규화(공백 제거) exact 매칭.
+            // 2단계: 표기가 달라 1단계에서 못 잡힌 항목을, 좌우 매칭이 정한 본문 구간의
+            //        미사용 본문에 "순서 보존"으로 배정한다(구간의 미사용 본문 수가 미매칭
+            //        항목 수와 정확히 같을 때만; 모호하면 신규조판 유지).
+            //        분석본은 완성본 레슨의 부분집합(동일 순서)이라는 워크플로 전제에서 안전.
+            //        2단계 배정은 모두 [위치복구] 로그로 남겨 가시화한다(완성본 태그가
+            //        비어있거나 표기가 달라도 위치로 복구 — 침묵 신규조판 방지).
+            function _canonPno(s) { return (s || "").replace(/\s/g, ""); }
+            var pnoToBody = {};
+            for (var jb = 0; jb < mBodies; jb++) {
+                var cpj = _canonPno(bodies[jb].pno);
+                if (cpj && pnoToBody[cpj] === undefined) pnoToBody[cpj] = jb;
+            }
+            var assign = [], usedBody = [];
+            for (var ub = 0; ub < mBodies; ub++) usedBody[ub] = false;
+            for (var ia = 0; ia < nItems; ia++) {
+                var capi = _canonPno(grp.items[ia].passageNo);
+                var mb = (capi && pnoToBody[capi] !== undefined) ? pnoToBody[capi] : -1;
+                if (mb >= 0 && usedBody[mb]) mb = -1;   // 같은 본문 중복배정 방지
+                assign[ia] = mb;
+                if (mb >= 0) usedBody[mb] = true;
+            }
+            // 2단계: 연속 미매칭 런 단위로 순서보존 갭필
+            var rs = 0;
+            while (rs < nItems) {
+                if (assign[rs] >= 0) { rs++; continue; }
+                var re2 = rs; while (re2 < nItems && assign[re2] < 0) re2++;
+                var loB = (rs > 0) ? assign[rs - 1] : -1;
+                var hiB = (re2 < nItems) ? assign[re2] : mBodies;
+                var gap = [];
+                for (var gpb = loB + 1; gpb < hiB; gpb++) if (!usedBody[gpb]) gap.push(gpb);
+                if (gap.length === (re2 - rs)) {
+                    for (var rr = 0; rr < gap.length; rr++) { assign[rs + rr] = gap[rr]; usedBody[gap[rr]] = true; }
+                }
+                rs = re2;
+            }
+
+            // 1) 본문(분석본 순서대로) 복사/조판 + 각 지문의 리뷰소스(revPlan) 기록
+            var bodyStart = doc.spreads.length;
+            var revPlan = [];   // 본문 순서대로의 리뷰 스프레드 idx (-1 = 빈 페이지)
+            var copyCnt = 0, newCnt = 0, fillCnt = 0;
+            for (var p2 = 0; p2 < nItems; p2++) {
+                var pno2 = _canonPno(grp.items[p2].passageNo);
+                var bj = assign[p2];
+                if (bj >= 0) {
+                    try {
+                        srcDoc.spreads[bodies[bj].idx].duplicate(LocationOptions.AFTER, doc.spreads[-1]);
+                        if (pno2) existingPassageNos[pno2] = true;
+                        pnoCopyCount++; copyCnt++;
+                        if (_canonPno(bodies[bj].pno) !== pno2) {   // 표기 달랐는데 위치로 복구
+                            fillCnt++;
+                            log("    [위치복구] " + grp.token + " 분석본'" + (grp.items[p2].passageNo || "?") + "' = 완성본'" + (bodies[bj].pno || "(번호없음)") + "'");
+                        }
+                        revPlan.push(bj < scan.reviews.length ? scan.reviews[bj] : -1);
+                    } catch(e) { revPlan.push(-1); }
+                } else {
+                    buildOneNew(grp.items[p2], fileCategory);
+                    newCnt++;
+                    revPlan.push(-1);
+                }
+            }
+            // 매칭 못한 항목이 남았는데 완성본에 미사용 본문이 있으면 경고(침묵 실패 가시화)
+            var unusedBodies = 0;
+            for (var ux = 0; ux < mBodies; ux++) if (!usedBody[ux]) unusedBodies++;
+            if (newCnt > 0 && unusedBodies > 0) {
+                log("  [경고:매칭미해결] " + grp.token + ": 신규조판 " + newCnt + "개, 완성본 미사용 본문 " + unusedBodies + "개 — 지문번호 표기 확인 필요");
+            }
+            if (doc.spreads.length > bodyStart) correctCopiedMasters(bodyStart, doc.spreads.length, "textbook");
+
+            // 2) 리뷰테스트: 본문과 같은 순번으로 복사 (포함 모드일 때만)
+            if (includeReviewTest) {
+                var revStart = doc.spreads.length;
+                var revCopied = 0, revEmpty = 0;
+                for (var r = 0; r < revPlan.length; r++) {
+                    if (revPlan[r] >= 0) {
+                        try { srcDoc.spreads[revPlan[r]].duplicate(LocationOptions.AFTER, doc.spreads[-1]); revCopied++; }
+                        catch(e) { createEmptyMemtestSpread(doc, refDoc, templateSpreads, masters, "F"); revEmpty++; }
+                    } else {
+                        createEmptyMemtestSpread(doc, refDoc, templateSpreads, masters, "F"); revEmpty++;
+                    }
+                }
+                if (doc.spreads.length > revStart) correctCopiedMasters(revStart, doc.spreads.length, "textbook");
+                log("  [리뷰] " + grp.token + ": 본문 " + copyCnt + (fillCnt > 0 ? ("(위치복구" + fillCnt + ")") : "") + (newCnt > 0 ? ("+신규" + newCnt) : "") + ", 리뷰 " + revCopied + (revEmpty > 0 ? ("+빈" + revEmpty) : "") + " (F-마스터)");
+            } else {
+                log("  [본문] " + grp.token + ": " + copyCnt + (fillCnt > 0 ? ("(위치복구" + fillCnt + ")") : "") + (newCnt > 0 ? ("+신규" + newCnt) : "") + "개");
+            }
+        }
+
+        // 완성본이 없는 과: 전부 신규 조판 + docx/빈 리뷰
+        function buildLessonNew(grp, fileCategory) {
+            var rtMap = S.review_test_map || {};
+            var rtData = rtMap[fileCategory] || rtMap[grp.token] || null;
+            var rtPassages = (rtData && rtData.passages) ? rtData.passages : [];
+            for (var bi = 0; bi < grp.items.length; bi++) {
+                buildOneNew(grp.items[bi], fileCategory);
+            }
+            if (includeReviewTest) {
+                for (var k = 0; k < grp.items.length; k++) {
+                    if (k < rtPassages.length && rtPassages[k].blank_text) {
+                        createMemtestSpread(doc, refDoc, templateSpreads, rtPassages[k], masters, stMemtest, stMemCopy, "F");
+                    } else {
+                        createEmptyMemtestSpread(doc, refDoc, templateSpreads, masters, "F");
+                    }
+                }
+            }
+            log("  [신규] " + grp.token + ": 본문 " + grp.items.length + "개 조판 (완성본 없음)");
+        }
+
+        // 지문번호에서 레슨(과/강) 식별자만 분리.
+        // [근본 원인] 기존 "뒤 1~2자리 숫자 제거"(rawNo.replace(/\d{1,2}$/))는 접미사가
+        // 숫자인 지문("3과01"→"3과")만 처리한다. "3과 추가"는 뒤가 숫자가 아니라
+        // "3과추가"로 남아 레슨에서 떨어져 나가 별도 그룹이 되고, 완성본 키("YBM김3과")와
+        // 못 만나 통째로 신규조판되던 버그가 있었다(본문 01~05는 매칭, "추가"만 누락).
+        // → "N과/N강" 마커를 앵커로 잡아 접미사가 숫자든 아니든("01"/"추가"/"추가본문")
+        //    같은 레슨으로 묶는다. 마커가 없는 SL/L 형식은 기존처럼 뒤 1~2자리 숫자만 제거.
+        //    (과=과, 강=강 — 코드베이스 NFC 규약. line 773 동일 가정)
+        function lessonToken(rawNo) {
+            if (!rawNo) return "__misc__";
+            var m = rawNo.match(/^(.*?\d+\s*(?:과|강))/);  // 과=과 강=강 (NFC, line 773과 동일 규약)
+            if (m) return m[1].replace(/\s/g, "");
+            var t = rawNo.replace(/\d{1,2}$/, "");
+            return t || "__misc__";
+        }
+
+        // 교과서 분석본을 과(lesson) 단위로 처리하는 진입점
+        function processTextbookLessons(passages, fileCategory) {
+            var catPrefix = fileCategory.replace(/\d.*$/, "");
+            // 과(token)별 그룹화: "3과01"→"3과", "3과추가"→"3과", "SL201"→"SL2"
+            var groups = [];
+            var groupMap = {};
+            for (var i = 0; i < passages.length; i++) {
+                var rawNo = (passages[i].passageNo || "").replace(/\s/g, "");
+                var token = lessonToken(rawNo);
+                if (!groupMap[token]) { groupMap[token] = { token: token, items: [] }; groups.push(groupMap[token]); }
+                groupMap[token].items.push(passages[i]);
+            }
+            for (var g = 0; g < groups.length; g++) {
+                var grp = groups[g];
+                var lym = (grp.token === "__misc__") ? null : findLessonYm(catPrefix, grp.token);
+                if (lym) copyLessonFromCompleted(grp, lym, fileCategory);
+                else buildLessonNew(grp, fileCategory);
+            }
+        }
+
         function closePnoLookupDocs() {
             for (var ym in pnoLookupDocCache) {
                 try { pnoLookupDocCache[ym].close(SaveOptions.NO); } catch(e) {}
@@ -799,6 +1229,14 @@ var settingsPath = "__SETTINGS_PATH__";
                 var passages = extractPassages(analDoc, sourceType);
                 log("  " + passages.length + "개 지문");
                 saveLog();
+
+                // [교과서] 과 단위로 완성본에서 본문+대응 리뷰만 선별 복사 (분석본 지문 기준)
+                // 모의고사/EBS/올림포스는 아래 기존 경로를 그대로 사용
+                if (sourceType === "textbook" && pnoLookupFiles.length > 0) {
+                    processTextbookLessons(passages, fileCategory);
+                    try { analDoc.close(SaveOptions.NO); } catch(e) {}
+                    continue;
+                }
 
                 for (var p = 0; p < passages.length; p++) {
                     var pno = passages[p].passageNo || "";
@@ -914,6 +1352,53 @@ var settingsPath = "__SETTINGS_PATH__";
                     var rtMasterKey = sourceType === "ebs" ? "L" : "F";
                     var rtMasterChar = rtMasterKey.charAt(0); // "F" or "L"
 
+                    var totalRtCopied = 0;
+                    var totalRtFilled = 0;
+                    var totalRtEmpty = 0;
+
+                    // ── 올림포스(EBS): 리뷰를 canon 키(강-유형)로 지문과 매칭 ──
+                    // 완성본 10-16강엔 리뷰가 없어 docx에서 가져오는데, 위치(index)로
+                    // 끼우면 강/번호가 어긋나 엉뚱한 지문에 붙는다(예: "With technology").
+                    // engine.py가 부여한 canon("15-01" 등)으로 지문과 정확히 매칭한다.
+                    var olpoCat = fileCategory && (fileCategory.indexOf("올림") >= 0 || fileCategory.indexOf("올포") >= 0);
+                    var canonMap = null;
+                    if (olpoCat) {
+                        for (var rci = 0; rci < rtPassages.length; rci++) {
+                            var rck = rtPassages[rci].canon;
+                            if (rck) {
+                                if (!canonMap) canonMap = {};
+                                if (canonMap[rck] === undefined) canonMap[rck] = rtPassages[rci];
+                            }
+                        }
+                    }
+
+                    if (canonMap) {
+                        // 지문 순서대로 canon 매칭 리뷰 삽입 (매칭 실패 시 빈 페이지)
+                        for (var opi = 0; opi < passages.length; opi++) {
+                            // 미래엔 DL: 리뷰도 미래엔N과 완성본의 DL 리뷰(F-마스터)에서 복사
+                            if (passages[opi].isDL) {
+                                var _dlrm = (passages[opi].passageNo || "").match(/^(\d+)과/);
+                                var _dlr = _dlrm ? findDLInTextbook(parseInt(_dlrm[1], 10)) : null;
+                                var _dlrOk = false;
+                                if (_dlr && _dlr.reviewIdx >= 0) {
+                                    try { _dlr.doc.spreads[_dlr.reviewIdx].duplicate(LocationOptions.AFTER, doc.spreads[-1]); _dlrOk = true; } catch(e) {}
+                                }
+                                if (_dlrOk) totalRtFilled++;
+                                else { createEmptyMemtestSpread(doc, refDoc, templateSpreads, masters, rtMasterKey); totalRtEmpty++; }
+                                continue;
+                            }
+                            var opck = olymposCanonKey(passages[opi].passageNo || "");
+                            var orev = opck ? canonMap[opck] : null;
+                            if (orev && orev.blank_text) {
+                                createMemtestSpread(doc, refDoc, templateSpreads, orev, masters, stMemtest, stMemCopy, rtMasterKey);
+                                totalRtFilled++;
+                            } else {
+                                createEmptyMemtestSpread(doc, refDoc, templateSpreads, masters, rtMasterKey);
+                                totalRtEmpty++;
+                            }
+                        }
+                    } else {
+
                     // 과(lesson)별 그룹 생성
                     var lessonGroups = []; // [{ym, startIdx, count, allCopied}]
                     var lgCurYm = null;
@@ -945,10 +1430,6 @@ var settingsPath = "__SETTINGS_PATH__";
                             if (!passages[gi]._pnoCopied) lgCurAllCopied = false;
                         }
                     }
-
-                    var totalRtCopied = 0;
-                    var totalRtFilled = 0;
-                    var totalRtEmpty = 0;
 
                     for (var lgi = 0; lgi < lessonGroups.length; lgi++) {
                         var lg = lessonGroups[lgi];
@@ -992,6 +1473,7 @@ var settingsPath = "__SETTINGS_PATH__";
                                 }
                             }
                         }
+                    }
                     }
 
                     // 로그 출력
@@ -1131,41 +1613,8 @@ var settingsPath = "__SETTINGS_PATH__";
             log("[암기] " + memtest.length + "개 완료");
         }
 
-        // -- 4. 마지막 페이지 (포켓북_마지막P.ai) — 왼쪽(짝수) 페이지에 배치 --
-        var lastPageImg = S.last_page_image || "";
-        if (lastPageImg) {
-            var imgFile = new File(lastPageImg);
-            if (imgFile.exists) {
-                var lastSpread = doc.spreads.add(LocationOptions.AT_END);
-                // 마스터 없음
-                try {
-                    for (var lpi = 0; lpi < lastSpread.pages.length; lpi++) {
-                        lastSpread.pages[lpi].appliedMaster = NothingEnum.NOTHING;
-                    }
-                } catch(e) {}
-                // 왼쪽(짝수) 페이지 찾기
-                var leftPage = null;
-                for (var lpi2 = 0; lpi2 < lastSpread.pages.length; lpi2++) {
-                    if (lastSpread.pages[lpi2].side == 1818653800) {
-                        leftPage = lastSpread.pages[lpi2]; break;
-                    }
-                }
-                if (!leftPage) leftPage = lastSpread.pages[0];
-                // 오른쪽 페이지 제거
-                for (var rpi = lastSpread.pages.length - 1; rpi >= 0; rpi--) {
-                    if (lastSpread.pages[rpi].side != 1818653800) {
-                        try { lastSpread.pages[rpi].remove(); } catch(e) {}
-                    }
-                }
-                var pgBounds = leftPage.bounds;
-                var rect = leftPage.rectangles.add({
-                    geometricBounds: [pgBounds[0] - 3, pgBounds[1] - 3, pgBounds[2] + 3, pgBounds[3] + 3]
-                });
-                rect.place(imgFile);
-                try { rect.fit(FitOptions.PROPORTIONALLY); } catch(e) {}
-                log("[마지막] 포켓북 마지막 페이지 추가 (왼쪽)");
-            }
-        }
+        // -- 4. 마지막 페이지(포켓북_마지막P.ai)는 듣기 등 AT_END 콘텐츠가 모두
+        //    들어간 뒤라야 진짜 문서 맨 끝에 오므로, 4.5 듣기 배치 직후(4.6)로 옮김. --
 
         // -- 4-1. 삽화 링크 재연결 (깨진 링크 + passageNo 불일치) --
         if (illustBase && grade) {
@@ -1650,6 +2099,44 @@ var settingsPath = "__SETTINGS_PATH__";
                 log("[듣기] 텍스트 파일 없음: " + S.listening_text_file);
             }
         }
+
+        // -- 4.6 마지막 페이지 (포켓북_마지막P.ai) — 왼쪽(짝수) 페이지에 배치 --
+        //    (듣기 등 모든 AT_END 콘텐츠 뒤에 추가해야 진짜 문서 맨 끝에 온다)
+        var lastPageImg = S.last_page_image || "";
+        if (lastPageImg) {
+            var imgFile = new File(lastPageImg);
+            if (imgFile.exists) {
+                var lastSpread = doc.spreads.add(LocationOptions.AT_END);
+                // 마스터 없음
+                try {
+                    for (var lpi = 0; lpi < lastSpread.pages.length; lpi++) {
+                        lastSpread.pages[lpi].appliedMaster = NothingEnum.NOTHING;
+                    }
+                } catch(e) {}
+                // 왼쪽(짝수) 페이지 찾기
+                var leftPage = null;
+                for (var lpi2 = 0; lpi2 < lastSpread.pages.length; lpi2++) {
+                    if (lastSpread.pages[lpi2].side == 1818653800) {
+                        leftPage = lastSpread.pages[lpi2]; break;
+                    }
+                }
+                if (!leftPage) leftPage = lastSpread.pages[0];
+                // 오른쪽 페이지 제거
+                for (var rpi = lastSpread.pages.length - 1; rpi >= 0; rpi--) {
+                    if (lastSpread.pages[rpi].side != 1818653800) {
+                        try { lastSpread.pages[rpi].remove(); } catch(e) {}
+                    }
+                }
+                var pgBounds = leftPage.bounds;
+                var rect = leftPage.rectangles.add({
+                    geometricBounds: [pgBounds[0] - 3, pgBounds[1] - 3, pgBounds[2] + 3, pgBounds[3] + 3]
+                });
+                rect.place(imgFile);
+                try { rect.fit(FitOptions.PROPORTIONALLY); } catch(e) {}
+                log("[마지막] 포켓북 마지막 페이지 추가 (왼쪽)");
+            }
+        }
+
         saveLog();
 
         // -- 5. 저장 + PDF 내보내기 --
@@ -2840,7 +3327,10 @@ var settingsPath = "__SETTINGS_PATH__";
                                 } else { break; }
                             }
                             var cleaned = buf2.replace(/[\r\n]/g, "").replace(/^\s+|\s+$/g, "");
-                            if (cleaned) {
+                            // 실제 챕터 라벨은 한글/영문을 포함한다("18강 장문Ⅱ", "L1 본문", "고2 9월").
+                            // 앵커 객체(￼)만 든 로컬 프레임은 객체 ID(예 1397781622)가 잡혀
+                            // 마스터의 진짜 라벨을 덮어쓰므로, 글자 없는 값은 무시한다.
+                            if (cleaned && /[A-Za-z가-힣]/.test(cleaned)) {
                                 if (!isMaster) { localResult = cleaned; break; }
                                 else if (!masterResult) masterResult = cleaned;
                             }
@@ -2962,7 +3452,21 @@ var settingsPath = "__SETTINGS_PATH__";
                             "\uCC55\uD130", "\u110E\u1162\u11B8\u1110\u1165", false);
 
                         // 챕터 라벨 유효성 검증: 50자 이하이고 숫자 포함
-                        if (chapLabel && chapLabel.length <= 50 && /\d/.test(chapLabel)) {
+                        // 미래엔 DL(딥러닝 장문): 페이지에 "N과 DL" 마커가 있으면 그것을
+                        // 지문번호로 사용. 분석본 챕터 라벨이 본문과 다른 엉뚱한 값일 수
+                        // 있어, DL 마커를 우선해야 미래엔 완성본 "N과 DL"과 매칭/복사된다.
+                        var dlNum = "";
+                        for (var dti = 0; dti < pageTFs.length; dti++) {
+                            try {
+                                var dtxt = String(pageTFs[dti].contents).replace(/\s/g, "");
+                                var dlm = dtxt.match(/(\d+)과DL/); // "3과DL"
+                                if (dlm) { dlNum = dlm[1]; break; }
+                            } catch(e) {}
+                        }
+                        if (dlNum) {
+                            passages[i].passageNo = dlNum + "과 DL";
+                            passages[i].isDL = true;
+                        } else if (chapLabel && chapLabel.length <= 50 && /\d/.test(chapLabel)) {
                             passages[i].passageNo = chapLabel;
                         } else if (shortLabel) {
                             // 폴백: 기존 위치 기반 shortLabel
