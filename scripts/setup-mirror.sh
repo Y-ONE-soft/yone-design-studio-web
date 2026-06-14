@@ -5,9 +5,11 @@
 #   bash scripts/setup-mirror.sh
 #
 # 목적: Google Drive NSFileProvider 데몬 EDEADLK 회피.
-#   자주 쓰는 GDrive 콘텐츠 폴더를 ~/Documents/yone-content-mirror/ 아래
-#   로컬 미러로 복사. 이후 _gdrive_safe_copy(engines/final/extractor.py)가
-#   자동으로 미러 우회 → deadlock 자체가 발생하지 않음.
+#   자주 쓰는 GDrive 콘텐츠 폴더를 로컬 미러(아래 MIRROR_BASE)로 복사. 이후
+#   _gdrive_safe_copy(engines/final/extractor.py)가 자동으로 미러 우회 →
+#   deadlock 자체가 발생하지 않음.
+#   ※ 미러는 iCloud "데스크탑 및 문서"(~/Documents) 밖에 둔다 — 안에 두면
+#     iCloud가 dataless로 evict해 이번엔 iCloud 경유 EDEADLK가 재발한다.
 #
 # 실행 시점:
 #   1) 새 맥북/조교 컴 셋업 시 1회
@@ -16,7 +18,7 @@
 set -e
 
 GDRIVE_BASE="$HOME/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비"
-MIRROR_BASE="$HOME/Documents/yone-content-mirror"
+MIRROR_BASE="${YONE_MIRROR_BASE:-$HOME/Library/Application Support/yone-design-web/content-mirror}"
 
 # 미러할 폴더 — "내신대비/" 다음부터의 상대경로.
 # 코드는 GDrive 경로의 "/내 드라이브/콘텐츠 관리/내신대비/" 뒤 경로를 그대로
@@ -27,6 +29,7 @@ SUBPATHS=(
     "EBS 작업"
     "교과서 작업"
     "인디자인 파일/워크북/모의고사"
+    "인디자인 파일/Y.ONE WEB/인디자인 원본"
 )
 
 # 1) GDrive 마운트 확인

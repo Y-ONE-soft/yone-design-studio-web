@@ -9,7 +9,9 @@
 set -u
 
 GDRIVE_BASE="$HOME/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비"
-MIRROR_BASE="$HOME/Documents/yone-content-mirror"
+# 미러는 iCloud "데스크탑 및 문서"(~/Documents) 밖에 둔다 — 안에 두면 iCloud가
+# dataless로 evict해 읽을 때 EDEADLK 재발. ~/Library 는 iCloud 미동기화.
+MIRROR_BASE="${YONE_MIRROR_BASE:-$HOME/Library/Application Support/yone-design-web/content-mirror}"
 JOBS_DIR="$HOME/dev/yone-design-web/jobs"
 LOG="$HOME/Library/Logs/yone-mirror-sync.log"
 
@@ -18,6 +20,8 @@ SUBPATHS=(
     "모의고사 작업/고2"
     "EBS 작업"
     "교과서 작업"
+    "인디자인 파일/워크북/모의고사"
+    "인디자인 파일/Y.ONE WEB/인디자인 원본"
 )
 
 ts() { date +'%Y-%m-%d %H:%M:%S'; }
@@ -52,11 +56,30 @@ for sub in "${SUBPATHS[@]}"; do
 
     mkdir -p "$dst"
 
-    # rsync 단일 호출, 변경분만. EDEADLK는 set -u 없이 자동 무시 (다음 사이클에 재시도).
-    if rsync -a --exclude=".*" "$src" "$dst" >> "$LOG" 2>&1; then
+    # rsync 자체 retry 루프 — GDrive Stream EDEADLK는 일시적이지만 단일 호출
+    # 안에서 만나면 그 사이클 내내 못 풀린다. 대기 후 재시도하면 대부분 회복.
+    # --partial: 일부 전송된 파일 보존 (재시도가 이어 받음)
+    # --partial-dir: stale 부분 파일을 별도 폴더에 격리 (조판 코드가 안 읽도록)
+    attempt=0
+    success=0
+    while [ $attempt -lt 3 ]; do
+        attempt=$((attempt + 1))
+        if rsync -a --exclude=".*" --partial \
+                 --partial-dir=".rsync-partial" \
+                 "$src" "$dst" >> "$LOG" 2>&1; then
+            success=1
+            break
+        fi
+        # 실패 — deadlock 풀리길 기다리고 재시도
+        if [ $attempt -lt 3 ]; then
+            sleep 10
+        fi
+    done
+
+    if [ $success -eq 1 ]; then
         : # 성공 — 조용히
     else
-        echo "[$(ts)] [실패] $sub" >> "$LOG"
+        echo "[$(ts)] [실패] $sub (${attempt}회 시도)" >> "$LOG"
         FAIL=$((FAIL + 1))
     fi
 done
