@@ -58,25 +58,68 @@ def _resolve_category(material_id):
     return mapping.get(material_id) or "기타"
 
 
-def _wait_for_stable_file(path, log_fn, timeout=300, check_interval=3, stable_required_seconds=20):
-    """파일 mtime·크기가 N초간 변경 없을 때까지 대기 (InDesign 저장 완료 신호).
+def _typeset_reference_mtime(job_dir):
+    """이번 조판 '준비 시각'의 하한선 — job_dir의 settings*.json 중 가장 과거 mtime.
 
-    InDesign이 .indd 저장은 비동기라 sharing.py가 너무 빨리 실행되면
-    옛 .indd(원본 .indd 등) 그대로 복사될 수 있음.
+    왜 이게 '조판 완료'와 '조판 전 템플릿'을 가르는 기준이 되는가:
+      - prepare_jsx가 원본 템플릿을 출력 경로로 복사할 때 safe_copy_indd가
+        copystat으로 *템플릿의 옛 mtime*(예: 01:34, 수일 전)을 그대로 남긴다.
+        → 조판 전 복사본의 mtime은 항상 이 settings.json 작성 시각보다 과거.
+      - 실제 조판 결과는 settings.json 작성 *이후* doc.save() 시점에 저장되므로
+        그 mtime보다 미래.
+    따라서 "indd mtime >= 이 기준" 이면 '이번 조판으로 새로 저장된 파일'임이 보장된다.
 
-    또한 운영 코드의 .indd가 indd_output_dir로 복사되는 데 1~2분 걸릴 수 있어서
-    초반에 옛 .indd가 안정 상태로 보일 수 있음. 이걸 방지하기 위해 시작 시 sleep.
+    여러 settings(예: 수능특강 분석/문제 2개)가 있어도, 가장 과거(min) mtime을
+    기준으로 삼으면 모든 출력본(각자 자기 settings 이후 저장됨)이 통과하고,
+    옛 템플릿(모든 settings보다 과거)만 걸러진다.
 
-    반환: True(안정 도달) / False(파일 없음 또는 timeout)
+    못 찾으면 None → 신선도 검사 생략(기존 안정성-only 동작으로 폴백).
     """
-    # 시작 시 운영 코드의 .indd 저장 완료 대기 (옛 .indd 안정으로 잘못 인식 방지)
-    initial_wait = 45
-    log_fn(f"[공유] {initial_wait}초 초기 대기 (운영 .indd 저장 완료 대기)")
-    time.sleep(initial_wait)
+    import re
 
+    newest_settings = None  # 실제로는 '가장 과거' 값을 모은다(아래 min 비교)
+    pattern = re.compile(r"^\.?settings.*\.json$")
+    try:
+        candidates = os.listdir(job_dir)
+    except OSError:
+        return None
+    for fname in candidates:
+        if not pattern.match(fname):
+            continue
+        try:
+            m = os.stat(os.path.join(job_dir, fname)).st_mtime
+        except OSError:
+            continue
+        if newest_settings is None or m < newest_settings:
+            newest_settings = m
+    return newest_settings
+
+
+def _wait_for_stable_file(path, log_fn, min_mtime=None, timeout=600,
+                          check_interval=3, stable_required_seconds=15):
+    """파일이 '이번 조판으로 새로 저장된 뒤' mtime·크기가 안정화될 때까지 대기.
+
+    핵심(과거 버그 방지):
+      조판 전 원본 템플릿 복사본은 safe_copy_indd의 copystat 때문에 템플릿의
+      옛 mtime(예: 01:34, 수일 전)을 그대로 가진다. 이 파일은 InDesign이 아직
+      덮어쓰기 전이라 '변화 없이 안정'한 상태로 보여, 기존 로직은 이 옛 템플릿을
+      조판 결과로 오인해 복사했다(= 조판결과에 '조판 안 된 1시34분 파일' 업로드).
+
+      min_mtime(조판 준비 시각, 보통 .settings.json mtime)을 주면, 그 이후로
+      저장된 파일만 '조판 완료'로 인정한다. 옛 템플릿 복사본은 min_mtime보다
+      항상 과거라 절대 통과하지 못한다.
+
+    min_mtime=None이면 신선도 검사를 생략하고 안정성만 본다(기존 동작 유지).
+
+    반환:
+      True  — (신선 +) 안정 도달 → 복사해도 됨
+      False — timeout 내 신선한 저장본이 안 나타남(=조판 전 템플릿일 가능성) → 복사 skip
+              (min_mtime=None일 때는 기존처럼 안정 신호만 있으면 True)
+    """
     last_sig = None
     last_change_at = time.time()
     elapsed = 0
+    fresh_seen = False
 
     while elapsed < timeout:
         if not os.path.exists(path):
@@ -85,27 +128,43 @@ def _wait_for_stable_file(path, log_fn, timeout=300, check_interval=3, stable_re
             continue
         try:
             st = os.stat(path)
-            sig = (st.st_size, int(st.st_mtime))
         except OSError:
             time.sleep(check_interval)
             elapsed += check_interval
             continue
 
-        if last_sig is None:
-            last_sig = sig
-            last_change_at = time.time()
-        elif last_sig != sig:
-            # 변화 발생 → 다시 대기
+        sig = (st.st_size, int(st.st_mtime))
+
+        # 신선도 게이트: 아직 이번 조판으로 저장되지 않은 옛 파일(템플릿)은
+        # '안정'하게 보여도 복사 금지하고 새 저장 신호를 계속 기다린다.
+        # (-1: 초 단위 반올림 여유)
+        if min_mtime is not None and st.st_mtime < min_mtime - 1:
+            last_sig = None          # 안정성 타이머 리셋
+            time.sleep(check_interval)
+            elapsed += check_interval
+            continue
+
+        if min_mtime is not None and not fresh_seen:
+            log_fn(f"[공유] 조판 결과 저장 감지 — 안정화 대기: {os.path.basename(path)}")
+            fresh_seen = True
+
+        if last_sig is None or last_sig != sig:
+            # 첫 관측 또는 변화 발생 → 다시 안정 대기
             last_sig = sig
             last_change_at = time.time()
         else:
             # 변화 없음 → 안정 시간 누적
-            stable_for = time.time() - last_change_at
-            if stable_for >= stable_required_seconds:
+            if time.time() - last_change_at >= stable_required_seconds:
                 return True
 
         time.sleep(check_interval)
         elapsed += check_interval
+
+    if min_mtime is not None and not fresh_seen:
+        # 끝내 새 저장본이 안 나타남 → 옛 템플릿 보호 위해 복사하지 않음
+        log_fn(f"[공유] ⚠️ 조판 결과가 timeout({timeout}s) 내 저장 안 됨 — "
+               f"옛 템플릿 오복사 방지로 skip: {os.path.basename(path)}")
+        return False
 
     log_fn(f"[공유] 안정 대기 timeout ({timeout}s) — 일단 복사 시도: {os.path.basename(path)}")
     return last_sig is not None
@@ -206,6 +265,10 @@ def _share_worker(job_id, job_dir, dest_root, category, log_fn, hint_indd_path=N
 
         copied = 0
 
+        # 이번 조판의 '준비 시각' 하한선 — 이 이후로 저장된 .indd만 '조판 완료'로 인정.
+        # 조판 전 원본 템플릿 복사본(옛 mtime)이 조판결과로 잘못 올라가는 것을 막는다.
+        typeset_ref = _typeset_reference_mtime(job_dir)
+
         # .indd 경로 수집
         candidate_paths = []
         if hint_indd_path:
@@ -230,8 +293,12 @@ def _share_worker(job_id, job_dir, dest_root, category, log_fn, hint_indd_path=N
                 if not os.path.exists(indd_path):
                     log_fn(f"[공유] .indd 파일 없음: {indd_path}")
                     continue
-                # InDesign 저장 완료까지 대기 (mtime/size 안정화)
-                _wait_for_stable_file(indd_path, log_fn)
+                # 이번 조판으로 새로 저장된(=조판 완료된) 파일이 될 때까지 대기.
+                # 아직 조판 전 템플릿(옛 mtime)이면 복사하지 않고 건너뛴다.
+                if not _wait_for_stable_file(indd_path, log_fn, min_mtime=typeset_ref):
+                    log_fn(f"[공유] ⏭️  조판 미완료로 .indd 복사 건너뜀: "
+                           f"{os.path.basename(indd_path)}")
+                    continue
                 try:
                     shutil.copy2(indd_path, dest_dir)
                     copied += 1

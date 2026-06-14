@@ -70,6 +70,46 @@ def _exec_jsx(app_name: str, code: str, timeout: int = 30) -> str:
         return ""
 
 
+def close_open_indd(indd_path: str, log=None) -> None:
+    """출력 indd가 InDesign에 이미 열려 있으면 저장 없이 닫는다.
+
+    재실행 시 출력 문서가 열린 상태에서 safe_copy가 그 위에 덮어쓰면
+    InDesign 내부 문서가 stale/invalid 되어 app.open 시 'Object is invalid'
+    오류가 난다. 반드시 safe_copy(덮어쓰기) '전에', 문서가 유효할 때 호출할 것.
+
+    InDesign 미실행이면 아무것도 하지 않는다(실행시키지 않음).
+    """
+    app = None
+    for ver in INDESIGN_VERSIONS:
+        name = f"Adobe InDesign {ver}"
+        if _is_indesign_running(name):
+            app = name
+            break
+    if not app:
+        return
+    import unicodedata
+    base = os.path.basename(indd_path)
+    # 파일명을 NFC·NFD 두 형태로 전달:
+    #   - InDesign 문서 경로(fsName/name)는 NFD, 파이썬 경로는 NFC라 한글이 불일치
+    #   - iCloud 경로 이중성(~/Documents vs ~/Library/Mobile Documents/.../Documents)도
+    #     basename 비교로 회피
+    payload = unicodedata.normalize("NFC", base) + "|" + unicodedata.normalize("NFD", base)
+    try:
+        with open("/tmp/_indd_close_path.txt", "w", encoding="utf-8") as f:
+            f.write(payload)
+    except OSError:
+        return
+    # 한글 경로 osascript 이슈 회피: 파일에서 읽음. 백슬래시 미사용. '|' 구분.
+    jsx = ('var pf=new File("/tmp/_indd_close_path.txt");pf.open("r");pf.encoding="UTF-8";'
+           'var raw=pf.read();pf.close();var names=raw.split("|");'
+           'for(var i=app.documents.length-1;i>=0;i--){try{var nm=app.documents[i].name;'
+           'for(var j=0;j<names.length;j++){if(names[j].length>1&&nm===names[j]){'
+           'app.documents[i].close(SaveOptions.NO);break;}}}catch(e){}}')
+    _exec_jsx(app, jsx, timeout=30)
+    if log:
+        log(f"[InDesign] 기존 출력 문서 정리: {os.path.basename(indd_path)}")
+
+
 def run_jsx(jsx_path: str, log, poll_log_path: str = None, timeout: int = 1200,
             cancel_check=None):
     """JSX 파일을 단계별로 실행.
