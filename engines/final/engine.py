@@ -1,5 +1,6 @@
 """파이널 직전보충 엔진 — BaseEngine 구현."""
 
+import datetime
 import json
 import os
 import re
@@ -19,6 +20,84 @@ def _nfc(s):
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
 _CONFIG_PATH = os.path.join(_DIR, "config.json")
+
+
+# ── 시험 기간(워크북 폴더) 자동 감지 ──────────────────────────────────
+_TERM_ORDER = {"중간": 1, "기말": 2}
+
+
+def _parse_exam_period(name):
+    """'26-1-기말' → (26, 1, 2) 정렬키. 형식 불일치면 None."""
+    m = re.match(r"^(\d{2})-(\d)-(중간|기말)$", _nfc(name).strip())
+    if not m:
+        return None
+    return (int(m.group(1)), int(m.group(2)), _TERM_ORDER[m.group(3)])
+
+
+def scan_exam_periods(gdrive_base):
+    """워크북 폴더에서 'YY-S-중간/기말' 형식 폴더를 최신순으로 반환.
+
+    로컬 미러는 워크북 하위가 부분 동기화될 수 있어(시기 폴더 누락 가능),
+    원본 GDrive 경로와 미러 경로를 모두 훑어 합집합으로 수집한다.
+    """
+    base = os.path.join(os.path.expanduser(gdrive_base or ""), "워크북")
+    found = set()
+    for cand in (base, _rlm(base, None)):
+        if not cand or not os.path.isdir(cand):
+            continue
+        try:
+            for d in os.listdir(cand):
+                if _parse_exam_period(d):
+                    found.add(_nfc(d))
+        except OSError:
+            continue
+    return sorted(found, key=_parse_exam_period, reverse=True)
+
+
+def estimate_exam_period(periods, today=None):
+    """오늘 날짜로 가장 적절한 시험기간을 고른다.
+
+    월 기준 추정(조판 작업이 시험 수 주 전부터인 점 반영):
+      3~5월=1학기중간, 6~7월=1학기기말, 8~10월=2학기중간,
+      11~12월=2학기기말, 1~2월(방학)=다가오는 1학기중간.
+    추정 시기와 정확히 일치하는 폴더가 있으면 그것, 없으면 추정 시점
+    이하의 최신 폴더, 그것도 없으면 폴더 목록 중 최신을 반환한다.
+    """
+    if not periods:
+        return ""
+    today = today or datetime.date.today()
+    yy = today.year % 100
+    mo = today.month
+    if mo in (6, 7):
+        sem, term = 1, 2
+    elif mo in (8, 9, 10):
+        sem, term = 2, 1
+    elif mo in (11, 12):
+        sem, term = 2, 2
+    else:  # 1~5월 → 1학기 중간
+        sem, term = 1, 1
+    target = (yy, sem, term)
+    keys = {_parse_exam_period(p): p for p in periods}
+    if target in keys:
+        return keys[target]
+    le = [p for p in periods if _parse_exam_period(p) <= target]
+    if le:
+        return max(le, key=_parse_exam_period)
+    return periods[0]
+
+
+def resolve_exam_period(cfg, value=None):
+    """exam_period 확정. value가 비었거나 'auto'면 폴더+날짜로 자동 결정.
+
+    우선순위: 명시값(value) > config의 고정값 > 폴더+날짜 자동 추정.
+    """
+    if value and value.strip().lower() != "auto":
+        return value.strip()
+    cfg_val = (cfg.get("exam_period") or "").strip()
+    if cfg_val and cfg_val.lower() != "auto":
+        return cfg_val
+    auto = estimate_exam_period(scan_exam_periods(cfg.get("gdrive_base", "")))
+    return auto or cfg_val
 
 
 def _convert_grammar_header(header, scope_text, scope_type, ebs_lecture=None):
@@ -343,7 +422,8 @@ class FinalEngine(BaseEngine):
         cfg = _load_config()
         school = unicodedata.normalize("NFC", self._get_meta(job_dir, "school", ""))
         grade = self._get_meta(job_dir, "grade", "고1")
-        exam_period = self._get_meta(job_dir, "exam_period", cfg["exam_period"])
+        exam_period = self._get_meta(job_dir, "exam_period", "")
+        exam_period = resolve_exam_period(cfg, exam_period)
 
         log(f"[설정] 학교={school}, 학년={grade}, 시험={exam_period}")
 
@@ -1483,7 +1563,8 @@ class FinalEngine(BaseEngine):
         cfg = _load_config()
         school = self._get_meta(job_dir, "school", "학교미선택")
         grade = self._get_meta(job_dir, "grade", "고1")
-        exam_period = self._get_meta(job_dir, "exam_period", cfg["exam_period"])
+        exam_period = self._get_meta(job_dir, "exam_period", "")
+        exam_period = resolve_exam_period(cfg, exam_period)
 
         with open(json_path, encoding="utf-8") as f:
             content = json.load(f)

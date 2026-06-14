@@ -536,17 +536,31 @@ def typeset_page(material_id):
     nav = _section_for_engine(material_id)
 
     # 파이널 엔진: 워크북 폴더에서 학교 목록 자동 스캔
+    exam_periods = []
+    current_period = ""
     if material_id == "final":
-        from engines.final.engine import _load_config as _load_final_config
+        from engines.final.engine import (
+            _load_config as _load_final_config,
+            scan_exam_periods, estimate_exam_period, resolve_exam_period,
+        )
         fcfg = _load_final_config()
-        schools = engine.scan_schools(fcfg["gdrive_base"], fcfg["exam_period"])
+        exam_periods = scan_exam_periods(fcfg["gdrive_base"])
+        # 드롭다운으로 명시 선택 시 URL 파라미터 우선, 없으면 날짜 기반 자동 추정
+        sel = request.args.get("exam_period", "").strip()
+        if sel and sel in exam_periods:
+            current_period = sel
+        else:
+            current_period = (estimate_exam_period(exam_periods)
+                              or resolve_exam_period(fcfg))
+        schools = engine.scan_schools(fcfg["gdrive_base"], current_period)
         if not schools:
             schools = _load_schools()
     else:
         schools = _load_schools()
 
     return render_template(tmpl, engine=engine, schools=schools,
-                           active_nav=nav)
+                           active_nav=nav, exam_periods=exam_periods,
+                           current_period=current_period)
 
 
 # ── 폴더 브라우저 API (웹 기반 — 원격 접속에서도 동작) ────────────────────────
@@ -907,17 +921,23 @@ def api_final_detect():
     data = request.get_json()
     school = data.get("school", "")
     grade = data.get("grade", "고1")
-    from engines.final.engine import FinalEngine, _load_config as _load_final_config
+    exam_period = data.get("exam_period", "").strip()
+    from engines.final.engine import (
+        FinalEngine, _load_config as _load_final_config,
+        scan_exam_periods, estimate_exam_period,
+    )
     from engines.final.scope_parser import parse_all_scopes
     fcfg = _load_final_config()
+    if not exam_period:
+        exam_period = estimate_exam_period(scan_exam_periods(fcfg["gdrive_base"]))
     files, wb_dir, _ = FinalEngine.find_workbook_files(
-        fcfg["gdrive_base"], fcfg["exam_period"], grade, school
+        fcfg["gdrive_base"], exam_period, grade, school
     )
     scopes = parse_all_scopes(files) if files else []
 
     # 교재 매핑 정보
     textbook_info = fcfg.get("school_textbook_map", {}).get(
-        fcfg["exam_period"], {}
+        exam_period, {}
     ).get(school)
 
     # 고3: 분석편에서 사용 가능한 강 목록 반환

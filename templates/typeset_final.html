@@ -3,12 +3,29 @@
 
 {% block content %}
 <div class="page-header">
-  <a href="/" class="back-link">&larr; 교재 선택</a>
+  <a href="/" class="back-link">교재 선택</a>
   <h1>파이널 직전보충</h1>
   <p>학교를 선택하면 워크북에서 자동 추출 &rarr; Vol.1(문장배열) + Vol.2(어법수정/영작) 조판</p>
 </div>
 
 <form id="typeset-form" class="upload-form" enctype="multipart/form-data">
+
+  <!-- ── 시험 기간 선택 ─────────────────────────────────────── -->
+  <div class="school-section">
+    <div class="section-label">시험 기간 <span class="required">*</span></div>
+    {% if exam_periods %}
+    <select name="exam_period" id="exam-period-select" onchange="changePeriod()"
+            style="padding:8px 14px;font-size:15px;border-radius:8px;border:1px solid #ccc;min-width:200px;cursor:pointer;">
+      {% for p in exam_periods %}
+      <option value="{{ p }}" {% if p == current_period %}selected{% endif %}>{{ p }}</option>
+      {% endfor %}
+    </select>
+    <span class="filename-preview" style="margin-left:10px;font-size:13px;color:#888;">날짜 기준 자동 선택됨 · 다르면 바꾸세요</span>
+    {% else %}
+    <input type="hidden" name="exam_period" id="exam-period-select" value="{{ current_period }}">
+    <div class="filename-preview">{{ current_period or '워크북 폴더를 찾을 수 없습니다' }}</div>
+    {% endif %}
+  </div>
 
   <!-- ── 학교 선택 ─────────────────────────────────────────── -->
   <div class="school-section">
@@ -59,6 +76,9 @@
 <div id="progress-area" class="progress-area hidden">
   <div class="progress-header">
     <h2>진행 상태</h2>
+    <button type="button" id="cancel-btn" class="cancel-btn hidden" onclick="cancelJob()">
+      취소
+    </button>
     <div class="step-indicators">
       <span class="step" id="step-extract">① 추출</span>
       <span class="step-sep">&rarr;</span>
@@ -81,6 +101,14 @@
   const MATERIAL_ID = "final";
   const schools = {{ schools | tojson }};
   let activeGradeTab = Object.keys(schools)[0] || "고1";
+
+  // ── 시험 기간 ────────────────────────────────────────────────
+  // 기간을 바꾸면 해당 폴더 학교 목록을 서버가 다시 렌더하도록 리로드
+  function changePeriod() {
+    const sel = document.getElementById('exam-period-select');
+    if (!sel || !sel.value) return;
+    window.location = '/typeset/final?exam_period=' + encodeURIComponent(sel.value);
+  }
 
   // ── 학교 선택 ────────────────────────────────────────────────
   function switchGrade(btn) {
@@ -122,6 +150,8 @@
   async function detectWorkbooks() {
     const school = document.getElementById('school-hidden').value;
     const grade = document.getElementById('grade-hidden').value;
+    const periodEl = document.getElementById('exam-period-select');
+    const exam_period = periodEl ? periodEl.value : '';
     const status = document.getElementById('workbook-status');
     if (!school) { status.textContent = '학교를 선택하세요'; return; }
     status.textContent = '확인 중...';
@@ -129,7 +159,7 @@
       const res = await fetch('/api/final/detect-workbooks', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({school, grade})
+        body: JSON.stringify({school, grade, exam_period})
       });
       const data = await res.json();
       if (data.count > 0) {
@@ -156,6 +186,30 @@
     }
   }
 
+  // ── 취소 ─────────────────────────────────────────────────────
+  let _currentJobId = null;
+  let _currentEvtSource = null;
+
+  function _showCancelBtn(show) {
+    const btn = document.getElementById('cancel-btn');
+    if (btn) {
+      btn.classList.toggle('hidden', !show);
+      if (show) { btn.disabled = false; btn.innerHTML = '취소'; }
+    }
+  }
+
+  async function cancelJob() {
+    if (!_currentJobId) return;
+    const btn = document.getElementById('cancel-btn');
+    if (btn) { btn.disabled = true; btn.textContent = '취소 중...'; }
+    if (_currentEvtSource) { _currentEvtSource.close(); _currentEvtSource = null; }
+    try { await fetch(`/api/cancel/${_currentJobId}`, { method: 'POST' }); } catch (_) {}
+    appendLog('[취소] 조판이 취소되었습니다.');
+    _showCancelBtn(false);
+    resetBtn();
+    _currentJobId = null;
+  }
+
   // ── 폼 제출 ──────────────────────────────────────────────────
   document.getElementById('typeset-form').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -165,6 +219,9 @@
 
     runBtn.disabled = true;
     runBtn.textContent = '실행 중...';
+
+    if (_currentEvtSource) { _currentEvtSource.close(); _currentEvtSource = null; }
+    _currentJobId = null;
 
     document.getElementById('progress-area').classList.remove('hidden');
     document.getElementById('result-area').classList.add('hidden');
@@ -180,6 +237,8 @@
         resetBtn();
         return;
       }
+      _currentJobId = data.job_id;
+      _showCancelBtn(true);
       startStream(data.job_id);
     } catch (err) {
       appendLog(`[오류] ${err.message}`);
@@ -190,15 +249,24 @@
   // ── SSE ──────────────────────────────────────────────────────
   function startStream(jobId) {
     const evtSource = new EventSource(`/api/stream/${jobId}`);
+    _currentEvtSource = evtSource;
     evtSource.onmessage = (e) => {
       const msg = e.data;
-      if (msg === '[DONE]') { evtSource.close(); fetchResult(jobId); return; }
+      if (msg === '[DONE]') {
+        evtSource.close();
+        _currentEvtSource = null;
+        _showCancelBtn(false);
+        fetchResult(jobId);
+        return;
+      }
       if (msg === '[PING]') return;
       appendLog(msg);
       updateStepFromLog(msg);
     };
     evtSource.onerror = () => {
       evtSource.close();
+      _currentEvtSource = null;
+      _showCancelBtn(false);
       appendLog('[연결 끊김] 결과를 확인합니다...');
       fetchResult(jobId);
     };
@@ -241,7 +309,6 @@
     const gradeLabel = result.grade_label || '';
     const overflow = result.overflow ?? 0;
     const warnings = result.warnings || [];
-    const pdfPaths = result.pdf_paths || [];
     const bs = result.block_summary || {};
     const valWarnings = result.validation_warnings || [];
 
@@ -281,12 +348,6 @@
     const overflowWarn = overflow > 0
       ? `<ul class="warn-list"><li>오버플로우 ${overflow}개</li></ul>` : '';
 
-    const downloadLinks = pdfPaths.length
-      ? pdfPaths.map((p, i) =>
-          `<a href="/download/${jobId}/pdf?idx=${i}" class="download-btn">PDF ${i+1} 다운로드</a>`
-        ).join('')
-      : '<p class="no-pdf">PDF가 생성되지 않았습니다.</p>';
-
     const hasWarnings = valWarnings.length > 0 || overflow > 0;
     const cardClass = ok && !hasWarnings ? 'ok' : 'warn';
 
@@ -303,7 +364,6 @@
         </table>
         ${valWarnHtml}
         ${overflowWarn}
-        <div class="action-row">${downloadLinks}</div>
       </div>`;
     setStep('verify');
   }
