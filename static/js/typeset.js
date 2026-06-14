@@ -114,8 +114,19 @@ function _showCancelBtn(show) {
   if (btn) btn.style.display = show ? '' : 'none';
 }
 
+// 외부(멀티-레슨 처리 등)에서 현재 작업 상태를 공유하기 위한 setter.
+window._tsSetCurrent = function (jobId, evtSource) {
+  _currentJobId = jobId || null;
+  _currentEvtSource = evtSource || null;
+  _showCancelBtn(!!jobId);
+};
+
+// 멀티-레슨 루프가 사용자 취소를 감지할 수 있도록 노출하는 플래그.
+window._tsCancelled = false;
+
 async function cancelJob() {
   if (!_currentJobId) return;
+  window._tsCancelled = true;
   const btn = document.getElementById('cancel-btn');
   if (btn) { btn.disabled = true; btn.textContent = '취소 중...'; }
   if (_currentEvtSource) { _currentEvtSource.close(); _currentEvtSource = null; }
@@ -144,6 +155,7 @@ document.getElementById('typeset-form').addEventListener('submit', async (e) => 
   if (_currentEvtSource) { _currentEvtSource.close(); _currentEvtSource = null; }
   if (_resultRetryTimer) { clearTimeout(_resultRetryTimer); _resultRetryTimer = null; }
   _currentJobId = null;
+  window._tsCancelled = false;
 
   // 진행 영역 표시
   document.getElementById('progress-area').classList.remove('hidden');
@@ -158,8 +170,12 @@ document.getElementById('typeset-form').addEventListener('submit', async (e) => 
     return;
   }
 
+  // 폼에 _target_material 필드가 있으면 그걸 우선 사용 (워크북 세로버전 등 분기용)
+  const overrideMaterial = (formData.get('_target_material') || '').toString().trim();
+  const effectiveMaterial = overrideMaterial || materialId;
+
   try {
-    const res = await fetch(`/api/run/${materialId}`, {
+    const res = await fetch(`/api/run/${effectiveMaterial}`, {
       method: 'POST',
       body: formData,
     });
@@ -302,16 +318,12 @@ function showResultCard(jobId, result) {
 
       ${warnHtml}
 
-      ${result.pdf_path
+      ${result.mockup_file
         ? `<div class="action-row">
-             <a href="/download/${jobId}/pdf" class="download-btn">📥 PDF 다운로드</a>
-             ${result.mockup_file
-               ? `<a href="http://localhost:8501?file=${encodeURIComponent(result.mockup_file)}"
-                     target="_blank" class="mockup-btn">🎨 목업에서 열기</a>`
-               : ''}
+             <a href="http://localhost:8501?file=${encodeURIComponent(result.mockup_file)}"
+                target="_blank" class="mockup-btn">🎨 목업에서 열기</a>
            </div>`
-        : '<p class="no-pdf">PDF가 생성되지 않았습니다.</p>'
-      }
+        : ''}
     </div>`;
 
   setStep('verify');
