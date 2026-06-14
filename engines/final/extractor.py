@@ -13,10 +13,23 @@ import unicodedata
 
 
 # ── 로컬 미러 redirect — EDEADLK 원천 차단 ─────────────────────────────────
-# 자주 쓰는 GDrive 폴더를 ~/Documents/yone-content-mirror/ 아래로 복사해두면
-# NSFileProvider 데몬을 거치지 않아 deadlock 자체가 발생하지 않는다.
+# 자주 쓰는 GDrive 폴더를 로컬 미러로 복사해두면 어떤 클라우드 File Provider
+# (Google Drive / iCloud)도 거치지 않아 deadlock 자체가 발생하지 않는다.
+#
+# [중요] 미러는 반드시 iCloud "데스크탑 및 문서" 동기화 영역 밖에 둔다.
+#   과거 ~/Documents/yone-content-mirror 는 iCloud가 동기화해 파일 91%를 dataless로
+#   비워버렸고, 그러면 미러를 읽을 때마다 이번엔 iCloud NSFileProvider 경유로
+#   EDEADLK가 재발했다(Drive 재시작·재시도 다 무력). ~/Library/Application Support
+#   와 홈 루트(~/)는 iCloud 미동기화라 안전.
+#   (2026-06-02: ~/Documents → ~/Library/Application Support 로 이전.)
+#   YONE_MIRROR_BASE 환경변수로 override 가능.
 # 미러가 있으면 우회, 없으면 원본 그대로 사용.
-_LOCAL_MIRROR_BASE = os.path.expanduser("~/Documents/yone-content-mirror")
+_LOCAL_MIRROR_BASE = os.path.expanduser(
+    os.environ.get(
+        "YONE_MIRROR_BASE",
+        "~/Library/Application Support/yone-design-web/content-mirror",
+    )
+)
 _GDRIVE_CONTENT_MARKER = "/내 드라이브/콘텐츠 관리/내신대비/"
 
 
@@ -24,19 +37,86 @@ def _resolve_local_mirror(src, log=None):
     """GDrive 경로를 로컬 미러로 redirect (미러가 존재할 때만)."""
     nfc_src = unicodedata.normalize("NFC", src)
     if _GDRIVE_CONTENT_MARKER not in nfc_src:
+        if log:
+            log(f"  [DEBUG mirror] marker NOT in src → return as-is")
         return src
     rest = nfc_src.split(_GDRIVE_CONTENT_MARKER, 1)[1]
     mirror_path = os.path.join(_LOCAL_MIRROR_BASE, rest)
+    if log:
+        log(f"  [DEBUG mirror] mirror_path={mirror_path!r}")
     for cand in [
         mirror_path,
         unicodedata.normalize("NFC", mirror_path),
         unicodedata.normalize("NFD", mirror_path),
     ]:
-        if os.path.exists(cand):
+        exists = os.path.exists(cand)
+        if log:
+            log(f"  [DEBUG mirror] cand exists={exists}: {cand!r}")
+        if exists:
+            if os.path.isdir(cand):
+                try:
+                    if not os.listdir(cand):
+                        if log:
+                            log(f"  [로컬 미러] {os.path.basename(cand)} 비어있음 → GDrive 원본 사용")
+                        return src
+                except OSError:
+                    return src
             if log:
                 log(f"  [로컬 미러] GDrive 우회 → {os.path.basename(cand)}")
             return cand
+    if log:
+        log(f"  [DEBUG mirror] no cand exists → return GDrive src")
     return src
+
+
+def list_manuscript_entries(orig_folder, log=None):
+    """원고 폴더 엔트리(파일/하위폴더)를 '미러 + GDrive 원본' 합집합으로 열거.
+
+    미러는 1회성 스냅샷이라, GDrive에 나중에 추가된 파일(예: 'Step3.hwpx')이
+    미러엔 없을 수 있다. 기존 코드는 미러 폴더만 listdir 해서 그런 파일을
+    조용히 누락시켰다(공백/단어 차이가 아니라 '미러에 아예 없음'이 원인).
+    이 함수는 미러에 없는 GDrive 전용 파일을 합집합으로 보강해 누락을 막는다.
+
+    - 각 엔트리의 읽기 경로(src): 미러본이 있으면 미러(빠르고 EDEADLK 회피),
+      없으면 GDrive 원본.
+    - GDrive listdir이 EDEADLK 등으로 실패하면 미러만으로 진행하되 로그를 남긴다
+      (조용한 누락 금지 — 무엇을 못 봤는지 항상 노출).
+
+    Returns: 정렬된 [(name_nfc, src_path), ...] (파일·하위폴더 모두 포함)
+    """
+    mirror_folder = _resolve_local_mirror(orig_folder, log=None)
+    entries = {}  # name_nfc -> src_path (미러 우선)
+
+    if mirror_folder and os.path.isdir(mirror_folder):
+        try:
+            for raw in os.listdir(mirror_folder):
+                n = unicodedata.normalize("NFC", raw)
+                if n.startswith("."):
+                    continue
+                entries[n] = os.path.join(mirror_folder, raw)
+        except OSError as e:
+            if log:
+                log(f"  [원고목록] 미러 listdir 실패: {e}")
+
+    # GDrive 원본과 합집합 — 미러에 없는 파일 보강 (미러가 원본과 다를 때만)
+    if orig_folder and orig_folder != mirror_folder and os.path.isdir(orig_folder):
+        try:
+            gdrive_only = []
+            for raw in os.listdir(orig_folder):
+                n = unicodedata.normalize("NFC", raw)
+                if n.startswith("."):
+                    continue
+                if n not in entries:
+                    entries[n] = os.path.join(orig_folder, raw)
+                    gdrive_only.append(n)
+            if gdrive_only and log:
+                log(f"  [원고목록] 미러에 없어 GDrive에서 보강 {len(gdrive_only)}개: "
+                    f"{', '.join(gdrive_only)}")
+        except OSError as e:
+            if log:
+                log(f"  [원고목록] GDrive listdir 실패 → 미러만 사용: {e}")
+
+    return sorted(entries.items())
 
 
 def _gdrive_safe_copy(src, dst, log=None, retries=5):
@@ -44,15 +124,25 @@ def _gdrive_safe_copy(src, dst, log=None, retries=5):
 
     Drive Stream FS는 File Provider extension 기반으로, 동시 read 요청 시
     EDEADLK(Errno 11, Resource deadlock avoided) 등 일시적 락 오류를
-    반환할 수 있다. 단일 shutil.copy2 + 지수 백오프 재시도로 처리한다.
+    반환할 수 있다.
 
     처방:
       1) 로컬 미러 redirect — ~/Documents/yone-content-mirror/에 미러가 있으면 우회
-      2) shutil.copy2 단일 호출 + 지수 백오프(1+3+8+15+30초, 누적 57초) 재시도
+      2) Python pure read/write — shutil.copy2(fcopyfile)이 Flask launchd thread
+         컨텍스트에서 hang하는 케이스 회피 (standalone/직접 thread는 정상이지만
+         launchd LaunchAgent context의 워커 thread에서는 fcopyfile이 무한 wait
+         가능). chunked read/write로 명시적 진행, 단계별 timestamp 로그로
+         hang 시 정확한 위치 파악 가능.
+      3) 지수 백오프(1+3+8+15+30초, 누적 57초) 재시도
 
     Returns: (ok: bool, last_err: str)
     """
+    if log:
+        log(f"  [DEBUG] _gdrive_safe_copy src_before={src!r}")
     src = _resolve_local_mirror(src, log)
+    if log:
+        log(f"  [DEBUG] _gdrive_safe_copy src_after ={src!r}")
+        log(f"  [DEBUG] src is local mirror? {_LOCAL_MIRROR_BASE in src}")
 
     # NFD/NFC 후보 모두 시도 (macOS APFS는 NFD)
     src_candidates = [src]
@@ -74,12 +164,42 @@ def _gdrive_safe_copy(src, dst, log=None, retries=5):
     backoffs = [1, 3, 8, 15, 30]
     last_err = ""
 
+    def _chunk_copy(src_path, dst_path):
+        """Python pure chunked copy — fcopyfile syscall 우회.
+
+        Flask launchd worker thread에서 fcopyfile이 hang하는 케이스 회피.
+        각 단계마다 timestamp 출력해서 hang 시 정확한 위치 파악.
+        """
+        import time as _t
+        t0 = _t.time()
+        with open(src_path, "rb") as fsrc:
+            t_open_src = _t.time() - t0
+            with open(dst_path, "wb") as fdst:
+                t_open_dst = _t.time() - t0
+                total = 0
+                while True:
+                    chunk = fsrc.read(64 * 1024)
+                    if not chunk:
+                        break
+                    fdst.write(chunk)
+                    total += len(chunk)
+                t_write = _t.time() - t0
+        # copystat은 별도 — atime/mtime 복사 (실패해도 데이터는 OK)
+        try:
+            shutil.copystat(src_path, dst_path)
+        except Exception:
+            pass
+        if log:
+            log(f"  [복사 timing] src_open={t_open_src:.2f}s "
+                f"dst_open={t_open_dst:.2f}s write={t_write:.2f}s "
+                f"size={total}B")
+        return total
+
     for attempt in range(retries):
         try:
             if os.path.exists(dst):
                 os.remove(dst)
-            shutil.copy2(src_resolved, dst)
-            actual = os.path.getsize(dst)
+            actual = _chunk_copy(src_resolved, dst)
             if actual == expected_size:
                 if log and attempt > 0:
                     log(f"  [GDrive 복사] 성공 ({attempt+1}회차)")
@@ -92,6 +212,30 @@ def _gdrive_safe_copy(src, dst, log=None, retries=5):
             log(f"  [GDrive 복사] 실패 ({attempt+1}/{retries}): {last_err}")
         if attempt < retries - 1:
             time.sleep(backoffs[min(attempt, len(backoffs) - 1)])
+
+    # Python read(2) 5회 전부 실패 → /bin/cp 폴백.
+    # 별도 프로세스의 read(2)는 같은 GDrive FUSE에서도 EDEADLK를 회피하는 케이스가 있음.
+    # -c는 APFS clonefile 시도(다른 FS면 자동 read/write 폴백)이라 GDrive→APFS에도 무해.
+    try:
+        if os.path.exists(dst):
+            os.remove(dst)
+        res = subprocess.run(
+            ["/bin/cp", "-c", src_resolved, dst],
+            capture_output=True, text=True, timeout=300
+        )
+        if res.returncode == 0 and os.path.exists(dst) \
+                and os.path.getsize(dst) == expected_size:
+            if log:
+                log(f"  [GDrive 복사] /bin/cp 폴백 성공")
+            return True, ""
+        cp_err = (res.stderr or res.stdout or "").strip() or f"rc={res.returncode}"
+        last_err = f"{last_err} / cp 폴백 실패: {cp_err}"
+        if log:
+            log(f"  [GDrive 복사] /bin/cp 폴백 실패: {cp_err}")
+    except (OSError, subprocess.SubprocessError) as e:
+        last_err = f"{last_err} / cp 폴백 예외: {type(e).__name__}: {e}"
+        if log:
+            log(f"  [GDrive 복사] /bin/cp 폴백 예외: {e}")
 
     return False, last_err
 
