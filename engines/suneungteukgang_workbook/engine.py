@@ -242,27 +242,33 @@ class SuneungteukgangWorkbookEngine(BaseEngine):
         if not unit_dir or not os.path.isdir(unit_dir):
             lesson_folder = self._read_meta_str(job_dir, "lesson_folder", "")
             if lesson_folder:
-                base = os.path.join(cfg["ebs_base"], cfg.get("fixed_series", ""))
+                # GDrive 원본 경로로 candidate 만들고 _rlm을 호출 → 미러가 비어있으면
+                # _rlm이 GDrive 원본으로 자동 폴백 (lesson 단위 빈 미러 폴더 우회).
+                gdrive_base = os.path.join(cfg["ebs_base"], cfg.get("fixed_series", ""))
                 subdir = cfg.get("series_subdir", "")
                 if subdir:
-                    base = os.path.join(base, subdir)
-                base = _rlm(base, log)  # base도 미러로 우회
-                candidate = os.path.join(base, lesson_folder)
+                    gdrive_base = os.path.join(gdrive_base, subdir)
+                gdrive_candidate = os.path.join(gdrive_base, lesson_folder)
+                candidate = _rlm(gdrive_candidate, log)
                 if os.path.isdir(candidate):
                     unit_dir = candidate
                     log(f"[파서] manuscript_folder 자동 계산: {os.path.basename(unit_dir)}")
-                elif os.path.isdir(base):
-                    target_norm = _nfc(lesson_folder).strip()
-                    for entry in os.listdir(base):
-                        if _nfc(entry).strip() != target_norm:
-                            continue
-                        actual = os.path.join(base, entry)
-                        if os.path.isdir(actual):
-                            unit_dir = actual
-                            log(f"[파서] manuscript_folder 자동 계산: '{entry}' (정규화 매칭: '{lesson_folder}')")
-                            break
+                else:
+                    # NFC 정규화 매칭 fallback — base listdir은 미러로 우회 (zombie 회피),
+                    # 매칭된 entry는 GDrive 경로로 재구성 후 _rlm으로 빈 미러 폴백 처리
+                    base_listed = _rlm(gdrive_base, log)
+                    if os.path.isdir(base_listed):
+                        target_norm = _nfc(lesson_folder).strip()
+                        for entry in os.listdir(base_listed):
+                            if _nfc(entry).strip() != target_norm:
+                                continue
+                            actual = _rlm(os.path.join(gdrive_base, entry), log)
+                            if os.path.isdir(actual):
+                                unit_dir = actual
+                                log(f"[파서] manuscript_folder 자동 계산: '{entry}' (정규화 매칭: '{lesson_folder}')")
+                                break
         # unit_dir도 미러로 redirect (위 if 블록 거치지 않은 경우)
-        unit_dir = _rlm(unit_dir, log)
+        unit_dir = _rlm(unit_dir, log) if unit_dir else unit_dir
         if unit_dir and os.path.isdir(unit_dir):
             log(f"[파서] 단원 폴더: {os.path.basename(unit_dir)}")
             for raw in os.listdir(unit_dir):
