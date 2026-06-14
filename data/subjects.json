@@ -17,7 +17,7 @@
       {"name": "모의고사 워크북","prefix": "모의고사워크북", "engine_id": "workbook"},
       {"name": "리딩파워 워크북","prefix": "리딩파워워크북", "engine_id": "ebs_workbook"},
       {"name": "수능특강 워크북","prefix": "수능특강워크북", "engine_id": "suneungteukgang_workbook"},
-      {"name": "부교재 워크북",  "prefix": "부교재워크북",  "engine_id": null}
+      {"name": "부교재 워크북",  "prefix": "부교재워크북",  "engine_id": "workbook_supp"}
     ]
   },
   {
@@ -54,9 +54,10 @@
     "section": "조판",
     "category": "결합 도구",
     "items": [
-      {"name": "모의고사 세로 결합", "prefix": "세로결합", "engine_id": "mockexam_sero_merge"},
+      {"name": "모의고사 워크북 세로버전", "prefix": "세로결합", "engine_id": "mockexam_sero_merge"},
       {"name": "분석본 결합", "prefix": "분석본결합", "engine_id": "analysis_merge"},
-      {"name": "마더텅 결합", "prefix": "마더텅결합", "engine_id": "mothertongue_merge"}
+      {"name": "마더텅 분석본", "prefix": "마더텅결합", "engine_id": "mothertongue_merge"},
+      {"name": "워크북 세로→가로", "prefix": "가로결합", "engine_id": "vert_to_horiz"}
     ]
   },
   {
@@ -65,6 +66,13 @@
     "items": [
       {"name": "세네카 조정", "prefix": "표지", "engine_id": "cover"},
       {"name": "포켓북 표지", "prefix": "포켓북표지", "engine_id": "cover_pocketbook"}
+    ]
+  },
+  {
+    "section": "가공",
+    "category": "워크북",
+    "items": [
+      {"name": "워크북 가공", "prefix": "워크북가공", "engine_id": "workbook_edit"}
     ]
   }
 ]
