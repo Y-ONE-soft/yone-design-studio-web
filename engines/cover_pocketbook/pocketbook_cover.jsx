@@ -19,6 +19,9 @@ function readJSON(path) {
 
 var cfg = readJSON(SETTINGS_PATH);
 
+// 풍경 래스터 overscan 배율(%) — 옅은 가장자리(흰 띠) 제거용
+var OVERSCAN = 118;
+
 // ---- 유틸 함수 ----------------------------------------------------------
 
 function makeCMYK(arr) {
@@ -38,7 +41,7 @@ function cmykMatch(color, ref) {
            Math.abs(color.black - ref[3]) < 0.5;
 }
 
-function replaceColorsInGroup(group, tc, sc, bc, refT, refS, refB) {
+function replaceColorsInGroup(group, tc, sc, bc, refT, refS, refB, refB2) {
     for (var i = 0; i < group.pageItems.length; i++) {
         var item = group.pageItems[i];
         if (item.typename === "PathItem") {
@@ -46,6 +49,7 @@ function replaceColorsInGroup(group, tc, sc, bc, refT, refS, refB) {
                 if (cmykMatch(item.fillColor, refT)) item.fillColor = tc;
                 else if (cmykMatch(item.fillColor, refS)) item.fillColor = sc;
                 else if (cmykMatch(item.fillColor, refB)) item.fillColor = bc;
+                else if (cmykMatch(item.fillColor, refB2)) item.fillColor = bc;
             }
             if (item.stroked && item.strokeColor.typename === "CMYKColor") {
                 if (cmykMatch(item.strokeColor, refT)) item.strokeColor = tc;
@@ -61,7 +65,7 @@ function replaceColorsInGroup(group, tc, sc, bc, refT, refS, refB) {
                 }
             }
         } else if (item.typename === "GroupItem") {
-            replaceColorsInGroup(item, tc, sc, bc, refT, refS, refB);
+            replaceColorsInGroup(item, tc, sc, bc, refT, refS, refB, refB2);
         } else if (item.typename === "CompoundPathItem") {
             try {
                 for (var k = 0; k < item.pathItems.length; k++) {
@@ -95,6 +99,22 @@ function replaceSchoolName(group, newName) {
     }
 }
 
+function replaceSemester(group, newSem) {
+    // '학기' + '고사' 를 포함한 TextFrame을 분석본 학기 문구로 교체
+    // (예: '1학기 중간고사' -> '1학기 기말고사'). 같은 글자수라 위치 보정 불필요.
+    if (!newSem) return;
+    for (var i = 0; i < group.pageItems.length; i++) {
+        var item = group.pageItems[i];
+        if (item.typename === "TextFrame") {
+            if (item.contents.indexOf("학기") >= 0 && item.contents.indexOf("고사") >= 0) {
+                item.contents = newSem;
+            }
+        } else if (item.typename === "GroupItem") {
+            replaceSemester(item, newSem);
+        }
+    }
+}
+
 // ---- 메인 ---------------------------------------------------------------
 
 function main() {
@@ -104,6 +124,7 @@ function main() {
     var refT = cfg.ref_title;
     var refS = cfg.ref_sub;
     var refB = cfg.ref_bg;
+    var refB2 = cfg.ref_bg2;
 
     var logLines = [];
 
@@ -126,7 +147,7 @@ function main() {
 
         // 색상 교체
         for (var i = 0; i < doc.layers.length; i++) {
-            replaceColorsInGroup(doc.layers[i], tc, sc, bc, refT, refS, refB);
+            replaceColorsInGroup(doc.layers[i], tc, sc, bc, refT, refS, refB, refB2);
         }
 
         // 학교명 교체
@@ -134,36 +155,31 @@ function main() {
             replaceSchoolName(doc.layers[i], schoolName);
         }
 
-        // 일러스트 교체 (Layer 0 > Group[0] > Group[0] = illustGroup)
+        // 학기 문구 교체 (분석본 기준)
+        for (var i = 0; i < doc.layers.length; i++) {
+            replaceSemester(doc.layers[i], school.semester);
+        }
+
+        // 풍경 일러스트는 템플릿(강동1) 고정 — 교체하지 않는다.
+        // 단, 풍경 래스터가 가장자리에서 옅어져 배경색과의 사이에 흰 띠가 보이므로,
+        // 클립 안에서 래스터를 살짝 확대(overscan)해 옅은 가장자리를 잘라낸다.
         try {
-            var mainGroup = doc.layers[0].groupItems[0];
-            var illustGroup = mainGroup.pageItems[0];
-            var clipPath = illustGroup.pageItems[0];
-            var rasterGroup = illustGroup.pageItems[1];
+            var igrp = doc.layers[0].groupItems[0].pageItems[0];  // illustGroup(클립)
+            var rgrp = igrp.pageItems[1];                          // rasterGroup
+            rgrp.resize(OVERSCAN, OVERSCAN, true, true, true, true, 100, Transformation.BOTTOM);
+        } catch (eo) {
+            logLines.push("  [경고] 풍경 overscan 실패: " + eo.message);
+        }
 
-            var visLeft = clipPath.left;
-            var visTop = clipPath.top;
-            var visWidth = clipPath.width;
-            var visHeight = clipPath.height;
-
-            // 기존 래스터 제거
-            while (rasterGroup.pageItems.length > 0) {
-                rasterGroup.pageItems[0].remove();
-            }
-
-            // 새 일러스트 배치
-            var illustFile = new File(school.illustration_path);
-            if (illustFile.exists) {
-                var placed = rasterGroup.placedItems.add();
-                placed.file = illustFile;
-                placed.left = visLeft;
-                placed.top = visTop;
-                placed.width = visWidth;
-                placed.height = visHeight;
-                placed.embed();
-            }
-        } catch (e) {
-            logLines.push("  [경고] 일러스트 교체 실패: " + e.message);
+        // 작업한 .ai 저장 (PDF 외에 편집 가능 원본도 남긴다)
+        var aiPath = outputDir + "/" + schoolKey + "_포켓북_표지.ai";
+        try {
+            var aiOpts = new IllustratorSaveOptions();
+            aiOpts.pdfCompatible = true;
+            doc.saveAs(new File(aiPath), aiOpts);
+            logLines.push("  AI: " + aiPath);
+        } catch (ea) {
+            logLines.push("  [경고] AI 저장 실패: " + ea.message);
         }
 
         // PDF 저장

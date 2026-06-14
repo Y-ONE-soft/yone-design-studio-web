@@ -1,6 +1,12 @@
 """포켓북 표지 엔진.
 
-분석본 PDF 업로드 -> 색상/일러스트 추출 -> Illustrator에서 포켓북 표지 AI 수정 -> PDF 출력.
+분석본 일러스트(.ai) 업로드 -> 색상 3종 추출 -> Illustrator에서 포켓북 표지 AI 색상/학교명 교체 -> PDF 출력.
+
+규칙(학교마다 풍경은 동일, 색상만 다르게):
+- 풍경 일러스트: 템플릿(강동1) 고정 — 학교별로 추출하지 않는다.
+- 배경색: 분석본 배경색으로 교체 (앞면 크림 + 뒷면 패널).
+- 포인트색 -> "POCKET BOOK" 제목.
+- 보조색 -> 2026 / 학교명 / 학기 / 포켓북 등 나머지 문구.
 """
 
 import hashlib
@@ -21,19 +27,15 @@ from core.base import BaseEngine
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
 _JSX_TEMPLATE = os.path.join(_DIR, "pocketbook_cover.jsx")
-_TEMPLATE_AI = "/Users/nhj/Documents/작업/Y.ONE STUDIO/디자인/표지/포켓북/강동1_포켓북_표지.ai"
 _OUTPUT_DIR = "/Users/nhj/Documents/작업/Y.ONE STUDIO/디자인/표지/포켓북"
+# 템플릿은 보호 폴더(_template)의 사본을 사용 — 출력 .ai가 원본 템플릿을 덮어쓰지 않게 한다.
+_TEMPLATE_AI = os.path.join(_OUTPUT_DIR, "_template", "강동1_포켓북_표지.ai")
 
-# 포켓북 템플릿(강동1) 기준 색상
-REF_TITLE = [80.1, 49.6, 81.6, 10.9]
-REF_SUB = [51.7, 69.2, 84.3, 13.6]
-REF_BG = [48.2, 0.0, 20.0, 0.0]
-
-# 분석본에서 제외할 공통 색상 (tolerance 1.0)
-_EXCLUDE_CMYK = [
-    (71.7, 72.8, 83.7, 49.4),
-    (0.0, 0.0, 12.0, 65.0),
-]
+# 포켓북 템플릿(강동1) 기준 색상 (find-and-replace 대상)
+REF_TITLE = [80.1, 49.6, 81.6, 10.9]   # 'POCKET BOOK' -> 포인트색
+REF_SUB = [51.7, 69.2, 84.3, 13.6]     # 2026/학교명/학기/포켓북 -> 보조색
+REF_BG = [48.2, 0.0, 20.0, 0.0]        # 뒷면 패널 -> 배경색
+REF_BG2 = [5.0, 5.0, 19.0, 0.0]        # 앞면 크림 배경 -> 배경색
 
 ILLUSTRATOR_VERSIONS = ["2026", "2025", "2024", "2023"]
 
@@ -55,107 +57,94 @@ def _school_display_name(key):
     return key
 
 
-def _cmyk_near(a, b, tol=1.0):
+# ---- 색상 추출 --------------------------------------------------------
+# 분석본 .ai의 '실제 요소 색상값'을 콘텐츠 스트림(CMYK fill 연산자 k)에서 그대로
+# 읽는다. 렌더 픽셀은 텍스처+COLOR 블렌드로 요소 원색과 달라지므로 쓰지 않는다.
+# 전 학교 공통(풍경/로고) 벡터색은 제외하고, 학교별 변동색에서 bg/제목/보조를 식별.
+
+# 14개교 전부에서 등장하는 공통(풍경/로고) 벡터색 — 추출에서 제외
+_COMMON_CMYK = [(71.7, 72.8, 83.7, 49.4), (0.0, 0.0, 12.0, 65.0)]
+_K_PAT = re.compile(r"([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+k\b")
+
+
+def _near_cmyk(a, b, tol=2.5):
     return all(abs(a[i] - b[i]) < tol for i in range(4))
 
 
-# ---- 색상 추출 --------------------------------------------------------
+def _cmyk_to_rgb(c):
+    C, M, Y, K = [v / 100.0 for v in c]
+    return ((1 - C) * (1 - K) * 255.0, (1 - M) * (1 - K) * 255.0, (1 - Y) * (1 - K) * 255.0)
 
 
-def _parse_cmyk_from_stream(doc, page):
-    """page의 content stream에서 CMYK fill 색상 목록 추출."""
-    colors = set()
-    for cref in page.get_contents():
-        content = doc.xref_stream(cref).decode("latin-1")
-        for m in re.findall(r"([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+k", content):
-            c, mm, y, kk = (float(x) for x in m)
-            colors.add((round(c * 100, 1), round(mm * 100, 1),
-                         round(y * 100, 1), round(kk * 100, 1)))
-    return colors
+def _extract_colors(analysis_path):
+    """분석본 .ai 콘텐츠 스트림에서 실제 요소 CMYK를 그대로 읽어 3색 식별.
 
-
-def _extract_colors(pdf_path):
-    """분석본 PDF에서 title/sub/bg CMYK 추출."""
-    doc = fitz.open(pdf_path)
-    front_colors = _parse_cmyk_from_stream(doc, doc[0])
-    back_colors = _parse_cmyk_from_stream(
-        doc, doc[1] if doc.page_count > 1 else doc[0]
-    )
-    doc.close()
-
-    all_colors = front_colors | back_colors
-    variable = {c for c in all_colors
-                if not any(_cmyk_near(c, ex) for ex in _EXCLUDE_CMYK)}
-
-    back_variable = {c for c in back_colors
-                     if not any(_cmyk_near(c, ex) for ex in _EXCLUDE_CMYK)}
-    bg = min(back_variable, key=lambda c: sum(c))
-
-    text_colors = sorted(variable - {bg}, key=lambda c: sum(c), reverse=True)
-    title = text_colors[0] if len(text_colors) >= 1 else bg
-    sub = text_colors[1] if len(text_colors) >= 2 else title
-
-    return {
-        "title": list(title),
-        "sub": list(sub),
-        "bg": list(bg),
-    }
-
-
-# ---- 일러스트 추출 ----------------------------------------------------
-
-
-def _extract_illustration(pdf_path, out_path):
-    """분석본 PDF에서 텍스트 제거 후 일러스트 영역만 렌더링."""
-    doc = fitz.open(pdf_path)
-    page = doc[0]
-
-    # content stream을 q..Q 블록으로 분리
-    contents = page.get_contents()
-    content = doc.xref_stream(contents[0]).decode("latin-1")
-    lines = content.split("\n")
-
-    blocks = []
-    current = []
-    depth = 0
-    pre = []
-
-    for line in lines:
-        stripped = line.strip()
-        if depth == 0 and stripped != "q" and not current:
-            pre.append(line)
+    - 공통(풍경/로고)색 제외 후 남는 '학교별 변동색'에서:
+      - bg        = 상단 여백 렌더색에 가장 가까운 변동색 (배경 식별)
+      - secondary = 변동색 중 최다 빈도 (작은 문구 다수) -> 2026/학교명/학기/포켓북
+      - title     = 그다음 빈도 (큰 제목)               -> 'POCKET BOOK'
+    반환값은 분석본 요소의 CMYK 원값 그대로(렌더 근사 아님).
+    """
+    doc = fitz.open(analysis_path)
+    counts = {}
+    for xref in range(1, doc.xref_length()):
+        try:
+            s = doc.xref_stream(xref)
+        except Exception:
             continue
-        current.append(line)
-        if stripped == "q":
-            depth += 1
-        elif stripped == "Q":
-            depth -= 1
-            if depth == 0:
-                blocks.append("\n".join(current))
-                current = []
-
-    # 처음 3 블록(Im0 sky, Fm0 overlay, Im1 land)만 유지, 나머지(텍스트) 제거
-    new_content = "\n".join(pre) + "\n"
-    for i, block in enumerate(blocks):
-        if i <= 2:
-            new_content += block + "\n"
-    if "/OC /MC0 BDC" in new_content and "EMC" not in new_content:
-        new_content += "EMC\n"
-
-    doc.update_stream(contents[0], new_content.encode("latin-1"))
-
-    # Image[1] (land) bbox로 크롭
-    img_info = page.get_image_info(xrefs=True)
-    if len(img_info) >= 2:
-        bbox = img_info[1]["bbox"]
-    else:
-        bbox = page.rect
-
-    clip = fitz.Rect(bbox[0], bbox[1], bbox[2], bbox[3])
-    pix = page.get_pixmap(matrix=fitz.Matrix(300 / 72, 300 / 72), clip=clip)
-    pix.save(out_path)
+        if not s:
+            continue
+        try:
+            txt = s.decode("latin-1")
+        except Exception:
+            continue
+        for m in _K_PAT.findall(txt):
+            c = tuple(round(float(x) * 100, 1) for x in m)
+            counts[c] = counts.get(c, 0) + 1
+    pix = doc[0].get_pixmap(matrix=fitz.Matrix(1.0, 1.0))
+    arr = np.frombuffer(pix.samples, dtype=np.uint8).reshape(
+        pix.height, pix.width, pix.n)[:, :, :3]
     doc.close()
-    return out_path
+
+    var = {c: n for c, n in counts.items()
+           if not any(_near_cmyk(c, x) for x in _COMMON_CMYK)}
+    if not var:
+        return {"title": list(REF_TITLE), "sub": list(REF_SUB), "bg": list(REF_BG)}
+
+    # 배경: 상단 좌/우 여백의 렌더 최빈색에 가장 가까운 변동색
+    H, W = arr.shape[0], arr.shape[1]
+    marg = np.concatenate([
+        arr[int(H * 0.08):int(H * 0.22), 0:int(W * 0.05)].reshape(-1, 3),
+        arr[int(H * 0.08):int(H * 0.22), int(W * 0.95):W].reshape(-1, 3),
+    ]).astype(np.int32)
+    mq = (marg // 6) * 6
+    mc, mn = np.unique(mq, axis=0, return_counts=True)
+    rough = mc[mn.argmax()]
+    bg = min(var, key=lambda c: sum(abs(_cmyk_to_rgb(c)[i] - rough[i]) for i in range(3)))
+
+    rest = sorted([c for c in var if c != bg], key=lambda c: -var[c])
+    secondary = rest[0] if rest else bg
+    title = rest[1] if len(rest) > 1 else secondary
+
+    return {"title": list(title), "sub": list(secondary), "bg": list(bg)}
+
+
+# ---- 학기 문구 추출 ---------------------------------------------------
+
+_SEMESTER_RE = re.compile(r"(\d)\s*학기\s*([가-힣]*고사)")
+
+
+def _extract_semester(analysis_path):
+    """분석본에서 'N학기 X고사' 문구 추출 (예: '1학기 기말고사'). 못 찾으면 None."""
+    doc = fitz.open(analysis_path)
+    txt = ""
+    for p in range(doc.page_count):
+        txt += doc[p].get_text()
+    doc.close()
+    m = _SEMESTER_RE.search(_nfc(txt))
+    if m:
+        return m.group(1) + "학기 " + m.group(2)
+    return None
 
 
 # ---- Illustrator 실행 ------------------------------------------------
@@ -223,7 +212,7 @@ class CoverPocketbookEngine(BaseEngine):
 
     @property
     def description(self):
-        return "분석본 PDF에서 색상/삽화를 추출하여 포켓북 표지 PDF를 자동 생성합니다."
+        return "분석본 일러스트(.ai)에서 색상/풍경을 추출하여 포켓북 표지 PDF를 자동 생성합니다."
 
     @property
     def template_name(self):
@@ -239,9 +228,9 @@ class CoverPocketbookEngine(BaseEngine):
             "slots": [
                 {
                     "key": "analysis_pdfs",
-                    "label": "분석본 PDF (.pdf)",
+                    "label": "분석본 일러스트 (.ai)",
                     "required": True,
-                    "accept": ".pdf",
+                    "accept": ".ai",
                     "multiple": True,
                 },
             ]
@@ -252,16 +241,13 @@ class CoverPocketbookEngine(BaseEngine):
         if isinstance(pdfs, str):
             pdfs = [pdfs]
         if not pdfs:
-            raise ValueError("분석본 PDF가 업로드되지 않았습니다.")
+            raise ValueError("분석본 .ai가 업로드되지 않았습니다.")
 
         log(f"[분석본] {len(pdfs)}개 파일")
 
-        illust_dir = os.path.join(job_dir, "illustrations")
-        os.makedirs(illust_dir, exist_ok=True)
-
         schools_data = []
-        for pdf_path in pdfs:
-            basename = _nfc(os.path.basename(pdf_path))
+        for ai_path in pdfs:
+            basename = _nfc(os.path.basename(ai_path))
             # app.py가 저장 시 "{key}_" 접두사를 붙이므로 제거
             if basename.startswith("analysis_pdfs_"):
                 basename = basename[len("analysis_pdfs_"):]
@@ -270,16 +256,16 @@ class CoverPocketbookEngine(BaseEngine):
 
             log(f"  {school_key} ({school_name})")
 
-            # 색상 추출
-            colors = _extract_colors(pdf_path)
-            log(f"    title=CMYK({colors['title']})")
-            log(f"    sub=CMYK({colors['sub']})")
+            # 색상 3종 추출 (풍경은 템플릿 고정 — 추출하지 않음)
+            colors = _extract_colors(ai_path)
+            log(f"    point(POCKET BOOK)=CMYK({colors['title']})")
+            log(f"    secondary(2026/학교/학기/포켓북)=CMYK({colors['sub']})")
             log(f"    bg=CMYK({colors['bg']})")
 
-            # 일러스트 추출
-            illust_path = os.path.join(illust_dir, f"{school_key}_illust.png")
-            _extract_illustration(pdf_path, illust_path)
-            log(f"    일러스트 추출 완료")
+            # 학기 문구 추출 (예: '1학기 기말고사')
+            semester = _extract_semester(ai_path)
+            if semester:
+                log(f"    학기={semester}")
 
             schools_data.append({
                 "school_key": school_key,
@@ -287,7 +273,7 @@ class CoverPocketbookEngine(BaseEngine):
                 "title_cmyk": colors["title"],
                 "sub_cmyk": colors["sub"],
                 "bg_cmyk": colors["bg"],
-                "illustration_path": illust_path,
+                "semester": semester or "",
             })
 
         # settings.json -> /tmp (한글 경로 회피)
@@ -303,6 +289,7 @@ class CoverPocketbookEngine(BaseEngine):
             "ref_title": REF_TITLE,
             "ref_sub": REF_SUB,
             "ref_bg": REF_BG,
+            "ref_bg2": REF_BG2,
             "schools": schools_data,
             "log_path": log_file,
         }
@@ -326,17 +313,19 @@ class CoverPocketbookEngine(BaseEngine):
         log(f"[Illustrator] {len(schools_data)}개 학교 표지 생성 중...")
         _run_illustrator_jsx(jsx_path, log, log_file, timeout=len(schools_data) * 60 + 60)
 
-        # 생성된 PDF를 job_dir에 복사
+        # 생성된 PDF + 작업한 .ai를 job_dir에 복사
         generated = []
         for sd in schools_data:
-            pdf_name = f"{sd['school_key']}_포켓북_표지.pdf"
-            src = os.path.join(_OUTPUT_DIR, pdf_name)
-            if os.path.exists(src):
-                dst = os.path.join(job_dir, pdf_name)
-                safe_copy(src, dst)
-                generated.append(dst)
+            base = f"{sd['school_key']}_포켓북_표지"
+            for ext in (".pdf", ".ai"):
+                src = os.path.join(_OUTPUT_DIR, base + ext)
+                if os.path.exists(src):
+                    dst = os.path.join(job_dir, base + ext)
+                    safe_copy(src, dst)
+                    if ext == ".pdf":
+                        generated.append(dst)
 
-        log(f"[완료] {len(generated)}/{len(schools_data)}개 PDF 생성")
+        log(f"[완료] {len(generated)}/{len(schools_data)}개 생성 (PDF + AI)")
         return settings_path
 
     def prepare_jsx(self, json_path, job_dir, log):
