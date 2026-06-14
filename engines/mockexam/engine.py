@@ -6,6 +6,7 @@ import re
 import shutil
 import unicodedata
 
+from config import STUDIO_ROOT
 from core.base import BaseEngine, safe_copy_indd
 
 
@@ -158,13 +159,10 @@ class MockexamEngine(BaseEngine):
         # 회차별 처리
         rounds = content.get("rounds", [content])
 
-        # 출력 디렉터리 — realpath로 심볼릭 링크 통과 (조판_자동화 → 통합웹사이트)
+        # 출력 디렉터리 — 조판/교재/동형모의고사/{학년}/{시험기간}/{학교}/
         grade_num = grade.replace("고", "")
-        _studio = os.path.dirname(os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-        ))
         output_dir = os.path.join(
-            _studio, "조판", "교재", "동형모의고사",
+            STUDIO_ROOT, "조판", "교재", "동형모의고사",
             grade, exam_period, school
         )
         os.makedirs(output_dir, exist_ok=True)
