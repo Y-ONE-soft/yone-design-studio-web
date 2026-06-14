@@ -395,9 +395,9 @@
                 continue;
             }
 
-            // VOL.XX / WEEKXX 패턴
-            // "배재고2VOL.01" → "배재고2VOL.05", "WEEK03" → "WEEK05"
-            var prefixes = ["VOL.", "WEEK"];
+            // VOL.XX / WEEKXX / 워크북XX 패턴
+            // "배재고2VOL.01" → "배재고2VOL.05", "WEEK03" → "WEEK05", "워크북 01" → "워크북 02"
+            var prefixes = ["VOL.", "WEEK", "워크북"];
             for (var pi = 0; pi < prefixes.length; pi++) {
                 var prefix = prefixes[pi];
                 var pPos = content.toUpperCase().indexOf(prefix);
