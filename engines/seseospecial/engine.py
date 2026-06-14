@@ -10,16 +10,20 @@ import re
 import shutil
 
 from core.base import BaseEngine, safe_copy
+from core.paths import resolve_config
 from engines.seseospecial.parser import parse_all
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
 _CONFIG_PATH = os.path.join(_DIR, "config.json")
 _JSX_TEMPLATE = os.path.join(_DIR, "jsx", "run.jsx")
+_PATH_KEYS = ["templates"]
 
 
 def _load_config() -> dict:
     with open(_CONFIG_PATH, encoding="utf-8") as f:
-        return json.load(f)
+        cfg = json.load(f)
+    # templates 의 '조판/인디자인 원본/...' 경로를 INDD_ORIGINAL_BASE(GDrive)로 redirect
+    return resolve_config(cfg, _PATH_KEYS)
 
 
 def _make_indd_path(cfg: dict, school: str, issue_num: str) -> str:
@@ -30,8 +34,8 @@ def _make_indd_path(cfg: dict, school: str, issue_num: str) -> str:
 
 
 def _school_key(school: str) -> str:
-    """'광문1' -> '광문1', '광문2' -> '광문2' 등 템플릿 키 추출."""
-    for key in ("광문1", "광문2"):
+    """'광문1' -> '광문1', '광문2' -> '광문2', '광문3' -> '광문3' 등 템플릿 키 추출."""
+    for key in ("광문1", "광문2", "광문3"):
         if key in school:
             return key
     return school
@@ -60,7 +64,11 @@ class SeseoSpecialEngine(BaseEngine):
         return {
             "slots": [
                 {"key": "part1", "label": "PART1 중요문장 (.hwpx)", "required": True},
-                {"key": "part2", "label": "PART2 실전문제+정답 (.hwpx)", "required": True},
+                {"key": "part2", "label": "PART2 실전문제 (.hwpx)", "required": True},
+                {"key": "answers",
+                 "label": "정답·해설 (.hwpx/.docx — 여러 파일 가능)",
+                 "required": False, "multiple": True,
+                 "accept": ".hwpx,.docx"},
             ]
         }
 
@@ -69,14 +77,20 @@ class SeseoSpecialEngine(BaseEngine):
     def parse(self, uploaded_files: dict, job_dir: str, log) -> str:
         part1_path = uploaded_files.get("part1")
         part2_path = uploaded_files.get("part2")
+        answer_files = uploaded_files.get("answers")
+        if isinstance(answer_files, str):
+            answer_files = [answer_files]
         if not part1_path:
             raise ValueError("PART1 중요문장 hwpx 파일이 없습니다.")
         if not part2_path:
             raise ValueError("PART2 실전문제 hwpx 파일이 없습니다.")
+        if not answer_files:
+            log("[내지] ⚠ 정답·해설 파일 없음 — 정답지는 비워둡니다.")
 
         school = self._get_school(job_dir)
         json_path = os.path.join(job_dir, "content.json")
-        parse_all(part1_path, part2_path, school, json_path, log)
+        parse_all(part1_path, part2_path, school, json_path, log,
+                  answer_paths=answer_files)
         return json_path
 
     # -- 2단계: JSX 준비 + InDesign 파일 복사 ---------------------------------
@@ -89,6 +103,14 @@ class SeseoSpecialEngine(BaseEngine):
 
         # 출력 디렉터리 생성
         os.makedirs(os.path.dirname(indd_path), exist_ok=True)
+
+        # 재실행 충돌 방지: 출력 indd가 InDesign에 열려 있으면 '덮어쓰기 전에' 닫는다
+        # (열린 채로 덮어쓰면 문서가 invalid 되어 app.open 시 'Object is invalid')
+        try:
+            from core.indesign.runner import close_open_indd
+            close_open_indd(indd_path, log)
+        except Exception:
+            pass
 
         # 원본 템플릿 복사
         key = _school_key(school)
@@ -149,7 +171,7 @@ class SeseoSpecialEngine(BaseEngine):
         part1_count = int(m1.group(1)) if m1 else None
 
         # PART2 문항 수
-        m2 = re.search(r"PART2:\s*(\d+)문항", content)
+        m2 = re.search(r"PART2:\s*(\d+)\s*(?:문항|그룹)", content)
         part2_count = int(m2.group(1)) if m2 else None
 
         # 정답 수
