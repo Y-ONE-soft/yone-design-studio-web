@@ -1,0 +1,36 @@
+// ============================================
+// Syncthing ignore list for yone-design-web
+// iMac <-> MacBook code/metadata mirror
+// ============================================
+
+// --- Per-machine work output (LARGE, exclude!) ---
+jobs
+
+// --- Per-machine secrets / environment ---
+.env
+.env.local
+
+// --- Per-machine uploads ---
+uploads
+
+// --- Git internals (syncing .git breaks both repos) ---
+.git
+
+// --- Python build artifacts ---
+__pycache__
+*.pyc
+*.pyo
+
+// --- Logs ---
+*.log
+flask.log
+
+// --- macOS / IDE / tooling noise ---
+.DS_Store
+.vscode
+.idea
+.claude
+
+// --- Misc local-only files ---
+18fe636a-*.json
+HANDOFF.md
