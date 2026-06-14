@@ -114,17 +114,47 @@ class TextbookWorkbookEngine(BaseEngine):
         base = os.path.join(cfg["textbook_base"], subject, publisher)
         if not os.path.isdir(base):
             return []
+        # 콤마로 묶인 단원도 매칭 (예: "1, 2과")
+        lesson_re = re.compile(r'(\d+(?:\s*,\s*\d+)*과|SL\d+|Project\s*\d+)')
+        # publisher에서 괄호 부분 제거 ("공통영어1 미래엔(김)" -> "공통영어1 미래엔")
+        publisher_no_paren = re.sub(r'\s*\([^)]*\)', '', publisher).strip()
+
         result = []
         for raw in sorted(os.listdir(base)):
             name = _nfc(raw)
             if name.startswith("."):
                 continue
             full = os.path.join(base, raw)
-            if os.path.isdir(full):
-                # "공통영어1 YBM(박) 1과" -> "1과" 추출
-                m = re.search(r'(\d+과|SL\d+|Project\s*\d+)', name)
-                if m:
-                    result.append({"folder": name, "label": m.group(1)})
+            if not os.path.isdir(full):
+                continue
+            m = lesson_re.search(name)
+            if m:
+                # 일반 단원 폴더: "공통영어1 YBM(박) 1과" -> "1과"
+                result.append({"folder": name, "label": m.group(1)})
+                continue
+            # 그룹 폴더(예: "공통영어1 미래엔 Deep Learning") 하위 단원 탐색
+            group_label = name
+            if publisher_no_paren and name.startswith(publisher_no_paren):
+                group_label = name[len(publisher_no_paren):].strip()
+            elif subject and name.startswith(subject):
+                group_label = name[len(subject):].strip()
+            try:
+                sub_raws = sorted(os.listdir(full))
+            except OSError:
+                continue
+            for sub_raw in sub_raws:
+                sub_name = _nfc(sub_raw)
+                if sub_name.startswith("."):
+                    continue
+                sub_full = os.path.join(full, sub_raw)
+                if not os.path.isdir(sub_full):
+                    continue
+                sub_m = lesson_re.search(sub_name)
+                if not sub_m:
+                    continue
+                rel_folder = os.path.join(name, sub_name)
+                label = (group_label + " " + sub_m.group(1)).strip() if group_label else sub_m.group(1)
+                result.append({"folder": rel_folder, "label": label})
         return result
 
     @staticmethod
@@ -217,7 +247,8 @@ class TextbookWorkbookEngine(BaseEngine):
                     files.append({"name": name, "used": used})
             elif os.path.isdir(full):
                 lower = name.lower()
-                if "step3" in lower or "스텝3" in _nfc(lower):
+                # "원본" 폴더는 raw 아카이브 → 미리보기에서도 제외 (parse와 동일 규칙)
+                if ("step3" in lower or "스텝3" in _nfc(lower)) and "원본" not in name:
                     # Step3 폴더 내 후보 파일 수집 (정답해설 제외)
                     step3_candidates = []
                     for raw2 in sorted(os.listdir(full)):
@@ -286,18 +317,20 @@ class TextbookWorkbookEngine(BaseEngine):
                 )
 
         # 1) 구글 드라이브 워크북 폴더에서 파일 복사
-        gdrive_workbook = self._read_meta_str(job_dir, "manuscript_folder", "")
-        # 폴더 listing도 미러로 우회 — Drive zombie 시 GDrive listdir이 EDEADLK 유발 회피.
-        # 미러 폴더 안에 같은 구조로 존재하면 GDrive 데몬을 완전히 거치지 않음.
-        from engines.final.extractor import _resolve_local_mirror as _rlm
-        gdrive_workbook = _rlm(gdrive_workbook, log)
-        if gdrive_workbook and os.path.isdir(gdrive_workbook):
-            log(f"[파서] 원고 폴더: {os.path.basename(gdrive_workbook)}")
-            for raw in os.listdir(gdrive_workbook):
-                src = os.path.join(gdrive_workbook, raw)
-                name = _nfc(raw)
-                if name.startswith("."):
-                    continue
+        orig_workbook = self._read_meta_str(job_dir, "manuscript_folder", "")
+        # 파일 목록은 '미러 + GDrive 합집합'으로 열거 — 미러가 stale(=GDrive에
+        # 나중 추가된 파일이 미러엔 없음)일 때 파일이 조용히 누락되던 문제 차단.
+        # 읽기 경로는 미러본 우선(EDEADLK 회피), 미러에 없으면 GDrive 원본.
+        from engines.final.extractor import (
+            _resolve_local_mirror as _rlm,
+            list_manuscript_entries,
+        )
+        mirror_workbook = _rlm(orig_workbook, log)
+        if mirror_workbook and os.path.isdir(mirror_workbook):
+            log(f"[파서] 원고 폴더: {os.path.basename(mirror_workbook)}")
+            entries = list_manuscript_entries(orig_workbook, log)
+            entry_names = {n for n, _ in entries}
+            for name, src in entries:
                 if os.path.isfile(src):
                     ext = os.path.splitext(name)[1].lower()
                     if ext in (".docx", ".hwp", ".hwpx"):
@@ -310,15 +343,18 @@ class TextbookWorkbookEngine(BaseEngine):
                         if name in alternatives:
                             target = alternatives[name]
                             target_path = os.path.join(manuscript_dir, target)
-                            orig_path = os.path.join(gdrive_workbook, target)
-                            if not os.path.exists(target_path) and not os.path.exists(orig_path):
+                            if not os.path.exists(target_path) and target not in entry_names:
                                 dest_name = target
                                 log(f"[파서] 대체 파일명: {name} -> {target}")
                         _safe_copy(src, os.path.join(manuscript_dir, dest_name))
                 elif os.path.isdir(src):
                     # Step3/스텝3 서브폴더 복사
+                    # ※ "Step3 원본(이그잼)" 류는 raw 소스 아카이브이지 원고 폴더가
+                    #   아니다. 이름에 "원본"이 들어간 폴더는 descent 대상에서 제외
+                    #   (정상 원고 폴더는 정확히 "Step3"/"스텝3"). 제외 안 하면 이그잼
+                    #   raw .hwp가 step3_dir로 흘러들어 Step3.hwpx와 함께 조판됨.
                     lower = name.lower()
-                    if "step3" in lower or "스텝3" in _nfc(lower):
+                    if ("step3" in lower or "스텝3" in _nfc(lower)) and "원본" not in name:
                         for raw2 in os.listdir(src):
                             src2 = os.path.join(src, raw2)
                             name2 = _nfc(raw2)
@@ -401,18 +437,31 @@ class TextbookWorkbookEngine(BaseEngine):
         grade_map = cfg.get("subject_grade_map", {})
         grade = grade_map.get(subject, 1)
 
+        # 학교 (공통/세종) — 부교재 워크북과 동일하게 학교 전용 내지 분기
+        school = self._read_meta_str(job_dir, "school", "")
+
         # 출력 파일명
         # publisher에서 과목명 제거: "공통영어1 YBM(박)" -> "YBM(박)"
         pub_short = publisher
         if subject and publisher.startswith(subject):
             pub_short = publisher[len(subject):].strip()
-        out_name = f"{subject}_{pub_short}_{lesson}_전체(C).indd"
+        # 세종 등 학교 선택 시 끝에 (학교) 접미사로 공통본과 구분
+        school_suffix = f"({school})" if school else ""
+        out_name = f"{subject}_{pub_short}_{lesson}_전체(C){school_suffix}.indd"
         indd_path = os.path.join(cfg["indd_output_dir"], out_name)
 
-        # 원본 indd 복사
-        src = cfg.get("indd_original", "")
-        if isinstance(src, dict):
-            src = src.get("모의고사", "")
+        # 원본 indd: 학교 키 → "_default"(공통) fallback. 구버전 문자열 config 호환.
+        indd_orig = cfg.get("indd_original", "")
+        if isinstance(indd_orig, dict):
+            src = ""
+            if school:
+                src = indd_orig.get(school, "")
+                if src:
+                    log(f"[내지] 학교 전용 템플릿: {school}")
+            if not src:
+                src = indd_orig.get("_default", "") or indd_orig.get("모의고사", "")
+        else:
+            src = indd_orig
         if os.path.exists(src):
             os.makedirs(os.path.dirname(indd_path), exist_ok=True)
             indd_path = safe_copy_indd(src, indd_path)
