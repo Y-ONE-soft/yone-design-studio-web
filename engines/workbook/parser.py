@@ -18,12 +18,15 @@ docx/hwp 원고 → 단락 목록 → STEP별 분류 → content.json
 
 import html
 import json
+import logging
 import os
 import re
 import struct
 import sys
 import unicodedata
 import zipfile
+
+_LOG = logging.getLogger(__name__)
 
 
 def _nfc(s):
@@ -147,12 +150,16 @@ def _hwpx_extract_paragraphs(hwpx_path, extract_underline=False, exclude_footnot
     """
     with zipfile.ZipFile(hwpx_path, 'r') as zf:
         names = zf.namelist()
-        section_name = next(
-            (n for n in names if re.search(r'section\d+\.xml', n, re.I)), None
+        # HWPX 본문도 여러 섹션(section0.xml/section1.xml/…)으로 나뉠 수 있다.
+        # 첫 섹션만 읽으면 두 번째 섹션 이후 단락이 통째로 누락된다(.hwp와 동일 버그).
+        # 모든 section XML을 번호 순으로 모아 각각 처리한다.
+        section_names = sorted(
+            (n for n in names if re.search(r'section\d+\.xml', n, re.I)),
+            key=lambda n: int(re.search(r'section(\d+)\.xml', n, re.I).group(1)),
         )
-        if not section_name:
+        if not section_names:
             raise ValueError(f"section XML을 찾을 수 없음: {hwpx_path}")
-        section_xml = zf.read(section_name).decode('utf-8')
+        section_xmls = [zf.read(n).decode('utf-8') for n in section_names]
 
         header_name = next(
             (n for n in names if re.search(r'header\.xml', n, re.I)), None
@@ -161,26 +168,18 @@ def _hwpx_extract_paragraphs(hwpx_path, extract_underline=False, exclude_footnot
 
     ul_ids = _parse_underline_ids(header_xml) if (extract_underline and header_xml) else set()
 
-    # 미주/각주 제거 (hwpx 실제 태그명: hp:endNote, hp:footNote — 대문자 N)
-    section_xml = re.sub(r'<hp:endNote\b.*?</hp:endNote>', '', section_xml, flags=re.DOTALL)
-    section_xml = re.sub(r'<hp:footNote\b.*?</hp:footNote>', '', section_xml, flags=re.DOTALL)
-
     paragraphs = []
-    for m in re.finditer(r'<hp:p\b([^>]*)>(.*?)</hp:p>', section_xml, re.DOTALL):
-        body = m.group(2)
-        segments = _hwpx_extract_segments(body, ul_ids)
 
+    def _emit(segments):
+        """세그먼트 목록을 new_para 경계로 분할해 paragraphs에 append."""
         cur_runs = []
-        first_flush = True
 
         def flush():
-            nonlocal first_flush
             text = ''.join(r['t'] for r in cur_runs)
             paragraphs.append({
                 "text": text,
                 "runs": [r for r in cur_runs if r['t']] or [{"t": "", "ul": False}],
             })
-            first_flush = False
 
         for seg in segments:
             if seg['new_para']:
@@ -190,6 +189,42 @@ def _hwpx_extract_paragraphs(hwpx_path, extract_underline=False, exclude_footnot
 
         if cur_runs:
             flush()
+
+    # <hp:p>(.*?)</hp:p> 비탐욕 매치는 표 셀의 중첩 </hp:p>에서 끊겨, 표(<hp:tbl>)
+    # *뒤*에 같은 바깥 단락 안에 이어지는 본문(예: 문장삽입 지문)이 매치 사이 gap에
+    # 고아로 남아 누락된다. 매치 직전 gap에서 마지막 </hp:tbl> 이후 텍스트를 복구한다.
+    def _recover_post_table_text(chunk):
+        tbl_close = chunk.rfind('</hp:tbl>')
+        if tbl_close == -1:
+            return
+        orphan = chunk[tbl_close + len('</hp:tbl>'):]
+        orphan_segs = _hwpx_extract_segments(orphan, ul_ids)
+        if not any(s['t'].strip() for s in orphan_segs):
+            # 표를 감싼 run이 표와 뒤따르는 본문을 함께 담는 경우, run 시작 태그가
+            # 표 앞(이전 매치)에서 잘려 <hp:t>가 run 래퍼 없이 남는다 → 직접 추출.
+            orphan_segs = []
+            for t_m in re.finditer(r'<hp:t\b[^>]*>(.*?)</hp:t>', orphan, re.DOTALL):
+                raw = re.sub(r'<hp:tab\b[^/]*/>', '\t', t_m.group(1))
+                for j, part in enumerate(re.split(r'<hp:lineBreak\s*/>', raw)):
+                    orphan_segs.append({
+                        "t": html.unescape(re.sub(r'<[^>]+>', '', part)),
+                        "ul": False, "new_para": j > 0,
+                    })
+        if any(s['t'].strip() for s in orphan_segs):
+            _emit(orphan_segs)
+
+    for section_xml in section_xmls:
+        # 미주/각주 제거 (hwpx 실제 태그명: hp:endNote, hp:footNote — 대문자 N)
+        section_xml = re.sub(r'<hp:endNote\b.*?</hp:endNote>', '', section_xml, flags=re.DOTALL)
+        section_xml = re.sub(r'<hp:footNote\b.*?</hp:footNote>', '', section_xml, flags=re.DOTALL)
+
+        prev_end = 0
+        for m in re.finditer(r'<hp:p\b([^>]*)>(.*?)</hp:p>', section_xml, re.DOTALL):
+            _recover_post_table_text(section_xml[prev_end:m.start()])
+            _emit(_hwpx_extract_segments(m.group(2), ul_ids))
+            prev_end = m.end()
+        # 마지막 매치 이후 trailing 표-고아 텍스트도 복구
+        _recover_post_table_text(section_xml[prev_end:])
 
     return paragraphs
 
@@ -413,8 +448,19 @@ def _hwp_extract_paragraphs(hwp_path, extract_underline=False, exclude_footnotes
 
     hwp = Hwp5File(hwp_path)
     ul_map = _hwp_build_charshape_ul(hwp) if extract_underline else {}
-    sec = hwp.bodytext.section(0)
-    all_recs = list(sec.records())
+    # HWP 본문은 여러 BodyText 섹션(Section0/1/2…)으로 나뉠 수 있다.
+    # section(0)만 읽으면 두 번째 섹션 이후 단락이 통째로 누락된다.
+    #   예) "스텝3 실전문제.hwp"는 54문제가 3개 섹션(4/50/0)에 흩어져 있어
+    #       Section0의 4문제만 추출되고 나머지 50문제가 조용히 사라졌다.
+    # 모든 섹션의 레코드를 문서 순서대로 이어붙인다. CHAR_SHAPE(ul_map)는
+    # DocInfo 전역이라 섹션을 합쳐도 밑줄 매핑이 그대로 유효하다.
+    try:
+        n_sections = len(hwp.bodytext.sections)
+    except Exception:
+        n_sections = 1
+    all_recs = []
+    for _si in range(n_sections):
+        all_recs.extend(list(hwp.bodytext.section(_si).records()))
 
     # HWP5 구조:
     # level 1 = 본문 단락
@@ -425,9 +471,13 @@ def _hwp_extract_paragraphs(hwp_path, extract_underline=False, exclude_footnotes
     # exclude_footnotes=False (Step1/Step2 등):
     #   level 3 중 CTRL 11/12로 감지되는 FOOTNOTE 블록만 제외, 나머지 포함
 
-    # Pass 1: FOOTNOTE 블록의 level 3 레코드 인덱스 수집 (선택적 필터링용)
+    # Pass 1: FOOTNOTE 블록의 level 3 레코드 인덱스 수집.
+    # ※ 양 모드(Step1/2의 exclude_footnotes=False, Step3의 True) 공통으로 실행한다.
+    #   level 3에는 각주/미주뿐 아니라 표·선지 같은 "문제 내용"도 들어있으므로(주석 448행),
+    #   CTRL 17/18로 도입된 진짜 각주/미주 level-3만 골라낸다. (예전 Step3의 "non-level-1
+    #   전부 삭제"는 요약 (A)(B)표·선지표까지 날려 원고 내용이 소리 없이 손실됐다.)
     footnote_l3_set = set()
-    if not exclude_footnotes:
+    if all_recs:
         for ri, rec in enumerate(all_recs):
             if rec.get('tagid') != 67 or rec.get('level', 1) != 1:
                 continue
@@ -481,15 +531,15 @@ def _hwp_extract_paragraphs(hwp_path, extract_underline=False, exclude_footnotes
         if rec.get('tagid') != 67:
             i += 1
             continue
-        # level 1: 항상 포함
+        # level 1(본문 단락): 항상 포함.
+        # level 3 중 각주/미주(footnote_l3_set)가 아닌 표·선지 등 문제 내용: 포함.
+        # 그 외(각주/미주 level-3, 기타 레벨): 제외.
+        # ※ exclude_footnotes True/False 동일 동작 — 진짜 각주/미주만 정밀 제거하고
+        #   문제 내용(표·선지)은 보존한다. (param은 hwpx 경로 시그니처 호환용으로 유지)
         if rec_level == 1:
-            pass  # 포함
-        elif exclude_footnotes:
-            # Step3: level 1이 아닌 모든 레코드 제외 (각주/미주 완전 제거)
-            i += 1
-            continue
+            pass
         elif rec_level == 3 and i not in footnote_l3_set:
-            pass  # 문제 내용 → 포함
+            pass
         else:
             i += 1
             continue
@@ -1079,6 +1129,27 @@ _RE_STEP3_INLINE_CHOICE = re.compile(
 _RE_STEP3_QUESTION_LIKE = re.compile(r'^\s*\d+\.\s')
 _CIRCLED_DIGITS = ['①', '②', '③', '④', '⑤']
 
+# ── 단열 5지선다 발문 구조 판정 (겉모습/앞번호에 의존하지 않음) ──────────────
+# 5지선다 어미: "…것은?" / "…것을 (모두) 고르시오" / "…곳은?" / "…옳은 것은?"
+# 앞 문항번호("1.") 유무, 꼬리표("- 1차") 유무와 무관 — 원고 표기가 바뀌어도 견딘다.
+_RE_STEP3_CHOICE_END = re.compile(
+    r'(?:것은|옳은\s*것은|것을\s*(?:모두\s*)?고르(?:시오|십시오)?|곳은)'
+    r'\s*[\?\.]?\s*(?:[-–—]\s*\d+\s*차\s*)?$'
+)
+# 단열 ①~⑤ prepend 대상이 '아닌' 5지선다(선지 구조가 다름):
+# 순서배열(①이 (A)-(C)-(B) 식 순열), (A)(B) 매칭표, 괄호/네모 안 어법선택.
+_RE_STEP3_NOT_SINGLE_COL = re.compile(
+    r'순서로\s*(?:가장\s*)?적절|이어질\s*글의\s*순서|괄호\s*안|네모\s*안'
+    r'|\(\s*A\s*\).{0,5}\(\s*B\s*\)'
+)
+# 다음 발문 경계(번호 유무 무관): "1." 형태 또는 한글 지시문+지시어미 라인.
+# 선지 prepend 루프가 다음 문제로 넘어가 ④⑤를 잘못 붙이는 것을 막는다.
+_RE_STEP3_PROMPT_BOUNDARY = re.compile(
+    r'^\s*\d+\.\s'
+    r'|[가-힣].*(?:것은|곳은|고르시오|고르십시오|쓰시오|완성하시오|고치시오|'
+    r'문장은|배열하)\s*[\?\.]?\s*(?:[-–—]\s*\d+\s*차\s*)?$'
+)
+
 
 def _add_step3_choice_numbers(paras):
     """Step3 hwp의 5지선다 자동번호(①②③④⑤) 텍스트화.
@@ -1098,7 +1169,10 @@ def _add_step3_choice_numbers(paras):
     n = len(paras)
     while i < n:
         text = (paras[i].get('text', '') or '').strip()
-        if not _RE_STEP3_CHOICE_QUESTION.match(text):
+        # 단열 5지선다 발문 판정 — 겉모습(앞번호)이 아니라 구조/의미로:
+        #   ① 한글 지시문이면서 5지선다 어미("것은?"/"것을 고르시오"/"곳은?")로 끝나고
+        #   ② 제외형(서술/요약/순서/(A)(B)표/괄호·네모 어법/지문 inline)이 아닐 때만.
+        if not (re.search(r'[가-힣]', text) and _RE_STEP3_CHOICE_END.search(text)):
             i += 1
             continue
         if _RE_STEP3_NON_CHOICE.search(text):
@@ -1106,6 +1180,10 @@ def _add_step3_choice_numbers(paras):
             continue
         # 선지가 지문 inline에 박힌 발문 → 자동 prepend skip
         if _RE_STEP3_INLINE_CHOICE.search(text):
+            i += 1
+            continue
+        # 순서/(A)(B)표/괄호·네모 어법 = 단열 선지가 아님 → prepend skip
+        if _RE_STEP3_NOT_SINGLE_COL.search(text):
             i += 1
             continue
 
@@ -1119,7 +1197,7 @@ def _add_step3_choice_numbers(paras):
             t_peek = (paras[j_peek].get('text', '') or '').strip()
             if not t_peek:
                 continue
-            if _RE_STEP3_QUESTION_LIKE.match(t_peek):
+            if _RE_STEP3_PROMPT_BOUNDARY.search(t_peek):
                 break
             if re.match(r'^\[(?:[Gg]ateway|\d+)\]$', t_peek):
                 break
@@ -1158,8 +1236,8 @@ def _add_step3_choice_numbers(paras):
             # 이미 ①~⑤로 시작하면 중단 (어법 객관식이거나 정상 입력된 경우)
             if t_j[0] in _CIRCLED_DIGITS:
                 break
-            # 다음 발문, 본문 마커([Gateway]/[숫자]), 본문 시작 ※ 만나면 중단
-            if _RE_STEP3_QUESTION_LIKE.match(t_j):
+            # 다음 발문(번호 유무 무관), 본문 마커([Gateway]/[숫자]), 본문 시작 ※ 만나면 중단
+            if _RE_STEP3_PROMPT_BOUNDARY.search(t_j):
                 break
             if re.match(r'^\[(?:[Gg]ateway|\d+)\]$', t_j):
                 break
@@ -1179,6 +1257,84 @@ def _add_step3_choice_numbers(paras):
             j += 1
         i = j if added > 0 else i + 1
     return paras
+
+
+# 표형 5지선다 번호 셀 — 단독 ①~⑤ 한 글자 단락 (정답 "②, ③"는 제외)
+_RE_STEP3_LONE_CIRCLED = re.compile(r'^\s*([①②③④⑤])\s*$')
+
+
+def _merge_step3_split_choice_numbers(paras):
+    """표형 5지선다에서 번호 칸(①~⑤)이 선지 텍스트와 분리 추출된 경우 병합.
+
+    "개수는?" / "모두 고르면?" 류 발문의 선지는 원고에서 2열 표(①|1개, ②|2개 …)로
+    작성된다. hwpx 표 평탄화 시 번호 셀과 텍스트 셀이 각각 별도 단락(①, 1개, ②, 2개 …)
+    으로 추출되고, 직후 _strip_step3_answers가 단독 ①~⑤를 정답 번호로 오인해 제거 →
+    선지에서 번호 글리프가 사라진다. 추출 직후(= _strip_step3_answers 이전)에 번호 셀을
+    다음 선지 텍스트에 prepend("① 1개")해 번호 유실을 막는다.
+
+    엄격 매칭: ①②③④⑤가 순서대로, 각각 단독 단락이고 사이에 비어있지 않은 선지가 1개씩
+    올 때만 병합. (단독 정답 "①"나 "②, ③"는 시퀀스를 못 이루므로 영향 없음.)
+    """
+    if not paras:
+        return paras
+
+    def _txt(p):
+        return (p.get('text', '') if isinstance(p, dict) else str(p)).strip()
+
+    n = len(paras)
+    to_merge = {}   # choice_idx -> 원문자
+    drop = set()    # 번호 셀 idx
+    i = 0
+    while i < n:
+        m0 = _RE_STEP3_LONE_CIRCLED.match(_txt(paras[i]))
+        if not (m0 and m0.group(1) == '①'):
+            i += 1
+            continue
+        seq = []        # (num_idx, choice_idx)
+        cur = i
+        ok = True
+        for d in _CIRCLED_DIGITS:
+            md = _RE_STEP3_LONE_CIRCLED.match(_txt(paras[cur])) if cur < n else None
+            if not (md and md.group(1) == d):
+                ok = False
+                break
+            j = cur + 1
+            while j < n and not _txt(paras[j]):
+                j += 1
+            if j >= n or _RE_STEP3_LONE_CIRCLED.match(_txt(paras[j])):
+                ok = False
+                break
+            seq.append((cur, j))
+            cur = j + 1
+        if ok and len(seq) == 5:
+            for (num_idx, choice_idx), d in zip(seq, _CIRCLED_DIGITS):
+                drop.add(num_idx)
+                to_merge[choice_idx] = d
+            i = cur
+        else:
+            i += 1
+
+    if not drop:
+        return paras
+
+    out = []
+    for idx, p in enumerate(paras):
+        if idx in drop:
+            continue
+        if idx in to_merge:
+            d = to_merge[idx]
+            if isinstance(p, dict):
+                merged = dict(p)
+                merged['text'] = d + ' ' + p.get('text', '')
+                runs = p.get('runs')
+                if isinstance(runs, list):
+                    merged['runs'] = [{'t': d + ' ', 'ul': False}] + list(runs)
+                out.append(merged)
+            else:
+                out.append(d + ' ' + str(p))
+        else:
+            out.append(p)
+    return out
 
 
 # Step3 책 헤더 / 묶음 마커 — 출력에서 제거
@@ -1386,6 +1542,87 @@ def _merge_step3_ab_pairs(paras):
     return out
 
 
+# 컬럼 헤더 셀: "(A)" / "(B)" / "(C)"
+_RE_STEP3_COL_HDR = re.compile(r'^\(\s*([ABC])\s*\)$')
+# 표 구분자 셀: "……" / "⋯" / 가운뎃점·마침표만 있는 한 줄
+_RE_STEP3_DOTS_CELL = re.compile(r'^[\s.·…⋯‧]+$')
+
+
+def _merge_step3_column_table(paras):
+    r"""(A)(B)[(C)] 컬럼표를 ①c1\tc2[\tc3] 선지로 병합 — 구조로만 판정(발문 안 봄).
+
+    hwp 표가 셀 단위로 평탄화되고 _strip_step3_answers가 행 번호(①~⑤)를 제거하면,
+    컬럼 헤더 + 값 셀만 세로로 줄줄이 남는다. 이를 5행으로 묶어 ①~⑤를 다시 부여한다.
+
+      2열 요약 선택형:  (A)(B) + [A값 …… B값]×5   → ①A\tB      (…… 구분자 필수)
+      3열 네모 어법:    (A)(B)(C) + [A B C]×5      → ①A\tB\tC    (구분자 없음)
+
+    엄격 판정: 연속 컬럼 헤더 (A)(B)[(C)] 직후, (……·빈줄 제외) 짧은 값 셀이 정확히
+    5×열수만큼 모일 때만 병합. 2열은 연결사형(_merge_step3_ab_pairs 담당)과 겹치지
+    않도록 …… 구분자가 있을 때만. 조건 미달이면 원본 그대로 둔다(안전).
+    """
+    out = []
+    i = 0
+    n = len(paras)
+    while i < n:
+        t = (paras[i].get('text', '') or '').strip()
+        m = _RE_STEP3_COL_HDR.match(t)
+        if m and m.group(1) == 'A':
+            # 연속 컬럼 헤더 (A)(B)[(C)] 수집 (사이 빈줄 허용)
+            cols = 1
+            j = i + 1
+            while j < n:
+                tj = (paras[j].get('text', '') or '').strip()
+                if not tj:
+                    j += 1
+                    continue
+                mj = _RE_STEP3_COL_HDR.match(tj)
+                if mj and mj.group(1) == chr(ord('A') + cols):
+                    cols += 1
+                    j += 1
+                    continue
+                break
+            if cols >= 2:
+                # 값 셀 수집 (……·빈줄 skip, 원문자·발문경계·긴 단락 만나면 중단)
+                cells = []
+                seps = 0
+                k = j
+                need = 5 * cols
+                while k < n and len(cells) < need:
+                    tk = (paras[k].get('text', '') or '').strip()
+                    if not tk:
+                        k += 1
+                        continue
+                    if _RE_STEP3_DOTS_CELL.match(tk):
+                        seps += 1
+                        k += 1
+                        continue
+                    if tk[0] in _CIRCLED_DIGITS or _RE_STEP3_PROMPT_BOUNDARY.search(tk):
+                        break
+                    if len(tk) > 60:  # 긴 단락(지문) → 표 셀 아님
+                        break
+                    cells.append(paras[k])
+                    k += 1
+                ok = ((cols == 3 and len(cells) == 15)
+                      or (cols == 2 and len(cells) == 10 and seps >= 1))
+                if ok:
+                    for r in range(5):
+                        row = cells[r * cols:(r + 1) * cols]
+                        parts = [(c.get('text') or '').strip() for c in row]
+                        mark = _CIRCLED_DIGITS[r]
+                        new_runs = [{"t": mark, "ul": False}]
+                        for ci, c in enumerate(row):
+                            if ci > 0:
+                                new_runs.append({"t": "\t", "ul": False})
+                            new_runs.extend(c.get('runs') or [{"t": parts[ci], "ul": False}])
+                        out.append({"text": mark + '\t'.join(parts), "runs": new_runs})
+                    i = k
+                    continue
+        out.append(paras[i])
+        i += 1
+    return out
+
+
 _STEP3_ANS_SECTION_PATTERNS = [
     re.compile(r'^\s*\[\s*정답\s*\]\s*$'),
     re.compile(r'^\s*【\s*정답\s*】\s*$'),
@@ -1480,9 +1717,61 @@ def _augment_step1_c1_passage(paras):
     return out
 
 
+# ── Step3 내용 보존 가드 ────────────────────────────────────────────────────
+# 원고(raw)의 실질 영어 단어(4자+)가 출력에서 사라지면 경고한다. 이 클래스의 버그
+# (구조 가정에서 비롯된 silent drop)를 — 알려진 2종뿐 아니라 앞으로 어떤 원고에서든 —
+# 즉시 가시화하는 안전망. 비파괴(경고만, 파싱 흐름은 그대로).
+_RE_STEP3_CONTENT_WORD = re.compile(r"[A-Za-z][A-Za-z'\-]{3,}")
+_RE_STEP3_ANS_HEADER_ANY = re.compile(
+    r'^\s*(?:\[?\s*정답\s*\]?|【\s*정답\s*】|<\s*정답\s*>|정답\s*(?:및|과)?\s*해설'
+    r'|빠른\s*정답\s*찾기|정답지|해설)\s*$'
+)
+
+
+def _step3_content_words(paras):
+    """정답섹션/인라인 정답줄을 제외한 실질 영어 단어(4자+) 집합.
+
+    _strip_step3_answers와 동일한 '정당한 제거' 기준을 적용해(정답섹션 헤더 이후 절단 +
+    원문자+콜론 해설줄 + ': ' 해설줄 제외) 오탐을 막는다.
+    """
+    words = set()
+    for p in paras:
+        t = ((p.get('text', '') if isinstance(p, dict) else str(p)) or '').strip()
+        if _RE_STEP3_ANS_HEADER_ANY.match(t):
+            break  # 정답섹션 진입 → 이후는 정당 제거 영역
+        # 정당하게 제거되는 줄(정답/해설·[Gateway]·책 헤더·유형 태그)은 보존 대상 아님 → 오탐 방지
+        if (_RE_STEP3_ANSWER.match(t) or (t.startswith(': ') and len(t) > 10)
+                or _RE_STEP3_GROUP_MARKER.match(t) or _RE_STEP3_BOOK_HEADER.match(t)
+                or _RE_STEP3_TYPE_TAG.match(t)):
+            continue
+        for w in _RE_STEP3_CONTENT_WORD.findall(t):
+            words.add(w.lower())
+    return words
+
+
+def _warn_step3_content_loss(raw_words, out_paras, label, log=None):
+    """raw_words(원고 실질 단어) 중 출력에서 사라진 것이 있으면 경고. 반환: 사라진 집합."""
+    out_words = set()
+    for p in out_paras:
+        t = (p.get('text', '') if isinstance(p, dict) else str(p)) or ''
+        for w in _RE_STEP3_CONTENT_WORD.findall(t):
+            out_words.add(w.lower())
+    dropped = raw_words - out_words
+    if dropped:
+        msg = ("⚠️ [내용보존경고] Step3 %s — 원고 내용 %d개 단어가 출력에서 사라짐: %s"
+               % (label, len(dropped), ', '.join(sorted(dropped)[:20])))
+        _LOG.warning(msg)
+        if callable(log):
+            try:
+                log(msg)
+            except Exception:
+                pass
+    return dropped
+
+
 def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
                         short_questions, combined_questions, extract_underline=True,
-                        step3_exclude_footnotes=True):
+                        step3_exclude_footnotes=True, log=None):
     """
     Step3 폴더 → 지문별 단락 목록.
     파일명: "고1 25년 9월 20번.hwp" 형태.
@@ -1548,6 +1837,7 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
         else:
             paras = _hwp_extract_paragraphs(fpath, extract_underline,
                                             exclude_footnotes=step3_exclude_footnotes)
+        _raw_words = _step3_content_words(paras)  # 보존 가드 스냅샷 (파이프라인 전)
         # Step3 정답/해설 줄 제거 (level 3 제외 후에도 level 1에 남은 정답 줄 처리)
         paras = _strip_step3_answers(paras)
         # Step3 유형 섹션 태그 제거 ("[유형 1] ...", "(심경, 분위기, ...)")
@@ -1562,6 +1852,9 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
         paras = _fix_step3_order_label_position(paras)
         # (A)/(B) 매칭 발문 → 표 5쌍 합치기 (①단어A\t단어B 형식)
         paras = _merge_step3_ab_pairs(paras)
+        # 요약 선택형 (A)(B)…… 짝표 → ①A\tB (연결사형과 구분: 구분자 …… 유무)
+        paras = _merge_step3_column_table(paras)
+        _warn_step3_content_loss(_raw_words, paras, f"{file_key}번", log)
         code = f"{yy}{mm}{str(q_num).zfill(2)}"
 
         target_list.append({
@@ -1595,6 +1888,7 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
             else:
                 paras = _hwp_extract_paragraphs(fpath, extract_underline,
                                                 exclude_footnotes=step3_exclude_footnotes)
+            _raw_words = _step3_content_words(paras)  # 보존 가드 스냅샷
             # 첫 단락 "N강 M번 YYMMQQ" 헤더 제거
             if paras:
                 first_text = (paras[0].get("text", "") if isinstance(paras[0], dict) else str(paras[0])).strip()
@@ -1611,6 +1905,8 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
             paras = _strip_step3_book_markers(paras)
             paras = _fix_step3_order_label_position(paras)
             paras = _merge_step3_ab_pairs(paras)
+            paras = _merge_step3_column_table(paras)
+            _warn_step3_content_loss(_raw_words, paras, f"{q_num_lesson}번", log)
             normal_items.append({
                 "question_num": q_num_lesson,
                 "code": file_code,
@@ -1643,12 +1939,17 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
             else:
                 paras = _hwp_extract_paragraphs(fpath, extract_underline,
                                                 exclude_footnotes=step3_exclude_footnotes)
+            _raw_words = _step3_content_words(paras)  # 보존 가드 스냅샷
+            # 표형 선지 번호 셀(①~⑤) 병합 — _strip_step3_answers가 단독 ①~⑤를 제거하기 전에 수행
+            paras = _merge_step3_split_choice_numbers(paras)
             paras = _strip_step3_answers(paras)
             paras = _strip_step3_type_tags(paras)
             paras = _add_step3_choice_numbers(paras)
             paras = _strip_step3_book_markers(paras)
             paras = _fix_step3_order_label_position(paras)
             paras = _merge_step3_ab_pairs(paras)
+            paras = _merge_step3_column_table(paras)
+            _warn_step3_content_loss(_raw_words, paras, _nfc(fname_raw), log)
             textbook_paras.extend(paras)
         if textbook_paras:
             normal_items.append({
@@ -1957,6 +2258,7 @@ def parse_manuscript_folder(manuscript_dir, config, grade, year, month, log=None
             mockexam.get('short_questions', []),
             mockexam.get('combined_questions', {}),
             step3_exclude_footnotes=config.get('step3_exclude_footnotes', True),
+            log=log,
         )
         result["steps"]["step3"] = {
             "normal": step3_data["normal"],

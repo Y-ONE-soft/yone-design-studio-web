@@ -73,21 +73,28 @@ class WorkbookEngine(BaseEngine):
             step3_dir = os.path.join(manuscript_dir, "Step3")
             os.makedirs(step3_dir, exist_ok=True)
             # 파일 분류: Step3 hwp는 Step3 폴더로, 나머지는 루트로
-            # 업로드 시 "manuscripts_" 접두사가 붙으므로 원본 파일명으로 복원
+            # 업로드 시 "manuscripts_" 접두사가 붙으므로 원본 파일명으로 복원.
+            # 파일명 앞뒤 공백은 외부 폴더(EBS 등)에서 섞여 들어오므로 strip.
+            # 변형 매칭(괄호 안 내용 다름 등)은 parser._find_manuscript_file이 처리.
             for fpath in manuscripts:
                 fname = os.path.basename(fpath)
-                # "manuscripts_원본파일명" → "원본파일명"
                 if fname.startswith("manuscripts_"):
                     fname = fname[len("manuscripts_"):]
-                # macOS NFD→NFC 정규화 후 판별
-                fname_nfc = unicodedata.normalize("NFC", fname)
-                is_step3 = ("번.hwp" in fname_nfc or "번.hwpx" in fname_nfc or
-                            "번.docx" in fname_nfc or
-                            bool(re.search(r'(?:스텝3|[Ss]tep\s*3)\.(?:hwpx?|docx)$', fname_nfc)))
+                fname_nfc = unicodedata.normalize("NFC", fname).strip()
+                # STEP3 식별 (파일명 변형에 robust하게):
+                #   1) "Step3"/"스텝3" 계열 — 대소문자 무시(re.I), step과 3 사이
+                #      공백/언더스코어/하이픈 허용([\s_-]*: "Step 3"·"Step_3"·"Step-3").
+                #      3 뒤는 (?!\d)로 숫자만 배제(Step31 등 오인 방지).
+                #      \b는 "_"를 단어문자로 봐 "Step 3_본문.docx"를 놓치므로 쓰지 않는다.
+                #   2) "N번" 또는 "N~N번" 패턴 포함 (예: "20번", "41~42번", "15강 1번")
+                is_step3 = (
+                    bool(re.search(r'(?:스텝|step)[\s_-]*3(?!\d)', fname_nfc, re.I)) or
+                    bool(re.search(r'\d+(?:\s*~\s*\d+)?\s*번', fname_nfc))
+                )
                 if is_step3:
-                    dest = os.path.join(step3_dir, fname)
+                    dest = os.path.join(step3_dir, fname_nfc)
                 else:
-                    dest = os.path.join(manuscript_dir, fname)
+                    dest = os.path.join(manuscript_dir, fname_nfc)
                 if fpath != dest:
                     safe_copy(fpath, dest)
         elif isinstance(manuscripts, str) and os.path.isdir(manuscripts):
@@ -145,6 +152,7 @@ class WorkbookEngine(BaseEngine):
         year = self._read_meta(job_dir, "year", 25)
         month = self._read_meta(job_dir, "month", 10)
         workbook_type = self._read_meta_str(job_dir, "workbook_type", "모의고사")
+        school = self._read_meta_str(job_dir, "school", "")
 
         # 출력 파일명 생성
         yy = str(year)[-2:]
@@ -153,7 +161,15 @@ class WorkbookEngine(BaseEngine):
         indd_path = os.path.join(cfg["indd_output_dir"], out_name)
 
         # 원본 indd → 작업 경로로 복사 (JSX에서 기존 문서를 별도 저장 후 닫음)
-        src = cfg.get("indd_original", {}).get(workbook_type, "")
+        # 학교 전용 템플릿 우선 → 없으면 기본 템플릿
+        indd_map = cfg.get("indd_original", {})
+        src = ""
+        if school:
+            src = indd_map.get(f"{workbook_type}_{school}", "")
+            if src:
+                log(f"[내지] 학교 전용 템플릿: {school}")
+        if not src:
+            src = indd_map.get(workbook_type, "")
         if os.path.exists(src):
             os.makedirs(os.path.dirname(indd_path), exist_ok=True)
             indd_path = safe_copy_indd(src, indd_path)

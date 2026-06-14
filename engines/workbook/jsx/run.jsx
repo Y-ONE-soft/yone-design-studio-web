@@ -1335,6 +1335,62 @@
                 }
             }
 
+            // 교과서 워크북 c1 하단 영역 식별
+            // 모의고사 c1은 "주어진 문장"이 3+ space gap 패턴이라 위 BTM/BTM_T 로직이 잡지만,
+            // 교과서 c1은 《제목》 또는 평문 한 줄 + (A)/원문자 하단지문 구조라 별도 분기 필요.
+            // 헤더({...}) + (A)~(Z) 선지 + 빈줄 + 한 줄 텍스트(BTM) + 빈줄? + (A)/원문자 시작 단락(BTM_T) 매칭.
+            if (workbookType === "교과서" && S1_C1_BTM && S1_C1_BTM_T) {
+                var parasTb = parasOf(story);
+                var hdrIdxsTb = [];
+                for (var hh = 0; hh < parasTb.length; hh++) {
+                    if (/^\s*\{[^}]+\}/.test(ptxt(parasTb[hh]))) hdrIdxsTb.push(hh);
+                }
+                hdrIdxsTb.push(parasTb.length);
+                for (var iHB = 0; iHB < hdrIdxsTb.length - 1; iHB++) {
+                    var bStart = hdrIdxsTb[iHB];
+                    var bEnd = hdrIdxsTb[iHB + 1];
+                    var lastChoiceTb = -1;
+                    for (var iCt = bStart + 1; iCt < bEnd; iCt++) {
+                        if (/^\s*\([A-Z]\)/.test(ptxt(parasTb[iCt]))) lastChoiceTb = iCt;
+                    }
+                    if (lastChoiceTb === -1) continue;
+                    var idxAfterTb = lastChoiceTb + 1;
+                    while (idxAfterTb < bEnd && /^[\s  -​  　]*$/.test(ptxt(parasTb[idxAfterTb]))) idxAfterTb++;
+                    if (idxAfterTb >= bEnd) continue;
+                    var btmIdxTb = idxAfterTb;
+                    var idxAfterBtmTb = btmIdxTb + 1;
+                    while (idxAfterBtmTb < bEnd && /^[\s  -​  　]*$/.test(ptxt(parasTb[idxAfterBtmTb]))) idxAfterBtmTb++;
+                    if (idxAfterBtmTb >= bEnd) continue;
+                    var nxtTxtTb = ptxt(parasTb[idxAfterBtmTb]);
+                    if (!/^\s*\([A-Z]\)/.test(nxtTxtTb) && !/[①-⑳]/.test(nxtTxtTb)) continue;
+                    var existingBtmSty = parasTb[btmIdxTb].appliedParagraphStyle;
+                    if (existingBtmSty && S1_C1_BTM && existingBtmSty.name === S1_C1_BTM.name) continue;
+                    try { parasTb[btmIdxTb].appliedParagraphStyle = S1_C1_BTM; } catch(_){}
+                    var idxBtmTtb = idxAfterBtmTb;
+                    while (idxBtmTtb < bEnd) {
+                        var btTxtTb = ptxt(parasTb[idxBtmTtb]);
+                        if (/^\s*\{[^}]+\}/.test(btTxtTb)) break;
+                        if (btTxtTb.replace(/[\s  -​  　]/g, '') !== '') {
+                            try { parasTb[idxBtmTtb].appliedParagraphStyle = S1_C1_BTM_T; } catch(_){}
+                        }
+                        idxBtmTtb++;
+                    }
+                }
+                // BTM → 빈 단락 → BTM_T 사이 빈 줄 1개 제거 (mockexam 갭 처리와 동일)
+                var parasGapTb = parasOf(story);
+                for (var iGt = parasGapTb.length - 2; iGt >= 1; iGt--) {
+                    var prevStyTb = parasGapTb[iGt - 1].appliedParagraphStyle;
+                    var isPrevBTMtb = (prevStyTb === S1_C1_BTM || (prevStyTb && S1_C1_BTM && prevStyTb.name === S1_C1_BTM.name));
+                    if (!isPrevBTMtb) continue;
+                    var curTGtb = ptxt(parasGapTb[iGt]);
+                    if (!/^[\s  -​  　]*$/.test(curTGtb)) continue;
+                    var nextStyTb = parasGapTb[iGt + 1].appliedParagraphStyle;
+                    var isNextBTM_Ttb = (nextStyTb === S1_C1_BTM_T || (nextStyTb && S1_C1_BTM_T && nextStyTb.name === S1_C1_BTM_T.name));
+                    if (!isNextBTM_Ttb) continue;
+                    try { parasGapTb[iGt].remove(); } catch(_){}
+                }
+            }
+
             // Arrow icon insertion after C1 blocks (원본 STEP1C1.jsx 방식)
             var arrowSrc = findLabeledItem("\uD654\uC0B4\uD45C \uB2F5\uC9C0");
             if (arrowSrc && S1_C1) {
@@ -2025,7 +2081,7 @@
     }
 
     // ---- STEP 3: 실전 문제 ----
-    function processStep3(story, step3Data) {
+    function processStep3(story, step3Data, isShortStory) {
         addLog("STEP3 처리 시작");
 
         if (!step3Data) { addLog("STEP3 데이터 없음, 건너뜀"); return; }
@@ -2058,13 +2114,11 @@
         // Insert content
         insertContent(story, allParagraphs);
 
+
         app.doScript(function() {
          try {
             // ── 1. 연속 리턴 정리 ──────────────────────────────────────────
             grepChange(story, "\\r{2,}", "\\r");
-
-            // ── 1.5. middle dot (U+00B7) → bullet (^8) ─────────────────────
-            grepChange(story, "\\x{00B7}", "^8");
 
             // ── 2. <보기>, <조건> 정규화 ────────────────────────────────────
             grepChange(story, "<\\s*\uBCF4\\s*\uAE30\\s*>", "<\uBCF4\uAE30>");
@@ -2473,6 +2527,18 @@
             }
 
             // 밑줄은 별도 후처리 스크립트(workbook_underline.jsx)에서 적용
+
+            // 분리된 짤지문 스토리만 character fillColor 강제 검정 적용
+            // (메인 스토리는 기존 character override가 본문 색을 유지하지만, 분리된 새 스토리는
+            //  paragraph style의 character defaults(=paper)가 그대로 적용되어 텍스트가 안 보임)
+            if (isShortStory) {
+                try {
+                    var __blk = doc.swatches.itemByName("Black");
+                    if (__blk && __blk.isValid && story.characters.length > 0) {
+                        story.characters.itemByRange(0, story.characters.length - 1).fillColor = __blk;
+                    }
+                } catch(_) {}
+            }
          } catch(innerErr) {
             var ef = new File("/tmp/workbook_debug.txt");
             ef.open("a"); ef.encoding = "UTF-8";
@@ -2716,11 +2782,33 @@
         var cfg = stepConfig[stepKey];
         if (!cfg) return null;
 
-        // Find the MAIN CONTENT story on the page (the one with most frames, typically empty)
-        // NOT the label story (which contains marker text like "어휘 선택 1")
+        // 1차: 마커 텍스트로 페이지 검색 — 페이지 번호 변동에 강건 (학교별 indd 등)
+        // 2차: cfg.page 번호로 fallback — 기존 동작 호환
         var targetPage = null;
-        try { targetPage = doc.pages.itemByName(cfg.page); } catch(_){}
+        if (cfg.marker) {
+            var allPages = doc.pages;
+            for (var pp = 0; pp < allPages.length; pp++) {
+                var pTfs = allPages[pp].textFrames;
+                for (var pt = 0; pt < pTfs.length; pt++) {
+                    var pContent = "";
+                    try { pContent = pTfs[pt].contents; } catch(_) { continue; }
+                    if (typeof pContent !== "string") continue;
+                    if (pContent.indexOf(cfg.marker) !== -1) {
+                        targetPage = allPages[pp];
+                        break;
+                    }
+                }
+                if (targetPage) break;
+            }
+        }
+        if (!targetPage || !targetPage.isValid) {
+            try { targetPage = doc.pages.itemByName(cfg.page); } catch(_){}
+        }
         if (!targetPage || !targetPage.isValid) return null;
+
+        // 매핑된 페이지 번호를 로그에 (디버그용)
+        var foundPageName = "?";
+        try { foundPageName = targetPage.name; } catch(_){}
 
         var tfs = targetPage.textFrames;
         var candidates = []; // collect {story, score} pairs
@@ -2734,7 +2822,7 @@
             // Prefer story whose FIRST frame is on this page (not a spillover from earlier)
             var firstFramePage = "?";
             try { firstFramePage = story.textContainers[0].parentPage.name; } catch(_){}
-            var isOwnStory = (firstFramePage === cfg.page);
+            var isOwnStory = (firstFramePage === foundPageName);
             // Score: own story gets huge bonus, then frame count
             var score = (isOwnStory ? 10000 : 0) + frames;
             candidates.push({ story: story, score: score });
@@ -2749,6 +2837,54 @@
         return candidates.length > 0 ? candidates[0].story : null;
     }
 
+    // 짤지문 영역 분리: 메인 step3 스토리에서 "짤지문" 마커 페이지 다음의 첫 프레임을
+    // unthread하여 별도 스토리로 만든다. 짤지문 마커가 없거나 다음 페이지에 해당 스토리
+    // 프레임이 없으면 null 반환(= EBS/수능특강 등 기존 동작 유지).
+    function splitStep3ShortStory(mainStory) {
+        if (!mainStory || !mainStory.isValid) return null;
+        var shortMarkerPage = null;
+        var allPages = doc.pages;
+        for (var p = 0; p < allPages.length; p++) {
+            var pTfs = allPages[p].textFrames;
+            for (var t = 0; t < pTfs.length; t++) {
+                var c = "";
+                try { c = pTfs[t].contents; } catch(_) { continue; }
+                if (typeof c !== "string") continue;
+                if (c.indexOf("짤지문") !== -1) {  // "짤지문"
+                    shortMarkerPage = allPages[p];
+                    break;
+                }
+            }
+            if (shortMarkerPage) break;
+        }
+        if (!shortMarkerPage) return null;
+
+        var markerOffset = shortMarkerPage.documentOffset;
+        if (markerOffset + 1 >= allPages.length) return null;
+        var nextPage = allPages[markerOffset + 1];
+
+        var containers = mainStory.textContainers;
+        var splitFrame = null;
+        for (var cc = 0; cc < containers.length; cc++) {
+            try {
+                if (containers[cc].parentPage === nextPage) {
+                    splitFrame = containers[cc];
+                    break;
+                }
+            } catch(_) {}
+        }
+        if (!splitFrame) return null;
+
+        try {
+            splitFrame.previousTextFrame = NothingEnum.NOTHING;
+        } catch(e) {
+            addLog("step3 짤지문 분리 실패: " + e.message);
+            return null;
+        }
+        addLog("step3 짤지문 영역 분리 성공: p" + nextPage.name);
+        return splitFrame.parentStory;
+    }
+
     // ========================================================================
     // 15. MAIN EXECUTION PIPELINE
     // ========================================================================
@@ -2757,6 +2893,7 @@
     // ── STEP 3 first (p178+, farthest back) — 텍스트/스타일만, 프레임브레이크는 나중에
     var step3Data = loadStepData("step3");
     var step3Story = null;
+    var step3ShortStory = null;
     if (excludeSet["step3"]) {
         addLog("step3: 사용자 제외, 건너뜀");
         step3Data = null;
@@ -2767,7 +2904,10 @@
             addLog("step3: 스토리 매핑 성공 (프레임 " + step3Story.textContainers.length + "개)");
             try {
                 addLog("STEP3 처리 시작");
-                processStep3(step3Story, step3Data);
+                // 짤지문 페이지 분리 일시 비활성화 — 분리 후 본문 character defaults 시각 문제 진단 중.
+                // 현재는 기존 동작: normal + short 모두 메인 step3 스토리에 부음 (짤지문이 일반 페이지에 들어감).
+                // step3ShortStory = splitStep3ShortStory(step3Story);
+                processStep3(step3Story, step3Data, false);
                 addLog("STEP3 텍스트/스타일 완료");
                 stepsDone++;
             } catch(e) {
@@ -2853,6 +2993,9 @@
     if (step3Story) {
         try {
             adjustStep3Pages(step3Story);
+            if (step3ShortStory && step3ShortStory.isValid) {
+                adjustStep3Pages(step3ShortStory);
+            }
             addLog("STEP3 페이지 레이아웃 완료");
         } catch(e) {
             addLog("step3 페이지 레이아웃 오류 — " + e.message);
