@@ -1,10 +1,11 @@
 {
   "indd_output_dir": "조판/교재/프리미엄북/블랙북",
   "indd_name_prefix": "블랙북",
-  "indd_original": "조판/인디자인 원본/[원본]배재1_블랙북_내지.indd",
+  "indd_original": "조판/인디자인 원본/[원본]배재1_블랙북_Part_내지.indd",
   "log_filename": "조판_로그.txt",
   "verify": {
-    "expected_days": 5,
+    "expected_body_stories": 3,
+    "expected_answer_stories": 2,
     "max_overflow": 0
   }
 }

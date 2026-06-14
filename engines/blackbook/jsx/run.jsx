@@ -5,6 +5,9 @@
 #target indesign
 (function() {
 
+    // 모든 대화상자 자동 차단 (사용자 개입 X)
+    try { app.scriptPreferences.userInteractionLevel = UserInteractionLevels.NEVER_INTERACT; } catch(e) {}
+
     // ── settings.json 로드 ─────────────────────────────────────────────────
     var settingsPath = "/Users/nhj/Documents/작업/Y.ONE STUDIO/조판/교재/프리미엄북/블랙북/auto/output/.blackbook_settings.json";
 
@@ -24,7 +27,7 @@
     var data = eval("(" + jf.read() + ")");
     jf.close();
 
-    if (!data || !data.days || data.days.length === 0) { return; }
+    if (!data || !data.sections) { return; }
 
     // ── 조기 로그 기록 (runner 폴링용) ────────────────────────────────────
     var _earlyLog = new File(outputDir + '/조판_로그.txt');
@@ -104,26 +107,36 @@
     }
 
     // ── 본문 스타일 (독해 그룹) ─────────────────────────────────────────
-    var GRP       = '독해';
-    var stProblem = ensureStyle(GRP, '문제');
-    var stSeonji  = ensureStyle(GRP, '선지');
-    var stJogon   = ensureStyle(GRP, '조건');
-    var stBase    = ensureRootStyle('!박스_지문');
-    var stNextQ   = ensureStyle(GRP, '다음 글을 읽고');
-    var stBox     = ensureStyle(GRP, '박스');
-    var stExample = ensureStyle(GRP, '보기');
-    var stUnder   = ensureCharStyle('밑줄');
+    var GRP        = '독해';
+    var stProblem  = ensureStyle(GRP, '문제');
+    var stSeonji   = ensureStyle(GRP, '!선지');
+    var stJogon    = ensureStyle(GRP, '조건');
+    var stBase     = ensureRootStyle('!박스_지문');
+    var stNextQ    = ensureStyle(GRP, '다음 글을 읽고');
+    var stBox      = ensureStyle(GRP, '박스');
+    var stExample  = ensureStyle(GRP, '보기');
+    var stCategory = ensureStyle(GRP, '카테고리');
+    var stUnder    = ensureCharStyle('밑줄');
 
-    // ── 정답 스타일 (정답지 그룹) ───────────────────────────────────────
-    var ANS_GRP   = '정답지';
+    // ── 어휘 스타일 (Vocabulary+ 그룹) ─────────────────────────────────
+    var VOC_GRP            = 'Vocabulary+';
+    var stVocabBonmunCat   = ensureStyle(VOC_GRP, '본문 카테고리'); // <N과 본문M>
+    var stVocabCategory    = ensureStyle(VOC_GRP, '카테고리');      // 〈연관 어휘〉
+    var stVocabItem        = ensureStyle(VOC_GRP, '!연관 어휘');    // 표제어+뜻+동의어
+
+    // ── 추가 본문 스타일 (배경) ────────────────────────────────────────
+    var stBackground       = ensureStyle(GRP, '배경');
+
+    // ── 정답 스타일 (정답 및 해설 그룹) ────────────────────────────────
+    var ANS_GRP   = '정답 및 해설';
     var stAnswer  = ensureStyle(ANS_GRP, '정답');
     var stExplan  = ensureStyle(ANS_GRP, '해설');
 
     function typeToStyle(typ) {
         if (typ === 'problem')          return stProblem;
         if (typ === 'choice')           return stSeonji;
-        if (typ === 'condition')        return stJogon;
-        if (typ === 'condition_item')   return stJogon;
+        if (typ === 'condition')        return stSeonji;  // 조건 → 선지 (지문 뒤 선택지)
+        if (typ === 'condition_item')   return stSeonji;
         if (typ === 'answer_blank')     return stSeonji;
         if (typ === 'next_question')    return stNextQ;
         if (typ === 'passage_header')   return stNextQ;
@@ -131,7 +144,12 @@
         if (typ === 'summary_content')  return stBox;
         if (typ === 'example_label')    return stExample;
         if (typ === 'example_content')  return stExample;
-        return stBase;  // passage
+        if (typ === 'vocab_header')     return stVocabBonmunCat;  // <N과 본문M> → 본문 카테고리
+        if (typ === 'vocab_passage')    return stBase;
+        if (typ === 'vocab_category')   return stVocabCategory;
+        if (typ === 'vocab_item')       return stVocabItem;
+        if (typ === 'background')       return stBackground;       // 문장 삽입/요약 배경
+        return stBase;
     }
 
     // ── 밑줄 적용 ────────────────────────────────────────────────────────
@@ -175,27 +193,24 @@
     // ── 프레임 브레이크 삽입 (문제 블록 시작점 앞, 두 번째부터) ────────────
     // 문제 블록 시작 = next_question 또는 (앞에 next_question 없는) problem
     function insertFrameBreaks(story) {
+        // 단락 속성 startParagraph = NEXT_FRAME 사용 (FRAME_BREAK 문자 삽입보다 빠르고 안전)
+        // story.paragraphs를 한 번만 가져와 캐시 (큰 스토리에서 매번 재조회는 매우 느림)
         var paras = story.paragraphs;
-        var breakIndices = [];
         var nextQPending = false;
-
         for (var i = 0; i < paras.length; i++) {
-            var sty = paras[i].appliedParagraphStyle;
-            if (sty === stNextQ) {
-                breakIndices.push(i);
-                nextQPending = true;
-            } else if (sty === stProblem) {
-                if (!nextQPending) {
-                    breakIndices.push(i);
-                }
-                nextQPending = false;
-            }
-        }
-
-        for (var k = breakIndices.length - 1; k >= 1; k--) {
             try {
-                paras = story.paragraphs;
-                paras[breakIndices[k]].insertionPoints[0].contents = SpecialCharacters.FRAME_BREAK;
+                var sty = paras[i].appliedParagraphStyle;
+                if (sty === stNextQ) {
+                    if (i > 0) {
+                        try { paras[i].startParagraph = StartParagraph.NEXT_FRAME; } catch(e) {}
+                    }
+                    nextQPending = true;
+                } else if (sty === stProblem) {
+                    if (!nextQPending && i > 0) {
+                        try { paras[i].startParagraph = StartParagraph.NEXT_FRAME; } catch(e) {}
+                    }
+                    nextQPending = false;
+                }
             } catch(e) {}
         }
     }
@@ -290,53 +305,198 @@
         log.push('빈 페이지 삭제: ' + deleted + '개');
     }
 
-    // ── Day별 본문 + 정답 스토리 수집 (단일 순회) ──────────────────────
-    var BODY_STYLE_NAMES = {
-        '\uBB38\uC81C': 1,         // 문제
-        '\uB2E4\uC74C \uAE00\uC744 \uC77D\uACE0': 1, // 다음 글을 읽고
-        '\uC120\uC9C0': 1,         // 선지
-        '\uC870\uAC74': 1,         // 조건
-        '!\uBC15\uC2A4_\uC9C0\uBB38': 1 // !박스_지문
-    };
-    function collectStories() {
-        var bodyFound = [], ansFound = [], seen = {};
-        var bodyDone = false;
+    // ── 영역 자동 분류 (frame 크기 + 페이지 순) ─────────────────────────
+    // 마스터 이름 의존 안 함. 모듈식 본문 + 큰 어휘 frame + 2단 정답 구조 자동 인식.
+    //   본문 모듈 frame : width >= 150 && height <  150  → frame당 한 문제
+    //   어휘 큰  frame  : width >= 150 && height >= 200  → frame당 한 어휘 본문
+    //   정답 좁은frame  : width <  100 && height >= 200  → 한 스토리(연결된 frame)에 정답 전체
+    //   헤더 등         : 그 외 (제외)
+    //
+    // 영역 분리:
+    //   본문 모듈: large(어휘) 첫 페이지 직전 → part1, 그 이후 → part2
+    //   정답: 서로 다른 parentStory id별로 묶음 → firstPgIdx 순으로 part1, part2
+    // ── 페이지 카테고리 + 연속 페이지 영역 검출 ─────────────────────────
+    //   module : 본문 모듈 frame (w>=150, h<150) 1개 이상
+    //   large  : 큰 frame (w>=150, h>=200) 1개 이상 (어휘 또는 표지)
+    //   narrow : 좁고 긴 frame (w<100, h>=200) 1개 이상 (정답 2단)
+    //   empty  : 매칭 frame 없음 (표지/구분 페이지)
+    // 같은 카테고리가 연속된 페이지를 한 영역으로 묶음. 마스터 이름 의존 X.
+    function categorizePage(page) {
+        var module = 0, large = 0, narrow = 0;
+        var tfs = page.textFrames;
+        for (var t = 0; t < tfs.length; t++) {
+            var b;
+            try { b = tfs[t].geometricBounds; } catch(e) { continue; }
+            var w = b[3] - b[1], h = b[2] - b[0];
+            if (h < 30 || w < 50) continue;
+            if (w >= 150 && h < 200) module++;
+            else if (w >= 150 && h >= 200) large++;
+            else if (w < 100 && h >= 200) narrow++;
+        }
+        if (module > 0) return 'module';
+        if (large > 0)  return 'large';
+        if (narrow > 0) return 'narrow';
+        return 'empty';
+    }
+
+    function detectAreas() {
+        var areas = [];
+        var cur = null;
         for (var p = 0; p < doc.pages.length; p++) {
-            var tfs = doc.pages[p].textFrames;
+            var page = doc.pages[p];
+            var cat = categorizePage(page);
+            if (cur === null || cur.cat !== cat) {
+                if (cur) areas.push(cur);
+                cur = {cat: cat, pages: [page]};
+            } else {
+                cur.pages.push(page);
+            }
+        }
+        if (cur) areas.push(cur);
+        return areas;
+    }
+
+    function filterAreas(areas, cat) {
+        var out = [];
+        for (var i = 0; i < areas.length; i++) {
+            if (areas[i].cat === cat) out.push(areas[i]);
+        }
+        return out;
+    }
+
+    var FILTER_MODULE = function(b) {
+        var w = b[3] - b[1], h = b[2] - b[0];
+        // 본문 모듈: w>=150 + h 30~199 (다양한 크기 모듈 포함)
+        return w >= 150 && h < 200 && h >= 30;
+    };
+    var FILTER_LARGE = function(b) {
+        var w = b[3] - b[1], h = b[2] - b[0];
+        // 어휘 큰 frame: w>=150 + h>=200
+        return w >= 150 && h >= 200;
+    };
+
+    // 영역 내 매칭 frame들의 체인을 모두 끊어 각 frame을 독립 스토리로 만듦.
+    // (원본 indd가 한 스토리 흐름으로 디자인되어 있어도 frame당 한 문제 매핑 가능하게 함)
+    function unchainAreaFrames(area, filterFn) {
+        var broken = 0;
+        for (var p = 0; p < area.pages.length; p++) {
+            var tfs = area.pages[p].textFrames;
             for (var t = 0; t < tfs.length; t++) {
-                var story = tfs[t].parentStory;
-                if (seen[story.id]) continue;
-                seen[story.id] = true;
-
-                // 본문 스토리 판별 (첫 10개 단락 체크)
-                if (!bodyDone) {
-                    var paras = story.paragraphs;
-                    var limit = Math.min(paras.length, 10);
-                    var isBody = false;
-                    for (var pi = 0; pi < limit; pi++) {
-                        if (BODY_STYLE_NAMES[paras[pi].appliedParagraphStyle.name]) {
-                            isBody = true; break;
-                        }
+                try {
+                    var b = tfs[t].geometricBounds;
+                    if (!filterFn(b)) continue;
+                    if (tfs[t].nextTextFrame) {
+                        tfs[t].nextTextFrame = null;
+                        broken++;
                     }
-                    if (isBody) {
-                        bodyFound.push(story);
-                        if (bodyFound.length >= data.days.length) bodyDone = true;
-                        continue;
-                    }
-                }
+                } catch(e) {}
+            }
+        }
+        return broken;
+    }
 
-                // 정답 스토리 판별
-                var aParas = story.paragraphs;
-                for (var api = 0; api < aParas.length; api++) {
-                    var sty = aParas[api].appliedParagraphStyle;
-                    if (sty === stAnswer || sty === stExplan) {
-                        ansFound.push(story);
+    // 영역 내 매칭 frame을 페이지 순 + y 순 (같은 y면 x 순) 으로 정렬해 반환
+    function collectFramesInArea(area, filterFn) {
+        var frames = [];
+        for (var p = 0; p < area.pages.length; p++) {
+            var page = area.pages[p];
+            var pageFrames = [];
+            var tfs = page.textFrames;
+            for (var t = 0; t < tfs.length; t++) {
+                try {
+                    var b = tfs[t].geometricBounds;
+                    if (filterFn(b)) pageFrames.push({tf: tfs[t], y: b[0], x: b[1]});
+                } catch(e) {}
+            }
+            pageFrames.sort(function(a, b) {
+                if (Math.abs(a.y - b.y) < 5) return a.x - b.x;
+                return a.y - b.y;
+            });
+            for (var n = 0; n < pageFrames.length; n++) frames.push(pageFrames[n]);
+        }
+        return frames;
+    }
+
+    // 영역 페이지의 textFrame을 새 페이지에 똑같이 복제
+    function clonePageFrames(srcPage, dstPage) {
+        var srcTfs = srcPage.textFrames;
+        for (var s = 0; s < srcTfs.length; s++) {
+            try {
+                var src = srcTfs[s];
+                var b = src.geometricBounds;
+                var nf = dstPage.textFrames.add({geometricBounds: b});
+                // 텍스트 스토리는 새 frame이 자체 새 스토리. 기존 frame 속성은 복제 안 함 (단순)
+            } catch(e) {}
+        }
+    }
+
+    // 영역의 마지막 페이지 다음에 새 페이지 추가 + frame 복제. 영역 안에서만 확장.
+    function ensureFramesInArea(area, neededCount, filterFn, label) {
+        var frames = collectFramesInArea(area, filterFn);
+        var added = 0;
+        var safetyMax = 200;
+        while (frames.length < neededCount && added < safetyMax) {
+            // area.pages 중 doc.pages에서 가장 뒤 위치 페이지를 lastPage로
+            var lastPage = null, maxIdx = -1;
+            for (var ai = 0; ai < area.pages.length; ai++) {
+                var pg = area.pages[ai];
+                if (!pg || !pg.isValid) continue;
+                for (var di = 0; di < doc.pages.length; di++) {
+                    if (doc.pages[di] === pg) {
+                        if (di > maxIdx) { maxIdx = di; lastPage = pg; }
                         break;
                     }
                 }
             }
+            if (!lastPage) {
+                log.push('[ERR] ' + label + ': 영역 마지막 페이지 무효');
+                break;
+            }
+            // 빈 페이지 추가 + 마스터 적용 + lastPage frame 복제
+            var newPage;
+            try {
+                newPage = doc.pages.add(LocationOptions.AFTER, lastPage);
+                if (lastPage.appliedMaster) {
+                    try { newPage.appliedMaster = lastPage.appliedMaster; } catch(e) {}
+                }
+                clonePageFrames(lastPage, newPage);
+            } catch(e) {
+                log.push('[ERR] ' + label + ': 페이지 추가 실패: ' + e.message);
+                break;
+            }
+            area.pages.push(newPage);
+
+            // 새 페이지의 매칭 frame 수집 (체인 끊기로 모두 독립 스토리)
+            var newPageFrames = [];
+            var newTfs = newPage.textFrames;
+            for (var t = 0; t < newTfs.length; t++) {
+                try {
+                    var b = newTfs[t].geometricBounds;
+                    if (filterFn(b)) {
+                        // 체인 끊기 (새 페이지도 한 스토리에 연결돼 있을 수 있음)
+                        try { if (newTfs[t].nextTextFrame) newTfs[t].nextTextFrame = null; } catch(e) {}
+                        newPageFrames.push({tf: newTfs[t], y: b[0], x: b[1]});
+                    }
+                } catch(e) {}
+            }
+            newPageFrames.sort(function(a, b) {
+                if (Math.abs(a.y - b.y) < 5) return a.x - b.x;
+                return a.y - b.y;
+            });
+
+            if (newPageFrames.length === 0) {
+                log.push('[WARN] ' + label + ': 복제 페이지에 매칭 frame 없음 - 중단');
+                break;
+            }
+            // 복제된 frame 콘텐츠 비우기
+            for (var c = 0; c < newPageFrames.length; c++) {
+                try { newPageFrames[c].tf.contents = ''; } catch(e) {}
+                frames.push(newPageFrames[c]);
+            }
+            added++;
         }
-        return { body: bodyFound, answer: ansFound };
+        if (added > 0) log.push('[INFO] ' + label + ': 페이지 ' + added + '개 추가 (frame ' + frames.length + '개 확보)');
+        return frames;
     }
 
     // ── 마스터 페이지 찾기 ───────────────────────────────────────────────
@@ -470,28 +630,74 @@
         return storyPages.length;
     }
 
-    // ── 수집 ────────────────────────────────────────────────────────────
-    var collected     = collectStories();
-    var dayStories    = collected.body;
-    var answerStories = collected.answer;
+    // ── 영역 자동 분류 + 매핑 ──────────────────────────────────────────
+    // ── 영역 검출 + 매핑 ──────────────────────────────────────────────
+    var areas = detectAreas();
+    var moduleAreas = filterAreas(areas, 'module');
+    var largeAreas  = filterAreas(areas, 'large');
 
-    var log = ['=== 블랙북 조판 자동화 v3 ==='];
+    // doc 전체에서 narrow frame을 페이지 순으로 수집하고, 페이지 인덱스 gap(>1)을
+    // 기준으로 그룹핑. 정답 표지 페이지가 narrow 영역 사이에 끼어 있어도 같은 정답지
+    // 안의 narrow는 한 그룹으로 묶임. 두 정답지 사이는 빈 페이지 + 표지 페이지로 gap이 큼.
+    function findNarrowAreas() {
+        var narrows = [];
+        for (var p = 0; p < doc.pages.length; p++) {
+            var pg = doc.pages[p];
+            var tfs = pg.textFrames;
+            for (var t = 0; t < tfs.length; t++) {
+                try {
+                    var b = tfs[t].geometricBounds;
+                    var w = b[3] - b[1], h = b[2] - b[0];
+                    if (w < 100 && h >= 200) {
+                        narrows.push({page: pg, pgIdx: p, y: b[0]});
+                        break;  // 페이지당 한 번만 등록
+                    }
+                } catch(e) {}
+            }
+        }
+        // pgIdx 순 (이미 순회 순)
+        var result = [];
+        var current = null;
+        var lastPg = -10;
+        for (var i = 0; i < narrows.length; i++) {
+            if (narrows[i].pgIdx - lastPg > 1) {
+                if (current) result.push(current);
+                current = {cat: 'narrow', pages: []};
+            }
+            current.pages.push(narrows[i].page);
+            lastPg = narrows[i].pgIdx;
+        }
+        if (current) result.push(current);
+        return result;
+    }
+    var narrowAreas = findNarrowAreas();
+
+    var sections = data.sections || {};
+
+    var log = ['=== 블랙북 조판 자동화 v6 (영역 객체 기반) ==='];
     log.push(new Date().toString());
     log.push('');
-    log.push('Day 수: ' + data.days.length + ' / 본문 스토리: ' + dayStories.length);
-    log.push('Day 정답: ' + (data.day_answers ? data.day_answers.length : 0) + '개 Day / 정답 스토리: ' + answerStories.length);
+    log.push('영역: module=' + moduleAreas.length + ', large=' + largeAreas.length + ', narrow=' + narrowAreas.length);
+    log.push('필요: PART1 문제=' + (sections.part1_problem || []).length +
+             ', PART1 어휘=' + (sections.part1_vocab || []).length +
+             ', PART2 문제=' + (sections.part2_problem || []).length +
+             ', PART1 해설=' + (sections.part1_answer || []).length +
+             ', PART2 해설=' + (sections.part2_answer || []).length);
     log.push('');
+
+    var bodyDoneCount = 0;
+    var ansDoneCount  = 0;
 
     app.doScript(function() {
 
-        // ── 주차 텍스트 치환 ("\d+주 차" → issueNum + "주 차") ────────────
+        // ── 주차 텍스트 치환 ──────────────────────────────────────────────
         if (issueNum) {
-            var weekText = issueNum + '\uC8FC \uCC28'; // "N주 차"
+            var weekText = issueNum + '주 차';
             app.findGrepPreferences = app.changeGrepPreferences = NothingEnum.NOTHING;
-            app.findGrepPreferences.findWhat = '\\d+\uC8FC.?\uCC28';
+            app.findGrepPreferences.findWhat = '\\d+주.?차';
             app.changeGrepPreferences.changeTo = weekText;
-            for (var mi = 0; mi < doc.masterSpreads.length; mi++) {
-                var ms = doc.masterSpreads[mi];
+            for (var mi2 = 0; mi2 < doc.masterSpreads.length; mi2++) {
+                var ms = doc.masterSpreads[mi2];
                 for (var mp = 0; mp < ms.pages.length; mp++) {
                     var mtfs = ms.pages[mp].textFrames;
                     for (var mt = 0; mt < mtfs.length; mt++) {
@@ -501,79 +707,296 @@
             }
             doc.changeGrep();
             app.findGrepPreferences = app.changeGrepPreferences = NothingEnum.NOTHING;
-            log.push('\uC8FC\uCC28 \uD14D\uC2A4\uD2B8 \uCE58\uD658: ' + weekText); // "주차 텍스트 치환: N주 차"
+            log.push('주차 텍스트 치환: ' + weekText);
         }
 
-        // ── Day별 본문 조판 ────────────────────────────────────────────
-        for (var di = 0; di < data.days.length; di++) {
-            var day = data.days[di];
-            var paras = day.paragraphs;
-            log.push('── Day ' + day.day_num + ' (' + paras.length + '개 단락) ──');
-
-            var story;
-            if (dayStories.length >= data.days.length) {
-                story = dayStories[di];
-            } else if (dayStories.length > 0) {
-                story = dayStories[0];
-                if (di > 0) {
-                    log.push('  [경고] 스토리 부족 — Day ' + day.day_num + ' 스킵');
-                    continue;
+        // ── 본문 모듈 frame 채우기 (frame당 한 문제/어휘 본문) ─────────────
+        function fillFrames(frames, groups, label) {
+            var filled = 0;
+            var cnt = Math.min(frames.length, groups.length);
+            for (var i = 0; i < cnt; i++) {
+                try {
+                    replaceStoryContent(frames[i].tf.parentStory, groups[i].paragraphs);
+                    filled++;
+                } catch(e) {
+                    log.push('[ERR] ' + label + ' frame ' + i + ': ' + e.message);
                 }
-            } else {
-                log.push('  [오류] 스토리 없음 — 스킵');
+            }
+            if (frames.length > groups.length) {
+                log.push('[INFO] ' + label + ': frame ' + frames.length + ' / 그룹 ' + groups.length + ' (남은 frame 그대로 둠)');
+                // 남는 frame 비우지 않음 (디자인 placeholder/콘텐츠 보존)
+            }
+            log.push(label + ': ' + filled + '/' + groups.length + ' frame 채움');
+            return filled;
+        }
+
+        var p1prob = sections.part1_problem || [];
+        var p1voc  = sections.part1_vocab   || [];
+        var p2prob = sections.part2_problem || [];
+
+        // 영역의 모든 매칭 frame을 페이지 순으로 한 줄 체인 연결 + 첫 스토리에 통째 흘려넣기
+        function fillAreaAsSingleFlow(area, filterFn, groups, label, isProblem) {
+            // 1) 영역의 모든 frame 수집
+            var frames = collectFramesInArea(area, filterFn);
+            if (frames.length === 0) {
+                log.push('[ERR] ' + label + ': 영역에 매칭 frame 없음');
+                return 0;
+            }
+            // 2) 모든 frame의 기존 체인 끊기 + 새 체인 연결
+            for (var i = 0; i < frames.length; i++) {
+                try { if (frames[i].tf.nextTextFrame) frames[i].tf.nextTextFrame = null; } catch(e) {}
+            }
+            for (var i2 = 0; i2 < frames.length - 1; i2++) {
+                try { frames[i2].tf.nextTextFrame = frames[i2+1].tf; } catch(e) {}
+            }
+            // 3) 그룹 paragraphs 합쳐서 한 흐름 텍스트 만들기
+            var allParas = [];
+            for (var g = 0; g < groups.length; g++) {
+                if (!groups[g].paragraphs) continue;
+                for (var pi = 0; pi < groups[g].paragraphs.length; pi++) {
+                    allParas.push(groups[g].paragraphs[pi]);
+                }
+            }
+            // 4) 첫 frame의 스토리에 통째 채움
+            var story = frames[0].tf.parentStory;
+            replaceStoryContent(story, allParas);
+            // 5) 문제 영역이면 각 문제 시작점에 frame break 삽입 + 첫 문제 번호 1로 리셋
+            if (isProblem) {
+                try { insertFrameBreaks(story); } catch(e) { log.push('[WARN] ' + label + ' frame break: ' + e.message); }
+                // 첫 문제 단락의 자동 번호를 1번부터 다시 시작 (PART1/PART2 각각 독립)
+                try {
+                    var sParas = story.paragraphs;
+                    for (var pi = 0; pi < sParas.length; pi++) {
+                        if (sParas[pi].appliedParagraphStyle === stProblem) {
+                            sParas[pi].numberingContinue = false;
+                            sParas[pi].numberingStartAt = 1;
+                            break;
+                        }
+                    }
+                } catch(e) { log.push('[WARN] ' + label + ' 번호 리셋: ' + e.message); }
+            }
+            // 6) 오버플로우 체크 (자동 페이지 추가 X — 사용자 수동 처리)
+            var lastFrame = story.textContainers[story.textContainers.length - 1];
+            var overflow = false;
+            try { overflow = lastFrame && lastFrame.overflows; } catch(e) {}
+            if (overflow) {
+                log.push('[WARN] ' + label + ': 마지막 frame 오버플로우 — 사용자 수동 처리 필요');
+            }
+            log.push(label + ': ' + groups.length + '개 그룹, frame ' + story.textContainers.length + '개, 오버플로우=' + overflow);
+            return groups.length;
+        }
+
+        // 영역의 모든 frame 체인 끊고 → 각 frame 독립 스토리화 → frame당 한 문제 채움.
+        // frame 부족 시 마지막 페이지 복제로 새 frame 추가 (영역 안에서만).
+        function fillAreaPerFrame(area, filterFn, groups, label) {
+            var brokenCnt = unchainAreaFrames(area, filterFn);
+            log.push('[INFO] ' + label + ': frame 체인 ' + brokenCnt + '개 끊음');
+            var frames = ensureFramesInArea(area, groups.length, filterFn, label);
+            return fillFrames(frames, groups, label);
+        }
+
+        // PART1 문제 = moduleAreas[0] — 스토리 연결 + frame break (사용자 명시 방식)
+        if (p1prob.length > 0) {
+            if (moduleAreas.length < 1) log.push('[ERR] PART1 문제: module 영역 없음');
+            else { fillAreaAsSingleFlow(moduleAreas[0], FILTER_MODULE, p1prob, 'PART1 문제', true); bodyDoneCount++; }
+        }
+        // PART1 어휘 = largeAreas[0] — 어휘는 frame당 한 본문 유지
+        if (p1voc.length > 0) {
+            if (largeAreas.length < 1) log.push('[ERR] PART1 어휘: large 영역 없음');
+            else { fillAreaPerFrame(largeAreas[0], FILTER_LARGE, p1voc, 'PART1 어휘'); bodyDoneCount++; }
+        }
+        // PART2 문제 = moduleAreas[1] — 동일하게 스토리 연결 + frame break
+        if (p2prob.length > 0) {
+            if (moduleAreas.length < 2) log.push('[ERR] PART2 문제: 두 번째 module 영역 없음');
+            else { fillAreaAsSingleFlow(moduleAreas[1], FILTER_MODULE, p2prob, 'PART2 문제', true); bodyDoneCount++; }
+        }
+
+        // ── 정답 영역 채우기 (narrowAreas[0]=PART1 해설, [1]=PART2 해설) ─
+        function findFirstNarrowStory(area) {
+            for (var p = 0; p < area.pages.length; p++) {
+                var tfs = area.pages[p].textFrames;
+                for (var t = 0; t < tfs.length; t++) {
+                    try {
+                        var b = tfs[t].geometricBounds;
+                        var w = b[3] - b[1], h = b[2] - b[0];
+                        if (w < 100 && h >= 200) return tfs[t].parentStory;
+                    } catch(e) {}
+                }
+            }
+            return null;
+        }
+
+        // 정답 영역의 narrow 스토리에 콘텐츠 채우고, 오버플로우 시 영역 안에서만
+        // 페이지 복제 + 새 narrow frame을 체인 연결. (PART1/PART2 영역 분리 보장)
+        function chainAndFillAnswerArea(area, story, label) {
+            var safetyMax = 100;
+            var added = 0;
+            // 마지막 frame을 계속 추적
+            function getLastFrame() {
+                try { return story.textContainers[story.textContainers.length - 1]; }
+                catch(e) { return null; }
+            }
+            var lastFrame = getLastFrame();
+            while (lastFrame && lastFrame.overflows && added < safetyMax) {
+                // area.pages 중 doc.pages에서 가장 뒤 위치 페이지를 lastPage로
+                var lastPage = null, maxIdx = -1;
+                for (var ai2 = 0; ai2 < area.pages.length; ai2++) {
+                    var pg2 = area.pages[ai2];
+                    if (!pg2 || !pg2.isValid) continue;
+                    for (var di2 = 0; di2 < doc.pages.length; di2++) {
+                        if (doc.pages[di2] === pg2) {
+                            if (di2 > maxIdx) { maxIdx = di2; lastPage = pg2; }
+                            break;
+                        }
+                    }
+                }
+                if (!lastPage) {
+                    log.push('[ERR] ' + label + ': 영역 마지막 페이지 무효');
+                    break;
+                }
+                var newPage;
+                try {
+                    newPage = doc.pages.add(LocationOptions.AFTER, lastPage);
+                    if (lastPage.appliedMaster) {
+                        try { newPage.appliedMaster = lastPage.appliedMaster; } catch(e) {}
+                    }
+                    clonePageFrames(lastPage, newPage);
+                } catch(e) {
+                    log.push('[ERR] ' + label + ': 페이지 추가 실패: ' + e.message);
+                    break;
+                }
+                area.pages.push(newPage);
+
+                // 새 페이지의 narrow frame 수집 (좌→우)
+                var newFrames = [];
+                var newTfs = newPage.textFrames;
+                for (var t = 0; t < newTfs.length; t++) {
+                    try {
+                        var b = newTfs[t].geometricBounds;
+                        var w = b[3] - b[1], h = b[2] - b[0];
+                        if (w < 100 && h >= 200) {
+                            newFrames.push({tf: newTfs[t], y: b[0], x: b[1]});
+                        }
+                    } catch(e) {}
+                }
+                newFrames.sort(function(a, b) {
+                    if (Math.abs(a.y - b.y) < 5) return a.x - b.x;
+                    return a.y - b.y;
+                });
+                if (newFrames.length === 0) {
+                    log.push('[WARN] ' + label + ': 복제 페이지에 narrow frame 없음 - 중단');
+                    break;
+                }
+                // 새 frame을 비우고 체인 끝에 연결 (텍스트 자동 흘러감)
+                for (var n = 0; n < newFrames.length; n++) {
+                    var nf = newFrames[n].tf;
+                    try { nf.contents = ''; } catch(e) {}
+                    try {
+                        lastFrame.nextTextFrame = nf;
+                        lastFrame = nf;
+                    } catch(e) {
+                        log.push('[ERR] ' + label + ': frame 체인 연결 실패: ' + e.message);
+                        return added;
+                    }
+                }
+                added++;
+                lastFrame = getLastFrame();
+            }
+            return added;
+        }
+
+        // ── 정답 영역: doc 전체 narrow frame을 스토리 ID 기준 그룹핑 ──
+        // 한 스토리 = 한 정답지. 첫 등장 스토리 = PART1 해설, 둘째 = PART2 해설.
+        // (페이지 순서가 섞여 있어도 스토리 단위로 정확히 분리됨)
+        function findNarrowFrameGroups() {
+            var byStory = {};
+            var orderedSids = [];
+            for (var p = 0; p < doc.pages.length; p++) {
+                var pg = doc.pages[p];
+                var tfs = pg.textFrames;
+                var pageFrames = [];
+                for (var t = 0; t < tfs.length; t++) {
+                    try {
+                        var b = tfs[t].geometricBounds;
+                        var w = b[3] - b[1], h = b[2] - b[0];
+                        if (w < 100 && h >= 200) {
+                            pageFrames.push({tf: tfs[t], pgIdx: p, page: pg, y: b[0], x: b[1]});
+                        }
+                    } catch(e) {}
+                }
+                pageFrames.sort(function(a, b) {
+                    if (Math.abs(a.y - b.y) < 5) return a.x - b.x;
+                    return a.y - b.y;
+                });
+                for (var k = 0; k < pageFrames.length; k++) {
+                    var pf = pageFrames[k];
+                    var sid;
+                    try { sid = pf.tf.parentStory.id; } catch(e) { continue; }
+                    if (!byStory[sid]) {
+                        byStory[sid] = {storyId: sid, frames: [], pages: []};
+                        orderedSids.push(sid);
+                    }
+                    byStory[sid].frames.push(pf);
+                    var addPg = true;
+                    for (var pp = 0; pp < byStory[sid].pages.length; pp++) {
+                        if (byStory[sid].pages[pp] === pf.page) { addPg = false; break; }
+                    }
+                    if (addPg) byStory[sid].pages.push(pf.page);
+                }
+            }
+            var groups = [];
+            for (var i = 0; i < orderedSids.length; i++) {
+                groups.push(byStory[orderedSids[i]]);
+            }
+            return groups;
+        }
+
+        var narrowGroups = findNarrowFrameGroups();
+        log.push('narrowGroups: ' + narrowGroups.length);
+        for (var ng = 0; ng < narrowGroups.length; ng++) {
+            log.push('  [' + ng + '] frames=' + narrowGroups[ng].frames.length + ' pages=' + narrowGroups[ng].pages.length);
+        }
+
+        var ANSWER_KEYS  = ['part1_answer', 'part2_answer'];
+        var ANSWER_LABEL = {'part1_answer': 'PART1 해설', 'part2_answer': 'PART2 해설'};
+        for (var ai = 0; ai < ANSWER_KEYS.length; ai++) {
+            var akey = ANSWER_KEYS[ai];
+            var ansList = sections[akey] || [];
+            var aLabel = ANSWER_LABEL[akey];
+            if (ansList.length === 0) { log.push('── ' + aLabel + ' 단락 없음 ──'); continue; }
+            if (ai >= narrowGroups.length) {
+                log.push('[ERR] ' + aLabel + ': narrow 그룹 부족');
                 continue;
             }
-
-            replaceStoryContent(story, paras);
-            insertFrameBreaks(story);
-
-            var blockCount = 0;
-            var nqPending = false;
-            for (var i = 0; i < paras.length; i++) {
-                if (paras[i].type === 'next_question' || paras[i].type === 'passage_header') {
-                    blockCount++;
-                    nqPending = true;
-                } else if (paras[i].type === 'problem') {
-                    if (!nqPending) blockCount++;
-                    nqPending = false;
-                }
+            var grp = narrowGroups[ai];
+            var grpFrames = grp.frames;
+            // 모든 frame 체인 끊고 재연결
+            for (var nfi = 0; nfi < grpFrames.length; nfi++) {
+                try { if (grpFrames[nfi].tf.nextTextFrame) grpFrames[nfi].tf.nextTextFrame = null; } catch(e) {}
+                try { grpFrames[nfi].tf.contents = ''; } catch(e) {}
             }
-            if (blockCount > 1) {
-                ensureEnoughFrames(story, blockCount);
+            for (var nfi2 = 0; nfi2 < grpFrames.length - 1; nfi2++) {
+                try { grpFrames[nfi2].tf.nextTextFrame = grpFrames[nfi2+1].tf; } catch(e) {}
             }
-
-            log.push('  단락: ' + paras.length + '개, 블록: ' + blockCount + '개 ✓');
-        }
-
-        // ── Day별 정답/해설 조판 ──────────────────────────────────────
-        if (data.day_answers && data.day_answers.length > 0) {
-            var ansCount = Math.min(data.day_answers.length, answerStories.length);
-            for (var dai = 0; dai < ansCount; dai++) {
-                var da = data.day_answers[dai];
-                if (!da.answers || da.answers.length === 0) continue;
-
-                replaceAnswerContent(answerStories[dai], da.answers);
-                var pgCount = adjustAnswerPages(answerStories[dai]);
-                log.push('정답 Day ' + da.day_num + ': ' + da.answers.length + '개, ' + pgCount + '페이지 ✓');
-            }
-
-            if (data.day_answers.length > answerStories.length) {
-                log.push('[경고] 정답 스토리 부족: ' + answerStories.length + '개 (필요 ' + data.day_answers.length + '개)');
+            var ansStory = grpFrames[0].tf.parentStory;
+            // 페이지 객체 묶음 (chainAndFillAnswerArea가 사용)
+            var grpArea = {cat: 'narrow', pages: grp.pages};
+            try {
+                replaceAnswerContent(ansStory, ansList);
+                var addedPg = chainAndFillAnswerArea(grpArea, ansStory, aLabel);
+                log.push(aLabel + ': ' + ansList.length + '개, 페이지 ' + grpArea.pages.length + ' (+' + addedPg + ' 추가) frames ' + ansStory.textContainers.length + ' ✓');
+                ansDoneCount++;
+            } catch(e) {
+                log.push('[ERR] ' + aLabel + ': ' + e.message);
             }
         }
 
-        // ── 문제 번호 연속화 ──────────────────────────────────────────────
-        try {
-            fixProblemNumbering(dayStories);
-            log.push('문제 번호 연속화 완료: ' + dayStories.length + '개 스토리');
-        } catch(e) {
-            log.push('[경고] 번호 연속화 실패: ' + e.message);
-        }
+        // ── 빈 페이지 삭제 ───────────────────────────────────────────────
+        // deleteEmptyPages 호출 비활성화 (영역 침범 위험 — 빈 페이지는 그대로 두기)
+        log.push('빈 페이지 삭제: 비활성화');
 
-        // ── 빈 페이지 삭제 ────────────────────────────────────────────────
-        try { deleteEmptyPages(); } catch(e) { log.push('[경고] 빈 페이지 삭제 실패: ' + e.message); }
+    }, ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, '블랙북 조판 자동화 v6');
 
-    }, ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, '블랙북 조판 자동화');
 
     // ── 오버플로우 체크 ───────────────────────────────────────────────────
     var overflows = [];
@@ -589,7 +1012,8 @@
     log.push('');
     log.push('오버플로우: ' + overflows.length + '개');
     if (overflows.length > 0) log.push('  페이지: ' + overflows.join(', '));
-    log.push('Day조판완료: ' + data.days.length + '개');
+    log.push('본문조판완료: ' + bodyDoneCount + '개');
+    log.push('정답조판완료: ' + ansDoneCount + '개');
 
     // ── 로그 저장 ─────────────────────────────────────────────────────────
     var logFile = new File(outputDir + '/조판_로그.txt');

@@ -5,7 +5,12 @@ import shutil
 
 from core.base import BaseEngine, safe_copy_indd
 from core.paths import resolve_config
-from engines.blackbook.parser import parse_hwpx, parse_answers_hwp
+from engines.blackbook.kind_parser import classify_filename, parse_by_kind
+
+_SECTION_KEYS = (
+    "part1_problem", "part1_vocab", "part2_problem",
+    "part1_answer",  "part2_answer",
+)
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
 _CONFIG_PATH = os.path.join(_DIR, "config.json")
@@ -44,7 +49,7 @@ class BlackbookEngine(BaseEngine):
 
     @property
     def description(self) -> str:
-        return "프리미엄북 블랙북 조판 자동화 (독해 서술형 Day 1–5)"
+        return "프리미엄북 블랙북 조판 자동화 (PART1 문제·어휘 + PART2 문제 + 해설)"
 
     @property
     def subject_prefix(self) -> str:
@@ -54,59 +59,88 @@ class BlackbookEngine(BaseEngine):
     def upload_spec(self) -> dict:
         return {
             "slots": [
-                {"key": "manuscript", "label": "블랙북 원고", "required": True},
-                {"key": "answers",    "label": "정답 및 해설", "required": False},
+                {
+                    "key": "manuscript",
+                    "label": "문제 원고 (PART1 문제·어휘, PART2 문제 — 여러 파일)",
+                    "required": True,
+                    "multiple": True,
+                    "accept": ".docx,.hwpx,.hwp",
+                },
+                {
+                    "key": "answers",
+                    "label": "해설 원고 (PART1·PART2 해설 — 여러 파일)",
+                    "required": False,
+                    "multiple": True,
+                    "accept": ".docx,.hwpx,.hwp",
+                },
             ]
         }
 
-    # ── 1단계: hwpx → content.json ──────────────────────────────────────
+    # ── 1단계: 다중 docx/hwpx → content.json ──────────────────────────
 
     def parse(self, uploaded_files: dict, job_dir: str, log) -> str:
-        hwpx_path = uploaded_files.get("manuscript")
-        if not hwpx_path:
-            raise ValueError("원고 hwpx 파일이 없습니다.")
+        """파일명 키워드로 5종 분류 → 종류별 파서 호출 → sections dict 생성."""
 
-        log(f"[파서] 파싱 중: {os.path.basename(hwpx_path)}")
-        data = parse_hwpx(hwpx_path)
+        def _as_list(v):
+            if v is None: return []
+            if isinstance(v, str): return [v]
+            return list(v)
 
-        # 정답 파일 파싱 (선택 사항) → Day별로 분배
-        answers_path = uploaded_files.get("answers")
-        if answers_path and os.path.exists(answers_path):
-            log(f"[파서] 정답 파싱 중: {os.path.basename(answers_path)}")
+        manuscript_files = _as_list(uploaded_files.get("manuscript"))
+        answer_files     = _as_list(uploaded_files.get("answers"))
+
+        all_files = manuscript_files + answer_files
+        if not all_files:
+            raise ValueError("업로드된 원고가 없습니다.")
+
+        sections = {k: [] for k in _SECTION_KEYS}
+        unmatched = []
+
+        for fpath in all_files:
+            if not os.path.exists(fpath):
+                log(f"[파서] 파일 없음 (무시): {fpath}")
+                continue
+            # 업로드 접두사 제거하여 분류 (manuscript_xxx, answers_xxx)
+            basename = os.path.basename(fpath)
+            cleaned = basename
+            for prefix in ("manuscript_", "answers_"):
+                if cleaned.startswith(prefix):
+                    cleaned = cleaned[len(prefix):]
+                    break
+            kind = classify_filename(cleaned)
+            if kind is None:
+                unmatched.append(basename)
+                log(f"[파서] 파일명 분류 실패: {basename} (무시)")
+                continue
             try:
-                answers = parse_answers_hwp(answers_path)
-                # Day별 문제 수 기반으로 정답 분배
-                day_answers = []
-                ans_idx = 0
-                for day in data["days"]:
-                    problem_count = sum(
-                        1 for p in day["paragraphs"] if p["type"] == "problem"
-                    )
-                    day_ans = answers[ans_idx : ans_idx + problem_count]
-                    day_answers.append({
-                        "day_num": day["day_num"],
-                        "answers": day_ans,
-                    })
-                    ans_idx += problem_count
-                data["day_answers"] = day_answers
-                log(f"[파서] 정답 완료: {len(answers)}개 → {len(day_answers)}개 Day")
+                sections[kind] = parse_by_kind(kind, fpath)
+                log(f"[파서] {kind} ← {basename} ({len(sections[kind])}개 단위)")
             except Exception as e:
-                log(f"[파서] 정답 파싱 실패 (무시): {e}")
-                data["day_answers"] = []
-        else:
-            data["day_answers"] = []
+                log(f"[파서] {kind} 파싱 실패: {basename} — {e}")
+
+        # 필수 영역 누락 검사 (문제 슬롯에서 최소 하나는 있어야)
+        problem_present = any(
+            sections[k] for k in ("part1_problem", "part2_problem")
+        )
+        if not problem_present:
+            raise ValueError(
+                "문제 원고가 누락됐거나 파일명에서 'Part1 문제' / 'Part2 문제' 키워드를 찾지 못했습니다. "
+                f"전달된 파일: {[os.path.basename(p) for p in all_files]}"
+            )
+
+        data = {"sections": sections, "unmatched": unmatched}
 
         json_path = os.path.join(job_dir, "content.json")
         with open(json_path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
 
-        total_paras = sum(len(d["paragraphs"]) for d in data["days"])
-        ans_total = sum(len(da["answers"]) for da in data.get("day_answers", []))
-        log(f"[파서] 완료: {len(data['days'])}개 Day, {total_paras}개 단락, 정답 {ans_total}개")
+        counts = " | ".join(f"{k}={len(sections[k])}" for k in _SECTION_KEYS)
+        log(f"[파서] 완료: {counts}")
+        if unmatched:
+            log(f"[파서] ⚠ 분류 실패 파일: {', '.join(unmatched)}")
 
         if not os.path.exists(json_path):
             raise RuntimeError("content.json 생성 실패")
-
         log(f"[파서] content.json 생성 완료 ({os.path.getsize(json_path):,} bytes)")
         return json_path
 
@@ -171,8 +205,9 @@ class BlackbookEngine(BaseEngine):
 
     def verify(self, job_dir: str, log) -> dict:
         cfg = _load_config()
-        expected_days = cfg["verify"]["expected_days"]
-        max_overflow = cfg["verify"]["max_overflow"]
+        expected_body   = cfg["verify"].get("expected_body_stories", 3)
+        expected_answer = cfg["verify"].get("expected_answer_stories", 2)
+        max_overflow    = cfg["verify"]["max_overflow"]
 
         log_path = os.path.join(job_dir, cfg["log_filename"])
         if not os.path.exists(log_path):
@@ -181,9 +216,10 @@ class BlackbookEngine(BaseEngine):
 
         content = open(log_path, encoding="utf-8", errors="ignore").read()
 
-        # Day 조판 완료 수
-        m = re.search(r"Day조판완료:\s*(\d+)개", content)
-        actual_days = int(m.group(1)) if m else None
+        body_m = re.search(r"본문조판완료:\s*(\d+)개", content)
+        ans_m  = re.search(r"정답조판완료:\s*(\d+)개", content)
+        actual_body   = int(body_m.group(1)) if body_m else None
+        actual_answer = int(ans_m.group(1))  if ans_m  else None
 
         overflow_m = re.search(r"오버플로우:\s*(\d+)개", content)
         overflow = int(overflow_m.group(1)) if overflow_m else None
@@ -196,24 +232,32 @@ class BlackbookEngine(BaseEngine):
                     break
 
         warnings = []
-        days_ok = True
+        stories_ok = True
 
-        if actual_days is None:
-            warnings.append("Day 조판 완료 수 확인 불가")
-            days_ok = False
-        elif actual_days != expected_days:
-            warnings.append(f"Day 수: {actual_days}개 (예상 {expected_days}개)")
-            days_ok = False
+        if actual_body is None:
+            warnings.append("본문 조판 수 확인 불가")
+            stories_ok = False
+        elif actual_body != expected_body:
+            warnings.append(f"본문 영역: {actual_body}개 (예상 {expected_body}개)")
+            stories_ok = False
+
+        if actual_answer is None:
+            warnings.append("정답 조판 수 확인 불가")
+            stories_ok = False
+        elif actual_answer != expected_answer:
+            warnings.append(f"정답 영역: {actual_answer}개 (예상 {expected_answer}개)")
+            stories_ok = False
 
         if overflow is None:
             warnings.append("오버플로우 수치 확인 불가")
         elif overflow > max_overflow:
             warnings.append(f"오버플로우 {overflow}개 발생")
 
-        ok = days_ok and (overflow is not None and overflow <= max_overflow) and pdf_path is not None
+        ok = stories_ok and (overflow is not None and overflow <= max_overflow) and pdf_path is not None
 
         stories = {
-            "Day조판": {"actual": actual_days, "expected": expected_days}
+            "본문": {"actual": actual_body,   "expected": expected_body},
+            "정답": {"actual": actual_answer, "expected": expected_answer},
         }
 
         result = {
@@ -225,5 +269,5 @@ class BlackbookEngine(BaseEngine):
         }
 
         status = "✅ 통과" if ok else f"⚠️ 경고 {len(warnings)}건"
-        log(f"[검수] {status} | 오버플로우: {overflow}개 | PDF: {'있음' if pdf_path else '없음'}")
+        log(f"[검수] {status} | 본문 {actual_body}/{expected_body} | 정답 {actual_answer}/{expected_answer} | 오버플로우 {overflow}개")
         return result
