@@ -60,6 +60,56 @@ def _rtf_encode(text):
     return "".join(_rtf_char(c) for c in text)
 
 
+# 선지 마커 (①~⑳) — 탭 정렬된 선지를 표로 강제 변환하지 않기 위한 분류용
+_OPTION_MARKERS = set(chr(c) for c in range(0x2460, 0x2474))
+
+
+def _starts_with_option(cell):
+    c = cell.strip()
+    return len(c) > 0 and c[0] in _OPTION_MARKERS
+
+
+def _classify_tab_line(full_text):
+    """탭 포함 단락 분류 → 'grid' | 'header' | 'normal'.
+
+    - grid:   한 줄에 선지(①②③…)가 여럿 탭으로 나열. 표로 묶으면 칸수 불일치·
+              ⑤ 누락·순서 꼬임이 생기므로 한 줄당 한 선지로 분리한다.
+    - header: 어휘 (A)/(B) 머리행. 탭/공백/선행탭 무관하게 '(A)\\tab (B)'로 정규화.
+    - normal: 그 외(본문·발문·어휘 데이터행 '①단어\\t단어' 등) — 기존 처리 유지.
+    """
+    cells = full_text.split("\t")
+    if len(cells) >= 2 and any(_starts_with_option(c) for c in cells[1:]):
+        return "grid"
+    if re.sub(r"\s+", " ", full_text.replace("\t", " ")).strip() == "(A) (B)":
+        return "header"
+    return "normal"
+
+
+def _hp_text_content(t_elem):
+    """<hp:t> 요소의 전체 텍스트를 추출한다.
+
+    HWPX는 <hp:t> 안에 <hp:tab/> 같은 인라인 요소를 두고, 그 뒤에 오는 텍스트를
+    그 인라인 요소의 tail에 담는다. 따라서 element.text(첫 인라인 요소 앞 텍스트)만
+    읽으면 탭 뒤 내용이 통째로 누락된다((A)/(B) 보기처럼 "① carry out" 만 남고
+    "prudent" 가 사라지는 증상). text + (tab→\\t) + 각 인라인 요소의 tail 을 순서대로
+    이어붙여 누락을 막는다.
+
+    연속된 탭(<hp:tab/><hp:tab/>)은 HWP에서 시각적 정렬용이므로 하나의 탭(열 구분)으로
+    합친다. 그래야 표 변환 시 헤더(탭 1개)와 보기(탭 2개)의 열 수가 어긋나 빈 열이
+    끼는 일이 없다.
+    """
+    parts = []
+    if t_elem.text:
+        parts.append(t_elem.text)
+    for sub in t_elem:
+        if _tag(sub) == "tab":
+            if not parts or parts[-1] != "\t":
+                parts.append("\t")
+        if sub.tail:
+            parts.append(sub.tail)
+    return "".join(parts)
+
+
 def _collect_run_text(run_elem, ul_ids):
     """run 요소에서 (text, is_underline) 청크 목록 반환.
 
@@ -70,8 +120,9 @@ def _collect_run_text(run_elem, ul_ids):
     is_ul = char_pr_id in ul_ids
     text_parts = []
     for child in run_elem:
-        if _tag(child) == "t" and child.text:
-            text_parts.append(child.text)
+        if _tag(child) == "t":
+            # child.text 만 읽으면 <hp:tab/> 뒤(tail) 내용이 누락되므로 전체 추출
+            text_parts.append(_hp_text_content(child))
         # ctrl, secPr, linesegarray 등 모두 무시
     combined = "".join(text_parts)
     if not combined:
@@ -89,6 +140,16 @@ def _paragraph_to_rtf(para_elem, ul_ids):
 
     if not chunks:
         return "\\pard\\par"
+
+    # 선지 그리드 / (A)(B) 머리행 정규화 (탭 정렬 선지를 표로 만들며 깨지는 문제 방지)
+    full_text = "".join(t for t, _ in chunks)
+    kind = _classify_tab_line(full_text)
+    if kind == "grid":
+        cells = [c.strip() for c in full_text.split("\t") if c.strip()]
+        if cells:
+            return "\n".join("\\pard " + _rtf_encode(c) + "\\par" for c in cells)
+    elif kind == "header":
+        return "\\pard (A)\\tab (B)\\par"
 
     # 연속 동일 underline 상태 병합
     merged = []
@@ -146,8 +207,13 @@ _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 
 
 def _docx_paragraph_to_rtf(p_elem):
-    """DOCX <w:p> 요소를 RTF 행으로 변환."""
-    chunks = []  # [(text, is_ul), ...]
+    """DOCX <w:p> 요소를 RTF 행으로 변환.
+
+    run 내 <w:br type="textWrapping"/>(Shift+Enter)는 RTF 단락 분리로 변환한다.
+    JSX의 후처리(\\r{2,} -> \\r)가 연속 빈 단락을 정리하므로 br 2개도 안전하다.
+    """
+    # 토큰 시퀀스: ("text", str, is_ul) 또는 ("para_break",)
+    tokens = []
     for r in p_elem:
         if _tag(r) != "r":
             continue
@@ -158,35 +224,54 @@ def _docx_paragraph_to_rtf(p_elem):
             if u_elem is not None:
                 val = u_elem.get(f"{{{_W_NS}}}val", "none")
                 is_ul = val not in ("none", "")
-        t_elem = r.find(f"{{{_W_NS}}}t")
-        if t_elem is not None and t_elem.text:
-            chunks.append((t_elem.text, is_ul))
+        for child in r:
+            ctag = _tag(child)
+            if ctag == "t" and child.text:
+                tokens.append(("text", child.text, is_ul))
+            elif ctag == "br":
+                btype = child.get(f"{{{_W_NS}}}type", "textWrapping")
+                if btype in ("textWrapping", "", None):
+                    tokens.append(("para_break",))
+                # column/page break은 무시
 
-    if not chunks:
+    if not tokens:
         return "\\pard\\par"
 
-    # 연속 동일 underline 상태 병합
-    merged = []
-    for text, ul in chunks:
-        if merged and merged[-1][1] == ul:
-            merged[-1] = (merged[-1][0] + text, ul)
+    # br 기준으로 sub-paragraph로 분할
+    subparas = [[]]
+    for tok in tokens:
+        if tok[0] == "para_break":
+            subparas.append([])
         else:
-            merged.append([text, ul])
+            subparas[-1].append((tok[1], tok[2]))
 
-    parts = ["\\pard "]
-    current_ul = False
-    for text, ul in merged:
-        if ul and not current_ul:
-            parts.append("\\ul ")
-            current_ul = True
-        elif not ul and current_ul:
+    lines = []
+    for sub in subparas:
+        if not sub:
+            lines.append("\\pard\\par")
+            continue
+        merged = []
+        for text, ul in sub:
+            if merged and merged[-1][1] == ul:
+                merged[-1] = (merged[-1][0] + text, ul)
+            else:
+                merged.append([text, ul])
+        parts = ["\\pard "]
+        current_ul = False
+        for text, ul in merged:
+            if ul and not current_ul:
+                parts.append("\\ul ")
+                current_ul = True
+            elif not ul and current_ul:
+                parts.append("\\ulnone ")
+                current_ul = False
+            parts.append(_rtf_encode(text))
+        if current_ul:
             parts.append("\\ulnone ")
-            current_ul = False
-        parts.append(_rtf_encode(text))
-    if current_ul:
-        parts.append("\\ulnone ")
-    parts.append("\\par")
-    return "".join(parts)
+        parts.append("\\par")
+        lines.append("".join(parts))
+
+    return "\n".join(lines)
 
 
 def _docx_para_text(p_elem):
@@ -201,17 +286,22 @@ def _docx_para_text(p_elem):
     return "".join(parts)
 
 
+_NUMBERED_QUESTION_RE = re.compile(r"^\d+\.\s+(다음|글|Which|Read)")
+
+
 def _skip_header_paragraphs(paragraphs):
     """원고 앞부분 제목/헤더 줄과 뒤따르는 빈 줄을 건너뛴 인덱스 반환.
 
-    패턴: 첫 번째 발문(다음 글의~)이 나오기 전의 비-본문 줄을 제거.
+    패턴: 첫 번째 발문(다음 글의~ 또는 "1. 다음~" 번호 발문)이 나오기 전의 비-본문 줄을 제거.
     """
     for i, p in enumerate(paragraphs):
         text = _docx_para_text(p).strip()
         if not text:
             continue
-        # 발문 시작 패턴: "다음 글", 선지 번호 ①~⑤, 영어 지문 시작
-        if text.startswith("다음 글") or text.startswith("(A)"):
+        # 발문 시작 패턴: "다음 글~", 번호 발문 "N. 다음/글/Which/Read~", 영어 지문 시작 "(A)"
+        if (text.startswith("다음 글")
+                or text.startswith("(A)")
+                or _NUMBERED_QUESTION_RE.match(text)):
             return i
         # 한글 제목/부제 줄이면 계속 건너뜀
         # 본문(영어 지문, 발문 등)이 아닌 줄은 skip

@@ -188,12 +188,62 @@ function applyStyles() {
     }
 
     // 4. 단락 스타일 적용 (상태머신)
-    var inBogi = false, inJogon = false, inYoyak = false, nextIsGivenSent = false;
+    var inBogi = false, inJogon = false, inYoyak = false;
     var yoyakBinkan = false;  // 발문에 요약+빈칸이 함께 있는 경우
     var afterJimun = false;   // 지문(boxStyle) 직후 상태
     var inReadAndAnswer = false;  // "다음 글을 읽고 질문에 답하시오" 내부
     var paras = ft.paragraphs;
     var qCount = 0;
+
+    // 사전 패스: 발문 다음 영문 본문 단락(j) 구조 분석
+    // - j 다음 단락(k)이 "(A)"로 시작 → 순서 배열형 → j는 boxStyle (주어진 글)
+    // - k 안에 ① ② ③ 마커 → 문장 삽입형 → j는 smallBoxStyle (주어진 문장)
+    var givenPassageIdx = {};
+    var givenSentenceIdx = {};
+    var _total = paras.length;
+    for (var preI = 0; preI < _total; preI++) {
+        var preTxt = paras[preI].contents;
+        var _isMundae = (
+            /[\uAC00-\uD7A3]\?/.test(preTxt) ||
+            /\uC2DC\s*\uC624\./.test(preTxt) ||
+            ((/\uC717\uAE00/.test(preTxt) || /\uC704 \uAE00/.test(preTxt)) && /\?/.test(preTxt)) ||
+            /^\s*\(\uC8FC\uAD00\uC2DD\)/.test(preTxt)
+        );
+        if (!_isMundae) continue;
+
+        // 발문 다음 첫 비빈 단락 (j)
+        var jIdx = -1;
+        for (var jj = preI + 1; jj < _total; jj++) {
+            var jjCc = paras[jj].contents.replace(/[\r\n]/g, "");
+            if (jjCc.replace(/[\s ]/g, "").length === 0) continue;
+            jIdx = jj; break;
+        }
+        if (jIdx < 0) continue;
+        var jCc = paras[jIdx].contents.replace(/[\r\n]/g, "");
+        // j 후보 검증: 영문/따옴표 시작 + (A)~(E)/①~⑤ 시작 아님
+        if (!/^\s*[A-Za-z("\u201C\u2018]/.test(jCc)) continue;
+        if (/^\s*\([A-E]\)/.test(jCc)) continue;
+        if (/^[\u2460-\u2464]/.test(jCc)) continue;
+
+        // j 다음 첫 비빈 단락 (k)
+        var kIdx = -1;
+        for (var kk = jIdx + 1; kk < _total; kk++) {
+            var kkCc = paras[kk].contents.replace(/[\r\n]/g, "");
+            if (kkCc.replace(/[\s ]/g, "").length === 0) continue;
+            kIdx = kk; break;
+        }
+        if (kIdx < 0) continue;
+        var kCc = paras[kIdx].contents.replace(/[\r\n]/g, "");
+
+        if (/^\s*\(A\)/.test(kCc)) {
+            // 순서 배열형: j = 주어진 글
+            givenPassageIdx[jIdx] = true;
+        } else if (/\u2460[\s\S]*\u2461[\s\S]*\u2462/.test(kCc)) {
+            // 문장 삽입형: j = 주어진 문장
+            givenSentenceIdx[jIdx] = true;
+        }
+        // 그 외 패턴(요약형/일반)은 마킹하지 않고 fallback(boxStyle)에 위임
+    }
 
     for (var i = 0; i < paras.length; i++) {
         var p   = paras[i];
@@ -201,7 +251,7 @@ function applyStyles() {
 
         // PRESERVE 스타일 → 상태 초기화 후 건너뜀
         if (PRESERVE[p.appliedParagraphStyle.name]) {
-            inBogi = false; inJogon = false; inYoyak = false; nextIsGivenSent = false;
+            inBogi = false; inJogon = false; inYoyak = false;
             yoyakBinkan = false; afterJimun = false;
             continue;
         }
@@ -241,7 +291,6 @@ function applyStyles() {
         );
         if (isMundae) {
             inBogi = false; inJogon = false; inYoyak = false;
-            nextIsGivenSent = /\uc8fc\uc5b4\uc9c4 \ubb38\uc7a5/.test(txt);
             // 요약+빈칸 동시 포함 감지
             yoyakBinkan = (/\uc694\uc57d/.test(txt) && /\ube48\uce78/.test(txt));
             afterJimun = false;
@@ -278,7 +327,7 @@ function applyStyles() {
 
         // 다음 글을 읽고
         if (/\ub2e4\uc74c \uae00\uc744 \uc77d\uace0/.test(txt)) {
-            inBogi = false; inJogon = false; inYoyak = false; nextIsGivenSent = false;
+            inBogi = false; inJogon = false; inYoyak = false;
             yoyakBinkan = false; afterJimun = false;
             // "질문에 답하시오" 포함 시 하위 문제 구조 진입
             inReadAndAnswer = /\uc9c8\ubb38\uc5d0\s*\ub2f5/.test(txt);
@@ -302,7 +351,7 @@ function applyStyles() {
 
         // ①~⑤ → 선지
         if (/^[\s\r\n]*[\u2460-\u2464]/.test(txt)) {
-            inBogi = false; inJogon = false; inYoyak = false; nextIsGivenSent = false;
+            inBogi = false; inJogon = false; inYoyak = false;
             yoyakBinkan = false; afterJimun = false;
             p.appliedParagraphStyle = seonjiStyle;
             continue;
@@ -325,10 +374,11 @@ function applyStyles() {
             if (smallBoxStyle) { p.appliedParagraphStyle = smallBoxStyle; continue; }
         }
 
-        // 주어진 문장 (문장 삽입형)
-        if (nextIsGivenSent && /^\s*[A-Za-z("]/.test(txt) && !/^\s*\([A-E]\)/.test(txt)) {
+        // 구조 기반: 주어진 글(순서 배열형) / 주어진 문장(문장 삽입형) → smallBoxStyle (작은박스·파란 배경)
+        if (givenPassageIdx[i] || givenSentenceIdx[i]) {
+            inBogi = false; inJogon = false; inYoyak = false;
+            yoyakBinkan = false; afterJimun = false;
             if (smallBoxStyle) p.appliedParagraphStyle = smallBoxStyle;
-            nextIsGivenSent = false;
             continue;
         }
 
@@ -496,49 +546,24 @@ function styleTabTextAsTable() {
             if (tfs.length > 0) tableFrame = tfs[0];
         } catch(e) {}
 
-        // 탭 텍스트 삭제 (메인 스토리에서 제거)
+        // 프레임 너비 (열 너비 계산용)
+        var frameW = 80;
+        try {
+            if (tableFrame) { var gbW = tableFrame.geometricBounds; frameW = gbW[3] - gbW[1]; }
+        } catch(e) {}
+
+        // 탭 텍스트를 "메인 스토리 안에서" 표로 in-place 변환한다.
+        // 독립 프레임이 아니라 본문 흐름에 포함되므로, 지문이 이동하면 표도 함께 이동한다.
         paras = ft.paragraphs;
         var sChar = paras[g.start].characters[0].index;
         var eP = paras[g.end];
         var eChar = eP.characters[eP.characters.length - 1].index;
-        ft.characters.itemByRange(sChar, eChar).remove();
-
-        if (!tableFrame || !tableFrame.parentPage) continue;
-
-        // 프레임의 남은 공간 측정
-        var gb = tableFrame.geometricBounds;  // [y1, x1, y2, x2]
-        var frameW = gb[3] - gb[1];
-        var textBottom = gb[0];
+        var tbl;
         try {
-            var lines = tableFrame.lines;
-            if (lines.length > 0) {
-                textBottom = lines[lines.length - 1].baseline + 4;  // 마지막 줄 + 여유
-            }
-        } catch(e) { textBottom = gb[0] + 10; }
-
-        var availableH = gb[2] - textBottom;
-        if (availableH < 15) {
-            writeLog("TABLE: \uacf5\uac04 \ubd80\uc871 (" + availableH.toFixed(1) + "mm)");
+            tbl = ft.characters.itemByRange(sChar, eChar).convertToTable("\t", "\r", maxCols);
+        } catch(e) {
+            writeLog("TABLE: convertToTable failed - " + e.message);
             continue;
-        }
-
-        // 독립 텍스트 프레임 생성 (메인 스토리와 분리)
-        var tblFrame = tableFrame.parentPage.textFrames.add();
-        tblFrame.geometricBounds = [textBottom, gb[1], gb[2], gb[3]];
-        tblFrame.textFramePreferences.insetSpacing = [0, 0, 0, 0];
-
-        // 표 생성
-        var tbl = tblFrame.insertionPoints[0].tables.add();
-        tbl.bodyRowCount = rowData.length;
-        tbl.columnCount = maxCols;
-
-        // 데이터 (밑줄 20자로 통일)
-        for (var dr = 0; dr < rowData.length; dr++) {
-            for (var dc = 0; dc < maxCols; dc++) {
-                var cellVal = rowData[dr][dc];
-                cellVal = cellVal.replace(/_{10,}/g, "____________________");
-                try { tbl.rows[dr].cells[dc].contents = cellVal; } catch(e) {}
-            }
         }
 
         // 열 너비
@@ -556,14 +581,13 @@ function styleTabTextAsTable() {
             }
         }
 
-        // 셀 텍스트 스타일
+        // 셀 텍스트: 선지 단락스타일 적용 (일반 선지와 동일하게 보이도록)
         try {
             var allC = tbl.cells.everyItem().getElements();
             for (var ac = 0; ac < allC.length; ac++) {
                 try {
-                    allC[ac].texts[0].pointSize = 8;
-                    allC[ac].texts[0].leading = 10;
-                    allC[ac].texts[0].justification = Justification.CENTER_ALIGN;
+                    allC[ac].texts[0].appliedParagraphStyle = seonjiStyle;
+                    allC[ac].texts[0].clearOverrides(OverrideType.ALL);
                 } catch(e) {}
             }
         } catch(e) {}
@@ -573,46 +597,30 @@ function styleTabTextAsTable() {
             try { tbl.rows[rh].autoGrow = true; } catch(e) {}
         }
 
-        // 테두리: #999999
-        var bColor = null;
+        // 테두리 전부 제거 (모든 셀 4변 stroke weight 0 + None 색 → 보이지 않게)
         try {
-            bColor = doc.colors.add({ name: "TblBorder", model: ColorModel.PROCESS, space: ColorSpace.RGB, colorValue: [153, 153, 153] });
-        } catch(e) {
-            try { bColor = doc.colors.itemByName("TblBorder"); } catch(e2) {}
-        }
-        if (bColor) {
-            try {
-                var allC2 = tbl.cells.everyItem().getElements();
-                for (var bc = 0; bc < allC2.length; bc++) {
-                    try {
-                        allC2[bc].topEdgeStrokeColor = bColor;
-                        allC2[bc].topEdgeStrokeWeight = 0.3;
-                        allC2[bc].bottomEdgeStrokeColor = bColor;
-                        allC2[bc].bottomEdgeStrokeWeight = 0.3;
-                        allC2[bc].leftEdgeStrokeColor = bColor;
-                        allC2[bc].leftEdgeStrokeWeight = 0.3;
-                        allC2[bc].rightEdgeStrokeColor = bColor;
-                        allC2[bc].rightEdgeStrokeWeight = 0.3;
-                    } catch(e) {}
-                }
-            } catch(e) {}
-        }
+            var allC2 = tbl.cells.everyItem().getElements();
+            for (var bc = 0; bc < allC2.length; bc++) {
+                try {
+                    allC2[bc].topEdgeStrokeWeight = 0;
+                    allC2[bc].bottomEdgeStrokeWeight = 0;
+                    allC2[bc].leftEdgeStrokeWeight = 0;
+                    allC2[bc].rightEdgeStrokeWeight = 0;
+                    allC2[bc].topEdgeStrokeColor = "None";
+                    allC2[bc].bottomEdgeStrokeColor = "None";
+                    allC2[bc].leftEdgeStrokeColor = "None";
+                    allC2[bc].rightEdgeStrokeColor = "None";
+                } catch(e) {}
+            }
+        } catch(e) {}
 
-        // 헤더 행 배경
-        var hFill = null;
+        // 배경색 전부 제거 (모든 셀 fill None → 표 형식 티 안 나게)
         try {
-            hFill = doc.colors.add({ name: "TblHeader", model: ColorModel.PROCESS, space: ColorSpace.RGB, colorValue: [232, 238, 244] });
-        } catch(e) {
-            try { hFill = doc.colors.itemByName("TblHeader"); } catch(e2) {}
-        }
-        if (hFill) {
-            try {
-                var hCells = tbl.rows[0].cells.everyItem().getElements();
-                for (var hc = 0; hc < hCells.length; hc++) {
-                    hCells[hc].fillColor = hFill;
-                }
-            } catch(e) {}
-        }
+            var fCells = tbl.cells.everyItem().getElements();
+            for (var fc = 0; fc < fCells.length; fc++) {
+                try { fCells[fc].fillColor = "None"; } catch(e) {}
+            }
+        } catch(e) {}
 
         // 셀 인셋
         try {
@@ -630,16 +638,10 @@ function styleTabTextAsTable() {
         // 세로 가운데 정렬
         try { tbl.cells.everyItem().verticalJustification = VerticalJustification.CENTER_ALIGN; } catch(e) {}
 
-        // 프레임 높이를 표 실제 높이에 맞춤
-        try {
-            doc.recompose();
-            var actualH = 0;
-            for (var rr = 0; rr < tbl.rows.length; rr++) actualH += tbl.rows[rr].height;
-            actualH += 2;
-            tblFrame.geometricBounds = [textBottom, gb[1], textBottom + actualH, gb[3]];
-        } catch(e) {}
+        // 본문 흐름에 포함된 표라 별도 프레임 높이 조정 불필요 (autoGrow + 리컴포즈)
+        try { doc.recompose(); } catch(e) {}
 
-        writeLog("TABLE: " + rowData.length + "\ud589 x " + maxCols + "\uc5f4 \ub3c5\ub9bd \ud504\ub808\uc784 \ud45c \ubc30\uce58 \uc644\ub8cc");
+        writeLog("TABLE: " + rowData.length + "\ud589 x " + maxCols + "\uc5f4 \ubcf8\ubb38 \uc778\ub77c\uc778 \ud45c (\uc9c0\ubb38\uacfc \ud568\uaed8 \uc774\ub3d9)");
     }
 }
 
