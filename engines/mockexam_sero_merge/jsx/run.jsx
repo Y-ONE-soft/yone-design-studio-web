@@ -323,16 +323,38 @@
         totalPages = newDoc.pages.length;
 
         // 코드 순서대로 markers 범위를 AT_END 로 추가
+        // 같은 지문(마커)을 여러 번호가 가리키면(장문 41~42 등) 1회만 삽입
+        var seenMarkers = {};
         for (var ci = 0; ci < SOURCES.length; ci++) {
             var srcMeta = SOURCES[ci];
             var sf = sourceFiles[ci];
             if (!sf) continue;
             var u = sf.absoluteURI;
             var sd = docCache[u];
+            var label = (srcMeta.display || srcMeta.code);
+
+            var mIdx = findMarkerIndex(fileMarkers[u], srcMeta.code);
+            if (mIdx === -1) {
+                var miss = label + " (" + (sf.displayName || sf.name) + ")";
+                // 범위 전개분(from_range)은 정보, 직접 입력한 번호는 경고
+                if (srcMeta.from_range) {
+                    writeLog("[정보] 해당 지문 없음 — 건너뜀: " + miss);
+                } else {
+                    writeLog("[경고] 마커 범위 없음: " + miss);
+                }
+                continue;
+            }
+
+            var mKey = u + "#" + mIdx;
+            if (seenMarkers[mKey]) {
+                writeLog("[정보] 중복 지문 — 건너뜀: " + label);
+                continue;
+            }
+            seenMarkers[mKey] = true;
+
             var rg = getCodeRange(fileMarkers[u], srcMeta.code, sd);
             if (!rg) {
-                writeLog("[경고] 마커 범위 없음: " + srcMeta.code +
-                         " (" + (sf.displayName || sf.name) + ")");
+                writeLog("[경고] 마커 범위 계산 실패: " + label);
                 continue;
             }
             var grpStart = newDoc.pages.length;
@@ -341,7 +363,7 @@
                     sd.pages[p2].duplicate(LocationOptions.AT_END, newDoc.pages.lastItem());
                     totalPages++;
                 } catch (eDup) {
-                    writeLog("[경고] " + srcMeta.code + " p" + p2 +
+                    writeLog("[경고] " + label + " p" + p2 +
                              " 복제 실패: " + eDup.message);
                 }
             }
