@@ -149,6 +149,21 @@
     }
 
     // ───────────────────────────────────────────────────────────────
+    // 스프레드 재편성 허용 — 내지 전부 allowPageShuffle = true
+    //   소스 분석본의 잠긴(island) spread 가 그대로 복제돼 결과 .indd 의
+    //   spread 가 "재편성 비허용"으로 남는 걸 방지. 문서 + 전체 spread 를
+    //   모두 재편성 허용으로 풀어 정상 펼침면으로 흐르게 한다.
+    //   (engines/final/indesign_stepper.py 와 동일 패턴)
+    // ───────────────────────────────────────────────────────────────
+
+    function allowShuffleAll(doc) {
+        try { doc.documentPreferences.allowPageShuffle = true; } catch (eDPS) {}
+        for (var s = 0; s < doc.spreads.length; s++) {
+            try { doc.spreads[s].allowPageShuffle = true; } catch (eSh) {}
+        }
+    }
+
+    // ───────────────────────────────────────────────────────────────
     // 분석본 마커 탐색 — "(고N) {YY}년 {M}월 {QQ}(-/~{QQ})번"
     //   고 고  년 년  월 월  번 번
     // ───────────────────────────────────────────────────────────────
@@ -260,6 +275,9 @@
         var newDoc;
         try { newDoc = app.open(outFile, false); }
         catch (eOpen) { fail("사본 열기 실패: " + eOpen.message); return; }
+
+        // 내지 전부 스프레드 재편성 허용 — 복제 전 문서 기본값 보정
+        allowShuffleAll(newDoc);
 
         // 후보 파일 dedup + open + markers 수집
         var docCache    = {};
@@ -386,6 +404,12 @@
         }
 
         try { cleanLabels(newDoc); } catch (eCl) {}
+
+        // 내지 전부 스프레드 재편성 허용 — 복제된 분석본 spread 까지 모두 풀기
+        try {
+            allowShuffleAll(newDoc);
+            writeLog("스프레드 재편성 허용 설정: " + newDoc.spreads.length + " spread");
+        } catch (eShf) { writeLog("[경고] 재편성 허용 설정 실패: " + eShf.message); }
 
         // 저장
         try { newDoc.save(); } catch (eS) { fail("저장 실패: " + eS.message); }

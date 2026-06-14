@@ -33,6 +33,15 @@ _DIR = os.path.dirname(os.path.abspath(__file__))
 _CONFIG_PATH = os.path.join(_DIR, "config.json")
 _PATH_KEYS = ["template_path", "gdrive_base", "output_base"]
 
+# 입력 파싱용 정규식 (모의고사 세로 결합과 동일)
+#   _YM_RE   : "25년 6월" / "2025년 06월" 회차 앵커 (년/월)
+#   _QTOK_RE : 문제번호 토큰 — "20-23" 범위 또는 단일 "29"
+#              (구분자: 하이픈/물결 및 그 전각·유니코드 변형)
+_RANGE_SEP = r"[\-~–—－～∼]"
+_YM_RE = re.compile(r"(\d{2,4})\s*년\s*(\d{1,2})\s*월")
+_QTOK_RE = re.compile(r"(\d{1,2})\s*" + _RANGE_SEP + r"\s*(\d{1,2})|(\d{1,2})")
+_CODE6_RE = re.compile(r"^\d{6}$")
+
 
 def _load_config():
     from core.paths import resolve_config
@@ -77,7 +86,7 @@ class AnalysisMergeEngine(BaseEngine):
             "slots": [
                 {
                     "key": "codes",
-                    "label": "문제 코드 (한 줄에 하나, 6자리 YYMMQQ — 예: 250320)",
+                    "label": "문제 (6자리 250632 또는 '25년 6월 32번' / '25년 6월 20-23번, 29번')",
                     "type": "textarea",
                     "required": True,
                 },
@@ -99,16 +108,97 @@ class AnalysisMergeEngine(BaseEngine):
         return default
 
     @staticmethod
-    def _parse_code(raw):
-        code = re.sub(r"\s", "", raw)
-        if not re.match(r"^\d{6}$", code):
-            return None
+    def _parse_qnums(segment):
+        """문제번호 구간 → [(번호:int, 범위확장분여부:bool)] (입력 순서 유지).
+
+        "32" → [(32,False)] / "32,33" → [(32,F),(33,F)]
+        "20-23" → [(20,T),(21,T),(22,T),(23,T)]  (범위 전개분은 True)
+        """
+        seg = segment.replace("번", " ")
+        out = []
+        for m in _QTOK_RE.finditer(seg):
+            if m.group(1) is not None:            # a~b 범위
+                a, b = int(m.group(1)), int(m.group(2))
+                step = 1 if a <= b else -1
+                for q in range(a, b + step, step):
+                    out.append((q, True))
+            else:                                 # 단일 번호
+                out.append((int(m.group(3)), False))
+        return out
+
+    @staticmethod
+    def _make_code(year, month, q, from_range):
+        """year('25'), month('06'), q(int) → 코드 dict (6자리 raw 포함)."""
         return {
-            "raw": code,
-            "year": code[0:2],
-            "month": code[2:4],
-            "qNum": code[4:6],
+            "raw": f"{year}{month}{int(q):02d}",
+            "year": year,
+            "month": month,
+            "qNum": f"{int(q):02d}",
+            "from_range": bool(from_range),
+            "display": f"{year}년 {int(month)}월 {int(q)}번",
         }
+
+    @classmethod
+    def _split_entries(cls, text):
+        """입력 전체를 회차/코드 조각으로 분리.
+
+        줄바꿈뿐 아니라 콤마로도 회차·코드를 구분할 수 있도록,
+        회차 앵커(년월)와 단독 6자리 코드 앞에 경계(개행)를 넣고 나눈다.
+        그래서 '250632, 25년 6월 33번' 처럼 코드와 자연어를 콤마로 섞어도 된다.
+        학년 토큰(고1/고2/고3)은 라디오에서 선택하므로 무시한다.
+        """
+        text = re.sub(r"고\s*[123]", " ", text)                       # 중복 학년 토큰 제거
+        text = _YM_RE.sub(lambda m: "\n" + m.group(0), text)          # 회차 앞 경계
+        text = re.sub(r"(?<!\d)\d{6}(?!\d)",
+                      lambda m: "\n" + m.group(0), text)              # 6자리 코드 앞 경계
+        return text.split("\n")
+
+    @classmethod
+    def _parse_line(cls, line):
+        """한 줄(조각) 입력 → 코드 dict 리스트.
+
+        지원 형식:
+          - 6자리 YYMMQQ (콤마/공백으로 여러 개): 250632  /  250632 250921
+          - 자연어 단일/콤마: 25년 6월 32번  /  25년 6월 32,33번
+          - 범위: 25년 6월 20-23번, 29번  /  25년 6월 20~21, 29~30
+          - 한 줄에 여러 회차: 25년 6월 33번, 22년 3월 33,34번
+        """
+        # '년/월' 글자가 전혀 없으면 6자리 코드 모드
+        if "년" not in line and "월" not in line:
+            out = []
+            for tok in re.split(r"[,\s]+", line.strip()):
+                if not tok:
+                    continue
+                t = re.sub(r"\s", "", tok)
+                if not _CODE6_RE.match(t):
+                    raise ValueError(
+                        f"잘못된 입력: {tok!r} — 6자리 코드(250632) 또는 "
+                        f"'25년 6월 32번' 형식으로 입력하세요."
+                    )
+                out.append(cls._make_code(t[0:2], t[2:4], int(t[4:6]), False))
+            return out
+
+        # 자연어 — '년/월' 앵커로 회차 그룹 분할
+        anchors = list(_YM_RE.finditer(line))
+        if not anchors:
+            raise ValueError(f"년/월을 인식하지 못했습니다: {line!r}")
+        out = []
+        for i, mt in enumerate(anchors):
+            yr = mt.group(1)
+            yr = yr[-2:] if len(yr) >= 2 else yr.zfill(2)   # 2025→25
+            mo = int(mt.group(2))
+            if not (1 <= mo <= 12):
+                raise ValueError(f"잘못된 월: {mt.group(2)}월 ({line!r})")
+            seg_start = mt.end()
+            seg_end = anchors[i + 1].start() if i + 1 < len(anchors) else len(line)
+            qnums = cls._parse_qnums(line[seg_start:seg_end])
+            if not qnums:
+                raise ValueError(f"문제 번호를 인식하지 못했습니다: {line!r}")
+            for q, is_range in qnums:
+                if not (1 <= q <= 99):
+                    raise ValueError(f"문제 번호 범위 오류: {q}번 ({line!r})")
+                out.append(cls._make_code(f"{int(yr):02d}", f"{mo:02d}", q, is_range))
+        return out
 
     @staticmethod
     def _find_month_folder(gdrive_base, grade_num, year, month):
@@ -117,10 +207,11 @@ class AnalysisMergeEngine(BaseEngine):
         폴더명 패턴: `고{N} {YY}년 {M}월` (또는 0-padded M)
         """
         grade_dir = os.path.join(gdrive_base, f"고{grade_num}")
-        # 미러 redirect — Drive zombie 시 GDrive listdir EDEADLK 회피
-        from engines.final.extractor import _resolve_local_mirror as _rlm
-        grade_dir = _rlm(grade_dir, None)
-        if not os.path.isdir(grade_dir):
+        # 미러 ∪ GDrive 합집합 — 미러가 stale해도(월 폴더가 GDrive에만 있어도)
+        # 누락 방지. 읽기는 미러 우선이라 EDEADLK 회피 유지.
+        from engines.final.extractor import list_manuscript_entries
+        entries = list_manuscript_entries(grade_dir, None)
+        if not entries:
             return None
 
         month_int = int(month)
@@ -129,15 +220,13 @@ class AnalysisMergeEngine(BaseEngine):
             month_variants.append(f"0{month_int}")
 
         prefix = f"고{grade_num} "
-        for raw in os.listdir(grade_dir):
-            nfc = _nfc(raw)
+        for nfc, full in entries:
             if not nfc.startswith(prefix):
                 continue
             if f"{year}년" not in nfc:
                 continue
             if not any(f"{mv}월" in nfc for mv in month_variants):
                 continue
-            full = os.path.join(grade_dir, raw)
             if os.path.isdir(full):
                 return full
         return None
@@ -148,15 +237,13 @@ class AnalysisMergeEngine(BaseEngine):
 
         반환 순서: 짧은 파일명이 먼저 (메인 → 보조 → 짤지문 등).
         """
-        if not month_folder or not os.path.isdir(month_folder):
+        if not month_folder:
             return []
-        # 미러 redirect — Drive zombie 시 GDrive listdir EDEADLK 회피
-        from engines.final.extractor import _resolve_local_mirror as _rlm
-        month_folder = _rlm(month_folder, None)
+        # 미러 ∪ GDrive 합집합 — 미러가 stale해도 분석본 .indd 누락 방지
+        from engines.final.extractor import list_manuscript_entries
         patterns = patterns or ["분석본"]
         results = []
-        for raw in os.listdir(month_folder):
-            nfc = _nfc(raw)
+        for nfc, full in list_manuscript_entries(month_folder, None):
             if not nfc.lower().endswith(".indd"):
                 continue
             if not any(pat in nfc for pat in patterns):
@@ -164,7 +251,7 @@ class AnalysisMergeEngine(BaseEngine):
             # ~$ / lock files 제외
             if nfc.startswith("~") or "idlk" in nfc.lower():
                 continue
-            results.append(os.path.join(month_folder, raw))
+            results.append(full)
         # 짧은 파일명이 우선 (e.g., "분석본.indd" → "분석본 2.indd" → "분석본 짤지문.indd")
         results.sort(key=lambda p: (len(os.path.basename(p)), os.path.basename(p)))
         return results
@@ -180,18 +267,24 @@ class AnalysisMergeEngine(BaseEngine):
         grade = self._get_meta(job_dir, "grade", "고1")
         grade_num = grade.replace("고", "")
 
-        # 코드 파싱
-        codes = []
-        for line in codes_text.splitlines():
-            line = line.strip()
-            if not line:
+        # 입력 파싱 — 6자리 코드 / "YY년 M월 Q번" / 범위 / 콤마·줄바꿈 혼합
+        parsed = []
+        for piece in self._split_entries(codes_text):
+            piece = piece.strip().strip(",").strip()
+            if not piece:
                 continue
-            p = self._parse_code(line)
-            if not p:
-                raise ValueError(f"잘못된 코드: {line!r} (6자리 숫자 필요)")
-            codes.append(p)
-        if not codes:
+            parsed.extend(self._parse_line(piece))
+        if not parsed:
             raise ValueError("문제 코드가 입력되지 않았습니다.")
+
+        # 동일 코드 중복 제거 (입력 순서 보존)
+        codes = []
+        seen = set()
+        for c in parsed:
+            if c["raw"] in seen:
+                continue
+            seen.add(c["raw"])
+            codes.append(c)
 
         log(f"[코드] {len(codes)}개")
 
