@@ -14,3 +14,14 @@ uploads/
 # IDE
 .vscode/
 .idea/
+
+# Syncthing 잔재 / 자동동기화 안전장치
+*.sync-conflict-*
+.stfolder/
+.stversions/
+*.local-bak
+
+# 로컬 백업 폴더 / 기계 전용 셋업 (각 기계 로컬에만)
+*_backup/
+_macbook_*
+_imac_*
