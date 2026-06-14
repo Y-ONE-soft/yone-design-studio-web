@@ -6,6 +6,8 @@ from engines.cover_pocketbook.engine import CoverPocketbookEngine
 from engines.pocketbook.engine import PocketbookEngine
 from engines.final.engine import FinalEngine
 from engines.workbook.engine import WorkbookEngine
+from engines.workbook_sero.engine import WorkbookSeroEngine
+from engines.workbook_supp.engine import WorkbookSuppEngine
 from engines.baenje.engine import BaenjeEngine
 from engines.textbook_workbook.engine import TextbookWorkbookEngine
 from engines.ebs_workbook.engine import EbsWorkbookEngine
@@ -15,6 +17,7 @@ from engines.mockexam.engine import MockexamEngine
 from engines.mockexam_sero_merge.engine import MockexamSeroMergeEngine
 from engines.analysis_merge.engine import AnalysisMergeEngine
 from engines.mothertongue_merge.engine import MothertongueMergeEngine
+from engines.vert_to_horiz.engine import VertToHorizEngine
 
 # ── 새 교재 추가 시 여기에 한 줄만 추가 ──────────────────────────────────
 _ENGINE_LIST = [
@@ -27,6 +30,8 @@ _ENGINE_LIST = [
     PocketbookEngine(),
     FinalEngine(),
     WorkbookEngine(),
+    WorkbookSeroEngine(),
+    WorkbookSuppEngine(),
     TextbookWorkbookEngine(),
     EbsWorkbookEngine(),
     SuneungteukgangWorkbookEngine(),
@@ -35,6 +40,7 @@ _ENGINE_LIST = [
     MockexamSeroMergeEngine(),
     AnalysisMergeEngine(),
     MothertongueMergeEngine(),
+    VertToHorizEngine(),
 ]
 # ────────────────────────────────────────────────────────────────────────
 
