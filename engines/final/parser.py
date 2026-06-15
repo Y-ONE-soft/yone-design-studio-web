@@ -263,8 +263,8 @@ def _is_question_header(text):
     # [Gateway] 또는 {Gateway} (고3 수능특강 분석편)
     if re.match(r"^[\[{]Gateway[\]}]$", t, re.IGNORECASE):
         return True
-    # {Example N} / [Example N] (리딩파워)
-    if re.match(r"^[\[{]Example\s*\d+[\]}]$", t, re.IGNORECASE):
+    # {Example N} / [Example N] / {EXN} / {Ex N} (리딩파워 — 파일마다 마커 표기 다름)
+    if re.match(r"^[\[{](?:Example|EX)\s*\d+[\]}]$", t, re.IGNORECASE):
         return True
     # {20}, {21~22}, {41~42} 등
     if re.match(r"^\{\d+(?:[~\-]\d+)?\}$", t):
@@ -290,8 +290,8 @@ def _extract_question_number(text):
     # [Gateway] 또는 {Gateway}
     if re.match(r"^[\[{]Gateway[\]}]$", t, re.IGNORECASE):
         return "Gateway"
-    # {Example N} / [Example N] → "ExampleN" (공백 제거)
-    m_ex = re.match(r"^[\[{]Example\s*(\d+)[\]}]$", t, re.IGNORECASE)
+    # {Example N} / [Example N] / {EXN} / {Ex N} → "ExampleN" (공백 제거)
+    m_ex = re.match(r"^[\[{](?:Example|EX)\s*(\d+)[\]}]$", t, re.IGNORECASE)
     if m_ex:
         return f"Example{m_ex.group(1)}"
     # {XX} or [XX] 형식
@@ -1207,8 +1207,8 @@ def _split_writing_blocks(paras, source, kor_styles, view_styles,
                 current_qnum = f"Ex{int(m_ue.group(2)):02d}"
                 current_unit_override = int(m_ue.group(1))
                 continue
-            # [Example N] / {Example N} — 리딩파워 Example 헤더
-            m_ex = re.match(r"^[\[{]\s*Example\s*(\d+)\s*[\]}]$", txt, re.IGNORECASE)
+            # [Example N] / {Example N} / {EXN} / {Ex N} — 리딩파워 Example 헤더
+            m_ex = re.match(r"^[\[{]\s*(?:Example|EX)\s*(\d+)\s*[\]}]$", txt, re.IGNORECASE)
             if m_ex:
                 current_qnum = f"Ex{int(m_ex.group(1)):02d}"
                 current_unit_override = None
