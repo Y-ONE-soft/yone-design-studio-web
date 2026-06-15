@@ -266,7 +266,7 @@ def _find_scope_row(rows, school, exam_period=None):
     return None
 
 
-def fetch_high3_scope(school, log=None):
+def fetch_high3_scope(school, log=None, exam_period=None):
     """\uace03 \ud559\uad50\uc758 \uc218\ub2a5\ud2b9\uac15/\ubd80\uad50\uc7ac \ubc94\uc704\ub97c \uad6c\uae00\uc2dc\ud2b8\uc5d0\uc11c \uc870\ud68c.
 
     \uc2dc\ud5d8\ubc94\uc704 \uc2dc\ud2b8\uc758 [3] \ucef4\ub7fc ("\ubd80\uad50\uc7ac \ubc0f \uc218\ub2a5\ud2b9\uac15")\uc744 \ud30c\uc2f1.
@@ -291,7 +291,7 @@ def fetch_high3_scope(school, log=None):
             log("[\uace03 \ubc94\uc704] \uc2dc\ud5d8\ubc94\uc704 \uc2dc\ud2b8 \uc811\uadfc \uc2e4\ud328")
         return empty
 
-    target_row = _find_scope_row(rows, school)
+    target_row = _find_scope_row(rows, school, exam_period)
     if not target_row:
         if log:
             log(f"[\uace03 \ubc94\uc704] \uc2dc\ud5d8\ubc94\uc704 \uc2dc\ud2b8\uc5d0\uc11c {school} \ubbf8\ubc1c\uacac")
@@ -425,7 +425,7 @@ def _parse_passage_list(s):
     return result
 
 
-def fetch_scope_for_school(school, log=None):
+def fetch_scope_for_school(school, log=None, exam_period=None):
     """시험범위 시트에서 특정 학교의 모의고사 범위를 가져온다."""
     rows = _fetch_csv(SCOPE_SHEET_ID, SCOPE_GID)
     if not rows:
@@ -433,7 +433,7 @@ def fetch_scope_for_school(school, log=None):
             log("[중요어휘] 시험범위 시트 접근 실패")
         return []
 
-    target_row = _find_scope_row(rows, school)
+    target_row = _find_scope_row(rows, school, exam_period)
     if not target_row:
         if log:
             log(f"[중요어휘] 시험범위 시트에서 {school} 미발견")
@@ -450,7 +450,7 @@ def fetch_scope_for_school(school, log=None):
     return exams
 
 
-def fetch_textbook_limits_for_school(school, log=None):
+def fetch_textbook_limits_for_school(school, log=None, exam_period=None):
     """시험범위 시트의 교과서 컬럼에서 과별 본문 제한 추출.
 
     패턴: "(N과는 본문M까지만 들어감)", "(N과 본문M까지)", "(SL 본문M까지)" 등
@@ -463,7 +463,7 @@ def fetch_textbook_limits_for_school(school, log=None):
     rows = _fetch_csv(SCOPE_SHEET_ID, SCOPE_GID)
     if not rows:
         return {}
-    target_row = _find_scope_row(rows, school)
+    target_row = _find_scope_row(rows, school, exam_period)
     if not target_row:
         return {}
     # 교과서 컬럼 (인덱스 1)
@@ -491,7 +491,7 @@ def fetch_textbook_limits_for_school(school, log=None):
     return limits
 
 
-def fetch_textbook_rm_lessons_for_school(school, log=None):
+def fetch_textbook_rm_lessons_for_school(school, log=None, exam_period=None):
     """시험범위 시트의 교과서 컬럼에서 RM/FR 포함 과 추출.
 
     패턴 예:
@@ -505,7 +505,7 @@ def fetch_textbook_rm_lessons_for_school(school, log=None):
     rows = _fetch_csv(SCOPE_SHEET_ID, SCOPE_GID)
     if not rows:
         return None
-    target_row = _find_scope_row(rows, school)
+    target_row = _find_scope_row(rows, school, exam_period)
     if not target_row:
         return None
     tb_text = target_row[1] if len(target_row) > 1 else ""
@@ -627,7 +627,7 @@ def fetch_rp_lecture_problem_counts(grade):
     return counts
 
 
-def fetch_vocab_for_school(school, grade, log=None, olpo_lectures=None, rp_lectures=None, passage_codes=None, workbook_order=None, code_order=None):
+def fetch_vocab_for_school(school, grade, log=None, olpo_lectures=None, rp_lectures=None, passage_codes=None, workbook_order=None, code_order=None, exam_period=None):
     """학교의 시험범위에 맞는 중요어휘를 자동 추출.
 
     각 모의고사 시기별 워크시트에서 해당 문항번호의 데이터를 수집.
@@ -637,7 +637,7 @@ def fetch_vocab_for_school(school, grade, log=None, olpo_lectures=None, rp_lectu
     (마더텅 기반 학교처럼 모의고사 scope가 비어있어도 워크북 지문 출처로 추출).
     """
     # 1) 시험범위에서 모의고사 목록
-    exams = fetch_scope_for_school(school, log)
+    exams = fetch_scope_for_school(school, log, exam_period=exam_period)
 
     # 2) 시트 목록 가져오기
     sheet_id = VOCAB_SHEET_IDS.get(grade)

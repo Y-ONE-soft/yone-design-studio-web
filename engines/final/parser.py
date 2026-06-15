@@ -520,10 +520,14 @@ def _classify_stories(stories):
         if _is_rp_source(_sf):
             _rp_story_groups[_sf].append(_st)
     for _sf, _sl in _rp_story_groups.items():
-        _m_lec = re.search(r"\ub9ac\ub529\ud30c\uc6cc\s*([\d,\s]+)\s*\uac15", _sf)
+        # \ud30c\uc77c\uba85\uc758 \uac15 \ubaa9\ub85d \ud30c\uc2f1. \ub450 \uac00\uc9c0 \uba85\uba85 \ud615\uc2dd \ubaa8\ub450 \uc9c0\uc6d0:
+        #   "\ub9ac\ub529\ud30c\uc6cc15,16,17\uac15" (\uac15\uc774 \ub05d\uc5d0\ub9cc)   \u2192 [15,16,17]
+        #   "\ub9ac\ub529\ud30c\uc6cc12\uac15,14\uac15"   (\uac15\uc774 \uc22b\uc790\ub9c8\ub2e4) \u2192 [12,14]
+        # \uac15/\ucf64\ub9c8\ub85c \uc774\uc5b4\uc9c0\ub294 \uc5f0\uc18d \uad6c\uac04\ub9cc \ucea1\ucc98 \u2192 "\ub9ac\ub529\ud30c\uc6cc19\uac15,\ubbf8\ub798\uc5d4\uae404\uacfc"\uc758 4\ub294 \uc81c\uc678.
+        _m_lec = re.search(r"\ub9ac\ub529\ud30c\uc6cc\s*((?:\d+\s*\uac15?\s*,?\s*)+)", _sf)
         if not _m_lec:
             continue
-        _lec_list = [int(x.strip()) for x in _m_lec.group(1).split(",") if x.strip().isdigit()]
+        _lec_list = [int(x) for x in re.findall(r"\d+", _m_lec.group(1))]
         if not _lec_list:
             continue
         _sl.sort(key=lambda s: s.get("pageOff", 0))
@@ -4560,7 +4564,7 @@ def parse_extracted(extracted_path, vocab_left, vocab_right,
     if not is_g3:
         try:
             from engines.final.vocab_fetcher import fetch_scope_for_school
-            scope_exams = fetch_scope_for_school(school, log=None)
+            scope_exams = fetch_scope_for_school(school, log=None, exam_period=exam_period)
             if scope_exams:
                 log(f"  시험범위 필터: {len(scope_exams)}개 시험")
         except Exception:

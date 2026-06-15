@@ -314,6 +314,22 @@ class FinalEngine(BaseEngine):
             if f.lower().endswith(".indd") and "워크북" in _nfc(f)
         ])
 
+        # "(수정전)" 구버전 파일 제외 — 같은 강 범위의 정식본이 함께 있으면 구버전이
+        # 추출/중복제거 단계에서 이겨 Ex 경계가 깨진 채 들어가는 사고 방지.
+        # 단, 정식본이 없으면(구버전만 존재) 콘텐츠 누락을 막기 위해 그대로 유지.
+        def _lec_sig(p):
+            m = re.search(r"\(([^)]*강[^)]*)\)", _nfc(os.path.basename(p)))
+            return m.group(1) if m else None
+        _clean_sigs = {
+            _lec_sig(f) for f in all_files
+            if "수정전" not in _nfc(os.path.basename(f))
+        }
+        all_files = [
+            f for f in all_files
+            if not ("수정전" in _nfc(os.path.basename(f))
+                    and _lec_sig(f) in _clean_sigs)
+        ]
+
         # 올포 파일만 분리 (학교별 워크북의 올포는 공용 파일로 대체)
         non_olpo = [f for f in all_files if "올포" not in _nfc(os.path.basename(f))]
         olpo_files = [f for f in all_files if "올포" in _nfc(os.path.basename(f))]
@@ -435,7 +451,7 @@ class FinalEngine(BaseEngine):
         lecture_details = {}  # 강별 지문번호 필터 (예: {"4": ["2","4"], "test1": ["3","4","6",...]})
         if grade == "고3":
             from engines.final.vocab_fetcher import fetch_high3_scope
-            scope_info = fetch_high3_scope(school, log=log)
+            scope_info = fetch_high3_scope(school, log=log, exam_period=exam_period)
             selected_lectures = scope_info["lectures"] + scope_info["tests"]
             exclude_gateway = scope_info["exclude_gateway"]
             textbook_lessons = scope_info.get("textbook_lessons", [])
@@ -592,7 +608,7 @@ class FinalEngine(BaseEngine):
                 from engines.final.vocab_fetcher import fetch_scope_for_school
                 allowed_qnums = set()
                 try:
-                    exams = fetch_scope_for_school(school, log=None)
+                    exams = fetch_scope_for_school(school, log=None, exam_period=exam_period)
                     for e in exams:
                         allowed_qnums.update(e["numbers"])
                 except Exception:
@@ -1088,7 +1104,7 @@ class FinalEngine(BaseEngine):
                 # 시트에 없고 워크북에만 있는 페어는 뒤에 유지.
                 try:
                     from engines.final.vocab_fetcher import fetch_scope_for_school as _fssch
-                    _sheet_exams = _fssch(school, log=None)
+                    _sheet_exams = _fssch(school, log=None, exam_period=exam_period)
                     _sheet_order = []
                     for _ex in _sheet_exams:
                         _pair = (str(_ex.get("year", "")),
@@ -1169,6 +1185,7 @@ class FinalEngine(BaseEngine):
                     workbook_order=_workbook_order,
                     passage_codes=_ordered_codes if _ordered_codes else None,
                     code_order=_ordered_codes if _ordered_codes else None,
+                    exam_period=exam_period,
                 )
                 vocab_left = vocab_data.get("left_text", "")
                 vocab_right = vocab_data.get("right_text", "")
@@ -1187,7 +1204,7 @@ class FinalEngine(BaseEngine):
             # 시험범위에서 허용 문항번호 수집 (모의고사 scope만)
             try:
                 from engines.final.vocab_fetcher import fetch_scope_for_school
-                exams_info = fetch_scope_for_school(school, log=None)
+                exams_info = fetch_scope_for_school(school, log=None, exam_period=exam_period)
             except Exception:
                 exams_info = []
 
@@ -1297,7 +1314,7 @@ class FinalEngine(BaseEngine):
         if grade in ("\uace01", "\uace02"):
             try:
                 from engines.final.vocab_fetcher import fetch_textbook_limits_for_school
-                _textbook_limits = fetch_textbook_limits_for_school(school, log=log) or {}
+                _textbook_limits = fetch_textbook_limits_for_school(school, log=log, exam_period=exam_period) or {}
             except Exception as _e_tl:
                 log(f"[\uad50\uacfc\uc11c] \ubcf8\ubb38 \uc81c\ud55c \uc870\ud68c \uc2e4\ud328: {_e_tl}")
 
@@ -1306,7 +1323,7 @@ class FinalEngine(BaseEngine):
         if grade in ("\uace01", "\uace02"):
             try:
                 from engines.final.vocab_fetcher import fetch_textbook_rm_lessons_for_school
-                _textbook_rm_lessons = fetch_textbook_rm_lessons_for_school(school, log=log)
+                _textbook_rm_lessons = fetch_textbook_rm_lessons_for_school(school, log=log, exam_period=exam_period)
             except Exception as _e_rm:
                 log(f"[\uad50\uacfc\uc11c] RM/FR \ud5c8\uc6a9 \uacfc \uc870\ud68c \uc2e4\ud328: {_e_rm}")
         # 리딩파워 Example 워크북용 강별 문제 수 (sheet 기반)
