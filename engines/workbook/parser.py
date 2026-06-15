@@ -427,6 +427,10 @@ def _normalize_circled_numbers(paras):
     return paras
 
 
+# 모의고사 워크북 신형식 출처 표기: "┃10월 18번┃", "┃10월 43~45번┃"
+_RE_SRC_BAR = re.compile(r'┃[^┃]*?월\s*\d+(?:\s*~\s*\d+)?\s*번[^┃]*?┃')
+
+
 def _hwp_extract_paragraphs(hwp_path, extract_underline=False, exclude_footnotes=False):
     """
     hwp 파일 파싱. hwpx(ZIP)이면 hwpx 파서 사용, 아니면 pyhwp + struct 디코딩.
@@ -461,6 +465,30 @@ def _hwp_extract_paragraphs(hwp_path, extract_underline=False, exclude_footnotes
     all_recs = []
     for _si in range(n_sections):
         all_recs.extend(list(hwp.bodytext.section(_si).records()))
+
+    # ── 모의고사 워크북 신형식 감지 ──────────────────────────────────────
+    # 한 지문을 여러 유형(어법/어휘/빈칸/순서/영작…)으로 변형하는 형식으로,
+    # 출처(┃…월 N번┃)·정답·해설·영작 모범답안을 전부 level 3에, 보기 박스를
+    # level 5에 둔다. → 이 형식에선 level 3 = 버릴 것(살릴 본문 없음),
+    #   level 5 = 살려야 할 보기. _new_format True일 때 아래 루프에서 정책을 반전.
+    # 기존 워크북(수능특강·EBS 등)에는 이 두 신호가 없어 기존 동작을 유지한다.
+    _new_format = False
+    for _r in all_recs:
+        if _r.get('tagid') != 67:
+            continue
+        _lv = _r.get('level', 1)
+        if _lv not in (3, 5):
+            continue
+        try:
+            _t = _hwp_decode_paratext(_r.get('payload', b'')).strip()
+        except Exception:
+            continue
+        if _lv == 3 and _RE_SRC_BAR.search(_t):
+            _new_format = True
+            break
+        if _lv == 5 and _t == '보기':
+            _new_format = True
+            break
 
     # HWP5 구조:
     # level 1 = 본문 단락
@@ -538,6 +566,14 @@ def _hwp_extract_paragraphs(hwp_path, extract_underline=False, exclude_footnotes
         #   문제 내용(표·선지)은 보존한다. (param은 hwpx 경로 시그니처 호환용으로 유지)
         if rec_level == 1:
             pass
+        elif _new_format:
+            # 신형식: level 5(보기 박스)만 살리고, level 3(출처/정답/해설/영작
+            #   모범답안) 등 나머지는 모두 제외한다.
+            if rec_level == 5:
+                pass
+            else:
+                i += 1
+                continue
         elif rec_level == 3 and i not in footnote_l3_set:
             pass
         else:
