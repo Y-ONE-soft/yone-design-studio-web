@@ -42,8 +42,10 @@ def _load_category_map():
                 cat = (block.get("category") or "").strip()
                 for item in block.get("items", []):
                     eng = item.get("engine_id")
-                    if eng and cat:
-                        mapping[eng] = cat
+                    # 항목별 category가 있으면 블록 category보다 우선 (조판결과 폴더 분리용)
+                    item_cat = (item.get("category") or "").strip() or cat
+                    if eng and item_cat:
+                        mapping[eng] = item_cat
     except Exception:
         pass
     _category_cache = mapping

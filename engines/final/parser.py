@@ -879,7 +879,7 @@ def _split_sentence_blocks(paras, source, sentence_styles, output_list,
         # 워크북 지문 번호 그대로 사용(FR은 별도 라벨). 균등 분할 금지.
         _is_dl = _is_deeplearning_workbook(source)
         def _match_passage_marker(t):
-            m = re.match(r"^[\[{]?(본문\d+|Further\s*Reading|Read\s*More)[\]}]?$", t, re.IGNORECASE)
+            m = re.match(r"^[\[{]?(본문\d+(?:[-~]\d+)*|Further\s*Reading|Read\s*More)[\]}]?$", t, re.IGNORECASE)
             if m:
                 lab = m.group(1)
                 if lab.startswith("본문"):
@@ -1070,7 +1070,7 @@ def _split_insert_blocks(paras, source, insert_styles, output_list,
         # 마커가 없으면 기존 "아래 주어진" 발문 기준 분할로 폴백.
         _is_dl_ins = _is_deeplearning_workbook(source)
         def _match_passage_marker_ins(t):
-            m = re.match(r"^[\[{]?(본문\d+|Further\s*Reading|Read\s*More)[\]}]?$", t, re.IGNORECASE)
+            m = re.match(r"^[\[{]?(본문\d+(?:[-~]\d+)*|Further\s*Reading|Read\s*More)[\]}]?$", t, re.IGNORECASE)
             if m:
                 lab = m.group(1)
                 if lab.startswith("본문"):
@@ -1216,7 +1216,7 @@ def _split_writing_blocks(paras, source, kor_styles, view_styles,
                 current_unit_override = None
                 continue
             # 본문N 헤더: [본문1], [본문2], 본문1 (대괄호/중괄호 optional)
-            m2 = re.match(r"^[\[{]?본문(\d+)[\]}]?$", txt)
+            m2 = re.match(r"^[\[{]?본문(\d+(?:[-~]\d+)*)[\]}]?$", txt)
             if m2:
                 current_qnum = "본문" + m2.group(1)
                 current_unit_override = None
@@ -1601,9 +1601,9 @@ def _canonical_order_key(header, source=""):
     h = _nfc(header or "").strip()
     src = _nfc(source or "")
     # 교과서
-    m_tb = re.match(r'^\uad50\uacfc\uc11c(\d+)\uacfc\s+\ubcf8\ubb38(\d+)', h)
+    m_tb = re.match(r'^\uad50\uacfc\uc11c(\d+)\uacfc\s+\ubcf8\ubb38(\d+)(?:-(\d+))?', h)
     if m_tb:
-        return (0, int(m_tb.group(1)), int(m_tb.group(2)), 0)
+        return (0, int(m_tb.group(1)), int(m_tb.group(2)), int(m_tb.group(3) or 0))
     m_tb_sl = re.match(r'^\uad50\uacfc\uc11cSL\s+\ubcf8\ubb38(\d+)', h)
     if m_tb_sl:
         return (0, 999, int(m_tb_sl.group(1)), 0)
