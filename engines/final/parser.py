@@ -3216,10 +3216,11 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                 max_body = textbook_limits.get(lesson)
                 if max_body is None:
                     return True
-                try:
-                    body_num = int(q.replace("\ubcf8\ubb38", ""))
-                except ValueError:
+                # "\ubcf8\ubb383-1" \ub4f1 \ud558\uc704\ubc88\ud638 \ub300\uc751: \uc8fc\ubc88\ud638\ub9cc \ube44\uad50.
+                _bm = re.match(r"(\d+)", q.replace("\ubcf8\ubb38", ""))
+                if not _bm:
                     return True
+                body_num = int(_bm.group(1))
                 return body_num <= max_body
             writing_kor = [w for w in writing_kor if _tb_limit_pass(w)]
             writing_view = [w for w in writing_view if _tb_limit_pass(w)]
