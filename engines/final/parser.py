@@ -1298,8 +1298,10 @@ def _writing_q_to_header(scope_text, q_num, lesson_label=None):
         if m_tb:
             return f"{m_tb.group(1)}\uacfc"
         # TED 외부지문
-        if "TED" in scope or "\uc678\ubd80\uc9c0\ubb38" in scope:
+        if "TED" in scope:
             return "TED1"
+        if "\uc678\ubd80\uc9c0\ubb38" in scope or "\uc678\ubd80" in scope:
+            return "\uc678\ubd80\uc9c0\ubb38"
         return None
 
     # Project 워크북: "Project1-1" → "교과서Project1 본문1"
@@ -1314,6 +1316,8 @@ def _writing_q_to_header(scope_text, q_num, lesson_label=None):
         if eff_label:
             if eff_label.startswith("TED"):
                 return f"{eff_label} 본문{num}"
+            if eff_label == "외부지문":
+                return f"외부지문 본문{num}"
             if eff_label == "SL":
                 return f"교과서SL 본문{num}"
             if eff_label.startswith("Project"):
@@ -1328,6 +1332,8 @@ def _writing_q_to_header(scope_text, q_num, lesson_label=None):
         if eff_label:
             if eff_label == "SL":
                 return f"교과서SL {suffix}"
+            if eff_label == "외부지문":
+                return f"외부지문 {suffix}"
             if not eff_label.startswith("TED"):
                 return f"교과서{eff_label} {suffix}"
         return suffix
@@ -1574,10 +1580,12 @@ def _scope_to_header(scope_text, block_num, blocks_per_lesson=5):
             return f"마더텅{m_mt.group(1)} 본문{block_num}"
         return f"마더텅 본문{block_num}"
 
-    # TED 외부지문: "TED외부지문" / "TED" / "외부지문" + 지문순번 → "TEDN 본문M"
-    # (TED 워크북 파일이 여러 개일 수 있는 케이스 대비 — 기본 TED1)
-    if "TED" in scope or "외부지문" in scope or "외부" in scope:
+    # 외부지문: scope에 "TED" 명시된 학교만 "TEDN 본문M"(기본 TED1).
+    # 그 외 일반 외부지문(상일2 등)은 "외부지문 본문M".
+    if "TED" in scope:
         return f"TED1 본문{block_num}"
+    if "외부지문" in scope or "외부" in scope:
+        return f"외부지문 본문{block_num}"
 
     # 기본
     return f"지문 {block_num}"
@@ -1617,6 +1625,10 @@ def _canonical_order_key(header, source=""):
     m_ted = re.match(r'^TED(\d+)\s+\ubcf8\ubb38(\d+)', h)
     if m_ted:
         return (0.7, int(m_ted.group(1)), int(m_ted.group(2)), 0)
+    # \uc77c\ubc18 \uc678\ubd80\uc9c0\ubb38 ("\uc678\ubd80\uc9c0\ubb38 \ubcf8\ubb383") \u2014 TED\uc640 \ub3d9\uc77c tier(0.7)
+    m_ext = re.match(r'^\uc678\ubd80\uc9c0\ubb38\s+\ubcf8\ubb38(\d+)', h)
+    if m_ext:
+        return (0.7, 1, int(m_ext.group(1)), 0)
     # 리딩파워 — 강별로 묶어서 같은 강 내에서 Ex 먼저, 일반 문제 뒤
     # (파일명 Example 여부와 무관하게 헤더의 "Ex" 표기만 기준으로 정렬 — 워크북 파일명/내용이 반대인 경우 대응)
     m_rp = re.match(r'^\ub9ac\ub529\ud30c\uc6cc\s+(\d+)\uac15\s+(?:Ex(\d+)|(\d+))', h)
@@ -1832,7 +1844,7 @@ def _is_in_scope(header, scope_exams):
         return True  # scope 없으면 전부 포함
     if (header.startswith("교과서") or header.startswith("올포") or
             header.startswith("마더텅") or header.startswith("SL") or
-            header.startswith("TED") or
+            header.startswith("TED") or header.startswith("외부지문") or
             re.match(r"^\d{1,2}과\s", header)):
         return True
     m = re.match(r'^(\d{2})(\d{2})(\d{2})(?:~(\d{2}))?$', header)
@@ -3007,6 +3019,7 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                          re.match(r"^리딩파워\s+\d+강\s+본문\d+", line) or
                          re.match(r"^마더텅\d*\s+본문\d+", line) or
                          re.match(r"^TED\d+\s+본문\d+", line) or
+                         re.match(r"^외부지문\s+본문\d+", line) or
                          re.match(r"^test\d+(\s|$)", line, re.IGNORECASE))
             if is_header:
                 normalized = _normalize_q41_42(line.strip())
