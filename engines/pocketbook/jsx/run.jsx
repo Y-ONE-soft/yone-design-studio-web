@@ -584,22 +584,32 @@ var settingsPath = "__SETTINGS_PATH__";
             for (var si = 0; si < srcDoc.spreads.length; si++) {
                 try {
                     var spPages = srcDoc.spreads[si].pages.everyItem().getElements();
-                    for (var spi = 0; spi < spPages.length; spi++) {
+                    var pnoText = "";
+                    var fallbackText = "";
+                    for (var spi = 0; spi < spPages.length && !pnoText; spi++) {
                         var spTFs = spPages[spi].textFrames.everyItem().getElements();
                         for (var sti = 0; sti < spTFs.length; sti++) {
                             var gb = spTFs[sti].geometricBounds;
+                            var t = spTFs[sti].contents.replace(/[\r\n\s]/g, "");
                             if (gb[0] >= 13 && gb[0] <= 17 && gb[2] <= 22 && gb[1] >= 13 && gb[1] <= 17) {
-                                var pnoText = spTFs[sti].contents.replace(/[\r\n\s]/g, "");
-                                if (pnoText) {
-                                    map[pnoText] = si;
-                                    // 범위 passageNo 확장: "260341~42" -> "260341","260342" 모두 등록
-                                    var expanded = expandPassageNo(pnoText);
-                                    for (var exi = 0; exi < expanded.length; exi++) {
-                                        if (!map[expanded[exi]]) map[expanded[exi]] = si;
-                                    }
-                                }
-                                break;
+                                if (t) { pnoText = t; break; }
                             }
+                            // 폴백: 긴 범위 라벨("230941-42" 등)은 장문이라 지문번호 박스가
+                            //       위로 밀려(top<13) 엄격 윈도우를 벗어나 못 잡힘 → 좌측
+                            //       번호칼럼(left<=20, 상단 bottom<=22) + YYMMQQ(+선택 범위)
+                            //       내용 패턴으로 인식 (scanCompletedLesson과 동일 방식).
+                            if (!fallbackText && gb[1] <= 20 && gb[2] <= 22 && /^\d{6}([~\-]\d{1,2})?$/.test(t)) {
+                                fallbackText = t;
+                            }
+                        }
+                    }
+                    if (!pnoText && fallbackText) pnoText = fallbackText;
+                    if (pnoText) {
+                        map[pnoText] = si;
+                        // 범위 passageNo 확장: "260341~42" -> "260341","260342" 모두 등록
+                        var expanded = expandPassageNo(pnoText);
+                        for (var exi = 0; exi < expanded.length; exi++) {
+                            if (!map[expanded[exi]]) map[expanded[exi]] = si;
                         }
                     }
                 } catch(e) {}
