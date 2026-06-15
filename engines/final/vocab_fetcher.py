@@ -217,22 +217,51 @@ def parse_exam_info(text):
     return results
 
 
-def _find_scope_row(rows, school):
-    """시험범위 시트에서 학교명 행을 찾아 반환."""
+def _find_scope_row(rows, school, exam_period=None):
+    """시험범위 시트에서 학교명 행을 찾아 반환.
+
+    시트에는 같은 학교가 '26-1-기말' 섹션과 '26-1-중간' 섹션에 각각 존재한다
+    (예: 한영고2 기말=6월 모의고사, 중간=3월 모의고사). exam_period가 주어지면
+    해당 섹션 헤더 아래의 학교 행만 매칭한다. 형식: '26-1-기말'/'26-1-중간'
+    (워크북 폴더명과 동일). 섹션을 못 찾거나 exam_period 없으면 기존 동작
+    (섹션 무관 첫 매칭)으로 폴백.
+    """
     school_nfc = unicodedata.normalize("NFC", school)
     base_name = re.sub(r"\d+$", "", school_nfc)
     grade_num = re.search(r"(\d+)$", school_nfc)
     grade_num = grade_num.group(1) if grade_num else ""
 
+    def _matches(cell):
+        return (
+            (base_name + "\uace0" + grade_num) in cell
+            or (base_name + grade_num) in cell
+            or (base_name + "\uc5ec\uace0" + grade_num) in cell
+        )
+
+    period_nfc = unicodedata.normalize("NFC", (exam_period or "").strip())
+    target_section = (
+        period_nfc if re.match(r"^\d{2}-\d-(\uc911\uac04|\uae30\ub9d0)$", period_nfc) else None
+    )
+
+    # 1\uc21c\uc704: exam_period \uc139\uc158 \uc548\uc5d0\uc11c\ub9cc \ud559\uad50 \ud589 \ud0d0\uc0c9
+    if target_section:
+        cur_section = None
+        for r in rows:
+            if not r or not r[0].strip():
+                continue
+            cell = unicodedata.normalize("NFC", r[0].strip())
+            if re.match(r"^\d{2}-\d-(\uc911\uac04|\uae30\ub9d0)$", cell):
+                cur_section = cell
+                continue
+            if cur_section == target_section and _matches(cell):
+                return r
+
+    # 2\uc21c\uc704(\ud3f4\ubc31): \uc139\uc158 \ubb34\uad00 \uccab \ub9e4\uce6d (\uae30\uc874 \ub3d9\uc791)
     for r in rows:
         if not r or not r[0].strip():
             continue
         cell = unicodedata.normalize("NFC", r[0].strip())
-        if (
-            (base_name + "\uace0" + grade_num) in cell
-            or (base_name + grade_num) in cell
-            or (base_name + "\uc5ec\uace0" + grade_num) in cell
-        ):
+        if _matches(cell):
             return r
     return None
 
