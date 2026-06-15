@@ -955,20 +955,28 @@ var settingsPath = "__SETTINGS_PATH__";
 
         // 완성본 한 스프레드의 지문번호 텍스트 (buildSpreadPnoMap과 동일한 위치 규칙)
         function getSpreadPnoText(srcDoc, si) {
+            // 1순위: 위치 윈도우(top/left 13~17)의 지문번호 프레임.
+            // 폴백: 긴 범위 라벨("230941-42" 등)은 프레임이 위로 밀려 윈도우를 벗어나
+            //       못 잡히던 버그가 있었음 → YYMMQQ(+선택적 범위) 패턴 + 좌측 번호
+            //       칼럼(left<=20)인 프레임을 내용기반으로 폴백 인식한다.
+            var fallback = "";
             try {
                 var spPages = srcDoc.spreads[si].pages.everyItem().getElements();
                 for (var spi = 0; spi < spPages.length; spi++) {
                     var tfs = spPages[spi].textFrames.everyItem().getElements();
                     for (var ti = 0; ti < tfs.length; ti++) {
                         var gb = tfs[ti].geometricBounds;
+                        var t = String(tfs[ti].contents).replace(/[\r\n\s]/g, "");
                         if (gb[0] >= 13 && gb[0] <= 17 && gb[2] <= 22 && gb[1] >= 13 && gb[1] <= 17) {
-                            var t = String(tfs[ti].contents).replace(/[\r\n\s]/g, "");
                             if (t) return t;
+                        }
+                        if (!fallback && gb[1] <= 20 && /^\d{6}([~\-]\d{1,2})?$/.test(t)) {
+                            fallback = t;
                         }
                     }
                 }
             } catch(e) {}
-            return "";
+            return fallback;
         }
 
         // 완성본을 본문/리뷰 스프레드 배열로 분류 (스프레드 순서 보존)
@@ -1026,16 +1034,25 @@ var settingsPath = "__SETTINGS_PATH__";
             //        2단계 배정은 모두 [위치복구] 로그로 남겨 가시화한다(완성본 태그가
             //        비어있거나 표기가 달라도 위치로 복구 — 침묵 신규조판 방지).
             function _canonPno(s) { return (s || "").replace(/\s/g, ""); }
+            // 범위 지문번호(41~42 / 41-42 / 41 / 42 는 모두 같은 지문)를 동일하게
+            // 매칭하기 위해 expandPassageNo로 모든 변형 키를 등록/조회한다.
+            // (예: 완성본 "230941-42" → 키 230941, 230942 등록 → 신규 "230941~42"/
+            //  "230941"/"230942" 어느 표기로 와도 같은 본문에 매칭)
             var pnoToBody = {};
             for (var jb = 0; jb < mBodies; jb++) {
-                var cpj = _canonPno(bodies[jb].pno);
-                if (cpj && pnoToBody[cpj] === undefined) pnoToBody[cpj] = jb;
+                var keysJ = expandPassageNo(bodies[jb].pno);
+                for (var kj = 0; kj < keysJ.length; kj++) {
+                    if (keysJ[kj] && pnoToBody[keysJ[kj]] === undefined) pnoToBody[keysJ[kj]] = jb;
+                }
             }
             var assign = [], usedBody = [];
             for (var ub = 0; ub < mBodies; ub++) usedBody[ub] = false;
             for (var ia = 0; ia < nItems; ia++) {
-                var capi = _canonPno(grp.items[ia].passageNo);
-                var mb = (capi && pnoToBody[capi] !== undefined) ? pnoToBody[capi] : -1;
+                var keysI = expandPassageNo(grp.items[ia].passageNo);
+                var mb = -1;
+                for (var ki = 0; ki < keysI.length; ki++) {
+                    if (pnoToBody[keysI[ki]] !== undefined) { mb = pnoToBody[keysI[ki]]; break; }
+                }
                 if (mb >= 0 && usedBody[mb]) mb = -1;   // 같은 본문 중복배정 방지
                 assign[ia] = mb;
                 if (mb >= 0) usedBody[mb] = true;
