@@ -677,10 +677,8 @@ try {{
         try {{ app.findGrepPreferences = app.changeGrepPreferences = NothingEnum.NOTHING; }} catch(e) {{}}
     }}
 
-    // PDF 재내보내기 (한글 경로 문제 방지를 위해 /tmp/ 경로 사용)
-    var pdfPath = "{indd_path}".replace(".indd", ".pdf");
-    doc.exportFile(ExportFormat.PDF_TYPE, new File(pdfPath));
-    log("pdf=ok");
+    // 직전보충: PDF 미내보내기 — 인디자인 파일(.indd)만 생성
+    log("pdf=skip");
 
     // Ruler origin 원상 복구 (저장 전)
     try {{
@@ -778,14 +776,12 @@ def run_typeset(settings_path, log):
                 os.remove(log_file)
             os.remove(marker)
 
-            # /tmp/ 경로의 PDF를 실제 경로 + job_dir에 복사
-            if os.path.exists(pdf_path):
-                job_pdf = os.path.join(job_dir, os.path.basename(pdf_path))
-                shutil.copy2(pdf_path, job_pdf)
-                log(f"  PDF: {os.path.basename(pdf_path)}")
-                log_lines.append(f"PDF: 성공 ({os.path.basename(pdf_path)})")
+            # 직전보충: PDF 미생성 — 인디자인 파일만 저장 (indd_path에 doc.save() 완료)
+            if os.path.exists(indd_path):
+                log(f"  내지(.indd): {os.path.basename(indd_path)}")
+                log_lines.append(f"내지: 성공 ({os.path.basename(indd_path)})")
             else:
-                log(f"  PDF 미생성")
+                log(f"  내지 미생성")
         else:
             log(f"  {vol_label} 타임아웃")
             log_lines.append(f"{vol_label} 타임아웃")
@@ -820,12 +816,7 @@ def run_typeset(settings_path, log):
                                 log(f"  {line}")
                         os.remove(vocab_log_f)
                     os.remove(vocab_marker)
-                    # vocab JSX가 /tmp/ 에 내보낸 PDF를 실제 경로 + job_dir에 복사
-                    # 중요어휘 추가 후 PDF를 job_dir에 다시 복사
-                    if os.path.exists(pdf_path):
-                        job_pdf = os.path.join(job_dir, os.path.basename(pdf_path))
-                        shutil.copy2(pdf_path, job_pdf)
-                        log(f"  중요어휘 PDF 재복사: {os.path.basename(pdf_path)}")
+                    # 직전보충: 중요어휘 추가 후 .indd 저장 완료 (PDF 미생성)
                     log("  중요어휘 완료")
                 else:
                     log("  중요어휘 타임아웃")
@@ -2334,8 +2325,8 @@ try {{
     }}
     log("finalPages=" + doc.pages.length + " overflow=" + finalOv);
 
-    doc.exportFile(ExportFormat.PDF_TYPE, new File("{pdf_path}"));
-    log("pdf=ok");
+    // 직전보충: PDF 미내보내기 — 인디자인 파일(.indd)만 생성
+    log("pdf=skip");
 
     // Ruler origin 원상 복구 (저장 전)
     try {{
@@ -3290,8 +3281,8 @@ try {{
         log("creditPageErr=" + e.message);
     }}
 
-    doc.exportFile(ExportFormat.PDF_TYPE, new File("{pdf_path}"));
-    log("pdf=ok");
+    // 직전보충: PDF 미내보내기 — 인디자인 파일(.indd)만 생성
+    log("pdf=skip");
 
     // Ruler origin 원상 복구 (저장 전)
     try {{

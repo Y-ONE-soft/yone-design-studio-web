@@ -1639,7 +1639,7 @@ class FinalEngine(BaseEngine):
 
         warnings = []
         overflow = 0
-        pdf_paths = []
+        indd_paths = []
 
         if os.path.exists(log_path):
             lc = open(log_path, encoding="utf-8", errors="ignore").read()
@@ -1648,23 +1648,16 @@ class FinalEngine(BaseEngine):
             if overflow > 0:
                 warnings.append(f"오버플로우 {overflow}개")
 
-        # PDF 수집
-        for d in [job_dir]:
-            for f in os.listdir(d):
-                if f.endswith(".pdf") and "파이널" in f:
-                    pdf_paths.append(os.path.join(d, f))
-
-        # .settings.json에서 출력 디렉터리도 확인
+        # 내지(.indd) 수집 — 직전보충은 PDF 미생성, 인디자인 파일만 산출.
+        # .settings.json의 jobs[].indd_path = 이번 실행에서 저장된 내지 (권위 있는 목록).
         sp = os.path.join(job_dir, ".settings.json")
         if os.path.exists(sp):
             with open(sp, encoding="utf-8") as f:
                 settings = json.load(f)
-            out_dir = settings.get("output_dir", "")
-            if out_dir and os.path.isdir(out_dir):
-                for f in os.listdir(out_dir):
-                    full = os.path.join(out_dir, f)
-                    if f.endswith(".pdf") and full not in pdf_paths:
-                        pdf_paths.append(full)
+            for _job in settings.get("jobs", []):
+                _ip = _job.get("indd_path", "")
+                if _ip and os.path.exists(_ip) and _ip not in indd_paths:
+                    indd_paths.append(_ip)
 
         totals = {
             "문장배열": content.get("총_문장배열", 0),
@@ -1764,7 +1757,7 @@ class FinalEngine(BaseEngine):
         for line in report_lines:
             log(f"  {line}")
 
-        ok = len(pdf_paths) > 0 and overflow == 0
+        ok = len(indd_paths) > 0 and overflow == 0
 
         # 검증 경고가 있으면 ok를 warn으로 처리
         if validation_warnings:
@@ -1774,10 +1767,11 @@ class FinalEngine(BaseEngine):
             "ok": ok,
             "overflow": overflow,
             "stories": stories,
-            "pdf_path": pdf_paths[0] if pdf_paths else None,
-            "pdf_paths": pdf_paths,
+            "indd_path": indd_paths[0] if indd_paths else None,
+            "indd_paths": indd_paths,
+            "pdf_path": None,
             "warnings": warnings,
             "block_summary": block_summary,
             "validation_warnings": validation_warnings,
-            "grade_label": f"PDF {len(pdf_paths)}개 | 문장배열 {totals['문장배열']} | 어법수정 {totals['어법수정']} | 영작 {totals['서술형영작']}",
+            "grade_label": f"내지 {len(indd_paths)}개 | 문장배열 {totals['문장배열']} | 어법수정 {totals['어법수정']} | 영작 {totals['서술형영작']}",
         }
