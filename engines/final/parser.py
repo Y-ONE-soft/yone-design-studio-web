@@ -1373,6 +1373,55 @@ def _parse_all_exams_from_scope(scope_text):
     return exams
 
 
+def _augment_scope_with_workbook_exams(scope_exams, stories, log=None):
+    """폴더에 실제 존재하는 모의고사 워크북의 (연,월)을 시험범위에 무조건 포함시킨다.
+
+    배경: 시험범위 시트에 해당 모의고사 줄이 빠졌거나(또는 fetch가 다른 행/부분
+    데이터를 읽으면) _is_in_scope가 그 워크북 지문을 YYMMQQ 단위로 통째 제거한다.
+    워크북 파일이 학교 폴더에 분명히 존재하면 그 지문은 전부 조판되어야 하므로,
+    워크북 파일명이 선언한 (연,월)은 시험범위에 강제로 추가한다.
+
+    - 시트에 이미 있는 시험은 그대로 두어 기존 문항번호 필터를 유지(회귀 방지).
+    - scope_exams가 비어있으면 _is_in_scope가 어차피 전부 통과시키므로 손대지 않음
+      (시트 fetch 실패 = 필터 없음 = 기존 동작 유지).
+    """
+    if not scope_exams:
+        return scope_exams
+    from engines.final.scope_parser import parse_scope_from_filename, classify_scope
+    present = set()
+    for e in scope_exams:
+        try:
+            present.add((str(e.get("year", "")), str(int(e.get("month")))))
+        except (TypeError, ValueError):
+            pass
+    seen_src = set()
+    added = []
+    for st in stories:
+        src = st.get("source_file", "")
+        if not src or src in seen_src:
+            continue
+        seen_src.add(src)
+        scope_txt = parse_scope_from_filename(src)
+        if classify_scope(scope_txt) != "mockexam":
+            continue
+        for yy, mm in _parse_all_exams_from_scope(scope_txt):
+            key = (yy, str(int(mm)))
+            if key in present:
+                continue
+            present.add(key)
+            scope_exams.append({
+                "grade": "",
+                "year": yy,
+                "month": str(int(mm)),
+                "numbers": list(range(18, 46)),
+                "raw": f"(워크북 자동 포함: {scope_txt})",
+            })
+            added.append(f"{yy}년{int(mm)}월")
+    if added and log:
+        log(f"  [시험범위] 워크북 존재로 자동 포함: {', '.join(added)}")
+    return scope_exams
+
+
 def _normalize_q41_42(header):
     """Q41, Q42를 항상 41~42로 정규화. 모든 년/월에 적용."""
     m = re.match(r'^(\d{4})(41|42)$', header)
@@ -4516,6 +4565,9 @@ def parse_extracted(extracted_path, vocab_left, vocab_right,
                 log(f"  시험범위 필터: {len(scope_exams)}개 시험")
         except Exception:
             pass
+        # 폴더에 존재하는 모의고사 워크북의 (연,월)은 시험범위에 무조건 포함
+        # (시트 누락/오행 매칭 시 워크북 지문 전체가 _is_in_scope에서 통째 제거되는 사고 방지)
+        scope_exams = _augment_scope_with_workbook_exams(scope_exams, stories, log)
 
     vol1 = _build_vol1(sentence_blocks, insert_blocks, vocab_left, vocab_right,
                        scope_exams=scope_exams,
