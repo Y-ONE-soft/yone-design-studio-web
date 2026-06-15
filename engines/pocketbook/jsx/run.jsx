@@ -813,7 +813,10 @@ var settingsPath = "__SETTINGS_PATH__";
                 var lessonMatch = pno.match(/^(\d+)\uACFC/);  // "1과", "2과" 등
                 if (lessonMatch) {
                     // 복수과 카테고리에서 접두어 추출: "YBM박1,2,3과" -> "YBM박"
-                    var catPrefix = fileCategory.replace(/\d[\d,]*\uACFC.*$/, "");
+                    // \uD63C\uD569 \uCE74\uD14C\uACE0\uB9AC("26\uB1446\uC6D4,YBM\uBC152\uACFC")\uB294 \uC55E\uCABD \uBAA8\uC758\uACE0\uC0AC \uB0A0\uC9DC \uC138\uADF8\uBA3C\uD2B8\uB97C
+                    // \uBA3C\uC800 \uC81C\uAC70\uD574\uC57C \uAD50\uACFC\uC11C \uC811\uB450\uC5B4\uAC00 \uC624\uC5FC\uB418\uC9C0 \uC54A\uB294\uB2E4. (\uB0A0\uC9DC \uC5C6\uC73C\uBA74 \uBB34\uB3D9\uC791)
+                    var tbCat = fileCategory.replace(/^\d{2}\uB144\s*\d{1,2}\uC6D4\s*,?\s*/, "");
+                    var catPrefix = tbCat.replace(/\d[\d,]*\uACFC.*$/, "");
                     var singleKey = catPrefix + lessonMatch[1] + "\uACFC";
                     // 개별 키로 먼저 시도
                     var found = false;
