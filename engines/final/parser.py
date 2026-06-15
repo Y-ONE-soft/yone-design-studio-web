@@ -3369,7 +3369,7 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                 break
             # 비교과서 source(리딩파워/모의고사 등) → 다음 스토리 계속 스캔
 
-        prev_본문_num = 0
+        prev_본문_num = (0, 0)  # (주번호, 부번호) — "본문3-1" 등 하위번호 대응
         # 복합 scope용 exam_index 추적 (source별)
         w_exam_idx = {}  # source -> exam_index
         w_prev_q = {}    # source -> 이전 q_num 숫자
@@ -3548,8 +3548,12 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                     if _dl_lesson:
                         lesson_label = f"{_dl_lesson}과"
                     if q_num.startswith("본문"):
-                        cur_num = int(q_num.replace("본문", "") or "0")
-                        if cur_num <= prev_본문_num and prev_본문_num > 0:
+                        # "본문3-1" 등 하위번호 대응: (주번호, 부번호) 튜플로 비교.
+                        # 같은 과 내 본문3-1 → 본문3-2는 과 증가가 아니며, 본문5 → 본문1만 다음 과.
+                        _qn = q_num.replace("본문", "")
+                        _mn = re.match(r"(\d+)(?:-(\d+))?", _qn)
+                        cur_num = (int(_mn.group(1)), int(_mn.group(2) or 0)) if _mn else (0, 0)
+                        if cur_num <= prev_본문_num and prev_본문_num > (0, 0):
                             lesson_idx += 1
                         prev_본문_num = cur_num
                         if not lesson_label and lesson_labels and lesson_idx < len(lesson_labels):
@@ -3563,7 +3567,7 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                         pass
                     else:
                         # 숫자 q_num (모의고사 등) — 본문 카운터 리셋
-                        prev_본문_num = 0
+                        prev_본문_num = (0, 0)
                         # 복합 scope: q_num 리셋 감지
                         if source not in w_exam_idx:
                             w_exam_idx[source] = 0
