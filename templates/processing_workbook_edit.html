@@ -75,6 +75,41 @@
   <div class="wb-result" id="result-compare"></div>
 </section>
 
+<!-- 모드: 지문번호 선별 -->
+<section class="wb-section hidden" id="panel-passages">
+  <h2>3. 지문번호 탐지</h2>
+  <p class="wb-help">문서의 지문번호와 섹션 구성을 읽어옵니다. (모의고사 <code>[N]</code>/<code>{N}</code>/<code>{2606NN}</code>/숫자프레임 자동 인식. 교과서·수능특강은 아래 라벨 형식 추가.)</p>
+  <div class="wb-row">
+    <button type="button" class="wb-btn" id="btn-passage-detect">지문번호 가져오기</button>
+    <label style="font-size:13px;color:#aaa;margin-left:8px;">라벨 형식 추가:
+      <label><input type="checkbox" class="ps-reader" value="textbookBon"> 본문N</label>
+      <label><input type="checkbox" class="ps-reader" value="textbookJimun"> 지문N</label>
+      <label><input type="checkbox" class="ps-reader" value="gangTag"> [N강-(M)]</label>
+    </label>
+  </div>
+  <div class="wb-result" id="result-passage-detect"></div>
+
+  <h2>4. 선별 실행</h2>
+  <div class="wb-modes">
+    <label><input type="radio" name="ps-mode" value="keep" checked> 입력한 번호만 남기기</label>
+    <label><input type="radio" name="ps-mode" value="delete"> 입력한 번호 삭제</label>
+  </div>
+  <input type="text" id="ps-nums" class="wb-input" placeholder="예) 21, 31-34, 38   (콤마 · N~M 범위 · N-M 통합지문)">
+  <div class="wb-options">
+    <label><input type="checkbox" id="ps-relayout" checked> 문법 섹션 1지문=1페이지 + 옆단번호 정렬</label>
+    <label style="margin-left:6px;">빈 페이지 정리:
+      <select id="ps-leftover" class="wb-input" style="width:auto;display:inline-block;">
+        <option value="none">안 함</option>
+        <option value="empty">완전 빈 페이지만</option>
+        <option value="tight" selected>헤더/발문 잔여까지(타이트)</option>
+      </select>
+    </label>
+    <label><input type="checkbox" id="ps-save" checked> 검수 통과 시 저장</label>
+  </div>
+  <button type="button" class="wb-btn wb-btn--run" id="btn-run-passages">지문 선별 실행</button>
+  <div class="wb-result" id="result-passages"></div>
+</section>
+
 <!-- 결과 파일 목록 -->
 <section class="wb-section hidden" id="panel-files">
   <h2>작업 폴더 결과물</h2>
@@ -155,6 +190,7 @@
       $('panel-seo').classList.toggle('hidden', m !== 'seo');
       $('panel-rounds').classList.toggle('hidden', m !== 'rounds');
       $('panel-compare').classList.toggle('hidden', m !== 'compare');
+      $('panel-passages').classList.toggle('hidden', m !== 'passages');
     });
   });
 
@@ -462,6 +498,62 @@
       });
     });
   }
+
+  // ── 지문번호 선별 ──
+  function psReaders() {
+    const sel = Array.from(document.querySelectorAll('.ps-reader:checked')).map(c => c.value);
+    return sel.join(',');  // 기본 inline 2종은 엔진이 항상 포함; 추가 리더만 전달
+  }
+  $('btn-passage-detect').addEventListener('click', async () => {
+    if (!currentDocPath) { alert('먼저 파일을 업로드하세요'); return; }
+    $('result-passage-detect').classList.remove('hidden');
+    $('result-passage-detect').textContent = '지문번호 탐지 중... (InDesign이 파일을 엽니다)';
+    const r = await call('/api/processing/workbook/passage-detect',
+      {docPath: currentDocPath, readers: psReaders()});
+    setResult($('result-passage-detect'), r, (d) => {
+      const secs = (d.body || '').split('\n').filter(Boolean).map(l => {
+        const [kind, count, numeric] = l.split('\t');
+        return kind + (numeric === '1' ? '*' : '') + '×' + count;
+      });
+      let html = `<b>지문번호 ${d.numCount}개:</b> ${escapeHtml(d.numbers || '')}<br>`;
+      html += `<b>섹션 ${d.sectionCount}개:</b> ${escapeHtml(secs.join('  '))}  <small>(숫자프레임 ${d.numFrames})</small><br>`;
+      html += d.isLocal === '1' || d.isLocal === 1 ? '' : '<span style="color:#ff6b6b">⚠ 클라우드(구글드라이브) 경로 — 저장 거부됨. 로컬 사본 사용.</span>';
+      return html;
+    });
+  });
+  $('btn-run-passages').addEventListener('click', async () => {
+    if (!currentDocPath) { alert('먼저 파일을 업로드하세요'); return; }
+    const nums = $('ps-nums').value.trim();
+    if (!nums) { alert('지문번호를 입력하세요 (예: 21, 31-34, 38)'); return; }
+    const mode = document.querySelector('input[name="ps-mode"]:checked').value;
+    const label = mode === 'keep' ? '남기고 나머지 삭제' : '삭제';
+    if (!confirm(`지문번호 [${nums}] 를 ${label} 합니다. 진행할까요?\n(작업 전 백업이 자동 생성됩니다)`)) return;
+    $('result-passages').classList.remove('hidden');
+    $('result-passages').textContent = '지문 선별 실행 중... (최대 15분, InDesign에서 작업)';
+    const r = await call('/api/processing/workbook/passage-select', {
+      docPath: currentDocPath,
+      nums: nums,
+      selectMode: mode,
+      backup: $('opt-backup').checked,
+      relayout: $('ps-relayout').checked,
+      leftover: $('ps-leftover').value,
+      save: $('ps-save').checked,
+      readers: psReaders(),
+    });
+    setResult($('result-passages'), r, (d) => {
+      let html = `<b>남김(${(d.kept||'').split(',').filter(Boolean).length}):</b> ${escapeHtml(d.kept || '')}<br>`;
+      html += `<b>삭제(${(d.deleted||'').split(',').filter(Boolean).length}):</b> ${escapeHtml(d.deleted || '')}<br>`;
+      if (d.keepMissing) html += `<span style="color:#ffa500">⚠ 문서에 없는 남김번호: ${escapeHtml(d.keepMissing)}</span><br>`;
+      html += `<b>삭제:</b> 글자 ${d.delChars} · 단락 ${d.delParas} · 숫자프레임 ${d.delFrames}<br>`;
+      html += `<b>레이아웃:</b> 1지문1페이지 ${d.relayout} · 빈페이지 제거 ${d.leftoverRemoved} · 최종 ${d.finalPages}쪽<br>`;
+      html += `<b>검수:</b> ${parseInt(d.problems) === 0 ? '<span style="color:#6be36b">통과 (남길 번호만 잔존)</span>' : '<span style="color:#ff6b6b">잔여 ' + d.problems + '건</span>'}<br>`;
+      if (d.body) html += `<pre style="margin:6px 0;font-size:12px;white-space:pre-wrap">${escapeHtml(d.body)}</pre>`;
+      html += parseInt(d.saved) === 1 ? '<b style="color:#6be36b">저장 완료.</b>' : '<b style="color:#ffa500">미저장(검수 보류).</b>';
+      html += '<br>' + dlLink(d.backup, '↓ 백업본');
+      refreshFiles();
+      return html;
+    });
+  });
 })();
 </script>
 {% endblock %}
