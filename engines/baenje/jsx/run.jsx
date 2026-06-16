@@ -559,11 +559,14 @@ function styleTabTextAsTable() {
         var eP = paras[g.end];
         var eChar = eP.characters[eP.characters.length - 1].index;
         var tbl;
-        // 주의: itemByRange(...).convertToTable(...) 체이닝 호출에서 나는 InDesign 에러는
-        // try/catch를 우회해 스크립트 전체를 중단시킨다(정답지/PDF 미배치의 원인이었음).
-        // 객체를 변수로 분리해야 catch가 정상 동작해 실패 시 안전하게 건너뛴다.
+        // 주의: itemByRange(...) 는 '지연 참조(specifier)'를 돌려준다. 이 참조에 곧바로
+        // convertToTable(...) 을 호출하면, 평가 시점에 나는 InDesign 에러가 try/catch를
+        // 우회해 스크립트 전체를 중단시킨다(정답지/PDF 미배치의 직접 원인이었음).
+        // 먼저 isValid 로 참조를 강제 평가해 두면 이후 convertToTable 에러가 정상적으로 catch된다.
         var tblRange = ft.characters.itemByRange(sChar, eChar);
+        var tblRangeValid = tblRange.isValid;
         try {
+            if (!tblRangeValid) { continue; }
             tbl = tblRange.convertToTable("\t", "\r", maxCols);
         } catch(e) {
             writeLog("TABLE: convertToTable failed - " + e.message);
@@ -891,7 +894,8 @@ app.doScript(
 setNextFrame();
 
 // ── 탭 구분 표 텍스트 스타일링 (표처럼 보이도록) ──────────────────────────
-styleTabTextAsTable();
+// 표 변환 단계에서 예기치 못한 예외가 나더라도 정답지 배치는 반드시 진행되도록 외곽에서 보호한다.
+try { styleTabTextAsTable(); } catch(e) { writeLog("표 변환 단계 오류(무시): " + e.message); }
 
 // ── 정답지 RTF 배치 (원고 스타일 적용 완료 후) ─────────────────────────
 if (answersRtfPath !== "") {
