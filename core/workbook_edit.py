@@ -77,9 +77,13 @@ def call_runner(opts: dict[str, Any], timeout: int = DEFAULT_TIMEOUT) -> dict[st
 
         _write_opts(opts)
 
+        # with timeout: 긴 작업(지문선별 등)이 기본 AppleEvent 2분 한도에 걸리지 않게
         script = (
-            f'tell application "{INDESIGN_APP}" to '
-            f'do script POSIX file "{JSX_RUNNER}" language javascript'
+            f'with timeout of {int(timeout)} seconds\n'
+            f'tell application "{INDESIGN_APP}"\n'
+            f'do script POSIX file "{JSX_RUNNER}" language javascript\n'
+            f'end tell\n'
+            f'end timeout'
         )
         try:
             proc = subprocess.run(
@@ -215,6 +219,39 @@ def save_doc(doc_path: str | None = None) -> dict[str, Any]:
     if doc_path:
         opts["docPath"] = doc_path
     return call_runner(opts)
+
+
+# ===== 지문번호 선별 (PassageSelect 엔진: 모의고사/교과서/부교재/수능특강 범용) =====
+def passage_detect(doc_path: str | None = None, readers: str = "") -> dict[str, Any]:
+    """문서의 지문번호 + 섹션 구성을 탐지(미리보기). readers: 라벨리더 추가(콤마구분)."""
+    opts: dict[str, Any] = {"mode": "passage_detect"}
+    if doc_path:
+        opts["docPath"] = doc_path
+    if readers:
+        opts["readers"] = readers
+    return call_runner(opts, timeout=300)
+
+
+def passage_select(doc_path: str | None, nums: str, select_mode: str = "keep",
+                   backup: bool = True, relayout: bool = True,
+                   leftover: str = "tight", save: bool = True,
+                   readers: str = "") -> dict[str, Any]:
+    """지문번호로 선별. select_mode='keep'(입력만 남김) | 'delete'(입력 삭제).
+    nums="21, 31-34, 38"  leftover='none'|'empty'|'tight'."""
+    opts: dict[str, Any] = {
+        "mode": "passage_select",
+        "selectMode": "delete" if select_mode == "delete" else "keep",
+        "nums": nums or "",
+        "backup": "1" if backup else "0",
+        "relayout": "1" if relayout else "0",
+        "leftover": leftover or "tight",
+        "save": "1" if save else "0",
+    }
+    if doc_path:
+        opts["docPath"] = doc_path
+    if readers:
+        opts["readers"] = readers
+    return call_runner(opts, timeout=900)
 
 
 # ===== 업로드 =====

@@ -501,6 +501,30 @@ def api_wb_save():
     return jsonify(wb_edit.save_doc(doc_path=data.get("docPath")))
 
 
+@app.route("/api/processing/workbook/passage-detect", methods=["POST"])
+def api_wb_passage_detect():
+    data = request.get_json(silent=True) or {}
+    return jsonify(wb_edit.passage_detect(
+        doc_path=data.get("docPath"),
+        readers=data.get("readers", ""),
+    ))
+
+
+@app.route("/api/processing/workbook/passage-select", methods=["POST"])
+def api_wb_passage_select():
+    data = request.get_json(silent=True) or {}
+    return jsonify(wb_edit.passage_select(
+        doc_path=data.get("docPath"),
+        nums=data.get("nums", ""),
+        select_mode=data.get("selectMode", "keep"),
+        backup=bool(data.get("backup", True)),
+        relayout=bool(data.get("relayout", True)),
+        leftover=data.get("leftover", "tight"),
+        save=bool(data.get("save", True)),
+        readers=data.get("readers", ""),
+    ))
+
+
 @app.route("/api/processing/workbook/convert-docx", methods=["POST"])
 def api_wb_convert_docx():
     data = request.get_json(silent=True) or {}
