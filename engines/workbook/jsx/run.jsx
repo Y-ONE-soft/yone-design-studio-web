@@ -2507,12 +2507,20 @@
                         hn++;
                     }
                 }
-                if (/\uBC11\uC904\s*\uCE5C\s*\uBD80\uBD84\s*\uC911,?\s*\uC5B4\uBC95\uC0C1\s*\uD2C0\uB9B0\s*\uAC83/.test(hTxt) && S3_PASSAGE && S3_PASSAGE.isValid) {
-                    if (hi + 1 < paras.length) {
-                        var nxt = paras[hi + 1];
-                        if (nxt.appliedParagraphStyle == S3_CHOICE) {
-                            try { nxt.appliedParagraphStyle = S3_PASSAGE; } catch(_){}
+                // \uBC11\uC904 \uCE5C (\uBD80\uBD84 / \u2460~\u2464 / \u2460~\u2463) \uC911 ... \u2192 \uC778\uB77C\uC778 \u2460\uB9C8\uCEE4 \uC9C0\uBB38\uC774 \uC120\uC9C0\uB85C \uC624\uBD84\uB958\uB41C \uAC83 \uBCF5\uC6D0.
+                // \uBC1C\uBB38 \uD45C\uAE30 \uBB34\uAD00: "\uBC11\uC904 \uCE5C \uBD80\uBD84 \uC911, \uC5B4\uBC95\uC0C1 \uD2C0\uB9B0 \uAC83\uC740?", "\uBC11\uC904 \uCE5C \u2460~\u2464 \uC911 ... \uCC3E\uC544 \uC4F0\uC2DC\uC624"(\uC11C\uC220\uD615) \uB4F1.
+                // \uC9C0\uBB38\uC774 \u2460\uB85C \uC2DC\uC791\uD558\uBA74 \u00A75(line 2187)\uAC00 \uC120\uC9C0\uB85C \uC624\uC778 \u2192 \uB2E4\uC74C \uBE44\uBE48 \uB2E8\uB77D\uC774 \uC120\uC9C0\uBA74 \uC9C0\uBB38 \uC2A4\uD0C0\uC77C\uB85C \uB418\uB3CC\uB9BC.
+                if (/\uBC11\uC904\s*\uCE5C\s*(?:\uBD80\uBD84|[\u2460-\u2473][\s~\u223C\-\u2013\u2014]*[\u2460-\u2473])\s*\uC911/.test(hTxt) && S3_PASSAGE && S3_PASSAGE.isValid) {
+                    var hpn = hi + 1;
+                    while (hpn < paras.length) {
+                        var hpt = (paras[hpn].contents || "").replace(/[\r\n]+$/, "");
+                        if (!/^\s*$/.test(hpt)) {
+                            if (paras[hpn].appliedParagraphStyle == S3_CHOICE) {
+                                try { paras[hpn].appliedParagraphStyle = S3_PASSAGE; } catch(_){}
+                            }
+                            break;
                         }
+                        hpn++;
                     }
                 }
             }

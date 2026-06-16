@@ -1592,6 +1592,11 @@ def _merge_step3_ab_pairs(paras):
             out.extend(passed)
             out.extend(cells)
             continue
+        # (A)(B) 헤더 행 복원 — 선지 위에 컬럼 라벨 표시 (버리지 않음)
+        out.append({"text": "(A)\t(B)",
+                    "runs": [{"t": "(A)", "ul": False},
+                             {"t": "\t", "ul": False},
+                             {"t": "(B)", "ul": False}]})
         # 5쌍 합치기: ① + (A)값 + 탭 + (B)값
         for k in range(5):
             t1 = (cells[2 * k].get('text') or '').rstrip()
@@ -1672,6 +1677,15 @@ def _merge_step3_column_table(paras):
                 ok = ((cols == 3 and len(cells) == 15)
                       or (cols == 2 and len(cells) == 10 and seps >= 1))
                 if ok:
+                    # (A)(B)[(C)] 헤더 행 복원 — 선지 위에 컬럼 라벨 표시 (버리지 않음).
+                    # JSX는 "(A)\t..." 단락을 선지 위 헤더로 렌더한다.
+                    hdr_labels = ['(' + chr(ord('A') + ci) + ')' for ci in range(cols)]
+                    hdr_runs = []
+                    for ci, lab in enumerate(hdr_labels):
+                        if ci > 0:
+                            hdr_runs.append({"t": "\t", "ul": False})
+                        hdr_runs.append({"t": lab, "ul": False})
+                    out.append({"text": '\t'.join(hdr_labels), "runs": hdr_runs})
                     for r in range(5):
                         row = cells[r * cols:(r + 1) * cols]
                         parts = [(c.get('text') or '').strip() for c in row]
@@ -1903,7 +1917,9 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
         else:
             paras = _hwp_extract_paragraphs(fpath, extract_underline,
                                             exclude_footnotes=step3_exclude_footnotes)
-        _raw_words = _step3_content_words(paras)  # 보존 가드 스냅샷 (파이프라인 전)
+        # 보존 가드 스냅샷 — 책 헤더(변형문제/수능특강)는 의도적 제거이므로
+        # 스냅샷에서도 제외해 허위 "내용 손실" 경고를 막는다(헤더 외 손실은 그대로 감지).
+        _raw_words = _step3_content_words(_strip_step3_book_markers(paras))
         # Step3 정답/해설 줄 제거 (level 3 제외 후에도 level 1에 남은 정답 줄 처리)
         paras = _strip_step3_answers(paras)
         # Step3 유형 섹션 태그 제거 ("[유형 1] ...", "(심경, 분위기, ...)")
