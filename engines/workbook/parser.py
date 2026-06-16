@@ -1374,27 +1374,57 @@ def _merge_step3_split_choice_numbers(paras):
 
 
 # Step3 책 헤더 / 묶음 마커 — 출력에서 제거
-# - "2027년 수능특강 영어    더변형문제    27강 컴퓨터,인터넷" 류 책 제목 라인
+# - "2027년 수능특강 영어    더변형문제    27강 컴퓨터,인터넷" 류 책 제목 라인 (수능특강 워크북)
+# - "- 2606 변형문제 -" / "[2606 변형문제]" 변형문제 부제 + 바로 위 책제목 (모의고사 등 변형문제 원고)
 # - "[Gateway]" 묶음 마커 (passage_above 판정에 사용된 후 출력에서 제거)
 _RE_STEP3_BOOK_HEADER = re.compile(r'^\d{4}\s*년?\s*수능특강')
 _RE_STEP3_GROUP_MARKER = re.compile(r'^\[\s*Gateway\s*\]$', re.I)
+# 변형문제 부제 — 책 이름이 아니라 "변형문제"를 앵커로 잡는다(책 이름 무관 일반화).
+# 예) "- 2606 변형문제 -", "[2606 변형문제]", "변형 문제"
+_RE_STEP3_VARIANT_SUBTITLE = re.compile(
+    r'^[\[\(\-–—\s]*\d{0,4}\s*변형\s*문제\s*[\]\)\-–—\s]*$'
+)
 
 
 def _strip_step3_book_markers(paras):
-    """수능특강 책 헤더 + [Gateway] 묶음 마커 단락 제거.
+    """책 헤더 + [Gateway] 묶음 마커 단락 제거.
+
+    제거 대상:
+    1. "2027년 수능특강 ..." 책 헤더 (수능특강 워크북 — 기존 동작 유지)
+    2. "- NNNN 변형문제 -" 부제 + 그 바로 위 책제목 줄(파일 맨 위 헤더).
+       부제를 앵커로 잡으므로 책 이름이 무엇이든("ENGLISH for High N" 등) 무관하게 제거된다.
+       수능특강 원고에는 이 부제가 없으므로 영향 없음.
+    3. "[Gateway]" 묶음 마커 (_add_step3_choice_numbers의 passage_above 판정에 쓰인 후 제거)
 
     원고 구조 예:
-        2027년 수능특강 영어    더변형문제    27강 컴퓨터,인터넷    ← 책 헤더
-        [Gateway]                                                ← 묶음 마커
-        <지문 본문>
-        1. 발문?
-        ...
-
-    [Gateway]는 _add_step3_choice_numbers의 passage_above 판정에 사용된 후
-    이 단계에서 제거되어 최종 출력은 바로 발문부터 시작.
+        ENGLISH for High 1        ← 책제목 (부제 앵커로 함께 제거)
+        - 2606 변형문제 -          ← 변형문제 부제
+        다음 글의 주제로 ... 것은?   ← 발문 (여기부터 본문)
     """
+    drop = set()
+    # 변형문제 부제를 앵커로: 부제 줄 + 바로 위 '책제목' 줄을 제거
+    for i, p in enumerate(paras):
+        text = (p.get('text', '') or '').strip()
+        if not _RE_STEP3_VARIANT_SUBTITLE.match(text):
+            continue
+        drop.add(i)
+        for j in range(i - 1, -1, -1):
+            tj = (paras[j].get('text', '') or '').strip()
+            if not tj:
+                continue
+            # 바로 위 비빈 단락이 '책제목'(발문/지문/선지/보기 아님 + 짧은 제목)이면 함께 제거
+            if (not _RE_STEP3_CHOICE_END.search(tj)
+                    and tj[0] not in _CIRCLED_DIGITS
+                    and not tj.startswith('※')
+                    and not tj.startswith('<')
+                    and len(tj) <= 40):
+                drop.add(j)
+            break
+
     out = []
-    for p in paras:
+    for i, p in enumerate(paras):
+        if i in drop:
+            continue
         text = (p.get('text', '') or '').strip()
         if _RE_STEP3_GROUP_MARKER.match(text):
             continue
