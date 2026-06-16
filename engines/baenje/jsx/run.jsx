@@ -559,8 +559,12 @@ function styleTabTextAsTable() {
         var eP = paras[g.end];
         var eChar = eP.characters[eP.characters.length - 1].index;
         var tbl;
+        // 주의: itemByRange(...).convertToTable(...) 체이닝 호출에서 나는 InDesign 에러는
+        // try/catch를 우회해 스크립트 전체를 중단시킨다(정답지/PDF 미배치의 원인이었음).
+        // 객체를 변수로 분리해야 catch가 정상 동작해 실패 시 안전하게 건너뛴다.
+        var tblRange = ft.characters.itemByRange(sChar, eChar);
         try {
-            tbl = ft.characters.itemByRange(sChar, eChar).convertToTable("\t", "\r", maxCols);
+            tbl = tblRange.convertToTable("\t", "\r", maxCols);
         } catch(e) {
             writeLog("TABLE: convertToTable failed - " + e.message);
             continue;
