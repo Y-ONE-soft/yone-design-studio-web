@@ -1970,7 +1970,7 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
             else:
                 paras = _hwp_extract_paragraphs(fpath, extract_underline,
                                                 exclude_footnotes=step3_exclude_footnotes)
-            _raw_words = _step3_content_words(paras)  # 보존 가드 스냅샷
+            _raw_words = _step3_content_words(_strip_step3_book_markers(paras))  # 보존 가드 스냅샷(헤더 제외)
             # 첫 단락 "N강 M번 YYMMQQ" 헤더 제거
             if paras:
                 first_text = (paras[0].get("text", "") if isinstance(paras[0], dict) else str(paras[0])).strip()
@@ -2021,7 +2021,7 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
             else:
                 paras = _hwp_extract_paragraphs(fpath, extract_underline,
                                                 exclude_footnotes=step3_exclude_footnotes)
-            _raw_words = _step3_content_words(paras)  # 보존 가드 스냅샷
+            _raw_words = _step3_content_words(_strip_step3_book_markers(paras))  # 보존 가드 스냅샷(헤더 제외)
             # 표형 선지 번호 셀(①~⑤) 병합 — _strip_step3_answers가 단독 ①~⑤를 제거하기 전에 수행
             paras = _merge_step3_split_choice_numbers(paras)
             paras = _strip_step3_answers(paras)
