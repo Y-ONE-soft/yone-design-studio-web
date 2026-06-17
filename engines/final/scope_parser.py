@@ -96,9 +96,16 @@ def parse_lectures_from_filename(filename):
     # (학교 분석편 파일: "(분석01)3,6,7,11,12강" 처럼 괄호 밖에 목록이 있는 경우 대응)
     candidates = re.findall(r"\(([^)]+)\)", fn) + [fn]
     for inner in candidates:
-        # "test1" 등 테스트 패턴
-        if re.match(r"^test\d+", inner.strip(), re.IGNORECASE):
-            return [inner.strip()]
+        # "test1" / "test1,test2" 등 테스트 패턴 — 강 목록처럼 쉼표로 분리.
+        # (학교 합본 분석편 "(test1,test2)"을 ["test1","test2"]로 나눠야
+        #  강(18,19,20,21강 → 18·19·20·21강)과 동일하게 강별 매핑된다.
+        #  과거엔 통째로 ["test1,test2"]를 반환해 selected_lectures와 매칭 실패→누락.)
+        _s = inner.strip()
+        if re.match(r"^test\d+", _s, re.IGNORECASE):
+            _parts = [p.strip() for p in _s.split(",") if p.strip()]
+            if _parts and all(re.match(r"^test\d+", p, re.IGNORECASE) for p in _parts):
+                return _parts
+            return [_s]
         # "분석01", "분석편02" 같은 파일 번호 표기는 스킵
         if re.match(r"^\ubd84\uc11d(?:\ud3b8)?\s*\d+\s*$", inner.strip()):
             continue
