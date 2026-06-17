@@ -612,6 +612,7 @@ def _hwp_extract_paragraphs(hwp_path, extract_underline=False, exclude_footnotes
 _RE_MANUSCRIPT_HEADER = re.compile(
     r'^(?:'
     r'고[12]_\d{4}_\d+월'     # "고1_2025_10월(경기도) - 읽기영역..."
+    r'|[가-힣].*\s\d+\s*지문\s*$'  # "성덕2 EBS 4지문" 류 책/출처 제목 (… N지문)
     r'|Q\.\s'                  # "Q. 문맥 상..."
     r'|어휘[선완]'              # "어휘선택(문제지)", "어휘완성(문제지)"
     r'|어법[선수]'              # "어법선택(문제지)", "어법수정..."
