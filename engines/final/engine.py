@@ -562,6 +562,20 @@ class FinalEngine(BaseEngine):
                 wb_files, extract_styles, extracted_path, log
             )
 
+        # 학교 자체 '올림포스NN강' 워크북의 올포 강 번호 — 중요어휘 fetch 보강용.
+        # (allowed_olpo_lectures는 '올포' 파일명 기반이라 '올림포스' 학교 워크북에선 비어
+        #  올포 중요어휘가 통째로 누락된다. extracted 올포 스토리의 lecture로 union 보강.)
+        _extracted_olpo_lectures = set()
+        try:
+            from engines.final.parser import _src_is_olpo as _is_olpo_fn
+            with open(extracted_path, encoding="utf-8") as _exf:
+                for _st in json.load(_exf).get("stories", []):
+                    _lec = _st.get("lecture", 0)
+                    if _lec and _lec > 0 and _is_olpo_fn(_st.get("source_file", "")):
+                        _extracted_olpo_lectures.add(_lec)
+        except Exception:
+            pass
+
         # 4) 어법수정 Word 파일 수집 — 소스 유형별 분기
         #    + 교과서 과별 본문 수 카운트 (문장배열 과 경계 ground truth)
         lesson_block_counts = {}  # {"1": 6, "2": 6} — 과번호 → 본문 수
@@ -1108,8 +1122,8 @@ class FinalEngine(BaseEngine):
             # 고1/고2: 구글시트에서 모의고사 범위 + 올포 강 범위 기반 추출
             try:
                 from engines.final.vocab_fetcher import fetch_vocab_for_school
-                # 올포 강 범위: allowed_olpo_lectures (find_workbook_files에서 계산된 set)
-                _olpo_lec_list = sorted(allowed_olpo_lectures) if allowed_olpo_lectures else None
+                # 올포 강 범위: allowed_olpo_lectures(공용 대체분) + extracted 올포 강(학교 올림포스 워크북)
+                _olpo_lec_list = sorted((allowed_olpo_lectures or set()) | _extracted_olpo_lectures) or None
                 # 워크북 파일 순서대로 (yy, mm) 페어 수집 → 중요어휘 정렬 순서로 사용
                 # 복합 scope("23년6월_24년9월")는 모든 (yy, mm) 페어를 전부 추출.
                 _workbook_order = []
@@ -1511,7 +1525,7 @@ class FinalEngine(BaseEngine):
                     if _codes:
                         log(f"[중요어휘] 폴백: 지문 {len(_codes)}개 코드로 재추출 시도")
                         from engines.final.vocab_fetcher import fetch_vocab_for_school as _fetch_vocab_pc
-                        _olpo_lec_list2 = sorted(allowed_olpo_lectures) if allowed_olpo_lectures else None
+                        _olpo_lec_list2 = sorted((allowed_olpo_lectures or set()) | _extracted_olpo_lectures) or None
                         _vd = _fetch_vocab_pc(
                             school, grade, log=log,
                             olpo_lectures=_olpo_lec_list2,

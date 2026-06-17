@@ -3559,7 +3559,20 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                     _last_dl = (writing_kor[i-1].get("_dl_lesson") if i > 0 and isinstance(writing_kor[i-1], dict) else None)
                     if _last_dl != _dl_lesson_chk:
                         _dl_force_emit = True
-                if (q_num and q_num != prev_qnum) or _force_emit_mt or _dl_force_emit:
+                # 올포: q_num이 비거나(올림포스 학교워크북 17/18강) 연속 동일(분석→분석)이라도
+                # 강/섹션(olpo_label) 변경 시 새 헤더 emit. 마더텅/딥러닝 force_emit과 동일 패턴 —
+                # 없으면 여러 강 영작이 한 헤더 아래 뭉쳐 "지문 번호 구분 없이 이어짐".
+                _olpo_force_emit = False
+                if is_olpo_src and item_lecture > 0:
+                    _cur_olpo_key = (item_lecture, kor_item.get("olpo_label", "") or "")
+                    _prev_it = writing_kor[i - 1] if i > 0 and isinstance(writing_kor[i - 1], dict) else None
+                    _prev_olpo_key = None
+                    if (_prev_it is not None and _src_is_olpo(_nfc(_prev_it.get("source", "")))
+                            and _prev_it.get("lecture", 0) > 0):
+                        _prev_olpo_key = (_prev_it.get("lecture"), _prev_it.get("olpo_label", "") or "")
+                    if _prev_olpo_key != _cur_olpo_key:
+                        _olpo_force_emit = True
+                if (q_num and q_num != prev_qnum) or _force_emit_mt or _dl_force_emit or _olpo_force_emit:
                     scope_match = re.search(r"\(([^)]+)\)", src_nfc)
                     scope = scope_match.group(1) if scope_match else ""
 
