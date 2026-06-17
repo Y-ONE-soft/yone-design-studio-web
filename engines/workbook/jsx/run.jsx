@@ -1159,6 +1159,26 @@
                 grepChange(story, "(^|,)\\s+(\\{)", "$1$2");
             }
 
+            // 프리앰블 제거: 첫 {N} 헤더(지문번호) 앞의 불필요한 줄 삭제.
+            //   예: "성덕2 EBS 4지문", "Q. 문맥 상 ...", "문장배열(문제지)"
+            //   안전장치: 첫 헤더 앞에 (A) 선지가 있으면 = 첫 지문 헤더 미인식 → 삭제 보류(본문 보호).
+            var preP = parasOf(story);
+            var firstHdrIdx = -1;
+            for (var ppi = 0; ppi < preP.length; ppi++) {
+                if (/^\s*\{[^}]+\}/.test(ptxt(preP[ppi]))) { firstHdrIdx = ppi; break; }
+            }
+            if (firstHdrIdx > 0) {
+                var preSafe = true;
+                for (var pci = 0; pci < firstHdrIdx; pci++) {
+                    if (/^\s*\([A-Z]\)/.test(ptxt(preP[pci]))) { preSafe = false; break; }
+                }
+                if (preSafe) {
+                    for (var pdi = firstHdrIdx - 1; pdi >= 0; pdi--) {
+                        try { preP[pdi].remove(); } catch(_){}
+                    }
+                }
+            }
+
             // 구조 기반 frame 분리:
             // (1) 헤더({...}) = 새 본문 = 페이지 시작 (startParagraph = NEXT_PAGE)
             // (2) 조건(주어진 문장) = 같은 본문 안 하단 영역 = 새 frame (startParagraph = NEXT_FRAME)
@@ -1588,16 +1608,21 @@
             for (var fbh = 1; fbh < fbHdr.length; fbh++) {
                 try { fbParas[fbHdr[fbh]].startParagraph = fbHeaderStart; } catch(_){}
             }
-            // 조건(주어진 문장): 각 헤더 블록에서 (X)선지 시퀀스 직후 첫 영문-only 단락 → NEXT_FRAME
+            // 하단 영역 첫 단락 → NEXT_FRAME : 상단(지문번호+본문+화살표) | 하단(발문+문제) 경계 분리.
+            // 발문(S1_HADAN)이 하단 맨 앞에 삽입되므로 그 '발문 앞'에서 프레임이 나뉘어야 한다.
+            // (주어진 문장이 아니라 발문 앞 — 발문/주어진문장/하단지문 중 블록 내 첫 단락 기준)
+            var fbBtmNames = {};
+            if (S1_HADAN)     fbBtmNames[S1_HADAN.name] = 1;
+            if (S1_HADAN_JIM) fbBtmNames[S1_HADAN_JIM.name] = 1;
+            if (S1_HADAN_SEO) fbBtmNames[S1_HADAN_SEO.name] = 1;
+            if (S1_C1_BTM)    fbBtmNames[S1_C1_BTM.name] = 1;
+            if (S1_C1_BTM_T)  fbBtmNames[S1_C1_BTM_T.name] = 1;
             var fbEnds = fbHdr.concat([fbParas.length]);
             for (var fbb = 0; fbb < fbEnds.length - 1; fbb++) {
-                var fbSawChoice = false;
                 for (var fbp = fbEnds[fbb] + 1; fbp < fbEnds[fbb + 1]; fbp++) {
-                    var fbT = ptxt(fbParas[fbp]);
-                    var fbTr = fbT.replace(/^[\s　]+|[\s　]+$/g, "");
-                    if (!fbTr) continue;
-                    if (/^\s*\([A-Z]\)/.test(fbT)) { fbSawChoice = true; continue; }
-                    if (fbSawChoice && /^[A-Za-z]/.test(fbTr) && !/[가-힣]/.test(fbTr)) {
+                    var fbSty = null;
+                    try { fbSty = fbParas[fbp].appliedParagraphStyle; } catch(_){}
+                    if (fbSty && fbBtmNames[fbSty.name]) {
                         try { fbParas[fbp].startParagraph = StartParagraph.NEXT_FRAME; } catch(_){}
                         break;
                     }
