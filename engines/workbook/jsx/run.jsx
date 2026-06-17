@@ -1573,6 +1573,38 @@
                 try { story.recompose(); } catch(_){}
             }
 
+            // ── FRAME BREAK 재적용 (InDesign 2026 회귀 대응) ──────────────────────
+            // InDesign 2026부터 appliedParagraphStyle 할당이 startParagraph 로컬
+            // 오버라이드를 스타일 기본값(ANYWHERE)으로 리셋한다. 위 §구조기반 frame 분리에서
+            // 설정한 NEXT_PAGE/NEXT_FRAME 가 이후의 모든 스타일 적용으로 사라지므로,
+            // 단락 가공/삭제가 모두 끝난 맨 마지막에 헤더/조건 프레임 분리를 다시 설정한다.
+            // (EBS의 ~M 프레임브레이크 '문자'는 살아남으며 동일 위치 NEXT_FRAME과 합쳐진다)
+            var fbParas = parasOf(story);
+            var fbHdr = [];
+            for (var fbi = 0; fbi < fbParas.length; fbi++) {
+                if (/^\s*\{[^}]+\}/.test(ptxt(fbParas[fbi]))) fbHdr.push(fbi);
+            }
+            var fbHeaderStart = (workbookType === "EBS") ? StartParagraph.NEXT_FRAME : StartParagraph.NEXT_PAGE;
+            for (var fbh = 1; fbh < fbHdr.length; fbh++) {
+                try { fbParas[fbHdr[fbh]].startParagraph = fbHeaderStart; } catch(_){}
+            }
+            // 조건(주어진 문장): 각 헤더 블록에서 (X)선지 시퀀스 직후 첫 영문-only 단락 → NEXT_FRAME
+            var fbEnds = fbHdr.concat([fbParas.length]);
+            for (var fbb = 0; fbb < fbEnds.length - 1; fbb++) {
+                var fbSawChoice = false;
+                for (var fbp = fbEnds[fbb] + 1; fbp < fbEnds[fbb + 1]; fbp++) {
+                    var fbT = ptxt(fbParas[fbp]);
+                    var fbTr = fbT.replace(/^[\s　]+|[\s　]+$/g, "");
+                    if (!fbTr) continue;
+                    if (/^\s*\([A-Z]\)/.test(fbT)) { fbSawChoice = true; continue; }
+                    if (fbSawChoice && /^[A-Za-z]/.test(fbTr) && !/[가-힣]/.test(fbTr)) {
+                        try { fbParas[fbp].startParagraph = StartParagraph.NEXT_FRAME; } catch(_){}
+                        break;
+                    }
+                }
+            }
+            try { story.recompose(); } catch(_){}
+            // ──────────────────────────────────────────────────────────────────────
         }, ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, "STEP1C1");
 
         addLog("STEP1 C1 완료");
