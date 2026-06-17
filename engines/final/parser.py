@@ -730,7 +730,9 @@ def _classify_stories(stories):
                 if p.get("s", "") in grammar_styles and txt:
                     lines.append(txt)
             if lines:
-                grammar_fix.append({"source": source, "lines": lines})
+                grammar_fix.append({"source": source, "lines": lines,
+                                    "lecture": lecture, "olpo_label": olpo_label,
+                                    "page_off": page_off})
 
         # 영작: {XX} 헤더로 블록 분리
         if "writing_kor" in types_found or "writing_view" in types_found:

@@ -235,6 +235,32 @@ class PocketbookEngine(BaseEngine):
         return ""
 
     @staticmethod
+    def _split_mixed_category(cat):
+        """혼합 카테고리를 (하위카테고리, 타입) 목록으로 분리.
+
+        '동아박4과,21년11월' → [('동아박4과','textbook'), ('21년11월','mockexam')]
+        '26년6월,YBM박2과'  → [('YBM박2과','textbook'), ('26년6월','mockexam')]
+        교과서 토큰이 여러 개면 하나로 합친다('능률민3과,4과' → '능률민3과,4과').
+        """
+        import unicodedata
+        nfc = unicodedata.normalize("NFC", cat) if cat else ""
+        tb_parts, mock_parts = [], []
+        for part in nfc.split(","):
+            part = part.strip()
+            if not part:
+                continue
+            if re.search(r"\d{2}년\s*\d{1,2}월", part) or "마더텅" in part:
+                mock_parts.append(part)
+            else:
+                tb_parts.append(part)
+        result = []
+        if tb_parts:
+            result.append((",".join(tb_parts), "textbook"))
+        for mp in mock_parts:
+            result.append((mp, "mockexam"))
+        return result
+
+    @staticmethod
     def _expand_category(cat):
         """카테고리 문자열을 개별 항목으로 확장.
         'YBM김1,2과' → ['YBM김1과', 'YBM김2과']
@@ -414,8 +440,16 @@ class PocketbookEngine(BaseEngine):
         seen_keys = set()
         missing_tb_cats = []
 
+        # 혼합(mixed) 파일은 교과서/모의고사 하위 카테고리로 분리해 각각 탐색
+        expanded_entries = []  # [(cat, ft), ...]
         for idx, cat in enumerate(categories):
             ft = file_types[idx] if idx < len(file_types) else "textbook"
+            if ft == "mixed":
+                expanded_entries.extend(self._split_mixed_category(cat))
+            else:
+                expanded_entries.append((cat, ft))
+
+        for cat, ft in expanded_entries:
             nfc_cat = unicodedata.normalize("NFC", cat) if cat else ""
             if not nfc_cat:
                 continue
@@ -711,7 +745,7 @@ class PocketbookEngine(BaseEngine):
         # 파일별 유형·카테고리 감지
         file_types = []
         categories = []
-        type_label = {"textbook": "교과서", "mockexam": "모의고사", "ebs": "EBS"}
+        type_label = {"textbook": "교과서", "mockexam": "모의고사", "ebs": "EBS", "mixed": "교과서+모의고사"}
         for af in analysis_files:
             st = self._detect_source_type(af)
             cat = self._detect_category(af)

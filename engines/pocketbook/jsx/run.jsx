@@ -1199,6 +1199,23 @@ var settingsPath = "__SETTINGS_PATH__";
             pnoLookupDocCache = {};
         }
 
+        // 혼합(mixed) 카테고리 문자열을 교과서/모의고사 부분으로 분리.
+        // "동아박4과,21년11월" → {textbook:"동아박4과", mockexam:"21년11월"}
+        // 날짜(YY년 M월) 또는 "마더텅"이 든 토큰은 모의고사, 나머지는 교과서.
+        function splitMixedCategory(cat) {
+            var parts = (cat || "").split(",");
+            var tb = [], mk = [];
+            for (var i = 0; i < parts.length; i++) {
+                var p = parts[i].replace(/^\s+|\s+$/g, "");
+                if (!p) continue;
+                var hasYear = (p.indexOf("\uB144") >= 0);             // year
+                var hasMonth = (p.indexOf("\uC6D4") >= 0);            // month
+                var isMother = (p.indexOf("\uB9C8\uB354\uD140") >= 0); // matertongue
+                if ((hasYear && hasMonth) || isMother) mk.push(p); else tb.push(p);
+            }
+            return { textbook: tb.join(","), mockexam: mk.join(",") };
+        }
+
         var existingPassageNos = {};
         var copyCount = 0;
         var pnoCopyCount = 0;
