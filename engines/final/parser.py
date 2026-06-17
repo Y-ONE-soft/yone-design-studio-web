@@ -26,6 +26,33 @@ def _is_deeplearning_workbook(source):
     return "\ub525\ub7ec\ub2dd" in base or "\ub525 \ub7ec\ub2dd" in base
 
 
+def _src_is_olpo(source):
+    """\uc62c\ud3ec(\uc62c\ub9bc\ud3ec\uc2a4) \uc6cc\ud06c\ubd81 \uc18c\uc2a4/\uc2a4\ucf54\ud504 \uc5ec\ubd80.
+
+    \uacf5\uc6a9 '\uc62c\ub9bc\ud3ec\uc2a4\ub3c5\ud574\uae30\ubcf8' \ud30c\uc77c\uacfc \ud559\uad50 \uc790\uccb4 '\uc62c\ub9bc\ud3ec\uc2a4NN\uac15' \uc6cc\ud06c\ubd81\uc744 \ubaa8\ub450 \uc778\uc2dd\ud55c\ub2e4.
+    Why: \ud559\uad50 \uc6cc\ud06c\ubd81 \ud30c\uc77c\uba85/\uc2dc\ud5d8\ubc94\uc704\uc5d0\ub294 \uc57d\uc5b4 '\uc62c\ud3ec'\uac00 \uc544\ub2c8\ub77c '\uc62c\ub9bc\ud3ec\uc2a4'\ub85c \ud45c\uae30\ub418\ubbc0\ub85c
+         '\uc62c\ud3ec' \ubd80\ubd84\ubb38\uc790\uc5f4\ub9cc \uac80\uc0ac\ud558\uba74 '\uc62c\ub9bc\ud3ec\uc2a410,11\uac15' \uac19\uc740 \ud559\uad50 \uc6cc\ud06c\ubd81\uc774 \ub204\ub77d\ub418\uc5b4
+         \uc62c\ud3ec \ubcf8\ubb38/\ubd84\uc11d\uc774 \uc81c\ub124\ub9ad '\uc9c0\ubb38 N' \ud5e4\ub354\ub85c \ub5a8\uc5b4\uc9c4\ub2e4.
+    """
+    s = _nfc(source or "")
+    return "\uc62c\ud3ec" in s or "\uc62c\ub9bc\ud3ec\uc2a4" in s
+
+
+def _dl_lesson_marker(t):
+    """'[N\uacfc Deep Learning]' \uc778\ub77c\uc778 \ub9c8\ucee4 \u2192 '\ubcf8\ubb386@\uacfcN' \uc778\ucf54\ub529. \ub9e4\uce6d \uc5c6\uc73c\uba74 None.
+
+    \ud63c\ud569 \uc6cc\ud06c\ubd81(\uc62c\ub9bc\ud3ec\uc2a4 + \uad50\uacfc\uc11c \ub525\ub7ec\ub2dd)\uc5d0\uc11c \uad50\uacfc\uc11c \ub525\ub7ec\ub2dd \uc139\uc158\uc744 \uad6c\ubd84\ud558\ub294 \ub9c8\ucee4.
+    \uae30\uc874 \uc804\uc6a9 \ub525\ub7ec\ub2dd \uc6cc\ud06c\ubd81\uc758 {1}/{2} \uacfc-\ub9c8\ucee4\uc640 \ub2ec\ub9ac \ucf58\ud150\uce20\uc5d0 \uc9c1\uc811 \ubc15\ud600 \uc788\uc73c\ubbc0\ub85c,
+    \ud30c\uc77c\uba85 \uae30\ubc18 _is_deeplearning_workbook \ud310\uc815\uacfc \ubb34\uad00\ud558\uac8c(=\uc62c\ud3ec [01] \ub9c8\ucee4\ub97c \uacfc-\ub9c8\ucee4\ub85c
+    \uc624\uc778\ud558\uc9c0 \uc54a\ub3c4\ub85d) \uc774 \ub9c8\ucee4\ub9cc \ubb34\uc870\uac74 \uc778\uc2dd\ud55c\ub2e4. '\ubcf8\ubb386@\uacfcN'\uc740 _tb_header_from_label\uc5d0\uc11c
+    '\uad50\uacfc\uc11cN\uacfc \ub525\ub7ec\ub2dd' \ud5e4\ub354\ub85c \ubcc0\ud658\ub41c\ub2e4.
+    """
+    m = re.match(r"^[\[{]?\s*(\d+)\s*\uacfc\s*Deep\s*Learning\s*[\]}]?$", t, re.IGNORECASE)
+    if m:
+        return "\ubcf8\ubb386@\uacfc" + m.group(1)
+    return None
+
+
 # ── 마더텅 지문 출처 매핑 (워크북 내 지문 순번 → YYMMQQ) ──────────────
 # 구조: {섹션번호: {순번: "YYMMQQ", ...}, ...}
 # 예: _MT_MAP[3][1] = "221120" (마더텅3 워크북 1번째 지문은 2022년 11월 20번)
@@ -892,6 +919,10 @@ def _split_sentence_blocks(paras, source, sentence_styles, output_list,
                 if re.search(r"Read\s*More", lab, re.IGNORECASE):
                     return "RM"
                 return "FR"
+            # 혼합 워크북: '[N과 Deep Learning]' 인라인 마커 → '본문6@과N' (교과서 딥러닝 섹션)
+            _dlm = _dl_lesson_marker(t)
+            if _dlm:
+                return _dlm
             # 딥러닝(본문6) 워크북: {1}/{2} 또는 [1]/[2] 같은 단독 정수 마커 → 과 번호로 해석.
             # 본문번호는 6 고정. 인코딩: "본문6@과N"
             if _is_dl:
@@ -1083,6 +1114,10 @@ def _split_insert_blocks(paras, source, insert_styles, output_list,
                 if re.search(r"Read\s*More", lab, re.IGNORECASE):
                     return "RM"
                 return "FR"
+            # 혼합 워크북: '[N과 Deep Learning]' 인라인 마커 → '본문6@과N' (교과서 딥러닝 섹션)
+            _dlm = _dl_lesson_marker(t)
+            if _dlm:
+                return _dlm
             if _is_dl_ins:
                 m2 = re.match(r"^[\[{](\d+)[\]}]$", t)
                 if m2:
@@ -1593,7 +1628,7 @@ def _scope_to_header(scope_text, block_num, blocks_per_lesson=5):
         return f"교과서SL 본문{block_num}"
 
     # 올림포스
-    if "올포" in scope:
+    if _src_is_olpo(scope):
         return f"올포 본문{block_num}"
 
     # 리딩파워 (영작 등에서 블록 순번만 있을 때 강별 균등 배분)
@@ -2450,7 +2485,7 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
                                 header = f"\ub9ac\ub529\ud30c\uc6cc {_L}\uac15 {str(_n).zfill(2)}"
                         else:
                             header = f"\ub9ac\ub529\ud30c\uc6cc \ube14\ub85d {str(ord_idx).zfill(2)}"
-                    elif block_lecture > 0 and ("올포" in (scope_match.group(1) if scope_match else "") or "올림포스독해기본" in src):
+                    elif block_lecture > 0 and (_src_is_olpo(scope_match.group(1) if scope_match else "") or _src_is_olpo(src)):
                         # 1순위: olpo_label (페이지 레이블 기반)
                         if _olpo_label:
                             header = f"\uc62c\ud3ec {block_lecture}\uac15 {_olpo_label}"
@@ -2520,7 +2555,7 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
                     _cidx = _tb_counters[src]
                     header = _tb_lesson_map[src].get(_cidx, f"교과서 본문{_cidx + 1}")
                     _tb_counters[src] += 1
-                elif block_lecture > 0 and ("올포" in src or "올림포스독해기본" in src):
+                elif block_lecture > 0 and _src_is_olpo(src):
                     # 1순위: olpo_label
                     if _olpo_label:
                         header = f"\uc62c\ud3ec {block_lecture}\uac15 {_olpo_label}"
@@ -2880,7 +2915,7 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
                         _cidx = _ins_counters[src]
                         header = _ins_lesson_map[src].get(_cidx, f"교과서 본문{_cidx + 1}")
                         _ins_counters[src] += 1
-                    elif block_lecture > 0 and ("올포" in (scope_match.group(1) if scope_match else "") or "올림포스독해기본" in src):
+                    elif block_lecture > 0 and (_src_is_olpo(scope_match.group(1) if scope_match else "") or _src_is_olpo(src)):
                         # 1순위: olpo_label
                         if _olpo_label:
                             header = f"\uc62c\ud3ec {block_lecture}\uac15 {_olpo_label}"
@@ -2945,7 +2980,7 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
                     _cidx = _ins_counters[src]
                     header = _ins_lesson_map[src].get(_cidx, f"교과서 본문{_cidx + 1}")
                     _ins_counters[src] += 1
-                elif block_lecture > 0 and ("올포" in src or "올림포스독해기본" in src):
+                elif block_lecture > 0 and _src_is_olpo(src):
                     # 1순위: olpo_label
                     if _olpo_label:
                         header = f"\uc62c\ud3ec {block_lecture}\uac15 {_olpo_label}"
@@ -3461,7 +3496,7 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                 item_lecture = kor_item.get("lecture", 0)
                 item_page_off = kor_item.get("page_off", -1)
                 src_nfc = _nfc(source)
-                is_olpo_src = ("올림포스독해기본" in src_nfc or "올포" in src_nfc)
+                is_olpo_src = _src_is_olpo(src_nfc)
 
                 # 워크북에 박힌 6자리 출처코드(YYMMQQ)가 있으면 최우선 사용 — 가짜번호 방지.
                 _ec_kor = kor_item.get("exam_code", "")
