@@ -178,20 +178,43 @@ class PocketbookEngine(BaseEngine):
 
     @staticmethod
     def _detect_source_type(filepath):
-        """파일명에서 소스 유형 감지. macOS NFD 대응."""
+        """파일명에서 소스 유형 감지. macOS NFD 대응.
+
+        한 분석본에 교과서(N과)와 모의고사(YY년M월)가 함께 들어 있으면 'mixed'.
+        (예: '동아박4과,21년11월' / '26년6월,YBM박2과')
+        run.jsx가 지문별 챕터 라벨로 교과서/모의고사를 다시 가른다.
+        EBS(올림포스/리딩파워)+교과서 혼합은 기존 ebs 경로(미래엔 DL 등)를 유지한다.
+        """
         import unicodedata
         name = unicodedata.normalize("NFC", os.path.basename(filepath))
-        if "모의" in name or "마더텅" in name or re.search(r"\d{2}년\s*\d{1,2}월", name):
+        is_ebs = ("올포" in name or "올림" in name or "리딩파워" in name or "리파" in name)
+        # 괄호 안 카테고리에 과/강(교과서)과 날짜(모의고사)가 동시에 있으면 혼합
+        paren_m = re.search(r"\(([^)]+)\)", name)
+        paren = paren_m.group(1) if paren_m else ""
+        has_lesson = bool(re.search(r"\d+\s*(?:과|강)", paren))
+        has_date = bool(re.search(r"\d{2}년\s*\d{1,2}월", name))
+        if has_lesson and has_date and not is_ebs:
+            return "mixed"
+        if "모의" in name or "마더텅" in name or has_date:
             return "mockexam"
-        if "올포" in name or "올림" in name or "리딩파워" in name or "리파" in name:
+        if is_ebs:
             return "ebs"
         return "textbook"
 
     @staticmethod
     def _detect_category(filepath):
-        """파일명에서 카테고리 추출. 모의고사(YY년M월)는 괄호보다 우선."""
+        """파일명에서 카테고리 추출. 모의고사(YY년M월)는 괄호보다 우선.
+
+        혼합(mixed) 파일은 괄호 안 전체(교과서+모의고사)를 그대로 반환한다
+        (예: '동아박4과,21년11월'). run.jsx/리뷰테스트 탐색이 하위로 분리한다.
+        """
         import unicodedata
         name = unicodedata.normalize("NFC", os.path.basename(filepath))
+        # 혼합: 괄호 안 전체 보존 (모의고사 우선 규칙보다 먼저 처리)
+        if PocketbookEngine._detect_source_type(filepath) == "mixed":
+            pm = re.search(r"\(([^)]+)\)", name)
+            if pm:
+                return pm.group(1).strip()
         # 모의고사: "26년 3월" or "26년3월" -> "26년3월" (괄호보다 우선)
         m2 = re.search(r"(\d{2}년)\s*(\d{1,2}월)", name)
         if m2:
