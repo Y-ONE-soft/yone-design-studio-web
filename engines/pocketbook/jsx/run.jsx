@@ -1277,6 +1277,26 @@ var settingsPath = "__SETTINGS_PATH__";
                 log("  " + passages.length + "개 지문");
                 saveLog();
 
+                // [혼합] 한 분석본에 교과서+모의고사 지문이 공존 (예: "동아박4과,21년 11월").
+                // extractPassages가 지문별 sourceType을 부여 → 부분집합으로 나눠 각 경로로 처리.
+                // 교과서 지문은 processTextbookLessons로, 모의고사 지문은 아래 기존 루프로.
+                if (sourceType === "mixed") {
+                    var splitCat = splitMixedCategory(fileCategory);
+                    var tbP = [], mkP = [];
+                    for (var mxi = 0; mxi < passages.length; mxi++) {
+                        if (passages[mxi].sourceType === "mockexam") mkP.push(passages[mxi]);
+                        else tbP.push(passages[mxi]);
+                    }
+                    log("  [\uD63C\uD569] \uAD50\uACFC\uC11C " + tbP.length + "\uAC1C(" + splitCat.textbook + ") + \uBAA8\uC758\uACE0\uC0AC " + mkP.length + "\uAC1C(" + splitCat.mockexam + ")");
+                    saveLog();
+                    if (tbP.length > 0) processTextbookLessons(tbP, splitCat.textbook);
+                    // 모의고사 부분은 아래 기존 모의고사 루프가 처리하도록 변수 재설정
+                    passages = mkP;
+                    sourceType = "mockexam";
+                    fileCategory = splitCat.mockexam;
+                    baseMasterName = (masterMap.mockexam).content;
+                }
+
                 // [교과서] 과 단위로 완성본에서 본문+대응 리뷰만 선별 복사 (분석본 지문 기준)
                 // 모의고사/EBS/올림포스는 아래 기존 경로를 그대로 사용
                 if (sourceType === "textbook" && pnoLookupFiles.length > 0) {
@@ -3422,7 +3442,20 @@ var settingsPath = "__SETTINGS_PATH__";
                         }
                     }
 
-                    if (sourceType === "mockexam") {
+                    // [혼합] 분석본에 교과서·모의고사가 섞여 있으면 지문별 챕터 라벨로 판정.
+                    // 라벨에 "년"+"월"이 함께 있으면 모의고사, 없으면 교과서.
+                    var effType = sourceType;
+                    if (sourceType === "mixed") {
+                        var probeLbl = extractCharStyleText(analDoc, pageTFs,
+                            "\uCC55\uD130", "\u110E\u1162\u11B8\u1110\u1165");
+                        var probe = probeLbl || subLabel || longLabel || shortLabel || "";
+                        var eHasYear = (probe.indexOf("\uB144") >= 0) || (probe.indexOf("\u1102\u1167\u11AB") >= 0);
+                        var eHasMonth = (probe.indexOf("\uC6D4") >= 0) || (probe.indexOf("\u110B\u116F\u11AF") >= 0);
+                        effType = (eHasYear && eHasMonth) ? "mockexam" : "textbook";
+                    }
+                    passages[i].sourceType = effType;
+
+                    if (effType === "mockexam") {
                         // 챕터 스타일에서 추출 우선 시도 (예: "고2 21년 9월 43~45번")
                         var chapMock = extractCharStyleText(analDoc, pageTFs,
                             "\uCC55\uD130", "\u110E\u1162\u11B8\u1110\u1165");
@@ -3490,10 +3523,11 @@ var settingsPath = "__SETTINGS_PATH__";
                                 passageNo: fallbackLabel,
                                 topic: "",
                                 type: passages[i].type,
+                                sourceType: effType,
                                 isSubPassage: true
                             });
                         }
-                    } else if (sourceType === "textbook" || sourceType === "ebs") {
+                    } else if (effType === "textbook" || effType === "ebs") {
                         // 교과서/EBS/리딩파워/올림포스 모두: 챕터 스타일에서 추출
                         var chapLabel = extractCharStyleText(analDoc, pageTFs,
                             "\uCC55\uD130", "\u110E\u1162\u11B8\u1110\u1165", false);

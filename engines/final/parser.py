@@ -4740,8 +4740,24 @@ def parse_extracted(extracted_path, vocab_left, vocab_right,
             # 2차 패스: grammar_blocks를 원래 순서대로 순회해 merged_lines 구성
             _mt_src_idx_pos = {}  # {_gb_src: 현재 소비 위치}
             _a1_cnt = {}
+            _olpo_gram_counter = {}  # (src, lecture) -> 올포 어법 본문 카운터 (빈 olpo_label 폴백)
             for gb in grammar_blocks:
                 _gb_src = _nfc(gb.get("source", ""))
+                # 올포 어법: Word 올포 어법 파일이 없어 워크북 A1을 강/섹션별 헤더로 살린다.
+                # (scope가 'unknown'/'textbook'(혼합)으로 분류돼 word_file로 스킵되던 것을
+                #  블록 단위 올포 판정으로 가로챔 — 문장배열/영작과 동일하게 '올포 N강 ...' 정렬.)
+                if gb.get("lecture", 0) > 0 and _src_is_olpo(_gb_src):
+                    _olec = gb.get("lecture")
+                    _olbl = (gb.get("olpo_label") or "").strip()
+                    if _olbl:
+                        _ohdr = f"올포 {_olec}강 {_olbl}"
+                    else:
+                        _okey = (_gb_src, _olec)
+                        _olpo_gram_counter[_okey] = _olpo_gram_counter.get(_okey, 0) + 1
+                        _ohdr = f"올포 {_olec}강 본문{_olpo_gram_counter[_okey]}"
+                    merged_lines.append(_ohdr)
+                    merged_lines.extend(gb.get("lines", []))
+                    continue
                 _gb_scope = _psf(_gb_src)
                 _gb_type = _cls(_gb_scope)
                 if _ggs(_gb_type) == "word_file":
