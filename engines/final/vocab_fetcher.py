@@ -370,6 +370,38 @@ def fetch_high3_scope(school, log=None, exam_period=None):
             continue
         lecture_details[f"test{m.group(1)}"] = _parse_passage_list(m.group(2))
 
+    # 공백 구분 표기 지원: 괄호 없이 마커 뒤 공백으로 지문이 이어지는 형식.
+    #   "18강 2, 4 / 19강 3~4, 7~8 / 21~23강 1, 3", "Test1 20~25, Test2 3~6"
+    # (명일여고3 등. 괄호 표기 학교 동작을 깨지 않도록, 괄호 파싱이 아무것도
+    #  못 얻었을 때만 적용한다.) 각 강/Test 마커 뒤 지문목록을 다음 마커·'/'·
+    #  줄끝 전까지 캡처한다. 괄호 표기("Test 1(3,4)")는 마커 뒤가 '('라서 미매치.
+    if not lecture_details:
+        _MK = r"(?:\d+\s*[-~–—]\s*\d+|\d+)\s*강|[Tt]est\s*\d+"
+        for m in re.finditer(
+            r"(" + _MK + r")\s+([\d,\s~–—\-]+?)\s*(?=/|" + _MK + r"|$)",
+            raw, re.MULTILINE,
+        ):
+            _lec_tok, _pass_tok = m.group(1), m.group(2)
+            if _skip_paren(_pass_tok):
+                continue
+            _passages = _parse_passage_list(_pass_tok)
+            if not _passages:
+                continue
+            _tm = re.match(r"[Tt]est\s*(\d+)", _lec_tok)
+            if _tm:
+                lecture_details[f"test{_tm.group(1)}"] = _passages
+                continue
+            _rng = re.match(r"(\d+)\s*[-~–—]\s*(\d+)\s*강", _lec_tok)
+            if _rng:
+                _a, _b = int(_rng.group(1)), int(_rng.group(2))
+                if _a <= _b and _b - _a < 50:
+                    for _n in range(_a, _b + 1):
+                        lecture_details[str(_n)] = _passages
+                continue
+            _sm = re.match(r"(\d+)\s*강", _lec_tok)
+            if _sm:
+                lecture_details[str(int(_sm.group(1)))] = _passages
+
     if log:
         preview = raw.replace("\n", " | ")
         log(f"[\uace03 \ubc94\uc704] \uc218\ub2a5\ud2b9\uac15: {preview}")
