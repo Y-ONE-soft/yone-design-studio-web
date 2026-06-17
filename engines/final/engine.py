@@ -299,6 +299,7 @@ class FinalEngine(BaseEngine):
                 for f in sorted(os.listdir(school_dir)):
                     if f.endswith(".indd") and "분석" in _nfc(f):
                         school_files.append(os.path.join(school_dir, f))
+            school_files = _drop_revised_duplicates(school_files)
             # 학교 폴더에 분석편이 있으면 그것만 사용 (번호순 정렬)
             if school_files:
                 def _ord(p):
@@ -323,6 +324,7 @@ class FinalEngine(BaseEngine):
                 os.path.join(wb_dir, f) for f in os.listdir(wb_dir)
                 if f.endswith(".indd") and "분석편" in _nfc(f)
             ])
+            files = _drop_revised_duplicates(files)
             return files, wb_dir, set()
         wb_dir = os.path.join(gdrive_base, "워크북", exam_period, grade, school)
         wb_dir = _rlm(wb_dir, None)
