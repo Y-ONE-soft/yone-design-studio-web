@@ -3806,6 +3806,23 @@ def _build_lecture_map(stories, selected_lectures=None):
                 lecture_map[(src, po)] = single_lec
             continue
 
+        # 실제 문장배열 그룹 수가 파일명 강 수와 다를 수 있다. 학교가 시험범위
+        # 강만 골라 합본을 만들면(예: 파일명 "(18,19,20,21강)"이지만 실제 수록은
+        # 18,19,21강) 파일명 순서대로 라벨링하면 21강 내용이 20강으로 오라벨되어
+        # 시험범위인 21강이 통째로 누락된다. 그룹 수 < 파일명 강 수이고
+        # selected_lectures가 있으며 (파일명 ∩ 범위) 수가 그룹 수와 같으면,
+        # 그 교집합(파일명 순서 유지)을 실제 라벨로 사용한다.
+        n_groups = sum(
+            1 for st in file_stories
+            if set(p.get("s", "") for p in st.get("paras", []) if p.get("s"))
+            & sentence_styles
+        )
+        effective_lectures = lectures
+        if selected_lectures and n_groups > 0 and n_groups != len(lectures):
+            scoped = [l for l in lectures if l in selected_lectures]
+            if len(scoped) == n_groups:
+                effective_lectures = scoped
+
         # 스토리 그룹 카운트: 문장배열 스타일이 나오면 새 강 시작
         group_idx = -1
         for story in file_stories:
@@ -3813,9 +3830,9 @@ def _build_lecture_map(stories, selected_lectures=None):
             styles_in_story = set(p.get("s", "") for p in paras if p.get("s"))
             if styles_in_story & sentence_styles:
                 group_idx += 1
-            if 0 <= group_idx < len(lectures):
+            if 0 <= group_idx < len(effective_lectures):
                 po = story.get("pageOff", -1)
-                lecture_map[(src, po)] = lectures[group_idx]
+                lecture_map[(src, po)] = effective_lectures[group_idx]
 
     return lecture_map
 
