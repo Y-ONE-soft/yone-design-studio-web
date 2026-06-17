@@ -987,15 +987,22 @@ def _build_vol1_jsx(indd_path, data_path, pdf_path, marker, log_file, pid, grade
             sorted_left = [left_by_num.get(n, "") for n in all_nums]
             sorted_right = [right_by_num.get(n, "") for n in all_nums]
         else:
-            # 고3: 오른쪽에 헤더 없음 → 빈줄(\n\n)로 분할하여 순서 매칭
+            # 고3: 오른쪽에 헤더 없음 → 빈줄(\n\n)로 분할하여 순서 매칭.
+            # 좌(중요어휘_왼)와 우(중요어휘_오)는 파서가 같은 순서로 emit하므로
+            # 인덱스로 1:1 대응한다. 정렬이 필요하면 반드시 좌/우를 '쌍으로 묶어'
+            # 같은 키로 정렬해야 한다. (과거엔 왼쪽만 따로 정렬해서, content.json의
+            # 패시지 순서가 정렬 순서와 다르거나(test2가 test1보다 먼저 등) 유령/
+            # 중복 블록이 끼면 test1 04부터 좌우가 한 칸씩 어긋났다.)
             right_raw = data.get("중요어휘_오", "") or ""
             right_by_blank = [p.strip() for p in right_raw.split("\n\n") if p.strip()]
-            # 왼쪽 정렬
-            sorted_left = sorted(left_passages,
-                                 key=lambda p: _vocab_sort_key(_extract_vocab_key(p) or ""))
-            sorted_right = right_by_blank[:len(sorted_left)]
-            while len(sorted_right) < len(sorted_left):
-                sorted_right.append("")
+            _n = min(len(left_passages), len(right_by_blank))
+            _pairs = [[left_passages[i], right_by_blank[i]] for i in range(_n)]
+            # 좌가 더 많으면(우 분할 누락 등) 남는 좌는 빈 우와 매칭
+            for _lp in left_passages[_n:]:
+                _pairs.append([_lp, ""])
+            _pairs.sort(key=lambda pr: _vocab_sort_key(_extract_vocab_key(pr[0]) or ""))
+            sorted_left = [pr[0] for pr in _pairs]
+            sorted_right = [pr[1] for pr in _pairs]
 
         # 오른쪽(원문)에서 지문번호 헤더 라인을 완전히 제거한다.
         # 왼쪽은 단락 스타일에서 헤더 처리하지만, 오른쪽은 헤더 텍스트가 남으면
