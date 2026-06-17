@@ -2222,6 +2222,12 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
         _src_block_idx = {}  # src -> 현재 인덱스
         for _bi, _ab in enumerate(sentence_blocks):
             _asrc = _nfc(_ab.get("source", ""))
+            # 올포(올림포스) 블록은 교과서 균등분할 맵에서 제외 — 혼합 워크북
+            # (예: '올림포스15,16,17,18강,미래엔3,4과DL')은 scope에 'N과'가 있어
+            # _tb_lesson_map에 교과서로 잡히면 올포 17/18강(q_num='01~02')이 교과서
+            # 경로로 빨려 누락된다. 교과서 딥러닝 블록은 passage_label로 별도 처리됨.
+            if _ab.get("lecture", 0) > 0 and _src_is_olpo(_asrc):
+                continue
             _q = _ab.get("q_num", "")
             if _q:
                 # 모의고사 문항번호(>= 18)는 교과서 맵에서 제외
@@ -2744,6 +2750,9 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
         _ins_src_idx = {}
         for _ib in sentence_insert_blocks:
             _isrc = _nfc(_ib.get("source", ""))
+            # 올포 블록은 교과서 균등분할 맵에서 제외 (문장배열과 동일 — 혼합 워크북 대응)
+            if _ib.get("lecture", 0) > 0 and _src_is_olpo(_isrc):
+                continue
             _iq = _ib.get("q_num", "")
             if _iq:
                 _iqm = re.match(r"(\d+)", _iq)
