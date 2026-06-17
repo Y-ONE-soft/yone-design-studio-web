@@ -18,6 +18,25 @@ def _nfc(s):
     """macOS NFD 한글 경로를 NFC로 정규화."""
     return unicodedata.normalize("NFC", s)
 
+
+def _drop_revised_duplicates(files):
+    """같은 .indd의 '(수정)'본과 원본이 함께 있으면 원본(비-수정)을 제외한다.
+
+    '(수정)'은 개정/교정본이 최종본이므로, 원본까지 함께 추출하면 동일 지문이
+    중복되어 중요어휘 등에서 헤더 중복·좌우 정렬 어긋남(test1 04부터 엉망)을
+    유발한다. '(수정전)' 같은 다른 토큰은 매치되지 않으므로 건드리지 않는다.
+    """
+    def _base(name):
+        # '(수정)' 토큰(및 주변 공백)만 제거 — '(수정전)' 등은 매치 안 됨
+        return re.sub(r"\s*\(수정\)\s*", "", name)
+    norm = {f: _nfc(os.path.basename(f)) for f in files}
+    revised_bases = {_base(n) for n in norm.values() if "(수정)" in n}
+    return [
+        f for f in files
+        if "(수정)" in norm[f] or _base(norm[f]) not in revised_bases
+    ]
+
+
 _DIR = os.path.dirname(os.path.abspath(__file__))
 _CONFIG_PATH = os.path.join(_DIR, "config.json")
 

@@ -4354,6 +4354,26 @@ def parse_extracted(extracted_path, vocab_left, vocab_right,
                     _vb for _vb in vocab_blocks
                     if _vb.get("q_num", "") or _is_textbook_source(_vb.get("source", ""))
                 ]
+            else:
+                # lecture_details가 없어도, q_num을 부여받은 강/test에 속하면서
+                # 정작 q_num을 못 받은 빈칸어휘 블록은 제거한다. 이런 블록은
+                #   ① 긴 지문(41~42 등)이 프레임 분할되며 생긴 spillover 꼬리, 또는
+                #   ② (수정)/원본이 함께 추출된 중복본의 잉여 블록
+                # 이며, 남겨 두면 _convert_vocab_blocks의 pre_split 경로에서 stale
+                # 인덱스로 잘못된 헤더(중복 'test1 03' 등)가 붙어 좌/우 정렬이
+                # test1 04부터 한 칸씩 어긋난다. q_num을 받은 강/test가 없는
+                # 블록(문장배열 미추출 등)은 판단 불가이므로 보존한다.
+                _lecs_with_qnums = {
+                    _lec for _lec, _qs in _lec_sb_qnums_orig.items() if _qs
+                }
+                vocab_blocks = [
+                    _vb for _vb in vocab_blocks
+                    if _vb.get("q_num", "")
+                    or _is_textbook_source(_vb.get("source", ""))
+                    or _lecture_map.get(
+                        (_vb.get("source", ""), _vb.get("page_off", -1)), ""
+                    ) not in _lecs_with_qnums
+                ]
 
             grammar_select_blocks = _filter_blocks_by_lecture(
                 grammar_select_blocks, _lecture_map, selected_lectures, lecture_details)
