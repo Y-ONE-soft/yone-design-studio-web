@@ -213,29 +213,66 @@ def _gdrive_safe_copy(src, dst, log=None, retries=5):
         if attempt < retries - 1:
             time.sleep(backoffs[min(attempt, len(backoffs) - 1)])
 
-    # Python read(2) 5회 전부 실패 → /bin/cp 폴백.
-    # 별도 프로세스의 read(2)는 같은 GDrive FUSE에서도 EDEADLK를 회피하는 케이스가 있음.
-    # -c는 APFS clonefile 시도(다른 FS면 자동 read/write 폴백)이라 GDrive→APFS에도 무해.
+    # Python read(2) 전부 실패 → 별도 프로세스 / GUI 세션 폴백 (다단계).
+    # launchd 컨텍스트의 워커 스레드에서 Drive Stream 미적재 파일을 materialize할 때
+    # EDEADLK(Errno 11)가 나는데, python read·/bin/cp -c(clonefile)는 같은 데드락에
+    # 막힌다(실측: cp -c → "clonefile failed: Resource deadlock avoided").
+    # ditto(별도 프로세스)·Finder(GUI 세션 복사)가 이 컨텍스트 데드락을 우회하는
+    # 케이스가 있어 순차 폴백한다. (clonefile을 직접 부르는 cp -c는 사용하지 않음)
+
+    # 1) ditto — macOS 네이티브, FUSE 호환성 우수, clonefile 미사용
     try:
         if os.path.exists(dst):
             os.remove(dst)
         res = subprocess.run(
-            ["/bin/cp", "-c", src_resolved, dst],
+            ["/usr/bin/ditto", src_resolved, dst],
             capture_output=True, text=True, timeout=300
         )
         if res.returncode == 0 and os.path.exists(dst) \
                 and os.path.getsize(dst) == expected_size:
             if log:
-                log(f"  [GDrive 복사] /bin/cp 폴백 성공")
+                log("  [GDrive 복사] ditto 폴백 성공")
             return True, ""
-        cp_err = (res.stderr or res.stdout or "").strip() or f"rc={res.returncode}"
-        last_err = f"{last_err} / cp 폴백 실패: {cp_err}"
+        ditto_err = (res.stderr or res.stdout or "").strip() or f"rc={res.returncode}"
+        last_err = f"{last_err} / ditto 폴백 실패: {ditto_err}"
         if log:
-            log(f"  [GDrive 복사] /bin/cp 폴백 실패: {cp_err}")
+            log(f"  [GDrive 복사] ditto 폴백 실패: {ditto_err}")
     except (OSError, subprocess.SubprocessError) as e:
-        last_err = f"{last_err} / cp 폴백 예외: {type(e).__name__}: {e}"
+        last_err = f"{last_err} / ditto 폴백 예외: {type(e).__name__}: {e}"
         if log:
-            log(f"  [GDrive 복사] /bin/cp 폴백 예외: {e}")
+            log(f"  [GDrive 복사] ditto 폴백 예외: {e}")
+
+    # 2) Finder duplicate (AppleScript) — GUI 세션의 Finder가 복사하므로
+    #    launchd 워커 스레드의 File Provider materialize 데드락을 우회한다.
+    try:
+        if os.path.exists(dst):
+            os.remove(dst)
+        dst_dir = os.path.dirname(dst) or "."
+        osa = ('tell application "Finder" to duplicate '
+               f'(POSIX file "{src_resolved}" as alias) '
+               f'to (POSIX file "{dst_dir}" as alias) with replacing')
+        res = subprocess.run(
+            ["/usr/bin/osascript", "-e", osa],
+            capture_output=True, text=True, timeout=300
+        )
+        # Finder는 원본 파일명으로 복사 → dst 이름으로 이동
+        finder_copied = os.path.join(dst_dir, os.path.basename(src_resolved))
+        if os.path.exists(finder_copied) and finder_copied != dst:
+            if os.path.exists(dst):
+                os.remove(dst)
+            os.rename(finder_copied, dst)
+        if os.path.exists(dst) and os.path.getsize(dst) == expected_size:
+            if log:
+                log("  [GDrive 복사] Finder 폴백 성공")
+            return True, ""
+        finder_err = (res.stderr or "").strip() or "복사물 없음/크기 불일치"
+        last_err = f"{last_err} / Finder 폴백 실패: {finder_err}"
+        if log:
+            log(f"  [GDrive 복사] Finder 폴백 실패: {finder_err}")
+    except (OSError, subprocess.SubprocessError) as e:
+        last_err = f"{last_err} / Finder 폴백 예외: {type(e).__name__}: {e}"
+        if log:
+            log(f"  [GDrive 복사] Finder 폴백 예외: {e}")
 
     return False, last_err
 
