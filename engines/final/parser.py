@@ -4969,6 +4969,37 @@ def parse_extracted(extracted_path, vocab_left, vocab_right,
     if len(sl_patterns) > 1:
         warnings.append(f"SL 명명 불일치: {sl_patterns}")
 
+    # Vol2: 영작 헤더-내용 일관성 (리딩파워 시트 대조).
+    # 혼합 파일(리딩파워+교과서)에서 헤더↔지문이 통째로 뒤바뀌어도 겉보기엔
+    # 멀쩡해 눈으로 못 잡는 스왑(광문2 "교과서4과 본문1"=RP19 노동자착취)을
+    # 내용 기반으로 검출한다. 영어 choices를 시트와 매칭해 실제 강·번호를 도출,
+    # 배정된 헤더와 다르면 경고.
+    if rp_sheet_data:
+        _w_pairs = vol2.get("서술형영작", []) or []
+        _w_hdrs = vol2.get("영작_헤더_상세", []) or []
+        for _hi, _he in enumerate(_w_hdrs):
+            _hdr = _nfc(_he.get("header", ""))
+            _s = _he.get("start_idx", 0)
+            _e = _w_hdrs[_hi + 1].get("start_idx", len(_w_pairs)) if _hi + 1 < len(_w_hdrs) else len(_w_pairs)
+            _matched = None
+            for _p in (_w_pairs[_s:_e] if isinstance(_w_pairs, list) else []):
+                _ch = (_p.get("choices", "") or "") if isinstance(_p, dict) else ""
+                if len(_ch) < 20:
+                    continue
+                _matched = _rp_writing_to_label(_ch, rp_sheet_data, (_p.get("korean", "") or ""))
+                if _matched:
+                    break
+            if not _matched:
+                continue  # 시트에 없는 내용(교과서/모의 등) — 대상 아님
+            _L, _is_ex, _n = _matched
+            _cn = f"리딩파워 {_L}강 {'Ex' if _is_ex else ''}{str(_n).zfill(2)}"
+            if "교과서" in _hdr:
+                warnings.append(f"영작 헤더-내용 불일치: '{_hdr}' 헤더에 리딩파워 내용({_cn}) — 스완 의심")
+            elif "리딩파워" in _hdr:
+                _hm = re.search(r"리딩파워\s+(\d+)강\s+(Ex)?0*(\d+)", _hdr)
+                if _hm and (int(_hm.group(1)), bool(_hm.group(2)), int(_hm.group(3))) != (_L, _is_ex, _n):
+                    warnings.append(f"영작 헤더-내용 불일치: '{_hdr}' ≠ 내용({_cn})")
+
     # 중요어휘 좌/우 지문수 일관성 (고3은 오른쪽 헤더 없으므로 스킵)
     if not is_g3:
         left_text = vol1.get("중요어휘_왼", "")
