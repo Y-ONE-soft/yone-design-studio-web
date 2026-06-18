@@ -2124,6 +2124,9 @@ def _find_manuscript_file(manuscript_dir, expected_filename, used_files=None):
     ext_expected = os.path.splitext(expected_filename)[1].lower()
     norm_expected = _normalize(expected_filename)
     exp_base, exp_has_paren = _split_paren(expected_filename)
+    # 답안 토큰: 파일명이 '문제'본인지 '정답/해설/답안'본인지 구분하는 기준.
+    _ANSWER_TOKENS = ('정답', '해설', '답안')
+    exp_has_ans = any(t in norm_expected for t in _ANSWER_TOKENS)
 
     exact = []
     partial = []        # (file_path, lcs_score)
@@ -2144,6 +2147,13 @@ def _find_manuscript_file(manuscript_dir, expected_filename, used_files=None):
         if f_norm == norm_expected:
             exact.append(fp)
             continue
+        cand_has_ans = any(t in f_norm for t in _ANSWER_TOKENS)
+        # 답안 슬롯(기대명에 정답/해설/답안 포함)에는 답안 토큰이 없는 '문제' 파일을
+        # 매칭 후보에서 제외. 예: 기대 '빈칸어법 정답지'에 대해 '빈칸어법'(문제)이
+        # prefix subsequence라 partial 1순위로 잡혀 '빈칸어법 해설'(ratio 후보)을
+        # 제치고 선택되던 버그 차단. 답안본 명명이 해설/정답지/답안 어느 쪽이든 답안본 우선.
+        if exp_has_ans and not cand_has_ans:
+            continue
         if _is_subseq(f_norm, norm_expected) or _is_subseq(norm_expected, f_norm):
             partial.append((fp, _lcs_len(f_norm, norm_expected)))
             continue
@@ -2153,11 +2163,8 @@ def _find_manuscript_file(manuscript_dir, expected_filename, used_files=None):
             paren_variant.append(fp)
             continue
         # LCS 비율 매칭 (위 모두 실패 시 fallback 후보로만 보관).
-        # 정답지 휴리스틱: expected에 '정답/해설/답안' 토큰이 없고 후보에는 있으면 제외.
-        # (정답지 파일을 본 파일 슬롯에 잘못 매칭하는 것을 막음)
-        _ANSWER_TOKENS = ('정답', '해설', '답안')
-        exp_has_ans = any(t in norm_expected for t in _ANSWER_TOKENS)
-        cand_has_ans = any(t in f_norm for t in _ANSWER_TOKENS)
+        # 정답지 휴리스틱(반대 방향): expected에 답안 토큰이 없는데 후보에는 있으면 제외.
+        # (정답/해설 파일을 '문제' 슬롯에 잘못 매칭하는 것을 막음)
         if cand_has_ans and not exp_has_ans:
             continue
         lcs = _lcs_len(f_norm, norm_expected)
