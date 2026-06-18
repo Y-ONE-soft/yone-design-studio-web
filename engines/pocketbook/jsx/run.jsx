@@ -1030,6 +1030,35 @@ var settingsPath = "__SETTINGS_PATH__";
             newCount++;
         }
 
+        // ── 본문↔리뷰 지문 일치 검사 (완성본 파일의 리뷰가 엉뚱한 과인 경우 감지) ──
+        // 스프레드에서 가장 긴 영문 텍스트의 시그니처(소문자 영문자만) 추출.
+        function _spreadEngSig(sdoc, spIdx) {
+            var sig = "";
+            try {
+                var pgs = sdoc.spreads[spIdx].pages.everyItem().getElements();
+                for (var i=0;i<pgs.length;i++){
+                    var tfs = pgs[i].textFrames.everyItem().getElements();
+                    for (var j=0;j<tfs.length;j++){
+                        var t = String(tfs[j].contents).toLowerCase().replace(/[^a-z]/g,"");
+                        if (t.length > sig.length) sig = t;
+                    }
+                }
+            } catch(e){}
+            return sig.length > 300 ? sig.substring(0,300) : sig;
+        }
+        function _textEngSig(str) { return String(str||"").toLowerCase().replace(/[^a-z]/g,""); }
+        // 본문 시그니처의 중간 청크가 리뷰 시그니처에 포함되면 같은 지문으로 판단.
+        function _samePassage(aSig, bSig) {
+            if (!aSig || !bSig || aSig.length < 40 || bSig.length < 40) return true; // 정보부족→보수적 일치
+            for (var f=0.3; f<=0.61; f+=0.3) {
+                var st = Math.floor(aSig.length*f);
+                if (st+25 > aSig.length) st = aSig.length-25;
+                if (st < 0) st = 0;
+                if (bSig.indexOf(aSig.substring(st, st+25)) >= 0) return true;
+            }
+            return false;
+        }
+
         // 완성본이 있는 과: 분석본 지문 본문 복사 + 같은 순번 리뷰 복사
         function copyLessonFromCompleted(grp, ym, fileCategory) {
             var srcDoc = openLookupDocByYm(ym);
@@ -1120,9 +1149,34 @@ var settingsPath = "__SETTINGS_PATH__";
             // 2) 리뷰테스트: 본문과 같은 순번으로 복사 (포함 모드일 때만)
             if (includeReviewTest) {
                 var revStart = doc.spreads.length;
-                var revCopied = 0, revEmpty = 0;
+                var revCopied = 0, revEmpty = 0, revFixed = 0;
+                var _rtMapTB = S.review_test_map || {};
+                var _rtDataTB = _rtMapTB[fileCategory] || _rtMapTB[grp.token] || null;
+                var _rtPassTB = (_rtDataTB && _rtDataTB.passages) ? _rtDataTB.passages : [];
+                var _docxSig = [];
+                for (var _di=0; _di<_rtPassTB.length; _di++) _docxSig.push(_textEngSig(_rtPassTB[_di].answer_text));
                 for (var r = 0; r < revPlan.length; r++) {
                     if (revPlan[r] >= 0) {
+                        // 본문↔완성본리뷰 일치 검사 (불일치 = 완성본 파일 오류 → docx 리뷰로 대체)
+                        var _bjr = assign[r];
+                        var _bodySig = (_bjr >= 0) ? _spreadEngSig(srcDoc, bodies[_bjr].idx) : "";
+                        var _revSig = _spreadEngSig(srcDoc, revPlan[r]);
+                        if (_bodySig && _revSig && !_samePassage(_bodySig, _revSig)) {
+                            var _pick = -1;
+                            for (var _ds=0; _ds<_docxSig.length; _ds++){
+                                if (_docxSig[_ds].length>=40 && _samePassage(_bodySig, _docxSig[_ds])) { _pick=_ds; break; }
+                            }
+                            if (_pick < 0 && r < _rtPassTB.length) _pick = r;
+                            if (_pick >= 0 && _rtPassTB[_pick] && _rtPassTB[_pick].blank_text) {
+                                createMemtestSpread(doc, refDoc, templateSpreads, _rtPassTB[_pick], masters, stMemtest, stMemCopy, "F");
+                                revFixed++;
+                                log("    [리뷰교정] " + grp.token + " " + (r+1) + "번: 완성본 리뷰가 본문과 불일치 → docx로 대체");
+                            } else {
+                                createEmptyMemtestSpread(doc, refDoc, templateSpreads, masters, "F"); revEmpty++;
+                                log("    [리뷰교정] " + grp.token + " " + (r+1) + "번: 완성본 리뷰 불일치, docx 없음 → 빈 페이지");
+                            }
+                            continue;
+                        }
                         try { srcDoc.spreads[revPlan[r]].duplicate(LocationOptions.AFTER, doc.spreads[-1]); revCopied++; }
                         catch(e) { createEmptyMemtestSpread(doc, refDoc, templateSpreads, masters, "F"); revEmpty++; }
                     } else {
@@ -1130,7 +1184,7 @@ var settingsPath = "__SETTINGS_PATH__";
                     }
                 }
                 if (doc.spreads.length > revStart) correctCopiedMasters(revStart, doc.spreads.length, "textbook");
-                log("  [리뷰] " + grp.token + ": 본문 " + copyCnt + (fillCnt > 0 ? ("(위치복구" + fillCnt + ")") : "") + (newCnt > 0 ? ("+신규" + newCnt) : "") + ", 리뷰 " + revCopied + (revEmpty > 0 ? ("+빈" + revEmpty) : "") + " (F-마스터)");
+                log("  [리뷰] " + grp.token + ": 본문 " + copyCnt + (fillCnt > 0 ? ("(위치복구" + fillCnt + ")") : "") + (newCnt > 0 ? ("+신규" + newCnt) : "") + ", 리뷰 " + revCopied + (revFixed > 0 ? ("+교정" + revFixed) : "") + (revEmpty > 0 ? ("+빈" + revEmpty) : "") + " (F-마스터)");
             } else {
                 log("  [본문] " + grp.token + ": " + copyCnt + (fillCnt > 0 ? ("(위치복구" + fillCnt + ")") : "") + (newCnt > 0 ? ("+신규" + newCnt) : "") + "개");
             }
