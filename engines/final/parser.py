@@ -921,6 +921,14 @@ def _split_sentence_blocks(paras, source, sentence_styles, output_list,
                 if re.search(r"Read\s*More", lab, re.IGNORECASE):
                     return "RM"
                 return "FR"
+            # 추가지문 마커: {3과 추가지문}/[4과 추가지문] → 영작과 동일 헤더로 통일
+            m_add = re.match(r"^[\[{]?\s*(?:(\d+)\s*과\s*)?추가지문\s*(\d*)\s*[\]}]?$", t)
+            if m_add:
+                if m_add.group(1):
+                    return f"{m_add.group(1)}과 추가지문"
+                if m_add.group(2):
+                    return f"추가지문{m_add.group(2)}"
+                return "추가지문"
             # 혼합 워크북: '[N과 Deep Learning]' 인라인 마커 → '본문6@과N' (교과서 딥러닝 섹션)
             _dlm = _dl_lesson_marker(t)
             if _dlm:
@@ -1116,6 +1124,14 @@ def _split_insert_blocks(paras, source, insert_styles, output_list,
                 if re.search(r"Read\s*More", lab, re.IGNORECASE):
                     return "RM"
                 return "FR"
+            # 추가지문 마커: {3과 추가지문}/[4과 추가지문] → 영작과 동일 헤더로 통일
+            m_add = re.match(r"^[\[{]?\s*(?:(\d+)\s*과\s*)?추가지문\s*(\d*)\s*[\]}]?$", t)
+            if m_add:
+                if m_add.group(1):
+                    return f"{m_add.group(1)}과 추가지문"
+                if m_add.group(2):
+                    return f"추가지문{m_add.group(2)}"
+                return "추가지문"
             # 혼합 워크북: '[N과 Deep Learning]' 인라인 마커 → '본문6@과N' (교과서 딥러닝 섹션)
             _dlm = _dl_lesson_marker(t)
             if _dlm:
@@ -2352,6 +2368,9 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
             """passage_label 기반 교과서 헤더. 실패 시 None."""
             if not _label:
                 return None
+            # 추가지문 마커는 과 매핑 없이 라벨 그대로 헤더 (영작과 통일)
+            if "추가지문" in _label:
+                return _label
             # 딥러닝 인코딩: "본문N@과M" → 과 번호가 라벨에 직접 포함됨 (page_off 매핑 불필요)
             # 딥러닝 워크북은 본문 슬롯에 매핑되지만 헤더 라벨은 "교과서{M}과 딥러닝"으로 출력.
             _dl_m = re.match(r"^(본문\d+)@과(\d+)$", _label)
@@ -2868,6 +2887,9 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
         def _ins_header_from_label(_src, _page_off, _label):
             if not _label:
                 return None
+            # 추가지문 마커는 과 매핑 없이 라벨 그대로 헤더 (영작과 통일)
+            if "추가지문" in _label:
+                return _label
             # 딥러닝 인코딩: "본문N@과M" → 과 번호가 라벨에 직접 포함됨 (page_off 매핑 불필요)
             # 딥러닝 워크북은 본문 슬롯에 매핑되지만 헤더 라벨은 "교과서{M}과 딥러닝"으로 출력.
             _dl_m = re.match(r"^(본문\d+)@과(\d+)$", _label)
