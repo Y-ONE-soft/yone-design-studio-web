@@ -81,6 +81,28 @@ def _drop_identical_duplicates(files):
     return [f for f in files if f not in drop]
 
 
+def _extract_ebs_subscope(scope_text):
+    """혼합 시험범위에서 EBS(리딩파워/올포/올림포스) 성분만 추출.
+
+    한 워크북이 교과서 단원과 EBS 강을 함께 담으면(예: '리딩파워19강,미래엔김4과')
+    classify_scope가 'textbook'으로만 분류해 EBS 강이 누락된다. EBS 접두어에 이어지는
+    강 목록만 캡처하므로 교과서 과번호가 강번호로 오인되지 않는다('미래엔김4과'의 '4' 제외).
+
+    '리딩파워19강,미래엔김4과' → '리딩파워19강'
+    '올포5,8강,능률민3과'      → '올포5,8강'
+    '리딩파워15,16,17강'       → '리딩파워15,16,17강' (순수 EBS는 그대로 반환)
+    EBS 성분이 없으면 None.
+    """
+    m = re.search(
+        r"(?:리딩파워|Reading\s*Power|올포|올림포스)\s*"
+        r"(?:\d+(?:\s*[-~]\s*\d+)?\s*강?\s*,?\s*)+",
+        _nfc(scope_text or ""),
+    )
+    if not m:
+        return None
+    return m.group(0).strip().rstrip(",").strip()
+
+
 _DIR = os.path.dirname(os.path.abspath(__file__))
 _CONFIG_PATH = os.path.join(_DIR, "config.json")
 
@@ -639,7 +661,26 @@ class FinalEngine(BaseEngine):
         # 같은 25년3월 어법수정 워드를 가리킴) 대비 — 모든 scope를 가로질러 dedup.
         _seen_word_files = set()
 
-        for s in scopes:
+        # 혼합 scope(교과서+EBS가 한 워크북에 공존, 예: '리딩파워19강,미래엔김4과') 대응:
+        # classify_scope가 'textbook'으로만 분류해 EBS 강 어법수정이 통째로 누락되므로,
+        # 어법수정 로딩 한정으로 EBS 성분을 별도 ebs scope 항목으로 펼쳐 둘 다 로딩한다.
+        _grammar_scopes = []
+        for _gs in scopes:
+            _grammar_scopes.append(_gs)
+            if _gs.get("type") == "textbook" and _gs.get("grammar_source") == "word_file":
+                _ebs_sub = _extract_ebs_subscope(_gs.get("scope", ""))
+                if _ebs_sub:
+                    _ebs_type = ("ebs_readingpower"
+                                 if ("리딩파워" in _ebs_sub or "Reading" in _ebs_sub)
+                                 else "ebs_olympos")
+                    _grammar_scopes.append({
+                        "file": _gs.get("file"), "scope": _ebs_sub,
+                        "type": _ebs_type, "grammar_source": "word_file",
+                    })
+                    log(f"  [어법수정] 혼합 scope EBS 성분 분리 로딩: "
+                        f"'{_gs.get('scope')}' → '{_ebs_sub}' ({_ebs_type})")
+
+        for s in _grammar_scopes:
             if s["grammar_source"] != "word_file":
                 continue  # 마더텅 등 workbook_a1 소스는 스킵
 
@@ -1240,9 +1281,11 @@ class FinalEngine(BaseEngine):
                 # 리딩파워 강 범위: scope 텍스트("리딩파워3,5,6강")에서 파싱
                 _rp_lectures = set()
                 for _s_rp in scopes:
-                    if _s_rp.get("type") != "ebs_readingpower":
+                    # 혼합 scope(교과서+리딩파워, 예: '리딩파워19강,미래엔김4과')도 포함하도록
+                    # type 필터 대신 EBS 성분을 추출해 리딩파워 강을 수집한다.
+                    _scope_txt = _extract_ebs_subscope(_s_rp.get("scope", "")) or ""
+                    if not ("리딩파워" in _scope_txt or "Reading" in _scope_txt):
                         continue
-                    _scope_txt = _nfc(_s_rp.get("scope", ""))
                     # "리딩파워3,5,6강" / "리딩파워1-4강" / "리딩파워9-11" 등
                     _s_body = _scope_txt.replace("\ub9ac\ub529\ud30c\uc6cc", "").replace("Reading", "")
                     _s_body = _s_body.replace("\uac15", "").strip()
