@@ -461,12 +461,23 @@ class PocketbookEngine(BaseEngine):
         seen_keys = set()
         missing_tb_cats = []
 
-        # 혼합(mixed) 파일은 교과서/모의고사 하위 카테고리로 분리해 각각 탐색
+        # 혼합(mixed) 파일은 교과서/모의고사 하위 카테고리로 분리해 각각 탐색.
+        # 멀티날짜 모의고사(예: 분석본04(25년6월,22년6월,22년3월))는 _detect_category가
+        # 첫 날짜만 반환하므로, 파일명의 모든 YY년M월을 각각 탐색해야 secondary 날짜
+        # 리뷰테스트(22년6월/22년3월 등)가 누락되지 않는다. (날짜 없는 마더텅은 그대로 유지)
         expanded_entries = []  # [(cat, ft), ...]
         for idx, cat in enumerate(categories):
             ft = file_types[idx] if idx < len(file_types) else "textbook"
             if ft == "mixed":
                 expanded_entries.extend(self._split_mixed_category(cat))
+            elif ft == "mockexam" and analysis_files and idx < len(analysis_files):
+                nfc_name = unicodedata.normalize("NFC", os.path.basename(analysis_files[idx]))
+                dates = re.findall(r"\d{2}년\s*\d{1,2}월", nfc_name)
+                if dates:
+                    for d in dates:
+                        expanded_entries.append((re.sub(r"\s+", "", d), "mockexam"))
+                else:
+                    expanded_entries.append((cat, ft))
             else:
                 expanded_entries.append((cat, ft))
 
