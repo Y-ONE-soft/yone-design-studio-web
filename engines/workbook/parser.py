@@ -1998,14 +1998,20 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
 
     # 교과서 Step3: 번호 없는 hwpx 파일 처리 (normal/short가 모두 비어있을 때)
     if not normal_items and not short_items:
+        # mockexam 번호 매칭을 실제로 수행한 경우(normal/short 지정)에만 "N번" 파일을
+        # '위에서 이미 처리됨'으로 간주해 제외한다. 수능특강/EBS처럼 mockexam이 비어
+        # 번호 매칭 자체를 하지 않은 경우에는 "...37번.hwpx" / "...41~42번.hwpx" 같은
+        # 파일도 번호 루프에서 소비된 적이 없으므로 본문(textbook) 후보로 포함해야 한다.
+        # (이 가드가 없으면 수능특강 Step3 모의고사형 분리파일이 전부 누락 → 빈 결과)
+        _had_number_matching = bool(normal_questions or short_questions)
         # 후보 파일 수집
         candidate_files = []
         for fname_raw in sorted(os.listdir(step3_dir)):
             fname = _nfc(fname_raw)
             if not fname.endswith('.hwp') and not fname.endswith('.hwpx') and not fname.endswith('.docx'):
                 continue
-            if re.search(r'\d+번\.(?:hwpx?|docx)', fname, re.I):
-                continue  # 이미 위에서 처리 대상이었던 파일
+            if _had_number_matching and re.search(r'\d+번\.(?:hwpx?|docx)', fname, re.I):
+                continue  # 번호 매칭으로 이미 처리 대상이었던 파일
             if fname_raw.startswith('.'):
                 continue
             candidate_files.append(fname_raw)
