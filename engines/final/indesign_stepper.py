@@ -686,7 +686,7 @@ try {{
     }} catch(eRO2) {{}}
 
     doc.save();
-    doc.close(SaveOptions.NO);
+    // 조판 결과는 닫지 않고 열어둠 (결과 즉시 확인용)
 
 }} catch(ex) {{
     log("ERROR=" + ex.message);
@@ -705,17 +705,8 @@ def run_typeset(settings_path, log):
     log(f"[조판] InDesign: {app}")
 
     _dismiss_indesign_dialogs(app)
-    # 기존 문서 닫기
-    try:
-        boot = 'while(app.documents.length>0)app.documents[0].close(SaveOptions.NO);'
-        escaped = boot.replace('"', '\\"')
-        subprocess.run(
-            ["osascript", "-e",
-             f'tell application "{app}" to do script "{escaped}" language javascript'],
-            capture_output=True, text=True, timeout=15
-        )
-    except Exception:
-        pass
+    # 작업 중인 다른 문서 보호: 전체 문서 닫기(close-all) 제거.
+    # 조판 대상은 매 실행 safe_copy_indd가 새 경로(_2, _3…)로 생성하므로 충돌 없음.
 
     with open(settings_path, encoding="utf-8") as f:
         settings = json.load(f)
@@ -2341,7 +2332,7 @@ try {{
     }} catch(eRO2) {{}}
 
     doc.save();
-    doc.close(SaveOptions.NO);
+    // 조판 결과는 닫지 않고 열어둠 (결과 즉시 확인용)
 
 }} catch(ex) {{
     log("ERROR=" + ex.message);
@@ -3297,7 +3288,7 @@ try {{
     }} catch(eRO2) {{}}
 
     doc.save();
-    doc.close(SaveOptions.NO);
+    // 조판 결과는 닫지 않고 열어둠 (결과 즉시 확인용)
 
 }} catch(ex) {{
     log("ERROR=" + ex.message);
