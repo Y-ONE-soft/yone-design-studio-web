@@ -261,6 +261,27 @@ class PocketbookEngine(BaseEngine):
         return result
 
     @staticmethod
+    def _resolve_subject_folder(folder):
+        """완성 포켓북 과목 폴더의 로마/아라비아 숫자 표기 차이 흡수.
+
+        config의 existing_pocketbooks는 '영어1'/'영어2'(아라비아)인데 실제 폴더는
+        '영어Ⅰ'/'영어Ⅱ'(로마)일 수 있다. 이 경우 완성본을 못 찾아 교과서 지문이
+        전부 신규조판되던 버그가 있었다(리뷰테스트 탐색은 norm_subj.replace로 이미
+        흡수하지만 완성 포켓북 경로만 누락). 실제 폴더가 있으면 그대로, 없으면
+        표기를 바꿔 존재하는 폴더를 찾는다."""
+        import unicodedata
+        if not folder or os.path.isdir(folder):
+            return folder
+        base, name = os.path.split(folder)
+        nfc = unicodedata.normalize("NFC", name)
+        for ar, ro in (("영어1", "영어Ⅰ"), ("영어2", "영어Ⅱ")):
+            if ar in nfc:
+                cand = os.path.join(base, nfc.replace(ar, ro))
+                if os.path.isdir(cand):
+                    return cand
+        return folder
+
+    @staticmethod
     def _expand_category(cat):
         """카테고리 문자열을 개별 항목으로 확장.
         'YBM김1,2과' → ['YBM김1과', 'YBM김2과']
@@ -943,6 +964,10 @@ class PocketbookEngine(BaseEngine):
 
         # 학년+학기에 해당하는 완성 포켓북 폴더만 검색
         all_pocketbooks = cfg.get("existing_pocketbooks", {})
+        # 과목 폴더 로마/아라비아 표기 차이 흡수 (영어1→영어Ⅰ 등). 안 하면 완성본
+        # 미발견으로 교과서 지문이 전부 신규조판됨.
+        all_pocketbooks = {k: (self._resolve_subject_folder(v) if isinstance(v, str) else v)
+                           for k, v in all_pocketbooks.items()}
         search_keys = []
         if mock_folder_key and mock_folder_key in all_pocketbooks:
             search_keys.append(mock_folder_key)
