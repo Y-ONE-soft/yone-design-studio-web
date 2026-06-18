@@ -31,6 +31,7 @@
   },
   "needs_underline": ["step2_a1", "step2_a1_btm", "step3"],
   "step3_exclude_footnotes": false,
+  "step1_c1_augment_passage": false,
   "mockexam": {},
   "verify": {
     "expected_steps": 7,

@@ -2329,8 +2329,12 @@ def parse_manuscript_folder(manuscript_dir, config, grade, year, month, log=None
         cleaned = _clean_empty_lines(paras)
 
         # step1_c1: 마더텅 형태(본문 도입부 + (A)(B)(C) 분할 본문)에서 도입부 paragraph에
-        # trailing 3+ space 추가 → processStep1C1이 BTM/BTM_T 분류 + 발문 자동 삽입
-        if step_key == "step1_c1":
+        # trailing 3+ space 추가 → processStep1C1이 BTM/BTM_T 분류 + 발문 자동 삽입.
+        # ※ 수능특강/EBS는 JSX가 도입부=본문 / (A)(B)(C)=일반 선지로 처리하도록 설계돼 있어
+        #   (run.jsx: "EBS처럼 헤더 다음 본문이 BTM이면 (A)(B)(C)도 일반 선지여야 하므로 건너뜀"),
+        #   이 augment가 적용되면 모의고사처럼 발문이 하단에 잘못 삽입된다. 따라서 config의
+        #   step1_c1_augment_passage=false인 엔진(수능특강 등)에서는 적용하지 않는다. 기본 True.
+        if step_key == "step1_c1" and config.get("step1_c1_augment_passage", True):
             cleaned = _augment_step1_c1_passage(cleaned)
 
         # 지문번호 추출
