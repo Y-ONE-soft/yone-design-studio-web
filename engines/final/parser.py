@@ -3647,7 +3647,11 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
 
                     # 리딩파워 영작: source별 문장배열 헤더 맵을 활용해 동일 강·번호로 매핑
                     # (파일명만 보고 Ex/일반을 결정하면 워크북01/워크북03처럼 내용이 반대인 경우 오매핑)
-                    if _is_rp_source(src_nfc):
+                    # 단, 리딩파워+교과서 혼합 파일(예: "(리딩파워19강,미래엔김4과)")의
+                    # 교과서 영작(q_num "본문N"/"RM"/"FR")은 리딩파워 경로로 보내면 안 된다.
+                    # (리딩파워 경로는 교과서 헤더를 못 만들어 → 아래 교과서 경로로 폴스루)
+                    _is_tb_marker_w = q_num.startswith("본문") or q_num in ("RM", "FR")
+                    if _is_rp_source(src_nfc) and not _is_tb_marker_w:
                         # source별 문장배열 헤더 리스트 (한 번만 구축)
                         if _rp_arr_hdrs is None:
                             _rp_arr_hdrs = {}
@@ -3666,15 +3670,18 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                             _rp_w_idx[src_nfc] = _cur_idx + 1
                         _arr_idx = _rp_w_seen[_wi_key]
                         header = None
-                        if _arr_list and _arr_idx < len(_arr_list):
-                            header = _arr_list[_arr_idx]
-                        # 2차 폴백: pair choices(영어)를 시트 데이터와 매칭해 실제 강/번호 도출
-                        # (광문2처럼 워크북 파일명/내용 불일치로 _arr_list가 부족한 경우에 유효)
-                        if not header and _pair_sheet_header:
+                        # 1순위: pair choices(영어)를 리딩파워 시트와 매칭한 실제 강·번호.
+                        # 내용 기반이라 가장 신뢰 — 혼합 파일(리딩파워+교과서)에서 문장배열
+                        # 헤더 '위치' 매핑(canonical 교과서-우선 순서)이 리딩파워↔교과서를
+                        # 통째로 뒤바꾸는 스왑(광문2 영작)을 차단한다.
+                        if _pair_sheet_header:
                             _pi_for_kor = _kor_to_pair_idx.get(i, i) if _kor_to_pair_idx else i
                             _sheet_hdr = _pair_sheet_header.get(_pi_for_kor)
                             if _sheet_hdr:
                                 header = _sheet_hdr
+                        # 2순위: source별 문장배열 헤더 위치 매핑 (시트 미매칭 시)
+                        if not header and _arr_list and _arr_idx < len(_arr_list):
+                            header = _arr_list[_arr_idx]
                         # 최종 폴백: 원본 q_num + lecture 조합
                         if not header:
                             eff_lec = kor_item.get("lecture_override", item_lecture) or item_lecture
