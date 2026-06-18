@@ -37,6 +37,50 @@ def _drop_revised_duplicates(files):
     ]
 
 
+def _drop_identical_duplicates(files):
+    """바이트 동일한 중복 .indd 제거.
+
+    로컬 미러에 워크북 재번호매김 전의 구버전(예: '광문2_워크북01(리딩파워15,16,17강)')이
+    남아 있으면, 같은 내용이 정본 '워크북02(리딩파워15,16,17강)'와 함께 추출되어 동일
+    지문이 두 번 들어가고 강 라벨/순서가 어긋난다. '(수정)'/'(수정전)' 토큰이 없어 기존
+    중복제거 로직에 걸리지 않으므로 별도 처리한다.
+
+    크기가 같은 파일끼리만 MD5를 비교해(정상 케이스 = 동일 크기 충돌 없음 → 해시 0회)
+    내용이 완전히 동일하면 워크북 번호가 가장 큰(= 최신 재번호) 파일만 남긴다.
+    바이트 동일 파일만 제거하므로 콘텐츠 손실 위험이 없다.
+    """
+    import hashlib
+    from collections import defaultdict
+    by_size = defaultdict(list)
+    for f in files:
+        try:
+            by_size[os.path.getsize(f)].append(f)
+        except OSError:
+            by_size[("__noerr__", f)].append(f)  # 크기 못 읽으면 단독 취급
+    def _wbnum(p):
+        m = re.search(r"워크북\s*(\d+)", _nfc(os.path.basename(p)))
+        return int(m.group(1)) if m else -1
+    drop = set()
+    for group in by_size.values():
+        if len(group) < 2:
+            continue
+        by_hash = defaultdict(list)
+        for f in group:
+            try:
+                with open(f, "rb") as fh:
+                    by_hash[hashlib.md5(fh.read()).hexdigest()].append(f)
+            except OSError:
+                by_hash[("__noerr__", f)].append(f)
+        for dups in by_hash.values():
+            if len(dups) < 2:
+                continue
+            keep = max(dups, key=_wbnum)  # 내용 동일 → 최신(최대) 워크북 번호 유지
+            for f in dups:
+                if f is not keep:
+                    drop.add(f)
+    return [f for f in files if f not in drop]
+
+
 _DIR = os.path.dirname(os.path.abspath(__file__))
 _CONFIG_PATH = os.path.join(_DIR, "config.json")
 
@@ -350,6 +394,9 @@ class FinalEngine(BaseEngine):
             if not ("수정전" in _nfc(os.path.basename(f))
                     and _lec_sig(f) in _clean_sigs)
         ]
+
+        # 미러에 남은 구버전(다른 워크북 번호) 바이트 동일 중복 제거 — 미러 미동기화 사고 방지
+        all_files = _drop_identical_duplicates(all_files)
 
         # 올포 파일만 분리 (학교별 워크북의 올포는 공용 파일로 대체)
         non_olpo = [f for f in all_files if "올포" not in _nfc(os.path.basename(f))]

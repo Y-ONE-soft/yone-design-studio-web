@@ -4994,7 +4994,7 @@ def parse_extracted(extracted_path, vocab_left, vocab_right,
             _L, _is_ex, _n = _matched
             _cn = f"리딩파워 {_L}강 {'Ex' if _is_ex else ''}{str(_n).zfill(2)}"
             if "교과서" in _hdr:
-                warnings.append(f"영작 헤더-내용 불일치: '{_hdr}' 헤더에 리딩파워 내용({_cn}) — 스완 의심")
+                warnings.append(f"영작 헤더-내용 불일치: '{_hdr}' 헤더에 리딩파워 내용({_cn}) — 스왑 의심")
             elif "리딩파워" in _hdr:
                 _hm = re.search(r"리딩파워\s+(\d+)강\s+(Ex)?0*(\d+)", _hdr)
                 if _hm and (int(_hm.group(1)), bool(_hm.group(2)), int(_hm.group(3))) != (_L, _is_ex, _n):
