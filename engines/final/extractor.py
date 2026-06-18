@@ -855,12 +855,8 @@ def extract_from_workbooks(indd_paths, style_filters, output_path, log):
 
     # InDesign 초기화
     _dismiss_indesign_dialogs(app_name)
-    try:
-        _jsx(app_name,
-             'while(app.documents.length>0)app.documents[0].close(SaveOptions.NO);',
-             timeout=15)
-    except Exception:
-        pass
+    # 작업 중인 다른 문서 보호: 전체 문서 닫기(close-all) 제거.
+    # 추출용 임시 복사본은 각 추출 종료 시 doc.close로 개별 정리됨.
 
     all_stories = []
 

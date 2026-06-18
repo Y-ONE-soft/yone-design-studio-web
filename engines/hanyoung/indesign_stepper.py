@@ -85,10 +85,8 @@ def run_typeset(settings_path, log):
     log(f"[InDesign] {app}")
 
     _dismiss(app)
-    try:
-        _jsx(app, 'while(app.documents.length>0)app.documents[0].close(SaveOptions.NO);')
-    except Exception:
-        pass
+    # 작업 중인 다른 문서 보호: 전체 문서 닫기(close-all) 제거.
+    # 조판 대상은 매 실행 safe_copy_indd가 새 경로(_2, _3…)로 생성하므로 충돌 없음.
 
     with open(settings_path, encoding="utf-8") as f:
         settings = json.load(f)
@@ -116,6 +114,14 @@ def _run_single_jsx(app, job, content, is_sero, settings_path, log, log_lines):
     # 영문 경로에 복사
     eng = "sero" if is_sero else "garo"
     tmp_indd = f"/tmp/hanyoung_{eng}.indd"
+    # 이전 실행에서 열어 둔 동일 이름 임시 결과 문서가 있으면 닫는다.
+    # (고정 임시 경로 재사용 — 열린 채로 두면 덮어쓰기/스테일 재오픈 충돌. 이름으로만 매칭해 정리)
+    _close_old = (
+        'for(var i=app.documents.length-1;i>=0;i--){'
+        'try{if(app.documents[i].name=="hanyoung_%s.indd")'
+        'app.documents[i].close(SaveOptions.NO);}catch(e){}}'
+    ) % eng
+    _jsx(app, _close_old)
     shutil.copy2(job["indd_path"], tmp_indd)
 
     # 전체 데이터를 JSON으로 저장
@@ -506,11 +512,10 @@ def _run_single_jsx(app, job, content, is_sero, settings_path, log, log_lines):
     ''', timeout=120)
     _log(log, log_lines, f"PDF: 성공 ({pdf_name})")
 
-    # 저장 + 닫기
+    # 저장 (결과는 닫지 않고 열어 둠 — 결과 즉시 확인용)
     _jsx(app, f'''
         var doc=app.activeDocument;
         doc.save(new File(Folder.temp.fsName+"/hanyoung_{eng}.indd"));
-        doc.close(SaveOptions.NO);
         app.scriptPreferences.userInteractionLevel=UserInteractionLevels.INTERACT_WITH_ALL;
     ''', timeout=60)
 
