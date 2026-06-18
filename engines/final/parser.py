@@ -3028,6 +3028,12 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
                 "header": header,
                 "paras": block["paras"]
             })
+        if os.environ.get("GM2_DEBUG"):
+            import sys as _sys
+            for _b in all_insert:
+                _h = _b.get("header", "")
+                if "교과서4과" in _h or "19강" in _h or "리딩파워 19" in _h:
+                    print(f"[GM2] hdr={_h!r} src=...{_nfc(_b.get('source',''))[-28:]!r} paras={len(_b.get('paras',[]))}", file=_sys.stderr)
         # 중복 헤더 제거
         seen_ins = set()
         deduped_ins = []
