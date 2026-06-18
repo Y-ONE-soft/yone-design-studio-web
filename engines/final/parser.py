@@ -1262,6 +1262,22 @@ def _split_writing_blocks(paras, source, kor_styles, view_styles,
                 current_qnum = "본문" + m2.group(1)
                 current_unit_override = None
                 continue
+            # 추가지문 헤더: [3과 추가지문], {4과 추가지문}, [추가지문], [추가지문2]
+            # — 워크북06(추가지문) 파일의 지문 구분 마커. examCode(YYMMQQ)도 번호
+            #   마커({XX})도 없어, 이 마커를 인식하지 못하면 q_num이 빈 문자열로 남아
+            #   직전 모의고사 헤더(예: 220634)에 통째로 흡수된다.
+            m_add = re.match(r"^[\[{]\s*(?:(\d+)\s*과\s*)?추가지문\s*(\d*)\s*[\]}]$", txt)
+            if m_add:
+                _add_ls = m_add.group(1)
+                _add_sq = m_add.group(2)
+                if _add_ls:
+                    current_qnum = f"{_add_ls}과 추가지문"
+                elif _add_sq:
+                    current_qnum = f"추가지문{_add_sq}"
+                else:
+                    current_qnum = "추가지문"
+                current_unit_override = None
+                continue
             # Project 헤더: [Project 1-1], [Project 1-2] (워크북 파일명에 Project 포함)
             m_proj = re.match(r"^[\[{]\s*Project\s*(\d+)[\s\-~]+(\d+)\s*[\]}]$", txt, re.IGNORECASE)
             if m_proj:
@@ -3517,6 +3533,15 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                 item_page_off = kor_item.get("page_off", -1)
                 src_nfc = _nfc(source)
                 is_olpo_src = _src_is_olpo(src_nfc)
+
+                # 추가지문 마커([N과 추가지문]): examCode·번호 가공 없이 헤더를 그대로 emit.
+                # (_split_writing_blocks에서 q_num에 "N과 추가지문"을 주입 — 인식 못 하면
+                #  직전 모의고사 헤더에 흡수되므로 다른 모든 변환보다 먼저 처리한다.)
+                if q_num and "추가지문" in q_num:
+                    if q_num != prev_qnum:
+                        writing_headers.append({"header": q_num, "start_idx": i})
+                        prev_qnum = q_num
+                    continue
 
                 # 워크북에 박힌 6자리 출처코드(YYMMQQ)가 있으면 최우선 사용 — 가짜번호 방지.
                 _ec_kor = kor_item.get("exam_code", "")
