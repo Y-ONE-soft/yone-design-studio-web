@@ -3821,6 +3821,16 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                             writing_headers.append({"header": header, "start_idx": i})
                     prev_qnum = q_num
 
+        if os.environ.get("GM2_DEBUG"):
+            import sys as _sys
+            for _h in writing_headers:
+                _hh = _nfc(_h.get("header", ""))
+                if "교과서4과" in _hh or "19강" in _hh:
+                    _ii = _h.get("start_idx", 0)
+                    _ki = writing_kor[_ii] if 0 <= _ii < len(writing_kor) else None
+                    _ko = _nfc(_ki.get("korean", "")) if isinstance(_ki, dict) else "?"
+                    _q = _ki.get("q_num", "") if isinstance(_ki, dict) else "?"
+                    print(f"[GM2W2] hdr={_hh!r} koridx={_ii} q={_q!r} ko={_ko[:30]!r}", file=_sys.stderr)
         if writing_headers:
             # writing_kor 기준 start_idx를 pairs 기준 index로 변환
             # (2강 01처럼 view가 kor보다 많은 케이스에서 view-only pair가 중간에 생기면
