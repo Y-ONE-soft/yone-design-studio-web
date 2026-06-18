@@ -3315,6 +3315,15 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                     return True
                 _q1_raw = int(_mm.group(1))
                 _q2_raw = int(_mm.group(2)) if _mm.group(2) else _q1_raw
+                # 다중시험 워크북 대응: 항목에 박힌 exam_code(YYMMQQ)로 정확한 시험을 특정해 검증.
+                # 2자리 q_num만 쓰면 아래 _src_yy_mm가 scope 텍스트의 '첫' 시험에만 매칭돼,
+                # 2번째 이후 시험 소속 문항이 잘못 제외된다 (예: wb"(25년3월,24년3월)"의
+                # 24년3월 34번 → q_num "34"가 첫 시험 25년3월{32,33}에 없어 드롭되는 버그).
+                _ec_w = (item.get("exam_code", "") or "").strip()
+                if len(_ec_w) >= 6 and _ec_w[:6].isdigit():
+                    _ec_allowed = _src_scope_qnums.get((_ec_w[:2], _ec_w[2:4]))
+                    if _ec_allowed is not None:
+                        return int(_ec_w[4:6]) in _ec_allowed
                 # q_num이 6자리 YYMMQQ 형태이면 자체 년월로 해당 시험의 numbers에서 직접 확인
                 # (복합 scope "23년6월_24년9월"에서 q_num="240930"인 경우 24년9월 시험으로 매칭)
                 if _q1_raw >= 1000:
