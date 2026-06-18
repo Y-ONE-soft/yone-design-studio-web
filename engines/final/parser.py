@@ -3028,19 +3028,22 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
                 "header": header,
                 "paras": block["paras"]
             })
-        if os.environ.get("GM2_DEBUG"):
-            import sys as _sys
-            for _b in all_insert:
-                _h = _b.get("header", "")
-                if "교과서4과" in _h or "19강" in _h or "리딩파워 19" in _h:
-                    print(f"[GM2] hdr={_h!r} src=...{_nfc(_b.get('source',''))[-28:]!r} paras={len(_b.get('paras',[]))}", file=_sys.stderr)
-        # 중복 헤더 제거
-        seen_ins = set()
+        # 중복 헤더 제거 — 같은 헤더가 충돌하면 '비-리딩파워' 블록을 우선한다.
+        # 리딩파워+교과서 혼합 파일(예: "(리딩파워19강,미래엔김4과)")의 리딩파워
+        # 삽입이 "교과서N과 본문M"으로 오라벨되어 먼저 들어오는 경우, 첫 블록 우선
+        # dedup이 진짜 교과서 본문 블록을 버리고, 이후 리딩파워 필터가 그 블록마저
+        # 제거해 교과서 본문이 통째로 사라졌다(광문2 본문1~4 누락). 리딩파워 삽입은
+        # 어차피 뒤에서 제거되므로, 충돌 시 비-리딩파워 블록으로 교체해 보존한다.
+        seen_idx = {}
         deduped_ins = []
         for b in all_insert:
-            if b["header"] in seen_ins:
+            h = b["header"]
+            if h in seen_idx:
+                _ex = deduped_ins[seen_idx[h]]
+                if _is_rp_source(_ex.get("source", "")) and not _is_rp_source(b.get("source", "")):
+                    deduped_ins[seen_idx[h]] = b
                 continue
-            seen_ins.add(b["header"])
+            seen_idx[h] = len(deduped_ins)
             deduped_ins.append(b)
         # 시험범위 필터링
         if scope_exams:
