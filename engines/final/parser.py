@@ -5020,7 +5020,9 @@ def parse_extracted(extracted_path, vocab_left, vocab_right,
         "총_문장배열": sum(len(b["items"]) for b in sentence_blocks),
         "총_문장삽입": len(insert_blocks),
         "총_어법수정": sum(len(b["lines"]) for b in (grammar_blocks if grammar_blocks else [])),
-        "총_서술형영작": len(writing_kor),
+        # 실제 조판되는 영작 쌍 수(필터 후). writing_kor(_build_vol2 호출 전 원본)는
+        # RM/본문제한 필터 반영 안 돼 실제 pairs 수와 어긋나므로 vol2 결과를 사용.
+        "총_서술형영작": len(vol2.get("서술형영작", [])),
     }
 
     # 비표준 발문/영문 typo 일괄 정규화 (헤더 제외 본문 텍스트만)
