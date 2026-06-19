@@ -2701,18 +2701,57 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
                 "source": src,
                 "header": header,
                 "items": block["items"],
+                "exam_code": _exam_code,
             }
             if block.get("passage"):
                 new_b["passage"] = block["passage"]
             all_blocks.append(new_b)
-        # 중복 헤더 제거 (같은 header가 여러 번 나오면 첫 번째만 유지)
-        seen_headers = set()
-        deduped = []
+        # 중복 헤더 제거 (같은 header가 여러 번 나오면 1개만 유지).
+        # 단순 "첫 번째 유지"는 모의고사 워크북에서 인접 문항 그랩이 examCode를
+        # 잘못 부여받아(_examCodeOf 페이지 근접 매핑) 같은 헤더에 옆 지문이 끼어들면
+        # idx 낮은 stray 그랩을 채택해 진짜 지문 문장배열을 통째 소실시킨다
+        # (명일1 230932: de Waal(Q32) 배열 소실, 감각신경(Q35) 배열이 중복 삽입된 버그).
+        # → 같은 헤더 후보가 여럿이면, 문장삽입(별도 경로라 stray 오염 없음·신뢰 가능)의
+        #   영문 토큰과 공유도가 최대인 그랩을 채택한다. 후보 1개거나 삽입 참조가
+        #   없으면 기존대로 첫 번째 유지(회귀 없음).
+        def _sig_toks(strs):
+            _s = set()
+            for _x in strs:
+                if isinstance(_x, dict):
+                    _x = _x.get("text", "")
+                for _w in re.findall(r"[A-Za-z]{5,}", str(_x).lower()):
+                    _s.add(_w)
+            return _s
+        _ins_toks_by_ec = {}
+        for _ib in sentence_insert_blocks:
+            _ec_ib = _ib.get("exam_code", "")
+            if _ec_ib:
+                _ins_toks_by_ec.setdefault(_ec_ib, set()).update(
+                    _sig_toks(_ib.get("paras", [])))
+        _cands_by_header = {}
+        _header_order = []
         for b in all_blocks:
-            if b["header"] in seen_headers:
+            _h = b["header"]
+            if _h not in _cands_by_header:
+                _cands_by_header[_h] = []
+                _header_order.append(_h)
+            _cands_by_header[_h].append(b)
+        deduped = []
+        for _h in _header_order:
+            _cands = _cands_by_header[_h]
+            if len(_cands) == 1:
+                deduped.append(_cands[0])
                 continue
-            seen_headers.add(b["header"])
-            deduped.append(b)
+            _ec_h = next((_c.get("exam_code", "") for _c in _cands
+                          if _c.get("exam_code")), "")
+            _ref = _ins_toks_by_ec.get(_ec_h)
+            if _ref:
+                _scored = [(len(_sig_toks(_c.get("items", [])) & _ref), _c)
+                           for _c in _cands]
+                _best_score, _best = max(_scored, key=lambda t: t[0])
+                deduped.append(_best if _best_score > 0 else _cands[0])
+            else:
+                deduped.append(_cands[0])
         # 시험범위 필터링
         if scope_exams:
             deduped = [b for b in deduped if _is_in_scope(b["header"], scope_exams)]
