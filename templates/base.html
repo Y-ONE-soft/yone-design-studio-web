@@ -12,6 +12,23 @@
        정적 main.css는 브라우저 캐시(max-age)로 늦게 반영되므로, 항상 새로 받는
        HTML에 인라인으로 둬서 캐시와 무관하게 다음 로드부터 즉시 적용되게 한다. */
     .role-assistant #progress-area { display: none !important; }
+
+    /* 조교 계정: 진행 로그를 숨긴 대신, 조판이 도는 동안 로딩 표시를 보여준다.
+       (관리자는 진행 로그가 그대로 보이므로 조교에게만 주입) */
+    .assistant-loading { margin-top: 40px; padding: 22px 26px;
+      border: 1px solid rgba(139,92,246,.35); border-radius: 16px;
+      background: rgba(139,92,246,.07); }
+    .assistant-loading .al-text { display: flex; align-items: center; gap: 10px;
+      font-size: 15px; font-weight: 500; color: #c4b5fd; margin-bottom: 14px; }
+    .assistant-loading .al-dot { width: 9px; height: 9px; border-radius: 50%;
+      background: #a78bfa; animation: al-pulse 1s ease-in-out infinite; }
+    .assistant-loading .al-bar { height: 6px; border-radius: 999px;
+      background: rgba(255,255,255,.08); overflow: hidden; }
+    .assistant-loading .al-bar > i { display: block; height: 100%; width: 35%;
+      border-radius: 999px; background: linear-gradient(90deg, #8b5cf6, #c4b5fd);
+      animation: al-indef 1.1s ease-in-out infinite; }
+    @keyframes al-indef { 0% { margin-left: -35%; } 100% { margin-left: 100%; } }
+    @keyframes al-pulse { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
   </style>
   <script>
     // ── iframe 임베드 차단 (clickjacking) ──
@@ -140,6 +157,26 @@
         console.log('%cY.ONE DESIGN 내부 시스템입니다. 이 콘솔에 코드를 붙여 넣으면 계정이 탈취되거나 데이터가 유출될 수 있습니다.', msgStyle);
         console.log('%c© 2026 Y.ONE DESIGN — All rights reserved.', msgStyle);
       } catch (_) {}
+    })();
+  </script>
+  <script>
+    // 조교 화면: 진행 상태(로그)를 숨겼으므로, 조판이 도는 동안 로딩 표시를 띄운다.
+    // run-btn의 disabled 상태(작업 시작=true, 종료 시 resetBtn에서 false)를 신호로 사용.
+    // 모든 typeset 페이지가 공통으로 쓰는 패턴이라 페이지별 수정 없이 동작한다.
+    (function () {
+      if (!document.body.classList.contains('role-assistant')) return;
+      var runBtn = document.getElementById('run-btn');
+      var result = document.getElementById('result-area');
+      if (!runBtn || !result) return;
+      var loader = document.createElement('div');
+      loader.id = 'assistant-loading';
+      loader.className = 'assistant-loading hidden';
+      loader.innerHTML =
+        '<div class="al-text"><span class="al-dot"></span>조판 진행 중… 완료되면 아래에 결과가 표시됩니다</div>' +
+        '<div class="al-bar"><i></i></div>';
+      result.parentNode.insertBefore(loader, result);
+      function sync() { loader.classList.toggle('hidden', !runBtn.disabled); }
+      new MutationObserver(sync).observe(runBtn, { attributes: true, attributeFilter: ['disabled'] });
     })();
   </script>
   {% block scripts %}{% endblock %}
