@@ -4619,16 +4619,43 @@ def parse_extracted(extracted_path, vocab_left, vocab_right,
                 if _lec:
                     _lec_sb_qnums_orig[_lec].append(_sb.get("q_num", ""))
             _lec_vb_idx = _dd(int)
+            _lec_prev_vb = {}        # lec -> 직전 vocab_block (길이분할 꼬리 병합용)
+            _lec_prev_lastnum = {}   # lec -> 직전 프레임 마지막 빈칸 번호
             for _vb in vocab_blocks:
                 _src = _vb.get("source", "")
                 _po = _vb.get("page_off", -1)
                 _lec = _lecture_map.get((_src, _po), "")
                 if _lec:
+                    _vnums = [int(_n) for _n in re.findall(
+                        r"(\d+)\s*\[", " ".join(_vb.get("en", [])))]
+                    _vfirst = _vnums[0] if _vnums else None
+                    _vlast = _vnums[-1] if _vnums else None
                     _idx = _lec_vb_idx[_lec]
-                    _lec_vb_idx[_lec] += 1
                     _qnums = _lec_sb_qnums_orig.get(_lec, [])
+                    _prev_last = _lec_prev_lastnum.get(_lec)
+                    # 마커를 모두 소진한 뒤 남은, 직전 프레임과 빈칸번호가 연속인
+                    # 프레임 = 장문 지문(예 test1 24~25)이 InDesign 프레임 용량으로
+                    # 분할된 꼬리. 현재는 q_num 미부여로 L4661 드롭에 걸려 본문 일부가
+                    # 통째 소실된다(명일3 중요어휘 test1 24~25의 본문25 401·402 소실).
+                    # → 직전(같은 지문) vocab_block에 병합한다. (고3 전용 경로)
+                    if (_idx >= len(_qnums) and _lec_prev_vb.get(_lec) is not None
+                            and _vfirst is not None and _prev_last is not None
+                            and _vfirst == _prev_last + 1):
+                        _prevb = _lec_prev_vb[_lec]
+                        _prevb["en"] = _prevb.get("en", []) + _vb.get("en", [])
+                        _prevb["kr"] = _prevb.get("kr", []) + _vb.get("kr", [])
+                        _vb["_merged_tail"] = True
+                        if _vlast is not None:
+                            _lec_prev_lastnum[_lec] = _vlast
+                        continue
+                    _lec_vb_idx[_lec] += 1
                     if _idx < len(_qnums) and _qnums[_idx]:
                         _vb["q_num"] = _qnums[_idx]
+                    _lec_prev_vb[_lec] = _vb
+                    if _vlast is not None:
+                        _lec_prev_lastnum[_lec] = _vlast
+            # 길이분할 꼬리로 직전 지문에 병합된 프레임은 목록에서 제거
+            vocab_blocks = [_v for _v in vocab_blocks if not _v.get("_merged_tail")]
 
             sentence_blocks = _filter_blocks_by_lecture(
                 sentence_blocks, _lecture_map, selected_lectures, lecture_details)
