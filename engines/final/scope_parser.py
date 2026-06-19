@@ -131,6 +131,12 @@ def parse_lectures_from_filename(filename):
                         result.extend(str(n) for n in range(s_n, e_n + 1))
                 elif part.isdigit():
                     result.append(part)
+            # 같은 괄호에 강+test 혼합 표기("29,30강,test2")이면 test 마커도 수집한다.
+            # (파일 내 순서상 test가 강 뒤에 오므로 result 끝에 추가 — 광문3 test2 누락 수정)
+            for _tm in re.finditer(r"test\s*(\d+)", inner, re.IGNORECASE):
+                _tl = "test" + _tm.group(1)
+                if _tl not in result:
+                    result.append(_tl)
             if result:
                 return result
     return []
