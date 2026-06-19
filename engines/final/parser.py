@@ -3666,7 +3666,7 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                 # 강/섹션(olpo_label) 변경 시 새 헤더 emit. 마더텅/딥러닝 force_emit과 동일 패턴 —
                 # 없으면 여러 강 영작이 한 헤더 아래 뭉쳐 "지문 번호 구분 없이 이어짐".
                 _olpo_force_emit = False
-                if is_olpo_src and item_lecture > 0:
+                if is_olpo_src and item_lecture > 0 and not kor_item.get("_dl_lesson"):
                     _cur_olpo_key = (item_lecture, kor_item.get("olpo_label", "") or "")
                     _prev_it = writing_kor[i - 1] if i > 0 and isinstance(writing_kor[i - 1], dict) else None
                     _prev_olpo_key = None
@@ -3750,7 +3750,8 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                             continue
 
                     # 올포 케이스: q_num 섹션 라벨 우선, 숫자면 본문N, 아니면 카운터 폴백
-                    if is_olpo_src and item_lecture > 0:
+                    # (딥러닝 영작은 _dl_lesson이 있으면 아래 교과서/딥러닝 경로로 — 올포 흡수 방지)
+                    if is_olpo_src and item_lecture > 0 and not kor_item.get("_dl_lesson"):
                         olp_lbl = kor_item.get("olpo_label", "")
                         # q_num 기반 직접 매핑 (olp_lbl 관계없이 일관 처리)
                         if q_num == "\ubd84\uc11d":
