@@ -912,7 +912,7 @@ def _split_sentence_blocks(paras, source, sentence_styles, output_list,
         # 워크북 지문 번호 그대로 사용(FR은 별도 라벨). 균등 분할 금지.
         _is_dl = _is_deeplearning_workbook(source)
         def _match_passage_marker(t):
-            m = re.match(r"^[\[{]?(본문\d+(?:[-~]\d+)*|Further\s*Reading|Read\s*More)[\]}]?$", t, re.IGNORECASE)
+            m = re.match(r"^[\[{]*(본문\d+(?:[-~]\d+)*|Further\s*Reading|Read\s*More)[\]}]*$", t, re.IGNORECASE)
             if m:
                 lab = m.group(1)
                 if lab.startswith("본문"):
@@ -922,7 +922,7 @@ def _split_sentence_blocks(paras, source, sentence_styles, output_list,
                     return "RM"
                 return "FR"
             # 추가지문 마커: {3과 추가지문}/[4과 추가지문] → 영작과 동일 헤더로 통일
-            m_add = re.match(r"^[\[{]?\s*(?:(\d+)\s*과\s*)?추가지문\s*(\d*)\s*[\]}]?$", t)
+            m_add = re.match(r"^[\[{]*\s*(?:(\d+)\s*과\s*)?추가지문\s*(\d*)\s*[\]}]*$", t)
             if m_add:
                 if m_add.group(1):
                     return f"{m_add.group(1)}과 추가지문"
@@ -1115,7 +1115,7 @@ def _split_insert_blocks(paras, source, insert_styles, output_list,
         # 마커가 없으면 기존 "아래 주어진" 발문 기준 분할로 폴백.
         _is_dl_ins = _is_deeplearning_workbook(source)
         def _match_passage_marker_ins(t):
-            m = re.match(r"^[\[{]?(본문\d+(?:[-~]\d+)*|Further\s*Reading|Read\s*More)[\]}]?$", t, re.IGNORECASE)
+            m = re.match(r"^[\[{]*(본문\d+(?:[-~]\d+)*|Further\s*Reading|Read\s*More)[\]}]*$", t, re.IGNORECASE)
             if m:
                 lab = m.group(1)
                 if lab.startswith("본문"):
@@ -1125,7 +1125,7 @@ def _split_insert_blocks(paras, source, insert_styles, output_list,
                     return "RM"
                 return "FR"
             # 추가지문 마커: {3과 추가지문}/[4과 추가지문] → 영작과 동일 헤더로 통일
-            m_add = re.match(r"^[\[{]?\s*(?:(\d+)\s*과\s*)?추가지문\s*(\d*)\s*[\]}]?$", t)
+            m_add = re.match(r"^[\[{]*\s*(?:(\d+)\s*과\s*)?추가지문\s*(\d*)\s*[\]}]*$", t)
             if m_add:
                 if m_add.group(1):
                     return f"{m_add.group(1)}과 추가지문"
@@ -1272,8 +1272,8 @@ def _split_writing_blocks(paras, source, kor_styles, view_styles,
                 current_qnum = m.group(1)
                 current_unit_override = None
                 continue
-            # 본문N 헤더: [본문1], [본문2], 본문1 (대괄호/중괄호 optional)
-            m2 = re.match(r"^[\[{]?본문(\d+(?:[-~]\d+)*)[\]}]?$", txt)
+            # 본문N 헤더: [본문1], [본문2], {{본문1}}, 본문1 (대괄호/중괄호 0개 이상)
+            m2 = re.match(r"^[\[{]*본문(\d+(?:[-~]\d+)*)[\]}]*$", txt)
             if m2:
                 current_qnum = "본문" + m2.group(1)
                 current_unit_override = None
@@ -1309,8 +1309,8 @@ def _split_writing_blocks(paras, source, kor_styles, view_styles,
                 current_unit_override = None
                 continue
             # 교과서 Further Reading → "FR", Read More → "RM"
-            m2b_fr = re.match(r"^[\[{]?Further\s*Reading[\]}]?$", txt, re.IGNORECASE)
-            m2b_rm = re.match(r"^[\[{]?Read\s*More[\]}]?$", txt, re.IGNORECASE)
+            m2b_fr = re.match(r"^[\[{]*Further\s*Reading[\]}]*$", txt, re.IGNORECASE)
+            m2b_rm = re.match(r"^[\[{]*Read\s*More[\]}]*$", txt, re.IGNORECASE)
             if m2b_fr:
                 current_qnum = "FR"
                 current_unit_override = None
