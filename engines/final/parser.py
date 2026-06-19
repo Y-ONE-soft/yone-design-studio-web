@@ -1770,9 +1770,24 @@ def _canonical_order_key(header, source=""):
     if m_g3:
         return (2.5, int(m_g3.group(1)), int(m_g3.group(2)), h)
     # 기타 (올포 등)
-    m_olpo = re.match(r'^\uc62c\ud3ec\s+(\d+)\uac15', h)
+    m_olpo = re.match(r'^\uc62c\ud3ec\s+(\d+)\uac15\s*(.*)$', h)
     if m_olpo:
-        return (1.2, int(m_olpo.group(1)), 0, h)
+        # \uc62c\ud3ec \uac15 \ub0b4 \uc21c\uc11c\ub294 \uc6d0\uace0(EBS docx)\u00b7\ud559\uad50 .indd \uacf5\ud1b5:
+        # \ubd84\uc11d \u2192 \ubcf8\ubb38N \u2192 \uc11c\uc220\ud615 \u2192 \ub17c\uc220\ud615. \ud5e4\ub354 \ubb38\uc790\uc5f4 \uc0ac\uc804\uc21c\uc73c\ub85c
+        # \uc815\ub82c\ud558\uba74 \uc790\ubaa8\uc21c \ub54c\ubb38\uc5d0 \ub17c\uc220\ud615\uc774 \ub9e8\uc55e\u00b7\ubd84\uc11d\uc774 \ubcf8\ubb38 \ub4a4\ub85c \ub4a4\uc11e\uc784.
+        _olbl = m_olpo.group(2).strip()
+        _mb = re.match(r'\ubcf8\ubb38(\d+)', _olbl)
+        if _olbl.startswith("\ubd84\uc11d"):
+            _osub = (0, 0)
+        elif _mb:
+            _osub = (1, int(_mb.group(1)))
+        elif _olbl.startswith("\uc11c\uc220\ud615"):
+            _osub = (2, 0)
+        elif _olbl.startswith("\ub17c\uc220\ud615"):
+            _osub = (3, 0)
+        else:
+            _osub = (4, 0)
+        return (1.2, int(m_olpo.group(1)), _osub[0], _osub[1])
     return (3, 9999, 0, h)
 
 
