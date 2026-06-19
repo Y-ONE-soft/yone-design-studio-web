@@ -81,6 +81,51 @@ def _drop_identical_duplicates(files):
     return [f for f in files if f not in drop]
 
 
+def _drop_superseded_workbook_versions(files, log=lambda m: None):
+    """같은 워크북 번호에 괄호 라벨이 다른 파일이 둘 이상이면(=구버전/신버전 공존),
+    라벨 토큰셋이 다른 쪽의 '진부분집합'인 파일을 구버전으로 보고 제외한다.
+
+    Why: 사용자가 워크북을 갱신하면 옛 파일(예: '워크북04(외부지문)')이 남고
+         새 파일('워크북04(25년3월,외부지문)')이 추가되는데, 미러 미동기화로 둘 다
+         감지되면 같은 외부지문이 중복 추출되고 새로 추가한 지문(25년3월)이 묻힌다.
+    How: 워크북 번호로 그룹 → 괄호 안 콤마 토큰셋이 같은 번호의 다른 파일 토큰셋의
+         진부분집합이면 제외. '(외부지문)'⊂'(25년3월,외부지문)' → 구버전 제외.
+         '_내지_2' 연속 파트는 라벨이 동일하므로(진부분집합 아님) 모두 유지된다.
+         라벨이 없거나 서로소(겹치지 않음)면 건드리지 않아 정상 워크북은 안전.
+    """
+    from collections import defaultdict
+    def _num(p):
+        m = re.search(r"워크북\s*(\d+)", _nfc(os.path.basename(p)))
+        return m.group(1) if m else None
+    def _tokens(p):
+        m = re.search(r"\(([^)]*)\)", _nfc(os.path.basename(p)))
+        if not m:
+            return frozenset()
+        return frozenset(t.strip() for t in m.group(1).split(",") if t.strip())
+    by_num = defaultdict(list)
+    for f in files:
+        n = _num(f)
+        if n is None:
+            continue
+        by_num[n].append(f)
+    drop = set()
+    for n, group in by_num.items():
+        tok = {f: _tokens(f) for f in group}
+        for f in group:
+            if f in drop:
+                continue
+            for g in group:
+                if g is f or g in drop:
+                    continue
+                # f의 라벨이 g 라벨의 진부분집합 → f는 구버전
+                if tok[f] and tok[f] < tok[g]:
+                    drop.add(f)
+                    log(f"  [워크북 버전] 구버전 제외: "
+                        f"{os.path.basename(f)} ← 최신 {os.path.basename(g)}")
+                    break
+    return [f for f in files if f not in drop]
+
+
 def _extract_ebs_subscope(scope_text):
     """혼합 시험범위에서 EBS(리딩파워/올포/올림포스) 성분만 추출.
 
@@ -392,14 +437,26 @@ class FinalEngine(BaseEngine):
             ])
             files = _drop_revised_duplicates(files)
             return files, wb_dir, set()
-        wb_dir = os.path.join(gdrive_base, "워크북", exam_period, grade, school)
-        wb_dir = _rlm(wb_dir, None)
-        if not os.path.isdir(wb_dir):
+        wb_dir_gdrive = os.path.join(gdrive_base, "워크북", exam_period, grade, school)
+        wb_dir = _rlm(wb_dir_gdrive, None)
+        # 미러 ∪ GDrive 합집합 — 미러 미동기화로 새로 추가/갱신된 워크북이 누락되는
+        # 사고 방지(예: 갱신된 '워크북04(25년3월,외부지문)'이 미러에 없어 구버전만 추출됨).
+        # 미러본이 있으면 미러 경로(빠르고 EDEADLK 회피), 미러에 없는 파일만 GDrive로 보강.
+        _names = {}
+        for _d in (wb_dir, wb_dir_gdrive):
+            if not _d or not os.path.isdir(_d):
+                continue
+            try:
+                for f in os.listdir(_d):
+                    nf = _nfc(f)
+                    if f.lower().endswith(".indd") and "워크북" in nf and nf not in _names:
+                        _names[nf] = os.path.join(_d, f)
+            except OSError:
+                continue
+        if not _names:
             return [], wb_dir, set()
-        all_files = sorted([
-            os.path.join(wb_dir, f) for f in os.listdir(wb_dir)
-            if f.lower().endswith(".indd") and "워크북" in _nfc(f)
-        ])
+        all_files = sorted(_names.values(),
+                           key=lambda p: _nfc(os.path.basename(p)))
 
         # "(수정전)" 구버전 파일 제외 — 같은 강 범위의 정식본이 함께 있으면 구버전이
         # 추출/중복제거 단계에서 이겨 Ex 경계가 깨진 채 들어가는 사고 방지.
@@ -419,6 +476,8 @@ class FinalEngine(BaseEngine):
 
         # 미러에 남은 구버전(다른 워크북 번호) 바이트 동일 중복 제거 — 미러 미동기화 사고 방지
         all_files = _drop_identical_duplicates(all_files)
+        # 같은 워크북 번호의 구버전 라벨(예: '(외부지문)' ⊂ '(25년3월,외부지문)') 제외
+        all_files = _drop_superseded_workbook_versions(all_files)
 
         # 올포 파일만 분리 (학교별 워크북의 올포는 공용 파일로 대체)
         non_olpo = [f for f in all_files if "올포" not in _nfc(os.path.basename(f))]
