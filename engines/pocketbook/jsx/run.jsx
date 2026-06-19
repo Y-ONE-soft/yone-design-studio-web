@@ -3593,6 +3593,15 @@ var settingsPath = "__SETTINGS_PATH__";
                         var chapLabel = extractCharStyleText(analDoc, pageTFs,
                             "\uCC55\uD130", "\u110E\u1162\u11B8\u1110\u1165", false);
 
+                        // [리딩파워] 지문 라벨은 "챕터"(유형 헤더: 어법/어휘/장문)가 아니라
+                        // "챕터_숫자"(Unit N XX)에 있다. 유형 헤더가 "어법 (1)"처럼 숫자를 포함하면
+                        // 아래 숫자 검증을 통과해 잘못 라벨이 된다. 올림포스는 canon 매칭 위해 미관여.
+                        if (fileCategory && (fileCategory.indexOf("\uB9AC\uB529\uD30C\uC6CC") >= 0 || fileCategory.indexOf("\uB9AC\uD30C") >= 0)) {
+                            var numLabel = extractCharStyleText(analDoc, pageTFs,
+                                "\uCC55\uD130\u005F\uC22B\uC790", "\u110E\u1162\u11B8\u1110\u1165\u005F\u1109\u116E\u11BA\u110C\u1161", false);
+                            if (numLabel && numLabel.length <= 50 && /\d/.test(numLabel)) chapLabel = numLabel;
+                        }
+
                         // 챕터 라벨 유효성 검증: 50자 이하이고 숫자 포함
                         // 미래엔 DL(딥러닝 장문): 페이지에 "N과 DL" 마커가 있으면 그것을
                         // 지문번호로 사용. 분석본 챕터 라벨이 본문과 다른 엉뚱한 값일 수
