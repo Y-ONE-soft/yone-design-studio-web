@@ -28,8 +28,8 @@ if os.path.exists(envp):
         v = v.strip().strip('"').strip("'")
         os.environ.setdefault(k.strip(), v)
 
-from engines import registry  # noqa: E402
 import config  # noqa: E402
+from engines.final.engine import FinalEngine  # noqa: E402
 
 
 def main():
@@ -37,7 +37,7 @@ def main():
     grade = sys.argv[2]
     exam_period = sys.argv[3]
 
-    engine = registry.get("final")
+    engine = FinalEngine()
 
     job_id = uuid.uuid4().hex[:8]
     job_dir = os.path.join(config.JOBS_DIR, "local_" + job_id)
