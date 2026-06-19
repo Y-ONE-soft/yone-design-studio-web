@@ -3416,6 +3416,40 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
             writing_kor = [w for w in writing_kor if _mock_q_in_scope(w)]
             writing_view = [w for w in writing_view if _mock_q_in_scope(w)]
 
+        # 다중 과 워크북(예: "미래엔김4,5과") page_off→과 매핑.
+        # scope 정규식 r"(\d+)\s*과"는 "4,5과"에서 마지막 "5"만 잡아 4과 항목을
+        # 5과로 오인식한다 → 4과 RM(시험범위 밖)이 RM 필터를 통과해 본문6 뒤에
+        # 지문번호 없이 붙는 버그. 한 과 = 한 스토리(page_off) 가정으로,
+        # page_off 오름차순을 파일명 과 순서에 1:1 대응시킨다.
+        _tb_po_lesson = {}  # src_nfc -> {page_off: "N"}
+        _tmp_src_po = {}
+        for _w in writing_kor:
+            if not isinstance(_w, dict):
+                continue
+            if _w.get("lecture", 0) or _w.get("exam_code", ""):
+                continue
+            if not re.match(r"^(본문|FR|RM)", str(_w.get("q_num", ""))):
+                continue
+            _sm = re.search(r"\(([^)]+)\)", _nfc(_w.get("source", "")))
+            _ml = re.search(r"([\d,]+)\s*과", _sm.group(1) if _sm else "")
+            if not _ml:
+                continue
+            _labs = [x.strip() for x in _ml.group(1).split(",") if x.strip()]
+            if len(_labs) < 2:
+                continue  # 단일 과는 scope 정규식으로 충분
+            _d = _tmp_src_po.setdefault(_nfc(_w.get("source", "")),
+                                        {"po": set(), "labs": _labs})
+            _d["po"].add(_w.get("page_off", -1))
+        for _src, _d in _tmp_src_po.items():
+            _pos = sorted(_d["po"])
+            if len(_pos) == len(_d["labs"]):
+                _tb_po_lesson[_src] = {po: _d["labs"][i] for i, po in enumerate(_pos)}
+
+        def _item_lesson_num(item):
+            """다중 과 워크북 항목의 정확한 과 번호. 매핑 없으면 None(scope 폴백)."""
+            _m = _tb_po_lesson.get(_nfc(item.get("source", "")))
+            return _m.get(item.get("page_off", -1)) if _m else None
+
         # 교과서 과별 본문 제한 필터: source scope가 "N과"이고 q_num="본문M"인데 M > limit이면 제외
         if textbook_limits:
             def _tb_limit_pass(item):
