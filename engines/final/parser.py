@@ -3462,14 +3462,16 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                 _sm = re.search(r"\(([^)]+)\)", src_nfc)
                 _scope = _sm.group(1) if _sm else ""
                 # scope에서 과 번호 추출
-                m_l = re.search(r"(\d+)\s*\uacfc", _scope)
-                if not m_l:
-                    if "SL" in _scope:
-                        lesson = "SL"
+                lesson = _item_lesson_num(item)
+                if lesson is None:
+                    m_l = re.search(r"(\d+)\s*\uacfc", _scope)
+                    if not m_l:
+                        if "SL" in _scope:
+                            lesson = "SL"
+                        else:
+                            return True
                     else:
-                        return True
-                else:
-                    lesson = m_l.group(1)
+                        lesson = m_l.group(1)
                 max_body = textbook_limits.get(lesson)
                 if max_body is None:
                     return True
@@ -3495,14 +3497,16 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                 _sm = re.search(r"\(([^)]+)\)", src_nfc)
                 _scope = _sm.group(1) if _sm else ""
                 # scope에서 과 번호 추출
-                m_l = re.search(r"(\d+)\s*과", _scope)
-                if not m_l:
-                    if "SL" in _scope:
-                        lesson = "SL"
+                lesson = _item_lesson_num(item)
+                if lesson is None:
+                    m_l = re.search(r"(\d+)\s*과", _scope)
+                    if not m_l:
+                        if "SL" in _scope:
+                            lesson = "SL"
+                        else:
+                            return True
                     else:
-                        return True
-                else:
-                    lesson = m_l.group(1)
+                        lesson = m_l.group(1)
                 return lesson in textbook_rm_lessons
             writing_kor = [w for w in writing_kor if _tb_rm_pass(w)]
             writing_view = [w for w in writing_view if _tb_rm_pass(w)]
