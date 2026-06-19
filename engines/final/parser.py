@@ -2733,37 +2733,16 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
         # 잘못 부여받아(_examCodeOf 페이지 근접 매핑) 같은 헤더에 옆 지문이 끼어들면
         # idx 낮은 stray 그랩을 채택해 진짜 지문 문장배열을 통째 소실시킨다
         # (명일1 230932: de Waal(Q32) 배열 소실, 감각신경(Q35) 배열이 중복 삽입된 버그).
-        # → 같은 헤더 후보가 여럿이면, 문장삽입(별도 경로라 stray 오염 없음·신뢰 가능)의
-        #   영문 토큰과 공유도가 최대인 그랩을 채택한다. 후보 1개거나 삽입 참조가
-        #   없으면 기존대로 첫 번째 유지(회귀 없음).
-        def _sig_toks(strs):
-            _s = set()
-            for _x in strs:
-                if isinstance(_x, dict):
-                    _x = _x.get("text", "")
-                for _w in re.findall(r"[A-Za-z]{5,}", str(_x).lower()):
-                    _s.add(_w)
-            return _s
+        # → 같은 헤더 후보가 여럿이면, 문장삽입(모의: stray 오염 없음)이나
+        #   중요어휘(올포: 라벨 정확)의 영문 토큰과 공유도가 최대인 그랩을 채택한다.
+        #   후보 1개거나 참조가 없으면 기존대로 첫 번째 유지(회귀 없음).
+        #   (_sig_toks·_vocab_toks_by_header 는 함수 상단에서 정의)
         _ins_toks_by_ec = {}
         for _ib in sentence_insert_blocks:
             _ec_ib = _ib.get("exam_code", "")
             if _ec_ib:
                 _ins_toks_by_ec.setdefault(_ec_ib, set()).update(
                     _sig_toks(_ib.get("paras", [])))
-        # 올포(examCode 없음)용 추가 참조: 중요어휘(EBS 시트 출처 → 라벨 신뢰 가능).
-        # 학교 워크북이 같은 올포 본문N에 서로 다른 지문을 라벨링(워크북 오라벨)하면
-        # 문장삽입도 같이 오염되므로, 라벨이 정확한 중요어휘를 참조로 쓴다.
-        # (상일1 올포 12강 본문2: 워크북01=본문3내용 오라벨 vs 워크북04=정답 → 진짜본문2 소실)
-        _vocab_toks_by_header = {}
-        if vocab_left_text:
-            for _vblk in re.split(r"\n\n+", vocab_left_text):
-                _vlines = _vblk.split("\n")
-                if not _vlines:
-                    continue
-                _vhdr = _nfc(_vlines[0].strip())
-                if _vhdr:
-                    _vocab_toks_by_header.setdefault(_vhdr, set()).update(
-                        _sig_toks([" ".join(_vlines[1:])]))
         _cands_by_header = {}
         _header_order = []
         for b in all_blocks:
@@ -3213,6 +3192,16 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
                 _ex = deduped_ins[seen_idx[h]]
                 if _is_rp_source(_ex.get("source", "")) and not _is_rp_source(b.get("source", "")):
                     deduped_ins[seen_idx[h]] = b
+                else:
+                    # 올포 등 비-RP 충돌: 중요어휘(라벨 정확)와 공유도가 더 높은 블록 채택
+                    # (문장배열 dedup과 동일 — 워크북 오라벨로 본문 swap/소실 방지)
+                    _vref = _vocab_toks_by_header.get(_nfc(h))
+                    if (_vref and not _is_rp_source(b.get("source", ""))
+                            and not _is_rp_source(_ex.get("source", ""))):
+                        _ex_ov = len(_sig_toks(_ex.get("paras", [])) & _vref)
+                        _b_ov = len(_sig_toks(b.get("paras", [])) & _vref)
+                        if _b_ov > _ex_ov:
+                            deduped_ins[seen_idx[h]] = b
                 continue
             seen_idx[h] = len(deduped_ins)
             deduped_ins.append(b)
