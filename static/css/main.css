@@ -753,9 +753,6 @@ select.issue-input option { background: #1a1a22; color: var(--text); padding: 8p
 .progress-area { margin-top: 40px; }
 .hidden { display: none !important; }
 
-/* 조교 계정: 진행 상태(로그·단계 표시)는 숨기고 결과(하단 박스)만 노출 */
-.role-assistant #progress-area { display: none !important; }
-
 .progress-header { display: flex; align-items: center;
                    justify-content: space-between; margin-bottom: 16px; }
 .progress-header h2 { font-size: 16px; font-weight: 600; }

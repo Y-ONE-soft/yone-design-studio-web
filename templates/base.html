@@ -7,6 +7,12 @@
   <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
   <title>{% block title %}조판 자동화{% endblock %} — Y.ONE DESIGN</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <style>
+    /* 조교 계정: 진행 상태(로그·단계)는 숨기고 결과(하단 박스)만 노출.
+       정적 main.css는 브라우저 캐시(max-age)로 늦게 반영되므로, 항상 새로 받는
+       HTML에 인라인으로 둬서 캐시와 무관하게 다음 로드부터 즉시 적용되게 한다. */
+    .role-assistant #progress-area { display: none !important; }
+  </style>
   <script>
     // ── iframe 임베드 차단 (clickjacking) ──
     if (window.top !== window.self) { window.top.location = window.self.location; }

@@ -800,9 +800,13 @@ var settingsPath = "__SETTINGS_PATH__";
                     var _ck = olymposCanonKey(pno);
                     if (!_ck) return false;
                     var _gNum = parseInt(_g[1], 10);
+                    // 리딩파워 완성본은 파일명 범위("13~20강")가 실제 내용(+21,22강)을 과소표기할 수 있어
+                    // 강-범위 완성본이면 범위 무관하게 canon 매칭 시도(buildCanonMap이 실제 보유분으로 판정).
+                    var _isRP = fileCategory && (fileCategory.indexOf("리딩파워") >= 0 || fileCategory.indexOf("리파") >= 0);
                     for (var _oi = 0; _oi < pnoLookupFiles.length; _oi++) {
                         var _lym = pnoLookupFiles[_oi].ym;
-                        if (!ymRangeHasGang(_lym, _gNum)) continue;
+                        if (_isRP) { if (!/\d+\s*강/.test(String(_lym))) continue; }
+                        else if (!ymRangeHasGang(_lym, _gNum)) continue;
                         if (!pnoLookupDocCache[_lym]) {
                             var _od = openLookupDocByYm(_lym);
                             if (!_od) continue;
