@@ -318,7 +318,7 @@ def find_ebs_grammar_files(content_base, scope_text, log=None, grade=None):
     found = []
 
     # 올림포스 독해기본1 (고1) / 2 (고2) — "올포"(약어)·"올림포스"(정식) 모두 인식
-    if "올포" in scope or "올림포스" in scope:
+    if "올포" in scope:
         # 강 번호 추출 (예: "올포1-4강" → [1,2,3,4], "올포5,8,9강" → [5,8,9])
         # 혼합 scope("올림포스15~18강,미래엔3,4과")는 호출부에서 올림포스 부분만 잘라 전달.
         units = _extract_unit_numbers(scope)
