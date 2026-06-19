@@ -321,19 +321,21 @@ def fetch_high3_scope(school, log=None, exam_period=None):
         return empty
 
     lectures = []
-    # 범위 표기 먼저 처리: "11~17강", "11-17강", "11\u201317강", "11\u201417강" → [11, 12, ..., 17]
-    for m in re.finditer(r"(\d+)\s*[-~\u2013\u2014]\s*(\d+)\s*\uac15", raw):
-        start_n, end_n = int(m.group(1)), int(m.group(2))
-        if start_n <= end_n and end_n - start_n < 50:
-            for n in range(start_n, end_n + 1):
-                lectures.append(str(n))
-    # 범위 표기 제거 후 단일/쉼표 목록 파싱 (예: "03강", "3,4,5강")
-    raw_wo_range = re.sub(r"\d+\s*[-~\u2013\u2014]\s*\d+\s*\uac15", "", raw)
-    for m in re.finditer(r"(\d+(?:\s*,\s*\d+)*)\s*\uac15", raw_wo_range):
-        for p in m.group(1).split(","):
-            p = p.strip()
-            if p.isdigit():
-                lectures.append(str(int(p)))  # 0-padding 제거 ("03" → "3")
+    # "17, 18, 21~30강" 처럼 단일+범위가 한 '강' 접미사를 공유하는 목록을 통째 파싱.
+    # (기존엔 범위 "21~30강"을 먼저 제거한 뒤 단일을 파싱했는데, '강'이 범위에만
+    #  붙어 있으면 앞쪽 단일 "17, 18"이 '강' 앵커를 잃어 통째로 누락됐다 — 광문3 17·18강.)
+    _LEC_ITEM = r"\d+\s*[-~\u2013\u2014]\s*\d+|\d+"
+    _LEC_LIST = r"((?:" + _LEC_ITEM + r")(?:\s*,\s*(?:" + _LEC_ITEM + r"))*)\s*\uac15"
+    for m in re.finditer(_LEC_LIST, raw):
+        for item in m.group(1).split(","):
+            item = item.strip()
+            _rng = re.match(r"(\d+)\s*[-~\u2013\u2014]\s*(\d+)$", item)
+            if _rng:
+                a, b = int(_rng.group(1)), int(_rng.group(2))
+                if a <= b and b - a < 50:
+                    lectures.extend(str(n) for n in range(a, b + 1))
+            elif item.isdigit():
+                lectures.append(str(int(item)))  # 0-padding 제거
     seen = set()
     lectures = [l for l in lectures if not (l in seen or seen.add(l))]
     lectures.sort(key=int)
