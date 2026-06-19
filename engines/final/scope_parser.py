@@ -47,7 +47,7 @@ def classify_scope(scope):
     # "올포"(약어)뿐 아니라 "올림포스"(정식명칭)도 인식. 학교 워크북 파일명/시험범위는
     # 약어 '올포'가 아니라 '올림포스NN강'으로 표기되는 경우가 많아, 이를 놓치면 scope가
     # unknown으로 분류돼 올림포스 어법수정이 올바른 EBS 폴더에서 안 온다(상일1).
-    if re.search(r"올포", scope):
+    if re.search(r"올포|올림포스", scope):
         return "ebs_olympos"
     if "마더텅" in scope:
         return "mothertongue"
