@@ -44,7 +44,12 @@ def classify_scope(scope):
         return "mockexam"
     if re.search(r"\d{2}년\d{1,2}월", scope):
         return "mockexam"
-    if re.search(r"올포", scope):
+    # 어법수정은 원고(Word docx)에서 가져온다. 올림포스 어법수정 원고는
+    # 'EBS 작업/올림포스 독해기본1/N강/...어법수정_문제지.docx'에 있다. 그런데 학교
+    # 워크북 파일명/시험범위는 약어 '올포'가 아니라 정식 '올림포스NN강'으로 표기되는
+    # 경우가 많아, "올포"만 검사하면 scope가 unknown→어법수정 원고 경로(find_ebs)에
+    # 도달 못 한다(상일1). '올림포스'도 ebs_olympos로 인식한다.
+    if re.search(r"올포|올림포스", scope):
         return "ebs_olympos"
     if "마더텅" in scope:
         return "mothertongue"
