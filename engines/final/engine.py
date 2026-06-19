@@ -1623,7 +1623,7 @@ class FinalEngine(BaseEngine):
             # — Vol1 문장배열 기반 재정렬이 아니라 헤더 자체 기준으로 정렬 (straggler 방지)
             _wp = (_cdata.get("vol2", {}) or {}).get("\uc11c\uc220\ud615\uc601\uc791", []) or []
             _wd = (_cdata.get("vol2", {}) or {}).get("\uc601\uc791_\ud5e4\ub354_\uc0c1\uc138", []) or []
-            if _wp and _wd:
+            if _wp and _wd and not os.environ.get("_SKIP_W_REORDER"):
                 from engines.final.parser import _canonical_order_key as _ck
                 _w_blocks = {}
                 _w_order = []
