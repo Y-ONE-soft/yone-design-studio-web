@@ -1632,6 +1632,17 @@ def _scope_to_header(scope_text, block_num, blocks_per_lesson=5):
     """
     scope = _nfc(scope_text)
 
+    # 혼합 스코프("25년3월,외부지문"): 모의고사 날짜 + 외부지문이 한 파일명에 공존.
+    # 이 함수에 도달하는 건 q_num이 없는 블록(=외부지문 본문)뿐이다(모의 블록은
+    # examCode/q_num 경로로 250339 등으로 따로 라벨링됨). 따라서 모의 날짜가 함께
+    # 있어도 외부지문 본문으로 라벨링해야 한다. (아래 모의고사 날짜 매칭보다 우선.)
+    _has_mock_date = bool(re.search(r"\d{2}년\s*\d{1,2}월", scope)
+                          or re.search(r"모의고사\s*\d{2}\.\d{1,2}", scope))
+    if _has_mock_date and "TED" in scope:
+        return f"TED1 본문{block_num}"
+    if _has_mock_date and ("외부지문" in scope or "외부" in scope):
+        return f"외부지문 본문{block_num}"
+
     # 모의고사: YYMMQQ 형식
     m = re.search(r"(\d{2})년\s*(\d{1,2})월", scope)
     if m:
