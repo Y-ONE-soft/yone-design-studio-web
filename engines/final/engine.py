@@ -1623,14 +1623,22 @@ class FinalEngine(BaseEngine):
             # — Vol1 문장배열 기반 재정렬이 아니라 헤더 자체 기준으로 정렬 (straggler 방지)
             _wp = (_cdata.get("vol2", {}) or {}).get("\uc11c\uc220\ud615\uc601\uc791", []) or []
             _wd = (_cdata.get("vol2", {}) or {}).get("\uc601\uc791_\ud5e4\ub354_\uc0c1\uc138", []) or []
-            if _wp and _wd and not os.environ.get("_SKIP_W_REORDER"):
+            if _wp and _wd:
                 from engines.final.parser import _canonical_order_key as _ck
+                # 각 헤더의 pairs 슬라이스 경계(_end)는 start_idx **오름차순**으로 잡아야
+                # 정확하다. _wd가 추출/페이지 순서라 start_idx가 단조가 아니면
+                # _wd[i+1].start_idx가 이 블록의 끝이 아니게 되어 옆 강 영작이 섞인다
+                # (고3 영작 강-단위 변위 버그 방어 — 입력 순서와 무관하게 정확히 슬라이스).
+                _by_start = sorted(range(len(_wd)),
+                                   key=lambda _j: _wd[_j].get("start_idx", 0))
+                _bnds = [_wd[_j].get("start_idx", 0) for _j in _by_start] + [len(_wp)]
                 _w_blocks = {}
                 _w_order = []
-                for _wi, _hi in enumerate(_wd):
+                for _rank, _j in enumerate(_by_start):
+                    _hi = _wd[_j]
                     _hh = (_hi.get("header") or "").strip()
                     _start = _hi.get("start_idx", 0)
-                    _end = _wd[_wi + 1]["start_idx"] if _wi + 1 < len(_wd) else len(_wp)
+                    _end = _bnds[_rank + 1]
                     if _hh and _hh not in _w_blocks:
                         _w_blocks[_hh] = _wp[_start:_end]
                         _w_order.append(_hh)
