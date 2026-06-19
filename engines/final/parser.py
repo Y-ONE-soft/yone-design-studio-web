@@ -1278,6 +1278,14 @@ def _split_writing_blocks(paras, source, kor_styles, view_styles,
                 current_qnum = "본문" + m2.group(1)
                 current_unit_override = None
                 continue
+            # 딥러닝 섹션 헤더: [N과 Deep Learning] — 혼합 워크북(올림포스+교과서 딥러닝)에서
+            # 교과서 딥러닝 영작이 올포에 흡수되지 않도록 구분. current_qnum에 "DLN"을 실어
+            # _mk_item이 q_num="본문6"+_dl_lesson=N으로 변환. 다음 마커가 나오면 자동 리셋된다.
+            m_dl = re.match(r"^[\[{]?\s*(\d+)\s*과\s*Deep\s*Learning\s*[\]}]?$", txt, re.IGNORECASE)
+            if m_dl:
+                current_qnum = "DL" + m_dl.group(1)
+                current_unit_override = None
+                continue
             # 추가지문 헤더: [3과 추가지문], {4과 추가지문}, [추가지문], [추가지문2]
             # — 워크북06(추가지문) 파일의 지문 구분 마커. examCode(YYMMQQ)도 번호
             #   마커({XX})도 없어, 이 마커를 인식하지 못하면 q_num이 빈 문자열로 남아
@@ -1326,10 +1334,18 @@ def _split_writing_blocks(paras, source, kor_styles, view_styles,
             continue
 
         def _mk_item(_t):
-            _it = {"text": _t, "source": source, "q_num": current_qnum,
+            _qn = current_qnum
+            _dl = None
+            _m_dl_q = re.match(r"^DL(\d+)$", current_qnum)
+            if _m_dl_q:
+                _qn = "본문6"  # 딥러닝 영작 관례 q_num (_assign_deeplearning_writing_lesson과 동일)
+                _dl = _m_dl_q.group(1)
+            _it = {"text": _t, "source": source, "q_num": _qn,
                    "page_off": page_off, "lecture": lecture, "olpo_label": olpo_label}
             if current_unit_override is not None:
                 _it["lecture_override"] = current_unit_override
+            if _dl:
+                _it["_dl_lesson"] = _dl
             return _it
 
         if style in kor_styles:
@@ -1743,6 +1759,11 @@ def _canonical_order_key(header, source=""):
     m_tb_fr = re.match(r'^\uad50\uacfc\uc11c(\d+)\uacfc\s+(?:FR|RM)', h)
     if m_tb_fr:
         return (0, int(m_tb_fr.group(1)), 999, 0)
+    # \uad50\uacfc\uc11c \ub525\ub7ec\ub2dd: "\uad50\uacfc\uc11cN\uacfc \ub525\ub7ec\ub2dd" (\ud63c\ud569 \uc6cc\ud06c\ubd81\uc758 [N\uacfc Deep Learning] \uc139\uc158).
+    # \ud574\ub2f9 \uacfc \ubcf8\ubb38 \ub4a4(\ub2e4\uc74c \uacfc \uc55e)\uc5d0 \ubc30\uce58. \ubbf8\uc778\uc2dd \uc2dc \uae30\ud0c0(3)\ub85c \ube60\uc838 \uc62c\ud3ec\u00b7\ubaa8\uc758\uace0\uc0ac \ub4a4\ub85c \ubc00\ub9b0\ub2e4.
+    m_tb_dl = re.match(r'^\uad50\uacfc\uc11c(\d+)\uacfc\s+\ub525\ub7ec\ub2dd', h)
+    if m_tb_dl:
+        return (0, int(m_tb_dl.group(1)), 998, 0)
     # TED 외부지문 ("TED1 본문3", "TED2 본문1" 등)
     m_ted = re.match(r'^TED(\d+)\s+\ubcf8\ubb38(\d+)', h)
     if m_ted:
