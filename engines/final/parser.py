@@ -2269,6 +2269,11 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
             for _b in sentence_blocks:
                 if _b.get("q_num"):
                     continue
+                # 외부지문 블록(passage_label="본문N")은 모의고사 문항이 아니므로
+                # 모의 번호를 채우면 안 됨. 혼합 워크북('(25년3월,외부지문)')에서
+                # 외부지문 본문이 250334 등 모의 코드로 오라벨→드롭되는 사고 방지.
+                if _b.get("passage_label"):
+                    continue
                 _src = _nfc(_b.get("source", ""))
                 _sm = re.search(r"\(([^)]+)\)", _src)
                 _sc = _sm.group(1) if _sm else ""
@@ -2463,9 +2468,6 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
             _passage_label = block.get("passage_label", "")
             _label_header = _tb_header_from_label(src, block.get("page_off", -1), _passage_label)
             _exam_code = block.get("exam_code", "")
-            if os.environ.get("_DBG_WB04") and "25년월" not in src and "외부" in _nfc(src):
-                import sys as _sys
-                _sys.stderr.write(f"[DBG04] plabel={_nfc(_passage_label)!r} exam={_exam_code!r} qnum={q_num!r} labelhdr={_nfc(str(_label_header))!r} po={block.get('page_off')}\n")
 
             # 워크북에 박힌 6자리 출처코드(YYMMQQ)가 있으면 최우선 사용 — 가짜번호 방지.
             if _exam_code:
@@ -2805,6 +2807,9 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
             _fill_by_src = {}
             for _b in sentence_insert_blocks:
                 if _b.get("q_num"):
+                    continue
+                # 외부지문 블록(passage_label="본문N")은 모의 번호 채우기 제외 (문장배열과 동일)
+                if _b.get("passage_label"):
                     continue
                 _src = _nfc(_b.get("source", ""))
                 _sm = re.search(r"\(([^)]+)\)", _src)
