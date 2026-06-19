@@ -318,7 +318,7 @@ class PocketbookEngine(BaseEngine):
         """
         import unicodedata
         nfc = unicodedata.normalize("NFC", cat) if cat else ""
-        m = re.search(r"(?:올림포스|올포)\s*([\d,\-~]+)강", nfc)
+        m = re.search(r"(?:올림포스|올포|리딩파워|리파)\s*([\d,\-~]+)강", nfc)
         if not m:
             return []
         spec = m.group(1)
