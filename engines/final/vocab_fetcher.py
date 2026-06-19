@@ -339,8 +339,17 @@ def fetch_high3_scope(school, log=None, exam_period=None):
     lectures.sort(key=int)
 
     tests = []
-    for m in re.finditer(r"test\s*(\d+)", raw, re.IGNORECASE):
-        tests.append(f"test{m.group(1)}")
+    # "TEST 1,2" / "Test 1, 2" 축약형 → test1, test2 모두 캡처.
+    # 기존 정규식 r"test\s*(\d+)"는 "TEST 1,2"에서 test1만 잡아 test2 누락(한영3 등).
+    # 콤마로 이어진 번호 목록을 한 마커 뒤에서 모두 수집. (괄호 지문목록 "Test 1(3,4)"는
+    # 마커 뒤가 '('라 미스매치 → 영향 없음.)
+    for m in re.finditer(r"test\s*((?:\d+\s*,\s*)*\d+)", raw, re.IGNORECASE):
+        for _num in m.group(1).split(","):
+            _num = _num.strip()
+            if _num.isdigit():
+                tests.append(f"test{_num}")
+    _seen_test = set()
+    tests = [t for t in tests if not (t in _seen_test or _seen_test.add(t))]
 
     exclude_gateway = bool(re.search(r"gateway\s*\uc81c\uc678", raw, re.IGNORECASE))
 
