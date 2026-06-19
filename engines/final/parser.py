@@ -4758,6 +4758,13 @@ def parse_extracted(extracted_path, vocab_left, vocab_right,
         # Word 어법수정은 word_file scope(교과서/모의고사/EBS)를 커버하므로
         # 해당 scope의 A1은 제외, workbook_a1 scope(마더텅 등) A1은 유지하여 병합
         merged_lines = list(grammar_word_lines)
+        # EBS docx(원고)가 이미 커버한 올포 강 집합 — 아래 A1(.indd) 살림이
+        # 같은 강을 중복 추가해 원고를 밀어내지 않도록(원고 우선) 사용.
+        _ebs_olpo_lecs = set()
+        for _gl in grammar_word_lines:
+            _mo = re.match(r"올포\s*(\d+)강", _nfc(_gl))
+            if _mo:
+                _ebs_olpo_lecs.add(int(_mo.group(1)))
         if not is_g3 and grammar_blocks:
             from engines.final.scope_parser import (
                 parse_scope_from_filename as _psf,
@@ -4820,6 +4827,11 @@ def parse_extracted(extracted_path, vocab_left, vocab_right,
                 #  블록 단위 올포 판정으로 가로챔 — 문장배열/영작과 동일하게 '올포 N강 ...' 정렬.)
                 if gb.get("lecture", 0) > 0 and _src_is_olpo(_gb_src):
                     _olec = gb.get("lecture")
+                    # 어법수정은 원고(EBS docx)에서 가져오는 게 원칙. EBS docx가 이 강을
+                    # 이미 제공했으면 .indd 워크북 A1 살림은 스킵(원고 우선, 중복 방지).
+                    # 원고에 없는 강(=docx 미존재)만 .indd로 폴백한다.
+                    if _olec in _ebs_olpo_lecs:
+                        continue
                     _olbl = (gb.get("olpo_label") or "").strip()
                     if _olbl:
                         _ohdr = f"올포 {_olec}강 {_olbl}"
