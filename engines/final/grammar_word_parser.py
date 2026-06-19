@@ -578,16 +578,22 @@ def parse_grammar_word(docx_path, auto_unit_base=None):
             # 지시문/교재명/챕터 제목 스킵
             # - "ReadingPower 유형편완성(2017) - Unit 03" (교재명)
             # - "Chapter 01. 대의 파악 - 03 목적" (다른 Chapter 형식)
+            # \uc120\ud589 \ubd88\ub9bf/\ub9c8\ucee4 \uc81c\uac70 \ud6c4 \uba54\ud0c0 \ud310\uc815. \uc77c\ubd80 \uc6d0\uace0\ub294 \uad50\uc7ac\uba85 \uc81c\ubaa9 \uc55e\uc5d0 '\u3134'(U+3134
+            # \ud55c\uae00 \ud638\ud658 \uc790\ubaa8, \uc11c\ube0c\ubd88\ub9bf \uc6a9\ub3c4)\uc744 \ubd99\uc778\ub2e4. \uc548 \ub5bc\uba74 "\u3134\uacf5\ud1b5\uc601\uc5b41_\ubbf8\ub798\uc5d4\uae40\uc131\uc5f0 -
+            # Lesson 4..." \uc81c\ubaa9\uc904\uc774 startswith \uba54\ud0c0 \uc2a4\ud0b5\uc744 \ud1b5\uacfc \ubabb \ud574 \uc720\ub839 '\ubcf8\ubb38' \ube14\ub85d\uc774
+            # \uc0dd\uae30\uace0 \uc2e4\uc81c \ubcf8\ubb38 \ubc88\ud638\uac00 \ud55c \uce78\uc529 \ubc00\ub9b0\ub2e4(\uc0c1\uc77c1 4\uacfc). \ud638\ud658 \uc790\ubaa8(U+3130~318F)\uc640
+            # \uac00\uc6b4\ub383\uc810/\ud654\uc0b4\ud45c \ub4f1 \uc120\ud589 \ub9c8\ucee4\ub9cc \uc81c\uac70 \u2014 \ubcf8\ubb38(\u300a\uc81c\ubaa9\u300b/\uc601\ubb38)\uc740 \uc601\ud5a5 \uc5c6\ub2e4.
+            _lt_meta = re.sub(r"^[\s\u3130-\u318f\u2022\u00b7\u21b3\u2192\u25b6]+", "", left_text)
             is_meta = (
-                left_text.startswith("Q.") or
-                left_text.startswith("\uc601\uc5b4") or
-                left_text.startswith("\uacf5\ud1b5\uc601\uc5b4") or
-                left_text.startswith("\uace0\ub4f1_") or
-                left_text.startswith("\uace01_") or
-                left_text.startswith("\uace02_") or
-                left_text.startswith("\uc62c\ub9bc\ud3ec\uc2a4") or
-                left_text.startswith("ReadingPower") or
-                bool(re.match(r"^Chapter\s+\d+", left_text)) or
+                _lt_meta.startswith("Q.") or
+                _lt_meta.startswith("\uc601\uc5b4") or
+                _lt_meta.startswith("\uacf5\ud1b5\uc601\uc5b4") or
+                _lt_meta.startswith("\uace0\ub4f1_") or
+                _lt_meta.startswith("\uace01_") or
+                _lt_meta.startswith("\uace02_") or
+                _lt_meta.startswith("\uc62c\ub9bc\ud3ec\uc2a4") or
+                _lt_meta.startswith("ReadingPower") or
+                bool(re.match(r"^Chapter\s+\d+", _lt_meta)) or
                 "\ud6a8\ud615\ud3b8" in left_text or
                 "\uc5b4\ubc95\uc218\uc815" in left_text
             )
