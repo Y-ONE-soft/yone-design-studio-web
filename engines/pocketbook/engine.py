@@ -357,6 +357,9 @@ class PocketbookEngine(BaseEngine):
             return "서술"
         if "논술" in header:
             return "논술"
+        # 리딩파워: "...Example" → "Ex" (지문 라벨 "Unit N Ex"와 canon 매칭)
+        if "Example" in header or re.search(r"(?<![A-Za-z])Ex(?![A-Za-z])", header):
+            return "Ex"
         nm = re.search(r"no\.?\s*(\d+)", header, re.IGNORECASE)
         if nm:
             n = int(nm.group(1))
@@ -380,6 +383,105 @@ class PocketbookEngine(BaseEngine):
                 gang_idx = 0
             if t and gang_idx < len(gang_list):
                 p["canon"] = str(gang_list[gang_idx]) + "-" + t
+
+    @staticmethod
+    def _find_rp_review_docx(unit_dir):
+        """리딩파워 Unit 폴더에서 리뷰테스트 해설지(없으면 정답지) .docx 경로.
+        "... 리뷰테스트"/"리테" 하위 폴더를 우선 탐색한다.
+        """
+        import unicodedata
+        dirs = [unit_dir]
+        try:
+            for raw in os.listdir(unit_dir):
+                full = os.path.join(unit_dir, raw)
+                if os.path.isdir(full):
+                    nfc = unicodedata.normalize("NFC", raw)
+                    if "리뷰" in nfc or "리테" in nfc:
+                        dirs.insert(0, full)
+        except Exception:
+            return None
+        for d in dirs:
+            try:
+                files = [unicodedata.normalize("NFC", f) for f in os.listdir(d)]
+            except Exception:
+                continue
+            for kw in ["해설지", "정답지"]:
+                for f in files:
+                    if f.startswith("~$"):
+                        continue
+                    if f.endswith(".docx") and kw in f:
+                        return os.path.join(d, f)
+        return None
+
+    def _discover_rp_review(self, rt_base, lesson_nums, job_dir, log):
+        """리딩파워 리뷰테스트 탐색 + 파싱 + Unit 기준 canon 부여.
+
+        올림포스는 "올림포스 독해기본N 〉 N강", 리딩파워는
+        "Reading Power 유형편(기본) 〉 Unit N 〉 ... 리뷰테스트 〉 ...해설지.docx" 구조이고
+        폴더가 "Unit N"으로 명명돼 올림포스 경로가 전혀 못 잡았다.
+        파일명 강번호 오타(예 "13,14,16,16강")를 흡수하려고 min~max 범위 Unit을 모두 본다.
+        canon은 "Unit번호-유형"(예 "17-Ex", "17-01") — run.jsx가 지문 "Unit 17 Ex"와 매칭.
+        """
+        import unicodedata
+        from engines.pocketbook.parser import parse_review_test
+        passages = []
+        ebs_base = os.path.join(rt_base, "EBS 작업")
+        if not os.path.isdir(ebs_base) or not lesson_nums:
+            return passages
+        # "Reading Power 유형편(기본)" 폴더 (완성편 제외)
+        rp_root = None
+        for raw in os.listdir(ebs_base):
+            nfc = unicodedata.normalize("NFC", raw)
+            if ("Reading Power" in nfc or "리딩파워" in nfc) and "완성" not in nfc:
+                full = os.path.join(ebs_base, raw)
+                if os.path.isdir(full):
+                    rp_root = full
+                    break
+        if not rp_root:
+            log("  [리뷰테스트] 리딩파워 폴더(EBS 작업) 못 찾음")
+            return passages
+        lo, hi = min(lesson_nums), max(lesson_nums)
+        gdrive_markers = ("GoogleDrive", "Google Drive", "CloudStorage")
+        local_rt_dir = os.path.join(job_dir, "review_test_local")
+        os.makedirs(local_rt_dir, exist_ok=True)
+        units = []
+        for raw in os.listdir(rp_root):
+            full = os.path.join(rp_root, raw)
+            if not os.path.isdir(full):
+                continue
+            um = re.search(r"Unit\s*(\d+)", unicodedata.normalize("NFC", raw))
+            if um and lo <= int(um.group(1)) <= hi:
+                units.append((int(um.group(1)), full))
+        units.sort()
+        for unum, udir in units:
+            docx = self._find_rp_review_docx(udir)
+            if not docx:
+                continue
+            parse_path = docx
+            if any(m in docx for m in gdrive_markers):
+                local_copy = os.path.join(local_rt_dir, os.path.basename(docx))
+                if not os.path.exists(local_copy):
+                    try:
+                        self._gdrive_cp(docx, local_copy)
+                    except Exception as e:
+                        log(f"  [리뷰테스트] 복사 실패: {e}")
+                        continue
+                parse_path = local_copy
+            try:
+                rt = parse_review_test(parse_path)
+            except Exception as e:
+                log(f"  [리뷰테스트] 파싱 실패 ({os.path.basename(docx)}): {e}")
+                continue
+            for rp in rt.get("passages", []):
+                t = PocketbookEngine._review_canon_type(rp["header"])
+                passages.append({
+                    "header": rp["header"],
+                    "answer_text": "\r".join(rp["lines_answer"]),
+                    "blank_text": "\r".join(rp["lines_blank"]),
+                    "word_count": rp["word_count"],
+                    "canon": (str(unum) + "-" + t) if t else None,
+                })
+        return passages
 
     @staticmethod
     def _match_categories_to_files(categories, completed_files):
@@ -542,6 +644,12 @@ class PocketbookEngine(BaseEngine):
                 # 강 번호 목록 추출 (범위 "10-12,14-16강" 포함)
                 lesson_nums = self._parse_gang_spec(nfc_cat)
                 if not lesson_nums:
+                    continue
+                # 리딩파워: 올림포스와 폴더 구조/명명("Unit N")이 달라 별도 처리
+                if "리딩파워" in nfc_cat or "리파" in nfc_cat:
+                    rp_passages = self._discover_rp_review(rt_base, lesson_nums, job_dir, log)
+                    rt_map[rt_key] = {"passages": rp_passages}
+                    log(f"  [리뷰테스트] {nfc_cat} -> {len(rp_passages)}개 (리딩파워)")
                     continue
                 # EBS 작업 하위에서 올림포스 폴더 탐색
                 ebs_base = os.path.join(rt_base, "EBS 작업")
