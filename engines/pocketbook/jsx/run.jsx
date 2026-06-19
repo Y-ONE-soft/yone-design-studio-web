@@ -623,14 +623,18 @@ var settingsPath = "__SETTINGS_PATH__";
         // "강번호-유형"(예: "11-01", "16-서술") 정규화 키로 환원한다.
         function olymposCanonKey(label) {
             if (!label) return null;
-            var gm = String(label).match(/(\d+)\s*강/); // "11강"
-            if (!gm) return null;
+            var s = String(label);
+            var gm = s.match(/(\d+)\s*강/); // 올림포스 "11강"
+            var matched;
+            if (gm) { matched = gm[0]; }
+            else { gm = s.match(/Unit\s*(\d+)/i); if (!gm) return null; matched = gm[0]; } // 리딩파워 "Unit 17"
             var gang = parseInt(gm[1], 10);
-            var rest = String(label).substring(String(label).indexOf(gm[0]) + gm[0].length);
+            var rest = s.substring(s.indexOf(matched) + matched.length);
             var t;
             if (rest.indexOf("분석") >= 0) t = "분석";              // 분석
             else if (rest.indexOf("서술형") >= 0) t = "서술"; // 서술형 -> 서술
             else if (rest.indexOf("논술형") >= 0) t = "논술"; // 논술형 -> 논술
+            else if (rest.indexOf("Ex") >= 0) t = "Ex"; // 리딩파워 "Unit N Ex" -> Ex
             else {
                 // 첫 번호 사용: "1번"→1, 범위 "1~2번"→1, 완성본 "1~2"/"01"→1.
                 // (장문 "장문Ⅰ 1~2번"에서 끝 숫자(2)를 잡아 17-02로 만들면
@@ -1481,7 +1485,7 @@ var settingsPath = "__SETTINGS_PATH__";
                     // 완성본 10-16강엔 리뷰가 없어 docx에서 가져오는데, 위치(index)로
                     // 끼우면 강/번호가 어긋나 엉뚱한 지문에 붙는다(예: "With technology").
                     // engine.py가 부여한 canon("15-01" 등)으로 지문과 정확히 매칭한다.
-                    var olpoCat = fileCategory && (fileCategory.indexOf("올림") >= 0 || fileCategory.indexOf("올포") >= 0);
+                    var olpoCat = fileCategory && (fileCategory.indexOf("올림") >= 0 || fileCategory.indexOf("올포") >= 0 || fileCategory.indexOf("리딩파워") >= 0 || fileCategory.indexOf("리파") >= 0);
                     var canonMap = null;
                     if (olpoCat) {
                         for (var rci = 0; rci < rtPassages.length; rci++) {
