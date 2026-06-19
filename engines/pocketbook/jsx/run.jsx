@@ -791,9 +791,10 @@ var settingsPath = "__SETTINGS_PATH__";
             // 분석본 "11강 ... 1번" 과 완성본 "올포 11강 01" 은 표기 규칙이 달라
             // 공백 제거 문자열 비교로는 매칭 불가. 강번호+유형 정규화 키로 매칭한다.
             // 책 구분(독해기본1/2)은 engine.py가 학기에 맞는 파일만 pno_lookup에 넣어 보장.
-            // 올림포스 카테고리에만 적용 (모의고사/교과서/리딩파워 경로는 영향 없음).
-            if (fileCategory && (fileCategory.indexOf("올림") >= 0 || fileCategory.indexOf("올포") >= 0)) {
-                var _g = pno.match(/(\d+)\s*강/);
+            // 올림포스·리딩파워(Unit 라벨) EBS에 적용 (모의고사/교과서 경로는 영향 없음).
+            // 리딩파워 완성본도 지문번호 배지가 "Unit N Ex/01/02"라 canon("N-Ex"/"N-01")으로 매칭.
+            if (fileCategory && (fileCategory.indexOf("올림") >= 0 || fileCategory.indexOf("올포") >= 0 || fileCategory.indexOf("리딩파워") >= 0 || fileCategory.indexOf("리파") >= 0)) {
+                var _g = pno.match(/(\d+)\s*강/) || pno.match(/Unit\s*(\d+)/i);
                 var _isMock6 = (pno.length >= 6 && /^\d{6}/.test(pno));
                 if (_g && !_isMock6) {
                     var _ck = olymposCanonKey(pno);
