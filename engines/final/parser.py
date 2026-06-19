@@ -3491,19 +3491,8 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
         # pair index와 헤더 start_idx가 어긋난다.
         from collections import OrderedDict
         def _pair_key(w):
-            _q = w.get("q_num", "")
-            _lec = w.get("lecture", 0)
-            _ec = w.get("exam_code", "")
-            # 다중 과(예: "미래엔김4,5과") 워크북에서 4과 본문2와 5과 본문2는
-            # (source, lecture=0, q_num="본문2", exam_code="")가 완전히 동일해
-            # 한 키로 병합되며 영작 내용이 과끼리 뒤섞인다. 교과서 본문/RM/FR
-            # 마커에 한해 page_off(스토리=과 구분)를 키에 추가해 분리한다.
-            # (모의고사는 exam_code/숫자 q_num, 올포는 lecture>0으로 이미 구분되므로
-            #  아래 조건에 걸리지 않아 기존 동작 그대로다.)
-            _po = ""
-            if _lec == 0 and not _ec and re.match(r"^(본문|FR|RM|Project)", str(_q)):
-                _po = w.get("page_off", -1)
-            return (_nfc(w.get("source", "")), _lec, _q, _ec, _po)
+            return (_nfc(w.get("source", "")), w.get("lecture", 0),
+                    w.get("q_num", ""), w.get("exam_code", ""))  # _BASELINE_REVERT_
         _kor_by_q = OrderedDict()
         for w in writing_kor:
             if not isinstance(w, dict):
