@@ -1327,7 +1327,7 @@ var settingsPath = "__SETTINGS_PATH__";
 
                 var baseMasterName = (masterMap[sourceType] || masterMap.textbook).content;
 
-                var passages = extractPassages(analDoc, sourceType);
+                var passages = extractPassages(analDoc, sourceType, fileCategory);
                 log("  " + passages.length + "개 지문");
                 saveLog();
 
@@ -2885,7 +2885,14 @@ var settingsPath = "__SETTINGS_PATH__";
 
         // 카테고리명
         var displayCat = fileCategory;
-        if (sourceType === "ebs") displayCat = "\uC62C\uB9BC\uD3EC\uC2A4";
+        // EBS \uB2E8\uC6D0\uBA85: \uBD84\uC11D\uBCF8 \uCE74\uD14C\uACE0\uB9AC\uB85C \uCC45 \uAD6C\uBD84(\uB9AC\uB529\uD30C\uC6CC vs \uC62C\uB9BC\uD3EC\uC2A4).
+        // \uACFC\uAC70\uC5D4 EBS\uBA74 \uBB34\uC870\uAC74 \uC62C\uB9BC\uD3EC\uC2A4\uB85C \uD558\uB4DC\uCF54\uB529\uD574 \uB9AC\uB529\uD30C\uC6CC\uB3C4 \uC62C\uB9BC\uD3EC\uC2A4\uB85C \uCC0D\uD614\uB2E4.
+        if (sourceType === "ebs") {
+            if (fileCategory && (fileCategory.indexOf("\uB9AC\uB529\uD30C\uC6CC") >= 0 || fileCategory.indexOf("\uB9AC\uD30C") >= 0))
+                displayCat = "\uB9AC\uB529\uD30C\uC6CC";   // \uB9AC\uB529\uD30C\uC6CC
+            else
+                displayCat = "\uC62C\uB9BC\uD3EC\uC2A4";   // \uC62C\uB9BC\uD3EC\uC2A4(\uAE30\uBCF8)
+        }
         else if (sourceType === "mockexam") displayCat = "\uBAA8\uC758\uACE0\uC0AC";
         else if (fileCategory) {
             displayCat = fileCategory.replace(/([^\d\s])(\d)/, "$1 $2");
@@ -3257,7 +3264,7 @@ var settingsPath = "__SETTINGS_PATH__";
     // ════════════════════════════════════════════════════════════════════
     // 분석본에서 지문 추출 -- 영어/한글 스토리 쌍 (서식 유지)
     // ════════════════════════════════════════════════════════════════════
-    function extractPassages(analDoc, sourceType) {
+    function extractPassages(analDoc, sourceType, fileCategory) {
         function isMasterPage(pg) {
             try { return pg.parent.constructor.name === "MasterSpread"; } catch(e) { return false; }
         }
