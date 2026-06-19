@@ -2183,6 +2183,28 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
     """
     vol1 = {}
 
+    # 중복 헤더 충돌 판별용 영문 토큰 추출 + 라벨별 중요어휘 참조 (문장배열·문장삽입
+    # dedup 공용). 학교 워크북이 같은 라벨에 다른 지문을 줄 때(올포 오라벨 등),
+    # 출처가 정확한 중요어휘와 공유도가 큰 블록을 채택해 진짜 지문 소실을 막는다.
+    def _sig_toks(strs):
+        _s = set()
+        for _x in strs:
+            if isinstance(_x, dict):
+                _x = _x.get("text", "")
+            for _w in re.findall(r"[A-Za-z]{5,}", str(_x).lower()):
+                _s.add(_w)
+        return _s
+    _vocab_toks_by_header = {}
+    if vocab_left_text:
+        for _vblk in re.split(r"\n\n+", vocab_left_text):
+            _vlines = _vblk.split("\n")
+            if not _vlines:
+                continue
+            _vhdr = _nfc(_vlines[0].strip())
+            if _vhdr:
+                _vocab_toks_by_header.setdefault(_vhdr, set()).update(
+                    _sig_toks([" ".join(_vlines[1:])]))
+
     # 올포 블록의 lecture 할당:
     # 1순위: exam_code(YYMMQQ) → xlsx 매핑 (학교 올포 워크북 정확 매핑)
     # 2순위: page_off 기반 그룹핑 (공용 올포 파일 폴백)
@@ -2728,6 +2750,20 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
             if _ec_ib:
                 _ins_toks_by_ec.setdefault(_ec_ib, set()).update(
                     _sig_toks(_ib.get("paras", [])))
+        # 올포(examCode 없음)용 추가 참조: 중요어휘(EBS 시트 출처 → 라벨 신뢰 가능).
+        # 학교 워크북이 같은 올포 본문N에 서로 다른 지문을 라벨링(워크북 오라벨)하면
+        # 문장삽입도 같이 오염되므로, 라벨이 정확한 중요어휘를 참조로 쓴다.
+        # (상일1 올포 12강 본문2: 워크북01=본문3내용 오라벨 vs 워크북04=정답 → 진짜본문2 소실)
+        _vocab_toks_by_header = {}
+        if vocab_left_text:
+            for _vblk in re.split(r"\n\n+", vocab_left_text):
+                _vlines = _vblk.split("\n")
+                if not _vlines:
+                    continue
+                _vhdr = _nfc(_vlines[0].strip())
+                if _vhdr:
+                    _vocab_toks_by_header.setdefault(_vhdr, set()).update(
+                        _sig_toks([" ".join(_vlines[1:])]))
         _cands_by_header = {}
         _header_order = []
         for b in all_blocks:
@@ -2745,6 +2781,9 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
             _ec_h = next((_c.get("exam_code", "") for _c in _cands
                           if _c.get("exam_code")), "")
             _ref = _ins_toks_by_ec.get(_ec_h)
+            # examCode 참조(모의)가 없으면 중요어휘 라벨별 참조(올포 등)로 폴백
+            if not _ref:
+                _ref = _vocab_toks_by_header.get(_nfc(_h))
             if _ref:
                 _scored = [(len(_sig_toks(_c.get("items", [])) & _ref), _c)
                            for _c in _cands]
