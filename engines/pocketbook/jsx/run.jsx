@@ -1135,6 +1135,8 @@ var settingsPath = "__SETTINGS_PATH__";
                         srcDoc.spreads[bodies[bj].idx].duplicate(LocationOptions.AFTER, doc.spreads[-1]);
                         if (pno2) existingPassageNos[pno2] = true;
                         pnoCopyCount++; copyCnt++;
+                        // 수록 지문 목록 집계용 — 완성본 레슨 복사도 지문마다 기록 (신규/복사와 동일 마커)
+                        log("  [pno복사] " + (grp.items[p2].passageNo || ""));
                         if (_canonPno(bodies[bj].pno) !== pno2) {   // 표기 달랐는데 위치로 복구
                             fillCnt++;
                             log("    [위치복구] " + grp.token + " 분석본'" + (grp.items[p2].passageNo || "?") + "' = 완성본'" + (bodies[bj].pno || "(번호없음)") + "'");

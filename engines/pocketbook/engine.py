@@ -1509,6 +1509,7 @@ class PocketbookEngine(BaseEngine):
         overflow = 0
         pdf_path = None
         total_passages = 0
+        passage_list = []   # 실제 수록된 지문번호 목록 (순서 보존)
 
         if os.path.exists(log_path):
             lc = open(log_path, encoding="utf-8", errors="ignore").read()
@@ -1522,6 +1523,21 @@ class PocketbookEngine(BaseEngine):
             m = re.search(r"총\s*(\d+)개\s*완료", lc)
             if m:
                 total_passages = int(m.group(1))
+
+            # 실제 수록된 지문번호 목록
+            # run.jsx가 지문마다 찍는 "[pno] <번호>" / "[pno복사] <번호>" 로그를 수집.
+            # (신규 조판·pno 복사·완성본 레슨 복사 모두 동일 마커로 기록됨)
+            # 순서 보존 + 중복 제거, "(+리뷰)" 같은 접미사 제거.
+            _seen_pno = set()
+            for _label in re.findall(r"\[pno(?:복사)?\]\s*([^\n\r]+)", lc):
+                _lab = re.sub(r"\s*\(\+리뷰\)\s*$", "", _label).strip()
+                if _lab and _lab not in _seen_pno:
+                    _seen_pno.add(_lab)
+                    passage_list.append(_lab)
+            # 로그에서 집계한 실제 개수가 있으면 그것을 지문 수로 사용
+            # (기존 "총 N개 완료" 문장은 run.jsx가 찍지 않아 항상 0이던 버그 보정)
+            if passage_list:
+                total_passages = len(passage_list)
 
             # PDF: /tmp에서 최종 경로로 복사
             final_output = ""
@@ -1576,6 +1592,7 @@ class PocketbookEngine(BaseEngine):
             "stories": {
                 "지문": {"actual": total_passages, "expected": total_passages},
             },
+            "passages": passage_list,
             "pdf_path": pdf_path,
             "indd_path": indd_out,
             "warnings": warnings,

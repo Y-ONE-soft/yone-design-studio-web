@@ -2,6 +2,15 @@
 {% block title %}포켓북{% endblock %}
 
 {% block content %}
+<style>
+  /* 결과 카드: 수록 지문번호 칩 목록 (no-cache HTML이라 항상 최신) */
+  .passage-list { margin-top: 2px; }
+  .passage-list .pl-title { font-size: 14px; font-weight: 500; color: #cbd5e1; margin-bottom: 12px; }
+  .passage-list .pl-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .passage-list .pl-chip { display: inline-block; padding: 5px 11px; border-radius: 999px;
+    background: rgba(139, 92, 246, .12); border: 1px solid rgba(139, 92, 246, .32);
+    color: #c4b5fd; font-size: 13px; line-height: 1.35; white-space: nowrap; }
+</style>
 <div class="page-header">
   <a href="/" class="back-link">교재 선택</a>
   <h1>포켓북</h1>
@@ -604,15 +613,32 @@
     const overflow = result.overflow || 0;
     const gradeLabel = result.grade_label || '';
     const warnings = result.warnings || [];
+    const passages = result.passages || [];
 
-    let storyRows = '';
-    const stories = result.stories || {};
-    for (const key in stories) {
-      if (stories.hasOwnProperty(key)) {
-        const v = stories[key];
-        storyRows += '<tr><td>' + key + '</td><td>' + (v.actual != null ? v.actual : '?') + '개</td></tr>';
+    // 수록 지문 목록: 있으면 지문번호 칩으로, 없으면(구버전 로그 등) 기존 항목/수량 표로 폴백
+    let bodyHtml;
+    if (passages.length) {
+      const esc = function(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
+      const chips = passages.map(function(p) { return '<span class="pl-chip">' + esc(p) + '</span>'; }).join('');
+      bodyHtml =
+        '<div class="passage-list">' +
+          '<div class="pl-title">수록 지문 ' + passages.length + '개</div>' +
+          '<div class="pl-chips">' + chips + '</div>' +
+        '</div>';
+    } else {
+      let storyRows = '';
+      const stories = result.stories || {};
+      for (const key in stories) {
+        if (stories.hasOwnProperty(key)) {
+          const v = stories[key];
+          storyRows += '<tr><td>' + key + '</td><td>' + (v.actual != null ? v.actual : '?') + '개</td></tr>';
+        }
       }
+      bodyHtml =
+        '<table class="story-table"><thead><tr><th>항목</th><th>수량</th></tr></thead>' +
+        '<tbody>' + storyRows + '</tbody></table>';
     }
+
     const warnHtml = warnings.length
       ? '<ul class="warn-list">' + warnings.map(function(w) { return '<li>' + w + '</li>'; }).join('') + '</ul>' : '';
 
@@ -623,10 +649,7 @@
           '<span class="overflow-badge ' + (overflow > 0 ? 'bad' : '') + '">오버플로우 ' + overflow + '개</span>' +
           '<span class="overflow-badge overflow-badge--grade">' + gradeLabel + '</span>' +
         '</div>' +
-        '<table class="story-table">' +
-          '<thead><tr><th>항목</th><th>수량</th></tr></thead>' +
-          '<tbody>' + storyRows + '</tbody>' +
-        '</table>' +
+        bodyHtml +
         warnHtml +
       '</div>';
     setStep('verify');
