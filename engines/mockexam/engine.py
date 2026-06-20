@@ -218,11 +218,14 @@ class MockexamEngine(BaseEngine):
         log_path = os.path.join(job_dir, "typeset_log.txt")
 
         from core.indesign.runner import run_jsx
-        run_jsx(jsx_dst, log, poll_log_path=log_path, timeout=self.jsx_timeout)
+        # 다회차: 첫 회차 PDF가 아니라 전체 완료 마커까지 대기 (조기 종료 방지)
+        run_jsx(jsx_dst, log, poll_log_path=log_path, timeout=self.jsx_timeout,
+                completion_marker="동형모의고사 조판 완료")
 
     @property
     def jsx_timeout(self):
-        return 300  # 5분
+        # 회차 수만큼 순차 조판하므로 넉넉히. 실제 행(hang)은 STALL_LIMIT(5분)이 따로 잡는다.
+        return 1200  # 20분 (다회차 대응)
 
     # -- 파이프라인: verify --
 

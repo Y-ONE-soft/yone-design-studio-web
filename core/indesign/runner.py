@@ -278,7 +278,11 @@ def _wait_for_completion(log_path: str, log, timeout: int, cancel_check=None,
             continue
 
         # PDF 내보내기 완료 또는 조판 결과 요약이 있으면 완료
-        if "PDF:" in content or "STEP\uc644\ub8cc:" in content or "\uc870\ud310 \uc644\ub8cc" in content:
+        if completion_marker:
+            if completion_marker in content:
+                time.sleep(2)
+                return
+        elif "PDF:" in content or "STEP\uc644\ub8cc:" in content or "\uc870\ud310 \uc644\ub8cc" in content:
             time.sleep(2)
             return
         # JSX 에러 감지 — 조판 시작 이후에 [오류]가 있으면 실패
