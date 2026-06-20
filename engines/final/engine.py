@@ -1300,17 +1300,19 @@ class FinalEngine(BaseEngine):
                 if _ext_local:
                     from engines.final.grammar_word_parser import parse_external_grammar_docx
                     _ext_passages = parse_external_grammar_docx(_ext_local)
-                    _seq = 0
+                    _added = 0
                     for _pp in _ext_passages:
                         _m2 = re.match(r"^본문(\d+)$", _pp.get("label", ""))
-                        if _m2:
-                            _seq = int(_m2.group(1))
-                        else:
-                            _seq += 1
-                        grammar_word_lines.append(f"{_ext_label} 본문{_seq}")
+                        if not _m2:
+                            # 'Reading …'/'Read More' 등 추가본문은 시험범위 밖(추가본문X) → 제외.
+                            # 원고가 '본문 N'과 라벨을 구분하므로 본문N만 채택한다.
+                            log(f"  [외부지문어법] 추가본문(Read More) 제외: {_pp.get('label', '')}")
+                            continue
+                        grammar_word_lines.append(f"{_ext_label} 본문{_m2.group(1)}")
                         grammar_word_lines.append(_pp.get("text", ""))
-                    if _ext_passages:
-                        log(f"[어법수정] 외부지문 원고 파싱: {len(_ext_passages)}개 지문 추가 "
+                        _added += 1
+                    if _added:
+                        log(f"[어법수정] 외부지문 원고 파싱: {_added}개 지문 추가 "
                             f"(접두='{_ext_label}', 파일={os.path.basename(_ext_doc)})")
         except Exception as _e:
             log(f"  [외부지문어법] 처리 실패: {_e}")
