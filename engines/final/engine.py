@@ -1625,11 +1625,11 @@ class FinalEngine(BaseEngine):
                 # Vol1 순서 + canonical 순서로 missing 블록 병합
                 _all_hdrs_in_order = [_h for _h in _v1_hdrs if _h in _blocks]
                 for _mh in _missing:
-                    _mkey = _ck(_mh)
+                    _mkey = _ck(_mh, g3=(grade == "고3"))
                     # 같은 canonical 키 그룹 내에서 올바른 위치 찾기 (선두 삽입)
                     _inserted = False
                     for _i, _h in enumerate(_all_hdrs_in_order):
-                        if _ck(_h) > _mkey:
+                        if _ck(_h, g3=(grade == "고3")) > _mkey:
                             _all_hdrs_in_order.insert(_i, _mh)
                             _inserted = True
                             break
@@ -1673,7 +1673,7 @@ class FinalEngine(BaseEngine):
                             _w_blocks[_hh] = []
                             _w_order.append(_hh)
                         _w_blocks[_hh].extend(_wp[_start:_end])
-                _sorted_hdrs = sorted(_w_order, key=lambda h: _ck(h))
+                _sorted_hdrs = sorted(_w_order, key=lambda h: _ck(h, g3=(grade == "고3")))
                 _new_wp = []
                 _new_wd = []
                 for _hh in _sorted_hdrs:
@@ -1715,7 +1715,7 @@ class FinalEngine(BaseEngine):
                                         _changed += 1
                                     _tgt = _cand
                             _groups.setdefault(_tgt, []).append(_p)
-                        _relabeled = sorted([h for h in _groups if h], key=lambda h: _ck(h))
+                        _relabeled = sorted([h for h in _groups if h], key=lambda h: _ck(h, g3=(grade == "고3")))
                         _r_wp = []
                         _r_wd = []
                         for _hh in _relabeled:

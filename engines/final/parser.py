@@ -1746,9 +1746,9 @@ def _is_rp_source(src):
     return ("\ub9ac\ub529\ud30c\uc6cc" in s) or ("Reading" in s)
 
 
-def _canonical_order_key(header, source=""):
+def _canonical_order_key(header, source="", g3=False):
     """전체 섹션 순서 통일 키:
-    0: 교과서 (과, 본문번호)
+    0: 교과서 (과, 본문번호)  — 단, g3=True면 교과서는 맨끝(3.5)으로 (강·TEST 뒤)
     0.7: TED 외부지문 (TEDN, 본문번호)
     1: 리딩파워 non-Example 워크북 (강, ex_flag, sub)  -- 1,2,3,5,6강 및 9,10,11강 non-Ex
     1.5: 리딩파워 Example 워크북 (강, ex_flag, sub)    -- 9,10,11강 Example만
@@ -1757,24 +1757,26 @@ def _canonical_order_key(header, source=""):
     """
     h = _nfc(header or "").strip()
     src = _nfc(source or "")
+    # 교과서 tier — g3에선 보충(일부 지문)이라 맨끝(3.5: 강·TEST 뒤), 그 외엔 맨앞(0)
+    _tb = 3.5 if g3 else 0
     # 교과서
     m_tb = re.match(r'^\uad50\uacfc\uc11c(\d+)\uacfc\s+\ubcf8\ubb38(\d+)(?:-(\d+))?', h)
     if m_tb:
-        return (0, int(m_tb.group(1)), int(m_tb.group(2)), int(m_tb.group(3) or 0))
+        return (_tb, int(m_tb.group(1)), int(m_tb.group(2)), int(m_tb.group(3) or 0))
     m_tb_sl = re.match(r'^\uad50\uacfc\uc11cSL\s+\ubcf8\ubb38(\d+)', h)
     if m_tb_sl:
-        return (0, 999, int(m_tb_sl.group(1)), 0)
+        return (_tb, 999, int(m_tb_sl.group(1)), 0)
     m_tb_proj = re.match(r'^\uad50\uacfc\uc11cProject(\d+)\s+\ubcf8\ubb38(\d+)', h)
     if m_tb_proj:
-        return (0, 500 + int(m_tb_proj.group(1)), int(m_tb_proj.group(2)), 0)
+        return (_tb, 500 + int(m_tb_proj.group(1)), int(m_tb_proj.group(2)), 0)
     m_tb_fr = re.match(r'^\uad50\uacfc\uc11c(\d+)\uacfc\s+(?:FR|RM)', h)
     if m_tb_fr:
-        return (0, int(m_tb_fr.group(1)), 999, 0)
+        return (_tb, int(m_tb_fr.group(1)), 999, 0)
     # \uad50\uacfc\uc11c \ub525\ub7ec\ub2dd: "\uad50\uacfc\uc11cN\uacfc \ub525\ub7ec\ub2dd" (\ud63c\ud569 \uc6cc\ud06c\ubd81\uc758 [N\uacfc Deep Learning] \uc139\uc158).
     # \ud574\ub2f9 \uacfc \ubcf8\ubb38 \ub4a4(\ub2e4\uc74c \uacfc \uc55e)\uc5d0 \ubc30\uce58. \ubbf8\uc778\uc2dd \uc2dc \uae30\ud0c0(3)\ub85c \ube60\uc838 \uc62c\ud3ec\u00b7\ubaa8\uc758\uace0\uc0ac \ub4a4\ub85c \ubc00\ub9b0\ub2e4.
     m_tb_dl = re.match(r'^\uad50\uacfc\uc11c(\d+)\uacfc\s+\ub525\ub7ec\ub2dd', h)
     if m_tb_dl:
-        return (0, int(m_tb_dl.group(1)), 998, 0)
+        return (_tb, int(m_tb_dl.group(1)), 998, 0)
     # TED 외부지문 ("TED1 본문3", "TED2 본문1" 등)
     m_ted = re.match(r'^TED(\d+)\s+\ubcf8\ubb38(\d+)', h)
     if m_ted:
@@ -2823,7 +2825,9 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
                 else:
                     tb_lesson = 0
                     tb_num = 0
-                return (0.9, tb_lesson, tb_num, h)
+                # \uace03: \uad50\uacfc\uc11c\ub294 \ubcf4\ucda9(\uc77c\ubd80 \uc9c0\ubb38)\uc774\ubbc0\ub85c \uac15\u00b7TEST \ub4a4(\ub9e8\ub05d)\uc5d0 \ubc30\uce58(tier 1.5 > test tier 1).
+                # \uc815\ubcf8 \uc21c\uc11c \ud1b5\uc77c: \uac15 \u2192 test1 \u2192 test2 \u2192 \uad50\uacfc\uc11c.
+                return (1.5, tb_lesson, tb_num, h)
             m_olpo = re.match(r'^\uc62c\ud3ec\s+(\d+)\uac15\s+(.+)$', h)
             if m_olpo:
                 lec_n = int(m_olpo.group(1))
