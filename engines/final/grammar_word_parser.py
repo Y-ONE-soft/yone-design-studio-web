@@ -636,3 +636,59 @@ def parse_grammar_word(docx_path, auto_unit_base=None):
         results.append(_block)
 
     return results
+
+
+def parse_external_grammar_docx(docx_path):
+    """외부지문/추가지문 어법수정 '원고(docx)'를 업로드 기반으로 파싱.
+
+    외부/추가 지문은 매번 출처·형식·제목이 달라지므로(예전 'TED'도 그때의 제목일
+    뿐) 폴더 경로/형식/헤더를 하드코딩하지 않는다. 원고의 단락을 순서대로 읽어
+    '번호. <페이지/레슨 마커> <라벨>' 형태의 지문 헤더를 감지하고, **라벨을 원고에서
+    그대로 유도**한다.
+
+    예) '1. L4-p. 83 본문 1'              → label '본문1'
+        '8. L4-p. 99 Reading about Bio-Engine' → label 'Reading about Bio-Engine'
+
+    표(2열)/단락 어느 구조든 대응하도록 document.xml의 <w:t>를 단락(<w:p>) 단위로
+    모아 처리한다(parse_grammar_word는 2열 표 전용이라 이 형식을 1블록으로 뭉친다).
+
+    Returns:
+        [{"label": "본문1"|"Reading about Bio-Engine"|..., "text": "지문(어법마커 N[..] 포함)"}]
+    """
+    import zipfile
+    import html
+    try:
+        xml = zipfile.ZipFile(docx_path).read("word/document.xml").decode("utf-8", "ignore")
+    except Exception:
+        return []
+    paras = []
+    for blk in re.split(r"</w:p>", xml):
+        ts = re.findall(r"<w:t[^>]*>([^<]*)</w:t>", blk)
+        line = html.unescape(_nfc("".join(ts))).strip()
+        if line:
+            paras.append(line)
+
+    # 지문 헤더: 선행 순번 + (임의의 페이지/레슨 마커) + 줄 끝 라벨.
+    # 라벨은 '본문 N' 또는 Reading/Read More/Further(추가 읽기) 류. 특정 교재/형식에
+    # 의존하지 않도록 가운데 마커는 .*?로 흘려보낸다.
+    HDR = re.compile(
+        r"^\d+\.\s+.*?\s(본문\s*\d+|Reading\b.*|Read\s*More.*|Further[^\n]*)$",
+        re.IGNORECASE,
+    )
+    out = []
+    label = None
+    buf = []
+    for p in paras:
+        m = HDR.match(p)
+        if m:
+            if label is not None:
+                out.append({"label": label, "text": "\n".join(buf).strip()})
+            raw = m.group(1).strip()
+            # '본문 1' → '본문1' (그 외 라벨은 공백 보존)
+            label = re.sub(r"본문\s*(\d+)", r"본문\1", raw)
+            buf = []
+        elif label is not None:
+            buf.append(p)
+    if label is not None:
+        out.append({"label": label, "text": "\n".join(buf).strip()})
+    return out
