@@ -4707,15 +4707,10 @@ def parse_extracted(extracted_path, vocab_left, vocab_right,
 
             sentence_blocks = _filter_blocks_by_lecture(
                 sentence_blocks, _lecture_map, selected_lectures, lecture_details)
-            # 영작은 q_num(지문번호) trim을 적용하지 않는다(lecture_details=None).
-            # TEST/모의 영작은 단일 병합 스토리라 q_num이 신뢰 불가 → q_num trim 시
-            # 범위 내 지문(예: test2 23)이 오삭제됨. lecture(강/test) 수준만 필터하고,
-            # 실제 시험범위 trim은 engine의 영작 내용기반 재라벨(어법 best-match)에서
-            # 약매칭 drop으로 처리한다(어법은 q_num trim된 in-scope 기준).
             writing_kor = _filter_items_by_lecture(
-                writing_kor, _lecture_map, selected_lectures, None)
+                writing_kor, _lecture_map, selected_lectures, lecture_details)
             writing_view = _filter_items_by_lecture(
-                writing_view, _lecture_map, selected_lectures, None)
+                writing_view, _lecture_map, selected_lectures, lecture_details)
 
             vocab_blocks = _filter_blocks_by_lecture(
                 vocab_blocks, _lecture_map, selected_lectures, lecture_details)
