@@ -413,6 +413,41 @@ def fetch_high3_scope(school, log=None, exam_period=None):
             if _sm:
                 lecture_details[str(int(_sm.group(1)))] = _passages
 
+    # "[강 목록]강(…제외)의 1,2번" / "TEST 1,2의 12~23번" 형식 지문번호 trim 파싱.
+    # 괄호 안 지문목록(28강(1,2)) 형식과 별개로, "의 … 번"으로 떨어진 표기를 지원한다
+    # (한영3: "21~30강(23강 제외)의 1,2번, TEST 1,2의 12~23번").
+    # 이미 설정된 키는 덮어쓰지 않아 기존 학교 동작 보존.
+    # 강 범위: "21~30강(…)의 1,2번"
+    for _m in re.finditer(
+        r"(\d+)\s*[-~–—]\s*(\d+)\s*강\s*(?:\([^)]*\))?\s*의\s*([\d,\s~–—\-]+?)\s*번",
+        raw,
+    ):
+        _a, _b = int(_m.group(1)), int(_m.group(2))
+        _ps = _parse_passage_list(_m.group(3))
+        if _ps and _a <= _b and _b - _a < 50:
+            for _n in range(_a, _b + 1):
+                lecture_details.setdefault(str(_n), _ps)
+    # 단일 강: "4강의 2번" / "4강(…)의 2번"
+    for _m in re.finditer(
+        r"(?<![\d~–—\-])(\d+)\s*강\s*(?:\([^)]*\))?\s*의\s*([\d,\s~–—\-]+?)\s*번",
+        raw,
+    ):
+        _ps = _parse_passage_list(_m.group(2))
+        if _ps:
+            lecture_details.setdefault(str(int(_m.group(1))), _ps)
+    # TEST: "TEST 1,2의 12~23번" → test1,test2 각각 [12..23]
+    for _m in re.finditer(
+        r"[Tt][Ee][Ss][Tt]\s*((?:\d+\s*,\s*)*\d+)\s*의\s*([\d,\s~–—\-]+?)\s*번",
+        raw,
+    ):
+        _ps = _parse_passage_list(_m.group(2))
+        if not _ps:
+            continue
+        for _tn in _m.group(1).split(","):
+            _tn = _tn.strip()
+            if _tn.isdigit():
+                lecture_details.setdefault(f"test{_tn}", _ps)
+
     if log:
         preview = raw.replace("\n", " | ")
         log(f"[\uace03 \ubc94\uc704] \uc218\ub2a5\ud2b9\uac15: {preview}")
