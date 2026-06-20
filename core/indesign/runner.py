@@ -111,7 +111,7 @@ def close_open_indd(indd_path: str, log=None) -> None:
 
 
 def run_jsx(jsx_path: str, log, poll_log_path: str = None, timeout: int = 1200,
-            cancel_check=None):
+            cancel_check=None, completion_marker: str = None):
     """JSX 파일을 단계별로 실행.
 
     큰 JSX 파일 대신, settings.json에서 정보를 읽고
@@ -218,7 +218,8 @@ def run_jsx(jsx_path: str, log, poll_log_path: str = None, timeout: int = 1200,
                 # 스크립트 전달 확인 후 osascript 종료 (응답 대기 불필요)
                 proc.kill()
                 log("[InDesign] 스크립트 전달 확인, 폴링 시작")
-                _wait_for_completion(poll_log_path, log, timeout, cancel_check)
+                _wait_for_completion(poll_log_path, log, timeout, cancel_check,
+                                     completion_marker)
             else:
                 proc.kill()
                 raise RuntimeError("InDesign 스크립트 시작 안 됨 (120초 대기) — InDesign 상태를 확인하세요")
@@ -233,7 +234,8 @@ def run_jsx(jsx_path: str, log, poll_log_path: str = None, timeout: int = 1200,
         log(f"[InDesign] 락 해제 — {job_name}")
 
 
-def _wait_for_completion(log_path: str, log, timeout: int, cancel_check=None):
+def _wait_for_completion(log_path: str, log, timeout: int, cancel_check=None,
+                         completion_marker: str = None):
     elapsed = 0
     last_mtime = 0
     stall_seconds = 0
