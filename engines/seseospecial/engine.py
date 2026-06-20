@@ -10,10 +10,7 @@ import re
 import shutil
 
 from core.base import BaseEngine, safe_copy
-<<<<<<< Updated upstream
 from core.paths import resolve_config
-=======
->>>>>>> Stashed changes
 from engines.seseospecial.parser import parse_all
 
 _DIR = os.path.dirname(os.path.abspath(__file__))

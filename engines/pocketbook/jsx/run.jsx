@@ -623,7 +623,6 @@ var settingsPath = "__SETTINGS_PATH__";
         // "강번호-유형"(예: "11-01", "16-서술") 정규화 키로 환원한다.
         function olymposCanonKey(label) {
             if (!label) return null;
-<<<<<<< Updated upstream
             var s = String(label);
             var gm = s.match(/(\d+)\s*강/); // 올림포스 "11강"
             var matched;
@@ -631,20 +630,11 @@ var settingsPath = "__SETTINGS_PATH__";
             else { gm = s.match(/Unit\s*(\d+)/i); if (!gm) return null; matched = gm[0]; } // 리딩파워 "Unit 17"
             var gang = parseInt(gm[1], 10);
             var rest = s.substring(s.indexOf(matched) + matched.length);
-=======
-            var gm = String(label).match(/(\d+)\s*강/); // "11강"
-            if (!gm) return null;
-            var gang = parseInt(gm[1], 10);
-            var rest = String(label).substring(String(label).indexOf(gm[0]) + gm[0].length);
->>>>>>> Stashed changes
             var t;
             if (rest.indexOf("분석") >= 0) t = "분석";              // 분석
             else if (rest.indexOf("서술형") >= 0) t = "서술"; // 서술형 -> 서술
             else if (rest.indexOf("논술형") >= 0) t = "논술"; // 논술형 -> 논술
-<<<<<<< Updated upstream
             else if (rest.indexOf("Ex") >= 0) t = "Ex"; // 리딩파워 "Unit N Ex" -> Ex
-=======
->>>>>>> Stashed changes
             else {
                 // 첫 번호 사용: "1번"→1, 범위 "1~2번"→1, 완성본 "1~2"/"01"→1.
                 // (장문 "장문Ⅰ 1~2번"에서 끝 숫자(2)를 잡아 17-02로 만들면
@@ -801,22 +791,15 @@ var settingsPath = "__SETTINGS_PATH__";
             // 분석본 "11강 ... 1번" 과 완성본 "올포 11강 01" 은 표기 규칙이 달라
             // 공백 제거 문자열 비교로는 매칭 불가. 강번호+유형 정규화 키로 매칭한다.
             // 책 구분(독해기본1/2)은 engine.py가 학기에 맞는 파일만 pno_lookup에 넣어 보장.
-<<<<<<< Updated upstream
             // 올림포스·리딩파워(Unit 라벨) EBS에 적용 (모의고사/교과서 경로는 영향 없음).
             // 리딩파워 완성본도 지문번호 배지가 "Unit N Ex/01/02"라 canon("N-Ex"/"N-01")으로 매칭.
             if (fileCategory && (fileCategory.indexOf("올림") >= 0 || fileCategory.indexOf("올포") >= 0 || fileCategory.indexOf("리딩파워") >= 0 || fileCategory.indexOf("리파") >= 0)) {
                 var _g = pno.match(/(\d+)\s*강/) || pno.match(/Unit\s*(\d+)/i);
-=======
-            // 올림포스 카테고리에만 적용 (모의고사/교과서/리딩파워 경로는 영향 없음).
-            if (fileCategory && (fileCategory.indexOf("올림") >= 0 || fileCategory.indexOf("올포") >= 0)) {
-                var _g = pno.match(/(\d+)\s*강/);
->>>>>>> Stashed changes
                 var _isMock6 = (pno.length >= 6 && /^\d{6}/.test(pno));
                 if (_g && !_isMock6) {
                     var _ck = olymposCanonKey(pno);
                     if (!_ck) return false;
                     var _gNum = parseInt(_g[1], 10);
-<<<<<<< Updated upstream
                     // 리딩파워 완성본은 파일명 범위("13~20강")가 실제 내용(+21,22강)을 과소표기할 수 있어
                     // 강-범위 완성본이면 범위 무관하게 canon 매칭 시도(buildCanonMap이 실제 보유분으로 판정).
                     var _isRP = fileCategory && (fileCategory.indexOf("리딩파워") >= 0 || fileCategory.indexOf("리파") >= 0);
@@ -824,11 +807,6 @@ var settingsPath = "__SETTINGS_PATH__";
                         var _lym = pnoLookupFiles[_oi].ym;
                         if (_isRP) { if (!/\d+\s*강/.test(String(_lym))) continue; }
                         else if (!ymRangeHasGang(_lym, _gNum)) continue;
-=======
-                    for (var _oi = 0; _oi < pnoLookupFiles.length; _oi++) {
-                        var _lym = pnoLookupFiles[_oi].ym;
-                        if (!ymRangeHasGang(_lym, _gNum)) continue;
->>>>>>> Stashed changes
                         if (!pnoLookupDocCache[_lym]) {
                             var _od = openLookupDocByYm(_lym);
                             if (!_od) continue;
@@ -999,21 +977,17 @@ var settingsPath = "__SETTINGS_PATH__";
 
         // 완성본 한 스프레드의 지문번호 텍스트 (buildSpreadPnoMap과 동일한 위치 규칙)
         function getSpreadPnoText(srcDoc, si) {
-<<<<<<< Updated upstream
             // 1순위: 위치 윈도우(top/left 13~17)의 지문번호 프레임.
             // 폴백: 긴 범위 라벨("230941-42" 등)은 프레임이 위로 밀려 윈도우를 벗어나
             //       못 잡히던 버그가 있었음 → YYMMQQ(+선택적 범위) 패턴 + 좌측 번호
             //       칼럼(left<=20)인 프레임을 내용기반으로 폴백 인식한다.
             var fallback = "";
-=======
->>>>>>> Stashed changes
             try {
                 var spPages = srcDoc.spreads[si].pages.everyItem().getElements();
                 for (var spi = 0; spi < spPages.length; spi++) {
                     var tfs = spPages[spi].textFrames.everyItem().getElements();
                     for (var ti = 0; ti < tfs.length; ti++) {
                         var gb = tfs[ti].geometricBounds;
-<<<<<<< Updated upstream
                         var t = String(tfs[ti].contents).replace(/[\r\n\s]/g, "");
                         if (gb[0] >= 13 && gb[0] <= 17 && gb[2] <= 22 && gb[1] >= 13 && gb[1] <= 17) {
                             if (t) return t;
@@ -1025,16 +999,6 @@ var settingsPath = "__SETTINGS_PATH__";
                 }
             } catch(e) {}
             return fallback;
-=======
-                        if (gb[0] >= 13 && gb[0] <= 17 && gb[2] <= 22 && gb[1] >= 13 && gb[1] <= 17) {
-                            var t = String(tfs[ti].contents).replace(/[\r\n\s]/g, "");
-                            if (t) return t;
-                        }
-                    }
-                }
-            } catch(e) {}
-            return "";
->>>>>>> Stashed changes
         }
 
         // 완성본을 본문/리뷰 스프레드 배열로 분류 (스프레드 순서 보존)
@@ -1075,7 +1039,6 @@ var settingsPath = "__SETTINGS_PATH__";
             newCount++;
         }
 
-<<<<<<< Updated upstream
         // ── 본문↔리뷰 지문 일치 검사 (완성본 파일의 리뷰가 엉뚱한 과인 경우 감지) ──
         // 스프레드에서 가장 긴 영문 텍스트의 시그니처(소문자 영문자만) 추출.
         function _spreadEngSig(sdoc, spIdx) {
@@ -1105,8 +1068,6 @@ var settingsPath = "__SETTINGS_PATH__";
             return false;
         }
 
-=======
->>>>>>> Stashed changes
         // 완성본이 있는 과: 분석본 지문 본문 복사 + 같은 순번 리뷰 복사
         function copyLessonFromCompleted(grp, ym, fileCategory) {
             var srcDoc = openLookupDocByYm(ym);
@@ -1124,7 +1085,6 @@ var settingsPath = "__SETTINGS_PATH__";
             //        2단계 배정은 모두 [위치복구] 로그로 남겨 가시화한다(완성본 태그가
             //        비어있거나 표기가 달라도 위치로 복구 — 침묵 신규조판 방지).
             function _canonPno(s) { return (s || "").replace(/\s/g, ""); }
-<<<<<<< Updated upstream
             // 범위 지문번호(41~42 / 41-42 / 41 / 42 는 모두 같은 지문)를 동일하게
             // 매칭하기 위해 expandPassageNo로 모든 변형 키를 등록/조회한다.
             // (예: 완성본 "230941-42" → 키 230941, 230942 등록 → 신규 "230941~42"/
@@ -1135,26 +1095,15 @@ var settingsPath = "__SETTINGS_PATH__";
                 for (var kj = 0; kj < keysJ.length; kj++) {
                     if (keysJ[kj] && pnoToBody[keysJ[kj]] === undefined) pnoToBody[keysJ[kj]] = jb;
                 }
-=======
-            var pnoToBody = {};
-            for (var jb = 0; jb < mBodies; jb++) {
-                var cpj = _canonPno(bodies[jb].pno);
-                if (cpj && pnoToBody[cpj] === undefined) pnoToBody[cpj] = jb;
->>>>>>> Stashed changes
             }
             var assign = [], usedBody = [];
             for (var ub = 0; ub < mBodies; ub++) usedBody[ub] = false;
             for (var ia = 0; ia < nItems; ia++) {
-<<<<<<< Updated upstream
                 var keysI = expandPassageNo(grp.items[ia].passageNo);
                 var mb = -1;
                 for (var ki = 0; ki < keysI.length; ki++) {
                     if (pnoToBody[keysI[ki]] !== undefined) { mb = pnoToBody[keysI[ki]]; break; }
                 }
-=======
-                var capi = _canonPno(grp.items[ia].passageNo);
-                var mb = (capi && pnoToBody[capi] !== undefined) ? pnoToBody[capi] : -1;
->>>>>>> Stashed changes
                 if (mb >= 0 && usedBody[mb]) mb = -1;   // 같은 본문 중복배정 방지
                 assign[ia] = mb;
                 if (mb >= 0) usedBody[mb] = true;
@@ -1186,11 +1135,8 @@ var settingsPath = "__SETTINGS_PATH__";
                         srcDoc.spreads[bodies[bj].idx].duplicate(LocationOptions.AFTER, doc.spreads[-1]);
                         if (pno2) existingPassageNos[pno2] = true;
                         pnoCopyCount++; copyCnt++;
-<<<<<<< Updated upstream
                         // 수록 지문 목록 집계용 — 완성본 레슨 복사도 지문마다 기록 (신규/복사와 동일 마커)
                         log("  [pno복사] " + (grp.items[p2].passageNo || ""));
-=======
->>>>>>> Stashed changes
                         if (_canonPno(bodies[bj].pno) !== pno2) {   // 표기 달랐는데 위치로 복구
                             fillCnt++;
                             log("    [위치복구] " + grp.token + " 분석본'" + (grp.items[p2].passageNo || "?") + "' = 완성본'" + (bodies[bj].pno || "(번호없음)") + "'");
@@ -1214,7 +1160,6 @@ var settingsPath = "__SETTINGS_PATH__";
             // 2) 리뷰테스트: 본문과 같은 순번으로 복사 (포함 모드일 때만)
             if (includeReviewTest) {
                 var revStart = doc.spreads.length;
-<<<<<<< Updated upstream
                 var revCopied = 0, revEmpty = 0, revFixed = 0;
                 var _rtMapTB = S.review_test_map || {};
                 var _rtDataTB = _rtMapTB[fileCategory] || _rtMapTB[grp.token] || null;
@@ -1243,11 +1188,6 @@ var settingsPath = "__SETTINGS_PATH__";
                             }
                             continue;
                         }
-=======
-                var revCopied = 0, revEmpty = 0;
-                for (var r = 0; r < revPlan.length; r++) {
-                    if (revPlan[r] >= 0) {
->>>>>>> Stashed changes
                         try { srcDoc.spreads[revPlan[r]].duplicate(LocationOptions.AFTER, doc.spreads[-1]); revCopied++; }
                         catch(e) { createEmptyMemtestSpread(doc, refDoc, templateSpreads, masters, "F"); revEmpty++; }
                     } else {
@@ -1255,11 +1195,7 @@ var settingsPath = "__SETTINGS_PATH__";
                     }
                 }
                 if (doc.spreads.length > revStart) correctCopiedMasters(revStart, doc.spreads.length, "textbook");
-<<<<<<< Updated upstream
                 log("  [리뷰] " + grp.token + ": 본문 " + copyCnt + (fillCnt > 0 ? ("(위치복구" + fillCnt + ")") : "") + (newCnt > 0 ? ("+신규" + newCnt) : "") + ", 리뷰 " + revCopied + (revFixed > 0 ? ("+교정" + revFixed) : "") + (revEmpty > 0 ? ("+빈" + revEmpty) : "") + " (F-마스터)");
-=======
-                log("  [리뷰] " + grp.token + ": 본문 " + copyCnt + (fillCnt > 0 ? ("(위치복구" + fillCnt + ")") : "") + (newCnt > 0 ? ("+신규" + newCnt) : "") + ", 리뷰 " + revCopied + (revEmpty > 0 ? ("+빈" + revEmpty) : "") + " (F-마스터)");
->>>>>>> Stashed changes
             } else {
                 log("  [본문] " + grp.token + ": " + copyCnt + (fillCnt > 0 ? ("(위치복구" + fillCnt + ")") : "") + (newCnt > 0 ? ("+신규" + newCnt) : "") + "개");
             }
@@ -1406,7 +1342,6 @@ var settingsPath = "__SETTINGS_PATH__";
                 log("  " + passages.length + "개 지문");
                 saveLog();
 
-<<<<<<< Updated upstream
                 // [혼합] 한 분석본에 교과서+모의고사 지문이 공존 (예: "동아박4과,21년 11월").
                 // extractPassages가 지문별 sourceType을 부여 → 부분집합으로 나눠 각 경로로 처리.
                 // 교과서 지문은 processTextbookLessons로, 모의고사 지문은 아래 기존 루프로.
@@ -1427,8 +1362,6 @@ var settingsPath = "__SETTINGS_PATH__";
                     baseMasterName = (masterMap.mockexam).content;
                 }
 
-=======
->>>>>>> Stashed changes
                 // [교과서] 과 단위로 완성본에서 본문+대응 리뷰만 선별 복사 (분석본 지문 기준)
                 // 모의고사/EBS/올림포스는 아래 기존 경로를 그대로 사용
                 if (sourceType === "textbook" && pnoLookupFiles.length > 0) {
@@ -1559,11 +1492,7 @@ var settingsPath = "__SETTINGS_PATH__";
                     // 완성본 10-16강엔 리뷰가 없어 docx에서 가져오는데, 위치(index)로
                     // 끼우면 강/번호가 어긋나 엉뚱한 지문에 붙는다(예: "With technology").
                     // engine.py가 부여한 canon("15-01" 등)으로 지문과 정확히 매칭한다.
-<<<<<<< Updated upstream
                     var olpoCat = fileCategory && (fileCategory.indexOf("올림") >= 0 || fileCategory.indexOf("올포") >= 0 || fileCategory.indexOf("리딩파워") >= 0 || fileCategory.indexOf("리파") >= 0);
-=======
-                    var olpoCat = fileCategory && (fileCategory.indexOf("올림") >= 0 || fileCategory.indexOf("올포") >= 0);
->>>>>>> Stashed changes
                     var canonMap = null;
                     if (olpoCat) {
                         for (var rci = 0; rci < rtPassages.length; rci++) {

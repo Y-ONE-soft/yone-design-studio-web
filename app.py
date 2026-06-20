@@ -501,7 +501,6 @@ def api_wb_save():
     return jsonify(wb_edit.save_doc(doc_path=data.get("docPath")))
 
 
-<<<<<<< Updated upstream
 @app.route("/api/processing/workbook/passage-detect", methods=["POST"])
 def api_wb_passage_detect():
     data = request.get_json(silent=True) or {}
@@ -526,8 +525,6 @@ def api_wb_passage_select():
     ))
 
 
-=======
->>>>>>> Stashed changes
 @app.route("/api/processing/workbook/convert-docx", methods=["POST"])
 def api_wb_convert_docx():
     data = request.get_json(silent=True) or {}

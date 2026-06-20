@@ -197,11 +197,7 @@ class PocketbookEngine(BaseEngine):
             return "mixed"
         if "모의" in name or "마더텅" in name or has_date:
             return "mockexam"
-<<<<<<< Updated upstream
         if is_ebs:
-=======
-        if "올포" in name or "올림" in name or "리딩파워" in name or "리파" in name:
->>>>>>> Stashed changes
             return "ebs"
         return "textbook"
 
@@ -322,11 +318,7 @@ class PocketbookEngine(BaseEngine):
         """
         import unicodedata
         nfc = unicodedata.normalize("NFC", cat) if cat else ""
-<<<<<<< Updated upstream
         m = re.search(r"(?:올림포스|올포|리딩파워|리파)\s*([\d,\-~]+)강", nfc)
-=======
-        m = re.search(r"(?:올림포스|올포)\s*([\d,\-~]+)강", nfc)
->>>>>>> Stashed changes
         if not m:
             return []
         spec = m.group(1)
@@ -365,12 +357,9 @@ class PocketbookEngine(BaseEngine):
             return "서술"
         if "논술" in header:
             return "논술"
-<<<<<<< Updated upstream
         # 리딩파워: "...Example" → "Ex" (지문 라벨 "Unit N Ex"와 canon 매칭)
         if "Example" in header or re.search(r"(?<![A-Za-z])Ex(?![A-Za-z])", header):
             return "Ex"
-=======
->>>>>>> Stashed changes
         nm = re.search(r"no\.?\s*(\d+)", header, re.IGNORECASE)
         if nm:
             n = int(nm.group(1))
@@ -396,7 +385,6 @@ class PocketbookEngine(BaseEngine):
                 p["canon"] = str(gang_list[gang_idx]) + "-" + t
 
     @staticmethod
-<<<<<<< Updated upstream
     def _find_rp_review_docx(unit_dir):
         """리딩파워 Unit 폴더에서 리뷰테스트 해설지(없으면 정답지) .docx 경로.
         "... 리뷰테스트"/"리테" 하위 폴더를 우선 탐색한다.
@@ -496,8 +484,6 @@ class PocketbookEngine(BaseEngine):
         return passages
 
     @staticmethod
-=======
->>>>>>> Stashed changes
     def _match_categories_to_files(categories, completed_files):
         """카테고리 목록과 완성 포켓북 파일 매칭.
         Returns: [{"category": str, "file": str, "lesson": int|None}, ...]

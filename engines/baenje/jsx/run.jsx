@@ -559,7 +559,6 @@ function styleTabTextAsTable() {
         var eP = paras[g.end];
         var eChar = eP.characters[eP.characters.length - 1].index;
         var tbl;
-<<<<<<< Updated upstream
         // 주의: itemByRange(...) 는 '지연 참조(specifier)'를 돌려준다. 이 참조에 곧바로
         // convertToTable(...) 을 호출하면, 평가 시점에 나는 InDesign 에러가 try/catch를
         // 우회해 스크립트 전체를 중단시킨다(정답지/PDF 미배치의 직접 원인이었음).
@@ -569,10 +568,6 @@ function styleTabTextAsTable() {
         try {
             if (!tblRangeValid) { continue; }
             tbl = tblRange.convertToTable("\t", "\r", maxCols);
-=======
-        try {
-            tbl = ft.characters.itemByRange(sChar, eChar).convertToTable("\t", "\r", maxCols);
->>>>>>> Stashed changes
         } catch(e) {
             writeLog("TABLE: convertToTable failed - " + e.message);
             continue;
