@@ -1309,20 +1309,23 @@ class FinalEngine(BaseEngine):
                 if _ext_local:
                     from engines.final.grammar_word_parser import parse_external_grammar_docx
                     _ext_passages = parse_external_grammar_docx(_ext_local)
-                    _added = 0
+                    # 원고의 모든 지문을 본문N(원고 본문번호, 그 외 라벨은 다음 순번)으로
+                    # 넣는다. 어떤 지문이 시험범위인지(예: Read More 포함 여부)는 워크북
+                    # =문장배열이 결정하므로, 여기서 Read More를 임의 제외하지 않는다.
+                    # 문장배열에 없는 외부/추가 지문은 아래 '어법 재정렬'에서 자동 제외된다.
+                    _seq = 0
                     for _pp in _ext_passages:
                         _m2 = re.match(r"^본문(\d+)$", _pp.get("label", ""))
-                        if not _m2:
-                            # 'Reading …'/'Read More' 등 추가본문은 시험범위 밖(추가본문X) → 제외.
-                            # 원고가 '본문 N'과 라벨을 구분하므로 본문N만 채택한다.
-                            log(f"  [외부지문어법] 추가본문(Read More) 제외: {_pp.get('label', '')}")
-                            continue
-                        grammar_word_lines.append(f"{_ext_label} 본문{_m2.group(1)}")
+                        if _m2:
+                            _seq = int(_m2.group(1))
+                        else:
+                            _seq += 1
+                        grammar_word_lines.append(f"{_ext_label} 본문{_seq}")
                         grammar_word_lines.append(_pp.get("text", ""))
-                        _added += 1
-                    if _added:
-                        log(f"[어법수정] 외부지문 원고 파싱: {_added}개 지문 추가 "
-                            f"(접두='{_ext_label}', 파일={os.path.basename(_ext_doc)})")
+                    if _ext_passages:
+                        log(f"[어법수정] 외부지문 원고 파싱: {len(_ext_passages)}개 지문 "
+                            f"(접두='{_ext_label}', 시험범위는 문장배열 기준 자동 정합 — "
+                            f"파일={os.path.basename(_ext_doc)})")
         except Exception as _e:
             log(f"  [외부지문어법] 처리 실패: {_e}")
 
@@ -1663,7 +1666,15 @@ class FinalEngine(BaseEngine):
                 # (예: "리딩파워 3강 02"가 Vol1에 없어도 3강 01-03 사이에 정렬됨)
                 from engines.final.parser import _canonical_order_key as _ck
                 _used = set(_h for _h in _v1_hdrs if _h in _blocks)
-                _missing = [_h for _h in _order_found if _h not in _used]
+                # 외부/추가지문 어법수정은 시험범위(=문장배열의 외부/추가지문)에만 들어가야
+                # 한다. 문장배열에 없는 외부/추가지문 헤더(원고엔 있으나 이번 범위 밖인
+                # Read More 등)는 제외 — Read More 포함 여부를 엔진에 하드코딩하지 않고
+                # 워크북(문장배열)이 결정하게 한다. (모의/교과서는 문장배열에 있어 영향 없음)
+                _missing = [
+                    _h for _h in _order_found
+                    if _h not in _used
+                    and not re.match(r"^(?:외부지문|추가지문)\s+본문", _nfc(_h))
+                ]
                 # Vol1 순서 + canonical 순서로 missing 블록 병합
                 _all_hdrs_in_order = [_h for _h in _v1_hdrs if _h in _blocks]
                 for _mh in _missing:
