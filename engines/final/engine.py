@@ -379,7 +379,16 @@ class FinalEngine(BaseEngine):
 
     @property
     def upload_spec(self):
-        return {"slots": []}
+        return {
+            "slots": [
+                {
+                    "key": "external_grammar",
+                    "label": "외부지문/추가지문 어법수정 원고 (.docx · 선택 — 외부/추가 지문이 있을 때만)",
+                    "accept": ".docx",
+                    "required": False,
+                },
+            ]
+        }
 
     # ── 메타데이터 헬퍼 ──
 
