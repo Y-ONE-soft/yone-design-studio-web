@@ -3597,6 +3597,27 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
         writing_kor.sort(key=_writing_sort_key)
         writing_view.sort(key=_writing_sort_key)
 
+        # 모의 지문(exam_code)이 같은 워크북의 두 파일 파트(_내지, _내지_2)에 중복
+        # 수록되면, _pair_key가 source를 포함해 같은 지문이 별도 그룹 2개로 들어가
+        # 영작 문장이 그대로 두 번씩 나온다(명일1 230934·230935·230941~42·231133·231134).
+        # 문장배열/삽입/어법/중요어휘는 헤더 dedup으로 이미 단일이라 영작만 발생.
+        # → 같은 (exam_code, 텍스트)는 한 번만 유지(완전 동일만 제거 → 파일 부분중복
+        #    해소, 두 파일이 서로 다른 문장이면 다른 텍스트라 union 유지). 비-모의(교과서
+        #    /외부지문/올포: exam_code 없음)는 미적용(단일 파일이라 중복 없음).
+        def _dedup_writing_by_examcode(lst):
+            _seen = set()
+            _out = []
+            for _w in lst:
+                if isinstance(_w, dict) and _w.get("exam_code"):
+                    _k = (_w.get("exam_code"), _w.get("text", ""))
+                    if _k in _seen:
+                        continue
+                    _seen.add(_k)
+                _out.append(_w)
+            return _out
+        writing_kor = _dedup_writing_by_examcode(writing_kor)
+        writing_view = _dedup_writing_by_examcode(writing_view)
+
         # (source, lecture, q_num, exam_code) 기반 한글-보기 매칭 (스타일 오류 방어)
         # 다른 강의 동일 q_num이 하나로 섞이지 않도록 source + lecture + q_num + exam_code 조합 키 사용.
         # exam_code 포함 이유: 같은 워크북에 q_num="37"이 230337(고1 3월 37번)과
