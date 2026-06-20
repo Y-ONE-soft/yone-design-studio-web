@@ -1627,6 +1627,7 @@ class FinalEngine(BaseEngine):
                         re.match(r"^\uc62c\ud3ec\s+\d+\uac15", _s) or
                         re.match(r"^\ub9ac\ub529\ud30c\uc6cc\s+\d+\uac15", _s) or
                         re.match(r"^TED\d+\s+\ubcf8\ubb38\d+", _s) or
+                        re.match(r"^(?:\uc678\ubd80\uc9c0\ubb38|\ucd94\uac00\uc9c0\ubb38)\s+\ubcf8\ubb38\d+", _s) or
                         re.match(r"^test\d+", _s, re.IGNORECASE)
                     )
                 _blocks = {}
