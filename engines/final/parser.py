@@ -4372,7 +4372,10 @@ def _convert_grammar_select(grammar_select_blocks, lecture_map, exclude_gateway=
             # 교과서 어법 섹션은 첫 본문에 헤더 라인이 없을 수 있음.
             # 블록 첫 줄이 본문이면 '본문1' 헤더를 합성해 주입.
             _first_line = next((l for l in b.get("lines", []) if l.strip()), "")
-            if _first_line and not re.match(r'^\d{1,2}$', _first_line.strip()):
+            # \uccab \uc904\uc774 \ubc14\ub808 \ubc88\ud638\ub3c4, \ud55c\uae00 "{\ubcf8\ubb38N}"/"[\ubcf8\ubb38N]" \ub9c8\ucee4\ub3c4 \uc544\ub2c8\uba74 '\ubcf8\ubb381' \ud569\uc131.
+            # (\ub9c8\ucee4\uac00 \uc788\uc73c\uba74 \uc544\ub798 \ub8e8\ud504\uc5d0\uc11c \ud5e4\ub354\uac00 \ub098\uc624\ubbc0\ub85c \uc911\ubcf5 \ud569\uc131 \ubc29\uc9c0)
+            if (_first_line and not re.match(r'^\d{1,2}$', _first_line.strip())
+                    and not re.match(r'^[\[{]\s*\ubcf8\ubb38\s*\d+\s*[\]}]$', _first_line.strip())):
                 tb_counter = 1
                 result.append(f"{header_prefix} \ubcf8\ubb38{tb_counter}")
         else:
@@ -4380,6 +4383,13 @@ def _convert_grammar_select(grammar_select_blocks, lecture_map, exclude_gateway=
         for line in b.get("lines", []):
             stripped = line.strip()
             # 교과서는 헤더가 중괄호 없이 "01","02"… 형식
+            if is_tb and re.match(r'^[\[{]\s*\ubcf8\ubb38\s*\d+\s*[\]}]$', stripped):
+                # \uad50\uacfc\uc11c \ubcf8\ubb38 \uacbd\uacc4 \ub9c8\ucee4 "{\ubcf8\ubb38N}"/"[\ubcf8\ubb38N]" \u2014 \ud5e4\ub354\ub85c \ubcc0\ud658, \ubcf8\ubb38\uc5d4 \ubbf8\ud3ec\ud568.
+                # (\uae30\uc874 ^\{\d+\}$ \ub294 \uc22b\uc790\ub9cc \ub9e4\uce6d\ud574 "{\ubcf8\ubb381}"\uac00 \ubcf8\ubb38\uc73c\ub85c \ub204\uc218 \u2192 \uc5b4\ubc95\uc218\uc815
+                #  [\ud5e4\ub354,\ubcf8\ubb38] \ud398\uc5b4\ub9c1 \uc5b4\uae0b\ub0a8. \ube44\uc0c1\uae40 4\uacfc \ub4f1.)
+                tb_counter += 1
+                result.append(f"{header_prefix} \ubcf8\ubb38{tb_counter}")
+                continue
             if is_tb and re.match(r'^\d{1,2}$', stripped):
                 tb_counter += 1
                 result.append(f"{header_prefix} \ubcf8\ubb38{tb_counter}")
