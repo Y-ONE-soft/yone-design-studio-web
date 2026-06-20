@@ -408,10 +408,15 @@ class FinalEngine(BaseEngine):
             school_files = []
             if os.path.isdir(school_dir):
                 for f in sorted(os.listdir(school_dir)):
+                    nf = _nfc(f)
                     # "분석편" 외 "통합편"(분석+문제 합본)도 분석 스타일을 담아 시험범위 강을
                     # 보강한다(강동3: 분석편(4,6,12,14,16강)에 없는 2,18강이 통합편02에 있음).
-                    # "문제편"(문제만)은 제외.
-                    if f.endswith(".indd") and ("분석" in _nfc(f) or "통합편" in _nfc(f)):
+                    # 또 교과서 지문 소스(예: 한영3 "투모로우 실전04(교과3,4과)")는 "분석/통합편"
+                    # 명명이 아니라 "교과"로만 식별되므로 포함한다(시험범위 교과서 과 보강).
+                    # "문제편"(문제만)은 항상 제외.
+                    if (f.endswith(".indd")
+                            and ("분석" in nf or "통합편" in nf or "교과" in nf)
+                            and "문제편" not in nf):
                         school_files.append(os.path.join(school_dir, f))
             school_files = _drop_revised_duplicates(school_files)
             # 학교 폴더에 분석편이 있으면 그것만 사용 (번호순 정렬)
