@@ -3638,6 +3638,9 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                 continue
             _view_by_q.setdefault(_pair_key(w), []).append(w["text"])
 
+        import sys as _sysdbg
+        _dbg_in = sum(1 for w in writing_kor if isinstance(w, dict) and '지역적 변이' in w.get('text', ''))
+        print(f"[DBG23] _build_vol2 입력 writing_kor children={_dbg_in}", file=_sysdbg.stderr)
         pairs = []
         # writing_kor 전역 index -> pairs index 매핑
         # (view-only pair가 중간에 끼면 writing_kor index와 pairs index가 어긋나서
@@ -3662,6 +3665,8 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                 if qi < len(views):
                     pair["choices"] = views[qi]
                 pairs.append(pair)
+        _dbg_out = sum(1 for p in pairs if '지역적 변이' in (p.get('korean') or ''))
+        print(f"[DBG23] _build_vol2 출력 pairs children={_dbg_out} (총 pair {len(pairs)})", file=_sysdbg.stderr)
         vol2["서술형영작"] = pairs
 
         # 리딩파워 영작 pair의 choices(영어)를 시트 데이터와 매칭해 정확한 (강, 번호) 매핑 구축
