@@ -213,6 +213,7 @@ def _hwpx_extract_paragraphs(hwpx_path, extract_underline=False, exclude_footnot
         if any(s['t'].strip() for s in orphan_segs):
             _emit(orphan_segs)
 
+<<<<<<< Updated upstream
     for section_xml in section_xmls:
         # 미주/각주 제거 (hwpx 실제 태그명: hp:endNote, hp:footNote — 대문자 N)
         section_xml = re.sub(r'<hp:endNote\b.*?</hp:endNote>', '', section_xml, flags=re.DOTALL)
@@ -225,6 +226,15 @@ def _hwpx_extract_paragraphs(hwpx_path, extract_underline=False, exclude_footnot
             prev_end = m.end()
         # 마지막 매치 이후 trailing 표-고아 텍스트도 복구
         _recover_post_table_text(section_xml[prev_end:])
+=======
+    prev_end = 0
+    for m in re.finditer(r'<hp:p\b([^>]*)>(.*?)</hp:p>', section_xml, re.DOTALL):
+        _recover_post_table_text(section_xml[prev_end:m.start()])
+        _emit(_hwpx_extract_segments(m.group(2), ul_ids))
+        prev_end = m.end()
+    # 마지막 매치 이후 trailing 표-고아 텍스트도 복구
+    _recover_post_table_text(section_xml[prev_end:])
+>>>>>>> Stashed changes
 
     return paragraphs
 
@@ -1247,6 +1257,29 @@ def _add_step3_choice_numbers(paras):
             i += 1
             continue
 
+        # 발문 직후 후보 단락에 이미 ①~⑤로 시작하는 단락이 있으면 prepend skip.
+        # (안내문/도표/광고 류 — 영문 본문 여러 단락 + 한국어 선지가 ①로 시작.
+        # 기존 "첫 영문 단락만 skip" 로직은 영문 본문 2번째부터를 선지로 오인해 본문에
+        # ②③④⑤를 잘못 prepend함. 이미 텍스트에 ①가 있으면 hwp AutoNumbering 누락
+        # 케이스가 아니므로 자동 prepend 불필요.)
+        already_has_circled = False
+        for j_peek in range(i + 1, min(n, i + 30)):
+            t_peek = (paras[j_peek].get('text', '') or '').strip()
+            if not t_peek:
+                continue
+            if _RE_STEP3_QUESTION_LIKE.match(t_peek):
+                break
+            if re.match(r'^\[(?:[Gg]ateway|\d+)\]$', t_peek):
+                break
+            if t_peek.startswith('※'):
+                break
+            if t_peek[0] in _CIRCLED_DIGITS:
+                already_has_circled = True
+                break
+        if already_has_circled:
+            i += 1
+            continue
+
         # 발문 위에 묶음 마커(※/[Gateway]/[숫자])가 있으면 지문은 마커 아래에
         # 이미 존재 → 발문 직후는 바로 선지. 다른 발문은 건너뛰며 마커까지 거슬러 올라감.
         # 마커가 없으면 (예: 동아박 MIXED) 발문 직후 첫 영문 단락이 자기 지문.
@@ -1614,6 +1647,7 @@ def _merge_step3_ab_pairs(paras):
     return out
 
 
+<<<<<<< Updated upstream
 # 컬럼 헤더 셀: "(A)" / "(B)" / "(C)"
 _RE_STEP3_COL_HDR = re.compile(r'^\(\s*([ABC])\s*\)$')
 # 표 구분자 셀: "……" / "⋯" / 가운뎃점·마침표만 있는 한 줄
@@ -1704,6 +1738,8 @@ def _merge_step3_column_table(paras):
     return out
 
 
+=======
+>>>>>>> Stashed changes
 _STEP3_ANS_SECTION_PATTERNS = [
     re.compile(r'^\s*\[\s*정답\s*\]\s*$'),
     re.compile(r'^\s*【\s*정답\s*】\s*$'),
@@ -1798,6 +1834,7 @@ def _augment_step1_c1_passage(paras):
     return out
 
 
+<<<<<<< Updated upstream
 # ── Step3 내용 보존 가드 ────────────────────────────────────────────────────
 # 원고(raw)의 실질 영어 단어(4자+)가 출력에서 사라지면 경고한다. 이 클래스의 버그
 # (구조 가정에서 비롯된 silent drop)를 — 알려진 2종뿐 아니라 앞으로 어떤 원고에서든 —
@@ -1850,6 +1887,8 @@ def _warn_step3_content_loss(raw_words, out_paras, label, log=None):
     return dropped
 
 
+=======
+>>>>>>> Stashed changes
 def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
                         short_questions, combined_questions, extract_underline=True,
                         step3_exclude_footnotes=True, log=None):
@@ -1971,7 +2010,10 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
             else:
                 paras = _hwp_extract_paragraphs(fpath, extract_underline,
                                                 exclude_footnotes=step3_exclude_footnotes)
+<<<<<<< Updated upstream
             _raw_words = _step3_content_words(_strip_step3_book_markers(paras))  # 보존 가드 스냅샷(헤더 제외)
+=======
+>>>>>>> Stashed changes
             # 첫 단락 "N강 M번 YYMMQQ" 헤더 제거
             if paras:
                 first_text = (paras[0].get("text", "") if isinstance(paras[0], dict) else str(paras[0])).strip()
@@ -1988,8 +2030,11 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
             paras = _strip_step3_book_markers(paras)
             paras = _fix_step3_order_label_position(paras)
             paras = _merge_step3_ab_pairs(paras)
+<<<<<<< Updated upstream
             paras = _merge_step3_column_table(paras)
             _warn_step3_content_loss(_raw_words, paras, f"{q_num_lesson}번", log)
+=======
+>>>>>>> Stashed changes
             normal_items.append({
                 "question_num": q_num_lesson,
                 "code": file_code,
@@ -2028,7 +2073,10 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
             else:
                 paras = _hwp_extract_paragraphs(fpath, extract_underline,
                                                 exclude_footnotes=step3_exclude_footnotes)
+<<<<<<< Updated upstream
             _raw_words = _step3_content_words(_strip_step3_book_markers(paras))  # 보존 가드 스냅샷(헤더 제외)
+=======
+>>>>>>> Stashed changes
             # 표형 선지 번호 셀(①~⑤) 병합 — _strip_step3_answers가 단독 ①~⑤를 제거하기 전에 수행
             paras = _merge_step3_split_choice_numbers(paras)
             paras = _strip_step3_answers(paras)
@@ -2130,9 +2178,12 @@ def _find_manuscript_file(manuscript_dir, expected_filename, used_files=None):
     ext_expected = os.path.splitext(expected_filename)[1].lower()
     norm_expected = _normalize(expected_filename)
     exp_base, exp_has_paren = _split_paren(expected_filename)
+<<<<<<< Updated upstream
     # 답안 토큰: 파일명이 '문제'본인지 '정답/해설/답안'본인지 구분하는 기준.
     _ANSWER_TOKENS = ('정답', '해설', '답안')
     exp_has_ans = any(t in norm_expected for t in _ANSWER_TOKENS)
+=======
+>>>>>>> Stashed changes
 
     exact = []
     partial = []        # (file_path, lcs_score)
@@ -2153,6 +2204,7 @@ def _find_manuscript_file(manuscript_dir, expected_filename, used_files=None):
         if f_norm == norm_expected:
             exact.append(fp)
             continue
+<<<<<<< Updated upstream
         cand_has_ans = any(t in f_norm for t in _ANSWER_TOKENS)
         # 답안 슬롯(기대명에 정답/해설/답안 포함)에는 답안 토큰이 없는 '문제' 파일을
         # 매칭 후보에서 제외. 예: 기대 '빈칸어법 정답지'에 대해 '빈칸어법'(문제)이
@@ -2160,6 +2212,8 @@ def _find_manuscript_file(manuscript_dir, expected_filename, used_files=None):
         # 제치고 선택되던 버그 차단. 답안본 명명이 해설/정답지/답안 어느 쪽이든 답안본 우선.
         if exp_has_ans and not cand_has_ans:
             continue
+=======
+>>>>>>> Stashed changes
         if _is_subseq(f_norm, norm_expected) or _is_subseq(norm_expected, f_norm):
             partial.append((fp, _lcs_len(f_norm, norm_expected)))
             continue
@@ -2169,8 +2223,16 @@ def _find_manuscript_file(manuscript_dir, expected_filename, used_files=None):
             paren_variant.append(fp)
             continue
         # LCS 비율 매칭 (위 모두 실패 시 fallback 후보로만 보관).
+<<<<<<< Updated upstream
         # 정답지 휴리스틱(반대 방향): expected에 답안 토큰이 없는데 후보에는 있으면 제외.
         # (정답/해설 파일을 '문제' 슬롯에 잘못 매칭하는 것을 막음)
+=======
+        # 정답지 휴리스틱: expected에 '정답/해설/답안' 토큰이 없고 후보에는 있으면 제외.
+        # (정답지 파일을 본 파일 슬롯에 잘못 매칭하는 것을 막음)
+        _ANSWER_TOKENS = ('정답', '해설', '답안')
+        exp_has_ans = any(t in norm_expected for t in _ANSWER_TOKENS)
+        cand_has_ans = any(t in f_norm for t in _ANSWER_TOKENS)
+>>>>>>> Stashed changes
         if cand_has_ans and not exp_has_ans:
             continue
         lcs = _lcs_len(f_norm, norm_expected)
@@ -2329,12 +2391,17 @@ def parse_manuscript_folder(manuscript_dir, config, grade, year, month, log=None
         cleaned = _clean_empty_lines(paras)
 
         # step1_c1: 마더텅 형태(본문 도입부 + (A)(B)(C) 분할 본문)에서 도입부 paragraph에
+<<<<<<< Updated upstream
         # trailing 3+ space 추가 → processStep1C1이 BTM/BTM_T 분류 + 발문 자동 삽입.
         # ※ 수능특강/EBS는 JSX가 도입부=본문 / (A)(B)(C)=일반 선지로 처리하도록 설계돼 있어
         #   (run.jsx: "EBS처럼 헤더 다음 본문이 BTM이면 (A)(B)(C)도 일반 선지여야 하므로 건너뜀"),
         #   이 augment가 적용되면 모의고사처럼 발문이 하단에 잘못 삽입된다. 따라서 config의
         #   step1_c1_augment_passage=false인 엔진(수능특강 등)에서는 적용하지 않는다. 기본 True.
         if step_key == "step1_c1" and config.get("step1_c1_augment_passage", True):
+=======
+        # trailing 3+ space 추가 → processStep1C1이 BTM/BTM_T 분류 + 발문 자동 삽입
+        if step_key == "step1_c1":
+>>>>>>> Stashed changes
             cleaned = _augment_step1_c1_passage(cleaned)
 
         # 지문번호 추출

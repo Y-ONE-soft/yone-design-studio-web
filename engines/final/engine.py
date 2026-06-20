@@ -437,6 +437,7 @@ class FinalEngine(BaseEngine):
             ])
             files = _drop_revised_duplicates(files)
             return files, wb_dir, set()
+<<<<<<< Updated upstream
         wb_dir_gdrive = os.path.join(gdrive_base, "워크북", exam_period, grade, school)
         wb_dir = _rlm(wb_dir_gdrive, None)
         # 미러 ∪ GDrive 합집합 — 미러 미동기화로 새로 추가/갱신된 워크북이 누락되는
@@ -454,6 +455,11 @@ class FinalEngine(BaseEngine):
             except OSError:
                 continue
         if not _names:
+=======
+        wb_dir = os.path.join(gdrive_base, "워크북", exam_period, grade, school)
+        wb_dir = _rlm(wb_dir, None)
+        if not os.path.isdir(wb_dir):
+>>>>>>> Stashed changes
             return [], wb_dir, set()
         all_files = sorted(_names.values(),
                            key=lambda p: _nfc(os.path.basename(p)))

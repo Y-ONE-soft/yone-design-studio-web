@@ -213,6 +213,7 @@ def _gdrive_safe_copy(src, dst, log=None, retries=5):
         if attempt < retries - 1:
             time.sleep(backoffs[min(attempt, len(backoffs) - 1)])
 
+<<<<<<< Updated upstream
     # Python read(2) 전부 실패 → 별도 프로세스 / GUI 세션 폴백 (다단계).
     # launchd 컨텍스트의 워커 스레드에서 Drive Stream 미적재 파일을 materialize할 때
     # EDEADLK(Errno 11)가 나는데, python read·/bin/cp -c(clonefile)는 같은 데드락에
@@ -221,16 +222,26 @@ def _gdrive_safe_copy(src, dst, log=None, retries=5):
     # 케이스가 있어 순차 폴백한다. (clonefile을 직접 부르는 cp -c는 사용하지 않음)
 
     # 1) ditto — macOS 네이티브, FUSE 호환성 우수, clonefile 미사용
+=======
+    # Python read(2) 5회 전부 실패 → /bin/cp 폴백.
+    # 별도 프로세스의 read(2)는 같은 GDrive FUSE에서도 EDEADLK를 회피하는 케이스가 있음.
+    # -c는 APFS clonefile 시도(다른 FS면 자동 read/write 폴백)이라 GDrive→APFS에도 무해.
+>>>>>>> Stashed changes
     try:
         if os.path.exists(dst):
             os.remove(dst)
         res = subprocess.run(
+<<<<<<< Updated upstream
             ["/usr/bin/ditto", src_resolved, dst],
+=======
+            ["/bin/cp", "-c", src_resolved, dst],
+>>>>>>> Stashed changes
             capture_output=True, text=True, timeout=300
         )
         if res.returncode == 0 and os.path.exists(dst) \
                 and os.path.getsize(dst) == expected_size:
             if log:
+<<<<<<< Updated upstream
                 log("  [GDrive 복사] ditto 폴백 성공")
             return True, ""
         ditto_err = (res.stderr or res.stdout or "").strip() or f"rc={res.returncode}"
@@ -273,6 +284,18 @@ def _gdrive_safe_copy(src, dst, log=None, retries=5):
         last_err = f"{last_err} / Finder 폴백 예외: {type(e).__name__}: {e}"
         if log:
             log(f"  [GDrive 복사] Finder 폴백 예외: {e}")
+=======
+                log(f"  [GDrive 복사] /bin/cp 폴백 성공")
+            return True, ""
+        cp_err = (res.stderr or res.stdout or "").strip() or f"rc={res.returncode}"
+        last_err = f"{last_err} / cp 폴백 실패: {cp_err}"
+        if log:
+            log(f"  [GDrive 복사] /bin/cp 폴백 실패: {cp_err}")
+    except (OSError, subprocess.SubprocessError) as e:
+        last_err = f"{last_err} / cp 폴백 예외: {type(e).__name__}: {e}"
+        if log:
+            log(f"  [GDrive 복사] /bin/cp 폴백 예외: {e}")
+>>>>>>> Stashed changes
 
     return False, last_err
 
