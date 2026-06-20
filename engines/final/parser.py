@@ -3586,6 +3586,16 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
             src = _nfc(item.get("source", ""))
             po = item.get("page_off", -1)
             sec = po if po >= 0 else 10000
+            # 고3 FINALEDGE 분석편: 파일명에 "워크북 N"이 없어 전부 wb_num=999로 뭉뚱그려지면
+            # 여러 분석편 파일(01/02/03)이 page_off로 교차정렬돼 한 헤더의 영작 pair가
+            # 비연속이 되고 헤더-내용이 어긋난다. 파일을 분석편 번호(없으면 0)로 분리해
+            # 파일 내 page_off 순서를 유지한다. (이후 engine.py가 헤더를 canonical 순서로
+            # 재정렬하므로 파일 간 순서는 무관 — 파일 내 헤더별 pair 연속성만 보장하면 됨.)
+            # 고1/2 워크북엔 '분석편' 파일이 없어 이 분기에 걸리지 않는다(무영향).
+            if "분석편" in src or "FINALEDGE" in src:
+                m_an = re.search(r"분석편\s*0*(\d+)", src)
+                an_num = int(m_an.group(1)) if m_an else 0
+                return (300, an_num, sec, 0)
             # 올포는 lecture 기반 정렬 (워크북 번호 정보가 공용 파일에 없음)
             if "올림포스독해기본" in src or "올포" in src:
                 lec = item.get("lecture", 0) or 999
