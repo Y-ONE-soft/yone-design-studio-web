@@ -3289,8 +3289,6 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                          re.match(r"^TED\d+\s+본문\d+", line) or
                          re.match(r"^외부지문\s+본문\d+", line) or
                          re.match(r"^test\d+(\s|$)", line, re.IGNORECASE))
-            if os.environ.get("_DBG_EG") and "외부" in str(line)[:12]:
-                import sys as _s; _s.stderr.write(f"[EG] is_header={bool(is_header)} repr={line!r}\n")
             if is_header:
                 normalized = _normalize_q41_42(line.strip())
                 in_scope = _is_in_scope(normalized, scope_exams) if scope_exams else True
@@ -3299,8 +3297,6 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                 # 중복 헤더 제거 (같은 헤더가 두 번 나오면 두 번째부터 스킵)
                 is_dup = normalized in _seen_grammar_headers
                 _seen_grammar_headers.add(normalized)
-                if os.environ.get("_DBG_EG") and "외부" in str(normalized)[:12]:
-                    import sys as _s; _s.stderr.write(f"[EG2] {normalized!r} insc={in_scope} dup={is_dup} tb={tb_ok} rm={rm_ok}\n")
                 skip_until_next_header = not in_scope or is_dup or not tb_ok or not rm_ok
                 if in_scope and not is_dup and tb_ok and rm_ok:
                     grammar_headers.append(normalized)
@@ -3360,8 +3356,6 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
         # scope_exams 없어도 textbook_limits/textbook_rm_lessons 필터가 적용된 경우 filtered_lines 사용
         _has_filter = bool(scope_exams) or bool(textbook_limits) or (textbook_rm_lessons is not None)
         vol2["어법수정"] = filtered_lines if _has_filter else all_lines
-        if os.environ.get("_DBG_EG"):
-            import sys as _s; _s.stderr.write(f"[EG3] gh_len={len(grammar_headers)} olpo_hdr={_has_olpo_hdr} ext={[h for h in grammar_headers if '외부' in str(h)]}\n")
         if grammar_headers:
             vol2["어법_헤더"] = grammar_headers
 
