@@ -1659,6 +1659,49 @@ class FinalEngine(BaseEngine):
                 _cdata["vol2"]["\uc11c\uc220\ud615\uc601\uc791"] = _new_wp
                 _cdata["vol2"]["\uc601\uc791_\ud5e4\ub354_\uc0c1\uc138"] = _new_wd
                 _cdata["vol2"]["\uc601\uc791_\ud5e4\ub354"] = [_h["header"] for _h in _new_wd]
+
+                # \uace03 \uc601\uc791 \ub0b4\uc6a9\uae30\ubc18 \uc7ac\ub77c\ubca8 \u2014 TEST \ub4f1 \ubcd1\ud569 \uc2a4\ud1a0\ub9ac/q_num \uc624\ud560\ub2f9\uc73c\ub85c \uc601\uc791 \ud5e4\ub354-\ub0b4\uc6a9\uc774
+                # \uc5b4\uae0b\ub098\ub294 \uac83\uc744, \uc815\ub82c \ubb34\uacb0\ud55c \uc5b4\ubc95\uc218\uc815 \ubcf8\ubb38\uc744 ground truth\ub85c \uad50\uc815\ud55c\ub2e4. \uac01 pair\uc758
+                # choices(\uc601\uc5b4)\ub97c \uc5b4\ubc95\ubcf8\ubb38 \ud1a0\ud070\uacfc best-match\ud574 \uc9c4\uc9dc \ud5e4\ub354\ub97c \uc0b0\ucd9c, \uadf8 \ud5e4\ub354\ub85c \uc7ac\uadf8\ub8f9\ud654.
+                # \ucd5c\uc18c 3\ud1a0\ud070 \uc77c\uce58 \uac00\ub4dc(\uc57d\ud55c \ub9e4\uce6d\uc740 \uc6d0 \ud5e4\ub354 \uc720\uc9c0) \u2192 \uc815\uc0c1 \uc815\ub82c \ud559\uad50\ub294 \ubb34\ubcc0\uacbd(\ud68c\uadc0 \ubc29\uc9c0).
+                if grade == "\uace03" and _new_wp and _new_wd:
+                    _gl = (_cdata.get("vol2", {}) or {}).get("\uc5b4\ubc95\uc218\uc815", []) or []
+                    _gtok = {}
+                    for _gi in range(0, len(_gl), 2):
+                        _gh2 = _gl[_gi]
+                        _gb2 = _gl[_gi + 1] if _gi + 1 < len(_gl) else ""
+                        _gtok[_gh2] = set(re.findall(r"[a-zA-Z]{4,}", str(_gb2).lower()))
+                    if _gtok:
+                        # pair\ubcc4 \uc6d0\ub798 \ud5e4\ub354 (\uc57d\ud55c \ub9e4\uce6d \ud3f4\ubc31\uc6a9)
+                        _orig = [None] * len(_new_wp)
+                        for _k2, _h2 in enumerate(_new_wd):
+                            _s2 = _h2.get("start_idx", 0)
+                            _e2 = _new_wd[_k2 + 1].get("start_idx", len(_new_wp)) if _k2 + 1 < len(_new_wd) else len(_new_wp)
+                            for _pi in range(_s2, _e2):
+                                if 0 <= _pi < len(_orig):
+                                    _orig[_pi] = _h2.get("header")
+                        _groups = {}
+                        _changed = 0
+                        for _pi, _p in enumerate(_new_wp):
+                            _ct = set(re.findall(r"[a-zA-Z]{4,}", str(_p.get("choices") or "").lower()))
+                            _tgt = _orig[_pi]
+                            if _ct:
+                                _cand = max(_gtok, key=lambda kk: len(_ct & _gtok[kk]))
+                                if len(_ct & _gtok[_cand]) >= 3:
+                                    if _cand != _orig[_pi]:
+                                        _changed += 1
+                                    _tgt = _cand
+                            _groups.setdefault(_tgt, []).append(_p)
+                        _relabeled = sorted([h for h in _groups if h], key=lambda h: _ck(h))
+                        _r_wp = []
+                        _r_wd = []
+                        for _hh in _relabeled:
+                            _r_wd.append({"header": _hh, "start_idx": len(_r_wp)})
+                            _r_wp.extend(_groups[_hh])
+                        _cdata["vol2"]["\uc11c\uc220\ud615\uc601\uc791"] = _r_wp
+                        _cdata["vol2"]["\uc601\uc791_\ud5e4\ub354_\uc0c1\uc138"] = _r_wd
+                        _cdata["vol2"]["\uc601\uc791_\ud5e4\ub354"] = [_h["header"] for _h in _r_wd]
+                        log(f"[\uc601\uc791] \uace03 \ub0b4\uc6a9\uae30\ubc18 \uc7ac\ub77c\ubca8: {len(_r_wd)}\uac1c \ud5e4\ub354, {_changed}\uac1c pair \uc7ac\ubc30\uce58")
                 log(f"[\uc601\uc791] canonical \uc21c\uc11c\ub85c \uc7ac\uc815\ub82c: {len(_new_wd)}\uac1c \ud5e4\ub354")
 
             if _v1_hdrs and (_g_lines or (_wp and _wd)):
