@@ -3289,6 +3289,8 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                          re.match(r"^TED\d+\s+본문\d+", line) or
                          re.match(r"^외부지문\s+본문\d+", line) or
                          re.match(r"^test\d+(\s|$)", line, re.IGNORECASE))
+            if os.environ.get("_DBG_EG") and "외부" in str(line)[:12]:
+                import sys as _s; _s.stderr.write(f"[EG] is_header={bool(is_header)} repr={line!r}\n")
             if is_header:
                 normalized = _normalize_q41_42(line.strip())
                 in_scope = _is_in_scope(normalized, scope_exams) if scope_exams else True
