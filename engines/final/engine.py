@@ -1259,6 +1259,62 @@ class FinalEngine(BaseEngine):
         if grammar_word_lines:
             log(f"[어법수정] Word에서 총 {len(grammar_word_lines)}개 지문 추출")
 
+        # 5-ext) 외부지문/추가지문 어법수정 — 업로드된 '원고(docx)'에서 직접 파싱.
+        #   외부/추가 지문은 출처·형식·제목이 매번 달라지므로(예전 'TED'도 그때 제목일
+        #   뿐) 폴더 자동탐색/형식/헤더 하드코딩 대신 사용자가 원고를 업로드하고 거기서
+        #   파싱한다. 라벨(본문N)은 원고에서 유도, 접두(외부지문/추가지문)는 스코프에서.
+        try:
+            _ext_doc = None
+            if isinstance(uploaded_files, dict):
+                for _k, _v in uploaded_files.items():
+                    if re.search(r"external|외부|추가", _nfc(str(_k))):
+                        _ext_doc = (_v[0] if isinstance(_v, list) and _v
+                                    else (_v if isinstance(_v, str) else None))
+                        if _ext_doc:
+                            break
+            if not _ext_doc:
+                _updir = os.path.join(job_dir, "uploads")
+                if os.path.isdir(_updir):
+                    for _fn in sorted(os.listdir(_updir)):
+                        if (_fn.lower().endswith(".docx")
+                                and "어법수정" in _nfc(_fn)
+                                and re.search(r"외부지문|추가지문|external", _nfc(_fn))):
+                            _ext_doc = os.path.join(_updir, _fn)
+                            break
+            if _ext_doc:
+                _ext_label = None
+                for _s in scopes:
+                    _m = re.search(r"(외부지문|추가지문)", _nfc(_s.get("scope", "")))
+                    if _m:
+                        _ext_label = _m.group(1)
+                        break
+                _ext_label = _ext_label or "외부지문"
+                _ext_local = _ext_doc
+                if any(x in _ext_doc for x in ("GoogleDrive", "Google Drive", "CloudStorage")):
+                    from engines.final.extractor import _gdrive_safe_copy
+                    _tmp = f"/tmp/final_extgram_{os.getpid()}.docx"
+                    _ok, _err = _gdrive_safe_copy(_ext_doc, _tmp, log=log)
+                    _ext_local = _tmp if _ok else None
+                    if not _ok:
+                        log(f"  [외부지문어법] 원고 GDrive 복사 실패: {_err}")
+                if _ext_local:
+                    from engines.final.grammar_word_parser import parse_external_grammar_docx
+                    _ext_passages = parse_external_grammar_docx(_ext_local)
+                    _seq = 0
+                    for _pp in _ext_passages:
+                        _m2 = re.match(r"^본문(\d+)$", _pp.get("label", ""))
+                        if _m2:
+                            _seq = int(_m2.group(1))
+                        else:
+                            _seq += 1
+                        grammar_word_lines.append(f"{_ext_label} 본문{_seq}")
+                        grammar_word_lines.append(_pp.get("text", ""))
+                    if _ext_passages:
+                        log(f"[어법수정] 외부지문 원고 파싱: {len(_ext_passages)}개 지문 추가 "
+                            f"(접두='{_ext_label}', 파일={os.path.basename(_ext_doc)})")
+        except Exception as _e:
+            log(f"  [외부지문어법] 처리 실패: {_e}")
+
         # 5) 중요어휘 자동 추출
         vocab_left = ""
         vocab_right = ""
