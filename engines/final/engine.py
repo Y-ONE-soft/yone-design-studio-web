@@ -1646,9 +1646,14 @@ class FinalEngine(BaseEngine):
                     _hh = (_hi.get("header") or "").strip()
                     _start = _hi.get("start_idx", 0)
                     _end = _bnds[_rank + 1]
-                    if _hh and _hh not in _w_blocks:
-                        _w_blocks[_hh] = _wp[_start:_end]
-                        _w_order.append(_hh)
+                    if _hh:
+                        # 중복 헤더(test1/test2 q_num 충돌 등)는 슬라이스를 버리지 않고 병합한다.
+                        # (기존엔 두 번째 occurrence를 drop해 해당 pair가 소실 — test2 23 등.)
+                        # 이후 고3 내용기반 재라벨이 어법 best-match로 올바른 헤더에 재배치한다.
+                        if _hh not in _w_blocks:
+                            _w_blocks[_hh] = []
+                            _w_order.append(_hh)
+                        _w_blocks[_hh].extend(_wp[_start:_end])
                 _sorted_hdrs = sorted(_w_order, key=lambda h: _ck(h))
                 _new_wp = []
                 _new_wd = []
