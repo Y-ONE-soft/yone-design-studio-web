@@ -408,7 +408,10 @@ class FinalEngine(BaseEngine):
             school_files = []
             if os.path.isdir(school_dir):
                 for f in sorted(os.listdir(school_dir)):
-                    if f.endswith(".indd") and "분석" in _nfc(f):
+                    # "분석편" 외 "통합편"(분석+문제 합본)도 분석 스타일을 담아 시험범위 강을
+                    # 보강한다(강동3: 분석편(4,6,12,14,16강)에 없는 2,18강이 통합편02에 있음).
+                    # "문제편"(문제만)은 제외.
+                    if f.endswith(".indd") and ("분석" in _nfc(f) or "통합편" in _nfc(f)):
                         school_files.append(os.path.join(school_dir, f))
             school_files = _drop_revised_duplicates(school_files)
             # 학교 폴더에 분석편이 있으면 그것만 사용 (번호순 정렬)
