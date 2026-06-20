@@ -418,6 +418,25 @@ class FinalEngine(BaseEngine):
                             and "문제편" not in nf):
                         school_files.append(os.path.join(school_dir, f))
             school_files = _drop_revised_duplicates(school_files)
+            # "사본"(복사본) 파일 제거 — 그 강/test가 비-사본 파일에 모두 포함되면 중복이므로 드롭.
+            # (한영3: "분석편02(test2)_내지 사본"의 test2는 "분석편02(test1,test2)"에 포함 →
+            #  드롭 안 하면 중요어휘·영작이 2회 중복 인쇄됨.) 강/test를 못 파싱하는
+            # 사본(교과서 등)은 보존(드롭 조건에 안 걸림).
+            if any("사본" in _nfc(os.path.basename(_f)) for _f in school_files):
+                from engines.final.scope_parser import parse_lectures_from_filename as _plf
+                _nonsabon_lecs = set()
+                for _f in school_files:
+                    if "사본" not in _nfc(os.path.basename(_f)):
+                        _nonsabon_lecs.update(_plf(_nfc(os.path.basename(_f))))
+                _kept = []
+                for _f in school_files:
+                    _bn = _nfc(os.path.basename(_f))
+                    if "사본" in _bn:
+                        _flecs = set(_plf(_bn))
+                        if _flecs and _flecs <= _nonsabon_lecs:
+                            continue
+                    _kept.append(_f)
+                school_files = _kept
             # 학교 폴더에 분석편이 있으면 그것만 사용 (번호순 정렬)
             if school_files:
                 def _ord(p):
