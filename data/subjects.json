@@ -65,7 +65,8 @@
     "category": "표지 제작",
     "items": [
       {"name": "세네카 조정", "prefix": "표지", "engine_id": "cover"},
-      {"name": "포켓북 표지", "prefix": "포켓북표지", "engine_id": "cover_pocketbook"}
+      {"name": "포켓북 표지", "prefix": "포켓북표지", "engine_id": "cover_pocketbook"},
+      {"name": "파이널 직전보충 표지", "prefix": "파이널직전보충표지", "engine_id": "final_cover"}
     ]
   },
   {

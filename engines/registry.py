@@ -3,6 +3,7 @@ from engines.blackbook.engine import BlackbookEngine
 from engines.hanyoung.engine import HanyoungEngine
 from engines.cover.engine import CoverEngine
 from engines.cover_pocketbook.engine import CoverPocketbookEngine
+from engines.final_cover.engine import FinalCoverEngine
 from engines.pocketbook.engine import PocketbookEngine
 from engines.final.engine import FinalEngine
 from engines.workbook.engine import WorkbookEngine
@@ -27,6 +28,7 @@ _ENGINE_LIST = [
     HanyoungEngine(),
     CoverEngine(),
     CoverPocketbookEngine(),
+    FinalCoverEngine(),
     PocketbookEngine(),
     FinalEngine(),
     WorkbookEngine(),
