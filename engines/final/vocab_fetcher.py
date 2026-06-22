@@ -602,6 +602,97 @@ def fetch_textbook_rm_lessons_for_school(school, log=None, exam_period=None):
     return rm_lessons or set()
 
 
+def fetch_olpo_scope_for_school(school, log=None, exam_period=None):
+    """시험범위 시트 부교재 컬럼(인덱스3)에서 올포 강별 허용 라벨 추출.
+
+    예: "올림포스 영어독해 기본1 10~12, 14~16강 분석~3"
+          → 10,11,12,14,15,16강: {분석, 본문1, 본문2, 본문3}
+        "올림포스 영어독해 기본1 17~18강 (Practice 1만)"
+          → 17,18강: {분석, 본문1}  (장문 Practice1=분석+본문1, 본문2~/서술형/논술형 제외)
+
+    Returns:
+        dict {강(int): set(허용 라벨)}. 강이 맵에 없으면 제한 없음(전체 허용).
+        빈 dict이면 필터 미적용(파싱 실패/단서 없음 — 보수적 폴백, 누락 사고 방지).
+    """
+    rows = _fetch_csv(SCOPE_SHEET_ID, SCOPE_GID)
+    if not rows:
+        return {}
+    target_row = _find_scope_row(rows, school, exam_period)
+    if not target_row:
+        return {}
+    raw = target_row[3] if len(target_row) > 3 else ""
+    raw = unicodedata.normalize("NFC", raw or "")
+    if "올림포스" not in raw and "올포" not in raw:
+        return {}
+
+    scope = {}
+    # 절(clause) 분리: 각 올림포스/올포 시작 지점에서 분할 (줄바꿈/불릿 유무 무관하게 견고)
+    segments = re.split(r"(?=올림포스|올포)", raw)
+    for seg in segments:
+        seg = seg.strip()
+        if "올림포스" not in seg and "올포" not in seg:
+            continue
+        # 강 목록: "강" 바로 앞 숫자/범위 리스트만 캡처 ("기본1"의 1 오염 방지)
+        m_lec = re.search(
+            r"((?:\d+\s*[~\-–—]\s*\d+|\d+)"
+            r"(?:\s*,\s*(?:\d+\s*[~\-–—]\s*\d+|\d+))*)\s*강",
+            seg,
+        )
+        if not m_lec:
+            continue
+        lectures = []
+        for part in m_lec.group(1).split(","):
+            part = part.strip()
+            rng = re.match(r"(\d+)\s*[~\-–—]\s*(\d+)$", part)
+            if rng:
+                a, b = int(rng.group(1)), int(rng.group(2))
+                if a <= b and b - a < 50:
+                    lectures.extend(range(a, b + 1))
+            elif part.isdigit():
+                lectures.append(int(part))
+        if not lectures:
+            continue
+        # 허용 라벨 판정: "분석~N" / "Practice N만" / "본문N까지" → {분석, 본문1..N}
+        allowed = None
+        m_an = re.search(r"분석\s*[~\-–—]\s*(\d+)", seg)
+        m_pr = re.search(r"Practice\s*(\d+)\s*만", seg, re.IGNORECASE)
+        m_bm = re.search(r"본문\s*(\d+)\s*까지", seg)
+        for _m in (m_an, m_pr, m_bm):
+            if _m:
+                n = int(_m.group(1))
+                allowed = {"분석"} | set("본문%d" % i for i in range(1, n + 1))
+                break
+        if allowed is None:
+            continue   # 인식 못한 단서 → 제한 없음(보수적, 누락 방지)
+        for lec in lectures:
+            scope.setdefault(lec, set()).update(allowed)
+    if log and scope:
+        _preview = ", ".join("%d강%s" % (k, sorted(v)) for k, v in sorted(scope.items()))
+        log("[올포 범위] 강별 허용 라벨: " + _preview)
+    return scope
+
+
+def fetch_exclude_writing_for_school(school, log=None, exam_period=None):
+    """시험범위 시트 비고 컬럼(인덱스6)에 '서술형 ... X/없음' → 서술형영작 섹션 제외.
+
+    "서술형 문항 X", "서술형 X", "서술형 없음" 등에 매칭. "서술형 단답식형만"처럼
+    출제(포함)를 의미하는 표기는 매칭하지 않는다.
+    """
+    rows = _fetch_csv(SCOPE_SHEET_ID, SCOPE_GID)
+    if not rows:
+        return False
+    target_row = _find_scope_row(rows, school, exam_period)
+    if not target_row:
+        return False
+    note = target_row[6] if len(target_row) > 6 else ""
+    note = unicodedata.normalize("NFC", note or "")
+    if re.search(r"서술형[^\n.]*?(?:\bX\b|없음|없다|미출제|제외)", note, re.IGNORECASE):
+        if log:
+            log("[서술형] 비고 '%s' → 서술형영작 섹션 제외" % note.strip()[:30])
+        return True
+    return False
+
+
 def _parse_olpo_lectures_from_scope(scope_text):
     """올포 scope 텍스트에서 강 번호 리스트 추출. "올포1-4강" → [1,2,3,4]."""
     s = scope_text.replace("\uc62c\ud3ec", "").replace("\uac15", "").strip()
@@ -685,7 +776,7 @@ def fetch_rp_lecture_problem_counts(grade):
     return counts
 
 
-def fetch_vocab_for_school(school, grade, log=None, olpo_lectures=None, rp_lectures=None, passage_codes=None, workbook_order=None, code_order=None, exam_period=None):
+def fetch_vocab_for_school(school, grade, log=None, olpo_lectures=None, rp_lectures=None, passage_codes=None, workbook_order=None, code_order=None, exam_period=None, olpo_scope=None):
     """학교의 시험범위에 맞는 중요어휘를 자동 추출.
 
     각 모의고사 시기별 워크시트에서 해당 문항번호의 데이터를 수집.
@@ -917,6 +1008,10 @@ def fetch_vocab_for_school(school, grade, log=None, olpo_lectures=None, rp_lectu
                     sec_display = "\ub17c\uc220\ud615"
                 else:
                     sec_display = sec
+                # 올포 강별 하위범위 필터 (분석~N / Practice N만 — 시험범위 부교재 컬럼)
+                # 문장배열/삽입/어법수정과 동일 기준으로 중요어휘도 걸러 일관성 유지
+                if olpo_scope and lec in olpo_scope and sec_display not in olpo_scope[lec]:
+                    continue
                 so = _sec_order.get(sec, 99)
                 # 섹션 순서 통일: 올포 = "1_..." (리딩파워 뒤, 모의고사 앞)
                 sort_key = f"1_{lec:03d}_{so}"
