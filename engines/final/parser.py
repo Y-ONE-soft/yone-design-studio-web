@@ -2050,6 +2050,28 @@ def _passes_textbook_rm_filter(header, textbook_rm_lessons):
     return lesson in textbook_rm_lessons
 
 
+def _passes_olpo_scope(header, olpo_scope):
+    """'올포 N강 {라벨}' 헤더가 강별 허용 라벨 필터를 통과하는지.
+
+    olpo_scope: {강(int): set(허용 라벨)} — 시험범위 시트 부교재 컬럼의
+        "분석~3"(→ 분석·본문1~3), "Practice 1만"(→ 분석·본문1) 등 하위 단서에서 추출.
+        - 비어있음/None: 제한 없음(전체 허용, 기존 동작)
+        - 강이 맵에 없음: 그 강은 제한 없음(전체 허용)
+        - 강이 맵에 있음: 허용 라벨 집합에 든 라벨만 통과
+    올포가 아닌 헤더(교과서/모의고사 등)는 항상 통과.
+    """
+    if not olpo_scope:
+        return True
+    m = re.match(r"^올포\s+(\d+)강\s+(본문\d+|분석|서술형|논술형)", (header or "").strip())
+    if not m:
+        return True
+    lec = int(m.group(1))
+    allowed = olpo_scope.get(lec)
+    if not allowed:
+        return True
+    return m.group(2) in allowed
+
+
 def _passes_textbook_limit(header, textbook_limits):
     """'교과서N과 본문M' 헤더가 textbook_limits 제한을 통과하는지.
 
@@ -2172,7 +2194,7 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
                 scope_exams=None, lesson_block_counts=None, sl_section_headers=None,
                 allowed_olpo_lectures=None, grade=None, rp_lecture_counts=None,
                 rp_sheet_data=None, textbook_limits=None, olpo_lecture_map=None,
-                textbook_rm_lessons=None):
+                textbook_rm_lessons=None, olpo_scope=None):
     """Vol1 데이터 구성.
 
     lesson_block_counts: 어법수정 Word에서 감지한 과별 본문 수.
@@ -3254,7 +3276,8 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                 scope_exams=None, allowed_olpo_lectures=None, mt_seq_map=None,
                 vol1_sentence_blocks=None, textbook_limits=None,
                 rp_sheet_data=None, olpo_lecture_map=None,
-                textbook_rm_lessons=None):
+                textbook_rm_lessons=None, olpo_scope=None,
+                exclude_writing=False):
     """Vol2 데이터 구성.
 
     allowed_olpo_lectures: 허용 올포 강 번호 set. 없으면 전체 허용.
@@ -4815,7 +4838,8 @@ def parse_extracted(extracted_path, vocab_left, vocab_right,
                     lecture_details=None, rp_lecture_counts=None,
                     rp_sheet_data=None, textbook_limits=None,
                     olpo_lecture_map=None, textbook_rm_lessons=None,
-                    lecture_exclude=None):
+                    lecture_exclude=None, olpo_scope=None,
+                    exclude_writing=False):
     """추출 데이터 + 웹 입력을 통합하여 content.json 생성."""
     log("[파싱] 추출 데이터 분류 중...")
 
