@@ -4660,6 +4660,118 @@ def _fill_insert_from_sentence(sentence_blocks, insert_blocks, log):
         log(f"  [문장삽입 폴백] 모의고사 {added}블록을 문장배열에서 복사")
 
 
+def _reconcile_olpo_labels(stories, grade, log=None):
+    """올포 지문 라벨(olpoLabel) 교차 교정 — 순서배열 서브섹션 재번호로 인한 누락 방지.
+
+    일부 워크북의 순서배열(문장배열/문장삽입) 서브섹션은 포함된 지문 부분집합을
+    01,02...로 재번호한다. 추출기는 페이지에 인쇄된 번호를 그대로 olpoLabel로
+    부여하므로, 같은 지문이 어법수정 STEP에서는 정식 번호(예: 본문3)인데
+    문장배열/삽입에서는 다른 번호(예: 본문2)로 어긋난다. 그 결과 다른 워크북의
+    진짜 본문2와 헤더가 충돌해 _build_vol1의 dedup이 본문3를 통째로 떨어뜨린다
+    (시험범위 지문 누락 — 상일1 올포 12강 본문3 사례).
+
+    교정: 강별로 어법수정 지문을 정답 기준(canonical)으로 삼고, 문장배열/문장삽입
+    지문을 본문 내용(토큰 Jaccard) 최다 일치 canonical 라벨로 맞춘다. 보수적 —
+    본문N/분석 라벨만, 강한 일치(>=THRESH)만, 이미 정상 점유된 라벨로는 교정하지
+    않음(새 충돌 방지). 빈 라벨/장문(17·18강) 라벨은 건드리지 않음. 고1/고2 전용
+    (고3은 FINALEDGE 분석편 + lecture_details 별도 경로).
+    """
+    if grade not in ("고1", "고2"):
+        return stories
+    from collections import defaultdict
+
+    # _classify_stories와 동일한 스타일 집합 (드리프트 시 함께 갱신)
+    _sent_styles = {"문장 배열 그랩", "C_문장배열", "C1_문장 배열"}
+    _ins_styles = {"하단 문제", "C1_문장 배열 하단", "C1_문장 배열 하단 지문",
+                   "문장 배열 하단 ", "문장 배열 하단 문제"}
+    _gram_styles = {"A_어법 수정"}
+    _label_re = re.compile(r"^(본문\d+|분석)$")
+    THRESH = 0.45
+
+    def _styles(s):
+        return set(p.get("s", "") for p in (s.get("paras") or []) if isinstance(p, dict))
+
+    def _section(s):
+        st = _styles(s)
+        if st & _gram_styles:
+            return "어법수정"
+        if st & _ins_styles:
+            return "문장삽입"
+        if st & _sent_styles:
+            return "문장배열"
+        return None
+
+    def _toks(s):
+        out = []
+        for p in (s.get("paras") or []):
+            if isinstance(p, dict):
+                out += re.findall(r"[a-z]{4,}", (p.get("t") or "").lower())
+        return set(out)
+
+    def _jac(a, b):
+        u = a | b
+        return (len(a & b) / len(u)) if u else 0.0
+
+    # 강별 어법수정 canonical: {lecture: {label: token_set}}
+    canon = defaultdict(dict)
+    for s in stories:
+        lec = s.get("lecture")
+        if lec is None or _section(s) != "어법수정":
+            continue
+        lab = str(s.get("olpoLabel") or "")
+        if not _label_re.match(lab):
+            continue
+        ts = _toks(s)
+        if not ts:
+            continue
+        prev = canon[str(lec)].get(lab)
+        canon[str(lec)][lab] = (prev | ts) if prev else ts
+
+    # 1차: 문장배열/문장삽입 후보의 best canonical 매칭 계산 + 정상 점유 라벨 수집
+    cand = []
+    occupied = defaultdict(set)   # (lecture, section) -> {정상 점유 라벨}
+    for s in stories:
+        sec = _section(s)
+        if sec not in ("문장배열", "문장삽입"):
+            continue
+        lec = s.get("lecture")
+        if lec is None or str(lec) not in canon:
+            continue
+        cur = str(s.get("olpoLabel") or "")
+        if not _label_re.match(cur):     # 빈/장문 라벨은 미변경
+            continue
+        ts = _toks(s)
+        if not ts:
+            continue
+        best_lab, best_sc = None, 0.0
+        for lab, cts in canon[str(lec)].items():
+            sc = _jac(ts, cts)
+            if sc > best_sc:
+                best_lab, best_sc = lab, sc
+        cand.append((s, str(lec), sec, cur, best_lab, best_sc))
+        if best_lab == cur and best_sc >= THRESH:
+            occupied[(str(lec), sec)].add(cur)
+
+    # 2차: 교정 적용
+    fixes = []
+    for s, lec, sec, cur, best_lab, best_sc in cand:
+        if not best_lab or best_sc < THRESH or best_lab == cur:
+            continue
+        if best_lab in occupied[(lec, sec)]:     # 이미 정상 점유 → 새 충돌 방지
+            continue
+        s["olpoLabel"] = best_lab
+        occupied[(lec, sec)].add(best_lab)
+        fixes.append((lec, sec, cur, best_lab, best_sc))
+
+    if log:
+        if fixes:
+            for lec, sec, cur, new, sc in fixes:
+                log(f"  [올포 라벨교정] {lec}강 {sec} {cur}→{new} (match={sc:.2f})")
+        else:
+            log("  [올포 라벨교정] 교정 대상 없음")
+    return stories
+
+
 def parse_extracted(extracted_path, vocab_left, vocab_right,
                     school, grade, exam_period, job_dir, log,
                     grammar_word_lines=None, lesson_block_counts=None,
@@ -4677,6 +4789,9 @@ def parse_extracted(extracted_path, vocab_left, vocab_right,
         extracted = json.load(f)
 
     stories = extracted.get("stories", [])
+    # 올포 순서배열 재번호로 어긋난 본문 라벨을 어법수정 기준으로 교차 교정
+    # (in-scope 지문이 헤더 충돌 dedup으로 누락되는 것 방지 — 고1/고2 전용)
+    _reconcile_olpo_labels(stories, grade, log)
     (sentence_blocks, insert_blocks, grammar_blocks, writing_kor, writing_view,
      vocab_blocks, grammar_select_blocks) = _classify_stories(stories)
 
