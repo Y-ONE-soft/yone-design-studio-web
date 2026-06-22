@@ -1534,14 +1534,10 @@ try {{
         if (!story.overflows) return true;
 
         if (fi.isTop) {{
-            // 상단 프레임 overflow: A단계 — 자간/행간 축소로 경미 초과 해소 (흡수/이동 없음).
-            // (expandTop의 below-frame 흡수가 후속 블록 배치와 충돌해 일부 블록이 섹션 밖으로 밀리는
-            //  문제는 그대로이므로 흡수/이동은 안 하고, 경미 초과만 in-place로 해소. 3~4줄+ = B단계.)
-            if (tryShrinkFit(story)) {{
-                log(section + " topOv_shrinkFit block=" + blockIdx);
-            }} else {{
-                log(section + " topOv_keepContent block=" + blockIdx);
-            }}
+            // 상단 프레임 overflow: 배치 중엔 내용 유지. (흡수/이동은 후속 배치와 충돌 → 금지)
+            // 자간/행간 shrink-fit은 배치·스타일·clearOverrides가 다 끝난 뒤 마지막 post-pass에서 적용한다
+            // (clearOverrides(CHARACTER_ONLY)가 배치 중 적용한 tracking/leading override를 지우기 때문).
+            log(section + " topOv_keepContent block=" + blockIdx);
             return true;
         }} else {{
             // 하단 프레임 -> 확장 시도 -> 실패시 다음 상단으로 이동
@@ -1559,12 +1555,8 @@ try {{
                 }}
             }}
 
-            // 확장해도 넘침 -> A단계 자간/행간 축소 -> 그래도 넘치면 내용 유지(B단계 대상)
-            if (tryShrinkFit(story)) {{
-                log(section + " bottomOv_shrinkFit block=" + blockIdx);
-            }} else {{
-                log(section + " bottomOv_keepContent block=" + blockIdx);
-            }}
+            // 확장해도 넘침 -> 내용 유지 (자간/행간 shrink-fit은 마지막 post-pass에서 적용)
+            log(section + " bottomOv_keepContent block=" + blockIdx);
             return true;
         }}
     }}
@@ -2360,6 +2352,22 @@ try {{
     }}
 
     // 크레딧 페이지는 Vocab JSX에서 마지막에 추가 (Vol1 JSX에서는 추가하지 않음)
+
+    // ========================================
+    // 12-post. 경미 오버플로우 최종 해소 (자간/행간 shrink-fit) — A단계
+    //   모든 배치·스타일·clearOverrides가 끝난 뒤 마지막에 적용해야 tracking/leading override가
+    //   clearOverrides(CHARACTER_ONLY)에 지워지지 않는다. 여전히 넘치는 지문 스토리만 대상.
+    //   3~4줄+ 과다초과는 tryShrinkFit이 false 반환(B단계). 헤더 문단 보존, tracking>=-25/leading-0.5pt.
+    // ========================================
+    var postShrinkOk = 0, postShrinkFail = 0;
+    for (var psi = 0; psi < doc.stories.length; psi++) {{
+        try {{
+            var pst = doc.stories[psi];
+            if (!pst.overflows) continue;
+            if (tryShrinkFit(pst)) postShrinkOk++; else postShrinkFail++;
+        }} catch(e) {{}}
+    }}
+    log("postShrink ok=" + postShrinkOk + " fail=" + postShrinkFail);
 
     // ========================================
     // 13. 최종 로그 + PDF + 저장
