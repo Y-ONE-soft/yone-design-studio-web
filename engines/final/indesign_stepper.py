@@ -1479,6 +1479,44 @@ try {{
         return newPage;
     }}
 
+    // ----------------------------------------
+    // 8-pre. 경미 오버플로우 in-place 해소 (A단계 — 프레임 이동/흡수/페이지추가 없음)
+    //   지문 문단 자간(tracking) 미세 축소 → 그래도 넘치면 행간(leading) 약간 축소.
+    //   가독성 보호: tracking 최저 -25, leading -0.5pt까지만. 헤더 문단([기본 단락])은 보존.
+    //   해소되면 true. (3~4줄+ 초과 = 흡수/이동/페이지추가는 B단계에서 별도 처리)
+    // ----------------------------------------
+    function isHeaderPara(p) {{
+        try {{
+            var sn = p.appliedParagraphStyle.name;
+            return (sn === "[기본 단락]" || sn === "[Basic Paragraph]");
+        }} catch(e) {{ return false; }}
+    }}
+    function tryShrinkFit(story) {{
+        try {{ story.recompose(); }} catch(e) {{}}
+        if (!story.overflows) return true;
+        var steps = [-10, -15, -20, -25];
+        for (var t = 0; t < steps.length; t++) {{
+            var paras = story.paragraphs;
+            for (var p = 0; p < paras.length; p++) {{
+                if (isHeaderPara(paras[p])) continue;
+                try {{ paras[p].tracking = steps[t]; }} catch(e) {{}}
+            }}
+            try {{ story.recompose(); }} catch(e) {{}}
+            if (!story.overflows) return true;
+        }}
+        // 자간만으로 부족 → 지문 문단 행간 -0.5pt (숫자 leading만, autoleading 보존)
+        var paras2 = story.paragraphs;
+        for (var p2 = 0; p2 < paras2.length; p2++) {{
+            if (isHeaderPara(paras2[p2])) continue;
+            try {{
+                var cl = paras2[p2].leading;
+                if (typeof cl === "number" && cl > 5) paras2[p2].leading = cl - 0.5;
+            }} catch(e) {{}}
+        }}
+        try {{ story.recompose(); }} catch(e) {{}}
+        return !story.overflows;
+    }}
+
     // ========================================
     // 8. 오버플로우 처리 함수
     // returns: true if block was placed, false if needs retry
@@ -1496,9 +1534,14 @@ try {{
         if (!story.overflows) return true;
 
         if (fi.isTop) {{
-            // 상단 프레임 overflow: expand 대신 내용 유지(overflow 상태 허용).
-            // (expandTop의 below-frame 흡수가 후속 블록 배치와 충돌해 일부 블록이 섹션 밖으로 밀리는 문제 방지)
-            log(section + " topOv_keepContent block=" + blockIdx);
+            // 상단 프레임 overflow: A단계 — 자간/행간 축소로 경미 초과 해소 (흡수/이동 없음).
+            // (expandTop의 below-frame 흡수가 후속 블록 배치와 충돌해 일부 블록이 섹션 밖으로 밀리는
+            //  문제는 그대로이므로 흡수/이동은 안 하고, 경미 초과만 in-place로 해소. 3~4줄+ = B단계.)
+            if (tryShrinkFit(story)) {{
+                log(section + " topOv_shrinkFit block=" + blockIdx);
+            }} else {{
+                log(section + " topOv_keepContent block=" + blockIdx);
+            }}
             return true;
         }} else {{
             // 하단 프레임 -> 확장 시도 -> 실패시 다음 상단으로 이동
@@ -1516,8 +1559,12 @@ try {{
                 }}
             }}
 
-            // 확장해도 넘침 -> 내용 유지 (오버플로우 상태로 둠, 블록 누락 방지)
-            log(section + " bottomOv_keepContent block=" + blockIdx);
+            // 확장해도 넘침 -> A단계 자간/행간 축소 -> 그래도 넘치면 내용 유지(B단계 대상)
+            if (tryShrinkFit(story)) {{
+                log(section + " bottomOv_shrinkFit block=" + blockIdx);
+            }} else {{
+                log(section + " bottomOv_keepContent block=" + blockIdx);
+            }}
             return true;
         }}
     }}
