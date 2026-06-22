@@ -678,6 +678,14 @@ def _classify_stories(stories, grade=None):
         if has_b1:
             types_found.discard("insert")
 
+        # 고3 하단 전용 스토리: insert(하단)만 있고 sentence(상단)가 없으면, 고3은
+        # 문장삽입 섹션이 없으므로 그 하단 내용을 문장배열로 처리한다(통합편 test2 09 등).
+        # 일반 지문은 상단+하단 공존 → "sentence" in types_found이라 해당 안 됨.
+        _g3_bottom_only = (
+            grade == "고3" and "insert" in types_found
+            and "sentence" not in types_found
+        )
+
         # sentence + insert 동시 포함 스토리 (모의고사 대형 스레드):
         # 둘 다 처리 — sentence_styles 항목은 문장배열로, insert_styles 항목은 문장삽입으로
         # (교과서 워크북은 별도 스토리이므로 이 경우에 해당 안 됨)
@@ -693,7 +701,7 @@ def _classify_stories(stories, grade=None):
         exam_code = story.get("examCode", "")
 
         # 문장배열: {XX} 헤더로 블록 분리
-        if "sentence" in types_found:
+        if "sentence" in types_found or _g3_bottom_only:
             # 마더텅 워크북은 상단(배열그랩) = 문장배열 문제, 하단(발문+배열하단) =
             # 문장삽입/순서배열 문제로 같은 지문에 대해 두 문제 타입이 출제된다.
             # 따라서 sentence와 insert 양쪽 모두 배치해야 한다 (교과서와 동일 구조).
@@ -706,7 +714,9 @@ def _classify_stories(stories, grade=None):
             if not page_qnum:
                 page_qnum = page_to_qnum.get((source, page_off), "")
             _before = len(sentence_arr)
-            _split_sentence_blocks(paras, source, sentence_styles, sentence_arr,
+            # 하단 전용(고3 통합편 test2 등)은 하단 스타일로 분할해 문장배열에 넣는다.
+            _sa_split_styles = insert_styles if _g3_bottom_only else sentence_styles
+            _split_sentence_blocks(paras, source, _sa_split_styles, sentence_arr,
                                    page_qnum=page_qnum, page_off=page_off,
                                    lecture=lecture, olpo_label=olpo_label)
             if exam_code:
@@ -714,7 +724,8 @@ def _classify_stories(stories, grade=None):
                     sentence_arr[_bi]["exam_code"] = exam_code
 
         # 문장삽입/순서배열: {XX} 헤더로 블록 분리
-        if "insert" in types_found:
+        # (고3 하단 전용은 위에서 문장배열로 처리했으므로 여기서 제외 — 중복 방지)
+        if "insert" in types_found and not _g3_bottom_only:
             ins_page_qnum = story.get("pageQNum", "")
             if not ins_page_qnum:
                 ins_page_qnum = page_to_qnum.get((source, page_off), "")
@@ -4868,7 +4879,7 @@ def parse_extracted(extracted_path, vocab_left, vocab_right,
     # (in-scope 지문이 헤더 충돌 dedup으로 누락되는 것 방지 — 고1/고2 전용)
     _reconcile_olpo_labels(stories, grade, log)
     (sentence_blocks, insert_blocks, grammar_blocks, writing_kor, writing_view,
-     vocab_blocks, grammar_select_blocks) = _classify_stories(stories)
+     vocab_blocks, grammar_select_blocks) = _classify_stories(stories, grade)
 
     # 모의고사 통합 워크북에서 추출한 문장삽입 블록을 insert_blocks에 병합
     # (사용자 지정 출처: "고1_25년_6월_전체(C).indd" 등 통합 파일)
