@@ -3373,14 +3373,19 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                     return None
                 return _h.split(None, 1)[0]
 
-            def _hdr_suffix_type(_h):
+            def _suffix_key(_h):
+                # 본문N-M → (0,N,M) / 본문N → (0,N,0) / RM → (1,) / FR → (2,) / 기타 → (3,)
+                # 1번째 원소 = 유형(본문/RM/FR/기타) 호환성 판정에도 사용.
                 _parts = _nfc(_h).split(None, 1)
                 _suf = _parts[1] if len(_parts) > 1 else ""
-                if re.match(r"^본문\d+", _suf):       # 본문N
-                    return "body"
-                if _suf in ("RM", "FR"):
-                    return _suf
-                return "other:" + _suf
+                _m = re.match(r"^본문(\d+)(?:-(\d+))?$", _suf)
+                if _m:
+                    return (0, int(_m.group(1)), int(_m.group(2) or 0))
+                if _suf == "RM":
+                    return (1, 0, 0)
+                if _suf == "FR":
+                    return (2, 0, 0)
+                return (3, 0, 0)
 
             _arr_by_lesson = {}
             for _b in vol1_sentence_blocks:
@@ -3398,19 +3403,16 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                 _alist = _arr_by_lesson.get(_k)
                 if not _alist or len(_glist) != len(_alist):
                     continue  # 개수 불일치 — 안전하게 건너뜀
-                if not all(_hdr_suffix_type(_g) == _hdr_suffix_type(_a)
-                           for _g, _a in zip(_glist, _alist)):
+                # 어법(원고)·문장배열(분석본) 모두 정규 본문 순서로 정렬 후 위치 대응.
+                # (어법 헤더는 이 시점 문자열정렬돼 RM이 앞에 올 수 있어 정렬 필수)
+                _gs = sorted(_glist, key=_suffix_key)
+                _as = sorted(_alist, key=_suffix_key)
+                if not all(_suffix_key(_g)[0] == _suffix_key(_a)[0]
+                           for _g, _a in zip(_gs, _as)):
                     continue  # 본문↔RM 등 유형 불일치 — 건너뜀
-                for _g, _a in zip(_glist, _alist):
+                for _g, _a in zip(_gs, _as):
                     if _nfc(_g) != _nfc(_a):
                         _relabel[_g] = _a
-            try:
-                import sys as _sys
-                _sys.stderr.write("[RELABEL-DBG] gram_lessons=%r\n" % {k: len(v) for k, v in _gram_by_lesson.items()})
-                _sys.stderr.write("[RELABEL-DBG] arr_lessons=%r\n" % {k: len(v) for k, v in _arr_by_lesson.items()})
-                _sys.stderr.write("[RELABEL-DBG] relabel=%r\n" % _relabel)
-            except Exception:
-                pass
             if _relabel:
                 vol2["어법_헤더"] = [_relabel.get(_h, _h) for _h in vol2["어법_헤더"]]
                 vol2["어법수정"] = [_relabel.get(_ln, _ln) for _ln in vol2["어법수정"]]
