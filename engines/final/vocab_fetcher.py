@@ -283,7 +283,7 @@ def fetch_high3_scope(school, log=None, exam_period=None):
     empty = {
         "lectures": [], "tests": [], "exclude_gateway": False, "raw": "",
         "textbook_lessons": [], "textbook_raw": "",
-        "lecture_details": {},
+        "lecture_details": {}, "lecture_exclude": {},
     }
     rows = _fetch_csv(SCOPE_SHEET_ID, SCOPE_GID)
     if not rows:
@@ -360,26 +360,40 @@ def fetch_high3_scope(school, log=None, exam_period=None):
     # Gateway 라벨은 분석편 원본에 없어 무시(숫자만 매칭).
     # "제외" 표기(예: "Gateway 제외", "24~28번 제외")는 반대 의미이므로 필터 미적용(전체 포함).
     lecture_details = {}
-    def _skip_paren(content):
+    lecture_exclude = {}  # \uac15/test -> \uc81c\uc678 \uc9c0\ubb38\ubc88\ud638 set (\uc608: {"test2": {1,8,24,25,26,27,28}})
+    def _classify_paren(content):
+        # ("exclude", [nums]) | ("include", [passages]) | ("skip", None)
         if "\uc81c\uc678" in content:
-            return True
+            nums = _parse_passage_list(content.replace("\uc81c\uc678", "").strip())
+            return ("exclude", nums) if nums else ("skip", None)
         passages = _parse_passage_list(content)
-        return len(passages) == 0
+        return ("include", passages) if passages else ("skip", None)
+    def _skip_paren(content):  # \uad04\ud638 \uc5c6\ub294 \ud3f4\ubc31(\uc544\ub798)\uc6a9 \u2014 \uae30\uc874 \ub3d9\uc791 \uc720\uc9c0(include\ub9cc \ucc44\ud0dd)
+        return _classify_paren(content)[0] != "include"
     for m in re.finditer(
         r"(\d+)(?:\s*[-~\u2013\u2014]\s*(\d+))?\s*\uac15\s*\(([^)]*)\)", raw
     ):
         s_n = int(m.group(1))
         e_n = int(m.group(2)) if m.group(2) else s_n
-        if _skip_paren(m.group(3)):
+        _kind, _vals = _classify_paren(m.group(3))
+        if _kind == "skip":
             continue
-        passages = _parse_passage_list(m.group(3))
         if s_n <= e_n and e_n - s_n < 50:
             for n in range(s_n, e_n + 1):
-                lecture_details[str(n)] = passages
-    for m in re.finditer(r"[Tt]est\s*(\d+)\s*\(([^)]*)\)", raw):
-        if _skip_paren(m.group(2)):
+                if _kind == "include":
+                    lecture_details[str(n)] = _vals
+                else:
+                    lecture_exclude[str(n)] = {int(v) for v in _vals if str(v).isdigit()}
+    # \ub300\ubb38\uc790 "TEST 2"\ub3c4 \ub9e4\uce6d\ud558\ub3c4\ub85d IGNORECASE (\uae30\uc874 [Tt]est\ub294 'TEST' \ubbf8\ub9e4\uce6d \u2192 \uad11\ubb383 \ub204\ub77d \uc6d0\uc778).
+    for m in re.finditer(r"[Tt]est\s*(\d+)\s*\(([^)]*)\)", raw, re.IGNORECASE):
+        _kind, _vals = _classify_paren(m.group(2))
+        if _kind == "skip":
             continue
-        lecture_details[f"test{m.group(1)}"] = _parse_passage_list(m.group(2))
+        _key = f"test{m.group(1)}"
+        if _kind == "include":
+            lecture_details[_key] = _vals
+        else:
+            lecture_exclude[_key] = {int(v) for v in _vals if str(v).isdigit()}
 
     # 공백 구분 표기 지원: 괄호 없이 마커 뒤 공백으로 지문이 이어지는 형식.
     #   "18강 2, 4 / 19강 3~4, 7~8 / 21~23강 1, 3", "Test1 20~25, Test2 3~6"
@@ -438,6 +452,7 @@ def fetch_high3_scope(school, log=None, exam_period=None):
         "textbook_lessons": textbook_lessons,
         "textbook_raw": textbook_raw,
         "lecture_details": lecture_details,
+        "lecture_exclude": lecture_exclude,
     }
 
 
