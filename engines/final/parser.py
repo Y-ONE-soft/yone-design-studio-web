@@ -4210,11 +4210,35 @@ def _q_num_in_allowed(q_num, allowed):
     return False
 
 
-def _filter_blocks_by_lecture(blocks, lecture_map, selected_lectures, lecture_details=None):
+def _q_num_in_excluded(q_num, excluded):
+    """블록 q_num이 제외 집합(set of int)에 해당하면 True → 드롭.
+
+    범위 라벨('24~25')은 포함된 모든 번호가 제외 집합에 있을 때만 제외한다
+    (부분만 겹치면 in-scope 번호가 섞여 있으므로 보존). 예: 제외={24,25,26,27,28}이면
+    '24~25'는 24·25 모두 제외 대상 → 드롭, '23~24'는 23이 살아 있어 보존.
+    """
+    if not q_num or not excluded:
+        return False
+    q = q_num.strip()
+    rm = re.match(r"^(\d+)\s*[-~–—]\s*(\d+)$", q)
+    if rm:
+        s_n, e_n = int(rm.group(1)), int(rm.group(2))
+        nums = list(range(s_n, e_n + 1))
+        return bool(nums) and all(n in excluded for n in nums)
+    try:
+        return int(q) in excluded
+    except ValueError:
+        return False
+
+
+def _filter_blocks_by_lecture(blocks, lecture_map, selected_lectures, lecture_details=None,
+                              lecture_exclude=None):
     """블록 리스트에서 선택된 강에 해당하는 것만 필터링.
 
     lecture_details가 있으면 강별 지문번호(q_num)까지 매칭.
     예: {"4": ["2","4"]}면 4강에서 q_num이 "2" 또는 "4"(또는 "02","04")인 것만 포함.
+    lecture_exclude가 있으면 강별 제외 지문번호(q_num)를 드롭.
+    예: {"test2": {24,25,...}}면 test2의 '24~25' 장문을 제외.
 
     교과서 분석편(파일명에 'N과' 포함)은 강 매핑이 없으므로 범위 체크 없이 유지.
     (교과서 과 범위는 engine.py에서 파일 선택 시 이미 필터됨.)
@@ -4231,16 +4255,21 @@ def _filter_blocks_by_lecture(blocks, lecture_map, selected_lectures, lecture_de
                 # q_num이 있을 때만 지문번호 필터 적용 (없는 블록은 강 매칭만)
                 if allowed and q and not _q_num_in_allowed(q, allowed):
                     continue
+            if lecture_exclude and lec in lecture_exclude:
+                q = b.get("q_num", "")
+                if q and _q_num_in_excluded(q, lecture_exclude[lec]):
+                    continue
             result.append(b)
         elif _is_textbook_source(src):
             result.append(b)
     return result
 
 
-def _filter_items_by_lecture(items, lecture_map, selected_lectures, lecture_details=None):
+def _filter_items_by_lecture(items, lecture_map, selected_lectures, lecture_details=None,
+                             lecture_exclude=None):
     """개별 항목 리스트(영작 등)에서 선택된 강에 해당하는 것만 필터링.
 
-    lecture_details가 있으면 지문번호(q_num)까지 매칭.
+    lecture_details가 있으면 지문번호(q_num)까지 매칭, lecture_exclude면 제외.
     """
     result = []
     for item in items:
@@ -4252,6 +4281,10 @@ def _filter_items_by_lecture(items, lecture_map, selected_lectures, lecture_deta
                 allowed = lecture_details[lec]
                 q = item.get("q_num", "")
                 if allowed and q and not _q_num_in_allowed(q, allowed):
+                    continue
+            if lecture_exclude and lec in lecture_exclude:
+                q = item.get("q_num", "")
+                if q and _q_num_in_excluded(q, lecture_exclude[lec]):
                     continue
             result.append(item)
         elif _is_textbook_source(src):
@@ -4781,7 +4814,8 @@ def parse_extracted(extracted_path, vocab_left, vocab_right,
                     textbook_raw="", gdrive_content_base="",
                     lecture_details=None, rp_lecture_counts=None,
                     rp_sheet_data=None, textbook_limits=None,
-                    olpo_lecture_map=None, textbook_rm_lessons=None):
+                    olpo_lecture_map=None, textbook_rm_lessons=None,
+                    lecture_exclude=None):
     """추출 데이터 + 웹 입력을 통합하여 content.json 생성."""
     log("[파싱] 추출 데이터 분류 중...")
 
@@ -4880,14 +4914,18 @@ def parse_extracted(extracted_path, vocab_left, vocab_right,
             vocab_blocks = [_v for _v in vocab_blocks if not _v.get("_merged_tail")]
 
             sentence_blocks = _filter_blocks_by_lecture(
-                sentence_blocks, _lecture_map, selected_lectures, lecture_details)
+                sentence_blocks, _lecture_map, selected_lectures, lecture_details,
+                lecture_exclude)
             writing_kor = _filter_items_by_lecture(
-                writing_kor, _lecture_map, selected_lectures, lecture_details)
+                writing_kor, _lecture_map, selected_lectures, lecture_details,
+                lecture_exclude)
             writing_view = _filter_items_by_lecture(
-                writing_view, _lecture_map, selected_lectures, lecture_details)
+                writing_view, _lecture_map, selected_lectures, lecture_details,
+                lecture_exclude)
 
             vocab_blocks = _filter_blocks_by_lecture(
-                vocab_blocks, _lecture_map, selected_lectures, lecture_details)
+                vocab_blocks, _lecture_map, selected_lectures, lecture_details,
+                lecture_exclude)
             # 중요어휘는 sentence와 1:1 매칭돼야 하므로 q_num이 없는 블록은 제거
             # (교과서 블록은 매핑 없이 쓰므로 예외 유지)
             if lecture_details:
@@ -4917,9 +4955,15 @@ def parse_extracted(extracted_path, vocab_left, vocab_right,
                 ]
 
             grammar_select_blocks = _filter_blocks_by_lecture(
-                grammar_select_blocks, _lecture_map, selected_lectures, lecture_details)
+                grammar_select_blocks, _lecture_map, selected_lectures, lecture_details,
+                lecture_exclude)
             log(f"  [고3] 필터 후: 문장배열={len(sentence_blocks)}, "
                 f"빈칸어휘={len(vocab_blocks)}, 어법선택={len(grammar_select_blocks)}")
+            if lecture_exclude:
+                log(f"  [고3] 강별 제외 지문번호: " + ", ".join(
+                    f"{k}({','.join(str(n) for n in sorted(v))})"
+                    for k, v in sorted(lecture_exclude.items(),
+                                       key=lambda kv: (0, int(kv[0])) if kv[0].isdigit() else (1, kv[0]))))
             if lecture_details:
                 _preview = ", ".join(
                     f"{k}({','.join(v) if v else '-'})" for k, v in sorted(

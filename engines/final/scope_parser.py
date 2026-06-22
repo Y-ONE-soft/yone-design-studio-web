@@ -107,9 +107,15 @@ def parse_lectures_from_filename(filename):
         #  과거엔 통째로 ["test1,test2"]를 반환해 selected_lectures와 매칭 실패→누락.)
         _s = inner.strip()
         if re.match(r"^test\d+", _s, re.IGNORECASE):
+            # 각 항목을 "testN"으로 정규화 — 접미사가 붙은 "test2짤지문"을 "test2"로.
+            # (그대로 두면 selected_lectures의 "test2"와 매칭 실패 → 통합편 누락.)
             _parts = [p.strip() for p in _s.split(",") if p.strip()]
-            if _parts and all(re.match(r"^test\d+", p, re.IGNORECASE) for p in _parts):
-                return _parts
+            _norm = []
+            for p in _parts:
+                pm = re.match(r"^test\s*(\d+)", p, re.IGNORECASE)
+                _norm.append("test" + pm.group(1) if pm else None)
+            if _parts and all(x is not None for x in _norm):
+                return _norm
             return [_s]
         # "분석01", "분석편02" 같은 파일 번호 표기는 스킵
         if re.match(r"^\ubd84\uc11d(?:\ud3b8)?\s*\d+\s*$", inner.strip()):

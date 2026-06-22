@@ -417,7 +417,12 @@ class FinalEngine(BaseEngine):
             school_files = []
             if os.path.isdir(school_dir):
                 for f in sorted(os.listdir(school_dir)):
-                    if f.endswith(".indd") and "분석" in _nfc(f):
+                    # "분석"(분석편) 외에 "짤지문"(통합편 짤지문 — 본 분석편에서 빠졌으나
+                    # 시험범위에 포함되는 지문 모음)도 분석 소스로 포함한다.
+                    # (광문3 통합편(test2짤지문)의 test2 02·09 누락 수정. 다른 학교
+                    #  통합편(강·모의고사)은 "짤지문" 미포함이라 영향 없음.)
+                    _nf = _nfc(f)
+                    if f.endswith(".indd") and ("분석" in _nf or "짤지문" in _nf):
                         school_files.append(os.path.join(school_dir, f))
             school_files = _drop_revised_duplicates(school_files)
             # 학교 폴더에 분석편이 있으면 그것만 사용 (번호순 정렬)
@@ -442,7 +447,7 @@ class FinalEngine(BaseEngine):
                 return [], wb_dir, set()
             files = sorted([
                 os.path.join(wb_dir, f) for f in os.listdir(wb_dir)
-                if f.endswith(".indd") and "분석편" in _nfc(f)
+                if f.endswith(".indd") and ("분석편" in _nfc(f) or "짤지문" in _nfc(f))
             ])
             files = _drop_revised_duplicates(files)
             return files, wb_dir, set()
@@ -607,6 +612,7 @@ class FinalEngine(BaseEngine):
         textbook_lessons = []  # 교과서 과 번호 (예: ["2"])
         textbook_raw = ""
         lecture_details = {}  # 강별 지문번호 필터 (예: {"4": ["2","4"], "test1": ["3","4","6",...]})
+        lecture_exclude = {}  # 강별 제외 지문번호 (예: {"test2": {1,8,24,25,26,27,28}})
         if grade == "고3":
             from engines.final.vocab_fetcher import fetch_high3_scope
             scope_info = fetch_high3_scope(school, log=log, exam_period=exam_period)
@@ -615,6 +621,7 @@ class FinalEngine(BaseEngine):
             textbook_lessons = scope_info.get("textbook_lessons", [])
             textbook_raw = scope_info.get("textbook_raw", "")
             lecture_details = scope_info.get("lecture_details", {})
+            lecture_exclude = scope_info.get("lecture_exclude", {})
             if not selected_lectures and not textbook_raw:
                 raise ValueError(
                     f"구글시트 시험범위에서 {school}의 고3 범위를 찾지 못했습니다. "
@@ -1611,6 +1618,7 @@ class FinalEngine(BaseEngine):
             textbook_raw=textbook_raw,
             gdrive_content_base=cfg.get("gdrive_content_base", ""),
             lecture_details=lecture_details,
+            lecture_exclude=lecture_exclude,
             rp_lecture_counts=_rp_lec_cnts,
             rp_sheet_data=_rp_sheet,
             textbook_limits=_textbook_limits,
