@@ -526,11 +526,15 @@ def _assign_deeplearning_writing_lesson(sentence_blocks, writing_kor, writing_vi
         log(f"  [딥러닝 영작] entry[{i}] → {qn} (과{lesson})")
 
 
-def _classify_stories(stories):
+def _classify_stories(stories, grade=None):
     """추출된 스토리들을 유형별로 분류.
 
     모의고사 워크북은 하나의 스토리에 여러 지문이 {20}, {21}, ... 헤더로
     구분되어 있으므로, 이 헤더를 기준으로 블록을 분리한다.
+
+    grade="고3"이면 문장삽입/순서배열 섹션이 없으므로, 하단(C1_문장 배열 하단)만
+    있고 상단(C1_문장 배열)이 없는 스토리(통합편 짤지문 test2 등)의 하단 내용을
+    문장배열로 넣는다.
     """
     # 분리 마커 사전 정규화: '[' + '4]' → '[4]'
     for _st in stories:
