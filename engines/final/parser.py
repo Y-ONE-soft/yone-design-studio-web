@@ -2801,6 +2801,9 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
         # 교과서 과별 RM/FR 허용 필터 ((N과는 Read More도 포함) 표기 기반)
         if textbook_rm_lessons is not None:
             deduped = [b for b in deduped if _passes_textbook_rm_filter(b["header"], textbook_rm_lessons)]
+        # 올포 강별 하위범위 필터 (분석~N / Practice N만 — 시험범위 시트 부교재 컬럼)
+        if olpo_scope:
+            deduped = [b for b in deduped if _passes_olpo_scope(b["header"], olpo_scope)]
         # 헤더 순 정렬: 교과서 먼저, N강 NN, YYMMQQ, 올포 N강 {분석|본문N|서술형|논술형} 순
         # 올포 섹션 순서: 분석(0) → 본문1..N(1~N) → 서술형(900) → 논술형(901)
         def _olpo_section_order(section):
@@ -3236,6 +3239,9 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
         # 교과서 과별 RM/FR 허용 필터
         if textbook_rm_lessons is not None:
             deduped_ins = [b for b in deduped_ins if _passes_textbook_rm_filter(b["header"], textbook_rm_lessons)]
+        # 올포 강별 하위범위 필터 (분석~N / Practice N만)
+        if olpo_scope:
+            deduped_ins = [b for b in deduped_ins if _passes_olpo_scope(b["header"], olpo_scope)]
 
         # 리딩파워 워크북은 문장삽입 섹션 없음 — sync 전에 제거
         # (sync에서 문장배열 헤더에 해당하는 빈 stub 생성)
@@ -3317,11 +3323,12 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                 in_scope = _is_in_scope(normalized, scope_exams) if scope_exams else True
                 tb_ok = _passes_textbook_limit(normalized, textbook_limits) if textbook_limits else True
                 rm_ok = _passes_textbook_rm_filter(normalized, textbook_rm_lessons) if textbook_rm_lessons is not None else True
+                olpo_ok = _passes_olpo_scope(normalized, olpo_scope) if olpo_scope else True
                 # 중복 헤더 제거 (같은 헤더가 두 번 나오면 두 번째부터 스킵)
                 is_dup = normalized in _seen_grammar_headers
                 _seen_grammar_headers.add(normalized)
-                skip_until_next_header = not in_scope or is_dup or not tb_ok or not rm_ok
-                if in_scope and not is_dup and tb_ok and rm_ok:
+                skip_until_next_header = not in_scope or is_dup or not tb_ok or not rm_ok or not olpo_ok
+                if in_scope and not is_dup and tb_ok and rm_ok and olpo_ok:
                     grammar_headers.append(normalized)
                     filtered_lines.append(normalized)
                 elif is_dup:
@@ -4112,6 +4119,12 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                 _si = _h.get("start_idx", 0)
                 _h["start_idx"] = _kor_to_pair_idx.get(_si, _si)
             vol2["영작_헤더_상세"] = writing_headers
+
+    # 시험범위 비고 "서술형 문항 X" → 서술형영작 섹션 통째 제외
+    # (빈 리스트 → indesign_stepper의 wPairs.length>0 가드로 자동 스킵, 빈 페이지 안 생김)
+    if exclude_writing:
+        vol2["서술형영작"] = []
+        vol2["영작_헤더_상세"] = []
 
     return vol2
 
@@ -5212,7 +5225,8 @@ def parse_extracted(extracted_path, vocab_left, vocab_right,
                        rp_sheet_data=rp_sheet_data,
                        textbook_limits=textbook_limits,
                        olpo_lecture_map=olpo_lecture_map,
-                       textbook_rm_lessons=textbook_rm_lessons)
+                       textbook_rm_lessons=textbook_rm_lessons,
+                       olpo_scope=olpo_scope)
 
     # Word에서 추출한 어법수정 데이터 → grammar_blocks에 추가 (A1 대신 사용)
     if grammar_word_lines:
@@ -5351,7 +5365,9 @@ def parse_extracted(extracted_path, vocab_left, vocab_right,
                        textbook_limits=textbook_limits,
                        rp_sheet_data=rp_sheet_data,
                        olpo_lecture_map=olpo_lecture_map,
-                       textbook_rm_lessons=textbook_rm_lessons)
+                       textbook_rm_lessons=textbook_rm_lessons,
+                       olpo_scope=olpo_scope,
+                       exclude_writing=exclude_writing)
 
     # Vol1 문장배열의 헤더 목록을 Vol2 영작에 공유
     # 어법수정은 독자 헤더가 있으므로 덮어쓰지 않음
