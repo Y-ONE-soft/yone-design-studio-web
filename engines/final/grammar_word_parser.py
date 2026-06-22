@@ -675,20 +675,48 @@ def parse_external_grammar_docx(docx_path):
         r"^\d+\.\s+.*?\s(본문\s*\d+|Reading\b.*|Read\s*More.*|Further[^\n]*)$",
         re.IGNORECASE,
     )
+    # 페이지/출처 마커가 'no.N'으로 끝나는 형식(예 '1. p1-no.1', '1. TED 1-no.1') →
+    # 라벨을 '본문N'(no.N 번호)으로 유도. 해설지/문제지 모두 이 헤더를 쓸 수 있다.
+    HDR_NO = re.compile(r"^\d+\.\s+.*?no\.?\s*(\d+)\s*$", re.IGNORECASE)
+
+    # 서두(첫 헤더 전) 단락 = 교재 제목·발문 등. 본문 사이에 반복되는 러닝 제목을
+    # 본문에 섞지 않도록 제거 기준으로 사용.
+    _preamble = set()
+    for p in paras:
+        if HDR.match(p) or HDR_NO.match(p):
+            break
+        _preamble.add(p)
+
+    def _is_korean(s):
+        han = sum(1 for ch in s if "가" <= ch <= "힣")
+        return han > 0 and han > 0.3 * max(1, len(s.replace(" ", "")))
+
+    def _to_problem(s):
+        # 해설지 어법 마커 'N[오답 (정답)]' → 문제지 형식 'N[오답]'
+        # (문제지는 괄호가 없어 무영향)
+        return re.sub(r"\[([^\[\]]*?)\s*\([^()]*\)\]", r"[\1]", s)
+
     out = []
     label = None
     buf = []
     for p in paras:
         m = HDR.match(p)
-        if m:
+        mno = None if m else HDR_NO.match(p)
+        if m or mno:
             if label is not None:
                 out.append({"label": label, "text": "\n".join(buf).strip()})
-            raw = m.group(1).strip()
-            # '본문 1' → '본문1' (그 외 라벨은 공백 보존)
-            label = re.sub(r"본문\s*(\d+)", r"본문\1", raw)
+            if m:
+                raw = m.group(1).strip()
+                # '본문 1' → '본문1' (그 외 라벨은 공백 보존)
+                label = re.sub(r"본문\s*(\d+)", r"본문\1", raw)
+            else:
+                label = f"본문{mno.group(1)}"
             buf = []
         elif label is not None:
-            buf.append(p)
+            # 러닝 제목(서두 반복)·한글 번역 단락 제외 — 어법수정은 영어 지문만.
+            if p in _preamble or _is_korean(p):
+                continue
+            buf.append(_to_problem(p))
     if label is not None:
         out.append({"label": label, "text": "\n".join(buf).strip()})
     return out
