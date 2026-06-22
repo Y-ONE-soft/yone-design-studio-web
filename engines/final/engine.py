@@ -1339,6 +1339,19 @@ class FinalEngine(BaseEngine):
         # 5) 중요어휘 자동 추출
         vocab_left = ""
         vocab_right = ""
+        # 올포 강별 하위범위(부교재 "분석~3"/"Practice 1만") + 서술형영작 제외(비고 "서술형 X")
+        # 중요어휘 fetch와 parse_extracted 양쪽에서 쓰므로 여기서 한 번만 조회.
+        _olpo_scope = {}
+        _exclude_writing = False
+        if grade in ("고1", "고2"):
+            try:
+                from engines.final.vocab_fetcher import (
+                    fetch_olpo_scope_for_school, fetch_exclude_writing_for_school,
+                )
+                _olpo_scope = fetch_olpo_scope_for_school(school, log=log, exam_period=exam_period) or {}
+                _exclude_writing = fetch_exclude_writing_for_school(school, log=log, exam_period=exam_period)
+            except Exception as _e_os:
+                log("[올포 범위] 조회 실패: %s" % _e_os)
         if grade == "고3":
             # 고3: 중요어휘는 워크북 빈칸어휘(C2_빈칸 어휘)에서 추출 — parser에서 처리
             log("[중요어휘] 고3: 빈칸어휘에서 추출 (구글시트 스킵)")
@@ -1442,6 +1455,7 @@ class FinalEngine(BaseEngine):
                 vocab_data = fetch_vocab_for_school(
                     school, grade, log=log,
                     olpo_lectures=_olpo_lec_list,
+                    olpo_scope=_olpo_scope,
                     rp_lectures=_rp_lec_list,
                     workbook_order=_workbook_order,
                     passage_codes=_ordered_codes if _ordered_codes else None,
@@ -1624,6 +1638,8 @@ class FinalEngine(BaseEngine):
             textbook_limits=_textbook_limits,
             olpo_lecture_map=_olpo_lecture_map,
             textbook_rm_lessons=_textbook_rm_lessons,
+            olpo_scope=_olpo_scope,
+            exclude_writing=_exclude_writing,
         )
 
         # 6.1) 어법수정을 Vol1 문장배열 헤더 순서로 재정렬
