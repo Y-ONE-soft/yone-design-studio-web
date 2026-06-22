@@ -3359,6 +3359,55 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
         if grammar_headers:
             vol2["어법_헤더"] = grammar_headers
 
+        # ── 교과서 어법수정 헤더를 문장배열(분석본) 정규 라벨에 정렬 ──
+        # 어법수정은 원고(Word) 블록 순서를 본문N으로 순차 부여하므로(engine tb_body_counter),
+        # 분석본이 한 본문을 본문3-1/3-2처럼 분할한 과에서는 어법수정이 분할 라벨을 잃고
+        # 본문1~7처럼 일련번호로 뭉친다(예: 상일2 5과). 문장배열 헤더(워크북 마커=분석본 정규
+        # 구조)와 과별로 1:1 대응(개수 동일 + 본문/RM/FR 유형 호환)하면 그 라벨로 교체해
+        # 두 섹션 라벨을 일치시킨다. 분할 없는 과는 위치동일 → 무변경, 개수/유형 불일치 과는
+        # 안전하게 건너뜀(올포·외부·모의 헤더는 '교과서' 접두 아니라 대상 외).
+        if vol1_sentence_blocks and vol2.get("어법_헤더"):
+            def _tb_lesson_key(_h):
+                _h = _nfc(_h)
+                if not _h.startswith("교과서"):  # 교과서
+                    return None
+                return _h.split(None, 1)[0]
+
+            def _hdr_suffix_type(_h):
+                _parts = _nfc(_h).split(None, 1)
+                _suf = _parts[1] if len(_parts) > 1 else ""
+                if re.match(r"^본문\d+", _suf):       # 본문N
+                    return "body"
+                if _suf in ("RM", "FR"):
+                    return _suf
+                return "other:" + _suf
+
+            _arr_by_lesson = {}
+            for _b in vol1_sentence_blocks:
+                _k = _tb_lesson_key(_b.get("header", ""))
+                if _k:
+                    _arr_by_lesson.setdefault(_k, []).append(_b.get("header", ""))
+            _gram_by_lesson = {}
+            for _h in vol2["어법_헤더"]:
+                _k = _tb_lesson_key(_h)
+                if _k:
+                    _gram_by_lesson.setdefault(_k, []).append(_h)
+
+            _relabel = {}
+            for _k, _glist in _gram_by_lesson.items():
+                _alist = _arr_by_lesson.get(_k)
+                if not _alist or len(_glist) != len(_alist):
+                    continue  # 개수 불일치 — 안전하게 건너뜀
+                if not all(_hdr_suffix_type(_g) == _hdr_suffix_type(_a)
+                           for _g, _a in zip(_glist, _alist)):
+                    continue  # 본문↔RM 등 유형 불일치 — 건너뜀
+                for _g, _a in zip(_glist, _alist):
+                    if _nfc(_g) != _nfc(_a):
+                        _relabel[_g] = _a
+            if _relabel:
+                vol2["어법_헤더"] = [_relabel.get(_h, _h) for _h in vol2["어법_헤더"]]
+                vol2["어법수정"] = [_relabel.get(_ln, _ln) for _ln in vol2["어법수정"]]
+
     # 서술형 영작: 한글과 보기를 쌍으로
     # writing_kor/writing_view는 이제 dict 리스트: {"text": ..., "source": ..., "q_num": ...}
     if writing_kor or writing_view:
