@@ -3404,6 +3404,13 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                 for _g, _a in zip(_glist, _alist):
                     if _nfc(_g) != _nfc(_a):
                         _relabel[_g] = _a
+            try:
+                import sys as _sys
+                _sys.stderr.write("[RELABEL-DBG] gram_lessons=%r\n" % {k: len(v) for k, v in _gram_by_lesson.items()})
+                _sys.stderr.write("[RELABEL-DBG] arr_lessons=%r\n" % {k: len(v) for k, v in _arr_by_lesson.items()})
+                _sys.stderr.write("[RELABEL-DBG] relabel=%r\n" % _relabel)
+            except Exception:
+                pass
             if _relabel:
                 vol2["어법_헤더"] = [_relabel.get(_h, _h) for _h in vol2["어법_헤더"]]
                 vol2["어법수정"] = [_relabel.get(_ln, _ln) for _ln in vol2["어법수정"]]
