@@ -146,8 +146,9 @@ try {{
     // 기존 중요어휘 샘플/빈 페이지를 모두 삭제 후 새로 생성
     // (슬롯 재사용은 원본 샘플 잔재/순서 엉킴 문제가 있어 모두 삭제하고 새로 생성)
     // 문장배열/문장삽입 콘텐츠 프레임 바운드가 있는 페이지만 보존.
-    var vEvenB = [[27,18,153,101],[153,18,279,101],[27,105,153,188],[153,105,279,188]];
-    var vOddB  = [[27,22,153,105],[153,22,279,105],[27,109,153,192],[153,109,279,192]];
+    // 쿼터 4셀 + 풀컬럼 2개(좌/우) — cascade가 만든 풀컬럼 프레임만 있는 페이지도 보존
+    var vEvenB = [[27,18,153,101],[153,18,279,101],[27,105,153,188],[153,105,279,188],[27,18,279,101],[27,105,279,188]];
+    var vOddB  = [[27,22,153,105],[153,22,279,105],[27,109,153,192],[153,109,279,192],[27,22,279,105],[27,109,279,192]];
     var removedOldVocab = 0;
     for (var vpi = doc.pages.length - 1; vpi >= 2; vpi--) {{
         var vpg = doc.pages[vpi];
@@ -2459,43 +2460,112 @@ try {{
     log("hardShrink ok=" + hardOk + " fail=" + hardFail);
 
     // ========================================
-    // 12-pageadd. B-2: hard-shrink로도 안 되는 진짜 장문 → 페이지 추가 + 스레드 연결.
-    //   안전조건: 섹션 '마지막' 콘텐츠 프레임일 때만(뒤에 밀 지문 없음 = 연쇄 없음).
-    //   중간 지문이면 스킵+로그(연쇄형 B-2 미구현 — 사고 위험). 이 시점 doc=배열+삽입만.
+    // 12-cascade. B-2 재설계: 장문(A/B-1/B-2c 후에도 넘침)을 통째로 풀컬럼에 재배치 + 뒤 지문 연쇄.
+    //   쪼개지 않고 frame.move로 통째 이동. 섹션(배열/삽입)별. PAGE_ORIGIN 페이지상대 좌표(좌표 검증 완료).
+    //   풀컬럼=상하 2슬롯(252pt). 장문은 상단슬롯 시작(하단슬롯이면 다음 상단으로, 빈슬롯 발생).
+    //   첫 장문 이전 지문은 불변(A/B-1 결과 보존). 페이지추가 필요시 SKIP+로그. 이 시점 doc=배열+삽입만.
     // ========================================
-    var _allCF = [];
-    for (var pgx=0; pgx<doc.pages.length; pgx++) {{
-        var _tfx = doc.pages[pgx].textFrames;
-        for (var tx=0; tx<_tfx.length; tx++) {{
-            if (_isContentFrame(_tfx[tx])) {{
-                var _gbx = _tfx[tx].geometricBounds;
-                _allCF.push({{f:_tfx[tx], pg:pgx, y:_gbx[0], x:_gbx[1]}});
+    (function() {{
+        var _cascOrig = doc.viewPreferences.rulerOrigin;
+        try {{ doc.viewPreferences.rulerOrigin = RulerOrigin.PAGE_ORIGIN; }} catch(e){{}}
+
+        function _isInsertFrame(f) {{
+            try {{ var c = f.parentStory.contents;
+                return (c.indexOf("아래 주어진") >= 0) || (c.indexOf("들어갈 곳") >= 0) || (c.indexOf("이어질 문장") >= 0);
+            }} catch(e){{}}
+            return false;
+        }}
+        function _pageByOff(off) {{
+            for (var i=0; i<doc.pages.length; i++) {{ if (doc.pages[i].documentOffset == off) return doc.pages[i]; }}
+            return null;
+        }}
+        function _gridB(off) {{
+            var even = (off % 2 === 0);
+            var x1 = even?22:18, x2 = even?105:101, x3 = even?109:105, x4 = even?192:188;
+            return {{ q:[[27,x1,153,x2],[153,x1,279,x2],[27,x3,153,x4],[153,x3,279,x4]], fullL:[27,x1,279,x2], fullR:[27,x3,279,x4] }};
+        }}
+
+        // 1. 콘텐츠 프레임 읽기순 수집
+        var _ccf = [];
+        for (var pgx=0; pgx<doc.pages.length; pgx++) {{
+            var _tfx = doc.pages[pgx].textFrames;
+            for (var tx=0; tx<_tfx.length; tx++) {{
+                if (_isContentFrame(_tfx[tx])) {{
+                    var _gbx = _tfx[tx].geometricBounds;
+                    _ccf.push({{f:_tfx[tx], off:doc.pages[pgx].documentOffset, y:_gbx[0], x:_gbx[1]}});
+                }}
             }}
         }}
-    }}
-    _allCF.sort(function(a,b){{ if(a.pg!=b.pg) return a.pg-b.pg; if(Math.abs(a.x-b.x)>6) return a.x-b.x; return a.y-b.y; }});
-    var pageAddOk=0, pageAddSkip=0;
-    for (var ci2=0; ci2<_allCF.length; ci2++) {{
-        var _F = _allCF[ci2].f;
-        var _ov=false;
-        try {{ _ov = _F.parentStory.overflows; }} catch(e){{}}
-        if (!_ov) continue;
-        if (ci2 < _allCF.length-1) {{ pageAddSkip++; log("pageAdd SKIP(mid-section) idx=" + ci2); continue; }}
-        try {{
-            var _newPg = doc.pages.add(LocationOptions.AFTER, _F.parentPage);
-            // continuation 프레임 G를 그리드(쿼터 LU) 바운드에 맞춰 생성 →
-            // 중요어휘 JSX의 removedOldVocab(그리드 매칭 페이지만 보존)에 살아남는다.
-            var _off = _newPg.documentOffset;
-            var _ref = (_off % 2 === 0) ? [27,22,153,105] : [27,18,153,101];
-            var _pgX = 0; try {{ _pgX = _newPg.bounds[1]; }} catch(e){{}}
-            var _G = _newPg.textFrames.add({{geometricBounds:[_ref[0], _pgX+_ref[1], _ref[2], _pgX+_ref[3]]}});
-            _F.nextTextFrame = _G;
-            try {{ _F.parentStory.recompose(); }} catch(e){{}}
-            pageAddOk++;
-            log("pageAdd OK last-frame newpage=" + _newPg.documentOffset + " stillOv=" + _F.parentStory.overflows + " GstillOv=" + _G.parentStory.overflows);
-        }} catch(e){{ log("pageAdd ERR " + e.message); }}
-    }}
-    log("pageAdd ok=" + pageAddOk + " skip=" + pageAddSkip);
+        _ccf.sort(function(a,b){{ if(a.off!=b.off) return a.off-b.off; if(Math.abs(a.x-b.x)>6) return a.x-b.x; return a.y-b.y; }});
+
+        // 2. 섹션 분류 (배열 / 삽입)
+        var _arrSec=[], _insSec=[];
+        for (var ci=0; ci<_ccf.length; ci++) {{ if(_isInsertFrame(_ccf[ci].f)) _insSec.push(_ccf[ci]); else _arrSec.push(_ccf[ci]); }}
+
+        var _cascMoved=0, _cascCols=0, _cascSkip=0;
+        function _repack(sec, name) {{
+            if (sec.length == 0) return;
+            var startOff = sec[0].f.parentPage.documentOffset, endOff = sec[sec.length-1].f.parentPage.documentOffset;
+            var availPages = endOff - startOff + 1;
+            var firstLong=-1;
+            for (var i=0;i<sec.length;i++) {{ var ov=false; try{{ov=sec[i].f.parentStory.overflows;}}catch(e){{}} if(ov){{firstLong=i;break;}} }}
+            if (firstLong < 0) {{ log("cascade "+name+" no-overflow"); return; }}
+            // 첫 장문부터 슬롯 재할당 (이전 지문은 슬롯 0..firstLong-1 점유, 불변)
+            var assign=[]; var cursor=firstLong;
+            for (var j=firstLong;j<sec.length;j++) {{
+                var ov2=false; try{{ov2=sec[j].f.parentStory.overflows;}}catch(e){{}}
+                if (ov2) {{
+                    var pos=cursor%4;
+                    if (pos==1||pos==3) {{ cursor++; }}   // 하단슬롯이면 다음 상단으로 (빈 하단슬롯 발생)
+                    assign.push({{idx:j, slot:cursor, span:2}});
+                    cursor+=2;
+                }} else {{
+                    assign.push({{idx:j, slot:cursor, span:1}});
+                    cursor+=1;
+                }}
+            }}
+            var neededPages = Math.ceil(cursor/4);
+            if (neededPages > availPages) {{
+                // 페이지 부족 → 섹션 마지막 뒤에 추가 (마스터=직전 페이지 동일). vol1 시점 doc=배열+삽입만.
+                var addCount = neededPages - availPages;
+                var anchorPg = _pageByOff(endOff);
+                for (var ap=0; ap<addCount && anchorPg; ap++) {{
+                    try {{
+                        var np = doc.pages.add(LocationOptions.AFTER, anchorPg);
+                        if (anchorPg.appliedMaster && anchorPg.appliedMaster.isValid) np.appliedMaster = anchorPg.appliedMaster;
+                        anchorPg = np;
+                    }} catch(e) {{ log("cascade pageAdd ERR "+name+": "+e.message); anchorPg=null; }}
+                }}
+                log("cascade pageAdd("+name+") +"+addCount+"p (need="+neededPages+" avail="+availPages+")");
+            }}
+            for (var a=0;a<assign.length;a++) {{
+                var asg=assign[a]; var fr=sec[asg.idx].f;
+                var pageOff = startOff + Math.floor(asg.slot/4);
+                var pos2 = asg.slot%4;
+                var pg = _pageByOff(pageOff);
+                if (!pg) {{ log("cascade ERR no page off="+pageOff); continue; }}
+                var gb2 = _gridB(pageOff);
+                var bnd = (asg.span==2) ? (pos2==0?gb2.fullL:gb2.fullR) : gb2.q[pos2];
+                try {{
+                    if (fr.parentPage == null || fr.parentPage.documentOffset != pageOff) fr.move(pg);
+                    fr.geometricBounds = bnd;
+                    try {{ fr.parentStory.recompose(); }} catch(e){{}}
+                    _cascMoved++;
+                    if (asg.span==2) _cascCols++;
+                }} catch(e){{ log("cascade move ERR "+name+" idx="+asg.idx+": "+e.message); }}
+            }}
+        }}
+        _repack(_arrSec, "배열");
+        _repack(_insSec, "삽입");
+        log("cascade moved="+_cascMoved+" fullcols="+_cascCols+" skip="+_cascSkip);
+
+        try {{ doc.viewPreferences.rulerOrigin = _cascOrig; }} catch(e){{}}
+    }})();
+
+    // 12-post2. cascade 후 재배치된 쿼터의 잔여 경미초과 재-shrink (A 재실행)
+    var post2Ok=0;
+    for (var p2i=0;p2i<doc.stories.length;p2i++) {{ try{{ var p2s=doc.stories[p2i]; if(p2s.overflows && tryShrinkFit(p2s)) post2Ok++; }}catch(e){{}} }}
+    log("postShrink2 ok="+post2Ok);
 
     // ========================================
     // 13. 최종 로그 + PDF + 저장
