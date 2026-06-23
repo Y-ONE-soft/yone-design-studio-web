@@ -3472,10 +3472,11 @@ try {{
                                     }}
                                     if (!_rhHas) {{
                                         var _rhAdd = 0;
-                                        for (var _rht = 0; _rht < _rhMp.textFrames.length; _rht++) {{
-                                            var _rhcc = ""; try {{ _rhcc = _rhMp.textFrames[_rht].contents; }} catch(e){{}}
-                                            if (/FINAL STEP/.test(_rhcc) || /Chapter\\.0/.test(_rhcc)) {{
-                                                try {{ var _rhgb = _rhMp.textFrames[_rht].geometricBounds; var _rhd = _rhMp.textFrames[_rht].duplicate(wFirstPg); _rhd.geometricBounds = _rhgb; _rhAdd++; }} catch(eRhD) {{ log("rectoHdr dup err=" + eRhD); }}
+                                        for (var _rht = 0; _rht < _rhMp.pageItems.length; _rht++) {{
+                                            var _rhit = _rhMp.pageItems[_rht]; var _rhgb;
+                                            try {{ _rhgb = _rhit.geometricBounds; }} catch(e){{ continue; }}
+                                            if (_rhgb[0] < 25 && _rhgb[1] >= 140) {{
+                                                try {{ var _rhd = _rhit.duplicate(wFirstPg); _rhd.geometricBounds = _rhgb; _rhAdd++; }} catch(eRhD) {{ log("rectoHdr dup err=" + eRhD); }}
                                             }}
                                         }}
                                         log("recto opener header restored count=" + _rhAdd + " off=" + wFirstPg.documentOffset);
