@@ -2457,6 +2457,40 @@ try {{
     log("hardShrink ok=" + hardOk + " fail=" + hardFail);
 
     // ========================================
+    // 12-pageadd. B-2: hard-shrink로도 안 되는 진짜 장문 → 페이지 추가 + 스레드 연결.
+    //   안전조건: 섹션 '마지막' 콘텐츠 프레임일 때만(뒤에 밀 지문 없음 = 연쇄 없음).
+    //   중간 지문이면 스킵+로그(연쇄형 B-2 미구현 — 사고 위험). 이 시점 doc=배열+삽입만.
+    // ========================================
+    var _allCF = [];
+    for (var pgx=0; pgx<doc.pages.length; pgx++) {{
+        var _tfx = doc.pages[pgx].textFrames;
+        for (var tx=0; tx<_tfx.length; tx++) {{
+            if (_isContentFrame(_tfx[tx])) {{
+                var _gbx = _tfx[tx].geometricBounds;
+                _allCF.push({{f:_tfx[tx], pg:pgx, y:_gbx[0], x:_gbx[1]}});
+            }}
+        }}
+    }}
+    _allCF.sort(function(a,b){{ if(a.pg!=b.pg) return a.pg-b.pg; if(Math.abs(a.x-b.x)>6) return a.x-b.x; return a.y-b.y; }});
+    var pageAddOk=0, pageAddSkip=0;
+    for (var ci2=0; ci2<_allCF.length; ci2++) {{
+        var _F = _allCF[ci2].f;
+        var _ov=false;
+        try {{ _ov = _F.parentStory.overflows; }} catch(e){{}}
+        if (!_ov) continue;
+        if (ci2 < _allCF.length-1) {{ pageAddSkip++; log("pageAdd SKIP(mid-section) idx=" + ci2); continue; }}
+        try {{
+            var _newPg = doc.pages.add(LocationOptions.AFTER, _F.parentPage);
+            var _G = _newPg.textFrames.add({{geometricBounds:[27, 18, 276, 101]}});
+            _F.nextTextFrame = _G;
+            try {{ _F.parentStory.recompose(); }} catch(e){{}}
+            pageAddOk++;
+            log("pageAdd OK last-frame newpage=" + _newPg.documentOffset + " stillOv=" + _F.parentStory.overflows);
+        }} catch(e){{ log("pageAdd ERR " + e.message); }}
+    }}
+    log("pageAdd ok=" + pageAddOk + " skip=" + pageAddSkip);
+
+    // ========================================
     // 13. 최종 로그 + PDF + 저장
     // ========================================
     var finalOv = 0;
