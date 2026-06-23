@@ -1287,17 +1287,20 @@ def _split_writing_blocks(paras, source, kor_styles, view_styles,
                 current_qnum = f"Ex{int(m_ex.group(1)):02d}"
                 current_unit_override = None
                 continue
-            # 숫자 헤더: [20], {01~02}, [[31] (이중/불완전 대괄호), 20번 / 41~42번 (번 접미사)
-            # 워크북마다 영작 지문번호 표기가 [NN] / NN번 / [[NN] 로 제각각이라, 대괄호
-            # 형식만 인식하면 NN번(예: 25년9월)·이중대괄호(예: 26년6월) 마커가 통째로
-            # 누락돼 해당 모의지문 영작 헤더가 사라지고 본문이 직전 지문에 이어붙는다.
-            # 괄호(여닫이 어느 쪽이든) 또는 '번' 접미사가 있을 때만 마커로 인정해
-            # 괄호 없는 맨숫자(본문 내용)를 마커로 오인하는 것을 막는다.
-            m = re.match(r"^([\[{]{0,2})\s*(\d+(?:\s*[~\-]\s*\d+)?)\s*(번?)\s*([\]}]{0,2})$", txt)
-            if m and (m.group(1) or m.group(3) or m.group(4)):
-                current_qnum = re.sub(r"\s+", "", m.group(2))
-                current_unit_override = None
-                continue
+            # 지문번호(숫자) 마커 — 표기 형식이 아니라 "구조"로 인식한다.
+            #   [20] {20} {01~02} [[31] [31]] 20번 41~42번, 그리고 장식이 전혀 없는
+            #   맨숫자 20 / 41~42 까지 전부 동일한 지문번호다. 영작 스토리에서 [기본 단락]
+            #   단락은 지문 구분 마커 자리이므로, '번'을 뗀 뒤 한글/영문 글자가 남지
+            #   않고(=본문N·Gateway·Example 등 명명 마커가 아니고) 숫자만 있으면 지문번호로
+            #   본다. 괄호 모양에 의존하지 않으므로 워크북마다 표기가 달라도 학교별 손질 불필요.
+            _no_beon = txt.replace("번", "")
+            if (re.search(r"\d", _no_beon)
+                    and not re.search(r"[A-Za-z가-힣ㄱ-ㅎㅏ-ㅣ]", _no_beon)):
+                _core = re.sub(r"[^\d~\-]", "", _no_beon)
+                if re.fullmatch(r"\d+(?:[~\-]\d+)?", _core):
+                    current_qnum = _core
+                    current_unit_override = None
+                    continue
             # 본문N 헤더: [본문1], [본문2], {{본문1}}, 본문1 (대괄호/중괄호 0개 이상)
             m2 = re.match(r"^[\[{]*본문(\d+(?:[-~]\d+)*)[\]}]*$", txt)
             if m2:
