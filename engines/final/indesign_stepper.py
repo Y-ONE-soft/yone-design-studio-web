@@ -2430,6 +2430,33 @@ try {{
     log("columnRebalance ok=" + rebOk + " both=" + rebBoth + " partial=" + rebPartial);
 
     // ========================================
+    // 12-hard. 강한 shrink (B-2c) — 리밸런싱 후에도 풀높이 프레임에서 1~2줄 근접초과인 장문.
+    //   자간 -40까지 + 행간 추가 -0.7pt. 그래도 넘치면(진짜 3~4줄+ 장문) B-2 페이지추가 대상.
+    // ========================================
+    var hardOk=0, hardFail=0;
+    for (var hsi=0; hsi<doc.stories.length; hsi++) {{
+        try {{
+            var hst = doc.stories[hsi];
+            if (!hst.overflows) continue;
+            var hp = hst.paragraphs;
+            for (var htv=-30; htv>=-40; htv-=5) {{
+                for (var hi=0; hi<hp.length; hi++) {{ if (!isHeaderPara(hp[hi])) {{ try {{ hp[hi].tracking = htv; }} catch(e){{}} }} }}
+                try {{ hst.recompose(); }} catch(e){{}}
+                if (!hst.overflows) break;
+            }}
+            if (hst.overflows) {{
+                for (var hj=0; hj<hp.length; hj++) {{
+                    if (isHeaderPara(hp[hj])) continue;
+                    try {{ var hcl=hp[hj].leading; if (typeof hcl==="number" && hcl>5) hp[hj].leading = hcl - 0.7; }} catch(e){{}}
+                }}
+                try {{ hst.recompose(); }} catch(e){{}}
+            }}
+            if (hst.overflows) hardFail++; else hardOk++;
+        }} catch(e){{}}
+    }}
+    log("hardShrink ok=" + hardOk + " fail=" + hardFail);
+
+    // ========================================
     // 13. 최종 로그 + PDF + 저장
     // ========================================
     var finalOv = 0;
