@@ -253,6 +253,25 @@ try {{
                     if (_isRight) {{
                         newPg.appliedMaster = dMasterVocab;
                         log("D-master applied to new vocab page " + newPg.documentOffset);
+                        // recto opener: D-마스터 recto 헤더 결손 → 본문 dominant recto 마스터에서 복사
+                        try {{
+                            var _vhDom=null,_vhN=-1,_vhC={{}},_vhM={{}};
+                            for (var _vhi=0;_vhi<doc.pages.length;_vhi++){{ var _vhp=doc.pages[_vhi]; if(_vhp.side!=1919382632)continue; var _vhm=_vhp.appliedMaster; if(!_vhm||!_vhm.isValid||_vhm===dMasterVocab)continue; _vhC[_vhm.name]=(_vhC[_vhm.name]||0)+1; _vhM[_vhm.name]=_vhm; }}
+                            for (var _vhk in _vhC){{ if(_vhC[_vhk]>_vhN){{_vhN=_vhC[_vhk];_vhDom=_vhk;}} }}
+                            if(_vhDom){{
+                                var _vhCm=_vhM[_vhDom],_vhMp=null;
+                                for(var _vhpp=0;_vhpp<_vhCm.pages.length;_vhpp++){{ if(_vhCm.pages[_vhpp].side==1919382632)_vhMp=_vhCm.pages[_vhpp]; }}
+                                if(_vhMp){{
+                                    var _vhHas=false;
+                                    for(var _vhx=0;_vhx<newPg.textFrames.length;_vhx++){{ var _vhc=""; try{{_vhc=newPg.textFrames[_vhx].contents;}}catch(e){{}} if(/FINAL STEP/.test(_vhc)||/Chapter\\.0/.test(_vhc)){{_vhHas=true;break;}} }}
+                                    if(!_vhHas){{
+                                        var _vhAdd=0;
+                                        for(var _vht=0;_vht<_vhMp.textFrames.length;_vht++){{ var _vhcc=""; try{{_vhcc=_vhMp.textFrames[_vht].contents;}}catch(e){{}} if(/FINAL STEP/.test(_vhcc)||/Chapter\\.0/.test(_vhcc)){{ try{{ var _vhgb=_vhMp.textFrames[_vht].geometricBounds; var _vhd=_vhMp.textFrames[_vht].duplicate(newPg); _vhd.geometricBounds=_vhgb; _vhAdd++; }}catch(e2){{ log("vocHdr dup err="+e2); }} }} }}
+                                        log("recto opener header restored count=" + _vhAdd + " off=" + newPg.documentOffset);
+                                    }}
+                                }}
+                            }}
+                        }} catch(eVh){{ log("vocab recto hdr fix err="+eVh.message); }}
                         // 섹션 마커 추가 (섹션 2 = 중요어휘)
                         try {{
                             var vocSec = doc.sections.add(newPg);
@@ -2345,6 +2364,25 @@ try {{
                 if (insFirstPage && insFirstPage.side == 1919382632) {{
                     insFirstPage.appliedMaster = mD;
                     log("D-master applied to ins firstPage off=" + insFirstPage.documentOffset);
+                    // recto opener: D-마스터 recto 헤더 결손 → 본문 dominant recto 마스터에서 복사
+                    try {{
+                        var _ihDom=null,_ihN=-1,_ihC={{}},_ihM={{}};
+                        for (var _ihi=0;_ihi<doc.pages.length;_ihi++){{ var _ihp=doc.pages[_ihi]; if(_ihp.side!=1919382632)continue; var _ihm=_ihp.appliedMaster; if(!_ihm||!_ihm.isValid||_ihm===mD)continue; _ihC[_ihm.name]=(_ihC[_ihm.name]||0)+1; _ihM[_ihm.name]=_ihm; }}
+                        for (var _ihk in _ihC){{ if(_ihC[_ihk]>_ihN){{_ihN=_ihC[_ihk];_ihDom=_ihk;}} }}
+                        if(_ihDom){{
+                            var _ihCm=_ihM[_ihDom],_ihMp=null;
+                            for(var _ihpp=0;_ihpp<_ihCm.pages.length;_ihpp++){{ if(_ihCm.pages[_ihpp].side==1919382632)_ihMp=_ihCm.pages[_ihpp]; }}
+                            if(_ihMp){{
+                                var _ihHas=false;
+                                for(var _ihx=0;_ihx<insFirstPage.textFrames.length;_ihx++){{ var _ihc=""; try{{_ihc=insFirstPage.textFrames[_ihx].contents;}}catch(e){{}} if(/FINAL STEP/.test(_ihc)||/Chapter\\.0/.test(_ihc)){{_ihHas=true;break;}} }}
+                                if(!_ihHas){{
+                                    var _ihAdd=0;
+                                    for(var _iht=0;_iht<_ihMp.textFrames.length;_iht++){{ var _ihcc=""; try{{_ihcc=_ihMp.textFrames[_iht].contents;}}catch(e){{}} if(/FINAL STEP/.test(_ihcc)||/Chapter\\.0/.test(_ihcc)){{ try{{ var _ihgb=_ihMp.textFrames[_iht].geometricBounds; var _ihd=_ihMp.textFrames[_iht].duplicate(insFirstPage); _ihd.geometricBounds=_ihgb; _ihAdd++; }}catch(e2){{ log("insHdr dup err="+e2); }} }} }}
+                                    log("recto opener header restored count=" + _ihAdd + " off=" + insFirstPage.documentOffset);
+                                }}
+                            }}
+                        }}
+                    }} catch(eIh){{ log("ins recto hdr fix err="+eIh.message); }}
                 }} else if (insFirstPage) {{
                     log("ins firstPage is LEFT — skip D-master (off=" + insFirstPage.documentOffset + ")");
                 }}
