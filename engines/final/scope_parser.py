@@ -19,6 +19,21 @@ def parse_scope_from_filename(filename):
         시험범위 문자열 (예: "교과서1,2과,SL")
     """
     fn = _nfc(filename)
+    # "워크북NN(" 뒤의 괄호 그룹을 균형 괄호로 추출 — scope 안에 "능률(민)" 같은
+    # 중첩 괄호가 있어도 전체를 잡는다(예: "워크북04(능률(민)3과)_내지" → "능률(민)3과").
+    # 기존 r"\(([^)]+)\)"는 내부 ")"에서 끊겨 "능률(민"만 잡아 textbook 분류 실패(한영1).
+    m_start = re.search(r"워크북\s*\d+\s*\(", fn)
+    if m_start:
+        start = m_start.end()
+        depth = 1
+        for i in range(start, len(fn)):
+            if fn[i] == "(":
+                depth += 1
+            elif fn[i] == ")":
+                depth -= 1
+                if depth == 0:
+                    return fn[start:i]
+    # 폴백: 워크북 패턴이 없거나(분석편 등) 닫는 괄호 못 찾을 때
     m = re.search(r"\(([^)]+)\)", fn)
     return m.group(1) if m else ""
 
