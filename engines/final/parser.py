@@ -3888,13 +3888,34 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                 if _ec_kor:
                     # 올포 워크북: xlsx 매핑으로 "올포 N강 본문M" 라벨로 변환
                     _hdr_kor = _ec_kor
+                    _ec_recon = False
                     if olpo_lecture_map and is_olpo_src:
                         from engines.final.olpo_mapper import code_to_olpo_header
                         _olpo_h = code_to_olpo_header(_ec_kor, olpo_lecture_map)
                         if _olpo_h:
                             _hdr_kor = _olpo_h
+                    # 스토리 레벨 exam_code(YYMMQQ)는 그 스토리 '첫' 지문의 코드일 뿐이다.
+                    # 한 영작 스토리에 여러 지문(내부 번호 마커 21/31/32…)이 묶여 있으면
+                    # 둘째 지문부터 전부 같은 exam_code로 붕괴돼 지문번호가 사라진다
+                    # (26년6월 케이스: 21/31/32/33/34/38 → 전부 260621). 비-올포 모의
+                    # 워크북에서 지문번호(q_num)가 따로 있으면 exam_code의 시험(YYMM)은
+                    # 유지하고 질문번호만 q_num으로 보정해 정확한 지문코드를 만든다.
+                    elif (q_num and q_num[0].isdigit() and not q_num.startswith("본문")
+                          and len(_ec_kor) >= 6 and _ec_kor[:6].isdigit()):
+                        _qq_m = re.match(r"^(\d+)(?:[~\-](\d+))?$", q_num)
+                        if _qq_m:
+                            _yymm = _ec_kor[:4]
+                            _qq = _qq_m.group(1).zfill(2)
+                            _new = (f"{_yymm}{_qq}~{_qq_m.group(2).zfill(2)}"
+                                    if _qq_m.group(2) else f"{_yymm}{_qq}")
+                            if _new != _ec_kor:
+                                _ec_recon = True
+                            _hdr_kor = _new
                     if _hdr_kor != prev_qnum:
-                        writing_headers.append({"header": _hdr_kor, "start_idx": i})
+                        # 보정된(첫 지문이 아닌) 모의 헤더는 다른 모의 경로와 동일하게 scope
+                        # 필터 적용. 원본 exam_code 그대로/올포는 기존처럼 무조건 추가(가짜번호 방지 유지).
+                        if (not _ec_recon) or (not scope_exams) or _is_in_scope(_hdr_kor, scope_exams):
+                            writing_headers.append({"header": _hdr_kor, "start_idx": i})
                         prev_qnum = _hdr_kor
                     continue
 
