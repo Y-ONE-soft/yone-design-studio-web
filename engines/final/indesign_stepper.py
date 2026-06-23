@@ -666,10 +666,20 @@ try {{
         try {{
             var vst = doc.stories[vsh];
             if (!vst.overflows) continue;
-            for (var vdz = 0; vdz < 3 && vst.overflows; vdz++) {{
+            for (var vdz = 0; vdz < 6 && vst.overflows; vdz++) {{
                 var vpz = vst.paragraphs;
                 for (var vp5 = 0; vp5 < vpz.length; vp5++) {{
-                    try {{ var vcp = vpz[vp5].pointSize; if (typeof vcp === "number" && vcp > 8) vpz[vp5].pointSize = vcp - 0.5; }} catch(e) {{}}
+                    try {{
+                        var vcp = vpz[vp5].pointSize;
+                        if (typeof vcp === "number") {{
+                            if (vcp > 8) vpz[vp5].pointSize = vcp - 0.5;
+                        }} else {{
+                            var vchs = vpz[vp5].characters;
+                            for (var vci = 0; vci < vchs.length; vci++) {{
+                                try {{ var vccp = vchs[vci].pointSize; if (typeof vccp === "number" && vccp > 8) vchs[vci].pointSize = vccp - 0.5; }} catch(e) {{}}
+                            }}
+                        }}
+                    }} catch(e) {{}}
                 }}
                 try {{ vst.recompose(); }} catch(e) {{}}
             }}
