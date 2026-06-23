@@ -1464,6 +1464,10 @@ class FinalEngine(BaseEngine):
                 )
                 vocab_left = vocab_data.get("left_text", "")
                 vocab_right = vocab_data.get("right_text", "")
+                # >>내용요약 앞 빈줄 정규화: 소스가 1~2빈줄/스페이스낀빈줄로 제멋대로 → 일괄 2빈줄(\n\n\n)
+                import re
+                vocab_left = re.sub(r"\s*>>내용요약", "\n\n\n>>내용요약", vocab_left)
+                vocab_right = re.sub(r"\s*>>내용요약", "\n\n\n>>내용요약", vocab_right)
                 log(f"[중요어휘] 결과: 왼쪽 {len(vocab_left)}자, 오른쪽 {len(vocab_right)}자")
             except Exception as e:
                 import traceback
