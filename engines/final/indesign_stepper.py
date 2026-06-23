@@ -659,6 +659,25 @@ try {{
         }}
     }} catch(eVT) {{ log("vocab tab add err=" + eVT.message); }}
 
+    // 오버플로우 최후수단: 넘치는 중요어휘 프레임(좌/우, 장문 지문) 본문 폰트 -0.5pt씩(최대 -1.5pt, 8pt floor) 축소.
+    // 잘림(내용 누락)보다 약간 작은 폰트가 낫다. 넘치는 스토리만 대상 → 정상 페이지 영향 없음.
+    var vShrunk = 0;
+    for (var vsh = 0; vsh < doc.stories.length; vsh++) {{
+        try {{
+            var vst = doc.stories[vsh];
+            if (!vst.overflows) continue;
+            for (var vdz = 0; vdz < 3 && vst.overflows; vdz++) {{
+                var vpz = vst.paragraphs;
+                for (var vp5 = 0; vp5 < vpz.length; vp5++) {{
+                    try {{ var vcp = vpz[vp5].pointSize; if (typeof vcp === "number" && vcp > 8) vpz[vp5].pointSize = vcp - 0.5; }} catch(e) {{}}
+                }}
+                try {{ vst.recompose(); }} catch(e) {{}}
+            }}
+            if (!vst.overflows) vShrunk++;
+        }} catch(e) {{}}
+    }}
+    if (vShrunk > 0) log("vocab emergency shrink fit=" + vShrunk);
+
     // 오버플로우 확인
     var ov = 0;
     for (var i = 0; i < doc.stories.length; i++) {{ if (doc.stories[i].overflows) ov++; }}
@@ -1536,6 +1555,18 @@ try {{
             }} catch(e) {{}}
         }}
         try {{ story.recompose(); }} catch(e) {{}}
+        if (!story.overflows) return true;
+        // 최후수단: 자간/행간으로도 1~2줄 안 맞으면 본문 폰트 -0.5pt씩(최대 -1.5pt) 축소.
+        // 헤더 제외, 8.5pt floor(가독성). 잘림(내용 누락)보다 약간 작은 폰트가 낫다.
+        // overflow 프레임에만 적용되므로 정상 학교 영향 없음.
+        for (var dz = 0; dz < 3 && story.overflows; dz++) {{
+            var pz = story.paragraphs;
+            for (var p5 = 0; p5 < pz.length; p5++) {{
+                if (isHeaderPara(pz[p5])) continue;
+                try {{ var cp = pz[p5].pointSize; if (typeof cp === "number" && cp > 8.5) pz[p5].pointSize = cp - 0.5; }} catch(e) {{}}
+            }}
+            try {{ story.recompose(); }} catch(e) {{}}
+        }}
         return !story.overflows;
     }}
 
