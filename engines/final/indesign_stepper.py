@@ -2370,6 +2370,66 @@ try {{
     log("postShrink ok=" + postShrinkOk + " fail=" + postShrinkFail);
 
     // ========================================
+    // 12-reb. 칼럼 리밸런싱 (B-1) — 같은 칼럼 경계선 이동으로 3~4줄+ 과다초과 해소
+    //   상단/하단 중 한쪽만 넘치고 짝꿍에 여백이 있으면, 둘 사이 경계선을 이동해 넘치는
+    //   프레임을 키우고 짝꿍 프레임을 줄인다. 내용 이동/페이지추가 없음(짝꿍 지문은 제자리,
+    //   프레임만 축소). 둘 다 넘치면 스킵(B-2 페이지추가 대상). 이 시점 doc=배열+삽입만.
+    // ========================================
+    function _isContentFrame(f) {{
+        try {{
+            var st = f.parentStory; if (!st) return false;
+            var ps = st.paragraphs;
+            for (var ci=0; ci<ps.length; ci++) {{
+                if (ps[ci].appliedParagraphStyle.name.indexOf("문장 배열") >= 0) return true;
+            }}
+        }} catch(e){{}}
+        return false;
+    }}
+    function _setBoundary(topF, botF, tb, bb, y) {{
+        topF.geometricBounds = [tb[0], tb[1], y, tb[3]];
+        botF.geometricBounds = [y, bb[1], bb[2], bb[3]];
+        try {{ topF.parentStory.recompose(); botF.parentStory.recompose(); }} catch(e){{}}
+    }}
+    function _rebalanceCol(topF, botF) {{
+        var ts = topF.parentStory, bs = botF.parentStory;
+        try {{ ts.recompose(); bs.recompose(); }} catch(e){{}}
+        if (ts.overflows == bs.overflows) return ts.overflows ? "both" : "none";
+        var tb = topF.geometricBounds, bb = botF.geometricBounds;
+        var y = tb[2], step = 4;
+        var lo = tb[0] + 12, hi = bb[2] - 12;
+        if (ts.overflows) {{
+            while (ts.overflows && y + step <= hi) {{
+                y += step; _setBoundary(topF, botF, tb, bb, y);
+                if (bs.overflows) {{ y -= step; _setBoundary(topF, botF, tb, bb, y); break; }}
+            }}
+        }} else {{
+            while (bs.overflows && y - step >= lo) {{
+                y -= step; _setBoundary(topF, botF, tb, bb, y);
+                if (ts.overflows) {{ y += step; _setBoundary(topF, botF, tb, bb, y); break; }}
+            }}
+        }}
+        return (!ts.overflows && !bs.overflows) ? "ok" : "partial";
+    }}
+    var rebOk=0, rebBoth=0, rebPartial=0;
+    for (var rpg=0; rpg<doc.pages.length; rpg++) {{
+        var _cf = [];
+        var _tfs = doc.pages[rpg].textFrames;
+        for (var _ti=0; _ti<_tfs.length; _ti++) {{ if (_isContentFrame(_tfs[_ti])) _cf.push(_tfs[_ti]); }}
+        for (var _a=0; _a<_cf.length; _a++) {{
+            for (var _b=_a+1; _b<_cf.length; _b++) {{
+                var _ba = _cf[_a].geometricBounds, _bb2 = _cf[_b].geometricBounds;
+                if (Math.abs(_ba[1]-_bb2[1]) > 6) continue;      // 다른 칼럼
+                if (Math.abs(_ba[0]-_bb2[0]) < 30) continue;     // 같은 행(이상 케이스)
+                var _top = _ba[0] < _bb2[0] ? _cf[_a] : _cf[_b];
+                var _bot = _ba[0] < _bb2[0] ? _cf[_b] : _cf[_a];
+                var _r = _rebalanceCol(_top, _bot);
+                if (_r=="ok") rebOk++; else if (_r=="both") rebBoth++; else if (_r=="partial") rebPartial++;
+            }}
+        }}
+    }}
+    log("columnRebalance ok=" + rebOk + " both=" + rebBoth + " partial=" + rebPartial);
+
+    // ========================================
     // 13. 최종 로그 + PDF + 저장
     // ========================================
     var finalOv = 0;
