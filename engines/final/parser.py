@@ -250,6 +250,12 @@ def _is_insert_noise(txt):
     t = txt.strip()
     if not t:
         return True
+    # 결합 지문(41~42 류) 하위지문 경계 마커: '{{38}', '{{41~42}}', '{{31'(미완성) 등.
+    # 원본 워크북 story에 [기본 단락]으로 박혀 있는 하위지문 구분 마커(N=원본 문항번호)로,
+    # 이중 여는 괄호 '{{' + 숫자 시그니처라 _is_question_header(단일 괄호)도 못 걸러
+    # 그대로 발문/지문 para로 새어 PDF에 literal '{{38}'로 인쇄됨. 닫는 괄호는 0~2개 허용.
+    if re.match(r"^\{\{\s*\d+(?:\s*[~\-]\s*\d+)?\s*\}{0,2}$", t):
+        return True
     # 순번만 있는 줄: 01, 02, 1, 2, ...
     if re.match(r"^\d{1,2}$", t):
         return True
