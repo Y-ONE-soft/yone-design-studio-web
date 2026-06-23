@@ -897,7 +897,15 @@ def extract_from_workbooks(indd_paths, style_filters, output_path, log):
         if os.path.exists(tmp_result):
             try:
                 with open(tmp_result, encoding="utf-8") as f:
-                    stories = json.load(f)
+                    _txt = f.read()
+                try:
+                    stories = json.loads(_txt)
+                except json.JSONDecodeError:
+                    # InDesign 특수/제어문자가 escape 안 된 채 JSON에 섞여 표준 파싱 실패.
+                    # 관대 모드(strict=False)로 재시도 — 워크북 전체 스토리 통째 누락 방지
+                    # (예: 성덕1 워크북02 모의고사 문장배열/영작 통째 손실 사고).
+                    stories = json.loads(_txt, strict=False)
+                    log("  JSON strict=False 재파싱 성공 (제어문자 포함)")
                 if isinstance(stories, dict) and stories.get("error"):
                     log(f"  추출 에러: {stories['error']}")
                 elif isinstance(stories, list):
@@ -1163,7 +1171,13 @@ def extract_mock_insert_blocks(indd_path, allowed_qnums, log):
     if os.path.exists(tmp_result):
         try:
             with open(tmp_result, encoding="utf-8") as f:
-                results = json.load(f)
+                _rtxt = f.read()
+            try:
+                results = json.loads(_rtxt)
+            except json.JSONDecodeError:
+                # InDesign 제어문자 escape 누락 대비 관대 파싱(strict=False)
+                results = json.loads(_rtxt, strict=False)
+                log("  [문장삽입 추출] JSON strict=False 재파싱 성공")
             if isinstance(results, dict) and results.get("error"):
                 log(f"  [문장삽입 추출] 에러: {results['error']}")
                 results = []
