@@ -666,6 +666,16 @@ try {{
         try {{
             var vst = doc.stories[vsh];
             if (!vst.overflows) continue;
+            // 1) 행간 반복 축소 (고정 leading 프레임 줄 수 감소 주 수단)
+            for (var vld = 0; vld < 10 && vst.overflows; vld++) {{
+                var vlp = vst.paragraphs; var vlc = false;
+                for (var vli = 0; vli < vlp.length; vli++) {{
+                    try {{ var vcl = vlp[vli].leading; var vps = vlp[vli].pointSize; var vml = (typeof vps === "number") ? vps : 8; if (typeof vcl === "number" && (vcl - 0.5) >= vml) {{ vlp[vli].leading = vcl - 0.5; vlc = true; }} }} catch(e) {{}}
+                }}
+                if (!vlc) break;
+                try {{ vst.recompose(); }} catch(e) {{}}
+            }}
+            // 2) 그래도 넘치면 폰트 축소
             for (var vdz = 0; vdz < 6 && vst.overflows; vdz++) {{
                 var vpz = vst.paragraphs;
                 for (var vp5 = 0; vp5 < vpz.length; vp5++) {{
@@ -1556,15 +1566,24 @@ try {{
             if (!story.overflows) return true;
         }}
         // 자간만으로 부족 → 지문 문단 행간 -0.5pt (숫자 leading만, autoleading 보존)
-        var paras2 = story.paragraphs;
-        for (var p2 = 0; p2 < paras2.length; p2++) {{
-            if (isHeaderPara(paras2[p2])) continue;
-            try {{
-                var cl = paras2[p2].leading;
-                if (typeof cl === "number" && cl > 5) paras2[p2].leading = cl - 0.5;
-            }} catch(e) {{}}
+        // 행간(leading) 반복 축소 — 고정 leading 프레임에서 줄 수를 줄이는 주 수단.
+        // (폰트만 줄이면 고정 leading은 줄 높이 그대로라 줄 수 안 줄어 효과 없음.)
+        // floor: 폰트 크기(단일행 간격) 이상 — 줄 겹침 방지.
+        for (var ld = 0; ld < 10 && story.overflows; ld++) {{
+            var paras2 = story.paragraphs;
+            var ldChanged = false;
+            for (var p2 = 0; p2 < paras2.length; p2++) {{
+                if (isHeaderPara(paras2[p2])) continue;
+                try {{
+                    var cl = paras2[p2].leading;
+                    var ps2 = paras2[p2].pointSize;
+                    var minLead = (typeof ps2 === "number") ? ps2 : 8;
+                    if (typeof cl === "number" && (cl - 0.5) >= minLead) {{ paras2[p2].leading = cl - 0.5; ldChanged = true; }}
+                }} catch(e) {{}}
+            }}
+            if (!ldChanged) break;
+            try {{ story.recompose(); }} catch(e) {{}}
         }}
-        try {{ story.recompose(); }} catch(e) {{}}
         if (!story.overflows) return true;
         // 최후수단: 자간/행간으로도 1~2줄 안 맞으면 본문 폰트 -0.5pt씩(최대 -1.5pt) 축소.
         // 헤더 제외, 8.5pt floor(가독성). 잘림(내용 누락)보다 약간 작은 폰트가 낫다.
