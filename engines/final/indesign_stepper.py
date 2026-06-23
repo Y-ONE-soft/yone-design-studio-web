@@ -2483,11 +2483,16 @@ try {{
         if (ci2 < _allCF.length-1) {{ pageAddSkip++; log("pageAdd SKIP(mid-section) idx=" + ci2); continue; }}
         try {{
             var _newPg = doc.pages.add(LocationOptions.AFTER, _F.parentPage);
-            var _G = _newPg.textFrames.add({{geometricBounds:[27, 18, 276, 101]}});
+            // continuation 프레임 G를 그리드(쿼터 LU) 바운드에 맞춰 생성 →
+            // 중요어휘 JSX의 removedOldVocab(그리드 매칭 페이지만 보존)에 살아남는다.
+            var _off = _newPg.documentOffset;
+            var _ref = (_off % 2 === 0) ? [27,22,153,105] : [27,18,153,101];
+            var _pgX = 0; try {{ _pgX = _newPg.bounds[1]; }} catch(e){{}}
+            var _G = _newPg.textFrames.add({{geometricBounds:[_ref[0], _pgX+_ref[1], _ref[2], _pgX+_ref[3]]}});
             _F.nextTextFrame = _G;
             try {{ _F.parentStory.recompose(); }} catch(e){{}}
             pageAddOk++;
-            log("pageAdd OK last-frame newpage=" + _newPg.documentOffset + " stillOv=" + _F.parentStory.overflows);
+            log("pageAdd OK last-frame newpage=" + _newPg.documentOffset + " stillOv=" + _F.parentStory.overflows + " GstillOv=" + _G.parentStory.overflows);
         }} catch(e){{ log("pageAdd ERR " + e.message); }}
     }}
     log("pageAdd ok=" + pageAddOk + " skip=" + pageAddSkip);
