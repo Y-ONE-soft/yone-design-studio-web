@@ -1559,11 +1559,22 @@ try {{
         // 최후수단: 자간/행간으로도 1~2줄 안 맞으면 본문 폰트 -0.5pt씩(최대 -1.5pt) 축소.
         // 헤더 제외, 8.5pt floor(가독성). 잘림(내용 누락)보다 약간 작은 폰트가 낫다.
         // overflow 프레임에만 적용되므로 정상 학교 영향 없음.
-        for (var dz = 0; dz < 3 && story.overflows; dz++) {{
+        for (var dz = 0; dz < 6 && story.overflows; dz++) {{
             var pz = story.paragraphs;
             for (var p5 = 0; p5 < pz.length; p5++) {{
                 if (isHeaderPara(pz[p5])) continue;
-                try {{ var cp = pz[p5].pointSize; if (typeof cp === "number" && cp > 8.5) pz[p5].pointSize = cp - 0.5; }} catch(e) {{}}
+                // 혼합 폰트 문단(인라인 마커 등)은 para.pointSize가 숫자 아님 → 문자 단위로 축소.
+                try {{
+                    var cp = pz[p5].pointSize;
+                    if (typeof cp === "number") {{
+                        if (cp > 8.5) pz[p5].pointSize = cp - 0.5;
+                    }} else {{
+                        var pchs = pz[p5].characters;
+                        for (var pci = 0; pci < pchs.length; pci++) {{
+                            try {{ var ccp = pchs[pci].pointSize; if (typeof ccp === "number" && ccp > 8.5) pchs[pci].pointSize = ccp - 0.5; }} catch(e) {{}}
+                        }}
+                    }}
+                }} catch(e) {{}}
             }}
             try {{ story.recompose(); }} catch(e) {{}}
         }}
@@ -3618,7 +3629,9 @@ try {{
             if (lastPg.side == PageSideOptions.LEFT_HAND || lastPg.side == 1818653800) {{
                 var blankPg = doc.pages.add();
                 try {{
-                    blankPg.appliedMaster = doc.masterSpreads.itemByName("A-chapter1");
+                    // Vol2 빈 페이지는 본문과 동일한 Chapter.02(B-chapter2) 사용 — A-chapter1(Chapter.01) 오기 방지
+                    var _bm = doc.masterSpreads.itemByName("B-chapter2");
+                    blankPg.appliedMaster = (_bm && _bm.isValid) ? _bm : doc.pages[1].appliedMaster;
                 }} catch(e) {{
                     try {{ blankPg.appliedMaster = doc.pages[1].appliedMaster; }} catch(e2) {{}}
                 }}
