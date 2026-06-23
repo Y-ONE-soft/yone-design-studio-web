@@ -266,7 +266,7 @@ try {{
                                     for(var _vhx=0;_vhx<newPg.textFrames.length;_vhx++){{ var _vhc=""; try{{_vhc=newPg.textFrames[_vhx].contents;}}catch(e){{}} if(/FINAL STEP/.test(_vhc)||/Chapter\\.0/.test(_vhc)){{_vhHas=true;break;}} }}
                                     if(!_vhHas){{
                                         var _vhAdd=0;
-                                        for(var _vht=0;_vht<_vhMp.textFrames.length;_vht++){{ var _vhcc=""; try{{_vhcc=_vhMp.textFrames[_vht].contents;}}catch(e){{}} if(/FINAL STEP/.test(_vhcc)||/Chapter\\.0/.test(_vhcc)){{ try{{ var _vhgb=_vhMp.textFrames[_vht].geometricBounds; var _vhd=_vhMp.textFrames[_vht].duplicate(newPg); _vhd.geometricBounds=_vhgb; _vhAdd++; }}catch(e2){{ log("vocHdr dup err="+e2); }} }} }}
+                                        for(var _vht=0;_vht<_vhMp.pageItems.length;_vht++){{ var _vhit=_vhMp.pageItems[_vht]; var _vhgb; try{{ _vhgb=_vhit.geometricBounds; }}catch(e){{ continue; }} if(_vhgb[0]<25 && _vhgb[1]>=140){{ try{{ var _vhd=_vhit.duplicate(newPg); _vhd.geometricBounds=_vhgb; _vhAdd++; }}catch(e2){{ log("vocHdr dup err="+e2); }} }} }}
                                         log("recto opener header restored count=" + _vhAdd + " off=" + newPg.documentOffset);
                                     }}
                                 }}
@@ -2377,7 +2377,7 @@ try {{
                                 for(var _ihx=0;_ihx<insFirstPage.textFrames.length;_ihx++){{ var _ihc=""; try{{_ihc=insFirstPage.textFrames[_ihx].contents;}}catch(e){{}} if(/FINAL STEP/.test(_ihc)||/Chapter\\.0/.test(_ihc)){{_ihHas=true;break;}} }}
                                 if(!_ihHas){{
                                     var _ihAdd=0;
-                                    for(var _iht=0;_iht<_ihMp.textFrames.length;_iht++){{ var _ihcc=""; try{{_ihcc=_ihMp.textFrames[_iht].contents;}}catch(e){{}} if(/FINAL STEP/.test(_ihcc)||/Chapter\\.0/.test(_ihcc)){{ try{{ var _ihgb=_ihMp.textFrames[_iht].geometricBounds; var _ihd=_ihMp.textFrames[_iht].duplicate(insFirstPage); _ihd.geometricBounds=_ihgb; _ihAdd++; }}catch(e2){{ log("insHdr dup err="+e2); }} }} }}
+                                    for(var _iht=0;_iht<_ihMp.pageItems.length;_iht++){{ var _ihit=_ihMp.pageItems[_iht]; var _ihgb; try{{ _ihgb=_ihit.geometricBounds; }}catch(e){{ continue; }} if(_ihgb[0]<25 && _ihgb[1]>=140){{ try{{ var _ihd=_ihit.duplicate(insFirstPage); _ihd.geometricBounds=_ihgb; _ihAdd++; }}catch(e2){{ log("insHdr dup err="+e2); }} }} }}
                                     log("recto opener header restored count=" + _ihAdd + " off=" + insFirstPage.documentOffset);
                                 }}
                             }}
