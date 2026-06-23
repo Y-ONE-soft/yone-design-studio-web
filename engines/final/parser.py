@@ -3562,6 +3562,15 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                 if len(_ec_w) >= 6 and _ec_w[:6].isdigit():
                     _ec_allowed = _src_scope_qnums.get((_ec_w[:2], _ec_w[2:4]))
                     if _ec_allowed is not None:
+                        # exam_code는 '시험(년/월)'만 특정한다. 질문번호는 item의 q_num이
+                        # 정확하다 — 한 영작 스토리에 여러 지문이 묶이면(26년6월 영작 등)
+                        # 모든 항목이 '첫' 지문의 exam_code(예: 260620)를 공유하므로,
+                        # exam_code[4:6](=20)을 질문번호로 쓰면 모든 지문이 첫 지문 번호로
+                        # 오판된다. 첫 지문이 scope 밖(20번 제외)이면 9개 지문이 통째로
+                        # 드롭된다. 2자리 q_num은 q_num을 쓰고, 6자리 YYMMQQ q_num만
+                        # 기존대로 exam_code QQ를 쓴다.
+                        if _q1_raw < 1000:
+                            return _q1_raw in _ec_allowed or _q2_raw in _ec_allowed
                         return int(_ec_w[4:6]) in _ec_allowed
                 # q_num이 6자리 YYMMQQ 형태이면 자체 년월로 해당 시험의 numbers에서 직접 확인
                 # (복합 scope "23년6월_24년9월"에서 q_num="240930"인 경우 24년9월 시험으로 매칭)
