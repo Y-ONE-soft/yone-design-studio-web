@@ -3408,6 +3408,43 @@ try {{
                     if (wFirstPg && (wFirstPg.side == 1919382632 || wFirstPg.side == PageSideOptions.RIGHT_HAND)) {{
                         wFirstPg.appliedMaster = mD2;
                         log("D-master applied to writing firstPage off=" + wFirstPg.documentOffset);
+                        // D-마스터 recto는 우상단 러닝헤더(Chapter.0X|...|FINAL STEP)가 비어 결손됨.
+                        // 본문 마스터(B-chapter2 등 recto pages 다수 사용)에서 헤더 프레임 복사.
+                        try {{
+                            var _rhDom = null, _rhN = -1, _rhCnt = {{}}, _rhMap = {{}};
+                            for (var _rhi = 0; _rhi < doc.pages.length; _rhi++) {{
+                                var _rhp = doc.pages[_rhi];
+                                if (_rhp.side != 1919382632) continue;
+                                var _rhm = _rhp.appliedMaster;
+                                if (!_rhm || !_rhm.isValid || _rhm === mD2) continue;
+                                _rhCnt[_rhm.name] = (_rhCnt[_rhm.name] || 0) + 1;
+                                _rhMap[_rhm.name] = _rhm;
+                            }}
+                            for (var _rhk in _rhCnt) {{ if (_rhCnt[_rhk] > _rhN) {{ _rhN = _rhCnt[_rhk]; _rhDom = _rhk; }} }}
+                            if (_rhDom) {{
+                                var _rhCm = _rhMap[_rhDom], _rhMp = null;
+                                for (var _rhpp = 0; _rhpp < _rhCm.pages.length; _rhpp++) {{
+                                    if (_rhCm.pages[_rhpp].side == 1919382632) _rhMp = _rhCm.pages[_rhpp];
+                                }}
+                                if (_rhMp) {{
+                                    var _rhHas = false;
+                                    for (var _rhx = 0; _rhx < wFirstPg.textFrames.length; _rhx++) {{
+                                        var _rhc = ""; try {{ _rhc = wFirstPg.textFrames[_rhx].contents; }} catch(e){{}}
+                                        if (/FINAL STEP/.test(_rhc) || /Chapter\\.0/.test(_rhc)) {{ _rhHas = true; break; }}
+                                    }}
+                                    if (!_rhHas) {{
+                                        var _rhAdd = 0;
+                                        for (var _rht = 0; _rht < _rhMp.textFrames.length; _rht++) {{
+                                            var _rhcc = ""; try {{ _rhcc = _rhMp.textFrames[_rht].contents; }} catch(e){{}}
+                                            if (/FINAL STEP/.test(_rhcc) || /Chapter\\.0/.test(_rhcc)) {{
+                                                try {{ var _rhgb = _rhMp.textFrames[_rht].geometricBounds; var _rhd = _rhMp.textFrames[_rht].duplicate(wFirstPg); _rhd.geometricBounds = _rhgb; _rhAdd++; }} catch(eRhD) {{ log("rectoHdr dup err=" + eRhD); }}
+                                            }}
+                                        }}
+                                        log("recto opener header restored count=" + _rhAdd + " off=" + wFirstPg.documentOffset);
+                                    }}
+                                }}
+                            }}
+                        }} catch(eRh) {{ log("recto hdr fix err=" + eRh.message); }}
                     }} else if (wFirstPg) {{
                         log("writing firstPage is LEFT off=" + wFirstPg.documentOffset + " -> no D-master");
                     }}
