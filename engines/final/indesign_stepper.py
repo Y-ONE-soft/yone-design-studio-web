@@ -488,6 +488,8 @@ try {{
             var apItems = apg.allPageItems;
             for (var aii = 0; aii < apItems.length; aii++) {{
                 if (apItems[aii].constructor.name !== "TextFrame") continue;
+                // B-2 스레드 연속(continuation) 프레임이 있는 페이지는 보존 (빈 듯 보여도 본문 이어짐)
+                try {{ if (apItems[aii].previousTextFrame !== null) {{ aHasText = true; break; }} }} catch(e) {{}}
                 var aigb = apItems[aii].geometricBounds;
                 if (aigb[0] < 0 || aigb[1] < 0 || (aigb[2] - aigb[0]) < 20) continue;
                 try {{
