@@ -2459,73 +2459,41 @@ try {{
     log("hardShrink ok=" + hardOk + " fail=" + hardFail);
 
     // ========================================
-    // 12-cascade. B-2 (배치-후 post-pass): 넘치는 지문마다 연속 슬롯을 끼워넣고 뒤 지문을 앞으로 민다.
-    //   배치가 끝나 프레임 고정 상태에서 frame.move로 이동(복제X → 헤더·박스·화살표 보존).
-    //   "진행 중 배치와 충돌"이라는 과거 근본원인이 구조적으로 없음. 이 시점 doc=배열/삽입만.
-    //   그리드 슬롯: 페이지당 4(LU,LL,RU,RL 읽기순). 새 페이지/프레임은 그리드 바운드(중요어휘 JSX 보존).
+    // 12-pageadd. B-2: hard-shrink로도 안 되는 진짜 장문 → 페이지 추가 + 스레드 연결.
+    //   안전조건: 섹션 '마지막' 콘텐츠 프레임일 때만(뒤에 밀 지문 없음 = 연쇄 없음).
+    //   중간 지문이면 스킵+로그(연쇄형 B-2 미구현 — 사고 위험). 이 시점 doc=배열+삽입만.
     // ========================================
-    var GEB = [[27,18,153,101],[153,18,279,101],[27,105,153,188],[153,105,279,188]];   // even page
-    var GOB = [[27,22,153,105],[153,22,279,105],[27,109,153,192],[153,109,279,192]];   // odd page
-    function _gb(pg, slot) {{
-        var ref = (pg.documentOffset % 2 === 0) ? GOB : GEB;   // addFramePage와 동일 규칙
-        var x = 0; try {{ x = pg.bounds[1]; }} catch(e){{}}
-        var b = ref[slot];
-        return [b[0], b[1]+x, b[2], b[3]+x];
-    }}
-    // 1) 콘텐츠 프레임 읽기순 수집
-    var cf = [];
+    var _allCF = [];
     for (var pgx=0; pgx<doc.pages.length; pgx++) {{
-        var tfx = doc.pages[pgx].textFrames;
-        for (var tx=0; tx<tfx.length; tx++) {{
-            if (_isContentFrame(tfx[tx])) {{ var gbx=tfx[tx].geometricBounds; cf.push({{f:tfx[tx], pg:pgx, y:gbx[0], x:gbx[1]}}); }}
+        var _tfx = doc.pages[pgx].textFrames;
+        for (var tx=0; tx<_tfx.length; tx++) {{
+            if (_isContentFrame(_tfx[tx])) {{
+                var _gbx = _tfx[tx].geometricBounds;
+                _allCF.push({{f:_tfx[tx], pg:pgx, y:_gbx[0], x:_gbx[1]}});
+            }}
         }}
     }}
-    cf.sort(function(a,b){{ if(a.pg!=b.pg) return a.pg-b.pg; if(Math.abs(a.x-b.x)>6) return a.x-b.x; return a.y-b.y; }});
-    var ncf = cf.length, overCnt = 0;
-    for (var i=0;i<ncf;i++){{ cf[i].ov=false; try{{cf[i].ov=cf[i].f.parentStory.overflows;}}catch(e){{}} if(cf[i].ov) overCnt++; }}
+    _allCF.sort(function(a,b){{ if(a.pg!=b.pg) return a.pg-b.pg; if(Math.abs(a.x-b.x)>6) return a.x-b.x; return a.y-b.y; }});
     var pageAddOk=0, pageAddSkip=0;
-    if (overCnt === 0) {{ log("cascade: overflow 없음 — 스킵"); }}
-    else {{
-        // 빈 그리드 프레임 제거 (이동 시 위치충돌 방지). 콘텐츠 프레임/비그리드 프레임은 보존.
-        for (var pz=0; pz<doc.pages.length; pz++) {{
-            var tz=doc.pages[pz].textFrames; var px2=0; try{{px2=doc.pages[pz].bounds[1];}}catch(e){{}}
-            for (var kz=tz.length-1; kz>=0; kz--) {{
-                var fz=tz[kz]; if (_isContentFrame(fz)) continue;
-                var gz=fz.geometricBounds; var isGrid=(Math.abs(gz[0]-27)<8||Math.abs(gz[0]-153)<8)&&(gz[2]-gz[0])>40;
-                var c2=""; try{{c2=(fz.contents||"").replace(/\s/g,"");}}catch(e){{}}
-                var thr=false; try{{thr=(fz.previousTextFrame!=null);}}catch(e){{}}
-                if (isGrid && c2.length===0 && !thr) {{ try{{fz.remove();}}catch(e){{}} }}
-            }}
-        }}
-        // 목표 슬롯 = ncf + overCnt. 부족하면 끝에 그리드 페이지 추가.
-        var totalSlots = ncf + overCnt;
-        while (doc.pages.length*4 < totalSlots) {{
-            var lastP = doc.pages[doc.pages.length-1];
-            var np = doc.pages.add(LocationOptions.AFTER, lastP);
-            try {{ if(lastP.appliedMaster && lastP.appliedMaster.isValid) np.appliedMaster=lastP.appliedMaster; }} catch(e){{}}
-            for (var sj=0;sj<4;sj++) {{ try{{ np.textFrames.add({{geometricBounds:_gb(np,sj)}}); }}catch(e){{}} }}
-        }}
-        function _slot(idx) {{ var p=doc.pages[Math.floor(idx/4)]; return {{page:p, bounds:_gb(p, idx%4)}}; }}
-        // 목표 인덱스: i + (앞의 overflow 누계)
-        var sh=0, tIdx=[];
-        for (var i2=0;i2<ncf;i2++){{ tIdx[i2]=i2+sh; if(cf[i2].ov) sh++; }}
-        // 백워드 이동 + continuation 스레드
-        for (var i3=ncf-1;i3>=0;i3--) {{
-            var t=tIdx[i3], sl=_slot(t);
-            try {{ cf[i3].f.move(sl.page); cf[i3].f.geometricBounds=sl.bounds; }} catch(e){{ log("cascade move ERR i="+i3+" "+e.message); }}
-            if (cf[i3].ov) {{
-                var slc=_slot(t+1);
-                try {{ var Gc=slc.page.textFrames.add({{geometricBounds:slc.bounds}}); cf[i3].f.nextTextFrame=Gc; cf[i3].f.parentStory.recompose(); pageAddOk++; }}
-                catch(e){{ log("cascade cont ERR i="+i3+" "+e.message); }}
-            }}
-        }}
-        // 빈 꼬리 페이지 제거
-        for (var pe=doc.pages.length-1; pe>=1; pe--) {{
-            var pg2=doc.pages[pe], has=false, it2=pg2.textFrames;
-            for (var k2=0;k2<it2.length;k2++){{ var cc=""; try{{cc=(it2[k2].contents||"").replace(/\s/g,"");}}catch(e){{}} var tt=false; try{{tt=(it2[k2].previousTextFrame!=null);}}catch(e){{}} if(cc.length>0||tt){{has=true;break;}} }}
-            if (!has) {{ try{{pg2.remove();}}catch(e){{}} }}
-        }}
-        log("cascade: passages="+ncf+" overflow="+overCnt+" addedSlots="+overCnt);
+    for (var ci2=0; ci2<_allCF.length; ci2++) {{
+        var _F = _allCF[ci2].f;
+        var _ov=false;
+        try {{ _ov = _F.parentStory.overflows; }} catch(e){{}}
+        if (!_ov) continue;
+        if (ci2 < _allCF.length-1) {{ pageAddSkip++; log("pageAdd SKIP(mid-section) idx=" + ci2); continue; }}
+        try {{
+            var _newPg = doc.pages.add(LocationOptions.AFTER, _F.parentPage);
+            // continuation 프레임 G를 그리드(쿼터 LU) 바운드에 맞춰 생성 →
+            // 중요어휘 JSX의 removedOldVocab(그리드 매칭 페이지만 보존)에 살아남는다.
+            var _off = _newPg.documentOffset;
+            var _ref = (_off % 2 === 0) ? [27,22,153,105] : [27,18,153,101];
+            var _pgX = 0; try {{ _pgX = _newPg.bounds[1]; }} catch(e){{}}
+            var _G = _newPg.textFrames.add({{geometricBounds:[_ref[0], _pgX+_ref[1], _ref[2], _pgX+_ref[3]]}});
+            _F.nextTextFrame = _G;
+            try {{ _F.parentStory.recompose(); }} catch(e){{}}
+            pageAddOk++;
+            log("pageAdd OK last-frame newpage=" + _newPg.documentOffset + " stillOv=" + _F.parentStory.overflows + " GstillOv=" + _G.parentStory.overflows);
+        }} catch(e){{ log("pageAdd ERR " + e.message); }}
     }}
     log("pageAdd ok=" + pageAddOk + " skip=" + pageAddSkip);
 
