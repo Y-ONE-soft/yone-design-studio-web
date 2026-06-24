@@ -5158,6 +5158,7 @@ def _drop_codeless_mt_version_dupes(stories, log=lambda m: None):
         return m.group(1) if m else None
 
     src_has_code = {}               # source_file(NFC) -> bool(코드 보유)
+    src_count = defaultdict(int)    # source_file(NFC) -> 스토리 수
     num_sources = defaultdict(set)  # 워크북번호 -> {source_file(NFC)}
     for s in stories:
         src = _nfc(s.get("source_file", ""))
@@ -5167,6 +5168,7 @@ def _drop_codeless_mt_version_dupes(stories, log=lambda m: None):
         if not num:
             continue
         num_sources[num].add(src)
+        src_count[src] += 1
         if s.get("examCode", ""):
             src_has_code[src] = True
         else:
@@ -5177,11 +5179,22 @@ def _drop_codeless_mt_version_dupes(stories, log=lambda m: None):
         codeful = sorted(s for s in srcs if src_has_code.get(s))
         codeless = sorted(s for s in srcs if not src_has_code.get(s))
         if codeful and codeless:
+            # 코드 정본이 있으면 코드없는 중복판 전부 제외
             for s in codeless:
                 drop_sources.add(s)
                 log(f"  [마더텅 버전] 코드없는 중복판 제외: "
                     f"{os.path.basename(s)} (정본: "
                     f"{', '.join(os.path.basename(c) for c in codeful)})")
+        elif not codeful and len(codeless) >= 2:
+            # 전부 코드없는 같은 강(예: 마더텅7강 가로/수정/사본)이 여러 버전이면 같은
+            # 지문이 버전마다 중복 추출돼 영작 등에서 본문이 2배로 들어간다(마더텅7강8 반복).
+            # 스토리 수 최다(가장 완전한 버전) 하나만 남기고 제거(동수면 파일명 사전순 우선).
+            keep = sorted(codeless, key=lambda s: (-src_count[s], s))[0]
+            for s in codeless:
+                if s != keep:
+                    drop_sources.add(s)
+                    log(f"  [마더텅 버전] 코드없는 동일강 중복판 제외: "
+                        f"{os.path.basename(s)} (유지: {os.path.basename(keep)})")
 
     if not drop_sources:
         return stories
