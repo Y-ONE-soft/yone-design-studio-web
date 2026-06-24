@@ -1007,6 +1007,10 @@ def _build_vol1_jsx(indd_path, data_path, pdf_path, marker, log_file, pid, grade
             m = _re.match(r'^test(\d+)\s+(\d+)', key)
             if m:
                 return (1, int(m.group(1)), int(m.group(2)))
+            # 파이널 마더텅: "마더텅 N강 M" → (2, 강, 지문순) — 출처코드와 동일 tier(2), 강·지문순
+            m = _re.match(r'^마더텅\s+(\d+)강\s+(\d+)', key)
+            if m:
+                return (2, int(m.group(1)), int(m.group(2)))
             m = _re.match(r'^(\d{6})', key)
             if m:
                 return (2, int(m.group(1)), 0)
