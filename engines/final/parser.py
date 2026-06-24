@@ -331,6 +331,67 @@ def _mt_seq_lookup(mt_seq_map, src_nfc, page_off):
     return result
 
 
+def _fix_mt_sentence_examcode_bleed(sentence_blocks, insert_blocks, stories,
+                                    log=lambda m: None):
+    """마더텅 워크북 문장배열/삽입 블록의 exam_code bleed 보정.
+
+    extractor._examCodeOf는 스토리 pageOff에 '가장 가까운' YYMMQQ 마커를 부착하는데,
+    워크북 코드마커 배치에 따라 일부 지문의 문장배열 스토리가 인접(앞) 지문의 코드를
+    물려받는(bleed) 경우가 있다. 그러면 같은 워크북 안에서 동일 exam_code가 서로 다른
+    두 지문에 붙고, _relabel_mt_in_content 후 헤더("마더텅 N강 M")가 중복되어 dedup
+    단계에서 진짜 지문 하나가 통째로 드롭된다(한영1 6강8→6강7코드 201123,
+    6강18→6강17코드 191123 → 문장배열/삽입에서 8·18 누락 사례).
+
+    보정 원칙(격리): 같은 마더텅 워크북 source 안에서 exam_code가 '중복'될 때만,
+    _build_mt_seq_map(문장배열=지문당 1개, 가장 신뢰 가능한 지문경계)의 pageOff→seq로
+    _MT_MAP[섹션][seq] 정답 코드를 재계산해 교정한다.
+    - 중복이 없으면(정상 추출) 전혀 동작하지 않음 → sparse 마더텅 교재(강동1 등) 무영향.
+    - 교정 코드가 이미 다른 지문에 쓰이면 새 충돌 방지로 skip(미사용 코드일 때만 교정).
+    """
+    if not _MT_MAP:
+        return
+    from collections import defaultdict
+    mt_seq_map = _build_mt_seq_map(stories)
+    _fixed = 0
+    for blocks in (sentence_blocks or [], insert_blocks or []):
+        by_src = defaultdict(list)
+        for b in blocks:
+            src_nfc = _nfc(b.get("source", ""))
+            scope_m = re.search(r"\(([^)]+)\)", src_nfc)
+            scope = scope_m.group(1) if scope_m else ""
+            if "마더텅" not in scope:
+                continue
+            if b.get("page_off", -1) < 0 or not b.get("exam_code"):
+                continue
+            by_src[src_nfc].append(b)
+        for src_nfc, sblocks in by_src.items():
+            scope_m = re.search(r"\(([^)]+)\)", src_nfc)
+            scope = scope_m.group(1) if scope_m else ""
+            sm = re.search(r"마더텅\s*(\d+)", scope)
+            if not sm:
+                continue
+            sec_map = _MT_MAP.get(int(sm.group(1)))
+            if not sec_map:
+                continue
+            code_pos = defaultdict(set)
+            for b in sblocks:
+                code_pos[b["exam_code"]].add(b["page_off"])
+            current_codes = set(code_pos.keys())
+            for b in sblocks:
+                code = b["exam_code"]
+                if len(code_pos[code]) < 2:
+                    continue  # 중복 아님 → 무동작(정상 보존)
+                seq = _mt_seq_lookup(mt_seq_map, src_nfc, b["page_off"])
+                if not seq:
+                    continue
+                correct = sec_map.get(seq)
+                if correct and correct != code and correct not in current_codes:
+                    b["exam_code"] = correct
+                    _fixed += 1
+    if _fixed and log:
+        log(f"  [마더텅 bleed보정] 문장배열/삽입 exam_code {_fixed}블록 교정")
+
+
 def _clean_text(t):
     """추출 텍스트에서 InDesign 객체 교체 문자(￼) 등 정리."""
     # Object Replacement Character (U+FFFC) 제거
@@ -5239,6 +5300,10 @@ def parse_extracted(extracted_path, vocab_left, vocab_right,
     if mock_insert_blocks and grade in ("\uace01", "\uace02"):
         _merge_mock_insert_blocks(insert_blocks, mock_insert_blocks,
                                   sentence_blocks=sentence_blocks, log=log)
+
+    # 마더텅 문장배열/삽입 exam_code bleed 보정(중복 코드에만 트리거) — relabel/dedup 전.
+    # (한영1 6강8·18이 앞 지문 코드를 물려받아 헤더 중복→dedup 드롭되던 사고 차단)
+    _fix_mt_sentence_examcode_bleed(sentence_blocks, insert_blocks, stories, log)
 
     log(f"  문장배열: {len(sentence_blocks)}개 블록 ({sum(len(b['items']) for b in sentence_blocks)}줄)")
     log(f"  문장삽입: {len(insert_blocks)}개 블록")

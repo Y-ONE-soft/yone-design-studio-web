@@ -1,0 +1,1932 @@
+{
+ "_validation_warnings": [
+  "어법_헤더(36)와 실제 어법수정 헤더(32) 불일치",
+  "영작 헤더-내용 불일치: '교과서4과 본문3' 헤더에 리딩파워 내용(리딩파워 15강 04) — 스왑 의심",
+  "영작 헤더-내용 불일치: '교과서4과 본문4' 헤더에 리딩파워 내용(리딩파워 16강 Ex01) — 스왑 의심"
+ ],
+ "exam_period": "26-1-기말",
+ "grade": "고2",
+ "school": "성덕2",
+ "vol1": {
+  "문장배열": [
+   {
+    "exam_code": "",
+    "header": "교과서3과 본문1",
+    "items": [
+     "(A) <The Power of Data in Sports>",
+     "(B) When the Oakland Athletics, a Major League Baseball team, won 20 games in a row in 2002, the professional sports industry was shocked.",
+     "(C) How did they do it?",
+     "(D) The Oakland Athletics were a small team with limited funds, which made it difficult for them to attract elite players.",
+     "(E) The key to their success was adopting sabermetrics, a statistical model used for making decisions in baseball."
+    ],
+    "source": "성덕2_워크북01(YBM박3,4과)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "교과서3과 본문2",
+    "items": [
+     "(A) Sabermetrics suggests that players' of fensive skills can be better measured by the frequency with which they safely reach base.",
+     "(B) Sabermetrics was created in the late 1970s.",
+     "(C) With sabermetrics, the Athletics were able to identify underrated players with significant contributions to winning and built a strong team on a small budget.",
+     "(D) Sabermetrics had not been widely used until the Athletics adopted it in 2002.",
+     "(E) It tries to use large amounts of information to discover patterns, trends, and insights that are diff icult to find with traditional ways of studying statistics.",
+     "(F) Thus, sports data analytics emerged as a systematic approach to predict game outcomes.",
+     "(G) It does not matter whether this is achieved through hits, walks, or hits by pitch.",
+     "(H) Normally, coaches and managers prefer players who can hit the ball hard and far, for such players tend to hit more home runs and extra-base hits.",
+     "(I) The success of the Athletics prompted other teams to quickly adopt sabermetrics, sparking a movement to utilize data not only in baseball but also in other sports."
+    ],
+    "source": "성덕2_워크북01(YBM박3,4과)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "교과서3과 본문3",
+    "items": [
+     "(A) What they had in common was significant expertise in data.",
+     "(B) While data analysis was already prevailing in the Premier League at that time, the new owner of the club, who also owned a baseball team in the United States, aimed to push data analysis in soccer to new heights.",
+     "(C) So he demanded that the club form a new data team.",
+     "(D) In 2010, Liverpool underwent a change in ownership.",
+     "(E) In soccer, the Liverpool Football Club of the English Premier League is similar to the Oakland Athletics in baseball.",
+     "(F) The team started to apply data analysis in key areas of club management, including player recruitment, injury prevention, and strategy during the game.",
+     "(G) The new team included a physicist from Cambridge, a nuclear scientist from Harvard, and a former chess champion."
+    ],
+    "source": "성덕2_워크북01(YBM박3,4과)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "교과서3과 본문4",
+    "items": [
+     "(A) The data team was praised for its efforts when the Liverpool Football Club won the league championship for the f irst time in 30 years in 2020.",
+     "(B) The emergence of sports analytics did not go unnoticed by the Korean sports industry.",
+     "(C) On the other hand, if not enough ice melts, the stone stops before reaching the target. The amount of ice melting depends on the sweeping speed and pressure.",
+     "(D) In training, they collected data on players' movement patterns, heart rates, and vital signs by using GPS trackers and sensors to prevent injuries.",
+     "(E) Applying too much pressure slows down the sweeping speed, and focusing only on speed makes it hard to transfer enough force to the broom. Finding the right balance between speed and pressure is important to melt the right amount of ice.",
+     "(F) During games, they used live data to make tactical decisions such as substitutions and formations.",
+     "(G) Following its debut at the Winter Olympic Games of 2014, the team recognized the need to enhance its sweeping technique.",
+     "(H) One notable example of success is the Korean women's curling team.",
+     "(I) The team analyzed large amounts of data to recruit players who fit the team's style of play.",
+     "(J) Sweeping melts the ice and makes the stone move faster. If too much ice melts, however, the stone moves too fast and misses the target."
+    ],
+    "source": "성덕2_워크북01(YBM박3,4과)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "교과서3과 본문5",
+    "items": [
+     "(A) The use of data analysis was critical in the team's winning of a silver medal at the 2018 Pyeongchang Winter Olympics.",
+     "(B) Through the device and motion-capture screens, foot pressure values and other data were obtained for analysis.",
+     "(C) The device consisted of infrared cameras and sensors attached to the players' bodies, shoes, and brooms.",
+     "(D) To identify the most effective technique, the Korean team designed a sweeping measurement device.",
+     "(E) After monitoring changes in the temperature of the ice surface, the team concluded that speed was more economical than strength for sweeping."
+    ],
+    "source": "성덕2_워크북01(YBM박3,4과)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "교과서3과 본문6",
+    "items": [
+     "(A) This data was used for psychological training to help players maintain stable heart rates during crucial moments.",
+     "(B) The Korean women's archery team had dominated the sport for decades.",
+     "(C) The successful use of sports analytics was not limited to the curling team.",
+     "(D) Players and coaches used the edited videos to analyze the players' usual habits or weaknesses.",
+     "(E) The team also created an AI coach that helped adjust shooting form.",
+     "(F) The team managers requested that the AI coach edit training videos of the players to assist with practical analysis.",
+     "(G) The active use of data analysis by the Korean women's archery team handed them their ninth Olympic gold medal in a row in Tokyo.",
+     "(H) The team developed a system to monitor players' heart rates by using advanced visual computing technology to convert facial color variations into heart rates.",
+     "(I) However, the team turned to sports analytics to maintain its edge over its rivals in preparation for the 2020 Tokyo Olympics."
+    ],
+    "source": "성덕2_워크북01(YBM박3,4과)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "교과서3과 본문7",
+    "items": [
+     "(A) Factors such as team chemistry, which is related to how well people get along, will likely remain difficult to measure.",
+     "(B) There are still limitations to what data analysis can capture in games.",
+     "(C) Still, sports analytics is undeniably elevating the level of play across various sports, and fans are enjoying this development.",
+     "(D) Similarly, predicting player performance in a match cannot be entirely accurate as players are humans and not machines."
+    ],
+    "source": "성덕2_워크북01(YBM박3,4과)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "교과서3과 FR",
+    "items": [
+     "(A) The secret to hitting a home run lies in the baseball bat. The bat's overall length must be fewer than 106.8 cm long and the diameter of the thickest part must be fewer than 7cm.",
+     "(B) A spinning ball can change directions in the air because of the air pressure around it.",
+     "(C) A baseball has 108 double stitches, creating raised lines on the ball called seams.",
+     "(D) This is called the Magnus effect.",
+     "(E) The seams make this effect stronger.",
+     "(F) Pitchers can use this effect to control the ball's direction and speed, creating pitches that are difficult for batters to hit. While pitchers try to throw challenging pitches by utilizing the ball's seams, batters attempt to make contact with the ball accurately in the hope of hitting a home run.",
+     "(G) <Hidden Numbers in Baseball>",
+     "(H) In baseball, the ball and the bat have hidden numbers that can greatly impact the outcome of a game.",
+     "(I) The seams help pitchers grip the ball better and transfer more power and spin when throwing it.",
+     "(J) If a player hits the ball about 5-10 cm from the end of the bat, the ball will fly the farthest and give the player the most thrilling and sweetest feeling. That is why this area is called the \"sweet spot.\""
+    ],
+    "source": "성덕2_워크북01(YBM박3,4과)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "교과서4과 본문1",
+    "items": [
+     "(A) This was not just about putting on a show.",
+     "(B) Now, imagine this: more than 2,000 soldiers, hundreds of horse riders, and lots of important officials, all marching alongside the king and his mother with 50 musicians playing traditional instruments.",
+     "(C) When they crossed a bridge made of 36 boats on the Hangang River, you can imagine how that turned heads!",
+     "(D) There was quite a crowd gathered there to witness a very special procession that's still talked about in Korea today.",
+     "(E) <King Jeongjo's Grand Procession>",
+     "(F) No, it was serious business. Lasting four days and covering 68 kilometers, the procession moved alongside the king and his mother as they made a round trip to Hwaseong Haenggung.",
+     "(G) Talk about a big event!",
+     "(H) Hey there! Let me introduce you to a fascinating piece of Korean history.",
+     "(I) Back on February 9, 1795, something remarkable happened in front of Changdeokgung Palace, where King Jeongjo lived.",
+     "(J) That must have been something ordinary people rarely saw."
+    ],
+    "source": "성덕2_워크북01(YBM박3,4과)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "교과서4과 본문2",
+    "items": [
+     "(A) It happened around his mother's sixtieth birthday.",
+     "(B) And his father's tomb was near Hwaseong Haenggung.",
+     "(C) Back in the Joseon Dynasty, just like today, turning 60 years old had a special meaning.",
+     "(D) The first thing King Jeongjo had in mind was to show respect to his family.",
+     "(E) He dressed up like a military leader, wearing armor and sitting on a horse with his soldiers marching in perfect order.",
+     "(F) Why did all of this happen?",
+     "(G) But wait. There's more. King Jeongjo was also making a statement about the Joseon Dynasty's strength.",
+     "(H) He was planning to hold a memorial service to honor his late father.",
+     "(I) By combining the two events, he was telling everyone how much family meant to him.",
+     "(J) It was a way of saying, \"We're ready to protect our land.\" He was really serious about making the Joseon Dynasty a powerful and successful kingdom."
+    ],
+    "source": "성덕2_워크북01(YBM박3,4과)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "교과서4과 본문3",
+    "items": [
+     "(A) They received fair wages and breaks during bad weather and were even paid when they were sick, something that was unheard of at that time.",
+     "(B) In King Jeongjo's mind were big plans for Hwaseong.",
+     "(C) There's more to King Jeongjo's story.",
+     "(D) So King Jeongjo gathered the best talents, such as Jeong Yakyong,* and let them bring together the finest architectural techniques of his time from both the East and the West to build Hwaseong Fortress.",
+     "(E) He treated his people well during the construction of the fortress.",
+     "(F) Once people got wind of King Jeongjo's plan, workers from all over the country came together in a rush.",
+     "(G) Now, here's the twist: the procession also had something to do with Hwaseong Fortress, which was being built.",
+     "(H) He wanted it to be a self-sufficient city with a strong military, farming, and trade as he hoped to make it the new capital, away from all the political chaos in Hanyang.",
+     "(I) Back then, ordinary people were typically required to work on public projects without getting paid.",
+     "(J) So, in under three years was the project finished, though it was initially thought to take about 10 years. Impressive, right?"
+    ],
+    "source": "성덕2_워크북01(YBM박3,4과)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "교과서4과 본문4",
+    "items": [
+     "(A) So, there weren't many chances available.",
+     "(B) The procession wasn't just some fancy show for ordinary people.",
+     "(C) This was a big deal, especially for those who couldn't read or write.",
+     "(D) During that time, the government used to hold exams to hire officials every three years.",
+     "(E) And here's the cherry on top: through the procession, King Jeongjo made government more accessible.",
+     "(F) King Jeongjo set up a chance during the procession for common people to meet him and to share their concerns.",
+     "(G) It was actually a way for them to get up close and personal with the king.",
+     "(H) They didn't have any other way to tell the king what was on their minds, so this was a direct line to him.",
+     "(I) He added special exams during the procession, giving more people a shot at joining the government. This move was innovative back then and made the government more diverse.",
+     "(J) Let's go back to the procession."
+    ],
+    "source": "성덕2_워크북01(YBM박3,4과)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "교과서4과 본문5",
+    "items": [
+     "(A) They weren't totally convinced it was authentic.",
+     "(B) At first, the people at UNESCO were a bit unsure about recognizing Hwaseong Fortress as the real deal.",
+     "(C) They were even part of why UNESCO recognized Hwaseong Fortress as a World Heritage Site.",
+     "(D) And guess what? King Jeongjo didn't forget a single detail.",
+     "(E) He made sure everything was documented properly by creating records for the procession and the construction of Hwaseong Fortress.",
+     "(F) But after checking out translated documents and comparing them with the restored fortress, they finally came around and agreed that the fortress had actually been restored just the way it was meant to be.",
+     "(G) These construction records were especially a lifesaver when the fortress was damaged during wartime."
+    ],
+    "source": "성덕2_워크북01(YBM박3,4과)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "교과서4과 본문6",
+    "items": [
+     "(A) It's a different take from the usual art of that time, which only focused on important figures.",
+     "(B) King Jeongjo's 1795 procession and Hwaseong Fortress stand as proof of that spirit.",
+     "(C) So being kind to the people was a big deal for kings of the Joseon Dynasty.",
+     "(D) And this is a significant part of Korean cultural heritage.",
+     "(E) One painting, Hwaneo Haengryeoldo, doesn't just feature the king's crew, but it also shows ordinary people watching along the road.",
+     "(F) Hwaseong is more than just a fortress; it symbolizes a king who cared for his people.",
+     "(G) And among the records of the procession, there are these amazing paintings."
+    ],
+    "source": "성덕2_워크북01(YBM박3,4과)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "교과서4과 FR",
+    "items": [
+     "(A) This fortress artfully blends two distinct Korean styles: the mountain fortress, or sanseong, and the flat-land fortress known as eupseong.",
+     "(B) So during peaceful times, people lived in and around the eupseong, such as Naganeupseong and Haemieupseong. Surrounded by low walls, the area housed administrative buildings, learning centers, and training grounds for soldiers.",
+     "(C) Common people, mainly farmers, lived outside these walls. In times of war, they withdrew to the nearby sanseong for safety.",
+     "(D) After the Japanese invasion, a new type of fortress emerged that combined the strengths of both the sanseong and the eupseong. Built along the natural slopes of Paldalsan Mountain, Suwon Hwaseong displayed strong walls and defenses while also serving as a center for agriculture, commerce, and housing.",
+     "(E) Historically, the sanseong served as the final defense against invaders by utilizing Korea's mountainous landscape to its advantage.",
+     "(F) Living in the sanseong was not practical due to scarce farmland and poor living conditions though.",
+     "(G) <Suwon Hwaseong: A Fusion of Defenses and Daily Life>",
+     "(H) A famous example of this advantage was the battle at Haengjusanseong during the Japanese invasion of Korea in the late 16th century.",
+     "(I) Suwon Hwaseong stands proudly as a UNESCO World Heritage Site, but its uniqueness often goes unnoticed.",
+     "(J) Defenders could fight from higher ground and effectively push back enemies with fewer soldiers."
+    ],
+    "source": "성덕2_워크북01(YBM박3,4과)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "외부지문 본문1",
+    "items": [
+     "(A) By one year or so, they start to realize the misery is not their own but someone else's, though they still seem confused over what to do about it.",
+     "(B) This confusion is also seen when one-year-old imitate the pain of someone else, possibly to better comprehend what they are feeling.",
+     "(C) For example, if another baby hurts fingers, a one-year-old might put her own fingers in her mouth to see if she hurts, too.",
+     "(D) In research by Martin L. Hoffman, for example, a one-year-old brought his own mother over to comfort a crying friend, ignoring the friend's mother, who was also in the room.",
+     "(E) Even a few months after birth, infants react to a disturbance in those around them as though it were their own, crying when they see another child's tears.",
+     "(F) Developmental psychologists have found that infants feel sympathetic distress even before they fully realize that they exist apart from other people."
+    ],
+    "source": "성덕2_워크북03(외부지문)_내지 2.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "외부지문 본문2",
+    "items": [
+     "(A) The reason is that we do not need to be creative for most of what we do.",
+     "(B) For example, we do not need to be creative when we are driving on the freeway, or riding in an elevator, or waiting in line at a grocery store.",
+     "(C) If you got up this morning and started contemplating the shape of your toothbrush or questioning the meaning of toast, you probably would not make it to work.",
+     "(D) Why don't we think differently more often?",
+     "(E) For most of our activities, these routines are indispensable, without them, our lives would be in chaos, and we would not get much accomplished.",
+     "(F) We are creatures of habit when it comes to the business of living."
+    ],
+    "source": "성덕2_워크북03(외부지문)_내지 2.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "외부지문 본문3",
+    "items": [
+     "(A) While investigating, they realized that the secret of Roseto wasn't diet or exercise or genes or location.",
+     "(B) These findings suggested the Rosetans had created a closely connected and protective social structure.",
+     "(C) They saw how many homes had three generations living under one roof, and how much respect grandparents commanded.",
+     "(D) They noticed the particular belief in equality of the community, which discouraged the wealthy from boasting about their success and helped the unsuccessful obscure their failures.",
+     "(E) They looked at how the Rosetans visited one another.",
+     "(F) A team of researchers found out the alarming low death rate of a small village of Roseto and started to investigate it.",
+     "(G) They learned about the extended family clans that underlay the town's social structure."
+    ],
+    "source": "성덕2_워크북03(외부지문)_내지 2.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "외부지문 본문4",
+    "items": [
+     "(A) Experienced writers invariably write in a climate of discussion.",
+     "(B) The art of writing and the art of discussion are closely linked.",
+     "(C) Their ideas often originate in discussion, their writing is a response to discussion, and their papers are designed to stimulate further discussion.",
+     "(D) Such people are not writing in a vacuum.",
+     "(E) Their writing is usually embedded in a context of others' ideas and opinions.",
+     "(F) Many writers, especially in the academic community, are directly responding to other writers - a scientist reexamining the experimental procedures of other scientists; a literary critic taking exception to a prevailing method of interpretation; a sociologist offering an alternative explanation of a colleague's data; a historian participating as respondent in a conference."
+    ],
+    "source": "성덕2_워크북03(외부지문)_내지 2.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "260320",
+    "items": [
+     "(A) Instead of staying laser-focused, use this transition as the jumping-off point for building new networks to shape the work you want to do and whom you want to do it with.",
+     "(B) But that is a mistake.",
+     "(C) So when things are tough during such a transition, you have almost nothing else in your life to counterbalance the stress.",
+     "(D) When moving into a new situation, many people decide that they need to master what's new.",
+     "(E) Being too focused can lead to becoming unidimensional ─ you have few remedies to the microstresses that are inevitably bombarding you at that time.",
+     "(F) To this end, they reduce their connections to people or activities that might distract them from their goal."
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "260321",
+    "items": [
+     "(A) It is important to model and expect the acceptance of all ideas without derogatory comments.",
+     "(B) Rich mathematical discussions cannot occur if this expectation is not in place.",
+     "(C) As educators we can model this by recording all answers to be considered without giving any verbal or physical expressions that indicate agreement or disagreement with any answer.",
+     "(D) Students who are in safe learning environments are willing to risk sharing an incorrect answer with their peers in order to grow mathematically.",
+     "(E) Students look to teachers as the source of correct answers.",
+     "(F) Part of building a safe learning community is to shift this source of knowledge to the students by equipping them to defend the thinking behind their solutions.",
+     "(G) We must remember that wrong answers are often rooted in misconceptions, and unless these ideas are allowed to be brought to the forefront, we cannot help students confront their thinking.",
+     "(H) The teacher may need to practice having a \"blank face.\"",
+     "(I) A first step toward establishing a respectful classroom learning community is acceptance of all ideas and answers ─ regardless of any obvious errors."
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "260322",
+    "items": [
+     "(A) In smaller stations, separate platforms should be used and traffic routed so that the two lines of movement do not cross.",
+     "(B) Commuters, on the other hand, are familiar with the route through the station, have little or no luggage, and are usually in a hurry.",
+     "(C) The passenger may not be familiar with the routine, have baggage to handle and check or retrieve, have a long wait for connections or delayed trains, and may require information, food, and a comfortable place to sit.",
+     "(D) Clear and concise direction and routing signs and other means of channelization are desirable.",
+     "(E) These two types of traffic should be kept separate to avoid conflict and confusion.",
+     "(F) In some large stations such as Grand Central Terminal in New York City, commuter and intercity trains arrive and depart on different levels.",
+     "(G) In some instances, separate stations are in use.",
+     "(H) They want direct access to or from local streets and transport.",
+     "(I) The usual intercity traveler moves slowly through the station area."
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "260323",
+    "items": [
+     "(A) At other times we will need a cue to provide a subtle change in atmosphere over a number of minutes, motivated perhaps by the mention of a sunset or the intention to slowly change the feel of the performance from normal to threatening.",
+     "(B) Each lighting cue triggers a change to a new state.",
+     "(C) This might be something very obvious such as a cue required to brighten a room setting when an actor turns on a light switch or the rapid increase in intensity at the end of a dance number in a traditional musical (known as a button cue).",
+     "(D) The question, 'What will lighting do for this production?' needs to be asked for each moment of the production, each dramatic unit or scene, and each transition.",
+     "(E) Most performance lighting is made up of a number of different looks which we have called lighting states.",
+     "(F) Like actors, lighting cues usually need a motivation."
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "260324",
+    "items": [
+     "(A) Similarly, when you are recording a musical instrument, the sound you receive at the microphone will be different in every room and the recorded sound will sound different as the instrument or the microphone is moved.",
+     "(B) It's actually kind of remarkable.",
+     "(C) But sound such as music from a loudspeaker will sound different in every acoustical environment.",
+     "(D) Every room where you set up the loudspeaker will cause the sound you hear to be different ─ sometimes dramatically different; that is because the room is now part of the signal path.",
+     "(E) Also, in the same room, the loudspeaker will sound different when it is placed in different locations in the room and it will sound different as you move around the room.",
+     "(F) Sound such as music coming from headphones will sound the same everywhere.",
+     "(G) Rooms have their own \"sound\" because they impose their own characteristics on audio signals contained within them.",
+     "(H) That's because the room is not part of that playback signal path.",
+     "(I) No matter what acoustical environment we are in, the headphones sound the same."
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "260329",
+    "items": [
+     "(A) It invented a new process for manufacturing: the modern factory.",
+     "(B) The larger piano shops did have specialists ─ for example, one person who specialized in soundboards, another who made hammers, and so on.",
+     "(C) These factories led to improvements in both efficiency and quality.",
+     "(D) The development of a true piano factory occurred first in the United States, led by Jonas Chickering in Boston and later the Steinway family in New York City.",
+     "(E) For example, one of the factories of the time had its own iron casting facility where it made its metal plates, which were thought to be the best available.",
+     "(F) Prior to around 1850, most piano shops used an apprentice system in which a master builder taught younger workers the skills of the trade, usually over the course of many years.",
+     "(G) The Industrial Revolution did more than just invent new materials or machines.",
+     "(H) But even the largest piano makers of that time produced no more than 5-10 pianos per year per worker, as pianos were still made essentially one at a time."
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "260330",
+    "items": [
+     "(A) While this deep dive into a particular area allows for thorough exploration and understanding, it can also result in narrowing the focus.",
+     "(B) Consequently, this singular focus may limit the breadth of knowledge and skills developed during the programme, potentially hindering students' ability to adapt to diverse career paths or address interdisciplinary challenges.",
+     "(C) These structured programmes often combine research with coursework and training in transferable skills.",
+     "(D) In a thesis-based doctoral programme, students typically spend a significant amount of time and effort researching a specific topic.",
+     "(E) By incorporating coursework, seminars, workshops and internships into the curriculum, they aim to provide students with a broader skill set and better prepare them for a variety of career paths beyond academia.",
+     "(F) As students become deeply absorbed in their research, they may spend less time exploring related fields or acquiring skills outside their immediate area of study.",
+     "(G) Some universities in Europe have recognised the limitations of traditional thesis-based doctoral programmes and have started to implement more structured approaches."
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "260331",
+    "items": [
+     "(A) However, when they were left alone with the box they exhibited fear and avoidance of it.",
+     "(B) All children agreed that the box was empty.",
+     "(C) Research shows that, by age three, children understand that imaginary objects do not come to life.",
+     "(D) In one study, preschool children were shown an empty box and were asked to imagine a monster inside.",
+     "(E) Indeed, research shows that children have a more difficult time displaying their understanding of the causal relations between imagination and reality when they are asked to pretend or imagine scary things, like monsters.",
+     "(F) However, emotion can sometimes disrupt this understanding, or at least its expression.",
+     "(G) This is especially clear with respect to everyday objects ─ children know that even though they imagine a pencil in an empty box, the box will remain empty.",
+     "(H) That is, even though a child knows that monsters are not real, the thought of a monster under a bed might be enough to make a child refuse to go into his room at night."
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "260332",
+    "items": [
+     "(A) Further, Dewey maintained that \"the aesthetic is the clarified and intensified development of traits that belong to every normally complete experience.\"",
+     "(B) It may be most convenient, though, to locate its contemporary intellectual origins in John Dewey's Art as Experience.",
+     "(C) In that book Dewey argued against the separation of art from life by basing aesthetic experience on the biological and cultural conditions of human life.",
+     "(D) Although there is presently a flowering of work on everyday aesthetics, the possibility of aesthetic gratification in ordinary objects and events has long been recognized, even if degraded and dismissed by prevalent philosophical theory.",
+     "(E) He located the aesthetic, not in an internalized awareness of sensation and feeling but in \"a complete interpenetration of self and the world of objects and events.\"",
+     "(F) Perhaps the best-known development to emerge from the liberation and expansion of aesthetic experience is the aesthetics of everyday life.",
+     "(G) Widely valued by poets, especially Romantic poets and those in Asian traditions, the aesthetic in everyday situations has also been recognized by novelists."
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "260333",
+    "items": [
+     "(A) Only moral agents can be judged to be morally better or worse than others, and the others in question must be moral agents themselves.",
+     "(B) One cannot validly argue that humans are morally superior beings on the ground that they possess, while others lack, the capacities of a moral agent.",
+     "(C) The reason is that, as far as moral standards are concerned, only beings that have the capacities of a moral agent can meaningfully be said to be either morally good or morally bad.",
+     "(D) One entity is correctly judged morally superior to another if it is the case that, when valid moral standards are applied to both entities, the first fulfills them to a greater degree than the second.",
+     "(E) Judgments of moral superiority are based on the comparative merits or deficiencies of the entities being judged, and these merits and deficiencies are all moral ones, that is, ones determined by moral standards.",
+     "(F) This would not be the case, however, if humans were being judged superior to animals and plants, since the latter are not moral agents.",
+     "(G) Both entities, therefore, must fall within the range of application of moral standards."
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "260334",
+    "items": [
+     "(A) In this context at least, the AI may be starting to recognise silence not as an absence but as meaningful data.",
+     "(B) Such artificial 'pause fillers' as machine-generated supplements for silence may help to produce a more natural-sounding cadence in machine-generated speech patterns and so help to convince the AI's human interlocutors that they are engaging with another human.",
+     "(C) However, the technical issues flagged in AI's poor handling of higher duration and frequency silences, no less than the machine inference that silence can be filled with relevant sounds in some conversational situations, are both significant.",
+     "(D) Yet the AI's confusion when presented with substantial silences, and its understanding that short break tags are equivalent to vocal markers such as 'uh's' and 'ah's' indicate the AI's continuing preferences for sound over silence, for presence over absence.",
+     "(E) AI's 'humanity' of silence emerges in these contexts not least because a short period of silence is likely to be interpreted as a 'pause for thought', therefore reinforcing the illusion that the machine is 'thinking' before responding, just as a human might."
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "260335",
+    "items": [
+     "(A) After his return from China in 1295, a century and a half before printing, Polo's narrative was copied in about 150 different manuscripts, with so many differences that we're not sure which version is authentic.",
+     "(B) Standardization of information was an effect of printing; since it allowed exact reproduction of information in a way that manuscript copying did not.",
+     "(C) In contrast, there is only one version of Christopher Columbus's letters about the exploration of the Caribbean in the 1490s, since they were fixed in printed form and widely distributed at the time they were written.",
+     "(D) This is evident in the contrast between the travel logs of Marco Polo and those of Christopher Columbus.",
+     "(E) So the certainty of accuracy was a way that printing was an improvement over the old oral-manuscript culture."
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "260336",
+    "items": [
+     "(A) In fact, the amount of land used for agriculture has been declining.",
+     "(B) In 2013, around 18.6 million square miles was used for food production, compared to 19.5 million square miles in 1991.",
+     "(C) However, the growing global population will always demand more food.",
+     "(D) Over the millennia, continuous innovations have boosted agricultural productivity while reducing manual labor.",
+     "(E) Despite this need, only a small portion of the Earth's surface is suitable for farming due to limitations such as climate, topography, soil quality, and technology.",
+     "(F) Political and economic factors, including land ownership patterns, environmental laws, and population density, also influence agricultural land use.",
+     "(G) It is projected that by 2050, the world's population will increase to 9.7 billion, which will require global food production to rise by at least 70% to meet demand.",
+     "(H) Archaeological evidence suggests that various crops were being cultivated as early as 9500 BC in the Levant."
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "260337",
+    "items": [
+     "(A) And the probability that a specific kin relationship has a label is predictable based on the other kinship terms in the language.",
+     "(B) If you are going to compare languages, it helps to start with something that you are confident you can find in all languages.",
+     "(C) Comparative typological studies of kinship terminology have discovered that languages have labels for some but not all family relationships.",
+     "(D) By contrast, terms for less central category members are often built up from the core terms ─ like mother-in-law and step-father.",
+     "(E) If we add other family relationships to this category ─ son, grandmother, aunt, brother-in-law, cousin ─ we are defining the category of kinship terminology.",
+     "(F) If we compare languages across the world, we can ask what kinship relationships are typically expressed with core terminology, and what relationships are expressed by modifying the core terminology.",
+     "(G) Take for example signs or words for mother and father.",
+     "(H) For example, all languages have a core set of kinship terms ─ like mother and father."
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "260338",
+    "items": [
+     "(A) These in-character behaviors can be insufficient, however, to maintain the necessary amount of common ground about what is fictional in the world of the make-believe.",
+     "(B) For example, it would be important to avoid confusion about who is playing which character: \"No, you're Captain Hook, and I'm Peter Pan!\"",
+     "(C) This might be sufficient to communicate that fictionally one of Peter's enemies, such as Captain Hook, is approaching.",
+     "(D) Sometimes these messages are emitted naturally as a result of full participation in the fictional world ─ i.e., something said or done by a player while in character communicates some things that are fictional of that world.",
+     "(E) For example, a child pretending to be Peter Pan might gasp and draw a plastic knife.",
+     "(F) At these times participants often come at least partly out of character to give other participants the information they need.",
+     "(G) There are several ways that participants in a makebelieve can communicate things about the fictional world to other participants."
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "260339",
+    "items": [
+     "(A) This bias comes from the fact that we live in a very constant pressure environment.",
+     "(B) But the pressure changes we experience are trivial compared to the pressure range of the overall planetary environment.",
+     "(C) Even small changes in pressure, such as those we experience when under water or on high mountaintops, can have very large effects on our metabolism.",
+     "(D) Since pressure is controlled by the weight of overlying material, pressures increase rapidly with depth.",
+     "(E) Our intuition about states of matter comes from our experience on Earth's surface, where the pressure is uniformly low and variations in temperature cause changes in the state of matter from solid to liquid to gas.",
+     "(F) Imagine the pressures generated by the weight of rock a mile thick!",
+     "(G) For this reason a planet's pressure ranges are enormous ─ from essentially zero pressure in space to pressures of millions of atmospheres in planetary interiors.",
+     "(H) Therefore, when we think of melting or boiling or the creation of plasma, we intuitively assume it reflects an increase in temperature."
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "260340",
+    "items": [
+     "(A) This exploratory and theory-building phase lasts until a convenient solution or large effect is found.",
+     "(B) The researcher begins with self-experiments that, if all goes well, find large effects and / or generate and eliminate many hypotheses.",
+     "(C) Thus, psychologists should consider doing both self-experiments and conventional ones.",
+     "(D) Of course, most scientists want to do both ─ discover something and convince others of their discovery.",
+     "(E) When self-experimentation and conventional experiments are both possible, the difference between them often resembles the difference between learning and showing:",
+     "(F) Then the researcher uses self-experiments to find the procedural parameters (e.g., duration, time of day, intensity) that optimize the solution or maximize the effect.",
+     "(G) Self-experiments are better for discovery but worse for convincing others that the solution is helpful or the answer is correct.",
+     "(H) Only then would the researcher begin conventional experiments, using the optimized parameters.",
+     "(I) The best use of resources may often be self-experiments followed by conventional ones."
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   }
+  ],
+  "문장삽입": [
+   {
+    "header": "교과서3과 본문1",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "<The Power of Data in Sports>"
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(A) How did they do it? The key to their success was adopting sabermetrics, a statistical model used for making decisions in baseball."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(B) The Oakland Athletics were a small team with limited funds, which made it difficult for them to attract elite players."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(C) When the Oakland Athletics, a Major League Baseball team, won 20 games in a row in 2002, the professional sports industry was shocked."
+     }
+    ],
+    "source": "성덕2_워크북01(YBM박3,4과)_내지.indd"
+   },
+   {
+    "header": "교과서3과 본문2",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "With sabermetrics, the Athletics were able to identify underrated players with significant contributions to winning and built a strong team on a small budget."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "Sabermetrics was created in the late 1970s. It tries to use large amounts of information to discover patterns, trends, and insights that are diff icult to find with traditional ways of studying statistics. (①) Normally, coaches and managers prefer players who can hit the ball hard and far, for such players tend to hit more home runs and extra-base hits. Sabermetrics suggests that players' of fensive skills can be better measured by the frequency with which they safely reach base. (②) It does not matter whether this is achieved through hits, walks, or hits by pitch. (③) Sabermetrics had not been widely used until the Athletics adopted it in 2002. (④) The success of the Athletics prompted other teams to quickly adopt sabermetrics, sparking a movement to utilize data not only in baseball but also in other sports. (⑤) Thus, sports data analytics emerged as a systematic approach to predict game outcomes."
+     }
+    ],
+    "source": "성덕2_워크북01(YBM박3,4과)_내지.indd"
+   },
+   {
+    "header": "교과서3과 본문3",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "The new team included a physicist from Cambridge, a nuclear scientist from Harvard, and a former chess champion."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "In soccer, the Liverpool Football Club of the English Premier League is similar to the Oakland Athletics in baseball. (①) In 2010, Liverpool underwent a change in ownership. (②) While data analysis was already prevailing in the Premier League at that time, the new owner of the club, who also owned a baseball team in the United States, aimed to push data analysis in soccer to new heights. So he demanded that the club form a new data team. (③) What they had in common was significant expertise in data. (④) The team started to apply data analysis in key areas of club management, including player recruitment, injury prevention, and strategy during the game. (⑤)"
+     }
+    ],
+    "source": "성덕2_워크북01(YBM박3,4과)_내지.indd"
+   },
+   {
+    "header": "교과서3과 본문4",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "The team analyzed large amounts of data to recruit players who fit the team's style of play."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(A) One notable example of success is the Korean women's curling team. Following its debut at the Winter Olympic Games of 2014, the team recognized the need to enhance its sweeping technique. Sweeping melts the ice and makes the stone move faster. If too much ice melts, however, the stone moves too fast and misses the target."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(B) On the other hand, if not enough ice melts, the stone stops before reaching the target. The amount of ice melting depends on the sweeping speed and pressure. Applying too much pressure slows down the sweeping speed, and focusing only on speed makes it hard to transfer enough force to the broom. Finding the right balance between speed and pressure is important to melt the right amount of ice."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(C) In training, they collected data on players' movement patterns, heart rates, and vital signs by using GPS trackers and sensors to prevent injuries. During games, they used live data to make tactical decisions such as substitutions and formations. The data team was praised for its efforts when the Liverpool Football Club won the league championship for the f irst time in 30 years in 2020. The emergence of sports analytics did not go unnoticed by the Korean sports industry."
+     }
+    ],
+    "source": "성덕2_워크북01(YBM박3,4과)_내지.indd"
+   },
+   {
+    "header": "교과서3과 본문5",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "To identify the most effective technique, the Korean team designed a sweeping measurement device."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(A) After monitoring changes in the temperature of the ice surface, the team concluded that speed was more economical than strength for sweeping. The use of data analysis was critical in the team's winning of a silver medal at the 2018 Pyeongchang Winter Olympics."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(B) Through the device and motion-capture screens, foot pressure values and other data were obtained for analysis."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(C) The device consisted of infrared cameras and sensors attached to the players' bodies, shoes, and brooms."
+     }
+    ],
+    "source": "성덕2_워크북01(YBM박3,4과)_내지.indd"
+   },
+   {
+    "header": "교과서3과 본문6",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "The Korean women's archery team had dominated the sport for decades."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "The successful use of sports analytics was not limited to the curling team. (①) However, the team turned to sports analytics to maintain its edge over its rivals in preparation for the 2020 Tokyo Olympics. The team developed a system to monitor players' heart rates by using advanced visual computing technology to convert facial color variations into heart rates. (②) This data was used for psychological training to help players maintain stable heart rates during crucial moments. (③) The team also created an AI coach that helped adjust shooting form. (④) The team managers requested that the AI coach edit training videos of the players to assist with practical analysis. Players and coaches used the edited videos to analyze the players' usual habits or weaknesses. (⑤) The active use of data analysis by the Korean women's archery team handed them their ninth Olympic gold medal in a row in Tokyo."
+     }
+    ],
+    "source": "성덕2_워크북01(YBM박3,4과)_내지.indd"
+   },
+   {
+    "header": "교과서3과 본문7",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "There are still limitations to what data analysis can capture in games."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(A) Similarly, predicting player performance in a match cannot be entirely accurate as players are humans and not machines."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(B) Still, sports analytics is undeniably elevating the level of play across various sports, and fans are enjoying this development."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(C) Factors such as team chemistry, which is related to how well people get along, will likely remain difficult to measure."
+     }
+    ],
+    "source": "성덕2_워크북01(YBM박3,4과)_내지.indd"
+   },
+   {
+    "header": "교과서3과 FR",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "The bat's overall length must be fewer than 106.8 cm long and the diameter of the thickest part must be fewer than 7cm."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "<Hidden Numbers in Baseball> In baseball, the ball and the bat have hidden numbers that can greatly impact the outcome of a game. (①) A baseball has 108 double stitches, creating raised lines on the ball called seams. The seams help pitchers grip the ball better and transfer more power and spin when throwing it. (②) A spinning ball can change directions in the air because of the air pressure around it. (③) This is called the Magnus effect. The seams make this effect stronger. Pitchers can use this effect to control the ball's direction and speed, creating pitches that are difficult for batters to hit. While pitchers try to throw challenging pitches by utilizing the ball's seams, batters attempt to make contact with the ball accurately in the hope of hitting a home run. The secret to hitting a home run lies in the baseball bat. (④) If a player hits the ball about 5-10 cm from the end of the bat, the ball will fly the farthest and give the player the most thrilling and sweetest feeling. That is why this area is called the \"sweet spot.\" (⑤)"
+     }
+    ],
+    "source": "성덕2_워크북01(YBM박3,4과)_내지.indd"
+   },
+   {
+    "header": "교과서4과 본문1",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "This was not just about putting on a show."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "<King Jeongjo's Grand Procession> Hey there! Let me introduce you to a fascinating piece of Korean history. (①) Back on February 9, 1795, something remarkable happened in front of Changdeokgung Palace, where King Jeongjo lived. There was quite a crowd gathered there to witness a very special procession that's still talked about in Korea today. (②) Now, imagine this: more than 2,000 soldiers, hundreds of horse riders, and lots of important officials, all marching alongside the king and his mother with 50 musicians playing traditional instruments. When they crossed a bridge made of 36 boats on the Hangang River, you can imagine how that turned heads! (③) That must have been something ordinary people rarely saw. Talk about a big event! (④) No, it was serious business. (⑤) Lasting four days and covering 68 kilometers, the procession moved alongside the king and his mother as they made a round trip to Hwaseong Haenggung."
+     }
+    ],
+    "source": "성덕2_워크북01(YBM박3,4과)_내지.indd"
+   },
+   {
+    "header": "교과서4과 본문2",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "Why did all of this happen?"
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(A) But wait. There's more. King Jeongjo was also making a statement about the Joseon Dynasty's strength. He dressed up like a military leader, wearing armor and sitting on a horse with his soldiers marching in perfect order. It was a way of saying, \"We're ready to protect our land.\" He was really serious about making the Joseon Dynasty a powerful and successful kingdom."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(B) And his father's tomb was near Hwaseong Haenggung. He was planning to hold a memorial service to honor his late father. By combining the two events, he was telling everyone how much family meant to him."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(C) The first thing King Jeongjo had in mind was to show respect to his family. It happened around his mother's sixtieth birthday. Back in the Joseon Dynasty, just like today, turning 60 years old had a special meaning."
+     }
+    ],
+    "source": "성덕2_워크북01(YBM박3,4과)_내지.indd"
+   },
+   {
+    "header": "교과서4과 본문3",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "Once people got wind of King Jeongjo's plan, workers from all over the country came together in a rush."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "Now, here's the twist: the procession also had something to do with Hwaseong Fortress, which was being built. (①) In King Jeongjo's mind were big plans for Hwaseong. He wanted it to be a self-sufficient city with a strong military, farming, and trade as he hoped to make it the new capital, away from all the political chaos in Hanyang. So King Jeongjo gathered the best talents, such as Jeong Yakyong,* and let them bring together the finest architectural techniques of his time from both the East and the West to build Hwaseong Fortress. (②) There's more to King Jeongjo's story. (③) He treated his people well during the construction of the fortress. (④) They received fair wages and breaks during bad weather and were even paid when they were sick, something that was unheard of at that time. Back then, ordinary people were typically required to work on public projects without getting paid. (⑤) So, in under three years was the project finished, though it was initially thought to take about 10 years. Impressive, right?"
+     }
+    ],
+    "source": "성덕2_워크북01(YBM박3,4과)_내지.indd"
+   },
+   {
+    "header": "교과서4과 본문4",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "Let's go back to the procession."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(A) This was a big deal, especially for those who couldn't read or write. They didn't have any other way to tell the king what was on their minds, so this was a direct line to him. And here's the cherry on top: through the procession, King Jeongjo made government more accessible."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(B) The procession wasn't just some fancy show for ordinary people. It was actually a way for them to get up close and personal with the king. King Jeongjo set up a chance during the procession for common people to meet him and to share their concerns."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(C) During that time, the government used to hold exams to hire officials every three years. So, there weren't many chances available. He added special exams during the procession, giving more people a shot at joining the government. This move was innovative back then and made the government more diverse."
+     }
+    ],
+    "source": "성덕2_워크북01(YBM박3,4과)_내지.indd"
+   },
+   {
+    "header": "교과서4과 본문5",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "They were even part of why UNESCO recognized Hwaseong Fortress as a World Heritage Site."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "And guess what? King Jeongjo didn't forget a single detail. (①) He made sure everything was documented properly by creating records for the procession and the construction of Hwaseong Fortress. (②) These construction records were especially a lifesaver when the fortress was damaged during wartime. (③) At first, the people at UNESCO were a bit unsure about recognizing Hwaseong Fortress as the real deal. (④) They weren't totally convinced it was authentic. But after checking out translated documents and comparing them with the restored fortress, they finally came around and agreed that the fortress had actually been restored just the way it was meant to be. (⑤)"
+     }
+    ],
+    "source": "성덕2_워크북01(YBM박3,4과)_내지.indd"
+   },
+   {
+    "header": "교과서4과 본문6",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "So being kind to the people was a big deal for kings of the Joseon Dynasty."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "And among the records of the procession, there are these amazing paintings. (①) One painting, Hwaneo Haengryeoldo, doesn't just feature the king's crew, but it also shows ordinary people watching along the road. (②) It's a different take from the usual art of that time, which only focused on important figures. (③) King Jeongjo's 1795 procession and Hwaseong Fortress stand as proof of that spirit. (④) Hwaseong is more than just a fortress; it symbolizes a king who cared for his people. (⑤) And this is a significant part of Korean cultural heritage."
+     }
+    ],
+    "source": "성덕2_워크북01(YBM박3,4과)_내지.indd"
+   },
+   {
+    "header": "교과서4과 FR",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "<Suwon Hwaseong: A Fusion of Defenses and Daily Life>"
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(A) A famous example of this advantage was the battle at Haengjusanseong during the Japanese invasion of Korea in the late 16th century. Living in the sanseong was not practical due to scarce farmland and poor living conditions though. So during peaceful times, people lived in and around the eupseong, such as Naganeupseong and Haemieupseong. Surrounded by low walls, the area housed administrative buildings, learning centers, and training grounds for soldiers."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(B) Suwon Hwaseong stands proudly as a UNESCO World Heritage Site, but its uniqueness often goes unnoticed. This fortress artfully blends two distinct Korean styles: the mountain fortress, or sanseong, and the flat-land fortress known as eupseong. Historically, the sanseong served as the final defense against invaders by utilizing Korea's mountainous landscape to its advantage. Defenders could fight from higher ground and effectively push back enemies with fewer soldiers."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(C) Common people, mainly farmers, lived outside these walls. In times of war, they withdrew to the nearby sanseong for safety. After the Japanese invasion, a new type of fortress emerged that combined the strengths of both the sanseong and the eupseong. Built along the natural slopes of Paldalsan Mountain, Suwon Hwaseong displayed strong walls and defenses while also serving as a center for agriculture, commerce, and housing."
+     }
+    ],
+    "source": "성덕2_워크북01(YBM박3,4과)_내지.indd"
+   },
+   {
+    "header": "외부지문 본문1",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "By one year or so, they start to realize the misery is not their own but someone else's, though they still seem confused over what to do about it."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "Developmental psychologists have found that infants feel sympathetic distress even before they fully realize that they exist apart from other people. (①) Even a few months after birth, infants react to a disturbance in those around them as though it were their own, crying when they see another child's tears. (②) In research by Martin L. Hoffman, for example, a one-year-old brought his own mother over to comfort a crying friend, ignoring the friend's mother, who was also in the room. (③) This confusion is also seen when one-year-old imitate the pain of someone else, possibly to better comprehend what they are feeling. (④) For example, if another baby hurts fingers, a one-year-old might put her own fingers in her mouth to see if she hurts, too. (⑤)"
+     }
+    ],
+    "source": "성덕2_워크북03(외부지문)_내지 2.indd"
+   },
+   {
+    "header": "외부지문 본문2",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "Why don't we think differently more often?"
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(A) For example, we do not need to be creative when we are driving on the freeway, or riding in an elevator, or waiting in line at a grocery store. We are creatures of habit when it comes to the business of living."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(B) For most of our activities, these routines are indispensable, without them, our lives would be in chaos, and we would not get much accomplished. If you got up this morning and started contemplating the shape of your toothbrush or questioning the meaning of toast, you probably would not make it to work."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(C) The reason is that we do not need to be creative for most of what we do."
+     }
+    ],
+    "source": "성덕2_워크북03(외부지문)_내지 2.indd"
+   },
+   {
+    "header": "외부지문 본문3",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "A team of researchers found out the alarming low death rate of a small village of Roseto and started to investigate it."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(A) They learned about the extended family clans that underlay the town's social structure. They saw how many homes had three generations living under one roof, and how much respect grandparents commanded."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(B) They noticed the particular belief in equality of the community, which discouraged the wealthy from boasting about their success and helped the unsuccessful obscure their failures. These findings suggested the Rosetans had created a closely connected and protective social structure."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(C) While investigating, they realized that the secret of Roseto wasn't diet or exercise or genes or location. They looked at how the Rosetans visited one another."
+     }
+    ],
+    "source": "성덕2_워크북03(외부지문)_내지 2.indd"
+   },
+   {
+    "header": "외부지문 본문4",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "Such people are not writing in a vacuum."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "The art of writing and the art of discussion are closely linked. (①) Experienced writers invariably write in a climate of discussion. (②) Their writing is usually embedded in a context of others' ideas and opinions. (③) Many writers, especially in the academic community, are directly responding to other writers - a scientist reexamining the experimental procedures of other scientists; a literary critic taking exception to a prevailing method of interpretation; a sociologist offering an alternative explanation of a colleague's data; a historian participating as respondent in a conference. (④) Their ideas often originate in discussion, their writing is a response to discussion, and their papers are designed to stimulate further discussion. (⑤)"
+     }
+    ],
+    "source": "성덕2_워크북03(외부지문)_내지 2.indd"
+   },
+   {
+    "header": "260320",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "So when things are tough during such a transition, you have almost nothing else in your life to counterbalance the stress."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "When moving into a new situation, many people decide that they need to master what's new. (①) To this end, they reduce their connections to people or activities that might distract them from their goal. (②) But that is a mistake. (③) Being too focused can lead to becoming unidimensional ─ you have few remedies to the microstresses that are inevitably bombarding you at that time. (④) Instead of staying laser-focused, use this transition as the jumping-off point for building new networks to shape the work you want to do and whom you want to do it with. (⑤)"
+     }
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   },
+   {
+    "header": "260321",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "Students who are in safe learning environments are willing to risk sharing an incorrect answer with their peers in order to grow mathematically."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "A first step toward establishing a respectful classroom learning community is acceptance of all ideas and answers ─ regardless of any obvious errors. Rich mathematical discussions cannot occur if this expectation is not in place. (①) We must remember that wrong answers are often rooted in misconceptions, and unless these ideas are allowed to be brought to the forefront, we cannot help students confront their thinking. (②) It is important to model and expect the acceptance of all ideas without derogatory comments. (③) As educators we can model this by recording all answers to be considered without giving any verbal or physical expressions that indicate agreement or disagreement with any answer. The teacher may need to practice having a \"blank face.\" Students look to teachers as the source of correct answers. (④) Part of building a safe learning community is to shift this source of knowledge to the students by equipping them to defend the thinking behind their solutions. (⑤)"
+     }
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   },
+   {
+    "header": "260322",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "The usual intercity traveler moves slowly through the station area."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(A) In smaller stations, separate platforms should be used and traffic routed so that the two lines of movement do not cross. In some instances, separate stations are in use. Clear and concise direction and routing signs and other means of channelization are desirable."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(B) The passenger may not be familiar with the routine, have baggage to handle and check or retrieve, have a long wait for connections or delayed trains, and may require information, food, and a comfortable place to sit. Commuters, on the other hand, are familiar with the route through the station, have little or no luggage, and are usually in a hurry."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(C) They want direct access to or from local streets and transport. These two types of traffic should be kept separate to avoid conflict and confusion. In some large stations such as Grand Central Terminal in New York City, commuter and intercity trains arrive and depart on different levels."
+     }
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   },
+   {
+    "header": "260323",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "Most performance lighting is made up of a number of different looks which we have called lighting states."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(A) At other times we will need a cue to provide a subtle change in atmosphere over a number of minutes, motivated perhaps by the mention of a sunset or the intention to slowly change the feel of the performance from normal to threatening. The question, 'What will lighting do for this production?' needs to be asked for each moment of the production, each dramatic unit or scene, and each transition."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(B) Like actors, lighting cues usually need a motivation. This might be something very obvious such as a cue required to brighten a room setting when an actor turns on a light switch or the rapid increase in intensity at the end of a dance number in a traditional musical (known as a button cue)."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(C) Each lighting cue triggers a change to a new state."
+     }
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   },
+   {
+    "header": "260324",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "Rooms have their own \"sound\" because they impose their own characteristics on audio signals contained within them."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(A) It's actually kind of remarkable. Sound such as music coming from headphones will sound the same everywhere."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(B) Every room where you set up the loudspeaker will cause the sound you hear to be different ─ sometimes dramatically different; that is because the room is now part of the signal path. Also, in the same room, the loudspeaker will sound different when it is placed in different locations in the room and it will sound different as you move around the room. Similarly, when you are recording a musical instrument, the sound you receive at the microphone will be different in every room and the recorded sound will sound different as the instrument or the microphone is moved."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(C) No matter what acoustical environment we are in, the headphones sound the same. That's because the room is not part of that playback signal path. But sound such as music from a loudspeaker will sound different in every acoustical environment."
+     }
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   },
+   {
+    "header": "260329",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "It invented a new process for manufacturing: the modern factory."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "The Industrial Revolution did more than just invent new materials or machines. (①) Prior to around 1850, most piano shops used an apprentice system in which a master builder taught younger workers the skills of the trade, usually over the course of many years. (②) The larger piano shops did have specialists ─ for example, one person who specialized in soundboards, another who made hammers, and so on. (③) But even the largest piano makers of that time produced no more than 5-10 pianos per year per worker, as pianos were still made essentially one at a time. (④) The development of a true piano factory occurred first in the United States, led by Jonas Chickering in Boston and later the Steinway family in New York City. These factories led to improvements in both efficiency and quality. (⑤) For example, one of the factories of the time had its own iron casting facility where it made its metal plates, which were thought to be the best available."
+     }
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   },
+   {
+    "header": "260330",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "These structured programmes often combine research with coursework and training in transferable skills."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "In a thesis-based doctoral programme, students typically spend a significant amount of time and effort researching a specific topic. (①) While this deep dive into a particular area allows for thorough exploration and understanding, it can also result in narrowing the focus. (②) As students become deeply absorbed in their research, they may spend less time exploring related fields or acquiring skills outside their immediate area of study. (③) Consequently, this singular focus may limit the breadth of knowledge and skills developed during the programme, potentially hindering students' ability to adapt to diverse career paths or address interdisciplinary challenges. (④) Some universities in Europe have recognised the limitations of traditional thesis-based doctoral programmes and have started to implement more structured approaches. (⑤) By incorporating coursework, seminars, workshops and internships into the curriculum, they aim to provide students with a broader skill set and better prepare them for a variety of career paths beyond academia."
+     }
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   },
+   {
+    "header": "260331",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "Research shows that, by age three, children understand that imaginary objects do not come to life."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(A) That is, even though a child knows that monsters are not real, the thought of a monster under a bed might be enough to make a child refuse to go into his room at night. Indeed, research shows that children have a more difficult time displaying their understanding of the causal relations between imagination and reality when they are asked to pretend or imagine scary things, like monsters."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(B) In one study, preschool children were shown an empty box and were asked to imagine a monster inside. All children agreed that the box was empty. However, when they were left alone with the box they exhibited fear and avoidance of it."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(C) This is especially clear with respect to everyday objects ─ children know that even though they imagine a pencil in an empty box, the box will remain empty. However, emotion can sometimes disrupt this understanding, or at least its expression."
+     }
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   },
+   {
+    "header": "260332",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "Perhaps the best-known development to emerge from the liberation and expansion of aesthetic experience is the aesthetics of everyday life."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(A) Although there is presently a flowering of work on everyday aesthetics, the possibility of aesthetic gratification in ordinary objects and events has long been recognized, even if degraded and dismissed by prevalent philosophical theory. Widely valued by poets, especially Romantic poets and those in Asian traditions, the aesthetic in everyday situations has also been recognized by novelists."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(B) He located the aesthetic, not in an internalized awareness of sensation and feeling but in \"a complete interpenetration of self and the world of objects and events.\" Further, Dewey maintained that \"the aesthetic is the clarified and intensified development of traits that belong to every normally complete experience.\""
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(C) It may be most convenient, though, to locate its contemporary intellectual origins in John Dewey's Art as Experience. In that book Dewey argued against the separation of art from life by basing aesthetic experience on the biological and cultural conditions of human life."
+     }
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   },
+   {
+    "header": "260333",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "Judgments of moral superiority are based on the comparative merits or deficiencies of the entities being judged, and these merits and deficiencies are all moral ones, that is, ones determined by moral standards."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "One cannot validly argue that humans are morally superior beings on the ground that they possess, while others lack, the capacities of a moral agent. (①) The reason is that, as far as moral standards are concerned, only beings that have the capacities of a moral agent can meaningfully be said to be either morally good or morally bad. (②) Only moral agents can be judged to be morally better or worse than others, and the others in question must be moral agents themselves. (③) One entity is correctly judged morally superior to another if it is the case that, when valid moral standards are applied to both entities, the first fulfills them to a greater degree than the second. (④) Both entities, therefore, must fall within the range of application of moral standards. (⑤) This would not be the case, however, if humans were being judged superior to animals and plants, since the latter are not moral agents."
+     }
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   },
+   {
+    "header": "260334",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "Such artificial 'pause fillers' as machine-generated supplements for silence may help to produce a more natural-sounding cadence in machine-generated speech patterns and so help to convince the AI's human interlocutors that they are engaging with another human."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(A) In this context at least, the AI may be starting to recognise silence not as an absence but as meaningful data. Yet the AI's confusion when presented with substantial silences, and its understanding that short break tags are equivalent to vocal markers such as 'uh's' and 'ah's' indicate the AI's continuing preferences for sound over silence, for presence over absence."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(B) However, the technical issues flagged in AI's poor handling of higher duration and frequency silences, no less than the machine inference that silence can be filled with relevant sounds in some conversational situations, are both significant."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(C) AI's 'humanity' of silence emerges in these contexts not least because a short period of silence is likely to be interpreted as a 'pause for thought', therefore reinforcing the illusion that the machine is 'thinking' before responding, just as a human might."
+     }
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   },
+   {
+    "header": "260335",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "Standardization of information was an effect of printing; since it allowed exact reproduction of information in a way that manuscript copying did not."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(A) After his return from China in 1295, a century and a half before printing, Polo's narrative was copied in about 150 different manuscripts, with so many differences that we're not sure which version is authentic."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(B) In contrast, there is only one version of Christopher Columbus's letters about the exploration of the Caribbean in the 1490s, since they were fixed in printed form and widely distributed at the time they were written. So the certainty of accuracy was a way that printing was an improvement over the old oral-manuscript culture."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(C) This is evident in the contrast between the travel logs of Marco Polo and those of Christopher Columbus."
+     }
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   },
+   {
+    "header": "260336",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "However, the growing global population will always demand more food."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "Archaeological evidence suggests that various crops were being cultivated as early as 9500 BC in the Levant. (①) Over the millennia, continuous innovations have boosted agricultural productivity while reducing manual labor. (②) It is projected that by 2050, the world's population will increase to 9.7 billion, which will require global food production to rise by at least 70% to meet demand. Despite this need, only a small portion of the Earth's surface is suitable for farming due to limitations such as climate, topography, soil quality, and technology. (③) Political and economic factors, including land ownership patterns, environmental laws, and population density, also influence agricultural land use. In fact, the amount of land used for agriculture has been declining. (④) In 2013, around 18.6 million square miles was used for food production, compared to 19.5 million square miles in 1991. (⑤)"
+     }
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   },
+   {
+    "header": "260337",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "By contrast, terms for less central category members are often built up from the core terms ─ like mother-in-law and step-father."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "If you are going to compare languages, it helps to start with something that you are confident you can find in all languages. Take for example signs or words for mother and father. (①) If we add other family relationships to this category ─ son, grandmother, aunt, brother-in-law, cousin ─ we are defining the category of kinship terminology. (②) Comparative typological studies of kinship terminology have discovered that languages have labels for some but not all family relationships. (③) And the probability that a specific kin relationship has a label is predictable based on the other kinship terms in the language. (④) For example, all languages have a core set of kinship terms ─ like mother and father. (⑤) If we compare languages across the world, we can ask what kinship relationships are typically expressed with core terminology, and what relationships are expressed by modifying the core terminology."
+     }
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   },
+   {
+    "header": "260338",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "There are several ways that participants in a makebelieve can communicate things about the fictional world to other participants."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(A) Sometimes these messages are emitted naturally as a result of full participation in the fictional world ─ i.e., something said or done by a player while in character communicates some things that are fictional of that world. For example, a child pretending to be Peter Pan might gasp and draw a plastic knife."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(B) At these times participants often come at least partly out of character to give other participants the information they need. For example, it would be important to avoid confusion about who is playing which character: \"No, you're Captain Hook, and I'm Peter Pan!\""
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(C) This might be sufficient to communicate that fictionally one of Peter's enemies, such as Captain Hook, is approaching. These in-character behaviors can be insufficient, however, to maintain the necessary amount of common ground about what is fictional in the world of the make-believe."
+     }
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   },
+   {
+    "header": "260339",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "Since pressure is controlled by the weight of overlying material, pressures increase rapidly with depth."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "Our intuition about states of matter comes from our experience on Earth's surface, where the pressure is uniformly low and variations in temperature cause changes in the state of matter from solid to liquid to gas. Therefore, when we think of melting or boiling or the creation of plasma, we intuitively assume it reflects an increase in temperature. (①) This bias comes from the fact that we live in a very constant pressure environment. (②) Even small changes in pressure, such as those we experience when under water or on high mountaintops, can have very large effects on our metabolism. (③) But the pressure changes we experience are trivial compared to the pressure range of the overall planetary environment. (④) Imagine the pressures generated by the weight of rock a mile thick! For this reason a planet's pressure ranges are enormous ─ from essentially zero pressure in space to pressures of millions of atmospheres in planetary interiors. (⑤)"
+     }
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   },
+   {
+    "header": "260340",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "Then the researcher uses self-experiments to find the procedural parameters (e.g., duration, time of day, intensity) that optimize the solution or maximize the effect."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "When self-experimentation and conventional experiments are both possible, the difference between them often resembles the difference between learning and showing: (①) Self-experiments are better for discovery but worse for convincing others that the solution is helpful or the answer is correct. Of course, most scientists want to do both ─ discover something and convince others of their discovery. (②) Thus, psychologists should consider doing both self-experiments and conventional ones. (③) The best use of resources may often be self-experiments followed by conventional ones. The researcher begins with self-experiments that, if all goes well, find large effects and / or generate and eliminate many hypotheses. This exploratory and theory-building phase lasts until a convenient solution or large effect is found. (④) Only then would the researcher begin conventional experiments, using the optimized parameters. (⑤)"
+     }
+    ],
+    "source": "성덕2_워크북02(26년3월)_내지.indd"
+   }
+  ],
+  "중요어휘_오": "260320\nWhen moving into a [new] situation, many people decide that they need to [master] what's new. To this end, they [reduce] their connections to people or activities that might [distract] them from their goal. But that is a [mistake]. Being too [focused] can lead to becoming [unidimensional] ─ you have [few] remedies to the microstresses that are inevitably [bombarding] you at that time. So when things are [tough] during such a transition, you have almost [nothing] else in your life to [counterbalance] the stress. Instead of staying [laser-focused], use this transition as the [jumping-off] point for [building] new [networks] to shape the work you want to do and whom you want to do it with.\n\n\n>>내용요약\nWhen facing a new situation, [maintaining] broad [connections] is essential rather than becoming too [focused], as diverse networks help [counterbalance] stress during transitions.\n\n260321\nA first step toward establishing a [respectful] classroom learning community is [acceptance] of [all] ideas and answers ─ [regardless] of any obvious [errors]. [Rich] mathematical discussions cannot occur if this expectation is not in place. We must remember that [wrong] answers are often rooted in [misconceptions], and unless these ideas are allowed to be brought to the [forefront], we cannot help students [confront] their thinking. Students who are in [safe] learning environments are willing to [risk] sharing an [incorrect] answer with their peers in order to [grow] mathematically. It is important to model and expect the [acceptance] of all ideas [without] derogatory comments. As educators we can model this by [recording] all answers to be considered without giving any verbal or physical expressions that indicate [agreement] or [disagreement] with any answer. The teacher may need to practice having a \"[blank] face.\" Students look to teachers as the source of [correct] answers. Part of building a [safe] learning community is to [shift] this source of knowledge to the [students] by equipping them to [defend] the thinking behind their solutions.\n\n\n>>내용요약\nA [safe] classroom requires [accepting] all answers, including [wrong] ones, to help students [confront] misconceptions and [defend] their own thinking.\n\n260322\nThe usual [intercity] traveler moves [slowly] through the station area. The passenger may not be [familiar] with the routine, have [baggage] to handle and check or retrieve, have a long [wait] for connections or delayed trains, and may require [information], food, and a comfortable place to sit. [Commuters], on the other hand, are [familiar] with the route through the station, have [little] or no luggage, and are usually in a [hurry]. They want [direct] access to or from local streets and transport. These two types of traffic should be kept [separate] to avoid [conflict] and [confusion]. In some large stations such as Grand Central Terminal in New York City, commuter and intercity trains arrive and depart on [different] levels. In smaller stations, [separate] platforms should be used and traffic routed so that the two lines of movement do not [cross]. In some instances, separate stations are in use. [Clear] and [concise] direction and routing signs and other means of channelization are desirable.\n\n\n>>내용요약\n[Intercity] travelers and [commuters] have [different] needs, so stations should [separate] their traffic flows to avoid [conflict] and [confusion].\n\n260323\nMost performance lighting is made up of a number of different looks which we have called lighting [states]. Each lighting [cue] triggers a [change] to a new state. Like actors, lighting cues usually need a [motivation]. This might be something very [obvious] such as a cue required to [brighten] a room setting when an actor turns on a light switch or the rapid [increase] in intensity at the end of a dance number in a traditional musical (known as a button cue). At other times we will need a cue to provide a [subtle] change in atmosphere over a number of minutes, [motivated] perhaps by the mention of a [sunset] or the intention to [slowly] change the feel of the performance from [normal] to [threatening]. The question, 'What will lighting do for this production?' needs to be asked for each [moment] of the production, each dramatic unit or scene, and each [transition].\n\n\n>>내용요약\nLighting [cues] require [motivation] to trigger changes in [states], ranging from [obvious] to [subtle] shifts, shaping the atmosphere of each [moment] in a production.\n\n260324\nRooms have their own \"[sound]\" because they [impose] their own characteristics on audio signals [contained] within them. It's actually kind of remarkable. Sound such as music coming from [headphones] will sound the [same] everywhere. No matter what acoustical environment we are in, the headphones sound the [same]. That's because the room is [not] part of that playback signal path. But sound such as music from a [loudspeaker] will sound [different] in every acoustical environment. Every room where you set up the loudspeaker will cause the sound you hear to be [different] ─ sometimes [dramatically] different; that is because the room is now [part] of the signal path. Also, in the [same] room, the loudspeaker will sound [different] when it is placed in different [locations] in the room and it will sound different as you [move] around the room. Similarly, when you are [recording] a musical instrument, the sound you receive at the microphone will be [different] in every room and the recorded sound will sound different as the instrument or the microphone is [moved].\n\n\n>>내용요약\nUnlike [headphones], a [loudspeaker]'s sound varies by room and [location] because the room becomes [part] of the [signal] path.\n\n260329\nThe Industrial Revolution did more than just [invent] new materials or machines. It invented a new [process] for manufacturing: the modern [factory]. Prior to around 1850, most piano shops used an [apprentice] system in which a master builder taught younger workers the skills of the trade, usually over the course of [many] years. The larger piano shops did have [specialists] ─ for example, one person who specialized in soundboards, another who made hammers, and so on. But even the largest piano makers of that time produced no more than [5-10] pianos per year per worker, as pianos were still made essentially [one] at a time. The development of a true piano [factory] occurred first in the United States, led by Jonas Chickering in Boston and later the Steinway family in New York City. These factories led to improvements in both [efficiency] and [quality]. For example, one of the factories of the time had its own iron casting facility where it made its metal plates, which were thought to be the [best] available.\n\n\n>>내용요약\nThe Industrial Revolution transformed piano making from a slow [apprentice] system to the modern [factory], greatly improving [efficiency] and [quality].\n\n260330\nIn a [thesis-based] doctoral programme, students typically spend a [significant] amount of time and effort researching a [specific] topic. While this deep dive into a particular area allows for [thorough] exploration and understanding, it can also result in [narrowing] the focus. As students become deeply [absorbed] in their research, they may spend [less] time exploring [related] fields or acquiring skills [outside] their immediate area of study. Consequently, this [singular] focus may [limit] the breadth of knowledge and skills developed during the programme, potentially [hindering] students' ability to [adapt] to diverse career paths or address [interdisciplinary] challenges. Some universities in Europe have [recognised] the limitations of traditional thesis-based doctoral programmes and have started to implement more [structured] approaches. These structured programmes often [combine] research with coursework and training in [transferable] skills. By incorporating coursework, seminars, workshops and internships into the curriculum, they aim to provide students with a [broader] skill set and better [prepare] them for a variety of career paths [beyond] academia.\n\n\n>>내용요약\nTraditional [thesis-based] doctoral programmes can [narrow] students' focus, so [structured] approaches that [combine] research with broader training better [prepare] them for diverse careers.\n\n260331\nResearch shows that, by age three, children [understand] that [imaginary] objects do not come to [life]. This is especially clear with respect to [everyday] objects ─ children know that even though they [imagine] a pencil in an empty box, the box will remain [empty]. However, [emotion] can sometimes [disrupt] this understanding, or at least its expression. That is, even though a child [knows] that monsters are [not] real, the thought of a monster under a bed might be enough to make a child [refuse] to go into his room at night. Indeed, research shows that children have a more [difficult] time displaying their understanding of the causal relations between [imagination] and [reality] when they are asked to pretend or imagine [scary] things, like monsters. In one study, preschool children were shown an [empty] box and were asked to imagine a monster inside. All children [agreed] that the box was empty. However, when they were left [alone] with the box they exhibited [fear] and [avoidance] of it.\n\n\n>>내용요약\nChildren [understand] that imaginary things aren't real, but [emotion], especially [fear], can [disrupt] this understanding and cause [avoidance] behavior.\n\n260332\nPerhaps the best-known development to emerge from the [liberation] and [expansion] of aesthetic experience is the aesthetics of [everyday] life. Although there is presently a [flowering] of work on everyday aesthetics, the possibility of aesthetic [gratification] in [ordinary] objects and events has long been [recognized], even if [degraded] and [dismissed] by prevalent philosophical theory. Widely valued by [poets], especially Romantic poets and those in Asian traditions, the aesthetic in everyday situations has also been recognized by [novelists]. It may be most convenient, though, to locate its contemporary intellectual origins in John Dewey's Art as Experience. In that book Dewey argued [against] the [separation] of art from [life] by basing aesthetic experience on the biological and cultural conditions of human life. He located the aesthetic, [not] in an internalized awareness of sensation and feeling but in \"a complete [interpenetration] of self and the world of objects and events.\" Further, Dewey maintained that \"the aesthetic is the clarified and [intensified] development of traits that belong to every [normally] complete experience.\"\n\n\n>>내용요약\nThe aesthetics of [everyday] life challenges the [separation] of art from life, recognizing aesthetic value in [ordinary] experiences rather than [dismissing] them.\n\n260333\nOne cannot [validly] argue that humans are morally [superior] beings on the ground that they [possess], while others [lack], the capacities of a [moral] agent. The reason is that, as far as moral standards are concerned, [only] beings that have the capacities of a moral agent can meaningfully be said to be either morally [good] or morally [bad]. Only moral agents can be [judged] to be morally [better] or [worse] than others, and the others in question must be moral agents [themselves]. Judgments of moral [superiority] are based on the [comparative] merits or deficiencies of the entities being judged, and these merits and deficiencies are all [moral] ones, that is, ones determined by moral standards. One entity is correctly judged morally [superior] to another if it is the case that, when valid moral standards are [applied] to both entities, the first fulfills them to a [greater] degree than the second. Both entities, therefore, must fall [within] the range of application of moral standards. This would [not] be the case, however, if humans were being judged superior to animals and plants, since the latter are [not] moral agents.\n\n\n>>내용요약\nMoral [superiority] can only be judged between [moral] agents, so claiming humans are morally [superior] to animals and plants is [invalid] since they [lack] moral agency.\n\n260334\nSuch artificial '[pause] fillers' as machine-generated supplements for [silence] may help to produce a more [natural]-sounding cadence in machine-generated speech patterns and so help to [convince] the AI's human interlocutors that they are engaging with another [human]. AI's '[humanity]' of silence emerges in these contexts not least because a short period of silence is likely to be interpreted as a '[pause] for thought', therefore [reinforcing] the illusion that the machine is '[thinking]' before responding, just as a human might. However, the technical issues flagged in AI's [poor] handling of [higher] duration and frequency silences, no less than the machine inference that silence can be [filled] with relevant sounds in some conversational situations, are both significant. In this context at least, the AI may be starting to [recognise] silence not as an [absence] but as [meaningful] data. Yet the AI's [confusion] when presented with [substantial] silences, and its understanding that short break tags are equivalent to vocal markers such as 'uh's' and 'ah's' indicate the AI's continuing [preferences] for [sound] over [silence], for [presence] over [absence].\n\n\n>>내용요약\nAI uses [pause] fillers to mimic [human] speech, but still [struggles] with [longer] silences, [preferring] sound over [silence] as [meaningful] communication.\n\n260335\n[Standardization] of information was an [effect] of printing; since it allowed [exact] [reproduction] of information in a way that [manuscript] copying did [not]. This is evident in the contrast between the travel logs of Marco Polo and those of Christopher Columbus. After his return from China in 1295, a century and a half [before] printing, Polo's narrative was copied in about 150 different manuscripts, with so many [differences] that we're not sure which version is [authentic]. In contrast, there is [only] one version of Christopher Columbus's letters about the exploration of the Caribbean in the 1490s, since they were [fixed] in [printed] form and widely [distributed] at the time they were written. So the certainty of [accuracy] was a way that printing was an [improvement] over the old oral-manuscript culture.\n\n\n>>내용요약\n[Printing] enabled [standardization] and [accurate] reproduction of information, unlike [manuscript] copying which produced many [inconsistent] versions.\n\n260336\nArchaeological evidence suggests that various crops were being [cultivated] as early as 9500 BC in the Levant. Over the millennia, continuous [innovations] have [boosted] agricultural productivity while [reducing] manual labor. However, the growing global [population] will always [demand] more food. It is projected that by 2050, the world's population will [increase] to 9.7 billion, which will require global food production to [rise] by at least 70% to meet demand. Despite this need, only a [small] portion of the Earth's surface is [suitable] for farming due to [limitations] such as climate, topography, soil quality, and technology. Political and economic factors, including land ownership patterns, environmental laws, and population density, also [influence] agricultural land use. In fact, the amount of land used for agriculture has been [declining]. In 2013, around 18.6 million square miles was used for food production, compared to 19.5 million square miles in 1991.\n\n\n>>내용요약\nDespite [rising] food [demand] from population growth, the amount of [suitable] agricultural land is [limited] and has been [declining].\n\n260337\nIf you are going to [compare] languages, it helps to start with something that you are confident you can find in [all] languages. Take for example signs or words for [mother] and [father]. If we add other family relationships to this category ─ son, grandmother, aunt, brother-in-law, cousin ─ we are defining the category of [kinship] terminology. Comparative [typological] studies of kinship terminology have discovered that languages have labels for [some] but [not] all family relationships. And the probability that a specific kin relationship has a label is [predictable] based on the other kinship terms in the language. For example, all languages have a [core] set of kinship terms ─ like mother and father. By contrast, terms for [less] central category members are often [built] [up] from the core terms ─ like mother-in-law and step-father. If we compare languages across the world, we can ask what kinship relationships are typically expressed with [core] terminology, and what relationships are expressed by [modifying] the core terminology.\n\n\n>>내용요약\nAll languages share [core] [kinship] terms like mother and father, while [less] central relationships are [predictably] [built] from those core terms.\n\n260338\nThere are several ways that participants in a [makebelieve] can [communicate] things about the [fictional] world to other participants. Sometimes these messages are emitted [naturally] as a result of full participation in the fictional world ─ i.e., something said or done by a player while [in] [character] communicates some things that are fictional of that world. For example, a child pretending to be Peter Pan might [gasp] and draw a plastic knife. This might be [sufficient] to communicate that fictionally one of Peter's enemies, such as Captain Hook, is [approaching]. These [in-character] behaviors can be [insufficient], however, to maintain the necessary amount of [common] [ground] about what is fictional in the world of the make-believe. At these times participants often come at least partly [out] [of] [character] to give other participants the information they need. For example, it would be important to avoid [confusion] about who is playing which character: \"No, you're Captain Hook, and I'm Peter Pan!\"\n\n\n>>내용요약\nIn make-believe, participants communicate [fictional] events through [in-character] actions, but sometimes must step [out] [of] [character] to maintain shared [understanding].\n\n260339\nOur [intuition] about states of matter comes from our experience on Earth's [surface], where the [pressure] is [uniformly] low and variations in [temperature] cause changes in the state of matter from solid to liquid to gas. Therefore, when we think of melting or boiling or the creation of plasma, we [intuitively] assume it reflects an increase in [temperature]. This [bias] comes from the fact that we live in a very [constant] pressure environment. Even [small] changes in pressure, such as those we experience when under water or on high mountaintops, can have very [large] effects on our metabolism. But the pressure changes we experience are [trivial] compared to the pressure range of the overall planetary environment. Since pressure is controlled by the weight of [overlying] material, pressures [increase] rapidly with [depth]. Imagine the pressures generated by the weight of rock a mile thick! For this reason a planet's pressure ranges are [enormous] ─ from essentially [zero] pressure in space to pressures of [millions] of atmospheres in planetary interiors.\n\n\n>>내용요약\nOur [intuition] links state changes to [temperature], but this [bias] ignores [pressure], which varies [enormously] across planetary environments.\n\n260340\nWhen self-experimentation and [conventional] experiments are both possible, the difference between them often resembles the difference between [learning] and [showing]: Self-experiments are [better] for [discovery] but [worse] for [convincing] others that the solution is helpful or the answer is correct. Of course, most scientists want to do [both] ─ discover something and convince others of their discovery. Thus, psychologists should consider doing [both] self-experiments and conventional ones. The [best] use of resources may often be self-experiments [followed] by conventional ones. The researcher begins with self-experiments that, if all goes well, find [large] effects and/or generate and [eliminate] many hypotheses. This [exploratory] and theory-building phase lasts until a convenient solution or large effect is found. Then the researcher uses self-experiments to find the procedural [parameters] (e.g., duration, time of day, intensity) that [optimize] the solution or [maximize] the effect. [Only] then would the researcher begin [conventional] experiments, using the optimized parameters.\n\n\n>>내용요약\n[Self-experimentation] is better for [discovery] while [conventional] experiments are better for [convincing] others, so researchers should use both [sequentially].",
+  "중요어휘_왼": "260320\nWhen moving into a [new] situation, many people decide that they need to [master] what's new. To this end, they [reduce] their connections to people or activities that might [distract] them from their goal. But that is a [mistake]. Being too [focused] can lead to becoming [unidimensional] ─ you have [few] remedies to the microstresses that are inevitably [bombarding] you at that time. So when things are [tough] during such a transition, you have almost [nothing] else in your life to [counterbalance] the stress. Instead of staying [laser-focused], use this transition as the [jumping-off] point for [building] new [networks] to shape the work you want to do and whom you want to do it with.\n\n\n>>내용요약\nWhen facing a new situation, [maintaining] broad [connections] is essential rather than becoming too [focused], as diverse networks help [counterbalance] stress during transitions.\n\n260321\nA first step toward establishing a [respectful] classroom learning community is [acceptance] of [all] ideas and answers ─ [regardless] of any obvious [errors]. [Rich] mathematical discussions cannot occur if this expectation is not in place. We must remember that [wrong] answers are often rooted in [misconceptions], and unless these ideas are allowed to be brought to the [forefront], we cannot help students [confront] their thinking. Students who are in [safe] learning environments are willing to [risk] sharing an [incorrect] answer with their peers in order to [grow] mathematically. It is important to model and expect the [acceptance] of all ideas [without] derogatory comments. As educators we can model this by [recording] all answers to be considered without giving any verbal or physical expressions that indicate [agreement] or [disagreement] with any answer. The teacher may need to practice having a \"[blank] face.\" Students look to teachers as the source of [correct] answers. Part of building a [safe] learning community is to [shift] this source of knowledge to the [students] by equipping them to [defend] the thinking behind their solutions.\n\n\n>>내용요약\nA [safe] classroom requires [accepting] all answers, including [wrong] ones, to help students [confront] misconceptions and [defend] their own thinking.\n\n260322\nThe usual [intercity] traveler moves [slowly] through the station area. The passenger may not be [familiar] with the routine, have [baggage] to handle and check or retrieve, have a long [wait] for connections or delayed trains, and may require [information], food, and a comfortable place to sit. [Commuters], on the other hand, are [familiar] with the route through the station, have [little] or no luggage, and are usually in a [hurry]. They want [direct] access to or from local streets and transport. These two types of traffic should be kept [separate] to avoid [conflict] and [confusion]. In some large stations such as Grand Central Terminal in New York City, commuter and intercity trains arrive and depart on [different] levels. In smaller stations, [separate] platforms should be used and traffic routed so that the two lines of movement do not [cross]. In some instances, separate stations are in use. [Clear] and [concise] direction and routing signs and other means of channelization are desirable.\n\n\n>>내용요약\n[Intercity] travelers and [commuters] have [different] needs, so stations should [separate] their traffic flows to avoid [conflict] and [confusion].\n\n260323\nMost performance lighting is made up of a number of different looks which we have called lighting [states]. Each lighting [cue] triggers a [change] to a new state. Like actors, lighting cues usually need a [motivation]. This might be something very [obvious] such as a cue required to [brighten] a room setting when an actor turns on a light switch or the rapid [increase] in intensity at the end of a dance number in a traditional musical (known as a button cue). At other times we will need a cue to provide a [subtle] change in atmosphere over a number of minutes, [motivated] perhaps by the mention of a [sunset] or the intention to [slowly] change the feel of the performance from [normal] to [threatening]. The question, 'What will lighting do for this production?' needs to be asked for each [moment] of the production, each dramatic unit or scene, and each [transition].\n\n\n>>내용요약\nLighting [cues] require [motivation] to trigger changes in [states], ranging from [obvious] to [subtle] shifts, shaping the atmosphere of each [moment] in a production.\n\n260324\nRooms have their own \"[sound]\" because they [impose] their own characteristics on audio signals [contained] within them. It's actually kind of remarkable. Sound such as music coming from [headphones] will sound the [same] everywhere. No matter what acoustical environment we are in, the headphones sound the [same]. That's because the room is [not] part of that playback signal path. But sound such as music from a [loudspeaker] will sound [different] in every acoustical environment. Every room where you set up the loudspeaker will cause the sound you hear to be [different] ─ sometimes [dramatically] different; that is because the room is now [part] of the signal path. Also, in the [same] room, the loudspeaker will sound [different] when it is placed in different [locations] in the room and it will sound different as you [move] around the room. Similarly, when you are [recording] a musical instrument, the sound you receive at the microphone will be [different] in every room and the recorded sound will sound different as the instrument or the microphone is [moved].\n\n\n>>내용요약\nUnlike [headphones], a [loudspeaker]'s sound varies by room and [location] because the room becomes [part] of the [signal] path.\n\n260329\nThe Industrial Revolution did more than just [invent] new materials or machines. It invented a new [process] for manufacturing: the modern [factory]. Prior to around 1850, most piano shops used an [apprentice] system in which a master builder taught younger workers the skills of the trade, usually over the course of [many] years. The larger piano shops did have [specialists] ─ for example, one person who specialized in soundboards, another who made hammers, and so on. But even the largest piano makers of that time produced no more than [5-10] pianos per year per worker, as pianos were still made essentially [one] at a time. The development of a true piano [factory] occurred first in the United States, led by Jonas Chickering in Boston and later the Steinway family in New York City. These factories led to improvements in both [efficiency] and [quality]. For example, one of the factories of the time had its own iron casting facility where it made its metal plates, which were thought to be the [best] available.\n\n\n>>내용요약\nThe Industrial Revolution transformed piano making from a slow [apprentice] system to the modern [factory], greatly improving [efficiency] and [quality].\n\n260330\nIn a [thesis-based] doctoral programme, students typically spend a [significant] amount of time and effort researching a [specific] topic. While this deep dive into a particular area allows for [thorough] exploration and understanding, it can also result in [narrowing] the focus. As students become deeply [absorbed] in their research, they may spend [less] time exploring [related] fields or acquiring skills [outside] their immediate area of study. Consequently, this [singular] focus may [limit] the breadth of knowledge and skills developed during the programme, potentially [hindering] students' ability to [adapt] to diverse career paths or address [interdisciplinary] challenges. Some universities in Europe have [recognised] the limitations of traditional thesis-based doctoral programmes and have started to implement more [structured] approaches. These structured programmes often [combine] research with coursework and training in [transferable] skills. By incorporating coursework, seminars, workshops and internships into the curriculum, they aim to provide students with a [broader] skill set and better [prepare] them for a variety of career paths [beyond] academia.\n\n\n>>내용요약\nTraditional [thesis-based] doctoral programmes can [narrow] students' focus, so [structured] approaches that [combine] research with broader training better [prepare] them for diverse careers.\n\n260331\nResearch shows that, by age three, children [understand] that [imaginary] objects do not come to [life]. This is especially clear with respect to [everyday] objects ─ children know that even though they [imagine] a pencil in an empty box, the box will remain [empty]. However, [emotion] can sometimes [disrupt] this understanding, or at least its expression. That is, even though a child [knows] that monsters are [not] real, the thought of a monster under a bed might be enough to make a child [refuse] to go into his room at night. Indeed, research shows that children have a more [difficult] time displaying their understanding of the causal relations between [imagination] and [reality] when they are asked to pretend or imagine [scary] things, like monsters. In one study, preschool children were shown an [empty] box and were asked to imagine a monster inside. All children [agreed] that the box was empty. However, when they were left [alone] with the box they exhibited [fear] and [avoidance] of it.\n\n\n>>내용요약\nChildren [understand] that imaginary things aren't real, but [emotion], especially [fear], can [disrupt] this understanding and cause [avoidance] behavior.\n\n260332\nPerhaps the best-known development to emerge from the [liberation] and [expansion] of aesthetic experience is the aesthetics of [everyday] life. Although there is presently a [flowering] of work on everyday aesthetics, the possibility of aesthetic [gratification] in [ordinary] objects and events has long been [recognized], even if [degraded] and [dismissed] by prevalent philosophical theory. Widely valued by [poets], especially Romantic poets and those in Asian traditions, the aesthetic in everyday situations has also been recognized by [novelists]. It may be most convenient, though, to locate its contemporary intellectual origins in John Dewey's Art as Experience. In that book Dewey argued [against] the [separation] of art from [life] by basing aesthetic experience on the biological and cultural conditions of human life. He located the aesthetic, [not] in an internalized awareness of sensation and feeling but in \"a complete [interpenetration] of self and the world of objects and events.\" Further, Dewey maintained that \"the aesthetic is the clarified and [intensified] development of traits that belong to every [normally] complete experience.\"\n\n\n>>내용요약\nThe aesthetics of [everyday] life challenges the [separation] of art from life, recognizing aesthetic value in [ordinary] experiences rather than [dismissing] them.\n\n260333\nOne cannot [validly] argue that humans are morally [superior] beings on the ground that they [possess], while others [lack], the capacities of a [moral] agent. The reason is that, as far as moral standards are concerned, [only] beings that have the capacities of a moral agent can meaningfully be said to be either morally [good] or morally [bad]. Only moral agents can be [judged] to be morally [better] or [worse] than others, and the others in question must be moral agents [themselves]. Judgments of moral [superiority] are based on the [comparative] merits or deficiencies of the entities being judged, and these merits and deficiencies are all [moral] ones, that is, ones determined by moral standards. One entity is correctly judged morally [superior] to another if it is the case that, when valid moral standards are [applied] to both entities, the first fulfills them to a [greater] degree than the second. Both entities, therefore, must fall [within] the range of application of moral standards. This would [not] be the case, however, if humans were being judged superior to animals and plants, since the latter are [not] moral agents.\n\n\n>>내용요약\nMoral [superiority] can only be judged between [moral] agents, so claiming humans are morally [superior] to animals and plants is [invalid] since they [lack] moral agency.\n\n260334\nSuch artificial '[pause] fillers' as machine-generated supplements for [silence] may help to produce a more [natural]-sounding cadence in machine-generated speech patterns and so help to [convince] the AI's human interlocutors that they are engaging with another [human]. AI's '[humanity]' of silence emerges in these contexts not least because a short period of silence is likely to be interpreted as a '[pause] for thought', therefore [reinforcing] the illusion that the machine is '[thinking]' before responding, just as a human might. However, the technical issues flagged in AI's [poor] handling of [higher] duration and frequency silences, no less than the machine inference that silence can be [filled] with relevant sounds in some conversational situations, are both significant. In this context at least, the AI may be starting to [recognise] silence not as an [absence] but as [meaningful] data. Yet the AI's [confusion] when presented with [substantial] silences, and its understanding that short break tags are equivalent to vocal markers such as 'uh's' and 'ah's' indicate the AI's continuing [preferences] for [sound] over [silence], for [presence] over [absence].\n\n\n>>내용요약\nAI uses [pause] fillers to mimic [human] speech, but still [struggles] with [longer] silences, [preferring] sound over [silence] as [meaningful] communication.\n\n260335\n[Standardization] of information was an [effect] of printing; since it allowed [exact] [reproduction] of information in a way that [manuscript] copying did [not]. This is evident in the contrast between the travel logs of Marco Polo and those of Christopher Columbus. After his return from China in 1295, a century and a half [before] printing, Polo's narrative was copied in about 150 different manuscripts, with so many [differences] that we're not sure which version is [authentic]. In contrast, there is [only] one version of Christopher Columbus's letters about the exploration of the Caribbean in the 1490s, since they were [fixed] in [printed] form and widely [distributed] at the time they were written. So the certainty of [accuracy] was a way that printing was an [improvement] over the old oral-manuscript culture.\n\n\n>>내용요약\n[Printing] enabled [standardization] and [accurate] reproduction of information, unlike [manuscript] copying which produced many [inconsistent] versions.\n\n260336\nArchaeological evidence suggests that various crops were being [cultivated] as early as 9500 BC in the Levant. Over the millennia, continuous [innovations] have [boosted] agricultural productivity while [reducing] manual labor. However, the growing global [population] will always [demand] more food. It is projected that by 2050, the world's population will [increase] to 9.7 billion, which will require global food production to [rise] by at least 70% to meet demand. Despite this need, only a [small] portion of the Earth's surface is [suitable] for farming due to [limitations] such as climate, topography, soil quality, and technology. Political and economic factors, including land ownership patterns, environmental laws, and population density, also [influence] agricultural land use. In fact, the amount of land used for agriculture has been [declining]. In 2013, around 18.6 million square miles was used for food production, compared to 19.5 million square miles in 1991.\n\n\n>>내용요약\nDespite [rising] food [demand] from population growth, the amount of [suitable] agricultural land is [limited] and has been [declining].\n\n260337\nIf you are going to [compare] languages, it helps to start with something that you are confident you can find in [all] languages. Take for example signs or words for [mother] and [father]. If we add other family relationships to this category ─ son, grandmother, aunt, brother-in-law, cousin ─ we are defining the category of [kinship] terminology. Comparative [typological] studies of kinship terminology have discovered that languages have labels for [some] but [not] all family relationships. And the probability that a specific kin relationship has a label is [predictable] based on the other kinship terms in the language. For example, all languages have a [core] set of kinship terms ─ like mother and father. By contrast, terms for [less] central category members are often [built] [up] from the core terms ─ like mother-in-law and step-father. If we compare languages across the world, we can ask what kinship relationships are typically expressed with [core] terminology, and what relationships are expressed by [modifying] the core terminology.\n\n\n>>내용요약\nAll languages share [core] [kinship] terms like mother and father, while [less] central relationships are [predictably] [built] from those core terms.\n\n260338\nThere are several ways that participants in a [makebelieve] can [communicate] things about the [fictional] world to other participants. Sometimes these messages are emitted [naturally] as a result of full participation in the fictional world ─ i.e., something said or done by a player while [in] [character] communicates some things that are fictional of that world. For example, a child pretending to be Peter Pan might [gasp] and draw a plastic knife. This might be [sufficient] to communicate that fictionally one of Peter's enemies, such as Captain Hook, is [approaching]. These [in-character] behaviors can be [insufficient], however, to maintain the necessary amount of [common] [ground] about what is fictional in the world of the make-believe. At these times participants often come at least partly [out] [of] [character] to give other participants the information they need. For example, it would be important to avoid [confusion] about who is playing which character: \"No, you're Captain Hook, and I'm Peter Pan!\"\n\n\n>>내용요약\nIn make-believe, participants communicate [fictional] events through [in-character] actions, but sometimes must step [out] [of] [character] to maintain shared [understanding].\n\n260339\nOur [intuition] about states of matter comes from our experience on Earth's [surface], where the [pressure] is [uniformly] low and variations in [temperature] cause changes in the state of matter from solid to liquid to gas. Therefore, when we think of melting or boiling or the creation of plasma, we [intuitively] assume it reflects an increase in [temperature]. This [bias] comes from the fact that we live in a very [constant] pressure environment. Even [small] changes in pressure, such as those we experience when under water or on high mountaintops, can have very [large] effects on our metabolism. But the pressure changes we experience are [trivial] compared to the pressure range of the overall planetary environment. Since pressure is controlled by the weight of [overlying] material, pressures [increase] rapidly with [depth]. Imagine the pressures generated by the weight of rock a mile thick! For this reason a planet's pressure ranges are [enormous] ─ from essentially [zero] pressure in space to pressures of [millions] of atmospheres in planetary interiors.\n\n\n>>내용요약\nOur [intuition] links state changes to [temperature], but this [bias] ignores [pressure], which varies [enormously] across planetary environments.\n\n260340\nWhen self-experimentation and [conventional] experiments are both possible, the difference between them often resembles the difference between [learning] and [showing]: Self-experiments are [better] for [discovery] but [worse] for [convincing] others that the solution is helpful or the answer is correct. Of course, most scientists want to do [both] ─ discover something and convince others of their discovery. Thus, psychologists should consider doing [both] self-experiments and conventional ones. The [best] use of resources may often be self-experiments [followed] by conventional ones. The researcher begins with self-experiments that, if all goes well, find [large] effects and/or generate and [eliminate] many hypotheses. This [exploratory] and theory-building phase lasts until a convenient solution or large effect is found. Then the researcher uses self-experiments to find the procedural [parameters] (e.g., duration, time of day, intensity) that [optimize] the solution or [maximize] the effect. [Only] then would the researcher begin [conventional] experiments, using the optimized parameters.\n\n\n>>내용요약\n[Self-experimentation] is better for [discovery] while [conventional] experiments are better for [convincing] others, so researchers should use both [sequentially]."
+ },
+ "vol2": {
+  "서술형영작": [
+   {
+    "choices": "( a small team / limited funds / were / The Oakland Athletics / with ), ( them / it / elite players / which / to / for / made / attract / difficult )",
+    "korean": "오클랜드 애슬레틱스는 자금이 부족한 소규모 팀이었기 때문에 우수한 선수를 끌어오는 데 어려움을 겪었다."
+   },
+   {
+    "choices": "Normally, ( prefer / coaches and managers / players ) ( can / hard and far / who / the ball / hit ), ( such / home runs and extra-base hits / tend to hit / for / players / more )",
+    "korean": "일반적으로, 코치와 감독은 공을 강하고 멀리 칠 수 있는 선수를 선호하는데, 그런 선수는 홈런과 장타를 더 많이 치는 경향이 있기 때문이다."
+   },
+   {
+    "choices": "( be better measured / players' of fensive skills / sabermetrics / that / can / suggests ) ( which / base / the frequency / they / safely reach / with / by )",
+    "korean": "세이버메트릭스는 베이스에 안전하게 도착하는 빈도로 선수의 공격 기술이 더 잘 측정될 수 있다고 제안한다."
+   },
+   {
+    "choices": "( hits, walks, or hits / this / does not matter / pitch / is achieved / whether / it / by / through )",
+    "korean": "진루가 안타, 볼넷 또는 데드볼을 통해 이루어졌는지 여부는 중요하지 않다."
+   },
+   {
+    "choices": "( other teams / quickly adopt / of / prompted / the success / the Athletics / sabermetrics / to ), ( utilize / a movement / but also / in baseball / data / sparking / not only / to / in other sports )",
+    "korean": "애슬레틱스의 성공은 다른 팀들이 빠르게 세이버메트릭스를 도입하도록 자극했고, 야구뿐만 아니라 다른 스포츠에서도 데이터를 활용하려는 움직임을 촉발시켰다."
+   },
+   {
+    "choices": "So ( from / that / a new data team / he / the club / demanded )",
+    "korean": "그래서 그는 구단에 새로운 데이터 팀을 구성할 것을 요구했다."
+   },
+   {
+    "choices": "( common / they / in / significant / had / expertise / in / what / data / was )",
+    "korean": "이들의 공통점은 데이터에 대한 상당한 전문성을 갖추고 있다는 것이었다."
+   },
+   {
+    "choices": "( its debut / of / following / at / 2014 / the Winter Olympic Games ), ( to / recognized / its sweeping technique / the team / enhance / the need )",
+    "korean": "2014년 동계 올림픽에 처음 등장한 이후, 한국 여자 컬링 대표팀은 스위핑 기술을 개선해야 할 필요성을 인식했다."
+   },
+   {
+    "choices": "( the sweeping speed / too much pressure / applying / slows down ), and ( to / makes / enough force / it / focusing only / the broom / hard / on speed / to / transfer )",
+    "korean": "너무 큰 압력을 가하면 스위핑 속도가 느려지고, 속도에만 집중하면 빗자루에 충분한 힘을 전달하기 어렵다."
+   },
+   {
+    "choices": "( speed and pressure / the right amount / is / to / finding / melt / of / between / ice / important / the right balance )",
+    "korean": "적절한 양의 얼음을 녹이려면 속도와 압력 사이의 적절한 균형을 찾는 것이 중요하다."
+   },
+   {
+    "choices": "( to / infrared cameras and sensors / the player’s bodies, shoes, and brooms / of / attached / the device consisted )",
+    "korean": "이 장치는 적외선 카메라와 선수들의 몸, 신발, 빗자루에 부착된 센서로 구성되었다."
+   },
+   {
+    "choices": "( to / a system / player’s heart rates / developed / monitor / the team ) ( convert / heart rates / by / into / advanced visual computing technology / to / using / facial color variations )",
+    "korean": "대표팀은 선수들의 얼굴색 변화를 심박수로 변환하는 첨단 비주얼 컴퓨팅 기술을 사용하여 선수들의 심박수를 모니터링하는 시스템을 개발했다."
+   },
+   {
+    "choices": "( for / this data / psychological training / was used ) ( during / stable heart rates / to / maintain / crucial moments / players / help )",
+    "korean": "이 데이터는 선수들이 결정적인 순간에 안정적인 심박수를 유지할 수 있도록 심리 훈련에 활용되었다."
+   },
+   {
+    "choices": "( adjust / also created / helped / an AI coach / shooting / form / that / the team )",
+    "korean": "또한 대표팀은 슈팅 자세를 교정하는데 도움이 되는 AI 코치도 만들었다."
+   },
+   {
+    "choices": "( edit / that / the team managers / training videos / the AI coach / requested ) ( assist / the players / with / of / practical analysis / to )",
+    "korean": "팀 매니저들은 AI 코치에게 실질적인 분석에 도움을 줄 수 있도록 선수들의 훈련 영상을 편집하도록 요청했다."
+   },
+   {
+    "choices": "( team / such / factors / chemistry / as ), ( get along / is related / people / to / which / how well ), ( to / will likely remain / measure / difficult )",
+    "korean": "사람들이 얼마나 잘 어울리는지와 관련된 팀 화합과 같은 요소는 여전히 측정하기 어려울 가능성이 높다."
+   },
+   {
+    "choices": "Similarly, ( player performance / entirely accurate / in / cannot / predicting / be / a match ) ( players / not machines / are / as / and / humans )",
+    "korean": "마찬가지로, 선수는 기계가 아닌 사람이기 때문에 경기 중 선수의 경기력을 예측하는 것도 완전히 정확할 수는 없다."
+   },
+   {
+    "choices": "( 108 double stitches / a baseball / has ), ( the ball / creating / on / seams / raised / called / lines )",
+    "korean": "야구공에는 108개의 이중 바늘땀이 있어 공에 솔기라고 불리는 돌출된 선을 만들어낸다."
+   },
+   {
+    "choices": "( the ball / grip / the seams / better / pitchers / help ) and ( when / more power / it / and spin / transfer / throwing )",
+    "korean": "솔기는 투수가 공을 더 잘 잡고, 던질 때 더 많은 힘과 회전을 전달할 수 있도록 도와준다."
+   },
+   {
+    "choices": "( can / control / this effect / the ball's direction and speed / pitchers / to / use ), ( are / to / pitches / batters / that / hit / for / creating / difficult )",
+    "korean": "투수는 공의 방향과 속도를 제어하기 위해 이 효과를 이용할 수 있고 타자가 치기 어려운 투구를 만들 수 있다."
+   },
+   {
+    "choices": "( there / was / a very special procession / to / there / gathered / witness / quite a crowd ) ( Korea today / is still talked / that / in / about )",
+    "korean": "오늘날까지도 한국에서 회자되는 아주 특별한 행차를 목격하기 위해 많은 사람들이 그곳에 모였어요."
+   },
+   {
+    "choices": "Now, imagine this: ( hundreds / lots / 2,000 soldiers / important officials / of / and / more than / horse riders / of ), ( alongside / 50 musicians / with / all marching / the king and his mother / traditional instruments / playing )",
+    "korean": "자, 상상해 보세요. 50명의 악사들이 전통 악기를 연주하는 가운데 2,000명이 넘는 군인들과 수백 명의 기마병, 그리고 많은 중요 관리들이 왕과 그의 어머니를 따라 행진하는 모습을요."
+   },
+   {
+    "choices": "( covering / lasting / and / 68 kilometers / four days ), ( the king and his mother / moved / the procession / alongside ) ( to / made / Hwaseong Haenggung / they / a round trip / as )",
+    "korean": "나흘간 지속되었고 68킬로미터를 이동하면서 이 행차는 왕과 그의 어머니를 따라 화성행궁까지 왕복했어요."
+   },
+   {
+    "choices": "( the two events / was telling / by / everyone / he / combining ) ( meant / how much / him / to / family )",
+    "korean": "이 두 가지 행사를 결합함으로써 그는 가족이 그에게 얼마나 큰 의미가 있는지 모두에게 말했던 것이죠."
+   },
+   {
+    "choices": "( like / he / a military leader / dressed up ), ( his soldiers / sitting on / and / in / wearing / with / perfect order / a horse / armor / marching )",
+    "korean": "그는 그의 병사들이 일사불란하게 행진하는 가운데, 갑옷을 입고 말 위에 앉아 장수처럼 차려입었어요."
+   },
+   {
+    "choices": "Now, here's the twist: ( also had / with / which / do / Hwaseong Fortress / was being built / to / the procession / something )",
+    "korean": "자, 여기 뜻밖의 반전이 있습니다. 이 행차는 화성과도 관련이 있는데요. 그것은 당시 건설 중이었어요."
+   },
+   {
+    "choices": "( were / King Jeongjo’s mind / Hwaseong / big plans / in / for )",
+    "korean": "정조의 머릿속에는 화성에 대한 큰 계획이 있었어요."
+   },
+   {
+    "choices": "( be / it / a strong military, farming, and trade / to / with / he / a self-sufficient city / wanted ) ( make / he / as / the new capital / to / it / hoped ), ( in / from / all the political chaos / Hanyang / away )",
+    "korean": "그는 화성을 한양의 정치적 혼란에서 벗어난 새로운 수도로 삼기를 희망해서 그것을 강한 군사력, 농업, 무역을 갖춘 자급자족 도시로 만들고자 했어요."
+   },
+   {
+    "choices": "Back then, ( public projects / work / ordinary people / getting / to / without / were typically required / paid / on )",
+    "korean": "당시 일반 백성들은 대개 임금을 받지 못한 채 공공 공사에 투입되는 것이 일반적이었지요."
+   },
+   {
+    "choices": "So, ( was / in / finished / under / the project / three years ), ( to / though / about / was initially thought / 10 years / it / take ), Impressive, right?",
+    "korean": "그래서 처음에는 10년 정도 걸릴 것으로 예상했던 공사를 3년 만에 끝낼 수 있었어요. 인상적이지 않나요?"
+   },
+   {
+    "choices": "( during / King Jeongjo / common people / a chance / for / him / to / set up / meet / the procession ) and ( their concerns / to / share )",
+    "korean": "정조는 행차 중에 일반 백성들이 왕을 만나고 고민을 나눌 수 있는 기회를 마련했습니다."
+   },
+   {
+    "choices": "( any other way / they / tell / to / didn’t have / the king ) ( on / what / their minds / was ), so ( him / to / this / a direct line / was )",
+    "korean": "그들은 왕에게 자신의 생각을 말할 다른 방법이 없었기 때문에 이 자리는 왕에게 통하는 직통 전화였던 셈입니다."
+   },
+   {
+    "choices": "( special exams / he / the procession / added / during ), ( joining / more people / the government / a shot / giving / at )",
+    "korean": "정조는 행차 기간에 특별 시험을 추가해 더 많은 사람이 정부에 들어갈 수 있도록 시도할 수 있도록 했어요."
+   },
+   {
+    "choices": "( Hwaseong Fortress / why / were / of / a World Heritage Site / recognized / even part / as / UNESCO / they )",
+    "korean": "이 기록은 유네스코가 화성을 세계문화유산으로 인정한 이유 중 하나이기도 해요."
+   },
+   {
+    "choices": "But ( translated documents / them / the restored fortress / after / with / checking out / and comparing ), ( finally came around and agreed / had actually been restored / that / was meant to be / the way / the fortress / it / just )",
+    "korean": "하지만 번역된 문서를 확인하고 복원된 성곽과 비교한 후, 결국 생각을 바꿔 화성이 원래의 모습 그대로 복원되었다는 것에 동의하게 되었어요."
+   },
+   {
+    "choices": "So ( the people / the Joseon Dynasty / for / a big deal / being kind / of / kings / to / was )",
+    "korean": "이처럼 조선 시대 왕들에게는 백성을 친절하게 대하는 것이 중요한 일이었어요."
+   },
+   {
+    "choices": "( for / low walls / administrative buildings, learning centers, and training grounds / surrounded / the area / soldiers / housed / by )",
+    "korean": "낮은 성벽으로 둘러싸인 읍성 안에는 관아 건물과 향교, 군인들의 훈련장 등이 있었다."
+   },
+   {
+    "choices": "( of / Paldalsan Mountain / the natural slopes / along / built ), ( strong walls and defense / Suwon Hwaseong / displayed ) ( as / agriculture, commerce, and housing / also serving / for / while / a center )",
+    "korean": "팔달산의 자연 경사면을 따라 축조된 수원 화성은 견고한 성벽과 방어 시설을 보여주면서 농업, 상업, 주거의 중심지 역할도 했다."
+   },
+   {
+    "choices": "( becoming / being / can lead / unidimensional / to / too / focused ) ─ ( are / have / inevitably / bombarding you / that / to the microstresses / few remedies ) you at that time.",
+    "korean": "너무 집중만 하는 것은 (당신을) 일차원적이 되도록 이끌 수 있으며, 당신에게 그 시기에 불가피하게 쏟아 부어지는 아주 작은 스트레스에 대한 치료제가 거의 없게 된다."
+   },
+   {
+    "choices": "( laser-focused / staying / instead / of ), ( as / to do / use / new networks / for building / to shape / you want / the work / this / the jumping-off point / transition ) and ( whom / with / it / to do / you / want ).",
+    "korean": "레이저처럼 집중만 하는 대신, 이 전환기를 자신이 하고 싶은 일과 그 일을 누구와 하고 싶은지를 구상하기 위해 새로운 네트워크를 구축하는 발판으로 활용하라."
+   },
+   {
+    "choices": "( misconceptions / in / are often / must remember / we / wrong answers / that / rooted ), and ( these ideas / are allowed / to be brought / to the fourefront / unless ), ( students / confront / their thinking / we / cannot help ).",
+    "korean": "틀린 답은 종종 오개념에서 비롯되며, 이러한 생각이 전면에 드러나도록 허락되지 않는다면, 우리가 학생들이 자신의 사고를 마주하도록 도울 수 없음을 기억해야 한다."
+   },
+   {
+    "choices": "( in safe learning environments / are willing / who / to risk / with / are / students / their peers / sharing / an incorrect answer ) in order to grow mathematically.",
+    "korean": "안전한 학습 환경에 있는 학생들은 수학적으로 성장하기 위해 그들의 또래들과 틀린 답을 공유하는 위험을 기꺼이 감수하려 한다."
+   },
+   {
+    "choices": "( familiar with / may / the passenger / not / be / the routine ), ( to handle / and check / or retrieve / have / baggage ), ( have / a long wait / or / for connections / delayed trains ), and ( and a comfortable / information, / may require / food, / place / to sit ).",
+    "korean": "그 승객은 절차에 익숙하지 않을 수도 있고, 처리하고 맡기거나 되찾아야 할 짐이 있을 수도 있으며, 환승이나 지연된 열차로 인해 오래 기다려야 할 수도 있고, 정보, 음식, 그리고 편안하게 앉을 자리를 필요로 할 수도 있다."
+   },
+   {
+    "choices": "Most performance lighting ( lighting states / different looks / which / a number of / we / have called / is made up of ).",
+    "korean": "대부분의 공연 조명은 우리가 조명 상태라고 부르는 여러 가지 서로 다른 조명 (연출) 장면으로 구성되어 있다."
+   },
+   {
+    "choices": "( the headphones / we are in, / sound / no matter what / acoustical environment / the same ).",
+    "korean": "우리가 어떤 음향 환경에 있든, 헤드폰은 똑같이 들린다."
+   },
+   {
+    "choices": "Also, in the same room, ( in different locations / when / will / in the room / different / is placed / the loudspeaker / it / sound ) and ( will sound / as / different / it / the room / move around / you ).",
+    "korean": "또한, 같은 방에서도, 스피커가 그 방의 다른 위치에 놓여있을 때 다르게 들릴 것이며, 당신이 방 안에서 돌아다니면 (또) 다르게 들릴 것이다."
+   },
+   {
+    "choices": "Prior to around 1850, ( the skills / of the trade / an apprentice system / used / in which / most piano shops / younger workers / a master builder / taught ), usually over the course of many years.",
+    "korean": "1850년 즈음 이전에, 대부분의 피아노 가게들은 한 명의 숙련가가 젊은 직원에게 업계의 기술을 가르치는 견습생 제도를 이용했는데, 보통 수년이 걸렸다."
+   },
+   {
+    "choices": "For example, ( its metal plates / made / where / casting facility / one of the factories / had / it / its own iron / of the time ), ( were thought / the best / which / available / to be ).",
+    "korean": "예를 들어, 그 당시의 한 공장은 금속판을 만들 수 있는 자체 철 주조 시설을 가지고 있었고, 그것은 가장 유용하다고 여겨졌다."
+   },
+   {
+    "choices": "As ( in their research / deeply absorbed / students / become ), they ( exploring /  outside / related fields / their immediate area / less time / may spend / or acquiring skills / of study ).",
+    "korean": "학생들이 자신의 연구에 깊이 몰두함에 따라, 그들은 관련 분야를 탐색하거나 자신들의 직접적인 연구 분야 밖의 기술을 습득하는 데는 더 적은 시간을 보내게 될 수도 있다."
+   },
+   {
+    "choices": "Consequently, this singular focus ( developed / of knowledge / may limit / during the programme / the breadth / and skills ), ( or address / interdisciplinary challenges / diverse career paths / potentially hindering / to / students' ability / to adapt ).",
+    "korean": "결과적으로, 이러한 단일한 초점은 (박사) 과정 동안 개발되는 지식과 기술의 폭을 제한하여, 잠재적으로 학생들이 다양한 진로에 적응하거나 학제 간 도전 과제를 처리하는 능력을 저해할 수 있다."
+   },
+   {
+    "choices": "Indeed, research shows that ( and reality / imagination / have / of the causal relations / displaying / their understanding / children / a more difficult time / between ) when ( they / or imagine / are asked / to pretend / scary things ), like monsters.",
+    "korean": "실제로, 아이들이 괴물과 같이 무서운 것을 가장하거나 상상하도록 요청받을 때 상상과 현실 간의 인과 관계에 대한 이해를 드러내는 데 더 어려움을 겪음을 연구에서 보여준다."
+   },
+   {
+    "choices": "Although ( there is / on everyday aesthetics / a flowering / of work / presently ), ( in ordinary objects / and events / of aesthetic gratification / has long / the possibility / been recognized ), even if ( prevalent philosophical theory / degraded / and / dismissed / by ).",
+    "korean": "현재 일상 미학에 관한 활발한 연구가 있지만, 평범한 사물과 사건 속의 미적 만족감에 대한 가능성은 오래전부터 인식되어 왔는데, 비록 지배적인 철학 이론에 의해 격하되고 무시받아 왔음에도 (그러했다)."
+   },
+   {
+    "choices": "The reason is that, ( moral standards / as far as / are / concerned ), only beings ( morally good / or / of a moral agent / morally bad / either / to be / that / the capacities / can meaningfully / have / be said ).",
+    "korean": "그 이유는, 도덕적 기준에 관해서는, 도덕적 행위자의 능력을 지닌 존재만이 유의미하게 도덕적으로 선하'거나' 도덕적으로 악하'다고' 말할 수 있기 때문이다."
+   },
+   {
+    "choices": "One entity is ( the case / if / it is / to another / morally superior / correctly judged ) that, when ( are applied to / both entities / valid moral standards ), ( to a greater degree / fulfills them / the first / the second / than ).",
+    "korean": "타당한 도덕적 기준을 두 존재 모두에게 적용했을 때, 첫 번째 존재가 두 번째 존재보다 그것(기준)들을 더 높은 정도로 충족하는 경우에만, 앞의 존재가 또 다른 존재보다 도덕적으로 우월하다고 정확하게 판단된다."
+   },
+   {
+    "choices": "However, the technical issues ( in AI's poor handling / frequency silences / of higher duration / and / flagged ), ( some conversational situations / can be filled with / relevant sounds / silence / the machine inference / no less than / in / that ), are both significant.",
+    "korean": "그러나, 지속 시간이 길거나 빈번한 침묵을 AI가 제대로 처리하지 못한다는 점에서 두드러지는 기술적 문제들과, 일부 대화 상황에서 침묵이 적절한 소리로 채워질 수 있다는 기계의 추론은, 둘 다 중요한 의미를 갖는다."
+   },
+   {
+    "choices": "After his return from China in 1295, a century and a half before printing, ( was copied / Polo's narrative / in about 150 different manuscripts ), ( is / that / with so many differences / we're / authentic / which version / not sure ).",
+    "korean": "인쇄술이 등장하기 한 세기 반 전인, 1295년 그의 중국으로부터의 귀환 후에, Polo의 이야기는 약 150개의 서로 다른 필사본으로 베껴졌는데, 그 차이가 너무 커서 우리는 어느 판본이 진짜인지 확신하지 못한다."
+   },
+   {
+    "choices": "It ( that / will increase / to 9.7 billion / is projected / by 2050, / the world's population ), ( by at least 70% / will require / to meet / which / to rise / global food production / demand ).",
+    "korean": "2050년까지, 세계 인구가 97억 명에 이를 것으로 예상되며, 이에 따라 수요를 충족시키기 위해 전 세계 식량 생산량이 최소 70%까지 늘어나야 할 것으로 전망된다."
+   },
+   {
+    "choices": "If we compare languages across the world, ( with / what kinship relationships / are / can ask / typically expressed / we / core terminology ), and ( are expressed / the core terminology / what relationships / by modifying ).",
+    "korean": "전 세계 언어를 비교해 보면, 우리는 어떤 친족 관계가 일반적으로 핵심 어휘 체계로 표현되는지, 그리고 어떤 관계가 핵심 어휘 체계를 변형하여 표현되는지 물을 수 있다."
+   },
+   {
+    "choices": "( be / can / These in-character behaviors / insufficient ), however, ( of common ground / in the world / to maintain / fictional / about what / the necessary amount / of the make-believe / is ).",
+    "korean": "그러나, 이러한 역할에 충실한 행동만으로는 가상 역할 놀이의 세계에서 무엇이 허구인지에 대해 필요한 만큼의 공통된 이해를 유지하기에 불충분할 수 있다."
+   },
+   {
+    "choices": "Our intuition ( about states / on / Earth's surface / our experience / from / of matter / comes ), ( to gas / in the state of matter / in temperature / cause changes / and variations / where / the pressure / to liquid / from solid / is uniformly low ).",
+    "korean": "물질의 상태에 대한 우리의 직관은 지구 표면에서의 경험에서 비롯되는데, 그곳에서는 압력이 균일하게 낮고 온도의 변화가 물질의 상태를 고체에서 액체, 그리고 기체로 변화시킨다."
+   },
+   {
+    "choices": "( conventional / experiments / the / only / then researcher / begin / would ), ( optimized / the / using / parameters ).",
+    "korean": "그러고 나서야 비로소 연구자는 그 최적화된 매개 변수를 사용하여, 전통적 실험을 시작하게 된다."
+   },
+   {
+    "choices": "( after / even / a few months / birth ), ( were / them / in / to / infants / those / as though / react / around / their own / a disturbance / it ), ( see / crying / they / another child’s tears / when )",
+    "korean": "태어난 지 몇 달밖에 되지 않아서도, 유아는 주변 사람들의 고통에 마치 그것이 자신의 것인 양 반응하여, 다른 아이의 눈물을 보면 운다."
+   },
+   {
+    "choices": "( got up / if / this morning / you ) and ( your toothbrush / started / the meaning / of / contemplating / toast / or / the shape / of / questioning ), ( probably / it / work / would not make / to / you )",
+    "korean": "만약 당신이 오늘 아침에 일어나 칫솔의 모양을 곰곰이 생각하거나 토스트의 의미에 대해 의문을 품기 시작한다면, 당신은 아마 직장에 도착하지 못할 것이다."
+   },
+   {
+    "choices": "( had / how many / one roof / living / saw / homes / under / three generations / they ), and ( commanded / how much / grandparents / respect )",
+    "korean": "그들은 얼마나 많은 가정이 세 세대가 한 지붕 아래에 살고 있는지, 그리고 조부모가 얼마나 많은 존경을 받는지를 보았다."
+   },
+   {
+    "choices": "( of / the particular belief / they / in / the community / noticed / equality ), ( the wealthy / the unsuccessful obscure / about / from / and / their failures / discouraged / helped / their success / which / boasting )",
+    "korean": "그들은 그 공동체의 평등에 대한 특별한 믿음을 알아차렸는데, 그것은 부유한 사람들이 자신의 성공에 대해 자랑하는 것을 막았고, 성공하지 못한 사람들이 자신의 실패를 흐리게 하도록 도왔다."
+   },
+   {
+    "choices": "( a response / their ideas / in / is / often originate / discussion / their writing / to / discussion ), and ( further discussion / are designed / their papers / stimulate / to )",
+    "korean": "그들의 생각은 흔히 토론에서 일어나고, 그들의 글쓰기는 토론에 대한 반응이며, 그들의 논문은 더 많은 토론을 자극하도록 고안되어 있다."
+   },
+   {
+    "choices": "( after / even / a few months / birth ), ( were / them / in / to / infants / those / as though / react / around / their own / a disturbance / it ), ( see / crying / they / another child’s tears / when )",
+    "korean": "태어난 지 몇 달밖에 되지 않아서도, 유아는 주변 사람들의 고통에 마치 그것이 자신의 것인 양 반응하여, 다른 아이의 눈물을 보면 운다."
+   },
+   {
+    "choices": "( got up / if / this morning / you ) and ( your toothbrush / started / the meaning / of / contemplating / toast / or / the shape / of / questioning ), ( probably / it / work / would not make / to / you )",
+    "korean": "만약 당신이 오늘 아침에 일어나 칫솔의 모양을 곰곰이 생각하거나 토스트의 의미에 대해 의문을 품기 시작한다면, 당신은 아마 직장에 도착하지 못할 것이다."
+   },
+   {
+    "choices": "( had / how many / one roof / living / saw / homes / under / three generations / they ), and ( commanded / how much / grandparents / respect )",
+    "korean": "그들은 얼마나 많은 가정이 세 세대가 한 지붕 아래에 살고 있는지, 그리고 조부모가 얼마나 많은 존경을 받는지를 보았다."
+   },
+   {
+    "choices": "( of / the particular belief / they / in / the community / noticed / equality ), ( the wealthy / the unsuccessful obscure / about / from / and / their failures / discouraged / helped / their success / which / boasting )",
+    "korean": "그들은 그 공동체의 평등에 대한 특별한 믿음을 알아차렸는데, 그것은 부유한 사람들이 자신의 성공에 대해 자랑하는 것을 막았고, 성공하지 못한 사람들이 자신의 실패를 흐리게 하도록 도왔다."
+   },
+   {
+    "choices": "( a response / their ideas / in / is / often originate / discussion / their writing / to / discussion ), and ( further discussion / are designed / their papers / stimulate / to )",
+    "korean": "그들의 생각은 흔히 토론에서 일어나고, 그들의 글쓰기는 토론에 대한 반응이며, 그들의 논문은 더 많은 토론을 자극하도록 고안되어 있다."
+   }
+  ],
+  "어법_헤더": [
+   "교과서3과 본문1",
+   "교과서3과 본문2",
+   "교과서3과 본문3",
+   "교과서3과 본문4",
+   "교과서3과 본문5",
+   "교과서3과 본문6",
+   "교과서3과 본문7",
+   "교과서3과 FR",
+   "교과서4과 본문1",
+   "교과서4과 본문2",
+   "교과서4과 본문3",
+   "교과서4과 본문4",
+   "교과서4과 본문5",
+   "교과서4과 본문6",
+   "교과서4과 FR",
+   "260320",
+   "260321",
+   "260322",
+   "260323",
+   "260324",
+   "260329",
+   "260330",
+   "260331",
+   "260332",
+   "260333",
+   "260334",
+   "260335",
+   "260336",
+   "260337",
+   "260338",
+   "260339",
+   "260340",
+   "외부지문 본문1",
+   "외부지문 본문2",
+   "외부지문 본문3",
+   "외부지문 본문4"
+  ],
+  "어법수정": [
+   "교과서3과 본문1",
+   "<The Power of Data in Sports> When the Oakland Athletics, a Major League Baseball team, 1[have won] 20 games in a row in 2002, the professional sports industry was 2[shocking]. The Oakland Athletics were a small team with 3[limiting] funds, 4[that] made 5[them] 6[difficulty] for them 7[attract] elite players. How did they do it? The key to their success 8[were] 9[adopted] sabermetrics, a statistical model 10[using] for 11[make] decisions in baseball.",
+   "교과서3과 본문2",
+   "Sabermetrics 12[created] in the late 1970s. It tries to use large amounts of information 13[discover] patterns, trends, and insights 14[what] 15[is] diff icult 16[find] with traditional ways of 17[study] statistics. Normally, coaches and managers prefer players 18[which] can hit the ball hard and far, 19[because of] such players tend 20[hitting] more home runs and extra-base hits. Sabermetrics suggests 21[what] players' of fensive skills can be better 22[measuring] by the frequency 23[which] they 24[safe] reach base. It does not matter 25[what] this 26[achieves] through hits, walks, or hits by pitch. Sabermetrics had not been widely 27[using] until the Athletics adopted 28[them] in 2002. With sabermetrics, the Athletics were able to 29[identifying] 30[underrating] players with significant contributions to 31[win] and 32[building] a strong team on a small budget. The success of the Athletics prompted other teams 33[quickly] adopt sabermetrics, 34[sparked] a movement 35[utilize] data not only in baseball but also in other sports. Thus, sports data analytics 36[was emerged] as a systematic approach 37[predict] game outcomes.",
+   "교과서3과 본문3",
+   "In soccer, the Liverpool Football Club of the English Premier League is 38[similarly] to the Oakland Athletics in baseball. In 2010, Liverpool underwent a change in ownership. While data analysis was already 39[prevailed] in the Premier League at that time, the new owner of the club, 40[which] also owned a baseball team in the United States, 41[aiming] 42[push] data analysis in soccer to new heights. So he demanded 43[what] the club 44[forms] a new data team. The new team included a physicist from Cambridge, a nuclear scientist from Harvard, and a former chess champion. 45[That] they had in common 46[were] significant expertise in data. The team started 47[apply] data analysis in key areas of club management, including player recruitment, injury prevention, and strategy during the game.",
+   "교과서3과 본문4",
+   "The team analyzed large amounts of data 48[recruit] players 49[whose] 50[fits] the team's style of play. In training, they collected data on players' movement patterns, heart rates, and vital signs by 51[use] GPS trackers and sensors 52[prevent] injuries. 53[While] games, they used live data 54[make] tactical decisions such as substitutions and formations. The data team 55[praised] for its efforts when the Liverpool Football Club 56[has won] the league championship for the f irst time in 30 years in 2020. The emergence of sports analytics did not go 57[unnoticing] by the Korean sports industry. One notable example of success 58[are] the Korean women's curling team. 59[Followed] its debut at the Winter Olympic Games of 2014, the team recognized the need 60[enhance] its sweeping technique. Sweeping melts the ice and 61[make] the stone 62[to move] faster. If too much ice melts, however, the stone moves too fast and 63[miss] the target. On the other hand, if not enough ice melts, the stone stops before 64[reach] the target. The amount of ice 65[melt] 66[depend] on the sweeping speed and pressure. 67[Apply] too much pressure 68[slow] down the sweeping speed, and 69[focus] only on speed 70[make] 71[them] 72[hardly] 73[transfer] enough force to the broom. 74[Find] the right balance between speed and pressure 75[are] 76[importantly] 77[melt] the right amount of ice.",
+   "교과서3과 본문5",
+   "78[Identify] the most effective technique, the Korean team designed a sweeping measurement device. The device 79[was consisted] of infrared cameras and sensors 80[attaching] to the players' bodies, shoes, and brooms. Through the device and motion-capture screens, foot pressure values and other data 81[obtained] for analysis. After 82[monitor] changes in the temperature of the ice surface, the team concluded 83[what] speed was more 84[economically] than strength for sweeping. The use of data analysis 85[were] 86[critically] in the team's winning of a silver medal at the 2018 Pyeongchang Winter Olympics.",
+   "교과서3과 본문6",
+   "The successful use of sports analytics 87[were] not 88[limiting] to the curling team. The Korean women's archery team 89[dominated] the sport for decades. However, the team turned to sports analytics 90[maintain] its edge over its rivals in preparation for the 2020 Tokyo Olympics. The team developed a system 91[monitor] players' heart rates by 92[use] advanced visual computing technology 93[convert] facial color variations into heart rates. This data 94[used] for psychological training 95[help] players 96[maintaining] stable heart rates 97[while] crucial moments. The team also created an AI coach 98[what] helped 99[adjusting] shooting form. The team managers requested 100[what] the AI coach 101[edits] training videos of the players 102[assist] with practical analysis. Players and coaches used the 103[editing] videos 104[analyze] the players' usual habits or weaknesses. The active use of data analysis by the Korean women's archery team 105[handing] 106[themselves] their ninth Olympic gold medal in a row in Tokyo.",
+   "교과서3과 본문7",
+   "There are still limitations to 107[which] data analysis can capture in games. Factors such as team chemistry, 108[that] 109[are] 110[relating] to how 111[good] people get along, will likely remain 112[difficulty] 113[measure]. Similarly, 114[predict] player performance in a match cannot be 115[entire] 116[accurately] as players are humans and not machines. Still, sports analytics is 117[undeniable] 118[elevated] the level of play across various sports, and fans are 119[enjoyed] this development.\nFurther Reading",
+   "교과서3과 FR",
+   "<Hidden Numbers in Baseball> In baseball, the ball and the bat have 120[hiding] numbers 121[what] can greatly impact the outcome of a game. A baseball has 108 double stitches, 122[creates] 123[raising] lines on the ball 124[calling] seams. The seams help pitchers 125[gripping] the ball better and 126[transferring] more power and spin when 127[thrown] 128[them]. A 129[spun] ball can change directions in the air 130[because] the air pressure around 131[them]. This 132[calls] the Magnus effect. The seams make this effect stronger. Pitchers can use this effect 133[control] the ball's direction and speed, 134[created] pitches 135[what] 136[is] 137[difficulty] for batters 138[hit]. While pitchers try to throw 139[challenged] pitches by 140[utilize] the ball's seams, batters attempt 141[making] contact with the ball 142[accurate] in the hope of 143[hit] a home run. The secret to 144[hit] a home run 145[lays] in the baseball bat. The bat's overall length must be fewer than 106.8 cm long and the diameter of the thickest part must be fewer than 7cm. If a player 146[will hit] the ball about 5-10 cm from the end of the bat, the ball will fly the farthest and 147[giving] the player the most 148[thrilled] and sweetest feeling. That is 149[because] this area 150[calls] the \"sweet spot.\"",
+   "교과서4과 본문1",
+   "<King Jeongjo's Grand Procession> Hey there! Let me 1[to introduce] you to a 2[fascinated] piece of Korean history. Back on February 9, 1795, 3[remarkable something] 4[was happened] in front of Changdeokgung Palace, 5[which] King Jeongjo lived. There 6[were] quite a crowd 7[gathering] there 8[witness] a very special procession 9[what's] still 10[talking] about in Korea today. Now, imagine this: more than 2,000 soldiers, hundreds of horse riders, and lots of important officials, all 11[marched] alongside the king and his mother with 50 musicians 12[played] traditional instruments. When they crossed a bridge 13[making] of 36 boats on the Hangang River, you can imagine how 14[did that turn] heads! That must have been something ordinary people rarely saw. Talk about a big event! This was not just about 15[put] on a show. No, it was serious business. 16[Lasted] four days and 17[covered] 68 kilometers, the procession moved alongside the king and his mother as they made a round trip to Hwaseong Haenggung.",
+   "교과서4과 본문2",
+   "Why did all of this happen? The first thing King Jeongjo had in mind 18[were] 19[show] respect to his family. It 20[was happened] around his mother's sixtieth birthday. Back in the Joseon Dynasty, just like today, 21[turn] 60 years old had a special meaning. And his father's tomb was near Hwaseong Haenggung. He was 22[planned] 23[holding] a memorial service 24[honor] his late father. By 25[being combined] the two events, he was 26[told] everyone how much 27[did family mean] to him. But wait. There's more. King Jeongjo was also 28[being made] a statement about the Joseon Dynasty's strength. He dressed up like a military leader, 29[wore] armor and 30[sat] on a horse with his soldiers 31[marched] in perfect order. It was a way of 32[say], \"We're 33[readily] 34[protecting] our land.\" He was 35[real] 36[seriously] about 37[make] the Joseon Dynasty a powerful and successful kingdom.",
+   "교과서4과 본문3",
+   "Now, here's the twist: the procession also had something 38[doing] with Hwaseong Fortress, 39[where] 40[were] 41[building]. In King Jeongjo's mind 42[was] big plans for Hwaseong. He wanted 43[them] 44[be] a self-sufficient city with a strong military, farming, and trade as he hoped 45[making] 46[them] the new capital, away from all the political chaos in Hanyang. So King Jeongjo gathered the best talents, such as Jeong Yakyong,* and let them 47[to bring] together the finest architectural techniques of his time from both the East and the West 48[build] Hwaseong Fortress. There's more to King Jeongjo's story. He treated his people 49[good] 50[while] the construction of the fortress. They received fair wages and breaks 51[while] bad weather and 52[was] even 53[paying] when they were sick, something 54[what] 55[were] 56[unhearing] of at that time. Back then, ordinary people were 57[typical] 58[requiring] 59[work] on public projects without 60[paying]. Once people got wind of King Jeongjo's plan, workers from all over the country 61[to come] together in a rush. So, in under three years 62[were] the project 63[finishing], 64[despite] it was 65[initial] 66[thinking] to 67[have taken] about 10 years. Impressive, right?",
+   "교과서4과 본문4",
+   "Let's go back to the procession. The procession wasn't just some fancy show for ordinary people. It was 68[actual] a way for them 69[get] up close and personal with the king. King Jeongjo set up a chance 70[while] the procession for common people 71[meet] him and 72[share] their concerns. This was a big deal, 73[especial] for those 74[what] couldn't read or write. They didn't have any other way 75[tell] the king 76[that] was on their minds, so this was a direct line to him. And here's the cherry on top: through the procession, King Jeongjo made government more 77[accessibly]. 78[While] that time, the government used to 79[holding] exams 80[hire] officials every three years. So, there 81[wasn't] 82[much] chances 83[availably]. He added special exams 84[while] the procession, 85[gave] more people a shot at 86[join] the government. This move was 87[innovatively] back then and 88[making] the government more 89[diversely].",
+   "교과서4과 본문5",
+   "And guess what? King Jeongjo didn't forget a single detail. He made sure everything 90[documented] 91[proper] by 92[creation] records for the procession and the construction of Hwaseong Fortress. These construction records were 93[especial] a lifesaver when the fortress 94[damaged] 95[while] wartime. They were even part of 96[what] UNESCO recognized Hwaseong Fortress as a World Heritage Site. At first, the people at UNESCO 97[was] a bit 98[unsurely] about 99[recognize] Hwaseong Fortress as the real deal. They weren't 100[total] 101[convincing] it was 102[authentically]. But after 103[check] out 104[translating] documents and 105[compare] 106[it] with the 107[restoring] fortress, they finally came around and 108[agreeing] 109[what] the fortress had actually 110[restored] just the way it 111[meant] 112[be].",
+   "교과서4과 본문6",
+   "And among the records of the procession, there 113[is] these 114[amazed] paintings. One painting, Hwaneo Haengryeoldo, 115[don't] just feature the king's crew, but it also shows ordinary people 116[watched] along the road. It's a different take from the usual art of that time, 117[when] only focused on important figures. So 118[be] 119[kindly] to the people 120[were] a big deal for kings of the Joseon Dynasty. King Jeongjo's 1795 procession and Hwaseong Fortress 121[are stood] as proof of that spirit. Hwaseong is more than just a fortress; it symbolizes a king 122[what] cared for his people. And this is a significant part of Korean cultural heritage.\nFurther Reading",
+   "교과서4과 FR",
+   "<Suwon Hwaseong: A Fusion of Defenses and Daily Life> Suwon Hwaseong 123[is stood] 124[proud] as a UNESCO World Heritage Site, but its uniqueness often goes 125[unnoticing]. This fortress 126[artful] blends two distinct Korean styles: the mountain fortress, or sanseong, and the flat-land fortress 127[knowing] as eupseong. Historically, the sanseong served as the final defense against invaders by 128[utilize] Korea's mountainous landscape to its advantage. Defenders could fight from higher ground and 129[effective] 130[pushing] back enemies with 131[little] soldiers. A famous example of this advantage 132[were] the battle at Haengjusanseong 133[while] the Japanese invasion of Korea in the late 16th century. 134[Live] in the sanseong 135[were] not 136[practically] 137[because] scarce farmland and poor living conditions though. So 138[while] peaceful times, people 139[living] in and around the eupseong, such as Naganeupseong and Haemieupseong. 140[Surrounding] by low walls, the area 141[housing] administrative buildings, learning centers, and training grounds for soldiers. Common people, mainly farmers, 142[living] outside these walls. In times of war, they withdrew to the nearby sanseong for safety. After the Japanese invasion, a new type of fortress 143[was emerged] 144[what] combined the strengths of both the sanseong and the eupseong. 145[Building] along the natural slopes of Paldalsan Mountain, Suwon Hwaseong displayed strong walls and defenses while also 146[being served] as a center for agriculture, commerce, and housing.",
+   "260320",
+   "When 1[moved] into a new situation, many people decide 2[what] they need to master 3[that's] new. To this end, they reduce their connections to people or activities 4[what] might distract them from their goal. But that is a mistake. 5[Be] too 6[focusing] can lead to 7[become] 8[unidimensionally] ─ you have few remedies to the microstresses 9[what] 10[is] 11[inevitable] 12[bombarded] you at that time. So when things are tough 13[while] such a transition, you have almost nothing else in your life 14[counterbalance] the stress. Instead of 15[stay] 16[laser-focusing], 17[using] this transition as the jumping-off point for 18[build] new networks 19[shape] the work you want 20[doing] and whom 21[do you] want 22[doing] 23[them] with.",
+   "260321",
+   "A first step toward 24[establish] a respectful classroom learning community 25[are] acceptance of all ideas and answers ─ regardless of any obvious errors. Rich mathematical discussions cannot 26[be occurred] if this expectation is not in place. We must remember 27[what] wrong answers 28[often root] in misconceptions, and unless these ideas 29[allow] to 30[bring] to the forefront, we cannot help students 31[confronting] their thinking. Students 32[whom] 33[is] in safe learning environments 34[is] willing 35[risking] 36[share] an incorrect answer with their peers in order to grow 37[mathematical]. It is important to model and 38[expects] the acceptance of all ideas without derogatory comments. As educators we can model this by 39[record] all answers to 40[consider] without 41[give] any verbal or physical expressions 42[what] 43[indicates] agreement or disagreement with any answer. The teacher may need to practice 44[to have] a \"blank face.\" Students look to teachers as the source of correct answers. Part of 45[being built] a safe learning community 46[are] to shift this source of knowledge to the students by 47[equip] 48[themselves] 49[defend] the thinking behind their solutions.",
+   "260322",
+   "The usual intercity traveler moves slowly through the station area. The passenger may not be 50[familiarly] with the routine, 51[having] baggage to handle and check or retrieve, 52[having] a long wait for connections or 53[delaying] trains, and may require information, food, and a comfortable place 54[sit]. Commuters, on the other hand, 55[is] 56[familiarly] with the route through the station, 57[having] little or no luggage, and 58[is] usually in a hurry. They want direct access to or from local streets and transport. These two types of traffic should 59[keep] 60[separately] 61[avoid] conflict and confusion. In some large stations such as Grand Central Terminal in New York City, commuter and intercity trains arrive and depart on different levels. In smaller stations, separate platforms should 62[use] and traffic routed so 63[what] the two lines of movement 64[does] not cross. In some instances, separate stations are in use. Clear and concise direction and routing signs and other means of channelization are 65[desirably].",
+   "260323",
+   "Most performance lighting is 66[making] up of a number of different looks 67[what] we have 68[been called] lighting states. Each lighting cue triggers a change to a new state. Like actors, lighting cues usually need a motivation. This might be something very 69[obviously] such as a cue 70[requiring] 71[brighten] a room setting when an actor 72[is turned] on a light switch or the rapid increase in intensity at the end of a dance number in a traditional musical (73[knowing] as a button cue). At other times we will need a cue 74[provided] a subtle change in atmosphere over a number of minutes, 75[motivating] perhaps by the mention of a sunset or the intention to 76[slow] 77[be changed] the feel of the performance from normal to 78[threaten]. The question, 'What will lighting do for this production?' 79[need] to 80[ask] for each moment of the production, each dramatic unit or scene, and each transition.",
+   "260324",
+   "Rooms have their own \"sound\" 81[because of] they impose their own characteristics on audio signals 82[containing] within them. It's actually kind of remarkable. Sound such as music 83[comes] from headphones will sound the same everywhere. No matter 84[how] acoustical environment we are in, the headphones sound the same. That's 85[because of] the room is not part of that playback signal path. But sound such as music from a loudspeaker will sound 86[differently] in every acoustical environment. Every room 87[which] you set up the loudspeaker will cause the sound you hear 88[being] different ─ sometimes 89[dramatic] 90[differently]; that is because the room is now part of the signal path. Also, in the same room, the loudspeaker will sound 91[differently] when 92[they are] 93[placing] in different locations in the room and it will sound 94[differently] as you move around the room. Similarly, when you are 95[recorded] a musical instrument, the sound you 96[are received] at the microphone will be different in every room and the 97[recording] sound will sound 98[differently] as the instrument or the microphone 99[moving].",
+   "260329",
+   "The Industrial Revolution did more than just 100[inventing] new materials or machines. It 101[was invented] a new process for manufacturing: the modern factory. Prior to around 1850, most piano shops 102[using] an apprentice system 103[which] a master builder 104[was taught] younger workers the skills of the trade, usually over the course of many years. The larger piano shops 105[were] have specialists ─ for example, one person 106[whose] 107[specializing] in soundboards, another 108[whose] 109[making] hammers, and so on. But even the largest piano makers of that time 110[producing] no more than 5-10 pianos per year per worker, as pianos were still 111[making] 112[essential] one at a time. The development of a true piano factory 113[was occurred] first in the United States, 114[leading] by Jonas Chickering in Boston and later the Steinway family in New York City. These factories 115[leading] to improvements in both efficiency and quality. For example, one of the factories of the time 116[having] its own iron 117[casted] facility 118[which] it 119[was made] its metal plates, 120[what] 121[thought] 122[being] the best 123[availably].",
+   "260330",
+   "In a thesis-based doctoral programme, students 124[typical] 125[spending] a significant amount of time and effort 126[researched] a specific topic. While this deep dive into a particular area 127[is allowed] for thorough exploration and understanding, 128[they] can also result in 129[narrowed] the focus. As students become 130[deep] 131[absorbing] in their research, they may spend less time 132[explored] 133[relating] fields or 134[acquired] skills outside their immediate area of study. Consequently, this singular focus may limit the breadth of knowledge and skills 135[is developed] during the programme, potentially 136[hindered] students' ability 137[adapting] to diverse career paths or 138[addressing] interdisciplinary challenges. Some universities in Europe 139[recognizing] the limitations of traditional thesis-based doctoral programmes and 140[starting] to implement more 141[structuring] approaches. These 142[structuring] programmes often combine research with coursework and training in transferable skills. By 143[incorporate] coursework, seminars, workshops and internships into the curriculum, they aim to 144[providing] students with a broader skill set and better 145[preparing] them for a variety of career paths beyond academia.",
+   "260331",
+   "Research shows 146[what], by age three, children understand 147[what] imaginary objects do not come to life. This is especially clear with respect to everyday objects ─ children know 148[what] even though they imagine a pencil in an empty box, the box will 149[be remained] empty. However, emotion can sometimes 150[be disrupted] this understanding, or at least its expression. That is, even though a child knows 151[what] monsters are not real, the thought of a monster under a bed might be enough 152[making] a child 153[to refuse] 154[going] into his room at night. Indeed, research shows 155[what] children have a more difficult time 156[display] their understanding of the causal relations between imagination and reality when they 157[ask] 158[pretending] or imagine scary things, like monsters. In one study, preschool children 159[showed] an empty box and 160[asked] 161[imagining] a monster inside. All children agreed 162[what] the box 163[being] empty. However, when they 164[left] alone with the box they 165[were exhibited] fear and avoidance of 166[them].",
+   "260332",
+   "Perhaps the best-known development to 167[be emerged] from the liberation and expansion of aesthetic experience 168[being] the aesthetics of everyday life. Although there is 169[present] a flowering of work on everyday aesthetics, the possibility of aesthetic gratification in ordinary objects and events has long 170[recognized], even if 171[degrading] and 172[dismissing] by prevalent philosophical theory. 173[Wide] 174[valuing] by poets, especially Romantic poets and those in Asian traditions, the aesthetic in everyday situations has also 175[recognized] by novelists. It may be most 176[conveniently], though, 177[locate] its 178[contemporarily] 179[intellectually] origins in John Dewey's Art as Experience. In that book Dewey 180[was argued] against the separation of art from life by 181[based] aesthetic experience on the biological and cultural conditions of human life. He 182[is located] the aesthetic, not in an 183[internalizing] awareness of sensation and feeling but in \"a complete interpenetration of self and the world of objects and events.\" Further, Dewey 184[maintaining] 185[what] \"the aesthetic is the 186[clarifying] and 187[intensifying] development of traits 188[what] 189[belongs] to every 190[normal] 191[completely] experience.\"",
+   "260333",
+   "One cannot validly argue 192[what] humans are 193[moral] 194[superiorly] beings on the ground 195[what] they possess, while others lack, the capacities of a moral agent. The reason is 196[what], as far as moral standards are 197[concerning], only beings 198[what] 199[has] the capacities of a moral agent can 200[meaningful] 201[say] 202[being] either 203[moral] 204[well] or 205[moral] 206[badly]. Only moral agents can 207[judge] 208[being] 209[moral] better or worse than others, and the others in question must be moral agents 210[them]. Judgments of moral superiority are based on the comparative merits or deficiencies of the entities 211[judging], and these merits and deficiencies are all moral 212[one], that is, 213[one] 214[determining] by moral standards. One entity is 215[correct] 216[judging] 217[moral] 218[superiorly] to another if it is the case 219[what], when valid moral standards 220[apply] to both entities, the first fulfills 221[it] to a greater degree than the second. Both entities, therefore, must fall within the range of application of moral standards. This would not be the case, however, if humans were 222[judging] superior to animals and plants, since the latter are not moral agents.",
+   "260334",
+   "Such artificial 'pause fillers' as 223[machine-generating] supplements for silence may help 224[producing] a more natural-sounding cadence in 225[machine-generating] speech patterns and so 226[helping] 227[convincing] the AI's human interlocutors 228[what] they are engaging with another human. AI's 'humanity' of silence 229[emerging] in these contexts not least 230[because of] a short period of silence is likely 231[being] interpreted as a 'pause for thought', therefore 232[reinforced] the illusion 233[what] the machine is 'thinking' before responding, just as a human might. However, the technical issues 234[flagging] in AI's poor handling of higher duration and frequency silences, no less than the machine inference 235[what] silence can be 236[filling] with relevant sounds in some conversational situations, 237[is] both significant. In this context at least, the AI may be starting 238[recognise] silence not as an absence but as meaningful data. Yet the AI's confusion when 239[presenting] with substantial silences, and its understanding 240[what] short break tags are 241[equivalently] to vocal markers such as 'uh's' and 'ah's' 242[indicating] the AI's continuing preferences for sound over silence, for presence over absence.",
+   "260335",
+   "Standardization of information was an effect of printing; since it 243[was allowed] exact reproduction of information in a way 244[what] manuscript copying 245[was] not. This is evident in the contrast between the travel logs of Marco Polo and 246[that] of Christopher Columbus. After his return from China in 1295, a century and a half before printing, Polo's narrative 247[copied] in about 150 different manuscripts, with so many differences 248[what] we're not sure which version is authentic. In contrast, there is only one version of Christopher Columbus's letters about the exploration of the Caribbean in the 1490s, since they 249[fixed] in 250[printing] form and 251[wide] 252[distributing] at the time they were 253[writing]. So the certainty of accuracy was a way 254[what] printing was an improvement over the old oral-manuscript culture.",
+   "260336",
+   "Archaeological evidence suggests 255[what] various crops were being 256[cultivating] as early as 9500 BC in the Levant. Over the millennia, continuous innovations have boosted agricultural productivity while 257[being reduced] manual labor. However, the growing global population will always 258[be demanded] more food. It 259[projects] 260[what] by 2050, the world's population will increase to 9.7 billion, 261[that] will 262[be required] global food production to 263[be risen] by at least 70% to meet demand. Despite this need, only a small portion of the Earth's surface 264[are] suitable for farming due to limitations such as climate, topography, soil quality, and technology. Political and economic factors, 265[included] land ownership patterns, environmental laws, and population density, also 266[influencing] agricultural land use. In fact, the amount of land 267[is used] for agriculture 268[declining]. In 2013, around 18.6 million square miles 269[were] used for food production, 270[comparing] to 19.5 million square miles in 1991.",
+   "260337",
+   "If you are going to compare languages, it helps 271[starting] with something 272[what] you are confident you can find in all languages. 273[Taking] for example signs or words for mother and father. If we add other family relationships to this category ─ son, grandmother, aunt, brother-in-law, cousin ─ we are 274[defined] the category of kinship terminology. Comparative typological studies of kinship terminology 275[has] 276[been discovered] 277[what] languages 278[having] labels for some but not all family relationships. And the probability 279[what] a specific kin relationship 280[having] a label 281[being] predictable based on the other kinship terms in the language. For example, all languages 282[has] a core set of kinship terms ─ like mother and father. By contrast, terms for less central category members are often 283[building] up from the core terms ─ like mother-in-law and step-father. If we compare languages across the world, we can ask 284[that] kinship relationships are 285[typical] 286[expressing] with core terminology, and 287[that] relationships are 288[expressing] by 289[modified] the core terminology.",
+   "260338",
+   "There are several ways 290[what] participants in a makebelieve can 291[be communicated] things about the fictional world to other participants. Sometimes these messages are 292[emitting] naturally as a result of full participation in the fictional world ─ i.e., something 293[saying] or 294[doing] by a player while in character communicates some things 295[what] are fictional of that world. For example, a child 296[pretends] to be Peter Pan might gasp and draw a plastic knife. This might be sufficient 297[communicating] 298[what] fictionally one of Peter's enemies, such as Captain Hook, 299[approaching]. These in-character behaviors can be insufficient, however, 300[maintaining] the necessary amount of common ground about 301[that] is fictional in the world of the make-believe. At these times participants often 302[coming] at least partly out of character 303[giving] other participants the information they 304[are needed]. For example, it would be important 305[avoid] confusion about who is playing which character: \"No, you're Captain Hook, and I'm Peter Pan!\"",
+   "260339",
+   "Our intuition about states of matter 306[coming] from our experience on Earth's surface, 307[whose] the pressure is 308[uniform] low and variations in temperature 309[causing] changes in the state of matter from solid to liquid to gas. Therefore, when we 310[thinking] of melting or boiling or the creation of plasma, we intuitively 311[assuming] it 312[is reflected] an increase in temperature. This bias 313[coming] from the fact 314[what] we live in a very constant pressure environment. Even small changes in pressure, such as 315[that] we experience when under water or on high mountaintops, can have very large effects on our metabolism. But the pressure changes we experience 316[is] 317[trivially] 318[comparing] to the pressure range of the overall planetary environment. Since pressure 319[controlled] by the weight of overlying material, pressures increase rapidly with depth. 320[Imagining] the pressures 321[is generated] by the weight of rock a mile thick! For this reason a planet's pressure ranges 322[is] enormous ─ from essentially zero pressure in space to pressures of millions of atmospheres in planetary interiors.",
+   "260340",
+   "When self-experimentation and conventional experiments 323[being] both possible, the difference between them often 324[resembles with] the difference between learning and showing: Self-experiments are better for discovery but worse for 325[convinced] others 326[what] the solution 327[being] helpful or the answer 328[being] correct. Of course, most scientists want 329[doing] both ─ discover something and convince others of their discovery. Thus, psychologists should consider 330[to do] both self-experiments and conventional 331[one]. The best use of resources may often be self-experiments 332[following] by conventional 333[one]. The researcher begins with self-experiments 334[what], if all 335[go] well, 336[finding] large effects and / or 337[generating] and 338[eliminating] many hypotheses. This exploratory and theory-building phase 339[is lasted] until a convenient solution or large effect is found. Then the researcher uses self-experiments 340[finding] the procedural parameters (e.g., duration, time of day, intensity) 341[what] 342[optimizes] the solution or 343[maximizes] the effect. Only then 344[the researcher would] begin conventional experiments, 345[use] the 346[optimizing] parameters.",
+   "외부지문 본문1",
+   "Developmental psychologists have found 1[what] infants feel 2[sympathetically] distress even before they 3[full] 4[realizes] 5[what] they exist apart from other people. Even a few months after birth, infants react to a disturbance in those around them as though it were their own, 6[cried] when they see another child's tears. By one year or so, they start to 7[realizing] the misery is not their own but someone else's, though they still seem 8[confusing] over 9[how] 10[doing] about it. In research by Martin L. Hoffman, for example, a one-year-old brought his own mother over 11[comfort] a 12[cried] friend, 13[ignored] the friend's mother, 14[whom] 15[were] also in the room. This confusion is also 16[seeing] when one-year-old imitate the pain of someone else, 17[possible] to better 18[comprehending] 19[that] they are 20[felt]. For example, if another baby hurts fingers, a one-year-old might put her own fingers in her mouth 21[seeing] if she hurts, too.",
+   "외부지문 본문2",
+   "Why don't we think 22[different] more often? The reason is 23[what] we do not need 24[being] 25[creatively] for most of 26[that] we do. For example, we do not need 27[being] 28[creatively] when we are 29[driven] on the freeway, or 30[ridden] in an elevator, or 31[waited] in line at a grocery store. We are creatures of habit when it comes to the business of living. For most of our activities, these routines are 32[indispensably], without 33[it], our lives would be in chaos, and we would not get much 34[accomplishing]. If you got up this morning and 35[starting] 36[contemplate] the shape of your toothbrush or 37[question] the meaning of toast, you 38[probable] would not make it to work.",
+   "외부지문 본문3",
+   "A team of researchers found out the alarming low death rate of a small village of Roseto and started to 39[investigating] 40[them]. While 41[investigated], they realized 42[what] the secret of Roseto wasn't diet or exercise or genes or location. They looked at 43[what] the Rosetans visited one another. They learned about the 44[extend] family clans 45[what] underlay the town's social structure. They saw 46[what] 47[much] homes had three generations 48[lived] under one roof, and 49[what] 50[many] respect grandparents commanded. They noticed the particular belief in equality of the community, 51[that] 52[discouraging] the wealthy from 53[boast] about their success and 54[helping] the 55[unsuccessfully] 56[obscuring] their failures. These findings suggested the Rosetans had created a 57[close] 58[connect] and protective social structure.",
+   "외부지문 본문4",
+   "The art of writing and the art of discussion 59[is] 60[close] 61[linking]. Experienced writers 62[invariable] 63[writes] in a climate of discussion. Their writing is 64[usual] 65[embedding] in a context of others' ideas and opinions. Many writers, 66[especial] in the academic community, 67[is] 68[direct] 69[responded] to other writers - a scientist 70[reexamined] the experimental procedures of other scientists; a literary critic 71[taken] exception to a prevailing method of interpretation; a sociologist 72[offered] an alternative explanation of a colleague's data; a historian 73[being participated] as respondent in a conference. Such people 74[is] not 75[written] in a vacuum. Their ideas often originate in discussion, their writing is a response to discussion, and their papers are 76[designing] to 77[stimulating] further discussion."
+  ],
+  "영작_헤더": [
+   "교과서3과 본문1",
+   "교과서3과 본문2",
+   "교과서3과 본문3",
+   "교과서3과 본문4",
+   "교과서3과 본문5",
+   "교과서3과 본문6",
+   "교과서3과 본문7",
+   "교과서3과 FR",
+   "교과서4과 본문1",
+   "교과서4과 본문2",
+   "교과서4과 본문3",
+   "교과서4과 본문4",
+   "교과서4과 본문5",
+   "교과서4과 본문6",
+   "교과서4과 FR",
+   "외부지문 본문1",
+   "외부지문 본문2",
+   "외부지문 본문3",
+   "외부지문 본문4",
+   "260320",
+   "260321",
+   "260322",
+   "260323",
+   "260324",
+   "260329",
+   "260330",
+   "260331",
+   "260332",
+   "260333",
+   "260334",
+   "260335",
+   "260336",
+   "260337",
+   "260338",
+   "260339",
+   "260340"
+  ],
+  "영작_헤더_상세": [
+   {
+    "header": "교과서3과 본문1",
+    "start_idx": 0
+   },
+   {
+    "header": "교과서3과 본문2",
+    "start_idx": 1
+   },
+   {
+    "header": "교과서3과 본문3",
+    "start_idx": 5
+   },
+   {
+    "header": "교과서3과 본문4",
+    "start_idx": 7
+   },
+   {
+    "header": "교과서3과 본문5",
+    "start_idx": 10
+   },
+   {
+    "header": "교과서3과 본문6",
+    "start_idx": 11
+   },
+   {
+    "header": "교과서3과 본문7",
+    "start_idx": 15
+   },
+   {
+    "header": "교과서3과 FR",
+    "start_idx": 17
+   },
+   {
+    "header": "교과서4과 본문1",
+    "start_idx": 20
+   },
+   {
+    "header": "교과서4과 본문2",
+    "start_idx": 23
+   },
+   {
+    "header": "교과서4과 본문3",
+    "start_idx": 25
+   },
+   {
+    "header": "교과서4과 본문4",
+    "start_idx": 30
+   },
+   {
+    "header": "교과서4과 본문5",
+    "start_idx": 33
+   },
+   {
+    "header": "교과서4과 본문6",
+    "start_idx": 35
+   },
+   {
+    "header": "교과서4과 FR",
+    "start_idx": 36
+   },
+   {
+    "header": "260320",
+    "start_idx": 38
+   },
+   {
+    "header": "260321",
+    "start_idx": 40
+   },
+   {
+    "header": "260322",
+    "start_idx": 42
+   },
+   {
+    "header": "260323",
+    "start_idx": 43
+   },
+   {
+    "header": "260324",
+    "start_idx": 44
+   },
+   {
+    "header": "260329",
+    "start_idx": 46
+   },
+   {
+    "header": "260330",
+    "start_idx": 48
+   },
+   {
+    "header": "260331",
+    "start_idx": 50
+   },
+   {
+    "header": "260332",
+    "start_idx": 51
+   },
+   {
+    "header": "260333",
+    "start_idx": 52
+   },
+   {
+    "header": "260334",
+    "start_idx": 54
+   },
+   {
+    "header": "260335",
+    "start_idx": 55
+   },
+   {
+    "header": "260336",
+    "start_idx": 56
+   },
+   {
+    "header": "260337",
+    "start_idx": 57
+   },
+   {
+    "header": "260338",
+    "start_idx": 58
+   },
+   {
+    "header": "260339",
+    "start_idx": 59
+   },
+   {
+    "header": "260340",
+    "start_idx": 60
+   },
+   {
+    "header": "외부지문 본문1",
+    "start_idx": 61
+   },
+   {
+    "header": "외부지문 본문2",
+    "start_idx": 62
+   },
+   {
+    "header": "외부지문 본문3",
+    "start_idx": 63
+   },
+   {
+    "header": "외부지문 본문4",
+    "start_idx": 65
+   },
+   {
+    "header": "외부지문 본문1",
+    "start_idx": 66
+   },
+   {
+    "header": "외부지문 본문2",
+    "start_idx": 67
+   },
+   {
+    "header": "외부지문 본문3",
+    "start_idx": 68
+   },
+   {
+    "header": "외부지문 본문4",
+    "start_idx": 70
+   }
+  ]
+ },
+ "총_문장배열": 299,
+ "총_문장삽입": 48,
+ "총_서술형영작": 71,
+ "총_어법수정": 72
+}
