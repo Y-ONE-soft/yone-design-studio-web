@@ -1010,7 +1010,9 @@ def fetch_vocab_for_school(school, grade, log=None, olpo_lectures=None, rp_lectu
                 elif sec == "\ub17c\uc220\ud615":
                     sec_display = "\ub17c\uc220\ud615"
                 else:
-                    sec_display = sec
+                    # 장문 Practice 범위 라벨 "a~b번" → 본문a (워크북/스코프 본문N과 매칭)
+                    _mr = re.match(r"(\d+)\s*[~～\-–—]\s*\d+\s*번", sec)
+                    sec_display = ("본문%s" % _mr.group(1)) if _mr else sec
                 # 올포 강별 하위범위 필터 (분석~N / Practice N만 — 시험범위 부교재 컬럼)
                 # 문장배열/삽입/어법수정과 동일 기준으로 중요어휘도 걸러 일관성 유지
                 if olpo_scope and lec in olpo_scope and sec_display not in olpo_scope[lec]:
