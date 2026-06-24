@@ -4445,6 +4445,18 @@ def _build_lecture_map(stories, selected_lectures=None):
                 lecture_map[(src, po)] = single_lec
             continue
 
+        # 통합편(다강 합본 중 일부 강만 STEP 보유): 추출 lecture가 {N강} 마커 기반이라
+        # 신뢰 가능. 아래 그룹순서 매핑은 부분 강일 때 첫 강으로 오할당하므로
+        # (강동3 통합편02: 18강 STEP 1그룹 → lectures[0]='2'로 오라벨) 추출값을 그대로 쓴다.
+        # (광문3 짤지문 통합편은 len==1이라 위 분기에서 처리됨 → 무영향.)
+        if "통합편" in _nfc(src):  # 통합편
+            for story in file_stories:
+                lec = story.get("lecture", 0)
+                po = story.get("pageOff", -1)
+                if lec:
+                    lecture_map[(src, po)] = str(lec)
+            continue
+
         # 실제 문장배열 그룹 수가 파일명 강 수와 다를 수 있다. 학교가 시험범위
         # 강만 골라 합본을 만들면(예: 파일명 "(18,19,20,21강)"이지만 실제 수록은
         # 18,19,21강) 파일명 순서대로 라벨링하면 21강 내용이 20강으로 오라벨되어
