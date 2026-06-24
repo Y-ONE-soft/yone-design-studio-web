@@ -3911,15 +3911,23 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                     # 유지하고 질문번호만 q_num으로 보정해 정확한 지문코드를 만든다.
                     elif (q_num and q_num[0].isdigit() and not q_num.startswith("본문")
                           and len(_ec_kor) >= 6 and _ec_kor[:6].isdigit()):
-                        _qq_m = re.match(r"^(\d+)(?:[~\-](\d+))?$", q_num)
-                        if _qq_m:
-                            _yymm = _ec_kor[:4]
-                            _qq = _qq_m.group(1).zfill(2)
-                            _new = (f"{_yymm}{_qq}~{_qq_m.group(2).zfill(2)}"
-                                    if _qq_m.group(2) else f"{_yymm}{_qq}")
-                            if _new != _ec_kor:
-                                _ec_recon = True
-                            _hdr_kor = _new
+                        # q_num이 이미 완전한 6자리 출처코드(YYMMQQ)면 그대로 사용한다.
+                        # 마더텅 등은 지문 번호 마커 자체가 6자리 코드라, exam_code의
+                        # YYMM(앞 4자리)을 또 앞에 붙이면 '2203'+'220340'=2203220340처럼
+                        # 10자리로 깨진다(YYMM 중복 부착). 이미 6자리면 보정 불필요 —
+                        # q_num이 그 지문의 정확한 코드이므로 원본 exam_code처럼 무조건 채택.
+                        if re.fullmatch(r"\d{6}(?:[~\-]\d{2})?", q_num):
+                            _hdr_kor = q_num
+                        else:
+                            _qq_m = re.match(r"^(\d+)(?:[~\-](\d+))?$", q_num)
+                            if _qq_m:
+                                _yymm = _ec_kor[:4]
+                                _qq = _qq_m.group(1).zfill(2)
+                                _new = (f"{_yymm}{_qq}~{_qq_m.group(2).zfill(2)}"
+                                        if _qq_m.group(2) else f"{_yymm}{_qq}")
+                                if _new != _ec_kor:
+                                    _ec_recon = True
+                                _hdr_kor = _new
                     if _hdr_kor != prev_qnum:
                         # 보정된(첫 지문이 아닌) 모의 헤더는 다른 모의 경로와 동일하게 scope
                         # 필터 적용. 원본 exam_code 그대로/올포는 기존처럼 무조건 추가(가짜번호 방지 유지).
@@ -4900,6 +4908,63 @@ def _reconcile_olpo_labels(stories, grade, log=None):
     return stories
 
 
+def _drop_codeless_mt_version_dupes(stories, log=lambda m: None):
+    """마더텅 워크북의 '출처코드 없는' 버전중복 파일 스토리를 제거.
+
+    한 워크북 번호(예: 워크북03 마더텅15강)에 (세로)/(가로)/(수정)/(예전기출) 등
+    레이아웃만 다른 버전 파일이 여러 개 추출되면, 출처코드(examCode, YYMMQQ)를 가진
+    정본(예: 세로)과 코드가 없는 재구성본(가로/수정)이 함께 들어온다. 코드 없는 스토리는
+    헤더가 페이지순서 추정(_mt_lookup)이나 '마더텅NN 본문M' 폴백으로 붙어서
+      - 문장삽입에서 엉뚱한 지문이 정본 YYMMQQ 슬롯을 차지(220340에 191140 오삽입),
+      - '마더텅15 본문1·2' 같은 가짜 헤더 생성(=정본 250640/250940과 중복),
+      - 영작 헤더/본문 정렬 어긋남(같은 코드로 붕괴)
+    을 유발한다. 근본 해법은 콘텐츠 폴더에서 강별 1파일만 남기는 것이지만, 미러/구버전
+    잔존으로 중복이 추출돼도 안전하도록 파서에서 방어한다.
+
+    규칙(보수적): 같은 '워크북NN' 번호의 마더텅 출처 중 examCode를 1개라도 가진 소스가
+    있으면, 그 번호의 '전부 코드 없는' 소스 스토리를 제거한다. 코드 있는 정본이 같은
+    지문을 모두 담으므로 콘텐츠 손실이 없다(정본=세로/예전기출은 무변경 → 기존 dedup이
+    그대로 처리). 마더텅이 아닌 워크북(리딩파워/올포/교과서 등)과, 코드 정본이 아예 없는
+    마더텅(전부 코드 없음 = 마더텅7강)은 건드리지 않는다.
+    """
+    from collections import defaultdict
+
+    def _wbnum(src):
+        m = re.search(r"워크북\s*(\d+)", _nfc(src))
+        return m.group(1) if m else None
+
+    src_has_code = {}               # source_file(NFC) -> bool(코드 보유)
+    num_sources = defaultdict(set)  # 워크북번호 -> {source_file(NFC)}
+    for s in stories:
+        src = _nfc(s.get("source_file", ""))
+        if "마더텅" not in src:   # 마더텅 출처만 대상
+            continue
+        num = _wbnum(src)
+        if not num:
+            continue
+        num_sources[num].add(src)
+        if s.get("examCode", ""):
+            src_has_code[src] = True
+        else:
+            src_has_code.setdefault(src, False)
+
+    drop_sources = set()
+    for num, srcs in num_sources.items():
+        codeful = sorted(s for s in srcs if src_has_code.get(s))
+        codeless = sorted(s for s in srcs if not src_has_code.get(s))
+        if codeful and codeless:
+            for s in codeless:
+                drop_sources.add(s)
+                log(f"  [마더텅 버전] 코드없는 중복판 제외: "
+                    f"{os.path.basename(s)} (정본: "
+                    f"{', '.join(os.path.basename(c) for c in codeful)})")
+
+    if not drop_sources:
+        return stories
+    return [s for s in stories
+            if _nfc(s.get("source_file", "")) not in drop_sources]
+
+
 def parse_extracted(extracted_path, vocab_left, vocab_right,
                     school, grade, exam_period, job_dir, log,
                     grammar_word_lines=None, lesson_block_counts=None,
@@ -4919,6 +4984,9 @@ def parse_extracted(extracted_path, vocab_left, vocab_right,
         extracted = json.load(f)
 
     stories = extracted.get("stories", [])
+    # 마더텅 버전중복 파일(코드없는 가로/수정 등)을 정본(코드있는 세로/예전기출)이
+    # 있을 때 제거 — 문장삽입 오삽입·가짜 '본문N' 헤더·영작 코드붕괴 방어.
+    stories = _drop_codeless_mt_version_dupes(stories, log)
     # 올포 순서배열 재번호로 어긋난 본문 라벨을 어법수정 기준으로 교차 교정
     # (in-scope 지문이 헤더 충돌 dedup으로 누락되는 것 방지 — 고1/고2 전용)
     _reconcile_olpo_labels(stories, grade, log)
