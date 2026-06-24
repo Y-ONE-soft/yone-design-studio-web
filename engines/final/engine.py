@@ -768,6 +768,8 @@ class FinalEngine(BaseEngine):
         )
         content_base = cfg.get("gdrive_content_base", "")
         grammar_word_lines = []
+        _dl_subject = None   # 딥러닝 어법 보충용 (교과서 scope에서 subject/publisher 캡처)
+        _dl_publisher = None
         # 고2 올포기출 → 모의고사 docx 매핑 시 사용 (시험범위 16지문 set)
         _olpo_target_codes_set = None
         # 같은 워드 파일이 여러 scope에서 매칭되는 케이스(예: "모의고사25.3"과 "25년3월02"가
@@ -805,6 +807,8 @@ class FinalEngine(BaseEngine):
                 # 교과서 → 교과서 작업 폴더 (과별로 개별 탐색하여 레슨 추적)
                 textbook_info = cfg.get("school_textbook_map", {}).get(exam_period, {}).get(school)
                 if textbook_info:
+                    _dl_subject = textbook_info["subject"]
+                    _dl_publisher = textbook_info["publisher"]
                     for lesson in textbook_info["lessons"]:
                         lesson_files = find_grammar_word_files(
                             content_base,
@@ -1373,6 +1377,34 @@ class FinalEngine(BaseEngine):
                             f"파일={os.path.basename(_ext_doc)})")
         except Exception as _e:
             log(f"  [외부지문어법] 처리 실패: {_e}")
+
+        # 5-dl) 딥러닝 어법 보충 — "Deep Learning" 폴더(과 폴더 밖)의 어법수정 문제지는
+        #   find_grammar_word_files(과 폴더만 스캔)에서 누락됨. 배열/삽입엔 워크북에서
+        #   딥러닝이 들어가 있으므로 어법도 보충한다. 라벨 "교과서N과 딥러닝"으로 추가하면
+        #   6.1) 재정렬이 문장배열의 딥러닝 위치에 자동 정렬(배열에 없으면 자동 제외).
+        if _dl_subject and _dl_publisher:
+            try:
+                from engines.final.grammar_word_parser import find_deeplearning_grammar_files
+                _dl_files = find_deeplearning_grammar_files(content_base, _dl_subject, _dl_publisher, log=log)
+                _dl_added = 0
+                for _dlf in _dl_files:
+                    for _b in parse_grammar_word(_dlf):
+                        _ml = re.search(r"L\s*(\d+)\s*-\s*본문", _b.get("header", ""))
+                        if not _ml:
+                            continue   # Appendix 등 본문 헤더 없는 junk 블록 스킵
+                        _dl_text = (_b.get("text") or "").strip()
+                        if not _dl_text:
+                            continue
+                        _dl_hdr = f"교과서{_ml.group(1)}과 딥러닝"
+                        if _dl_hdr in grammar_word_lines:
+                            continue   # 중복 방지
+                        grammar_word_lines.append(_dl_hdr)
+                        grammar_word_lines.append(_dl_text)
+                        _dl_added += 1
+                if _dl_added:
+                    log(f"[어법수정] 딥러닝 보충: {_dl_added}개 지문 추가")
+            except Exception as _e_dl:
+                log(f"  [딥러닝어법] 처리 실패: {_e_dl}")
 
         # 5) 중요어휘 자동 추출
         vocab_left = ""
