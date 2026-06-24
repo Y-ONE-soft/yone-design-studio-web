@@ -660,7 +660,10 @@ def fetch_olpo_scope_for_school(school, log=None, exam_period=None):
         for _m in (m_an, m_pr, m_bm):
             if _m:
                 n = int(_m.group(1))
-                allowed = {"분석"} | set("본문%d" % i for i in range(1, n + 1))
+                allowed = set("본문%d" % i for i in range(1, n + 1))
+                # "Practice N만"은 장문 Practice 본문만(분석 제외); "분석~N"/"본문N까지"는 분석 포함
+                if _m is not m_pr:
+                    allowed.add("분석")
                 break
         if allowed is None:
             continue   # 인식 못한 단서 → 제한 없음(보수적, 누락 방지)
