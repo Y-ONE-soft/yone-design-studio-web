@@ -121,7 +121,12 @@ def capture(job_ids):
             holder["mt_labels"] = P.get_mothertongue_section_labels()
             holder["in_parse"] = True
             try:
-                return real_pe(*a, **k)
+                result = real_pe(*a, **k)
+                # parse_extracted 가 막 쓴 content.json (engine.parse 의 6.5 중요어휘 폴백 등
+                # 후처리 전) = replay(parse_extracted 직접호출)와 동일 범위. 이걸 golden 으로.
+                with open(result, encoding="utf-8") as _cf:
+                    holder["golden_content"] = json.load(_cf)
+                return result
             finally:
                 holder["in_parse"] = False
 
@@ -153,8 +158,7 @@ def capture(job_ids):
                 real_pe, real_fs, real_mg)
             os.environ.pop("_REUSE_EXTRACTED", None)
 
-        cpath = os.path.join(tmp, "content.json")
-        if not ok or "kwargs" not in holder or not os.path.isfile(cpath):
+        if not ok or "kwargs" not in holder or "golden_content" not in holder:
             print(f"[FAIL] {jid}: parse_extracted 미실행 또는 content.json 미생성")
             shutil.rmtree(tmp, ignore_errors=True)
             continue
@@ -171,9 +175,8 @@ def capture(job_ids):
         with open(os.path.join(out, "inputs.pkl"), "wb") as f:
             pickle.dump(payload, f)
         shutil.copy(ex, os.path.join(out, "extracted.json"))
-        cj = json.load(open(cpath, encoding="utf-8"))
         with open(os.path.join(out, "golden.json"), "w", encoding="utf-8") as f:
-            f.write(_norm(cj, [tmp]))
+            f.write(_norm(holder["golden_content"], [tmp]))
         json.dump(
             {"school": school, "grade": grade, "exam_period": exam, "source_job": jid,
              "fetch_scope_calls": len(holder["fetch_scope"]),
