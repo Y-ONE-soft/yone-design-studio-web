@@ -2156,6 +2156,55 @@ def _parse_olpo_lectures(scope_text):
     return result
 
 
+def _parse_scope_lessons(scope_text):
+    """워크북 scope 문자열에서 교과서 과 번호와 올포 강 번호를 분리 추출.
+
+    콤마 위치가 '3,4과'(숫자 사이) / '3과,4과'(과 뒤) 어느 쪽이든 모든 과를
+    포착한다(finditer). 기존 `re.search(r"(\\d+(?:,\\d+)*)\\s*과")`는 '3과,4과'에서
+    첫 과('3')만 잡아 4과가 통째로 누락됐다(배재1 SL 라벨 시프트의 근본 원인).
+
+    반환: (textbook_lessons: [str], olpo_lectures: [int], has_sl: bool)
+      '능률민3과,4과,SL2'      -> (['3','4'], [],   True)
+      '능률오2과,올림포스11강' -> (['2'],     [11], False)
+      'YBM김3,4과'             -> (['3','4'], [],   False)
+      '올림포스12,13,14,15,16강' -> ([],      [12,13,14,15,16], False)
+    """
+    textbook = []
+    for _m in re.finditer(r"(\d+(?:\s*,\s*\d+)*)\s*과", scope_text):
+        for _n in _m.group(1).split(","):
+            _n = _n.strip()
+            if _n.isdigit() and _n not in textbook:
+                textbook.append(_n)
+    olpo = []
+    for _m in re.finditer(r"(\d+(?:\s*,\s*\d+)*)\s*강", scope_text):
+        for _n in _m.group(1).split(","):
+            _n = _n.strip()
+            if _n.isdigit() and int(_n) not in olpo:
+                olpo.append(int(_n))
+    return textbook, olpo, ("SL" in scope_text)
+
+
+def _olpo_or_tb_header(src, block_lecture, olpo_label, counters):
+    """올포 src 블록의 헤더 결정 (문장배열/문장삽입 공용).
+
+    혼합 워크북(예: '능률오2과,올림포스11강')에서 block_lecture가 그 워크북의
+    올포 강 목록에 없고 교과서 과 목록에 있으면 '교과서{과}과 ...'로 분류한다.
+    src가 '올림포스'를 포함해 _src_is_olpo가 True여도, lecture가 교과서 과 번호면
+    올포로 오라벨되지 않도록 방지(광문1 교과서2과 → '올포 2강' 버그).
+    그 외(순수 올포 강)는 기존과 동일하게 '올포 {강}강 ...'.
+    counters: {(src,lecture): n} 카운터 dict — 호출부에서 ARR/INS 분리 전달.
+    """
+    _scm = re.search(r"\(([^)]+)\)", src)
+    _tb_l, _ol_l, _ = _parse_scope_lessons(_scm.group(1) if _scm else "")
+    _is_tb = bool(_tb_l) and str(block_lecture) in _tb_l and block_lecture not in _ol_l
+    _prefix = ("교과서%d과" % block_lecture) if _is_tb else ("올포 %d강" % block_lecture)
+    if olpo_label:
+        return "%s %s" % (_prefix, olpo_label)
+    _key = (src, block_lecture)
+    counters[_key] = counters.get(_key, 0) + 1
+    return "%s 본문%d" % (_prefix, counters[_key])
+
+
 def _reassign_olpo_lectures(blocks, page_off_key="page_off"):
     """올포 블록 중 lecture=0(미할당)인 블록만 page_off 기반 강 그룹핑으로 재할당.
 
@@ -2406,19 +2455,18 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
         for _src, _blocks_info in _tb_page_map.items():
             _sm = re.search(r"\(([^)]+)\)", _src)
             _scope_txt = _sm.group(1) if _sm else ""
-            _lm = re.search(r"(\d+(?:,\d+)*)\s*과", _scope_txt)
+            # 모든 과 번호 포착(finditer) — '3과,4과' 형식에서 4과 누락 방지.
+            _lessons, _olpo_lecs_scope, _has_sl = _parse_scope_lessons(_scope_txt)
             # Project 워크북 (예: 워크북02(YBM(김)Project1)) — 과 매칭 실패 시 src에서 직접 추출
-            _proj_m = re.search(r"Project\s*(\d+)", _src, re.IGNORECASE) if not _lm else None
+            _proj_m = re.search(r"Project\s*(\d+)", _src, re.IGNORECASE) if not _lessons else None
             if _proj_m:
                 _proj_label = f"Project{_proj_m.group(1)}"
                 _tb_lesson_map[_src] = {}
                 for _idx, _po in _blocks_info:
                     _tb_lesson_map[_src][_idx] = f"교과서{_proj_label} 본문{_idx + 1}"
                 continue
-            if not _lm:
+            if not _lessons:
                 continue
-            _lessons = [l.strip() for l in _lm.group(1).split(",")]
-            _has_sl = "SL" in _scope_txt
             _all_lessons = list(_lessons)
             if _has_sl:
                 _all_lessons.append("SL")
@@ -2434,13 +2482,22 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
                         _tb_lesson_map[_src][_idx] = f"교과서{_all_lessons[0]}과 본문{_idx + 1}"
                 continue
 
-            # 실제 블록 수를 과 수로 균등 분할
+            # 과별 블록 경계: 어법수정 Word 기반 과별 본문 수(lesson_block_counts)가
+            # _all_lessons를 정확히 커버하고 추출 블록 수와 합이 일치하면 그 경계를
+            # ground truth로 사용(불균등 과 길이 대응). 아니면 기존 균등분할 폴백.
+            _lbc_counts = None
+            if lesson_block_counts:
+                _cand = [int(lesson_block_counts.get(_l, 0)) for _l in _all_lessons]
+                if all(_c > 0 for _c in _cand) and sum(_cand) == n_blocks:
+                    _lbc_counts = _cand
             _bpl = max(1, n_blocks // len(_all_lessons))
             _tb_lesson_map[_src] = {}
             _offset = 0
             for _li, _lesson in enumerate(_all_lessons):
-                # 마지막 과는 나머지 블록 전부 할당
-                if _li == len(_all_lessons) - 1:
+                if _lbc_counts is not None:
+                    _count = _lbc_counts[_li]
+                elif _li == len(_all_lessons) - 1:
+                    # 마지막 과는 나머지 블록 전부 할당
                     _count = n_blocks - _offset
                 else:
                     _count = _bpl
@@ -2465,9 +2522,10 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
         for _src, _blocks_info in _tb_page_map.items():
             _sm = re.search(r"\(([^)]+)\)", _src)
             _scope_txt = _sm.group(1) if _sm else ""
-            _lm = re.search(r"(\d+(?:,\d+)*)\s*과", _scope_txt)
+            # 모든 과 번호 포착(finditer) — _tb_lesson_map과 동일 기준.
+            _lessons, _olpo_lecs_scope, _has_sl = _parse_scope_lessons(_scope_txt)
             # Project 워크북 처리
-            _proj_m = re.search(r"Project\s*(\d+)", _src, re.IGNORECASE) if not _lm else None
+            _proj_m = re.search(r"Project\s*(\d+)", _src, re.IGNORECASE) if not _lessons else None
             if _proj_m:
                 _proj_label = f"Project{_proj_m.group(1)}"
                 _unique_pos = sorted({_po for _, _po in _blocks_info if _po >= 0})
@@ -2476,10 +2534,8 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
                     _m[_po] = _proj_label
                 _tb_story_lesson[_src] = _m
                 continue
-            if not _lm:
+            if not _lessons:
                 continue
-            _lessons = [l.strip() for l in _lm.group(1).split(",")]
-            _has_sl = "SL" in _scope_txt
             _all_lessons = list(_lessons)
             if _has_sl:
                 _all_lessons.append("SL")
