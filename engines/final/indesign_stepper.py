@@ -1071,6 +1071,7 @@ def _build_vol1_jsx(indd_path, data_path, pdf_path, marker, log_file, pid, grade
         # 공백 줄이 되어 왼쪽/오른쪽 첫 문장 시작 높이가 어긋난다.
         _vocab_header_re = _re.compile(
             r'^(?:\d{6}(?:~\d{2})?|'
+            r'\ub9c8\ub354\ud145\s+\d+\uac15\s+\d+(?:[~\-]\d+)?|'  # \ub9c8\ub354\ud145 N\uac15 M
             r'\uc62c\ud3ec\s+\d+\uac15\s+\S+|'
             r'(?:\ub9ac\ub529\ud30c\uc6cc\s+)?(?:\d+\uac15|test\d+)\s+(?:Ex\d+|\d{2}(?:[~\-]\d{2})?|Gateway)|'
             r'\uad50\uacfc\uc11c\S+?\s+\ubcf8\ubb38\d+)\s*\n',
