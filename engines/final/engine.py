@@ -770,6 +770,7 @@ class FinalEngine(BaseEngine):
         grammar_word_lines = []
         _dl_subject = None   # 딥러닝 어법 보충용 (교과서 scope에서 subject/publisher 캡처)
         _dl_publisher = None
+        _dl_lessons = set()  # 시험범위 과 번호 (딥러닝 보충 필터 — 범위 밖 과 제외)
         # 고2 올포기출 → 모의고사 docx 매핑 시 사용 (시험범위 16지문 set)
         _olpo_target_codes_set = None
         # 같은 워드 파일이 여러 scope에서 매칭되는 케이스(예: "모의고사25.3"과 "25년3월02"가
@@ -809,6 +810,7 @@ class FinalEngine(BaseEngine):
                 if textbook_info:
                     _dl_subject = textbook_info["subject"]
                     _dl_publisher = textbook_info["publisher"]
+                    _dl_lessons = {re.sub(r"과$", "", _l).strip() for _l in textbook_info["lessons"]}
                     for lesson in textbook_info["lessons"]:
                         lesson_files = find_grammar_word_files(
                             content_base,
@@ -1392,6 +1394,8 @@ class FinalEngine(BaseEngine):
                         _ml = re.search(r"L\s*(\d+)\s*-\s*본문", _b.get("header", ""))
                         if not _ml:
                             continue   # Appendix 등 본문 헤더 없는 junk 블록 스킵
+                        if _dl_lessons and _ml.group(1) not in _dl_lessons:
+                            continue   # 시험범위 밖 과의 딥러닝 제외 (예: 1,2과 파일)
                         _dl_text = (_b.get("text") or "").strip()
                         if not _dl_text:
                             continue
