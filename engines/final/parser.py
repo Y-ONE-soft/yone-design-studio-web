@@ -3016,20 +3016,18 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
         for _isrc, _iblocks in _ins_page_map.items():
             _ism = re.search(r"\(([^)]+)\)", _isrc)
             _iscope = _ism.group(1) if _ism else ""
-            _ilm = re.search(r"(\d+(?:,\d+)*)\s*과", _iscope)
+            # 모든 과 번호 포착(finditer) — 문장배열 _tb_lesson_map과 동일 기준.
+            _ilessons, _iolpo_lecs, _ihas_sl = _parse_scope_lessons(_iscope)
             # Project 워크북 처리 (예: 워크북02(YBM(김)Project1))
-            _iproj_m = re.search(r"Project\s*(\d+)", _isrc, re.IGNORECASE) if not _ilm else None
+            _iproj_m = re.search(r"Project\s*(\d+)", _isrc, re.IGNORECASE) if not _ilessons else None
             if _iproj_m:
                 _iproj_label = f"Project{_iproj_m.group(1)}"
                 _ins_lesson_map[_isrc] = {}
                 for _idx, _po in _iblocks:
                     _ins_lesson_map[_isrc][_idx] = f"교과서{_iproj_label} 본문{_idx + 1}"
                 continue
-            if not _ilm:
+            if not _ilessons:
                 continue
-            _ilessons = [l.strip() for l in _ilm.group(1).split(",")]
-            # SL 포함 여부 체크
-            _ihas_sl = "SL" in _iscope
             _iall_lessons = list(_ilessons)
             if _ihas_sl:
                 _iall_lessons.append("SL")
@@ -3044,12 +3042,20 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
                     else:
                         _ins_lesson_map[_isrc][_idx] = f"교과서{_iall_lessons[0]}과 본문{_idx + 1}"
                 continue
-            # 실제 블록 수 기준 균등 분할
+            # 과별 블록 경계: lesson_block_counts(어법수정 ground truth)가 _iall_lessons를
+            # 정확히 커버하고 블록 수 합이 일치하면 그 경계 사용. 아니면 균등분할 폴백.
+            _ilbc_counts = None
+            if lesson_block_counts:
+                _icand = [int(lesson_block_counts.get(_l, 0)) for _l in _iall_lessons]
+                if all(_c > 0 for _c in _icand) and sum(_icand) == _in_blocks:
+                    _ilbc_counts = _icand
             _ibpl = max(1, _in_blocks // len(_iall_lessons))
             _ins_lesson_map[_isrc] = {}
             _ioff = 0
             for _ili, _il in enumerate(_iall_lessons):
-                if _ili == len(_iall_lessons) - 1:
+                if _ilbc_counts is not None:
+                    _ic = _ilbc_counts[_ili]
+                elif _ili == len(_iall_lessons) - 1:
                     _ic = _in_blocks - _ioff
                 else:
                     _ic = _ibpl
@@ -3071,9 +3077,10 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
         for _isrc, _iblocks in _ins_page_map.items():
             _ism = re.search(r"\(([^)]+)\)", _isrc)
             _iscope = _ism.group(1) if _ism else ""
-            _ilm = re.search(r"(\d+(?:,\d+)*)\s*과", _iscope)
+            # 모든 과 번호 포착(finditer) — _ins_lesson_map과 동일 기준.
+            _ilessons, _iolpo_lecs, _ihas_sl = _parse_scope_lessons(_iscope)
             # Project 워크북 처리
-            _iproj_m = re.search(r"Project\s*(\d+)", _isrc, re.IGNORECASE) if not _ilm else None
+            _iproj_m = re.search(r"Project\s*(\d+)", _isrc, re.IGNORECASE) if not _ilessons else None
             if _iproj_m:
                 _iproj_label = f"Project{_iproj_m.group(1)}"
                 _unique_pos_i = sorted({_po for _, _po in _iblocks if _po >= 0})
@@ -3082,10 +3089,8 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
                     _mi[_po] = _iproj_label
                 _ins_story_lesson[_isrc] = _mi
                 continue
-            if not _ilm:
+            if not _ilessons:
                 continue
-            _ilessons = [l.strip() for l in _ilm.group(1).split(",")]
-            _ihas_sl = "SL" in _iscope
             _iall_lessons = list(_ilessons)
             if _ihas_sl:
                 _iall_lessons.append("SL")
