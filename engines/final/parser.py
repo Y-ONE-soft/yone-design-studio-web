@@ -3500,7 +3500,7 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                 vol1_sentence_blocks=None, textbook_limits=None,
                 rp_sheet_data=None, olpo_lecture_map=None,
                 textbook_rm_lessons=None, olpo_scope=None,
-                exclude_writing=False):
+                exclude_writing=False, grade=None):
     """Vol2 데이터 구성.
 
     allowed_olpo_lectures: 허용 올포 강 번호 set. 없으면 전체 허용.
@@ -3946,6 +3946,13 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
             #  아래 조건에 걸리지 않아 기존 동작 그대로다.)
             _po = ""
             if _lec == 0 and not _ec and re.match(r"^(본문|FR|RM|Project)", str(_q)):
+                _po = w.get("page_off", -1)
+            elif grade == "고3":
+                # 고3: test2 스토리의 lecture 필드가 stale(직전 강 번호=30)이라
+                # 30강 q03과 test2 q03이 (source,lecture,q_num,exam_code) 동일 키로
+                # 병합돼 pairs/헤더 start_idx가 어긋나고 그 뒤 강들까지 연쇄로 섞인다.
+                # 각 강·test2는 단일 page_off에 모여 q_num으로 분리되므로, page_off를
+                # 키에 더하면 강↔test2가 정확히 분리된다(같은 강 내 과분할 없음).
                 _po = w.get("page_off", -1)
             return (_nfc(w.get("source", "")), _lec, _q, _ec, _po)
         _kor_by_q = OrderedDict()
