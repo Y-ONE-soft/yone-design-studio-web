@@ -5715,7 +5715,7 @@ def parse_extracted(extracted_path, vocab_left, vocab_right,
                        olpo_lecture_map=olpo_lecture_map,
                        textbook_rm_lessons=textbook_rm_lessons,
                        olpo_scope=olpo_scope,
-                       exclude_writing=exclude_writing)
+                       exclude_writing=exclude_writing, grade=grade)
 
     # Vol1 문장배열의 헤더 목록을 Vol2 영작에 공유
     # 어법수정은 독자 헤더가 있으므로 덮어쓰지 않음
