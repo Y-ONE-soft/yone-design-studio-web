@@ -2283,6 +2283,31 @@ def _parse_olpo_lectures(scope_text):
     return result
 
 
+def _wb_scope(src):
+    """워크북 파일명에서 시험범위(괄호 안)를 중첩괄호 안전하게 추출.
+
+    기존 r"\\(([^)]+)\\)"는 '능률(민)3과'의 내부 ')'에 끊겨 '능률(민'만 잡아 교과서
+    분류에 실패한다(한영1 교과서3과 ARR/INS/영작 오라벨). '워크북NN(' 뒤를 균형 괄호로
+    끝까지 잡는다(scope_parser.parse_scope_from_filename과 동일 규칙). 워크북 패턴이
+    없으면 첫 괄호 그룹으로 폴백 → 중첩 없는 출처(마더텅15강·25년6월·리딩파워N강 등)는
+    기존과 결과가 완전히 동일(드롭인).
+    """
+    fn = _nfc(src or "")
+    m_start = re.search(r"워크북\s*\d+\s*\(", fn)
+    if m_start:
+        start = m_start.end()
+        depth = 1
+        for i in range(start, len(fn)):
+            if fn[i] == "(":
+                depth += 1
+            elif fn[i] == ")":
+                depth -= 1
+                if depth == 0:
+                    return fn[start:i]
+    m = re.search(r"\(([^)]+)\)", fn)
+    return m.group(1) if m else ""
+
+
 def _parse_scope_lessons(scope_text):
     """워크북 scope 문자열에서 교과서 과 번호와 올포 강 번호를 분리 추출.
 
@@ -2580,8 +2605,7 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
         # 핵심: 실제 추출된 블록 수를 기준으로 균등 분할. lesson_block_counts는 비율 참고용.
         _tb_lesson_map = {}
         for _src, _blocks_info in _tb_page_map.items():
-            _sm = re.search(r"\(([^)]+)\)", _src)
-            _scope_txt = _sm.group(1) if _sm else ""
+            _scope_txt = _wb_scope(_src)
             # 모든 과 번호 포착(finditer) — '3과,4과' 형식에서 4과 누락 방지.
             _lessons, _olpo_lecs_scope, _has_sl = _parse_scope_lessons(_scope_txt)
             # Project 워크북 (예: 워크북02(YBM(김)Project1)) — 과 매칭 실패 시 src에서 직접 추출
@@ -2647,8 +2671,7 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
         # 블록은 워크북에 적힌 {본문N}/{Further Reading} 마커로 헤더 부여 (균등 분할 금지).
         _tb_story_lesson = {}  # src -> {page_off: lesson_label}
         for _src, _blocks_info in _tb_page_map.items():
-            _sm = re.search(r"\(([^)]+)\)", _src)
-            _scope_txt = _sm.group(1) if _sm else ""
+            _scope_txt = _wb_scope(_src)
             # 모든 과 번호 포착(finditer) — _tb_lesson_map과 동일 기준.
             _lessons, _olpo_lecs_scope, _has_sl = _parse_scope_lessons(_scope_txt)
             # Project 워크북 처리
@@ -3141,8 +3164,7 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
 
         _ins_lesson_map = {}
         for _isrc, _iblocks in _ins_page_map.items():
-            _ism = re.search(r"\(([^)]+)\)", _isrc)
-            _iscope = _ism.group(1) if _ism else ""
+            _iscope = _wb_scope(_isrc)
             # 모든 과 번호 포착(finditer) — 문장배열 _tb_lesson_map과 동일 기준.
             _ilessons, _iolpo_lecs, _ihas_sl = _parse_scope_lessons(_iscope)
             # Project 워크북 처리 (예: 워크북02(YBM(김)Project1))
@@ -3202,8 +3224,7 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
         # passage_label 기반 매핑: src+page_off → 과 (문장배열과 동일 로직)
         _ins_story_lesson = {}
         for _isrc, _iblocks in _ins_page_map.items():
-            _ism = re.search(r"\(([^)]+)\)", _isrc)
-            _iscope = _ism.group(1) if _ism else ""
+            _iscope = _wb_scope(_isrc)
             # 모든 과 번호 포착(finditer) — _ins_lesson_map과 동일 기준.
             _ilessons, _iolpo_lecs, _ihas_sl = _parse_scope_lessons(_iscope)
             # Project 워크북 처리
@@ -3712,8 +3733,7 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                 if not q_num or q_num.startswith("본문") or not q_num[0].isdigit():
                     return True
                 src_nfc = _nfc(item.get("source", ""))
-                _sm = re.search(r"\(([^)]+)\)", src_nfc)
-                _scope = _sm.group(1) if _sm else ""
+                _scope = _wb_scope(src_nfc)
                 if not re.search(r"\d{2}\ub144\s*\d{1,2}\uc6d4|\ubaa8\uc758\uace0\uc0ac", _scope):
                     return True  # 모의고사 아님
                 _mm = re.match(r"(\d+)(?:[~\-](\d+))?", q_num)
@@ -3790,8 +3810,7 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                 continue
             if not re.match(r"^(본문|FR|RM)", str(_w.get("q_num", ""))):
                 continue
-            _sm = re.search(r"\(([^)]+)\)", _nfc(_w.get("source", "")))
-            _ml = re.search(r"([\d,]+)\s*과", _sm.group(1) if _sm else "")
+            _ml = re.search(r"([\d,]+)\s*과", _wb_scope(_w.get("source", "")))
             if not _ml:
                 continue
             _labs = [x.strip() for x in _ml.group(1).split(",") if x.strip()]
@@ -3819,8 +3838,7 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                 if not q.startswith("\ubcf8\ubb38"):
                     return True
                 src_nfc = _nfc(item.get("source", ""))
-                _sm = re.search(r"\(([^)]+)\)", src_nfc)
-                _scope = _sm.group(1) if _sm else ""
+                _scope = _wb_scope(src_nfc)
                 # scope에서 과 번호 추출
                 lesson = _item_lesson_num(item)
                 if lesson is None:
@@ -3854,8 +3872,7 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                 if q not in ("FR", "RM"):
                     return True
                 src_nfc = _nfc(item.get("source", ""))
-                _sm = re.search(r"\(([^)]+)\)", src_nfc)
-                _scope = _sm.group(1) if _sm else ""
+                _scope = _wb_scope(src_nfc)
                 # scope에서 과 번호 추출
                 lesson = _item_lesson_num(item)
                 if lesson is None:
