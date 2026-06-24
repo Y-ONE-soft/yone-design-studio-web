@@ -63,6 +63,12 @@ _MT_SECTION_LABELS = None
 # 역매핑 캐시: {YYMMQQ: (강번호, 지문순번)} — 출처코드를 "마더텅 N강 M" 라벨로 환원.
 # _MT_MAP에서 lazy 빌드, load_mothertongue_map 호출 시 무효화(None).
 _MT_REVERSE = None
+# 이번 job이 실제로 마더텅 워크북(.indd source_file에 "마더텅")을 쓰는지 여부.
+# False면 마더텅 라벨 환원·(강,지문)정렬을 전혀 적용하지 않는다 — 다른 학교 모의고사
+# YYMMQQ가 마더텅 출처 xlsx 코드와 겹쳐(같은 기출) 오라벨/오정렬되는 사고 방지.
+# (마더텅 출처코드 192개 = 일반 모의고사 코드와 동일 → _MT_MAP 로드 여부만으로 가르면 안 됨.)
+# parse_extracted 진입부에서 job마다 재계산. 비-마더텅 job(모든 모의고사 학교)=False.
+_MT_JOB_ACTIVE = False
 
 
 def _mt_reverse_map():
@@ -104,6 +110,10 @@ def _relabel_mt_in_content(content, log=lambda m: None):
     순수 모의고사 YYMMQQ 등)는 역매핑에 없으므로 그대로 둔다. 정렬은 이미
     _canonical_order_key가 (강,지문순)으로 처리했으므로 여기서는 순서 변경 없음.
     """
+    # 마더텅 워크북을 쓰는 job에서만 환원 — 비-마더텅 job(모의고사 학교)은 코드가
+    # 마더텅 출처 xlsx와 겹쳐도 절대 건드리지 않는다.
+    if not _MT_JOB_ACTIVE:
+        return content
     rev = _mt_reverse_map()
     if not rev or not isinstance(content, dict):
         return content
@@ -1934,10 +1944,12 @@ def _canonical_order_key(header, source=""):
     # 모의고사 YYMMQQ
     m_mock = re.match(r'^(\d{6})(?:~\d+)?', h)
     if m_mock:
-        # 마더텅 출처코드면 (강, 지문순번)으로 정렬 — 시험연도순이 아니라 강·지문순.
-        _mt = _mt_reverse_map().get(m_mock.group(1))
-        if _mt:
-            return (2, _mt[0], _mt[1], 0)
+        # 마더텅 job에서만 (강, 지문순번)으로 정렬 — 시험연도순이 아니라 강·지문순.
+        # 비-마더텅 job(모의고사 학교)은 절대 건드리지 않는다(코드 겹쳐도 YYMMQQ 순 유지).
+        if _MT_JOB_ACTIVE:
+            _mt = _mt_reverse_map().get(m_mock.group(1))
+            if _mt:
+                return (2, _mt[0], _mt[1], 0)
         return (2, int(m_mock.group(1)), 0, 0)
     # 고3 분석편: "N강 NN" 또는 "N강 NN~NN" (예: "3강 01", "19강 05~06")
     # Why: 강동3 등 고3 학교에서 영작/어법 헤더가 lexical 정렬돼 11강이 3강 앞으로 가는 문제.
@@ -5157,6 +5169,10 @@ def parse_extracted(extracted_path, vocab_left, vocab_right,
     # 마더텅 버전중복 파일(코드없는 가로/수정 등)을 정본(코드있는 세로/예전기출)이
     # 있을 때 제거 — 문장삽입 오삽입·가짜 '본문N' 헤더·영작 코드붕괴 방어.
     stories = _drop_codeless_mt_version_dupes(stories, log)
+    # 이번 job이 마더텅 워크북을 쓰는지 판정 → 마더텅 라벨 환원·(강,지문)정렬 활성화 여부.
+    # 마더텅 .indd source가 하나도 없으면(모든 모의고사 학교) 비활성 → YYMMQQ 그대로 유지.
+    global _MT_JOB_ACTIVE
+    _MT_JOB_ACTIVE = any("마더텅" in _nfc(s.get("source_file", "")) for s in stories)
     # 올포 순서배열 재번호로 어긋난 본문 라벨을 어법수정 기준으로 교차 교정
     # (in-scope 지문이 헤더 충돌 dedup으로 누락되는 것 방지 — 고1/고2 전용)
     _reconcile_olpo_labels(stories, grade, log)
