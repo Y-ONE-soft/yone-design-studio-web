@@ -401,10 +401,12 @@ class FinalEngine(BaseEngine):
     # ── 워크북 자동 감지 ──
 
     @staticmethod
-    def find_workbook_files(gdrive_base, exam_period, grade, school):
+    def find_workbook_files(gdrive_base, exam_period, grade, school,
+                            selected_lectures=None):
         """워크북 디렉터리에서 .indd 파일 자동 감지.
 
         고1/고2: 학교별 워크북 중 '올포' 파일은 공용 EBS 독해기본 파일로 대체.
+        고3: selected_lectures(시험범위 강) 중 분석편/짤지문에 없는 강은 통합편에서 보강.
         반환: (files, wb_dir, allowed_olpo_lectures)
         """
         gdrive_base = os.path.expanduser(gdrive_base)
