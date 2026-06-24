@@ -778,12 +778,20 @@
             // Insert frame breaks at bracket paragraphs
             insertFrameBreaksAtBrackets(story);
 
-            // Apply A1_어휘 선택 to paragraph after each bracket
+            // Apply A1_어휘 선택 to the WHOLE body span after each bracket
+            // (지문번호[N] 다음부터 다음 지문번호 전까지 본문 단락 전체).
+            // 정상본은 본문이 1단락뿐이라 결과가 동일하고, 본문 위에 《섹션 제목》이
+            // 여러 단락 끼는 교재(예: 본문 안에 《Cooking…》 류 제목)에서도 본문이
+            // [기본 단락]으로 누락되지 않도록 j+1 한 칸이 아니라 구간으로 처리한다.
             if (S1_A1) {
                 var paras2 = parasOf(story);
                 for (var j = 0; j < paras2.length; j++) {
-                    if (isBracketPara(paras2[j]) && j + 1 < paras2.length) {
-                        try { paras2[j + 1].appliedParagraphStyle = S1_A1; } catch(_){}
+                    if (isBracketPara(paras2[j])) {
+                        for (var k = j + 1; k < paras2.length && !isBracketPara(paras2[k]); k++) {
+                            if (!isBlankPara(paras2[k])) {
+                                try { paras2[k].appliedParagraphStyle = S1_A1; } catch(_){}
+                            }
+                        }
                     }
                 }
             }
@@ -810,19 +818,20 @@
                 if (isBracketPara(paras[i])) bracketIdx.push(i);
             }
 
-            // Apply A2_본문 박스 to first English paragraph after bracket (skip blanks)
+            // Apply A2_본문 박스 to the WHOLE body span after each bracket
+            // (지문번호 다음 ~ 다음 지문번호 전까지 영어 본문 단락 전체).
+            // 첫 영어 단락만 잡으면, 본문 위에 《섹션 제목》이 끼는 교재에서 제목에만
+            // 박스가 먹고 실제 본문이 누락된다. O/X 문항은 영어라 함께 박스가 먹지만,
+            // 아래 TF 처리에서 다시 S1_A2_OX로 덮어쓰므로 결과는 본문=박스/문항=OX.
             if (S1_A2_BOX) {
-                for (var k = 0; k < bracketIdx.length; k++) {
-                    paras = parasOf(story);
-                    bracketIdx = [];
-                    for (var t = 0; t < paras.length; t++) {
-                        if (isBracketPara(paras[t])) bracketIdx.push(t);
-                    }
-                    var bi = bracketIdx[k];
-                    var tIdx = bi + 1;
-                    while (tIdx < paras.length && isBlankPara(paras[tIdx])) tIdx++;
-                    if (tIdx < paras.length && isEnglishPara(paras[tIdx])) {
-                        try { paras[tIdx].appliedParagraphStyle = S1_A2_BOX; } catch(_){}
+                var pA = parasOf(story);
+                for (var j2 = 0; j2 < pA.length; j2++) {
+                    if (isBracketPara(pA[j2])) {
+                        for (var k2 = j2 + 1; k2 < pA.length && !isBracketPara(pA[k2]); k2++) {
+                            if (!isBlankPara(pA[k2]) && isEnglishPara(pA[k2])) {
+                                try { pA[k2].appliedParagraphStyle = S1_A2_BOX; } catch(_){}
+                            }
+                        }
                     }
                 }
             }
