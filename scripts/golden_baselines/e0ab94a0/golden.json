@@ -1,4 +1,7 @@
 {
+ "_validation_warnings": [
+  "문장배열(71)과 문장삽입(70) 블록수 불일치"
+ ],
  "exam_period": "26-1-기말",
  "grade": "고1",
  "school": "한영1",
@@ -158,6 +161,19 @@
     "exam_code": "201123",
     "header": "201123",
     "items": [
+     "(A) Wind, solar, and biomass also cause negative environmental impacts, such as visual pollution, intensive land occupation and negative effects on bird populations.",
+     "(B) Renewable sources of energy include a variety of sources such as hydropower and ocean-based technologies.",
+     "(C) Hydropower dams, for example, have an impact on aquatic ecosystems and, more recently, have been identified as significant sources of greenhouse emissions.",
+     "(D) Additionally, solar, wind, geothermal and biomass renewable sources also have their own impact on the environment.",
+     "(E) The use of renewable sources of energy to produce electricity has increasingly been encouraged as a way to harmonize the need to secure electricity supply with environmental protection objectives.",
+     "(F) But the use of renewable sources also comes with its own consequences, which require consideration."
+    ],
+    "source": "한영1_워크북01(마더텅6강)_내지.indd"
+   },
+   {
+    "exam_code": "240923",
+    "header": "240923",
+    "items": [
      "(A) AI can also enhance the capabilities of low-skilled workers, with potentially positive effects on their wages and career prospects.",
      "(B) For example, AI's capacity to translate written and spoken word in real-time can improve the performance of nonnative speakers in the workplace.",
      "(C) Moreover, recent developments in AI-powered text generators can instantly improve the performance of lower-skilled individuals in domains such as writing, coding or customer service.",
@@ -277,6 +293,21 @@
    {
     "exam_code": "191123",
     "header": "191123",
+    "items": [
+     "(A) That's true of sheer information, like your phone number or the place you left your keys.",
+     "(B) Thinking requires its expression.",
+     "(C) Knowledge relies on judgements, which you discover and polish in conversation with other people or with yourself.",
+     "(D) In the speaking or writing, you uncover your bad ideas, often embarrassing ones, and good ideas too, sometimes fame-making ones.",
+     "(E) But it's not true of knowledge.",
+     "(F) Therefore you don't learn the details of your thinking until speaking or writing it out in detail and looking back critically at the result.",
+     "(G) You can say that information sits in one brain until it is communicated to another, unchanged in the conversation.",
+     "(H) \"Is what I just said foolish, or is what I just wrote a deep truth?\""
+    ],
+    "source": "한영1_워크북01(마더텅6강)_내지.indd"
+   },
+   {
+    "exam_code": "230323",
+    "header": "230323",
     "items": [
      "(A) Railways, in the nineteenth century, opened up now famous seaside resorts such as Blackpool and Brighton.",
      "(B) As the social and economic situation of countries got better, wage levels and working conditions improved.",
@@ -1216,7 +1247,7 @@
     "source": "한영1_워크북01(마더텅6강)_내지.indd"
    },
    {
-    "header": "201123",
+    "header": "240923",
     "paras": [
      {
       "style": "[기본 단락]",
@@ -1431,6 +1462,32 @@
      {
       "style": "C1_문장 배열 하단 지문",
       "text": "(C) Knowledge relies on judgements, which you discover and polish in conversation with other people or with yourself. Therefore you don't learn the details of your thinking until speaking or writing it out in detail and looking back critically at the result."
+     }
+    ],
+    "source": "한영1_워크북01(마더텅6강)_내지.indd"
+   },
+   {
+    "header": "230323",
+    "paras": [
+     {
+      "style": "[기본 단락]",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "문장 배열 하단 ",
+      "text": "As the social and economic situation of countries got better, wage levels and working conditions improved."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(A) In Canada, for example, the new coast-­to-­coast railway system made possible the building of such famous hotels as Banff Springs and Chateau Lake Louise in the Rockies. Later, the arrival of air transport opened up more of the world and led to tourism growth."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(B) Gradually people were given more time off. At the same time, forms of transport improved and it became faster and cheaper to get to places."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(C) England’s industrial revolution led to many of these changes. Railways, in the nineteenth century, opened up now famous seaside resorts such as Blackpool and Brighton. With the railways came many large hotels."
      }
     ],
     "source": "한영1_워크북01(마더텅6강)_내지.indd"
@@ -3253,6 +3310,7 @@
    "211123",
    "221123",
    "201123",
+   "240923",
    "171121",
    "210323",
    "230623",
@@ -3262,6 +3320,7 @@
    "230923",
    "220923",
    "191123",
+   "230323",
    "241023",
    "250323",
    "250623",

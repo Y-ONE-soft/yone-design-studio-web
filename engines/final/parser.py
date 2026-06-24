@@ -353,8 +353,12 @@ def _fix_mt_sentence_examcode_bleed(sentence_blocks, insert_blocks, stories,
     from collections import defaultdict
     mt_seq_map = _build_mt_seq_map(stories)
     _fixed = 0
+    # 같은 지문의 문장배열·문장삽입 블록은 같은 pageOff에서 같은(bled) 코드를 공유한다.
+    # 한쪽 리스트만 보면 중복이 안 잡히는 경우가 있으므로(예: 6강8 삽입은 삽입 리스트
+    # 안에선 단독) 배열+삽입을 source별로 통합해 'pageOff가 다른 동일 코드'(=bleed)를
+    # 검출하고, 검출된 블록을 각자 pageOff→seq로 교정한다.
+    by_src = defaultdict(list)
     for blocks in (sentence_blocks or [], insert_blocks or []):
-        by_src = defaultdict(list)
         for b in blocks:
             src_nfc = _nfc(b.get("source", ""))
             scope_m = re.search(r"\(([^)]+)\)", src_nfc)
@@ -364,30 +368,30 @@ def _fix_mt_sentence_examcode_bleed(sentence_blocks, insert_blocks, stories,
             if b.get("page_off", -1) < 0 or not b.get("exam_code"):
                 continue
             by_src[src_nfc].append(b)
-        for src_nfc, sblocks in by_src.items():
-            scope_m = re.search(r"\(([^)]+)\)", src_nfc)
-            scope = scope_m.group(1) if scope_m else ""
-            sm = re.search(r"마더텅\s*(\d+)", scope)
-            if not sm:
+    for src_nfc, sblocks in by_src.items():
+        scope_m = re.search(r"\(([^)]+)\)", src_nfc)
+        scope = scope_m.group(1) if scope_m else ""
+        sm = re.search(r"마더텅\s*(\d+)", scope)
+        if not sm:
+            continue
+        sec_map = _MT_MAP.get(int(sm.group(1)))
+        if not sec_map:
+            continue
+        code_pos = defaultdict(set)
+        for b in sblocks:
+            code_pos[b["exam_code"]].add(b["page_off"])
+        current_codes = set(code_pos.keys())
+        for b in sblocks:
+            code = b["exam_code"]
+            if len(code_pos[code]) < 2:
+                continue  # 다른 pageOff에 같은 코드 없음 → 정상(무동작)
+            seq = _mt_seq_lookup(mt_seq_map, src_nfc, b["page_off"])
+            if not seq:
                 continue
-            sec_map = _MT_MAP.get(int(sm.group(1)))
-            if not sec_map:
-                continue
-            code_pos = defaultdict(set)
-            for b in sblocks:
-                code_pos[b["exam_code"]].add(b["page_off"])
-            current_codes = set(code_pos.keys())
-            for b in sblocks:
-                code = b["exam_code"]
-                if len(code_pos[code]) < 2:
-                    continue  # 중복 아님 → 무동작(정상 보존)
-                seq = _mt_seq_lookup(mt_seq_map, src_nfc, b["page_off"])
-                if not seq:
-                    continue
-                correct = sec_map.get(seq)
-                if correct and correct != code and correct not in current_codes:
-                    b["exam_code"] = correct
-                    _fixed += 1
+            correct = sec_map.get(seq)
+            if correct and correct != code and correct not in current_codes:
+                b["exam_code"] = correct
+                _fixed += 1
     if _fixed and log:
         log(f"  [마더텅 bleed보정] 문장배열/삽입 exam_code {_fixed}블록 교정")
 
