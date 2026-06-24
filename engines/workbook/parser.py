@@ -833,6 +833,42 @@ def _wrap_hadan_with_spaces(paragraphs):
     return result
 
 
+_RE_ENG_WORD = re.compile(r'[A-Za-z]+')
+
+
+def _eng_word_count(text):
+    return len(_RE_ENG_WORD.findall(text))
+
+
+def _is_body_line(text):
+    """긴 영어 콘텐츠(지문 본문/제목 등) — 짧은 번호 마커와 구분하는 기준."""
+    return _eng_word_count(text) >= 5
+
+
+def _is_passage_marker_struct(paragraphs, i):
+    """지문번호 마커를 '형식'이 아니라 '구조'로 판정.
+
+    특정 출판사 형식(L1-본문1 / p2-no.20 / [본문1] / PROJECT 2-본문1 …)에
+    의존하지 않고, 보편 구조 특징으로 인식한다:
+      - 짧은 줄 (헤더/본문보다 훨씬 짧음)
+      - 숫자를 포함 (번호 성격)
+      - 영단어가 적음 (영어 문장=본문/제목이 아님)
+      - 바로 뒤에 본문(긴 영어)이 따라옴 (책 제목 등 헤더와 구분)
+    지문번호 형식이 무엇으로 바뀌든(앞에 숫자·기호·단원명 무엇이 오든) 견고하다.
+    """
+    text = paragraphs[i]['text'].strip()
+    if not text or len(text) > 40:
+        return False
+    if not re.search(r'\d', text):
+        return False
+    if _eng_word_count(text) >= 4:
+        return False
+    j = i + 1
+    while j < len(paragraphs) and not paragraphs[j]['text'].strip():
+        j += 1
+    return j < len(paragraphs) and _is_body_line(paragraphs[j]['text'].strip())
+
+
 def _strip_manuscript_headers(paragraphs):
     """원고 앞부분의 헤더 줄 제거.
 
@@ -843,7 +879,15 @@ def _strip_manuscript_headers(paragraphs):
     이렇게 단순화하면 책 제목/발문/섹션 라벨/부제목이 어떤 형식이든 (출판사/교재 변경 무관) 자동 처리됨.
     본문 마커가 끝까지 없는 STEP은 fallback으로 헤더 패턴 매칭을 사용.
     """
-    # 1) 첫 본문 마커 찾기 → 그 앞 모두 헤더 영역으로 간주
+    # 1) 구조 기반: 첫 지문번호 마커(짧은 번호 줄 + 뒤에 본문) 앞을 헤더로 간주.
+    #    출판사별 형식 목록이 아니라 보편 구조로 판정 → 새 형식에도 견고.
+    for i, p in enumerate(paragraphs):
+        if not p['text'].strip():
+            continue
+        if _is_passage_marker_struct(paragraphs, i):
+            return paragraphs[i:]
+
+    # 1-b) fallback: 기존 형식 정규식 (구조로 못 잡는 특이 케이스 안전망)
     for i, p in enumerate(paragraphs):
         text = p['text'].strip()
         if not text:
