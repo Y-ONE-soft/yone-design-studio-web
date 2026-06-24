@@ -919,13 +919,15 @@ def _build_vol1_jsx(indd_path, data_path, pdf_path, marker, log_file, pid, grade
             has_test = bool(_re.search(r'^test\d+\s+(?:\d{2}(?:[~\-]\d{2})?|Gateway)$', raw_text, _re.MULTILINE | _re.IGNORECASE))
             has_olpo = bool(_re.search(r'^\uc62c\ud3ec\s+\d+\uac15\s+\S+', raw_text, _re.MULTILINE))
             has_rp = bool(_re.search(r'^\ub9ac\ub529\ud30c\uc6cc\s+\d+\uac15\s+\S+', raw_text, _re.MULTILINE))
+            # \ub9c8\ub354\ud145 \ucd9c\ucc98 \ub77c\ubca8 \ud5e4\ub354: "\ub9c8\ub354\ud145 N\uac15 M" (M=\uc9c0\ubb38\uc21c\ubc88 1~2\uc790\ub9ac, ~\ubc94\uc704 \uac00\ub2a5)
+            has_mt = bool(_re.search(r'^\ub9c8\ub354\ud145\s+\d+\uac15\s+\d+', raw_text, _re.MULTILINE))
             has_tb = bool(_re.search(r'^\uad50\uacfc\uc11c\S+?\s+\ubcf8\ubb38\d+$', raw_text, _re.MULTILINE))
             if has_lecture or has_test or has_tb:
                 # 고3: "N강 MM" / "N강 Gateway" / "test1 24~25" / "교과서N과 본문M" 헤더 기준 분할
                 parts = _re.split(r"(?=^(?:\d+강|test\d+)\s+(?:\d{2}(?:[~\-]\d{2})?|Gateway)$|^\uad50\uacfc\uc11c\S+?\s+\ubcf8\ubb38\d+$)", raw_text, flags=_re.MULTILINE | _re.IGNORECASE)
-            elif has_olpo or has_rp:
+            elif has_olpo or has_rp or has_mt:
                 # 파이널 고1/고2: YYMMQQ / "올포 N강 {섹션}" / "리딩파워 N강 {ExMM|MM}" 헤더 기준 분할
-                parts = _re.split(r"(?=^(?:\d{6}(?:~\d{2})?|\uc62c\ud3ec\s+\d+\uac15\s+\S+|\ub9ac\ub529\ud30c\uc6cc\s+\d+\uac15\s+\S+)$)", raw_text, flags=_re.MULTILINE)
+                parts = _re.split(r"(?=^(?:\d{6}(?:~\d{2})?|\ub9c8\ub354\ud145\s+\d+\uac15\s+\d+(?:~\d+)?|\uc62c\ud3ec\s+\d+\uac15\s+\S+|\ub9ac\ub529\ud30c\uc6cc\s+\d+\uac15\s+\S+)$)", raw_text, flags=_re.MULTILINE)
             else:
                 # 기존: YYMMQQ 기준 분할
                 parts = _re.split(r"(?=^\d{6}(?:~\d{2})?$)", raw_text, flags=_re.MULTILINE)
@@ -956,6 +958,10 @@ def _build_vol1_jsx(indd_path, data_path, pdf_path, marker, log_file, pid, grade
                 return m.group(1)
             # 기존 YYMMQQ
             m = _re.match(r'^(\d{6}(?:~\d{2})?)', p)
+            if m:
+                return m.group(1)
+            # 파이널 마더텅: "마더텅 N강 M"
+            m = _re.match(r'^(마더텅\s+\d+강\s+\d+(?:~\d+)?)', p)
             if m:
                 return m.group(1)
             return ""
