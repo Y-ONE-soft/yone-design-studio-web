@@ -663,13 +663,6 @@ _RE_HEADER_NUM = re.compile(
     r'(?:\s*\([^\)]*\))?'                                    # 트레일링 부가정보 "(정답 1개)" 등 (선택)
     r'\s*$'
 )
-# 단원명-본문 헤더: "1. PROJECT 2-본문1", "2. PROJECT 2-본문2", "Unit3-본문1" 등.
-# _RE_PAGE_MARKER(L/p 계열)에 없는 임의 영문 단원명 + "-본문N" 형식을 본문 마커로
-# 인식한다. 이게 없으면 _strip_manuscript_headers가 첫 본문 마커를 못 찾아
-# 헤더 영역(책제목/Q/섹션라벨/READING)을 못 자르고, 지문번호도 인식하지 못한다.
-_RE_BONMUN_MARKER = re.compile(
-    r'^\s*(?:\d+\s*[.)]\s*)?[A-Za-z][A-Za-z ]*\d*\s*[-–—]\s*본문\s*(\d+)\s*(?:\([^)]*\))?\s*$'
-)
 # Chapter 구분선 (EBS 등): "Chapter 03. 추론적 이해 - 09 빈칸 추론 (1)"
 _RE_CHAPTER_DIVIDER = re.compile(r'^\s*Chapter\s+\d+\.\s', re.IGNORECASE)
 
@@ -879,21 +872,22 @@ def _strip_manuscript_headers(paragraphs):
     이렇게 단순화하면 책 제목/발문/섹션 라벨/부제목이 어떤 형식이든 (출판사/교재 변경 무관) 자동 처리됨.
     본문 마커가 끝까지 없는 STEP은 fallback으로 헤더 패턴 매칭을 사용.
     """
-    # 1) 구조 기반: 첫 지문번호 마커(짧은 번호 줄 + 뒤에 본문) 앞을 헤더로 간주.
-    #    출판사별 형식 목록이 아니라 보편 구조로 판정 → 새 형식에도 견고.
-    for i, p in enumerate(paragraphs):
-        if not p['text'].strip():
-            continue
-        if _is_passage_marker_struct(paragraphs, i):
-            return paragraphs[i:]
-
-    # 1-b) fallback: 기존 형식 정규식 (구조로 못 잡는 특이 케이스 안전망)
+    # 1) 정규식 마커 우선 — 기존 검증된 형식(L1-본문1/p2-no.20/p20-Example 1/[본문1] 등).
+    #    이게 잡는 한 예전과 100% 동일하게 동작하므로 회귀가 없다. (구조 판정 단독은
+    #    EBS의 'Example' 형식이나 짧은 본문 첫 줄/한글 문장에서 첫 지문을 놓치거나
+    #    오인할 수 있어, 검증된 정규식을 먼저 적용한다.)
     for i, p in enumerate(paragraphs):
         text = p['text'].strip()
         if not text:
             continue
         if (_RE_BRACKET_NUM.match(text) or _RE_HEADER_NUM.match(text)
-                or _RE_KOREAN_BRACKET.match(text) or _RE_BONMUN_MARKER.match(text)):
+                or _RE_KOREAN_BRACKET.match(text)):
+            return paragraphs[i:]
+
+    # 2) 정규식이 못 잡는 새 형식(예: 'PROJECT 2-본문1') → 구조 인식으로 보강.
+    #    정규식 화이트리스트에 형식을 계속 추가하지 않아도(땜질 회피) 새 형식을 잡는다.
+    for i, p in enumerate(paragraphs):
+        if p['text'].strip() and _is_passage_marker_struct(paragraphs, i):
             return paragraphs[i:]
 
     # 2) 본문 마커가 끝까지 없음 → fallback: 헤더 패턴 매칭으로 스킵
@@ -927,11 +921,6 @@ def _extract_question_numbers(paragraphs, step_key):
                 # "41~42" 같은 범위는 첫 번호만 사용
                 num_str = captured.split('~')[0]
                 numbers.append(int(num_str))
-            continue
-        # 단원명-본문 형식 ("1. PROJECT 2-본문1")
-        m = _RE_BONMUN_MARKER.match(text)
-        if m:
-            numbers.append(int(m.group(1)))
     return numbers
 
 
