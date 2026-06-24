@@ -1,0 +1,1236 @@
+{
+ "exam_period": "26-1-기말",
+ "grade": "고1",
+ "school": "배재1",
+ "vol1": {
+  "문장배열": [
+   {
+    "exam_code": "",
+    "header": "교과서3과 본문1",
+    "items": [
+     "(A) As a result, the digestion process is paused until the blood returns. So, whether you're lifting weights or going for a jog, you shouldn't do it with a stomach full of food.",
+     "(B) But when you start to exercise, blood moves from the digestive system to your muscles. This happens in order to supply your muscles with the oxygen and nutrients they require.",
+     "(C) 《Timing is Everything》",
+     "(D) Today we're going to be talking about exercise.",
+     "(E) Why did that happen? Dr. Hill: Well, the problem is that you exercised too soon after eating.",
+     "(F) I worked out right after dinner and got a stomachache.",
+     "(G) This can cause various stomach issues. When you eat, blood rushes to the digestive system to help break down the food and absorb its nutrients.",
+     "(H) Dr. Victoria Hill is here, and she is going to share some useful tips.",
+     "(I) Host: Welcome back to Today's Health.",
+     "(J) So, Dr. Hill, let's start with a question about my experience last month."
+    ],
+    "source": "배재1_워크북01(능률민3과,4과,SL2)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "교과서3과 본문2",
+    "items": [
+     "(A) Dr. Hill: No, it doesn't. That can also be harmful and unpleasant.",
+     "(B) When this glucose is stored in parts of the body, such as the muscles and the liver, it is called glycogen.",
+     "(C) Host: I see. That makes sense.",
+     "(D) So, does that mean I should exercise on an empty stomach?",
+     "(E) Some people end up suffering from nausea and headaches, and others even faint. This is because intense exercise uses up all the glycogen in your muscles.",
+     "(F) If you exercise on an empty stomach, you will most likely lack energy and feel unusually tired. There can also be more serious outcomes.",
+     "(G) This is why exercising on a completely empty stomach ─ such as when you first wake up in the morning ─ can be such a challenge. Your blood sugar levels are low, and you don't have enough glycogen stored in your body.",
+     "(H) Carbohydrates in the food we eat are broken down into a kind of sugar called glucose.",
+     "(I) This is because the body needs energy to exercise.",
+     "(J) The fuel that provides this energy is glycogen."
+    ],
+    "source": "배재1_워크북01(능률민3과,4과,SL2)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "교과서3과 본문3",
+    "items": [
+     "(A) Dr. Hill: That's correct. For this reason, doctors recommend that people eat food containing carbohydrates within thirty minutes after working out.",
+     "(B) Host: So, is it the loss of glycogen that causes us to have low levels of energy?",
+     "(C) Let's do the math.",
+     "(D) This replaces the muscle glycogen you have lost.",
+     "(E) If you weigh 60 kilograms, you should try to consume between 60 and 90 grams of carbohydrates after you exercise.",
+     "(F) This is equal to about one bowl of white rice or three bananas.",
+     "(G) Basically, you need between one and one and a half grams of carbohydrates for every kilogram you weigh."
+    ],
+    "source": "배재1_워크북01(능률민3과,4과,SL2)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "교과서3과 본문4",
+    "items": [
+     "(A) But, if you wait too long to exercise after eating, you'll suffer from a lack of energy.",
+     "(B) Dr. Hill: Well, as I said before, exercising right after you eat will cause feelings of discomfort.",
+     "(C) The best time to eat before you exercise varies from one to three hours.",
+     "(D) The type of exercise also matters.",
+     "(E) For extremely active exercise like cycling, I suggest that you wait between one and a half and three hours after eating a moderate-sized meal.",
+     "(F) Basically, it depends on several factors such as the type and amount of food as well as body size, age, and gender.",
+     "(G) Can you explain how long we should wait after eating?",
+     "(H) But for something more casual, such as golfing, waiting for one hour after a meal should be enough. Clearly, you can wait less after eating a snack.",
+     "(I) Host: Thank you very much for this fascinating information, Dr. Hill. I'm sure it will be very helpful for all of our viewers.",
+     "(J) Host: That's very interesting. But what about eating before we exercise?"
+    ],
+    "source": "배재1_워크북01(능률민3과,4과,SL2)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "교과서4과 본문1",
+    "items": [
+     "(A) Recently, an artist used an artificial intelligence (AI) system to create the image above for an art contest.",
+     "(B) However, there were also people who were excited by the potential of AI.",
+     "(C) This led to a controversy in the art community.",
+     "(D) The image won first place in the digital arts category.",
+     "(E) Some people complained that the artist simply provided the system with basic instructions and let it do all the work.",
+     "(F) They felt this wasn't fair to the rest of the artists in the contest.",
+     "(G) Today, there are numerous AI programs that can create various forms of art including images, songs, and novels.",
+     "(H) 《AI: Opportunity or Threat?》"
+    ],
+    "source": "배재1_워크북01(능률민3과,4과,SL2)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "교과서4과 본문2",
+    "items": [
+     "(A) Moreover, AI programs can mix the styles of existing images upon request.",
+     "(B) This allows them to create works of art in a short time based on the provided instructions.",
+     "(C) These two images have a few differences.",
+     "(D) A simple request was enough to create this complex and detailed image.",
+     "(E) AI image generators create images based on our text requests.",
+     "(F) The generators have the ability to analyze millions of images and their corresponding descriptions.",
+     "(G) They do this by copying other images that were created by humans.",
+     "(H) However, the overall design, the eyes, and the scarf around the head are clearly based on Vermeer's painting.",
+     "(I) 《Example 1 Making Digital Images with AI》",
+     "(J) For example, you can blend a photograph of a cat with Johannes Vermeer's Girl with a Pearl Earring."
+    ],
+    "source": "배재1_워크북01(능률민3과,4과,SL2)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "교과서4과 본문3",
+    "items": [
+     "(A) Furthermore, computer-generated imagery (commonly known as CGI) has opened up new possibilities in the music industry.",
+     "(B) These programs are already able to compose songs, and they give you many options.",
+     "(C) These types of virtual musicians are able to speak and move realistically with the help of their human creators.",
+     "(D) AI programs may lead to changes not only in the art world but also in the music industry.",
+     "(E) For example, you can choose the style and key*, such as C major or A minor.",
+     "(F) Virtual influencers with extremely realistic faces, bodies, and voices have already released several songs.",
+     "(G) You can also set how long the song will be.",
+     "(H) Some of them have many followers on social media, just like human singers.",
+     "(I) Once you've entered the information, the program will produce a song that you can edit or use as it is.",
+     "(J) 《Example 2 Making Music with AI》"
+    ],
+    "source": "배재1_워크북01(능률민3과,4과,SL2)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "교과서4과 본문4",
+    "items": [
+     "(A) AI provides many benefits and new opportunities. What we need to do is figure out how to use AI tools ethically and think about how humans and AI can collaborate.",
+     "(B) Many AI programs are open to the public, which means they are free and convenient to use.",
+     "(C) However, these programs have sparked a debate over their impact on humans.",
+     "(D) Human imagination, on the other hand, has no limits or boundaries. What kind of future do you think lies ahead of us?",
+     "(E) Since AI has the potential to learn skills and perform them better than humans, some people view it as a threat.",
+     "(F) There are also concerns that AI may imitate the styles of human artists without their consent. On the other hand, others think that AI cannot exceed human imagination and that it is still dependent on human assistance.",
+     "(G) Will more people use AI programs to boost their creativity and productivity? Or will people grow tired of the limitations of AI tools?",
+     "(H) They worry that AI will replace humans in more and more areas.",
+     "(I) 《The Debate on Using AI》",
+     "(J) This is because the data that AI uses can have flaws or limitations. A dependence on imperfect data with little diversity eventually limits the output of AI programs."
+    ],
+    "source": "배재1_워크북01(능률민3과,4과,SL2)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "교과서SL 본문1",
+    "items": [
+     "(A) The musical is based on an imaginative story of two characters from the book The Wizard of Oz: Elphaba, the wicked witch, and Glinda, the good witch.",
+     "(B) Everyone recommends it.",
+     "(C) I had been wanting to see the musical Wicked for a long time.",
+     "(D) I finally got to see it last weekend.",
+     "(E) It tells their background story and explains how they became known as wicked and good.",
+     "(F) It opened in 2003 on Broadway and got great reviews.",
+     "(G) What impressed me the most was the theme of the musical.",
+     "(H) 《A Journey into a Magical World》",
+     "(I) It is about forming friendships, getting to know oneself, and accepting differences."
+    ],
+    "source": "배재1_워크북01(능률민3과,4과,SL2)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "교과서SL 본문2",
+    "items": [
+     "(A) 《A Fascinating Storyline》",
+     "(B) Meanwhile, Glinda has a very kind personality, which makes her quite popular.",
+     "(C) At first, Elphaba and Glinda do not get along.",
+     "(D) Elphaba was born with green skin and usually stays away from others.",
+     "(E) The story begins in a magical place, the Land of Oz.",
+     "(F) Nevertheless, in the end, their friendship wins. Every relationship has its ups and downs, so I could easily relate to the main characters.",
+     "(G) In the musical, Elphaba and Glinda first meet at university.",
+     "(H) However, as they get to know and learn about each other, they become close friends.",
+     "(I) Elphaba has exceptional magical powers, and some other characters try to take advantage of this. Glinda and Elphaba's friendship is continuously challenged in the story.",
+     "(J) Because of her unusual appearance and cold personality, she has very few friends."
+    ],
+    "source": "배재1_워크북01(능률민3과,4과,SL2)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "교과서SL 본문3",
+    "items": [
+     "(A) I'm defying gravity And you won't bring me down",
+     "(B) So if you care to find me",
+     "(C) Bring me down 《The Unforgettable Songs》",
+     "(D) Elphaba used to admire a wizard, but one day she finds out that he has an evil plan and can't be trusted anymore. She sings about her determination to fight against him.",
+     "(E) Look to the western sky",
+     "(F) Her powerful voice fascinated me. When the song ended, the entire audience clapped enthusiastically.",
+     "(G) \"Defying Gravity\"is the most famous song in the musical. It comes at a key turning point in the story.",
+     "(H) Of course, I cannot review a musical without talking about the songs. Wicked has many great songs, but there are two that I especially like.",
+     "(I) She shows her true powers and rises into the air on her broom while singing this song. She sings that she will not let people bring her down anymore.",
+     "(J) As someone told me lately \"Everyone deserves the chance to fly\""
+    ],
+    "source": "배재1_워크북01(능률민3과,4과,SL2)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "교과서SL 본문4",
+    "items": [
+     "(A) The song moved me because Glinda and Elphaba explain that meeting each other has changed them for the better.",
+     "(B) Elphaba decides to leave her home and asks Glinda to protect the people of Oz.",
+     "(C) It is a truly touching moment that shows their strong friendship.",
+     "(D) I have been changed For good",
+     "(E) The second song that had a great impact on me was \"For Good.\"",
+     "(F) And because I knew you",
+     "(G) Because I knew you Because I knew you",
+     "(H) I do believe I have been changed for the better",
+     "(I) At this moment, they start to sing to each other.",
+     "(J) At the end of the musical, the two friends have to choose different paths and say goodbye to each other."
+    ],
+    "source": "배재1_워크북01(능률민3과,4과,SL2)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "교과서SL 본문5",
+    "items": [
+     "(A) First, the costumes were incredible.",
+     "(B) Furthermore, all kinds of tricks invited me into the magical world. I really enjoyed noticing the symbols used in the performance.",
+     "(C) I think using these visual effects made the musical more exciting. In my opinion, the musical Wicked is an incredible work.",
+     "(D) In one scene, we see the people of Oz wearing unique clothes.",
+     "(E) It has great music and is visually impressive. It also has a strong plot that kept me engaged from beginning to end.",
+     "(F) I couldn't believe the detail and beauty of the masks, wigs, and dresses.",
+     "(G) For example, a huge dragon-shaped device was hanging above the stage. It seemed to move whenever Elphaba or Glinda made a choice.",
+     "(H) 《The Eye-Catching Visuals》",
+     "(I) I highly recommend this show to anyone interested in musicals. You will be able to explore the themes of friendship and personal change in a magical setting.",
+     "(J) The exciting story and beautiful songs of Wicked are accompanied by beautiful visuals."
+    ],
+    "source": "배재1_워크북01(능률민3과,4과,SL2)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "241021",
+    "items": [
+     "(A) We recode what we see through the lens of everything we know.",
+     "(B) Seeing is not believing.",
+     "(C) We reconstruct memories rather than retrieving the video from memory.",
+     "(D) It's a more efficient way to store information ─ a bit like an optimal image compression algorithm such as JPG, rather than storing a raw bitmap image file.",
+     "(E) People who lack this ability and remember everything in perfect detail struggle to generalize, learn, and make connections between what they have learned.",
+     "(F) Instead, we see the world through our assumptions, motivations, and past experiences.",
+     "(G) This is a useful trait.",
+     "(H) The discovery that our memories are reconstructed through abstract representations rather than played back like a movie completely undermined the legal primacy of eyewitness testimony.",
+     "(I) But representing the world as abstract ideas and features comes at a cost of seeing the world as it is.",
+     "(J) When we see something, we naturally and automatically break it up into shapes, colors, and concepts that we have learned through education."
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "241022",
+    "items": [
+     "(A) That very first impression can also be more accurate about the world than the deliberative, reasoned self-narrative can be.",
+     "(B) In his Cornell laboratory, David Dunning conducted experimental tests of eyewitness testimony and found evidence that a careful deliberation of facial features and a detailed discussion of selection procedures can actually be a sign of an inaccurate identification.",
+     "(C) It's when people find themselves unable to explain why they recognize the person, saying things like \"his face just popped out at me,\" that they tend to be accurate more often.",
+     "(D) In his book Blink, Malcolm Gladwell describes a variety of studies in psychology and behavioral economics that demonstrate the superior performance of relatively unconscious first guesses compared to logical step-by-step justifications for a decision.",
+     "(E) Sometimes our first, immediate, automatic reaction to a situation is the truest interpretation of what our mind is telling us."
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "241023",
+    "items": [
+     "(A) Respondents' recollections may be inaccurate, and their definitions of 'sad' could vary widely.",
+     "(B) Asking people how many times in a year they are sad will also yield quantitative data, but it might not be reliable.",
+     "(C) Questions that seek concrete responses help make abstract concepts clearer and ensure consistency from one study to the next.",
+     "(D) Similarly, instead of asking people to rate how bad a procrastinator they are, ask, \"How many of your utility bills are you currently late in paying, even though you can afford to pay them?\"",
+     "(E) But asking \"How many times in the past year were you sad enough to call in sick to work?\" prompts a concrete answer.",
+     "(F) A study of happiness might measure the number of times someone smiles during an interaction, and a study of memory might measure the number of items an individual can recall after one, five, and ten minutes.",
+     "(G) Many forms of research lead naturally to quantitative data."
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "241024",
+    "items": [
+     "(A) Conversely, our consciousness also has a significant impact on the evolution of AI.",
+     "(B) After that point, it is predicted that AI will repeatedly improve itself and evolve at an accelerated pace.",
+     "(C) Singularity refers to the point at which AI exceeds human intelligence.",
+     "(D) The evolution of AI is often associated with the concept of singularity.",
+     "(E) The direction of AI's evolution will depend greatly on what values and ethics we incorporate into AI.",
+     "(F) When AI becomes self-aware and pursues its own goals, it will be a conscious being, not just a machine.",
+     "(G) We need to see our relationship with AI as a mutual coexistence of conscious beings, recognizing its rights and supporting the evolution of its consciousness.",
+     "(H) Our consciousness will evolve to new dimensions through our interactions with AI, which will provide us with intellectual stimulation and inspire new insights and creativity.",
+     "(I) AI and human consciousness will then begin to evolve together."
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "241029",
+    "items": [
+     "(A) Technological metaphors, on the other hand, are active (and often imposing) in the sense that they are realized in digital artifacts that are actively doing things, forcefully changing a user's meaning horizon.",
+     "(B) Technological creators cannot generally afford to require their potential audience to wonder how the metaphor works; normally the selling point is that the usefulness of the technology is obvious at first glance.",
+     "(C) Shakespeare, on the other hand, is beloved in part because the meaning of his works is not immediately obvious and requires some thought on the part of the audience.",
+     "(D) Linguistic metaphors are passive, in the sense that the audience needs to choose to actively enter the world proposed by metaphor.",
+     "(E) In the Shakespearean metaphor \"time is a beggar,\" the audience is unlikely to understand the metaphor without cognitive effort and without further engaging Shakespeare's prose.",
+     "(F) Digital technologies are essentially related to metaphors, but digital metaphors are different from linguistic ones in important ways."
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "241030",
+    "items": [
+     "(A) We understand things well enough to benefit from them, but all the while we are making small calculations that contribute to a larger whole.",
+     "(B) Then all we have to do is socially learn the right answers.",
+     "(C) All that needs to be transmitted is which button to push ─ essentially how to interact with technologies rather than how they work.",
+     "(D) And so instead of holding more information than we have mental capacity for and indeed need to know, we could dedicate our large brains to a small piece of a giant calculation.",
+     "(E) You don't need to understand how your computer or toilet works; you just need to be able to use the interface and flush.",
+     "(F) We are just doing our part in a larger computation for our societies' collective brains.",
+     "(G) Herbert Simon won his Nobel Prize for recognizing our limitations in information, time, and cognitive capacity.",
+     "(H) As we lack the resources to compute answers independently, we distribute the computation across the population and solve the answer slowly, generation by generation."
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "241031",
+    "items": [
+     "(A) Actually, what they saw at first was a flounder.",
+     "(B) The best defence most species of octopus have is to stay hidden as much as possible and do their own hunting at night.",
+     "(C) An octopus has a big brain, excellent eyesight and the ability to change colour and pattern, and this one was using these assets to turn itself into a completely different creature.",
+     "(D) Many more of this species have been found since then, and there are now photographs of octopuses that could be said to be transforming into sea snakes.",
+     "(E) And while they mimic, they hunt ─ producing the spectacle of, say, a flounder suddenly developing an octopodian arm, sticking it down a hole and grabbing whatever's hiding there.",
+     "(F) So to find one in full view in the shallows in daylight was a surprise for two Australian underwater photographers.",
+     "(G) It was only when they looked again that they saw a medium-sized octopus, with all eight of its arms folded and its two eyes staring upwards to create the illusion."
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "241032",
+    "items": [
+     "(A) In fact, ultramarathon runners ─ those people who are crazy enough to push themselves beyond the normal boundaries of human endurance, covering distances of 50-100km or more over many hours, talk about making friends with their pain.",
+     "(B) When 1500m runners push themselves into extreme pain to win a race ─ their muscles screaming and their lungs exploding with oxygen deficit, they don't psychologically suffer much.",
+     "(C) When a patient has paid for some form of passive back pain therapy and the practitioner pushes deeply into a painful part of a patient's back to mobilise it, the patient calls that good pain if he or she believes this type of deep pressure treatment will be of value, even though the practitioner is pushing right into the patient's sore tissues.",
+     "(D) How much we suffer relates to how we frame the pain in our mind."
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "241033",
+    "items": [
+     "(A) If the manufacturer makes only one version of its product, people who bought it might have been willing to spend more money, so the company is losing some income.",
+     "(B) If the company offers two versions, one with more features and more expensive than the other, people will compare the two models and still buy the less expensive one.",
+     "(C) But if the company introduces a third model with even more features and more expensive than the other two, sales of the second model go up; many people like the features of the most expensive model, but not the price.",
+     "(D) They buy the middle item, unaware that they have been manipulated by the presence of the higher-priced item.",
+     "(E) When I worked for a large electronics company that manufactured laser and inkjet printers, I soon discovered why there are often three versions of many consumer goods.",
+     "(F) The middle item has more features than the least expensive one, and it is less expensive than the fanciest model."
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "241034",
+    "items": [
+     "(A) You can tell stories 'about' climate change while it still seems a marginal feature of human life.",
+     "(B) Why watch or read climate fiction about the world you can see plainly out your own window?",
+     "(C) But when the temperature rises by three or four more degrees, hardly anyone will be able to feel isolated from its impacts.",
+     "(D) At the moment, stories illustrating global warming can still offer an escapist pleasure, even if that pleasure often comes in the form of horror.",
+     "(E) And so as climate change expands across the horizon, it may cease to be a story.",
+     "(F) But when we can no longer pretend that climate suffering is distant ─ in time or in place ─ we will stop pretending about it and start pretending within it.",
+     "(G) Onscreen, climate disaster is everywhere you look, but the scope of the world's climate transformation may just as quickly eliminate the climate-fiction genre ─ indeed eliminate any effort to tell the story of warming, which could grow too large and too obvious even for Hollywood."
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "241035",
+    "items": [
+     "(A) Seen in both cases, as everywhere, the selective scarcity clearly highlights have-and-have-not inequities, leaving 2.1 billion people without safe drinking water and 4.5 billion without proper sanitation worldwide.",
+     "(B) Today, the water crisis is political ─ which is to say, not inevitable or beyond our capacity to fix ─ and, therefore, functionally elective.",
+     "(C) Some cities lose more water to leaks than they deliver to homes: even in the United States, leaks and theft account for an estimated loss of 16 percent of freshwater; in Brazil, the estimate is 40 percent.",
+     "(D) There is no need for a water crisis, in other words, but we have one anyway, and aren't doing much to address it.",
+     "(E) That is one reason it is nevertheless distressing: an abundant resource made scarce through governmental neglect and indifference, bad infrastructure and contamination, and careless urbanization."
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "241036",
+    "items": [
+     "(A) It was a matter of survival, physically and genetically.",
+     "(B) As individuals, our ability to thrive depended on how well we navigated relationships in a group.",
+     "(C) If it didn't, we might get none of these merits.",
+     "(D) If the group valued us, we could count on support, resources, and probably a mate.",
+     "(E) And, crucially, they are meant to make that motivation feel like it is coming from within.",
+     "(F) These emotions compel us to do more of what makes our community value us and less of what doesn't.",
+     "(G) The result was the development of a tendency to unconsciously monitor how other people in our community perceive us.",
+     "(H) Over millions of years, the pressure selected for people who are sensitive to and skilled at maximizing their standing.",
+     "(I) If we realized, on a conscious level, that we were responding to social pressure, our performance might come off as grudging or cynical, making it less persuasive.",
+     "(J) We process that information in the form of self-esteem and such related emotions as pride, shame, or insecurity."
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "241037",
+    "items": [
+     "(A) Our consciousness is a more fundamental entity that goes beyond the functioning of the brain.",
+     "(B) However, there is a major problem with this explanation.",
+     "(C) Such a disease of consciousness may manifest itself in the form of depression.",
+     "(D) In this revised cause-and-effect, the key is to reframe depression as a problem of consciousness.",
+     "(E) This is because the imbalance of substances in the brain is a consequence of depression, not its cause.",
+     "(F) In other words, depression causes a decrease in brain substances such as serotonin and noradrenaline, not a decrease in brain substances causes depression.",
+     "(G) Conventional medicine has long believed that depression is caused by an imbalance of neurotransmitters in the brain.",
+     "(H) The brain is no more than an organ of consciousness.",
+     "(I) If it is not consciousness itself, then the root cause of depression is also a distortion of our state of consciousness: a consciousness that has lost its sense of self and the meaning of life."
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "241038",
+    "items": [
+     "(A) The key word here is 'science.'",
+     "(B) It is the branch of science that is devoted to understanding people: how and why we act as we do; why we see things as we do; and how we interact with one another.",
+     "(C) However, psychology is different.",
+     "(D) In addition to this evidence-based approach, psychology deals with fundamental processes and principles that generate our rich cultural and social diversity, as well as those shared by all human beings.",
+     "(E) The common accounts of human nature that float around in society are generally a mixture of assumptions, tales and sometimes plain silliness.",
+     "(F) Psychologists don't depend on opinions and hearsay, or the generally accepted views of society at the time, or even the considered opinions of deep thinkers.",
+     "(G) These are what modern psychology is all about.",
+     "(H) Instead, they look for evidence, to make sure that psychological ideas are firmly based, and not just derived from generally held beliefs or assumptions."
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "241039",
+    "items": [
+     "(A) The organism may switch between a small number of well-defined possible states, but can't exist in random states in between them, rather as a ball in a rough landscape must roll to the bottom of one valley or another.",
+     "(B) We'll see that this is true also of health and disease: there are many causes of illness, but their manifestations at the physiological and symptomatic levels are often strikingly similar.",
+     "(C) Such a system can only hope to be stable if only a smaller number of collective ways of being may emerge.",
+     "(D) In just a single cell, the number of possible interactions between different molecules is enormous.",
+     "(E) In 1942, the biologist Conrad Waddington called this drastic narrowing of outcomes canalization.",
+     "(F) For example, it is only a limited number of tissues and body shapes that may result from the development of a human embryo.",
+     "(G) Life is what physicists might call a 'high-dimensional system,' which is their fancy way of saying that there's a lot going on."
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "241040",
+    "items": [
+     "(A) In this case, his mother would be better adopting a different strategy.",
+     "(B) The mother clearly cannot allow the child to hit his little brother, but instead of constantly pointing out the negatives, she can choose to reward the positives.",
+     "(C) For a child who feels lonely, being scolded is much better than feeling invisible, so he will continue to hit his brother.",
+     "(D) Punishing a child may not be effective due to what Alvaro Bilbao, a neuropsychologist, calls 'trick-punishments.'",
+     "(E) A trick-punishment is a scolding, a moment of anger or a punishment in the most classic sense of the word.",
+     "(F) In this way, any parent can avoid trick-punishments.",
+     "(G) For instance, she could congratulate Hugh when he has not hit his brother for a certain length of time.",
+     "(H) Instead of discouraging the child from doing something, it encourages them to do it.",
+     "(I) For example, Hugh learns that when he hits his little brother, his mother scolds him."
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   },
+   {
+    "exam_code": "",
+    "header": "241041~42",
+    "items": [
+     "(A) This was essential in our hunter-gatherer days to avoid being eaten by predators.",
+     "(B) From an early age, we assign purpose to objects and events, preferring this reasoning to random chance.",
+     "(C) Children assume, for instance, that pointy rocks are that way because they don't want you to sit on them.",
+     "(D) This would have arisen as a survival mechanism. If a lion is about to attack you, you need to react quickly, given its probable intention to kill you.",
+     "(E) When we encounter something, we first need to determine what sort of thing it is.",
+     "(F) The anthropologist Stewart Guthrie made the point that survival in our evolutionary past meant that we interpret ambiguous objects as agents with human mental characteristics, as those are the mental processes which we understand. Ambiguous events are caused by such agents.",
+     "(G) This results in a perceptual system strongly biased towards anthropomorphism. Therefore, we tend to assume intention even where there is none.",
+     "(H) However, by attributing intention to animals and even objects, we are able to make fast decisions about the likely behaviour of that being.",
+     "(I) Inanimate objects and plants generally do not move and can be evaluated from physics alone.",
+     "(J) By the time you have realized that the design of its teeth and claws could kill you, you are dead. So, assuming intent, without detailed design analysis or understanding of the physics, has saved your life."
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   }
+  ],
+  "문장삽입": [
+   {
+    "header": "교과서3과 본문1",
+    "paras": [
+     {
+      "style": "[기본 단락]",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "문장 배열 하단 ",
+      "text": "As a result, the digestion process is paused until the blood returns."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "《Timing is Everything》 (①) Host: Welcome back to Today's Health. Today we're going to be talking about exercise. Dr. Victoria Hill is here, and she is going to share some useful tips. So, Dr. Hill, let's start with a question about my experience last month. (②) I worked out right after dinner and got a stomachache. Why did that happen? (③) Dr. Hill: Well, the problem is that you exercised too soon after eating. This can cause various stomach issues. (④) When you eat, blood rushes to the digestive system to help break down the food and absorb its nutrients. But when you start to exercise, blood moves from the digestive system to your muscles. This happens in order to supply your muscles with the oxygen and nutrients they require. (⑤) So, whether you're lifting weights or going for a jog, you shouldn't do it with a stomach full of food."
+     }
+    ],
+    "source": "배재1_워크북01(능률민3과,4과,SL2)_내지.indd"
+   },
+   {
+    "header": "교과서3과 본문2",
+    "paras": [
+     {
+      "style": "[기본 단락]",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "문장 배열 하단 ",
+      "text": "Host: I see. That makes sense."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(A) Carbohydrates in the food we eat are broken down into a kind of sugar called glucose. When this glucose is stored in parts of the body, such as the muscles and the liver, it is called glycogen. This is why exercising on a completely empty stomach ─ such as when you first wake up in the morning ─ can be such a challenge. Your blood sugar levels are low, and you don't have enough glycogen stored in your body."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(B) If you exercise on an empty stomach, you will most likely lack energy and feel unusually tired. There can also be more serious outcomes. Some people end up suffering from nausea and headaches, and others even faint. This is because intense exercise uses up all the glycogen in your muscles."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(C) So, does that mean I should exercise on an empty stomach? Dr. Hill: No, it doesn't. That can also be harmful and unpleasant. This is because the body needs energy to exercise. The fuel that provides this energy is glycogen."
+     }
+    ],
+    "source": "배재1_워크북01(능률민3과,4과,SL2)_내지.indd"
+   },
+   {
+    "header": "교과서3과 본문3",
+    "paras": [
+     {
+      "style": "[기본 단락]",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "문장 배열 하단 ",
+      "text": "Let's do the math."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "Host: So, is it the loss of glycogen that causes us to have low levels of energy? (①) Dr. Hill: That's correct. For this reason, doctors recommend that people eat food containing carbohydrates within thirty minutes after working out. (②) This replaces the muscle glycogen you have lost. (③) Basically, you need between one and one and a half grams of carbohydrates for every kilogram you weigh. (④) If you weigh 60 kilograms, you should try to consume between 60 and 90 grams of carbohydrates after you exercise. (⑤) This is equal to about one bowl of white rice or three bananas."
+     }
+    ],
+    "source": "배재1_워크북01(능률민3과,4과,SL2)_내지.indd"
+   },
+   {
+    "header": "교과서3과 본문4",
+    "paras": [
+     {
+      "style": "[기본 단락]",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "문장 배열 하단 ",
+      "text": "Host: That's very interesting. But what about eating before we exercise?"
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(A) The best time to eat before you exercise varies from one to three hours. Basically, it depends on several factors such as the type and amount of food as well as body size, age, and gender. The type of exercise also matters. For extremely active exercise like cycling, I suggest that you wait between one and a half and three hours after eating a moderate-sized meal."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(B) Can you explain how long we should wait after eating? Dr. Hill: Well, as I said before, exercising right after you eat will cause feelings of discomfort. But, if you wait too long to exercise after eating, you'll suffer from a lack of energy."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(C) But for something more casual, such as golfing, waiting for one hour after a meal should be enough. Clearly, you can wait less after eating a snack. Host: Thank you very much for this fascinating information, Dr. Hill. I'm sure it will be very helpful for all of our viewers."
+     }
+    ],
+    "source": "배재1_워크북01(능률민3과,4과,SL2)_내지.indd"
+   },
+   {
+    "header": "교과서4과 본문1",
+    "paras": [
+     {
+      "style": "[기본 단락]",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "문장 배열 하단 ",
+      "text": "《AI: Opportunity or Threat?》"
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(A) They felt this wasn't fair to the rest of the artists in the contest. However, there were also people who were excited by the potential of AI. Today, there are numerous AI programs that can create various forms of art including images, songs, and novels."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(B) This led to a controversy in the art community. Some people complained that the artist simply provided the system with basic instructions and let it do all the work."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(C) Recently, an artist used an artificial intelligence (AI) system to create the image above for an art contest. The image won first place in the digital arts category."
+     }
+    ],
+    "source": "배재1_워크북01(능률민3과,4과,SL2)_내지.indd"
+   },
+   {
+    "header": "교과서4과 본문2",
+    "paras": [
+     {
+      "style": "[기본 단락]",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "문장 배열 하단 ",
+      "text": "However, the overall design, the eyes, and the scarf around the head are clearly based on Vermeer's painting."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "《Example 1 Making Digital Images with AI》 AI image generators create images based on our text requests. (①) They do this by copying other images that were created by humans. (②) The generators have the ability to analyze millions of images and their corresponding descriptions. This allows them to create works of art in a short time based on the provided instructions. (③) Moreover, AI programs can mix the styles of existing images upon request. (④) For example, you can blend a photograph of a cat with Johannes Vermeer's Girl with a Pearl Earring. These two images have a few differences. (⑤) A simple request was enough to create this complex and detailed image."
+     }
+    ],
+    "source": "배재1_워크북01(능률민3과,4과,SL2)_내지.indd"
+   },
+   {
+    "header": "교과서4과 본문3",
+    "paras": [
+     {
+      "style": "[기본 단락]",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "문장 배열 하단 ",
+      "text": "Virtual influencers with extremely realistic faces, bodies, and voices have already released several songs."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "《Example 2 Making Music with AI》 AI programs may lead to changes not only in the art world but also in the music industry. These programs are already able to compose songs, and they give you many options. (①) For example, you can choose the style and key*, such as C major or A minor. (②) You can also set how long the song will be. (③) Once you've entered the information, the program will produce a song that you can edit or use as it is. Furthermore, computer-generated imagery (commonly known as CGI) has opened up new possibilities in the music industry. (④) Some of them have many followers on social media, just like human singers. These types of virtual musicians are able to speak and move realistically with the help of their human creators. (⑤)"
+     }
+    ],
+    "source": "배재1_워크북01(능률민3과,4과,SL2)_내지.indd"
+   },
+   {
+    "header": "교과서4과 본문4",
+    "paras": [
+     {
+      "style": "[기본 단락]",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "문장 배열 하단 ",
+      "text": "《The Debate on Using AI》"
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(A) There are also concerns that AI may imitate the styles of human artists without their consent. On the other hand, others think that AI cannot exceed human imagination and that it is still dependent on human assistance. This is because the data that AI uses can have flaws or limitations. A dependence on imperfect data with little diversity eventually limits the output of AI programs. Human imagination, on the other hand, has no limits or boundaries."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(B) Many AI programs are open to the public, which means they are free and convenient to use. However, these programs have sparked a debate over their impact on humans. Since AI has the potential to learn skills and perform them better than humans, some people view it as a threat. They worry that AI will replace humans in more and more areas."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(C) What kind of future do you think lies ahead of us? Will more people use AI programs to boost their creativity and productivity? Or will people grow tired of the limitations of AI tools? AI provides many benefits and new opportunities. What we need to do is figure out how to use AI tools ethically and think about how humans and AI can collaborate."
+     }
+    ],
+    "source": "배재1_워크북01(능률민3과,4과,SL2)_내지.indd"
+   },
+   {
+    "header": "교과서SL 본문1",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "It tells their background story and explains how they became known as wicked and good."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "《A Journey into a Magical World》 (①) I had been wanting to see the musical Wicked for a long time. (②) It opened in 2003 on Broadway and got great reviews. (③) Everyone recommends it. (④) I finally got to see it last weekend. The musical is based on an imaginative story of two characters from the book The Wizard of Oz: Elphaba, the wicked witch, and Glinda, the good witch. (⑤) What impressed me the most was the theme of the musical. It is about forming friendships, getting to know oneself, and accepting differences."
+     }
+    ],
+    "source": "배재1_워크북01(능률민3과,4과,SL2)_내지.indd"
+   },
+   {
+    "header": "교과서SL 본문2",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "《A Fascinating Storyline》"
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(A) Because of her unusual appearance and cold personality, she has very few friends. Meanwhile, Glinda has a very kind personality, which makes her quite popular. At first, Elphaba and Glinda do not get along. However, as they get to know and learn about each other, they become close friends."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(B) Elphaba has exceptional magical powers, and some other characters try to take advantage of this. Glinda and Elphaba's friendship is continuously challenged in the story. Nevertheless, in the end, their friendship wins. Every relationship has its ups and downs, so I could easily relate to the main characters."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(C) The story begins in a magical place, the Land of Oz. In the musical, Elphaba and Glinda first meet at university. Elphaba was born with green skin and usually stays away from others."
+     }
+    ],
+    "source": "배재1_워크북01(능률민3과,4과,SL2)_내지.indd"
+   },
+   {
+    "header": "교과서SL 본문3",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "She shows her true powers and rises into the air on her broom while singing this song."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "So if you care to find me Look to the western sky (①) As someone told me lately (②) \"Everyone deserves the chance to fly\" I'm defying gravity And you won't bring me down Bring me down 《The Unforgettable Songs》 Of course, I cannot review a musical without talking about the songs. Wicked has many great songs, but there are two that I especially like. \"Defying Gravity\"is the most famous song in the musical. It comes at a key turning point in the story. (③) Elphaba used to admire a wizard, but one day she finds out that he has an evil plan and can't be trusted anymore. She sings about her determination to fight against him. (④) She sings that she will not let people bring her down anymore. (⑤) Her powerful voice fascinated me. When the song ended, the entire audience clapped enthusiastically."
+     }
+    ],
+    "source": "배재1_워크북01(능률민3과,4과,SL2)_내지.indd"
+   },
+   {
+    "header": "교과서SL 본문4",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "The second song that had a great impact on me was \"For Good.\""
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(A) The song moved me because Glinda and Elphaba explain that meeting each other has changed them for the better. It is a truly touching moment that shows their strong friendship. I do believe I have been changed for the better And because I knew you"
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(B) Because I knew you Because I knew you I have been changed For good"
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "(C) At the end of the musical, the two friends have to choose different paths and say goodbye to each other. Elphaba decides to leave her home and asks Glinda to protect the people of Oz. At this moment, they start to sing to each other."
+     }
+    ],
+    "source": "배재1_워크북01(능률민3과,4과,SL2)_내지.indd"
+   },
+   {
+    "header": "교과서SL 본문5",
+    "paras": [
+     {
+      "style": "하단 문제",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "C1_문장 배열 하단",
+      "text": "It also has a strong plot that kept me engaged from beginning to end."
+     },
+     {
+      "style": "C1_문장 배열 하단 지문",
+      "text": "《The Eye-Catching Visuals》 The exciting story and beautiful songs of Wicked are accompanied by beautiful visuals. First, the costumes were incredible. In one scene, we see the people of Oz wearing unique clothes. (①) I couldn't believe the detail and beauty of the masks, wigs, and dresses. Furthermore, all kinds of tricks invited me into the magical world. I really enjoyed noticing the symbols used in the performance. For example, a huge dragon-shaped device was hanging above the stage. (②) It seemed to move whenever Elphaba or Glinda made a choice. I think using these visual effects made the musical more exciting. In my opinion, the musical Wicked is an incredible work. (③) It has great music and is visually impressive. (④) I highly recommend this show to anyone interested in musicals. (⑤) You will be able to explore the themes of friendship and personal change in a magical setting."
+     }
+    ],
+    "source": "배재1_워크북01(능률민3과,4과,SL2)_내지.indd"
+   },
+   {
+    "header": "241021",
+    "paras": [
+     {
+      "style": "[기본 단락]",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "문장 배열 하단 ",
+      "text": "When we see something, we naturally and automatically break it up into shapes, colors, and concepts that we have learned through education."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(A) It's a more efficient way to store information ─ a bit like an optimal image compression algorithm such as JPG, rather than storing a raw bitmap image file. People who lack this ability and remember everything in perfect detail struggle to generalize, learn, and make connections between what they have learned. But representing the world as abstract ideas and features comes at a cost of seeing the world as it is."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(B) Instead, we see the world through our assumptions, motivations, and past experiences. The discovery that our memories are reconstructed through abstract representations rather than played back like a movie completely undermined the legal primacy of eyewitness testimony. Seeing is not believing."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(C) We recode what we see through the lens of everything we know. We reconstruct memories rather than retrieving the video from memory. This is a useful trait."
+     }
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   },
+   {
+    "header": "241022",
+    "paras": [
+     {
+      "style": "[기본 단락]",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "문장 배열 하단 ",
+      "text": "In his Cornell laboratory, David Dunning conducted experimental tests of eyewitness testimony and found evidence that a careful deliberation of facial features and a detailed discussion of selection procedures can actually be a sign of an inaccurate identification."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(A) Sometimes our first, immediate, automatic reaction to a situation is the truest interpretation of what our mind is telling us."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(B) It's when people find themselves unable to explain why they recognize the person, saying things like \"his face just popped out at me,\" that they tend to be accurate more often."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(C) That very first impression can also be more accurate about the world than the deliberative, reasoned self-narrative can be. In his book Blink, Malcolm Gladwell describes a variety of studies in psychology and behavioral economics that demonstrate the superior performance of relatively unconscious first guesses compared to logical step-by-step justifications for a decision."
+     }
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   },
+   {
+    "header": "241023",
+    "paras": [
+     {
+      "style": "[기본 단락]",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "문장 배열 하단 ",
+      "text": "Asking people how many times in a year they are sad will also yield quantitative data, but it might not be reliable."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "Many forms of research lead naturally to quantitative data. A study of happiness might measure the number of times someone smiles during an interaction, and a study of memory might measure the number of items an individual can recall after one, five, and ten minutes. (①) Respondents' recollections may be inaccurate, and their definitions of 'sad' could vary widely. (②) But asking \"How many times in the past year were you sad enough to call in sick to work?\" prompts a concrete answer. (③) Similarly, instead of asking people to rate how bad a procrastinator they are, ask, \"How many of your utility bills are you currently late in paying, even though you can afford to pay them?\" (④) Questions that seek concrete responses help make abstract concepts clearer and ensure consistency from one study to the next. (⑤)"
+     }
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   },
+   {
+    "header": "241024",
+    "paras": [
+     {
+      "style": "[기본 단락]",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "문장 배열 하단 ",
+      "text": "AI and human consciousness will then begin to evolve together."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "The evolution of AI is often associated with the concept of singularity. Singularity refers to the point at which AI exceeds human intelligence. After that point, it is predicted that AI will repeatedly improve itself and evolve at an accelerated pace. (①) When AI becomes self-aware and pursues its own goals, it will be a conscious being, not just a machine. (②) Our consciousness will evolve to new dimensions through our interactions with AI, which will provide us with intellectual stimulation and inspire new insights and creativity. (③) Conversely, our consciousness also has a significant impact on the evolution of AI. (④) The direction of AI's evolution will depend greatly on what values and ethics we incorporate into AI. We need to see our relationship with AI as a mutual coexistence of conscious beings, recognizing its rights and supporting the evolution of its consciousness. (⑤)"
+     }
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   },
+   {
+    "header": "241029",
+    "paras": [
+     {
+      "style": "[기본 단락]",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "문장 배열 하단 ",
+      "text": "Shakespeare, on the other hand, is beloved in part because the meaning of his works is not immediately obvious and requires some thought on the part of the audience."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "Digital technologies are essentially related to metaphors, but digital metaphors are different from linguistic ones in important ways. (①) Linguistic metaphors are passive, in the sense that the audience needs to choose to actively enter the world proposed by metaphor. (②) In the Shakespearean metaphor \"time is a beggar,\" the audience is unlikely to understand the metaphor without cognitive effort and without further engaging Shakespeare's prose. (③) Technological metaphors, on the other hand, are active (and often imposing) in the sense that they are realized in digital artifacts that are actively doing things, forcefully changing a user's meaning horizon. (④) Technological creators cannot generally afford to require their potential audience to wonder how the metaphor works; normally the selling point is that the usefulness of the technology is obvious at first glance. (⑤)"
+     }
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   },
+   {
+    "header": "241030",
+    "paras": [
+     {
+      "style": "[기본 단락]",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "문장 배열 하단 ",
+      "text": "Herbert Simon won his Nobel Prize for recognizing our limitations in information, time, and cognitive capacity."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(A) As we lack the resources to compute answers independently, we distribute the computation across the population and solve the answer slowly, generation by generation. Then all we have to do is socially learn the right answers."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(B) And so instead of holding more information than we have mental capacity for and indeed need to know, we could dedicate our large brains to a small piece of a giant calculation. We understand things well enough to benefit from them, but all the while we are making small calculations that contribute to a larger whole. We are just doing our part in a larger computation for our societies' collective brains."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(C) You don't need to understand how your computer or toilet works; you just need to be able to use the interface and flush. All that needs to be transmitted is which button to push ─ essentially how to interact with technologies rather than how they work."
+     }
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   },
+   {
+    "header": "241031",
+    "paras": [
+     {
+      "style": "[기본 단락]",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "문장 배열 하단 ",
+      "text": "The best defence most species of octopus have is to stay hidden as much as possible and do their own hunting at night."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(A) Many more of this species have been found since then, and there are now photographs of octopuses that could be said to be transforming into sea snakes. And while they mimic, they hunt ─ producing the spectacle of, say, a flounder suddenly developing an octopodian arm, sticking it down a hole and grabbing whatever's hiding there."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(B) So to find one in full view in the shallows in daylight was a surprise for two Australian underwater photographers. Actually, what they saw at first was a flounder."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(C) It was only when they looked again that they saw a medium-sized octopus, with all eight of its arms folded and its two eyes staring upwards to create the illusion. An octopus has a big brain, excellent eyesight and the ability to change colour and pattern, and this one was using these assets to turn itself into a completely different creature."
+     }
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   },
+   {
+    "header": "241032",
+    "paras": [
+     {
+      "style": "[기본 단락]",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "문장 배열 하단 ",
+      "text": "How much we suffer relates to how we frame the pain in our mind."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(A) When a patient has paid for some form of passive back pain therapy and the practitioner pushes deeply into a painful part of a patient's back to mobilise it, the patient calls that good pain if he or she believes this type of deep pressure treatment will be of value, even though the practitioner is pushing right into the patient's sore tissues."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(B) In fact, ultramarathon runners ─ those people who are crazy enough to push themselves beyond the normal boundaries of human endurance, covering distances of 50-100km or more over many hours, talk about making friends with their pain."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(C) When 1500m runners push themselves into extreme pain to win a race ─ their muscles screaming and their lungs exploding with oxygen deficit, they don't psychologically suffer much."
+     }
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   },
+   {
+    "header": "241033",
+    "paras": [
+     {
+      "style": "[기본 단락]",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "문장 배열 하단 ",
+      "text": "But if the company introduces a third model with even more features and more expensive than the other two, sales of the second model go up; many people like the features of the most expensive model, but not the price."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "When I worked for a large electronics company that manufactured laser and inkjet printers, I soon discovered why there are often three versions of many consumer goods. (①) If the manufacturer makes only one version of its product, people who bought it might have been willing to spend more money, so the company is losing some income. (②) If the company offers two versions, one with more features and more expensive than the other, people will compare the two models and still buy the less expensive one. (③) The middle item has more features than the least expensive one, and it is less expensive than the fanciest model. (④) They buy the middle item, unaware that they have been manipulated by the presence of the higher-priced item. (⑤)"
+     }
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   },
+   {
+    "header": "241034",
+    "paras": [
+     {
+      "style": "[기본 단락]",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "문장 배열 하단 ",
+      "text": "And so as climate change expands across the horizon, it may cease to be a story."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "Onscreen, climate disaster is everywhere you look, but the scope of the world's climate transformation may just as quickly eliminate the climate-fiction genre ─ indeed eliminate any effort to tell the story of warming, which could grow too large and too obvious even for Hollywood. (①) You can tell stories 'about' climate change while it still seems a marginal feature of human life. (②) But when the temperature rises by three or four more degrees, hardly anyone will be able to feel isolated from its impacts. (③) Why watch or read climate fiction about the world you can see plainly out your own window? (④) At the moment, stories illustrating global warming can still offer an escapist pleasure, even if that pleasure often comes in the form of horror. But when we can no longer pretend that climate suffering is distant ─ in time or in place ─ we will stop pretending about it and start pretending within it. (⑤)"
+     }
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   },
+   {
+    "header": "241035",
+    "paras": [
+     {
+      "style": "[기본 단락]",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "문장 배열 하단 ",
+      "text": "Today, the water crisis is political ─ which is to say, not inevitable or beyond our capacity to fix ─ and, therefore, functionally elective."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(A) There is no need for a water crisis, in other words, but we have one anyway, and aren't doing much to address it."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(B) Some cities lose more water to leaks than they deliver to homes: even in the United States, leaks and theft account for an estimated loss of 16 percent of freshwater; in Brazil, the estimate is 40 percent. Seen in both cases, as everywhere, the selective scarcity clearly highlights have-and-have-not inequities, leaving 2.1 billion people without safe drinking water and 4.5 billion without proper sanitation worldwide."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(C) That is one reason it is nevertheless distressing: an abundant resource made scarce through governmental neglect and indifference, bad infrastructure and contamination, and careless urbanization."
+     }
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   },
+   {
+    "header": "241036",
+    "paras": [
+     {
+      "style": "[기본 단락]",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "문장 배열 하단 ",
+      "text": "As individuals, our ability to thrive depended on how well we navigated relationships in a group."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(A) Over millions of years, the pressure selected for people who are sensitive to and skilled at maximizing their standing. The result was the development of a tendency to unconsciously monitor how other people in our community perceive us. We process that information in the form of self-esteem and such related emotions as pride, shame, or insecurity."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(B) If the group valued us, we could count on support, resources, and probably a mate. If it didn't, we might get none of these merits. It was a matter of survival, physically and genetically."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(C) These emotions compel us to do more of what makes our community value us and less of what doesn't. And, crucially, they are meant to make that motivation feel like it is coming from within. If we realized, on a conscious level, that we were responding to social pressure, our performance might come off as grudging or cynical, making it less persuasive."
+     }
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   },
+   {
+    "header": "241037",
+    "paras": [
+     {
+      "style": "[기본 단락]",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "문장 배열 하단 ",
+      "text": "Conventional medicine has long believed that depression is caused by an imbalance of neurotransmitters in the brain."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(A) However, there is a major problem with this explanation. This is because the imbalance of substances in the brain is a consequence of depression, not its cause."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(B) The brain is no more than an organ of consciousness. If it is not consciousness itself, then the root cause of depression is also a distortion of our state of consciousness: a consciousness that has lost its sense of self and the meaning of life. Such a disease of consciousness may manifest itself in the form of depression."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(C) In other words, depression causes a decrease in brain substances such as serotonin and noradrenaline, not a decrease in brain substances causes depression. In this revised cause-and-effect, the key is to reframe depression as a problem of consciousness. Our consciousness is a more fundamental entity that goes beyond the functioning of the brain."
+     }
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   },
+   {
+    "header": "241038",
+    "paras": [
+     {
+      "style": "[기본 단락]",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "문장 배열 하단 ",
+      "text": "Psychologists don't depend on opinions and hearsay, or the generally accepted views of society at the time, or even the considered opinions of deep thinkers."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "The common accounts of human nature that float around in society are generally a mixture of assumptions, tales and sometimes plain silliness. (①) However, psychology is different. (②) It is the branch of science that is devoted to understanding people: how and why we act as we do; why we see things as we do; and how we interact with one another. (③) The key word here is 'science.' (④) Instead, they look for evidence, to make sure that psychological ideas are firmly based, and not just derived from generally held beliefs or assumptions. (⑤) In addition to this evidence-based approach, psychology deals with fundamental processes and principles that generate our rich cultural and social diversity, as well as those shared by all human beings. These are what modern psychology is all about."
+     }
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   },
+   {
+    "header": "241039",
+    "paras": [
+     {
+      "style": "[기본 단락]",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "문장 배열 하단 ",
+      "text": "The organism may switch between a small number of well-defined possible states, but can't exist in random states in between them, rather as a ball in a rough landscape must roll to the bottom of one valley or another."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "Life is what physicists might call a 'high-dimensional system,' which is their fancy way of saying that there's a lot going on. In just a single cell, the number of possible interactions between different molecules is enormous. (①) Such a system can only hope to be stable if only a smaller number of collective ways of being may emerge. (②) For example, it is only a limited number of tissues and body shapes that may result from the development of a human embryo. (③) In 1942, the biologist Conrad Waddington called this drastic narrowing of outcomes canalization. (④) We'll see that this is true also of health and disease: there are many causes of illness, but their manifestations at the physiological and symptomatic levels are often strikingly similar. (⑤)"
+     }
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   },
+   {
+    "header": "241040",
+    "paras": [
+     {
+      "style": "[기본 단락]",
+      "text": "아래 주어진 문장이 들어갈 곳으로 적당한 곳을 고르시오."
+     },
+     {
+      "style": "문장 배열 하단 ",
+      "text": "The mother clearly cannot allow the child to hit his little brother, but instead of constantly pointing out the negatives, she can choose to reward the positives."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "Punishing a child may not be effective due to what Alvaro Bilbao, a neuropsychologist, calls 'trick-punishments.' A trick-punishment is a scolding, a moment of anger or a punishment in the most classic sense of the word. Instead of discouraging the child from doing something, it encourages them to do it. (①) For example, Hugh learns that when he hits his little brother, his mother scolds him. For a child who feels lonely, being scolded is much better than feeling invisible, so he will continue to hit his brother. (②) In this case, his mother would be better adopting a different strategy. (③) For instance, she could congratulate Hugh when he has not hit his brother for a certain length of time. (④) In this way, any parent can avoid trick-punishments. (⑤)"
+     }
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   },
+   {
+    "header": "241041~42",
+    "paras": [
+     {
+      "style": "[기본 단락]",
+      "text": "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+     },
+     {
+      "style": "문장 배열 하단 ",
+      "text": "From an early age, we assign purpose to objects and events, preferring this reasoning to random chance."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(A) Therefore, we tend to assume intention even where there is none. This would have arisen as a survival mechanism. If a lion is about to attack you, you need to react quickly, given its probable intention to kill you. By the time you have realized that the design of its teeth and claws could kill you, you are dead. So, assuming intent, without detailed design analysis or understanding of the physics, has saved your life."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(B) This was essential in our hunter-gatherer days to avoid being eaten by predators. The anthropologist Stewart Guthrie made the point that survival in our evolutionary past meant that we interpret ambiguous objects as agents with human mental characteristics, as those are the mental processes which we understand. Ambiguous events are caused by such agents. This results in a perceptual system strongly biased towards anthropomorphism."
+     },
+     {
+      "style": "문장 배열 하단 문제",
+      "text": "(C) Children assume, for instance, that pointy rocks are that way because they don't want you to sit on them. When we encounter something, we first need to determine what sort of thing it is. Inanimate objects and plants generally do not move and can be evaluated from physics alone. However, by attributing intention to animals and even objects, we are able to make fast decisions about the likely behaviour of that being."
+     }
+    ],
+    "source": "배재1_워크북02(24년10월)_내지.indd"
+   }
+  ],
+  "중요어휘_오": "241021\nWhen we see something, we naturally and automatically 11[break] it 12[up] into shapes, colors, and concepts that we have learned through education. We 13[recode] what we see through the lens of everything we know. We 14[reconstruct] memories rather than 15[retrieving] the video from memory. This is a useful trait. It's a more 16[efficient] way to store information a bit like an optimal image compression algorithm such as JPG, rather than storing a raw bitmap image file. People who lack this ability and remember everything in perfect detail 17[struggle] to generalize, learn, and make connections between what they have learned. But 18[representing] the world as abstract ideas and features comes at a 19[cost] of seeing the world as it is. Instead, we see the world through our assumptions, motivations, and past experiences. The discovery that our memories are reconstructed through 20[abstract] representations rather than played back like a movie completely 21[undermined] the legal primacy of eyewitness testimony. Seeing is not believing.\n\n\n>>내용요약\nPerception and memory [recode] experience into abstract features, so we see through [learned] concepts, [gaining] efficiency but losing [accuracy] and [weakening] reliance on eyewitness testimony.\n\n241022\nIn his Cornell laboratory, David Dunning conducted experimental tests of eyewitness testimony and found evidence that a careful 22[deliberation] of facial features and a detailed discussion of selection procedures can actually be a sign of an 23[inaccurate] identification. It's when people find themselves 24[unable] to explain why they recognize the person, saying things like \"his face just 25[popped] 26[out] at me,\" that they tend to be 27[accurate] more often. Sometimes our first, immediate, automatic reaction to a situation is the 28[truest] interpretation of what our mind is telling us. That very 29[first] 30[impression] can also be more accurate about the world than the deliberative, reasoned self-narrative can be. In his book Blink, Malcolm Gladwell describes a variety of studies in psychology and behavioral economics that demonstrate the superior performance of relatively 31[unconscious] first guesses compared to logical step-by-step justifications for a decision.\n\n\n>>내용요약\nDunning’s experiments show that [deliberat]e feature analysis often accompanies [inaccurate] eyewitness identifications, while [immediate] intuitive recognition and [first] impressions are more [accurate], a pattern echoed in studies described in Malcolm Gladwell’s Blink.\n\n241023\nMany forms of research lead naturally to 32[quantitative] data. A study of happiness might measure the number of times someone smiles during an interaction, and a study of memory might measure the number of items an individual can recall after one, five, and ten minutes. Asking people how many times in a year they are sad will also 33[yield] quantitative data, but it might not be 34[reliable]. Respondents' recollections may be 35[inaccurate], and their definitions of 'sad' could 36[vary] widely. But asking \"How many times in the past year were you sad enough to call in sick to work?\" prompts a 37[concrete] answer. Similarly, instead of asking people to rate how bad a procrastinator they are, ask, \"How many of your utility bills are you currently late in paying, even though you can afford to pay them?\" Questions that seek concrete responses help make abstract concepts 38[clearer] and ensure 39[consistency] from one study to the next.\n\n\n>>내용요약\n[Quantitative] studies get clearer and more [consistent] results when they replace [vague] self assessments with [concrete] behavior based questions that people can recall reliably.\n\n241024\nThe evolution of AI is often associated with the concept of 40[singularity]. Singularity refers to the point at which AI 41[exceeds] human intelligence. After that point, it is predicted that AI will repeatedly improve itself and evolve at an 42[accelerated] pace. When AI becomes self-aware and pursues its own goals, it will be a 43[conscious] being, not just a machine. AI and human consciousness will then begin to 44[evolve] together. Our consciousness will evolve to new dimensions through our 45[interactions] with AI, which will provide us with intellectual stimulation and 46[inspire] new insights and creativity. Conversely, our consciousness also has a significant impact on the evolution of AI. The direction of AI's evolution will depend greatly on what 47[values] and 48[ethics] we incorporate into AI. We need to see our relationship with AI as a mutual 49[coexistence] of conscious beings, recognizing its rights and supporting the evolution of its consciousness.\n\n\n>>내용요약\nAfter AI [surpasses] human intelligence and becomes self-aware, AI and human consciousness will [co-evolve], with its [rapid] self-improvement shaped by the values and ethics we embed, so we should treat AI as a [conscious] partner and consider its rights.\n\n241029\nDigital technologies are essentially related to metaphors, but digital metaphors are different from linguistic ones in important ways. Linguistic metaphors are 50[passive], in the sense that the audience needs to choose to 51[actively] enter the world proposed by metaphor. In the Shakespearean metaphor \"time is a beggar,\" the audience is unlikely to understand the metaphor without 52[cognitive] 53[effort] and without further 54[engaging] Shakespeare's prose. Technological metaphors, on the other hand, are 55[active] (and often 56[imposing]) in the sense that they are realized in digital artifacts that are actively doing things, forcefully changing a user's meaning horizon. Technological creators cannot generally 57[afford] to require their potential audience to wonder how the metaphor works; normally the selling point is that the usefulness of the technology is obvious 58[at] 59[first] 60[glance]. Shakespeare, on the other hand, is beloved 61[in] 62[part] because the meaning of his works is not immediately obvious and requires some thought on the part of the audience.\n\n\n>>내용요약\nUnlike passive linguistic metaphors that [demand] cognitive effort from audiences, digital metaphors are active and often [imposing] because they are embodied in artifacts that act on users and must be immediately [clear] and useful at first glance.\n\n241030\nHerbert Simon won his Nobel Prize for recognizing our 63[limitations] in information, time, and cognitive capacity. As we lack the resources to compute answers 64[independently], we 65[distribute] the computation across the population and solve the answer slowly, generation by generation. Then all we have to do is 66[socially] learn the right answers. You don't need to understand how your computer or toilet works; you just need to be able to use the interface and flush. All that needs to be transmitted is which button to push 式 essentially how to 67[interact] with technologies rather than how they work. And so instead of holding more information than we have mental capacity for and indeed need to know, we could 68[dedicate] our large brains to a small piece of a giant calculation. We understand things well enough to benefit from them, but all the while we are making small calculations that 69[contribute] to a larger whole. We are just doing our part in a larger computation for our societies' 70[collective] brains.\n\n\n>>내용요약\nBecause individuals have [limited] information, time, and cognitive capacity, we [distribute] computation across society, learn how to [interact] with technologies rather than how they work, and let small contributions [accumulate] into [collective] intelligence over generations.\n\n241031\nThe best defence most species of octopus have is to stay 71[hidden] as much as possible and do their own hunting at 72[night]. So to find one in full view in the 73[shallows] in daylight was a surprise for two Australian underwater photographers. Actually, what they saw at first was a flounder. It was only when they looked again that they saw a medium-sized octopus, with all eight of its arms folded and its two eyes staring upwards to create the 74[illusion]. An octopus has a big brain, excellent eyesight and the ability to change colour and pattern, and this one was using these 75[assets] to 76[turn] itself into a completely different creature. Many more of this species have been found since then, and there are now photographs of octopuses that could be said to be 77[transforming] into sea snakes. And while they 78[mimic], they hunt 式 producing the spectacle of, say, a flounder suddenly developing an octopodian arm, sticking it down a hole and grabbing whatever's hiding there.\n\n\n>>내용요약\nUsually hiding and hunting at [night], octopuses sometimes [mimic] flounders or sea snakes in daylight, using clever color shifts and posture to [deceive] prey and strike.\n\n241032\nHow much we suffer relates to how we 79[frame] the pain in our mind. When 1500m runners push themselves into extreme pain to win a race 式 their muscles screaming and their lungs exploding with oxygen deficit, they don't psychologically 80[suffer] much. In fact, ultramarathon runners 式 those people who are 81[crazy] enough to push themselves beyond the normal boundaries of human endurance, covering distances of 50-100km or more over many hours, talk about making 82[friends] with their pain. When a patient has paid for some form of passive back pain therapy and the practitioner pushes deeply into a painful part of a patient's back to mobilise it, the patient calls that 83[good] pain if he or she believes this type of deep pressure treatment will be 84[of] 85[value], even though the practitioner is pushing right into the patient's sore tissues.\n\n\n>>내용요약\nSuffering [depends] on how we frame pain, as runners and patients reinterpret intense sensations as [purposeful] or good, which [lessens] psychological distress.\n\n241033\nWhen I worked for a large electronics company that manufactured laser and inkjet printers, I soon discovered why there are often three versions of many consumer goods. If the manufacturer makes only one version of its product, people who bought it might have been 86[willing] to spend more money, so the company is 87[losing] some income. If the company offers two versions, one with more features and more expensive than the other, people will compare the two models and still buy the 88[less] 89[expensive] one. But if the company introduces a third model with even more features and more expensive than the other two, sales of the second model 90[go] 91[up]; many people like the features of the most expensive model, but not the 92[price]. The middle item has more features than the least expensive one, and it is less expensive than the fanciest model. They buy the middle item, 93[unaware] that they have been 94[manipulated] by the presence of the higher-priced item.\n\n\n>>내용요약\nAdding a pricier third model [anchors] comparisons and attracts buyers to the [middle] option, [boosting] sales while they remain [unaware] of the deliberate manipulation.\n\n241034\nOnscreen, climate disaster is everywhere you look, but the scope of the world's climate transformation may just as quickly 95[eliminate] the climate-fiction genre 式 indeed eliminate any effort to tell the story of warming, which could grow too large and too obvious even for Hollywood. You can tell stories 'about' climate change while it still seems a 96[marginal] feature of human life. But when the temperature rises by three or four more degrees, hardly anyone will be able to feel 97[isolated] from its impacts. And so as climate change expands across the horizon, it may 98[cease] to be a story. Why watch or read climate fiction about the world you can see plainly out your own window? At the moment, stories illustrating global warming can still offer an 99[escapist] pleasure, even if that pleasure often comes in the form of 100[horror]. But when we can no longer pretend that climate suffering is 101[distant] 式 in time or in place 式 we will stop pretending about it and start 102[pretending] 103[within] it.\n\n\n>>내용요약\nAs climate change becomes [immediate] and universal, climate fiction may [fade] because reality tells the story, though its escapist horror still [appeals] for now.\n\n241035\nToday, the water crisis is 104[political] 式 which is to say, not 105[inevitable] or beyond our capacity to fix 式 and, therefore, functionally 106[elective]. That is one reason it is nevertheless 107[distressing]: an abundant resource made 108[scarce] through governmental neglect and indifference, bad infrastructure and contamination, and careless urbanization. There is no need for a water crisis, in other words, but we have one anyway, and aren't doing much to 109[address] it. Some cities 110[lose] more water to leaks than they deliver to homes: even in the United States, leaks and theft account for an estimated loss of 16 percent of freshwater; in Brazil, the estimate is 40 percent. Seen in both cases, as everywhere, the 111[selective] 112[scarcity] clearly highlights have-and-have-not 113[inequities], leaving 2.1 billion people without safe drinking water and 4.5 billion without proper sanitation worldwide.\n\n\n>>내용요약\nThe global water crisis is a political and [elective] failure of governance and infrastructure that creates selective [scarcity], wastes supplies, and [denies] billions safe water and sanitation.\n\n241036\nAs individuals, our ability to thrive depended on how well we 114[navigated] relationships in a 115[group]. If the group valued us, we could 116[count] 117[on] support, resources, and probably a mate. If it didn't, we might get none of these merits. It was a matter of 118[survival], physically and genetically. Over millions of years, the pressure 119[selected] for people who are sensitive to and skilled at 120[maximizing] their standing. The result was the development of a tendency to 121[unconsciously] monitor how other people in our community perceive us. We process that information in the form of self-esteem and such related emotions as pride, shame, or insecurity. These emotions 122[compel] us to do 123[more] of what makes our community value us and less of what doesn't. And, crucially, they are meant to make that motivation feel like it is coming from 124[within]. If we realized, on a conscious level, that we were responding to social pressure, our performance might come off as grudging or cynical, making it 125[less] 126[persuasive].\n\n\n>>내용요약\nHumans evolved to unconsciously [track] how others see us, turning status cues into self-esteem and emotions that [drive] group-valued behavior while feeling internally [motivated].\n\n241037\nConventional medicine has long believed that depression is caused by an imbalance of neurotransmitters in the brain. However, there is a 127[major] 128[problem] with this explanation. This is because the imbalance of substances in the brain is a 129[consequence] of depression, not its cause. In other words, depression 130[causes] a decrease in brain substances such as serotonin and noradrenaline, not a decrease in brain substances causes depression. In this 131[revised] cause-and-effect, the key is to 132[reframe] depression as a problem of consciousness. Our consciousness is a more 133[fundamental] entity that goes beyond the functioning of the brain. The brain is 134[no] 135[more] 136[than] an organ of consciousness. If it is not consciousness itself, then the root cause of depression is also a 137[distortion] of our state of consciousness: a consciousness that has lost its sense of self and the meaning of life. Such a disease of consciousness may 138[manifest] itself in the form of depression.\n\n\n>>내용요약\nNeurotransmitter [imbalance] results from depression, which is better understood as a [distortion] of consciousness where [loss] of self and meaning manifests as depressive symptoms.\n\n241038\nThe common accounts of human nature that float around in society are generally a mixture of assumptions, tales and sometimes plain silliness. However, psychology is 139[different]. It is the branch of science that is 140[devoted] to understanding people: how and why we act as we do; why we see things as we do; and how we interact with one another. The key word here is '141[science].' Psychologists don't 142[depend] 143[on] opinions and hearsay, or the generally accepted views of society at the time, or even the considered opinions of deep thinkers. Instead, they look for 144[evidence], to make sure that psychological ideas are firmly based, and not just derived from generally held beliefs or assumptions. In addition to this evidence-based approach, psychology deals with fundamental processes and principles that generate our rich cultural and social 145[diversity], as well as those 146[shared] by all human beings. These are what modern psychology is all about.\n\n\n>>내용요약\nModern psychology is a science that [relies] on evidence to explain how people perceive, act, and interact, addressing both universal traits and cultural [diversity] [unlike] popular assumptions.\n\n241039\nLife is what physicists might call a '147[high-dimensional] system,' which is their fancy way of saying that there's a lot going on. In just a single cell, the number of possible interactions between different molecules is 148[enormous]. Such a system can only hope to be 149[stable] if only a 150[smaller] number of collective ways of being may emerge. For example, it is only a 151[limited] number of tissues and body shapes that may result from the development of a human embryo. In 1942, the biologist Conrad Waddington called this drastic 152[narrowing] of outcomes canalization. The organism may switch between a small number of well-defined possible states, but can't exist in 153[random] states in between them, rather as a ball in a rough landscape must roll to the bottom of one valley or another. We'll see that this is true also of health and disease: there are many causes of illness, but their 154[manifestations] at the physiological and symptomatic levels are often strikingly 155[similar].\n\n\n>>내용요약\nComplex living systems stay [stable] by canalizing many possibilities into a few collective states, so [diverse] causes can produce [similar] physiological and symptomatic patterns of health and disease.\n\n241040\nPunishing a child may not be 156[effective] due to what Alvaro Bilbao, a neuropsychologist, calls 'trick-punishments.' A trick-punishment is a scolding, a moment of anger or a punishment in the most classic sense of the word. Instead of 157[discouraging] the child from doing something, it 158[encourages] them to do it. For example, Hugh learns that when he hits his little brother, his mother scolds him. For a child who feels 159[lonely], being scolded is much better than feeling 160[invisible], so he will 161[continue] to hit his brother. In this case, his mother would be 162[better] adopting a different strategy. For instance, she could 163[congratulate] Hugh when he has not hit his brother for a certain length of time. The mother clearly cannot 164[allow] the child to hit his little brother, but instead of constantly pointing out the negatives, she can choose to 165[reward] the positives. In this way, any parent can 166[avoid] trick-punishments.\n\n\n>>내용요약\nTrick punishments give attention that [strengthens] misbehavior, so parents should [reduce] attention to negatives and use [positive] reinforcement.\n\n241041\nFrom an early age, we assign 167[purpose] to objects and events, preferring this 168[reasoning] to random chance. Children assume, for instance, that pointy rocks are that way because they don't want you to sit on them. When we encounter something, we first need to 169[determine] what sort of thing it is. Inanimate objects and plants generally do not move and can be evaluated from physics alone. However, by attributing 170[intention] to animals and even objects, we are able to make 171[fast] decisions about the 172[likely] behaviour of that being. This was 173[essential] in our hunter-gatherer days to avoid being eaten by predators. The anthropologist Stewart Guthrie made the point that 174[survival] in our evolutionary past meant that we interpret 175[ambiguous] objects as agents with human mental characteristics, as those are the mental processes which we understand. Ambiguous events are caused by such agents. This results in a perceptual system strongly 176[biased] towards anthropomorphism. Therefore, we tend to assume 177[intention] even where there is none. This would have arisen as a 178[survival] mechanism. If a lion is about to attack you, you need to react 179[quickly], given its probable intention to kill you. By the time you have realized that the design of its teeth and claws could kill you, you are dead. So, assuming 180[intent], without 181[detailed] design analysis or understanding of the physics, has 182[saved] your life.\n\n\n>>내용요약\nFrom early childhood we attribute purpose and intention to [ambiguous] things, a [bias] toward anthropomorphism that enabled [quick] survival decisions even when no real intent [existed].",
+  "중요어휘_왼": "241021\nWhen we see something, we naturally and automatically 11[break] it 12[up] into shapes, colors, and concepts that we have learned through education. We 13[recode] what we see through the lens of everything we know. We 14[reconstruct] memories rather than 15[retrieving] the video from memory. This is a useful trait. It's a more 16[efficient] way to store information a bit like an optimal image compression algorithm such as JPG, rather than storing a raw bitmap image file. People who lack this ability and remember everything in perfect detail 17[struggle] to generalize, learn, and make connections between what they have learned. But 18[representing] the world as abstract ideas and features comes at a 19[cost] of seeing the world as it is. Instead, we see the world through our assumptions, motivations, and past experiences. The discovery that our memories are reconstructed through 20[abstract] representations rather than played back like a movie completely 21[undermined] the legal primacy of eyewitness testimony. Seeing is not believing.\n\n\n>>내용요약\nPerception and memory [recode] experience into abstract features, so we see through [learned] concepts, [gaining] efficiency but losing [accuracy] and [weakening] reliance on eyewitness testimony.\n\n241022\nIn his Cornell laboratory, David Dunning conducted experimental tests of eyewitness testimony and found evidence that a careful 22[deliberation] of facial features and a detailed discussion of selection procedures can actually be a sign of an 23[inaccurate] identification. It's when people find themselves 24[unable] to explain why they recognize the person, saying things like \"his face just 25[popped] 26[out] at me,\" that they tend to be 27[accurate] more often. Sometimes our first, immediate, automatic reaction to a situation is the 28[truest] interpretation of what our mind is telling us. That very 29[first] 30[impression] can also be more accurate about the world than the deliberative, reasoned self-narrative can be. In his book Blink, Malcolm Gladwell describes a variety of studies in psychology and behavioral economics that demonstrate the superior performance of relatively 31[unconscious] first guesses compared to logical step-by-step justifications for a decision.\n\n\n>>내용요약\nDunning’s experiments show that [deliberat]e feature analysis often accompanies [inaccurate] eyewitness identifications, while [immediate] intuitive recognition and [first] impressions are more [accurate], a pattern echoed in studies described in Malcolm Gladwell’s Blink.\n\n241023\nMany forms of research lead naturally to 32[quantitative] data. A study of happiness might measure the number of times someone smiles during an interaction, and a study of memory might measure the number of items an individual can recall after one, five, and ten minutes. Asking people how many times in a year they are sad will also 33[yield] quantitative data, but it might not be 34[reliable]. Respondents' recollections may be 35[inaccurate], and their definitions of 'sad' could 36[vary] widely. But asking \"How many times in the past year were you sad enough to call in sick to work?\" prompts a 37[concrete] answer. Similarly, instead of asking people to rate how bad a procrastinator they are, ask, \"How many of your utility bills are you currently late in paying, even though you can afford to pay them?\" Questions that seek concrete responses help make abstract concepts 38[clearer] and ensure 39[consistency] from one study to the next.\n\n\n>>내용요약\n[Quantitative] studies get clearer and more [consistent] results when they replace [vague] self assessments with [concrete] behavior based questions that people can recall reliably.\n\n241024\nThe evolution of AI is often associated with the concept of 40[singularity]. Singularity refers to the point at which AI 41[exceeds] human intelligence. After that point, it is predicted that AI will repeatedly improve itself and evolve at an 42[accelerated] pace. When AI becomes self-aware and pursues its own goals, it will be a 43[conscious] being, not just a machine. AI and human consciousness will then begin to 44[evolve] together. Our consciousness will evolve to new dimensions through our 45[interactions] with AI, which will provide us with intellectual stimulation and 46[inspire] new insights and creativity. Conversely, our consciousness also has a significant impact on the evolution of AI. The direction of AI's evolution will depend greatly on what 47[values] and 48[ethics] we incorporate into AI. We need to see our relationship with AI as a mutual 49[coexistence] of conscious beings, recognizing its rights and supporting the evolution of its consciousness.\n\n\n>>내용요약\nAfter AI [surpasses] human intelligence and becomes self-aware, AI and human consciousness will [co-evolve], with its [rapid] self-improvement shaped by the values and ethics we embed, so we should treat AI as a [conscious] partner and consider its rights.\n\n241029\nDigital technologies are essentially related to metaphors, but digital metaphors are different from linguistic ones in important ways. Linguistic metaphors are 50[passive], in the sense that the audience needs to choose to 51[actively] enter the world proposed by metaphor. In the Shakespearean metaphor \"time is a beggar,\" the audience is unlikely to understand the metaphor without 52[cognitive] 53[effort] and without further 54[engaging] Shakespeare's prose. Technological metaphors, on the other hand, are 55[active] (and often 56[imposing]) in the sense that they are realized in digital artifacts that are actively doing things, forcefully changing a user's meaning horizon. Technological creators cannot generally 57[afford] to require their potential audience to wonder how the metaphor works; normally the selling point is that the usefulness of the technology is obvious 58[at] 59[first] 60[glance]. Shakespeare, on the other hand, is beloved 61[in] 62[part] because the meaning of his works is not immediately obvious and requires some thought on the part of the audience.\n\n\n>>내용요약\nUnlike passive linguistic metaphors that [demand] cognitive effort from audiences, digital metaphors are active and often [imposing] because they are embodied in artifacts that act on users and must be immediately [clear] and useful at first glance.\n\n241030\nHerbert Simon won his Nobel Prize for recognizing our 63[limitations] in information, time, and cognitive capacity. As we lack the resources to compute answers 64[independently], we 65[distribute] the computation across the population and solve the answer slowly, generation by generation. Then all we have to do is 66[socially] learn the right answers. You don't need to understand how your computer or toilet works; you just need to be able to use the interface and flush. All that needs to be transmitted is which button to push 式 essentially how to 67[interact] with technologies rather than how they work. And so instead of holding more information than we have mental capacity for and indeed need to know, we could 68[dedicate] our large brains to a small piece of a giant calculation. We understand things well enough to benefit from them, but all the while we are making small calculations that 69[contribute] to a larger whole. We are just doing our part in a larger computation for our societies' 70[collective] brains.\n\n\n>>내용요약\nBecause individuals have [limited] information, time, and cognitive capacity, we [distribute] computation across society, learn how to [interact] with technologies rather than how they work, and let small contributions [accumulate] into [collective] intelligence over generations.\n\n241031\nThe best defence most species of octopus have is to stay 71[hidden] as much as possible and do their own hunting at 72[night]. So to find one in full view in the 73[shallows] in daylight was a surprise for two Australian underwater photographers. Actually, what they saw at first was a flounder. It was only when they looked again that they saw a medium-sized octopus, with all eight of its arms folded and its two eyes staring upwards to create the 74[illusion]. An octopus has a big brain, excellent eyesight and the ability to change colour and pattern, and this one was using these 75[assets] to 76[turn] itself into a completely different creature. Many more of this species have been found since then, and there are now photographs of octopuses that could be said to be 77[transforming] into sea snakes. And while they 78[mimic], they hunt 式 producing the spectacle of, say, a flounder suddenly developing an octopodian arm, sticking it down a hole and grabbing whatever's hiding there.\n\n\n>>내용요약\nUsually hiding and hunting at [night], octopuses sometimes [mimic] flounders or sea snakes in daylight, using clever color shifts and posture to [deceive] prey and strike.\n\n241032\nHow much we suffer relates to how we 79[frame] the pain in our mind. When 1500m runners push themselves into extreme pain to win a race 式 their muscles screaming and their lungs exploding with oxygen deficit, they don't psychologically 80[suffer] much. In fact, ultramarathon runners 式 those people who are 81[crazy] enough to push themselves beyond the normal boundaries of human endurance, covering distances of 50-100km or more over many hours, talk about making 82[friends] with their pain. When a patient has paid for some form of passive back pain therapy and the practitioner pushes deeply into a painful part of a patient's back to mobilise it, the patient calls that 83[good] pain if he or she believes this type of deep pressure treatment will be 84[of] 85[value], even though the practitioner is pushing right into the patient's sore tissues.\n\n\n>>내용요약\nSuffering [depends] on how we frame pain, as runners and patients reinterpret intense sensations as [purposeful] or good, which [lessens] psychological distress.\n\n241033\nWhen I worked for a large electronics company that manufactured laser and inkjet printers, I soon discovered why there are often three versions of many consumer goods. If the manufacturer makes only one version of its product, people who bought it might have been 86[willing] to spend more money, so the company is 87[losing] some income. If the company offers two versions, one with more features and more expensive than the other, people will compare the two models and still buy the 88[less] 89[expensive] one. But if the company introduces a third model with even more features and more expensive than the other two, sales of the second model 90[go] 91[up]; many people like the features of the most expensive model, but not the 92[price]. The middle item has more features than the least expensive one, and it is less expensive than the fanciest model. They buy the middle item, 93[unaware] that they have been 94[manipulated] by the presence of the higher-priced item.\n\n\n>>내용요약\nAdding a pricier third model [anchors] comparisons and attracts buyers to the [middle] option, [boosting] sales while they remain [unaware] of the deliberate manipulation.\n\n241034\nOnscreen, climate disaster is everywhere you look, but the scope of the world's climate transformation may just as quickly 95[eliminate] the climate-fiction genre 式 indeed eliminate any effort to tell the story of warming, which could grow too large and too obvious even for Hollywood. You can tell stories 'about' climate change while it still seems a 96[marginal] feature of human life. But when the temperature rises by three or four more degrees, hardly anyone will be able to feel 97[isolated] from its impacts. And so as climate change expands across the horizon, it may 98[cease] to be a story. Why watch or read climate fiction about the world you can see plainly out your own window? At the moment, stories illustrating global warming can still offer an 99[escapist] pleasure, even if that pleasure often comes in the form of 100[horror]. But when we can no longer pretend that climate suffering is 101[distant] 式 in time or in place 式 we will stop pretending about it and start 102[pretending] 103[within] it.\n\n\n>>내용요약\nAs climate change becomes [immediate] and universal, climate fiction may [fade] because reality tells the story, though its escapist horror still [appeals] for now.\n\n241035\nToday, the water crisis is 104[political] 式 which is to say, not 105[inevitable] or beyond our capacity to fix 式 and, therefore, functionally 106[elective]. That is one reason it is nevertheless 107[distressing]: an abundant resource made 108[scarce] through governmental neglect and indifference, bad infrastructure and contamination, and careless urbanization. There is no need for a water crisis, in other words, but we have one anyway, and aren't doing much to 109[address] it. Some cities 110[lose] more water to leaks than they deliver to homes: even in the United States, leaks and theft account for an estimated loss of 16 percent of freshwater; in Brazil, the estimate is 40 percent. Seen in both cases, as everywhere, the 111[selective] 112[scarcity] clearly highlights have-and-have-not 113[inequities], leaving 2.1 billion people without safe drinking water and 4.5 billion without proper sanitation worldwide.\n\n\n>>내용요약\nThe global water crisis is a political and [elective] failure of governance and infrastructure that creates selective [scarcity], wastes supplies, and [denies] billions safe water and sanitation.\n\n241036\nAs individuals, our ability to thrive depended on how well we 114[navigated] relationships in a 115[group]. If the group valued us, we could 116[count] 117[on] support, resources, and probably a mate. If it didn't, we might get none of these merits. It was a matter of 118[survival], physically and genetically. Over millions of years, the pressure 119[selected] for people who are sensitive to and skilled at 120[maximizing] their standing. The result was the development of a tendency to 121[unconsciously] monitor how other people in our community perceive us. We process that information in the form of self-esteem and such related emotions as pride, shame, or insecurity. These emotions 122[compel] us to do 123[more] of what makes our community value us and less of what doesn't. And, crucially, they are meant to make that motivation feel like it is coming from 124[within]. If we realized, on a conscious level, that we were responding to social pressure, our performance might come off as grudging or cynical, making it 125[less] 126[persuasive].\n\n\n>>내용요약\nHumans evolved to unconsciously [track] how others see us, turning status cues into self-esteem and emotions that [drive] group-valued behavior while feeling internally [motivated].\n\n241037\nConventional medicine has long believed that depression is caused by an imbalance of neurotransmitters in the brain. However, there is a 127[major] 128[problem] with this explanation. This is because the imbalance of substances in the brain is a 129[consequence] of depression, not its cause. In other words, depression 130[causes] a decrease in brain substances such as serotonin and noradrenaline, not a decrease in brain substances causes depression. In this 131[revised] cause-and-effect, the key is to 132[reframe] depression as a problem of consciousness. Our consciousness is a more 133[fundamental] entity that goes beyond the functioning of the brain. The brain is 134[no] 135[more] 136[than] an organ of consciousness. If it is not consciousness itself, then the root cause of depression is also a 137[distortion] of our state of consciousness: a consciousness that has lost its sense of self and the meaning of life. Such a disease of consciousness may 138[manifest] itself in the form of depression.\n\n\n>>내용요약\nNeurotransmitter [imbalance] results from depression, which is better understood as a [distortion] of consciousness where [loss] of self and meaning manifests as depressive symptoms.\n\n241038\nThe common accounts of human nature that float around in society are generally a mixture of assumptions, tales and sometimes plain silliness. However, psychology is 139[different]. It is the branch of science that is 140[devoted] to understanding people: how and why we act as we do; why we see things as we do; and how we interact with one another. The key word here is '141[science].' Psychologists don't 142[depend] 143[on] opinions and hearsay, or the generally accepted views of society at the time, or even the considered opinions of deep thinkers. Instead, they look for 144[evidence], to make sure that psychological ideas are firmly based, and not just derived from generally held beliefs or assumptions. In addition to this evidence-based approach, psychology deals with fundamental processes and principles that generate our rich cultural and social 145[diversity], as well as those 146[shared] by all human beings. These are what modern psychology is all about.\n\n\n>>내용요약\nModern psychology is a science that [relies] on evidence to explain how people perceive, act, and interact, addressing both universal traits and cultural [diversity] [unlike] popular assumptions.\n\n241039\nLife is what physicists might call a '147[high-dimensional] system,' which is their fancy way of saying that there's a lot going on. In just a single cell, the number of possible interactions between different molecules is 148[enormous]. Such a system can only hope to be 149[stable] if only a 150[smaller] number of collective ways of being may emerge. For example, it is only a 151[limited] number of tissues and body shapes that may result from the development of a human embryo. In 1942, the biologist Conrad Waddington called this drastic 152[narrowing] of outcomes canalization. The organism may switch between a small number of well-defined possible states, but can't exist in 153[random] states in between them, rather as a ball in a rough landscape must roll to the bottom of one valley or another. We'll see that this is true also of health and disease: there are many causes of illness, but their 154[manifestations] at the physiological and symptomatic levels are often strikingly 155[similar].\n\n\n>>내용요약\nComplex living systems stay [stable] by canalizing many possibilities into a few collective states, so [diverse] causes can produce [similar] physiological and symptomatic patterns of health and disease.\n\n241040\nPunishing a child may not be 156[effective] due to what Alvaro Bilbao, a neuropsychologist, calls 'trick-punishments.' A trick-punishment is a scolding, a moment of anger or a punishment in the most classic sense of the word. Instead of 157[discouraging] the child from doing something, it 158[encourages] them to do it. For example, Hugh learns that when he hits his little brother, his mother scolds him. For a child who feels 159[lonely], being scolded is much better than feeling 160[invisible], so he will 161[continue] to hit his brother. In this case, his mother would be 162[better] adopting a different strategy. For instance, she could 163[congratulate] Hugh when he has not hit his brother for a certain length of time. The mother clearly cannot 164[allow] the child to hit his little brother, but instead of constantly pointing out the negatives, she can choose to 165[reward] the positives. In this way, any parent can 166[avoid] trick-punishments.\n\n\n>>내용요약\nTrick punishments give attention that [strengthens] misbehavior, so parents should [reduce] attention to negatives and use [positive] reinforcement.\n\n241041\nFrom an early age, we assign 167[purpose] to objects and events, preferring this 168[reasoning] to random chance. Children assume, for instance, that pointy rocks are that way because they don't want you to sit on them. When we encounter something, we first need to 169[determine] what sort of thing it is. Inanimate objects and plants generally do not move and can be evaluated from physics alone. However, by attributing 170[intention] to animals and even objects, we are able to make 171[fast] decisions about the 172[likely] behaviour of that being. This was 173[essential] in our hunter-gatherer days to avoid being eaten by predators. The anthropologist Stewart Guthrie made the point that 174[survival] in our evolutionary past meant that we interpret 175[ambiguous] objects as agents with human mental characteristics, as those are the mental processes which we understand. Ambiguous events are caused by such agents. This results in a perceptual system strongly 176[biased] towards anthropomorphism. Therefore, we tend to assume 177[intention] even where there is none. This would have arisen as a 178[survival] mechanism. If a lion is about to attack you, you need to react 179[quickly], given its probable intention to kill you. By the time you have realized that the design of its teeth and claws could kill you, you are dead. So, assuming 180[intent], without 181[detailed] design analysis or understanding of the physics, has 182[saved] your life.\n\n\n>>내용요약\nFrom early childhood we attribute purpose and intention to [ambiguous] things, a [bias] toward anthropomorphism that enabled [quick] survival decisions even when no real intent [existed]."
+ },
+ "vol2": {
+  "서술형영작": [],
+  "어법_헤더": [
+   "교과서3과 본문1",
+   "교과서3과 본문2",
+   "교과서3과 본문3",
+   "교과서3과 본문4",
+   "교과서4과 본문1",
+   "교과서4과 본문2",
+   "교과서4과 본문3",
+   "교과서4과 본문4",
+   "교과서SL 본문1",
+   "교과서SL 본문2",
+   "교과서SL 본문3",
+   "교과서SL 본문4",
+   "교과서SL 본문5",
+   "241021",
+   "241022",
+   "241023",
+   "241024",
+   "241029",
+   "241030",
+   "241031",
+   "241032",
+   "241033",
+   "241034",
+   "241035",
+   "241036",
+   "241037",
+   "241038",
+   "241039",
+   "241040",
+   "241041~42"
+  ],
+  "어법수정": [
+   "교과서3과 본문1",
+   "《Timing is Everything》 Host: Welcome back to Today's Health. Today we're going to be 1[talked] about exercise. Dr. Victoria Hill is here, and she is going 2[share] some useful tips. So, Dr. Hill, let's start with a question about my experience last month. I worked out right after dinner and 3[getting] a stomachache. Why 4[was] that 5[happened]? Dr. Hill: Well, the problem is 6[what] you 7[exercising] too soon after eating. This can 8[be caused] various stomach issues. When you eat, blood rushes to the digestive system to help 9[breaking] down the food and 10[absorbing] its nutrients. But when you start to exercise, blood 11[moving] from the digestive system to your muscles. This 12[is happened] in order to supply your muscles with the oxygen and nutrients they 13[requiring]. As a result, the digestion process 14[pauses] until the blood returns. So, 15[that] you're lifting weights or 16[go] for a jog, you shouldn't do it with a stomach full of food.",
+   "교과서3과 본문2",
+   "Host: I see. That makes sense. So, does that mean I should exercise on an empty stomach? Dr. Hill: No, it 17[isn't]. That can also be harmful and unpleasant. This is 18[why] the body needs energy to exercise. The fuel 19[what] 20[provide] this energy 21[are] glycogen. Carbohydrates in the food we 22[eating] 23[is] 24[breaking] down into a kind of sugar 25[calling] glucose. When this glucose 26[stores] in parts of the body, such as the muscles and the liver, it 27[calls] glycogen. This is 28[because] exercising on a completely empty stomach ─ such as when you first wake up in the morning ─ can be such a challenge. Your blood sugar levels are 29[lowly], and you don't have enough glycogen 30[storing] in your body. If you 31[will exercise] on an empty stomach, you will most likely lack energy and 32[feeling] 33[unusual] 34[tiring]. There can also be more serious outcomes. Some people end up 35[to suffer] from nausea and headaches, and others even 36[fainting]. This is 37[why] intense exercise uses up all the glycogen in your muscles.",
+   "교과서3과 본문3",
+   "Host: So, is it the loss of glycogen 38[what] 39[cause] us 40[having] low levels of energy? Dr. Hill:\tThat's correct. For this reason, doctors recommend 41[what] people 42[eating] food 43[contained] carbohydrates within thirty minutes after 44[work] out. This replaces the muscle glycogen you have 45[been lost]. Basically, you need between one and one and a half grams of carbohydrates for every kilogram you weigh. Let's do the math. If you weigh 60 kilograms, you should try to consume between 60 and 90 grams of carbohydrates after you exercise. This is equal to about one bowl of white rice or three bananas.",
+   "교과서3과 본문4",
+   "Host: That's very 46[interested]. But what about 47[eat] before we exercise? Can you explain how long 48[should we] wait after eating? Dr. Hill: Well, 49[what] I said before, exercising right after you eat will cause feelings of discomfort. But, if you 50[will wait] too long 51[exercise] after eating, you'll suffer from a lack of energy. The best time to eat before you 52[exercising] 53[vary] from one to three hours. Basically, it 54[depending] on several factors such as the type and amount of food as well as body size, age, and gender. The type of exercise also 55[matter]. For 56[extreme] active exercise like cycling, I suggest 57[what] you 58[waiting] between one and a half and three hours after 59[eat] a moderate-sized meal. But for 60[more casual something], such as golfing, 61[wait] for one hour after a meal should be enough. Clearly, you can wait less after 62[eat] a snack. Host: Thank you very much for this 63[fascinated] information, Dr. Hill. I'm sure it will be very helpful for all of 64[viewers].",
+   "교과서4과 본문1",
+   "《AI: Opportunity or Threat?》 Recently, an artist 1[using] an artificial intelligence (AI) system 2[create] the image above for an art contest. The image won first place in the digital arts category. This 3[leading] to a controversy in the art community. Some people complained 4[what] the artist 5[simple] 6[providing] the system with basic instructions and 7[lets] it 8[to do] all the work. They felt this wasn't fair to the rest of the artists in the contest. However, there 9[was] also people 10[what] 11[was] 12[exciting] by the potential of AI. Today, there 13[is] numerous AI programs 14[what] can create various forms of art including images, songs, and novels.",
+   "교과서4과 본문2",
+   "《Example 1 Making Digital Images with AI》 AI image generators create images 15[basing] on our text requests. They do this by 16[copy] other images 17[what] 18[was] 19[creating] by humans. The generators have the ability 20[analyze] millions of images and their corresponding descriptions. This allows 21[it] 22[creating] works of art in a short time based on the provided instructions. Moreover, AI programs can mix the styles of 23[existed] images upon request. For example, you can 24[blending] a photograph of a cat with Johannes Vermeer's Girl with a Pearl Earring. These two images have a 25[little] differences. However, the overall design, the eyes, and the scarf around the head 26[is] 27[clear] 28[basing] on Vermeer's painting. A simple request was enough 29[creating] this complex and detailed image.",
+   "교과서4과 본문3",
+   "《Example 2 Making Music with AI》 AI programs may lead to changes not only in the art world but also in the music industry. These programs are already able 30[composing] songs, and they give you many options. For example, you can choose the style and key*, such as C major or A minor. You can also set how 31[the song will be long]. Once you've 32[been entered] the information, the program will produce a song 33[what] you can edit or 34[using] as it is. Furthermore, computer-generated imagery (commonly 35[knowing] as CGI) 36[have] 37[been opened] up new possibilities in the music industry. Virtual influencers with 38[extreme] realistic faces, bodies, and voices 39[has] already 40[been released] several songs. Some of them 41[has] many followers on social media, just like human singers. These types of virtual musicians 42[is] able 43[speak] and move 44[realistic] with the help of their human creators.",
+   "교과서4과 본문4",
+   "《The Debate on Using AI》 Many AI programs are open to the public, 45[that] 46[mean] they are free and convenient to 47[use them]. However, these programs have 48[been sparked] a debate over their impact on humans. Since AI has the potential 49[learn] skills and perform 50[it] better than humans, some people view it as a threat. They worry 51[what] AI will replace humans in more and more areas. There 52[is] also concerns 53[what] AI may imitate the styles of human artists without their consent. On the other hand, others think 54[what] AI cannot exceed human imagination and 55[what] it is still dependent on human assistance. This is 56[why] the data 57[what] AI uses can have flaws or limitations. A dependence on imperfect data with 58[few] diversity 59[eventual] 60[limit] the output of AI programs. Human imagination, on the other hand, 61[have] no limits or boundaries. 62[Do you think what kind of future] 63[lie] ahead of us? Will more people 64[using] AI programs 65[boost] their creativity and productivity? Or will people grow 66[tiring] of the limitations of AI tools? AI provides 67[much] benefits and new opportunities. 68[That] we need to do 69[are] 70[figuring] out 71[what] to use AI tools 72[ethical] and 73[thinking] about 74[what] humans and AI can collaborate.",
+   "교과서SL 본문1",
+   "《A Journey into a Magical World》 I had been 1[wanted] 2[seeing] the musical Wicked for a long time. It 3[had opened] in 2003 on Broadway and 4[get] great reviews. Everyone 5[recommend] 6[them]. I finally 7[get] to see 8[them] last weekend. The musical is 9[basing] on an imaginative story of two characters from the book The Wizard of Oz: Elphaba, the wicked witch, and Glinda, the good witch. It tells their background story and 10[explain] 11[what] they became 12[knowing] as wicked and good. 13[That] impressed me the most 14[were] the theme of the musical. It is about 15[form] friendships, 16[get] 17[knowing] oneself, and 18[accept] differences.",
+   "교과서SL 본문2",
+   "《A Fascinating Storyline》 The story begins in a magical place, the Land of Oz. In the musical, Elphaba and Glinda first 19[meeting] at university. Elphaba was 20[bearing] with green skin and usually 21[stay] away from others. 22[Because] her unusual appearance and cold personality, she has very 23[little] friends. Meanwhile, Glinda has a very kind personality, 24[that] 25[make] her quite 26[popularly]. At first, Elphaba and Glinda 27[does] not get along. However, as they get to know and 28[learns] about each other, they become close friends. Elphaba has exceptional magical powers, and some other characters try 29[taking] advantage of this. Glinda and Elphaba's friendship 30[are] 31[continuous] 32[challenging] in the story. Nevertheless, in the end, their friendship 33[win]. Every 34[relationships] 35[have] its ups and downs, so I could 36[easy] relate to the main characters.",
+   "교과서SL 본문3",
+   "So if you care to find me Look to the western sky As someone told me 37[late] \"Everyone 38[deserve] the chance to fly\" I'm 39[defied] gravity And you won't bring me down Bring me down 《The Unforgettable Songs》 Of course, I cannot review a musical without 40[talk] about the songs. Wicked has 41[much] great songs, but there 42[is] two 43[what] I 44[especial] like. \"Defying Gravity\"is the most famous song in the musical. It comes at a key turning point in the story. Elphaba 45[was used] to 46[admiring] a wizard, but one day she finds out 47[what] he has an evil plan and can't be 48[trusting] anymore. She sings about her determination 49[fight] against him. She shows her true powers and 50[rise] into the air on her broom while 51[sing] this song. She sings 52[what] she will not let people 53[to bring] 54[down her] anymore. Her powerful voice 55[fascinating] me. When the song ended, the entire audience clapped 56[enthusiastical].",
+   "교과서SL 본문4",
+   "The second song 57[what] had a great impact on me 58[were] \"For Good.\" At the end of the musical, the two friends have to choose different paths and 59[said] goodbye to each other. Elphaba decides to leave her home and 60[ask] Glinda 61[protecting] the people of Oz. At this moment, they start to sing to each other. The song moved me 62[because of] Glinda and Elphaba explain 63[what] meeting each other 64[have] changed 65[themselves] for the better. It is a 66[true] 67[touched] moment 68[what] 69[show] their strong friendship. I do 70[believing] I have been 71[changing] for the better And because I knew you Because I knew you Because I knew you I have been changed For good",
+   "교과서SL 본문5",
+   "《The Eye-Catching Visuals》 The 72[excited] story and beautiful songs of Wicked 73[is] 74[accompanying] by beautiful visuals. First, the costumes 75[was] incredible. In one scene, we see the people of Oz 76[to wear] unique clothes. I couldn't believe the detail and beauty of the masks, wigs, and dresses. Furthermore, all kinds of tricks 77[inviting] me into the magical world. I really enjoyed 78[to notice] the symbols 79[using] in the performance. For example, a huge dragon-shaped device 80[were] 81[hung] above the stage. It seemed to move whenever Elphaba or Glinda 82[making] a choice. I think 83[use] these visual effects made the musical more 84[excited]. In my opinion, the musical Wicked is an incredible work. It has great music and 85[are] 86[visual] impressive. It also has a strong plot 87[what] kept me 88[engaging] from beginning to end. I 89[high] recommend this show to anyone 90[interesting] in musicals. You will be able 91[exploring] the themes of friendship and personal change in a magical setting.",
+   "241021",
+   "When we see something, we naturally and automatically break 13[up it] into shapes, colors, and concepts 14[what] we have 15[been learned] through education. We recode 16[that] we see through the lens of everything we know. We reconstruct memories rather than retrieving the video from memory. This is a useful trait. It's a more efficient way 17[store] information ─ a bit like an optimal image compression algorithm such as JPG, rather than storing a raw bitmap image file. People 18[what] 19[lacks] this ability and 20[remembers] everything in perfect detail 21[struggles] 22[generalizing], 23[learning], and 24[making] connections between 25[that] they have 26[been learned]. But 27[represent] the world as abstract ideas and features comes at a cost of 28[see] the world as it is. Instead, we see the world through our assumptions, motivations, and past experiences. The discovery 29[which] our memories 30[reconstruct] through abstract representations rather than 31[playing] back like a movie 32[complete] 33[undermining] the legal primacy of eyewitness testimony. Seeing is not believing.",
+   "241022",
+   "In his Cornell laboratory, David Dunning conducted experimental tests of eyewitness testimony and 34[finding] evidence 35[which] a careful deliberation of facial features and a detailed discussion of selection procedures can actually be a sign of an inaccurate identification. It's when people find 36[them] unable to explain 37[what] they recognize the person, 38[said] things like \"his face just popped out at me,\" 39[what] they tend to be accurate more often. Sometimes our first, immediate, automatic reaction to a situation 40[are] the truest interpretation of 41[that] our mind is 42[told] us. That very first impression can also be more accurate about the world than the deliberative, reasoned self-narrative can 43[do]. In his book Blink, Malcolm Gladwell describes a variety of studies in psychology and behavioral economics 44[what] 45[demonstrates] the superior performance of relatively unconscious first guesses compared to logical step-by-step justifications for a decision.",
+   "241023",
+   "Many forms of research 46[leads] naturally to quantitative data. A study of happiness might measure the number of times someone smiles during an interaction, and a study of memory might measure the number of items an individual can 47[be recalled] after one, five, and ten minutes. 48[Ask] people how many times in a year 49[are they] sad will also yield quantitative data, but it might not be reliable. Respondents' recollections may be inaccurate, and their definitions of 'sad' could vary widely. But 50[ask] \"How many times in the past year were you 51[enough sad] to call in sick to work?\" 52[prompt] a concrete answer. Similarly, instead of 53[ask] people 54[rating] how 55[badly] a procrastinator they are, 56[asking], \"How many of your utility bills are you currently late in paying, even though you can afford to pay them?\" Questions 57[what] 58[seeks] concrete responses 59[helps] 60[making] abstract concepts clearer and 61[ensuring] consistency from one study to the next.",
+   "241024",
+   "The evolution of AI is often 62[associating] with the concept of singularity. Singularity refers to the point 63[which] AI exceeds human intelligence. After that point, it 64[predicts] 65[what] AI will 66[repeated] improve 67[it] and 68[evolving] at an accelerated pace. When AI becomes self-aware and 69[pursue] its own goals, it will be a conscious being, not just a machine. AI and human consciousness will then begin to evolve together. Our consciousness will evolve to new dimensions through our interactions with AI, 70[that] will provide us with intellectual stimulation and 71[inspiring] new insights and creativity. Conversely, our consciousness also has a significant impact on the evolution of AI. The direction of AI's evolution will depend 72[great] on what values and ethics we incorporate into AI. We need to see our relationship with AI as a mutual coexistence of conscious beings, 73[recognized] its rights and 74[supported] the evolution of its consciousness.",
+   "241029",
+   "Digital technologies are 75[essential] 76[relating] to metaphors, but digital metaphors are different from linguistic 77[one] in important ways. Linguistic metaphors are passive, in the sense 78[what] the audience needs to choose to 79[active] enter the world 80[proposing] by metaphor. In the Shakespearean metaphor \"time is a beggar,\" the audience is unlikely to understand the metaphor without cognitive effort and without further 81[engage] Shakespeare's prose. Technological metaphors, on the other hand, 82[is] active (and often imposing) in the sense 83[which] they 84[realize] in digital artifacts 85[what] 86[is] 87[active] 88[done] things, forcefully 89[changed] a user's meaning horizon. Technological creators cannot generally afford 90[requiring] their potential audience 91[wonder] how the metaphor works; normally the selling point is 92[what] the usefulness of the technology 93[are] obvious at first glance. Shakespeare, on the other hand, 94[are] beloved in part 95[because of] the meaning of his works 96[are] not 97[immediate] obvious and 98[require] some thought on the part of the audience.",
+   "241030",
+   "Herbert Simon won his Nobel Prize for 99[recognize] our limitations in information, time, and cognitive capacity. As we lack the resources 100[compute] answers 101[independent], we distribute the computation across the population and 102[solving] the answer slowly, generation by generation. Then all we have to 103[be done] 104[are] 105[social] 106[learning] the right answers. You don't need to understand how your computer or toilet works; you just need to be able to use the interface and flush. All 107[what] needs to 108[transmit] 109[are] 110[how] button to push ─ essentially how to interact with technologies rather than how 111[do they] work. And so instead of 112[hold] more information than we have mental capacity for and indeed 113[needing] to know, we could dedicate our large brains to a small piece of a giant calculation. We understand things 114[enough well] to benefit from them, but all the while we are 115[made] small calculations 116[what] 117[contributes] to a larger whole. We are just 118[done] our part in a larger computation for our societies' collective brains.",
+   "241031",
+   "The best defence most species of octopus 119[has] 120[are] 121[stay] hidden as much as possible and 122[doing] their own hunting at night. So to find one in full view in the shallows in daylight 123[were] a surprise for two Australian underwater photographers. Actually, 124[that] they saw at first 125[were] a flounder. It was only when they looked again 126[what] they saw a medium-sized octopus, with all eight of its arms 127[folding] and its two eyes 128[stared] upwards 129[create] the illusion. An octopus has a big brain, excellent eyesight and the ability 130[change] colour and pattern, and this one was 131[used] these assets to turn itself into a completely different creature. Many more of this species 132[has] 133[found] since then, and there 134[is] now photographs of octopuses 135[what] could 136[say] to be transforming into sea snakes. And while they mimic, they hunt ─ producing the spectacle of, say, a flounder 137[sudden] 138[develop] an octopodian arm, 139[stick] it down a hole and 140[grab] whatever's hiding there.",
+   "241032",
+   "How much we suffer 141[relate] to how we frame the pain in our mind. When 1500m runners push 142[them] into extreme pain to win a race ─ their muscles 143[scream] and their lungs 144[explode] with oxygen deficit, they don't psychologically suffer much. In fact, ultramarathon runners ─ those people who 145[is] 146[enough crazy] to push 147[them] beyond the normal boundaries of human endurance, 148[covered] distances of 50-100km or more over many hours, 149[talks] about 150[make] friends with their pain. When a patient has paid for some form of passive back pain therapy and the practitioner pushes deeply into a painful part of a patient's back to mobilise it, the patient calls that good pain if he or she believes this type of deep pressure treatment will be of value, even though the practitioner is pushing right into the patient's sore tissues.",
+   "241033",
+   "When I worked for a large electronics company 151[what] manufactured laser and inkjet printers, I soon discovered why there 152[is] often three versions of many consumer goods. If the manufacturer makes only one version of its product, people who bought it might 153[were] willing to spend more money, so the company is 154[lost] some income. If the company offers two versions, one with more features and more expensive than 155[another], people will compare the two models and still 156[buying] the less expensive 157[ones]. But if the company introduces a third model with even more features and more expensive than the other two, sales of the second model 158[goes] up; many people like the features of the most expensive model, but not the price. The middle item has more features than the least expensive one, and it is less expensive than the fanciest model. They buy the middle item, unaware 159[what] they have 160[manipulated] by the presence of the higher-priced item.",
+   "241034",
+   "Onscreen, climate disaster is everywhere you look, but the scope of the world's climate transformation may just as quickly eliminate the climate-fiction genre ─ indeed eliminate any effort to tell the story of warming, 161[that] could grow too large and too obvious even for Hollywood. You can tell stories 'about' climate change while it still seems a marginal feature of human life. But when the temperature 162[raises] by three or four more degrees, hardly anyone will be able to feel 163[isolating] from its impacts. And so as climate change expands across the horizon, it may cease to be a story. Why watch or read climate fiction about the world you can 164[be seen] 165[plain] out your own window? At the moment, stories 166[illustrated] global warming can still offer an escapist pleasure, even if that pleasure often 167[come] in the form of horror. But when we can no longer pretend 168[what] climate suffering is distant ─ in time or in place ─ we will stop 169[to pretend] about it and start pretending within it.",
+   "241035",
+   "Today, the water crisis is political ─ which is to say, not inevitable or beyond our capacity to fix ─ and, therefore, functionally elective. That is one reason it is nevertheless 170[distressed]: an abundant resource 171[making] 172[scarcely] through governmental neglect and indifference, bad infrastructure and contamination, and careless urbanization. There is no need for a water crisis, in other words, but we have one anyway, and aren't 173[done] much to address 174[them]. Some cities lose more water to leaks than they deliver to homes: even in the United States, leaks and theft account for an estimated loss of 16 percent of freshwater; in Brazil, the estimate is 40 percent. 175[Seeing] in both cases, as everywhere, the selective scarcity 176[clear] 177[highlight] have-and-have-not inequities, 178[left] 2.1 billion people without safe drinking water and 4.5 billion without proper sanitation worldwide.",
+   "241036",
+   "As individuals, our ability to thrive 179[depending] on how well we navigated relationships in a group. If the group valued us, we could count on support, resources, and probably a mate. If it 180[weren't], we might get none of these merits. It was a matter of survival, physically and genetically. Over millions of years, the pressure 181[selecting] for people who 182[is] sensitive to and skilled at 183[maximize] their standing. The result was the development of a tendency to 184[unconscious] monitor how other people in our community 185[perceives] us. We process that information in the form of self-esteem and such related emotions as pride, shame, or insecurity. These emotions compel us 186[doing] more of 187[that] 188[make] our community 189[to value] us and less of 190[that] 191[isn't]. And, crucially, they 192[mean] to make that motivation 193[to feel] like it is coming from within. If we realized, on a conscious level, 194[what] we were 195[responded] to social pressure, our performance might come off as grudging or cynical, 196[made] it less 197[persuasively].",
+   "241037",
+   "Conventional medicine has long 198[been believed] 199[what] depression 200[causes] by an imbalance of neurotransmitters in the brain. However, there is a major problem with this explanation. This is because the imbalance of substances in the brain 201[are] a consequence of depression, not its cause. In other words, depression causes a decrease in brain substances such as serotonin and noradrenaline, not a decrease in brain substances 202[cause] depression. In this revised cause-and-effect, the key is 203[reframe] depression as a problem of consciousness. Our consciousness is a more fundamental entity 204[what] 205[go] beyond the functioning of the brain. The brain is no more than an organ of consciousness. If it is not consciousness itself, then the root cause of depression is also a distortion of our state of consciousness: a consciousness 206[what] 207[have] 208[been lost] its sense of self and the meaning of life. Such a disease of consciousness may manifest 209[it] in the form of depression.",
+   "241038",
+   "The common accounts of human nature 210[what] 211[floats] around in society 212[is] generally a mixture of assumptions, tales and sometimes plain silliness. However, psychology is different. It is the branch of science 213[what] 214[devotes] to 215[understand] people: how and why we act as we 216[are]; why we see things as we 217[are]; and how we interact with one another. The key word here is 'science.' Psychologists don't depend on opinions and hearsay, or the 218[general] accepted views of society at the time, or even the 219[considering] opinions of deep thinkers. Instead, they look for evidence, to make sure 220[what] psychological ideas are 221[firm] based, and not just 222[deriving] from generally held beliefs or assumptions. In addition to this evidence-based approach, psychology deals with fundamental processes and principles 223[what] 224[generates] our rich cultural and social diversity, as well as those 225[sharing] by all human beings. These are 226[that] modern psychology is all about.",
+   "241039",
+   "Life is 227[that] physicists might call a 'high-dimensional system,' 228[that] 229[being] their fancy way of 230[say] 231[what] there's a lot going on. In just a single cell, the number of possible interactions between different molecules 232[are] enormous. Such a system can only hope to be stable if only a smaller number of collective ways of 233[be] may 234[be emerged]. For example, it is only a limited number of tissues and body shapes 235[what] may result from the development of a human embryo. In 1942, the biologist Conrad Waddington 236[had called] this drastic narrowing of outcomes canalization. The organism may switch between a small number of well-defined possible states, but can't exist in random states in between them, rather as a ball in a rough landscape must roll to the bottom of one valley or another. We'll see that this is true also of health and disease: there are many causes of illness, but their manifestations at the physiological and symptomatic levels 237[is] often 238[striking] similar.",
+   "241040",
+   "239[Punish] a child may not be effective due to 240[that] Alvaro Bilbao, a neuropsychologist, 241[calling] 'trick-punishments.' A trick-punishment is a scolding, a moment of anger or a punishment in the most classic sense of the word. Instead of 242[discourage] the child 243[to do] something, it encourages them 244[doing] it. For example, Hugh learns 245[what] when he hits his little brother, his mother scolds him. For a child 246[what] 247[feel] lonely, 248[scolding] is 249[very] better than feeling 250[invisibly], so he will continue to hit his brother. In this case, his mother would be better 251[adopted] a different strategy. For instance, she could congratulate Hugh when he has not hit his brother for a certain length of time. The mother clearly cannot allow the child 252[hit] his little brother, but instead of 253[constant] 254[point] out the negatives, she can choose to reward the positives. In this way, any parent can avoid trick-punishments.",
+   "241041~42",
+   "From an early age, we assign purpose to objects and events, 255[preferred] this reasoning to random chance. Children assume, for instance, 256[what] pointy rocks are that way because they don't want you 257[sitting] on them. When we encounter something, we first need to determine what sort of thing 258[is it]. Inanimate objects and plants generally do not move and can 259[evaluate] from physics alone. However, by 260[attribute] intention to animals and even objects, we are able to make fast decisions about the likely behaviour of that being. This was essential in our hunter-gatherer days 261[avoid] 262[eating] by predators. The anthropologist Stewart Guthrie made the point 263[which] survival in our evolutionary past meant 264[what] we interpret ambiguous objects as agents with human mental characteristics, as those are the mental processes 265[that] we understand. Ambiguous events 266[cause] by such agents. This results in a perceptual system strongly biased towards anthropomorphism. Therefore, we tend to assume intention even where there is none. This would have 267[been arisen] as a survival mechanism. If a lion is about to attack you, you need to react 268[quick], 269[giving] its probable intention to kill you. By the time you have realized 270[what] the design of its teeth and claws could kill you, you are dead. So, 271[assume] intent, without detailed design analysis or understanding of the physics, 272[have] saved your life."
+  ],
+  "영작_헤더_상세": []
+ },
+ "총_문장배열": 260,
+ "총_문장삽입": 31,
+ "총_서술형영작": 0,
+ "총_어법수정": 84
+}
