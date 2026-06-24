@@ -1341,6 +1341,28 @@ class FinalEngine(BaseEngine):
                                 and re.search(r"외부지문|추가지문|external", _nfc(_fn))):
                             _ext_doc = os.path.join(_updir, _fn)
                             break
+            # 업로드가 없으면 학교 시험범위 폴더에서 자동탐색 — '워크북에 외부/추가
+            # 지문이 있으면(=scope에 잡히면) 그냥 조판되게'. 폴더명/제목 하드코딩 없이
+            # '어법수정 문제지' docx를 찾고, 시험범위는 문장배열 기준으로 자동 정합된다.
+            if not _ext_doc:
+                _has_ext_scope = any(
+                    _s.get("type") == "external"
+                    or re.search(r"외부|추가", _nfc(_s.get("scope", "")))
+                    for _s in scopes
+                )
+                if _has_ext_scope:
+                    from engines.final.grammar_word_parser import (
+                        find_external_grammar_docx,
+                    )
+                    _ext_cands = find_external_grammar_docx(
+                        content_base, grade, school, exam_period, log=log
+                    )
+                    if _ext_cands:
+                        _ext_doc = _ext_cands[0]
+                        if len(_ext_cands) > 1 and log:
+                            log(f"  [외부지문어법] 후보 {len(_ext_cands)}개 — 첫 파일 "
+                                f"사용(나머지는 문장배열 정합에서 자동 제외): "
+                                f"{[os.path.basename(c) for c in _ext_cands]}")
             if _ext_doc:
                 _ext_label = None
                 for _s in scopes:

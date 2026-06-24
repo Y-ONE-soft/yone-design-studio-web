@@ -517,6 +517,67 @@ def find_external_ted_grammar_files(content_base, grade, school, exam_period, lo
     return found
 
 
+def find_external_grammar_docx(content_base, grade, school, exam_period, log=None):
+    """\uc678\ubd80/\ucd94\uac00 \uc9c0\ubb38 \uc5b4\ubc95\uc218\uc815 Word\ub97c \ud559\uad50 \uc2dc\ud5d8\ubc94\uc704 \ud3f4\ub354\uc5d0\uc11c \uc77c\ubc18 \ud0d0\uc0c9.
+
+    \ud2b9\uc815 \ud3f4\ub354\uba85('\uc678\ubd80\uc9c0\ubb38 TED' \ub4f1)\uc5d0 \uc758\uc874\ud558\uc9c0 \uc54a\ub294\ub2e4 \u2014 'TED'\ub294 \uadf8\ub54c\uc758 \uc81c\ubaa9\uc77c \ubfd0\uc774\uace0,
+    \uc678\ubd80/\ucd94\uac00 \uc9c0\ubb38 \ud3f4\ub354\uba85\uc740 \ub9e4\ubc88 \ub2e4\ub974\ub2e4(EBS 4\uc9c0\ubb38, \ud559\uad50\ud504\ub9b0\ud2b8, \uc678\ubd80\uc9c0\ubb38 \ub4f1). \ud559\uad50\uc758
+    \uc2dc\ud5d8\uc2dc\uae30 \ud3f4\ub354(\uc608: '2026\ub144/\uace02/\uc131\ub355\uace02/2. 26-1-\uae30\ub9d0') \ud558\uc704\ub97c \uc7ac\uadc0\uc801\uc73c\ub85c \ud6d1\uc5b4
+    '\uc5b4\ubc95\uc218\uc815'+'\ubb38\uc81c\uc9c0'\ub97c \ud3ec\ud568\ud558\ub294 .docx(\uc815\ub2f5/\ud574\uc124/\uc784\uc2dc\ud30c\uc77c \uc81c\uc678)\ub97c \ubaa8\ub450 \uc218\uc9d1\ud55c\ub2e4.
+
+    \uc5b4\ub5a4 \uc9c0\ubb38\uc774 \uc2e4\uc81c \uc2dc\ud5d8\ubc94\uc704\uc778\uc9c0\ub294 \ubb38\uc7a5\ubc30\uc5f4(=\uc678\ubd80\uc9c0\ubb38 \uc6cc\ud06c\ubd81)\uc774 \uacb0\uc815\ud558\ubbc0\ub85c, \uacfc\ub2e4
+    \uc218\uc9d1\ub3fc\ub3c4 \ud638\ucd9c\ubd80\uc758 '\uc5b4\ubc95 \uc7ac\uc815\ub82c'\uc5d0\uc11c \ubb38\uc7a5\ubc30\uc5f4\uc5d0 \uc5c6\ub294 \uc9c0\ubb38\uc740 \uc790\ub3d9 \uc81c\uc678\ub41c\ub2e4.
+
+    Returns:
+        [path, ...] \u2014 \uc5b4\ubc95\uc218\uc815 Word \uacbd\ub85c \ub9ac\uc2a4\ud2b8 (\ubcf4\ud1b5 0~1\uac1c)
+    """
+    year_base = os.path.join(content_base, "2026\ub144", grade)
+    if not os.path.isdir(year_base):
+        return []
+    school_nfc = _nfc(school or "")
+    base_name = re.sub(r"\d+$", "", school_nfc)
+    grade_num = re.search(r"(\d+)$", school_nfc)
+    grade_num = grade_num.group(1) if grade_num else ""
+    candidate_dirs = []
+    for d in os.listdir(year_base):
+        dn = _nfc(d)
+        if (
+            dn == school_nfc
+            or dn == f"{base_name}\uace0{grade_num}"
+            or dn == f"{base_name}\uc5ec\uace0{grade_num}"
+            or dn.startswith(base_name)
+        ):
+            candidate_dirs.append(os.path.join(year_base, d))
+    found = []
+    seen = set()
+    for school_dir in candidate_dirs:
+        try:
+            sub = os.listdir(school_dir)
+        except OSError:
+            continue
+        for sd in sub:
+            sdn = _nfc(sd)
+            if exam_period and exam_period not in sdn:
+                continue
+            period_dir = os.path.join(school_dir, sd)
+            if not os.path.isdir(period_dir):
+                continue
+            for root, dirs, files in os.walk(period_dir):
+                for f in files:
+                    fn = _nfc(f)
+                    if ("\uc5b4\ubc95\uc218\uc815" in fn and "\ubb38\uc81c\uc9c0" in fn
+                            and fn.endswith(".docx") and not fn.startswith("~")
+                            and "\uc815\ub2f5" not in fn and "\ud574\uc124" not in fn):
+                        full = os.path.join(root, f)
+                        if full in seen:
+                            continue
+                        seen.add(full)
+                        found.append(full)
+                        if log:
+                            log(f"  [\uc5b4\ubc95\uc218\uc815] \uc678\ubd80\uc9c0\ubb38 \uc6d0\uace0 \uc790\ub3d9\ud0d0\uc0c9: {fn}")
+    return found
+
+
 def _extract_unit_numbers(scope):
     """범위 텍스트에서 강/유닛 번호 추출.
     "올포1-4강" → [1,2,3,4]
