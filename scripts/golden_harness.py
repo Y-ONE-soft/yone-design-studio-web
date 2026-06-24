@@ -28,6 +28,15 @@ job_id 는 jobs/ 아래 final 엔진 job (extracted.json + school/grade/exam_per
 """
 import os
 import sys
+
+# 결정성 보장: set/dict 순회 순서를 고정해 capture/check 간 hash-seed 비결정성을 제거한다.
+# (마더텅 dedup 등 일부 parse_extracted 경로가 set 순회에 의존 → seed 미고정 시 같은 입력도
+#  프로세스마다 블록수가 달라져 golden 이 흔들림. 한영1 70↔71 블록 사례.)
+# PYTHONHASHSEED 는 인터프리터 시작 전에 설정돼야 효력이 있으므로, 미설정이면 재실행한다.
+if os.environ.get("PYTHONHASHSEED") != "0":
+    os.environ["PYTHONHASHSEED"] = "0"
+    os.execv(sys.executable, [sys.executable] + sys.argv)
+
 import json
 import time
 import pickle
