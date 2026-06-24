@@ -2071,11 +2071,12 @@ class FinalEngine(BaseEngine):
         vocab_left = vol1.get("중요어휘_왼", "")
         vocab_nums = [p.strip()[:6] for p in vocab_left.split("\n") if re.match(r"^\d{6}", p.strip())] if vocab_left else []
         vocab_olp = [p.strip() for p in vocab_left.split("\n") if re.match(r"^\uc62c\ud3ec\s+\d+\uac15", p.strip())] if vocab_left else []
-        vocab_count = len(vocab_nums) + len(vocab_olp)
+        vocab_mt = [p.strip() for p in vocab_left.split("\n") if re.match(r"^\ub9c8\ub354\ud145\s+\d+\uac15\s+\d+", p.strip())] if vocab_left else []
+        vocab_count = len(vocab_nums) + len(vocab_olp) + len(vocab_mt)
         v_25_3 = [n for n in vocab_nums if n.startswith("2503")]
         v_25_6 = [n for n in vocab_nums if n.startswith("2506")]
         v_26_3 = [n for n in vocab_nums if n.startswith("2603")]
-        report_lines.append(f"중요어휘: {vocab_count}개 지문 (25-3: {len(v_25_3)}, 25-6: {len(v_25_6)}, 26-3: {len(v_26_3)}, 올포: {len(vocab_olp)})")
+        report_lines.append(f"중요어휘: {vocab_count}개 지문 (25-3: {len(v_25_3)}, 25-6: {len(v_25_6)}, 26-3: {len(v_26_3)}, 마더텅: {len(vocab_mt)}, 올포: {len(vocab_olp)})")
         report_lines.append(f"  25-3: {', '.join(v_25_3)}")
         report_lines.append(f"  25-6: {', '.join(v_25_6)}")
         report_lines.append(f"  26-3: {', '.join(v_26_3)}")
