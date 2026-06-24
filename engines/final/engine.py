@@ -417,15 +417,19 @@ class FinalEngine(BaseEngine):
             school_dir = os.path.join(gdrive_base, "워크북", exam_period, grade, school)
             school_dir = _rlm(school_dir, None)
             school_files = []
+            unified_files = []  # 통합편 — scope 강 보강 폴백용 (분석편에 없는 강만)
             if os.path.isdir(school_dir):
                 for f in sorted(os.listdir(school_dir)):
                     # "분석"(분석편) 외에 "짤지문"(통합편 짤지문 — 본 분석편에서 빠졌으나
                     # 시험범위에 포함되는 지문 모음)도 분석 소스로 포함한다.
-                    # (광문3 통합편(test2짤지문)의 test2 02·09 누락 수정. 다른 학교
-                    #  통합편(강·모의고사)은 "짤지문" 미포함이라 영향 없음.)
+                    # (광문3 통합편(test2짤지문)의 test2 02·09 누락 수정.)
                     _nf = _nfc(f)
-                    if f.endswith(".indd") and ("분석" in _nf or "짤지문" in _nf):
+                    if not f.endswith(".indd"):
+                        continue
+                    if ("분석" in _nf or "짤지문" in _nf):
                         school_files.append(os.path.join(school_dir, f))
+                    elif "통합편" in _nf:
+                        unified_files.append(os.path.join(school_dir, f))
             school_files = _drop_revised_duplicates(school_files)
             # 학교 폴더에 분석편이 있으면 그것만 사용 (번호순 정렬)
             if school_files:
@@ -440,6 +444,25 @@ class FinalEngine(BaseEngine):
                         return (int(m2.group(1)), base)
                     return (999, base)
                 school_files.sort(key=_ord)
+                # 시험범위 강 중 분석편/짤지문에 없는 강은 통합편에서 보강.
+                # (강동3: 분석편=4,6,12,14,16강, scope 18강 → 통합편02(2,8,10,18,20강)에서
+                #  18강 STEP 추출. 2강은 통합편02에 STEP 없어 추출돼도 빈 결과.)
+                # 분석편이 scope 전강 커버 시 need=∅ → 통합편 미포함(명일3/광문3/한영3 무영향).
+                # 통합편 안 범위밖 강(8,10,20)은 parse 단계 강 필터로 제거됨.
+                if selected_lectures and unified_files:
+                    from engines.final.scope_parser import (
+                        parse_lectures_from_filename as _plf,
+                    )
+                    _covered = set()
+                    for _sf in school_files:
+                        for _l in _plf(_nfc(os.path.basename(_sf))):
+                            _covered.add(str(_l))
+                    _need = {str(x) for x in selected_lectures} - _covered
+                    if _need:
+                        for _uf in unified_files:
+                            _ul = {str(x) for x in _plf(_nfc(os.path.basename(_uf)))}
+                            if _ul & _need:
+                                school_files.append(_uf)
                 return school_files, school_dir, set()
 
             # fallback: 공유 EBS 분석편
@@ -639,7 +662,8 @@ class FinalEngine(BaseEngine):
 
         # 1) 워크북 파일 감지
         wb_files, wb_dir, allowed_olpo_lectures = self.find_workbook_files(
-            cfg["gdrive_base"], exam_period, grade, school
+            cfg["gdrive_base"], exam_period, grade, school,
+            selected_lectures=selected_lectures
         )
         if not wb_files:
             raise FileNotFoundError(f"워크북 파일을 찾을 수 없습니다: {wb_dir}")
