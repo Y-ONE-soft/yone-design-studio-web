@@ -711,11 +711,23 @@ class FinalEngine(BaseEngine):
         #  올포 중요어휘가 통째로 누락된다. extracted 올포 스토리의 lecture로 union 보강.)
         _extracted_olpo_lectures = set()
         try:
-            from engines.final.parser import _src_is_olpo as _is_olpo_fn
+            from engines.final.parser import (
+                _src_is_olpo as _is_olpo_fn,
+                _parse_scope_lessons as _psl_fn,
+                _nfc as _nfc_fn,
+            )
             with open(extracted_path, encoding="utf-8") as _exf:
                 for _st in json.load(_exf).get("stories", []):
                     _lec = _st.get("lecture", 0)
-                    if _lec and _lec > 0 and _is_olpo_fn(_st.get("source_file", "")):
+                    _sf = _nfc_fn(_st.get("source_file", ""))
+                    if _lec and _lec > 0 and _is_olpo_fn(_sf):
+                        # 혼합 워크북(능률오2과+올림포스11강 등): 교과서 과 번호가 올포
+                        # 강으로 오인돼 중요어휘 강목록에 섞이지 않도록 제외
+                        # (광문1: 교과서2과 lecture=2 → 올림포스2강 혼입 방지).
+                        _scm = re.search(r"\(([^)]+)\)", os.path.basename(_sf))
+                        _tb_l, _ol_l, _ = _psl_fn(_scm.group(1) if _scm else "")
+                        if _tb_l and str(_lec) in _tb_l and _lec not in _ol_l:
+                            continue
                         _extracted_olpo_lectures.add(_lec)
         except Exception:
             pass

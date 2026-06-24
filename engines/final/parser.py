@@ -2710,14 +2710,8 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
                         else:
                             header = f"\ub9ac\ub529\ud30c\uc6cc \ube14\ub85d {str(ord_idx).zfill(2)}"
                     elif block_lecture > 0 and (_src_is_olpo(scope_match.group(1) if scope_match else "") or _src_is_olpo(src)):
-                        # 1순위: olpo_label (페이지 레이블 기반)
-                        if _olpo_label:
-                            header = f"\uc62c\ud3ec {block_lecture}\uac15 {_olpo_label}"
-                        else:
-                            # 폴백: 강별 본문 카운터
-                            key = (src, block_lecture)
-                            _lec_counters[key] = _lec_counters.get(key, 0) + 1
-                            header = f"올포 {block_lecture}강 본문{_lec_counters[key]}"
+                        # 올포/교과서 판정 — 혼합 워크북 교과서 과 오라벨 방지(광문1 교과서2과).
+                        header = _olpo_or_tb_header(src, block_lecture, _olpo_label, _lec_counters)
                     else:
                         scope = scope_match.group(1) if scope_match else "지문"
                         # 마더텅: q_num이 교과서 섹션번호(<18)로 오인된 블록도 page_off 기반 매핑
@@ -2780,13 +2774,8 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
                     header = _tb_lesson_map[src].get(_cidx, f"교과서 본문{_cidx + 1}")
                     _tb_counters[src] += 1
                 elif block_lecture > 0 and _src_is_olpo(src):
-                    # 1순위: olpo_label
-                    if _olpo_label:
-                        header = f"\uc62c\ud3ec {block_lecture}\uac15 {_olpo_label}"
-                    else:
-                        key = (src, block_lecture)
-                        _lec_counters[key] = _lec_counters.get(key, 0) + 1
-                        header = f"올포 {block_lecture}강 본문{_lec_counters[key]}"
+                    # 올포/교과서 판정 — 혼합 워크북 교과서 과 오라벨 방지(광문1).
+                    header = _olpo_or_tb_header(src, block_lecture, _olpo_label, _lec_counters)
                 elif _is_rp_source(src):
                     # 리딩파워 워크북(no q_num): 파일명 강 목록 + 블록 순번으로 매핑
                     if src not in _rp_ex_map_cache:
@@ -3187,13 +3176,8 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
                         header = _ins_lesson_map[src].get(_cidx, f"교과서 본문{_cidx + 1}")
                         _ins_counters[src] += 1
                     elif block_lecture > 0 and (_src_is_olpo(scope_match.group(1) if scope_match else "") or _src_is_olpo(src)):
-                        # 1순위: olpo_label
-                        if _olpo_label:
-                            header = f"\uc62c\ud3ec {block_lecture}\uac15 {_olpo_label}"
-                        else:
-                            key = (src, block_lecture)
-                            _ins_lec_counters[key] = _ins_lec_counters.get(key, 0) + 1
-                            header = f"올포 {block_lecture}강 본문{_ins_lec_counters[key]}"
+                        # 올포/교과서 판정 — 혼합 워크북 교과서 과 오라벨 방지(광문1).
+                        header = _olpo_or_tb_header(src, block_lecture, _olpo_label, _ins_lec_counters)
                     else:
                         scope = scope_match.group(1) if scope_match else "지문"
                         # 마더텅 워크북: q_num이 비어 이 경로로 빠진 블록도 page_off 기반 매핑
@@ -3252,13 +3236,8 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
                     header = _ins_lesson_map[src].get(_cidx, f"교과서 본문{_cidx + 1}")
                     _ins_counters[src] += 1
                 elif block_lecture > 0 and _src_is_olpo(src):
-                    # 1순위: olpo_label
-                    if _olpo_label:
-                        header = f"\uc62c\ud3ec {block_lecture}\uac15 {_olpo_label}"
-                    else:
-                        key = (src, block_lecture)
-                        _ins_lec_counters[key] = _ins_lec_counters.get(key, 0) + 1
-                        header = f"올포 {block_lecture}강 본문{_ins_lec_counters[key]}"
+                    # 올포/교과서 판정 — 혼합 워크북 교과서 과 오라벨 방지(광문1).
+                    header = _olpo_or_tb_header(src, block_lecture, _olpo_label, _ins_lec_counters)
                 else:
                     scope_match = re.search(r"\(([^)]+)\)", src)
                     scope = scope_match.group(1) if scope_match else "지문"
@@ -4120,8 +4099,23 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                     # (딥러닝 영작은 _dl_lesson이 있으면 아래 교과서/딥러닝 경로로 — 올포 흡수 방지)
                     if is_olpo_src and item_lecture > 0 and not kor_item.get("_dl_lesson"):
                         olp_lbl = kor_item.get("olpo_label", "")
+                        # 혼합 워크북(능률오2과+올림포스11강 등): item_lecture가 그 워크북의 올포
+                        # 강 목록에 없고 교과서 과 목록에 있으면 '교과서{과}과 ...'로 (올포 오라벨 방지).
+                        _w_scm = re.search(r"\(([^)]+)\)", src_nfc)
+                        _w_tb, _w_ol, _ = _parse_scope_lessons(_w_scm.group(1) if _w_scm else "")
+                        _w_is_tb = bool(_w_tb) and str(item_lecture) in _w_tb and item_lecture not in _w_ol
                         # q_num 기반 직접 매핑 (olp_lbl 관계없이 일관 처리)
-                        if q_num == "\ubd84\uc11d":
+                        if _w_is_tb and q_num and q_num.isdigit():
+                            header = f"교과서{item_lecture}과 본문{int(q_num)}"
+                        elif _w_is_tb and olp_lbl:
+                            header = f"교과서{item_lecture}과 {olp_lbl}"
+                        elif _w_is_tb:
+                            key = (source, item_lecture)
+                            if w_olpo_prev_qnum.get(key) != q_num:
+                                w_olpo_counters[key] = w_olpo_counters.get(key, 0) + 1
+                                w_olpo_prev_qnum[key] = q_num
+                            header = f"교과서{item_lecture}과 본문{w_olpo_counters[key]}"
+                        elif q_num == "\ubd84\uc11d":
                             header = f"\uc62c\ud3ec {item_lecture}\uac15 \ubd84\uc11d"
                         elif q_num in ("\uc11c\uc220\ud615", "\ub17c\uc220\ud615"):
                             header = f"\uc62c\ud3ec {item_lecture}\uac15 {q_num}"
