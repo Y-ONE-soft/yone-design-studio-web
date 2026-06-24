@@ -272,6 +272,8 @@
     // Pre-step: strip "N." prefix and remove all whitespace, then test compact form.
     var headerPatterns = [
         /^L\d+[-\u2013\u2014]\uBCF8\uBB38\d+(?:\([^\)]{0,40}\))?$/,
+        // \uB2E8\uC6D0\uBA85(PROJECT/Unit \uB4F1)-\uBCF8\uBB38N \u2014 "L" \uC678 \uC784\uC758 \uC601\uBB38 \uB2E8\uC6D0\uBA85 + \uC120\uD0DD\uC801 \uB2E8\uC6D0\uBC88\uD638 \uD5C8\uC6A9
+        /^[A-Za-z]{1,15}\d*[-\u2013\u2014]\uBCF8\uBB38\d+(?:\([^\)]{0,40}\))?$/,
         /^L\d+[-\u2013\u2014][A-Za-z]{1,30}(?:\([^\)]{0,40}\))?$/,
         /^L\d+[-\u2013\u2014]p\.?\d+(?:~\d+)?(?:[A-Za-z]{1,20})?$/i,
         /^p\d+[-\u2013\u2014\.]?(?:no\.)?\d+(?:~\d+)?(?:\([^\)]{0,40}\))?$/i,
