@@ -663,6 +663,13 @@ _RE_HEADER_NUM = re.compile(
     r'(?:\s*\([^\)]*\))?'                                    # 트레일링 부가정보 "(정답 1개)" 등 (선택)
     r'\s*$'
 )
+# 단원명-본문 헤더: "1. PROJECT 2-본문1", "2. PROJECT 2-본문2", "Unit3-본문1" 등.
+# _RE_PAGE_MARKER(L/p 계열)에 없는 임의 영문 단원명 + "-본문N" 형식을 본문 마커로
+# 인식한다. 이게 없으면 _strip_manuscript_headers가 첫 본문 마커를 못 찾아
+# 헤더 영역(책제목/Q/섹션라벨/READING)을 못 자르고, 지문번호도 인식하지 못한다.
+_RE_BONMUN_MARKER = re.compile(
+    r'^\s*(?:\d+\s*[.)]\s*)?[A-Za-z][A-Za-z ]*\d*\s*[-–—]\s*본문\s*(\d+)\s*(?:\([^)]*\))?\s*$'
+)
 # Chapter 구분선 (EBS 등): "Chapter 03. 추론적 이해 - 09 빈칸 추론 (1)"
 _RE_CHAPTER_DIVIDER = re.compile(r'^\s*Chapter\s+\d+\.\s', re.IGNORECASE)
 
@@ -841,7 +848,8 @@ def _strip_manuscript_headers(paragraphs):
         text = p['text'].strip()
         if not text:
             continue
-        if _RE_BRACKET_NUM.match(text) or _RE_HEADER_NUM.match(text) or _RE_KOREAN_BRACKET.match(text):
+        if (_RE_BRACKET_NUM.match(text) or _RE_HEADER_NUM.match(text)
+                or _RE_KOREAN_BRACKET.match(text) or _RE_BONMUN_MARKER.match(text)):
             return paragraphs[i:]
 
     # 2) 본문 마커가 끝까지 없음 → fallback: 헤더 패턴 매칭으로 스킵
@@ -875,6 +883,11 @@ def _extract_question_numbers(paragraphs, step_key):
                 # "41~42" 같은 범위는 첫 번호만 사용
                 num_str = captured.split('~')[0]
                 numbers.append(int(num_str))
+            continue
+        # 단원명-본문 형식 ("1. PROJECT 2-본문1")
+        m = _RE_BONMUN_MARKER.match(text)
+        if m:
+            numbers.append(int(m.group(1)))
     return numbers
 
 
