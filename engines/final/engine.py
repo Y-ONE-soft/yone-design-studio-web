@@ -1291,9 +1291,13 @@ class FinalEngine(BaseEngine):
                     _m_comp = re.match(r"^(\d{4})(41|42)$", _hdr_yy)
                     if _m_comp:
                         _hdr_yy = f"{_m_comp.group(1)}41~42"
-                    # 일반 모의고사 Word(_yymm 있음)만 passage_codes 필터 적용.
-                    # 마더텅 예전 기출(_yymm=None)은 파일 자체가 구지문용이라 필터 제외.
-                    if _yymm and _passage_codes:
+                    # passage_codes(=워크북 마더텅 섹션 전체 _MT_MAP 코드 + 추출 코드)로
+                    # 시험범위 필터. 마더텅 예전 기출(_yymm=None)도 적용한다 — 예전기출
+                    # 폴더는 시험범위 밖 강(3/4/5강 등)을 over-collect하므로 무필터로 두면
+                    # 어법에 범위 밖 지문이 인입된다(한영1 3/4/5강 12지문 사례). in-scope
+                    # 구지문은 _passage_codes에 _MT_MAP[워크북섹션]으로 전부 포함되어
+                    # 보존됨(L1164-1185). _passage_codes 비면 스킵(비-마더텅 무영향).
+                    if _passage_codes:
                         _base = _hdr_yy.split("~")[0][:6]
                         if _base not in _passage_codes:
                             continue
