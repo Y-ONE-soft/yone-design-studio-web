@@ -60,6 +60,110 @@ _MT_MAP = None
 # 섹션 라벨 맵: {3: "필자의 주장", 4: "의미 추론", 5: "요지 추론"}
 # 엑셀 R3 헤더에서 추출. 예전 기출 폴더 이름 조회용.
 _MT_SECTION_LABELS = None
+# 역매핑 캐시: {YYMMQQ: (강번호, 지문순번)} — 출처코드를 "마더텅 N강 M" 라벨로 환원.
+# _MT_MAP에서 lazy 빌드, load_mothertongue_map 호출 시 무효화(None).
+_MT_REVERSE = None
+
+
+def _mt_reverse_map():
+    """{YYMMQQ: (강, 지문순번)} 역매핑 반환 (lazy 빌드). _MT_MAP 미로드면 빈 dict."""
+    global _MT_REVERSE
+    if _MT_REVERSE is None:
+        rev = {}
+        if _MT_MAP:
+            for sect, seqmap in _MT_MAP.items():
+                for seq, code in seqmap.items():
+                    # 같은 코드가 여러 칸이면 첫 등장(작은 강·순번) 유지
+                    rev.setdefault(str(code).zfill(6), (sect, seq))
+        _MT_REVERSE = rev
+    return _MT_REVERSE
+
+
+def _mt_code_to_label(code):
+    """YYMMQQ(또는 'YYMMQQ~NN') → '마더텅 N강 M'. 마더텅 코드 아니면 None.
+
+    범위 접미사(~42 등)는 base 6자리로 조회 후 그대로 덧붙인다.
+    """
+    if not code:
+        return None
+    s = str(code).strip()
+    m = re.match(r"^(\d{6})(.*)$", s)
+    if not m:
+        return None
+    mt = _mt_reverse_map().get(m.group(1))
+    if not mt:
+        return None
+    return f"마더텅 {mt[0]}강 {mt[1]}{m.group(2)}"
+
+
+def _relabel_mt_in_content(content, log=lambda m: None):
+    """content.json의 마더텅 출처코드(YYMMQQ) 헤더를 '마더텅 N강 M' 라벨로 환원.
+
+    표시 라벨만 바꾼다 — 시험범위 필터·중요어휘 fetch 등 YYMMQQ 의존 로직이 모두
+    끝난 파이프라인 최종 단계(JSX 직전)에서 호출해야 한다. 비-마더텅 코드(다른 학교
+    순수 모의고사 YYMMQQ 등)는 역매핑에 없으므로 그대로 둔다. 정렬은 이미
+    _canonical_order_key가 (강,지문순)으로 처리했으므로 여기서는 순서 변경 없음.
+    """
+    rev = _mt_reverse_map()
+    if not rev or not isinstance(content, dict):
+        return content
+    cnt = [0]
+
+    def _lab(s):
+        if not isinstance(s, str):
+            return s
+        l = _mt_code_to_label(s.strip())
+        if l:
+            cnt[0] += 1
+            return l
+        return s
+
+    def _is_code_line(s):
+        return isinstance(s, str) and re.fullmatch(r"\d{6}(?:~\d+)?", s.strip())
+
+    def _relabel_hdr_list(lst):
+        out = []
+        for it in lst:
+            if isinstance(it, dict) and isinstance(it.get("header"), str):
+                it = dict(it)
+                it["header"] = _lab(it["header"])
+            elif isinstance(it, str):
+                it = _lab(it)
+            out.append(it)
+        return out
+
+    vol1 = content.get("vol1", {}) or {}
+    vol2 = content.get("vol2", {}) or {}
+
+    # 문장배열/문장삽입: 블록 header
+    for sec in ("문장배열", "문장삽입"):
+        for b in vol1.get(sec, []) or []:
+            if isinstance(b, dict) and isinstance(b.get("header"), str):
+                b["header"] = _lab(b["header"])
+
+    # 중요어휘: 문자열 내 YYMMQQ 단독 라인만 환원
+    for sec in ("중요어휘_왼", "중요어휘_오"):
+        v = vol1.get(sec)
+        if isinstance(v, str) and v:
+            lines = v.split("\n")
+            for i, ln in enumerate(lines):
+                if _is_code_line(ln):
+                    lines[i] = _lab(ln)
+            vol1[sec] = "\n".join(lines)
+
+    # 어법수정: 헤더 라인(YYMMQQ 단독)만 환원 (지문 텍스트는 그대로)
+    gl = vol2.get("어법수정")
+    if isinstance(gl, list):
+        vol2["어법수정"] = [_lab(x) if _is_code_line(x) else x for x in gl]
+
+    # 헤더 리스트들 (str 또는 {header,...})
+    for key in ("어법_헤더", "영작_헤더_상세", "영작_헤더"):
+        if isinstance(vol2.get(key), list):
+            vol2[key] = _relabel_hdr_list(vol2[key])
+
+    if cnt[0] and log:
+        log(f"  [마더텅 라벨] {cnt[0]}개 헤더를 '마더텅 N강 M'로 환원")
+    return content
 
 
 def load_mothertongue_map(xlsx_path):
@@ -69,9 +173,10 @@ def load_mothertongue_map(xlsx_path):
         R3 (헤더): (None, "03 필자의 주장", "04 의미 추론", "05 요지 추론")
         R4~ (데이터): (순번, YYMMQQ_3, YYMMQQ_4, YYMMQQ_5)
     """
-    global _MT_MAP, _MT_SECTION_LABELS
+    global _MT_MAP, _MT_SECTION_LABELS, _MT_REVERSE
     _MT_MAP = None
     _MT_SECTION_LABELS = None
+    _MT_REVERSE = None  # 역매핑 캐시 무효화 (다음 _mt_reverse_map 호출 시 재빌드)
     if not xlsx_path:
         return
     try:
@@ -1820,9 +1925,17 @@ def _canonical_order_key(header, source=""):
         is_ex = m_rp.group(2) is not None
         sub = int(m_rp.group(2) or m_rp.group(3) or 0)
         return (1, lec, 0 if is_ex else 1, sub)
+    # 마더텅 "N강 M" 라벨(이미 환원된 경우) — (강, 지문순번) 순
+    m_mt_lbl = re.match(r'^마더텅\s+(\d+)강\s+(\d+)', h)
+    if m_mt_lbl:
+        return (2, int(m_mt_lbl.group(1)), int(m_mt_lbl.group(2)), 0)
     # 모의고사 YYMMQQ
     m_mock = re.match(r'^(\d{6})(?:~\d+)?', h)
     if m_mock:
+        # 마더텅 출처코드면 (강, 지문순번)으로 정렬 — 시험연도순이 아니라 강·지문순.
+        _mt = _mt_reverse_map().get(m_mock.group(1))
+        if _mt:
+            return (2, _mt[0], _mt[1], 0)
         return (2, int(m_mock.group(1)), 0, 0)
     # 고3 분석편: "N강 NN" 또는 "N강 NN~NN" (예: "3강 01", "19강 05~06")
     # Why: 강동3 등 고3 학교에서 영작/어법 헤더가 lexical 정렬돼 11강이 3강 앞으로 가는 문제.

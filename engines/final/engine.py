@@ -1882,6 +1882,21 @@ class FinalEngine(BaseEngine):
                 log(f"[중요어휘] 26올포기출 주입 실패: {_e}")
                 log(f"  {traceback.format_exc()}")
 
+        # 7) 마더텅 출처코드(YYMMQQ) → "마더텅 N강 M" 라벨 환원 (표시용).
+        #    시험범위 필터·중요어휘 fetch 등 YYMMQQ 의존 로직이 모두 끝난 최종 단계에서
+        #    수행. 정렬은 이미 _canonical_order_key가 (강,지문순)으로 처리함.
+        try:
+            from engines.final.parser import _relabel_mt_in_content
+            with open(content_path, encoding="utf-8") as _rf:
+                _rdata = json.load(_rf)
+            _relabel_mt_in_content(_rdata, log)
+            with open(content_path, "w", encoding="utf-8") as _rf:
+                json.dump(_rdata, _rf, ensure_ascii=False, indent=2)
+        except Exception as _e_mt:
+            import traceback
+            log(f"[마더텅 라벨] 환원 실패(YYMMQQ 유지): {_e_mt}")
+            log(f"  {traceback.format_exc()}")
+
         return content_path
 
     # ── 파이프라인: prepare_jsx ──
