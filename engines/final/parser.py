@@ -4020,10 +4020,9 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
             if not isinstance(kor_item, dict):
                 continue
             source = kor_item.get("source", "")
-            scope_match = re.search(r"\(([^)]+)\)", _nfc(source))
-            if not scope_match:
+            scope = _wb_scope(source)
+            if not scope:
                 continue
-            scope = scope_match.group(1)
             # "교과서1,2과,SL" or "미래엔김3과" → ["1과", "2과", "SL"]
             m_lesson = re.search(r"교과(?:서)?\s*([\d,]+)\s*과", scope)
             if not m_lesson:
