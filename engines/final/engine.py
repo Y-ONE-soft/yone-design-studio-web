@@ -1397,6 +1397,12 @@ class FinalEngine(BaseEngine):
                         if _dl_lessons and _ml.group(1) not in _dl_lessons:
                             continue   # 시험범위 밖 과의 딥러닝 제외 (예: 1,2과 파일)
                         _dl_text = (_b.get("text") or "").strip()
+                        # "Appendix_Deep Learning" 등 소스 구분 마커 줄 제거
+                        # (다음 지문 구분선이 앞 지문 텍스트에 흡수됨)
+                        _dl_text = "\n".join(
+                            _ln for _ln in _dl_text.split("\n")
+                            if not re.match(r"^\s*Appendix[_\s]*Deep\s*Lea", _ln, re.IGNORECASE)
+                        ).strip()
                         if not _dl_text:
                             continue
                         _dl_hdr = f"교과서{_ml.group(1)}과 딥러닝"
