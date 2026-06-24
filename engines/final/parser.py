@@ -4183,13 +4183,20 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                     # 마더텅 전체 지문 순번 추적 (YYMMQQ 매핑용): 지문 경계마다 증가
                     _is_mt_w = "\ub9c8\ub354\ud145" in scope
                     if _is_mt_w:
-                        # mt_seq_map이 있으면 원고 전체 기준 순번을 우선 사용
-                        # (영작 문제 없는 지문 페이지도 포함된 정확한 순번)
-                        _mapped_seq = _mt_seq_lookup(mt_seq_map, src_nfc, item_page_off)
-                        if _mapped_seq:
-                            w_mt_total[src_nfc] = _mapped_seq
+                        # 인쇄된 지문번호(q_num="01"~"NN")가 곧 마더텅 지문순번 = 가장 신뢰.
+                        # 영작 page_off가 문장배열 범위 밖이면 page-seq 추정(_mt_seq_lookup)이
+                        # 어긋나 헤더가 붕괴(마더텅7강 1·24만 남는 사고)하므로 q_num을 최우선 사용.
+                        _qn_m = re.match(r"^(\d{1,2})(?:[~\-]\d{1,2})?$", q_num) if q_num else None
+                        if _qn_m and not q_num.startswith("본문"):
+                            w_mt_total[src_nfc] = int(_qn_m.group(1))
                         else:
-                            w_mt_total[src_nfc] = w_mt_total.get(src_nfc, 0) + 1
+                            # mt_seq_map이 있으면 원고 전체 기준 순번을 우선 사용
+                            # (영작 문제 없는 지문 페이지도 포함된 정확한 순번)
+                            _mapped_seq = _mt_seq_lookup(mt_seq_map, src_nfc, item_page_off)
+                            if _mapped_seq:
+                                w_mt_total[src_nfc] = _mapped_seq
+                            else:
+                                w_mt_total[src_nfc] = w_mt_total.get(src_nfc, 0) + 1
 
                     # 리딩파워 영작: source별 문장배열 헤더 맵을 활용해 동일 강·번호로 매핑
                     # (파일명만 보고 Ex/일반을 결정하면 워크북01/워크북03처럼 내용이 반대인 경우 오매핑)
