@@ -110,6 +110,54 @@ def find_grammar_word_files(content_base, subject, publisher, lessons, log=None)
     return found_files
 
 
+def find_deeplearning_grammar_files(content_base, subject, publisher, log=None):
+    """Deep Learning 폴더(과 폴더 밖, 1~4과와 분리)의 어법수정 문제지 탐색.
+
+    딥러닝 어법은 "{subject} {publisher}" 교재 폴더 안의 별도 "... Deep Learning"
+    폴더에 있어 find_grammar_word_files(과 폴더만 스캔)에서 누락된다. 별도로 수집.
+    파일 내 헤더는 "L3-본문9"/"L4-본문9"(과별 딥러닝) 형식.
+    """
+    textbook_base = os.path.join(content_base, "교과서 작업")
+    from engines.final.extractor import _resolve_local_mirror as _rlm
+    textbook_base = _rlm(textbook_base, None)
+
+    subject_dir = None
+    if os.path.isdir(textbook_base):
+        for d in os.listdir(textbook_base):
+            if _nfc(d) == subject or _nfc(d).replace(" ", "") == subject.replace(" ", ""):
+                subject_dir = os.path.join(textbook_base, d)
+                break
+    if not subject_dir or not os.path.isdir(subject_dir):
+        return []
+
+    publisher_dir = None
+    target_name = f"{subject} {publisher}"
+    for d in os.listdir(subject_dir):
+        dn = _nfc(d)
+        if publisher in dn or target_name.replace(" ", "") in dn.replace(" ", ""):
+            publisher_dir = os.path.join(subject_dir, d)
+            break
+    if not publisher_dir or not os.path.isdir(publisher_dir):
+        return []
+
+    found_files = []
+    for d in os.listdir(publisher_dir):
+        dn = _nfc(d)
+        if not os.path.isdir(os.path.join(publisher_dir, d)):
+            continue
+        if "Deep Learning" in dn or "DeepLearning" in dn.replace(" ", ""):
+            for root, dirs, files in os.walk(os.path.join(publisher_dir, d)):
+                for f in files:
+                    fn = _nfc(f)
+                    if ("어법수정" in fn and ("문제지" in fn or fn.endswith("_문제.docx"))
+                            and fn.endswith(".docx")
+                            and not fn.startswith("~") and "정답" not in fn and "해설" not in fn):
+                        found_files.append(os.path.join(root, f))
+                        if log:
+                            log(f"  [어법수정] 딥러닝 파일: {fn}")
+    return found_files
+
+
 def find_mockexam_grammar_files(content_base, scope_text, grade, log=None):
     """모의고사 작업 폴더에서 어법수정 Word 파일 탐색.
 
