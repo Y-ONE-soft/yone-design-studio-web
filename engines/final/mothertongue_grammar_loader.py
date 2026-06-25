@@ -206,8 +206,48 @@ def _modern_docx(folder):
     return None
 
 
+def _grammar_body_words(text):
+    """어법수정 본문에서 매칭용 단어집합 추출 (어법마커 N[..] 제거)."""
+    import re as _re
+    cleaned = _re.sub(r"\d*\[[^\]]*\]", " ", text or "")
+    return set(_re.findall(r"[a-z]{4,}", cleaned.lower()))
+
+
+def _match_code_by_passage(body, sect, passage_ref, mt_map):
+    """어법수정 docx 블록 본문을 시험범위 지문 본문(passage_ref)과 내용 비교해
+    출처코드를 판정한다. 헤더에 YYMMQQ가 없는 옛날지문 docx 대응.
+
+    passage_ref: {code: 단어집합} — 해당 강 정본 워크북 지문의 본문 단어집합.
+    sect 강의 후보코드(mt_map[sect])로 한정해 오매칭을 막고, 포함률(본문 단어가
+    지문에 포함된 비율)이 임계 이상이며 2순위와 충분히 벌어질 때만 채택.
+    """
+    if not passage_ref:
+        return None
+    cand_codes = set((mt_map or {}).get(sect, {}).values()) if sect else None
+    bw = _grammar_body_words(body)
+    if len(bw) < 15:
+        return None
+    scored = []
+    for code, pw in passage_ref.items():
+        if cand_codes is not None and code not in cand_codes:
+            continue
+        if not pw:
+            continue
+        contain = len(bw & pw) / len(bw)
+        scored.append((contain, code))
+    if not scored:
+        return None
+    scored.sort(reverse=True)
+    best_c, best_code = scored[0]
+    second = scored[1][0] if len(scored) > 1 else 0.0
+    if best_c >= 0.80 and (best_c - second) >= 0.15:
+        return best_code
+    return None
+
+
 def load_mothertongue_grammar_map(gdrive_content_base, grade, required_yymmqqs,
-                                   mt_map=None, mt_section_labels=None, log=None):
+                                   mt_map=None, mt_section_labels=None, log=None,
+                                   passage_ref=None):
     """마더텅 지문의 YYMMQQ 목록을 받아, 각 YYMMQQ에 대응하는 어법수정 원고 반환.
 
     Args:
@@ -217,6 +257,8 @@ def load_mothertongue_grammar_map(gdrive_content_base, grade, required_yymmqqs,
         mt_map: {섹션번호: {순번: YYMMQQ}} — 섹션별 포함 관계 역추적용
         mt_section_labels: {섹션번호: "필자의 주장"} — 예전 기출 폴더 이름 조회용
         log: 로그 콜백
+        passage_ref: {code: 단어집합} — 정본 워크북 지문 본문(내용매칭용). 옛날지문
+            docx처럼 헤더에 출처코드가 없을 때 본문 비교로 코드를 판정하는 데 쓴다.
 
     Returns:
         {"221120": "본문 문자열", ...} — 못 찾은 YYMMQQ는 키 없음
@@ -326,19 +368,19 @@ def load_mothertongue_grammar_map(gdrive_content_base, grade, required_yymmqqs,
                     os.remove(local)
             except Exception:
                 pass
-        # 매칭
-        for yq, sects in yq_to_sections.items():
-            if yq in result:
-                continue
-            for sect in sects:
-                blocks = section_blocks.get(sect, [])
-                for hdr, body in blocks:
-                    ext = _extract_yymmqq_from_header(hdr)
-                    if ext == yq:
-                        result[yq] = body
-                        break
-                if yq in result:
-                    break
+        # 매칭: (1) 헤더의 YYMMQQ 우선. (2) 헤더에 출처코드가 없는 옛날지문 docx는
+        # 본문을 정본 워크북 지문(passage_ref)과 내용 비교해 코드를 판정한다.
+        for sect, blocks in section_blocks.items():
+            for hdr, body in blocks:
+                code = _extract_yymmqq_from_header(hdr)
+                by_content = False
+                if not code or code not in required_yymmqqs:
+                    code = _match_code_by_passage(body, sect, passage_ref, mt_map)
+                    by_content = True
+                if code and code in required_yymmqqs and code not in result:
+                    result[code] = body
+                    if log and by_content:
+                        log(f"  [마더텅어법] 옛날지문 내용매칭 → {code} ({sect}강)")
 
     # 누락 로깅
     missing_after = [yq for yq in required_yymmqqs if yq not in result]

@@ -311,6 +311,68 @@ def _build_mt_seq_map(stories):
     return result
 
 
+def _build_mt_passage_ref(stories):
+    """마더텅 시험범위 지문의 {YYMMQQ: 본문 단어집합} 맵을 만든다.
+
+    옛날지문 어법수정 docx는 헤더에 출처코드가 없어 본문 내용비교로 코드를 판정해야
+    한다(load_mothertongue_grammar_map의 passage_ref). 코드는 워크북 원고의 지문
+    출현 순번(seq)으로 _MT_MAP에서 조회한다.
+
+    seq 기준(정본): 같은 강에 버전중복 워크북이 섞여 있을 수 있으므로(예: 15강
+    예전기출 indd 7지문 + 세로 indd 21지문), '문장배열 스토리 pageOff가 가장 많은
+    소스'를 정본으로 보고 그 소스의 pageOff 순서로 seq를 매긴다. 본문 텍스트는 정본
+    소스의 모든 스토리를 지문(seq)별로 합쳐 구성한다.
+    """
+    if not _MT_MAP:
+        return {}
+    import re as _re
+    from collections import defaultdict
+    sentence_styles = {"문장 배열 그랩", "C_문장배열", "C1_문장 배열"}
+
+    # 강 → {source: set(문장배열 pageOff)} 로 정본 소스 선정
+    gang_src_pages = defaultdict(lambda: defaultdict(set))
+    gang_stories = defaultdict(list)
+    for st in stories:
+        src = _nfc(st.get("source_file", ""))
+        m = _re.search(r"마더텅\s*(\d+)강", src)
+        if not m:
+            continue
+        gang = int(m.group(1))
+        gang_stories[gang].append(st)
+        if any(p.get("s", "") in sentence_styles for p in st.get("paras", [])):
+            po = st.get("pageOff", -1)
+            if po >= 0:
+                gang_src_pages[gang][src].add(po)
+
+    def _words(t):
+        return set(_re.findall(r"[a-z]{4,}", (t or "").lower()))
+
+    ref = {}
+    for gang, src_pages in gang_src_pages.items():
+        sec_map = _MT_MAP.get(gang)
+        if not sec_map or not src_pages:
+            continue
+        canon = max(src_pages, key=lambda s: len(src_pages[s]))
+        starts = sorted(src_pages[canon])
+        # 정본 소스의 스토리를 가장 가까운(<=) start 에 묶어 지문(seq)별 본문 합성
+        per_seq = defaultdict(list)
+        for st in gang_stories[gang]:
+            if _nfc(st.get("source_file", "")) != canon:
+                continue
+            po = st.get("pageOff", -1)
+            cand = [s for s in starts if s <= po]
+            if not cand:
+                continue
+            seq = starts.index(cand[-1]) + 1
+            for p in st.get("paras", []):
+                per_seq[seq].append(p.get("t", ""))
+        for seq, texts in per_seq.items():
+            code = sec_map.get(seq)
+            if code:
+                ref[code] = _words(" ".join(texts))
+    return ref
+
+
 def _mt_seq_lookup(mt_seq_map, src_nfc, page_off):
     """writing_kor item의 page_off에 대응하는 원고 지문 순번 조회.
 
@@ -5716,6 +5778,8 @@ def parse_extracted(extracted_path, vocab_left, vocab_right,
                         from engines.final.mothertongue_grammar_loader import (
                             load_mothertongue_grammar_map
                         )
+                        # 옛날지문 어법 docx(헤더에 출처코드 없음) 내용매칭용 지문 본문맵
+                        _mt_passage_ref = _build_mt_passage_ref(stories)
                         _mt_text_map = load_mothertongue_grammar_map(
                             gdrive_content_base,
                             grade,
@@ -5723,6 +5787,7 @@ def parse_extracted(extracted_path, vocab_left, vocab_right,
                             mt_map=_MT_MAP,
                             mt_section_labels=_MT_SECTION_LABELS,
                             log=log,
+                            passage_ref=_mt_passage_ref,
                         )
                         log(f"  [마더텅어법] Word 로드: {len(_mt_text_map)}/{len(_required_yqs)}건")
                     except Exception as _e:
