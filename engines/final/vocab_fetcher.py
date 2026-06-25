@@ -963,6 +963,8 @@ def fetch_vocab_for_school(school, grade, log=None, olpo_lectures=None, rp_lectu
             # 없는 정상 지문은 절대 건드리지 않음(시기별 빈칸/내용 보존).
             def _norm_v(t):
                 return re.sub(r"[^a-z]", "", re.sub(r"\d*\[[^\]]*\]", " ", (t or "").lower()))[:160]
+            def _words(t):
+                return set(re.findall(r"[a-z]{3,}", re.sub(r"\d*\[[^\]]*\]", " ", (t or "").lower())))
             _text_codes = {}
             for _i, (_sk, _code, _txt) in enumerate(all_items):
                 _k = _norm_v(_txt)
@@ -972,10 +974,20 @@ def fetch_vocab_for_school(school, grade, log=None, olpo_lectures=None, rp_lectu
             for _k, _idxs in _text_codes.items():
                 if len(_idxs) < 2:
                     continue  # 중복 아님 → 무동작
+                # 같은 본문이 2개 이상 코드에 들어감 = 시기별 입력오류. 각 코드의 마더텅
+                # 정본과 '단어 겹침'을 본다: 겹침이 낮으면(=마더텅이 다른 지문) 그 코드의
+                # 시기별이 틀린 것 → 마더텅으로 교체. 겹침이 높으면(같은 지문, 빈칸만
+                # 다름) 시기별 정본이므로 그대로 둔다.
                 for _i in _idxs:
                     _c = all_items[_i][1]
                     _mt = mt_vocab.get(_c)
-                    if _mt and _norm_v(_mt) != _k:
+                    if not _mt:
+                        continue
+                    _sw = _words(all_items[_i][2])
+                    if not _sw:
+                        continue
+                    _contain = len(_sw & _words(_mt)) / len(_sw)
+                    if _contain < 0.5:  # 시기별이 마더텅(이 코드 정본)과 다른 지문 = 오류
                         all_items[_i] = (all_items[_i][0], _c, _mt)
                         _fixed_dup.append(_c)
             if _fixed_dup and log:
