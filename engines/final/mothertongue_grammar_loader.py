@@ -83,6 +83,17 @@ def _parse_docx_table1(docx_path, log=None):
         c0 = row.cells[0].text.strip() if len(row.cells) > 0 else ""
         if not c0:
             continue
+        # 추가 형식: "N번 YYMMQQ"(콘텐츠팀이 누락 지문 어법을 보충할 때 쓰는 헤더).
+        # 헤더와 본문이 한 셀에 줄바꿈으로 함께 들어있다 → 첫 줄=헤더(코드 포함),
+        # 나머지 줄=본문으로 분리. (예: "7번 201123\nThe use of renewable ...")
+        _m_num = re.match(r"^\d+\s*번\s*\d{6}", c0)
+        if _m_num:
+            if cur_hdr and cur_body:
+                results.append((cur_hdr, "\n".join(cur_body)))
+            _ls = c0.split("\n")
+            cur_hdr = _ls[0].strip()
+            cur_body = [_l.strip() for _l in _ls[1:] if _l.strip()]
+            continue
         # 헤더 감지: "N." 로 시작하고 no./p 등 지문 마커 포함
         is_hdr = bool(re.match(
             r"^\d+\.\s*(p\d+|p\d+\uac15|L\d+|SL\d*|Special\s*Lesson\s*\d*)",
