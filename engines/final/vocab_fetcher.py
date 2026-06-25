@@ -957,6 +957,29 @@ def fetch_vocab_for_school(school, grade, log=None, olpo_lectures=None, rp_lectu
                     sk = f"2_{code}"
                 all_items.append((sk, code, text))
                 _mt_added += 1
+            # 시기별 시트 중복(데이터 오류) 교정: 같은 본문이 서로 다른 코드에 들어가
+            # 있으면(예: 24-6 no.24가 no.23과 동일 입력) 그 코드의 마더텅 시트 정본으로
+            # 교체. 마더텅 시트는 강·지문번호로 정리돼 no.번호 입력오류에 안전. 중복이
+            # 없는 정상 지문은 절대 건드리지 않음(시기별 빈칸/내용 보존).
+            def _norm_v(t):
+                return re.sub(r"[^a-z]", "", re.sub(r"\d*\[[^\]]*\]", " ", (t or "").lower()))[:160]
+            _text_codes = {}
+            for _i, (_sk, _code, _txt) in enumerate(all_items):
+                _k = _norm_v(_txt)
+                if len(_k) >= 30:
+                    _text_codes.setdefault(_k, []).append(_i)
+            _fixed_dup = 0
+            for _k, _idxs in _text_codes.items():
+                if len(_idxs) < 2:
+                    continue  # 중복 아님 → 무동작
+                for _i in _idxs:
+                    _c = all_items[_i][1]
+                    _mt = mt_vocab.get(_c)
+                    if _mt and _norm_v(_mt) != _k:
+                        all_items[_i] = (all_items[_i][0], _c, _mt)
+                        _fixed_dup += 1
+            if _fixed_dup and log:
+                log(f"[중요어휘] 시기별 중복 교정: {_fixed_dup}개 → 마더텅 정본")
             if log:
                 log(f"[\uc911\uc694\uc5b4\ud718] \ub9c8\ub354\ud145 \uc2dc\ud2b8 \ud3f4\ubc31: {_mt_added}\uac1c \ucd94\uac00")
 
