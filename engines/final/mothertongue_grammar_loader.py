@@ -233,16 +233,66 @@ def _match_code_by_passage(body, sect, passage_ref, mt_map):
             continue
         if not pw:
             continue
-        contain = len(bw & pw) / len(bw)
-        scored.append((contain, code))
+        # 자카드(교집합/합집합). 포함률(contain)은 작은 어법 단어집합이 과포화된
+        # 워크북 지문(여러 STEP 합본)에 1.00으로 걸려 오매칭되므로, 합집합 크기로
+        # 페널티를 주는 자카드를 쓴다.
+        jac = len(bw & pw) / len(bw | pw)
+        scored.append((jac, code))
     if not scored:
         return None
     scored.sort(reverse=True)
     best_c, best_code = scored[0]
     second = scored[1][0] if len(scored) > 1 else 0.0
-    if best_c >= 0.80 and (best_c - second) >= 0.15:
+    # 최상위가 차상위보다 분명히 높을 때만 채택(오매칭/충돌 방지).
+    if best_c >= 0.25 and (best_c - second) >= 0.08:
         return best_code
     return None
+
+
+def _load_legacy_passage_words(sect_dir):
+    """예전기출 강 폴더의 '지문 xlsx'(A열 '[N강 M번 YYMMQQ]', B열 본문)에서
+    {code: 단어집합} 구성.
+
+    옛날지문 어법 docx는 헤더에 출처코드가 없어 본문 내용비교로 코드를 판정하는데,
+    워크북 추출본은 STEP 합본·버전중복으로 지문 경계가 흐려 오매칭이 난다. 이 xlsx는
+    지문이 코드와 1:1로 깔끔히 분리돼 있어 가장 신뢰할 수 있는 매칭 기준이다.
+    """
+    ref = {}
+    if not sect_dir or not os.path.isdir(sect_dir):
+        return ref
+    try:
+        import openpyxl
+    except Exception:
+        return ref
+    paths = []
+    for root, _dirs, files in os.walk(sect_dir):
+        for fn in files:
+            fnn = _nfc(fn)
+            if fnn.endswith(".xlsx") and not fnn.startswith("~") and "지문" in fnn:
+                paths.append(os.path.join(root, fn))
+    for p in paths:
+        try:
+            wb = openpyxl.load_workbook(p, data_only=True, read_only=True)
+        except Exception:
+            continue
+        for ws in wb.worksheets:
+            for row in ws.iter_rows(values_only=True):
+                if not row or row[0] is None:
+                    continue
+                m = re.search(r"(\d{6})", _nfc(str(row[0])))
+                if not m or m.group(1) in ref:
+                    continue
+                body = ""
+                for c in row[1:]:
+                    if c and isinstance(c, str) and len(c) > len(body):
+                        body = c
+                if len(body) > 60:
+                    ref[m.group(1)] = set(re.findall(r"[a-z]{4,}", body.lower()))
+        try:
+            wb.close()
+        except Exception:
+            pass
+    return ref
 
 
 def load_mothertongue_grammar_map(gdrive_content_base, grade, required_yymmqqs,
@@ -339,6 +389,7 @@ def load_mothertongue_grammar_map(gdrive_content_base, grade, required_yymmqqs,
                     yq_to_sections.setdefault(yq, set()).add(sect)
         # 섹션별로 예전 기출 Word 한 번씩만 파싱 (캐시)
         section_blocks = {}
+        section_xlsx_ref = {}
         sections_needed = set()
         for sects in yq_to_sections.values():
             sections_needed |= sects
@@ -361,6 +412,7 @@ def load_mothertongue_grammar_map(gdrive_content_base, grade, required_yymmqqs,
                 continue
             blocks = _parse_docx_table1(local, log=log)
             section_blocks[sect] = blocks
+            section_xlsx_ref[sect] = _load_legacy_passage_words(sect_dir)
             if log:
                 log(f"  [마더텅어법] 예전 기출 {sect}강 파싱: {len(blocks)}블록")
             try:
@@ -371,11 +423,14 @@ def load_mothertongue_grammar_map(gdrive_content_base, grade, required_yymmqqs,
         # 매칭: (1) 헤더의 YYMMQQ 우선. (2) 헤더에 출처코드가 없는 옛날지문 docx는
         # 본문을 정본 워크북 지문(passage_ref)과 내용 비교해 코드를 판정한다.
         for sect, blocks in section_blocks.items():
+            # 매칭 기준: xlsx 지문(깨끗·1:1) 우선, 없으면 워크북 추출 지문(passage_ref).
+            _ref = dict(passage_ref or {})
+            _ref.update(section_xlsx_ref.get(sect, {}))
             for hdr, body in blocks:
                 code = _extract_yymmqq_from_header(hdr)
                 by_content = False
                 if not code or code not in required_yymmqqs:
-                    code = _match_code_by_passage(body, sect, passage_ref, mt_map)
+                    code = _match_code_by_passage(body, sect, _ref, mt_map)
                     by_content = True
                 if code and code in required_yymmqqs and code not in result:
                     result[code] = body
