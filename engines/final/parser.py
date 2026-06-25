@@ -5773,13 +5773,18 @@ def parse_extracted(extracted_path, vocab_left, vocab_right,
                     for _bi, _yq in _seq_list:
                         if _yq:
                             _required_yqs.add(_yq)
+                # 옛날지문 어법 docx(헤더에 출처코드 없음) 내용매칭용 지문 본문맵.
+                # 동시에 in-scope 전체 마더텅 지문으로 탐색집합을 확장한다 — A1 OX 어법
+                # 블록이 추출되지 않은 in-scope 지문도 예전기출/Word 어법을 찾도록.
+                # _build_mt_passage_ref는 정본 워크북(강별 최다 문장배열 소스) 지문만
+                # 담으므로 sparse 마더텅 교재(강동1 등)는 자기 수록 지문만 확장된다.
+                _mt_passage_ref = _build_mt_passage_ref(stories)
+                _required_yqs |= set(_mt_passage_ref)
                 if _required_yqs and gdrive_content_base:
                     try:
                         from engines.final.mothertongue_grammar_loader import (
                             load_mothertongue_grammar_map
                         )
-                        # 옛날지문 어법 docx(헤더에 출처코드 없음) 내용매칭용 지문 본문맵
-                        _mt_passage_ref = _build_mt_passage_ref(stories)
                         _mt_text_map = load_mothertongue_grammar_map(
                             gdrive_content_base,
                             grade,
