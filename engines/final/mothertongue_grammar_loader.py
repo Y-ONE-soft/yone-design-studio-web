@@ -68,14 +68,16 @@ def _parse_docx_table1(docx_path, log=None):
 
     if not doc.tables:
         return []
-    # Table[1]이 없으면 Table[0] 사용
-    table = doc.tables[1] if len(doc.tables) > 1 else doc.tables[0]
+    # 모든 테이블의 행을 순회한다. (옛날지문 어법수정 docx는 일부 지문(예: 6강 4번)을
+    # Table[0]에 따로 두는 경우가 있어 Table[1]만 읽으면 누락된다. 헤더 정규식이
+    # 'N. p..' 형식만 잡으므로 제목/지시문 행은 자동 무시되어 안전.)
+    _all_rows = [_r for _t in doc.tables for _r in _t.rows]
 
     results = []
     cur_hdr = None
     cur_body = []
 
-    for row in table.rows:
+    for row in _all_rows:
         if not row.cells:
             continue
         c0 = row.cells[0].text.strip() if len(row.cells) > 0 else ""
