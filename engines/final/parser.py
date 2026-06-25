@@ -5854,6 +5854,17 @@ def parse_extracted(extracted_path, vocab_left, vocab_right,
                     _hdr = _scope_to_header(_gb_scope, _block_idx)
                     merged_lines.append(_hdr)
                     merged_lines.extend(gb.get("lines", []))
+            # A1 OX 어법블록이 추출되지 않은 in-scope 마더텅 지문도, 예전기출/Word에서
+            # 어법을 찾았으면(_mt_text_map) 추가한다. 헤더 충돌 dedup·_canonical_order_key
+            # 정렬이 뒤에서 강·지문순으로 배치하므로 추가 순서는 무관.
+            for _xyq in sorted(_mt_text_map):
+                if _xyq in merged_lines:
+                    continue
+                merged_lines.append(_xyq)
+                for _ln in _mt_text_map[_xyq].split("\n"):
+                    _ln = _ln.strip()
+                    if _ln:
+                        merged_lines.append(_ln)
         grammar_blocks = [{
             "source": "어법수정 Word" if not is_g3 else "어법선택 추출",
             "lines": merged_lines
