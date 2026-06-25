@@ -968,7 +968,7 @@ def fetch_vocab_for_school(school, grade, log=None, olpo_lectures=None, rp_lectu
                 _k = _norm_v(_txt)
                 if len(_k) >= 30:
                     _text_codes.setdefault(_k, []).append(_i)
-            _fixed_dup = 0
+            _fixed_dup = []
             for _k, _idxs in _text_codes.items():
                 if len(_idxs) < 2:
                     continue  # 중복 아님 → 무동작
@@ -977,9 +977,9 @@ def fetch_vocab_for_school(school, grade, log=None, olpo_lectures=None, rp_lectu
                     _mt = mt_vocab.get(_c)
                     if _mt and _norm_v(_mt) != _k:
                         all_items[_i] = (all_items[_i][0], _c, _mt)
-                        _fixed_dup += 1
+                        _fixed_dup.append(_c)
             if _fixed_dup and log:
-                log(f"[중요어휘] 시기별 중복 교정: {_fixed_dup}개 → 마더텅 정본")
+                log(f"[중요어휘] 시기별 중복 교정: {len(_fixed_dup)}개 {_fixed_dup} → 마더텅 정본")
             if log:
                 log(f"[\uc911\uc694\uc5b4\ud718] \ub9c8\ub354\ud145 \uc2dc\ud2b8 \ud3f4\ubc31: {_mt_added}\uac1c \ucd94\uac00")
 
