@@ -205,6 +205,8 @@ def _modern_docx(folder):
     if not folder or not os.path.isdir(folder):
         return None
     for root, dirs, files in os.walk(folder):
+        # .rsync-partial 등 숨김 dot-디렉토리(미완성 동기화 잔여물) 건너뛰기
+        dirs[:] = [d for d in dirs if not d.startswith(".")]
         for f in files:
             fn = _nfc(f)
             if fn.startswith("~"):
@@ -277,6 +279,8 @@ def _load_legacy_passage_words(sect_dir):
         return ref
     paths = []
     for root, _dirs, files in os.walk(sect_dir):
+        # .rsync-partial 등 숨김 dot-디렉토리(미완성 동기화 잔여물) 건너뛰기
+        _dirs[:] = [d for d in _dirs if not d.startswith(".")]
         for fn in files:
             fnn = _nfc(fn)
             if fnn.endswith(".xlsx") and not fnn.startswith("~") and "지문" in fnn:
