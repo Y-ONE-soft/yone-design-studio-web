@@ -1699,6 +1699,9 @@
             function extractTail(txt) {
                 var s = (txt || "").replace(/^\s+|\s+$/g, "");
                 var m;
+                // \uCD9C\uD310\uC0AC \uD615\uC2DD(L1-/PROJECT 2- \uB4F1) \uBB34\uAD00: "\uBCF8\uBB38N"\uC73C\uB85C \uB05D\uB098\uBA74 \uBCF8\uBB38\uBC88\uD638\uB85C \uC778\uC2DD
+                m = s.match(/(\uBCF8\uBB38\s*\d+)\s*$/i);
+                if (m) return m[1];
                 m = s.match(/^\s*\d+[\s.)-]*L\d+(?:\s*[-\u2013\u2014]\s*p\.?\s*\d+)?\s*[-\u2013\u2014]?\s*(\uBCF8\uBB38\s*\d+)\b/i);
                 if (m) return m[1];
                 m = s.match(/^\s*(\d+)[\s.)-]*L\d+(?:\s*[-\u2013\u2014]\s*p\.?\s*\d+)\s*$/i);
