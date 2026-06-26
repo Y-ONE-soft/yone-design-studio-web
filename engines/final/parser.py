@@ -1219,10 +1219,14 @@ def _split_sentence_blocks(paras, source, sentence_styles, output_list,
                 lab = m.group(1)
                 if lab.startswith("본문"):
                     return lab  # "본문3"
-                # Read More → "RM" (미래엔 등), Further Reading → "FR" (YBM 등)
+                # Read More → "RM"(+번호), Further Reading → "FR"(+번호).
+                # 번호 보존: Read More 1/2 여러 개일 때 같은 라벨이면 헤더 충돌·dedup으로
+                # 한쪽이 소실되므로(세종1 비상홍3과 가죽지문 누락 사례) 번호를 붙여 구분.
+                _rmfr_n = re.search(r"(\d+)", lab)
+                _sfx = _rmfr_n.group(1) if _rmfr_n else ""
                 if re.search(r"Read\s*More", lab, re.IGNORECASE):
-                    return "RM"
-                return "FR"
+                    return "RM" + _sfx
+                return "FR" + _sfx
             # 추가지문 마커: {3과 추가지문}/[4과 추가지문] → 영작과 동일 헤더로 통일
             m_add = re.match(r"^[\[{]*\s*(?:(\d+)\s*과\s*)?추가지문\s*(\d*)\s*[\]}]*$", t)
             if m_add:
@@ -1422,10 +1426,12 @@ def _split_insert_blocks(paras, source, insert_styles, output_list,
                 lab = m.group(1)
                 if lab.startswith("본문"):
                     return lab
-                # Read More → "RM", Further Reading → "FR"
+                # Read More → "RM"(+번호), Further Reading → "FR"(+번호) — 번호 보존(충돌 방지)
+                _rmfr_n = re.search(r"(\d+)", lab)
+                _sfx = _rmfr_n.group(1) if _rmfr_n else ""
                 if re.search(r"Read\s*More", lab, re.IGNORECASE):
-                    return "RM"
-                return "FR"
+                    return "RM" + _sfx
+                return "FR" + _sfx
             # 추가지문 마커: {3과 추가지문}/[4과 추가지문] → 영작과 동일 헤더로 통일
             m_add = re.match(r"^[\[{]*\s*(?:(\d+)\s*과\s*)?추가지문\s*(\d*)\s*[\]}]*$", t)
             if m_add:
