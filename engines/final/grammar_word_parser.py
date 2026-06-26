@@ -96,6 +96,8 @@ def find_grammar_word_files(content_base, subject, publisher, lessons, log=None)
 
         # 어법수정 문제지 .docx 찾기 (하위 폴더 포함)
         for root, dirs, files in os.walk(lesson_dir):
+            # .rsync-partial 등 숨김 dot-디렉토리(미완성 동기화 잔여물) 건너뛰기
+            dirs[:] = [d for d in dirs if not d.startswith(".")]
             for f in files:
                 fn = _nfc(f)
                 # "문제지" 표기 + "_문제.docx" 표기 모두 허용 (파일명 오타 대응)
@@ -147,6 +149,8 @@ def find_deeplearning_grammar_files(content_base, subject, publisher, log=None):
             continue
         if "Deep Learning" in dn or "DeepLearning" in dn.replace(" ", ""):
             for root, dirs, files in os.walk(os.path.join(publisher_dir, d)):
+                # .rsync-partial 등 숨김 dot-디렉토리(미완성 동기화 잔여물) 건너뛰기
+                dirs[:] = [d for d in dirs if not d.startswith(".")]
                 for f in files:
                     fn = _nfc(f)
                     if ("어법수정" in fn and ("문제지" in fn or fn.endswith("_문제.docx"))
@@ -225,6 +229,8 @@ def find_mockexam_grammar_files(content_base, scope_text, grade, log=None):
         # 표준 파일: "..._어법수정_문제지.docx"
         # 변형 파일: "41~42번 어법수정.docx" 같이 특정 문항범위만 다루는 보충 파일도 포함.
         for root, dirs, files in os.walk(target_folder):
+            # .rsync-partial 등 숨김 dot-디렉토리(미완성 동기화 잔여물) 건너뛰기
+            dirs[:] = [d for d in dirs if not d.startswith(".")]
             for f in files:
                 fn = _nfc(f)
                 if not (fn.endswith(".docx") and "어법수정" in fn
@@ -323,6 +329,8 @@ def find_mockexam_grammar_files_by_codes(content_base, grade, passage_codes=None
         if not os.path.isdir(target):
             continue
         for root, dirs, files in os.walk(target):
+            # .rsync-partial 등 숨김 dot-디렉토리(미완성 동기화 잔여물) 건너뛰기
+            dirs[:] = [d for d in dirs if not d.startswith(".")]
             for f in files:
                 fn = _nfc(f)
                 if not (fn.endswith(".docx") and "\uc5b4\ubc95\uc218\uc815" in fn
@@ -403,6 +411,8 @@ def find_ebs_grammar_files(content_base, scope_text, log=None, grade=None):
                         unit_dir = os.path.join(olympos_base, d)
                         # 직접 하위 또는 워크북 하위에서 찾기
                         for root, dirs, files in os.walk(unit_dir):
+                            # .rsync-partial 등 숨김 dot-디렉토리(미완성 동기화 잔여물) 건너뛰기
+                            dirs[:] = [d for d in dirs if not d.startswith(".")]
                             for f in files:
                                 fn = _nfc(f)
                                 # "문제지" 표기 + "_문제.docx" 표기 모두 허용 (파일명 오타 대응)
@@ -453,6 +463,8 @@ def find_ebs_grammar_files(content_base, scope_text, log=None, grade=None):
                         # 각 매칭 디렉토리의 어법수정 파일 수집
                         # (Example + Example 제외 별도 디렉토리라면 둘 다 처리)
                         for root, dirs, files in os.walk(full_path):
+                            # .rsync-partial 등 숨김 dot-디렉토리(미완성 동기화 잔여물) 건너뛰기
+                            dirs[:] = [d for d in dirs if not d.startswith(".")]
                             for f in files:
                                 fn = _nfc(f)
                                 if ("어법수정" in fn and fn.endswith(".docx")
@@ -563,6 +575,8 @@ def find_external_grammar_docx(content_base, grade, school, exam_period, log=Non
             if not os.path.isdir(period_dir):
                 continue
             for root, dirs, files in os.walk(period_dir):
+                # .rsync-partial 등 숨김 dot-디렉토리(미완성 동기화 잔여물) 건너뛰기
+                dirs[:] = [d for d in dirs if not d.startswith(".")]
                 for f in files:
                     fn = _nfc(f)
                     if ("\uc5b4\ubc95\uc218\uc815" in fn and "\ubb38\uc81c\uc9c0" in fn
