@@ -37,7 +37,7 @@ def _drop_revised_duplicates(files):
     ]
 
 
-def _drop_identical_duplicates(files):
+def _drop_identical_duplicates(files, log=lambda m: None):
     """바이트 동일한 중복 .indd 제거.
 
     로컬 미러에 워크북 재번호매김 전의 구버전(예: '광문2_워크북01(리딩파워15,16,17강)')이
@@ -48,29 +48,66 @@ def _drop_identical_duplicates(files):
     크기가 같은 파일끼리만 MD5를 비교해(정상 케이스 = 동일 크기 충돌 없음 → 해시 0회)
     내용이 완전히 동일하면 워크북 번호가 가장 큰(= 최신 재번호) 파일만 남긴다.
     바이트 동일 파일만 제거하므로 콘텐츠 손실 위험이 없다.
+
+    EDEADLK 보강: GDrive 좀비 파일은 MD5 읽기에서 OSError(EDEADLK)가 난다. 옛 코드는
+    읽기 실패본을 고유 키로 취급해 dedup에서 누락시켰고(= 그대로 살아남음), 추출이 그
+    좀비 사본을 다시 열다 또 EDEADLK로 조판 전체가 실패했다. 두 가지로 보강한다:
+      1) 크기/MD5를 GDrive 경로에서 못 읽으면 미러 경로로 재시도(_rlm).
+      2) 그래도 못 읽은 파일이 같은 크기 정위치본('내지.indd')의 GDrive 중복본
+         ('내지 (1).indd')이면 안전 제외 — 동일 크기 + GDrive 자동 중복 접미사는 바이트
+         동일의 강한 정황이고, 좀비 사본을 남기면 추출이 다시 EDEADLK로 실패하기 때문.
+    정상(읽기 성공) 파일에 대해서는 옛 동작과 100% 동일하다(미러 재시도/안전제외 분기는
+    OSError 시에만 진입).
     """
     import hashlib
     from collections import defaultdict
-    by_size = defaultdict(list)
-    for f in files:
-        try:
-            by_size[os.path.getsize(f)].append(f)
-        except OSError:
-            by_size[("__noerr__", f)].append(f)  # 크기 못 읽으면 단독 취급
+
+    def _size(f):
+        # 크기 — GDrive EDEADLK 시 미러 경로로 재시도. 못 읽으면 None(그룹화 제외 = 보존).
+        for cand in (f, _rlm(f, None)):
+            try:
+                return os.path.getsize(cand)
+            except OSError:
+                continue
+        return None
+
+    def _md5(f):
+        # MD5 — GDrive EDEADLK 시 미러 경로로 재시도. 못 읽으면 None(읽기 실패).
+        for cand in (f, _rlm(f, None)):
+            try:
+                with open(cand, "rb") as fh:
+                    return hashlib.md5(fh.read()).hexdigest()
+            except OSError:
+                continue
+        return None
+
     def _wbnum(p):
         m = re.search(r"워크북\s*(\d+)", _nfc(os.path.basename(p)))
         return int(m.group(1)) if m else -1
+
+    def _gdrive_dup_base(name):
+        # GDrive 중복 업로드 접미사 '<stem> (N).<ext>' → 정위치 base 'stem.ext'
+        m = re.match(r"^(.*) \(\d+\)(\.[^.]+)$", _nfc(name))
+        return (m.group(1) + m.group(2)) if m else None
+
+    by_size = defaultdict(list)
+    for f in files:
+        sz = _size(f)
+        if sz is not None:  # 크기조차 못 읽으면(미러도 실패) 그룹화 안 함 = 그대로 보존
+            by_size[sz].append(f)
     drop = set()
     for group in by_size.values():
         if len(group) < 2:
             continue
         by_hash = defaultdict(list)
+        unreadable = []  # 같은 크기지만 내용을 못 읽은 파일(미러 재시도까지 실패)
         for f in group:
-            try:
-                with open(f, "rb") as fh:
-                    by_hash[hashlib.md5(fh.read()).hexdigest()].append(f)
-            except OSError:
-                by_hash[("__noerr__", f)].append(f)
+            h = _md5(f)
+            if h is None:
+                unreadable.append(f)
+            else:
+                by_hash[h].append(f)
+        # 1) 바이트 동일 그룹 → 최신(최대) 워크북 번호만 유지
         for dups in by_hash.values():
             if len(dups) < 2:
                 continue
@@ -78,6 +115,15 @@ def _drop_identical_duplicates(files):
             for f in dups:
                 if f is not keep:
                     drop.add(f)
+                    log(f"  [중복제거] 바이트 동일 → 제외: {_nfc(os.path.basename(f))}")
+        # 2) 못 읽은 파일이 같은 크기 정위치본의 GDrive 중복본이면 안전 제외
+        names_in_group = {_nfc(os.path.basename(g)): g for g in group}
+        for f in unreadable:
+            base = _gdrive_dup_base(os.path.basename(f))
+            if base and base in names_in_group and names_in_group[base] is not f:
+                drop.add(f)
+                log(f"  [중복제거] 읽기 실패 GDrive 중복본 안전 제외: "
+                    f"{_nfc(os.path.basename(f))} (정위치 {base} 동일 크기)")
     return [f for f in files if f not in drop]
 
 
