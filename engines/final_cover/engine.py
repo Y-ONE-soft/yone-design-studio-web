@@ -24,9 +24,17 @@ _DIR = os.path.dirname(os.path.abspath(__file__))
 _JSX_TEMPLATE = os.path.join(_DIR, "final_cover.jsx")
 
 _BASE = "/Users/nhj/Documents/작업/Y.ONE STUDIO/디자인/표지/파이널 직전보충"
-# 고정 템플릿 .ai 4종 (열기만 하고 저장하지 않음 — 원본 보호)
+# 런타임 미러: Illustrator가 여기서 템플릿을 연다(로컬·고속). 매 실행 시 최신본 자동 반영.
 _TEMPLATE_DIR = os.path.join(_BASE, "src_local")
 _OUTPUT_DIR = os.path.join(_BASE, "OUTPUT")
+
+# 사용자가 로고/디자인을 편집·저장하는 위치들(우선순위 순). 여기에 더 새 파일이 있으면
+# 실행 직전 _TEMPLATE_DIR 로 자동 복사 → 편집한 최신본이 항상 출력에 반영된다.
+_MASTER_DIRS = [
+    ("부모폴더", _BASE),
+    ("GDrive", "/Users/nhj/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com"
+               "/내 드라이브/콘텐츠 관리/내신대비/인디자인 파일/파이널 직전보충/표지"),
+]
 
 _FILE_BY_KEY = {
     "세종": "파이널_표지(세종).ai",
@@ -41,6 +49,35 @@ ILLUSTRATOR_VERSIONS = ["2026", "2025", "2024", "2023"]
 
 def _nfc(s):
     return unicodedata.normalize("NFC", s or "")
+
+
+def _refresh_template(key, log):
+    """편집한 최신본 자동 반영.
+
+    _MASTER_DIRS(부모폴더/GDrive)에 _TEMPLATE_DIR(src_local) 사본보다 mtime이 더 새로운
+    파일이 있으면 복사해 온다. '더 새 것만' 덮으므로 되돌림(revert)은 일어나지 않는다.
+    어느 소스를 썼는지 로그로 남겨 투명하게 보여준다.
+    """
+    fname = _FILE_BY_KEY[key]
+    dst = os.path.join(_TEMPLATE_DIR, fname)
+    cur_m = os.path.getmtime(dst) if os.path.exists(dst) else -1.0
+    best_path, best_m, best_label = None, cur_m, None
+    for label, d in _MASTER_DIRS:
+        cand = os.path.join(d, fname)
+        try:
+            if os.path.exists(cand):
+                m = os.path.getmtime(cand)
+                if m > best_m:
+                    best_path, best_m, best_label = cand, m, label
+        except Exception:
+            pass
+    if best_path:
+        try:
+            safe_copy(best_path, dst, log=log)
+            log(f"  템플릿 최신본 반영: {fname} ← {best_label}")
+        except Exception as e:
+            log(f"  [경고] 템플릿 갱신 실패({fname}): {e} — 기존 사본 사용")
+    return dst
 
 
 def _resolve_template_key(school):
@@ -158,7 +195,7 @@ class FinalCoverEngine(BaseEngine):
             raise ValueError("Vol을 하나 이상 선택하세요.")
 
         key = _resolve_template_key(school)
-        template_path = os.path.join(_TEMPLATE_DIR, _FILE_BY_KEY[key])
+        template_path = _refresh_template(key, log)   # 편집한 최신본 자동 반영
         if not os.path.exists(template_path):
             raise ValueError(f"템플릿 파일이 없습니다: {template_path}")
 
