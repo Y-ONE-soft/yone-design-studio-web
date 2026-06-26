@@ -1724,10 +1724,12 @@
             var rePNo = /^\s*\d+\s*[.)]?\s*p\.?\s*\d+\s*(?:[-\u2013\u2014\uFE63\uFF0D]|\s)*no\.?\s*\d+(?:~\d+)?\b.*$/i;
             var rePDesc = /^\s*\d+\s*[.)]?\s*p\.?\s*\d+\s*(?:[-\u2013\u2014\uFE63\uFF0D]|\s)+\s*.+$/i;
             var reAnalysis = /^\s*\d+.*\uC218\uB2A5\s*\uB300\uBE44\s*analysis.*$/i;
+            // \uCD9C\uD310\uC0AC \uD615\uC2DD \uBB34\uAD00: "N. \u2026\uBCF8\uBB38N" (\uC608: 1. PROJECT 2-\uBCF8\uBB381) \u2014 \uC9C0\uBB38\uBC88\uD638 \uD5E4\uB354\uB85C \uC778\uC2DD
+            var reBonmun = /^\s*\d+\s*[.)]?\s*.*?\uBCF8\uBB38\s*\d+\s*$/i;
 
             function isA1Header(txt) {
                 var t = (txt || "").replace(/\r|\n/g, "");
-                return reL.test(t) || rePNo.test(t) || rePDesc.test(t) || reAnalysis.test(t);
+                return reL.test(t) || rePNo.test(t) || rePDesc.test(t) || reAnalysis.test(t) || reBonmun.test(t);
             }
 
             // Find top header
