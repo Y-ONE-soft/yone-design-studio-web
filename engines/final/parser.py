@@ -1214,7 +1214,7 @@ def _split_sentence_blocks(paras, source, sentence_styles, output_list,
         # 워크북 지문 번호 그대로 사용(FR은 별도 라벨). 균등 분할 금지.
         _is_dl = _is_deeplearning_workbook(source)
         def _match_passage_marker(t):
-            m = re.match(r"^[\[{]*(본문\d+(?:[-~]\d+)*|Further\s*Reading(?:\s*\d+)?|Read\s*More(?:\s*\d+)?)[\]}]*$", t, re.IGNORECASE)
+            m = re.match(r"^[\[{]*(본문\d+(?:[-~]\d+)*|Further\s*Reading(?:\s*\d+)?|Read(?:\s+[A-Za-z]+)+(?:\s*\d+)?)[\]}]*$", t, re.IGNORECASE)
             if m:
                 lab = m.group(1)
                 if lab.startswith("본문"):
@@ -1224,9 +1224,9 @@ def _split_sentence_blocks(paras, source, sentence_styles, output_list,
                 # 한쪽이 소실되므로(세종1 비상홍3과 가죽지문 누락 사례) 번호를 붙여 구분.
                 _rmfr_n = re.search(r"(\d+)", lab)
                 _sfx = _rmfr_n.group(1) if _rmfr_n else ""
-                if re.search(r"Read\s*More", lab, re.IGNORECASE):
-                    return "RM" + _sfx
-                return "FR" + _sfx
+                if re.search(r"Further", lab, re.IGNORECASE):
+                    return "FR" + _sfx
+                return "RM" + _sfx
             # 추가지문 마커: {3과 추가지문}/[4과 추가지문] → 영작과 동일 헤더로 통일
             m_add = re.match(r"^[\[{]*\s*(?:(\d+)\s*과\s*)?추가지문\s*(\d*)\s*[\]}]*$", t)
             if m_add:
@@ -1421,7 +1421,7 @@ def _split_insert_blocks(paras, source, insert_styles, output_list,
         # 마커가 없으면 기존 "아래 주어진" 발문 기준 분할로 폴백.
         _is_dl_ins = _is_deeplearning_workbook(source)
         def _match_passage_marker_ins(t):
-            m = re.match(r"^[\[{]*(본문\d+(?:[-~]\d+)*|Further\s*Reading(?:\s*\d+)?|Read\s*More(?:\s*\d+)?)[\]}]*$", t, re.IGNORECASE)
+            m = re.match(r"^[\[{]*(본문\d+(?:[-~]\d+)*|Further\s*Reading(?:\s*\d+)?|Read(?:\s+[A-Za-z]+)+(?:\s*\d+)?)[\]}]*$", t, re.IGNORECASE)
             if m:
                 lab = m.group(1)
                 if lab.startswith("본문"):
@@ -1429,9 +1429,9 @@ def _split_insert_blocks(paras, source, insert_styles, output_list,
                 # Read More → "RM"(+번호), Further Reading → "FR"(+번호) — 번호 보존(충돌 방지)
                 _rmfr_n = re.search(r"(\d+)", lab)
                 _sfx = _rmfr_n.group(1) if _rmfr_n else ""
-                if re.search(r"Read\s*More", lab, re.IGNORECASE):
-                    return "RM" + _sfx
-                return "FR" + _sfx
+                if re.search(r"Further", lab, re.IGNORECASE):
+                    return "FR" + _sfx
+                return "RM" + _sfx
             # 추가지문 마커: {3과 추가지문}/[4과 추가지문] → 영작과 동일 헤더로 통일
             m_add = re.match(r"^[\[{]*\s*(?:(\d+)\s*과\s*)?추가지문\s*(\d*)\s*[\]}]*$", t)
             if m_add:
@@ -1626,7 +1626,7 @@ def _split_writing_blocks(paras, source, kor_styles, view_styles,
                 continue
             # 교과서 Further Reading → "FR", Read More → "RM"
             m2b_fr = re.match(r"^[\[{]*Further\s*Reading(?:\s*\d+)?[\]}]*$", txt, re.IGNORECASE)
-            m2b_rm = re.match(r"^[\[{]*Read\s*More(?:\s*\d+)?[\]}]*$", txt, re.IGNORECASE)
+            m2b_rm = re.match(r"^[\[{]*Read(?:\s+[A-Za-z]+)+(?:\s*\d+)?[\]}]*$", txt, re.IGNORECASE)
             if m2b_fr:
                 _frn = re.search(r"(\d+)", txt)
                 current_qnum = "FR" + (_frn.group(1) if _frn else "")
