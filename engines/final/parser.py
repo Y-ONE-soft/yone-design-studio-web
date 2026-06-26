@@ -1226,7 +1226,8 @@ def _split_sentence_blocks(paras, source, sentence_styles, output_list,
                 _sfx = _rmfr_n.group(1) if _rmfr_n else ""
                 if re.search(r"Further", lab, re.IGNORECASE):
                     return "FR" + _sfx
-                return "RM" + _sfx
+                # Read More/Read Culture 등 → 원문 섹션명 그대로 유지(공백 정규화)
+                return re.sub(r"\s+", " ", lab).strip()
             # 추가지문 마커: {3과 추가지문}/[4과 추가지문] → 영작과 동일 헤더로 통일
             m_add = re.match(r"^[\[{]*\s*(?:(\d+)\s*과\s*)?추가지문\s*(\d*)\s*[\]}]*$", t)
             if m_add:
@@ -1431,7 +1432,8 @@ def _split_insert_blocks(paras, source, insert_styles, output_list,
                 _sfx = _rmfr_n.group(1) if _rmfr_n else ""
                 if re.search(r"Further", lab, re.IGNORECASE):
                     return "FR" + _sfx
-                return "RM" + _sfx
+                # Read More/Read Culture 등 → 원문 섹션명 그대로 유지(공백 정규화)
+                return re.sub(r"\s+", " ", lab).strip()
             # 추가지문 마커: {3과 추가지문}/[4과 추가지문] → 영작과 동일 헤더로 통일
             m_add = re.match(r"^[\[{]*\s*(?:(\d+)\s*과\s*)?추가지문\s*(\d*)\s*[\]}]*$", t)
             if m_add:
@@ -1633,8 +1635,9 @@ def _split_writing_blocks(paras, source, kor_styles, view_styles,
                 current_unit_override = None
                 continue
             if m2b_rm:
-                _rmn = re.search(r"(\d+)", txt)
-                current_qnum = "RM" + (_rmn.group(1) if _rmn else "")
+                # Read More/Read Culture 등 → 원문 섹션명 그대로 유지
+                _rmclean = re.sub(r"^[\[{]+|[\]}]+$", "", txt)
+                current_qnum = re.sub(r"\s+", " ", _rmclean).strip()
                 current_unit_override = None
                 continue
             # 올포 분석 섹션 헤더: [분석]
@@ -1732,8 +1735,9 @@ def _writing_q_to_header(scope_text, q_num, lesson_label=None):
             return f"교과서{eff_label} 본문{num}"
         return f"본문{num}"
 
-    # "FR"/"RM"(+번호) (교과서 Further Reading / Read More) — lesson_label 사용
-    if re.match(r'^(?:FR|RM)\d*$', q_num or ""):
+    # "FR"/"RM"(+번호) + "Read More/Culture N"(원문 섹션명) — lesson_label 사용
+    if (re.match(r'^(?:FR|RM)\d*$', q_num or "")
+            or re.match(r'^Read\s', q_num or "", re.IGNORECASE)):
         eff_label = lesson_label or _scope_label()
         suffix = q_num  # FR or RM 그대로 유지
         if eff_label:
@@ -2371,7 +2375,7 @@ def _passes_textbook_rm_filter(header, textbook_rm_lessons):
         return True
     h = (header or "").strip()
     # 교과서N과 FR/RM 만 검사. 본문이나 비교과서 헤더는 통과.
-    m = re.match(r'^교과서(\d+|SL)과?\s+(?:FR|RM)\d*$', h)
+    m = re.match(r'^교과서(\d+|SL)과?\s+(?:(?:FR|RM)\d*|Read\s.+)$', h)
     if not m:
         return True
     lesson = m.group(1)
@@ -2885,7 +2889,8 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
             _lesson = _lesson_map.get(_page_off)
             if _lesson is None:
                 return None
-            if _label in ("FR", "RM"):
+            if (_label in ("FR", "RM") or re.match(r"^(?:FR|RM)\d", _label)
+                    or re.match(r"^Read\s", _label, re.IGNORECASE)):
                 _suf = _label
                 if _lesson == "SL":
                     return f"교과서SL {_suf}"
@@ -3437,7 +3442,8 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
             _lesson = _lesson_map.get(_page_off)
             if _lesson is None:
                 return None
-            if _label in ("FR", "RM"):
+            if (_label in ("FR", "RM") or re.match(r"^(?:FR|RM)\d", _label)
+                    or re.match(r"^Read\s", _label, re.IGNORECASE)):
                 _suf = _label
                 if _lesson == "SL":
                     return f"교과서SL {_suf}"
