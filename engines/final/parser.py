@@ -1628,11 +1628,13 @@ def _split_writing_blocks(paras, source, kor_styles, view_styles,
             m2b_fr = re.match(r"^[\[{]*Further\s*Reading(?:\s*\d+)?[\]}]*$", txt, re.IGNORECASE)
             m2b_rm = re.match(r"^[\[{]*Read\s*More(?:\s*\d+)?[\]}]*$", txt, re.IGNORECASE)
             if m2b_fr:
-                current_qnum = "FR"
+                _frn = re.search(r"(\d+)", txt)
+                current_qnum = "FR" + (_frn.group(1) if _frn else "")
                 current_unit_override = None
                 continue
             if m2b_rm:
-                current_qnum = "RM"
+                _rmn = re.search(r"(\d+)", txt)
+                current_qnum = "RM" + (_rmn.group(1) if _rmn else "")
                 current_unit_override = None
                 continue
             # 올포 분석 섹션 헤더: [분석]
@@ -1730,8 +1732,8 @@ def _writing_q_to_header(scope_text, q_num, lesson_label=None):
             return f"교과서{eff_label} 본문{num}"
         return f"본문{num}"
 
-    # "FR"/"RM" (교과서 Further Reading / Read More) — lesson_label 사용
-    if q_num in ("FR", "RM"):
+    # "FR"/"RM"(+번호) (교과서 Further Reading / Read More) — lesson_label 사용
+    if re.match(r'^(?:FR|RM)\d*$', q_num or ""):
         eff_label = lesson_label or _scope_label()
         suffix = q_num  # FR or RM 그대로 유지
         if eff_label:
@@ -2369,7 +2371,7 @@ def _passes_textbook_rm_filter(header, textbook_rm_lessons):
         return True
     h = (header or "").strip()
     # 교과서N과 FR/RM 만 검사. 본문이나 비교과서 헤더는 통과.
-    m = re.match(r'^교과서(\d+|SL)과?\s+(?:FR|RM)$', h)
+    m = re.match(r'^교과서(\d+|SL)과?\s+(?:FR|RM)\d*$', h)
     if not m:
         return True
     lesson = m.group(1)
