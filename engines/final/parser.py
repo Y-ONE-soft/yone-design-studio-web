@@ -776,7 +776,7 @@ def _assign_deeplearning_writing_lesson(sentence_blocks, writing_kor, writing_vi
         log(f"  [딥러닝 영작] entry[{i}] → {qn} (과{lesson})")
 
 
-def _classify_stories(stories, grade=None):
+def _classify_stories(stories, grade=None, rp_scope_lectures=None, log=None):
     """추출된 스토리들을 유형별로 분류.
 
     모의고사 워크북은 하나의 스토리에 여러 지문이 {20}, {21}, ... 헤더로
@@ -845,6 +845,34 @@ def _classify_stories(stories, grade=None):
                 _s["lecture"] = _lec_list[_lec_idx]
         elif len(_sent_stories) == 1 and len(_lec_list) >= 1:
             _sent_stories[0]["lecture"] = _lec_list[0]
+
+    # 리딩파워 시트 scope 필터 + 교차검증 (시트가 강 scope 권위 — 파일명 아님)
+    # 위 재할당 후 적용: 광문2처럼 추출 stray 강(=9)이 먼저 파일명으로 교정된 뒤
+    # 필터링되어야 정상 콘텐츠가 안 지워짐. 세종1 워크북03의 범위밖 22강은 여기서 제외.
+    # rp_scope_lectures=None(파싱실패/비리딩파워)이면 무동작 → 기존 파일명 동작 그대로(폴백).
+    if rp_scope_lectures:
+        _kept = []
+        _dropped = []
+        _seen = set()
+        for _st in stories:
+            if _is_rp_source(_nfc(_st.get("source_file", ""))):
+                _lec = _st.get("lecture", 0)
+                if _lec:
+                    _seen.add(_lec)
+                if _lec and _lec not in rp_scope_lectures:
+                    _dropped.append(_lec)
+                    continue
+            _kept.append(_st)
+        if _dropped:
+            stories = _kept
+            if log:
+                from collections import Counter
+                log(f"[리딩파워] 시트 범위 밖 강 제외: {dict(Counter(_dropped))} "
+                    f"(시트 범위={sorted(rp_scope_lectures)})")
+        if log:
+            _missing = sorted(set(rp_scope_lectures) - _seen)
+            if _missing:
+                log(f"[리딩파워] ⚠ 시트 범위 강 {_missing} 추출에 없음 — 소스 확인 필요")
 
     sentence_arr = []      # 문장배열 (Vol1)
     sentence_insert = []   # 문장삽입/순서배열 (Vol1)
@@ -5358,8 +5386,18 @@ def parse_extracted(extracted_path, vocab_left, vocab_right,
     # 올포 순서배열 재번호로 어긋난 본문 라벨을 어법수정 기준으로 교차 교정
     # (in-scope 지문이 헤더 충돌 dedup으로 누락되는 것 방지 — 고1/고2 전용)
     _reconcile_olpo_labels(stories, grade, log)
+    # 리딩파워 강 scope: 시트를 권위로(파일명 폴백). 리딩파워 스토리 있을 때만 fetch.
+    _rp_scope_lecs = None
+    if any(_is_rp_source(_nfc(s.get("source_file", ""))) for s in stories):
+        try:
+            from engines.final.vocab_fetcher import fetch_rp_scope_lectures
+            _rp_scope_lecs = fetch_rp_scope_lectures(
+                school, log=log, exam_period=exam_period)
+        except Exception as _e_rp:
+            log(f"[리딩파워] 시트 scope fetch 실패(파일명 폴백): {_e_rp}")
     (sentence_blocks, insert_blocks, grammar_blocks, writing_kor, writing_view,
-     vocab_blocks, grammar_select_blocks) = _classify_stories(stories, grade)
+     vocab_blocks, grammar_select_blocks) = _classify_stories(
+        stories, grade, rp_scope_lectures=_rp_scope_lecs, log=log)
 
     # 모의고사 통합 워크북에서 추출한 문장삽입 블록을 insert_blocks에 병합
     # (사용자 지정 출처: "고1_25년_6월_전체(C).indd" 등 통합 파일)

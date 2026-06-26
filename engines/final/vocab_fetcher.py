@@ -508,6 +508,78 @@ def fetch_scope_for_school(school, log=None, exam_period=None):
     return exams
 
 
+def _parse_rp_lectures(text):
+    """리딩파워 scope 텍스트에서 강 집합 파싱 (범위 '~', 콤마, '제외' 처리).
+
+    예) "유형편 기본 13~20강 Example, 1, 2번, 21강 Example, 1번" → {13..21}
+        "유형편 완성 12, 14~17, 19강"                          → {12,14,15,16,17,19}
+        "unit 1강~11강 (unit 4,7,8강 제외, Example 포함)"       → {1,2,3,5,6,9,10,11}
+    '번'(문제번호)은 강 캡처에서 자동 배제됨('강' 앞 숫자만 캡처).
+    """
+    t = unicodedata.normalize("NFC", text or "")
+    # 1) 제외 강 수집 ("...4,7,8강 제외...")
+    excluded = set()
+    for m_ex in re.finditer(r"([\d,\s~]+)강?\s*제외", t):
+        for n in re.findall(r"\d+", m_ex.group(1)):
+            excluded.add(int(n))
+    # 2) base 파싱 오염 방지: 제외 절 제거 (괄호 내/외)
+    t_base = re.sub(r"[\(（][^)）]*제외[^)）]*[\)）]", " ", t)
+    t_base = re.sub(r"[\d,\s~]+강?\s*제외", " ", t_base)
+    # 3) 범위 가운데 강 제거: "1강~11강" → "1~11강"
+    t_base = t_base.replace("강~", "~").replace("강 ~", "~")
+    # 4) "N..강" 캡처 ('강' 앞 숫자/범위/콤마 런)
+    base = set()
+    for m in re.finditer(r"([\d~,\s]+)강", t_base):
+        for part in m.group(1).split(","):
+            part = part.strip()
+            if not part:
+                continue
+            if "~" in part:
+                try:
+                    a, b = part.split("~")
+                    base.update(range(int(a.strip()), int(b.strip()) + 1))
+                except Exception:
+                    pass
+            elif part.isdigit():
+                base.add(int(part))
+    return base - excluded
+
+
+def fetch_rp_scope_lectures(school, log=None, exam_period=None):
+    """시험범위 시트에서 리딩파워(Reading Power) 강 목록을 파싱해 반환.
+
+    파일명이 아니라 '시험범위 시트'를 리딩파워 강 scope의 권위로 삼기 위함
+    (파일명은 사람이 붙인 라벨이라 누락/오타 가능 — 세종1 워크북01 '16강' 누락 사례).
+
+    Returns: 강 번호 set (예: {13,14,...,21}) 또는 리딩파워 범위 없으면 None.
+    """
+    try:
+        rows = _fetch_csv(SCOPE_SHEET_ID, SCOPE_GID)
+    except Exception:
+        rows = None
+    if not rows:
+        if log:
+            log("[리딩파워] 시험범위 시트 접근 실패 — 파일명 폴백")
+        return None
+    target_row = _find_scope_row(rows, school, exam_period)
+    if not target_row:
+        if log:
+            log(f"[리딩파워] 시트에서 {school} 미발견 — 파일명 폴백")
+        return None
+    rp_text = ""
+    for cell in target_row:
+        c = unicodedata.normalize("NFC", cell or "")
+        if ("Reading Power" in c) or ("리딩파워" in c) or ("reading power" in c.lower()):
+            rp_text = c
+            break
+    if not rp_text:
+        return None
+    lecs = _parse_rp_lectures(rp_text)
+    if log:
+        log(f"[리딩파워] 시트 강 범위: {sorted(lecs) if lecs else '파싱실패'} ← '{rp_text[:70]}'")
+    return lecs or None
+
+
 def fetch_textbook_limits_for_school(school, log=None, exam_period=None):
     """시험범위 시트의 교과서 컬럼에서 과별 본문 제한 추출.
 
