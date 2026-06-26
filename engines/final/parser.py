@@ -847,21 +847,30 @@ def _classify_stories(stories, grade=None, rp_scope_lectures=None, log=None):
             _sent_stories[0]["lecture"] = _lec_list[0]
 
     # 리딩파워 시트 scope 필터 + 교차검증 (시트가 강 scope 권위 — 파일명 아님)
-    # 위 재할당 후 적용: 광문2처럼 추출 stray 강(=9)이 먼저 파일명으로 교정된 뒤
-    # 필터링되어야 정상 콘텐츠가 안 지워짐. 세종1 워크북03의 범위밖 22강은 여기서 제외.
-    # rp_scope_lectures=None(파싱실패/비리딩파워)이면 무동작 → 기존 파일명 동작 그대로(폴백).
+    # 추출 lecture가 시트 범위 밖일 때:
+    #   - '파일명에 선언된 진짜 강'이면 범위밖 콘텐츠로 보고 제외 (세종1 워크북03 22강)
+    #   - '파일명에 없는 추출 artifact'(광문2 stray=9, 실제론 19강인데 추출이 9로 오기록)면
+    #     유지 — 정상 콘텐츠 보존. (영작 라벨은 lecture가 아니라 scope+블록순으로 생성되므로
+    #     artifact 스토리를 유지해도 라벨은 정상.)
+    # rp_scope_lectures=None(파싱실패/비리딩파워)이면 무동작 → 기존 동작 그대로(폴백).
     if rp_scope_lectures:
         _kept = []
         _dropped = []
         _seen = set()
         for _st in stories:
-            if _is_rp_source(_nfc(_st.get("source_file", ""))):
+            _sf = _nfc(_st.get("source_file", ""))
+            if _is_rp_source(_sf):
                 _lec = _st.get("lecture", 0)
                 if _lec:
                     _seen.add(_lec)
                 if _lec and _lec not in rp_scope_lectures:
-                    _dropped.append(_lec)
-                    continue
+                    _mfn = re.search(r"리딩파워\s*((?:\d+\s*강?\s*,?\s*)+)", _sf)
+                    _fn_lecs = (set(int(x) for x in re.findall(r"\d+", _mfn.group(1)))
+                                if _mfn else set())
+                    if _lec in _fn_lecs:   # 파일명 선언 강 = 진짜 범위밖 → 제외
+                        _dropped.append(_lec)
+                        continue
+                    # 파일명에 없는 강 = 추출 artifact → 유지
             _kept.append(_st)
         if _dropped:
             stories = _kept
