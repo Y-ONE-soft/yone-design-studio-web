@@ -353,7 +353,8 @@ def find_mockexam_grammar_files_by_codes(content_base, grade, passage_codes=None
     return found_files
 
 
-def find_ebs_grammar_files(content_base, scope_text, log=None, grade=None, rp_edition=None):
+def find_ebs_grammar_files(content_base, scope_text, log=None, grade=None,
+                           rp_edition=None, rp_scope_lectures=None):
     """EBS 작업 폴더에서 어법수정 Word 파일 탐색.
 
     Args:
@@ -364,6 +365,10 @@ def find_ebs_grammar_files(content_base, scope_text, log=None, grade=None, rp_ed
         rp_edition: "기본"/"완성" — 리딩파워 유형편 에디션 (시트 기준).
             EBS 폴더에 '유형편(기본)'·'유형편(완성)'이 둘 다 있을 때
             올바른 에디션 폴더를 선택. None이면 첫 매칭(기존 동작).
+        rp_scope_lectures: 리딩파워 강 집합 (시트 기준, 예 {13,...,21}).
+            주어지면 파일명 scope 대신 이 강목록으로 탐색 — 파일명이
+            16강 누락(세종1)·범위밖 22강 포함 같은 오류를 가질 수 있어
+            시트를 권위로 삼음. None이면 파일명 scope(기존 동작).
 
     Returns:
         발견된 파일 튜플 리스트 [(path, 강번호), ...]
@@ -429,7 +434,13 @@ def find_ebs_grammar_files(content_base, scope_text, log=None, grade=None, rp_ed
 
     # 리딩파워
     elif "리딩파워" in scope or "Reading" in scope:
-        units = _extract_unit_numbers(scope)
+        # 강 목록: 시트 scope가 권위 (파일명은 16강 누락·범위밖 22강 포함 등 오류 가능)
+        if rp_scope_lectures:
+            units = sorted(rp_scope_lectures)
+            if log:
+                log(f"  [어법수정] 리딩파워 강(시트): {units}")
+        else:
+            units = _extract_unit_numbers(scope)
         rp_base = None
         # '유형편(기본)'·'유형편(완성)'이 공존 → 시트 에디션으로 정확히 선택.
         # (첫 매칭 break 방식은 에디션 미일치 시 16/18/20/21강처럼 해당 에디션에만

@@ -948,14 +948,19 @@ class FinalEngine(BaseEngine):
                     # 리딩파워: 유형편 에디션(기본/완성)을 시트에서 확인해 전달
                     # (학교마다 에디션이 달라 첫 매칭 폴더로는 어법 누락 — 세종1=기본, 광문2=완성)
                     _rp_edition = None
+                    _rp_lecs = None
                     if "리딩파워" in _nfc(scope_text or "") or "Reading" in (scope_text or ""):
                         try:
-                            from engines.final.vocab_fetcher import fetch_rp_edition
+                            from engines.final.vocab_fetcher import (
+                                fetch_rp_edition, fetch_rp_scope_lectures
+                            )
                             _rp_edition = fetch_rp_edition(school, log=log, exam_period=exam_period)
+                            _rp_lecs = fetch_rp_scope_lectures(school, log=None, exam_period=exam_period)
                         except Exception:
-                            _rp_edition = None
+                            pass
                     word_files = find_ebs_grammar_files(
-                        content_base, scope_text, log=log, grade=grade, rp_edition=_rp_edition
+                        content_base, scope_text, log=log, grade=grade,
+                        rp_edition=_rp_edition, rp_scope_lectures=_rp_lecs
                     )
                     _olpo_target_codes_set = None
 
