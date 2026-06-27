@@ -695,7 +695,7 @@ def parse_grammar_word(docx_path, auto_unit_base=None):
             is_header = bool(re.match(
                 r"^\d+\.\s*(L\d+|p\d+|SL\d*|Special\s*Lesson\s*\d*|TED\s*\d*|PROJECT\s*\d+|Project\s*\d+)[-.]?(\ubcf8\ubb38|p\.?\d|no\.?\s*\d|Read|Further|"
                 r"\uc218\ub2a5\s*\ub300\ube44\s*ANALYSIS|ANALYSIS|"
-                r"Example\s*\d+|"
+                r"Example\s*\d*|"
                 r"\uc11c\uc220\ud615\s*Practice|\ub17c\uc220\ud615\s*Practice|Practice)",
                 left_text
             ))

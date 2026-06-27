@@ -372,9 +372,9 @@ def _convert_grammar_header(header, scope_text, scope_type, ebs_lecture=None):
         # "3. p10-no.1" → "리딩파워 N강 01"
         lec = str(ebs_lecture) if ebs_lecture is not None else ""
         prefix = f"\ub9ac\ub529\ud30c\uc6cc {lec}\uac15" if lec else "\ub9ac\ub529\ud30c\uc6cc"
-        m_ex = re.search(r"Example\s*(\d+)", header, re.IGNORECASE)
+        m_ex = re.search(r"Example\s*(\d*)", header, re.IGNORECASE)
         if m_ex:
-            return f"{prefix} Ex{int(m_ex.group(1)):02d}"
+            return f"{prefix} Ex{int(m_ex.group(1) or 1):02d}"
         m_p = re.search(r"no\.?\s*(\d+)", header, re.IGNORECASE)
         if m_p:
             return f"{prefix} {int(m_p.group(1)):02d}"
@@ -1108,9 +1108,11 @@ class FinalEngine(BaseEngine):
                                 # Word 원고 헤더 변환:
                                 # "Read More" → RM (미래엔 김 등), "Further Reading" → FR (YBM 박 등)
                                 elif re.search(r"Read\s*More", hdr, re.IGNORECASE):
-                                    hdr = f"\uad50\uacfc\uc11c{_lesson_num_raw}\uacfc RM"
+                                    _m_rm = re.search(r"Read\s*More\s*(\d+)", hdr, re.IGNORECASE)
+                                    hdr = f"\uad50\uacfc\uc11c{_lesson_num_raw}\uacfc RM{_m_rm.group(1) if _m_rm else ''}"
                                 elif re.search(r"Further\s*Reading", hdr, re.IGNORECASE):
-                                    hdr = f"\uad50\uacfc\uc11c{_lesson_num_raw}\uacfc FR"
+                                    _m_fr = re.search(r"Further\s*Reading\s*(\d+)", hdr, re.IGNORECASE)
+                                    hdr = f"\uad50\uacfc\uc11c{_lesson_num_raw}\uacfc FR{_m_fr.group(1) if _m_fr else ''}"
                                 else:
                                     tb_body_counter += 1
                                     hdr = f"\uad50\uacfc\uc11c{_lesson_num_raw}\uacfc \ubcf8\ubb38{tb_body_counter}"
