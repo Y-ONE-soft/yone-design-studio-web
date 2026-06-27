@@ -540,8 +540,9 @@ def _is_question_header(text):
     # [Gateway] 또는 {Gateway} (고3 수능특강 분석편)
     if re.match(r"^[\[{]Gateway[\]}]$", t, re.IGNORECASE):
         return True
-    # {Example N} / [Example N] / {EXN} / {Ex N} (리딩파워 — 파일마다 마커 표기 다름)
-    if re.match(r"^[\[{](?:Example|EX)\s*\d+[\]}]$", t, re.IGNORECASE):
+    # {Example N} / [Example N] / {EXN} / {Ex N} / {Example}(숫자없음) (리딩파워 — 파일마다 마커 표기 다름)
+    # 세종1 유형편(기본)은 강당 Example 1개라 마커가 '{Example}'(숫자 없음) — \d*로 허용
+    if re.match(r"^[\[{](?:Example|EX)\s*\d*[\]}]$", t, re.IGNORECASE):
         return True
     # {20}, {21~22}, {41~42} 등
     if re.match(r"^\{\d+(?:[~\-]\d+)?\}$", t):
@@ -567,10 +568,11 @@ def _extract_question_number(text):
     # [Gateway] 또는 {Gateway}
     if re.match(r"^[\[{]Gateway[\]}]$", t, re.IGNORECASE):
         return "Gateway"
-    # {Example N} / [Example N] / {EXN} / {Ex N} → "ExampleN" (공백 제거)
-    m_ex = re.match(r"^[\[{](?:Example|EX)\s*(\d+)[\]}]$", t, re.IGNORECASE)
+    # {Example N} / [Example N] / {EXN} / {Ex N} / {Example}(숫자없음) → "ExampleN"
+    # 숫자 없는 '{Example}'(세종1 유형편 기본)은 Example1로 간주 (강당 Example 1개)
+    m_ex = re.match(r"^[\[{](?:Example|EX)\s*(\d*)[\]}]$", t, re.IGNORECASE)
     if m_ex:
-        return f"Example{m_ex.group(1)}"
+        return f"Example{m_ex.group(1) or '1'}"
     # {XX} or [XX] 형식
     m = re.match(r"^[\[{](\d+(?:[~\-]\d+)?)[\]}]$", t)
     if m:
@@ -1570,10 +1572,11 @@ def _split_writing_blocks(paras, source, kor_styles, view_styles,
                 current_qnum = f"Ex{int(m_ue.group(2)):02d}"
                 current_unit_override = int(m_ue.group(1))
                 continue
-            # [Example N] / {Example N} / {EXN} / {Ex N} — 리딩파워 Example 헤더
-            m_ex = re.match(r"^[\[{]\s*(?:Example|EX)\s*(\d+)\s*[\]}]$", txt, re.IGNORECASE)
+            # [Example N] / {Example N} / {EXN} / {Ex N} / {Example}(숫자없음) — 리딩파워 Example 헤더
+            # 숫자 없는 '{Example}'(세종1 유형편 기본)은 Ex01로 간주
+            m_ex = re.match(r"^[\[{]\s*(?:Example|EX)\s*(\d*)\s*[\]}]$", txt, re.IGNORECASE)
             if m_ex:
-                current_qnum = f"Ex{int(m_ex.group(1)):02d}"
+                current_qnum = f"Ex{int(m_ex.group(1) or 1):02d}"
                 current_unit_override = None
                 continue
             # 지문번호(숫자) 마커 — 표기 형식이 아니라 "구조"로 인식한다.
