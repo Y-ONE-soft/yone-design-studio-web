@@ -1014,15 +1014,20 @@ def fetch_vocab_for_school(school, grade, log=None, olpo_lectures=None, rp_lectu
                 code = r[0].strip().zfill(2)
                 if code in qq_set:
                     text = r[1].strip() if len(r) > 1 else ""
+                    yymmqq_full = f"{yymm}{code}"
+                    # 정렬 키: code_order 우선, 없으면 YYMMQQ 오름차순(다른 섹션과 통일).
+                    if yymmqq_full in _code_rank:
+                        sk = f"2_{_code_rank[yymmqq_full]:04d}"
+                    else:
+                        sk = f"2_{yymmqq_full}"
                     if text:
-                        yymmqq_full = f"{yymm}{code}"
-                        # 정렬 키: code_order 우선, 없으면 YYMMQQ 오름차순(다른 섹션과 통일).
-                        if yymmqq_full in _code_rank:
-                            sk = f"2_{_code_rank[yymmqq_full]:04d}"
-                        else:
-                            sk = f"2_{yymmqq_full}"
                         all_items.append((sk, yymmqq_full, text))
                         pc_found += 1
+                        matched_qq.add(code)
+                    else:
+                        # 시트 본문 셀 공란 — 지문번호 헤더만 두고 내용은 비워둠(콘텐츠팀 입력 대기).
+                        # 행 자체는 존재(시험범위 내 지문)하므로 슬롯을 만들어 구조를 완성한다.
+                        all_items.append((sk, yymmqq_full, ""))
                         matched_qq.add(code)
             missing_qq = qq_set - matched_qq
             if missing_qq:
