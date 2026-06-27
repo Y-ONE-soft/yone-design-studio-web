@@ -2208,11 +2208,12 @@ def _rp_content_to_label(block, rp_sheet_data):
             if not sheet_norm:
                 continue
             if cand_prefix in sheet_norm[:300] or sheet_norm[:50] in cand_norm[:300]:
-                m = re.match(r"^(\d+)-(?:Example\s*(\d+)|(\d+))$", key, re.IGNORECASE)
+                # 키 "N-Example"(숫자없음=유형편기본)·"N-1~2"(범위) 허용. 범위는 첫 번호.
+                m = re.match(r"^(\d+)-(?:Example\s*(\d*)|(\d+)(?:~\d+)?)$", key, re.IGNORECASE)
                 if m:
                     lec = int(m.group(1))
-                    if m.group(2):
-                        return (lec, True, int(m.group(2)))
+                    if m.group(2) is not None:
+                        return (lec, True, int(m.group(2) or 1))
                     else:
                         return (lec, False, int(m.group(3)))
     return None
