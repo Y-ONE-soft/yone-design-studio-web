@@ -3668,34 +3668,42 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
         if vol1.get("문장배열"):
             def _rp_wtoks(_s):
                 return set(re.findall(r"[a-z]{3,}", (_s or "").lower()))
-            _arr_rp_ref = []
+            _arr_rp_ref = []  # [(header, wordset)]
             for _ab in vol1["문장배열"]:
                 _ah = _nfc(_ab.get("header", ""))
                 if re.match(r"리딩파워\s*\d+강", _ah):
                     _atxt = " ".join(_ab.get("items", []) or []) + " " + (_ab.get("passage", "") or "")
                     _arr_rp_ref.append((_ah, _rp_wtoks(_atxt)))
-            _rp_ins_keep = {}   # header -> block (헤더당 1개, paras 많은 쪽 우선)
+            _rp_ins_pool = []  # [(block, wordset)]
             _non_rp_ins = []
             for _b in deduped_ins:
                 if not _is_rp_source(_b.get("source", "")):
                     _non_rp_ins.append(_b)
                     continue
                 _bw = _rp_wtoks(" ".join(_p.get("text", "") for _p in _b.get("paras", [])))
-                if not _bw:
+                if _bw:
+                    _rp_ins_pool.append((_b, _bw))
+            # 그리디 최대가중 매칭: (배열헤더, 삽입블록) 겹침을 강한 쌍부터 1:1 배정.
+            # 강 내 Example↔01↔02 혼동 방지 + 과다분할 중복 블록은 미사용으로 자동 제거.
+            _pairs = []
+            for _ai, (_ah, _aw) in enumerate(_arr_rp_ref):
+                if not _aw:
                     continue
-                _best_h, _best_ov = None, 0.0
-                for _ah, _aw in _arr_rp_ref:
-                    if not _aw:
-                        continue
-                    _ov = len(_bw & _aw) / float(min(len(_bw), len(_aw)))
-                    if _ov > _best_ov:
-                        _best_ov, _best_h = _ov, _ah
-                if _best_h and _best_ov >= 0.3:
-                    _b["header"] = _best_h
-                    _prev = _rp_ins_keep.get(_best_h)
-                    if _prev is None or len(_b.get("paras", [])) > len(_prev.get("paras", [])):
-                        _rp_ins_keep[_best_h] = _b
-            deduped_ins = _non_rp_ins + list(_rp_ins_keep.values())
+                for _bi, (_b, _bw) in enumerate(_rp_ins_pool):
+                    _ov = len(_aw & _bw) / float(min(len(_aw), len(_bw)))
+                    if _ov >= 0.3:
+                        _pairs.append((_ov, _ai, _bi))
+            _pairs.sort(key=lambda _x: _x[0], reverse=True)
+            _used_a, _used_b, _rp_ins_keep = set(), set(), []
+            for _ov, _ai, _bi in _pairs:
+                if _ai in _used_a or _bi in _used_b:
+                    continue
+                _used_a.add(_ai)
+                _used_b.add(_bi)
+                _blk = _rp_ins_pool[_bi][0]
+                _blk["header"] = _arr_rp_ref[_ai][0]
+                _rp_ins_keep.append(_blk)
+            deduped_ins = _non_rp_ins + _rp_ins_keep
 
         # 문장배열과 1:1 동기화 — 문장배열 헤더 순서로 먼저 정렬.
         # 리딩파워/교과서 출처는 문장삽입 없으면 stub 생성하지 않음 (실제 paras 있는 블록만 포함).
