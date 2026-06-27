@@ -645,6 +645,8 @@ def parse_grammar_word(docx_path, auto_unit_base=None):
     current_unit = None  # "Chapter 03. 추론적 이해 - 09 빈칸 추론 (1)" 같은 헤더에서 추출한 Unit 번호
     _saw_chapter = False  # Chapter 헤더 1회 이상 감지 여부 (이 경우 page 점프 분배 비활성)
     _prev_page = None    # 직전 블록의 페이지 번호 (자동 Unit 증가용)
+    _seen_real_header = False  # 실제 본문 헤더("1. L3-본문1" 등) 1회 이상 감지 여부
+    _preamble = []       # 첫 헤더 전 서두(교재명/과 제목/발문) — 헤더 나오면 버림
 
     for table in doc.tables:
         for row in table.rows:
@@ -725,6 +727,7 @@ def parse_grammar_word(docx_path, auto_unit_base=None):
                 continue
 
             if is_header:
+                _seen_real_header = True
                 # 이전 블록 먼저 저장 (현재 current_unit으로)
                 if current_header and current_text:
                     _block = {"header": current_header, "text": "\n".join(current_text)}
@@ -747,9 +750,10 @@ def parse_grammar_word(docx_path, auto_unit_base=None):
             elif current_header:
                 current_text.append(left_text)
             else:
-                # 헤더 없이 본문이 시작된 경우
-                current_header = "본문"
-                current_text.append(left_text)
+                # 첫 헤더 전 서두(교재명·과 제목·발문 등)는 본문이 아니므로 버퍼에 모은다.
+                # 실제 헤더가 하나라도 나오면 이 버퍼는 버린다 — 과 제목(예: 비상홍 'My
+                # Octopus Teacher')이 본문1로 오인돼 이후 본문번호가 한 칸씩 밀리는 버그 방지.
+                _preamble.append(left_text)
 
     # 마지막 블록 저장
     if current_header and current_text:
@@ -757,6 +761,10 @@ def parse_grammar_word(docx_path, auto_unit_base=None):
         if current_unit is not None:
             _block["unit"] = current_unit
         results.append(_block)
+
+    # 헤더가 끝까지 하나도 없었던 파일(서두만 존재)만 서두를 단일 블록으로 폴백 처리.
+    if not _seen_real_header and _preamble:
+        results.append({"header": "본문", "text": "\n".join(_preamble)})
 
     return results
 
