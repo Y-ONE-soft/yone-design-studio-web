@@ -580,6 +580,41 @@ def fetch_rp_scope_lectures(school, log=None, exam_period=None):
     return lecs or None
 
 
+def fetch_rp_edition(school, log=None, exam_period=None):
+    """시험범위 시트 RP 셀에서 유형편 에디션('기본'/'완성') 추출.
+
+    세종1='유형편 기본', 광문2='유형편 완성'처럼 학교마다 에디션이 다른데
+    EBS 폴더에 'Reading Power 유형편(기본)'·'유형편(완성)' 둘 다 존재해
+    파인더가 첫 폴더만 잡으면 어법수정 원고를 엉뚱한 에디션에서 찾음.
+    시트 RP 셀 텍스트로 에디션을 판정해 파인더에 전달하기 위함.
+
+    Returns: '기본' | '완성' | None (RP 범위 없거나 에디션 미표기 시)
+    """
+    try:
+        rows = _fetch_csv(SCOPE_SHEET_ID, SCOPE_GID)
+    except Exception:
+        rows = None
+    if not rows:
+        return None
+    target_row = _find_scope_row(rows, school, exam_period)
+    if not target_row:
+        return None
+    for cell in target_row:
+        c = unicodedata.normalize("NFC", cell or "")
+        if ("Reading Power" in c) or ("리딩파워" in c) or ("reading power" in c.lower()):
+            # '완성' 먼저 검사 ('기본'과 동시 표기 가능성 대비 — 통상 한쪽만 표기)
+            if "완성" in c:  # 완성
+                ed = "완성"
+            elif "기본" in c:  # 기본
+                ed = "기본"
+            else:
+                ed = None
+            if log and ed:
+                log(f"[리딩파워] 시트 에디션: 유형편 {ed}")
+            return ed
+    return None
+
+
 def fetch_textbook_limits_for_school(school, log=None, exam_period=None):
     """시험범위 시트의 교과서 컬럼에서 과별 본문 제한 추출.
 

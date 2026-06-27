@@ -353,7 +353,7 @@ def find_mockexam_grammar_files_by_codes(content_base, grade, passage_codes=None
     return found_files
 
 
-def find_ebs_grammar_files(content_base, scope_text, log=None, grade=None):
+def find_ebs_grammar_files(content_base, scope_text, log=None, grade=None, rp_edition=None):
     """EBS 작업 폴더에서 어법수정 Word 파일 탐색.
 
     Args:
@@ -361,6 +361,9 @@ def find_ebs_grammar_files(content_base, scope_text, log=None, grade=None):
         scope_text: 시험범위 텍스트 (예: "올포1-4강", "리딩파워1,2강")
         log: 로그 콜백
         grade: "고1"/"고2"/"고3" — 올림포스 독해기본1 vs 2 구분용
+        rp_edition: "기본"/"완성" — 리딩파워 유형편 에디션 (시트 기준).
+            EBS 폴더에 '유형편(기본)'·'유형편(완성)'이 둘 다 있을 때
+            올바른 에디션 폴더를 선택. None이면 첫 매칭(기존 동작).
 
     Returns:
         발견된 파일 튜플 리스트 [(path, 강번호), ...]
@@ -428,11 +431,23 @@ def find_ebs_grammar_files(content_base, scope_text, log=None, grade=None):
     elif "리딩파워" in scope or "Reading" in scope:
         units = _extract_unit_numbers(scope)
         rp_base = None
+        # '유형편(기본)'·'유형편(완성)'이 공존 → 시트 에디션으로 정확히 선택.
+        # (첫 매칭 break 방식은 에디션 미일치 시 16/18/20/21강처럼 해당 에디션에만
+        #  있는 강 어법을 통째 누락시킴 — 세종1=기본, 광문2=완성)
+        _rp_cands = []
         for d in os.listdir(ebs_base):
             dn = _nfc(d)
             if "Reading Power" in dn or "리딩파워" in dn:
-                rp_base = os.path.join(ebs_base, d)
-                break
+                _rp_cands.append((os.path.join(ebs_base, d), dn))
+        if rp_edition:
+            for _p, _dn in _rp_cands:
+                if rp_edition in _dn:  # "기본" 또는 "완성"
+                    rp_base = _p
+                    if log:
+                        log(f"  [어법수정] 리딩파워 에디션 선택: {_dn} (시트=유형편 {rp_edition})")
+                    break
+        if not rp_base and _rp_cands:
+            rp_base = _rp_cands[0][0]  # 폴백: 첫 매칭 (기존 동작)
 
         if rp_base:
             # 중복 파일 방지 (예: "Unit 9~11 Example" + "Unit 9~11 Example 제외" 두 디렉토리 모두 매칭될 때

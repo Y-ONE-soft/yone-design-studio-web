@@ -945,8 +945,17 @@ class FinalEngine(BaseEngine):
                     allowed_qnums = set()
                 else:
                     # 고1 EBS / 리딩파워 / 독해기본 — 기존 로직
+                    # 리딩파워: 유형편 에디션(기본/완성)을 시트에서 확인해 전달
+                    # (학교마다 에디션이 달라 첫 매칭 폴더로는 어법 누락 — 세종1=기본, 광문2=완성)
+                    _rp_edition = None
+                    if "리딩파워" in _nfc(scope_text or "") or "Reading" in (scope_text or ""):
+                        try:
+                            from engines.final.vocab_fetcher import fetch_rp_edition
+                            _rp_edition = fetch_rp_edition(school, log=log, exam_period=exam_period)
+                        except Exception:
+                            _rp_edition = None
                     word_files = find_ebs_grammar_files(
-                        content_base, scope_text, log=log, grade=grade
+                        content_base, scope_text, log=log, grade=grade, rp_edition=_rp_edition
                     )
                     _olpo_target_codes_set = None
 
