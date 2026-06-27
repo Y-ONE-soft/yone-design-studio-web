@@ -2616,6 +2616,18 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
     """
     vol1 = {}
 
+    # 리딩파워 문장삽입 원본 스냅샷 (classify 직후, _build_vol1 라벨링/dedup 전).
+    # RP 삽입 라벨링 경로는 그동안 필터로 막혀 미검증 상태(Example 미인식·중복·드롭)라
+    # 신뢰할 수 없으므로, 여기서 (강, q_num, paras)를 그대로 보존해 두고 뒤에서 문장배열
+    # RP 헤더에 정확히 정렬해 재구성한다. (paras는 이후 변형되지 않으므로 참조 보존 OK)
+    _rp_ins_snapshot = []  # [(lecture, q_num, source, paras)]
+    for _rb in (sentence_insert_blocks or []):
+        if _is_rp_source(_rb.get("source", "")) and _rb.get("paras"):
+            _rp_ins_snapshot.append((
+                _rb.get("lecture", 0), str(_rb.get("q_num", "")),
+                _rb.get("source", ""), _rb.get("paras"),
+            ))
+
     # 중복 헤더 충돌 판별용 영문 토큰 추출 + 라벨별 중요어휘 참조 (문장배열·문장삽입
     # dedup 공용). 학교 워크북이 같은 라벨에 다른 지문을 줄 때(올포 오라벨 등),
     # 출처가 정확한 중요어휘와 공유도가 큰 블록을 채택해 진짜 지문 소실을 막는다.
@@ -3665,45 +3677,35 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
         # 문제가 실재하므로 버그였음.) RP 삽입 블록의 자체 라벨링 경로는 그동안 필터로
         # 막혀 미검증 상태(Example 미인식·순번 중복)이므로, 신뢰 가능한 문장배열 RP
         # 헤더에 '내용 매칭'으로 정렬해 동일 헤더를 부여한다(배열↔삽입 1:1, 과다분할 제거).
-        if vol1.get("문장배열"):
-            def _rp_wtoks(_s):
-                return set(re.findall(r"[a-z]{3,}", (_s or "").lower()))
-            _arr_rp_ref = []  # [(header, wordset)]
-            for _ab in vol1["문장배열"]:
-                _ah = _nfc(_ab.get("header", ""))
-                if re.match(r"리딩파워\s*\d+강", _ah):
-                    _atxt = " ".join(_ab.get("items", []) or []) + " " + (_ab.get("passage", "") or "")
-                    _arr_rp_ref.append((_ah, _rp_wtoks(_atxt)))
-            _rp_ins_pool = []  # [(block, wordset)]
-            _non_rp_ins = []
-            for _b in deduped_ins:
-                if not _is_rp_source(_b.get("source", "")):
-                    _non_rp_ins.append(_b)
+        if vol1.get("문장배열") and _rp_ins_snapshot:
+            _arr_rp_headers = set(
+                _nfc(_b["header"]) for _b in vol1["문장배열"]
+                if re.match(r"리딩파워\s*\d+강", _nfc(_b.get("header", "")))
+            )
+            def _rp_ins_label(_lec, _q):
+                _q = _nfc(_q)
+                _mex = re.match(r"Example\s*(\d*)", _q, re.IGNORECASE)
+                if _mex:
+                    return f"리딩파워 {_lec}강 Ex{int(_mex.group(1) or 1):02d}"
+                _mn = re.match(r"(\d+)", _q)
+                if _mn:
+                    return f"리딩파워 {_lec}강 {int(_mn.group(1)):02d}"
+                return None
+            # classify 스냅샷에서 (강,q_num)으로 헤더 직접 생성 → 문장배열 RP 헤더에만 매핑.
+            # 헤더당 1개(첫 등장) 유지 → 과다분할/중복 자동 제거.
+            _rp_rebuilt = []
+            _rp_seen_h = set()
+            for _lec, _q, _src, _paras in _rp_ins_snapshot:
+                if not _lec:
                     continue
-                _bw = _rp_wtoks(" ".join(_p.get("text", "") for _p in _b.get("paras", [])))
-                if _bw:
-                    _rp_ins_pool.append((_b, _bw))
-            # 그리디 최대가중 매칭: (배열헤더, 삽입블록) 겹침을 강한 쌍부터 1:1 배정.
-            # 강 내 Example↔01↔02 혼동 방지 + 과다분할 중복 블록은 미사용으로 자동 제거.
-            _pairs = []
-            for _ai, (_ah, _aw) in enumerate(_arr_rp_ref):
-                if not _aw:
-                    continue
-                for _bi, (_b, _bw) in enumerate(_rp_ins_pool):
-                    _ov = len(_aw & _bw) / float(min(len(_aw), len(_bw)))
-                    if _ov >= 0.3:
-                        _pairs.append((_ov, _ai, _bi))
-            _pairs.sort(key=lambda _x: _x[0], reverse=True)
-            _used_a, _used_b, _rp_ins_keep = set(), set(), []
-            for _ov, _ai, _bi in _pairs:
-                if _ai in _used_a or _bi in _used_b:
-                    continue
-                _used_a.add(_ai)
-                _used_b.add(_bi)
-                _blk = _rp_ins_pool[_bi][0]
-                _blk["header"] = _arr_rp_ref[_ai][0]
-                _rp_ins_keep.append(_blk)
-            deduped_ins = _non_rp_ins + _rp_ins_keep
+                _h = _rp_ins_label(_lec, _q)
+                if _h and _nfc(_h) in _arr_rp_headers and _h not in _rp_seen_h:
+                    _rp_seen_h.add(_h)
+                    _rp_rebuilt.append({"source": _src, "header": _h, "paras": _paras})
+            # 기존 deduped_ins의 (미검증 라벨링) RP 블록 제거 + 재구성본으로 대체
+            deduped_ins = [
+                _b for _b in deduped_ins if not _is_rp_source(_b.get("source", ""))
+            ] + _rp_rebuilt
 
         # 문장배열과 1:1 동기화 — 문장배열 헤더 순서로 먼저 정렬.
         # 리딩파워/교과서 출처는 문장삽입 없으면 stub 생성하지 않음 (실제 paras 있는 블록만 포함).
