@@ -3826,24 +3826,51 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
                 if _k:
                     _gram_by_lesson.setdefault(_k, []).append(_h)
 
+            # 어법·배열 블록의 첫 본문 라인(내용)을 모아 위치 대응을 내용으로 검증한다.
+            # 엔진이 어법 원고 라벨(본문4-1·Read Culture 1·Read More 2)을 본문N/RM으로
+            # 재번호·축약하므로(engine tb_body_counter + "Read More"→RM), 같은 과 안에서
+            # 정렬 후 위치별로 "내용"이 일치할 때만 배열(워크북 마커=정본) 라벨로 교체한다.
+            # 개수가 달라도(어법이 Read More 2를 제목만으로 병합한 3과 등) 짧은 쪽까지 대응하고,
+            # 내용이 불일치하면 건너뛴다(안전 — 다른 학교 회귀 방지).
+            _glabels = set(_nfc(h) for h in vol2["어법_헤더"])
+            _gram_first = {}
+            _glines = vol2.get("어법수정", [])
+            for _i in range(len(_glines)):
+                _s = _nfc(_glines[_i]).strip()
+                if _s in _glabels and _s not in _gram_first and _i + 1 < len(_glines):
+                    _gram_first[_s] = _nfc(_glines[_i + 1])
+            _arr_first = {}
+            for _b in vol1_sentence_blocks:
+                _h = _nfc(_b.get("header", ""))
+                if _h and _h not in _arr_first:
+                    _atxt = _b.get("passage", "") or " ".join(_b.get("items", []) or [])
+                    _arr_first[_h] = _nfc(_atxt)
+
+            def _wd(_t):
+                return set(re.findall(r"[a-z]{3,}", (_t or "").lower()))
+
             _relabel = {}
             for _k, _glist in _gram_by_lesson.items():
                 _alist = _arr_by_lesson.get(_k)
-                if not _alist or len(_glist) != len(_alist):
-                    continue  # 개수 불일치 — 안전하게 건너뜀
+                if not _alist:
+                    continue
                 # 어법(원고)·문장배열(분석본) 모두 정규 본문 순서로 정렬 후 위치 대응.
-                # (어법 헤더는 이 시점 문자열정렬돼 RM이 앞에 올 수 있어 정렬 필수)
+                # (어법 헤더는 문자열정렬돼 RM이 앞에 올 수 있어 정렬 필수. 개수 달라도 zip은 짧은 쪽까지)
                 _gs = sorted(_glist, key=_suffix_key)
                 _as = sorted(_alist, key=_suffix_key)
-                if not all(_suffix_key(_g)[0] == _suffix_key(_a)[0]
-                           for _g, _a in zip(_gs, _as)):
-                    continue  # 본문↔RM 등 유형 불일치 — 건너뜀
                 for _g, _a in zip(_gs, _as):
-                    if _nfc(_g) != _nfc(_a):
-                        _relabel[_g] = _a
+                    if _nfc(_g) == _nfc(_a):
+                        continue
+                    _gw = _wd(_gram_first.get(_nfc(_g), ""))
+                    _aw = _wd(_arr_first.get(_nfc(_a), ""))
+                    if not _gw or not _aw:
+                        continue  # 내용 확보 실패 — 건너뜀(안전)
+                    _ov = len(_gw & _aw) / float(min(len(_gw), len(_aw)))
+                    if _ov >= 0.5:  # 같은 지문(내용 일치) — 배열 라벨로 통일
+                        _relabel[_nfc(_g)] = _nfc(_a)
             if _relabel:
-                vol2["어법_헤더"] = [_relabel.get(_h, _h) for _h in vol2["어법_헤더"]]
-                vol2["어법수정"] = [_relabel.get(_ln, _ln) for _ln in vol2["어법수정"]]
+                vol2["어법_헤더"] = [_relabel.get(_nfc(_h), _h) for _h in vol2["어법_헤더"]]
+                vol2["어법수정"] = [_relabel.get(_nfc(_ln), _ln) for _ln in vol2["어법수정"]]
 
     # 서술형 영작: 한글과 보기를 쌍으로
     # writing_kor/writing_view는 이제 dict 리스트: {"text": ..., "source": ..., "q_num": ...}
