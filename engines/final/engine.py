@@ -1617,6 +1617,18 @@ class FinalEngine(BaseEngine):
                         elif _part.isdigit():
                             _rp_lectures.add(int(_part))
                 _rp_lec_list = sorted(_rp_lectures) if _rp_lectures else None
+                # 중요어휘 강도 시험범위 시트를 권위로 (파일명은 16강 누락·22강 초과 등 오류 가능 —
+                # 세종1 워크북 파일명 "13,14,15강/17,18,19,20강/21,22강"엔 16강 없고 22강 초과).
+                # 어법(L958)·배열 분류와 동일 원칙(feedback_final_rp_sheet_scope_authority).
+                if _rp_lectures:
+                    try:
+                        from engines.final.vocab_fetcher import fetch_rp_scope_lectures
+                        _rp_sheet_lecs = fetch_rp_scope_lectures(school, log=None, exam_period=exam_period)
+                        if _rp_sheet_lecs:
+                            _rp_lec_list = sorted(_rp_sheet_lecs)
+                            log(f"  [중요어휘] 리딩파워 강(시트 권위): {_rp_lec_list}")
+                    except Exception:
+                        pass
 
                 vocab_data = fetch_vocab_for_school(
                     school, grade, log=log,
