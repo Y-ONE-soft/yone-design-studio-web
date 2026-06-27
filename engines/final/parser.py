@@ -2958,6 +2958,14 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
                         matched = (_blk_lec, True, int(_mq_ex.group(1)))
                     elif _mq_num:
                         matched = (_blk_lec, False, int(_mq_num.group(1)))
+                # 마커가 Example 여부를 틀리게 표기한 워크북 교정 (워크북03 21강: 배열 .indd가
+                # Example 지문을 {1}로 마킹, 같은 워크북 예문/한글 스토리는 [Example]로 정확).
+                # 같은 강인데 시트 내용매칭과 Example 여부(is_ex)가 어긋나면 시트(내용)를 신뢰.
+                # (마커 정확한 학교는 마커=내용 일치라 무동작 → 회귀 없음)
+                if matched:
+                    _xcm = _rp_content_to_label(block, rp_sheet_data)
+                    if _xcm and _xcm[0] == matched[0] and _xcm[1] != matched[1]:
+                        matched = _xcm
                 # 1차 매핑이 같은 src에서 이미 사용된 헤더와 중복되면 시트 매칭으로 대체
                 # (광문2 워크북01처럼 한 Story에 여러 강 마커가 일련번호({1}~{10})로 매겨진 케이스)
                 if matched:
