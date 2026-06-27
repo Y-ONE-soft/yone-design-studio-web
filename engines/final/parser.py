@@ -3660,10 +3660,42 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
         if olpo_scope:
             deduped_ins = [b for b in deduped_ins if _passes_olpo_scope(b["header"], olpo_scope)]
 
-        # 리딩파워 워크북도 C1 문장배열 '하단 문제'(주어진 문장 삽입)가 있으면
-        # 문장삽입/순서배열 섹션에 포함한다. 하단 문제가 없는 지문은 classify에서
-        # insert 블록이 생성되지 않으므로 자연히 제외된다(아래 sync의 paras 체크).
-        # (과거: RP를 일괄 제거했으나, RP 유형편 워크북에 하단 삽입 문제가 실제 존재)
+        # 리딩파워 워크북도 C1 문장배열 '하단 문제'(주어진 문장 삽입/순서 배열)가 있으면
+        # 문장삽입/순서배열 섹션에 포함한다. (과거: RP를 일괄 제거 — RP 유형편엔 하단
+        # 문제가 실재하므로 버그였음.) RP 삽입 블록의 자체 라벨링 경로는 그동안 필터로
+        # 막혀 미검증 상태(Example 미인식·순번 중복)이므로, 신뢰 가능한 문장배열 RP
+        # 헤더에 '내용 매칭'으로 정렬해 동일 헤더를 부여한다(배열↔삽입 1:1, 과다분할 제거).
+        if vol1.get("문장배열"):
+            def _rp_wtoks(_s):
+                return set(re.findall(r"[a-z]{3,}", (_s or "").lower()))
+            _arr_rp_ref = []
+            for _ab in vol1["문장배열"]:
+                _ah = _nfc(_ab.get("header", ""))
+                if re.match(r"리딩파워\s*\d+강", _ah):
+                    _atxt = " ".join(_ab.get("items", []) or []) + " " + (_ab.get("passage", "") or "")
+                    _arr_rp_ref.append((_ah, _rp_wtoks(_atxt)))
+            _rp_ins_keep = {}   # header -> block (헤더당 1개, paras 많은 쪽 우선)
+            _non_rp_ins = []
+            for _b in deduped_ins:
+                if not _is_rp_source(_b.get("source", "")):
+                    _non_rp_ins.append(_b)
+                    continue
+                _bw = _rp_wtoks(" ".join(_p.get("text", "") for _p in _b.get("paras", [])))
+                if not _bw:
+                    continue
+                _best_h, _best_ov = None, 0.0
+                for _ah, _aw in _arr_rp_ref:
+                    if not _aw:
+                        continue
+                    _ov = len(_bw & _aw) / float(min(len(_bw), len(_aw)))
+                    if _ov > _best_ov:
+                        _best_ov, _best_h = _ov, _ah
+                if _best_h and _best_ov >= 0.3:
+                    _b["header"] = _best_h
+                    _prev = _rp_ins_keep.get(_best_h)
+                    if _prev is None or len(_b.get("paras", [])) > len(_prev.get("paras", [])):
+                        _rp_ins_keep[_best_h] = _b
+            deduped_ins = _non_rp_ins + list(_rp_ins_keep.values())
 
         # 문장배열과 1:1 동기화 — 문장배열 헤더 순서로 먼저 정렬.
         # 리딩파워/교과서 출처는 문장삽입 없으면 stub 생성하지 않음 (실제 paras 있는 블록만 포함).
