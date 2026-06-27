@@ -3660,12 +3660,10 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
         if olpo_scope:
             deduped_ins = [b for b in deduped_ins if _passes_olpo_scope(b["header"], olpo_scope)]
 
-        # 리딩파워 워크북은 문장삽입 섹션 없음 — sync 전에 제거
-        # (sync에서 문장배열 헤더에 해당하는 빈 stub 생성)
-        deduped_ins = [
-            b for b in deduped_ins
-            if not _is_rp_source(b.get("source", ""))
-        ]
+        # 리딩파워 워크북도 C1 문장배열 '하단 문제'(주어진 문장 삽입)가 있으면
+        # 문장삽입/순서배열 섹션에 포함한다. 하단 문제가 없는 지문은 classify에서
+        # insert 블록이 생성되지 않으므로 자연히 제외된다(아래 sync의 paras 체크).
+        # (과거: RP를 일괄 제거했으나, RP 유형편 워크북에 하단 삽입 문제가 실제 존재)
 
         # 문장배열과 1:1 동기화 — 문장배열 헤더 순서로 먼저 정렬.
         # 리딩파워/교과서 출처는 문장삽입 없으면 stub 생성하지 않음 (실제 paras 있는 블록만 포함).
