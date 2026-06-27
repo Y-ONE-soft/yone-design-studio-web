@@ -1203,11 +1203,13 @@ def fetch_vocab_for_school(school, grade, log=None, olpo_lectures=None, rp_lectu
                 if not text:
                     continue
                 # 섹션 표기: "Example1" → prefix "리딩파워 N강Ex 01", "1" → prefix "리딩파워 N강 01"
-                m_ex = re.match(r"Example\s*(\d+)", sec)
+                # 유형편 기본은 강당 Example 1개라 시트 섹션이 'Example'(숫자 없음) — \d*로 허용,
+                # 없으면 1. (숫자로 안 끝나면 단락스타일 GREP 미적용 → 배열처럼 'Ex01'로 통일)
+                m_ex = re.match(r"Example\s*(\d*)$", sec)
                 # 섹션 순서 통일: 리딩파워 = "0_..." (최앞. 교과서는 vocab 제외)
                 sort_key = f"0_{lec:03d}_{_rp_sec_order(sec):03d}"
                 if m_ex:
-                    prefix = f"\ub9ac\ub529\ud30c\uc6cc {lec}\uac15 Ex{int(m_ex.group(1)):02d}"
+                    prefix = f"\ub9ac\ub529\ud30c\uc6cc {lec}\uac15 Ex{int(m_ex.group(1) or 1):02d}"
                 elif sec.isdigit():
                     prefix = f"\ub9ac\ub529\ud30c\uc6cc {lec}\uac15 {int(sec):02d}"
                 else:
