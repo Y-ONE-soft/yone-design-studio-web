@@ -3678,30 +3678,39 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
         # 막혀 미검증 상태(Example 미인식·순번 중복)이므로, 신뢰 가능한 문장배열 RP
         # 헤더에 '내용 매칭'으로 정렬해 동일 헤더를 부여한다(배열↔삽입 1:1, 과다분할 제거).
         if vol1.get("문장배열") and _rp_ins_snapshot:
-            _arr_rp_headers = set(
-                _nfc(_b["header"]) for _b in vol1["문장배열"]
-                if re.match(r"리딩파워\s*\d+강", _nfc(_b.get("header", "")))
-            )
-            def _rp_ins_label(_lec, _q):
-                _q = _nfc(_q)
-                _mex = re.match(r"Example\s*(\d*)", _q, re.IGNORECASE)
-                if _mex:
-                    return f"리딩파워 {_lec}강 Ex{int(_mex.group(1) or 1):02d}"
-                _mn = re.match(r"(\d+)", _q)
-                if _mn:
-                    return f"리딩파워 {_lec}강 {int(_mn.group(1)):02d}"
-                return None
-            # classify 스냅샷에서 (강,q_num)으로 헤더 직접 생성 → 문장배열 RP 헤더에만 매핑.
-            # 헤더당 1개(첫 등장) 유지 → 과다분할/중복 자동 제거.
-            _rp_rebuilt = []
-            _rp_seen_h = set()
-            for _lec, _q, _src, _paras in _rp_ins_snapshot:
-                if not _lec:
+            def _rp_wt(_s):
+                return set(re.findall(r"[a-z]{3,}", (_s or "").lower()))
+            # 문장배열 RP 블록 = 정답 라벨(21강 Example/01 마커 swap 등 이미 교정됨).
+            _arr_rp_ref = []  # [(header, wordset)]
+            for _ab in vol1["문장배열"]:
+                _ah = _nfc(_ab.get("header", ""))
+                if re.match(r"리딩파워\s*\d+강", _ah):
+                    _atxt = " ".join(_ab.get("items", []) or []) + " " + (_ab.get("passage", "") or "")
+                    _arr_rp_ref.append((_ah, _rp_wt(_atxt)))
+            # classify 스냅샷(깨끗한 삽입 블록)을 배열 RP 블록과 '내용 매칭'.
+            _snap_w = [(_i, _rp_wt(" ".join(_p.get("text", "") for _p in _paras)), _src, _paras)
+                       for _i, (_lec, _q, _src, _paras) in enumerate(_rp_ins_snapshot)]
+            # 그리디 최대가중 1:1 매칭 (강한 쌍부터). 배열헤더·삽입블록 각각 1회.
+            _pairs = []
+            for _ai, (_ah, _aw) in enumerate(_arr_rp_ref):
+                if not _aw:
                     continue
-                _h = _rp_ins_label(_lec, _q)
-                if _h and _nfc(_h) in _arr_rp_headers and _h not in _rp_seen_h:
-                    _rp_seen_h.add(_h)
-                    _rp_rebuilt.append({"source": _src, "header": _h, "paras": _paras})
+                for _si, _sw, _ssrc, _spar in _snap_w:
+                    if not _sw:
+                        continue
+                    _ov = len(_aw & _sw) / float(min(len(_aw), len(_sw)))
+                    if _ov >= 0.3:
+                        _pairs.append((_ov, _ai, _si))
+            _pairs.sort(key=lambda _x: _x[0], reverse=True)
+            _used_a, _used_s, _rp_rebuilt = set(), set(), []
+            _snap_by_i = {_si: (_ssrc, _spar) for _si, _sw, _ssrc, _spar in _snap_w}
+            for _ov, _ai, _si in _pairs:
+                if _ai in _used_a or _si in _used_s:
+                    continue
+                _used_a.add(_ai)
+                _used_s.add(_si)
+                _ssrc, _spar = _snap_by_i[_si]
+                _rp_rebuilt.append({"source": _ssrc, "header": _arr_rp_ref[_ai][0], "paras": _spar})
             # 기존 deduped_ins의 (미검증 라벨링) RP 블록 제거 + 재구성본으로 대체
             deduped_ins = [
                 _b for _b in deduped_ins if not _is_rp_source(_b.get("source", ""))
