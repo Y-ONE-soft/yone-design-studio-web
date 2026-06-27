@@ -2249,11 +2249,12 @@ def _rp_writing_to_label(choices_text, rp_sheet_data, korean_text=""):
             best_match = key
     # 50% 이상 단어 매칭이면 신뢰 가능
     if best_match and best_ratio >= 0.5:
-        m = re.match(r"^(\d+)-(?:Example\s*(\d+)|(\d+))$", best_match, re.IGNORECASE)
+        # 키 "N-Example"(숫자없음)·"N-1~2"(범위) 허용. 범위는 첫 번호.
+        m = re.match(r"^(\d+)-(?:Example\s*(\d*)|(\d+)(?:~\d+)?)$", best_match, re.IGNORECASE)
         if m:
             lec = int(m.group(1))
-            if m.group(2):
-                return (lec, True, int(m.group(2)))
+            if m.group(2) is not None:
+                return (lec, True, int(m.group(2) or 1))
             else:
                 return (lec, False, int(m.group(3)))
     return None
@@ -2964,7 +2965,11 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
                 # 같은 강인데 시트 내용매칭과 Example 여부(is_ex)가 어긋나면 시트(내용)를 신뢰.
                 # (마커 정확한 학교는 마커=내용 일치라 무동작 → 회귀 없음)
                 if matched:
-                    _xcm = _rp_content_to_label(block, rp_sheet_data)
+                    # 배열은 문장이 섞여(scrambled) substring 매칭 실패 → 단어매칭 우선
+                    _bt = block.get("passage", "") or " ".join((block.get("items") or [])[:5])
+                    _xcm = _rp_writing_to_label(_bt, rp_sheet_data) if (_bt and len(_bt) >= 30) else None
+                    if not _xcm:
+                        _xcm = _rp_content_to_label(block, rp_sheet_data)
                     if _xcm and _xcm[0] == matched[0] and _xcm[1] != matched[1]:
                         matched = _xcm
                 # 1차 매핑이 같은 src에서 이미 사용된 헤더와 중복되면 시트 매칭으로 대체
@@ -2987,9 +2992,14 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
                                 _alt_matched = _rp_writing_to_label(_block_text, rp_sheet_data)
                         if _alt_matched:
                             matched = _alt_matched
-                # 2차 폴백: 1차 매핑이 아예 없으면 시트 기반 content matching
+                # 2차 폴백: 1차 매핑이 아예 없으면 시트 기반 content matching (substring → 단어매칭)
                 if not matched:
                     matched = _rp_content_to_label(block, rp_sheet_data)
+                if not matched:
+                    # 배열 섞임 대응 — 단어매칭 (마커 {1~2} 등으로 1차/substring 실패한 경우)
+                    _bt2 = block.get("passage", "") or " ".join((block.get("items") or [])[:5])
+                    if _bt2 and len(_bt2) >= 30:
+                        matched = _rp_writing_to_label(_bt2, rp_sheet_data)
                 if matched:
                     _L, _is_ex_entry, _n = matched
                     if _is_ex_entry:
