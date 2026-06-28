@@ -5127,8 +5127,61 @@ def _merge_mock_insert_blocks(insert_blocks, mock_blocks, sentence_blocks=None, 
         if qn:
             existing_keys.add((src, qn))
 
+    # 올포 블록 중복 방지용: 이미 같은 (lecture, label) 헤더가 insert에 있는지 수집.
+    _existing_olpo_hdrs = set()
+    for ib in insert_blocks:
+        _ph = ib.get("_preset_header", "")
+        if _ph.startswith("올포 "):
+            _existing_olpo_hdrs.add(_ph)
+
     added = 0
     for mb in mock_blocks:
+        # ── 공용 올포 삽입/순서 블록: lecture+olpo_label 기반 (qnum 없음) ──
+        if mb.get("is_olpo"):
+            _olec = mb.get("lecture", 0)
+            if not _olec:
+                continue
+            _olabel = mb.get("olpo_label", "") or ""
+            _ohdr = f"올포 {_olec}강 {_olabel}".strip() if _olabel else None
+            paras_o = mb.get("paras", [])
+            if not paras_o:
+                continue
+            processed_o = []
+            for p in paras_o:
+                style = p.get("s", "")
+                txt = (p.get("t", "") or "").strip()
+                if not txt:
+                    continue
+                if txt in ("￼", "➡", "→", "⇨", "→", "➡"):
+                    continue
+                _is_prompt_o = ("주어진 문장이 들어갈" in txt) or ("주어진 문장 다음에 이어질" in txt) or ("주어진 문장이 들어가기에" in txt) or ("이어질 문장들의 적절한 순서" in txt)
+                if _is_prompt_o:
+                    new_style = "문장 배열 하단 문제"
+                    txt = re.sub(r"^￼?\s*", "", txt)
+                elif style.strip() == "문장 배열 하단":
+                    new_style = "문장 배열 하단"
+                else:
+                    new_style = "문장 배열 하단 문제"
+                processed_o.append({"style": new_style, "text": txt})
+            if not processed_o:
+                continue
+            # (lecture,label) 헤더가 이미 insert에 있으면 스킵 (중복 방지)
+            if _ohdr and _ohdr in _existing_olpo_hdrs:
+                continue
+            new_block_o = {
+                "source": mb.get("source_file", "올림포스독해기본.indd"),
+                "paras": processed_o,
+                "q_num": "",
+                "page_off": mb.get("page_off", -1),
+                "lecture": _olec,
+            }
+            if _ohdr:
+                new_block_o["_preset_header"] = _ohdr
+                _existing_olpo_hdrs.add(_ohdr)
+            insert_blocks.append(new_block_o)
+            added += 1
+            continue
+
         qnum = mb.get("qnum", "")
         if not qnum:
             continue

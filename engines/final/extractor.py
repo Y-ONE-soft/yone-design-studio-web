@@ -1365,13 +1365,22 @@ if (doc) {{
         if (st.paragraphs.length < 3) continue;
 
         var hasPrompt = false;
+        var hasInsertStyle = false;
         for (var pi = 0; pi < st.paragraphs.length; pi++) {{
-            var cc = (st.paragraphs[pi].contents || "").replace(/[\\r\\n\\t]/g, " ").replace(/^\\s+|\\s+$/g, "");
+            var _pp = st.paragraphs[pi];
+            var cc = (_pp.contents || "").replace(/[\\r\\n\\t]/g, " ").replace(/^\\s+|\\s+$/g, "");
             if (cc.indexOf(INSERT_PROMPT_1) !== -1 || cc.indexOf(INSERT_PROMPT_2) !== -1 || cc.indexOf(INSERT_PROMPT_3) !== -1) {{
-                hasPrompt = true; break;
+                hasPrompt = true;
+            }}
+            var _psn = ""; try {{ _psn = _pp.appliedParagraphStyle.name; }} catch(e) {{}}
+            if (_psn === "문장 배열 하단 문제" || _psn === "문장 배열 하단 " || _psn === "하단 문제" ||
+                _psn === "C1_문장 배열 하단" || _psn === "C1_문장 배열 하단 지문") {{
+                hasInsertStyle = true;
             }}
         }}
-        if (!hasPrompt) continue;
+        // 발문 + 하단문제 스타일을 모두 갖춘 깔끔한 삽입/순서 스토리만 채택.
+        // (STEP3/실전문제 통짜 스토리는 발문을 본문 안에 품고 있어도 하단 스타일이 없어 제외)
+        if (!hasPrompt || !hasInsertStyle) continue;
 
         // 스토리 첫 프레임 페이지 + Y로 강/라벨 판정
         var pageOff = -1, storyY = -1;

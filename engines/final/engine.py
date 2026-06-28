@@ -1762,6 +1762,47 @@ class FinalEngine(BaseEngine):
         # 교과서 insert를 mock_insert_data에 병합 (parser가 동일 경로 처리)
         mock_insert_data.extend(tb_insert_data)
 
+        # 5.7) 공용 올림포스독해기본 파일에서 '문장삽입/순서배열' 블록 추출.
+        #      올포 삽입/순서 문제는 학교별 '올림포스NN강' 워크북엔 없고(문장배열만 존재)
+        #      공용 파일에만 있어 그동안 통째로 누락됐다. 시험범위 올포 강을 커버하는
+        #      공용 파일을 찾아 삽입/순서 블록만 추출(중요어휘/문장배열은 학교 워크북 사용).
+        olpo_insert_data = []
+        if grade == "고1":
+            # 필요한 올포 강 = 학교 올림포스 워크북 강(_extracted_olpo_lectures)
+            #                 ∪ '올포' 파일명 기반 강(allowed_olpo_lectures)
+            _olpo_need = set(_extracted_olpo_lectures) | set(allowed_olpo_lectures or set())
+            if _olpo_need:
+                _olpo_base = os.path.expanduser(cfg.get("고1_올포_공용_base", ""))
+                _olpo_base = _rlm(_olpo_base, None)
+                if os.path.isdir(_olpo_base):
+                    _seen_olpo_files = set()
+                    for _of in sorted(os.listdir(_olpo_base)):
+                        if not _of.endswith(".indd"):
+                            continue
+                        _ofn = _nfc(_of)
+                        _m = re.search(r"\((\d+)-(\d+)강\)", _ofn)
+                        if not _m:
+                            continue
+                        _fs, _fe = int(_m.group(1)), int(_m.group(2))
+                        _file_lecs = set(range(_fs, _fe + 1))
+                        if not (_file_lecs & _olpo_need):
+                            continue
+                        _opath = os.path.join(_olpo_base, _of)
+                        if _opath in _seen_olpo_files:
+                            continue
+                        _seen_olpo_files.add(_opath)
+                        from engines.final.extractor import extract_olpo_insert_blocks
+                        _oblks = extract_olpo_insert_blocks(_opath, _olpo_need, log) or []
+                        for _ob in _oblks:
+                            _ob["is_olpo"] = True
+                            _ob["scope_text"] = "올포"
+                        olpo_insert_data.extend(_oblks)
+                    if olpo_insert_data:
+                        log(f"[올포 문장삽입] 공용 파일에서 {len(olpo_insert_data)}블록 추출 (강 {sorted(_olpo_need)})")
+                else:
+                    log(f"[올포 문장삽입] 공용 base 없음: {_olpo_base}")
+        mock_insert_data.extend(olpo_insert_data)
+
         # 6) 추출 데이터 + Word 어법수정 + 중요어휘 → content.json
         from engines.final.parser import parse_extracted, load_mothertongue_map
         # 마더텅 워크북 쓰는 학교(한영 등)용 지문 출처 매핑 로드
