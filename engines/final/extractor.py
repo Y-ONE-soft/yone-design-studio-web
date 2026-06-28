@@ -528,6 +528,7 @@ if (doc) {{
         var plPg = doc.pages[pli];
         var plOff = plPg.documentOffset;
         var plFrames = plPg.textFrames;
+        var plH = 9999; try {{ plH = plPg.bounds[2] - plPg.bounds[0]; }} catch(eh) {{}}
         var plSection = "";
         var plLabel = "";
         // 섹션명 후보 프레임 + 번호 후보 프레임 수집
@@ -543,8 +544,9 @@ if (doc) {{
                 if (fY < 0 && firstTxt.length > 0 && firstTxt.length < 30) {{
                     plSection = firstTxt.replace(/^\\s+/, "");
                 }}
-                // 레이블 후보: y가 0~40 범위, 짧은 텍스트
-                if (fY >= -5 && fY < 40 && firstTxt.length < 10) {{
+                // 레이블 후보: 콘텐츠 영역 전체(푸터 제외) 짧은 텍스트.
+                // (페이지당 문항 2개 세로배치 시 2번째 문항 번호가 y중간이라 y<40으론 누락 → 짝수 본문 탈락)
+                if (fY >= -5 && fY < (plH - 30) && firstTxt.length < 10) {{
                     // 숫자 2자리, "분석", "[분석]", "[N]", "논술" 등
                     var clean = firstTxt.replace(/\\s/g, "").replace(/[│|]$/, "");
                     labelCands.push({{y: fY, x: fX, txt: clean}});
