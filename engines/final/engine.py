@@ -1742,7 +1742,10 @@ class FinalEngine(BaseEngine):
                     "\uc6cc\ud06c\ubd81", "\uad50\uacfc\uc11c", _subject_file, _publisher
                 )
                 if os.path.isdir(_tb_base):
-                    from engines.final.extractor import extract_mock_insert_blocks as _extract_ins
+                    from engines.final.extractor import (
+                        extract_mock_insert_blocks as _extract_ins,
+                        extract_olpo_insert_blocks as _extract_ins_pos,
+                    )
                     for _lesson in textbook_lessons:
                         _lesson_num = re.sub(r"\uacfc$", "", _lesson).strip()
                         _tb_file = os.path.join(
@@ -1757,6 +1760,21 @@ class FinalEngine(BaseEngine):
                                 _b["is_textbook"] = True
                                 _b["lesson_num"] = _lesson_num
                             tb_insert_data.extend(_blks)
+                            # \ud3f4\ubc31: {\ubcf8\ubb38N} \ud5e4\ub354\uac00 \uc544\ub2c8\ub77c \uc704\uce58\ubc88\ud638('01'/'02')\ub85c\ub9cc \ubcf8\ubb38\uc744
+                            # \ub9e4\uae30\ub294 \uad50\uacfc\uc11c(\ub2a5\ub960(\uc624) \ub4f1)\ub294 \ubc1c\ubb38\uae30\ubc18 \ucd94\ucd9c\uc774 0\ube14\ub85d \u2192 \uc704\uce58\ub77c\ubca8
+                            # \uae30\ubc18 \ucd94\ucd9c\uae30\ub85c \ubcf8\ubb38N/\uc0bd\uc785\u00b7\uc21c\uc11c \ube14\ub85d\uc744 \ubcf4\uac15\ud55c\ub2e4.
+                            if not _blks:
+                                _pblks = _extract_ins_pos(_tb_file, set(), log) or []
+                                for _pb in _pblks:
+                                    _pb["scope_text"] = f"\uad50\uacfc\uc11c{_lesson_num}\uacfc"
+                                    _pb["is_textbook"] = True
+                                    _pb["lesson_num"] = _lesson_num
+                                    # \uc704\uce58\uae30\ubc18 \ucd94\ucd9c\uae30\ub294 lecture\ub97c \ucc44\uc6b0\uc9c0\ub9cc \uad50\uacfc\uc11c\uc5d0\uc120 \ubb34\uc758\ubbf8 \u2192
+                                    # olpo \ubd84\uae30\ub85c \uc0c8\uc9c0 \uc54a\uac8c \uc81c\uac70\ud558\uace0 \ubcf8\ubb38\ub77c\ubca8\ub9cc \uc0ac\uc6a9.
+                                    _pb.pop("lecture", None)
+                                tb_insert_data.extend(_pblks)
+                                if _pblks:
+                                    log(f"[\uad50\uacfc\uc11c \ubb38\uc7a5\uc0bd\uc785] \uc704\uce58\ub77c\ubca8 \ud3f4\ubc31 {len(_pblks)}\ube14\ub85d")
                         else:
                             log(f"[\uad50\uacfc\uc11c \ubb38\uc7a5\uc0bd\uc785] \ud30c\uc77c \uc5c6\uc74c: {_tb_file}")
         # 교과서 insert를 mock_insert_data에 병합 (parser가 동일 경로 처리)

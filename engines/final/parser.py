@@ -5136,6 +5136,50 @@ def _merge_mock_insert_blocks(insert_blocks, mock_blocks, sentence_blocks=None, 
 
     added = 0
     for mb in mock_blocks:
+        # ── 교과서 위치라벨 폴백 블록: is_textbook + olpo_label(본문N), qnum 없음 ──
+        #    (능률(오) 등 '01'/'02' 위치번호 교과서 — 발문기반 추출 0블록 폴백)
+        if mb.get("is_textbook") and not mb.get("qnum") and mb.get("olpo_label"):
+            _tlnum = mb.get("lesson_num", "")
+            _tlabel = mb.get("olpo_label", "")
+            _thdr = f"교과서{_tlnum}과 {_tlabel}" if _tlnum and _tlabel else None
+            paras_t = mb.get("paras", [])
+            if not paras_t or not _thdr:
+                continue
+            processed_t = []
+            for p in paras_t:
+                style = p.get("s", "")
+                txt = (p.get("t", "") or "").strip()
+                if not txt:
+                    continue
+                if txt in ("￼", "➡", "→", "⇨"):
+                    continue
+                # 본문 위치라벨('01' 등) 단독 단락 스킵
+                if re.match(r"^\d{1,2}$", txt.replace(" ", "")):
+                    continue
+                _is_prompt_t = ("주어진 문장이 들어갈" in txt) or ("주어진 문장 다음에 이어질" in txt) or ("주어진 문장이 들어가기에" in txt)
+                if _is_prompt_t:
+                    new_style = "문장 배열 하단 문제"
+                    txt = re.sub(r"^￼?\s*", "", txt)
+                elif style.strip() == "문장 배열 하단":
+                    new_style = "문장 배열 하단"
+                else:
+                    new_style = "문장 배열 하단 문제"
+                processed_t.append({"style": new_style, "text": txt})
+            if not processed_t:
+                continue
+            if any(ib.get("_preset_header") == _thdr for ib in insert_blocks):
+                continue
+            insert_blocks.append({
+                "source": mb.get("source_file", "교과서.indd"),
+                "paras": processed_t,
+                "q_num": "",
+                "page_off": mb.get("page_off", -1),
+                "lecture": 0,
+                "_preset_header": _thdr,
+            })
+            added += 1
+            continue
+
         # ── 공용 올포 삽입/순서 블록: lecture+olpo_label 기반 (qnum 없음) ──
         if mb.get("is_olpo"):
             _olec = mb.get("lecture", 0)
