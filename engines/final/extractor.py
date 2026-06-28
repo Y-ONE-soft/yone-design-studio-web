@@ -1197,3 +1197,306 @@ def extract_mock_insert_blocks(indd_path, allowed_qnums, log):
             pass
 
     return results
+
+
+def _build_olpo_insert_extract_jsx(indd_path, output_json_path, allowed_lectures):
+    """공용 올림포스독해기본 파일에서 '문장삽입/순서배열' 블록을 추출하는 JSX 생성.
+
+    extract_mock_insert_blocks와 동일한 발문 기반 추출이지만, 각 스토리에
+    lecture(강 번호)와 olpoLabel(분석/본문N/서술형/논술형)을 첨부한다.
+    강 번호는 공용 파일 간지의 "Unit.N" 헤더 프레임으로, 라벨은 페이지 위치
+    번호 프레임으로 판정한다(extract_from_workbooks의 _lectureOf/_olpoLabelOf와 동일).
+    allowed_lectures(예: {11,12,...,16})에 포함되는 강의 블록만 채택한다.
+    """
+    lecs_js = json.dumps(list(allowed_lectures), ensure_ascii=False)
+
+    jsx = f"""#target indesign
+app.scriptPreferences.userInteractionLevel = UserInteractionLevels.NEVER_INTERACT;
+
+var allowedLectures = {lecs_js};
+var inddPath = "{indd_path.replace(chr(92), '/')}";
+var outputPath = "{output_json_path.replace(chr(92), '/')}";
+
+function lectureAllowed(n) {{
+    if (!allowedLectures || allowedLectures.length === 0) return true;
+    for (var i = 0; i < allowedLectures.length; i++) {{
+        if (allowedLectures[i] === n) return true;
+    }}
+    return false;
+}}
+
+var doc;
+try {{
+    doc = app.open(File(inddPath), false);
+}} catch(e) {{
+    var ef = new File(outputPath);
+    ef.open("w"); ef.encoding = "UTF-8";
+    ef.write('{{"error":"' + e.message + '","stories":[]}}');
+    ef.close();
+}}
+
+if (doc) {{
+    var results = [];
+
+    // --- 강 페이지 맵 (Unit.N 간지 헤더) — extract_from_workbooks와 동일 ---
+    var lectureStartPages = [];
+    var unitPagesSeen = {{}};
+    var hasUnitMarkers = false;
+    for (var lpi = 0; lpi < doc.pages.length; lpi++) {{
+        var lpgOff = doc.pages[lpi].documentOffset;
+        var ltfs = doc.pages[lpi].textFrames;
+        for (var lfi = 0; lfi < ltfs.length; lfi++) {{
+            try {{
+                var um = (ltfs[lfi].contents || "").match(/Unit[\\.\\s]*(\\d+)/);
+                if (um) {{
+                    hasUnitMarkers = true;
+                    var un = parseInt(um[1], 10);
+                    if (unitPagesSeen[un] === undefined || lpgOff < unitPagesSeen[un]) {{
+                        unitPagesSeen[un] = lpgOff;
+                    }}
+                }}
+            }} catch(e) {{}}
+        }}
+    }}
+    if (hasUnitMarkers) {{
+        for (var uk in unitPagesSeen) {{
+            if (unitPagesSeen.hasOwnProperty(uk)) {{
+                lectureStartPages.push({{page: unitPagesSeen[uk], num: parseInt(uk, 10)}});
+            }}
+        }}
+    }} else {{
+        for (var lpi2 = 0; lpi2 < doc.pages.length; lpi2++) {{
+            var lpgOff2 = doc.pages[lpi2].documentOffset;
+            var ltfs2 = doc.pages[lpi2].textFrames;
+            for (var lfi2 = 0; lfi2 < ltfs2.length; lfi2++) {{
+                try {{
+                    var lt = ltfs2[lfi2].paragraphs[0].contents.replace(/[\\r\\n]/g, " ").replace(/\\s/g, "");
+                    var lm = lt.match(/^\\{{(\\d+)강\\}}$/) || lt.match(/^(\\d+)강$/);
+                    if (lm) {{ lectureStartPages.push({{page: lpgOff2, num: parseInt(lm[1], 10)}}); break; }}
+                }} catch(e) {{}}
+            }}
+        }}
+    }}
+    function _lectureOf(pgOff) {{
+        if (pgOff < 0) return 0;
+        var best = -1, bestNum = 0;
+        for (var k = 0; k < lectureStartPages.length; k++) {{
+            var lsp = lectureStartPages[k];
+            if (lsp.page <= pgOff && lsp.page > best) {{ best = lsp.page; bestNum = lsp.num; }}
+        }}
+        return bestNum;
+    }}
+
+    // --- 페이지별 올포 라벨 맵 — extract_from_workbooks와 동일 ---
+    var pageLabels = {{}};
+    function _trim(s) {{ return s.replace(/^\\s+|\\s+$/g, ""); }}
+    for (var pli = 0; pli < doc.pages.length; pli++) {{
+        var plPg = doc.pages[pli];
+        var plOff = plPg.documentOffset;
+        var plFrames = plPg.textFrames;
+        var plH = 9999; try {{ plH = plPg.bounds[2] - plPg.bounds[0]; }} catch(eh) {{}}
+        var plSection = "";
+        var labelCands = [];
+        for (var plfi = 0; plfi < plFrames.length; plfi++) {{
+            try {{
+                var fr = plFrames[plfi];
+                var bb = fr.geometricBounds;
+                var fY = bb[0], fX = bb[1];
+                var firstTxt = _trim(fr.paragraphs[0].contents.replace(/[\\r\\n]+/g, "").replace(/\\t/g, ""));
+                if (fY < 0 && firstTxt.length > 0 && firstTxt.length < 30) {{
+                    plSection = firstTxt.replace(/^\\s+/, "");
+                }}
+                if (fY >= -5 && fY < (plH - 30) && firstTxt.length < 10) {{
+                    var clean = firstTxt.replace(/\\s/g, "").replace(/[│|]$/, "");
+                    labelCands.push({{y: fY, x: fX, txt: clean}});
+                }}
+            }} catch(epl) {{}}
+        }}
+        var pageLblArr = [];
+        for (var lci = 0; lci < labelCands.length; lci++) {{
+            var lc = labelCands[lci];
+            var txt = lc.txt;
+            if (/^\\d{{1,2}}$/.test(txt)) {{
+                var nn = parseInt(txt, 10);
+                if (nn >= 1 && nn <= 9) pageLblArr.push({{y: lc.y, x: lc.x, raw: txt, kind: "num", val: nn}});
+            }} else if (/^\\[\\d+\\]$/.test(txt)) {{
+                pageLblArr.push({{y: lc.y, x: lc.x, raw: txt, kind: "bracket_num", val: parseInt(txt.replace(/[\\[\\]]/g, ""), 10)}});
+            }} else if (txt === "분석" || txt === "[분석]") {{
+                pageLblArr.push({{y: lc.y, x: lc.x, raw: txt, kind: "analyze"}});
+            }} else if (txt === "논술" || txt === "논술형") {{
+                pageLblArr.push({{y: lc.y, x: lc.x, raw: txt, kind: "non"}});
+            }} else if (txt === "서술" || txt === "서술형") {{
+                pageLblArr.push({{y: lc.y, x: lc.x, raw: txt, kind: "seo"}});
+            }}
+        }}
+        pageLabels[plOff] = {{section: plSection, labels: pageLblArr}};
+    }}
+    function _olpoLabelOf(pgOff, storyY) {{
+        var pl = pageLabels[pgOff];
+        if (!pl || !pl.labels || pl.labels.length === 0) return "";
+        var best = null, bestDist = 99999;
+        for (var k = 0; k < pl.labels.length; k++) {{
+            var lab = pl.labels[k];
+            var dist = (storyY != null && storyY >= 0) ? Math.abs(lab.y - storyY) : 0;
+            if (dist < bestDist) {{ bestDist = dist; best = lab; }}
+        }}
+        if (!best) return "";
+        var sec = pl.section || "";
+        var isWriting = (sec.indexOf("영작") !== -1);
+        if (best.kind === "analyze") return "분석";
+        if (best.kind === "non") return "논술형";
+        if (best.kind === "seo") return "서술형";
+        if (best.kind === "bracket_num") {{
+            if (isWriting) {{ if (best.val === 2) return "서술형"; if (best.val === 3) return "논술형"; }}
+            return "본문" + best.val;
+        }}
+        if (best.kind === "num") return "본문" + best.val;
+        return "";
+    }}
+
+    // --- 발문 (extract_mock_insert_blocks와 동일) ---
+    var INSERT_PROMPT_1 = "아래 주어진 문장이 들어갈";
+    var INSERT_PROMPT_2 = "아래 주어진 문장 다음에 이어질";
+    var INSERT_PROMPT_3 = "주어진 문장이 들어가기에";
+
+    // 공용 올포 파일은 한 스토리=한 문항(threaded 아님). 발문이 있으면 채택.
+    for (var si = 0; si < doc.stories.length; si++) {{
+        var st = doc.stories[si];
+        if (st.paragraphs.length < 3) continue;
+
+        var hasPrompt = false;
+        for (var pi = 0; pi < st.paragraphs.length; pi++) {{
+            var cc = (st.paragraphs[pi].contents || "").replace(/[\\r\\n\\t]/g, " ").replace(/^\\s+|\\s+$/g, "");
+            if (cc.indexOf(INSERT_PROMPT_1) !== -1 || cc.indexOf(INSERT_PROMPT_2) !== -1 || cc.indexOf(INSERT_PROMPT_3) !== -1) {{
+                hasPrompt = true; break;
+            }}
+        }}
+        if (!hasPrompt) continue;
+
+        // 스토리 첫 프레임 페이지 + Y로 강/라벨 판정
+        var pageOff = -1, storyY = -1;
+        try {{
+            var tc0 = st.textContainers[0];
+            if (tc0.parentPage) pageOff = tc0.parentPage.documentOffset;
+            storyY = tc0.geometricBounds[0];
+        }} catch(e) {{}}
+        if (pageOff < 0) continue;
+
+        var lec = _lectureOf(pageOff);
+        if (!lectureAllowed(lec)) continue;
+        var olpoLbl = _olpoLabelOf(pageOff, storyY);
+
+        var paras = [];
+        for (var pj = 0; pj < st.paragraphs.length; pj++) {{
+            var pt = st.paragraphs[pj].contents;
+            if (pt) pt = pt.replace(/\\r$/, "");
+            var psn = ""; try {{ psn = st.paragraphs[pj].appliedParagraphStyle.name; }} catch(e) {{}}
+            paras.push({{s: psn, t: pt || ""}});
+        }}
+        results.push({{idx: si, pageOff: pageOff, lecture: lec, olpoLabel: olpoLbl, paras: paras}});
+    }}
+
+    var outFile = new File(outputPath);
+    outFile.open("w"); outFile.encoding = "UTF-8";
+    var jsonStr = '[';
+    for (var ri = 0; ri < results.length; ri++) {{
+        if (ri > 0) jsonStr += ',';
+        var olEsc = (results[ri].olpoLabel || "").replace(/"/g, '\\\\"');
+        jsonStr += '{{"idx":' + results[ri].idx + ',"pageOff":' + results[ri].pageOff +
+                   ',"lecture":' + results[ri].lecture + ',"olpoLabel":"' + olEsc + '","paras":[';
+        var pp = results[ri].paras;
+        for (var ppi = 0; ppi < pp.length; ppi++) {{
+            if (ppi > 0) jsonStr += ',';
+            var escaped = pp[ppi].t || "";
+            escaped = escaped.replace(/\\\\/g, "\\\\\\\\");
+            escaped = escaped.replace(/"/g, '\\\\"');
+            escaped = escaped.replace(/\\n/g, "\\\\n");
+            escaped = escaped.replace(/\\r/g, "\\\\r");
+            escaped = escaped.replace(/\\t/g, "\\\\t");
+            var sEsc = (pp[ppi].s || "").replace(/"/g, '\\\\"');
+            jsonStr += '{{"s":"' + sEsc + '","t":"' + escaped + '"}}';
+        }}
+        jsonStr += ']}}';
+    }}
+    jsonStr += ']';
+    outFile.write(jsonStr);
+    outFile.close();
+
+    doc.close(SaveOptions.NO);
+}}
+"""
+    return jsx
+
+
+def extract_olpo_insert_blocks(indd_path, allowed_lectures, log):
+    """공용 올림포스독해기본 파일에서 문장삽입/순서배열 블록 추출 (강·라벨 첨부).
+
+    Args:
+        indd_path: 공용 올포 파일 경로 (고1_올림포스독해기본(A-B강)_내지.indd)
+        allowed_lectures: 채택할 강 번호 set (예: {11,12,13,14,15,16}). 빈 set이면 전체.
+        log: 로그 콜백
+    Returns:
+        [{"lecture": 11, "olpo_label": "본문2"|"분석"|"서술형"|"", "page_off": int,
+          "paras": [{"s":..., "t":...}, ...], "source_file": basename}, ...]
+    """
+    app_name = _find_app()
+    log(f"[올포 문장삽입 추출] {os.path.basename(indd_path)} (강 {sorted(allowed_lectures)})")
+    basename = os.path.basename(indd_path)
+
+    tmp_indd = f"/tmp/final_olpo_insert_{os.getpid()}.indd"
+    copied, last_err = _gdrive_safe_copy(indd_path, tmp_indd, log=log)
+    if not copied:
+        msg = (f"GDrive 올포 문장삽입 워크북 복사 실패 (5회 재시도): "
+               f"{basename} — 마지막 오류: {last_err}")
+        log(f"  [오류] {msg}")
+        raise RuntimeError(msg)
+
+    tmp_result = f"/tmp/final_olpo_insert_result_{os.getpid()}.json"
+    if os.path.exists(tmp_result):
+        os.remove(tmp_result)
+
+    jsx_code = _build_olpo_insert_extract_jsx(tmp_indd, tmp_result, list(allowed_lectures))
+    jsx_path = f"/tmp/final_olpo_insert_{os.getpid()}.jsx"
+    with open(jsx_path, "w", encoding="utf-8") as f:
+        f.write(jsx_code)
+
+    _run_jsx_file(app_name, jsx_path, timeout=180)
+
+    waited = 0
+    while not os.path.exists(tmp_result) and waited < 120:
+        time.sleep(2)
+        waited += 2
+
+    results = []
+    if os.path.exists(tmp_result):
+        try:
+            with open(tmp_result, encoding="utf-8") as f:
+                _rtxt = f.read()
+            try:
+                raw = json.loads(_rtxt)
+            except json.JSONDecodeError:
+                raw = json.loads(_rtxt, strict=False)
+                log("  [올포 문장삽입 추출] JSON strict=False 재파싱 성공")
+            if isinstance(raw, dict) and raw.get("error"):
+                log(f"  [올포 문장삽입 추출] 에러: {raw['error']}")
+                raw = []
+            if isinstance(raw, list):
+                for r in raw:
+                    results.append({
+                        "lecture": r.get("lecture", 0),
+                        "olpo_label": r.get("olpoLabel", ""),
+                        "page_off": r.get("pageOff", -1),
+                        "paras": r.get("paras", []),
+                        "source_file": basename,
+                    })
+                log(f"  [올포 문장삽입 추출] {len(results)}개 블록 추출")
+        except Exception as e:
+            log(f"  [올포 문장삽입 추출] JSON 파싱 실패: {e}")
+
+    for tmp in [tmp_indd, tmp_result, jsx_path]:
+        try:
+            os.remove(tmp)
+        except Exception:
+            pass
+
+    return results
