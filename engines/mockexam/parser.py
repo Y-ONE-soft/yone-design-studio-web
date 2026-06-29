@@ -95,9 +95,10 @@ _RE_HEADER = re.compile(
 )
 
 # 출처 표기 단독 단락 (skip) — 상일/배재 원고에서 발문 다음 줄에 단독으로 등장
-# 예: [올림포스 영어독해 기본1 UNIT 03 Practice 02], [22번], [31번]
+# 예: [올림포스 영어독해 기본1 UNIT 03 Practice 02], [22번], [31번], [2017. 3. 23번]
+# \d{4} = 연도 출처표기([2017. 3. 23번] 등). 실제 시험지엔 안 나오는 내부 표기 → 제거.
 _RE_SOURCE_LINE = re.compile(
-    r"^\s*\[(?:올림포스|마더텅|수능특강|EBS|능률|\d+년|\d+월|\d+번)[^\]]*\]\s*\.?\s*$",
+    r"^\s*\[(?:올림포스|마더텅|수능특강|EBS|능률|\d{4}|\d+년|\d+월|\d+번)[^\]]*\]\s*\.?\s*$",
     re.UNICODE
 )
 
@@ -853,19 +854,16 @@ def _expand_instruction_groups(paragraphs):
             group.append(paragraphs[j])
             j += 1
 
-        # 각 지문블록 시작 앞에 번호 placeholder 삽입
-        def _prev_meaningful(gi):
-            k = gi - 1
-            while k >= 0 and group[k].get("pstyle") == "_skip":
-                k -= 1
-            return group[k].get("pstyle") if k >= 0 else None
-
+        # 각 지문블록 시작 앞에 번호 placeholder 삽입.
+        # 지문 경계 = 직전이 출처태그(_header/_skip)·선지·그룹시작. (출처태그가 각 지문을
+        # 구분하므로 _skip을 건너뛰지 말 것 — 어법/낱말 문제는 선지 없이 영단어로 끝남)
         made = 0
         rebuilt = []
         for gi in range(len(group)):
             cs = group[gi].get("pstyle")
+            prev = group[gi - 1].get("pstyle") if gi > 0 else None
             is_start = (cs in _PASSAGE_START_STYLES and made < count and
-                        _prev_meaningful(gi) in (None, "선지", "_header"))
+                        prev in (None, "선지", "_header", "_skip"))
             if is_start:
                 rebuilt.append({"text": "", "runs": [{"t": "", "ul": False}],
                                 "pstyle": "문제 번호"})
