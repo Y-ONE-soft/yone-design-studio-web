@@ -5134,6 +5134,17 @@ def _merge_mock_insert_blocks(insert_blocks, mock_blocks, sentence_blocks=None, 
         if _ph.startswith("올포 "):
             _existing_olpo_hdrs.add(_ph)
 
+    # 교과서 삽입 본문 제한: 배열(권위)의 교과서 과별 최대 본문번호 초과분 제외.
+    # (능률(오) standalone 파일에 시험범위 밖 supplementary 본문6 등이 있을 때 차단 —
+    #  배열은 워크북 소스라 본문1~5만, 삽입은 standalone 소스라 본문6 혼입되던 사고 방어)
+    _tb_max_body = {}  # 과(str) -> max 본문번호(int)
+    for sb in (sentence_blocks or []):
+        _hm = re.match(r"교과서(\d+)과\s*본문(\d+)", sb.get("header", "") or "")
+        if _hm:
+            _ls, _bn = _hm.group(1), int(_hm.group(2))
+            if _bn > _tb_max_body.get(_ls, 0):
+                _tb_max_body[_ls] = _bn
+
     added = 0
     for mb in mock_blocks:
         # ── 교과서 위치라벨 폴백 블록: is_textbook + olpo_label(본문N), qnum 없음 ──
@@ -5144,6 +5155,10 @@ def _merge_mock_insert_blocks(insert_blocks, mock_blocks, sentence_blocks=None, 
             _thdr = f"교과서{_tlnum}과 {_tlabel}" if _tlnum and _tlabel else None
             paras_t = mb.get("paras", [])
             if not paras_t or not _thdr:
+                continue
+            # 시험범위 밖 교과서 본문(예: 능률오2과 standalone 본문6 Wozniak/Jobs) 제외
+            _tbm = re.match(r"본문(\d+)", _tlabel)
+            if _tbm and str(_tlnum) in _tb_max_body and int(_tbm.group(1)) > _tb_max_body[str(_tlnum)]:
                 continue
             processed_t = []
             for p in paras_t:
