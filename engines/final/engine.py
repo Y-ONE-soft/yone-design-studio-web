@@ -1647,6 +1647,18 @@ class FinalEngine(BaseEngine):
                 # >>내용요약 앞 빈줄 정규화: 소스가 1~2빈줄/스페이스낀빈줄로 제멋대로 → 일괄 2빈줄(\n\n\n)
                 vocab_left = re.sub(r"\s*>>내용요약", "\n\n\n>>내용요약", vocab_left)
                 vocab_right = re.sub(r"\s*>>내용요약", "\n\n\n>>내용요약", vocab_right)
+                # 깨진 em-dash 복원: 영어 지문 속 '式'(U+5F0F, 式)는 '─'(U+2500, ─) 오타
+                # (시트 소스 데이터 깨짐). 단, 단어 뜻의 한자(예: '方式' 方式)는 보존 —
+                # 양옆을 공백+ASCII(비공백)로 감싼 경우만 변환하여 한글/한자 인접 식별자는 건드리지 않음.
+                _vocab_dash = lambda _t: re.sub(
+                    "(?<=[\\x21-\\x7e])\\s+式\\s+(?=[\\x21-\\x7e])", " ─ ", _t)
+                _vl0, _vr0 = vocab_left, vocab_right
+                vocab_left = _vocab_dash(vocab_left)
+                vocab_right = _vocab_dash(vocab_right)
+                _ndash = (_vl0.count("式") - vocab_left.count("式")) + \
+                         (_vr0.count("式") - vocab_right.count("式"))
+                if _ndash:
+                    log(f"[중요어휘] em-dash 복원(式→─): {_ndash}건")
                 log(f"[중요어휘] 결과: 왼쪽 {len(vocab_left)}자, 오른쪽 {len(vocab_right)}자")
             except Exception as e:
                 import traceback
