@@ -722,6 +722,70 @@ def _mark_post_read_box(paragraphs):
     return paragraphs
 
 
+# ── 어법 매트릭스(선지 표) 재조립 ────────────────────────────────────────────────
+# 일부 어법 문제는 [I]~[V] 행 × ①~⑤ 열 표인데, 원고가 셀을 단락 하나씩(열 우선)으로
+# 풀어놓아 조판 시 세로로 깨진다. 패턴을 감지해 탭 구분 행 단락으로 재조립한다.
+# 예: 행라벨 [I][II][III][IV][V] + (① + 행수만큼 셀) × 열수 → 탭 표 (1회 (A)(B)(C)식 렌더)
+_RE_MATRIX_ROWLABEL = re.compile(r"^\[(?:[IVXLC]+|\d{1,2})\]$", re.UNICODE)
+_RE_MATRIX_CHOICE = re.compile(r"^[①-⑩]$", re.UNICODE)
+_RE_MATRIX_CELL = re.compile(r"^\([a-zA-Z]\)$", re.UNICODE)
+
+
+def _merge_choice_matrix(paragraphs):
+    """행라벨+선지셀로 평탄화된 어법 매트릭스를 탭 구분 표 행으로 재조립."""
+    if not paragraphs:
+        return paragraphs
+
+    n = len(paragraphs)
+    out = []
+    i = 0
+    while i < n:
+        # 1) 연속 행라벨 수집 ([I][II]...)
+        j = i
+        labels = []
+        while j < n and _RE_MATRIX_ROWLABEL.match(paragraphs[j].get("text", "").strip()):
+            labels.append(paragraphs[j]["text"].strip())
+            j += 1
+
+        if len(labels) >= 3:
+            m = len(labels)
+            # 2) (선지마커 + m개 셀) 그룹 반복 수집
+            cols = []
+            k = j
+            while k < n and _RE_MATRIX_CHOICE.match(paragraphs[k].get("text", "").strip()):
+                marker = paragraphs[k]["text"].strip()
+                cells = []
+                kk = k + 1
+                while kk < n and len(cells) < m and \
+                        _RE_MATRIX_CELL.match(paragraphs[kk].get("text", "").strip()):
+                    cells.append(paragraphs[kk]["text"].strip())
+                    kk += 1
+                if len(cells) != m:
+                    break  # 깔끔한 매트릭스 아님
+                cols.append((marker, cells))
+                k = kk
+
+            if len(cols) >= 2:
+                # 3) 행 우선 탭 표로 재구성 (헤더: 빈칸+①②… / 각 행: 라벨+셀들)
+                def _mkpara(text):
+                    return {"text": text,
+                            "runs": [{"t": text, "ul": False}],
+                            "pstyle": "선지"}
+
+                header = "\t" + "\t".join(c[0] for c in cols)
+                out.append(_mkpara(header))
+                for r in range(m):
+                    row = labels[r] + "\t" + "\t".join(c[1][r] for c in cols)
+                    out.append(_mkpara(row))
+                i = k
+                continue
+
+        out.append(paragraphs[i])
+        i += 1
+
+    return out
+
+
 # ── 문제 단위 분할 ────────────────────────────────────────────────────────────
 
 def _split_into_questions(classified_paras):
@@ -829,6 +893,9 @@ def parse_manuscript(filepath, school, grade, exam_period, exam_date,
 
     # 2.6) 후처리: '다음 글을 읽고' 후 박스 본문 표시
     classified = _mark_post_read_box(classified)
+
+    # 2.7) 어법 매트릭스(평탄화된 [I]~[V]×①~⑤ 표) 탭 표로 재조립
+    classified = _merge_choice_matrix(classified)
 
     # 3) 문제 단위 분할
     questions, meta = _split_into_questions(classified)
