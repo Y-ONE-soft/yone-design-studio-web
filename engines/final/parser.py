@@ -5636,7 +5636,7 @@ def parse_extracted(extracted_path, vocab_left, vocab_right,
     # (사용자 지정 출처: "고1_25년_6월_전체(C).indd" 등 통합 파일)
     if mock_insert_blocks and grade in ("\uace01", "\uace02"):
         _merge_mock_insert_blocks(insert_blocks, mock_insert_blocks,
-                                  sentence_blocks=vol1.get("문장배열", sentence_blocks), log=log)
+                                  sentence_blocks=sentence_blocks, log=log)
 
     # 마더텅 문장배열/삽입 exam_code bleed 보정(중복 코드에만 트리거) — relabel/dedup 전.
     # (한영1 6강8·18이 앞 지문 코드를 물려받아 헤더 중복→dedup 드롭되던 사고 차단)
