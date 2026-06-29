@@ -107,11 +107,17 @@ _RE_META = re.compile(r"^객(?:관식)?\s*\d+\s*[/,]?\s*서", re.UNICODE)
 # 원고 제목 줄: "한영고 1학년 동형 모의고사 1회" 등 — 본문 아닌 스캐폴딩 (skip)
 _RE_DOC_TITLE = re.compile(r"^.{0,20}동형\s*모의고사\s*\d*\s*회\s*$", re.UNICODE)
 
+# 서답형/서술형 명시 마커: "[서답형1]", "[서술형 2]" 등 — 이게 있으면 무조건 서술형.
+# (객관식/서술형 구분의 가장 신뢰할 수 있는 신호. "~시오" 어미 휴리스틱보다 우선)
+_RE_DESC_MARKER = re.compile(r"^\s*\[\s*서[답술]형\s*\d*\s*\]", re.UNICODE)
+
 # 발문 분류 패턴 (Final_test.jsx 기반)
-# 1) "다음 글을 읽고 물음에 답하시오" + 변형 (공백/쉼표/마침표)
+# 1) "다음 글을 읽고 (물음/질문)에 답하시오" + 변형 (공백/쉼표/마침표)
+#    → 지문 묶음 발문(passage intro). 뒤의 "윗글…것은?" 들이 실제 객관식 문항.
+#    "물음에"뿐 아니라 "질문에 답하시오"도 인식해야 함(원고마다 다름).
 #    [N~M] / [N-M] / [선택형 N~M] 같은 prefix 허용 (명일/성덕 케이스)
 _RE_INTRO_READ = re.compile(
-    r"(?:^\[[^\]]*\d[^\]]*\]\s*)?다음\s*글을\s*읽고[,]?\s*물음에\s*답하시오\.?",
+    r"(?:^\[[^\]]*\d[^\]]*\]\s*)?다음\s*글을\s*읽고[,]?\s*(?:물음|질문)에\s*답하시오\.?",
     re.UNICODE
 )
 # 2) 객관식 "고르시오" 발문 (서술형 시오 검사보다 먼저 — 대부분 객관식)
@@ -119,9 +125,12 @@ _RE_INTRO_READ = re.compile(
 _RE_INTRO_CHOOSE = re.compile(
     r"고르시오\.?(?:\s*[\[\(][^\]\)]*[\]\)])*\s*$", re.UNICODE
 )
-# 3) 서술형 발문: "~시오." 끝, 시오 뒤 [출처]·(점수) 허용
+# 3) 서술형 발문: 진짜 서술형 어미(쓰시오/고치시오/배열/영작/서술/완성/채우)로 끝.
+#    ⚠ "답하시오"(지문 묶음 intro)·"고르시오"(객관식)는 서술형이 아님 → 제외.
+#    (예전엔 generic "시오"라서 "질문에 답하시오"가 서술형으로 오분류됐음)
 _RE_INTRO_DESC = re.compile(
-    r"시오\.?(?:\s*[\[\(][^\]\)]*[\]\)])*\s*$", re.UNICODE
+    r"(?:쓰시오|고치시오|배열하시오|영작하시오|서술하시오|완성하시오|채우시오)"
+    r"\.?(?:\s*[\[\(][^\]\)]*[\]\)])*\s*$", re.UNICODE
 )
 # 4) 객관식 발문: 한글 + ?로 끝남, 후행 [출처]·(점수) 허용
 #    예: "...것은? [21년 6월 22번]" / "...곳은? (1.2점)"
@@ -328,7 +337,18 @@ def _classify_paragraph(text, prev_style, in_descriptive_block, ctx=None):
         return "서술형답지"
 
     # 발문 분류 (우선순위 순) — 모든 발문은 in_box / expect_box reset
-    # 1) "다음 글을 읽고 물음에 답하시오" — 최우선
+    # 0) 서답형/서술형 명시 마커([서답형N]) — 가장 신뢰도 높은 신호, 최우선
+    if _RE_DESC_MARKER.match(stripped):
+        if ctx is not None:
+            ctx["expect_box"] = None
+            ctx["pending_summary"] = False
+            ctx["after_insert_box"] = False
+            ctx["pending_qa"] = False
+            ctx["in_qa_box"] = False
+            ctx["expect_first_passage"] = False
+            ctx["in_box"] = None
+        return "서술형 번호"
+    # 1) "다음 글을 읽고 (물음/질문)에 답하시오" — 지문 묶음 intro (객관식)
     if _RE_INTRO_READ.search(stripped):
         if ctx is not None:
             ctx["expect_box"] = None
