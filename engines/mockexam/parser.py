@@ -806,6 +806,76 @@ def _merge_choice_matrix(paragraphs):
     return out
 
 
+# ── 지시문형 묶음 발문 펼치기 ─────────────────────────────────────────────────
+# "[3~4] 다음 글의 내용과 일치하지 않는 것을 고르시오." 처럼 한 지시문에 N개 지문이
+# 묶인 경우: 지시문은 비번호 헤더로 두고, 각 지문 앞에 빈 '문제 번호' placeholder를
+# 삽입해 InDesign 자동번호가 N..M으로 매겨지게 한다. (안 그러면 둘째 지문이 번호 없이
+# 지문+선지만 떠서 "발문 없는 블록"이 됨)
+# ※ 지문묶음 intro("다음 글을 읽고 …답하시오")는 '문제 번호'가 아니라 별도 하위 발문이
+#   있으므로 여기 해당 안 됨.
+_RE_RANGE_PREFIX = re.compile(r"^\s*\[\s*(\d+)\s*[~\-]\s*(\d+)\s*\]")
+_PASSAGE_START_STYLES = (
+    "지문", "지문_순서", "영단어",
+    "테두리_순서", "테두리_요약", "테두리_순서삽입", "테두리_조건", "테두리_보기",
+)
+
+
+def _expand_instruction_groups(paragraphs):
+    if not paragraphs:
+        return paragraphs
+    n = len(paragraphs)
+    out = []
+    i = 0
+    while i < n:
+        p = paragraphs[i]
+        m = _RE_RANGE_PREFIX.match(p.get("text", "")) if p.get("pstyle") == "문제 번호" else None
+        if not m:
+            out.append(p)
+            i += 1
+            continue
+        lo, hi = int(m.group(1)), int(m.group(2))
+        count = hi - lo + 1
+        if count < 2:
+            out.append(p)
+            i += 1
+            continue
+
+        # 지시문 → 비번호 헤더
+        header = dict(p)
+        header["pstyle"] = "다음 글을 읽고"
+        out.append(header)
+
+        # 그룹 본문 수집(다음 진짜 발문 전까지)
+        j = i + 1
+        group = []
+        while j < n and paragraphs[j].get("pstyle") not in (
+                "문제 번호", "서술형 번호", "다음 글을 읽고"):
+            group.append(paragraphs[j])
+            j += 1
+
+        # 각 지문블록 시작 앞에 번호 placeholder 삽입
+        def _prev_meaningful(gi):
+            k = gi - 1
+            while k >= 0 and group[k].get("pstyle") == "_skip":
+                k -= 1
+            return group[k].get("pstyle") if k >= 0 else None
+
+        made = 0
+        rebuilt = []
+        for gi in range(len(group)):
+            cs = group[gi].get("pstyle")
+            is_start = (cs in _PASSAGE_START_STYLES and made < count and
+                        _prev_meaningful(gi) in (None, "선지", "_header"))
+            if is_start:
+                rebuilt.append({"text": "", "runs": [{"t": "", "ul": False}],
+                                "pstyle": "문제 번호"})
+                made += 1
+            rebuilt.append(group[gi])
+        out.extend(rebuilt)
+        i = j
+    return out
+
+
 # ── 문제 단위 분할 ────────────────────────────────────────────────────────────
 
 def _split_into_questions(classified_paras):
@@ -916,6 +986,9 @@ def parse_manuscript(filepath, school, grade, exam_period, exam_date,
 
     # 2.7) 어법 매트릭스(평탄화된 [I]~[V]×①~⑤ 표) 탭 표로 재조립
     classified = _merge_choice_matrix(classified)
+
+    # 2.8) 지시문형 묶음([3~4] 등) 펼치기 — 각 지문 앞 번호 placeholder
+    classified = _expand_instruction_groups(classified)
 
     # 3) 문제 단위 분할
     questions, meta = _split_into_questions(classified)
