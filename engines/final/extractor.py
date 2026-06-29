@@ -1382,27 +1382,51 @@ if (doc) {{
         // (STEP3/실전문제 통짜 스토리는 발문을 본문 안에 품고 있어도 하단 스타일이 없어 제외)
         if (!hasPrompt || !hasInsertStyle) continue;
 
-        // 스토리 첫 프레임 페이지 + Y로 강/라벨 판정
-        var pageOff = -1, storyY = -1;
-        try {{
-            var tc0 = st.textContainers[0];
-            if (tc0.parentPage) pageOff = tc0.parentPage.documentOffset;
-            storyY = tc0.geometricBounds[0];
-        }} catch(e) {{}}
-        if (pageOff < 0) continue;
-
-        var lec = _lectureOf(pageOff);
-        if (!lectureAllowed(lec)) continue;
-        var olpoLbl = _olpoLabelOf(pageOff, storyY);
-
-        var paras = [];
-        for (var pj = 0; pj < st.paragraphs.length; pj++) {{
-            var pt = st.paragraphs[pj].contents;
-            if (pt) pt = pt.replace(/\\r$/, "");
-            var psn = ""; try {{ psn = st.paragraphs[pj].appliedParagraphStyle.name; }} catch(e) {{}}
-            paras.push({{s: psn, t: pt || ""}});
+        // 한 스토리에 여러 문제가 라벨(분석/서술/논술/01~09)로 구분되어 묶여 있음.
+        // 라벨 단락 기준으로 세그먼트 분리 → 문제별 1블록. 각 세그먼트는 발문 이후만
+        // (라벨/➡/￼ 잡문자 제외) 채택. (모의 emitSegment와 동일 원리)
+        function _olpoLabelKind(t) {{
+            var c = t.replace(/[\\s\\u3000]/g, "");
+            if (c === "분석" || c === "[분석]") return "분석";
+            if (c === "서술" || c === "서술형" || c === "[서술]") return "서술형";
+            if (c === "논술" || c === "논술형" || c === "[논술]") return "논술형";
+            var m = c.match(/^[\\[]?0?([1-9])[\\]]?$/);
+            if (m) return "본문" + m[1];
+            return null;
         }}
-        results.push({{idx: si, pageOff: pageOff, lecture: lec, olpoLabel: olpoLbl, paras: paras}});
+        var _segs = [];
+        for (var _pj = 0; _pj < st.paragraphs.length; _pj++) {{
+            var _sn = ""; try {{ _sn = st.paragraphs[_pj].appliedParagraphStyle.name; }} catch(e) {{}}
+            if (_sn !== "[기본 단락]" && _sn !== "[Basic Paragraph]") continue;
+            var _ct = (st.paragraphs[_pj].contents || "").replace(/[\\r\\n\\t]/g, "").replace(/^\\s+|\\s+$/g, "");
+            var _lk = _olpoLabelKind(_ct);
+            if (_lk) _segs.push({{label: _lk, start: _pj}});
+        }}
+        for (var _sgi = 0; _sgi < _segs.length; _sgi++) {{
+            var _sStart = _segs[_sgi].start;
+            var _sEnd = (_sgi + 1 < _segs.length) ? _segs[_sgi + 1].start : st.paragraphs.length;
+            var _promptIdx = -1;
+            for (var _kk = _sStart; _kk < _sEnd; _kk++) {{
+                var _cc = (st.paragraphs[_kk].contents || "").replace(/[\\r\\n\\t]/g, " ").replace(/^\\s+|\\s+$/g, "");
+                if (_cc.indexOf(INSERT_PROMPT_1) !== -1 || _cc.indexOf(INSERT_PROMPT_2) !== -1 || _cc.indexOf(INSERT_PROMPT_3) !== -1) {{ _promptIdx = _kk; break; }}
+            }}
+            if (_promptIdx < 0) continue;
+            var _segPg = -1;
+            try {{ var _ptf = st.paragraphs[_promptIdx].parentTextFrames; if (_ptf.length > 0 && _ptf[0].parentPage) _segPg = _ptf[0].parentPage.documentOffset; }} catch(e) {{}}
+            if (_segPg < 0) {{ try {{ var _tc0 = st.textContainers[0]; if (_tc0.parentPage) _segPg = _tc0.parentPage.documentOffset; }} catch(e) {{}} }}
+            var _segLec = _lectureOf(_segPg);
+            if (!lectureAllowed(_segLec)) continue;
+            var _segParas = [];
+            for (var _kk2 = _promptIdx; _kk2 < _sEnd; _kk2++) {{
+                var _pt = st.paragraphs[_kk2].contents; if (_pt) _pt = _pt.replace(/\\r$/, "");
+                var _psn = ""; try {{ _psn = st.paragraphs[_kk2].appliedParagraphStyle.name; }} catch(e) {{}}
+                var _cl = (_pt || "").replace(/[\\r\\n\\t\\s\\u3000\\u27a1\\ufffc]/g, "");
+                if (_cl === "") continue;
+                _segParas.push({{s: _psn, t: _pt || ""}});
+            }}
+            if (_segParas.length < 2) continue;
+            results.push({{idx: si, pageOff: _segPg, lecture: _segLec, olpoLabel: _segs[_sgi].label, paras: _segParas}});
+        }}
     }}
 
     var outFile = new File(outputPath);
