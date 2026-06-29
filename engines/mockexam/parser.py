@@ -101,8 +101,11 @@ _RE_SOURCE_LINE = re.compile(
     re.UNICODE
 )
 
-# 메타 정보: "객관식 25, 서술형 6"
-_RE_META = re.compile(r"^객관식\s*\d+", re.UNICODE)
+# 메타 정보: "객관식 25, 서술형 6" / "객 24 / 서 6" (학교별 약식 표기)
+_RE_META = re.compile(r"^객(?:관식)?\s*\d+\s*[/,]?\s*서", re.UNICODE)
+
+# 원고 제목 줄: "한영고 1학년 동형 모의고사 1회" 등 — 본문 아닌 스캐폴딩 (skip)
+_RE_DOC_TITLE = re.compile(r"^.{0,20}동형\s*모의고사\s*\d*\s*회\s*$", re.UNICODE)
 
 # 발문 분류 패턴 (Final_test.jsx 기반)
 # 1) "다음 글을 읽고 물음에 답하시오" + 변형 (공백/쉼표/마침표)
@@ -277,6 +280,10 @@ def _classify_paragraph(text, prev_style, in_descriptive_block, ctx=None):
     # 메타 정보
     if _RE_META.match(stripped):
         return "_meta"
+
+    # 원고 제목 줄 (동형 모의고사 N회) — 본문 스캐폴딩, 제외
+    if _RE_DOC_TITLE.match(stripped):
+        return "_skip"
 
     # 헤더
     if _RE_HEADER.match(stripped):
