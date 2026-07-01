@@ -211,11 +211,14 @@ def _run_jsx_once(jsx_path: str, log, poll_log_path: str = None, timeout: int = 
             except OSError:
                 pass
 
+        # NEVER_INTERACT로 다이얼로그 억제 후 JSX 실행. try/finally로 감싸
+        # JSX가 에러로 죽어도 반드시 INTERACT_WITH_ALL로 복원 — 그래야 이후
+        # 사람이 같은 InDesign을 쓸 때 경고창이 정상적으로 뜬다(비대화 잔류 방지).
         bootstrap = (
             'app.scriptPreferences.userInteractionLevel = UserInteractionLevels.NEVER_INTERACT;'
             f'var _f = new File("{tmp_jsx}");'
-            'app.doScript(_f, ScriptLanguage.JAVASCRIPT);'
-            'app.scriptPreferences.userInteractionLevel = UserInteractionLevels.INTERACT_WITH_ALL;'
+            'try{ app.doScript(_f, ScriptLanguage.JAVASCRIPT); }'
+            'finally{ app.scriptPreferences.userInteractionLevel = UserInteractionLevels.INTERACT_WITH_ALL; }'
         )
 
         log("[InDesign] JSX 실행 시작...")
