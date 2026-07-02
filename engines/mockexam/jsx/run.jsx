@@ -481,6 +481,8 @@
             catch(e) { writeLog(logPath, "[경고] 세종 박스 라벨 재지정 실패: " + (e.message || e)); }
             try { restartConditionNumbering(doc, story, logPath); }
             catch(e) { writeLog(logPath, "[경고] 세종 조건 번호 리셋 실패: " + (e.message || e)); }
+            try { centerArrows(doc, story, logPath); }
+            catch(e) { writeLog(logPath, "[경고] 세종 화살표 정렬 실패: " + (e.message || e)); }
         } else {
             try { autoPlacePasteboardHeaders(doc, story, logPath); }
             catch(e) { writeLog(logPath, "[경고] 페이스트보드 헤더 배치 실패: " + (e.message || e)); }
@@ -489,6 +491,21 @@
 
     // 세종: 박스 내 '<보기>'/'<조건>'/'<요약>' 라벨줄 → 중앙 라벨 스타일(테두리_라벨).
     // 실제 기출지처럼 박스 상단 중앙에 번호 없이 얹힘(동일 테두리라 박스와 자동 병합).
+    // 세종: 단독 화살표(↓↑⇓⇑) 단락을 가운데 정렬 (순서삽입/요약 문항의 화살표).
+    function centerArrows(doc, story, logPath) {
+        var paras = story.paragraphs;
+        var cnt = 0;
+        for (var i = 0; i < paras.length; i++) {
+            var t = "";
+            try { t = paras[i].contents; } catch(e) { continue; }
+            var s = String(t).replace(/[\s\r\n]/g, "");
+            if (s === "↓" || s === "↑" || s === "⇓" || s === "⇑") {
+                try { paras[i].justification = Justification.CENTER_ALIGN; cnt++; } catch(e) {}
+            }
+        }
+        writeLog(logPath, "세종 화살표 가운데정렬: " + cnt + "개");
+    }
+
     // 세종: 조건 박스마다 항목 번호를 (1)부터 리셋. 박스 경계 = 앞 단락이 번호매김 조건항목이 아님.
     function restartConditionNumbering(doc, story, logPath) {
         var paras = story.paragraphs;

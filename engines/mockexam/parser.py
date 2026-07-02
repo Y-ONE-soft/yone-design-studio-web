@@ -617,6 +617,35 @@ def _normalize_condition_items(paragraphs):
             _strip_leading_marker(p)
 
 
+# (A)(B) 이중빈칸 선지: '① wordA\t...\twordB' → '① wordA\t…\twordB' 로 통일.
+# 원고마다 탭만/…… 등 제각각인 것을 가운데 '…'(U+2026) 한 개 + 탭 정렬로 정규화.
+_RE_CHOICE_NUM = re.compile(r"^\s*([①②③④⑤⑥⑦⑧⑨⑩])\s*")
+_RE_AB_SPLIT = re.compile(r"\s*\t+\s*(?:[…·⋯.…]+\s*\t*\s*)?")
+
+
+def _normalize_ab_choices(paragraphs):
+    """(A)(B) 이중빈칸 선지의 구분자를 '…'로 통일 (탭 정렬 유지)."""
+    for p in paragraphs:
+        if p.get("pstyle") != "선지":
+            continue
+        t = p.get("text", "")
+        if "\t" not in t:
+            continue
+        m = _RE_CHOICE_NUM.match(t)
+        if not m:
+            continue  # 헤더행 '(A)\t(B)' 등은 건드리지 않음
+        rest = t[m.end():]
+        parts = _RE_AB_SPLIT.split(rest, 1)
+        if len(parts) != 2:
+            continue
+        a, b = parts[0].strip(), parts[1].strip()
+        if not a or not b:
+            continue
+        newt = m.group(1) + " " + a + "\t…\t" + b
+        p["text"] = newt
+        p["runs"] = [{"t": newt, "ul": False}]
+
+
 def _merge_grouped_intros(paragraphs):
     """묶음 발문 통합 (parser 후처리).
 
@@ -1029,6 +1058,9 @@ def parse_manuscript(filepath, school, grade, exam_period, exam_date,
 
     # 2.55) 조건 항목 선두 마커 제거 (실제 기출지처럼 (1)(2)(3) 자동번호로 통일)
     _normalize_condition_items(classified)
+
+    # 2.56) (A)(B) 이중빈칸 선지 구분자 '…' 통일
+    _normalize_ab_choices(classified)
 
     # 2.6) 후처리: '다음 글을 읽고' 후 박스 본문 표시
     classified = _mark_post_read_box(classified)
