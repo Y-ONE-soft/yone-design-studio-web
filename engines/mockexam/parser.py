@@ -623,18 +623,29 @@ _RE_CHOICE_NUM = re.compile(r"^\s*([①②③④⑤⑥⑦⑧⑨⑩])\s*")
 _RE_AB_SPLIT = re.compile(r"\s*\t+\s*(?:[…·⋯.…]+\s*\t*\s*)?")
 
 
+_RE_CIRCLED = "①②③④⑤⑥⑦⑧⑨⑩"
+_RE_ORDER_PATTERN = re.compile(r"\([A-E]\)\s*[-–~]\s*\([A-E]\)")
+
+
 def _normalize_ab_choices(paragraphs):
-    """(A)(B) 이중빈칸 선지의 구분자를 '…'로 통일 (탭 정렬 유지)."""
+    """(A)(B) 이중빈칸 선지의 구분자를 '…'로 통일 (탭 정렬 유지).
+    ⚠ 순서(ordering) 선지 '① (A)-(C)-(B) \\t ② ...'는 제외:
+      - 원문자가 1개인 선지만 (순서 선지는 한 줄에 ①②③ 묶임)
+      - '(A)-(C)' 같은 순서 패턴 포함 시 제외."""
     for p in paragraphs:
         if p.get("pstyle") != "선지":
             continue
         t = p.get("text", "")
         if "\t" not in t:
             continue
+        if sum(t.count(c) for c in _RE_CIRCLED) != 1:
+            continue  # 순서 선지 등 원문자 여러 개 → 제외
         m = _RE_CHOICE_NUM.match(t)
         if not m:
             continue  # 헤더행 '(A)\t(B)' 등은 건드리지 않음
         rest = t[m.end():]
+        if _RE_ORDER_PATTERN.search(rest):
+            continue  # 순서 배열 선지 제외
         parts = _RE_AB_SPLIT.split(rest, 1)
         if len(parts) != 2:
             continue
