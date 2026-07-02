@@ -17,16 +17,26 @@ INDESIGN_VERSIONS = ["2026", "2025", "2024", "2023", "2022"]
 
 
 def _is_indesign_running(app_name: str) -> bool:
-    """System Events를 통해 InDesign 프로세스 실행 여부 확인.
+    """InDesign 프로세스 실행 여부 확인.
     tell application "AppName" 방식은 앱을 실제로 론치시키므로 사용 금지."""
+    # 1) System Events (자동화 권한 있으면 정확)
     try:
-        # 프로세스 이름은 앱 번들 이름과 동일
         r = subprocess.run(
             ["osascript", "-e",
              f'tell application "System Events" to (name of processes) contains "{app_name}"'],
             capture_output=True, text=True, timeout=5
         )
-        return r.stdout.strip() == "true"
+        if r.stdout.strip() == "true":
+            return True
+    except Exception:
+        pass
+    # 2) pgrep fallback (System Events 자동화 권한 -1743 거부 시)
+    try:
+        r = subprocess.run(
+            ["pgrep", "-f", app_name],
+            capture_output=True, text=True, timeout=5
+        )
+        return r.returncode == 0 and bool(r.stdout.strip())
     except Exception:
         return False
 
