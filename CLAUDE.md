@@ -75,9 +75,9 @@ docx/hwp/hwpx에서 단락 + 밑줄 정보를 추출하고, 발문/지문/선지
 - 새 엔진을 추가할 때 `engines/registry.py`의 `_ENGINE_LIST`에서 기존 엔진을 삭제하지 않는다.
 - subjects.json의 `engine_id`는 `material_id`와 정확히 일치해야 인덱스 카드 → 페이지 이동이 동작.
 
-## 운영 규칙 (상위 CLAUDE.md에서 강제 — 자동 주입됨)
+## 운영 규칙 (MANDATORY)
 
-- **yonestudio.com**은 Cloudflare Tunnel로 localhost:5010에 묶여 있어 **Flask 재시작 = 즉시 실서비스 배포**. 코드 수정 → Flask 재시작 → localhost와 yonestudio.com 양쪽 모두 동작 확인까지가 작업 완료의 정의.
+- **yonestudio.com**은 Cloudflare Tunnel로 localhost:5010에 묶여 있어 **Flask 재시작 = 즉시 실서비스 배포**. 절차: 코드 수정 → Flask 재시작(kickstart) → (해당 시) export 실행 → **localhost:5010과 yonestudio.com 양쪽 모두** 실제 동작 확인 → 양쪽이 다르면 원인 해결 전까지 작업 미완료. 상세 절차는 `deploy-check` 스킬(`.claude/skills/deploy-check/`) 참조.
 - **구글 드라이브 파일은 직접 수정 금지** — 반드시 로컬로 복사 후 작업 (`_gdrive_safe_copy` 사용).
 - **버그 수정 격리**: A 케이스 수정이 B 케이스를 깨뜨리지 않도록 영향 범위를 최소화. 요청 범위 외 리팩터링 금지.
 
