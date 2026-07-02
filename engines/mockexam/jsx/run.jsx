@@ -489,6 +489,29 @@
 
     // 세종: 박스 내 '<보기>'/'<조건>'/'<요약>' 라벨줄 → 중앙 라벨 스타일(테두리_라벨).
     // 실제 기출지처럼 박스 상단 중앙에 번호 없이 얹힘(동일 테두리라 박스와 자동 병합).
+    // 세종: 조건 박스마다 항목 번호를 (1)부터 리셋. 박스 경계 = 앞 단락이 번호매김 조건항목이 아님.
+    function restartConditionNumbering(doc, story, logPath) {
+        var paras = story.paragraphs;
+        var prevWasItem = false;
+        var cnt = 0;
+        for (var i = 0; i < paras.length; i++) {
+            var pn = "";
+            try { pn = paras[i].appliedParagraphStyle.name; } catch(e) {}
+            var isNumberedCond = false;
+            if (pn === "테두리_조건") {
+                try { isNumberedCond = (paras[i].bulletsAndNumberingListType == ListType.NUMBERED_LIST); } catch(e) {}
+            }
+            if (isNumberedCond) {
+                try { paras[i].numberingContinue = prevWasItem ? true : false; } catch(e) {}
+                if (!prevWasItem) cnt++;
+                prevWasItem = true;
+            } else {
+                prevWasItem = false;
+            }
+        }
+        writeLog(logPath, "세종 조건 번호 리셋: " + cnt + "개 박스");
+    }
+
     function relabelBoxHeaders(doc, story, logPath) {
         var lbl = getPStyle(doc, "테두리_라벨");
         var paras = story.paragraphs;
