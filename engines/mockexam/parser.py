@@ -105,8 +105,12 @@ _RE_SOURCE_LINE = re.compile(
 # 메타 정보: "객관식 25, 서술형 6" / "객 24 / 서 6" (학교별 약식 표기)
 _RE_META = re.compile(r"^객(?:관식)?\s*\d+\s*[/,]?\s*서", re.UNICODE)
 
-# 원고 제목 줄: "한영고 1학년 동형 모의고사 1회" 등 — 본문 아닌 스캐폴딩 (skip)
-_RE_DOC_TITLE = re.compile(r"^.{0,20}동형\s*모의고사\s*\d*\s*회\s*$", re.UNICODE)
+# 메타 문항수 단독 줄: "선택형: 24문항" / "서답형: 6문항" (세종 형식) — 배점칸이 마스터에 있어 본문 제외.
+# ⚠ "서답형 4. 다음..." 발문과 구분: 콜론 + '문항' + 줄끝 요구.
+_RE_META_COUNT = re.compile(r"^\s*(?:선택형|서답형|객관식|서술형)\s*[:：]\s*\d+\s*문항\s*$", re.UNICODE)
+
+# 원고 제목 줄: "한영고 1학년 동형 모의고사 1회", "세종1 동형 1회 원고" 등 — 본문 아닌 스캐폴딩 (skip)
+_RE_DOC_TITLE = re.compile(r"^.{0,20}동형\s*(?:모의고사)?\s*\d*\s*회(?:\s*원고)?\s*$", re.UNICODE)
 
 # 서답형/서술형 명시 마커: "[서답형1]", "[서술형 2]" 등 — 이게 있으면 무조건 서술형.
 # (객관식/서술형 구분의 가장 신뢰할 수 있는 신호. "~시오" 어미 휴리스틱보다 우선)
@@ -289,6 +293,10 @@ def _classify_paragraph(text, prev_style, in_descriptive_block, ctx=None):
 
     # 메타 정보
     if _RE_META.match(stripped):
+        return "_meta"
+
+    # 메타 문항수 단독 줄 ("선택형: 24문항" 등) — 배점칸이 마스터에 있어 본문 제외
+    if _RE_META_COUNT.match(stripped):
         return "_meta"
 
     # 원고 제목 줄 (동형 모의고사 N회) — 본문 스캐폴딩, 제외
