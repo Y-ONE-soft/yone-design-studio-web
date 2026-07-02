@@ -577,6 +577,46 @@ def _add_text_prefix(para, prefix):
         runs[0]["t"] = prefix + old_t.lstrip()
 
 
+# 조건 항목 선두 마커: 불릿(•·‣▪◦∙-–) 또는 (1)/1./1) 형태
+_RE_LEADING_MARKER = re.compile(r"^\s*(?:[•·‣▪◦∙\-–]\s*|\(\s*\d+\s*\)\s*|\d+\s*[.)]\s*)")
+
+
+def _strip_leading_marker(para):
+    """조건 항목 단락의 선두 불릿/번호 마커 제거 (text + runs[0] 동기).
+    실제 기출지처럼 (1)(2)(3) 자동번호로 통일하기 위해 원고 마커를 벗겨냄."""
+    text = para.get("text", "")
+    m = _RE_LEADING_MARKER.match(text)
+    if not m:
+        return
+    n = m.end()
+    para["text"] = text[n:]
+    runs = para.get("runs")
+    if runs:
+        remaining = n
+        for r in runs:
+            t = r.get("t", "")
+            if remaining <= 0:
+                break
+            if len(t) <= remaining:
+                remaining -= len(t)
+                r["t"] = ""
+            else:
+                r["t"] = t[remaining:]
+                remaining = 0
+
+
+_RE_BOX_LABEL_ONLY = re.compile(r"^\s*<\s*(?:보기|조건|요약|요약문)\s*>\s*$")
+
+
+def _normalize_condition_items(paragraphs):
+    """테두리_조건 항목의 선두 마커 제거 (라벨 '<조건>' 줄은 제외)."""
+    for p in paragraphs:
+        if p.get("pstyle") == "테두리_조건":
+            if _RE_BOX_LABEL_ONLY.match(p.get("text", "")):
+                continue
+            _strip_leading_marker(p)
+
+
 def _merge_grouped_intros(paragraphs):
     """묶음 발문 통합 (parser 후처리).
 
@@ -986,6 +1026,9 @@ def parse_manuscript(filepath, school, grade, exam_period, exam_date,
 
     # 2.5) 묶음 발문 통합
     classified = _merge_grouped_intros(classified)
+
+    # 2.55) 조건 항목 선두 마커 제거 (실제 기출지처럼 (1)(2)(3) 자동번호로 통일)
+    _normalize_condition_items(classified)
 
     # 2.6) 후처리: '다음 글을 읽고' 후 박스 본문 표시
     classified = _mark_post_read_box(classified)

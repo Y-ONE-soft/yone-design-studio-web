@@ -479,6 +479,8 @@
         if (school === "세종고") {
             try { relabelBoxHeaders(doc, story, logPath); }
             catch(e) { writeLog(logPath, "[경고] 세종 박스 라벨 재지정 실패: " + (e.message || e)); }
+            try { restartConditionNumbering(doc, story, logPath); }
+            catch(e) { writeLog(logPath, "[경고] 세종 조건 번호 리셋 실패: " + (e.message || e)); }
         } else {
             try { autoPlacePasteboardHeaders(doc, story, logPath); }
             catch(e) { writeLog(logPath, "[경고] 페이스트보드 헤더 배치 실패: " + (e.message || e)); }
