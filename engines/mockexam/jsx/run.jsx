@@ -474,11 +474,36 @@
         applyKoreanFonts(doc, story, logPath);
 
         // 6) 페이스트보드 박스 헤더 자동 배치 (학교가 페이지 옆에 미리 둔 <보기>/<조건> 라벨)
-        try {
-            autoPlacePasteboardHeaders(doc, story, logPath);
-        } catch(e) {
-            writeLog(logPath, "[경고] 페이스트보드 헤더 배치 실패: " + (e.message || e));
+        // 세종: <보기>/<조건>/<요약> 라벨은 박스 상단 중앙 인라인 라벨(테두리_라벨).
+        // 그 외 학교: 페이스트보드 좌측 헤더 복제 배치.
+        if (school === "세종고") {
+            try { relabelBoxHeaders(doc, story, logPath); }
+            catch(e) { writeLog(logPath, "[경고] 세종 박스 라벨 재지정 실패: " + (e.message || e)); }
+        } else {
+            try { autoPlacePasteboardHeaders(doc, story, logPath); }
+            catch(e) { writeLog(logPath, "[경고] 페이스트보드 헤더 배치 실패: " + (e.message || e)); }
         }
+    }
+
+    // 세종: 박스 내 '<보기>'/'<조건>'/'<요약>' 라벨줄 → 중앙 라벨 스타일(테두리_라벨).
+    // 실제 기출지처럼 박스 상단 중앙에 번호 없이 얹힘(동일 테두리라 박스와 자동 병합).
+    function relabelBoxHeaders(doc, story, logPath) {
+        var lbl = getPStyle(doc, "테두리_라벨");
+        var paras = story.paragraphs;
+        var cnt = 0;
+        for (var i = 0; i < paras.length; i++) {
+            var t = "";
+            try { t = paras[i].contents; } catch(e) { continue; }
+            var s = String(t).replace(/[\s\r\n ]/g, "");
+            if (s === "<보기>" || s === "<조건>" || s === "<요약>" || s === "<요약문>") {
+                var pn = "";
+                try { pn = paras[i].appliedParagraphStyle.name; } catch(e) {}
+                if (pn.indexOf("테두리") >= 0) {
+                    try { paras[i].appliedParagraphStyle = lbl; cnt++; } catch(e) {}
+                }
+            }
+        }
+        writeLog(logPath, "세종 박스 라벨 재지정: " + cnt + "개");
     }
 
     // ── 페이스트보드 박스 헤더 자동 배치 ──────────────────────────────────────
