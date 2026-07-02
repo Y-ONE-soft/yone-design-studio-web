@@ -499,7 +499,10 @@
                 var pn = "";
                 try { pn = paras[i].appliedParagraphStyle.name; } catch(e) {}
                 if (pn.indexOf("테두리") >= 0) {
-                    try { paras[i].appliedParagraphStyle = lbl; cnt++; } catch(e) {}
+                    try { paras[i].justification = Justification.CENTER_ALIGN; } catch(e) {}
+                    try { paras[i].bulletsAndNumberingListType = ListType.NO_LIST; } catch(e) {}
+                    try { paras[i].leftIndent = 0; paras[i].firstLineIndent = 0; } catch(e) {}
+                    cnt++;
                 }
             }
         }
