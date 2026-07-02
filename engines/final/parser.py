@@ -2071,9 +2071,9 @@ def _is_rp_source(src):
     return ("\ub9ac\ub529\ud30c\uc6cc" in s) or ("Reading" in s)
 
 
-def _canonical_order_key(header, source=""):
+def _canonical_order_key(header, source="", g3=False):
     """전체 섹션 순서 통일 키:
-    0: 교과서 (과, 본문번호)
+    0: 교과서 (과, 본문번호)  — 단, g3=True면 교과서는 맨끝(3.5)으로 (강·TEST 뒤)
     0.7: TED 외부지문 (TEDN, 본문번호)
     1: 리딩파워 non-Example 워크북 (강, ex_flag, sub)  -- 1,2,3,5,6강 및 9,10,11강 non-Ex
     1.5: 리딩파워 Example 워크북 (강, ex_flag, sub)    -- 9,10,11강 Example만
@@ -2082,24 +2082,26 @@ def _canonical_order_key(header, source=""):
     """
     h = _nfc(header or "").strip()
     src = _nfc(source or "")
+    # 교과서 tier — g3에선 보충(일부 지문)이라 맨끝(3.5: 강·TEST 뒤), 그 외엔 맨앞(0)
+    _tb = 3.5 if g3 else 0
     # 교과서
     m_tb = re.match(r'^\uad50\uacfc\uc11c(\d+)\uacfc\s+\ubcf8\ubb38(\d+)(?:-(\d+))?', h)
     if m_tb:
-        return (0, int(m_tb.group(1)), int(m_tb.group(2)), int(m_tb.group(3) or 0))
+        return (_tb, int(m_tb.group(1)), int(m_tb.group(2)), int(m_tb.group(3) or 0))
     m_tb_sl = re.match(r'^\uad50\uacfc\uc11cSL\s+\ubcf8\ubb38(\d+)', h)
     if m_tb_sl:
-        return (0, 999, int(m_tb_sl.group(1)), 0)
+        return (_tb, 999, int(m_tb_sl.group(1)), 0)
     m_tb_proj = re.match(r'^\uad50\uacfc\uc11cProject(\d+)\s+\ubcf8\ubb38(\d+)', h)
     if m_tb_proj:
-        return (0, 500 + int(m_tb_proj.group(1)), int(m_tb_proj.group(2)), 0)
+        return (_tb, 500 + int(m_tb_proj.group(1)), int(m_tb_proj.group(2)), 0)
     m_tb_fr = re.match(r'^\uad50\uacfc\uc11c(\d+)\uacfc\s+(?:FR|RM)', h)
     if m_tb_fr:
-        return (0, int(m_tb_fr.group(1)), 999, 0)
+        return (_tb, int(m_tb_fr.group(1)), 999, 0)
     # \uad50\uacfc\uc11c \ub525\ub7ec\ub2dd: "\uad50\uacfc\uc11cN\uacfc \ub525\ub7ec\ub2dd" (\ud63c\ud569 \uc6cc\ud06c\ubd81\uc758 [N\uacfc Deep Learning] \uc139\uc158).
     # \ud574\ub2f9 \uacfc \ubcf8\ubb38 \ub4a4(\ub2e4\uc74c \uacfc \uc55e)\uc5d0 \ubc30\uce58. \ubbf8\uc778\uc2dd \uc2dc \uae30\ud0c0(3)\ub85c \ube60\uc838 \uc62c\ud3ec\u00b7\ubaa8\uc758\uace0\uc0ac \ub4a4\ub85c \ubc00\ub9b0\ub2e4.
     m_tb_dl = re.match(r'^\uad50\uacfc\uc11c(\d+)\uacfc\s+\ub525\ub7ec\ub2dd', h)
     if m_tb_dl:
-        return (0, int(m_tb_dl.group(1)), 998, 0)
+        return (_tb, int(m_tb_dl.group(1)), 998, 0)
     # TED 외부지문 ("TED1 본문3", "TED2 본문1" 등)
     m_ted = re.match(r'^TED(\d+)\s+\ubcf8\ubb38(\d+)', h)
     if m_ted:
@@ -3283,7 +3285,9 @@ def _build_vol1(sentence_blocks, sentence_insert_blocks, vocab_left_text, vocab_
                 else:
                     tb_lesson = 0
                     tb_num = 0
-                return (0.9, tb_lesson, tb_num, h)
+                # \uace03: \uad50\uacfc\uc11c\ub294 \ubcf4\ucda9(\uc77c\ubd80 \uc9c0\ubb38)\uc774\ubbc0\ub85c \uac15\u00b7TEST \ub4a4(\ub9e8\ub05d)\uc5d0 \ubc30\uce58(tier 1.5 > test tier 1).
+                # \uc815\ubcf8 \uc21c\uc11c \ud1b5\uc77c: \uac15 \u2192 test1 \u2192 test2 \u2192 \uad50\uacfc\uc11c.
+                return (1.5, tb_lesson, tb_num, h)
             m_olpo = re.match(r'^\uc62c\ud3ec\s+(\d+)\uac15\s+(.+)$', h)
             if m_olpo:
                 lec_n = int(m_olpo.group(1))
@@ -4172,6 +4176,16 @@ def _build_vol2(grammar_lines_all, writing_kor, writing_view, scopes_info=None,
             src = _nfc(item.get("source", ""))
             po = item.get("page_off", -1)
             sec = po if po >= 0 else 10000
+            # 고3 FINALEDGE 분석편: 파일명에 "워크북 N"이 없어 전부 wb_num=999로 뭉뚱그려지면
+            # 여러 분석편 파일(01/02/03)이 page_off로 교차정렬돼 한 헤더의 영작 pair가
+            # 비연속이 되고 헤더-내용이 어긋난다. 파일을 분석편 번호(없으면 0)로 분리해
+            # 파일 내 page_off 순서를 유지한다. (이후 engine.py가 헤더를 canonical 순서로
+            # 재정렬하므로 파일 간 순서는 무관 — 파일 내 헤더별 pair 연속성만 보장하면 됨.)
+            # 고1/2 워크북엔 '분석편' 파일이 없어 이 분기에 걸리지 않는다(무영향).
+            if "분석편" in src or "FINALEDGE" in src:
+                m_an = re.search(r"분석편\s*0*(\d+)", src)
+                an_num = int(m_an.group(1)) if m_an else 0
+                return (300, an_num, sec, 0)
             # 올포는 lecture 기반 정렬 (워크북 번호 정보가 공용 파일에 없음)
             if "올림포스독해기본" in src or "올포" in src:
                 lec = item.get("lecture", 0) or 999
@@ -5077,7 +5091,10 @@ def _convert_grammar_select(grammar_select_blocks, lecture_map, exclude_gateway=
             # 교과서 어법 섹션은 첫 본문에 헤더 라인이 없을 수 있음.
             # 블록 첫 줄이 본문이면 '본문1' 헤더를 합성해 주입.
             _first_line = next((l for l in b.get("lines", []) if l.strip()), "")
-            if _first_line and not re.match(r'^\d{1,2}$', _first_line.strip()):
+            # \uccab \uc904\uc774 \ubc14\ub808 \ubc88\ud638\ub3c4, \ud55c\uae00 "{\ubcf8\ubb38N}"/"[\ubcf8\ubb38N]" \ub9c8\ucee4\ub3c4 \uc544\ub2c8\uba74 '\ubcf8\ubb381' \ud569\uc131.
+            # (\ub9c8\ucee4\uac00 \uc788\uc73c\uba74 \uc544\ub798 \ub8e8\ud504\uc5d0\uc11c \ud5e4\ub354\uac00 \ub098\uc624\ubbc0\ub85c \uc911\ubcf5 \ud569\uc131 \ubc29\uc9c0)
+            if (_first_line and not re.match(r'^\d{1,2}$', _first_line.strip())
+                    and not re.match(r'^[\[{]\s*\ubcf8\ubb38\s*\d+\s*[\]}]$', _first_line.strip())):
                 tb_counter = 1
                 result.append(f"{header_prefix} \ubcf8\ubb38{tb_counter}")
         else:
@@ -5085,6 +5102,13 @@ def _convert_grammar_select(grammar_select_blocks, lecture_map, exclude_gateway=
         for line in b.get("lines", []):
             stripped = line.strip()
             # 교과서는 헤더가 중괄호 없이 "01","02"… 형식
+            if is_tb and re.match(r'^[\[{]\s*\ubcf8\ubb38\s*\d+\s*[\]}]$', stripped):
+                # \uad50\uacfc\uc11c \ubcf8\ubb38 \uacbd\uacc4 \ub9c8\ucee4 "{\ubcf8\ubb38N}"/"[\ubcf8\ubb38N]" \u2014 \ud5e4\ub354\ub85c \ubcc0\ud658, \ubcf8\ubb38\uc5d4 \ubbf8\ud3ec\ud568.
+                # (\uae30\uc874 ^\{\d+\}$ \ub294 \uc22b\uc790\ub9cc \ub9e4\uce6d\ud574 "{\ubcf8\ubb381}"\uac00 \ubcf8\ubb38\uc73c\ub85c \ub204\uc218 \u2192 \uc5b4\ubc95\uc218\uc815
+                #  [\ud5e4\ub354,\ubcf8\ubb38] \ud398\uc5b4\ub9c1 \uc5b4\uae0b\ub0a8. \ube44\uc0c1\uae40 4\uacfc \ub4f1.)
+                tb_counter += 1
+                result.append(f"{header_prefix} \ubcf8\ubb38{tb_counter}")
+                continue
             if is_tb and re.match(r'^\d{1,2}$', stripped):
                 tb_counter += 1
                 result.append(f"{header_prefix} \ubcf8\ubb38{tb_counter}")

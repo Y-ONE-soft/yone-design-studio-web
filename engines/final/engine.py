@@ -469,6 +469,10 @@ class FinalEngine(BaseEngine):
                     # "분석"(분석편) 외에 "짤지문"(통합편 짤지문 — 본 분석편에서 빠졌으나
                     # 시험범위에 포함되는 지문 모음)도 분석 소스로 포함한다.
                     # (광문3 통합편(test2짤지문)의 test2 02·09 누락 수정.)
+                    # NOTE(merge 2026-07-02): 6/20 맥북판의 '통합편을 school_files에 직접
+                    # 포함'(강동3 2,18강 보강)은 이 버전의 unified_files 폴백(아래 elif +
+                    # 528~538행 '시험범위 강 중 분석편에 없는 강만 통합편에서 보강')으로
+                    # 대체됨 — 의도 동일, 더 정교. 그래서 아이맥판(HEAD)을 채택.
                     _nf = _nfc(f)
                     if not f.endswith(".indd"):
                         continue
@@ -477,6 +481,25 @@ class FinalEngine(BaseEngine):
                     elif "통합편" in _nf:
                         unified_files.append(os.path.join(school_dir, f))
             school_files = _drop_revised_duplicates(school_files)
+            # "사본"(복사본) 파일 제거 — 그 강/test가 비-사본 파일에 모두 포함되면 중복이므로 드롭.
+            # (한영3: "분석편02(test2)_내지 사본"의 test2는 "분석편02(test1,test2)"에 포함 →
+            #  드롭 안 하면 중요어휘·영작이 2회 중복 인쇄됨.) 강/test를 못 파싱하는
+            # 사본(교과서 등)은 보존(드롭 조건에 안 걸림).
+            if any("사본" in _nfc(os.path.basename(_f)) for _f in school_files):
+                from engines.final.scope_parser import parse_lectures_from_filename as _plf
+                _nonsabon_lecs = set()
+                for _f in school_files:
+                    if "사본" not in _nfc(os.path.basename(_f)):
+                        _nonsabon_lecs.update(_plf(_nfc(os.path.basename(_f))))
+                _kept = []
+                for _f in school_files:
+                    _bn = _nfc(os.path.basename(_f))
+                    if "사본" in _bn:
+                        _flecs = set(_plf(_bn))
+                        if _flecs and _flecs <= _nonsabon_lecs:
+                            continue
+                    _kept.append(_f)
+                school_files = _kept
             # 학교 폴더에 분석편이 있으면 그것만 사용 (번호순 정렬)
             if school_files:
                 def _ord(p):
@@ -1956,11 +1979,11 @@ class FinalEngine(BaseEngine):
                 # Vol1 순서 + canonical 순서로 missing 블록 병합
                 _all_hdrs_in_order = [_h for _h in _v1_hdrs if _h in _blocks]
                 for _mh in _missing:
-                    _mkey = _ck(_mh)
+                    _mkey = _ck(_mh, g3=(grade == "고3"))
                     # 같은 canonical 키 그룹 내에서 올바른 위치 찾기 (선두 삽입)
                     _inserted = False
                     for _i, _h in enumerate(_all_hdrs_in_order):
-                        if _ck(_h) > _mkey:
+                        if _ck(_h, g3=(grade == "고3")) > _mkey:
                             _all_hdrs_in_order.insert(_i, _mh)
                             _inserted = True
                             break
@@ -1996,10 +2019,15 @@ class FinalEngine(BaseEngine):
                     _hh = (_hi.get("header") or "").strip()
                     _start = _hi.get("start_idx", 0)
                     _end = _bnds[_rank + 1]
-                    if _hh and _hh not in _w_blocks:
-                        _w_blocks[_hh] = _wp[_start:_end]
-                        _w_order.append(_hh)
-                _sorted_hdrs = sorted(_w_order, key=lambda h: _ck(h))
+                    if _hh:
+                        # 중복 헤더(test1/test2 q_num 충돌 등)는 슬라이스를 버리지 않고 병합한다.
+                        # (기존엔 두 번째 occurrence를 drop해 해당 pair가 소실 — test2 23 등.)
+                        # 이후 고3 내용기반 재라벨이 어법 best-match로 올바른 헤더에 재배치한다.
+                        if _hh not in _w_blocks:
+                            _w_blocks[_hh] = []
+                            _w_order.append(_hh)
+                        _w_blocks[_hh].extend(_wp[_start:_end])
+                _sorted_hdrs = sorted(_w_order, key=lambda h: _ck(h, g3=(grade == "고3")))
                 _new_wp = []
                 _new_wd = []
                 for _hh in _sorted_hdrs:
@@ -2008,6 +2036,49 @@ class FinalEngine(BaseEngine):
                 _cdata["vol2"]["\uc11c\uc220\ud615\uc601\uc791"] = _new_wp
                 _cdata["vol2"]["\uc601\uc791_\ud5e4\ub354_\uc0c1\uc138"] = _new_wd
                 _cdata["vol2"]["\uc601\uc791_\ud5e4\ub354"] = [_h["header"] for _h in _new_wd]
+
+                # \uace03 \uc601\uc791 \ub0b4\uc6a9\uae30\ubc18 \uc7ac\ub77c\ubca8 \u2014 TEST \ub4f1 \ubcd1\ud569 \uc2a4\ud1a0\ub9ac/q_num \uc624\ud560\ub2f9\uc73c\ub85c \uc601\uc791 \ud5e4\ub354-\ub0b4\uc6a9\uc774
+                # \uc5b4\uae0b\ub098\ub294 \uac83\uc744, \uc815\ub82c \ubb34\uacb0\ud55c \uc5b4\ubc95\uc218\uc815 \ubcf8\ubb38\uc744 ground truth\ub85c \uad50\uc815\ud55c\ub2e4. \uac01 pair\uc758
+                # choices(\uc601\uc5b4)\ub97c \uc5b4\ubc95\ubcf8\ubb38 \ud1a0\ud070\uacfc best-match\ud574 \uc9c4\uc9dc \ud5e4\ub354\ub97c \uc0b0\ucd9c, \uadf8 \ud5e4\ub354\ub85c \uc7ac\uadf8\ub8f9\ud654.
+                # \ucd5c\uc18c 3\ud1a0\ud070 \uc77c\uce58 \uac00\ub4dc(\uc57d\ud55c \ub9e4\uce6d\uc740 \uc6d0 \ud5e4\ub354 \uc720\uc9c0) \u2192 \uc815\uc0c1 \uc815\ub82c \ud559\uad50\ub294 \ubb34\ubcc0\uacbd(\ud68c\uadc0 \ubc29\uc9c0).
+                if grade == "\uace03" and _new_wp and _new_wd:
+                    _gl = (_cdata.get("vol2", {}) or {}).get("\uc5b4\ubc95\uc218\uc815", []) or []
+                    _gtok = {}
+                    for _gi in range(0, len(_gl), 2):
+                        _gh2 = _gl[_gi]
+                        _gb2 = _gl[_gi + 1] if _gi + 1 < len(_gl) else ""
+                        _gtok[_gh2] = set(re.findall(r"[a-zA-Z]{4,}", str(_gb2).lower()))
+                    if _gtok:
+                        # pair\ubcc4 \uc6d0\ub798 \ud5e4\ub354 (\uc57d\ud55c \ub9e4\uce6d \ud3f4\ubc31\uc6a9)
+                        _orig = [None] * len(_new_wp)
+                        for _k2, _h2 in enumerate(_new_wd):
+                            _s2 = _h2.get("start_idx", 0)
+                            _e2 = _new_wd[_k2 + 1].get("start_idx", len(_new_wp)) if _k2 + 1 < len(_new_wd) else len(_new_wp)
+                            for _pi in range(_s2, _e2):
+                                if 0 <= _pi < len(_orig):
+                                    _orig[_pi] = _h2.get("header")
+                        _groups = {}
+                        _changed = 0
+                        for _pi, _p in enumerate(_new_wp):
+                            _ct = set(re.findall(r"[a-zA-Z]{4,}", str(_p.get("choices") or "").lower()))
+                            _tgt = _orig[_pi]
+                            if _ct:
+                                _cand = max(_gtok, key=lambda kk: len(_ct & _gtok[kk]))
+                                if len(_ct & _gtok[_cand]) >= 3:
+                                    if _cand != _orig[_pi]:
+                                        _changed += 1
+                                    _tgt = _cand
+                            _groups.setdefault(_tgt, []).append(_p)
+                        _relabeled = sorted([h for h in _groups if h], key=lambda h: _ck(h, g3=(grade == "고3")))
+                        _r_wp = []
+                        _r_wd = []
+                        for _hh in _relabeled:
+                            _r_wd.append({"header": _hh, "start_idx": len(_r_wp)})
+                            _r_wp.extend(_groups[_hh])
+                        _cdata["vol2"]["\uc11c\uc220\ud615\uc601\uc791"] = _r_wp
+                        _cdata["vol2"]["\uc601\uc791_\ud5e4\ub354_\uc0c1\uc138"] = _r_wd
+                        _cdata["vol2"]["\uc601\uc791_\ud5e4\ub354"] = [_h["header"] for _h in _r_wd]
+                        log(f"[\uc601\uc791] \uace03 \ub0b4\uc6a9\uae30\ubc18 \uc7ac\ub77c\ubca8: {len(_r_wd)}\uac1c \ud5e4\ub354, {_changed}\uac1c pair \uc7ac\ubc30\uce58")
                 log(f"[\uc601\uc791] canonical \uc21c\uc11c\ub85c \uc7ac\uc815\ub82c: {len(_new_wd)}\uac1c \ud5e4\ub354")
 
             if _v1_hdrs and (_g_lines or (_wp and _wd)):

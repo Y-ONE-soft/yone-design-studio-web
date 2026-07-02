@@ -1325,12 +1325,62 @@ def download_pdf(job_id):
 
 # ── 파이프라인 실행 (백그라운드 스레드) ──────────────────────────────────
 
+def _classify_failure(msg):
+    """실패 메시지를 유형으로 분류 — 향후 유형별 집계용."""
+    if not msg:
+        return "unknown"
+    if ("스크립트 전달 실패" in msg) or ("스크립트 시작 안 됨" in msg):
+        return "startup_delivery"          # 1단계 자동 재시도 대상
+    if ("미갱신" in msg) or ("행(hang)" in msg) or ("응답 없음" in msg):
+        return "hang_timeout"
+    if ("Errno 11" in msg) or ("Resource deadlock" in msg) or ("EDEADLK" in msg):
+        return "file_lock_edeadlk"
+    if ("[오류]" in msg) or ("스토리" in msg) or ("찾을 수 없" in msg):
+        return "jsx_data_error"
+    low = msg.lower()
+    if ("폰트" in msg) or ("링크" in msg) or ("font" in low) or ("link" in low):
+        return "font_link_missing"
+    return "other"
+
+
+def _persist_failure(job_id, job_dir, engine, stage, err_msg, tb):
+    """실패 이력을 디스크에 영속화 — 유형별 집계 + 1단계 커버리지 측정용.
+
+    jm.fail 은 in-memory 스트림이라 재부팅 시 소실된다. 여기서
+    job_dir/failure.json(개별, traceback 포함) + 중앙 JSONL(전체 집계)로 남긴다.
+    이 함수는 절대 예외를 밖으로 던지지 않는다(실패 경로를 깨지 않기 위해).
+    """
+    import time as _t
+    material_id = getattr(engine, "material_id", "") or ""
+    rec = {
+        "ts": _t.strftime("%Y-%m-%d %H:%M:%S"),
+        "job_id": job_id,
+        "material_id": material_id,
+        "stage": stage,
+        "error": (err_msg or "")[:500],
+        "category": _classify_failure(err_msg or ""),
+    }
+    try:
+        with open(os.path.join(job_dir, "failure.json"), "w", encoding="utf-8") as f:
+            json.dump({**rec, "traceback": (tb or "")[-4000:]}, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+    try:
+        cpath = os.path.expanduser("~/Library/Logs/yonestudio-failures.jsonl")
+        with open(cpath, "a", encoding="utf-8") as f:
+            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
+
+
 def _run_pipeline(engine, job_id: str, job_dir: str, uploaded: dict):
     log = lambda m: jm.put_log(job_id, m)
     skip_id = getattr(engine, "skip_indesign", False)
     total = "2" if skip_id else "3"
+    stage = "init"   # 실패 시 어느 단계에서 났는지 기록용
     try:
         # ── 1단계: 파싱 ──────────────────────────────────────────────
+        stage = "parse"
         log("━━━━━━━━━━━━━━━━━━━━━━━━━━━")
         log(f"[1/{total}] 원고 파싱 중...")
         json_path = engine.parse(uploaded, job_dir, log)
@@ -1341,6 +1391,7 @@ def _run_pipeline(engine, job_id: str, job_dir: str, uploaded: dict):
 
         # ── 2단계: InDesign 조판 (skip_indesign이면 건너뛰기) ────────
         if not skip_id:
+            stage = "indesign"
             log("━━━━━━━━━━━━━━━━━━━━━━━━━━━")
             log("[2/3] InDesign 조판 중...")
             jsx_path = engine.prepare_jsx(json_path, job_dir, log)
@@ -1367,6 +1418,7 @@ def _run_pipeline(engine, job_id: str, job_dir: str, uploaded: dict):
             return
 
         # ── 마지막 단계: 검수 ────────────────────────────────────────
+        stage = "verify"
         step = total
         log("━━━━━━━━━━━━━━━━━━━━━━━━━━━")
         log(f"[{step}/{total}] 검수 중...")
@@ -1404,8 +1456,14 @@ def _run_pipeline(engine, job_id: str, job_dir: str, uploaded: dict):
     except Exception as e:
         log(f"[오류] {e}")
         import traceback
-        log(traceback.format_exc())
+        tb = traceback.format_exc()
+        log(tb)
         jm.fail(job_id, str(e))
+        # 실패 이력 영속화(분석용). 실패 경로를 절대 깨지 않도록 예외 무시.
+        try:
+            _persist_failure(job_id, job_dir, engine, stage, str(e), tb)
+        except Exception:
+            pass
 
 
 # ── Claude 채팅 (원격 접속용) ────────────────────────────────────────

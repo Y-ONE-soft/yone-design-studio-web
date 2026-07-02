@@ -21,9 +21,17 @@ hwpx(ZIP) → section0.xml + header.xml → 단락 추출 → Day별 분류 → 
 
 import html
 import json
+import os
 import re
 import sys
+import xml.etree.ElementTree as ET
 import zipfile
+
+_W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+
+
+def _wtag(tag: str) -> str:
+    return f"{{{_W_NS}}}{tag}"
 
 
 # ── header.xml: underline charPr ID 수집 ────────────────────────────────────
@@ -432,10 +440,307 @@ def parse_answers_hwp(hwp_path: str) -> list:
     return _parse_answer_lines(lines)
 
 
+# ── DOCX 단락 파서 ──────────────────────────────────────────────────────────
+
+def _parse_docx_paragraphs(docx_path: str) -> list:
+    """docx 파일 → [{'text', 'runs', 'page_break': False}] 단락 목록."""
+    with zipfile.ZipFile(docx_path, 'r') as zf:
+        doc_xml = zf.read("word/document.xml").decode('utf-8')
+
+    root = ET.fromstring(doc_xml)
+    body = root.find(_wtag("body"))
+    if body is None:
+        return []
+
+    result = []
+    for elem in body:
+        if elem.tag != _wtag("p"):
+            continue
+
+        runs = []
+        for r in elem.findall(_wtag("r")):
+            rpr = r.find(_wtag("rPr"))
+            is_ul = False
+            if rpr is not None:
+                u = rpr.find(_wtag("u"))
+                if u is not None:
+                    val = u.get(_wtag("val"), "none")
+                    is_ul = val not in ("none", "")
+            for sub in r:
+                if sub.tag == _wtag("t") and sub.text:
+                    runs.append({'t': sub.text, 'ul': is_ul})
+
+        text = ''.join(r['t'] for r in runs).strip()
+        if text:
+            # 연속 동일 underline 상태 병합
+            merged = []
+            for run in runs:
+                if not run['t']:
+                    continue
+                if merged and merged[-1]['ul'] == run['ul']:
+                    merged[-1]['t'] += run['t']
+                else:
+                    merged.append({'t': run['t'], 'ul': run['ul']})
+            result.append({
+                'page_break': False,
+                'text': text,
+                'runs': merged,
+            })
+
+    return result
+
+
+def _extract_docx_lines(docx_path: str) -> list:
+    """docx 본문에서 텍스트 줄 목록만 추출 (정답지 파싱용)."""
+    with zipfile.ZipFile(docx_path, 'r') as zf:
+        doc_xml = zf.read("word/document.xml").decode('utf-8')
+    root = ET.fromstring(doc_xml)
+    body = root.find(_wtag("body"))
+    if body is None:
+        return []
+    lines = []
+    for elem in body:
+        if elem.tag != _wtag("p"):
+            continue
+        parts = []
+        for r in elem.findall(_wtag("r")):
+            for sub in r:
+                if sub.tag == _wtag("t") and sub.text:
+                    parts.append(sub.text)
+        text = ''.join(parts).strip()
+        if text:
+            lines.append(text)
+    return lines
+
+
+# ── 양식 자동 감지 ──────────────────────────────────────────────────────────
+
+_RE_PART_MARKER = re.compile(r'^\s*<\s*Part\s*[12](?:\s*어휘)?\s*>\s*$', re.IGNORECASE)
+_RE_PASSAGE_MARKER = re.compile(r'^\s*<\s*본문\s*\d+\s*>\s*$')
+_RE_CATEGORY = re.compile(r'^\s*<\s*(?:연관\s*어휘|영영\s*풀이|속담(?:\s*및\s*격언)?)\s*>\s*$')
+
+
+def detect_format(paras: list) -> str:
+    """단락 목록을 보고 'part' 또는 'day' 양식 반환."""
+    for p in paras:
+        text = p.get('text', '').strip()
+        if _RE_PART_MARKER.match(text):
+            return 'part'
+        if _RE_DAY.match(text):
+            return 'day'
+    # 마커 없으면 기본값 'day'
+    return 'day'
+
+
+# ── Part 양식 분류 및 분할 ──────────────────────────────────────────────────
+
+def _classify_vocab_line(text: str) -> str:
+    """어휘 영역 내 단락 분류."""
+    t = text.strip()
+    if _RE_CATEGORY.match(t):
+        return 'category'
+    if t.startswith('동의어:') or t.startswith('반의어:'):
+        return 'vocab'
+    # "단어(품사): 영어 정의" 패턴 → english_def
+    if re.match(r'^[A-Za-z][\w\s\-]*\([^)]+\):', t):
+        return 'english_def'
+    return None  # 컨텍스트 의존 — 호출부에서 결정
+
+
+def _is_english_line(text: str) -> bool:
+    """영어로만 된 줄인지 (한글 미포함)."""
+    return bool(re.search(r'[A-Za-z]', text)) and not bool(re.search(r'[가-힣]', text))
+
+
+def _split_into_parts(paras: list) -> dict:
+    """단락 목록을 <Part1>/<Part1 어휘>/<Part2> 영역으로 분리."""
+    section = None  # 'part1' / 'vocab' / 'part2'
+    vocab_passage_no = 0
+    vocab_passage_paras = None  # 현재 본문 단락 목록
+    vocab_in_category = None    # 현재 카테고리 ('vocab' / 'english_def' / 'saying')
+
+    parts = {
+        'part1': [],   # 객관식 단락 (problem, choice, ...)
+        'vocab': [],   # [{'passage_label', 'paragraphs': [...]}]
+        'part2': [],
+    }
+
+    def start_new_passage(label):
+        nonlocal vocab_passage_paras, vocab_in_category
+        vocab_passage_paras = []
+        vocab_in_category = None
+        parts['vocab'].append({
+            'label': label,
+            'paragraphs': vocab_passage_paras,
+        })
+
+    in_condition = False
+    in_summary = False
+    in_example = False
+
+    for p in paras:
+        text = p.get('text', '').strip()
+        runs = p.get('runs', [])
+        if not text:
+            continue
+
+        # ── 영역 마커 ──
+        m_part = _RE_PART_MARKER.match(text)
+        if m_part:
+            t_low = text.lower().replace(' ', '')
+            if '어휘' in t_low or 'vocab' in t_low:
+                section = 'vocab'
+            elif 'part2' in t_low:
+                section = 'part2'
+            else:
+                section = 'part1'
+            in_condition = in_summary = in_example = False
+            continue
+
+        if section is None:
+            # Part 마커 이전 단락은 무시
+            continue
+
+        # ── Part1 / Part2: 객관식 분류 (기존 _classify 재사용) ──
+        if section in ('part1', 'part2'):
+            # 레이블 정규화
+            norm = _normalize_label(text)
+            if norm != text:
+                text = norm
+
+            typ = _classify(text, in_condition)
+            if typ == 'passage' and in_summary:
+                typ = 'summary_content'
+            elif typ == 'passage' and in_example:
+                if '/' in text or ',' in text or '，' in text:
+                    typ = 'example_content'
+                in_example = False
+
+            if typ == 'summary_label':
+                in_summary = True; in_example = False; in_condition = False
+            elif typ == 'example_label':
+                in_example = True; in_summary = False; in_condition = False
+            elif typ == 'condition':
+                in_condition = True; in_summary = False; in_example = False
+            elif typ in ('problem', 'passage_header', 'next_question',
+                         'choice', 'answer_blank'):
+                in_condition = False; in_summary = False; in_example = False
+
+            if typ == 'blank':
+                continue
+
+            final_text, final_runs = text, runs
+            if typ == 'problem':
+                final_text, final_runs = _strip_inline_answer(text, runs)
+
+            if final_text:
+                parts[section].append({
+                    'text': final_text,
+                    'type': typ,
+                    'runs': final_runs,
+                })
+            continue
+
+        # ── Part1 어휘 영역 ──
+        # 본문 마커 <본문 N>
+        if _RE_PASSAGE_MARKER.match(text):
+            m = re.search(r'\d+', text)
+            vocab_passage_no = int(m.group()) if m else (vocab_passage_no + 1)
+            start_new_passage(f'본문 {vocab_passage_no}')
+            continue
+
+        # 본문 마커가 없는 상태에서 영어 본문이 시작되면 자동 분리
+        # (영어로만 된 줄 + 직전이 어휘 단락) → 새 passage
+        # 단, 본 passage가 시작되지 않았으면 강제로 시작
+        if vocab_passage_paras is None:
+            vocab_passage_no += 1
+            start_new_passage(f'본문 {vocab_passage_no}')
+
+        # 카테고리 마커
+        if _RE_CATEGORY.match(text):
+            if '연관' in text:
+                vocab_in_category = 'vocab'
+            elif '영영' in text:
+                vocab_in_category = 'english_def'
+            elif '속담' in text:
+                vocab_in_category = 'saying'
+            vocab_passage_paras.append({
+                'text': text, 'type': 'category', 'runs': runs,
+            })
+            continue
+
+        # 동의어:/반의어: 줄은 헤더 없어도 vocab 모드 강제 진입
+        if text.startswith('동의어:') or text.startswith('반의어:'):
+            vocab_in_category = 'vocab'
+            vocab_passage_paras.append({
+                'text': text, 'type': 'vocab', 'runs': runs,
+            })
+            continue
+
+        # "단어(품사): 영어 정의" → 영영풀이 자동 인식
+        if re.match(r'^[A-Za-z][\w\s\-]*\([^)]+\):\s+[A-Za-z]', text):
+            vocab_in_category = 'english_def'
+            vocab_passage_paras.append({
+                'text': text, 'type': 'english_def', 'runs': runs,
+            })
+            continue
+
+        # 카테고리 헤더 없는 상태 (vocab_in_category is None)
+        if vocab_in_category is None:
+            # 영어로만 된 줄 → passage_text (영어 본문)
+            if _is_english_line(text):
+                vocab_passage_paras.append({
+                    'text': text, 'type': 'passage_text', 'runs': runs,
+                })
+                continue
+            # 짧은 줄 + 영어+한글 혼합 = 표제어 추정 (헤더 없이도 vocab 모드 진입)
+            if (len(text) < 60
+                    and re.search(r'[A-Za-z]', text)
+                    and re.search(r'[가-힣]', text)):
+                vocab_in_category = 'vocab'
+                vocab_passage_paras.append({
+                    'text': text, 'type': 'vocab', 'runs': runs,
+                })
+                continue
+            # 그 외 (한글만 등) → passage_text
+            vocab_passage_paras.append({
+                'text': text, 'type': 'passage_text', 'runs': runs,
+            })
+            continue
+
+        # vocab 모드 진행 중 + 긴 영어 줄 = 새 본문 시작 (마커 없는 경우 자동 분리)
+        if vocab_in_category == 'vocab' and _is_english_line(text) and len(text) > 50:
+            vocab_passage_no += 1
+            start_new_passage(f'본문 {vocab_passage_no}')
+            vocab_passage_paras.append({
+                'text': text, 'type': 'passage_text', 'runs': runs,
+            })
+            continue
+
+        # 카테고리별 분류
+        if vocab_in_category == 'vocab':
+            typ = 'vocab'
+        elif vocab_in_category == 'english_def':
+            typ = 'english_def'
+        elif vocab_in_category == 'saying':
+            typ = 'saying'
+        else:
+            typ = 'passage_text'
+
+        vocab_passage_paras.append({
+            'text': text, 'type': typ, 'runs': runs,
+        })
+
+    return parts
+
+
 # ── 공개 API ────────────────────────────────────────────────────────────────
 
 def parse_hwpx(hwpx_path: str) -> dict:
-    """hwpx 파일 경로 → {"days": [...]} dict."""
+    """hwpx 파일 경로 → 양식별 dict 반환.
+    Day 양식: {'format': 'day', 'days': [...]}
+    Part 양식: {'format': 'part', 'parts': {...}}
+    """
     with zipfile.ZipFile(hwpx_path, 'r') as zf:
         names = zf.namelist()
         section_name = next(
@@ -451,8 +756,41 @@ def parse_hwpx(hwpx_path: str) -> dict:
         header_xml = zf.read(header_name).decode('utf-8') if header_name else ''
 
     paras = _parse_paragraphs(section_xml, header_xml)
-    days = _split_into_days(paras)
-    return {'days': days}
+    fmt = detect_format(paras)
+    if fmt == 'part':
+        return {'format': 'part', 'parts': _split_into_parts(paras)}
+    return {'format': 'day', 'days': _split_into_days(paras)}
+
+
+def parse_docx(docx_path: str) -> dict:
+    """docx 파일 경로 → 양식별 dict 반환."""
+    paras = _parse_docx_paragraphs(docx_path)
+    fmt = detect_format(paras)
+    if fmt == 'part':
+        return {'format': 'part', 'parts': _split_into_parts(paras)}
+    return {'format': 'day', 'days': _split_into_days(paras)}
+
+
+def parse_manuscript(path: str) -> dict:
+    """원고 파일(hwpx/docx) → 양식별 dict. 확장자 자동 분기."""
+    ext = os.path.splitext(path)[1].lower()
+    if ext == '.docx':
+        return parse_docx(path)
+    return parse_hwpx(path)
+
+
+def parse_answers_docx(docx_path: str) -> list:
+    """정답 docx → [{'num', 'answer', 'explanation'}]."""
+    lines = _extract_docx_lines(docx_path)
+    return _parse_answer_lines(lines)
+
+
+def parse_answers(path: str) -> list:
+    """정답 파일(hwpx/hwp/docx) → 정답 목록. 확장자 자동 분기."""
+    ext = os.path.splitext(path)[1].lower()
+    if ext == '.docx':
+        return parse_answers_docx(path)
+    return parse_answers_hwp(path)
 
 
 def main():

@@ -110,9 +110,65 @@ def close_open_indd(indd_path: str, log=None) -> None:
         log(f"[InDesign] 기존 출력 문서 정리: {os.path.basename(indd_path)}")
 
 
+def _is_transient_id_failure(msg: str) -> bool:
+    """자동 재시도해도 안전한 '시작/전달 단계 일시적 실패'인지 판정.
+
+    시작/전달 단계 실패만 True — 콜드스타트/-609/AppleEvent 전달 실패 등.
+    장시간 hang/timeout, JSX [오류], 데이터 오류는 False(재시도 안 함)로 두어
+    오탐 무한루프와 에러 은폐를 방지한다.
+    """
+    if not msg:
+        return False
+    transient_markers = (
+        "스크립트 전달 실패",
+        "스크립트 시작 안 됨",
+    )
+    return any(mk in msg for mk in transient_markers)
+
+
 def run_jsx(jsx_path: str, log, poll_log_path: str = None, timeout: int = 1200,
             cancel_check=None, completion_marker: str = None):
-    """JSX 파일을 단계별로 실행.
+    """JSX 실행 + 일시적 실패 자동 재시도 래퍼.
+
+    1차 시도는 기존 동작과 완전히 동일. 시작/전달 단계의 '일시적' 실패
+    (콜드스타트/-609/전달 실패)에 한해 InDesign을 깨끗이 재기동 후 최대 1회
+    자동 재시도한다. 애매한 hang/timeout과 JSX [오류]는 재시도하지 않고
+    그대로 실패시킨다.
+
+    환경변수 YONE_ID_RETRY=0 이면 재시도를 끄고 기존 동작으로 롤백.
+    """
+    max_attempts = 1 if os.environ.get("YONE_ID_RETRY", "1") == "0" else 2
+    last_exc = None
+    for attempt in range(1, max_attempts + 1):
+        if attempt > 1:
+            # 재시도 전 정리: 이전 시도의 stale 로그 제거(오완료 오탐 방지)
+            # + InDesign 강제 종료(다음 _run_jsx_once가 깨끗이 재기동).
+            if poll_log_path:
+                try:
+                    os.remove(poll_log_path)
+                except OSError:
+                    pass
+            _kill_indesign(log)
+            time.sleep(5)
+            log(f"[InDesign] 재시도 {attempt}/{max_attempts} 시작 (일시적 실패 복구)")
+        try:
+            _run_jsx_once(jsx_path, log, poll_log_path=poll_log_path,
+                          timeout=timeout, cancel_check=cancel_check,
+                          completion_marker=completion_marker)
+            return
+        except RuntimeError as e:
+            last_exc = e
+            if attempt < max_attempts and _is_transient_id_failure(str(e)):
+                log(f"[InDesign] 일시적 실패 감지 — 재시도 예정: {str(e)[:120]}")
+                continue
+            raise
+    if last_exc:
+        raise last_exc
+
+
+def _run_jsx_once(jsx_path: str, log, poll_log_path: str = None, timeout: int = 1200,
+            cancel_check=None, completion_marker: str = None):
+    """JSX 파일을 단계별로 실행 (단일 시도). 재시도는 run_jsx 래퍼가 담당.
 
     큰 JSX 파일 대신, settings.json에서 정보를 읽고
     Python에서 InDesign을 단계별로 제어.
@@ -156,11 +212,14 @@ def run_jsx(jsx_path: str, log, poll_log_path: str = None, timeout: int = 1200,
             except OSError:
                 pass
 
+        # NEVER_INTERACT로 다이얼로그 억제 후 JSX 실행. try/finally로 감싸
+        # JSX가 에러로 죽어도 반드시 INTERACT_WITH_ALL로 복원 — 그래야 이후
+        # 사람이 같은 InDesign을 쓸 때 경고창이 정상적으로 뜬다(비대화 잔류 방지).
         bootstrap = (
             'app.scriptPreferences.userInteractionLevel = UserInteractionLevels.NEVER_INTERACT;'
             f'var _f = new File("{tmp_jsx}");'
-            'app.doScript(_f, ScriptLanguage.JAVASCRIPT);'
-            'app.scriptPreferences.userInteractionLevel = UserInteractionLevels.INTERACT_WITH_ALL;'
+            'try{ app.doScript(_f, ScriptLanguage.JAVASCRIPT); }'
+            'finally{ app.scriptPreferences.userInteractionLevel = UserInteractionLevels.INTERACT_WITH_ALL; }'
         )
 
         log("[InDesign] JSX 실행 시작...")
