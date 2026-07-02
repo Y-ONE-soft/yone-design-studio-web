@@ -38,6 +38,11 @@
       "short": "한영",
       "grades": ["고1", "고2", "고3"],
       "template_pattern": "[원본]한영{grade_num}_동형모의고사.indd"
+    },
+    "세종고": {
+      "short": "세종",
+      "grades": ["고1", "고2"],
+      "template_pattern": "[원본]세종{grade_num}_동형모의고사.indd"
     }
   }
 }
