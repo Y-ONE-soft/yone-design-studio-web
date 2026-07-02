@@ -76,6 +76,51 @@ def _wait_marker(marker_path, timeout=300):
     return os.path.exists(marker_path)
 
 
+# ── 크레딧(마지막페이지) .ai 로컬 확보 ─────────────────────────────────
+# 원본은 GDrive에 있어 렌더 중 직접 place 시 EDEADLK 위험 + GDrive 미마운트/
+# 다른 계정 기계에서는 경로가 없어 크레딧 페이지가 조용히 누락(이식성 버그).
+# 로컬로 복사해 그 경로를 배치에 쓰고, 실패 시 원본 GDrive 경로로 폴백
+# (= 현행과 완전히 동일, 절대 더 나빠지지 않음). YONE_CREDIT_AI_LOCAL=0 롤백.
+_CREDIT_AI_GDRIVE = os.path.expanduser(
+    "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/"
+    "콘텐츠 관리/내신대비/인디자인 파일/"
+    "파이널 직전보충/내지/마지막페이지.ai")
+_CREDIT_AI_LOCAL = os.path.expanduser(
+    "~/Library/Application Support/yone-design-web/assets/credit_lastpage.ai")
+
+
+def _resolve_credit_ai(log=None):
+    """크레딧 .ai를 로컬로 확보해 JSX 문자열 리터럴용 경로를 반환한다.
+
+    복사 성공 → 로컬 ASCII 경로(EDEADLK 없음, 이식성 개선).
+    실패 → 원본 GDrive 경로(기존 하드코딩과 동일한 \\u 이스케이프 형태로 폴백).
+    YONE_CREDIT_AI_LOCAL=0 이면 로컬화를 끄고 기존 동작 유지.
+    """
+    path = _CREDIT_AI_GDRIVE
+    if os.environ.get("YONE_CREDIT_AI_LOCAL", "1") != "0":
+        try:
+            os.makedirs(os.path.dirname(_CREDIT_AI_LOCAL), exist_ok=True)
+            from engines.final.extractor import _gdrive_safe_copy
+            ok, _err = _gdrive_safe_copy(_CREDIT_AI_GDRIVE, _CREDIT_AI_LOCAL, log=log)
+            if ok and os.path.exists(_CREDIT_AI_LOCAL):
+                path = _CREDIT_AI_LOCAL
+        except Exception:
+            path = _CREDIT_AI_GDRIVE
+    # JSX 문자열 리터럴 안전화: 비ASCII→\uXXXX, 역슬래시/따옴표 이스케이프
+    out = []
+    for c in path:
+        o = ord(c)
+        if c == "\\":
+            out.append("\\\\")
+        elif c == '"':
+            out.append('\\"')
+        elif o > 127:
+            out.append("\\u%04x" % o)
+        else:
+            out.append(c)
+    return "".join(out)
+
+
 def _build_vocab_jsx(indd_path, left_json_path, right_json_path, marker, log_file, pid=0, grade=""):
     """중요어휘 전용 JSX — Vol1 문서를 열고 새 페이지에 왼/오 프레임 생성."""
     is_g3_js = "true" if grade == "\uace03" else "false"
@@ -571,7 +616,7 @@ try {{
     // 마지막 페이지 (크레딧) 추가 — 마지막페이지.ai 배치
     // 크레딧 페이지는 반드시 왼쪽(짝수) 페이지에 위치해야 함
     try {{
-        var lastAiPath = "/Users/nhj/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/\\uB0B4 \\uB4DC\\uB77C\\uC774\\uBE0C/\\uCF58\\uD150\\uCE20 \\uAD00\\uB9AC/\\uB0B4\\uC2E0\\uB300\\uBE44/\\uC778\\uB514\\uC790\\uC778 \\uD30C\\uC77C/\\uD30C\\uC774\\uB110 \\uC9C1\\uC804\\uBCF4\\uCDA9/\\uB0B4\\uC9C0/\\uB9C8\\uC9C0\\uB9C9\\uD398\\uC774\\uC9C0.ai";
+        var lastAiPath = "{_resolve_credit_ai()}";
         var lastAiFile = new File(lastAiPath);
         if (lastAiFile.exists) {{
             // 현재 마지막 페이지가 왼쪽(LEFT)이면 빈 오른쪽 페이지 삽입
@@ -3662,7 +3707,7 @@ try {{
     // 마지막 페이지 (크레딧) 추가 — 마지막페이지.ai 배치
     // 크레딧 페이지는 반드시 왼쪽(짝수) 페이지에 위치해야 함
     try {{
-        var lastAiPath = "/Users/nhj/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/\\uB0B4 \\uB4DC\\uB77C\\uC774\\uBE0C/\\uCF58\\uD150\\uCE20 \\uAD00\\uB9AC/\\uB0B4\\uC2E0\\uB300\\uBE44/\\uC778\\uB514\\uC790\\uC778 \\uD30C\\uC77C/\\uD30C\\uC774\\uB110 \\uC9C1\\uC804\\uBCF4\\uCDA9/\\uB0B4\\uC9C0/\\uB9C8\\uC9C0\\uB9C9\\uD398\\uC774\\uC9C0.ai";
+        var lastAiPath = "{_resolve_credit_ai()}";
         var lastAiFile = new File(lastAiPath);
         if (lastAiFile.exists) {{
             var lastPg = doc.pages[-1];
