@@ -5,9 +5,13 @@
 ```bash
 cd ~/dev/yone-design-web-summer   # (또는 리포 루트)
 python3 -m pytest tests/ -q
+
+# 실서비스와 동일한 인터프리터(3.9)로 확인 (merge/배포 전 필수 — deploy_to_prod.sh가 사용)
+PYTHONPATH="$HOME/Library/Python/3.9/lib/python/site-packages" /usr/bin/python3 -m pytest tests/ -q
 ```
 
-InDesign 불필요 — `engine.parse()`만 재실행한다. 전 케이스 수 분 내.
+InDesign 불필요 — `engine.parse()`만 재실행한다. 전 케이스 수 초 내.
+(실서비스 Flask는 /usr/bin/python3 3.9로 구동 — start_flask.sh 참조. 3.14/3.9 양쪽 23/23 통과 확인: 2026-07-03)
 
 ## 구조
 
