@@ -31,7 +31,7 @@ GOOD_DUMP = _dump([
     {"t": "1. 다음 글의 제목으로 가장 적절한 것은?",
      "s": "STEP 03 > S_실전문제 번호 수정 올림포스"},
     {"t": "Understanding ecosystems requires patience and careful observation.",
-     "s": "STEP 03 > 지문 밑줄 없음"},
+     "s": "STEP 03 > 실전 문제 지문 올림포스_"},
     {"t": "① The Hidden Cost of Progress", "s": "STEP 03 > S_선지 올림포스"},
 ])
 

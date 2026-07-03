@@ -18,7 +18,7 @@ def test_step3_basics():
     p_styles = resolve_style("workbook", "STEP3", "P")
     assert isinstance(p_styles, list)
     assert "STEP 03 > 실전 문제 지문 올림포스_" in p_styles
-    assert "STEP 03 > 지문 밑줄 있음" in p_styles
+    assert "STEP 03 > 실전 문제 지문 올림포스_ 밑줄제거" in p_styles
 
 
 def test_override():
@@ -51,3 +51,25 @@ def test_corpus_step3_full_coverage():
                                   has_underline=r.get("has_underline"))
                     n += 1
     assert n > 2000  # 커버리지 실효성 가드
+
+
+def test_style_map_names_exist_in_template_inventory():
+    """style_map의 모든 스타일명이 실물 템플릿 인벤토리에 존재해야 한다.
+
+    (템플릿 스타일 개명/오타를 회귀로 잡는 장치 — 픽스처는
+    core/template_spec.extract_template_spec으로 워크북C 원본에서 추출)
+    """
+    spec = json.load(open(os.path.join(TESTS_DIR, "fixtures",
+                                       "template_spec_workbookC.json"),
+                          encoding="utf-8"))
+    inventory = set(spec["paragraph_styles"])
+    smap = json.load(open(os.path.join(
+        os.path.dirname(TESTS_DIR), "core", "structure", "style_map.json"),
+        encoding="utf-8"))
+    missing = []
+    for step, table in smap["workbook"].items():
+        for kind, style in table.items():
+            for s in (style if isinstance(style, list) else [style]):
+                if s and s not in inventory:
+                    missing.append(f"{step}/{kind}: {s}")
+    assert not missing, f"템플릿에 없는 스타일 참조: {missing}"
