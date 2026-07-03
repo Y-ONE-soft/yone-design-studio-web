@@ -1,0 +1,146 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "yone/content-v2",
+  "title": "content.json v2 — 표준 문항 IR",
+  "description": "docs/taxonomy/05_파서_룰_매핑표.md의 공통 출력 스키마. 모든 교재 엔진이 공유하는 문항 중간 표현. v2 파일럿: workbook Step3 + 신규 동형 엔진.",
+  "type": "object",
+  "required": ["version", "items"],
+  "properties": {
+    "version": {"const": 2},
+    "meta": {
+      "type": "object",
+      "description": "문서 수준 메타 (학교/학년/시험기간 등 — 엔진 자유 확장)",
+      "properties": {
+        "school": {"type": "string"},
+        "grade": {"type": ["integer", "string"]},
+        "exam": {"type": "string"},
+        "category": {"type": "string"}
+      }
+    },
+    "items": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/item"}
+    }
+  },
+  "definitions": {
+    "item": {
+      "type": "object",
+      "required": ["id", "question"],
+      "properties": {
+        "id": {"type": "string", "description": "문항 ID (자동 부여)"},
+        "type": {
+          "type": ["string", "null"],
+          "pattern": "^(OBJ|SRV)-[A-Z]+(-[A-Z0-9]+)*$",
+          "description": "leaf 코드 (engines/_taxonomy). 미분류면 null — 검수 게이트가 지목"
+        },
+        "kind": {"enum": ["객관식", "서술형", null]},
+        "label": {"type": ["string", "null"], "description": "한국어 유형 라벨"},
+        "header": {
+          "type": "object",
+          "properties": {
+            "marker": {"type": ["string", "null"], "description": "[20~21] | 서술형1. | 5. | null"},
+            "group_id": {"type": ["string", "null"], "description": "장문 묶음 그룹 (G-N)"},
+            "source": {"type": ["string", "null"], "description": "[24년 10월 20번] 류 출처"},
+            "score": {"type": ["number", "null"]}
+          }
+        },
+        "question": {"type": "string", "description": "발문 본문"},
+        "stimulus": {
+          "type": "object",
+          "properties": {
+            "type": {"enum": ["passage", "dialogue", "chart", "notice", "empty"]},
+            "blocks": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["kind", "content"],
+                "properties": {
+                  "kind": {"enum": ["text", "para"]},
+                  "label": {"type": ["string", "null"], "description": "(A)/(B)/(C) 등"},
+                  "content": {"type": "string"},
+                  "marks": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": ["type"],
+                      "properties": {
+                        "type": {"enum": ["underline", "blank", "paren", "mark_circle", "position"]},
+                        "id": {"type": ["string", "null"], "description": "① / ⓐ / (A)"},
+                        "span": {
+                          "type": "array",
+                          "items": {"type": "integer"},
+                          "minItems": 2,
+                          "maxItems": 2
+                        },
+                        "options": {
+                          "type": "array",
+                          "items": {"type": "string"},
+                          "description": "괄호 선택형 (A)[accept/expect]의 선택지"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "given": {
+          "type": ["object", "null"],
+          "properties": {
+            "type": {"enum": ["sentence", "summary_box", "condition_box", "word_box", "sentence_box", null]},
+            "content": {"type": "string"}
+          }
+        },
+        "choices": {
+          "type": ["object", "null"],
+          "properties": {
+            "format": {"enum": ["circled", "letter_combo", "text_combo", "count", "none"]},
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["label", "content"],
+                "properties": {
+                  "label": {"type": "string"},
+                  "content": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "constraints": {"type": "array", "items": {"type": "string"}},
+        "answer": {"type": ["string", "null"]},
+        "variants": {
+          "type": "object",
+          "description": "7 변형 차원 (docs/taxonomy/06 스키마의 V1~V7)",
+          "properties": {
+            "choice_format": {"type": "string"},
+            "answer_count": {"type": "string"},
+            "polarity": {"type": "string"},
+            "source_marker": {"type": "string"},
+            "bundle": {"type": "string"},
+            "inline_marker": {"type": "string"},
+            "choice_origin": {"type": "string"}
+          }
+        },
+        "_source": {
+          "type": "object",
+          "description": "원고 추적 정보 (파일/학교/카테고리)",
+          "properties": {
+            "file": {"type": "string"},
+            "school": {"type": "string"},
+            "year": {"type": "string"},
+            "exam": {"type": "string"},
+            "category": {"type": "string"}
+          }
+        },
+        "_warnings": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "파싱 단계 경고 (검수 게이트로 전달)"
+        }
+      }
+    }
+  }
+}

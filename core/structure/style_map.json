@@ -1,0 +1,71 @@
+{
+  "_doc": "단락스타일 룩업 (docs/taxonomy/11_워크북_스타일매핑.md 데이터화). (step_unit × 단락종류[× 조건]) → InDesign 단락스타일 '그룹 > 이름'. null = 출력 제거 대상. 스타일명 변경/학교 커스텀은 이 파일(또는 엔진 오버라이드 데이터)만 수정 — JSX/코드 수정 불필요.",
+  "_version": "2026-07-03 v1 (STEP3 완전, STEP1/2는 주 스타일만 — 파일럿 확장하며 보강)",
+  "workbook": {
+    "STEP3": {
+      "GH": null,
+      "A": null,
+      "Q": "STEP 03 > S_실전문제 번호 수정 올림포스",
+      "Q-INTRO": "STEP 03 > 다음 글을 읽고",
+      "P": "STEP 03 > 실전 문제 지문 올림포스_",
+      "P@no_underline": "STEP 03 > 지문 밑줄 없음",
+      "P@underline": "STEP 03 > 지문 밑줄 있음",
+      "P-CONTEXT": "STEP 03 > 배경 올림포스",
+      "C": "STEP 03 > S_선지 올림포스",
+      "Cond": "STEP 03 > 조건 올림포스",
+      "Box": "STEP 03 > 보기 올림포스",
+      "Word": "STEP 03 > 영단어",
+      "K": null,
+      "Sym": "STEP 03 > 실전 문제 지문 올림포스_",
+      "Ans": "STEP 03 > 실전 문제 지문 올림포스_",
+      "UNKNOWN": "STEP 03 > 실전 문제 지문 올림포스_"
+    },
+    "STEP1A1": {
+      "P": "STEP 01 > A2_본문 박스",
+      "C": "STEP 01 > A1_어휘 선택",
+      "NUM": "STEP 01 > A_번호"
+    },
+    "STEP1A2": {
+      "P": "STEP 01 > A2_본문 박스",
+      "OX": "STEP 01 > A2_OX문제"
+    },
+    "STEP1B1": {
+      "*": "STEP 01 > B1_내용 정리",
+      "SUBJ": "STEP 01 > B1_주제",
+      "TITLE": "STEP 01 > B1_제목",
+      "Q": "STEP 01 > 하단 문제",
+      "P@bottom": "STEP 01 > 하단 지문",
+      "C": "STEP 01 > 하단 선지"
+    },
+    "STEP1B2": {
+      "Q": "STEP 01 > B2_내용 종합 번호",
+      "C": "STEP 01 > B2_내용 종합 선지",
+      "P": "STEP 01 > A2_본문 박스"
+    },
+    "STEP1C1": {
+      "P": "STEP 01 > C1_문장 배열",
+      "Q@bottom": "STEP 01 > 하단 문제"
+    },
+    "STEP1C2": {
+      "P": "STEP 01 > C2_빈칸 어휘",
+      "K": "STEP 01 > C2_빈칸 어휘 한글"
+    },
+    "STEP2A1": {
+      "P": "STEP 02 > A1_어법 선택"
+    },
+    "STEP2A1Practice": {
+      "P": "STEP 02 > A1_어법 선택 하단"
+    },
+    "STEP2B1": {
+      "*": "STEP 02 > B1_어법 OX"
+    },
+    "STEP2C1": {
+      "P": "STEP 02 > C1_빈칸 어법",
+      "K": "STEP 01 > C2_빈칸 어휘 한글"
+    },
+    "STEP2C2": {
+      "Q": "STEP 02 > C2_영작 배열 번호",
+      "Box": "STEP 02 > C2_영작 배열 보기"
+    }
+  }
+}

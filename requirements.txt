@@ -4,5 +4,7 @@ openpyxl>=3.1        # engines/final 등 xlsx 시트 대조
 PyMuPDF>=1.27        # PDF 텍스트/페이지 검사 (import fitz)
 numpy>=2.0           # 이미지/좌표 처리 보조
 
+jsonschema>=4.0       # content.json v2 검증 (core/schema)
+
 # 개발/테스트
 pytest>=9.0
