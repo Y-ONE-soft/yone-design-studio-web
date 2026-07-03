@@ -87,8 +87,23 @@ try {
         wlog("[경고] 스타일 없음(자동 생성 안 함): " + name);
         return null;
     }
-    var csUL = doc.characterStyles.itemByName("밑줄");
     var noneCS = doc.characterStyles[0];
+    // 밑줄 문자스타일 — 플로우별 ul_style 우선, 폴백은 v1 CS_UNDERLINE 순서
+    var ulCache = {};
+    function ulStyleFor(flow) {
+        var names = [];
+        if (flow.ul_style) { names.push(flow.ul_style); }
+        names.push("문제_밑줄");
+        names.push("밑줄");
+        for (var ni = 0; ni < names.length; ni++) {
+            var nm = names[ni];
+            if (ulCache[nm] === undefined) {
+                ulCache[nm] = findCharacterStyleByPath(doc, nm);
+            }
+            if (ulCache[nm]) { return ulCache[nm]; }
+        }
+        return null;
+    }
 
     for (var fi2 = 0; fi2 < plan.flows.length; fi2++) {
         var flow = plan.flows[fi2];
@@ -100,6 +115,7 @@ try {
             story = storyByMarker(doc, tgt.marker, tgt.page, tgt.rank);
         }
         if (!story) { wlog("[경고] 스토리 못 찾음: " + flow.step); continue; }
+        var csUL = ulStyleFor(flow);
 
         var flat = [];
         var unitStart = [];
@@ -115,7 +131,9 @@ try {
         try { story.texts[0].appliedCharacterStyle = noneCS; } catch (e) {}
         wlog(flow.step + ": " + flat.length + "단락 배치 (유닛 " + flow.units.length + ")");
 
-        var paras = story.paragraphs;
+        // 대형 스토리 필수 최적화: 컬렉션 인덱싱 대신 getElements() 1회 캐시
+        // (v1 blackbook run.jsx:197 주석 — 매번 재조회는 2,000단락에서 행 유발)
+        var paras = story.paragraphs.everyItem().getElements();
         var isStart = {};
         for (var us = 0; us < unitStart.length; us++) { isStart[unitStart[us]] = true; }
         for (var pi = 0; pi < flat.length && pi < paras.length; pi++) {
@@ -125,7 +143,7 @@ try {
                 try { paras[pi].startParagraph = StartParagraph.NEXT_FRAME; } catch (e) {}
             }
             var runs = flat[pi].runs;
-            if (runs && runs.length > 0 && csUL.isValid) {
+            if (runs && runs.length > 0 && csUL) {
                 var off = 0;
                 for (var ri = 0; ri < runs.length; ri++) {
                     var rl = runs[ri].t ? runs[ri].t.length : 0;
@@ -138,7 +156,7 @@ try {
                     off += rl;
                 }
             }
-            if ((pi + 1) % 100 === 0) {
+            if ((pi + 1) % 50 === 0) {
                 wlog(flow.step + " 스타일: " + (pi + 1) + "/" + flat.length);
             }
         }

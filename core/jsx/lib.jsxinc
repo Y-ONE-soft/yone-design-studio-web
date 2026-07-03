@@ -103,6 +103,22 @@ function findParagraphStyleByPath(doc, fullPath) {
     return st.isValid ? st : null;
 }
 
+// "그룹 > 이름" 전체 경로로 문자스타일 찾기 (그룹 없으면 루트에서)
+function findCharacterStyleByPath(doc, fullPath) {
+    var parts = fullPath.split(">");
+    for (var i = 0; i < parts.length; i++) {
+        parts[i] = parts[i].replace(/^\s+|\s+$/g, "");
+    }
+    var container = doc;
+    for (var gi = 0; gi < parts.length - 1; gi++) {
+        var grp = container.characterStyleGroups.itemByName(parts[gi]);
+        if (!grp.isValid) { return null; }
+        container = grp;
+    }
+    var st = container.characterStyles.itemByName(parts[parts.length - 1]);
+    return st.isValid ? st : null;
+}
+
 // ── 페이지/스토리 탐색 ───────────────────────────────────────────────────────
 // 마커 텍스트를 포함한 텍스트프레임이 있는 첫 페이지 (내지 개편에도 강건)
 function findPageByMarker(doc, marker) {
