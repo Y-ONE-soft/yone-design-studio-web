@@ -1094,10 +1094,16 @@ def api_mockup_render_binding():
     session = _mockup_sessions.get(token)
     if not session:
         return "세션 없음 — 표지를 다시 업로드해 주세요.", 400
-    if binding not in mockup_engine.TEMPLATES:
+    if binding not in mockup_engine.ALL_BINDINGS:
         return f"알 수 없는 바인딩: {binding}", 400
     try:
-        img = mockup_engine.render(session["front"], binding, long_edge=1500)
+        fit = float(request.form.get("fit", "1.0"))
+    except ValueError:
+        fit = 1.0
+    fit = max(0.7, min(1.3, fit))
+    try:
+        img = mockup_engine.render(session["front"], binding,
+                                   back_img=session.get("back"), long_edge=1500, fit=fit)
         buf = _io.BytesIO()
         if fmt == "PNG":
             img.save(buf, "PNG", optimize=True); mime = "image/png"
