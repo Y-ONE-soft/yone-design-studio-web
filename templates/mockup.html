@@ -550,6 +550,7 @@
         const img = document.getElementById('preview-img');
         img.onload = () => { showSpinner(false); enableDownload(); };
         img.src = URL.createObjectURL(blob);
+        img.classList.remove('hidden');
         img.style.display = 'block';
         document.getElementById('preview-placeholder').style.display = 'none';
       } catch(e) { showSpinner(false); }
@@ -570,6 +571,7 @@
         const img = document.getElementById('preview-img');
         img.onload = () => { showSpinner(false); enableDownload(); };
         img.src = url;
+        img.classList.remove('hidden');
         img.style.display = 'block';
         document.getElementById('preview-placeholder').style.display = 'none';
       } catch(e) { showSpinner(false); }
