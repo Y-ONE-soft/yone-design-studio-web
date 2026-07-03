@@ -48,10 +48,10 @@ BOX_WORDLIST = re.compile(r'/|(?:,[^,]*){3,}')   # 슬래시 또는 쉼표 3개+
 Q_FALLBACK_PATTERNS = [
     re.compile(r'^\d+\.\s.*(?:\?|시오\.?|것은\??|것을)\s*$'),   # "3. ... 것은?"
     re.compile(r'^서술형\s*\d+\s*[.)]'),                        # "서술형1."
-    re.compile(r'(?:시오|것은|곳은|것을|까)\s*[?.!]?\s*$'),       # 한글 종결어미 (앞 공백 허용)
+    re.compile(r'(?:시오|것은|곳은|것을|까|고르면|고른다면)\s*[?.!]?\s*$'),  # 한글 종결어미
 ]
 # 폴백 종결어미 단독은 오탐 위험 → 발문 시작 신호와 AND 결합
-Q_START_HINT = re.compile(r'^(?:\d+\s*[.)]|서술형|다음|위\s*글|글의|밑줄|주어진)')
+Q_START_HINT = re.compile(r'^(?:\d+\s*[.)]|서술형|다음|위\s*글|윗\s*글|윗글|아래\s*글|글의|밑줄|주어진)')
 Q_INTRO_FALLBACK = [
     re.compile(r'^(?:※\s*)?다음\s*글을\s*읽고\s*,?\s*물음에\s*답하시오'),
     re.compile(r'^\[\d+\s*~\s*\d+\]\s*다음\s*글'),

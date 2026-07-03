@@ -1,7 +1,7 @@
 {
  "total": 142936,
- "classified": 124370,
- "rate": 87.01,
+ "classified": 124384,
+ "rate": 87.02,
  "per_code": {
   "OBJ-CTN-CLAIM": 579,
   "OBJ-CTN-COUNT": 46,
@@ -92,7 +92,7 @@
   "OBJ-VOC-SYN": 217,
   "OBJ-VOC-UND-MEAN": 2793,
   "OBJ-VOC-UND-WRONG": 8646,
-  "OBJ-VOC-UND-WRONG-MULTI": 142,
+  "OBJ-VOC-UND-WRONG-MULTI": 156,
   "OBJ-VOC-WORD-DEF": 84,
   "SRV-EXT-COMPLETE": 186,
   "SRV-EXT-FILL": 66,
@@ -136,7 +136,7 @@
   "SRV-WRT-SUMM-THEME": 6
  },
  "per_category_rate": {
-  "(없음)": 83.1,
+  "(없음)": 83.2,
   "4스텝모의고사": 91.0,
   "교과서": 87.0,
   "기적의특강": 89.7,
@@ -354,5 +354,5 @@
    "n": 10
   }
  ],
- "unclassified_kinds": 8692
+ "unclassified_kinds": 8679
 }

@@ -173,16 +173,28 @@ def build_ir(paras, meta=None, log=None):
                 cur["_group_intro"] = intro_text
             if pending_stimulus:
                 for pr in pending_stimulus:
-                    block = {"kind": "para" if pr["kind"] == "P-CONTEXT" else "text",
-                             "label": None, "content": pr["text"]}
-                    cur["stimulus"]["blocks"].append(block)
+                    if pr["kind"] == "Box":
+                        if not re.match(r'^\s*(?:<|\[)', pr["text"]) \
+                                or len(pr["text"]) > 12:
+                            cur["given"]["type"] = cur["given"]["type"] or "word_box"
+                            cur["given"]["content"] += \
+                                ("\n" if cur["given"]["content"] else "") + pr["text"]
+                    elif pr["kind"] == "Cond":
+                        if not re.match(r'^\s*(?:<|\[)?\s*조\s*건', pr["text"]):
+                            cur["constraints"].append(pr["text"])
+                    else:
+                        block = {"kind": "para" if pr["kind"] == "P-CONTEXT" else "text",
+                                 "label": None, "content": pr["text"]}
+                        cur["stimulus"]["blocks"].append(block)
                 pending_stimulus = []
             continue
 
         if cur is None:
             # 묶음/서답형: 공유 지문이 도입문 뒤·첫 발문 앞에 오는 배치 —
             # 버퍼에 담아 다음 문항의 지문으로 붙인다 (드랍 금지).
-            if kind in ("P", "P-CONTEXT"):
+            if kind in ("P", "P-CONTEXT", "Box", "Cond") or (
+                    kind == "UNKNOWN" and text
+                    and not re.search(r"[가-힣]", text)):
                 pending_stimulus.append(r)
                 continue
             # 그 외(표지/안내 등)는 경고만

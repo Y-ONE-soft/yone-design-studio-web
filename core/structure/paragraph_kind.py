@@ -161,6 +161,32 @@ def classify_paragraphs(paras):
                 and nxt and R.P_ORDER_LABEL.match(nxt["text"])):
             item["kind"] = "P-CONTEXT"
 
+    # 본문 인라인 번호 문장 보정: P 사이에 낀 1~2개짜리 C 연쇄가 "긴 영어
+    # 완결문"이면 선지가 아니라 ①~⑤ 마커가 문장 앞에 붙은 지문 단락이다
+    # (어법 문제 변형 — 선지는 항상 5개 연쇄 또는 인라인 분할형).
+    i = 0
+    while i < len(out):
+        if out[i]["kind"] != "C":
+            i += 1
+            continue
+        j = i
+        while j < len(out) and out[j]["kind"] in ("C", "BLANK"):
+            j += 1
+        run = [k for k in range(i, j) if out[k]["kind"] == "C"]
+        if 1 <= len(run) <= 2:
+            prev = next((out[k] for k in range(i - 1, -1, -1)
+                         if out[k]["kind"] != "BLANK"), None)
+            nxt = out[j] if j < len(out) else None
+            neighbor_p = ((prev and prev["kind"] in ("P", "P-CONTEXT"))
+                          or (nxt and nxt["kind"] in ("P", "P-CONTEXT")))
+            if neighbor_p and all(
+                    len(out[k]["text"]) >= 80
+                    and not R.HANGUL.search(out[k]["text"])
+                    for k in run):
+                for k in run:
+                    out[k]["kind"] = "P"
+        i = j
+
     # Cond/Box propagation: 마커 뒤 이어지는 항목 단락을 같은 종류로.
     for i, item in enumerate(out):
         if item["kind"] not in ("Cond", "Box"):
