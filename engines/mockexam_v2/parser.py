@@ -113,6 +113,7 @@ def build_ir(paras, meta=None, log=None):
     warnings = []
     cur = None
     group_intro = None       # 직전 Q-INTRO의 group 정보 (묶음 문항 상속)
+    pending_stimulus = []    # 발문보다 앞에 온 공유 지문 (묶음/서답형 배치)
     seq = 0
 
     for r in annotated:
@@ -170,10 +171,21 @@ def build_ir(paras, meta=None, log=None):
             }
             if intro_text:
                 cur["_group_intro"] = intro_text
+            if pending_stimulus:
+                for pr in pending_stimulus:
+                    block = {"kind": "para" if pr["kind"] == "P-CONTEXT" else "text",
+                             "label": None, "content": pr["text"]}
+                    cur["stimulus"]["blocks"].append(block)
+                pending_stimulus = []
             continue
 
         if cur is None:
-            # 발문 앞의 고아 단락 (표지/안내 등) — 경고만
+            # 묶음/서답형: 공유 지문이 도입문 뒤·첫 발문 앞에 오는 배치 —
+            # 버퍼에 담아 다음 문항의 지문으로 붙인다 (드랍 금지).
+            if kind in ("P", "P-CONTEXT"):
+                pending_stimulus.append(r)
+                continue
+            # 그 외(표지/안내 등)는 경고만
             if text:
                 warnings.append(f"발문 이전 고아 단락: {text[:50]!r}")
             continue

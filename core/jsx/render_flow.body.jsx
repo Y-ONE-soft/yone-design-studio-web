@@ -54,8 +54,10 @@ try {
     story.contents = texts.join("\r");
     wlog("텍스트 배치: " + plan.length + "개 단락");
 
-    // 2) 문자 스타일 초기화
+    // 2) 문자 스타일 초기화 (대형 스토리에서 느릴 수 있음 — 전후 하트비트)
+    wlog("문자 스타일 초기화 시작 (" + story.characters.length + "자)");
     story.characters.everyItem().appliedCharacterStyle = doc.characterStyles[0];
+    wlog("문자 스타일 초기화 완료");
 
     // 3) 단락 스타일 (전체 경로 탐색, 자동 생성 금지)
     var cache = {};
@@ -92,7 +94,7 @@ try {
                 off += rl;
             }
         }
-        if ((si + 1) % 50 === 0) {
+        if ((si + 1) % 25 === 0) {
             wlog("스타일 적용: " + (si + 1) + "/" + plan.length);
         }
     }

@@ -75,8 +75,14 @@ def main():
     from core.inspect import dump_indd
     dump = dump_indd(out_indd, f"{out}/typeset_dump.json", log)
 
-    print("== 5/5 검수 (내용 보존 + 스타일)")
-    want = {w.lower() for p in plan for w in _RE_WORD.findall(p["t"])}
+    print("== 5/5 검수 (내용 보존 + 스타일) — 기준은 원고 원본 (플랜 아님)")
+    from engines.mockexam_v2.parser import extract_file_paragraphs
+    want = set()
+    for f in glob.glob(f"{cdir}/inputs/*"):
+        if os.path.basename(f) == name or len(docs) == 1:
+            for rp in extract_file_paragraphs(f):
+                for w in _RE_WORD.findall(rp["text"]):
+                    want.add(w.lower())
     got = set()
     style_hit = style_total = 0
     dump_texts = {}
