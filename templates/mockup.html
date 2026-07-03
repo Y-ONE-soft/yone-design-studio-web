@@ -61,6 +61,11 @@
             <span class="cover-drop-icon">📄</span>
             <span class="cover-drop-text">선택사항</span>
             <span class="cover-drop-name" id="name-back"></span>
+            <button type="button" class="cover-clear" title="삭제" aria-label="삭제"
+                    onclick="clearCover('back', event)">
+              <svg viewBox="0 0 12 12" width="10" height="10"><path d="M2 2 L10 10 M10 2 L2 10"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+            </button>
           </div>
         </div>
       </div>
@@ -426,6 +431,32 @@
       else pendingBack = file;
       sessionToken = null;
       scheduleUploadAndRender();
+    }
+
+    // ── 업로드 파일 삭제/초기화 ──────────────────────────────────
+    function clearCover(side, e) {
+      if (e) { e.stopPropagation(); e.preventDefault(); }
+      const drop = document.getElementById('drop-' + side);
+      document.getElementById('file-' + side).value = '';   // 같은 파일 재선택 가능하도록
+      document.getElementById('name-' + side).textContent = '';
+      drop.classList.remove('has-file');
+      const thumb = drop.querySelector('.cover-preview-thumb');
+      if (thumb) thumb.remove();
+      imgDataUrls[side] = null;
+      sessionToken = null;
+      document.getElementById('crop-' + side + '-section').classList.add('hidden');
+      if (side === 'front') {
+        pendingFront = null;
+        const img = document.getElementById('preview-img');
+        img.removeAttribute('src');
+        img.classList.add('hidden'); img.style.display = 'none';
+        document.getElementById('preview-placeholder').style.display = '';
+        document.getElementById('dl-png').disabled = true;
+        document.getElementById('dl-jpg').disabled = true;
+      } else {
+        pendingBack = null;
+        if (pendingFront) scheduleUploadAndRender();  // 앞표지만으로 다시 렌더
+      }
     }
 
     // ── 파라미터 동기화 ──────────────────────────────────────────
