@@ -1,0 +1,16 @@
+{
+  "_doc": "워크북 STEP → 내지 스토리 매핑 (v1 run.jsx:2841~2854 기본값의 데이터화). marker 텍스트로 페이지 탐색(내지 개편에 강건), page는 폴백. rank=같은 페이지 2번째 스토리. step3는 마스터 O 기반.",
+  "step1_a1":     {"page": "4",   "marker": "어휘 선택 1"},
+  "step1_a1_2":   {"page": "13",  "marker": "어휘 선택 2"},
+  "step1_a2":     {"page": "22",  "marker": "본문 O/X"},
+  "step1_b1":     {"page": "40",  "marker": "본문 정리"},
+  "step1_b2":     {"page": "58",  "marker": "내용 종합"},
+  "step1_c1":     {"page": "76",  "marker": "문장 배열"},
+  "step1_c2":     {"page": "94",  "marker": "빈칸 어휘"},
+  "step2_a1":     {"page": "114", "marker": "어법 선택"},
+  "step2_a1_btm": {"page": "114", "marker": "어법 선택", "rank": 2},
+  "step2_b1":     {"page": "132", "marker": "어법 O/X"},
+  "step2_c1":     {"page": "150", "marker": "빈칸 어법"},
+  "step2_c2":     {"page": "168", "marker": "영작 배열"},
+  "step3":        {"master": "O"}
+}
