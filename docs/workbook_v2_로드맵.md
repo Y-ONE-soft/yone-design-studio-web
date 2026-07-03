@@ -27,3 +27,7 @@
 - 플랜 빌더: engines/workbook_v2/plan.py (STEP_BUILDERS 레지스트리)
 - 실행기: core/jsx/workbook_flow.body.jsx (marker/master 스토리 탐색 + 오버플로우 페이지 확장)
 - 스토리 매핑 데이터: engines/workbook_v2/step_map.json
+
+## 진행 로그 (자율 진행 — 2026-07-05 야간)
+- W1 완료: step3 (누락0/오버플로우0, 커밋됨)
+- 이하 각 단계 에이전트가 완료 시 여기에 결과를 추가한다.
