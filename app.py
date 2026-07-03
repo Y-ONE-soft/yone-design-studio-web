@@ -1082,6 +1082,34 @@ def api_mockup_render():
         return str(e), 500
 
 
+@app.route("/api/mockup/render_binding", methods=["POST"])
+def api_mockup_render_binding():
+    """무선/스프링/중철 바인딩 목업 — 헤드리스 A/B 라이트맵 엔진 (Photoshop 불필요)."""
+    from core.mockup import mockup_engine
+    from PIL import Image as _Img
+    import io as _io
+    token   = request.form.get("token")
+    binding = request.form.get("binding", "")
+    fmt     = request.form.get("fmt", "PNG").upper()
+    session = _mockup_sessions.get(token)
+    if not session:
+        return "세션 없음 — 표지를 다시 업로드해 주세요.", 400
+    if binding not in mockup_engine.TEMPLATES:
+        return f"알 수 없는 바인딩: {binding}", 400
+    try:
+        img = mockup_engine.render(session["front"], binding, long_edge=1500)
+        buf = _io.BytesIO()
+        if fmt == "PNG":
+            img.save(buf, "PNG", optimize=True); mime = "image/png"
+        else:
+            bg = _Img.new("RGB", img.size, (255, 255, 255))
+            bg.paste(img, mask=img.split()[-1]); bg.save(buf, "JPEG", quality=92)
+            mime = "image/jpeg"
+        return Response(buf.getvalue(), mimetype=mime)
+    except Exception as e:
+        return str(e), 500
+
+
 # ── API ──────────────────────────────────────────────────────────────────
 
 @app.route("/api/run/<material_id>", methods=["POST"])

@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>목업 — Y.ONE DESIGN</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <style>
+    .binding-row{display:flex;gap:6px}
+    .binding-btn{flex:1;padding:8px 4px;border:1px solid #d0d0d8;background:#fff;
+                 border-radius:8px;cursor:pointer;font-size:13px;transition:.12s}
+    .binding-btn.active{background:#1a1a22;color:#fff;border-color:#1a1a22}
+    .binding-hint{font-size:11px;color:#8a8a92;margin-top:6px;line-height:1.4}
+  </style>
 </head>
 <body class="mockup-body">
   <header class="top-bar">
@@ -45,6 +52,18 @@
             <span class="cover-drop-name" id="name-back"></span>
           </div>
         </div>
+      </div>
+
+      <!-- 바인딩 목업 (헤드리스 엔진, Photoshop 불필요) -->
+      <div class="panel-section binding-select">
+        <div class="panel-section-title">바인딩 목업</div>
+        <div class="binding-row">
+          <button class="binding-btn active" data-b="일반" onclick="selectBinding(null)">일반</button>
+          <button class="binding-btn" data-b="무선"   onclick="selectBinding('무선')">무선</button>
+          <button class="binding-btn" data-b="스프링" onclick="selectBinding('스프링')">스프링</button>
+          <button class="binding-btn" data-b="중철"   onclick="selectBinding('중철')">중철</button>
+        </div>
+        <div class="binding-hint">무선·스프링·중철은 실제 목업 템플릿에 표지를 자동 배치합니다(슬라이더 조정 불필요). 펼침 표지는 오른쪽 절반을 앞표지로 사용.</div>
       </div>
 
       <!-- 앞표지 크롭 -->
