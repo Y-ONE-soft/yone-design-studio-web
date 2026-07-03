@@ -2,7 +2,7 @@ import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 JOBS_DIR = os.path.join(BASE_DIR, "jobs")
-PORT = 5010
+PORT = int(os.environ.get("YONE_PORT", "5010"))  # 스테이징: YONE_PORT=5011
 DEBUG = True
 
 # Y.ONE STUDIO 루트
