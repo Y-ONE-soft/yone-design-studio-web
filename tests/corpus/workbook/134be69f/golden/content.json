@@ -259,7 +259,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "Cond"
       },
       {
        "text": "주어진 어구를 제외하고 9단어로 영작할 것",
@@ -269,7 +269,7 @@
          "ul": false
         }
        ],
-       "kind": "UNKNOWN"
+       "kind": "Cond"
       },
       {
        "text": "<보기> with / audience members / a way / identify / allow",

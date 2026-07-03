@@ -24,6 +24,7 @@ import json
 import os
 import shutil
 import sys
+import unicodedata
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CORPUS = os.path.join(REPO, "tests", "corpus")
@@ -157,7 +158,8 @@ def copy_case(engine, job_id, job_dir, inputs, dry: bool):
     for f in inputs:
         shutil.copy2(f, os.path.join(dst, "inputs", os.path.basename(f)))
     for name in sorted(os.listdir(job_dir)):
-        if name.endswith(".txt") and name not in _META_EXCLUDE:
+        if name.endswith(".txt") \
+                and unicodedata.normalize("NFC", name) not in _META_EXCLUDE:
             shutil.copy2(os.path.join(job_dir, name),
                          os.path.join(dst, "meta", name))
     shutil.copy2(os.path.join(job_dir, "content.json"),

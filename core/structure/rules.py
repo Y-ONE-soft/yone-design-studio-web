@@ -99,7 +99,7 @@ P_SHORT_MIN_LEN = 30
 P_SENTENCE_END = re.compile(r'[.!?]["’”\')\]]?\s*$')
 
 # ── Box 마커 + 내용 한 줄 ("<보기> with / a way / ...") ──────────────────────
-BOX_INLINE = re.compile(r'^\s*<\s*보\s*기\s*[A-Z0-9]?\s*>\s*\S')
+BOX_INLINE = re.compile(r'^\s*<\s*보\s*기\s*[A-Z0-9]?\s*>\s*[^가-힣\s]')  # '<보기>의 …' 한글 지시문 제외 (조건 항목)
 
 # ── P 선행 노이즈: ".19 Dear Residents..." 류 숫자 마커 잔재 ─────────────────
 P_LEADING_NOISE = re.compile(r'^[.\s]*\d+\s+(?=[A-Z"“])')

@@ -14,10 +14,11 @@ def test_step3_basics():
     assert resolve_style("workbook", "STEP3", "Q") \
         == "STEP 03 > S_실전문제 번호 수정 올림포스"
     assert resolve_style("workbook", "STEP3", "GH") is None       # 제거 대상
-    assert resolve_style("workbook", "STEP3", "P", has_underline=True) \
-        == "STEP 03 > 지문 밑줄 있음"
-    assert resolve_style("workbook", "STEP3", "P", has_underline=False) \
-        == "STEP 03 > 지문 밑줄 없음"
+    # P 계열은 허용 스타일 배열 (JSX가 밑줄 변형을 상황별로 적용 — E2E 파일럿 반영)
+    p_styles = resolve_style("workbook", "STEP3", "P")
+    assert isinstance(p_styles, list)
+    assert "STEP 03 > 실전 문제 지문 올림포스_" in p_styles
+    assert "STEP 03 > 지문 밑줄 있음" in p_styles
 
 
 def test_override():
