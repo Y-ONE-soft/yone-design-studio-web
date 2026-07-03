@@ -71,5 +71,23 @@
       "Q": "STEP 02 > C2_영작 배열 번호",
       "Box": "STEP 02 > C2_영작 배열 보기"
     }
+  },
+  "mockexam_v2": {
+    "_doc": "동형모의고사 v2 (한영 계열 템플릿 기준 — 실물 스펙 tests/fixtures/template_spec_dh_hanyoung3.json 대조). 학교별 차이는 overrides로.",
+    "FLOW": {
+      "Q": "문제 번호",
+      "Q-SRV": "서술형 번호",
+      "Q-INTRO": "다음 글을 읽고",
+      "P": "지문",
+      "P-CONTEXT": "영어지문_순서",
+      "C": "선지",
+      "Cond": "조건",
+      "Box": "테두리",
+      "Word": "영단어",
+      "Ans": "서술형답지",
+      "K": "지문",
+      "Sym": "지문",
+      "UNKNOWN": "지문"
+    }
   }
 }

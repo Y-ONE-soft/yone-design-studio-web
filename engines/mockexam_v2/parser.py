@@ -122,7 +122,13 @@ def build_ir(paras, meta=None, log=None):
 
         if kind == "Q-INTRO":
             cur = _flush_item(items, cur, warnings)
-            group_intro = {"header": _header_of(text), "text": text}
+            gh = _header_of(text)
+            n_range = 0
+            m = _RE_GROUP.match(text)
+            if m:
+                n_range = int(m.group(2)) - int(m.group(1)) + 1
+            group_intro = {"header": gh, "text": text,
+                           "remaining": n_range or 99, "fresh": True}
             continue
 
         if kind == "Q":
@@ -130,12 +136,24 @@ def build_ir(paras, meta=None, log=None):
             code, label, q_kind = classify(_clean_question(text))
             if code == "OBJ-LNG-HEADER":
                 # 묶음 도입부 — 문항이 아니라 그룹 컨텍스트
-                group_intro = {"header": _header_of(text), "text": text}
+                gh2 = _header_of(text)
+                n_range = 0
+                m2 = _RE_GROUP.match(text)
+                if m2:
+                    n_range = int(m2.group(2)) - int(m2.group(1)) + 1
+                group_intro = {"header": gh2, "text": text,
+                               "remaining": n_range or 99, "fresh": True}
                 continue
             seq += 1
             header = _header_of(text)
-            if group_intro and not header["group_id"]:
-                header["group_id"] = group_intro["header"]["group_id"]
+            intro_text = None
+            if group_intro and group_intro["remaining"] > 0:
+                if not header["group_id"]:
+                    header["group_id"] = group_intro["header"]["group_id"]
+                if group_intro["fresh"]:
+                    intro_text = group_intro["text"]   # 그룹 첫 문항 앞에 1회 출력
+                    group_intro["fresh"] = False
+                group_intro["remaining"] -= 1
             cur = {
                 "id": f"q-{seq:03d}",
                 "type": code,
@@ -150,6 +168,8 @@ def build_ir(paras, meta=None, log=None):
                 "answer": None,
                 "_warnings": [],
             }
+            if intro_text:
+                cur["_group_intro"] = intro_text
             continue
 
         if cur is None:

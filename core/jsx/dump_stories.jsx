@@ -28,7 +28,14 @@ function esc(s) {
         else if (n == 13) { out += "\\r"; }
         else if (n == 9) { out += "\\t"; }
         else if (n < 32) { out += " "; }
-        else { out += c; }
+        else if (n < 127) { out += c; }
+        else {
+            // 비ASCII 전부 \uXXXX 이스케이프 — ExtendScript File.write가
+            // 외자 서러게이트 등에서 조용히 실패(0바이트 파일)하는 문제 회피
+            var hex = n.toString(16);
+            while (hex.length < 4) { hex = "0" + hex; }
+            out += "\\u" + hex;
+        }
     }
     return out;
 }
@@ -87,9 +94,13 @@ try {
     buf.push("],\"overflow_stories\":" + overflowCount + "}");
     var out = new File(OUT);
     out.encoding = "UTF-8";
-    out.open("w");
-    out.write(buf.join(""));
+    if (!out.open("w")) { throw "OUT open 실패: " + OUT; }
+    var payload = buf.join("");
+    var okWrite = out.write(payload);
     out.close();
+    var written = new File(OUT).length;
+    wlog("쓰기: write=" + okWrite + " bytes=" + written + "/" + payload.length);
+    if (!okWrite || written <= 0) { throw "OUT write 실패 (bytes=" + written + ")"; }
     doc.close(SaveOptions.NO);
     doc = null;
     wlog("덤프 완료: 스토리 " + stories.length + "개, 오버플로우 스토리 " + overflowCount + "개");
