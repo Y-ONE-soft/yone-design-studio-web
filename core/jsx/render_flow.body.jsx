@@ -54,9 +54,11 @@ try {
     story.contents = texts.join("\r");
     wlog("텍스트 배치: " + plan.length + "개 단락");
 
-    // 2) 문자 스타일 초기화 (대형 스토리에서 느릴 수 있음 — 전후 하트비트)
+    // 2) 문자 스타일 초기화 — texts[0](스토리 전체 범위 단일 객체) 사용.
+    //    characters.everyItem()는 세션 상태에 따라 간헐적으로 수 분간 행
+    //    (2026-07-05 두 차례 관측 — 동일 지점).
     wlog("문자 스타일 초기화 시작 (" + story.characters.length + "자)");
-    story.characters.everyItem().appliedCharacterStyle = doc.characterStyles[0];
+    story.texts[0].appliedCharacterStyle = doc.characterStyles[0];
     wlog("문자 스타일 초기화 완료");
 
     // 3) 단락 스타일 (전체 경로 탐색, 자동 생성 금지)

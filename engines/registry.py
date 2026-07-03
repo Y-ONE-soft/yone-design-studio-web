@@ -15,6 +15,7 @@ from engines.ebs_workbook.engine import EbsWorkbookEngine
 from engines.suneungteukgang_workbook.engine import SuneungteukgangWorkbookEngine
 from engines.seseospecial.engine import SeseoSpecialEngine
 from engines.mockexam.engine import MockexamEngine
+from engines.mockexam_v2.engine import MockexamV2Engine
 from engines.mockexam_sero_merge.engine import MockexamSeroMergeEngine
 from engines.analysis_merge.engine import AnalysisMergeEngine
 from engines.mothertongue_merge.engine import MothertongueMergeEngine
@@ -43,6 +44,7 @@ _ENGINE_LIST = [
     AnalysisMergeEngine(),
     MothertongueMergeEngine(),
     VertToHorizEngine(),
+    MockexamV2Engine(),
 ]
 # ────────────────────────────────────────────────────────────────────────
 

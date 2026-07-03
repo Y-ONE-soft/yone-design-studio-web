@@ -30,7 +30,9 @@ function jsonEscape(s) {
         else if (c === 0x0A) { out += '\\n'; }
         else if (c === 0x0D) { out += '\\r'; }
         else if (c === 0x09) { out += '\\t'; }
-        else if (c < 0x20) {
+        else if (c < 0x20 || c >= 0x7F) {
+            // 비ASCII 전부 \uXXXX — ExtendScript File.write가 특정 문자
+            // (외자 서러게이트 등)에서 0바이트로 조용히 실패하는 문제 회피
             var hex = c.toString(16);
             while (hex.length < 4) { hex = "0" + hex; }
             out += '\\u' + hex;
@@ -63,9 +65,12 @@ function jsonStringify(obj) {
 function writeJSON(path, obj) {
     var f = new File(path);
     f.encoding = "UTF-8";
-    f.open("w");
-    f.write(jsonStringify(obj));
+    if (!f.open("w")) { throw "writeJSON open 실패: " + path; }
+    var payload = jsonStringify(obj);
+    var ok = f.write(payload);
     f.close();
+    var written = new File(path).length;
+    if (!ok || written <= 0) { throw "writeJSON write 실패 (bytes=" + written + "): " + path; }
 }
 
 // ── 스타일 ───────────────────────────────────────────────────────────────────

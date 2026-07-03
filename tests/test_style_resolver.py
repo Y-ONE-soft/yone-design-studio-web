@@ -73,3 +73,32 @@ def test_style_map_names_exist_in_template_inventory():
                 if s and s not in inventory:
                     missing.append(f"{step}/{kind}: {s}")
     assert not missing, f"템플릿에 없는 스타일 참조: {missing}"
+
+
+def test_mockexam_v2_school_overrides_exist_in_inventory():
+    """동형 v2: 기본 FLOW + 학교 overrides 적용 결과가 각 학교 실물 템플릿
+    인벤토리에 전부 존재해야 한다 (새 학교 추가 시 스펙 픽스처도 추가할 것)."""
+    smap = json.load(open(os.path.join(
+        os.path.dirname(TESTS_DIR), "core", "structure", "style_map.json"),
+        encoding="utf-8"))["mockexam_v2"]
+    flow = smap["FLOW"]
+    school_fixtures = {
+        "한영3": "template_spec_dh_hanyoung3.json",
+        "상일2": "template_spec_dh_상일2.json",
+        "성덕1": "template_spec_dh_성덕1.json",
+        "명일3": "template_spec_dh_명일3.json",
+        "강동3": "template_spec_dh_강동3.json",
+    }
+    problems = []
+    for school, fx in school_fixtures.items():
+        inv = set(json.load(open(os.path.join(TESTS_DIR, "fixtures", fx),
+                                 encoding="utf-8"))["paragraph_styles"])
+        table = dict(flow)
+        table.update(smap.get("overrides", {}).get(school, {}))
+        for kind, style in table.items():
+            if kind.startswith("_"):
+                continue
+            for s in (style if isinstance(style, list) else [style]):
+                if s and s not in inv:
+                    problems.append(f"{school}/{kind}: {s}")
+    assert not problems, f"학교 템플릿에 없는 스타일: {problems}"

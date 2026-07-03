@@ -32,7 +32,8 @@
     "category": "직전보충",
     "items": [
       {"name": "파이널 직전보충", "prefix": "파이널", "engine_id": "final"},
-      {"name": "동형모의고사",   "prefix": "동형",   "engine_id": "mockexam", "category": "동형모의고사"}
+      {"name": "동형모의고사",   "prefix": "동형",   "engine_id": "mockexam", "category": "동형모의고사"},
+      {"name": "동형모의고사 v2 (베타)", "prefix": "동형", "engine_id": "mockexam_v2", "category": "동형모의고사"}
     ]
   },
   {
