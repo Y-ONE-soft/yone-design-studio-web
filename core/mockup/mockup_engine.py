@@ -44,14 +44,31 @@ def _quad_from_contour(c):
             return _order_quad(ap)
     return _order_quad(cv2.boxPoints(cv2.minAreaRect(c)))
 
-def _detect_quads(A, B, n=1):
+def _ab_mask(A, B):
     diff = np.abs(A[..., :3] - B[..., :3]).mean(2)
-    mask = (diff > 40).astype(np.uint8) * 255
-    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, np.ones((15, 15), np.uint8))
+    m = (diff > 40).astype(np.uint8) * 255
+    return cv2.morphologyEx(m, cv2.MORPH_CLOSE, np.ones((15, 15), np.uint8))
+
+def _detect_quads(A, B, n=1):
+    mask = _ab_mask(A, B)
     cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:n]
     quads = [_quad_from_contour(c) for c in cnts]
     quads.sort(key=lambda q: q[:, 0].mean())
+    return quads
+
+def _detect_spread_quads(A, B):
+    """펼침(양면): 두 페이지가 책등에서 붙어 한 덩어리이므로 책등(중앙)에서 좌/우로 나눔."""
+    mask = _ab_mask(A, B)
+    cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    c = max(cnts, key=cv2.contourArea)
+    x, y, w, h = cv2.boundingRect(c)
+    cx = x + w // 2
+    quads = []
+    for xa, xb in [(x, cx), (cx, x + w)]:
+        sub = mask.copy(); sub[:, :xa] = 0; sub[:, xb:] = 0
+        sc, _ = cv2.findContours(sub, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        quads.append(_quad_from_contour(max(sc, key=cv2.contourArea)))
     return quads
 
 def _rect_dims(quad, base=2000):
@@ -148,7 +165,7 @@ def render(cover_img, binding, back_img=None, long_edge=1500, shadow=True, fit=1
 
     if binding in SPREAD:
         tpl = SPREAD[binding]; A, B = _get_ab(tpl); H, W = A.shape[:2]
-        quads = _detect_quads(A, B, n=2)
+        quads = _detect_spread_quads(A, B)
         pages = [_front_of_spread(cover_img), _front_of_spread(back_img or cover_img)]
         C = np.zeros((H, W, 3), np.float32)
         for cov_src, quad in zip(pages, quads):
