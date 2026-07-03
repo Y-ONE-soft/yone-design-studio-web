@@ -18,8 +18,11 @@ fi
 # 1) 로컬 변경 커밋 (있을 때만)
 git add -A
 if ! git diff --cached --quiet; then
-    git commit -m "auto($NAME): $(date '+%F %T')" || true
-    echo "  -> 로컬 변경 커밋함"
+    # 변경 파일 요약을 커밋 본문에 포함 (git log만으로 무엇이 바뀌었는지 추적 가능)
+    SUMMARY=$(git diff --cached --name-status | head -20)
+    N_FILES=$(git diff --cached --name-status | wc -l | tr -d ' ')
+    git commit -m "auto($NAME): $(date '+%F %T') (${N_FILES}개 파일)" -m "$SUMMARY" || true
+    echo "  -> 로컬 변경 커밋함 (${N_FILES}개 파일)"
 fi
 
 # 2) 원격 변경 가져오기 (rebase + autostash로 divergence 흡수)
