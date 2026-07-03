@@ -1,0 +1,2744 @@
+{
+ "school": "성덕고",
+ "grade": "고1",
+ "exam_period": "26-1-기말",
+ "exam_date": "2026.6.29(월)",
+ "exam_type": "1학기 기말고사",
+ "round": 2,
+ "meta": {},
+ "questions": [
+  {
+   "source": "",
+   "paragraphs": [
+    {
+     "text": "다음 패션 산업에 대한 글의 내용과 일치하지 않는 것은? ",
+     "runs": [
+      {
+       "t": "다음 패션 산업에 대한 글의 내용과 일치하지 ",
+       "ul": false
+      },
+      {
+       "t": "않는",
+       "ul": true
+      },
+      {
+       "t": " 것은?",
+       "ul": false
+      },
+      {
+       "t": " ",
+       "ul": false
+      }
+     ],
+     "pstyle": "문제 번호"
+    },
+    {
+     "text": " The rise of circular fashion is facilitated by new technology and ideas. Materials commonly used in clothing are not eco-friendly because they require considerable resources and often break down slowly. This creates a need for eco-friendly textile alternatives. Currently, companies are developing recycled fibers and fibers extracted from agricultural waste products like leaves, peels, and seeds. One company uses nanotechnology to make soft material from orange peels. Another makes fabrics from kapok tree seeds. The trees grow well in poor soil without needing much water. These new fabrics produce less waste, last a long time, and break down easily.",
+     "runs": [
+      {
+       "t": " The rise of circular fashion is facilitated by new technology and ideas. Materials commonly used in clothing are not eco-friendly because they require considerable resources and often break down slowly. This creates a need for eco-friendly textile alternatives. Currently, companies are developing recycled fibers and fibers extracted from agricultural waste products like leaves, peels, and seeds. One company uses nanotechnology to make soft material from orange peels. Another makes fabrics from kapok tree seeds. The trees grow well in poor soil without needing much water. These new fabrics produce less waste, last a long time, and break down easily.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "① New technology makes circular fashion possible.",
+     "runs": [
+      {
+       "t": "① New technology makes circular fashion possible.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "② Eco-friendly textile alternatives are being developed.",
+     "runs": [
+      {
+       "t": "② Eco-friendly textile alternatives are being developed.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "③ New products from agricultural waste are worse for the environment than previous products.",
+     "runs": [
+      {
+       "t": "③ New products from agricultural waste are worse for the environment than previous products.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "④ Nanotechnology helps to produce soft materials.",
+     "runs": [
+      {
+       "t": "④ Nanotechnology helps to produce soft materials.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "⑤ Kapok trees grow well in poor condition, so they can be good materials for circular fashion.",
+     "runs": [
+      {
+       "t": "⑤ Kapok trees grow well in poor condition, so they can be good materials for circular fashion.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은?",
+     "runs": [
+      {
+       "t": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은?",
+       "ul": false
+      }
+     ],
+     "pstyle": "문제 번호"
+    },
+    {
+     "text": "But that's not what archaeologists see: some civilizations end suddenly, like the Aztec and Inca, conquered by invaders in the 1520s AD.",
+     "runs": [
+      {
+       "t": "But that's not what archaeologists see: some civilizations end suddenly, like the Aztec and Inca, conquered by invaders in the 1520s AD.",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_순서삽입"
+    },
+    {
+     "text": " History, people often say, repeats itself. And looking at the historical records of the ancient civilizations, some things do seem to happen again and again. ( ① ) Civilizations expand, get overextended, and then collapse as in the cases of Rome, which went under in 476 AD, and the British Empire, which fell apart more than a thousand years later in the post-World War Ⅱ era. ( ② ) But is this always the case, suggesting that history must repeat itself in exactly the same way each time? ( ③ ) If so, archaeology would be pretty boring; one thing would happen again and again. ( ④ ) Those empires never had the chance to collapse as a result of overexpansion. ( ⑤ ) So in the case of civilizations, \"history repeats itself\" seems to be an oversimplification.",
+     "runs": [
+      {
+       "t": " History, people often say, repeats itself. And looking at the historical records of the ancient civilizations, some things do seem to happen again and again. ( ① ) Civilizations expand, get overextended, and then collapse as in the cases of Rome, which went under in 476 AD, and the British Empire, which fell apart more than a thousand years later in the post-World War Ⅱ era. ( ② ) But is this always the case, suggesting that history must repeat itself in exactly the same way each time? ( ③ ) If so, archaeology would be pretty boring; one thing would happen again and again. ( ④ ) Those empires never had the chance to collapse as a result of overexpansion. ( ⑤ ) So in the case of civilizations, \"history repeats itself\" seems to be an oversimplification.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "다음 The Shed에 관한 안내문의 내용과 일치하지 않는 것은?",
+     "runs": [
+      {
+       "t": "다음 The Shed에 관한 안내문의 내용과 일치하지 ",
+       "ul": false
+      },
+      {
+       "t": "않는",
+       "ul": true
+      },
+      {
+       "t": " 것은?",
+       "ul": false
+      }
+     ],
+     "pstyle": "문제 번호"
+    },
+    {
+     "text": "The Shed – Korean Cuisine in London",
+     "runs": [
+      {
+       "t": "The Shed – Korean Cuisine in London",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "Ranked #1 Korean Restaurant in London – May 2025",
+     "runs": [
+      {
+       "t": "Ranked #1 Korean Restaurant in London – May 2025",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "⦁Menu: Authentic Korean dishes – bulgogi, bibimbap, and more (Full menu available upon request)",
+     "runs": [
+      {
+       "t": "⦁Menu: Authentic Korean dishes – bulgogi, bibimbap, and more (Full menu available upon request)",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "⦁Reservation Only: Walk-ins not accepted",
+     "runs": [
+      {
+       "t": "⦁Reservation Only: Walk-ins not accepted",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "  (Reservations online only via our website)",
+     "runs": [
+      {
+       "t": "  (Reservations online only via our website)",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "⦁Opening Hours:",
+     "runs": [
+      {
+       "t": "⦁Opening Hours:",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "  Lunch: 12:00 PM - 3:00 PM",
+     "runs": [
+      {
+       "t": "  Lunch: 12:00 PM - 3:00 PM",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "  Dinner: 6:00 PM -10:00 PM (Closed Mondays)",
+     "runs": [
+      {
+       "t": "  Dinner: 6:00 PM -10:00 PM (Closed Mondays)",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "⦁Address: 123 Hanok Street, London W1A 1AA",
+     "runs": [
+      {
+       "t": "⦁Address: 123 Hanok Street, London W1A 1AA",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "⦁Website: www.theshedkorean.co.uk",
+     "runs": [
+      {
+       "t": "⦁Website: www.theshedkorean.co.uk",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "Traditional Korean flavors with a modern touch",
+     "runs": [
+      {
+       "t": "Traditional Korean flavors with a modern touch",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "in the heart of London.",
+     "runs": [
+      {
+       "t": "in the heart of London.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "① 2025년 5월에 런던에서 1위를 한 한식당이다.",
+     "runs": [
+      {
+       "t": "① 2025년 5월에 런던에서 1위를 한 한식당이다.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "② 전체 메뉴는 요청하면 볼 수 있다.",
+     "runs": [
+      {
+       "t": "② 전체 메뉴는 요청하면 볼 수 있다.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "③ 예약 없이 방문할 수 있다.",
+     "runs": [
+      {
+       "t": "③ 예약 없이 방문할 수 있다.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "④ 점심 영업시간은 오후 12시부터 오후 3시이다.",
+     "runs": [
+      {
+       "t": "④ 점심 영업시간은 오후 12시부터 오후 3시이다.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "⑤ 월요일에 문을 닫는다.",
+     "runs": [
+      {
+       "t": "⑤ 월요일에 문을 닫는다.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "다음 글에서 전체 흐름과 관계 없는 문장은?",
+     "runs": [
+      {
+       "t": "다음 글에서 전체 흐름과 관계 ",
+       "ul": false
+      },
+      {
+       "t": "없는",
+       "ul": true
+      },
+      {
+       "t": " 문장은?",
+       "ul": false
+      }
+     ],
+     "pstyle": "문제 번호"
+    },
+    {
+     "text": " When scientists make an important new discovery or experimentally prove some hypothesis, they do not, in general, keep that information to themselves so that they alone can consider its meaning and derive additional theories from it. ① Instead, they publish their results and make their data available for inspection. ② This makes it possible for other scientists to reconsider their data and possibly refute their conclusions. ③ More importantly, though, it makes it possible for other scientists to use that data to construct new hypothesis and perform new experiments. ④ Natural science contrasts sharply with social science in that experiments are conducted in a laboratory. ⑤ The assumption is that society as a whole will end up knowing more if information is spread as widely as possible, rather than being limited to a few people. In a strict sense, every scientist depends on the work of other scientists.",
+     "runs": [
+      {
+       "t": " When scientists make an important new discovery or experimentally prove some hypothesis, they do not, in general, keep that information to themselves so that they alone can consider its meaning and derive additional theories from it. ① Instead, they publish their results and make their data available for inspection. ② This makes it possible for other scientists to reconsider their data and possibly refute their conclusions. ③ More importantly, though, it makes it possible for other scientists to use that data to construct new hypothesis and perform new experiments. ④ Natural science contrasts sharply with social science in that experiments are conducted in a laboratory. ⑤ The assumption is that society as a whole will end up knowing more if information is spread as widely as possible, rather than being limited to a few people. In a strict sense, every scientist depends on the work of other scientists.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "다음 글의 제목으로 가장 적절한 것은? ",
+     "runs": [
+      {
+       "t": "다음 글의 제목으로 가장 적절한 것은?",
+       "ul": false
+      },
+      {
+       "t": " ",
+       "ul": false
+      }
+     ],
+     "pstyle": "문제 번호"
+    },
+    {
+     "text": " The linear fashion moves in a straight line from design to consumption to disposal. Material extraction, textile manufacturing, the supply chain, design, sales, marketing, and other steps are guided by the aim of maximizing garment consumption without considering other issues. Due to linear fashion, the fashion industry negatively affects the environment. 85% of textiles go into landfills, only 1% of the material is recycled, at least 500,000 tons of microfibers end up in the ocean (equal to 50 billion plastic bottles), and 93 billion cubic meters of water is required for textile production annually. Alarming numbers like these will keep increasing if producers maintain the old system. It is clear that waste and pollution from the fashion industry must be reduced. Linear fashion must change, and this could happen through circular fashion.",
+     "runs": [
+      {
+       "t": " The linear fashion moves in a straight line from design to consumption to disposal. Material extraction, textile manufacturing, the supply chain, design, sales, marketing, and other steps are guided by the aim of maximizing garment consumption without considering other issues. Due to linear fashion, the fashion industry negatively affects the environment. 85% of textiles go into landfills, only 1% of the material is recycled, at least 500,000 tons of microfibers end up in the ocean (equal to 50 billion plastic bottles), and 93 billion cubic meters of water is required for textile production annually. Alarming numbers like these will keep increasing if producers maintain the old system. It is clear that waste and pollution from the fashion industry must be reduced. Linear fashion must change, and this could happen through circular fashion.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "① The Positive Effect of Maximizing Garment Consumption",
+     "runs": [
+      {
+       "t": "① The Positive Effect of Maximizing Garment Consumption",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "② How to Deal with the Waste from the Fashion Industry",
+     "runs": [
+      {
+       "t": "② How to Deal with the Waste from the Fashion Industry",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "③ The Savior of the Fashion Industry: The Linear Fashion",
+     "runs": [
+      {
+       "t": "③ The Savior of the Fashion Industry: The Linear Fashion",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "④ The Reason for Sustaining the Traditional Fashion Industry",
+     "runs": [
+      {
+       "t": "④ The Reason for Sustaining the Traditional Fashion Industry",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "⑤ Rethinking Fashion: from Linear Waste to Circular Change",
+     "runs": [
+      {
+       "t": "⑤ Rethinking Fashion: from Linear Waste to Circular Change",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "다음 글의 밑줄 친 부분 중, 어법상 옳은 것은?",
+     "runs": [
+      {
+       "t": "다음 글의 밑줄 친 부분 중, 어법상 옳은 것은?",
+       "ul": false
+      }
+     ],
+     "pstyle": "문제 번호"
+    },
+    {
+     "text": " Butler's story shows that much of ①which we see on the Internet cannot be trusted. This emphasizes the importance of digital literacy. Digital literacy is about more than just using computers. It is the ability to use digital technology to find, evaluate, create, and communicate information. To become digitally literate, we need to develop an attitude and knowledge that ②enables us to detect false information online. False information is any information ③that misinforms or deceives people. It can be about anything such as health, the environment, and economics across many platforms. It can be influential, as The Shed incident shows. If people ④were digitally literate, they would not have been fooled by The Shed experiment so easily. Digitally literate people would have carefully considered information about The Shed without being distracted by other people's reactions. They would have been suspicious ⑤what the restaurant did not have an address.",
+     "runs": [
+      {
+       "t": " Butler's story shows that much of ①",
+       "ul": false
+      },
+      {
+       "t": "which",
+       "ul": true
+      },
+      {
+       "t": " we see on the Internet cannot be trusted. This emphasizes the importance of digital literacy. Digital literacy is about more than just using computers. It is the ability to use digital technology to find, evaluate, create, and communicate information. To become digitally literate, we need to develop an attitude and knowledge that ②",
+       "ul": false
+      },
+      {
+       "t": "enables",
+       "ul": true
+      },
+      {
+       "t": " us to detect false information online. False information is any information ③",
+       "ul": false
+      },
+      {
+       "t": "that",
+       "ul": true
+      },
+      {
+       "t": " misinforms or deceives people. It can be about anything such as health, the environment, and economics across many platforms. It can be influential, as The Shed incident shows. If people ④",
+       "ul": false
+      },
+      {
+       "t": "were",
+       "ul": true
+      },
+      {
+       "t": " digitally literate, they would not have been fooled by The Shed experiment so easily. Digitally literate people would have carefully considered information about The Shed without being distracted by other people's reactions. They would have been suspicious ⑤",
+       "ul": false
+      },
+      {
+       "t": "what",
+       "ul": true
+      },
+      {
+       "t": " the restaurant did not have an address.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "다음 글의 주제로 가장 적절한 것은?",
+     "runs": [
+      {
+       "t": "다음 글의 주제로 가장 적절한 것은?",
+       "ul": false
+      }
+     ],
+     "pstyle": "문제 번호"
+    },
+    {
+     "text": " We think we're being logical, objective, and rational ― and therefore accurate in our analysis, judgment, and decisions. So we think that if other people are logical, objective, and rational, they will agree with us and see what we see. But the opposite is the case. Every human brain is different. Everyone's life experience is different. Everyone's desires and knowledge are different. You might think you're being realistic ― that is, that your ideas match reality, but that's impossible. It's only your interpretation of reality, which will always be different from someone else's. When two nations play each other in the World Cup, the fans of each country criticize the referees for missing all the infractions that the other team commits. Without fail, each fan base believes that the referees are biased against their team.",
+     "runs": [
+      {
+       "t": " We think we're being logical, objective, and rational ― and therefore accurate in our analysis, judgment, and decisions. So we think that if other people are logical, objective, and rational, they will agree with us and see what we see. But the opposite is the case. Every human brain is different. Everyone's life experience is different. Everyone's desires and knowledge are different. You might think you're being realistic ― that is, that your ideas match reality, but that's impossible. It's only your interpretation of reality, which will always be different from someone else's. When two nations play each other in the World Cup, the fans of each country criticize the referees for missing all the infractions that the other team commits. Without fail, each fan base believes that the referees are biased against their team.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "① the emotional factors behind human reasoning and behavior",
+     "runs": [
+      {
+       "t": "① the emotional factors behind human reasoning and behavior",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "② the illusion of objectivity and the limits of human perception",
+     "runs": [
+      {
+       "t": "② the illusion of objectivity and the limits of human perception",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "③ the need for scientific objectivity in judging sports competitions",
+     "runs": [
+      {
+       "t": "③ the need for scientific objectivity in judging sports competitions",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "④ the role of logical thinking in enhancing decision-making accuracy",
+     "runs": [
+      {
+       "t": "④ the role of logical thinking in enhancing decision-making accuracy",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "⑤ the importance of shared perspectives in international conflict resolution",
+     "runs": [
+      {
+       "t": "⑤ the importance of shared perspectives in international conflict resolution",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+     "runs": [
+      {
+       "t": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 ",
+       "ul": false
+      },
+      {
+       "t": "않은",
+       "ul": true
+      },
+      {
+       "t": " 것은?",
+       "ul": false
+      }
+     ],
+     "pstyle": "문제 번호"
+    },
+    {
+     "text": " There are some ways to improve digital literacy. You should check the ①credibility of the content creator. If a story has no writer's name, this could be a sign that its content is questionable. If there is a name, find out what and where the person has reported before. If the person has not written anything else or writes for a website that looks ②reliable, think twice before believing the content. Also, check who else is reporting the story. If no other media are reporting the ③same story, the story may not be true. Pick a few keywords from the story and put them in a search site to see if other media are ④supporting the story. Sorting through the vast amount of information created and shared online is challenging. However, it is important that we know what false information is and how it spreads. The better we ⑤recognize false information, the better we will be at avoiding it and helping others do the same.",
+     "runs": [
+      {
+       "t": " There are some ways to improve digital literacy. You should check the ①",
+       "ul": false
+      },
+      {
+       "t": "credibility",
+       "ul": true
+      },
+      {
+       "t": " of the content creator. If a story has no writer's name, this could be a sign that its content is questionable. If there is a name, find out what and where the person has reported before. If the person has not written anything else or writes for a website that looks ②",
+       "ul": false
+      },
+      {
+       "t": "reliable",
+       "ul": true
+      },
+      {
+       "t": ", think twice before believing the content. Also, check who else is reporting the story. If no other media are reporting the ③",
+       "ul": false
+      },
+      {
+       "t": "same",
+       "ul": true
+      },
+      {
+       "t": " story, the story may not be true. Pick a few keywords from the story and put them in a search site to see if other media are ④",
+       "ul": false
+      },
+      {
+       "t": "supporting",
+       "ul": true
+      },
+      {
+       "t": " the story. Sorting through the vast amount of information created and shared online is challenging. However, it is important that we know what false information is and how it spreads. The better we ⑤",
+       "ul": false
+      },
+      {
+       "t": "recognize",
+       "ul": true
+      },
+      {
+       "t": " false information, the better we will be at avoiding it and helping others do the same.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은? ",
+     "runs": [
+      {
+       "t": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?",
+       "ul": false
+      },
+      {
+       "t": " ",
+       "ul": false
+      }
+     ],
+     "pstyle": "문제 번호"
+    },
+    {
+     "text": " Fortunately, The Shed incident was an experiment that caused little damage.",
+     "runs": [
+      {
+       "t": " Fortunately, The Shed incident was an experiment that caused little damage.",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_순서"
+    },
+    {
+     "text": "(A) In addition, misleading online reviews about questionable products often trick people into wasting money. ",
+     "runs": [
+      {
+       "t": "(A) In addition, misleading online reviews about questionable products often trick people into wasting money. ",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문_순서"
+    },
+    {
+     "text": "(B) However, false information can cause emotional or financial harm to people.",
+     "runs": [
+      {
+       "t": "(B) However, false information can cause emotional or financial harm to people.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문_순서"
+    },
+    {
+     "text": "(C) For example, false information about a certain gender or belief group can stir up hatred against that group. It can cause fights between those who support the group and those who do not.",
+     "runs": [
+      {
+       "t": "(C) For example, false information about a certain gender or belief group can stir up hatred against that group. It can cause fights between those who support the group and those who do not.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문_순서"
+    },
+    {
+     "text": "① (A)-(C)-(B)\t② (B)-(A)-(C)\t③ (B)-(C)-(A)",
+     "runs": [
+      {
+       "t": "① (A)-(C)-(B)\t② (B)-(A)-(C)\t③ (B)-(C)-(A)",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "④ (C)-(A)-(B)\t⑤ (C)-(B)-(A)",
+     "runs": [
+      {
+       "t": "④ (C)-(A)-(B)\t⑤ (C)-(B)-(A)",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "다음 글의 내용을 아래와 같이 요약할 때 빈칸에 들어갈 말로 가장 적절한 것은?",
+     "runs": [
+      {
+       "t": "다음 글의 내용을 아래와 같이 요약할 때 빈칸에 들어갈 말로 가장 적절한 것은?",
+       "ul": false
+      }
+     ],
+     "pstyle": "문제 번호"
+    },
+    {
+     "text": " To avoid being deceived by false information, we need to develop a habit of critically evaluating what we see online. If you see a story that looks too good or too bad to be true, check the source first. Look at the website the story comes from. Does it look real? Are there spelling errors? Does it have other stories or just the one you read? Check that the story contains references and links to other information. Click on those links and see if the other information looks reliable. Websites with false information often do not have many real stories about other topics. They also often have lots of advertisements that pop up when you visit the sites.",
+     "runs": [
+      {
+       "t": " To avoid being deceived by false information, we need to develop a habit of critically evaluating what we see online. If you see a story that looks too good or too bad to be true, check the source first. Look at the website the story comes from. Does it look real? Are there spelling errors? Does it have other stories or just the one you read? Check that the story contains references and links to other information. Click on those links and see if the other information looks reliable. Websites with false information often do not have many real stories about other topics. They also often have lots of advertisements that pop up when you visit the sites.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": " You should then check the credibility of the content creator. If a story has no writer's name, this could be a sign that its content is questionable. If there is a name, find out what and where the person has reported before. If the person has not written anything else or writes for a website that looks unreliable, think twice before believing the content.",
+     "runs": [
+      {
+       "t": " You should then check the credibility of the content creator. If a story has no writer's name, this could be a sign that its content is questionable. If there is a name, find out what and where the person has reported before. If the person has not written anything else or writes for a website that looks unreliable, think twice before believing the content.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": " Finally, check who else is reporting the story. If no other media are reporting the same story, the story may not be true. Pick a few keywords from the story and put them in a search site to see if other media are supporting the story.",
+     "runs": [
+      {
+       "t": " Finally, check who else is reporting the story. If no other media are reporting the same story, the story may not be true. Pick a few keywords from the story and put them in a search site to see if other media are supporting the story.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": " Sorting through the vast amount of information created and shared online is challenging. However, it is important that we know what false information is and how it spreads. The better we recognize false information, the better we will be at avoiding it and helping others do the same.",
+     "runs": [
+      {
+       "t": " Sorting through the vast amount of information created and shared online is challenging. However, it is important that we know what false information is and how it spreads. The better we recognize false information, the better we will be at avoiding it and helping others do the same.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "↓",
+     "runs": [
+      {
+       "t": "↓",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "Before believing something online, check who posted it, if it's true, and if others say the same. By doing so, ___________________________________________.",
+     "runs": [
+      {
+       "t": "Before believing something online, check who posted it, if it's true, and if others say the same. By doing so, ___________________________________________.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "① the credibility of your content will last longer",
+     "runs": [
+      {
+       "t": "① ",
+       "ul": false
+      },
+      {
+       "t": "the credibility of your content will last longer",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "② you can avoid being misled by false or biased information",
+     "runs": [
+      {
+       "t": "② ",
+       "ul": false
+      },
+      {
+       "t": "you can avoid being misled by false or biased information",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "③ false information can spread quickly, so it must be approached with caution",
+     "runs": [
+      {
+       "t": "③ ",
+       "ul": false
+      },
+      {
+       "t": "false information can spread quickly, so it must be approached with caution",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "④ we should be cautious of websites with unclear sources or numerous advertisements",
+     "runs": [
+      {
+       "t": "④ ",
+       "ul": false
+      },
+      {
+       "t": "we should be cautious of websites with unclear sources or numerous advertisements",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "⑤ we can search for keywords, which can help us determine whether they are supported by other sources",
+     "runs": [
+      {
+       "t": "⑤ ",
+       "ul": false
+      },
+      {
+       "t": "we can search for keywords, which can help us determine whether they are supported by other sources",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "다음 글의 제목으로 가장 적절한 것은?",
+     "runs": [
+      {
+       "t": "다음 글의 제목으로 가장 적절한 것은?",
+       "ul": false
+      }
+     ],
+     "pstyle": "문제 번호"
+    },
+    {
+     "text": " Maya stood in line to check in for her flight. Her anticipations for the upcomingEuropean backpacking trip were really high. She had been looking forward to the trip for a year. She couldn't wait to visit museums in Madrid and see the Eiffel Tower at night in Paris. As she stood in line, she could feel those experiences were finally so close. When she approached the counter, the airline employee asked to see her passport. Maya reached into her pocket but felt nothing. She realized she had left her passport at home. Her plans were ruined. She was heartbroken, knowing she could not board the flight and had to delay her dream trip.",
+     "runs": [
+      {
+       "t": " Maya stood in line to check in for her flight. Her anticipations for the upcomingEuropean backpacking trip were really high. She had been looking forward to the trip for a year. She couldn't wait to visit museums in Madrid and see the Eiffel Tower at night in Paris. As she stood in line, she could feel those experiences were finally so close. When she approached the counter, the airline employee asked to see her passport. Maya reached into her pocket but felt nothing. She realized she had left her passport at home. Her plans were ruined. She was heartbroken, knowing she could not board the flight and had to delay her dream trip.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "① A Backpacking Trip in Europe",
+     "runs": [
+      {
+       "t": "① A Backpacking Trip in Europe",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "② Missing Passport, Broken Heart",
+     "runs": [
+      {
+       "t": "② Missing Passport, Broken Heart",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "③ The Best Traveling Season in Europe",
+     "runs": [
+      {
+       "t": "③ The Best Traveling Season in Europe",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "④ Travel Tips for Non-Experienced Travelers",
+     "runs": [
+      {
+       "t": "④ Travel Tips for Non-Experienced Travelers",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "⑤ How to Keep Your Passport Safe While Traveling",
+     "runs": [
+      {
+       "t": "⑤ How to Keep Your Passport Safe While Traveling",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "밑줄 친 문장이 다음 글에서 의미하는 바로 가장 적절한 것은?",
+     "runs": [
+      {
+       "t": "밑줄 친 문장이 다음 글에서 의미하는 바로 가장 적절한 것은?",
+       "ul": false
+      }
+     ],
+     "pstyle": "문제 번호"
+    },
+    {
+     "text": " People often ask me, \"What surprises you most about habits?\" One thing that continually astonishes me is the degree to which we're influenced by sheer convenience. The amount of effort, time, or decision making required by an action has a huge influence on habit formation. To a truly remarkable extent, we're more likely to do something if it's convenient, and less likely if it's not. For this reason, we should pay close attention to the convenience of any activity we want to make into a habit. Putting a wastebasket next to our front door made mail sorting slightly more convenient, and I stopped procrastinating with this chore. Many people report that they do a much better job of staying close to distant family members now that tools like group chats make it easy to stay in touch.",
+     "runs": [
+      {
+       "t": " People often ask me, \"What surprises you most about habits?\" One thing that continually astonishes me is the degree to which we're influenced by sheer convenience. ",
+       "ul": false
+      },
+      {
+       "t": "The amount of effort, time, or decision making required by an action has a huge influence on habit formation",
+       "ul": true
+      },
+      {
+       "t": ". To a truly remarkable extent, we're more likely to do something if it's convenient, and less likely if it's not. For this reason, we should pay close attention to the convenience of any activity we want to make into a habit. Putting a wastebasket next to our front door made mail sorting slightly more convenient, and I stopped procrastinating with this chore. Many people report that they do a much better job of staying close to distant family members now that tools like group chats make it easy to stay in touch.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "① habit formation through repetition alone",
+     "runs": [
+      {
+       "t": "① habit formation through repetition alone",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "② the role of convenience in habit formation",
+     "runs": [
+      {
+       "t": "② the role of convenience in habit formation",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "③ the minimal impact of ease on habit formation",
+     "runs": [
+      {
+       "t": "③ the minimal impact of ease on habit formation",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "④ the influence of personal preference on habit formation",
+     "runs": [
+      {
+       "t": "④ the influence of personal preference on habit formation",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "⑤ the necessity of willpower and discipline in forming habits",
+     "runs": [
+      {
+       "t": "⑤ the necessity of willpower and discipline in forming habits",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "다음 글의 요지로 가장 적절한 것은?",
+     "runs": [
+      {
+       "t": "다음 글의 요지로 가장 적절한 것은?",
+       "ul": false
+      }
+     ],
+     "pstyle": "문제 번호"
+    },
+    {
+     "text": " We have a 'diving reflex', like other marine mammals. This means that special nerve endings on our faces, around the mouth and nose, trigger this reflex only when the facial region goes under water. If we are in the water, with our head out in the air, there is no diving reflex. But if we sink just our face in a bowl of water, while the whole of the rest of our body is in the dry air, the diving reflex is triggered. It automatically closes down the airway, reducing the risk of swallowing water, and it narrows the small air-passages in the lungs. At the same time the heart rate is slowed down to half speed and blood is shunted to the vital organs, protecting them from the effects of the brief stop in breathing. By contrast, if a chimpanzee or a gorilla found itself in water with its face below the surface, it would panic, its heart would race and it would quickly drown.",
+     "runs": [
+      {
+       "t": " We have a 'diving reflex', like other marine mammals. This means that special nerve endings on our faces, around the mouth and nose, trigger this reflex only when the facial region goes under water. If we are in the water, with our head out in the air, there is no diving reflex. But if we sink just our face in a bowl of water, while the whole of the rest of our body is in the dry air, the diving reflex is triggered. It automatically closes down the airway, reducing the risk of swallowing water, and it narrows the small air-passages in the lungs. At the same time the heart rate is slowed down to half speed and blood is shunted to the vital organs, protecting them from the effects of the brief stop in breathing. By contrast, if a chimpanzee or a gorilla found itself in water with its face below the surface, it would panic, its heart would race and it would quickly drown.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "① Humans have a diving reflex that is different from that of other mammals.",
+     "runs": [
+      {
+       "t": "① Humans have a diving reflex that is different from that of other mammals.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "② The diving reflex can be trained and strengthened with constant practice.",
+     "runs": [
+      {
+       "t": "② The diving reflex can be trained and strengthened with constant practice.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "③ Humans have better adaptability than other mammals in any environment.",
+     "runs": [
+      {
+       "t": "③ Humans have better adaptability than other mammals in any environment.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "④ The diving reflex is a survival mechanism developed by marine mammals.",
+     "runs": [
+      {
+       "t": "④ The diving reflex is a survival mechanism developed by marine mammals.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "⑤ The diving reflex helps to enhance the respiratory efficiency of great apes.",
+     "runs": [
+      {
+       "t": "⑤ The diving reflex helps to enhance the respiratory efficiency of great apes.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "다음 글의 내용을 아래와 같이 요약할 때 빈칸 (A)~(C)에 들어갈 말로 가장 적절한 것은?",
+     "runs": [
+      {
+       "t": "다음 글의 내용을 아래와 같이 요약할 때 빈칸 (A)~(C)에 들어갈 말로 가장 적절한 것은?",
+       "ul": false
+      }
+     ],
+     "pstyle": "문제 번호"
+    },
+    {
+     "text": " To monitor our surroundings is to focus on what's outside of ourselves: what we see, hear, smell, feel, and perhaps even taste. But sometimes what really marks a place is something less specific ─ a feeling within us. An interesting example emerged from a study of subway passenger behavior. Researchers trying to understand why people sit where they sit or stand where they stand in subway and metro trains examined the factors that shape the way riders used and navigated that space in different situations. One of their findings involved the reasons many riders like to plant themselves close to the train's doors. Partly this was the obvious convenience of being able to exit more quickly. But it was shaped partly by a more abstract sensation ─ the desire to avoid the sometimes uncomfortable feeling of accidentally making eye contact with seated passengers. We can't see feelings ─ but they're very real.",
+     "runs": [
+      {
+       "t": " To monitor our surroundings is to focus on what's outside of ourselves: what we see, hear, smell, feel, and perhaps even taste. But sometimes what really marks a place is something less specific ─ a ",
+       "ul": false
+      },
+      {
+       "t": "feeling",
+       "ul": false
+      },
+      {
+       "t": " within us. An interesting example emerged from a study of subway passenger behavior. Researchers trying to understand why people sit where they sit or stand where they stand in subway and metro trains examined the factors that shape the way riders used and navigated that space in different situations. One of their findings involved the reasons many riders like to plant themselves close to the train's doors. Partly this was the obvious convenience of being able to exit more quickly. But it was shaped partly by a more abstract sensation ─ the desire to avoid the sometimes uncomfortable feeling of accidentally making eye contact with seated passengers. We can't see feelings ─ but they're very real.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "↓",
+     "runs": [
+      {
+       "t": "↓",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "The way people use public spaces like subway trains is influenced not only by (A)__________ features such as convenience but also by internal feelings. For example, many passengers choose to stand near the doors to avoid (B)__________ with seated riders. This shows how (C)__________  emotions can shape our experience of the world.",
+     "runs": [
+      {
+       "t": "The way people use public spaces like subway trains is influenced not only by (A)__________ features such as convenience but also by internal feelings. For example, many passengers choose to stand near the doors to avoid (B)__________ with seated riders. This shows how (C)__________  emotions can shape our experience of the world.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "       (A)\t     (B)\t\t   (C)",
+     "runs": [
+      {
+       "t": "       (A)\t     (B)\t\t   (C)",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "① emotional\t…\teye contact\t physical",
+     "runs": [
+      {
+       "t": "① emotional\t…\teye contact\t physical",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "② physical\t…\tinteraction\t invisible",
+     "runs": [
+      {
+       "t": "② physical\t…\tinteraction\t invisible",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "③ internal\t…\texchange\t emotional",
+     "runs": [
+      {
+       "t": "③ internal\t…\texchange\t emotional",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "④ personal\t…\tmovement\t visible",
+     "runs": [
+      {
+       "t": "④ personal\t…\tmovement\t visible",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "⑤ external\t…\tdistraction\t noticeable",
+     "runs": [
+      {
+       "t": "⑤ external\t…\tdistraction\t noticeable",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "다음 Jessi에 관한 글의 내용과 일치하지 않는 것은?",
+     "runs": [
+      {
+       "t": "다음 Jessi에 관한 글의 내용과 일치하지 ",
+       "ul": false
+      },
+      {
+       "t": "않는",
+       "ul": true
+      },
+      {
+       "t": " 것은?",
+       "ul": false
+      }
+     ],
+     "pstyle": "문제 번호"
+    },
+    {
+     "text": " Jessie is a fashion blogger who loves unique, vibrant clothes. But guess what? She does not buy new clothes. Instead, she buys them secondhand. You may think secondhand clothes are old fashioned, but by buying them, Jessie can try different styles. She also does not get too attached to any style or brand because there is always another exciting outfit waiting to be discovered. Jessie's clothing habits are not just about creating a style; they are about saving the Earth. The reason is that her actions help reduce the production and consumption of clothes.",
+     "runs": [
+      {
+       "t": " Jessie is a fashion blogger who loves unique, vibrant clothes. But guess what? She does not buy new clothes. Instead, she buys them secondhand. You may think secondhand clothes are old fashioned, but by buying them, Jessie can try different styles. She also does not get too attached to any style or brand because there is always another exciting outfit waiting to be discovered. Jessie's clothing habits are not just about creating a style; they are about saving the Earth. The reason is that her actions help reduce the production and consumption of clothes.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "① Jessi prefers purchasing used clothes rather than new ones.",
+     "runs": [
+      {
+       "t": "① Jessi prefers purchasing used clothes rather than new ones.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "② Jessi can try out diverse fashion styles by purchasing secondhand clothing.",
+     "runs": [
+      {
+       "t": "② Jessi can try out diverse fashion styles by purchasing secondhand clothing.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "③ Jessi is not overly attached to any style or brand because there are interesting clothes waiting to be found.",
+     "runs": [
+      {
+       "t": "③ Jessi is not overly attached to any style or brand because there are interesting clothes waiting to be found.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "④ Jessi's clothing habits are not only about creating style, but also about saving the planet.",
+     "runs": [
+      {
+       "t": "④ Jessi's clothing habits are not only about creating style, but also about saving the planet.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "⑤ Jessi's behavior helps contribute to maximizing garment manufacturing and purchasing.",
+     "runs": [
+      {
+       "t": "⑤ Jessi's behavior helps contribute to maximizing garment manufacturing and purchasing.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은? ",
+     "runs": [
+      {
+       "t": "다음 글의 밑줄 친 부분 중, 어법상 ",
+       "ul": false
+      },
+      {
+       "t": "틀린",
+       "ul": true
+      },
+      {
+       "t": " 것은?",
+       "ul": false
+      },
+      {
+       "t": " ",
+       "ul": false
+      }
+     ],
+     "pstyle": "문제 번호"
+    },
+    {
+     "text": " It is natural for people to observe happenings and then seek explanations for why those happenings occurred. But sometimes the reasoning is wrong ①because of one or more misconceptions. One of these is the ecological fallacy, where an argument claims ②that there is a causal relationship between two things merely because they occur together. For example, in the 1950s ③it was found that crime rates were the highest in neighborhoods where immigrants were most numerous. Some people used this \"co-occurrence\" to argue ④what immigrants were a cause of crime. But a careful analysis of this situation revealed that immigrants were forced ⑤to live in neighborhoods where crime rates were already high; they could not afford more expensive housing in safer neighborhoods. Immigrants themselves committed very few of the crimes. Unless you analyze the claim carefully, you would misinterpret the relationship and thereby construct a faulty belief.",
+     "runs": [
+      {
+       "t": " It is natural for people to observe happenings and then seek explanations for why those happenings occurred. But sometimes the reasoning is wrong ①",
+       "ul": false
+      },
+      {
+       "t": "because ",
+       "ul": true
+      },
+      {
+       "t": "of",
+       "ul": true
+      },
+      {
+       "t": " one or more misconceptions. One of these is the ecological fallacy, where an argument claims ②",
+       "ul": false
+      },
+      {
+       "t": "that",
+       "ul": true
+      },
+      {
+       "t": " there is a causal relationship between two things merely because they occur together. For example, in the 1950s ③",
+       "ul": false
+      },
+      {
+       "t": "it",
+       "ul": true
+      },
+      {
+       "t": " was found that crime rates were the highest in neighborhoods where immigrants were most numerous. Some people used this \"co-occurrence\" to argue ④",
+       "ul": false
+      },
+      {
+       "t": "what",
+       "ul": true
+      },
+      {
+       "t": " immigrants were a cause of crime. But a careful analysis of this situation revealed that immigrants were forced ⑤",
+       "ul": false
+      },
+      {
+       "t": "to",
+       "ul": true
+      },
+      {
+       "t": " live",
+       "ul": true
+      },
+      {
+       "t": " in neighborhoods where crime rates were already high; they could not afford more expensive housing in safer neighborhoods. Immigrants themselves committed very few of the crimes. Unless you analyze the claim carefully, you would misinterpret the relationship and thereby construct a faulty belief.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "다음 빈칸에 들어갈 말로 가장 적절한 것은? ",
+     "runs": [
+      {
+       "t": "다음 빈칸에 들어갈 말로 가장 적절한 것은?",
+       "ul": false
+      },
+      {
+       "t": " ",
+       "ul": false
+      }
+     ],
+     "pstyle": "문제 번호"
+    },
+    {
+     "text": " In the 1930s, the British psychologist Sir Frederic Bartlett asked people to listen to folktales from other countries and then recall these stories at a later date. As you might guess, unfamiliar stories were not remembered as well as familiar stories. Surprisingly, however, errors in memory were not random. Rather, subjects often rewrote similar parts of the stories in their own minds ─ particularly the parts that made the least sense to them. Bartlett concluded that when facing problems, humans draw upon mental schemata, or shelves of stored knowledge in our brains, to fill in any minor gaps in our memories. Therefore, remembering is an imaginative process that involves _____________________.",
+     "runs": [
+      {
+       "t": " In the 1930s, the British psychologist Sir Frederic Bartlett asked people to listen to folktales from other countries and then recall these stories at a later date. As you might guess, unfamiliar stories were not remembered as well as familiar stories. Surprisingly, however, errors in memory were not random. Rather, subjects often rewrote similar parts of the stories in their own minds ─ particularly the parts that made the least sense to them. Bartlett concluded that when facing problems, humans draw upon mental schemata, or shelves of stored knowledge in our brains, to fill in any minor gaps in our memories. Therefore, remembering is an imaginative process that involves _____________________.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "① leading rational reasoning",
+     "runs": [
+      {
+       "t": "① leading rational reasoning",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "② rewriting a whole new story",
+     "runs": [
+      {
+       "t": "② rewriting a whole new story",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "③ measuring various possibilities",
+     "runs": [
+      {
+       "t": "③ measuring various possibilities",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "④ building upon past experiences",
+     "runs": [
+      {
+       "t": "④ building upon past experiences",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "⑤ striving to improve our memory",
+     "runs": [
+      {
+       "t": "⑤ striving to improve our memory",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "다음 글의 제목으로 가장 적절한 것은? ",
+     "runs": [
+      {
+       "t": "다음 글의 제목으로 가장 적절한 것은?",
+       "ul": false
+      },
+      {
+       "t": " ",
+       "ul": false
+      }
+     ],
+     "pstyle": "문제 번호"
+    },
+    {
+     "text": " It is common sense that people's inner beliefs may drive their external behavior. If you're attracted to a certain person, you should be more likely to socialize with that person. If you favor a brand of toothpaste, you're more likely to buy it. Of course, our internal thoughts don't always predict our public behavior, but, overall, what we do obviously reflects what we think. But beliefs and behaviors are also related in a more remarkable way. It turns out that the arrow is as likely to point in the reverse direction. As social psychologist David Myers observes, \"If social psychology has taught us anything during the last 25 years, it is that we are likely not only to think ourselves into a way of acting but also to act ourselves into a way of thinking.\"",
+     "runs": [
+      {
+       "t": " It is common sense that people's inner beliefs may drive their external behavior. If you're attracted to a certain person, you should be more likely to socialize with that person. If you favor a brand of toothpaste, you're more likely to buy it. Of course, our internal thoughts don't always predict our public behavior, but, overall, what we do obviously reflects what we think. But beliefs and behaviors are also related in a more remarkable way. It turns out that the arrow is as likely to point in the reverse direction. As social psychologist David Myers observes, \"If social psychology has taught us anything during the last 25 years, it is that we are likely not only to think ourselves into a way of acting but also to act ourselves into a way of thinking.\"",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "① The Power of First Impressions",
+     "runs": [
+      {
+       "t": "① ",
+       "ul": false
+      },
+      {
+       "t": "The Power of First Impressions",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "② How Advertising Influences Consumer Choices",
+     "runs": [
+      {
+       "t": "② ",
+       "ul": false
+      },
+      {
+       "t": "How Advertising Influences Consumer Choices",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "③ Secrets of Becoming a Socially Popular Person",
+     "runs": [
+      {
+       "t": "③ ",
+       "ul": false
+      },
+      {
+       "t": "Secrets of Becoming a Socially Popular Person",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "④ The Role of Emotion in Romantic Relationships",
+     "runs": [
+      {
+       "t": "④ ",
+       "ul": false
+      },
+      {
+       "t": "The Role of Emotion in Romantic Relationships",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "⑤ The Two-Way Link Between Beliefs and Behaviors",
+     "runs": [
+      {
+       "t": "⑤ ",
+       "ul": false
+      },
+      {
+       "t": "The Two-Way Link Between Beliefs and Behaviors",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "다음 빈칸에 들어갈 말로 가장 적절한 것은?",
+     "runs": [
+      {
+       "t": "다음 빈칸에 들어갈 말로 가장 적절한 것은?",
+       "ul": false
+      }
+     ],
+     "pstyle": "문제 번호"
+    },
+    {
+     "text": " Walking on the beach, you do not need to worry about footprints. They vanish with the waves. However, a \"digital footprint\" ─ the data trail left when you sign up, access, or send content ─ not only proves challenging to remove but enables tracking of your behavior, preferences, and opinions. Let's explore actions that create digital footprints. They include creating online accounts, visiting websites, and using apps. Your digital footprints from these activities may remain permanent. Even if you request a website or social media platform to remove your personal information, someone might have already collected your information with bad intent. Additionally, your negative online activity can potentially harm your reputation or career. It is important to __________________________________________________________.",
+     "runs": [
+      {
+       "t": " Walking on the beach, you do not need to worry about footprints. They vanish with the waves. However, a \"digital footprint\" ─ the data trail left when you sign up, access, or send content ─ not only proves challenging to remove but enables tracking of your behavior, preferences, and opinions. Let's explore actions that create digital footprints. They include creating online accounts, visiting websites, and using apps. Your digital footprints from these activities may remain permanent. Even if you request a website or social media platform to remove your personal information, someone might have already collected your information with bad intent. Additionally, your negative online activity can potentially harm your reputation or career. It is important to __________________________________________________________.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "① ignore your privacy and reputation completely",
+     "runs": [
+      {
+       "t": "① ",
+       "ul": false
+      },
+      {
+       "t": "ignore your privacy and reputation completely",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "② limit the amount of personal data you provide online",
+     "runs": [
+      {
+       "t": "② ",
+       "ul": false
+      },
+      {
+       "t": "limit the amount of personal data you provide online",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "③ disregard managing your online identity or presence",
+     "runs": [
+      {
+       "t": "③ ",
+       "ul": false
+      },
+      {
+       "t": "disregard managing your online identity or presence",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "④ employ weak security measures, such as simple passwords",
+     "runs": [
+      {
+       "t": "④ ",
+       "ul": false
+      },
+      {
+       "t": "employ weak security measures, such as simple passwords",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "⑤ remain indifferent to how your data is collected and used",
+     "runs": [
+      {
+       "t": "⑤ ",
+       "ul": false
+      },
+      {
+       "t": "remain indifferent to how your data is collected and used",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?",
+     "runs": [
+      {
+       "t": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?",
+       "ul": false
+      }
+     ],
+     "pstyle": "문제 번호"
+    },
+    {
+     "text": " In most respects, humans are one of a relatively small number of species that evolved a very different strategy of investing more energy to reproduce more slowly. Like apes and elephants, we mature at a leisurely pace, grow large bodies, and have few babies.",
+     "runs": [
+      {
+       "t": " In most respects, humans are one of a relatively small number of species that evolved a very different strategy of investing more energy to reproduce more slowly. Like apes and elephants, we mature at a leisurely pace, grow large bodies, and have few babies.",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_순서"
+    },
+    {
+     "text": "(A) A house mouse can become a mother when she is just five weeks old, has four to ten pups per litter, and can have a new litter every two months over the course of her approximately twelve-month life. However, the vast majority of her pups die young.",
+     "runs": [
+      {
+       "t": "(A) A house mouse can become a mother when she is just five weeks old, has four to ten pups per litter, and can have a new litter every two months over the course of her approximately twelve-month life. However, the vast majority of her pups die young.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문_순서"
+    },
+    {
+     "text": "(B) However, we devote much time and energy to raising them well. This unusual strategy succeeds because while apes and elephants produce fewer babies than mice, a larger percentage of their offspring survive to then reproduce.",
+     "runs": [
+      {
+       "t": "(B) However, we devote much time and energy to raising them well. This unusual strategy succeeds because while apes and elephants produce fewer babies than mice, a larger percentage of their offspring survive to then reproduce.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문_순서"
+    },
+    {
+     "text": "(C) In contrast, a chimp or elephant mother does not reproduce until she is at least twelve years old, and she gives birth to only one infant every five or six years over the next thirty or so years. About half of these offspring make it to becoming parents.",
+     "runs": [
+      {
+       "t": "(C) In contrast, a chimp or elephant mother does not reproduce until she is at least twelve years old, and she gives birth to only one infant every five or six years over the next thirty or so years. About half of these offspring make it to becoming parents.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문_순서"
+    },
+    {
+     "text": "① (A) - (B) - (C)\t\t② (A) - (C) - (B)",
+     "runs": [
+      {
+       "t": "① (A) - (B) - (C)\t\t② (A) - (C) - (B)",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "③ (B) - (A) - (C) \t④ (B) - (C) - (A)\t",
+     "runs": [
+      {
+       "t": "③ (B) - (A) - (C) \t④ (B) - (C) - (A)\t",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "⑤ (C) - (A) - (B)",
+     "runs": [
+      {
+       "t": "⑤ (C) - (A) - (B)",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "다음 빈칸에 들어갈 말로 적절하지 않은 것은? ",
+     "runs": [
+      {
+       "t": "다음 빈칸에 들어갈 말로 적절하지 ",
+       "ul": false
+      },
+      {
+       "t": "않은",
+       "ul": true
+      },
+      {
+       "t": " 것은?",
+       "ul": false
+      },
+      {
+       "t": " ",
+       "ul": false
+      }
+     ],
+     "pstyle": "문제 번호"
+    },
+    {
+     "text": " Most entrepreneurs put in tremendous amounts of time and effort in creating and launching new products and services and then make the mistake of overpricing them. They have created something they care deeply about, it's theirs, and __________________ __________________________________________________ While many of them are quick to realize that their initial prices are too high, not all these people are happy or willing to drop their prices to make their products more attractive. And this can be a very costly mistake that may lead to the failure of their new business. When you launch a new product or service, your priority should be to get sufficient market adoption as soon as possible and you should be ready to sacrifice your initial prices and profits to achieve this aim. Once you have strong sales volumes, you can increase your prices to maximize your profits.",
+     "runs": [
+      {
+       "t": " Most entrepreneurs put in tremendous amounts of time and effort in creating and launching new products and services and then make the mistake of overpricing them. They have created something they care deeply about, it's theirs, and __________________ __________________________________________________ While many of them are quick to realize that their initial prices are too high, not all these people are happy or willing to drop their prices to make their products more attractive. And this can be a very costly mistake that may lead to the failure of their new business. When you launch a new product or service, your priority should be to get sufficient market adoption as soon as possible and you should be ready to sacrifice your initial prices and profits to achieve this aim. Once you have strong sales volumes, you can increase your prices to maximize your profits.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "① this powerful sense of ownership distorts their perception of value which causes them to overprice their products.",
+     "runs": [
+      {
+       "t": "① ",
+       "ul": false
+      },
+      {
+       "t": "this powerful sense of ownership distorts their perception of value which causes them to overprice their products.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "② because they feel such strong ownership, they tend to see the value incorrectly and charge too much for their products.",
+     "runs": [
+      {
+       "t": "② ",
+       "ul": false
+      },
+      {
+       "t": "because they feel such strong ownership, they tend to see the value incorrectly and charge too much for their products.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "③ a strong feeling of ownership affects how they see the product's value, so they set the prices too high for the products.",
+     "runs": [
+      {
+       "t": "③ ",
+       "ul": false
+      },
+      {
+       "t": "a strong feeling of ownership affects how they see the product's value, so they set the prices too high for the products.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "④ they think their product is very special because it belongs to them, making them overestimate the product's value and put a higher price on it.",
+     "runs": [
+      {
+       "t": "④ ",
+       "ul": false
+      },
+      {
+       "t": "they think their product is very special because it belongs to them, making them overestimate the product's value and put a higher price on it.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "⑤ their lack of personal attachment to the product helps them see the product more objectively, preventing them from asking too much for it.33",
+     "runs": [
+      {
+       "t": "⑤ ",
+       "ul": false
+      },
+      {
+       "t": "their lack of personal attachment to the product helps them see the product more objectively, preventing them from asking too much for it.33",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은?",
+     "runs": [
+      {
+       "t": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은?",
+       "ul": false
+      }
+     ],
+     "pstyle": "문제 번호"
+    },
+    {
+     "text": "In fact, having expertise in a topic means that knowledge is organized into coherent frameworks, and the expert understands the inter-relationship between facts and can distinguish which ideas are most central.",
+     "runs": [
+      {
+       "t": "In fact, having expertise in a topic means that knowledge is organized into coherent frameworks, and the expert understands the inter-relationship between facts and can distinguish which ideas are most central.",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_순서삽입"
+    },
+    {
+     "text": " Studies of experts provide insight into what it means to have deep and flexible understanding. ( ① ) Experts in a particular domain are people who have deep, richly interconnected ideas about the world. ( ② ) They are not just good thinkers or people who are exceptionally smart. ( ③ ) Rather, experts have knowledge in a specific domain ― such as chess, chemistry, or tennis ― and are not generalists. ( ④ ) However, experts do not just know \"a bunch of facts.\" ( ⑤ ) This kind of deep but organized understanding allows for greater flexibility in learning and facilitates application across multiple contexts. ",
+     "runs": [
+      {
+       "t": " Studies of experts provide insight into what it means to have deep and flexible understanding. ( ① ) Experts in a particular domain are people who have deep, richly interconnected ideas about the world. ( ② ) They are not just good thinkers or people who are exceptionally smart. ( ③ ) Rather, experts have knowledge in a specific domain ― such as chess, chemistry, or tennis ― and are not generalists. ( ④ ) However, experts do not just know \"a bunch of facts.\" ( ⑤ ) This kind of deep but organized understanding allows for greater flexibility in learning and facilitates application across multiple contexts. ",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "Edward O. Wilson에 관한 다음 글의 내용과 일치하는 것은?",
+     "runs": [
+      {
+       "t": "Edward O. Wilson에 관한 다음 글의 내용과 일치하는 것은?",
+       "ul": false
+      }
+     ],
+     "pstyle": "문제 번호"
+    },
+    {
+     "text": " Edward O. Wilson was born in Birmingham, Alabama, in 1929. During his early years, he developed a fascination with nature and devoted much of his time to exploring the outdoors. When he was seven, a fishing accident left him with partial loss of vision; his reduced sight led Wilson to the study of ants. He could not observe larger animals from a distance. Instead, he concentrated on smaller creatures he could study up close. After studying evolutionary biology at the University of Alabama, Wilson transferred to Harvard University, where he became a professor in 1956. He never received a Nobel Prize ― the prize didn't recognize research in the field of evolutionary biology. However, he was awarded the Crafoord Prize in 1990. Wilson, known to some as the \"modern-day Darwin\", died at the age of 92 in Massachusetts.",
+     "runs": [
+      {
+       "t": " Edward O. Wilson was born in Birmingham, Alabama, in 1929. During his early years, he developed a fascination with nature and devoted much of his time to exploring the outdoors. When he was seven, a fishing accident left him with partial loss of vision; his reduced sight led Wilson to the study of ants. He could not observe larger animals from a distance. Instead, he concentrated on smaller creatures he could study up close. After studying evolutionary biology at the University of Alabama, Wilson transferred to Harvard University, where he became a professor in 1956. He never received a Nobel Prize ― the prize didn't recognize research in the field of evolutionary biology. However, he was awarded the Crafoord Prize in 1990. Wilson, known to some as the \"modern-day Darwin\", died at the age of 92 in Massachusetts.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "① 어린 시절에는 주로 실내에서 시간을 보냈다.",
+     "runs": [
+      {
+       "t": "① 어린 시절에는 주로 실내에서 시간을 보냈다.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "② 시력 문제로 개미와 같은 작은 생물에 집중하게 됐다.",
+     "runs": [
+      {
+       "t": "② 시력 문제로 개미와 같은 작은 생물에 집중하게 됐다.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "③ 시력이 저하된 이후에도 멀리 있는 동물을 관찰했다.",
+     "runs": [
+      {
+       "t": "③ 시력이 저하된 이후에도 멀리 있는 동물을 관찰했다.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "④ Harvard 대학교에서 교수로 재직 중에 노벨상을 받았다.",
+     "runs": [
+      {
+       "t": "④ Harvard 대학교에서 교수로 재직 중에 노벨상을 받았다.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "⑤ 최근에 생존해 현대 다윈으로 불리기도 했다.",
+     "runs": [
+      {
+       "t": "⑤ 최근에 생존해 현대 다윈으로 불리기도 했다.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "다음 Houseplant Heaven Popup Shop에 관한 안내문의 내용과 일치하지 않는 것은?",
+     "runs": [
+      {
+       "t": "다음 Houseplant Heaven Popup Shop에 관한 안내문의 내용과 일치하지 ",
+       "ul": false
+      },
+      {
+       "t": "않는",
+       "ul": true
+      },
+      {
+       "t": " 것은?",
+       "ul": false
+      }
+     ],
+     "pstyle": "문제 번호"
+    },
+    {
+     "text": "Houseplant Heaven Popup Shop",
+     "runs": [
+      {
+       "t": "Houseplant Heaven Popup Shop",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "Enjoy a special plant shopping experience! Explore beautiful houseplants, and bring some green into your home.",
+     "runs": [
+      {
+       "t": "Enjoy a special plant shopping experience! Explore beautiful houseplants, and bring some green into your home.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "When: October 11-13, 10 a.m.-8 p.m.",
+     "runs": [
+      {
+       "t": "When: October 11-13, 10 a.m.-8 p.m.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "Where: Tasty Cup Cafe",
+     "runs": [
+      {
+       "t": "Where: Tasty Cup Cafe",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "Details",
+     "runs": [
+      {
+       "t": "Details",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "• Indoor plants are available for purchase.",
+     "runs": [
+      {
+       "t": "• Indoor plants are available for purchase.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "• If you buy 2 plants, you will get a 50% discount on coffee.",
+     "runs": [
+      {
+       "t": "• If you buy 2 plants, you will get a 50% discount on coffee.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "Activities",
+     "runs": [
+      {
+       "t": "Activities",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "• Take pictures in a photo zone filled with unique plants.",
+     "runs": [
+      {
+       "t": "• Take pictures in a photo zone filled with unique plants.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "• Decorate eco-friendly pots made from recycled glass.",
+     "runs": [
+      {
+       "t": "• Decorate eco-friendly pots made from recycled glass.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "※ Outside food and drinks are not allowed.",
+     "runs": [
+      {
+       "t": "※ Outside food and drinks are not allowed.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "① 사흘간 진행된다.",
+     "runs": [
+      {
+       "t": "① 사흘간 진행된다.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "② 실내 식물이 구새 가능하다.",
+     "runs": [
+      {
+       "t": "② 실내 식물이 구새 가능하다.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "③ 식물을 2개 사면 커피를 반값에 구매 가능하다.",
+     "runs": [
+      {
+       "t": "③ 식물을 2개 사면 커피를 반값에 구매 가능하다.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "④ 친환경 화분을 장식하는 활동이 있다.",
+     "runs": [
+      {
+       "t": "④ 친환경 화분을 장식하는 활동이 있다.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "⑤ 외부에서 음식과 음료를 가져와도 된다.",
+     "runs": [
+      {
+       "t": "⑤ 외부에서 음식과 음료를 가져와도 된다.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "다음 글을 읽고 이해한 내용으로 적절하지 않은 것은? ",
+     "runs": [
+      {
+       "t": "다음 글을 읽고 이해한 내용으로 적절하지 ",
+       "ul": false
+      },
+      {
+       "t": "않은",
+       "ul": true
+      },
+      {
+       "t": " 것은?",
+       "ul": false
+      },
+      {
+       "t": " ",
+       "ul": false
+      }
+     ],
+     "pstyle": "문제 번호"
+    },
+    {
+     "text": " Circular fashion is inspired by the principles of a circular economy and sustainable development. A circular economy is based on limiting waste, keeping resources and materials in use, and reusing them to extract their maximum value. Therefore, clothing and textiles are produced, used, and reused to minimize waste. It is a renewable approach to reduce the fashion industry's environmental impact. Circular fashion provides numerous benefits. First, extending the lifespan of fibers significantly reduces textile waste, benefiting the environment. Second, circular processes utilize chemicals and materials safe for human health and the environment. Third, materials are regenerated instead of being disposed of, which enables their long-term use.",
+     "runs": [
+      {
+       "t": " Circular fashion is inspired by the principles of a circular economy and sustainable development. A circular economy is based on limiting waste, keeping resources and materials in use, and reusing them to extract their maximum value. Therefore, clothing and textiles are produced, used, and reused to minimize waste. It is a renewable approach to reduce the fashion industry's environmental impact. Circular fashion provides numerous benefits. First, extending the lifespan of fibers significantly reduces textile waste, benefiting the environment. Second, circular processes utilize chemicals and materials safe for human health and the environment. Third, materials are regenerated instead of being disposed of, which enables their long-term use.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "① 순환 패션은 순환 경제와 지속 가능한 발전의 원리에 영감을 받았다.",
+     "runs": [
+      {
+       "t": "① 순환 패션은 순환 경제와 지속 가능한 발전의 원리에 영감을 받았다.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "② 순환 경제는 폐기물을 제한하며 자원과 재료를 계속 사용하고 재사용하는 것에 기반한다.",
+     "runs": [
+      {
+       "t": "② 순환 경제는 폐기물을 제한하며 자원과 재료를 계속 사용하고 재사용하는 것에 기반한다.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "③ 순환 패션은 패션 산업의 환경적 영향을 줄이는 재생 가능한 접근 방식이다.",
+     "runs": [
+      {
+       "t": "③ 순환 패션은 패션 산업의 환경적 영향을 줄이는 재생 가능한 접근 방식이다.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "④ 섬유의 수명을 연장하면 직물 폐기물을 줄일 수 있다.",
+     "runs": [
+      {
+       "t": "④ 섬유의 수명을 연장하면 직물 폐기물을 줄일 수 있다.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "⑤ 순환 과정에서 활용하는 화학 물질은 환경에는 안전하지만, 인간의 건강에는 해롭다.",
+     "runs": [
+      {
+       "t": "⑤ 순환 과정에서 활용하는 화학 물질은 환경에는 안전하지만, 인간의 건강에는 해롭다.",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "다음 빈칸에 들어갈 말로 가장 적절한 것은? ",
+     "runs": [
+      {
+       "t": "다음 빈칸에 들어갈 말로 가장 적절한 것은?",
+       "ul": false
+      },
+      {
+       "t": " ",
+       "ul": false
+      }
+     ],
+     "pstyle": "문제 번호"
+    },
+    {
+     "text": " Imagine following the spirit of a silence vow into daily life. Challenge yourself to spend an entire day saying only what you absolutely must say. It's been widely observed by behavioral psychology experts – and anyone who's ever been on a first date – that we too often tend to treat \"conversation\" as a game of waiting for our own turn to speak. We miss what's being said because we're mentally rehearsing our next utterance. What if you could eliminate the idea that the next available mini-silence is your next opening to express whatever is in your head? What if you were limited to, say, fifty spoken words tomorrow? I think you'd listen quite differently. You'd attend quite carefully to every word you heard. You'd be attuned to what you must respond to. You might discover that ___________________________.",
+     "runs": [
+      {
+       "t": " Imagine following the spirit of a silence vow into daily life. Challenge yourself to spend an entire day saying only what you absolutely must say. It's been widely observed by behavioral psychology experts – and anyone who's ever been on a first date – that we too often tend to treat \"conversation\" as a game of waiting for our own turn to speak. We miss what's being said because we're mentally rehearsing our next utterance. What if you could eliminate the idea that the next available mini-silence is your next opening to express whatever is in your head? What if you were limited to, say, fifty spoken words tomorrow? I think you'd listen quite differently. You'd attend quite carefully to every word you heard. You'd be attuned to what you must respond to. You might discover that ___________________________.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "① silence often causes social isolation",
+     "runs": [
+      {
+       "t": "① silence often causes social isolation",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "② less talking can promote attentive listening",
+     "runs": [
+      {
+       "t": "② less talking can promote attentive listening",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "③ you should eliminate pauses in conversation",
+     "runs": [
+      {
+       "t": "③ you should eliminate pauses in conversation",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "④ careful consideration should precede speaking",
+     "runs": [
+      {
+       "t": "④ careful consideration should precede speaking",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "⑤ saying nothing is powerful in revealing personality",
+     "runs": [
+      {
+       "t": "⑤ saying nothing is powerful in revealing personality",
+       "ul": false
+      }
+     ],
+     "pstyle": "선지"
+    },
+    {
+     "text": "서답형 1. 다음 우리말을 아래의 조건에 맞추어 주어진 <단어>를 활용하여 영작하시오. ",
+     "runs": [
+      {
+       "t": "서답형 1. 다음 우리말을 아래의 조건에 맞추어 주어진 <단어>를 활용하여 영작하시오.",
+       "ul": false
+      },
+      {
+       "t": " ",
+       "ul": false
+      }
+     ],
+     "pstyle": "서술형 번호"
+    },
+    {
+     "text": "<조건>",
+     "runs": [
+      {
+       "t": "<조건>",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_조건"
+    },
+    {
+     "text": "주어진 단어만을 모두 사용할 것",
+     "runs": [
+      {
+       "t": "주어진 단어만을 모두 사용할 것",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_조건"
+    },
+    {
+     "text": "필요시 주어진 단어를 중복으로 사용하거나 변형할 것",
+     "runs": [
+      {
+       "t": "필요시 주어진 단어를 중복으로 사용하거나 변형할 것",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_조건"
+    },
+    {
+     "text": "가정법 과거완료로 영작할 것",
+     "runs": [
+      {
+       "t": "가정법 과거완료로 영작할 것",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_조건"
+    },
+    {
+     "text": "<우리말>",
+     "runs": [
+      {
+       "t": "<우리말>",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_조건"
+    },
+    {
+     "text": "만약 그가 더 많이 연습했었더라면, 그는 그 노래를 완벽하게 연주할 수 있었을 것이다.",
+     "runs": [
+      {
+       "t": "만약 그가 더 많이 연습했었더라면, 그는 그 노래를 완벽하게 연주할 수 있었을 것이다.",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_조건"
+    },
+    {
+     "text": "<단어>",
+     "runs": [
+      {
+       "t": "<단어>",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_조건"
+    },
+    {
+     "text": "the song / practice / perfectly / if / more / he / have / play / can ",
+     "runs": [
+      {
+       "t": "the song / practice / perfectly / if / more / he / have / play / can ",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_조건"
+    },
+    {
+     "text": "답: _____________________________________________________",
+     "runs": [
+      {
+       "t": "답: _____________________________________________________",
+       "ul": false
+      }
+     ],
+     "pstyle": "서술형답지"
+    },
+    {
+     "text": "서답형 2. 다음 글의 요지를 <보기>에 주어진 표현만을 재배열하여 완성하시오.",
+     "runs": [
+      {
+       "t": "서답형 2. 다음 글의 요지를 <보기>에 주어진 표현만을 재배열하여 완성하시오.",
+       "ul": false
+      }
+     ],
+     "pstyle": "서술형 번호"
+    },
+    {
+     "text": " There is a natural assumption of truth, or a truth bias when humans communicate with one another. In other words, when we're listening to others or reading their words, our automatic assumption is that the other person is telling the truth. This usually works out fine. If you ask someone where the restroom is located or if it's raining outside, you can safely assume that most people will not lie in their responses. Imagine how difficult it would be to converse with someone if you assumed that everything they were telling you was false! Indeed, questioning the truth of a statement and then choosing not to believe it requires additional mental steps. For the most part, humans are \"cognitive misers,\" which means we typically don't expend more mental effort than seems necessary in a given situation. It makes sense then, that when we see something online, even if it is fake, our default is to believe it, at least at first.",
+     "runs": [
+      {
+       "t": " There is a natural assumption of truth, or a truth bias when humans communicate with one another. In other words, when we're listening to others or reading their words, our automatic assumption is that the other person is telling the truth. This usually works out fine. If you ask someone where the restroom is located or if it's raining outside, you can safely assume that most people will not lie in their responses. Imagine how difficult it would be to converse with someone if you assumed that ",
+       "ul": false
+      },
+      {
+       "t": "everything ",
+       "ul": false
+      },
+      {
+       "t": "they were telling you was false! Indeed, questioning the truth of a statement and then choosing not to believe it requires additional mental steps. For the most part, humans are \"cognitive misers,\" which means we typically don't expend more mental effort than seems necessary in a given situation. It makes sense then, that when we see something online, even if it is fake, our default is to believe it, at least at first.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "<보기>",
+     "runs": [
+      {
+       "t": "<보기>",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_보기"
+    },
+    {
+     "text": "are naturally inclined / what others say / because / more mental effort / humans / require / questioning and disbelief / to believe",
+     "runs": [
+      {
+       "t": "are naturally inclined / what others say / because / more mental effort / humans / require / questioning and disbelief / to believe",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_보기"
+    },
+    {
+     "text": "답: ___________________________________________________________________",
+     "runs": [
+      {
+       "t": "답: ___________________________________________________________________",
+       "ul": false
+      }
+     ],
+     "pstyle": "서술형답지"
+    },
+    {
+     "text": "서답형 3. 다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 단어를 <조건>에 맞게 작성하시오. ",
+     "runs": [
+      {
+       "t": "서답형 3. 다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 단어를 <조건>에 맞게 작성하시오.",
+       "ul": false
+      },
+      {
+       "t": " ",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_보기"
+    },
+    {
+     "text": " Stanford psychology professor Dr. Carol Dweck is the internationally recognized pioneer of the concept of \"growth mindset\" as a way to continually grow, learn, and persevere in our efforts. Dweck found that kids who are told they're \"smart\" actually underperform in future tasks, by choosing easier tasks to avoid evidence that they are not smart, which Dweck calls having a \"fixed mindset.\" In contrast, Dweck found, kids who are praised not for their smarts but for their effort develop what Dweck calls a \"growth mindset.\" They learn that their effort is what led to their success, and if they continue to try hard, over time they'll improve and achieve more things. These kids end up taking on tougher things, and feel better about themselves. \"Emphasizing effort gives a child a variable that they can control,\" Dweck has explained.",
+     "runs": [
+      {
+       "t": " Stanford psychology professor Dr. Carol Dweck is the internationally recognized pioneer of the concept of \"growth mindset\" as a way to continually grow, learn, and persevere in our efforts. Dweck found that kids who are told they're \"smart\" actually underperform in future tasks, by choosing easier tasks to avoid evidence that they are not smart, which Dweck calls having a \"fixed mindset.\" In contrast, Dweck found, kids who are praised not for their smarts but for their effort develop what Dweck calls a \"growth mindset.\" They learn that their effort is what led to their success, and if they continue to try hard, over time they'll improve and achieve more things. These kids end up taking on tougher things, and feel better about themselves. \"Emphasizing effort gives a child a variable that they can control,\" Dweck has explained.",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_보기"
+    },
+    {
+     "text": "↓",
+     "runs": [
+      {
+       "t": "↓",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "Dweck found that children praised for (A)_____________ often develop a fixed mindset, but those praised for (B)_____________ learn to enjoy growth through effort.",
+     "runs": [
+      {
+       "t": "Dweck found that children praised for (A)_____________ often develop a fixed mindset, but those praised for (B)_____________ learn to enjoy growth through effort.",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_보기"
+    },
+    {
+     "text": "<조건>",
+     "runs": [
+      {
+       "t": "<조건>",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_조건"
+    },
+    {
+     "text": "(A), (B) 각각 두 단어로 쓸 것",
+     "runs": [
+      {
+       "t": "(A), (B) 각각 두 단어로 쓸 것",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_조건"
+    },
+    {
+     "text": "본문에 사용된 표현을 찾아 쓰되, 필요한 경우 형태를 변형할 것",
+     "runs": [
+      {
+       "t": "본문에 사용된 표현을 찾아 쓰되, 필요한 경우 형태를 변형할 것",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_조건"
+    },
+    {
+     "text": "(A): _____________________________________",
+     "runs": [
+      {
+       "t": "(A): _____________________________________",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_조건"
+    },
+    {
+     "text": "(B): _____________________________________",
+     "runs": [
+      {
+       "t": "(B): _____________________________________",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_조건"
+    },
+    {
+     "text": "서답형 4. 다음 빈칸에 들어갈 말을 <조건>에 맞게 쓰시오.",
+     "runs": [
+      {
+       "t": "서답형 4. 다음 빈칸에 들어갈 말을 <조건>에 맞게 쓰시오.",
+       "ul": false
+      }
+     ],
+     "pstyle": "서술형 번호"
+    },
+    {
+     "text": " Science is concerned with accumulating and understanding observations of the physical world. That understanding alone solves no problems. Individual people have to act on that understanding for it to help solve problems. For instance, science has found that regular exercise can lower your risk of heart disease. Knowing this fact is interesting, but it will do nothing for your personal health unless you act on it and actually exercise. And that's the hard part. Reading an article about exercise is easy. Getting into an actual routine of regular exercise is harder. In this sense, science really solves no problems at all. ___________________________________ can real problems be solved. In fact, many of humanity's biggest problems are caused by lack of action, and not lack of knowledge.",
+     "runs": [
+      {
+       "t": " Science is concerned with accumulating and understanding observations of the physical world. That understanding alone solves no problems. Individual people have to act on that understanding for it to help solve problems. For instance, science has found that regular exercise can lower your risk of heart disease. Knowing this fact is interesting, but it will do nothing for your personal health unless you act on it and actually exercise. And that's the hard part. Reading an article about exercise is easy. Getting into an actual routine of regular exercise is harder. In this sense, science really solves no problems at all. ___________________________________ can real problems be solved. In fact, many of humanity's biggest problems are caused by lack of action, and not lack of knowledge.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "<조건>",
+     "runs": [
+      {
+       "t": "<조건>",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_조건"
+    },
+    {
+     "text": "<보기>에 주어진 단어를 모두 한 번씩만 사용할 것 (어형 변화 없이 그대로 사용할 것)",
+     "runs": [
+      {
+       "t": "<보기>에 주어진 단어를 모두 한 번씩만 사용할 것 (어형 변화 없이 그대로 사용할 것)",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_조건"
+    },
+    {
+     "text": "<보기>",
+     "runs": [
+      {
+       "t": "<보기>",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_보기"
+    },
+    {
+     "text": "   people / only / on / knowledge / when / scientific / act",
+     "runs": [
+      {
+       "t": "   people / only / on / knowledge / when / scientific / act",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_보기"
+    },
+    {
+     "text": "답: _____________________________________________________",
+     "runs": [
+      {
+       "t": "답: _____________________________________________________",
+       "ul": false
+      }
+     ],
+     "pstyle": "서술형답지"
+    },
+    {
+     "text": "서답형 5. 다음 글의 밑줄 친 ⓐ~ⓔ 중 어법상 틀린 부분이 포함된 문장을 2개를 찾아서 <보기>와 같이 그 번호를 쓰고 틀린 부분을 올바르게 고쳐 쓰시오. ",
+     "runs": [
+      {
+       "t": "서답형 5. 다음 글의 밑줄 친 ⓐ~ⓔ 중 어법상 ",
+       "ul": false
+      },
+      {
+       "t": "틀린",
+       "ul": true
+      },
+      {
+       "t": " 부분이 포함된 문장을 2개를 찾아서 <보기>와 같이 그 번호를 쓰고 틀린 부분을 올바르게 고쳐 쓰시오.",
+       "ul": false
+      },
+      {
+       "t": " ",
+       "ul": false
+      }
+     ],
+     "pstyle": "서술형 번호"
+    },
+    {
+     "text": " ⓐIn everyday life, we use previous experience to predict where should we pay attention. Different environments create different expectations. ⓑThis was profoundly illustrated by the scientist Jared Diamond in his book Guns, Germs, and Steel. He describes an adventure wandering through the New Guinea jungle with native New Guineans. ⓒHe relates that these natives tend to perform poorly at tasks Westerners have been trained to do since childhood. ⓓBut they are not hardly stupid. They can detect the most subtle changes in the jungle, good for following the tracks of a predator or for finding the way back home. They know which insects to leave alone, know where food exists, can build and tear down shelters with ease. ⓔDiamond, who had never spent time in such places, has no ability to pay attention to these things. Were he to be tested on such tasks, he also would perform poorly.",
+     "runs": [
+      {
+       "t": " ⓐ",
+       "ul": false
+      },
+      {
+       "t": "In everyday life, we use previous experience to predict where should we pay attention.",
+       "ul": true
+      },
+      {
+       "t": " Different environments create different expectations. ⓑ",
+       "ul": false
+      },
+      {
+       "t": "This was profoundly illustrated by the scientist Jared Diamond in his book ",
+       "ul": true
+      },
+      {
+       "t": "Guns, Germs, and Stee",
+       "ul": true
+      },
+      {
+       "t": "l.",
+       "ul": true
+      },
+      {
+       "t": " He describes an adventure wandering through the New Guinea jungle with native New Guineans. ⓒ",
+       "ul": false
+      },
+      {
+       "t": "He relates that these natives tend to perform poorly at tasks Westerners have been trained to do since childhood.",
+       "ul": true
+      },
+      {
+       "t": " ⓓ",
+       "ul": false
+      },
+      {
+       "t": "But they are not hardly stupid.",
+       "ul": true
+      },
+      {
+       "t": " They can detect the most subtle changes in the jungle, good for following the tracks of a predator or for finding the way back home. They know which insects to leave alone, know where food exists, can build and tear down shelters with ease. ⓔ",
+       "ul": false
+      },
+      {
+       "t": "Diamond, who had never spent time in such places, has no ability to pay attention to these things.",
+       "ul": true
+      },
+      {
+       "t": " Were he to be tested on such tasks, he also would perform poorly.",
+       "ul": false
+      }
+     ],
+     "pstyle": "지문"
+    },
+    {
+     "text": "<보기>",
+     "runs": [
+      {
+       "t": "<보기>",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_보기"
+    },
+    {
+     "text": "ⓐ, go → goes",
+     "runs": [
+      {
+       "t": "ⓐ, go → goes",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_보기"
+    },
+    {
+     "text": "       번호\t    틀린 부분\t\t    고친 내용",
+     "runs": [
+      {
+       "t": "       번호\t    틀린 부분\t\t    고친 내용",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_보기"
+    },
+    {
+     "text": "(1): _________, __________________ → __________________",
+     "runs": [
+      {
+       "t": "(1): _________, __________________ → __________________",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_보기"
+    },
+    {
+     "text": "(2): _________, __________________ → __________________",
+     "runs": [
+      {
+       "t": "(2): _________, __________________ → __________________",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_보기"
+    },
+    {
+     "text": "서답형 6. 다음 (A), (B)의 우리말을 아래의 조건에 맞추어 괄호 안의 단어를 활용하여 영작하시오.",
+     "runs": [
+      {
+       "t": "서답형 6. 다음 (A), (B)의 우리말을 아래의 조건에 맞추어 괄호 안의 단어를 활용하여 영작하시오.",
+       "ul": false
+      }
+     ],
+     "pstyle": "서술형 번호"
+    },
+    {
+     "text": "<조건>",
+     "runs": [
+      {
+       "t": "<조건>",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_조건"
+    },
+    {
+     "text": "주어진 괄호 안의 단어만을 모두 사용할 것 (필요시 어형 변형)",
+     "runs": [
+      {
+       "t": "주어진 괄호 안의 단어만을 모두 사용할 것 (필요시 어형 변형)",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_조건"
+    },
+    {
+     "text": "완성된 한 문장으로 영작할 것",
+     "runs": [
+      {
+       "t": "완성된 한 문장으로 영작할 것",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_조건"
+    },
+    {
+     "text": "(A) 나는 그 주인이 어떻게 그렇게 독특한 하나의 메뉴를 생각해냈는지에 대하여 관심이 있다.",
+     "runs": [
+      {
+       "t": "(A) 나는 그 주인이 어떻게 그렇게 독특한 하나의 메뉴를 생각해냈는지에 대하여 관심이 있다.",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_조건"
+    },
+    {
+     "text": "(come up with / interested / how / I / in / the owner / such a unique menu / be)",
+     "runs": [
+      {
+       "t": "(come up with / interested / how / I / in / the owner / such a unique menu / be)",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_조건"
+    },
+    {
+     "text": "답: _____________________________________________________",
+     "runs": [
+      {
+       "t": "답: _____________________________________________________",
+       "ul": false
+      }
+     ],
+     "pstyle": "서술형답지"
+    },
+    {
+     "text": "(B) 만약 당신이 당신의 시간을 효과적으로 관리하지 않는다면, 당신은 당신의 일들을 끝낼 수 없을 것이다.",
+     "runs": [
+      {
+       "t": "(B) 만약 당신이 당신의 시간을 효과적으로 관리하지 않는다면, 당신은 당신의 일들을 끝낼 수 없을 것이다.",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_조건"
+    },
+    {
+     "text": "(effectively / will / your tasks / manage / your time / you / unless / be able to / you / not / finish)",
+     "runs": [
+      {
+       "t": "(effectively / will / your tasks / manage / your time / you / unless / be able to / you / not / finish)",
+       "ul": false
+      }
+     ],
+     "pstyle": "테두리_조건"
+    },
+    {
+     "text": "답: _____________________________________________________",
+     "runs": [
+      {
+       "t": "답: _____________________________________________________",
+       "ul": false
+      }
+     ],
+     "pstyle": "서술형답지"
+    }
+   ]
+  }
+ ]
+}

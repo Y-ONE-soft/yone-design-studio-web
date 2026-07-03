@@ -1,0 +1,8 @@
+{
+  "engine": "workbook_sero",
+  "source_job": "e79f8af9",
+  "note": "golden = 선별 당시 현행 파서 출력 (정답 아님 — tests/README.md 참조)",
+  "golden_regenerated": {
+    "commit": "6e59e54"
+  }
+}
