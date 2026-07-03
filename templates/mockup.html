@@ -63,7 +63,19 @@
           <button class="binding-btn" data-b="스프링" onclick="selectBinding('스프링')">스프링</button>
           <button class="binding-btn" data-b="중철"   onclick="selectBinding('중철')">중철</button>
         </div>
-        <div class="binding-hint">무선·스프링·중철은 실제 목업 템플릿에 표지를 자동 배치합니다(슬라이더 조정 불필요). 펼침 표지는 오른쪽 절반을 앞표지로 사용.</div>
+        <div class="binding-row" style="margin-top:6px">
+          <button class="binding-btn" data-b="중철펼침" onclick="selectBinding('중철펼침')">중철펼침</button>
+          <button class="binding-btn" data-b="낱장"     onclick="selectBinding('낱장')">낱장(A4)</button>
+        </div>
+        <div id="fit-control" class="hidden" style="margin-top:10px">
+          <div class="slider-row">
+            <span class="slider-label">표지 맞춤</span>
+            <input type="range"  id="fit-slider" min="80" max="120" step="1" value="100" oninput="onFitInput(this.value)">
+            <input type="number" id="fit-num"    min="80" max="120" step="1" value="100" oninput="onFitInput(this.value)">
+          </div>
+          <div class="binding-hint">100% = 프레임 꽉 채움 · 100 미만 = 축소(가장자리 복제 여백) · 초과 = 확대(가장자리 잘림)</div>
+        </div>
+        <div class="binding-hint" id="binding-note">무선·스프링·중철은 표지 자동 배치. 중철펼침은 앞표지=1p·뒷표지=2p. 낱장은 가로/세로 종이 1장.</div>
       </div>
 
       <!-- 앞표지 크롭 -->
@@ -234,7 +246,9 @@
       back_cx: 0,  back_cy: 0,  back_cw: 500
     };
     let sessionToken = null;
-    let bindingMode = null;   // null=일반(슬라이더), '무선'|'스프링'|'중철'=바인딩 엔진
+    let bindingMode = null;   // null=일반(슬라이더), 그 외=바인딩 엔진
+    let fitPct = 100;         // 표지 맞춤 %
+    let fitTimer = null;
     let renderTimer = null;
     let currentBlob = null;
     let pendingFront = null;
@@ -503,8 +517,18 @@
         x.classList.toggle('active', x.dataset.b === (b || '일반')));
       // 바인딩 모드에서는 크롭/슬라이더 컨트롤 숨김
       document.querySelectorAll('.mockup-panel .panel-section:not(.binding-select)')
-        .forEach(s => { s.dataset.prevDisplay = s.style.display; s.style.display = b ? 'none' : ''; });
+        .forEach(s => { s.style.display = b ? 'none' : ''; });
+      // 표지 맞춤 슬라이더: 낱장 제외한 바인딩에서만 표시
+      document.getElementById('fit-control').classList.toggle('hidden', !(b && b !== '낱장'));
       if (sessionToken) renderByMode();
+    }
+
+    function onFitInput(v) {
+      fitPct = Math.max(80, Math.min(120, parseInt(v) || 100));
+      document.getElementById('fit-slider').value = fitPct;
+      document.getElementById('fit-num').value = fitPct;
+      clearTimeout(fitTimer);
+      fitTimer = setTimeout(() => { if (sessionToken && bindingMode) doRenderBinding(); }, 220);
     }
 
     function renderByMode() {
@@ -517,6 +541,7 @@
       const fd = new FormData();
       fd.append('token', sessionToken);
       fd.append('binding', bindingMode);
+      fd.append('fit', (fitPct / 100).toFixed(3));
       try {
         const res = await fetch('/api/mockup/render_binding', {method: 'POST', body: fd});
         if (!res.ok) { showSpinner(false); return; }
@@ -561,7 +586,7 @@
       fd.append('token', sessionToken);
       fd.append('fmt', fmt);
       let url = '/api/mockup/render';
-      if (bindingMode) { fd.append('binding', bindingMode); url = '/api/mockup/render_binding'; }
+      if (bindingMode) { fd.append('binding', bindingMode); fd.append('fit', (fitPct/100).toFixed(3)); url = '/api/mockup/render_binding'; }
       else { fd.append('params', JSON.stringify(params)); }
       const res = await fetch(url, {method: 'POST', body: fd});
       const blob = await res.blob();
