@@ -73,9 +73,9 @@
             <input type="range"  id="fit-slider" min="80" max="120" step="1" value="100" oninput="onFitInput(this.value)">
             <input type="number" id="fit-num"    min="80" max="120" step="1" value="100" oninput="onFitInput(this.value)">
           </div>
-          <div class="binding-hint">100% = 프레임 꽉 채움 · 100 미만 = 축소(가장자리 복제 여백) · 초과 = 확대(가장자리 잘림)</div>
+          <div class="binding-hint">100% = 프레임 꽉 채움(가장자리까지) · 100 미만 = 축소(단색 여백) · 초과 = 확대(가장자리 잘림)</div>
         </div>
-        <div class="binding-hint" id="binding-note">무선·스프링·중철은 표지 자동 배치. 중철펼침은 앞표지=1p·뒷표지=2p. 낱장은 가로/세로 종이 1장.</div>
+        <div class="binding-hint" id="binding-note">무선·스프링·중철은 표지 자동 배치. 중철펼침은 <b>2페이지 PDF를 앞표지 칸에 올리면 자동 분할</b>(또는 앞표지=1p·뒷표지=2p). 낱장은 올린 표지 방향(가로/세로)을 그대로 따름.</div>
       </div>
 
       <!-- 앞표지 크롭 -->

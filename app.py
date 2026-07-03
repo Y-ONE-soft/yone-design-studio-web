@@ -1105,9 +1105,10 @@ def api_mockup_render_binding():
     except ValueError:
         fit = 1.0
     fit = max(0.7, min(1.3, fit))
+    back_img = session.get("back") or session.get("front_p2")  # 뒷표지 없으면 2페이지 자동
     try:
         img = mockup_engine.render(session["front"], binding,
-                                   back_img=session.get("back"), long_edge=1500, fit=fit)
+                                   back_img=back_img, long_edge=1500, fit=fit)
         buf = _io.BytesIO()
         if fmt == "PNG":
             img.save(buf, "PNG", optimize=True); mime = "image/png"
