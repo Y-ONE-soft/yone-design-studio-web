@@ -1,6 +1,6 @@
 {
   "_doc": "단락스타일 룩업 (docs/taxonomy/11_워크북_스타일매핑.md 데이터화). (step_unit × 단락종류[× 조건]) → InDesign 단락스타일 '그룹 > 이름'. null = 출력 제거 대상. 스타일명 변경/학교 커스텀은 이 파일(또는 엔진 오버라이드 데이터)만 수정 — JSX/코드 수정 불필요.",
-  "_version": "2026-07-05 v4 — 동형 학교별 overrides (상일2/성덕1/명일3/강동3, 실물 스펙 대조)",
+  "_version": "2026-07-05 v5 — blackbook 섹션 추가 (v1 typeToStyle 의미 보존)",
   "workbook": {
     "STEP3": {
       "GH": null,
@@ -112,6 +112,32 @@
         "Box": "테두리_보기",
         "Ans": "기본"
       }
+    }
+  },
+  "blackbook": {
+    "_doc": "블랙북 v2 (배재1 템플릿 스펙 대조 — tests/fixtures/template_spec_blackbook.json). FLOW=IR kind, V1TYPES=v1 파서 단락 type (어휘/정답 재사용분).",
+    "FLOW": {
+      "Q": "독해 > 문제",
+      "Q-INTRO": "독해 > 다음 글을 읽고",
+      "P": "!박스_지문",
+      "P-CONTEXT": "독해 > 배경",
+      "C": "독해 > !선지",
+      "Cond": "독해 > !선지",
+      "Box": "독해 > 보기",
+      "Box@summary": "독해 > 박스",
+      "Word": "독해 > 보기",
+      "Ans": "독해 > !선지",
+      "K": "!박스_지문",
+      "Sym": "!박스_지문",
+      "UNKNOWN": "!박스_지문"
+    },
+    "V1TYPES": {
+      "vocab_header": "Vocabulary+ > 본문 카테고리",
+      "vocab_passage": "!박스_지문",
+      "vocab_category": "Vocabulary+ > 카테고리",
+      "vocab_item": "Vocabulary+ > !연관 어휘",
+      "answer": "정답 및 해설 > 정답",
+      "explanation": "정답 및 해설 > 해설"
     }
   }
 }
