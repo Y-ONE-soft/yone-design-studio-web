@@ -11,6 +11,17 @@ W2 (순수 텍스트 6스텝): v1 JSX의 GREP 치환/단락 삭제/패턴 스타
 스토리 배치 전 파이썬 전처리로 이식 (engines/workbook/jsx/run.jsx의
 processStep1A1/1B2/1C2/2A1/2A1Btm/2C1 대응). v1의 "프레임브레이크 삽입" =
 빌더의 유닛 분할 (실행기 break_per_unit이 유닛 경계에 NEXT_FRAME 적용).
+
+W3 (아이콘 4스텝): 단락 dict에 선택 필드 "icon"을 지원 —
+  {"t": ..., "s": ..., "runs": [...],
+   "icon": {"label": "TF 버튼", "pos": "end"|"start", "pad": " ",
+            "mode": "dup"(기본)|"place"}}
+실행기(core/jsx/workbook_flow.body.jsx)가 스타일/밑줄/브레이크 이후 마지막
+패스에서 역순으로 findLabeledItem(label) 원본을 duplicate(또는 itemLink
+place — v1 processStep2B1의 링크 place + 너비 스케일) 인라인 앵커 삽입.
+pad는 아이콘과 본문 사이 간격 문자(end면 아이콘 앞, start면 아이콘 뒤).
+스타일 "$BASIC"은 문서 내장 [기본 단락] 센티널 — 인벤토리 실물 스타일이
+아니라 InDesign 문서 기본 스타일이므로 자동 생성 금지 규칙과 무관.
 """
 import json
 import os
@@ -371,17 +382,341 @@ def build_step2_a1_btm(step_data):
             "ul_style": "공통 > 지문 밑줄"}
 
 
+# ── W3 공용: 아이콘 스텝용 헬퍼 ─────────────────────────────────────────────
+
+# v1 hasCircled (1B1에서 사용하는 넓은 원문자 집합: ①~⑳ + ⓵~⓿ + ❶~❿)
+_RE_CIRCLED_WIDE = re.compile("[①-⑳⓵-⓿❶-❿]")
+# v1 startsWithDaeum: /^(\s*[“”‘’"']*)다음/
+_RE_DAEUM = re.compile("^\\s*[\"'“”‘’]*다음")
+# v1 STEP1A2 TF 토큰: ❮ T / F ❯
+_RE_TF_TOKEN = re.compile("❮\\s*T\\s*/\\s*F\\s*❯")
+# v1 STEP1B1 주제/제목 검출: /^\s*\{?\s*(주제|제목)\s*\}?(\s|$)/
+_RE_SUBJ_HEAD = re.compile(r"^\s*\{?\s*(주제|제목)\s*\}?(?:\s|$)")
+# v1 STEP1B1 교체 정규식(뒤 공백까지 소비): ^(\s*)\{?\s*주제\s*\}?\s*
+_RE_SUBJ_STRIP = {
+    "주제": re.compile(r"^\s*\{?\s*주제\s*\}?\s*"),
+    "제목": re.compile(r"^\s*\{?\s*제목\s*\}?\s*"),
+}
+# v1 STEP2C2 소괄호 번호 단독줄: ^\s*\(\d{1,2}\)\s*$
+_RE_C2_SOLO_NUM = re.compile(r"^\s*\(\d{1,2}\)\s*$")
+
+_ICON_TF_DUP = {"label": "TF 버튼", "pos": "end", "pad": " "}
+_ICON_TF_PLACE = {"label": "TF 버튼", "pos": "end", "pad": " ",
+                  "mode": "place"}
+_ICON_STEP1_Q = {"label": "STEP1 문제아이콘", "pos": "start", "pad": "\t"}
+_ICON_STEP2_ANS = {"label": "STEP2 영작 답지", "pos": "start"}
+
+
+def _cut_span(text, runs, start, end):
+    """text[start:end] 구간을 텍스트+runs에서 동시에 제거 (오프셋 정합 유지)."""
+    new_text = text[:start] + text[end:]
+    new_runs = []
+    off = 0
+    for r in runs or []:
+        t = r.get("t") or ""
+        a, b = off, off + len(t)
+        head = t[:max(0, min(len(t), start - a))]
+        tail = t[max(0, min(len(t), end - a)):]
+        kept = head + tail
+        if kept:
+            new_runs.append(dict(r, t=kept))
+        off = b
+    return new_text, new_runs
+
+
+# ── STEP1 A2: 본문 O/X — v1 processStep1A2 ──────────────────────────────────
+# 전체 기본 단락 → bracket 뒤 영어 본문 = A2_본문 박스, ❮T/F❯ 토큰 단락 =
+# A2_OX문제 + 토큰 제거 + TF 버튼 duplicate 삽입. bracket 위 빈 단락 제거(≤5),
+# bracket 기준 유닛 분할(=프레임브레이크). bracket/빈 단락은 [기본 단락] 유지.
+
+def build_step1_a2(step_data):
+    st_box = _style("STEP1A2", "P")
+    st_ox = _style("STEP1A2", "OX")
+    units = []
+    warnings = []
+    cur = []
+    seen_bracket = False
+    for p in step_data.get("paragraphs", []) or []:
+        text = p.get("text") or ""
+        runs = p.get("runs") or []
+        if _is_bracket_para(text):
+            if seen_bracket and cur:
+                # v1 insertFrameBreaksAtBrackets: bracket 위 빈 단락 제거(최대 5)
+                guard = 5
+                while cur and guard > 0 and _is_blank(cur[-1]["t"]):
+                    cur.pop()
+                    guard -= 1
+                units.append(cur)
+                cur = []
+            seen_bracket = True
+            cur.append(_mk(text, "$BASIC", runs))
+            continue
+        n_tok = 0
+        while True:
+            m = _RE_TF_TOKEN.search(text)
+            if not m:
+                break
+            text, runs = _cut_span(text, runs, m.start(), m.end())
+            n_tok += 1
+        if n_tok > 0:
+            item = _mk(text, st_ox, runs)
+            item["icon"] = dict(_ICON_TF_DUP)
+            if n_tok > 1:
+                warnings.append("step1_a2: 한 단락에 TF 토큰 " + str(n_tok)
+                                + "개 → 아이콘 1개만 삽입: " + text[:40])
+            cur.append(item)
+            continue
+        if _is_blank(text):
+            cur.append(_mk(text, "$BASIC", runs))   # v1: 기본 단락 유지
+            continue
+        if seen_bracket and re.search(r"[A-Za-z]", text):
+            cur.append(_mk(text, st_box, runs))     # bracket 뒤 영어 → 박스
+        else:
+            cur.append(_mk(text, "$BASIC", runs))   # 섹션 제목 등 비영어
+    if cur:
+        units.append(cur)
+    return {"units": units, "warnings": warnings}
+
+
+# ── STEP1 B1: 본문 정리 — v1 processStep1B1 ─────────────────────────────────
+# {주제}/{제목} 정규화(단독줄은 다음 단락과 병합), bracket(2번째+)·"다음" 발문
+# 기준 유닛 분할, 선지 위/제목 앞 빈 줄 보장, "다음" 발문에 STEP1 문제아이콘+탭.
+
+def build_step1_b1(step_data):
+    st_all = _style("STEP1B1", "*")
+    st_subj = _style("STEP1B1", "SUBJ")
+    st_title = _style("STEP1B1", "TITLE")
+    st_q = _style("STEP1B1", "Q")
+    st_jim = _style("STEP1B1", "P@bottom")
+    st_c = _style("STEP1B1", "C")
+    st_box = _style("STEP1B1", "Box")
+    src = list(step_data.get("paragraphs", []) or [])
+    warnings = []
+
+    # 1) {주제}/{제목} 정규화 — v1 grepChange 3종 + 스타일 패스의 합성.
+    #    단독줄("주제")은 다음 비공백 단락과 병합("{주제} <내용>"), 인라인은
+    #    접두만 "{주제} "로 재작성. tag로 SUBJ/TITLE 스타일 지정을 예약.
+    items = []
+    i = 0
+    while i < len(src):
+        text = src[i].get("text") or ""
+        runs = src[i].get("runs") or []
+        m = _RE_SUBJ_HEAD.match(text)
+        if m:
+            kind = m.group(1)
+            strip_end = _RE_SUBJ_STRIP[kind].match(text).end()
+            prefix = "{" + kind + "} "
+            if not text[strip_end:].strip():
+                j = i + 1
+                while j < len(src) and _is_blank(src[j].get("text") or ""):
+                    j += 1
+                if j < len(src):
+                    nxt_t = src[j].get("text") or ""
+                    nxt_r = src[j].get("runs") or []
+                    items.append({"t": prefix + nxt_t,
+                                  "runs": [{"t": prefix, "ul": False}]
+                                  + list(nxt_r),
+                                  "tag": kind})
+                    i = j + 1
+                    continue
+                items.append({"t": text, "runs": runs, "tag": None})
+                i += 1
+                continue
+            body_t, body_r = _cut_span(text, runs, 0, strip_end)
+            items.append({"t": prefix + body_t,
+                          "runs": [{"t": prefix, "ul": False}] + body_r,
+                          "tag": kind})
+            i += 1
+            continue
+        items.append({"t": text, "runs": runs, "tag": None})
+        i += 1
+
+    # 2) 스타일 결정 (v1 적용 순서: 전체 B1 → 선지 → 하단 → 지문/본문박스
+    #    → 주제/제목 → '[' 시작 단락 [기본 단락])
+    out = []
+    for it in items:
+        text = it["t"]
+        style = st_all
+        if _RE_CIRCLED_WIDE.search(text) and not _RE_DAEUM.match(text):
+            style = st_c
+        if _RE_DAEUM.match(text):
+            style = st_q
+        out.append(_mk(text, style, it["runs"]))
+    for k in range(len(items) - 1):
+        if (_RE_DAEUM.match(items[k]["t"])
+                and re.search(r"[A-Za-z]", items[k + 1]["t"])):
+            out[k + 1]["s"] = st_jim
+        if _is_bracket_para(items[k]["t"]):
+            out[k + 1]["s"] = st_box
+    for k, it in enumerate(items):
+        if it["tag"] == "주제":
+            out[k]["s"] = st_subj
+        elif it["tag"] == "제목":
+            out[k]["s"] = st_title
+        zs = re.sub("^[\\s\u00a0\u2000-\u200b]+", "", it["t"])
+        if re.match("^[\\[［]", zs):
+            out[k]["s"] = "$BASIC"      # v1: bracket 단락 → 기본 단락
+
+    # 3) 선지(원문자) 위 빈 줄 보장 (역순 — v1과 동일 조건)
+    k = len(out) - 1
+    while k > 0:
+        t = out[k]["t"]
+        if _RE_CIRCLED_WIDE.search(t) and not _RE_DAEUM.match(t):
+            prev = re.sub(r"[\r\n]", "", out[k - 1]["t"])
+            if prev != "" and not _RE_CIRCLED_WIDE.search(prev):
+                out.insert(k, _mk("", st_all, []))
+        k -= 1
+
+    # 4) {제목} 앞 빈 줄 보장 (역순)
+    k = len(out) - 1
+    while k >= 1:
+        if out[k]["s"] == st_title:
+            prev = re.sub(r"[\r\n]", "", out[k - 1]["t"])
+            if prev != "":
+                out.insert(k, _mk("", st_title, []))
+        k -= 1
+
+    # 5) "다음" 발문에 아이콘+탭 (실행기 최종 패스에서 삽입)
+    for item in out:
+        if _RE_DAEUM.match(item["t"]):
+            item["icon"] = dict(_ICON_STEP1_Q)
+
+    # 6) 유닛 분할: bracket(2번째+) + 모든 "다음" 발문 (v1 프레임브레이크 대상)
+    units = []
+    cur = []
+    seen_bracket = False
+    for item in out:
+        t = item["t"]
+        if _is_bracket_para(t):
+            if seen_bracket and cur:
+                units.append(cur)
+                cur = []
+            seen_bracket = True
+        elif _RE_DAEUM.match(t) and cur:
+            units.append(cur)
+            cur = []
+        cur.append(item)
+    if cur:
+        units.append(cur)
+    return {"units": units, "warnings": warnings}
+
+
+# ── STEP2 B1: 어법 OX — v1 processStep2B1 ───────────────────────────────────
+# insertHeaderBreaks 의미론(헤더 제거+유닛 분할+빈 단락 제거 — W2 재사용),
+# 각 내용 단락 끝에 TF 버튼(링크 place + 너비 스케일) 삽입.
+
+def build_step2_b1(step_data):
+    st = _style("STEP2B1", "*")
+    units = []
+    cur = []
+    for p in step_data.get("paragraphs", []) or []:
+        text = p.get("text") or ""
+        if is_header_line(text):
+            if cur:
+                units.append(cur)
+                cur = []
+            continue
+        if _is_blank(text):
+            continue    # v1 insertHeaderBreaks 말미 GREP이 빈 줄 일괄 제거
+        item = _mk(text, st, p.get("runs") or [])
+        item["icon"] = dict(_ICON_TF_PLACE)
+        cur.append(item)
+    if cur:
+        units.append(cur)
+    return {"units": units, "warnings": []}
+
+
+# ── STEP2 C2: 영작 배열 — v1 processStep2C2 ─────────────────────────────────
+# (N) 단독줄·빈 단락·영어 전용(한글/슬래시/bracket 없음) 단락 삭제,
+# 한글 2자+ → 번호, 슬래시 → 보기(우선), [/] 포함 → 기본. 보기 블록 끝마다
+# 빈 단락+STEP2 영작 답지 아이콘, bracket 앞 빈 줄 2개(이전 유닛 꼬리),
+# bracket 기준 유닛 분할 (모의고사 — v1의 EBS 분기는 브레이크 생략이지만
+# v2 W3 대상은 모의고사 내지).
+
+def _c2_is_bracket(text):
+    # v1 step9 판정: '['와 ']' 포함 + '\s*[' 시작
+    return ("[" in text and "]" in text
+            and bool(re.match(r"^\s*\[", text)))
+
+
+def build_step2_c2(step_data):
+    st_num = _style("STEP2C2", "Q")
+    st_view = _style("STEP2C2", "Box")
+    warnings = []
+
+    # 1) 삭제 룰 (v1 1~2단계: (N) 단독줄, 빈 단락, 영어 전용 답 단락)
+    kept = []
+    for p in step_data.get("paragraphs", []) or []:
+        text = p.get("text") or ""
+        if _RE_C2_SOLO_NUM.match(text):
+            continue
+        if _is_blank(text):
+            continue    # v1: \r{2,} → \r
+        has_br = "[" in text and "]" in text
+        eng_only = (re.search(r"[A-Za-z]", text)
+                    and not re.search("[가-힣]", text)
+                    and "/" not in text)
+        if eng_only and not has_br:
+            continue    # 영어 정답 문장 삭제
+        kept.append(p)
+
+    # 2) 스타일 (v1 3~5단계 + 9단계 bracket→기본 오버라이드)
+    styled = []
+    for p in kept:
+        text = p.get("text") or ""
+        style = "$BASIC"
+        if _RE_KOR2.search(text):
+            style = st_num
+        if "/" in text:
+            style = st_view
+        if "[" in text or "]" in text:
+            style = "$BASIC"
+        styled.append(_mk(text, style, p.get("runs") or []))
+
+    # 3) 보기 블록 끝마다 빈 단락 + 아이콘 (v1 6단계)
+    out = []
+    for k, item in enumerate(styled):
+        out.append(item)
+        if item["s"] == st_view and (k + 1 >= len(styled)
+                                     or styled[k + 1]["s"] != st_view):
+            icon_para = _mk("", "$BASIC", [])
+            icon_para["icon"] = dict(_ICON_STEP2_ANS)
+            out.append(icon_para)
+
+    # 4) 유닛 분할 + bracket 앞 빈 줄 2개 보장 (v1 7·9단계 —
+    #    빈 줄은 프레임브레이크 앞 = 이전 유닛 꼬리에 붙는다)
+    units = []
+    cur = []
+    seen_bracket = False
+    for item in out:
+        if _c2_is_bracket(item["t"]):
+            if seen_bracket and cur:
+                cur.append(_mk("", "$BASIC", []))
+                cur.append(_mk("", "$BASIC", []))
+                units.append(cur)
+                cur = []
+            seen_bracket = True
+        cur.append(item)
+    if cur:
+        units.append(cur)
+    return {"units": units, "warnings": warnings}
+
+
 # ── 스텝 빌더 레지스트리 (단계 전환: 지원 스텝을 여기서 늘려간다) ────────────
 
 STEP_BUILDERS = {
     "step3": build_step3,
     "step1_a1": build_step1_a1,
     "step1_a1_2": build_step1_a1,   # v1과 동일: 같은 처리, 다른 스토리
+    "step1_a2": build_step1_a2,
+    "step1_b1": build_step1_b1,
     "step1_b2": build_step1_b2,
     "step1_c2": build_step1_c2,
     "step2_a1": build_step2_a1,
     "step2_a1_btm": build_step2_a1_btm,
+    "step2_b1": build_step2_b1,
     "step2_c1": build_step2_c1,
+    "step2_c2": build_step2_c2,
 }
 
 

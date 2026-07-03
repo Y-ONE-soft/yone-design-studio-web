@@ -2,6 +2,13 @@
 // 스토리 탐색 = v1 mapStepToStory 의미론: marker 텍스트 페이지 → 메인 스토리,
 // step3는 마스터 O 페이지들의 메인 스토리. 미지원 스텝은 건드리지 않는다.
 // 스타일 자동 생성 금지. 유닛 경계 프레임브레이크(startParagraph NEXT_FRAME).
+//
+// W3: generic 인라인 아이콘 op — 플랜 단락의 선택 필드 icon
+//   {label, pos: "end"|"start", pad, mode: "dup"(기본)|"place"}
+// 스타일/밑줄/브레이크 적용이 끝난 뒤 마지막 패스에서 역순(뒤 단락부터)으로
+// findLabeledItem(label) 원본을 duplicate 인라인 앵커 삽입 (v1 insertInlineIcon
+// 의미론). mode "place"는 v1 processStep2B1의 itemLink 기반: 라벨 아이템의
+// 링크 파일을 place하고 원본 너비로 스케일. 원본 없으면 [경고] 로그만.
 
 var TEMPLATE = "__TEMPLATE_PATH__";
 var PLAN = "__PLAN_PATH__";
@@ -70,17 +77,166 @@ function storyByMarker(doc, marker, pageName, rank) {
     return counts[rank - 1] ? counts[rank - 1].st : null;
 }
 
+// 문서 내장 [기본 단락] — 플랜 센티널 "$BASIC" 해석용 (v1 getBasicPara 이식)
+function basicParaOf(doc) {
+    var s = null;
+    try {
+        s = doc.paragraphStyles.itemByName("$ID/NormalParagraphStyle");
+        if (s && s.isValid) { return s; }
+    } catch (e) {}
+    try {
+        s = doc.paragraphStyles.itemByName("[기본 단락]");
+        if (s && s.isValid) { return s; }
+    } catch (e) {}
+    try {
+        s = doc.paragraphStyles.itemByName("[Basic Paragraph]");
+        if (s && s.isValid) { return s; }
+    } catch (e) {}
+    return doc.paragraphStyles[0];
+}
+
+// ── 아이콘 op (W3) ──────────────────────────────────────────────────────────
+var _iconDup = {};    // label -> {src, state} 또는 {missing: true}
+var _iconLink = {};   // label -> {path, width} 또는 {missing: true}
+
+function _iconSource(doc, label) {
+    if (_iconDup[label]) { return _iconDup[label]; }
+    var src = findLabeledItem(doc, label);
+    if (!src) {
+        _iconDup[label] = { missing: true };
+        wlog("[경고] 아이콘 원본 없음: " + label);
+        return _iconDup[label];
+    }
+    // v1 unlockItem: 원본/레이어 잠금 해제 (종료 시 relockIcons가 복원)
+    var state = { itemLocked: false, layerLocked: false };
+    try { state.itemLocked = src.locked; src.locked = false; } catch (e) {}
+    try {
+        if (src.itemLayer) {
+            state.layerLocked = src.itemLayer.locked;
+            src.itemLayer.locked = false;
+            src.itemLayer.visible = true;
+        }
+    } catch (e) {}
+    _iconDup[label] = { src: src, state: state };
+    return _iconDup[label];
+}
+
+function _iconLinkInfo(doc, label) {
+    if (_iconLink[label]) { return _iconLink[label]; }
+    var info = { missing: true };
+    var gs = doc.allGraphics;
+    for (var gi = 0; gi < gs.length; gi++) {
+        try {
+            var g = gs[gi];
+            if (g.parent && g.parent.label === label && g.itemLink) {
+                var gb = g.parent.geometricBounds;
+                info = { path: g.itemLink.filePath, width: gb[3] - gb[1] };
+                break;
+            }
+        } catch (e) {}
+    }
+    if (info.missing) { wlog("[경고] 아이콘 링크 없음: " + label); }
+    _iconLink[label] = info;
+    return info;
+}
+
+function relockIcons() {
+    for (var k in _iconDup) {
+        var e1 = _iconDup[k];
+        if (!e1 || !e1.src) { continue; }
+        try { e1.src.locked = e1.state.itemLocked; } catch (e) {}
+        try {
+            if (e1.src.itemLayer) {
+                e1.src.itemLayer.locked = e1.state.layerLocked;
+            }
+        } catch (e) {}
+    }
+}
+
+// 단락 끝(\r 앞) 삽입점 — 스토리 마지막 단락(\r 없음)은 맨 끝
+function _endIP(para) {
+    var c = "";
+    try { c = para.contents || ""; } catch (e) {}
+    var endsCR = c.length > 0 && c.charAt(c.length - 1) === "\r";
+    return endsCR ? para.insertionPoints[-2] : para.insertionPoints[-1];
+}
+
+// pad 보장 (v1 2B1: 마지막 문자가 pad가 아니면 삽입 후 삽입점 재취득)
+function _ensureEndPad(para, ip, pad) {
+    var c = "";
+    try { c = (para.contents || "").replace(/\r$/, ""); } catch (e) {}
+    if (c.length === 0 || c.charAt(c.length - 1) !== pad.charAt(pad.length - 1)) {
+        ip.contents = pad;
+        return _endIP(para);
+    }
+    return ip;
+}
+
+// 단락 1개에 아이콘 1개 삽입. 성공 1 / 실패 0.
+function insertIconAt(doc, story, para, ic) {
+    var pos = (ic.pos === "start") ? "start" : "end";
+    var pad = ic.pad || "";
+    if (ic.mode === "place") {
+        // v1 processStep2B1: 링크 파일 place + 원본 너비 스케일
+        var info = _iconLinkInfo(doc, ic.label);
+        if (info.missing) { return 0; }
+        var ip = _endIP(para);
+        if (pad) { ip = _ensureEndPad(para, ip, pad); }
+        try {
+            var placed = story.insertionPoints[ip.index].place(File(info.path))[0];
+            try { placed.anchoredObjectSettings.anchorType = AnchorPosition.INLINE_POSITION; } catch (e) {}
+            try {
+                placed.fit(FitOptions.FRAME_TO_CONTENT);
+                var pgb = placed.geometricBounds;
+                var pw = pgb[3] - pgb[1];
+                if (pw > 0 && info.width) {
+                    var sc = (info.width / pw) * 100;
+                    placed.absoluteHorizontalScale = sc;
+                    placed.absoluteVerticalScale = sc;
+                }
+            } catch (e) {}
+            return 1;
+        } catch (e) { return 0; }
+    }
+    // 기본: duplicate 인라인 앵커 (v1 insertInlineIcon)
+    var entry = _iconSource(doc, ic.label);
+    if (entry.missing) { return 0; }
+    var ip2 = (pos === "start") ? para.insertionPoints[0] : _endIP(para);
+    if (pos === "end" && pad) { ip2 = _ensureEndPad(para, ip2, pad); }
+    var clone = null;
+    try {
+        clone = entry.src.duplicate();
+        try { clone.anchoredObjectSettings.anchoredPosition = AnchorPosition.INLINE_POSITION; } catch (e) {}
+        try { clone.textWrapPreferences.textWrapMode = TextWrapModes.NONE; } catch (e) {}
+        clone.anchoredObjectSettings.insertAnchoredObject(ip2, AnchorPosition.INLINE_POSITION);
+        try { clone.fit(FitOptions.FRAME_TO_CONTENT); } catch (e) {}
+    } catch (e) {
+        try { if (clone) { clone.remove(); } } catch (e2) {}
+        return 0;
+    }
+    if (pos === "start" && pad) {
+        // 앵커(￼) 직후에 pad (v1 1B1: 아이콘 다음 탭)
+        try { para.insertionPoints[1].contents = pad; } catch (e) {}
+    }
+    return 1;
+}
+
 var doc = null;
 try {
     wlog("워크북 v2 조판 시작: " + TEMPLATE);
     var plan = readJSONFile(PLAN);
     doc = app.open(File(TEMPLATE), false);
+    app.scriptPreferences.enableRedraw = false;   // v1 run.jsx:111 파리티
 
     var styleCache = {};
     var missing = {};
     function styleOf(name) {
         if (styleCache[name]) { return styleCache[name]; }
         if (missing[name]) { return null; }
+        if (name === "$BASIC") {
+            styleCache[name] = basicParaOf(doc);
+            return styleCache[name];
+        }
         var ps = findParagraphStyleByPath(doc, name);
         if (ps) { styleCache[name] = ps; return ps; }
         missing[name] = true;
@@ -105,8 +261,11 @@ try {
         return null;
     }
 
-    for (var fi2 = 0; fi2 < plan.flows.length; fi2++) {
-        var flow = plan.flows[fi2];
+    // 플로우 1개 처리 — v1 processStep* 대응. 반드시 app.doScript
+    // UndoModes.ENTIRE_SCRIPT로 감싸 호출한다 (아래 루프): 수천 개의 개별
+    // undo 트랜잭션이 앵커/추가 페이지가 누적된 문서에서 단락당 수 초의
+    // 감속(행 유사)을 유발 (W3 실측 — v1 run.jsx도 스텝마다 동일 패턴).
+    function processFlow(flow) {
         var tgt = flow.target || {};
         var story = null;
         if (tgt.master) {
@@ -114,7 +273,7 @@ try {
         } else if (tgt.marker) {
             story = storyByMarker(doc, tgt.marker, tgt.page, tgt.rank);
         }
-        if (!story) { wlog("[경고] 스토리 못 찾음: " + flow.step); continue; }
+        if (!story) { wlog("[경고] 스토리 못 찾음: " + flow.step); return; }
         var csUL = ulStyleFor(flow);
 
         var flat = [];
@@ -127,7 +286,14 @@ try {
         }
         var texts = [];
         for (var i2 = 0; i2 < flat.length; i2++) { texts.push(flat[i2].t); }
-        story.contents = texts.join("\r");
+        var joined = texts.join("\r");
+        // 마지막 단락이 빈 문자열이면 스토리 끝 \r 뒤에 단락 객체가 생기지
+        // 않아 flat↔paras 정렬이 1개 어긋난다 (꼬리 아이콘 단락 누락 원인).
+        // \r 하나를 덧붙여 마지막 빈 단락을 실체화한다.
+        if (texts.length > 0 && texts[texts.length - 1] === "") {
+            joined += "\r";
+        }
+        story.contents = joined;
         try { story.texts[0].appliedCharacterStyle = noneCS; } catch (e) {}
         wlog(flow.step + ": " + flat.length + "단락 배치 (유닛 " + flow.units.length + ")");
 
@@ -161,6 +327,26 @@ try {
             }
         }
 
+        // 아이콘 패스 — 밑줄 runs·프레임브레이크 적용 이후 마지막, 역순
+        // (아이콘 삽입은 텍스트 길이를 바꾸므로 뒤 단락부터 → 인덱스 안정)
+        var iconCounts = {};
+        var iconDone = 0;
+        for (var xi = flat.length - 1; xi >= 0; xi--) {
+            var ic = flat[xi].icon;
+            if (!ic || xi >= paras.length) { continue; }
+            if (insertIconAt(doc, story, paras[xi], ic)) {
+                iconCounts[ic.label] = (iconCounts[ic.label] || 0) + 1;
+            }
+            iconDone++;
+            if (iconDone % 50 === 0) {
+                // 진행 로그 — 러너의 300초 무갱신 행 판정(pkill) 방지용
+                wlog(flow.step + " 아이콘 진행: " + iconDone);
+            }
+        }
+        for (var lb in iconCounts) {
+            wlog(flow.step + " 아이콘 삽입: " + iconCounts[lb] + "개 (" + lb + ")");
+        }
+
         // 스토리 오버플로우 시 마스터 유지 페이지 추가 (v1 ensureNoOverflow 의미론)
         var conts = story.textContainers;
         var lastF = conts[conts.length - 1];
@@ -179,6 +365,17 @@ try {
         if (safety > 0) { wlog(flow.step + ": 오버플로우 페이지 +" + safety); }
     }
 
+    for (var fi2 = 0; fi2 < plan.flows.length; fi2++) {
+        // 플로우(스텝) 단위 Undo 그룹화 — v1 파리티 (UndoModes.ENTIRE_SCRIPT)
+        (function (fl) {
+            app.doScript(function () { processFlow(fl); },
+                         ScriptLanguage.JAVASCRIPT, undefined,
+                         UndoModes.ENTIRE_SCRIPT, "wb_v2 " + fl.step);
+        })(plan.flows[fi2]);
+    }
+
+    relockIcons();   // v1 relockItem — 아이콘 원본/레이어 잠금 복원
+
     var ovf = 0;
     for (var s3 = 0; s3 < doc.stories.length; s3++) {
         try {
@@ -193,8 +390,11 @@ try {
     wlog("PDF: 성공 -> " + OUT_PDF);
     doc.close(SaveOptions.NO);
     doc = null;
+    try { app.scriptPreferences.enableRedraw = true; } catch (e4) {}
     wlog("워크북 v2 조판 완료");
 } catch (e) {
     wlog("[오류] " + e);
+    try { relockIcons(); } catch (e3) {}
     try { if (doc) { doc.close(SaveOptions.NO); } } catch (e2) {}
+    try { app.scriptPreferences.enableRedraw = true; } catch (e5) {}
 }

@@ -32,3 +32,4 @@
 - W1 완료: step3 (누락0/오버플로우0, 커밋됨)
 - 이하 각 단계 에이전트가 완료 시 여기에 결과를 추가한다.
 - **W2 완료**: 순수 텍스트 6스텝 이식 (1A1/1A1_2/1B2/1C2/2A1/2A1Btm/2C1 — GREP·삭제·패턴스타일을 파이썬 전처리로, v1 판정 정규식 그대로 이식). E2E(0a5da924, 실 InDesign): 지원 8스텝 전부 내용 보존 누락 0 ✅. 함정 해결: 2,000+단락 스토리에서 story.paragraphs 컬렉션 인덱싱 행 → everyItem().getElements() 1회 캐시 필수 (v1 blackbook 주석의 함정 실증).
+- **W3 완료**: 아이콘 4스텝 이식 (1A2/1B1/2B1/2C2). 실행기에 generic 아이콘 op({"icon":{label,pos}} — findLabeledItem duplicate/링크 place, 역순 삽입) 추가. E2E(0a5da924): 12스텝 전부 내용 보존 0누락 + 아이콘 검증 통과 (TF 버튼 90+133, 문제아이콘 18, 영작답지 70). 함정: 구버전 렌더가 InDesign 점유 시 반드시 정리 후 재실행 (락 /tmp/indesign_exec.lock).

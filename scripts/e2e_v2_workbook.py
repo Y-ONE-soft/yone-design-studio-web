@@ -88,21 +88,30 @@ def main():
         }
 
     print("== 5/5 리포트")
+    # W3 아이콘 검증: 덤프에 ❮T/F❯ 토큰 잔존 금지 + 아이콘 삽입 카운트 로그
+    re_tf = re.compile("❮\\s*T\\s*/\\s*F\\s*❯")
+    tf_tokens = sum(len(re_tf.findall(pp["t"]))
+                    for st in dump["stories"] for pp in st["paragraphs"])
+    log_lines = [l.strip() for l in open(jsx_log, encoding="utf-8")]
     report = {
         "case": case,
         "supported_steps": supported,
         "unsupported_steps": plan["unsupported"],
         "per_step": per_step,
         "overflow_stories": dump.get("overflow_stories", 0),
-        "render_warnings": [l.strip() for l in
-                            open(jsx_log, encoding="utf-8") if "[경고]" in l],
+        "tf_tokens_in_dump": tf_tokens,
+        "icon_logs": [l for l in log_lines if "아이콘 삽입" in l],
+        "render_warnings": [l for l in log_lines if "[경고]" in l],
     }
     json.dump(report, open(f"{out}/report.json", "w", encoding="utf-8"),
               ensure_ascii=False, indent=1)
     print(json.dumps(report, ensure_ascii=False, indent=1))
     ok = all(v["missing_words"] == 0 for v in per_step.values())
-    print("\n결과:", "✅ 전 스텝 내용 보존 통과" if ok else "❌ 내용 누락")
-    return 0 if ok else 1
+    icon_ok = (tf_tokens == 0
+               and not any("아이콘" in w for w in report["render_warnings"]))
+    print("\n결과:", "✅ 전 스텝 내용 보존 통과" if ok else "❌ 내용 누락",
+          "/", "✅ 아이콘 검증 통과" if icon_ok else "❌ 아이콘 검증 실패")
+    return 0 if (ok and icon_ok) else 1
 
 
 if __name__ == "__main__":
