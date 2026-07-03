@@ -29,22 +29,25 @@ SPECS = {
 }
 
 
-def load_cover_bytes(file_bytes, filename=""):
+def load_cover_bytes(file_bytes, filename="", page=0):
+    """page: PDF 페이지 인덱스. 범위 밖이면 None (이미지 파일은 page>0이면 None)."""
     name = filename.lower()
     if name.endswith(".pdf"):
         try:
             import fitz
             doc = fitz.open(stream=file_bytes, filetype="pdf")
-            page = doc[0]
+            if page >= doc.page_count:
+                return None
+            pg = doc[page]
             mat = fitz.Matrix(200/72, 200/72)
-            clip = page.trimbox
+            clip = pg.trimbox
             if clip.is_empty or clip.width < 10:
-                clip = page.rect
-            pix = page.get_pixmap(matrix=mat, clip=clip, alpha=False)
+                clip = pg.rect
+            pix = pg.get_pixmap(matrix=mat, clip=clip, alpha=False)
             return Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
         except ImportError:
             raise RuntimeError("PDF 처리를 위해 PyMuPDF 필요")
-    return Image.open(io.BytesIO(file_bytes)).convert("RGB")
+    return None if page > 0 else Image.open(io.BytesIO(file_bytes)).convert("RGB")
 
 
 def default_crop_params(img, side="front"):

@@ -1,15 +1,11 @@
 """헤드리스 책 목업 엔진 — A/B 라이트맵 방식 (Photoshop 불필요).
-흰 표지 렌더(A)·검은 표지 렌더(B)를 한 번만 베이크해두면
-  out = B + cover*(A-B)
-로 원근·조명·페이지단면·스파이럴 오클루전을 재현한다.
+흰 표지 렌더(A)·검은 표지 렌더(B)를 한 번 베이크 → out = B + cover*(A-B).
 
-바인딩:
-  무선/스프링/중철  → 단면 앞표지 (A/B 1쿼드)
-  중철펼침          → 펼친 2페이지 (A/B 2쿼드, front=왼쪽·back=오른쪽)
-  낱장              → 가로/세로 A4 종이 1장 (목업 없이 종이질감+그림자)
+바인딩: 무선/스프링/중철(단면) · 중철펼침(2페이지) · 낱장(종이 1장)
 
-fit: 표지 맞춤 배율(0.85~1.15). 1.0=프레임 꽉 채움, <1=축소(가장자리 복제 여백),
-     >1=확대(가장자리 크롭).
+표지 맞춤(fit): 1.0=프레임 꽉 채움(가장자리까지, 상단 위주로 살짝 크롭).
+  <1=축소(단색 여백, 줄무늬 없음) · >1=확대(중앙 크롭).
+비율이 안 맞는 표지(A4 vs US레터)도 여백은 표지 테두리 중앙값 단색으로 채워 깔끔.
 """
 import os
 import numpy as np
@@ -18,9 +14,9 @@ from PIL import Image, ImageFilter, ImageDraw
 
 BAKE = os.path.join(os.path.dirname(__file__), "bake")
 
-TEMPLATES = {"무선": "wireless", "스프링": "spring", "중철": "saddle04"}  # 단면
-SPREAD = {"중철펼침": "saddle02"}                                        # 펼침
-FLAT = {"낱장"}                                                          # 종이 1장
+TEMPLATES = {"무선": "wireless", "스프링": "spring", "중철": "saddle04"}
+SPREAD = {"중철펼침": "saddle02"}
+FLAT = {"낱장"}
 ALL_BINDINGS = list(TEMPLATES) + list(SPREAD) + list(FLAT)
 
 _cache = {}
@@ -55,43 +51,47 @@ def _detect_quads(A, B, n=1):
     cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:n]
     quads = [_quad_from_contour(c) for c in cnts]
-    quads.sort(key=lambda q: q[:, 0].mean())      # 왼→오
+    quads.sort(key=lambda q: q[:, 0].mean())
     return quads
 
-def _prep_cover(img, target_ratio, crop=10, fit=1.0):
-    a = np.asarray(img.convert("RGB"))
-    if a.shape[0] > 2*crop and a.shape[1] > 2*crop:
-        a = a[crop:a.shape[0]-crop, crop:a.shape[1]-crop]
-    h, w = a.shape[:2]
-    tw = round(h * target_ratio)
-    if tw > w:
-        pl = (tw - w) // 2
-        a = np.concatenate([np.repeat(a[:, :1], pl, 1), a, np.repeat(a[:, -1:], tw-w-pl, 1)], axis=1)
-    elif tw < w:
-        th = round(w / target_ratio); pt = (th - h) // 2
-        a = np.concatenate([np.repeat(a[:1, :], pt, 0), a, np.repeat(a[-1:, :], th-h-pt, 0)], axis=0)
-    # fit: 표지 맞춤 배율
-    h, w = a.shape[:2]
-    if fit < 0.999:                                # 축소 → 가장자리 복제 여백
-        nw, nh = round(w/fit), round(h/fit)
-        pl, pt = (nw-w)//2, (nh-h)//2
-        a = np.concatenate([np.repeat(a[:, :1], pl, 1), a, np.repeat(a[:, -1:], nw-w-pl, 1)], axis=1)
-        a = np.concatenate([np.repeat(a[:1, :], pt, 0), a, np.repeat(a[-1:, :], nh-h-pt, 0)], axis=0)
-    elif fit > 1.001:                              # 확대 → 중앙 크롭
-        nw, nh = round(w/fit), round(h/fit)
-        x, y = (w-nw)//2, (h-nh)//2
-        a = a[y:y+nh, x:x+nw]
-    return a
+def _rect_dims(quad, base=2000):
+    wq = (np.linalg.norm(quad[1]-quad[0]) + np.linalg.norm(quad[2]-quad[3])) / 2
+    hq = (np.linalg.norm(quad[3]-quad[0]) + np.linalg.norm(quad[2]-quad[1])) / 2
+    return max(1, round(base * wq / hq)), base
+
+def _border_color(a):
+    b = np.concatenate([a[0], a[-1], a[:, 0], a[:, -1]], axis=0).reshape(-1, 3)
+    return np.median(b, axis=0)
+
+def _place(cover_img, FW, FH, fit=1.0, top_bias=0.62, crop_border=10):
+    """표지를 FW×FH 프레임에 배치. fit=1=꽉채움(가장자리, 상단위주 크롭),
+    <1=축소(단색 여백), >1=확대(크롭)."""
+    a = np.asarray(cover_img.convert("RGB"))
+    if a.shape[0] > 2*crop_border and a.shape[1] > 2*crop_border:
+        a = a[crop_border:a.shape[0]-crop_border, crop_border:a.shape[1]-crop_border]
+    ch, cw = a.shape[:2]
+    fill = max(FW/cw, FH/ch)
+    scale = fill * max(0.4, min(2.0, fit))
+    nw, nh = max(1, round(cw*scale)), max(1, round(ch*scale))
+    interp = cv2.INTER_AREA if scale < 1 else cv2.INTER_CUBIC
+    r = cv2.resize(a, (nw, nh), interpolation=interp).astype(np.float32)
+    canvas = np.full((FH, FW, 3), _border_color(a), dtype=np.float32)
+    xoff = (FW - nw) // 2
+    yoff = -int(round((nh - FH) * top_bias)) if nh > FH else (FH - nh) // 2
+    dx0, dx1 = max(0, xoff), min(FW, xoff + nw)
+    dy0, dy1 = max(0, yoff), min(FH, yoff + nh)
+    canvas[dy0:dy1, dx0:dx1] = r[dy0-yoff:dy1-yoff, dx0-xoff:dx1-xoff]
+    return canvas
 
 def _front_of_spread(img):
     w, h = img.size
     return img.crop((w // 2, 0, w, h)) if w / h > 1.2 else img
 
-def _warp_into(cover, quad, W, H):
-    ch, cw = cover.shape[:2]
+def _warp_into(rect, quad, W, H):
+    FH, FW = rect.shape[:2]
     M = cv2.getPerspectiveTransform(
-        np.float32([[0, 0], [cw-1, 0], [cw-1, ch-1], [0, ch-1]]), quad)
-    warp = cv2.warpPerspective(cover, M, (W, H), flags=cv2.INTER_CUBIC,
+        np.float32([[0, 0], [FW-1, 0], [FW-1, FH-1], [0, FH-1]]), quad)
+    warp = cv2.warpPerspective(rect, M, (W, H), flags=cv2.INTER_CUBIC,
                                borderMode=cv2.BORDER_REPLICATE).astype(np.float32)
     mask = np.zeros((H, W), np.float32)
     cv2.fillConvexPoly(mask, quad.astype(np.int32), 1.0)
@@ -112,9 +112,9 @@ def _add_shadow(rgba, opacity=0.30, dx_f=0.006, dy_f=0.020, blur_f=0.020, pad_f=
     return out.crop(bb) if bb else out
 
 def _finish(out_img, tpl, long_edge, shadow):
-    over_path = os.path.join(BAKE, f"{tpl}_over.png") if tpl else None
-    if over_path and os.path.exists(over_path):
-        out_img.alpha_composite(Image.open(over_path).convert("RGBA"))
+    over = os.path.join(BAKE, f"{tpl}_over.png") if tpl else None
+    if over and os.path.exists(over):
+        out_img.alpha_composite(Image.open(over).convert("RGBA"))
     if shadow:
         res = _add_shadow(np.asarray(out_img, dtype=np.float32))
     else:
@@ -127,8 +127,7 @@ def _composite(A, B, C):
     return Image.fromarray(np.dstack([out_rgb, A[..., 3]]).astype(np.uint8), "RGBA")
 
 def _flat_sheet(cover, long_edge, shadow):
-    src = cover.convert("RGB")
-    w, h = src.size
+    src = cover.convert("RGB"); w, h = src.size
     rng = np.random.default_rng(7)
     noise = rng.normal(0, 1, (max(1, h//4), max(1, w//4))).astype(np.float32)
     noise = (noise - noise.min()) / (np.ptp(noise) + 1e-6) * 255
@@ -139,15 +138,11 @@ def _flat_sheet(cover, long_edge, shadow):
     b = max(2, int(min(w, h)*0.004)); d.rectangle([0, 0, w-1, h-1], outline=40, width=b)
     edge = edge.filter(ImageFilter.GaussianBlur(b))
     paper.paste(Image.new("RGBA", (w, h), (0, 0, 0, 255)), (0, 0), edge.point(lambda a: int(a*0.25)))
-    if shadow:
-        res = _add_shadow(np.asarray(paper, dtype=np.float32), opacity=0.26, dy_f=0.016, blur_f=0.016)
-    else:
-        res = paper
+    res = _add_shadow(np.asarray(paper, dtype=np.float32), opacity=0.26, dy_f=0.016, blur_f=0.016) if shadow else paper
     s = long_edge / max(res.size)
     return res.resize((round(res.width*s), round(res.height*s)), Image.LANCZOS)
 
 def render(cover_img, binding, back_img=None, long_edge=1500, shadow=True, fit=1.0):
-    """cover_img: PIL.Image. binding: 무선/스프링/중철/중철펼침/낱장."""
     if binding in FLAT:
         return _flat_sheet(cover_img, long_edge, shadow)
 
@@ -157,20 +152,16 @@ def render(cover_img, binding, back_img=None, long_edge=1500, shadow=True, fit=1
         pages = [_front_of_spread(cover_img), _front_of_spread(back_img or cover_img)]
         C = np.zeros((H, W, 3), np.float32)
         for cov_src, quad in zip(pages, quads):
-            wq = (np.linalg.norm(quad[1]-quad[0]) + np.linalg.norm(quad[2]-quad[3])) / 2
-            hq = (np.linalg.norm(quad[3]-quad[0]) + np.linalg.norm(quad[2]-quad[1])) / 2
-            warp, mask = _warp_into(_prep_cover(cov_src, wq/hq, fit=fit), quad, W, H)
+            FW, FH = _rect_dims(quad)
+            warp, mask = _warp_into(_place(cov_src, FW, FH, fit), quad, W, H)
             C = C*(1-mask) + warp*mask
         return _finish(_composite(A, B, C), tpl, long_edge, shadow)
 
     tpl = TEMPLATES[binding]; A, B = _get_ab(tpl); H, W = A.shape[:2]
     quad = _detect_quads(A, B, n=1)[0]
-    wq = (np.linalg.norm(quad[1]-quad[0]) + np.linalg.norm(quad[2]-quad[3])) / 2
-    hq = (np.linalg.norm(quad[3]-quad[0]) + np.linalg.norm(quad[2]-quad[1])) / 2
-    cov = _prep_cover(_front_of_spread(cover_img), wq/hq, fit=fit)
-    warp, mask = _warp_into(cov, quad, W, H)
-    C = warp * mask
-    return _finish(_composite(A, B, C), tpl, long_edge, shadow)
+    FW, FH = _rect_dims(quad)
+    warp, mask = _warp_into(_place(_front_of_spread(cover_img), FW, FH, fit), quad, W, H)
+    return _finish(_composite(A, B, warp*mask), tpl, long_edge, shadow)
 
 
 if __name__ == "__main__":

@@ -1043,16 +1043,20 @@ def api_mockup_upload():
     if not front:
         return jsonify({"error": "앞표지 필요"}), 400
     try:
-        front_img = renderer.load_cover_bytes(front.read(), front.filename)
+        front_bytes = front.read()
+        front_img = renderer.load_cover_bytes(front_bytes, front.filename)
         front_crop = renderer.default_crop_params(front_img, "front")
+        # 중철펼침용: 앞 파일이 2페이지 PDF면 2페이지를 자동 추출
+        front_p2 = renderer.load_cover_bytes(front_bytes, front.filename, page=1)
         back_img = None
         back_crop = None
         if back and back.filename:
             back_img = renderer.load_cover_bytes(back.read(), back.filename)
             back_crop = renderer.default_crop_params(back_img, "back")
         token = uuid.uuid4().hex[:10]
-        _mockup_sessions[token] = {"front": front_img, "back": back_img}
-        return jsonify({"token": token, "front_crop": front_crop, "back_crop": back_crop})
+        _mockup_sessions[token] = {"front": front_img, "back": back_img, "front_p2": front_p2}
+        return jsonify({"token": token, "front_crop": front_crop, "back_crop": back_crop,
+                        "has_p2": front_p2 is not None})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
