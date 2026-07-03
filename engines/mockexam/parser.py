@@ -70,16 +70,16 @@ def _extract_paragraphs(filepath, extract_underline=True):
     ext = os.path.splitext(filepath)[1].lower()
 
     if ext == ".hwpx":
-        from engines.workbook.parser import _hwpx_extract_paragraphs
+        from core.extract import _hwpx_extract_paragraphs
         return _hwpx_extract_paragraphs(filepath, extract_underline=extract_underline, exclude_footnotes=True)
     elif ext == ".docx":
-        from engines.workbook.parser import _docx_extract_paragraphs
+        from core.extract import _docx_extract_paragraphs
         return _docx_extract_paragraphs(filepath, extract_underline=extract_underline)
     elif ext == ".hwp":
-        from engines.workbook.parser import _hwp_is_hwpx, _hwpx_extract_paragraphs
+        from core.extract import _hwp_is_hwpx, _hwpx_extract_paragraphs
         if _hwp_is_hwpx(filepath):
             return _hwpx_extract_paragraphs(filepath, extract_underline=extract_underline, exclude_footnotes=True)
-        from engines.workbook.parser import _hwp_extract_paragraphs
+        from core.extract import _hwp_extract_paragraphs
         return _hwp_extract_paragraphs(filepath, extract_underline=extract_underline, exclude_footnotes=True)
     else:
         raise ValueError(f"지원하지 않는 파일 형식: {ext}")

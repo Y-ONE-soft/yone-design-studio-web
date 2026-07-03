@@ -39,7 +39,11 @@ _CPR_PAT = re.compile(r'charPrIDRef="(\d+)"')
 
 
 def _find_underline_ids(header_xml: str) -> set:
-    """header.xml에서 underline type=BOTTOM인 charPr ID를 찾는다."""
+    """header.xml에서 underline type=BOTTOM인 charPr ID를 찾는다.
+
+    ※ core.extract._parse_underline_ids와 의미가 다름 (BOTTOM 한정 vs NONE 외 전부)
+      — 세서특필 원고 특성에 맞춘 것. 통합은 Phase 2에서 검토.
+    """
     import xml.etree.ElementTree as ET
     root = ET.fromstring(header_xml)
     ul_ids = set()

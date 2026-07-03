@@ -35,19 +35,8 @@ def _wtag(tag: str) -> str:
 
 
 # ── header.xml: underline charPr ID 수집 ────────────────────────────────────
-
-def _parse_underline_ids(header_xml: str) -> set:
-    """밑줄 서식이 적용된 charPr id 집합 반환."""
-    ul_ids = set()
-    for m in re.finditer(r'<hh:charPr\b([^>]*)>(.*?)</hh:charPr>', header_xml, re.DOTALL):
-        id_m = re.search(r'\bid="(\d+)"', m.group(1))
-        if not id_m:
-            continue
-        body = m.group(2)
-        ul_m = re.search(r'<hh:underline\s+type="([^"]+)"', body)
-        if ul_m and ul_m.group(1).upper() != 'NONE':
-            ul_ids.add(id_m.group(1))
-    return ul_ids
+# Phase 1: core/extract의 동일 구현으로 대체 (기존 사본과 byte-identical 로직)
+from core.extract import _parse_underline_ids  # noqa: E402
 
 
 # ── section0.xml: 단락 추출 ─────────────────────────────────────────────────
@@ -57,6 +46,10 @@ def _extract_segments(body: str, ul_ids: set) -> list:
     <hp:run> 목록을 순회하며 (text, underline, new_para) 세그먼트 목록 반환.
     <hp:lineBreak/>는 새 단락 시작 신호로 처리.
     반환: [{"t": str, "ul": bool, "new_para": bool}]
+
+    ※ core.extract._hwpx_extract_segments와 유사하나 의도적 차이 존재
+      (hp:t 매칭 폭, hp:tab 미치환, page_break는 상위에서 처리) —
+      통합은 Phase 2에서 골든 diff 검토와 함께. 지금은 동작 보존이 우선.
     """
     segments = []
     for run_m in re.finditer(r'<hp:run\s+charPrIDRef="(\d+)"[^>]*>(.*?)</hp:run>', body, re.DOTALL):

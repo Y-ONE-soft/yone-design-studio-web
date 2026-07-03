@@ -280,9 +280,11 @@ def _parse_step3_from_files(step3_dir, log):
     """
     if not os.path.isdir(step3_dir):
         return []
-    from engines.workbook.parser import (
+    from core.extract import (
         _docx_extract_paragraphs,
         _hwp_extract_paragraphs,
+    )
+    from engines.workbook.parser import (
         _strip_step3_answers,
         _strip_step3_type_tags,
         _strip_step3_book_markers,
