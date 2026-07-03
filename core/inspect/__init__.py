@@ -168,3 +168,90 @@ def inspect_workbook_step3(content, dump, style_overrides=None):
         "warnings": warnings,
         "stats": stats,
     }
+
+
+# ── 범용 검수 (전 교재 확산 — 엔진 코드/JSX 무수정) ──────────────────────────
+
+_SKIP_KEYS = {"file", "filename", "path", "source_file", "pstyle", "kind",
+              "q_code", "code", "marker", "style", "indd_path", "pdf_path",
+              "jsx_path", "log_path", "json_path", "output_dir", "meta_path"}
+
+
+def _norm_typo(s):
+    return (s.replace("’", "'").replace("‘", "'")
+             .replace("“", '"').replace("”", '"'))
+
+
+def harvest_content_words(obj, out=None, key=None):
+    """content.json(스키마 무관)에서 조판돼야 할 영문 실질 단어를 수확.
+
+    경로/메타성 키와 '_' 접두 키는 제외 — 어떤 엔진의 content 구조든 동작.
+    """
+    if out is None:
+        out = set()
+    if isinstance(obj, str):
+        if key not in _SKIP_KEYS and not obj.startswith("/"):
+            for w in _RE_WORD.findall(_norm_typo(obj)):
+                out.add(w.lower())
+    elif isinstance(obj, list):
+        for v in obj:
+            harvest_content_words(v, out, key)
+    elif isinstance(obj, dict):
+        for k, v in obj.items():
+            if not str(k).startswith("_"):
+                harvest_content_words(v, out, k)
+    return out
+
+
+def _find_indd_paths(obj, out):
+    if isinstance(obj, str):
+        if obj.endswith(".indd") and os.path.isfile(obj):
+            out.append(obj)
+    elif isinstance(obj, list):
+        for v in obj:
+            _find_indd_paths(v, out)
+    elif isinstance(obj, dict):
+        for v in obj.values():
+            _find_indd_paths(v, out)
+    return out
+
+
+def inspect_generic(job_dir, log, timeout=600):
+    """엔진 무관 조판 검수 — content.json 단어셋 ↔ 산출 .indd 덤프 대조.
+
+    검사: (a) 내용 보존(파서 산출물 기준 — 파서 단계 손실은 보존 가드 담당),
+          (b) 오버플로우 스토리 수.
+    반환: {"ok", "missing_words", "missing_sample", "overflow_stories",
+           "indd_count"} 또는 None(대상 없음). 예외는 위로 — 호출부 fail-open.
+    """
+    content_path = os.path.join(job_dir, "content.json")
+    settings_path = os.path.join(job_dir, ".settings.json")
+    if not (os.path.isfile(content_path) and os.path.isfile(settings_path)):
+        return None
+    settings = json.load(open(settings_path, encoding="utf-8"))
+    indd_paths = []
+    _find_indd_paths(settings, indd_paths)
+    indd_paths = list(dict.fromkeys(indd_paths))
+    if not indd_paths:
+        return None
+
+    want = harvest_content_words(json.load(open(content_path, encoding="utf-8")))
+    got = set()
+    overflow = 0
+    for i, indd in enumerate(indd_paths, start=1):
+        dump = dump_indd(indd,
+                         os.path.join(job_dir, f"typeset_dump_g{i}.json"),
+                         log, timeout=timeout)
+        overflow += dump.get("overflow_stories", 0)
+        for t, _s in _dump_paragraphs(dump):
+            for w in _RE_WORD.findall(_norm_typo(t)):
+                got.add(w.lower())
+    missing = want - got
+    return {
+        "ok": not missing,
+        "missing_words": len(missing),
+        "missing_sample": sorted(missing)[:15],
+        "overflow_stories": overflow,
+        "indd_count": len(indd_paths),
+        "content_words": len(want),
+    }

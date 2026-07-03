@@ -1464,6 +1464,32 @@ def _run_pipeline(engine, job_id: str, job_dir: str, uploaded: dict):
         result = engine.verify(job_dir, log)
         log(f"[{step}/{total}] 검수 완료 ✓")
 
+        # ── 범용 검수 게이트 (opt-in: YONE_INSPECT=1) ────────────────────
+        # 조판 산출 .indd를 다시 열어 content.json 단어셋과 대조 — 내용 누락
+        # 자동 검출. 엔진 코드/JSX 무수정, 실패해도 조판 결과에 영향 없음.
+        # (mockexam_v2는 verify에 자체 게이트 내장 — 중복 덤프 방지 위해 제외)
+        if (os.environ.get("YONE_INSPECT") == "1"
+                and engine.material_id != "mockexam_v2"):
+            try:
+                from core.inspect import inspect_generic
+                log("[검수+] 내용 보존 대조 중...")
+                g = inspect_generic(job_dir, log)
+                if g is not None:
+                    result["inspect"] = g
+                    if g["ok"]:
+                        log(f"[검수+] ✅ 내용 보존 확인 "
+                            f"({g['content_words']}단어, indd {g['indd_count']}개)")
+                    else:
+                        result["ok"] = False
+                        warn = (f"[검수+] ❌ 내용 누락 의심 {g['missing_words']}단어: "
+                                + ", ".join(g["missing_sample"][:8]))
+                        result.setdefault("warnings", []).append(warn)
+                        log(warn)
+                    if g["overflow_stories"]:
+                        log(f"[검수+] ⚠️ 오버플로우 스토리 {g['overflow_stories']}개")
+            except Exception as _ie:
+                log(f"[검수+] 건너뜀 (검수 실패가 조판을 막지 않음): {_ie}")
+
         # PDF를 목업 IN 폴더에 자동 복사
         pdf_path = result.get("pdf_path")
         if pdf_path and os.path.exists(pdf_path):
