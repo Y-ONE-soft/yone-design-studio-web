@@ -36,7 +36,14 @@ ENGINE_SLOTS = {
     "workbook": ["manuscripts"],
     "workbook_sero": ["manuscripts"],
     "mockexam": ["manuscripts"],
+    "blackbook": ["manuscript", "answers"],
+    "seseospecial": ["part1", "part2", "answers"],
 }
+
+# 코퍼스 보류 엔진 (parse가 업로드 아닌 외부 소스에 의존 — 오프라인 재실행 불가):
+#   final / textbook_workbook / ebs_workbook: GDrive 원고 폴더에서 직접 복사
+#   pocketbook: 분석본 .indd 폴더 스캔
+#   baenje: content.json 미생성 (RTF 산출 — 별도 스냅샷 방식 필요)
 
 
 def _classify(settings: dict, content: dict) -> str | None:
@@ -51,6 +58,11 @@ def _classify(settings: dict, content: dict) -> str | None:
     if isinstance(jobs, list) and jobs and isinstance(jobs[0], dict) \
             and "round" in jobs[0] and "data" in jobs[0]:
         return "mockexam"
+    if keys == {"indd_path", "issue_num", "json_path", "output_dir"} \
+            and "sections" in content:
+        return "blackbook"
+    if "school_key" in keys and "part1" in content and "part2" in content:
+        return "seseospecial"
     return None
 
 

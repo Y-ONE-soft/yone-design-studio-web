@@ -1,0 +1,8 @@
+{
+  "engine": "blackbook",
+  "source_job": "027d750a",
+  "note": "golden = 선별 당시 현행 파서 출력 (정답 아님 — tests/README.md 참조)",
+  "golden_regenerated": {
+    "commit": "df9ea28"
+  }
+}
