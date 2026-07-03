@@ -9,6 +9,11 @@
 // findLabeledItem(label) 원본을 duplicate 인라인 앵커 삽입 (v1 insertInlineIcon
 // 의미론). mode "place"는 v1 processStep2B1의 itemLink 기반: 라벨 아이템의
 // 링크 파일을 place하고 원본 너비로 스케일. 원본 없으면 [경고] 로그만.
+//
+// W4: 유닛 확장 형식 — 유닛이 단락 배열(기존) 또는
+//   {"paras": [...], "page_break": true} dict. page_break 유닛 시작 단락은
+//   startParagraph NEXT_PAGE (v1 processStep1C1의 헤더 = 새 페이지),
+//   그 외 유닛 경계는 기존과 동일 NEXT_FRAME.
 
 var TEMPLATE = "__TEMPLATE_PATH__";
 var PLAN = "__PLAN_PATH__";
@@ -278,10 +283,14 @@ try {
 
         var flat = [];
         var unitStart = [];
+        var unitPageBreak = [];
         for (var u = 0; u < flow.units.length; u++) {
+            var unitObj = flow.units[u];
+            var uParas = unitObj.paras || unitObj;   // dict 형식(W4) 겸용
             unitStart.push(flat.length);
-            for (var q = 0; q < flow.units[u].length; q++) {
-                flat.push(flow.units[u][q]);
+            unitPageBreak.push(unitObj.page_break ? true : false);
+            for (var q = 0; q < uParas.length; q++) {
+                flat.push(uParas[q]);
             }
         }
         var texts = [];
@@ -301,12 +310,19 @@ try {
         // (v1 blackbook run.jsx:197 주석 — 매번 재조회는 2,000단락에서 행 유발)
         var paras = story.paragraphs.everyItem().getElements();
         var isStart = {};
-        for (var us = 0; us < unitStart.length; us++) { isStart[unitStart[us]] = true; }
+        for (var us = 0; us < unitStart.length; us++) {
+            // "page" = NEXT_PAGE (W4 page_break 유닛), "frame" = NEXT_FRAME
+            isStart[unitStart[us]] = unitPageBreak[us] ? "page" : "frame";
+        }
         for (var pi = 0; pi < flat.length && pi < paras.length; pi++) {
             var ps2 = styleOf(flat[pi].s);
             if (ps2) { paras[pi].appliedParagraphStyle = ps2; }
             if (flow.break_per_unit && pi > 0 && isStart[pi]) {
-                try { paras[pi].startParagraph = StartParagraph.NEXT_FRAME; } catch (e) {}
+                try {
+                    paras[pi].startParagraph = (isStart[pi] === "page")
+                        ? StartParagraph.NEXT_PAGE
+                        : StartParagraph.NEXT_FRAME;
+                } catch (e) {}
             }
             var runs = flat[pi].runs;
             if (runs && runs.length > 0 && csUL) {

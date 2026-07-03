@@ -17,6 +17,7 @@ from engines.seseospecial.engine import SeseoSpecialEngine
 from engines.mockexam.engine import MockexamEngine
 from engines.mockexam_v2.engine import MockexamV2Engine
 from engines.blackbook_v2.engine import BlackbookV2Engine
+from engines.workbook_v2.engine import WorkbookV2Engine
 from engines.mockexam_sero_merge.engine import MockexamSeroMergeEngine
 from engines.analysis_merge.engine import AnalysisMergeEngine
 from engines.mothertongue_merge.engine import MothertongueMergeEngine
@@ -47,6 +48,7 @@ _ENGINE_LIST = [
     VertToHorizEngine(),
     MockexamV2Engine(),
     BlackbookV2Engine(),
+    WorkbookV2Engine(),
 ]
 # ────────────────────────────────────────────────────────────────────────
 

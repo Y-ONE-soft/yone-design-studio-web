@@ -137,7 +137,8 @@ def _is_transient_id_failure(msg: str) -> bool:
 
 
 def run_jsx(jsx_path: str, log, poll_log_path: str = None, timeout: int = 1200,
-            cancel_check=None, completion_marker: str = None):
+            cancel_check=None, completion_marker: str = None,
+            stall_limit: int = None):
     """JSX 실행 + 일시적 실패 자동 재시도 래퍼.
 
     1차 시도는 기존 동작과 완전히 동일. 시작/전달 단계의 '일시적' 실패
@@ -146,6 +147,10 @@ def run_jsx(jsx_path: str, log, poll_log_path: str = None, timeout: int = 1200,
     그대로 실패시킨다.
 
     환경변수 YONE_ID_RETRY=0 이면 재시도를 끄고 기존 동작으로 롤백.
+
+    stall_limit: 로그 무갱신 행(hang) 판정 초 (기본 300 — 기존 동작 동일).
+        대형 문서(200p+)의 doc.save + PDF export는 로그 없이 5분을 넘길 수
+        있어(workbook_v2 실측) 해당 엔진만 늘려서 전달한다.
     """
     max_attempts = 1 if os.environ.get("YONE_ID_RETRY", "1") == "0" else 2
     last_exc = None
@@ -164,7 +169,8 @@ def run_jsx(jsx_path: str, log, poll_log_path: str = None, timeout: int = 1200,
         try:
             _run_jsx_once(jsx_path, log, poll_log_path=poll_log_path,
                           timeout=timeout, cancel_check=cancel_check,
-                          completion_marker=completion_marker)
+                          completion_marker=completion_marker,
+                          stall_limit=stall_limit)
             return
         except RuntimeError as e:
             last_exc = e
@@ -177,7 +183,8 @@ def run_jsx(jsx_path: str, log, poll_log_path: str = None, timeout: int = 1200,
 
 
 def _run_jsx_once(jsx_path: str, log, poll_log_path: str = None, timeout: int = 1200,
-            cancel_check=None, completion_marker: str = None):
+            cancel_check=None, completion_marker: str = None,
+            stall_limit: int = None):
     """JSX 파일을 단계별로 실행 (단일 시도). 재시도는 run_jsx 래퍼가 담당.
 
     큰 JSX 파일 대신, settings.json에서 정보를 읽고
@@ -288,7 +295,7 @@ def _run_jsx_once(jsx_path: str, log, poll_log_path: str = None, timeout: int = 
                 proc.kill()
                 log("[InDesign] 스크립트 전달 확인, 폴링 시작")
                 _wait_for_completion(poll_log_path, log, timeout, cancel_check,
-                                     completion_marker)
+                                     completion_marker, stall_limit=stall_limit)
             else:
                 proc.kill()
                 raise RuntimeError("InDesign 스크립트 시작 안 됨 (120초 대기) — InDesign 상태를 확인하세요")
@@ -304,11 +311,14 @@ def _run_jsx_once(jsx_path: str, log, poll_log_path: str = None, timeout: int = 
 
 
 def _wait_for_completion(log_path: str, log, timeout: int, cancel_check=None,
-                         completion_marker: str = None):
+                         completion_marker: str = None,
+                         stall_limit: int = None):
     elapsed = 0
     last_mtime = 0
     stall_seconds = 0
-    STALL_LIMIT = 300  # 로그 갱신 없이 5분 경과하면 행(hang) 판정
+    # 로그 갱신 없이 5분(기본) 경과하면 행(hang) 판정 — 대형 문서 엔진은
+    # run_jsx(stall_limit=...)로 상향 (PDF export가 로그 없이 5분+ 소요)
+    STALL_LIMIT = stall_limit or 300
     _debug_log = "/tmp/workbook_debug.txt"
 
     def _read_any_log():

@@ -31,7 +31,7 @@ def main():
     log = lambda m: print(f"  {m}", flush=True)
 
     print(f"== 1/5 플랜 빌드 ({case})")
-    from engines.workbook_v2.plan import steps_to_plan
+    from engines.workbook_v2.plan import steps_to_plan, unit_paras
     content = json.load(open(f"{cdir}/golden/content.json", encoding="utf-8"))
     plan = steps_to_plan(content["steps"])
     plan_path = os.path.abspath(f"{out}/render_plan.json")
@@ -75,7 +75,7 @@ def main():
     for flow in plan["flows"]:
         want = set()
         for u in flow["units"]:
-            for p in u:
+            for p in unit_paras(u):
                 want.update(w.lower() for w in _RE_WORD.findall(p["t"]))
         missing = want - got
         per_step[flow["step"]] = {

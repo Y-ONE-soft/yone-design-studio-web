@@ -22,6 +22,18 @@ place — v1 processStep2B1의 링크 place + 너비 스케일) 인라인 앵커
 pad는 아이콘과 본문 사이 간격 문자(end면 아이콘 앞, start면 아이콘 뒤).
 스타일 "$BASIC"은 문서 내장 [기본 단락] 센티널 — 인벤토리 실물 스타일이
 아니라 InDesign 문서 기본 스타일이므로 자동 생성 금지 규칙과 무관.
+
+W4 (step1_c1 — 최난): v1 processStep1C1(run.jsx 1136~1648)의 이식.
+  - 헤더 정규화 GREP 15+ → _sub_runs(밑줄 runs 오프셋 보존 치환)로 전처리
+  - 프레임 분리 = v1 "FRAME BREAK 재적용" 섹션(실효 동작)의 유닛화:
+      헤더(2번째+) → 유닛 {"page_break": true} = 실행기 NEXT_PAGE
+      (EBS는 NEXT_FRAME = page_break 없음), 블록 내 첫 하단 스타일 단락
+      → 일반 유닛 경계(NEXT_FRAME)
+  - 화살표 답지 아이콘: C1 연속 블록 끝 뒤 빈 단락에 icon op
+  - 발문("아래 주어진 문장이…") = 빌더가 텍스트 단락으로 생성 + 문제아이콘
+
+유닛 확장 형식: 기존 유닛(단락 list) 외에 {"paras": [...], "page_break": true}
+dict 형식 지원 — 실행기가 page_break 유닛 시작 단락에 NEXT_PAGE 적용.
 """
 import json
 import os
@@ -191,6 +203,11 @@ def extract_tail(text):
 
 def _mk(text, style, runs):
     return {"t": text, "s": style, "runs": runs or []}
+
+
+def unit_paras(unit):
+    """유닛의 단락 리스트 — list(기존) / {"paras": ...} dict(W4) 겸용."""
+    return unit["paras"] if isinstance(unit, dict) else unit
 
 
 def _map_chars(para, table):
@@ -702,6 +719,397 @@ def build_step2_c2(step_data):
     return {"units": units, "warnings": warnings}
 
 
+# ── W4: STEP1 C1 문장 배열 — v1 processStep1C1 (최난) ───────────────────────
+# 원본: engines/workbook/jsx/run.jsx 1136~1648. 패스 순서를 v1 그대로 유지:
+# 공백 bracket 제거 → 헤더 정규화 GREP → 레지듀얼 정리 → 프리앰블 제거 →
+# 스타일 패스(기본/BTM/C1/BTM갭/BTM_T/원문자/갭 빈줄 제거/교과서 분기) →
+# 화살표 아이콘 → 발문 삽입 → { 안전망 → 헤더 잔재 정리 → (하단 제외) →
+# 유닛 분할(헤더=NEXT_PAGE|EBS는 NEXT_FRAME, 블록 첫 하단 단락=NEXT_FRAME).
+
+_RE_C1_HEADER = re.compile(r"^\s*\{[^}]+\}")
+_RE_C1_CHOICE = re.compile(r"^\s*\([A-Z]\)")
+_RE_C1_ABC = re.compile(r"^\s*\(([ABC])\)")
+_RE_C1_EMPTY_BRACKET = re.compile(
+    "^\\s*\\[[\\s  -​]*\\]\\s*$")
+_RE_C1_NUM_BRACKET = re.compile(r"^\s*\[\d+")
+# v1 hits7 (원문자 → 하단 지문): ①-⑳ + ⓵-⓿ + ❶-➓
+_RE_C1_CIRCLED_WIDE = re.compile("[①-⑳⓵-⓿❶-➓]")
+_RE_C1_CIRCLED_PROMPT = re.compile("[①-⑳]")   # 발문 유형 판별용
+# v1 has3PlusGaps: 공백류 3연속 이상
+_RE_3GAPS = re.compile("[ \\t  -​  　]{3,}")
+
+# v1 헤더 정규화 GREP 체인 (순서 보존 — InDesign GREP과 동일 의미의 파이썬 re)
+_C1_GREPS = [
+    (re.compile(r"\bno\.\s*(\d{1,3}(?:~\d{1,3})?)"), r"{\1}"),
+    (re.compile(r"\bExample\s+(\d{1,3})"), r"{\1}"),
+    (re.compile(r"\b(\d+)\.\s*p\d+\s*[-–—]?\s*Example\b"),
+     r"{\1}"),
+    (re.compile(r"\bANALYSIS\b"), "{분석}"),
+    (re.compile(r"\b\d+\.\s*L\d+\s*[-–—.]?\s*p\.?\s*\d+"
+                r"[^\r\n]*?본문\s*(\d+)\b"), r"{본문\1}"),
+    (re.compile(r"L\d+\s*[-–—.]?\s*p\.?\s*\d+"
+                r"[^\r\n]*?본문\s*(\d+)\b"), r"{본문\1}"),
+    (re.compile(r"(본문)\s*(\d+)"), r"{\1\2}"),
+    (re.compile(r"\b(\d+)\.\s*L\d+\s*[-–—.]?\s*p\.?\s*\d+\b"),
+     r"{본문\1}"),
+    (re.compile(r"\bL\d+\s*[-–—.]?\s*p\.?\s*\d+\b"), ""),
+    (re.compile(r"\b\d+\.\s*p\d+\s*[-–—]?\s*서술형\s*Practice\b"),
+     "{서술형 Practice}"),
+    (re.compile(r"\b\d+\.\s*p\d+\s*[-–—]?\s*논술형\s*"
+                r"Prac(?:tice|ice)\b"), "{논술형 Practice}"),
+]
+# v1 "Clean up residual text before {" (3회 반복)
+_C1_RESID = [
+    (re.compile(r"((?:^|,)\s*)[^{\r\n]*?(\{[^}]+\})"), r"\1\2"),
+    (re.compile(r"-\s*(\{)"), r"\1"),
+    (re.compile(r"(^|,)\s+(\{)"), r"\1\2"),
+]
+# v1 "Clean up header remnants" (최종)
+_C1_REMNANT = [
+    (re.compile(r"(\{본문\d+\})\([^)]*\)"), r"\1"),
+    (re.compile(r"(\{[A-Za-z][A-Za-z\s]+\})\([^)]*\)"), r"\1"),
+]
+
+_RE_TAB = re.compile(r"\t")
+_RE_LEAD3WS = re.compile(r"^\s{3,}")
+
+_PROMPT_CIRC = "아래 주어진 문장이 들어갈 위치로 알맞은 곳을 고르시오."
+_PROMPT_ORDER = "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
+_ICON_ARROW = {"label": "화살표 답지", "pos": "start"}
+
+
+def _slice_runs(runs, a, b):
+    """runs에서 [a,b) 문자 구간만 잘라 반환 (오프셋 정합 유지)."""
+    out = []
+    off = 0
+    for r in runs or []:
+        t = r.get("t") or ""
+        s, e = off, off + len(t)
+        lo, hi = max(a, s), min(b, e)
+        if lo < hi:
+            out.append(dict(r, t=t[lo - s:hi - s]))
+        off = e
+    return out
+
+
+def _sub_runs(rx, repl, text, runs):
+    """re.sub 대응 — 텍스트와 runs를 동시에 치환 (밑줄 오프셋 보존).
+
+    치환 삽입분은 비밑줄 run으로 들어간다 (v1 GREP changeTo와 동일:
+    새 텍스트는 서식 없는 평문)."""
+    matches = list(rx.finditer(text))
+    if not matches:
+        return text, runs
+    out_t = []
+    out_r = []
+    last = 0
+    for m in matches:
+        out_t.append(text[last:m.start()])
+        out_r.extend(_slice_runs(runs, last, m.start()))
+        rep = m.expand(repl)
+        if rep:
+            out_t.append(rep)
+            out_r.append({"t": rep, "ul": False})
+        last = m.end()
+    out_t.append(text[last:])
+    out_r.extend(_slice_runs(runs, last, len(text)))
+    return "".join(out_t), out_r
+
+
+def _c1_true_empty(text):
+    """v1 발문 삽입 walk의 isEmpty: \\r\\n 제거 후 빈 문자열 (공백은 비빈)."""
+    return re.sub(r"[\r\n]", "", text or "") == ""
+
+
+def _c1_remove_gap_blank(items, st_btm, st_btm_t):
+    """v1: BTM(주어진 문장) → 빈 단락 → BTM_T 사이 빈 줄 1개 제거 (역순)."""
+    i = len(items) - 2
+    while i >= 1:
+        if (items[i - 1]["s"] == st_btm and _is_blank(items[i]["t"])
+                and items[i + 1]["s"] == st_btm_t):
+            del items[i]
+        i -= 1
+
+
+def build_step1_c1(step_data, workbook_type="모의고사", exclude_btm=False):
+    st_c1 = _style("STEP1C1", "P")
+    st_btm = _style("STEP1C1", "BTM")
+    st_btm_t = _style("STEP1C1", "BTM_T")
+    st_hadan = _style("STEP1C1", "Q@bottom")
+    is_ebs = (workbook_type == "EBS")
+    warnings = []
+
+    # 0) 원본 → 작업 리스트 (s=None은 '어떤 스타일 패스도 안 건드림' 추적 —
+    #    v1에서 startParagraph가 스타일 재적용에 안 지워지는 단락 판별용)
+    items = [{"t": p.get("text") or "", "runs": p.get("runs") or [],
+              "s": None}
+             for p in step_data.get("paragraphs", []) or []]
+
+    # 1) 공백만 있는 bracket 단락 제거: [   ] → 삭제
+    items = [it for it in items if not _RE_C1_EMPTY_BRACKET.match(it["t"])]
+
+    # 2) 헤더 정규화 GREP 체인 + 레지듀얼 정리(3회)
+    for it in items:
+        t, r = it["t"], it["runs"]
+        for rx, repl in _C1_GREPS:
+            t, r = _sub_runs(rx, repl, t, r)
+        for _ in range(3):
+            for rx, repl in _C1_RESID:
+                t, r = _sub_runs(rx, repl, t, r)
+        it["t"], it["runs"] = t, r
+
+    # 3) 프리앰블 제거 — 첫 {N} 헤더 앞 단락 삭제 ((A) 선지가 있으면 보류)
+    first_hdr = next((i for i, it in enumerate(items)
+                      if _RE_C1_HEADER.match(it["t"])), -1)
+    if first_hdr > 0:
+        if not any(_RE_C1_CHOICE.match(items[i]["t"])
+                   for i in range(first_hdr)):
+            items = items[first_hdr:]
+    elif first_hdr < 0:
+        warnings.append("step1_c1: {N} 지문 헤더 미인식 — 프레임 분리 없이 "
+                        "단일 유닛 배치")
+
+    n = len(items)
+    hdr_idx = [i for i, it in enumerate(items)
+               if _RE_C1_HEADER.match(it["t"])]
+
+    # 3b) 조건(주어진 문장) 후보 — v1 conditionIdxList와 동일 시퀀스.
+    #     v1에선 이 startParagraph가 이후 스타일 적용으로 지워져(2026 회귀)
+    #     '어떤 스타일도 안 받은 단락'만 실효 → _cond 플래그로 추적.
+    hdr_ends = hdr_idx + [n]
+    for b in range(len(hdr_ends) - 1):
+        saw_choice = False
+        for i in range(hdr_ends[b] + 1, hdr_ends[b + 1]):
+            t = items[i]["t"]
+            trim = re.sub("^[\\s　]+|[\\s　]+$", "", t)
+            if not trim:
+                continue
+            if _RE_C1_CHOICE.match(t):
+                saw_choice = True
+                continue
+            if (saw_choice and re.match(r"^[A-Za-z]", trim)
+                    and not re.search("[가-힣]", trim)):
+                items[i]["_cond"] = True
+                break
+
+    # 4a) {…} 헤더 + [N bracket → [기본 단락]
+    for it in items:
+        if _RE_C1_NUM_BRACKET.match(it["t"]) or _RE_C1_HEADER.match(it["t"]):
+            it["s"] = "$BASIC"
+
+    # 4b) 모든 {header} 다음 첫 비빈 단락 → C1_BTM (EBS 등 본문 별도 줄 원고)
+    for h in hdr_idx:
+        j = h + 1
+        while j < n and _is_blank(items[j]["t"]):
+            j += 1
+        if j < n:
+            items[j]["s"] = st_btm
+
+    # 4c) (A)~(Z) 선지 → C1_문장 배열 (3+공백 단락에서 블록 종료)
+    in_block = False
+    for i, it in enumerate(items):
+        if i > 0 and _RE_C1_HEADER.match(items[i - 1]["t"]):
+            in_block = True
+        if _RE_3GAPS.search(it["t"]):
+            in_block = False
+        if in_block and _RE_C1_CHOICE.match(it["t"]):
+            it["s"] = st_c1
+
+    # 4d) 3+공백 단락 → C1_BTM, BTM 단락의 탭 + 선행 공백(3+) 제거
+    for it in items:
+        if _RE_3GAPS.search(it["t"]):
+            it["s"] = st_btm
+    for it in items:
+        if it["s"] == st_btm:
+            t, r = _sub_runs(_RE_TAB, "", it["t"], it["runs"])
+            t, r = _sub_runs(_RE_LEAD3WS, "", t, r)
+            it["t"], it["runs"] = t, r
+
+    # 4e) BTM(3+공백 잔존) 뒤 (A|B|C) 시퀀스 → C1_하단 지문
+    for i in range(n):
+        if items[i]["s"] != st_btm or not _RE_3GAPS.search(items[i]["t"]):
+            continue
+        j = i + 1
+        while j < n and _is_blank(items[j]["t"]):
+            j += 1
+        if j >= n or not _RE_C1_ABC.match(items[j]["t"]):
+            continue
+        k = j
+        while k < n:
+            t = items[k]["t"]
+            if "{" in t or not _RE_C1_ABC.match(t):
+                break
+            items[k]["s"] = st_btm_t
+            k += 1
+
+    # 4f) 원문자 포함 단락 → C1_하단 지문 (v1 grepFind — 스토리 전역)
+    for it in items:
+        if _RE_C1_CIRCLED_WIDE.search(it["t"]):
+            it["s"] = st_btm_t
+
+    # 4g) BTM → 빈 단락 → BTM_T 사이 빈 줄 1개 제거
+    _c1_remove_gap_blank(items, st_btm, st_btm_t)
+    n = len(items)
+
+    # 4h) 교과서 분기: 《제목》/평문 한 줄 하단 구조 식별
+    if workbook_type == "교과서":
+        hdr_idx = [i for i, it in enumerate(items)
+                   if _RE_C1_HEADER.match(it["t"])]
+        hdr_ends = hdr_idx + [n]
+        for b in range(len(hdr_ends) - 1):
+            b_start, b_end = hdr_ends[b], hdr_ends[b + 1]
+            last_choice = -1
+            for i in range(b_start + 1, b_end):
+                if _RE_C1_CHOICE.match(items[i]["t"]):
+                    last_choice = i
+            if last_choice < 0:
+                continue
+            j = last_choice + 1
+            while j < b_end and _is_blank(items[j]["t"]):
+                j += 1
+            if j >= b_end:
+                continue
+            btm_i = j
+            j = btm_i + 1
+            while j < b_end and _is_blank(items[j]["t"]):
+                j += 1
+            if j >= b_end:
+                continue
+            nxt = items[j]["t"]
+            if (not _RE_C1_CHOICE.match(nxt)
+                    and not re.search("[①-⑳]", nxt)):
+                continue
+            if items[btm_i]["s"] == st_btm:
+                continue
+            items[btm_i]["s"] = st_btm
+            k = j
+            while k < b_end:
+                t = items[k]["t"]
+                if _RE_C1_HEADER.match(t):
+                    break
+                if not _is_blank(t):
+                    items[k]["s"] = st_btm_t
+                k += 1
+        _c1_remove_gap_blank(items, st_btm, st_btm_t)
+        n = len(items)
+
+    # 5) 화살표 답지 아이콘 — C1 연속 블록 끝 뒤 (v1 STEP1C1_New 방식)
+    out = []
+    i = 0
+    while i < n:
+        it = items[i]
+        out.append(it)
+        is_run_end = (it["s"] == st_c1
+                      and (i + 1 >= n or items[i + 1]["s"] != st_c1))
+        if is_run_end:
+            if is_ebs and i + 1 < n and _is_blank(items[i + 1]["t"]):
+                # EBS: 기존 빈 단락 재사용 (frame break 밀림 방지)
+                nxt = items[i + 1]
+                nxt["s"] = "$BASIC"
+                nxt["icon"] = dict(_ICON_ARROW)
+                out.append(nxt)
+                i += 2
+                continue
+            if not is_ebs:
+                # 동아박/교과서/모의고사: \r\r — 빈 단락 2개, 두 번째에 화살표
+                out.append({"t": "", "runs": [], "s": "$BASIC"})
+            arrow = {"t": "", "runs": [], "s": "$BASIC",
+                     "icon": dict(_ICON_ARROW)}
+            out.append(arrow)
+        i += 1
+    items = out
+    n = len(items)
+
+    # 6) 발문 삽입 — C1_하단 지문 연속 구간 첫 단락 앞 (하단 제외 시 생략)
+    if not exclude_btm:
+        starts = [i for i in range(n)
+                  if items[i]["s"] == st_btm_t
+                  and (i == 0 or items[i - 1]["s"] != st_btm_t)]
+        for i in reversed(starts):
+            bt = items[i]["t"]
+            if _RE_C1_CIRCLED_PROMPT.search(bt):
+                prompt = _PROMPT_CIRC
+            elif _RE_C1_CHOICE.match(bt):
+                prompt = _PROMPT_ORDER
+            else:
+                continue
+            ins = i
+            while ins > 0:
+                above = items[ins - 1]
+                # v1 isEmpty: 앵커(￼) 포함 단락은 비빈 — 아이콘 단락에서 멈춤
+                if above["s"] == st_btm or (
+                        _c1_true_empty(above["t"])
+                        and not above.get("icon")):
+                    ins -= 1
+                    continue
+                break
+            p = {"t": prompt, "runs": [], "s": st_hadan,
+                 "icon": dict(_ICON_STEP1_Q)}
+            items.insert(ins, p)
+        n = len(items)
+
+    # 7) 안전망: '{' 포함 단락 → [기본 단락] (v1 Final safety)
+    for it in items:
+        if "{" in it["t"]:
+            it["s"] = "$BASIC"
+
+    # 8) 헤더 잔재물 정리
+    for it in items:
+        t, r = it["t"], it["runs"]
+        for rx, repl in _C1_REMNANT:
+            t, r = _sub_runs(rx, repl, t, r)
+        it["t"], it["runs"] = t, r
+
+    # 9) 하단만 제외: BTM/BTM_T/발문 단락 삭제 (상단 유지)
+    if exclude_btm:
+        items = [it for it in items
+                 if it["s"] not in (st_btm, st_btm_t, st_hadan)]
+        n = len(items)
+
+    # 10) 유닛 분할 — v1 "FRAME BREAK 재적용"의 실효 동작:
+    #     헤더(2번째+) = NEXT_PAGE (EBS는 NEXT_FRAME),
+    #     블록 내 첫 하단 스타일 단락 = NEXT_FRAME,
+    #     스타일 패스가 안 건드린 조건 단락 = NEXT_FRAME (v1 startParagraph 잔존)
+    bottom_styles = {st_btm, st_btm_t, st_hadan}
+    units = []
+    cur = []
+    cur_page_break = False
+
+    def _flush():
+        if cur:
+            unit = {"paras": list(cur)}
+            if cur_page_break:
+                unit["page_break"] = True
+            units.append(unit)
+
+    seen_header = False
+    block_bottom_done = True
+    for it in items:
+        is_hdr = bool(_RE_C1_HEADER.match(it["t"]))
+        if is_hdr:
+            _flush()
+            cur = []
+            cur_page_break = seen_header and not is_ebs
+            seen_header = True
+            block_bottom_done = False
+        elif (not block_bottom_done and it["s"] in bottom_styles):
+            _flush()
+            cur = []
+            cur_page_break = False
+            block_bottom_done = True
+        elif it.get("_cond") and it["s"] is None:
+            _flush()
+            cur = []
+            cur_page_break = False
+        para = _mk(it["t"], it["s"] if it["s"] is not None else "$BASIC",
+                   it["runs"])
+        if it.get("icon"):
+            para["icon"] = it["icon"]
+        cur.append(para)
+    _flush()
+    return {"units": units, "warnings": warnings}
+
+
 # ── 스텝 빌더 레지스트리 (단계 전환: 지원 스텝을 여기서 늘려간다) ────────────
 
 STEP_BUILDERS = {
@@ -717,12 +1125,21 @@ STEP_BUILDERS = {
     "step2_b1": build_step2_b1,
     "step2_c1": build_step2_c1,
     "step2_c2": build_step2_c2,
+    "step1_c1": build_step1_c1,
 }
 
+# 원고 유형(EBS/교과서/모의고사) 분기가 필요한 빌더 — v1은 settings의
+# workbook_type으로 분기 (workbook 엔진은 미전달 = "" → 非EBS 처리).
+_CTX_BUILDERS = {"step1_c1"}
 
-def steps_to_plan(steps, exclude=None):
+
+def steps_to_plan(steps, exclude=None, workbook_type="모의고사"):
     """v1 content steps → {"format": "wb-flows-v1", "flows": [...],
-    "unsupported": [스텝키]} — 미지원 스텝은 커버리지 리포트용으로 기록."""
+    "unsupported": [스텝키]} — 미지원 스텝은 커버리지 리포트용으로 기록.
+
+    exclude: 스텝 키(전체 제외) + "step1_c1_btm"(C1 하단만 제외) 지원.
+    workbook_type: "모의고사"|"교과서"|"EBS" — C1 프레임 분리/아이콘 분기.
+    """
     exclude = set(exclude or [])
     flows = []
     unsupported = []
@@ -733,7 +1150,11 @@ def steps_to_plan(steps, exclude=None):
         if builder is None:
             unsupported.append(step_key)
             continue
-        built = builder(step_data)
+        if step_key in _CTX_BUILDERS:
+            built = builder(step_data, workbook_type=workbook_type,
+                            exclude_btm=("step1_c1_btm" in exclude))
+        else:
+            built = builder(step_data)
         target = dict(STEP_MAP.get(step_key, {}))
         flow = {"step": step_key, "target": target,
                 "break_per_unit": True, "units": built["units"]}

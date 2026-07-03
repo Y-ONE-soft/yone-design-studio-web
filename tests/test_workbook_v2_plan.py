@@ -339,3 +339,116 @@ def test_w3_step2_c2_semantics():
             if (re.search(r"[A-Za-z]", t) and "/" not in t
                     and not ("[" in t and "]" in t)):
                 assert re.search("[가-힣]", t), t[:60]
+
+
+# ── W4: step1_c1 (문장 배열 — 최난) ─────────────────────────────────────────
+# v1 processStep1C1 이식: 헤더 정규화 GREP, 프레임 분리(NEXT_PAGE/FRAME),
+# 화살표 답지 아이콘, 하단 발문 삽입. 유닛은 {"paras", "page_break"} dict.
+
+def _uparas(u):
+    from engines.workbook_v2.plan import unit_paras
+    return unit_paras(u)
+
+
+def test_w4_step1_c1_units_and_styles():
+    """모의고사 18지문 = 상단 18 + 하단 18 유닛, 헤더(2번째+) page_break."""
+    inv = _inventory() | {_BASIC}
+    plan = steps_to_plan(_load("0a5da924")["steps"])
+    assert plan["unsupported"] == []            # step1_c1 완성 → 미지원 0
+    flow = _flow(plan, "step1_c1")
+    units = flow["units"]
+    assert len(units) == 36
+    # page_break: 첫 헤더 제외 헤더 유닛 17개만 (v1: h=1부터 NEXT_PAGE)
+    pbs = [bool(u.get("page_break")) for u in units]
+    assert sum(pbs) == 17
+    assert pbs[0] is False                      # 첫 헤더
+    assert all(pbs[i] for i in range(2, 36, 2))  # 상단 유닛(2번째+)
+    assert not any(pbs[i] for i in range(1, 36, 2))  # 하단 유닛
+    styles = {p["s"] for u in units for p in _uparas(u)}
+    assert styles <= inv, styles - inv
+    assert "STEP 01 > C1_문장 배열" in styles
+    assert "STEP 01 > C1_문장 배열 하단" in styles
+    assert "STEP 01 > C1_문장 배열 하단 지문" in styles
+
+
+def test_w4_step1_c1_headers_normalized():
+    """'1. p2-no.20' → '{20}' 정규화 + [기본 단락], 상단 유닛 선두."""
+    plan = steps_to_plan(_load("0a5da924")["steps"])
+    units = _flow(plan, "step1_c1")["units"]
+    tops = units[0::2]
+    for u in tops:
+        head = _uparas(u)[0]
+        assert re.match(r"^\{\d+(?:~\d+)?\}$", head["t"]), head["t"]
+        assert head["s"] == _BASIC
+    assert _uparas(tops[0])[0]["t"] == "{20}"
+
+
+def test_w4_step1_c1_bottom_prompts_and_arrows():
+    """하단 유닛 = 발문(하단 문제+아이콘) 선두, 유형별 발문, 화살표 18개."""
+    plan = steps_to_plan(_load("0a5da924")["steps"])
+    units = _flow(plan, "step1_c1")["units"]
+    bottoms = units[1::2]
+    circ, order = 0, 0
+    for u in bottoms:
+        ps = _uparas(u)
+        assert ps[0]["s"] == "STEP 01 > 하단 문제"
+        assert ps[0]["icon"] == {"label": "STEP1 문제아이콘",
+                                 "pos": "start", "pad": "\t"}
+        if "위치로 알맞은" in ps[0]["t"]:
+            circ += 1
+        elif "이어질 문장들의" in ps[0]["t"]:
+            order += 1
+        # 주어진 문장(하단) — 탭/선행 3+공백 제거됨
+        btm = [p for p in ps if p["s"] == "STEP 01 > C1_문장 배열 하단"]
+        assert len(btm) == 1
+        assert not re.match(r"^\s{3,}", btm[0]["t"]) and "\t" not in btm[0]["t"]
+        assert [p for p in ps
+                if p["s"] == "STEP 01 > C1_문장 배열 하단 지문"]
+    assert (circ, order) == (10, 8)             # 0a5da924 유형 구성
+    arrows = [p for u in units for p in _uparas(u)
+              if p.get("icon", {}).get("label") == "화살표 답지"]
+    assert len(arrows) == 18
+    for p in arrows:
+        assert p["t"] == "" and p["s"] == _BASIC
+        assert p["icon"] == {"label": "화살표 답지", "pos": "start"}
+    # 화살표는 상단 유닛 끝(선지 뒤), 발문보다 앞 (v1 배치 순서)
+    for u in units[0::2]:
+        assert _uparas(u)[-1].get("icon", {}).get("label") == "화살표 답지"
+
+
+def test_w4_step1_c1_content_conservation():
+    """삭제 룰(공백 bracket/프리앰블/헤더 정규화) 외 내용 전량 보존."""
+    for case in ("0a5da924", "01accf5a", "0807ebd8", "0e3844d2"):
+        steps = _load(case)["steps"]
+        flow = _flow(steps_to_plan(steps), "step1_c1")
+        got = _words(p["t"] for u in flow["units"] for p in _uparas(u))
+        # 헤더 줄 제외 원문 전량 보존 (헤더는 {N}으로 정규화됨)
+        keep = [p["text"] for p in steps["step1_c1"]["paragraphs"]
+                if not re.match(r"^\s*\d+\.\s*p", p["text"])]
+        missing = _words(keep) - got
+        assert not missing, (case, sorted(missing)[:8])
+
+
+def test_w4_step1_c1_ebs_branch():
+    """EBS: 헤더 page_break 없음(NEXT_FRAME), 화살표는 빈 단락 재사용 1개."""
+    plan = steps_to_plan(_load("0807ebd8")["steps"], workbook_type="EBS")
+    units = _flow(plan, "step1_c1")["units"]
+    assert not any(u.get("page_break") for u in units)
+    plan2 = steps_to_plan(_load("0807ebd8")["steps"])   # 비EBS 대조
+    units2 = _flow(plan2, "step1_c1")["units"]
+    assert sum(bool(u.get("page_break")) for u in units2) == 2  # 헤더 3-1
+
+
+def test_w4_step1_c1_exclude_btm():
+    """step1_c1_btm 제외: 하단(BTM/BTM_T/발문) 삭제, 상단 유닛만."""
+    plan = steps_to_plan(_load("0a5da924")["steps"],
+                         exclude=["step1_c1_btm"])
+    units = _flow(plan, "step1_c1")["units"]
+    assert len(units) == 18
+    styles = {p["s"] for u in units for p in _uparas(u)}
+    assert "STEP 01 > C1_문장 배열 하단" not in styles
+    assert "STEP 01 > C1_문장 배열 하단 지문" not in styles
+    assert "STEP 01 > 하단 문제" not in styles
+    # step1_c1 전체 제외는 플로우 자체가 빠짐
+    plan2 = steps_to_plan(_load("0a5da924")["steps"], exclude=["step1_c1"])
+    assert not [f for f in plan2["flows"] if f["step"] == "step1_c1"]

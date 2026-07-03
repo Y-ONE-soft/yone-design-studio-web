@@ -50,6 +50,8 @@
     },
     "STEP1C1": {
       "P": "STEP 01 > C1_문장 배열",
+      "BTM": "STEP 01 > C1_문장 배열 하단",
+      "BTM_T": "STEP 01 > C1_문장 배열 하단 지문",
       "Q@bottom": "STEP 01 > 하단 문제"
     },
     "STEP1C2": {
