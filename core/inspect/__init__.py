@@ -21,8 +21,15 @@ _RE_WORD = re.compile(r"[A-Za-z][A-Za-z'\-]{3,}")
 
 
 def dump_indd(indd_path, out_json, log, timeout=600):
-    """완성 .indd를 열어 스토리 텍스트+스타일을 out_json으로 덤프."""
+    """완성 .indd를 열어 스토리 텍스트+스타일을 out_json으로 덤프.
+
+    경로는 반드시 절대경로로 강제 — ExtendScript의 File(상대경로)는 InDesign
+    프로세스 기준으로 풀려서, 상대경로를 넘기면 JSX가 로그를 엉뚱한 곳에 쓰고
+    러너가 '시작 안 됨'으로 오판해 InDesign을 강제종료한다 (2026-07-05 실사고).
+    """
     from core.indesign.runner import run_jsx
+    indd_path = os.path.abspath(indd_path)
+    out_json = os.path.abspath(out_json)
     dump_log = out_json + ".log"
     for p in (out_json, dump_log):
         try:
@@ -198,8 +205,11 @@ def harvest_content_words(obj, out=None, key=None):
             harvest_content_words(v, out, key)
     elif isinstance(obj, dict):
         for k, v in obj.items():
-            if not str(k).startswith("_"):
-                harvest_content_words(v, out, k)
+            if str(k).startswith("_") or k == "runs":
+                # runs = 밑줄 run 조각 — text와 중복이며 단어가 쪼개져
+                # ("m"+"aking") 오탐을 만든다. text만 수확.
+                continue
+            harvest_content_words(v, out, k)
     return out
 
 
@@ -224,6 +234,7 @@ def inspect_generic(job_dir, log, timeout=600):
     반환: {"ok", "missing_words", "missing_sample", "overflow_stories",
            "indd_count"} 또는 None(대상 없음). 예외는 위로 — 호출부 fail-open.
     """
+    job_dir = os.path.abspath(job_dir)
     content_path = os.path.join(job_dir, "content.json")
     settings_path = os.path.join(job_dir, ".settings.json")
     if not (os.path.isfile(content_path) and os.path.isfile(settings_path)):
