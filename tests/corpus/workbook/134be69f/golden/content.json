@@ -16,7 +16,9 @@
          "t": "다음 글의 주제로 가장 적절한 것은? ",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-CTN-TOPIC"
       },
       {
        "text": " There is simply no better way to influence or stir an audience — instantly, powerfully, authentically — than by opening up to them with a personal story or anecdote. To be clear: I'm not saying you need to tell them long stories about your family vacations or show them baby pictures from the stage. I'm saying that you can share a key biographical detail, or an emotion that you're feeling in the moment, or a self-deprecating joke. It is a tried-and-tested way of bonding with an audience of strangers — and of laying the groundwork for you to then persuade them. The harsh reality is that people won't bond with your arguments in a vacuum, but they will, says speech coach Bas van den Beld, \"bond with you\" — the person making those arguments. By sharing a revealing story or a personal flaw, you allow audience members a way to identify with you.",
@@ -25,7 +27,8 @@
          "t": " There is simply no better way to influence or stir an audience — instantly, powerfully, authentically — than by opening up to them with a personal story or anecdote. To be clear: I'm not saying you need to tell them long stories about your family vacations or show them baby pictures from the stage. I'm saying that you can share a key biographical detail, or an emotion that you're feeling in the moment, or a self-deprecating joke. It is a tried-and-tested way of bonding with an audience of strangers — and of laying the groundwork for you to then persuade them. The harsh reality is that people won't bond with your arguments in a vacuum, but they will, says speech coach Bas van den Beld, \"bond with you\" — the person making those arguments. By sharing a revealing story or a personal flaw, you allow audience members a way to identify with you.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "① role of humor in making public speaking memorable",
@@ -34,7 +37,8 @@
          "t": "① role of humor in making public speaking memorable",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "② methods for building trust with unfamiliar audiences",
@@ -43,7 +47,8 @@
          "t": "② methods for building trust with unfamiliar audiences",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "③ necessity of sharing private details to influence listeners",
@@ -52,7 +57,8 @@
          "t": "③ necessity of sharing private details to influence listeners",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "④ importance of emotional honesty for persuasive speeches",
@@ -61,7 +67,8 @@
          "t": "④ importance of emotional honesty for persuasive speeches",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "⑤ effectiveness of personal stories in audience engagement",
@@ -70,7 +77,8 @@
          "t": "⑤ effectiveness of personal stories in audience engagement",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은?",
@@ -79,7 +87,9 @@
          "t": "다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은?",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-BLANK-AB"
       },
       {
        "text": " There is simply no better way to influence or stir an audience — instantly, powerfully, authentically — than by opening up to them with a personal story or anecdote. To be clear: I'm not saying you need to tell them long stories about your family vacations or show them baby pictures from the stage. I'm saying that you can share a key biographical detail, or an emotion that you're feeling in the moment, or a self-deprecating joke. It is a tried-and-tested way of bonding with an audience of strangers — and of laying the groundwork for you to then persuade them. The harsh reality is that people won't bond with your arguments in a vacuum, but they will, says speech coach Bas van den Beld, \"bond with you\" — the person making those arguments. By sharing a revealing story or a personal flaw, you allow audience members a way to identify with you.",
@@ -88,7 +98,8 @@
          "t": " There is simply no better way to influence or stir an audience — instantly, powerfully, authentically — than by opening up to them with a personal story or anecdote. To be clear: I'm not saying you need to tell them long stories about your family vacations or show them baby pictures from the stage. I'm saying that you can share a key biographical detail, or an emotion that you're feeling in the moment, or a self-deprecating joke. It is a tried-and-tested way of bonding with an audience of strangers — and of laying the groundwork for you to then persuade them. The harsh reality is that people won't bond with your arguments in a vacuum, but they will, says speech coach Bas van den Beld, \"bond with you\" — the person making those arguments. By sharing a revealing story or a personal flaw, you allow audience members a way to identify with you.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "⬇",
@@ -97,7 +108,8 @@
          "t": "⬇",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Sym"
       },
       {
        "text": "Sharing a personal     (A)     or story with an audience is an effective way to create     (B)     and make your message more persuasive.",
@@ -138,7 +150,8 @@
          "t": " and make your message more persuasive.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "    (A)             \t(B)",
@@ -147,7 +160,8 @@
          "t": "    (A)             \t(B)",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "① opinion    · · · · ·    \tdisagreement",
@@ -156,7 +170,8 @@
          "t": "① opinion    · · · · ·    \tdisagreement",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "② argument    · · · · · \tdistance",
@@ -165,7 +180,8 @@
          "t": "② argument    · · · · · \tdistance",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "③ question    · · · · ·    \tconflict",
@@ -174,7 +190,8 @@
          "t": "③ question    · · · · ·    \tconflict",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "④ example    · · · · ·    \tdebate",
@@ -183,7 +200,8 @@
          "t": "④ example    · · · · ·    \tdebate",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "⑤ detail    · · · · ·    \tconnection",
@@ -192,7 +210,8 @@
          "t": "⑤ detail    · · · · ·    \tconnection",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "다음 글의 밑줄 친 (A)의 우리말을 다음과 같이 쓸 때, 주어진 <조건>에 알맞게 문장을 완성하시오.",
@@ -201,7 +220,8 @@
          "t": "다음 글의 밑줄 친 (A)의 우리말을 다음과 같이 쓸 때, 주어진 <조건>에 알맞게 문장을 완성하시오.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q"
       },
       {
        "text": "There is simply no better way to influence or stir an audience than by opening up to them with a personal story or anecdote. To be clear: I'm not saying you need to tell them long stories about your family vacations or show them baby pictures from the stage. I'm saying that you can share a key biographical detail, or an emotion that you're feeling in the moment, or a self-deprecating joke. It is a tried-and-tested way of bonding with an audience of strangers, and of laying the groundwork for you to then persuade them. The harsh reality is that people won't bond with your arguments in a vacuum, but they will, says speech coach Bas van den Beld, \"bond with you\", the person making those arguments. (A) 의미심장한 이야기나 개인적인 결점을 공유함으로써, 여러분은 청중 구성원들이 여러분과 동일시할 방식을 허용한다.",
@@ -218,7 +238,8 @@
          "t": ".",
          "ul": false
         }
-       ]
+       ],
+       "kind": "UNKNOWN"
       },
       {
        "text": "<조건>",
@@ -227,7 +248,8 @@
          "t": "<조건>",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Cond"
       },
       {
        "text": "<보기>의 단어를 반드시 사용할 것 (필요 시 변형 가능)",
@@ -236,7 +258,8 @@
          "t": "<보기>의 단어를 반드시 사용할 것 (필요 시 변형 가능)",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Box"
       },
       {
        "text": "주어진 어구를 제외하고 9단어로 영작할 것",
@@ -245,7 +268,8 @@
          "t": "주어진 어구를 제외하고 9단어로 영작할 것",
          "ul": false
         }
-       ]
+       ],
+       "kind": "UNKNOWN"
       },
       {
        "text": "<보기> with / audience members / a way / identify / allow",
@@ -254,7 +278,8 @@
          "t": "<보기> with / audience members / a way / identify / allow",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Box"
       },
       {
        "text": "By sharing a revealing story or a personal flaw, you ________________________________________________________________________.",
@@ -263,7 +288,8 @@
          "t": "By sharing a revealing story or a personal flaw, you ________________________________________________________________________.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Box"
       },
       {
        "text": "다음 글에서 전체 흐름과 관계 없는 문장은?",
@@ -280,7 +306,9 @@
          "t": " 문장은?",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-IRRELEVANT"
       },
       {
        "text": " There is simply no better way to influence or stir an audience — instantly, powerfully, authentically — than by opening up to them with a personal story or anecdote. To be clear: I'm not saying you need to tell them long stories about your family vacations or show them baby pictures from the stage. ① I'm saying that you can share a key biographical detail, or an emotion that you're feeling in the moment, or a self-deprecating joke. ② It is a tried-and-tested way of bonding with an audience of strangers — and of laying the groundwork for you to then persuade them. ③ Professional speakers often rely solely on statistics and logical reasoning to quickly win over an audience's support. ④ The harsh reality is that people won't bond with your arguments in a vacuum, but they will, says speech coach Bas van den Beld, \"bond with you\" — the person making those arguments. ⑤ By sharing a revealing story or a personal flaw, you allow audience members a way to identify with you.",
@@ -289,7 +317,8 @@
          "t": " There is simply no better way to influence or stir an audience — instantly, powerfully, authentically — than by opening up to them with a personal story or anecdote. To be clear: I'm not saying you need to tell them long stories about your family vacations or show them baby pictures from the stage. ① I'm saying that you can share a key biographical detail, or an emotion that you're feeling in the moment, or a self-deprecating joke. ② It is a tried-and-tested way of bonding with an audience of strangers — and of laying the groundwork for you to then persuade them. ③ Professional speakers often rely solely on statistics and logical reasoning to quickly win over an audience's support. ④ The harsh reality is that people won't bond with your arguments in a vacuum, but they will, says speech coach Bas van den Beld, \"bond with you\" — the person making those arguments. ⑤ By sharing a revealing story or a personal flaw, you allow audience members a way to identify with you.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "다음 빈칸에 들어갈 말로 가장 적절한 것을 고르시오. ",
@@ -298,7 +327,9 @@
          "t": "다음 빈칸에 들어갈 말로 가장 적절한 것을 고르시오. ",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-BLANK-SENT"
       },
       {
        "text": " There is simply _________________________________ — instantly, powerfully, authentically — than by opening up to them with a personal story or anecdote. To be clear: I'm not saying you need to tell them long stories about your family vacations or show them baby pictures from the stage. I'm saying that you can share a key biographical detail, or an emotion that you're feeling in the moment, or a self-deprecating joke. It is a tried-and-tested way of bonding with an audience of strangers — and of laying the groundwork for you to then persuade them. The harsh reality is that people won't bond with your arguments in a vacuum, but they will, says speech coach Bas van den Beld, \"bond with you\" — the person making those arguments. By sharing a revealing story or a personal flaw, you allow audience members a way to identify with you.",
@@ -307,7 +338,8 @@
          "t": " There is simply _________________________________ — instantly, powerfully, authentically — than by opening up to them with a personal story or anecdote. To be clear: I'm not saying you need to tell them long stories about your family vacations or show them baby pictures from the stage. I'm saying that you can share a key biographical detail, or an emotion that you're feeling in the moment, or a self-deprecating joke. It is a tried-and-tested way of bonding with an audience of strangers — and of laying the groundwork for you to then persuade them. The harsh reality is that people won't bond with your arguments in a vacuum, but they will, says speech coach Bas van den Beld, \"bond with you\" — the person making those arguments. By sharing a revealing story or a personal flaw, you allow audience members a way to identify with you.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "① no better way to influence or stir an audience",
@@ -316,7 +348,8 @@
          "t": "① no better way to influence or stir an audience",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "② faster approach to present or summarize your main points",
@@ -325,7 +358,8 @@
          "t": "② faster approach to present or summarize your main points",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "③ more effective method to distract or confuse your listeners",
@@ -334,7 +368,8 @@
          "t": "③ more effective method to distract or confuse your listeners",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "④ easier technique for memorizing and repeating key information",
@@ -343,7 +378,8 @@
          "t": "④ easier technique for memorizing and repeating key information",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "⑤ less reliable strategy for engaging with the audience's emotions",
@@ -352,7 +388,8 @@
          "t": "⑤ less reliable strategy for engaging with the audience's emotions",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "다음 빈칸에 들어갈 말로 가장 적절한 것을 고르시오. ",
@@ -361,7 +398,9 @@
          "t": "다음 빈칸에 들어갈 말로 가장 적절한 것을 고르시오. ",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-BLANK-SENT"
       },
       {
        "text": " There is simply no better way to influence or stir an audience — instantly, powerfully, authentically — than by opening up to them with a personal story or anecdote. To be clear: I'm not saying you need to tell them long stories about your family vacations or show them baby pictures from the stage. I'm saying that you can share a key biographical detail, or an emotion that you're feeling in the moment, or a self-deprecating joke. It is a tried-and-tested way of bonding with an audience of strangers — and of laying the groundwork for you to then persuade them. The harsh reality is that people won't bond with your arguments in a vacuum, but they will, says speech coach Bas van den Beld, \"bond with you\" — the person making those arguments. By sharing a revealing story or a personal flaw, __________________________________________.",
@@ -370,7 +409,8 @@
          "t": " There is simply no better way to influence or stir an audience — instantly, powerfully, authentically — than by opening up to them with a personal story or anecdote. To be clear: I'm not saying you need to tell them long stories about your family vacations or show them baby pictures from the stage. I'm saying that you can share a key biographical detail, or an emotion that you're feeling in the moment, or a self-deprecating joke. It is a tried-and-tested way of bonding with an audience of strangers — and of laying the groundwork for you to then persuade them. The harsh reality is that people won't bond with your arguments in a vacuum, but they will, says speech coach Bas van den Beld, \"bond with you\" — the person making those arguments. By sharing a revealing story or a personal flaw, __________________________________________.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "① you encourage others to share their own life stories",
@@ -379,7 +419,8 @@
          "t": "① you encourage others to share their own life stories",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "② you invite listeners to focus solely on your expertise",
@@ -388,7 +429,8 @@
          "t": "② you invite listeners to focus solely on your expertise",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "③ you help the audience evaluate information objectively",
@@ -397,7 +439,8 @@
          "t": "③ you help the audience evaluate information objectively",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "④ you allow audience members a way to identify with you",
@@ -406,7 +449,8 @@
          "t": "④ you allow audience members a way to identify with you",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "⑤ you give your arguments more logical credibility on stage",
@@ -415,7 +459,8 @@
          "t": "⑤ you give your arguments more logical credibility on stage",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "밑줄 친 \"bond with you\"가 다음 글에서 의미하는 바로 가장 적절한 것은?",
@@ -432,7 +477,9 @@
          "t": "가 다음 글에서 의미하는 바로 가장 적절한 것은?",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-VOC-UND-MEAN"
       },
       {
        "text": " There is simply no better way to influence or stir an audience — instantly, powerfully, authentically — than by opening up to them with a personal story or anecdote. To be clear: I'm not saying you need to tell them long stories about your family vacations or show them baby pictures from the stage. I'm saying that you can share a key biographical detail, or an emotion that you're feeling in the moment, or a self-deprecating joke. It is a tried-and-tested way of bonding with an audience of strangers — and of laying the groundwork for you to then persuade them. The harsh reality is that people won't bond with your arguments in a vacuum, but they will, says speech coach Bas van den Beld, \"bond with you\" — the person making those arguments. By sharing a revealing story or a personal flaw, you allow audience members a way to identify with you.",
@@ -449,7 +496,8 @@
          "t": " — the person making those arguments. By sharing a revealing story or a personal flaw, you allow audience members a way to identify with you.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "① agree logically with every point made by the speaker",
@@ -458,7 +506,8 @@
          "t": "① agree logically with every point made by the speaker",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "② focus only on the factual content of the presentation",
@@ -467,7 +516,8 @@
          "t": "② focus only on the factual content of the presentation",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "③ pay attention exclusively to visual aids and data charts",
@@ -476,7 +526,8 @@
          "t": "③ pay attention exclusively to visual aids and data charts",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "④ become distracted from what is being argued or presented",
@@ -485,7 +536,8 @@
          "t": "④ become distracted from what is being argued or presented",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "⑤ form an emotional connection to the speaker as an individual",
@@ -494,7 +546,8 @@
          "t": "⑤ form an emotional connection to the speaker as an individual",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것을 고르시오. ",
@@ -503,7 +556,9 @@
          "t": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것을 고르시오. ",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-ORDER"
       },
       {
        "text": " There is simply no better way to influence or stir an audience — instantly, powerfully, authentically — than by opening up to them with a personal story or anecdote.",
@@ -512,7 +567,8 @@
          "t": " There is simply no better way to influence or stir an audience — instantly, powerfully, authentically — than by opening up to them with a personal story or anecdote.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P-CONTEXT"
       },
       {
        "text": "(A) The harsh reality is that people won't bond with your arguments in a vacuum, but they will, says speech coach Bas van den Beld, \"bond with you\" — the person making those arguments. By sharing a revealing story or a personal flaw, you allow audience members a way to identify with you.",
@@ -521,7 +577,8 @@
          "t": "(A) The harsh reality is that people won't bond with your arguments in a vacuum, but they will, says speech coach Bas van den Beld, \"bond with you\" — the person making those arguments. By sharing a revealing story or a personal flaw, you allow audience members a way to identify with you.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "(B) I'm saying that you can share a key biographical detail, or an emotion that you're feeling in the moment, or a self-deprecating joke. It is a tried-and-tested way of bonding with an audience of strangers — and of laying the groundwork for you to then persuade them.",
@@ -530,7 +587,8 @@
          "t": "(B) I'm saying that you can share a key biographical detail, or an emotion that you're feeling in the moment, or a self-deprecating joke. It is a tried-and-tested way of bonding with an audience of strangers — and of laying the groundwork for you to then persuade them.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "(C) To be clear: I'm not saying you need to tell them long stories about your family vacations or show them baby pictures from the stage.",
@@ -539,7 +597,8 @@
          "t": "(C) To be clear: I'm not saying you need to tell them long stories about your family vacations or show them baby pictures from the stage.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "① (A) － (C) － (B)\t② (B) － (A) － (C)",
@@ -548,7 +607,8 @@
          "t": "① (A) － (C) － (B)\t② (B) － (A) － (C)",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "③ (B) － (C) － (A)\t④ (C) － (A) － (B)",
@@ -557,7 +617,8 @@
          "t": "③ (B) － (C) － (A)\t④ (C) － (A) － (B)",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "⑤ (C) － (B) － (A)",
@@ -566,7 +627,8 @@
          "t": "⑤ (C) － (B) － (A)",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "다음 (A), (B), (C)의 각 네모 안에서 어법에 맞는 표현으로 가장 적절한 것은?",
@@ -583,7 +645,9 @@
          "t": "은?",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-GRM-PAREN"
       },
       {
        "text": " There is simply no better way to influence or stir an audience — instantly, powerfully, authentically — than by opening up to them with a personal story or anecdote. To be clear: I'm not saying you need to tell them long stories about your family vacations or show them baby pictures from the stage. I'm saying that you can share a key biographical detail, or an emotion that you're (A) [felt / feeling] in the moment, or a self-deprecating joke. It is a tried-and-tested way of bonding with an audience of strangers — and of (B) [laying / layers] the groundwork for you to then persuade them. The harsh reality is (C) [what / that] people won't bond with your arguments in a vacuum, but they will, says speech coach Bas van den Beld, \"bond with you\" — the person making those arguments. By sharing a revealing story or a personal flaw, you allow audience members a way to identify with you.",
@@ -592,7 +656,8 @@
          "t": " There is simply no better way to influence or stir an audience — instantly, powerfully, authentically — than by opening up to them with a personal story or anecdote. To be clear: I'm not saying you need to tell them long stories about your family vacations or show them baby pictures from the stage. I'm saying that you can share a key biographical detail, or an emotion that you're (A) [felt / feeling] in the moment, or a self-deprecating joke. It is a tried-and-tested way of bonding with an audience of strangers — and of (B) [laying / layers] the groundwork for you to then persuade them. The harsh reality is (C) [what / that] people won't bond with your arguments in a vacuum, but they will, says speech coach Bas van den Beld, \"bond with you\" — the person making those arguments. By sharing a revealing story or a personal flaw, you allow audience members a way to identify with you.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P-CONTEXT"
       },
       {
        "text": "   (A)         \t(B)        \t(C)     ",
@@ -601,7 +666,8 @@
          "t": "   (A)         \t(B)        \t(C)     ",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "① felt    \tlayers    \twhat",
@@ -610,7 +676,8 @@
          "t": "① felt    \tlayers    \twhat",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "② felt    \tlayers   \t\tthat",
@@ -619,7 +686,8 @@
          "t": "② felt    \tlayers   \t\tthat",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "③ feeling    \tlaying    \twhat",
@@ -628,7 +696,8 @@
          "t": "③ feeling    \tlaying    \twhat",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "④ feeling    \tlaying    \tthat",
@@ -637,7 +706,8 @@
          "t": "④ feeling    \tlaying    \tthat",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "⑤ feeling    \tlayers    \twhat",
@@ -646,7 +716,8 @@
          "t": "⑤ feeling    \tlayers    \twhat",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "다음 글을 읽고 주어진 주제를 조건에 맞게 완성하시오.",
@@ -655,7 +726,9 @@
          "t": "다음 글을 읽고 주어진 주제를 조건에 맞게 완성하시오.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "SRV-WRT-SUMM-THEME"
       },
       {
        "text": "There is simply no better way to influence or stir an audience ─ instantly, powerfully, authentically ─ than by opening up to them with a personal story or anecdote. To be clear: I'm not saying you need to tell them long stories about your family vacations or show them baby pictures from the stage. I'm saying that you can share a key biographical detail, or an emotion that you're feeling in the moment, or a self-deprecating joke. It is a tried-and-tested way of bonding with an audience of strangers ─ and of laying the groundwork for you to then persuade them. The harsh reality is that people won't bond with your arguments in a vacuum, but they will, says speech coach Bas van den Beld, \"bond with you\" ─ the person making those arguments. By sharing a revealing story or a personal flaw, you allow audience members a way to identify with you.",
@@ -664,7 +737,8 @@
          "t": "There is simply no better way to influence or stir an audience ─ instantly, powerfully, authentically ─ than by opening up to them with a personal story or anecdote. To be clear: I'm not saying you need to tell them long stories about your family vacations or show them baby pictures from the stage. I'm saying that you can share a key biographical detail, or an emotion that you're feeling in the moment, or a self-deprecating joke. It is a tried-and-tested way of bonding with an audience of strangers ─ and of laying the groundwork for you to then persuade them. The harsh reality is that people won't bond with your arguments in a vacuum, but they will, says speech coach Bas van den Beld, \"bond with you\" ─ the person making those arguments. By sharing a revealing story or a personal flaw, you allow audience members a way to identify with you.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "how (A) __________ personal stories lays the groundwork for (B) __________ an audience",
@@ -673,7 +747,8 @@
          "t": "how (A) __________ personal stories lays the groundwork for (B) __________ an audience",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "[조건]",
@@ -682,7 +757,8 @@
          "t": "[조건]",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Cond"
       },
       {
        "text": "빈칸 (A)는 본문에 사용된 어휘(1단어)로 채울 것",
@@ -691,7 +767,8 @@
          "t": "빈칸 (A)는 본문에 사용된 어휘(1단어)로 채울 것",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Cond"
       },
       {
        "text": "빈칸 (B)는 본문에 사용된 어휘(1단어)로 채울 것",
@@ -700,7 +777,8 @@
          "t": "빈칸 (B)는 본문에 사용된 어휘(1단어)로 채울 것",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Cond"
       },
       {
        "text": "필요시 어형 변화 가능",
@@ -709,7 +787,8 @@
          "t": "필요시 어형 변화 가능",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Cond"
       },
       {
        "text": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은? ",
@@ -734,7 +813,9 @@
          "t": " ",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-GRM-UND-WRONG"
       },
       {
        "text": " There is simply no better way ① influencing or stir an audience — instantly, powerfully, authentically — than by opening up to them with a personal story or anecdote. To be clear: I'm not saying you need to tell them long stories about your family vacations or show them baby pictures from the stage. I'm saying that you can share a key biographical detail, or an emotion that you're ② feeling in the moment, or a self-deprecating joke. It is a tried-and-tested way of bonding with an audience of strangers — and of ③ laying the groundwork for you to then persuade them. The harsh reality is ④ that people won't bond with your arguments in a vacuum, but they will, says speech coach Bas van den Beld, \"bond with you\" — the person making those arguments. By sharing a revealing story or a personal flaw, you allow audience members a way ⑤ to identify with you.",
@@ -783,7 +864,8 @@
          "t": " with you.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A) ~ (C)에 들어갈 말을 본문의 단어를 활용하여 쓰시오.",
@@ -792,7 +874,9 @@
          "t": "다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A) ~ (C)에 들어갈 말을 본문의 단어를 활용하여 쓰시오.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-BLANK-AB"
       },
       {
        "text": "There is simply no better way to influence or stir an audience ─ instantly, powerfully, authentically ─ than by opening up to them with a personal story or anecdote. To be clear: I'm not saying you need to tell them long stories about your family vacations or show them baby pictures from the stage. I'm saying that you can share a key biographical detail, or an emotion that you're feeling in the moment, or a self-deprecating joke. It is a tried-and-tested way of bonding with an audience of strangers ─ and of laying the groundwork for you to then persuade them. The harsh reality is that people won't bond with your arguments in a vacuum, but they will, says speech coach Bas van den Beld, \"bond with you\" ─ the person making those arguments. By sharing a revealing story or a personal flaw, you allow audience members a way to identify with you.",
@@ -801,7 +885,8 @@
          "t": "There is simply no better way to influence or stir an audience ─ instantly, powerfully, authentically ─ than by opening up to them with a personal story or anecdote. To be clear: I'm not saying you need to tell them long stories about your family vacations or show them baby pictures from the stage. I'm saying that you can share a key biographical detail, or an emotion that you're feeling in the moment, or a self-deprecating joke. It is a tried-and-tested way of bonding with an audience of strangers ─ and of laying the groundwork for you to then persuade them. The harsh reality is that people won't bond with your arguments in a vacuum, but they will, says speech coach Bas van den Beld, \"bond with you\" ─ the person making those arguments. By sharing a revealing story or a personal flaw, you allow audience members a way to identify with you.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "Sharing personal stories or (A)__________ details is the most effective way to (B)__________ with an audience, as people are more likely to connect with the speaker as a person than with their arguments alone, ultimately laying the groundwork for (C)__________.",
@@ -810,7 +895,8 @@
          "t": "Sharing personal stories or (A)__________ details is the most effective way to (B)__________ with an audience, as people are more likely to connect with the speaker as a person than with their arguments alone, ultimately laying the groundwork for (C)__________.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "<조 건>",
@@ -819,7 +905,8 @@
          "t": "<조 건>",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Cond"
       },
       {
        "text": "한 칸당 하나의 단어를 적을 것",
@@ -828,7 +915,8 @@
          "t": "한 칸당 하나의 단어를 적을 것",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Cond"
       },
       {
        "text": "본문에 쓰인 단어만 사용할 것",
@@ -837,7 +925,8 @@
          "t": "본문에 쓰인 단어만 사용할 것",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Cond"
       },
       {
        "text": "필요시 단어의 형태를 어법에 맞게 변화시킬 것 (-ing, -ed, 부사↔형용사, 명사형 등)",
@@ -846,7 +935,8 @@
          "t": "필요시 단어의 형태를 어법에 맞게 변화시킬 것 (-ing, -ed, 부사↔형용사, 명사형 등)",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Cond"
       },
       {
        "text": "(A) : _______________ (B) : _______________ (C) : _______________",
@@ -855,7 +945,8 @@
          "t": "(A) : _______________ (B) : _______________ (C) : _______________",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       }
      ]
     }

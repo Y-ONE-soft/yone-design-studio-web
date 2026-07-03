@@ -6356,7 +6356,9 @@
          "t": " [ep1]",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-CTN-TITLE"
       },
       {
        "text": " In an experiment, when people were asked to count three minutes in their heads, 25-year-olds were quite accurate, but 65-year-olds went over on average by 40 seconds. Time seemed to pass faster for the older group. This may seem meaningless, but there are a lot of benefits to perceiving time like 65-year-olds. For example, if you have been working on a project for eight hours, but it only feels like six, you will have more energy to keep going. If you have been running for 20 minutes, and you perceive it to be only 13 minutes, you're more likely to have seven more minutes of energy. So, if you want to use your energy to work longer, just change your perception of how long you have been working.",
@@ -6365,7 +6367,8 @@
          "t": " In an experiment, when people were asked to count three minutes in their heads, 25-year-olds were quite accurate, but 65-year-olds went over on average by 40 seconds. Time seemed to pass faster for the older group. This may seem meaningless, but there are a lot of benefits to perceiving time like 65-year-olds. For example, if you have been working on a project for eight hours, but it only feels like six, you will have more energy to keep going. If you have been running for 20 minutes, and you perceive it to be only 13 minutes, you're more likely to have seven more minutes of energy. So, if you want to use your energy to work longer, just change your perception of how long you have been working.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "① The Time : Fair to Everyone",
@@ -6374,7 +6377,8 @@
          "t": "① The Time : Fair to Everyone",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "② How to Count Time Accurately",
@@ -6383,7 +6387,8 @@
          "t": "② How to Count Time Accurately",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "③ Why Does Time Go Fast For Old People?",
@@ -6392,7 +6397,8 @@
          "t": "③ Why Does Time Go Fast For Old People?",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "④ Advantages of Changing Time Awareness",
@@ -6401,7 +6407,8 @@
          "t": "④ Advantages of Changing Time Awareness",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "⑤ Experiments to Save Energy on a Project",
@@ -6410,7 +6417,8 @@
          "t": "⑤ Experiments to Save Energy on a Project",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "다음 글의 주제로 가장 적절한 것은? [ep1]",
@@ -6423,7 +6431,9 @@
          "t": " [ep1]",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-CTN-TOPIC"
       },
       {
        "text": " In an experiment where people were asked to count three minutes in their heads, 25-year-olds were quite accurate, but 65-year-olds went over on average by 40 seconds. Time seemed to pass faster for the older group. This may seem insignificant when considering where it is worth being used onto daily routines, but in reality, there are a lot of benefits to perceiving time in terms of how further laborers are now working within a limited hour. For example, if you have been working on a project for eight hours, but it only feels like six, you will have more energy to keep going. If you have been running for 20 minutes, and you perceive it to be only 13 minutes, you’re more likely to have seven more minutes of energy. So, if you want to use your energy to work longer, just change your perception of how long you have been working. Insofar as you may have a relatively delayed time on mind exceeding real working time, it is likely to get extra energy to work more or longer.",
@@ -6432,7 +6442,8 @@
          "t": " In an experiment where people were asked to count three minutes in their heads, 25-year-olds were quite accurate, but 65-year-olds went over on average by 40 seconds. Time seemed to pass faster for the older group. This may seem insignificant when considering where it is worth being used onto daily routines, but in reality, there are a lot of benefits to perceiving time in terms of how further laborers are now working within a limited hour. For example, if you have been working on a project for eight hours, but it only feels like six, you will have more energy to keep going. If you have been running for 20 minutes, and you perceive it to be only 13 minutes, you’re more likely to have seven more minutes of energy. So, if you want to use your energy to work longer, just change your perception of how long you have been working. Insofar as you may have a relatively delayed time on mind exceeding real working time, it is likely to get extra energy to work more or longer.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "① Keep whatever promise on time.",
@@ -6441,7 +6452,8 @@
          "t": "① Keep whatever promise on time.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "② Count time accurately when working.",
@@ -6450,7 +6462,8 @@
          "t": "② Count time accurately when working.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "③ Ponder over how to perceive accuracy of time.",
@@ -6459,7 +6472,8 @@
          "t": "③ Ponder over how to perceive accuracy of time.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "④ Take benefits coming from psychologically-lagged time.",
@@ -6468,7 +6482,8 @@
          "t": "④ Take benefits coming from psychologically-lagged time.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "⑤ Time passes like an arrow when not perceiving its flow.",
@@ -6477,7 +6492,8 @@
          "t": "⑤ Time passes like an arrow when not perceiving its flow.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "다음 글의 제목으로 가장 적절한 것은? [pr1]",
@@ -6490,7 +6506,9 @@
          "t": " [pr1]",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-CTN-TITLE"
       },
       {
        "text": " Sometimes conflict can be resolved through an expansion of resources. For example, a department may need five computers but has a budget for only three. However, by talking the finance people into delaying the purchase of other equipment, there will be more money left for departmental computers. Alternatively, the company may be reorganized and some people given early retirement, thus freeing up funds for computer equipment. An expansion of resources involves a reworking of the budget for the purpose of determining how additional funds can be found.",
@@ -6499,7 +6517,8 @@
          "t": " Sometimes conflict can be resolved through an expansion of resources. For example, a department may need five computers but has a budget for only three. However, by talking the finance people into delaying the purchase of other equipment, there will be more money left for departmental computers. Alternatively, the company may be reorganized and some people given early retirement, thus freeing up funds for computer equipment. An expansion of resources involves a reworking of the budget for the purpose of determining how additional funds can be found.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "① Resolving Conflicts Through Redistribution of Financial Resources",
@@ -6508,7 +6527,8 @@
          "t": "① Resolving Conflicts Through Redistribution of Financial Resources",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "② The Importance of Dialogue in Your Organization",
@@ -6517,7 +6537,8 @@
          "t": "② The Importance of Dialogue in Your Organization",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "③ Expansion of Resources As the Power of Government",
@@ -6526,7 +6547,8 @@
          "t": "③ Expansion of Resources As the Power of Government",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "④ The Relationship between Consumption, Income and Wealth",
@@ -6535,7 +6557,8 @@
          "t": "④ The Relationship between Consumption, Income and Wealth",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "⑤ The Importance of Conflict Resolution in Your Workplace",
@@ -6544,7 +6567,8 @@
          "t": "⑤ The Importance of Conflict Resolution in Your Workplace",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "다음 글의 제목으로 가장 적절한 것은? [pr1]",
@@ -6557,7 +6581,9 @@
          "t": " [pr1]",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-CTN-TITLE"
       },
       {
        "text": "Sometimes conflict can be resolved through an expansion of resources. For example, a department may need five computers but has a budget for only three. However, by talking the finance people into delaying the purchase of other equipment, there will be more money left for departmental computers. Alternatively, the company may be reorganized and some people given early retirement, thus freeing up funds for computer equipment. An expansion of resources involves a reworking of the budget for the purpose of determining how additional funds can be found.",
@@ -6566,7 +6592,8 @@
          "t": "Sometimes conflict can be resolved through an expansion of resources. For example, a department may need five computers but has a budget for only three. However, by talking the finance people into delaying the purchase of other equipment, there will be more money left for departmental computers. Alternatively, the company may be reorganized and some people given early retirement, thus freeing up funds for computer equipment. An expansion of resources involves a reworking of the budget for the purpose of determining how additional funds can be found.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "① An Expansion of Resources: A Strategy for Managing Conflict",
@@ -6575,7 +6602,8 @@
          "t": "① An Expansion of Resources: A Strategy for Managing Conflict",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "② Using Mediation Techniques to Manage Conflict",
@@ -6584,7 +6612,8 @@
          "t": "② Using Mediation Techniques to Manage Conflict",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "③ Conflict Management Techniques: Pros and Cons",
@@ -6593,7 +6622,8 @@
          "t": "③ Conflict Management Techniques: Pros and Cons",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "④ National Conflict: Targeting Natural resources",
@@ -6602,7 +6632,8 @@
          "t": "④ National Conflict: Targeting Natural resources",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "⑤ Conflict resolution in your Workplace: Expanding Consciousness",
@@ -6611,7 +6642,8 @@
          "t": "⑤ Conflict resolution in your Workplace: Expanding Consciousness",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "다음 글의 주제로 가장 적절한 것은? [pr2]",
@@ -6624,7 +6656,9 @@
          "t": " [pr2]",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-CTN-TOPIC"
       },
       {
        "text": " A child who hears a stern warning about the dangers of running in the street will have better self-esteem than a child who only hears that he's a \"bad boy\" when he runs into the street. The child who's a \"bad boy\" is getting the message that he and his behavior are not okay. He doesn't learn the difference between what he does and what he is. As an adult, his inner critic will attack both his behavior and his worth. Parents who carefully distinguish between inappropriate behavior and the basic goodness of the child raise children who feel better about themselves and have a far gentler inner critic.",
@@ -6633,7 +6667,8 @@
          "t": " A child who hears a stern warning about the dangers of running in the street will have better self-esteem than a child who only hears that he's a \"bad boy\" when he runs into the street. The child who's a \"bad boy\" is getting the message that he and his behavior are not okay. He doesn't learn the difference between what he does and what he is. As an adult, his inner critic will attack both his behavior and his worth. Parents who carefully distinguish between inappropriate behavior and the basic goodness of the child raise children who feel better about themselves and have a far gentler inner critic.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "① stern disciplines make kids feel bad about themselves",
@@ -6642,7 +6677,8 @@
          "t": "① stern disciplines make kids feel bad about themselves",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "② how a gentle inner critic improves children's self-esteem",
@@ -6651,7 +6687,8 @@
          "t": "② how a gentle inner critic improves children's self-esteem",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "③ negative effects of a strong inner critic on one's behavior",
@@ -6660,7 +6697,8 @@
          "t": "③ negative effects of a strong inner critic on one's behavior",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "④ the difference between what a child does and what he is",
@@ -6669,7 +6707,8 @@
          "t": "④ the difference between what a child does and what he is",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "⑤ correcting kids' behaviors without hurting their self-esteem",
@@ -6678,7 +6717,8 @@
          "t": "⑤ correcting kids' behaviors without hurting their self-esteem",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "다음 글의 요지로 가장 적절한 것은? [pr2]",
@@ -6691,7 +6731,9 @@
          "t": " [pr2]",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-CTN-GIST"
       },
       {
        "text": " A child who hears a stern warning about the dangers of running in the street will have better self-esteem than a child who only hears that he's a \"bad boy\" when he runs into the street. The child who's a \"bad boy\" is getting the message that he and his behavior are not okay. He doesn't learn the difference between what he does and what he is. As an adult, his inner critic will attack both his behavior and his worth. Parents who carefully distinguish between inappropriate behavior and the basic goodness of the child raise children who feel better about themselves and have a far gentler inner critic.",
@@ -6700,7 +6742,8 @@
          "t": " A child who hears a stern warning about the dangers of running in the street will have better self-esteem than a child who only hears that he's a \"bad boy\" when he runs into the street. The child who's a \"bad boy\" is getting the message that he and his behavior are not okay. He doesn't learn the difference between what he does and what he is. As an adult, his inner critic will attack both his behavior and his worth. Parents who carefully distinguish between inappropriate behavior and the basic goodness of the child raise children who feel better about themselves and have a far gentler inner critic.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "① 자녀의 위험한 행동에 대해 올바르게 경고하는 것이 중요하다.",
@@ -6713,7 +6756,8 @@
          "t": "이 중요하다.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "② 부모는 자녀의 어떤 행동이라도 허용해주고 격려해줘야 한다.",
@@ -6730,7 +6774,8 @@
          "t": "해줘야 한다.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "③ 아이의 자존감은 부모의 양육 태도와 관련이 없다.",
@@ -6739,7 +6784,9 @@
          "t": "③ 아이의 자존감은 부모의 양육 태도와 관련이 없다.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-CTN-TONE"
       },
       {
        "text": "④ 자녀가 위험한 행동을 할 때 무조건 혼을 내야 한다.",
@@ -6752,7 +6799,8 @@
          "t": "다.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "⑤ 자녀가 거리에서 함부로 뛰지 못하도록 지도해야 한다.",
@@ -6761,7 +6809,8 @@
          "t": "⑤ 자녀가 거리에서 함부로 뛰지 못하도록 지도해야 한다.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "(A), (B), (C)의 각 네모 안에서 어법에 맞는 표현으로 가장 적절한 것은? [ep1]",
@@ -6778,7 +6827,9 @@
          "t": " [ep1]",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-GRM-PAREN"
       },
       {
        "text": "In an experiment, when people were asked (A) [to count / counting] three minutes in their heads, 25‒year‒olds were quite accurate, but 65‒year‒olds went over on average by 40 seconds. Time seemed to pass faster for the older group. This may seem meaningless, but there are a lot of benefits to perceiving time like 65‒year‒olds. For example, if you (B) [have been worked / have been working] on a project for eight hours, but it only feels like six, you will have more energy to keep going. If you have been running for 20 minutes, and you perceive it to be only 13 minutes, you’re more likely to have seven more minutes of energy. One of the greatest (C) [benefits / benefit] of getting older is the cooling of passion-not rushing to quick action.",
@@ -6795,7 +6846,8 @@
          "t": "olds. For example, if you (B) [have been worked / have been working] on a project for eight hours, but it only feels like six, you will have more energy to keep going. If you have been running for 20 minutes, and you perceive it to be only 13 minutes, you’re more likely to have seven more minutes of energy. One of the greatest (C) [benefits / benefit] of getting older is the cooling of passion-not rushing to quick action.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P-CONTEXT"
       },
       {
        "text": "     (A)              (B)            (C)",
@@ -6804,7 +6856,8 @@
          "t": "     (A)              (B)            (C)",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "① counting - have been working - benefits",
@@ -6813,7 +6866,8 @@
          "t": "① counting - have been working - benefits",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "② counting - have been worked - benefit",
@@ -6822,7 +6876,8 @@
          "t": "② counting - have been worked - benefit",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "③ to count - have been working - benefits",
@@ -6831,7 +6886,8 @@
          "t": "③ to count - have been working - benefits",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "④ to count - have been worked - benefits",
@@ -6840,7 +6896,8 @@
          "t": "④ to count - have been worked - benefits",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "⑤ to count - have been working - benefit",
@@ -6849,7 +6906,8 @@
          "t": "⑤ to count - have been working - benefit",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "다음 글의 밑줄 친 부분 중, 어법상 올바른 것을 모두 고르시오. [pr1]",
@@ -6862,7 +6920,9 @@
          "t": " [pr1]",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-GRM-UND-CORRECT"
       },
       {
        "text": "Sometimes conflict can ① resolve through an expansion of resources. For example, a department may need five computers but has a budget for only three. However, by ② talking the finance people into delaying the purchase of other equipment, there will be more money ③ left for departmental computers. Alternatively, the company may be reorganized and some people given early retirement, thus ④ freed up funds for computer equipment. An expansion of resources involves a reworking of the budget for the purpose of determining ⑤ how can additional funds be found.",
@@ -6911,7 +6971,8 @@
          "t": " can additional funds be found.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "다음 글의 밑줄 친 부분 중, 어법상 어색한 것을 모두 고른 것은? [pr2]",
@@ -6924,7 +6985,9 @@
          "t": " [pr2]",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-GRM-UND-WRONG-MULTI"
       },
       {
        "text": " A child who hears a stern warning about the dangers of running in the street will have better self-esteem ⓐas a child who only hears that he's a 'bad boy\" when he runs into the street. The child who's a \"bad boy\" is getting the message ⓑwhich he and his behavior are not okay. He doesn't learn the difference between what he does and ⓒwhat he is. As an adult, his inner critic will ⓓbe attacked both his behavior and his worth. Parents who carefully distinguish between inappropriate behavior and the basic goodness of the child ⓔbringing up children who feel better about themselves and have a far gentler inner critic.",
@@ -6977,7 +7040,8 @@
          "t": " children who feel better about themselves and have a far gentler inner critic.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ",
@@ -6986,7 +7050,8 @@
          "t": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "다음 글의 괄호 (A), (B), (C) 안에서 문맥에 맞는 낱말로 가장 적절한 것은? [ep1]",
@@ -7003,7 +7068,9 @@
          "t": " [ep1]",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-VOC-PAREN"
       },
       {
        "text": " In an experiment, when people were asked to count three minutes in their heads, 25-year-olds were quite accurate, but 65-year-olds went over on average by 40 seconds. Time seemed to pass (A)[faster / slower] for the older group. This may seem meaningless, but there are a lot of benefits to perceiving time like 65-year-olds. For example, if you have been working on a project for eight hours, but it only feels like six, you will have more energy to keep going. If you have been running for 20 minutes, and you perceive it to be only 13 minutes, you're more likely to have seven (B)[less / more] minutes of energy. So, if you want to use your energy to work longer, just change your perception of how (C)[long / hard] you have been working.",
@@ -7012,7 +7079,8 @@
          "t": " In an experiment, when people were asked to count three minutes in their heads, 25-year-olds were quite accurate, but 65-year-olds went over on average by 40 seconds. Time seemed to pass (A)[faster / slower] for the older group. This may seem meaningless, but there are a lot of benefits to perceiving time like 65-year-olds. For example, if you have been working on a project for eight hours, but it only feels like six, you will have more energy to keep going. If you have been running for 20 minutes, and you perceive it to be only 13 minutes, you're more likely to have seven (B)[less / more] minutes of energy. So, if you want to use your energy to work longer, just change your perception of how (C)[long / hard] you have been working.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P-CONTEXT"
       },
       {
        "text": "    (A)\t\t  (B)\t\t (C)",
@@ -7021,7 +7089,8 @@
          "t": "    (A)\t\t  (B)\t\t (C)",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "① faster\t less\t\tlong",
@@ -7030,7 +7099,8 @@
          "t": "① faster\t less\t\tlong",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "② faster\t more\t\tlong",
@@ -7039,7 +7109,8 @@
          "t": "② faster\t more\t\tlong",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "③ faster\t more\t\thard",
@@ -7048,7 +7119,8 @@
          "t": "③ faster\t more\t\thard",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "④ slower\t more\t\thard",
@@ -7057,7 +7129,8 @@
          "t": "④ slower\t more\t\thard",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "⑤ slower\t less\t\thard",
@@ -7066,7 +7139,8 @@
          "t": "⑤ slower\t less\t\thard",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은? [ep1]",
@@ -7079,7 +7153,9 @@
          "t": " [ep1]",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-VOC-UND-WRONG"
       },
       {
        "text": " In an experiment, when people were asked to count three minutes in their heads, 25-year-olds were quite accurate, but 65-year-olds went over on average by 40 seconds. Time seemed to pass ⓐfaster for the older group. This may seem meaningless, ⓑso there are a lot of benefits to perceiving time like 65-year-olds. For example, if you have been working on a project for eight hours, but it only feels like six, you will have ⓒmore energy to keep going. If you have been running for 20 minutes, and you perceive it to be only 13 minutes, you’re ⓓmore likely to have seven more minutes of energy. So, if you want to use your energy to work ⓔlonger, just change your perception of how long you have been working.",
@@ -7128,7 +7204,8 @@
          "t": ", just change your perception of how long you have been working.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ",
@@ -7137,7 +7214,8 @@
          "t": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "다음 글의 밑줄 친 부분 중 문맥상 낱말의 쓰임이 적절하지 않은 것은? [pr1] ",
@@ -7154,7 +7232,9 @@
          "t": " [pr1] ",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-VOC-UND-WRONG"
       },
       {
        "text": " Sometimes conflict can be ⓐresolved through an expansion of resources. For example, a department may need five computers but has a budget for only three. However, by talking the finance people into ⓑsuggesting the purchase of other equipment, there will be more money left for departmental computers. Alternatively, the company may be reorganized and some people may ⓒgiven early retirement. Thus, this can ⓓfree up funds for computer equipment. An expansion of resources involves a reworking of the budget for the purpose of determining how ⓔadditional funds can be found.",
@@ -7203,7 +7283,8 @@
          "t": " funds can be found.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ",
@@ -7212,7 +7293,8 @@
          "t": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "다음 글의 밑줄 친 부분 중, 문맥상 적절하지 않은 것은? [pr1]",
@@ -7225,7 +7307,9 @@
          "t": " [pr1]",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-VOC-UND-WRONG"
       },
       {
        "text": " Sometimes conflict can be ⓐresolved through an expansion of resources. For example, a department may need five computers but has ⓑa financial plan for only three. However, by ⓒpersuading the finance people to delay the purchase of other equipment, there will be more money left for departmental computers. Otherwise, the company may be reorganized and some people given early retirement, thus ⓓreleasing funds for computer equipment. An expansion of resources involves a reworking of the budget for the purpose of determining how ⓔexternal funds can be found.",
@@ -7274,7 +7358,8 @@
          "t": " funds can be found.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ",
@@ -7283,7 +7368,8 @@
          "t": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "다음 글의 괄호 (A), (B), (C) 안에서 문맥에 맞는 낱말로 가장 적절한 것은? [pr2]",
@@ -7300,7 +7386,9 @@
          "t": " [pr2]",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-VOC-PAREN"
       },
       {
        "text": "A child who only hears that he's a \"bad boy\" when he runs into the street will have (A)[less / better] self-esteem than a child who hears a stern warning about the dangers of running in the street. The child who's a \"bad boy\" is getting the message that he and his behavior are (B)[bad / okay]. He doesn't learn the difference between what he does and what he is. As an adult, his inner critic will attack both his behavior and his worth. Parents who carefully distinguish between inappropriate behavior and the basic goodness of the child raise children who feel (C)[worse / better] about themselves and have a far gentler inner critic.",
@@ -7309,7 +7397,8 @@
          "t": "A child who only hears that he's a \"bad boy\" when he runs into the street will have (A)[less / better] self-esteem than a child who hears a stern warning about the dangers of running in the street. The child who's a \"bad boy\" is getting the message that he and his behavior are (B)[bad / okay]. He doesn't learn the difference between what he does and what he is. As an adult, his inner critic will attack both his behavior and his worth. Parents who carefully distinguish between inappropriate behavior and the basic goodness of the child raise children who feel (C)[worse / better] about themselves and have a far gentler inner critic.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P-CONTEXT"
       },
       {
        "text": "    (A)\t\t       (B)\t \t (C)",
@@ -7318,7 +7407,8 @@
          "t": "    (A)\t\t       (B)\t \t (C)",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "① less\t\t      bad\t\tworse",
@@ -7327,7 +7417,8 @@
          "t": "① less\t\t      bad\t\tworse",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "② less\t \t      bad\t\tbetter",
@@ -7336,7 +7427,8 @@
          "t": "② less\t \t      bad\t\tbetter",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "③ better\t      bad\t\tbetter",
@@ -7345,7 +7437,8 @@
          "t": "③ better\t      bad\t\tbetter",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "④ better\t      okay\t\tbetter",
@@ -7354,7 +7447,8 @@
          "t": "④ better\t      okay\t\tbetter",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "⑤ better\t      okay\t\tworse",
@@ -7363,7 +7457,8 @@
          "t": "⑤ better\t      okay\t\tworse",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "다음 빈칸에 들어갈 가장 알맞은 것은? [ep1]",
@@ -7376,7 +7471,8 @@
          "t": " [ep1]",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q"
       },
       {
        "text": "In an experiment, when people were asked to count three minutes in their heads, 25‒year‒olds were quite accurate, but 65‒year‒olds went over on average by 40 seconds. Time seemed to pass faster for the older group. This may seem meaningless, but there are a lot of benefits to perceiving time like 65‒year‒olds. For example, if you have been working on a project for eight hours, but it only feels like six, you will have more energy to keep going. If you have been running for 20 minutes, and you perceive it to be only 13 minutes, you’re more likely to have seven more minutes of energy. So, if you want to use your energy to work longer,                  .",
@@ -7505,7 +7601,8 @@
          "t": ".",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "① stay in shape to feel younger than you are",
@@ -7514,7 +7611,8 @@
          "t": "① stay in shape to feel younger than you are",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "② remember working too long is a waste of time",
@@ -7523,7 +7621,8 @@
          "t": "② remember working too long is a waste of time",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "③ just change your perception of how long you have been working.",
@@ -7532,7 +7631,8 @@
          "t": "③ just change your perception of how long you have been working.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "④ believe that you have little energy to use for working",
@@ -7541,7 +7641,8 @@
          "t": "④ believe that you have little energy to use for working",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "⑤ get the work done as soon as possible.",
@@ -7550,7 +7651,8 @@
          "t": "⑤ get the work done as soon as possible.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "다음 글의 빈칸에 들어갈 말로 가장 적절한 것은? [pr1]",
@@ -7563,7 +7665,9 @@
          "t": " [pr1]",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-BLANK-SENT"
       },
       {
        "text": " Sometimes conflict can be resolved through an expansion of resources. For example, a department may need five computers but has a budget for only three. However, by talking the finance people into delaying the purchase of other equipment, there will be more money left for departmental computers. Alternatively, the company may be reorganized and some people given early retirement, thus freeing up funds for computer equipment. An expansion of resources involves _____________ for the purpose of determining how additional funds can be found.",
@@ -7572,7 +7676,8 @@
          "t": " Sometimes conflict can be resolved through an expansion of resources. For example, a department may need five computers but has a budget for only three. However, by talking the finance people into delaying the purchase of other equipment, there will be more money left for departmental computers. Alternatively, the company may be reorganized and some people given early retirement, thus freeing up funds for computer equipment. An expansion of resources involves _____________ for the purpose of determining how additional funds can be found.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "① an extremely fast computer",
@@ -7581,7 +7686,8 @@
          "t": "① an extremely fast computer",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "② a reorganization of the budget",
@@ -7590,7 +7696,8 @@
          "t": "② a reorganization of the budget",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "③ an intricate and deceitful plan",
@@ -7599,7 +7706,8 @@
          "t": "③ an intricate and deceitful plan",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "④ a fund raising event in the company",
@@ -7608,7 +7716,8 @@
          "t": "④ a fund raising event in the company",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "⑤ a elaborate manipulation of equipment",
@@ -7617,7 +7726,8 @@
          "t": "⑤ a elaborate manipulation of equipment",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "다음 글의 빈칸에 들어갈 말로 가장 적절한 것은? [pr2]",
@@ -7630,7 +7740,9 @@
          "t": " [pr2]",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-BLANK-SENT"
       },
       {
        "text": " A child who hears a stern warning about the dangers of running in the street will have better self-esteem than a child who only hears that he's a \"bad boy\" when he runs into the street. The child who's a \"bad boy\" is getting the message that he and his behavior are not okay. He doesn't learn the difference between what he does and what he is. As an adult, his inner critic will attack both his behavior and his worth. Parents who carefully distinguish between (A)_______ and (B)_______ raise children who feel better about themselves and have a far gentler inner critic.",
@@ -7639,7 +7751,8 @@
          "t": " A child who hears a stern warning about the dangers of running in the street will have better self-esteem than a child who only hears that he's a \"bad boy\" when he runs into the street. The child who's a \"bad boy\" is getting the message that he and his behavior are not okay. He doesn't learn the difference between what he does and what he is. As an adult, his inner critic will attack both his behavior and his worth. Parents who carefully distinguish between (A)_______ and (B)_______ raise children who feel better about themselves and have a far gentler inner critic.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P-CONTEXT"
       },
       {
        "text": "         (A)\t                (B)",
@@ -7648,7 +7761,8 @@
          "t": "         (A)\t                (B)",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "① inner critic\t\texternal critic",
@@ -7657,7 +7771,8 @@
          "t": "① inner critic\t\texternal critic",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "② the goodness\tthe wickedness",
@@ -7666,7 +7781,8 @@
          "t": "② the goodness\tthe wickedness",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "③ improper behavior\tchild’s goodness",
@@ -7675,7 +7791,8 @@
          "t": "③ improper behavior\tchild’s goodness",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "④ what the child is\twhat the child will be",
@@ -7684,7 +7801,8 @@
          "t": "④ what the child is\twhat the child will be",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "⑤ appropriate behavior\tinappropriate behav",
@@ -7693,7 +7811,8 @@
          "t": "⑤ appropriate behavior\tinappropriate behav",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "다음 글의 빈칸에 들어갈 말로 가장 적절한 것은? [pr2]",
@@ -7706,7 +7825,9 @@
          "t": " [pr2]",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-BLANK-SENT"
       },
       {
        "text": " A child who hears a stern warning about the dangers of running in the street will have better self-esteem than a child who only hears that he's a \"bad boy\" when he runs into the street. The child who's a \"bad boy\" is getting the message that he and his behavior are not okay. He doesn't learn the difference between what he does and what he is. As an adult, ___________________________. Parents who carefully distinguish between inappropriate behavior and the basic goodness of the child raise children who feel better about themselves and have a far gentler inner critic.",
@@ -7715,7 +7836,8 @@
          "t": " A child who hears a stern warning about the dangers of running in the street will have better self-esteem than a child who only hears that he's a \"bad boy\" when he runs into the street. The child who's a \"bad boy\" is getting the message that he and his behavior are not okay. He doesn't learn the difference between what he does and what he is. As an adult, ___________________________. Parents who carefully distinguish between inappropriate behavior and the basic goodness of the child raise children who feel better about themselves and have a far gentler inner critic.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "① he will criticize his parents for being too strict on him by calling him a bad boy.",
@@ -7724,7 +7846,8 @@
          "t": "① he will criticize his parents for being too strict on him by calling him a bad boy.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "② he will be able to tell what is wrong with his behavior.",
@@ -7733,7 +7856,8 @@
          "t": "② he will be able to tell what is wrong with his behavior.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "③ he will accuse himself not just for his bad behavior but for his worthlessness.",
@@ -7742,7 +7866,8 @@
          "t": "③ he will accuse himself not just for his bad behavior but for his worthlessness.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "④ he will still run into the street and be a bad boy.",
@@ -7751,7 +7876,8 @@
          "t": "④ he will still run into the street and be a bad boy.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "⑤ he will learn how to behave and respect himself.",
@@ -7760,7 +7886,8 @@
          "t": "⑤ he will learn how to behave and respect himself.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은? [ep1]",
@@ -7773,7 +7900,9 @@
          "t": " [ep1]",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-ORDER"
       },
       {
        "text": " In an experiment, when people were asked to count three minutes in their heads, 25-year-olds were quite accurate, but 65-year-olds went over on average by 40 seconds.",
@@ -7782,7 +7911,8 @@
          "t": " In an experiment, when people were asked to count three minutes in their heads, 25-year-olds were quite accurate, but 65-year-olds went over on average by 40 seconds.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P-CONTEXT"
       },
       {
        "text": "(A) So, if you want to use your energy to work longer, just change your perception of how long you have been working.",
@@ -7791,7 +7921,8 @@
          "t": "(A) So, if you want to use your energy to work longer, just change your perception of how long you have been working.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "(B) Time seemed to pass faster for the older group. This may seem meaningless, but there are a lot of benefits to perceiving time like 65-year-olds.",
@@ -7800,7 +7931,8 @@
          "t": "(B) Time seemed to pass faster for the older group. This may seem meaningless, but there are a lot of benefits to perceiving time like 65-year-olds.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "(C) For example, if you have been working on a project for eight hours, but it only feels like six, you will have more energy to keep going. If you have been running for 20 minutes, and you perceive it to be only 13 minutes, you're more likely to have seven more minutes of energy.",
@@ -7809,7 +7941,8 @@
          "t": "(C) For example, if you have been working on a project for eight hours, but it only feels like six, you will have more energy to keep going. If you have been running for 20 minutes, and you perceive it to be only 13 minutes, you're more likely to have seven more minutes of energy.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "① (A) - (C) - (B)\t② (B) - (A) - (C)",
@@ -7818,7 +7951,8 @@
          "t": "① (A) - (C) - (B)\t② (B) - (A) - (C)",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "③ (B) - (C) - (A)\t④ (C) - (A) - (B)",
@@ -7827,7 +7961,8 @@
          "t": "③ (B) - (C) - (A)\t④ (C) - (A) - (B)",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "⑤ (C) - (B) - (A)",
@@ -7836,7 +7971,8 @@
          "t": "⑤ (C) - (B) - (A)",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "다음 글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은? [ep1]",
@@ -7853,7 +7989,9 @@
          "t": " [ep1]",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-INSERT"
       },
       {
        "text": "For example, if you have been working on a project for eight hours, but it only feels like six, you will have more energy to keep going.",
@@ -7862,7 +8000,8 @@
          "t": "For example, if you have been working on a project for eight hours, but it only feels like six, you will have more energy to keep going.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P-CONTEXT"
       },
       {
        "text": " In an experiment, when people were asked to count three minutes in their heads, 25‒year‒olds were quite accurate, but 65‒year‒olds went over on average by 40 seconds. (A) It seemed that time seemed to pass faster for the older group. (B) This may seem meaningless, but there are a lot of benefits no perceiving time like 65-year-olds. (C) If you have been running for 20 minute, and you perceive it to be only 13 minutes, you're more likely to have seven more minutes of energy. (D) So, if you want to use your energy to work longer, just change your perception of how long you have been working. (E)",
@@ -7871,7 +8010,8 @@
          "t": " In an experiment, when people were asked to count three minutes in their heads, 25‒year‒olds were quite accurate, but 65‒year‒olds went over on average by 40 seconds. (A) It seemed that time seemed to pass faster for the older group. (B) This may seem meaningless, but there are a lot of benefits no perceiving time like 65-year-olds. (C) If you have been running for 20 minute, and you perceive it to be only 13 minutes, you're more likely to have seven more minutes of energy. (D) So, if you want to use your energy to work longer, just change your perception of how long you have been working. (E)",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "① A      ② B      ③ C      ④ D      ⑤ E",
@@ -7880,7 +8020,8 @@
          "t": "① A      ② B      ③ C      ④ D      ⑤ E",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은? [pr1]",
@@ -7897,7 +8038,9 @@
          "t": " [pr1]",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-INSERT"
       },
       {
        "text": "Alternatively, the company may be reorganized and some people given early retirement, thus freeing up funds for computer equipment.",
@@ -7906,7 +8049,8 @@
          "t": "Alternatively, the company may be reorganized and some people given early retirement, thus freeing up funds for computer equipment.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P-CONTEXT"
       },
       {
        "text": "( ① ) Sometimes conflict can be resolved through an expansion of resources. ( ② ) For example, a department may need five computers but has a budget for only three. ( ③ ) However, by talking the finance people into delaying the purchase of other equipment, there will be more money left for departmental computers. ( ④ ) An expansion of resources involves a reworking of the budget for the purpose of determining how additional funds can be found. ( ⑤ )",
@@ -7915,7 +8059,8 @@
          "t": "( ① ) Sometimes conflict can be resolved through an expansion of resources. ( ② ) For example, a department may need five computers but has a budget for only three. ( ③ ) However, by talking the finance people into delaying the purchase of other equipment, there will be more money left for departmental computers. ( ④ ) An expansion of resources involves a reworking of the budget for the purpose of determining how additional funds can be found. ( ⑤ )",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은? [pr2]",
@@ -7928,7 +8073,9 @@
          "t": " [pr2]",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-ORDER"
       },
       {
        "text": " A child who hears a strict warning about the dangers of running in the street will have better self-esteem than a child who only hears that he’s a “bad boy” when he runs into the street.",
@@ -7937,7 +8084,8 @@
          "t": " A child who hears a strict warning about the dangers of running in the street will have better self-esteem than a child who only hears that he’s a “bad boy” when he runs into the street.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P-CONTEXT"
       },
       {
        "text": "(A) As a result, as he grows up to be an adult, his inner critic will frequently attack both his behavior and his personal worth at the same time whenever unexpected matters happen. Such a distorted self-evaluation causes him to begin losing self-esteem.",
@@ -7946,7 +8094,8 @@
          "t": "(A) As a result, as he grows up to be an adult, his inner critic will frequently attack both his behavior and his personal worth at the same time whenever unexpected matters happen. Such a distorted self-evaluation causes him to begin losing self-esteem.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "(B) Whoever gets accustomed to hearing “bad boy” is more likely to believe that he and his behavior are not okay rather than to wonder what makes his deed unacceptable. That’s why he doesn’t still learn the difference between what he does and who he is.",
@@ -7955,7 +8104,8 @@
          "t": "(B) Whoever gets accustomed to hearing “bad boy” is more likely to believe that he and his behavior are not okay rather than to wonder what makes his deed unacceptable. That’s why he doesn’t still learn the difference between what he does and who he is.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "(C) Therefore, parents who can carefully distinguish between inappropriate behavior and the basic goodwill of the child are well aware of how much important it is to raise children who feel better about themselves and have a far gentler inner critic.",
@@ -7964,7 +8114,8 @@
          "t": "(C) Therefore, parents who can carefully distinguish between inappropriate behavior and the basic goodwill of the child are well aware of how much important it is to raise children who feel better about themselves and have a far gentler inner critic.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "① (A) - (C) - (B)\t② (B) - (A) - (C)",
@@ -7973,7 +8124,8 @@
          "t": "① (A) - (C) - (B)\t② (B) - (A) - (C)",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "③ (B) - (C) - (A)\t④ (C) - (A) - (B)",
@@ -7982,7 +8134,8 @@
          "t": "③ (B) - (C) - (A)\t④ (C) - (A) - (B)",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "⑤ (C) - (B) - (A)",
@@ -7991,7 +8144,8 @@
          "t": "⑤ (C) - (B) - (A)",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "다음 글을 보기와 같이 요약하고자 할 때 빈칸에 들어갈 가장 적절한 것은? [ep1]",
@@ -8008,7 +8162,8 @@
          "t": " [ep1]",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q"
       },
       {
        "text": "In an experiment, when people were asked to count three minutes in their heads, 25‒year‒olds were quite accurate, but 65‒year‒olds went over on average by 40 seconds. Time seemed to pass faster for the older group. This may seem meaningless, but there are a lot of benefits to perceiving time like 65‒year‒olds. For example, if you have been working on a project for eight hours, but it only feels like six, you will have more energy to keep going. If you have been running for 20 minutes, and you perceive it to be only 13 minutes, you’re more likely to have seven more minutes of energy. So, if you want to use your energy to work longer, just change your perception of how long you have been working.",
@@ -8041,7 +8196,8 @@
          "t": "year‒olds went over on average by 40 seconds. Time seemed to pass faster for the older group. This may seem meaningless, but there are a lot of benefits to perceiving time like 65‒year‒olds. For example, if you have been working on a project for eight hours, but it only feels like six, you will have more energy to keep going. If you have been running for 20 minutes, and you perceive it to be only 13 minutes, you’re more likely to have seven more minutes of energy. So, if you want to use your energy to work longer, just change your perception of how long you have been working.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "↓",
@@ -8050,7 +8206,8 @@
          "t": "↓",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Sym"
       },
       {
        "text": "Those who think time goes _____(A)_____ will get more _____(B)_____ than those who do not.",
@@ -8059,7 +8216,8 @@
          "t": "Those who think time goes _____(A)_____ will get more _____(B)_____ than those who do not.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "    (A)        (B)",
@@ -8068,7 +8226,8 @@
          "t": "    (A)        (B)",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "① slower - dependence",
@@ -8077,7 +8236,8 @@
          "t": "① slower - dependence",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "② slower - impulsion",
@@ -8086,7 +8246,8 @@
          "t": "② slower - impulsion",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "③ faster -  sorrow",
@@ -8095,7 +8256,8 @@
          "t": "③ faster -  sorrow",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "④ faster -  energy",
@@ -8104,7 +8266,8 @@
          "t": "④ faster -  energy",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "⑤ worse - selfishness",
@@ -8113,7 +8276,8 @@
          "t": "⑤ worse - selfishness",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "다음 빈칸에 들어갈 표현을 본문에서 사용된 단어 중에서 찾아 어법에 맞게 변형하여 한 단어로 작성하시오. (단, 주어진 철자 수를 충족하는 표현만 정답으로 인정) [ep1]",
@@ -8134,7 +8298,9 @@
          "t": " [ep1]",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "SRV-WRD-START-LETTER"
       },
       {
        "text": " In an experiment, when people were asked to count three minutes in their heads, 25-year-olds were quite accurate, but 65-year-olds went over on average by 40 seconds. Time seemed to pass faster for the older group. This may seem meaningless, but there are a lot of benefits to perceiving time like 65-year-olds. For example, if you have been working on a project for eight hours, but it only feels like six, you will have more energy to keep going. If you have been running for 20 minutes, and you perceive it to be only 13 minutes, you’re more likely to have seven more minutes of energy. So, if you want to use your energy to work longer, just change your ___________ of how long you have been working.",
@@ -8143,7 +8309,8 @@
          "t": " In an experiment, when people were asked to count three minutes in their heads, 25-year-olds were quite accurate, but 65-year-olds went over on average by 40 seconds. Time seemed to pass faster for the older group. This may seem meaningless, but there are a lot of benefits to perceiving time like 65-year-olds. For example, if you have been working on a project for eight hours, but it only feels like six, you will have more energy to keep going. If you have been running for 20 minutes, and you perceive it to be only 13 minutes, you’re more likely to have seven more minutes of energy. So, if you want to use your energy to work longer, just change your ___________ of how long you have been working.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "→ ___________________________________________",
@@ -8152,7 +8319,8 @@
          "t": "→ ___________________________________________",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Ans"
       },
       {
        "text": "다음 글의 내용을 요약하고자 한다. 빈칸 (A), (B), (C) 에 들어갈 말을 <조건>에 맞게 기술하시오. [ep1]",
@@ -8173,7 +8341,8 @@
          "t": " [ep1]",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q"
       },
       {
        "text": " In an experiment, when people were asked to count three minutes in their heads, 25-year-olds were quite accurate, but 65-year-olds went over on average by 40 seconds. Time seemed to pass faster for the older group. This may seem meaningless, but there are a lot of benefits to perceiving time like 65-year-olds. For example, if you have been working on a project for eight hours, but it only feels like six, you will have more energy to keep going. If you have been running for 20 minutes, and you perceive it to be only 13 minutes, you're more likely to have seven more minutes of energy. So, if you want to use your energy to work longer, just change your perception of how long you have been working.",
@@ -8182,7 +8351,8 @@
          "t": " In an experiment, when people were asked to count three minutes in their heads, 25-year-olds were quite accurate, but 65-year-olds went over on average by 40 seconds. Time seemed to pass faster for the older group. This may seem meaningless, but there are a lot of benefits to perceiving time like 65-year-olds. For example, if you have been working on a project for eight hours, but it only feels like six, you will have more energy to keep going. If you have been running for 20 minutes, and you perceive it to be only 13 minutes, you're more likely to have seven more minutes of energy. So, if you want to use your energy to work longer, just change your perception of how long you have been working.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "↓",
@@ -8191,7 +8361,8 @@
          "t": "↓",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Sym"
       },
       {
        "text": " (A)_______ of time changes with age. When we are young, time seems to be passing more slowly. As we get (B)_______, we are getting the sense that time passes more rapidly. Feeling time passing (C)_______ has great benefits for the energy to work longer.",
@@ -8200,7 +8371,8 @@
          "t": " (A)_______ of time changes with age. When we are young, time seems to be passing more slowly. As we get (B)_______, we are getting the sense that time passes more rapidly. Feeling time passing (C)_______ has great benefits for the energy to work longer.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "<조건>",
@@ -8209,7 +8381,8 @@
          "t": "<조건>",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Cond"
       },
       {
        "text": "1. 본문에서 찾아 변형 없이 작성하시오.",
@@ -8218,7 +8391,8 @@
          "t": "1. 본문에서 찾아 변형 없이 작성하시오.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q"
       },
       {
        "text": "2. 각각 한 단어로 어법상 올바르게 작성하시오.",
@@ -8227,7 +8401,8 @@
          "t": "2. 각각 한 단어로 어법상 올바르게 작성하시오.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q"
       },
       {
        "text": "(A): ___________________________________________",
@@ -8236,7 +8411,8 @@
          "t": "(A): ___________________________________________",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Ans"
       },
       {
        "text": "(B): ___________________________________________",
@@ -8245,7 +8421,8 @@
          "t": "(B): ___________________________________________",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Ans"
       },
       {
        "text": "(C): ___________________________________________",
@@ -8254,7 +8431,8 @@
          "t": "(C): ___________________________________________",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Ans"
       },
       {
        "text": "다음 글을 읽고 빈칸 (A), (B), (C)에 들어갈 말을 본문에 있는 단어만을 이용해 각각 한 단어로 쓰시오.(필요시 변형 가능) [pr1]",
@@ -8271,7 +8449,9 @@
          "t": " [pr1]",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-BLANK-ABC"
       },
       {
        "text": " Sometimes conflict can be resolved through an expansion of resources. For example, a department may need five computers but has a budget for only three. However, by talking the finance people into delaying the purchase of other equipment, there will be more money left for departmental computers. Alternatively, the company may be reorganized and some people given early retirement, thus freeing up funds for computer equipment. An expansion of resources involves a reworking of the budget for the purpose of determining how additional funds can be found.",
@@ -8280,7 +8460,8 @@
          "t": " Sometimes conflict can be resolved through an expansion of resources. For example, a department may need five computers but has a budget for only three. However, by talking the finance people into delaying the purchase of other equipment, there will be more money left for departmental computers. Alternatively, the company may be reorganized and some people given early retirement, thus freeing up funds for computer equipment. An expansion of resources involves a reworking of the budget for the purpose of determining how additional funds can be found.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": " In this company, they can purchase two more computers by (A)_________ the budget, such as (B)_________ the buy of other equipment, or (C)_________ human resources.",
@@ -8289,7 +8470,8 @@
          "t": " In this company, they can purchase two more computers by (A)_________ the budget, such as (B)_________ the buy of other equipment, or (C)_________ human resources.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "답 : (A)__________________________",
@@ -8298,7 +8480,8 @@
          "t": "답 : (A)__________________________",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Ans"
       },
       {
        "text": "    (B)__________________________",
@@ -8307,7 +8490,8 @@
          "t": "    (B)__________________________",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Ans"
       },
       {
        "text": "    (C)__________________________",
@@ -8316,7 +8500,8 @@
          "t": "    (C)__________________________",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Ans"
       },
       {
        "text": "다음 글의 요지를 <조건>에 맞게 완성하시오. [pr1]",
@@ -8333,7 +8518,9 @@
          "t": " [pr1]",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "SRV-WRT-COND"
       },
       {
        "text": " Sometimes conflict can be resolved through an expansion of resources. For example, a department may need five computers but has a budget for only three. However, by talking the finance people into delaying the purchase of other equipment, there will be more money left for departmental computers. Alternatively, the company may be reorganized and some people given early retirement, thus freeing up funds for computer equipment. An expansion of resources involves a reworking of the budget for the purpose of determining how additional funds can be found.",
@@ -8342,7 +8529,8 @@
          "t": " Sometimes conflict can be resolved through an expansion of resources. For example, a department may need five computers but has a budget for only three. However, by talking the finance people into delaying the purchase of other equipment, there will be more money left for departmental computers. Alternatively, the company may be reorganized and some people given early retirement, thus freeing up funds for computer equipment. An expansion of resources involves a reworking of the budget for the purpose of determining how additional funds can be found.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "<요지>",
@@ -8351,7 +8539,8 @@
          "t": "<요지>",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Box"
       },
       {
        "text": " A (A)_______ of the budget such as (B)_______ the purchase of other equipment or (C)_______ the company may free up additional, (D)_______, which can (E)_______ conflict.",
@@ -8360,7 +8549,8 @@
          "t": " A (A)_______ of the budget such as (B)_______ the purchase of other equipment or (C)_______ the company may free up additional, (D)_______, which can (E)_______ conflict.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Box"
       },
       {
        "text": "<조건>",
@@ -8369,7 +8559,8 @@
          "t": "<조건>",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Cond"
       },
       {
        "text": "· 어휘를 지문에서 찾아 쓰시오. (어형 변화 가능)",
@@ -8378,7 +8569,8 @@
          "t": "· 어휘를 지문에서 찾아 쓰시오. (어형 변화 가능)",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Cond"
       },
       {
        "text": "· 빈칸 (A)~(E)에 한 단어씩 넣어 전체문장을 다시 적으시오.",
@@ -8387,7 +8579,8 @@
          "t": "· 빈칸 (A)~(E)에 한 단어씩 넣어 전체문장을 다시 적으시오.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Cond"
       },
       {
        "text": "→ ____________________________________________",
@@ -8396,7 +8589,8 @@
          "t": "→ ____________________________________________",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Ans"
       },
       {
        "text": "다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은? [pr2]",
@@ -8421,7 +8615,9 @@
          "t": " [pr2]",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-BLANK-AB"
       },
       {
        "text": " A child who hears a stern warning about the dangers of running in the street will have better self-esteem than a child who only hears that he's a \"bad boy\" when he runs into the street. The child who's a \"bad boy\" is getting the message that he and his behavior are not okay. He doesn't learn the difference between what he does and what he is. As an adult, his inner critic will attack both his behavior and his worth. Parents who carefully distinguish between inappropriate behavior and the basic goodness of the child raise children who feel better about themselves and have a far gentler inner critic.",
@@ -8430,7 +8626,8 @@
          "t": " A child who hears a stern warning about the dangers of running in the street will have better self-esteem than a child who only hears that he's a \"bad boy\" when he runs into the street. The child who's a \"bad boy\" is getting the message that he and his behavior are not okay. He doesn't learn the difference between what he does and what he is. As an adult, his inner critic will attack both his behavior and his worth. Parents who carefully distinguish between inappropriate behavior and the basic goodness of the child raise children who feel better about themselves and have a far gentler inner critic.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "↓",
@@ -8439,7 +8636,8 @@
          "t": "↓",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Sym"
       },
       {
        "text": " Parents need to (A)____________ between the child’s inappropriate behaviors and the child’s true self to raise the child with high (B)____________ and a gentle inner critic.",
@@ -8448,7 +8646,8 @@
          "t": " Parents need to (A)____________ between the child’s inappropriate behaviors and the child’s true self to raise the child with high (B)____________ and a gentle inner critic.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "      (A)                   (B)",
@@ -8457,7 +8656,8 @@
          "t": "      (A)                   (B)",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "① distinguish\t\tself-esteem",
@@ -8466,7 +8666,8 @@
          "t": "① distinguish\t\tself-esteem",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "② investigate\t\tsincerity",
@@ -8475,7 +8676,8 @@
          "t": "② investigate\t\tsincerity",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "③ distinguish\t\tmorality",
@@ -8484,7 +8686,8 @@
          "t": "③ distinguish\t\tmorality",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "④ investigate\t\tenthusiasm",
@@ -8493,7 +8696,8 @@
          "t": "④ investigate\t\tenthusiasm",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "⑤ evaluate\t\thonesty",
@@ -8502,7 +8706,8 @@
          "t": "⑤ evaluate\t\thonesty",
          "ul": false
         }
-       ]
+       ],
+       "kind": "C"
       },
       {
        "text": "다음 글을 읽고, 밑줄 친 (A) 부분과 문맥상 의미하는 바가 같은 단어나 어구를 모두 찾아서 조건에 맞게 쓰시오. [pr2]",
@@ -8523,7 +8728,9 @@
          "t": " [pr2]",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-VOC-UND-MEAN"
       },
       {
        "text": " A child who hears a stern warning about the dangers of running in the street will have better self-esteem than a child who only hears that he’s a “bad boy” when he runs into the street. The child who’s a “bad boy” is getting the message that he and his behavior are not okay. He doesn’t learn the difference between what he does and (A)what he is. As an adult, his inner critic will attack both his behavior and his worth. Parents who carefully distinguish between inappropriate behavior and the basic goodness of the child raise children who feel better about themselves and have a far gentler inner critic.",
@@ -8540,7 +8747,8 @@
          "t": ". As an adult, his inner critic will attack both his behavior and his worth. Parents who carefully distinguish between inappropriate behavior and the basic goodness of the child raise children who feel better about themselves and have a far gentler inner critic.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "<조건>",
@@ -8549,7 +8757,8 @@
          "t": "<조건>",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Cond"
       },
       {
        "text": "⦁반드시 정답에 해당하는 단어나 어구만을 찾아서 작성할 것.",
@@ -8558,7 +8767,8 @@
          "t": "⦁반드시 정답에 해당하는 단어나 어구만을 찾아서 작성할 것.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Cond"
       },
       {
        "text": "⦁정답이 포함된 문장 전체를 쓰는 경우 감점.",
@@ -8567,7 +8777,8 @@
          "t": "⦁정답이 포함된 문장 전체를 쓰는 경우 감점.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Cond"
       },
       {
        "text": "정답 : ________________________________________",
@@ -8576,7 +8787,8 @@
          "t": "정답 : ________________________________________",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Ans"
       },
       {
        "text": "다음 글을 읽고 글쓴이의 주장을 쓰고자 한다. <보기>의 표현만을 모두 한 번씩 사용하여 빈칸 (A)와 (B)에 들어갈 말을 문맥과 어법에 맞게 완성하시오. (단, 필요시 어법에 맞게 단어의 형태를 변형할 것) [pr2]",
@@ -8621,7 +8833,8 @@
          "t": " [pr2]",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Q"
       },
       {
        "text": " A child who hears a stern warning about the dangers of running in the street will have better self-esteem than a child who only hears that he’s a “bad boy” when he runs into the street. The child who’s a “bad boy” is getting the message that he and his behavior are not okay. He doesn’t learn the difference between what he does and what he is. As an adult, his inner critic will attack both his behavior and his worth. It is much more important for parents and children to have frequent communication on daily matters. Parents who carefully distinguish between inappropriate behavior and the basic goodness of the child raise children who feel better about themselves and have a far gentler inner critic. ",
@@ -8630,7 +8843,8 @@
          "t": " A child who hears a stern warning about the dangers of running in the street will have better self-esteem than a child who only hears that he’s a “bad boy” when he runs into the street. The child who’s a “bad boy” is getting the message that he and his behavior are not okay. He doesn’t learn the difference between what he does and what he is. As an adult, his inner critic will attack both his behavior and his worth. It is much more important for parents and children to have frequent communication on daily matters. Parents who carefully distinguish between inappropriate behavior and the basic goodness of the child raise children who feel better about themselves and have a far gentler inner critic. ",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "↓",
@@ -8639,7 +8853,8 @@
          "t": "↓",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Sym"
       },
       {
        "text": "Parents should (A)________________________ and what they are when (B)_______________________.",
@@ -8660,7 +8875,8 @@
          "t": "_.",
          "ul": false
         }
-       ]
+       ],
+       "kind": "P"
       },
       {
        "text": "<보기>",
@@ -8669,7 +8885,8 @@
          "t": "<보기>",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Box"
       },
       {
        "text": "differentiate / behavior / point out / between / do / their / Children / improper / what",
@@ -8678,7 +8895,8 @@
          "t": "differentiate / behavior / point out / between / do / their / Children / improper / what",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Box"
       },
       {
        "text": "정답: (A)__________________________________________",
@@ -8687,7 +8905,8 @@
          "t": "정답: (A)__________________________________________",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Ans"
       },
       {
        "text": "     (B)__________________________________________",
@@ -8696,7 +8915,8 @@
          "t": "     (B)__________________________________________",
          "ul": false
         }
-       ]
+       ],
+       "kind": "Ans"
       }
      ]
     }

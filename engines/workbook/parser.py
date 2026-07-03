@@ -1522,7 +1522,35 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
                 "paragraphs": textbook_paras,
             })
 
+    # ── Phase 2 파일럿: 단락종류(kind)/발문유형(q_code) 주석 ──────────────────
+    # additive 필드 — 기존 JSX는 모르는 키를 무시하므로 v1 경로 무영향.
+    # 판정 실패 시 주석 없이 통과 (fail-open: 조판을 막지 않는다).
+    _annotate_step3_kinds(normal_items + short_items, log)
     return {"normal": normal_items, "short": short_items}
+
+
+def _annotate_step3_kinds(items, log=None):
+    """core.structure 판정 결과를 단락 dict에 kind/q_code로 병기."""
+    try:
+        from core.structure import classify_paragraphs
+    except Exception as e:
+        _LOG.warning("[구조] core.structure 로드 실패 — 주석 생략: %s", e)
+        return
+    for item in items:
+        try:
+            results = classify_paragraphs(item.get("paragraphs", []))
+        except Exception as e:
+            msg = f"[구조] 단락종류 주석 실패({item.get('question_num')}): {e}"
+            _LOG.warning(msg)
+            if callable(log):
+                log(msg)
+            continue
+        for r in results:
+            para = r["para"]
+            if isinstance(para, dict):
+                para["kind"] = r["kind"]
+                if r.get("q_code"):
+                    para["q_code"] = r["q_code"]
 
 
 def _find_manuscript_file(manuscript_dir, expected_filename, used_files=None):
