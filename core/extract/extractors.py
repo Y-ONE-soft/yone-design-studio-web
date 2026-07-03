@@ -16,11 +16,14 @@ import하므로 정의 이름을 유지한다. 신규 코드는 core.extract의 
 """
 
 import html
+import logging
 import os
 import re
 import struct
 import unicodedata
 import zipfile
+
+_LOG = logging.getLogger(__name__)
 
 def _nfc(s):
     """macOS NFD 파일명을 NFC로 정규화."""
@@ -453,7 +456,9 @@ def _hwp_extract_paragraphs(hwp_path, extract_underline=False, exclude_footnotes
     # DocInfo 전역이라 섹션을 합쳐도 밑줄 매핑이 그대로 유효하다.
     try:
         n_sections = len(hwp.bodytext.sections)
-    except Exception:
+    except Exception as e:
+        _LOG.warning("[추출] 섹션 수 확인 실패(%s) — Section0만 읽음, 뒷 섹션 단락 누락 가능: %s",
+                     e, os.path.basename(hwp_path))
         n_sections = 1
     all_recs = []
     for _si in range(n_sections):
@@ -475,7 +480,7 @@ def _hwp_extract_paragraphs(hwp_path, extract_underline=False, exclude_footnotes
         try:
             _t = _hwp_decode_paratext(_r.get('payload', b'')).strip()
         except Exception:
-            continue
+            continue  # 형식 감지용 프리패스 — 실제 누락은 본 루프에서 경고됨
         if _lv == 3 and _RE_SRC_BAR.search(_t):
             _new_format = True
             break
@@ -533,7 +538,10 @@ def _hwp_extract_paragraphs(hwp_path, extract_underline=False, exclude_footnotes
             payload = all_recs[rj].get('payload', b'')
             try:
                 txt = _hwp_decode_paratext(payload)
-            except Exception:
+            except Exception as e:
+                _LOG.warning("[추출] 표-본문 보호 검사 실패(레코드 %d, %s) — "
+                             "각주로 분류되어 제외될 수 있음: %s",
+                             rj, e, os.path.basename(hwp_path))
                 continue
             if len(txt) < 60:
                 continue
@@ -588,7 +596,9 @@ def _hwp_extract_paragraphs(hwp_path, extract_underline=False, exclude_footnotes
             else:
                 txt = _hwp_decode_paratext(rec['payload'])
                 runs = [{"t": txt, "ul": False}]
-        except Exception:
+        except Exception as e:
+            _LOG.warning("[추출] 단락 디코딩 실패 — 해당 단락 누락(레코드 %d, %s): %s",
+                         i, e, os.path.basename(hwp_path))
             i += 1
             continue
 

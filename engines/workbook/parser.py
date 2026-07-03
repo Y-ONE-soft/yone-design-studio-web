@@ -1319,23 +1319,10 @@ def _step3_content_words(paras):
 
 
 def _warn_step3_content_loss(raw_words, out_paras, label, log=None):
-    """raw_words(원고 실질 단어) 중 출력에서 사라진 것이 있으면 경고. 반환: 사라진 집합."""
-    out_words = set()
-    for p in out_paras:
-        t = (p.get('text', '') if isinstance(p, dict) else str(p)) or ''
-        for w in _RE_STEP3_CONTENT_WORD.findall(t):
-            out_words.add(w.lower())
-    dropped = raw_words - out_words
-    if dropped:
-        msg = ("⚠️ [내용보존경고] Step3 %s — 원고 내용 %d개 단어가 출력에서 사라짐: %s"
-               % (label, len(dropped), ', '.join(sorted(dropped)[:20])))
-        _LOG.warning(msg)
-        if callable(log):
-            try:
-                log(msg)
-            except Exception:
-                pass
-    return dropped
+    """core.extract.guard.warn_content_loss로 위임 (Phase 1 승격 — 동작 동일)."""
+    from core.extract.guard import warn_content_loss
+    return warn_content_loss(raw_words, out_paras, f"Step3 {label}", log=log,
+                             word_re=_RE_STEP3_CONTENT_WORD)
 
 
 def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
