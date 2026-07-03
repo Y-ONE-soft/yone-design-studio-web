@@ -98,10 +98,15 @@ def render(cover_img, binding, long_edge=1500, shadow=True):
     warped = cv2.warpPerspective(cov, M, (W, H), flags=cv2.INTER_CUBIC,
                                  borderMode=cv2.BORDER_REPLICATE).astype(np.float32) / 255.0
     out_rgb = np.clip(B[..., :3] + warped * (A[..., :3] - B[..., :3]), 0, 255)
-    out = np.dstack([out_rgb, A[..., 3]])
-    res = _add_shadow(out) if shadow else Image.fromarray(out.astype(np.uint8), "RGBA")
-    if not shadow:
-        bb = res.getbbox(); res = res.crop(bb) if bb else res
+    out_img = Image.fromarray(np.dstack([out_rgb, A[..., 3]]).astype(np.uint8), "RGBA")
+    # 표지 위 요소(스파이럴 등) 오버레이 — 반투명이라 라이트맵으로 재현 불가
+    over_path = os.path.join(BAKE, f"{tpl}_over.png")
+    if os.path.exists(over_path):
+        out_img.alpha_composite(Image.open(over_path).convert("RGBA"))
+    if shadow:
+        res = _add_shadow(np.asarray(out_img, dtype=np.float32))
+    else:
+        res = out_img; bb = res.getbbox(); res = res.crop(bb) if bb else res
     s = long_edge / max(res.size)
     return res.resize((round(res.width*s), round(res.height*s)), Image.LANCZOS)
 
