@@ -234,6 +234,7 @@
       back_cx: 0,  back_cy: 0,  back_cw: 500
     };
     let sessionToken = null;
+    let bindingMode = null;   // null=일반(슬라이더), '무선'|'스프링'|'중철'=바인딩 엔진
     let renderTimer = null;
     let currentBlob = null;
     let pendingFront = null;
@@ -491,7 +492,41 @@
         sessionToken = data.token;
         applyCropDefaults('front', data.front_crop);
         if (data.back_crop) applyCropDefaults('back', data.back_crop);
-        await doRender();
+        await renderByMode();
+      } catch(e) { showSpinner(false); }
+    }
+
+    // ── 바인딩 목업 (헤드리스 엔진) ──────────────────────────────
+    function selectBinding(b) {
+      bindingMode = b;
+      document.querySelectorAll('.binding-btn').forEach(x =>
+        x.classList.toggle('active', x.dataset.b === (b || '일반')));
+      // 바인딩 모드에서는 크롭/슬라이더 컨트롤 숨김
+      document.querySelectorAll('.mockup-panel .panel-section:not(.binding-select)')
+        .forEach(s => { s.dataset.prevDisplay = s.style.display; s.style.display = b ? 'none' : ''; });
+      if (sessionToken) renderByMode();
+    }
+
+    function renderByMode() {
+      return bindingMode ? doRenderBinding() : doRender();
+    }
+
+    async function doRenderBinding() {
+      if (!sessionToken || !bindingMode) return;
+      showSpinner(true);
+      const fd = new FormData();
+      fd.append('token', sessionToken);
+      fd.append('binding', bindingMode);
+      try {
+        const res = await fetch('/api/mockup/render_binding', {method: 'POST', body: fd});
+        if (!res.ok) { showSpinner(false); return; }
+        const blob = await res.blob();
+        currentBlob = blob;
+        const img = document.getElementById('preview-img');
+        img.onload = () => { showSpinner(false); enableDownload(); };
+        img.src = URL.createObjectURL(blob);
+        img.style.display = 'block';
+        document.getElementById('preview-placeholder').style.display = 'none';
       } catch(e) { showSpinner(false); }
     }
 
@@ -524,9 +559,11 @@
       if (!sessionToken) return;
       const fd = new FormData();
       fd.append('token', sessionToken);
-      fd.append('params', JSON.stringify(params));
       fd.append('fmt', fmt);
-      const res = await fetch('/api/mockup/render', {method: 'POST', body: fd});
+      let url = '/api/mockup/render';
+      if (bindingMode) { fd.append('binding', bindingMode); url = '/api/mockup/render_binding'; }
+      else { fd.append('params', JSON.stringify(params)); }
+      const res = await fetch(url, {method: 'POST', body: fd});
       const blob = await res.blob();
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
