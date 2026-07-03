@@ -6,6 +6,7 @@
       {"name": "화이트북 워크북",   "prefix": "화이트북",     "engine_id": "whitebook"},
       {"name": "화이트북 실전문제", "prefix": "화이트북실전",  "engine_id": null},
       {"name": "블랙북",            "prefix": "블랙북",       "engine_id": "blackbook"},
+      {"name": "블랙북 v2 (베타)", "prefix": "블랙북", "engine_id": "blackbook_v2", "category": "프리미엄북"},
       {"name": "배N제",             "prefix": "배N제",        "engine_id": "baenje"}
     ]
   },

@@ -234,6 +234,33 @@ try {
             var flat = flow.units[0] || [];
             placeUnit(story, flat);
             wlog(flow.area + ": " + flat.length + "단락 배치");
+
+            // 오버플로우 시 페이지+프레임 추가 (v1 run.jsx:540~551 parity, 최대 3페이지)
+            var safety = 0;
+            var conts = story.textContainers;
+            var lastF = conts[conts.length - 1];
+            while (lastF.overflows && safety < 3) {
+                var lp = lastF.parentPage;
+                var tb = [];
+                for (var c2 = 0; c2 < conts.length; c2++) {
+                    if (conts[c2].parentPage === lp) {
+                        var bb = conts[c2].geometricBounds;
+                        tb.push([bb[0], bb[1], bb[2], bb[3]]);
+                    }
+                }
+                tb.sort(function (a, b4) { return a[1] - b4[1]; });
+                var npg = doc.pages.add(LocationOptions.AFTER, lp);
+                try { npg.appliedMaster = lp.appliedMaster; } catch (e) {}
+                for (var j2 = 0; j2 < (tb.length || 1); j2++) {
+                    var ntf = npg.textFrames.add();
+                    ntf.geometricBounds = tb[j2] || [10, 10, 270, 90];
+                    lastF.nextTextFrame = ntf;
+                    lastF = ntf;
+                }
+                conts = story.textContainers;
+                safety++;
+                wlog(flow.area + ": 오버플로우 — 페이지 추가 (" + safety + ")");
+            }
         }
     }
 

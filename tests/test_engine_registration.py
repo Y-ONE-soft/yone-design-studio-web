@@ -10,13 +10,17 @@ def test_registry_subjects_template_consistency():
     from engines import registry
     engines = {e.material_id: e for e in registry.all_engines()}
     assert "mockexam_v2" in engines
+    assert "blackbook_v2" in engines
     assert "mockexam" in engines            # 기존 엔진 유지 (삭제 금지 규칙)
-    assert len(engines) >= 22
+    assert "blackbook" in engines
+    assert len(engines) >= 23
 
     raw = open(os.path.join(REPO, "data", "subjects.json"),
                encoding="utf-8").read()
     assert '"engine_id": "mockexam_v2"' in raw     # 카드 존재
+    assert '"engine_id": "blackbook_v2"' in raw
     assert '"engine_id": "mockexam"' in raw        # 기존 카드 유지
+    assert '"engine_id": "blackbook"' in raw
 
     e = engines["mockexam_v2"]
     tpl = os.path.join(REPO, "templates", e.template_name)
