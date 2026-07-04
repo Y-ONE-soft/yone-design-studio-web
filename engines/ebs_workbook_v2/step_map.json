@@ -1,0 +1,11 @@
+{
+  "_doc": "EBS 리딩파워 내지([원본]EBS리딩파워) STEP → 스토리 매핑 — v1 ebs_workbook/engine.py prepare_jsx의 ebs_step_story_map 데이터화 + step3(마스터 O — v1 mapStepToStory 기본값, EBS settings엔 미지정이었음). p22 어법 수정은 서술형+객관식 같은 페이지 (rank 2 = 하단).",
+  "step1_a1":     {"page": "4",  "marker": "어휘 선택"},
+  "step1_a2":     {"page": "7",  "marker": "본문 O/X"},
+  "step1_c1":     {"page": "10", "marker": "문장 배열"},
+  "step1_c2":     {"page": "13", "marker": "빈칸 어휘"},
+  "step2_a1":     {"page": "22", "marker": "어법 수정"},
+  "step2_a1_btm": {"page": "22", "marker": "어법 수정", "rank": 2},
+  "step2_c2":     {"page": "28", "marker": "영작 배열"},
+  "step3":        {"master": "O"}
+}

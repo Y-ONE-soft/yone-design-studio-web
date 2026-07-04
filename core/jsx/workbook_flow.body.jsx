@@ -226,6 +226,65 @@ function insertIconAt(doc, story, para, ic) {
     return 1;
 }
 
+// ── 간지 텍스트 업데이트 (v1 run.jsx 16.7 이식 — plan.divider가 있을 때만) ──
+// 간지 페이지 = 마스터 [None](또는 없음) + 오른쪽 + 텍스트프레임 1개 +
+// 첫 단락에 한글. 1단락=line1, 2단락=line2.
+function updateDividerPages(doc, line1, line2) {
+    var n = 0;
+    for (var dpi = 0; dpi < doc.pages.length; dpi++) {
+        var dpg = doc.pages[dpi];
+        var masterName = "";
+        try { masterName = dpg.appliedMaster ? dpg.appliedMaster.name : ""; } catch (e) {}
+        if (masterName !== "" && masterName !== "[None]") { continue; }
+        // Enumerator 엄격 비교 신뢰 불가 (W7 교훈) — == 비교 사용
+        if (!(dpg.side == PageSideOptions.RIGHT_HAND)) { continue; }
+        if (dpg.textFrames.length !== 1) { continue; }
+        var divTf = dpg.textFrames[0];
+        var divParas = divTf.paragraphs;
+        if (divParas.length < 2) { continue; }
+        var p1 = String(divParas[0].contents || "").replace(/[\r\n]+$/, "");
+        if (!/[가-힣]/.test(p1)) { continue; }
+        try {
+            divParas[0].contents = line1 + "\r";
+            divParas[1].contents = line2 + "\r";
+            n++;
+        } catch (e) {}
+    }
+    wlog("간지 텍스트 업데이트: " + n + "개 (" + line1 + " / " + line2 + ")");
+}
+
+// ── 교과서 후처리 (v1 run.jsx 16.8 이식 — plan.textbook_postprocess) ────────
+// 빈 A-마스터 페이지 → B-마스터, 빈 C-마스터 페이지 → D-마스터.
+function textbookPostprocess(doc) {
+    var bMaster = null, dMaster = null;
+    try { bMaster = doc.masterSpreads.itemByName("B-마스터"); bMaster.name; } catch (e) { bMaster = null; }
+    try { dMaster = doc.masterSpreads.itemByName("D-마스터"); dMaster.name; } catch (e) { dMaster = null; }
+    var n = 0;
+    for (var tpi = doc.pages.length - 1; tpi >= 0; tpi--) {
+        var tpg = doc.pages[tpi];
+        var tfs2 = tpg.textFrames;
+        var tHasContent = false;
+        for (var ttf = 0; ttf < tfs2.length; ttf++) {
+            var tc2 = "";
+            try { tc2 = (tfs2[ttf].contents || ""); } catch (e) {}
+            if (String(tc2).replace(/[\s\r\n￼]+/g, "").length > 0) {
+                tHasContent = true;
+                break;
+            }
+        }
+        if (tHasContent) { continue; }
+        var curMaster = "";
+        try { curMaster = tpg.appliedMaster ? tpg.appliedMaster.name : ""; } catch (e) {}
+        if (curMaster === "A-마스터" && bMaster) {
+            try { tpg.appliedMaster = bMaster; n++; } catch (e) {}
+        }
+        if (curMaster === "C-마스터" && dMaster) {
+            try { tpg.appliedMaster = dMaster; n++; } catch (e) {}
+        }
+    }
+    wlog("교과서 후처리: 빈 페이지 마스터 재할당 " + n + "개");
+}
+
 var doc = null;
 try {
     wlog("워크북 v2 조판 시작: " + TEMPLATE);
@@ -391,6 +450,20 @@ try {
     }
 
     relockIcons();   // v1 relockItem — 아이콘 원본/레이어 잠금 복원
+
+    // opt-in 후처리 op (plan 키가 있을 때만 — 기존 플랜은 무변경)
+    if (plan.divider && plan.divider.line1) {
+        app.doScript(function () {
+            updateDividerPages(doc, plan.divider.line1,
+                               plan.divider.line2 || "");
+        }, ScriptLanguage.JAVASCRIPT, undefined,
+           UndoModes.ENTIRE_SCRIPT, "wb_v2 divider");
+    }
+    if (plan.textbook_postprocess) {
+        app.doScript(function () { textbookPostprocess(doc); },
+                     ScriptLanguage.JAVASCRIPT, undefined,
+                     UndoModes.ENTIRE_SCRIPT, "wb_v2 textbook_post");
+    }
 
     var ovf = 0;
     for (var s3 = 0; s3 < doc.stories.length; s3++) {

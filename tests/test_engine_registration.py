@@ -109,3 +109,35 @@ def test_seseospecial_v2_registration():
     assert getattr(e, "template_name", "typeset.html") == "typeset.html"
     # 공용 폼은 upload_spec으로 자동 생성 — v1과 동일 슬롯이어야 UI 동작 동일
     assert e.upload_spec == engines["seseospecial"].upload_spec
+
+
+def test_gdrive_workbook_family_v2_registration():
+    """GDrive 의존 워크북 3종 v2 — registry/카드/전용 템플릿 정합.
+
+    (textbook_workbook_v2 → ebs_workbook_v2 → suneungteukgang_workbook_v2
+    순차 전환 — 전환 완료된 엔진만 검사 목록에 추가한다)
+    """
+    converted = ["textbook_workbook_v2", "ebs_workbook_v2",
+                 "suneungteukgang_workbook_v2"]
+    from engines import registry
+    engines = {e.material_id: e for e in registry.all_engines()}
+    raw = open(os.path.join(REPO, "data", "subjects.json"),
+               encoding="utf-8").read()
+    for mid in converted:
+        v1_id = mid[:-3]
+        assert mid in engines, mid
+        assert v1_id in engines, v1_id      # 기존 엔진 유지 (삭제 금지 규칙)
+        assert f'"engine_id": "{mid}"' in raw
+        assert f'"engine_id": "{v1_id}"' in raw     # 기존 카드 유지
+
+        e = engines[mid]
+        assert e.template_name == f"typeset_{v1_id}_v2.html"
+        tpl = os.path.join(REPO, "templates", e.template_name)
+        assert os.path.isfile(tpl), f"템플릿 없음: {tpl}"
+        src = open(tpl, encoding="utf-8").read()
+        assert 'data-material="{{ engine.material_id }}"' in src
+        # 폴더 탐색 UI는 v1 공용 API 재사용 + 업로드 슬롯 v1 동일
+        assert e.upload_spec == engines[v1_id].upload_spec
+
+    from engines.workbook_v2.engine import WorkbookV2Engine
+    assert isinstance(engines["textbook_workbook_v2"], WorkbookV2Engine)

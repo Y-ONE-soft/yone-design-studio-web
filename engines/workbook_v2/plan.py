@@ -61,8 +61,39 @@ def _style(step_unit, kind, default_kind="P"):
 
 # ── Step3: kind 주석 기반 (질문/지문/선지/보기/조건/답란 전부 데이터 룩업) ──
 
+# v1 processStep3 pass 2 — <보기>/<조건> 표기 정규화 (run.jsx 2197~2200)
+_S3_GREPS = [
+    (re.compile(r"<\s*보\s*기\s*>"), "<보기>"),
+    (re.compile(r"<\s*조\s*건\s*>"), "<조건>"),
+    (re.compile(r"\[\s*보기\s*\]"), "<보기>"),
+    (re.compile(r"\[\s*조건\s*\]"), "<조건>"),
+]
+# v1 pass 10 — 번호(S3_NUM) 단락의 "숫자. " 접두 제거 (run.jsx 2423~2431)
+_RE_S3_QNUM = re.compile(r"^\d+\.\s")
+# v1 pass 5 번호/INTRO 휴리스틱 (run.jsx 2253~2272) — 분류기(kind)가 약한
+# 판정(UNKNOWN/K/Cond)을 내린 단락에만 오버레이. v1 실물 dump 대조에서
+# "(주관식) …쓰시오." / "…것은? [2-N]" 발문이 분류기 미인식으로 번호 스타일
+# +번호 제거를 못 받는 16건이 실증됨 (교과서 80dd3fa2). v1의 조건 propagation
+# 은 번호 스타일 단락을 덮지 않으므로(run.jsx 2417 break) Cond 포함이 파리티.
+_RE_S3_KORQ = re.compile(r"[가-힣]\?")
+_S3_WEAK_KINDS = {"UNKNOWN", "K", "Cond"}
+
+
+def _s3_effective_kind(kind, text):
+    if kind not in _S3_WEAK_KINDS:
+        return kind
+    if _RE_S3_KORQ.search(text):
+        return "Q"
+    if "다음 글을 읽고 물음에" in text:
+        return "Q-INTRO"
+    if "시오" in text:
+        return "Q"
+    return kind
+
+
 def build_step3(step_data):
     """step3 데이터 {normal:[{question_num, paragraphs}], short:[...]} → 유닛."""
+    st_q = _style("STEP3", "Q")
     units = []
     warnings = []
     for group in ("normal", "short"):
@@ -73,11 +104,15 @@ def build_step3(step_data):
                 kind = p.get("kind") or "UNKNOWN"
                 if kind in ("GH", "A", "BLANK"):
                     continue          # 제거 대상 (style_map에서 null)
-                style = _style("STEP3", kind)
+                style = _style("STEP3", _s3_effective_kind(kind, text))
                 if style is None:
                     continue
-                unit.append({"t": text, "s": style,
-                             "runs": p.get("runs") or []})
+                runs = p.get("runs") or []
+                for rx, repl in _S3_GREPS:
+                    text, runs = _sub_runs(rx, repl, text, runs)
+                if style == st_q:
+                    text, runs = _sub_runs(_RE_S3_QNUM, "", text, runs)
+                unit.append({"t": text, "s": style, "runs": runs})
             if unit:
                 units.append(unit)
     return {"units": units, "warnings": warnings}
@@ -647,8 +682,10 @@ def build_step2_b1(step_data):
 # (N) 단독줄·빈 단락·영어 전용(한글/슬래시/bracket 없음) 단락 삭제,
 # 한글 2자+ → 번호, 슬래시 → 보기(우선), [/] 포함 → 기본. 보기 블록 끝마다
 # 빈 단락+STEP2 영작 답지 아이콘, bracket 앞 빈 줄 2개(이전 유닛 꼬리),
-# bracket 기준 유닛 분할 (모의고사 — v1의 EBS 분기는 브레이크 생략이지만
-# v2 W3 대상은 모의고사 내지).
+# bracket 기준 유닛 분할.
+# EBS 분기 (v1 run.jsx 2125 — 리딩파워는 문제들이 연속해서 흐름): bracket
+# 유닛 분할(프레임브레이크) 생략, 대신 bracket 앞 빈 줄 2개만 같은 유닛에
+# 유지 (v1 7단계는 유형 공통, 9단계 브레이크만 EBS 생략).
 
 def _c2_is_bracket(text):
     # v1 step9 판정: '['와 ']' 포함 + '\s*[' 시작
@@ -656,9 +693,10 @@ def _c2_is_bracket(text):
             and bool(re.match(r"^\s*\[", text)))
 
 
-def build_step2_c2(step_data):
+def build_step2_c2(step_data, workbook_type="모의고사"):
     st_num = _style("STEP2C2", "Q")
     st_view = _style("STEP2C2", "Box")
+    is_ebs = (workbook_type == "EBS")
     warnings = []
 
     # 1) 삭제 룰 (v1 1~2단계: (N) 단독줄, 빈 단락, 영어 전용 답 단락)
@@ -701,7 +739,8 @@ def build_step2_c2(step_data):
             out.append(icon_para)
 
     # 4) 유닛 분할 + bracket 앞 빈 줄 2개 보장 (v1 7·9단계 —
-    #    빈 줄은 프레임브레이크 앞 = 이전 유닛 꼬리에 붙는다)
+    #    빈 줄은 프레임브레이크 앞 = 이전 유닛 꼬리에 붙는다).
+    #    EBS: 유닛 분할 없이 빈 줄 2개만 (v1 9단계 브레이크 생략 분기).
     units = []
     cur = []
     seen_bracket = False
@@ -710,8 +749,9 @@ def build_step2_c2(step_data):
             if seen_bracket and cur:
                 cur.append(_mk("", "$BASIC", []))
                 cur.append(_mk("", "$BASIC", []))
-                units.append(cur)
-                cur = []
+                if not is_ebs:
+                    units.append(cur)
+                    cur = []
             seen_bracket = True
         cur.append(item)
     if cur:
@@ -1135,32 +1175,67 @@ STEP_BUILDERS = {
 
 # 원고 유형(EBS/교과서/모의고사) 분기가 필요한 빌더 — v1은 settings의
 # workbook_type으로 분기 (workbook 엔진은 미전달 = "" → 非EBS 처리).
-_CTX_BUILDERS = {"step1_c1"}
+_CTX_BUILDERS = {"step1_c1", "step2_c2"}
 
 
-def steps_to_plan(steps, exclude=None, workbook_type="모의고사"):
+def ensure_step3_kinds(step3_data, log=None):
+    """구버전 content.json(step3 단락에 kind 미주석) 재사용 대비 —
+    kind가 하나도 없으면 v1 파서의 주석기를 그대로 호출해 in-place 보강.
+
+    현행 파서(engines/workbook/parser)는 항상 kind를 심으므로 실서비스
+    경로에선 no-op. 과거 job content.json 재실행(코퍼스/E2E)용 fail-open."""
+    if not step3_data:
+        return
+    items = ((step3_data.get("normal") or [])
+             + (step3_data.get("short") or []))
+    if not items:
+        return
+    has_kind = any(p.get("kind")
+                   for it in items for p in it.get("paragraphs") or [])
+    if has_kind:
+        return
+    try:
+        from engines.workbook.parser import _annotate_step3_kinds
+        _annotate_step3_kinds(items, log)
+        if callable(log):
+            log("[v2] step3 kind 주석 보강 (구버전 content.json — "
+                "kind 미포함)")
+    except Exception as e:                                  # noqa: BLE001
+        if callable(log):
+            log(f"[v2] ⚠️ step3 kind 주석 보강 실패 — 기본 스타일 배치: {e}")
+
+
+def steps_to_plan(steps, exclude=None, workbook_type="모의고사",
+                  step_map=None):
     """v1 content steps → {"format": "wb-flows-v1", "flows": [...],
     "unsupported": [스텝키]} — 미지원 스텝은 커버리지 리포트용으로 기록.
 
     exclude: 스텝 키(전체 제외) + "step1_c1_btm"(C1 하단만 제외) 지원.
-    workbook_type: "모의고사"|"교과서"|"EBS" — C1 프레임 분리/아이콘 분기.
+    workbook_type: "모의고사"|"교과서"|"EBS" — C1/C2 프레임 분리·아이콘 분기.
+    step_map: 스텝→스토리 매핑 override (None = 모의고사 기본 STEP_MAP).
+        지정 시 매핑에 없는 스텝은 배치 불가 → unsupported로 보고
+        (EBS/수능특강 내지는 스텝 페이지 구성이 다르다).
     """
     exclude = set(exclude or [])
+    smap = STEP_MAP if step_map is None else step_map
     flows = []
     unsupported = []
     for step_key, step_data in steps.items():
         if step_key in exclude:
             continue
         builder = STEP_BUILDERS.get(step_key)
-        if builder is None:
+        if builder is None or (step_map is not None
+                               and step_key not in smap):
             unsupported.append(step_key)
             continue
-        if step_key in _CTX_BUILDERS:
+        if step_key == "step1_c1":
             built = builder(step_data, workbook_type=workbook_type,
                             exclude_btm=("step1_c1_btm" in exclude))
+        elif step_key in _CTX_BUILDERS:
+            built = builder(step_data, workbook_type=workbook_type)
         else:
             built = builder(step_data)
-        target = dict(STEP_MAP.get(step_key, {}))
+        target = dict(smap.get(step_key, {}))
         flow = {"step": step_key, "target": target,
                 "break_per_unit": True, "units": built["units"]}
         if built.get("ul_style"):

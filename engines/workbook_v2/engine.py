@@ -185,25 +185,46 @@ class WorkbookV2Engine(BaseEngine):
                 f"(workbook_type={workbook_type}, school={school})")
         return src
 
+    def _load_cfg(self):
+        """엔진 config 로드 — 파생 엔진(교과서/EBS/수능특강)이 오버라이드."""
+        return _load_v1_config()
+
+    def _workbook_type(self, job_dir):
+        """원고 유형 — 기본은 v1 워크북 메타 규칙. 파생 엔진은 고정값."""
+        return self._read_meta_str(job_dir, "workbook_type", "모의고사")
+
+    def _step_map(self):
+        """스텝→스토리 매핑 override — None이면 모의고사 기본 STEP_MAP.
+        EBS/수능특강 파생 엔진이 내지 구조에 맞는 매핑을 반환한다."""
+        return None
+
+    def _plan_decorations(self, job_dir, cfg):
+        """플랜 최상위에 병합할 선택 키 (실행기 opt-in op) — 기본 없음.
+        교과서 파생 엔진이 {"divider": ..., "textbook_postprocess": True}
+        를 반환한다 (v1 run.jsx 16.7/16.8)."""
+        return {}
+
     # ── 2단계: prepare_jsx — 플랜 빌드 + 템플릿 복사 + JSX 생성 ─────────────
 
     def prepare_jsx(self, json_path, job_dir, log):
-        from engines.workbook_v2.plan import steps_to_plan
+        from engines.workbook_v2.plan import steps_to_plan, ensure_step3_kinds
 
-        cfg = _load_v1_config()
+        cfg = self._load_cfg()
         grade = self._read_meta(job_dir, "grade", 1)
         year = self._read_meta(job_dir, "year", 25)
         month = self._read_meta(job_dir, "month", 10)
-        workbook_type = self._read_meta_str(job_dir, "workbook_type",
-                                            "모의고사")
+        workbook_type = self._workbook_type(job_dir)
         school = self._read_meta_str(job_dir, "school", "")
         exclude = self._read_exclude(job_dir)
         if exclude:
             log(f"[v2] 제외 섹션: {', '.join(exclude)}")
 
         content = json.load(open(json_path, encoding="utf-8"))
+        ensure_step3_kinds(content.get("steps", {}).get("step3"), log)
         plan = steps_to_plan(content.get("steps", {}), exclude=exclude,
-                             workbook_type=workbook_type)
+                             workbook_type=workbook_type,
+                             step_map=self._step_map())
+        plan.update(self._plan_decorations(job_dir, cfg))
         plan_path = os.path.abspath(os.path.join(job_dir, "render_plan.json"))
         with open(plan_path, "w", encoding="utf-8") as f:
             json.dump(plan, f, ensure_ascii=False)
@@ -233,7 +254,7 @@ class WorkbookV2Engine(BaseEngine):
             log_path=jsx_log,
             out_path=os.path.join(job_dir, "run.jsx"))
 
-        settings = {"engine": "workbook_v2", "indd_path": indd_path,
+        settings = {"engine": self.material_id, "indd_path": indd_path,
                     "pdf_path": pdf_path, "jsx_path": jsx_path,
                     "log_path": jsx_log, "json_path": json_path,
                     "plan_path": plan_path,
@@ -251,6 +272,15 @@ class WorkbookV2Engine(BaseEngine):
         from core.indesign.runner import run_jsx
         settings = json.load(open(os.path.join(job_dir, ".settings.json"),
                                   encoding="utf-8"))
+        # 재실행 안전 (seseospecial_v2 W7 교훈): 이전 실행의 조판_로그에 완료
+        # 마커가 남아 있으면 러너가 렌더 시작 직후 조기 완료로 오판 → 이후
+        # dump 제출 실패 → 재시도 pkill이 렌더 중인 InDesign을 죽인다.
+        # 러너는 1차 시도에서 poll 로그를 지우지 않으므로 여기서 제거한다.
+        # (실서비스는 job_dir가 매번 새로 생성돼 no-op — E2E 재실행용 안전망)
+        try:
+            os.remove(settings["log_path"])
+        except OSError:
+            pass
         # stall_limit 900: 워크북 전체(C) 문서(250p+)의 doc.save + PDF export가
         # 로그 무갱신으로 5분을 초과 (기본 300초 행 판정이 export 중 오탐 —
         # W4 실측: 정상 export 중 InDesign이 강제 종료됨)

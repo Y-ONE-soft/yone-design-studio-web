@@ -1,0 +1,5248 @@
+{
+  "grade": 0,
+  "year": 0,
+  "month": 0,
+  "steps": {
+    "step1_a1": {
+      "filename": "1. 어휘선택.docx",
+      "question_numbers": [
+        1,
+        2,
+        3
+      ],
+      "paragraph_count": 9,
+      "paragraphs": [
+        {
+          "text": "[01]",
+          "runs": [
+            {
+              "t": "[01]",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "Over the past twenty years, with the (1)❮ ⓐ arrival  / ⓑ departure ❯ of digital politics, social and political protest movements have changed and become ever more (2)❮ ⓐ prominent  / ⓑ obscure ❯ through what the sociologist Manuel Castells has called Networks of Outrage and Hope. We now have a (3)❮ ⓐ stagnant   / ⓑ swirling ❯ world of 'online activism', digital (4)❮ ⓐ rebellion  / ⓑ compliance ❯, information politics and People's Platforms. Smartphones and social networking now (5)❮ ⓐ withhold   / ⓑ provide ❯ a more (6)❮ ⓐ rigid   / ⓑ fluid ❯, (7)❮ ⓐ hierarchical   / ⓑ leaderless ❯, (8)❮ ⓐ exclusionary   / ⓑ participatory ❯ activism that arises more (9)❮ ⓐ deliberately   / ⓑ spontaneously ❯. The early examples like the Occupy Movement (2011), the Arab Spring in Egypt (2010), the Umbrella Movement in Hong Kong (2014, 2019), the Gezi Park Movement in Turkey (2013), and the Pussy Riots in Russia (2011) (10)❮ ⓐ galvanized  / ⓑ discouraged ❯ large numbers of people and (11)❮ ⓐ attracted  / ⓑ repelled ❯ world attention. While some suggest that these new politics are (12)❮ ⓐ enhancing  / ⓑ undermining ❯ democracy, others maintain that they do not really (13)❮ ⓐ accommodate   / ⓑ challenge ❯ the (14)❮ ⓐ subordinate   / ⓑ dominant ❯ power groups. Looking back, most of them have proved (15)❮ ⓐ triumphant   / ⓑ unsuccessful ❯, clamped down upon by the state. There seems a (16)❮ ⓐ boundlessness   / ⓑ limit ❯ to the power of new social movements.",
+          "runs": [
+            {
+              "t": "Over the past twenty years, with the ",
+              "ul": false
+            },
+            {
+              "t": "(1)❮ ⓐ arrival  / ⓑ departure ❯",
+              "ul": false
+            },
+            {
+              "t": " of digital politics, social and political protest movements have changed and become ever more ",
+              "ul": false
+            },
+            {
+              "t": "(2)❮ ⓐ prominent  / ⓑ obscure ❯",
+              "ul": false
+            },
+            {
+              "t": " through what the sociologist Manuel Castells has called Networks of Outrage and Hope. We now have a ",
+              "ul": false
+            },
+            {
+              "t": "(3)❮ ⓐ stagnant   / ⓑ swirling ❯",
+              "ul": false
+            },
+            {
+              "t": " world of 'online activism', digital ",
+              "ul": false
+            },
+            {
+              "t": "(4)❮ ⓐ rebellion  / ⓑ compliance ❯",
+              "ul": false
+            },
+            {
+              "t": ", information politics and People's Platforms. Smartphones and social networking now ",
+              "ul": false
+            },
+            {
+              "t": "(5)❮ ⓐ withhold   / ⓑ provide ❯",
+              "ul": false
+            },
+            {
+              "t": " a more ",
+              "ul": false
+            },
+            {
+              "t": "(6)❮ ⓐ rigid   / ⓑ fluid ❯",
+              "ul": false
+            },
+            {
+              "t": ", ",
+              "ul": false
+            },
+            {
+              "t": "(7)❮ ⓐ hierarchical   / ⓑ leaderless ❯",
+              "ul": false
+            },
+            {
+              "t": ", ",
+              "ul": false
+            },
+            {
+              "t": "(8)❮ ⓐ exclusionary   / ⓑ participatory ❯",
+              "ul": false
+            },
+            {
+              "t": " activism that arises more ",
+              "ul": false
+            },
+            {
+              "t": "(9)❮ ⓐ deliberately   / ⓑ spontaneously ❯",
+              "ul": false
+            },
+            {
+              "t": ". The early examples like the Occupy Movement (2011), the Arab Spring in Egypt (2010), the Umbrella Movement in Hong Kong (2014, 2019), the Gezi Park Movement in Turkey (2013), and the Pussy Riots in Russia (2011) ",
+              "ul": false
+            },
+            {
+              "t": "(10)❮ ⓐ galvanized  / ⓑ discouraged ❯",
+              "ul": false
+            },
+            {
+              "t": " large numbers of people and ",
+              "ul": false
+            },
+            {
+              "t": "(11)❮ ⓐ attracted  / ⓑ repelled ❯",
+              "ul": false
+            },
+            {
+              "t": " world attention. While some suggest that these new politics are ",
+              "ul": false
+            },
+            {
+              "t": "(12)❮ ⓐ enhancing  / ⓑ undermining ❯",
+              "ul": false
+            },
+            {
+              "t": " democracy, others maintain that they do not really ",
+              "ul": false
+            },
+            {
+              "t": "(13)❮ ⓐ accommodate   / ⓑ challenge ❯",
+              "ul": false
+            },
+            {
+              "t": " the ",
+              "ul": false
+            },
+            {
+              "t": "(14)❮ ⓐ subordinate   / ⓑ dominant ❯",
+              "ul": false
+            },
+            {
+              "t": " power groups. Looking back, most of them have proved ",
+              "ul": false
+            },
+            {
+              "t": "(15)❮ ⓐ triumphant   / ⓑ unsuccessful ❯",
+              "ul": false
+            },
+            {
+              "t": ", clamped down upon by the state. There seems a ",
+              "ul": false
+            },
+            {
+              "t": "(16)❮ ⓐ boundlessness   / ⓑ limit ❯",
+              "ul": false
+            },
+            {
+              "t": " to the power of new social movements.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "",
+          "runs": [
+            {
+              "t": "",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "[02]",
+          "runs": [
+            {
+              "t": "[02]",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "The (1)❮ ⓐ decline   / ⓑ advent ❯ of automobiles (2)❮ ⓐ marginally   / ⓑ drastically ❯ (3)❮ ⓐ altered  / ⓑ preserved ❯ urban landscapes by enabling the (4)❮ ⓐ contraction   / ⓑ growth ❯ of suburbs. Cars provided individuals the ability to live (5)❮ ⓐ proximate   / ⓑ farther ❯ from city centers, where land was (6)❮ ⓐ cheaper  / ⓑ costlier ❯ and more (7)❮ ⓐ scant   / ⓑ abundant ❯. This (8)❮ ⓐ retrenchment   / ⓑ expansion ❯ created the modern suburb, characterized by residential zones (9)❮ ⓐ integrated   / ⓑ separate ❯ from commercial and industrial areas, promoting a shift from (10)❮ ⓐ high-density  / ⓑ sparse ❯ urban living to the spacious suburbs. The (11)❮ ⓐ rigidity   / ⓑ flexibility ❯ cars offered meant people could commute daily, uniting work, leisure, and homelife in new ways. In response, urban planning (12)❮ ⓐ stagnated   / ⓑ evolved ❯, placing (13)❮ ⓐ disregard   / ⓑ emphasis ❯ on roads and highways to accommodate increased travel. This decentralization led to altered living patterns, encouraging families to seek homes in (14)❮ ⓐ quieter  / ⓑ clamorous ❯, suburban environments while maintaining access to urban job markets. The sprawling growth fueled demands for expanded infrastructure and services in these areas, bringing in new economic opportunities. Cars were instrumental in shaping this living model by significantly detaching home locations from places of employment and recreation.",
+          "runs": [
+            {
+              "t": "The ",
+              "ul": false
+            },
+            {
+              "t": "(1)❮ ⓐ decline   / ⓑ advent ❯",
+              "ul": false
+            },
+            {
+              "t": " of automobiles ",
+              "ul": false
+            },
+            {
+              "t": "(2)❮ ⓐ marginally   / ⓑ drastically ❯",
+              "ul": false
+            },
+            {
+              "t": " ",
+              "ul": false
+            },
+            {
+              "t": "(3)❮ ⓐ altered  / ⓑ preserved ❯",
+              "ul": false
+            },
+            {
+              "t": " urban landscapes by enabling the ",
+              "ul": false
+            },
+            {
+              "t": "(4)❮ ⓐ contraction   / ⓑ growth ❯",
+              "ul": false
+            },
+            {
+              "t": " of suburbs. Cars provided individuals the ability to live ",
+              "ul": false
+            },
+            {
+              "t": "(5)❮ ⓐ proximate   / ⓑ farther ❯",
+              "ul": false
+            },
+            {
+              "t": " from city centers, where land was ",
+              "ul": false
+            },
+            {
+              "t": "(6)❮ ⓐ cheaper  / ⓑ costlier ❯",
+              "ul": false
+            },
+            {
+              "t": " and more ",
+              "ul": false
+            },
+            {
+              "t": "(7)❮ ⓐ scant   / ⓑ abundant ❯",
+              "ul": false
+            },
+            {
+              "t": ". This ",
+              "ul": false
+            },
+            {
+              "t": "(8)❮ ⓐ retrenchment   / ⓑ expansion ❯",
+              "ul": false
+            },
+            {
+              "t": " created the modern suburb, characterized by residential zones ",
+              "ul": false
+            },
+            {
+              "t": "(9)❮ ⓐ integrated   / ⓑ separate ❯",
+              "ul": false
+            },
+            {
+              "t": " from commercial and industrial areas, promoting a shift from ",
+              "ul": false
+            },
+            {
+              "t": "(10)❮ ⓐ high-density  / ⓑ sparse ❯",
+              "ul": false
+            },
+            {
+              "t": " urban living to the spacious suburbs. The ",
+              "ul": false
+            },
+            {
+              "t": "(11)❮ ⓐ rigidity   / ⓑ flexibility ❯",
+              "ul": false
+            },
+            {
+              "t": " cars offered meant people could commute daily, uniting work, leisure, and homelife in new ways. In response, urban planning ",
+              "ul": false
+            },
+            {
+              "t": "(12)❮ ⓐ stagnated   / ⓑ evolved ❯",
+              "ul": false
+            },
+            {
+              "t": ", placing ",
+              "ul": false
+            },
+            {
+              "t": "(13)❮ ⓐ disregard   / ⓑ emphasis ❯",
+              "ul": false
+            },
+            {
+              "t": " on roads and highways to accommodate increased travel. This decentralization led to altered living patterns, encouraging families to seek homes in ",
+              "ul": false
+            },
+            {
+              "t": "(14)❮ ⓐ quieter  / ⓑ clamorous ❯",
+              "ul": false
+            },
+            {
+              "t": ", suburban environments while maintaining access to urban job markets. The sprawling growth fueled demands for expanded infrastructure and services in these areas, bringing in new economic opportunities. Cars were instrumental in shaping this living model by significantly detaching home locations from places of employment and recreation.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "",
+          "runs": [
+            {
+              "t": "",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "[03]",
+          "runs": [
+            {
+              "t": "[03]",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "The graph above (1)❮ ⓐ shows  / ⓑ obscures ❯ results from a 2018 U.S. survey on (2)❮ ⓐ awareness  / ⓑ ignorance ❯ of AI uses among the (3)❮ ⓐ specialized   / ⓑ general ❯ population and tech executives. Tech executives had a (4)❮ ⓐ attenuated   / ⓑ higher ❯ awareness of AI uses across the (5)❮ ⓐ various  / ⓑ uniform ❯ domains compared to the general population, with the (6)❮ ⓐ rule   / ⓑ exception ❯ of Drones. The (7)❮ ⓐ bottom   / ⓑ top ❯ three AI domains with the (8)❮ ⓐ minimal   / ⓑ highest ❯ awareness among tech executives were Voice Assistants, Natural Language Processing, and Text Recognition. Ride-Hailing Apps had the (9)❮ ⓐ paramount   / ⓑ lowest ❯ awareness levels in both the general population group and the tech executives group. Tech executives' awareness of AI use in Natural Language Processing was (10)❮ ⓐ less  / ⓑ exceeding ❯ than (11)❮ ⓐ double  / ⓑ half ❯ that of the general public. The (12)❮ ⓐ stasis   / ⓑ rate ❯ of awareness of AI use for Computer Vision and Drones was the (13)❮ ⓐ same  / ⓑ disparate ❯ among tech executives, but for the general population, the awareness of Drones was 10 percentage points higher than that of Computer Vision.",
+          "runs": [
+            {
+              "t": "The graph above ",
+              "ul": false
+            },
+            {
+              "t": "(1)❮ ⓐ shows  / ⓑ obscures ❯",
+              "ul": false
+            },
+            {
+              "t": " results from a 2018 U.S. survey on ",
+              "ul": false
+            },
+            {
+              "t": "(2)❮ ⓐ awareness  / ⓑ ignorance ❯",
+              "ul": false
+            },
+            {
+              "t": " of AI uses among the ",
+              "ul": false
+            },
+            {
+              "t": "(3)❮ ⓐ specialized   / ⓑ general ❯",
+              "ul": false
+            },
+            {
+              "t": " population and tech executives. Tech executives had a ",
+              "ul": false
+            },
+            {
+              "t": "(4)❮ ⓐ attenuated   / ⓑ higher ❯",
+              "ul": false
+            },
+            {
+              "t": " awareness of AI uses across the ",
+              "ul": false
+            },
+            {
+              "t": "(5)❮ ⓐ various  / ⓑ uniform ❯",
+              "ul": false
+            },
+            {
+              "t": " domains compared to the general population, with the ",
+              "ul": false
+            },
+            {
+              "t": "(6)❮ ⓐ rule   / ⓑ exception ❯",
+              "ul": false
+            },
+            {
+              "t": " of Drones. The ",
+              "ul": false
+            },
+            {
+              "t": "(7)❮ ⓐ bottom   / ⓑ top ❯",
+              "ul": false
+            },
+            {
+              "t": " three AI domains with the ",
+              "ul": false
+            },
+            {
+              "t": "(8)❮ ⓐ minimal   / ⓑ highest ❯",
+              "ul": false
+            },
+            {
+              "t": " awareness among tech executives were Voice Assistants, Natural Language Processing, and Text Recognition. Ride-Hailing Apps had the ",
+              "ul": false
+            },
+            {
+              "t": "(9)❮ ⓐ paramount   / ⓑ lowest ❯",
+              "ul": false
+            },
+            {
+              "t": " awareness levels in both the general population group and the tech executives group. Tech executives' awareness of AI use in Natural Language Processing was ",
+              "ul": false
+            },
+            {
+              "t": "(10)❮ ⓐ less  / ⓑ exceeding ❯",
+              "ul": false
+            },
+            {
+              "t": " than ",
+              "ul": false
+            },
+            {
+              "t": "(11)❮ ⓐ double  / ⓑ half ❯",
+              "ul": false
+            },
+            {
+              "t": " that of the general public. The ",
+              "ul": false
+            },
+            {
+              "t": "(12)❮ ⓐ stasis   / ⓑ rate ❯",
+              "ul": false
+            },
+            {
+              "t": " of awareness of AI use for Computer Vision and Drones was the ",
+              "ul": false
+            },
+            {
+              "t": "(13)❮ ⓐ same  / ⓑ disparate ❯",
+              "ul": false
+            },
+            {
+              "t": " among tech executives, but for the general population, the awareness of Drones was 10 percentage points higher than that of Computer Vision.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "",
+          "runs": [
+            {
+              "t": "",
+              "ul": false
+            }
+          ]
+        }
+      ]
+    },
+    "step1_a2": {
+      "filename": "2. 본문OX.docx",
+      "question_numbers": [
+        1,
+        2,
+        3
+      ],
+      "paragraph_count": 24,
+      "paragraphs": [
+        {
+          "text": "[01]",
+          "runs": [
+            {
+              "t": "[01]",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "Over the past twenty years, with the arrival of digital politics, social and political protest movements have changed and become ever more prominent through what the sociologist Manuel Castells has called Networks of Outrage and Hope. We now have a swirling world of 'online activism', digital rebellion, information politics and People's Platforms. Smartphones and social networking now provide a more fluid, leaderless, participatory activism that arises more spontaneously. The early examples like the Occupy Movement (2011), the Arab Spring in Egypt (2010), the Umbrella Movement in Hong Kong (2014, 2019), the Gezi Park Movement in Turkey (2013), and the Pussy Riots in Russia (2011) galvanized large numbers of people and attracted world attention. While some suggest that these new politics are enhancing democracy, others maintain that they do not really challenge the dominant power groups. Looking back, most of them have proved unsuccessful, clamped down upon by the state. There seems a limit to the power of new social movements.",
+          "runs": [
+            {
+              "t": "Over the past twenty years, with the arrival of digital politics, social and political protest movements have changed and become ever more prominent through what the sociologist Manuel Castells has called Networks of Outrage and Hope. We now have a swirling world of 'online activism', digital rebellion, information politics and People's Platforms. Smartphones and social networking now provide a more fluid, leaderless, participatory activism that arises more spontaneously. The early examples like the Occupy Movement (2011), the Arab Spring in Egypt (2010), the Umbrella Movement in Hong Kong (2014, 2019), the Gezi Park Movement in Turkey (2013), and the Pussy Riots in Russia (2011) galvanized large numbers of people and attracted world attention. While some suggest that these new politics are enhancing democracy, others maintain that they do not really challenge the dominant power groups. Looking back, most of them have proved unsuccessful, clamped down upon by the state. There seems a limit to the power of new social movements.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(1) Digital politics has made protest movements more visible over the last twenty years. ❮ T / F ❯",
+          "runs": [
+            {
+              "t": "(1) Digital politics has made protest movements more visible over the last twenty years. ❮ T / F ❯",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(2) Online activism today is usually more rigid and tightly led. ❮ T / F ❯",
+          "runs": [
+            {
+              "t": "(2) Online activism today is usually more rigid and tightly led. ❮ T / F ❯",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(3) The Arab Spring in Egypt happened in 2011. ❮ T / F ❯",
+          "runs": [
+            {
+              "t": "(3) The Arab Spring in Egypt happened in 2011. ❮ T / F ❯",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(4) Everyone agrees these new political movements strengthen democracy. ❮ T / F ❯",
+          "runs": [
+            {
+              "t": "(4) Everyone agrees these new political movements strengthen democracy. ❮ T / F ❯",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(5) Most of these movements ended in clear success against the state. ❮ T / F ❯",
+          "runs": [
+            {
+              "t": "(5) Most of these movements ended in clear success against the state. ❮ T / F ❯",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "",
+          "runs": [
+            {
+              "t": "",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "[02]",
+          "runs": [
+            {
+              "t": "[02]",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "The advent of automobiles drastically altered urban landscapes by enabling the growth of suburbs. Cars provided individuals the ability to live farther from city centers, where land was cheaper and more abundant. This expansion created the modern suburb, characterized by residential zones separate from commercial and industrial areas, promoting a shift from high-density urban living to the spacious suburbs. The flexibility cars offered meant people could commute daily, uniting work, leisure, and homelife in new ways. In response, urban planning evolved, placing emphasis on roads and highways to accommodate increased travel. This decentralization led to altered living patterns, encouraging families to seek homes in quieter, suburban environments while maintaining access to urban job markets. The sprawling growth fueled demands for expanded infrastructure and services in these areas, bringing in new economic opportunities. Cars were instrumental in shaping this living model by significantly detaching home locations from places of employment and recreation.",
+          "runs": [
+            {
+              "t": "The advent of automobiles drastically altered urban landscapes by enabling the growth of suburbs. Cars provided individuals the ability to live farther from city centers, where land was cheaper and more abundant. This expansion created the modern suburb, characterized by residential zones separate from commercial and industrial areas, promoting a shift from high-density urban living to the spacious suburbs. The flexibility cars offered meant people could commute daily, uniting work, leisure, and homelife in new ways. In response, urban planning evolved, placing emphasis on roads and highways to accommodate increased travel. This decentralization led to altered living patterns, encouraging families to seek homes in quieter, suburban environments while maintaining access to urban job markets. The sprawling growth fueled demands for expanded infrastructure and services in these areas, bringing in new economic opportunities. Cars were instrumental in shaping this living model by significantly detaching home locations from places of employment and recreation.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(1) Cars made it harder for people to move away from downtown areas. ❮ T / F ❯",
+          "runs": [
+            {
+              "t": "(1) Cars made it harder for people to move away from downtown areas. ❮ T / F ❯",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(2) Suburbs mixed homes closely with business and factory spaces. ❮ T / F ❯",
+          "runs": [
+            {
+              "t": "(2) Suburbs mixed homes closely with business and factory spaces. ❮ T / F ❯",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(3) Because of cars, fewer people were able to travel to work each day. ❮ T / F ❯",
+          "runs": [
+            {
+              "t": "(3) Because of cars, fewer people were able to travel to work each day. ❮ T / F ❯",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(4) City planning started to focus less on roads and major highways. ❮ T / F ❯",
+          "runs": [
+            {
+              "t": "(4) City planning started to focus less on roads and major highways. ❮ T / F ❯",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(5) Cars helped separate where people lived from where they worked or had fun. ❮ T / F ❯",
+          "runs": [
+            {
+              "t": "(5) Cars helped separate where people lived from where they worked or had fun. ❮ T / F ❯",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "",
+          "runs": [
+            {
+              "t": "",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "[03]",
+          "runs": [
+            {
+              "t": "[03]",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "The graph above shows results from a 2018 U.S. survey on awareness of Al uses among the general population and tech executives. Tech executives had a higher awareness of Al uses across the various domains compared to the general population, with the exception of Drones. The top three AI domains with the highest awareness among tech executives were Voice Assistants, Natural Language Processing, and Text Recognition. Ride-Hailing Apps had the lowest awareness levels in both the general population group and the tech executives group. Tech executives' awareness of Al use in Natural Language Processing was more than double that of the general public. The rate of awareness of AI use for Computer Vision and Drones was the same among tech executives, but for the general population, the awareness of Drones was 10 percentage points higher than that of Computer Vision.",
+          "runs": [
+            {
+              "t": "The graph above shows results from a 2018 U.S. survey on awareness of Al uses among the general population and tech executives. Tech executives had a higher awareness of Al uses across the various domains compared to the general population, with the exception of Drones. The top three AI domains with the highest awareness among tech executives were Voice Assistants, Natural Language Processing, and Text Recognition. Ride-Hailing Apps had the lowest awareness levels in both the general population group and the tech executives group. Tech executives' awareness of Al use in Natural Language Processing was more than double that of the general public. The rate of awareness of AI use for Computer Vision and Drones was the same among tech executives, but for the general population, the awareness of Drones was 10 percentage points higher than that of Computer Vision.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(1) The survey was done in 2020 and covered people around the world. ❮ T / F ❯  ",
+          "runs": [
+            {
+              "t": "(1) The survey was done in 2020 and covered people around the world. ❮ T / F ❯  ",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(2) The general public showed higher AI awareness than tech executives in most areas. ❮ T / F ❯  ",
+          "runs": [
+            {
+              "t": "(2) The general public showed higher AI awareness than tech executives in most areas. ❮ T / F ❯  ",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(3) Drones was one of the three best-known AI fields for tech executives. ❮ T / F ❯  ",
+          "runs": [
+            {
+              "t": "(3) Drones was one of the three best-known AI fields for tech executives. ❮ T / F ❯  ",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(4) Ride-Hailing Apps had the highest awareness in the general population. ❮ T / F ❯  ",
+          "runs": [
+            {
+              "t": "(4) Ride-Hailing Apps had the highest awareness in the general population. ❮ T / F ❯  ",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(5) Tech executives were more than twice as aware of NLP as the general public. ❮ T / F ❯",
+          "runs": [
+            {
+              "t": "(5) Tech executives were more than twice as aware of NLP as the general public. ❮ T / F ❯",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "",
+          "runs": [
+            {
+              "t": "",
+              "ul": false
+            }
+          ]
+        }
+      ]
+    },
+    "step1_c1": {
+      "filename": "3. 문장배열.docx",
+      "question_numbers": [
+        1,
+        2,
+        3
+      ],
+      "paragraph_count": 27,
+      "paragraphs": [
+        {
+          "text": "1. p156-no.01",
+          "runs": [
+            {
+              "t": "1. p156-no.01",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "Over the past twenty years, with the arrival of digital politics, social and political protest movements have changed and become ever more prominent through what the sociologist Manuel Castells has called Networks of Outrage and Hope.",
+          "runs": [
+            {
+              "t": "Over the past twenty years, with the arrival of digital politics, social and political protest movements have changed and become ever more prominent through what the sociologist Manuel Castells has called Networks of Outrage and Hope.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(A) The early examples like the Occupy Movement (2011), the Arab Spring in Egypt (2010), the Umbrella Movement in Hong Kong (2014, 2019), the Gezi Park Movement in Turkey (2013), and the Pussy Riots in Russia (2011) galvanized large numbers of people and attracted world attention.",
+          "runs": [
+            {
+              "t": "(A) The early examples like the Occupy Movement (2011), the Arab Spring in Egypt (2010), the Umbrella Movement in Hong Kong (2014, 2019), the Gezi Park Movement in Turkey (2013), and the Pussy Riots in Russia (2011) galvanized large numbers of people and attracted world attention.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(B) We now have a swirling world of 'online activism', digital rebellion, information politics and People's Platforms.",
+          "runs": [
+            {
+              "t": "(B) We now have a swirling world of 'online activism', digital rebellion, information politics and People's Platforms.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(C) Looking back, most of them have proved unsuccessful, clamped down upon by the state.",
+          "runs": [
+            {
+              "t": "(C) Looking back, most of them have proved unsuccessful, clamped down upon by the state.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(D) Smartphones and social networking now provide a more fluid, leaderless, participatory activism that arises more spontaneously.",
+          "runs": [
+            {
+              "t": "(D) Smartphones and social networking now provide a more fluid, leaderless, participatory activism that arises more spontaneously.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(E) There seems a limit to the power of new social movements.",
+          "runs": [
+            {
+              "t": "(E) There seems a limit to the power of new social movements.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(F) While some suggest that these new politics are enhancing democracy, others maintain that they do not really challenge the dominant power groups.",
+          "runs": [
+            {
+              "t": "(F) While some suggest that these new politics are enhancing democracy, others maintain that they do not really challenge the dominant power groups.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "",
+          "runs": [
+            {
+              "t": "",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "2. p156-no.02",
+          "runs": [
+            {
+              "t": "2. p156-no.02",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "The advent of automobiles drastically altered urban landscapes by enabling the growth of suburbs.",
+          "runs": [
+            {
+              "t": "The advent of automobiles drastically altered urban landscapes by enabling the growth of suburbs.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(A) This decentralization led to altered living patterns, encouraging families to seek homes in quieter, suburban environments while maintaining access to urban job markets.",
+          "runs": [
+            {
+              "t": "(A) This decentralization led to altered living patterns, encouraging families to seek homes in quieter, suburban environments while maintaining access to urban job markets.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(B) This expansion created the modern suburb, characterized by residential zones separate from commercial and industrial areas, promoting a shift from high-density urban living to the spacious suburbs.",
+          "runs": [
+            {
+              "t": "(B) This expansion created the modern suburb, characterized by residential zones separate from commercial and industrial areas, promoting a shift from high-density urban living to the spacious suburbs.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(C) Cars provided individuals the ability to live farther from city centers, where land was cheaper and more abundant.",
+          "runs": [
+            {
+              "t": "(C) Cars provided individuals the ability to live farther from city centers, where land was cheaper and more abundant.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(D) The sprawling growth fueled demands for expanded infrastructure and services in these areas, bringing in new economic opportunities.",
+          "runs": [
+            {
+              "t": "(D) The sprawling growth fueled demands for expanded infrastructure and services in these areas, bringing in new economic opportunities.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(E) In response, urban planning evolved, placing emphasis on roads and highways to accommodate increased travel.",
+          "runs": [
+            {
+              "t": "(E) In response, urban planning evolved, placing emphasis on roads and highways to accommodate increased travel.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(F) Cars were instrumental in shaping this living model by significantly detaching home locations from places of employment and recreation.",
+          "runs": [
+            {
+              "t": "(F) Cars were instrumental in shaping this living model by significantly detaching home locations from places of employment and recreation.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(G) The flexibility cars offered meant people could commute daily, uniting work, leisure, and homelife in new ways.",
+          "runs": [
+            {
+              "t": "(G) The flexibility cars offered meant people could commute daily, uniting work, leisure, and homelife in new ways.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "",
+          "runs": [
+            {
+              "t": "",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "3. p157-no.03",
+          "runs": [
+            {
+              "t": "3. p157-no.03",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "The graph above shows results from a 2018 U.S. survey on awareness of Al uses among the general population and tech executives.",
+          "runs": [
+            {
+              "t": "The graph above shows results from a 2018 U.S. survey on awareness of Al uses among the general population and tech executives.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(A) Tech executives had a higher awareness of Al uses across the various domains compared to the general population, with the exception of Drones.",
+          "runs": [
+            {
+              "t": "(A) Tech executives had a higher awareness of Al uses across the various domains compared to the general population, with the exception of Drones.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(B) Ride-Hailing Apps had the lowest awareness levels in both the general population group and the tech executives group.",
+          "runs": [
+            {
+              "t": "(B) Ride-Hailing Apps had the lowest awareness levels in both the general population group and the tech executives group.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(C) The top three AI domains with the highest awareness among tech executives were Voice Assistants, Natural Language Processing, and Text Recognition.",
+          "runs": [
+            {
+              "t": "(C) The top three AI domains with the highest awareness among tech executives were Voice Assistants, Natural Language Processing, and Text Recognition.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(D) The rate of awareness of AI use for Computer Vision and Drones was the same among tech executives, but for the general population, the awareness of Drones was 10 percentage points higher than that of Computer Vision.",
+          "runs": [
+            {
+              "t": "(D) The rate of awareness of AI use for Computer Vision and Drones was the same among tech executives, but for the general population, the awareness of Drones was 10 percentage points higher than that of Computer Vision.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "(E) Tech executives' awareness of Al use in Natural Language Processing was more than double that of the general public.",
+          "runs": [
+            {
+              "t": "(E) Tech executives' awareness of Al use in Natural Language Processing was more than double that of the general public.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "",
+          "runs": [
+            {
+              "t": "",
+              "ul": false
+            }
+          ]
+        }
+      ]
+    },
+    "step1_c2": {
+      "filename": "4. 빈칸어휘 정답.docx",
+      "question_numbers": [
+        1,
+        2,
+        3
+      ],
+      "paragraph_count": 51,
+      "paragraphs": [
+        {
+          "text": "1. p156-no.01",
+          "runs": [
+            {
+              "t": "1. p156-no.01",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "",
+          "runs": [
+            {
+              "t": "",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "Over the past twenty years, with the arrival of digital politics, social and political protest movements have 1[changed] and become ever more 2[prominent] through what the sociologist Manuel Castells has called Networks of Outrage and Hope.",
+          "runs": [
+            {
+              "t": "Over the past twenty years, with the arrival of digital politics, social and political protest movements have ",
+              "ul": false
+            },
+            {
+              "t": "1",
+              "ul": false
+            },
+            {
+              "t": "[c",
+              "ul": false
+            },
+            {
+              "t": "hanged",
+              "ul": false
+            },
+            {
+              "t": "]",
+              "ul": false
+            },
+            {
+              "t": " and become ever more ",
+              "ul": false
+            },
+            {
+              "t": "2",
+              "ul": false
+            },
+            {
+              "t": "[p",
+              "ul": false
+            },
+            {
+              "t": "rominent",
+              "ul": false
+            },
+            {
+              "t": "]",
+              "ul": false
+            },
+            {
+              "t": " through what the sociologist Manuel Castells has called Networks of Outrage and Hope.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "지난 20년에 걸쳐, 디지털 정치의 도래와 더불어, 사회적ㆍ정치적 항의 운동은 변화해 왔고, 사회학자 Manuel Castells가 '분노와 희망의 네트워크'라고 부른 것을 통해 점점 더 두드러지게 되었다.",
+          "runs": [
+            {
+              "t": "지난 20년에 걸쳐, 디지털 정치의 도래와 더불어, 사회적ㆍ정치적 항의 운동은 변화해 왔고, 사회학자 Manuel Castells가 '분노와 희망의 네트워크'라고 부른 것을 통해 점점 더 두드러지게 되었다.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "We now have a swirling world of 'online activism', digital rebellion, information politics and People's Platforms.",
+          "runs": [
+            {
+              "t": "We now have a swirling world of 'online activism', digital rebellion, information politics and People's Platforms.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "우리는 이제 '온라인 행동주의', 디지털 반란, 정보 정치, 그리고 '대중의 플랫폼'이라는 소용돌이치는 세계 속에 있다.",
+          "runs": [
+            {
+              "t": "우리는 이제 '온라인 행동주의', 디지털 반란, 정보 정치, 그리고 '대중의 플랫폼'이라는 소용돌이치는 세계 속에 있다.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "Smartphones and social networking now provide a more 3[fluid], 4[leaderless], participatory activism that arises more spontaneously.",
+          "runs": [
+            {
+              "t": "Smartphones and social networking now provide a more ",
+              "ul": false
+            },
+            {
+              "t": "3",
+              "ul": false
+            },
+            {
+              "t": "[f",
+              "ul": false
+            },
+            {
+              "t": "luid",
+              "ul": false
+            },
+            {
+              "t": "]",
+              "ul": false
+            },
+            {
+              "t": ", ",
+              "ul": false
+            },
+            {
+              "t": "4",
+              "ul": false
+            },
+            {
+              "t": "[l",
+              "ul": false
+            },
+            {
+              "t": "eaderless",
+              "ul": false
+            },
+            {
+              "t": "]",
+              "ul": false
+            },
+            {
+              "t": ", participatory activism that arises more spontaneously.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "스마트폰과 소셜 네트워킹은 이제 더 자생적으로 일어나는, 더 유동적이고, 지도자가 없는 참여적인 행동주의를 제공한다.",
+          "runs": [
+            {
+              "t": "스마트폰과 소셜 네트워킹은 이제 더 자생적으로 일어나는, 더 유동적이고, 지도자가 없는 참여적인 행동주의를 제공한다.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "The early examples like the Occupy Movement (2011), the Arab Spring in Egypt (2010), the Umbrella Movement in Hong Kong (2014, 2019), the Gezi Park Movement in Turkey (2013), and the Pussy Riots in Russia (2011) 5[galvanized] large numbers of people and attracted world attention.",
+          "runs": [
+            {
+              "t": "The early examples like the Occupy Movement (2011), the Arab Spring in Egypt (2010), the Umbrella Movement in Hong Kong (2014, 2019), the Gezi Park Movement in Turkey (2013), and the Pussy Riots in Russia (2011) ",
+              "ul": false
+            },
+            {
+              "t": "5",
+              "ul": false
+            },
+            {
+              "t": "[g",
+              "ul": false
+            },
+            {
+              "t": "alvanized",
+              "ul": false
+            },
+            {
+              "t": "]",
+              "ul": false
+            },
+            {
+              "t": " large numbers of people and attracted world attention.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "초기 사례들인 '점거 운동'(2011), 이집트의 '아랍의 봄'(2010), 홍콩의 '우산 운동'(2014, 2019), 튀르키예의 'Gezi 공원 운동'(2013), 러시아의 'Pussy Riot 시위'(2011)는 많은 사람을 행동에 나서게 했고 전 세계의 시선을 끌었다.",
+          "runs": [
+            {
+              "t": "초기 사례들인 '점거 운동'(2011), 이집트의 '아랍의 봄'(2010), 홍콩의 '우산 운동'(2014, 2019), 튀르키예의 'Gezi 공원 운동'(2013), 러시아의 'Pussy Riot 시위'(2011)는 많은 사람을 행동에 나서게 했고 전 세계의 시선을 끌었다.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "While some suggest that these new politics are 6[enhancing] 7[democracy], others maintain that they do not really challenge the 8[dominant] power groups.",
+          "runs": [
+            {
+              "t": "While some suggest that these new politics are ",
+              "ul": false
+            },
+            {
+              "t": "6",
+              "ul": false
+            },
+            {
+              "t": "[e",
+              "ul": false
+            },
+            {
+              "t": "nhancing",
+              "ul": false
+            },
+            {
+              "t": "]",
+              "ul": false
+            },
+            {
+              "t": " ",
+              "ul": false
+            },
+            {
+              "t": "7",
+              "ul": false
+            },
+            {
+              "t": "[d",
+              "ul": false
+            },
+            {
+              "t": "emocracy",
+              "ul": false
+            },
+            {
+              "t": "]",
+              "ul": false
+            },
+            {
+              "t": ", others maintain that they do not really challenge the ",
+              "ul": false
+            },
+            {
+              "t": "8",
+              "ul": false
+            },
+            {
+              "t": "[d",
+              "ul": false
+            },
+            {
+              "t": "ominant",
+              "ul": false
+            },
+            {
+              "t": "]",
+              "ul": false
+            },
+            {
+              "t": " power groups.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "어떤 이들은 이러한 새로운 정치가 민주주의를 강화한다고 주장하는 반면, 또 어떤 이들은 그것이 지배적인 권력 집단에 실제로 도전하지는 못한다고 주장한다.",
+          "runs": [
+            {
+              "t": "어떤 이들은 이러한 새로운 정치가 민주주의를 강화한다고 주장하는 반면, 또 어떤 이들은 그것이 지배적인 권력 집단에 실제로 도전하지는 못한다고 주장한다.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "Looking back, most of them have proved 9[unsuccessful], 10[clamped] 11[down] upon by the state.",
+          "runs": [
+            {
+              "t": "Looking back, most of them have proved ",
+              "ul": false
+            },
+            {
+              "t": "9",
+              "ul": false
+            },
+            {
+              "t": "[u",
+              "ul": false
+            },
+            {
+              "t": "nsuccessful",
+              "ul": false
+            },
+            {
+              "t": "]",
+              "ul": false
+            },
+            {
+              "t": ", ",
+              "ul": false
+            },
+            {
+              "t": "10",
+              "ul": false
+            },
+            {
+              "t": "[c",
+              "ul": false
+            },
+            {
+              "t": "lamped",
+              "ul": false
+            },
+            {
+              "t": "]",
+              "ul": false
+            },
+            {
+              "t": " ",
+              "ul": false
+            },
+            {
+              "t": "11",
+              "ul": false
+            },
+            {
+              "t": "[d",
+              "ul": false
+            },
+            {
+              "t": "own",
+              "ul": false
+            },
+            {
+              "t": "]",
+              "ul": false
+            },
+            {
+              "t": " upon by the state.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "되돌아보면, 그것들 대부분은 국가에 의해 진압되어, 성공하지 못한 것으로 드러났다.",
+          "runs": [
+            {
+              "t": "되돌아보면, 그것들 대부분은 국가에 의해 진압되어, 성공하지 못한 것으로 드러났다.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "There seems a 12[limit] to the power of new social movements.",
+          "runs": [
+            {
+              "t": "There seems a ",
+              "ul": false
+            },
+            {
+              "t": "12",
+              "ul": false
+            },
+            {
+              "t": "[l",
+              "ul": false
+            },
+            {
+              "t": "imit",
+              "ul": false
+            },
+            {
+              "t": "]",
+              "ul": false
+            },
+            {
+              "t": " to the power of new social movements.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "새로운 사회 운동의 힘에는 어떤 한계가 있는 듯하다.",
+          "runs": [
+            {
+              "t": "새로운 사회 운동의 힘에는 어떤 한계가 있는 듯하다.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "",
+          "runs": [
+            {
+              "t": "",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "2. p156-no.02",
+          "runs": [
+            {
+              "t": "2. p156-no.02",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "",
+          "runs": [
+            {
+              "t": "",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "The advent of automobiles drastically altered 13[urban] 14[landscapes] by enabling the growth of suburbs.",
+          "runs": [
+            {
+              "t": "The advent of automobiles drastically altered ",
+              "ul": false
+            },
+            {
+              "t": "13",
+              "ul": false
+            },
+            {
+              "t": "[u",
+              "ul": false
+            },
+            {
+              "t": "rban",
+              "ul": false
+            },
+            {
+              "t": "]",
+              "ul": false
+            },
+            {
+              "t": " ",
+              "ul": false
+            },
+            {
+              "t": "14",
+              "ul": false
+            },
+            {
+              "t": "[l",
+              "ul": false
+            },
+            {
+              "t": "andscapes",
+              "ul": false
+            },
+            {
+              "t": "]",
+              "ul": false
+            },
+            {
+              "t": " by enabling the growth of suburbs.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "자동차의 출현은 교외의 성장을 가능하게 함으로써 도시 경관을 급격하게 변화시켰다.",
+          "runs": [
+            {
+              "t": "자동차의 출현은 교외의 성장을 가능하게 함으로써 도시 경관을 급격하게 변화시켰다.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "Cars provided individuals the ability to live 15[farther] from city centers, where land was 16[cheaper] and more 17[abundant].",
+          "runs": [
+            {
+              "t": "Cars provided individuals the ability to live ",
+              "ul": false
+            },
+            {
+              "t": "15",
+              "ul": false
+            },
+            {
+              "t": "[f",
+              "ul": false
+            },
+            {
+              "t": "arther",
+              "ul": false
+            },
+            {
+              "t": "]",
+              "ul": false
+            },
+            {
+              "t": " from city centers, where land was ",
+              "ul": false
+            },
+            {
+              "t": "16",
+              "ul": false
+            },
+            {
+              "t": "[c",
+              "ul": false
+            },
+            {
+              "t": "heaper",
+              "ul": false
+            },
+            {
+              "t": "]",
+              "ul": false
+            },
+            {
+              "t": " and more ",
+              "ul": false
+            },
+            {
+              "t": "17",
+              "ul": false
+            },
+            {
+              "t": "[a",
+              "ul": false
+            },
+            {
+              "t": "bundant",
+              "ul": false
+            },
+            {
+              "t": "]",
+              "ul": false
+            },
+            {
+              "t": ".",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "자동차는 사람들에게 도심으로부터 더 먼 곳에서 살 수 있는 능력을 제공했는데, 그곳은 토지가 더 저렴하고 더 많았다.",
+          "runs": [
+            {
+              "t": "자동차는 사람들에게 도심으로부터 더 먼 곳에서 살 수 있는 능력을 제공했는데, 그곳은 토지가 더 저렴하고 더 많았다.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "This expansion created the modern suburb, characterized by residential zones 18[separate] from commercial and industrial areas, promoting a 19[shift] from high-density urban living to the spacious suburbs.",
+          "runs": [
+            {
+              "t": "This expansion created the modern suburb, characterized by residential zones ",
+              "ul": false
+            },
+            {
+              "t": "18",
+              "ul": false
+            },
+            {
+              "t": "[s",
+              "ul": false
+            },
+            {
+              "t": "eparate",
+              "ul": false
+            },
+            {
+              "t": "]",
+              "ul": false
+            },
+            {
+              "t": " from commercial and industrial areas, promoting a ",
+              "ul": false
+            },
+            {
+              "t": "19",
+              "ul": false
+            },
+            {
+              "t": "[s",
+              "ul": false
+            },
+            {
+              "t": "hift",
+              "ul": false
+            },
+            {
+              "t": "]",
+              "ul": false
+            },
+            {
+              "t": " from high-density urban living to the spacious suburbs.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "이러한 확장은 상업 및 산업 지역에서 분리된 주거 지역을 특징으로 하는 현대 교외 지역을 만들어냈고, 고밀도 도시 생활에서 넓은 교외 지역으로의 이동을 촉진했다.",
+          "runs": [
+            {
+              "t": "이러한 확장은 상업 및 산업 지역에서 분리된 주거 지역을 특징으로 하는 현대 교외 지역을 만들어냈고, 고밀도 도시 생활에서 넓은 교외 지역으로의 이동을 촉진했다.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "The flexibility cars offered meant people could 20[commute] daily, uniting work, leisure, and homelife in new ways.",
+          "runs": [
+            {
+              "t": "The flexibility cars offered meant people could ",
+              "ul": false
+            },
+            {
+              "t": "20",
+              "ul": false
+            },
+            {
+              "t": "[c",
+              "ul": false
+            },
+            {
+              "t": "ommute",
+              "ul": false
+            },
+            {
+              "t": "]",
+              "ul": false
+            },
+            {
+              "t": " daily, uniting work, leisure, and homelife in new ways.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "자동차가 제공한 유연성은 사람들이 매일 출퇴근할 수 있게 되어서, 일과 여가와 가정생활을 새로운 방식으로 결합하게 됨을 의미했다.",
+          "runs": [
+            {
+              "t": "자동차가 제공한 유연성은 사람들이 매일 출퇴근할 수 있게 되어서, 일과 여가와 가정생활을 새로운 방식으로 결합하게 됨을 의미했다.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "In response, urban planning evolved, placing emphasis on roads and highways to 21[accommodate] increased travel.",
+          "runs": [
+            {
+              "t": "In response, urban planning evolved, placing emphasis on roads and highways to ",
+              "ul": false
+            },
+            {
+              "t": "21",
+              "ul": false
+            },
+            {
+              "t": "[a",
+              "ul": false
+            },
+            {
+              "t": "ccommodate",
+              "ul": false
+            },
+            {
+              "t": "]",
+              "ul": false
+            },
+            {
+              "t": " increased travel.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "이에 따라, 도시 계획은 늘어난 이동을 수용하기 위해 도로와 고속 도로에 중점을 두는 방식으로 진화했다.",
+          "runs": [
+            {
+              "t": "이에 따라, 도시 계획은 늘어난 이동을 수용하기 위해 도로와 고속 도로에 중점을 두는 방식으로 진화했다.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "This decentralization led to 22[altered] living patterns, encouraging families to seek homes in quieter, suburban environments while maintaining 23[access] to urban job markets.",
+          "runs": [
+            {
+              "t": "This decentralization led to ",
+              "ul": false
+            },
+            {
+              "t": "22",
+              "ul": false
+            },
+            {
+              "t": "[a",
+              "ul": false
+            },
+            {
+              "t": "ltered",
+              "ul": false
+            },
+            {
+              "t": "]",
+              "ul": false
+            },
+            {
+              "t": " living patterns, encouraging families to seek homes in quieter, suburban environments while maintaining ",
+              "ul": false
+            },
+            {
+              "t": "23",
+              "ul": false
+            },
+            {
+              "t": "[a",
+              "ul": false
+            },
+            {
+              "t": "ccess",
+              "ul": false
+            },
+            {
+              "t": "]",
+              "ul": false
+            },
+            {
+              "t": " to urban job markets.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "이러한 분산은 생활 패턴의 변화를 가져왔고, 가정들이 도시의 취업 시장에 대한 접근성을 유지하면서 더 조용한, 교외 환경에 있는 주택을 찾게 했다.",
+          "runs": [
+            {
+              "t": "이러한 분산은 생활 패턴의 변화를 가져왔고, 가정들이 도시의 취업 시장에 대한 접근성을 유지하면서 더 조용한, 교외 환경에 있는 주택을 찾게 했다.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "The sprawling growth fueled 24[demands] for expanded infrastructure and services in these areas, bringing in new economic opportunities.",
+          "runs": [
+            {
+              "t": "The sprawling growth fueled ",
+              "ul": false
+            },
+            {
+              "t": "24",
+              "ul": false
+            },
+            {
+              "t": "[d",
+              "ul": false
+            },
+            {
+              "t": "emands",
+              "ul": false
+            },
+            {
+              "t": "]",
+              "ul": false
+            },
+            {
+              "t": " for expanded infrastructure and services in these areas, bringing in new economic opportunities.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "무질서하게 퍼져 나가는 확장은 이러한 지역의 사회 기반 시설과 서비스 확장에 대한 수요를 촉진하여, 새로운 경제적 기회를 가져왔다.",
+          "runs": [
+            {
+              "t": "무질서하게 퍼져 나가는 확장은 이러한 지역의 사회 기반 시설과 서비스 확장에 대한 수요를 촉진하여, 새로운 경제적 기회를 가져왔다.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "Cars were instrumental in shaping this living model by significantly 25[detaching] home locations from places of employment and recreation.",
+          "runs": [
+            {
+              "t": "Cars were instrumental in shaping this living model by significantly ",
+              "ul": false
+            },
+            {
+              "t": "25",
+              "ul": false
+            },
+            {
+              "t": "[d",
+              "ul": false
+            },
+            {
+              "t": "etaching",
+              "ul": false
+            },
+            {
+              "t": "]",
+              "ul": false
+            },
+            {
+              "t": " home locations from places of employment and recreation.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "자동차는 주거지를 직장과 여가 장소로부터 크게 분리함으로써 이러한 생활 모델을 형성하는 데 중요한 역할을 했다.",
+          "runs": [
+            {
+              "t": "자동차는 주거지를 직장과 여가 장소로부터 크게 분리함으로써 이러한 생활 모델을 형성하는 데 중요한 역할을 했다.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "",
+          "runs": [
+            {
+              "t": "",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "3. p157-no.03",
+          "runs": [
+            {
+              "t": "3. p157-no.03",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "",
+          "runs": [
+            {
+              "t": "",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "The graph above shows results from a 2018 U.S. survey on awareness of Al uses among the general population and tech executives.",
+          "runs": [
+            {
+              "t": "The graph above shows results from a 2018 U.S. survey on awareness of Al uses among the general population and tech executives.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "위 도표는 일반인과 기술 기업 임원의 AI 활용 인식에 관한 2018년 미국 설문조사 결과를 보여준다.",
+          "runs": [
+            {
+              "t": "위 도표는 일반인과 기술 기업 임원의 AI 활용 인식에 관한 2018년 미국 설문조사 결과를 보여준다.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "Tech executives had a 26[higher] awareness of Al uses across the various domains compared to the general population, with the exception of Drones.",
+          "runs": [
+            {
+              "t": "Tech executives had a ",
+              "ul": false
+            },
+            {
+              "t": "26",
+              "ul": false
+            },
+            {
+              "t": "[h",
+              "ul": false
+            },
+            {
+              "t": "igher",
+              "ul": false
+            },
+            {
+              "t": "]",
+              "ul": false
+            },
+            {
+              "t": " awareness of Al uses across the various domains compared to the general population, with the exception of Drones.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "기술 기업 임원은 일반인과 비교했을 때, '드론'을 제외한 다양한 영역에서의 AI 활용에 대해 더 높은 인지도를 가지고 있었다.",
+          "runs": [
+            {
+              "t": "기술 기업 임원은 일반인과 비교했을 때, '드론'을 제외한 다양한 영역에서의 AI 활용에 대해 더 높은 인지도를 가지고 있었다.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "The top three AI domains with the 27[highest] awareness among tech executives were Voice Assistants, Natural Language Processing, and Text Recognition.",
+          "runs": [
+            {
+              "t": "The top three AI domains with the ",
+              "ul": false
+            },
+            {
+              "t": "27",
+              "ul": false
+            },
+            {
+              "t": "[h",
+              "ul": false
+            },
+            {
+              "t": "ighest",
+              "ul": false
+            },
+            {
+              "t": "]",
+              "ul": false
+            },
+            {
+              "t": " awareness among tech executives were Voice Assistants, Natural Language Processing, and Text Recognition.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "기술 기업 임원이 가장 높은 인지도를 가진 상위 3개 AI 분야는 '음성 비서', '자연어 처리', 그리고 '텍스트 인식'이었다.",
+          "runs": [
+            {
+              "t": "기술 기업 임원이 가장 높은 인지도를 가진 상위 3개 AI 분야는 '음성 비서', '자연어 처리', 그리고 '텍스트 인식'이었다.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "Ride-Hailing Apps had the 28[lowest] awareness levels in both the general population group and the tech executives group.",
+          "runs": [
+            {
+              "t": "Ride-Hailing Apps had the ",
+              "ul": false
+            },
+            {
+              "t": "28",
+              "ul": false
+            },
+            {
+              "t": "[l",
+              "ul": false
+            },
+            {
+              "t": "owest",
+              "ul": false
+            },
+            {
+              "t": "]",
+              "ul": false
+            },
+            {
+              "t": " awareness levels in both the general population group and the tech executives group.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "'차량 호출 앱'은 일반인 그룹과 기술 기업 임원 그룹 둘 다에서 가장 낮은 인식 수준을 보였다.",
+          "runs": [
+            {
+              "t": "'차량 호출 앱'은 일반인 그룹과 기술 기업 임원 그룹 둘 다에서 가장 낮은 인식 수준을 보였다.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "Tech executives' awareness of Al use in Natural Language Processing was more than 29[double] that of the general public.",
+          "runs": [
+            {
+              "t": "Tech executives' awareness of Al use in Natural Language Processing was more than ",
+              "ul": false
+            },
+            {
+              "t": "29",
+              "ul": false
+            },
+            {
+              "t": "[d",
+              "ul": false
+            },
+            {
+              "t": "ouble",
+              "ul": false
+            },
+            {
+              "t": "]",
+              "ul": false
+            },
+            {
+              "t": " that of the general public.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "'자연어 처리'에서 기술 기업 임원의 AI 활용에 대한 인지도가 일반인의 것보다 두 배가 넘었다.",
+          "runs": [
+            {
+              "t": "'자연어 처리'에서 기술 기업 임원의 AI 활용에 대한 인지도가 일반인의 것보다 두 배가 넘었다.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "The rate of awareness of AI use for Computer Vision and Drones was the 30[same] among tech executives, but for the general population, the awareness of Drones was 10 percentage points 31[higher] than that of Computer Vision.",
+          "runs": [
+            {
+              "t": "The rate of awareness of AI use for Computer Vision and Drones was the ",
+              "ul": false
+            },
+            {
+              "t": "30",
+              "ul": false
+            },
+            {
+              "t": "[s",
+              "ul": false
+            },
+            {
+              "t": "ame",
+              "ul": false
+            },
+            {
+              "t": "]",
+              "ul": false
+            },
+            {
+              "t": " among tech executives, but for the general population, the awareness of Drones was 10 percentage points ",
+              "ul": false
+            },
+            {
+              "t": "31",
+              "ul": false
+            },
+            {
+              "t": "[h",
+              "ul": false
+            },
+            {
+              "t": "igher",
+              "ul": false
+            },
+            {
+              "t": "]",
+              "ul": false
+            },
+            {
+              "t": " than that of Computer Vision.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "'컴퓨터 비전'과 '드론'의 AI 활용 인지도 비율은 기술 기업 임원 사이에서는 동일했지만, 일반인에게 '드론'에 대한 인지도가 '컴퓨터 비전'에 대한 것보다 10%포인트 더 높았다.",
+          "runs": [
+            {
+              "t": "'컴퓨터 비전'과 '드론'의 AI 활용 인지도 비율은 기술 기업 임원 사이에서는 동일했지만, 일반인에게 '드론'에 대한 인지도가 '컴퓨터 비전'에 대한 것보다 10%포인트 더 높았다.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "",
+          "runs": [
+            {
+              "t": "",
+              "ul": false
+            }
+          ]
+        }
+      ]
+    },
+    "step2_a1": {
+      "filename": "5. 어법선택.docx",
+      "question_numbers": [
+        1,
+        2
+      ],
+      "paragraph_count": 6,
+      "paragraphs": [
+        {
+          "text": "1. p156-no.01",
+          "runs": [
+            {
+              "t": "1. p156-no.01",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "Over the past twenty years, with the arrival of digital politics, social and political protest movements have changed and become ever more prominent through 1[what / that] the sociologist Manuel Castells has 2[called / been called] Networks of Outrage and Hope. We now have a 3[swirled / swirling] world of 'online activism', digital rebellion, information politics and People's Platforms. Smartphones and social networking now 4[provides / provide] a more fluid, leaderless, participatory activism 5[that / what] arises more 6[spontaneously / spontaneous]. The early examples like the Occupy Movement (2011), the Arab Spring in Egypt (2010), the Umbrella Movement in Hong Kong (2014, 2019), the Gezi Park Movement in Turkey (2013), and the Pussy Riots in Russia (2011) 7[galvanized / galvanizing] large numbers of people and 8[attracting / attracted] world attention. While some 9[are suggested / suggest] 10[what / that] these new politics are enhancing democracy, others 11[maintaining / maintain] 12[what / that] they do not really challenge the dominant power groups. 13[Looked / Looking] back, most of them 14[have / has] 15[proved / been proved] 16[unsuccessful / unsuccessfully], 17[clamping / clamped] down upon by the state. There 18[seems / seem] a limit to the power of new social movements. ",
+          "runs": [
+            {
+              "t": "Over the past twenty years, with the arrival of digital politics, social and political protest movements have changed and become ever more prominent through ",
+              "ul": false
+            },
+            {
+              "t": "1",
+              "ul": false
+            },
+            {
+              "t": "[what / that]",
+              "ul": false
+            },
+            {
+              "t": " the sociologist Manuel Castells has ",
+              "ul": false
+            },
+            {
+              "t": "2",
+              "ul": false
+            },
+            {
+              "t": "[called / been called]",
+              "ul": false
+            },
+            {
+              "t": " Networks of Outrage and Hope. We now have a ",
+              "ul": false
+            },
+            {
+              "t": "3",
+              "ul": false
+            },
+            {
+              "t": "[swirled / swirling]",
+              "ul": false
+            },
+            {
+              "t": " world of 'online activism', digital rebellion, information politics and People's Platforms. Smartphones and social networking now ",
+              "ul": false
+            },
+            {
+              "t": "4",
+              "ul": false
+            },
+            {
+              "t": "[provides / provide]",
+              "ul": false
+            },
+            {
+              "t": " a more fluid, leaderless, participatory activism ",
+              "ul": false
+            },
+            {
+              "t": "5",
+              "ul": false
+            },
+            {
+              "t": "[that / what]",
+              "ul": false
+            },
+            {
+              "t": " arises more ",
+              "ul": false
+            },
+            {
+              "t": "6",
+              "ul": false
+            },
+            {
+              "t": "[spontaneously / spontaneous]",
+              "ul": false
+            },
+            {
+              "t": ". The early examples like the Occupy Movement (2011), the Arab Spring in Egypt (2010), the Umbrella Movement in Hong Kong (2014, 2019), the Gezi Park Movement in Turkey (2013), and the Pussy Riots in Russia (2011) ",
+              "ul": false
+            },
+            {
+              "t": "7",
+              "ul": false
+            },
+            {
+              "t": "[galvanized / galvanizing]",
+              "ul": false
+            },
+            {
+              "t": " large numbers of people and ",
+              "ul": false
+            },
+            {
+              "t": "8",
+              "ul": false
+            },
+            {
+              "t": "[attracting / attracted]",
+              "ul": false
+            },
+            {
+              "t": " world attention. While some ",
+              "ul": false
+            },
+            {
+              "t": "9",
+              "ul": false
+            },
+            {
+              "t": "[are suggested / suggest]",
+              "ul": false
+            },
+            {
+              "t": " ",
+              "ul": false
+            },
+            {
+              "t": "10",
+              "ul": false
+            },
+            {
+              "t": "[what / that]",
+              "ul": false
+            },
+            {
+              "t": " these new politics are enhancing democracy, others ",
+              "ul": false
+            },
+            {
+              "t": "11",
+              "ul": false
+            },
+            {
+              "t": "[maintaining / maintain]",
+              "ul": false
+            },
+            {
+              "t": " ",
+              "ul": false
+            },
+            {
+              "t": "12",
+              "ul": false
+            },
+            {
+              "t": "[what / that]",
+              "ul": false
+            },
+            {
+              "t": " they do not really challenge the dominant power groups. ",
+              "ul": false
+            },
+            {
+              "t": "13",
+              "ul": false
+            },
+            {
+              "t": "[Looked / Looking]",
+              "ul": false
+            },
+            {
+              "t": " back, most of them ",
+              "ul": false
+            },
+            {
+              "t": "14",
+              "ul": false
+            },
+            {
+              "t": "[have / has]",
+              "ul": false
+            },
+            {
+              "t": " ",
+              "ul": false
+            },
+            {
+              "t": "15",
+              "ul": false
+            },
+            {
+              "t": "[proved / been proved]",
+              "ul": false
+            },
+            {
+              "t": " ",
+              "ul": false
+            },
+            {
+              "t": "16",
+              "ul": false
+            },
+            {
+              "t": "[unsuccessful / unsuccessfully]",
+              "ul": false
+            },
+            {
+              "t": ", ",
+              "ul": false
+            },
+            {
+              "t": "17",
+              "ul": false
+            },
+            {
+              "t": "[clamping / clamped]",
+              "ul": false
+            },
+            {
+              "t": " down upon by the state. There ",
+              "ul": false
+            },
+            {
+              "t": "18",
+              "ul": false
+            },
+            {
+              "t": "[seems / seem]",
+              "ul": false
+            },
+            {
+              "t": " a limit to the power of new social movements. ",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "",
+          "runs": [
+            {
+              "t": "",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "2. p156-no.02",
+          "runs": [
+            {
+              "t": "2. p156-no.02",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "The advent of automobiles 19[drastically / drastical] 20[altered / was altered] urban landscapes by 21[enabled / enabling] the growth of suburbs. Cars 22[provided / providing] individuals the ability 23[living / to live] farther from city centers, 24[which / where] land was cheaper and more abundant. This expansion 25[creating / created] the modern suburb, 26[characterizing / characterized] by residential zones 27[separate / separating] from commercial and industrial areas, 28[promoted / promoting] a shift from high-density urban 29[live / living] to the spacious suburbs. The flexibility cars 30[offering / offered] 31[meant / meaning] people could 32[commuting / commute] daily, uniting work, leisure, and homelife in new ways. In response, urban planning 33[evolving / evolved], 34[placed / placing] emphasis on roads and highways to 35[accommodate / be accommodated] increased travel. This decentralization 36[leading / led] to 37[altered / altering] 38[living / lived] patterns, 39[encouraged / encouraging] families 40[to seek / seek] homes in quieter, suburban environments while 41[maintaining / maintained] access to urban job markets. The sprawling growth 42[fueling / fueled] demands for 43[expanded / expanding] infrastructure and services in these areas, 44[bringing / brought] in new economic opportunities. Cars 45[being / were] instrumental in shaping this 46[live / living] model by 47[significantly / significant] 48[detached / detaching] home locations from places of employment and recreation. ",
+          "runs": [
+            {
+              "t": "The advent of automobiles ",
+              "ul": false
+            },
+            {
+              "t": "19",
+              "ul": false
+            },
+            {
+              "t": "[drastically / drastical]",
+              "ul": false
+            },
+            {
+              "t": " ",
+              "ul": false
+            },
+            {
+              "t": "20",
+              "ul": false
+            },
+            {
+              "t": "[altered / was altered]",
+              "ul": false
+            },
+            {
+              "t": " urban landscapes by ",
+              "ul": false
+            },
+            {
+              "t": "21",
+              "ul": false
+            },
+            {
+              "t": "[enabled / enabling]",
+              "ul": false
+            },
+            {
+              "t": " the growth of suburbs. Cars ",
+              "ul": false
+            },
+            {
+              "t": "22",
+              "ul": false
+            },
+            {
+              "t": "[provided / providing]",
+              "ul": false
+            },
+            {
+              "t": " individuals the ability ",
+              "ul": false
+            },
+            {
+              "t": "23",
+              "ul": false
+            },
+            {
+              "t": "[living / to live]",
+              "ul": false
+            },
+            {
+              "t": " farther from city centers, ",
+              "ul": false
+            },
+            {
+              "t": "24",
+              "ul": false
+            },
+            {
+              "t": "[which / where]",
+              "ul": false
+            },
+            {
+              "t": " land was cheaper and more abundant. This expansion ",
+              "ul": false
+            },
+            {
+              "t": "25",
+              "ul": false
+            },
+            {
+              "t": "[creating / created]",
+              "ul": false
+            },
+            {
+              "t": " the modern suburb, ",
+              "ul": false
+            },
+            {
+              "t": "26",
+              "ul": false
+            },
+            {
+              "t": "[characterizing / characterized]",
+              "ul": false
+            },
+            {
+              "t": " by residential zones ",
+              "ul": false
+            },
+            {
+              "t": "27",
+              "ul": false
+            },
+            {
+              "t": "[separate / separating]",
+              "ul": false
+            },
+            {
+              "t": " from commercial and industrial areas, ",
+              "ul": false
+            },
+            {
+              "t": "28",
+              "ul": false
+            },
+            {
+              "t": "[promoted / promoting]",
+              "ul": false
+            },
+            {
+              "t": " a shift from high-density urban ",
+              "ul": false
+            },
+            {
+              "t": "29",
+              "ul": false
+            },
+            {
+              "t": "[live / living]",
+              "ul": false
+            },
+            {
+              "t": " to the spacious suburbs. The flexibility cars ",
+              "ul": false
+            },
+            {
+              "t": "30",
+              "ul": false
+            },
+            {
+              "t": "[offering / offered]",
+              "ul": false
+            },
+            {
+              "t": " ",
+              "ul": false
+            },
+            {
+              "t": "31",
+              "ul": false
+            },
+            {
+              "t": "[meant / meaning]",
+              "ul": false
+            },
+            {
+              "t": " people could ",
+              "ul": false
+            },
+            {
+              "t": "32",
+              "ul": false
+            },
+            {
+              "t": "[commuting / commute]",
+              "ul": false
+            },
+            {
+              "t": " daily, uniting work, leisure, and homelife in new ways. In response, urban planning ",
+              "ul": false
+            },
+            {
+              "t": "33",
+              "ul": false
+            },
+            {
+              "t": "[evolving / evolved]",
+              "ul": false
+            },
+            {
+              "t": ", ",
+              "ul": false
+            },
+            {
+              "t": "34",
+              "ul": false
+            },
+            {
+              "t": "[placed / placing]",
+              "ul": false
+            },
+            {
+              "t": " emphasis on roads and highways to ",
+              "ul": false
+            },
+            {
+              "t": "35",
+              "ul": false
+            },
+            {
+              "t": "[accommodate / be accommodated]",
+              "ul": false
+            },
+            {
+              "t": " increased travel. This decentralization ",
+              "ul": false
+            },
+            {
+              "t": "36",
+              "ul": false
+            },
+            {
+              "t": "[leading / led]",
+              "ul": false
+            },
+            {
+              "t": " to ",
+              "ul": false
+            },
+            {
+              "t": "37",
+              "ul": false
+            },
+            {
+              "t": "[altered / altering]",
+              "ul": false
+            },
+            {
+              "t": " ",
+              "ul": false
+            },
+            {
+              "t": "38",
+              "ul": false
+            },
+            {
+              "t": "[living / lived]",
+              "ul": false
+            },
+            {
+              "t": " patterns, ",
+              "ul": false
+            },
+            {
+              "t": "39",
+              "ul": false
+            },
+            {
+              "t": "[encouraged / encouraging]",
+              "ul": false
+            },
+            {
+              "t": " families ",
+              "ul": false
+            },
+            {
+              "t": "40",
+              "ul": false
+            },
+            {
+              "t": "[to seek / seek]",
+              "ul": false
+            },
+            {
+              "t": " homes in quieter, suburban environments while ",
+              "ul": false
+            },
+            {
+              "t": "41",
+              "ul": false
+            },
+            {
+              "t": "[maintaining / maintained]",
+              "ul": false
+            },
+            {
+              "t": " access to urban job markets. The sprawling growth ",
+              "ul": false
+            },
+            {
+              "t": "42",
+              "ul": false
+            },
+            {
+              "t": "[fueling / fueled]",
+              "ul": false
+            },
+            {
+              "t": " demands for ",
+              "ul": false
+            },
+            {
+              "t": "43",
+              "ul": false
+            },
+            {
+              "t": "[expanded / expanding]",
+              "ul": false
+            },
+            {
+              "t": " infrastructure and services in these areas, ",
+              "ul": false
+            },
+            {
+              "t": "44",
+              "ul": false
+            },
+            {
+              "t": "[bringing / brought]",
+              "ul": false
+            },
+            {
+              "t": " in new economic opportunities. Cars ",
+              "ul": false
+            },
+            {
+              "t": "45",
+              "ul": false
+            },
+            {
+              "t": "[being / were]",
+              "ul": false
+            },
+            {
+              "t": " instrumental in shaping this ",
+              "ul": false
+            },
+            {
+              "t": "46",
+              "ul": false
+            },
+            {
+              "t": "[live / living]",
+              "ul": false
+            },
+            {
+              "t": " model by ",
+              "ul": false
+            },
+            {
+              "t": "47",
+              "ul": false
+            },
+            {
+              "t": "[significantly / significant]",
+              "ul": false
+            },
+            {
+              "t": " ",
+              "ul": false
+            },
+            {
+              "t": "48",
+              "ul": false
+            },
+            {
+              "t": "[detached / detaching]",
+              "ul": false
+            },
+            {
+              "t": " home locations from places of employment and recreation. ",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "",
+          "runs": [
+            {
+              "t": "",
+              "ul": false
+            }
+          ]
+        }
+      ]
+    },
+    "step2_a1_btm": {
+      "filename": "6. 어법 객관식.docx",
+      "question_numbers": [
+        1,
+        2,
+        3
+      ],
+      "paragraph_count": 8,
+      "paragraphs": [
+        {
+          "text": "1. p156-no.01  (정답 1개)",
+          "runs": [
+            {
+              "t": "1. p156-no.01  (정답 1개)",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "Over the past twenty years, with the arrival of digital politics, social and political protest movements have changed and ①become ever more prominent through ②that the sociologist Manuel Castells has called Networks of Outrage and Hope. We now have a swirling world of 'online activism', digital rebellion, information politics and People's Platforms. Smartphones and social networking now provide a more fluid, leaderless, participatory activism ③that arises more spontaneously. The early examples like the Occupy Movement (2011), the Arab Spring in Egypt (2010), the Umbrella Movement in Hong Kong (2014, 2019), the Gezi Park Movement in Turkey (2013), and the Pussy Riots in Russia (2011) galvanized large numbers of people and attracted world attention. ④While some suggest that these new politics are enhancing democracy, others maintain that they do not really challenge the dominant power groups. Looking back, most of them ⑤have proved unsuccessful, clamped down upon by the state. There seems a limit to the power of new social movements. ",
+          "runs": [
+            {
+              "t": "Over the past twenty years, with the arrival of digital politics, social and political protest movements have changed and ①",
+              "ul": false
+            },
+            {
+              "t": "become",
+              "ul": true
+            },
+            {
+              "t": " ever more prominent through ②",
+              "ul": false
+            },
+            {
+              "t": "that",
+              "ul": true
+            },
+            {
+              "t": " the sociologist Manuel Castells has called Networks of Outrage and Hope. We now have a swirling world of 'online activism', digital rebellion, information politics and People's Platforms. Smartphones and social networking now provide a more fluid, leaderless, participatory activism ③",
+              "ul": false
+            },
+            {
+              "t": "that",
+              "ul": true
+            },
+            {
+              "t": " arises more spontaneously. The early examples like the Occupy Movement (2011), the Arab Spring in Egypt (2010), the Umbrella Movement in Hong Kong (2014, 2019), the Gezi Park Movement in Turkey (2013), and the Pussy Riots in Russia (2011) galvanized large numbers of people and attracted world attention. ④",
+              "ul": false
+            },
+            {
+              "t": "While",
+              "ul": true
+            },
+            {
+              "t": " some suggest that these new politics are enhancing democracy, others maintain that they do not really challenge the dominant power groups. Looking back, most of them ⑤",
+              "ul": false
+            },
+            {
+              "t": "have proved",
+              "ul": true
+            },
+            {
+              "t": " unsuccessful, clamped down upon by the state. There seems a limit to the power of new social movements. ",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "",
+          "runs": [
+            {
+              "t": "",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "2. p156-no.02  (정답 1개)",
+          "runs": [
+            {
+              "t": "2. p156-no.02  (정답 1개)",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "The advent of automobiles drastically altered urban landscapes by enabling the growth of suburbs. Cars provided individuals the ability to live farther from city centers, ①where land was cheaper and more abundant. This expansion created the modern suburb, characterized by residential zones separate from commercial and industrial areas, promoting a shift from high-density urban living to the spacious suburbs. The flexibility cars ②offering meant people could commute daily, uniting work, leisure, and homelife in new ways. In response, urban planning evolved, placing emphasis on roads and highways to accommodate increased travel. This decentralization led to ③altered living patterns, encouraging families to seek homes in quieter, suburban environments while maintaining access to urban job markets. The sprawling growth fueled demands for expanded infrastructure and services in these areas, ④bringing in new economic opportunities. Cars were instrumental in shaping this living model by significantly ⑤detaching home locations from places of employment and recreation. ",
+          "runs": [
+            {
+              "t": "The advent of automobiles drastically altered urban landscapes by enabling the growth of suburbs. Cars provided individuals the ability to live farther from city centers, ①",
+              "ul": false
+            },
+            {
+              "t": "where",
+              "ul": true
+            },
+            {
+              "t": " land was cheaper and more abundant. This expansion created the modern suburb, characterized by residential zones separate from commercial and industrial areas, promoting a shift from high-density urban living to the spacious suburbs. The flexibility cars ②",
+              "ul": false
+            },
+            {
+              "t": "offering",
+              "ul": true
+            },
+            {
+              "t": " meant people could commute daily, uniting work, leisure, and homelife in new ways. In response, urban planning evolved, placing emphasis on roads and highways to accommodate increased travel. This decentralization led to ③",
+              "ul": false
+            },
+            {
+              "t": "altered",
+              "ul": true
+            },
+            {
+              "t": " living patterns, encouraging families to seek homes in quieter, suburban environments while maintaining access to urban job markets. The sprawling growth fueled demands for expanded infrastructure and services in these areas, ④",
+              "ul": false
+            },
+            {
+              "t": "bringing",
+              "ul": true
+            },
+            {
+              "t": " in new economic opportunities. Cars were instrumental in shaping this living model by significantly ⑤",
+              "ul": false
+            },
+            {
+              "t": "detaching",
+              "ul": true
+            },
+            {
+              "t": " home locations from places of employment and recreation. ",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "",
+          "runs": [
+            {
+              "t": "",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "3. p157-no.03  (정답 1개)",
+          "runs": [
+            {
+              "t": "3. p157-no.03  (정답 1개)",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "The graph above ①shows results from a 2018 U.S. survey on awareness of Al uses among the general population and tech executives. Tech executives ②had a higher awareness of Al uses across the various domains ③compared to the general population, with the exception of Drones. The top three AI domains with the highest awareness among tech executives were Voice Assistants, Natural Language Processing, and Text Recognition. Ride-Hailing Apps had the lowest awareness levels in both the general population group and the tech executives group. Tech executives' awareness of Al use in Natural Language Processing ④was more than double that of the general public. The rate of awareness of AI use for Computer Vision and Drones ⑤were the same among tech executives, but for the general population, the awareness of Drones was 10 percentage points higher than that of Computer Vision. ",
+          "runs": [
+            {
+              "t": "The graph above ①",
+              "ul": false
+            },
+            {
+              "t": "shows",
+              "ul": true
+            },
+            {
+              "t": " results from a 2018 U.S. survey on awareness of Al uses among the general population and tech executives. Tech executives ②",
+              "ul": false
+            },
+            {
+              "t": "had",
+              "ul": true
+            },
+            {
+              "t": " a higher awareness of Al uses across the various domains ③",
+              "ul": false
+            },
+            {
+              "t": "compared",
+              "ul": true
+            },
+            {
+              "t": " to the general population, with the exception of Drones. The top three AI domains with the highest awareness among tech executives were Voice Assistants, Natural Language Processing, and Text Recognition. Ride-Hailing Apps had the lowest awareness levels in both the general population group and the tech executives group. Tech executives' awareness of Al use in Natural Language Processing ④",
+              "ul": false
+            },
+            {
+              "t": "was",
+              "ul": true
+            },
+            {
+              "t": " more than double that of the general public. The rate of awareness of AI use for Computer Vision and Drones ⑤",
+              "ul": false
+            },
+            {
+              "t": "were",
+              "ul": true
+            },
+            {
+              "t": " the same among tech executives, but for the general population, the awareness of Drones was 10 percentage points higher than that of Computer Vision. ",
+              "ul": false
+            }
+          ]
+        }
+      ]
+    },
+    "step2_c2": {
+      "filename": "7. 영작배열(서술형).hwp",
+      "question_numbers": [
+        1,
+        2
+      ],
+      "paragraph_count": 8,
+      "paragraphs": [
+        {
+          "text": "[01]",
+          "runs": [
+            {
+              "t": "[01]",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "어떤 이들은 이러한 새로운 정치가 민주주의를 강화한다고 주장하는 반면, 또 어떤 이들은 그것이 지배적인 권력 집단에 실제로 도전하지는 못한다고 주장한다.",
+          "runs": [
+            {
+              "t": "어떤 이들은 이러한 새로운 정치가 민주주의를 강화한다고 주장하는 반면, 또 어떤 이들은 그것이 지배적인 권력 집단에 실제로 도전하지는 못한다고 주장한다.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "( these new politics / some / that / democracy / suggest / are enhancing / while ), ( that / the dominant power groups / do not really challenge / others / maintain / they )",
+          "runs": [
+            {
+              "t": "( these new politics / some / that / democracy / suggest / are enhancing / while ), ( that / the dominant power groups / do not really challenge / others / maintain / they )",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "While some suggest that these new politics are enhancing democracy, others maintain that they do not really challenge the dominant power groups.",
+          "runs": [
+            {
+              "t": "While some suggest that these new politics are enhancing democracy, others maintain that they do not really challenge the dominant power groups.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "[02]",
+          "runs": [
+            {
+              "t": "[02]",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "이러한 분산은 생활 패턴의 변화를 가져왔고, 가정들이 도시의 취업 시장에 대한 접근성을 유지하면서 더 조용한, 교외 환경에 있는 주택을 찾게 했다.",
+          "runs": [
+            {
+              "t": "이러한 분산은 생활 패턴의 변화를 가져왔고, 가정들이 도시의 취업 시장에 대한 접근성을 유지하면서 더 조용한, 교외 환경에 있는 주택을 찾게 했다.",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "( led / this decentralization / living patterns / altered / to ), ( seek / in / encouraging / to / quieter / homes / families ), ( while / urban job markets / suburban environments / access / maintaining / to )",
+          "runs": [
+            {
+              "t": "( led / this decentralization / living patterns / altered / to ), ( seek / in / encouraging / to / quieter / homes / families ), ( while / urban job markets / suburban environments / access / maintaining / to )",
+              "ul": false
+            }
+          ]
+        },
+        {
+          "text": "This decentralization led to altered living patterns, encouraging families to seek homes in quieter, suburban environments while maintaining access to urban job markets.",
+          "runs": [
+            {
+              "t": "This decentralization led to altered living patterns, encouraging families to seek homes in quieter, suburban environments while maintaining access to urban job markets.",
+              "ul": false
+            }
+          ]
+        }
+      ]
+    },
+    "step3": {
+      "normal": [
+        {
+          "question_num": "textbook",
+          "code": "",
+          "paragraphs": [
+            {
+              "text": "2027년 수능특강 영어                                    더변형문제                                    27강 컴퓨터,인터넷",
+              "runs": [
+                {
+                  "t": "2027년 수능특강 영어                                    더변형문제                                    27강 컴퓨터,인터넷",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "[Gateway]",
+              "runs": [
+                {
+                  "t": "[Gateway]",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "※ 다음 글을 읽고 물음에 답하시오.",
+              "runs": [
+                {
+                  "t": "※ 다음 글을 읽고 물음에 답하시오.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "Information and meaning are, clearly, not the same thing. The former refers to uninterpreted data or sensory states ①which probability in a certain situation can be easily measured; the latter refers to the interpretation of the data or sensory states, including the special kinds of nuances and values ②which the information entails, or is intended to have, in the given situation. This applies to any type of information, from alarm signals to sophisticated statements. Take, for instance, a coin-tossing game ③which it is decided that throwing three heads in a row constitutes a win. If a certain player ends up consistently with the desired outcome, ④defeating all who challenge that player, then we tend to interpret the outcome either as the work of Fortune, or else as clever and ⑤undetectable cheating on the part of the winning player. Interpretation is at the core of everything we do, think about, and feel.",
+              "runs": [
+                {
+                  "t": "Information and meaning are, clearly, not the same thing. The former refers to uninterpreted data or sensory states ①",
+                  "ul": false
+                },
+                {
+                  "t": "which",
+                  "ul": true
+                },
+                {
+                  "t": " probability in a certain situation can be easily measured; the latter refers to the interpretation of the data or sensory states, including the special kinds of nuances and values ②",
+                  "ul": false
+                },
+                {
+                  "t": "which",
+                  "ul": true
+                },
+                {
+                  "t": " the information entails, or is intended to have, in the given situation. This applies to any type of information, from alarm signals to sophisticated statements. Take, for instance, a coin-tossing game ③",
+                  "ul": false
+                },
+                {
+                  "t": "which",
+                  "ul": true
+                },
+                {
+                  "t": " it is decided that throwing three heads in a row constitutes a win. If a certain player ends up consistently with the desired outcome, ④",
+                  "ul": false
+                },
+                {
+                  "t": "defeating",
+                  "ul": true
+                },
+                {
+                  "t": " all who challenge that player, then we tend to interpret the outcome either as the work of Fortune, or else as clever and ⑤",
+                  "ul": false
+                },
+                {
+                  "t": "undetectable",
+                  "ul": true
+                },
+                {
+                  "t": " cheating on the part of the winning player. Interpretation is at the core of everything we do, think about, and feel.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "1. 다음 밑줄 친 부분 ①~⑤중 어법상 어색한 것을 모두 바르게 고치시오.",
+              "runs": [
+                {
+                  "t": "1. 다음 밑줄 친 부분 ①~⑤중 어법상 어색한 것을 모두 바르게 고치시오.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "①which",
+              "runs": [
+                {
+                  "t": "①which",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "②which",
+              "runs": [
+                {
+                  "t": "②which",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "③which",
+              "runs": [
+                {
+                  "t": "③which",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "④defeating",
+              "runs": [
+                {
+                  "t": "④defeating",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "⑤undetectable",
+              "runs": [
+                {
+                  "t": "⑤undetectable",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "2. 윗글의 주제로 가장 적절한 것은?",
+              "runs": [
+                {
+                  "t": "2. 윗글의 주제로 가장 적절한 것은?",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "①The mechanics of coin tossing games",
+              "runs": [
+                {
+                  "t": "①",
+                  "ul": false
+                },
+                {
+                  "t": "The mechanics of coin tossing games",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "②Interpretation as the core of human cognition",
+              "runs": [
+                {
+                  "t": "②",
+                  "ul": false
+                },
+                {
+                  "t": "Interpretation as the core of human cognition",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "③Statistical probability in gambling systems",
+              "runs": [
+                {
+                  "t": "③",
+                  "ul": false
+                },
+                {
+                  "t": "Statistical probability in gambling systems",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "④Sensory perception as objective measurement",
+              "runs": [
+                {
+                  "t": "④",
+                  "ul": false
+                },
+                {
+                  "t": "Sensory perception as objective measurement",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "⑤Fortune as a determinant of human success",
+              "runs": [
+                {
+                  "t": "⑤",
+                  "ul": false
+                },
+                {
+                  "t": "Fortune as a determinant of human success",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "3. 윗글의 내용을 다음과 같이 요약하고자 한다. 빈칸 (A), (B), (C)에 들어갈 말로 적절한 것을 본문에서 찾아 쓰시오. (필요시 어형 변화시킬 것)",
+              "runs": [
+                {
+                  "t": "3. 윗글의 내용을 다음과 같이 요약하고자 한다. 빈칸 (A), (B), (C)에 들어갈 말로 적절한 것을 본문에서 찾아 쓰시오. (필요시 어형 변화시킬 것)",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "Although (A)       may be statistically measurable data, (B)       ultimately depends on contextual (C)        shaped by human judgment.",
+              "runs": [
+                {
+                  "t": "Although (A)",
+                  "ul": false
+                },
+                {
+                  "t": "      ",
+                  "ul": true
+                },
+                {
+                  "t": " may be statistically measurable data, (B)",
+                  "ul": false
+                },
+                {
+                  "t": "      ",
+                  "ul": true
+                },
+                {
+                  "t": " ultimately depends on contextual (C)",
+                  "ul": false
+                },
+                {
+                  "t": "       ",
+                  "ul": true
+                },
+                {
+                  "t": " shaped by human judgment.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "(A)",
+              "runs": [
+                {
+                  "t": "(A)",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "(B)",
+              "runs": [
+                {
+                  "t": "(B)",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "(C)",
+              "runs": [
+                {
+                  "t": "(C)",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "[Gateway]",
+              "runs": [
+                {
+                  "t": "[Gateway]",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "※ 다음 글을 읽고 물음에 답하시오.",
+              "runs": [
+                {
+                  "t": "※ 다음 글을 읽고 물음에 답하시오.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "Information and meaning are, clearly, not the same thing. The former refers to uninterpreted data or sensory states whose probability in a certain situation can be easily measured; the latter refers to the interpretation of the data or sensory states, including the special kinds of nuances and values that the information entails, or is intended to have, in the given situation. This applies to any type of information, from alarm signals to sophisticated statements. Take, for instance, a coin-tossing game in which it is decided that throwing three heads in a row constitutes a win. If a certain player ends up consistently with the desired outcome, defeating all who challenge that player, then we tend to interpret the outcome either as the work of Fortune, or else as clever and undetectable cheating on the part of the winning player. (A)           is at the core of everything we do, think about, and feel.",
+              "runs": [
+                {
+                  "t": "Information and meaning are, clearly, not the same thing. The former refers to uninterpreted data or sensory states whose probability in a certain situation can be easily measured; the latter refers to the interpretation of the data or sensory states, including the special kinds of nuances and values that the information entails, or is intended to have, in the given situation. This applies to any type of information, from alarm signals to sophisticated statements. Take, for instance, a coin-tossing game in which it is decided that throwing three heads in a row constitutes a win. If a certain player ends up consistently with the desired outcome, defeating all who challenge that player, then we tend to interpret the outcome either as the work of Fortune, or else as clever and undetectable cheating on the part of the winning player. (A)",
+                  "ul": false
+                },
+                {
+                  "t": "          ",
+                  "ul": true
+                },
+                {
+                  "t": " is at the core of everything we do, think about, and feel.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "4. 빈칸(A)에 들어갈 말로 가장 적절한 단어를 영어로 쓰시오. (한 단어)",
+              "runs": [
+                {
+                  "t": "4. 빈칸(A)에 들어갈 말로 가장 적절한 단어를 영어로 쓰시오. (한 단어)",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "(A)",
+              "runs": [
+                {
+                  "t": "(A)",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "5. 윗글의 제목을 <조건>에 맞게 영어로 완성하여 쓰시오.",
+              "runs": [
+                {
+                  "t": "5. 윗글의 제목을 <조건>에 맞게 영어로 완성하여 쓰시오.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "1. <보기>에 주어진 어구를 모두 사용할 것",
+              "runs": [
+                {
+                  "t": "1. <보기>에 주어진 어구를 모두 사용할 것",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "2. <보기>에 주어진 어구 이외의 단어를 추가하지 말 것",
+              "runs": [
+                {
+                  "t": "2. <보기>에 주어진 어구 이외의 단어를 추가하지 말 것",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "3. 단 주어진 단어의 형태를 변형하지 말 것",
+              "runs": [
+                {
+                  "t": "3. 단 주어진 단어의 형태를 변형하지 말 것",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "<보기>Interpretation, Meaning, The Lens, Of, Filtered, Through,",
+              "runs": [
+                {
+                  "t": "<보기>Interpretation, Meaning, The Lens, Of, Filtered, Through,",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "6. 윗글의 내용과 일치하지 않는 것은?",
+              "runs": [
+                {
+                  "t": "6. 윗글의 내용과 일치하지 ",
+                  "ul": false
+                },
+                {
+                  "t": "않는",
+                  "ul": true
+                },
+                {
+                  "t": " 것은?",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "①Information refers to uninterpreted data or sensory states.",
+              "runs": [
+                {
+                  "t": "①",
+                  "ul": false
+                },
+                {
+                  "t": "Information refers to uninterpreted data or sensory states.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "②Meaning involves interpretation that includes nuances and contextual values.",
+              "runs": [
+                {
+                  "t": "②",
+                  "ul": false
+                },
+                {
+                  "t": "Meaning involves interpretation that includes nuances and contextual values.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "③Information can be measured statistically, but meaning involves contextual interpretation.",
+              "runs": [
+                {
+                  "t": "③",
+                  "ul": false
+                },
+                {
+                  "t": "Information can be measured statistically, but meaning involves contextual interpretation.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "④In the coin tossing example, repeated success is explained solely by statistical probability without inviting further interpretation.",
+              "runs": [
+                {
+                  "t": "④",
+                  "ul": false
+                },
+                {
+                  "t": "In the coin tossing example, repeated success is explained solely by statistical probability without inviting further interpretation.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "⑤Interpretation influences how we think, feel, and act.",
+              "runs": [
+                {
+                  "t": "⑤",
+                  "ul": false
+                },
+                {
+                  "t": "Interpretation influences how we think, feel, and act.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "[Gateway]",
+              "runs": [
+                {
+                  "t": "[Gateway]",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "※ 다음 글을 읽고 물음에 답하시오.",
+              "runs": [
+                {
+                  "t": "※ 다음 글을 읽고 물음에 답하시오.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "Information and meaning are, clearly, not the same thing.",
+              "runs": [
+                {
+                  "t": "Information and meaning are, clearly, not the same thing.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "(A)",
+              "runs": [
+                {
+                  "t": "(A)",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "If a certain player ends up consistently with the desired outcome, defeating all who challenge that player, then we tend to interpret the outcome either as the work of Fortune, or else as clever and undetectable cheating on the part of the winning player. Interpretation is at the core of everything we do, think about, and feel.",
+              "runs": [
+                {
+                  "t": "If a certain player ends up consistently with the desired outcome, defeating all who challenge that player, then we tend to interpret the outcome either as the work of Fortune, or else as clever and undetectable cheating on the part of the winning player. Interpretation is at the core of everything we do, think about, and feel.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "(B)",
+              "runs": [
+                {
+                  "t": "(B)",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "This applies to any type of information, from alarm signals to sophisticated statements. Take, for instance, a coin-tossing game in which it is decided that throwing three heads in a row constitutes a win.",
+              "runs": [
+                {
+                  "t": "This applies to any type of information, from alarm signals to sophisticated statements. Take, for instance, a coin-tossing game in which it is decided that throwing three heads in a row constitutes a win.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "(C)",
+              "runs": [
+                {
+                  "t": "(C)",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "The former refers to uninterpreted data or sensory states whose probability in a certain situation can be easily measured; the latter refers to the interpretation of the data or sensory states, including the special kinds of nuances and values that the information entails, or is intended to have, in the given situation.",
+              "runs": [
+                {
+                  "t": "The former refers to uninterpreted data or sensory states whose probability in a certain situation can be easily measured; the latter refers to the interpretation of the data or sensory states, including the special kinds of nuances and values that the information entails, or is intended to have, in the given situation.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "7. 주어진 글 다음에 이어질 글의 순서로 적절한 것은?",
+              "runs": [
+                {
+                  "t": "7. 주어진 글 다음에 이어질 글의 순서로 적절한 것은?",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "① (A) - (C) - (B)",
+              "runs": [
+                {
+                  "t": "① (A) - (C) - (B)",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "② (B) - (A) - (C)",
+              "runs": [
+                {
+                  "t": "② (B) - (A) - (C)",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "③ (B) - (C) - (A)",
+              "runs": [
+                {
+                  "t": "③ (B) - (C) - (A)",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "④ (C) - (B) - (A)",
+              "runs": [
+                {
+                  "t": "④ (C) - (B) - (A)",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "⑤ (C) - (A) - (B)",
+              "runs": [
+                {
+                  "t": "⑤ (C) - (A) - (B)",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "[1]",
+              "runs": [
+                {
+                  "t": "[1]",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "※ 다음 글을 읽고 물음에 답하시오.",
+              "runs": [
+                {
+                  "t": "※ 다음 글을 읽고 물음에 답하시오.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "Over the past twenty years, with the arrival of digital politics, social and political protest movements have changed and ①become ever more prominent through what the sociologist Manuel Castells has called Networks of Outrage and Hope. We now have a swirling world of ‘online activism’, digital rebellion, information politics and People’s Platforms. Smartphones and social networking now provide a more fluid, leaderless, participatory activism ②that arises more spontaneously. The early examples like the Occupy Movement (2011), the Arab Spring in Egypt (2010), the Umbrella Movement in Hong Kong (2014, 2019), the Gezi Park Movement in Turkey (2013), and the Pussy Riots in Russia (2011) galvanized large numbers of people and ③attracting world attention. While some suggest that these new politics are enhancing democracy, others maintain that they do not really challenge the dominant power groups. Looking back, most of ④whom have proved unsuccessful, clamped down upon by the state. There ⑤seems a limit to the power of new social movements.",
+              "runs": [
+                {
+                  "t": "Over the past twenty years, with the arrival of digital politics, social and political protest movements have changed and ①",
+                  "ul": false
+                },
+                {
+                  "t": "become",
+                  "ul": true
+                },
+                {
+                  "t": " ever more prominent through what the sociologist Manuel Castells has called Networks of Outrage and Hope. We now have a swirling world of ‘online activism’, digital rebellion, information politics and People’s Platforms. Smartphones and social networking now provide a more fluid, leaderless, participatory activism ②",
+                  "ul": false
+                },
+                {
+                  "t": "that",
+                  "ul": true
+                },
+                {
+                  "t": " arises more spontaneously. The early examples like the Occupy Movement (2011), the Arab Spring in Egypt (2010), the Umbrella Movement in Hong Kong (2014, 2019), the Gezi Park Movement in Turkey (2013), and the Pussy Riots in Russia (2011) galvanized large numbers of people and ③",
+                  "ul": false
+                },
+                {
+                  "t": "attracting",
+                  "ul": true
+                },
+                {
+                  "t": " world attention. While some suggest that these new politics are enhancing democracy, others maintain that they do not really challenge the dominant power groups. Looking back, most of ④",
+                  "ul": false
+                },
+                {
+                  "t": "whom",
+                  "ul": true
+                },
+                {
+                  "t": " have proved unsuccessful, clamped down upon by the state. There ⑤",
+                  "ul": false
+                },
+                {
+                  "t": "seems",
+                  "ul": true
+                },
+                {
+                  "t": " a limit to the power of new social movements.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "1. 다음 밑줄 친 부분 ①~⑤중 어법상 어색한 것을 모두 바르게 고치시오.",
+              "runs": [
+                {
+                  "t": "1. 다음 밑줄 친 부분 ①~⑤중 어법상 어색한 것을 모두 바르게 고치시오.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "①become",
+              "runs": [
+                {
+                  "t": "①become",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "②that",
+              "runs": [
+                {
+                  "t": "②that",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "③attracting",
+              "runs": [
+                {
+                  "t": "③attracting",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "④whom",
+              "runs": [
+                {
+                  "t": "④whom",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "⑤seems",
+              "runs": [
+                {
+                  "t": "⑤seems",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "2. 윗글의 주제를 <조건>에 맞게 영어로 완성하여 쓰시오.",
+              "runs": [
+                {
+                  "t": "2. 윗글의 주제를 <조건>에 맞게 영어로 완성하여 쓰시오.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "1. <보기>에 주어진 어구를 모두 사용할 것",
+              "runs": [
+                {
+                  "t": "1. <보기>에 주어진 어구를 모두 사용할 것",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "2. <보기>에 주어진 어구 이외의 단어를 추가하지 말 것",
+              "runs": [
+                {
+                  "t": "2. <보기>에 주어진 어구 이외의 단어를 추가하지 말 것",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "3. 단 주어진 단어의 형태를 변형하지 말 것",
+              "runs": [
+                {
+                  "t": "3. 단 주어진 단어의 형태를 변형하지 말 것",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "<보기> the expansion, weakness, of, digital,",
+              "runs": [
+                {
+                  "t": "<보기> the expansion, weakness, of, digital,",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "and, their structural, protest networks,",
+              "runs": [
+                {
+                  "t": "and, their structural, protest networks,",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "3. 윗글의 내용을 다음과 같이 요약하고자 한다. 빈칸 (A), (B), (C)에 들어갈 말로 적절한 것을 본문에서 찾아 쓰시오. (필요시 어형 변화시킬 것)",
+              "runs": [
+                {
+                  "t": "3. 윗글의 내용을 다음과 같이 요약하고자 한다. 빈칸 (A), (B), (C)에 들어갈 말로 적절한 것을 본문에서 찾아 쓰시오. (필요시 어형 변화시킬 것)",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "Although (A)       platforms enable spontaneous and participatory activism, many such movements ultimately reveal the structural (B) __________ of network-based politics, especially when confronted by the (C) __________.",
+              "runs": [
+                {
+                  "t": "Although (A)",
+                  "ul": false
+                },
+                {
+                  "t": "      ",
+                  "ul": true
+                },
+                {
+                  "t": " platforms enable spontaneous and participatory activism, many such movements ultimately reveal the structural (B) __________ of network-based politics, especially when confronted by the (C) __________.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "(A)",
+              "runs": [
+                {
+                  "t": "(A)",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "(B)",
+              "runs": [
+                {
+                  "t": "(B)",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "(C)",
+              "runs": [
+                {
+                  "t": "(C)",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "[1]",
+              "runs": [
+                {
+                  "t": "[1]",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "※ 다음 글을 읽고 물음에 답하시오.",
+              "runs": [
+                {
+                  "t": "※ 다음 글을 읽고 물음에 답하시오.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "Over the past twenty years, with the arrival of digital politics, social and political protest movements have changed and become ever more prominent through ①what the sociologist Manuel Castells has called Networks of Outrage and Hope.",
+              "runs": [
+                {
+                  "t": "Over the past twenty years, with the arrival of digital politics, social and political protest movements have changed and become ever more prominent through ①",
+                  "ul": false
+                },
+                {
+                  "t": "what",
+                  "ul": true
+                },
+                {
+                  "t": " the sociologist Manuel Castells has called Networks of Outrage and Hope.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "(A)",
+              "runs": [
+                {
+                  "t": "(A)",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "The early examples like the Occupy Movement (2011), the Arab Spring in Egypt (2010), the Umbrella Movement in Hong Kong (2014, 2019), the Gezi Park Movement in Turkey (2013), and the Pussy Riots in Russia (2011) ②galvanized large numbers of people and attracted world attention.",
+              "runs": [
+                {
+                  "t": "The early examples like the Occupy Movement (2011), the Arab Spring in Egypt (2010), the Umbrella Movement in Hong Kong (2014, 2019), the Gezi Park Movement in Turkey (2013), and the Pussy Riots in Russia (2011) ②",
+                  "ul": false
+                },
+                {
+                  "t": "galvanized",
+                  "ul": true
+                },
+                {
+                  "t": " large numbers of people and attracted world attention.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "(B)",
+              "runs": [
+                {
+                  "t": "(B)",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "We now have a swirling world of ‘online activism’, digital rebellion, information politics and People’s Platforms. Smartphones and social networking now provide a more fluid, leaderless, participatory activism that arises more ③spontaneous.",
+              "runs": [
+                {
+                  "t": "We now have a swirling world of ‘online activism’, digital rebellion, information politics and People’s Platforms. Smartphones and social networking now provide a more fluid, leaderless, participatory activism that arises more ③",
+                  "ul": false
+                },
+                {
+                  "t": "spontaneous",
+                  "ul": true
+                },
+                {
+                  "t": ".",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "(C)",
+              "runs": [
+                {
+                  "t": "(C)",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "While some suggest that these new politics are enhancing democracy, others maintain that they do not really challenge the dominant power groups. ④Looking back, most of them have proved unsuccessful, clamped down upon by the state. There seems a limit to the power of new social movements.",
+              "runs": [
+                {
+                  "t": "While some suggest that these new politics are enhancing democracy, others maintain that they do not really challenge the dominant power groups. ④",
+                  "ul": false
+                },
+                {
+                  "t": "Looking",
+                  "ul": true
+                },
+                {
+                  "t": " back, most of them have proved unsuccessful, clamped down upon by the state. There seems a limit to the power of new social movements.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "4. 다음 밑줄 친 부분 ①~④중 어법상 어색한 것을 모두 바르게 고치시오.",
+              "runs": [
+                {
+                  "t": "4. 다음 밑줄 친 부분 ①~④중 어법상 어색한 것을 모두 바르게 고치시오.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "①what",
+              "runs": [
+                {
+                  "t": "①what",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "②galvanized",
+              "runs": [
+                {
+                  "t": "②galvanized",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "③spontaneous",
+              "runs": [
+                {
+                  "t": "③spontaneous",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "④Looking",
+              "runs": [
+                {
+                  "t": "④Looking",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "5. 윗글의 제목으로 가장 적절한 것은?",
+              "runs": [
+                {
+                  "t": "5. 윗글의 제목으로 가장 적절한 것은?",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "①Digital Platforms And The Limits Of Protest",
+              "runs": [
+                {
+                  "t": "①",
+                  "ul": false
+                },
+                {
+                  "t": "Digital Platforms And The Limits Of Protest",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "②Digital Politics As The End Of State Authority",
+              "runs": [
+                {
+                  "t": "②",
+                  "ul": false
+                },
+                {
+                  "t": "Digital Politics As The End Of State Authority",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "③Governments Powerless Before Network Movements",
+              "runs": [
+                {
+                  "t": "③",
+                  "ul": false
+                },
+                {
+                  "t": "Governments Powerless Before Network Movements",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "④The Replacement Of Traditional Politics By Platforms",
+              "runs": [
+                {
+                  "t": "④",
+                  "ul": false
+                },
+                {
+                  "t": "The Replacement Of Traditional Politics By Platforms",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "⑤Guaranteed Democratic Progress Through Social Media",
+              "runs": [
+                {
+                  "t": "⑤",
+                  "ul": false
+                },
+                {
+                  "t": "Guaranteed Democratic Progress Through Social Media",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "6. 주어진 글 다음에 이어질 글의 순서로 적절한 것은?",
+              "runs": [
+                {
+                  "t": "6. 주어진 글 다음에 이어질 글의 순서로 적절한 것은?",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "① (A) - (C) - (B)",
+              "runs": [
+                {
+                  "t": "① (A) - (C) - (B)",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "② (B) - (A) - (C)",
+              "runs": [
+                {
+                  "t": "② (B) - (A) - (C)",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "③ (B) - (C) - (A)",
+              "runs": [
+                {
+                  "t": "③ (B) - (C) - (A)",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "④ (C) - (B) - (A)",
+              "runs": [
+                {
+                  "t": "④ (C) - (B) - (A)",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "⑤ (C) - (A) - (B)",
+              "runs": [
+                {
+                  "t": "⑤ (C) - (A) - (B)",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "[1]",
+              "runs": [
+                {
+                  "t": "[1]",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "※ 다음 글을 읽고 물음에 답하시오.",
+              "runs": [
+                {
+                  "t": "※ 다음 글을 읽고 물음에 답하시오.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "Over the past twenty years, with the arrival of digital politics, social and political protest movements have changed and become ever more prominent through what the sociologist Manuel Castells has called Networks of Outrage and Hope. ①We now have a swirling world of ‘online activism’, digital rebellion, information politics and People’s Platforms. ②Smartphones and social networking now provide a more fluid, leaderless, participatory activism that arises more spontaneously. ③The early examples like the Occupy Movement (2011), the Arab Spring in Egypt (2010), the Umbrella Movement in Hong Kong (2014, 2019), the Gezi Park Movement in Turkey (2013), and the Pussy Riots in Russia (2011) galvanized large numbers of people and attracted world attention. ④Looking back, most of them have proved unsuccessful, clamped down upon by the state. ⑤There seems a limit to the power of new social movements.",
+              "runs": [
+                {
+                  "t": "Over the past twenty years, with the arrival of digital politics, social and political protest movements have changed and become ever more prominent through what the sociologist Manuel Castells has called Networks of Outrage and Hope. ①We now have a swirling world of ‘online activism’, digital rebellion, information politics and People’s Platforms. ②Smartphones and social networking now provide a more fluid, leaderless, participatory activism that arises more spontaneously. ③The early examples like the Occupy Movement (2011), the Arab Spring in Egypt (2010), the Umbrella Movement in Hong Kong (2014, 2019), the Gezi Park Movement in Turkey (2013), and the Pussy Riots in Russia (2011) galvanized large numbers of people and attracted world attention. ④Looking back, most of them have proved unsuccessful, clamped down upon by the state. ⑤There seems a limit to the power of new social movements.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "7. 글의 흐름상 주어진 문장이 들어가기에 가장 적절한 곳은?",
+              "runs": [
+                {
+                  "t": "7. 글의 흐름상 주어진 문장이 들어가기에 가장 적절한 곳은?",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "①While some suggest that these new politics are enhancing democracy, others maintain that they do not really challenge the dominant power groups.",
+              "runs": [
+                {
+                  "t": "①",
+                  "ul": false
+                },
+                {
+                  "t": "While some suggest that these new politics are enhancing democracy, others maintain that they do not really challenge the dominant power groups.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "①       ②       ③       ④       ⑤",
+              "runs": [
+                {
+                  "t": "①       ②       ③       ④       ⑤",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "8. 윗글의 내용과 일치하지 않는 것은?",
+              "runs": [
+                {
+                  "t": "8. 윗글의 내용과 일치하지 ",
+                  "ul": false
+                },
+                {
+                  "t": "않는",
+                  "ul": true
+                },
+                {
+                  "t": " 것은?",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "①Digital politics has made social protest movements more visible, and they have become more prominent through online networks.",
+              "runs": [
+                {
+                  "t": "①",
+                  "ul": false
+                },
+                {
+                  "t": "Digital politics has made social protest movements more visible, and they have become more prominent through online networks.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "②Smartphones and social networking encourage more fluid and participatory activism, and such activism often arises spontaneously without clear leadership.",
+              "runs": [
+                {
+                  "t": "②",
+                  "ul": false
+                },
+                {
+                  "t": "Smartphones and social networking encourage more fluid and participatory activism, and such activism often arises spontaneously without clear leadership.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "③Early movements such as the Occupy Movement and the Arab Spring attracted global attention, and they were examples of digitally connected protest.",
+              "runs": [
+                {
+                  "t": "③",
+                  "ul": false
+                },
+                {
+                  "t": "Early movements such as the Occupy Movement and the Arab Spring attracted global attention, and they were examples of digitally connected protest.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "④Although some believe digital activism strengthens democracy, most recent movements have successfully overthrown dominant power groups.",
+              "runs": [
+                {
+                  "t": "④",
+                  "ul": false
+                },
+                {
+                  "t": "Although some believe digital activism strengthens democracy, most recent movements have successfully overthrown dominant power groups.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "⑤Many new social movements have faced state suppression, and there appears to be a limit to their power.",
+              "runs": [
+                {
+                  "t": "⑤",
+                  "ul": false
+                },
+                {
+                  "t": "Many new social movements have faced state suppression, and there appears to be a limit to their power.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "[2]",
+              "runs": [
+                {
+                  "t": "[2]",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "※ 다음 글을 읽고 물음에 답하시오.",
+              "runs": [
+                {
+                  "t": "※ 다음 글을 읽고 물음에 답하시오.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "The advent of automobiles drastically altered urban landscapes by enabling the growth of suburbs. Cars provided individuals the ability ①to live farther from city centers, where land was cheaper and more abundant. This expansion created the modern suburb, ②was characterized by residential zones separate from commercial and industrial areas, promoting a shift from highdensity urban living to the spacious suburbs. The flexibility cars offered meant people could commute daily, uniting work, leisure, and homelife in new ways. In response, urban planning evolved, ③placed emphasis on roads and highways to accommodate increased travel. This decentralization led to altered living patterns, encouraging families to seek homes in quieter, suburban environments while ④maintaining access to urban job markets. The sprawling growth fueled demands for expanded infrastructure and services in these areas, bringing in new economic opportunities. Cars were instrumental in shaping this living model by significantly ⑤detaching home locations from places of employment and recreation.",
+              "runs": [
+                {
+                  "t": "The advent of automobiles drastically altered urban landscapes by enabling the growth of suburbs. Cars provided individuals the ability ①",
+                  "ul": false
+                },
+                {
+                  "t": "to live",
+                  "ul": true
+                },
+                {
+                  "t": " farther from city centers, where land was cheaper and more abundant. This expansion created the modern suburb, ②",
+                  "ul": false
+                },
+                {
+                  "t": "was characterized",
+                  "ul": true
+                },
+                {
+                  "t": " by residential zones separate from commercial and industrial areas, promoting a shift from highdensity urban living to the spacious suburbs. The flexibility cars offered meant people could commute daily, uniting work, leisure, and homelife in new ways. In response, urban planning evolved, ③",
+                  "ul": false
+                },
+                {
+                  "t": "placed",
+                  "ul": true
+                },
+                {
+                  "t": " emphasis on roads and highways to accommodate increased travel. This decentralization led to altered living patterns, encouraging families to seek homes in quieter, suburban environments while ④",
+                  "ul": false
+                },
+                {
+                  "t": "maintaining",
+                  "ul": true
+                },
+                {
+                  "t": " access to urban job markets. The sprawling growth fueled demands for expanded infrastructure and services in these areas, bringing in new economic opportunities. Cars were instrumental in shaping this living model by significantly ⑤",
+                  "ul": false
+                },
+                {
+                  "t": "detaching",
+                  "ul": true
+                },
+                {
+                  "t": " home locations from places of employment and recreation.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "1. 다음 밑줄 친 부분 ①~⑤중 어법상 어색한 것을 모두 바르게 고치시오.",
+              "runs": [
+                {
+                  "t": "1. 다음 밑줄 친 부분 ①~⑤중 어법상 어색한 것을 모두 바르게 고치시오.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "①to live",
+              "runs": [
+                {
+                  "t": "①to live",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "②was characterized",
+              "runs": [
+                {
+                  "t": "②was characterized",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "③placed",
+              "runs": [
+                {
+                  "t": "③placed",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "④maintaining",
+              "runs": [
+                {
+                  "t": "④maintaining",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "⑤detaching",
+              "runs": [
+                {
+                  "t": "⑤detaching",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "2. 윗글의 주제로 가장 적절한 것은?",
+              "runs": [
+                {
+                  "t": "2. 윗글의 주제로 가장 적절한 것은?",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "①Why suburbs failed to attract families",
+              "runs": [
+                {
+                  "t": "①",
+                  "ul": false
+                },
+                {
+                  "t": "Why suburbs failed to attract families",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "②How urban density increased with automobiles",
+              "runs": [
+                {
+                  "t": "②",
+                  "ul": false
+                },
+                {
+                  "t": "How urban density increased with automobiles",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "③How cars separated people from their houses",
+              "runs": [
+                {
+                  "t": "③",
+                  "ul": false
+                },
+                {
+                  "t": "How cars separated people from their houses",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "④The decline of all highway construction projects",
+              "runs": [
+                {
+                  "t": "④",
+                  "ul": false
+                },
+                {
+                  "t": "The decline of all highway construction projects",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "⑤Automobiles reshaping urban living and planning",
+              "runs": [
+                {
+                  "t": "⑤",
+                  "ul": false
+                },
+                {
+                  "t": "Automobiles reshaping urban living and planning",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "3. 윗글의 내용을 다음과 같이 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 적절한 것을 본문에서 찾아 쓰시오. (필요시 어형 변화시킬 것)",
+              "runs": [
+                {
+                  "t": "3. 윗글의 내용을 다음과 같이 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 적절한 것을 본문에서 찾아 쓰시오. (필요시 어형 변화시킬 것)",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "Automobiles enabled people to live in cheaper (A)__________ away from city centers while commuting to work, and this led to urban (B)__________ and altered living patterns.",
+              "runs": [
+                {
+                  "t": "Automobiles enabled people to live in cheaper (A)__________ away from city centers while commuting to work, and this led to urban (B)__________ and altered living patterns.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "(A)",
+              "runs": [
+                {
+                  "t": "(A)",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "(B)",
+              "runs": [
+                {
+                  "t": "(B)",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "[2]",
+              "runs": [
+                {
+                  "t": "[2]",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "※ 다음 글을 읽고 물음에 답하시오.",
+              "runs": [
+                {
+                  "t": "※ 다음 글을 읽고 물음에 답하시오.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "The advent of automobiles drastically altered urban landscapes by enabling the growth of suburbs. Cars provided individuals the ability to live farther from city centers, ①where land was cheaper and more abundant. This expansion created the modern suburb, characterized by residential zones separate from commercial and industrial areas, ②promoting a shift from highdensity urban living to the spacious suburbs. The flexibility cars offered meant people could commute daily, uniting work, leisure, and homelife in new ways. In response, urban planning evolved, placing emphasis on roads and highways ③to accommodate increased travel. This decentralization led to altered living patterns, encouraging families ④seek homes in quieter, suburban environments while maintaining access to urban job markets. The sprawling growth fueled demands for expanded infrastructure and services in these areas, ⑤brought in new economic opportunities. Cars were instrumental in shaping this living model by (A)",
+              "runs": [
+                {
+                  "t": "The advent of automobiles drastically altered urban landscapes by enabling the growth of suburbs. Cars provided individuals the ability to live farther from city centers, ①",
+                  "ul": false
+                },
+                {
+                  "t": "where",
+                  "ul": true
+                },
+                {
+                  "t": " land was cheaper and more abundant. This expansion created the modern suburb, characterized by residential zones separate from commercial and industrial areas, ②",
+                  "ul": false
+                },
+                {
+                  "t": "promoting",
+                  "ul": true
+                },
+                {
+                  "t": " a shift from highdensity urban living to the spacious suburbs. The flexibility cars offered meant people could commute daily, uniting work, leisure, and homelife in new ways. In response, urban planning evolved, placing emphasis on roads and highways ③",
+                  "ul": false
+                },
+                {
+                  "t": "to accommodate",
+                  "ul": true
+                },
+                {
+                  "t": " increased travel. This decentralization led to altered living patterns, encouraging families ④",
+                  "ul": false
+                },
+                {
+                  "t": "seek",
+                  "ul": true
+                },
+                {
+                  "t": " homes in quieter, suburban environments while maintaining access to urban job markets. The sprawling growth fueled demands for expanded infrastructure and services in these areas, ⑤",
+                  "ul": false
+                },
+                {
+                  "t": "brought",
+                  "ul": true
+                },
+                {
+                  "t": " in new economic opportunities. Cars were instrumental in shaping this living model by (A)",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": ".",
+              "runs": [
+                {
+                  "t": ".",
+                  "ul": true
+                }
+              ]
+            },
+            {
+              "text": "4. 다음 밑줄 친 부분 ①~⑤중 어법상 어색한 것을 모두 바르게 고치시오.",
+              "runs": [
+                {
+                  "t": "4. 다음 밑줄 친 부분 ①~⑤중 어법상 어색한 것을 모두 바르게 고치시오.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "①where",
+              "runs": [
+                {
+                  "t": "①where",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "②promoting",
+              "runs": [
+                {
+                  "t": "②promoting",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "③to accommodate",
+              "runs": [
+                {
+                  "t": "③to accommodate",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "④seek",
+              "runs": [
+                {
+                  "t": "④seek",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "⑤brought",
+              "runs": [
+                {
+                  "t": "⑤brought",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "5. 빈칸(A)에 들어갈 말로 가장 적절한 것은?",
+              "runs": [
+                {
+                  "t": "5. 빈칸(A)에 들어갈 말로 가장 적절한 것은?",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "①integrating home and work locations tightly",
+              "runs": [
+                {
+                  "t": "①",
+                  "ul": false
+                },
+                {
+                  "t": "integrating home and work locations tightly",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "②separating residences from work and leisure sites",
+              "runs": [
+                {
+                  "t": "②",
+                  "ul": false
+                },
+                {
+                  "t": "separating residences from work and leisure sites",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "③significantly attaching home locations to employment and recreation areas",
+              "runs": [
+                {
+                  "t": "③",
+                  "ul": false
+                },
+                {
+                  "t": "significantly attaching home locations to employment and recreation areas",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "④having no impact on home-work separation whatsoever",
+              "runs": [
+                {
+                  "t": "④",
+                  "ul": false
+                },
+                {
+                  "t": "having no impact on home-work separation whatsoever",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "⑤forcing employment centers to relocate near residential areas",
+              "runs": [
+                {
+                  "t": "⑤",
+                  "ul": false
+                },
+                {
+                  "t": "forcing employment centers to relocate near residential areas",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "6. 윗글의 제목으로 가장 적절한 것은?",
+              "runs": [
+                {
+                  "t": "6. 윗글의 제목으로 가장 적절한 것은?",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "①Cars and the Birth of Urban Suburbs",
+              "runs": [
+                {
+                  "t": "①",
+                  "ul": false
+                },
+                {
+                  "t": "Cars and the Birth of Urban Suburbs",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "②How Cars Increased Urban Density",
+              "runs": [
+                {
+                  "t": "②",
+                  "ul": false
+                },
+                {
+                  "t": "How Cars Increased Urban Density",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "③Why Suburbs Prevented Urban Growth",
+              "runs": [
+                {
+                  "t": "③",
+                  "ul": false
+                },
+                {
+                  "t": "Why Suburbs Prevented Urban Growth",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "④How Automobiles Reshaped Urban Life",
+              "runs": [
+                {
+                  "t": "④",
+                  "ul": false
+                },
+                {
+                  "t": "How Automobiles Reshaped Urban Life",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "⑤Role of Public Transportation in Urban Decentralization",
+              "runs": [
+                {
+                  "t": "⑤",
+                  "ul": false
+                },
+                {
+                  "t": "Role of Public Transportation in Urban Decentralization",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "[2]",
+              "runs": [
+                {
+                  "t": "[2]",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "※ 다음 글을 읽고 물음에 답하시오.",
+              "runs": [
+                {
+                  "t": "※ 다음 글을 읽고 물음에 답하시오.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "The advent of automobiles drastically altered urban landscapes by enabling the growth of suburbs. Cars provided individuals the ability to live farther from city centers, where land was cheaper and more abundant. ①This expansion created the modern suburb, characterized by residential zones separate from commercial and industrial areas, promoting a shift from highdensity urban living to the spacious suburbs. ②The flexibility cars offered meant people could commute daily, uniting work, leisure, and homelife in new ways. ③In response, urban planning evolved, placing emphasis on roads and highways to accommodate increased travel. ④The sprawling growth fueled demands for expanded infrastructure and services in these areas, bringing in new economic opportunities. ⑤Cars were instrumental in shaping this living model by significantly detaching home locations from places of employment and recreation.",
+              "runs": [
+                {
+                  "t": "The advent of automobiles drastically altered urban landscapes by enabling the growth of suburbs. Cars provided individuals the ability to live farther from city centers, where land was cheaper and more abundant. ①This expansion created the modern suburb, characterized by residential zones separate from commercial and industrial areas, promoting a shift from highdensity urban living to the spacious suburbs. ②The flexibility cars offered meant people could commute daily, uniting work, leisure, and homelife in new ways. ③In response, urban planning evolved, placing emphasis on roads and highways to accommodate increased travel. ④The sprawling growth fueled demands for expanded infrastructure and services in these areas, bringing in new economic opportunities. ⑤Cars were instrumental in shaping this living model by significantly detaching home locations from places of employment and recreation.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "7. 글의 흐름상 주어진 문장이 들어가기에 가장 적절한 곳은?",
+              "runs": [
+                {
+                  "t": "7. 글의 흐름상 주어진 문장이 들어가기에 가장 적절한 곳은?",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "①This decentralization led to altered living patterns, encouraging families to seek homes in quieter, suburban environments while maintaining access to urban job markets.",
+              "runs": [
+                {
+                  "t": "①",
+                  "ul": false
+                },
+                {
+                  "t": "This decentralization led to altered living patterns, encouraging families to seek homes in quieter, suburban environments while maintaining access to urban job markets.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "①       ②       ③       ④       ⑤",
+              "runs": [
+                {
+                  "t": "①       ②       ③       ④       ⑤",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "8. 윗글의 내용과 일치하지 않는 것은?",
+              "runs": [
+                {
+                  "t": "8. 윗글의 내용과 일치하지 ",
+                  "ul": false
+                },
+                {
+                  "t": "않는",
+                  "ul": true
+                },
+                {
+                  "t": " 것은?",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "①Automobiles enabled suburban growth, and cars allowed people to live farther from city centers.",
+              "runs": [
+                {
+                  "t": "①",
+                  "ul": false
+                },
+                {
+                  "t": "Automobiles enabled suburban growth, and cars allowed people to live farther from city centers.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "②Urban planning remained unchanged, and cities maintained focus on pedestrian infrastructure exclusively.",
+              "runs": [
+                {
+                  "t": "②",
+                  "ul": false
+                },
+                {
+                  "t": "Urban planning remained unchanged, and cities maintained focus on pedestrian infrastructure exclusively.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "③Modern suburbs featured separated residential zones, and this promoted a shift from high-density urban living.",
+              "runs": [
+                {
+                  "t": "③",
+                  "ul": false
+                },
+                {
+                  "t": "Modern suburbs featured separated residential zones, and this promoted a shift from high-density urban living.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "④Cars offered commuting flexibility, and people could unite work, leisure, and home in new ways.",
+              "runs": [
+                {
+                  "t": "④",
+                  "ul": false
+                },
+                {
+                  "t": "Cars offered commuting flexibility, and people could unite work, leisure, and home in new ways.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "⑤Decentralization altered living patterns, and families sought suburban homes while accessing urban jobs.",
+              "runs": [
+                {
+                  "t": "⑤",
+                  "ul": false
+                },
+                {
+                  "t": "Decentralization altered living patterns, and families sought suburban homes while accessing urban jobs.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "[3]",
+              "runs": [
+                {
+                  "t": "[3]",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "※ 다음 도표를 보고 물음에 답하시오.",
+              "runs": [
+                {
+                  "t": "※ 다음 도표를 보고 물음에 답하시오.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "위 도표의 내용과 일치하지 않는 것은?",
+              "runs": [
+                {
+                  "t": "위 도표의 내용과 일치하지 ",
+                  "ul": false
+                },
+                {
+                  "t": "않는",
+                  "ul": true
+                },
+                {
+                  "t": " 것은?",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "The graph above shows the percentage of the U.S. general population and tech executives who were aware of six different uses of AI in 2018. ① Voice Assistants recorded the highest level of awareness among both the general population and tech executives. ② Tech executives’awareness of Natural Language Processing was 19 percentage points higher than that of the general population. ③ For Text Recognition, the awareness rate of the general population was 10 percentage points lower than that of tech executives. ④ Drones was the only AI use for which the awareness rate of the general population was higher than that of tech executives. ⑤ The gap in awareness between the general population and tech executives was the largest in Ride-Hailing Apps.",
+              "runs": [
+                {
+                  "t": "The graph above shows the percentage of the U.S. general population and tech executives who were aware of six different uses of AI in 2018. ① Voice Assistants recorded the highest level of awareness among both the general population and tech executives. ② Tech executives’awareness of Natural Language Processing was 19 percentage points higher than that of the general population. ③ For Text Recognition, the awareness rate of the general population was 10 percentage points lower than that of tech executives. ④ Drones was the only AI use for which the awareness rate of the general population was higher than that of tech executives. ⑤ The gap in awareness between the general population and tech executives was the largest in Ride-Hailing Apps.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "* ride-hailing: 차량 호출",
+              "runs": [
+                {
+                  "t": "* ride-hailing: 차량 호출",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "위 도표의 내용과 일치하지 않는 것은?",
+              "runs": [
+                {
+                  "t": "위 도표의 내용과 일치하지 ",
+                  "ul": false
+                },
+                {
+                  "t": "않는",
+                  "ul": true
+                },
+                {
+                  "t": " 것은?",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "The graph above presents the results of a 2018 U.S. survey comparing how aware the general public and tech executives were of various uses of AI. ① Tech executives showed higher awareness than the general public in five out of the six AI uses surveyed, with Drones being the only exception. ② Among tech executives, Voice Assistants ranked first in awareness, followed by Natural Language Processing in second place. ③ For Computer Vision, the awareness of tech executives exceeded that of the general public by less than 10 percentage points. ④ The number of AI uses for which the awareness rate of the general public exceeded 40 percent was four. ⑤ In both groups, fewer than one in three respondents were aware of Ride-Hailing Apps as a use of AI.",
+              "runs": [
+                {
+                  "t": "The graph above presents the results of a 2018 U.S. survey comparing how aware the general public and tech executives were of various uses of AI. ① Tech executives showed higher awareness than the general public in five out of the six AI uses surveyed, with Drones being the only exception. ② Among tech executives, Voice Assistants ranked first in awareness, followed by Natural Language Processing in second place. ③ For Computer Vision, the awareness of tech executives exceeded that of the general public by less than 10 percentage points. ④ The number of AI uses for which the awareness rate of the general public exceeded 40 percent was four. ⑤ In both groups, fewer than one in three respondents were aware of Ride-Hailing Apps as a use of AI.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "* ride-hailing: 차량 호출",
+              "runs": [
+                {
+                  "t": "* ride-hailing: 차량 호출",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "위 도표의 내용과 일치하지 않는 것은?",
+              "runs": [
+                {
+                  "t": "위 도표의 내용과 일치하지 ",
+                  "ul": false
+                },
+                {
+                  "t": "않는",
+                  "ul": true
+                },
+                {
+                  "t": " 것은?",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "The graph above shows the percentage of the general population and tech executives in the United States who were aware of six AI uses in 2018. ① Among the general population, the AI use with the lowest level of awareness was Ride-Hailing Apps, at only 21 percent. ② Natural Language Processing ranked second in awareness among tech executives, while it ranked fifth among the general population. ③ Voice Assistants was the only AI use of which more than 60 percent of the general population was aware. ④ The awareness of Drones differed between the two groups by only 2 percentage points, the smallest gap among the six AI uses. ⑤ The gap in awareness between tech executives and the general population was larger for Voice Assistants than for Text Recognition.",
+              "runs": [
+                {
+                  "t": "The graph above shows the percentage of the general population and tech executives in the United States who were aware of six AI uses in 2018. ① Among the general population, the AI use with the lowest level of awareness was Ride-Hailing Apps, at only 21 percent. ② Natural Language Processing ranked second in awareness among tech executives, while it ranked fifth among the general population. ③ Voice Assistants was the only AI use of which more than 60 percent of the general population was aware. ④ The awareness of Drones differed between the two groups by only 2 percentage points, the smallest gap among the six AI uses. ⑤ The gap in awareness between tech executives and the general population was larger for Voice Assistants than for Text Recognition.",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "* ride-hailing: 차량 호출",
+              "runs": [
+                {
+                  "t": "* ride-hailing: 차량 호출",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "[정답]",
+              "runs": [
+                {
+                  "t": "[정답]",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "[Gateway]",
+              "runs": [
+                {
+                  "t": "[Gateway]",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "①whose ③in which",
+              "runs": [
+                {
+                  "t": "①whose ③in which",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "2",
+              "runs": [
+                {
+                  "t": "2",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "(A)information (B)meaning (C)interpretation",
+              "runs": [
+                {
+                  "t": "(A)information (B)meaning (C)interpretation",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "interpretation",
+              "runs": [
+                {
+                  "t": "interpretation",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "Meaning Filtered Through The Lens Of Interpretation",
+              "runs": [
+                {
+                  "t": "Meaning Filtered Through The Lens Of Interpretation",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "4",
+              "runs": [
+                {
+                  "t": "4",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "4",
+              "runs": [
+                {
+                  "t": "4",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "[1]",
+              "runs": [
+                {
+                  "t": "[1]",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "③attracted ④them",
+              "runs": [
+                {
+                  "t": "③attracted ④them",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "the expansion of digital protest networks and their structural weakness",
+              "runs": [
+                {
+                  "t": "the expansion of digital protest networks and their structural weakness",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "(A)digital (B) limits (C) state",
+              "runs": [
+                {
+                  "t": "(A)digital (B) limits (C) state",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "③spontaneously",
+              "runs": [
+                {
+                  "t": "③spontaneously",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "1",
+              "runs": [
+                {
+                  "t": "1",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "2",
+              "runs": [
+                {
+                  "t": "2",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "4",
+              "runs": [
+                {
+                  "t": "4",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "4",
+              "runs": [
+                {
+                  "t": "4",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "[2]",
+              "runs": [
+                {
+                  "t": "[2]",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "②characterized ③placing",
+              "runs": [
+                {
+                  "t": "②characterized ③placing",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "5",
+              "runs": [
+                {
+                  "t": "5",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "(A)suburbs (B)decentralization",
+              "runs": [
+                {
+                  "t": "(A)suburbs (B)decentralization",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "④to seek ⑤bringing",
+              "runs": [
+                {
+                  "t": "④to seek ⑤bringing",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "2",
+              "runs": [
+                {
+                  "t": "2",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "4",
+              "runs": [
+                {
+                  "t": "4",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "4",
+              "runs": [
+                {
+                  "t": "4",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "2",
+              "runs": [
+                {
+                  "t": "2",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "[3]",
+              "runs": [
+                {
+                  "t": "[3]",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "5",
+              "runs": [
+                {
+                  "t": "5",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "2. 4",
+              "runs": [
+                {
+                  "t": "2. 4",
+                  "ul": false
+                }
+              ]
+            },
+            {
+              "text": "3. 5",
+              "runs": [
+                {
+                  "t": "3. 5",
+                  "ul": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "short": [],
+      "normal_count": 1,
+      "short_count": 0
+    }
+  },
+  "workbook_type": "EBS",
+  "series": "2027 수능특강 영어",
+  "unit": "27강"
+}
