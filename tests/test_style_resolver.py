@@ -75,6 +75,28 @@ def test_style_map_names_exist_in_template_inventory():
     assert not missing, f"템플릿에 없는 스타일 참조: {missing}"
 
 
+def test_whitebook_style_map_exists_in_template_inventory():
+    """whitebook v2: style_map의 단락/문자스타일이 실물 [원본] 템플릿
+    인벤토리(tests/fixtures/template_spec_whitebook.json)에 전부 존재."""
+    spec = json.load(open(os.path.join(TESTS_DIR, "fixtures",
+                                       "template_spec_whitebook.json"),
+                          encoding="utf-8"))
+    para_inv = set(spec["paragraph_styles"])
+    char_inv = set(spec["character_styles"])
+    smap = json.load(open(os.path.join(
+        os.path.dirname(TESTS_DIR), "core", "structure", "style_map.json"),
+        encoding="utf-8"))["whitebook"]
+    missing = []
+    for table in ("AREAS", "PRAC"):
+        for kind, style in smap[table].items():
+            if style not in para_inv:
+                missing.append(f"{table}/{kind}: {style}")
+    for kind, style in smap["CHAR"].items():
+        if style not in char_inv:
+            missing.append(f"CHAR/{kind}: {style}")
+    assert not missing, f"템플릿에 없는 스타일 참조: {missing}"
+
+
 def test_mockexam_v2_school_overrides_exist_in_inventory():
     """동형 v2: 기본 FLOW + 학교 overrides 적용 결과가 각 학교 실물 템플릿
     인벤토리에 전부 존재해야 한다 (새 학교 추가 시 스펙 픽스처도 추가할 것)."""

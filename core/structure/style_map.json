@@ -1,6 +1,6 @@
 {
   "_doc": "단락스타일 룩업 (docs/taxonomy/11_워크북_스타일매핑.md 데이터화). (step_unit × 단락종류[× 조건]) → InDesign 단락스타일 '그룹 > 이름'. null = 출력 제거 대상. 스타일명 변경/학교 커스텀은 이 파일(또는 엔진 오버라이드 데이터)만 수정 — JSX/코드 수정 불필요.",
-  "_version": "2026-07-05 v5 — blackbook 섹션 추가 (v1 typeToStyle 의미 보존)",
+  "_version": "2026-07-04 v6 — whitebook 섹션 추가 (v1 run.jsx STYLES 표 보존)",
   "workbook": {
     "STEP3": {
       "GH": null,
@@ -143,6 +143,33 @@
       "vocab_item": "Vocabulary+ > !연관 어휘",
       "answer": "정답 및 해설 > 정답",
       "explanation": "정답 및 해설 > 해설"
+    }
+  },
+  "whitebook": {
+    "_doc": "화이트북 v2 (배재1 워크북형 템플릿 스펙 대조 — tests/fixtures/template_spec_whitebook.json). AREAS=v1 run.jsx STYLES 표(스토리 채움 단락스타일 — v1 getStyle은 그룹 1단계 탐색, v2는 전체 경로 표기), PRAC=연습문제 파서 sty → 단락스타일, CHAR=문자스타일.",
+    "AREAS": {
+      "A_word": "A 어휘",
+      "B_eng": "C 예문",
+      "B_kor": "C 예문 사본",
+      "C_bogis": "C 단어 박스",
+      "C_def": "D 영영사전",
+      "D_box": "D 단어 박스 new",
+      "D_item": "D 단어 new",
+      "E_sent": "E 전치사",
+      "ANS_hdr": "정답 > 정답_",
+      "ANS_item": "정답 > 정답지 번호",
+      "ANS_sol": "정답 및 해설 > 해설_"
+    },
+    "PRAC": {
+      "문제": "독해 > 문제",
+      "선지": "독해 > 선지",
+      "보기": "독해 > 보기",
+      "정답지 번호": "정답 > 정답지 번호",
+      "해설_": "정답 및 해설 > 해설_"
+    },
+    "CHAR": {
+      "UL": "밑줄",
+      "ANS": "정답"
     }
   }
 }

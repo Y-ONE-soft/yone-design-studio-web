@@ -39,6 +39,17 @@ ENGINE_SLOTS = {
     "mockexam": ["manuscripts"],
     "blackbook": ["manuscript", "answers"],
     "seseospecial": ["part1", "part2", "answers"],
+    "whitebook": ["w1_main", "w1_practice", "w1_main_ans", "w1_prac_ans",
+                  "w2_main", "w2_practice", "w2_main_ans", "w2_prac_ans",
+                  "w3_main", "w3_practice", "w3_main_ans", "w3_prac_ans"],
+}
+
+# 구 슬롯명 → 현행 슬롯명 (upload_spec 개편 이전 job의 inputs를 재사용하기 위해
+# 코퍼스 복사 시 파일 접두사를 개명한다. replay는 현행 upload_spec 기준으로 동작)
+LEGACY_SLOT_ALIASES = {
+    "whitebook": {"week2": "w1_main", "week3": "w2_main", "week4": "w3_main",
+                  "ans2": "w1_main_ans", "ans3": "w2_main_ans",
+                  "ans4": "w3_main_ans"},
 }
 
 # 코퍼스 보류 엔진 (parse가 업로드 아닌 외부 소스에 의존 — 오프라인 재실행 불가):
@@ -62,6 +73,10 @@ def _classify(settings: dict, content: dict) -> str | None:
     if keys == {"indd_path", "issue_num", "json_path", "output_dir"} \
             and "sections" in content:
         return "blackbook"
+    # whitebook: blackbook과 settings 키가 동일 — content 구조(Day)로 구분
+    if keys == {"indd_path", "issue_num", "json_path", "output_dir"} \
+            and "days" in content:
+        return "whitebook"
     if "school_key" in keys and "part1" in content and "part2" in content:
         return "seseospecial"
     return None
@@ -79,19 +94,30 @@ def _diversity_key(job_dir: str) -> tuple:
     return tuple(vals)
 
 
-def _input_files(job_dir: str, slots: list) -> list:
-    """uploads/ 루트에서 슬롯 접두사가 붙은 원본만 수집 (파생물 제외)."""
+def _input_files(job_dir: str, slots: list, aliases: dict = None) -> list:
+    """uploads/ 루트에서 슬롯 접두사가 붙은 원본만 수집 (파생물 제외).
+
+    aliases(구 슬롯명 → 현행 슬롯명)가 있으면 구 접두사도 매칭한다."""
     up = os.path.join(job_dir, "uploads")
     if not os.path.isdir(up):
         return []
+    prefixes = list(slots) + sorted(aliases or {})
     out = []
     for name in sorted(os.listdir(up)):
         full = os.path.join(up, name)
         if not os.path.isfile(full):
             continue
-        if any(name.startswith(f"{slot}_") for slot in slots):
+        if any(name.startswith(f"{p}_") for p in prefixes):
             out.append(full)
     return out
+
+
+def _canonical_input_name(name: str, aliases: dict) -> str:
+    """구 슬롯 접두사를 현행 슬롯명으로 개명 (없으면 그대로)."""
+    for old, new in (aliases or {}).items():
+        if name.startswith(f"{old}_"):
+            return f"{new}_" + name[len(old) + 1:]
+    return name
 
 
 def scan(jobs_dir: str):
@@ -113,7 +139,8 @@ def scan(jobs_dir: str):
         engine = _classify(settings, content)
         if engine is None:
             continue
-        inputs = _input_files(job_dir, ENGINE_SLOTS[engine])
+        inputs = _input_files(job_dir, ENGINE_SLOTS[engine],
+                              LEGACY_SLOT_ALIASES.get(engine))
         if not inputs:
             continue
         cands.append((engine, job_id, job_dir, inputs, _diversity_key(job_dir)))
@@ -155,8 +182,10 @@ def copy_case(engine, job_id, job_dir, inputs, dry: bool):
     os.makedirs(os.path.join(dst, "inputs"))
     os.makedirs(os.path.join(dst, "meta"))
     os.makedirs(os.path.join(dst, "golden"))
+    aliases = LEGACY_SLOT_ALIASES.get(engine, {})
     for f in inputs:
-        shutil.copy2(f, os.path.join(dst, "inputs", os.path.basename(f)))
+        name = _canonical_input_name(os.path.basename(f), aliases)
+        shutil.copy2(f, os.path.join(dst, "inputs", name))
     for name in sorted(os.listdir(job_dir)):
         if name.endswith(".txt") \
                 and unicodedata.normalize("NFC", name) not in _META_EXCLUDE:

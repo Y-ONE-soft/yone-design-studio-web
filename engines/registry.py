@@ -24,6 +24,7 @@ from engines.mockexam_sero_merge.engine import MockexamSeroMergeEngine
 from engines.analysis_merge.engine import AnalysisMergeEngine
 from engines.mothertongue_merge.engine import MothertongueMergeEngine
 from engines.vert_to_horiz.engine import VertToHorizEngine
+from engines.whitebook_v2.engine import WhitebookV2Engine
 
 # ── 새 교재 추가 시 여기에 한 줄만 추가 ──────────────────────────────────
 _ENGINE_LIST = [
@@ -53,6 +54,7 @@ _ENGINE_LIST = [
     WorkbookV2Engine(),
     WorkbookSuppV2Engine(),
     WorkbookSeroV2Engine(),
+    WhitebookV2Engine(),
 ]
 # ────────────────────────────────────────────────────────────────────────
 

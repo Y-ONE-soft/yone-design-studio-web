@@ -68,3 +68,24 @@ def test_workbook_family_v2_registration():
     # supp v2는 workbook_v2 상속 — 파서/플랜/검수 로직 공유 확인
     from engines.workbook_v2.engine import WorkbookV2Engine
     assert isinstance(engines["workbook_supp_v2"], WorkbookV2Engine)
+
+
+def test_whitebook_v2_registration():
+    """whitebook_v2 — registry(27번째)/카드/공용 템플릿 정합."""
+    from engines import registry
+    engines = {e.material_id: e for e in registry.all_engines()}
+    assert "whitebook_v2" in engines
+    assert "whitebook" in engines           # 기존 엔진 유지 (삭제 금지 규칙)
+    assert len(engines) >= 27
+
+    raw = open(os.path.join(REPO, "data", "subjects.json"),
+               encoding="utf-8").read()
+    assert '"engine_id": "whitebook_v2"' in raw
+    assert '"engine_id": "whitebook"' in raw       # 기존 카드 유지
+
+    # v1이 공용 typeset.html 사용 — v2도 동일 (template_name 미정의 = 공용)
+    e = engines["whitebook_v2"]
+    assert getattr(e, "template_name", "typeset.html") == "typeset.html"
+    assert os.path.isfile(os.path.join(REPO, "templates", "typeset.html"))
+    # 공용 폼은 upload_spec으로 자동 생성 — v1과 동일 슬롯이어야 UI 동작 동일
+    assert e.upload_spec == engines["whitebook"].upload_spec

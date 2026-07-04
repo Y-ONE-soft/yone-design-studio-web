@@ -22,6 +22,7 @@ def build_uploaded(engine, job_dir: str) -> dict:
     """app.py:api_run 의 슬롯 처리(1167~1207)를 재현해 uploaded dict 구성."""
     uploads = os.path.join(job_dir, "uploads")
     uploaded = {}
+    all_keys = [s["key"] for s in engine.upload_spec["slots"]]
     for slot in engine.upload_spec["slots"]:
         key = slot["key"]
         if slot.get("type") in ("text", "textarea"):
@@ -29,9 +30,15 @@ def build_uploaded(engine, job_dir: str) -> dict:
             if os.path.isfile(txt):
                 uploaded[key] = open(txt, encoding="utf-8").read().strip()
             continue
+        # 접두사 충돌 방지: 다른 슬롯의 더 긴 키가 매칭되는 파일은 제외
+        # (예: whitebook의 w1_main vs w1_main_ans — 실서비스는 슬롯 키로 정확
+        # 저장하지만, replay는 파일명 접두사로 복원하므로 여기서 걸러야 한다)
+        longer = [k for k in all_keys
+                  if k != key and k.startswith(f"{key}_")]
         matches = sorted(
             os.path.join(uploads, n) for n in os.listdir(uploads)
             if n.startswith(f"{key}_")
+            and not any(n.startswith(f"{k}_") for k in longer)
         ) if os.path.isdir(uploads) else []
         if not matches:
             continue
