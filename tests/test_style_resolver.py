@@ -97,6 +97,25 @@ def test_whitebook_style_map_exists_in_template_inventory():
     assert not missing, f"템플릿에 없는 스타일 참조: {missing}"
 
 
+def test_seseospecial_style_map_exists_in_template_inventory():
+    """세서특필 v2: style_map의 모든 단락스타일이 광문2/광문3 실물 [원본]
+    템플릿 인벤토리에 전부 존재. (주의: [원본]광문1은 구세대 템플릿 —
+    C ver 트리, 새형식 스타일 부재 — 이라 대상에서 제외. style_map _doc 참조.)"""
+    smap = json.load(open(os.path.join(
+        os.path.dirname(TESTS_DIR), "core", "structure", "style_map.json"),
+        encoding="utf-8"))["seseospecial"]
+    for fx in ("template_spec_seseospecial_광문2.json",
+               "template_spec_seseospecial_광문3.json"):
+        inv = set(json.load(open(os.path.join(TESTS_DIR, "fixtures", fx),
+                                 encoding="utf-8"))["paragraph_styles"])
+        missing = []
+        for table in ("PART1", "PART2", "ANS"):
+            for kind, style in smap[table].items():
+                if style not in inv:
+                    missing.append(f"{table}/{kind}: {style}")
+        assert not missing, f"{fx}에 없는 스타일 참조: {missing}"
+
+
 def test_mockexam_v2_school_overrides_exist_in_inventory():
     """동형 v2: 기본 FLOW + 학교 overrides 적용 결과가 각 학교 실물 템플릿
     인벤토리에 전부 존재해야 한다 (새 학교 추가 시 스펙 픽스처도 추가할 것)."""

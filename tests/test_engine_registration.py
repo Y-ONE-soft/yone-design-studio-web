@@ -89,3 +89,23 @@ def test_whitebook_v2_registration():
     assert os.path.isfile(os.path.join(REPO, "templates", "typeset.html"))
     # 공용 폼은 upload_spec으로 자동 생성 — v1과 동일 슬롯이어야 UI 동작 동일
     assert e.upload_spec == engines["whitebook"].upload_spec
+
+
+def test_seseospecial_v2_registration():
+    """seseospecial_v2 — registry(28번째)/카드/공용 템플릿 정합."""
+    from engines import registry
+    engines = {e.material_id: e for e in registry.all_engines()}
+    assert "seseospecial_v2" in engines
+    assert "seseospecial" in engines        # 기존 엔진 유지 (삭제 금지 규칙)
+    assert len(engines) >= 28
+
+    raw = open(os.path.join(REPO, "data", "subjects.json"),
+               encoding="utf-8").read()
+    assert '"engine_id": "seseospecial_v2"' in raw
+    assert '"engine_id": "seseospecial"' in raw     # 기존 카드 유지
+
+    # v1이 공용 typeset.html 사용 — v2도 동일 (template_name 미정의 = 공용)
+    e = engines["seseospecial_v2"]
+    assert getattr(e, "template_name", "typeset.html") == "typeset.html"
+    # 공용 폼은 upload_spec으로 자동 생성 — v1과 동일 슬롯이어야 UI 동작 동일
+    assert e.upload_spec == engines["seseospecial"].upload_spec

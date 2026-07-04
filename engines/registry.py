@@ -25,6 +25,7 @@ from engines.analysis_merge.engine import AnalysisMergeEngine
 from engines.mothertongue_merge.engine import MothertongueMergeEngine
 from engines.vert_to_horiz.engine import VertToHorizEngine
 from engines.whitebook_v2.engine import WhitebookV2Engine
+from engines.seseospecial_v2.engine import SeseoSpecialV2Engine
 
 # ── 새 교재 추가 시 여기에 한 줄만 추가 ──────────────────────────────────
 _ENGINE_LIST = [
@@ -55,6 +56,7 @@ _ENGINE_LIST = [
     WorkbookSuppV2Engine(),
     WorkbookSeroV2Engine(),
     WhitebookV2Engine(),
+    SeseoSpecialV2Engine(),
 ]
 # ────────────────────────────────────────────────────────────────────────
 

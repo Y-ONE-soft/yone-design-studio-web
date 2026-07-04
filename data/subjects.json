@@ -53,7 +53,8 @@
     "section": "조판",
     "category": "특강교재",
     "items": [
-      {"name": "세서특필", "prefix": "세서특필", "engine_id": "seseospecial"}
+      {"name": "세서특필", "prefix": "세서특필", "engine_id": "seseospecial"},
+      {"name": "세서특필 v2 (베타)", "prefix": "세서특필", "engine_id": "seseospecial_v2"}
     ]
   },
   {
