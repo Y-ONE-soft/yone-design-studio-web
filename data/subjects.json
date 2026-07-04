@@ -19,7 +19,9 @@
       {"name": "워크북 v2 (베타)","prefix": "워크북",        "engine_id": "workbook_v2", "category": "워크북"},
       {"name": "리딩파워 워크북","prefix": "리딩파워워크북", "engine_id": "ebs_workbook"},
       {"name": "수능특강 워크북","prefix": "수능특강워크북", "engine_id": "suneungteukgang_workbook"},
-      {"name": "부교재 워크북",  "prefix": "부교재워크북",  "engine_id": "workbook_supp"}
+      {"name": "부교재 워크북",  "prefix": "부교재워크북",  "engine_id": "workbook_supp"},
+      {"name": "부교재 워크북 v2 (베타)", "prefix": "부교재워크북", "engine_id": "workbook_supp_v2", "category": "워크북"},
+      {"name": "워크북 세로 v2 (베타)", "prefix": "워크북세로", "engine_id": "workbook_sero_v2", "category": "워크북"}
     ]
   },
   {

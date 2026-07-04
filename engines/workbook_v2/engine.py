@@ -160,6 +160,31 @@ class WorkbookV2Engine(BaseEngine):
         log(f"[v2 파서] 완료: {len(data.get('steps', {}))}개 STEP")
         return json_path
 
+    # ── 파생 엔진 훅 (workbook_supp_v2 등이 오버라이드 — 기본은 v1 규칙) ────
+
+    def _output_name(self, job_dir, grade, year, month, workbook_type,
+                     school):
+        """출력 .indd 파일명 — v1 워크북 규칙 + _v2 접미."""
+        yy = str(year)[-2:]
+        mm = str(month).zfill(2)
+        return f"고{grade}_{yy}년_{mm}월_전체(C)_v2.indd"
+
+    def _select_template(self, cfg, workbook_type, school, log):
+        """원본 indd 선택 — v1과 동일: 학교 전용 템플릿 우선 → 유형 기본."""
+        indd_map = cfg.get("indd_original", {})
+        src = ""
+        if school:
+            src = indd_map.get(f"{workbook_type}_{school}", "")
+            if src:
+                log(f"[내지] 학교 전용 템플릿: {school}")
+        if not src:
+            src = indd_map.get(workbook_type, "")
+        if not src or not os.path.exists(src):
+            raise FileNotFoundError(
+                f"내지 원본 없음: {src or workbook_type} "
+                f"(workbook_type={workbook_type}, school={school})")
+        return src
+
     # ── 2단계: prepare_jsx — 플랜 빌드 + 템플릿 복사 + JSX 생성 ─────────────
 
     def prepare_jsx(self, json_path, job_dir, log):
@@ -188,25 +213,13 @@ class WorkbookV2Engine(BaseEngine):
             log(f"[v2] ⚠️ 미지원 스텝(렌더 제외): "
                 + ", ".join(plan["unsupported"]))
 
-        # 출력 파일명: v1 규칙 + _v2 접미
-        yy = str(year)[-2:]
-        mm = str(month).zfill(2)
-        out_name = f"고{grade}_{yy}년_{mm}월_전체(C)_v2.indd"
+        # 출력 파일명: v1 규칙 + _v2 접미 (파생 엔진은 _output_name 오버라이드)
+        out_name = self._output_name(job_dir, grade, year, month,
+                                     workbook_type, school)
         indd_path = os.path.join(cfg["indd_output_dir"], out_name)
 
-        # 원본 indd 선택 — v1과 동일: 학교 전용 템플릿 우선 → 유형 기본
-        indd_map = cfg.get("indd_original", {})
-        src = ""
-        if school:
-            src = indd_map.get(f"{workbook_type}_{school}", "")
-            if src:
-                log(f"[내지] 학교 전용 템플릿: {school}")
-        if not src:
-            src = indd_map.get(workbook_type, "")
-        if not src or not os.path.exists(src):
-            raise FileNotFoundError(
-                f"내지 원본 없음: {src or workbook_type} "
-                f"(workbook_type={workbook_type}, school={school})")
+        # 원본 indd 선택 (파생 엔진은 _select_template 오버라이드)
+        src = self._select_template(cfg, workbook_type, school, log)
         os.makedirs(os.path.dirname(indd_path), exist_ok=True)
         indd_path = safe_copy_indd(src, indd_path)
         log(f"[내지] 원본 복사: {os.path.basename(indd_path)}")

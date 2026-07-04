@@ -831,7 +831,12 @@ def _c1_remove_gap_blank(items, st_btm, st_btm_t):
         i -= 1
 
 
-def build_step1_c1(step_data, workbook_type="모의고사", exclude_btm=False):
+def build_step1_c1(step_data, workbook_type="모의고사", exclude_btm=False,
+                   split_condition=True):
+    # split_condition: v1 conditionIdxList 잔존 해석의 NEXT_FRAME 유닛 분리.
+    # 세로 워크북(workbook_sero_v2)은 페이지당 프레임 2개(상단 보기+하단)라
+    # 이 분리가 실물 v1 출력에 없고(사이클 페이지 오버플로우 유발) False로
+    # 끈다. 가로(workbook_v2)는 기존 동작 유지(True) — 코퍼스 4케이스 미발동.
     st_c1 = _style("STEP1C1", "P")
     st_btm = _style("STEP1C1", "BTM")
     st_btm_t = _style("STEP1C1", "BTM_T")
@@ -1097,7 +1102,7 @@ def build_step1_c1(step_data, workbook_type="모의고사", exclude_btm=False):
             cur = []
             cur_page_break = False
             block_bottom_done = True
-        elif it.get("_cond") and it["s"] is None:
+        elif split_condition and it.get("_cond") and it["s"] is None:
             _flush()
             cur = []
             cur_page_break = False

@@ -40,3 +40,31 @@ def test_registry_subjects_template_consistency():
     wsrc = open(wtpl, encoding="utf-8").read()
     assert 'data-material="{{ engine.material_id }}"' in wsrc
     assert "workbook_sero" not in wsrc      # v2 페이지에 v1 세로 버튼 없음
+
+
+def test_workbook_family_v2_registration():
+    """workbook_supp_v2 / workbook_sero_v2 — registry/카드/템플릿 정합."""
+    from engines import registry
+    engines = {e.material_id: e for e in registry.all_engines()}
+    assert "workbook_supp_v2" in engines
+    assert "workbook_sero_v2" in engines
+    assert "workbook_supp" in engines       # 기존 엔진 유지 (삭제 금지 규칙)
+    assert "workbook_sero" in engines
+
+    raw = open(os.path.join(REPO, "data", "subjects.json"),
+               encoding="utf-8").read()
+    assert '"engine_id": "workbook_supp_v2"' in raw
+    assert '"engine_id": "workbook_sero_v2"' in raw
+    assert '"engine_id": "workbook_supp"' in raw   # 기존 카드 유지
+
+    for mid in ("workbook_supp_v2", "workbook_sero_v2"):
+        e = engines[mid]
+        tpl = os.path.join(REPO, "templates", e.template_name)
+        assert e.template_name.endswith("_v2.html"), mid
+        assert os.path.isfile(tpl), f"템플릿 없음: {tpl}"
+        src = open(tpl, encoding="utf-8").read()
+        assert 'data-material="{{ engine.material_id }}"' in src
+
+    # supp v2는 workbook_v2 상속 — 파서/플랜/검수 로직 공유 확인
+    from engines.workbook_v2.engine import WorkbookV2Engine
+    assert isinstance(engines["workbook_supp_v2"], WorkbookV2Engine)

@@ -18,6 +18,8 @@ from engines.mockexam.engine import MockexamEngine
 from engines.mockexam_v2.engine import MockexamV2Engine
 from engines.blackbook_v2.engine import BlackbookV2Engine
 from engines.workbook_v2.engine import WorkbookV2Engine
+from engines.workbook_supp_v2.engine import WorkbookSuppV2Engine
+from engines.workbook_sero_v2.engine import WorkbookSeroV2Engine
 from engines.mockexam_sero_merge.engine import MockexamSeroMergeEngine
 from engines.analysis_merge.engine import AnalysisMergeEngine
 from engines.mothertongue_merge.engine import MothertongueMergeEngine
@@ -49,6 +51,8 @@ _ENGINE_LIST = [
     MockexamV2Engine(),
     BlackbookV2Engine(),
     WorkbookV2Engine(),
+    WorkbookSuppV2Engine(),
+    WorkbookSeroV2Engine(),
 ]
 # ────────────────────────────────────────────────────────────────────────
 
