@@ -77,6 +77,11 @@ _RE_S3_QNUM = re.compile(r"^\d+\.\s")
 # 은 번호 스타일 단락을 덮지 않으므로(run.jsx 2417 break) Cond 포함이 파리티.
 _RE_S3_KORQ = re.compile(r"[가-힣]\?")
 _S3_WEAK_KINDS = {"UNKNOWN", "K", "Cond"}
+# v1 pass 11 — 화살표 단독 단락 삭제 + 다음 단락 배경(S3_BG) (run.jsx
+# 2433~2450). EBS Unit15 v1 실물 dump 대조에서 "↓" 4건 실증 (모의고사
+# 코퍼스에도 19건 존재 — v1 파리티 회복).
+_RE_S3_ARROW = re.compile(
+    "^[⬇⇩↓↘⇓⬆↑⇧⇑️]+$")
 
 
 def _s3_effective_kind(kind, text):
@@ -99,14 +104,22 @@ def build_step3(step_data):
     for group in ("normal", "short"):
         for item in step_data.get(group, []) or []:
             unit = []
+            arrow_pending = False
             for p in item.get("paragraphs", []):
                 text = p.get("text", "")
                 kind = p.get("kind") or "UNKNOWN"
                 if kind in ("GH", "A", "BLANK"):
                     continue          # 제거 대상 (style_map에서 null)
+                if _RE_S3_ARROW.match(text.strip()) and text.strip():
+                    arrow_pending = True     # v1 pass 11: 화살표 단락 삭제
+                    continue
                 style = _style("STEP3", _s3_effective_kind(kind, text))
                 if style is None:
                     continue
+                if arrow_pending:
+                    # v1 pass 11: 화살표 다음 단락 → 배경(S3_BG)
+                    style = _style("STEP3", "P-CONTEXT")
+                    arrow_pending = False
                 runs = p.get("runs") or []
                 for rx, repl in _S3_GREPS:
                     text, runs = _sub_runs(rx, repl, text, runs)

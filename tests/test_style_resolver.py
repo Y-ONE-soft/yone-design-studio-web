@@ -143,3 +143,57 @@ def test_mockexam_v2_school_overrides_exist_in_inventory():
                 if s and s not in inv:
                     problems.append(f"{school}/{kind}: {s}")
     assert not problems, f"학교 템플릿에 없는 스타일: {problems}"
+
+
+def test_gdrive_workbook_v2_templates_inventory():
+    """GDrive 워크북 3종 v2 템플릿 실물 인벤토리 가드.
+
+    각 내지가 해당 엔진 스텝의 style_map 스타일(플랜이 실제 방출하는 것 —
+    리스트 값은 첫 요소)·아이콘 라벨·마커 프레임·스토리 탐색 마스터를
+    실제로 갖고 있는지 고정한다. 픽스처는 core.template_spec으로
+    [원본] 로컬 사본에서 추출 (2026-07-04).
+    """
+    def used_styles(smap, steps):
+        out = set()
+        for st in steps:
+            for kind, v in smap[st].items():
+                s = v[0] if isinstance(v, list) else v
+                if s:
+                    out.add(s)
+        return out
+
+    smap = json.load(open(os.path.join(
+        os.path.dirname(TESTS_DIR), "core", "structure", "style_map.json"),
+        encoding="utf-8"))["workbook"]
+    ebs_steps = ["STEP1A1", "STEP1A2", "STEP1C1", "STEP1C2", "STEP2A1",
+                 "STEP2A1Practice", "STEP2C2", "STEP3"]
+    cases = [
+        # (픽스처, 스텝 유닛, 필요 마스터 prefix, 마커 텍스트)
+        ("template_spec_ebs_readingpower.json", ebs_steps, {"O", "M"},
+         ["어휘 선택", "본문 O/X", "문장 배열", "빈칸 어휘", "어법 수정",
+          "영작 배열"]),
+        ("template_spec_suneungteukgang_analysis.json", ebs_steps[:-1],
+         set(),
+         ["어휘선택", "본문 O/X", "문장배열", "빈칸어휘", "어법선택",
+          "영작배열"]),
+        ("template_spec_suneungteukgang_problem.json", ["STEP3"], {"D"},
+         []),
+    ]
+    icon_labels = {"TF 버튼", "STEP1 문제아이콘", "STEP2 영작 답지",
+                   "화살표 답지"}
+    for fixture, steps, masters, markers in cases:
+        spec = json.load(open(os.path.join(TESTS_DIR, "fixtures", fixture),
+                              encoding="utf-8"))
+        inv = set(spec["paragraph_styles"])
+        missing = used_styles(smap, steps) - inv
+        assert not missing, (fixture, missing)
+        assert masters <= {m["prefix"] for m in spec["masters"]}, fixture
+        labels = {li["label"] for li in spec["labeled_items"]}
+        assert icon_labels <= labels, (fixture, icon_labels - labels)
+        heads = " | ".join(f.get("head", "") for p in spec["page_map"]
+                           for f in p["frames"])
+        for mk in markers:
+            assert mk in heads, (fixture, mk)
+        # 밑줄 문자스타일 폴백 체인(문제_밑줄→밑줄) 중 하나는 존재
+        assert any(c in spec["character_styles"]
+                   for c in ("문제_밑줄", "밑줄")), fixture
