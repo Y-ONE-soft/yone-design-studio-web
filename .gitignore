@@ -2,6 +2,7 @@ __pycache__/
 *.pyc
 .DS_Store
 jobs/
+jobs_archive/
 .claude/
 18fe636a-*.json
 

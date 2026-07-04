@@ -113,6 +113,19 @@ tail -f ~/Library/Logs/yonestudio-flask.log
 tail -f ~/Library/Logs/yonestudio-flask-error.log
 ```
 
+### jobs/ 보존 정책 (아카이브)
+
+90일 초과 job 디렉터리를 `jobs_archive/`(gitignore)로 이동한다 — 삭제하지 않음.
+골든 코퍼스로 승격된 job(`tests/corpus/*/*/manifest.json`의 `source_job`)은 자동 제외.
+
+```bash
+python3 scripts/archive_jobs.py            # dry-run: 이동 대상 목록만 출력 (기본)
+python3 scripts/archive_jobs.py --apply    # 실제 이동
+python3 scripts/archive_jobs.py --days 30  # 보존 기간 변경
+```
+
+launchd 주기 실행 등록은 사용자 결정 사항 — 제안 문구는 스크립트 docstring 참조.
+
 ---
 
 ## 디렉터리 구조
