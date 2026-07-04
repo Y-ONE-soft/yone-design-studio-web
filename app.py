@@ -1515,6 +1515,15 @@ def _run_pipeline(engine, job_id: str, job_dir: str, uploaded: dict):
 
         jm.done(job_id, result)
 
+        # (C1-4) 조판 완료 macOS 알림 — fail-open, YONE_NOTIFY=0으로 끔
+        try:
+            from core import notify
+            notify.notify_job_finished(
+                getattr(engine, "display_name", engine.material_id),
+                job_id, ok=True)
+        except Exception as _ne:
+            log(f"[알림] 실패 (무시): {_ne}")
+
         # 조교 공유 폴더로 비동기 복사 (ASSISTANT_SHARE_DIR 환경변수 설정 시).
         # 별도 thread라 GDrive 지연/실패가 메인 pipeline에 영향 없음.
         try:
@@ -1538,6 +1547,14 @@ def _run_pipeline(engine, job_id: str, job_dir: str, uploaded: dict):
         tb = traceback.format_exc()
         log(tb)
         jm.fail(job_id, str(e))
+        # (C1-4) 조판 실패 macOS 알림 — fail-open, YONE_NOTIFY=0으로 끔
+        try:
+            from core import notify
+            notify.notify_job_finished(
+                getattr(engine, "display_name", engine.material_id),
+                job_id, ok=False, error=str(e))
+        except Exception as _ne:
+            log(f"[알림] 실패 (무시): {_ne}")
         # 실패 이력 영속화(분석용). 실패 경로를 절대 깨지 않도록 예외 무시.
         try:
             _persist_failure(job_id, job_dir, engine, stage, str(e), tb)
