@@ -91,6 +91,7 @@ def _is_blocked_for_assistant(path):
 import core.job_manager as jm
 from core.indesign import runner as indesign
 from core import workbook_edit as wb_edit
+from core.uploads import sanitize_filename, allowed_by_accept
 from engines import registry
 
 _DATA_DIR      = os.path.join(os.path.dirname(__file__), "data")
@@ -204,7 +205,8 @@ app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 # Werkzeug 3.0+ form parsing 보안 한도 — 멀티 파일 업로드용으로 크게.
-app.config["MAX_CONTENT_LENGTH"] = 1024 * 1024 * 1024   # 1 GB 요청 전체 크기
+# (C1-3) 1GB → 256MB 하향: 원고(docx/hwpx) 다중 업로드는 수십 MB 수준이라 충분.
+app.config["MAX_CONTENT_LENGTH"] = 256 * 1024 * 1024    # 256 MB 요청 전체 크기
 app.config["MAX_FORM_MEMORY_SIZE"] = 64 * 1024 * 1024   # 64 MB 텍스트 필드 합
 app.config["MAX_FORM_PARTS"] = 10000                     # 멀티파트 part 수
 app.jinja_loader = _RetryingFileSystemLoader(
@@ -1225,7 +1227,13 @@ def api_run(material_id):
             paths = []
             for f in files:
                 if f and f.filename:
-                    safe_name = f"{key}_{os.path.basename(f.filename)}"
+                    # (C1-3) 확장자 화이트리스트 — 슬롯 accept가 진실
+                    if not allowed_by_accept(f.filename, slot.get("accept", "")):
+                        msg = (f"허용되지 않는 파일 형식: {f.filename} "
+                               f"(허용: {slot.get('accept')})")
+                        jm.fail(job_id, msg)
+                        return jsonify({"job_id": job_id, "error": msg}), 400
+                    safe_name = f"{key}_{sanitize_filename(f.filename)}"
                     path = os.path.join(upload_dir, safe_name)
                     f.save(path)
                     paths.append(path)
@@ -1237,7 +1245,13 @@ def api_run(material_id):
         else:
             f = request.files.get(key)
             if f and f.filename:
-                safe_name = f"{key}_{os.path.basename(f.filename)}"
+                # (C1-3) 확장자 화이트리스트 — 슬롯 accept가 진실
+                if not allowed_by_accept(f.filename, slot.get("accept", "")):
+                    msg = (f"허용되지 않는 파일 형식: {f.filename} "
+                           f"(허용: {slot.get('accept')})")
+                    jm.fail(job_id, msg)
+                    return jsonify({"job_id": job_id, "error": msg}), 400
+                safe_name = f"{key}_{sanitize_filename(f.filename)}"
                 path = os.path.join(upload_dir, safe_name)
                 f.save(path)
                 uploaded[key] = path
