@@ -122,7 +122,7 @@
       section.classList.remove('hidden');
       listEl.innerHTML = '<div class="info-box-row info-box-row--ok">' +
         labels.length + '개 강 순차 조판: ' + labels.join(', ') + '</div>' +
-        '<div class="info-box-summary u-mt-4">각 강마다 분석본 → 문제본 자동 조판됩니다.</div>';
+        '<div class="info-box-summary u-mt-4">각 강마다 분석본 → 문제본 자동 조판 후, 전체 강을 통합한 _v2 파일을 생성합니다.</div>';
       // 첫 강의 lesson_folder hidden field에 저장 (단일 모드 호환)
       document.getElementById('unit-folder-hidden').value = _unitFolders[labels[0]] || '';
       return;
@@ -179,7 +179,7 @@
     }
     if (labels.length > 1) {
       document.getElementById('filename-preview').textContent =
-        labels.length + '개 강 (각각 별도 파일 생성)';
+        labels.length + '개 강 (강별 파일 + 통합 _v2 파일 생성)';
       return;
     }
     var unitShort = labels[0].replace(/\s+/g, '');
@@ -241,16 +241,15 @@
       }
 
       logArea.textContent += '\n━━━━━ 강별 조판 완료: 성공 ' + totalOk + '개, 실패 ' + totalFail + '개 ━━━━━\n';
-      if (labels.length >= 2) { logArea.textContent += '[안내] v2는 다중 강 통합(merge) 미지원 — 통합 파일이 필요하면 v1 페이지를 사용하세요.\n'; }
       logArea.scrollTop = logArea.scrollHeight;
 
-      // v2: 다중 강 통합(merge)은 미지원 — 통합이 필요하면 v1 페이지 사용
-      // (v1 merge_lessons는 v1 파일명 규칙 대상이라 _v2 출력에 미적용)
-      if (false && totalOk === labels.length && labels.length >= 2) {
-        logArea.textContent += '\n━━━━━ 통합 파일 생성 중 ━━━━━\n';
+      // v2 다중 강 통합(merge) — 강별 _v2 indd를 spread duplicate로 통합
+      // + 검수 게이트(강별 단어셋 보존 / 스프레드 수 정합) 결과 표시
+      if (totalOk === labels.length && labels.length >= 2) {
+        logArea.textContent += '\n━━━━━ 통합 파일 생성 중 (검수 게이트 포함) ━━━━━\n';
         logArea.scrollTop = logArea.scrollHeight;
         try {
-          var mResp = await fetch('/api/suneungteukgang-workbook/merge', {
+          var mResp = await fetch('/api/suneungteukgang-workbook-v2/merge', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ lessons: labels })
@@ -266,6 +265,17 @@
             if (mData.result.problem) {
               logArea.textContent += '[문제본 통합] ✓ ' + mData.result.problem + '\n';
             }
+            var verify = mData.result.verify || {};
+            Object.keys(verify).forEach(function(k) {
+              var v = verify[k];
+              var korName = (k === 'analysis') ? '분석본' : '문제본';
+              logArea.textContent += '[검수 게이트] ' + korName + ': ' +
+                (v.ok ? '✅ 통과' : '❌ 실패') +
+                ' (강 ' + v.lessons + '개, 스프레드 ' + v.spreads + ')\n';
+              (v.warnings || []).forEach(function(w) {
+                logArea.textContent += '  ' + w + '\n';
+              });
+            });
             if (mData.result.errors && mData.result.errors.length > 0) {
               mData.result.errors.forEach(function(err) {
                 logArea.textContent += '[통합 오류] ' + err + '\n';
@@ -276,6 +286,8 @@
           logArea.textContent += '[통합 실패] ' + err.message + '\n';
         }
         logArea.scrollTop = logArea.scrollHeight;
+      } else if (labels.length >= 2) {
+        logArea.textContent += '[안내] 일부 강 조판 실패 — 통합 파일 생성을 생략합니다.\n';
       }
 
       runBtn.disabled = false;

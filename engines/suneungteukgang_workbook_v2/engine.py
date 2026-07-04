@@ -16,9 +16,13 @@ run_indesign이 순차 실행한다 (v1 run_indesign 오버라이드 구조 그�
     지목 + PDF 2개
 
 v1 무변경. 출력 파일명 v1 규칙(EBS_수능특강_{강}_분석/문제) + _v2 접미 공존.
-다중 강 통합(merge_lessons)은 v1의 것을 그대로 사용한다 — v1 파일명 규칙
-(_v2 없음) 대상이므로 v2 출력 통합은 미지원 (전용 템플릿에서 다중 선택 제거,
-로드맵 미해결 참조).
+
+다중 강 통합(merge_lessons)도 v2 자체 구현 — v1 merge_lessons와 동일 의미론
+(첫 강 indd를 saveAs 후 나머지 강의 spread를 AT_END duplicate)이되,
+  - 대상/산출 파일명이 _v2 규칙 (v1 산출물과 절대 안 섞임)
+  - lib.jsxinc 기반 core/jsx/merge_spreads.body.jsx (절대경로/ES3 철칙)
+  - 머지 후 검수 게이트: 통합본을 dump_indd로 재오픈해 강별 단어셋 보존
+    + 스프레드 수(=소스 합) 정합 확인 (_gate_merge — 오프라인 테스트 대상)
 """
 import json
 import os
@@ -34,6 +38,9 @@ _V1_CONFIG = os.path.join(os.path.dirname(_DIR), "suneungteukgang_workbook",
                           "config.json")
 _RENDER_BODY = os.path.join(os.path.dirname(os.path.dirname(_DIR)),
                             "core", "jsx", "workbook_flow.body.jsx")
+_MERGE_BODY = os.path.join(os.path.dirname(os.path.dirname(_DIR)),
+                           "core", "jsx", "merge_spreads.body.jsx")
+_MERGE_MARKER = "스프레드 머지 완료"   # merge_spreads.body.jsx의 완료 wlog와 일치
 _PATH_KEYS = ["indd_output_dir", "indd_original", "ebs_base"]
 
 _STAGE_MAPS = json.load(open(os.path.join(_DIR, "step_map.json"),
@@ -51,6 +58,117 @@ def _load_v1_config():
     with open(_V1_CONFIG, encoding="utf-8") as f:
         cfg = json.load(f)
     return resolve_config(cfg, _PATH_KEYS)
+
+
+# ── 다중 강 통합(merge) 헬퍼 — 오프라인 테스트 대상 ─────────────────────────
+
+def _strip_ws(label):
+    return re.sub(r"\s+", "", label)
+
+
+def _merged_label(lesson_labels):
+    """통합 파일명 라벨 — v1 merge_lessons 규칙 그대로.
+    (한글+~ 조합이 InDesign saveAs에서 가끔 silent fail → `-` 결합)"""
+    first = _strip_ws(lesson_labels[0])
+    last = _strip_ws(lesson_labels[-1])
+    if first == last:
+        return first
+    if len(lesson_labels) <= 4:
+        return "-".join(_strip_ws(l) for l in lesson_labels)
+    return f"{first}-{last}"
+
+
+def _latest_lesson_indd(out_dir, short, tok):
+    """강별 v2 산출물 중 가장 최신(mtime) 것 — v1과 동일하게 _N 사본 포함."""
+    exact = os.path.join(out_dir, f"EBS_수능특강_{short}_{tok}_v2.indd")
+    candidates = [exact] if os.path.exists(exact) else []
+    base = os.path.join(out_dir, f"EBS_수능특강_{short}_{tok}_v2")
+    n = 2
+    while os.path.exists(f"{base}_{n}.indd"):
+        candidates.append(f"{base}_{n}.indd")
+        n += 1
+    if not candidates:
+        return None
+    candidates.sort(key=os.path.getmtime, reverse=True)
+    return candidates[0]
+
+
+def _dedupe_path(path):
+    if not os.path.exists(path):
+        return path
+    base, ext = os.path.splitext(path)
+    k = 2
+    while os.path.exists(f"{base}_{k}{ext}"):
+        k += 1
+    return f"{base}_{k}{ext}"
+
+
+def _text_words(texts):
+    got = set()
+    for t in texts:
+        for w in _RE_WORD.findall(_norm_typo(t)):
+            got.add(w.lower())
+    return got
+
+
+def _gate_merge(stats, dump, src_paths):
+    """머지 검수 게이트 (순수 함수).
+
+    stats: merge JSX가 남긴 게이트 입력 — 소스별 spread/pages/paras(전체
+           단락 텍스트) + 통합본 spread/pages + dup_fail
+    dump:  통합본 .indd를 dump_indd로 재오픈한 결과 (저장 파일 기준 진실)
+    검사: (a) 소스 수 정합 (b) 통합본 스프레드 수 = 소스 합 + duplicate
+          실패 0 (c) 강별 단어셋이 통합본 dump에 모두 존재
+    반환: (ok, warnings, info)
+    """
+    warnings = []
+    ok = True
+    sources = stats.get("sources", [])
+    merged = stats.get("merged", {}) or {}
+
+    # (a) 소스 수 정합
+    if len(sources) != len(src_paths):
+        ok = False
+        warnings.append(f"❌ 머지 소스 수 불일치: stats {len(sources)}개 ≠ "
+                        f"요청 {len(src_paths)}개")
+
+    # (b) 스프레드 수 정합 + duplicate 실패
+    want_spreads = sum(s.get("spreads", 0) for s in sources)
+    got_spreads = merged.get("spreads", -1)
+    if got_spreads != want_spreads:
+        ok = False
+        warnings.append(f"❌ 통합본 스프레드 수 불일치: {got_spreads} ≠ "
+                        f"소스 합 {want_spreads}")
+    if stats.get("dup_fail"):
+        ok = False
+        warnings.append(f"❌ spread duplicate 실패 {stats['dup_fail']}건")
+
+    # (c) 강별 단어셋 보존 (통합본 재오픈 dump 기준)
+    got_words = set()
+    overflow = 0
+    for story in dump.get("stories", []):
+        for pp in story.get("paragraphs", []):
+            for w in _RE_WORD.findall(_norm_typo(pp["t"])):
+                got_words.add(w.lower())
+        if story.get("overflow"):
+            overflow += 1
+    for s_stat in sources:
+        want = _text_words(s_stat.get("paras", []))
+        missing = want - got_words
+        if missing:
+            ok = False
+            warnings.append(
+                f"❌ {os.path.basename(s_stat.get('path', '?'))} 내용누락 "
+                f"{len(missing)}단어: " + ", ".join(sorted(missing)[:8]))
+
+    # 오버플로우는 강별 결과에서 이월된 것 — v2 규칙대로 경고(수동 처리)
+    if overflow:
+        warnings.append(f"⚠️ 통합본 오버플로우 스토리 {overflow}개 "
+                        f"(강별 결과에서 이월 — 수동 처리)")
+
+    info = {"spreads": got_spreads, "pages": merged.get("pages"),
+            "overflow": overflow, "lessons": len(sources)}
+    return ok, warnings, info
 
 
 class SuneungteukgangWorkbookV2Engine(WorkbookV2Engine):
@@ -288,3 +406,114 @@ class SuneungteukgangWorkbookV2Engine(WorkbookV2Engine):
                               for st in settings["stages"]},
             "warnings": warnings,
         }
+
+    # ── 다중 강 통합 merge (v2) ─────────────────────────────────────────────
+    # 강별 _v2 indd가 모두 만들어진 후 호출 (UI가 강별 조판 완료 후 fetch).
+    # 첫 강 indd를 통합본으로 saveAs 후 다른 강의 spread를 끝에 duplicate.
+    # 분석본/문제본 각각. v1 merge_lessons와 동일 의미론 + 검수 게이트 추가.
+    @classmethod
+    def merge_lessons(cls, lesson_labels, log):
+        """lesson_labels: ['21강', '22강', ...] (UI에서 선택된 순서대로)
+        Returns: {'analysis': path|None, 'problem': path|None,
+                  'errors': [...], 'verify': {stage: {...}}}
+        """
+        from core.indesign.runner import run_jsx
+        from core.inspect import dump_indd
+
+        results = {"analysis": None, "problem": None, "errors": [],
+                   "verify": {}}
+        if not isinstance(lesson_labels, list) or len(lesson_labels) < 2:
+            results["errors"].append("통합할 강이 2개 미만입니다.")
+            return results
+
+        cfg = _load_v1_config()
+        out_dir = cfg["indd_output_dir"]
+        merged_label = _merged_label(lesson_labels)
+
+        for tok, stage_kor, key in [("분석", "분석본", "analysis"),
+                                    ("문제", "문제본", "problem")]:
+            # 강별 source indd (_v2 규칙, 가장 최신 사본)
+            src_paths = []
+            missing = []
+            for label in lesson_labels:
+                p = _latest_lesson_indd(out_dir, _strip_ws(label), tok)
+                if p is None:
+                    missing.append(f"{label} {stage_kor}")
+                else:
+                    src_paths.append(os.path.abspath(p))
+            if missing:
+                results["errors"].append(
+                    f"{stage_kor} 통합 실패 — 원본 indd 누락: "
+                    + ", ".join(missing))
+                continue
+
+            merged_path = os.path.abspath(_dedupe_path(os.path.join(
+                out_dir, f"EBS_수능특강_{merged_label}_{tok}_v2.indd")))
+            log(f"[{stage_kor} 통합] {len(src_paths)}개 강 → "
+                f"{os.path.basename(merged_path)}")
+
+            # 머지 작업 파일 — 전부 절대경로 (InDesign 철칙)
+            settings_path = os.path.abspath(os.path.join(
+                out_dir, f"_merge_{tok}_v2.settings.json"))
+            stats_path = os.path.abspath(os.path.join(
+                out_dir, f"_merge_{tok}_v2_stats.json"))
+            merge_log = os.path.abspath(os.path.join(
+                out_dir, f"_merge_{tok}_v2_로그.txt"))
+            # stale 완료마커/게이트 입력 제거 — 이전 머지의 로그·stats가
+            # 남아 있으면 조기 완료 오탐/낡은 stats 검증 사고 (W7 교훈)
+            for p in (merge_log, stats_path):
+                try:
+                    os.remove(p)
+                except OSError:
+                    pass
+            with open(settings_path, "w", encoding="utf-8") as f:
+                json.dump({"sources": src_paths, "merged": merged_path,
+                           "stats": stats_path}, f, ensure_ascii=False)
+            jsx_path = build_jsx(
+                _MERGE_BODY, {"__MERGE_SETTINGS_PATH__": settings_path},
+                log_path=merge_log,
+                out_path=os.path.join(out_dir, f"_merge_{tok}_v2.jsx"))
+
+            try:
+                run_jsx(jsx_path, log, poll_log_path=merge_log,
+                        timeout=1200, completion_marker=_MERGE_MARKER,
+                        stall_limit=900)
+            except Exception as e:
+                results["errors"].append(
+                    f"{stage_kor} 통합 InDesign 실행 실패: {e}")
+                continue
+
+            if not os.path.exists(merged_path):
+                results["errors"].append(f"{stage_kor} 통합 결과 파일 미생성")
+                continue
+            if not os.path.exists(stats_path):
+                results["errors"].append(
+                    f"{stage_kor} 통합 게이트 입력(stats) 미생성 — 검증 불가")
+                continue
+
+            # 검수 게이트 — 통합본을 재오픈해 저장 파일 기준으로 대조
+            stats = json.load(open(stats_path, encoding="utf-8"))
+            try:
+                dump = dump_indd(
+                    merged_path,
+                    os.path.join(out_dir, f"_merge_{tok}_v2_dump.json"), log)
+            except Exception as e:
+                results["errors"].append(
+                    f"{stage_kor} 통합본 덤프 실패 (게이트 검증 불가): {e}")
+                continue
+            gate_ok, warnings, info = _gate_merge(stats, dump, src_paths)
+            for w in warnings:
+                log(f"[{stage_kor} 통합] {w}")
+            results["verify"][key] = dict(info, ok=gate_ok,
+                                          warnings=warnings)
+            if gate_ok:
+                results[key] = merged_path
+                log(f"[{stage_kor} 통합] 완료: "
+                    f"{os.path.basename(merged_path)} "
+                    f"(강 {info['lessons']}개, 스프레드 {info['spreads']})")
+            else:
+                results["errors"].append(
+                    f"{stage_kor} 통합 검수 게이트 실패: "
+                    + " / ".join(warnings[:3]))
+
+        return results

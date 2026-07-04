@@ -97,3 +97,7 @@
   - **다중 강 통합(merge) 미지원**: v1 merge_lessons는 v1 파일명 규칙(_v2 없음) 대상 — v2 전용 템플릿에서 통합 자동 실행을 비활성화하고 안내 문구로 대체 (통합 필요 시 v1 페이지 사용). v2 출력 대상 merge는 후속 과제.
   - **미해결/주의**: (1) Test 2 케이스(4fa1510e, 1.8MB — 19지문)는 오프라인 플랜 스냅샷까지만 검증(실기 E2E는 27강 1케이스), (2) 다중 강 merge 미지원(위), (3) 65cf0265의 step2_a1 2유닛(지문 3개 대비) = 파서가 인식한 헤더 수 기준 — v1 동일 파서라 파리티.
 - **W8 배치 총괄**: GDrive 의존 3종(교과서/리딩파워/수능특강) 전환 완료 — registry 29·30·31번째, 테스트 156개(양 인터프리터), content-only 코퍼스 방식 확립(과거 job content.json 고정 + ensure_step3_kinds 재주석), step3 파리티 4종 보수(K 증발/보기·조건 정규화/번호 휴리스틱+제거/화살표 배경)는 기존 workbook_v2·sero·supp에도 공통 적용되는 개선. 교훈: **word-preservation 게이트만으로는 플랜 단계의 삭제/스타일 공백을 못 잡는다 — v1 실물 dump 대조가 4건 전부를 잡았다.**
+- **W9 완료 (2026-07-05): 수능특강 v2 다중 강 merge 지원 — W8-3 후속 과제 해소.**
+  - **구성**: `SuneungteukgangWorkbookV2Engine.merge_lessons`(classmethod) — 강별 _v2 산출물(분석본/문제본 각각)을 `core/jsx/merge_spreads.body.jsx`(lib.jsxinc 기반 신설, spread.duplicate AT_END 이식)로 통합. `/api/suneungteukgang-workbook-v2/merge` 엔드포인트 추가(app.py — v1 api_st_merge와 병렬, v1 무변경). 통합 단계도 신규 로그 경로 사용(stale 마커 원칙 유지).
+  - **검수 게이트**: 통합본 dump에서 강별 단어셋 보존 + 스프레드/페이지 수 정합(강 수 대비) + 오버플로우는 강별 결과에서 이월된 것만 허용(경고 지목).
+  - **E2E (통과)**: 27강+Test2 2개 강 통합 — 분석본 57스프레드/111페이지, 문제본 57스프레드/110페이지, 강별 콘텐츠 보존 ok, 오버플로우는 강별 단독 조판에서 이월된 것뿐(분석 6/문제 1 — 수동 처리 관행). 테스트 191개(양 인터프리터).

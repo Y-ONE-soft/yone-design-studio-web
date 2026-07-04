@@ -718,6 +718,23 @@ def api_st_merge():
     return jsonify({"result": result, "logs": logs})
 
 
+@app.route("/api/suneungteukgang-workbook-v2/merge", methods=["POST"])
+def api_st_v2_merge():
+    """다중 강 통합 (v2) — 강별 _v2 indd를 spread duplicate로 합치고
+    검수 게이트(강별 단어셋 보존 + 스프레드 수 정합)까지 수행."""
+    from engines.suneungteukgang_workbook_v2.engine import (
+        SuneungteukgangWorkbookV2Engine)
+    body = request.get_json() or {}
+    lessons = body.get("lessons", [])
+    if not isinstance(lessons, list) or len(lessons) < 2:
+        return jsonify({"error": "lessons 배열(2개 이상) 필요"}), 400
+
+    logs = []
+    result = SuneungteukgangWorkbookV2Engine.merge_lessons(lessons,
+                                                           logs.append)
+    return jsonify({"result": result, "logs": logs})
+
+
 # ── 서버 진단 API ────────────────────────────────────────────────────────────
 
 @app.route("/diagnose")
