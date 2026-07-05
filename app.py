@@ -205,8 +205,8 @@ app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 # Werkzeug 3.0+ form parsing 보안 한도 — 멀티 파일 업로드용으로 크게.
-# (C1-3) 1GB → 256MB 하향: 원고(docx/hwpx) 다중 업로드는 수십 MB 수준이라 충분.
-app.config["MAX_CONTENT_LENGTH"] = 256 * 1024 * 1024    # 256 MB 요청 전체 크기
+# 표지 .ai / 세로변환 .indd는 수백 MB급이라 1GB 유지 (256MB 하향 시도는 회귀 — 2026-07-05).
+app.config["MAX_CONTENT_LENGTH"] = 1024 * 1024 * 1024   # 1 GB 요청 전체 크기
 app.config["MAX_FORM_MEMORY_SIZE"] = 64 * 1024 * 1024   # 64 MB 텍스트 필드 합
 app.config["MAX_FORM_PARTS"] = 10000                     # 멀티파트 part 수
 app.jinja_loader = _RetryingFileSystemLoader(
