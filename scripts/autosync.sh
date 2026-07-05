@@ -17,6 +17,21 @@ fi
 
 # 1) 로컬 변경 커밋 (있을 때만)
 git add -A
+
+# 50MB 초과 파일은 커밋에서 제외 — GitHub가 100MB에서 push를 거부해 이후 모든
+# push가 조용히 마비됨 (2026-07-04 bake PNG 145MB로 실증, 07-05 filter-repo로 수습).
+# 신규 파일은 .git/info/exclude 등록으로 재발 차단, 알림으로 사람에게 알린다.
+while IFS= read -r f; do
+    [ -f "$f" ] || continue
+    sz=$(stat -f%z "$f" 2>/dev/null || echo 0)
+    if [ "$sz" -gt 52428800 ]; then
+        git restore --staged -- "$f" 2>/dev/null || git reset -q HEAD -- "$f"
+        grep -qxF "$f" .git/info/exclude 2>/dev/null || echo "$f" >> .git/info/exclude
+        echo "!! 50MB 초과 커밋 제외: $f ($((sz/1048576))MB)"
+        osascript -e "display notification \"$f ($((sz/1048576))MB) 커밋에서 제외됨\" with title \"autosync: 대용량 파일\"" 2>/dev/null || true
+    fi
+done < <(git diff --cached --name-only)
+
 if ! git diff --cached --quiet; then
     # 변경 파일 요약을 커밋 본문에 포함 (git log만으로 무엇이 바뀌었는지 추적 가능)
     SUMMARY=$(git diff --cached --name-status | head -20)
@@ -33,6 +48,10 @@ if ! git pull --rebase --autostash origin main; then
 fi
 
 # 3) 푸쉬 (로컬이 앞서 있을 때만 실제 전송됨)
-git push origin main || echo "!! push 실패 (인증/네트워크 확인)"
+# 실패를 로그에만 남기면 아무도 모른 채 백업 공백이 누적된다 (2026-07-04 실증) — 알림 필수.
+if ! git push origin main; then
+    echo "!! push 실패 (인증/네트워크/원격 거부 확인)"
+    osascript -e 'display notification "git push 실패 — ~/Library/Logs/yone-web-autosync.log 확인" with title "autosync 경고"' 2>/dev/null || true
+fi
 
 echo "=== $(date '+%F %T') [$NAME] 완료 ==="
