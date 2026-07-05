@@ -97,29 +97,46 @@ function main(){
   if(gichul.length){ log+=" (첫 "+gichul[0].name+" p"+gichul[0].page+")\n";
     var gichulDivider=gichul[0].page-2; // 기출 간지 = 첫 기출챕터 -2
 
-    // (A) 기출 간지(N마스터 성격) 챕터목록 갱신: "Chapter NN <유형>" 목록 프레임 찾아 재작성
-    // 간지의 챕터목록 = 마스터에 있는 "Chapter 01"~ 포함 프레임
-    for(var m=0;m<doc.masterSpreads.length;m++){ var ms=doc.masterSpreads[m];
-      for(var mp=0;mp<ms.pages.length;mp++){ var mpg=ms.pages[mp];
-        for(var mf=0;mf<mpg.textFrames.length;mf++){ var mtf=mpg.textFrames[mf]; var mc=String(mtf.contents);
-          // 기출 간지 챕터목록: "Chapter"들 + "기출" 파트인 것(대의/세부 등 기출유형 포함 or 기출 divider)
-          if(mc.indexOf("Chapter 01")>=0 && (mc.indexOf("기출")>=0 || mc.indexOf("대의")>=0)){
-            // 이 프레임이 기출 간지인지 확인: 마스터가 기출용인지 대략적으로 — 챕터수>=6 or "기출" 텍스트 인접
-            var mpars=mtf.parentStory.paragraphs; var chIdx=[];
-            for(var pq=0;pq<mpars.length;pq++){ if(/Chapter\s*\d+/.test(String(mpars[pq].contents))) chIdx.push(pq); }
-            // 기출 간지로 간주: 챕터 개수가 기출챕터수와 근접(>=6) — 독해간지(4개)와 구분
-            if(chIdx.length>=6){
-              for(var ci=0;ci<chIdx.length && ci<gichul.length;ci++){ var para=mpars[chIdx[ci]];
-                var t=String(para.contents); var lastTab=t.lastIndexOf("\t"); if(lastTab<0)continue;
-                var chs=para.characters; var end=chs.length; var lastCh=String(chs[end-1].contents); var stop=(lastCh=="\r"||lastCh=="\n")?end-2:end-1;
-                try{ para.characters.itemByRange(lastTab+1,stop).contents=gichul[ci].name; }catch(e){}
-                // 번호도 순차 보정
-                try{ var nm2=t.match(/Chapter\s*(\d+)/); }catch(e){}
-              }
-              log+="기출 간지 챕터목록 갱신("+Math.min(chIdx.length,gichul.length)+")\n";
-            }
-          }
-        }
+    // (A) 기출 간지 챕터목록 재구성(라인 추가/삭제 포함): 6+챕터 목록프레임(독해간지 4개와 구분)
+    var listFrame=null;
+    for(var m=0;m<doc.masterSpreads.length && !listFrame;m++){ var ms=doc.masterSpreads[m];
+      for(var mp=0;mp<ms.pages.length && !listFrame;mp++){ var mpg=ms.pages[mp];
+        for(var mf=0;mf<mpg.textFrames.length;mf++){ var mc=String(mpg.textFrames[mf].contents);
+          var cn=(mc.match(/Chapter\s*\d+/g)||[]).length; if(cn>=6){ listFrame=mpg.textFrames[mf]; break; } } } }
+    if(listFrame){ var lst=listFrame.parentStory; var csB=getCS("개념_bold(or)")||getCS("개념_bold"), csT=getCS("개념_제목");
+      function chapParas(){ var a=[],p=lst.paragraphs; for(var i=0;i<p.length;i++) if(/Chapter\s*\d+/.test(String(p[i].contents))) a.push(i); return a; }
+      var idx=chapParas();
+      // 초과 라인 제거
+      for(var i=idx.length-1;i>=gichul.length;i--){ try{ lst.paragraphs[idx[i]].remove(); }catch(e){} }
+      idx=chapParas();
+      // 부족 라인 추가(마지막 챕터라인 복제 형식)
+      while(idx.length<gichul.length){ var last=lst.paragraphs[idx[idx.length-1]];
+        var lt=String(last.contents).replace(/[\r\n]+$/,'');
+        last.insertionPoints[-1].contents="\r"+lt; // 형식복제(줄바꿈+동일 텍스트)
+        idx=chapParas(); }
+      // 각 라인 번호(개념_bold)+이름(개념_제목) 세팅
+      idx=chapParas();
+      for(var ci=0;ci<gichul.length;ci++){ var para=lst.paragraphs[idx[ci]]; var t=String(para.contents);
+        var nn=(ci+1<10?"0":"")+(ci+1);
+        // 번호: "Chapter \d+" -> "Chapter NN" + 개념_bold 적용
+        var mC=t.indexOf("Chapter");
+        if(mC>=0){ var after=t.substring(mC+8); var dm=after.match(/^\s*(\d+)/);
+          if(dm){ var ds=mC+8+after.indexOf(dm[1]); try{ para.characters.itemByRange(ds, ds+dm[1].length-1).contents=nn; }catch(e){}
+            if(csB){ try{ para.characters.itemByRange(mC, mC+7+1+nn.length-1).appliedCharacterStyle=csB; }catch(e){} } } }
+        // 이름: 마지막 탭 뒤 + 개념_제목 적용
+        t=String(para.contents); var lastTab=t.lastIndexOf("\t"); if(lastTab<0)continue;
+        var chs=para.characters; var end=chs.length; var lastCh=String(chs[end-1].contents); var stop=(lastCh=="\r"||lastCh=="\n")?end-2:end-1;
+        try{ para.characters.itemByRange(lastTab+1,stop).contents=gichul[ci].name; }catch(e){}
+        if(csT){ try{ para.characters.itemByRange(lastTab, stop).appliedCharacterStyle=csT; }catch(e){} }
+      }
+      log+="기출 간지 챕터목록 재구성 "+gichul.length+"개\n";
+      // 기본값(12pt/24leading) 리셋 후, 넘치면 프레임높이÷챕터수로 fit(폰트도 축소=긴이름 wrap방지). 결정론적·idempotent.
+      var lp=lst.paragraphs; for(var i=0;i<lp.length;i++){ try{ lp[i].pointSize=12; lp[i].leading=24; }catch(e){} }
+      if(listFrame.overflows){ var gb=listFrame.geometricBounds; var hPt=(gb[2]-gb[0])*2.834646;
+        var fit=Math.floor((hPt-6)/gichul.length); if(fit<11)fit=11; if(fit>24)fit=24;
+        var fpt=Math.floor(fit*0.58); if(fpt<9)fpt=9; if(fpt>12)fpt=12;
+        for(var i=0;i<lp.length;i++){ try{ lp[i].pointSize=fpt; lp[i].leading=fit; }catch(e){} }
+        log+="  간지 오버플로우 -> pt="+fpt+"/leading="+fit+"(프레임맞춤)\n";
       }
     }
 
