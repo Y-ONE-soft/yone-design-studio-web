@@ -1285,6 +1285,7 @@ def steps_to_plan(steps, exclude=None, workbook_type="모의고사",
     smap = STEP_MAP if step_map is None else step_map
     flows = []
     unsupported = []
+    warnings = []
     for step_key, step_data in steps.items():
         if step_key in exclude:
             continue
@@ -1300,6 +1301,7 @@ def steps_to_plan(steps, exclude=None, workbook_type="모의고사",
             built = builder(step_data, workbook_type=workbook_type)
         else:
             built = builder(step_data)
+        warnings.extend(built.get("warnings") or [])
         target = dict(smap.get(step_key, {}))
         flow = {"step": step_key, "target": target,
                 "break_per_unit": True, "units": built["units"]}
@@ -1307,4 +1309,5 @@ def steps_to_plan(steps, exclude=None, workbook_type="모의고사",
             flow["ul_style"] = built["ul_style"]
         flows.append(flow)
     return {"format": "wb-flows-v1", "flows": flows,
-            "unsupported": sorted(unsupported)}
+            "unsupported": sorted(unsupported),
+            "warnings": warnings}

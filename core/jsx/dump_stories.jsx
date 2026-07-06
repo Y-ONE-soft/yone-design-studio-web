@@ -88,10 +88,60 @@ try {
             ovf = tc.length > 0 && tc[tc.length - 1].overflows;
         } catch (e) {}
         if (ovf) { overflowCount++; }
+        // W11 additive 필드: pg = 프레임이 놓인 페이지 이름들(순서), b = 첫
+        // 프레임 [top,left] (상/하단 배치 검수용). 기존 소비자는 추가 키 무시.
+        var pgs = [];
+        var b0 = null;
+        try {
+            var tc2 = st.textContainers;
+            var seenPg = {};
+            for (var ti = 0; ti < tc2.length; ti++) {
+                var ppg = null;
+                try { ppg = tc2[ti].parentPage; } catch (e) {}
+                if (!ppg) { continue; }
+                var pnm = String(ppg.name);
+                if (!seenPg[pnm]) { seenPg[pnm] = true; pgs.push("\"" + esc(pnm) + "\""); }
+                if (b0 === null) {
+                    var gb0 = tc2[ti].geometricBounds;
+                    b0 = "[" + Math.round(gb0[0]) + "," + Math.round(gb0[1]) + "]";
+                }
+            }
+        } catch (e) {}
         buf.push((si > 0 ? "," : "") + "{\"idx\":" + si + ",\"overflow\":" +
-                 (ovf ? "true" : "false") + ",\"paragraphs\":[" + sb.join(",") + "]}");
+                 (ovf ? "true" : "false") +
+                 ",\"pg\":[" + pgs.join(",") + "]" +
+                 (b0 !== null ? ",\"b\":" + b0 : "") +
+                 ",\"paragraphs\":[" + sb.join(",") + "]}");
     }
-    buf.push("],\"overflow_stories\":" + overflowCount + "}");
+    // W11: 잔여 사이클 페이지 검출 — 다중 프레임 스토리(=사이클 본문) 프레임이
+    // 있는데 전부 빈 페이지 (지문번호/발문 등 단일 프레임 장식만 남은 페이지).
+    var stale = [];
+    try {
+        var allPgs = doc.pages.everyItem().getElements();
+        for (var spi = 0; spi < allPgs.length; spi++) {
+            var stfs = allPgs[spi].textFrames;
+            var hasLocal = false;
+            var allBlank = true;
+            for (var sfi = 0; sfi < stfs.length; sfi++) {
+                var multi = false;
+                try { multi = stfs[sfi].parentStory.textContainers.length > 1; } catch (e) {}
+                if (!multi) { continue; }
+                hasLocal = true;
+                var cc = "";
+                try { cc = String(stfs[sfi].contents || ""); } catch (e) {}
+                if (cc.replace(/[\s\r\n￼]+/g, "").length > 0) { allBlank = false; break; }
+            }
+            if (hasLocal && allBlank) {
+                var mnm = "";
+                try { mnm = allPgs[spi].appliedMaster ? String(allPgs[spi].appliedMaster.name) : ""; } catch (e) {}
+                stale.push("{\"p\":\"" + esc(String(allPgs[spi].name)) +
+                           "\",\"m\":\"" + esc(mnm) + "\"}");
+            }
+        }
+    } catch (e) {}
+    buf.push("],\"overflow_stories\":" + overflowCount +
+             ",\"page_count\":" + doc.pages.length +
+             ",\"stale_pages\":[" + stale.join(",") + "]}");
     var out = new File(OUT);
     out.encoding = "UTF-8";
     if (!out.open("w")) { throw "OUT open 실패: " + OUT; }
