@@ -1,6 +1,6 @@
 {
   "generated": "2026-07-06",
-  "parser_git_head": "41f03f7",
+  "parser_git_head": "27ab973",
   "parser_worktree_dirty": true,
   "fail_20260706_header": "1. p1-no.3과 추가지문",
   "fail_20260706_recognized": true,
@@ -8,9 +8,9 @@
   "inventory_errors": 0,
   "header_occurrences": 190970,
   "unique_shapes": 1801,
-  "regex_recognition_rate_pct": 89.1,
-  "regex_plus_struct_rate_pct": 93.34,
-  "unrecognized_shapes": 1337,
+  "regex_recognition_rate_pct": 89.71,
+  "regex_plus_struct_rate_pct": 93.49,
+  "unrecognized_shapes": 1329,
   "stem_occurrences": 31614,
   "stem_shapes": 2893,
   "top_unrecognized": [
@@ -37,12 +37,6 @@
       "count": 707,
       "files": 7,
       "sample": "2020년_고2_11월_경기도 교육청_학력평가_37번"
-    },
-    {
-      "shape": "N. pN-수능 대비 ANALYSIS",
-      "count": 635,
-      "files": 630,
-      "sample": "1. p54-수능 대비 ANALYSIS"
     },
     {
       "shape": "N강 - 라운드(N)",
@@ -105,18 +99,6 @@
       "sample": "no.20"
     },
     {
-      "shape": "N. pN-논술형 Practice",
-      "count": 205,
-      "files": 205,
-      "sample": "10. p66-논술형 Practice"
-    },
-    {
-      "shape": "N. pN-서술형 Practice",
-      "count": 204,
-      "files": 203,
-      "sample": "9. p65-서술형 Practice"
-    },
-    {
       "shape": "N. pN강-no.N번 N",
       "count": 187,
       "files": 51,
@@ -133,10 +115,28 @@
       "count": 170,
       "files": 4,
       "sample": "<수능특강 영어 17강-1>"
+    },
+    {
+      "shape": "N. N년 N월 N번",
+      "count": 149,
+      "files": 1,
+      "sample": "1. 2022년 11월 20번"
+    },
+    {
+      "shape": "교과서 N과 본문N",
+      "count": 148,
+      "files": 9,
+      "sample": "교과서 2과 본문1"
+    },
+    {
+      "shape": "■ 고N N년 N월 N번",
+      "count": 148,
+      "files": 4,
+      "sample": "■ 고2 25년 3월 21번"
     }
   ],
   "by_series_regex_rate_pct": {
-    "2025년": 43.02,
+    "2025년": 43.37,
     "2026년": 83.29,
     "4스텝모의고사": 40.0,
     "STEP3 변형문제": 3.12,
@@ -145,7 +145,7 @@
     "기적의특강": 97.55,
     "동형모의고사": 47.22,
     "리딩파워": 95.44,
-    "리테": 81.19,
+    "리테": 83.17,
     "모의고사_기타": 95.72,
     "문제모음": 96.51,
     "배N제": 0.0,
@@ -153,9 +153,9 @@
     "세미모의고사": 62.28,
     "수능특강": 86.15,
     "어법총정리": 53.43,
-    "올림포스": 84.53,
-    "워크북": 92.69,
-    "직전보충": 87.05,
+    "올림포스": 92.34,
+    "워크북": 92.76,
+    "직전보충": 87.33,
     "포켓북": 80.89,
     "플로우노트": 0.0
   }
