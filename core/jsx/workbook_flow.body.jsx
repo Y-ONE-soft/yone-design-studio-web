@@ -687,7 +687,13 @@ try {
     }
     wlog("오버플로우: " + ovf + "개");
 
+    // 저장/export 직전 하트비트 — 러너 stall 시계를 리셋해 무갱신 구간이
+    // '해당 단계 소요'만큼만 되도록 (W13 c05 실측: 284p 전량 콘텐츠 문서의
+    // PDF export가 로그 무갱신 20분+. 900초 stall이면 정상 export 중
+    // 강제종료 = 유령 모달 사고 재발 경로 — 엔진 stall_limit 상향과 세트)
+    wlog("문서 저장 시작 (로그 무갱신 수 분 가능)");
     doc.save(File(OUT_INDD));
+    wlog("PDF export 시작 (대형 문서는 로그 무갱신 20분+ 가능)");
     doc.exportFile(ExportFormat.PDF_TYPE, File(OUT_PDF));
     wlog("PDF: 성공 -> " + OUT_PDF);
     doc.close(SaveOptions.NO);

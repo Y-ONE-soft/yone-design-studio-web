@@ -73,7 +73,11 @@ def _load_v1_config():
 
 class WorkbookV2Engine(BaseEngine):
 
-    jsx_timeout = 1800
+    # W13 c05 실측(고1 25-10 전체 업로드 — 284p 전량 콘텐츠): PDF export가
+    # 로그 무갱신 20분+, 전체 렌더 40분+. 기존 timeout 1800/stall 900이면
+    # 정상 export 중 행 오탐 강제종료(유령 모달 사고 재발 경로) — 워크북
+    # 계열만 상향 (다른 엔진 기본값 무변경, 진짜 행은 최종 timeout이 차단).
+    jsx_timeout = 3600
 
     @property
     def material_id(self):
@@ -309,13 +313,16 @@ class WorkbookV2Engine(BaseEngine):
             os.remove(settings["log_path"])
         except OSError:
             pass
-        # stall_limit 900: 워크북 전체(C) 문서(250p+)의 doc.save + PDF export가
-        # 로그 무갱신으로 5분을 초과 (기본 300초 행 판정이 export 중 오탐 —
-        # W4 실측: 정상 export 중 InDesign이 강제 종료됨)
+        # stall_limit 2700: 워크북 전체(C) 문서의 doc.save + PDF export가
+        # 로그 무갱신으로 길게 이어진다 (W4 실측 5분+ → 900, W13 c05 실측
+        # 20분+ — 900이면 정상 export 중 행 오탐 강제종료 = 유령 모달 사고
+        # 재발 경로). JSX가 저장/export 직전 하트비트를 남기므로 무갱신
+        # 구간은 해당 단계 소요만큼이다. 진짜 행은 timeout(3600)이 차단
+        # (timeout 경로는 InDesign을 죽이지 않는다 — 킬 루프 금지).
         run_jsx(settings["jsx_path"], log, poll_log_path=settings["log_path"],
                 timeout=self.jsx_timeout,
                 completion_marker="워크북 v2 조판 완료",
-                stall_limit=900)
+                stall_limit=2700)
 
     # ── 4단계: verify — 검수 게이트 내장 ────────────────────────────────────
 
