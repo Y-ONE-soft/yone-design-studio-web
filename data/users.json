@@ -1,0 +1,4 @@
+[
+  {"username": "admin",     "role": "admin",     "password_env": "YONE_ADMIN_PASSWORD"},
+  {"username": "assistant", "role": "assistant", "password_env": "YONE_ASSISTANT_PASSWORD"}
+]

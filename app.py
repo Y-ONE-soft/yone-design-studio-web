@@ -66,14 +66,10 @@ shutil.copyfile = _patched_copyfile
 
 
 # ── 인증 설정 ──────────────────────────────────────────────────────
-# 사용자 계정. 비밀번호는 반드시 환경변수(.env 또는 launchd)에서만 주입.
-#   YONE_ADMIN_PASSWORD     → admin 비밀번호
-#   YONE_ASSISTANT_PASSWORD → assistant 비밀번호
+# 사용자 계정 구조는 data/users.json에서 로드 (C2-8). 비밀번호는 절대 파일에
+# 저장하지 않고, 각 계정의 password_env가 가리키는 환경변수(.env 또는 launchd)
+# 에서만 주입한다. 로더는 _load_users() (아래 JSON 캐시 헬퍼 뒤에 정의).
 # 환경변수 미설정 시 fallback은 빈 문자열 → 어떤 비밀번호로도 로그인 불가 (보안 정책).
-USERS = {
-    "admin":     {"password": os.environ.get("YONE_ADMIN_PASSWORD",     ""), "role": "admin"},
-    "assistant": {"password": os.environ.get("YONE_ASSISTANT_PASSWORD", ""), "role": "assistant"},
-}
 
 # 조교(assistant)가 접근할 수 없는 경로 — 목업/채팅
 ASSISTANT_BLOCKED_PATHS = ("/mockup", "/chat")
@@ -97,6 +93,7 @@ from engines import registry
 _DATA_DIR      = os.path.join(os.path.dirname(__file__), "data")
 _SCHOOLS_FILE  = os.path.join(_DATA_DIR, "schools.json")
 _SUBJECTS_FILE = os.path.join(_DATA_DIR, "subjects.json")
+_USERS_FILE    = os.path.join(_DATA_DIR, "users.json")
 
 
 # JSON 캐시 — invalidation 기반.
@@ -159,6 +156,43 @@ def _save_schools(data):
 
 def _load_subjects():
     return _read_json_cached(_SUBJECTS_FILE, [])
+
+
+# ── 사용자 계정 로드 (C2-8) ──────────────────────────────────────────
+# data/users.json 스키마: [{"username", "role", "password_env"}] — 비밀번호는
+# 파일에 두지 않고 password_env가 가리키는 환경변수에서 매 호출 시 resolve.
+# users.json 부재/파손 시 기존 하드코딩과 동일한 내장 기본값으로 폴백(fail-open).
+_DEFAULT_USERS_SPEC = [
+    {"username": "admin",     "role": "admin",     "password_env": "YONE_ADMIN_PASSWORD"},
+    {"username": "assistant", "role": "assistant", "password_env": "YONE_ASSISTANT_PASSWORD"},
+]
+
+
+def _resolve_users_spec(spec):
+    """spec 리스트 → {username: {"password", "role"}}. 잘못된 항목은 건너뜀."""
+    users = {}
+    if not isinstance(spec, list):
+        return users
+    for u in spec:
+        if not isinstance(u, dict):
+            continue
+        name = (u.get("username") or "").strip()
+        if not name:
+            continue
+        users[name] = {
+            "password": os.environ.get(u.get("password_env") or "", ""),
+            "role": u.get("role") or "assistant",
+        }
+    return users
+
+
+def _load_users():
+    """username → {"password", "role"} dict. users.json은 _read_json_cached로
+    1회만 디스크 read (EDEADLK 회피), 유효 항목이 하나도 없으면 내장 기본값."""
+    users = _resolve_users_spec(_read_json_cached(_USERS_FILE, _DEFAULT_USERS_SPEC))
+    if not users:
+        users = _resolve_users_spec(_DEFAULT_USERS_SPEC)
+    return users
 
 
 # 디스크 file open 재시도 — macOS APFS가 동시 open 시 간헐적으로 반환하는
@@ -232,7 +266,7 @@ def login_page():
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         pw = request.form.get("password", "")
-        user = USERS.get(username)
+        user = _load_users().get(username)
         if user and user["password"] == pw:
             session["authenticated"] = True
             session["username"] = username
