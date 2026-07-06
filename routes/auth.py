@@ -4,6 +4,8 @@ check_auth / add_no_cache는 before_app_request / after_app_request로 등록되
 블루프린트 소속과 무관하게 기존 app.before_request / app.after_request와 동일하게
 모든 요청에 적용된다.
 """
+import threading
+import time
 from functools import wraps
 
 from flask import (Blueprint, jsonify, redirect, request, session, url_for)
@@ -11,6 +13,69 @@ from flask import (Blueprint, jsonify, redirect, request, session, url_for)
 from core.webdata import load_users
 
 bp = Blueprint("auth", __name__)
+
+# ── 로그인 시도 제한 (C3-13) ─────────────────────────────────────────
+# (클라이언트IP, username) 키로 실패 5회 → 10분 잠금. 잠금 중 시도는
+# 카운트/잠금 연장 없이 거부. 성공 시 카운터 초기화. 인메모리라 Flask
+# 재시작 시 초기화됨 (단일 프로세스 launchd 운영이라 충분).
+LOGIN_MAX_FAILURES = 5
+LOGIN_LOCKOUT_SECONDS = 600  # 10분
+
+_login_attempts = {}   # (ip, username) -> {"count", "locked_until", "last_at"}
+_login_lock = threading.Lock()
+
+# 테스트에서 시간 모킹이 가능하도록 간접 호출
+_now = time.time
+
+
+def _client_ip():
+    """실제 클라이언트 IP.
+
+    서비스는 Cloudflare Tunnel → localhost:5010이라 request.remote_addr은
+    항상 로컬 주소다. 실제 클라이언트 IP는 CF-Connecting-IP 헤더에 있고,
+    로컬 직접 접속(스테이징/테스트)에는 헤더가 없어 remote_addr로 폴백.
+    """
+    return request.headers.get("CF-Connecting-IP") or request.remote_addr or "unknown"
+
+
+def _sweep_expired(now):
+    """만료 엔트리 lazy 청소 — 호출자가 _login_lock을 잡은 상태여야 한다."""
+    stale = [
+        key for key, e in _login_attempts.items()
+        if (e["locked_until"] and now >= e["locked_until"])          # 잠금 만료
+        or (not e["locked_until"]
+            and now - e["last_at"] > LOGIN_LOCKOUT_SECONDS)          # 오래된 실패
+    ]
+    for key in stale:
+        del _login_attempts[key]
+
+
+def _is_locked(ip, username):
+    now = _now()
+    with _login_lock:
+        _sweep_expired(now)
+        e = _login_attempts.get((ip, username))
+        return bool(e and e["locked_until"] and now < e["locked_until"])
+
+
+def _record_failure(ip, username):
+    """실패 1회 기록. (누적 실패 수, 이번에 잠금 발동 여부)를 반환."""
+    now = _now()
+    with _login_lock:
+        e = _login_attempts.setdefault(
+            (ip, username), {"count": 0, "locked_until": 0.0, "last_at": now})
+        e["count"] += 1
+        e["last_at"] = now
+        locked_now = False
+        if e["count"] >= LOGIN_MAX_FAILURES and not e["locked_until"]:
+            e["locked_until"] = now + LOGIN_LOCKOUT_SECONDS
+            locked_now = True
+        return e["count"], locked_now
+
+
+def _clear_failures(ip, username):
+    with _login_lock:
+        _login_attempts.pop((ip, username), None)
 
 # 조교(assistant)가 접근할 수 없는 경로 — 목업/채팅
 ASSISTANT_BLOCKED_PATHS = ("/mockup", "/chat")
@@ -44,13 +109,25 @@ def login_page():
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         pw = request.form.get("password", "")
-        user = load_users().get(username)
-        if user and user["password"] == pw:
-            session["authenticated"] = True
-            session["username"] = username
-            session["role"] = user["role"]
-            return redirect("/")
-        error = "아이디 또는 비밀번호가 틀렸습니다"
+        ip = _client_ip()
+        if _is_locked(ip, username):
+            # 잠금 중 시도는 카운트/잠금 연장 없이 거부 (정답이어도 거부)
+            print(f"[auth] 로그인 잠금 중 시도 거부: ip={ip} username={username!r}",
+                  flush=True)
+            error = "로그인 시도가 너무 많습니다. 잠시 후 다시 시도해 주세요"
+        else:
+            user = load_users().get(username)
+            if user and user["password"] == pw:
+                _clear_failures(ip, username)
+                session["authenticated"] = True
+                session["username"] = username
+                session["role"] = user["role"]
+                return redirect("/")
+            count, locked_now = _record_failure(ip, username)
+            print(f"[auth] 로그인 실패: ip={ip} username={username!r} "
+                  f"(누적 {count}회{' — 10분 잠금 발동' if locked_now else ''})",
+                  flush=True)
+            error = "아이디 또는 비밀번호가 틀렸습니다"
     return '''
     <!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
