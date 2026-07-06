@@ -1,0 +1,8 @@
+{
+  "engine": "workbook_supp",
+  "source_job": "06f4b2c2",
+  "note": "부교재 워크북 (교과서 추가지문형 — 3과/4과 추가지문 2지문 + Step3 정답표). W11 결함 수리(헤더 한글꼬리 인식 + 정답 단독줄 절단) 이후 출력이 골든.",
+  "golden_regenerated": {
+    "commit": "af903c5"
+  }
+}

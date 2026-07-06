@@ -342,6 +342,27 @@ class WorkbookV2Engine(BaseEngine):
             ok = False
             warnings.append("❌ PDF 미생성")
 
+        # (e) 완제품 게이트 (W11 — 헤더/정답 잔존, 지문번호 프레임,
+        #     잔여 페이지, 상/하단 배치, 파싱 계층 경고). 게이트 자체 오류는
+        #     경고로 강등 (조판을 막지 않는다 — fail-open).
+        try:
+            from engines.workbook_v2.gate import inspect_workbook_finish
+            content = json.load(open(settings["json_path"],
+                                     encoding="utf-8"))
+            rep = inspect_workbook_finish(content, plan, dump)
+            if rep["critical"]:
+                ok = False
+                warnings.extend(f"❌ {c}" for c in rep["critical"])
+            warnings.extend(f"⚠️ {w}" for w in rep["warnings"])
+            log(f"[검수] 완제품 게이트: critical {len(rep['critical'])} / "
+                f"warning {len(rep['warnings'])}")
+        except Exception as e:                                  # noqa: BLE001
+            warnings.append(f"⚠️ 완제품 게이트 실행 실패: {e}")
+
+        # 플랜 빌더 경고 (헤더 미인식 등 — steps_to_plan이 수집)
+        warnings.extend(f"⚠️ 플랜: {w}"
+                        for w in (plan.get("warnings") or [])[:5])
+
         render_warns = [l.strip() for l in open(settings["log_path"],
                                                 encoding="utf-8")
                         if "[경고]" in l]

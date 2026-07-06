@@ -177,6 +177,30 @@ def inspect_workbook_step3(content, dump, style_overrides=None):
     }
 
 
+# ── 정답 블록 잔존 검출 (W11 — 완제품 게이트 공용) ───────────────────────────
+
+# 정답표 행: "1. ①   2. ⑤   3. ①  …" (번호+원문자 3쌍 이상)
+_RE_ANSWER_ROW = re.compile(
+    r"(?:^|\s)\d{1,2}\s*\.\s*[①-⑤](?:\s+\d{1,2}\s*\.\s*[①-⑤]){2,}")
+
+
+def find_leaked_answers(dump):
+    """덤프에서 정답 블록 잔존 단락 수집 — '정답'류 단독 마커 + 정답표 행.
+
+    원고의 정답 섹션("정답" 단독 줄 + 정답표)이 파서/플랜을 뚫고 출력물에
+    인쇄된 경우를 잡는다 (workbook_supp 06f4b2c2 실증 — 완제품 기준).
+    """
+    from core.structure import rules as R
+    hits = []
+    for t, _s in _dump_paragraphs(dump):
+        tt = t.strip()
+        if not tt:
+            continue
+        if R.A_PATTERNS[2].match(tt) or _RE_ANSWER_ROW.search(tt):
+            hits.append(tt[:60])
+    return hits
+
+
 # ── 범용 검수 (전 교재 확산 — 엔진 코드/JSX 무수정) ──────────────────────────
 
 _SKIP_KEYS = {"file", "filename", "path", "source_file", "pstyle", "kind",
