@@ -1,0 +1,162 @@
+{
+  "generated": "2026-07-06",
+  "parser_git_head": "41f03f7",
+  "parser_worktree_dirty": true,
+  "fail_20260706_header": "1. p1-no.3과 추가지문",
+  "fail_20260706_recognized": true,
+  "inventory_files": 20982,
+  "inventory_errors": 0,
+  "header_occurrences": 190970,
+  "unique_shapes": 1801,
+  "regex_recognition_rate_pct": 89.1,
+  "regex_plus_struct_rate_pct": 93.34,
+  "unrecognized_shapes": 1337,
+  "stem_occurrences": 31614,
+  "stem_shapes": 2893,
+  "top_unrecognized": [
+    {
+      "shape": "N. pN~N-no.N",
+      "count": 1124,
+      "files": 236,
+      "sample": "1. p46~49-no.01"
+    },
+    {
+      "shape": "본문N",
+      "count": 1015,
+      "files": 136,
+      "sample": "본문2"
+    },
+    {
+      "shape": "N강 N번 N",
+      "count": 925,
+      "files": 127,
+      "sample": "7강 4번 200324"
+    },
+    {
+      "shape": "N년_고N_N월_경기도 교육청_학력평가_N번",
+      "count": 707,
+      "files": 7,
+      "sample": "2020년_고2_11월_경기도 교육청_학력평가_37번"
+    },
+    {
+      "shape": "N. pN-수능 대비 ANALYSIS",
+      "count": 635,
+      "files": 630,
+      "sample": "1. p54-수능 대비 ANALYSIS"
+    },
+    {
+      "shape": "N강 - 라운드(N)",
+      "count": 394,
+      "files": 49,
+      "sample": "6강 - 라운드(1)"
+    },
+    {
+      "shape": "정답: N번",
+      "count": 391,
+      "files": 25,
+      "sample": "정답: 4번"
+    },
+    {
+      "shape": "N. N",
+      "count": 379,
+      "files": 32,
+      "sample": "15. 2"
+    },
+    {
+      "shape": "N.N",
+      "count": 344,
+      "files": 14,
+      "sample": "2.4"
+    },
+    {
+      "shape": "고N N년 N월 N번",
+      "count": 279,
+      "files": 12,
+      "sample": "고1 25년 10월 20번"
+    },
+    {
+      "shape": "N년_고N_N월_서울특별시 교육청_학력평가_N번",
+      "count": 246,
+      "files": 2,
+      "sample": "2021년_고1_3월_서울특별시 교육청_학력평가_18번"
+    },
+    {
+      "shape": "N. N-N-고N-N",
+      "count": 223,
+      "files": 18,
+      "sample": "1. 24-10-고1-31"
+    },
+    {
+      "shape": "N. Special Lesson N-본문N",
+      "count": 222,
+      "files": 53,
+      "sample": "2. Special Lesson 1-본문3"
+    },
+    {
+      "shape": "N. no.N",
+      "count": 210,
+      "files": 49,
+      "sample": "1. no.1"
+    },
+    {
+      "shape": "no.N",
+      "count": 210,
+      "files": 7,
+      "sample": "no.20"
+    },
+    {
+      "shape": "N. pN-논술형 Practice",
+      "count": 205,
+      "files": 205,
+      "sample": "10. p66-논술형 Practice"
+    },
+    {
+      "shape": "N. pN-서술형 Practice",
+      "count": 204,
+      "files": 203,
+      "sample": "9. p65-서술형 Practice"
+    },
+    {
+      "shape": "N. pN강-no.N번 N",
+      "count": 187,
+      "files": 51,
+      "sample": "1. p3강-no.4번 190920"
+    },
+    {
+      "shape": "N-N번",
+      "count": 171,
+      "files": 32,
+      "sample": "41-42번"
+    },
+    {
+      "shape": "<수능특강 영어 N강-N>",
+      "count": 170,
+      "files": 4,
+      "sample": "<수능특강 영어 17강-1>"
+    }
+  ],
+  "by_series_regex_rate_pct": {
+    "2025년": 43.02,
+    "2026년": 83.29,
+    "4스텝모의고사": 40.0,
+    "STEP3 변형문제": 3.12,
+    "jobs_06f4b2c2_부교재": 100.0,
+    "교과서": 77.93,
+    "기적의특강": 97.55,
+    "동형모의고사": 47.22,
+    "리딩파워": 95.44,
+    "리테": 81.19,
+    "모의고사_기타": 95.72,
+    "문제모음": 96.51,
+    "배N제": 0.0,
+    "분석본": 2.33,
+    "세미모의고사": 62.28,
+    "수능특강": 86.15,
+    "어법총정리": 53.43,
+    "올림포스": 84.53,
+    "워크북": 92.69,
+    "직전보충": 87.05,
+    "포켓북": 80.89,
+    "플로우노트": 0.0
+  }
+}
