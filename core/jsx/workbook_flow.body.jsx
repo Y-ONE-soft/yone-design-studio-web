@@ -57,13 +57,41 @@ function mainStoryOnMaster(doc, prefix) {
 }
 
 // marker 페이지의 N번째 스토리 (rank — 같은 페이지 하단 스토리용)
-function storyByMarker(doc, marker, pageName, rank) {
+// pos ("top"|"bottom", opt-in W11): 다중 프레임 스토리를 이 페이지 첫 프레임의
+// 세로 좌표로 정렬해 기하로 선택. [원본]워크북_C p114는 page.textFrames 순서가
+// [발문(1프레임), 하단, 상단]이라 프레임수 동률에서 rank/mainStoryOnPage가
+// 상단(step2_a1)/하단(step2_a1_btm)을 뒤바꿨다 (supp 06f4b2c2 실증).
+function storyByMarker(doc, marker, pageName, rank, pos) {
     var page = findPageByMarker(doc, marker);
     if (!page && pageName) {
         try { page = doc.pages.itemByName(pageName); } catch (e) {}
         if (page && !page.isValid) { page = null; }
     }
     if (!page) { return null; }
+    if (pos === "top" || pos === "bottom") {
+        var cands = [];
+        var seenP = {};
+        var pfs = page.textFrames;
+        for (var ci = 0; ci < pfs.length; ci++) {
+            try {
+                var cst = pfs[ci].parentStory;
+                if (cst.textContainers.length <= 1) { continue; }  // 라벨 스토리 제외 (v1 파리티)
+                var top = pfs[ci].geometricBounds[0];
+                var cid = String(cst.id);
+                if (seenP[cid]) {
+                    if (top < seenP[cid].top) { seenP[cid].top = top; }
+                    continue;
+                }
+                seenP[cid] = { st: cst, top: top };
+                cands.push(seenP[cid]);
+            } catch (e) {}
+        }
+        if (cands.length > 0) {
+            cands.sort(function (a, b) { return a.top - b.top; });
+            return (pos === "top") ? cands[0].st : cands[cands.length - 1].st;
+        }
+        // 다중 프레임 스토리가 없으면 기존 경로로 폴백
+    }
     if (!rank || rank <= 1) { return mainStoryOnPage(page); }
     // rank 2+: 프레임 수 순위 N번째 스토리
     var counts = [];
@@ -226,6 +254,148 @@ function insertIconAt(doc, story, para, ic) {
     return 1;
 }
 
+// ── W11 op: 독립 지문번호 프레임 갱신 (plan.passage_numbers가 있을 때만) ────
+// 빈칸어휘/어법OX/빈칸어법 섹션은 지문번호가 메인 스토리 밖 단일 프레임
+// 스토리("20" 등 모의고사 문항번호 잔재). 스텝 스토리의 k번째 콘텐츠 페이지의
+// 순수 숫자 단일 프레임을 원고 지문번호 labels[k]로 갱신한다.
+var RE_BARE_NUM = /^\s*\d{1,3}(?:\s*~\s*\d{1,3})?\s*$/;
+
+function storyPagesInOrder(story) {
+    var pages = [];
+    var seen = {};
+    var conts = story.textContainers;
+    for (var i = 0; i < conts.length; i++) {
+        var pg = null;
+        try { pg = conts[i].parentPage; } catch (e) {}
+        if (!pg) { continue; }
+        var key = String(pg.documentOffset);
+        if (seen[key]) { continue; }
+        seen[key] = true;
+        pages.push(pg);
+    }
+    return pages;
+}
+
+function updatePassageNumbers(doc, flowStories, op) {
+    var labels = op.labels || [];
+    var steps = op.steps || [];
+    if (labels.length === 0 || steps.length === 0) { return; }
+    var total = 0;
+    for (var si = 0; si < steps.length; si++) {
+        var rec = flowStories[steps[si]];
+        if (!rec) { continue; }
+        var pages = storyPagesInOrder(rec.story);
+        var n = 0;
+        for (var k = 0; k < pages.length && k < labels.length; k++) {
+            var tfs = pages[k].textFrames;
+            for (var fi = 0; fi < tfs.length; fi++) {
+                try {
+                    var fst = tfs[fi].parentStory;
+                    if (fst.textContainers.length !== 1) { continue; }
+                    if (!RE_BARE_NUM.test(String(fst.contents || ""))) { continue; }
+                    fst.contents = labels[k];
+                    n++;
+                } catch (e) {}
+            }
+        }
+        if (n > 0) { wlog(steps[si] + " 지문번호 프레임 갱신: " + n + "개"); }
+        total += n;
+    }
+    wlog("지문번호 프레임 갱신 합계: " + total + "개 (" + labels.join(", ") + ")");
+}
+
+// ── W11 op: 페이지 정리 (plan.page_cleanup이 있을 때만) ─────────────────────
+// 원고에 없는 스텝/남는 사이클의 페이지 삭제 + 빈 STEP3 페이지 M 마스터.
+// v1 run.jsx 16.5(빈 페이지 삭제)의 완제품 확장: 판정 기준을 '다중 프레임
+// 스토리(=사이클 본문) 프레임이 있는데 전부 비었는가'로 두어, 지문번호/발문
+// 등 단일 프레임 장식 스토리에 내용이 남아 있어도 잔여 사이클 페이지를
+// 삭제한다 (v1 16.5는 장식 내용 때문에 이런 페이지를 못 지웠음).
+// 범위: 첫 콘텐츠 섹션(마커 플로우 스토리의 첫 페이지) ~ STEP3 시작 전.
+// STEP3 영역은 v1 adjustStep3Pages 파리티 — 빈 페이지에 M 마스터 재할당.
+function isBlankFrameContent(tf) {
+    var c = "";
+    try { c = String(tf.contents || ""); } catch (e) {}
+    return c.replace(/[\s\r\n￼]+/g, "").length === 0;
+}
+
+function cleanupPages(doc, flowStories, op) {
+    // 1) 보호 경계 계산
+    var cleanStart = -1;      // 첫 콘텐츠 섹션 페이지 offset
+    var step3Story = null;
+    var step3Start = doc.pages.length;
+    for (var step in flowStories) {
+        var rec = flowStories[step];
+        var pages = storyPagesInOrder(rec.story);
+        if (pages.length === 0) { continue; }
+        var first = pages[0].documentOffset;
+        if (rec.isMaster) {
+            step3Story = rec.story;
+            if (first < step3Start) { step3Start = first; }
+        } else if (cleanStart < 0 || first < cleanStart) {
+            cleanStart = first;
+        }
+    }
+    if (cleanStart < 0) { wlog("페이지 정리: 대상 없음"); return; }
+
+    // 2) STEP1/2 영역 — 다중 프레임 스토리 프레임 전부 빈 페이지 삭제 (역순)
+    var removed = 0;
+    for (var dp = doc.pages.length - 1; dp >= 0; dp--) {
+        if (dp < cleanStart || dp >= step3Start) { continue; }
+        var pg = doc.pages[dp];
+        var tfs = pg.textFrames;
+        var hasLocal = false;
+        var allBlank = true;
+        for (var tf = 0; tf < tfs.length; tf++) {
+            var multi = false;
+            try { multi = tfs[tf].parentStory.textContainers.length > 1; } catch (e) {}
+            if (!multi) { continue; }
+            hasLocal = true;
+            if (!isBlankFrameContent(tfs[tf])) { allBlank = false; break; }
+        }
+        if (hasLocal && allBlank) {
+            try { pg.remove(); removed++; } catch (e) {}
+        }
+    }
+    wlog("페이지 정리: 잔여 스텝/사이클 페이지 " + removed + "개 삭제");
+
+    // 3) STEP3 영역 — 빈 페이지 M 마스터 재할당 (v1 adjustStep3Pages 파리티)
+    if (!step3Story) { return; }
+    var emptyMasterPrefix = op.empty_master || "M";
+    var mMaster = null;
+    try {
+        var ms = doc.masterSpreads.everyItem().getElements();
+        for (var mi = 0; mi < ms.length; mi++) {
+            if (String(ms[mi].namePrefix) === emptyMasterPrefix) {
+                mMaster = ms[mi];
+                break;
+            }
+        }
+    } catch (e) {}
+    if (!mMaster) { wlog("[경고] " + emptyMasterPrefix + " 마스터 없음 — STEP3 빈 페이지 재할당 생략"); return; }
+    try { step3Story.recompose(); } catch (e) {}
+    var s3pages = storyPagesInOrder(step3Story);
+    var reassigned = 0;
+    for (var sp = 0; sp < s3pages.length; sp++) {
+        var spg = s3pages[sp];
+        var hasContent = false;
+        var stfs = spg.textFrames;
+        for (var st2 = 0; st2 < stfs.length; st2++) {
+            try {
+                // 스펙파이어 === 비교 신뢰 불가 (W7 교훈) — id로 비교
+                if (String(stfs[st2].parentStory.id) === String(step3Story.id)
+                        && !isBlankFrameContent(stfs[st2])) {
+                    hasContent = true;
+                    break;
+                }
+            } catch (e) {}
+        }
+        if (!hasContent) {
+            try { spg.appliedMaster = mMaster; reassigned++; } catch (e) {}
+        }
+    }
+    wlog("페이지 정리: 빈 STEP3 페이지 " + emptyMasterPrefix + " 마스터 " + reassigned + "개");
+}
+
 // ── 간지 텍스트 업데이트 (v1 run.jsx 16.7 이식 — plan.divider가 있을 때만) ──
 // 간지 페이지 = 마스터 [None](또는 없음) + 오른쪽 + 텍스트프레임 1개 +
 // 첫 단락에 한글. 1단락=line1, 2단락=line2.
@@ -329,15 +499,19 @@ try {
     // UndoModes.ENTIRE_SCRIPT로 감싸 호출한다 (아래 루프): 수천 개의 개별
     // undo 트랜잭션이 앵커/추가 페이지가 누적된 문서에서 단락당 수 초의
     // 감속(행 유사)을 유발 (W3 실측 — v1 run.jsx도 스텝마다 동일 패턴).
+    // 플로우별 배치 스토리 기록 — 후처리 op(passage_numbers/page_cleanup)용
+    var flowStories = {};   // step -> {story, isMaster}
+
     function processFlow(flow) {
         var tgt = flow.target || {};
         var story = null;
         if (tgt.master) {
             story = mainStoryOnMaster(doc, tgt.master);
         } else if (tgt.marker) {
-            story = storyByMarker(doc, tgt.marker, tgt.page, tgt.rank);
+            story = storyByMarker(doc, tgt.marker, tgt.page, tgt.rank, tgt.pos);
         }
         if (!story) { wlog("[경고] 스토리 못 찾음: " + flow.step); return; }
+        flowStories[flow.step] = { story: story, isMaster: !!tgt.master };
         var csUL = ulStyleFor(flow);
 
         var flat = [];
@@ -452,6 +626,20 @@ try {
     relockIcons();   // v1 relockItem — 아이콘 원본/레이어 잠금 복원
 
     // opt-in 후처리 op (plan 키가 있을 때만 — 기존 플랜은 무변경)
+    if (plan.passage_numbers) {
+        app.doScript(function () {
+            updatePassageNumbers(doc, flowStories, plan.passage_numbers);
+        }, ScriptLanguage.JAVASCRIPT, undefined,
+           UndoModes.ENTIRE_SCRIPT, "wb_v2 passage_numbers");
+    }
+    if (plan.page_cleanup) {
+        app.doScript(function () {
+            cleanupPages(doc, flowStories,
+                         (typeof plan.page_cleanup === "object")
+                             ? plan.page_cleanup : {});
+        }, ScriptLanguage.JAVASCRIPT, undefined,
+           UndoModes.ENTIRE_SCRIPT, "wb_v2 page_cleanup");
+    }
     if (plan.divider && plan.divider.line1) {
         app.doScript(function () {
             updateDividerPages(doc, plan.divider.line1,

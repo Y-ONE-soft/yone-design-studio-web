@@ -1207,6 +1207,42 @@ STEP_BUILDERS = {
 _CTX_BUILDERS = {"step1_c1", "step2_c2"}
 
 
+# ── 지문번호 라벨 추출 (W11 — 독립 번호 프레임 갱신 op + 검수 게이트용) ──────
+# 헤더 "1. p1-no.3과 추가지문" → "3과 추가지문", "1. p2-no.20" → "20".
+_RE_LABEL_HEADER = re.compile(
+    r"^\s*\d+\s*[.)]\s*p\.?\s*\d+\s*[-–—.]?\s*(?:no\.\s*)?"
+    r"(\d+(?:\s*~\s*\d+)?(?:\s*[가-힣][가-힣0-9\s]*[가-힣0-9])?)",
+    re.I)
+# bracket 지문번호 "[3과 추가지문]" / "[20]" → 내용부
+_RE_LABEL_BRACKET = re.compile(r"^\s*\[([^\]]+)\]\s*$")
+
+# 라벨 소스 우선순위: 헤더 기반 스텝(독립 번호 프레임 섹션과 동일 원고 계열)
+_LABEL_STEPS = ("step1_c2", "step2_c1", "step2_b1", "step2_a1", "step1_a1")
+
+
+def passage_labels(steps):
+    """원고 지문번호 라벨을 순서대로 추출 (중복 제거, 첫 유효 스텝 채택).
+
+    독립 텍스트 프레임 지문번호 갱신 op(passage_numbers)와 검수 게이트의
+    '원고 지문번호' 기준. 헤더 스텝이 없으면 step1_a1의 bracket 단락 폴백.
+    """
+    for key in _LABEL_STEPS:
+        data = steps.get(key) or {}
+        labels = []
+        for p in data.get("paragraphs", []) or []:
+            text = _norm_header(p.get("text") or "")
+            m = _RE_LABEL_HEADER.match(text)
+            if not m and key == "step1_a1":
+                m = _RE_LABEL_BRACKET.match(text)
+            if m:
+                label = re.sub(r"\s+", " ", m.group(1)).strip()
+                if label and label not in labels:
+                    labels.append(label)
+        if labels:
+            return labels
+    return []
+
+
 def ensure_step3_kinds(step3_data, log=None):
     """구버전 content.json(step3 단락에 kind 미주석) 재사용 대비 —
     kind가 하나도 없으면 v1 파서의 주석기를 그대로 호출해 in-place 보강.
