@@ -48,3 +48,20 @@ def test_v2_parse_case(case):
     assert total == EXPECTED_ITEMS[case], f"문항 수 {total} != {EXPECTED_ITEMS[case]}"
     # 객관식의 90%+ 는 '선지 5개' 또는 '밑줄형(본문 내 선지)'여야 함
     assert obj_ok / obj_total >= 0.85, f"선지 구조 정합 {obj_ok}/{obj_total}"
+
+
+def test_v2_1f172958_srv_types():
+    """서답형 발문([서답형 N])은 전부 SRV-* / 서술형이어야 한다.
+
+    2026-07-06: 서답형 4·6이 객관식 코드(OBJ-VOC-UND-MEAN / OBJ-LNG-AB)로
+    오분류되던 회귀 방지 (첫 매칭 우선 룰 테이블에서 OBJ 룰이 선점하던 건).
+    """
+    docs = parse_manuscripts(
+        glob.glob(os.path.join(CORPUS, "1f172958", "inputs", "*")))
+    srv = [it for _n, doc in docs for it in doc["items"]
+           if (it["question"] or "").startswith("[서답형")]
+    assert len(srv) == 6, f"서답형 문항 수 {len(srv)} != 6"
+    for it in srv:
+        assert it["type"] and it["type"].startswith("SRV-"), \
+            f"서답형이 객관식 코드로 분류: {it['type']} — {it['question'][:40]!r}"
+        assert it["kind"] == "서술형", f"{it['kind']} — {it['question'][:40]!r}"
