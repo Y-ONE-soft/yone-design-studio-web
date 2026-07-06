@@ -54,8 +54,9 @@ def find_indesign_app() -> str:
             return app
     # 실행 중인 InDesign이 없으면 최신 버전을 자동 실행
     app = installed[0]
+    # /Applications/{app}은 폴더라 kLSNoExecutableErr — 반드시 .app 번들 경로로
     subprocess.Popen(
-        ["open", "-a", f"/Applications/{app}"],
+        ["open", "-a", f"/Applications/{app}/{app}.app"],
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
     )
     # 실행 대기 (최대 120초 — InDesign 콜드 스타트는 느림)
@@ -204,6 +205,17 @@ def _run_jsx_once(jsx_path: str, log, poll_log_path: str = None, timeout: int = 
     log(f"[InDesign] 락 획득 — {job_name}")
 
     try:
+        # 이전 실행의 stale 로그 삭제 (JSX 제출 전, 락 보유 중이라 안전).
+        # 같은 job_dir 재실행 시 남은 completion_marker가 조기 완료 오탐 →
+        # 렌더 중 InDesign에 다음 osascript 제출 충돌 → 재시도 pkill 사고로
+        # 이어진다 (2026-07-04 seseospecial_v2 E2E 실증). JSX가 로그를 새로
+        # 생성하므로 전달 감지·완료 대기·verify 모두 삭제에 영향 없음.
+        if poll_log_path:
+            try:
+                os.remove(poll_log_path)
+            except OSError:
+                pass
+
         # settings.json 경로 추출 (JSX 파일에서)
         with open(jsx_path, encoding="utf-8") as f:
             jsx_content = f.read()
