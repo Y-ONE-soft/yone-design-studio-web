@@ -263,6 +263,12 @@ def _hwp_decode_paratext(payload):
             if code == 10 or code == 13:
                 result.append('\n')
                 i += 2
+            elif code == 9:
+                # 탭(인라인 제어, 8워드) — 문자로 보존 (W12: 표형 선지
+                # "① is\tbe done\tit"의 셀 구분자가 통째로 사라져
+                # "isbe doneit"로 병합되던 유실 수리)
+                result.append('\t')
+                i += 16
             elif code in _EXTENDED:
                 i += 16  # 8워드 = 16바이트
             else:
@@ -360,6 +366,17 @@ def _hwp_text_with_underline(para_text_payload, charshape_pairs, ul_map):
                 cur_text += '\n'
                 char_idx += 1
                 i += 2
+            elif code == 9:
+                # 탭(인라인 제어, 8워드) — 문자로 보존 (W12,
+                # _hwp_decode_paratext와 동일). 비밑줄 취급.
+                ul = pos_ul.get(char_idx, cur_ul)
+                if ul != cur_ul and cur_text:
+                    runs.append({"t": cur_text, "ul": cur_ul})
+                    cur_text = ""
+                    cur_ul = ul
+                cur_text += '\t'
+                char_idx += 8
+                i += 16
             elif code in _EXTENDED:
                 char_idx += 8  # 확장 제어는 8워드
                 i += 16
