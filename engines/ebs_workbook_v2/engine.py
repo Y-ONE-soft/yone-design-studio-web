@@ -73,10 +73,38 @@ class EbsWorkbookV2Engine(WorkbookV2Engine):
         from engines.ebs_workbook.engine import EbsWorkbookEngine
         return EbsWorkbookEngine().upload_spec
 
-    # ── 1단계: parse — v1 완전 위임 (GDrive 복사 + 파서) ────────────────────
+    # ── 1단계: parse — v1 위임 + 변형문제 문제모음 Step3 선라우팅 (W12) ─────
 
     def parse(self, uploaded_files, job_dir, log):
+        """v1 파서 위임 전에 변형문제 문제모음 업로드를 Step3로 선라우팅.
+
+        v1의 추가 업로드 Step3 판정은 파일명 "step3/스텝3/N번"만 인식해
+        "…123문제 [변형문제]….hwp" 류 문제모음이 일반 폴더로 들어가 어느
+        스텝에도 매핑되지 않고 조용히 유실된다 (W12 실증 — 게이트 G7).
+        v1 무변경: v2 래퍼가 uploads/Step3/에 미리 복사하고 나머지만 위임.
+        """
+        import unicodedata
+        from core.base import safe_copy
         from engines.ebs_workbook.engine import EbsWorkbookEngine
+        from engines.workbook_v2.engine import _is_variant_pool_filename
+
+        manuscripts = uploaded_files.get("manuscripts")
+        if isinstance(manuscripts, list):
+            rest = []
+            step3_dir = os.path.join(job_dir, "uploads", "Step3")
+            for fpath in manuscripts:
+                fname = os.path.basename(fpath)
+                if fname.startswith("manuscripts_"):
+                    fname = fname[len("manuscripts_"):]
+                fname_nfc = unicodedata.normalize("NFC", fname).strip()
+                if _is_variant_pool_filename(fname_nfc):
+                    os.makedirs(step3_dir, exist_ok=True)
+                    safe_copy(fpath, os.path.join(step3_dir, fname_nfc))
+                    log(f"[v2] 변형문제 문제모음 → Step3 라우팅: {fname_nfc}")
+                else:
+                    rest.append(fpath)
+            if len(rest) != len(manuscripts):
+                uploaded_files = dict(uploaded_files, manuscripts=rest)
         return EbsWorkbookEngine().parse(uploaded_files, job_dir, log)
 
     # ── WorkbookV2Engine 훅 오버라이드 ──────────────────────────────────────
