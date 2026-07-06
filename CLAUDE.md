@@ -24,7 +24,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 아키텍처 빅 픽처
 
 ### 요청 흐름 (`/api/run/<material_id>` POST)
-`app.py:_run_pipeline`이 백그라운드 스레드로 다음을 순차 호출합니다:
+`routes/typeset.py:/api/run`이 `core/pipeline.py:run_pipeline`을 백그라운드 스레드로 실행해 다음을 순차 호출합니다 (C2-9 분리 — app.py는 앱 조립+블루프린트 등록만):
 
 1. `engine.parse(uploaded, job_dir, log)` → 원고 → `content.json` + `step_*.json`
 2. `engine.prepare_jsx(json_path, job_dir, log)` → 원본 .indd 복사 + `.settings.json` + `run.jsx` 임시 사본
@@ -49,8 +49,8 @@ docx/hwp/hwpx에서 단락 + 밑줄 정보를 추출하고, 발문/지문/선지
 ### iCloud Documents / GDrive EDEADLK 회피
 이 코드베이스의 모든 파일 I/O는 launchd-spawned Flask 컨텍스트에서 macOS APFS / iCloud Drive / Google Drive Stream의 EDEADLK(Errno 11)에 빠질 위험이 있습니다. 다음 패턴들이 적용되어 있습니다:
 
-- **`app.py`의 JSON 캐시**: `_read_json_cached`로 한 번만 디스크 read 후 메모리 보관, `_save_*`에서 직접 캐시 갱신. EDEADLK/EAGAIN/EINTR은 5회 backoff 재시도.
-- **`_RetryingFileSystemLoader`**: Jinja `get_source`도 동일한 retry로 감쌈 (TEMPLATES_AUTO_RELOAD=True 환경에서 동시 요청이 .html을 동시에 읽을 때).
+- **`core/webdata.py`의 JSON 캐시** (구 app.py): `read_json_cached`로 한 번만 디스크 read 후 메모리 보관, `save_*`에서 직접 캐시 갱신. EDEADLK/EAGAIN/EINTR은 5회 backoff 재시도. 사용자 계정도 여기서 로드(`load_users` — data/users.json + password_env, C2-8).
+- **`core/webdata.py:RetryingFileSystemLoader`**: Jinja `get_source`도 동일한 retry로 감쌈 (TEMPLATES_AUTO_RELOAD=True 환경에서 동시 요청이 .html을 동시에 읽을 때).
 - **`core.base.safe_copy_indd`**: 원본 .indd 복사 (raw read/write → /bin/cp -c → /tmp 경유 폴백).
 - **`engines.final.extractor._gdrive_safe_copy`**: GDrive Stream 파일 안전 복사 — 로컬 미러 redirect(`~/Documents/yone-content-mirror/`) → `shutil.copy2` 단일 호출 + 지수 백오프(1+3+8+15+30초) 재시도. 새 GDrive 복사가 필요하면 직접 `shutil.copy2` 대신 이 함수를 사용해야 합니다.
 - **JSX 템플릿 모듈 캐시**: `engines/cover/engine.py`, `engines/ebs_workbook/engine.py` 등은 모듈 로드 시 1회만 `_JSX_TEMPLATE_CONTENT`로 읽어 메모리에 보관. 템플릿 변경 시 Flask 재시작 필요.
@@ -65,7 +65,7 @@ docx/hwp/hwpx에서 단락 + 밑줄 정보를 추출하고, 발문/지문/선지
 4. `templates/typeset_<id>.html` — UI (slot 자동 생성은 `typeset.js`)
 5. `engines/registry.py` — `_ENGINE_LIST`에 한 줄 추가 (기존 등록은 절대 삭제 안 함)
 6. `data/subjects.json` — 인덱스 페이지에 카드 추가 (Read 후 Edit으로 append, 기존 항목 유지)
-7. (필요 시) `app.py`에 폴더 탐색용 `/api/<id>/...` 엔드포인트 추가
+7. (필요 시) `routes/folders.py`에 폴더 탐색용 `/api/<id>/...` 엔드포인트 추가
 
 `templates/typeset.html`(공용)을 그대로 쓰면 `engine.upload_spec`만으로 폼이 생성되고, 엔진별 자체 UI가 필요하면 `template_name` property로 별도 템플릿 지정.
 

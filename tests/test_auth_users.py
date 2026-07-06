@@ -1,7 +1,7 @@
 """인증/사용자 구조 (C2-8) — data/users.json 로드 + 로그인 동작.
 
 app 모듈 import 전에 반드시 환경변수를 넣어야 한다 (YONE_SECRET_KEY 미설정 시
-app.py가 RuntimeError로 기동 거부).
+app.py가 RuntimeError로 기동 거부). 사용자 로더는 core/webdata.py (C2-9 분리 후).
 """
 import os
 
@@ -12,6 +12,7 @@ os.environ["YONE_ADMIN_PASSWORD"] = "test-admin-pw"
 os.environ["YONE_ASSISTANT_PASSWORD"] = "test-assist-pw"
 
 import app as app_module  # noqa: E402
+from core import webdata  # noqa: E402
 
 
 @pytest.fixture()
@@ -21,10 +22,10 @@ def client():
         yield c
 
 
-# ── _load_users ──────────────────────────────────────────────────────
+# ── load_users ───────────────────────────────────────────────────────
 
 def test_load_users_from_json():
-    users = app_module._load_users()
+    users = webdata.load_users()
     assert set(users) >= {"admin", "assistant"}
     assert users["admin"]["role"] == "admin"
     assert users["admin"]["password"] == "test-admin-pw"
@@ -33,29 +34,28 @@ def test_load_users_from_json():
 
 
 def test_load_users_fallback_when_file_missing(monkeypatch):
-    # users.json 부재 → _read_json_cached가 default(내장 스펙)를 반환 (fail-open)
-    monkeypatch.setattr(app_module, "_USERS_FILE",
-                        os.path.join(app_module._DATA_DIR, "__no_such_users__.json"))
+    # users.json 부재 → read_json_cached가 default(내장 스펙)를 반환 (fail-open)
+    missing = os.path.join(webdata.DATA_DIR, "__no_such_users__.json")
+    monkeypatch.setattr(webdata, "USERS_FILE", missing)
     try:
-        users = app_module._load_users()
+        users = webdata.load_users()
     finally:
-        app_module._invalidate_json_cache(
-            os.path.join(app_module._DATA_DIR, "__no_such_users__.json"))
+        webdata.invalidate_json_cache(missing)
     assert set(users) == {"admin", "assistant"}
     assert users["admin"]["password"] == "test-admin-pw"
 
 
 def test_load_users_fallback_when_spec_malformed(monkeypatch):
     # 파손된 스펙(유효 항목 0) → 내장 기본값으로 폴백
-    monkeypatch.setattr(app_module, "_read_json_cached",
+    monkeypatch.setattr(webdata, "read_json_cached",
                         lambda path, default: {"broken": True})
-    users = app_module._load_users()
+    users = webdata.load_users()
     assert set(users) == {"admin", "assistant"}
     assert users["admin"]["role"] == "admin"
 
 
 def test_resolve_users_spec_skips_invalid_entries():
-    users = app_module._resolve_users_spec([
+    users = webdata.resolve_users_spec([
         {"username": "ok", "role": "admin", "password_env": "YONE_ADMIN_PASSWORD"},
         {"role": "admin"},          # username 없음 → 스킵
         "not-a-dict",               # dict 아님 → 스킵
@@ -68,7 +68,7 @@ def test_resolve_users_spec_skips_invalid_entries():
 def test_users_json_never_contains_password():
     # 보안 게이트: users.json 자체에 password 키/실비밀번호가 없어야 함
     import json
-    with open(app_module._USERS_FILE, encoding="utf-8") as f:
+    with open(webdata.USERS_FILE, encoding="utf-8") as f:
         spec = json.load(f)
     for u in spec:
         assert "password" not in u
