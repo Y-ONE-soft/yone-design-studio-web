@@ -37,6 +37,22 @@ def _is_variant_pool_filename(fname_nfc):
             and not _RE_ANSWER_TOKEN.search(fname_nfc))
 
 
+def _routes_to_step3(fname_nfc):
+    """업로드 파일명 → Step3 폴더 라우팅 여부 (v1 주석 참조: Step 3/Step_3/
+    Step-3 + "N번" 패턴 + 변형문제 문제모음(W12)).
+
+    정답/답지/해설 파일은 Step3로 라우팅하지 않는다 (W13 c05 실증:
+    "고1_모의고사_25년_10월_STEP3_정답.hwpx" 교사용 정답 hwpx가 Step3 원고
+    폴더로 들어감 — 파일명이 문항 패턴까지 겹치면 정답이 문제로 조판된다.
+    v1 textbook GDrive 경로의 _is_answer_or_explanation 제외와 동일 정책,
+    v1 본가 무변경 — 미라우팅 파일은 루트에 남아 G9 [미사용원고]로 보고)."""
+    return (
+        bool(re.search(r"(?:스텝|step)[\s_-]*3(?!\d)", fname_nfc, re.I))
+        or bool(re.search(r"\d+(?:\s*~\s*\d+)?\s*번", fname_nfc))
+        or _is_variant_pool_filename(fname_nfc)
+    ) and not _RE_ANSWER_TOKEN.search(fname_nfc)
+
+
 def _norm_typo(s):
     """타이포그래피 정규화 — InDesign이 곧은따옴표를 굽은따옴표(’“”),
     하이픈을 대시로 자동 치환하므로 단어 대조 전에 통일한다."""
@@ -136,15 +152,7 @@ class WorkbookV2Engine(BaseEngine):
                 if fname.startswith("manuscripts_"):
                     fname = fname[len("manuscripts_"):]
                 fname_nfc = _nfc(fname).strip()
-                # STEP3 식별 (v1 주석 참조: Step 3/Step_3/Step-3 + "N번" 패턴
-                # + 변형문제 문제모음(W12))
-                is_step3 = (
-                    bool(re.search(r"(?:스텝|step)[\s_-]*3(?!\d)",
-                                   fname_nfc, re.I))
-                    or bool(re.search(r"\d+(?:\s*~\s*\d+)?\s*번", fname_nfc))
-                    or _is_variant_pool_filename(fname_nfc)
-                )
-                if is_step3:
+                if _routes_to_step3(fname_nfc):
                     dest = os.path.join(step3_dir, fname_nfc)
                 else:
                     dest = os.path.join(manuscript_dir, fname_nfc)
@@ -369,7 +377,11 @@ class WorkbookV2Engine(BaseEngine):
             from engines.workbook_v2.gate import inspect_workbook_finish
             content = json.load(open(settings["json_path"],
                                      encoding="utf-8"))
-            rep = inspect_workbook_finish(content, plan, dump)
+            rep = inspect_workbook_finish(
+                content, plan, dump,
+                uploads_dir=os.path.join(job_dir, "uploads"))
+            for fn in rep["stats"].get("unused_uploads_expected") or []:
+                log(f"[검수] 미사용 원고(정답/답지류 — 의도된 제외): {fn}")
             if rep["critical"]:
                 ok = False
                 warnings.extend(f"❌ {c}" for c in rep["critical"])
