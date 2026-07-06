@@ -131,3 +131,8 @@
   - **구성**: `SuneungteukgangWorkbookV2Engine.merge_lessons`(classmethod) — 강별 _v2 산출물(분석본/문제본 각각)을 `core/jsx/merge_spreads.body.jsx`(lib.jsxinc 기반 신설, spread.duplicate AT_END 이식)로 통합. `/api/suneungteukgang-workbook-v2/merge` 엔드포인트 추가(app.py — v1 api_st_merge와 병렬, v1 무변경). 통합 단계도 신규 로그 경로 사용(stale 마커 원칙 유지).
   - **검수 게이트**: 통합본 dump에서 강별 단어셋 보존 + 스프레드/페이지 수 정합(강 수 대비) + 오버플로우는 강별 결과에서 이월된 것만 허용(경고 지목).
   - **E2E (통과)**: 27강+Test2 2개 강 통합 — 분석본 57스프레드/111페이지, 문제본 57스프레드/110페이지, 강별 콘텐츠 보존 ok, 오버플로우는 강별 단독 조판에서 이월된 것뿐(분석 6/문제 1 — 수동 처리 관행). 테스트 191개(양 인터프리터).
+- **W13 (2026-07-06): 품질 루프 3라운드 — 미학습 원고 3종 (YBM PROJECT형 c13 / 능률 SL c15 / 모의고사 워크북 STEP2 정답 c05).**
+  - **결함 D2~D7 수리 커밋 6건**: hwp 밑줄 추출 성능(단락당 ~100만 엔트리 dict → 구간 역순 스캔), 정답/답지 원고 Step3 오라우팅 차단 + **게이트 G9(미사용 원고)**, 교과서 계열 완제품 op 확산(page_cleanup+passage_numbers), 대형 문서 export 행 오탐 재보정(저장/export 하트비트, stall 2700), **본가 workbook_v2 상하반전 실기 확인 → pos 힌트 기본 STEP_MAP 확산**(W11 미해결 ① 해소).
+  - **추가 수리(본 커밋)**: 지문번호 프레임 매핑이 '스토리 k번째 페이지 = k번째 지문' 가정에 의존 → 지문이 페이지를 넘치면 어긋남(c13 실증). 유닛 시작 단락의 실제 페이지(unitStart)를 기준으로 페이지→라벨 매핑, 넘친 연속 페이지도 같은 지문 번호(하위호환: unitStart 없으면 구 방식).
+  - 산출: 3종 PDF(data_corpus/round3/*/out/), 코퍼스 3건 편입 + 가드 테스트, 테스트 270개 양 인터프리터.
+  - **잔여 1건**: 3종 최종 출력의 게이트 critical 0 재확정(덤프)은 세션 중단(사용자 InDesign 작업 개시)으로 미실행 — InDesign 유휴 시 dump+gate 1회면 됨. 라운드 중 c15 조판에서 스크립트가 비가시 문서에 고착되는 사건 1회(사용자 개입 Esc로 해소, stale 락 제거됨).
