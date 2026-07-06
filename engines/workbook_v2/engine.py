@@ -37,6 +37,22 @@ def _is_variant_pool_filename(fname_nfc):
             and not _RE_ANSWER_TOKEN.search(fname_nfc))
 
 
+def _routes_to_step3(fname_nfc):
+    """업로드 파일명 → Step3 폴더 라우팅 여부 (v1 주석 참조: Step 3/Step_3/
+    Step-3 + "N번" 패턴 + 변형문제 문제모음(W12)).
+
+    정답/답지/해설 파일은 Step3로 라우팅하지 않는다 (W13 c05 실증:
+    "고1_모의고사_25년_10월_STEP3_정답.hwpx" 교사용 정답 hwpx가 Step3 원고
+    폴더로 들어감 — 파일명이 문항 패턴까지 겹치면 정답이 문제로 조판된다.
+    v1 textbook GDrive 경로의 _is_answer_or_explanation 제외와 동일 정책,
+    v1 본가 무변경 — 미라우팅 파일은 루트에 남아 G9 [미사용원고]로 보고)."""
+    return (
+        bool(re.search(r"(?:스텝|step)[\s_-]*3(?!\d)", fname_nfc, re.I))
+        or bool(re.search(r"\d+(?:\s*~\s*\d+)?\s*번", fname_nfc))
+        or _is_variant_pool_filename(fname_nfc)
+    ) and not _RE_ANSWER_TOKEN.search(fname_nfc)
+
+
 def _norm_typo(s):
     """타이포그래피 정규화 — InDesign이 곧은따옴표를 굽은따옴표(’“”),
     하이픈을 대시로 자동 치환하므로 단어 대조 전에 통일한다."""
@@ -57,7 +73,11 @@ def _load_v1_config():
 
 class WorkbookV2Engine(BaseEngine):
 
-    jsx_timeout = 1800
+    # W13 c05 실측(고1 25-10 전체 업로드 — 284p 전량 콘텐츠): PDF export가
+    # 로그 무갱신 20분+, 전체 렌더 40분+. 기존 timeout 1800/stall 900이면
+    # 정상 export 중 행 오탐 강제종료(유령 모달 사고 재발 경로) — 워크북
+    # 계열만 상향 (다른 엔진 기본값 무변경, 진짜 행은 최종 timeout이 차단).
+    jsx_timeout = 3600
 
     @property
     def material_id(self):
@@ -136,15 +156,7 @@ class WorkbookV2Engine(BaseEngine):
                 if fname.startswith("manuscripts_"):
                     fname = fname[len("manuscripts_"):]
                 fname_nfc = _nfc(fname).strip()
-                # STEP3 식별 (v1 주석 참조: Step 3/Step_3/Step-3 + "N번" 패턴
-                # + 변형문제 문제모음(W12))
-                is_step3 = (
-                    bool(re.search(r"(?:스텝|step)[\s_-]*3(?!\d)",
-                                   fname_nfc, re.I))
-                    or bool(re.search(r"\d+(?:\s*~\s*\d+)?\s*번", fname_nfc))
-                    or _is_variant_pool_filename(fname_nfc)
-                )
-                if is_step3:
+                if _routes_to_step3(fname_nfc):
                     dest = os.path.join(step3_dir, fname_nfc)
                 else:
                     dest = os.path.join(manuscript_dir, fname_nfc)
@@ -212,10 +224,15 @@ class WorkbookV2Engine(BaseEngine):
         return None
 
     def _plan_decorations(self, job_dir, cfg):
-        """플랜 최상위에 병합할 선택 키 (실행기 opt-in op) — 기본 없음.
-        교과서 파생 엔진이 {"divider": ..., "textbook_postprocess": True}
-        를 반환한다 (v1 run.jsx 16.7/16.8)."""
-        return {}
+        """플랜 최상위에 병합할 선택 키 (실행기 opt-in op).
+
+        본가(모의고사)는 page_cleanup만 — c05(고1 25-10) 실기에서 내용
+        없는 스텝 페이지 22개 잔존 (게이트 G4 warning 실증, W13).
+        passage_numbers는 미적용: 모의고사 내지의 번호 프레임(20~45)이
+        원고 문항번호와 정합이라 갱신 이득이 없다 (G3 clean 실측).
+        파생 엔진(supp/교과서/EBS)은 이 훅을 전부 오버라이드하고
+        수능특강/세로는 자체 prepare라 미호출 — 이 변경은 본가 전용."""
+        return {"page_cleanup": {"empty_master": "M"}}
 
     # ── 2단계: prepare_jsx — 플랜 빌드 + 템플릿 복사 + JSX 생성 ─────────────
 
@@ -301,13 +318,16 @@ class WorkbookV2Engine(BaseEngine):
             os.remove(settings["log_path"])
         except OSError:
             pass
-        # stall_limit 900: 워크북 전체(C) 문서(250p+)의 doc.save + PDF export가
-        # 로그 무갱신으로 5분을 초과 (기본 300초 행 판정이 export 중 오탐 —
-        # W4 실측: 정상 export 중 InDesign이 강제 종료됨)
+        # stall_limit 2700: 워크북 전체(C) 문서의 doc.save + PDF export가
+        # 로그 무갱신으로 길게 이어진다 (W4 실측 5분+ → 900, W13 c05 실측
+        # 20분+ — 900이면 정상 export 중 행 오탐 강제종료 = 유령 모달 사고
+        # 재발 경로). JSX가 저장/export 직전 하트비트를 남기므로 무갱신
+        # 구간은 해당 단계 소요만큼이다. 진짜 행은 timeout(3600)이 차단
+        # (timeout 경로는 InDesign을 죽이지 않는다 — 킬 루프 금지).
         run_jsx(settings["jsx_path"], log, poll_log_path=settings["log_path"],
                 timeout=self.jsx_timeout,
                 completion_marker="워크북 v2 조판 완료",
-                stall_limit=900)
+                stall_limit=2700)
 
     # ── 4단계: verify — 검수 게이트 내장 ────────────────────────────────────
 
@@ -369,7 +389,11 @@ class WorkbookV2Engine(BaseEngine):
             from engines.workbook_v2.gate import inspect_workbook_finish
             content = json.load(open(settings["json_path"],
                                      encoding="utf-8"))
-            rep = inspect_workbook_finish(content, plan, dump)
+            rep = inspect_workbook_finish(
+                content, plan, dump,
+                uploads_dir=os.path.join(job_dir, "uploads"))
+            for fn in rep["stats"].get("unused_uploads_expected") or []:
+                log(f"[검수] 미사용 원고(정답/답지류 — 의도된 제외): {fn}")
             if rep["critical"]:
                 ok = False
                 warnings.extend(f"❌ {c}" for c in rep["critical"])

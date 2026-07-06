@@ -1,7 +1,7 @@
 {
   "generated": "2026-07-06",
-  "parser_git_head": "27ab973",
-  "parser_worktree_dirty": true,
+  "parser_git_head": "1b82742",
+  "parser_worktree_dirty": false,
   "fail_20260706_header": "1. p1-no.3과 추가지문",
   "fail_20260706_recognized": true,
   "inventory_files": 20982,

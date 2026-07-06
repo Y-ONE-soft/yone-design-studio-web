@@ -284,16 +284,59 @@ function updatePassageNumbers(doc, flowStories, op) {
     for (var si = 0; si < steps.length; si++) {
         var rec = flowStories[steps[si]];
         if (!rec) { continue; }
-        var pages = storyPagesInOrder(rec.story);
+        // 페이지 → 라벨 매핑.
+        // 기본: '유닛 k 시작 페이지 ~ 유닛 k+1 시작 전' 구간 페이지 전부에
+        // labels[k] (W13 c13 실증 — 지문이 페이지를 넘치면 '스토리 k번째
+        // 페이지 = k번째 지문' 가정이 깨진다. 넘친 연속 페이지도 같은 지문
+        // 번호로 갱신). unitStart가 없으면(하위호환) 옛 페이지 순서 매핑.
+        var pageLabel = {};   // documentOffset(str) -> label
+        var mapped = false;
+        if (rec.unitStart && rec.unitStart.length > 0) {
+            try {
+                var paras = rec.story.paragraphs.everyItem().getElements();
+                var startOffsets = [];
+                for (var uk = 0; uk < rec.unitStart.length && uk < labels.length; uk++) {
+                    var pIdx = rec.unitStart[uk];
+                    if (pIdx >= paras.length) { break; }
+                    var ptf = paras[pIdx].parentTextFrames;
+                    if (ptf.length === 0) { continue; }
+                    var upg = null;
+                    try { upg = ptf[0].parentPage; } catch (e) {}
+                    if (!upg) { continue; }
+                    startOffsets.push({ off: upg.documentOffset, label: labels[uk] });
+                }
+                if (startOffsets.length > 0) {
+                    var allPages = storyPagesInOrder(rec.story);
+                    for (var ap = 0; ap < allPages.length; ap++) {
+                        var poff = allPages[ap].documentOffset;
+                        var lab = null;
+                        for (var so = 0; so < startOffsets.length; so++) {
+                            if (poff >= startOffsets[so].off) { lab = startOffsets[so].label; }
+                        }
+                        if (lab !== null) { pageLabel[String(poff)] = lab; }
+                    }
+                    mapped = true;
+                }
+            } catch (e) {}
+        }
+        if (!mapped) {
+            var pagesFallback = storyPagesInOrder(rec.story);
+            for (var k = 0; k < pagesFallback.length && k < labels.length; k++) {
+                pageLabel[String(pagesFallback[k].documentOffset)] = labels[k];
+            }
+        }
         var n = 0;
-        for (var k = 0; k < pages.length && k < labels.length; k++) {
-            var tfs = pages[k].textFrames;
+        var pages = storyPagesInOrder(rec.story);
+        for (var pk = 0; pk < pages.length; pk++) {
+            var lab2 = pageLabel[String(pages[pk].documentOffset)];
+            if (lab2 === undefined || lab2 === null) { continue; }
+            var tfs = pages[pk].textFrames;
             for (var fi = 0; fi < tfs.length; fi++) {
                 try {
                     var fst = tfs[fi].parentStory;
                     if (fst.textContainers.length !== 1) { continue; }
                     if (!RE_BARE_NUM.test(String(fst.contents || ""))) { continue; }
-                    fst.contents = labels[k];
+                    fst.contents = lab2;
                     n++;
                 } catch (e) {}
             }
@@ -343,6 +386,41 @@ function cleanupPages(doc, flowStories, op) {
         cleanStart = 0;
     }
     if (cleanStart < 0) { wlog("페이지 정리: 대상 없음"); return; }
+
+    // 1b) 스레드 절단 (W13 성능 — c15 실기 실증): 콘텐츠 섹션 스토리가
+    // 잔여 빈 프레임 수백 개에 연결된 채로 페이지를 지우면 pg.remove()마다
+    // 전체 스토리 recompose가 돌아 삭제 루프가 사실상 정지한다 (c15에서
+    // 삭제 26개 후 70분+ 무진행 — 앵커 아이콘 137개 문서). 삭제 전에 각
+    // 콘텐츠 스토리의 '마지막 텍스트 프레임' 뒤 연결을 끊으면 빈 프레임은
+    // 독립 프레임이 되어 삭제가 recompose를 유발하지 않는다. 잘린 프레임은
+    // 어차피 아래 루프의 삭제 대상 페이지에만 존재한다.
+    var unthreaded = 0;
+    for (var st2 in flowStories) {
+        var rec2 = flowStories[st2];
+        if (rec2.isMaster) { continue; }   // STEP3는 M 마스터 경로에서 관리
+        try {
+            var conts = rec2.story.textContainers;
+            var lastWithText = -1;
+            for (var ci = 0; ci < conts.length; ci++) {
+                var cc = "";
+                try { cc = String(conts[ci].contents || ""); } catch (e) {}
+                if (cc.replace(/[\s\r\n\uFFFC]+/g, "").length > 0) {
+                    lastWithText = ci;
+                }
+            }
+            if (lastWithText >= 0 && lastWithText < conts.length - 1) {
+                try {
+                    conts[lastWithText].nextTextFrame = NothingEnum.NOTHING;
+                } catch (eN) {
+                    conts[lastWithText].nextTextFrame = null;
+                }
+                unthreaded++;
+            }
+        } catch (e) {}
+    }
+    if (unthreaded > 0) {
+        wlog("페이지 정리: 잔여 빈 프레임 스레드 절단 " + unthreaded + "개 스토리");
+    }
 
     // 2) STEP1/2 영역 — 다중 프레임 스토리 프레임 전부 빈 페이지 삭제 (역순)
     // 하트비트 필수 (W12 실증): 페이지 삭제는 건당 리플로우로 느려서 수백
@@ -530,7 +608,6 @@ try {
             story = storyByMarker(doc, tgt.marker, tgt.page, tgt.rank, tgt.pos);
         }
         if (!story) { wlog("[경고] 스토리 못 찾음: " + flow.step); return; }
-        flowStories[flow.step] = { story: story, isMaster: !!tgt.master };
         var csUL = ulStyleFor(flow);
 
         var flat = [];
@@ -556,6 +633,13 @@ try {
         }
         story.contents = joined;
         try { story.texts[0].appliedCharacterStyle = noneCS; } catch (e) {}
+        // unitStart(유닛 첫 단락 인덱스)를 함께 기록 — passage_numbers op가
+        // '유닛 시작 페이지' 기준으로 번호 프레임을 갱신하는 데 쓴다 (W13
+        // c13 실증: 지문이 페이지를 넘치면 '스토리 k번째 페이지 = k번째
+        // 지문' 가정이 깨져 오갱신/잔존 발생). 아이콘은 앵커/기존 단락
+        // 재사용이라 단락 인덱스를 바꾸지 않는다.
+        flowStories[flow.step] = { story: story, isMaster: !!tgt.master,
+                                   unitStart: unitStart.slice(0) };
         wlog(flow.step + ": " + flat.length + "단락 배치 (유닛 " + flow.units.length + ")");
 
         // 대형 스토리 필수 최적화: 컬렉션 인덱싱 대신 getElements() 1회 캐시
@@ -687,7 +771,13 @@ try {
     }
     wlog("오버플로우: " + ovf + "개");
 
+    // 저장/export 직전 하트비트 — 러너 stall 시계를 리셋해 무갱신 구간이
+    // '해당 단계 소요'만큼만 되도록 (W13 c05 실측: 284p 전량 콘텐츠 문서의
+    // PDF export가 로그 무갱신 20분+. 900초 stall이면 정상 export 중
+    // 강제종료 = 유령 모달 사고 재발 경로 — 엔진 stall_limit 상향과 세트)
+    wlog("문서 저장 시작 (로그 무갱신 수 분 가능)");
     doc.save(File(OUT_INDD));
+    wlog("PDF export 시작 (대형 문서는 로그 무갱신 20분+ 가능)");
     doc.exportFile(ExportFormat.PDF_TYPE, File(OUT_PDF));
     wlog("PDF: 성공 -> " + OUT_PDF);
     doc.close(SaveOptions.NO);

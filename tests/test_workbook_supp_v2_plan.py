@@ -122,9 +122,11 @@ def test_step_map_pos(plan):
     tg = {f["step"]: f["target"] for f in plan["flows"]}
     assert tg["step2_a1"].get("pos") == "top"
     assert tg["step2_a1_btm"].get("pos") == "bottom"
-    # 기본 workbook_v2 STEP_MAP은 무변경 (pos 없음 — 격리)
+    # W13: 본가/textbook 실기(c05/c13/c15) + v1 실물 SL2 기하 확인으로
+    # 기본 STEP_MAP에도 pos 확산 (W11의 '실기 확인 후 별도' 조건 충족)
     from engines.workbook_v2.plan import STEP_MAP as BASE
-    assert "pos" not in BASE["step2_a1"]
+    assert BASE["step2_a1"]["pos"] == "top"
+    assert BASE["step2_a1_btm"]["pos"] == "bottom"
 
 
 # ── D4/D5: supp 데코레이션 (page_cleanup + passage_numbers) ──────────────────
@@ -151,9 +153,12 @@ def test_decorations(content, tmp_path):
 
 
 def test_base_engine_decorations_unchanged(tmp_path):
-    """격리 가드 — workbook_v2 기본 훅은 여전히 빈 데코레이션."""
+    """본가 데코 가드 — W13부터 page_cleanup opt-in (c05 실기: 잔여 22페이지).
+    passage_numbers는 본가 미적용 유지 (모의고사 번호 프레임 정합)."""
     from engines.workbook_v2.engine import WorkbookV2Engine
-    assert WorkbookV2Engine()._plan_decorations(str(tmp_path), {}) == {}
+    deco = WorkbookV2Engine()._plan_decorations(str(tmp_path), {})
+    assert deco == {"page_cleanup": {"empty_master": "M"}}
+    assert "passage_numbers" not in deco
 
 
 # ── D6: step3 정답 블록 절단 ─────────────────────────────────────────────────

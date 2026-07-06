@@ -16,10 +16,17 @@
                   않았는데 조판이 '성공'으로 끝나는 침묵 유실 (critical, W12)
   G8 [구분선잔존] 원전 교재의 챕터/유닛 구분선("Chapter 03. ..." /
                   "Unit 10 긴 어구 빈칸")이 출력 본문에 인쇄됨 (critical, W12)
+  G9 [미사용원고] 업로드/원고 폴더의 원고 파일이 어느 스텝에도 소비되지
+                  않고 조용히 무시됨 (W13 c15 실증: "…STEP 2_박소원
+                  완료.hwpx" 통합 원고 3종 침묵 무시). 정답/답지/해설
+                  파일과 '정답지 짝' 파일은 의도된 미사용이라 stats로만
+                  보고, 그 외는 warning (G7 전량 유실의 부분 유실 보완).
 
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
-구버전 덤프에는 경고로만 보고한다 (재덤프 안내).
+구버전 덤프에는 경고로만 보고한다 (재덤프 안내). G9는 uploads_dir를 넘긴
+경우에만 검사한다 (오프라인 플랜 테스트 호환).
 """
+import os
 import re
 import unicodedata
 
@@ -95,8 +102,75 @@ def _is_struct_header_candidate(paras, i):
 # 헤더 기반 스텝 (헤더 제거/정규화가 빌더 책임인 스텝)
 _HEADER_STEPS = ("step1_c2", "step2_c1", "step2_b1", "step2_a1", "step1_c1")
 
+# ── G9: 미사용 업로드 원고 (W13) ─────────────────────────────────────────────
+_MS_EXTS = (".docx", ".hwp", ".hwpx")
+_RE_ANSWERISH = re.compile(r"정답|답지|답안|해설|answer", re.I)
+_RE_S3_NUMFILE = re.compile(r"\d+(?:\s*~\s*\d+)?\s*번\s*\.(?:hwpx?|docx)",
+                            re.I)
+_RE_VARIANT = re.compile(r"변형\s*문제")
 
-def inspect_workbook_finish(content, plan, dump):
+
+def _norm_fname(name):
+    return unicodedata.normalize(
+        "NFC", os.path.splitext(name)[0]).replace(" ", "").lower()
+
+
+def find_unused_uploads(content, uploads_dir):
+    """(expected_unused, suspicious) — 스텝에 소비되지 않은 원고 파일 분류.
+
+    used 판정은 파서 소비 규칙의 근사 재현:
+      - 루트: content steps의 filename (파서가 매칭·rename한 실명)
+      - Step3 하위폴더: "N번" 파일(모의고사 번호 매칭), 변형문제 문제모음,
+        교과서 경로(step3가 textbook 항목이면 비정답 후보 전부 소비)
+    expected_unused = 정답/답지/해설 토큰 파일 + '정답지 짝' 파일(빈칸어휘
+    스텝처럼 정답지 본이 소비되는 경우의 문제지 본) — 관행상 폴더에 늘
+    존재하므로 stats로만 보고한다.
+    """
+    steps = (content.get("steps") or {}) if content else {}
+    used = set()
+    for sd in steps.values():
+        if isinstance(sd, dict) and sd.get("filename"):
+            used.add(_norm_fname(sd["filename"]))
+    st3 = steps.get("step3") or {}
+    st3_items = ((st3.get("normal") or []) + (st3.get("short") or [])
+                 if isinstance(st3, dict) else [])
+    st3_textbook = any(it.get("question_num") == "textbook"
+                       for it in st3_items)
+    st3_numbered = any(it.get("question_num") != "textbook"
+                       for it in st3_items)
+
+    expected, suspicious = [], []
+    for root, dirs, files in os.walk(uploads_dir):
+        dirs[:] = [d for d in dirs if not d.startswith(".")]
+        in_step3 = "step3" in unicodedata.normalize(
+            "NFC", os.path.relpath(root, uploads_dir)).lower()
+        for f in sorted(files):
+            if f.startswith(".") or os.path.splitext(f)[1].lower() \
+                    not in _MS_EXTS:
+                continue
+            nf = unicodedata.normalize("NFC", f)
+            key = _norm_fname(nf)
+            if key in used:
+                continue
+            if in_step3:
+                if st3_numbered and _RE_S3_NUMFILE.search(nf):
+                    continue      # 모의고사 번호 매칭으로 소비
+                if _RE_VARIANT.search(nf) and st3_items:
+                    continue      # 변형문제 문제모음 (W12 라우팅)
+                if (st3_textbook and not _RE_ANSWERISH.search(nf)):
+                    continue      # 교과서 경로: 비정답 후보 전부 소비
+            if _RE_ANSWERISH.search(nf) or any(u.startswith(key)
+                                               for u in used):
+                # 정답/답지류, 또는 소비된 변형본의 짝 파일 (예: 사용
+                # "…빈칸어휘 정답지.docx"/"…영작배열(서술형).hwpx"의 짝
+                # "…빈칸어휘.docx"/"…영작배열.docx") — 관행상 의도된 미사용
+                expected.append(nf)
+            else:
+                suspicious.append(nf)
+    return expected, suspicious
+
+
+def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
     """content(원고 파싱본) + plan + 출력 덤프 → 완제품 게이트 리포트."""
     critical = []
     warnings = []
@@ -217,6 +291,18 @@ def inspect_workbook_finish(content, plan, dump):
         elif st_top and st_btm:
             warnings.append("[상하배치] 덤프에 프레임 좌표 없음(구버전 덤프)"
                             " — 상/하단 검사 생략")
+
+    # ── G9 미사용 업로드 원고 (W13 — 부분 침묵 유실 보고) ────────────────
+    if uploads_dir and os.path.isdir(uploads_dir):
+        expected_unused, suspicious = find_unused_uploads(content,
+                                                          uploads_dir)
+        stats["unused_uploads_expected"] = expected_unused
+        stats["unused_uploads"] = suspicious
+        if suspicious:
+            warnings.append(
+                f"[미사용원고] {len(suspicious)}개 파일이 어느 스텝에도 "
+                f"사용되지 않음 (파일명 규칙 확인): "
+                + " | ".join(suspicious[:5]))
 
     # ── G6 파싱 계층: 구조적 헤더 후보 미인식 (경고) ─────────────────────
     for key in _HEADER_STEPS:

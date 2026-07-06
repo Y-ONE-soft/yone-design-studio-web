@@ -1,0 +1,6 @@
+{
+  "engine": "textbook_workbook_v2",
+  "source_job": "round3-gdrive",
+  "replay": "manuscript_folder=inputs_folder (GDrive 워크북 폴더 로컬 재현) — manifest.json 없음: test_parse_snapshot 자동 발견 대신 test_workbook_v2_round3의 커스텀 리플레이 사용",
+  "note": "W13 r3c15sl2 — 교과서 워크북 미학습 원고. 완제품 op 확산(D5)·G9(D4) 실증 케이스."
+}

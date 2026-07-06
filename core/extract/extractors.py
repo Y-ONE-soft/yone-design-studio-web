@@ -332,14 +332,27 @@ def _hwp_text_with_underline(para_text_payload, charshape_pairs, ul_map):
     """PARA_TEXT payload를 디코딩하면서 charshape 기반 밑줄 run 생성."""
     # 원본 위치별 밑줄 여부 매핑
     # charshape_pairs: [(pos, csid), ...] — pos는 원본 payload 내 문자 인덱스
-    pos_ul = {}  # {원본위치: bool}
-    for cp_idx in range(len(charshape_pairs)):
-        start_pos = charshape_pairs[cp_idx][0]
-        end_pos = charshape_pairs[cp_idx + 1][0] if cp_idx + 1 < len(charshape_pairs) else 999999
-        csid = charshape_pairs[cp_idx][1]
-        is_ul = ul_map.get(csid, False)
-        for p in range(start_pos, end_pos):
-            pos_ul[p] = is_ul
+    #
+    # (W13 성능) 예전 구현은 {위치: bool} dict를 pair마다 range(start, end)로
+    # 채웠는데, 마지막 pair의 end가 999999라 단락마다 ~100만 엔트리를 만들어
+    # 밑줄 추출이 단락당 ~37ms → Step3 hwp 파일당 4~5초 (25파일 원고에서
+    # 파서가 행처럼 보이는 침묵 지연, W13 c05 실증). 아래 _PosUl은 같은
+    # 의미론('나중 pair 쓰기가 이김' + 미커버 위치는 default)을 구간 역순
+    # 스캔으로 대체한다 — 골든 스냅샷 byte-identical 검증됨.
+    class _PosUl(object):
+        __slots__ = ()
+
+        @staticmethod
+        def get(pos, default):
+            for k in range(len(charshape_pairs) - 1, -1, -1):
+                s = charshape_pairs[k][0]
+                e = (charshape_pairs[k + 1][0]
+                     if k + 1 < len(charshape_pairs) else 999999)
+                if s <= pos < e:
+                    return ul_map.get(charshape_pairs[k][1], False)
+            return default
+
+    pos_ul = _PosUl()
 
     # payload 디코딩 + 밑줄 매핑
     _EXTENDED = set(range(0, 10)) - {10}

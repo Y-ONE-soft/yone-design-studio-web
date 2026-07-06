@@ -27,6 +27,11 @@ _V1_CONFIG = os.path.join(os.path.dirname(_DIR), "textbook_workbook",
                           "config.json")
 _PATH_KEYS = ["indd_output_dir", "indd_original", "textbook_base"]
 
+# 독립 지문번호 텍스트 프레임을 가진 섹션 (supp W11과 동일 —
+# [원본]워크북_C 실물: 빈칸 어휘 p94~ / 어법 O/X p132~ / 빈칸 어법 p150~
+# 페이지 좌측의 단일 프레임 번호 스토리. 교과서 내지도 같은 원본이다)
+_NUMBER_FRAME_STEPS = ["step1_c2", "step2_b1", "step2_c1"]
+
 
 def _load_v1_config():
     with open(_V1_CONFIG, encoding="utf-8") as f:
@@ -113,10 +118,32 @@ class TextbookWorkbookV2Engine(WorkbookV2Engine):
         return src
 
     def _plan_decorations(self, job_dir, cfg):
-        """v1 run.jsx 16.7(간지) + 16.8(빈 페이지 마스터 재할당) opt-in."""
+        """v1 run.jsx 16.7(간지) + 16.8(빈 페이지 마스터 재할당) opt-in
+        + 완제품 후처리 op 2종 (W13 — c13/c15 실조판 실증).
+
+        교과서 원고는 지문 2~5개인데 내지([원본]워크북_C)는 모의고사 18지문
+        규격이라, 실기에서 모의고사 잔재 지문번호 프레임 17종(20~45)과
+        내용 없는 스텝 페이지 200개+가 잔존했다 (게이트 G3/G4 warning 실증).
+        supp(W11)/ebs(W12)와 동일하게 page_cleanup(잔여 페이지 삭제 + 빈
+        STEP3 페이지 M 마스터)과 passage_numbers(독립 지문번호 프레임을
+        원고 지문번호로 갱신)를 opt-in한다. 간지 페이지는 단일 프레임이라
+        page_cleanup 삭제 판정(다중 프레임 스토리 전부 빈)에 걸리지 않고,
+        textbook_postprocess(16.8)는 잔존 빈 페이지에만 동작한다."""
+        from engines.workbook_v2.plan import passage_labels
         subject, pub_short, lesson = self._textbook_meta(job_dir)
-        return {
+        deco = {
             "divider": {"line1": f"{subject} {pub_short}".strip(),
                         "line2": lesson},
             "textbook_postprocess": True,
+            "page_cleanup": {"empty_master": "M"},
         }
+        try:
+            content = json.load(open(os.path.join(job_dir, "content.json"),
+                                     encoding="utf-8"))
+            labels = passage_labels(content.get("steps", {}))
+        except (OSError, ValueError):
+            labels = []
+        if labels:
+            deco["passage_numbers"] = {"labels": labels,
+                                       "steps": list(_NUMBER_FRAME_STEPS)}
+        return deco
