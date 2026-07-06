@@ -12,6 +12,10 @@
                   (step_map pos 힌트 사용 시 critical, 아니면 warning)
   G6 [헤더미인식] 원고(콘텐츠 단락)에 구조적 헤더 후보가 있는데 인식기가
                   하나도 못 잡음 — 파싱 계층 경고 (순환 측정 방지)
+  G7 [빈플랜]     렌더 유닛이 0 — 업로드 원고가 어느 스텝에도 매핑되지
+                  않았는데 조판이 '성공'으로 끝나는 침묵 유실 (critical, W12)
+  G8 [구분선잔존] 원전 교재의 챕터/유닛 구분선("Chapter 03. ..." /
+                  "Unit 10 긴 어구 빈칸")이 출력 본문에 인쇄됨 (critical, W12)
 
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
 구버전 덤프에는 경고로만 보고한다 (재덤프 안내).
@@ -26,6 +30,13 @@ from engines.workbook_v2.plan import (is_header_line, is_a1_header,
 _RE_BARE_NUM = re.compile(r"^\d{1,3}(?:\s*~\s*\d{1,3})?$")
 _RE_DIGIT = re.compile(r"\d")
 _RE_ENG_WORD = re.compile(r"[A-Za-z]+")
+
+# G8 — 원전 교재 구분선 (파서 _RE_CHAPTER_DIVIDER/_RE_UNIT_DIVIDER 준용.
+# 출력 검사용 독립 정의 — 파서가 틀리면 게이트도 같이 틀리는 순환 방지)
+_DIVIDER_PATTERNS = [
+    re.compile(r"^Chapter\s+\d+\.\s", re.I),
+    re.compile(r"^Unit\s+\d+\s+[가-힣][가-힣0-9\s]{0,30}$"),
+]
 
 
 def _clean(t):
@@ -98,11 +109,27 @@ def inspect_workbook_finish(content, plan, dump):
     pos_used = any((fl.get("target") or {}).get("pos")
                    for fl in plan.get("flows", []))
 
-    # ── G1 헤더 원문 잔존 ────────────────────────────────────────────────
+    # ── G7 빈 플랜 — 업로드 원고가 렌더 유닛으로 전혀 이어지지 않음 ─────
+    # (W12 실증: 변형문제 문제모음 hwp가 스텝 분류에 안 잡혀 조용히
+    # 유실됐는데 verify ok=True로 끝나던 침묵 유실 차단)
+    total_units = sum(len(fl.get("units") or [])
+                     for fl in plan.get("flows", []))
+    stats["plan_units"] = total_units
+    if total_units == 0:
+        critical.append("[빈플랜] 렌더 유닛 0 — 업로드 원고가 어느 스텝에도 "
+                        "매핑되지 않음 (파일명/폴더 규칙 확인)")
+
+    # ── G1 헤더 원문 잔존 + G8 구분선 잔존 ──────────────────────────────
     leaks = []
+    divider_leaks = []
     for t, _s in _dump_paras(dump):
         tt = _clean(t)
-        if not tt or not _RE_DIGIT.search(tt):
+        if not tt:
+            continue
+        if any(p.match(tt) for p in _DIVIDER_PATTERNS):
+            divider_leaks.append(tt[:60])
+            continue
+        if not _RE_DIGIT.search(tt):
             continue
         if tt.startswith("{") or tt.startswith("["):
             continue    # {20}/{3과 추가지문}/[20] — 의도된 라벨 산출물
@@ -113,6 +140,11 @@ def inspect_workbook_finish(content, plan, dump):
         critical.append(f"[헤더잔존] {len(leaks)}개 단락이 지문번호 헤더 "
                         f"원문 그대로 인쇄됨: "
                         + " | ".join(sorted(set(leaks))[:5]))
+    stats["divider_leaks"] = len(divider_leaks)
+    if divider_leaks:
+        critical.append(f"[구분선잔존] {len(divider_leaks)}개 단락이 원전 "
+                        f"챕터/유닛 구분선 그대로 인쇄됨: "
+                        + " | ".join(sorted(set(divider_leaks))[:5]))
 
     # ── G2 정답 블록 잔존 ────────────────────────────────────────────────
     ans = find_leaked_answers(dump)
