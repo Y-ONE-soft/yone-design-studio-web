@@ -160,6 +160,9 @@ _HEADER_PATTERNS = [
     re.compile(r"^p\d+[-–—][A-Za-z]{1,15}\.?\d+(?:~\d+)?$", re.I),
     re.compile(r"^p\d+[-–—](?:서술형|논술형)Practice$", re.I),
     re.compile(r"^p\d+[-–—]+수능대비ANALYSIS$", re.I),
+    # 부교재 코너명형 (W12): "1. p80-수능 Analysis" — compact "p80-수능Analysis".
+    # 기존 패턴 무변경 append.
+    re.compile(r"^p\d+[-–—]?수능Analysis$", re.I),
 ]
 _RE_SUPP = re.compile(r"^Supplementary Reading$", re.I)
 
@@ -254,6 +257,12 @@ def extract_tail(text):
         return m.group(2) if m.group(2) else m.group(1)
     if re.search(r"수능\s*대비\s*analysis", s, re.I):
         return "분석"
+    # 부교재 코너명형 (W12): "N. pN-수능 Analysis" → "분석N" (선행 순번 —
+    # C1 GREP {분석N}/원고 [분석N] 마커 관행과 일치). 기존 분기 무변경 삽입.
+    m = re.match(r"^\s*(\d+)[\s.)-]*p\.?\s*\d+[\s-]*수능\s*Analysis\s*$",
+                 s, re.I)
+    if m:
+        return "분석" + m.group(1)
     m = re.match(r"^\s*\d+[\s.)-]*p\.?\s*\d+\s*(?:[-–—]|\s)+\s*(.+)$",
                  s, re.I)
     if m:
@@ -813,6 +822,14 @@ _C1_GREPS = [
     (re.compile(r"\bExample\s+(\d{1,3})"), r"{\1}"),
     (re.compile(r"\b(\d+)\.\s*p\d+\s*[-–—]?\s*Example\b"),
      r"{\1}"),
+    # 부교재 코너명형 (W12): "N. pN-수능 Analysis" → {분석N} (선행 순번 —
+    # 같은 원고의 [분석N] 마커 관행과 일치), "N. pN-Practice 0M" → {M}
+    # ([M] 마커 관행과 일치, 선행 0 제거). 기존 룰 무변경 삽입 — 아래
+    # ANALYSIS(대문자 전용)/서술형 Practice 룰과 매치 집합이 겹치지 않는다.
+    (re.compile(r"\b(\d+)\.\s*p\d+\s*[-–—]?\s*수능\s*Analysis\b", re.I),
+     r"{분석\1}"),
+    (re.compile(r"\b\d+\.\s*p\d+\s*[-–—]?\s*Practice\s*0*(\d{1,3})\b"),
+     r"{\1}"),
     (re.compile(r"\bANALYSIS\b"), "{분석}"),
     (re.compile(r"\b\d+\.\s*L\d+\s*[-–—.]?\s*p\.?\s*\d+"
                 r"[^\r\n]*?본문\s*(\d+)\b"), r"{본문\1}"),
@@ -1209,8 +1226,12 @@ _CTX_BUILDERS = {"step1_c1", "step2_c2"}
 
 # ── 지문번호 라벨 추출 (W11 — 독립 번호 프레임 갱신 op + 검수 게이트용) ──────
 # 헤더 "1. p1-no.3과 추가지문" → "3과 추가지문", "1. p2-no.20" → "20".
+# 페이지 번호 뒤 (?!\d): 코너명형 헤더 "1. p80-수능 Analysis"에서 p80이
+# p8+라벨"0"으로 쪼개져 엉뚱한 라벨이 나오던 백트래킹 차단 (W12 실증 —
+# 지문번호 프레임이 0/6/8로 갱신됨). 코너명형은 라벨 없음 → 다음 스텝/
+# bracket 폴백([분석N]/[N])이 담당.
 _RE_LABEL_HEADER = re.compile(
-    r"^\s*\d+\s*[.)]\s*p\.?\s*\d+\s*[-–—.]?\s*(?:no\.\s*)?"
+    r"^\s*\d+\s*[.)]\s*p\.?\s*\d+(?!\d)\s*[-–—.]?\s*(?:no\.\s*)?"
     r"(\d+(?:\s*~\s*\d+)?(?:\s*[가-힣][가-힣0-9\s]*[가-힣0-9])?)",
     re.I)
 # bracket 지문번호 "[3과 추가지문]" / "[20]" → 내용부
