@@ -25,6 +25,17 @@ _RENDER_BODY = os.path.join(os.path.dirname(os.path.dirname(_DIR)),
 
 _RE_WORD = re.compile(r"[A-Za-z][A-Za-z'\-]{3,}")
 
+# 변형문제 문제모음 파일명 (W12): "리딩파워 유형 (기본)-Unit 15- 123문제
+# [변형문제]-.hwp" 류 — Step3(변형문제) 원고로 라우팅한다. 정답/해설/답지
+# 본은 제외 (Step3 본문에 endnote로 합쳐져 있는 관행).
+_RE_VARIANT_POOL = re.compile(r"변형\s*문제")
+_RE_ANSWER_TOKEN = re.compile(r"정답|해설|답지|답안")
+
+
+def _is_variant_pool_filename(fname_nfc):
+    return (bool(_RE_VARIANT_POOL.search(fname_nfc))
+            and not _RE_ANSWER_TOKEN.search(fname_nfc))
+
 
 def _norm_typo(s):
     """타이포그래피 정규화 — InDesign이 곧은따옴표를 굽은따옴표(’“”),
@@ -125,11 +136,13 @@ class WorkbookV2Engine(BaseEngine):
                 if fname.startswith("manuscripts_"):
                     fname = fname[len("manuscripts_"):]
                 fname_nfc = _nfc(fname).strip()
-                # STEP3 식별 (v1 주석 참조: Step 3/Step_3/Step-3 + "N번" 패턴)
+                # STEP3 식별 (v1 주석 참조: Step 3/Step_3/Step-3 + "N번" 패턴
+                # + 변형문제 문제모음(W12))
                 is_step3 = (
                     bool(re.search(r"(?:스텝|step)[\s_-]*3(?!\d)",
                                    fname_nfc, re.I))
                     or bool(re.search(r"\d+(?:\s*~\s*\d+)?\s*번", fname_nfc))
+                    or _is_variant_pool_filename(fname_nfc)
                 )
                 if is_step3:
                     dest = os.path.join(step3_dir, fname_nfc)
@@ -233,6 +246,13 @@ class WorkbookV2Engine(BaseEngine):
         if plan["unsupported"]:
             log(f"[v2] ⚠️ 미지원 스텝(렌더 제외): "
                 + ", ".join(plan["unsupported"]))
+        # 빈 플랜 조기 차단 (W12 — 게이트 G7과 동일 기준): 원고가 어느
+        # 스텝에도 매핑되지 않았는데 InDesign을 돌려 '빈 완제품'이 성공으로
+        # 남는 침묵 유실 방지.
+        if not any(fl["units"] for fl in plan["flows"]):
+            raise ValueError(
+                "렌더할 유닛이 0개입니다 — 업로드 원고가 어느 스텝에도 "
+                "매핑되지 않았습니다 (파일명/폴더 규칙 확인)")
 
         # 출력 파일명: v1 규칙 + _v2 접미 (파생 엔진은 _output_name 오버라이드)
         out_name = self._output_name(job_dir, grade, year, month,

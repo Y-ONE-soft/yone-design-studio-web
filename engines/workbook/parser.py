@@ -95,8 +95,11 @@ _RE_PAGE_MARKER = (
 #       "1. L4-p.82", "1. L4-p.82  (정답 1개)",
 #       "1. L1-본문1  (정답 1개)",
 #       "1. p1-no.3과 추가지문" (교과서 추가지문형 — 지문번호 뒤 한글 라벨 꼬리)
+#       "1. p80-수능 Analysis" (부교재 코너명형 — 한글 코너명 + 영문 토큰, W12)
 # 라벨은 no., Example, Test 등 임의의 영문 토큰 허용 (특정 단어에 의존하지 않음).
 # 한글 꼬리는 선택 그룹이라 기존 형식 매칭에는 영향이 없다 (2026-07 W11).
+# W12: 꼬리에 영문 혼용 허용 ("수능 Analysis") — 꼬리 시작은 여전히 한글이라
+# 순수 영문 본문/제목 줄에는 영향 없음.
 _RE_HEADER_NUM = re.compile(
     r'^\s*'
     r'(?:\d+\s*[\.\)]\s*)?'                                  # 선행 순번 "N." 또는 "N)" (있으면)
@@ -104,12 +107,16 @@ _RE_HEADER_NUM = re.compile(
     r'\s*[-–—\.]?\s*'                                        # 구분자 (선택)
     r'(?:no\.\s*|Example\s+|Practice\s+|[A-Za-z]+\.?\s*)?'   # 라벨 (선택)
     r'(\d+(?:\s*~\s*\d+)?)?'                                 # 지문 번호 (캡처, 선택)
-    r'(?:\s*[가-힣][가-힣0-9\s]{0,30})?'                     # 한글 라벨 꼬리 "과 추가지문" 등 (선택)
+    r'(?:\s*[가-힣][가-힣0-9A-Za-z\s]{0,30})?'               # 한글 라벨 꼬리 "과 추가지문"/"수능 Analysis" 등 (선택)
     r'(?:\s*\([^\)]*\))?'                                    # 트레일링 부가정보 "(정답 1개)" 등 (선택)
     r'\s*$'
 )
 # Chapter 구분선 (EBS 등): "Chapter 03. 추론적 이해 - 09 빈칸 추론 (1)"
 _RE_CHAPTER_DIVIDER = re.compile(r'^\s*Chapter\s+\d+\.\s', re.IGNORECASE)
+# Unit 구분선 (부교재 코너명형, W12): "Unit 10 긴 어구 빈칸" / "Unit 13 문장 삽입"
+# — 원전 교재의 단원+유형명 구분선. 숫자 뒤가 한글 유형명일 때만 매치
+# (영문 본문 "Unit 15 ..."류 문장은 제외).
+_RE_UNIT_DIVIDER = re.compile(r'^\s*Unit\s+\d+\s+[가-힣][가-힣0-9\s]{0,30}$')
 
 # 옛 형식 워크북 헤더 (마더텅 옛 기출 등)
 # "9번" 단독 줄 + "17년 11월 21번" 단독 줄 → "9. p0-no.21" 표준 형식으로 정규화
@@ -391,12 +398,15 @@ def _strip_lesson_markers(paras):
 
 
 def _strip_chapter_dividers(paras):
-    """EBS 리딩파워 등의 챕터 구분선("Chapter 03. ...")을 모두 제거.
+    """EBS 리딩파워 등의 챕터/유닛 구분선을 모두 제거.
 
+    "Chapter 03. ..."(기존) + "Unit 10 긴 어구 빈칸"(부교재 코너명형, W12).
     원고 곳곳에 끼어있는 단순 구분선이며 지문 본문이 아니라서 그대로 두면
     프레임 브레이크가 잘못 들어가거나 본문에 흡수된다.
     """
-    return [p for p in paras if not _RE_CHAPTER_DIVIDER.match(p['text'])]
+    return [p for p in paras
+            if not _RE_CHAPTER_DIVIDER.match(p['text'])
+            and not _RE_UNIT_DIVIDER.match(p['text'].strip())]
 
 
 # 정답 구간 감지 패턴
