@@ -1,5 +1,5 @@
 {
-  "_doc": "워크북 STEP → 내지 스토리 매핑 (v1 run.jsx:2841~2854 기본값의 데이터화). marker 텍스트로 페이지 탐색(내지 개편에 강건), page는 폴백. rank=같은 페이지 2번째 스토리. step3는 마스터 O 기반.",
+  "_doc": "워크북 STEP → 내지 스토리 매핑 (v1 run.jsx:2841~2854 기본값의 데이터화). marker 텍스트로 페이지 탐색(내지 개편에 강건), page는 폴백. rank=같은 페이지 2번째 스토리. step3는 마스터 O 기반. pos(top/bottom, W13): [원본]워크북_C p114의 page.textFrames 순서가 [발문, 하단, 상단]이라 프레임수 동률에서 rank 선택이 상단(step2_a1)/하단(btm)을 뒤바꾸는 상하반전 — supp(W11)·ebs(W12)에 이어 본가(c05 고1 25-10 실기)와 textbook(c13/c15 실기 + v1 실물 SL2 기하 a1 top=31/btm=164)에서 확인되어 기본 맵으로 확산.",
   "step1_a1":     {"page": "4",   "marker": "어휘 선택 1"},
   "step1_a1_2":   {"page": "13",  "marker": "어휘 선택 2"},
   "step1_a2":     {"page": "22",  "marker": "본문 O/X"},
@@ -7,8 +7,8 @@
   "step1_b2":     {"page": "58",  "marker": "내용 종합"},
   "step1_c1":     {"page": "76",  "marker": "문장 배열"},
   "step1_c2":     {"page": "94",  "marker": "빈칸 어휘"},
-  "step2_a1":     {"page": "114", "marker": "어법 선택"},
-  "step2_a1_btm": {"page": "114", "marker": "어법 선택", "rank": 2},
+  "step2_a1":     {"page": "114", "marker": "어법 선택", "pos": "top"},
+  "step2_a1_btm": {"page": "114", "marker": "어법 선택", "rank": 2, "pos": "bottom"},
   "step2_b1":     {"page": "132", "marker": "어법 O/X"},
   "step2_c1":     {"page": "150", "marker": "빈칸 어법"},
   "step2_c2":     {"page": "168", "marker": "영작 배열"},

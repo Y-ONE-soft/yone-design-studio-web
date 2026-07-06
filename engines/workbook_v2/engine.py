@@ -224,10 +224,15 @@ class WorkbookV2Engine(BaseEngine):
         return None
 
     def _plan_decorations(self, job_dir, cfg):
-        """플랜 최상위에 병합할 선택 키 (실행기 opt-in op) — 기본 없음.
-        교과서 파생 엔진이 {"divider": ..., "textbook_postprocess": True}
-        를 반환한다 (v1 run.jsx 16.7/16.8)."""
-        return {}
+        """플랜 최상위에 병합할 선택 키 (실행기 opt-in op).
+
+        본가(모의고사)는 page_cleanup만 — c05(고1 25-10) 실기에서 내용
+        없는 스텝 페이지 22개 잔존 (게이트 G4 warning 실증, W13).
+        passage_numbers는 미적용: 모의고사 내지의 번호 프레임(20~45)이
+        원고 문항번호와 정합이라 갱신 이득이 없다 (G3 clean 실측).
+        파생 엔진(supp/교과서/EBS)은 이 훅을 전부 오버라이드하고
+        수능특강/세로는 자체 prepare라 미호출 — 이 변경은 본가 전용."""
+        return {"page_cleanup": {"empty_master": "M"}}
 
     # ── 2단계: prepare_jsx — 플랜 빌드 + 템플릿 복사 + JSX 생성 ─────────────
 
