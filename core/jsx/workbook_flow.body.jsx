@@ -338,9 +338,18 @@ function cleanupPages(doc, flowStories, op) {
     if (cleanStart < 0) { wlog("페이지 정리: 대상 없음"); return; }
 
     // 2) STEP1/2 영역 — 다중 프레임 스토리 프레임 전부 빈 페이지 삭제 (역순)
+    // 하트비트 필수 (W12 실증): 페이지 삭제는 건당 리플로우로 느려서 수백
+    // 페이지 문서에선 로그 무갱신이 stall_limit(900초)를 넘고, 러너가 정상
+    // 진행 중인 InDesign을 행(hang)으로 오탐해 강제 종료했다 (스타일 루프
+    // 50단락 하트비트 철칙과 동일 사유).
     var removed = 0;
+    var scanned = 0;
     for (var dp = doc.pages.length - 1; dp >= 0; dp--) {
         if (dp < cleanStart || dp >= step3Start) { continue; }
+        scanned++;
+        if (scanned % 20 === 0) {
+            wlog("페이지 정리 진행: " + scanned + "페이지 검사 / " + removed + "개 삭제");
+        }
         var pg = doc.pages[dp];
         var tfs = pg.textFrames;
         var hasLocal = false;
@@ -376,6 +385,9 @@ function cleanupPages(doc, flowStories, op) {
     var s3pages = storyPagesInOrder(step3Story);
     var reassigned = 0;
     for (var sp = 0; sp < s3pages.length; sp++) {
+        if (sp > 0 && sp % 40 === 0) {
+            wlog("페이지 정리 진행(STEP3): " + sp + "/" + s3pages.length);
+        }
         var spg = s3pages[sp];
         var hasContent = false;
         var stfs = spg.textFrames;
