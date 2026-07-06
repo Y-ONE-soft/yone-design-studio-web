@@ -59,7 +59,11 @@ def test_units_targets_and_styles():
 
 
 def test_step_map_matches_v1_settings():
-    """EBS step_map = v1 prepare_jsx의 ebs_step_story_map 리터럴 + step3."""
+    """EBS step_map = v1 prepare_jsx의 ebs_step_story_map 리터럴 + step3.
+
+    W12: step2_a1/btm에 pos(top/bottom) 기하 힌트 추가 — 4ed24266 실기에서
+    rank 선택이 상/하단을 뒤바꾸는 상하반전 확인(a1 top 164 ≥ btm 31),
+    supp W11 결함②의 확산 조건(실기 확인) 충족. v1 마커/페이지는 그대로."""
     v1 = {
         "step1_a1":     {"page": "4",  "marker": "어휘 선택"},
         "step1_a2":     {"page": "7",  "marker": "본문 O/X"},
@@ -69,8 +73,10 @@ def test_step_map_matches_v1_settings():
         "step2_a1_btm": {"page": "22", "marker": "어법 수정", "rank": 2},
         "step2_c2":     {"page": "28", "marker": "영작 배열"},
     }
+    pos = {"step2_a1": "top", "step2_a1_btm": "bottom"}
     for k, v in v1.items():
-        assert _STEP_MAP[k] == v, k
+        expected = dict(v, **({"pos": pos[k]} if k in pos else {}))
+        assert _STEP_MAP[k] == expected, k
     # step3: v1 settings 미지정 = run.jsx 기본 마스터 O
     assert _STEP_MAP["step3"] == {"master": "O"}
     assert set(_STEP_MAP) == set(v1) | {"step3"}
