@@ -335,6 +335,13 @@ function cleanupPages(doc, flowStories, op) {
             cleanStart = first;
         }
     }
+    if (cleanStart < 0 && step3Story) {
+        // STEP3만 있는 원고 (변형문제 문제모음 등, W12): STEP1/2 콘텐츠
+        // 플로우가 없으면 STEP3 이전 전 구간을 정리 대상으로 잡는다.
+        // 표지/간지 등 단일 프레임 장식 페이지는 아래 '다중 프레임 스토리
+        // 전부 빈 페이지' 판정에 걸리지 않아 보존된다.
+        cleanStart = 0;
+    }
     if (cleanStart < 0) { wlog("페이지 정리: 대상 없음"); return; }
 
     // 2) STEP1/2 영역 — 다중 프레임 스토리 프레임 전부 빈 페이지 삭제 (역순)
@@ -609,10 +616,13 @@ try {
         }
 
         // 스토리 오버플로우 시 마스터 유지 페이지 추가 (v1 ensureNoOverflow 의미론)
+        // safety 상한 60 (W12): 123문제 변형문제 문제모음이 상한 10을 넘겨
+        // 초과분이 overset(미인쇄)으로 잘렸다. 상한은 무한 루프 가드일 뿐
+        // 실제 반복 수는 오버플로우 해소 시점이 결정 — 기존 케이스 무영향.
         var conts = story.textContainers;
         var lastF = conts[conts.length - 1];
         var safety = 0;
-        while (lastF.overflows && safety < 10) {
+        while (lastF.overflows && safety < 60) {
             var lp = lastF.parentPage;
             var gb = lastF.geometricBounds;
             var np = doc.pages.add(LocationOptions.AFTER, lp);
@@ -622,6 +632,9 @@ try {
             lastF.nextTextFrame = ntf;
             lastF = ntf;
             safety++;
+            if (safety % 10 === 0) {
+                wlog(flow.step + " 오버플로우 페이지 확장 진행: +" + safety);
+            }
         }
         if (safety > 0) { wlog(flow.step + ": 오버플로우 페이지 +" + safety); }
     }

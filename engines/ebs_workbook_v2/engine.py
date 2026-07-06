@@ -115,6 +115,16 @@ class EbsWorkbookV2Engine(WorkbookV2Engine):
     def _workbook_type(self, job_dir):
         return "EBS"
 
+    def _plan_decorations(self, job_dir, cfg):
+        """완제품 후처리 op — page_cleanup opt-in (W12).
+
+        변형문제 문제모음(STEP3 단독) 실조판에서 원고 없는 STEP1/2 섹션
+        페이지 24개 + 섹션 지문번호 프레임(01~04)이 잔존(게이트 warning)
+        → 잔여 페이지 삭제 + 빈 STEP3 페이지 M 마스터(내지 실물에 M-마스터
+        존재 확인). passage_numbers는 EBS 내지의 독립 번호 프레임 실물
+        근거가 없어 미적용 (섹션 페이지 삭제로 함께 정리됨)."""
+        return {"page_cleanup": {"empty_master": "M"}}
+
     def _step_map(self):
         return dict(_STEP_MAP)
 
