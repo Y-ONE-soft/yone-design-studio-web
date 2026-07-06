@@ -79,6 +79,11 @@ def _header_of(text):
 # 인라인 마커형: 선지/위치가 본문 안 ①~⑤로 존재 — 별도 선지 단락 없음이 정상
 _RE_INLINE_TYPE = re.compile(r'-UND-|FLW-IRRELEVANT|FLW-INSERT|GRM-CORRECT')
 
+# 하위 물음 마커: "(1) ..." — 다부문 문항("물음에 답하시오" 헤더)의 내부 번호.
+# 새 문항 경계가 아니라 직전 문항의 하위 물음이다 (오버레이 조건은 build_ir 참조).
+_RE_SUBITEM = re.compile(r'^\s*\(\d+\)\s')
+_MULTIPART_HINT = "물음에 답하"
+
 
 def _flush_item(items, cur, warnings):
     if cur is None:
@@ -133,6 +138,15 @@ def build_ir(paras, meta=None, log=None):
             continue
 
         if kind == "Q":
+            # 하위 물음 오버레이 (발동 범위 최소화): "(N) ..." 번호 단락은
+            # 직전 문항이 다부문 헤더("물음에 답하시오")일 때만 그 문항의
+            # 하위 물음으로 붙인다 — 분류기가 발문으로 오인해도 경계 미분할.
+            # ((1)/(2)류 미분류 하위 물음이 UNKNOWN으로 지문에 남는 것과 동일 취급)
+            if (cur is not None and _RE_SUBITEM.match(text)
+                    and _MULTIPART_HINT in (cur.get("question") or "")):
+                cur["stimulus"]["blocks"].append(
+                    {"kind": "text", "label": "UNKNOWN", "content": text})
+                continue
             cur = _flush_item(items, cur, warnings)
             code, label, q_kind = classify(_clean_question(text))
             if code == "OBJ-LNG-HEADER":
