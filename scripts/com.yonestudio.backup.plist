@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.yonestudio.backup</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/nhj/dev/yone-design-web-summer/scripts/backup_assets.sh</string>
+    <string>all</string>
+  </array>
+  <!-- 매주 일요일 04:00 — config tar + jsx 미러 + data_corpus/jobs GDrive rsync -->
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Weekday</key><integer>0</integer>
+    <key>Hour</key><integer>4</integer>
+    <key>Minute</key><integer>0</integer>
+  </dict>
+  <key>StandardOutPath</key><string>/Users/nhj/Library/Logs/yone-backup-launchd.log</string>
+  <key>StandardErrorPath</key><string>/Users/nhj/Library/Logs/yone-backup-launchd.log</string>
+</dict></plist>
