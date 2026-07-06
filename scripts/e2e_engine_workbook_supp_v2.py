@@ -28,7 +28,10 @@ for _line in open(os.path.expanduser("~/dev/yone-design-web/.env")):
 
 def main():
     case = sys.argv[1] if len(sys.argv) > 1 else "0a5da924"
-    case_dir = os.path.join(REPO, "tests", "corpus", "workbook", case)
+    # supp 전용 코퍼스(tests/corpus/workbook_supp/) 우선, 없으면 워크북 코퍼스
+    case_dir = os.path.join(REPO, "tests", "corpus", "workbook_supp", case)
+    if not os.path.isdir(case_dir):
+        case_dir = os.path.join(REPO, "tests", "corpus", "workbook", case)
     out = os.path.abspath(os.path.join(REPO, "data_corpus",
                                        "wb_supp_e2e", case))
     job = os.path.join(out, "job")
