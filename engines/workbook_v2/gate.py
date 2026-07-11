@@ -289,6 +289,40 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                f" (템플릿 잔재): " + ", ".join(unknown[:10]))
         (critical if strict_numbers else warnings).append(msg)
 
+    # ── G4b 고아 번호 페이지 (W14 c03/c15 실증) ─────────────────────────
+    # 지문번호/문항번호 프레임은 있는데 콘텐츠 스토리가 전혀 없는 페이지 —
+    # 원고 없는 스텝의 섹션 머리/예시 페이지(c03 '20' 3p), 또는 W13 스레드
+    # 절단 이후 빈 프레임 페이지가 삭제 판정(다중 프레임 전부 빈)을
+    # 벗어나며 남은 잔재(c15 '5' 3p). page_cleanup 사용 시 critical.
+    # 콘텐츠 판정은 '플랜(원고) 단락과 겹치는 스토리'만 — 섹션 마커
+    # (" 빈칸 어휘")/발문/예시 등 내지 장식 텍스트는 콘텐츠가 아니다
+    # (c03 p6/p10/p11: 마커·예시 텍스트 때문에 '내용 있음'으로 오인 방지).
+    plan_texts = set()
+    for fl in plan.get("flows", []):
+        for u in fl.get("units", []):
+            for p in (u["paras"] if isinstance(u, dict) else u):
+                tt = _clean(p.get("t", ""))
+                if len(tt) >= 4:
+                    plan_texts.add(tt)
+    num_pages = set()
+    content_pages = set()
+    for story in dump.get("stories", []):
+        ps = story.get("paragraphs", [])
+        pgs = story.get("pg") or []
+        if len(ps) == 1 and _RE_BARE_NUM.match(_clean(ps[0].get("t", ""))):
+            num_pages.update(pgs)
+        elif any(_clean(p.get("t", "")) in plan_texts
+                 for p in ps if len(_clean(p.get("t", ""))) >= 4):
+            content_pages.update(pgs)
+    orphan_pages = sorted(num_pages - content_pages, key=lambda x: (
+        int(x) if str(x).isdigit() else 10**9, str(x)))
+    stats["orphan_number_pages"] = len(orphan_pages)
+    if orphan_pages:
+        msg = (f"[잔여페이지] 번호 프레임만 있고 콘텐츠 없는 페이지 "
+               f"{len(orphan_pages)}개: p" + ", p".join(
+                   str(p) for p in orphan_pages[:10]))
+        (critical if strict_pages else warnings).append(msg)
+
     # ── G4 잔여 페이지 (원고 없는 스텝/남는 사이클) ──────────────────────
     stale = dump.get("stale_pages")
     if stale is None:

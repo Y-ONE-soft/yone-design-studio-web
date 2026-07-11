@@ -249,3 +249,48 @@ def test_round4_jsx_clear_steps_present():
                encoding="utf-8").read()
     assert "clear_steps" in src
     assert "지문번호 잔재 프레임 삭제" in src
+
+
+# ── D3-2: 고아 번호 페이지 (섹션 머리/예시·스레드 절단 잔재) ────────────────
+
+def test_gate_g4b_orphan_number_pages():
+    """번호 프레임만 있고 플랜(원고) 콘텐츠가 없는 페이지 검출 — c03
+    ('20'+마커/예시 텍스트, 콘텐츠 없음)과 c15('5'+빈 프레임, W13 스레드
+    절단 잔재) 재현. 마커/예시 등 내지 장식 텍스트는 콘텐츠로 안 친다."""
+    from engines.workbook_v2.gate import inspect_workbook_finish
+    plan = {"page_cleanup": {"empty_master": "M"},
+            "flows": [{"step": "step3", "units": [[
+                {"t": "Real manuscript sentence for the plan.", "s": "S"},
+            ]]}]}
+    dump = {"stale_pages": [], "stories": [
+        # p6: 고아 — 번호 + 마커 장식 텍스트만 (c03 재현)
+        {"pg": ["6"], "paragraphs": [{"t": "20", "s": "N"}]},
+        {"pg": ["6"], "paragraphs": [{"t": " 빈칸 어휘", "s": "M"}]},
+        # p10: 고아 — 번호 + 템플릿 예시 텍스트 (플랜에 없음)
+        {"pg": ["10"], "paragraphs": [{"t": "20", "s": "N"}]},
+        {"pg": ["10"], "paragraphs": [
+            {"t": "All experimental equipment must be handled.", "s": "P"}]},
+        # p15: 정상 — 번호 + 플랜 콘텐츠
+        {"pg": ["15"], "paragraphs": [{"t": "20", "s": "N"}]},
+        {"pg": ["15"], "paragraphs": [
+            {"t": "Real manuscript sentence for the plan.", "s": "P"}]},
+    ]}
+    rep = inspect_workbook_finish({}, plan, dump)
+    hits = [c for c in rep["critical"] if "번호 프레임만" in c]
+    assert hits and "p6" in hits[0] and "p10" in hits[0]
+    assert "p15" not in hits[0]
+    assert rep["stats"]["orphan_number_pages"] == 2
+    # page_cleanup 미사용이면 warning 강등
+    plan2 = {"flows": plan["flows"]}
+    rep2 = inspect_workbook_finish({}, plan2, dump)
+    assert not any("번호 프레임만" in c for c in rep2["critical"])
+    assert any("번호 프레임만" in w for w in rep2["warnings"])
+
+
+def test_round4_jsx_orphan_page_criterion_present():
+    """실행기 cleanupPages에 고아 번호 페이지 삭제 판정 이식 확인."""
+    src = open(os.path.join(os.path.dirname(TESTS_DIR),
+                            "core", "jsx", "workbook_flow.body.jsx"),
+               encoding="utf-8").read()
+    assert "hasBareNum" in src and "hasFlowContent" in src
+    assert "flowIds" in src
