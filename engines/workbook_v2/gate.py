@@ -21,6 +21,10 @@
                   완료.hwpx" 통합 원고 3종 침묵 무시). 정답/답지/해설
                   파일과 '정답지 짝' 파일은 의도된 미사용이라 stats로만
                   보고, 그 외는 warning (G7 전량 유실의 부분 유실 보완).
+  G10 [특수문자]  hwp 사용자 영역(PUA) 문자가 출력에 인쇄됨 — InDesign
+                  폰트에 글리프가 없어 tofu(빈 네모)로 찍힌다 (W14 c05/c06
+                  실증: 요약 화살표 ⇩가 /\U000f0036으로 인코딩).
+                  PUA 단독 단락은 critical, 본문 내 혼입은 warning.
 
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
 구버전 덤프에는 경고로만 보고한다 (재덤프 안내). G9는 uploads_dir를 넘긴
@@ -44,6 +48,15 @@ _DIVIDER_PATTERNS = [
     re.compile(r"^Chapter\s+\d+\.\s", re.I),
     re.compile(r"^Unit\s+\d+\s+[가-힣][가-힣0-9\s]{0,30}$"),
 ]
+
+
+# G10 — hwp 사용자 영역(PUA) 문자 (BMP U+E000~F8FF + plane 15/16).
+# InDesign 본문 폰트에 글리프가 없어 tofu로 인쇄된다. ￼(U+FFFC 앵커)는
+# PUA가 아니므로 무관.
+def _is_pua(ch):
+    cp = ord(ch)
+    return (0xE000 <= cp <= 0xF8FF or 0xF0000 <= cp <= 0xFFFFD
+            or 0x100000 <= cp <= 0x10FFFD)
 
 
 def _clean(t):
@@ -226,6 +239,30 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
     if ans:
         critical.append(f"[정답잔존] {len(ans)}개 단락: "
                         + " | ".join(ans[:5]))
+
+    # ── G10 hwp 사용자 영역(PUA) 문자 잔존 (W14) ─────────────────────────
+    pua_solo = []
+    pua_inline = []
+    for t, _s in _dump_paras(dump):
+        tt = _clean(t)
+        if not tt or not any(_is_pua(ch) for ch in tt):
+            continue
+        codes = sorted({f"U+{ord(ch):04X}" for ch in tt if _is_pua(ch)})
+        if all(_is_pua(ch) or ch.isspace() for ch in tt):
+            pua_solo.append(codes[0])
+        else:
+            pua_inline.append(f"{codes[0]} ({tt[:30]})")
+    stats["pua_solo"] = len(pua_solo)
+    stats["pua_inline"] = len(pua_inline)
+    if pua_solo:
+        critical.append(
+            f"[특수문자] hwp 사용자 영역(PUA) 단독 단락 {len(pua_solo)}개 — "
+            f"폰트 글리프 없음(tofu 인쇄): "
+            + ", ".join(sorted(set(pua_solo))[:5]))
+    if pua_inline:
+        warnings.append(
+            f"[특수문자] 본문 내 PUA 문자 혼입 {len(pua_inline)}개 단락: "
+            + " | ".join(pua_inline[:3]))
 
     # ── G3 독립 지문번호 프레임 ↔ 원고 지문번호 ─────────────────────────
     labels = list((plan.get("passage_numbers") or {}).get("labels") or [])

@@ -48,3 +48,84 @@ def test_variant_pool_count_marker_rejects():
               "배재고 어휘 DAY23~25 문제.hwpx",
               "24년 3월 고2 문제.hwpx"):
         assert not _is_variant_pool_filename(f), f
+
+
+# ── D2: PUA 화살표 — 플랜 삭제+배경 + 게이트 G10 ───────────────────────────
+
+def _mk_step3(paragraphs):
+    return {"normal": [{"question_num": "20", "paragraphs": paragraphs}],
+            "short": []}
+
+
+def test_step3_pua_arrow_deleted_and_next_bg():
+    from engines.workbook_v2.plan import build_step3, _style
+    bg = _style("STEP3", "P-CONTEXT")
+    for arrow in ("", "\U000f0036", "\U000f003b", "↓"):
+        st3 = _mk_step3([
+            {"text": "다음 글을 아래와 같이 요약할 때 알맞은 것은?",
+             "kind": "Q"},
+            {"text": "One of the most important aspects is trust.",
+             "kind": "P"},
+            {"text": arrow, "kind": "UNKNOWN"},
+            {"text": "To maintain a relationship, keep (A)___.",
+             "kind": "P"},
+        ])
+        units = build_step3(st3)["units"]
+        paras = [p for u in units
+                 for p in (u["paras"] if isinstance(u, dict) else u)]
+        texts = [p["t"] for p in paras]
+        assert arrow not in texts, f"화살표 단락 잔존: {arrow!r}"
+        summary = [p for p in paras if p["t"].startswith("To maintain")]
+        assert summary and summary[0]["s"] == bg, \
+            f"요약문 배경 미부여 ({arrow!r})"
+
+
+def test_step3_normal_symbols_not_treated_as_arrow():
+    """일반 문자/기호 단독 단락은 화살표 규칙 미발동 (과일반화 방지)."""
+    from engines.workbook_v2.plan import _s3_arrow_para
+    for t in ("→", "①", "*benign: 무해한", "A", "", "  ", "￼"):
+        assert not _s3_arrow_para(t), repr(t)
+    for t in ("", "\U000f0036", "↓", "⇩⇩"):
+        assert _s3_arrow_para(t), repr(t)
+
+
+def test_gate_g10_pua_detection():
+    from engines.workbook_v2.gate import inspect_workbook_finish
+    plan = {"flows": [{"step": "step3",
+                       "units": [[{"t": "body", "s": "S"}]]}]}
+    mk = lambda paras: {"stories": [{"paragraphs": paras}],
+                        "stale_pages": []}
+    # 단독 PUA 단락 → critical
+    rep = inspect_workbook_finish(
+        {}, plan, mk([{"t": "\r", "s": "S"},
+                      {"t": "정상 본문 paragraph", "s": "S"}]))
+    assert any("[특수문자]" in c for c in rep["critical"])
+    assert rep["stats"]["pua_solo"] == 1
+    # 본문 혼입 → warning (critical 아님)
+    rep = inspect_workbook_finish(
+        {}, plan, mk([{"t": "본문 \U000f0036 혼입", "s": "S"}]))
+    assert not any("[특수문자]" in c for c in rep["critical"])
+    assert any("[특수문자]" in w for w in rep["warnings"])
+    # 깨끗한 출력 + 앵커(U+FFFC)는 미발동
+    rep = inspect_workbook_finish(
+        {}, plan, mk([{"t": "정상 본문￼", "s": "S"}]))
+    assert not any("[특수문자]" in c
+                   for c in rep["critical"] + rep["warnings"])
+
+
+def test_round4_c05_golden_plan_has_no_pua():
+    """W13 편입 c05 골든 재플랜 — PUA 화살표 18건 삭제 + 요약문 배경."""
+    golden = os.path.join(CORPUS, "workbook_v2", "r3c05mock", "golden",
+                          "content.json")
+    c = json.load(open(golden, encoding="utf-8"))
+    from engines.workbook_v2.plan import (steps_to_plan, ensure_step3_kinds,
+                                          _is_pua)
+    ensure_step3_kinds(c["steps"]["step3"])
+    plan = steps_to_plan(c["steps"], workbook_type="모의고사")
+    fl = [f for f in plan["flows"] if f["step"] == "step3"][0]
+    paras = [p for u in fl["units"]
+             for p in (u["paras"] if isinstance(u, dict) else u)]
+    assert not any(any(_is_pua(ch) for ch in p.get("t", ""))
+                   for p in paras), "PUA 화살표 잔존"
+    assert len(fl["units"]) == 25          # 유닛 수 무변 (W13 가드와 일치)
+    assert sum(1 for p in paras if "배경" in (p.get("s") or "")) >= 18
