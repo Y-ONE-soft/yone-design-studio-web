@@ -338,7 +338,9 @@ def test_round3_c05_golden_g9_and_step3():
 
 
 def test_textbook_plan_decorations_no_labels(tmp_path):
-    """라벨을 못 뽑으면 passage_numbers 미포함 (G3는 warning 유지)."""
+    """라벨을 못 뽑아도 passage_numbers는 clear-only 모드로 포함 (W14 D3:
+    교과서 step3 페이지의 모의고사 문항번호 잔재 프레임 삭제 — 갱신은
+    labels가 비면 실행기가 생략)."""
     from engines.textbook_workbook_v2.engine import TextbookWorkbookV2Engine
     job = tmp_path / "job"
     job.mkdir()
@@ -346,4 +348,5 @@ def test_textbook_plan_decorations_no_labels(tmp_path):
         (job / f"{k}.txt").write_text("x", encoding="utf-8")
     deco = TextbookWorkbookV2Engine()._plan_decorations(str(job), {})
     assert deco["page_cleanup"] == {"empty_master": "M"}
-    assert "passage_numbers" not in deco
+    assert deco["passage_numbers"]["labels"] == []
+    assert deco["passage_numbers"]["clear_steps"] == ["step3"]

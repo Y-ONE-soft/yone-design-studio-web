@@ -129,3 +129,123 @@ def test_round4_c05_golden_plan_has_no_pua():
                    for p in paras), "PUA 화살표 잔존"
     assert len(fl["units"]) == 25          # 유닛 수 무변 (W13 가드와 일치)
     assert sum(1 for p in paras if "배경" in (p.get("s") or "")) >= 18
+
+
+# ── 코퍼스 가드: 후보③ (교과서 서술형 Step3 단독) ──────────────────────────
+
+def test_round4_c03_parse_snapshot(tmp_path):
+    """r4c03essay 커스텀 리플레이 — manuscript_folder 메타 경로 (r3 교과서
+    2종과 동일 방식). Step3/ 하위 폴더의 서술형 hwpx가 textbook 경로로
+    소비된다."""
+    import _replay
+    from engines.textbook_workbook_v2.engine import TextbookWorkbookV2Engine
+    case_dir = os.path.join(CORPUS, "textbook_workbook", "r4c03essay")
+    job = str(tmp_path / "job")
+    os.makedirs(job)
+    for n in os.listdir(os.path.join(case_dir, "meta")):
+        with open(os.path.join(case_dir, "meta", n)) as f:
+            val = f.read()
+        with open(os.path.join(job, n), "w") as f:
+            f.write(val)
+    with open(os.path.join(job, "manuscript_folder.txt"), "w") as f:
+        f.write(os.path.join(case_dir, "inputs_folder"))
+    logs = []
+    json_path = TextbookWorkbookV2Engine().parse({"manuscripts": []}, job,
+                                                 logs.append)
+    produced = _replay.canonicalize(
+        json.load(open(json_path, encoding="utf-8")), [job])
+    golden = _replay.canonicalize(
+        json.load(open(os.path.join(case_dir, "golden", "content.json"),
+                       encoding="utf-8")), [])
+    diff = _replay.first_diff(produced, golden)
+    assert diff is None, diff
+
+
+def test_round4_c03_plan_essay_stems_and_blanks():
+    """후보③ 골든 재플랜 — 조건 지시문 발문(…시오. [3과])이 번호 스타일,
+    <조건>/<보기> 스타일, 학생 답란('정답: ___')은 삭제되지 않고 보존."""
+    golden = os.path.join(CORPUS, "textbook_workbook", "r4c03essay",
+                          "golden", "content.json")
+    c = json.load(open(golden, encoding="utf-8"))
+    st3 = c["steps"]["step3"]
+    items = (st3.get("normal") or []) + (st3.get("short") or [])
+    assert len(items) == 1 and items[0]["question_num"] == "textbook"
+    n_src = len(items[0]["paragraphs"])
+    from engines.workbook_v2.plan import steps_to_plan, ensure_step3_kinds
+    ensure_step3_kinds(st3)
+    plan = steps_to_plan(c["steps"], workbook_type="교과서")
+    assert plan.get("warnings") == []
+    fl = [f for f in plan["flows"] if f["step"] == "step3"][0]
+    paras = [p for u in fl["units"]
+             for p in (u["paras"] if isinstance(u, dict) else u)]
+    assert len(paras) == n_src == 161      # 서술형 원고 전 단락 보존
+    def sty(prefix):
+        return [p for p in paras if (p.get("t") or "").startswith(prefix)]
+    assert "번호" in sty("다음 글의 빈칸 부분을 <보기>의")[0]["s"]
+    assert "조건" in sty("<조건>")[0]["s"]
+    assert "보기" in sty("<보기>")[0]["s"]
+    blanks = [p for p in paras if (p.get("t") or "").startswith("정답: _")]
+    assert len(blanks) >= 5                # 학생 답란 보존 (삭제 금지)
+
+
+# ── 코퍼스 가드: 후보⑥ (리딩파워 기출 문제모음 177문제) ────────────────────
+
+def test_round4_c06_golden_pool_step3():
+    """후보⑥ 골든 — 문항수 표기 라우팅으로 step3 단일 풀 소비, 발문/선지
+    구조 대량 인식, 플랜에서 PUA 화살표 삭제."""
+    golden = os.path.join(CORPUS, "ebs_workbook_v2", "r4c06rpcr",
+                          "golden", "content.json")
+    c = json.load(open(golden, encoding="utf-8"))
+    st3 = c["steps"]["step3"]
+    assert st3["normal_count"] == 1
+    paras = st3["normal"][0]["paragraphs"]
+    assert len(paras) > 1000
+    kinds = {p.get("kind") for p in paras}
+    assert {"Q", "P", "C", "Cond", "Box"} <= kinds
+    from engines.workbook_v2.plan import (steps_to_plan, ensure_step3_kinds,
+                                          _is_pua)
+    from engines.ebs_workbook_v2.engine import _STEP_MAP
+    ensure_step3_kinds(st3)
+    plan = steps_to_plan(c["steps"], workbook_type="EBS",
+                         step_map=dict(_STEP_MAP))
+    fl = [f for f in plan["flows"] if f["step"] == "step3"][0]
+    pl = [p for u in fl["units"]
+          for p in (u["paras"] if isinstance(u, dict) else u)]
+    # PUA '단독' 화살표 2건은 삭제, 발문은 번호 스타일 157+
+    solo = [p for p in pl
+            if p.get("t") and all(_is_pua(ch) for ch in p["t"].strip())]
+    assert solo == []
+    assert sum(1 for p in pl if "번호" in (p.get("s") or "")) >= 157
+
+
+# ── D3: 교과서 step3 문항번호 잔재 프레임 삭제 (clear_steps) ────────────────
+
+def test_round4_textbook_deco_clear_steps_with_labels(tmp_path):
+    """라벨이 있는 교과서(c13/c15류)도 clear_steps 포함 — 갱신+잔재 삭제
+    동시 (기존 갱신 동작 무변, 실행기가 step3 페이지 잔재만 추가 정리)."""
+    import json as _json
+    from engines.textbook_workbook_v2.engine import (
+        TextbookWorkbookV2Engine, _NUMBER_FRAME_STEPS)
+    job = tmp_path / "job"
+    job.mkdir()
+    for k in ("subject", "publisher", "lesson"):
+        (job / f"{k}.txt").write_text("x", encoding="utf-8")
+    content = {"steps": {"step1_c2": {"paragraphs": [
+        {"text": "1. p10-본문1"}, {"text": ""},
+        {"text": "An example passage sentence for label extraction here."},
+    ]}}}
+    (job / "content.json").write_text(
+        _json.dumps(content, ensure_ascii=False), encoding="utf-8")
+    deco = TextbookWorkbookV2Engine()._plan_decorations(str(job), {})
+    pn = deco["passage_numbers"]
+    assert pn["clear_steps"] == ["step3"]
+    assert pn["steps"] == list(_NUMBER_FRAME_STEPS)
+
+
+def test_round4_jsx_clear_steps_present():
+    """실행기 JSX에 clear_steps 처리 이식 확인 (op 키 계약 가드)."""
+    src = open(os.path.join(os.path.dirname(TESTS_DIR),
+                            "core", "jsx", "workbook_flow.body.jsx"),
+               encoding="utf-8").read()
+    assert "clear_steps" in src
+    assert "지문번호 잔재 프레임 삭제" in src

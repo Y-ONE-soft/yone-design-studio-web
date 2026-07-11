@@ -279,6 +279,31 @@ function storyPagesInOrder(story) {
 function updatePassageNumbers(doc, flowStories, op) {
     var labels = op.labels || [];
     var steps = op.steps || [];
+    var clearSteps = op.clear_steps || [];
+    if ((labels.length === 0 || steps.length === 0)
+            && clearSteps.length === 0) { return; }
+    // W14 D3: clear_steps — 라벨 개념이 없는 스텝(교과서 step3 서술형 등)의
+    // 콘텐츠 페이지에 남은 순수 숫자 단일 프레임(모의고사 문항번호 잔재)을
+    // 삭제한다 (c03 실증: step3 단독 원고 페이지에 '20' 프레임 3개 잔존).
+    var cleared = 0;
+    for (var ci = 0; ci < clearSteps.length; ci++) {
+        var recC = flowStories[clearSteps[ci]];
+        if (!recC) { continue; }
+        var pagesC = storyPagesInOrder(recC.story);
+        for (var pc = 0; pc < pagesC.length; pc++) {
+            var tfsC = pagesC[pc].textFrames;
+            for (var fc = tfsC.length - 1; fc >= 0; fc--) {   // 삭제는 역순
+                try {
+                    var fstC = tfsC[fc].parentStory;
+                    if (fstC.textContainers.length !== 1) { continue; }
+                    if (!RE_BARE_NUM.test(String(fstC.contents || ""))) { continue; }
+                    tfsC[fc].remove();
+                    cleared++;
+                } catch (e) {}
+            }
+        }
+    }
+    if (cleared > 0) { wlog("지문번호 잔재 프레임 삭제: " + cleared + "개"); }
     if (labels.length === 0 || steps.length === 0) { return; }
     var total = 0;
     for (var si = 0; si < steps.length; si++) {
