@@ -279,6 +279,31 @@ function storyPagesInOrder(story) {
 function updatePassageNumbers(doc, flowStories, op) {
     var labels = op.labels || [];
     var steps = op.steps || [];
+    var clearSteps = op.clear_steps || [];
+    if ((labels.length === 0 || steps.length === 0)
+            && clearSteps.length === 0) { return; }
+    // W14 D3: clear_steps — 라벨 개념이 없는 스텝(교과서 step3 서술형 등)의
+    // 콘텐츠 페이지에 남은 순수 숫자 단일 프레임(모의고사 문항번호 잔재)을
+    // 삭제한다 (c03 실증: step3 단독 원고 페이지에 '20' 프레임 3개 잔존).
+    var cleared = 0;
+    for (var ci = 0; ci < clearSteps.length; ci++) {
+        var recC = flowStories[clearSteps[ci]];
+        if (!recC) { continue; }
+        var pagesC = storyPagesInOrder(recC.story);
+        for (var pc = 0; pc < pagesC.length; pc++) {
+            var tfsC = pagesC[pc].textFrames;
+            for (var fc = tfsC.length - 1; fc >= 0; fc--) {   // 삭제는 역순
+                try {
+                    var fstC = tfsC[fc].parentStory;
+                    if (fstC.textContainers.length !== 1) { continue; }
+                    if (!RE_BARE_NUM.test(String(fstC.contents || ""))) { continue; }
+                    tfsC[fc].remove();
+                    cleared++;
+                } catch (e) {}
+            }
+        }
+    }
+    if (cleared > 0) { wlog("지문번호 잔재 프레임 삭제: " + cleared + "개"); }
     if (labels.length === 0 || steps.length === 0) { return; }
     var total = 0;
     for (var si = 0; si < steps.length; si++) {
@@ -427,6 +452,15 @@ function cleanupPages(doc, flowStories, op) {
     // 페이지 문서에선 로그 무갱신이 stall_limit(900초)를 넘고, 러너가 정상
     // 진행 중인 InDesign을 행(hang)으로 오탐해 강제 종료했다 (스타일 루프
     // 50단락 하트비트 철칙과 동일 사유).
+    // W14 D3: 고아 번호 페이지 판정용 — 배치된 플로우 스토리 id 집합.
+    // 번호(지문/문항) 프레임은 있는데 이 페이지에 플로우 콘텐츠가 전혀
+    // 없으면 원고 없는 스텝의 섹션 머리/예시 페이지(c03 '20' 3p) 또는
+    // 스레드 절단(W13) 이후 단일 프레임이 된 빈 꼬리 페이지(c15 '5' 3p)다.
+    // 간지/표지는 번호 프레임이 없어 이 판정에 걸리지 않는다.
+    var flowIds = {};
+    for (var fk in flowStories) {
+        try { flowIds[String(flowStories[fk].story.id)] = true; } catch (e) {}
+    }
     var removed = 0;
     var scanned = 0;
     for (var dp = doc.pages.length - 1; dp >= 0; dp--) {
@@ -439,14 +473,30 @@ function cleanupPages(doc, flowStories, op) {
         var tfs = pg.textFrames;
         var hasLocal = false;
         var allBlank = true;
+        var hasBareNum = false;
+        var hasFlowContent = false;
         for (var tf = 0; tf < tfs.length; tf++) {
-            var multi = false;
-            try { multi = tfs[tf].parentStory.textContainers.length > 1; } catch (e) {}
-            if (!multi) { continue; }
-            hasLocal = true;
-            if (!isBlankFrameContent(tfs[tf])) { allBlank = false; break; }
+            var pst = null;
+            var nConts = 0;
+            try {
+                pst = tfs[tf].parentStory;
+                nConts = pst.textContainers.length;
+            } catch (e) { continue; }
+            if (nConts > 1) {
+                hasLocal = true;
+                if (!isBlankFrameContent(tfs[tf])) { allBlank = false; }
+            } else if (RE_BARE_NUM.test(String(pst.contents || ""))) {
+                hasBareNum = true;
+            }
+            try {
+                if (flowIds[String(pst.id)]
+                        && !isBlankFrameContent(tfs[tf])) {
+                    hasFlowContent = true;
+                }
+            } catch (e2) {}
         }
-        if (hasLocal && allBlank) {
+        if ((hasLocal && allBlank && !hasFlowContent)
+                || (hasBareNum && !hasFlowContent)) {
             try { pg.remove(); removed++; } catch (e) {}
         }
     }

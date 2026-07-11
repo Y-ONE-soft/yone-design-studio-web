@@ -143,7 +143,12 @@ class TextbookWorkbookV2Engine(WorkbookV2Engine):
             labels = passage_labels(content.get("steps", {}))
         except (OSError, ValueError):
             labels = []
-        if labels:
-            deco["passage_numbers"] = {"labels": labels,
-                                       "steps": list(_NUMBER_FRAME_STEPS)}
+        # W14 D3: 교과서 step3(textbook 항목)는 지문번호 라벨 개념이 없다 —
+        # step3 콘텐츠 페이지에 남는 모의고사 문항번호 잔재 프레임('20' 등)을
+        # 삭제한다 (c03 서술형 step3 단독 실증). 라벨이 있으면 기존 갱신도
+        # 그대로 수행 (실행기는 labels/steps가 비면 갱신을 생략하고
+        # clear_steps만 처리).
+        deco["passage_numbers"] = {"labels": labels,
+                                   "steps": list(_NUMBER_FRAME_STEPS),
+                                   "clear_steps": ["step3"]}
         return deco

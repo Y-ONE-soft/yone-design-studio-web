@@ -21,6 +21,10 @@
                   완료.hwpx" 통합 원고 3종 침묵 무시). 정답/답지/해설
                   파일과 '정답지 짝' 파일은 의도된 미사용이라 stats로만
                   보고, 그 외는 warning (G7 전량 유실의 부분 유실 보완).
+  G10 [특수문자]  hwp 사용자 영역(PUA) 문자가 출력에 인쇄됨 — InDesign
+                  폰트에 글리프가 없어 tofu(빈 네모)로 찍힌다 (W14 c05/c06
+                  실증: 요약 화살표 ⇩가 /\U000f0036으로 인코딩).
+                  PUA 단독 단락은 critical, 본문 내 혼입은 warning.
 
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
 구버전 덤프에는 경고로만 보고한다 (재덤프 안내). G9는 uploads_dir를 넘긴
@@ -44,6 +48,15 @@ _DIVIDER_PATTERNS = [
     re.compile(r"^Chapter\s+\d+\.\s", re.I),
     re.compile(r"^Unit\s+\d+\s+[가-힣][가-힣0-9\s]{0,30}$"),
 ]
+
+
+# G10 — hwp 사용자 영역(PUA) 문자 (BMP U+E000~F8FF + plane 15/16).
+# InDesign 본문 폰트에 글리프가 없어 tofu로 인쇄된다. ￼(U+FFFC 앵커)는
+# PUA가 아니므로 무관.
+def _is_pua(ch):
+    cp = ord(ch)
+    return (0xE000 <= cp <= 0xF8FF or 0xF0000 <= cp <= 0xFFFFD
+            or 0x100000 <= cp <= 0x10FFFD)
 
 
 def _clean(t):
@@ -227,6 +240,30 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         critical.append(f"[정답잔존] {len(ans)}개 단락: "
                         + " | ".join(ans[:5]))
 
+    # ── G10 hwp 사용자 영역(PUA) 문자 잔존 (W14) ─────────────────────────
+    pua_solo = []
+    pua_inline = []
+    for t, _s in _dump_paras(dump):
+        tt = _clean(t)
+        if not tt or not any(_is_pua(ch) for ch in tt):
+            continue
+        codes = sorted({f"U+{ord(ch):04X}" for ch in tt if _is_pua(ch)})
+        if all(_is_pua(ch) or ch.isspace() for ch in tt):
+            pua_solo.append(codes[0])
+        else:
+            pua_inline.append(f"{codes[0]} ({tt[:30]})")
+    stats["pua_solo"] = len(pua_solo)
+    stats["pua_inline"] = len(pua_inline)
+    if pua_solo:
+        critical.append(
+            f"[특수문자] hwp 사용자 영역(PUA) 단독 단락 {len(pua_solo)}개 — "
+            f"폰트 글리프 없음(tofu 인쇄): "
+            + ", ".join(sorted(set(pua_solo))[:5]))
+    if pua_inline:
+        warnings.append(
+            f"[특수문자] 본문 내 PUA 문자 혼입 {len(pua_inline)}개 단락: "
+            + " | ".join(pua_inline[:3]))
+
     # ── G3 독립 지문번호 프레임 ↔ 원고 지문번호 ─────────────────────────
     labels = list((plan.get("passage_numbers") or {}).get("labels") or [])
     if not labels:
@@ -251,6 +288,40 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         msg = (f"[지문번호] 원고에 없는 번호 프레임 {len(unknown)}종 잔존"
                f" (템플릿 잔재): " + ", ".join(unknown[:10]))
         (critical if strict_numbers else warnings).append(msg)
+
+    # ── G4b 고아 번호 페이지 (W14 c03/c15 실증) ─────────────────────────
+    # 지문번호/문항번호 프레임은 있는데 콘텐츠 스토리가 전혀 없는 페이지 —
+    # 원고 없는 스텝의 섹션 머리/예시 페이지(c03 '20' 3p), 또는 W13 스레드
+    # 절단 이후 빈 프레임 페이지가 삭제 판정(다중 프레임 전부 빈)을
+    # 벗어나며 남은 잔재(c15 '5' 3p). page_cleanup 사용 시 critical.
+    # 콘텐츠 판정은 '플랜(원고) 단락과 겹치는 스토리'만 — 섹션 마커
+    # (" 빈칸 어휘")/발문/예시 등 내지 장식 텍스트는 콘텐츠가 아니다
+    # (c03 p6/p10/p11: 마커·예시 텍스트 때문에 '내용 있음'으로 오인 방지).
+    plan_texts = set()
+    for fl in plan.get("flows", []):
+        for u in fl.get("units", []):
+            for p in (u["paras"] if isinstance(u, dict) else u):
+                tt = _clean(p.get("t", ""))
+                if len(tt) >= 4:
+                    plan_texts.add(tt)
+    num_pages = set()
+    content_pages = set()
+    for story in dump.get("stories", []):
+        ps = story.get("paragraphs", [])
+        pgs = story.get("pg") or []
+        if len(ps) == 1 and _RE_BARE_NUM.match(_clean(ps[0].get("t", ""))):
+            num_pages.update(pgs)
+        elif any(_clean(p.get("t", "")) in plan_texts
+                 for p in ps if len(_clean(p.get("t", ""))) >= 4):
+            content_pages.update(pgs)
+    orphan_pages = sorted(num_pages - content_pages, key=lambda x: (
+        int(x) if str(x).isdigit() else 10**9, str(x)))
+    stats["orphan_number_pages"] = len(orphan_pages)
+    if orphan_pages:
+        msg = (f"[잔여페이지] 번호 프레임만 있고 콘텐츠 없는 페이지 "
+               f"{len(orphan_pages)}개: p" + ", p".join(
+                   str(p) for p in orphan_pages[:10]))
+        (critical if strict_pages else warnings).append(msg)
 
     # ── G4 잔여 페이지 (원고 없는 스텝/남는 사이클) ──────────────────────
     stale = dump.get("stale_pages")

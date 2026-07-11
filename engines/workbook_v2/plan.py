@@ -84,6 +84,29 @@ _RE_S3_ARROW = re.compile(
     "^[⬇⇩↓↘⇓⬆↑⇧⇑️]+$")
 
 
+def _is_pua(ch):
+    """hwp 사용자 영역(PUA) 문자 — BMP U+E000~F8FF + plane 15/16."""
+    cp = ord(ch)
+    return (0xE000 <= cp <= 0xF8FF or 0xF0000 <= cp <= 0xFFFFD
+            or 0x100000 <= cp <= 0x10FFFD)
+
+
+def _s3_arrow_para(text):
+    """화살표 단독 단락 판정 — 리터럴 화살표 + PUA 인코딩 변형 (W14).
+
+    hwp 심볼표의 요약 화살표(⇩)가 원고에 따라 리터럴이 아닌 사용자
+    영역 문자(, \U000f0036 등)로 저장된다 (c05 모의고사 18건 /
+    c06 리딩파워 기출 2건 실증). PUA 단독 단락은 InDesign에서 글리프
+    없는 tofu로 인쇄되므로 화살표와 동일하게 삭제+다음 단락 배경 처리
+    (게이트 G10이 출력 검사로 이중 방어)."""
+    t = text.strip()
+    if not t:
+        return False
+    if _RE_S3_ARROW.match(t):
+        return True
+    return all(_is_pua(ch) for ch in t)
+
+
 def _s3_effective_kind(kind, text):
     if kind not in _S3_WEAK_KINDS:
         return kind
@@ -110,7 +133,7 @@ def build_step3(step_data):
                 kind = p.get("kind") or "UNKNOWN"
                 if kind in ("GH", "A", "BLANK"):
                     continue          # 제거 대상 (style_map에서 null)
-                if _RE_S3_ARROW.match(text.strip()) and text.strip():
+                if _s3_arrow_para(text):
                     arrow_pending = True     # v1 pass 11: 화살표 단락 삭제
                     continue
                 style = _style("STEP3", _s3_effective_kind(kind, text))
