@@ -25,6 +25,12 @@
                   폰트에 글리프가 없어 tofu(빈 네모)로 찍힌다 (W14 c05/c06
                   실증: 요약 화살표 ⇩가 /\U000f0036으로 인코딩).
                   PUA 단독 단락은 critical, 본문 내 혼입은 warning.
+  G11 [마커오염/마커스타일] 변형문제 출처 마커("[NHN_..._변형]")에 원문자
+                  접두가 붙어 인쇄(파서 선지 오염) 또는 같은 마커가 복수
+                  스타일로 인쇄(kind 오분류 — 발문/선지 스타일로 찍힘).
+                  둘 다 critical (W15 c04 실증: 183개 중 9개 비일관 + 오염 1).
+  G12 [문장삽입배경] 출처 마커가 있는 스토리에서 문장삽입 발문 뒤 배경
+                  (주어진 문장 박스) 미부여 — warning (W15 c04 실증 12건).
 
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
 구버전 덤프에는 경고로만 보고한다 (재덤프 안내). G9는 uploads_dir를 넘긴
@@ -41,6 +47,13 @@ from engines.workbook_v2.plan import (is_header_line, is_a1_header,
 _RE_BARE_NUM = re.compile(r"^\d{1,3}(?:\s*~\s*\d{1,3})?$")
 _RE_DIGIT = re.compile(r"\d")
 _RE_ENG_WORD = re.compile(r"[A-Za-z]+")
+
+# G11 — 변형문제 출처 마커 (출력 검사용 독립 정의 — 파서/플랜과 순환 방지)
+_RE_SRC_MARKER = re.compile(r"^\[[^\[\]]{2,}변형\]$")
+_RE_SRC_POLLUTED = re.compile(r"^[①-⑤]\[[^\[\]]{2,}변형\]$")
+# G12 — 문장삽입 발문 (주어진 문장 배경 박스 기대)
+_RE_INSERT_PROMPT = re.compile(r"주어진 문장이 들어가|들어갈 위치|"
+                               r"들어가기에 가장 적절한 곳")
 
 # G8 — 원전 교재 구분선 (파서 _RE_CHAPTER_DIVIDER/_RE_UNIT_DIVIDER 준용.
 # 출력 검사용 독립 정의 — 파서가 틀리면 게이트도 같이 틀리는 순환 방지)
@@ -263,6 +276,60 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         warnings.append(
             f"[특수문자] 본문 내 PUA 문자 혼입 {len(pua_inline)}개 단락: "
             + " | ".join(pua_inline[:3]))
+
+    # ── G11 변형문제 출처 마커 인쇄 상태 (W15 c04) ───────────────────────
+    # "[202506H2_18목적추론_변형]" 단독 단락은 관행상 지문 스타일로 일관
+    # 인쇄된다 (v1 실물 고2 25-6 워크북 대조). ① 마커에 원문자 접두가 붙어
+    # 인쇄 = 파서 선지 오염(원고에 없는 선지 번호), ② 같은 마커 셰이프가
+    # 복수 스타일로 인쇄 = kind 오분류(발문/선지 스타일로 크게 찍힘) —
+    # 둘 다 critical.
+    src_styles = {}
+    src_polluted = []
+    for t, s in _dump_paras(dump):
+        tt = _clean(t)
+        if _RE_SRC_POLLUTED.match(tt):
+            src_polluted.append(tt[:40])
+            continue
+        if _RE_SRC_MARKER.match(tt):
+            src_styles.setdefault(s, []).append(tt)
+    stats["src_markers"] = sum(len(v) for v in src_styles.values())
+    stats["src_marker_styles"] = len(src_styles)
+    stats["src_polluted"] = len(src_polluted)
+    if src_polluted:
+        critical.append(
+            f"[마커오염] 출처 마커에 원고에 없는 원문자 접두 "
+            f"{len(src_polluted)}개: " + " | ".join(src_polluted[:3]))
+    if len(src_styles) > 1:
+        major = max(src_styles, key=lambda k: len(src_styles[k]))
+        minority = {k: v for k, v in src_styles.items() if k != major}
+        critical.append(
+            "[마커스타일] 출처 마커가 복수 스타일로 인쇄됨 (기준 "
+            f"「{major}」 {len(src_styles[major])}개 외): "
+            + " | ".join(f"「{k}」 {len(v)}개 (예: {v[0][:30]})"
+                         for k, v in sorted(minority.items())[:3]))
+
+    # ── G12 문장삽입 '주어진 문장' 배경 (W15 c04 — warning) ──────────────
+    # 변형 문제모음(출처 마커가 있는 스토리)에서 문장삽입 발문 뒤 3단락 내에
+    # 배경 스타일 단락이 없으면 지목 — 주어진 문장 박스 누락 (v2는 분류
+    # 계층 P-CONTEXT로 부여, v1 실물은 마커에 배경을 줬음 — 어느 쪽이든
+    # '배경 없음'은 결함).
+    insert_missing = []
+    for story in dump.get("stories", []):
+        ps = story.get("paragraphs", [])
+        if not any(_RE_SRC_MARKER.match(_clean(p.get("t", ""))) for p in ps):
+            continue
+        for i, p in enumerate(ps):
+            if not _RE_INSERT_PROMPT.search(_clean(p.get("t", ""))):
+                continue
+            window = [q for q in ps[i + 1:i + 5]
+                      if _clean(q.get("t", ""))][:3]
+            if not any("배경" in (q.get("s") or "") for q in window):
+                insert_missing.append(_clean(p.get("t", ""))[:40])
+    stats["insert_bg_missing"] = len(insert_missing)
+    if insert_missing:
+        warnings.append(
+            f"[문장삽입배경] 문장삽입 발문 뒤 배경(주어진 문장 박스) 미부여 "
+            f"{len(insert_missing)}건: " + " | ".join(insert_missing[:3]))
 
     # ── G3 독립 지문번호 프레임 ↔ 원고 지문번호 ─────────────────────────
     labels = list((plan.get("passage_numbers") or {}).get("labels") or [])

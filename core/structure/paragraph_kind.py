@@ -95,6 +95,11 @@ def _base_kind(text):
     """컨텍스트 없이 단락 하나의 1차 종류. (idx 무관 부분)"""
     if not text:
         return "BLANK", None
+    # 변형문제 출처 마커 — taxonomy보다 먼저 (마커 안의 유형명 "심경추론"
+    # 등이 발문으로 오매칭되는 것을 차단, W15 c04). 스타일은 style_map
+    # STEP3.SRC(지문 — v1 실물 관행)로 인쇄.
+    if R.SRC_MARKER.match(text):
+        return "SRC", None
     if _is_group_header(text):
         return "GH", None
     if _is_answer(text):
@@ -143,8 +148,11 @@ def classify_paragraphs(paras):
 
         # P-CONTEXT 판정 1: 직전 발문이 문장삽입/순서배열 계열이고
         #   이 단락이 그 발문 뒤 첫 비빈 본문이면 배경/씨앗 단락.
+        #   출처 마커(SRC)는 발문과 본문 사이에 끼는 구조 요소라 건너뛴다
+        #   (W15 c04: 발문→[마커]→주어진 문장 순서에서 배경 미부여 실증).
         prev_meaning = next(
-            (out[j] for j in range(i - 1, -1, -1) if out[j]["kind"] != "BLANK"),
+            (out[j] for j in range(i - 1, -1, -1)
+             if out[j]["kind"] not in ("BLANK", "SRC")),
             None,
         )
         if (prev_meaning and prev_meaning["kind"] in ("Q", "Q-INTRO")
