@@ -60,6 +60,14 @@
                   (N[영단어] 괄호 표기)가 다량 인쇄됨 — 구6스텝
                   'Step3 어법수정' 파일명이 실전문제로 오라우팅된 상태
                   (W17 c11 실증: 6지문 45개 표기). critical.
+  G20 [선두잔재]  스토리 선두 콘텐츠 단락이 날짜-only 라인("17. 11. 23") —
+                  원고 표제 블록의 작업 날짜 메모가 표제 제거를 비껴가
+                  본문 첫 단락으로 인쇄됨 (W18 c18 실증: 문항 번호 보호
+                  규칙(숫자+점 시작)이 날짜를 문항 번호로 오인 보호). critical.
+  G13 확장 (W18): 발문 시작 신호가 없어도 꼬리 [출처/태그] + 시오/세요-체
+                  종결이면 발문 시그니처 ("영어로 번역하세요 [9강 1번]"이
+                  지문 스타일로 인쇄된 c18 실증 + 세로 e79f8af9 기출력의
+                  "11. (주관식) … 고르세요. [정답 2개]" 잠복 검출).
 
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
 구버전 덤프에는 경고로만 보고한다 (재덤프 안내). G9는 uploads_dir를 넘긴
@@ -129,6 +137,11 @@ _RE_TYPE_MARKER = re.compile(r"^\[\s*Type\b[^\[\]]{0,30}\]$", re.I)
 
 # G19 — 어법수정 원고 시그니처 (W17 c11): "1[asked]" 정답 괄호 표기.
 _RE_GRAMMAR_FIX_SIG = re.compile(r"\d\s*\[\s*[A-Za-z]")
+
+# G20 — 스토리 선두 날짜-only 라인 (W18 c18): 원고 표제 블록의 작업 날짜
+# 메모 ("17. 11. 23"). 본문 어디서나가 아니라 '스토리 첫 콘텐츠 단락'만
+# 검사한다 (본문 속 날짜 표기 오탐 방지 — 양품 16종 sweep 0 확인).
+_RE_LEAD_DATE = re.compile(r"^\d{2,4}\s*\.\s*\d{1,2}\s*\.\s*\d{1,2}\s*\.?$")
 
 # G16 — 현행 스텝이 소화 가능한 콘텐츠 토큰 (파일명 정규화 기준 —
 # _norm_fname: 공백 제거 + 소문자). EBS 계열은 어법수정도 스텝 원고
@@ -455,8 +468,10 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                 break
             core = nx
         body = _RE_Q_LEAD_TAG.sub("", core).strip()
+        had_tail_tag = core != tt   # 꼬리 [출처/태그]가 있었음
         is_q_sig = bool(_RE_Q_LEAD_TAG.match(core)) or (
-            _RE_Q_START.match(body) and _RE_Q_END.search(body))
+            _RE_Q_START.match(body) and _RE_Q_END.search(body)) or (
+            had_tail_tag and bool(_RE_Q_END.search(body)))   # W18 확장
         if is_q_sig and body and not any(k in (s or "")
                                          for k in _Q_STYLE_KEYS):
             q_style_miss.append(tt[:45])
@@ -465,6 +480,22 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         critical.append(
             f"[발문스타일] 발문 시그니처 단락 {len(q_style_miss)}개가 발문 "
             f"계열 스타일이 아님: " + " | ".join(q_style_miss[:3]))
+
+    # ── G20 스토리 선두 날짜-only 잔재 (W18 c18) ─────────────────────────
+    lead_junk = []
+    for story in dump.get("stories", []):
+        for p in story.get("paragraphs", []):
+            tt = _clean(p.get("t", ""))
+            if not tt:
+                continue
+            if _RE_LEAD_DATE.match(tt):
+                lead_junk.append(tt[:30])
+            break               # 스토리 첫 콘텐츠 단락만 검사
+    stats["leading_date_junk"] = len(lead_junk)
+    if lead_junk:
+        critical.append(
+            f"[선두잔재] 스토리 선두에 날짜-only 라인 {len(lead_junk)}개 "
+            f"인쇄됨 (표제 블록 잔재): " + " | ".join(lead_junk[:3]))
 
     # ── G14 영단어 스타일 오분류 (W16 c10) ───────────────────────────────
     word_bad = []
