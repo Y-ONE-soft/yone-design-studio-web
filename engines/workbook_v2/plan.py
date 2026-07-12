@@ -139,8 +139,10 @@ def build_step3(step_data):
                 style = _style("STEP3", _s3_effective_kind(kind, text))
                 if style is None:
                     continue
-                if arrow_pending:
-                    # v1 pass 11: 화살표 다음 단락 → 배경(S3_BG)
+                if arrow_pending and kind != "SRC":
+                    # v1 pass 11: 화살표 다음 단락 → 배경(S3_BG).
+                    # 출처 마커(SRC)는 배경을 소비하지 않고 통과 — 배경은
+                    # 마커 다음 실제 요약문/주어진 문장에 부여 (W15 c04).
                     style = _style("STEP3", "P-CONTEXT")
                     arrow_pending = False
                 runs = p.get("runs") or []

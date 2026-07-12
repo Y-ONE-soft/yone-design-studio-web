@@ -44,11 +44,22 @@ def _stage_plan(steps, stage):
 
 
 def test_stage_maps_match_v1_literals():
-    """스테이지 매핑 = v1 엔진 클래스 상수와 정확히 일치 (이식 진실 앵커)."""
+    """스테이지 매핑 = v1 엔진 클래스 상수와 정확히 일치 (이식 진실 앵커).
+
+    pos(top/bottom)는 v2 전용 기하 힌트 — W15 c08_ref 실기에서 v2 rank
+    선택이 분석 내지 상하를 반전시켜(v1 실물 a1 top=30/btm=164와 정반대)
+    추가된 필드라 v1 리터럴 비교에서 제외한다."""
     from engines.suneungteukgang_workbook.engine import (
         SuneungteukgangWorkbookEngine as V1)
-    assert _STAGE_MAPS["analysis"] == V1._ANALYSIS_STEP_STORY_MAP
-    assert _STAGE_MAPS["problem"] == V1._PROBLEM_STEP_STORY_MAP
+
+    def _no_pos(m):
+        return {k: {kk: vv for kk, vv in v.items() if kk != "pos"}
+                for k, v in m.items()}
+
+    assert _no_pos(_STAGE_MAPS["analysis"]) == V1._ANALYSIS_STEP_STORY_MAP
+    assert _no_pos(_STAGE_MAPS["problem"]) == V1._PROBLEM_STEP_STORY_MAP
+    assert _STAGE_MAPS["analysis"]["step2_a1"]["pos"] == "top"
+    assert _STAGE_MAPS["analysis"]["step2_a1_btm"]["pos"] == "bottom"
     assert "_doc" not in _STAGE_MAPS
 
 
