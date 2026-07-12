@@ -682,8 +682,22 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         wt = ((content or {}).get("workbook_type") or "")
         tokens = (_STEP_CONTENT_TOKENS_EBS if wt == "EBS"
                   else _STEP_CONTENT_TOKENS)
+        # W18 c17 — 같은 콘텐츠 가족의 파일이 이미 소비된 경우(예: 'Step1 C2
+        # 빈칸어휘 정답지' 소비 + 'Step1 C2 빈칸어휘(개정)' 병존)는 부분
+        # 침묵 유실이 아니라 변형본 짝 — critical 승격에서 제외(G9 warning
+        # 유지). G16의 본래 표적은 '그 가족이 아예 미소비'(W17 c11).
+        used_names = {_norm_fname(sd["filename"])
+                      for sd in steps.values()
+                      if isinstance(sd, dict) and sd.get("filename")}
+
+        def _family_consumed(f):
+            toks = [tok for tok in tokens if tok in _norm_fname(f)]
+            return toks and all(any(tok in u for u in used_names)
+                                for tok in toks)
+
         step_unused = [f for f in suspicious
-                       if any(tok in _norm_fname(f) for tok in tokens)]
+                       if any(tok in _norm_fname(f) for tok in tokens)
+                       and not _family_consumed(f)]
         other_unused = [f for f in suspicious if f not in step_unused]
         stats["unused_step_manuscripts"] = step_unused
         if step_unused:

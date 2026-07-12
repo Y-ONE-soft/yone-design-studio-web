@@ -348,10 +348,45 @@ class WorkbookSeroV2Engine(BaseEngine):
                         if "[경고]" in l]
         warnings.extend(f"⚠️ {w}" for w in render_warns[:5])
 
+        # (d) 완제품 게이트 (W18 D5 — 세로에도 전 계열 공통 게이트 통합.
+        # W18 c17 실증: 전 스텝 0분할 침묵 유실이 verify ok=True로 통과)
+        gate_report = None
+        try:
+            from engines.workbook_v2.gate import inspect_workbook_finish
+            flow_map = {}
+            for cyc_ref in meta["cycles"]:
+                cyc = json.load(open(cyc_ref["path"], encoding="utf-8"))
+                for slot in cyc["slots"]:
+                    if slot.get("clear"):
+                        continue
+                    fl = flow_map.setdefault(
+                        slot["step"],
+                        {"step": slot["step"], "target": {}, "units": []})
+                    fl["units"].extend(slot.get("units") or [])
+            pseudo_plan = {"flows": list(flow_map.values())}
+            content_path = os.path.join(job_dir, "content.json")
+            content = (json.load(open(content_path, encoding="utf-8"))
+                       if os.path.exists(content_path) else {})
+            uploads_dir = os.path.join(job_dir, "uploads")
+            gate_report = inspect_workbook_finish(
+                content, pseudo_plan, dump,
+                uploads_dir if os.path.isdir(uploads_dir) else None)
+            for c in gate_report["critical"]:
+                ok = False
+                warnings.append(f"❌ {c}")
+            for w in gate_report["warnings"]:
+                warnings.append(f"⚠️ {w}")
+            log(f"[게이트] critical {len(gate_report['critical'])} / "
+                f"warning {len(gate_report['warnings'])}")
+        except Exception as e:                        # noqa: BLE001
+            ok = False
+            warnings.append(f"❌ 게이트 검사 실패: {e}")
+
         log(f"[검수] 사이클 {len(meta['cycles'])}개 / 누락 {total_missing} / "
             f"오버플로우 {overflow} / PDF {'OK' if pdf_ok else '실패'}")
         return {
             "ok": ok,
+            "gate": gate_report,
             "overflow": overflow,
             "cycles_completed": len(meta["cycles"]),
             "stories": {},
