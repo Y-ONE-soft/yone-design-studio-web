@@ -332,3 +332,87 @@ def test_g2_extension_catches_c04_latent_dump():
     d = json.load(open(path, encoding="utf-8"))
     rep = inspect_workbook_finish(None, None, d)
     assert [c for c in rep["critical"] if "정답잔존" in c]
+
+# ── 코퍼스 r7 — c11 커스텀 리플레이 + 플랜 앵커 ─────────────────────────────
+
+CORPUS = os.path.join(TESTS_DIR, "corpus")
+
+
+def test_round7_c11_parse_replay(tmp_path):
+    """r7c11oldwb 커스텀 리플레이 — 구6스텝 폴더가 선라우팅 스테이징을
+    거쳐 6스텝으로 파싱된다 (r6c10cheonjae와 동일 방식)."""
+    import sys
+    sys.path.insert(0, TESTS_DIR)
+    import _replay
+    from engines.textbook_workbook_v2.engine import TextbookWorkbookV2Engine
+    case_dir = os.path.join(CORPUS, "textbook_workbook", "r7c11oldwb")
+    job = str(tmp_path / "job")
+    os.makedirs(job)
+    for n in os.listdir(os.path.join(case_dir, "meta")):
+        with open(os.path.join(case_dir, "meta", n)) as f:
+            val = f.read()
+        with open(os.path.join(job, n), "w") as f:
+            f.write(val)
+    with open(os.path.join(job, "manuscript_folder.txt"), "w") as f:
+        f.write(os.path.join(case_dir, "inputs_folder"))
+    logs = []
+    json_path = TextbookWorkbookV2Engine().parse({"manuscripts": []}, job,
+                                                 logs.append)
+    produced = _replay.canonicalize(
+        json.load(open(json_path, encoding="utf-8")), [job])
+    golden = _replay.canonicalize(
+        json.load(open(os.path.join(case_dir, "golden", "content.json"),
+                       encoding="utf-8")), [])
+    diff = _replay.first_diff(produced, golden)
+    assert diff is None, diff
+    assert any("[구6스텝]" in m for m in logs)
+
+
+def test_round7_c11_plan_anchor():
+    """c11 골든 재플랜 — 구6스텝 라우팅 후 6스텝 플랜 (실전문제=step3,
+    어법수정 시그니처 0)."""
+    import re
+    from engines.workbook_v2.plan import steps_to_plan, ensure_step3_kinds
+    golden = os.path.join(CORPUS, "textbook_workbook", "r7c11oldwb",
+                          "golden", "content.json")
+    c = json.load(open(golden, encoding="utf-8"))
+    ensure_step3_kinds(c["steps"]["step3"])
+    plan = steps_to_plan(c["steps"], workbook_type="교과서")
+    shape = {f["step"]: (len(f["units"]),
+                         sum(len(u["paras"] if isinstance(u, dict) else u)
+                             for u in f["units"]))
+             for f in plan["flows"]}
+    assert shape == {"step1_a1": (6, 12), "step1_a1_2": (6, 12),
+                     "step1_c1": (6, 75), "step1_c2": (6, 110),
+                     "step2_c2": (1, 39), "step3": (1, 561)}
+    assert plan["unsupported"] == []
+    sig = re.compile(r"\d\s*\[\s*[A-Za-z]")
+    st3 = [f for f in plan["flows"] if f["step"] == "step3"][0]
+    paras = [p for u in st3["units"]
+             for p in (u["paras"] if isinstance(u, dict) else u)]
+    assert sum(len(sig.findall(p["t"])) for p in paras) == 0
+
+
+def test_round7_c16_plan_anchor():
+    """c16 골든 재플랜 — 워터마크/꼬리 정답 표제 0 + 유형 마커 6개
+    지문 스타일 일관 (D2/D3/D4 수리 고정)."""
+    import re
+    from collections import Counter
+    from engines.workbook_v2.plan import steps_to_plan, ensure_step3_kinds
+    golden = os.path.join(CORPUS, "ebs_workbook_v2", "r7c16olympos",
+                          "golden", "content.json")
+    c = json.load(open(golden, encoding="utf-8"))
+    ensure_step3_kinds(c["steps"]["step3"])
+    plan = steps_to_plan(c["steps"], workbook_type="EBS")
+    fl = [f for f in plan["flows"] if f["step"] == "step3"][0]
+    paras = [p for u in fl["units"]
+             for p in (u["paras"] if isinstance(u, dict) else u)]
+    assert len(paras) == 301
+    junk = re.compile(r"^(https?://|※ 본|EBS |영어독해)")
+    assert not [p for p in paras if junk.match(p["t"].strip())]
+    assert not [p for p in paras if p["t"].strip().endswith(" 정답")]
+    tm = [p for p in paras if p["t"].strip().startswith("[ Type")]
+    assert len(tm) == 6 and len({p["s"] for p in tm}) == 1
+    tally = Counter(p["s"].split(">")[-1].strip() for p in paras)
+    assert tally["조건 올림포스"] == 7
+    assert tally["배경 올림포스"] == 1      # PUA 화살표 → 삭제+배경 (W14 D2)
