@@ -249,6 +249,14 @@ class SuneungteukgangWorkbookV2Engine(WorkbookV2Engine):
             stage_steps = {k: v for k, v in steps.items() if k in stage_map}
             plan = steps_to_plan(stage_steps, exclude=exclude,
                                  workbook_type="EBS", step_map=stage_map)
+            if stage_label == "analysis":
+                # 완제품 op (W15 c08_ref 실증): 분석 내지의 B-마스터 여분
+                # 페이지 3개 + 지문번호('04') 잔재 프레임 페이지가 납품물에
+                # 남음 — page_cleanup opt-in (다른 워크북 계열과 동일 의미론,
+                # 분석본은 step3 플로우가 없어 M-마스터 경로 미진입).
+                # 문제본은 다강(多講) 셸 구조(D-마스터 39p + '2강' 간지 —
+                # v1 실물도 50p 동일)라 merge 워크플로 확인 전 보류.
+                plan["page_cleanup"] = {}
             plan_path = os.path.abspath(
                 os.path.join(job_dir, f"render_plan_{stage_label}.json"))
             with open(plan_path, "w", encoding="utf-8") as f:
