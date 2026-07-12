@@ -241,7 +241,9 @@ class SuneungteukgangWorkbookV2Engine(WorkbookV2Engine):
         if leftover:
             log(f"[v2] ⚠️ 미지원 스텝(렌더 제외): {', '.join(leftover)}")
 
-        stages_meta = []
+        # 1차: 스테이지별 플랜 먼저 전부 빌드 — 빈 플랜 조기 차단(W12 G7
+        # 기준의 2단계 확장)을 템플릿 복사 전에 수행하기 위함.
+        stage_plans = {}
         for stage_label, stage_kor, name_tok, orig_key in _STAGES:
             stage_map = _STAGE_MAPS[stage_label]
             stage_steps = {k: v for k, v in steps.items() if k in stage_map}
@@ -254,7 +256,22 @@ class SuneungteukgangWorkbookV2Engine(WorkbookV2Engine):
             log(f"[v2] {stage_kor} 플랜: " + (", ".join(
                 f"{fl['step']} {len(fl['units'])}유닛"
                 for fl in plan["flows"]) or "(플로우 없음)"))
+            stage_plans[stage_label] = (plan, plan_path)
 
+        # 빈 플랜 조기 차단 (W15 c08 실증: 수능특강 원고 hwpx가 어느 스텝에도
+        # 매핑되지 않았는데 빈 템플릿 2개가 verify ok=True로 '성공' — 2단계
+        # 경로의 침묵 유실). 두 스테이지 모두 0유닛이면 InDesign 실행 전 차단.
+        total_units = sum(len(fl["units"])
+                          for plan, _ in stage_plans.values()
+                          for fl in plan["flows"])
+        if total_units == 0:
+            raise ValueError(
+                "렌더할 유닛이 0개입니다 — 업로드 원고가 어느 스텝에도 "
+                "매핑되지 않았습니다 (파일명/폴더 규칙 확인)")
+
+        stages_meta = []
+        for stage_label, stage_kor, name_tok, orig_key in _STAGES:
+            plan, plan_path = stage_plans[stage_label]
             src = indd_originals.get(orig_key)
             if not src or not os.path.exists(src):
                 raise FileNotFoundError(f"{stage_label} 원본 indd 없음: {src}")
@@ -378,6 +395,35 @@ class SuneungteukgangWorkbookV2Engine(WorkbookV2Engine):
                 ok = False
                 pdf_all = False
                 warnings.append(f"❌ [{st['kor']}] PDF 미생성")
+
+            # (c2) 완제품 게이트 — 스테이지별(분석본/문제본 각각) 적용 (W15).
+            #     게이트 자체 오류는 경고로 강등 (fail-open — 조판을 막지
+            #     않는다). c08 실증: 게이트 부재 시 빈 완제품이 ok=True.
+            try:
+                from engines.workbook_v2.gate import inspect_workbook_finish
+                content = json.load(open(settings["json_path"],
+                                         encoding="utf-8"))
+                # G9(미사용원고)는 job 단위 검사 — 첫 스테이지에서만 수행해
+                # 두 스테이지 중복 경고를 피한다.
+                first = (st is settings["stages"][0])
+                rep = inspect_workbook_finish(
+                    content, plan, dump,
+                    uploads_dir=(os.path.join(job_dir, "uploads")
+                                 if first else None))
+                for fn in rep["stats"].get("unused_uploads_expected") or []:
+                    log(f"[검수] [{st['kor']}] 미사용 원고(정답/답지류 — "
+                        f"의도된 제외): {fn}")
+                if rep["critical"]:
+                    ok = False
+                    warnings.extend(f"❌ [{st['kor']}] {c}"
+                                    for c in rep["critical"])
+                warnings.extend(f"⚠️ [{st['kor']}] {w}"
+                                for w in rep["warnings"])
+                log(f"[검수] [{st['kor']}] 완제품 게이트: critical "
+                    f"{len(rep['critical'])} / warning {len(rep['warnings'])}")
+            except Exception as e:                          # noqa: BLE001
+                warnings.append(f"⚠️ [{st['kor']}] 완제품 게이트 실행 실패: "
+                                f"{e}")
 
             if os.path.exists(st["log_path"]):
                 render_warns = [l.strip()
