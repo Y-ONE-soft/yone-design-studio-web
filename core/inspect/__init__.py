@@ -182,6 +182,11 @@ def inspect_workbook_step3(content, dump, style_overrides=None):
 # 정답표 행: "1. ①   2. ⑤   3. ①  …" (번호+원문자 3쌍 이상)
 _RE_ANSWER_ROW = re.compile(
     r"(?:^|\s)\d{1,2}\s*\.\s*[①-⑤](?:\s+\d{1,2}\s*\.\s*[①-⑤]){2,}")
+# 꼬리 정답 섹션 표제: "<표제> 정답" (W17 c16/c04 — "2025년 06월 모의고사
+# <고2> 정답"/"★ 객관식 빠른 정답"류. 발문은 '?'로 끝나 제외, "■ 정답: …"
+# 문항별 정답은 콜론 뒤 내용이 있어 제외. 파서 _RE_S3_ANSWER_TITLE 준용 —
+# 출력 검사용 독립 정의로 순환 방지)
+_RE_ANSWER_TAIL_TITLE = re.compile(r"^[^?？]{0,40}[\s\-–—]정답$")
 
 
 def find_leaked_answers(dump):
@@ -196,7 +201,8 @@ def find_leaked_answers(dump):
         tt = t.strip()
         if not tt:
             continue
-        if R.A_PATTERNS[2].match(tt) or _RE_ANSWER_ROW.search(tt):
+        if (R.A_PATTERNS[2].match(tt) or _RE_ANSWER_ROW.search(tt)
+                or _RE_ANSWER_TAIL_TITLE.match(tt)):
             hits.append(tt[:60])
     return hits
 

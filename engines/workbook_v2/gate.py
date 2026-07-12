@@ -43,6 +43,23 @@
                   한글 + '것' 종결, 답란 이전)이 조건 스타일이 아닌
                   스타일로 인쇄됨 — critical (W16 c10 실증 3블록 +
                   c04/c05/0a5da924 잠복).
+  G16 [스텝원고미사용] 미사용 원고(G9 suspicious) 중 파일명 콘텐츠 토큰이
+                  현행 스텝이 소화 가능한 종류(문장배열/영작배열/실전문제
+                  등)인 파일 — 부분 침묵 유실의 강신호라 critical 승격
+                  (W17 c11 실증: 구6스텝 폴더의 Step4 빈칸내용/Step5
+                  영작배열/Step6 실전문제 3종 침묵 미사용). 대응 스텝이
+                  없는 종류(교과서 계열의 어법수정 등)는 G9 warning 유지.
+  G17 [워터마크잔존] 원고 선두의 학원 워터마크(URL 단독 라인, 무단도용/
+                  무단전재/불법복제 경고 라인)가 출력에 인쇄됨 — critical
+                  (W17 c16 실증: cafe.naver URL + "※ 본 자료는 무단도용
+                  … 금합니다"가 지문 스타일로 인쇄).
+  G18 [유형마커스타일] 문제 유형 구분 마커("[ Type A ]"류 단독 대괄호
+                  라인)가 복수 스타일로 인쇄됨 — kind 오분류 (W17 c16
+                  실증: [ Type C (2) ]만 Box 전파로 보기 스타일). critical.
+  G19 [어법수정혼입] step3(실전문제) 스토리에 어법수정 원고 시그니처
+                  (N[영단어] 괄호 표기)가 다량 인쇄됨 — 구6스텝
+                  'Step3 어법수정' 파일명이 실전문제로 오라우팅된 상태
+                  (W17 c11 실증: 6지문 45개 표기). critical.
 
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
 구버전 덤프에는 경고로만 보고한다 (재덤프 안내). G9는 uploads_dir를 넘긴
@@ -98,6 +115,29 @@ _DIVIDER_PATTERNS = [
     re.compile(r"^Chapter\s+\d+\.\s", re.I),
     re.compile(r"^Unit\s+\d+\s+[가-힣][가-힣0-9\s]{0,30}$"),
 ]
+
+# G17 — 학원 워터마크 (W17 c16): URL '단독' 라인(본문 속 인용 URL과 구분)
+# 또는 무단도용/무단전재 경고 문구 포함 라인. '불법복제'는 어휘 정의
+# ("pirate : … 불법 복제하다" — 화이트북 실덤프 실증)와 충돌해 제외.
+_RE_WATERMARK_URL = re.compile(r"^(?:https?://\S+|www\.\S+)$")
+_RE_WATERMARK_WARN = re.compile(r"무단\s*도용|무단\s*전재")
+
+# G18 — 문제 유형 구분 마커 (W17 c16): "[ Type A ]" / "[ Type C (1) ]" /
+# "[ Type D (1) 어법 ]" 류 단독 대괄호 라인. 같은 가족 마커는 한 스타일로
+# 일관 인쇄돼야 한다 (G11 SRC 마커의 유형 마커 확장).
+_RE_TYPE_MARKER = re.compile(r"^\[\s*Type\b[^\[\]]{0,30}\]$", re.I)
+
+# G19 — 어법수정 원고 시그니처 (W17 c11): "1[asked]" 정답 괄호 표기.
+_RE_GRAMMAR_FIX_SIG = re.compile(r"\d\s*\[\s*[A-Za-z]")
+
+# G16 — 현행 스텝이 소화 가능한 콘텐츠 토큰 (파일명 정규화 기준 —
+# _norm_fname: 공백 제거 + 소문자). EBS 계열은 어법수정도 스텝 원고
+# (file_map step2_a1)라 토큰에 추가된다.
+_STEP_CONTENT_TOKENS = ("어휘선택", "본문ox", "본문정리", "내용종합",
+                        "문장배열", "빈칸어휘", "어휘완성", "빈칸내용",
+                        "어법선택", "어법ox", "빈칸어법", "영작배열",
+                        "낱말배열", "실전문제")
+_STEP_CONTENT_TOKENS_EBS = _STEP_CONTENT_TOKENS + ("어법수정",)
 
 
 # G10 — hwp 사용자 영역(PUA) 문자 (BMP U+E000~F8FF + plane 15/16).
@@ -345,6 +385,37 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
             + " | ".join(f"「{k}」 {len(v)}개 (예: {v[0][:30]})"
                          for k, v in sorted(minority.items())[:3]))
 
+    # ── G17 학원 워터마크 잔존 (W17 c16) ─────────────────────────────────
+    watermark = []
+    for t, _s in _dump_paras(dump):
+        tt = _clean(t)
+        if not tt:
+            continue
+        if _RE_WATERMARK_URL.match(tt) or _RE_WATERMARK_WARN.search(tt):
+            watermark.append(tt[:50])
+    stats["watermark_leaks"] = len(watermark)
+    if watermark:
+        critical.append(
+            f"[워터마크잔존] 학원 워터마크/경고 라인 {len(watermark)}개가 "
+            f"출력에 인쇄됨: " + " | ".join(watermark[:3]))
+
+    # ── G18 유형 마커 스타일 일관성 (W17 c16) ────────────────────────────
+    type_styles = {}
+    for t, s in _dump_paras(dump):
+        tt = _clean(t)
+        if _RE_TYPE_MARKER.match(tt):
+            type_styles.setdefault(s, []).append(tt)
+    stats["type_markers"] = sum(len(v) for v in type_styles.values())
+    stats["type_marker_styles"] = len(type_styles)
+    if len(type_styles) > 1:
+        major = max(type_styles, key=lambda k: len(type_styles[k]))
+        minority = {k: v for k, v in type_styles.items() if k != major}
+        critical.append(
+            "[유형마커스타일] 유형 구분 마커가 복수 스타일로 인쇄됨 (기준 "
+            f"「{major}」 {len(type_styles[major])}개 외): "
+            + " | ".join(f"「{k}」 {len(v)}개 (예: {v[0][:30]})"
+                         for k, v in sorted(minority.items())[:3]))
+
     # ── G12 문장삽입 '주어진 문장' 배경 (W15 c04 — warning) ──────────────
     # 변형 문제모음(출처 마커가 있는 스토리)에서 문장삽입 발문 뒤 3단락 내에
     # 배경 스타일 단락이 없으면 지목 — 주어진 문장 박스 누락 (v2는 분류
@@ -551,17 +622,49 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
             warnings.append("[상하배치] 덤프에 프레임 좌표 없음(구버전 덤프)"
                             " — 상/하단 검사 생략")
 
-    # ── G9 미사용 업로드 원고 (W13 — 부분 침묵 유실 보고) ────────────────
+    # ── G19 어법수정 원고 step3 혼입 (W17 c11) ───────────────────────────
+    # step3(실전문제) 스토리에 "1[asked]" 정답 괄호 표기가 다량이면
+    # 구6스텝 'Step3 어법수정' 오라우팅 — 실전문제/변형 pool에는 이 표기가
+    # 없다. step1_c2(빈칸어휘 정답지)는 같은 표기를 정당하게 쓰므로
+    # 반드시 step3 플로우 스토리로 한정한다.
+    if "step3" in flows:
+        st3_story = _find_story_with_text(
+            dump, _flow_probe_text(flows["step3"]))
+        if st3_story is not None:
+            sig_hits = sum(
+                len(_RE_GRAMMAR_FIX_SIG.findall(_clean(p.get("t", ""))))
+                for p in st3_story.get("paragraphs", []))
+            stats["grammar_fix_sig_hits"] = sig_hits
+            if sig_hits >= 5:
+                critical.append(
+                    f"[어법수정혼입] step3 스토리에 어법수정 정답 괄호 "
+                    f"표기 {sig_hits}개 — 어법수정 원고가 실전문제로 "
+                    f"오라우팅된 상태 (파일명 라우팅 확인)")
+
+    # ── G9 미사용 업로드 원고 (W13 — 부분 침묵 유실 보고)
+    #    + G16 스텝원고 미사용 critical 승격 (W17 c11) ─────────────────────
     if uploads_dir and os.path.isdir(uploads_dir):
         expected_unused, suspicious = find_unused_uploads(content,
                                                           uploads_dir)
         stats["unused_uploads_expected"] = expected_unused
         stats["unused_uploads"] = suspicious
-        if suspicious:
+        wt = ((content or {}).get("workbook_type") or "")
+        tokens = (_STEP_CONTENT_TOKENS_EBS if wt == "EBS"
+                  else _STEP_CONTENT_TOKENS)
+        step_unused = [f for f in suspicious
+                       if any(tok in _norm_fname(f) for tok in tokens)]
+        other_unused = [f for f in suspicious if f not in step_unused]
+        stats["unused_step_manuscripts"] = step_unused
+        if step_unused:
+            critical.append(
+                f"[스텝원고미사용] 현행 스텝이 소화 가능한 원고 "
+                f"{len(step_unused)}개가 사용되지 않음 (부분 침묵 유실): "
+                + " | ".join(step_unused[:5]))
+        if other_unused:
             warnings.append(
-                f"[미사용원고] {len(suspicious)}개 파일이 어느 스텝에도 "
+                f"[미사용원고] {len(other_unused)}개 파일이 어느 스텝에도 "
                 f"사용되지 않음 (파일명 규칙 확인): "
-                + " | ".join(suspicious[:5]))
+                + " | ".join(other_unused[:5]))
 
     # ── G6 파싱 계층: 구조적 헤더 후보 미인식 (경고) ─────────────────────
     for key in _HEADER_STEPS:
