@@ -109,12 +109,34 @@ class WorkbookSeroV2Engine(BaseEngine):
         raw = open(exclude_path, encoding="utf-8").read().strip()
         return [s.strip() for s in raw.split(",") if s.strip()]
 
-    # ── 1단계: 원고 폴더 → content.json (v1 세로 파서 재사용) ───────────────
+    # ── 1단계: 원고 폴더 → content.json (v2 오케스트레이션 — v1 helpers) ────
+
+    # W18 c17 (D3) — Step3 라우팅 가드: 스텝1/2 접두 파일("Step1 A1 어휘선택
+    # (2단계 34번).docx"의 'NN번')과 정답/답지/해설 파일("고1 23년 11월
+    # NN번_정답.hwp", "…워크북step3_정답지.hwpx")이 Step3로 흘러 중복/정답
+    # 사이클을 만들던 것 차단 (W13 본가 오라우팅 차단의 세로 확장).
+    _RE_STEP12_PREFIX = re.compile(r"^\s*(?:스텝|step)\s*[12]\b", re.I)
+    _RE_ANSWERISH = re.compile(r"정답|답지|답안|해설", re.I)
+    # W18 c17 (D6) — 정규 워크북의 'Step2 B2 문법 기본 문제 정답' 네이밍은
+    # 가로 file_map(step2_a1_btm 기대명 '어법선택(객관식)')이 못 잡는다 —
+    # 내용은 0a5da924가 소비한 '어법선택(문법 기본 문제) 정답지'와 동일
+    # 형식(틀린어법 정답지: 원문자 + [정답해설]). 기대명으로 rename 스테이징.
+    _GRAMMAR_BASIC_RENAME = "Step2 A1 어법선택(객관식).docx"
+
+    def _stage_fname(self, fname_nfc, log):
+        norm = re.sub(r"[^0-9a-z가-힣]", "", fname_nfc.lower())
+        if ("문법기본문제" in norm and "어법선택" not in norm
+                and self._RE_ANSWERISH.search(fname_nfc)):
+            log(f"[스테이징] {fname_nfc} → {self._GRAMMAR_BASIC_RENAME} "
+                f"(문법 기본 문제 정답 → step2_a1_btm 소비)")
+            return self._GRAMMAR_BASIC_RENAME
+        return fname_nfc
 
     def parse(self, uploaded_files, job_dir, log):
-        from engines.workbook_sero.parser import parse_manuscript_folder
+        from engines.workbook_sero_v2.parser_ext import (
+            parse_manuscript_folder_v2)
 
-        # 업로드 파일 분류 — v1 세로 엔진과 동일 (Step3 판정 포함)
+        # 업로드 파일 분류 — v1 세로 엔진 규칙 + D3 라우팅 가드
         manuscripts = uploaded_files.get("manuscripts")
         if isinstance(manuscripts, list):
             manuscript_dir = os.path.join(job_dir, "uploads")
@@ -125,12 +147,16 @@ class WorkbookSeroV2Engine(BaseEngine):
                 fname = os.path.basename(fpath)
                 if fname.startswith("manuscripts_"):
                     fname = fname[len("manuscripts_"):]
-                fname_nfc = _nfc(fname).strip()
+                fname_nfc = self._stage_fname(_nfc(fname).strip(), log)
                 is_step3 = (
                     bool(re.search(r"(?:스텝|step)[\s_-]*3(?!\d)",
                                    fname_nfc, re.I))
                     or bool(re.search(r"\d+(?:\s*~\s*\d+)?\s*번", fname_nfc))
                 )
+                if self._RE_STEP12_PREFIX.match(fname_nfc):
+                    is_step3 = False    # D3 — 스텝1/2 원고의 'NN번' 오인 차단
+                if is_step3 and self._RE_ANSWERISH.search(fname_nfc):
+                    is_step3 = False    # D3 — 정답/답지 파일은 문제가 아님
                 if is_step3:
                     dest = os.path.join(step3_dir, fname_nfc)
                 else:
@@ -150,10 +176,10 @@ class WorkbookSeroV2Engine(BaseEngine):
         month = self._read_meta(job_dir, "month", 10)
         cfg = _load_v1_config()
 
-        log(f"[v2 파서] 시작 (v1 세로 파서 재사용): 고{grade} {year}년 "
-            f"{month}월")
-        data = parse_manuscript_folder(manuscript_dir, cfg, grade, year,
-                                       month, log)
+        log(f"[v2 파서] 시작 (v2 오케스트레이션 — v1 helpers 재사용): "
+            f"고{grade} {year}년 {month}월")
+        data = parse_manuscript_folder_v2(manuscript_dir, cfg, grade, year,
+                                          month, log)
 
         json_path = os.path.join(job_dir, "content.json")
         with open(json_path, "w", encoding="utf-8") as f:
