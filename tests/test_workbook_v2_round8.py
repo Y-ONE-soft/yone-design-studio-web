@@ -328,13 +328,15 @@ def test_sero_cut_answer_parts():
     assert [p["text"] for p in out] == ["고1 #20", "Problem body."]
 
 
-def test_sero_cut_answer_parts_resumes_at_marker():
+def test_sero_cut_answer_parts_drops_to_end():
+    """정답 파트의 마커는 단독 재등장("[34]")·원문자 부착 형태라 재개
+    판별 불가 — 표제부터 끝까지 드롭 (a1 보충본 실증: [34] 재등장으로
+    정답 13항목이 문제 섹션에 역병합되던 것)."""
     from engines.workbook_sero_v2.parser_ext import _cut_answer_parts
     out = _cut_answer_parts(_p(
-        "고1 #20", "Part1.", "어휘1단계 정답", "junk",
-        "고1 #21", "Part2."), {"20", "21"})
-    assert [p["text"] for p in out] == ["고1 #20", "Part1.",
-                                        "고1 #21", "Part2."]
+        "고1 #20", "Part1.", "정답 및 해설", "1. 어휘2단계_Hard_정답",
+        "[20]", "1. ⓐ idealism (=realism)"), {"20"})
+    assert [p["text"] for p in out] == ["고1 #20", "Part1."]
 
 
 def test_sero_corpus_parity_deep():

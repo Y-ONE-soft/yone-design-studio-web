@@ -18,6 +18,7 @@ v1 세로 파서(engines/workbook_sero/parser)는 마더텅 증강 원고([N강 
 """
 import os
 import re
+import unicodedata
 
 from engines.workbook_sero.parser import (
     _workbook_parse,
@@ -41,10 +42,12 @@ _RE_Q_BARE = re.compile(r'^\s*(\d{1,3})(?:\s*~\s*(\d{1,3}))?\s*(?:\.|번)\s*$')
 # '포함형' 마커로 삼아 해당 문항 사이클로 배정). step3 번호 집합 한정.
 _RE_Q_STEM_TAIL = re.compile(
     r'^.{0,120}[?？]\s*\[(\d{1,3})(?:~(\d{1,3}))?\]\s*[①-⑤]?\s*$')
-# 스텝 파일 내부 정답 파트 표제: "내용일치 정답" (a2 실증 — 이하 정답
-# 블록의 마커는 "고1 #21 ③"처럼 원문자가 붙어 분할되지 않고 마지막
-# 섹션에 통째로 붙는다 → 정답 파트는 사이클에 싣지 않는다)
-_RE_ANSWER_PART_TITLE = re.compile(r'^[^?？]{0,40}[\s\-–—]정답$')
+# 스텝 파일 내부 정답 파트 표제: "내용일치 정답" / "1. 어휘2단계_Hard_정답"
+# / "정답 및 해설" (a2·a1 보충본 실증 — 이하 정답 블록의 마커는
+# "고1 #21 ③" 원문자 부착 또는 "[34]" 재등장 형태라 문제 파트와 구분
+# 불가 → 표제부터 파일 끝까지 사이클에 싣지 않는다)
+_RE_ANSWER_PART_TITLE = re.compile(
+    r'^[^?？]{0,40}[_\s\-–—]정답$|^정답(\s*및\s*해설)?$')
 
 
 def _detect_qnum_v2(text, known_qnums):
@@ -70,23 +73,19 @@ def _detect_qnum_v2(text, known_qnums):
 def _cut_answer_parts(paragraphs, known_qnums):
     """스텝 파일 내부의 정답 파트("내용일치 정답" 이하) 제거 (W18 c17 a2).
 
-    정답 파트 표제부터 드롭을 시작하고, 다음 '단독' 마커(문제 파트 재개)
-    에서 해제한다. 정답 파트의 마커는 원문자가 붙어("고1 #21 ③") 단독
-    마커 패턴에 안 걸리므로 통째로 드롭된다. 영단어 항목("248. answer")은
-    한글 '정답' 종결이 아니라 무관.
+    정답 파트 표제부터 파일 끝까지 드롭한다. 정답 파트의 마커는 원문자
+    부착("고1 #21 ③") 또는 단독 재등장("[34]" — a1 보충본 정답 섹션)
+    형태라 마커로 문제 파트 재개를 판별할 수 없다 — 관측된 전 셰이프에서
+    정답 파트는 파일 꼬리이므로 끝까지 드롭이 안전. 영단어 항목
+    ("248. answer")은 한글 '정답' 종결이 아니라 무관.
     """
     out = []
-    dropping = False
     for para in paragraphs:
         text = (para.get("text", "") if isinstance(para, dict)
                 else str(para)).strip()
         if _RE_ANSWER_PART_TITLE.match(text):
-            dropping = True
-            continue
-        if dropping and _detect_qnum_v2(text, known_qnums):
-            dropping = False    # 문제 파트 재개
-        if not dropping:
-            out.append(para)
+            break
+        out.append(para)
     return out
 
 
@@ -143,6 +142,61 @@ _STEP_KEYS = [
 ]
 
 
+# A1 어휘선택 보충본: "Step1 A1 어휘선택(2단계 34번).docx" — 본 파일이
+# 다루지 않는 문항의 어휘 N단계 블록 ([NN] 마커 + 본문 + _정답 파트).
+_RE_A1_SUPP_STAGE = re.compile(r'([12])\s*단계')
+
+
+def _merge_a1_supplements(manuscript_dir, raw, log):
+    """미소비 어휘선택 보충본을 step1_a1/a1_2 paragraphs 뒤에 병합 (W18 D11).
+
+    가로 파서는 스텝당 1파일만 소비 — "(2단계 34번)" 보충본이 조용히
+    무시돼 해당 문항의 어휘 2단계 박스가 비었다 (c17 Q34 실증). 병합된
+    단락은 [NN] 마커 분할이 문항 사이클로 배정하고, _정답 파트 컷이
+    정답 블록을 걸러낸다. 반환: 병합한 파일명 리스트 (G9 소비 보고용).
+    """
+    from core.extract import (_docx_extract_paragraphs,
+                              _hwp_extract_paragraphs)
+    steps = raw.get("steps") or {}
+    used = set()
+    for sd in steps.values():
+        if isinstance(sd, dict) and sd.get("filename"):
+            used.add(unicodedata.normalize("NFC", sd["filename"]))
+    merged = []
+    for fname_raw in sorted(os.listdir(manuscript_dir)):
+        fname = unicodedata.normalize("NFC", fname_raw)
+        ext = os.path.splitext(fname)[1].lower()
+        if ext not in (".docx", ".hwp", ".hwpx") or fname in used:
+            continue
+        if "어휘선택" not in fname.replace(" ", ""):
+            continue
+        m = _RE_A1_SUPP_STAGE.search(fname)
+        if not m:
+            continue
+        sk = "step1_a1" if m.group(1) == "1" else "step1_a1_2"
+        sd = steps.get(sk)
+        if not isinstance(sd, dict):
+            continue
+        fpath = os.path.join(manuscript_dir, fname_raw)
+        try:
+            if ext == ".docx":
+                paras = _docx_extract_paragraphs(fpath, True)
+            else:
+                paras = _hwp_extract_paragraphs(fpath, True,
+                                                exclude_footnotes=True)
+        except Exception as e:      # noqa: BLE001
+            log(f"[파서/sero-v2] 보충본 읽기 실패: {fname} — {e}")
+            continue
+        # 보충본 단위로 정답 파트를 먼저 컷 — 여러 파일 병합 시 뒤 파일의
+        # 문제 파트가 앞 파일 정답 컷에 쓸려가지 않게 소스별 처리
+        paras = _cut_answer_parts(paras, set())
+        sd.setdefault("paragraphs", []).extend(paras)
+        merged.append((sk, fname))
+        log(f"[파서/sero-v2] 어휘선택 보충본 병합: {fname} → {sk} "
+            f"(+{len(paras)}단락)")
+    return merged
+
+
 def parse_manuscript_folder_v2(manuscript_dir, config, grade, year, month,
                                log):
     """v1 parse_manuscript_folder의 v2 재구성 — 분할 마커만 확장.
@@ -153,6 +207,7 @@ def parse_manuscript_folder_v2(manuscript_dir, config, grade, year, month,
     # 1단계: 가로 워크북 parser로 STEP1/2/3 추출 (v1 동일)
     log("[파서/sero-v2] 가로 워크북 parser 호출 (재사용)")
     raw = _workbook_parse(manuscript_dir, config, grade, year, month, log)
+    supp_merged = _merge_a1_supplements(manuscript_dir, raw, log)
 
     # 2단계: STEP3 — 폴더 직접 파싱 우선, 폴백 v1 동일
     step3_dir = os.path.join(manuscript_dir, "Step3")
@@ -248,6 +303,9 @@ def parse_manuscript_folder_v2(manuscript_dir, config, grade, year, month,
         sd = (raw.get("steps") or {}).get(sk)
         if isinstance(sd, dict) and sd.get("filename"):
             steps_view[sk] = {"filename": sd["filename"]}
+    for i, (sk, fname) in enumerate(supp_merged):
+        # 보충본도 소비 파일로 보고 (G9 미사용 오탐 방지)
+        steps_view[f"{sk}_supp{i}"] = {"filename": fname}
     q_frames = []
     for it in step3_items:
         qn = str(it.get("q_num") or "")
