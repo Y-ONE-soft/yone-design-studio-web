@@ -169,6 +169,34 @@ def test_gate_g18_clean_when_uniform():
     assert not [c for c in rep["critical"] if "유형마커스타일" in c]
 
 
+# ── D1 수리: 구6스텝 선라우팅 매핑 ───────────────────────────────────────────
+
+def test_legacy_dest_name_mapping():
+    from engines.textbook_workbook_v2.engine import TextbookWorkbookV2Engine
+    f = TextbookWorkbookV2Engine._legacy_dest_name
+    names = set()
+    assert f("Step2 문장배열.docx", names) == "Step1 C1 문장배열.docx"
+    assert (f("Step2 문장배열 정답지.docx", names)
+            == "Step1 C1 문장배열 정답지.docx")
+    assert f("Step4 빈칸내용.docx", names) == "Step1 C2 빈칸어휘.docx"
+    assert (f("Step4 빈칸내용 정답지.docx", names)
+            == "Step1 C2 빈칸어휘 정답지.docx")
+    assert (f("Step5 영작배열.docx", names)
+            == "Step2 C2 영작배열(서술형).docx")
+    assert f("Step6 실전문제.hwp", names) == "Step3 실전문제.hwp"
+    # 미대응 토큰: StepN 접두 제거 (step3 오라우팅 차단) + 미대응 표기
+    assert (f("Step3 어법수정.docx", names)
+            == "어법수정 (구6스텝 미대응).docx")
+    assert (f("Step3 어법수정 정답지.docx", names)
+            == "어법수정 (구6스텝 미대응) 정답지.docx")
+    # 현행 규격명(스텝 문자코드 포함)은 무변경
+    assert f("Step1 A1 어휘선택.docx", names) is None
+    assert f("Step2 C2 영작배열(서술형).hwpx", names) is None
+    assert f("Step3.hwpx", names) is None
+    # 충돌 방지: 현행 규격명이 폴더에 실재하면 rename하지 않음
+    assert f("Step2 문장배열.docx", {"Step1 C1 문장배열.docx"}) is None
+
+
 # ── 기존 양품 덤프 false-critical 0 (신규 게이트 sweep) ──────────────────────
 
 def test_new_gates_false_positive_free_on_known_good_dumps():
