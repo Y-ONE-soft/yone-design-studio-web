@@ -18,9 +18,34 @@ v1 무변경. 출력 파일명 _v2 접미로 공존. run/verify는 WorkbookV2Eng
 """
 import json
 import os
+import re
+import unicodedata
 
 from core.paths import resolve_config
 from engines.workbook_v2.engine import WorkbookV2Engine
+
+# ── 15개정 구6스텝 워크북 파일명 선라우팅 (W17 c11) ─────────────────────────
+# 구교과서(15개정) 워크북 폴더는 "StepN <콘텐츠토큰>[ 정답지]" 네이밍
+# (Step2 문장배열 / Step3 어법수정 / Step4 빈칸내용 / Step5 영작배열 /
+# Step6 실전문제)이라 현행 file_map(스텝 문자코드 포함)과 어긋난다.
+# 실증(영어 독해와 작문 비상(김) 1과): Step4 빈칸내용·Step5 영작배열·
+# Step6 실전문제가 침묵 미사용되고, 'Step3 어법수정'은 Step3 토큰 때문에
+# 실전문제(step3)로 오라우팅됐다. 콘텐츠 토큰 기준으로 현행 규격명으로
+# 스테이징한 뒤 v1 parse에 위임한다 (v1 무변경 — W12 ebs_v2 선라우팅 전례).
+_RE_LEGACY_STEP = re.compile(
+    r"^Step\s*(\d)\s+([가-힣]+)(\s*정답지)?\.(docx|hwpx|hwp)$", re.I)
+# 콘텐츠 토큰 → 현행 규격 base 이름. 빈칸내용(어휘완성)은 현행 step1_c2가
+# '정답지'를 소비하는 스텝이라 정답지가 소비본이 된다 (N[답] 괄호 표기
+# 형식 동일 — c11 실물 대조). 나머지는 문제본 소비.
+_LEGACY_CONTENT_MAP = {
+    "문장배열": "Step1 C1 문장배열",
+    "빈칸내용": "Step1 C2 빈칸어휘",
+    "영작배열": "Step2 C2 영작배열(서술형)",
+    "실전문제": "Step3 실전문제",
+    # 어법수정: 현행 교과서 워크북에 대응 스텝 없음 — 매핑하지 않고
+    # Step3 토큰 오라우팅만 차단 (G9 미사용 보고로 운영 판단에 위임)
+}
+_LEGACY_UNMAPPED_SUFFIX = " (구6스텝 미대응)"
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
 _V1_CONFIG = os.path.join(os.path.dirname(_DIR), "textbook_workbook",
@@ -78,11 +103,95 @@ class TextbookWorkbookV2Engine(WorkbookV2Engine):
             pub_short = publisher[len(subject):].strip()
         return subject, pub_short, lesson
 
-    # ── 1단계: parse — v1 완전 위임 (GDrive 복사 + 파서) ────────────────────
+    # ── 1단계: parse — 구6스텝 선라우팅 + v1 완전 위임 (GDrive 복사 + 파서) ──
 
     def parse(self, uploaded_files, job_dir, log):
+        self._prestage_legacy_folder(job_dir, log)
         from engines.textbook_workbook.engine import TextbookWorkbookEngine
         return TextbookWorkbookEngine().parse(uploaded_files, job_dir, log)
+
+    @staticmethod
+    def _legacy_dest_name(name_nfc, entry_names):
+        """구6스텝 파일명 → 현행 규격명 (해당 없으면 None = 원명 유지)."""
+        m = _RE_LEGACY_STEP.match(name_nfc)
+        if not m:
+            return None
+        token, ans, ext = m.group(2), (m.group(3) or "").strip(), m.group(4)
+        base = _LEGACY_CONTENT_MAP.get(token)
+        if base is None:
+            # 미대응 토큰(어법수정 등): StepN 접두를 떼어 오라우팅(Step3
+            # 토큰 → step3 폴더 흡수)을 차단하고 미사용 보고로 남긴다.
+            dest = f"{token}{_LEGACY_UNMAPPED_SUFFIX}"
+        else:
+            dest = base
+        if ans:
+            dest += " 정답지"
+        dest += f".{ext}"
+        # 폴더에 이미 현행 규격명 파일이 실재하면 rename하지 않는다 (충돌 방지)
+        if dest in entry_names:
+            return None
+        return dest
+
+    def _prestage_legacy_folder(self, job_dir, log):
+        """구6스텝 워크북 폴더를 현행 규격명으로 스테이징 (없으면 no-op).
+
+        manuscript_folder 메타의 폴더에서 구6스텝 파일명이 발견되면
+        job_dir/원고_구6스텝/ 에 현행 규격명으로 사전 복사하고 메타를
+        스테이징 경로로 재작성한다 (원경로는 manuscript_folder_original.txt
+        보존). GDrive 원본 무접촉 — 읽기 전용 복사만 수행."""
+        folder = self._read_meta_str(job_dir, "manuscript_folder", "")
+        if not folder or not os.path.isdir(folder):
+            return
+        from engines.final.extractor import (_gdrive_safe_copy,
+                                             list_manuscript_entries)
+        entries = list_manuscript_entries(folder, log)
+        entry_names = {unicodedata.normalize("NFC", n) for n, _ in entries}
+        renames = {}
+        for name, _src in entries:
+            nfc = unicodedata.normalize("NFC", name)
+            dest = self._legacy_dest_name(nfc, entry_names)
+            if dest and dest != nfc:
+                renames[nfc] = dest
+        if not renames:
+            return
+        staged = os.path.join(job_dir, "원고_구6스텝")
+        os.makedirs(staged, exist_ok=True)
+        log(f"[구6스텝] 15개정 구스텝 파일명 감지 — 현행 규격명으로 "
+            f"선라우팅 ({len(renames)}건)")
+
+        def _copy(src_path, dst_path):
+            ok, err = _gdrive_safe_copy(src_path, dst_path, log=log)
+            if not ok:
+                raise RuntimeError(
+                    f"구6스텝 스테이징 복사 실패: "
+                    f"{os.path.basename(src_path)} ({str(err)[:200]})")
+
+        for name, src in entries:
+            nfc = unicodedata.normalize("NFC", name)
+            if os.path.isdir(src):
+                # 서브폴더(Step3 등)는 구조 그대로 복사
+                for root, dirs, files in os.walk(src):
+                    dirs[:] = [d for d in dirs if not d.startswith(".")]
+                    rel = os.path.relpath(root, src)
+                    dst_dir = os.path.join(staged, nfc,
+                                           "" if rel == "." else rel)
+                    os.makedirs(dst_dir, exist_ok=True)
+                    for f in files:
+                        if f.startswith("."):
+                            continue
+                        _copy(os.path.join(root, f),
+                              os.path.join(dst_dir, f))
+                continue
+            dest = renames.get(nfc, nfc)
+            if dest != nfc:
+                log(f"[구6스텝] {nfc} → {dest}")
+            _copy(src, os.path.join(staged, dest))
+        orig_meta = os.path.join(job_dir, "manuscript_folder_original.txt")
+        with open(orig_meta, "w", encoding="utf-8") as f:
+            f.write(folder)
+        with open(os.path.join(job_dir, "manuscript_folder.txt"), "w",
+                  encoding="utf-8") as f:
+            f.write(staged)
 
     # ── WorkbookV2Engine 훅 오버라이드 ──────────────────────────────────────
 
