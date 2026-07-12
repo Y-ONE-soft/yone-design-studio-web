@@ -1,0 +1,4291 @@
+{
+ "grade": 0,
+ "year": 0,
+ "month": 0,
+ "steps": {
+  "step3": {
+   "normal": [
+    {
+     "question_num": "textbook",
+     "code": "",
+     "paragraphs": [
+      {
+       "text": "다음 글에서 밑줄 친 This pattern resumed가 의미하는 바로 가장 적절한 것은? [pr2]",
+       "runs": [
+        {
+         "t": "다음 글에서 밑줄 친 This pattern resumed가 의미하는 바로 가장 적절한 것은? [pr2]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-VOC-UND-MEAN"
+      },
+      {
+       "text": " Astronomical stars, the ones visible in the sky at night and scattered across the universe, produce their own light and heat rather than, as with the planet Earth, relying on other bodies for illumination and warmth. So it is, metaphorically, with the stars of motion pictures and team sports. They attract attention by themselves. People will pay to attend movies or games in which they appear because they are appearing. When Michael Jordan, the dominant basketball player of the last decade of the twentieth century, ended his second retirement from the sport, the team for which he played, the Washington Wizards, attracted sellout audiences everywhere it played. The previous year, when Jordan was not playing for the Wizards, far fewer spectators had attended the team's games. This pattern resumed after he retired again.",
+       "runs": [
+        {
+         "t": " Astronomical stars, the ones visible in the sky at night and scattered across the universe, produce their own light and heat rather than, as with the planet Earth, relying on other bodies for illumination and warmth. So it is, metaphorically, with the stars of motion pictures and team sports. They attract attention by themselves. People will pay to attend movies or games in which they appear because they are appearing. When Michael Jordan, the dominant basketball player of the last decade of the twentieth century, ended his second retirement from the sport, the team for which he played, the Washington Wizards, attracted sellout audiences everywhere it played. The previous year, when Jordan was not playing for the Wizards, far fewer spectators had attended the team's games. ",
+         "ul": false
+        },
+        {
+         "t": "This pattern resumed ",
+         "ul": true
+        },
+        {
+         "t": "after he retired again.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① The team drew much fewer audiences",
+       "runs": [
+        {
+         "t": "① The team drew much fewer audiences",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② Many players followed his style of play",
+       "runs": [
+        {
+         "t": "② Many players followed his style of play",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ He recorded the best-ever results",
+       "runs": [
+        {
+         "t": "③ He recorded the best-ever results",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ He never appeared in the ground",
+       "runs": [
+        {
+         "t": "④ He never appeared in the ground",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ The team’s tickets were sold out",
+       "runs": [
+        {
+         "t": "⑤ The team’s tickets were sold out",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 글의 제목으로 가장 적절한 것은? [ep1]",
+       "runs": [
+        {
+         "t": "다음 글의 제목으로 가장 적절한 것은? [ep1]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-CTN-TITLE"
+      },
+      {
+       "text": "When I was young, my parents worshipped medical doctors as if they were exceptional beings possessing godlike qualities. But I never dreamed of pursuing a career in medicine until I entered the hospital for a rare disease. I became a medical curiosity, attracting some of the area’s top specialists to look in on me and review my case. As a patient, and a teenager eager to return to college, I asked each doctor who examined me, “What caused my disease?” “How will you make me better?” The typical response was nonverbal. They shook their heads and walked out of my room. I remember thinking to myself, “Well, I could do that.” When it became clear to me that no doctor could answer my basic questions, I walked out of the hospital against medical advice. Returning to college, I pursued medicine with a great passion.",
+       "runs": [
+        {
+         "t": "When I was young, my parents worshipped medical doctors as if they were exceptional beings possessing godlike qualities. But I never dreamed of pursuing a career in medicine until I entered the hospital for a rare disease. I became a medical curiosity, attracting some of the area’s top specialists to look in on me and review my case. As a patient, and a teenager eager to return to college, I asked each doctor who examined me, “What caused my disease?” “How will you make me better?” The typical response was nonverbal. They shook their heads and walked out of my room. I remember thinking to myself, “Well, I could do that.” When it became clear to me that no doctor could answer my basic questions, I walked out of the hospital against medical advice. Returning to college, I pursued medicine with a great passion.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① Importance of Intensive Care",
+       "runs": [
+        {
+         "t": "① Importance of Intensive Care",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② When People Dream of Being a Doctor",
+       "runs": [
+        {
+         "t": "② When People Dream of Being a Doctor",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ The Reason Why I Followed a Medical Career",
+       "runs": [
+        {
+         "t": "③ The Reason Why I Followed a Medical Career",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ Effects of New Medicine on Curing a Rare Disease",
+       "runs": [
+        {
+         "t": "④ Effects of New Medicine on Curing a Rare Disease",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ Limitations of Answering Basic Medical Questions",
+       "runs": [
+        {
+         "t": "⑤ Limitations of Answering Basic Medical Questions",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 글의 주제로 가장 적절한 것은? [ep2]",
+       "runs": [
+        {
+         "t": "다음 글의 주제로 가장 적절한 것은? [ep2]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-CTN-TOPIC"
+      },
+      {
+       "text": " Some researchers assumed early human beings ate mainly the muscle flesh of animals, as we do today. Yet, to the surprise of the researchers, focusing on the muscle appears to be a relatively recent phenomenon. In every history on the subject, the evidence suggests that early human populations preferred the fat and organ meat of the animal over its muscle meat. Vilhjalmur Stefansson, an arctic explorer, found that the Inuit were careful to save fatty meat and organs for human consumption while giving muscle meat to the dogs. In this way, humans ate as other large, meat-eating mammals eat. Lions and tigers, for instance, first eat the blood, hearts, livers, and brains of the animals they kill, often leaving the muscle meat for eagles. These organs tend to be much higher in fat.",
+       "runs": [
+        {
+         "t": " Some researchers assumed early human beings ate mainly the muscle flesh of animals, as we do today. Yet, to the surprise of the researchers, focusing on the muscle appears to be a relatively recent phenomenon. In every history on the subject, the evidence suggests that early human populations preferred the fat and organ meat of the animal over its muscle meat. Vilhjalmur Stefansson, an arctic explorer, found that the Inuit were careful to save fatty meat and organs for human consumption while giving muscle meat to the dogs. In this way, humans ate as other large, meat-eating mammals eat. Lions and tigers, for instance, first eat the blood, hearts, livers, and brains of the animals they kill, often leaving the muscle meat for eagles. These organs tend to be much higher in fat.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① the way the Inuit withstand the harsh weather condition",
+       "runs": [
+        {
+         "t": "① the way the Inuit withstand the harsh weather condition",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② the historical reason why early humans craved for the muscle flesh of animals",
+       "runs": [
+        {
+         "t": "② the historical reason why early humans craved for the muscle flesh of animals",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ a similarity between mammals and early humans in terms of a preferred hunting target",
+       "runs": [
+        {
+         "t": "③ a similarity between mammals and early humans in terms of a preferred hunting target",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ the surprising fact that the early humans preferred to consume the fat-rich parts of animals",
+       "runs": [
+        {
+         "t": "④ the surprising fact that the early humans preferred to consume the fat-rich parts of animals",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ an evidence that the fat and organ meat have a higher nutritional value than the muscle meat",
+       "runs": [
+        {
+         "t": "⑤ an evidence that the fat and organ meat have a higher nutritional value than the muscle meat",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 글의 제목으로 가장 적절한 것은? [pr1]",
+       "runs": [
+        {
+         "t": "다음 글의 제목으로 가장 적절한 것은? [pr1]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-CTN-TITLE"
+      },
+      {
+       "text": " In the late 1960s, the art world was divided into so many minor movements that tracking them all is difficult. In one of the most radical of these movements, artists believed that they didn't need to produce any artwork at all (rather like Dada) but simply generate concepts or ideas. In reality, this conceptual art, as it's known, is often a type of performance or \"happening\" that can be very spontaneous and audience-driven. Sometimes it's simply writing on a wall. One early conceptual artist camped out with a coyote for a week in an art gallery to get people thinking about the treatment of Native Americans. Feminist art is linked with conceptual art in that it focuses on the inequalities faced by women and tries to provoke change. The movement has no set style. It might include a painting on canvas or a group of women dressed up in gorilla costumes crashing a public event to pass out pamphlets.",
+       "runs": [
+        {
+         "t": " In the late 1960s, the art world was divided into so many minor movements that tracking them all is difficult. In one of the most radical of these movements, artists believed that they didn't need to produce any artwork at all (rather like Dada) but simply generate concepts or ideas. In reality, this conceptual art, as it's known, is often a type of performance or \"happening\" that can be very spontaneous and audience-driven. Sometimes it's simply writing on a wall. One early conceptual artist camped out with a coyote for a week in an art gallery to get people thinking about the treatment of Native Americans. Feminist art is linked with conceptual art in that it focuses on the inequalities faced by women and tries to provoke change. The movement has no set style. It might include a painting on canvas or a group of women dressed up in gorilla costumes crashing a public event to pass out pamphlets.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① Causes for the Hostility towards Conceptual Art",
+       "runs": [
+        {
+         "t": "① Causes for the Hostility towards Conceptual Art",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② The Role of Performance in Forming Conceptual Art",
+       "runs": [
+        {
+         "t": "② The Role of Performance in Forming Conceptual Art",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ Is Conceptual Art full of Creative Spirit and Artistic Depth?",
+       "runs": [
+        {
+         "t": "③ Is Conceptual Art full of Creative Spirit and Artistic Depth?",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ Conceptual Artist: A Pioneer Who Takes Precedence over Feminist",
+       "runs": [
+        {
+         "t": "④ Conceptual Artist: A Pioneer Who Takes Precedence over Feminist",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ Exploring the Emergence and Various Tendencies of Conceptual Art",
+       "runs": [
+        {
+         "t": "⑤ Exploring the Emergence and Various Tendencies of Conceptual Art",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 글의 제목으로 가장 적절한 것은? [pr2] ",
+       "runs": [
+        {
+         "t": "다음 글의 제목으로 가장 적절한 것은? [pr2] ",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-CTN-TITLE"
+      },
+      {
+       "text": " Astronomical stars, the ones visible in the sky at night and scattered across the universe, produce their own light and heat rather than, as with the planet Earth, relying on other bodies for illumination and warmth. So it is, metaphorically, with the stars of team sports. They attract attention by themselves. People will pay to attend movies or games in which they appear because they are appearing. When Michael Jordan, the dominant basketball player of the last decade of the twentieth century, ended his second retirement from the sport, the team for which he played, the Washington Wizards, attracted sellout audiences everywhere it played. The previous year, when Jordan was not playing for the Wizards, far fewer spectators had attended the team’s games. This pattern resumed after he retired again.",
+       "runs": [
+        {
+         "t": " Astronomical stars, the ones visible in the sky at night and scattered across the universe, produce their own light and heat rather than, as with the planet Earth, relying on other bodies for illumination and warmth. So it is, metaphorically, with the stars of team sports. They attract attention by themselves. People will pay to attend movies or games in which they appear because they are appearing. When Michael Jordan, the dominant basketball player of the last decade of the twentieth century, ended his second retirement from the sport, the team for which he played, the Washington Wizards, attracted sellout audiences everywhere it played. The previous year, when Jordan was not playing for the Wizards, far fewer spectators had attended the team’s games. This pattern resumed after he retired again.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① How to Increase Public Interest in Astronomy",
+       "runs": [
+        {
+         "t": "① How to Increase Public Interest in Astronomy",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② Michael Jordan : The Beginning of the Legend of Basketball",
+       "runs": [
+        {
+         "t": "② Michael Jordan : The Beginning of the Legend of Basketball",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ Why Searching for the Stars in the Night Sky Is So Difficult",
+       "runs": [
+        {
+         "t": "③ Why Searching for the Stars in the Night Sky Is So Difficult",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ The Similar Characteristics between Astronomical Stars and Sports Stars",
+       "runs": [
+        {
+         "t": "④ The Similar Characteristics between Astronomical Stars and Sports Stars",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ Studying Astronomical Stars Increases Your Knowledge about How Stars Give Off Light",
+       "runs": [
+        {
+         "t": "⑤ Studying Astronomical Stars Increases Your Knowledge about How Stars Give Off Light",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 글의 제목으로 가장 적절한 것은? [pr3]",
+       "runs": [
+        {
+         "t": "다음 글의 제목으로 가장 적절한 것은? [pr3]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-CTN-TITLE"
+      },
+      {
+       "text": " Looking for the poem's subject is natural. Almost all poetry has messages to deliver - lots of them, profound and diverse as stars. But these messages are sometimes hidden, and you have to read attentively to make them out. Notice that we specifically avoid saying, “The subject is what a poem's about\" - because that implies that what a poem says is all there is to a poem. If that were so, why would people go to the trouble of writing poetry? Instead, people go to the trouble because poems sound a certain way, are built in certain shapes, and have certain beauties in sound and meaning, all of which accompanies the meaning and goes beyond it. Not all poems have a single subject. Some poems have many subjects, and some have subjects that aren't clear. Sometimes a poem's subject is simply itself-the words in it and their relationships to one another. The point is to be alert for the subject (or subjects) of any poem as you read.",
+       "runs": [
+        {
+         "t": " Looking for the poem's subject is natural. Almost all poetry has messages to deliver - lots of them, profound and diverse as stars. But these messages are sometimes hidden, and you have to read attentively to make them out. Notice that we specifically avoid saying, “The subject is what a poem's about\" - because that implies that what a poem says is all there is to a poem. If that were so, why would people go to the trouble of writing poetry? Instead, people go to the trouble because poems sound a certain way, are built in certain shapes, and have certain beauties in sound and meaning, all of which accompanies the meaning and goes beyond it. Not all poems have a single subject. Some poems have many subjects, and some have subjects that aren't clear. Sometimes a poem's subject is simply itself-the words in it and their relationships to one another. The point is to be alert for the subject (or subjects) of any poem as you read.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① How to Make Poems More Accessible",
+       "runs": [
+        {
+         "t": "① How to Make Poems More Accessible",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② Limitations in Choosing Poem's Material",
+       "runs": [
+        {
+         "t": "② Limitations in Choosing Poem's Material",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ Is Single Subject Enough to Deliver Messages?",
+       "runs": [
+        {
+         "t": "③ Is Single Subject Enough to Deliver Messages?",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ Various Metaphors to Describe Poems's Subjects",
+       "runs": [
+        {
+         "t": "④ Various Metaphors to Describe Poems's Subjects",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ Understanding Subjects of Poetry: Critical but Can Be Tricky",
+       "runs": [
+        {
+         "t": "⑤ Understanding Subjects of Poetry: Critical but Can Be Tricky",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 글의 내용과 일치하지 않는 것은? [ep1]",
+       "runs": [
+        {
+         "t": "다음 글의 내용과 일치하지 않는 것은? [ep1]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-CTN-MATCH"
+      },
+      {
+       "text": "When I was young, my parents worshipped medical doctors as if they were exceptional beings possessing godlike qualities. But I never dreamed of pursuing a career in medicine until I entered the hospital for a rare disease. I became a medical curiosity, attracting some of the area’s top specialists to look in on me and review my case. As a patient, and a teenager eager to return to college, I asked each doctor who examined me, “What caused my disease?” “How will you make me better?” The typical response was nonverbal. They shook their heads and walked out of my room. I remember thinking to myself, “Well, I could do that.” When it became clear to me that no doctor could answer my basic questions, I walked out of the hospital against medical advice. Returning to college, I pursued medicine with a great passion.",
+       "runs": [
+        {
+         "t": "When I was young, my parents worshipped medical doctors as if they were exceptional beings possessing godlike qualities. But I never dreamed of pursuing a career in medicine until I entered the hospital for a rare disease. I became a medical curiosity, attracting some of the area’s top specialists to look in on me and review my case. As a patient, and a teenager eager to return to college, I asked each doctor who examined me, “What caused my disease?” “How will you make me better?” The typical response was nonverbal. They shook their heads and walked out of my room. I remember thinking to myself, “Well, I could do that.” When it became clear to me that no doctor could answer my basic questions, I walked out of the hospital against medical advice. Returning to college, I pursued medicine with a great passion.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① my parents had a high opinion of medical doctor",
+       "runs": [
+        {
+         "t": "① my parents had a high opinion of medical doctor",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② only after I suffered from a rare disease did I come to have an interest in medicine",
+       "runs": [
+        {
+         "t": "② only after I suffered from a rare disease did I come to have an interest in medicine",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ I got medical attention from doctors who wanted to examine my case",
+       "runs": [
+        {
+         "t": "③ I got medical attention from doctors who wanted to examine my case",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ My doctors were not convinced of curing my disease",
+       "runs": [
+        {
+         "t": "④ My doctors were not convinced of curing my disease",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ I decided to go into medicine to follow a good example of my doctors",
+       "runs": [
+        {
+         "t": "⑤ I decided to go into medicine to follow a good example of my doctors",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 글의 내용과 일치하는 것은? [ep2]",
+       "runs": [
+        {
+         "t": "다음 글의 내용과 일치하는 것은? [ep2]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-CTN-MATCH"
+      },
+      {
+       "text": "Some researchers assumed early human beings ate mainly the muscle flesh of animals, as we do today. By \"meat,\" they meant the muscle of the animal. Yet focusing on the muscle appears to be a relatively recent phenomenon. In every history on the subject, the evidence suggests that early human populations preferred the fat and organ meat of the animal over its muscle meat. Vilhjalmur Stefansson, an arctic explorer, found that the Inuit were careful to save fatty meat and organs for human consumption while giving muscle meat to the dogs. In this way, humans ate as other large, meat-eating mammals eat. Lions and tigers, for instance, first eat the blood, hearts, livers, and brains of the animals they kill, often leaving the muscle meat for eagles. These organs tend to be much higher in fat.",
+       "runs": [
+        {
+         "t": "Some researchers assumed early human beings ate mainly the muscle flesh of animals, as we do today. By \"meat,\" they meant the muscle of the animal. Yet focusing on the muscle appears to be a relatively recent phenomenon. In every history on the subject, the evidence suggests that early human populations preferred the fat and organ meat of the animal over its muscle meat. Vilhjalmur Stefansson, an arctic explorer, found that the Inuit were careful to save fatty meat and organs for human consumption while giving muscle meat to the dogs. In this way, humans ate as other large, meat-eating mammals eat. Lions and tigers, for instance, first eat the blood, hearts, livers, and brains of the animals they kill, often leaving the muscle meat for eagles. These organs tend to be much higher in fat.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① Meat-eating mammals ate the whole animal rather than just the meat.",
+       "runs": [
+        {
+         "t": "① Meat-eating mammals ate the whole animal rather than just the meat.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② The organ meat meant plenty of muscle meat but not enough fat.",
+       "runs": [
+        {
+         "t": "② The organ meat meant plenty of muscle meat but not enough fat.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ Meat consumed without fat was commonly understood to lead to strength.",
+       "runs": [
+        {
+         "t": "③ Meat consumed without fat was commonly understood to lead to strength.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ Early human beings perceived the importance of muscle flesh of animals as much as we do today.",
+       "runs": [
+        {
+         "t": "④ Early human beings perceived the importance of muscle flesh of animals as much as we do today.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ It was clear for Stefansson that fat was the most favored and precious food to the Inuit.",
+       "runs": [
+        {
+         "t": "⑤ It was clear for Stefansson that fat was the most favored and precious food to the Inuit.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 글의 내용과 일치하지 않는 것은? [pr1]",
+       "runs": [
+        {
+         "t": "다음 글의 내용과 일치하지 않는 것은? [pr1]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-CTN-MATCH"
+      },
+      {
+       "text": " In the late 1960s, the art world was divided into so many minor movements that tracking them all is difficult. In one of the most radical of these movements, artists believed that they didn’t need to produce any artwork at all (rather like Dada) but simply generate concepts or ideas. In reality, this conceptual art, as it’s known, is often a type of performance or “happening” that can be very spontaneous and audience-driven. Sometimes it’s simply writing on a wall. One early conceptual artist camped out with a coyote for a week in an art gallery to get people thinking about the treatment of Native Americans. Feminist art is linked with conceptual art in that it focuses on the inequalities faced by women and tries to provoke change. The movement has no set style. It might include a painting on canvas or a group of women dressed up in gorilla costumes crashing a public event to pass out pamphlets.",
+       "runs": [
+        {
+         "t": " In the late 1960s, the art world was divided into so many minor movements that tracking them all is difficult. In one of the most radical of these movements, artists believed that they didn’t need to produce any artwork at all (rather like Dada) but simply generate concepts or ideas. In reality, this conceptual art, as it’s known, is often a type of performance or “happening” that can be very spontaneous and audience-driven. Sometimes it’s simply writing on a wall. One early conceptual artist camped out with a coyote for a week in an art gallery to get people thinking about the treatment of Native Americans. Feminist art is linked with conceptual art in that it focuses on the inequalities faced by women and tries to provoke change. The movement has no set style. It might include a painting on canvas or a group of women dressed up in gorilla costumes crashing a public event to pass out pamphlets.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① 1960년 후반에, 미술계는 너무 많은 작은 사회적 움직임(운동)들로 갈라져서 그것을 추적하는 것이 어려웠다.",
+       "runs": [
+        {
+         "t": "① 1960년 후반에, 미술계는 너무 많은 작은 사회적 움직임(운동)들로 갈라져서 그것을 추적하는 것이 어려웠다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② 예술가들은 어떤 예술작품도 전혀 만들 필요가 없고, 단지 개념이나 아이디어를 창출하기만 해야 한다고 믿었다.",
+       "runs": [
+        {
+         "t": "② 예술가들은 어떤 예술작품도 전혀 만들 필요가 없고, 단지 개념이나 아이디어를 창출하기만 해야 한다고 믿었다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ 실제로, 알려진 것처럼, 개념 예술은 흔히, 매우 자발적이고 관객이 주도할 수 있는 유형의 공연 또는 즉흥극일 수 있다.",
+       "runs": [
+        {
+         "t": "③ 실제로, 알려진 것처럼, 개념 예술은 흔히, 매우 자발적이고 관객이 주도할 수 있는 유형의 공연 또는 즉흥극일 수 있다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ 개념예술과 관련된 사회적 움직임(운동)은 어떤 정해진 스타일도 없다.",
+       "runs": [
+        {
+         "t": "④ 개념예술과 관련된 사회적 움직임(운동)은 어떤 정해진 스타일도 없다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ 개념예술과 관련된 사회적 움직임(운동)으로 캔버스 위의 그림이나 팸플렛을 나누어주기 위해 공공행사에 불청객으로 들어가는 고릴라 의상으로 변장한 한 무리의 여자들을 포함할 수도 있다.",
+       "runs": [
+        {
+         "t": "⑤ 개념예술과 관련된 사회적 움직임(운동)으로 캔버스 위의 그림이나 팸플렛을 나누어주기 위해 공공행사에 불청객으로 들어가는 고릴라 의상으로 변장한 한 무리의 여자들을 포함할 수도 있다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 글의 내용과 일치하지 않는 것은? [pr3]",
+       "runs": [
+        {
+         "t": "다음 글의 내용과 일치하지 않는 것은? [pr3]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-CTN-MATCH"
+      },
+      {
+       "text": "Looking for the poem’s subject is natural. Almost all poetry has messages to deliver — lots of them, profound and diverse as stars. But these messages are sometimes hidden, and you have to read attentively to make them out. Notice that we specifically avoid saying, “ The subject is what a poem’s about” — because that implies that what a poem says is all there is to a poem. If that were so, why would people go to the trouble of writing poetry? Instead, people go to the trouble because poems sound a certain way, are built in certain shapes, and have certain beauties in sound and meaning, all of which accompanies the meaning and goes beyond it. Not all poems have a single subject. Some poems have many subjects, and some have subjects that aren’t clear. Sometimes a poem’s subject is simply itself—the words in it and their relationships to one another. The point is to be alert for the subject (or subjects) of any poem as you read.",
+       "runs": [
+        {
+         "t": "Looking for the poem’s subject is natural. Almost all poetry has messages to deliver — lots of them, profound and diverse as stars. But these messages are sometimes hidden, and you have to read attentively to make them out. Notice that we specifically avoid saying, “ The subject is what a poem’s about” — because that implies that what a poem says is all there is to a poem. If that were so, why would people go to the trouble of writing poetry? Instead, people go to the trouble because poems sound a certain way, are built in certain shapes, and have certain beauties in sound and meaning, all of which accompanies the meaning and goes beyond it. Not all poems have a single subject. Some poems have many subjects, and some have subjects that aren’t clear. Sometimes a poem’s subject is simply itself—the words in it and their relationships to one another. The point is to be alert for the subject (or subjects) of any poem as you read.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① 시속에서 주제를 찾는 것은 자연스러운 일이다.",
+       "runs": [
+        {
+         "t": "① 시속에서 주제를 찾는 것은 자연스러운 일이다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② 시가 전달하고자 하는 메시지들은 가끔씩 숨겨져 있기도 하다.",
+       "runs": [
+        {
+         "t": "② 시가 전달하고자 하는 메시지들은 가끔씩 숨겨져 있기도 하다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ 시를 읽을 때 그 주제에 대해서 긴장하고 집중하는 것이 중요하다.",
+       "runs": [
+        {
+         "t": "③ 시를 읽을 때 그 주제에 대해서 긴장하고 집중하는 것이 중요하다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ 어떤 시는 하나가 아닌 여러 주제들을 가지기도 한다.",
+       "runs": [
+        {
+         "t": "④ 어떤 시는 하나가 아닌 여러 주제들을 가지기도 한다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ 사람들은 과정의 복잡성과 어려움으로 시 쓰기를 회피하고 싫어한다.",
+       "runs": [
+        {
+         "t": "⑤ 사람들은 과정의 복잡성과 어려움으로 시 쓰기를 회피하고 싫어한다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 James Walter Thompson에 관한 글의 내용과 일치하는 것은? [pr4]",
+       "runs": [
+        {
+         "t": "다음 James Walter Thompson에 관한 글의 내용과 일치하는 것은? [pr4]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-CTN-MATCH"
+      },
+      {
+       "text": " After serving in the navy at the end of the Civil War, James Walter Thompson went to New York determined to carve out a career in the big city. In 1868 he was hired by a tiny advertising agency run by William J. Carlton, at that point still involved in the primitive business of placing advertisements in newspapers and magazines. It was the latter that interested Thompson, who noticed that they ran few advertisements while staying longer in the family home than newspapers, thus making them potentially a more effective medium. He began to specialize in magazine advertising, gradually building up an exclusive stable of publications available only to his clients. Ten years after joining the agency, he bought it for a total of US $1,300 and put his own name above the door. He hired staff specifically to look after clients' needs, creating the account executive role. He opened offices in Chicago, Boston, Cincinnati and even London - the first US agency to expand abroad. In these ways and others, J. Walter Thompson created the first modern advertising agency. In 1916, with both his health and his enthusiasm failing. Thompson handed over the reins to Stanley Resor, who would take the agency to even greater heights.",
+       "runs": [
+        {
+         "t": " After serving in the navy at the end of the Civil War, James Walter Thompson went to New York determined to carve out a career in the big city. In 1868 he was hired by a tiny advertising agency run by William J. Carlton, at that point still involved in the primitive business of placing advertisements in newspapers and magazines. It was the latter that interested Thompson, who noticed that they ran few advertisements while staying longer in the family home than newspapers, thus making them potentially a more effective medium. He began to specialize in magazine advertising, gradually building up an exclusive stable of publications available only to his clients. Ten years after joining the agency, he bought it for a total of US $1,300 and put his own name above the door. He hired staff specifically to look after clients' needs, creating the account executive role. He opened offices in Chicago, Boston, Cincinnati and even London - the first US agency to expand abroad. In these ways and others, J. Walter Thompson created the first modern advertising agency. In 1916, with both his health and his enthusiasm failing. Thompson handed over the reins to Stanley Resor, who would take the agency to even greater heights.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① 1868년에 작은 광고 대행사를 운영하기 시작했다.",
+       "runs": [
+        {
+         "t": "① 1868년에 작은 광고 대행사를 운영하기 시작했다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② 신문에 광고를 거의 싣지 않는다는 것을 알고 나서 신문광고에 관심을 두었다.",
+       "runs": [
+        {
+         "t": "② 신문에 광고를 거의 싣지 않는다는 것을 알고 나서 신문광고에 관심을 두었다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ 광고기획자로서 고객의 요구사항을 직접 관리했다.",
+       "runs": [
+        {
+         "t": "③ 광고기획자로서 고객의 요구사항을 직접 관리했다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ 그의 회사를 최초의 현대적인 광고 대행사로 성장시켰다.",
+       "runs": [
+        {
+         "t": "④ 그의 회사를 최초의 현대적인 광고 대행사로 성장시켰다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ 광고 업계에 발을 들인지 50년이 되는 해에 Stanley Resor에게 그의 자리를 넘겨주었다.",
+       "runs": [
+        {
+         "t": "⑤ 광고 업계에 발을 들인지 50년이 되는 해에 Stanley Resor에게 그의 자리를 넘겨주었다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 글의 James에 관한 내용과 일치하지 않는 것은? [pr4]",
+       "runs": [
+        {
+         "t": "다음 글의 James에 관한 내용과 일치하지 않는 것은? [pr4]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-CTN-MATCH"
+      },
+      {
+       "text": " After serving in the navy at the end of the Civil War, James Walter Thompson went to New York determined to carve out a career in the big city. In 1868 he was hired by a tiny advertising agency run by William J. Carlton, at that point still involved in the primitive business of placing advertisements in newspapers and magazines. It was the latter that interested Thompson, who noticed that they ran few advertisements while staying longer in the family home than newspapers, thus making them potentially a more effective medium. He began to specialize in magazine advertising, gradually building up an exclusive stable of publications available only to his clients. Ten years after joining the agency, he bought it for a total of US $1,300 (US $500 for the company and US $800 for the furniture) and put his own name above the door.",
+       "runs": [
+        {
+         "t": " After serving in the navy at the end of the Civil War, James Walter Thompson went to New York determined to carve out a career in the big city. In 1868 he was hired by a tiny advertising agency run by William J. Carlton, at that point still involved in the primitive business of placing advertisements in newspapers and magazines. It was the latter that interested Thompson, who noticed that they ran few advertisements while staying longer in the family home than newspapers, thus making them potentially a more effective medium. He began to specialize in magazine advertising, gradually building up an exclusive stable of publications available only to his clients. Ten years after joining the agency, he bought it for a total of US $1,300 (US $500 for the company and US $800 for the furniture) and put his own name above the door.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① 해군 복무 후에 경력을 쌓기 위해 뉴욕으로 갔다.",
+       "runs": [
+        {
+         "t": "① 해군 복무 후에 경력을 쌓기 위해 뉴욕으로 갔다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② 취직한 회사는 작은 규모의 광고 대행사였다.",
+       "runs": [
+        {
+         "t": "② 취직한 회사는 작은 규모의 광고 대행사였다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ 잡지가 많은 광고를 싣고 있다는 것을 알게 되었다.",
+       "runs": [
+        {
+         "t": "③ 잡지가 많은 광고를 싣고 있다는 것을 알게 되었다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ 자신의 고객만 이용할 수 있는 독점적인 출판물 제품군을 점차 개발해 나갔다.",
+       "runs": [
+        {
+         "t": "④ 자신의 고객만 이용할 수 있는 독점적인 출판물 제품군을 점차 개발해 나갔다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ 처음 취업했던 회사를 1,300달러에 인수했다.",
+       "runs": [
+        {
+         "t": "⑤ 처음 취업했던 회사를 1,300달러에 인수했다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "(A), (B), (C)의 각 네모 안에서 어법에 맞는 표현으로 가장 적절한 것은? [ep2]",
+       "runs": [
+        {
+         "t": "(A), (B), (C)의 각 네모 안에서 어법에 맞는 표현으로 가장 적절한 것은? [ep2]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-GRM-PAREN"
+      },
+      {
+       "text": "Some researchers assumed early human beings ate mainly the muscle flesh of animals, as we (A) [are / do] today. By “meat,” they meant the muscle of the animal. Yet focusing on the muscle appears to be a relatively recent phenomenon. In every history on the subject, the evidence suggests that early human populations preferred the fat and organ meat of the animal over its muscle meat. Vilhjalmur Stefansson, an arctic explorer, found (B) [what / that] the Inuit were careful to save fatty meat and organs for human consumption while giving muscle meat to the dogs. In this way, humans ate as other large, meat-eating mammals eat. Lions and tigers, for instance, first eat the blood, hearts, livers, and brains of the animals they kill, often (C) [leaving / leave] the muscle meat for eagles. These organs tend to be much higher in fat.",
+       "runs": [
+        {
+         "t": "Some researchers assumed early human beings ate mainly the muscle flesh of animals, as we (A) [are / do] today. By “meat,” they meant the muscle of the animal. Yet focusing on the muscle appears to be a relatively recent phenomenon. In every history on the subject, the evidence suggests that early human populations preferred the fat and organ meat of the animal over its muscle meat. Vilhjalmur Stefansson, an arctic explorer, found (B) [what / that] the Inuit were careful to save fatty meat and organs for human consumption while giving muscle meat to the dogs. In this way, humans ate as other large, meat-eating mammals eat. Lions and tigers, for instance, first eat the blood, hearts, livers, and brains of the animals they kill, often (C) [leaving / leave] the muscle meat for eagles. These organs tend to be much higher in fat.",
+         "ul": false
+        }
+       ],
+       "kind": "P-CONTEXT"
+      },
+      {
+       "text": "   (A)      (B) \t       (C)",
+       "runs": [
+        {
+         "t": "   (A)      (B) \t       (C)",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "① do -    that -    leave",
+       "runs": [
+        {
+         "t": "① do -    that -    leave",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② do -    what -   leaving",
+       "runs": [
+        {
+         "t": "② do -    what -   leaving",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ are -   what -   leaving",
+       "runs": [
+        {
+         "t": "③ are -   what -   leaving",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ are -   that -    leave",
+       "runs": [
+        {
+         "t": "④ are -   that -    leave",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ do -   that -    leaving",
+       "runs": [
+        {
+         "t": "⑤ do -   that -    leaving",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 글의 (A), (B), (C), (D)의 각 밑줄 친 부분에서 어법상 맞는 낱말로 가장 적절한 것은? [ep2]",
+       "runs": [
+        {
+         "t": "다음 글의 (A), (B), (C), (D)의 각 밑줄 친 부분에서 어법상 맞는 낱말로 가장 적절한 것은? [ep2]",
+         "ul": false
+        }
+       ],
+       "kind": "Q"
+      },
+      {
+       "text": " Some researchers assumed early human beings ate mainly the muscle (A)[flash / flesh] of animals, as we (B)[did / do] today. By “meat,” they meant the muscle of the animal. Yet focusing on the muscle appears to be a relatively recent (C)[phenomenon / phenomena]. In every history on the subject, the evidence suggests that early human populations (D)[prefer / preferred] the fat and organ meat of the animal over its muscle meat. Vilhjalmur Stefansson, an arctic explorer, found that the Inuit were careful to save fatty meat and organs for human consumption while giving muscle meat to the dogs. In this way, humans ate as other large, meat-eating mammals eat. Lions and tigers, for instance, first eat the blood, hearts, livers, and brains of the animals they kill, often leaving the muscle meat for eagles. These organs tend to be much higher in fat.",
+       "runs": [
+        {
+         "t": " Some researchers assumed early human beings ate mainly the muscle (A)[flash / flesh] of animals, as we (B)[did / do] today. By “meat,” they meant the muscle of the animal. Yet focusing on the muscle appears to be a relatively recent (C)[phenomenon / phenomena]. In every history on the subject, the evidence suggests that early human populations (D)[prefer / preferred] the fat and organ meat of the animal over its muscle meat. Vilhjalmur Stefansson, an arctic explorer, found that the Inuit were careful to save fatty meat and organs for human consumption while giving muscle meat to the dogs. In this way, humans ate as other large, meat-eating mammals eat. Lions and tigers, for instance, first eat the blood, hearts, livers, and brains of the animals they kill, often leaving the muscle meat for eagles. These organs tend to be much higher in fat.",
+         "ul": false
+        }
+       ],
+       "kind": "P-CONTEXT"
+      },
+      {
+       "text": "    (A)     (B) \t         (C) \t       (D)",
+       "runs": [
+        {
+         "t": "    (A)     (B) \t         (C) \t       (D)",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "① flesh    do      phenomena     preferred",
+       "runs": [
+        {
+         "t": "① flesh    do      phenomena     preferred",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② flesh    do      phenomenon    preferred",
+       "runs": [
+        {
+         "t": "② flesh    do      phenomenon    preferred",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ flash    do      phenomenon    preferred",
+       "runs": [
+        {
+         "t": "③ flash    do      phenomenon    preferred",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ flash    did     phenomenon     prefer",
+       "runs": [
+        {
+         "t": "④ flash    did     phenomenon     prefer",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ flash    did     phenomena      prefer",
+       "runs": [
+        {
+         "t": "⑤ flash    did     phenomena      prefer",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 글의 밑줄 친 ⓐ~ⓔ 중, 어법상 어색한 것은 모두 몇 개인가? [pr1]",
+       "runs": [
+        {
+         "t": "다음 글의 밑줄 친 ⓐ~ⓔ 중, 어법상 어색한 것은 모두 몇 개인가? [pr1]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-GRM-UND-WRONG"
+      },
+      {
+       "text": " In the late 1960s, the art world was divided into so many minor movements that tracking them all is difficult. In one of the most radical of these movements, artists believed that they didn’t need ⓐproducing any artwork at all (rather like Dada) but simply generate concepts or ideas. In reality, this conceptual art, ⓑas it’s known, is often a type of performance or “happening” that can be very spontaneous and audience-driven. Sometimes it’s simply writing on a wall. One early conceptual artist camped out with a coyote for a week in an art gallery ⓒto get people thinking about the treatment of Native Americans. Feminist art is linked with conceptual art in that it focuses on the inequalities ⓓfaced women and tries to provoke change. The movement has no set style. It might include a painting on canvas or a group of women dressed up in gorilla costumes ⓔcrash a public event to pass out pamphlets.",
+       "runs": [
+        {
+         "t": " In the late 1960s, the art world was divided into so many minor movements that tracking them all is difficult. In one of the most radical of these movements, artists believed that they didn’t need ⓐ",
+         "ul": false
+        },
+        {
+         "t": "producing",
+         "ul": true
+        },
+        {
+         "t": " any artwork at all (rather like Dada) but simply generate concepts or ideas. In reality, this conceptual art, ⓑ",
+         "ul": false
+        },
+        {
+         "t": "as",
+         "ul": true
+        },
+        {
+         "t": " it’s known, is often a type of performance or “happening” that can be very spontaneous and audience-driven. Sometimes it’s simply writing on a wall. One early conceptual artist camped out with a coyote for a week in an art gallery ⓒ",
+         "ul": false
+        },
+        {
+         "t": "to get",
+         "ul": true
+        },
+        {
+         "t": " people thinking about the treatment of Native Americans. Feminist art is linked with conceptual art in that it focuses on the inequalities ⓓ",
+         "ul": false
+        },
+        {
+         "t": "faced",
+         "ul": true
+        },
+        {
+         "t": " women and tries to provoke change. The movement has no set style. It might include a painting on canvas or a group of women dressed up in gorilla costumes ⓔ",
+         "ul": false
+        },
+        {
+         "t": "crash",
+         "ul": true
+        },
+        {
+         "t": " a public event to pass out pamphlets.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① 1개    ② 2개    ③ 3개    ④ 4개    ⑤ 5개",
+       "runs": [
+        {
+         "t": "① 1개    ② 2개    ③ 3개    ④ 4개    ⑤ 5개",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 글의 괄호 (A), (B), (C) 안에서 어법에 맞는 표현으로 가장 적절한 것은? [pr2]",
+       "runs": [
+        {
+         "t": "다음 글의 괄호 (A), (B), (C) 안에서 어법에 맞는 표현으로 가장 적절한 것은? [pr2]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-GRM-PAREN"
+      },
+      {
+       "text": " Astronomical stars, the ones visible in the sky at night and scattered across the universe, (A)[confine / radiate] their own light and heat rather than, as with the planet Earth, relying on other bodies for illumination and warmth. So it is, metaphorically, with the stars of motion pictures and team sports. They (B)[engage / inquire] attention by themselves. People will pay to attend movies or games in which they appear because they are appearing. When Michael Jordan, the dominant basketball player of the last decade of the twentieth century, ended his second retirement from the sport, the team for which he played, the Washington Wizards, attracted sellout audiences everywhere it played. The previous year, when Jordan was not playing for the Wizards, far fewer spectators had attended the team's games. This pattern (C)[emerged / ceased] again after he retired for the third time. Upon Jordan leaving, the team didn't get people's attention any more.",
+       "runs": [
+        {
+         "t": " Astronomical stars, the ones visible in the sky at night and scattered across the universe, (A)[confine / radiate] their own light and heat rather than, as with the planet Earth, relying on other bodies for illumination and warmth. So it is, metaphorically, with the stars of motion pictures and team sports. They (B)[engage / inquire] attention by themselves. People will pay to attend movies or games in which they appear because they are appearing. When Michael Jordan, the dominant basketball player of the last decade of the twentieth century, ended his second retirement from the sport, the team for which he played, the Washington Wizards, attracted sellout audiences everywhere it played. The previous year, when Jordan was not playing for the Wizards, far fewer spectators had attended the team's games. This pattern (C)[emerged / ceased] again after he retired for the third time. Upon Jordan leaving, the team didn't get people's attention any more.",
+         "ul": false
+        }
+       ],
+       "kind": "P-CONTEXT"
+      },
+      {
+       "text": "    (A)             (B)\t          (C)",
+       "runs": [
+        {
+         "t": "    (A)             (B)\t          (C)",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "① radiate\t   inquire\tceased",
+       "runs": [
+        {
+         "t": "① radiate\t   inquire\tceased",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② radiate\t   engage\temerged",
+       "runs": [
+        {
+         "t": "② radiate\t   engage\temerged",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ radiate\t   engage\tceased",
+       "runs": [
+        {
+         "t": "③ radiate\t   engage\tceased",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ confine\t   inquire\tceased",
+       "runs": [
+        {
+         "t": "④ confine\t   inquire\tceased",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ confine\t   engage\temerged",
+       "runs": [
+        {
+         "t": "⑤ confine\t   engage\temerged",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 글의 밑줄 친 부분 중 어법상 어색한 것은? [pr3]",
+       "runs": [
+        {
+         "t": "다음 글의 밑줄 친 부분 중 어법상 어색한 것은? [pr3]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-GRM-UND-WRONG"
+      },
+      {
+       "text": " Looking for the poem's subject is natural. ⓐAlmost all poetry has messages to deliver — lots of them, profound and diverse as stars. But these messages are sometimes hidden, and you have to read ⓑattentively to make them out. Notice that we specifically avoid saying, \"The subject is what a poem's about\" — because ⓒthat implies that what a poem says is all there is to a poem. If that were so, why would people go to the trouble of writing poetry? Instead, people go to the trouble because poems sound a certain way, ⓓbuilt in certain shapes, and have certain beauties in sound and meaning, all of which accompanies the meaning and goes beyond it. Not all poems have a single subject. Some poems have many subjects, and some have subjects that aren't clear. Sometimes a poem's subject is simply ⓔitself—the words in it and their relationships to one another. The point is to be alert for the subject (or subjects) of any poem as you read.",
+       "runs": [
+        {
+         "t": " Looking for the poem's subject is natural. ⓐ",
+         "ul": false
+        },
+        {
+         "t": "Almost",
+         "ul": true
+        },
+        {
+         "t": " all poetry has messages to deliver — lots of them, profound and diverse as stars. But these messages are sometimes hidden, and you have to read ⓑ",
+         "ul": false
+        },
+        {
+         "t": "attentively",
+         "ul": true
+        },
+        {
+         "t": " to make them out. Notice that we specifically avoid saying, \"The subject is what a poem's about\" — because ⓒ",
+         "ul": false
+        },
+        {
+         "t": "that",
+         "ul": true
+        },
+        {
+         "t": " implies that what a poem says is all there is to a poem. If that were so, why would people go to the trouble of writing poetry? Instead, people go to the trouble because poems sound a certain way, ⓓ",
+         "ul": false
+        },
+        {
+         "t": "built",
+         "ul": true
+        },
+        {
+         "t": " in certain shapes, and have certain beauties in sound and meaning, all of which accompanies the meaning and goes beyond it. Not all poems have a single subject. Some poems have many subjects, and some have subjects that aren't clear. Sometimes a poem's subject is simply ⓔ",
+         "ul": false
+        },
+        {
+         "t": "itself",
+         "ul": true
+        },
+        {
+         "t": "—the words in it and their relationships to one another. The point is to be alert for the subject (or subjects) of any poem as you read.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ",
+       "runs": [
+        {
+         "t": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 글의 밑줄 친 부분 중, 어법상 옳은 것은? [pr4]",
+       "runs": [
+        {
+         "t": "다음 글의 밑줄 친 부분 중, 어법상 옳은 것은? [pr4]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-GRM-CORRECT-SINGLE"
+      },
+      {
+       "text": " After serving in the navy at the end of the Civil War, James Walter Thompson went to New York ⓐdetermined to carve out a career in the big city. In 1868 he was hired by a tiny advertising agency run by William J. Carlton, at that point still involved in the primitive business of placing advertisements in newspapers and magazines. It was the latter that interested Thompson, ⓑwhat noticed that they ran few advertisements while staying longer in the family home than newspapers, thus making them ⓒpotential a more effective medium. He began to specialize in magazine advertising, gradually building up an ⓓexclusively stable of publications available only to his clients. Ten years after joining the agency, he bought it for a total of US $1,300 (US $500 for the company and US $800 for the furniture) and ⓔwas put his own name above the door.",
+       "runs": [
+        {
+         "t": " After serving in the navy at the end of the Civil War, James Walter Thompson went to New York ⓐ",
+         "ul": false
+        },
+        {
+         "t": "determined",
+         "ul": true
+        },
+        {
+         "t": " to carve out a career in the big city. In 1868 he was hired by a tiny advertising agency run by William J. Carlton, at that point still involved in the primitive business of placing advertisements in newspapers and magazines. It was the latter that interested Thompson, ⓑ",
+         "ul": false
+        },
+        {
+         "t": "what",
+         "ul": true
+        },
+        {
+         "t": " noticed that they ran few advertisements while staying longer in the family home than newspapers, thus making them ⓒ",
+         "ul": false
+        },
+        {
+         "t": "potential",
+         "ul": true
+        },
+        {
+         "t": " a more effective medium. He began to specialize in magazine advertising, gradually building up an ⓓ",
+         "ul": false
+        },
+        {
+         "t": "exclusively",
+         "ul": true
+        },
+        {
+         "t": " stable of publications available only to his clients. Ten years after joining the agency, he bought it for a total of US $1,300 (US $500 for the company and US $800 for the furniture) and ⓔ",
+         "ul": false
+        },
+        {
+         "t": "was put",
+         "ul": true
+        },
+        {
+         "t": " his own name above the door.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ",
+       "runs": [
+        {
+         "t": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 글의 괄호 (A), (B), (C) 안에서 문맥에 맞는 낱말로 가장 적절한 것은? [ep1]",
+       "runs": [
+        {
+         "t": "다음 글의 괄호 (A), (B), (C) 안에서 문맥에 맞는 낱말로 가장 적절한 것은? [ep1]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-VOC-PAREN"
+      },
+      {
+       "text": " When I was young, my parents worshipped medical doctors as if they were exceptional beings possessing godlike qualities. But I never dreamed of pursuing a career in medicine until I entered the hospital for a rare disease. I became a medical curiosity, (A)[attracting / disturbing] some of the area's top specialists to look in on me and review my case. As a patient, and a teenager eager to return to college, I asked each doctor who examined me, \"What caused my disease?\" \"How will you make me better?\" The typical response was (B)[verbal / nonverbal]. They shook their heads and walked out of my room. I remember thinking to myself, \"Well, I could do that.\" When it became clear to me that no doctor could answer my basic questions, I walked out of the hospital (C)[for / against] medical advice. Returning to college, I pursued medicine with a great passion.",
+       "runs": [
+        {
+         "t": " When I was young, my parents worshipped medical doctors as if they were exceptional beings possessing godlike qualities. But I never dreamed of pursuing a career in medicine until I entered the hospital for a rare disease. I became a medical curiosity, (A)[attracting / disturbing] some of the area's top specialists to look in on me and review my case. As a patient, and a teenager eager to return to college, I asked each doctor who examined me, \"What caused my disease?\" \"How will you make me better?\" The typical response was (B)[verbal / nonverbal]. They shook their heads and walked out of my room. I remember thinking to myself, \"Well, I could do that.\" When it became clear to me that no doctor could answer my basic questions, I walked out of the hospital (C)[for / against] medical advice. Returning to college, I pursued medicine with a great passion.",
+         "ul": false
+        }
+       ],
+       "kind": "P-CONTEXT"
+      },
+      {
+       "text": "      (A)\t    (B)\t\t  (C)\t",
+       "runs": [
+        {
+         "t": "      (A)\t    (B)\t\t  (C)\t",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "① attracting\t verbal\t\tagainst",
+       "runs": [
+        {
+         "t": "① attracting\t verbal\t\tagainst",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② attracting\t nonverbal\tfor",
+       "runs": [
+        {
+         "t": "② attracting\t nonverbal\tfor",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ attracting\t nonverbal\tagainst",
+       "runs": [
+        {
+         "t": "③ attracting\t nonverbal\tagainst",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ disturbing\t verbal\t\tfor",
+       "runs": [
+        {
+         "t": "④ disturbing\t verbal\t\tfor",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ disturbing\t nonverbal\tagainst",
+       "runs": [
+        {
+         "t": "⑤ disturbing\t nonverbal\tagainst",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "(A), (B), (C)의 각 네모 안에서 문맥에 맞는 낱말로 가장 적절한 것은? [ep2]",
+       "runs": [
+        {
+         "t": "(A), (B), (C)의 각 네모 안에서 문맥에 맞는 낱말로 가장 적절한 것은? [ep2]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-VOC-PAREN"
+      },
+      {
+       "text": "Some researchers assumed early human beings ate mainly the muscle flesh of animals, as we do today. By “meat,” they meant the muscle of the animal. Yet focusing on the muscle appears to be a relatively (A) [recent / ancient] phenomenon. In every history on the subject, the evidence suggests that early human populations (B) [disfavored / preferred] the fat and organ meat of the animal over its muscle meat. Vilhjalmur Stefansson, an arctic explorer, found that the Inuit were careful to save fatty meat and organs for human consumption while giving muscle meat to the dogs. In this way, humans ate as other large, meat-eating mammals eat. Lions and tigers, for instance, first eat the blood, hearts, livers, and brains of the animals they kill, often leaving the muscle meat for eagles. These organs tend to be much higher in (C) [fat / muscle].",
+       "runs": [
+        {
+         "t": "Some researchers assumed early human beings ate mainly the muscle flesh of animals, as we do today. By “meat,” they meant the muscle of the animal. Yet focusing on the muscle appears to be a relatively (A) [recent / ancient] phenomenon. In every history on the subject, the evidence suggests that early human populations (B) [disfavored / preferred] the fat and organ meat of the animal over its muscle meat. Vilhjalmur Stefansson, an arctic explorer, found that the Inuit were careful to save fatty meat and organs for human consumption while giving muscle meat to the dogs. In this way, humans ate as other large, meat-eating mammals eat. Lions and tigers, for instance, first eat the blood, hearts, livers, and brains of the animals they kill, often leaving the muscle meat for eagles. These organs tend to be much higher in (C) [fat / muscle].",
+         "ul": false
+        }
+       ],
+       "kind": "P-CONTEXT"
+      },
+      {
+       "text": "     (A)\t   (B)\t      (C)",
+       "runs": [
+        {
+         "t": "     (A)\t   (B)\t      (C)",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "① recent -    disfavored -  muscle",
+       "runs": [
+        {
+         "t": "① recent -    disfavored -  muscle",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② ancient -   disfavored -  fat",
+       "runs": [
+        {
+         "t": "② ancient -   disfavored -  fat",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ ancient -   preferred -   muscle",
+       "runs": [
+        {
+         "t": "③ ancient -   preferred -   muscle",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ recent -    preferred -   fat",
+       "runs": [
+        {
+         "t": "④ recent -    preferred -   fat",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ ancient -   preferred -   fat",
+       "runs": [
+        {
+         "t": "⑤ ancient -   preferred -   fat",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 글에서 밑줄 친 단어의 뜻풀이가 문맥상 가장 적절한 것은? [pr1]",
+       "runs": [
+        {
+         "t": "다음 글에서 밑줄 친 단어의 뜻풀이가 문맥상 가장 적절한 것은? [pr1]",
+         "ul": false
+        }
+       ],
+       "kind": "Q"
+      },
+      {
+       "text": " In the late 1960s, the art world was divided into so many ⓐminor movements that tracking them all is difficult. In one of the most radical of these movements, artists believed that they didn't need to produce any artwork at all (rather like Dada) but simply generate concepts or ideas. In reality, this conceptual art, as it's known, is often a type of performance or \"happening\" that can be very ⓑspontaneous and audience-driven. Sometimes it's simply writing on a wall. One early conceptual artist camped out with a coyote for a week in an art gallery to get people thinking about the ⓒtreatment of Native Americans. Feminist art is linked with conceptual art in that it focuses on the inequalities faced by women and tries to ⓓprovoke change. The movement has no set style. It might include a painting on canvas or a group of women dressed up in gorilla costumes ⓔcrashing a public event to pass out pamphlets.",
+       "runs": [
+        {
+         "t": " In the late 1960s, the art world was divided into so many ⓐ",
+         "ul": false
+        },
+        {
+         "t": "minor",
+         "ul": true
+        },
+        {
+         "t": " movements that tracking them all is difficult. In one of the most radical of these movements, artists believed that they didn't need to produce any artwork at all (rather like Dada) but simply generate concepts or ideas. In reality, this conceptual art, as it's known, is often a type of performance or \"happening\" that can be very ⓑ",
+         "ul": false
+        },
+        {
+         "t": "spontaneous",
+         "ul": true
+        },
+        {
+         "t": " and audience-driven. Sometimes it's simply writing on a wall. One early conceptual artist camped out with a coyote for a week in an art gallery to get people thinking about the ⓒ",
+         "ul": false
+        },
+        {
+         "t": "treatment ",
+         "ul": true
+        },
+        {
+         "t": "of Native Americans. Feminist art is linked with conceptual art in that it focuses on the inequalities faced by women and tries to ⓓ",
+         "ul": false
+        },
+        {
+         "t": "provoke",
+         "ul": true
+        },
+        {
+         "t": " change. The movement has no set style. It might include a painting on canvas or a group of women dressed up in gorilla costumes ⓔ",
+         "ul": false
+        },
+        {
+         "t": "crashing",
+         "ul": true
+        },
+        {
+         "t": " a public event to pass out pamphlets.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① not likely to be dangerous to someone's life",
+       "runs": [
+        {
+         "t": "① not likely to be dangerous to someone's life",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② not planned or arranged, but done suddenly",
+       "runs": [
+        {
+         "t": "② not planned or arranged, but done suddenly",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ medical attention given to an injured person",
+       "runs": [
+        {
+         "t": "③ medical attention given to an injured person",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ deliberately make someone behave aggressively",
+       "runs": [
+        {
+         "t": "④ deliberately make someone behave aggressively",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ failing unexpectedly, often with serious effects",
+       "runs": [
+        {
+         "t": "⑤ failing unexpectedly, often with serious effects",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 글의 괄호 (A), (B), (C) 안에서 어법에 맞는 표현으로 가장 적절한 것은? [pr2]",
+       "runs": [
+        {
+         "t": "다음 글의 괄호 (A), (B), (C) 안에서 어법에 맞는 표현으로 가장 적절한 것은? [pr2]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-GRM-PAREN"
+      },
+      {
+       "text": " Astronomical stars, the ones visible in the sky at night and scattered across the universe, (A)[confine / radiate] their own light and heat rather than, as with the planet Earth, relying on other bodies for illumination and warmth. So it is, metaphorically, with the stars of motion pictures and team sports. They (B)[engage / inquire] attention by themselves. People will pay to attend movies or games in which they appear because they are appearing. When Michael Jordan, the dominant basketball player of the last decade of the twentieth century, ended his second retirement from the sport, the team for which he played, the Washington Wizards, attracted sellout audiences everywhere it played. The previous year, when Jordan was not playing for the Wizards, far fewer spectators had attended the team's games. This pattern (C)[emerged / ceased] again after he retired for the third time. Upon Jordan leaving, the team didn't get people's attention any more.",
+       "runs": [
+        {
+         "t": " Astronomical stars, the ones visible in the sky at night and scattered across the universe, (A)[confine / radiate] their own light and heat rather than, as with the planet Earth, relying on other bodies for illumination and warmth. So it is, metaphorically, with the stars of motion pictures and team sports. They (B)[engage / inquire] attention by themselves. People will pay to attend movies or games in which they appear because they are appearing. When Michael Jordan, the dominant basketball player of the last decade of the twentieth century, ended his second retirement from the sport, the team for which he played, the Washington Wizards, attracted sellout audiences everywhere it played. The previous year, when Jordan was not playing for the Wizards, far fewer spectators had attended the team's games. This pattern (C)[emerged / ceased] again after he retired for the third time. Upon Jordan leaving, the team didn't get people's attention any more.",
+         "ul": false
+        }
+       ],
+       "kind": "P-CONTEXT"
+      },
+      {
+       "text": "     (A)\t     (B)\t          (C)",
+       "runs": [
+        {
+         "t": "     (A)\t     (B)\t          (C)",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "① radiate\t   inquire\tceased",
+       "runs": [
+        {
+         "t": "① radiate\t   inquire\tceased",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② radiate\t   engage\temerged",
+       "runs": [
+        {
+         "t": "② radiate\t   engage\temerged",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ radiate\t   engage\tceased",
+       "runs": [
+        {
+         "t": "③ radiate\t   engage\tceased",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ confine\t   inquire\tceased",
+       "runs": [
+        {
+         "t": "④ confine\t   inquire\tceased",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ confine\t   engage\temerged",
+       "runs": [
+        {
+         "t": "⑤ confine\t   engage\temerged",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 글의 밑줄 친 부분 중 어법상 어색한 것은? [pr3]",
+       "runs": [
+        {
+         "t": "다음 글의 밑줄 친 부분 중 어법상 어색한 것은? [pr3]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-GRM-UND-WRONG"
+      },
+      {
+       "text": " Looking for the poem's subject is natural. ⓐAlmost all poetry has messages to deliver — lots of them, profound and diverse as stars. But these messages are sometimes hidden, and you have to read ⓑattentively to make them out. Notice that we specifically avoid saying, \"The subject is what a poem's about\" — because ⓒthat implies that what a poem says is all there is to a poem. If that were so, why would people go to the trouble of writing poetry? Instead, people go to the trouble because poems sound a certain way, ⓓbuilt in certain shapes, and have certain beauties in sound and meaning, all of which accompanies the meaning and goes beyond it. Not all poems have a single subject. Some poems have many subjects, and some have subjects that aren't clear. Sometimes a poem's subject is simply ⓔitself—the words in it and their relationships to one another. The point is to be alert for the subject (or subjects) of any poem as you read.",
+       "runs": [
+        {
+         "t": " Looking for the poem's subject is natural. ⓐ",
+         "ul": false
+        },
+        {
+         "t": "Almost",
+         "ul": true
+        },
+        {
+         "t": " all poetry has messages to deliver — lots of them, profound and diverse as stars. But these messages are sometimes hidden, and you have to read ⓑ",
+         "ul": false
+        },
+        {
+         "t": "attentively",
+         "ul": true
+        },
+        {
+         "t": " to make them out. Notice that we specifically avoid saying, \"The subject is what a poem's about\" — because ⓒ",
+         "ul": false
+        },
+        {
+         "t": "that",
+         "ul": true
+        },
+        {
+         "t": " implies that what a poem says is all there is to a poem. If that were so, why would people go to the trouble of writing poetry? Instead, people go to the trouble because poems sound a certain way, ⓓ",
+         "ul": false
+        },
+        {
+         "t": "built",
+         "ul": true
+        },
+        {
+         "t": " in certain shapes, and have certain beauties in sound and meaning, all of which accompanies the meaning and goes beyond it. Not all poems have a single subject. Some poems have many subjects, and some have subjects that aren't clear. Sometimes a poem's subject is simply ⓔ",
+         "ul": false
+        },
+        {
+         "t": "itself",
+         "ul": true
+        },
+        {
+         "t": "—the words in it and their relationships to one another. The point is to be alert for the subject (or subjects) of any poem as you read.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ",
+       "runs": [
+        {
+         "t": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 글의 밑줄 친 부분 중, 낱말의 쓰임이 적절하지 않은 것은? [pr4]",
+       "runs": [
+        {
+         "t": "다음 글의 밑줄 친 부분 중, 낱말의 쓰임이 적절하지 않은 것은? [pr4]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-VOC-UND-WRONG"
+      },
+      {
+       "text": " After serving in the navy at the end of the Civil War, James Walter Thompson went to New York determined to ⓐcarve out a career in the big city. In 1868 he was ⓑhired by a tiny advertising agency run by William J. Carlton, at that point still involved in the primitive business of placing advertisements in magazines and newspapers. It was ⓒthe latter that interested Thompson, who noticed that they ran few advertisements while staying longer in the family home than newspapers, thus making them potentially a more effective medium. He began to specialize in magazine advertising, gradually building up an ⓓexclusive stable of publications available only to his clients. Ten years after joining the agency, he bought it for a total of US $1, 300 (US $500 for the company and US $800 for the furniture) and ⓔput his own name above the door.",
+       "runs": [
+        {
+         "t": " After serving in the navy at the end of the Civil War, James Walter Thompson went to New York determined to ⓐ",
+         "ul": false
+        },
+        {
+         "t": "carve",
+         "ul": true
+        },
+        {
+         "t": " out a career in the big city. In 1868 he was ⓑ",
+         "ul": false
+        },
+        {
+         "t": "hired",
+         "ul": true
+        },
+        {
+         "t": " by a tiny advertising agency run by William J. Carlton, at that point still involved in the primitive business of placing advertisements in magazines and newspapers. It was ⓒ",
+         "ul": false
+        },
+        {
+         "t": "the latter",
+         "ul": true
+        },
+        {
+         "t": " that interested Thompson, who noticed that they ran few advertisements while staying longer in the family home than newspapers, thus making them potentially a more effective medium. He began to specialize in magazine advertising, gradually building up an ⓓ",
+         "ul": false
+        },
+        {
+         "t": "exclusive",
+         "ul": true
+        },
+        {
+         "t": " stable of publications available only to his clients. Ten years after joining the agency, he bought it for a total of US $1, 300 (US $500 for the company and US $800 for the furniture) and ⓔ",
+         "ul": false
+        },
+        {
+         "t": "put",
+         "ul": true
+        },
+        {
+         "t": " his own name above the door.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ",
+       "runs": [
+        {
+         "t": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 빈칸에 들어갈 말로 가장 적절한 것은? [ep1]",
+       "runs": [
+        {
+         "t": "다음 빈칸에 들어갈 말로 가장 적절한 것은? [ep1]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-BLANK-SENT"
+      },
+      {
+       "text": " When I was young, my parents worshipped medical doctors as if they were exceptional being possessing godlike qualities. But I never dreamed of pursuing a career in medicine until __________________. I became a medical curiosity, attracting some of the area’s top specialists to look in on me and review my case. As a patient, and a teenager eager to return to college, I asked each doctor who examined me, “What caused my disease?” “How will you make me better?” The typical response was nonverbal. they shook their heads and walked out of my room. I remember thinking to myself, “Well, I could do that.” When it became clear to me that no doctor could answer my basic questions, I walked out of the hospital against medical advice. Returning to college, I pursued medicine with a great passion.",
+       "runs": [
+        {
+         "t": " When I was young, my parents worshipped medical doctors as if they were exceptional being possessing godlike qualities. But I never dreamed of pursuing a career in medicine until __________________. I became a medical curiosity, attracting some of the area’s top specialists to look in on me and review my case. As a patient, and a teenager eager to return to college, I asked each doctor who examined me, “What caused my disease?” “How will you make me better?” The typical response was nonverbal. they shook their heads and walked out of my room. I remember thinking to myself, “Well, I could do that.” When it became clear to me that no doctor could answer my basic questions, I walked out of the hospital against medical advice. Returning to college, I pursued medicine with a great passion.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① I survived from a serious accident",
+       "runs": [
+        {
+         "t": "① I survived from a serious accident",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② I read a book about modern medicine",
+       "runs": [
+        {
+         "t": "② I read a book about modern medicine",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ I decided to follow my parents’ advice",
+       "runs": [
+        {
+         "t": "③ I decided to follow my parents’ advice",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ I entered the hospital for a rare disease",
+       "runs": [
+        {
+         "t": "④ I entered the hospital for a rare disease",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ I took a lecture from one of the top specialists",
+       "runs": [
+        {
+         "t": "⑤ I took a lecture from one of the top specialists",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 빈칸에 들어갈 말로 가장 적절한 것은? [ep2]",
+       "runs": [
+        {
+         "t": "다음 빈칸에 들어갈 말로 가장 적절한 것은? [ep2]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-BLANK-SENT"
+      },
+      {
+       "text": "Some researchers assumed early human beings ate mainly the muscle flesh of animals, as we do today. By “meat,” they meant the muscle of the animal. Yet focusing on the muscle appears to be a relatively recent phenomenon. In every history on the subject, the evidence suggests that early human populations ________________________ over its muscle meat. Vilhjalmur Stefansson, an arctic explorer, found that the Inuit were careful to save fatty meat and organs for human consumption while giving muscle meat to the dogs. In this way, humans ate as other large, meat-eating mammals eat. Lions and tigers, for instance, first eat the blood, hearts, livers, and brains of the animals they kill, often leaving the muscle meat for eagles. These organs tend to be much higher in fat.",
+       "runs": [
+        {
+         "t": "Some researchers assumed early human beings ate mainly the muscle flesh of animals, as we do today. By “meat,” they meant the muscle of the animal. Yet focusing on the muscle appears to be a relatively recent phenomenon. In every history on the subject, the evidence suggests that early human populations ________________________ over its muscle meat. Vilhjalmur Stefansson, an arctic explorer, found that the Inuit were careful to save fatty meat and organs for human consumption while giving muscle meat to the dogs. In this way, humans ate as other large, meat-eating mammals eat. Lions and tigers, for instance, first eat the blood, hearts, livers, and brains of the animals they kill, often leaving the muscle meat for eagles. These organs tend to be much higher in fat.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① were nourished through vegetarian diet",
+       "runs": [
+        {
+         "t": "① were nourished through vegetarian diet",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② consumed raw fish for their adequate nutrition",
+       "runs": [
+        {
+         "t": "② consumed raw fish for their adequate nutrition",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ became more likely to prefer cooked meat of the animal",
+       "runs": [
+        {
+         "t": "③ became more likely to prefer cooked meat of the animal",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ were reluctant to eat the fatty organ parts of the animal",
+       "runs": [
+        {
+         "t": "④ were reluctant to eat the fatty organ parts of the animal",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ had a preference for the fat and organ meat of the animal",
+       "runs": [
+        {
+         "t": "⑤ had a preference for the fat and organ meat of the animal",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 빈칸에 들어갈 말로 가장 적절한 것은? [pr1]",
+       "runs": [
+        {
+         "t": "다음 빈칸에 들어갈 말로 가장 적절한 것은? [pr1]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-BLANK-SENT"
+      },
+      {
+       "text": " In the late 1960s, the art world was divided into so many minor movements that tracking them all is difficult. In one of the most radical of these movements, artists believed that they didn't need to produce any artwork at all (rather like Dada) but simply generate concepts or ideas. In reality, this conceptual art, as it's known, is often a type of performance or \"happening\" that can be very spontaneous and audience-driven. Sometimes it's simply writing on a wall. One early conceptual artist camped out with a coyote for a week in an art gallery to get people thinking about the treatment of Native Americans. Feminist art is linked with conceptual art in that it focuses on the inequalities faced by women and tries to provoke change. _____________________________. It might include a painting on canvas or a group of women dressed up in gorilla costumes crashing a public event to pass out pamphlets.",
+       "runs": [
+        {
+         "t": " In the late 1960s, the art world was divided into so many minor movements that tracking them all is difficult. In one of the most radical of these movements, artists believed that they didn't need to produce any artwork at all (rather like Dada) but simply generate concepts or ideas. In reality, this conceptual art, as it's known, is often a type of performance or \"happening\" that can be very spontaneous and audience-driven. Sometimes it's simply writing on a wall. One early conceptual artist camped out with a coyote for a week in an art gallery to get people thinking about the treatment of Native Americans. Feminist art is linked with conceptual art in that it focuses on the inequalities faced by women and tries to provoke change. _____________________________. It might include a painting on canvas or a group of women dressed up in gorilla costumes crashing a public event to pass out pamphlets.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① The movement has no fixed style.",
+       "runs": [
+        {
+         "t": "① The movement has no fixed style.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② The movement has standardized style.",
+       "runs": [
+        {
+         "t": "② The movement has standardized style.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ The movement benefits from diversity.",
+       "runs": [
+        {
+         "t": "③ The movement benefits from diversity.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ The movement celebrates mainstream of the art world.",
+       "runs": [
+        {
+         "t": "④ The movement celebrates mainstream of the art world.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ The movement is responsible for the inflexibility of the art world.",
+       "runs": [
+        {
+         "t": "⑤ The movement is responsible for the inflexibility of the art world.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 빈칸에 들어갈 말로 가장 적절한 것은? [pr2]",
+       "runs": [
+        {
+         "t": "다음 빈칸에 들어갈 말로 가장 적절한 것은? [pr2]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-BLANK-SENT"
+      },
+      {
+       "text": " Astronomical stars, the ones visible in the sky at night and scattered across the universe, produce their own light and heat rather than, as with the planet Earth, relying on other bodies for illumination and warmth. The stars of motion pictures and team sports do too in that they ____________.  People will pay to attend movies or games in which they appear because they are appearing. When Michael Jordan, the dominant basketball player of the last decade of the twentieth century, ended his second retirement from the sport, the team for which he played, the Washington Wizards, attracted sellout audiences everywhere it played. The previous year, when Jordan was not playing for the Wizards, far fewer spectators had attended the team's games. This pattern resumed after he retired again.",
+       "runs": [
+        {
+         "t": " Astronomical stars, the ones visible in the sky at night and scattered across the universe, produce their own light and heat rather than, as with the planet Earth, relying on other bodies for illumination and warmth. The stars of motion pictures and team sports do too in that they ____________.  People will pay to attend movies or games in which they appear because they are appearing. When Michael Jordan, the dominant basketball player of the last decade of the twentieth century, ended his second retirement from the sport, the team for which he played, the Washington Wizards, attracted sellout audiences everywhere it played. The previous year, when Jordan was not playing for the Wizards, far fewer spectators had attended the team's games. This pattern resumed after he retired again.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① show themselves off",
+       "runs": [
+        {
+         "t": "① show themselves off",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② try to empathize with the fans",
+       "runs": [
+        {
+         "t": "② try to empathize with the fans",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ can enjoy everlasting popularity",
+       "runs": [
+        {
+         "t": "③ can enjoy everlasting popularity",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ rise to the stardom by accident",
+       "runs": [
+        {
+         "t": "④ rise to the stardom by accident",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ are likely to step down from star status",
+       "runs": [
+        {
+         "t": "⑤ are likely to step down from star status",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 글의 빈칸에 들어갈 말로 가장 적절한 것은? [pr3]",
+       "runs": [
+        {
+         "t": "다음 글의 빈칸에 들어갈 말로 가장 적절한 것은? [pr3]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-BLANK-SENT"
+      },
+      {
+       "text": " Looking for the poem's subject is natural. Almost all poetry has messages to deliver — lots of them, profound and diverse as stars. But these messages are sometimes hidden, and you have to read attentively to make them out. Notice that we specifically avoid saying, \"The subject is what a poem's about\" — because that implies that what a poem says is all there is to a poem. If that were so, why would people go to the trouble of writing poetry? Instead, people go to the trouble because poems sound a certain way, are built in certain shapes, and have certain beauties in sound and meaning, all of which accompanies the meaning and goes beyond it. Not all poems have a single subject. Some poems have many subjects, and some have subjects that aren't clear. Sometimes a poem's subject is simply itself—the words in it and their relationships to one another. The point is to be _________________.",
+       "runs": [
+        {
+         "t": " Looking for the poem's subject is natural. Almost all poetry has messages to deliver — lots of them, profound and diverse as stars. But these messages are sometimes hidden, and you have to read attentively to make them out. Notice that we specifically avoid saying, \"The subject is what a poem's about\" — because that implies that what a poem says is all there is to a poem. If that were so, why would people go to the trouble of writing poetry? Instead, people go to the trouble because poems sound a certain way, are built in certain shapes, and have certain beauties in sound and meaning, all of which accompanies the meaning and goes beyond it. Not all poems have a single subject. Some poems have many subjects, and some have subjects that aren't clear. Sometimes a poem's subject is simply itself—the words in it and their relationships to one another. The point is to be _________________.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① honest when the truth feels risky",
+       "runs": [
+        {
+         "t": "① honest when the truth feels risky",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② reasonable in a relationship with some trouble",
+       "runs": [
+        {
+         "t": "② reasonable in a relationship with some trouble",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ inconsiderate for ideas which come from writers",
+       "runs": [
+        {
+         "t": "③ inconsiderate for ideas which come from writers",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ understanding about all kinds of reading materials",
+       "runs": [
+        {
+         "t": "④ understanding about all kinds of reading materials",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ careful when making the subject of any poem out",
+       "runs": [
+        {
+         "t": "⑤ careful when making the subject of any poem out",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 빈칸에 들어갈 말로 가장 적절한 것은? [pr4]",
+       "runs": [
+        {
+         "t": "다음 빈칸에 들어갈 말로 가장 적절한 것은? [pr4]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-BLANK-SENT"
+      },
+      {
+       "text": " After serving in the navy at the end of the Civil War, James Walter Thompson went to New York determined to carve out a career in the big city. In 1868 he was hired by a tiny advertising agency run by William J. Carlton, at that point still involved in the primitive business of placing advertisements in newspapers and magazines. It was the latter that interested Thompson, who noticed that they ran few advertisements while staying longer in the family home than newspapers, thus __________________. He began to specialize in magazine advertising, gradually building up an exclusive stable of publications available only to his clients. Ten years after joining the agency, he bought it for a total of US $1, 300 (US $500 for the company and US $800 for the furniture) and put his own name above the door.",
+       "runs": [
+        {
+         "t": " After serving in the navy at the end of the Civil War, James Walter Thompson went to New York determined to carve out a career in the big city. In 1868 he was hired by a tiny advertising agency run by William J. Carlton, at that point still involved in the primitive business of placing advertisements in newspapers and magazines. It was the latter that interested Thompson, who noticed that they ran few advertisements while staying longer in the family home than newspapers, thus __________________. He began to specialize in magazine advertising, gradually building up an exclusive stable of publications available only to his clients. Ten years after joining the agency, he bought it for a total of US $1, 300 (US $500 for the company and US $800 for the furniture) and put his own name above the door.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① relying on the customers’ purchasing record",
+       "runs": [
+        {
+         "t": "① relying on the customers’ purchasing record",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② making them potentially a more effective medium",
+       "runs": [
+        {
+         "t": "② making them potentially a more effective medium",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ having a negative effect on the clients in the cities",
+       "runs": [
+        {
+         "t": "③ having a negative effect on the clients in the cities",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ bringing about technological advances in modern society",
+       "runs": [
+        {
+         "t": "④ bringing about technological advances in modern society",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ helping them design new products more quickly",
+       "runs": [
+        {
+         "t": "⑤ helping them design new products more quickly",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 글 다음에 이어질 순서로 가장 적절한 것은? [ep1]",
+       "runs": [
+        {
+         "t": "다음 글 다음에 이어질 순서로 가장 적절한 것은? [ep1]",
+         "ul": false
+        }
+       ],
+       "kind": "Q"
+      },
+      {
+       "text": "When I was young, my parents worshipped medical doctors as if they were exceptional beings possessing godlike qualities. But I never dreamed of pursuing a career in medicine until I entered the hospital for a rare disease.",
+       "runs": [
+        {
+         "t": "When I was young, my parents worshipped medical doctors as if they were exceptional beings possessing godlike qualities. But I never dreamed of pursuing a career in medicine until I entered the hospital for a rare disease.",
+         "ul": false
+        }
+       ],
+       "kind": "P-CONTEXT"
+      },
+      {
+       "text": "(A) I became a medical curiosity, attracting some of the area’s top specialists to look in on me and review my case. As a patient, and a teenager eager to return to college, I asked each doctor who examined me, “What caused my disease?” “How will you make me better?”",
+       "runs": [
+        {
+         "t": "(A) I became a medical curiosity, attracting some of the area’s top specialists to look in on me and review my case. As a patient, and a teenager eager to return to college, I asked each doctor who examined me, “What caused my disease?” “How will you make me better?”",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "(B) When it became clear to me that no doctor could answer my basic questions, I walked out of the hospital against medical advice. Returning to college, I pursued medicine with a great passion.",
+       "runs": [
+        {
+         "t": "(B) When it became clear to me that no doctor could answer my basic questions, I walked out of the hospital against medical advice. Returning to college, I pursued medicine with a great passion.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "(C) The typical response was nonverbal. They shook their heads and walked out of my room. I remember thinking to myself, “Well, I could do that.”",
+       "runs": [
+        {
+         "t": "(C) The typical response was nonverbal. They shook their heads and walked out of my room. I remember thinking to myself, “Well, I could do that.”",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① (A) - (C) - (B)",
+       "runs": [
+        {
+         "t": "① (A) - (C) - (B)",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② (B) - (C) - (A)",
+       "runs": [
+        {
+         "t": "② (B) - (C) - (A)",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ (B) - (A) - (C)",
+       "runs": [
+        {
+         "t": "③ (B) - (A) - (C)",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ (C) - (A) - (B)",
+       "runs": [
+        {
+         "t": "④ (C) - (A) - (B)",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ (C) - (B) - (A)",
+       "runs": [
+        {
+         "t": "⑤ (C) - (B) - (A)",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은? [ep2]",
+       "runs": [
+        {
+         "t": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은? [ep2]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-ORDER"
+      },
+      {
+       "text": " Some researchers assumed early human beings ate mainly the muscle flesh of animals, as we do today. By \"meat,\" they meant the muscle of the animal.",
+       "runs": [
+        {
+         "t": " Some researchers assumed early human beings ate mainly the muscle flesh of animals, as we do today. By \"meat,\" they meant the muscle of the animal.",
+         "ul": false
+        }
+       ],
+       "kind": "P-CONTEXT"
+      },
+      {
+       "text": "(A) Vilhjalmur Stefansson, an arctic explorer, found that the Inuit were careful to save fatty meat and organs for human consumption while giving muscle meat to the dogs. In this way, humans ate as other large, meat-eating mammals eat.",
+       "runs": [
+        {
+         "t": "(A) Vilhjalmur Stefansson, an arctic explorer, found that the Inuit were careful to save fatty meat and organs for human consumption while giving muscle meat to the dogs. In this way, humans ate as other large, meat-eating mammals eat.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "(B) Yet focusing on the muscle appears to be a relatively recent phenomenon. In every history on the subject, the evidence suggests that early human populations preferred the fat and organ meat of the animal over its muscle meat.",
+       "runs": [
+        {
+         "t": "(B) Yet focusing on the muscle appears to be a relatively recent phenomenon. In every history on the subject, the evidence suggests that early human populations preferred the fat and organ meat of the animal over its muscle meat.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "(C) Lions and tigers, for instance, first eat the blood, hearts, livers, and brains of the animals they kill, often leaving the muscle meat for eagles. These organs tend to be much higher in fat.",
+       "runs": [
+        {
+         "t": "(C) Lions and tigers, for instance, first eat the blood, hearts, livers, and brains of the animals they kill, often leaving the muscle meat for eagles. These organs tend to be much higher in fat.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① (A) - (C) - (B)",
+       "runs": [
+        {
+         "t": "① (A) - (C) - (B)",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② (B) - (A) - (C) ",
+       "runs": [
+        {
+         "t": "② (B) - (A) - (C) ",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ (B) - (C) - (A)",
+       "runs": [
+        {
+         "t": "③ (B) - (C) - (A)",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ (C) - (A) - (B)\t",
+       "runs": [
+        {
+         "t": "④ (C) - (A) - (B)\t",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ (C) - (B) - (A)\t",
+       "runs": [
+        {
+         "t": "⑤ (C) - (B) - (A)\t",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은? [pr1]",
+       "runs": [
+        {
+         "t": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은? [pr1]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-ORDER"
+      },
+      {
+       "text": " In the late 1960s, the art world was divided into so many minor movements that tracking them all is difficult.",
+       "runs": [
+        {
+         "t": " In the late 1960s, the art world was divided into so many minor movements that tracking them all is difficult.",
+         "ul": false
+        }
+       ],
+       "kind": "P-CONTEXT"
+      },
+      {
+       "text": "(A) Likewise, feminist art is linked with conceptual art in that it focuses on the inequalities faced by women and tries to provoke change. The movement has no set style. It might include a painting on canvas or a group of women dressed up in gorilla costumes crashing a public event to pass out pamphlets.",
+       "runs": [
+        {
+         "t": "(A) Likewise, feminist art is linked with conceptual art in that it focuses on the inequalities faced by women and tries to provoke change. The movement has no set style. It might include a painting on canvas or a group of women dressed up in gorilla costumes crashing a public event to pass out pamphlets.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "(B) In reality, this conceptual art, as it's known, is often a type of performance or \"happening\" that can be very spontaneous and audience-driven. Sometimes it's simply writing on a wall. One early conceptual artist camped out with a coyote for a week in an art gallery to get people thinking about the treatment of Native Americans.",
+       "runs": [
+        {
+         "t": "(B) In reality, this conceptual art, as it's known, is often a type of performance or \"happening\" that can be very spontaneous and audience-driven. Sometimes it's simply writing on a wall. One early conceptual artist camped out with a coyote for a week in an art gallery to get people thinking about the treatment of Native Americans.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "(C) In one of the most radical of these movements, artists believed that they didn't need to produce any artwork at all (rather like Dada) but simply generate concepts or ideas. That's what we call \"conceptual art\".",
+       "runs": [
+        {
+         "t": "(C) In one of the most radical of these movements, artists believed that they didn't need to produce any artwork at all (rather like Dada) but simply generate concepts or ideas. That's what we call \"conceptual art\".",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① (A) - (B) - (C)\t② (A) - (C) - (B)",
+       "runs": [
+        {
+         "t": "① (A) - (B) - (C)\t② (A) - (C) - (B)",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ (B) - (A) - (C)\t④ (C) - (A) - (B)",
+       "runs": [
+        {
+         "t": "③ (B) - (A) - (C)\t④ (C) - (A) - (B)",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ (C) - (B) - (A)",
+       "runs": [
+        {
+         "t": "⑤ (C) - (B) - (A)",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 글 다음에 이어질 순서로 가장 적절한 것은? [pr2]",
+       "runs": [
+        {
+         "t": "다음 글 다음에 이어질 순서로 가장 적절한 것은? [pr2]",
+         "ul": false
+        }
+       ],
+       "kind": "Q"
+      },
+      {
+       "text": "Astronomical stars, the ones visible in the sky at night and scattered across the universe, produce their own light and heat rather than, as with the planet Earth, relying on other bodies for illumination and warmth.",
+       "runs": [
+        {
+         "t": "Astronomical stars, the ones visible in the sky at night and scattered across the universe, produce their own light and heat rather than, as with the planet Earth, relying on other bodies for illumination and warmth.",
+         "ul": false
+        }
+       ],
+       "kind": "P-CONTEXT"
+      },
+      {
+       "text": "(A) The previous year, when Jordan was not playing for the Wizards, far fewer spectators had attended the team’s games. This pattern resumed after he retired again.",
+       "runs": [
+        {
+         "t": "(A) The previous year, when Jordan was not playing for the Wizards, far fewer spectators had attended the team’s games. This pattern resumed after he retired again.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "(B) So it is, metaphorically, with the stars of motion pictures and team sports. They attract attention by themselves. People will pay to attend movies or games in which they appear because they are appearing.",
+       "runs": [
+        {
+         "t": "(B) So it is, metaphorically, with the stars of motion pictures and team sports. They attract attention by themselves. People will pay to attend movies or games in which they appear because they are appearing.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "(C) When Michael Jordan, the dominant basketball player of the last decade of the twentieth century, ended his second retirement from the sport, the team for which he played, the Washington Wizards, attracted sellout audiences everywhere it played.",
+       "runs": [
+        {
+         "t": "(C) When Michael Jordan, the dominant basketball player of the last decade of the twentieth century, ended his second retirement from the sport, the team for which he played, the Washington Wizards, attracted sellout audiences everywhere it played.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① (B) - (A) - (C)",
+       "runs": [
+        {
+         "t": "① (B) - (A) - (C)",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② (C) - (B) - (A)",
+       "runs": [
+        {
+         "t": "② (C) - (B) - (A)",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ (B) - (C) - (A)",
+       "runs": [
+        {
+         "t": "③ (B) - (C) - (A)",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ (C) - (A) - (B)",
+       "runs": [
+        {
+         "t": "④ (C) - (A) - (B)",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ (A) - (C) - (B)",
+       "runs": [
+        {
+         "t": "⑤ (A) - (C) - (B)",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은? [pr3]",
+       "runs": [
+        {
+         "t": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은? [pr3]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-ORDER"
+      },
+      {
+       "text": " Looking for the poem's subject is natural. Almost all poetry has messages to deliver – lots of them, profound and diverse as stars.",
+       "runs": [
+        {
+         "t": " Looking for the poem's subject is natural. Almost all poetry has messages to deliver – lots of them, profound and diverse as stars.",
+         "ul": false
+        }
+       ],
+       "kind": "P-CONTEXT"
+      },
+      {
+       "text": "(A) If that were so, why would people go to the trouble of writing poetry? Instead, people go to the trouble because poems sound a certain way, are built in certain shapes, and have certain beauties in sound and meaning, all of which accompanies the meaning and goes beyond it.",
+       "runs": [
+        {
+         "t": "(A) If that were so, why would people go to the trouble of writing poetry? Instead, people go to the trouble because poems sound a certain way, are built in certain shapes, and have certain beauties in sound and meaning, all of which accompanies the meaning and goes beyond it.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "(B) But these messages are sometimes hidden, and you have to read attentively to make them out. Notice that we specifically avoid saying, \"The subject is what a poem's about\" – because that implies that what a poem says is all there is to a poem.",
+       "runs": [
+        {
+         "t": "(B) But these messages are sometimes hidden, and you have to read attentively to make them out. Notice that we specifically avoid saying, \"The subject is what a poem's about\" – because that implies that what a poem says is all there is to a poem.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "(C) Not all poems have a single subject. Some poems have many subjects, and some have subjects that aren't clear. Sometimes a poem's subject is simply itself – the words in it and their relationships to one another. The point is to be alert for the subject (or subjects) of any poem as you read.",
+       "runs": [
+        {
+         "t": "(C) Not all poems have a single subject. Some poems have many subjects, and some have subjects that aren't clear. Sometimes a poem's subject is simply itself – the words in it and their relationships to one another. The point is to be alert for the subject (or subjects) of any poem as you read.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① (A) - (C) - (B)\t② (B) - (A) - (C) ",
+       "runs": [
+        {
+         "t": "① (A) - (C) - (B)\t② (B) - (A) - (C) ",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ (B) - (C) - (A)\t④ (C) - (A) - (B)",
+       "runs": [
+        {
+         "t": "③ (B) - (C) - (A)\t④ (C) - (A) - (B)",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ (C) - (B) - (A)\t",
+       "runs": [
+        {
+         "t": "⑤ (C) - (B) - (A)\t",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은? [pr4]",
+       "runs": [
+        {
+         "t": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은? [pr4]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-ORDER"
+      },
+      {
+       "text": " After serving in the navy at the end of the Civil War, James Walter Thompson went to New York determined to carve out a career in the big city.",
+       "runs": [
+        {
+         "t": " After serving in the navy at the end of the Civil War, James Walter Thompson went to New York determined to carve out a career in the big city.",
+         "ul": false
+        }
+       ],
+       "kind": "P-CONTEXT"
+      },
+      {
+       "text": "(A) It was the latter that interested Thompson, who noticed that they ran few advertisements while staying longer in the family home than newspapers, thus making them potentially a more effective medium.",
+       "runs": [
+        {
+         "t": "(A) It was the latter that interested Thompson, who noticed that they ran few advertisements while staying longer in the family home than newspapers, thus making them potentially a more effective medium.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "(B) In 1868 he was hired by a tiny advertising agency run by William J. Carlton, at that point still involved in the primitive business of placing advertisements in newspapers and magazines.",
+       "runs": [
+        {
+         "t": "(B) In 1868 he was hired by a tiny advertising agency run by William J. Carlton, at that point still involved in the primitive business of placing advertisements in newspapers and magazines.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "(C) He began to specialize in magazine advertising, gradually building up an exclusive stable of publications available only to his clients. Ten years after joining the agency, he bought it for a total of US $1, 300 (US $500 for the company and US $800 for the furniture) and put his own name above the door.",
+       "runs": [
+        {
+         "t": "(C) He began to specialize in magazine advertising, gradually building up an exclusive stable of publications available only to his clients. Ten years after joining the agency, he bought it for a total of US $1, 300 (US $500 for the company and US $800 for the furniture) and put his own name above the door.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① (B)-(C)-(A)\t② (B)-(A)-(C)\t③ (C)-(B)-(A)",
+       "runs": [
+        {
+         "t": "① (B)-(C)-(A)\t② (B)-(A)-(C)\t③ (C)-(B)-(A)",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ (C)-(A)-(B)   ⑤ (A)-(C)-(B)",
+       "runs": [
+        {
+         "t": "④ (C)-(A)-(B)   ⑤ (A)-(C)-(B)",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 문장이 들어갈 위치로 가장 적절한 곳은? [ep1]",
+       "runs": [
+        {
+         "t": "다음 문장이 들어갈 위치로 가장 적절한 곳은? [ep1]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-INSERT"
+      },
+      {
+       "text": "The typical response was nonverbal.",
+       "runs": [
+        {
+         "t": "The typical response was nonverbal.",
+         "ul": false
+        }
+       ],
+       "kind": "P-CONTEXT"
+      },
+      {
+       "text": "When I was young, my parents worshipped medical doctors as if they were exceptional beings possessing godlike qualities. ( ① ) But I never dreamed of pursuing a career in medicine until I entered the hospital for a rare disease. I became a medical curiosity, attracting some of the area’s top specialists to look in on me and review my case. ( ② ) As a patient, and a teenager eager to return to college, I asked each doctor who examined me, “What caused my disease?” “How will you make me better?” ( ③ ) They shook their heads and walked out of my room. ( ④ ) I remember thinking to myself, “Well, I could do that.” When it became clear to me that no doctor could answer my basic questions, I walked out of the hospital against medical advice. ( ⑤ ) Returning to college, I pursued medicine with a great passion.",
+       "runs": [
+        {
+         "t": "When I was young, my parents worshipped medical doctors as if they were exceptional beings possessing godlike qualities. ( ① ) But I never dreamed of pursuing a career in medicine until I entered the hospital for a rare disease. I became a medical curiosity, attracting some of the area’s top specialists to look in on me and review my case. ( ② ) As a patient, and a teenager eager to return to college, I asked each doctor who examined me, “What caused my disease?” “How will you make me better?” ( ③ ) They shook their heads and walked out of my room. ( ④ ) I remember thinking to myself, “Well, I could do that.” When it became clear to me that no doctor could answer my basic questions, I walked out of the hospital against medical advice. ( ⑤ ) Returning to college, I pursued medicine with a great passion.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은? [ep2]",
+       "runs": [
+        {
+         "t": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은? [ep2]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-INSERT"
+      },
+      {
+       "text": "In this way, humans ate as other large, meat-eating mammals eat.",
+       "runs": [
+        {
+         "t": "In this way, humans ate as other large, meat-eating mammals eat.",
+         "ul": false
+        }
+       ],
+       "kind": "P-CONTEXT"
+      },
+      {
+       "text": "Some researchers assumed early human beings ate mainly the muscle flesh of animals, as we do today. By “meat,” they meant the muscle of the animal. Yet focusing on the muscle appears to be a relatively recent phenomenon. ( ① ) In every history on the subject, the evidence suggests that early human populations preferred the fat and organ meat of the animal over its muscle meat. ( ② ) Vilhjalmur Stefansson, an arctic explorer, found that the Inuit were careful to save fatty meat and organs for human consumption while giving muscle meat to the dogs. ( ③ ) Lions and tigers, for instance, first eat the blood, hearts, livers, and brains of the animals they kill, often leaving the muscle meat for eagles. ( ④ ) These organs tend to be much higher in fat. ( ⑤ )",
+       "runs": [
+        {
+         "t": "Some researchers assumed early human beings ate mainly the muscle flesh of animals, as we do today. By “meat,” they meant the muscle of the animal. Yet focusing on the muscle appears to be a relatively recent phenomenon. ( ① ) In every history on the subject, the evidence suggests that early human populations preferred the fat and organ meat of the animal over its muscle meat. ( ② ) Vilhjalmur Stefansson, an arctic explorer, found that the Inuit were careful to save fatty meat and organs for human consumption while giving muscle meat to the dogs. ( ③ ) Lions and tigers, for instance, first eat the blood, hearts, livers, and brains of the animals they kill, often leaving the muscle meat for eagles. ( ④ ) These organs tend to be much higher in fat. ( ⑤ )",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "다음 글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은? [pr1]",
+       "runs": [
+        {
+         "t": "다음 글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은? [pr1]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-INSERT"
+      },
+      {
+       "text": "In one of the most radical of these movements, artists believed that they didn't need to produce any artwork at all (rather like Dada) but simply generate concepts or ideas.",
+       "runs": [
+        {
+         "t": "In one of the most radical of these movements, artists believed that they didn't need to produce any artwork at all (rather like Dada) but simply generate concepts or ideas.",
+         "ul": false
+        }
+       ],
+       "kind": "P-CONTEXT"
+      },
+      {
+       "text": " In the late 1960s, the art world was divided into so many minor movements that tracking them all is difficult. (A) In reality, this conceptual art, as it's known, is often a type of performance or \"happening\" that can be very spontaneous and audience-driven. (B) Sometimes it's simply writing on a wall. (C) One early conceptual artist camped out with a coyote for a week in an art gallery to get people thinking about the treatment of Native Americans. (D) Feminist art is linked with conceptual art in that it focuses on the inequalities faced by women and tries to provoke change. (E) It might include a painting on canvas or a group of women dressed up in gorilla costumes crashing a public event to pass out pamphlets.",
+       "runs": [
+        {
+         "t": " In the late 1960s, the art world was divided into so many minor movements that tracking them all is difficult. (A) In reality, this conceptual art, as it's known, is often a type of performance or \"happening\" that can be very spontaneous and audience-driven. (B) Sometimes it's simply writing on a wall. (C) One early conceptual artist camped out with a coyote for a week in an art gallery to get people thinking about the treatment of Native Americans. (D) Feminist art is linked with conceptual art in that it focuses on the inequalities faced by women and tries to provoke change. (E) It might include a painting on canvas or a group of women dressed up in gorilla costumes crashing a public event to pass out pamphlets.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① A      ② B      ③ C      ④ D      ⑤ E",
+       "runs": [
+        {
+         "t": "① A      ② B      ③ C      ④ D      ⑤ E",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 알맞은 곳은? [pr2]",
+       "runs": [
+        {
+         "t": "다음 글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 알맞은 곳은? [pr2]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-INSERT"
+      },
+      {
+       "text": " People will pay to attend movies or games in which they appear because they are appearing.",
+       "runs": [
+        {
+         "t": " People will pay to attend movies or games in which they appear because they are appearing.",
+         "ul": false
+        }
+       ],
+       "kind": "P-CONTEXT"
+      },
+      {
+       "text": " Astronomical stars, the ones visible in the sky at night and scattered across the universe, produce their own light and heat rather than, as with the planet Earth, relying on other bodies for illumination and warmth. (A) So it is, metaphorically, with the stars of motion pictures and team sports. (B) They attract attention by themselves. (C) When Michael Jordan, the dominant basketball player of the last decade of the twentieth century, ended his second retirement from the sport, the team for which he played, the Washington Wizards, attracted sellout audiences everywhere it played. (D) The previous year, when Jordan was not playing for the Wizards, far fewer spectators had attended the team’s games. This pattern resumed after he retired again. (E)",
+       "runs": [
+        {
+         "t": " Astronomical stars, the ones visible in the sky at night and scattered across the universe, produce their own light and heat rather than, as with the planet Earth, relying on other bodies for illumination and warmth. (A) So it is, metaphorically, with the stars of motion pictures and team sports. (B) They attract attention by themselves. (C) When Michael Jordan, the dominant basketball player of the last decade of the twentieth century, ended his second retirement from the sport, the team for which he played, the Washington Wizards, attracted sellout audiences everywhere it played. (D) The previous year, when Jordan was not playing for the Wizards, far fewer spectators had attended the team’s games. This pattern resumed after he retired again. (E)",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① A      ② B      ③ C      ④ D      ⑤ E",
+       "runs": [
+        {
+         "t": "① A      ② B      ③ C      ④ D      ⑤ E",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은? [pr3]",
+       "runs": [
+        {
+         "t": "다음 글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은? [pr3]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-INSERT"
+      },
+      {
+       "text": " If that were so, why would people go to the trouble of writing poetry? ",
+       "runs": [
+        {
+         "t": " If that were so, why would people go to the trouble of writing poetry? ",
+         "ul": false
+        }
+       ],
+       "kind": "P-CONTEXT"
+      },
+      {
+       "text": " Looking for the poem's subject is natural. Almost all poetry has messages to deliver - lots of them, profound and diverse as stars. But these messages are sometimes hidden, and you have to read attentively to make them out. (A) Notice that we specifically avoid saying, \"The subject is what a poem's about\" - because that implies that what a poem says is all there is to a poem. (B) Instead, people go to the trouble because poems sound a certain way, are built in certain shapes, and have certain beauties in sound and meaning, all of which accompanies the meaning and goes beyond it. (C) Not all poems have a single subject. Some poems have many subjects, and some have subjects that aren't clear. (D) Sometimes a poem's subject is simply itself - the words in it and their relationships to one another. (E) The point is to be alert for the subject (or subjects) of any poem as you read.",
+       "runs": [
+        {
+         "t": " Looking for the poem's subject is natural. Almost all poetry has messages to deliver - lots of them, profound and diverse as stars. But these messages are sometimes hidden, and you have to read attentively to make them out. (A) Notice that we specifically avoid saying, \"The subject is what a poem's about\" - because that implies that what a poem says is all there is to a poem. (B) Instead, people go to the trouble because poems sound a certain way, are built in certain shapes, and have certain beauties in sound and meaning, all of which accompanies the meaning and goes beyond it. (C) Not all poems have a single subject. Some poems have many subjects, and some have subjects that aren't clear. (D) Sometimes a poem's subject is simply itself - the words in it and their relationships to one another. (E) The point is to be alert for the subject (or subjects) of any poem as you read.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① A      ② B      ③ C      ④ D      ⑤ E",
+       "runs": [
+        {
+         "t": "① A      ② B      ③ C      ④ D      ⑤ E",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 글의 (A)~(E) 중 주어진 문장이 들어가기에 가장 적절한 곳은? [pr4]",
+       "runs": [
+        {
+         "t": "다음 글의 (A)~(E) 중 주어진 문장이 들어가기에 가장 적절한 곳은? [pr4]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-INSERT"
+      },
+      {
+       "text": "It was the latter that interested Thompson, who noticed that they ran few advertisements while staying longer in the family home than newspapers, thus making them potentially a more effective medium.",
+       "runs": [
+        {
+         "t": "It was the latter that interested Thompson, who noticed that they ran few advertisements while staying longer in the family home than newspapers, thus making them potentially a more effective medium.",
+         "ul": false
+        }
+       ],
+       "kind": "P-CONTEXT"
+      },
+      {
+       "text": " After serving in the navy at the end of the Civil War, James Walter Thompson went to New York determined to carve out a career in the big city. (A) In 1868 he was hired by a tiny advertising agency run by William J. Carlton. (B) At that point it was still involved in the primitive business of placing advertisements in newspapers and magazines. (C) He began to specialize in magazine advertising, gradually building up an exclusive stable of publications available only to his clients. (D) Ten years after joining the agency, he bought it for a total of US $1,300 and put his own name above the door. (E) He is credited as the \"father of modern magazine advertising\" in the United States.",
+       "runs": [
+        {
+         "t": " After serving in the navy at the end of the Civil War, James Walter Thompson went to New York determined to carve out a career in the big city. (A) In 1868 he was hired by a tiny advertising agency run by William J. Carlton. (B) At that point it was still involved in the primitive business of placing advertisements in newspapers and magazines. (C) He began to specialize in magazine advertising, gradually building up an exclusive stable of publications available only to his clients. (D) Ten years after joining the agency, he bought it for a total of US $1,300 and put his own name above the door. (E) He is credited as the \"father of modern magazine advertising\" in the United States.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① A      ② B      ③ C      ④ D      ⑤ E",
+       "runs": [
+        {
+         "t": "① A      ② B      ③ C      ④ D      ⑤ E",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은? [pr2]",
+       "runs": [
+        {
+         "t": "다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은? [pr2]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-BLANK-AB"
+      },
+      {
+       "text": " Astronomical stars, the ones visible in the sky at night and scattered across the universe, produce their own light and heat rather than, as with the planet Earth, relying on other bodies for illumination and warmth. So it is, metaphorically, with the stars of motion pictures and team sports. They attract attention by themselves. People will pay to attend movies or games in which they appear because they are appearing. When Michael Jordan, the dominant basketball player of the last decade of the twentieth century, ended his second retirement from the sport, the team for which he played, the Washington Wizards, attracted sellout audiences everywhere it played. The previous year, when Jordan was not playing for the Wizards, far fewer spectators had attended the team's games. This pattern resumed after he retired again.",
+       "runs": [
+        {
+         "t": " Astronomical stars, the ones visible in the sky at night and scattered across the universe, produce their own light and heat rather than, as with the planet Earth, relying on other bodies for illumination and warmth. So it is, metaphorically, with the stars of motion pictures and team sports. They attract attention by themselves. People will pay to attend movies or games in which they appear because they are appearing. When Michael Jordan, the dominant basketball player of the last decade of the twentieth century, ended his second retirement from the sport, the team for which he played, the Washington Wizards, attracted sellout audiences everywhere it played. The previous year, when Jordan was not playing for the Wizards, far fewer spectators had attended the team's games. This pattern resumed after he retired again.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "↓",
+       "runs": [
+        {
+         "t": "↓",
+         "ul": false
+        }
+       ],
+       "kind": "Sym"
+      },
+      {
+       "text": " Astronomical stars and celebrities have something in common metaphorically in that both have their own ability to (A)________ themselves, rather than relying on (B)________.",
+       "runs": [
+        {
+         "t": " Astronomical stars and celebrities have something in common metaphorically in that both have their own ability to (A)________ themselves, rather than relying on (B)________.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "      (A)                (B)",
+       "runs": [
+        {
+         "t": "      (A)                (B)",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "① scatter\t     fame",
+       "runs": [
+        {
+         "t": "① scatter\t     fame",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② radiate\t     surroundings",
+       "runs": [
+        {
+         "t": "② radiate\t     surroundings",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ attract\t     environment",
+       "runs": [
+        {
+         "t": "③ attract\t     environment",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ dominate\t     popularity",
+       "runs": [
+        {
+         "t": "④ dominate\t     popularity",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ illuminate\t     appearance",
+       "runs": [
+        {
+         "t": "⑤ illuminate\t     appearance",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은? [pr3] ",
+       "runs": [
+        {
+         "t": "다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은? [pr3] ",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-BLANK-AB"
+      },
+      {
+       "text": " Looking for the poem’s subject is natural. Almost all poetry has messages to deliver – lots of them, profound and diverse as stars. But these messages are sometimes hidden, and you have to read attentively to make them out. Notice that we specifically avoid saying, “The subject is what a poem’s about” - because that implies that what a poem says is all there is to a poem. If that were so, why would people go to the trouble of writing poetry? Instead, people go to the trouble because poems sound a certain way, are built in certain shapes, and have certain beauties in sound and meaning, all of which accompanies the meaning and goes beyond it. Not all poems have a single subject. Some poems have many subjects, and some have subjects that aren’t clear. The point is that you should be alert for the subject (or subjects) of any poem as you read.",
+       "runs": [
+        {
+         "t": " Looking for the poem’s subject is natural. Almost all poetry has messages to deliver – lots of them, profound and diverse as stars. But these messages are sometimes hidden, and you have to read attentively to make them out. Notice that we specifically avoid saying, “The subject is what a poem’s about” - because that implies that what a poem says is all there is to a poem. If that were so, why would people go to the trouble of writing poetry? Instead, people go to the trouble because poems sound a certain way, are built in certain shapes, and have certain beauties in sound and meaning, all of which accompanies the meaning and goes beyond it. Not all poems have a single subject. Some poems have many subjects, and some have subjects that aren’t clear. The point is that you should be alert for the subject (or subjects) of any poem as you read.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "↓",
+       "runs": [
+        {
+         "t": "↓",
+         "ul": false
+        }
+       ],
+       "kind": "Sym"
+      },
+      {
+       "text": "Because not only are the messages in all poetry profound and sometimes hidden, but its subject is (A)___________, you should (B)____________ the subject or messages of any poem you read.",
+       "runs": [
+        {
+         "t": "Because not only are the messages in all poetry profound and sometimes hidden, but its subject is (A)___________, you should (B)____________ the subject or messages of any poem you read.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "     (A)\t              (B)",
+       "runs": [
+        {
+         "t": "     (A)\t              (B)",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "① unclear\t   be absorbed in",
+       "runs": [
+        {
+         "t": "① unclear\t   be absorbed in",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② apparent\t   distract your attention from",
+       "runs": [
+        {
+         "t": "② apparent\t   distract your attention from",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ apparent\t   be absorbed in",
+       "runs": [
+        {
+         "t": "③ apparent\t   be absorbed in",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ unclear\t   distract your attention from",
+       "runs": [
+        {
+         "t": "④ unclear\t   distract your attention from",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ ambiguous\t   have no regard for",
+       "runs": [
+        {
+         "t": "⑤ ambiguous\t   have no regard for",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 글을 읽고 밑줄 친 부분과 같은 뜻이 되도록 괄호 안의 동사를 사용하여 영작하시오. [pr2]",
+       "runs": [
+        {
+         "t": "다음 글을 읽고 밑줄 친 부분과 같은 뜻이 되도록 괄호 안의 동사를 사용하여 영작하시오. [pr2]",
+         "ul": false
+        }
+       ],
+       "kind": "Q"
+      },
+      {
+       "text": " Astronomical stars, the ones visible in the sky at night and scattered across the universe, produce their own light and heat rather than, as with the planet Earth, relying on other bodies for illumination and warmth. (A)정말 그러하다. (be) metaphorically, with the stars of motion pictures and team sports. (B)그들은 스스로 주목을 끈다. (attract) People will pay to attend movies or games in which they appear because they are appearing. When Michael Jordan, the dominant basketball player of the last decade of the twentieth century, ended his second retirement  from the sport, (C)그가 뛰었던 팀인, (play) the Washington Wizards, attracted sellout audiences everywhere it played. The previous year, when Jordan was not playing for the Wizards, far fewer spectators had attended the team's games. This pattern resumed after he retired again.",
+       "runs": [
+        {
+         "t": " Astronomical stars, the ones visible in the sky at night and scattered across the universe, produce their own light and heat rather than, as with the planet Earth, relying on other bodies for illumination and warmth. ",
+         "ul": false
+        },
+        {
+         "t": "(A)정말 그러하다. (be)",
+         "ul": true
+        },
+        {
+         "t": " metaphorically, with the stars of motion pictures and team sports. ",
+         "ul": false
+        },
+        {
+         "t": "(B)그들은 스스로 주목을 끈다. (attract)",
+         "ul": true
+        },
+        {
+         "t": " People will pay to attend movies or games in which they appear because they are appearing. When Michael Jordan, the dominant basketball player of the last decade of the twentieth century, ended his second retirement  from the sport, ",
+         "ul": false
+        },
+        {
+         "t": "(C)그가 뛰었던 팀인, (play)",
+         "ul": true
+        },
+        {
+         "t": " the Washington Wizards, attracted sellout audiences everywhere it played. The previous year, when Jordan was not playing for the Wizards, far fewer spectators had attended the team's games. This pattern resumed after he retired again.",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": "(A)_________________________________________________",
+       "runs": [
+        {
+         "t": "(A)_________________________________________________",
+         "ul": false
+        }
+       ],
+       "kind": "Ans"
+      },
+      {
+       "text": "(B)_________________________________________________",
+       "runs": [
+        {
+         "t": "(B)_________________________________________________",
+         "ul": false
+        }
+       ],
+       "kind": "Ans"
+      },
+      {
+       "text": "(C)_________________________________________________",
+       "runs": [
+        {
+         "t": "(C)_________________________________________________",
+         "ul": false
+        }
+       ],
+       "kind": "Ans"
+      },
+      {
+       "text": "다음 밑줄 친 (A), (B), (C)를 어법에 맞게 고쳐 쓰시오. [ep1]",
+       "runs": [
+        {
+         "t": "다음 밑줄 친 (A), (B), (C)를 어법에 맞게 고쳐 쓰시오. [ep1]",
+         "ul": false
+        }
+       ],
+       "kind": "Q"
+      },
+      {
+       "text": " When I was young, my parents worshipped medical doctors as if they (A)are exceptional beings possessing godlike qualities. But I never dreamed of pursuing a career in medicine until I entered the hospital for a rare disease. I became a medical curiosity, attracting some of the area’s top specialists to look in on me and review my case. As a patient, and a teenager eager to return to college, I asked each doctor who examined me, “What caused my disease?” “How will you make me better?” The typical response was nonverbal. They shook their heads and walked out of my room. I remember (B)to think to myself, “Well, I could do that.” When (C)there became clear to me that no doctor could answer my basic questions, I walked out of the hospital against medical advice. Returning to college, I pursued medicine with a great passion.",
+       "runs": [
+        {
+         "t": " When I was young, my parents worshipped medical doctors as if they (A)",
+         "ul": false
+        },
+        {
+         "t": "are",
+         "ul": true
+        },
+        {
+         "t": " exceptional beings possessing godlike qualities. But I never dreamed of pursuing a career in medicine until I entered the hospital for a rare disease. I became a medical curiosity, attracting some of the area’s top specialists to look in on me and review my case. As a patient, and a teenager eager to return to college, I asked each doctor who examined me, “What caused my disease?” “How will you make me better?” The typical response was nonverbal. They shook their heads and walked out of my room. I remember (B)",
+         "ul": false
+        },
+        {
+         "t": "to think",
+         "ul": true
+        },
+        {
+         "t": " to myself, “Well, I could do that.” When (C)",
+         "ul": false
+        },
+        {
+         "t": "there",
+         "ul": true
+        },
+        {
+         "t": " became clear to me that no doctor could answer my basic questions, I walked out of the hospital against medical advice. Returning to college, I pursued medicine with a great passion.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "(A)_________________________________________________",
+       "runs": [
+        {
+         "t": "(A)_________________________________________________",
+         "ul": false
+        }
+       ],
+       "kind": "Ans"
+      },
+      {
+       "text": "(B)_________________________________________________",
+       "runs": [
+        {
+         "t": "(B)_________________________________________________",
+         "ul": false
+        }
+       ],
+       "kind": "Ans"
+      },
+      {
+       "text": "(C)_________________________________________________",
+       "runs": [
+        {
+         "t": "(C)_________________________________________________",
+         "ul": false
+        }
+       ],
+       "kind": "Ans"
+      },
+      {
+       "text": "다음 중 어법상 어색한 부분이 있는 것 2개를 골라 그 기호를 쓰고, 바르게 고쳐 쓰시오. [pr1]",
+       "runs": [
+        {
+         "t": "다음 중 어법상 어색한 부분이 있는 것 2개를 골라 그 기호를 쓰고, 바르게 고쳐 쓰시오. [pr1]",
+         "ul": false
+        }
+       ],
+       "kind": "Q"
+      },
+      {
+       "text": " In the late 1960s, the art world was divided into ⓐso many minor movements that to track them all is difficult. One of the most radical of these movements, artists believed that they didn't need to produce any artwork at all (rather like Dada) but simply generate concepts or ideas. In reality, this conceptual art, as it's known, is often ⓑa type of performance or \"happening\" that can be very spontaneous and audience-driving. Sometimes it's simply writing on a wall. One early conceptual artist camped out with a coyote for a week in an art gallery ⓒto get people to think about the treatment of Native Americans. Feminist art is linked with conceptual art ⓓthat it focuses on the inequalities faced by women and tries to provoke change. The movement has no set style. It might include a painting on canvas or a group of women ⓔdressed up in gorilla costumes crashing a public event to pass out pamphlets.",
+       "runs": [
+        {
+         "t": " In the late 1960s, the art world was divided into ⓐ",
+         "ul": false
+        },
+        {
+         "t": "so many minor movements that to track them all is difficult",
+         "ul": true
+        },
+        {
+         "t": ". One of the most radical of these movements, artists believed that they didn't need to produce any artwork at all (rather like Dada) but simply generate concepts or ideas. In reality, this conceptual art, as it's known, is often ⓑ",
+         "ul": false
+        },
+        {
+         "t": "a type of performance or \"happening\" that can be very spontaneous and audience-driving",
+         "ul": true
+        },
+        {
+         "t": ". Sometimes it's simply writing on a wall. One early conceptual artist camped out with a coyote for a week in an art gallery ⓒ",
+         "ul": false
+        },
+        {
+         "t": "to get people to think about the treatment of Native Americans",
+         "ul": true
+        },
+        {
+         "t": ". Feminist art is linked with conceptual art ⓓ",
+         "ul": false
+        },
+        {
+         "t": "that it focuses on the inequalities faced by women",
+         "ul": true
+        },
+        {
+         "t": " and tries to provoke change. The movement has no set style. It might include a painting on canvas or a group of women ⓔ",
+         "ul": false
+        },
+        {
+         "t": "dressed up in gorilla costumes crashing a public event to pass out pamphlets",
+         "ul": true
+        },
+        {
+         "t": ".",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "  해당 기호   어색한 표현       고친 표현",
+       "runs": [
+        {
+         "t": "  해당 기호   어색한 표현       고친 표현",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": "(1)__________:_________________ → _________________",
+       "runs": [
+        {
+         "t": "(1)__________:_________________ → _________________",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": "(2)__________:_________________ → _________________",
+       "runs": [
+        {
+         "t": "(2)__________:_________________ → _________________",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": "다음 빈칸 (A)~(D)에 들어갈 가장 적절한 단어를 <보기>에서 찾아 어법에 맞는 형태로 고쳐 쓰시오. [pr4]",
+       "runs": [
+        {
+         "t": "다음 빈칸 (A)~(D)에 들어갈 가장 적절한 단어를 <보기>에서 찾아 어법에 맞는 형태로 고쳐 쓰시오. [pr4]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "SRV-WRD-BOX"
+      },
+      {
+       "text": " After serving in the navy at the end of the Civil War, James Walter Thompson went to New York (A)____________ to carve out a career in the big city. In 1868 he was hired by a tiny advertising agency run by William J. Carlton, at that point still (B)____________ in the primitive business of placing advertisements in newspapers and magazines. It was the latter that interested Thompson, who noticed that they ran few advertisements while staying longer in the family home than newspapers, thus making them potentially a more effective medium. He began to specialize in magazine advertising, gradually (C)____________ up an exclusive stable of publications available only to his clients. Ten years after joining the agency, he bought it for a total of US $1, 300, (D)____________  his own name above the door.",
+       "runs": [
+        {
+         "t": " After serving in the navy at the end of the Civil War, James Walter Thompson went to New York (A)____________ to carve out a career in the big city. In 1868 he was hired by a tiny advertising agency run by William J. Carlton, at that point still (B)____________ in the primitive business of placing advertisements in newspapers and magazines. It was the latter that interested Thompson, who noticed that they ran few advertisements while staying longer in the family home than newspapers, thus making them potentially a more effective medium. He began to specialize in magazine advertising, gradually (C)____________ up an exclusive stable of publications available only to his clients. Ten years after joining the agency, he bought it for a total of US $1, 300, (D)____________  his own name above the door.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "<보기>",
+       "runs": [
+        {
+         "t": "<보기>",
+         "ul": false
+        }
+       ],
+       "kind": "Box"
+      },
+      {
+       "text": "build / involve / determine / put",
+       "runs": [
+        {
+         "t": "build / involve / determine / put",
+         "ul": false
+        }
+       ],
+       "kind": "Box"
+      },
+      {
+       "text": "(A)________________________________________________",
+       "runs": [
+        {
+         "t": "(A)________________________________________________",
+         "ul": false
+        }
+       ],
+       "kind": "Box"
+      },
+      {
+       "text": "(B)________________________________________________",
+       "runs": [
+        {
+         "t": "(B)________________________________________________",
+         "ul": false
+        }
+       ],
+       "kind": "Box"
+      },
+      {
+       "text": "(C)________________________________________________",
+       "runs": [
+        {
+         "t": "(C)________________________________________________",
+         "ul": false
+        }
+       ],
+       "kind": "Box"
+      },
+      {
+       "text": "(D)________________________________________________",
+       "runs": [
+        {
+         "t": "(D)________________________________________________",
+         "ul": false
+        }
+       ],
+       "kind": "Box"
+      },
+      {
+       "text": "다음 글의 주제로 가장 적절한 것은? [Review 17강 -1번]",
+       "runs": [
+        {
+         "t": "다음 글의 주제로 가장 적절한 것은? [Review 17강 -1번]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-CTN-TOPIC"
+      },
+      {
+       "text": "Labour Day has been celebrated on the first Monday in September in Canada since the 1880s. The September date has remained unchanged, even though the government was encouraged to adopt May 1 as Labour Day, the date celebrated by the majority of the world. Moving the holiday, in addition to breaking with tradition, could have been viewed as aligning the Canadian labour movements with internationalist sympathies. Another major reason for keeping the current September date is that the United States celebrates its Labor Day on the same day. Synchronizing the holiday reduces possible inconvenience for businesses with major operations on both sides of the border.",
+       "runs": [
+        {
+         "t": "Labour Day has been celebrated on the first Monday in September in Canada since the 1880s. The September date has remained unchanged, even though the government was encouraged to adopt May 1 as Labour Day, the date celebrated by the majority of the world. Moving the holiday, in addition to breaking with tradition, could have been viewed as aligning the Canadian labour movements with internationalist sympathies. Another major reason for keeping the current September date is that the United States celebrates its Labor Day on the same day. Synchronizing the holiday reduces possible inconvenience for businesses with major operations on both sides of the border.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① how the majority of the world celebrates Labor Day",
+       "runs": [
+        {
+         "t": "① how the majority of the world celebrates Labor Day",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② difficulties in moving American Labour Day to May 1",
+       "runs": [
+        {
+         "t": "② difficulties in moving American Labour Day to May 1",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ reasons that Canada keeps the date of its Labour Day unchanged",
+       "runs": [
+        {
+         "t": "③ reasons that Canada keeps the date of its Labour Day unchanged",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④struggles of Canadian government to keep up with the new labour movement",
+       "runs": [
+        {
+         "t": "④struggles of Canadian government to keep up with the new labour movement",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤the importance of the favorable economic relations between Canada and USA",
+       "runs": [
+        {
+         "t": "⑤the importance of the favorable economic relations between Canada and USA",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은? [REVIEW 17강-2번]",
+       "runs": [
+        {
+         "t": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은? [REVIEW 17강-2번]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-INSERT"
+      },
+      {
+       "text": "But history provides reason for skepticism.",
+       "runs": [
+        {
+         "t": "But history provides reason for skepticism.",
+         "ul": false
+        }
+       ],
+       "kind": "P-CONTEXT"
+      },
+      {
+       "text": "The more we learn about whales, the better able we will be to protect them. This argument undoubtedly has merit.( ① ) We would not be in a position today to argue for the rights of whales were it not for the scientific research that has been done.( ② ) And if we could be certain that additional benign research would affect the benefit of the whales, who could oppose it?( ③ ) Sad though it is to say, science has been more often used against animals than for them. ( ④ ) Sidney Holt has given one such example in which the results of benign research involving wolves are now being used against them.(  ⑤ ) Who can have confidence that this will not be the case with the whales as well? ",
+       "runs": [
+        {
+         "t": "The more we learn about whales, the better able we will be to protect them. This argument undoubtedly has merit.( ① ) We would not be in a position today to argue for the rights of whales were it not for the scientific research that has been done.( ② ) And if we could be certain that additional benign research would affect the benefit of the whales, who could oppose it?( ③ ) Sad though it is to say, science has been more often used against animals than for them. ( ④ ) Sidney Holt has given one such example in which the results of benign research involving wolves are now being used against them.(  ⑤ ) Who can have confidence that this will not be the case with the whales as well? ",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "[서술형 2] 다음 글의 밑줄 친 without을 if로 시작하여 바꿔 쓸 때 빈칸에 들어갈 알맞은 표현을 쓰세요. [리딩파워, Chapter4 Review 17강 2번]",
+       "runs": [
+        {
+         "t": "[서술형 2] 다음 글의 밑줄 친 without을 if로 시작하여 바꿔 쓸 때 빈칸에 들어갈 알맞은 표현을 쓰세요. [리딩파워, Chapter4 Review 17강 2번]",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": "  The more we learn about whales, the better able we will be to protect them. This argument undoubtedly has merit. We would not be in a position today to argue for the rights of whales without the scientific research that has been done. And if we could be certain that additional benign research would affect the benefit of the whales, who could oppose it? But history provides reason for skepticism. Sad though it is to say, science has been more often used against animals than for them. ",
+       "runs": [
+        {
+         "t": "  The more we learn about whales, the better able we will be to protect them. This argument undoubtedly has merit. We would not be in a position today to argue for the rights of whales ",
+         "ul": false
+        },
+        {
+         "t": "without",
+         "ul": true
+        },
+        {
+         "t": " the scientific research that has been done. And if we could be certain that additional benign research would affect the benefit of the whales, who could oppose it? But history provides reason for skepticism. Sad though it is to say, science has been more often used against animals than for them. ",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "without = if ________________________________",
+       "runs": [
+        {
+         "t": "without = if ________________________________",
+         "ul": false
+        }
+       ],
+       "kind": "Ans"
+      },
+      {
+       "text": "글의 흐름으로 보아, 밑줄 친 어휘의 표현이 적절한 것은? [리딩파워, Chapter 4 Review 17강 4번]",
+       "runs": [
+        {
+         "t": "글의 흐름으로 보아, 밑줄 친 어휘의 표현이 적절한 것은? [리딩파워, Chapter 4 Review 17강 4번]",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": "  The next time you review résumés, try ignoring all of the perfectly qualified applicants. Do what Southwest Airlines does: Don’t hire people with experience at another airline unless you’re sure that they can (A)accept / ignore what they’ve learned there. “Competence” is too often another word for “bad attitude.” Instead, find the serial incompetents—the folks who are quick enough to master a task and restless enough to try something new. It’s not very surprising that so many new companies that are creating wealth today are run and staffed by (B) inexperienced / trained people. Because they have very little work history, these people haven’t fallen prey to becoming competent. They are ready to (C) adjust / adjoin to unknown field.",
+       "runs": [
+        {
+         "t": "  The next time you review résumés, try ignoring all of the perfectly qualified applicants. Do what Southwest Airlines does: Don’t hire people with experience at another airline unless you’re sure that they can (A)",
+         "ul": false
+        },
+        {
+         "t": "accept / ignore",
+         "ul": true
+        },
+        {
+         "t": " what they’ve learned there. “Competence” is too often another word for “bad attitude.” Instead, find the serial incompetents—the folks who are quick enough to master a task and restless enough to try something new. It’s not very surprising that so many new companies that are creating wealth today are run and staffed by (B) ",
+         "ul": false
+        },
+        {
+         "t": "inexperienced / trained",
+         "ul": true
+        },
+        {
+         "t": " people. Because they have very little work history, these people haven’t fallen prey to becoming competent. They are ready to (C) ",
+         "ul": false
+        },
+        {
+         "t": "adjust / adjoin",
+         "ul": true
+        },
+        {
+         "t": " to unknown field.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "     (A)            (B)           (C)",
+       "runs": [
+        {
+         "t": "     (A)            (B)           (C)",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "① accept         trained       adjust",
+       "runs": [
+        {
+         "t": "① accept         trained       adjust",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② accept       inexperienced   adjoin",
+       "runs": [
+        {
+         "t": "② accept       inexperienced   adjoin",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ ignore       inexperienced   adjoin",
+       "runs": [
+        {
+         "t": "③ ignore       inexperienced   adjoin",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ ignore       inexperienced   adjust",
+       "runs": [
+        {
+         "t": "④ ignore       inexperienced   adjust",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ ignore         trained        adjoin",
+       "runs": [
+        {
+         "t": "⑤ ignore         trained        adjoin",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 글의 요지로 가장 적절한 것은? [REVIEW 17강-4번]",
+       "runs": [
+        {
+         "t": "다음 글의 요지로 가장 적절한 것은? [REVIEW 17강-4번]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-CTN-GIST"
+      },
+      {
+       "text": "The next time you review résumés, try ignoring all of the perfectly qualified applicants. Do what Southwest Airlines does: Don’t hire people with experience at another airline unless you’re sure that they can unlearn what they’ve learned there. “Competence” is too often another word for “bad attitude.” Instead, find the serial incompetents—the folks who are quick enough to master a task and restless enough to try something new. It’s not very surprising that so many new companies that are creating wealth today are run and staffed by very young people. Because they have very little work history, these people haven’t fallen prey to becoming competent. They don’t have to unlearn bad habits. ",
+       "runs": [
+        {
+         "t": "The next time you review résumés, try ignoring all of the perfectly qualified applicants. Do what Southwest Airlines does: Don’t hire people with experience at another airline unless you’re sure that they can unlearn what they’ve learned there. “Competence” is too often another word for “bad attitude.” Instead, find the serial incompetents—the folks who are quick enough to master a task and restless enough to try something new. It’s not very surprising that so many new companies that are creating wealth today are run and staffed by very young people. Because they have very little work history, these people haven’t fallen prey to becoming competent. They don’t have to unlearn bad habits. ",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① 역사가 짧은 회사일수록 발전 가능성이 높다",
+       "runs": [
+        {
+         "t": "① 역사가 짧은 회사일수록 발전 가능성이 높다",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② 경험이 없는 사람들이 오히려 미지의 분야에 더 적합할 수 있다.",
+       "runs": [
+        {
+         "t": "② 경험이 없는 사람들이 오히려 미지의 분야에 더 적합할 수 있다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ 경험이 많은 사람은 경험이 없는 사람보다 더 빨리 배운다.",
+       "runs": [
+        {
+         "t": "③ 경험이 많은 사람은 경험이 없는 사람보다 더 빨리 배운다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ 훌륭한 지도자는 구성원의 미숙함을 전문성으로 바꿀 수 있다.",
+       "runs": [
+        {
+         "t": "④ 훌륭한 지도자는 구성원의 미숙함을 전문성으로 바꿀 수 있다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ 이력서 작성 시 자신의 가능성 보다는 경험을 더 강조해야 한다.",
+       "runs": [
+        {
+         "t": "⑤ 이력서 작성 시 자신의 가능성 보다는 경험을 더 강조해야 한다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 글에서 전체 흐름과 관계가 없는 문장은? [리딩파워, 17강-EX2]",
+       "runs": [
+        {
+         "t": "다음 글에서 전체 흐름과 관계가 ",
+         "ul": false
+        },
+        {
+         "t": "없는",
+         "ul": true
+        },
+        {
+         "t": " 문장은? [리딩파워, 17강-EX2]",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": "  Some researchers assumed early human beings ate mainly the muscle flesh of animals, as we do today. By “meat,” they meant the muscle of the animal. ①Yet focusing on the muscle appears to be a relatively recent phenomenon. ②In every history on the subject, the evidence suggests that early human populations preferred the fat and organ meat of the animal over its muscle meat. ③Vilhjalmur Stefansson, an arctic explorer, found that the Inuit were careful to save fatty meat and organs for human consumption while giving muscle meat to the dogs. In this way, humans ate as other large, meat-eating mammals eat. ④Effective raw-meat eaters like wolves and lions have teeth that are designed for slicing through elastic muscle, almost like a pair of scissors.⑤Lions and tigers, for instance, first eat the blood, hearts, livers, and brains of the animals they kill, often leaving the muscle meat for eagles. These organs tend to be much higher in fat.",
+       "runs": [
+        {
+         "t": "  Some researchers assumed early human beings ate mainly the muscle flesh of animals, as we do today. By “meat,” they meant the muscle of the animal. ①Yet focusing on the muscle appears to be a relatively recent phenomenon. ②In every history on the subject, the evidence suggests that early human populations preferred the fat and organ meat of the animal over its muscle meat. ③Vilhjalmur Stefansson, an arctic explorer, found that the Inuit were careful to save fatty meat and organs for human consumption while giving muscle meat to the dogs. In this way, humans ate as other large, meat-eating mammals eat. ④Effective raw-meat eaters like wolves and lions have teeth that are designed for slicing through elastic muscle, almost like a pair of scissors.⑤Lions and tigers, for instance, first eat the blood, hearts, livers, and brains of the animals they kill, often leaving the muscle meat for eagles. These organs tend to be much higher in fat.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "다음 글에서 전체 흐름과 관계 없는 문장은?[리딩파워17-EX2]",
+       "runs": [
+        {
+         "t": "다음 글에서 전체 흐름과 관계 없는 문장은?[리딩파워17-EX2]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-FLW-IRRELEVANT"
+      },
+      {
+       "text": "Some researchers assumed early human beings ate mainly the muscle flesh of animals, as we do today. By “meat,” they meant the muscle of the animal. ①Yet focusing on the muscle appears to be a relatively recent phenomenon. ②In every history on the subject, the evidence suggests that early human populations preferred the fat and organ meat of the animal over its muscle meat. ③Vilhjalmur Stefansson, an arctic explorer, found that the Inuit were careful to save fatty meat and organs for human consumption while giving muscle meat to the dogs. ④In this way, humans ate as other  large, meat-eating mammals eat. ⑤Consequently, most of the fat and organ meat of the animal are high in such saturated and trans fats.",
+       "runs": [
+        {
+         "t": "Some researchers assumed early human beings ate mainly the muscle flesh of animals, as we do today. By “meat,” they meant the muscle of the animal. ①Yet focusing on the muscle appears to be a relatively recent phenomenon. ②In every history on the subject, the evidence suggests that early human populations preferred the fat and organ meat of the animal over its muscle meat. ③Vilhjalmur Stefansson, an arctic explorer, found that the Inuit were careful to save fatty meat and organs for human consumption while giving muscle meat to the dogs. ④In this way, humans ate as other  large, meat-eating mammals eat. ⑤Consequently, most of the fat and organ meat of the animal are high in such saturated and trans fats.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "(A), (B), (C)의 각 네모 안에서 문맥에 맞는 낱말로 가장 적절한 것은? [리딩파워, 17강 1번]",
+       "runs": [
+        {
+         "t": "(A), (B), (C)의 각 네모 안에서 문맥에 맞는 낱말로 가장 적절한 것은? [리딩파워, 17강 1번]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-VOC-PAREN"
+      },
+      {
+       "text": "  In the late 1960s, the art world was divided into so many minor movements that tracking them all is (A) [straightforward / complicated]. In one of the most radical of these movements, artists believed that they didn’t need to produce any artwork at all (rather like Dada) but simply generate concepts or ideas. In reality, this conceptual art, as it’s known, is often a type of performance or “happening” that can be very (B) [voluntary / unwilling] and audience-driven. Sometimes it’s simply writing on a wall. One early conceptual artist camped out with a coyote for a week in an art gallery to get people thinking about the treatment of Native Americans. Feminist art is linked with conceptual art in that it focuses on the (C) [equality / discrimination] faced by women and tries to provoke change. The movement has no set style. It might include a painting on canvas or a group of women dressed up in gorilla costumes crashing a public event to pass out pamphlets.",
+       "runs": [
+        {
+         "t": "  In the late 1960s, the art world was divided into so many minor movements that tracking them all is (A) [straightforward / complicated]. In one of the most radical of these movements, artists believed that they didn’t need to produce any artwork at all (rather like Dada) but simply generate concepts or ideas. In reality, this conceptual art, as it’s known, is often a type of performance or “happening” that can be very (B) [voluntary / unwilling] and audience-driven. Sometimes it’s simply writing on a wall. One early conceptual artist camped out with a coyote for a week in an art gallery to get people thinking about the treatment of Native Americans. Feminist art is linked with conceptual art in that it focuses on the (C) [equality / discrimination] faced by women and tries to provoke change. The movement has no set style. It might include a painting on canvas or a group of women dressed up in gorilla costumes crashing a public event to pass out pamphlets.",
+         "ul": false
+        }
+       ],
+       "kind": "P-CONTEXT"
+      },
+      {
+       "text": "        (A)            (B)           (C)",
+       "runs": [
+        {
+         "t": "        (A)            (B)           (C)",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "① complicated     voluntary      equality",
+       "runs": [
+        {
+         "t": "① complicated     voluntary      equality",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② complicated     voluntary    discrimination",
+       "runs": [
+        {
+         "t": "② complicated     voluntary    discrimination",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ complicated     unwilling    discrimination",
+       "runs": [
+        {
+         "t": "③ complicated     unwilling    discrimination",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ straightforward  unwilling    discrimination",
+       "runs": [
+        {
+         "t": "④ straightforward  unwilling    discrimination",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ straightforward  unwilling      equality",
+       "runs": [
+        {
+         "t": "⑤ straightforward  unwilling      equality",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "글의 흐름으로 보아, 밑줄 친 어휘의 표현이 적절한 것은? [리딩파워, 17강]",
+       "runs": [
+        {
+         "t": "글의 흐름으로 보아, 밑줄 친 어휘의 표현이 적절한 것은? [리딩파워, 17강]",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": "  In the late 1960s, the art world was divided into so many minor movements that tracking them all is (A)straightforward / complicated. In one of the most radical of these movements, artists believed that they didn’t need to produce any artwork at all (rather like Dada) but simply generate concepts or ideas. In reality, this conceptual art, as it’s known, is often a type of performance or “happening” that can be very (B)voluntary / unwilling and audience-driven. Sometimes it’s simply writing on a wall. One early conceptual artist camped out with a coyote for a week in an art gallery to get people thinking about the treatment of Native Americans. Feminist art is linked with conceptual art in that it focuses on the inequalities faced by women and tries to (C)provoke / remove change. The movement has no set style. It might include a painting on canvas or a group of women dressed up in gorilla costumes crashing a public event to pass out pamphlets.",
+       "runs": [
+        {
+         "t": "  In the late 1960s, the art world was divided into so many minor movements that tracking them all is (A)",
+         "ul": false
+        },
+        {
+         "t": "straightforward / complicated",
+         "ul": true
+        },
+        {
+         "t": ". In one of the most radical of these movements, artists believed that they didn’t need to produce any artwork at all (rather like Dada) but simply generate concepts or ideas. In reality, this conceptual art, as it’s known, is often a type of performance or “happening” that can be very (B)",
+         "ul": false
+        },
+        {
+         "t": "voluntary / unwilling",
+         "ul": true
+        },
+        {
+         "t": " and audience-driven. Sometimes it’s simply writing on a wall. One early conceptual artist camped out with a coyote for a week in an art gallery to get people thinking about the treatment of Native Americans. Feminist art is linked with conceptual art in that it focuses on the inequalities faced by women and tries to (C)",
+         "ul": false
+        },
+        {
+         "t": "provoke / remove",
+         "ul": true
+        },
+        {
+         "t": " change. The movement has no set style. It might include a painting on canvas or a group of women dressed up in gorilla costumes crashing a public event to pass out pamphlets.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "      (A)             (B)          (C)",
+       "runs": [
+        {
+         "t": "      (A)             (B)          (C)",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "① complicated     voluntary    remove",
+       "runs": [
+        {
+         "t": "① complicated     voluntary    remove",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② complicated     voluntary    provoke",
+       "runs": [
+        {
+         "t": "② complicated     voluntary    provoke",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ complicated     unwilling    provoke",
+       "runs": [
+        {
+         "t": "③ complicated     unwilling    provoke",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ straightforward  unwilling    provoke",
+       "runs": [
+        {
+         "t": "④ straightforward  unwilling    provoke",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ straightforward  voluntary   remove",
+       "runs": [
+        {
+         "t": "⑤ straightforward  voluntary   remove",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 밑줄 친 부분 중, 어휘의 표현이 적절하지 않은 것은? [리딩파워, 17강 2번]",
+       "runs": [
+        {
+         "t": "다음 밑줄 친 부분 중, 어휘의 표현이 적절하지 않은 것은? [리딩파워, 17강 2번]",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": "  Astronomical stars, the ones visible in the sky at night and ①scattered across the universe, produce their own light and heat rather than, as with the planet Earth, relying on other bodies for illumination and warmth. So it is, ②figuratively, with the stars of motion pictures and team sports. They ③distract attention by themselves. People will pay to attend movies or games in which they appear because they are appearing. When Michael Jordan, the ④prominent basketball player of the last decade of the twentieth century, ended his second retirement from the sport, the team for which he played, the Washington Wizards, ⑤drew sellout audiences everywhere it played. The previous year, when Jordan was not playing for the Wizards, far fewer spectators had attended the team’s games. This pattern resumed after he retired again. ",
+       "runs": [
+        {
+         "t": "  Astronomical stars, the ones visible in the sky at night and ①",
+         "ul": false
+        },
+        {
+         "t": "scattered",
+         "ul": true
+        },
+        {
+         "t": " across the universe, produce their own light and heat rather than, as with the planet Earth, relying on other bodies for illumination and warmth. So it is, ②",
+         "ul": false
+        },
+        {
+         "t": "figuratively",
+         "ul": true
+        },
+        {
+         "t": ", with the stars of motion pictures and team sports. They ③",
+         "ul": false
+        },
+        {
+         "t": "distract",
+         "ul": true
+        },
+        {
+         "t": " attention by themselves. People will pay to attend movies or games in which they appear because they are appearing. When Michael Jordan, the ④",
+         "ul": false
+        },
+        {
+         "t": "prominent",
+         "ul": true
+        },
+        {
+         "t": " basketball player of the last decade of the twentieth century, ended his second retirement from the sport, the team for which he played, the Washington Wizards, ⑤",
+         "ul": false
+        },
+        {
+         "t": "drew",
+         "ul": true
+        },
+        {
+         "t": " sellout audiences everywhere it played. The previous year, when Jordan was not playing for the Wizards, far fewer spectators had attended the team’s games. This pattern resumed after he retired again. ",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "다음 글의 주제로 가장 적절한 것은? [EBS리딩파워유형편완성 17강 3번]",
+       "runs": [
+        {
+         "t": "다음 글의 주제로 가장 적절한 것은? [EBS리딩파워유형편완성 17강 3번]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-CTN-TOPIC"
+      },
+      {
+       "text": " Looking for the poem’s subject is natural. Almost all poetry has messages to deliver — lots of them, profound and diverse as stars. But these messages are sometimes hidden, and you have to read attentively to make them out. Notice that we specifically avoid saying, “ The subject is what a poem’s about” — because that implies that what a poem says is all there is to a poem. If that were so, why would people go to the trouble of writing poetry? Instead, people go to the trouble because poems sound a certain way, are built in certain shapes, and have certain beauties in sound and meaning, all of which accompanies the meaning and goes beyond it. Not all poems have a single subject. Some poems have many subjects, and some have subjects that aren’t clear. Sometimes a poem’s subject is simply itself—the words in it and their relationships to one another. The point is to be alert for the subject (or subjects) of any poem as you read. ",
+       "runs": [
+        {
+         "t": " Looking for the poem’s subject is natural. Almost all poetry has messages to deliver — lots of them, profound and diverse as stars. But these messages are sometimes hidden, and you have to read attentively to make them out. Notice that we specifically avoid saying, “ The subject is what a poem’s about” — because that implies that what a poem says is all there is to a poem. If that were so, why would people go to the trouble of writing poetry? Instead, people go to the trouble because poems sound a certain way, are built in certain shapes, and have certain beauties in sound and meaning, all of which accompanies the meaning and goes beyond it. Not all poems have a single subject. Some poems have many subjects, and some have subjects that aren’t clear. Sometimes a poem’s subject is simply itself—the words in it and their relationships to one another. The point is to be alert for the subject (or subjects) of any poem as you read. ",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① proper mindset in reading various poems",
+       "runs": [
+        {
+         "t": "① proper mindset in reading various poems",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② way of forming creative poetic expressions",
+       "runs": [
+        {
+         "t": "② way of forming creative poetic expressions",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ contribution of artistic knowledge to reading poems",
+       "runs": [
+        {
+         "t": "③ contribution of artistic knowledge to reading poems",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ significance of poetic clarity in gaining poetic insight",
+       "runs": [
+        {
+         "t": "④ significance of poetic clarity in gaining poetic insight",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ difficulty of conveying a message by poetic implication",
+       "runs": [
+        {
+         "t": "⑤ difficulty of conveying a message by poetic implication",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "James Walter Thompson에 관한 다음 글의 내용과 일치하는 것은? [리딩파워17강 4번]",
+       "runs": [
+        {
+         "t": "James Walter Thompson에 관한 다음 글의 내용과 일치하는 것은? [리딩파워17강 4번]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-CTN-MATCH"
+      },
+      {
+       "text": "After serving in the navy at the end of the Civil War, James Walter Thompson went to New York determined to carve out a career in the big city. In 1868 he was hired by a tiny advertising agency run by William J. Carlton, at that point still involved in the primitive business of placing advertisements in newspapers and magazines. It was the latter that interested Thompson, who noticed that they ran few advertisements while staying longer in the family home than newspapers, thus making them potentially a more effective medium. He began to specialize in magazine advertising, gradually building up an exclusive stable of publications available only to his clients. Ten years after joining the agency, he bought it for a total of US $1, 300 (US $500 for the company and US $800 for the furniture) and put his own name above the door.",
+       "runs": [
+        {
+         "t": "After serving in the navy at the end of the Civil War, James Walter Thompson went to New York determined to carve out a career in the big city. In 1868 he was hired by a tiny advertising agency run by William J. Carlton, at that point still involved in the primitive business of placing advertisements in newspapers and magazines. It was the latter that interested Thompson, who noticed that they ran few advertisements while staying longer in the family home than newspapers, thus making them potentially a more effective medium. He began to specialize in magazine advertising, gradually building up an exclusive stable of publications available only to his clients. Ten years after joining the agency, he bought it for a total of US $1, 300 (US $500 for the company and US $800 for the furniture) and put his own name above the door.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① 남북 전쟁의 말기에 육군 장교로 복무했다",
+       "runs": [
+        {
+         "t": "① 남북 전쟁의 말기에 육군 장교로 복무했다",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② 아버지로부터 물려받은 작은 광고대행사를 운영했다",
+       "runs": [
+        {
+         "t": "② 아버지로부터 물려받은 작은 광고대행사를 운영했다",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ 잡지보다 신문 광고에 더 특별한 관심을 갖고 전문으로 했다",
+       "runs": [
+        {
+         "t": "③ 잡지보다 신문 광고에 더 특별한 관심을 갖고 전문으로 했다",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ 자신의 고객들만을 위한 독점적인 출판물 제품군을 개발했다",
+       "runs": [
+        {
+         "t": "④ 자신의 고객들만을 위한 독점적인 출판물 제품군을 개발했다",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ 입사한지 10년 후 자신의 이름을 회사에 양도했다",
+       "runs": [
+        {
+         "t": "⑤ 입사한지 10년 후 자신의 이름을 회사에 양도했다",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      }
+     ]
+    }
+   ],
+   "short": [],
+   "normal_count": 1,
+   "short_count": 0
+  }
+ },
+ "workbook_type": "EBS",
+ "series": "Reading Power 유형편(완성)",
+ "unit": "Unit17"
+}

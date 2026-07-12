@@ -254,6 +254,87 @@ def test_gate_g15_clean_paths():
     assert rep["stats"]["cond_item_miss"] == 0
 
 
+# ── 코퍼스 r6 — c10 커스텀 리플레이 + 플랜 앵커 ─────────────────────────────
+
+CORPUS = os.path.join(TESTS_DIR, "corpus")
+
+
+def test_round6_c10_parse_replay(tmp_path):
+    """r6c10cheonjae 커스텀 리플레이 — manuscript_folder 메타 경로
+    (r4c03essay와 동일 방식). 15개정 천재(이) 8과 서술형 hwpx."""
+    import sys
+    sys.path.insert(0, TESTS_DIR)
+    import _replay
+    from engines.textbook_workbook_v2.engine import TextbookWorkbookV2Engine
+    case_dir = os.path.join(CORPUS, "textbook_workbook", "r6c10cheonjae")
+    job = str(tmp_path / "job")
+    os.makedirs(job)
+    for n in os.listdir(os.path.join(case_dir, "meta")):
+        with open(os.path.join(case_dir, "meta", n)) as f:
+            val = f.read()
+        with open(os.path.join(job, n), "w") as f:
+            f.write(val)
+    with open(os.path.join(job, "manuscript_folder.txt"), "w") as f:
+        f.write(os.path.join(case_dir, "inputs_folder"))
+    logs = []
+    json_path = TextbookWorkbookV2Engine().parse({"manuscripts": []}, job,
+                                                 logs.append)
+    produced = _replay.canonicalize(
+        json.load(open(json_path, encoding="utf-8")), [job])
+    golden = _replay.canonicalize(
+        json.load(open(os.path.join(case_dir, "golden", "content.json"),
+                       encoding="utf-8")), [])
+    diff = _replay.first_diff(produced, golden)
+    assert diff is None, diff
+
+
+def test_round6_c10_plan_anchor():
+    """후보⑩ 골든 재플랜 — 조건 항목/화자 라벨/영단어 강등이 스타일에
+    반영되고 전 단락 보존 (GH 1 제거 제외)."""
+    from collections import Counter
+    from engines.workbook_v2.plan import steps_to_plan, ensure_step3_kinds
+    golden = os.path.join(CORPUS, "textbook_workbook", "r6c10cheonjae",
+                          "golden", "content.json")
+    c = json.load(open(golden, encoding="utf-8"))
+    st3 = c["steps"]["step3"]
+    ensure_step3_kinds(st3)
+    plan = steps_to_plan(c["steps"], workbook_type="교과서")
+    fl = [f for f in plan["flows"] if f["step"] == "step3"][0]
+    paras = [p for u in fl["units"]
+             for p in (u["paras"] if isinstance(u, dict) else u)]
+    n_src = sum(len(it["paragraphs"])
+                for it in (st3.get("normal") or []) + (st3.get("short") or []))
+    assert len(paras) == n_src - 1 == 852       # GH 1 제거 외 전 단락 보존
+    tally = Counter(p["s"].split(">")[-1].strip() for p in paras)
+    assert tally["조건 올림포스"] >= 115        # D3 — 조건 항목 구제
+    assert tally["영단어"] == 1                 # D2 — 각주 어휘(*extensively)만
+    def style_of(prefix):
+        for p in paras:
+            if p["t"].strip().startswith(prefix):
+                return p["s"]
+        raise AssertionError(f"단락 없음: {prefix}")
+    assert "지문" in style_of("Minji:")
+    assert "지문" in style_of("A: 노란색 코트")
+    assert "조건" in style_of("1. 위 단어들을 어형변화")
+    assert "조건" in style_of("반드시 빈칸은 주어진 철자로")
+
+
+def test_round6_c07_plan_anchor():
+    """후보⑦ 골든 재플랜 — [서술형 2] 해요체 발문이 번호 스타일 (D1)."""
+    from engines.workbook_v2.plan import steps_to_plan, ensure_step3_kinds
+    golden = os.path.join(CORPUS, "ebs_workbook_v2", "r6c07rp17",
+                          "golden", "content.json")
+    c = json.load(open(golden, encoding="utf-8"))
+    ensure_step3_kinds(c["steps"]["step3"])
+    plan = steps_to_plan(c["steps"], workbook_type="EBS")
+    fl = [f for f in plan["flows"] if f["step"] == "step3"][0]
+    paras = [p for u in fl["units"]
+             for p in (u["paras"] if isinstance(u, dict) else u)]
+    seyo = [p for p in paras if p["t"].startswith("[서술형 2]")]
+    assert seyo and all("번호" in p["s"] for p in seyo)
+    assert len(paras) == 376
+
+
 def test_gates_false_positive_free_on_known_good_dumps():
     """기존 양품 덤프에 새 게이트 false-critical 0 (파일 존재 시)."""
     good = [
