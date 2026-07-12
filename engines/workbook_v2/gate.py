@@ -31,6 +31,18 @@
                   둘 다 critical (W15 c04 실증: 183개 중 9개 비일관 + 오염 1).
   G12 [문장삽입배경] 출처 마커가 있는 스토리에서 문장삽입 발문 뒤 배경
                   (주어진 문장 박스) 미부여 — warning (W15 c04 실증 12건).
+  G13 [발문스타일] 발문 시그니처 단락([서술형 N] 접두 태그, 또는 발문
+                  시작 신호 + 시오/세요-체 종결)이 발문 계열 스타일이
+                  아닌 스타일로 인쇄됨 — critical (W16 c07 실증:
+                  "[서술형 2] … 쓰세요." 해요체 발문이 지문 스타일).
+  G14 [영단어오분류] 영단어 스타일 단락이 실제 어휘 항목("word: 한글 뜻")
+                  이 아님 — 한글 뜻이 없거나 콜론 앞 머리가 1글자(대화문
+                  화자 라벨 "A:"/"Minji:") — critical (W16 c10 실증 6건 +
+                  c04/80dd3fa2 잠복. v1 실물: 이런 행은 전부 지문 스타일).
+  G15 [조건항목]  <조건> 블록 안의 강신호 조건 항목(불릿 시작 또는
+                  한글 + '것' 종결, 답란 이전)이 조건 스타일이 아닌
+                  스타일로 인쇄됨 — critical (W16 c10 실증 3블록 +
+                  c04/c05/0a5da924 잠복).
 
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
 구버전 덤프에는 경고로만 보고한다 (재덤프 안내). G9는 uploads_dir를 넘긴
@@ -54,6 +66,31 @@ _RE_SRC_POLLUTED = re.compile(r"^[①-⑤]\[[^\[\]]{2,}변형\]$")
 # G12 — 문장삽입 발문 (주어진 문장 배경 박스 기대)
 _RE_INSERT_PROMPT = re.compile(r"주어진 문장이 들어가|들어갈 위치|"
                                r"들어가기에 가장 적절한 곳")
+
+# G13 — 발문 시그니처 (출력 검사용 독립 정의 — 플랜 오버레이와 순환 방지)
+_RE_HANGUL = re.compile(r"[가-힣]")
+_RE_Q_LEAD_TAG = re.compile(r"^\[(?:서술|논술)형\s*\d*\]")
+_RE_Q_TRAIL_SRC = re.compile(r"\s*\[[^\[\]]{1,40}\]\s*$")
+_RE_Q_START = re.compile(r"^(?:다음|윗\s*글|위\s*글|글의\s*흐름|주어진)")
+_RE_Q_END = re.compile(r"(?:시오|세요)\s*[.?!]?\s*$")
+# 발문 계열 스타일 시그니처 — "실전 문제 지문"(지문 스타일)과 충돌하지
+# 않도록 "하단 문제"/"OX문제"처럼 구체 명칭으로 한정
+_Q_STYLE_KEYS = ("번호", "발문", "다음 글을 읽고", "하단 문제", "OX문제")
+
+# G14 — 영단어 스타일 오용 (실제 어휘 항목은 "word: 한글 뜻" — 한글 필수,
+# 콜론 앞 머리 2+글자. 1글자 머리는 대화문 화자 라벨 "A:")
+_RE_WORD_BAD_HEAD = re.compile(r"^[A-Za-z]\s*[:：]")
+
+# G15 — <조건> 블록 항목 (강신호 한정 — v1 실물 관행: 영어 어구 나열은
+# 지문 유지, 시오-체 번호 항목은 발문 유지. 4ed24266/c15 v1 덤프 실증)
+_RE_COND_BULLET = re.compile(r"^\s*[•⦁◦∙ㆍ·]")
+_RE_COND_GEOT = re.compile(r"것\s*\.?\s*$")
+_RE_COND_NUMSTART = re.compile(r"^\s*\d+\s*[.)]")
+# 답란 = 밑줄런으로 '끝나는' 줄 한정 — 본문 중간 빈칸 표기("보기의
+# [_______]에서 … 할 것"은 조건 항목)와 구분 (c06 실증)
+_RE_COND_BLOCK_END = re.compile(r"_{6,}\s*[.,)]?\s*$|^\s*(?:정답|→|우리말)")
+_RE_COND_QHINT = re.compile(r"^(?:다음|윗\s*글|위\s*글|글의|밑줄|주어진|"
+                            r"\(주관식\)|서술형)")
 
 # G8 — 원전 교재 구분선 (파서 _RE_CHAPTER_DIVIDER/_RE_UNIT_DIVIDER 준용.
 # 출력 검사용 독립 정의 — 파서가 틀리면 게이트도 같이 틀리는 순환 방지)
@@ -330,6 +367,90 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         warnings.append(
             f"[문장삽입배경] 문장삽입 발문 뒤 배경(주어진 문장 박스) 미부여 "
             f"{len(insert_missing)}건: " + " | ".join(insert_missing[:3]))
+
+    # ── G13 발문 스타일 누락 (W16 c07) ───────────────────────────────────
+    # [서술형 N] 접두 태그, 또는 발문 시작 신호("다음/윗글/주어진…") +
+    # 시오/세요-체 종결(꼬리 [출처] 태그 제거 후)이 발문 계열 스타일이
+    # 아니면 검출 — 해요체("쓰세요") 발문이 지문 스타일로 인쇄되는 결함.
+    q_style_miss = []
+    for t, s in _dump_paras(dump):
+        tt = _clean(t)
+        if not tt or not _RE_HANGUL.search(tt):
+            continue
+        core = tt
+        while True:
+            nx = _RE_Q_TRAIL_SRC.sub("", core)
+            if nx == core:
+                break
+            core = nx
+        body = _RE_Q_LEAD_TAG.sub("", core).strip()
+        is_q_sig = bool(_RE_Q_LEAD_TAG.match(core)) or (
+            _RE_Q_START.match(body) and _RE_Q_END.search(body))
+        if is_q_sig and body and not any(k in (s or "")
+                                         for k in _Q_STYLE_KEYS):
+            q_style_miss.append(tt[:45])
+    stats["q_style_miss"] = len(q_style_miss)
+    if q_style_miss:
+        critical.append(
+            f"[발문스타일] 발문 시그니처 단락 {len(q_style_miss)}개가 발문 "
+            f"계열 스타일이 아님: " + " | ".join(q_style_miss[:3]))
+
+    # ── G14 영단어 스타일 오분류 (W16 c10) ───────────────────────────────
+    word_bad = []
+    for t, s in _dump_paras(dump):
+        if "영단어" not in (s or ""):
+            continue
+        tt = _clean(t)
+        if not tt:
+            continue
+        if not _RE_HANGUL.search(tt) or _RE_WORD_BAD_HEAD.match(tt):
+            word_bad.append(tt[:45])
+    stats["word_style_bad"] = len(word_bad)
+    if word_bad:
+        critical.append(
+            f"[영단어오분류] 어휘 항목이 아닌 단락 {len(word_bad)}개가 "
+            f"영단어 스타일로 인쇄됨: " + " | ".join(word_bad[:3]))
+
+    # ── G15 <조건> 블록 항목 스타일 (W16 c10) ────────────────────────────
+    # <조건> 마커부터 답란(밑줄런/정답/→/우리말) 이전까지 스캔. 강신호
+    # 조건 항목(불릿 시작 / 한글 + '것' 종결 / 번호 + 한글 + '것' 종결)이
+    # 조건 스타일이 아니면 검출. 발문 스타일 + 발문 신호(시작 힌트/시오)는
+    # 블록 종료로 간주 (v1 실물: 시오-체 번호 항목은 발문 유지 관행).
+    cond_miss = []
+    for story in dump.get("stories", []):
+        ps = story.get("paragraphs", [])
+        for i, p in enumerate(ps):
+            if _clean(p.get("t", "")) != "<조건>":
+                continue
+            for j in range(i + 1, len(ps)):
+                qt = _clean(ps[j].get("t", ""))
+                qs = ps[j].get("s") or ""
+                if not qt:
+                    continue
+                if _RE_COND_BLOCK_END.search(qt):
+                    break
+                if qt.startswith("<보기>") or qt == "보기":
+                    break
+                if any(k in qs for k in ("다음 글을 읽고", "보기", "배경")):
+                    break
+                if "번호" in qs and (_RE_COND_QHINT.match(qt)
+                                     or "시오" in qt):
+                    break
+                strong = (_RE_COND_BULLET.match(qt)
+                          or (_RE_COND_GEOT.search(qt)
+                              and _RE_HANGUL.search(qt)))
+                if strong and "조건" not in qs:
+                    cond_miss.append(qt[:45])
+                elif not (_RE_HANGUL.search(qt)
+                          or _RE_COND_BULLET.match(qt)):
+                    continue    # 영어 어구 나열 — 지문 유지 관행 (skip)
+                elif "조건" not in qs and not strong:
+                    break       # 한글 비조건 문장 — 블록 종료로 간주
+    stats["cond_item_miss"] = len(cond_miss)
+    if cond_miss:
+        critical.append(
+            f"[조건항목] <조건> 블록 항목 {len(cond_miss)}개가 조건 스타일이 "
+            f"아님: " + " | ".join(cond_miss[:3]))
 
     # ── G3 독립 지문번호 프레임 ↔ 원고 지문번호 ─────────────────────────
     labels = list((plan.get("passage_numbers") or {}).get("labels") or [])

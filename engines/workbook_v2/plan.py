@@ -39,6 +39,7 @@ import json
 import os
 import re
 
+from core.structure.rules import Q_START_HINT as _RE_Q_START_HINT
 from core.structure.style_resolver import resolve_style
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
@@ -77,6 +78,22 @@ _RE_S3_QNUM = re.compile(r"^\d+\.\s")
 # 은 번호 스타일 단락을 덮지 않으므로(run.jsx 2417 break) Cond 포함이 파리티.
 _RE_S3_KORQ = re.compile(r"[가-힣]\?")
 _S3_WEAK_KINDS = {"UNKNOWN", "K", "Cond"}
+# W16 c07 (D1) — [서술형 N]/[논술형 N] 접두 태그 발문 + 해요체("쓰세요")
+# 발문 (리딩파워 유형편(완성) Unit17 실증: "[서술형 2] … 쓰세요. [출처]"가
+# taxonomy·구조 폴백 모두 미인식 → 지문 스타일로 인쇄). 해요체는 해석(K)
+# 문장과 충돌 가능 → 발문 시작 신호(Q_START_HINT)와 AND 결합.
+_RE_S3_QTAG = re.compile(r"^\[(?:서술|논술)형\s*\d*\]")
+_RE_S3_SEYO = re.compile(r"(?:쓰|하|고르|답하|완성하|바꾸|채우)세요")
+# W16 c10 (D2) — 영단어(Word) kind 강등: 어휘 항목은 "word: 한글 뜻"이
+# 원칙 (v1 실물 고2_25-6 덤프: 화자 라벨 "Minji:"/"A: …"·영문 제목·
+# 안내문 필드 "Dates: …"는 전부 지문 스타일). 한글 뜻이 없거나 콜론 앞
+# 머리가 1글자면 지문(P)으로 강등.
+_RE_S3_HANGUL = re.compile(r"[가-힣]")
+_RE_S3_WORD_BAD_HEAD = re.compile(r"^[A-Za-z]\s*[:：]")
+# 대화문 화자 라벨 행("A: 노란색 코트를 … 누구야?") — 물음표가 있어도
+# 발문이 아니라 대화 지문. 발문은 화자 라벨로 시작하지 않는다 (c10 실증:
+# Word 오분류 수리 후 KORQ 오버레이가 대화행을 발문으로 승격하던 것 차단).
+_RE_S3_SPEAKER = re.compile(r"^[A-Za-z][A-Za-z .]{0,12}[:：]")
 # v1 pass 11 — 화살표 단독 단락 삭제 + 다음 단락 배경(S3_BG) (run.jsx
 # 2433~2450). EBS Unit15 v1 실물 dump 대조에서 "↓" 4건 실증 (모의고사
 # 코퍼스에도 19건 존재 — v1 파리티 회복).
@@ -108,14 +125,27 @@ def _s3_arrow_para(text):
 
 
 def _s3_effective_kind(kind, text):
+    # W16 D2 — 영단어 강등 (분류기 수리와 이중 방어: content-only 코퍼스
+    # 재실행은 구버전 kind 주석을 그대로 쓰므로 플랜 계층에서도 강등).
+    if kind == "Word":
+        t = text.strip()
+        if not _RE_S3_HANGUL.search(t) or _RE_S3_WORD_BAD_HEAD.match(t):
+            return "P"
+        return kind
     if kind not in _S3_WEAK_KINDS:
         return kind
+    if _RE_S3_SPEAKER.match(text.strip()):
+        return kind                     # W16 — 대화 화자 라벨 행은 발문 아님
+    if _RE_S3_QTAG.match(text.strip()):
+        return "Q"                      # W16 D1 — [서술형 N] 접두 발문
     if _RE_S3_KORQ.search(text):
         return "Q"
     if "다음 글을 읽고 물음에" in text:
         return "Q-INTRO"
     if "시오" in text:
         return "Q"
+    if _RE_S3_SEYO.search(text) and _RE_Q_START_HINT.match(text.strip()):
+        return "Q"                      # W16 D1 — 해요체 발문 (시작 신호 AND)
     return kind
 
 
