@@ -691,6 +691,10 @@ _RE_STEP3_PROMPT_BOUNDARY = re.compile(
     r'|[가-힣].*(?:것은|곳은|고르시오|고르십시오|쓰시오|완성하시오|고치시오|'
     r'문장은|배열하)\s*[\?\.]?\s*(?:[-–—]\s*\d+\s*차\s*)?$'
 )
+# 변형문제 출처 마커 단독 단락 ("[202506H2_25도표_변형]") — 선지 prepend
+# 경계. 발문 직후에 마커가 오는 문제모음(발문→마커→지문 순)에서 마커가
+# 선지 1번으로 오인돼 원고에 없는 ①이 붙는 것을 막는다 (W15 c04 실증).
+_RE_STEP3_SRC_MARKER = re.compile(r'^\[[^\[\]]{2,}변형\]$')
 
 
 def _add_step3_choice_numbers(paras):
@@ -743,6 +747,8 @@ def _add_step3_choice_numbers(paras):
                 break
             if re.match(r'^\[(?:[Gg]ateway|\d+)\]$', t_peek):
                 break
+            if _RE_STEP3_SRC_MARKER.match(t_peek):
+                continue    # 출처 마커는 선지 후보가 아님 — 건너뛰고 계속
             if t_peek.startswith('※'):
                 break
             if t_peek[0] in _CIRCLED_DIGITS:
@@ -783,6 +789,9 @@ def _add_step3_choice_numbers(paras):
                 break
             if re.match(r'^\[(?:[Gg]ateway|\d+)\]$', t_j):
                 break
+            if _RE_STEP3_SRC_MARKER.match(t_j):
+                j += 1
+                continue    # 출처 마커 — 선지 아님 (①이 붙으면 원고 오염, W15)
             if t_j.startswith('※'):
                 break
             # 첫 영문 단락 = 지문 → 1회 skip
