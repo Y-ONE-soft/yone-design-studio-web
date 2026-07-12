@@ -76,6 +76,88 @@ def test_s3_overlay_word_demotion():
         == "Word"
 
 
+def test_s3_overlay_speaker_line_not_question():
+    """대화 화자 라벨 행은 물음표가 있어도 발문 승격 금지 (c10 실증 —
+    Word 오분류 수리 후 KORQ 오버레이가 대화행을 발문으로 승격하던 것)."""
+    from engines.workbook_v2.plan import _s3_effective_kind
+    assert _s3_effective_kind(
+        "UNKNOWN", "A: 노란색 코트를 입고 있는 저 여자 아이는 누구야?") \
+        == "UNKNOWN"
+    assert _s3_effective_kind(
+        "UNKNOWN", "Minji: 이건 무슨 뜻이야? 대답해 보시오.") == "UNKNOWN"
+
+
+def test_cond_propagation_v1_semantics():
+    """D3 — <조건> 뒤 어구 나열 건너뛰기 + 번호/불릿 항목 조건화 +
+    발문 오매칭(Q) 강등 + 답란 종료 (c10 실증)."""
+    out = classify_paragraphs([
+        {"text": "<조건>"},
+        {"text": "team, teams, their, even though,"},        # 어구 — skip
+        {"text": "both, tried, won, best, my"},              # 어구 — skip
+        {"text": "1. 위 단어들을 어형변화 없이 모두, 한 번씩만 사용할 것"},
+        {"text": "2. 위 단어들 외에 3개의 단어를 추가하여 '나의 팀'을 "
+                 "강조하는 문장으로 완성할 것"},
+        {"text": "정답: ___________________"},               # 답란 = 종료
+        {"text": "다음은 글의 내용을 바탕으로 재구성한 문장이다."},
+    ])
+    kinds = [o["kind"] for o in out]
+    assert kinds[0] == "Cond"
+    assert kinds[1] != "Cond" and kinds[2] != "Cond", "어구 나열은 지문 유지"
+    assert kinds[3] == "Cond" and kinds[4] == "Cond", "번호 조건 항목"
+    assert kinds[6] != "Cond", "답란 이후는 전파 금지"
+
+
+def test_cond_propagation_bullets_and_q_demotion():
+    out = classify_paragraphs([
+        {"text": "<조건>"},
+        {"text": "◦ It(가주어), that(진주어)를 활용할 것"},
+        {"text": "◦ Gijisi juldarigi, couples, a child를 활용할 것"},
+        {"text": "◦ 12단어 내외의 완전한 문장으로 작성할 것"},
+        {"text": "<조건>"},
+        # taxonomy 발문 리프(SRV-WRD-START-LETTER) 오매칭 → 강등
+        {"text": "반드시 빈칸은 주어진 철자로 시작하는 한 단어로 쓸 것"},
+    ])
+    kinds = [o["kind"] for o in out]
+    assert kinds[1:4] == ["Cond", "Cond", "Cond"]
+    assert kinds[5] == "Cond", "조건 문구의 발문 오매칭은 조건으로 강등"
+
+
+def test_cond_propagation_keeps_sio_numbered_questions():
+    """시오-체 번호 항목은 발문 유지 (v1 실물 4ed24266 관행)."""
+    out = classify_paragraphs([
+        {"text": "<조건>"},
+        {"text": "1.(A)는 본문에서 찾아 변형하여 한단어로 쓰시오."},
+    ])
+    assert out[1]["kind"] != "Cond"
+
+
+def test_cond_item_with_inline_blank_not_block_end():
+    """본문 중간 빈칸 표기는 답란이 아님 — 조건 항목 유지 (c06 실증)."""
+    out = classify_paragraphs([
+        {"text": "<조건>"},
+        {"text": "보기의 [_______]에서 적절한 단어 하나만 고르고 나머지 "
+                 "단어는 모두 한 번씩 사용할 것"},
+        {"text": "주어진 단어들의 형태를 바꾸지 말 것"},
+    ])
+    assert out[1]["kind"] == "Cond"
+    assert out[2]["kind"] == "Cond"
+
+
+def test_word_def_tightened():
+    """D2 분류기 — 화자 라벨/영문 제목/안내문 필드는 Word가 아님."""
+    out = classify_paragraphs([
+        {"text": "Minji:"},
+        {"text": "Gijisi Juldarigi Festival: A Celebration of Tradition"},
+        {"text": "Dates: July 5-7, 2025"},
+        {"text": "A: 노란색 코트를 입고 있는 저 여자 아이는 누구야?"},
+        {"text": "inherit: 물려받다"},
+        {"text": "*extensively 널리, 광범위하게"},
+    ])
+    kinds = [o["kind"] for o in out]
+    assert "Word" not in kinds[:4]
+    assert kinds[4] == "Word" and kinds[5] == "Word"
+
+
 # ── D1 게이트 G13: 발문 스타일 누락 — 수리 전 상태 재현으로 검출 실증 ─────────
 
 def test_gate_g13_detects_seyo_question_as_passage():

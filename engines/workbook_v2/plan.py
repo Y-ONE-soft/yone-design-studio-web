@@ -90,6 +90,10 @@ _RE_S3_SEYO = re.compile(r"(?:쓰|하|고르|답하|완성하|바꾸|채우)세�
 # 머리가 1글자면 지문(P)으로 강등.
 _RE_S3_HANGUL = re.compile(r"[가-힣]")
 _RE_S3_WORD_BAD_HEAD = re.compile(r"^[A-Za-z]\s*[:：]")
+# 대화문 화자 라벨 행("A: 노란색 코트를 … 누구야?") — 물음표가 있어도
+# 발문이 아니라 대화 지문. 발문은 화자 라벨로 시작하지 않는다 (c10 실증:
+# Word 오분류 수리 후 KORQ 오버레이가 대화행을 발문으로 승격하던 것 차단).
+_RE_S3_SPEAKER = re.compile(r"^[A-Za-z][A-Za-z .]{0,12}[:：]")
 # v1 pass 11 — 화살표 단독 단락 삭제 + 다음 단락 배경(S3_BG) (run.jsx
 # 2433~2450). EBS Unit15 v1 실물 dump 대조에서 "↓" 4건 실증 (모의고사
 # 코퍼스에도 19건 존재 — v1 파리티 회복).
@@ -130,6 +134,8 @@ def _s3_effective_kind(kind, text):
         return kind
     if kind not in _S3_WEAK_KINDS:
         return kind
+    if _RE_S3_SPEAKER.match(text.strip()):
+        return kind                     # W16 — 대화 화자 라벨 행은 발문 아님
     if _RE_S3_QTAG.match(text.strip()):
         return "Q"                      # W16 D1 — [서술형 N] 접두 발문
     if _RE_S3_KORQ.search(text):
