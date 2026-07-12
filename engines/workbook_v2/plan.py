@@ -796,6 +796,12 @@ def build_step2_c2(step_data, workbook_type="모의고사"):
             continue
         if _is_blank(text):
             continue    # v1: \r{2,} → \r
+        # 지문 헤더 제거 (W17 c11: "1. L1-본문1" 한글 포함 헤더가 v1의
+        # eng_only 삭제 룰을 비껴가 문항번호 스타일로 인쇄됨 — G1 검출.
+        # 모의고사형 헤더("1. p16-no.01")는 eng_only가 이미 삭제하던 것과
+        # 동일 의미론 — 지문 번호는 독립 프레임(passage_numbers) 담당).
+        if is_header_line(_norm_header(text)):
+            continue
         has_br = "[" in text and "]" in text
         eng_only = (re.search(r"[A-Za-z]", text)
                     and not re.search("[가-힣]", text)

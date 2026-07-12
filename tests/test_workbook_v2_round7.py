@@ -384,7 +384,14 @@ def test_round7_c11_plan_anchor():
              for f in plan["flows"]}
     assert shape == {"step1_a1": (6, 12), "step1_a1_2": (6, 12),
                      "step1_c1": (6, 75), "step1_c2": (6, 110),
-                     "step2_c2": (1, 39), "step3": (1, 561)}
+                     "step2_c2": (1, 33), "step3": (1, 560)}
+    # D5: step2_c2 헤더("1. L1-본문1") 플랜 제거 / D6: 꼬리 라이센스 제거
+    c2 = [f for f in plan["flows"] if f["step"] == "step2_c2"][0]
+    c2_paras = [p for u in c2["units"]
+                for p in (u["paras"] if isinstance(u, dict) else u)]
+    from engines.workbook_v2.plan import is_header_line, _norm_header
+    assert not [p for p in c2_paras
+                if is_header_line(_norm_header(p["t"]))]
     assert plan["unsupported"] == []
     sig = re.compile(r"\d\s*\[\s*[A-Za-z]")
     st3 = [f for f in plan["flows"] if f["step"] == "step3"][0]
@@ -416,3 +423,39 @@ def test_round7_c16_plan_anchor():
     tally = Counter(p["s"].split(">")[-1].strip() for p in paras)
     assert tally["조건 올림포스"] == 7
     assert tally["배경 올림포스"] == 1      # PUA 화살표 → 삭제+배경 (W14 D2)
+
+
+# ── D5/D6 수리 (c11 실조판 게이트 검출분 — G1 헤더잔존 / G17 워터마크) ───────
+
+def test_strip_step3_trailing_junk():
+    from engines.workbook.parser import _strip_step3_trailing_junk
+    paras = _p(["마지막 문제 지문입니다.", "",
+                "본 콘텐츠는 해당 출판사로부터 교과서 라이센스를 획득하여 "
+                "이그잼포유에서 제작하였습니다. 본 콘텐츠에 대한 저작권은 "
+                "이그잼포유가 소유하고 있으며, 콘텐츠의 전부 또는 일부를 "
+                "무단 전재하거나 배포하는 것은 저작권법에 의한 법적 책임을 "
+                "물을 수 있습니다."])
+    out = [p["text"] for p in _strip_step3_trailing_junk(paras)]
+    assert out == ["마지막 문제 지문입니다.", ""]
+    # 문서 중간 권리 문구는 무접촉 (꼬리에 실질 라인이 있으면 중단)
+    mid = _p(["지문", "저작권 관련 지문 문장입니다.", "실질 마지막 지문."])
+    assert [p["text"] for p in _strip_step3_trailing_junk(mid)] \
+        == [p["text"] for p in mid]
+
+
+def test_build_step2_c2_strips_headers():
+    """D5: 한글 포함 지문 헤더("1. L1-본문1")가 v1 eng_only 삭제 룰을
+    비껴가 문항번호 스타일로 인쇄되던 것 — 플랜에서 제거."""
+    from engines.workbook_v2.plan import build_step2_c2
+    step = {"paragraphs": [
+        {"text": "1. L1-본문1", "runs": []},
+        {"text": "만약 우리가 실패와 성공 중 어느 것을 선호하냐는 질문을 "
+                 "받는다면, 우리는 모두 성공을 선택할 것이다.", "runs": []},
+        {"text": "(prefer / and / would / one / choose / success)",
+         "runs": []},
+    ]}
+    res = build_step2_c2(step)
+    paras = [p for u in res["units"]
+             for p in (u["paras"] if isinstance(u, dict) else u)]
+    assert not [p for p in paras if p["t"].startswith("1. L1")]
+    assert [p for p in paras if p["t"].startswith("만약")]

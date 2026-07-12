@@ -630,6 +630,30 @@ def _strip_step3_leading_junk(paras):
     return out
 
 
+def _strip_step3_trailing_junk(paras):
+    """Step3 문제모음 꼬리의 권리/워터마크 라인 제거 (W17 c11 실증 —
+    '본 콘텐츠는 … 라이센스를 획득하여 이그잼포유에서 제작 … 저작권은 …
+    무단 전재 …'가 실전문제 마지막 단락으로 인쇄됨, G17 검출).
+
+    문서 맨 끝에서부터 스캔하며 URL 단독 라인·권리 문구 라인만 제거한다.
+    빈 단락은 보존, 첫 실질 라인에서 즉시 중단 — 문서 중간 무접촉."""
+    drop = set()
+    i = len(paras) - 1
+    while i >= 0:
+        text = paras[i]['text'].strip()
+        if not text:
+            i -= 1
+            continue
+        if _RE_S3_JUNK_URL.match(text) or _RE_S3_JUNK_RIGHTS.search(text):
+            drop.add(i)
+            i -= 1
+            continue
+        break
+    if not drop:
+        return paras
+    return [p for k, p in enumerate(paras) if k not in drop]
+
+
 def _strip_step3_type_tags(paras):
     """Step3 원고에서 유형 섹션 태그/부제를 모두 제거.
 
@@ -1579,8 +1603,9 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
             else:
                 paras = _hwp_extract_paragraphs(fpath, extract_underline,
                                                 exclude_footnotes=step3_exclude_footnotes)
-            # 선두 표제/워터마크 블록 제거 (W17 c16 — 보존 가드 스냅샷 전에)
+            # 선두/꼬리 표제·워터마크 제거 (W17 c16/c11 — 스냅샷 전에)
             paras = _strip_step3_leading_junk(paras)
+            paras = _strip_step3_trailing_junk(paras)
             _raw_words = _step3_content_words(_strip_step3_book_markers(paras))  # 보존 가드 스냅샷(헤더 제외)
             # 표형 선지 번호 셀(①~⑤) 병합 — _strip_step3_answers가 단독 ①~⑤를 제거하기 전에 수행
             paras = _merge_step3_split_choice_numbers(paras)
