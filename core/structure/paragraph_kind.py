@@ -220,6 +220,13 @@ def classify_paragraphs(paras):
             if item["kind"] == "Box":
                 if nxt["kind"] in ("Q", "Q-INTRO", "GH", "A", "Cond", "Box"):
                     break
+                # 단독 대괄호 마커 라인("[ Type C (2) ]" 유형 구분 마커 등)은
+                # 보기 어구가 아니다 — 전파 차단 (W17 c16: Box 전파가 무한글
+                # 판정으로 유형 마커를 보기 스타일로 오염). 어구 나열
+                # 대괄호("[ pleased / pleasing ]")는 구분자(/ ,)로 통과.
+                if (t.startswith("[") and t.endswith("]")
+                        and "/" not in t and "," not in t):
+                    break
                 if R.BOX_WORDLIST.search(t) or not R.HANGUL.search(t):
                     nxt["kind"] = "Box"
                     j += 1

@@ -278,6 +278,28 @@ def test_strip_step3_answers_keeps_per_question_lines():
     assert out == [p["text"] for p in paras]
 
 
+# ── D4 수리: Box 전파가 유형 마커에서 중단 ───────────────────────────────────
+
+def test_box_propagation_breaks_at_type_marker():
+    res = classify_paragraphs([
+        {"text": "<보기>"},
+        {"text": "they / is / exist / that / understand"},
+        {"text": ""},
+        {"text": ""},
+        {"text": "[ Type C (2) ]"},
+        {"text": "※ 다음 글을 읽고 물음에 답하시오."},
+    ])
+    kinds = [r["kind"] for r in res]
+    assert kinds[1] == "Box"          # 어구 나열은 유지
+    assert kinds[4] != "Box"          # 유형 마커는 전파 차단
+    # 어구 나열 대괄호(구분자 포함)는 여전히 Box 전파
+    res2 = classify_paragraphs([
+        {"text": "<보기>"},
+        {"text": "[ pleased / pleasing ]"},
+    ])
+    assert res2[1]["kind"] == "Box"
+
+
 # ── 기존 양품 덤프 false-critical 0 (신규 게이트 sweep) ──────────────────────
 
 def test_new_gates_false_positive_free_on_known_good_dumps():
