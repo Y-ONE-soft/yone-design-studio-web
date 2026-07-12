@@ -575,6 +575,33 @@ try {
                 try { nfr.parentStory.contents = qn; } catch (e) {}
             }
         }
+        // pN_main 슬롯 오버플로우 — 페이지 복제 (W18 D8, plan.overflow_dup
+        // opt-in). 슬롯 배치가 전부 끝난 뒤 2차 패스: 대상 스토리를 먼저
+        // 전부 확보(페이지 복제로 오프셋이 밀려도 스토리 객체는 유효) 후
+        // 복제한다. 메인 프레임 단독 페이지(pN_main)에 한정 — p0/p6 공유
+        // 페이지는 복제 시 이웃 프레임 내용이 중복 인쇄되므로 제외.
+        if (plan.overflow_dup) {
+            var pend = [];
+            for (var oi = 0; oi < cyc.slots.length; oi++) {
+                var oe = cyc.slots[oi];
+                if (oe.clear || oe.slot === "step3") { continue; }
+                if (!/_main$/.test(String(oe.slot))) { continue; }
+                var ofr = resolveSlotFrame(doc, cycleStart, oe.slot);
+                if (!ofr) { continue; }
+                var ost = null;
+                try { ost = ofr.parentStory; } catch (e) {}
+                if (!ost || !ost.isValid) { continue; }
+                try { ost.recompose(); } catch (e) {}
+                var otc = ost.textContainers;
+                if (otc.length > 0 && otc[otc.length - 1].overflows) {
+                    pend.push({ story: ost,
+                                tag: "Q" + qn + " " + oe.slot });
+                }
+            }
+            for (var pi2 = 0; pi2 < pend.length; pi2++) {
+                fixStep3Overflow(pend[pi2].story, pend[pi2].tag);
+            }
+        }
     }
 
     // ── 실행 ─────────────────────────────────────────────────────────────────
@@ -604,6 +631,40 @@ try {
         wlog("사이클 " + (ci + 1) + " 완료 (+" + added + "p)");
         currentStart += CYCLE_LENGTH + added;
         cyclesDone++;
+    }
+
+    // 빈 페이지 정리 (W18 D9, plan.page_cleanup opt-in) — 배치가 전부 끝난
+    // 뒤, 본문 영역(간지 이후)에서 '순수 번호 프레임(≤4자 숫자) 외에 내용
+    // 있는 프레임이 없는' 페이지 삭제. 원고 없는 스텝의 사이클 페이지가
+    // 번호 프레임만 남아 인쇄되던 잔재(G4b) 해소. 역순 삭제 + 하트비트
+    // (W12 D7 — 무로그 삭제 루프의 러너 행 오탐 방지).
+    if (plan.page_cleanup) {
+        var removed = 0;
+        var scanned = 0;
+        for (var dp = doc.pages.length - 1; dp >= HEADER_PAGES; dp--) {
+            scanned++;
+            if (scanned % 20 === 0) {
+                wlog("[정리] 페이지 스캔 " + scanned + " (삭제 " + removed + ")");
+            }
+            try {
+                var pgc = doc.pages[dp];
+                var keep = false;
+                var ptfs = pgc.textFrames;
+                for (var pf = 0; pf < ptfs.length; pf++) {
+                    var pc = (ptfs[pf].contents || "")
+                        .replace(/[\s\r\n￼]+/g, "");
+                    if (pc.length === 0) { continue; }
+                    if (/^\d{1,3}(~\d{1,3})?$/.test(pc)) { continue; }
+                    keep = true;
+                    break;
+                }
+                if (!keep && ptfs.length > 0) {
+                    pgc.remove();
+                    removed++;
+                }
+            } catch (eDp) {}
+        }
+        wlog("[정리] 빈 페이지 삭제: " + removed + "개");
     }
 
     relockIcons();

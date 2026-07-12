@@ -248,14 +248,16 @@ def test_sero_routing_v1_step3_names_unchanged(tmp_path):
 
 
 def test_sero_stage_rename_grammar_basic():
-    """'Step2 B2 문법 기본 문제 정답.docx' → step2_a1_btm 기대명 rename
-    (D6). 이미 어법선택 명명이거나 정답 아닌 문제지는 무변경."""
+    """'Step2 B2 문법 기본 문제.docx'(문제지 — 지문 가족) → step2_a1_btm
+    기대명 rename (D6/D7). 세로 btm 콘텐츠 가족은 지문(e79f8af9 골든 근거)
+    — 정답지(원문자+[정답해설] 해설 가족)와 기존 어법선택 명명은 무변경."""
     eng = _sero_engine()
     logs = []
-    assert eng._stage_fname("Step2 B2 문법 기본 문제 정답.docx",
-                            logs.append) == "Step2 A1 어법선택(객관식).docx"
     assert eng._stage_fname("Step2 B2 문법 기본 문제.docx",
-                            logs.append) == "Step2 B2 문법 기본 문제.docx"
+                            logs.append) == "Step2 A1 어법선택(객관식).docx"
+    assert eng._stage_fname("Step2 B2 문법 기본 문제 정답.docx",
+                            logs.append) \
+        == "Step2 B2 문법 기본 문제 정답.docx"
     assert eng._stage_fname("Step2 A1 어법선택(문법 기본 문제) 정답지.docx",
                             logs.append) \
         == "Step2 A1 어법선택(문법 기본 문제) 정답지.docx"

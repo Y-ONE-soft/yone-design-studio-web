@@ -117,18 +117,19 @@ class WorkbookSeroV2Engine(BaseEngine):
     # 사이클을 만들던 것 차단 (W13 본가 오라우팅 차단의 세로 확장).
     _RE_STEP12_PREFIX = re.compile(r"^\s*(?:스텝|step)\s*[12]\b", re.I)
     _RE_ANSWERISH = re.compile(r"정답|답지|답안|해설", re.I)
-    # W18 c17 (D6) — 정규 워크북의 'Step2 B2 문법 기본 문제 정답' 네이밍은
-    # 가로 file_map(step2_a1_btm 기대명 '어법선택(객관식)')이 못 잡는다 —
-    # 내용은 0a5da924가 소비한 '어법선택(문법 기본 문제) 정답지'와 동일
-    # 형식(틀린어법 정답지: 원문자 + [정답해설]). 기대명으로 rename 스테이징.
+    # W18 c17 (D6/D7) — 정규 워크북의 'Step2 B2 문법 기본 문제' 네이밍은
+    # 가로 file_map(step2_a1_btm 기대명 '어법선택(객관식)')이 못 잡는다.
+    # 세로 btm 슬롯의 콘텐츠 가족은 '지문(원문자 표기)'이다 — 세로 코퍼스
+    # (e79f8af9) 골든의 btm이 지문 텍스트임을 근거로 **문제지**를 기대명으로
+    # rename (정답지는 원문자+[정답해설] 해설 가족 — 슬롯에 맞지 않음).
     _GRAMMAR_BASIC_RENAME = "Step2 A1 어법선택(객관식).docx"
 
     def _stage_fname(self, fname_nfc, log):
         norm = re.sub(r"[^0-9a-z가-힣]", "", fname_nfc.lower())
         if ("문법기본문제" in norm and "어법선택" not in norm
-                and self._RE_ANSWERISH.search(fname_nfc)):
+                and not self._RE_ANSWERISH.search(fname_nfc)):
             log(f"[스테이징] {fname_nfc} → {self._GRAMMAR_BASIC_RENAME} "
-                f"(문법 기본 문제 정답 → step2_a1_btm 소비)")
+                f"(문법 기본 문제 문제지 → step2_a1_btm 소비)")
             return self._GRAMMAR_BASIC_RENAME
         return fname_nfc
 
@@ -207,8 +208,14 @@ class WorkbookSeroV2Engine(BaseEngine):
                                workbook_type=workbook_type)
 
         # 사이클별 분할 저장 — ExtendScript eval() 1MB 제한 회피 (v1과 동일)
+        # W18 D8/D9: pN_main 슬롯 오버플로우 페이지 복제 + 빈 페이지 정리
+        # (정규 워크북 c17 실증 — c2 어휘 91항목 절단 19건 / 번호 프레임만
+        # 남은 잔여 페이지 35건). 실행기 opt-in 키.
         meta = {"format": plan["format"], "cycle_count": plan["cycle_count"],
-                "unsupported": plan["unsupported"], "cycles": []}
+                "unsupported": plan["unsupported"],
+                "overflow_dup": True,
+                "page_cleanup": {"empty_master": "M"},
+                "cycles": []}
         n_warn = 0
         for idx, cyc in enumerate(plan["cycles"]):
             cyc_path = os.path.abspath(
@@ -363,7 +370,9 @@ class WorkbookSeroV2Engine(BaseEngine):
                         slot["step"],
                         {"step": slot["step"], "target": {}, "units": []})
                     fl["units"].extend(slot.get("units") or [])
-            pseudo_plan = {"flows": list(flow_map.values())}
+            pseudo_plan = {"flows": list(flow_map.values()),
+                           # D9 사용 시 잔여 페이지 게이트 critical 승격
+                           "page_cleanup": meta.get("page_cleanup")}
             content_path = os.path.join(job_dir, "content.json")
             content = (json.load(open(content_path, encoding="utf-8"))
                        if os.path.exists(content_path) else {})
