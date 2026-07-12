@@ -46,7 +46,10 @@ def _load_v1_config():
 
 class WorkbookSeroV2Engine(BaseEngine):
 
-    jsx_timeout = 1800
+    # W18: 25사이클 정규 워크북(390p+, 슬롯 오버플로우 복제 포함)이 30분을
+    # 초과 — 러너 총 타임아웃(1800)이 정상 진행 중 렌더를 포기(강제 종료는
+    # 아님 — JSX는 자력 완주). 킬 루프 금지 원칙과 함께 상향.
+    jsx_timeout = 3600
 
     @property
     def material_id(self):

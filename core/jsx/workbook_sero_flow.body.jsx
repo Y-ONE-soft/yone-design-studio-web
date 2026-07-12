@@ -575,6 +575,37 @@ try {
                 try { nfr.parentStory.contents = qn; } catch (e) {}
             }
         }
+        // 빈 슬롯 페이지 수집 (W18 D9, plan.page_cleanup opt-in) — 플랜
+        // 기준: 한 페이지의 모든 슬롯이 clear(원고 없음)이면 삭제 대상.
+        // 페이지 ID로 기록 (이후 페이지 복제로 오프셋이 밀려도 안전).
+        // 템플릿 장식(섹션 타이틀/데모 예시)은 지오메트리로 구분 불가 —
+        // 플랜이 진실 (1차 재조판에서 지오메트리 스캔이 데모 페이지 10개를
+        // 남긴 실증).
+        if (plan.page_cleanup) {
+            var offSlots = {};
+            for (var ki = 0; ki < cyc.slots.length; ki++) {
+                var ke = cyc.slots[ki];
+                var mm = String(ke.slot).match(/^p(\d)_/);
+                if (!mm) { continue; }
+                var koff = mm[1];
+                if (!offSlots[koff]) { offSlots[koff] = []; }
+                offSlots[koff].push(ke);
+            }
+            for (var ko in offSlots) {
+                var allClear = true;
+                for (var kj = 0; kj < offSlots[ko].length; kj++) {
+                    if (!offSlots[ko][kj].clear) { allClear = false; break; }
+                }
+                if (!allClear) { continue; }
+                var kpIdx = cycleStart + parseInt(ko, 10);
+                if (kpIdx < doc.pages.length) {
+                    try {
+                        cleanupPageIds[cleanupPageIds.length] =
+                            doc.pages[kpIdx].id;
+                    } catch (e) {}
+                }
+            }
+        }
         // pN_main 슬롯 오버플로우 — 페이지 복제 (W18 D8, plan.overflow_dup
         // opt-in). 슬롯 배치가 전부 끝난 뒤 2차 패스: 대상 스토리를 먼저
         // 전부 확보(페이지 복제로 오프셋이 밀려도 스토리 객체는 유효) 후
@@ -607,6 +638,7 @@ try {
     // ── 실행 ─────────────────────────────────────────────────────────────────
     adjustCycles(doc, cycles.length);
 
+    var cleanupPageIds = [];    // W18 D9 — 빈 슬롯 페이지 ID (플랜 기준)
     var cyclesDone = 0;
     var currentStart = HEADER_PAGES;
     for (var ci = 0; ci < cycles.length; ci++) {
@@ -633,38 +665,28 @@ try {
         cyclesDone++;
     }
 
-    // 빈 페이지 정리 (W18 D9, plan.page_cleanup opt-in) — 배치가 전부 끝난
-    // 뒤, 본문 영역(간지 이후)에서 '순수 번호 프레임(≤4자 숫자) 외에 내용
-    // 있는 프레임이 없는' 페이지 삭제. 원고 없는 스텝의 사이클 페이지가
-    // 번호 프레임만 남아 인쇄되던 잔재(G4b) 해소. 역순 삭제 + 하트비트
-    // (W12 D7 — 무로그 삭제 루프의 러너 행 오탐 방지).
-    if (plan.page_cleanup) {
+    // 빈 슬롯 페이지 삭제 (W18 D9, plan.page_cleanup opt-in) — processCycle
+    // 에서 플랜 기준으로 수집한 페이지 ID를 역순 삭제. 원고 없는 스텝의
+    // 사이클 페이지가 번호 프레임/템플릿 데모만 남아 인쇄되던 잔재(G4b)
+    // 해소. 하트비트 유지 (W12 D7 — 무로그 삭제 루프의 러너 행 오탐 방지).
+    if (plan.page_cleanup && cleanupPageIds.length > 0) {
+        var idSet = {};
+        for (var ci2 = 0; ci2 < cleanupPageIds.length; ci2++) {
+            idSet[cleanupPageIds[ci2]] = true;
+        }
         var removed = 0;
-        var scanned = 0;
         for (var dp = doc.pages.length - 1; dp >= HEADER_PAGES; dp--) {
-            scanned++;
-            if (scanned % 20 === 0) {
-                wlog("[정리] 페이지 스캔 " + scanned + " (삭제 " + removed + ")");
-            }
             try {
-                var pgc = doc.pages[dp];
-                var keep = false;
-                var ptfs = pgc.textFrames;
-                for (var pf = 0; pf < ptfs.length; pf++) {
-                    var pc = (ptfs[pf].contents || "")
-                        .replace(/[\s\r\n￼]+/g, "");
-                    if (pc.length === 0) { continue; }
-                    if (/^\d{1,3}(~\d{1,3})?$/.test(pc)) { continue; }
-                    keep = true;
-                    break;
-                }
-                if (!keep && ptfs.length > 0) {
-                    pgc.remove();
-                    removed++;
+                if (!idSet[doc.pages[dp].id]) { continue; }
+                doc.pages[dp].remove();
+                removed++;
+                if (removed % 10 === 0) {
+                    wlog("[정리] 빈 슬롯 페이지 삭제 진행: " + removed);
                 }
             } catch (eDp) {}
         }
-        wlog("[정리] 빈 페이지 삭제: " + removed + "개");
+        wlog("[정리] 빈 슬롯 페이지 삭제: " + removed + "개 (대상 "
+             + cleanupPageIds.length + ")");
     }
 
     relockIcons();
