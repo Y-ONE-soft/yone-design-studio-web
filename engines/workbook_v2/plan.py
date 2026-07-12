@@ -84,6 +84,12 @@ _S3_WEAK_KINDS = {"UNKNOWN", "K", "Cond"}
 # 문장과 충돌 가능 → 발문 시작 신호(Q_START_HINT)와 AND 결합.
 _RE_S3_QTAG = re.compile(r"^\[(?:서술|논술)형\s*\d*\]")
 _RE_S3_SEYO = re.compile(r"(?:쓰|하|고르|답하|완성하|바꾸|채우)세요")
+# W18 c18 (D2) — 시작 신호 없는 해요체 발문 변형: "영어로 번역하세요
+# [9강 1번]" (리딩파워 유형편 완성 기출 pool 실증 — 지문 스타일 인쇄) +
+# 세로 e79f8af9 기출력 "11. (주관식) … 고르세요. [정답 2개]" 잠복(G13
+# 확장 검출). 꼬리 [출처/태그]를 제거한 몸통이 세요-체 종결이면 발문.
+_RE_S3_TAIL_TAG = re.compile(r"\s*\[[^\[\]]{1,40}\]\s*$")
+_RE_S3_SEYO_END = re.compile(r"세요\s*[.?!]?\s*$")
 # W16 c10 (D2) — 영단어(Word) kind 강등: 어휘 항목은 "word: 한글 뜻"이
 # 원칙 (v1 실물 고2_25-6 덤프: 화자 라벨 "Minji:"/"A: …"·영문 제목·
 # 안내문 필드 "Dates: …"는 전부 지문 스타일). 한글 뜻이 없거나 콜론 앞
@@ -146,6 +152,15 @@ def _s3_effective_kind(kind, text):
         return "Q"
     if _RE_S3_SEYO.search(text) and _RE_Q_START_HINT.match(text.strip()):
         return "Q"                      # W16 D1 — 해요체 발문 (시작 신호 AND)
+    core = text.strip()
+    while True:                         # W18 D2 — 꼬리 [출처/태그] 제거
+        nx = _RE_S3_TAIL_TAG.sub("", core)
+        if nx == core:
+            break
+        core = nx
+    if (core != text.strip() and _RE_S3_SEYO.search(core)
+            and _RE_S3_SEYO_END.search(core)):
+        return "Q"                      # W18 D2 — 해요체 + 꼬리 태그 발문
     return kind
 
 
