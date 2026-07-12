@@ -43,6 +43,39 @@ def _plan_stub():
     return {"flows": [{"step": "step3", "units": [[{"t": "x"}]]}]}
 
 
+# ── D1 수리: 플랜 오버레이 — [서술형 N] 접두 + 해요체 발문 ───────────────────
+
+def test_s3_overlay_seyo_and_tag_question():
+    from engines.workbook_v2.plan import _s3_effective_kind
+    assert _s3_effective_kind("UNKNOWN", _SEYO_Q) == "Q"
+    assert _s3_effective_kind(
+        "UNKNOWN", "[서술형 1] 윗글의 빈칸에 알맞은 단어를 쓰시오.") == "Q"
+    # 해요체 + 발문 시작 신호 (숫자 접두 포함 — Q_START_HINT)
+    assert _s3_effective_kind(
+        "UNKNOWN", "15. 다음 지문 속에 밑줄 친 'it'의 용법과 같은 'it'을 "
+        "가진 문장을 고르세요.") == "Q"
+    # 시작 신호 없는 해요체(해석/대화 문장)는 미발동 — false positive 방지
+    assert _s3_effective_kind("K", "매일 아침 운동하세요.") == "K"
+    # 강한 kind는 오버레이 대상 아님
+    assert _s3_effective_kind("P", "Some passage ending 하세요.") == "P"
+
+
+def test_s3_overlay_word_demotion():
+    from engines.workbook_v2.plan import _s3_effective_kind
+    # 화자 라벨 / 영문 제목 / 안내문 필드 / 1글자 머리 → 지문(P) 강등
+    assert _s3_effective_kind("Word", "Minji:") == "P"
+    assert _s3_effective_kind(
+        "Word", "Gijisi Juldarigi Festival: A Celebration of Tradition") \
+        == "P"
+    assert _s3_effective_kind("Word", "Dates: July 5-7, 2025") == "P"
+    assert _s3_effective_kind(
+        "Word", "A: 노란색 코트를 입고 있는 저 여자 아이는 누구야?") == "P"
+    # 실제 어휘 항목은 유지
+    assert _s3_effective_kind("Word", "inherit: 물려받다") == "Word"
+    assert _s3_effective_kind("Word", "*extensively 널리, 광범위하게") \
+        == "Word"
+
+
 # ── D1 게이트 G13: 발문 스타일 누락 — 수리 전 상태 재현으로 검출 실증 ─────────
 
 def test_gate_g13_detects_seyo_question_as_passage():
