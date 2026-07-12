@@ -3,6 +3,6 @@
   "source_job": "round5-gdrive",
   "note": "W15 후보④ 모의고사_2학년_2025년_06월_변형문제_18_45_211문제_아잉카.hwp — [NHN_..._변형]형 문제모음(본가 모의고사 경로 첫 pool 케이스). 출처 마커 SRC kind(D1)/선지 ① 오염 차단(D2)/문장삽입 P-CONTEXT 마커 스킵(D3) 수리 후 출력이 골든.",
   "golden_regenerated": {
-    "commit": "8785a55"
+    "commit": "c686e18"
   }
 }

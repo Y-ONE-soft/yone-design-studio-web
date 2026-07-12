@@ -2633,7 +2633,7 @@
          "ul": false
         }
        ],
-       "kind": "Word"
+       "kind": "UNKNOWN"
       },
       {
        "text": "Ages: 17-19",
@@ -2643,7 +2643,7 @@
          "ul": false
         }
        ],
-       "kind": "Word"
+       "kind": "UNKNOWN"
       },
       {
        "text": "Place: University of Drakemont",
@@ -2653,7 +2653,7 @@
          "ul": false
         }
        ],
-       "kind": "Word"
+       "kind": "UNKNOWN"
       },
       {
        "text": "Programs",
@@ -2703,7 +2703,7 @@
          "ul": false
         }
        ],
-       "kind": "Word"
+       "kind": "UNKNOWN"
       },
       {
        "text": "Notes",
@@ -2852,7 +2852,7 @@
          "ul": false
         }
        ],
-       "kind": "Word"
+       "kind": "UNKNOWN"
       },
       {
        "text": "Where: Lake Union",
@@ -2862,7 +2862,7 @@
          "ul": false
         }
        ],
-       "kind": "Word"
+       "kind": "UNKNOWN"
       },
       {
        "text": "Details",
@@ -10071,7 +10071,7 @@
          "ul": false
         }
        ],
-       "kind": "Word"
+       "kind": "UNKNOWN"
       },
       {
        "text": "Ages: 17-19",
@@ -10081,7 +10081,7 @@
          "ul": false
         }
        ],
-       "kind": "Word"
+       "kind": "UNKNOWN"
       },
       {
        "text": "Place: University of Drakemont",
@@ -10091,7 +10091,7 @@
          "ul": false
         }
        ],
-       "kind": "Word"
+       "kind": "UNKNOWN"
       },
       {
        "text": "Programs",
@@ -10141,7 +10141,7 @@
          "ul": false
         }
        ],
-       "kind": "Word"
+       "kind": "UNKNOWN"
       },
       {
        "text": "Notes",
@@ -10215,7 +10215,7 @@
          "ul": true
         }
        ],
-       "kind": "Word"
+       "kind": "UNKNOWN"
       },
       {
        "text": "윗글을 참고하여 아래 질문에 답하시오.",
@@ -10249,7 +10249,7 @@
          "ul": true
         }
        ],
-       "kind": "Word"
+       "kind": "UNKNOWN"
       },
       {
        "text": "※ 다음 글을 읽고 물음에 답하시오. ",
@@ -10300,7 +10300,7 @@
          "ul": false
         }
        ],
-       "kind": "Word"
+       "kind": "UNKNOWN"
       },
       {
        "text": "Where: Lake Union",
@@ -10310,7 +10310,7 @@
          "ul": false
         }
        ],
-       "kind": "Word"
+       "kind": "UNKNOWN"
       },
       {
        "text": "Details",
@@ -10537,7 +10537,7 @@
          "ul": true
         }
        ],
-       "kind": "Word"
+       "kind": "UNKNOWN"
       },
       {
        "text": "※ 다음 글을 읽고 물음에 답하시오. ",
@@ -18624,7 +18624,7 @@
          "ul": false
         }
        ],
-       "kind": "Word"
+       "kind": "UNKNOWN"
       },
       {
        "text": "Ages: 17-19",
@@ -18634,7 +18634,7 @@
          "ul": false
         }
        ],
-       "kind": "Word"
+       "kind": "UNKNOWN"
       },
       {
        "text": "Place: University of Drakemont",
@@ -18644,7 +18644,7 @@
          "ul": false
         }
        ],
-       "kind": "Word"
+       "kind": "UNKNOWN"
       },
       {
        "text": "Programs",
@@ -18694,7 +18694,7 @@
          "ul": false
         }
        ],
-       "kind": "Word"
+       "kind": "UNKNOWN"
       },
       {
        "text": "Notes",
@@ -18841,7 +18841,7 @@
          "ul": false
         }
        ],
-       "kind": "Word"
+       "kind": "UNKNOWN"
       },
       {
        "text": "Where: Lake Union",
@@ -18851,7 +18851,7 @@
          "ul": false
         }
        ],
-       "kind": "Word"
+       "kind": "UNKNOWN"
       },
       {
        "text": "Details",
@@ -21831,7 +21831,7 @@
          "ul": false
         }
        ],
-       "kind": "Word"
+       "kind": "UNKNOWN"
       },
       {
        "text": "Ages: 17-19",
@@ -21841,7 +21841,7 @@
          "ul": false
         }
        ],
-       "kind": "Word"
+       "kind": "UNKNOWN"
       },
       {
        "text": "Place: University of Drakemont",
@@ -21851,7 +21851,7 @@
          "ul": false
         }
        ],
-       "kind": "Word"
+       "kind": "UNKNOWN"
       },
       {
        "text": "Programs",
@@ -21901,7 +21901,7 @@
          "ul": false
         }
        ],
-       "kind": "Word"
+       "kind": "UNKNOWN"
       },
       {
        "text": "Notes",
@@ -22041,7 +22041,7 @@
          "ul": false
         }
        ],
-       "kind": "Word"
+       "kind": "UNKNOWN"
       },
       {
        "text": "Where: Lake Union",
@@ -22051,7 +22051,7 @@
          "ul": false
         }
        ],
-       "kind": "Word"
+       "kind": "UNKNOWN"
       },
       {
        "text": "Details",
