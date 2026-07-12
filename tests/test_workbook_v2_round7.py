@@ -197,6 +197,87 @@ def test_legacy_dest_name_mapping():
     assert f("Step2 문장배열.docx", {"Step1 C1 문장배열.docx"}) is None
 
 
+# ── D2 수리: 선두 표제/워터마크 블록 제거 ────────────────────────────────────
+
+def _p(texts):
+    return [{"text": t, "runs": []} for t in texts]
+
+
+def test_strip_step3_leading_junk_c16_block():
+    from engines.workbook.parser import _strip_step3_leading_junk
+    paras = _p(["EBS 변형문제", " ", "EBS 올림포스", "영어독해 기본 02",
+                "Chapter 03", "Unit 09", "  ",
+                "http://cafe.naver.com/isaacenglishacademy",
+                "※ 본 자료는 무단도용 및 타 사이트에 게시를 금합니다.",
+                "[ Type A ]",
+                "다음 글의 제목으로 가장 적절한 것은?"])
+    out = [p["text"] for p in _strip_step3_leading_junk(paras)]
+    assert out == [" ", "  ", "[ Type A ]",
+                   "다음 글의 제목으로 가장 적절한 것은?"]
+
+
+def test_strip_step3_leading_junk_apex_block():
+    """v1 골든 0807ebd8/0e3844d2의 APEX 권리 블록 (긴 문장이라 표제 기준
+    밖이지만 권리 어휘로 제거)."""
+    from engines.workbook.parser import _strip_step3_leading_junk
+    paras = _p(["리딩파워 유형편 [기본]", "CH5 17강 변형문제",
+                "본 자료는 APEX에서 제작하였으며, 도서로의 모든 출판권과 "
+                "파일 전송권 등은 APEX에 있습니다.",
+                "본 자료의 레이아웃 및 편집 등에 대한 저작권 침해나 타 "
+                "사이트 게시 및 무단복제/무단전송/무단도용을 금합니다.",
+                "다음 글에 드러난 'Captain Zietem'의 심경으로 가장 적절한 "
+                "것은? [pr2]"])
+    out = [p["text"] for p in _strip_step3_leading_junk(paras)]
+    assert len(out) == 1 and out[0].startswith("다음 글에")
+
+
+def test_strip_step3_leading_junk_conservative():
+    from engines.workbook.parser import _strip_step3_leading_junk
+    # 40자+ 문서 타이틀(수능특강)은 표제 기준 밖 — 즉시 중단, 무변경
+    stg = _p(["2027년 수능특강 영어                          더변형문제",
+              "[Gateway]", "짧은 표제처럼 보이는 줄"])
+    assert [p["text"] for p in _strip_step3_leading_junk(stg)] \
+        == [p["text"] for p in stg]
+    # 발문/지시문 시작 신호는 보호 — 첫 줄부터 실질 내용이면 무변경
+    q = _p(["서술형 1. 다음 조건에 맞게 쓰시오", "본문..."])
+    assert [p["text"] for p in _strip_step3_leading_junk(q)] \
+        == [p["text"] for p in q]
+    # 문서 중간(첫 실질 라인 이후)은 절대 무접촉
+    mid = _p(["다음 글의 제목으로 가장 적절한 것은?", "기출┃2023┃",
+              "passage"])
+    assert [p["text"] for p in _strip_step3_leading_junk(mid)] \
+        == [p["text"] for p in mid]
+
+
+def test_strip_step3_leading_junk_doc_label():
+    """c11 Step6 실전문제.hwp 선두 '기출┃2023┃' 문서 라벨 제거."""
+    from engines.workbook.parser import _strip_step3_leading_junk
+    paras = _p(["기출┃2023┃", "다음 글의 밑줄 친 ⓐ~ⓔ 중, 어법상 어색한 "
+                "것은?", "If we were asked..."])
+    out = [p["text"] for p in _strip_step3_leading_junk(paras)]
+    assert out[0].startswith("다음 글의")
+
+
+# ── D3 수리: 꼬리 '<표제> 정답' 섹션 절단 ────────────────────────────────────
+
+def test_strip_step3_answers_tail_title_cut():
+    from engines.workbook.parser import _strip_step3_answers
+    paras = _p(["마지막 문제 지문입니다.",
+                "2025년 06월 모의고사 <고2> 정답",
+                "★ 객관식 빠른 정답", "1", "2",
+                "규림재희아빠 선생님", "최종 감수\tIsaac 매니저님"])
+    out = [p["text"] for p in _strip_step3_answers(paras)]
+    assert out == ["마지막 문제 지문입니다."]
+
+
+def test_strip_step3_answers_keeps_per_question_lines():
+    from engines.workbook.parser import _strip_step3_answers
+    paras = _p(["■ 정답: He was taken on tour by his enslaver.",
+                "다음 중 이 문제의 정답은?"])
+    out = [p["text"] for p in _strip_step3_answers(paras)]
+    assert out == [p["text"] for p in paras]
+
+
 # ── 기존 양품 덤프 false-critical 0 (신규 게이트 sweep) ──────────────────────
 
 def test_new_gates_false_positive_free_on_known_good_dumps():

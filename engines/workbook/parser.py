@@ -585,6 +585,51 @@ _RE_STEP3_TYPE_SUBTAG = re.compile(
 )
 
 
+# W17 c16 — Step3 문제모음(pool/교과서 통합) 선두의 학원 표제/워터마크 블록.
+#   'EBS 변형문제'/'영어독해 기본 02'(짧은 표제), cafe.naver URL,
+#   '※ 본 자료는 무단도용 … 금합니다'(권리 경고)가 지문 스타일로 인쇄됐다.
+#   v1 골든 0807ebd8/0e3844d2(APEX 리딩파워 pool)에도 동일 블록 잠복.
+_RE_S3_JUNK_URL = re.compile(r'^(?:https?://\S+|www\.\S+)$')
+_RE_S3_JUNK_RIGHTS = re.compile(
+    r'무단\s*도용|무단\s*전재|무단\s*복제|무단\s*전송|저작권|출판권|전송권')
+# 표제로 간주하지 않는 선두 라인 (문항/지시문 시작 신호)
+_RE_S3_JUNK_PROTECT = re.compile(r'^(?:\d+\s*[.)]|서술형|논술형|Q\b|Q\.|※\s*다음)')
+# 꼬리 정답 섹션 표제: "<표제> 정답" (물음표 없음 + 공백/대시 뒤 '정답' 종결)
+_RE_S3_ANSWER_TITLE = re.compile(r'^[^?？]{0,40}[\s\-–—]정답$')
+
+
+def _strip_step3_leading_junk(paras):
+    """Step3 문제모음 선두의 표제/워터마크 블록 제거 (W17 c16).
+
+    문서 맨 앞에서부터 스캔하며 URL 단독 라인·권리 경고 라인·짧은 표제
+    라인(30자 이하, 물음표 없음)만 제거한다. 빈 단락은 보존(골든 안정),
+    표제도 경고도 아닌 첫 실질 라인(발문/마커/본문)에서 즉시 중단 —
+    문서 중간에는 절대 손대지 않는다. 40자+ 문서 타이틀(수능특강
+    '2027년 … 더변형문제')은 표제 기준 밖이라 보존된다 (kind 계층 관행).
+    """
+    out = []
+    i = 0
+    n = len(paras)
+    while i < n:
+        p = paras[i]
+        text = p['text'].strip()
+        if not text:
+            out.append(p)          # 빈 단락 보존
+            i += 1
+            continue
+        if _RE_S3_JUNK_URL.match(text) or _RE_S3_JUNK_RIGHTS.search(text):
+            i += 1
+            continue
+        if (len(text) <= 30 and '?' not in text and '？' not in text
+                and not _RE_S3_JUNK_PROTECT.match(text)
+                and not (text.startswith('[') and text.endswith(']'))):
+            i += 1                 # 짧은 표제 라인 ('EBS 변형문제' 등)
+            continue
+        break                      # 첫 실질 라인 — 이후 무접촉
+    out.extend(paras[i:])
+    return out
+
+
 def _strip_step3_type_tags(paras):
     """Step3 원고에서 유형 섹션 태그/부제를 모두 제거.
 
@@ -625,11 +670,16 @@ def _strip_step3_answers(paras):
     # "정답" 한 줄 뒤에 정답표를 붙이는 형식. 문항 사이 정답 표기는 원문자
     # 단독/콜론 형식이라 아래 개별 제거 룰이 담당 — 골든 코퍼스에 '정답'
     # 단독 본문 줄 없음 확인).
+    # W17: "<표제> 정답" 꼬리 표제도 섹션 헤더 — "2025년 06월 모의고사
+    # <고2> 정답"/"★ 객관식 빠른 정답"(c04 잠복, 정답표+제작진 크레딧
+    # 블록이 통째로 인쇄됐음) / "EBS 올림포스 - … 정답"(c16). 발문은
+    # '?'로 끝나 매치되지 않고, "■ 정답: …" 문항별 정답은 콜론 뒤 내용이
+    # 있어 매치되지 않음 (골든 전수 sweep: c04 2건 외 매치 없음 확인).
     section_headers = ('정답 및 해설', '빠른 정답 찾기', '정답지', '정답')
     cut_idx = None
     for i, p in enumerate(paras):
         text = p['text'].strip()
-        if text in section_headers:
+        if text in section_headers or _RE_S3_ANSWER_TITLE.match(text):
             cut_idx = i
             break
     if cut_idx is not None:
@@ -1529,6 +1579,8 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
             else:
                 paras = _hwp_extract_paragraphs(fpath, extract_underline,
                                                 exclude_footnotes=step3_exclude_footnotes)
+            # 선두 표제/워터마크 블록 제거 (W17 c16 — 보존 가드 스냅샷 전에)
+            paras = _strip_step3_leading_junk(paras)
             _raw_words = _step3_content_words(_strip_step3_book_markers(paras))  # 보존 가드 스냅샷(헤더 제외)
             # 표형 선지 번호 셀(①~⑤) 병합 — _strip_step3_answers가 단독 ①~⑤를 제거하기 전에 수행
             paras = _merge_step3_split_choice_numbers(paras)
