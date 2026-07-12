@@ -11445,7 +11445,7 @@
          "ul": false
         }
        ],
-       "kind": "UNKNOWN"
+       "kind": "Cond"
       },
       {
        "text": "필요시 어형 변화, 제시어 포함 총 16단어",
@@ -11455,7 +11455,7 @@
          "ul": false
         }
        ],
-       "kind": "UNKNOWN"
+       "kind": "Cond"
       },
       {
        "text": "                                                     ",
@@ -12122,7 +12122,7 @@
          "ul": false
         }
        ],
-       "kind": "UNKNOWN"
+       "kind": "Cond"
       },
       {
        "text": "                                                      ",

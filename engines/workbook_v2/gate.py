@@ -86,7 +86,9 @@ _RE_WORD_BAD_HEAD = re.compile(r"^[A-Za-z]\s*[:：]")
 _RE_COND_BULLET = re.compile(r"^\s*[•⦁◦∙ㆍ·]")
 _RE_COND_GEOT = re.compile(r"것\s*\.?\s*$")
 _RE_COND_NUMSTART = re.compile(r"^\s*\d+\s*[.)]")
-_RE_COND_BLOCK_END = re.compile(r"_{3,}|^\s*(?:정답|→|우리말)")
+# 답란 = 밑줄런으로 '끝나는' 줄 한정 — 본문 중간 빈칸 표기("보기의
+# [_______]에서 … 할 것"은 조건 항목)와 구분 (c06 실증)
+_RE_COND_BLOCK_END = re.compile(r"_{6,}\s*[.,)]?\s*$|^\s*(?:정답|→|우리말)")
 _RE_COND_QHINT = re.compile(r"^(?:다음|윗\s*글|위\s*글|글의|밑줄|주어진|"
                             r"\(주관식\)|서술형)")
 

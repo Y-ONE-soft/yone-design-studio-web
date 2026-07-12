@@ -196,29 +196,63 @@ def classify_paragraphs(paras):
         i = j
 
     # Cond/Box propagation: 마커 뒤 이어지는 항목 단락을 같은 종류로.
+    # Cond는 W16 c10에서 v1 pass 15/16 의미론으로 재구성 —
+    #   (a) 비항목(영어 어구 나열)은 중단이 아니라 '건너뛰고 계속'
+    #       (v1 pass 15: DEFAULT run 전체를 스캔하며 마커 항목만 조건화.
+    #        어구 나열 자체는 지문 유지 = v1 실물 관행),
+    #   (b) 답란(밑줄런/정답/→/우리말)이 블록의 실질 종료,
+    #   (c) 조건 문구가 taxonomy 발문으로 오매칭된 Q(시작 힌트 없음 +
+    #       '것' 종결)는 조건으로 강등 ("반드시 빈칸은 … 쓸 것" 실증.
+    #        시오-체 번호 항목은 발문 유지 = v1 실물 4ed24266 관행),
+    #   (d) 건너뛴 뒤에는 마커 항목(불릿/번호)만 조건화 — 한글 비율
+    #       단독 신호는 인접 항목에만 (원거리 오염 방지).
     for i, item in enumerate(out):
         if item["kind"] not in ("Cond", "Box"):
             continue
         j = i + 1
+        skipped = False
         while j < len(out):
             nxt = out[j]
             if nxt["kind"] == "BLANK":
                 j += 1
                 continue
-            if nxt["kind"] in ("Q", "Q-INTRO", "GH", "A", "Cond", "Box"):
-                break
             t = nxt["text"]
-            if item["kind"] == "Cond" and (R.COND_ITEM_START.match(t)
-                                           or _korean_ratio(t) >= 0.3):
+            if item["kind"] == "Box":
+                if nxt["kind"] in ("Q", "Q-INTRO", "GH", "A", "Cond", "Box"):
+                    break
+                if R.BOX_WORDLIST.search(t) or not R.HANGUL.search(t):
+                    nxt["kind"] = "Box"
+                    j += 1
+                    continue
+                break
+            # ── Cond ──
+            if nxt["kind"] in ("Q-INTRO", "GH", "A", "Cond", "Box", "Ans",
+                               "SRC", "P-CONTEXT"):
+                break
+            if R.COND_BLOCK_END.search(t):
+                break
+            marker_item = bool(R.COND_ITEM_START.match(t))
+            if nxt["kind"] == "Q":
+                if not R.Q_START_HINT.search(t) \
+                        and R.COND_ITEM_END.search(t):
+                    nxt["kind"] = "Cond"
+                    j += 1
+                    continue
+                break
+            if nxt["kind"] in ("UNKNOWN", "K") and (
+                    marker_item or R.COND_ITEM_END.search(t)
+                    or R.COND_ITEM_LEAD.match(t)
+                    or (not skipped and _korean_ratio(t) >= 0.3)):
                 nxt["kind"] = "Cond"
                 j += 1
                 continue
-            if item["kind"] == "Box" and (R.BOX_WORDLIST.search(t)
-                                          or not R.HANGUL.search(t)):
-                nxt["kind"] = "Box"
+            if nxt["kind"] in ("C", "Word") and marker_item:
+                # v1 pass 9/16: 오분류된 선지·영단어(★불릿 조건)도 재분류
+                nxt["kind"] = "Cond"
                 j += 1
                 continue
-            break
+            skipped = True
+            j += 1
 
     # 밑줄 변형 정보 (P-NOUL / P-WITH-UL은 스타일 매핑 차원 — kind는 P 유지)
     for item in out:
