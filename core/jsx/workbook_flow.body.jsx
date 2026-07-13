@@ -596,8 +596,13 @@ function cleanupPages(doc, flowStories, op) {
 }
 
 // ── 간지 텍스트 업데이트 (v1 run.jsx 16.7 이식 — plan.divider가 있을 때만) ──
-// 간지 페이지 = 마스터 [None](또는 없음) + 오른쪽 + 텍스트프레임 1개 +
-// 첫 단락에 한글. 1단락=line1, 2단락=line2.
+// 간지 페이지 = 마스터 [None](또는 없음) + 텍스트프레임 1개 + 첫 단락에
+// 한글. 1단락=line1, 2단락=line2.
+// v1과 달리 오른쪽(RIGHT_HAND) 조건을 걸지 않는다 (W19 결함 D5): 앞선
+// 페이지 삭제(page_cleanup)로 간지가 왼쪽 페이지로 밀릴 수 있고(c05 실측
+// p122 잔재 — v1 16.7도 같은 조건이라 실물 동일), 이 계열 내지에서 마스터
+// [None]+프레임 1개+한글 첫 단락 조합은 간지뿐이라 좌우 무관하게 안전
+// (c04/c05/c20 덤프 실측 — 매칭 스토리 전부 간지 라벨).
 function updateDividerPages(doc, line1, line2) {
     var n = 0;
     for (var dpi = 0; dpi < doc.pages.length; dpi++) {
@@ -605,8 +610,6 @@ function updateDividerPages(doc, line1, line2) {
         var masterName = "";
         try { masterName = dpg.appliedMaster ? dpg.appliedMaster.name : ""; } catch (e) {}
         if (masterName !== "" && masterName !== "[None]") { continue; }
-        // Enumerator 엄격 비교 신뢰 불가 (W7 교훈) — == 비교 사용
-        if (!(dpg.side == PageSideOptions.RIGHT_HAND)) { continue; }
         if (dpg.textFrames.length !== 1) { continue; }
         var divTf = dpg.textFrames[0];
         var divParas = divTf.paragraphs;

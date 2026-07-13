@@ -276,3 +276,25 @@ def test_base_and_supp_decorations_include_divider(tmp_path):
         deco = eng._plan_decorations(str(job), {})
         assert deco["divider"] == {"line1": "고1 모의고사",
                                    "line2": "25년 10월"}, type(eng)
+
+
+# ── D5: updateDividerPages 좌우 무관 갱신 — JSX 소스 가드 (오프라인) ─────────
+
+def test_executor_divider_side_agnostic():
+    # W19 c05 실측: page_cleanup으로 간지가 왼쪽 페이지(p122)로 밀리면
+    # v1 16.7의 RIGHT_HAND 조건이 갱신을 배제 → G22 critical 잔존.
+    # v2는 의도적으로 side 조건을 제거 (완제품 기준 — v1 파리티 아님).
+    src = open(os.path.join(REPO, "core", "jsx",
+                            "workbook_flow.body.jsx"),
+               encoding="utf-8").read()
+    body = src.split("function updateDividerPages")[1].split("\nfunction ")[0]
+    assert "RIGHT_HAND" not in body
+    # 안전 조건(마스터 [None] + 프레임 1개 + 한글 첫 단락)은 유지
+    assert "[None]" in body
+    assert "textFrames.length !== 1" in body
+
+
+def test_c05_divider_left_pre_fix_evidence_fixture_exists():
+    fx = _fixture("c05_divider_left_pre_fix.json")
+    assert fx["divider_stale"] == 1
+    assert any("간지라벨" in c for c in fx["critical"])
