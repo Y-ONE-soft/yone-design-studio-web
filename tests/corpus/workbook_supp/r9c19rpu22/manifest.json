@@ -1,0 +1,8 @@
+{
+  "engine": "workbook_supp",
+  "source_job": "round9-gdrive",
+  "note": "W19 c19 RP 유형편(기본) Unit 22 워크북 — '정답' 접미(지 없음)/'어법 객관식 문제'/'어법OX'(무공백) 네이밍 변형 + school=세종1 학교 전용 내지 케이스 (세종 내지는 step1_b2 미지원 — supp v2 템플릿 카탈로그).",
+  "golden_regenerated": {
+    "commit": "f4c4bc8"
+  }
+}
