@@ -1273,6 +1273,15 @@ def build_step1_c1(step_data, workbook_type="모의고사", exclude_btm=False,
             p = {"t": prompt, "runs": [], "s": st_hadan,
                  "icon": dict(_ICON_STEP1_Q)}
             items.insert(ins, p)
+            # W21 r11 D4: 발문과 주어진 문장(BTM) 사이의 원고 잔여 빈 단락
+            # 제거 — 걸어 올라오며 건넌 빈 단락이 발문 아래 남아 '하단 문제
+            # 발문 ↔ 주어진 문장' 사이 불필요한 빈 줄로 인쇄됐다 (실사용
+            # 0e3108fd 실증). v1 실물(워크북03(외부지문) 스토리 26)은 발문
+            # 바로 다음이 BTM — 빈 단락 없음. 아이콘 단락은 보존.
+            k = ins + 1
+            while (k < len(items) and _c1_true_empty(items[k]["t"])
+                   and not items[k].get("icon")):
+                del items[k]
         n = len(items)
 
     # 7) 안전망: '{' 포함 단락 → [기본 단락] (v1 Final safety)
