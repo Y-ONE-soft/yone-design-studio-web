@@ -95,9 +95,33 @@
                   (G3/G4 패턴). 세로 실행기도 W20에서 divider op 지원
                   (라벨 내용 정확 매칭 방식 — c17 소급 해소).
 
+  G23 [라벨스타일] 지문번호 라벨 단락([N]/{N})의 인쇄 스타일이 계약
+                  (step_map.json label_contract — 플랜 flow.target에 실림)과
+                  불일치 — critical (W21 r11 실증: v2가 [N]에 'A_어휘 선택
+                  번호'를 입혔으나 v1 실물(워크북03(외부지문))은 [기본 단락]).
+  G24 [프레임브레이크] ① 지문 다수 원고가 유닛 1개로 배치(per_passage_units
+                  계약 스텝 — 헤더 미인식으로 프레임 분리가 통째로 실패한
+                  상태. W21 r11 실증: '1. no.1' 무-p형 헤더 4스텝) ② 유닛
+                  시작 단락이 실제 프레임 경계에 있지 않음 (덤프 fc 필드
+                  실측 — 신형 덤프 한정). 둘 다 critical.
+  G25 [발문빈단락] 발문(하단 문제 스타일) 바로 다음이 빈 단락 — 발문과
+                  주어진 문장 사이 불필요한 빈 줄 (W21 r11 실증: C1 발문
+                  삽입이 원고 잔여 빈 단락 위에 얹힘. v1 실물은 발문 바로
+                  다음이 주어진 문장). critical.
+  G26 [섹션마스터] 섹션 시작 페이지의 마스터가 좌/우 변형 계약(step_map
+                  master_pair)과 불일치 — 페이지 정리로 시작이 밀렸는데
+                  마스터가 그대로 (W21 r11 실증: [원본]워크북_C p13 어휘
+                  선택 2 = 우측 시작 B-마스터). section_masters op 사용
+                  플랜은 critical, 아니면 warning. 덤프 pages 필드 필요.
+  G27 [간지적합] 외부지문(무-p형 'N. no.M' 헤더) 원고인데 간지가 '고N
+                  모의고사' 라벨 — 원고 유형과 간지 내용 불일치 의심.
+                  v1 실물(워크북03(외부지문))도 같은 모의고사 라벨을 유지한
+                  실물 관행이 있어 warning (사람 확인 지목용, W21 r11).
+
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
-구버전 덤프에는 경고로만 보고한다 (재덤프 안내). G9는 uploads_dir를 넘긴
-경우에만 검사한다 (오프라인 플랜 테스트 호환).
+G24②/G26은 W21 확장 필드(fc / pages)가 필요하다. 구버전 덤프에는 경고로만
+보고한다 (재덤프 안내). G9는 uploads_dir를 넘긴 경우에만 검사한다 (오프라인
+플랜 테스트 호환).
 """
 import os
 import re
@@ -175,6 +199,21 @@ _RE_GRAMMAR_FIX_SIG = re.compile(r"\d\s*\[\s*[A-Za-z]")
 # 검사한다 (본문 속 날짜 표기 오탐 방지 — 양품 16종 sweep 0 확인).
 _RE_LEAD_DATE = re.compile(r"^\d{2,4}\s*\.\s*\d{1,2}\s*\.\s*\d{1,2}\s*\.?$")
 
+# G2 — step3 말미 압축 정답표 행 (완제품 보존 관행 — W21 r11 v1 실물 실증)
+_RE_ANSWER_KEY_ROW = re.compile(
+    r"^\d{1,2}\s*\.\s*[①-⑤](?:\s+\d{1,2}\s*\.\s*[①-⑤])+")
+
+# G23 — "$BASIC" 계약의 [기본 단락] 별칭 (실행기 basicParaOf 대응 +
+# 플랜 문자열 그대로의 합성 덤프 호환)
+_BASIC_ALIASES = {"[기본 단락]", "[Basic Paragraph]", "NormalParagraphStyle",
+                  "$ID/NormalParagraphStyle", "$BASIC"}
+# G25 — C1 자동 삽입 발문 텍스트 (B1의 '하단 문제_지문' 등 부분 일치 오탐
+# 방지: 스타일 leaf 정확 일치 + 이 접두 텍스트만 검사)
+_RE_C1_PROMPT_TEXT = re.compile(r"^아래 주어진 문장")
+# G27 — 외부지문 무-p형 헤더 ("1. no.1")
+_RE_NOP_HEADER = re.compile(r"^\s*\d+\s*[.)]\s*no\.?\s*\d+(?:~\d+)?\s*$",
+                            re.I)
+
 # G16 — 현행 스텝이 소화 가능한 콘텐츠 토큰 (파일명 정규화 기준 —
 # _norm_fname: 공백 제거 + 소문자). EBS 계열은 어법수정도 스텝 원고
 # (file_map step2_a1)라 토큰에 추가된다.
@@ -227,6 +266,40 @@ def _find_story_with_text(dump, text):
             if _clean(p.get("t", "")) == key:
                 return story
     return None
+
+
+def _find_flow_story(dump, flow, max_probe=40):
+    """플로우 → 덤프 스토리 매칭 (W21 r11 — 다수 단락 스코어링).
+
+    단일 최장 단락 매칭(_flow_probe_text)은 같은 지문을 재인쇄하는 step3
+    스토리로 오매핑될 수 있다 (0e3108fd 실증: step1_a2 최장 단락이 step3
+    실전문제 지문과 동일). 플로우 단락 여러 개의 포함 수로 스코어링하고,
+    동률이면 단락 수가 적은(초집합이 아닌) 스토리를 고른다."""
+    probes = []
+    seen = set()
+    for u in flow.get("units", []):
+        for p in (u["paras"] if isinstance(u, dict) else u):
+            tt = _clean(p.get("t") or "")
+            if len(tt) >= 8 and tt not in seen:
+                seen.add(tt)
+                probes.append(tt)
+        if len(probes) >= max_probe:
+            break
+    if not probes:
+        return _find_story_with_text(dump, _flow_probe_text(flow))
+    probe_set = set(probes[:max_probe])
+    best = None
+    best_key = (-1, 0)
+    for story in dump.get("stories", []):
+        texts = {_clean(p.get("t", "")) for p in story.get("paragraphs", [])}
+        score = len(probe_set & texts)
+        if score == 0:
+            continue
+        key = (score, -len(story.get("paragraphs", [])))
+        if key > best_key:
+            best_key = key
+            best = story
+    return best
 
 
 def _is_struct_header_candidate(paras, i):
@@ -287,6 +360,16 @@ def find_unused_uploads(content, uploads_dir):
     st3_numbered = any(it.get("question_num") != "textbook"
                        for it in st3_items)
 
+    # 전체 파일명 집합 (W21 r11): 업로드 슬롯 접두 사본("manuscripts_X")의
+    # 원본 X가 라우팅으로 다른 하위 폴더(Step3/)에 스테이징된 경우도 중복
+    # 사본으로 판정하기 위함 (0e3108fd 실측: "manuscripts_Step 3.hwpx"의
+    # 원본 "Step 3.hwpx"가 Step3/로 라우팅돼 같은 폴더 존재 검사를 비껴감).
+    all_names = set()
+    for root, dirs, files in os.walk(uploads_dir):
+        dirs[:] = [d for d in dirs if not d.startswith(".")]
+        for f in files:
+            all_names.add(unicodedata.normalize("NFC", f))
+
     expected, suspicious = [], []
     for root, dirs, files in os.walk(uploads_dir):
         dirs[:] = [d for d in dirs if not d.startswith(".")]
@@ -306,7 +389,7 @@ def find_unused_uploads(content, uploads_dir):
             if nf.startswith("manuscripts_"):
                 stripped = nf[len("manuscripts_"):]
                 if (_norm_fname(stripped) in used
-                        or os.path.exists(os.path.join(root, stripped))):
+                        or stripped in all_names):
                     continue
             if in_step3:
                 if st3_numbered and _RE_S3_NUMFILE.search(nf):
@@ -378,6 +461,29 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
 
     # ── G2 정답 블록 잔존 ────────────────────────────────────────────────
     ans = find_leaked_answers(dump)
+    # W21 r11: step3(문제 pool) 스토리의 압축 정답표 행("1. ①  2. ② …")은
+    # 완제품 관행상 보존 — v1 실물(워크북03(외부지문) 스토리 53)도 실전문제
+    # 지문 스타일로 유지한다 (문제책 말미 정답 모음). step3 플로우 스토리
+    # 안의 해당 셰이프만 critical에서 제외하고 stats로 보고.
+    st3_flow = next((fl for fl in plan.get("flows", [])
+                     if fl.get("step") == "step3"), None)
+    if ans and st3_flow:
+        # 플랜에도 있는 행만 면제 (파서가 의도 보존한 정답 모음) — 파서가
+        # 잘라야 했던 '정답' 마커 블록의 행(06f4b2c2)은 플랜에 없어 잔존
+        # critical 유지. find_leaked_answers는 raw strip()[:60] — 동일 정규화.
+        st3_plan_texts = {(p.get("t") or "").strip()[:60]
+                          for u in st3_flow.get("units", [])
+                          for p in (u["paras"] if isinstance(u, dict) else u)}
+        st3_dump = _find_flow_story(dump, st3_flow)
+        if st3_dump is not None:
+            st3_texts = {(p.get("t") or "").strip()[:60]
+                         for p in st3_dump.get("paragraphs", [])}
+            kept = [a for a in ans
+                    if _RE_ANSWER_KEY_ROW.match(a) and a in st3_texts
+                    and a in st3_plan_texts]
+            if kept:
+                stats["answer_rows_step3_kept"] = len(kept)
+                ans = [a for a in ans if a not in set(kept)]
     stats["answer_leaks"] = len(ans)
     if ans:
         critical.append(f"[정답잔존] {len(ans)}개 단락: "
@@ -723,12 +829,22 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         warnings.append("[잔여페이지] 덤프에 페이지 정보 없음(구버전 덤프)"
                         " — 재덤프 필요")
     else:
-        empty_prefix = ((plan.get("page_cleanup") or {})
-                        .get("empty_master", "M")
-                        if isinstance(plan.get("page_cleanup"), dict)
-                        else "M")
-        residual = [e for e in stale
-                    if not str(e.get("m", "")).startswith(empty_prefix)]
+        cleanup_op = (plan.get("page_cleanup")
+                      if isinstance(plan.get("page_cleanup"), dict) else {})
+        if cleanup_op.get("empty") == "delete":
+            # W21 delete 모드: 빈 페이지는 삭제가 계약 — M 마스터 면제 없음.
+            # 페이지 인벤토리(pages)의 빈 페이지(프레임 있고 전부 공백 —
+            # 스레드 절단 후 단일 프레임 꼬리 포함)도 잔여로 합산 (r11
+            # 재조판 1차 실측: stale 판정 밖 p12/p21 잔존).
+            residual = list(stale)
+            seen_p = {str(e.get("p")) for e in residual}
+            for pe in dump.get("pages") or []:
+                if pe.get("empty") and str(pe.get("p")) not in seen_p:
+                    residual.append({"p": pe.get("p"), "m": pe.get("m")})
+        else:
+            empty_prefix = cleanup_op.get("empty_master", "M")
+            residual = [e for e in stale
+                        if not str(e.get("m", "")).startswith(empty_prefix)]
         stats["stale_pages"] = len(residual)
         if residual:
             names = [str(e.get("p")) for e in residual]
@@ -736,6 +852,176 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                    f"{len(residual)}개 잔존: p" + ", p".join(names[:12])
                    + ("…" if len(names) > 12 else ""))
             (critical if strict_pages else warnings).append(msg)
+
+    # ── G23 지문번호 라벨 스타일 계약 (W21 r11) ──────────────────────────
+    # step_map.json의 label_contract가 flow.target으로 플랜에 실린다.
+    # 라벨 셰이프 단락(단독 [N]/{N})의 실측 스타일이 계약과 다르면 critical.
+    label_style_bad = []
+    for fl in plan.get("flows", []):
+        contract = (fl.get("target") or {}).get("label_contract")
+        if not contract or not contract.get("re"):
+            continue
+        story = _find_flow_story(dump, fl)
+        if story is None:
+            continue
+        try:
+            rx = re.compile(contract["re"])
+        except re.error:
+            continue
+        want = contract.get("style") or "$BASIC"
+        for p in story.get("paragraphs", []):
+            tt = _clean(p.get("t", ""))
+            if not tt or not rx.match(tt):
+                continue
+            s = p.get("s") or ""
+            ok_style = (s in _BASIC_ALIASES if want == "$BASIC"
+                        else s == want)
+            if not ok_style:
+                label_style_bad.append(
+                    f"{fl['step']} {tt[:15]} 「{s}」≠「{want}」")
+    stats["label_style_bad"] = len(label_style_bad)
+    if label_style_bad:
+        critical.append(
+            f"[라벨스타일] 지문번호 라벨 {len(label_style_bad)}개가 계약 "
+            f"스타일과 불일치: " + " | ".join(label_style_bad[:4]))
+
+    # ── G24 프레임 브레이크 (W21 r11) ────────────────────────────────────
+    # ① per_passage_units 계약 스텝이 지문 다수 원고에서 유닛 1개로 배치 —
+    #    헤더 미인식으로 프레임 분리가 통째로 실패한 상태 (플랜 실측).
+    labels_for_units = list((plan.get("passage_numbers") or {})
+                            .get("labels") or []) or passage_labels(steps)
+    break_fail = []
+    for fl in plan.get("flows", []):
+        if not (fl.get("target") or {}).get("per_passage_units"):
+            continue
+        if len(fl.get("units") or []) == 1 and len(labels_for_units) >= 2:
+            break_fail.append(f"{fl['step']} (지문 {len(labels_for_units)}개 "
+                              f"→ 유닛 1개)")
+    stats["frame_break_plan_fail"] = len(break_fail)
+    if break_fail:
+        critical.append(
+            f"[프레임브레이크] 지문 분리 미발생 {len(break_fail)}개 스텝: "
+            + " | ".join(break_fail[:5]))
+
+    # ② 유닛 시작 단락이 실제 프레임 경계에 있는지 (덤프 fc 실측 — 신형
+    #    덤프 한정. 단락↔플랜 1:1 정렬은 배치 방식(story.contents 치환)이
+    #    보장, trimWsOverset로 꼬리 단락이 줄 수 있어 범위 밖은 생략).
+    fc_missing_warned = False
+    break_pos_bad = []
+    for fl in plan.get("flows", []):
+        units = fl.get("units") or []
+        if not fl.get("break_per_unit") or len(units) < 2:
+            continue
+        story = _find_flow_story(dump, fl)
+        if story is None:
+            continue
+        if "fc" not in story:
+            if not fc_missing_warned:
+                warnings.append("[프레임브레이크] 덤프에 프레임 문자 인덱스"
+                                "(fc) 없음(구버전 덤프) — 실측 생략")
+                fc_missing_warned = True
+            continue
+        fc_set = {c for c in story.get("fc") or [] if c >= 0}
+        ps = story.get("paragraphs", [])
+        offsets = []
+        off = 0
+        for p in ps:
+            offsets.append(off)
+            off += len(p.get("t") or "")
+        upto = 0
+        for k, u in enumerate(fl["units"]):
+            n_paras = len(u["paras"] if isinstance(u, dict) else u)
+            start = upto
+            upto += n_paras
+            if k == 0 or start >= len(offsets):
+                continue
+            if offsets[start] not in fc_set:
+                break_pos_bad.append(f"{fl['step']} 유닛{k + 1}")
+    stats["frame_break_pos_bad"] = len(break_pos_bad)
+    if break_pos_bad:
+        critical.append(
+            f"[프레임브레이크] 유닛 시작이 프레임 경계에 있지 않음 "
+            f"{len(break_pos_bad)}건: " + " | ".join(break_pos_bad[:5]))
+
+    # ── G25 발문 다음 빈 단락 (W21 r11) ──────────────────────────────────
+    # 발문(하단 문제 스타일) 바로 다음의 '진짜 빈'(앵커 없는) 단락 —
+    # 발문과 주어진 문장 사이 불필요한 빈 줄. v1 실물은 발문 직후가 BTM.
+    prompt_gap = []
+    for story in dump.get("stories", []):
+        ps = story.get("paragraphs", [])
+        for i, p in enumerate(ps[:-1]):
+            leaf = (p.get("s") or "").split(" > ")[-1].strip()
+            if leaf != "하단 문제":
+                continue
+            if not _RE_C1_PROMPT_TEXT.match(_clean(p.get("t", ""))):
+                continue    # C1 자동 삽입 발문만 — B1 발문 등 오탐 방지
+            nt = (ps[i + 1].get("t") or "")
+            if "￼" in nt:
+                continue          # 아이콘 앵커 단락은 빈 줄이 아님
+            if not nt.replace("\r", "").strip():
+                prompt_gap.append(_clean(p.get("t", ""))[:35])
+    stats["prompt_gap_blanks"] = len(prompt_gap)
+    if prompt_gap:
+        critical.append(
+            f"[발문빈단락] 발문 바로 다음 빈 단락 {len(prompt_gap)}건 "
+            f"(발문-주어진 문장 사이 빈 줄): " + " | ".join(prompt_gap[:3]))
+
+    # ── G26 섹션 시작 좌/우 마스터 (W21 r11) ─────────────────────────────
+    pages_inv = {str(e.get("p")): e for e in dump.get("pages") or []}
+    strict_masters = bool(plan.get("section_masters"))
+    master_bad = []
+    pages_missing_warned = False
+    for fl in plan.get("flows", []):
+        pair = (fl.get("target") or {}).get("master_pair")
+        if not pair:
+            continue
+        if not pages_inv:
+            if not pages_missing_warned and dump.get("stories"):
+                warnings.append("[섹션마스터] 덤프에 페이지 인벤토리(pages) "
+                                "없음(구버전 덤프) — 실측 생략")
+                pages_missing_warned = True
+            break
+        story = _find_flow_story(dump, fl)
+        if story is None or not story.get("pg"):
+            continue
+        entry = pages_inv.get(str(story["pg"][0]))
+        if not entry:
+            continue
+        want = pair.get("right") if entry.get("side") == "R" \
+            else pair.get("left")
+        if want and entry.get("m") != want:
+            master_bad.append(f"{fl['step']} p{entry.get('p')}"
+                              f"({entry.get('side')}) 「{entry.get('m')}」"
+                              f"≠「{want}」")
+    stats["section_master_bad"] = len(master_bad)
+    if master_bad:
+        msg = (f"[섹션마스터] 섹션 시작 페이지 마스터가 좌/우 변형과 "
+               f"불일치 {len(master_bad)}건: " + " | ".join(master_bad[:5]))
+        (critical if strict_masters else warnings).append(msg)
+
+    # ── G27 간지 적합성 (W21 r11) ────────────────────────────────────────
+    # 외부지문 무-p형('N. no.M') 헤더 원고인데 간지가 '고N 모의고사' 라벨.
+    # v1 실물(워크북03(외부지문))도 같은 라벨을 유지한 관행이 있어 warning
+    # (사람 확인 지목 — 자동 치환할 근거 라벨이 실물에 없다).
+    is_nop_manuscript = any(
+        _RE_NOP_HEADER.match(_norm_header(p.get("text") or ""))
+        for sd in steps.values() if isinstance(sd, dict)
+        for p in (sd.get("paragraphs") or []))
+    if is_nop_manuscript:
+        mock_dividers = []
+        for story in dump.get("stories", []):
+            ps = story.get("paragraphs", [])
+            for i in range(len(ps) - 1):
+                if (_RE_DIVIDER_L1.match(_clean(ps[i].get("t", "")))
+                        and _RE_DIVIDER_L2.match(
+                            _clean(ps[i + 1].get("t", "")))):
+                    mock_dividers.append(_clean(ps[i].get("t", "")))
+        stats["divider_type_mismatch"] = len(mock_dividers)
+        if mock_dividers:
+            warnings.append(
+                f"[간지적합] 외부지문 원고인데 간지 {len(mock_dividers)}개가 "
+                f"'모의고사' 라벨 — 원고 유형과 불일치 의심 (사람 확인): "
+                + mock_dividers[0])
 
     # ── G5 step2_a1 상단 / step2_a1_btm 하단 기하 검사 ───────────────────
     flows = {fl["step"]: fl for fl in plan.get("flows", [])}

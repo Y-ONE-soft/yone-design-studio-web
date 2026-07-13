@@ -272,6 +272,13 @@ _HEADER_PATTERNS = [
     # 부교재 코너명형 (W12): "1. p80-수능 Analysis" — compact "p80-수능Analysis".
     # 기존 패턴 무변경 append.
     re.compile(r"^p\d+[-–—]?수능Analysis$", re.I),
+    # 외부지문 무-p형 (W21 r11 — 성덕 외부지문 실사용 실증): "1. no.1" 처럼
+    # 페이지 없이 지문 순번만 있는 헤더. v1 isHeaderLine도 미인식이라 v1
+    # 렌더 출력엔 헤더가 그대로 인쇄됐고(3664cc0e 조판_로그 '헤더 0개'),
+    # 실물 .indd(워크북03(외부지문))는 조판사가 손으로 헤더 제거+프레임
+    # 분리를 복원한 상태 — 완제품 기준으로 v2가 인식한다. 기존 패턴 무변경
+    # append ("N. " 접두 제거 후 compact "no.1" 형태만 매치).
+    re.compile(r"^no\.?\d+(?:~\d+)?$", re.I),
 ]
 _RE_SUPP = re.compile(r"^Supplementary Reading$", re.I)
 
@@ -324,13 +331,16 @@ _RE_A1_PDESC = re.compile(
     re.I)
 _RE_A1_ANALYSIS = re.compile(r"^\s*\d+.*수능\s*대비\s*analysis.*$", re.I)
 _RE_A1_BONMUN = re.compile(r"^\s*\d+\s*[.)]?\s*.*?본문\s*\d+\s*$", re.I)
+# 외부지문 무-p형 (W21 r11): "1. no.1" — v1 실물(워크북03(외부지문))은
+# 조판사가 손으로 {1}~{4} 정규화 + 프레임 분리를 복원했다 (스토리 61 실측).
+_RE_A1_NO = re.compile(r"^\s*\d+\s*[.)]?\s*no\.?\s*\d+(?:~\d+)?\s*$", re.I)
 
 
 def is_a1_header(text):
     t = re.sub(r"[\r\n]", "", text or "")
     return bool(_RE_A1_L.match(t) or _RE_A1_PNO.match(t)
                 or _RE_A1_PDESC.match(t) or _RE_A1_ANALYSIS.match(t)
-                or _RE_A1_BONMUN.match(t))
+                or _RE_A1_BONMUN.match(t) or _RE_A1_NO.match(t))
 
 
 def extract_tail(text):
@@ -364,6 +374,11 @@ def extract_tail(text):
                  r"(?:[\s-]*(.+))?$", s, re.I)
     if m:
         return m.group(2) if m.group(2) else m.group(1)
+    # 외부지문 무-p형 (W21 r11): "1. no.1" → "1" — p-형("1. p2-no.20"→"20")과
+    # 동일하게 no-번호를 라벨로 (v1 실물 {1}~{4} 대조). 기존 분기 무변경 삽입.
+    m = re.match(r"^\s*\d+[\s.)-]*no\.?\s*(\d+(?:~\d+)?)\s*$", s, re.I)
+    if m:
+        return m.group(1)
     if re.search(r"수능\s*대비\s*analysis", s, re.I):
         return "분석"
     # 부교재 코너명형 (W12): "N. pN-수능 Analysis" → "분석N" (선행 순번 —
@@ -422,7 +437,10 @@ _A1_TABLE = str.maketrans({"❮": "[", "❯": "]"})
 
 
 def build_step1_a1(step_data):
-    st_num = _style("STEP1A1", "NUM")
+    # 지문번호 [N]은 [기본 단락] — v1 processStep1A1은 전체 BASIC_PARA 후
+    # 본문 구간에만 A1_어휘 선택을 입히고 bracket은 손대지 않는다 (S1_A_NUM
+    # 은 선언만 되고 미사용). v1 실물 대조: 워크북03(외부지문) 스토리 21
+    # '[1]' = [기본 단락] (W21 r11 D1 — v2가 NUM을 입히던 것은 이식 오류).
     st_body = _style("STEP1A1", "C")
     units = []
     warnings = []
@@ -438,7 +456,7 @@ def build_step1_a1(step_data):
                 units.append(cur)
                 cur = []
             seen_bracket = True
-            cur.append(_mk(text, st_num, p["runs"]))
+            cur.append(_mk(text, "$BASIC", p["runs"]))
         else:
             cur.append(_mk(text, st_body, p["runs"]))
     if cur:
@@ -451,7 +469,10 @@ def build_step1_a1(step_data):
 # 원문자 → 선지. 빈 단락은 유지(v1 동일) — 스타일은 직전 단락을 따라간다.
 
 def build_step1_b2(step_data):
-    st_num = _style("STEP1B2", "NUM")
+    # 지문번호 [N]은 [기본 단락] — v1 processStep1B2도 전체 BASIC_PARA 후
+    # ']' 닫힘 뒤 본문/번호/선지만 스타일링, bracket은 기본 유지 (W21 r11
+    # D3 — v1 실물 워크북03(외부지문) 스토리 137 '[1]' = [기본 단락]).
+    st_num = "$BASIC"
     st_body = _style("STEP1B2", "P")
     st_q = _style("STEP1B2", "Q")
     st_c = _style("STEP1B2", "C")
@@ -1252,6 +1273,15 @@ def build_step1_c1(step_data, workbook_type="모의고사", exclude_btm=False,
             p = {"t": prompt, "runs": [], "s": st_hadan,
                  "icon": dict(_ICON_STEP1_Q)}
             items.insert(ins, p)
+            # W21 r11 D4: 발문과 주어진 문장(BTM) 사이의 원고 잔여 빈 단락
+            # 제거 — 걸어 올라오며 건넌 빈 단락이 발문 아래 남아 '하단 문제
+            # 발문 ↔ 주어진 문장' 사이 불필요한 빈 줄로 인쇄됐다 (실사용
+            # 0e3108fd 실증). v1 실물(워크북03(외부지문) 스토리 26)은 발문
+            # 바로 다음이 BTM — 빈 단락 없음. 아이콘 단락은 보존.
+            k = ins + 1
+            while (k < len(items) and _c1_true_empty(items[k]["t"])
+                   and not items[k].get("icon")):
+                del items[k]
         n = len(items)
 
     # 7) 안전망: '{' 포함 단락 → [기본 단락] (v1 Final safety)
@@ -1349,6 +1379,9 @@ _RE_LABEL_HEADER = re.compile(
     r"^\s*\d+\s*[.)]\s*p\.?\s*\d+(?!\d)\s*[-–—.]?\s*(?:no\.\s*)?"
     r"(\d+(?:\s*~\s*\d+)?(?:\s*[가-힣][가-힣0-9\s]*[가-힣0-9])?)",
     re.I)
+# 외부지문 무-p형 헤더 "1. no.1" → no-번호 (W21 r11 — p-형과 동일 규칙)
+_RE_LABEL_HEADER_NOP = re.compile(
+    r"^\s*\d+\s*[.)]\s*no\.\s*(\d+(?:\s*~\s*\d+)?)\s*$", re.I)
 # bracket 지문번호 "[3과 추가지문]" / "[20]" → 내용부
 _RE_LABEL_BRACKET = re.compile(r"^\s*\[([^\]]+)\]\s*$")
 
@@ -1368,6 +1401,8 @@ def passage_labels(steps):
         for p in data.get("paragraphs", []) or []:
             text = _norm_header(p.get("text") or "")
             m = _RE_LABEL_HEADER.match(text)
+            if not m:
+                m = _RE_LABEL_HEADER_NOP.match(text)
             if not m and key == "step1_a1":
                 m = _RE_LABEL_BRACKET.match(text)
             if m:

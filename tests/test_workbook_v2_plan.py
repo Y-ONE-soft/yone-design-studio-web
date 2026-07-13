@@ -80,7 +80,9 @@ def test_w2_styles_and_units_corpus():
             assert len(flow["units"]) == n_units, (case, step)
             styles = {p["s"] for u in flow["units"] for p in u}
             assert None not in styles, (case, step)
-            assert styles <= inv, (case, step, styles - inv)
+            # $BASIC = 문서 내장 [기본 단락] 센티널 — 인벤토리 밖 허용
+            # (W21 r11: 지문번호 [N]은 v1 파리티로 [기본 단락])
+            assert styles <= (inv | {"$BASIC"}), (case, step, styles - inv)
 
 
 def test_w2_content_conservation_corpus():
@@ -121,11 +123,15 @@ def test_w2_content_conservation_corpus():
 
 
 def test_w2_step1_a1_semantics():
-    """1A1: ❮❯→[] 치환, 지문번호→NUM, 본문→A1_어휘 선택, 빈 단락 제거."""
+    """1A1: ❮❯→[] 치환, 지문번호→기본 단락, 본문→A1_어휘 선택, 빈 단락 제거.
+
+    지문번호 [N] = $BASIC (W21 r11): v1 processStep1A1은 전체 BASIC_PARA 후
+    본문 구간만 스타일링 — S1_A_NUM('A_어휘 선택 번호')은 선언만 되고 미사용.
+    v1 실물(워크북03(외부지문) 스토리 21) '[1]' = [기본 단락] 실측."""
     plan = steps_to_plan(_load("0a5da924")["steps"])
     flow = _flow(plan, "step1_a1")
     for unit in flow["units"]:
-        assert unit[0]["s"] == "STEP 01 > A_어휘 선택 번호"
+        assert unit[0]["s"] == "$BASIC"
         assert re.match(r"^\[\d+(?:~\d+)?\]$", unit[0]["t"])
         for p in unit[1:]:
             assert p["s"] == "STEP 01 > A1_어휘 선택"
@@ -136,12 +142,13 @@ def test_w2_step1_a1_semantics():
 
 
 def test_w2_step1_b2_semantics():
-    """1B2: [N]→NUM, 본문→박스, (N)→번호, 원문자→선지."""
+    """1B2: [N]→기본 단락(W21 r11 — v1 실물 파리티), 본문→박스, (N)→번호,
+    원문자→선지."""
     plan = steps_to_plan(_load("0a5da924")["steps"])
     flow = _flow(plan, "step1_b2")
     unit = flow["units"][0]
     assert unit[0]["t"] == "[20]"
-    assert unit[0]["s"] == "STEP 01 > A_어휘 선택 번호"
+    assert unit[0]["s"] == "$BASIC"
     assert unit[1]["s"] == "STEP 01 > A2_본문 박스"
     styles = {p["t"][:3]: p["s"] for p in unit if p["t"].strip()}
     assert styles["(1)"] == "STEP 01 > B2_내용 종합 번호"
@@ -215,7 +222,9 @@ def test_w3_styles_and_units_corpus():
             assert len(flow["units"]) == n_units, (case, step)
             styles = {p["s"] for u in flow["units"] for p in u}
             assert None not in styles, (case, step)
-            assert styles <= inv, (case, step, styles - inv)
+            # $BASIC = 문서 내장 [기본 단락] 센티널 — 인벤토리 밖 허용
+            # (W21 r11: 지문번호 [N]은 v1 파리티로 [기본 단락])
+            assert styles <= (inv | {"$BASIC"}), (case, step, styles - inv)
 
 
 def test_w3_content_conservation_corpus():
