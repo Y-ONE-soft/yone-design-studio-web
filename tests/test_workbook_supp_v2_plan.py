@@ -145,7 +145,11 @@ def test_decorations(content, tmp_path):
     with open(os.path.join(job, "content.json"), "w", encoding="utf-8") as f:
         json.dump(content, f, ensure_ascii=False)
     deco = WorkbookSuppV2Engine()._plan_decorations(job, {})
-    assert deco["page_cleanup"] == {"empty_master": "M"}
+    # W21 r11 (실사용 0e3108fd 전체-1/전체-2): 기본 내지는 빈 STEP3 페이지
+    # 삭제(delete 모드 — 'M 마스터 보존' v1 관행 폐기 확정) + 섹션 시작
+    # 좌/우 마스터 정합 op. 학교 전용 내지는 기존 동작 유지.
+    assert deco["page_cleanup"] == {"empty": "delete"}
+    assert deco["section_masters"] is True
     assert deco["passage_numbers"]["labels"] == ["3과 추가지문",
                                                  "4과 추가지문"]
     assert deco["passage_numbers"]["steps"] == ["step1_c2", "step2_b1",

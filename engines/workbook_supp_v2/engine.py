@@ -66,12 +66,11 @@ class WorkbookSuppV2Engine(WorkbookV2Engine):
 
     # ── W11 훅: 스토리 매핑 + 완제품 후처리 op ──────────────────────────────
 
-    def _step_map(self):
-        """supp 전용 step_map — step2_a1/btm pos(top/bottom) 기하 힌트.
+    def _template_token(self):
+        """선택될 내지의 학교 토큰 ("세종" 등) — 없으면 "" (기본 내지).
 
-        학교 전용 내지가 선택되는 경우(base prepare_jsx가 _plan_ctx로
-        제공하는 컨텍스트로 _select_template과 동일하게 판정) 해당 내지의
-        스텝 카탈로그를 적용한다 — 세종 내지는 step1_b2 미지원 (W19)."""
+        base prepare_jsx가 _plan_ctx로 제공하는 컨텍스트로 _select_template과
+        동일하게 판정한다 (경로/사본 이름이 달라도 토큰은 보존)."""
         ctx = getattr(self, "_plan_ctx", None) or {}
         cfg, school = ctx.get("cfg"), ctx.get("school", "")
         if cfg and school:
@@ -82,9 +81,20 @@ class WorkbookSuppV2Engine(WorkbookV2Engine):
             except FileNotFoundError:
                 src = ""
             base = os.path.basename(src)
-            for token, smap in _TEMPLATE_STEP_MAPS:
+            for token, _smap in _TEMPLATE_STEP_MAPS:
                 if token in base:
-                    return smap
+                    return token
+        return ""
+
+    def _step_map(self):
+        """supp 전용 step_map — step2_a1/btm pos(top/bottom) 기하 힌트.
+
+        학교 전용 내지가 선택되는 경우 해당 내지의 스텝 카탈로그를 적용한다
+        — 세종 내지는 step1_b2 미지원 (W19)."""
+        token = self._template_token()
+        for tk, smap in _TEMPLATE_STEP_MAPS:
+            if tk == token:
+                return smap
         return _STEP_MAP
 
     def _plan_decorations(self, job_dir, cfg):
@@ -101,7 +111,17 @@ class WorkbookSuppV2Engine(WorkbookV2Engine):
         # '고N 모의고사 / YY년 M월'을 갱신한다 — v2도 동일 opt-in.
         # 세종 내지의 간지('세종고 …')는 간지-마스터 페이지라 updateDivider
         # 매칭 조건(마스터 [None]) 밖 — 무접촉 (c19 실측 pg=['간지']).
-        deco = {"page_cleanup": {"empty_master": "M"}}
+        # W21 r11 (실사용 0e3108fd 결함 전체-1/전체-2): 기본 내지([원본]
+        # 워크북_C)는 ① 빈 STEP3 페이지를 M 마스터 보존 대신 삭제(delete
+        # 모드 — 'M 보존' v1 관행은 완제품 기준으로 폐기 확정), ② 페이지
+        # 정리 후 섹션 시작 페이지의 좌/우 마스터 변형 정합(section_masters
+        # — 쌍 데이터는 step_map.json master_pair 계약). 학교 전용 내지
+        # (세종 등)는 마스터 구성이 미실측이라 기존 동작 유지 (무접촉).
+        if self._template_token():
+            deco = {"page_cleanup": {"empty_master": "M"}}
+        else:
+            deco = {"page_cleanup": {"empty": "delete"},
+                    "section_masters": True}
         deco.update(_mockexam_divider(job_dir))
         try:
             content = json.load(open(os.path.join(job_dir, "content.json"),

@@ -432,6 +432,10 @@ function trimWsOverset(story) {
 }
 
 function cleanupPages(doc, flowStories, op) {
+    // W21 r11: op.empty === "delete" — 빈 STEP3 페이지를 M 마스터 재할당
+    // 대신 삭제한다 (실사용 0e3108fd: 빈 M 페이지 84개 잔존이 사용자 지목
+    // 결함. 'M 마스터 보존'은 v1 관행이었으나 완제품 기준으로 폐기 확정).
+    var deleteEmpty = (op.empty === "delete");
     // 1) 보호 경계 계산
     var cleanStart = -1;      // 첫 콘텐츠 섹션 페이지 offset
     var step3Story = null;
@@ -467,7 +471,9 @@ function cleanupPages(doc, flowStories, op) {
     var unthreaded = 0;
     for (var st2 in flowStories) {
         var rec2 = flowStories[st2];
-        if (rec2.isMaster) { continue; }   // STEP3는 M 마스터 경로에서 관리
+        // STEP3(isMaster)는 M 재할당 경로에서 관리 — 단, delete 모드에선
+        // STEP1/2와 동일하게 절단해 빈 꼬리 페이지를 삭제 가능하게 한다 (W21)
+        if (rec2.isMaster && !deleteEmpty) { continue; }
         try {
             var conts = rec2.story.textContainers;
             var lastWithText = -1;
@@ -516,7 +522,9 @@ function cleanupPages(doc, flowStories, op) {
     var removed = 0;
     var scanned = 0;
     for (var dp = doc.pages.length - 1; dp >= 0; dp--) {
-        if (dp < cleanStart || dp >= step3Start) { continue; }
+        if (dp < cleanStart) { continue; }
+        var inStep3 = (dp >= step3Start);
+        if (inStep3 && !deleteEmpty) { continue; }
         scanned++;
         if (scanned % 20 === 0) {
             wlog("페이지 정리 진행: " + scanned + "페이지 검사 / " + removed + "개 삭제");
@@ -527,35 +535,58 @@ function cleanupPages(doc, flowStories, op) {
         var allBlank = true;
         var hasBareNum = false;
         var hasFlowContent = false;
+        var anyFrame = tfs.length > 0;
+        var allBlankOrNum = anyFrame;   // delete 모드 STEP3 영역 판정 (W21)
         for (var tf = 0; tf < tfs.length; tf++) {
             var pst = null;
             var nConts = 0;
             try {
                 pst = tfs[tf].parentStory;
                 nConts = pst.textContainers.length;
-            } catch (e) { continue; }
+            } catch (e) { allBlankOrNum = false; continue; }
+            var frameBlank = isBlankFrameContent(tfs[tf]);
+            var frameBareNum = (nConts === 1
+                                && RE_BARE_NUM.test(String(pst.contents || "")));
+            if (!frameBlank && !frameBareNum) { allBlankOrNum = false; }
             if (nConts > 1) {
                 hasLocal = true;
-                if (!isBlankFrameContent(tfs[tf])) { allBlank = false; }
-            } else if (RE_BARE_NUM.test(String(pst.contents || ""))) {
+                if (!frameBlank) { allBlank = false; }
+            } else if (frameBareNum) {
                 hasBareNum = true;
             }
             try {
-                if (flowIds[String(pst.id)]
-                        && !isBlankFrameContent(tfs[tf])) {
+                if (flowIds[String(pst.id)] && !frameBlank) {
                     hasFlowContent = true;
                 }
             } catch (e2) {}
         }
+        if (inStep3) {
+            // W21 delete 모드: 빈 STEP3 페이지 삭제 — 프레임이 있고 전부
+            // 공백(또는 문항번호 잔재 단일 프레임)이며 스텝 콘텐츠가 없는
+            // 페이지. 간지/짤지문 라벨 페이지는 한글 텍스트가 있어 보존.
+            if (anyFrame && allBlankOrNum && !hasFlowContent) {
+                try { pg.remove(); removed++; } catch (e) {}
+            }
+            continue;
+        }
         if ((hasLocal && allBlank && !hasFlowContent)
-                || (hasBareNum && !hasFlowContent)) {
+                || (hasBareNum && !hasFlowContent)
+                // W21 delete 모드: STEP1/2 영역도 완전 정리 — 스레드 절단
+                // (1b) 후 단일 프레임이 된 빈 꼬리 페이지가 기존 판정
+                // (다중 프레임/번호 프레임)을 비껴가 잔존 (r11 재조판 1차
+                // 실측 p12/p21 — v1 실물 STEP1/2 영역엔 빈 페이지 0).
+                // 발문/예시/간지 등 텍스트 있는 프레임 페이지는 보존.
+                || (deleteEmpty && anyFrame && allBlankOrNum
+                    && !hasFlowContent)) {
             try { pg.remove(); removed++; } catch (e) {}
         }
     }
-    wlog("페이지 정리: 잔여 스텝/사이클 페이지 " + removed + "개 삭제");
+    wlog("페이지 정리: 잔여 스텝/사이클 페이지 " + removed + "개 삭제"
+         + (deleteEmpty ? " (STEP3 빈 페이지 포함 — delete 모드)" : ""));
 
-    // 3) STEP3 영역 — 빈 페이지 M 마스터 재할당 (v1 adjustStep3Pages 파리티)
-    if (!step3Story) { return; }
+    // 3) STEP3 영역 — 빈 페이지 M 마스터 재할당 (v1 adjustStep3Pages 파리티,
+    //    delete 모드에선 위에서 삭제 완료 — 재할당 생략)
+    if (!step3Story || deleteEmpty) { return; }
     var emptyMasterPrefix = op.empty_master || "M";
     var mMaster = null;
     try {
@@ -593,6 +624,61 @@ function cleanupPages(doc, flowStories, op) {
         }
     }
     wlog("페이지 정리: 빈 STEP3 페이지 " + emptyMasterPrefix + " 마스터 " + reassigned + "개");
+}
+
+// ── W21 op: 섹션 시작 좌/우 마스터 정합 (plan.section_masters가 있을 때만) ──
+// 페이지 정리로 섹션 시작이 좌→우(또는 우→좌)로 밀리면 시작 페이지 마스터를
+// 좌/우 변형으로 교체한다. [원본]워크북_C 실측: STEP1 섹션이 오른쪽에서
+// 시작하면 B-마스터(어휘 선택 2, p13), 왼쪽이면 A-마스터. STEP2는 C/D 쌍.
+// 쌍 데이터는 flow.target.master_pair (step_map.json 계약) — 계약 없는
+// 플로우/내지는 무접촉. 반드시 page_cleanup 이후 호출 (좌/우 확정 후).
+function fixSectionMasters(doc, flowStories) {
+    var n = 0;
+    var masterCache = {};
+    // 비대면(facing 아님) 문서는 pg.side가 전부 RIGHT_HAND ([원본]워크북_C
+    // 실측) — 인쇄 물리 좌/우는 페이지 순서 홀짝으로 판정 (offset 0 = p1 =
+    // 오른쪽). facing 문서만 pg.side를 신뢰한다.
+    var facing = false;
+    try { facing = doc.documentPreferences.facingPages; } catch (e) {}
+    function sideOf(pg) {
+        if (facing) {
+            try {
+                return (pg.side === PageSideOptions.LEFT_HAND) ? "L" : "R";
+            } catch (e) { return "R"; }
+        }
+        try {
+            return (pg.documentOffset % 2 === 0) ? "R" : "L";
+        } catch (e) { return "R"; }
+    }
+    function masterByName(name) {
+        if (masterCache[name] !== undefined) { return masterCache[name]; }
+        var m = null;
+        try { m = doc.masterSpreads.itemByName(name); m.name; } catch (e) { m = null; }
+        masterCache[name] = m;
+        if (!m) { wlog("[경고] 섹션 마스터 없음: " + name); }
+        return m;
+    }
+    for (var step in flowStories) {
+        var rec = flowStories[step];
+        var pair = rec.masterPair;
+        if (!pair || rec.isMaster) { continue; }
+        var pages = storyPagesInOrder(rec.story);
+        if (pages.length === 0) { continue; }
+        var pg = pages[0];
+        var want = (sideOf(pg) === "R") ? pair.right : pair.left;
+        if (!want) { continue; }
+        var cur = "";
+        try { cur = pg.appliedMaster ? String(pg.appliedMaster.name) : ""; } catch (e) {}
+        if (cur === want) { continue; }
+        var m2 = masterByName(want);
+        if (!m2) { continue; }
+        try {
+            pg.appliedMaster = m2;
+            n++;
+            wlog("섹션 마스터: " + step + " p" + pg.name + " (" + cur + " → " + want + ")");
+        } catch (e) {}
+    }
+    wlog("섹션 시작 마스터 정합: " + n + "개 교체");
 }
 
 // ── 간지 텍스트 업데이트 (v1 run.jsx 16.7 이식 — plan.divider가 있을 때만) ──
@@ -744,7 +830,8 @@ try {
         // 지문' 가정이 깨져 오갱신/잔존 발생). 아이콘은 앵커/기존 단락
         // 재사용이라 단락 인덱스를 바꾸지 않는다.
         flowStories[flow.step] = { story: story, isMaster: !!tgt.master,
-                                   unitStart: unitStart.slice(0) };
+                                   unitStart: unitStart.slice(0),
+                                   masterPair: tgt.master_pair || null };
         wlog(flow.step + ": " + flat.length + "단락 배치 (유닛 " + flow.units.length + ")");
 
         // 대형 스토리 필수 최적화: 컬렉션 인덱싱 대신 getElements() 1회 캐시
@@ -860,6 +947,11 @@ try {
                              ? plan.page_cleanup : {});
         }, ScriptLanguage.JAVASCRIPT, undefined,
            UndoModes.ENTIRE_SCRIPT, "wb_v2 page_cleanup");
+    }
+    if (plan.section_masters) {
+        app.doScript(function () { fixSectionMasters(doc, flowStories); },
+                     ScriptLanguage.JAVASCRIPT, undefined,
+                     UndoModes.ENTIRE_SCRIPT, "wb_v2 section_masters");
     }
     if (plan.divider && plan.divider.line1) {
         app.doScript(function () {
