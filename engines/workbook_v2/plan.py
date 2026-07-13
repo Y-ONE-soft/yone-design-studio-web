@@ -437,7 +437,10 @@ _A1_TABLE = str.maketrans({"❮": "[", "❯": "]"})
 
 
 def build_step1_a1(step_data):
-    st_num = _style("STEP1A1", "NUM")
+    # 지문번호 [N]은 [기본 단락] — v1 processStep1A1은 전체 BASIC_PARA 후
+    # 본문 구간에만 A1_어휘 선택을 입히고 bracket은 손대지 않는다 (S1_A_NUM
+    # 은 선언만 되고 미사용). v1 실물 대조: 워크북03(외부지문) 스토리 21
+    # '[1]' = [기본 단락] (W21 r11 D1 — v2가 NUM을 입히던 것은 이식 오류).
     st_body = _style("STEP1A1", "C")
     units = []
     warnings = []
@@ -453,7 +456,7 @@ def build_step1_a1(step_data):
                 units.append(cur)
                 cur = []
             seen_bracket = True
-            cur.append(_mk(text, st_num, p["runs"]))
+            cur.append(_mk(text, "$BASIC", p["runs"]))
         else:
             cur.append(_mk(text, st_body, p["runs"]))
     if cur:
@@ -466,7 +469,10 @@ def build_step1_a1(step_data):
 # 원문자 → 선지. 빈 단락은 유지(v1 동일) — 스타일은 직전 단락을 따라간다.
 
 def build_step1_b2(step_data):
-    st_num = _style("STEP1B2", "NUM")
+    # 지문번호 [N]은 [기본 단락] — v1 processStep1B2도 전체 BASIC_PARA 후
+    # ']' 닫힘 뒤 본문/번호/선지만 스타일링, bracket은 기본 유지 (W21 r11
+    # D3 — v1 실물 워크북03(외부지문) 스토리 137 '[1]' = [기본 단락]).
+    st_num = "$BASIC"
     st_body = _style("STEP1B2", "P")
     st_q = _style("STEP1B2", "Q")
     st_c = _style("STEP1B2", "C")
