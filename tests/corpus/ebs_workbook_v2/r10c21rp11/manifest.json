@@ -1,0 +1,8 @@
+{
+  "engine": "ebs_workbook_v2",
+  "source_job": "round10-gdrive",
+  "note": "W20 잠복 ① 지정 타격 — 리딩파워 유형완성 기출문제-11강(133문제).hwp (인라인 PUA 겹따옴표 U+F0852/F0853 보유 실증). D1(PUA 인쇄 매핑) 수리 후 출력이 골든.",
+  "golden_regenerated": {
+    "commit": "e0ce327"
+  }
+}

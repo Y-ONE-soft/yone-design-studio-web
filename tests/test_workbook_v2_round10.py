@@ -100,6 +100,47 @@ def test_sero_cycle_plan_maps_pua():
 REPO = os.path.dirname(TESTS_DIR)
 
 
+# ── r10 코퍼스 앵커 (c21/c22 — 편입 골든의 플랜 수치 고정) ──────────────────
+
+def test_r10c21_plan_anchor():
+    """c21 골든 → 플랜: PUA 0 + 겹따옴표 정자 + E2E 실측 수치."""
+    golden = os.path.join(CORPUS, "ebs_workbook_v2", "r10c21rp11",
+                          "golden", "content.json")
+    c = json.load(open(golden, encoding="utf-8"))
+    from engines.workbook_v2.plan import (steps_to_plan, ensure_step3_kinds,
+                                          _is_pua)
+    ensure_step3_kinds(c["steps"]["step3"])
+    plan = steps_to_plan(c["steps"], workbook_type="EBS")
+    txt = json.dumps(plan, ensure_ascii=False)
+    assert not any(_is_pua(ch) for ch in txt)
+    assert "“land of opportunity”" in txt
+    fl = [f for f in plan["flows"] if f["step"] == "step3"][0]
+    paras = [p for u in fl["units"]
+             for p in (u["paras"] if isinstance(u, dict) else u)]
+    assert len(paras) == 746            # E2E 실측 (2026-07-13)
+    assert sum(1 for p in paras if "배경" in (p.get("s") or "")) == 33
+
+
+def test_r10c22_plan_anchor():
+    """c22 골든 → 플랜: U+F003B(원고 28건) 전량 소화 + divider."""
+    golden = os.path.join(CORPUS, "workbook_v2", "r10c22mock2503g1",
+                          "golden", "content.json")
+    c = json.load(open(golden, encoding="utf-8"))
+    raw = open(golden, encoding="utf-8").read()
+    assert raw.count("\U000f003b") == 28   # 원고 잠복 (파서 무변경 보존)
+    from engines.workbook_v2.plan import (steps_to_plan, ensure_step3_kinds,
+                                          _is_pua)
+    ensure_step3_kinds(c["steps"]["step3"])
+    plan = steps_to_plan(c["steps"], workbook_type="모의고사")
+    txt = json.dumps(plan, ensure_ascii=False)
+    assert not any(_is_pua(ch) for ch in txt)
+    fl = [f for f in plan["flows"] if f["step"] == "step3"][0]
+    paras = [p for u in fl["units"]
+             for p in (u["paras"] if isinstance(u, dict) else u)]
+    assert len(fl["units"]) == 25           # E2E 실측 (18 normal + 7 short)
+    assert sum(1 for p in paras if "배경" in (p.get("s") or "")) == 28
+
+
 # ── 세로 divider op 이식 (W20 — G22 소급 c17) ───────────────────────────────
 
 def test_sero_executor_has_divider_op():
