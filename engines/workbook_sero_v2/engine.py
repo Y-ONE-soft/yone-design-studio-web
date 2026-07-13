@@ -46,7 +46,10 @@ def _load_v1_config():
 
 class WorkbookSeroV2Engine(BaseEngine):
 
-    jsx_timeout = 1800
+    # W18: 25사이클 정규 워크북(390p+, 슬롯 오버플로우 복제 포함)이 30분을
+    # 초과 — 러너 총 타임아웃(1800)이 정상 진행 중 렌더를 포기(강제 종료는
+    # 아님 — JSX는 자력 완주). 킬 루프 금지 원칙과 함께 상향.
+    jsx_timeout = 3600
 
     @property
     def material_id(self):
@@ -109,12 +112,35 @@ class WorkbookSeroV2Engine(BaseEngine):
         raw = open(exclude_path, encoding="utf-8").read().strip()
         return [s.strip() for s in raw.split(",") if s.strip()]
 
-    # ── 1단계: 원고 폴더 → content.json (v1 세로 파서 재사용) ───────────────
+    # ── 1단계: 원고 폴더 → content.json (v2 오케스트레이션 — v1 helpers) ────
+
+    # W18 c17 (D3) — Step3 라우팅 가드: 스텝1/2 접두 파일("Step1 A1 어휘선택
+    # (2단계 34번).docx"의 'NN번')과 정답/답지/해설 파일("고1 23년 11월
+    # NN번_정답.hwp", "…워크북step3_정답지.hwpx")이 Step3로 흘러 중복/정답
+    # 사이클을 만들던 것 차단 (W13 본가 오라우팅 차단의 세로 확장).
+    _RE_STEP12_PREFIX = re.compile(r"^\s*(?:스텝|step)\s*[12]\b", re.I)
+    _RE_ANSWERISH = re.compile(r"정답|답지|답안|해설", re.I)
+    # W18 c17 (D6/D7) — 정규 워크북의 'Step2 B2 문법 기본 문제' 네이밍은
+    # 가로 file_map(step2_a1_btm 기대명 '어법선택(객관식)')이 못 잡는다.
+    # 세로 btm 슬롯의 콘텐츠 가족은 '지문(원문자 표기)'이다 — 세로 코퍼스
+    # (e79f8af9) 골든의 btm이 지문 텍스트임을 근거로 **문제지**를 기대명으로
+    # rename (정답지는 원문자+[정답해설] 해설 가족 — 슬롯에 맞지 않음).
+    _GRAMMAR_BASIC_RENAME = "Step2 A1 어법선택(객관식).docx"
+
+    def _stage_fname(self, fname_nfc, log):
+        norm = re.sub(r"[^0-9a-z가-힣]", "", fname_nfc.lower())
+        if ("문법기본문제" in norm and "어법선택" not in norm
+                and not self._RE_ANSWERISH.search(fname_nfc)):
+            log(f"[스테이징] {fname_nfc} → {self._GRAMMAR_BASIC_RENAME} "
+                f"(문법 기본 문제 문제지 → step2_a1_btm 소비)")
+            return self._GRAMMAR_BASIC_RENAME
+        return fname_nfc
 
     def parse(self, uploaded_files, job_dir, log):
-        from engines.workbook_sero.parser import parse_manuscript_folder
+        from engines.workbook_sero_v2.parser_ext import (
+            parse_manuscript_folder_v2)
 
-        # 업로드 파일 분류 — v1 세로 엔진과 동일 (Step3 판정 포함)
+        # 업로드 파일 분류 — v1 세로 엔진 규칙 + D3 라우팅 가드
         manuscripts = uploaded_files.get("manuscripts")
         if isinstance(manuscripts, list):
             manuscript_dir = os.path.join(job_dir, "uploads")
@@ -125,12 +151,16 @@ class WorkbookSeroV2Engine(BaseEngine):
                 fname = os.path.basename(fpath)
                 if fname.startswith("manuscripts_"):
                     fname = fname[len("manuscripts_"):]
-                fname_nfc = _nfc(fname).strip()
+                fname_nfc = self._stage_fname(_nfc(fname).strip(), log)
                 is_step3 = (
                     bool(re.search(r"(?:스텝|step)[\s_-]*3(?!\d)",
                                    fname_nfc, re.I))
                     or bool(re.search(r"\d+(?:\s*~\s*\d+)?\s*번", fname_nfc))
                 )
+                if self._RE_STEP12_PREFIX.match(fname_nfc):
+                    is_step3 = False    # D3 — 스텝1/2 원고의 'NN번' 오인 차단
+                if is_step3 and self._RE_ANSWERISH.search(fname_nfc):
+                    is_step3 = False    # D3 — 정답/답지 파일은 문제가 아님
                 if is_step3:
                     dest = os.path.join(step3_dir, fname_nfc)
                 else:
@@ -150,10 +180,10 @@ class WorkbookSeroV2Engine(BaseEngine):
         month = self._read_meta(job_dir, "month", 10)
         cfg = _load_v1_config()
 
-        log(f"[v2 파서] 시작 (v1 세로 파서 재사용): 고{grade} {year}년 "
-            f"{month}월")
-        data = parse_manuscript_folder(manuscript_dir, cfg, grade, year,
-                                       month, log)
+        log(f"[v2 파서] 시작 (v2 오케스트레이션 — v1 helpers 재사용): "
+            f"고{grade} {year}년 {month}월")
+        data = parse_manuscript_folder_v2(manuscript_dir, cfg, grade, year,
+                                          month, log)
 
         json_path = os.path.join(job_dir, "content.json")
         with open(json_path, "w", encoding="utf-8") as f:
@@ -181,8 +211,14 @@ class WorkbookSeroV2Engine(BaseEngine):
                                workbook_type=workbook_type)
 
         # 사이클별 분할 저장 — ExtendScript eval() 1MB 제한 회피 (v1과 동일)
+        # W18 D8/D9: pN_main 슬롯 오버플로우 페이지 복제 + 빈 페이지 정리
+        # (정규 워크북 c17 실증 — c2 어휘 91항목 절단 19건 / 번호 프레임만
+        # 남은 잔여 페이지 35건). 실행기 opt-in 키.
         meta = {"format": plan["format"], "cycle_count": plan["cycle_count"],
-                "unsupported": plan["unsupported"], "cycles": []}
+                "unsupported": plan["unsupported"],
+                "overflow_dup": True,
+                "page_cleanup": {"empty_master": "M"},
+                "cycles": []}
         n_warn = 0
         for idx, cyc in enumerate(plan["cycles"]):
             cyc_path = os.path.abspath(
@@ -322,10 +358,47 @@ class WorkbookSeroV2Engine(BaseEngine):
                         if "[경고]" in l]
         warnings.extend(f"⚠️ {w}" for w in render_warns[:5])
 
+        # (d) 완제품 게이트 (W18 D5 — 세로에도 전 계열 공통 게이트 통합.
+        # W18 c17 실증: 전 스텝 0분할 침묵 유실이 verify ok=True로 통과)
+        gate_report = None
+        try:
+            from engines.workbook_v2.gate import inspect_workbook_finish
+            flow_map = {}
+            for cyc_ref in meta["cycles"]:
+                cyc = json.load(open(cyc_ref["path"], encoding="utf-8"))
+                for slot in cyc["slots"]:
+                    if slot.get("clear"):
+                        continue
+                    fl = flow_map.setdefault(
+                        slot["step"],
+                        {"step": slot["step"], "target": {}, "units": []})
+                    fl["units"].extend(slot.get("units") or [])
+            pseudo_plan = {"flows": list(flow_map.values()),
+                           # D9 사용 시 잔여 페이지 게이트 critical 승격
+                           "page_cleanup": meta.get("page_cleanup")}
+            content_path = os.path.join(job_dir, "content.json")
+            content = (json.load(open(content_path, encoding="utf-8"))
+                       if os.path.exists(content_path) else {})
+            uploads_dir = os.path.join(job_dir, "uploads")
+            gate_report = inspect_workbook_finish(
+                content, pseudo_plan, dump,
+                uploads_dir if os.path.isdir(uploads_dir) else None)
+            for c in gate_report["critical"]:
+                ok = False
+                warnings.append(f"❌ {c}")
+            for w in gate_report["warnings"]:
+                warnings.append(f"⚠️ {w}")
+            log(f"[게이트] critical {len(gate_report['critical'])} / "
+                f"warning {len(gate_report['warnings'])}")
+        except Exception as e:                        # noqa: BLE001
+            ok = False
+            warnings.append(f"❌ 게이트 검사 실패: {e}")
+
         log(f"[검수] 사이클 {len(meta['cycles'])}개 / 누락 {total_missing} / "
             f"오버플로우 {overflow} / PDF {'OK' if pdf_ok else '실패'}")
         return {
             "ok": ok,
+            "gate": gate_report,
             "overflow": overflow,
             "cycles_completed": len(meta["cycles"]),
             "stories": {},

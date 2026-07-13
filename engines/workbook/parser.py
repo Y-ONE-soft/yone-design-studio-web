@@ -594,6 +594,10 @@ _RE_S3_JUNK_RIGHTS = re.compile(
     r'무단\s*도용|무단\s*전재|무단\s*복제|무단\s*전송|저작권|출판권|전송권')
 # 표제로 간주하지 않는 선두 라인 (문항/지시문 시작 신호)
 _RE_S3_JUNK_PROTECT = re.compile(r'^(?:\d+\s*[.)]|서술형|논술형|Q\b|Q\.|※\s*다음)')
+# 표제 블록 내 날짜-only 메모 ("17. 11. 23" — W18 c18 실증: 문항 번호
+# 보호 규칙(^\d+.)이 날짜를 문항 번호로 오인 보호 → 본문 첫 단락 인쇄)
+_RE_S3_JUNK_DATE = re.compile(
+    r'^\d{2,4}\s*\.\s*\d{1,2}\s*\.\s*\d{1,2}\s*\.?$')
 # 꼬리 정답 섹션 표제: "<표제> 정답" (물음표 없음 + 공백/대시 뒤 '정답' 종결)
 _RE_S3_ANSWER_TITLE = re.compile(r'^[^?？]{0,40}[\s\-–—]정답$')
 
@@ -619,6 +623,9 @@ def _strip_step3_leading_junk(paras):
             continue
         if _RE_S3_JUNK_URL.match(text) or _RE_S3_JUNK_RIGHTS.search(text):
             i += 1
+            continue
+        if _RE_S3_JUNK_DATE.match(text):
+            i += 1                 # 표제 블록 내 날짜 메모 (W18 c18)
             continue
         if (len(text) <= 30 and '?' not in text and '？' not in text
                 and not _RE_S3_JUNK_PROTECT.match(text)

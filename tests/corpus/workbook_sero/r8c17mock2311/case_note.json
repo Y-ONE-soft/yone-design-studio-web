@@ -1,0 +1,8 @@
+{
+  "engine": "workbook_sero_v2",
+  "source_job": "round8-gdrive",
+  "note": "W18 신규 선정 — 고1 23년 11월 정규 모의고사 워크북 폴더 (세로 첫 품질 루프). 마커 4종(pN-no/고N #NN/단독 NN./발문 꼬리 [NN])+정답 파트 컷+보충본 병합(D3~D7,D11) 수리 후 출력이 골든. 주의: 폴더 구조(스텝3/정답 등)는 업로드 평면화 재현 — inputs는 파일명만.",
+  "golden_regenerated": {
+    "commit": "W18"
+  }
+}
