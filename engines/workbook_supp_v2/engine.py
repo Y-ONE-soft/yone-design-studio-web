@@ -23,6 +23,18 @@ _STEP_MAP = json.load(open(os.path.join(_DIR, "step_map.json"),
                            encoding="utf-8"))
 _STEP_MAP.pop("_doc", None)
 
+# 학교 전용 내지의 스텝 카탈로그 (W19 c19 실증): 세종 내지(42p)에는 '내용
+# 종합'(step1_b2) 섹션이 실물에 없다 — 마커 텍스트/페이지 58 모두 부재
+# (v1 실물 세종1_워크북리딩파워20강_내지.indd 42p도 동일). 매핑에 없는
+# 스텝은 steps_to_plan이 unsupported로 보고 → 렌더 제외 + verify 지목.
+# (미지원 매핑 없이 렌더하면 '스토리 못 찾음' 경고 후 원고가 침묵 유실돼
+# 단어 게이트 ok=False — c19 1차 조판 실증.)
+_SEJONG_STEP_MAP = {k: v for k, v in _STEP_MAP.items() if k != "step1_b2"}
+
+# 내지 파일명 토큰 → 스텝 카탈로그. _select_template이 고를 원본의
+# basename으로 판정 (경로/사본 이름이 달라도 토큰은 보존된다).
+_TEMPLATE_STEP_MAPS = [("세종", _SEJONG_STEP_MAP)]
+
 # 독립 지문번호 텍스트 프레임을 가진 섹션 (템플릿 스펙
 # tests/fixtures/template_spec_workbookC.json 실물 확인: 빈칸 어휘 p94~ /
 # 어법 O/X p132~ / 빈칸 어법 p150~ 페이지 좌측의 단일 프레임 번호 스토리)
@@ -55,7 +67,24 @@ class WorkbookSuppV2Engine(WorkbookV2Engine):
     # ── W11 훅: 스토리 매핑 + 완제품 후처리 op ──────────────────────────────
 
     def _step_map(self):
-        """supp 전용 step_map — step2_a1/btm pos(top/bottom) 기하 힌트."""
+        """supp 전용 step_map — step2_a1/btm pos(top/bottom) 기하 힌트.
+
+        학교 전용 내지가 선택되는 경우(base prepare_jsx가 _plan_ctx로
+        제공하는 컨텍스트로 _select_template과 동일하게 판정) 해당 내지의
+        스텝 카탈로그를 적용한다 — 세종 내지는 step1_b2 미지원 (W19)."""
+        ctx = getattr(self, "_plan_ctx", None) or {}
+        cfg, school = ctx.get("cfg"), ctx.get("school", "")
+        if cfg and school:
+            try:
+                src = self._select_template(
+                    cfg, ctx.get("workbook_type", "모의고사"), school,
+                    lambda m: None)
+            except FileNotFoundError:
+                src = ""
+            base = os.path.basename(src)
+            for token, smap in _TEMPLATE_STEP_MAPS:
+                if token in base:
+                    return smap
         return _STEP_MAP
 
     def _plan_decorations(self, job_dir, cfg):
@@ -67,7 +96,13 @@ class WorkbookSuppV2Engine(WorkbookV2Engine):
             프레임을 원고 지문번호로 갱신 (v1 미지원 — 완제품 기준 신설).
         """
         from engines.workbook_v2.plan import passage_labels
+        from engines.workbook_v2.engine import _mockexam_divider
+        # divider (W19 D4): v1 supp는 run.jsx 16.7을 그대로 상속해 간지
+        # '고N 모의고사 / YY년 M월'을 갱신한다 — v2도 동일 opt-in.
+        # 세종 내지의 간지('세종고 …')는 간지-마스터 페이지라 updateDivider
+        # 매칭 조건(마스터 [None]) 밖 — 무접촉 (c19 실측 pg=['간지']).
         deco = {"page_cleanup": {"empty_master": "M"}}
+        deco.update(_mockexam_divider(job_dir))
         try:
             content = json.load(open(os.path.join(job_dir, "content.json"),
                                      encoding="utf-8"))

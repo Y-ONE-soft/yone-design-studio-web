@@ -68,6 +68,24 @@
                   종결이면 발문 시그니처 ("영어로 번역하세요 [9강 1번]"이
                   지문 스타일로 인쇄된 c18 실증 + 세로 e79f8af9 기출력의
                   "11. (주관식) … 고르세요. [정답 2개]" 잠복 검출).
+  G21 [원문자중복] ①로 시작하면서 본문에 ①이 다시 등장하는 장문(200자+)
+                  단락 — 선지 자동번호가 inline 번호 지문(도표/불일치류:
+                  선지가 지문 문장에 ①~⑤로 박힘)에 원고에 없는 ①을
+                  prepend해 기형 번호('①The graph … ① In Germany …')가
+                  인쇄된 오염 (W19 c20 실증: ※ 다중 문항 아이템의 재인쇄
+                  지문 + passage_above 우회 경로. 원고에 타이핑된 inline
+                  번호 지문은 ①이 1회뿐이라 통과 — c19/0a5da924 실측).
+                  critical.
+  G22 [간지라벨] 간지의 '고N 모의고사 / YY년 M월' 라벨이 원고(content의
+                  grade/year/month)와 불일치 — v1 run.jsx 16.7이 간지를
+                  갱신하는데 v2 본가는 divider op 미적용이라 [원본] 템플릿
+                  잔재('고2 모의고사 / 26년 3월')가 그대로 납품됐다
+                  (W19 c20 실증 + c04/c05/c12/c14/06f4b2c2/세로 계열 등
+                  소급 검출 — c05는 고1 25년 10월 책에 고2 26년 3월 간지).
+                  '…월 짤지문' 단독 라벨은 v1도 미갱신(실물 잔존)이라 제외.
+                  content에 grade/year/month가 없으면 검사 생략.
+                  divider op 사용 플랜은 critical, 미사용은 warning
+                  (G3/G4 패턴 — 세로 실행기는 divider op 미지원).
 
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
 구버전 덤프에는 경고로만 보고한다 (재덤프 안내). G9는 uploads_dir를 넘긴
@@ -82,6 +100,11 @@ from engines.workbook_v2.plan import (is_header_line, is_a1_header,
                                       passage_labels, _norm_header)
 
 _RE_BARE_NUM = re.compile(r"^\d{1,3}(?:\s*~\s*\d{1,3})?$")
+# G21 — 원문자 선지 번호 (①~⑮: 지문 inline 번호도 같은 집합)
+_CIRCLED_DIGITS = "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮"
+# G22 — 모의고사 간지 라벨 ('고N 모의고사' + 'YY년 M월' 연속 2단락)
+_RE_DIVIDER_L1 = re.compile(r"^고(\d)\s*모의고사$")
+_RE_DIVIDER_L2 = re.compile(r"^(\d{2})년\s*0?(\d{1,2})월$")
 _RE_DIGIT = re.compile(r"\d")
 _RE_ENG_WORD = re.compile(r"[A-Za-z]+")
 
@@ -520,6 +543,59 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         critical.append(
             f"[영단어오분류] 어휘 항목이 아닌 단락 {len(word_bad)}개가 "
             f"영단어 스타일로 인쇄됨: " + " | ".join(word_bad[:3]))
+
+    # ── G21 원문자 ① 중복 오염 (W19 c20) ────────────────────────────────
+    # ※ 다중 문항 아이템은 발문마다 지문을 재인쇄한다. 마지막 5지선다
+    # 발문(도표/불일치류 — 선지가 지문 문장 inline ①~⑤) 뒤 재인쇄 지문에
+    # 선지 자동번호가 원고에 없는 ①을 prepend → '①The graph … ① In
+    # Germany …'처럼 한 단락에 ①이 2회 등장하는 기형 번호가 인쇄된다.
+    # 원고에 타이핑된 inline 번호 지문('①Families … ②Gary …' c19 /
+    # '① Remember …' 0a5da924)은 ①이 1회뿐이라 통과 (v1 관행 보존).
+    choice_polluted = []
+    for t, _s in _dump_paras(dump):
+        tt = _clean(t)
+        if len(tt) < 200 or not tt or tt[0] != "①":
+            continue
+        if "①" in tt[1:]:
+            choice_polluted.append(tt[:60])
+    stats["choice_polluted_passages"] = len(choice_polluted)
+    if choice_polluted:
+        critical.append(
+            f"[원문자중복] ①로 시작하면서 본문에 ①이 다시 등장하는 장문 "
+            f"단락 {len(choice_polluted)}개 — 선지 자동번호가 inline 번호 "
+            f"지문에 ①을 중복 부여한 오염: " + " | ".join(choice_polluted[:2]))
+
+    # ── G22 간지 라벨 원고 불일치 (W19 c20 + 본가 소급) ──────────────────
+    # v1 16.7은 간지의 '고N 모의고사 / YY년 M월'을 원고 값으로 갱신한다.
+    # content에 grade/year/month가 전부 있을 때만 검사 (교과서 간지는
+    # subject/publisher 형식이라 L1 패턴 자체가 안 잡힘).
+    exp_g, exp_y, exp_m = (content or {}).get("grade"), \
+        (content or {}).get("year"), (content or {}).get("month")
+    divider_stale = []
+    if exp_g and exp_y and exp_m:
+        for story in dump.get("stories", []):
+            ps = story.get("paragraphs", [])
+            for i in range(len(ps) - 1):
+                m1 = _RE_DIVIDER_L1.match(_clean(ps[i].get("t", "")))
+                m2 = _RE_DIVIDER_L2.match(_clean(ps[i + 1].get("t", "")))
+                if not (m1 and m2):
+                    continue
+                if (int(m1.group(1)) != int(exp_g)
+                        or int(m2.group(1)) != int(exp_y) % 100
+                        or int(m2.group(2)) != int(exp_m)):
+                    divider_stale.append(
+                        f"{m1.group(0)}/{m2.group(0)}")
+    stats["divider_stale"] = len(divider_stale)
+    if divider_stale:
+        msg = (f"[간지라벨] 간지 라벨 {len(divider_stale)}개가 원고"
+               f"(고{exp_g} {exp_y}년 {exp_m}월)와 불일치 — 템플릿 잔재: "
+               + " | ".join(sorted(set(divider_stale))[:3]))
+        # divider op 사용 플랜은 갱신이 계약 — critical. 미사용(과거 출력
+        # /세로 실행기)은 warning 지목 (G3/G4 패턴).
+        if plan.get("divider"):
+            critical.append(msg)
+        else:
+            warnings.append(msg)
 
     # ── G15 <조건> 블록 항목 스타일 (W16 c10) ────────────────────────────
     # <조건> 마커부터 답란(밑줄런/정답/→/우리말) 이전까지 스캔. 강신호

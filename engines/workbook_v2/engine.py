@@ -75,6 +75,24 @@ def _load_v1_config():
                                 "manuscript_base", "completed_base"])
 
 
+def _mockexam_divider(job_dir):
+    """모의고사 간지 divider op (W19 D4 — v1 run.jsx 16.7 파리티).
+
+    content.json의 grade/year/month로 '고N 모의고사 / YY년 M월' 라인을
+    만든다 (v1과 동일 포맷 — 월 zero-pad 없음). 값이 없으면 미적용."""
+    try:
+        content = json.load(open(os.path.join(job_dir, "content.json"),
+                                 encoding="utf-8"))
+        g, y, m = (content.get("grade"), content.get("year"),
+                   content.get("month"))
+    except (OSError, ValueError):
+        return {}
+    if not (g and y and m):
+        return {}
+    return {"divider": {"line1": f"고{g} 모의고사",
+                        "line2": f"{y}년 {m}월"}}
+
+
 class WorkbookV2Engine(BaseEngine):
 
     # W13 c05 실측(고1 25-10 전체 업로드 — 284p 전량 콘텐츠): PDF export가
@@ -230,13 +248,19 @@ class WorkbookV2Engine(BaseEngine):
     def _plan_decorations(self, job_dir, cfg):
         """플랜 최상위에 병합할 선택 키 (실행기 opt-in op).
 
-        본가(모의고사)는 page_cleanup만 — c05(고1 25-10) 실기에서 내용
+        본가(모의고사)는 page_cleanup — c05(고1 25-10) 실기에서 내용
         없는 스텝 페이지 22개 잔존 (게이트 G4 warning 실증, W13).
         passage_numbers는 미적용: 모의고사 내지의 번호 프레임(20~45)이
         원고 문항번호와 정합이라 갱신 이득이 없다 (G3 clean 실측).
-        파생 엔진(supp/교과서/EBS)은 이 훅을 전부 오버라이드하고
-        수능특강/세로는 자체 prepare라 미호출 — 이 변경은 본가 전용."""
-        return {"page_cleanup": {"empty_master": "M"}}
+        divider(W19 D4): v1 run.jsx 16.7은 간지 '고N 모의고사 / YY년 M월'
+        을 원고 값으로 갱신하는데 v2 본가는 미적용이라 [원본] 템플릿
+        잔재('고2 모의고사 / 26년 3월')가 그대로 납품됐다 (c20 실증 +
+        c04/c05 소급 검출 — 게이트 G22). 파생 엔진(supp/교과서/EBS)은
+        이 훅을 전부 오버라이드하고 수능특강/세로는 자체 prepare라
+        미호출 — 이 변경은 본가 전용."""
+        deco = {"page_cleanup": {"empty_master": "M"}}
+        deco.update(_mockexam_divider(job_dir))
+        return deco
 
     # ── 2단계: prepare_jsx — 플랜 빌드 + 템플릿 복사 + JSX 생성 ─────────────
 
@@ -255,6 +279,12 @@ class WorkbookV2Engine(BaseEngine):
 
         content = json.load(open(json_path, encoding="utf-8"))
         ensure_step3_kinds(content.get("steps", {}).get("step3"), log)
+        # 훅 컨텍스트 (W19): _step_map이 선택될 내지(학교 전용 템플릿)에 따라
+        # 매핑을 달리할 수 있도록 스냅샷 제공 (예: supp 세종 내지는 '내용
+        # 종합' 섹션이 없어 step1_b2를 미지원 보고해야 한다). 기본 구현은
+        # 미사용 — 기존 엔진 동작 무변경.
+        self._plan_ctx = {"cfg": cfg, "school": school,
+                          "workbook_type": workbook_type, "job_dir": job_dir}
         plan = steps_to_plan(content.get("steps", {}), exclude=exclude,
                              workbook_type=workbook_type,
                              step_map=self._step_map())

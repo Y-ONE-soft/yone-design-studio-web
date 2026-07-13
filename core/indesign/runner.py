@@ -143,9 +143,10 @@ def run_jsx(jsx_path: str, log, poll_log_path: str = None, timeout: int = 1200,
     """JSX 실행 + 일시적 실패 자동 재시도 래퍼.
 
     1차 시도는 기존 동작과 완전히 동일. 시작/전달 단계의 '일시적' 실패
-    (콜드스타트/-609/전달 실패)에 한해 InDesign을 깨끗이 재기동 후 최대 1회
-    자동 재시도한다. 애매한 hang/timeout과 JSX [오류]는 재시도하지 않고
-    그대로 실패시킨다.
+    (콜드스타트/-609/전달 실패)에 한해 최대 1회 '제출 재시도'한다 —
+    InDesign 프로세스는 절대 죽이지 않는다 (킬 루프 금지: 2026-07-04 W4
+    사건에서 SIGKILL 누적이 비가시 모달 30486으로 스크립팅을 차단).
+    애매한 hang/timeout과 JSX [오류]는 재시도하지 않고 그대로 실패시킨다.
 
     환경변수 YONE_ID_RETRY=0 이면 재시도를 끄고 기존 동작으로 롤백.
 
@@ -157,16 +158,15 @@ def run_jsx(jsx_path: str, log, poll_log_path: str = None, timeout: int = 1200,
     last_exc = None
     for attempt in range(1, max_attempts + 1):
         if attempt > 1:
-            # 재시도 전 정리: 이전 시도의 stale 로그 제거(오완료 오탐 방지)
-            # + InDesign 강제 종료(다음 _run_jsx_once가 깨끗이 재기동).
+            # 재시도 전 정리: 이전 시도의 stale 로그 제거(오완료 오탐 방지).
+            # InDesign 프로세스는 건드리지 않고 제출만 다시 한다.
             if poll_log_path:
                 try:
                     os.remove(poll_log_path)
                 except OSError:
                     pass
-            _kill_indesign(log)
             time.sleep(5)
-            log(f"[InDesign] 재시도 {attempt}/{max_attempts} 시작 (일시적 실패 복구)")
+            log(f"[InDesign] 재시도 {attempt}/{max_attempts} 시작 (일시적 실패 복구 — 제출 재시도, 프로세스 종료 없음)")
         try:
             _run_jsx_once(jsx_path, log, poll_log_path=poll_log_path,
                           timeout=timeout, cancel_check=cancel_check,
@@ -207,9 +207,10 @@ def _run_jsx_once(jsx_path: str, log, poll_log_path: str = None, timeout: int = 
     try:
         # 이전 실행의 stale 로그 삭제 (JSX 제출 전, 락 보유 중이라 안전).
         # 같은 job_dir 재실행 시 남은 completion_marker가 조기 완료 오탐 →
-        # 렌더 중 InDesign에 다음 osascript 제출 충돌 → 재시도 pkill 사고로
-        # 이어진다 (2026-07-04 seseospecial_v2 E2E 실증). JSX가 로그를 새로
-        # 생성하므로 전달 감지·완료 대기·verify 모두 삭제에 영향 없음.
+        # 렌더 중 InDesign에 다음 osascript 제출이 충돌한다 (2026-07-04
+        # seseospecial_v2 E2E 실증 — 당시엔 재시도 pkill 사고로까지 번짐).
+        # JSX가 로그를 새로 생성하므로 전달 감지·완료 대기·verify 모두
+        # 삭제에 영향 없음.
         if poll_log_path:
             try:
                 os.remove(poll_log_path)
@@ -384,22 +385,28 @@ def _wait_for_completion(log_path: str, log, timeout: int, cancel_check=None,
                 log("[InDesign] JSX 에러: " + err_msg)
                 raise RuntimeError(err_msg)
 
-        # 행(hang) 감지: 로그 갱신이 STALL_LIMIT 이상 없으면 InDesign 프로세스 강제 종료 후 재시도
+        # 스톨 감지: 로그 갱신이 STALL_LIMIT 이상 없으면 작업을 '보류'로
+        # 실패 처리하고 사람 개입을 유도한다. InDesign은 절대 죽이지 않는다
+        # — 비결정 스톨(W15 c04: 2700초 스톨 후 재제출은 1분 내 통과)을
+        # SIGKILL하면 복구 데이터가 비가시 모달 30486으로 스크립팅을 영구
+        # 차단한다 (2026-07-04 W4 사건, 킬 루프 금지).
         if stall_seconds >= STALL_LIMIT and last_mtime > 0:
-            log(f"[InDesign] 로그 갱신 없음 ({stall_seconds}초) — InDesign 행(hang) 감지")
-            _kill_indesign(log)
-            raise RuntimeError(f"InDesign 응답 없음 (로그 {stall_seconds}초간 미갱신) — 자동 종료됨. 재시도해주세요.")
+            log(f"[InDesign] 로그 갱신 없음 ({stall_seconds}초) — 스톨 감지, 작업 보류 (InDesign은 종료하지 않음)")
+            from core import notify
+            notify.send(
+                "InDesign 스톨 감지 ⏸",
+                f"로그 {stall_seconds}초간 미갱신 — 작업 보류. InDesign 상태를 확인 후 재제출하세요.",
+            )
+            raise RuntimeError(
+                f"InDesign 스톨 (로그 {stall_seconds}초간 미갱신) — 작업 보류. "
+                "InDesign은 종료하지 않았습니다. 상태 확인 후 재제출해주세요."
+            )
 
     raise RuntimeError(f"InDesign 응답 없음 ({timeout}초 대기) — InDesign이 실행 중인지 확인하세요")
 
 
-def _kill_indesign(log):
-    """InDesign 프로세스 강제 종료."""
-    try:
-        result = subprocess.run(
-            ["pkill", "-9", "-f", "Adobe InDesign"],
-            capture_output=True, text=True, timeout=10
-        )
-        log("[InDesign] 프로세스 강제 종료 완료")
-    except Exception as e:
-        log(f"[InDesign] 프로세스 종료 실패: {e}")
+# _kill_indesign은 제거됨 (2026-07-13). InDesign을 SIGKILL하는 자동 경로는
+# 어떤 이유로든 금지 — 복구 데이터가 비가시 모달 30486을 만들어 이후 모든
+# 스크립팅(app.open, userInteractionLevel)을 차단하며 사람이 GUI에서 풀어야
+# 한다 (2026-07-04 W4 사건). 스톨/실패 시에는 알림 + 실패 반환으로 사람
+# 개입을 유도할 것.

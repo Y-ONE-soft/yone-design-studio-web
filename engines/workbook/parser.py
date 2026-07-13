@@ -880,6 +880,13 @@ def _add_step3_choice_numbers(paras):
                 saw_passage = True
                 j += 1
                 continue
+            # 지문 inline 번호 통단락(도표/불일치류 — 선지가 지문 문장에
+            # ①~⑤로 박힘)에는 prepend 금지: ①을 중복 부여해 기형 번호가
+            # 된다 (W19 c20 실증 — ※ 다중 문항 아이템은 passage_above가
+            # True라 위 지문 skip을 우회해, 발문 뒤 재인쇄 지문이 선지
+            # 후보로 잡혔음). 정상 선지는 짧고 본문에 원문자가 없다.
+            if len(t_j) > 120 and any(ch in _CIRCLED_DIGITS for ch in t_j):
+                break
             mark = _CIRCLED_DIGITS[added]
             paras[j]['text'] = mark + paras[j]['text']
             runs = paras[j].get('runs')

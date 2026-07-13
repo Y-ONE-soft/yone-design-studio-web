@@ -386,6 +386,51 @@ function isBlankFrameContent(tf) {
     return c.replace(/[\s\r\n￼]+/g, "").length === 0;
 }
 
+// 스토리 꼬리의 '배치 밖(overset) 공백' 제거 (W19 c19 실증): 플랜 꼬리의
+// 빈 단락(\r)이 마지막 프레임을 정확히 채운 스토리에서 overset으로 남거나,
+// cleanupPages의 스레드 절단(1b)이 공백 전용 꼬리 프레임을 끊으면서
+// overset('\r')을 만든다 — 확장이 공백 전용 페이지를 만들고 정리가 그
+// 페이지를 지우며 재발하는 순환. 배치된(보이는) 텍스트/프레임 안 여백은
+// 보존하고 overset 구간의 공백만 제거한다 (본문 무손실). 반환: 제거 문자 수.
+function trimWsOverset(story) {
+    var conts = story.textContainers;
+    if (!conts || conts.length === 0) { return 0; }
+    var ov = false;
+    try { ov = conts[conts.length - 1].overflows; } catch (e) {}
+    if (!ov) { return 0; }
+    var total = story.characters.length;
+    // 스토리 끝에서 마지막 실질 문자 위치 (공백/개행/앵커만 건너뜀 — 상한
+    // 500자: 그 이상의 꼬리 공백은 비정상 플랜, 손대지 않음)
+    var lastReal = total - 1;
+    var scanned = 0;
+    while (lastReal >= 0 && scanned < 500) {
+        var ch = "";
+        try { ch = String(story.characters[lastReal].contents); }
+        catch (e) { return 0; }
+        if (ch.replace(/[\s\r\n﻿￼]+/g, "").length > 0) { break; }
+        lastReal--;
+        scanned++;
+    }
+    if (lastReal < 0 || lastReal >= total - 1) { return 0; }
+    // 배치 마지막 문자 위치 — 이 뒤(overset)만 제거 대상
+    var placedEnd = -1;
+    for (var pe = 0; pe < conts.length; pe++) {
+        try {
+            var pcs = conts[pe].characters;
+            if (pcs.length > 0) {
+                var pl = pcs[-1].index;
+                if (pl > placedEnd) { placedEnd = pl; }
+            }
+        } catch (e) {}
+    }
+    var from = (placedEnd + 1 > lastReal + 1) ? placedEnd + 1 : lastReal + 1;
+    if (from > total - 1) { return 0; }
+    try {
+        story.characters.itemByRange(from, total - 1).remove();
+        return total - from;
+    } catch (e) { return 0; }
+}
+
 function cleanupPages(doc, flowStories, op) {
     // 1) 보호 경계 계산
     var cleanStart = -1;      // 첫 콘텐츠 섹션 페이지 offset
@@ -440,6 +485,13 @@ function cleanupPages(doc, flowStories, op) {
                     conts[lastWithText].nextTextFrame = null;
                 }
                 unthreaded++;
+                // 절단이 공백 전용 꼬리(빈 단락)를 overset으로 만들면 즉시
+                // 정리 — 본문 무손실, overset '\r' 잔존 방지 (W19 c19).
+                var cutTrim = trimWsOverset(rec2.story);
+                if (cutTrim > 0) {
+                    wlog("페이지 정리: " + st2 + " 꼬리 공백 overset "
+                         + cutTrim + "자 정리");
+                }
             }
         } catch (e) {}
     }
@@ -544,8 +596,13 @@ function cleanupPages(doc, flowStories, op) {
 }
 
 // ── 간지 텍스트 업데이트 (v1 run.jsx 16.7 이식 — plan.divider가 있을 때만) ──
-// 간지 페이지 = 마스터 [None](또는 없음) + 오른쪽 + 텍스트프레임 1개 +
-// 첫 단락에 한글. 1단락=line1, 2단락=line2.
+// 간지 페이지 = 마스터 [None](또는 없음) + 텍스트프레임 1개 + 첫 단락에
+// 한글. 1단락=line1, 2단락=line2.
+// v1과 달리 오른쪽(RIGHT_HAND) 조건을 걸지 않는다 (W19 결함 D5): 앞선
+// 페이지 삭제(page_cleanup)로 간지가 왼쪽 페이지로 밀릴 수 있고(c05 실측
+// p122 잔재 — v1 16.7도 같은 조건이라 실물 동일), 이 계열 내지에서 마스터
+// [None]+프레임 1개+한글 첫 단락 조합은 간지뿐이라 좌우 무관하게 안전
+// (c04/c05/c20 덤프 실측 — 매칭 스토리 전부 간지 라벨).
 function updateDividerPages(doc, line1, line2) {
     var n = 0;
     for (var dpi = 0; dpi < doc.pages.length; dpi++) {
@@ -553,8 +610,6 @@ function updateDividerPages(doc, line1, line2) {
         var masterName = "";
         try { masterName = dpg.appliedMaster ? dpg.appliedMaster.name : ""; } catch (e) {}
         if (masterName !== "" && masterName !== "[None]") { continue; }
-        // Enumerator 엄격 비교 신뢰 불가 (W7 교훈) — == 비교 사용
-        if (!(dpg.side == PageSideOptions.RIGHT_HAND)) { continue; }
         if (dpg.textFrames.length !== 1) { continue; }
         var divTf = dpg.textFrames[0];
         var divParas = divTf.paragraphs;
@@ -753,6 +808,13 @@ try {
         // safety 상한 60 (W12): 123문제 변형문제 문제모음이 상한 10을 넘겨
         // 초과분이 overset(미인쇄)으로 잘렸다. 상한은 무한 루프 가드일 뿐
         // 실제 반복 수는 오버플로우 해소 시점이 결정 — 기존 케이스 무영향.
+        // 꼬리 공백 전용 overset은 페이지를 늘리지 않고 정리 (W19 c19):
+        // 공백 전용 확장 페이지는 page_cleanup 스레드 절단에서 다시 잘려
+        // overset('\r')이 재발한다. 실질 오버플로우는 아래 확장이 그대로.
+        var wsTrim = trimWsOverset(story);
+        if (wsTrim > 0) {
+            wlog(flow.step + ": 꼬리 공백 overset " + wsTrim + "자 정리");
+        }
         var conts = story.textContainers;
         var lastF = conts[conts.length - 1];
         var safety = 0;
