@@ -213,3 +213,66 @@ def test_pua_f003b_arrow_rule_covers_plane15():
 def test_c19_pre_fix_evidence_fixture_exists():
     fx = _fixture("c19_sejong_b2_pre_fix.json")
     assert any("step1_b2" in w for w in fx["warnings"])
+
+
+# ── D4: G22 간지 라벨 + 본가/supp divider op ────────────────────────────────
+
+_CONTENT_META = {"grade": 2, "year": 25, "month": 3}
+
+
+def _divider_dump(l2="26년 3월"):
+    return _dump([{"t": "고2 모의고사", "s": "[기본 단락]"},
+                  {"t": l2, "s": "[기본 단락]"}])
+
+
+def test_gate_g22_detects_stale_divider_critical_with_op():
+    r = inspect_workbook_finish(_CONTENT_META,
+                                {"divider": {"line1": "x", "line2": "y"}},
+                                _divider_dump())
+    assert any("간지라벨" in c for c in r["critical"])
+
+
+def test_gate_g22_warns_without_divider_op():
+    # 과거 출력/세로 실행기(divider op 미지원) — warning 지목 (G3/G4 패턴)
+    r = inspect_workbook_finish(_CONTENT_META, {}, _divider_dump())
+    assert not any("간지라벨" in c for c in r["critical"])
+    assert any("간지라벨" in w for w in r["warnings"])
+
+
+def test_gate_g22_passes_matching_and_skips_variants():
+    # 일치 라벨 통과
+    r = inspect_workbook_finish(_CONTENT_META, {}, _divider_dump("25년 3월"))
+    assert r["stats"]["divider_stale"] == 0
+    # '짤지문' 단독 라벨은 v1도 미갱신 — 제외
+    r = inspect_workbook_finish(_CONTENT_META, {},
+                                _divider_dump("26년 3월 짤지문"))
+    assert r["stats"]["divider_stale"] == 0
+    # content 메타 없으면 검사 생략
+    r = inspect_workbook_finish({}, {}, _divider_dump())
+    assert r["stats"]["divider_stale"] == 0
+
+
+def test_mockexam_divider_decoration(tmp_path):
+    from engines.workbook_v2.engine import _mockexam_divider
+    job = tmp_path / "job"
+    job.mkdir()
+    (job / "content.json").write_text(json.dumps(_CONTENT_META),
+                                      encoding="utf-8")
+    assert _mockexam_divider(str(job)) == {
+        "divider": {"line1": "고2 모의고사", "line2": "25년 3월"}}
+    # content 없음 → 미적용
+    assert _mockexam_divider(str(tmp_path / "none")) == {}
+
+
+def test_base_and_supp_decorations_include_divider(tmp_path):
+    from engines.workbook_v2.engine import WorkbookV2Engine
+    from engines.workbook_supp_v2.engine import WorkbookSuppV2Engine
+    job = tmp_path / "job"
+    job.mkdir()
+    (job / "content.json").write_text(
+        json.dumps({"grade": 1, "year": 25, "month": 10, "steps": {}}),
+        encoding="utf-8")
+    for eng in (WorkbookV2Engine(), WorkbookSuppV2Engine()):
+        deco = eng._plan_decorations(str(job), {})
+        assert deco["divider"] == {"line1": "고1 모의고사",
+                                   "line2": "25년 10월"}, type(eng)

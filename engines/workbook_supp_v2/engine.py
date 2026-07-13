@@ -96,7 +96,13 @@ class WorkbookSuppV2Engine(WorkbookV2Engine):
             프레임을 원고 지문번호로 갱신 (v1 미지원 — 완제품 기준 신설).
         """
         from engines.workbook_v2.plan import passage_labels
+        from engines.workbook_v2.engine import _mockexam_divider
+        # divider (W19 D4): v1 supp는 run.jsx 16.7을 그대로 상속해 간지
+        # '고N 모의고사 / YY년 M월'을 갱신한다 — v2도 동일 opt-in.
+        # 세종 내지의 간지('세종고 …')는 간지-마스터 페이지라 updateDivider
+        # 매칭 조건(마스터 [None]) 밖 — 무접촉 (c19 실측 pg=['간지']).
         deco = {"page_cleanup": {"empty_master": "M"}}
+        deco.update(_mockexam_divider(job_dir))
         try:
             content = json.load(open(os.path.join(job_dir, "content.json"),
                                      encoding="utf-8"))

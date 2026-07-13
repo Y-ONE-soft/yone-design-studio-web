@@ -76,6 +76,16 @@
                   지문 + passage_above 우회 경로. 원고에 타이핑된 inline
                   번호 지문은 ①이 1회뿐이라 통과 — c19/0a5da924 실측).
                   critical.
+  G22 [간지라벨] 간지의 '고N 모의고사 / YY년 M월' 라벨이 원고(content의
+                  grade/year/month)와 불일치 — v1 run.jsx 16.7이 간지를
+                  갱신하는데 v2 본가는 divider op 미적용이라 [원본] 템플릿
+                  잔재('고2 모의고사 / 26년 3월')가 그대로 납품됐다
+                  (W19 c20 실증 + c04/c05/c12/c14/06f4b2c2/세로 계열 등
+                  소급 검출 — c05는 고1 25년 10월 책에 고2 26년 3월 간지).
+                  '…월 짤지문' 단독 라벨은 v1도 미갱신(실물 잔존)이라 제외.
+                  content에 grade/year/month가 없으면 검사 생략.
+                  divider op 사용 플랜은 critical, 미사용은 warning
+                  (G3/G4 패턴 — 세로 실행기는 divider op 미지원).
 
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
 구버전 덤프에는 경고로만 보고한다 (재덤프 안내). G9는 uploads_dir를 넘긴
@@ -92,6 +102,9 @@ from engines.workbook_v2.plan import (is_header_line, is_a1_header,
 _RE_BARE_NUM = re.compile(r"^\d{1,3}(?:\s*~\s*\d{1,3})?$")
 # G21 — 원문자 선지 번호 (①~⑮: 지문 inline 번호도 같은 집합)
 _CIRCLED_DIGITS = "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮"
+# G22 — 모의고사 간지 라벨 ('고N 모의고사' + 'YY년 M월' 연속 2단락)
+_RE_DIVIDER_L1 = re.compile(r"^고(\d)\s*모의고사$")
+_RE_DIVIDER_L2 = re.compile(r"^(\d{2})년\s*0?(\d{1,2})월$")
 _RE_DIGIT = re.compile(r"\d")
 _RE_ENG_WORD = re.compile(r"[A-Za-z]+")
 
@@ -551,6 +564,38 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
             f"[원문자중복] ①로 시작하면서 본문에 ①이 다시 등장하는 장문 "
             f"단락 {len(choice_polluted)}개 — 선지 자동번호가 inline 번호 "
             f"지문에 ①을 중복 부여한 오염: " + " | ".join(choice_polluted[:2]))
+
+    # ── G22 간지 라벨 원고 불일치 (W19 c20 + 본가 소급) ──────────────────
+    # v1 16.7은 간지의 '고N 모의고사 / YY년 M월'을 원고 값으로 갱신한다.
+    # content에 grade/year/month가 전부 있을 때만 검사 (교과서 간지는
+    # subject/publisher 형식이라 L1 패턴 자체가 안 잡힘).
+    exp_g, exp_y, exp_m = (content or {}).get("grade"), \
+        (content or {}).get("year"), (content or {}).get("month")
+    divider_stale = []
+    if exp_g and exp_y and exp_m:
+        for story in dump.get("stories", []):
+            ps = story.get("paragraphs", [])
+            for i in range(len(ps) - 1):
+                m1 = _RE_DIVIDER_L1.match(_clean(ps[i].get("t", "")))
+                m2 = _RE_DIVIDER_L2.match(_clean(ps[i + 1].get("t", "")))
+                if not (m1 and m2):
+                    continue
+                if (int(m1.group(1)) != int(exp_g)
+                        or int(m2.group(1)) != int(exp_y) % 100
+                        or int(m2.group(2)) != int(exp_m)):
+                    divider_stale.append(
+                        f"{m1.group(0)}/{m2.group(0)}")
+    stats["divider_stale"] = len(divider_stale)
+    if divider_stale:
+        msg = (f"[간지라벨] 간지 라벨 {len(divider_stale)}개가 원고"
+               f"(고{exp_g} {exp_y}년 {exp_m}월)와 불일치 — 템플릿 잔재: "
+               + " | ".join(sorted(set(divider_stale))[:3]))
+        # divider op 사용 플랜은 갱신이 계약 — critical. 미사용(과거 출력
+        # /세로 실행기)은 warning 지목 (G3/G4 패턴).
+        if plan.get("divider"):
+            critical.append(msg)
+        else:
+            warnings.append(msg)
 
     # ── G15 <조건> 블록 항목 스타일 (W16 c10) ────────────────────────────
     # <조건> 마커부터 답란(밑줄런/정답/→/우리말) 이전까지 스캔. 강신호
