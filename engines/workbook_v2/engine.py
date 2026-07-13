@@ -255,6 +255,12 @@ class WorkbookV2Engine(BaseEngine):
 
         content = json.load(open(json_path, encoding="utf-8"))
         ensure_step3_kinds(content.get("steps", {}).get("step3"), log)
+        # 훅 컨텍스트 (W19): _step_map이 선택될 내지(학교 전용 템플릿)에 따라
+        # 매핑을 달리할 수 있도록 스냅샷 제공 (예: supp 세종 내지는 '내용
+        # 종합' 섹션이 없어 step1_b2를 미지원 보고해야 한다). 기본 구현은
+        # 미사용 — 기존 엔진 동작 무변경.
+        self._plan_ctx = {"cfg": cfg, "school": school,
+                          "workbook_type": workbook_type, "job_dir": job_dir}
         plan = steps_to_plan(content.get("steps", {}), exclude=exclude,
                              workbook_type=workbook_type,
                              step_map=self._step_map())
