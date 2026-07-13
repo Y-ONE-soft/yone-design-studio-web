@@ -219,6 +219,11 @@ class WorkbookSeroV2Engine(BaseEngine):
                 "overflow_dup": True,
                 "page_cleanup": {"empty_master": "M"},
                 "cycles": []}
+        # W20 — 간지 라벨 갱신 (G22 소급 c17: 세로 실행기 divider op 이식.
+        # 본가/supp W19 D4와 동일 의미론 — content grade/year/month 기반,
+        # '짤지문' 라벨은 실행기 매칭에서 비매치 = v1 관행 보존)
+        from engines.workbook_v2.engine import _mockexam_divider
+        meta.update(_mockexam_divider(job_dir))
         n_warn = 0
         for idx, cyc in enumerate(plan["cycles"]):
             cyc_path = os.path.abspath(
@@ -375,7 +380,9 @@ class WorkbookSeroV2Engine(BaseEngine):
                     fl["units"].extend(slot.get("units") or [])
             pseudo_plan = {"flows": list(flow_map.values()),
                            # D9 사용 시 잔여 페이지 게이트 critical 승격
-                           "page_cleanup": meta.get("page_cleanup")}
+                           "page_cleanup": meta.get("page_cleanup"),
+                           # W20 — divider op 사용 시 G22 critical 승격
+                           "divider": meta.get("divider")}
             content_path = os.path.join(job_dir, "content.json")
             content = (json.load(open(content_path, encoding="utf-8"))
                        if os.path.exists(content_path) else {})

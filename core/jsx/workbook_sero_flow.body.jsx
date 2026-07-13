@@ -689,6 +689,45 @@ try {
              + cleanupPageIds.length + ")");
     }
 
+    // ── 간지 라벨 갱신 (W20 — plan.divider가 있을 때만; G22 소급 c17) ────
+    // 가로 실행기 updateDividerPages(마스터 [None]+프레임 1개 휴리스틱)와
+    // 달리 세로 내지의 간지는 '간지' 섹션의 2단락 스토리로 존재 — 라벨
+    // 내용 정확 매칭('고N 모의고사' + 'YY년 M월' 연속 2단락)으로만 갱신
+    // ('…월 짤지문' 라벨은 비매치 = v1 관행 보존, G22 제외와 동일).
+    if (plan.divider && plan.divider.line1) {
+        app.doScript(function () {
+            var dn = 0;
+            var reL1 = /^고\d\s*모의고사\s*$/;
+            var reL2 = /^\d{1,2}년\s*\d{1,2}월\s*$/;
+            var allStories = doc.stories.everyItem().getElements();
+            for (var dvi = 0; dvi < allStories.length; dvi++) {
+                var dvParas;
+                try {
+                    dvParas = allStories[dvi].paragraphs
+                        .everyItem().getElements();
+                } catch (eDv0) { continue; }
+                if (dvParas.length < 2 || dvParas.length > 3) { continue; }
+                var dvT1 = String(dvParas[0].contents || "")
+                    .replace(/[\r\n]+$/, "");
+                var dvT2 = String(dvParas[1].contents || "")
+                    .replace(/[\r\n]+$/, "");
+                if (!reL1.test(dvT1) || !reL2.test(dvT2)) { continue; }
+                try {
+                    var dvTail2 = (String(dvParas[1].contents || "")
+                        .slice(-1) === "\r") ? "\r" : "";
+                    dvParas[0].contents = plan.divider.line1 + "\r";
+                    dvParas[1].contents = (plan.divider.line2 || "")
+                        + dvTail2;
+                    dn++;
+                } catch (eDv) {}
+            }
+            wlog("간지 텍스트 업데이트: " + dn + "개 ("
+                 + plan.divider.line1 + " / "
+                 + (plan.divider.line2 || "") + ")");
+        }, ScriptLanguage.JAVASCRIPT, undefined,
+           UndoModes.ENTIRE_SCRIPT, "wb_sero_v2 divider");
+    }
+
     relockIcons();
 
     var ovf = 0;

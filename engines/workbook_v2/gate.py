@@ -25,6 +25,13 @@
                   폰트에 글리프가 없어 tofu(빈 네모)로 찍힌다 (W14 c05/c06
                   실증: 요약 화살표 ⇩가 /\U000f0036으로 인코딩).
                   PUA 단독 단락은 critical, 본문 내 혼입은 warning.
+  G10 확장 (W20): 인쇄 매핑 테이블(plan.PUA_PRINT_TABLE — 겹따옴표
+                  U+F0852/F0853, 요약 화살표 U+F0036/F003B/F0EA) 등재
+                  코드가 본문 혼입으로 잔존하면 critical — 현행 플랜은
+                  이 코드들을 정자로 치환하므로 잔존 = 매핑 미적용
+                  출력(구출력 소급 검출: c06 W14 최종 출력의 U+F0852/
+                  F0853 혼입 2건). 미등재 코드 혼입은 warning 유지
+                  (근거 없는 치환 금지 — U+F09F/F000/F081~F085 잠복).
   G11 [마커오염/마커스타일] 변형문제 출처 마커("[NHN_..._변형]")에 원문자
                   접두가 붙어 인쇄(파서 선지 오염) 또는 같은 마커가 복수
                   스타일로 인쇄(kind 오분류 — 발문/선지 스타일로 찍힘).
@@ -85,7 +92,8 @@
                   '…월 짤지문' 단독 라벨은 v1도 미갱신(실물 잔존)이라 제외.
                   content에 grade/year/month가 없으면 검사 생략.
                   divider op 사용 플랜은 critical, 미사용은 warning
-                  (G3/G4 패턴 — 세로 실행기는 divider op 미지원).
+                  (G3/G4 패턴). 세로 실행기도 W20에서 divider op 지원
+                  (라벨 내용 정확 매칭 방식 — c17 소급 해소).
 
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
 구버전 덤프에는 경고로만 보고한다 (재덤프 안내). G9는 uploads_dir를 넘긴
@@ -96,8 +104,9 @@ import re
 import unicodedata
 
 from core.inspect import find_leaked_answers
-from engines.workbook_v2.plan import (is_header_line, is_a1_header,
-                                      passage_labels, _norm_header)
+from engines.workbook_v2.plan import (PUA_PRINT_TABLE, is_header_line,
+                                      is_a1_header, passage_labels,
+                                      _norm_header)
 
 _RE_BARE_NUM = re.compile(r"^\d{1,3}(?:\s*~\s*\d{1,3})?$")
 # G21 — 원문자 선지 번호 (①~⑮: 지문 inline 번호도 같은 집합)
@@ -374,9 +383,10 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         critical.append(f"[정답잔존] {len(ans)}개 단락: "
                         + " | ".join(ans[:5]))
 
-    # ── G10 hwp 사용자 영역(PUA) 문자 잔존 (W14) ─────────────────────────
+    # ── G10 hwp 사용자 영역(PUA) 문자 잔존 (W14, W20 확장) ───────────────
     pua_solo = []
     pua_inline = []
+    pua_mapped = []
     for t, _s in _dump_paras(dump):
         tt = _clean(t)
         if not tt or not any(_is_pua(ch) for ch in tt):
@@ -384,15 +394,25 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         codes = sorted({f"U+{ord(ch):04X}" for ch in tt if _is_pua(ch)})
         if all(_is_pua(ch) or ch.isspace() for ch in tt):
             pua_solo.append(codes[0])
+        elif any(_is_pua(ch) and ord(ch) in PUA_PRINT_TABLE for ch in tt):
+            # W20 — 인쇄 매핑 등재 코드의 혼입 잔존은 critical (현행
+            # 플랜은 치환하므로 잔존 = 매핑 미적용/구출력)
+            pua_mapped.append(f"{codes[0]} ({tt[:30]})")
         else:
             pua_inline.append(f"{codes[0]} ({tt[:30]})")
     stats["pua_solo"] = len(pua_solo)
     stats["pua_inline"] = len(pua_inline)
+    stats["pua_mapped_inline"] = len(pua_mapped)
     if pua_solo:
         critical.append(
             f"[특수문자] hwp 사용자 영역(PUA) 단독 단락 {len(pua_solo)}개 — "
             f"폰트 글리프 없음(tofu 인쇄): "
             + ", ".join(sorted(set(pua_solo))[:5]))
+    if pua_mapped:
+        critical.append(
+            f"[특수문자] 인쇄 매핑 등재 PUA 코드가 본문에 잔존 "
+            f"{len(pua_mapped)}개 단락 (플랜 매핑 미적용 출력): "
+            + " | ".join(pua_mapped[:3]))
     if pua_inline:
         warnings.append(
             f"[특수문자] 본문 내 PUA 문자 혼입 {len(pua_inline)}개 단락: "

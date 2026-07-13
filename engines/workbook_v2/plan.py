@@ -130,6 +130,45 @@ def _s3_arrow_para(text):
     return all(_is_pua(ch) for ch in t)
 
 
+# ── hwp 심볼 PUA 인쇄 매핑 (W20 D1 — c06 인라인 PUA 잠복 W14 (1) 해소) ──────
+# hwp 문자표 심볼이 사용자 영역(PUA) 코드로 저장된 채 본문에 혼입되면
+# InDesign에서 tofu로 인쇄된다 (인라인이라 화살표 단독 단락 삭제 경로도
+# 못 잡음). 문맥 증거가 실증된 코드만 유니코드 정자로 치환한다 — 근거
+# 없는 코드는 등재 금지 (G10이 warning으로 지목, 미등재 잠복: U+F09F
+# 조건 불릿 / U+F000 인용부호 앞 공백류 / U+F081~F085 문장 마커).
+#   U+F0852/U+F0853  겹따옴표 “ ” — c06 16강 "puts it, ␦Seventy-five
+#                    … whole family.␦In other words" + c21 11강 "the
+#                    ␦land of opportunity␦ nevertheless" (여닫이 짝 실증)
+#   U+F0036/U+F003B/U+F0EA  요약 화살표 ⇩ 변형 — W14 D2 실증(c05 18건/
+#                    c06 2건) + W20 모의고사 스텝3 전수 스캔 12폴더·
+#                    리딩파워 pool 전부 요약 위치 단독 단락
+# 전부 1:1(한 글자) 치환 — _map_chars가 runs 오프셋을 보존한다.
+PUA_PRINT_TABLE = str.maketrans({
+    "\U000f0852": "“", "\U000f0853": "”",
+    "\U000f0036": "⇩", "\U000f003b": "⇩", "": "⇩",
+})
+
+
+def apply_pua_print_map(obj):
+    """content 단락 트리에 PUA 인쇄 매핑을 적용한 사본 반환 (원본 무변형).
+
+    "text" 키를 가진 dict는 _map_chars로 텍스트+runs를 함께 치환한다
+    (1:1 길이 보존 — 밑줄 runs 오프셋 유지). 매핑에 없는 PUA는 그대로
+    통과 (플랜 화살표 판정/G10 게이트가 각자 처리)."""
+    if isinstance(obj, list):
+        return [apply_pua_print_map(x) for x in obj]
+    if isinstance(obj, dict):
+        if isinstance(obj.get("text"), str):
+            out = dict(obj)
+            mapped = _map_chars(obj, PUA_PRINT_TABLE)
+            out["text"] = mapped["text"]
+            if obj.get("runs"):
+                out["runs"] = mapped["runs"]
+            return out
+        return {k: apply_pua_print_map(v) for k, v in obj.items()}
+    return obj
+
+
 def _s3_effective_kind(kind, text):
     # W16 D2 — 영단어 강등 (분류기 수리와 이중 방어: content-only 코퍼스
     # 재실행은 구버전 kind 주석을 그대로 쓰므로 플랜 계층에서도 강등).
@@ -1391,6 +1430,8 @@ def steps_to_plan(steps, exclude=None, workbook_type="모의고사",
                                and step_key not in smap):
             unsupported.append(step_key)
             continue
+        # W20 D1 — hwp 심볼 PUA 인쇄 매핑 (사본 — content 원본 무변형)
+        step_data = apply_pua_print_map(step_data)
         if step_key == "step1_c1":
             built = builder(step_data, workbook_type=workbook_type,
                             exclude_btm=("step1_c1_btm" in exclude))
