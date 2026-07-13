@@ -163,10 +163,17 @@ def _merge_a1_supplements(manuscript_dir, raw, log):
         if isinstance(sd, dict) and sd.get("filename"):
             used.add(unicodedata.normalize("NFC", sd["filename"]))
     merged = []
+    seen_bases = set()
     for fname_raw in sorted(os.listdir(manuscript_dir)):
         fname = unicodedata.normalize("NFC", fname_raw)
         ext = os.path.splitext(fname)[1].lower()
         if ext not in (".docx", ".hwp", ".hwpx") or fname in used:
+            continue
+        # 업로드 슬롯 접두("manuscripts_") 사본과 스테이징 사본이 같은
+        # 디렉터리에 공존한다 — 접두 제거 기준으로 중복 병합 차단
+        base = (fname[len("manuscripts_"):]
+                if fname.startswith("manuscripts_") else fname)
+        if base in seen_bases or base in used:
             continue
         if "어휘선택" not in fname.replace(" ", ""):
             continue
@@ -192,6 +199,7 @@ def _merge_a1_supplements(manuscript_dir, raw, log):
         paras = _cut_answer_parts(paras, set())
         sd.setdefault("paragraphs", []).extend(paras)
         merged.append((sk, fname))
+        seen_bases.add(base)
         log(f"[파서/sero-v2] 어휘선택 보충본 병합: {fname} → {sk} "
             f"(+{len(paras)}단락)")
     return merged

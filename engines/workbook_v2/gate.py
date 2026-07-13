@@ -268,6 +268,14 @@ def find_unused_uploads(content, uploads_dir):
             key = _norm_fname(nf)
             if key in used:
                 continue
+            # 업로드 슬롯 접두 사본("manuscripts_X")과 스테이징 사본(X)이
+            # 같은 uploads 디렉터리에 공존 (W18 sero 실증: 26개 오탐) —
+            # 접두 제거명이 소비됐거나 같은 폴더에 존재하면 중복 사본
+            if nf.startswith("manuscripts_"):
+                stripped = nf[len("manuscripts_"):]
+                if (_norm_fname(stripped) in used
+                        or os.path.exists(os.path.join(root, stripped))):
+                    continue
             if in_step3:
                 if st3_numbered and _RE_S3_NUMFILE.search(nf):
                     continue      # 모의고사 번호 매칭으로 소비

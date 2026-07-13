@@ -394,3 +394,67 @@ def test_gate_g16_family_consumed_not_critical(tmp_path):
     crit = [c for c in rep["critical"] if "스텝원고미사용" in c]
     assert crit and "문장배열" in crit[0]
     assert "빈칸어휘(개정)" not in crit[0]
+
+
+# ── 코퍼스 r8 가드 ──────────────────────────────────────────────────────────
+
+CORPUS = os.path.join(TESTS_DIR, "corpus")
+
+
+def test_round8_c18_golden_pool_step3():
+    """c18 골든 — 전권 기출 pool: 선두 날짜 잔재 없음(D1), 해요체 발문
+    번역하세요가 플랜에서 번호 스타일(D2), 855→846단락 보존."""
+    golden = os.path.join(CORPUS, "ebs_workbook_v2", "r8c18rppool",
+                          "golden", "content.json")
+    c = json.load(open(golden, encoding="utf-8"))
+    st3 = c["steps"]["step3"]
+    assert st3["normal_count"] == 1
+    paras = st3["normal"][0]["paragraphs"]
+    texts = [p.get("text", "") for p in paras]
+    assert not any(t.strip().startswith("17. 11. 23") for t in texts)  # D1
+    assert texts[0].startswith("다음 글의 내용과 일치하는 것은?")
+    assert any("영어로 번역하세요" in t for t in texts)
+    from engines.workbook_v2.plan import steps_to_plan, ensure_step3_kinds
+    from engines.ebs_workbook_v2.engine import _STEP_MAP
+    ensure_step3_kinds(st3)
+    plan = steps_to_plan(c["steps"], workbook_type="EBS",
+                         step_map=dict(_STEP_MAP))
+    fl = [f for f in plan["flows"] if f["step"] == "step3"][0]
+    pl = [p for u in fl["units"]
+          for p in (u["paras"] if isinstance(u, dict) else u)]
+    hit = [p for p in pl if "번역하세요" in (p.get("t") or "")]
+    assert hit and "번호" in hit[0]["s"]                              # D2
+
+
+def test_round8_c17_engine_parse_replay(tmp_path):
+    """c17 골든 — 정규 모의고사 워크북 폴더의 세로 파싱 재현: 25사이클
+    (중복/정답 사이클 없음), 전 스텝 분할, btm=지문 가족, Q34 보충본."""
+    import _replay
+    eng = _sero_engine()
+    case_dir = os.path.join(CORPUS, "workbook_sero", "r8c17mock2311")
+    job = str(tmp_path / "job")
+    _replay.build_job(case_dir, job)
+    uploaded = _replay.build_uploaded(eng, job)
+    json_path = eng.parse(uploaded, job, lambda m: None)
+    content = json.load(open(json_path, encoding="utf-8"))
+    golden = json.load(open(os.path.join(case_dir, "golden",
+                                         "content.json"), encoding="utf-8"))
+    assert content["cycles"] == golden["cycles"]
+    qn = [x["q_num"] for x in content["cycles"]]
+    assert len(qn) == 25 and len(set(qn)) == 25          # D3 — 중복 없음
+    counts = content["raw_step_counts"]
+    assert all(counts[k] >= 18 for k in
+               ("step1_a2", "step1_b1", "step1_b2", "step1_c1", "step1_c2",
+                "step2_a1", "step2_a1_btm", "step2_b1", "step2_c1",
+                "step2_c2"))                              # D4 — 분할 회복
+    cy = {x["q_num"]: x for x in content["cycles"]}
+    btm = [p.get("text", "") for p in cy["20"]["steps"]["step2_a1_btm"]
+           if p.get("text", "").strip()]
+    assert btm and btm[0].startswith("Unfortunately")     # D7 — 지문 가족
+    a12 = [p.get("text", "") for p in cy["34"]["steps"]["step1_a1_2"]
+           if p.get("text", "").strip()]
+    assert a12 and "❮" in a12[0]                          # D11 — 보충본
+    for x in content["cycles"]:                           # 정답 파트 컷
+        for sk in ("step1_a1", "step1_a1_2", "step1_a2", "step1_b1"):
+            for p in x["steps"][sk]:
+                assert "[정답해설]" not in p.get("text", "")
