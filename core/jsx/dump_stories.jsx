@@ -90,14 +90,24 @@ try {
         if (ovf) { overflowCount++; }
         // W11 additive 필드: pg = 프레임이 놓인 페이지 이름들(순서), b = 첫
         // 프레임 [top,left] (상/하단 배치 검수용). 기존 소비자는 추가 키 무시.
+        // W21 additive 필드: fc = 각 텍스트 프레임 첫 문자의 스토리 내 문자
+        // 인덱스 (빈 프레임은 -1) — 게이트 G24(프레임 브레이크 실측)용.
         var pgs = [];
         var b0 = null;
+        var fcs = [];
         try {
             var tc2 = st.textContainers;
             var seenPg = {};
             for (var ti = 0; ti < tc2.length; ti++) {
                 var ppg = null;
                 try { ppg = tc2[ti].parentPage; } catch (e) {}
+                var fci = -1;
+                try {
+                    if (tc2[ti].characters.length > 0) {
+                        fci = tc2[ti].characters[0].index;
+                    }
+                } catch (e) {}
+                fcs.push(String(fci));
                 if (!ppg) { continue; }
                 var pnm = String(ppg.name);
                 if (!seenPg[pnm]) { seenPg[pnm] = true; pgs.push("\"" + esc(pnm) + "\""); }
@@ -110,6 +120,7 @@ try {
         buf.push((si > 0 ? "," : "") + "{\"idx\":" + si + ",\"overflow\":" +
                  (ovf ? "true" : "false") +
                  ",\"pg\":[" + pgs.join(",") + "]" +
+                 ",\"fc\":[" + fcs.join(",") + "]" +
                  (b0 !== null ? ",\"b\":" + b0 : "") +
                  ",\"paragraphs\":[" + sb.join(",") + "]}");
     }
@@ -139,8 +150,44 @@ try {
             }
         }
     } catch (e) {}
+    // W21 additive: 전체 페이지 인벤토리 — 이름/마스터/좌우/빈 페이지 여부.
+    // 게이트 G26(섹션 시작 좌/우 마스터 변형)·전체-1(빈 페이지 잔존) 실측용.
+    var pagesInfo = [];
+    try {
+        var invPgs = doc.pages.everyItem().getElements();
+        for (var ipi = 0; ipi < invPgs.length; ipi++) {
+            var ipg = invPgs[ipi];
+            var im = "";
+            try { im = ipg.appliedMaster ? String(ipg.appliedMaster.name) : ""; } catch (e) {}
+            // 비대면(facing 아님) 문서는 pg.side가 전부 RIGHT_HAND — 인쇄
+            // 물리 좌/우는 페이지 순서 홀짝으로 판정 (offset 0 = p1 = 오른쪽).
+            var iside = "";
+            try {
+                var facing = false;
+                try { facing = doc.documentPreferences.facingPages; } catch (e) {}
+                if (facing) {
+                    iside = (ipg.side === PageSideOptions.LEFT_HAND) ? "L" : "R";
+                } else {
+                    iside = (ipg.documentOffset % 2 === 0) ? "R" : "L";
+                }
+            } catch (e) {}
+            var itfs = ipg.textFrames;
+            var iEmpty = true;
+            for (var itf = 0; itf < itfs.length; itf++) {
+                var icc = "";
+                try { icc = String(itfs[itf].contents || ""); } catch (e) {}
+                if (icc.replace(/[\s\r\n￼]+/g, "").length > 0) { iEmpty = false; break; }
+            }
+            if (itfs.length === 0) { iEmpty = false; }   // 프레임 없는 표지류는 '빈 페이지' 아님
+            pagesInfo.push("{\"p\":\"" + esc(String(ipg.name)) +
+                           "\",\"m\":\"" + esc(im) +
+                           "\",\"side\":\"" + iside +
+                           "\",\"empty\":" + (iEmpty ? "true" : "false") + "}");
+        }
+    } catch (e) {}
     buf.push("],\"overflow_stories\":" + overflowCount +
              ",\"page_count\":" + doc.pages.length +
+             ",\"pages\":[" + pagesInfo.join(",") + "]" +
              ",\"stale_pages\":[" + stale.join(",") + "]}");
     var out = new File(OUT);
     out.encoding = "UTF-8";
