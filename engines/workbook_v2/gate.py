@@ -68,6 +68,14 @@
                   종결이면 발문 시그니처 ("영어로 번역하세요 [9강 1번]"이
                   지문 스타일로 인쇄된 c18 실증 + 세로 e79f8af9 기출력의
                   "11. (주관식) … 고르세요. [정답 2개]" 잠복 검출).
+  G21 [원문자중복] ①로 시작하면서 본문에 ①이 다시 등장하는 장문(200자+)
+                  단락 — 선지 자동번호가 inline 번호 지문(도표/불일치류:
+                  선지가 지문 문장에 ①~⑤로 박힘)에 원고에 없는 ①을
+                  prepend해 기형 번호('①The graph … ① In Germany …')가
+                  인쇄된 오염 (W19 c20 실증: ※ 다중 문항 아이템의 재인쇄
+                  지문 + passage_above 우회 경로. 원고에 타이핑된 inline
+                  번호 지문은 ①이 1회뿐이라 통과 — c19/0a5da924 실측).
+                  critical.
 
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
 구버전 덤프에는 경고로만 보고한다 (재덤프 안내). G9는 uploads_dir를 넘긴
@@ -82,6 +90,8 @@ from engines.workbook_v2.plan import (is_header_line, is_a1_header,
                                       passage_labels, _norm_header)
 
 _RE_BARE_NUM = re.compile(r"^\d{1,3}(?:\s*~\s*\d{1,3})?$")
+# G21 — 원문자 선지 번호 (①~⑮: 지문 inline 번호도 같은 집합)
+_CIRCLED_DIGITS = "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮"
 _RE_DIGIT = re.compile(r"\d")
 _RE_ENG_WORD = re.compile(r"[A-Za-z]+")
 
@@ -520,6 +530,27 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         critical.append(
             f"[영단어오분류] 어휘 항목이 아닌 단락 {len(word_bad)}개가 "
             f"영단어 스타일로 인쇄됨: " + " | ".join(word_bad[:3]))
+
+    # ── G21 원문자 ① 중복 오염 (W19 c20) ────────────────────────────────
+    # ※ 다중 문항 아이템은 발문마다 지문을 재인쇄한다. 마지막 5지선다
+    # 발문(도표/불일치류 — 선지가 지문 문장 inline ①~⑤) 뒤 재인쇄 지문에
+    # 선지 자동번호가 원고에 없는 ①을 prepend → '①The graph … ① In
+    # Germany …'처럼 한 단락에 ①이 2회 등장하는 기형 번호가 인쇄된다.
+    # 원고에 타이핑된 inline 번호 지문('①Families … ②Gary …' c19 /
+    # '① Remember …' 0a5da924)은 ①이 1회뿐이라 통과 (v1 관행 보존).
+    choice_polluted = []
+    for t, _s in _dump_paras(dump):
+        tt = _clean(t)
+        if len(tt) < 200 or not tt or tt[0] != "①":
+            continue
+        if "①" in tt[1:]:
+            choice_polluted.append(tt[:60])
+    stats["choice_polluted_passages"] = len(choice_polluted)
+    if choice_polluted:
+        critical.append(
+            f"[원문자중복] ①로 시작하면서 본문에 ①이 다시 등장하는 장문 "
+            f"단락 {len(choice_polluted)}개 — 선지 자동번호가 inline 번호 "
+            f"지문에 ①을 중복 부여한 오염: " + " | ".join(choice_polluted[:2]))
 
     # ── G15 <조건> 블록 항목 스타일 (W16 c10) ────────────────────────────
     # <조건> 마커부터 답란(밑줄런/정답/→/우리말) 이전까지 스캔. 강신호
