@@ -97,6 +97,38 @@ def test_sero_cycle_plan_maps_pua():
     assert "“quoted”" in txt
 
 
+REPO = os.path.dirname(TESTS_DIR)
+
+
+# ── 세로 divider op 이식 (W20 — G22 소급 c17) ───────────────────────────────
+
+def test_sero_executor_has_divider_op():
+    """세로 실행기 divider — 라벨 내용 정확 매칭 방식 소스 가드.
+
+    가로의 마스터/프레임 휴리스틱 대신 '고N 모의고사'+'YY년 M월' 연속
+    2단락 매칭만 갱신 — '…월 짤지문' 라벨은 끝 앵커($)로 비매치
+    (v1 관행 보존, G22 제외와 동일)."""
+    src = open(os.path.join(REPO, "core", "jsx",
+                            "workbook_sero_flow.body.jsx"),
+               encoding="utf-8").read()
+    assert "plan.divider" in src
+    body = src.split("plan.divider && plan.divider.line1")[1]
+    body = body.split("relockIcons")[0]
+    assert r"/^고\d\s*모의고사\s*$/" in body
+    assert r"월\s*$/" in body          # 끝 앵커 — 짤지문 라벨 비매치
+    assert "간지 텍스트 업데이트" in body
+
+
+def test_sero_meta_and_gate_plan_include_divider():
+    """sero prepare_jsx가 meta에 divider를 싣고 verify pseudo-plan으로
+    전달 (G22 critical 승격 계약) — 소스 가드."""
+    src = open(os.path.join(REPO, "engines", "workbook_sero_v2",
+                            "engine.py"), encoding="utf-8").read()
+    assert "_mockexam_divider" in src
+    assert src.index("_mockexam_divider(job_dir)") < src.index("n_warn = 0")
+    assert '"divider": meta.get("divider")' in src
+
+
 # ── G10 확장 — 검출 실증 (수리 전 c06 실덤프 발췌 픽스처) ────────────────────
 
 def test_gate_g10_mapped_inline_critical_on_pre_fix_c06_dump():

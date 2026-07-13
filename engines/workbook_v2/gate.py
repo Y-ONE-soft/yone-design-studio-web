@@ -92,7 +92,8 @@
                   '…월 짤지문' 단독 라벨은 v1도 미갱신(실물 잔존)이라 제외.
                   content에 grade/year/month가 없으면 검사 생략.
                   divider op 사용 플랜은 critical, 미사용은 warning
-                  (G3/G4 패턴 — 세로 실행기는 divider op 미지원).
+                  (G3/G4 패턴). 세로 실행기도 W20에서 divider op 지원
+                  (라벨 내용 정확 매칭 방식 — c17 소급 해소).
 
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
 구버전 덤프에는 경고로만 보고한다 (재덤프 안내). G9는 uploads_dir를 넘긴
