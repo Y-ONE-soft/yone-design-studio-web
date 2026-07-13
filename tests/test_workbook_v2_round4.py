@@ -101,11 +101,17 @@ def test_gate_g10_pua_detection():
                       {"t": "정상 본문 paragraph", "s": "S"}]))
     assert any("[특수문자]" in c for c in rep["critical"])
     assert rep["stats"]["pua_solo"] == 1
-    # 본문 혼입 → warning (critical 아님)
+    # 매핑 미등재 코드의 본문 혼입 → warning (critical 아님)
     rep = inspect_workbook_finish(
-        {}, plan, mk([{"t": "본문 \U000f0036 혼입", "s": "S"}]))
+        {}, plan, mk([{"t": "본문  혼입", "s": "S"}]))
     assert not any("[특수문자]" in c for c in rep["critical"])
     assert any("[특수문자]" in w for w in rep["warnings"])
+    # 매핑 등재 코드(U+F0036)의 본문 혼입 → critical (W20 G10 확장 —
+    # 현행 플랜은 치환하므로 잔존 = 매핑 미적용 출력)
+    rep = inspect_workbook_finish(
+        {}, plan, mk([{"t": "본문 \U000f0036 혼입", "s": "S"}]))
+    assert any("[특수문자]" in c for c in rep["critical"])
+    assert rep["stats"]["pua_mapped_inline"] == 1
     # 깨끗한 출력 + 앵커(U+FFFC)는 미발동
     rep = inspect_workbook_finish(
         {}, plan, mk([{"t": "정상 본문￼", "s": "S"}]))
