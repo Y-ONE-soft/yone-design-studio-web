@@ -28,7 +28,8 @@ page_break 포함) — 실행기(core/jsx/workbook_sero_flow.body.jsx)가 해석
 """
 import re
 
-from engines.workbook_v2.plan import (STEP_BUILDERS, _RE_3GAPS, build_step3,
+from engines.workbook_v2.plan import (STEP_BUILDERS, _RE_3GAPS,
+                                      apply_pua_print_map, build_step3,
                                       unit_paras)  # noqa: F401 (unit_paras — verify 재사용)
 
 # ── 슬롯 → 스텝 매핑 (v1 seroProcessCycle의 페이지 오프셋 구조) ──────────────
@@ -200,6 +201,8 @@ def _build_cycle(cyc, exclude, workbook_type):
             slots.append({"slot": slot, "step": step_key, "clear": True})
             continue
         builder = STEP_BUILDERS[step_key]
+        # W20 D1 — hwp 심볼 PUA 인쇄 매핑 (사본 — content 원본 무변형)
+        paras = apply_pua_print_map(paras)
         if step_key == "step1_c1":
             paras = _augment_c1_condition_gap(paras)
         augmented = _augment(paras, q_num, code, step_key)
@@ -224,6 +227,8 @@ def _build_cycle(cyc, exclude, workbook_type):
     if "step3" not in exclude:
         s3_paras = steps.get("step3") or []
         if s3_paras:
+            # W20 D1 — hwp 심볼 PUA 인쇄 매핑 (사본)
+            s3_paras = apply_pua_print_map(s3_paras)
             annotated = _annotate_step3_kinds(s3_paras, warnings)
             built = build_step3({"normal": [{"question_num": q_num,
                                              "paragraphs": annotated}],

@@ -1430,6 +1430,8 @@ def steps_to_plan(steps, exclude=None, workbook_type="모의고사",
                                and step_key not in smap):
             unsupported.append(step_key)
             continue
+        # W20 D1 — hwp 심볼 PUA 인쇄 매핑 (사본 — content 원본 무변형)
+        step_data = apply_pua_print_map(step_data)
         if step_key == "step1_c1":
             built = builder(step_data, workbook_type=workbook_type,
                             exclude_btm=("step1_c1_btm" in exclude))
