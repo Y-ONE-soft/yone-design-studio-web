@@ -645,6 +645,12 @@ function cleanupPages(doc, flowStories, op) {
     wlog("페이지 정리: 잔여 스텝/사이클 페이지 " + removed + "개 삭제"
          + (deleteEmpty ? " (STEP3 빈 페이지 포함 — delete 모드)" : ""));
 
+    // 2b) W22 r12 (delete 모드): 파트 경계 정렬 — 페이지 삭제로 간지
+    // 라벨이 물리 왼쪽 페이지로 밀렸으면 간지 스프레드 앞에 M(메모)
+    // 마스터 채움 페이지 1장을 삽입해 복원한다 (사용자 확정 스펙:
+    // 파트 경계의 오른쪽 채움 페이지는 삭제가 아니라 M 마스터).
+    if (deleteEmpty) { alignPartFillers(doc); }
+
     // 3) STEP3 영역 — 빈 페이지 M 마스터 재할당 (v1 adjustStep3Pages 파리티,
     //    delete 모드에선 위에서 삭제 완료 — 재할당 생략)
     if (!step3Story || deleteEmpty) { return; }
@@ -686,6 +692,95 @@ function cleanupPages(doc, flowStories, op) {
     }
     wlog("페이지 정리: 빈 STEP3 페이지 " + emptyMasterPrefix + " 마스터 " + reassigned + "개");
 }
+
+// ── W22 op: 파트 경계 채움 페이지 (delete 모드의 cleanupPages가 호출) ───────
+// [원본]워크북_C 실측 정렬: 간지 스프레드 = 왼쪽(마스터 없음, 프레임 0) +
+// 오른쪽(마스터 없음, 라벨 프레임 1). 페이지 삭제로 파트 콘텐츠가 홀수
+// 페이지로 끝나면 간지 라벨이 왼쪽으로 밀린다 — 간지 스프레드 시작 앞에
+// M(메모) 마스터 페이지 1장을 삽입해 라벨을 오른쪽으로 복원한다 (r12
+// 사용자 확정 스펙: 파트 경계에 필요한 오른쪽 채움 페이지는 M 마스터).
+// [W22 파트경계 유틸 시작] — scripts/e2e_round12_filler_probe.py가 이 구간을
+// 추출해 실제 InDesign에서 단독 실측한다. 마커 주석 제거 금지.
+function pageSideOf(doc, pg) {
+    // 비대면(facing 아님) 문서는 pg.side가 전부 RIGHT_HAND ([원본]워크북_C
+    // W21 실측) — 인쇄 물리 좌/우는 documentOffset 홀짝 (offset 0 = p1 =
+    // 오른쪽). facing 문서만 pg.side를 신뢰 (fixSectionMasters와 동일 판정).
+    var facing = false;
+    try { facing = doc.documentPreferences.facingPages; } catch (e) {}
+    if (facing) {
+        try {
+            return (pg.side === PageSideOptions.LEFT_HAND) ? "L" : "R";
+        } catch (e2) { return "R"; }
+    }
+    try { return (pg.documentOffset % 2 === 0) ? "R" : "L"; } catch (e3) {}
+    return "R";
+}
+
+function isDividerLabelPage(pg) {
+    // 간지 라벨 페이지 = 마스터 [None](또는 없음) + 텍스트 프레임 1개 +
+    // 첫 단락에 한글 (updateDividerPages와 동일 판정 — W19 D5 주석 참조).
+    var mn = "";
+    try { mn = pg.appliedMaster ? String(pg.appliedMaster.name) : ""; } catch (e) {}
+    if (mn !== "" && mn !== "[None]") { return false; }
+    if (pg.textFrames.length !== 1) { return false; }
+    var ps = null;
+    try { ps = pg.textFrames[0].paragraphs; } catch (e2) { return false; }
+    if (!ps || ps.length < 2) { return false; }
+    var t1 = "";
+    try { t1 = String(ps[0].contents || ""); } catch (e3) {}
+    return /[가-힣]/.test(t1);
+}
+
+function alignPartFillers(doc) {
+    var mMaster = null;
+    try {
+        var ms = doc.masterSpreads.everyItem().getElements();
+        for (var mi = 0; mi < ms.length; mi++) {
+            if (String(ms[mi].namePrefix) === "M") { mMaster = ms[mi]; break; }
+        }
+    } catch (e) {}
+    if (!mMaster) {
+        wlog("[경고] M 마스터 없음 — 파트 경계 채움 페이지 생략");
+        return;
+    }
+    var inserted = 0;
+    for (var pi = 0; pi < doc.pages.length; pi++) {
+        var pg = doc.pages[pi];
+        if (!isDividerLabelPage(pg)) { continue; }
+        if (pageSideOf(doc, pg) === "R") { continue; }   // 정렬 정상
+        // 간지 스프레드 시작(왼쪽 빈 동반 페이지 — 마스터 없음/프레임 0)
+        // 앞에 삽입. 동반 페이지가 없으면 라벨 페이지 앞에 삽입.
+        var ref = pg;
+        if (pi > 0) {
+            var prev = doc.pages[pi - 1];
+            var pmn = "";
+            try {
+                pmn = prev.appliedMaster ? String(prev.appliedMaster.name) : "";
+            } catch (e2) {}
+            if ((pmn === "" || pmn === "[None]")
+                    && prev.textFrames.length === 0) {
+                ref = prev;
+            }
+        }
+        try {
+            // pages.add(BEFORE, page)는 스프레드 단위로 삽입돼 목표보다
+            // 한 칸 앞(왼쪽)에 끼어든다 (r12 프로브 실측). 끝에 추가 후
+            // page.move(BEFORE, ref) — move는 페이지 단위로 정확하다.
+            var np = doc.pages.add(LocationOptions.AT_END);
+            np.appliedMaster = mMaster;
+            np.move(LocationOptions.BEFORE, ref);
+            inserted++;
+            wlog("파트 경계 채움: 간지 p" + pg.name
+                 + " 앞 M 마스터 페이지 삽입");
+        } catch (e3) {
+            wlog("[경고] 파트 경계 채움 페이지 삽입 실패: " + e3);
+        }
+    }
+    if (inserted > 0) {
+        wlog("파트 경계 채움 페이지: " + inserted + "개 삽입 (M 마스터)");
+    }
+}
+// [W22 파트경계 유틸 끝]
 
 // ── W21 op: 섹션 시작 좌/우 마스터 정합 (plan.section_masters가 있을 때만) ──
 // 페이지 정리로 섹션 시작이 좌→우(또는 우→좌)로 밀리면 시작 페이지 마스터를

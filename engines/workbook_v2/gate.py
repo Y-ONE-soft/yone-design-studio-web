@@ -1054,6 +1054,52 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                 f"'모의고사' 라벨 — 원고 유형과 불일치 의심 (사람 확인): "
                 + mock_dividers[0])
 
+    # ── G28 파트 경계 정렬 (W22 r12) ─────────────────────────────────────
+    # [원본]워크북_C 실측: 간지 스프레드 = 왼쪽(빈 페이지) + 오른쪽(라벨).
+    # ① 간지 라벨 페이지가 물리 왼쪽(L)이면 파트 경계 채움 페이지 누락 —
+    #    delete 모드(정렬이 실행기 계약)는 critical, 아니면 warning
+    #    (v1 실물도 밀린 간지를 방치한 관행 — W19 D5 주석. 완제품 기준
+    #    으로 폐기, 사용자 확정 스펙: 오른쪽 채움 페이지 = M 마스터 삽입).
+    # ② delete 모드의 M 마스터 페이지는 간지 직전 오른쪽 채움만 허용 —
+    #    그 외 위치의 M 페이지는 빈 페이지 잔재 (W21 '완전 정리' 정책).
+    if pages_inv:
+        div_l1 = _clean((plan.get("divider") or {}).get("line1") or "")
+        boundary_bad = []
+        for story in dump.get("stories", []):
+            pgs = story.get("pg") or []
+            if len(pgs) != 1:
+                continue
+            entry = pages_inv.get(str(pgs[0]))
+            if not entry or str(entry.get("m") or "") not in ("", "[None]"):
+                continue
+            ps = story.get("paragraphs", [])
+            if not ps:
+                continue
+            t0 = _clean(ps[0].get("t", ""))
+            is_label = (div_l1 and t0 == div_l1) or (
+                len(ps) >= 2 and _RE_DIVIDER_L1.match(t0)
+                and _RE_DIVIDER_L2.match(_clean(ps[1].get("t", ""))))
+            if is_label and entry.get("side") == "L":
+                boundary_bad.append(
+                    f"간지 p{entry.get('p')}가 왼쪽 페이지 (오른쪽 채움 누락)")
+        if cleanup_delete:
+            plist = dump.get("pages") or []
+            for i, pe in enumerate(plist):
+                if not str(pe.get("m") or "").startswith("M"):
+                    continue
+                nxt = plist[i + 1] if i + 1 < len(plist) else None
+                ok_pos = (pe.get("side") == "R" and nxt
+                          and str(nxt.get("m") or "") in ("", "[None]"))
+                if not ok_pos:
+                    boundary_bad.append(
+                        f"M 페이지 p{pe.get('p')} 위치 이상 "
+                        f"(간지 직전 오른쪽 채움만 허용)")
+        stats["part_boundary_bad"] = len(boundary_bad)
+        if boundary_bad:
+            msg = (f"[파트경계] 파트 경계 정렬 이상 {len(boundary_bad)}건: "
+                   + " | ".join(boundary_bad[:5]))
+            (critical if cleanup_delete else warnings).append(msg)
+
     # ── G5 step2_a1 상단 / step2_a1_btm 하단 기하 검사 ───────────────────
     flows = {fl["step"]: fl for fl in plan.get("flows", [])}
     if "step2_a1" in flows and "step2_a1_btm" in flows:
