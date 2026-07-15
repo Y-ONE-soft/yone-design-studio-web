@@ -15,6 +15,7 @@ v1(engines/workbook_supp) 무변경. 출력 파일명 v1 규칙 + _v2 접미로 
 """
 import json
 import os
+import re
 
 from engines.workbook_v2.engine import WorkbookV2Engine
 
@@ -40,6 +41,12 @@ _TEMPLATE_STEP_MAPS = [("세종", _SEJONG_STEP_MAP)]
 # 어법 O/X p132~ / 빈칸 어법 p150~ 페이지 좌측의 단일 프레임 번호 스토리)
 _NUMBER_FRAME_STEPS = ["step1_c2", "step2_b1", "step2_c1"]
 
+# 외부지문 무-p형 헤더 "1. no.1" (W22 r12 — 간지 교재유형 판정용.
+# 게이트 _RE_NOP_HEADER와 동일 패턴이나 독립 정의 — 게이트는 출력 검사용
+# 정의를 따로 유지한다: 생산 코드가 틀리면 게이트도 같이 틀리는 순환 방지)
+_RE_NOP_HEADER = re.compile(r"^\s*\d+\s*[.)]\s*no\.?\s*\d+(?:~\d+)?\s*$",
+                            re.I)
+
 
 class WorkbookSuppV2Engine(WorkbookV2Engine):
 
@@ -63,6 +70,21 @@ class WorkbookSuppV2Engine(WorkbookV2Engine):
     @property
     def template_name(self):
         return "typeset_workbook_supp_v2.html"
+
+    @property
+    def upload_spec(self):
+        """W22 r12 (사용자 확정 스펙): 간지 문구 선택 입력 필드 —
+        입력하면 그 문구로 간지 갱신, 미입력이면 교재유형만 표기.
+        텍스트 슬롯은 routes/typeset.py가 job_dir/divider_text.txt로
+        저장한다 (새 라우트 없음 — 기존 슬롯 처리 재사용)."""
+        spec = dict(super().upload_spec)
+        spec["slots"] = list(spec["slots"]) + [{
+            "key": "divider_text",
+            "label": "간지 문구 (선택 — 미입력 시 교재유형만 표기)",
+            "type": "text",
+            "required": False,
+        }]
+        return spec
 
     # ── W11 훅: 스토리 매핑 + 완제품 후처리 op ──────────────────────────────
 
@@ -97,18 +119,40 @@ class WorkbookSuppV2Engine(WorkbookV2Engine):
                 return smap
         return _STEP_MAP
 
+    def _divider_deco(self, job_dir, content):
+        """간지 divider op — W22 r12 사용자 확정 스펙 (supp 계열 한정).
+
+        업로드 시 간지 문구(divider_text 슬롯)를 입력하면 그 문구로 간지를
+        갱신하고, 미입력이면 교재유형만 표기한다 — 외부지문(무-p형 'N. no.M'
+        헤더) 원고는 '외부지문', 그 외는 workbook_type 메타(기본 '모의고사').
+        기존 '고N 모의고사 / YY년 M월'은 supp 폼이 년/월을 받지 않아
+        엔진 기본값(25년 10월)이 그대로 찍히던 잔재 — 폐기 (r12 피드백 3).
+        line2는 빈 문자열(둘째 줄 비움). source(user|type)는 게이트 G27이
+        소비하는 계약 키 (실행기는 line1/line2만 읽는다 — additive)."""
+        text = self._read_meta_str(job_dir, "divider_text", "")
+        if text:
+            return {"divider": {"line1": text, "line2": "",
+                                "source": "user"}}
+        from engines.workbook_v2.plan import _norm_header
+        steps = (content or {}).get("steps") or {}
+        is_nop = any(
+            _RE_NOP_HEADER.match(_norm_header(p.get("text") or ""))
+            for sd in steps.values() if isinstance(sd, dict)
+            for p in (sd.get("paragraphs") or []))
+        label = "외부지문" if is_nop else self._workbook_type(job_dir)
+        return {"divider": {"line1": label, "line2": "", "source": "type"}}
+
     def _plan_decorations(self, job_dir, cfg):
-        """완제품 후처리 op 2종 (실행기 opt-in — 다른 엔진 플랜 무변경).
+        """완제품 후처리 op (실행기 opt-in — 다른 엔진 플랜 무변경).
 
         page_cleanup: 원고에 없는 스텝/남는 사이클 페이지 삭제 + 빈 STEP3
             페이지 M 마스터 재할당 (v1 run.jsx 16.5 + adjustStep3Pages 이식).
         passage_numbers: 빈칸어휘/어법OX/빈칸어법 섹션의 독립 지문번호
             프레임을 원고 지문번호로 갱신 (v1 미지원 — 완제품 기준 신설).
+        divider: 간지 문구 — W22 r12 스펙 (_divider_deco 참조. v1 상속의
+            '고N 모의고사/YY년 M월'(W19 D4)은 r12 피드백 3으로 폐기).
         """
         from engines.workbook_v2.plan import passage_labels
-        from engines.workbook_v2.engine import _mockexam_divider
-        # divider (W19 D4): v1 supp는 run.jsx 16.7을 그대로 상속해 간지
-        # '고N 모의고사 / YY년 M월'을 갱신한다 — v2도 동일 opt-in.
         # 세종 내지의 간지('세종고 …')는 간지-마스터 페이지라 updateDivider
         # 매칭 조건(마스터 [None]) 밖 — 무접촉 (c19 실측 pg=['간지']).
         # W21 r11 (실사용 0e3108fd 결함 전체-1/전체-2): 기본 내지([원본]
@@ -122,13 +166,13 @@ class WorkbookSuppV2Engine(WorkbookV2Engine):
         else:
             deco = {"page_cleanup": {"empty": "delete"},
                     "section_masters": True}
-        deco.update(_mockexam_divider(job_dir))
         try:
             content = json.load(open(os.path.join(job_dir, "content.json"),
                                      encoding="utf-8"))
-            labels = passage_labels(content.get("steps", {}))
         except (OSError, ValueError):
-            labels = []
+            content = {}
+        deco.update(self._divider_deco(job_dir, content))
+        labels = passage_labels(content.get("steps", {}) or {})
         if labels:
             deco["passage_numbers"] = {"labels": labels,
                                        "steps": list(_NUMBER_FRAME_STEPS)}

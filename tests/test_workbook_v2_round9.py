@@ -272,10 +272,16 @@ def test_base_and_supp_decorations_include_divider(tmp_path):
     (job / "content.json").write_text(
         json.dumps({"grade": 1, "year": 25, "month": 10, "steps": {}}),
         encoding="utf-8")
-    for eng in (WorkbookV2Engine(), WorkbookSuppV2Engine()):
-        deco = eng._plan_decorations(str(job), {})
-        assert deco["divider"] == {"line1": "고1 모의고사",
-                                   "line2": "25년 10월"}, type(eng)
+    # 본가(모의고사)는 W19 D4 그대로 — 원고 grade/year/month 라벨
+    deco = WorkbookV2Engine()._plan_decorations(str(job), {})
+    assert deco["divider"] == {"line1": "고1 모의고사", "line2": "25년 10월"}
+    # supp는 W22 r12 사용자 확정 스펙으로 변경: 간지 문구 입력 시 그 문구,
+    # 미입력 시 교재유형만 표기 ('고N 모의고사/YY년 M월'은 supp 폼이
+    # 년/월을 받지 않아 기본값이 찍히던 잔재 — 폐기). 상세 가드는
+    # tests/test_workbook_v2_round12.py.
+    deco_s = WorkbookSuppV2Engine()._plan_decorations(str(job), {})
+    assert deco_s["divider"] == {"line1": "모의고사", "line2": "",
+                                 "source": "type"}
 
 
 # ── D5: updateDividerPages 좌우 무관 갱신 — JSX 소스 가드 (오프라인) ─────────

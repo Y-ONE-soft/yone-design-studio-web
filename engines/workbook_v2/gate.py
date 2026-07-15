@@ -113,10 +113,23 @@
                   마스터가 그대로 (W21 r11 실증: [원본]워크북_C p13 어휘
                   선택 2 = 우측 시작 B-마스터). section_masters op 사용
                   플랜은 critical, 아니면 warning. 덤프 pages 필드 필요.
-  G27 [간지적합] 외부지문(무-p형 'N. no.M' 헤더) 원고인데 간지가 '고N
-                  모의고사' 라벨 — 원고 유형과 간지 내용 불일치 의심.
-                  v1 실물(워크북03(외부지문))도 같은 모의고사 라벨을 유지한
-                  실물 관행이 있어 warning (사람 확인 지목용, W21 r11).
+  G27 [간지적합] W22 r12 스펙 확정 (사용자 확정 — supp 계열): 간지는
+                  업로드 시 입력한 간지 문구, 미입력이면 교재유형만 표기
+                  (예: '외부지문'). plan.divider.source(user|type) 계약이
+                  있으면 모의고사 라벨 잔재/기대 문구 불일치 = critical.
+                  계약 없는 플랜(본가/구출력)은 기존 W21 warning 유지:
+                  외부지문(무-p형 'N. no.M') 원고 + '모의고사' 라벨 →
+                  사람 확인 지목 (v1 실물도 같은 라벨 유지 관행).
+  G4 확장 (W22 r12): 반복 장식(페이지마다 얹히는 발문/섹션 탭)만 남은
+                  장식-빈 페이지를 delete 모드 잔여로 합산 — 장식 텍스트가
+                  '텍스트 있음'으로 빈 페이지 판정을 비껴가 잔존 (r11
+                  재조판 p34 어법선택 발문 / p47 영작배열 탭, 사용자 지목).
+  G28 [파트경계] 간지 라벨 페이지가 물리 왼쪽(L) — 페이지 삭제로 파트
+                  경계 정렬이 깨졌는데 오른쪽 채움(M 마스터) 페이지 누락.
+                  delete 모드의 M 페이지는 간지 직전 오른쪽 채움만 허용
+                  (그 외 M 페이지 = 빈 페이지 잔재). delete 모드 critical,
+                  아니면 warning (W22 r12 — 사용자 확정 스펙: 파트 경계
+                  오른쪽 채움 페이지는 삭제가 아니라 M 마스터 삽입).
 
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
 G24②/G26은 W21 확장 필드(fc / pages)가 필요하다. 구버전 덤프에는 경고로만
@@ -1030,15 +1043,24 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                f"불일치 {len(master_bad)}건: " + " | ".join(master_bad[:5]))
         (critical if strict_masters else warnings).append(msg)
 
-    # ── G27 간지 적합성 (W21 r11) ────────────────────────────────────────
-    # 외부지문 무-p형('N. no.M') 헤더 원고인데 간지가 '고N 모의고사' 라벨.
-    # v1 실물(워크북03(외부지문))도 같은 라벨을 유지한 관행이 있어 warning
-    # (사람 확인 지목 — 자동 치환할 근거 라벨이 실물에 없다).
+    # ── G27 간지 적합성 (W21 r11 → W22 r12 스펙 확정) ────────────────────
+    # 사용자 확정 스펙 (r12 피드백 3, supp 계열): 간지는 업로드 시 입력한
+    # 간지 문구, 미입력이면 교재유형만 표기 (예: '외부지문'). 엔진이
+    # plan.divider.source(user|type)로 계약을 실으면:
+    #   ① '고N 모의고사 / YY년 M월' 잔재 = critical (기대 문구로 갱신됐어야 함)
+    #   ② 간지 라벨 실측(마스터 없는 페이지의 단일 페이지 스토리)이 기대
+    #      문구(line1)와 불일치 = critical (라벨 실측이 없으면 생략 —
+    #      간지 없는 합성 덤프/내지 호환)
+    # source 없는 플랜(본가 모의고사/구출력)은 기존 W21 warning 유지:
+    # 외부지문 무-p형('N. no.M') 원고 + '모의고사' 라벨 → 사람 확인 지목
+    # (v1 실물도 같은 라벨을 유지한 관행 — 자동 치환 근거가 없었다).
     is_nop_manuscript = any(
         _RE_NOP_HEADER.match(_norm_header(p.get("text") or ""))
         for sd in steps.values() if isinstance(sd, dict)
         for p in (sd.get("paragraphs") or []))
-    if is_nop_manuscript:
+    divider_plan = plan.get("divider") or {}
+    supp_divider = divider_plan.get("source") in ("user", "type")
+    if supp_divider or is_nop_manuscript:
         mock_dividers = []
         for story in dump.get("stories", []):
             ps = story.get("paragraphs", [])
@@ -1048,7 +1070,42 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                             _clean(ps[i + 1].get("t", "")))):
                     mock_dividers.append(_clean(ps[i].get("t", "")))
         stats["divider_type_mismatch"] = len(mock_dividers)
-        if mock_dividers:
+        if supp_divider:
+            want_l1 = _clean(divider_plan.get("line1") or "")
+            if mock_dividers:
+                critical.append(
+                    f"[간지적합] 간지 {len(mock_dividers)}개가 모의고사 "
+                    f"라벨 잔재 — 기대 문구 「{want_l1}」 미적용: "
+                    + mock_dividers[0])
+            elif pages_inv and want_l1:
+                # 간지 라벨 실측 대조 — 마스터 없는 페이지의 단일 페이지
+                # 스토리(2단락+, 첫 단락 한글) = 간지 라벨 (실행기
+                # updateDividerPages와 동일 판정 부류)
+                divider_wrong = []
+                for story in dump.get("stories", []):
+                    pgs = story.get("pg") or []
+                    if len(pgs) != 1:
+                        continue
+                    entry = pages_inv.get(str(pgs[0]))
+                    if (not entry
+                            or str(entry.get("m") or "") not in ("",
+                                                                 "[None]")):
+                        continue
+                    ps = story.get("paragraphs", [])
+                    if len(ps) < 2:
+                        continue
+                    t0 = _clean(ps[0].get("t", ""))
+                    if not _RE_HANGUL.search(t0) and t0 != want_l1:
+                        continue
+                    if t0 != want_l1:
+                        divider_wrong.append(f"p{entry.get('p')} 「{t0[:20]}」")
+                stats["divider_label_wrong"] = len(divider_wrong)
+                if divider_wrong:
+                    critical.append(
+                        f"[간지적합] 간지 라벨 {len(divider_wrong)}개가 기대 "
+                        f"문구 「{want_l1}」와 불일치: "
+                        + " | ".join(divider_wrong[:3]))
+        elif is_nop_manuscript and mock_dividers:
             warnings.append(
                 f"[간지적합] 외부지문 원고인데 간지 {len(mock_dividers)}개가 "
                 f"'모의고사' 라벨 — 원고 유형과 불일치 의심 (사람 확인): "
