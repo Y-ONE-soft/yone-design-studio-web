@@ -113,10 +113,23 @@
                   마스터가 그대로 (W21 r11 실증: [원본]워크북_C p13 어휘
                   선택 2 = 우측 시작 B-마스터). section_masters op 사용
                   플랜은 critical, 아니면 warning. 덤프 pages 필드 필요.
-  G27 [간지적합] 외부지문(무-p형 'N. no.M' 헤더) 원고인데 간지가 '고N
-                  모의고사' 라벨 — 원고 유형과 간지 내용 불일치 의심.
-                  v1 실물(워크북03(외부지문))도 같은 모의고사 라벨을 유지한
-                  실물 관행이 있어 warning (사람 확인 지목용, W21 r11).
+  G27 [간지적합] W22 r12 스펙 확정 (사용자 확정 — supp 계열): 간지는
+                  업로드 시 입력한 간지 문구, 미입력이면 교재유형만 표기
+                  (예: '외부지문'). plan.divider.source(user|type) 계약이
+                  있으면 모의고사 라벨 잔재/기대 문구 불일치 = critical.
+                  계약 없는 플랜(본가/구출력)은 기존 W21 warning 유지:
+                  외부지문(무-p형 'N. no.M') 원고 + '모의고사' 라벨 →
+                  사람 확인 지목 (v1 실물도 같은 라벨 유지 관행).
+  G4 확장 (W22 r12): 반복 장식(페이지마다 얹히는 발문/섹션 탭)만 남은
+                  장식-빈 페이지를 delete 모드 잔여로 합산 — 장식 텍스트가
+                  '텍스트 있음'으로 빈 페이지 판정을 비껴가 잔존 (r11
+                  재조판 p34 어법선택 발문 / p47 영작배열 탭, 사용자 지목).
+  G28 [파트경계] 간지 라벨 페이지가 물리 왼쪽(L) — 페이지 삭제로 파트
+                  경계 정렬이 깨졌는데 오른쪽 채움(M 마스터) 페이지 누락.
+                  delete 모드의 M 페이지는 간지 직전 오른쪽 채움만 허용
+                  (그 외 M 페이지 = 빈 페이지 잔재). delete 모드 critical,
+                  아니면 warning (W22 r12 — 사용자 확정 스펙: 파트 경계
+                  오른쪽 채움 페이지는 삭제가 아니라 M 마스터 삽입).
 
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
 G24②/G26은 W21 확장 필드(fc / pages)가 필요하다. 구버전 덤프에는 경고로만
@@ -824,14 +837,15 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         (critical if strict_pages else warnings).append(msg)
 
     # ── G4 잔여 페이지 (원고 없는 스텝/남는 사이클) ──────────────────────
+    cleanup_op = (plan.get("page_cleanup")
+                  if isinstance(plan.get("page_cleanup"), dict) else {})
+    cleanup_delete = cleanup_op.get("empty") == "delete"
     stale = dump.get("stale_pages")
     if stale is None:
         warnings.append("[잔여페이지] 덤프에 페이지 정보 없음(구버전 덤프)"
                         " — 재덤프 필요")
     else:
-        cleanup_op = (plan.get("page_cleanup")
-                      if isinstance(plan.get("page_cleanup"), dict) else {})
-        if cleanup_op.get("empty") == "delete":
+        if cleanup_delete:
             # W21 delete 모드: 빈 페이지는 삭제가 계약 — M 마스터 면제 없음.
             # 페이지 인벤토리(pages)의 빈 페이지(프레임 있고 전부 공백 —
             # 스레드 절단 후 단일 프레임 꼬리 포함)도 잔여로 합산 (r11
@@ -841,6 +855,36 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
             for pe in dump.get("pages") or []:
                 if pe.get("empty") and str(pe.get("p")) not in seen_p:
                     residual.append({"p": pe.get("p"), "m": pe.get("m")})
+                    seen_p.add(str(pe.get("p")))
+            # W22 r12: 장식-빈 페이지 합산 — 반복 장식(페이지마다 얹히는
+            # 발문/섹션 탭) 단일 프레임 텍스트만 남은 페이지는 pages의
+            # empty 판정('텍스트 있음')을 비껴간다 (r11 재조판 실측:
+            # p34 어법선택 발문 / p47 영작배열 탭 — 사용자 지목 결함).
+            # 콘텐츠(플랜 단락) 페이지에서 수집한 단일 페이지 스토리
+            # 텍스트와 같은 텍스트 + 공백/번호 프레임만 있는 페이지를
+            # 잔여로 본다. 간지/표지(마스터 없음)와 M 채움 페이지(파트
+            # 경계 — G28이 위치 검증)는 제외.
+            page_texts = {}
+            furn = set()
+            for story in dump.get("stories", []):
+                pgs = story.get("pg") or []
+                txt = _clean("".join(p.get("t", "")
+                                     for p in story.get("paragraphs", [])))
+                for pg in pgs:
+                    page_texts.setdefault(str(pg), []).append(txt)
+                if len(pgs) == 1 and txt and str(pgs[0]) in content_pages:
+                    furn.add(txt)
+            for pe in dump.get("pages") or []:
+                p = str(pe.get("p"))
+                m = str(pe.get("m") or "")
+                if (p in seen_p or p in content_pages
+                        or m in ("", "[None]") or m.startswith("M")):
+                    continue
+                texts = page_texts.get(p)
+                if texts and all((not t) or _RE_BARE_NUM.match(t)
+                                 or t in furn for t in texts):
+                    residual.append({"p": pe.get("p"), "m": pe.get("m")})
+                    seen_p.add(p)
         else:
             empty_prefix = cleanup_op.get("empty_master", "M")
             residual = [e for e in stale
@@ -999,15 +1043,24 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                f"불일치 {len(master_bad)}건: " + " | ".join(master_bad[:5]))
         (critical if strict_masters else warnings).append(msg)
 
-    # ── G27 간지 적합성 (W21 r11) ────────────────────────────────────────
-    # 외부지문 무-p형('N. no.M') 헤더 원고인데 간지가 '고N 모의고사' 라벨.
-    # v1 실물(워크북03(외부지문))도 같은 라벨을 유지한 관행이 있어 warning
-    # (사람 확인 지목 — 자동 치환할 근거 라벨이 실물에 없다).
+    # ── G27 간지 적합성 (W21 r11 → W22 r12 스펙 확정) ────────────────────
+    # 사용자 확정 스펙 (r12 피드백 3, supp 계열): 간지는 업로드 시 입력한
+    # 간지 문구, 미입력이면 교재유형만 표기 (예: '외부지문'). 엔진이
+    # plan.divider.source(user|type)로 계약을 실으면:
+    #   ① '고N 모의고사 / YY년 M월' 잔재 = critical (기대 문구로 갱신됐어야 함)
+    #   ② 간지 라벨 실측(마스터 없는 페이지의 단일 페이지 스토리)이 기대
+    #      문구(line1)와 불일치 = critical (라벨 실측이 없으면 생략 —
+    #      간지 없는 합성 덤프/내지 호환)
+    # source 없는 플랜(본가 모의고사/구출력)은 기존 W21 warning 유지:
+    # 외부지문 무-p형('N. no.M') 원고 + '모의고사' 라벨 → 사람 확인 지목
+    # (v1 실물도 같은 라벨을 유지한 관행 — 자동 치환 근거가 없었다).
     is_nop_manuscript = any(
         _RE_NOP_HEADER.match(_norm_header(p.get("text") or ""))
         for sd in steps.values() if isinstance(sd, dict)
         for p in (sd.get("paragraphs") or []))
-    if is_nop_manuscript:
+    divider_plan = plan.get("divider") or {}
+    supp_divider = divider_plan.get("source") in ("user", "type")
+    if supp_divider or is_nop_manuscript:
         mock_dividers = []
         for story in dump.get("stories", []):
             ps = story.get("paragraphs", [])
@@ -1017,11 +1070,92 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                             _clean(ps[i + 1].get("t", "")))):
                     mock_dividers.append(_clean(ps[i].get("t", "")))
         stats["divider_type_mismatch"] = len(mock_dividers)
-        if mock_dividers:
+        if supp_divider:
+            want_l1 = _clean(divider_plan.get("line1") or "")
+            if mock_dividers:
+                critical.append(
+                    f"[간지적합] 간지 {len(mock_dividers)}개가 모의고사 "
+                    f"라벨 잔재 — 기대 문구 「{want_l1}」 미적용: "
+                    + mock_dividers[0])
+            elif pages_inv and want_l1:
+                # 간지 라벨 실측 대조 — 마스터 없는 페이지의 단일 페이지
+                # 스토리(2단락+, 첫 단락 한글) = 간지 라벨 (실행기
+                # updateDividerPages와 동일 판정 부류)
+                divider_wrong = []
+                for story in dump.get("stories", []):
+                    pgs = story.get("pg") or []
+                    if len(pgs) != 1:
+                        continue
+                    entry = pages_inv.get(str(pgs[0]))
+                    if (not entry
+                            or str(entry.get("m") or "") not in ("",
+                                                                 "[None]")):
+                        continue
+                    ps = story.get("paragraphs", [])
+                    if len(ps) < 2:
+                        continue
+                    t0 = _clean(ps[0].get("t", ""))
+                    if not _RE_HANGUL.search(t0) and t0 != want_l1:
+                        continue
+                    if t0 != want_l1:
+                        divider_wrong.append(f"p{entry.get('p')} 「{t0[:20]}」")
+                stats["divider_label_wrong"] = len(divider_wrong)
+                if divider_wrong:
+                    critical.append(
+                        f"[간지적합] 간지 라벨 {len(divider_wrong)}개가 기대 "
+                        f"문구 「{want_l1}」와 불일치: "
+                        + " | ".join(divider_wrong[:3]))
+        elif is_nop_manuscript and mock_dividers:
             warnings.append(
                 f"[간지적합] 외부지문 원고인데 간지 {len(mock_dividers)}개가 "
                 f"'모의고사' 라벨 — 원고 유형과 불일치 의심 (사람 확인): "
                 + mock_dividers[0])
+
+    # ── G28 파트 경계 정렬 (W22 r12) ─────────────────────────────────────
+    # [원본]워크북_C 실측: 간지 스프레드 = 왼쪽(빈 페이지) + 오른쪽(라벨).
+    # ① 간지 라벨 페이지가 물리 왼쪽(L)이면 파트 경계 채움 페이지 누락 —
+    #    delete 모드(정렬이 실행기 계약)는 critical, 아니면 warning
+    #    (v1 실물도 밀린 간지를 방치한 관행 — W19 D5 주석. 완제품 기준
+    #    으로 폐기, 사용자 확정 스펙: 오른쪽 채움 페이지 = M 마스터 삽입).
+    # ② delete 모드의 M 마스터 페이지는 간지 직전 오른쪽 채움만 허용 —
+    #    그 외 위치의 M 페이지는 빈 페이지 잔재 (W21 '완전 정리' 정책).
+    if pages_inv:
+        div_l1 = _clean((plan.get("divider") or {}).get("line1") or "")
+        boundary_bad = []
+        for story in dump.get("stories", []):
+            pgs = story.get("pg") or []
+            if len(pgs) != 1:
+                continue
+            entry = pages_inv.get(str(pgs[0]))
+            if not entry or str(entry.get("m") or "") not in ("", "[None]"):
+                continue
+            ps = story.get("paragraphs", [])
+            if not ps:
+                continue
+            t0 = _clean(ps[0].get("t", ""))
+            is_label = (div_l1 and t0 == div_l1) or (
+                len(ps) >= 2 and _RE_DIVIDER_L1.match(t0)
+                and _RE_DIVIDER_L2.match(_clean(ps[1].get("t", ""))))
+            if is_label and entry.get("side") == "L":
+                boundary_bad.append(
+                    f"간지 p{entry.get('p')}가 왼쪽 페이지 (오른쪽 채움 누락)")
+        if cleanup_delete:
+            plist = dump.get("pages") or []
+            for i, pe in enumerate(plist):
+                if not str(pe.get("m") or "").startswith("M"):
+                    continue
+                nxt = plist[i + 1] if i + 1 < len(plist) else None
+                ok_pos = (pe.get("side") == "R" and nxt
+                          and str(nxt.get("m") or "") in ("", "[None]"))
+                if not ok_pos:
+                    boundary_bad.append(
+                        f"M 페이지 p{pe.get('p')} 위치 이상 "
+                        f"(간지 직전 오른쪽 채움만 허용)")
+        stats["part_boundary_bad"] = len(boundary_bad)
+        if boundary_bad:
+            msg = (f"[파트경계] 파트 경계 정렬 이상 {len(boundary_bad)}건: "
+                   + " | ".join(boundary_bad[:5]))
+            (critical if cleanup_delete else warnings).append(msg)
 
     # ── G5 step2_a1 상단 / step2_a1_btm 하단 기하 검사 ───────────────────
     flows = {fl["step"]: fl for fl in plan.get("flows", [])}
