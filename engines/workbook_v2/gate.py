@@ -824,14 +824,15 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         (critical if strict_pages else warnings).append(msg)
 
     # ── G4 잔여 페이지 (원고 없는 스텝/남는 사이클) ──────────────────────
+    cleanup_op = (plan.get("page_cleanup")
+                  if isinstance(plan.get("page_cleanup"), dict) else {})
+    cleanup_delete = cleanup_op.get("empty") == "delete"
     stale = dump.get("stale_pages")
     if stale is None:
         warnings.append("[잔여페이지] 덤프에 페이지 정보 없음(구버전 덤프)"
                         " — 재덤프 필요")
     else:
-        cleanup_op = (plan.get("page_cleanup")
-                      if isinstance(plan.get("page_cleanup"), dict) else {})
-        if cleanup_op.get("empty") == "delete":
+        if cleanup_delete:
             # W21 delete 모드: 빈 페이지는 삭제가 계약 — M 마스터 면제 없음.
             # 페이지 인벤토리(pages)의 빈 페이지(프레임 있고 전부 공백 —
             # 스레드 절단 후 단일 프레임 꼬리 포함)도 잔여로 합산 (r11
@@ -841,6 +842,36 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
             for pe in dump.get("pages") or []:
                 if pe.get("empty") and str(pe.get("p")) not in seen_p:
                     residual.append({"p": pe.get("p"), "m": pe.get("m")})
+                    seen_p.add(str(pe.get("p")))
+            # W22 r12: 장식-빈 페이지 합산 — 반복 장식(페이지마다 얹히는
+            # 발문/섹션 탭) 단일 프레임 텍스트만 남은 페이지는 pages의
+            # empty 판정('텍스트 있음')을 비껴간다 (r11 재조판 실측:
+            # p34 어법선택 발문 / p47 영작배열 탭 — 사용자 지목 결함).
+            # 콘텐츠(플랜 단락) 페이지에서 수집한 단일 페이지 스토리
+            # 텍스트와 같은 텍스트 + 공백/번호 프레임만 있는 페이지를
+            # 잔여로 본다. 간지/표지(마스터 없음)와 M 채움 페이지(파트
+            # 경계 — G28이 위치 검증)는 제외.
+            page_texts = {}
+            furn = set()
+            for story in dump.get("stories", []):
+                pgs = story.get("pg") or []
+                txt = _clean("".join(p.get("t", "")
+                                     for p in story.get("paragraphs", [])))
+                for pg in pgs:
+                    page_texts.setdefault(str(pg), []).append(txt)
+                if len(pgs) == 1 and txt and str(pgs[0]) in content_pages:
+                    furn.add(txt)
+            for pe in dump.get("pages") or []:
+                p = str(pe.get("p"))
+                m = str(pe.get("m") or "")
+                if (p in seen_p or p in content_pages
+                        or m in ("", "[None]") or m.startswith("M")):
+                    continue
+                texts = page_texts.get(p)
+                if texts and all((not t) or _RE_BARE_NUM.match(t)
+                                 or t in furn for t in texts):
+                    residual.append({"p": pe.get("p"), "m": pe.get("m")})
+                    seen_p.add(p)
         else:
             empty_prefix = cleanup_op.get("empty_master", "M")
             residual = [e for e in stale

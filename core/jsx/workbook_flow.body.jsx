@@ -386,6 +386,22 @@ function isBlankFrameContent(tf) {
     return c.replace(/[\s\r\n￼]+/g, "").length === 0;
 }
 
+// W22 r12: 장식(반복 발문/섹션 탭) 프레임 텍스트의 정규화 키 — 앵커(￼)/
+// 공백류(em-space 포함) 정리. 플로우 콘텐츠가 있는 페이지에서 수집한 단일
+// 프레임 장식 텍스트와 '같은 텍스트'만 남은 잔여 페이지를 빈 페이지로
+// 판정하기 위한 것 (실사용 0e3108fd 재조판 실측: p34 어법선택 발문
+// "다음 밑줄 친 부분 중 어법상 틀린 것은?", p47 영작배열 섹션 탭이
+// '텍스트 있음'으로 삭제 판정을 비껴가 잔존). 120자 초과는 장식으로 보지
+// 않는다 (본문 오인 방지).
+function furnKeyOf(tf) {
+    var c = "";
+    try { c = String(tf.contents || ""); } catch (e) { return ""; }
+    c = c.replace(/[\s\r\n ￼]+/g, " ");
+    c = c.replace(/^\s+|\s+$/g, "");
+    if (c.length === 0 || c.length > 120) { return ""; }
+    return c;
+}
+
 // 스토리 꼬리의 '배치 밖(overset) 공백' 제거 (W19 c19 실증): 플랜 꼬리의
 // 빈 단락(\r)이 마지막 프레임을 정확히 채운 스토리에서 overset으로 남거나,
 // cleanupPages의 스레드 절단(1b)이 공백 전용 꼬리 프레임을 끊으면서
@@ -519,6 +535,39 @@ function cleanupPages(doc, flowStories, op) {
     for (var fk in flowStories) {
         try { flowIds[String(flowStories[fk].story.id)] = true; } catch (e) {}
     }
+    // W22 r12 (delete 모드): 장식 텍스트 수집 — 플로우 콘텐츠가 있는
+    // 페이지의 단일 프레임 비-플로우 스토리 텍스트. 잔여 페이지에 같은
+    // 텍스트의 반복 장식(페이지마다 얹히는 발문/섹션 탭)만 남으면 아래
+    // 삭제 판정에서 빈 프레임으로 취급한다 (r11 재조판 실측: p34 어법선택
+    // 발문 / p47 영작배열 탭이 '텍스트 있음'으로 판정을 비껴가 잔존 —
+    // 사용자 지목 결함). 간지/표지 텍스트는 플로우 콘텐츠 페이지에
+    // 등장하지 않으므로 수집되지 않는다 (보존 — 기존 동작 무변경).
+    var furn = {};
+    if (deleteEmpty) {
+        for (var gp = cleanStart; gp < doc.pages.length; gp++) {
+            var gtfs = doc.pages[gp].textFrames;
+            var gHasFlow = false;
+            for (var gi = 0; gi < gtfs.length; gi++) {
+                try {
+                    if (flowIds[String(gtfs[gi].parentStory.id)]
+                            && !isBlankFrameContent(gtfs[gi])) {
+                        gHasFlow = true;
+                        break;
+                    }
+                } catch (e) {}
+            }
+            if (!gHasFlow) { continue; }
+            for (var gj = 0; gj < gtfs.length; gj++) {
+                try {
+                    var gst = gtfs[gj].parentStory;
+                    if (flowIds[String(gst.id)]) { continue; }
+                    if (gst.textContainers.length !== 1) { continue; }
+                    var gk = furnKeyOf(gtfs[gj]);
+                    if (gk) { furn[gk] = true; }
+                } catch (e) {}
+            }
+        }
+    }
     var removed = 0;
     var scanned = 0;
     for (var dp = doc.pages.length - 1; dp >= 0; dp--) {
@@ -547,7 +596,19 @@ function cleanupPages(doc, flowStories, op) {
             var frameBlank = isBlankFrameContent(tfs[tf]);
             var frameBareNum = (nConts === 1
                                 && RE_BARE_NUM.test(String(pst.contents || "")));
-            if (!frameBlank && !frameBareNum) { allBlankOrNum = false; }
+            // W22 r12 (delete 모드): 수집된 반복 장식 텍스트와 같은 단일
+            // 프레임(발문/섹션 탭)은 빈 프레임 취급 — p34/p47류 잔존 교정
+            var frameFurn = false;
+            if (deleteEmpty && !frameBlank && nConts === 1) {
+                var fkey = "";
+                try {
+                    if (!flowIds[String(pst.id)]) { fkey = furnKeyOf(tfs[tf]); }
+                } catch (eF) {}
+                frameFurn = !!(fkey && furn[fkey]);
+            }
+            if (!frameBlank && !frameBareNum && !frameFurn) {
+                allBlankOrNum = false;
+            }
             if (nConts > 1) {
                 hasLocal = true;
                 if (!frameBlank) { allBlank = false; }

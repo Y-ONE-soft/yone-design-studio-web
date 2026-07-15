@@ -215,7 +215,9 @@ def test_gate_detects_user_defects(bad_report):
     assert rep["stats"]["frame_break_plan_fail"] == 4
     assert rep["stats"]["prompt_gap_blanks"] == 4
     # 84 (M 마스터 빈 STEP3) + 2 (stale 판정 밖 빈 페이지 — pages 인벤토리)
-    assert rep["stats"]["stale_pages"] == 86
+    # + 1 (W22 G4 확장 — 장식-빈 페이지: p45 '영작 배열' 섹션 탭만 남은
+    #      잔여 페이지. r12 사용자 지목 p34/p47류의 원본 출력 내 소급 검출)
+    assert rep["stats"]["stale_pages"] == 87
     assert rep["stats"]["section_master_bad"] >= 5
 
 
