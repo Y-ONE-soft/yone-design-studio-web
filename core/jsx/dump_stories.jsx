@@ -95,6 +95,7 @@ try {
         var pgs = [];
         var b0 = null;
         var fcs = [];
+        var fps = [];
         try {
             var tc2 = st.textContainers;
             var seenPg = {};
@@ -108,6 +109,9 @@ try {
                     }
                 } catch (e) {}
                 fcs.push(String(fci));
+                // W23 additive: fp = 프레임별 페이지 이름 (fc와 병렬 —
+                // 게이트 G30이 단락→페이지 실측에 사용. 페이지 밖은 "").
+                fps.push("\"" + esc(ppg ? String(ppg.name) : "") + "\"");
                 if (!ppg) { continue; }
                 var pnm = String(ppg.name);
                 if (!seenPg[pnm]) { seenPg[pnm] = true; pgs.push("\"" + esc(pnm) + "\""); }
@@ -121,6 +125,7 @@ try {
                  (ovf ? "true" : "false") +
                  ",\"pg\":[" + pgs.join(",") + "]" +
                  ",\"fc\":[" + fcs.join(",") + "]" +
+                 ",\"fp\":[" + fps.join(",") + "]" +
                  (b0 !== null ? ",\"b\":" + b0 : "") +
                  ",\"paragraphs\":[" + sb.join(",") + "]}");
     }
@@ -185,9 +190,44 @@ try {
                            "\",\"empty\":" + (iEmpty ? "true" : "false") + "}");
         }
     } catch (e) {}
+    // W23 additive: 폰트 인벤토리 — 게이트 G29(글리프 커버리지)가 폰트
+    // 파일(location)의 cmap을 실측하는 데 쓴다. fonts = 문서 사용 폰트
+    // (name은 "패밀리\t스타일"), style_fonts = 단락스타일별 적용 폰트.
+    var fontsInfo = [];
+    try {
+        var dfs = doc.fonts.everyItem().getElements();
+        for (var dfi = 0; dfi < dfs.length; dfi++) {
+            var fnm = "", floc = "", fst = "";
+            try { fnm = String(dfs[dfi].name); } catch (e) {}
+            try {
+                floc = dfs[dfi].location ? String(dfs[dfi].location) : "";
+            } catch (e) {}
+            try { fst = String(dfs[dfi].status); } catch (e) {}
+            fontsInfo.push("{\"n\":\"" + esc(fnm) + "\",\"loc\":\"" +
+                           esc(floc) + "\",\"st\":\"" + esc(fst) + "\"}");
+        }
+    } catch (e) {}
+    var styleFonts = [];
+    try {
+        var aps = doc.allParagraphStyles;
+        for (var api = 0; api < aps.length; api++) {
+            var sfull = "", sfam = "", ssty = "";
+            try { sfull = styleFullName(aps[api]); } catch (e) {}
+            if (!sfull) { continue; }
+            try {
+                var af = aps[api].appliedFont;
+                sfam = (typeof af == "string") ? af : String(af.fontFamily);
+            } catch (e) {}
+            try { ssty = String(aps[api].fontStyle); } catch (e) {}
+            styleFonts.push("{\"s\":\"" + esc(sfull) + "\",\"f\":\"" +
+                            esc(sfam) + "\",\"fs\":\"" + esc(ssty) + "\"}");
+        }
+    } catch (e) {}
     buf.push("],\"overflow_stories\":" + overflowCount +
              ",\"page_count\":" + doc.pages.length +
              ",\"pages\":[" + pagesInfo.join(",") + "]" +
+             ",\"fonts\":[" + fontsInfo.join(",") + "]" +
+             ",\"style_fonts\":[" + styleFonts.join(",") + "]" +
              ",\"stale_pages\":[" + stale.join(",") + "]}");
     var out = new File(OUT);
     out.encoding = "UTF-8";

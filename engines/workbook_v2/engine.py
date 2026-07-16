@@ -257,15 +257,22 @@ class WorkbookV2Engine(BaseEngine):
         잔재('고2 모의고사 / 26년 3월')가 그대로 납품됐다 (c20 실증 +
         c04/c05 소급 검출 — 게이트 G22). 파생 엔진(supp/교과서/EBS)은
         이 훅을 전부 오버라이드하고 수능특강/세로는 자체 prepare라
-        미호출 — 이 변경은 본가 전용."""
-        deco = {"page_cleanup": {"empty_master": "M"}}
+        미호출 — 이 변경은 본가 전용.
+        question_keep(W23 r13 F4): 문제 단위 펼침면 킵 — step3 문제가
+        오른쪽 페이지에서 잘려 다음 장으로 이어지면 다음 페이지로 밀기.
+        True 센티널은 prepare_jsx가 플랜 완성 후 question_keep_op로
+        확장한다 (opt-in — supp+본가만 활성, 파생 엔진 플랜 무변경)."""
+        deco = {"page_cleanup": {"empty_master": "M"},
+                "question_keep": True}
         deco.update(_mockexam_divider(job_dir))
         return deco
 
     # ── 2단계: prepare_jsx — 플랜 빌드 + 템플릿 복사 + JSX 생성 ─────────────
 
     def prepare_jsx(self, json_path, job_dir, log):
-        from engines.workbook_v2.plan import steps_to_plan, ensure_step3_kinds
+        from engines.workbook_v2.plan import (steps_to_plan,
+                                              ensure_step3_kinds,
+                                              question_keep_op)
 
         cfg = self._load_cfg()
         grade = self._read_meta(job_dir, "grade", 1)
@@ -289,6 +296,18 @@ class WorkbookV2Engine(BaseEngine):
                              workbook_type=workbook_type,
                              step_map=self._step_map())
         plan.update(self._plan_decorations(job_dir, cfg))
+        # W23 r13 F4 — question_keep 센티널(True) 확장: 데코 훅은 플랜
+        # (flows)을 못 보므로 여기서 문제 시작 인덱스/스타일 계약을 계산해
+        # 치환한다 (대상 스텝에 시작점이 없으면 키 제거 — 실행기 no-op).
+        if plan.get("question_keep") is True:
+            qk = question_keep_op(plan)
+            if qk:
+                plan["question_keep"] = qk
+                log("[v2] 문제단위킵: step3 문제 시작 "
+                    + str(sum(len(v.get("starts") or [])
+                              for v in qk["flows"].values())) + "개 계약")
+            else:
+                plan.pop("question_keep", None)
         plan_path = os.path.abspath(os.path.join(job_dir, "render_plan.json"))
         with open(plan_path, "w", encoding="utf-8") as f:
             json.dump(plan, f, ensure_ascii=False)

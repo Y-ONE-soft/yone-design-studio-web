@@ -1,0 +1,6 @@
+{
+ "engine": "workbook_supp_v2",
+ "source_job": "6c1430c3",
+ "note": "W23 r13 — 실사용 3차 피드백 원고: 공통영어1 능률(민) Unit.3 추가지문 워크북 (부교재 supp, _default 내지, filename_stem '1'). '[N과 추가지문]' bracket 헤더 + CO₂ 아래첨자(U+2082) 151건 + step3 단일 아이템 127단락(문제 24개). 피드백 4건(간지 '모의고사' 오라벨/짤지문 고아 간지/₂ 글리프 미표시/문제 오른쪽→다음 장 걸침)의 코퍼스. 골든 content.json은 job 6c1430c3 파서 산출(파서 무변경 — 아래첨자는 플랜 계층 치환이라 골든에 ₂ 보존).",
+ "golden_regenerated": {}
+}

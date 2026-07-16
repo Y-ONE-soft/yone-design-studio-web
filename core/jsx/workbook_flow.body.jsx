@@ -447,6 +447,32 @@ function trimWsOverset(story) {
     } catch (e) { return 0; }
 }
 
+// 스토리 오버플로우 시 마스터 유지 페이지 추가 (v1 ensureNoOverflow 의미론
+// — W4 processFlow 인라인을 W23에서 함수화: 문제단위킵 밀기 패스도 공용).
+// safety 상한 60 (W12): 123문제 변형문제 문제모음이 상한 10을 넘겨 초과분이
+// overset(미인쇄)으로 잘렸다. 상한은 무한 루프 가드일 뿐 실제 반복 수는
+// 오버플로우 해소 시점이 결정 — 기존 케이스 무영향. 반환 = 추가 페이지 수.
+function expandStoryOverflow(doc, label, story) {
+    var conts = story.textContainers;
+    var lastF = conts[conts.length - 1];
+    var safety = 0;
+    while (lastF.overflows && safety < 60) {
+        var lp = lastF.parentPage;
+        var gb = lastF.geometricBounds;
+        var np = doc.pages.add(LocationOptions.AFTER, lp);
+        try { np.appliedMaster = lp.appliedMaster; } catch (e) {}
+        var ntf = np.textFrames.add();
+        ntf.geometricBounds = [gb[0], gb[1], gb[2], gb[3]];
+        lastF.nextTextFrame = ntf;
+        lastF = ntf;
+        safety++;
+        if (safety % 10 === 0) {
+            wlog(label + " 오버플로우 페이지 확장 진행: +" + safety);
+        }
+    }
+    return safety;
+}
+
 function cleanupPages(doc, flowStories, op) {
     // W21 r11: op.empty === "delete" — 빈 STEP3 페이지를 M 마스터 재할당
     // 대신 삭제한다 (실사용 0e3108fd: 빈 M 페이지 84개 잔존이 사용자 지목
@@ -645,6 +671,14 @@ function cleanupPages(doc, flowStories, op) {
     wlog("페이지 정리: 잔여 스텝/사이클 페이지 " + removed + "개 삭제"
          + (deleteEmpty ? " (STEP3 빈 페이지 포함 — delete 모드)" : ""));
 
+    // 2a-2) W23 r13 (delete 모드): 고아 간지 스프레드 삭제 — 간지 라벨 뒤에
+    // 다음 간지/문서 끝까지 플로우 콘텐츠가 없으면 사용되지 않는 섹션의
+    // 간지 잔재다 (r13 피드백 F2: 짤지문 간지 p34~35 잔존 — 짤지문 섹션은
+    // v2가 콘텐츠를 배치하지 않는 템플릿 영역. 이 라벨 페이지는 섹션
+    // 마스터(O)가 적용돼 있어 isDividerLabelPage/updateDividerPages의
+    // 마스터-없음 판정을 전부 비껴간다 — [원본]워크북_C p263 실측).
+    if (deleteEmpty) { removeOrphanDividers(doc, flowIds); }
+
     // 2b) W22 r12 (delete 모드): 파트 경계 정렬 — 페이지 삭제로 간지
     // 라벨이 물리 왼쪽 페이지로 밀렸으면 간지 스프레드 앞에 M(메모)
     // 마스터 채움 페이지 1장을 삽입해 복원한다 (사용자 확정 스펙:
@@ -781,6 +815,180 @@ function alignPartFillers(doc) {
     }
 }
 // [W22 파트경계 유틸 끝]
+
+// ── W23 r13: 고아 간지 스프레드 삭제 (delete 모드의 cleanupPages가 호출) ────
+// 간지 라벨 후보 = 로컬 프레임 1개 + 비-플로우 단일 프레임 스토리 + 단락
+// 2개 이상 + 첫 단락 한글 + 전체 40자 미만 (마스터 불문 — 짤지문 간지는
+// 섹션 마스터(O)가 적용된 채 존재. 게이트 G28③과 동일 부류). 발문/장식
+// 프레임은 단락 1개, 본문은 40자 초과라 걸리지 않는다.
+function isDividerLabelLike(pg, flowIds) {
+    if (pg.textFrames.length !== 1) { return false; }
+    var tf = pg.textFrames[0];
+    var st = null;
+    try { st = tf.parentStory; } catch (e) { return false; }
+    if (flowIds && flowIds[String(st.id)]) { return false; }
+    try { if (st.textContainers.length !== 1) { return false; } }
+    catch (e2) { return false; }
+    var ps = null;
+    try { ps = tf.paragraphs; } catch (e3) { return false; }
+    if (!ps || ps.length < 2) { return false; }
+    var whole = "";
+    try { whole = String(st.contents || ""); } catch (e4) {}
+    if (whole.replace(/[\s\r\n￼]+/g, "").length === 0) { return false; }
+    if (whole.length > 40) { return false; }
+    var t1 = "";
+    try { t1 = String(ps[0].contents || ""); } catch (e5) {}
+    return /[가-힣]/.test(t1);
+}
+
+function removeOrphanDividers(doc, flowIds) {
+    var pagesArr = doc.pages.everyItem().getElements();
+    var info = [];
+    for (var i = 0; i < pagesArr.length; i++) {
+        var pg = pagesArr[i];
+        var hasFlow = false;
+        var tfs = pg.textFrames;
+        for (var j = 0; j < tfs.length; j++) {
+            try {
+                if (flowIds[String(tfs[j].parentStory.id)]
+                        && !isBlankFrameContent(tfs[j])) {
+                    hasFlow = true;
+                    break;
+                }
+            } catch (e) {}
+        }
+        info.push({ pg: pg, label: isDividerLabelLike(pg, flowIds),
+                    flow: hasFlow });
+        if ((i + 1) % 40 === 0) {
+            wlog("고아 간지 검사 진행: " + (i + 1) + "/" + pagesArr.length);
+        }
+    }
+    var removed = 0;
+    for (var k = info.length - 1; k >= 0; k--) {
+        if (!info[k].label) { continue; }
+        var orphan = true;
+        for (var m = k + 1; m < info.length; m++) {
+            if (info[m].label) { break; }
+            if (info[m].flow) { orphan = false; break; }
+        }
+        if (!orphan) { continue; }
+        // 동반 왼쪽 빈 페이지(프레임 0 또는 전부 공백, 라벨/플로우 아님)도
+        // 함께 삭제 — 스프레드 좌우 짝수 유지 (뒤 간지 정렬 무영향).
+        var names = [String(info[k].pg.name)];
+        var companion = null;
+        if (k > 0 && !info[k - 1].label && !info[k - 1].flow) {
+            var ptfs = info[k - 1].pg.textFrames;
+            var blank = true;
+            for (var q = 0; q < ptfs.length; q++) {
+                if (!isBlankFrameContent(ptfs[q])) { blank = false; break; }
+            }
+            if (blank) {
+                companion = info[k - 1].pg;
+                names.unshift(String(companion.name));
+            }
+        }
+        try {
+            info[k].pg.remove();
+            if (companion) { companion.remove(); }
+            removed++;
+            wlog("고아 간지 스프레드 삭제: p" + names.join(", p")
+                 + " (뒤따르는 콘텐츠 없음)");
+        } catch (e6) {
+            wlog("[경고] 고아 간지 삭제 실패: " + e6);
+        }
+    }
+    wlog("고아 간지 스프레드: " + removed + "개 삭제");
+}
+
+// ── W23 op: 문제 단위 펼침면 킵 (plan.question_keep — opt-in) ───────────────
+// 사용자 확정 스펙 (r13 피드백 F4): 한 문제(발문+지문+선지 전체)가 왼쪽→
+// 오른쪽 페이지로 이어지는 것은 허용, 오른쪽 페이지에서 잘려 다음 장
+// (스프레드 넘김)으로 이어지는 것은 금지 — 그 문제 전체를 다음 페이지로
+// 민다. 문제 시작 인덱스는 플랜이 계산(question_keep.flows[step].starts —
+// plan.question_keep_op, 발문/그룹 인트로 스타일 단락. 인덱스 0 제외).
+// 밀기 = NEXT_PAGE startParagraph (텍스트 무삽입 — 검수 1:1 대조 유지).
+// 캐스케이드: 한 건 밀 때마다 recompose + 재실측, 상한 = 시작점 수×2+10.
+// 왼쪽에서 시작하고도 스프레드를 넘는 문제(한 문제가 2페이지 초과)는
+// 밀어도 해소 불가 — 경고 지목만. 밀어낸 결과 생기는 페이지 하단 공백은
+// 허용(스펙), 스토리 끝 오버플로우는 expandStoryOverflow로 즉시 확장.
+function spreadIdOf(doc, pg) {
+    // 물리 스프레드 번호 — 비대면 문서는 documentOffset 홀짝 (offset 0 =
+    // p1 = 오른쪽 단독 스프레드 0). pageSideOf와 동일 판정 계열.
+    try { return Math.floor((pg.documentOffset + 1) / 2); } catch (e) {}
+    return -1;
+}
+
+function enforceQuestionKeep(doc, flowStories, op) {
+    var flowsCfg = (op && op.flows) || {};
+    for (var step in flowsCfg) {
+        var rec = flowStories[step];
+        if (!rec) { continue; }
+        var story = rec.story;
+        var starts = flowsCfg[step].starts || [];
+        if (starts.length === 0) { continue; }
+        var pushed = 0;
+        var skipped = 0;
+        var iter = 0;
+        var noFix = {};
+        var limit = starts.length * 2 + 10;
+        while (iter < limit) {
+            iter++;
+            try { story.recompose(); } catch (e0) {}
+            var paras = story.paragraphs.everyItem().getElements();
+            var hit = -1;
+            for (var k = 0; k < starts.length; k++) {
+                if ((k + 1) % 40 === 0) {
+                    wlog("문제단위킵 검사 진행: " + step + " "
+                         + (k + 1) + "/" + starts.length);
+                }
+                var si = starts[k];
+                if (si <= 0 || si >= paras.length || noFix[si]) { continue; }
+                var ei = (k + 1 < starts.length
+                          && starts[k + 1] <= paras.length)
+                    ? starts[k + 1] - 1 : paras.length - 1;
+                var sf = null, ef = null;
+                try { sf = paras[si].parentTextFrames[0]; } catch (e1) {}
+                try {
+                    var efs = paras[ei].parentTextFrames;
+                    ef = efs[efs.length - 1];
+                } catch (e2) {}
+                if (!sf || !ef) { continue; }   // overset — 확장이 처리
+                var sp = null, ep = null;
+                try { sp = sf.parentPage; ep = ef.parentPage; } catch (e3) {}
+                if (!sp || !ep) { continue; }
+                if (spreadIdOf(doc, ep) <= spreadIdOf(doc, sp)) { continue; }
+                if (pageSideOf(doc, sp) !== "R") {
+                    // 왼쪽 시작 + 스프레드 초과 — 밀어도 해소 불가
+                    noFix[si] = true;
+                    skipped++;
+                    wlog("[경고] 문제단위킵: " + step + " 단락 " + si
+                         + " 문제가 스프레드 초과 (왼쪽 시작) — 밀기로 해소"
+                         + " 불가, 수동 확인");
+                    continue;
+                }
+                hit = k;
+                break;
+            }
+            if (hit < 0) { break; }
+            try {
+                paras[starts[hit]].startParagraph = StartParagraph.NEXT_PAGE;
+                pushed++;
+                wlog("문제단위킵: " + step + " 단락 " + starts[hit]
+                     + " 다음 페이지로 밀기 (" + pushed + "건째)");
+            } catch (e4) {
+                noFix[starts[hit]] = true;
+                wlog("[경고] 문제단위킵 밀기 실패(단락 " + starts[hit]
+                     + "): " + e4);
+            }
+            var grew = expandStoryOverflow(doc, step + " 문제단위킵", story);
+            if (grew > 0) {
+                wlog(step + " 문제단위킵: 오버플로우 페이지 +" + grew);
+            }
+        }
+        wlog("문제단위킵: " + step + " 밀기 " + pushed + "건 / 해소 불가 "
+             + skipped + "건");
+    }
+}
 
 // ── W21 op: 섹션 시작 좌/우 마스터 정합 (plan.section_masters가 있을 때만) ──
 // 페이지 정리로 섹션 시작이 좌→우(또는 우→좌)로 밀리면 시작 페이지 마스터를
@@ -1009,14 +1217,25 @@ try {
                 } catch (e) {}
             }
             var runs = flat[pi].runs;
-            if (runs && runs.length > 0 && csUL) {
+            if (runs && runs.length > 0) {
                 var off = 0;
                 for (var ri = 0; ri < runs.length; ri++) {
                     var rl = runs[ri].t ? runs[ri].t.length : 0;
-                    if (rl > 0 && runs[ri].ul) {
+                    if (rl > 0 && (runs[ri].ul || runs[ri].sub)) {
                         var a = off, b = off + rl - 1;
                         if (a < paras[pi].characters.length && b < paras[pi].characters.length) {
-                            paras[pi].characters.itemByRange(a, b).appliedCharacterStyle = csUL;
+                            if (runs[ri].ul && csUL) {
+                                paras[pi].characters.itemByRange(a, b).appliedCharacterStyle = csUL;
+                            }
+                            // W23 F3: 아래첨자 run — Position 속성 직접
+                            // 적용 (문자스타일 아님, 자동 생성 금지 규칙
+                            // 무관. 플랜 SUBSCRIPT_PRINT_TABLE의 ₂→2 치환
+                            // 짝 — 어떤 폰트에서든 렌더 가능).
+                            if (runs[ri].sub) {
+                                try {
+                                    paras[pi].characters.itemByRange(a, b).position = Position.SUBSCRIPT;
+                                } catch (eSub) {}
+                            }
                         }
                     }
                     off += rl;
@@ -1058,23 +1277,7 @@ try {
         if (wsTrim > 0) {
             wlog(flow.step + ": 꼬리 공백 overset " + wsTrim + "자 정리");
         }
-        var conts = story.textContainers;
-        var lastF = conts[conts.length - 1];
-        var safety = 0;
-        while (lastF.overflows && safety < 60) {
-            var lp = lastF.parentPage;
-            var gb = lastF.geometricBounds;
-            var np = doc.pages.add(LocationOptions.AFTER, lp);
-            try { np.appliedMaster = lp.appliedMaster; } catch (e) {}
-            var ntf = np.textFrames.add();
-            ntf.geometricBounds = [gb[0], gb[1], gb[2], gb[3]];
-            lastF.nextTextFrame = ntf;
-            lastF = ntf;
-            safety++;
-            if (safety % 10 === 0) {
-                wlog(flow.step + " 오버플로우 페이지 확장 진행: +" + safety);
-            }
-        }
+        var safety = expandStoryOverflow(doc, flow.step, story);
         if (safety > 0) { wlog(flow.step + ": 오버플로우 페이지 +" + safety); }
     }
 
@@ -1103,6 +1306,21 @@ try {
                              ? plan.page_cleanup : {});
         }, ScriptLanguage.JAVASCRIPT, undefined,
            UndoModes.ENTIRE_SCRIPT, "wb_v2 page_cleanup");
+    }
+    if (plan.question_keep && plan.question_keep.flows) {
+        // W23 r13 F4 — 반드시 page_cleanup 이후 (삭제 전에 밀면 push로 빈
+        // 페이지가 생기고 정리가 그 페이지를 지우며 좌우가 되밀리는 순환).
+        // 밀기/확장으로 뒤 간지 정렬이 변할 수 있어 delete 모드는
+        // alignPartFillers를 재실행한다 (멱등 — 라벨이 왼쪽일 때만 삽입).
+        app.doScript(function () {
+            enforceQuestionKeep(doc, flowStories, plan.question_keep);
+            if (plan.page_cleanup
+                    && (typeof plan.page_cleanup === "object")
+                    && plan.page_cleanup.empty === "delete") {
+                alignPartFillers(doc);
+            }
+        }, ScriptLanguage.JAVASCRIPT, undefined,
+           UndoModes.ENTIRE_SCRIPT, "wb_v2 question_keep");
     }
     if (plan.section_masters) {
         app.doScript(function () { fixSectionMasters(doc, flowStories); },

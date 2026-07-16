@@ -131,19 +131,41 @@
                   아니면 warning (W22 r12 — 사용자 확정 스펙: 파트 경계
                   오른쪽 채움 페이지는 삭제가 아니라 M 마스터 삽입).
 
+  G27 확장 (W23 r13 F1): supp 계약(plan.divider.source)에서 '모의고사'는
+                  어떤 경우에도 자동(type)으로 나가면 안 된다 — 유형 판정
+                  실패의 메타 기본값 추락이면 중립 '부교재'가 계약 (job
+                  6c1430c3 실증: '[N과 추가지문]' 원고 간지가 '모의고사'로
+                  인쇄). source=type + line1='모의고사' = critical.
+  G28③ 고아 간지 (W23 r13 F2): 간지 라벨 뒤에 다음 간지/문서 끝까지 플로우
+                  콘텐츠 페이지가 없으면 사용되지 않는 섹션의 간지 잔재 —
+                  delete 모드 critical (스프레드 삭제가 실행기 계약), 아니면
+                  warning (6c1430c3 실증: 짤지문 간지 p34~35 잔존 — 라벨
+                  페이지에 섹션 마스터(O)가 적용돼 기존 간지 판정을 전부
+                  비껴갔다).
+  G29 [글리프커버리지] (W23 r13 F3): ① 아래첨자 인쇄 매핑(SUBSCRIPT_
+                  PRINT_TABLE) 등재 문자 잔존 = critical (치환 미적용 출력
+                  소급 — G10 확장 패턴), ② 스타일 적용 폰트의 cmap 실측
+                  (core.fontcov)으로 글리프 미지원 문자 warning 지목 —
+                  PUA(G10)와 별개의 '폰트 커버리지' 부류.
+  G30 [문제단위킵] (W23 r13 F4): 한 문제(발문+지문+선지)가 오른쪽 페이지
+                  에서 잘려 다음 장으로 이어짐 — question_keep 계약 플랜은
+                  critical, 구출력은 warning 소급 지목. 스프레드 초과
+                  문제(밀기로 해소 불가)는 warning.
+
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
-G24②/G26은 W21 확장 필드(fc / pages)가 필요하다. 구버전 덤프에는 경고로만
-보고한다 (재덤프 안내). G9는 uploads_dir를 넘긴 경우에만 검사한다 (오프라인
-플랜 테스트 호환).
+G24②/G26은 W21 확장 필드(fc / pages)가 필요하다. G29②는 W23 확장 필드
+(fonts / style_fonts), G30은 W23 확장 필드(fp — 프레임별 페이지, fc 병렬)가
+필요하다. 구버전 덤프에는 경고로만 보고한다 (재덤프 안내). G9는 uploads_dir를
+넘긴 경우에만 검사한다 (오프라인 플랜 테스트 호환).
 """
 import os
 import re
 import unicodedata
 
 from core.inspect import find_leaked_answers
-from engines.workbook_v2.plan import (PUA_PRINT_TABLE, is_header_line,
-                                      is_a1_header, passage_labels,
-                                      _norm_header)
+from engines.workbook_v2.plan import (PUA_PRINT_TABLE, SUBSCRIPT_PRINT_TABLE,
+                                      is_header_line, is_a1_header,
+                                      passage_labels, _norm_header)
 
 _RE_BARE_NUM = re.compile(r"^\d{1,3}(?:\s*~\s*\d{1,3})?$")
 # G21 — 원문자 선지 번호 (①~⑮: 지문 inline 번호도 같은 집합)
@@ -246,10 +268,17 @@ def _is_pua(ch):
             or 0x100000 <= cp <= 0x10FFFD)
 
 
+# W23 F3 — 플랜↔덤프 대조용 아래첨자 정규화: 플랜이 ₂→2(+sub run)로
+# 치환하므로 구출력(₂ 그대로)과 신플랜(2)의 텍스트 매칭이 어긋난다.
+# _clean에서 양쪽을 ASCII 숫자로 통일 (G29의 잔존 검출은 원문 p["t"]를
+# 직접 스캔하므로 이 정규화와 무관).
+_SUB_NORM_TABLE = str.maketrans(SUBSCRIPT_PRINT_TABLE)
+
+
 def _clean(t):
     """덤프 단락 텍스트 정규화 — 앵커(￼)/개행 제거 + 공백 정리."""
     t = unicodedata.normalize("NFC", t or "")
-    t = t.replace("￼", "")
+    t = t.replace("￼", "").translate(_SUB_NORM_TABLE)
     return _norm_header(t)
 
 
@@ -1060,6 +1089,17 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         for p in (sd.get("paragraphs") or []))
     divider_plan = plan.get("divider") or {}
     supp_divider = divider_plan.get("source") in ("user", "type")
+    # W23 r13 (F1 — 사용자 확정 스펙 강화): supp 계열(source 계약)에서
+    # '모의고사'는 어떤 경우에도 자동(type)으로 나가면 안 된다 — 유형 판정
+    # 실패의 메타 기본값 추락 (job 6c1430c3 실증: '[N과 추가지문]' 헤더
+    # 원고가 무-p형 감지에 안 잡혀 간지가 '모의고사'로 인쇄). 판정 불가면
+    # 중립 '부교재'가 계약. 사용자가 직접 입력(source=user)한 문구는 무관.
+    if (divider_plan.get("source") == "type"
+            and _clean(divider_plan.get("line1") or "") == "모의고사"):
+        critical.append(
+            "[간지적합] supp 간지 계약 위반 — 교재유형 자동 판정이 "
+            "'모의고사' (supp에서 '모의고사' 자동 라벨 금지 — 판정 불가면 "
+            "'부교재', r13 F1)")
     if supp_divider or is_nop_manuscript:
         mock_dividers = []
         for story in dump.get("stories", []):
@@ -1156,6 +1196,217 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
             msg = (f"[파트경계] 파트 경계 정렬 이상 {len(boundary_bad)}건: "
                    + " | ".join(boundary_bad[:5]))
             (critical if cleanup_delete else warnings).append(msg)
+
+        # ── G28③ 고아 간지 스프레드 (W23 r13 — F2) ──────────────────────
+        # 간지 라벨 뒤에 다음 간지/문서 끝까지 플로우 콘텐츠 페이지가 하나도
+        # 없으면 그 간지는 사용되지 않는 섹션의 잔재다 (job 6c1430c3 실증:
+        # '고2 모의고사/26년 3월 짤지문' 간지 스프레드 p34~35 — 짤지문
+        # 섹션은 v2가 콘텐츠를 배치하지 않는 템플릿 영역이라 delete 모드가
+        # 내용 페이지를 전부 지운 뒤에도 라벨만 남는다. 이 라벨 페이지는
+        # 섹션 마스터(O)가 적용돼 있어 마스터-없음 기준의 간지 판정/갱신을
+        # 전부 비껴간다 — [원본]워크북_C p263 실측). 라벨 후보 = 단일 페이지
+        # 비-플로우 스토리 + 2단락 이상 + 첫 단락 한글 + 전체 40자 미만
+        # (실행기 removeOrphanDividers와 동일 부류 — 마스터 불문).
+        # delete 모드(스프레드 삭제가 실행기 계약)는 critical, 아니면
+        # warning (v1/M-모드 실물도 잔존 관행 — 소급은 지목만).
+        page_ord = {str(e.get("p")): i
+                    for i, e in enumerate(dump.get("pages") or [])}
+        label_cands = {}
+        for story in dump.get("stories", []):
+            pgs = story.get("pg") or []
+            if len(pgs) != 1 or str(pgs[0]) not in page_ord:
+                continue
+            ps = story.get("paragraphs", [])
+            if len(ps) < 2:
+                continue
+            whole = _clean("".join(p.get("t", "") for p in ps))
+            if not whole or len(whole) > 40:
+                continue
+            t0 = _clean(ps[0].get("t", ""))
+            if not _RE_HANGUL.search(t0):
+                continue
+            if any(_clean(p.get("t", "")) in plan_texts
+                   for p in ps if len(_clean(p.get("t", ""))) >= 4):
+                continue          # 플로우 콘텐츠(원고 단락)와 겹침 — 제외
+            label_cands[page_ord[str(pgs[0])]] = (str(pgs[0]), t0)
+        content_ord = sorted(page_ord[p] for p in content_pages
+                             if p in page_ord)
+        if not content_ord:
+            label_cands = {}      # 콘텐츠 페이지 0 (합성 덤프/빈 플랜) — 생략
+        orphan_div = []
+        for oi in sorted(label_cands):
+            nxt = [x for x in label_cands if x > oi]
+            hi = min(nxt) if nxt else len(page_ord)
+            if not any(oi < c < hi for c in content_ord):
+                pname, t0 = label_cands[oi]
+                orphan_div.append(f"p{pname} 「{t0[:20]}」")
+        stats["orphan_dividers"] = len(orphan_div)
+        if orphan_div:
+            msg = (f"[파트경계] 고아 간지 {len(orphan_div)}개 — 뒤따르는 "
+                   f"콘텐츠 없음 (스프레드 삭제 대상): "
+                   + " | ".join(orphan_div[:5]))
+            (critical if cleanup_delete else warnings).append(msg)
+
+    # ── G29 글리프 커버리지 (W23 r13 — F3) ───────────────────────────────
+    # ① 아래첨자 인쇄 매핑(plan.SUBSCRIPT_PRINT_TABLE) 등재 문자의 출력
+    #    잔존 = critical — 현행 플랜은 이 문자를 ASCII 숫자+아래첨자 서식
+    #    run으로 치환하므로 잔존 = 매핑 미적용 출력 (G10 확장의 PUA 테이블
+    #    과 동일 패턴. job 6c1430c3 소급: CO₂의 U+2082 151건이 글리프 없는
+    #    폰트로 인쇄 — 사용자 지목 결함).
+    # ② 그 외 특수문자(U+2000~2BFF, PUA 제외)는 덤프의 스타일→폰트 매핑
+    #    (style_fonts/fonts — W23 확장 필드)과 폰트 파일 cmap 실측으로
+    #    '적용 폰트가 글리프 미지원'만 warning 지목 (근거 없는 자동 치환
+    #    금지 — PUA(G10)와 별개의 '폰트 커버리지' 부류). 폰트 정보 없는
+    #    구버전 덤프는 ②를 생략한다 (fail-open).
+    sub_resid = {}
+    for t, _s in _dump_paras(dump):
+        for ch in t:
+            if ch in SUBSCRIPT_PRINT_TABLE:
+                sub_resid[ch] = sub_resid.get(ch, 0) + 1
+    stats["subscript_residue"] = sum(sub_resid.values())
+    if sub_resid:
+        # 치환된 플랜(등재 문자 0)의 출력에 잔존 = 매핑 미적용 = critical.
+        # 플랜 자체에 등재 문자가 남은 경우(구플랜 소급 / 치환 미지원 계열
+        # — 세로 등)는 warning 지목 (G3/G4의 'op 사용 시 critical' 패턴 —
+        # 다른 계열의 정당한 출력을 false-critical로 깨지 않는다).
+        plan_has_registered = any(
+            ch in (p.get("t") or "")
+            for fl in plan.get("flows", [])
+            for u in fl.get("units", [])
+            for p in (u["paras"] if isinstance(u, dict) else u)
+            for ch in SUBSCRIPT_PRINT_TABLE)
+        det = ", ".join(f"'{c}'(U+{ord(c):04X}) {n}건"
+                        for c, n in sorted(sub_resid.items()))
+        msg = (f"[글리프커버리지] 아래첨자 인쇄 매핑 등재 문자 잔존 — "
+               f"폰트 글리프 없음 = tofu/미표시: {det}")
+        (warnings if plan_has_registered else critical).append(msg)
+    style_fonts = {e.get("s"): (e.get("f") or "", e.get("fs") or "")
+                   for e in dump.get("style_fonts") or []}
+    font_locs = {}
+    for e in dump.get("fonts") or []:
+        font_locs[str(e.get("n") or "")] = e.get("loc") or ""
+    if style_fonts and font_locs:
+        from core.fontcov import font_covers
+        uncov = {}
+        for story in dump.get("stories", []):
+            for p in story.get("paragraphs", []):
+                t = p.get("t", "")
+                risky = {ch for ch in t
+                         if 0x2000 <= ord(ch) <= 0x2BFF
+                         and not _is_pua(ch)
+                         and ch not in SUBSCRIPT_PRINT_TABLE}
+                if not risky:
+                    continue
+                sname = p.get("s") or ""
+                fam, fsty = style_fonts.get(sname, ("", ""))
+                loc = (font_locs.get(f"{fam}\t{fsty}")
+                       or font_locs.get(fam))
+                if not loc:
+                    continue
+                for ch in risky:
+                    if font_covers(loc, ch) is False:
+                        key = (ch, sname, fam)
+                        uncov[key] = uncov.get(key, 0) + t.count(ch)
+        stats["font_uncovered"] = sum(uncov.values())
+        if uncov:
+            det = " | ".join(
+                f"'{ch}'(U+{ord(ch):04X}) ×{n} — 스타일 「{sn}」 폰트 "
+                f"「{fm}」" for (ch, sn, fm), n in sorted(uncov.items())[:3])
+            warnings.append(
+                f"[글리프커버리지] 적용 폰트가 글리프 미지원 "
+                f"{sum(uncov.values())}건 (cmap 실측): {det}")
+
+    # ── G30 문제단위킵 (W23 r13 — F4) ────────────────────────────────────
+    # 사용자 확정 스펙: 한 문제(발문+지문+선지 전체)가 오른쪽 페이지에서
+    # 잘려 다음 장(스프레드 넘김)으로 이어지면 안 된다 — 왼쪽→오른쪽은
+    # 허용. 문제 경계 = question_keep 계약(q_styles)의 발문/인트로 스타일
+    # 단락. 계약 없는 구출력은 스타일 leaf 휴리스틱('실전문제 번호'/'다음
+    # 글을 읽고')으로 소급 지목 (warning). 단락→페이지는 덤프 W23 확장
+    # 필드 fp(프레임별 페이지 이름 — fc와 병렬)로 독립 재계산. 시작이
+    # 왼쪽인데 스프레드를 넘는 문제(한 문제가 2페이지 초과)는 밀어도 해소
+    # 불가 — warning 지목 (실행기도 경고만).
+    qk = (plan.get("question_keep")
+          if isinstance(plan.get("question_keep"), dict) else {})
+    qk_styles = set(qk.get("q_styles") or [])
+
+    def _is_q_boundary_style(s):
+        if qk_styles:
+            return s in qk_styles
+        return "실전문제 번호" in s or "다음 글을 읽고" in s
+
+    qk_steps = sorted((qk.get("flows") or {}).keys()) or ["step3"]
+    page_ord30 = {str(e.get("p")): i
+                  for i, e in enumerate(dump.get("pages") or [])}
+    pages_inv30 = {str(e.get("p")): e for e in dump.get("pages") or []}
+    keep_viol = []
+    keep_manual = []
+    keep_nodump = False
+    for fl in plan.get("flows", []):
+        if fl.get("step") not in qk_steps:
+            continue
+        story = _find_flow_story(dump, fl)
+        if story is None:
+            continue
+        ps = story.get("paragraphs", [])
+        bounds = [i for i, p in enumerate(ps)
+                  if _is_q_boundary_style(p.get("s") or "")]
+        if not bounds:
+            continue
+        fc = story.get("fc") or []
+        fp = story.get("fp") or []
+        if not fc or not fp or not page_ord30:
+            keep_nodump = True
+            continue
+        frames = sorted((c, str(pg)) for c, pg in zip(fc, fp)
+                        if isinstance(c, int) and c >= 0 and pg)
+        if not frames:
+            continue
+        offs = []
+        cum = 0
+        for p in ps:
+            offs.append(cum)
+            cum += len(p.get("t", ""))
+
+        def _pg_of(off, _frames=frames):
+            name = None
+            for c, pg in _frames:
+                if c <= off:
+                    name = pg
+                else:
+                    break
+            return name
+
+        for bi, si in enumerate(bounds):
+            ei = (bounds[bi + 1] - 1 if bi + 1 < len(bounds)
+                  else len(ps) - 1)
+            sp = _pg_of(offs[si])
+            ep = _pg_of(offs[ei] + max(0, len(ps[ei].get("t", "")) - 1))
+            if sp is None or ep is None:
+                continue
+            so, eo = page_ord30.get(sp), page_ord30.get(ep)
+            if so is None or eo is None:
+                continue
+            if (eo + 1) // 2 <= (so + 1) // 2:
+                continue          # 같은 스프레드 안 (L→R 허용 포함)
+            head = _clean(ps[si].get("t", ""))[:28]
+            entry = f"{fl['step']} p{sp}→p{ep} 「{head}」"
+            if (pages_inv30.get(sp) or {}).get("side") == "R":
+                keep_viol.append(entry)
+            else:
+                keep_manual.append(entry)
+    stats["question_keep_viol"] = len(keep_viol)
+    if keep_nodump and qk:
+        warnings.append("[문제단위킵] 덤프에 프레임 페이지 정보 없음"
+                        "(구버전 덤프) — 재덤프 필요")
+    if keep_viol:
+        msg = (f"[문제단위킵] 오른쪽 페이지→다음 장 걸침 문제 "
+               f"{len(keep_viol)}건 (문제 전체를 다음 페이지로 밀어야 함): "
+               + " | ".join(keep_viol[:5]))
+        (critical if qk else warnings).append(msg)
+    if keep_manual:
+        warnings.append(
+            f"[문제단위킵] 한 문제가 스프레드 초과 {len(keep_manual)}건 — "
+            f"밀기로 해소 불가 (수동 확인): " + " | ".join(keep_manual[:3]))
 
     # ── G5 step2_a1 상단 / step2_a1_btm 하단 기하 검사 ───────────────────
     flows = {fl["step"]: fl for fl in plan.get("flows", [])}

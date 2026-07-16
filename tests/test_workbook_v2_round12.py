@@ -189,9 +189,15 @@ def test_gate_g28_non_delete_mode_warning():
 
 def test_gate_g28_w21_output_labels_aligned(w21_report):
     """W21 재조판본의 간지 라벨(p3/p29/p49)은 전부 오른쪽 — 파트경계 무결
-    (p47 잔존이 '우연히' 정렬을 지켰던 상태. 삭제 후에는 M 채움이 계약)."""
-    assert not [c for c in w21_report["critical"]
-                if c.startswith("[파트경계]")]
+    (p47 잔존이 '우연히' 정렬을 지켰던 상태. 삭제 후에는 M 채움이 계약).
+    W23 r13 의미론 갱신: 짤지문 고아 간지(p61 — 뒤따르는 콘텐츠 없음)는
+    G28③이 새로 소급 검출한다 (r13 F2, 당시엔 게이트 구멍). 정렬(왼쪽
+    라벨/M 위치) 계열 무결만 이 테스트의 원래 검증 대상으로 유지."""
+    align = [c for c in w21_report["critical"]
+             if c.startswith("[파트경계]") and "고아 간지" not in c]
+    assert not align
+    orphan = [c for c in w21_report["critical"] if "고아 간지" in c]
+    assert orphan and "짤지문" not in orphan[0]  # 라벨 첫 줄('고2 모의고사')로 지목
 
 
 def test_executor_f2_filler_sources():
@@ -242,8 +248,10 @@ def test_supp_divider_deco_user_text(content, tmp_path):
 
 
 def test_supp_divider_deco_type_fallback(tmp_path):
-    """미입력 + 무-p형 헤더 없는 원고 → 교재유형(workbook_type 메타,
-    기본 '모의고사')만 표기 — 년/월 잔재 없음."""
+    """미입력 + 유형 신호 없는 원고 → 중립 '부교재' — 년/월 잔재 없음.
+    W23 r13 의미론 갱신 (F1 — 사용자 확정): 기존 폴백 '모의고사'(메타
+    기본값)는 supp에서 어떤 경우에도 자동으로 나가면 안 된다 (6c1430c3
+    실사용 결함 — 게이트 G27이 critical로 계약 감시)."""
     job = str(tmp_path)
     json.dump({"grade": 1, "year": 25, "month": 10,
                "steps": {"step1_a1": {"paragraphs":
@@ -251,7 +259,7 @@ def test_supp_divider_deco_type_fallback(tmp_path):
               open(os.path.join(job, "content.json"), "w", encoding="utf-8"),
               ensure_ascii=False)
     deco = WorkbookSuppV2Engine()._plan_decorations(job, {})
-    assert deco["divider"] == {"line1": "모의고사", "line2": "",
+    assert deco["divider"] == {"line1": "부교재", "line2": "",
                                "source": "type"}
 
 
