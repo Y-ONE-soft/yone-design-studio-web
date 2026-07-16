@@ -230,9 +230,10 @@ def test_executor_f2_orphan_sources():
     assert "function removeOrphanDividers" in src
     assert "function isDividerLabelLike" in src
     body = src.split("function cleanupPages")[1].split("\nfunction ")[0]
-    # delete 모드에서 alignPartFillers보다 먼저 호출 (삭제 → 정렬 순서)
-    assert "removeOrphanDividers(doc, flowIds)" in body
-    assert (body.index("removeOrphanDividers(doc, flowIds)")
+    # delete 모드에서 alignPartFillers보다 먼저 호출 (삭제 → 정렬 순서).
+    # W24 r14: divider_solo opt-in 인자 추가 ('N강' 단독 단락 셸 간지).
+    assert "removeOrphanDividers(doc, flowIds, !!op.divider_solo)" in body
+    assert (body.index("removeOrphanDividers(doc, flowIds")
             < body.index("alignPartFillers(doc)"))
 
 

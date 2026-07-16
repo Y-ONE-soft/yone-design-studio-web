@@ -1224,13 +1224,21 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         # warning (v1/M-모드 실물도 잔존 관행 — 소급은 지목만).
         page_ord = {str(e.get("p")): i
                     for i, e in enumerate(dump.get("pages") or [])}
+        # W24 r14 (수능특강 문제 내지 opt-in — page_cleanup.divider_solo):
+        # 다강 셸 간지는 'N강' 단독 단락 1개 ([원본]수능특강(문제) p27
+        # '2강' 실측) — opt-in 플랜에 한해 단락 1개 라벨도 후보로 본다
+        # (실행기 isDividerLabelLike와 동일 판정 부류. supp/본가 무영향).
+        allow_solo = bool(cleanup_op.get("divider_solo"))
         label_cands = {}
         for story in dump.get("stories", []):
             pgs = story.get("pg") or []
             if len(pgs) != 1 or str(pgs[0]) not in page_ord:
                 continue
             ps = story.get("paragraphs", [])
-            if len(ps) < 2:
+            if len(ps) < 2 and not (
+                    allow_solo and len(ps) == 1
+                    and re.match(r"^\d+\s*강$",
+                                 _clean(ps[0].get("t", "")))):
                 continue
             whole = _clean("".join(p.get("t", "") for p in ps))
             if not whole or len(whole) > 40:
