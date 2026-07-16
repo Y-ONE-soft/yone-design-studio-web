@@ -116,15 +116,24 @@ def _gate_merge(stats, dump, src_paths):
 
     stats: merge JSX가 남긴 게이트 입력 — 소스별 spread/pages/paras(전체
            단락 텍스트) + 통합본 spread/pages + dup_fail
+           (+ W24 r14: parity_pads — 홀수 파리티 채움 페이지 수, 소스별
+            start_offset — 통합본에서 그 강이 시작하는 0-기반 페이지 오프셋)
     dump:  통합본 .indd를 dump_indd로 재오픈한 결과 (저장 파일 기준 진실)
-    검사: (a) 소스 수 정합 (b) 통합본 스프레드 수 = 소스 합 + duplicate
+    검사: (a) 소스 수 정합 (b) 통합본 스프레드/페이지 수 정합 + duplicate
           실패 0 (c) 강별 단어셋이 통합본 dump에 모두 존재
+          (d) W24 r14 — 2번째+ 강의 시작 페이지가 인쇄 오른쪽(짝수
+          오프셋)인지: delete 모드가 홀수 페이지 강 산출물을 만들 수
+          있게 되면서(27강 문제본 9p 실증) 뒤 강의 표지/간지가 왼쪽으로
+          뒤집히는 파리티 결함이 생겼다 — merge가 채움 페이지로 짝수
+          정렬한다 (스프레드 합은 채움이 스프레드를 0~1개 늘릴 수 있어
+          parity_pads만큼 슬랙 허용).
     반환: (ok, warnings, info)
     """
     warnings = []
     ok = True
     sources = stats.get("sources", [])
     merged = stats.get("merged", {}) or {}
+    parity_pads = int(stats.get("parity_pads") or 0)
 
     # (a) 소스 수 정합
     if len(sources) != len(src_paths):
@@ -132,16 +141,36 @@ def _gate_merge(stats, dump, src_paths):
         warnings.append(f"❌ 머지 소스 수 불일치: stats {len(sources)}개 ≠ "
                         f"요청 {len(src_paths)}개")
 
-    # (b) 스프레드 수 정합 + duplicate 실패
+    # (b) 스프레드/페이지 수 정합 + duplicate 실패
     want_spreads = sum(s.get("spreads", 0) for s in sources)
     got_spreads = merged.get("spreads", -1)
-    if got_spreads != want_spreads:
+    if not (want_spreads <= got_spreads <= want_spreads + parity_pads):
         ok = False
         warnings.append(f"❌ 통합본 스프레드 수 불일치: {got_spreads} ≠ "
-                        f"소스 합 {want_spreads}")
+                        f"소스 합 {want_spreads}"
+                        + (f"(+파리티 채움 ≤{parity_pads})"
+                           if parity_pads else ""))
+    want_pages = sum(s.get("pages", 0) for s in sources) + parity_pads
+    got_pages = merged.get("pages", -1)
+    if sources and got_pages != want_pages:
+        ok = False
+        warnings.append(f"❌ 통합본 페이지 수 불일치: {got_pages} ≠ "
+                        f"소스 합+채움 {want_pages}")
     if stats.get("dup_fail"):
         ok = False
         warnings.append(f"❌ spread duplicate 실패 {stats['dup_fail']}건")
+
+    # (d) 강 시작 파리티 — 2번째+ 강의 첫 페이지는 인쇄 오른쪽(짝수
+    #     오프셋)이어야 한다 (구버전 stats엔 start_offset이 없어 생략)
+    for s_stat in sources[1:]:
+        off = s_stat.get("start_offset")
+        if off is None:
+            continue
+        if off % 2 == 1:
+            ok = False
+            warnings.append(
+                f"❌ {os.path.basename(s_stat.get('path', '?'))} 시작이 "
+                f"인쇄 왼쪽 페이지 (오프셋 {off} — 표지/간지 뒤집힘)")
 
     # (c) 강별 단어셋 보존 (통합본 재오픈 dump 기준)
     got_words = set()
@@ -168,6 +197,8 @@ def _gate_merge(stats, dump, src_paths):
 
     info = {"spreads": got_spreads, "pages": merged.get("pages"),
             "overflow": overflow, "lessons": len(sources)}
+    if parity_pads:
+        info["parity_pads"] = parity_pads
     return ok, warnings, info
 
 
@@ -217,7 +248,9 @@ class SuneungteukgangWorkbookV2Engine(WorkbookV2Engine):
     # ── 2단계: prepare_jsx — 스테이지별 플랜/템플릿/JSX 2세트 ───────────────
 
     def prepare_jsx(self, json_path, job_dir, log):
-        from engines.workbook_v2.plan import steps_to_plan, ensure_step3_kinds
+        from engines.workbook_v2.plan import (steps_to_plan,
+                                              ensure_step3_kinds,
+                                              question_keep_op)
 
         cfg = self._load_cfg()
         unit = self._read_meta_str(job_dir, "lesson", "")
@@ -250,13 +283,38 @@ class SuneungteukgangWorkbookV2Engine(WorkbookV2Engine):
             plan = steps_to_plan(stage_steps, exclude=exclude,
                                  workbook_type="EBS", step_map=stage_map)
             if stage_label == "analysis":
-                # 완제품 op (W15 c08_ref 실증): 분석 내지의 B-마스터 여분
-                # 페이지 3개 + 지문번호('04') 잔재 프레임 페이지가 납품물에
-                # 남음 — page_cleanup opt-in (다른 워크북 계열과 동일 의미론,
-                # 분석본은 step3 플로우가 없어 M-마스터 경로 미진입).
-                # 문제본은 다강(多講) 셸 구조(D-마스터 39p + '2강' 간지 —
-                # v1 실물도 50p 동일)라 merge 워크플로 확인 전 보류.
-                plan["page_cleanup"] = {}
+                # 완제품 op (W15 c08_ref 실증 → W24 r14 delete 확산):
+                # 분석 내지의 B-마스터 여분 페이지 + 지문번호 잔재 프레임
+                # 페이지가 납품물에 남음 — W24부터 delete 모드 (빈 페이지
+                # 완전 삭제 + 장식-빈/꼬리 단일 프레임 페이지까지 정리.
+                # 분석 내지는 M 마스터/모의고사형 간지가 없어 파트 경계
+                # 채움·고아 간지 경로는 자연 no-op — 22p 실측
+                # data_corpus/round14/template_masters/stg_analysis_dump).
+                # section_masters는 분석 내지가 B-마스터 좌/우 공용이라
+                # 쌍 자체가 없음 — 계약 미등재 (op 불필요).
+                plan["page_cleanup"] = {"empty": "delete"}
+            else:
+                # W24 r14 — 문제본 delete 확산: W15 잔여 '다강(多講) 셸'
+                # (2번째 강 D-마스터 39p + '2강' 간지 p26~27 + E-마스터
+                # 정답 여분 — v1 실물도 50p 동일) 해소. 셸 빈 페이지는
+                # 다중 프레임 스토리 전부-빈 판정으로, '2강' 간지는
+                # divider_solo('N강' 단독 단락 라벨 — [원본]수능특강(문제)
+                # p27 실측) 고아 간지 판정으로 삭제된다. 현재 강 간지
+                # ('1강' p3)는 뒤에 플로우 콘텐츠가 있어 보존. merge
+                # (다강 통합)는 강별 spread를 AT_END duplicate하므로 셸
+                # 제거가 상호작용하지 않음 — r14 merge 실기로 검증.
+                plan["page_cleanup"] = {"empty": "delete",
+                                        "divider_solo": "강"}
+                # 문제 단위 펼침면 킵 (W23 r13 F4 스펙 — supp/본가 검증
+                # 후 확산. 자체 prepare라 base의 센티널 확장 경로를 안
+                # 타므로 여기서 직접 계약을 계산해 싣는다.)
+                qk = question_keep_op(plan)
+                if qk:
+                    plan["question_keep"] = qk
+                    log("[v2] 문제단위킵: step3 문제 시작 "
+                        + str(sum(len(v.get("starts") or [])
+                                  for v in qk["flows"].values()))
+                        + "개 계약")
             plan_path = os.path.abspath(
                 os.path.join(job_dir, f"render_plan_{stage_label}.json"))
             with open(plan_path, "w", encoding="utf-8") as f:
