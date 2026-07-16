@@ -1,0 +1,16 @@
+{
+  "_doc": "교과서 워크북 STEP → 스토리 매핑 (W24 r14). 내지가 supp/모의고사와 같은 [원본]워크북_C라 기본 STEP_MAP(engines/workbook_v2/step_map.json)과 동일 마커/페이지/pos에, section_masters op가 소비하는 master_pair(섹션 시작 페이지의 좌/우 마스터 변형 쌍 — supp W21 실측 계약 재사용: STEP1 = A/B, STEP2 = C/D)만 추가했다. supp 전용 계약(label_contract/per_passage_units)은 교과서 실물 대조 근거가 없어 싣지 않는다 (게이트 G23/G24의 계약 검사는 계약이 실린 스텝만).",
+  "step1_a1": {"page": "4", "marker": "어휘 선택 1", "master_pair": {"left": "A-마스터", "right": "B-마스터"}},
+  "step1_a1_2": {"page": "13", "marker": "어휘 선택 2", "master_pair": {"left": "A-마스터", "right": "B-마스터"}},
+  "step1_a2": {"page": "22", "marker": "본문 O/X", "master_pair": {"left": "A-마스터", "right": "B-마스터"}},
+  "step1_b1": {"page": "40", "marker": "본문 정리", "master_pair": {"left": "A-마스터", "right": "B-마스터"}},
+  "step1_b2": {"page": "58", "marker": "내용 종합", "master_pair": {"left": "A-마스터", "right": "B-마스터"}},
+  "step1_c1": {"page": "76", "marker": "문장 배열", "master_pair": {"left": "A-마스터", "right": "B-마스터"}},
+  "step1_c2": {"page": "94", "marker": "빈칸 어휘", "master_pair": {"left": "A-마스터", "right": "B-마스터"}},
+  "step2_a1": {"page": "114", "marker": "어법 선택", "pos": "top", "master_pair": {"left": "C-마스터", "right": "D-마스터"}},
+  "step2_a1_btm": {"page": "114", "marker": "어법 선택", "rank": 2, "pos": "bottom", "master_pair": {"left": "C-마스터", "right": "D-마스터"}},
+  "step2_b1": {"page": "132", "marker": "어법 O/X", "master_pair": {"left": "C-마스터", "right": "D-마스터"}},
+  "step2_c1": {"page": "150", "marker": "빈칸 어법", "master_pair": {"left": "C-마스터", "right": "D-마스터"}},
+  "step2_c2": {"page": "168", "marker": "영작 배열", "master_pair": {"left": "C-마스터", "right": "D-마스터"}},
+  "step3": {"master": "O"}
+}

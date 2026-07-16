@@ -151,6 +151,11 @@
                   에서 잘려 다음 장으로 이어짐 — question_keep 계약 플랜은
                   critical, 구출력은 warning 소급 지목. 스프레드 초과
                   문제(밀기로 해소 불가)는 warning.
+  G27 확장 (W24 r14): 간지는 line1(교재유형)+line2(디테일 범위) 두 줄
+                  분리 입력 (둘 다 선택 — 사용자 확정 스펙). 자동 판정
+                  ('N과 추가지문' 감지 포함) 표기는 '외부지문'으로 통일 —
+                  source=type + line1='추가지문'은 구 판정 사다리(r13 ③)
+                  잔존 플랜 = critical.
 
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
 G24②/G26은 W21 확장 필드(fc / pages)가 필요하다. G29②는 W23 확장 필드
@@ -1100,6 +1105,14 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
             "[간지적합] supp 간지 계약 위반 — 교재유형 자동 판정이 "
             "'모의고사' (supp에서 '모의고사' 자동 라벨 금지 — 판정 불가면 "
             "'부교재', r13 F1)")
+    # W24 r14 (사용자 확정 스펙): 자동 판정('N과 추가지문' 감지 포함)의
+    # 표기는 '외부지문'이다 — source=type + '추가지문'은 구 판정 사다리
+    # (r13 ③)의 잔존 플랜 (사용자 직접 입력 source=user는 무관).
+    if (divider_plan.get("source") == "type"
+            and _clean(divider_plan.get("line1") or "") == "추가지문"):
+        critical.append(
+            "[간지적합] supp 간지 계약 위반 — 교재유형 자동 판정 표기가 "
+            "'추가지문' (자동 표기는 '외부지문'이 계약, r14)")
     if supp_divider or is_nop_manuscript:
         mock_dividers = []
         for story in dump.get("stories", []):
@@ -1211,13 +1224,21 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         # warning (v1/M-모드 실물도 잔존 관행 — 소급은 지목만).
         page_ord = {str(e.get("p")): i
                     for i, e in enumerate(dump.get("pages") or [])}
+        # W24 r14 (수능특강 문제 내지 opt-in — page_cleanup.divider_solo):
+        # 다강 셸 간지는 'N강' 단독 단락 1개 ([원본]수능특강(문제) p27
+        # '2강' 실측) — opt-in 플랜에 한해 단락 1개 라벨도 후보로 본다
+        # (실행기 isDividerLabelLike와 동일 판정 부류. supp/본가 무영향).
+        allow_solo = bool(cleanup_op.get("divider_solo"))
         label_cands = {}
         for story in dump.get("stories", []):
             pgs = story.get("pg") or []
             if len(pgs) != 1 or str(pgs[0]) not in page_ord:
                 continue
             ps = story.get("paragraphs", [])
-            if len(ps) < 2:
+            if len(ps) < 2 and not (
+                    allow_solo and len(ps) == 1
+                    and re.match(r"^\d+\s*강$",
+                                 _clean(ps[0].get("t", "")))):
                 continue
             whole = _clean("".join(p.get("t", "") for p in ps))
             if not whole or len(whole) > 40:

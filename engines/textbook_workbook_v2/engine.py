@@ -52,6 +52,13 @@ _V1_CONFIG = os.path.join(os.path.dirname(_DIR), "textbook_workbook",
                           "config.json")
 _PATH_KEYS = ["indd_output_dir", "indd_original", "textbook_base"]
 
+# W24 r14: 교과서 전용 step_map — 기본 STEP_MAP과 동일 마커/pos에
+# master_pair(섹션 시작 좌/우 마스터 쌍 — 내지가 supp와 같은 [원본]
+# 워크북_C라 supp W21 실측 계약 재사용)만 추가 (step_map.json _doc 참조).
+_STEP_MAP = json.load(open(os.path.join(_DIR, "step_map.json"),
+                           encoding="utf-8"))
+_STEP_MAP.pop("_doc", None)
+
 # 독립 지문번호 텍스트 프레임을 가진 섹션 (supp W11과 동일 —
 # [원본]워크북_C 실물: 빈칸 어휘 p94~ / 어법 O/X p132~ / 빈칸 어법 p150~
 # 페이지 좌측의 단일 프레임 번호 스토리. 교과서 내지도 같은 원본이다)
@@ -226,25 +233,44 @@ class TextbookWorkbookV2Engine(WorkbookV2Engine):
             raise FileNotFoundError(f"내지 원본 없음: {src}")
         return src
 
+    def _step_map(self):
+        """W24 r14: 교과서 전용 step_map — master_pair 계약 추가 (기본
+        STEP_MAP과 같은 마커/페이지/pos, section_masters op가 소비)."""
+        return dict(_STEP_MAP)
+
     def _plan_decorations(self, job_dir, cfg):
         """v1 run.jsx 16.7(간지) + 16.8(빈 페이지 마스터 재할당) opt-in
-        + 완제품 후처리 op 2종 (W13 — c13/c15 실조판 실증).
+        + 완제품 후처리 op (W13 — c13/c15 실조판 실증 + W24 r14 확산).
 
         교과서 원고는 지문 2~5개인데 내지([원본]워크북_C)는 모의고사 18지문
         규격이라, 실기에서 모의고사 잔재 지문번호 프레임 17종(20~45)과
         내용 없는 스텝 페이지 200개+가 잔존했다 (게이트 G3/G4 warning 실증).
-        supp(W11)/ebs(W12)와 동일하게 page_cleanup(잔여 페이지 삭제 + 빈
-        STEP3 페이지 M 마스터)과 passage_numbers(독립 지문번호 프레임을
-        원고 지문번호로 갱신)를 opt-in한다. 간지 페이지는 단일 프레임이라
-        page_cleanup 삭제 판정(다중 프레임 스토리 전부 빈)에 걸리지 않고,
-        textbook_postprocess(16.8)는 잔존 빈 페이지에만 동작한다."""
+        supp(W11)/ebs(W12)와 동일하게 page_cleanup과 passage_numbers(독립
+        지문번호 프레임을 원고 지문번호로 갱신)를 opt-in한다.
+
+        W24 r14 (supp 검증 3종 op 확산 — 내지가 supp와 같은 [원본]워크북_C):
+          - page_cleanup delete 모드: 빈 페이지 완전 삭제 + 고아 간지
+            스프레드 삭제 + 파트 경계 M 채움 (W21~W23 supp 실증. 'M 보존'
+            v1 관행은 완제품 기준으로 폐기 — W21 사용자 확정)
+          - section_masters: 섹션 시작 좌/우 마스터 정합 (쌍 데이터는
+            step_map.json master_pair — supp W21 실측 계약 재사용)
+          - question_keep: 문제 단위 펼침면 킵 (W23 r13 F4 스펙, True
+            센티널을 base prepare_jsx가 계약으로 확장)
+        간지 라벨 페이지는 delete 판정(다중 프레임 스토리 전부 빈)에
+        걸리지 않고 divider op가 정리 이후 문구를 갱신한다 (실행기 순서:
+        page_cleanup → question_keep → section_masters → divider —
+        간지 텍스트 op와 delete의 상호작용은 r14 c13 실기로 검증).
+        textbook_postprocess(16.8)는 잔존 빈 페이지에만 동작 — delete
+        모드에선 사실상 no-op이나 밀기 공백 페이지 방어로 유지."""
         from engines.workbook_v2.plan import passage_labels
         subject, pub_short, lesson = self._textbook_meta(job_dir)
         deco = {
             "divider": {"line1": f"{subject} {pub_short}".strip(),
                         "line2": lesson},
             "textbook_postprocess": True,
-            "page_cleanup": {"empty_master": "M"},
+            "page_cleanup": {"empty": "delete"},
+            "section_masters": True,
+            "question_keep": True,
         }
         try:
             content = json.load(open(os.path.join(job_dir, "content.json"),

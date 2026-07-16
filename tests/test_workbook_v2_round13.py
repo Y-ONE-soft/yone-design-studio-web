@@ -116,10 +116,12 @@ def _mk_job(tmp_path, content_obj, uploads=(), meta=None):
 
 
 def test_supp_divider_addu_header(content, tmp_path):
-    """'[N과 추가지문]' bracket 헤더 원고 → '추가지문' (6c1430c3 실증)."""
+    """'[N과 추가지문]' bracket 헤더 원고 → '외부지문' (6c1430c3 실증 감지
+    유지 — W24 r14 의미론 갱신: 자동 판정 표기는 '추가지문'이 아니라
+    '외부지문'으로 통일, 사용자 확정 스펙)."""
     job = _mk_job(tmp_path, content)
     deco = WorkbookSuppV2Engine()._plan_decorations(job, {})
-    assert deco["divider"] == {"line1": "추가지문", "line2": "",
+    assert deco["divider"] == {"line1": "외부지문", "line2": "",
                                "source": "type"}
 
 
@@ -228,9 +230,10 @@ def test_executor_f2_orphan_sources():
     assert "function removeOrphanDividers" in src
     assert "function isDividerLabelLike" in src
     body = src.split("function cleanupPages")[1].split("\nfunction ")[0]
-    # delete 모드에서 alignPartFillers보다 먼저 호출 (삭제 → 정렬 순서)
-    assert "removeOrphanDividers(doc, flowIds)" in body
-    assert (body.index("removeOrphanDividers(doc, flowIds)")
+    # delete 모드에서 alignPartFillers보다 먼저 호출 (삭제 → 정렬 순서).
+    # W24 r14: divider_solo opt-in 인자 추가 ('N강' 단독 단락 셸 간지).
+    assert "removeOrphanDividers(doc, flowIds, !!op.divider_solo)" in body
+    assert (body.index("removeOrphanDividers(doc, flowIds")
             < body.index("alignPartFillers(doc)"))
 
 
@@ -485,11 +488,12 @@ def test_mockexam_divider_still_unchanged(tmp_path):
 
 
 def test_derived_engines_no_question_keep(tmp_path):
-    """교과서/EBS 파생 엔진의 데코는 question_keep 미탑재 (opt-in 시작 —
-    supp+본가만. 파생 계열 확산은 실기 검증 후)."""
+    """W24 r14 의미론 갱신: question_keep이 교과서/EBS 파생 엔진으로 확산
+    (실기 1건 검증 후 활성 — W23 opt-in 시작 당시엔 supp+본가만이었다).
+    True 센티널은 base prepare_jsx가 계약으로 확장한다."""
     from engines.textbook_workbook_v2.engine import TextbookWorkbookV2Engine
     from engines.ebs_workbook_v2.engine import EbsWorkbookV2Engine
     job = _mk_job(tmp_path, {"steps": {}})
     for eng in (TextbookWorkbookV2Engine(), EbsWorkbookV2Engine()):
         deco = eng._plan_decorations(job, {})
-        assert "question_keep" not in deco, type(eng).__name__
+        assert deco.get("question_keep") is True, type(eng).__name__

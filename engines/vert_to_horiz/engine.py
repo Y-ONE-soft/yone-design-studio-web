@@ -293,8 +293,12 @@ class VertToHorizEngine(BaseEngine):
         if not os.path.exists(indd_out):
             warnings.append(f".indd 미생성: {os.path.basename(indd_out)}")
 
-        # 로그에서 경고/오류 카운트
-        log_path = settings.get("log_path", "")
+        # 로그에서 경고/오류 카운트 — job 전용 로그(이번 실행분만) 사용.
+        # log_path는 출력 폴더(조판/교재/가로결합/) 전역 convert_log.txt 로
+        # 모든 작업의 로그가 영구 누적된다 — 과거 실행 경고(예: 2026-05-22
+        # 1차 실행 642건)가 이후 모든 작업 판정에 계상되는 오염 방지.
+        log_paths = settings.get("log_paths") or []
+        log_path = log_paths[0] if log_paths else settings.get("log_path", "")
         warn_count = 0
         if log_path and os.path.exists(log_path):
             try:

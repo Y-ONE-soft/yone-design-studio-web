@@ -32,7 +32,24 @@
                pad2(d.getSeconds()) + "] ";
     }
 
-    var settings   = readJSON(SETTINGS_PATH);
+    // settings 로드 실패 시에도 job_dir 로그에 흔적을 남긴다 — 종전에는
+    // readJSON 예외가 로그 0바이트 침묵 실패로 빠져 원인 진단이 불가했다
+    // (2026-05-15 73605d61: 마더텅 결합 유일 실행이 무로그로 소멸).
+    var settings;
+    try {
+        settings = readJSON(SETTINGS_PATH);
+    } catch (eBoot) {
+        try {
+            var _ef = new File(new File(SETTINGS_PATH).parent.fsName + "/merge_log.txt");
+            _ef.encoding = "UTF-8";
+            if (_ef.open("a")) {
+                _ef.write(ts() + "[치명적 오류] settings 로드 실패: " +
+                          (eBoot.message || eBoot) + "\n");
+                _ef.close();
+            }
+        } catch (eEf) {}
+        throw eBoot;
+    }
     var LOG_PATH   = settings.log_path;
     var LOG_PATHS  = settings.log_paths || [];
 
@@ -419,9 +436,17 @@
             writeLog("[경고] 해결 안 된 코드 " + unresolved.length + "개: " + unresolved.join(", "));
         }
 
+        // PDF export — 사용자 UI 잔존 설정(페이지별 분할/페이지 범위) 상속 방지
+        // (세로결합 2026-05-28 폴더 분할 사례와 동일 계열). 프리셋/품질은
+        // 기존과 동일하게 현재 설정을 따른다.
         try {
             var pdfFile = new File(OUTPUT_PDF);
-            newDoc.exportFile(ExportFormat.PDF_TYPE, pdfFile);
+            try { app.pdfExportPreferences.pageRange = PageRange.ALL_PAGES; } catch (ePr) {}
+            try { app.pdfExportPreferences.exportAsSinglePages = false; } catch (eSp) {}
+            try { app.pdfExportPreferences.viewPDF = false; } catch (eVp) {}
+            newDoc.exportFile(ExportFormat.PDF_TYPE, pdfFile, false);
+            // 파일 시스템 반영 지연 대비 — 최대 10초 대기 후 판정
+            for (var wPdf = 0; wPdf < 20 && !pdfFile.exists; wPdf++) { $.sleep(500); }
             if (pdfFile.exists) {
                 writeLog("PDF: " + pdfFile.fsName);
             } else {

@@ -465,8 +465,11 @@ class AnalysisMergeEngine(BaseEngine):
         if not os.path.exists(pdf_out):
             warnings.append(f"PDF 미생성: {os.path.basename(pdf_out)}")
 
-        # 로그에서 [경고]/[오류] 카운트
-        log_path = settings.get("log_path", "")
+        # 로그에서 [경고]/[오류] 카운트 — job 전용 로그(이번 실행분만) 우선.
+        # log_path(출력 폴더 공용 로그)는 과거 실행분이 누적될 수 있어
+        # 다른 작업의 경고가 현재 작업 판정을 오염시킨다.
+        log_paths = settings.get("log_paths") or []
+        log_path = log_paths[0] if log_paths else settings.get("log_path", "")
         warn_count = 0
         if log_path and os.path.exists(log_path):
             try:

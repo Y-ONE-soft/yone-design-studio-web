@@ -677,7 +677,9 @@ function cleanupPages(doc, flowStories, op) {
     // v2가 콘텐츠를 배치하지 않는 템플릿 영역. 이 라벨 페이지는 섹션
     // 마스터(O)가 적용돼 있어 isDividerLabelPage/updateDividerPages의
     // 마스터-없음 판정을 전부 비껴간다 — [원본]워크북_C p263 실측).
-    if (deleteEmpty) { removeOrphanDividers(doc, flowIds); }
+    if (deleteEmpty) {
+        removeOrphanDividers(doc, flowIds, !!op.divider_solo);
+    }
 
     // 2b) W22 r12 (delete 모드): 파트 경계 정렬 — 페이지 삭제로 간지
     // 라벨이 물리 왼쪽 페이지로 밀렸으면 간지 스프레드 앞에 M(메모)
@@ -766,22 +768,35 @@ function isDividerLabelPage(pg) {
 }
 
 function alignPartFillers(doc) {
+    // W24 r14: M 마스터 lookup은 첫 삽입 필요 시점으로 지연 — M 마스터가
+    // 없는 내지(수능특강 분석/문제 등)에서 간지 정렬이 애초에 필요 없는데
+    // '[경고] M 마스터 없음'이 항상 찍히던 노이즈 제거 (동작 동일 — M이
+    // 있는 내지([원본]워크북_C/EBS리딩파워)는 기존 경로 그대로).
     var mMaster = null;
-    try {
-        var ms = doc.masterSpreads.everyItem().getElements();
-        for (var mi = 0; mi < ms.length; mi++) {
-            if (String(ms[mi].namePrefix) === "M") { mMaster = ms[mi]; break; }
+    var mLooked = false;
+    function lookupM() {
+        if (mLooked) { return mMaster; }
+        mLooked = true;
+        try {
+            var ms = doc.masterSpreads.everyItem().getElements();
+            for (var mi = 0; mi < ms.length; mi++) {
+                if (String(ms[mi].namePrefix) === "M") {
+                    mMaster = ms[mi];
+                    break;
+                }
+            }
+        } catch (e) {}
+        if (!mMaster) {
+            wlog("[경고] M 마스터 없음 — 파트 경계 채움 페이지 생략");
         }
-    } catch (e) {}
-    if (!mMaster) {
-        wlog("[경고] M 마스터 없음 — 파트 경계 채움 페이지 생략");
-        return;
+        return mMaster;
     }
     var inserted = 0;
     for (var pi = 0; pi < doc.pages.length; pi++) {
         var pg = doc.pages[pi];
         if (!isDividerLabelPage(pg)) { continue; }
         if (pageSideOf(doc, pg) === "R") { continue; }   // 정렬 정상
+        if (!lookupM()) { return; }
         // 간지 스프레드 시작(왼쪽 빈 동반 페이지 — 마스터 없음/프레임 0)
         // 앞에 삽입. 동반 페이지가 없으면 라벨 페이지 앞에 삽입.
         var ref = pg;
@@ -821,7 +836,7 @@ function alignPartFillers(doc) {
 // 2개 이상 + 첫 단락 한글 + 전체 40자 미만 (마스터 불문 — 짤지문 간지는
 // 섹션 마스터(O)가 적용된 채 존재. 게이트 G28③과 동일 부류). 발문/장식
 // 프레임은 단락 1개, 본문은 40자 초과라 걸리지 않는다.
-function isDividerLabelLike(pg, flowIds) {
+function isDividerLabelLike(pg, flowIds, allowSolo) {
     if (pg.textFrames.length !== 1) { return false; }
     var tf = pg.textFrames[0];
     var st = null;
@@ -831,7 +846,18 @@ function isDividerLabelLike(pg, flowIds) {
     catch (e2) { return false; }
     var ps = null;
     try { ps = tf.paragraphs; } catch (e3) { return false; }
-    if (!ps || ps.length < 2) { return false; }
+    if (!ps || ps.length < 1) { return false; }
+    if (ps.length < 2) {
+        // W24 r14 (수능특강 문제 내지 opt-in — page_cleanup.divider_solo):
+        // 다강 셸 간지는 'N강' 단독 단락 1개 ([원본]수능특강(문제) p27
+        // '2강' 실측). 단락 1개 라벨은 발문/장식 프레임과 구분이 안 돼
+        // 'N강' 정확 패턴 + opt-in일 때만 허용한다 (supp/본가 무영향 —
+        // 그쪽 간지는 2단락 라벨이라 기존 경로 그대로).
+        var solo = "";
+        try { solo = String(st.contents || ""); } catch (e6) {}
+        solo = solo.replace(/[\s\r\n￼]+/g, "");
+        if (!allowSolo || !/^\d+강$/.test(solo)) { return false; }
+    }
     var whole = "";
     try { whole = String(st.contents || ""); } catch (e4) {}
     if (whole.replace(/[\s\r\n￼]+/g, "").length === 0) { return false; }
@@ -841,7 +867,7 @@ function isDividerLabelLike(pg, flowIds) {
     return /[가-힣]/.test(t1);
 }
 
-function removeOrphanDividers(doc, flowIds) {
+function removeOrphanDividers(doc, flowIds, allowSolo) {
     var pagesArr = doc.pages.everyItem().getElements();
     var info = [];
     for (var i = 0; i < pagesArr.length; i++) {
@@ -857,7 +883,7 @@ function removeOrphanDividers(doc, flowIds) {
                 }
             } catch (e) {}
         }
-        info.push({ pg: pg, label: isDividerLabelLike(pg, flowIds),
+        info.push({ pg: pg, label: isDividerLabelLike(pg, flowIds, allowSolo),
                     flow: hasFlow });
         if ((i + 1) % 40 === 0) {
             wlog("고아 간지 검사 진행: " + (i + 1) + "/" + pagesArr.length);

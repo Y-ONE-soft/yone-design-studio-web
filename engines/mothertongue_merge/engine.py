@@ -509,7 +509,9 @@ class MothertongueMergeEngine(BaseEngine):
         if not os.path.exists(pdf_out):
             warnings.append(f"PDF 미생성: {os.path.basename(pdf_out)}")
 
-        log_path = settings.get("log_path", "")
+        # job 전용 로그(이번 실행분만) 우선 — 공용 로그 누적 오염 방지
+        log_paths = settings.get("log_paths") or []
+        log_path = log_paths[0] if log_paths else settings.get("log_path", "")
         warn_count = 0
         if log_path and os.path.exists(log_path):
             try:

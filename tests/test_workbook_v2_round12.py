@@ -217,10 +217,13 @@ def test_executor_f2_filler_sources():
 # ── F3: 간지 문구 스펙 (supp 계열) ───────────────────────────────────────────
 
 def test_supp_upload_spec_divider_text():
+    """W24 r14 의미론 갱신: 간지 입력이 두 필드(line1/line2)로 분리 —
+    W22 단일 divider_text 슬롯은 하위호환으로 유지 (line1로 소비)."""
     spec = WorkbookSuppV2Engine().upload_spec
-    slot = next(s for s in spec["slots"] if s["key"] == "divider_text")
-    assert slot.get("type") == "text"
-    assert not slot.get("required")
+    for key in ("divider_line1", "divider_line2", "divider_text"):
+        slot = next(s for s in spec["slots"] if s["key"] == key)
+        assert slot.get("type") == "text"
+        assert not slot.get("required")
     # 파일 슬롯은 그대로 (라우트/폼 처리 무변경)
     assert [s["key"] for s in spec["slots"]][0] == "manuscripts"
 
@@ -264,10 +267,13 @@ def test_supp_divider_deco_type_fallback(tmp_path):
 
 
 def test_supp_template_has_divider_field():
+    """W24 r14 의미론 갱신: 폼은 두 줄 분리 입력 노출 (divider_text 단일
+    필드는 폼에서 제거 — 슬롯 하위호환만 유지)."""
     html = open(os.path.join(REPO, "templates",
                              "typeset_workbook_supp_v2.html"),
                 encoding="utf-8").read()
-    assert 'name="divider_text"' in html
+    assert 'name="divider_line1"' in html
+    assert 'name="divider_line2"' in html
 
 
 # ── F3: 게이트 G27 스펙 갱신 ────────────────────────────────────────────────

@@ -59,7 +59,8 @@ var MERGE_SETTINGS_PATH = "__MERGE_SETTINGS_PATH__";
         var statsPath = cfg.stats;     // 게이트 입력 JSON 절대경로
         wlog("머지 시작: " + srcs.length + "개 → " + mergedPath);
 
-        var stats = { sources: [], merged: {}, dup_fail: 0 };
+        var stats = { sources: [], merged: {}, dup_fail: 0,
+                      parity_pads: 0 };
 
         var firstFile = new File(srcs[0]);
         if (!firstFile.exists) { throw "소스 없음: " + srcs[0]; }
@@ -69,6 +70,7 @@ var MERGE_SETTINGS_PATH = "__MERGE_SETTINGS_PATH__";
             path: srcs[0],
             spreads: dst.spreads.length,
             pages: dst.pages.length,
+            start_offset: 0,
             paras: docParagraphTexts(dst)
         });
         // saveAs — 원본(첫 강 indd)은 그대로 두고 통합본 경로에 저장
@@ -76,6 +78,25 @@ var MERGE_SETTINGS_PATH = "__MERGE_SETTINGS_PATH__";
         wlog("saveAs 완료: " + mergedPath);
 
         for (var i = 1; i < srcs.length; i++) {
+            // W24 r14 — 홀수 파리티 채움: delete 모드가 홀수 페이지 강
+            // 산출물을 만들 수 있어(27강 문제본 9p 실증), 그대로 이어붙이면
+            // 뒤 강의 표지/간지가 인쇄 왼쪽으로 뒤집히고 스프레드 재편성이
+            // 일어난다 (32≠31 실측). 다음 강을 붙이기 전에 dst가 홀수면
+            // 빈 페이지(마스터 없음) 1장을 끝에 추가해 짝수 정렬한다.
+            if (dst.pages.length % 2 === 1) {
+                try {
+                    var padPg = dst.pages.add(LocationOptions.AT_END);
+                    try { padPg.appliedMaster = NothingEnum.NOTHING; }
+                    catch (ePM) {
+                        try { padPg.appliedMaster = null; } catch (ePM2) {}
+                    }
+                    stats.parity_pads++;
+                    wlog("  홀수 파리티 채움 페이지 추가 (dst.pages="
+                         + dst.pages.length + ")");
+                } catch (ePad) {
+                    wlog("  [경고] 파리티 채움 페이지 추가 실패: " + ePad);
+                }
+            }
             var srcFile = new File(srcs[i]);
             if (!srcFile.exists) { throw "소스 없음: " + srcs[i]; }
             src = app.open(srcFile);
@@ -83,6 +104,7 @@ var MERGE_SETTINGS_PATH = "__MERGE_SETTINGS_PATH__";
                 path: srcs[i],
                 spreads: src.spreads.length,
                 pages: src.pages.length,
+                start_offset: dst.pages.length,
                 paras: docParagraphTexts(src)
             });
             // 컬렉션 인덱싱 금지 — everyItem().getElements() 캐시 후 순회
