@@ -1101,14 +1101,25 @@ try {
                 } catch (e) {}
             }
             var runs = flat[pi].runs;
-            if (runs && runs.length > 0 && csUL) {
+            if (runs && runs.length > 0) {
                 var off = 0;
                 for (var ri = 0; ri < runs.length; ri++) {
                     var rl = runs[ri].t ? runs[ri].t.length : 0;
-                    if (rl > 0 && runs[ri].ul) {
+                    if (rl > 0 && (runs[ri].ul || runs[ri].sub)) {
                         var a = off, b = off + rl - 1;
                         if (a < paras[pi].characters.length && b < paras[pi].characters.length) {
-                            paras[pi].characters.itemByRange(a, b).appliedCharacterStyle = csUL;
+                            if (runs[ri].ul && csUL) {
+                                paras[pi].characters.itemByRange(a, b).appliedCharacterStyle = csUL;
+                            }
+                            // W23 F3: 아래첨자 run — Position 속성 직접
+                            // 적용 (문자스타일 아님, 자동 생성 금지 규칙
+                            // 무관. 플랜 SUBSCRIPT_PRINT_TABLE의 ₂→2 치환
+                            // 짝 — 어떤 폰트에서든 렌더 가능).
+                            if (runs[ri].sub) {
+                                try {
+                                    paras[pi].characters.itemByRange(a, b).position = Position.SUBSCRIPT;
+                                } catch (eSub) {}
+                            }
                         }
                     }
                     off += rl;

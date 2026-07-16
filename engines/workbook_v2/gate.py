@@ -143,6 +143,11 @@
                   warning (6c1430c3 실증: 짤지문 간지 p34~35 잔존 — 라벨
                   페이지에 섹션 마스터(O)가 적용돼 기존 간지 판정을 전부
                   비껴갔다).
+  G29 [글리프커버리지] (W23 r13 F3): ① 아래첨자 인쇄 매핑(SUBSCRIPT_
+                  PRINT_TABLE) 등재 문자 잔존 = critical (치환 미적용 출력
+                  소급 — G10 확장 패턴), ② 스타일 적용 폰트의 cmap 실측
+                  (core.fontcov)으로 글리프 미지원 문자 warning 지목 —
+                  PUA(G10)와 별개의 '폰트 커버리지' 부류.
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
 G24②/G26은 W21 확장 필드(fc / pages)가 필요하다. 구버전 덤프에는 경고로만
 보고한다 (재덤프 안내). G9는 uploads_dir를 넘긴 경우에만 검사한다 (오프라인
@@ -153,9 +158,9 @@ import re
 import unicodedata
 
 from core.inspect import find_leaked_answers
-from engines.workbook_v2.plan import (PUA_PRINT_TABLE, is_header_line,
-                                      is_a1_header, passage_labels,
-                                      _norm_header)
+from engines.workbook_v2.plan import (PUA_PRINT_TABLE, SUBSCRIPT_PRINT_TABLE,
+                                      is_header_line, is_a1_header,
+                                      passage_labels, _norm_header)
 
 _RE_BARE_NUM = re.compile(r"^\d{1,3}(?:\s*~\s*\d{1,3})?$")
 # G21 — 원문자 선지 번호 (①~⑮: 지문 inline 번호도 같은 집합)
@@ -258,10 +263,17 @@ def _is_pua(ch):
             or 0x100000 <= cp <= 0x10FFFD)
 
 
+# W23 F3 — 플랜↔덤프 대조용 아래첨자 정규화: 플랜이 ₂→2(+sub run)로
+# 치환하므로 구출력(₂ 그대로)과 신플랜(2)의 텍스트 매칭이 어긋난다.
+# _clean에서 양쪽을 ASCII 숫자로 통일 (G29의 잔존 검출은 원문 p["t"]를
+# 직접 스캔하므로 이 정규화와 무관).
+_SUB_NORM_TABLE = str.maketrans(SUBSCRIPT_PRINT_TABLE)
+
+
 def _clean(t):
     """덤프 단락 텍스트 정규화 — 앵커(￼)/개행 제거 + 공백 정리."""
     t = unicodedata.normalize("NFC", t or "")
-    t = t.replace("￼", "")
+    t = t.replace("￼", "").translate(_SUB_NORM_TABLE)
     return _norm_header(t)
 
 
@@ -1230,6 +1242,75 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                    + " | ".join(orphan_div[:5]))
             (critical if cleanup_delete else warnings).append(msg)
 
+
+    # ── G29 글리프 커버리지 (W23 r13 — F3) ───────────────────────────────
+    # ① 아래첨자 인쇄 매핑(plan.SUBSCRIPT_PRINT_TABLE) 등재 문자의 출력
+    #    잔존 = critical — 현행 플랜은 이 문자를 ASCII 숫자+아래첨자 서식
+    #    run으로 치환하므로 잔존 = 매핑 미적용 출력 (G10 확장의 PUA 테이블
+    #    과 동일 패턴. job 6c1430c3 소급: CO₂의 U+2082 151건이 글리프 없는
+    #    폰트로 인쇄 — 사용자 지목 결함).
+    # ② 그 외 특수문자(U+2000~2BFF, PUA 제외)는 덤프의 스타일→폰트 매핑
+    #    (style_fonts/fonts — W23 확장 필드)과 폰트 파일 cmap 실측으로
+    #    '적용 폰트가 글리프 미지원'만 warning 지목 (근거 없는 자동 치환
+    #    금지 — PUA(G10)와 별개의 '폰트 커버리지' 부류). 폰트 정보 없는
+    #    구버전 덤프는 ②를 생략한다 (fail-open).
+    sub_resid = {}
+    for t, _s in _dump_paras(dump):
+        for ch in t:
+            if ch in SUBSCRIPT_PRINT_TABLE:
+                sub_resid[ch] = sub_resid.get(ch, 0) + 1
+    stats["subscript_residue"] = sum(sub_resid.values())
+    if sub_resid:
+        # 치환된 플랜(등재 문자 0)의 출력에 잔존 = 매핑 미적용 = critical.
+        # 플랜 자체에 등재 문자가 남은 경우(구플랜 소급 / 치환 미지원 계열
+        # — 세로 등)는 warning 지목 (G3/G4의 'op 사용 시 critical' 패턴 —
+        # 다른 계열의 정당한 출력을 false-critical로 깨지 않는다).
+        plan_has_registered = any(
+            ch in (p.get("t") or "")
+            for fl in plan.get("flows", [])
+            for u in fl.get("units", [])
+            for p in (u["paras"] if isinstance(u, dict) else u)
+            for ch in SUBSCRIPT_PRINT_TABLE)
+        det = ", ".join(f"'{c}'(U+{ord(c):04X}) {n}건"
+                        for c, n in sorted(sub_resid.items()))
+        msg = (f"[글리프커버리지] 아래첨자 인쇄 매핑 등재 문자 잔존 — "
+               f"폰트 글리프 없음 = tofu/미표시: {det}")
+        (warnings if plan_has_registered else critical).append(msg)
+    style_fonts = {e.get("s"): (e.get("f") or "", e.get("fs") or "")
+                   for e in dump.get("style_fonts") or []}
+    font_locs = {}
+    for e in dump.get("fonts") or []:
+        font_locs[str(e.get("n") or "")] = e.get("loc") or ""
+    if style_fonts and font_locs:
+        from core.fontcov import font_covers
+        uncov = {}
+        for story in dump.get("stories", []):
+            for p in story.get("paragraphs", []):
+                t = p.get("t", "")
+                risky = {ch for ch in t
+                         if 0x2000 <= ord(ch) <= 0x2BFF
+                         and not _is_pua(ch)
+                         and ch not in SUBSCRIPT_PRINT_TABLE}
+                if not risky:
+                    continue
+                sname = p.get("s") or ""
+                fam, fsty = style_fonts.get(sname, ("", ""))
+                loc = (font_locs.get(f"{fam}\t{fsty}")
+                       or font_locs.get(fam))
+                if not loc:
+                    continue
+                for ch in risky:
+                    if font_covers(loc, ch) is False:
+                        key = (ch, sname, fam)
+                        uncov[key] = uncov.get(key, 0) + t.count(ch)
+        stats["font_uncovered"] = sum(uncov.values())
+        if uncov:
+            det = " | ".join(
+                f"'{ch}'(U+{ord(ch):04X}) ×{n} — 스타일 「{sn}」 폰트 "
+                f"「{fm}」" for (ch, sn, fm), n in sorted(uncov.items())[:3])
+            warnings.append(
+                f"[글리프커버리지] 적용 폰트가 글리프 미지원 "
+                f"{sum(uncov.values())}건 (cmap 실측): {det}")
 
     # ── G5 step2_a1 상단 / step2_a1_btm 하단 기하 검사 ───────────────────
     flows = {fl["step"]: fl for fl in plan.get("flows", [])}

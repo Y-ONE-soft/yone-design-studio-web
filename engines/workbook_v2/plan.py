@@ -169,6 +169,59 @@ def apply_pua_print_map(obj):
     return obj
 
 
+# ── 아래첨자 인쇄 매핑 (W23 r13 F3 — 사용자 실측: "₂ 같은 글리프가 폰트
+# 때문에 안 보임") ──────────────────────────────────────────────────────────
+# 아래첨자 숫자(U+2080~2089, 예: CO₂)는 이 계열 내지의 본문 폰트에 글리프가
+# 없어 tofu/공백으로 인쇄된다 (job 6c1430c3 실사용 3차 피드백 — 코퍼스에도
+# 06f4b2c2 306건 / 0a5da924 32건 잠복, W11부터 존재). 등가 표기로 치환:
+# ASCII 숫자 + 아래첨자 서식 run(sub) — 실행기가 Position.SUBSCRIPT를 직접
+# 적용한다 (문자스타일 아님 — seseospecial W7의 underline 속성 직접 적용
+# 전례, 자동 생성 금지 규칙과 무관. 어떤 폰트에서든 렌더 가능).
+# 게이트 G29가 이 매핑 등재 문자의 출력 잔존을 critical로 소급 검출한다
+# (G10 확장의 PUA 테이블과 동일 패턴 — 잔존 = 매핑 미적용 출력).
+SUBSCRIPT_PRINT_TABLE = {chr(0x2080 + i): str(i) for i in range(10)}
+
+
+def _apply_sub_para(para):
+    """단락 1개에 아래첨자 매핑 적용 — 텍스트는 ASCII 숫자로, 해당 위치는
+    runs에 {"sub": True} 서식 run으로 분리 (1:1 길이 보존 — 밑줄 runs
+    오프셋 유지. runs가 없던 단락은 전체를 비밑줄 run으로 실체화)."""
+    text = para.get("text") or ""
+    idxs = [i for i, ch in enumerate(text) if ch in SUBSCRIPT_PRINT_TABLE]
+    if not idxs:
+        return para
+    runs = para.get("runs") or [{"t": text, "ul": False}]
+    pieces = []
+    prev = 0
+    for i in idxs:
+        if i > prev:
+            pieces.extend(_slice_runs(runs, prev, i))
+        base = _slice_runs(runs, i, i + 1)
+        seg = dict(base[0] if base else {"ul": False})
+        seg["t"] = SUBSCRIPT_PRINT_TABLE[text[i]]
+        seg["sub"] = True
+        pieces.append(seg)
+        prev = i + 1
+    if prev < len(text):
+        pieces.extend(_slice_runs(runs, prev, len(text)))
+    out = dict(para)
+    out["text"] = "".join(SUBSCRIPT_PRINT_TABLE.get(ch, ch) for ch in text)
+    out["runs"] = pieces
+    return out
+
+
+def apply_subscript_print_map(obj):
+    """content 단락 트리에 아래첨자 인쇄 매핑을 적용한 사본 반환 (원본
+    무변형 — apply_pua_print_map과 동일 계층·동일 순회)."""
+    if isinstance(obj, list):
+        return [apply_subscript_print_map(x) for x in obj]
+    if isinstance(obj, dict):
+        if isinstance(obj.get("text"), str):
+            return _apply_sub_para(obj)
+        return {k: apply_subscript_print_map(v) for k, v in obj.items()}
+    return obj
+
+
 def _s3_effective_kind(kind, text):
     # W16 D2 — 영단어 강등 (분류기 수리와 이중 방어: content-only 코퍼스
     # 재실행은 구버전 kind 주석을 그대로 쓰므로 플랜 계층에서도 강등).
@@ -1467,6 +1520,8 @@ def steps_to_plan(steps, exclude=None, workbook_type="모의고사",
             continue
         # W20 D1 — hwp 심볼 PUA 인쇄 매핑 (사본 — content 원본 무변형)
         step_data = apply_pua_print_map(step_data)
+        # W23 F3 — 아래첨자(₂류) 인쇄 매핑: ASCII 숫자 + sub 서식 run
+        step_data = apply_subscript_print_map(step_data)
         if step_key == "step1_c1":
             built = builder(step_data, workbook_type=workbook_type,
                             exclude_btm=("step1_c1_btm" in exclude))
