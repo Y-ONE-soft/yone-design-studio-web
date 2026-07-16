@@ -158,10 +158,13 @@ def test_decorations(content, tmp_path):
 
 def test_base_engine_decorations_unchanged(tmp_path):
     """본가 데코 가드 — W13부터 page_cleanup opt-in (c05 실기: 잔여 22페이지).
-    passage_numbers는 본가 미적용 유지 (모의고사 번호 프레임 정합)."""
+    passage_numbers는 본가 미적용 유지 (모의고사 번호 프레임 정합).
+    W23 r13 의미론 갱신: question_keep 센티널 추가 (F4 — 문제 단위 펼침면
+    킵, supp+본가 opt-in. prepare_jsx가 플랜 완성 후 계약으로 확장)."""
     from engines.workbook_v2.engine import WorkbookV2Engine
     deco = WorkbookV2Engine()._plan_decorations(str(tmp_path), {})
-    assert deco == {"page_cleanup": {"empty_master": "M"}}
+    assert deco == {"page_cleanup": {"empty_master": "M"},
+                    "question_keep": True}
     assert "passage_numbers" not in deco
 
 

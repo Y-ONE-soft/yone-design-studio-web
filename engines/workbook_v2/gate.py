@@ -136,7 +136,6 @@
                   실패의 메타 기본값 추락이면 중립 '부교재'가 계약 (job
                   6c1430c3 실증: '[N과 추가지문]' 원고 간지가 '모의고사'로
                   인쇄). source=type + line1='모의고사' = critical.
-
   G28③ 고아 간지 (W23 r13 F2): 간지 라벨 뒤에 다음 간지/문서 끝까지 플로우
                   콘텐츠 페이지가 없으면 사용되지 않는 섹션의 간지 잔재 —
                   delete 모드 critical (스프레드 삭제가 실행기 계약), 아니면
@@ -148,10 +147,16 @@
                   소급 — G10 확장 패턴), ② 스타일 적용 폰트의 cmap 실측
                   (core.fontcov)으로 글리프 미지원 문자 warning 지목 —
                   PUA(G10)와 별개의 '폰트 커버리지' 부류.
+  G30 [문제단위킵] (W23 r13 F4): 한 문제(발문+지문+선지)가 오른쪽 페이지
+                  에서 잘려 다음 장으로 이어짐 — question_keep 계약 플랜은
+                  critical, 구출력은 warning 소급 지목. 스프레드 초과
+                  문제(밀기로 해소 불가)는 warning.
+
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
-G24②/G26은 W21 확장 필드(fc / pages)가 필요하다. 구버전 덤프에는 경고로만
-보고한다 (재덤프 안내). G9는 uploads_dir를 넘긴 경우에만 검사한다 (오프라인
-플랜 테스트 호환).
+G24②/G26은 W21 확장 필드(fc / pages)가 필요하다. G29②는 W23 확장 필드
+(fonts / style_fonts), G30은 W23 확장 필드(fp — 프레임별 페이지, fc 병렬)가
+필요하다. 구버전 덤프에는 경고로만 보고한다 (재덤프 안내). G9는 uploads_dir를
+넘긴 경우에만 검사한다 (오프라인 플랜 테스트 호환).
 """
 import os
 import re
@@ -1242,7 +1247,6 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                    + " | ".join(orphan_div[:5]))
             (critical if cleanup_delete else warnings).append(msg)
 
-
     # ── G29 글리프 커버리지 (W23 r13 — F3) ───────────────────────────────
     # ① 아래첨자 인쇄 매핑(plan.SUBSCRIPT_PRINT_TABLE) 등재 문자의 출력
     #    잔존 = critical — 현행 플랜은 이 문자를 ASCII 숫자+아래첨자 서식
@@ -1311,6 +1315,98 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
             warnings.append(
                 f"[글리프커버리지] 적용 폰트가 글리프 미지원 "
                 f"{sum(uncov.values())}건 (cmap 실측): {det}")
+
+    # ── G30 문제단위킵 (W23 r13 — F4) ────────────────────────────────────
+    # 사용자 확정 스펙: 한 문제(발문+지문+선지 전체)가 오른쪽 페이지에서
+    # 잘려 다음 장(스프레드 넘김)으로 이어지면 안 된다 — 왼쪽→오른쪽은
+    # 허용. 문제 경계 = question_keep 계약(q_styles)의 발문/인트로 스타일
+    # 단락. 계약 없는 구출력은 스타일 leaf 휴리스틱('실전문제 번호'/'다음
+    # 글을 읽고')으로 소급 지목 (warning). 단락→페이지는 덤프 W23 확장
+    # 필드 fp(프레임별 페이지 이름 — fc와 병렬)로 독립 재계산. 시작이
+    # 왼쪽인데 스프레드를 넘는 문제(한 문제가 2페이지 초과)는 밀어도 해소
+    # 불가 — warning 지목 (실행기도 경고만).
+    qk = (plan.get("question_keep")
+          if isinstance(plan.get("question_keep"), dict) else {})
+    qk_styles = set(qk.get("q_styles") or [])
+
+    def _is_q_boundary_style(s):
+        if qk_styles:
+            return s in qk_styles
+        return "실전문제 번호" in s or "다음 글을 읽고" in s
+
+    qk_steps = sorted((qk.get("flows") or {}).keys()) or ["step3"]
+    page_ord30 = {str(e.get("p")): i
+                  for i, e in enumerate(dump.get("pages") or [])}
+    pages_inv30 = {str(e.get("p")): e for e in dump.get("pages") or []}
+    keep_viol = []
+    keep_manual = []
+    keep_nodump = False
+    for fl in plan.get("flows", []):
+        if fl.get("step") not in qk_steps:
+            continue
+        story = _find_flow_story(dump, fl)
+        if story is None:
+            continue
+        ps = story.get("paragraphs", [])
+        bounds = [i for i, p in enumerate(ps)
+                  if _is_q_boundary_style(p.get("s") or "")]
+        if not bounds:
+            continue
+        fc = story.get("fc") or []
+        fp = story.get("fp") or []
+        if not fc or not fp or not page_ord30:
+            keep_nodump = True
+            continue
+        frames = sorted((c, str(pg)) for c, pg in zip(fc, fp)
+                        if isinstance(c, int) and c >= 0 and pg)
+        if not frames:
+            continue
+        offs = []
+        cum = 0
+        for p in ps:
+            offs.append(cum)
+            cum += len(p.get("t", ""))
+
+        def _pg_of(off, _frames=frames):
+            name = None
+            for c, pg in _frames:
+                if c <= off:
+                    name = pg
+                else:
+                    break
+            return name
+
+        for bi, si in enumerate(bounds):
+            ei = (bounds[bi + 1] - 1 if bi + 1 < len(bounds)
+                  else len(ps) - 1)
+            sp = _pg_of(offs[si])
+            ep = _pg_of(offs[ei] + max(0, len(ps[ei].get("t", "")) - 1))
+            if sp is None or ep is None:
+                continue
+            so, eo = page_ord30.get(sp), page_ord30.get(ep)
+            if so is None or eo is None:
+                continue
+            if (eo + 1) // 2 <= (so + 1) // 2:
+                continue          # 같은 스프레드 안 (L→R 허용 포함)
+            head = _clean(ps[si].get("t", ""))[:28]
+            entry = f"{fl['step']} p{sp}→p{ep} 「{head}」"
+            if (pages_inv30.get(sp) or {}).get("side") == "R":
+                keep_viol.append(entry)
+            else:
+                keep_manual.append(entry)
+    stats["question_keep_viol"] = len(keep_viol)
+    if keep_nodump and qk:
+        warnings.append("[문제단위킵] 덤프에 프레임 페이지 정보 없음"
+                        "(구버전 덤프) — 재덤프 필요")
+    if keep_viol:
+        msg = (f"[문제단위킵] 오른쪽 페이지→다음 장 걸침 문제 "
+               f"{len(keep_viol)}건 (문제 전체를 다음 페이지로 밀어야 함): "
+               + " | ".join(keep_viol[:5]))
+        (critical if qk else warnings).append(msg)
+    if keep_manual:
+        warnings.append(
+            f"[문제단위킵] 한 문제가 스프레드 초과 {len(keep_manual)}건 — "
+            f"밀기로 해소 불가 (수동 확인): " + " | ".join(keep_manual[:3]))
 
     # ── G5 step2_a1 상단 / step2_a1_btm 하단 기하 검사 ───────────────────
     flows = {fl["step"]: fl for fl in plan.get("flows", [])}

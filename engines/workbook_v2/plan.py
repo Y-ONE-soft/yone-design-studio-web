@@ -1539,3 +1539,39 @@ def steps_to_plan(steps, exclude=None, workbook_type="모의고사",
     return {"format": "wb-flows-v1", "flows": flows,
             "unsupported": sorted(unsupported),
             "warnings": warnings}
+
+
+def question_keep_op(plan, steps=("step3",)):
+    """W23 r13 (F4) — 문제 단위 펼침면 킵 op 계산 (실행기/게이트 공용 계약).
+
+    사용자 확정 스펙: 한 문제(발문+지문+선지 전체)가 왼쪽→오른쪽 페이지로
+    이어지는 것은 허용, 오른쪽 페이지에서 잘려 다음 장(스프레드 넘김)으로
+    이어지는 것은 금지 — 그 경우 문제 전체를 다음 페이지로 민다.
+
+    starts = 문제 시작 단락의 '평탄화(flat) 인덱스' (실행기 processFlow가
+    유닛을 순서대로 평탄화해 스토리에 얹으므로 스토리 단락 인덱스와 1:1).
+    문제 시작 = STEP3 발문(Q)/그룹 인트로(Q-INTRO) 스타일 단락. 인덱스 0은
+    제외 — 플로우 첫 단락을 밀면 섹션 시작 자체가 마커 페이지를 벗어난다.
+    q_styles는 게이트 G30이 출력 재검산에 소비한다. 대상 스텝에 시작점이
+    없으면 None (op 미적용)."""
+    q_styles = set()
+    for kind in ("Q", "Q-INTRO"):
+        st = _style("STEP3", kind)
+        if st:
+            q_styles.add(st)
+    flows_cfg = {}
+    for fl in plan.get("flows", []):
+        if fl.get("step") not in steps:
+            continue
+        starts = []
+        idx = 0
+        for u in fl.get("units", []):
+            for p in unit_paras(u):
+                if p.get("s") in q_styles and idx > 0:
+                    starts.append(idx)
+                idx += 1
+        if starts:
+            flows_cfg[fl["step"]] = {"starts": starts}
+    if not flows_cfg:
+        return None
+    return {"flows": flows_cfg, "q_styles": sorted(q_styles)}
