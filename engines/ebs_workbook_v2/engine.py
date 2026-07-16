@@ -116,14 +116,35 @@ class EbsWorkbookV2Engine(WorkbookV2Engine):
         return "EBS"
 
     def _plan_decorations(self, job_dir, cfg):
-        """완제품 후처리 op — page_cleanup opt-in (W12).
+        """완제품 후처리 op — page_cleanup opt-in (W12) + question_keep
+        (W24 r14 확산).
 
         변형문제 문제모음(STEP3 단독) 실조판에서 원고 없는 STEP1/2 섹션
         페이지 24개 + 섹션 지문번호 프레임(01~04)이 잔존(게이트 warning)
         → 잔여 페이지 삭제 + 빈 STEP3 페이지 M 마스터(내지 실물에 M-마스터
         존재 확인). passage_numbers는 EBS 내지의 독립 번호 프레임 실물
-        근거가 없어 미적용 (섹션 페이지 삭제로 함께 정리됨)."""
-        return {"page_cleanup": {"empty_master": "M"}}
+        근거가 없어 미적용 (섹션 페이지 삭제로 함께 정리됨).
+
+        W24 r14 확산 판정 (EBS리딩파워_내지 46p 실측 —
+        data_corpus/round14/template_masters/ebs_dump.json + c16 재조판
+        프로브 data_corpus/round14/c16_ebs_probe/):
+          - question_keep 활성: step3 문제 단위 펼침면 킵 (r14 c16 실기
+            밀기 5건, 게이트 G30 critical 0 — True 센티널은 base
+            prepare_jsx가 계약으로 확장).
+          - page_cleanup delete 활성: r14 c16 delete 프로브 critical 0/
+            warning 0 (기지 overset 1 유지). delete가 기존 M-모드와
+            다른 구간은 STEP3 영역(마지막 간지 이후)+장식-빈/꼬리
+            페이지뿐이라 간지 정렬(내장 M p19 채움)이 구조적으로 보존
+            — M-모드의 빈 M 페이지 2장이 삭제돼 24p→23p. 한계: EBS
+            간지 라벨은 라틴 표기("EBS Reading Power")라 고아 간지/파트
+            경계 자동 정렬의 판정 밖 — 빈 섹션 간지 잔존은 기존 동작
+            그대로(무회귀)이고, 정렬 붕괴는 G28(delete critical)이 감시.
+          - section_masters 보류: 섹션 시작 좌/우 쌍은 STEP1 = A/B로
+            실측됐으나(우측 시작 p7/p13 = B-마스터) EBS v2 코퍼스가 전부
+            STEP3 단독이라 실기 검증 불가 — step_map.json에 master_pair
+            계약만 등재해 G26 warning 감시로 두고 op는 켜지 않는다."""
+        return {"page_cleanup": {"empty": "delete"},
+                "question_keep": True}
 
     def _step_map(self):
         return dict(_STEP_MAP)

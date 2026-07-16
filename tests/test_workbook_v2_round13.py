@@ -488,11 +488,12 @@ def test_mockexam_divider_still_unchanged(tmp_path):
 
 
 def test_derived_engines_no_question_keep(tmp_path):
-    """교과서/EBS 파생 엔진의 데코는 question_keep 미탑재 (opt-in 시작 —
-    supp+본가만. 파생 계열 확산은 실기 검증 후)."""
+    """W24 r14 의미론 갱신: question_keep이 교과서/EBS 파생 엔진으로 확산
+    (실기 1건 검증 후 활성 — W23 opt-in 시작 당시엔 supp+본가만이었다).
+    True 센티널은 base prepare_jsx가 계약으로 확장한다."""
     from engines.textbook_workbook_v2.engine import TextbookWorkbookV2Engine
     from engines.ebs_workbook_v2.engine import EbsWorkbookV2Engine
     job = _mk_job(tmp_path, {"steps": {}})
     for eng in (TextbookWorkbookV2Engine(), EbsWorkbookV2Engine()):
         deco = eng._plan_decorations(job, {})
-        assert "question_keep" not in deco, type(eng).__name__
+        assert deco.get("question_keep") is True, type(eng).__name__

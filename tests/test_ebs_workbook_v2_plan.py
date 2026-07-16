@@ -63,7 +63,10 @@ def test_step_map_matches_v1_settings():
 
     W12: step2_a1/btm에 pos(top/bottom) 기하 힌트 추가 — 4ed24266 실기에서
     rank 선택이 상/하단을 뒤바꾸는 상하반전 확인(a1 top 164 ≥ btm 31),
-    supp W11 결함②의 확산 조건(실기 확인) 충족. v1 마커/페이지는 그대로."""
+    supp W11 결함②의 확산 조건(실기 확인) 충족. v1 마커/페이지는 그대로.
+    W24 r14: STEP1 4스텝에 master_pair(A/B — 내지 46p 실측: 우측 시작
+    p7/p13 = B-마스터) 계약 등재. STEP2는 C-마스터 좌/우 공용이라 미등재
+    (section_masters op는 실기 검증 불가로 보류 — G26 warning 감시만)."""
     v1 = {
         "step1_a1":     {"page": "4",  "marker": "어휘 선택"},
         "step1_a2":     {"page": "7",  "marker": "본문 O/X"},
@@ -74,8 +77,11 @@ def test_step_map_matches_v1_settings():
         "step2_c2":     {"page": "28", "marker": "영작 배열"},
     }
     pos = {"step2_a1": "top", "step2_a1_btm": "bottom"}
+    pair = {"left": "A-마스터", "right": "B-마스터"}
     for k, v in v1.items():
         expected = dict(v, **({"pos": pos[k]} if k in pos else {}))
+        if k.startswith("step1_"):
+            expected["master_pair"] = pair
         assert _STEP_MAP[k] == expected, k
     # step3: v1 settings 미지정 = run.jsx 기본 마스터 O
     assert _STEP_MAP["step3"] == {"master": "O"}

@@ -239,7 +239,8 @@ def test_textbook_plan_decorations_finish_ops(tmp_path):
     (job / "content.json").write_text(json.dumps(content, ensure_ascii=False),
                                       encoding="utf-8")
     deco = TextbookWorkbookV2Engine()._plan_decorations(str(job), {})
-    assert deco["page_cleanup"] == {"empty_master": "M"}
+    # W24 r14 의미론 갱신: 교과서도 delete 모드 확산 (r14 c13 실기 검증)
+    assert deco["page_cleanup"] == {"empty": "delete"}
     assert deco["passage_numbers"]["labels"] == ["1", "2"]
     assert deco["passage_numbers"]["steps"] == ["step1_c2", "step2_b1",
                                                 "step2_c1"]
@@ -347,6 +348,7 @@ def test_textbook_plan_decorations_no_labels(tmp_path):
     for k in ("subject", "publisher", "lesson"):
         (job / f"{k}.txt").write_text("x", encoding="utf-8")
     deco = TextbookWorkbookV2Engine()._plan_decorations(str(job), {})
-    assert deco["page_cleanup"] == {"empty_master": "M"}
+    # W24 r14 의미론 갱신: 교과서도 delete 모드 확산 (r14 c13 실기 검증)
+    assert deco["page_cleanup"] == {"empty": "delete"}
     assert deco["passage_numbers"]["labels"] == []
     assert deco["passage_numbers"]["clear_steps"] == ["step3"]
