@@ -189,9 +189,15 @@ def test_gate_g28_non_delete_mode_warning():
 
 def test_gate_g28_w21_output_labels_aligned(w21_report):
     """W21 재조판본의 간지 라벨(p3/p29/p49)은 전부 오른쪽 — 파트경계 무결
-    (p47 잔존이 '우연히' 정렬을 지켰던 상태. 삭제 후에는 M 채움이 계약)."""
-    assert not [c for c in w21_report["critical"]
-                if c.startswith("[파트경계]")]
+    (p47 잔존이 '우연히' 정렬을 지켰던 상태. 삭제 후에는 M 채움이 계약).
+    W23 r13 의미론 갱신: 짤지문 고아 간지(p61 — 뒤따르는 콘텐츠 없음)는
+    G28③이 새로 소급 검출한다 (r13 F2, 당시엔 게이트 구멍). 정렬(왼쪽
+    라벨/M 위치) 계열 무결만 이 테스트의 원래 검증 대상으로 유지."""
+    align = [c for c in w21_report["critical"]
+             if c.startswith("[파트경계]") and "고아 간지" not in c]
+    assert not align
+    orphan = [c for c in w21_report["critical"] if "고아 간지" in c]
+    assert orphan and "짤지문" not in orphan[0]  # 라벨 첫 줄('고2 모의고사')로 지목
 
 
 def test_executor_f2_filler_sources():

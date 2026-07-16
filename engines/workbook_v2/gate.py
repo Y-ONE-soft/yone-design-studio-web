@@ -137,6 +137,12 @@
                   6c1430c3 실증: '[N과 추가지문]' 원고 간지가 '모의고사'로
                   인쇄). source=type + line1='모의고사' = critical.
 
+  G28③ 고아 간지 (W23 r13 F2): 간지 라벨 뒤에 다음 간지/문서 끝까지 플로우
+                  콘텐츠 페이지가 없으면 사용되지 않는 섹션의 간지 잔재 —
+                  delete 모드 critical (스프레드 삭제가 실행기 계약), 아니면
+                  warning (6c1430c3 실증: 짤지문 간지 p34~35 잔존 — 라벨
+                  페이지에 섹션 마스터(O)가 적용돼 기존 간지 판정을 전부
+                  비껴갔다).
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
 G24②/G26은 W21 확장 필드(fc / pages)가 필요하다. 구버전 덤프에는 경고로만
 보고한다 (재덤프 안내). G9는 uploads_dir를 넘긴 경우에만 검사한다 (오프라인
@@ -1173,6 +1179,57 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
             msg = (f"[파트경계] 파트 경계 정렬 이상 {len(boundary_bad)}건: "
                    + " | ".join(boundary_bad[:5]))
             (critical if cleanup_delete else warnings).append(msg)
+
+        # ── G28③ 고아 간지 스프레드 (W23 r13 — F2) ──────────────────────
+        # 간지 라벨 뒤에 다음 간지/문서 끝까지 플로우 콘텐츠 페이지가 하나도
+        # 없으면 그 간지는 사용되지 않는 섹션의 잔재다 (job 6c1430c3 실증:
+        # '고2 모의고사/26년 3월 짤지문' 간지 스프레드 p34~35 — 짤지문
+        # 섹션은 v2가 콘텐츠를 배치하지 않는 템플릿 영역이라 delete 모드가
+        # 내용 페이지를 전부 지운 뒤에도 라벨만 남는다. 이 라벨 페이지는
+        # 섹션 마스터(O)가 적용돼 있어 마스터-없음 기준의 간지 판정/갱신을
+        # 전부 비껴간다 — [원본]워크북_C p263 실측). 라벨 후보 = 단일 페이지
+        # 비-플로우 스토리 + 2단락 이상 + 첫 단락 한글 + 전체 40자 미만
+        # (실행기 removeOrphanDividers와 동일 부류 — 마스터 불문).
+        # delete 모드(스프레드 삭제가 실행기 계약)는 critical, 아니면
+        # warning (v1/M-모드 실물도 잔존 관행 — 소급은 지목만).
+        page_ord = {str(e.get("p")): i
+                    for i, e in enumerate(dump.get("pages") or [])}
+        label_cands = {}
+        for story in dump.get("stories", []):
+            pgs = story.get("pg") or []
+            if len(pgs) != 1 or str(pgs[0]) not in page_ord:
+                continue
+            ps = story.get("paragraphs", [])
+            if len(ps) < 2:
+                continue
+            whole = _clean("".join(p.get("t", "") for p in ps))
+            if not whole or len(whole) > 40:
+                continue
+            t0 = _clean(ps[0].get("t", ""))
+            if not _RE_HANGUL.search(t0):
+                continue
+            if any(_clean(p.get("t", "")) in plan_texts
+                   for p in ps if len(_clean(p.get("t", ""))) >= 4):
+                continue          # 플로우 콘텐츠(원고 단락)와 겹침 — 제외
+            label_cands[page_ord[str(pgs[0])]] = (str(pgs[0]), t0)
+        content_ord = sorted(page_ord[p] for p in content_pages
+                             if p in page_ord)
+        if not content_ord:
+            label_cands = {}      # 콘텐츠 페이지 0 (합성 덤프/빈 플랜) — 생략
+        orphan_div = []
+        for oi in sorted(label_cands):
+            nxt = [x for x in label_cands if x > oi]
+            hi = min(nxt) if nxt else len(page_ord)
+            if not any(oi < c < hi for c in content_ord):
+                pname, t0 = label_cands[oi]
+                orphan_div.append(f"p{pname} 「{t0[:20]}」")
+        stats["orphan_dividers"] = len(orphan_div)
+        if orphan_div:
+            msg = (f"[파트경계] 고아 간지 {len(orphan_div)}개 — 뒤따르는 "
+                   f"콘텐츠 없음 (스프레드 삭제 대상): "
+                   + " | ".join(orphan_div[:5]))
+            (critical if cleanup_delete else warnings).append(msg)
+
 
     # ── G5 step2_a1 상단 / step2_a1_btm 하단 기하 검사 ───────────────────
     flows = {fl["step"]: fl for fl in plan.get("flows", [])}

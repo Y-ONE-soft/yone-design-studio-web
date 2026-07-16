@@ -645,6 +645,14 @@ function cleanupPages(doc, flowStories, op) {
     wlog("페이지 정리: 잔여 스텝/사이클 페이지 " + removed + "개 삭제"
          + (deleteEmpty ? " (STEP3 빈 페이지 포함 — delete 모드)" : ""));
 
+    // 2a-2) W23 r13 (delete 모드): 고아 간지 스프레드 삭제 — 간지 라벨 뒤에
+    // 다음 간지/문서 끝까지 플로우 콘텐츠가 없으면 사용되지 않는 섹션의
+    // 간지 잔재다 (r13 피드백 F2: 짤지문 간지 p34~35 잔존 — 짤지문 섹션은
+    // v2가 콘텐츠를 배치하지 않는 템플릿 영역. 이 라벨 페이지는 섹션
+    // 마스터(O)가 적용돼 있어 isDividerLabelPage/updateDividerPages의
+    // 마스터-없음 판정을 전부 비껴간다 — [원본]워크북_C p263 실측).
+    if (deleteEmpty) { removeOrphanDividers(doc, flowIds); }
+
     // 2b) W22 r12 (delete 모드): 파트 경계 정렬 — 페이지 삭제로 간지
     // 라벨이 물리 왼쪽 페이지로 밀렸으면 간지 스프레드 앞에 M(메모)
     // 마스터 채움 페이지 1장을 삽입해 복원한다 (사용자 확정 스펙:
@@ -781,6 +789,90 @@ function alignPartFillers(doc) {
     }
 }
 // [W22 파트경계 유틸 끝]
+
+// ── W23 r13: 고아 간지 스프레드 삭제 (delete 모드의 cleanupPages가 호출) ────
+// 간지 라벨 후보 = 로컬 프레임 1개 + 비-플로우 단일 프레임 스토리 + 단락
+// 2개 이상 + 첫 단락 한글 + 전체 40자 미만 (마스터 불문 — 짤지문 간지는
+// 섹션 마스터(O)가 적용된 채 존재. 게이트 G28③과 동일 부류). 발문/장식
+// 프레임은 단락 1개, 본문은 40자 초과라 걸리지 않는다.
+function isDividerLabelLike(pg, flowIds) {
+    if (pg.textFrames.length !== 1) { return false; }
+    var tf = pg.textFrames[0];
+    var st = null;
+    try { st = tf.parentStory; } catch (e) { return false; }
+    if (flowIds && flowIds[String(st.id)]) { return false; }
+    try { if (st.textContainers.length !== 1) { return false; } }
+    catch (e2) { return false; }
+    var ps = null;
+    try { ps = tf.paragraphs; } catch (e3) { return false; }
+    if (!ps || ps.length < 2) { return false; }
+    var whole = "";
+    try { whole = String(st.contents || ""); } catch (e4) {}
+    if (whole.replace(/[\s\r\n￼]+/g, "").length === 0) { return false; }
+    if (whole.length > 40) { return false; }
+    var t1 = "";
+    try { t1 = String(ps[0].contents || ""); } catch (e5) {}
+    return /[가-힣]/.test(t1);
+}
+
+function removeOrphanDividers(doc, flowIds) {
+    var pagesArr = doc.pages.everyItem().getElements();
+    var info = [];
+    for (var i = 0; i < pagesArr.length; i++) {
+        var pg = pagesArr[i];
+        var hasFlow = false;
+        var tfs = pg.textFrames;
+        for (var j = 0; j < tfs.length; j++) {
+            try {
+                if (flowIds[String(tfs[j].parentStory.id)]
+                        && !isBlankFrameContent(tfs[j])) {
+                    hasFlow = true;
+                    break;
+                }
+            } catch (e) {}
+        }
+        info.push({ pg: pg, label: isDividerLabelLike(pg, flowIds),
+                    flow: hasFlow });
+        if ((i + 1) % 40 === 0) {
+            wlog("고아 간지 검사 진행: " + (i + 1) + "/" + pagesArr.length);
+        }
+    }
+    var removed = 0;
+    for (var k = info.length - 1; k >= 0; k--) {
+        if (!info[k].label) { continue; }
+        var orphan = true;
+        for (var m = k + 1; m < info.length; m++) {
+            if (info[m].label) { break; }
+            if (info[m].flow) { orphan = false; break; }
+        }
+        if (!orphan) { continue; }
+        // 동반 왼쪽 빈 페이지(프레임 0 또는 전부 공백, 라벨/플로우 아님)도
+        // 함께 삭제 — 스프레드 좌우 짝수 유지 (뒤 간지 정렬 무영향).
+        var names = [String(info[k].pg.name)];
+        var companion = null;
+        if (k > 0 && !info[k - 1].label && !info[k - 1].flow) {
+            var ptfs = info[k - 1].pg.textFrames;
+            var blank = true;
+            for (var q = 0; q < ptfs.length; q++) {
+                if (!isBlankFrameContent(ptfs[q])) { blank = false; break; }
+            }
+            if (blank) {
+                companion = info[k - 1].pg;
+                names.unshift(String(companion.name));
+            }
+        }
+        try {
+            info[k].pg.remove();
+            if (companion) { companion.remove(); }
+            removed++;
+            wlog("고아 간지 스프레드 삭제: p" + names.join(", p")
+                 + " (뒤따르는 콘텐츠 없음)");
+        } catch (e6) {
+            wlog("[경고] 고아 간지 삭제 실패: " + e6);
+        }
+    }
+    wlog("고아 간지 스프레드: " + removed + "개 삭제");
+}
 
 // ── W21 op: 섹션 시작 좌/우 마스터 정합 (plan.section_masters가 있을 때만) ──
 // 페이지 정리로 섹션 시작이 좌→우(또는 우→좌)로 밀리면 시작 페이지 마스터를
