@@ -72,8 +72,9 @@ def main():
                           encoding="utf-8"))
     assert plan["page_cleanup"] == {"empty": "delete"}, plan["page_cleanup"]
     assert plan.get("section_masters") is True
-    # F1: 간지 미입력 → 실측 유형 '추가지문' ('모의고사' 자동 라벨 금지)
-    assert plan["divider"] == {"line1": "추가지문", "line2": "",
+    # F1: 간지 미입력 → 실측 유형 자동 판정 ('모의고사' 자동 라벨 금지)
+    # W24 r14 의미론 갱신: 자동 판정 표기 '추가지문' → '외부지문' 통일
+    assert plan["divider"] == {"line1": "외부지문", "line2": "",
                                "source": "type"}, plan["divider"]
     # F3: 플랜에 아래첨자 잔존 0 + sub 서식 run
     resid = sum(p["t"].count("₂") for fl in plan["flows"]
@@ -107,9 +108,9 @@ def main():
     for st in dump.get("stories", []):
         ps = st.get("paragraphs", [])
         if (len(st.get("pg") or []) == 1 and len(ps) >= 2
-                and ps[0].get("t", "").startswith("추가지문")):
+                and ps[0].get("t", "").startswith(("추가지문", "외부지문"))):
             labels.append(str(st["pg"][0]))
-    print("간지(추가지문) 페이지:",
+    print("간지(외부지문) 페이지:",
           [(p, inv.get(p, {}).get("side")) for p in sorted(
               labels, key=lambda x: int(x) if x.isdigit() else 0)])
     # F2 짤지문 간지 잔존 실측

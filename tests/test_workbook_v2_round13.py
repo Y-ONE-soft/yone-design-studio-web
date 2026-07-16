@@ -116,10 +116,12 @@ def _mk_job(tmp_path, content_obj, uploads=(), meta=None):
 
 
 def test_supp_divider_addu_header(content, tmp_path):
-    """'[N과 추가지문]' bracket 헤더 원고 → '추가지문' (6c1430c3 실증)."""
+    """'[N과 추가지문]' bracket 헤더 원고 → '외부지문' (6c1430c3 실증 감지
+    유지 — W24 r14 의미론 갱신: 자동 판정 표기는 '추가지문'이 아니라
+    '외부지문'으로 통일, 사용자 확정 스펙)."""
     job = _mk_job(tmp_path, content)
     deco = WorkbookSuppV2Engine()._plan_decorations(job, {})
-    assert deco["divider"] == {"line1": "추가지문", "line2": "",
+    assert deco["divider"] == {"line1": "외부지문", "line2": "",
                                "source": "type"}
 
 

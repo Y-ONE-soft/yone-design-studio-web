@@ -151,6 +151,11 @@
                   에서 잘려 다음 장으로 이어짐 — question_keep 계약 플랜은
                   critical, 구출력은 warning 소급 지목. 스프레드 초과
                   문제(밀기로 해소 불가)는 warning.
+  G27 확장 (W24 r14): 간지는 line1(교재유형)+line2(디테일 범위) 두 줄
+                  분리 입력 (둘 다 선택 — 사용자 확정 스펙). 자동 판정
+                  ('N과 추가지문' 감지 포함) 표기는 '외부지문'으로 통일 —
+                  source=type + line1='추가지문'은 구 판정 사다리(r13 ③)
+                  잔존 플랜 = critical.
 
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
 G24②/G26은 W21 확장 필드(fc / pages)가 필요하다. G29②는 W23 확장 필드
@@ -1100,6 +1105,14 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
             "[간지적합] supp 간지 계약 위반 — 교재유형 자동 판정이 "
             "'모의고사' (supp에서 '모의고사' 자동 라벨 금지 — 판정 불가면 "
             "'부교재', r13 F1)")
+    # W24 r14 (사용자 확정 스펙): 자동 판정('N과 추가지문' 감지 포함)의
+    # 표기는 '외부지문'이다 — source=type + '추가지문'은 구 판정 사다리
+    # (r13 ③)의 잔존 플랜 (사용자 직접 입력 source=user는 무관).
+    if (divider_plan.get("source") == "type"
+            and _clean(divider_plan.get("line1") or "") == "추가지문"):
+        critical.append(
+            "[간지적합] supp 간지 계약 위반 — 교재유형 자동 판정 표기가 "
+            "'추가지문' (자동 표기는 '외부지문'이 계약, r14)")
     if supp_divider or is_nop_manuscript:
         mock_dividers = []
         for story in dump.get("stories", []):

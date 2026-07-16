@@ -82,14 +82,28 @@ class WorkbookSuppV2Engine(WorkbookV2Engine):
 
     @property
     def upload_spec(self):
-        """W22 r12 (사용자 확정 스펙): 간지 문구 선택 입력 필드 —
-        입력하면 그 문구로 간지 갱신, 미입력이면 교재유형만 표기.
-        텍스트 슬롯은 routes/typeset.py가 job_dir/divider_text.txt로
-        저장한다 (새 라우트 없음 — 기존 슬롯 처리 재사용)."""
+        """W24 r14 (사용자 확정 스펙): 간지 두 줄 분리 입력 —
+        line1(교재유형) + line2(디테일 범위), 둘 다 선택. 미입력이면
+        교재유형만 자동 표기 (W22 단일 divider_text의 확장 — 기존 필드는
+        하위호환으로 유지: 값이 오면 line1로 소비). 텍스트 슬롯은
+        routes/typeset.py가 job_dir/{key}.txt로 저장한다 (새 라우트 없음
+        — 기존 슬롯 처리 재사용)."""
         spec = dict(super().upload_spec)
         spec["slots"] = list(spec["slots"]) + [{
+            "key": "divider_line1",
+            "label": "간지 첫 줄 — 교재유형 (선택, 미입력 시 자동 판정)",
+            "type": "text",
+            "required": False,
+        }, {
+            "key": "divider_line2",
+            "label": "간지 둘째 줄 — 디테일 범위 (선택)",
+            "type": "text",
+            "required": False,
+        }, {
+            # W22 단일 입력 하위호환 (구 폼/캐시 페이지가 divider_text로
+            # 보내면 line1로 소비 — UI에는 노출하지 않는다)
             "key": "divider_text",
-            "label": "간지 문구 (선택 — 미입력 시 교재유형만 표기)",
+            "label": "간지 문구 (구버전 하위호환 — line1로 소비)",
             "type": "text",
             "required": False,
         }]
@@ -129,29 +143,37 @@ class WorkbookSuppV2Engine(WorkbookV2Engine):
         return _STEP_MAP
 
     def _divider_deco(self, job_dir, content):
-        """간지 divider op — W22 r12 사용자 확정 스펙 + W23 r13 판정 강화.
+        """간지 divider op — W24 r14 두 줄 분리 입력 + W23 r13 판정 강화.
 
-        업로드 시 간지 문구(divider_text 슬롯)를 입력하면 그 문구로 간지를
-        갱신하고, 미입력이면 교재유형만 표기한다. 교재유형 판정 사다리
-        (r13 F1 — job 6c1430c3 실증: '[N과 추가지문]' 원고가 무-p형 감지에
-        안 잡혀 메타 기본 '모의고사'가 인쇄된 결함):
+        간지는 line1(교재유형) + line2(디테일 범위) 구조 (사용자 확정
+        스펙). 업로드 시 divider_line1/divider_line2 슬롯(둘 다 선택)을
+        입력하면 그 문구로 간지를 갱신하고, line1 미입력이면 교재유형을
+        자동 판정해 표기한다 (line2는 입력값 그대로 — 미입력 시 비움).
+        W22 단일 divider_text는 하위호환: 값이 있으면 line1로 소비.
+        교재유형 판정 사다리 (r13 F1 — job 6c1430c3 실증: '[N과 추가지문]'
+        원고가 무-p형 감지에 안 잡혀 메타 기본 '모의고사'가 인쇄된 결함):
           ① 업로드 파일/폴더명 '외부지문' 토큰 → '외부지문'
           ② 무-p형 'N. no.M' 헤더 → '외부지문' (W22 기존)
-          ③ 'N과 추가지문' 헤더(bracket 단독/p형 꼬리) → '추가지문'
+          ③ 'N과 추가지문' 헤더(bracket 단독/p형 꼬리) → '외부지문'
+             (r14 사용자 확정: 자동 판정 표기는 '추가지문'이 아니라
+             '외부지문' — 게이트 G27이 '추가지문' 자동 표기 잔존을 감시)
           ④ workbook_type 메타가 '모의고사'가 아니면 그 값 (사용자가 폼
              에서 교과서/EBS 내지를 고른 신호)
           ⑤ 판정 불가 → 중립 '부교재' — supp에서 '모의고사'는 어떤 경우
              에도 자동으로 나가면 안 된다 (사용자 확정 스펙, 게이트 G27
              계약: source=type + '모의고사' = critical).
-        line2는 빈 문자열(둘째 줄 비움). source(user|type)는 게이트 G27이
-        소비하는 계약 키 (실행기는 line1/line2만 읽는다 — additive)."""
-        text = self._read_meta_str(job_dir, "divider_text", "")
-        if text:
-            return {"divider": {"line1": text, "line2": "",
+        source(user|type)는 line1의 출처 계약 — 게이트 G27이 소비한다
+        (실행기는 line1/line2만 읽는다 — additive). line2는 source와
+        무관한 사용자 입력 (자동 판정 line1 + 사용자 line2 조합 허용)."""
+        line1 = (self._read_meta_str(job_dir, "divider_line1", "")
+                 or self._read_meta_str(job_dir, "divider_text", ""))
+        line2 = self._read_meta_str(job_dir, "divider_line2", "")
+        if line1:
+            return {"divider": {"line1": line1, "line2": line2,
                                 "source": "user"}}
         return {"divider": {"line1": self._detect_supp_type(job_dir,
                                                             content),
-                            "line2": "", "source": "type"}}
+                            "line2": line2, "source": "type"}}
 
     def _detect_supp_type(self, job_dir, content):
         """교재유형 실측 판정 — _divider_deco 사다리 ①~⑤ (docstring 참조)."""
@@ -174,7 +196,8 @@ class WorkbookSuppV2Engine(WorkbookV2Engine):
             return "외부지문"
         if any(_RE_ADDU_HEADER.match(t) or _RE_ADDU_TAIL.search(t)
                for t in texts):
-            return "추가지문"
+            # r14 사용자 확정: 'N과 추가지문' 원고도 자동 표기는 '외부지문'
+            return "외부지문"
         wt = self._workbook_type(job_dir)
         if wt and wt != "모의고사":
             return wt
