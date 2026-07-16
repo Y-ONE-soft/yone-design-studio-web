@@ -40,7 +40,23 @@
                pad2(d.getSeconds()) + "] ";
     }
 
-    var settings   = readJSON(SETTINGS_PATH);
+    // settings 로드 실패 시에도 job_dir 로그에 흔적을 남긴다 — 종전에는
+    // readJSON 예외가 로그 0바이트 침묵 실패로 빠져 원인 진단이 불가했다.
+    var settings;
+    try {
+        settings = readJSON(SETTINGS_PATH);
+    } catch (eBoot) {
+        try {
+            var _ef = new File(new File(SETTINGS_PATH).parent.fsName + "/convert_log.txt");
+            _ef.encoding = "UTF-8";
+            if (_ef.open("a")) {
+                _ef.write(ts() + "[치명적 오류] settings 로드 실패: " +
+                          (eBoot.message || eBoot) + "\n");
+                _ef.close();
+            }
+        } catch (eEf) {}
+        throw eBoot;
+    }
     var LOG_PATH   = settings.log_path;
     var LOG_PATHS  = settings.log_paths || [];
 

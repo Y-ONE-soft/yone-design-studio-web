@@ -32,7 +32,23 @@
                pad2(d.getSeconds()) + "] ";
     }
 
-    var settings   = readJSON(SETTINGS_PATH);
+    // settings 로드 실패 시에도 job_dir 로그에 흔적을 남긴다 — 종전에는
+    // readJSON 예외가 로그 0바이트 침묵 실패로 빠져 원인 진단이 불가했다.
+    var settings;
+    try {
+        settings = readJSON(SETTINGS_PATH);
+    } catch (eBoot) {
+        try {
+            var _ef = new File(new File(SETTINGS_PATH).parent.fsName + "/merge_log.txt");
+            _ef.encoding = "UTF-8";
+            if (_ef.open("a")) {
+                _ef.write(ts() + "[치명적 오류] settings 로드 실패: " +
+                          (eBoot.message || eBoot) + "\n");
+                _ef.close();
+            }
+        } catch (eEf) {}
+        throw eBoot;
+    }
     var LOG_PATH   = settings.log_path;
     var LOG_PATHS  = settings.log_paths || [];
 
@@ -420,9 +436,19 @@
         }
 
         // PDF export
+        // 사용자가 UI에서 마지막으로 쓴 export 설정(페이지 범위 / 페이지별
+        // 개별 PDF)이 스크립트 export에 상속된다 — 세로결합에서 '페이지별
+        // 분할'이 켜진 채 결과가 폴더+_NN.pdf 로 쪼개진 사례(2026-05-28)와
+        // 동일 계열 결함 재발 방지. 위험 설정만 정규화하고 프리셋/품질은
+        // 기존과 동일하게 현재 설정을 따른다.
         try {
             var pdfFile = new File(OUTPUT_PDF);
-            newDoc.exportFile(ExportFormat.PDF_TYPE, pdfFile);
+            try { app.pdfExportPreferences.pageRange = PageRange.ALL_PAGES; } catch (ePr) {}
+            try { app.pdfExportPreferences.exportAsSinglePages = false; } catch (eSp) {}
+            try { app.pdfExportPreferences.viewPDF = false; } catch (eVp) {}
+            newDoc.exportFile(ExportFormat.PDF_TYPE, pdfFile, false);
+            // 파일 시스템 반영 지연 대비 — 최대 10초 대기 후 판정
+            for (var wPdf = 0; wPdf < 20 && !pdfFile.exists; wPdf++) { $.sleep(500); }
             if (pdfFile.exists) {
                 writeLog("PDF: " + pdfFile.fsName);
             } else {
