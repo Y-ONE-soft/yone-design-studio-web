@@ -16,6 +16,7 @@ v1(engines/workbook_supp) 무변경. 출력 파일명 v1 규칙 + _v2 접미로 
 import json
 import os
 import re
+import unicodedata
 
 from engines.workbook_v2.engine import WorkbookV2Engine
 
@@ -46,6 +47,14 @@ _NUMBER_FRAME_STEPS = ["step1_c2", "step2_b1", "step2_c1"]
 # 정의를 따로 유지한다: 생산 코드가 틀리면 게이트도 같이 틀리는 순환 방지)
 _RE_NOP_HEADER = re.compile(r"^\s*\d+\s*[.)]\s*no\.?\s*\d+(?:~\d+)?\s*$",
                             re.I)
+# W23 r13 F1 — 교재유형 판정 강화 (job 6c1430c3 실증: '[N과 추가지문]'
+# bracket 헤더 원고가 무-p형 감지에 안 잡혀 간지가 메타 기본 '모의고사'로
+# 추락). 추가지문형 헤더("[3과 추가지문]" 단독 단락, p형 "p1-no.3과
+# 추가지문" 꼬리 포함)와 업로드 파일/폴더명의 '외부지문' 토큰을 감지한다.
+_RE_ADDU_HEADER = re.compile(
+    r"^\[?\s*\d+\s*과\s*추가\s*지문\s*\]?$")
+_RE_ADDU_TAIL = re.compile(r"\d+\s*과\s*추가\s*지문\s*(?:\([^)]*\))?\]?\s*$")
+_RE_EXT_TOKEN = re.compile(r"외부\s*지문")
 
 
 class WorkbookSuppV2Engine(WorkbookV2Engine):
@@ -120,27 +129,56 @@ class WorkbookSuppV2Engine(WorkbookV2Engine):
         return _STEP_MAP
 
     def _divider_deco(self, job_dir, content):
-        """간지 divider op — W22 r12 사용자 확정 스펙 (supp 계열 한정).
+        """간지 divider op — W22 r12 사용자 확정 스펙 + W23 r13 판정 강화.
 
         업로드 시 간지 문구(divider_text 슬롯)를 입력하면 그 문구로 간지를
-        갱신하고, 미입력이면 교재유형만 표기한다 — 외부지문(무-p형 'N. no.M'
-        헤더) 원고는 '외부지문', 그 외는 workbook_type 메타(기본 '모의고사').
-        기존 '고N 모의고사 / YY년 M월'은 supp 폼이 년/월을 받지 않아
-        엔진 기본값(25년 10월)이 그대로 찍히던 잔재 — 폐기 (r12 피드백 3).
+        갱신하고, 미입력이면 교재유형만 표기한다. 교재유형 판정 사다리
+        (r13 F1 — job 6c1430c3 실증: '[N과 추가지문]' 원고가 무-p형 감지에
+        안 잡혀 메타 기본 '모의고사'가 인쇄된 결함):
+          ① 업로드 파일/폴더명 '외부지문' 토큰 → '외부지문'
+          ② 무-p형 'N. no.M' 헤더 → '외부지문' (W22 기존)
+          ③ 'N과 추가지문' 헤더(bracket 단독/p형 꼬리) → '추가지문'
+          ④ workbook_type 메타가 '모의고사'가 아니면 그 값 (사용자가 폼
+             에서 교과서/EBS 내지를 고른 신호)
+          ⑤ 판정 불가 → 중립 '부교재' — supp에서 '모의고사'는 어떤 경우
+             에도 자동으로 나가면 안 된다 (사용자 확정 스펙, 게이트 G27
+             계약: source=type + '모의고사' = critical).
         line2는 빈 문자열(둘째 줄 비움). source(user|type)는 게이트 G27이
         소비하는 계약 키 (실행기는 line1/line2만 읽는다 — additive)."""
         text = self._read_meta_str(job_dir, "divider_text", "")
         if text:
             return {"divider": {"line1": text, "line2": "",
                                 "source": "user"}}
+        return {"divider": {"line1": self._detect_supp_type(job_dir,
+                                                            content),
+                            "line2": "", "source": "type"}}
+
+    def _detect_supp_type(self, job_dir, content):
+        """교재유형 실측 판정 — _divider_deco 사다리 ①~⑤ (docstring 참조)."""
+        uploads = os.path.join(job_dir, "uploads")
+        names = []
+        if os.path.isdir(uploads):
+            for root, dirs, files in os.walk(uploads):
+                dirs[:] = [d for d in dirs if not d.startswith(".")]
+                names.append(os.path.basename(root))
+                names.extend(f for f in files if not f.startswith("."))
+        if any(_RE_EXT_TOKEN.search(unicodedata.normalize("NFC", n))
+               for n in names):
+            return "외부지문"
         from engines.workbook_v2.plan import _norm_header
         steps = (content or {}).get("steps") or {}
-        is_nop = any(
-            _RE_NOP_HEADER.match(_norm_header(p.get("text") or ""))
-            for sd in steps.values() if isinstance(sd, dict)
-            for p in (sd.get("paragraphs") or []))
-        label = "외부지문" if is_nop else self._workbook_type(job_dir)
-        return {"divider": {"line1": label, "line2": "", "source": "type"}}
+        texts = [_norm_header(p.get("text") or "")
+                 for sd in steps.values() if isinstance(sd, dict)
+                 for p in (sd.get("paragraphs") or [])]
+        if any(_RE_NOP_HEADER.match(t) for t in texts):
+            return "외부지문"
+        if any(_RE_ADDU_HEADER.match(t) or _RE_ADDU_TAIL.search(t)
+               for t in texts):
+            return "추가지문"
+        wt = self._workbook_type(job_dir)
+        if wt and wt != "모의고사":
+            return wt
+        return "부교재"
 
     def _plan_decorations(self, job_dir, cfg):
         """완제품 후처리 op (실행기 opt-in — 다른 엔진 플랜 무변경).

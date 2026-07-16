@@ -277,10 +277,12 @@ def test_base_and_supp_decorations_include_divider(tmp_path):
     assert deco["divider"] == {"line1": "고1 모의고사", "line2": "25년 10월"}
     # supp는 W22 r12 사용자 확정 스펙으로 변경: 간지 문구 입력 시 그 문구,
     # 미입력 시 교재유형만 표기 ('고N 모의고사/YY년 M월'은 supp 폼이
-    # 년/월을 받지 않아 기본값이 찍히던 잔재 — 폐기). 상세 가드는
-    # tests/test_workbook_v2_round12.py.
+    # 년/월을 받지 않아 기본값이 찍히던 잔재 — 폐기). W23 r13 의미론 갱신:
+    # 유형 신호 없는 원고의 폴백은 '모의고사'(메타 기본)가 아니라 중립
+    # '부교재' — supp에서 '모의고사' 자동 라벨 금지 (r13 F1, 사용자 확정).
+    # 상세 가드는 tests/test_workbook_v2_round12.py + round13.
     deco_s = WorkbookSuppV2Engine()._plan_decorations(str(job), {})
-    assert deco_s["divider"] == {"line1": "모의고사", "line2": "",
+    assert deco_s["divider"] == {"line1": "부교재", "line2": "",
                                  "source": "type"}
 
 

@@ -242,8 +242,10 @@ def test_supp_divider_deco_user_text(content, tmp_path):
 
 
 def test_supp_divider_deco_type_fallback(tmp_path):
-    """미입력 + 무-p형 헤더 없는 원고 → 교재유형(workbook_type 메타,
-    기본 '모의고사')만 표기 — 년/월 잔재 없음."""
+    """미입력 + 유형 신호 없는 원고 → 중립 '부교재' — 년/월 잔재 없음.
+    W23 r13 의미론 갱신 (F1 — 사용자 확정): 기존 폴백 '모의고사'(메타
+    기본값)는 supp에서 어떤 경우에도 자동으로 나가면 안 된다 (6c1430c3
+    실사용 결함 — 게이트 G27이 critical로 계약 감시)."""
     job = str(tmp_path)
     json.dump({"grade": 1, "year": 25, "month": 10,
                "steps": {"step1_a1": {"paragraphs":
@@ -251,7 +253,7 @@ def test_supp_divider_deco_type_fallback(tmp_path):
               open(os.path.join(job, "content.json"), "w", encoding="utf-8"),
               ensure_ascii=False)
     deco = WorkbookSuppV2Engine()._plan_decorations(job, {})
-    assert deco["divider"] == {"line1": "모의고사", "line2": "",
+    assert deco["divider"] == {"line1": "부교재", "line2": "",
                                "source": "type"}
 
 

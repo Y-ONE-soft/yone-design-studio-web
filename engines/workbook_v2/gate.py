@@ -131,6 +131,12 @@
                   아니면 warning (W22 r12 — 사용자 확정 스펙: 파트 경계
                   오른쪽 채움 페이지는 삭제가 아니라 M 마스터 삽입).
 
+  G27 확장 (W23 r13 F1): supp 계약(plan.divider.source)에서 '모의고사'는
+                  어떤 경우에도 자동(type)으로 나가면 안 된다 — 유형 판정
+                  실패의 메타 기본값 추락이면 중립 '부교재'가 계약 (job
+                  6c1430c3 실증: '[N과 추가지문]' 원고 간지가 '모의고사'로
+                  인쇄). source=type + line1='모의고사' = critical.
+
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
 G24②/G26은 W21 확장 필드(fc / pages)가 필요하다. 구버전 덤프에는 경고로만
 보고한다 (재덤프 안내). G9는 uploads_dir를 넘긴 경우에만 검사한다 (오프라인
@@ -1060,6 +1066,17 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         for p in (sd.get("paragraphs") or []))
     divider_plan = plan.get("divider") or {}
     supp_divider = divider_plan.get("source") in ("user", "type")
+    # W23 r13 (F1 — 사용자 확정 스펙 강화): supp 계열(source 계약)에서
+    # '모의고사'는 어떤 경우에도 자동(type)으로 나가면 안 된다 — 유형 판정
+    # 실패의 메타 기본값 추락 (job 6c1430c3 실증: '[N과 추가지문]' 헤더
+    # 원고가 무-p형 감지에 안 잡혀 간지가 '모의고사'로 인쇄). 판정 불가면
+    # 중립 '부교재'가 계약. 사용자가 직접 입력(source=user)한 문구는 무관.
+    if (divider_plan.get("source") == "type"
+            and _clean(divider_plan.get("line1") or "") == "모의고사"):
+        critical.append(
+            "[간지적합] supp 간지 계약 위반 — 교재유형 자동 판정이 "
+            "'모의고사' (supp에서 '모의고사' 자동 라벨 금지 — 판정 불가면 "
+            "'부교재', r13 F1)")
     if supp_divider or is_nop_manuscript:
         mock_dividers = []
         for story in dump.get("stories", []):
