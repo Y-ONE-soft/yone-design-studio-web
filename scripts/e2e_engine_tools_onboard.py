@@ -114,9 +114,55 @@ def run_slim(mode="ox"):
     print("SLIM E2E OK:", result["indd_path"])
 
 
+def run_convert(src_name="고2_23년_6월_전체(C).indd", grade_dir="고2"):
+    """세로 변환 (W27) — GDrive 전체(C) 사본 입력, 수동 세로(C)와 파리티 대조는
+    scripts/compare_convert_parity.py 별도 실행."""
+    import engines.convert_to_vertical.engine as mod
+    from engines.convert_to_vertical.engine import ConvertToVerticalEngine
+
+    out = os.path.join(OUT_ROOT, "convert_vert")
+    real = mod._load_config
+
+    def patched():
+        cfg = real()
+        cfg["output_base"] = os.path.join(out, "out")
+        return cfg
+    mod._load_config = patched
+
+    # GDrive 안전 사본 → data_corpus (엔진도 자체 사본을 뜨지만 이중 안전)
+    local_src = os.path.join(out, "input", src_name)
+    if not os.path.exists(local_src):
+        gd = os.path.expanduser(
+            "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/"
+            "콘텐츠 관리/내신대비/인디자인 파일/워크북/모의고사")
+        src = os.path.join(gd, grade_dir, src_name)
+        assert os.path.exists(src), src
+        from engines.final.extractor import _gdrive_safe_copy
+        os.makedirs(os.path.dirname(local_src), exist_ok=True)
+        _gdrive_safe_copy(src, local_src,
+                          log=lambda m: print(f"  {m}", flush=True))
+
+    engine = ConvertToVerticalEngine()
+    job = os.path.join(out, "job")
+    result = _run_engine(
+        engine, job,
+        uploaded={"doc_path": local_src},
+        meta={"result_name": "e2e_" + os.path.splitext(src_name)[0]
+                             .replace("전체", "세로"),
+              "export_pdf": "on"},
+    )
+    assert result["ok"], f"verify 실패: {result['warnings']}"
+    print("CONVERT E2E OK:", result["indd_path"])
+
+
 if __name__ == "__main__":
     which = sys.argv[1] if len(sys.argv) > 1 else "horiz"
     if which == "horiz":
         run_horiz()
+    elif which == "convert":
+        if len(sys.argv) > 2:
+            run_convert(sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else "고2")
+        else:
+            run_convert()
     else:
         run_slim(sys.argv[2] if len(sys.argv) > 2 else "ox")

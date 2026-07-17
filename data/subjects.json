@@ -83,7 +83,8 @@
     "section": "가공",
     "category": "변환",
     "items": [
-      {"name": "워크북 세로→가로", "prefix": "가로결합", "engine_id": "vert_to_horiz", "category": "결합 도구", "url": "/typeset/vert_to_horiz"}
+      {"name": "워크북 세로→가로", "prefix": "가로결합", "engine_id": "vert_to_horiz", "category": "결합 도구", "url": "/typeset/vert_to_horiz"},
+      {"name": "워크북 세로 변환 (베타 — 실기 검증 대기)", "prefix": "세로변환", "engine_id": "convert_to_vertical", "url": "/typeset/convert_to_vertical"}
     ]
   },
   {
