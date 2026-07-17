@@ -104,6 +104,13 @@ class MockexamSeroMergeEngine(BaseEngine):
 
     # ─── 헬퍼 ───────────────────────────────────────────────────────
 
+    # 소스 파일 종별 라벨 (에러 메시지용) — 서브클래스(가로판 결합)가 오버라이드
+    _SRC_LABEL = "세로버전"
+
+    def _config(self):
+        """엔진 config 로드 훅 — 서브클래스가 자체 config.json으로 교체 가능."""
+        return _load_config()
+
     def _get_meta(self, job_dir, key, default=""):
         path = os.path.join(job_dir, f"{key}.txt")
         if os.path.exists(path):
@@ -241,7 +248,7 @@ class MockexamSeroMergeEngine(BaseEngine):
 
     def parse(self, uploaded_files, job_dir, log):
         """코드 → 소스 .indd 매핑 → 로컬 사본 → metadata.json."""
-        cfg = _load_config()
+        cfg = self._config()
 
         codes_text = uploaded_files.get("codes", "")
         grade = self._get_meta(job_dir, "grade", "고1")
@@ -288,7 +295,8 @@ class MockexamSeroMergeEngine(BaseEngine):
                     not_found.append(f"{c['year']}년 {int(c['month'])}월")
         if not_found:
             raise FileNotFoundError(
-                "세로버전 파일을 찾지 못한 회차:\n  " + "\n  ".join(not_found)
+                f"{self._SRC_LABEL} 파일을 찾지 못한 회차:\n  "
+                + "\n  ".join(not_found)
             )
 
         # 코드별 소스 엔트리
