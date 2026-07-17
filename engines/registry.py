@@ -30,6 +30,9 @@ from engines.textbook_workbook_v2.engine import TextbookWorkbookV2Engine
 from engines.ebs_workbook_v2.engine import EbsWorkbookV2Engine
 from engines.suneungteukgang_workbook_v2.engine import (
     SuneungteukgangWorkbookV2Engine)
+from engines.slim_merge.engine import SlimMergeEngine
+from engines.mockexam_horiz_merge.engine import MockexamHorizMergeEngine
+from engines.passage_remove.engine import PassageRemoveEngine
 
 # ── 새 교재 추가 시 여기에 한 줄만 추가 ──────────────────────────────────
 _ENGINE_LIST = [
@@ -64,6 +67,9 @@ _ENGINE_LIST = [
     TextbookWorkbookV2Engine(),
     EbsWorkbookV2Engine(),
     SuneungteukgangWorkbookV2Engine(),
+    SlimMergeEngine(),
+    MockexamHorizMergeEngine(),
+    PassageRemoveEngine(),
 ]
 # ────────────────────────────────────────────────────────────────────────
 

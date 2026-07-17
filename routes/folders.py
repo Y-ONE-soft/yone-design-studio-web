@@ -253,6 +253,76 @@ def api_mothertongue_lessons():
     return jsonify(MothertongueMergeEngine.list_lessons(grade, school))
 
 
+# ── 지문 제거 API (W26) ──────────────────────────────────────────────────────
+
+@bp.route("/api/passage-remove/scan-dir", methods=["POST"])
+def api_passage_remove_scan_dir():
+    """폴더 내 .indd 파일 목록 (pocketbook scan-dir 패턴)."""
+    import unicodedata as _ud
+    data = request.get_json() or {}
+    folder = os.path.abspath(os.path.expanduser(data.get("path", "")))
+    if not os.path.isdir(folder):
+        return jsonify({"error": "폴더를 찾을 수 없습니다", "path": folder})
+    files = []
+    try:
+        for raw in sorted(os.listdir(folder)):
+            if raw.startswith("."):
+                continue
+            nfc = _ud.normalize("NFC", raw)
+            if nfc.lower().endswith(".indd"):
+                files.append(nfc)
+    except PermissionError:
+        return jsonify({"error": "접근 권한 없음", "path": folder})
+    return jsonify({"path": folder, "files": files})
+
+
+@bp.route("/api/passage-remove/inventory", methods=["POST"])
+def api_passage_remove_inventory():
+    """.indd → 지문 인벤토리 추출 (InDesign dump + 매처 그룹핑).
+
+    입력: multipart(indd 파일) 또는 form/json doc_path(서버 경로).
+    원본은 수정하지 않는다 — 사본을 떠서 dump한다. 수 분 소요 가능.
+    """
+    from core.uploads import sanitize_filename
+    from engines.passage_remove.engine import (
+        INVENTORY_BASE, create_inventory)
+
+    src = None
+    if "indd" in request.files and request.files["indd"].filename:
+        f = request.files["indd"]
+        name = sanitize_filename(f.filename)
+        if not name.lower().endswith(".indd"):
+            return jsonify({"error": ".indd 파일만 지원"}), 400
+        up_dir = os.path.join(INVENTORY_BASE, "_uploads")
+        os.makedirs(up_dir, exist_ok=True)
+        src = os.path.join(up_dir, name)
+        f.save(src)
+    else:
+        data = request.get_json(silent=True) or request.form
+        doc_path = (data.get("doc_path") or "").strip()
+        if not doc_path:
+            return jsonify({"error": "doc_path 또는 indd 파일 필요"}), 400
+        src = os.path.abspath(os.path.expanduser(doc_path))
+        if not (os.path.isfile(src) and src.lower().endswith(".indd")):
+            return jsonify({"error": ".indd 파일을 찾을 수 없습니다",
+                            "path": src}), 400
+
+    logs = []
+    try:
+        inv_id, inv = create_inventory(src, logs.append)
+    except Exception as e:                                   # noqa: BLE001
+        return jsonify({"error": f"인벤토리 추출 실패: {e}",
+                        "log": logs[-5:]}), 500
+    groups = [
+        {"gid": g["gid"], "label": g["label"], "title": g["title"],
+         "sections": g["sections"], "units": len(g["unit_uids"]),
+         "hub": g["hub"], "multi": g["multi"]}
+        for g in inv["groups"]
+    ]
+    return jsonify({"inventory_id": inv_id, "doc": inv["source_name"],
+                    "groups": groups, "log": logs})
+
+
 # ── 학교 관리 API ────────────────────────────────────────────────────────────
 
 @bp.route("/api/schools")

@@ -141,3 +141,42 @@ def test_gdrive_workbook_family_v2_registration():
 
     from engines.workbook_v2.engine import WorkbookV2Engine
     assert isinstance(engines["textbook_workbook_v2"], WorkbookV2Engine)
+
+
+def test_processing_tools_registration():
+    """W25: 수동 결합 2종 흡수 + 카테고리 재편 — registry/카드/템플릿 정합."""
+    from engines import registry
+    engines = {e.material_id: e for e in registry.all_engines()}
+    assert "slim_merge" in engines
+    assert "mockexam_horiz_merge" in engines
+    assert "mockexam_sero_merge" in engines   # 기존 엔진 유지 (삭제 금지 규칙)
+    assert "vert_to_horiz" in engines
+
+    # 가로판 결합은 sero 엔진의 입력 파이프 상속 (코드 파싱/GDrive 매칭 재사용)
+    from engines.mockexam_sero_merge.engine import MockexamSeroMergeEngine
+    assert isinstance(engines["mockexam_horiz_merge"], MockexamSeroMergeEngine)
+
+    for mid in ("slim_merge", "mockexam_horiz_merge"):
+        e = engines[mid]
+        tpl = os.path.join(REPO, "templates", e.template_name)
+        assert os.path.isfile(tpl), f"템플릿 없음: {tpl}"
+        assert f'const MATERIAL_ID = "{mid}"' in open(tpl, encoding="utf-8").read()
+        jsx = os.path.join(REPO, "engines", mid, "jsx", "run.jsx")
+        assert os.path.isfile(jsx), f"JSX 없음: {jsx}"
+        src = open(jsx, encoding="utf-8").read()
+        assert "__SETTINGS_PATH__" in src              # 토큰 치환 계약
+        assert "settings 로드 실패" in src              # 부트스트랩 try-catch
+
+    # 카테고리 재편: [가공] 섹션 = 결합/변환/편집 3그룹, 이동 카드 URL 보존
+    subjects = json.load(open(os.path.join(REPO, "data", "subjects.json"),
+                              encoding="utf-8"))
+    proc = [b for b in subjects if b.get("section") == "가공"]
+    assert [b["category"] for b in proc] == ["결합", "변환", "편집"]
+    typeset_cats = {b["category"] for b in subjects if b.get("section") == "조판"}
+    assert "결합 도구" not in typeset_cats             # [조판]에서 도구 제거
+    items = {i["engine_id"]: i for b in proc for i in b["items"]}
+    for mid in ("mockexam_sero_merge", "analysis_merge",
+                "mothertongue_merge", "vert_to_horiz",
+                "slim_merge", "mockexam_horiz_merge"):
+        assert items[mid]["url"] == f"/typeset/{mid}"  # 라우트 무변경 (이동만)
+    assert "workbook_edit" in items                    # 기존 가공 카드 유지
