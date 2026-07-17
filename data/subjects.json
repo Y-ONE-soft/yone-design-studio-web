@@ -90,6 +90,7 @@
     "category": "편집",
     "items": [
       {"name": "워크북 가공", "prefix": "워크북가공", "engine_id": "workbook_edit", "category": "워크북"},
+      {"name": "펼침면 압축", "prefix": "펼침면압축", "engine_id": "slim_merge", "url": "/typeset/slim_merge"},
       {"name": "워크북 지문 제거", "prefix": "지문제거", "engine_id": "passage_remove", "url": "/typeset/passage_remove"}
     ]
   }
