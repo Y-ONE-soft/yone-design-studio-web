@@ -17,7 +17,8 @@
   <div class="subject-grid">
     {% for item in cat['items'] %}
     {% if item.engine_id %}
-    <a href="{{ base_url }}{{ item.engine_id }}" class="subject-card subject-card--on">
+    {# item.url이 있으면 카드별 URL 오버라이드 — 섹션 이동 시 기존 라우트 보존용 #}
+    <a href="{{ item.url or (base_url ~ item.engine_id) }}" class="subject-card subject-card--on">
       <span class="subject-name">{{ item.name }}</span>
       <span class="subject-arrow">{{ cta_text }}</span>
     </a>

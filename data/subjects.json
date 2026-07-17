@@ -61,16 +61,6 @@
     ]
   },
   {
-    "section": "조판",
-    "category": "결합 도구",
-    "items": [
-      {"name": "모의고사 워크북 세로버전", "prefix": "세로결합", "engine_id": "mockexam_sero_merge"},
-      {"name": "분석본 결합", "prefix": "분석본결합", "engine_id": "analysis_merge"},
-      {"name": "마더텅 분석본", "prefix": "마더텅결합", "engine_id": "mothertongue_merge"},
-      {"name": "워크북 세로→가로", "prefix": "가로결합", "engine_id": "vert_to_horiz"}
-    ]
-  },
-  {
     "section": "표지",
     "category": "표지 제작",
     "items": [
@@ -81,9 +71,25 @@
   },
   {
     "section": "가공",
-    "category": "워크북",
+    "category": "결합",
     "items": [
-      {"name": "워크북 가공", "prefix": "워크북가공", "engine_id": "workbook_edit"}
+      {"name": "모의고사 워크북 세로버전", "prefix": "세로결합", "engine_id": "mockexam_sero_merge", "category": "결합 도구", "url": "/typeset/mockexam_sero_merge"},
+      {"name": "분석본 결합", "prefix": "분석본결합", "engine_id": "analysis_merge", "category": "결합 도구", "url": "/typeset/analysis_merge"},
+      {"name": "마더텅 분석본", "prefix": "마더텅결합", "engine_id": "mothertongue_merge", "category": "결합 도구", "url": "/typeset/mothertongue_merge"}
+    ]
+  },
+  {
+    "section": "가공",
+    "category": "변환",
+    "items": [
+      {"name": "워크북 세로→가로", "prefix": "가로결합", "engine_id": "vert_to_horiz", "category": "결합 도구", "url": "/typeset/vert_to_horiz"}
+    ]
+  },
+  {
+    "section": "가공",
+    "category": "편집",
+    "items": [
+      {"name": "워크북 가공", "prefix": "워크북가공", "engine_id": "workbook_edit", "category": "워크북"}
     ]
   }
 ]
