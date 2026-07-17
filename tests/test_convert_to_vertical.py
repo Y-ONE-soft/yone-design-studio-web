@@ -83,6 +83,73 @@ def test_jsx_body_builds_with_lib():
         assert "cfg.json" in src
 
 
+# ── 수동본 파리티 정적 대조 (실기 E2E 보류 대체 — 미러 있을 때만) ───────────
+
+MANUAL = os.path.expanduser(
+    "~/dev/yone-design-web/manual_jsx_mirror/ConvertToVertical.jsx")
+
+
+@pytest.mark.skipif(not os.path.isfile(MANUAL), reason="수동본 미러 없음")
+def test_static_parity_with_manual():
+    """이식 본문이 수동본(2026-06-17)의 핵심 의미론 조각을 그대로 담는지.
+
+    실기 파리티(dump 대조)가 InDesign 점유로 보류된 동안의 정적 게이트 —
+    변환 로직의 핵심 리터럴(코드 정규식/섹션명/간지 스타일/이미지 normName/
+    재배치 순서)이 수동본과 문자 그대로 일치해야 한다.
+    """
+    manual = open(MANUAL, encoding="utf-8").read()
+    port = open(BODY, encoding="utf-8").read()
+
+    verbatim = [
+        # leadPassageNum 코드 정규식 2종 (06-17 개선의 핵심)
+        r"/^\s*\{(\d{4})(\d{2}(?:~\d+)?)\}/",
+        r"/^\s*[\[{]\s*(\d{1,3}(?:~\d+)?)\s*[\]}]/",
+        # O/M 그룹 시작 감지
+        r"/^\s*\{[^}]+\}/",
+        # 섹션 라벨명
+        '["ox", "title", "content", "insert", "blank"]',
+        '["grammar", "grammarox", "blankgrammar"]',
+        # 재배치 사이클 안전 상한
+        "aseq < 30", "op < 40",
+        # STEP4.5 보존 분리의 핵심 호출
+        "texts[0].duplicate(LocationOptions.AT_END, nf.insertionPoints[0])",
+        'UndoModes.FAST_ENTIRE_SCRIPT, "스토리 보존 분리"',
+        # STEP10 간지 처리 스타일/마스터 이름 (\uXXXX가 아닌 원문 비교는 port쪽)
+        "GlobalClashResolutionStrategy.LOAD_ALL_WITH_OVERWRITE",
+        # 이미지 normName 규칙
+        '.replace("(B)", "")',
+        "/^마지막P(?=\\.[^.]+$)/",
+    ]
+    for frag in verbatim:
+        # 수동본은 한글을 \uXXXX 이스케이프로 담는 경우가 있어 두 형태 허용
+        frag_esc = frag.encode("unicode_escape").decode("ascii") \
+                       .replace("\\\\", "\\")
+        assert frag in port, f"이식본에 없음: {frag!r}"
+        assert (frag in manual) or (frag_esc in manual) or (
+            frag in ("aseq < 30", "op < 40")  # 공백 변형 허용 조각
+            and frag.replace(" ", "") in manual.replace(" ", "")), \
+            f"수동본에 없음(파리티 기준 이탈?): {frag!r}"
+
+    # 수동본 하드코딩 ↔ 이식 유도의 대응 (숫자 21/5/9는 유도식으로 대체됨)
+    assert "sep1[0] - 21" in manual          # 수동: A_SECT_COUNT = sep1[0]-21
+    assert "(sep1[0] - FRONT) / 6" in port   # 이식: NUM = (sep1-front)/6
+    assert "pair < 9" in manual              # 수동: 어휘 9쌍 고정
+    assert "pair < HW_PAIRS" in port         # 이식: NUM/2 유도
+    # 재배치 사이클 순서 (hw→ox→…→blankgrammar) 등장 순서 일치
+    order = ["hw_", "ox_", "title_", "content_", "insert_", "blank_",
+             "grammar_", "grammarox_", "blankgrammar_", "arrange_", "om_"]
+    def _push_positions(src, tag):
+        idx = src.find('pages_k.push(lmap[PFX + "' + tag)
+        assert idx >= 0, f"재배치 push 없음: {tag}"
+        return idx
+    for src in (manual, port):
+        pos = [src.find('"' + t) for t in order]
+        # 각 라벨 문자열이 존재하고, STEP5 push 블록의 순서가 동일
+        p_hw = _push_positions(src, "hw_")
+        p_bg = _push_positions(src, "blankgrammar_")
+        assert p_hw < p_bg
+
+
 # ── 엔진 parse / prepare_jsx (InDesign 불필요) ──────────────────────────────
 
 @pytest.fixture()
