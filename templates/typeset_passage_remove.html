@@ -1,0 +1,333 @@
+{% extends "base.html" %}
+{% block title %}워크북 지문 제거{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <a href="/processing" class="back-link">가공 선택</a>
+  <h1>워크북 지문 제거</h1>
+  <p>조판된 워크북 전체(C) .indd에서 선택한 지문을 모든 섹션(어휘/어법/배열/실전문제)에서 한 번에 제거합니다. 같은 지문의 변형(빈칸·선지·배열·번역)은 자동으로 묶입니다.</p>
+</div>
+
+<!-- 1단계: 문서 선택 + 지문 목록 추출 -->
+<div class="school-section">
+  <div class="section-label">① 전체(C) .indd 선택</div>
+  <div style="display:flex; flex-direction:column; gap:10px;">
+    <div>
+      <input type="file" id="indd-file" accept=".indd" class="form-input">
+      <div class="input-hint">업로드하거나, 아래에 서버 폴더 경로를 입력해 선택하세요.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <input type="text" id="server-dir" class="form-input" style="flex:1"
+             placeholder="서버 폴더 경로 (예: ~/Documents/.../조판/교재/...)">
+      <button type="button" class="run-btn" style="width:auto; padding:8px 16px;"
+              onclick="scanDir()">폴더 스캔</button>
+    </div>
+    <div id="file-list" class="hidden" style="max-height:180px; overflow:auto;
+         border:1px solid var(--border-color,#ddd); border-radius:8px; padding:8px;"></div>
+  </div>
+  <button type="button" class="run-btn" id="inventory-btn" style="margin-top:12px;"
+          onclick="extractInventory()">
+    <span class="btn-icon">&#128269;</span> 지문 목록 추출 (InDesign — 수 분 소요)
+  </button>
+  <pre id="inventory-log" class="log-area hidden" style="max-height:140px;"></pre>
+</div>
+
+<!-- 2단계: 지문 체크박스 -->
+<div class="school-section hidden" id="groups-section">
+  <div class="section-label">② 제거할 지문 선택 <span id="doc-name" style="font-weight:normal; color:#888;"></span></div>
+  <div style="margin:6px 0;">
+    <label style="cursor:pointer; font-size:13px;">
+      <input type="checkbox" id="show-singles" onchange="renderGroups()"> 단독 유닛(그룹 미형성)도 표시
+    </label>
+  </div>
+  <div id="groups-list" style="display:flex; flex-direction:column; gap:6px;"></div>
+</div>
+
+<!-- 3단계: 실행 -->
+<form id="typeset-form" class="upload-form hidden">
+  <div class="school-section">
+    <div class="section-label">③ 결과 파일명 (선택)</div>
+    <input type="text" name="result_name" id="result-name" class="form-input"
+           placeholder="비워두면 원본명_지문제거.indd">
+    <div class="input-hint">결과는 <code>조판/교재/지문제거/</code> 폴더에 저장. 원본은 수정되지 않습니다.</div>
+  </div>
+  <button type="submit" class="run-btn" id="run-btn">
+    <span class="btn-icon">&#9654;</span> 선택 지문 제거 실행
+  </button>
+</form>
+
+<!-- 진행 상태 -->
+<div id="progress-area" class="progress-area hidden">
+  <div class="progress-header">
+    <h2>진행 상태</h2>
+    <button type="button" id="cancel-btn" class="cancel-btn hidden" onclick="cancelJob()">취소</button>
+    <div class="step-indicators">
+      <span class="step" id="step-parse">&#9312; 준비</span>
+      <span class="step-sep">&rarr;</span>
+      <span class="step" id="step-typeset">&#9313; InDesign 제거</span>
+      <span class="step-sep">&rarr;</span>
+      <span class="step" id="step-verify">&#9314; 검수</span>
+    </div>
+  </div>
+  <pre id="log-area" class="log-area"></pre>
+</div>
+
+<!-- 결과 -->
+<div id="result-area" class="result-area hidden"></div>
+
+<script>
+  const MATERIAL_ID = 'passage_remove';
+  let _currentJobId = null;
+  let _currentEvtSource = null;
+  let _inventoryId = null;
+  let _groups = [];
+  let _serverDocPath = null;
+
+  async function scanDir() {
+    const dir = document.getElementById('server-dir').value.trim();
+    if (!dir) { alert('폴더 경로를 입력하세요.'); return; }
+    const res = await fetch('/api/passage-remove/scan-dir', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({path: dir}),
+    });
+    const data = await res.json();
+    const box = document.getElementById('file-list');
+    box.classList.remove('hidden');
+    if (data.error) { box.innerHTML = `<span style="color:#c00;">${data.error}</span>`; return; }
+    if (!data.files.length) { box.innerHTML = '.indd 파일이 없습니다.'; return; }
+    box.innerHTML = data.files.map(f =>
+      `<label style="display:block; cursor:pointer; padding:2px 4px;">
+         <input type="radio" name="server-indd" value="${data.path}/${f}"> ${f}
+       </label>`).join('');
+    box.querySelectorAll('input[name="server-indd"]').forEach(r => {
+      r.addEventListener('change', () => { _serverDocPath = r.value; });
+    });
+  }
+
+  async function extractInventory() {
+    const btn = document.getElementById('inventory-btn');
+    const logEl = document.getElementById('inventory-log');
+    const file = document.getElementById('indd-file').files[0];
+    if (!file && !_serverDocPath) { alert('.indd 파일을 업로드하거나 서버 파일을 선택하세요.'); return; }
+    btn.disabled = true;
+    btn.textContent = '추출 중... (InDesign 실행 — 수 분 소요)';
+    logEl.classList.remove('hidden');
+    logEl.textContent = '인벤토리 추출 시작...\n';
+    try {
+      let res;
+      if (file) {
+        const fd = new FormData();
+        fd.append('indd', file);
+        res = await fetch('/api/passage-remove/inventory', { method: 'POST', body: fd });
+      } else {
+        res = await fetch('/api/passage-remove/inventory', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({doc_path: _serverDocPath}),
+        });
+      }
+      const data = await res.json();
+      (data.log || []).forEach(l => logEl.textContent += l + '\n');
+      if (!res.ok || data.error) {
+        logEl.textContent += `[오류] ${data.error || '서버 오류'}\n`;
+        return;
+      }
+      _inventoryId = data.inventory_id;
+      _groups = data.groups;
+      document.getElementById('doc-name').textContent = `— ${data.doc}`;
+      document.getElementById('groups-section').classList.remove('hidden');
+      document.getElementById('typeset-form').classList.remove('hidden');
+      renderGroups();
+    } catch (err) {
+      logEl.textContent += `[오류] ${err.message}\n`;
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<span class="btn-icon">&#128269;</span> 지문 목록 추출 (InDesign — 수 분 소요)';
+    }
+  }
+
+  function renderGroups() {
+    const list = document.getElementById('groups-list');
+    const showSingles = document.getElementById('show-singles').checked;
+    const rows = _groups
+      .filter(g => (g.multi || showSingles))
+      .map(g => {
+        const label = g.label ? `[${g.label}]` : '(번호 없음)';
+        const badge = g.hub
+          ? '<span style="color:#c00; font-size:12px;">여러 지문 혼합 — 선택 불가</span>'
+          : `<span style="color:#888; font-size:12px;">${g.units}개 섹션 유닛</span>`;
+        return `
+          <label style="display:flex; gap:8px; align-items:flex-start;
+                        padding:6px 8px; border:1px solid var(--border-color,#e2e2e2);
+                        border-radius:8px; cursor:${g.hub ? 'not-allowed' : 'pointer'};">
+            <input type="checkbox" class="group-cb" value="${g.gid}" ${g.hub ? 'disabled' : ''}
+                   style="margin-top:3px;">
+            <span style="flex:1; min-width:0;">
+              <strong>${label}</strong> ${badge}<br>
+              <span style="font-size:12px; color:#666; display:block;
+                           overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                ${escapeHtml(g.title)}</span>
+            </span>
+          </label>`;
+      });
+    list.innerHTML = rows.length ? rows.join('') : '표시할 지문 그룹이 없습니다.';
+  }
+
+  function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g,
+      c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function _showCancelBtn(show) {
+    const btn = document.getElementById('cancel-btn');
+    if (btn) {
+      btn.classList.toggle('hidden', !show);
+      if (show) { btn.disabled = false; btn.innerHTML = '취소'; }
+    }
+  }
+
+  async function cancelJob() {
+    if (!_currentJobId) return;
+    const btn = document.getElementById('cancel-btn');
+    if (btn) { btn.disabled = true; btn.textContent = '취소 중...'; }
+    if (_currentEvtSource) { _currentEvtSource.close(); _currentEvtSource = null; }
+    try { await fetch(`/api/cancel/${_currentJobId}`, { method: 'POST' }); } catch (_) {}
+    appendLog('[취소] 작업이 취소되었습니다.');
+    _showCancelBtn(false);
+    resetBtn();
+    _currentJobId = null;
+  }
+
+  document.getElementById('typeset-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const selected = Array.from(document.querySelectorAll('.group-cb:checked'))
+      .map(cb => cb.value);
+    if (!_inventoryId) { alert('지문 목록을 먼저 추출하세요.'); return; }
+    if (!selected.length) { alert('제거할 지문을 선택하세요.'); return; }
+
+    const formData = new FormData();
+    formData.append('inventory_id', _inventoryId);
+    formData.append('selected', selected.join(','));
+    formData.append('result_name', document.getElementById('result-name').value.trim());
+
+    const runBtn = document.getElementById('run-btn');
+    runBtn.disabled = true;
+    runBtn.textContent = '실행 중...';
+
+    if (_currentEvtSource) { _currentEvtSource.close(); _currentEvtSource = null; }
+    _currentJobId = null;
+
+    document.getElementById('progress-area').classList.remove('hidden');
+    document.getElementById('result-area').classList.add('hidden');
+    document.getElementById('result-area').innerHTML = '';
+    document.getElementById('log-area').textContent = '';
+    setStep(null);
+
+    try {
+      const res = await fetch(`/api/run/${MATERIAL_ID}`, { method: 'POST', body: formData });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        appendLog(`[오류] ${data.error || '서버 오류'}`);
+        resetBtn(); return;
+      }
+      _currentJobId = data.job_id;
+      _showCancelBtn(true);
+      startStream(data.job_id);
+    } catch (err) {
+      appendLog(`[오류] ${err.message}`);
+      resetBtn();
+    }
+  });
+
+  function startStream(jobId) {
+    const evtSource = new EventSource(`/api/stream/${jobId}`);
+    _currentEvtSource = evtSource;
+    evtSource.onmessage = (e) => {
+      const msg = e.data;
+      if (msg === '[DONE]') {
+        evtSource.close();
+        _currentEvtSource = null;
+        _showCancelBtn(false);
+        fetchResult(jobId);
+        return;
+      }
+      if (msg === '[PING]') return;
+      appendLog(msg);
+      updateStepFromLog(msg);
+    };
+    evtSource.onerror = () => {
+      evtSource.close();
+      _currentEvtSource = null;
+      _showCancelBtn(false);
+      appendLog('[연결 끊김] 결과를 확인합니다...');
+      fetchResult(jobId);
+    };
+  }
+
+  function updateStepFromLog(msg) {
+    if (msg.includes('[지문제거]')) setStep('parse');
+    else if (msg.includes('지문 제거 시작') || msg.includes('삭제 진행')) setStep('typeset');
+    else if (msg.includes('[검수]')) setStep('verify');
+  }
+
+  function setStep(active) {
+    ['parse', 'typeset', 'verify'].forEach(s => {
+      const el = document.getElementById(`step-${s}`);
+      if (!el) return;
+      const order = ['parse', 'typeset', 'verify'];
+      const ai = order.indexOf(active);
+      const si = order.indexOf(s);
+      el.classList.toggle('active', s === active);
+      el.classList.toggle('done', ai > si && ai >= 0);
+    });
+  }
+
+  async function fetchResult(jobId) {
+    resetBtn();
+    try {
+      const res = await fetch(`/api/result/${jobId}`);
+      const { status, result } = await res.json();
+      if (status === 'error' || !result) { showErrorCard(result?.error || '알 수 없는 오류'); return; }
+      showResultCard(jobId, result);
+    } catch (err) { showErrorCard(err.message); }
+  }
+
+  function showResultCard(jobId, result) {
+    const area = document.getElementById('result-area');
+    area.classList.remove('hidden');
+    const ok = result.ok;
+    const warnings = result.warnings || [];
+    const inddPath = result.indd_path;
+    const pdfPath = result.pdf_path;
+
+    const cardClass = ok ? 'ok' : 'warn';
+    area.innerHTML = `
+      <div class="result-card ${cardClass}">
+        <div class="result-header">
+          <span class="result-badge">${ok ? '제거 완료' : '확인 필요'}</span>
+        </div>
+        ${inddPath ? `<p style="margin:8px 0; font-size:13px; word-break:break-all;">결과: ${inddPath}</p>` : ''}
+        ${pdfPath ? `<p style="margin:4px 0; font-size:13px; word-break:break-all;">PDF: ${pdfPath}</p>` : ''}
+        ${warnings.length ? `<ul class="warn-list">${warnings.map(w => '<li>' + escapeHtml(w) + '</li>').join('')}</ul>` : ''}
+      </div>`;
+    setStep('verify');
+  }
+
+  function showErrorCard(msg) {
+    const area = document.getElementById('result-area');
+    area.classList.remove('hidden');
+    area.innerHTML = `<div class="result-card error"><p>오류: ${escapeHtml(msg)}</p></div>`;
+  }
+
+  function appendLog(msg) {
+    const pre = document.getElementById('log-area');
+    pre.textContent += msg + '\n';
+    pre.scrollTop = pre.scrollHeight;
+  }
+
+  function resetBtn() {
+    const btn = document.getElementById('run-btn');
+    btn.disabled = false;
+    btn.innerHTML = '<span class="btn-icon">&#9654;</span> 선택 지문 제거 실행';
+  }
+</script>
+{% endblock %}

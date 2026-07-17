@@ -488,5 +488,21 @@
     ],
     "endpoint_func": "typeset_page",
     "signature": "(material_id)"
+  },
+  {
+    "rule": "/api/passage-remove/inventory",
+    "methods": [
+      "POST"
+    ],
+    "endpoint_func": "api_passage_remove_inventory",
+    "signature": "()"
+  },
+  {
+    "rule": "/api/passage-remove/scan-dir",
+    "methods": [
+      "POST"
+    ],
+    "endpoint_func": "api_passage_remove_scan_dir",
+    "signature": "()"
   }
 ]

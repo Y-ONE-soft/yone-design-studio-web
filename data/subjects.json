@@ -89,7 +89,8 @@
     "section": "가공",
     "category": "편집",
     "items": [
-      {"name": "워크북 가공", "prefix": "워크북가공", "engine_id": "workbook_edit", "category": "워크북"}
+      {"name": "워크북 가공", "prefix": "워크북가공", "engine_id": "workbook_edit", "category": "워크북"},
+      {"name": "워크북 지문 제거", "prefix": "지문제거", "engine_id": "passage_remove", "url": "/typeset/passage_remove"}
     ]
   }
 ]
