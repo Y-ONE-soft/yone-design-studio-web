@@ -22,6 +22,7 @@ from engines.workbook_supp_v2.engine import WorkbookSuppV2Engine
 from engines.workbook_sero_v2.engine import WorkbookSeroV2Engine
 from engines.mockexam_sero_merge.engine import MockexamSeroMergeEngine
 from engines.analysis_merge.engine import AnalysisMergeEngine
+from engines.analysis_merge_v2.engine import AnalysisMergeV2Engine
 from engines.mothertongue_merge.engine import MothertongueMergeEngine
 from engines.vert_to_horiz.engine import VertToHorizEngine
 from engines.whitebook_v2.engine import WhitebookV2Engine
@@ -56,6 +57,7 @@ _ENGINE_LIST = [
     MockexamEngine(),
     MockexamSeroMergeEngine(),
     AnalysisMergeEngine(),
+    AnalysisMergeV2Engine(),
     MothertongueMergeEngine(),
     VertToHorizEngine(),
     MockexamV2Engine(),
