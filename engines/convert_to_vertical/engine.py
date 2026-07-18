@@ -168,7 +168,7 @@ class ConvertToVerticalEngine(BaseEngine):
 
     @property
     def display_name(self):
-        return "워크북 세로 변환 (베타 — 실기 검증 대기)"
+        return "워크북 세로 변환 (베타)"
 
     @property
     def description(self):

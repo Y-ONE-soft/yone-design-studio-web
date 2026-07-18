@@ -159,10 +159,21 @@ def test_static_parity_with_manual():
     #   코드당 새 페이지 1장으로 재배분 (수동 '실물'의 지문당 1페이지 구조).
     assert "STEP4.4" in port and "arrange_pages_added" in port
     assert 'PFX + "arrange_" + k4 + "_0"' in port
-    # ② 분리 산물 말미 \r 제거 — 암묵 빈 최종 단락이 가득 찬 프레임 복제를
-    #   오버셋으로 뒤집는 것 방지 (수동본은 프레임 텍스트 통짜 복제라 동일
-    #   문제 잠복 — 수동 '실물'은 사람 마무리로 0 오버셋).
-    assert port.count('.contents === "\\r"') >= 2
+    # ② 분리 산물 말미 \r 제거 — 암묵 빈 최종 단락이 flag-only 오버셋을
+    #   남기는 것 방지. 7차 프로브(probe_tail7 D0) 실측: itemByRange의
+    #   contents는 배열(["\r"]) 반환이라 === "\r" 직접 비교(6차 수리)는
+    #   항상 false로 침묵 no-op — String() 비교 + remove()로 교체.
+    assert port.count('String(lc4.contents) === "\\r"') == 1
+    assert port.count('String(lc5.contents) === "\\r"') == 1
+    assert "lc4.remove();" in port and "lc5.remove();" in port
+    # ②b 프레임 속성 대입 순서 — tfp.properties 일괄 대입이 새 프레임 폭을
+    #   리사이즈(84→82, probe_tail7c 실측)하므로 gb는 반드시 tfp 이후 마지막.
+    for frag in ("nf4.textFramePreferences.properties = pTfp",
+                 "nf.textFramePreferences.properties = cp.tfp"):
+        assert frag in port
+        gb_after = port.index("nf4.geometricBounds = pGb") if "pTfp" in frag \
+            else port.index("nf.geometricBounds = cp.gb")
+        assert gb_after > port.index(frag), f"gb 대입이 tfp보다 앞: {frag!r}"
     # ③ STEP10 파괴적 동기화 기본 생략 — 수동 실물은 임포트 스타일 흔적 0·
     #   혼합 마스터 유지. 같은 이름 스타일 덮어쓰기가 리플로우 오버셋 유발.
     assert "cfg.master_sync === true" in port
