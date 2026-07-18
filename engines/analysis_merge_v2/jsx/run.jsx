@@ -858,7 +858,9 @@
         writeLog("===== 완료 =====");
 
     } catch (eMain) {
-        writeLog("[치명적 오류] " + (eMain.message || eMain));
+        // "[오류]" 마커 포함 — 러너의 JSX 에러 감지가 즉시 실패로 처리하게
+        // (완료 마커만 기다리다 300초 스톨 보류로 빠지는 것 방지)
+        writeLog("[오류] 치명적: " + (eMain.message || eMain));
         try { writeReport(report); } catch (eWr) {}
     }
 

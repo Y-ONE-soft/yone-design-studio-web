@@ -319,6 +319,18 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
         log(f"[GDrive 저장 예정] {cfg['save_base']}/{exam_period}/{school}/")
         return jsx_dst
 
+    # ─── run_indesign ──────────────────────────────────────────────
+
+    def run_indesign(self, job_dir, log):
+        """runner 기본 완료 판정은 'PDF:'/'조판 완료' 마커 의존 — v2는 PDF가
+        없으므로 명시적 완료 마커('===== 완료 =====')를 전달한다."""
+        from core.indesign.runner import run_jsx
+        jsx_path = os.path.join(job_dir, "run.jsx")
+        log_file = os.path.join(job_dir, self.log_filename)
+        run_jsx(jsx_path, log, poll_log_path=log_file,
+                timeout=self.jsx_timeout,
+                completion_marker="===== 완료 =====")
+
     # ─── GDrive 저장 (검수 통과 후) ────────────────────────────────
 
     @staticmethod
