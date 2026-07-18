@@ -594,76 +594,281 @@ try {
     }
 
     // ==================================================
-    // STEP 4.5: 연결된 스토리 "내용 보존 분리" (재배치 이전 — 수동본 동일)
+    // STEP 4.5: 연결된 스토리 "내용 보존 분리" (재배치 이전 — 수동본 동일 목적)
     //  재배치(pg.move)에서 연결 스토리 텍스트가 첫 지문으로 몰리므로 이동 전에
-    //  각 프레임의 표시 텍스트를 서식 유지한 채 독립 프레임으로 복제 후 원본 제거.
+    //  분리한다. W27 실기 결함 3종을 수리한 재구현:
+    //   (1) 스냅샷 stale 참조 — everyItem().getElements() 참조가 앞선 제거로
+    //       무효화돼 스레드 8/12가 침묵 스킵됨 → 읽기 전용 ID 수집 후
+    //       itemByID 재해결 + 잔존 0까지 라운드 반복 + 최종 [오류] 게이트.
+    //   (2) 부분 실패 겹침 — 복제 후 원본 제거 실패 시 원본+복제가 겹쳐
+    //       이중 인쇄 위험 → 스토리 단위 트랜잭션(전 그룹 성공 후에만 원본
+    //       제거, 실패 시 새 프레임 롤백).
+    //   (3) 단락 분단 — 프레임 단위 독립 분리가 문제 내 페이지를 흐르는
+    //       단락(실전문제 O/M)을 중간 절단해 오버셋 21건·누락 6라인 유발 →
+    //       단락 경계와 일치하는 프레임 경계에서만 절단하고, 단락이 걸친
+    //       프레임들은 새 스레드로 함께 유지 (수동 실물 세로(C)의 문제별
+    //       3~4p 스레드 구조와 동일 의미론).
     // ==================================================
     // 수동본은 가시 창에서 실행돼 합성이 보장됐지만, 웹은 창 없이 열므로
     // texts[0] 캡처 전에 합성을 강제한다 (미합성 → 빈 캡처 → 내용 붕괴 방지)
     try { doc.recompose(); } catch (e) {}
     var _splitCount = 0;
+    var _splitGroups = 0;
+    var _splitRemain = 0;
     (function () {
-        function _onPage(cont) {
-            try { return cont.parentPage ? true : false; } catch (e) { return false; }
-        }
-        function _splitAll() {
-            try { app.scriptPreferences.enableRedraw = false; } catch (e) {}
+        var _skipIds = {};    // 페이지 밖(앵커) 컨테이너 보유 — 의도적 보존
+        var _failIds = {};    // 제거 부분 실패 — 재분리 금지(중복 방지)
+
+        function _collectThreadIds() {
+            var ids = [];
             var stories = doc.stories.everyItem().getElements();
-            wlog("STEP4.5: 스토리 보존 분리 시작 (" + stories.length + "개 스캔)");
             for (var si = 0; si < stories.length; si++) {
-                if (si % 50 === 0) {
-                    wlog("STEP4.5 진행: " + si + "/" + stories.length);
+                if (si % 200 === 0) {
+                    wlog("STEP4.5 스캔: " + si + "/" + stories.length);
                 }
                 var conts;
                 try { conts = stories[si].textContainers; } catch (e) { continue; }
                 if (!conts || conts.length < 2) { continue; }
-                if (!_onPage(conts[0])) { continue; }
-                var caps = [];
-                for (var ci2 = 0; ci2 < conts.length; ci2++) {
-                    var c = conts[ci2];
-                    var cap = { frame: c, pg: null, gb: null, len: 0, os: null, tfp: null, lyr: null };
-                    try { cap.pg = c.parentPage; } catch (e) {}
-                    try { cap.gb = c.geometricBounds; } catch (e) {}
-                    try { cap.len = c.texts[0].contents.length; } catch (e) {}
-                    try { cap.os = c.appliedObjectStyle; } catch (e) {}
-                    try { cap.tfp = c.textFramePreferences.properties; } catch (e) {}
-                    try { cap.lyr = c.itemLayer; } catch (e) {}
-                    caps.push(cap);
+                var onPage = false;
+                try { onPage = conts[0].parentPage ? true : false; } catch (e) {}
+                if (!onPage) { continue; }
+                // 분리 산출 그룹 스레드(단락이 걸친 문제 내 프레임 묶음)는
+                // 의도적 다중 컨테이너 — 재수집 시 무한 재분리 방지
+                var already = false;
+                try { already = (conts[0].label === "__cv_split__"); } catch (e) {}
+                if (already) { continue; }
+                try { ids.push(stories[si].id); } catch (e) {}
+            }
+            return ids;
+        }
+
+        // 반환: "ok" | "stale"(다음 라운드 재해결) | "skip" | "fail"
+        function _splitStoryById(sid) {
+            var st = null;
+            try {
+                st = doc.stories.itemByID(sid);
+                if (!st.isValid) { return "stale"; }
+            } catch (e) { return "stale"; }
+            var conts;
+            try { conts = st.textContainers; } catch (e) { return "stale"; }
+            if (!conts || conts.length < 2) { return "stale"; }
+
+            // 컨테이너 캡처 (무효 좀비 컨테이너는 건너뜀 — 텍스트 0 취급)
+            var caps = [];
+            var anchored = 0;
+            for (var ci2 = 0; ci2 < conts.length; ci2++) {
+                var c = conts[ci2];
+                var cap = { frame: c, fid: null, pg: null, gb: null, len: 0,
+                            os: null, tfp: null, lyr: null, endsPara: true,
+                            zombie: false };
+                var tx = null;
+                try { tx = c.texts[0].contents; } catch (e) {}
+                if (tx === null) {
+                    // 프로브 실증: 대형 스레드 캡처 중 일시적 참조 해석 실패
+                    // ('Object is invalid') — 1회 재시도 후에만 좀비 확정
+                    try { tx = c.texts[0].contents; } catch (e) { cap.zombie = true; }
                 }
-                for (var ci3 = 0; ci3 < caps.length; ci3++) {
-                    var cp = caps[ci3];
-                    if (!cp.pg) { continue; }
-                    var nf = cp.pg.textFrames.add();
+                try { cap.fid = c.id; } catch (e) {}
+                if (cap.zombie) { caps.push(cap); continue; }
+                cap.len = tx.length;
+                cap.endsPara = (cap.len === 0) ||
+                               (tx.charAt(cap.len - 1) === "\r");
+                try { cap.pg = c.parentPage; } catch (e) {}
+                try { cap.gb = c.geometricBounds; } catch (e) {}
+                try { cap.os = c.appliedObjectStyle; } catch (e) {}
+                try { cap.tfp = c.textFramePreferences.properties; } catch (e) {}
+                try { cap.lyr = c.itemLayer; } catch (e) {}
+                if (!cap.pg) { anchored++; }
+                caps.push(cap);
+            }
+            if (anchored > 0) {
+                wlog("[경고] STEP4.5: 페이지 밖 컨테이너 " + anchored +
+                     "개 스토리(id " + sid + ") — 분리 생략(앵커 보존)");
+                return "skip";
+            }
+
+            // 단락 경계 그룹화 — 이전 프레임이 단락 중간에서 끝나면 같은 그룹
+            var groups = [];
+            var cur = [0];
+            for (var gi = 1; gi < caps.length; gi++) {
+                if (caps[gi - 1].endsPara || caps[gi - 1].zombie) {
+                    groups.push(cur); cur = [];
+                }
+                cur.push(gi);
+            }
+            groups.push(cur);
+
+            // 프레임 시작 문자 오프셋 (마지막 그룹은 오버셋 잔여까지 포함)
+            var storyLen = 0;
+            try { storyLen = st.texts[0].contents.length; } catch (e) {}
+            var cum = [];
+            var acc = 0;
+            for (var pi = 0; pi < caps.length; pi++) {
+                cum.push(acc); acc += caps[pi].len;
+            }
+
+            // 그룹별: 새 프레임 생성+스레드 연결 → 스토리 범위 복제
+            var made = [];
+            var okAll = true;
+            for (var g = 0; g < groups.length && okAll; g++) {
+                var grp = groups[g];
+                var firstNf = null;
+                var prevNf = null;
+                var grpLen = 0;
+                for (var m = 0; m < grp.length; m++) {
+                    var cp = caps[grp[m]];
+                    grpLen += cp.len;
+                    if (cp.zombie || !cp.pg) { continue; }
+                    var nf = null;
+                    try { nf = cp.pg.textFrames.add(); }
+                    catch (e) {
+                        wlog("[경고] STEP4.5 프레임 생성 실패(id " + sid + "): " + e.message);
+                        okAll = false; break;
+                    }
+                    made.push(nf);
+                    try { nf.label = "__cv_split__"; } catch (e) {}
                     try { if (cp.lyr) { nf.itemLayer = cp.lyr; } } catch (e) {}
                     try { nf.geometricBounds = cp.gb; } catch (e) {}
                     try { if (cp.os) { nf.appliedObjectStyle = cp.os; } } catch (e) {}
                     try { if (cp.tfp) { nf.textFramePreferences.properties = cp.tfp; } } catch (e) {}
-                    if (cp.len > 0) {
-                        try { cp.frame.texts[0].duplicate(LocationOptions.AT_END, nf.insertionPoints[0]); } catch (e) {}
+                    if (prevNf !== null) {
+                        try { prevNf.nextTextFrame = nf; }
+                        catch (e) {
+                            wlog("[경고] STEP4.5 스레드 연결 실패(id " + sid + "): " + e.message);
+                            okAll = false; break;
+                        }
                     }
+                    if (firstNf === null) { firstNf = nf; }
+                    prevNf = nf;
                 }
-                for (var ci4 = 0; ci4 < caps.length; ci4++) {
-                    if (!caps[ci4].pg) { continue; }
-                    try { caps[ci4].frame.remove(); } catch (e) {}
+                if (!okAll) { break; }
+                var start = cum[grp[0]];
+                var end = (g === groups.length - 1)
+                    ? (storyLen - 1)
+                    : (cum[grp[grp.length - 1]] + caps[grp[grp.length - 1]].len - 1);
+                if (firstNf !== null && end >= start) {
+                    try {
+                        st.texts[0].characters.itemByRange(start, end)
+                            .duplicate(LocationOptions.AT_END, firstNf.insertionPoints[0]);
+                    } catch (e) {
+                        wlog("[경고] STEP4.5 범위 복제 실패(id " + sid + ", " +
+                             start + "~" + end + "): " + e.message);
+                        okAll = false;
+                    }
+                } else if (firstNf === null && grpLen > 0) {
+                    wlog("[경고] STEP4.5 그룹 프레임 없음(id " + sid + ") — 내용 보존 불가");
+                    okAll = false;
                 }
-                _splitCount++;
+                _splitGroups++;
+            }
+            if (!okAll) {
+                for (var r = made.length - 1; r >= 0; r--) {
+                    try { made[r].remove(); } catch (e) {}
+                }
+                return "fail";
+            }
+
+            // 전 그룹 성공 — 원본 프레임 제거.
+            //  실기 3차 실증(2026-07-18): 컨테이너 객체 참조(.remove())는 캡처
+            //  참조든 fresh 재취득 참조든 이 컨텍스트(창 없는 문서 + do script)
+            //  에서 "예외 없는 침묵 no-op"이 된다 — 3차에서 fresh 목록 제거가
+            //  12스레드 전부 잔존(제거 오류 0). 반면 2차의
+            //  doc.pageItems.itemByID(안정 ID).remove()는 129/131 컨테이너를
+            //  실제 제거했다. → 제거는 반드시 ID 재해결 경로로 수행하고,
+            //  잔존 0이 될 때까지 fresh ID 목록으로 최대 3회 재시도.
+            function _livePageContainerIds() {
+                var ids2 = [];
+                var chk = null;
+                try { chk = doc.stories.itemByID(sid); } catch (e) { return ids2; }
+                var valid = false;
+                try { valid = chk.isValid; } catch (e) {}
+                if (!valid) { return ids2; }             // 스토리 소멸 = 완전 제거
+                var cc;
+                try { cc = chk.textContainers; } catch (e) { return ids2; }
+                for (var v = 0; v < cc.length; v++) {
+                    var vp = null;
+                    try { vp = cc[v].parentPage; } catch (e) {}
+                    if (!vp) { continue; }
+                    try { ids2.push(cc[v].id); } catch (e) {}
+                }
+                return ids2;
+            }
+            var tries = 0;
+            var rmErr = 0;
+            while (tries < 3) {
+                var liveIds = _livePageContainerIds();
+                if (liveIds.length === 0) { break; }
+                for (var r0 = liveIds.length - 1; r0 >= 0; r0--) {
+                    try {
+                        var it0 = doc.pageItems.itemByID(liveIds[r0]);
+                        if (it0.isValid) { it0.remove(); }
+                    } catch (e) { rmErr++; }
+                }
+                tries++;
+            }
+            var leftover = _livePageContainerIds().length;
+            if (leftover > 0) {
+                wlog("[경고] STEP4.5 원본 제거 불완전(id " + sid + "): 제거 오류 " +
+                     rmErr + "건, 잔존 컨테이너 " + leftover + "개 — 겹침 위험, 재분리 금지");
+                return "fail";
+            }
+            return "ok";
+        }
+
+        function _splitRounds() {
+            try { app.scriptPreferences.enableRedraw = false; } catch (e) {}
+            var round = 0;
+            while (round < 6) {
+                var ids = _collectThreadIds();
+                var todo = [];
+                for (var t = 0; t < ids.length; t++) {
+                    if (!_skipIds[ids[t]] && !_failIds[ids[t]]) { todo.push(ids[t]); }
+                }
+                if (todo.length === 0) { break; }
+                round++;
+                wlog("STEP4.5 라운드 " + round + ": 스레드 " + todo.length + "개");
+                var progress = 0;
+                for (var ii = 0; ii < todo.length; ii++) {
+                    var res = _splitStoryById(todo[ii]);
+                    if (res === "ok") { _splitCount++; progress++; }
+                    else if (res === "skip") { _skipIds[todo[ii]] = true; }
+                    else if (res === "fail") { _failIds[todo[ii]] = true; }
+                    // "stale"은 다음 라운드 재수집으로 재해결
+                }
+                try { doc.recompose(); } catch (e) {}
+                if (progress === 0) { break; }
             }
         }
+
         try {
-            app.doScript(_splitAll, ScriptLanguage.JAVASCRIPT, undefined,
+            app.doScript(_splitRounds, ScriptLanguage.JAVASCRIPT, undefined,
                 UndoModes.FAST_ENTIRE_SCRIPT, "스토리 보존 분리");
         } catch (e) {
-            _splitAll();
+            wlog("[경고] STEP4.5 doScript 실패 — 직접 실행: " + e.message);
+            _splitRounds();
+        }
+
+        // 최종 재스캔 — 의도적 보존(skip) 외 스레드가 남으면 실패 중단
+        var remainIds = _collectThreadIds();
+        for (var f = 0; f < remainIds.length; f++) {
+            if (!_skipIds[remainIds[f]]) { _splitRemain++; }
         }
     })();
+    if (_splitRemain > 0) {
+        wlog("[오류] STEP4.5: 분리 실패 스레드 " + _splitRemain +
+             "개 잔존 — 재배치 시 텍스트 붕괴/겹침 위험으로 중단");
+        throw new Error("STEP4.5 분리 실패 스레드 " + _splitRemain + "개 잔존");
+    }
     // 대량 프레임 추가/삭제 후 doc 참조 stale 가능 — 자기 문서명으로 재취득
     // (수동본은 activeDocument — 웹에선 사용자 문서 오염 위험이라 이름 재취득)
     try {
         var _re = app.documents.itemByName(__docName);
         if (_re.isValid) { doc = _re; }
     } catch (e) {}
-    wlog("STEP4.5: 스레드 스토리 " + _splitCount + "개 분리 완료");
+    wlog("STEP4.5: 스레드 스토리 " + _splitCount + "개 분리 완료 (독립 그룹 " +
+         _splitGroups + "개, 잔존 0)");
     result.split_stories = _splitCount;
+    result.split_groups = _splitGroups;
 
     // 분리가 끝났으니 redraw를 꺼서 재배치 속도 확보
     try { app.scriptPreferences.enableRedraw = false; } catch (e) {}

@@ -111,8 +111,7 @@ def test_static_parity_with_manual():
         '["grammar", "grammarox", "blankgrammar"]',
         # 재배치 사이클 안전 상한
         "aseq < 30", "op < 40",
-        # STEP4.5 보존 분리의 핵심 호출
-        "texts[0].duplicate(LocationOptions.AT_END, nf.insertionPoints[0])",
+        # STEP4.5 보존 분리 — undo 그룹 명명은 수동본과 동일
         'UndoModes.FAST_ENTIRE_SCRIPT, "스토리 보존 분리"',
         # STEP10 간지 처리 스타일/마스터 이름 (\uXXXX가 아닌 원문 비교는 port쪽)
         "GlobalClashResolutionStrategy.LOAD_ALL_WITH_OVERWRITE",
@@ -133,6 +132,16 @@ def test_static_parity_with_manual():
     # 수동본 하드코딩 ↔ 이식 유도의 대응 (숫자 21/5/9는 유도식으로 대체됨)
     assert "sep1[0] - 21" in manual          # 수동: A_SECT_COUNT = sep1[0]-21
     assert "(sep1[0] - FRONT) / 6" in port   # 이식: NUM = (sep1-front)/6
+
+    # STEP4.5 의도적 차이 (W27 실기 결함 수리 — 수동본 프레임 단위 분리
+    # 'texts[0].duplicate(...nf...)'는 stale 참조 침묵 스킵·부분 실패 겹침·
+    # 단락 분단을 실기에서 유발): 이식본은 ID 재해결 라운드 + 스토리 단위
+    # 트랜잭션 + 단락 경계 그룹 분리를 사용한다.
+    assert "texts[0].duplicate(LocationOptions.AT_END, nf.insertionPoints[0])" in manual
+    assert "itemByID" in port                # stale 참조 대체 (ID 재해결)
+    assert "characters.itemByRange" in port  # 그룹 범위 복제 (단락 보존)
+    assert "_collectThreadIds" in port       # 잔존 0 검증 라운드
+    assert "분리 실패 스레드" in port          # 잔존 시 [오류] 중단 게이트
     assert "pair < 9" in manual              # 수동: 어휘 9쌍 고정
     assert "pair < HW_PAIRS" in port         # 이식: NUM/2 유도
     # 재배치 사이클 순서 (hw→ox→…→blankgrammar) 등장 순서 일치
@@ -277,3 +286,41 @@ def test_page_code_sequence_and_blocks():
     # 흩어진 코드 → 중복 블록
     scattered = contiguous_blocks([("1", "20"), ("2", "21"), ("3", "20")])
     assert scattered.count("20") == 2
+
+
+# ── 검수 게이트 헬퍼 — 중복 배치 / 관통 스레드 (W27 실기 결함 실증) ─────────
+
+def test_line_counts_and_duplication():
+    from engines.convert_to_vertical.engine import line_counts
+    long_a = "A" * 30
+    long_b = "B" * 30
+    src = {"stories": [
+        {"pg": ["1"], "paragraphs": [{"t": long_a}, {"t": "짧음"}]},
+    ]}
+    out = {"stories": [
+        {"pg": ["1"], "paragraphs": [{"t": long_a}]},
+        {"pg": ["2"], "paragraphs": [{"t": long_a}, {"t": long_b}]},
+    ]}
+    sc = line_counts(src)
+    oc = line_counts(out)
+    assert sc == {long_a: 1}
+    assert oc == {long_a: 2, long_b: 1}
+    dup = [t for t, n in oc.items() if n > sc.get(t, 0)]
+    assert sorted(dup) == sorted([long_a, long_b])
+
+
+def test_residual_thread_count():
+    from engines.convert_to_vertical.engine import residual_thread_count
+    # 문제 내 연속 3~4p 스레드(수동 실물 구조) — 정상
+    ok_dump = {"stories": [
+        {"pg": ["14", "15", "16"], "paragraphs": []},
+        {"pg": ["7"], "paragraphs": []},
+    ]}
+    assert residual_thread_count(ok_dump) == 0
+    # 사이클 관통 스레드(분리 실패 실증 형태 — 큰 페이지 간격)
+    bad_dump = {"stories": [
+        {"pg": ["8", "23", "36", "48"], "paragraphs": []},
+        {"pg": ["4", "19"], "paragraphs": []},
+        {"pg": ["100", "101"], "paragraphs": []},
+    ]}
+    assert residual_thread_count(bad_dump) == 2
