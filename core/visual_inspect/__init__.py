@@ -214,15 +214,17 @@ def geometry_checks(dump, th=None):
     for pg in dump.get("pages", []):
         if pg.get("b"):
             page_bounds[pg["p"]] = pg["b"]
-    # 페이지별 (story_idx, rect) 수집
+    # 페이지별 (story_idx, rect, 스토리 프레임 수) 수집
     frames_by_page = {}
     for st in dump.get("stories", []):
         fps = st.get("fp") or []
         fbs = st.get("fb") or []
+        n_placed = sum(1 for fp, fb in zip(fps, fbs) if fp and fb)
         for fp, fb in zip(fps, fbs):
             if not fp or not fb:
                 continue
-            frames_by_page.setdefault(fp, []).append((st.get("idx"), fb))
+            frames_by_page.setdefault(fp, []).append(
+                (st.get("idx"), fb, n_placed))
 
     flags = {}
 
@@ -230,18 +232,31 @@ def geometry_checks(dump, th=None):
         flags.setdefault(pg, []).append(
             {"code": code, "level": level, "detail": detail})
 
+    def _oob_frac(fb, pb):
+        ph = max(1.0, pb[2] - pb[0])
+        pw = max(1.0, pb[3] - pb[1])
+        return max(
+            (pb[0] - fb[0]) / ph, (fb[2] - pb[2]) / ph,
+            (pb[1] - fb[1]) / pw, (fb[3] - pb[3]) / pw)
+
     for pg, frames in frames_by_page.items():
         pb = page_bounds.get(pg)
         if pb:
-            ph = max(1.0, pb[2] - pb[0])
-            pw = max(1.0, pb[3] - pb[1])
-            for idx, fb in frames:
-                # 페이지 밖으로 나간 깊이 (각 변, 페이지 크기 비율)
-                over = max(
-                    (pb[0] - fb[0]) / ph, (fb[2] - pb[2]) / ph,
-                    (pb[1] - fb[1]) / pw, (fb[3] - pb[3]) / pw)
+            for idx, fb, n_placed in frames:
+                # 페이지 밖으로 나간 깊이 (각 변, 페이지 크기 비율).
+                # 좌표계 이중 해석 (W30 r13 실측): 덤프 fb는 룰러 원점에 따라
+                # 페이지 상대일 수 있는데 페이지 b는 스프레드 좌표라, 오른쪽
+                # 페이지가 전부 '89% 이탈' 오탐됐다. 스프레드 해석과 페이지
+                # 상대 해석([0,0,h,w]) 중 위반이 작은 쪽을 채택 — 어느 좌표계
+                # 덤프든 진짜 이탈만 남는다 (세로 축은 두 해석이 동일).
+                over = min(_oob_frac(fb, pb),
+                           _oob_frac(fb, [0, 0, pb[2] - pb[0], pb[3] - pb[1]]))
+                # 단일 프레임 장식 스토리(섹션 탭/라벨)는 의도적 재단선 밖
+                # 배치가 관행(r13 실측: 상단 탭 -21.5mm) — review로 낮춘다.
+                # 다중 프레임(본문 플로우) 이탈은 내용 잘림 위험 → critical.
                 if over > th["oob_critical_frac"]:
-                    add(pg, "GEOM_OOB", "critical",
+                    level = "critical" if n_placed > 1 else "review"
+                    add(pg, "GEOM_OOB", level,
                         f"스토리 {idx} 프레임 {fb} 페이지 이탈 {over:.1%}")
                 elif over > th["oob_review_frac"]:
                     add(pg, "GEOM_OOB", "review",
@@ -249,8 +264,8 @@ def geometry_checks(dump, th=None):
         # 서로 다른 스토리 프레임 겹침
         for i in range(len(frames)):
             for j in range(i + 1, len(frames)):
-                si, ra = frames[i]
-                sj, rb = frames[j]
+                si, ra = frames[i][0], frames[i][1]
+                sj, rb = frames[j][0], frames[j][1]
                 if si == sj:
                     continue
                 inter = _rect_intersection(ra, rb)
@@ -388,6 +403,15 @@ def inspect_pages(png_paths, dump=None, thresholds=None):
                     rec["flags"].append(f)
                 else:
                     doc_flags.append(dict(f, detail=f"{f['detail']} (p{pg_name})"))
+        # W30 (r13 라벨 겹침 미검출 실증): fb 없는 구버전 덤프는 지오메트리
+        # 검사가 조용히 건너뛰어져 '무플래그=통과'로 오독됐다 — 침묵 금지,
+        # 미수행을 명시 플래그로 남긴다 (fail-open 유지: review 수준).
+        if dump.get("stories") and not any(
+                st.get("fb") for st in dump["stories"]):
+            doc_flags.append({
+                "code": "GEOM_SKIPPED", "level": "review",
+                "detail": "덤프에 프레임 지오메트리(fb) 없음(구버전) — "
+                          "겹침/이탈 검사 미수행. 재덤프 권장."})
 
     all_flags = doc_flags + [f for r in pages for f in r["flags"]]
     n_crit = sum(1 for f in all_flags if f["level"] == "critical")

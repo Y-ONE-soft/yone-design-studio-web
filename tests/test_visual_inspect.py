@@ -140,10 +140,10 @@ def test_overset_unknown_page_doc_flag(tmp_path):
 
 
 def test_geometry_oob_and_overlap():
-    pages = [{"p": "1", "b": [0, 0, 280, 210]}]
+    pages = [{"p": "1", "b": [0, 0, 280, 210]}, {"p": "2", "b": [0, 0, 280, 210]}]
     stories = [
-        # 페이지를 6% 이탈 (아래로) → critical
-        {"idx": 0, "fp": ["1"], "fb": [[250, 20, 297, 190]]},
+        # 다중 프레임(본문 플로우) 스토리가 페이지를 6% 이탈 (아래로) → critical
+        {"idx": 0, "fp": ["1", "2"], "fb": [[250, 20, 297, 190], [50, 20, 120, 190]]},
         # 프레임 겹침 (스토리 1 × 2, 교차 > 30%) → review
         {"idx": 1, "fp": ["1"], "fb": [[50, 20, 120, 190]]},
         {"idx": 2, "fp": ["1"], "fb": [[80, 20, 150, 190]]},
@@ -152,6 +152,55 @@ def test_geometry_oob_and_overlap():
     codes = {(f["code"], f["level"]) for f in flags["1"]}
     assert ("GEOM_OOB", "critical") in codes
     assert ("GEOM_OVERLAP", "review") in codes
+
+
+def test_geometry_oob_single_frame_decoration_is_review():
+    """단일 프레임 장식(섹션 탭/라벨)의 재단선 밖 배치는 review (W30 —
+    r13 실측: 상단 탭 -21.5mm는 의도적 블리드 디자인)."""
+    pages = [{"p": "1", "b": [0, 0, 297, 210]}]
+    stories = [{"idx": 0, "fp": ["1"], "fb": [[-21.5, 39, 4.5, 115.25]]}]
+    flags = geometry_checks(_dump(stories, pages))
+    fl = flags["1"]
+    assert len(fl) == 1
+    assert fl[0]["code"] == "GEOM_OOB" and fl[0]["level"] == "review"
+
+
+def test_geometry_oob_page_relative_right_page_no_false_flag():
+    """오른쪽 페이지의 페이지 상대 fb — 스프레드 좌표 페이지 b와의 좌표계
+    불일치가 '89% 이탈' 오탐을 내면 안 된다 (W30 r13 실측 결함)."""
+    pages = [{"p": "15", "b": [0, 210, 297, 420]}]
+    stories = [{"idx": 0, "fp": ["15", "15"],
+                "fb": [[32, 22, 172.89, 190], [200, 22, 280, 190]]}]
+    flags = geometry_checks(_dump(stories, pages))
+    assert flags.get("15", []) == []
+
+
+def test_geometry_label_body_overlap_r13_regression():
+    """r13 부교재 라벨 겹침 회귀 (수리 전 실측 지오메트리): '추가지문' 라벨
+    프레임이 본문 플로우 프레임과 36~41% 교차 → GEOM_OVERLAP review."""
+    pages = [{"p": "14", "b": [0, 0, 297, 210]}]
+    stories = [
+        {"idx": 29, "fp": ["14"], "fb": [[32, 9.6, 84.92, 27.22]]},     # 라벨
+        {"idx": 54, "fp": ["14"], "fb": [[32, 20, 282.75, 188]]},       # 본문
+    ]
+    flags = geometry_checks(_dump(stories, pages))
+    codes = {(f["code"], f["level"]) for f in flags["14"]}
+    assert ("GEOM_OVERLAP", "review") in codes
+
+
+def test_geometry_skipped_doc_flag_when_dump_lacks_fb(tmp_path):
+    """fb 없는 구버전 덤프 — 침묵 통과 금지, GEOM_SKIPPED review 명시
+    (W30: r13 라벨 겹침이 구버전 덤프로 미검출된 실증)."""
+    dump = _dump([{"idx": 0, "fp": ["1"], "pg": ["1"]}],
+                 [{"p": "1", "m": "", "side": "R", "empty": False}])
+    rep = inspect_pages(_save(tmp_path, [_page(_textlike)]), dump=dump)
+    assert any(f["code"] == "GEOM_SKIPPED" and f["level"] == "review"
+               for f in rep["doc_flags"])
+    rep2 = inspect_pages(
+        _save(tmp_path, [_page(_textlike)]),
+        dump=_dump([{"idx": 0, "fp": ["1"], "fb": [[10, 10, 100, 100]]}],
+                   [{"p": "1", "m": "", "side": "R", "empty": False}]))
+    assert not any(f["code"] == "GEOM_SKIPPED" for f in rep2["doc_flags"])
 
 
 def test_geometry_absent_fields_noop():
