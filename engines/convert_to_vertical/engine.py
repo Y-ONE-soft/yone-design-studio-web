@@ -110,6 +110,40 @@ def contiguous_blocks(seq):
     return blocks
 
 
+def line_counts(dump, min_len=25):
+    """덤프의 정규화 라인 → 등장 횟수 (중복 배치 게이트용)."""
+    counts = {}
+    for st in dump.get("stories", []):
+        for para in st.get("paragraphs", []):
+            t = _norm_line(para.get("t"))
+            if len(t) >= min_len:
+                counts[t] = counts.get(t, 0) + 1
+    return counts
+
+
+def residual_thread_count(dump, max_gap=4):
+    """섹션 관통 스레드 수 — 페이지 간격이 max_gap 초과인 다중 페이지 스토리.
+
+    STEP4.5 분리 실패 검출 (W27 실기 실증): 분리 안 된 스레드는 재배치 후
+    사이클들을 관통해 큰 페이지 간격으로 남는다. 정상 잔존(문제 내 O/M
+    연속 3~4p 스레드)은 간격 1이라 미검출.
+    """
+    residual = 0
+    for st in dump.get("stories", []):
+        pgs = st.get("pg") or []
+        if len(pgs) < 2:
+            continue
+        nums = []
+        for p in pgs:
+            digits = re.sub(r"\D", "", str(p))
+            if digits:
+                nums.append(int(digits))
+        nums.sort()
+        if any(b - a > max_gap for a, b in zip(nums, nums[1:])):
+            residual += 1
+    return residual
+
+
 class ConvertToVerticalEngine(BaseEngine):
     """워크북 전체(C) → 세로버전 변환 — [가공] > 변환."""
 
@@ -364,13 +398,11 @@ class ConvertToVerticalEngine(BaseEngine):
                 t = _norm_line(para.get("t"))
                 if len(t) >= 25:
                     must_keep.add(t)
-        got = set()
+        src_counts = line_counts(src_dump)
+        out_counts = line_counts(out_dump)
+        got = set(out_counts)
         out_overflow = 0
         for st in out_dump.get("stories", []):
-            for para in st.get("paragraphs", []):
-                t = _norm_line(para.get("t"))
-                if len(t) >= 25:
-                    got.add(t)
             if st.get("overflow"):
                 out_overflow += 1
         missing = must_keep - got
@@ -381,6 +413,31 @@ class ConvertToVerticalEngine(BaseEngine):
                 + " | ".join(sorted(missing)[:3]))
         log(f"[검수] 내용 보존: 원본 {len(must_keep)}라인 중 "
             f"누락 {len(missing)}")
+
+        # (a2) 중복 배치 게이트 (W27 실기 결함 실증 — 분리 부분 실패로
+        #      원본 스레드 + 복제 프레임이 겹쳐 같은 라인이 2회 인쇄될 위험)
+        dup_lines = [t for t, n in out_counts.items()
+                     if n > src_counts.get(t, 0)]
+        if len(dup_lines) >= 5:
+            ok = False
+            warnings.append(
+                f"❌ 내용 중복 배치 {len(dup_lines)}라인 (원본보다 많이 등장 — "
+                f"분리 실패 겹침 의심): " + " | ".join(
+                    sorted(dup_lines)[:2]))
+        elif dup_lines:
+            warnings.append(f"⚠️ 내용 중복 배치 {len(dup_lines)}라인")
+        log(f"[검수] 중복 배치: {len(dup_lines)}라인")
+
+        # (a3) 섹션 관통 스레드 잔존 게이트 (W27 실기 결함 실증 — STEP4.5가
+        #      분리하지 못한 스레드는 사이클을 관통해 페이지 간격이 크게 남음.
+        #      수동 실물의 정상 잔존 스레드는 문제 내 연속 3~4p — 간격 1 이내)
+        residual_threads = residual_thread_count(out_dump)
+        if residual_threads:
+            ok = False
+            warnings.append(
+                f"❌ 섹션 관통 스레드 잔존 {residual_threads}개 — "
+                "STEP4.5 분리 실패 (재배치 후 텍스트 흐름 붕괴 위험)")
+        log(f"[검수] 관통 스레드 잔존: {residual_threads}개")
 
         # (b) 사이클 구조 — 출력의 지문 코드가 연속 블록으로 그룹화됐는지
         seq = page_code_sequence(out_dump)
