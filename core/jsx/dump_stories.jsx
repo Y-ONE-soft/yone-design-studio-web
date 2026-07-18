@@ -96,6 +96,7 @@ try {
         var b0 = null;
         var fcs = [];
         var fps = [];
+        var fbs = [];
         try {
             var tc2 = st.textContainers;
             var seenPg = {};
@@ -112,6 +113,17 @@ try {
                 // W23 additive: fp = 프레임별 페이지 이름 (fc와 병렬 —
                 // 게이트 G30이 단락→페이지 실측에 사용. 페이지 밖은 "").
                 fps.push("\"" + esc(ppg ? String(ppg.name) : "") + "\"");
+                // W29 additive: fb = 프레임별 geometricBounds [t,l,b,r]
+                // (fp와 병렬 — 시각 검수의 겹침/경계 이탈 검출용. 실패는 null).
+                var fbj = "null";
+                try {
+                    var gbF = tc2[ti].geometricBounds;
+                    fbj = "[" + Math.round(gbF[0] * 100) / 100 + "," +
+                          Math.round(gbF[1] * 100) / 100 + "," +
+                          Math.round(gbF[2] * 100) / 100 + "," +
+                          Math.round(gbF[3] * 100) / 100 + "]";
+                } catch (e) {}
+                fbs.push(fbj);
                 if (!ppg) { continue; }
                 var pnm = String(ppg.name);
                 if (!seenPg[pnm]) { seenPg[pnm] = true; pgs.push("\"" + esc(pnm) + "\""); }
@@ -126,6 +138,7 @@ try {
                  ",\"pg\":[" + pgs.join(",") + "]" +
                  ",\"fc\":[" + fcs.join(",") + "]" +
                  ",\"fp\":[" + fps.join(",") + "]" +
+                 ",\"fb\":[" + fbs.join(",") + "]" +
                  (b0 !== null ? ",\"b\":" + b0 : "") +
                  ",\"paragraphs\":[" + sb.join(",") + "]}");
     }
@@ -184,10 +197,20 @@ try {
                 if (icc.replace(/[\s\r\n￼]+/g, "").length > 0) { iEmpty = false; break; }
             }
             if (itfs.length === 0) { iEmpty = false; }   // 프레임 없는 표지류는 '빈 페이지' 아님
+            // W29 additive: b = 페이지 bounds [t,l,b,r] (시각 검수 지오메트리 기준)
+            var ipb = "null";
+            try {
+                var gbP = ipg.bounds;
+                ipb = "[" + Math.round(gbP[0] * 100) / 100 + "," +
+                      Math.round(gbP[1] * 100) / 100 + "," +
+                      Math.round(gbP[2] * 100) / 100 + "," +
+                      Math.round(gbP[3] * 100) / 100 + "]";
+            } catch (e) {}
             pagesInfo.push("{\"p\":\"" + esc(String(ipg.name)) +
                            "\",\"m\":\"" + esc(im) +
                            "\",\"side\":\"" + iside +
-                           "\",\"empty\":" + (iEmpty ? "true" : "false") + "}");
+                           "\",\"b\":" + ipb +
+                           ",\"empty\":" + (iEmpty ? "true" : "false") + "}");
         }
     } catch (e) {}
     // W23 additive: 폰트 인벤토리 — 게이트 G29(글리프 커버리지)가 폰트
