@@ -769,13 +769,12 @@ try {
             }
 
             // 전 그룹 성공 — 원본 프레임 제거.
-            //  실기 3차 실증(2026-07-18): 컨테이너 객체 참조(.remove())는 캡처
-            //  참조든 fresh 재취득 참조든 이 컨텍스트(창 없는 문서 + do script)
-            //  에서 "예외 없는 침묵 no-op"이 된다 — 3차에서 fresh 목록 제거가
-            //  12스레드 전부 잔존(제거 오류 0). 반면 2차의
-            //  doc.pageItems.itemByID(안정 ID).remove()는 129/131 컨테이너를
-            //  실제 제거했다. → 제거는 반드시 ID 재해결 경로로 수행하고,
-            //  잔존 0이 될 때까지 fresh ID 목록으로 최대 3회 재시도.
+            //  5차 프로브 판명(probe_remove5.jsx, 2026-07-18): 제거 no-op의
+            //  원인은 참조 종류가 아니라 doScript(FAST_ENTIRE_SCRIPT) 래퍼 —
+            //  래퍼 밖(bare)에서는 itemByID 제거가 복제 유무와 무관하게 전량
+            //  실효(T1/T2: isValid true 100%, 잔존 0). ID 재해결 경로와
+            //  잔존 0까지 재시도는 유지하고, isValid=false 스킵을 별도
+            //  계수해 해석 실패(①)와 remove no-op(②)을 로그로 구분한다.
             function _livePageContainerIds() {
                 var ids2 = [];
                 var chk = null;
@@ -795,21 +794,36 @@ try {
             }
             var tries = 0;
             var rmErr = 0;
+            var rmTried = 0;
+            var rmSkipInvalid = 0;
             while (tries < 3) {
                 var liveIds = _livePageContainerIds();
                 if (liveIds.length === 0) { break; }
                 for (var r0 = liveIds.length - 1; r0 >= 0; r0--) {
                     try {
                         var it0 = doc.pageItems.itemByID(liveIds[r0]);
-                        if (it0.isValid) { it0.remove(); }
+                        if (it0.isValid) { rmTried++; it0.remove(); }
+                        else { rmSkipInvalid++; }
                     } catch (e) { rmErr++; }
                 }
                 tries++;
             }
             var leftover = _livePageContainerIds().length;
             if (leftover > 0) {
-                wlog("[경고] STEP4.5 원본 제거 불완전(id " + sid + "): 제거 오류 " +
-                     rmErr + "건, 잔존 컨테이너 " + leftover + "개 — 겹침 위험, 재분리 금지");
+                // 복제 산출 롤백 — 원본 잔존 + 복제본 잔존 = 이중 인쇄 위험이므로
+                // fail 반환 전에 이 스토리에서 만든 __cv_split__ 프레임을 걷어낸다
+                // (게이트가 완화되더라도 겹침이 남지 않도록 대칭화).
+                var rbErr = 0;
+                for (var rb = made.length - 1; rb >= 0; rb--) {
+                    try {
+                        var rbIt = doc.pageItems.itemByID(made[rb].id);
+                        if (rbIt.isValid) { rbIt.remove(); } else { rbErr++; }
+                    } catch (e) { rbErr++; }
+                }
+                wlog("[경고] STEP4.5 원본 제거 불완전(id " + sid + "): 시도 " +
+                     rmTried + "건, invalid 스킵 " + rmSkipInvalid + "건, 오류 " +
+                     rmErr + "건, 잔존 컨테이너 " + leftover + "개 — 복제 " +
+                     made.length + "개 롤백(실패 " + rbErr + "건), 재분리 금지");
                 return "fail";
             }
             return "ok";
@@ -840,13 +854,15 @@ try {
             }
         }
 
-        try {
-            app.doScript(_splitRounds, ScriptLanguage.JAVASCRIPT, undefined,
-                UndoModes.FAST_ENTIRE_SCRIPT, "스토리 보존 분리");
-        } catch (e) {
-            wlog("[경고] STEP4.5 doScript 실패 — 직접 실행: " + e.message);
-            _splitRounds();
-        }
+        // 수동본은 app.doScript(..., UndoModes.FAST_ENTIRE_SCRIPT,
+        // "스토리 보존 분리")로 감싸지만, 5차 프로브(probe_remove5.jsx,
+        // 2026-07-18)가 창 없는 do script 컨텍스트에서 이 래퍼 안의 모든
+        // remove()가 예외 없는 침묵 no-op(itemByID/allPageItems 공히,
+        // recompose 시 전량 부활 — T3/T4)임을 판명 — 1~4차 '원본 제거
+        // 침묵 no-op'의 실원인. 래퍼 없이 직접 실행하면 동일 제거가 전량
+        // 실효(T1/T2)하므로 undo 그룹화를 포기하고 직접 실행한다
+        // (의도적 차이 — test_static_parity_with_manual에 기록).
+        _splitRounds();
 
         // 최종 재스캔 — 의도적 보존(skip) 외 스레드가 남으면 실패 중단
         var remainIds = _collectThreadIds();
