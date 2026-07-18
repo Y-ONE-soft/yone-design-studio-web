@@ -649,14 +649,23 @@
         if (!tplFile.exists) { fail("템플릿 없음: " + TEMPLATE_PATH); writeReport(report); return; }
 
         var outFile = new File(OUTPUT_INDD);
-        // 같은 경로의 문서가 이미 열려 있으면 닫는다 — 재실행 시 InDesign이
-        // 낡은 문서를 재사용해 override 중복 오류가 나는 것 방지.
+        // 같은 경로/이름의 문서가 이미 열려 있으면 닫는다 — 재실행 시
+        // InDesign이 낡은 문서를 재사용해 override 중복·저장 행(hang)이
+        // 나는 것 방지. fullName은 백킹 파일이 지워진 문서에서 접근이
+        // 불안정할 수 있어 이름(name) 매칭도 함께 사용한다 (job별 출력
+        // 파일명은 고유 — 이름 충돌로 남의 문서를 닫을 일 없음).
+        var outBase = outFile.name;
         for (var dPre = app.documents.length - 1; dPre >= 0; dPre--) {
+            var closeIt = false;
             try {
-                if (app.documents[dPre].fullName.toString() === outFile.toString()) {
-                    app.documents[dPre].close(SaveOptions.NO);
-                }
+                if (app.documents[dPre].fullName.toString() === outFile.toString()) closeIt = true;
             } catch (ePre) {}
+            try {
+                if (!closeIt && app.documents[dPre].name === outBase) closeIt = true;
+            } catch (ePre2) {}
+            if (closeIt) {
+                try { app.documents[dPre].close(SaveOptions.NO); } catch (ePre3) {}
+            }
         }
         if (!tplFile.copy(outFile)) { fail("템플릿 복사 실패: " + OUTPUT_INDD); writeReport(report); return; }
         writeLog("템플릿 복사 -> " + outFile.fsName);
