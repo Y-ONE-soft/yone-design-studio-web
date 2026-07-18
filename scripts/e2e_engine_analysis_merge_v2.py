@@ -18,6 +18,8 @@
 """
 import json
 import os
+import shutil
+import subprocess
 import sys
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -32,12 +34,62 @@ if os.path.isfile(ENV):
             os.environ.setdefault(_k.strip(), _v.strip().strip('"').strip("'"))
 
 
+def close_indesign_docs_under(prefix, log):
+    """열린 InDesign 문서 중 백킹 파일이 prefix 아래인 것을 **저장 없이** 닫는다.
+
+    W28 하네스 사고 재발 방지: 열린 문서의 백킹 파일을 rm 하면 InDesign이
+    같은 경로의 낡은 문서를 재사용해 save 행/wedge에 빠진다 — **rm 전 반드시
+    close**. 닫기가 확인되지 않으면(무응답 포함) RuntimeError로 중단해
+    rm이 실행되지 않게 한다. InDesign 미실행이면 no-op (실행 유발 금지).
+    사용자 문서는 prefix 밖이므로 접촉하지 않는다.
+    """
+    try:
+        running = subprocess.run(
+            ["pgrep", "-f", "Adobe InDesign"],
+            capture_output=True).returncode == 0
+    except OSError:
+        running = False
+    if not running:
+        return 0
+    prefix = os.path.join(os.path.abspath(prefix), "")
+    js = (
+        "var pfx=%s; var n=0;"
+        " for (var i=app.documents.length-1;i>=0;i--){"
+        "  var d=app.documents[i]; var fp=\"\";"
+        "  try{fp=d.fullName.fsName;}catch(e){}"
+        "  if (fp.indexOf(pfx)===0){d.close(SaveOptions.NO); n++;}}"
+        " String(n);" % json.dumps(prefix, ensure_ascii=False))
+    osa = ('tell application "Adobe InDesign 2026" to do script "%s" '
+           "language javascript"
+           % js.replace("\\", "\\\\").replace('"', '\\"'))
+    try:
+        proc = subprocess.run(["osascript", "-e", osa],
+                              capture_output=True, text=True, timeout=180)
+    except subprocess.TimeoutExpired:
+        raise RuntimeError(
+            "InDesign 문서 닫기 무응답(180s) — do script wedge 가능성. "
+            "백킹 파일 삭제 금지: 사람이 InDesign 상태 확인 후 재시도.")
+    if proc.returncode != 0:
+        raise RuntimeError(
+            f"InDesign 문서 닫기 실패 — 백킹 파일 삭제 금지: "
+            f"{(proc.stderr or '').strip()[:200]}")
+    n = int(proc.stdout.strip() or "0")
+    if n:
+        log(f"[하네스] e2e 잔여 InDesign 문서 {n}개 저장 없이 닫음")
+    return n
+
+
 def main():
     real = "--real" in sys.argv
     out_root = os.path.join(REPO, "data_corpus", "analysis_merge_v2", "e2e")
     job = os.path.join(out_root, "job")
-    os.makedirs(job, exist_ok=True)
     log = lambda m: print(f"  {m}", flush=True)
+
+    # ── 하네스 안전 가드: 클린 재실행 — 반드시 close 후 rm ────────────
+    close_indesign_docs_under(out_root, log)
+    if os.path.isdir(out_root):
+        shutil.rmtree(out_root)
+    os.makedirs(job, exist_ok=True)
 
     import engines.analysis_merge_v2.engine as eng_mod
     from engines.analysis_merge_v2.engine import AnalysisMergeV2Engine
@@ -74,18 +126,26 @@ def main():
             f.write(v)
     uploaded = {"codes": "25년 6월 33번, 22년 3월 33-34번"}
 
-    print("== 1/4 parse")
-    json_path = engine.parse(uploaded, job, log)
+    try:
+        print("== 1/4 parse")
+        json_path = engine.parse(uploaded, job, log)
 
-    print("== 2/4 prepare_jsx")
-    jsx_path = engine.prepare_jsx(json_path, job, log)
+        print("== 2/4 prepare_jsx")
+        jsx_path = engine.prepare_jsx(json_path, job, log)
 
-    print("== 3/4 run_indesign (파이프라인과 동일 경로)")
-    assert jsx_path == os.path.join(job, "run.jsx")
-    engine.run_indesign(job, log)
+        print("== 3/4 run_indesign (파이프라인과 동일 경로)")
+        assert jsx_path == os.path.join(job, "run.jsx")
+        engine.run_indesign(job, log)
 
-    print("== 4/4 verify")
-    result = engine.verify(job, log)
+        print("== 4/4 verify")
+        result = engine.verify(job, log)
+    finally:
+        # 철칙(2026-07-18): 끝난 문서는 즉시 닫기 — JSX가 결과 확인용으로
+        # 열어둔 산출물(save 완료)·크래시 잔여 소스 사본을 저장 없이 정리.
+        try:
+            close_indesign_docs_under(out_root, log)
+        except RuntimeError as e:
+            log(f"[하네스] 사후 문서 정리 실패(수동 확인 필요): {e}")
     print(json.dumps({k: v for k, v in result.items() if k != "stories"},
                      ensure_ascii=False, indent=2))
     assert "pdf_path" not in result, "스펙1 위반: pdf_path 반환됨"

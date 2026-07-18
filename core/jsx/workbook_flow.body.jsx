@@ -260,6 +260,44 @@ function insertIconAt(doc, story, para, ic) {
 // 순수 숫자 단일 프레임을 원고 지문번호 labels[k]로 갱신한다.
 var RE_BARE_NUM = /^\s*\d{1,3}(?:\s*~\s*\d{1,3})?\s*$/;
 
+// W30: 긴 한글 라벨(추가지문/외부지문형)의 본문 침범 교정 — 모의고사 내지의
+// 지문번호 프레임은 박스 우측이 본문 프레임 좌변(x≈20)을 이미 넘는다
+// (r13 실측: 라벨 [32, 9.6~27.2] vs 본문 좌변 20). 숫자 잔재("20")는 짧아
+// 침범 구간에 글리프가 닿지 않지만, 긴 라벨은 첫 줄이 프레임 폭을 채워
+// 문항 번호('1.'/'11.')와 겹친다 (r13 p14/15 시각 검수 실증). 라벨 프레임
+// 우변을 본문 좌변 앞으로 클램프하고, 줄바꿈 증가로 생기는 overset은
+// 하단 여백(왼쪽 마진 빈 공간)으로 프레임을 늘려 해소한다.
+// 숫자 라벨(v1 파리티 경로)은 호출부에서 배제 — 기존 동작 무변경.
+var LABEL_CLAMP_GAP = 1.5;   // 본문 좌변과의 간격 (mm)
+var LABEL_MIN_W = 5;         // 클램프 후 최소 프레임 폭 (mm — 한글 12pt 1자)
+function clampLabelFrame(tf, page, flowStory) {
+    var bodyL = null;
+    var conts = flowStory.textContainers;
+    for (var i = 0; i < conts.length; i++) {
+        var pg = null;
+        try { pg = conts[i].parentPage; } catch (e) {}
+        if (!pg || pg.documentOffset !== page.documentOffset) { continue; }
+        var g = conts[i].geometricBounds;
+        if (bodyL === null || g[1] < bodyL) { bodyL = g[1]; }
+    }
+    if (bodyL === null) { return false; }
+    var gb = tf.geometricBounds;
+    var newR = bodyL - LABEL_CLAMP_GAP;
+    if (gb[3] <= newR + 0.01) { return false; }        // 침범 없음 — 무접촉
+    if (newR - gb[1] < LABEL_MIN_W) { return false; }  // 무리한 축소 금지
+    try { tf.geometricBounds = [gb[0], gb[1], gb[2], newR]; } catch (e1) { return false; }
+    var guard = 0;
+    while (guard < 40) {
+        var ovf = false;
+        try { ovf = tf.overflows; } catch (e2) { break; }
+        if (!ovf) { break; }
+        var g2 = tf.geometricBounds;
+        try { tf.geometricBounds = [g2[0], g2[1], g2[2] + 5, g2[3]]; } catch (e3) { break; }
+        guard++;
+    }
+    return true;
+}
+
 function storyPagesInOrder(story) {
     var pages = [];
     var seen = {};
@@ -351,6 +389,7 @@ function updatePassageNumbers(doc, flowStories, op) {
             }
         }
         var n = 0;
+        var clamped = 0;
         var pages = storyPagesInOrder(rec.story);
         for (var pk = 0; pk < pages.length; pk++) {
             var lab2 = pageLabel[String(pages[pk].documentOffset)];
@@ -363,10 +402,20 @@ function updatePassageNumbers(doc, flowStories, op) {
                     if (!RE_BARE_NUM.test(String(fst.contents || ""))) { continue; }
                     fst.contents = lab2;
                     n++;
+                    // W30: 숫자 아닌 긴 라벨만 본문 침범 클램프 (숫자 라벨은
+                    // v1 파리티 경로 — 프레임 무접촉)
+                    if (!RE_BARE_NUM.test(String(lab2))) {
+                        if (clampLabelFrame(tfs[fi], pages[pk], rec.story)) {
+                            clamped++;
+                        }
+                    }
                 } catch (e) {}
             }
         }
         if (n > 0) { wlog(steps[si] + " 지문번호 프레임 갱신: " + n + "개"); }
+        if (clamped > 0) {
+            wlog(steps[si] + " 라벨 프레임 본문 침범 교정: " + clamped + "개");
+        }
         total += n;
     }
     wlog("지문번호 프레임 갱신 합계: " + total + "개 (" + labels.join(", ") + ")");
