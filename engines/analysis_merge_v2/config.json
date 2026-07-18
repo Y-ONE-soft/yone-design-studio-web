@@ -1,0 +1,11 @@
+{
+  "template_path": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/인디자인 파일/분석본/고1,고2(공통)/내지/[원본]분석본_내지(마스터).indd",
+  "gdrive_base": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/모의고사 작업",
+  "save_base": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/인디자인 파일/분석본/고1,고2(공통)",
+  "image_dirs": [
+    "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/인디자인 파일/이미지/분석본"
+  ],
+  "log_filename": "merge_log.txt",
+  "keep_head": 1,
+  "file_patterns": ["분석본"]
+}

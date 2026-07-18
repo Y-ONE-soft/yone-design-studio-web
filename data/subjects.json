@@ -75,6 +75,7 @@
     "items": [
       {"name": "모의고사 워크북 세로버전", "prefix": "세로결합", "engine_id": "mockexam_sero_merge", "category": "결합 도구", "url": "/typeset/mockexam_sero_merge"},
       {"name": "분석본 결합", "prefix": "분석본결합", "engine_id": "analysis_merge", "category": "결합 도구", "url": "/typeset/analysis_merge"},
+      {"name": "분석본 결합 v2 (베타)", "prefix": "분석본결합", "engine_id": "analysis_merge_v2", "category": "결합 도구", "url": "/typeset/analysis_merge_v2"},
       {"name": "마더텅 분석본", "prefix": "마더텅결합", "engine_id": "mothertongue_merge", "category": "결합 도구", "url": "/typeset/mothertongue_merge"},
       {"name": "모의고사 가로판 결합", "prefix": "가로판결합", "engine_id": "mockexam_horiz_merge", "url": "/typeset/mockexam_horiz_merge"}
     ]
