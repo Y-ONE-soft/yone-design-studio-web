@@ -151,6 +151,22 @@ def test_static_parity_with_manual():
     assert "app.doScript(_splitRounds" not in port  # 래퍼 제거 (직접 실행)
     assert "_splitRounds();" in port
     assert "made.length - 1" in port         # fail 시 __cv_split__ 복제 롤백
+
+    # W27 6차 의도적 차이 3종 (5차 하류 결함 실측 수리 — 오프라인 진단:
+    # 5차 덤프 job/typeset_dump.json + 수동 실물 manual_dump.json 대조):
+    # ① STEP4.4 arrange 코드 단위 재배분 — 수동본은 페이지 라벨 이어붙임만
+    #   있어(18코드/10페이지 스레드) 코드 산개가 구조적으로 불가피. 이식본은
+    #   코드당 새 페이지 1장으로 재배분 (수동 '실물'의 지문당 1페이지 구조).
+    assert "STEP4.4" in port and "arrange_pages_added" in port
+    assert 'PFX + "arrange_" + k4 + "_0"' in port
+    # ② 분리 산물 말미 \r 제거 — 암묵 빈 최종 단락이 가득 찬 프레임 복제를
+    #   오버셋으로 뒤집는 것 방지 (수동본은 프레임 텍스트 통짜 복제라 동일
+    #   문제 잠복 — 수동 '실물'은 사람 마무리로 0 오버셋).
+    assert port.count('.contents === "\\r"') >= 2
+    # ③ STEP10 파괴적 동기화 기본 생략 — 수동 실물은 임포트 스타일 흔적 0·
+    #   혼합 마스터 유지. 같은 이름 스타일 덮어쓰기가 리플로우 오버셋 유발.
+    assert "cfg.master_sync === true" in port
+    assert "_applyCMasterExceptFirst(doc);" in port   # 코드는 보존(옵션 경로)
     assert "pair < 9" in manual              # 수동: 어휘 9쌍 고정
     assert "pair < HW_PAIRS" in port         # 이식: NUM/2 유도
     # 재배치 사이클 순서 (hw→ox→…→blankgrammar) 등장 순서 일치
@@ -316,6 +332,19 @@ def test_line_counts_and_duplication():
     assert oc == {long_a: 2, long_b: 1}
     dup = [t for t, n in oc.items() if n > sc.get(t, 0)]
     assert sorted(dup) == sorted([long_a, long_b])
+
+
+def test_expected_page_count():
+    from engines.convert_to_vertical.engine import expected_page_count
+    # W27 6차: 240 - 구분4 - arrange원본10 + 코드별18 = 244
+    stats = {"sep_pages_deleted": 4,
+             "arrange_pages_added": 18, "arrange_pages_deleted": 10}
+    assert expected_page_count(240, stats) == 244
+    # 구버전 JSX (arrange 통계 없음) — 기존 산식 유지
+    assert expected_page_count(240, {"sep_pages_deleted": 4}) == 236
+    # 통계 없음/실패 → 판정 생략
+    assert expected_page_count(240, {}) is None
+    assert expected_page_count(0, {"sep_pages_deleted": 4}) is None
 
 
 def test_residual_thread_count():
