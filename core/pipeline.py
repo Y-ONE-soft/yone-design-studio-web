@@ -137,6 +137,29 @@ def run_pipeline(engine, job_id: str, job_dir: str, uploaded: dict):
             except Exception as _ie:
                 log(f"[검수+] 건너뜀 (검수 실패가 조판을 막지 않음): {_ie}")
 
+        # ── 시각 검수 1층 (opt-in: YONE_VISUAL_INSPECT=1, W29) ──────────────
+        # 산출 PDF를 페이지 PNG로 렌더해 기계 검사(오버셋 페이지 지목/지오메트리/
+        # 픽셀 이상) → job_dir/visual_report.json. 판정은 게이트와 별개 —
+        # critical이 있어도 warning만 붙이고 ok는 바꾸지 않는다 (fail-open).
+        # analysis_merge는 병렬 트랙(대개편 중)이라 제외 — 연결 지점은
+        # docs/workbook_v2_로드맵.md W29 기록 참조.
+        if (os.environ.get("YONE_VISUAL_INSPECT") == "1"
+                and engine.material_id != "analysis_merge"):
+            try:
+                from core.visual_inspect import inspect_job_visual
+                log("[시각검수] 페이지 렌더 + 기계 검사 중...")
+                vr = inspect_job_visual(job_dir, log, result=result)
+                if vr is not None:
+                    result["visual_report"] = vr["report_path"]
+                    if vr["summary"]["critical"]:
+                        warn = (f"[시각검수] ❗ critical {vr['summary']['critical']}건 "
+                                f"(페이지 {vr['summary']['flagged_pages'][:8]}) — "
+                                f"visual_report.json 확인")
+                        result.setdefault("warnings", []).append(warn)
+                        log(warn)
+            except Exception as _ve:
+                log(f"[시각검수] 건너뜀 (검수 실패가 조판을 막지 않음): {_ve}")
+
         # PDF를 목업 IN 폴더에 자동 복사
         pdf_path = result.get("pdf_path")
         if pdf_path and os.path.exists(pdf_path):
