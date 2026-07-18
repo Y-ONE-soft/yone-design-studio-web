@@ -2,8 +2,10 @@
 // __SETTINGS_PATH__ 는 engine.py 에서 실제 경로로 치환됨.
 //
 // v1(engines/analysis_merge/jsx/run.jsx) 대비 변경 — 2026 여름 개편:
+//   [스펙2] page.duplicate 후 프레임 지오메트리를 소스 좌표로 복원
+//           (실측: 문서 간 복제 시 LEFT +2mm / RIGHT +4mm 수평 이동)
+//           + 복원 전/후 드리프트를 report_path JSON에 기록 (verify 게이트)
 //   [스펙3·1] PDF export 제거 (목업 핸드오프 원천 차단) — .indd만 저장
-//   검수 리포트(report_path JSON) 기록 — verify 게이트의 입력
 // ES3 제약: let/const/화살표/템플릿 리터럴 금지, JSON.parse는 eval.
 #target indesign
 
@@ -296,6 +298,76 @@
     }
 
     // ───────────────────────────────────────────────────────────────
+    // [스펙2] 프레임 지오메트리 캡처/복원
+    //   실측(repro1): 문서 간 page.duplicate가 콘텐츠 아이템을 페이지 기준
+    //   LEFT +2mm / RIGHT +4mm 순수 평행이동시킨다 (슬러그 탭은 무이동).
+    //   → 복제 직후 소스 좌표와의 (dx,dy)를 item.move로 되돌린다.
+    //   move는 회전/크기를 건드리지 않는 순수 이동이라 안전.
+    // ───────────────────────────────────────────────────────────────
+
+    function collectGeo(page) {
+        var arr = [];
+        try {
+            var items = page.pageItems;
+            for (var i = 0; i < items.length; i++) {
+                var gb;
+                try { gb = items[i].geometricBounds; } catch (eG) { gb = null; }
+                arr.push(gb);
+            }
+        } catch (eP) {}
+        return arr;
+    }
+
+    function restoreGeo(newPage, srcGeo, geoRep, srcLabel) {
+        var items;
+        try { items = newPage.pageItems; } catch (eI) { return; }
+        var n = Math.min(items.length, srcGeo.length);
+        var maxBefore = 0, maxAfter = 0;
+        if (items.length !== srcGeo.length) {
+            geoRep.count_mismatch_pages.push(
+                "p" + newPage.name + "(" + srcLabel + "): " +
+                srcGeo.length + "->" + items.length);
+        }
+        for (var i = 0; i < n; i++) {
+            var want = srcGeo[i];
+            if (!want) continue;
+            var cur;
+            try { cur = items[i].geometricBounds; } catch (eC) { continue; }
+            var dx = want[1] - cur[1];
+            var dy = want[0] - cur[0];
+            var drift = Math.max(Math.abs(dx), Math.abs(dy));
+            if (drift > maxBefore) maxBefore = drift;
+            if (drift > 0.01) {
+                try {
+                    try { items[i].locked = false; } catch (eLk) {}
+                    items[i].move(undefined, [dx, dy]);
+                } catch (eMv) {
+                    writeLog("[경고] 지오메트리 복원 실패 p" + newPage.name +
+                             " item" + i + ": " + eMv.message);
+                }
+            }
+            var after;
+            try { after = items[i].geometricBounds; } catch (eA) { continue; }
+            var rx = Math.abs(want[1] - after[1]);
+            var ry = Math.abs(want[0] - after[0]);
+            var resid = Math.max(rx, ry);
+            if (resid > maxAfter) maxAfter = resid;
+        }
+        geoRep.pages.push({
+            page: String(newPage.name), src: srcLabel,
+            items: n,
+            drift_before_mm: round3(maxBefore),
+            residual_mm: round3(maxAfter)
+        });
+        if (maxBefore > geoRep.max_drift_before_mm) {
+            geoRep.max_drift_before_mm = round3(maxBefore);
+        }
+        if (maxAfter > geoRep.max_residual_mm) {
+            geoRep.max_residual_mm = round3(maxAfter);
+        }
+    }
+
+    // ───────────────────────────────────────────────────────────────
     // 메인
     // ───────────────────────────────────────────────────────────────
 
@@ -421,6 +493,8 @@
 
             var grpStart = newDoc.pages.length;
             for (var p2 = matchedRange.startIdx; p2 <= matchedRange.endIdx; p2++) {
+                // [스펙2] 소스 지오메트리 캡처 → 복제 → 복원
+                var srcGeo = collectGeo(matchedDoc.pages[p2]);
                 try {
                     matchedDoc.pages[p2].duplicate(
                         LocationOptions.AT_END, newDoc.pages.lastItem()
@@ -428,6 +502,14 @@
                 } catch (eDup) {
                     writeLog("[경고] " + code + " p" + p2 +
                              " 복제 실패: " + eDup.message);
+                    continue;
+                }
+                try {
+                    restoreGeo(newDoc.pages.lastItem(), srcGeo, report.geometry,
+                               matchedFileName + " p" + (p2 + 1));
+                } catch (eRg) {
+                    writeLog("[경고] 지오메트리 복원 오류 p" + (p2 + 1) + ": " +
+                             eRg.message);
                 }
             }
             var grpEnd = newDoc.pages.length - 1;
@@ -464,6 +546,8 @@
             writeLog("[경고] 매칭 실패 코드 " + report.unresolved.length + "개: " +
                      report.unresolved.join(", "));
         }
+        writeLog("지오메트리: 교정 전 최대 " + report.geometry.max_drift_before_mm +
+                 "mm → 잔여 " + report.geometry.max_residual_mm + "mm");
 
         writeReport(report);
 

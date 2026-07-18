@@ -363,6 +363,22 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
             warnings.append(f"마커 매칭 실패 코드 {len(unresolved)}개: "
                             + ", ".join(unresolved))
 
+        # ── 게이트 2: 프레임 지오메트리 (스펙 2) ────────────────────
+        geo = report.get("geometry") or {}
+        max_drift = geo.get("max_residual_mm")
+        mismatch = geo.get("count_mismatch_pages") or []
+        geo_ok = (max_drift is not None and max_drift <= self.GEO_TOL_MM
+                  and not mismatch)
+        gates["geometry_ok"] = geo_ok
+        if max_drift is None:
+            warnings.append("지오메트리 리포트 없음")
+        elif max_drift > self.GEO_TOL_MM:
+            warnings.append(
+                f"프레임 잔여 드리프트 {max_drift}mm > 허용 {self.GEO_TOL_MM}mm "
+                f"(교정 전 최대 {geo.get('max_drift_before_mm')}mm)")
+        if mismatch:
+            warnings.append(f"페이지 아이템 수 불일치: {mismatch}")
+
         all_gates_ok = all(gates.values()) and os.path.exists(indd_out)
 
         # ── GDrive 저장 (스펙 3) — 게이트 전부 통과 시에만 ──────────
@@ -394,4 +410,8 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
             "indd_path": gdrive_path or (indd_out if os.path.exists(indd_out) else None),
             "local_indd": indd_out if os.path.exists(indd_out) else None,
             "gdrive_path": gdrive_path,
+            "geometry": {
+                "max_drift_before_mm": geo.get("max_drift_before_mm"),
+                "max_residual_mm": max_drift,
+            },
         }
