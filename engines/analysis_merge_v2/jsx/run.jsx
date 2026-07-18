@@ -5,6 +5,11 @@
 //   [스펙2] page.duplicate 후 프레임 지오메트리를 소스 좌표로 복원
 //           (실측: 문서 간 복제 시 LEFT +2mm / RIGHT +4mm 수평 이동)
 //           + 복원 전/후 드리프트를 report_path JSON에 기록 (verify 게이트)
+//   [스펙4] 저장 전 링크 전수 점검 — 깨진 링크 relink_map으로 리링크 후
+//           전부 임베드(Link.unlink() == InDesign 임베드), 결과 기록
+//   [스펙5] 1페이지(간지) 텍스트 — 간지 마스터 학교명(챕터_숫자)/순번 갱신,
+//           상단 슬러그 범위/범위_추가내용 기재, 범위 프레임쌍
+//           오버라이드 병기 (범위 여러 개면 아래로 +21.5mm 간격 복제)
 //   [스펙3·1] PDF export 제거 (목업 핸드오프 원천 차단) — .indd만 저장
 // ES3 제약: let/const/화살표/템플릿 리터럴 금지, JSON.parse는 eval.
 #target indesign
@@ -368,6 +373,257 @@
     }
 
     // ───────────────────────────────────────────────────────────────
+    // [스펙5] 간지/1페이지 텍스트
+    //   실측 스펙 (GDrive 기존 결합본 덤프 — 강동2_분석본03/명일1_분석본04):
+    //     · 간지-마스터 학교명 프레임: 문자스타일 '챕터_숫자',
+    //       내용 "2026 강동고2" 형태  → settings.ganji_school
+    //     · 간지-마스터 순번 프레임: 작은 프레임, 내용 숫자("3") → issue_num
+    //     · 페이지1 상단 슬러그 프레임 2개(y<0): cs '범위'=교재명/회차,
+    //       cs '범위_추가내용'=상세 범위
+    //     · 범위 프레임쌍(가로 스트립): 간지-마스터의 '범위'(y1 238)/
+    //       '범위_추가내용'(y1 259) 프레임을 페이지로 오버라이드해
+    //       y1 232 / 242.5로 이동, 범위가 여러 개면 쌍을 아래로
+    //       +21.5mm 간격 복제해 위아래로 병기
+    // ───────────────────────────────────────────────────────────────
+
+    var GANJI_RANGE_Y = 232;      // 오버라이드 후 범위 프레임 y1 (실측)
+    var GANJI_DETAIL_Y = 242.5;   // 오버라이드 후 추가내용 프레임 y1 (실측)
+    var GANJI_PAIR_STEP = 21.5;   // 추가 범위쌍 y 간격 (실측 21~23.5 중간값)
+
+    function frameCS(tf) {
+        try { return tf.texts[0].textStyleRanges[0].appliedCharacterStyle.name; }
+        catch (e) { return ""; }
+    }
+
+    function findCharStyle(doc, name) {
+        // itemByName은 스타일 그룹 내부를 못 찾음 — allCharacterStyles에서 탐색
+        try {
+            var all = doc.allCharacterStyles;
+            for (var i = 0; i < all.length; i++) {
+                if (all[i].name === name) return all[i];
+            }
+        } catch (e) {}
+        return null;
+    }
+
+    function setFrameText(doc, tf, text, csName) {
+        tf.contents = String(text);
+        // 문자스타일 재적용 (자동 생성 금지 — 없으면 경고만)
+        if (csName) {
+            var cs = findCharStyle(doc, csName);
+            if (cs) {
+                try { tf.texts[0].appliedCharacterStyle = cs; } catch (eA) {}
+            } else {
+                writeLog("[경고] 문자스타일 없음: " + csName);
+            }
+        }
+    }
+
+    function moveToY(item, y1) {
+        var gb = item.geometricBounds;
+        item.move(undefined, [0, y1 - gb[0]]);
+    }
+
+    function overrideOrReuse(masterItem, page) {
+        // 이미 페이지에 재정의돼 있으면 그 항목을 재사용 (override 중복 오류 방지)
+        try {
+            var pis = page.pageItems;
+            for (var i = 0; i < pis.length; i++) {
+                try {
+                    var om = pis[i].overriddenMasterPageItem;
+                    if (om && om.id === masterItem.id) return pis[i];
+                } catch (eOm) {}
+            }
+        } catch (eP) {}
+        return masterItem.override(page);
+    }
+
+    function applyGanji(doc, ganjiRep) {
+        var page0 = doc.pages[0];
+        var master = null;
+        try { master = page0.appliedMaster; } catch (eM) {}
+        if (!master || String(master.name).indexOf("간지") === -1) {
+            try { master = doc.masterSpreads.itemByName("간지-마스터"); } catch (eM2) {}
+        }
+        if (!master || !master.isValid) {
+            throw new Error("간지 마스터를 찾지 못함");
+        }
+
+        // 마스터 프레임 분류
+        var mSchool = null, mIssue = null, mRange = null, mDetail = null;
+        var mtf = master.textFrames;
+        for (var i = 0; i < mtf.length; i++) {
+            var tf = mtf[i];
+            var cs = frameCS(tf);
+            var txt = "";
+            try { txt = String(tf.contents); } catch (eT) {}
+            if (cs === "챕터_숫자") { mSchool = tf; }
+            else if (cs === "범위") { mRange = tf; }
+            else if (cs === "범위_추가내용") { mDetail = tf; }
+            else if (/^\s*\d+\s*$/.test(txt)) { mIssue = tf; }
+        }
+        if (!mSchool) writeLog("[경고] 간지 학교명 프레임(챕터_숫자) 미발견");
+        if (!mIssue) writeLog("[경고] 간지 순번 프레임 미발견");
+        if (!mRange || !mDetail) {
+            throw new Error("간지 범위/범위_추가내용 마스터 프레임 미발견");
+        }
+
+        // 1) 마스터: 학교명 + 순번
+        if (mSchool) setFrameText(doc, mSchool, settings.ganji_school, "챕터_숫자");
+        var issueNum = String(parseInt(settings.issue_num, 10) || 1);
+        if (mIssue) { try { mIssue.contents = issueNum; } catch (eIN) {} }
+
+        // 2) 페이지1 상단 슬러그 (y<0 프레임: 범위/범위_추가내용)
+        var ranges = settings.ranges || [];
+        var titles = [], details = [];
+        for (var r = 0; r < ranges.length; r++) {
+            if (ranges[r].title) titles.push(ranges[r].title);
+            if (ranges[r].detail) details.push(ranges[r].detail);
+        }
+        var slugTitle = titles.join(" / ");
+        var slugDetail = details.join(" / ");
+        var p0tf = page0.textFrames;
+        var slugTitleSet = false, slugDetailSet = false;
+        for (var s = 0; s < p0tf.length; s++) {
+            var stf = p0tf[s];
+            var gb;
+            try { gb = stf.geometricBounds; } catch (eG) { continue; }
+            if (gb[0] >= 0) continue;               // 페이지 위 슬러그만
+            var scs = frameCS(stf);
+            if (scs === "범위") {
+                setFrameText(doc, stf, slugTitle, "범위");
+                slugTitleSet = true;
+            } else if (scs === "범위_추가내용") {
+                setFrameText(doc, stf, slugDetail, "범위_추가내용");
+                slugDetailSet = true;
+            }
+        }
+
+        // 3) 범위 프레임쌍 — 마스터 오버라이드 후 위로 이동, 추가 범위는
+        //    아래로 +21.5mm 간격 복제 (위아래 병기 — 기존 결합본 실측 배치)
+        var ovrRange = overrideOrReuse(mRange, page0);
+        var ovrDetail = overrideOrReuse(mDetail, page0);
+        moveToY(ovrRange, GANJI_RANGE_Y);
+        moveToY(ovrDetail, GANJI_DETAIL_Y);
+        setFrameText(doc, ovrRange, ranges.length ? ranges[0].title : " ", "범위");
+        setFrameText(doc, ovrDetail,
+                     (ranges.length && ranges[0].detail) ? ranges[0].detail : " ",
+                     "범위_추가내용");
+        var pairs = 1;
+        for (var k = 1; k < ranges.length; k++) {
+            var dupR = ovrRange.duplicate();
+            var dupD = ovrDetail.duplicate();
+            moveToY(dupR, GANJI_RANGE_Y + GANJI_PAIR_STEP * k);
+            moveToY(dupD, GANJI_DETAIL_Y + GANJI_PAIR_STEP * k);
+            setFrameText(doc, dupR, ranges[k].title, "범위");
+            setFrameText(doc, dupD, ranges[k].detail || " ", "범위_추가내용");
+            pairs++;
+        }
+
+        ganjiRep.ok = true;
+        ganjiRep.school = settings.ganji_school;
+        ganjiRep.issue_num = issueNum;
+        ganjiRep.slug_title = slugTitle;
+        ganjiRep.slug_title_set = slugTitleSet;
+        ganjiRep.slug_detail = slugDetail;
+        ganjiRep.slug_detail_set = slugDetailSet;
+        ganjiRep.range_pairs = pairs;
+        writeLog("간지 기재: " + settings.ganji_school + " / 순번 " + issueNum +
+                 " / 범위쌍 " + pairs + "개");
+    }
+
+    // ───────────────────────────────────────────────────────────────
+    // [스펙4] 링크 점검 — 리링크 후 전부 임베드
+    //   Link.unlink() 가 InDesign '링크 임베드'에 해당 (임베드 후에도
+    //   doc.links 에 status LINK_EMBEDDED 로 남음 — 기존 결합본 실측 동일).
+    // ───────────────────────────────────────────────────────────────
+
+    function linkEls(doc) {
+        try { return doc.links.everyItem().getElements(); } catch (e) { return []; }
+    }
+
+    function processLinks(doc, relinkMap, linkRep) {
+        var els = linkEls(doc);
+        linkRep.total = els.length;
+        var missingBefore = 0, relinked = 0, embedded = 0;
+
+        // 1) 깨진 링크 리링크 (파일명 매칭 — 파이썬 사전 스캔 맵)
+        for (var i = 0; i < els.length; i++) {
+            var lk = els[i];
+            var st;
+            try { st = lk.status; } catch (eS) { continue; }
+            if (st === LinkStatus.LINK_MISSING) {
+                missingBefore++;
+                var nm = "";
+                try { nm = String(lk.name); } catch (eN) {}
+                var cand = relinkMap[nm];
+                if (cand && (new File(cand)).exists) {
+                    try {
+                        lk.relink(new File(cand));
+                        relinked++;
+                        writeLog("리링크: " + nm + " -> " + cand);
+                    } catch (eRl) {
+                        writeLog("[경고] 리링크 실패: " + nm + " — " + eRl.message);
+                    }
+                } else {
+                    writeLog("[경고] 리링크 후보 없음: " + nm);
+                }
+            }
+        }
+
+        // 2) 구버전 링크 업데이트
+        els = linkEls(doc);
+        for (var u = 0; u < els.length; u++) {
+            try {
+                if (els[u].status === LinkStatus.LINK_OUT_OF_DATE) els[u].update();
+            } catch (eU) {}
+        }
+
+        // 3) 전부 임베드
+        els = linkEls(doc);
+        for (var e2 = 0; e2 < els.length; e2++) {
+            var lk2 = els[e2];
+            var st2;
+            try { st2 = lk2.status; } catch (eS2) { continue; }
+            if (st2 === LinkStatus.LINK_EMBEDDED) continue;
+            if (st2 === LinkStatus.LINK_MISSING) continue;   // 리링크 실패분 — 아래 재계수
+            try {
+                lk2.unlink();     // == 임베드
+                embedded++;
+            } catch (eE) {
+                var nm2 = ""; try { nm2 = String(lk2.name); } catch (eN2) {}
+                writeLog("[경고] 임베드 실패: " + nm2 + " — " + eE.message);
+            }
+        }
+
+        // 4) 최종 재계수 (게이트 판정값)
+        els = linkEls(doc);
+        var missingAfter = 0, unembeddedAfter = 0;
+        var detail = [];
+        for (var f = 0; f < els.length; f++) {
+            var st3, nm3 = "";
+            try { st3 = els[f].status; } catch (eS3) { continue; }
+            try { nm3 = String(els[f].name); } catch (eN3) {}
+            if (st3 === LinkStatus.LINK_MISSING) {
+                missingAfter++;
+                detail.push({ name: nm3, status: "MISSING" });
+            } else if (st3 !== LinkStatus.LINK_EMBEDDED) {
+                unembeddedAfter++;
+                detail.push({ name: nm3, status: String(st3) });
+            }
+        }
+        linkRep.missing_before = missingBefore;
+        linkRep.relinked = relinked;
+        linkRep.embedded = embedded;
+        linkRep.missing_after = missingAfter;
+        linkRep.unembedded_after = unembeddedAfter;
+        linkRep.detail = detail;
+        writeLog("링크: 총 " + els.length + " (깨짐 " + missingBefore +
+                 " → 리링크 " + relinked + ", 임베드 " + embedded +
+                 ", 잔여 깨짐 " + missingAfter + ", 미임베드 " + unembeddedAfter + ")");
+    }
+
+    // ───────────────────────────────────────────────────────────────
     // 메인
     // ───────────────────────────────────────────────────────────────
 
@@ -393,6 +649,15 @@
         if (!tplFile.exists) { fail("템플릿 없음: " + TEMPLATE_PATH); writeReport(report); return; }
 
         var outFile = new File(OUTPUT_INDD);
+        // 같은 경로의 문서가 이미 열려 있으면 닫는다 — 재실행 시 InDesign이
+        // 낡은 문서를 재사용해 override 중복 오류가 나는 것 방지.
+        for (var dPre = app.documents.length - 1; dPre >= 0; dPre--) {
+            try {
+                if (app.documents[dPre].fullName.toString() === outFile.toString()) {
+                    app.documents[dPre].close(SaveOptions.NO);
+                }
+            } catch (ePre) {}
+        }
         if (!tplFile.copy(outFile)) { fail("템플릿 복사 실패: " + OUTPUT_INDD); writeReport(report); return; }
         writeLog("템플릿 복사 -> " + outFile.fsName);
 
@@ -532,11 +797,42 @@
         }
         try { cleanLabels(newDoc); } catch (eCl) {}
 
+        // [스펙5] 간지/1페이지 텍스트
+        try {
+            applyGanji(newDoc, report.ganji);
+        } catch (eGj) {
+            report.ganji.ok = false;
+            report.ganji.error = eGj.message || String(eGj);
+            writeLog("[경고] 간지 기재 실패: " + report.ganji.error);
+        }
+
+        // [스펙4] 링크 리링크 + 전부 임베드 (저장 전)
+        try {
+            processLinks(newDoc, settings.relink_map || {}, report.links);
+        } catch (eLn) {
+            writeLog("[경고] 링크 처리 오류: " + (eLn.message || eLn));
+        }
+
         // 스프레드 재편성 허용 (v1 동일)
         try {
             allowShuffleAll(newDoc);
             writeLog("스프레드 재편성 허용 설정: " + newDoc.spreads.length + " spread");
         } catch (eShf) { writeLog("[경고] 재편성 허용 설정 실패: " + eShf.message); }
+
+        // 오버플로우 스캔 (전체 페이지 텍스트 프레임)
+        try {
+            for (var op = 0; op < newDoc.pages.length; op++) {
+                var otf = newDoc.pages[op].textFrames;
+                for (var of2 = 0; of2 < otf.length; of2++) {
+                    var isOvf = false;
+                    try { isOvf = otf[of2].overflows; } catch (eOv) {}
+                    if (isOvf) {
+                        report.overflow_pages.push(String(newDoc.pages[op].name));
+                        break;
+                    }
+                }
+            }
+        } catch (eOs) {}
 
         // 저장 (.indd만 — PDF export 없음 [스펙3·1])
         try { newDoc.save(); } catch (eS) { fail("저장 실패: " + eS.message); }

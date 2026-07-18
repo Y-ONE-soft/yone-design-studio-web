@@ -18,7 +18,7 @@ v1(engines/analysis_merge)과의 차이 — 사용자 스펙 6건:
      LINK_EMBEDDED로 남음). verify 게이트: 미임베드 0 / 깨진 링크 0.
   5. 1페이지·간지 텍스트 — 기존 결합본 실측 스펙(간지 마스터의
      '2026 {학교표기}' 챕터_숫자 프레임 + 순번 프레임, 페이지1 상단 슬러그
-     범위/범위_추가내용 프레임, 세로 범위 프레임쌍 오버라이드 병기)대로
+     범위/범위_추가내용 프레임, 범위 프레임쌍 오버라이드 위아래 병기)대로
      학교명/순번/범위들을 기재한다.
   6. verify — 기존(파일 생성/로그 경고) + 지오메트리/링크/간지/오버플로우
      게이트. 시각 검수(core.visual_inspect) 연결 지점은 아래 verify 주석 참조.
@@ -89,6 +89,18 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
                     "key": "codes",
                     "label": "문제 (6자리 250632 또는 '25년 6월 32번' / '25년 6월 20-23번, 29번')",
                     "type": "textarea",
+                    "required": True,
+                },
+                {
+                    "key": "ranges",
+                    "label": "범위 목록 (교재명/회차 + 상세)",
+                    "type": "text",
+                    "required": True,
+                },
+                {
+                    "key": "ganji_school",
+                    "label": "간지 학교 표기 (예: 2026 강동고2)",
+                    "type": "text",
                     "required": True,
                 },
                 {
@@ -188,6 +200,14 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
         meta_path = super().parse(uploaded_files, job_dir, log)
         cfg = _load_config()
 
+        # 범위 목록 (간지/1페이지 기재용) — 필수
+        ranges = self.parse_ranges(self._get_meta(job_dir, "ranges", ""))
+        if not ranges:
+            raise ValueError(
+                "범위 목록이 입력되지 않았습니다. (예: 고1 25년 3월 모의고사 | 39번, 40번)")
+        log(f"[범위] {len(ranges)}개: "
+            + " / ".join(r["title"] for r in ranges))
+
         # 템플릿: GDrive 원본 → job_dir 로컬 사본 (GDrive 원본 무수정 원칙)
         tpl_src = cfg["template_path"]
         if not os.path.isfile(tpl_src):
@@ -199,9 +219,20 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
             raise RuntimeError(f"템플릿 복사 실패: {err}")
         log(f"[템플릿] 로컬 사본: {os.path.basename(tpl_local)}")
 
+        # relink 맵 — 소스 월 폴더 + 이미지 폴더 사전 스캔
         with open(meta_path, encoding="utf-8") as f:
             meta = json.load(f)
+        month_folders = []
+        for s in meta.get("sources", []):
+            mf = s.get("month_folder")
+            if mf and mf not in month_folders:
+                month_folders.append(mf)
+        relink_map = self.build_relink_map(cfg, month_folders)
+        log(f"[링크맵] 후보 {len(relink_map)}개 파일")
+
         meta["template_local"] = tpl_local
+        meta["ranges"] = ranges
+        meta["relink_map"] = relink_map
         with open(meta_path, "w", encoding="utf-8") as f:
             json.dump(meta, f, ensure_ascii=False, indent=2)
         return meta_path
@@ -232,6 +263,8 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
             raise ValueError("학교를 선택하세요 (저장 폴더: 학교명+학년).")
         if not exam_period:
             raise ValueError("시험 기간을 선택하세요.")
+        if not ganji_school:
+            raise ValueError("간지 학교 표기를 입력하세요. (예: 2026 강동고2)")
 
         with open(json_path, encoding="utf-8") as f:
             meta = json.load(f)
@@ -259,6 +292,9 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
             "grade": grade,
             "exam_period": exam_period,
             "issue_num": issue_num,
+            "ganji_school": ganji_school,
+            "ranges": ranges,
+            "relink_map": meta.get("relink_map") or {},
             "sources": meta["sources"],
             # GDrive 최종 저장 정보 (파이썬 verify 전용 — JSX는 GDrive 무접촉)
             "gdrive_save": {
@@ -379,6 +415,40 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
         if mismatch:
             warnings.append(f"페이지 아이템 수 불일치: {mismatch}")
 
+        # ── 게이트 3: 링크 (스펙 4) ─────────────────────────────────
+        links = report.get("links") or {}
+        n_missing = links.get("missing_after", -1)
+        n_unembedded = links.get("unembedded_after", -1)
+        links_ok = (n_missing == 0 and n_unembedded == 0)
+        gates["links_ok"] = links_ok
+        if not links_ok:
+            warnings.append(
+                f"링크 게이트 실패 — 깨진 링크 {n_missing}개, "
+                f"미임베드 {n_unembedded}개 "
+                f"(리링크 {links.get('relinked', 0)}건, 임베드 {links.get('embedded', 0)}건)")
+
+        # ── 게이트 4: 간지/1페이지 텍스트 (스펙 5) ──────────────────
+        ganji = report.get("ganji") or {}
+        ganji_ok = bool(ganji.get("ok"))
+        gates["ganji_ok"] = ganji_ok
+        if not ganji_ok:
+            warnings.append("간지/1페이지 기재 실패: "
+                            + (ganji.get("error") or "리포트 없음"))
+
+        # ── 게이트 5: 오버플로우 (콘텐츠 페이지) ────────────────────
+        overflow_pages = report.get("overflow_pages") or []
+        gates["overflow_ok"] = not overflow_pages
+        if overflow_pages:
+            warnings.append(f"오버플로우 프레임 페이지: {overflow_pages}")
+
+        # ── 시각 검수 연결 지점 (스펙 6) ────────────────────────────
+        # core/visual_inspect(시각 검수 1층)은 병렬 트랙이 구축 중 —
+        # origin에 push되면 아래 형태로 연결한다 (fail-open):
+        #   from core.visual_inspect import inspect_job_visual
+        #   vis = inspect_job_visual(job_dir, log)  # .indd → 페이지 PNG 검사
+        #   result["visual"] = vis; critical 발견 시 ok=False
+        # (현재는 미연결 — push 전 API 변동 가능성 때문에 주석으로만 남김.)
+
         all_gates_ok = all(gates.values()) and os.path.exists(indd_out)
 
         # ── GDrive 저장 (스펙 3) — 게이트 전부 통과 시에만 ──────────
@@ -403,7 +473,7 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
         # 목업 IN 폴더 자동 복사(result["pdf_path"] 조건)가 발동하지 않는다.
         return {
             "ok": ok,
-            "overflow": 0,
+            "overflow": len(overflow_pages),
             "stories": {},
             "warnings": warnings,
             "gates": gates,
@@ -414,4 +484,6 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
                 "max_drift_before_mm": geo.get("max_drift_before_mm"),
                 "max_residual_mm": max_drift,
             },
+            "links": links,
+            "ganji": ganji,
         }
