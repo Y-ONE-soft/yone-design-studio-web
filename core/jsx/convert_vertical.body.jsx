@@ -612,6 +612,178 @@ try {
     // 수동본은 가시 창에서 실행돼 합성이 보장됐지만, 웹은 창 없이 열므로
     // texts[0] 캡처 전에 합성을 강제한다 (미합성 → 빈 캡처 → 내용 붕괴 방지)
     try { doc.recompose(); } catch (e) {}
+
+    // ==================================================
+    // STEP 4.4: 영작배열(arrange) 스레드 — 코드 단위 재배분 (6차 수리)
+    //  5차 실측: 소스는 18개 지문의 영작배열이 10페이지에 연속 배치된 단일
+    //  스레드(코드 시작 페이지는 3곳뿐)라 페이지 이동만으로는 사이클 정렬이
+    //  불가능 — arrange 라벨이 직전 코드 지문에 꼬리로 붙어 코드 5종 산개·
+    //  2종 미검출이 발생했다 (verify (b) 실패의 실체).
+    //  수리: 스레드 텍스트를 코드 단락 경계로 분할해 코드당 새 페이지 1장
+    //  (arrange_k_0)에 배치하고 원본 arrange 페이지를 삭제한다 — 수동 실물
+    //  세로(C)의 '지문당 영작배열 1페이지' 구조와 동일 의미론.
+    //  (오프라인 드라이런: 섹션 18개 타일링 무결·라인 보존·블록 18/18 검증)
+    // ==================================================
+    var _arrSections = 0;
+    var _arrAdded = 0;
+    var _arrDeleted = 0;
+    (function () {
+        if (arrStart < 0 || arrStart > arrEnd) { return; }
+        var origPages = [];
+        for (var oi4 = arrStart; oi4 <= arrEnd && oi4 < doc.pages.length; oi4++) {
+            origPages.push(doc.pages[oi4]);
+        }
+        if (origPages.length === 0) { return; }
+        // 후보 스레드: 컨테이너 2개 이상이 전부 arrange 범위 페이지 위
+        var target = null;
+        var stories4 = doc.stories.everyItem().getElements();
+        for (var si4 = 0; si4 < stories4.length; si4++) {
+            var conts4;
+            try { conts4 = stories4[si4].textContainers; } catch (e) { continue; }
+            if (!conts4 || conts4.length < 2) { continue; }
+            var allIn = true;
+            for (var ci4 = 0; ci4 < conts4.length; ci4++) {
+                var off4 = -1;
+                try {
+                    var pp4 = conts4[ci4].parentPage;
+                    if (pp4) { off4 = pp4.documentOffset; }
+                } catch (e) {}
+                if (off4 < arrStart || off4 > arrEnd) { allIn = false; break; }
+            }
+            if (allIn) { target = stories4[si4]; break; }
+        }
+        if (!target) {
+            wlog("[경고] STEP4.4: arrange 스레드 미발견 — 재배분 생략(일반 분리로 진행)");
+            return;
+        }
+        var atxt = "";
+        try { atxt = target.texts[0].contents; } catch (e) {}
+        if (!atxt) {
+            wlog("[경고] STEP4.4: arrange 스레드 텍스트 캡처 실패 — 재배분 생략");
+            return;
+        }
+        // 코드 단락 마커 스캔 (leadPassageNum과 동일 정규식 2종)
+        var marks = [];
+        var pos4 = 0;
+        while (pos4 < atxt.length) {
+            var nxt4 = atxt.indexOf("\r", pos4);
+            var pend4 = (nxt4 < 0) ? atxt.length : nxt4 + 1;
+            var phead = atxt.substring(pos4, Math.min(pend4, pos4 + 40));
+            var acode = null;
+            var am6 = phead.match(/^\s*\{(\d{4})(\d{2}(?:~\d+)?)\}/);
+            if (am6) { acode = am6[2]; }
+            if (acode === null) {
+                var ams = phead.match(/^\s*[\[{]\s*(\d{1,3}(?:~\d+)?)\s*[\]}]/);
+                if (ams) { acode = ams[1]; }
+            }
+            if (acode !== null) { marks.push({ pos: pos4, code: acode }); }
+            pos4 = pend4;
+        }
+        if (marks.length < 2) {
+            wlog("[경고] STEP4.4: arrange 코드 마커 " + marks.length +
+                 "개(<2) — 재배분 생략(일반 분리로 진행)");
+            return;
+        }
+        if (marks[0].pos !== 0) {
+            wlog("[경고] STEP4.4: 첫 코드 이전 서두 " + marks[0].pos +
+                 "자 — 첫 섹션에 포함");
+            marks[0].pos = 0;
+        }
+        // 원형 프레임/페이지 속성 (첫 컨테이너 기준 — x위치는 STEP6.5가 보정)
+        var pGb = null, pOs = null, pTfp = null, pLyr = null, pMaster = null;
+        try {
+            var proto4 = target.textContainers[0];
+            try { pGb = proto4.geometricBounds; } catch (e) {}
+            try { pOs = proto4.appliedObjectStyle; } catch (e) {}
+            try { pTfp = proto4.textFramePreferences.properties; } catch (e) {}
+            try { pLyr = proto4.itemLayer; } catch (e) {}
+            try { pMaster = proto4.parentPage.appliedMaster; } catch (e) {}
+        } catch (e) {}
+        // 섹션별 새 페이지 + 프레임 + 범위 복제
+        var used4 = {};
+        var anchorPg4 = origPages[origPages.length - 1];
+        for (var sx = 0; sx < marks.length; sx++) {
+            var sStart = marks[sx].pos;
+            var sEnd = (sx + 1 < marks.length) ? (marks[sx + 1].pos - 1)
+                                               : (atxt.length - 1);
+            if (sEnd < sStart) { continue; }
+            var np4 = null;
+            try { np4 = doc.pages.add(LocationOptions.AFTER, anchorPg4); }
+            catch (e) {
+                throw new Error("STEP4.4 페이지 추가 실패(섹션 " + sx + "): " + e);
+            }
+            anchorPg4 = np4;
+            _arrAdded++;
+            try { if (pMaster) { np4.appliedMaster = pMaster; } } catch (e) {}
+            var k4 = -1;
+            for (var ck4 = 0; ck4 < canonNums.length; ck4++) {
+                if (canonNums[ck4] === marks[sx].code && !used4[ck4]) {
+                    k4 = ck4; break;
+                }
+            }
+            if (k4 >= 0) {
+                used4[k4] = true;
+                np4.label = PFX + "arrange_" + k4 + "_0";
+            } else {
+                np4.label = PFX + "arrange_u" + sx;
+                wlog("[경고] STEP4.4: canon 외 코드 '" + marks[sx].code +
+                     "' — 미배치 페이지 유지");
+            }
+            var nf4 = null;
+            try { nf4 = np4.textFrames.add(); }
+            catch (e) {
+                throw new Error("STEP4.4 프레임 생성 실패(섹션 " + sx + "): " + e);
+            }
+            try { nf4.label = "__cv_split__"; } catch (e) {}
+            try { if (pLyr) { nf4.itemLayer = pLyr; } } catch (e) {}
+            try { if (pGb) { nf4.geometricBounds = pGb; } } catch (e) {}
+            try { if (pOs) { nf4.appliedObjectStyle = pOs; } } catch (e) {}
+            try { if (pTfp) { nf4.textFramePreferences.properties = pTfp; } } catch (e) {}
+            try {
+                target.texts[0].characters.itemByRange(sStart, sEnd)
+                    .duplicate(LocationOptions.AT_END, nf4.insertionPoints[0]);
+            } catch (e) {
+                throw new Error("STEP4.4 범위 복제 실패(섹션 " + sx + ", " +
+                                sStart + "~" + sEnd + "): " + e);
+            }
+            // 말미 \r 1개 제거 — 암묵 빈 최종 단락이 한 줄을 요구해 정확히
+            // 가득 찬 프레임을 오버셋시키는 것 방지 (6차 실측 수리 B — 삭제
+            // 방식이라 마지막 단락의 단락 속성은 보존됨)
+            try {
+                var nch4 = nf4.parentStory.characters;
+                var lc4 = nch4.itemByRange(nch4.length - 1, nch4.length - 1);
+                if (lc4.contents === "\r") { lc4.contents = ""; }
+            } catch (e) {}
+            _arrSections++;
+        }
+        // 원본 arrange 페이지 삭제 (스레드 컨테이너·헤더 프레임 동반 소멸 —
+        // 헤더(y<=0) 스토리는 verify 의도 손실 제외 대상)
+        for (var rr4 = origPages.length - 1; rr4 >= 0; rr4--) {
+            try { origPages[rr4].remove(); _arrDeleted++; }
+            catch (e) { wlog("[경고] STEP4.4 원본 페이지 삭제 실패: " + e); }
+        }
+        // fail-loud: 원본 스레드 잔존 확인 (페이지 삭제로 소멸했어야 함)
+        var liveN4 = 0;
+        try {
+            if (target.isValid) {
+                var cc4b = target.textContainers;
+                for (var v4 = 0; v4 < cc4b.length; v4++) {
+                    try { if (cc4b[v4].parentPage) { liveN4++; } } catch (e) {}
+                }
+            }
+        } catch (e) {}
+        if (liveN4 > 0) {
+            throw new Error("STEP4.4: 원본 arrange 스레드 잔존 컨테이너 " +
+                            liveN4 + "개 — 중단(침묵 오배치 금지)");
+        }
+        try { doc.recompose(); } catch (e) {}
+        wlog("STEP4.4: arrange 재배분 — 섹션 " + _arrSections +
+             "개, 페이지 +" + _arrAdded + "/-" + _arrDeleted);
+    })();
+    result.arrange_sections = _arrSections;
+    result.arrange_pages_added = _arrAdded;
+    result.arrange_pages_deleted = _arrDeleted;
+
     var _splitCount = 0;
     var _splitGroups = 0;
     var _splitRemain = 0;
@@ -750,6 +922,17 @@ try {
                     try {
                         st.texts[0].characters.itemByRange(start, end)
                             .duplicate(LocationOptions.AT_END, firstNf.insertionPoints[0]);
+                        // 말미 \r 1개 제거 — 새 스토리의 암묵 빈 최종 단락이
+                        // 한 줄을 요구해, 정확히 가득 찼던 원본 프레임 복제가
+                        // 오버셋으로 뒤집히는 것 방지 (6차 실측: 5차 오버셋
+                        // 14건 중 다수가 텍스트 전량 표시+빈 단락 오버셋.
+                        // 삭제 방식이라 마지막 단락의 단락 속성은 보존됨)
+                        try {
+                            var nch5 = firstNf.parentStory.characters;
+                            var lc5 = nch5.itemByRange(nch5.length - 1,
+                                                       nch5.length - 1);
+                            if (lc5.contents === "\r") { lc5.contents = ""; }
+                        } catch (e) {}
                     } catch (e) {
                         wlog("[경고] STEP4.5 범위 복제 실패(id " + sid + ", " +
                              start + "~" + end + "): " + e.message);
@@ -986,9 +1169,19 @@ try {
     }
 
     // ==================================================
-    // STEP 10: 세로 마스터 원본 열기 + 마스터/스타일 동기화 + 간지 처리
+    // STEP 10: 마스터/스타일 동기화(옵션) + 간지 처리
+    //  6차 실측 (수동 실물 세로(C) 덤프): 수동 실물은 마스터 임포트 스타일
+    //  흔적 0, 페이지 마스터도 A~E/O/M 혼합 유지 — loadMasters/importStyles
+    //  (LOAD_ALL_WITH_OVERWRITE)/C마스터 일괄 적용은 실물과 다른 동기화이며,
+    //  같은 이름 스타일 덮어쓰기·마스터 교체가 원본과 동일 기하/텍스트인
+    //  프레임 13건을 리플로우 오버셋시켰다 (untouched 프레임 2건 포함).
+    //  → 파괴적 동기화는 cfg.master_sync === true일 때만 수행 (기본 생략 —
+    //  마스터 마감은 수동 흐름의 사람 마무리 단계 소관). 간지/y0/재링크 등
+    //  대상 문서 로컬 처리는 항상 수행.
     // ==================================================
-    if (cfg.master_indd) {
+    var MASTER_SYNC = (cfg.master_sync === true);
+    result.master_sync = MASTER_SYNC;
+    if (MASTER_SYNC && cfg.master_indd) {
         var masterFile = new File(cfg.master_indd);
         if (masterFile.exists) {
             wlog("STEP10: 세로 마스터 열기 — " + cfg.master_indd);
@@ -1003,20 +1196,27 @@ try {
                 _finalPhysicalSync(sourceDoc, doc);
                 _syncStyles(sourceDoc, doc);
                 _applyCMasterExceptFirst(doc);
-                _applyGanjiToFirstPage(doc);
-                _remapGanjiCharacterStyles(doc);
-                _setFirstPageItemsYToZero(doc);
-                _relinkSpecialImages(doc, cfg.image_base);
-                wlog("STEP10: 마스터/스타일 동기화 + 간지 처리 완료");
+                wlog("STEP10: 마스터/스타일 동기화 완료 (master_sync=on)");
             } catch (e10) {
                 wlog("[경고] STEP10 동기화 중 오류 (계속 진행): " + e10);
             }
             sourceDoc.close(SaveOptions.NO);
         } else {
-            wlog("[경고] 세로 마스터 원본 없음 — STEP10 생략: " + cfg.master_indd);
+            wlog("[경고] 세로 마스터 원본 없음 — 동기화 생략: " + cfg.master_indd);
         }
     } else {
-        wlog("[경고] master_indd 미설정 — STEP10 생략");
+        wlog("STEP10: 마스터/스타일 동기화 생략(기본 — 6차 리플로우 실측, "
+             + "수동 실물 파리티. 필요 시 cfg.master_sync=true)");
+    }
+    try {
+        _unlockEverything(doc);
+        _applyGanjiToFirstPage(doc);
+        _remapGanjiCharacterStyles(doc);
+        _setFirstPageItemsYToZero(doc);
+        _relinkSpecialImages(doc, cfg.image_base);
+        wlog("STEP10: 간지 처리 + 특수 이미지 재링크 완료");
+    } catch (e10b) {
+        wlog("[경고] STEP10 간지/재링크 중 오류 (계속 진행): " + e10b);
     }
 
     try { app.scriptPreferences.enableRedraw = true; } catch (e) {}

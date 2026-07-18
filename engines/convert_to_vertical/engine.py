@@ -121,6 +121,21 @@ def line_counts(dump, min_len=25):
     return counts
 
 
+def expected_page_count(src_pages, stats):
+    """출력 기대 페이지 수 = 원본 - 구분삭제 - arrange삭제 + arrange추가.
+
+    W27 6차: STEP4.4가 영작배열 스레드를 코드당 1페이지로 재배분하면서
+    페이지를 추가/삭제한다 (stats: arrange_pages_added/deleted). 통계가
+    없으면(구버전 JSX/실패) None — 판정 생략.
+    """
+    deleted = stats.get("sep_pages_deleted")
+    if deleted is None or not src_pages:
+        return None
+    arr_add = stats.get("arrange_pages_added") or 0
+    arr_del = stats.get("arrange_pages_deleted") or 0
+    return src_pages - deleted - arr_del + arr_add
+
+
 def residual_thread_count(dump, max_gap=4):
     """섹션 관통 스레드 수 — 페이지 간격이 max_gap 초과인 다중 페이지 스토리.
 
@@ -469,15 +484,18 @@ class ConvertToVerticalEngine(BaseEngine):
         elif out_overflow:
             warnings.append(f"⚠️ 오버플로우 스토리 {out_overflow}개 (원본에도 존재)")
 
-        # (d) 페이지 정리 리포트
+        # (d) 페이지 정리 리포트 (구분 삭제 + STEP4.4 arrange 재배분 반영)
         src_pages = src_dump.get("page_count") or 0
         out_pages = out_dump.get("page_count") or 0
         deleted = stats.get("sep_pages_deleted")
+        expected = expected_page_count(src_pages, stats)
         log(f"[검수] 페이지 {src_pages} → {out_pages} "
-            f"(구분 삭제 {deleted if deleted is not None else '?'})")
-        if deleted is not None and src_pages and out_pages != src_pages - deleted:
+            f"(구분 삭제 {deleted if deleted is not None else '?'}, "
+            f"arrange +{stats.get('arrange_pages_added', '?')}"
+            f"/-{stats.get('arrange_pages_deleted', '?')})")
+        if expected is not None and out_pages != expected:
             warnings.append(
-                f"⚠️ 페이지 수 불일치: {src_pages} - {deleted} != {out_pages}")
+                f"⚠️ 페이지 수 불일치: 기대 {expected} != 실제 {out_pages}")
 
         # (e) PDF
         pdf_path = settings.get("pdf_path")
