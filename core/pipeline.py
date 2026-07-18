@@ -141,10 +141,10 @@ def run_pipeline(engine, job_id: str, job_dir: str, uploaded: dict):
         # 산출 PDF를 페이지 PNG로 렌더해 기계 검사(오버셋 페이지 지목/지오메트리/
         # 픽셀 이상) → job_dir/visual_report.json. 판정은 게이트와 별개 —
         # critical이 있어도 warning만 붙이고 ok는 바꾸지 않는다 (fail-open).
-        # analysis_merge는 병렬 트랙(대개편 중)이라 제외 — 연결 지점은
-        # docs/workbook_v2_로드맵.md W29 기록 참조.
-        if (os.environ.get("YONE_VISUAL_INSPECT") == "1"
-                and engine.material_id != "analysis_merge"):
+        # (analysis_merge 제외 조건은 대개편 완료로 해제 — analysis_merge_v2는
+        #  PDF가 없어 verify 내부에서 allow_indesign 렌더로 자체 연결,
+        #  이 훅에서는 PDF 부재 시 None으로 자연 스킵된다.)
+        if os.environ.get("YONE_VISUAL_INSPECT") == "1":
             try:
                 from core.visual_inspect import inspect_job_visual
                 log("[시각검수] 페이지 렌더 + 기계 검사 중...")

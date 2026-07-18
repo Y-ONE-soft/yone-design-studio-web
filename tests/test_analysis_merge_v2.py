@@ -234,3 +234,25 @@ def test_verify_missing_report(engine, tmp_path):
     res = engine.verify(job, lambda m: None)
     assert res["ok"] is False
     assert any("리포트" in w for w in res["warnings"])
+
+
+def test_verify_visual_hook_off_by_default(engine, tmp_path, monkeypatch):
+    """시각 검수는 opt-in — 환경변수 없으면 visual=None, 게이트 불변."""
+    monkeypatch.delenv("YONE_VISUAL_INSPECT", raising=False)
+    job, _ = _make_job(tmp_path, GOOD_REPORT)
+    res = engine.verify(job, lambda m: None)
+    assert res["visual"] is None and res["ok"] is True
+
+
+def test_verify_visual_hook_fail_open(engine, tmp_path, monkeypatch):
+    """시각 검수 예외는 fail-open — 게이트/저장에 영향 없음 (W29 판정 철학)."""
+    monkeypatch.setenv("YONE_VISUAL_INSPECT", "1")
+    import core.visual_inspect as vi
+
+    def _boom(*a, **k):
+        raise RuntimeError("렌더 백엔드 없음")
+
+    monkeypatch.setattr(vi, "inspect_job_visual", _boom)
+    job, _ = _make_job(tmp_path, GOOD_REPORT)
+    res = engine.verify(job, lambda m: None)
+    assert res["ok"] is True and res["visual"] is None

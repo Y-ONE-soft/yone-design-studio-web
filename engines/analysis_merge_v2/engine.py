@@ -453,13 +453,28 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
         if overflow_pages:
             warnings.append(f"오버플로우 프레임 페이지: {overflow_pages}")
 
-        # ── 시각 검수 연결 지점 (스펙 6) ────────────────────────────
-        # core/visual_inspect(시각 검수 1층)은 병렬 트랙이 구축 중 —
-        # origin에 push되면 아래 형태로 연결한다 (fail-open):
-        #   from core.visual_inspect import inspect_job_visual
-        #   vis = inspect_job_visual(job_dir, log)  # .indd → 페이지 PNG 검사
-        #   result["visual"] = vis; critical 발견 시 ok=False
-        # (현재는 미연결 — push 전 API 변동 가능성 때문에 주석으로만 남김.)
+        # ── 시각 검수 1층 (스펙 6 — opt-in: YONE_VISUAL_INSPECT=1) ──
+        # v2는 PDF가 없어 .indd 렌더(allow_indesign=True)로 실행. W29 판정
+        # 철학 준수: fail-open, critical도 warning만 붙이고 게이트는 불변.
+        visual = None
+        if (os.environ.get("YONE_VISUAL_INSPECT") == "1"
+                and os.path.exists(indd_out)):
+            try:
+                from core.visual_inspect import inspect_job_visual
+                log("[시각검수] 페이지 렌더 + 기계 검사 중...")
+                vr = inspect_job_visual(job_dir, log,
+                                        result={"indd_path": indd_out},
+                                        allow_indesign=True)
+                if vr is not None:
+                    visual = {"report_path": vr["report_path"],
+                              "summary": vr["summary"]}
+                    if vr["summary"]["critical"]:
+                        warnings.append(
+                            f"[시각검수] critical {vr['summary']['critical']}건 "
+                            f"(페이지 {vr['summary']['flagged_pages'][:8]}) — "
+                            f"visual_report.json 확인")
+            except Exception as _ve:
+                log(f"[시각검수] 건너뜀 (fail-open): {_ve}")
 
         all_gates_ok = all(gates.values()) and os.path.exists(indd_out)
 
@@ -492,6 +507,7 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
             "indd_path": gdrive_path or (indd_out if os.path.exists(indd_out) else None),
             "local_indd": indd_out if os.path.exists(indd_out) else None,
             "gdrive_path": gdrive_path,
+            "visual": visual,
             "geometry": {
                 "max_drift_before_mm": geo.get("max_drift_before_mm"),
                 "max_residual_mm": max_drift,
