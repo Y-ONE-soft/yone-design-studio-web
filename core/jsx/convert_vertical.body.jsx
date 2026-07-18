@@ -736,9 +736,12 @@ try {
             }
             try { nf4.label = "__cv_split__"; } catch (e) {}
             try { if (pLyr) { nf4.itemLayer = pLyr; } } catch (e) {}
-            try { if (pGb) { nf4.geometricBounds = pGb; } } catch (e) {}
             try { if (pOs) { nf4.appliedObjectStyle = pOs; } } catch (e) {}
             try { if (pTfp) { nf4.textFramePreferences.properties = pTfp; } } catch (e) {}
+            // gb는 반드시 tfp 이후 마지막에 — tfp.properties 일괄 대입이 프레임
+            // 폭을 리사이즈(84→82, 7차 프로브 probe_tail7c 실측)해 원본 합성과
+            // 다른 리플로우(꼬리 절단 오버셋)를 유발한다
+            try { if (pGb) { nf4.geometricBounds = pGb; } } catch (e) {}
             try {
                 target.texts[0].characters.itemByRange(sStart, sEnd)
                     .duplicate(LocationOptions.AT_END, nf4.insertionPoints[0]);
@@ -747,12 +750,15 @@ try {
                                 sStart + "~" + sEnd + "): " + e);
             }
             // 말미 \r 1개 제거 — 암묵 빈 최종 단락이 한 줄을 요구해 정확히
-            // 가득 찬 프레임을 오버셋시키는 것 방지 (6차 실측 수리 B — 삭제
-            // 방식이라 마지막 단락의 단락 속성은 보존됨)
+            // 가득 찬 프레임을 오버셋시키는 것 방지. 7차 프로브(probe_tail7
+            // D0) 실측: itemByRange(n-1,n-1).contents는 문자열이 아니라
+            // 배열(["\r"])을 반환해 === "\r" 비교가 항상 false — 6차 수리가
+            // 침묵 no-op이었던 실원인. String() 비교 + remove()(프로브 A로
+            // 실삭제 실증)로 교체. 삭제 방식이라 마지막 단락 속성은 보존.
             try {
                 var nch4 = nf4.parentStory.characters;
                 var lc4 = nch4.itemByRange(nch4.length - 1, nch4.length - 1);
-                if (lc4.contents === "\r") { lc4.contents = ""; }
+                if (String(lc4.contents) === "\r") { lc4.remove(); }
             } catch (e) {}
             _arrSections++;
         }
@@ -900,9 +906,15 @@ try {
                     made.push(nf);
                     try { nf.label = "__cv_split__"; } catch (e) {}
                     try { if (cp.lyr) { nf.itemLayer = cp.lyr; } } catch (e) {}
-                    try { nf.geometricBounds = cp.gb; } catch (e) {}
                     try { if (cp.os) { nf.appliedObjectStyle = cp.os; } } catch (e) {}
                     try { if (cp.tfp) { nf.textFramePreferences.properties = cp.tfp; } } catch (e) {}
+                    // gb는 반드시 tfp 이후 마지막에 — tfp.properties 일괄
+                    // 대입이 프레임 폭을 리사이즈(84→82, probe_tail7c 실측)해
+                    // 원본에서 정확히 가득 찼던 프레임의 복제가 1~2줄
+                    // 오버셋(꼬리 절단)으로 뒤집히는 실원인이었다 (6차
+                    // 오버플로우 14 중 꼬리 절단 ~10건 + 프레임 폭 +2 실험
+                    // probe_tail7b에서 3/3 즉시 해소 실증)
+                    try { nf.geometricBounds = cp.gb; } catch (e) {}
                     if (prevNf !== null) {
                         try { prevNf.nextTextFrame = nf; }
                         catch (e) {
@@ -923,15 +935,17 @@ try {
                         st.texts[0].characters.itemByRange(start, end)
                             .duplicate(LocationOptions.AT_END, firstNf.insertionPoints[0]);
                         // 말미 \r 1개 제거 — 새 스토리의 암묵 빈 최종 단락이
-                        // 한 줄을 요구해, 정확히 가득 찼던 원본 프레임 복제가
-                        // 오버셋으로 뒤집히는 것 방지 (6차 실측: 5차 오버셋
-                        // 14건 중 다수가 텍스트 전량 표시+빈 단락 오버셋.
-                        // 삭제 방식이라 마지막 단락의 단락 속성은 보존됨)
+                        // 한 줄을 요구해 flag-only 오버셋을 남기는 것 방지.
+                        // 7차 프로브(probe_tail7 D0) 실측: itemByRange의
+                        // contents는 배열(["\r"]) 반환이라 === "\r"이 항상
+                        // false — 6차 수리 ⓑ가 침묵 no-op이었던 실원인.
+                        // String() 비교 + remove()(프로브 A에서 오버셋 해소
+                        // 실증)로 교체. 삭제 방식이라 마지막 단락 속성 보존.
                         try {
                             var nch5 = firstNf.parentStory.characters;
                             var lc5 = nch5.itemByRange(nch5.length - 1,
                                                        nch5.length - 1);
-                            if (lc5.contents === "\r") { lc5.contents = ""; }
+                            if (String(lc5.contents) === "\r") { lc5.remove(); }
                         } catch (e) {}
                     } catch (e) {
                         wlog("[경고] STEP4.5 범위 복제 실패(id " + sid + ", " +
