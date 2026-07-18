@@ -111,8 +111,6 @@ def test_static_parity_with_manual():
         '["grammar", "grammarox", "blankgrammar"]',
         # 재배치 사이클 안전 상한
         "aseq < 30", "op < 40",
-        # STEP4.5 보존 분리 — undo 그룹 명명은 수동본과 동일
-        'UndoModes.FAST_ENTIRE_SCRIPT, "스토리 보존 분리"',
         # STEP10 간지 처리 스타일/마스터 이름 (\uXXXX가 아닌 원문 비교는 port쪽)
         "GlobalClashResolutionStrategy.LOAD_ALL_WITH_OVERWRITE",
         # 이미지 normName 규칙
@@ -142,6 +140,17 @@ def test_static_parity_with_manual():
     assert "characters.itemByRange" in port  # 그룹 범위 복제 (단락 보존)
     assert "_collectThreadIds" in port       # 잔존 0 검증 라운드
     assert "분리 실패 스레드" in port          # 잔존 시 [오류] 중단 게이트
+    # STEP4.5 undo 그룹 의도적 차이 (5차 프로브 probe_remove5, 2026-07-18):
+    # 수동본의 doScript(FAST_ENTIRE_SCRIPT, "스토리 보존 분리") 래퍼는 창 없는
+    # do script 컨텍스트에서 모든 remove()를 예외 없는 침묵 no-op으로 만든다
+    # (1~4차 '원본 제거 no-op'의 실원인) — 이식본은 래퍼 없이 직접 실행.
+    assert 'UndoModes.FAST_ENTIRE_SCRIPT' in manual
+    assert 'UndoModes.FAST_ENTIRE_SCRIPT, "\\uc2a4\\ud1a0\\ub9ac ' \
+           '\\ubcf4\\uc874 \\ubd84\\ub9ac"' in manual or \
+           'UndoModes.FAST_ENTIRE_SCRIPT, "스토리 보존 분리"' in manual
+    assert "app.doScript(_splitRounds" not in port  # 래퍼 제거 (직접 실행)
+    assert "_splitRounds();" in port
+    assert "made.length - 1" in port         # fail 시 __cv_split__ 복제 롤백
     assert "pair < 9" in manual              # 수동: 어휘 9쌍 고정
     assert "pair < HW_PAIRS" in port         # 이식: NUM/2 유도
     # 재배치 사이클 순서 (hw→ox→…→blankgrammar) 등장 순서 일치
