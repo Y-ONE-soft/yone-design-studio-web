@@ -47,6 +47,11 @@ def test_registration_consistency():
     assert '"master:" + mkey' in src            # 마스터 프레임 오버플로우 스캔
     assert "keepSize" in src                    # 로컬 서식 캡처→복원 (오버셋 원인)
 
+    # 폼(템플릿) — 코드 → 범위 자동 유도 규칙 미러 계약 (피드백2)
+    tpl_src = open(tpl, encoding="utf-8").read()
+    assert "deriveRangesFromCodes" in tpl_src
+    assert "effectiveRanges" in tpl_src
+
 
 def test_upload_spec_slots(engine):
     keys = [s["key"] for s in engine.upload_spec["slots"]]
@@ -127,6 +132,57 @@ def test_sanitize_filename_strips_spaces(engine):
         "배재1_분석본01(고125년3월)_내지"
     assert engine.sanitize_filename('a/b:c*d?e"f<g>h|i j') == "abcdefghij"
     assert engine.sanitize_filename("") == ""
+
+
+# ── 문제 코드 → 범위 자동 유도 (사용자 피드백 2026-07-19) ────────────────────
+
+def _mk_code(raw):
+    return {"raw": raw, "year": raw[0:2], "month": raw[2:4], "qNum": raw[4:6]}
+
+
+def test_derive_ranges_from_codes_single(engine):
+    """사용자 예시: 250320 → 고1 25년 3월 모의고사 / 20번."""
+    out = engine.derive_ranges_from_codes([_mk_code("250320")], "고1")
+    assert out == [{"title": "고1 25년 3월 모의고사", "detail": "20번"}]
+    out2 = engine.derive_ranges_from_codes([_mk_code("240922")], "고1")
+    assert out2 == [{"title": "고1 24년 9월 모의고사", "detail": "22번"}]
+
+
+def test_derive_ranges_from_codes_multi_and_runs(engine):
+    """여러 회차는 입력 순서대로 병기, 연속 번호는 a~b번 압축, 중복 제거."""
+    codes = [_mk_code("250339"), _mk_code("250340"), _mk_code("220920"),
+             _mk_code("250340")]
+    out = engine.derive_ranges_from_codes(codes, "고1")
+    assert out == [
+        {"title": "고1 25년 3월 모의고사", "detail": "39~40번"},
+        {"title": "고1 22년 9월 모의고사", "detail": "20번"},
+    ]
+    # 비연속 혼합
+    codes2 = [_mk_code("250620"), _mk_code("250621"), _mk_code("250622"),
+              _mk_code("250629")]
+    out2 = engine.derive_ranges_from_codes(codes2, "고2")
+    assert out2 == [{"title": "고2 25년 6월 모의고사", "detail": "20~22번, 29번"}]
+
+
+def test_derive_ranges_grade_fallback_and_empty(engine):
+    assert engine.derive_ranges_from_codes([], "고1") == []
+    out = engine.derive_ranges_from_codes([_mk_code("250101")], "")
+    assert out[0]["title"].startswith("고1 ")
+
+
+def test_derived_range_title_matches_filename_abbrev(engine):
+    """코드에서 유도한 범위도 파일명 축약 규칙과 정합 —
+    "고1 25년 3월 모의고사" → "25년3월"."""
+    ranges = engine.derive_ranges_from_codes(
+        [_mk_code("250339"), _mk_code("220920")], "고1")
+    name = engine.default_result_name("배재1", "1", ranges)
+    assert name == "배재1_분석본01(25년3월,22년9월)_내지"
+
+
+def test_upload_spec_ranges_optional(engine):
+    slots = {s["key"]: s for s in engine.upload_spec["slots"]}
+    assert slots["ranges"]["required"] is False   # 비우면 코드에서 자동 유도
+    assert slots["codes"]["required"] is True
 
 
 # ── relink 맵 (스펙4) ────────────────────────────────────────────────────────
