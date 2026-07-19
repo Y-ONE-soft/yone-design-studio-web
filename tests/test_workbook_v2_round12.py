@@ -194,10 +194,16 @@ def test_gate_g28_w21_output_labels_aligned(w21_report):
     G28③이 새로 소급 검출한다 (r13 F2, 당시엔 게이트 구멍). 정렬(왼쪽
     라벨/M 위치) 계열 무결만 이 테스트의 원래 검증 대상으로 유지."""
     align = [c for c in w21_report["critical"]
-             if c.startswith("[파트경계]") and "고아 간지" not in c]
+             if c.startswith("[파트경계]") and "고아 간지" not in c
+             and "크레딧" not in c]
     assert not align
     orphan = [c for c in w21_report["critical"] if "고아 간지" in c]
     assert orphan and "짤지문" not in orphan[0]  # 라벨 첫 줄('고2 모의고사')로 지목
+    # W30-r15 의미론 갱신: 크레딧 스프레드 규칙(왼쪽 정렬 + 오른쪽 메모 M)
+    # 은 이후 확정된 사용자 스펙 — 구출력(p62 크레딧 왼쪽, 메모 없음)은
+    # G28④가 새로 소급 검출한다 (당시엔 게이트 부류 자체가 없었음).
+    credit = [c for c in w21_report["critical"] if "크레딧" in c]
+    assert credit and "메모(M) 페이지 누락" in credit[0]
 
 
 def test_executor_f2_filler_sources():

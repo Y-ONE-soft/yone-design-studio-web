@@ -171,16 +171,21 @@ def test_textbook_decorations_expanded(tmp_path):
 
 def test_textbook_step_map_master_pairs():
     """교과서 step_map: 기본 STEP_MAP과 동일 마커/pos + master_pair
-    (STEP1 = A/B, STEP2 = C/D — supp W21 실측 계약 재사용, supp 전용
-    label_contract/per_passage_units는 미등재)."""
+    (STEP1 = A/B, STEP2 = C/D — supp W21 실측 계약 재사용).
+    W30-r15 의미론 갱신: per_passage_units는 헤더 분할 스텝 5종에 등재 —
+    실서비스 376b34d0(교과서 L-p-코너명형 헤더 미인식 → 지문 6개 유닛 1개
+    통짜, 게이트 침묵)로 '실물 대조 근거 없음' 보류가 해제됐다.
+    label_contract는 여전히 미등재 (교과서 실물 대조 근거 없음)."""
     from engines.textbook_workbook_v2.engine import TextbookWorkbookV2Engine
     from engines.workbook_v2.plan import STEP_MAP
     smap = TextbookWorkbookV2Engine()._step_map()
     base_map = {k: v for k, v in STEP_MAP.items() if k != "_doc"}
     assert set(smap) == set(base_map)
+    ppu_steps = {"step1_c1", "step1_c2", "step2_a1", "step2_b1", "step2_c1"}
     for k, base in base_map.items():
         entry = dict(smap[k])
         pair = entry.pop("master_pair", None)
+        ppu = entry.pop("per_passage_units", None)
         assert entry == base, k                      # 마커/페이지/pos 동일
         if k == "step3":
             assert pair is None
@@ -189,7 +194,7 @@ def test_textbook_step_map_master_pairs():
                 else ("C-마스터", "D-마스터")
             assert pair == {"left": want[0], "right": want[1]}, k
         assert "label_contract" not in smap[k]
-        assert "per_passage_units" not in smap[k]
+        assert ppu is (True if k in ppu_steps else None), k
 
 
 def test_ebs_decorations_delete_and_question_keep(tmp_path):
