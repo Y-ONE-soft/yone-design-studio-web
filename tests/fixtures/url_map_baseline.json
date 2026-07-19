@@ -8,6 +8,46 @@
     "signature": "()"
   },
   {
+    "rule": "/api/analysis-merge/ebs-books",
+    "methods": [
+      "GET"
+    ],
+    "endpoint_func": "api_am_ebs_books",
+    "signature": "()"
+  },
+  {
+    "rule": "/api/analysis-merge/ebs-units",
+    "methods": [
+      "GET"
+    ],
+    "endpoint_func": "api_am_ebs_units",
+    "signature": "()"
+  },
+  {
+    "rule": "/api/analysis-merge/tb-lessons",
+    "methods": [
+      "GET"
+    ],
+    "endpoint_func": "api_am_tb_lessons",
+    "signature": "()"
+  },
+  {
+    "rule": "/api/analysis-merge/tb-publishers",
+    "methods": [
+      "GET"
+    ],
+    "endpoint_func": "api_am_tb_publishers",
+    "signature": "()"
+  },
+  {
+    "rule": "/api/analysis-merge/tb-subjects",
+    "methods": [
+      "GET"
+    ],
+    "endpoint_func": "api_am_tb_subjects",
+    "signature": "()"
+  },
+  {
     "rule": "/api/browse-folder",
     "methods": [
       "POST"
@@ -110,6 +150,22 @@
       "GET"
     ],
     "endpoint_func": "api_mothertongue_lessons",
+    "signature": "()"
+  },
+  {
+    "rule": "/api/passage-remove/inventory",
+    "methods": [
+      "POST"
+    ],
+    "endpoint_func": "api_passage_remove_inventory",
+    "signature": "()"
+  },
+  {
+    "rule": "/api/passage-remove/scan-dir",
+    "methods": [
+      "POST"
+    ],
+    "endpoint_func": "api_passage_remove_scan_dir",
     "signature": "()"
   },
   {
@@ -488,21 +544,5 @@
     ],
     "endpoint_func": "typeset_page",
     "signature": "(material_id)"
-  },
-  {
-    "rule": "/api/passage-remove/inventory",
-    "methods": [
-      "POST"
-    ],
-    "endpoint_func": "api_passage_remove_inventory",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/passage-remove/scan-dir",
-    "methods": [
-      "POST"
-    ],
-    "endpoint_func": "api_passage_remove_scan_dir",
-    "signature": "()"
   }
 ]

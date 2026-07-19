@@ -69,11 +69,30 @@
     <input type="hidden" name="ranges" id="ranges-hidden">
   </div>
 
+  <!-- 교과서/EBS 소스 (W28-확장) -->
+  <div class="school-section">
+    <div class="section-label">교과서/EBS 소스</div>
+    <div class="input-label u-mt-4">
+      과목&rarr;출판사&rarr;과 / 교재&rarr;강 순으로 선택하면 해당 분석본 .indd
+      전체(간지 제외)가 결합됩니다. 학교 변형본은 파일 선택에서 구분됩니다.<br>
+      문제 코드 없이 교과서/EBS 소스만으로도 결합할 수 있습니다.
+    </div>
+    <div id="extra-source-rows"></div>
+    <div style="display:flex;gap:6px;margin-top:6px">
+      <button type="button" class="form-select" id="add-tb-btn"
+              style="width:auto;cursor:pointer">+ 교과서 소스</button>
+      <button type="button" class="form-select" id="add-ebs-btn"
+              style="width:auto;cursor:pointer">+ EBS 소스</button>
+    </div>
+    <input type="hidden" name="extra_sources" id="extra-sources-hidden">
+  </div>
+
   <!-- 문제 코드 -->
   <div class="school-section">
-    <div class="section-label">문제 코드 <span class="required">*</span></div>
+    <div class="section-label">문제 코드 (모의고사)</div>
     <div class="input-label u-mt-4">
-      6자리 코드 또는 자연어 &middot; 줄바꿈/쉼표 구분<br>
+      6자리 코드 또는 자연어 &middot; 줄바꿈/쉼표 구분 &middot;
+      교과서/EBS 소스만 결합하면 비워둡니다<br>
       예) <code>250320</code> &middot; <code>25년 3월 20-23번, 29번</code> &middot;
       <code>25년 3월 20번, 25년 9월 31번</code>
     </div>
@@ -228,6 +247,229 @@
     addRangeRow('', '');
   });
 
+  // ── 교과서/EBS 소스 행 (W28-확장) ────────────────────────────────
+  const _apiCache = {};
+  async function fetchJson(url) {
+    if (_apiCache[url]) return _apiCache[url];
+    const res = await fetch(url);
+    const data = await res.json();
+    _apiCache[url] = data;
+    return data;
+  }
+
+  // 서버(engines/analysis_merge_v2/sources.py) 규칙 미러 — 테스트로 고정
+  function pubShort(subject, publisher) {
+    let p = (publisher || '').trim();
+    const s = (subject || '').trim();
+    if (s && p.startsWith(s)) p = p.slice(s.length).trim();
+    return p.replace(/[()\s]/g, '');
+  }
+  const EBS_BOOK_SHORT = {
+    '올림포스 독해기본1': '올독기1',
+    '올림포스 독해기본2': '올독기2',
+    '올림포스 고2 기출': '올고2기출',
+    'Reading Power 유형편(기본)': '리딩파워기본',
+    'Reading Power 유형편(완성)': '리딩파워완성',
+    '2026 수능특강 영어': '26수특',
+    '2027 수능특강 영어': '27수특',
+  };
+  function ebsShort(book) {
+    return EBS_BOOK_SHORT[book] || (book || '').replace(/[()\s]/g, '');
+  }
+  function joinAbbrev(shortName, unit) {
+    unit = (unit || '').replace(/\s+/g, '');
+    if (shortName && unit && /\d$/.test(shortName) && /^\d/.test(unit)) {
+      return shortName + '_' + unit;
+    }
+    return shortName + unit;
+  }
+  function deriveTbRange(subject, publisher, lessonFolder, lessonLabel) {
+    return { title: lessonFolder, detail: '',
+             abbrev: joinAbbrev(pubShort(subject, publisher), lessonLabel) };
+  }
+  function deriveEbsRange(book, unitLabel, fileName, school) {
+    let stem = (fileName || '').replace(/\.indd$/i, '').trim();
+    if (school) {
+      const esc = school.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      stem = stem.replace(new RegExp(esc + '\\s*$'), '').trim();
+    }
+    const labelNums = ((unitLabel || '').match(/\d+/g) || []).map(Number);
+    const tokRe = /Unit\s*(\d+)|((?:\d+\s*[~\-,]\s*)*\d+)\s*강/g;
+    let tok = null, m;
+    while ((m = tokRe.exec(stem)) !== null) {
+      const nums = (m[0].match(/\d+/g) || []).map(Number);
+      if (!labelNums.length || nums.some(n => labelNums.includes(n))) { tok = m; break; }
+    }
+    let title = '', detail = '';
+    if (tok) {
+      const start = tok.index;
+      if (start > 0 && stem[start - 1] === '(') {
+        const end = stem.indexOf(')', start);
+        detail = stem.slice(start, end === -1 ? stem.length : end).trim();
+        title = stem.slice(0, start - 1).replace(/[\s\-_,·~]+$/, '');
+      } else {
+        title = stem.slice(0, start).replace(/[\s\-_,·~]+$/, '');
+        detail = stem.slice(start).trim();
+      }
+    }
+    if (!title) { title = stem.split('(')[0].trim() || book; detail = unitLabel; }
+    if (!detail) detail = unitLabel;
+    let au = (unitLabel || '').replace(/\s+/g, '');
+    const mu = /^Unit(\d+)$/.exec(au);
+    if (mu) au = mu[1] + '강';
+    return { title, detail, abbrev: joinAbbrev(ebsShort(book), au) };
+  }
+
+  function _mkSelect(cls, placeholder) {
+    const sel = document.createElement('select');
+    sel.className = 'form-select ' + cls;
+    sel.innerHTML = `<option value="">${placeholder}</option>`;
+    sel.disabled = true;
+    return sel;
+  }
+  function _fill(sel, options, placeholder) {
+    sel.innerHTML = `<option value="">${placeholder}</option>`;
+    for (const o of options) {
+      const opt = document.createElement('option');
+      opt.value = String(o.value);
+      opt.textContent = o.label;
+      sel.appendChild(opt);
+    }
+    sel.disabled = options.length === 0;
+  }
+
+  function addExtraSourceRow(type) {
+    const wrap = document.getElementById('extra-source-rows');
+    const row = document.createElement('div');
+    row.className = 'extra-source-row';
+    row.dataset.type = type;
+    row.style.cssText = 'display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;align-items:center';
+    const tag = document.createElement('span');
+    tag.textContent = type === 'textbook' ? '교과서' : 'EBS';
+    tag.style.cssText = 'font-size:0.85em;color:#555;min-width:44px';
+    row.appendChild(tag);
+
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'form-select';
+    del.style.cssText = 'width:auto;cursor:pointer';
+    del.innerHTML = '&times;';
+    del.addEventListener('click', () => { row.remove(); updateExtraSources(); });
+
+    if (type === 'textbook') {
+      const selSub = _mkSelect('es-subject', '과목');
+      const selPub = _mkSelect('es-publisher', '출판사');
+      const selLes = _mkSelect('es-lesson', '과');
+      const selFile = _mkSelect('es-file', '파일');
+      row.append(selSub, selPub, selLes, selFile, del);
+      fetchJson('/api/analysis-merge/tb-subjects').then(list => {
+        _fill(selSub, list.map(s => ({value: s, label: s})), '과목');
+      });
+      selSub.addEventListener('change', async () => {
+        _fill(selPub, [], '출판사'); _fill(selLes, [], '과'); _fill(selFile, [], '파일');
+        row._lessons = null; updateExtraSources();
+        if (!selSub.value) return;
+        const pubs = await fetchJson('/api/analysis-merge/tb-publishers?subject=' +
+                                     encodeURIComponent(selSub.value));
+        _fill(selPub, pubs.map(p => ({value: p, label: p})), '출판사');
+      });
+      selPub.addEventListener('change', async () => {
+        _fill(selLes, [], '과'); _fill(selFile, [], '파일');
+        row._lessons = null; updateExtraSources();
+        if (!selPub.value) return;
+        const lessons = await fetchJson('/api/analysis-merge/tb-lessons?subject=' +
+          encodeURIComponent(selSub.value) + '&publisher=' + encodeURIComponent(selPub.value));
+        row._lessons = lessons;
+        _fill(selLes, lessons.map((e, i) => ({value: i, label: e.label})), '과');
+      });
+      selLes.addEventListener('change', () => {
+        _fill(selFile, [], '파일'); updateExtraSources();
+        const entry = (row._lessons || [])[selLes.value];
+        if (!entry) return;
+        _fill(selFile, entry.files.map(f => ({
+          value: f.name,
+          label: (f.school ? `[${f.school}] ` : '[기본] ') + f.name,
+        })), '파일');
+        if (entry.files.length) { selFile.value = entry.files[0].name; }
+        updateExtraSources();
+      });
+      selFile.addEventListener('change', updateExtraSources);
+    } else {
+      const selBook = _mkSelect('es-book', '교재');
+      const selUnit = _mkSelect('es-unit', '강');
+      const selFile = _mkSelect('es-file', '파일');
+      row.append(selBook, selUnit, selFile, del);
+      fetchJson('/api/analysis-merge/ebs-books').then(list => {
+        _fill(selBook, list.map(b => ({value: b, label: b})), '교재');
+      });
+      selBook.addEventListener('change', async () => {
+        _fill(selUnit, [], '강'); _fill(selFile, [], '파일');
+        row._units = null; updateExtraSources();
+        if (!selBook.value) return;
+        const units = await fetchJson('/api/analysis-merge/ebs-units?book=' +
+                                      encodeURIComponent(selBook.value));
+        row._units = units;
+        _fill(selUnit, units.map((u, i) => ({value: i, label: u.label})), '강');
+        if (!units.length) {
+          _fill(selUnit, [], '강 없음 (미지원 구조)');
+        }
+      });
+      selUnit.addEventListener('change', () => {
+        _fill(selFile, [], '파일'); updateExtraSources();
+        const entry = (row._units || [])[selUnit.value];
+        if (!entry) return;
+        _fill(selFile, entry.files.map(f => ({
+          value: f.name,
+          label: (f.school ? `[${f.school}] ` : '[기본] ') + f.name,
+        })), '파일');
+        if (entry.files.length) { selFile.value = entry.files[0].name; }
+        updateExtraSources();
+      });
+      selFile.addEventListener('change', updateExtraSources);
+    }
+    wrap.appendChild(row);
+  }
+
+  document.getElementById('add-tb-btn').addEventListener('click', () => addExtraSourceRow('textbook'));
+  document.getElementById('add-ebs-btn').addEventListener('click', () => addExtraSourceRow('ebs'));
+
+  // 완성된 행 → [{식별자}, ...] + 유도 범위(derived) 부착
+  function collectExtraSources() {
+    const out = [];
+    document.querySelectorAll('.extra-source-row').forEach(row => {
+      if (row.dataset.type === 'textbook') {
+        const sub = row.querySelector('.es-subject').value;
+        const pub = row.querySelector('.es-publisher').value;
+        const lesIdx = row.querySelector('.es-lesson').value;
+        const file = row.querySelector('.es-file').value;
+        const entry = (row._lessons || [])[lesIdx];
+        if (!sub || !pub || !entry || !file) return;
+        const f = entry.files.find(x => x.name === file);
+        out.push({
+          type: 'textbook', subject: sub, publisher: pub,
+          lesson_folder: entry.folder, file_name: file,
+          derived: deriveTbRange(sub, pub, entry.folder, entry.label),
+          school: f ? f.school : null,
+        });
+      } else {
+        const book = row.querySelector('.es-book').value;
+        const unitIdx = row.querySelector('.es-unit').value;
+        const file = row.querySelector('.es-file').value;
+        const entry = (row._units || [])[unitIdx];
+        if (!book || !entry || !file) return;
+        const f = entry.files.find(x => x.name === file);
+        out.push({
+          type: 'ebs', book: book, unit_folder: entry.folder, file_name: file,
+          derived: deriveEbsRange(book, entry.label, file, f ? f.school : null),
+          school: f ? f.school : null,
+        });
+      }
+    });
+    return out;
+  }
+
+  function updateExtraSources() { updatePreview(); }
+
   function updateGanjiSuggest() {
     const el = document.getElementById('ganji-school');
     if (el.dataset.userEdited === '1') return;
@@ -356,11 +598,14 @@
     }));
   }
 
-  // 간지/파일명에 실제 쓰일 범위: 수동 입력 우선, 없으면 코드에서 유도
+  // 간지/파일명에 실제 쓰일 범위: 수동 입력 우선, 없으면
+  // 문제 코드 + 교과서/EBS 소스에서 유도 (서버 parse와 동일 순서)
   function effectiveRanges(items) {
     const manual = collectRanges();
     if (manual.length) return manual;
-    return deriveRangesFromCodes(items || parseCodes().items);
+    const derived = deriveRangesFromCodes(items || parseCodes().items);
+    for (const src of collectExtraSources()) derived.push(src.derived);
+    return derived;
   }
 
   // 범위 제목 → 파일명용 축약: "고1 25년 3월 모의고사" → "25년3월"
@@ -381,7 +626,7 @@
     const nn = ('0' + (parseInt(document.getElementById('issue-num').value, 10) || 1)).slice(-2);
     const parts = [];
     for (const r of effectiveRanges(items)) {
-      const s = abbrevRangeTitle(r.title);
+      const s = (r.abbrev || '').trim() || abbrevRangeTitle(r.title);
       if (s && !parts.includes(s)) parts.push(s);
     }
     const summary = parts.join(',').slice(0, 40) || '결합';
@@ -417,10 +662,14 @@
     // 범위 자동 유도 미리보기 (수동 범위가 없을 때만)
     const derivedEl = document.getElementById('ranges-derived');
     if (derivedEl) {
-      if (!collectRanges().length && items.length) {
+      const extras = collectExtraSources();
+      if (!collectRanges().length && (items.length || extras.length)) {
         const derived = deriveRangesFromCodes(items);
-        derivedEl.innerHTML = '코드에서 자동 유도 → ' + escapeHtml(
-          derived.map(r => `${r.title} / ${r.detail}`).join('  ·  '));
+        for (const src of extras) derived.push(src.derived);
+        derivedEl.innerHTML = '자동 유도 → ' + escapeHtml(
+          derived.map(r => (r.title + (r.detail ? ' / ' + r.detail : '') +
+                            (r.detail === '' && r.abbrev ? ' / (과 제목 자동)' : ''))
+          ).join('  ·  '));
       } else {
         derivedEl.innerHTML = '';
       }
@@ -481,8 +730,10 @@
             parsed.errors.join('\n'));
       return;
     }
-    if (parsed.items.length === 0) {
-      alert('인식된 문제가 없습니다.\n예: 25년 3월 20번  또는  250320');
+    const extraSources = collectExtraSources();
+    if (parsed.items.length === 0 && extraSources.length === 0) {
+      alert('문제 코드 또는 교과서/EBS 소스 중 하나는 입력해야 합니다.\n' +
+            '예: 25년 3월 20번 / 250320 / + 교과서 소스');
       return;
     }
     if (!document.getElementById('school-select').value) {
@@ -491,11 +742,22 @@
     if (!document.getElementById('ganji-school').value.trim()) {
       alert('간지 학교 표기를 입력하세요. (예: 2026 강동고2)'); return;
     }
-    // 수동 범위만 전송 — 비어 있으면 서버가 문제 코드에서 자동 유도
-    // (규칙 단일화: derive_ranges_from_codes)
+    // 수동 범위만 전송 — 비어 있으면 서버가 문제 코드+소스에서 자동 유도
+    // (규칙 단일화: derive_ranges_from_codes + sources.derive_range_*)
     const ranges = collectRanges();
     document.getElementById('ranges-hidden').value =
       ranges.length ? JSON.stringify(ranges) : '';
+
+    // 교과서/EBS 소스 — 식별자만 전송 (서버가 스캔 재검증 후 경로 해석)
+    document.getElementById('extra-sources-hidden').value =
+      extraSources.length ? JSON.stringify(extraSources.map(s => {
+        if (s.type === 'textbook') {
+          return { type: s.type, subject: s.subject, publisher: s.publisher,
+                   lesson_folder: s.lesson_folder, file_name: s.file_name };
+        }
+        return { type: s.type, book: s.book, unit_folder: s.unit_folder,
+                 file_name: s.file_name };
+      })) : '';
 
     const formData = new FormData(form);
     if (!formData.get('result_name').trim()) {
@@ -591,7 +853,7 @@
     const gates = result.gates || {};
     const gateNames = {codes_ok: '코드 매칭', geometry_ok: '프레임 지오메트리',
                        links_ok: '링크 임베드', ganji_ok: '간지 기재',
-                       overflow_ok: '오버플로우'};
+                       overflow_ok: '오버플로우', doc_ok: '교과서/EBS 소스'};
     const gateHtml = Object.keys(gateNames).map(k => {
       const v = gates[k];
       const mark = v === undefined ? '?' : (v ? '✓' : '✗');

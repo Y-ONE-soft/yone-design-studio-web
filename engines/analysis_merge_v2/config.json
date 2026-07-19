@@ -7,5 +7,12 @@
   ],
   "log_filename": "merge_log.txt",
   "keep_head": 1,
-  "file_patterns": ["분석본"]
+  "file_patterns": [
+    "분석본"
+  ],
+  "textbook_base": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/교과서 작업",
+  "ebs_base": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/EBS 작업",
+  "textbook_exclude": [
+    "이전 파일(15개정)"
+  ]
 }
