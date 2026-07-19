@@ -45,7 +45,11 @@ def test_registration_consistency():
     # 2026-07-19 배재1 실사고 봉합 계약:
     assert "overset_frames" in src              # 간지 기재 프레임 오버셋 게이트
     assert '"master:" + mkey' in src            # 마스터 프레임 오버플로우 스캔
-    assert "keepSize" in src                    # 로컬 서식 캡처→복원 (오버셋 원인)
+    # W28-피드백2 (색·밑줄 계열 캡처→복원 + 서식 대조 게이트) 계약:
+    assert "KEEP_COLOR_ATTRS" in src            # 색/밑줄/획 로컬 서식 캡처→복원
+    assert '"underlineColor"' in src
+    assert "attr_mismatches" in src             # 기대/실측 스냅샷 대조 게이트
+    assert "captureTextAttrs" in src
 
     # 폼(템플릿) — 코드 → 범위 자동 유도 규칙 미러 계약 (피드백2)
     tpl_src = open(tpl, encoding="utf-8").read()
@@ -328,6 +332,23 @@ def test_verify_ganji_overset_blocks_gdrive(engine, tmp_path):
     assert res["gates"]["ganji_ok"] is False and res["ok"] is False
     assert res["gdrive_path"] is None and not os.listdir(gbase)
     assert any("오버셋" in w for w in res["warnings"])
+
+
+def test_verify_ganji_attr_mismatch_blocks(engine, tmp_path):
+    """간지 학교명 서식 대조 게이트 (W28-피드백2): 기재 전(기대)과 기재
+    후(실측) 스냅샷이 다르면 — 색/밑줄 훼손 — GDrive 저장 보류.
+    JSX ok 반영과 무관하게 verify가 독립 재검하는지(이중 봉합)도 확인."""
+    bad = json.loads(json.dumps(GOOD_REPORT))
+    bad["ganji"]["attr_mismatches"] = [
+        "fillColor: 검정 -> C=0 M=0 Y=0 K=100",
+        "underlineColor: PANTONE 802 C -> (텍스트 색상)",
+    ]
+    # JSX가 ok=false 반영을 놓치는 회귀 상황을 가정 (ok=True 그대로)
+    job, gbase = _make_job(tmp_path, bad)
+    res = engine.verify(job, lambda m: None)
+    assert res["gates"]["ganji_ok"] is False and res["ok"] is False
+    assert res["gdrive_path"] is None and not os.listdir(gbase)
+    assert any("서식 불일치" in w for w in res["warnings"])
 
 
 def test_verify_master_overflow_blocks(engine, tmp_path):

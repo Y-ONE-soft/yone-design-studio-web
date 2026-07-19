@@ -539,8 +539,16 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
         # ── 게이트 4: 간지/1페이지 텍스트 (스펙 5) ──────────────────
         ganji = report.get("ganji") or {}
         ganji_ok = bool(ganji.get("ok"))
+        # 간지 프레임 속성 대조 (W28-피드백2): 학교명 기재 전 캡처(기대)와
+        # 기재 후 실측의 색/밑줄/크기 스냅샷이 다르면 실패 — JSX가 ok에
+        # 반영하지만, verify에서도 독립적으로 재검한다 (이중 봉합).
+        attr_mismatches = ganji.get("attr_mismatches") or []
+        if attr_mismatches:
+            ganji_ok = False
+            warnings.append("간지 학교명 서식 불일치(기대→실측): "
+                            + ", ".join(str(m) for m in attr_mismatches))
         gates["ganji_ok"] = ganji_ok
-        if not ganji_ok:
+        if not bool(ganji.get("ok")):
             warnings.append("간지/1페이지 기재 실패: "
                             + (ganji.get("error") or "리포트 없음"))
 
