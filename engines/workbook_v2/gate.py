@@ -185,7 +185,8 @@ import unicodedata
 
 from core.inspect import find_leaked_answers
 from core.structure.header_detect import detect_headers
-from engines.workbook_v2.plan import (PUA_PRINT_TABLE, SUBSCRIPT_PRINT_TABLE,
+from engines.workbook_v2.plan import (GLYPH_PRINT_TABLE, PUA_PRINT_TABLE,
+                                      SUBSCRIPT_PRINT_TABLE,
                                       is_header_line, is_a1_header,
                                       passage_labels, _norm_header)
 
@@ -297,8 +298,10 @@ def _is_pua(ch):
 # W23 F3 — 플랜↔덤프 대조용 아래첨자 정규화: 플랜이 ₂→2(+sub run)로
 # 치환하므로 구출력(₂ 그대로)과 신플랜(2)의 텍스트 매칭이 어긋난다.
 # _clean에서 양쪽을 ASCII 숫자로 통일 (G29의 잔존 검출은 원문 p["t"]를
-# 직접 스캔하므로 이 정규화와 무관).
-_SUB_NORM_TABLE = str.maketrans(SUBSCRIPT_PRINT_TABLE)
+# 직접 스캔하므로 이 정규화와 무관). W30 후속 — 글리프 인쇄 매핑(❮❯→〈〉)
+# 도 동일 이유로 정규화에 합류 (구출력 ❮ ↔ 신플랜 〈 매칭 유지).
+_SUB_NORM_TABLE = str.maketrans({**SUBSCRIPT_PRINT_TABLE,
+                                 **GLYPH_PRINT_TABLE})
 
 
 def _clean(t):
@@ -1406,6 +1409,28 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         msg = (f"[글리프커버리지] 아래첨자 인쇄 매핑 등재 문자 잔존 — "
                f"폰트 글리프 없음 = tofu/미표시: {det}")
         (warnings if plan_has_registered else critical).append(msg)
+    # ①b 글리프 인쇄 매핑(plan.GLYPH_PRINT_TABLE — ❮❯→〈〉, W30 후속)
+    #    등재 문자의 출력 잔존 — ①과 동일 패턴: 치환된 현행 플랜(등재
+    #    문자 0)의 출력에 잔존 = 매핑 미적용 = critical, 플랜 자체에 등재
+    #    문자가 남은 경우(구플랜/구출력 소급)는 warning 지목.
+    glyph_resid = {}
+    for t, _s in _dump_paras(dump):
+        for ch in t:
+            if ch in GLYPH_PRINT_TABLE:
+                glyph_resid[ch] = glyph_resid.get(ch, 0) + 1
+    stats["glyph_residue"] = sum(glyph_resid.values())
+    if glyph_resid:
+        plan_has_glyph = any(
+            ch in (p.get("t") or "")
+            for fl in plan.get("flows", [])
+            for u in fl.get("units", [])
+            for p in (u["paras"] if isinstance(u, dict) else u)
+            for ch in GLYPH_PRINT_TABLE)
+        det = ", ".join(f"'{c}'(U+{ord(c):04X}) {n}건"
+                        for c, n in sorted(glyph_resid.items()))
+        msg = (f"[글리프커버리지] 글리프 인쇄 매핑 등재 문자 잔존 — "
+               f"폰트 글리프 없음 = tofu/미표시: {det}")
+        (warnings if plan_has_glyph else critical).append(msg)
     style_fonts = {e.get("s"): (e.get("f") or "", e.get("fs") or "")
                    for e in dump.get("style_fonts") or []}
     font_locs = {}
@@ -1420,7 +1445,8 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                 risky = {ch for ch in t
                          if 0x2000 <= ord(ch) <= 0x2BFF
                          and not _is_pua(ch)
-                         and ch not in SUBSCRIPT_PRINT_TABLE}
+                         and ch not in SUBSCRIPT_PRINT_TABLE
+                         and ch not in GLYPH_PRINT_TABLE}
                 if not risky:
                     continue
                 sname = p.get("s") or ""

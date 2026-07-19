@@ -251,12 +251,66 @@ function setStep(active) {
 
 // ── 결과 카드 ─────────────────────────────────────────────────────────────
 
+// W30 후속 — 세션 만료(401) 시 결과·게이트 경고 미전달 수리.
+// 장시간 조판 중 로그인 세션(12시간 절대 만료)이 끝나면 /api/result 폴링이
+// 401 {"error":"unauthorized"}를 받는데, 종전 코드는 이를 '결과 아직 없음'
+// 으로 오분류해 20회 재시도 후 "알 수 없는 오류"만 표시했다 (실증: job
+// 376b34d0 — 게이트 critical이 사용자에게 도달하지 못함). 수리: 401을
+// 명시 감지해 재로그인 안내 카드를 띄우고, job_id를 localStorage에 보관 —
+// 재로그인 후 같은 페이지로 돌아오면 자동으로 결과를 이어서 표시한다.
+// (서버 결과는 인메모리 보관이므로 Flask 재시작 전까지 조회 가능. 라우트/
+// 세션 정책은 무변경 — 보안 약화 없음.)
+const PENDING_RESULT_KEY = 'ts_pending_result';
+
+function _savePendingResult(jobId) {
+  try {
+    localStorage.setItem(PENDING_RESULT_KEY, JSON.stringify(
+      { jobId: jobId, path: location.pathname, ts: Date.now() }));
+  } catch (_) {}
+}
+
+function _clearPendingResult() {
+  try { localStorage.removeItem(PENDING_RESULT_KEY); } catch (_) {}
+}
+
+function showSessionExpiredCard(jobId) {
+  _savePendingResult(jobId);
+  const area = document.getElementById('result-area');
+  if (!area) return;
+  area.classList.remove('hidden');
+  area.innerHTML = `
+    <div class="result-card warn">
+      <div class="result-header">
+        <span class="result-badge">🔒 세션 만료</span>
+      </div>
+      <p>로그인 세션이 만료되어 조판 결과를 표시하지 못했습니다.<br>
+         결과와 검수 경고는 서버에 보관되어 있습니다 — 다시 로그인한 뒤
+         이 페이지로 돌아오면 자동으로 표시됩니다.</p>
+      <div class="action-row">
+        <a href="/login" class="mockup-btn">🔑 다시 로그인</a>
+      </div>
+    </div>`;
+}
+
 async function fetchResult(jobId, retries) {
   if (retries === undefined) retries = 20;
   resetBtn();
   try {
     const res = await fetch(`/api/result/${jobId}`);
+    if (res.status === 401) {
+      // 세션 만료 — 재시도해도 영원히 401. 재로그인 안내 + 결과 보류.
+      appendLog('[오류] 세션이 만료되어 결과를 가져오지 못했습니다. 다시 로그인하면 결과가 표시됩니다.');
+      _showCancelBtn(false);
+      showSessionExpiredCard(jobId);
+      return;
+    }
     const { status, result } = await res.json();
+    if (res.status === 404) {
+      // job 소멸 (서버 재시작 등) — 재시도 무의미.
+      _clearPendingResult();
+      showErrorCard('작업 결과를 찾을 수 없습니다 (서버가 재시작되었을 수 있습니다). 조판을 다시 실행해 주세요.');
+      return;
+    }
 
     // 아직 실행 중이면 재시도 (3초 간격)
     if ((status === 'pending' || status === 'running' || !result) && retries > 0) {
@@ -266,9 +320,11 @@ async function fetchResult(jobId, retries) {
     }
 
     if (status === 'error' || !result) {
+      _clearPendingResult();
       showErrorCard(result?.error || '알 수 없는 오류');
       return;
     }
+    _clearPendingResult();
     showResultCard(jobId, result);
   } catch (err) {
     if (retries > 0) {
@@ -348,3 +404,23 @@ function resetBtn() {
   btn.disabled = false;
   btn.innerHTML = '<span class="btn-icon">▶</span> 조판 실행';
 }
+
+// ── 세션 만료로 보류된 결과 자동 복원 (W30 후속) ──────────────────────────
+// 폴링 401로 보류된 job_id가 이 페이지 것이면, 재로그인 후 돌아왔을 때
+// 결과를 이어서 조회해 표시한다. 24시간 지난 항목은 폐기 (서버 인메모리
+// 결과는 재시작 시 소멸 — 그 경우 fetchResult가 404 안내 후 정리한다).
+(function resumePendingResult() {
+  let entry = null;
+  try {
+    entry = JSON.parse(localStorage.getItem(PENDING_RESULT_KEY) || 'null');
+  } catch (_) {}
+  if (!entry || !entry.jobId || entry.path !== location.pathname) return;
+  if (Date.now() - (entry.ts || 0) > 24 * 3600 * 1000) {
+    _clearPendingResult();
+    return;
+  }
+  const progress = document.getElementById('progress-area');
+  if (progress) progress.classList.remove('hidden');
+  appendLog(`[복원] 이전 조판 결과를 확인합니다... (job ${entry.jobId})`);
+  fetchResult(entry.jobId);
+})();
