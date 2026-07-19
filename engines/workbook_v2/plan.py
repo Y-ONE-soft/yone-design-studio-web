@@ -73,6 +73,13 @@ _S3_GREPS = [
 ]
 # v1 pass 10 — 번호(S3_NUM) 단락의 "숫자. " 접두 제거 (run.jsx 2423~2431)
 _RE_S3_QNUM = re.compile(r"^\d+\.\s")
+# W30-r15 (결함 5 — 실서비스 376b34d0 실증): 교과서 꼼꼼변형 실전문제의
+# 출처 라인("공통영어2_YBM(김) 1과_03" / "… 1과_01~02" — 문항 끝 단독
+# 단락, kind UNKNOWN → 지문 스타일로 인쇄됨). 완제품에 불필요 — 제거.
+# 형태: <과목_출판사 토큰(밑줄 포함)> + 공백 + <N과_NN[~NN]> 전체 라인.
+# 본문 영어 문장은 '_'가 붙은 선두 토큰 + 'N과_N' 꼬리를 동시에 갖지
+# 않아 오매치 없음 (골든 코퍼스 전수 재빌드 diff 0으로 증명).
+_RE_S3_TEXTBOOK_SRC = re.compile(r"^\S+_\S+\s+\d+과_\d+(?:\s*~\s*\d+)?$")
 # v1 pass 5 번호/INTRO 휴리스틱 (run.jsx 2253~2272) — 분류기(kind)가 약한
 # 판정(UNKNOWN/K/Cond)을 내린 단락에만 오버레이. v1 실물 dump 대조에서
 # "(주관식) …쓰시오." / "…것은? [2-N]" 발문이 분류기 미인식으로 번호 스타일
@@ -275,6 +282,10 @@ def build_step3(step_data):
                 if _s3_arrow_para(text):
                     arrow_pending = True     # v1 pass 11: 화살표 단락 삭제
                     continue
+                if _RE_S3_TEXTBOOK_SRC.match(text.strip()):
+                    continue    # W30-r15: 교과서 실전문제 출처 라인 제거
+                                # (결함 5 — 배경 대기(arrow_pending)는
+                                # SRC 마커와 동일하게 소비하지 않고 통과)
                 style = _style("STEP3", _s3_effective_kind(kind, text))
                 if style is None:
                     continue
