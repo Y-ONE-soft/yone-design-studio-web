@@ -956,6 +956,57 @@ function alignPartFillers(doc) {
 }
 // [W22 파트경계 유틸 끝]
 
+// ── W30-r15 op: 크레딧(판권) 페이지 정렬 (delete 모드 — 결함 7) ─────────────
+// 사용자 확정 스펙: 마지막 크레딧 페이지는 항상 왼쪽 + 오른쪽이 비면
+// 메모(M) 페이지 (W22 파트 경계 규칙의 크레딧 확장). 크레딧 = 문서 마지막
+// 페이지가 마스터 없음 + 텍스트 프레임 0 (그래픽 전용 판권 — [원본]
+// 워크북_C 말미 페이지. 페이지 정리는 프레임 기반이라 이 페이지는 항상
+// 살아남고, 간지 왼쪽 동반 페이지는 라벨이 뒤따르므로 '마지막'이 될 수
+// 없다 — 전 코퍼스 덤프 sweep 실측). 크레딧이 오른쪽이면 앞에 M 1장을
+// 삽입해 왼쪽으로 보내고(376b34d0 실증: 문제단위킵 페이지 확장 +3이
+// 홀짝을 뒤집어 판권 p99가 오른쪽 단독), 크레딧 스프레드의 오른쪽은
+// 메모(M) 페이지로 채운다. 페이지 수를 바꾸는 모든 op 이후 1회 호출.
+function alignCreditPage(doc) {
+    if (doc.pages.length < 2) { return; }
+    var last = doc.pages[doc.pages.length - 1];
+    var mn = "";
+    try {
+        mn = last.appliedMaster ? String(last.appliedMaster.name) : "";
+    } catch (e) {}
+    if (mn !== "" && mn !== "[None]") { return; }   // 크레딧 아님 (M 등)
+    if (last.textFrames.length !== 0) { return; }   // 간지 라벨/콘텐츠 아님
+    var mMaster = null;
+    try {
+        var ms = doc.masterSpreads.everyItem().getElements();
+        for (var mi = 0; mi < ms.length; mi++) {
+            if (String(ms[mi].namePrefix) === "M") {
+                mMaster = ms[mi];
+                break;
+            }
+        }
+    } catch (e2) {}
+    if (!mMaster) {
+        wlog("[경고] M 마스터 없음 — 크레딧 정렬 생략");
+        return;
+    }
+    try {
+        if (pageSideOf(doc, last) === "R") {
+            // pages.add(BEFORE)는 스프레드 단위 삽입 (W22 프로브 실측) —
+            // 끝에 추가 후 move(BEFORE)로 정확히 크레딧 앞에 끼운다
+            var np = doc.pages.add(LocationOptions.AT_END);
+            np.appliedMaster = mMaster;
+            np.move(LocationOptions.BEFORE, last);
+            wlog("크레딧 정렬: 판권 p" + last.name
+                 + " 앞 M 마스터 페이지 삽입 (왼쪽 정렬)");
+        }
+        var memo = doc.pages.add(LocationOptions.AT_END);
+        memo.appliedMaster = mMaster;
+        wlog("크레딧 정렬: 판권 오른쪽 메모(M) 페이지 추가");
+    } catch (e3) {
+        wlog("[경고] 크레딧 정렬 실패: " + e3);
+    }
+}
+
 // ── W23 r13: 고아 간지 스프레드 삭제 (delete 모드의 cleanupPages가 호출) ────
 // 간지 라벨 후보 = 로컬 프레임 1개 + 비-플로우 단일 프레임 스토리 + 단락
 // 2개 이상 + 첫 단락 한글 + 전체 40자 미만 (마스터 불문 — 짤지문 간지는
@@ -1472,6 +1523,17 @@ try {
             }
         }, ScriptLanguage.JAVASCRIPT, undefined,
            UndoModes.ENTIRE_SCRIPT, "wb_v2 question_keep");
+    }
+    if (plan.page_cleanup && (typeof plan.page_cleanup === "object")
+            && plan.page_cleanup.empty === "delete") {
+        // W30-r15 (결함 7): 크레딧(판권) 정렬 — 페이지 수를 바꾸는 모든
+        // op(page_cleanup 삭제·간지 채움·question_keep 오버플로우 확장)
+        // 이후 1회. 376b34d0 실증: 문제단위킵 확장 +3이 홀짝을 뒤집어
+        // 판권이 오른쪽 단독(p99)으로 납품됐다 — cleanupPages 시점 정렬은
+        // 이후 확장에 다시 깨질 수 있어 여기서만 수행한다.
+        app.doScript(function () { alignCreditPage(doc); },
+                     ScriptLanguage.JAVASCRIPT, undefined,
+                     UndoModes.ENTIRE_SCRIPT, "wb_v2 credit_align");
     }
     if (plan.section_masters) {
         app.doScript(function () { fixSectionMasters(doc, flowStories); },
