@@ -156,6 +156,22 @@
                   ('N과 추가지문' 감지 포함) 표기는 '외부지문'으로 통일 —
                   source=type + line1='추가지문'은 구 판정 사다리(r13 ③)
                   잔존 플랜 = critical.
+  G1 확장 (W30-r15): 교과서 실전문제 출처 라인("공통영어2_YBM(김) 1과_03")
+                  잔존 = critical — 플랜(build_step3)이 제거 (376b34d0
+                  실증 25건: kind UNKNOWN → 지문 스타일 인쇄).
+  G24①b (W30-r15): step1_c1 {헤더} 마커 수 < 지문 라벨 수 — 부분 미인식
+                  지문이 앞 블록에 흡수된 상태 (376b34d0 실증: 'N. L1-
+                  추가본문' 미정규화 → 유닛 10개라 ①을 비껴감).
+                  per_passage_units 계약 스텝 한정, critical.
+  G28④ 크레딧 (W30-r15 — 사용자 확정 스펙): 마지막 크레딧(판권) 페이지는
+                  항상 왼쪽 + 오른쪽이 비면 메모(M) 페이지. 크레딧 식별 =
+                  문서 말미 비-M 페이지가 마스터 없음+텍스트 프레임 0
+                  (전 코퍼스 sweep 실측 셰이프). delete 모드 critical
+                  (실행기 alignCreditPage 계약), 구출력 warning.
+  G31 [프레임결손] (W30-r15): 다단(모드 2+) 스토리의 중간 페이지 프레임
+                  결손 — expandStoryOverflow가 마지막 프레임 1개만 복제해
+                  2단 템플릿 페이지를 1단으로 만든 결함 (376b34d0 실증
+                  p95~97). question_keep/delete 계약 플랜 critical.
 
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
 G24②/G26은 W21 확장 필드(fc / pages)가 필요하다. G29②는 W23 확장 필드
@@ -168,6 +184,7 @@ import re
 import unicodedata
 
 from core.inspect import find_leaked_answers
+from core.structure.header_detect import detect_headers
 from engines.workbook_v2.plan import (PUA_PRINT_TABLE, SUBSCRIPT_PRINT_TABLE,
                                       is_header_line, is_a1_header,
                                       passage_labels, _norm_header)
@@ -183,6 +200,10 @@ _RE_ENG_WORD = re.compile(r"[A-Za-z]+")
 
 # G11 — 변형문제 출처 마커 (출력 검사용 독립 정의 — 파서/플랜과 순환 방지)
 _RE_SRC_MARKER = re.compile(r"^\[[^\[\]]{2,}변형\]$")
+# G1 확장 (W30-r15) — 교과서 실전문제 출처 라인 ("공통영어2_YBM(김) 1과_03"
+# / "… 1과_01~02" — 밑줄 포함 과목_출판사 토큰 + 'N과_NN[~NN]' 전체 라인.
+# 출력 검사용 독립 정의 — plan._RE_S3_TEXTBOOK_SRC와 순환 방지)
+_RE_S3_SRC_LINE = re.compile(r"^\S+_\S+\s+\d+과_\d+(?:\s*~\s*\d+)?$")
 _RE_SRC_POLLUTED = re.compile(r"^[①-⑤]\[[^\[\]]{2,}변형\]$")
 # G12 — 문장삽입 발문 (주어진 문장 배경 박스 기대)
 _RE_INSERT_PROMPT = re.compile(r"주어진 문장이 들어가|들어갈 위치|"
@@ -505,6 +526,21 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         critical.append(f"[구분선잔존] {len(divider_leaks)}개 단락이 원전 "
                         f"챕터/유닛 구분선 그대로 인쇄됨: "
                         + " | ".join(sorted(set(divider_leaks))[:5]))
+
+    # ── G1 확장 (W30-r15): 교과서 실전문제 출처 라인 잔존 ────────────────
+    # 꼼꼼변형 원고의 문항 말미 출처("공통영어2_YBM(김) 1과_03")가 지문
+    # 스타일로 인쇄됨 (실서비스 376b34d0 실증 25건 — kind UNKNOWN 추락).
+    # 완제품에 불필요 — 플랜(build_step3)이 제거하므로 잔존 = 미적용 출력.
+    src_leaks = []
+    for t, _s in _dump_paras(dump):
+        tt = _clean(t)
+        if tt and _RE_S3_SRC_LINE.match(tt):
+            src_leaks.append(tt[:60])
+    stats["step3_source_leaks"] = len(src_leaks)
+    if src_leaks:
+        critical.append(f"[출처잔존] {len(src_leaks)}개 단락이 실전문제 "
+                        f"출처 라인 그대로 인쇄됨: "
+                        + " | ".join(sorted(set(src_leaks))[:5]))
 
     # ── G2 정답 블록 잔존 ────────────────────────────────────────────────
     ans = find_leaked_answers(dump)
@@ -981,6 +1017,32 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
             f"[프레임브레이크] 지문 분리 미발생 {len(break_fail)}개 스텝: "
             + " | ".join(break_fail[:5]))
 
+    # ①b (W30-r15): step1_c1 부분 미인식 — {헤더} 마커 수 < 지문 라벨 수.
+    # 376b34d0 실증: 6지문 중 '6. L1-추가본문'만 GREP 미정규화 → 추가본문
+    # 지문이 본문5 블록에 흡수(발문/프레임 분리 누락)됐는데 유닛이 10개라
+    # ①(유닛 1개 판정)을 비껴갔다. per_passage_units 계약 스텝 한정.
+    c1_deficit = []
+    for fl in plan.get("flows", []):
+        if fl.get("step") != "step1_c1":
+            continue
+        if not (fl.get("target") or {}).get("per_passage_units"):
+            continue
+        if len(labels_for_units) < 2:
+            continue
+        n_markers = sum(
+            1 for u in fl.get("units") or []
+            for p in (u["paras"] if isinstance(u, dict) else u)
+            if re.match(r"^\{+[^{}]+\}+$", (p.get("t") or "").strip()))
+        if n_markers < len(labels_for_units):
+            c1_deficit.append(
+                f"step1_c1 헤더 마커 {n_markers}개 < 지문 "
+                f"{len(labels_for_units)}개")
+    stats["c1_marker_deficit"] = len(c1_deficit)
+    if c1_deficit:
+        critical.append(
+            "[프레임브레이크] 지문 헤더 부분 미인식 — 미인식 지문이 앞 "
+            "블록에 흡수됨: " + " | ".join(c1_deficit))
+
     # ② 유닛 시작 단락이 실제 프레임 경계에 있는지 (덤프 fc 실측 — 신형
     #    덤프 한정. 단락↔플랜 1:1 정렬은 배치 방식(story.contents 치환)이
     #    보장, trimWsOverset로 꼬리 단락이 줄 수 있어 범위 밖은 생략).
@@ -1192,22 +1254,65 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
             if is_label and entry.get("side") == "L":
                 boundary_bad.append(
                     f"간지 p{entry.get('p')}가 왼쪽 페이지 (오른쪽 채움 누락)")
+        # W30-r15 (결함 7): 크레딧(판권) 페이지 식별 — 마스터 없음 + 텍스트
+        # 프레임 0(그래픽 전용, dump 규약상 empty=False) + 문서 말미.
+        # 간지 왼쪽 동반 페이지와 같은 셰이프지만 간지는 라벨 페이지가
+        # 뒤따르므로 '말미'가 될 수 없다 (전 코퍼스 덤프 sweep: 모든 산출
+        # 문서의 마지막 비-M 페이지가 이 셰이프 = [원본]워크북_C 판권).
+        framed_pages = set()
+        for story in dump.get("stories", []):
+            for fpg in (story.get("fp") or story.get("pg") or []):
+                framed_pages.add(str(fpg))
+
+        def _credit_shape(pe):
+            return (pe is not None
+                    and str(pe.get("m") or "") in ("", "[None]")
+                    and not pe.get("empty")
+                    and str(pe.get("p")) not in framed_pages)
+
+        plist = dump.get("pages") or []
         if cleanup_delete:
-            plist = dump.get("pages") or []
             for i, pe in enumerate(plist):
                 if not str(pe.get("m") or "").startswith("M"):
                     continue
                 nxt = plist[i + 1] if i + 1 < len(plist) else None
                 ok_pos = (pe.get("side") == "R" and nxt
                           and str(nxt.get("m") or "") in ("", "[None]"))
-                if not ok_pos:
+                # W30-r15: 크레딧 스프레드의 오른쪽 메모(M) 페이지 허용 —
+                # 마지막 M 페이지 + 직전이 크레딧(왼쪽) (사용자 확정 스펙:
+                # 크레딧 왼쪽 + 오른쪽이 비면 메모 페이지)
+                ok_credit_memo = (nxt is None and pe.get("side") == "R"
+                                  and i > 0 and _credit_shape(plist[i - 1])
+                                  and plist[i - 1].get("side") == "L")
+                if not (ok_pos or ok_credit_memo):
                     boundary_bad.append(
                         f"M 페이지 p{pe.get('p')} 위치 이상 "
-                        f"(간지 직전 오른쪽 채움만 허용)")
+                        f"(간지 직전 오른쪽/크레딧 뒤 메모만 허용)")
         stats["part_boundary_bad"] = len(boundary_bad)
         if boundary_bad:
             msg = (f"[파트경계] 파트 경계 정렬 이상 {len(boundary_bad)}건: "
                    + " | ".join(boundary_bad[:5]))
+            (critical if cleanup_delete else warnings).append(msg)
+
+        # ── G28④ 크레딧 페이지 정렬 (W30-r15 — 결함 7, 사용자 확정 스펙:
+        # 마지막 크레딧 페이지는 항상 왼쪽 + 오른쪽이 비면 메모(M) 페이지.
+        # 376b34d0 실증: 판권 p99가 오른쪽(R) 단독. delete 모드(실행기
+        # alignCreditPage가 계약)는 critical, 구출력은 warning 소급 지목) ──
+        ci = len(plist) - 1
+        while ci >= 0 and str(plist[ci].get("m") or "").startswith("M"):
+            ci -= 1
+        credit_bad = []
+        if ci >= 0 and _credit_shape(plist[ci]):
+            ce = plist[ci]
+            if ce.get("side") == "R":
+                credit_bad.append(
+                    f"크레딧 p{ce.get('p')}가 오른쪽 페이지 (왼쪽 정렬 계약)")
+            elif ci == len(plist) - 1:
+                credit_bad.append(
+                    f"크레딧 p{ce.get('p')} 오른쪽 메모(M) 페이지 누락")
+        stats["credit_page_bad"] = len(credit_bad)
+        if credit_bad:
+            msg = "[파트경계] 크레딧 정렬 이상: " + " | ".join(credit_bad)
             (critical if cleanup_delete else warnings).append(msg)
 
         # ── G28③ 고아 간지 스프레드 (W23 r13 — F2) ──────────────────────
@@ -1429,6 +1534,47 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
             f"[문제단위킵] 한 문제가 스프레드 초과 {len(keep_manual)}건 — "
             f"밀기로 해소 불가 (수동 확인): " + " | ".join(keep_manual[:3]))
 
+    # ── G31 프레임 결손 (W30-r15 — 결함 6) ───────────────────────────────
+    # 스토리가 흐르는 페이지의 '그 스토리 프레임 수'가 스토리 대다수
+    # 페이지(모드, 2 이상 = 다단 템플릿)보다 적은 '중간' 페이지 — 오버플로우
+    # 페이지 확장(expandStoryOverflow)이 마지막 프레임 1개만 복제해 2단
+    # 템플릿 페이지를 1단으로 만든 결함 (376b34d0 실증: p95~97 프레임 1개,
+    # 템플릿 O-마스터는 페이지당 2단 2프레임). 첫/마지막 페이지는 제외 —
+    # 섹션 중간 시작/스레드 절단(빈 꼬리 프레임 분리)의 정상 감소 (전체
+    # 코퍼스 덤프 sweep에서 중간 결손은 376b34d0뿐임을 실측). 오버플로우
+    # 확장이 동작하는 계약 플랜(question_keep/page_cleanup)은 critical.
+    frame_deficit = []
+    for story in dump.get("stories", []):
+        fp = [str(p) for p in story.get("fp") or []]
+        if not fp:
+            continue
+        order = []
+        for p in fp:
+            if p not in order:
+                order.append(p)
+        if len(order) < 3:
+            continue
+        cnt = {}
+        for p in fp:
+            cnt[p] = cnt.get(p, 0) + 1
+        mode_cnt = {}
+        for p in order:
+            mode_cnt[cnt[p]] = mode_cnt.get(cnt[p], 0) + 1
+        mode = max(mode_cnt, key=lambda k: (mode_cnt[k], k))
+        if mode < 2:
+            continue
+        bad = [p for p in order[1:-1] if cnt[p] < mode]
+        if bad:
+            frame_deficit.append(
+                f"스토리 {story.get('idx')} p" + ", p".join(bad[:6])
+                + f" (프레임 {min(cnt[p] for p in bad)}개 < 모드 {mode}개)")
+    stats["frame_deficit_stories"] = len(frame_deficit)
+    if frame_deficit:
+        msg = (f"[프레임결손] 다단 스토리 중간 페이지 프레임 결손 "
+               f"{len(frame_deficit)}건: " + " | ".join(frame_deficit[:4]))
+        (critical if (plan.get("question_keep") or cleanup_delete)
+         else warnings).append(msg)
+
     # ── G5 step2_a1 상단 / step2_a1_btm 하단 기하 검사 ───────────────────
     flows = {fl["step"]: fl for fl in plan.get("flows", [])}
     if "step2_a1" in flows and "step2_a1_btm" in flows:
@@ -1507,26 +1653,37 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                 f"사용되지 않음 (파일명 규칙 확인): "
                 + " | ".join(other_unused[:5]))
 
-    # ── G6 파싱 계층: 구조적 헤더 후보 미인식 (경고) ─────────────────────
+    # ── G6 파싱 계층: 구조적 헤더 후보 미인식 (W31 — 파서와 같은 눈) ─────
+    # 플랜 빌더(plan._step_header_detection)와 동일한 구조 우선 인식기를
+    # 사용한다. 침묵 실패(강한 후보 2+ / 인식 0~1)는 critical — 빌더가
+    # 먼저 HeaderSilenceError로 조판을 중단하므로 여기 도달은 구플랜 재검사
+    # 케이스다. 부분 미인식은 warning 유지.
     for key in _HEADER_STEPS:
         sd = steps.get(key)
         if not isinstance(sd, dict):
             continue
-        paras = sd.get("paragraphs") or []
-        cands = [i for i in range(len(paras))
-                 if _is_struct_header_candidate(paras, i)]
-        if not cands:
+        texts = [(p.get("text") or "") for p in sd.get("paragraphs") or []]
+        if not texts:
             continue
-        recognized = 0
-        for i in cands:
-            t = _norm_header(paras[i].get("text") or "")
-            if is_header_line(t) or is_a1_header(t) or t.startswith("["):
-                recognized += 1
-        if recognized == 0:
+        det = detect_headers(
+            texts,
+            legacy=lambda t: (is_header_line(_norm_header(t))
+                              or is_a1_header(t)
+                              or _norm_header(t).startswith("[")))
+        if not det.candidates:
+            continue
+        if det.silent():
+            critical.append(
+                f"[헤더미인식] {key}: 구조적 헤더 후보 "
+                f"{len(det.candidates)}개(강한 후보 "
+                f"{len(det.strong_candidates())}개) 중 인식 "
+                f"{len(det.header_idx)}개 — 새 헤더 형식, 통짜 유닛 위험:\n"
+                + det.describe())
+        elif not det.recognized_candidates():
             warnings.append(
-                f"[헤더미인식] {key}: 구조적 헤더 후보 {len(cands)}개 중 "
-                f"인식 0개 — 새 헤더 형식 의심: "
-                + (paras[cands[0]].get("text") or "")[:40])
+                f"[헤더미인식] {key}: 구조적 헤더 후보 "
+                f"{len(det.candidates)}개 중 인식 0개 — 새 헤더 형식 의심: "
+                + det.candidates[0]["t"][:40])
 
     return {"ok": not critical, "critical": critical, "warnings": warnings,
             "stats": stats}

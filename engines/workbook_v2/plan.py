@@ -39,6 +39,8 @@ import json
 import os
 import re
 
+from core.structure.header_detect import (HeaderSilenceError,
+                                          detect_headers)
 from core.structure.rules import Q_START_HINT as _RE_Q_START_HINT
 from core.structure.style_resolver import resolve_style
 
@@ -71,6 +73,13 @@ _S3_GREPS = [
 ]
 # v1 pass 10 — 번호(S3_NUM) 단락의 "숫자. " 접두 제거 (run.jsx 2423~2431)
 _RE_S3_QNUM = re.compile(r"^\d+\.\s")
+# W30-r15 (결함 5 — 실서비스 376b34d0 실증): 교과서 꼼꼼변형 실전문제의
+# 출처 라인("공통영어2_YBM(김) 1과_03" / "… 1과_01~02" — 문항 끝 단독
+# 단락, kind UNKNOWN → 지문 스타일로 인쇄됨). 완제품에 불필요 — 제거.
+# 형태: <과목_출판사 토큰(밑줄 포함)> + 공백 + <N과_NN[~NN]> 전체 라인.
+# 본문 영어 문장은 '_'가 붙은 선두 토큰 + 'N과_N' 꼬리를 동시에 갖지
+# 않아 오매치 없음 (골든 코퍼스 전수 재빌드 diff 0으로 증명).
+_RE_S3_TEXTBOOK_SRC = re.compile(r"^\S+_\S+\s+\d+과_\d+(?:\s*~\s*\d+)?$")
 # v1 pass 5 번호/INTRO 휴리스틱 (run.jsx 2253~2272) — 분류기(kind)가 약한
 # 판정(UNKNOWN/K/Cond)을 내린 단락에만 오버레이. v1 실물 dump 대조에서
 # "(주관식) …쓰시오." / "…것은? [2-N]" 발문이 분류기 미인식으로 번호 스타일
@@ -273,6 +282,10 @@ def build_step3(step_data):
                 if _s3_arrow_para(text):
                     arrow_pending = True     # v1 pass 11: 화살표 단락 삭제
                     continue
+                if _RE_S3_TEXTBOOK_SRC.match(text.strip()):
+                    continue    # W30-r15: 교과서 실전문제 출처 라인 제거
+                                # (결함 5 — 배경 대기(arrow_pending)는
+                                # SRC 마커와 동일하게 소비하지 않고 통과)
                 style = _style("STEP3", _s3_effective_kind(kind, text))
                 if style is None:
                     continue
@@ -332,6 +345,17 @@ _HEADER_PATTERNS = [
     # 분리를 복원한 상태 — 완제품 기준으로 v2가 인식한다. 기존 패턴 무변경
     # append ("N. " 접두 제거 후 compact "no.1" 형태만 매치).
     re.compile(r"^no\.?\d+(?:~\d+)?$", re.I),
+    # 교과서 L-p-코너명형 (W30-r15 — 실서비스 376b34d0 실증): "1. L1-p. 13
+    # 본문 1" → compact "L1-p.13본문1". 기존 L-p 패턴(위 4번째)은 한글
+    # 꼬리를 허용하지 않아 미인식 → step1_c2/step2_b1/step2_c1이 지문
+    # 6개를 유닛 1개 통짜로 배치 + 헤더 원문 인쇄 (사용자 지목 결함 2~4).
+    # 기존 패턴 무변경 append.
+    re.compile(r"^L\d+[-–—]p\.?\d+(?:~\d+)?[가-힣][가-힣0-9]{0,30}"
+               r"(?:\([^\)]{0,40}\))?$", re.I),
+    # 교과서 L-한글라벨형 (W30-r15 — 같은 원고): "6. L1-추가본문" →
+    # compact "L1-추가본문". 페이지/숫자 없이 한글 라벨만 직결된 형태.
+    # 숫자 없는 한글 꼬리라 기존 어느 패턴에도 안 걸렸다.
+    re.compile(r"^L\d+[-–—][가-힣][가-힣0-9]{0,30}(?:\([^\)]{0,40}\))?$"),
 ]
 _RE_SUPP = re.compile(r"^Supplementary Reading$", re.I)
 
@@ -371,6 +395,37 @@ def is_header_line(text):
         return False
     compact = re.sub(r"\s+", "", body)
     return any(p.match(compact) for p in _HEADER_PATTERNS)
+
+
+# ── W31: 구조 우선 헤더 인식 (문서 단위 — 정규식 열거는 프라이어로 강등) ─────
+# 새 인식기(core/structure/header_detect)가 1선, 기존 is_header_line/
+# is_a1_header는 legacy 프라이어(가산점 + 하위호환 보장 — legacy 인식분은
+# 항상 유지). False로 내리면 기존 정규식 열거 단독 동작 (안전 밸브).
+USE_STRUCT_HEADER_DETECT = True
+
+
+def _step_header_detection(step_data, step_name, legacy, strict=True):
+    """스텝 원고 전체를 문서 단위로 훑어 헤더 인덱스 집합을 얻는다.
+
+    strict=True: 침묵 금지 — 강한 구조 후보(직후 영어 본문)가 2+개인데
+    인식이 0~1개면 HeaderSilenceError로 조판 중단 (경고 아님)."""
+    texts = [(p.get("text") or "")
+             for p in step_data.get("paragraphs", []) or []]
+    det = (detect_headers(texts, legacy=legacy)
+           if USE_STRUCT_HEADER_DETECT else _legacy_only(texts, legacy))
+    if strict and USE_STRUCT_HEADER_DETECT and det.silent():
+        raise HeaderSilenceError(step_name, det)
+    return det
+
+
+def _legacy_only(texts, legacy):
+    """안전 밸브 경로 — 기존 정규식 열거만으로 Detection 구성."""
+    from core.structure.header_detect import Detection
+    det = Detection()
+    for i, t in enumerate(texts):
+        if legacy(t):
+            det.header_idx.add(i)
+    return det
 
 
 # v1 processStep2A1의 헤더 판정 (isA1Header — 헤더를 지우지 않고 {tail}로 변환)
@@ -582,9 +637,12 @@ def _build_wordfill(step_data, step_unit):
     units = []
     warnings = []
     cur = []
-    for p in step_data.get("paragraphs", []) or []:
+    # W31: 구조 우선 인식 (legacy is_header_line은 프라이어) + 침묵 금지
+    det = _step_header_detection(step_data, step_unit.lower(),
+                                 legacy=is_header_line)
+    for i, p in enumerate(step_data.get("paragraphs", []) or []):
         text = p.get("text") or ""
-        if is_header_line(text):
+        if det.is_header(i):
             if cur:
                 units.append(cur)
                 cur = []
@@ -617,10 +675,15 @@ def build_step2_a1(step_data):
     warnings = []
     cur = []
     seen_header = False
-    for p in step_data.get("paragraphs", []) or []:
+    # W31: 구조 우선 인식 (legacy is_a1_header는 프라이어) + 침묵 금지.
+    # 구조 신호로만 잡힌 헤더도 유닛 분할 경계가 된다 ({tail} 정규화는
+    # extract_tail이 꼬리를 찾을 때만 — v1 동일: 못 찾으면 원문 유지).
+    det = _step_header_detection(step_data, "step2_a1",
+                                 legacy=is_a1_header)
+    for i, p in enumerate(step_data.get("paragraphs", []) or []):
         text = p.get("text") or ""
         runs = p.get("runs") or []
-        if is_a1_header(text):
+        if is_a1_header(text) or det.is_header(i):
             if seen_header and cur:
                 units.append(cur)
                 cur = []
@@ -878,9 +941,12 @@ def build_step2_b1(step_data):
     st = _style("STEP2B1", "*")
     units = []
     cur = []
-    for p in step_data.get("paragraphs", []) or []:
+    # W31: 구조 우선 인식 (legacy is_header_line은 프라이어) + 침묵 금지
+    det = _step_header_detection(step_data, "step2_b1",
+                                 legacy=is_header_line)
+    for i, p in enumerate(step_data.get("paragraphs", []) or []):
         text = p.get("text") or ""
-        if is_header_line(text):
+        if det.is_header(i):
             if cur:
                 units.append(cur)
                 cur = []
@@ -918,7 +984,12 @@ def build_step2_c2(step_data, workbook_type="모의고사"):
 
     # 1) 삭제 룰 (v1 1~2단계: (N) 단독줄, 빈 단락, 영어 전용 답 단락)
     kept = []
-    for p in step_data.get("paragraphs", []) or []:
+    # W31: 구조 우선 인식 — 새 형식 헤더도 제거 (유닛은 bracket 기준이라
+    # 침묵 게이트는 비적용 strict=False).
+    det = _step_header_detection(
+        step_data, "step2_c2",
+        legacy=lambda t: is_header_line(_norm_header(t)), strict=False)
+    for i, p in enumerate(step_data.get("paragraphs", []) or []):
         text = p.get("text") or ""
         if _RE_C2_SOLO_NUM.match(text):
             continue
@@ -928,7 +999,14 @@ def build_step2_c2(step_data, workbook_type="모의고사"):
         # eng_only 삭제 룰을 비껴가 문항번호 스타일로 인쇄됨 — G1 검출.
         # 모의고사형 헤더("1. p16-no.01")는 eng_only가 이미 삭제하던 것과
         # 동일 의미론 — 지문 번호는 독립 프레임(passage_numbers) 담당).
-        if is_header_line(_norm_header(text)):
+        # bracket 단락([Project 1-1] 등)은 C2의 유닛 분할 마커라 제거
+        # 금지 (W31 코퍼스 diff 실증: r3c13ybm 유닛 2→1 회귀 방지).
+        # seq(시퀀스 단조성)만으로 잡힌 약한 검출도 제거 금지 — 모의고사
+        # C2의 "20번" 문항 라벨은 v1이 인쇄하는 내용이다 (코퍼스 diff
+        # 실증: r9c20mock2503/r10c22mock2503g1). C2는 유닛을 bracket이
+        # 담당하므로 제거는 강한 검출(legacy/anchor/shape)로만.
+        if (det.is_header(i) and not _c2_is_bracket(text)
+                and det.via(i) != "seq"):
             continue
         has_br = "[" in text and "]" in text
         eng_only = (re.search(r"[A-Za-z]", text)
@@ -1024,9 +1102,21 @@ _C1_GREPS = [
                 r"[^\r\n]*?본문\s*(\d+)\b"), r"{본문\1}"),
     (re.compile(r"L\d+\s*[-–—.]?\s*p\.?\s*\d+"
                 r"[^\r\n]*?본문\s*(\d+)\b"), r"{본문\1}"),
-    (re.compile(r"(본문)\s*(\d+)"), r"{\1\2}"),
+    # (?<!\{): 이미 {본문N}으로 정규화된 라벨 재래핑 방지 — 위 L-p 룰이
+    # 만든 "{본문1}"이 "{{본문1}}"로 이중 래핑돼 인쇄되던 것 교정
+    # (W30-r15 — 실서비스 376b34d0 실측. v1 JSX도 같은 순서라 동일 증상
+    # 이었을 형태지만 이 헤더형("N. L1-p. 13 본문 1")은 v2 첫 실사용 —
+    # 완제품 기준 교정. "N. L1-본문1"류 기존 경로는 '-' 선행이라 무영향).
+    (re.compile(r"(?<!\{)(본문)\s*(\d+)"), r"{\1\2}"),
     (re.compile(r"\b(\d+)\.\s*L\d+\s*[-–—.]?\s*p\.?\s*\d+\b"),
      r"{본문\1}"),
+    # 교과서 L-한글라벨형 (W30-r15 — "6. L1-추가본문" → "{추가본문}"):
+    # 페이지/본문번호 없이 한글 라벨이 직결된 헤더. 기존 어느 룰에도 안
+    # 걸려 헤더 미정규화 → 추가본문 지문이 본문5 블록에 흡수 + 발문/프레임
+    # 분리 누락 (사용자 지목 결함 1). 기존 룰 무변경 삽입 — L-p형은 위
+    # 룰들이 먼저 소비하고, 이 룰은 'N. L<n>-<한글>' 전체 라인만 매치.
+    (re.compile(r"\b(\d+)\.\s*L\d+\s*[-–—.]\s*([가-힣][가-힣0-9\s]{0,30}?)"
+                r"\s*$"), r"{\2}"),
     (re.compile(r"\bL\d+\s*[-–—.]?\s*p\.?\s*\d+\b"), ""),
     (re.compile(r"\b\d+\.\s*p\d+\s*[-–—]?\s*서술형\s*Practice\b"),
      "{서술형 Practice}"),
@@ -1141,6 +1231,31 @@ def build_step1_c1(step_data, workbook_type="모의고사", exclude_btm=False,
     # 3) 프리앰블 제거 — 첫 {N} 헤더 앞 단락 삭제 ((A) 선지가 있으면 보류)
     first_hdr = next((i for i, it in enumerate(items)
                       if _RE_C1_HEADER.match(it["t"])), -1)
+    # W31: GREP 열거가 하나도 못 잡으면 구조 우선 인식기로 폴백 — 검출된
+    # 헤더를 {라벨}로 정규화해 이후 패스(_RE_C1_HEADER 기준)가 그대로 동작.
+    if first_hdr < 0 and USE_STRUCT_HEADER_DETECT:
+        det = detect_headers([it["t"] for it in items])
+        if det.silent():
+            raise HeaderSilenceError("step1_c1", det)
+        if det.header_idx:
+            ordinal = 0
+            for i in sorted(det.header_idx):
+                ordinal += 1
+                t = items[i]["t"]
+                m = re.search(r"본문\s*(\d+)", t)
+                if m:
+                    label = "본문" + m.group(1)
+                else:
+                    m = re.match(r"^\s*(\d{1,3})\s*[.)]", t)
+                    label = m.group(1) if m else str(ordinal)
+                new_t = "{" + label + "}"
+                items[i]["t"] = new_t
+                items[i]["runs"] = [{"t": new_t, "ul": False}]
+            first_hdr = next((i for i, it in enumerate(items)
+                              if _RE_C1_HEADER.match(it["t"])), -1)
+            warnings.append("step1_c1: 구조 인식기로 헤더 %d개 검출 "
+                            "(정규식 열거 미인식 형식)"
+                            % len(det.header_idx))
     if first_hdr > 0:
         if not any(_RE_C1_CHOICE.match(items[i]["t"])
                    for i in range(first_hdr)):

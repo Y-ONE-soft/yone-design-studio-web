@@ -1,6 +1,6 @@
 {
-  "generated": "2026-07-06",
-  "parser_git_head": "1b82742",
+  "generated": "2026-07-19",
+  "parser_git_head": "cff5647",
   "parser_worktree_dirty": false,
   "fail_20260706_header": "1. p1-no.3과 추가지문",
   "fail_20260706_recognized": true,
@@ -11,6 +11,257 @@
   "regex_recognition_rate_pct": 89.71,
   "regex_plus_struct_rate_pct": 93.49,
   "unrecognized_shapes": 1329,
+  "struct_v2_rate_pct": 96.39,
+  "struct_v2_recognized_occ": 184072,
+  "struct_v2_stem_fp": 0,
+  "struct_v2_unrecognized_occ": 6898,
+  "fail_20260719_header": "1. L1-p. 13 본문 1",
+  "fail_20260719_regex_recognized": true,
+  "fail_20260719_v2_recognized": true,
+  "struct_v2_top_newly_recognized": [
+    {
+      "shape": "N. pN~N-no.N",
+      "v2_ok": 1118,
+      "count": 1124,
+      "sample": "1. p46~49-no.01"
+    },
+    {
+      "shape": "본문N",
+      "v2_ok": 1011,
+      "count": 1015,
+      "sample": "본문2"
+    },
+    {
+      "shape": "N강 N번 N",
+      "v2_ok": 899,
+      "count": 925,
+      "sample": "7강 4번 200324"
+    },
+    {
+      "shape": "N년_고N_N월_경기도 교육청_학력평가_N번",
+      "v2_ok": 702,
+      "count": 707,
+      "sample": "2020년_고2_11월_경기도 교육청_학력평가_37번"
+    },
+    {
+      "shape": "N강 - 라운드(N)",
+      "v2_ok": 394,
+      "count": 394,
+      "sample": "6강 - 라운드(1)"
+    },
+    {
+      "shape": "고N N년 N월 N번",
+      "v2_ok": 263,
+      "count": 279,
+      "sample": "고1 25년 10월 20번"
+    },
+    {
+      "shape": "N년_고N_N월_서울특별시 교육청_학력평가_N번",
+      "v2_ok": 246,
+      "count": 246,
+      "sample": "2021년_고1_3월_서울특별시 교육청_학력평가_18번"
+    },
+    {
+      "shape": "N. N-N-고N-N",
+      "v2_ok": 223,
+      "count": 223,
+      "sample": "1. 24-10-고1-31"
+    },
+    {
+      "shape": "N. Special Lesson N-본문N",
+      "v2_ok": 222,
+      "count": 222,
+      "sample": "2. Special Lesson 1-본문3"
+    },
+    {
+      "shape": "no.N",
+      "v2_ok": 210,
+      "count": 210,
+      "sample": "no.20"
+    },
+    {
+      "shape": "N. no.N",
+      "v2_ok": 205,
+      "count": 210,
+      "sample": "1. no.1"
+    },
+    {
+      "shape": "N. pN강-no.N번 N",
+      "v2_ok": 187,
+      "count": 187,
+      "sample": "1. p3강-no.4번 190920"
+    },
+    {
+      "shape": "N. N년 N월 N번",
+      "v2_ok": 149,
+      "count": 149,
+      "sample": "1. 2022년 11월 20번"
+    },
+    {
+      "shape": "교과서 N과 본문N",
+      "v2_ok": 148,
+      "count": 148,
+      "sample": "교과서 2과 본문1"
+    },
+    {
+      "shape": "■ 고N N년 N월 N번",
+      "v2_ok": 148,
+      "count": 148,
+      "sample": "■ 고2 25년 3월 21번"
+    },
+    {
+      "shape": "N. Special Lesson N-p. N 본문 N",
+      "v2_ok": 140,
+      "count": 140,
+      "sample": "1. Special Lesson 1-p. 52 본문 1"
+    },
+    {
+      "shape": "N) [N강 N번]",
+      "v2_ok": 138,
+      "count": 138,
+      "sample": "1) [5강 2번]"
+    },
+    {
+      "shape": "<수능특강 영어 N강-N>",
+      "v2_ok": 132,
+      "count": 170,
+      "sample": "<수능특강 영어 17강-1>"
+    },
+    {
+      "shape": "N년_고N_N월_부산광역시 교육청_학력평가_N번",
+      "v2_ok": 132,
+      "count": 132,
+      "sample": "2021년_고2_6월_부산광역시 교육청_학력평가_18번"
+    },
+    {
+      "shape": "<본문N>",
+      "v2_ok": 130,
+      "count": 140,
+      "sample": "<본문1>"
+    }
+  ],
+  "struct_v2_top_unrecognized": [
+    {
+      "shape": "정답: N번",
+      "missed": 391,
+      "count": 391,
+      "sample": "정답: 4번"
+    },
+    {
+      "shape": "N. N",
+      "missed": 379,
+      "count": 379,
+      "sample": "15. 2"
+    },
+    {
+      "shape": "N.N",
+      "missed": 344,
+      "count": 344,
+      "sample": "2.4"
+    },
+    {
+      "shape": "N-N번",
+      "missed": 171,
+      "count": 171,
+      "sample": "41-42번"
+    },
+    {
+      "shape": "N. N단어 이내로 작성할 것",
+      "missed": 107,
+      "count": 107,
+      "sample": "2. 10단어 이내로 작성할 것"
+    },
+    {
+      "shape": "N~N번",
+      "missed": 97,
+      "count": 99,
+      "sample": "41~42번"
+    },
+    {
+      "shape": "N. N 어휘선택",
+      "missed": 92,
+      "count": 92,
+      "sample": "1. 2206 어휘선택"
+    },
+    {
+      "shape": "N강",
+      "missed": 88,
+      "count": 106,
+      "sample": "8강"
+    },
+    {
+      "shape": "고등_영어(천재이재영) - Lesson N. Further Reading",
+      "missed": 83,
+      "count": 83,
+      "sample": "고등_영어(천재이재영) - Lesson 5. Further Reading"
+    },
+    {
+      "shape": "N) N",
+      "missed": 79,
+      "count": 79,
+      "sample": "1) 1"
+    },
+    {
+      "shape": "Unit N",
+      "missed": 78,
+      "count": 100,
+      "sample": "Unit 02"
+    },
+    {
+      "shape": "(지문: [Unit N Example N])",
+      "missed": 75,
+      "count": 75,
+      "sample": "(지문: [Unit 9 Example 2])"
+    },
+    {
+      "shape": "수능특강 영어 N강-N",
+      "missed": 72,
+      "count": 110,
+      "sample": "수능특강 영어 23강-3"
+    },
+    {
+      "shape": "영어N 비상(홍) N과",
+      "missed": 66,
+      "count": 66,
+      "sample": "영어2 비상(홍) 2과"
+    },
+    {
+      "shape": "정답: N번, N번",
+      "missed": 63,
+      "count": 63,
+      "sample": "정답: 2번, 5번"
+    },
+    {
+      "shape": "영어 독해와 작문 비상(김) N과",
+      "missed": 56,
+      "count": 56,
+      "sample": "영어 독해와 작문 비상(김) 1과"
+    },
+    {
+      "shape": "N강 정답과 간략 해설",
+      "missed": 49,
+      "count": 49,
+      "sample": "6강 정답과 간략 해설"
+    },
+    {
+      "shape": "<Reading Power 유형편 완성 N강 N번>",
+      "missed": 48,
+      "count": 48,
+      "sample": "<Reading Power 유형편 완성 12강 1번>"
+    },
+    {
+      "shape": "N. LN-본문N(p.N) (정답 N개)",
+      "missed": 48,
+      "count": 48,
+      "sample": "6. L3-본문4(p.73)  (정답 1개)"
+    },
+    {
+      "shape": "본문 N-N",
+      "missed": 46,
+      "count": 46,
+      "sample": "본문 4-1"
+    }
+  ],
   "stem_occurrences": 31614,
   "stem_shapes": 2893,
   "top_unrecognized": [
