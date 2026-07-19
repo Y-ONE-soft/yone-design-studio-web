@@ -168,6 +168,7 @@ import re
 import unicodedata
 
 from core.inspect import find_leaked_answers
+from core.structure.header_detect import detect_headers
 from engines.workbook_v2.plan import (PUA_PRINT_TABLE, SUBSCRIPT_PRINT_TABLE,
                                       is_header_line, is_a1_header,
                                       passage_labels, _norm_header)
@@ -1507,26 +1508,37 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                 f"사용되지 않음 (파일명 규칙 확인): "
                 + " | ".join(other_unused[:5]))
 
-    # ── G6 파싱 계층: 구조적 헤더 후보 미인식 (경고) ─────────────────────
+    # ── G6 파싱 계층: 구조적 헤더 후보 미인식 (W31 — 파서와 같은 눈) ─────
+    # 플랜 빌더(plan._step_header_detection)와 동일한 구조 우선 인식기를
+    # 사용한다. 침묵 실패(강한 후보 2+ / 인식 0~1)는 critical — 빌더가
+    # 먼저 HeaderSilenceError로 조판을 중단하므로 여기 도달은 구플랜 재검사
+    # 케이스다. 부분 미인식은 warning 유지.
     for key in _HEADER_STEPS:
         sd = steps.get(key)
         if not isinstance(sd, dict):
             continue
-        paras = sd.get("paragraphs") or []
-        cands = [i for i in range(len(paras))
-                 if _is_struct_header_candidate(paras, i)]
-        if not cands:
+        texts = [(p.get("text") or "") for p in sd.get("paragraphs") or []]
+        if not texts:
             continue
-        recognized = 0
-        for i in cands:
-            t = _norm_header(paras[i].get("text") or "")
-            if is_header_line(t) or is_a1_header(t) or t.startswith("["):
-                recognized += 1
-        if recognized == 0:
+        det = detect_headers(
+            texts,
+            legacy=lambda t: (is_header_line(_norm_header(t))
+                              or is_a1_header(t)
+                              or _norm_header(t).startswith("[")))
+        if not det.candidates:
+            continue
+        if det.silent():
+            critical.append(
+                f"[헤더미인식] {key}: 구조적 헤더 후보 "
+                f"{len(det.candidates)}개(강한 후보 "
+                f"{len(det.strong_candidates())}개) 중 인식 "
+                f"{len(det.header_idx)}개 — 새 헤더 형식, 통짜 유닛 위험:\n"
+                + det.describe())
+        elif not det.recognized_candidates():
             warnings.append(
-                f"[헤더미인식] {key}: 구조적 헤더 후보 {len(cands)}개 중 "
-                f"인식 0개 — 새 헤더 형식 의심: "
-                + (paras[cands[0]].get("text") or "")[:40])
+                f"[헤더미인식] {key}: 구조적 헤더 후보 "
+                f"{len(det.candidates)}개 중 인식 0개 — 새 헤더 형식 의심: "
+                + det.candidates[0]["t"][:40])
 
     return {"ok": not critical, "critical": critical, "warnings": warnings,
             "stats": stats}
