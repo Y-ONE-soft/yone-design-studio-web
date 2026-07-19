@@ -231,6 +231,46 @@ def apply_subscript_print_map(obj):
     return obj
 
 
+# ── 글리프 인쇄 매핑 (W30 후속 — r15 c25 실측: ❮❯ 12건 글리프커버리지
+# warning) ──────────────────────────────────────────────────────────────────
+# 헤비 꺾쇠 ❮(U+276E)/❯(U+276F)는 이 계열 내지 본문 폰트(Noto Sans CJK KR)
+# cmap에 글리프가 없어 tofu/미표시로 인쇄된다 (core.fontcov 실측 — Black/
+# Bold/DemiLight/Light/Medium/Regular/Thin 전 7웨이트 미지원. r15 c25
+# step3 실전문제 지문의 삽입 문장 표기 12건). W23 SUBSCRIPT_PRINT_TABLE
+# 전례대로 지원 실측된 등가 문자로 플랜 계층 치환: 홑꺾쇠 〈(U+3008)/
+# 〉(U+3009) — 전 7웨이트 커버 실측 (‹›(U+2039/A)·《》(U+300A/B)·＜＞
+# (U+FF1C/E)도 커버되나 원표기와 시각적으로 가장 가까운 홑꺾쇠 채택,
+# ‹›는 반각이라 삽입 문장 강조 표기에 과소).
+#
+# 단, 아래첨자/PUA 매핑과 달리 **빌더 이후**에 적용한다 — 1A1 빌더가
+# ❮❯→[]를(_A1_TABLE), 1A2 빌더가 ❮T/F❯ 토큰 제거를 소비하므로 빌더 전에
+# 치환하면 해당 로직이 무력화된다. 빌더 산출 유닛에 남은 잔존(=그대로
+# 인쇄될 문자)에만 적용. 1:1(한 글자) 치환 — 텍스트/runs 오프셋 보존.
+# content 원본은 무변형 (골든/파서 산출 보존 — W20 PUA 전례).
+# 게이트 G29가 등재 문자의 출력 잔존을 소급 검출한다.
+GLYPH_PRINT_TABLE = {"❮": "〈", "❯": "〉"}
+_GLYPH_PRINT_TRANS = str.maketrans(GLYPH_PRINT_TABLE)
+
+
+def apply_glyph_print_map_units(units):
+    """빌더 산출 유닛 리스트에 글리프 인쇄 매핑을 in-place 적용.
+
+    유닛은 빌더가 갓 생성한 객체(content와 비공유)라 in-place가 안전하다.
+    runs는 해당 단락에 등재 문자가 있을 때만 재작성 (1:1 길이 보존)."""
+    for u in units:
+        for p in unit_paras(u):
+            t = p.get("t") or ""
+            if not any(ch in t for ch in GLYPH_PRINT_TABLE):
+                continue
+            p["t"] = t.translate(_GLYPH_PRINT_TRANS)
+            if p.get("runs"):
+                p["runs"] = [
+                    dict(r, t=r["t"].translate(_GLYPH_PRINT_TRANS))
+                    if isinstance(r.get("t"), str) else r
+                    for r in p["runs"]]
+    return units
+
+
 def _s3_effective_kind(kind, text):
     # W16 D2 — 영단어 강등 (분류기 수리와 이중 방어: content-only 코퍼스
     # 재실행은 구버전 kind 주석을 그대로 쓰므로 플랜 계층에서도 강등).
@@ -1644,6 +1684,9 @@ def steps_to_plan(steps, exclude=None, workbook_type="모의고사",
             built = builder(step_data, workbook_type=workbook_type)
         else:
             built = builder(step_data)
+        # W30 후속 — 빌더가 소비하고 남은 ❮❯ 잔존을 등가 글리프로 치환
+        # (빌더 이후 적용 — 1A1 []·1A2 TF 토큰 로직 보존)
+        apply_glyph_print_map_units(built["units"])
         warnings.extend(built.get("warnings") or [])
         target = dict(smap.get(step_key, {}))
         flow = {"step": step_key, "target": target,
