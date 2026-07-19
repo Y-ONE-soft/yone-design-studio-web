@@ -28,7 +28,9 @@ def _is_group_header(text):
     if m:
         tokens = [t for t in __import__("re").split(r'[\s,/&·]+', text.strip('()（） '))
                   if t]
-        if len(tokens) >= R.GH_SUBTITLE_MIN_TOKENS:
+        if (R.GH_SUBTITLE_MIN_TOKENS <= len(tokens)
+                <= R.GH_SUBTITLE_MAX_TOKENS):
+            # 상한(W30-r15): 조건 블록의 긴 괄호 부연은 부제가 아니다
             return True
     return False
 
