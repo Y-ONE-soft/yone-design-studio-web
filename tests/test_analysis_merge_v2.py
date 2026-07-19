@@ -42,6 +42,10 @@ def test_registration_consistency():
     assert "__SETTINGS_PATH__" in src           # 토큰 치환 계약
     assert "settings 로드 실패" in src           # 부트스트랩 try-catch
     assert "exportFile" not in src              # PDF export 제거 (스펙1·3)
+    # 2026-07-19 배재1 실사고 봉합 계약:
+    assert "overset_frames" in src              # 간지 기재 프레임 오버셋 게이트
+    assert '"master:" + mkey' in src            # 마스터 프레임 오버플로우 스캔
+    assert "keepSize" in src                    # 로컬 서식 캡처→복원 (오버셋 원인)
 
 
 def test_upload_spec_slots(engine):
@@ -84,6 +88,45 @@ def test_default_result_name(engine):
     name2 = engine.default_result_name("명일1", "x", [{"title": "a/b:c", "detail": ""}])
     assert name2.startswith("명일1_분석본01(")
     assert "/" not in name2.split("_", 1)[1] and ":" not in name2
+
+
+# ── 파일명 축약 규칙 (사용자 피드백 2026-07-19) ──────────────────────────────
+
+def test_default_result_name_abbreviates_year_month(engine):
+    """범위 제목 전체("고1 25년 3월 모의고사")가 아니라 "25년3월"만 —
+    공백 없는 파일명."""
+    name = engine.default_result_name(
+        "배재1", "1",
+        [{"title": "고1 25년 3월 모의고사", "detail": "39~40번"},
+         {"title": "고1 22년 9월 모의고사", "detail": "20번"}])
+    assert name == "배재1_분석본01(25년3월,22년9월)_내지"
+    assert " " not in name
+
+
+def test_summarize_range_title_variants(engine):
+    # 년·월 추출 (선행 0 제거)
+    assert engine.summarize_range_title("고1 25년 3월 모의고사") == "25년3월"
+    assert engine.summarize_range_title("고2 22년 09월") == "22년9월"
+    # 이미 축약된 기존 형식 하위호환
+    assert engine.summarize_range_title("26년6월") == "26년6월"
+    # 년·월 없는 제목(교과서 단원 등)은 공백만 제거
+    assert engine.summarize_range_title("영어I YBM(박) 2과") == "영어IYBM(박)2과"
+    assert engine.summarize_range_title("") == ""
+
+
+def test_default_result_name_dedups_same_month(engine):
+    name = engine.default_result_name(
+        "명일1", "2",
+        [{"title": "고1 25년 3월 모의고사", "detail": "1번"},
+         {"title": "25년 3월", "detail": "2번"}])
+    assert name == "명일1_분석본02(25년3월)_내지"
+
+
+def test_sanitize_filename_strips_spaces(engine):
+    assert engine.sanitize_filename("배재1_분석본01(고1 25년 3월)_내지") == \
+        "배재1_분석본01(고125년3월)_내지"
+    assert engine.sanitize_filename('a/b:c*d?e"f<g>h|i j') == "abcdefghij"
+    assert engine.sanitize_filename("") == ""
 
 
 # ── relink 맵 (스펙4) ────────────────────────────────────────────────────────
@@ -215,6 +258,30 @@ def test_verify_ganji_gate(engine, tmp_path):
     job, _ = _make_job(tmp_path, bad)
     res = engine.verify(job, lambda m: None)
     assert res["gates"]["ganji_ok"] is False and res["ok"] is False
+
+
+def test_verify_ganji_overset_blocks_gdrive(engine, tmp_path):
+    """간지 기재 프레임 오버셋(2026-07-19 배재1 실사고)이 게이트에 잡혀
+    GDrive 저장이 보류되는지 — JSX가 남기는 리포트 형태 그대로 검증."""
+    bad = json.loads(json.dumps(GOOD_REPORT))
+    bad["ganji"] = {"ok": False,
+                    "error": "기재 프레임 오버셋: 간지 학교명(챕터_숫자)",
+                    "overset_frames": ["간지 학교명(챕터_숫자)"]}
+    job, gbase = _make_job(tmp_path, bad)
+    res = engine.verify(job, lambda m: None)
+    assert res["gates"]["ganji_ok"] is False and res["ok"] is False
+    assert res["gdrive_path"] is None and not os.listdir(gbase)
+    assert any("오버셋" in w for w in res["warnings"])
+
+
+def test_verify_master_overflow_blocks(engine, tmp_path):
+    """마스터 프레임 오버플로우("master:간지-마스터")도 오버플로우 게이트가
+    잡는지 — 스캔 확장 계약."""
+    bad = json.loads(json.dumps(GOOD_REPORT))
+    bad["overflow_pages"] = ["master:간지-마스터"]
+    job, _ = _make_job(tmp_path, bad)
+    res = engine.verify(job, lambda m: None)
+    assert res["gates"]["overflow_ok"] is False and res["ok"] is False
 
 
 def test_verify_overflow_and_unresolved_gates(engine, tmp_path):

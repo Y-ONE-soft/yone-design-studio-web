@@ -239,16 +239,45 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
 
     # ─── prepare_jsx ───────────────────────────────────────────────
 
+    # 범위 제목의 년·월 추출 ("고1 25년 3월 모의고사" → 25년3월)
+    _RE_YEAR_MONTH = re.compile(r"(\d{1,2})\s*년\s*(\d{1,2})\s*월")
+
+    @classmethod
+    def summarize_range_title(cls, title):
+        """범위 제목 → 파일명용 축약 (사용자 피드백 2026-07-19).
+
+        년·월만 남긴다: "고1 25년 3월 모의고사" → "25년3월".
+        년·월이 없는 제목(교과서 단원 등)은 공백만 제거해 그대로 —
+        기존 형식 입력 하위호환.
+        """
+        title = (title or "").strip()
+        m = cls._RE_YEAR_MONTH.search(title)
+        if m:
+            return f"{int(m.group(1))}년{int(m.group(2))}월"
+        return re.sub(r"\s+", "", title)
+
+    @staticmethod
+    def sanitize_filename(name):
+        """파일명 규칙: 부적합 문자 제거 + 띄어쓰기 금지 (피드백 2026-07-19)."""
+        name = re.sub(r'[/\\:*?"<>|]', "", name or "")
+        return re.sub(r"\s+", "", name)
+
     def default_result_name(self, school, issue_num, ranges):
-        """기존 실물 명명 규칙: {학교}_분석본{NN}({범위요약})_내지"""
+        """명명 규칙: {학교}_분석본{NN}({년월 축약,…})_내지 — 공백 없음.
+
+        예: 배재1_분석본01(25년3월,22년9월)_내지
+        """
         try:
             nn = f"{int(issue_num):02d}"
         except (TypeError, ValueError):
             nn = "01"
-        summary = ",".join(r["title"] for r in ranges)[:40] or "결합"
-        # 파일명에 부적합한 문자 제거
-        summary = re.sub(r'[/\\:*?"<>|]', "", summary)
-        return f"{school}_분석본{nn}({summary})_내지"
+        parts = []
+        for r in ranges:
+            s = self.summarize_range_title(r.get("title", ""))
+            if s and s not in parts:        # 같은 년월 중복 기재 방지
+                parts.append(s)
+        summary = ",".join(parts)[:40] or "결합"
+        return self.sanitize_filename(f"{school}_분석본{nn}({summary})_내지")
 
     def prepare_jsx(self, json_path, job_dir, log):
         cfg = _load_config()
@@ -272,6 +301,15 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
         if not result_name:
             result_name = self.default_result_name(school, issue_num, ranges)
             log(f"[파일명 자동 생성] {result_name}")
+        else:
+            # 직접 입력한 파일명도 파일명 규칙 적용 (띄어쓰기 금지)
+            cleaned = self.sanitize_filename(result_name)
+            if cleaned != result_name:
+                log(f"[파일명 정규화] {result_name!r} → {cleaned!r}")
+                result_name = cleaned
+            if not result_name:
+                result_name = self.default_result_name(school, issue_num, ranges)
+                log(f"[파일명 자동 생성] {result_name}")
 
         # 로컬 스테이징 출력 (검수 게이트 통과 후 verify가 GDrive로 복사)
         output_dir = os.path.join(job_dir, "out")
