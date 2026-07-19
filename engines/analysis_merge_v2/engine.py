@@ -56,7 +56,8 @@ def _load_config():
     from core.paths import resolve_config
     with open(_CONFIG_PATH, encoding="utf-8") as f:
         cfg = json.load(f)
-    cfg = resolve_config(cfg, ["template_path", "gdrive_base", "save_base"])
+    cfg = resolve_config(cfg, ["template_path", "gdrive_base", "save_base",
+                               "textbook_base", "ebs_base"])
     from core.paths import resolve
     cfg["image_dirs"] = [resolve(p) for p in cfg.get("image_dirs", [])]
     return cfg
@@ -89,7 +90,15 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
                     "key": "codes",
                     "label": "문제 (6자리 250632 또는 '25년 6월 32번' / '25년 6월 20-23번, 29번')",
                     "type": "textarea",
-                    "required": True,
+                    # W28-확장: 교과서/EBS 소스만으로도 결합 가능 —
+                    # 서버에서 '코드 또는 추가 소스 중 하나 필수'를 검증한다.
+                    "required": False,
+                },
+                {
+                    "key": "extra_sources",
+                    "label": "교과서/EBS 소스 (JSON — 폼이 자동 생성)",
+                    "type": "text",
+                    "required": False,
                 },
                 {
                     "key": "ranges",
@@ -246,15 +255,68 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
     # ─── parse ─────────────────────────────────────────────────────
 
     def parse(self, uploaded_files, job_dir, log):
-        """v1 parse(코드→소스 로컬 복사) + 템플릿 로컬 확보 + 범위/relink 맵."""
-        meta_path = super().parse(uploaded_files, job_dir, log)
-        cfg = _load_config()
+        """v1 parse(코드→소스 로컬 복사) + 교과서/EBS 소스(W28-확장) +
+        템플릿 로컬 확보 + 범위/relink 맵."""
+        from engines.analysis_merge_v2 import sources as srcmod
 
-        with open(meta_path, encoding="utf-8") as f:
-            meta = json.load(f)
+        cfg = _load_config()
+        codes_text = (uploaded_files.get("codes") or "").strip()
+        extra_sel = srcmod.parse_extra_sources(
+            self._get_meta(job_dir, "extra_sources", ""))
+        if not codes_text and not extra_sel:
+            raise ValueError(
+                "문제 코드 또는 교과서/EBS 소스 중 하나는 입력해야 합니다.")
+
+        if codes_text:
+            meta_path = super().parse(uploaded_files, job_dir, log)
+            with open(meta_path, encoding="utf-8") as f:
+                meta = json.load(f)
+        else:
+            # 코드 없이 교과서/EBS 소스만 결합하는 경우 — v1 parse는 코드가
+            # 필수라 건너뛰고 빈 골격을 만든다.
+            meta = {"codes": [], "sources": []}
+            meta_path = os.path.join(job_dir, "metadata.json")
+
+        # ── 교과서/EBS 소스 (W28-확장): 식별자 재검증 → 로컬 복사 ──────
+        from engines.final.extractor import _gdrive_safe_copy
+        doc_sources = []
+        for i, sel in enumerate(extra_sel):
+            if sel["type"] == "textbook":
+                src_path, lesson_label, school = srcmod.resolve_textbook_file(
+                    cfg, sel["subject"], sel["publisher"],
+                    sel["lesson_folder"], sel["file_name"])
+                rng = srcmod.derive_range_textbook(
+                    sel["subject"], sel["publisher"],
+                    sel["lesson_folder"], lesson_label)
+                label = sel["lesson_folder"] + (f" {school}" if school else "")
+            else:
+                src_path, unit_label, school = srcmod.resolve_ebs_file(
+                    cfg, sel["book"], sel["unit_folder"], sel["file_name"])
+                rng = srcmod.derive_range_ebs(
+                    sel["book"], unit_label, sel["file_name"], school)
+                label = f"{sel['book']} {unit_label}" + (
+                    f" {school}" if school else "")
+
+            local_path = os.path.join(
+                job_dir, f"src_doc{i}_{_nfc(os.path.basename(src_path))}")
+            ok, err = _gdrive_safe_copy(src_path, local_path, log=log)
+            if not ok:
+                raise RuntimeError(f"소스 복사 실패: {label} — {err}")
+            log(f"[{sel['type']}] {label} → {os.path.basename(local_path)}")
+            doc_sources.append({
+                "kind": "doc",
+                "type": sel["type"],
+                "label": label,
+                "school": school,
+                "source_path": src_path,
+                "local_path": local_path,
+                "derived_range": rng,
+                "range_idx": -1,      # 자동 유도 시 아래에서 채움
+            })
+        meta.setdefault("sources", []).extend(doc_sources)
 
         # 범위 목록 (간지/1페이지 기재용) — 수동 입력 우선, 비우면 문제
-        # 코드(YYMMNN)에서 자동 유도 (사용자 피드백 2026-07-19)
+        # 코드(YYMMNN) + 교과서/EBS 소스에서 자동 유도
         ranges = self.parse_ranges(self._get_meta(job_dir, "ranges", ""))
         if ranges:
             log(f"[범위] {len(ranges)}개: "
@@ -262,12 +324,16 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
         else:
             grade = self._get_meta(job_dir, "grade", "고1")
             ranges = self.derive_ranges_from_codes(meta.get("codes"), grade)
+            for ds in doc_sources:
+                ds["range_idx"] = len(ranges)
+                ranges.append(ds["derived_range"])
             if not ranges:
                 raise ValueError(
                     "범위 목록이 입력되지 않았고 코드에서 유도할 수도 없습니다. "
                     "(예: 고1 25년 3월 모의고사 | 39번, 40번)")
             log(f"[범위 자동 유도] {len(ranges)}개: "
-                + " / ".join(f"{r['title']} / {r['detail']}" for r in ranges))
+                + " / ".join(f"{r['title']} / {r['detail']}".rstrip(" /")
+                             for r in ranges))
 
         # 템플릿: GDrive 원본 → job_dir 로컬 사본 (GDrive 원본 무수정 원칙)
         tpl_src = cfg["template_path"]
@@ -280,10 +346,12 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
             raise RuntimeError(f"템플릿 복사 실패: {err}")
         log(f"[템플릿] 로컬 사본: {os.path.basename(tpl_local)}")
 
-        # relink 맵 — 소스 월 폴더 + 이미지 폴더 사전 스캔
+        # relink 맵 — 소스 월 폴더 + 교과서/EBS 소스 폴더 + 이미지 폴더 사전 스캔
         month_folders = []
         for s in meta.get("sources", []):
             mf = s.get("month_folder")
+            if s.get("kind") == "doc" and s.get("source_path"):
+                mf = os.path.dirname(s["source_path"])
             if mf and mf not in month_folders:
                 month_folders.append(mf)
         relink_map = self.build_relink_map(cfg, month_folders)
@@ -322,9 +390,12 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
         return re.sub(r"\s+", "", name)
 
     def default_result_name(self, school, issue_num, ranges):
-        """명명 규칙: {학교}_분석본{NN}({년월 축약,…})_내지 — 공백 없음.
+        """명명 규칙: {학교}_분석본{NN}({축약,…})_내지 — 공백 없음.
 
         예: 배재1_분석본01(25년3월,22년9월)_내지
+            세종1_분석본02(비상홍3과,올독기2_9강)_내지  (W28-확장)
+        교과서/EBS 유도 범위는 abbrev(출판사/교재 축약)를 우선 사용하고,
+        수동/모의고사 범위는 년월 축약(summarize_range_title)을 쓴다.
         """
         try:
             nn = f"{int(issue_num):02d}"
@@ -332,8 +403,9 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
             nn = "01"
         parts = []
         for r in ranges:
-            s = self.summarize_range_title(r.get("title", ""))
-            if s and s not in parts:        # 같은 년월 중복 기재 방지
+            s = (r.get("abbrev") or "").strip() \
+                or self.summarize_range_title(r.get("title", ""))
+            if s and s not in parts:        # 같은 년월/소스 중복 기재 방지
                 parts.append(s)
         summary = ",".join(parts)[:40] or "결합"
         return self.sanitize_filename(f"{school}_분석본{nn}({summary})_내지")
@@ -553,10 +625,43 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
                             + (ganji.get("error") or "리포트 없음"))
 
         # ── 게이트 5: 오버플로우 (콘텐츠 페이지) ────────────────────
+        # 소스가 결합 전부터 갖고 있던 오버셋(preexisting)은 결합 결함이
+        # 아니므로 경고로만 노출 — 게이트는 결합이 새로 만든 오버셋만 잡는다
+        # (손마무리 실물에도 잔존 overset 전례 — 소스 수리는 별도 운영).
         overflow_pages = report.get("overflow_pages") or []
         gates["overflow_ok"] = not overflow_pages
         if overflow_pages:
             warnings.append(f"오버플로우 프레임 페이지: {overflow_pages}")
+        preexisting_ovf = report.get("preexisting_overflow_pages") or []
+        if preexisting_ovf:
+            warnings.append(
+                f"[안내] 소스 자체 오버셋 페이지(결합 전부터 존재 — 소스 수리 "
+                f"권장): {preexisting_ovf}")
+
+        # ── 게이트 6: 교과서/EBS 소스 결합 (W28-확장) ───────────────
+        # JSX가 doc 소스별 {label, pages_total, pages_merged, skipped_pages,
+        # size_mismatch}를 기록 — 페이지 크기 비호환/0페이지 결합이면 실패
+        # (무리하게 맞추지 않고 저장 보류 + 실측 보고).
+        expected_docs = [s for s in settings.get("sources", [])
+                         if s.get("kind") == "doc"]
+        doc_srcs = report.get("doc_sources") or []
+        doc_ok = True
+        if expected_docs and len(doc_srcs) < len(expected_docs):
+            doc_ok = False
+            warnings.append(
+                f"교과서/EBS 소스 리포트 누락: 기대 {len(expected_docs)}개, "
+                f"기록 {len(doc_srcs)}개")
+        for d in doc_srcs:
+            if d.get("size_mismatch"):
+                doc_ok = False
+                warnings.append(
+                    f"소스 페이지 크기 비호환: {d.get('label')} "
+                    f"({d.get('page_w')}x{d.get('page_h')}mm ≠ 템플릿 "
+                    f"{d.get('tpl_w')}x{d.get('tpl_h')}mm)")
+            if not d.get("pages_merged"):
+                doc_ok = False
+                warnings.append(f"소스 결합 페이지 0: {d.get('label')}")
+        gates["doc_ok"] = doc_ok
 
         # ── 시각 검수 1층 (스펙 6 — opt-in: YONE_VISUAL_INSPECT=1) ──
         # v2는 PDF가 없어 .indd 렌더(allow_indesign=True)로 실행. W29 판정
@@ -619,4 +724,6 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
             },
             "links": links,
             "ganji": ganji,
+            "doc_sources": doc_srcs,
+            "preexisting_overflow": preexisting_ovf,
         }

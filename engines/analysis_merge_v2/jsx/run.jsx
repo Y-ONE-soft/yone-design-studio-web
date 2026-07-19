@@ -11,6 +11,10 @@
 //           상단 슬러그 범위/범위_추가내용 기재, 범위 프레임쌍
 //           오버라이드 병기 (범위 여러 개면 아래로 +21.5mm 간격 복제)
 //   [스펙3·1] PDF export 제거 (목업 핸드오프 원천 차단) — .indd만 저장
+//   [W28-확장] 교과서/EBS 분석본 소스(kind:"doc") — 문서 전체를 결합
+//     (간지/표지 마스터·마스터 없는 개요 페이지 스킵), 페이지 크기 대조
+//     리포트(doc_sources), 자동 유도 범위를 소스 간지/개요 텍스트로 보강
+//     (교과서: cs 범위/챕터, EBS: cs 카테고리/부제목 — 손마무리 실물 전례)
 // ES3 제약: let/const/화살표/템플릿 리터럴 금지, JSON.parse는 eval.
 #target indesign
 
@@ -788,8 +792,56 @@
                     count_mismatch_pages: [], pages: [] },
         links: {},
         ganji: { ok: false },
-        overflow_pages: []
+        overflow_pages: [],
+        // doc 소스가 결합 전부터 갖고 있던 오버셋을 그대로 물려받은 페이지
+        // (실측: 올독기2 9강 p13 — 소스와 동일 스토리/프레임/자수).
+        // 손마무리 실물에도 잔존 overset 전례가 있어 게이트는 통과시키고
+        // verify가 경고로만 노출한다. 결합이 새로 만든 오버셋은 여전히
+        // overflow_pages로 게이트 실패.
+        preexisting_overflow_pages: [],
+        doc_sources: []
     };
+
+    // ── [W28-확장] 유틸 ────────────────────────────────────────────
+
+    function trimStr(s) {
+        return String(s).replace(/^[\s ]+|[\s ]+$/g, "");
+    }
+
+    // 자동 유도 범위(auto:true)를 소스 간지/개요 텍스트로 보강.
+    // 손마무리 실물 전례(w28_ext/probe_ranges 실측):
+    //   교과서 간지: cs '범위'="공통영어1 비상(홍) 3과", cs '챕터'=과 제목
+    //   EBS 개요:   cs '카테고리'="올림포스 영어독해 기본2",
+    //               cs '부제목'="9강 어휘 적절성"
+    function enrichDocRange(doc, srcMeta, scanPages) {
+        var idx = (srcMeta.range_idx === undefined) ? -1 : srcMeta.range_idx;
+        if (idx < 0) return null;
+        var ranges = settings.ranges || [];
+        var rng = ranges[idx];
+        if (!rng || !rng.auto) return null;
+        var titleCS = (srcMeta.type === "ebs") ? "카테고리" : "범위";
+        var detailCS = (srcMeta.type === "ebs") ? "부제목" : "챕터";
+        var pagesToScan = scanPages.length ? scanPages : [0];
+        var title = null, detail = null;
+        for (var sp = 0; sp < pagesToScan.length; sp++) {
+            var pIdx = pagesToScan[sp];
+            if (pIdx < 0 || pIdx >= doc.pages.length) continue;
+            var items;
+            try { items = doc.pages[pIdx].allPageItems; } catch (eIt) { continue; }
+            for (var i = 0; i < items.length; i++) {
+                var txt;
+                try { txt = items[i].contents; } catch (eC) { continue; }
+                if (typeof txt !== "string" || !trimStr(txt).length) continue;
+                var cs = frameCS(items[i]);
+                if (title === null && cs === titleCS) title = trimStr(txt);
+                if (detail === null && cs === detailCS) detail = trimStr(txt);
+            }
+            if (title !== null && detail !== null) break;
+        }
+        if (title !== null) rng.title = title;
+        if (detail !== null) rng.detail = detail;
+        return { title: rng.title, detail: rng.detail };
+    }
 
     try {
         writeLog("===== 분석본 결합 v2 시작 =====");
@@ -840,6 +892,13 @@
 
         allowShuffleAll(newDoc);
 
+        // [W28-확장] 템플릿 페이지 크기 (doc 소스 호환성 대조 기준)
+        var TPL_W = 0, TPL_H = 0;
+        try {
+            TPL_W = newDoc.documentPreferences.pageWidth;
+            TPL_H = newDoc.documentPreferences.pageHeight;
+        } catch (eTs) {}
+
         // 후보 파일 dedup + open + markers 수집
         var docCache    = {};
         var openedByUs  = {};
@@ -848,7 +907,9 @@
 
         for (var si = 0; si < SOURCES.length; si++) {
             var src = SOURCES[si];
-            var cands = src.candidates || [];
+            var isDoc = (src.kind === "doc");
+            var cands = src.candidates ||
+                        (src.local_path ? [src.local_path] : []);
             for (var ci = 0; ci < cands.length; ci++) {
                 var cf = new File(cands[ci]);
                 if (!cf.exists) {
@@ -861,10 +922,12 @@
                 try {
                     var got = getDoc(cf, docCache);
                     if (got.opened) openedByUs[uri] = true;
-                    fileMarkers[uri] = findAllMarkers(got.doc);
+                    // doc 소스(교과서/EBS)는 마커 매칭을 쓰지 않는다
+                    fileMarkers[uri] = isDoc ? [] : findAllMarkers(got.doc);
                     try { tagStoryLabels(got.doc); } catch (eTag) {}
                     writeLog("열기: " + cf.displayName +
-                             " (markers=" + fileMarkers[uri].length + ")");
+                             (isDoc ? " (doc 소스)"
+                                    : " (markers=" + fileMarkers[uri].length + ")"));
                 } catch (eOp) {
                     writeLog("[경고] 열기 실패: " + cf.fsName + " — " + eOp.message);
                 }
@@ -891,9 +954,144 @@
 
         var codeRanges = [];
         var extractedRanges = {};
+        // 소스에 원래 있던 오버셋을 물려받은 새 문서 페이지 인덱스
+        var preexistingOvfNewPages = {};
 
         for (var ci2 = 0; ci2 < SOURCES.length; ci2++) {
             var srcMeta = SOURCES[ci2];
+
+            // ── [W28-확장] 교과서/EBS 문서 소스 — 전체 결합 ────────────
+            if (srcMeta.kind === "doc") {
+                var dFile = new File(srcMeta.local_path || "");
+                var dUri = dFile.exists ? dFile.absoluteURI : "";
+                var dDoc = dUri ? docCache[dUri] : null;
+                var docRec = {
+                    label: srcMeta.label || "", type: srcMeta.type || "",
+                    pages_total: 0, pages_merged: 0, skipped_pages: [],
+                    page_w: null, page_h: null,
+                    tpl_w: round3(TPL_W), tpl_h: round3(TPL_H),
+                    size_mismatch: false, range: null
+                };
+                if (!dDoc) {
+                    report.unresolved.push(srcMeta.label || "doc소스");
+                    report.doc_sources.push(docRec);
+                    writeLog("[경고] doc 소스 열기 실패: " + (srcMeta.label || ""));
+                    continue;
+                }
+                var dKey = "doc|" + dUri;
+                if (extractedRanges[dKey]) {
+                    writeLog("  [doc] " + srcMeta.label + " → 이미 결합됨 — skip");
+                    continue;
+                }
+                extractedRanges[dKey] = true;
+                try {
+                    docRec.page_w = round3(dDoc.documentPreferences.pageWidth);
+                    docRec.page_h = round3(dDoc.documentPreferences.pageHeight);
+                } catch (eDs) {}
+                if (docRec.page_w !== null &&
+                        (Math.abs(docRec.page_w - TPL_W) > 1 ||
+                         Math.abs(docRec.page_h - TPL_H) > 1)) {
+                    // 비호환 — 무리하게 맞추지 않는다. verify doc_ok 게이트가
+                    // GDrive 저장을 보류하고 실측치를 보고한다.
+                    docRec.size_mismatch = true;
+                    writeLog("[경고] 페이지 크기 비호환: " + srcMeta.label +
+                             " " + docRec.page_w + "x" + docRec.page_h +
+                             "mm (템플릿 " + round3(TPL_W) + "x" +
+                             round3(TPL_H) + "mm) — 결합 보류");
+                    report.doc_sources.push(docRec);
+                    continue;
+                }
+                docRec.pages_total = dDoc.pages.length;
+                // 간지/표지 마스터·마스터 없는 개요 페이지 스킵 (손마무리
+                // 실물 전례: 결합본 내부에 소스 간지가 남지 않는다 —
+                // w28_ext/probe_ranges interior_ganji=[] 실측)
+                var mergeIdx = [], skippedIdx = [];
+                for (var dp = 0; dp < dDoc.pages.length; dp++) {
+                    var dmn = "";
+                    try {
+                        dmn = dDoc.pages[dp].appliedMaster
+                            ? String(dDoc.pages[dp].appliedMaster.name) : "";
+                    } catch (eDm) {}
+                    if (!dmn || dmn.indexOf("간지") !== -1 ||
+                            dmn.indexOf("표지") !== -1) {
+                        skippedIdx.push(dp);
+                    } else {
+                        mergeIdx.push(dp);
+                    }
+                }
+                docRec.skipped_pages = skippedIdx;
+                // 자동 유도 범위 보강 — 소스 간지/개요 텍스트 (실물 표기)
+                try {
+                    docRec.range = enrichDocRange(dDoc, srcMeta, skippedIdx);
+                } catch (eEn) {
+                    writeLog("[경고] 범위 보강 실패: " + (eEn.message || eEn));
+                }
+                // 소스가 결합 전부터 갖고 있던 오버셋 페이지 스캔 —
+                // 물려받은 오버셋은 게이트 실패가 아니라 경고로 노출한다
+                var srcOvf = {};
+                var srcOvfList = [];
+                for (var so = 0; so < mergeIdx.length; so++) {
+                    var soIdx = mergeIdx[so];
+                    var soTfs = dDoc.pages[soIdx].textFrames;
+                    for (var sof = 0; sof < soTfs.length; sof++) {
+                        var soOv = false;
+                        try { soOv = soTfs[sof].overflows; } catch (eSo) {}
+                        if (soOv) {
+                            srcOvf[soIdx] = true;
+                            srcOvfList.push(soIdx + 1);
+                            break;
+                        }
+                    }
+                }
+                docRec.src_overflow_pages = srcOvfList;
+                if (srcOvfList.length) {
+                    writeLog("[안내] 소스 자체 오버셋 " + srcOvfList.length +
+                             "p (결합 전부터): " + srcMeta.label +
+                             " p" + srcOvfList.join(",p"));
+                }
+                var dGrpStart = newDoc.pages.length;
+                for (var dpi = 0; dpi < mergeIdx.length; dpi++) {
+                    var p3 = mergeIdx[dpi];
+                    var srcGeo2 = collectGeo(dDoc.pages[p3]);
+                    try {
+                        dDoc.pages[p3].duplicate(
+                            LocationOptions.AT_END, newDoc.pages.lastItem());
+                    } catch (eDup2) {
+                        writeLog("[경고] " + srcMeta.label + " p" + (p3 + 1) +
+                                 " 복제 실패: " + eDup2.message);
+                        continue;
+                    }
+                    if (srcOvf[p3]) {
+                        preexistingOvfNewPages[newDoc.pages.length - 1] = true;
+                    }
+                    try {
+                        restoreGeo(newDoc.pages.lastItem(), srcGeo2,
+                                   report.geometry,
+                                   (srcMeta.label || "doc") + " p" + (p3 + 1));
+                    } catch (eRg2) {
+                        writeLog("[경고] 지오메트리 복원 오류 " +
+                                 srcMeta.label + " p" + (p3 + 1) + ": " +
+                                 (eRg2.message || eRg2));
+                    }
+                }
+                var dGrpEnd = newDoc.pages.length - 1;
+                docRec.pages_merged = (dGrpEnd >= dGrpStart)
+                    ? (dGrpEnd - dGrpStart + 1) : 0;
+                if (dGrpEnd >= dGrpStart) {
+                    codeRanges.push({ code: srcMeta.label || "doc",
+                                      startIdx: dGrpStart, endIdx: dGrpEnd });
+                    writeLog("  [doc] " + srcMeta.label + " ← " + dDoc.name +
+                             " " + docRec.pages_merged + "p 결합 (스킵 " +
+                             skippedIdx.length + "p)" +
+                             (docRec.range
+                                 ? " / 범위: " + docRec.range.title +
+                                   " / " + docRec.range.detail
+                                 : ""));
+                }
+                report.doc_sources.push(docRec);
+                continue;
+            }
+
             var year = srcMeta.year;
             var month = srcMeta.month;
             var qNum = srcMeta.qNum;
@@ -1002,7 +1200,8 @@
             writeLog("스프레드 재편성 허용 설정: " + newDoc.spreads.length + " spread");
         } catch (eShf) { writeLog("[경고] 재편성 허용 설정 실패: " + eShf.message); }
 
-        // 오버플로우 스캔 (전체 페이지 텍스트 프레임)
+        // 오버플로우 스캔 (전체 페이지 텍스트 프레임) — 소스에서 물려받은
+        // 오버셋(preexistingOvfNewPages)은 별도 목록으로 분리 (경고 전용)
         try {
             for (var op = 0; op < newDoc.pages.length; op++) {
                 var otf = newDoc.pages[op].textFrames;
@@ -1010,7 +1209,13 @@
                     var isOvf = false;
                     try { isOvf = otf[of2].overflows; } catch (eOv) {}
                     if (isOvf) {
-                        report.overflow_pages.push(String(newDoc.pages[op].name));
+                        if (preexistingOvfNewPages[op]) {
+                            report.preexisting_overflow_pages.push(
+                                String(newDoc.pages[op].name));
+                        } else {
+                            report.overflow_pages.push(
+                                String(newDoc.pages[op].name));
+                        }
                         break;
                     }
                 }

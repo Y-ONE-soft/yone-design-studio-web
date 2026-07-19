@@ -59,7 +59,8 @@ def test_registration_consistency():
 
 def test_upload_spec_slots(engine):
     keys = [s["key"] for s in engine.upload_spec["slots"]]
-    assert keys == ["codes", "ranges", "ganji_school", "result_name"]
+    assert keys == ["codes", "extra_sources", "ranges", "ganji_school",
+                    "result_name"]
 
 
 # ── 범위 파싱 (스펙5 입력) ───────────────────────────────────────────────────
@@ -186,7 +187,10 @@ def test_derived_range_title_matches_filename_abbrev(engine):
 def test_upload_spec_ranges_optional(engine):
     slots = {s["key"]: s for s in engine.upload_spec["slots"]}
     assert slots["ranges"]["required"] is False   # 비우면 코드에서 자동 유도
-    assert slots["codes"]["required"] is True
+    # W28-확장: 교과서/EBS 소스만으로도 결합 가능 — 코드는 선택,
+    # '둘 중 하나 필수'는 parse가 서버 측에서 검증한다.
+    assert slots["codes"]["required"] is False
+    assert slots["extra_sources"]["required"] is False
 
 
 # ── relink 맵 (스펙4) ────────────────────────────────────────────────────────
@@ -283,7 +287,7 @@ def test_verify_all_gates_pass_copies_to_gdrive(engine, tmp_path):
     res = engine.verify(job, lambda m: None)
     assert res["gates"] == {"codes_ok": True, "geometry_ok": True,
                             "links_ok": True, "ganji_ok": True,
-                            "overflow_ok": True}
+                            "overflow_ok": True, "doc_ok": True}
     assert res["ok"] is True
     assert res["gdrive_path"] and os.path.isfile(res["gdrive_path"])
     assert res["gdrive_path"].startswith(gbase)

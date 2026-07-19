@@ -243,6 +243,48 @@ def api_mockexam_schools():
     return jsonify(schools)
 
 
+# ── 분석본 결합 v2 — 교과서/EBS 소스 탐색 API (W28-확장) ─────────────────────
+
+@bp.route("/api/analysis-merge/tb-subjects")
+def api_am_tb_subjects():
+    from engines.analysis_merge_v2.engine import _load_config
+    from engines.analysis_merge_v2 import sources as srcmod
+    return jsonify(srcmod.list_textbook_subjects(_load_config()))
+
+
+@bp.route("/api/analysis-merge/tb-publishers")
+def api_am_tb_publishers():
+    from engines.analysis_merge_v2.engine import _load_config
+    from engines.analysis_merge_v2 import sources as srcmod
+    subject = request.args.get("subject", "")
+    return jsonify(srcmod.list_textbook_publishers(_load_config(), subject))
+
+
+@bp.route("/api/analysis-merge/tb-lessons")
+def api_am_tb_lessons():
+    from engines.analysis_merge_v2.engine import _load_config
+    from engines.analysis_merge_v2 import sources as srcmod
+    subject = request.args.get("subject", "")
+    publisher = request.args.get("publisher", "")
+    return jsonify(srcmod.list_textbook_lessons(_load_config(),
+                                                subject, publisher))
+
+
+@bp.route("/api/analysis-merge/ebs-books")
+def api_am_ebs_books():
+    from engines.analysis_merge_v2.engine import _load_config
+    from engines.analysis_merge_v2 import sources as srcmod
+    return jsonify(srcmod.list_ebs_books(_load_config()))
+
+
+@bp.route("/api/analysis-merge/ebs-units")
+def api_am_ebs_units():
+    from engines.analysis_merge_v2.engine import _load_config
+    from engines.analysis_merge_v2 import sources as srcmod
+    book = request.args.get("book", "")
+    return jsonify(srcmod.list_ebs_units(_load_config(), book))
+
+
 # ── 마더텅 결합 API ──────────────────────────────────────────────────────────
 
 @bp.route("/api/mothertongue/lessons")
