@@ -326,13 +326,29 @@
     return String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
   }
 
+  // 범위 제목 → 파일명용 축약: "고1 25년 3월 모의고사" → "25년3월"
+  // (년·월 없는 제목은 공백만 제거 — 서버 default_result_name과 동일 규칙)
+  function abbrevRangeTitle(t) {
+    const m = /(\d{1,2})\s*년\s*(\d{1,2})\s*월/.exec(t || '');
+    if (m) return `${parseInt(m[1], 10)}년${parseInt(m[2], 10)}월`;
+    return (t || '').replace(/\s+/g, '');
+  }
+
+  function sanitizeFilename(name) {
+    // 파일명 규칙: 부적합 문자 제거 + 띄어쓰기 금지
+    return String(name).replace(/[/\\:*?"<>|]/g, '').replace(/\s+/g, '');
+  }
+
   function autoResultName() {
     const school = document.getElementById('school-select').value || '학교';
     const nn = ('0' + (parseInt(document.getElementById('issue-num').value, 10) || 1)).slice(-2);
-    const ranges = collectRanges();
-    let summary = ranges.map(r => r.title).join(',').slice(0, 40) || '결합';
-    summary = summary.replace(/[/\\:*?"<>|]/g, '');
-    return `${school}_분석본${nn}(${summary})_내지`;
+    const parts = [];
+    for (const r of collectRanges()) {
+      const s = abbrevRangeTitle(r.title);
+      if (s && !parts.includes(s)) parts.push(s);
+    }
+    const summary = parts.join(',').slice(0, 40) || '결합';
+    return sanitizeFilename(`${school}_분석본${nn}(${summary})_내지`);
   }
 
   function updatePreview() {
@@ -364,7 +380,8 @@
     const preview = document.getElementById('filename-preview');
     const school = document.getElementById('school-select').value;
     const period = document.getElementById('exam-period').value || '기간미지정';
-    const name = document.getElementById('result-name').value.trim() || autoResultName();
+    const manual = document.getElementById('result-name').value.trim();
+    const name = manual ? sanitizeFilename(manual) : autoResultName();
     if (!school) { preview.textContent = '— (학교를 선택하세요)'; return; }
     preview.innerHTML = `
       <div class="filename-preview-folder">${escapeHtml(SAVE_BASE)}/${escapeHtml(period)}/${escapeHtml(school)}/</div>

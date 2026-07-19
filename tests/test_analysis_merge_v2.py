@@ -86,6 +86,45 @@ def test_default_result_name(engine):
     assert "/" not in name2.split("_", 1)[1] and ":" not in name2
 
 
+# ── 파일명 축약 규칙 (사용자 피드백 2026-07-19) ──────────────────────────────
+
+def test_default_result_name_abbreviates_year_month(engine):
+    """범위 제목 전체("고1 25년 3월 모의고사")가 아니라 "25년3월"만 —
+    공백 없는 파일명."""
+    name = engine.default_result_name(
+        "배재1", "1",
+        [{"title": "고1 25년 3월 모의고사", "detail": "39~40번"},
+         {"title": "고1 22년 9월 모의고사", "detail": "20번"}])
+    assert name == "배재1_분석본01(25년3월,22년9월)_내지"
+    assert " " not in name
+
+
+def test_summarize_range_title_variants(engine):
+    # 년·월 추출 (선행 0 제거)
+    assert engine.summarize_range_title("고1 25년 3월 모의고사") == "25년3월"
+    assert engine.summarize_range_title("고2 22년 09월") == "22년9월"
+    # 이미 축약된 기존 형식 하위호환
+    assert engine.summarize_range_title("26년6월") == "26년6월"
+    # 년·월 없는 제목(교과서 단원 등)은 공백만 제거
+    assert engine.summarize_range_title("영어I YBM(박) 2과") == "영어IYBM(박)2과"
+    assert engine.summarize_range_title("") == ""
+
+
+def test_default_result_name_dedups_same_month(engine):
+    name = engine.default_result_name(
+        "명일1", "2",
+        [{"title": "고1 25년 3월 모의고사", "detail": "1번"},
+         {"title": "25년 3월", "detail": "2번"}])
+    assert name == "명일1_분석본02(25년3월)_내지"
+
+
+def test_sanitize_filename_strips_spaces(engine):
+    assert engine.sanitize_filename("배재1_분석본01(고1 25년 3월)_내지") == \
+        "배재1_분석본01(고125년3월)_내지"
+    assert engine.sanitize_filename('a/b:c*d?e"f<g>h|i j') == "abcdefghij"
+    assert engine.sanitize_filename("") == ""
+
+
 # ── relink 맵 (스펙4) ────────────────────────────────────────────────────────
 
 def test_build_relink_map_prunes_hidden_and_adds_nfd(engine, tmp_path):
