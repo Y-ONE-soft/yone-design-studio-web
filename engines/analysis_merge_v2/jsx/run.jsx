@@ -407,14 +407,44 @@
     }
 
     function setFrameText(doc, tf, text, csName) {
+        // 템플릿 프레임의 손질된 로컬 서식(폰트/크기/행간)을 캡처→복원.
+        // 실사고(2026-07-19 배재1): 간지 학교명 프레임은 문자스타일
+        // '챕터_숫자'(MBC 1961 OTF 16pt) 위에 로컬 오버라이드(G마켓 산스
+        // 11pt)로 3.88mm 프레임에 맞춰져 있는데, contents 대입+스타일
+        // 재적용이 오버라이드를 유실시켜 16pt로 튀며 전량 오버셋
+        // (0자 표시 + 빨간 +)이 됐다.
+        // 주의: tf.texts[0]은 '프레임에 표시된 텍스트'라 오버셋 상태에서는
+        // 빈 범위가 되어 서식 대입이 예외 없는 침묵 no-op이 된다 (실측:
+        // contents 대입 직후 16pt로 튀며 즉시 오버셋 → 이후 texts[0] 조작
+        // 전부 무효). 스토리(parentStory)는 오버셋과 무관하게 전체 텍스트를
+        // 담으므로 서식 조작은 스토리 기준으로 한다.
+        var keepFont = null, keepSize = null, keepLeading = null;
+        try {
+            var r0 = tf.parentStory.textStyleRanges[0];
+            keepFont = r0.appliedFont;
+            keepSize = r0.pointSize;
+            keepLeading = r0.leading;
+        } catch (eKeep) {}
         tf.contents = String(text);
+        var storyText = null;
+        try { storyText = tf.parentStory.texts[0]; } catch (eSt) {}
         // 문자스타일 재적용 (자동 생성 금지 — 없으면 경고만)
         if (csName) {
             var cs = findCharStyle(doc, csName);
             if (cs) {
-                try { tf.texts[0].appliedCharacterStyle = cs; } catch (eA) {}
+                try { if (storyText) storyText.appliedCharacterStyle = cs; } catch (eA) {}
             } else {
                 writeLog("[경고] 문자스타일 없음: " + csName);
+            }
+        }
+        if (keepSize !== null && storyText) {
+            try {
+                if (keepFont) storyText.appliedFont = keepFont;
+                storyText.pointSize = keepSize;
+                if (keepLeading !== null) storyText.leading = keepLeading;
+            } catch (eRestore) {
+                writeLog("[경고] 프레임 서식 복원 실패: " +
+                         (eRestore.message || eRestore));
             }
         }
     }
@@ -468,10 +498,20 @@
             throw new Error("간지 범위/범위_추가내용 마스터 프레임 미발견");
         }
 
+        // 기재 프레임 오버셋 게이트용 수집 (2026-07-19 실사고: 학교명
+        // 프레임은 마스터 위에 있어 페이지 오버플로우 스캔에 안 잡혔다)
+        var edited = [];
+
         // 1) 마스터: 학교명 + 순번
-        if (mSchool) setFrameText(doc, mSchool, settings.ganji_school, "챕터_숫자");
+        if (mSchool) {
+            setFrameText(doc, mSchool, settings.ganji_school, "챕터_숫자");
+            edited.push({ tf: mSchool, name: "간지 학교명(챕터_숫자)" });
+        }
         var issueNum = String(parseInt(settings.issue_num, 10) || 1);
-        if (mIssue) { try { mIssue.contents = issueNum; } catch (eIN) {} }
+        if (mIssue) {
+            try { mIssue.contents = issueNum; } catch (eIN) {}
+            edited.push({ tf: mIssue, name: "간지 순번" });
+        }
 
         // 2) 페이지1 상단 슬러그 (y<0 프레임: 범위/범위_추가내용)
         var ranges = settings.ranges || [];
@@ -493,9 +533,11 @@
             if (scs === "범위") {
                 setFrameText(doc, stf, slugTitle, "범위");
                 slugTitleSet = true;
+                edited.push({ tf: stf, name: "슬러그 범위" });
             } else if (scs === "범위_추가내용") {
                 setFrameText(doc, stf, slugDetail, "범위_추가내용");
                 slugDetailSet = true;
+                edited.push({ tf: stf, name: "슬러그 범위_추가내용" });
             }
         }
 
@@ -509,6 +551,8 @@
         setFrameText(doc, ovrDetail,
                      (ranges.length && ranges[0].detail) ? ranges[0].detail : " ",
                      "범위_추가내용");
+        edited.push({ tf: ovrRange, name: "범위쌍1 범위" });
+        edited.push({ tf: ovrDetail, name: "범위쌍1 추가내용" });
         var pairs = 1;
         for (var k = 1; k < ranges.length; k++) {
             var dupR = ovrRange.duplicate();
@@ -517,8 +561,20 @@
             moveToY(dupD, GANJI_DETAIL_Y + GANJI_PAIR_STEP * k);
             setFrameText(doc, dupR, ranges[k].title, "범위");
             setFrameText(doc, dupD, ranges[k].detail || " ", "범위_추가내용");
+            edited.push({ tf: dupR, name: "범위쌍" + (k + 1) + " 범위" });
+            edited.push({ tf: dupD, name: "범위쌍" + (k + 1) + " 추가내용" });
             pairs++;
         }
+
+        // 기재 프레임 오버셋 게이트 — 하나라도 넘치면 간지 기재 실패로
+        // 판정한다 (verify ganji_ok=False → GDrive 저장 보류).
+        var oversetNames = [];
+        for (var ov = 0; ov < edited.length; ov++) {
+            var isOver = false;
+            try { isOver = edited[ov].tf.overflows; } catch (eOvf) {}
+            if (isOver) oversetNames.push(edited[ov].name);
+        }
+        ganjiRep.overset_frames = oversetNames;
 
         ganjiRep.ok = true;
         ganjiRep.school = settings.ganji_school;
@@ -528,8 +584,14 @@
         ganjiRep.slug_detail = slugDetail;
         ganjiRep.slug_detail_set = slugDetailSet;
         ganjiRep.range_pairs = pairs;
+        if (oversetNames.length) {
+            ganjiRep.ok = false;
+            ganjiRep.error = "기재 프레임 오버셋: " + oversetNames.join(", ");
+            writeLog("[경고] 간지 " + ganjiRep.error);
+        }
         writeLog("간지 기재: " + settings.ganji_school + " / 순번 " + issueNum +
-                 " / 범위쌍 " + pairs + "개");
+                 " / 범위쌍 " + pairs + "개" +
+                 (oversetNames.length ? " / 오버셋 " + oversetNames.length + "건" : ""));
     }
 
     // ───────────────────────────────────────────────────────────────
@@ -667,6 +729,15 @@
                 try { app.documents[dPre].close(SaveOptions.NO); } catch (ePre3) {}
             }
         }
+        // 잔존 출력 파일은 복사 전에 제거 — 직전 실행이 남긴 파일 위로
+        // 덮어쓰며 열면 InDesign이 낡은 문서 상태를 되살려 페이지 정리가
+        // 침묵 no-op이 되고 행(hang)으로 이어질 수 있다 (2026-07-19 재실행 실측:
+        // 7페이지 잔존 → 정리 무효 → duplicate 중 무기한 블록).
+        if (outFile.exists && !outFile.remove()) {
+            fail("잔존 출력 파일 제거 실패(파일 사용 중?): " + OUTPUT_INDD);
+            writeReport(report);
+            return;
+        }
         if (!tplFile.copy(outFile)) { fail("템플릿 복사 실패: " + OUTPUT_INDD); writeReport(report); return; }
         writeLog("템플릿 복사 -> " + outFile.fsName);
 
@@ -714,6 +785,16 @@
             }
         }
         writeLog("베이스 정리 → " + newDoc.pages.length + " 페이지 보존");
+        // fail-loud: 정리 후에도 초과 페이지가 남으면 낡은 문서 재사용 등
+        // 비정상 상태 — 침묵 진행하면 stale 문서 위 duplicate로 InDesign이
+        // 보호 종료(ProtectiveShutdown)까지 갈 수 있다 (2026-07-19 실측).
+        if (newDoc.pages.length > KEEP_HEAD) {
+            fail("베이스 정리 실패: " + newDoc.pages.length + "p 잔존 (기대 " +
+                 KEEP_HEAD + "p) — 낡은 문서 재사용 의심, 중단");
+            try { newDoc.close(SaveOptions.NO); } catch (eClAb) {}
+            writeReport(report);
+            return;
+        }
 
         var codeRanges = [];
         var extractedRanges = {};
@@ -842,6 +923,30 @@
                 }
             }
         } catch (eOs) {}
+
+        // 적용 마스터 스프레드 프레임도 스캔 — 마스터 위 프레임(간지
+        // 학교명 등)은 page.textFrames에 안 잡혀 오버셋이 게이트를
+        // 통과하던 구멍 봉합 (2026-07-19 배재1 실사고)
+        try {
+            var seenMasters = {};
+            for (var mp = 0; mp < newDoc.pages.length; mp++) {
+                var am = null;
+                try { am = newDoc.pages[mp].appliedMaster; } catch (eAm) {}
+                if (!am || !am.isValid) continue;
+                var mkey = String(am.name);
+                if (seenMasters[mkey]) continue;
+                seenMasters[mkey] = true;
+                var mfr = am.textFrames;
+                for (var mf = 0; mf < mfr.length; mf++) {
+                    var mOvf = false;
+                    try { mOvf = mfr[mf].overflows; } catch (eMOv) {}
+                    if (mOvf) {
+                        report.overflow_pages.push("master:" + mkey);
+                        break;
+                    }
+                }
+            }
+        } catch (eMs) {}
 
         // 저장 (.indd만 — PDF export 없음 [스펙3·1])
         try { newDoc.save(); } catch (eS) { fail("저장 실패: " + eS.message); }

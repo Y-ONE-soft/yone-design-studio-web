@@ -42,6 +42,10 @@ def test_registration_consistency():
     assert "__SETTINGS_PATH__" in src           # 토큰 치환 계약
     assert "settings 로드 실패" in src           # 부트스트랩 try-catch
     assert "exportFile" not in src              # PDF export 제거 (스펙1·3)
+    # 2026-07-19 배재1 실사고 봉합 계약:
+    assert "overset_frames" in src              # 간지 기재 프레임 오버셋 게이트
+    assert '"master:" + mkey' in src            # 마스터 프레임 오버플로우 스캔
+    assert "keepSize" in src                    # 로컬 서식 캡처→복원 (오버셋 원인)
 
 
 def test_upload_spec_slots(engine):
@@ -254,6 +258,30 @@ def test_verify_ganji_gate(engine, tmp_path):
     job, _ = _make_job(tmp_path, bad)
     res = engine.verify(job, lambda m: None)
     assert res["gates"]["ganji_ok"] is False and res["ok"] is False
+
+
+def test_verify_ganji_overset_blocks_gdrive(engine, tmp_path):
+    """간지 기재 프레임 오버셋(2026-07-19 배재1 실사고)이 게이트에 잡혀
+    GDrive 저장이 보류되는지 — JSX가 남기는 리포트 형태 그대로 검증."""
+    bad = json.loads(json.dumps(GOOD_REPORT))
+    bad["ganji"] = {"ok": False,
+                    "error": "기재 프레임 오버셋: 간지 학교명(챕터_숫자)",
+                    "overset_frames": ["간지 학교명(챕터_숫자)"]}
+    job, gbase = _make_job(tmp_path, bad)
+    res = engine.verify(job, lambda m: None)
+    assert res["gates"]["ganji_ok"] is False and res["ok"] is False
+    assert res["gdrive_path"] is None and not os.listdir(gbase)
+    assert any("오버셋" in w for w in res["warnings"])
+
+
+def test_verify_master_overflow_blocks(engine, tmp_path):
+    """마스터 프레임 오버플로우("master:간지-마스터")도 오버플로우 게이트가
+    잡는지 — 스캔 확장 계약."""
+    bad = json.loads(json.dumps(GOOD_REPORT))
+    bad["overflow_pages"] = ["master:간지-마스터"]
+    job, _ = _make_job(tmp_path, bad)
+    res = engine.verify(job, lambda m: None)
+    assert res["gates"]["overflow_ok"] is False and res["ok"] is False
 
 
 def test_verify_overflow_and_unresolved_gates(engine, tmp_path):
