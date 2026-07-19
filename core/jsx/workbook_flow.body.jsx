@@ -501,19 +501,74 @@ function trimWsOverset(story) {
 // safety 상한 60 (W12): 123문제 변형문제 문제모음이 상한 10을 넘겨 초과분이
 // overset(미인쇄)으로 잘렸다. 상한은 무한 루프 가드일 뿐 실제 반복 수는
 // 오버플로우 해소 시점이 결정 — 기존 케이스 무영향. 반환 = 추가 페이지 수.
+// W30-r15 (결함 6): 소스 페이지의 '이 스토리' 프레임 전체를 스레드 순서로
+// 복제한다 — 기존 구현은 마지막 프레임 1개만 복제해 2단 템플릿(O-마스터,
+// 페이지당 2프레임)의 확장 페이지가 1단(오른쪽 단 1개)으로 열화됐다
+// (실서비스 376b34d0 p95~98 실측, 게이트 G31). 좌/우 여백 비대칭(교과서
+// 내지 실측 1.5mm)은 새 페이지와 같은 물리 사이드의 스토리 페이지에서
+// 기하 템플릿을 얻어 보존하고, 없으면 소스 페이지 상대좌표 폴백.
+function framesOfStoryOnPage(story, pg) {
+    var out = [];
+    var conts = story.textContainers;
+    for (var i = 0; i < conts.length; i++) {
+        try {
+            if (conts[i].parentPage
+                    && conts[i].parentPage.id === pg.id) {
+                out.push(conts[i]);
+            }
+        } catch (e) {}
+    }
+    return out;
+}
+
+function relBoundsOfFrames(pg, frames) {
+    var pb = pg.bounds;
+    var out = [];
+    for (var i = 0; i < frames.length; i++) {
+        var gb = frames[i].geometricBounds;
+        out.push([gb[0] - pb[0], gb[1] - pb[1],
+                  gb[2] - pb[0], gb[3] - pb[1]]);
+    }
+    return out;
+}
+
 function expandStoryOverflow(doc, label, story) {
     var conts = story.textContainers;
     var lastF = conts[conts.length - 1];
     var safety = 0;
     while (lastF.overflows && safety < 60) {
         var lp = lastF.parentPage;
-        var gb = lastF.geometricBounds;
+        var srcPage = lp;
+        var srcFrames = framesOfStoryOnPage(story, lp);
+        if (srcFrames.length === 0) { srcFrames = [lastF]; }
         var np = doc.pages.add(LocationOptions.AFTER, lp);
         try { np.appliedMaster = lp.appliedMaster; } catch (e) {}
-        var ntf = np.textFrames.add();
-        ntf.geometricBounds = [gb[0], gb[1], gb[2], gb[3]];
-        lastF.nextTextFrame = ntf;
-        lastF = ntf;
+        // 사이드 매칭 기하 템플릿: 새 페이지와 같은 물리 사이드의 스토리
+        // 페이지(뒤에서부터, 프레임 수 동등 이상)를 찾는다
+        if (pageSideOf(doc, np) !== pageSideOf(doc, srcPage)) {
+            try {
+                var spgs = storyPagesInOrder(story);
+                for (var si = spgs.length - 1; si >= 0; si--) {
+                    if (pageSideOf(doc, spgs[si])
+                            !== pageSideOf(doc, np)) { continue; }
+                    var cand = framesOfStoryOnPage(story, spgs[si]);
+                    if (cand.length >= srcFrames.length) {
+                        srcPage = spgs[si];
+                        srcFrames = cand;
+                        break;
+                    }
+                }
+            } catch (e6) {}
+        }
+        var rel = relBoundsOfFrames(srcPage, srcFrames);
+        var npb = np.bounds;
+        for (var fi = 0; fi < rel.length; fi++) {
+            var ntf = np.textFrames.add();
+            ntf.geometricBounds = [npb[0] + rel[fi][0], npb[1] + rel[fi][1],
+                                   npb[0] + rel[fi][2], npb[1] + rel[fi][3]];
+            lastF.nextTextFrame = ntf;
+            lastF = ntf;
+        }
         safety++;
         if (safety % 10 === 0) {
             wlog(label + " 오버플로우 페이지 확장 진행: +" + safety);
@@ -574,6 +629,27 @@ function cleanupPages(doc, flowStories, op) {
                 if (cc.replace(/[\s\r\n\uFFFC]+/g, "").length > 0) {
                     lastWithText = ci;
                 }
+            }
+            if (lastWithText >= 0 && lastWithText < conts.length - 1) {
+                // W30-r15 (결함 6 잔여): 절단은 페이지 경계에서 — 마지막
+                // 텍스트 프레임과 같은 페이지의 뒤 칼럼 프레임은 스레드에
+                // 남긴다. 프레임 중간 절단이면 이후 문제단위킵 밀기가
+                // 그 페이지의 남은 칼럼(빈 독립 스토리로 분리됨)을
+                // 건너뛰고 확장 페이지로 흘러 우단 공백이 남는다
+                // (r15 1차 재조판 실측: p96 좌단만 스토리, 우단은 빈
+                // 별도 스토리 — G31 [프레임결손] 검출).
+                try {
+                    var lwPage = conts[lastWithText].parentPage;
+                    while (lastWithText < conts.length - 1) {
+                        var nxtPg = null;
+                        try {
+                            nxtPg = conts[lastWithText + 1].parentPage;
+                        } catch (ePg) {}
+                        if (!(lwPage && nxtPg
+                                && nxtPg.id === lwPage.id)) { break; }
+                        lastWithText++;
+                    }
+                } catch (eQ) {}
             }
             if (lastWithText >= 0 && lastWithText < conts.length - 1) {
                 try {
