@@ -406,8 +406,85 @@
         return null;
     }
 
+    // 캡처→복원 대상 로컬 서식 속성 (W28-피드백2, 2026-07-19):
+    // 크기 계열(폰트/크기/행간)만 복원하던 1차 수리는 색 계열을 놓쳐
+    // 문자스타일 재적용이 학교명 글자색·밑줄 색을 스타일 정의값으로
+    // 되돌렸다(사용자 피드백: "색상이 이상하다"). 색/밑줄/획 계열까지
+    // 전부 캡처해 복원한다.
+    var KEEP_COLOR_ATTRS = [
+        "fillColor", "fillTint", "strokeColor", "strokeTint",
+        "underline", "underlineColor", "underlineTint",
+        "underlineWeight", "underlineOffset", "underlineType"
+    ];
+
+    function captureTextAttrs(r0) {
+        var keep = {};
+        try { keep.appliedFont = r0.appliedFont; } catch (e1) {}
+        try { keep.pointSize = r0.pointSize; } catch (e2) {}
+        try { keep.leading = r0.leading; } catch (e3) {}
+        for (var i = 0; i < KEEP_COLOR_ATTRS.length; i++) {
+            var k = KEEP_COLOR_ATTRS[i];
+            try { keep[k] = r0[k]; } catch (eK) {}
+        }
+        return keep;
+    }
+
+    function applyTextAttrs(t, keep) {
+        try { if (keep.appliedFont) t.appliedFont = keep.appliedFont; } catch (e1) {}
+        try { if (keep.pointSize !== undefined) t.pointSize = keep.pointSize; } catch (e2) {}
+        try { if (keep.leading !== undefined) t.leading = keep.leading; } catch (e3) {}
+        for (var i = 0; i < KEEP_COLOR_ATTRS.length; i++) {
+            var k = KEEP_COLOR_ATTRS[i];
+            if (keep[k] === undefined) continue;
+            try { t[k] = keep[k]; } catch (eK) {
+                writeLog("[경고] 서식 복원 실패(" + k + "): " + (eK.message || eK));
+            }
+        }
+    }
+
+    function swatchName(v) {
+        if (v === null || v === undefined) return null;
+        try { if (v.name !== undefined) return String(v.name); } catch (e) {}
+        try { return String(v); } catch (e2) { return null; }
+    }
+
+    // 리포트/게이트용 직렬화 스냅샷 (기대 vs 실측 대조 — verify 게이트)
+    function attrsSnapshot(r0) {
+        var s = {};
+        try { s.font = String(r0.appliedFont.name); }
+        catch (e1) { try { s.font = String(r0.appliedFont); } catch (e1b) {} }
+        try { s.pointSize = r0.pointSize; } catch (e2) {}
+        try { s.leading = String(r0.leading); } catch (e3) {}
+        try { s.fillColor = swatchName(r0.fillColor); } catch (e4) {}
+        try { s.fillTint = r0.fillTint; } catch (e5) {}
+        try { s.strokeColor = swatchName(r0.strokeColor); } catch (e6) {}
+        try { s.underline = r0.underline; } catch (e7) {}
+        try { s.underlineColor = swatchName(r0.underlineColor); } catch (e8) {}
+        try { s.underlineTint = r0.underlineTint; } catch (e9) {}
+        try { s.underlineWeight = String(r0.underlineWeight); } catch (e10) {}
+        try { s.underlineOffset = String(r0.underlineOffset); } catch (e11) {}
+        return s;
+    }
+
+    function diffAttrs(expected, actual) {
+        var out = [];
+        if (!expected || !actual) return out;
+        for (var k in expected) {
+            if (!expected.hasOwnProperty(k)) continue;
+            var e = expected[k], a = actual[k];
+            var same;
+            if (typeof e == "number" && typeof a == "number") {
+                same = Math.abs(e - a) < 0.01;
+            } else {
+                same = String(e) === String(a);
+            }
+            if (!same) out.push(k + ": " + e + " -> " + a);
+        }
+        return out;
+    }
+
     function setFrameText(doc, tf, text, csName) {
-        // 템플릿 프레임의 손질된 로컬 서식(폰트/크기/행간)을 캡처→복원.
+        // 템플릿 프레임의 손질된 로컬 서식(폰트/크기/행간/색/밑줄)을 캡처→복원.
         // 실사고(2026-07-19 배재1): 간지 학교명 프레임은 문자스타일
         // '챕터_숫자'(MBC 1961 OTF 16pt) 위에 로컬 오버라이드(G마켓 산스
         // 11pt)로 3.88mm 프레임에 맞춰져 있는데, contents 대입+스타일
@@ -418,12 +495,13 @@
         // contents 대입 직후 16pt로 튀며 즉시 오버셋 → 이후 texts[0] 조작
         // 전부 무효). 스토리(parentStory)는 오버셋과 무관하게 전체 텍스트를
         // 담으므로 서식 조작은 스토리 기준으로 한다.
-        var keepFont = null, keepSize = null, keepLeading = null;
+        // 반환: { expected, actual } — 기재 전 캡처 스냅샷과 기재 후 실측
+        // 스냅샷 (verify의 간지 서식 게이트가 대조).
+        var keep = null, expected = null;
         try {
             var r0 = tf.parentStory.textStyleRanges[0];
-            keepFont = r0.appliedFont;
-            keepSize = r0.pointSize;
-            keepLeading = r0.leading;
+            keep = captureTextAttrs(r0);
+            expected = attrsSnapshot(r0);
         } catch (eKeep) {}
         tf.contents = String(text);
         var storyText = null;
@@ -437,16 +515,12 @@
                 writeLog("[경고] 문자스타일 없음: " + csName);
             }
         }
-        if (keepSize !== null && storyText) {
-            try {
-                if (keepFont) storyText.appliedFont = keepFont;
-                storyText.pointSize = keepSize;
-                if (keepLeading !== null) storyText.leading = keepLeading;
-            } catch (eRestore) {
-                writeLog("[경고] 프레임 서식 복원 실패: " +
-                         (eRestore.message || eRestore));
-            }
+        if (keep !== null && storyText) {
+            applyTextAttrs(storyText, keep);
         }
+        var actual = null;
+        try { actual = attrsSnapshot(tf.parentStory.textStyleRanges[0]); } catch (eAct) {}
+        return { expected: expected, actual: actual };
     }
 
     function moveToY(item, y1) {
@@ -503,8 +577,9 @@
         var edited = [];
 
         // 1) 마스터: 학교명 + 순번
+        var schoolAttrs = null;
         if (mSchool) {
-            setFrameText(doc, mSchool, settings.ganji_school, "챕터_숫자");
+            schoolAttrs = setFrameText(doc, mSchool, settings.ganji_school, "챕터_숫자");
             edited.push({ tf: mSchool, name: "간지 학교명(챕터_숫자)" });
         }
         var issueNum = String(parseInt(settings.issue_num, 10) || 1);
@@ -576,6 +651,16 @@
         }
         ganjiRep.overset_frames = oversetNames;
 
+        // 학교명 서식 보존 게이트 (W28-피드백2): 기재 전 캡처(기대)와
+        // 기재 후 실측을 대조 — 색/밑줄/크기 계열이 하나라도 달라지면
+        // 간지 기재 실패로 판정 (verify ganji_ok=False → GDrive 저장 보류).
+        var attrMismatches = [];
+        if (schoolAttrs) {
+            ganjiRep.school_attrs = schoolAttrs;
+            attrMismatches = diffAttrs(schoolAttrs.expected, schoolAttrs.actual);
+            ganjiRep.attr_mismatches = attrMismatches;
+        }
+
         ganjiRep.ok = true;
         ganjiRep.school = settings.ganji_school;
         ganjiRep.issue_num = issueNum;
@@ -589,9 +674,17 @@
             ganjiRep.error = "기재 프레임 오버셋: " + oversetNames.join(", ");
             writeLog("[경고] 간지 " + ganjiRep.error);
         }
+        if (attrMismatches.length) {
+            ganjiRep.ok = false;
+            var attrMsg = "학교명 서식 훼손: " + attrMismatches.join(", ");
+            ganjiRep.error = ganjiRep.error
+                ? ganjiRep.error + " / " + attrMsg : attrMsg;
+            writeLog("[경고] 간지 " + attrMsg);
+        }
         writeLog("간지 기재: " + settings.ganji_school + " / 순번 " + issueNum +
                  " / 범위쌍 " + pairs + "개" +
-                 (oversetNames.length ? " / 오버셋 " + oversetNames.length + "건" : ""));
+                 (oversetNames.length ? " / 오버셋 " + oversetNames.length + "건" : "") +
+                 (attrMismatches.length ? " / 서식 불일치 " + attrMismatches.length + "건" : ""));
     }
 
     // ───────────────────────────────────────────────────────────────

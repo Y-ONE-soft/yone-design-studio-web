@@ -57,13 +57,15 @@
 
   <!-- 범위 목록 -->
   <div class="school-section">
-    <div class="section-label">범위 목록 (1페이지·간지 표기) <span class="required">*</span></div>
+    <div class="section-label">범위 목록 (1페이지·간지 표기)</div>
     <div class="input-label u-mt-4">
-      범위(교재명/회차) + 상세(과·번호·제목). 여러 범위를 결합하면 간지에 나란히 병기됩니다.
+      범위(교재명/회차) + 상세(과·번호·제목). 여러 범위를 결합하면 간지에 나란히 병기됩니다.<br>
+      <b>비워두면 문제 코드에서 자동 유도</b>됩니다. (예: 250320 &rarr; 고1 25년 3월 모의고사 / 20번)
     </div>
     <div id="range-rows"></div>
     <button type="button" class="form-select" id="add-range-btn"
             style="width:auto;cursor:pointer;margin-top:6px">+ 범위 추가</button>
+    <div id="ranges-derived" class="input-hint"></div>
     <input type="hidden" name="ranges" id="ranges-hidden">
   </div>
 
@@ -326,6 +328,41 @@
     return String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
   }
 
+  // ── 문제 코드 → 범위 자동 유도 (서버 derive_ranges_from_codes와 동일 규칙) ──
+  function formatQnums(qs) {
+    const parts = [];
+    let i = 0;
+    while (i < qs.length) {
+      let j = i;
+      while (j + 1 < qs.length && qs[j + 1] === qs[j] + 1) j++;
+      parts.push(j > i ? `${qs[i]}~${qs[j]}번` : `${qs[i]}번`);
+      i = j + 1;
+    }
+    return parts.join(', ');
+  }
+
+  function deriveRangesFromCodes(items) {
+    const grade = currentGrade();
+    const order = [], byKey = {};
+    for (const it of items) {
+      const key = it.raw.slice(0, 4);
+      if (!byKey[key]) { byKey[key] = []; order.push(key); }
+      const q = parseInt(it.raw.slice(4, 6), 10);
+      if (!byKey[key].includes(q)) byKey[key].push(q);
+    }
+    return order.map(k => ({
+      title: `${grade} ${parseInt(k.slice(0, 2), 10)}년 ${parseInt(k.slice(2, 4), 10)}월 모의고사`,
+      detail: formatQnums(byKey[k]),
+    }));
+  }
+
+  // 간지/파일명에 실제 쓰일 범위: 수동 입력 우선, 없으면 코드에서 유도
+  function effectiveRanges(items) {
+    const manual = collectRanges();
+    if (manual.length) return manual;
+    return deriveRangesFromCodes(items || parseCodes().items);
+  }
+
   // 범위 제목 → 파일명용 축약: "고1 25년 3월 모의고사" → "25년3월"
   // (년·월 없는 제목은 공백만 제거 — 서버 default_result_name과 동일 규칙)
   function abbrevRangeTitle(t) {
@@ -339,11 +376,11 @@
     return String(name).replace(/[/\\:*?"<>|]/g, '').replace(/\s+/g, '');
   }
 
-  function autoResultName() {
+  function autoResultName(items) {
     const school = document.getElementById('school-select').value || '학교';
     const nn = ('0' + (parseInt(document.getElementById('issue-num').value, 10) || 1)).slice(-2);
     const parts = [];
-    for (const r of collectRanges()) {
+    for (const r of effectiveRanges(items)) {
       const s = abbrevRangeTitle(r.title);
       if (s && !parts.includes(s)) parts.push(s);
     }
@@ -377,11 +414,23 @@
       }
     }
 
+    // 범위 자동 유도 미리보기 (수동 범위가 없을 때만)
+    const derivedEl = document.getElementById('ranges-derived');
+    if (derivedEl) {
+      if (!collectRanges().length && items.length) {
+        const derived = deriveRangesFromCodes(items);
+        derivedEl.innerHTML = '코드에서 자동 유도 → ' + escapeHtml(
+          derived.map(r => `${r.title} / ${r.detail}`).join('  ·  '));
+      } else {
+        derivedEl.innerHTML = '';
+      }
+    }
+
     const preview = document.getElementById('filename-preview');
     const school = document.getElementById('school-select').value;
     const period = document.getElementById('exam-period').value || '기간미지정';
     const manual = document.getElementById('result-name').value.trim();
-    const name = manual ? sanitizeFilename(manual) : autoResultName();
+    const name = manual ? sanitizeFilename(manual) : autoResultName(items);
     if (!school) { preview.textContent = '— (학교를 선택하세요)'; return; }
     preview.innerHTML = `
       <div class="filename-preview-folder">${escapeHtml(SAVE_BASE)}/${escapeHtml(period)}/${escapeHtml(school)}/</div>
@@ -439,18 +488,18 @@
     if (!document.getElementById('school-select').value) {
       alert('학교를 선택하세요. (저장 폴더: 학교명+학년)'); return;
     }
-    const ranges = collectRanges();
-    if (!ranges.length) {
-      alert('범위를 1개 이상 입력하세요. (예: 고1 25년 3월 모의고사)'); return;
-    }
     if (!document.getElementById('ganji-school').value.trim()) {
       alert('간지 학교 표기를 입력하세요. (예: 2026 강동고2)'); return;
     }
-    document.getElementById('ranges-hidden').value = JSON.stringify(ranges);
+    // 수동 범위만 전송 — 비어 있으면 서버가 문제 코드에서 자동 유도
+    // (규칙 단일화: derive_ranges_from_codes)
+    const ranges = collectRanges();
+    document.getElementById('ranges-hidden').value =
+      ranges.length ? JSON.stringify(ranges) : '';
 
     const formData = new FormData(form);
     if (!formData.get('result_name').trim()) {
-      formData.set('result_name', autoResultName());
+      formData.set('result_name', autoResultName(parsed.items));
     }
 
     runBtn.disabled = true;

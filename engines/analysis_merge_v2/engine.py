@@ -93,9 +93,9 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
                 },
                 {
                     "key": "ranges",
-                    "label": "범위 목록 (교재명/회차 + 상세)",
+                    "label": "범위 목록 (교재명/회차 + 상세 — 비우면 문제 코드에서 자동 유도)",
                     "type": "text",
-                    "required": True,
+                    "required": False,
                 },
                 {
                     "key": "ganji_school",
@@ -153,6 +153,56 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
                     out.append({"title": title, "detail": detail})
         return out
 
+    # ─── 문제 코드 → 범위 자동 유도 (사용자 피드백 2026-07-19) ──────
+
+    @staticmethod
+    def _format_qnums(qnums):
+        """문항 번호 리스트 → 상세 표기 (연속 구간은 "a~b번"으로 압축).
+
+        [39, 40] → "39~40번" / [20, 21, 22, 23, 29] → "20~23번, 29번"
+        (기존 손마무리 실물·수동 입력 관례: "39~40번", "20번")
+        """
+        parts = []
+        i = 0
+        while i < len(qnums):
+            j = i
+            while j + 1 < len(qnums) and qnums[j + 1] == qnums[j] + 1:
+                j += 1
+            if j > i:
+                parts.append(f"{qnums[i]}~{qnums[j]}번")
+            else:
+                parts.append(f"{qnums[i]}번")
+            i = j + 1
+        return ", ".join(parts)
+
+    @classmethod
+    def derive_ranges_from_codes(cls, codes, grade):
+        """범위 미입력 시 문제 코드(YYMMNN)에서 간지 범위 목록 자동 유도.
+
+        규칙 (사용자 스펙): 250320 → "고1 25년 3월 모의고사 / 20번"
+          - title  = "{학년} {YY}년 {M}월 모의고사"  (학년은 폼의 학년 필드)
+          - detail = 같은 회차 문항 번호들 ("20번", "39~40번" — 연속 압축)
+        여러 회차면 입력 순서(첫 등장 순)대로 범위 목록에 병기 —
+        기존 다중 범위 병기 로직(범위쌍 복제)이 그대로 소비한다.
+        """
+        grade = (grade or "").strip() or "고1"
+        order = []
+        by_ym = {}
+        for c in codes or []:
+            key = (c["year"], c["month"])
+            if key not in by_ym:
+                by_ym[key] = []
+                order.append(key)
+            q = int(c["qNum"])
+            if q not in by_ym[key]:
+                by_ym[key].append(q)
+        out = []
+        for year, month in order:
+            title = f"{grade} {int(year)}년 {int(month)}월 모의고사"
+            out.append({"title": title,
+                        "detail": cls._format_qnums(by_ym[(year, month)])})
+        return out
+
     # ─── relink 맵 (링크 파일명 → 절대경로) [스펙4에서 사용] ────────
 
     @staticmethod
@@ -200,13 +250,24 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
         meta_path = super().parse(uploaded_files, job_dir, log)
         cfg = _load_config()
 
-        # 범위 목록 (간지/1페이지 기재용) — 필수
+        with open(meta_path, encoding="utf-8") as f:
+            meta = json.load(f)
+
+        # 범위 목록 (간지/1페이지 기재용) — 수동 입력 우선, 비우면 문제
+        # 코드(YYMMNN)에서 자동 유도 (사용자 피드백 2026-07-19)
         ranges = self.parse_ranges(self._get_meta(job_dir, "ranges", ""))
-        if not ranges:
-            raise ValueError(
-                "범위 목록이 입력되지 않았습니다. (예: 고1 25년 3월 모의고사 | 39번, 40번)")
-        log(f"[범위] {len(ranges)}개: "
-            + " / ".join(r["title"] for r in ranges))
+        if ranges:
+            log(f"[범위] {len(ranges)}개: "
+                + " / ".join(r["title"] for r in ranges))
+        else:
+            grade = self._get_meta(job_dir, "grade", "고1")
+            ranges = self.derive_ranges_from_codes(meta.get("codes"), grade)
+            if not ranges:
+                raise ValueError(
+                    "범위 목록이 입력되지 않았고 코드에서 유도할 수도 없습니다. "
+                    "(예: 고1 25년 3월 모의고사 | 39번, 40번)")
+            log(f"[범위 자동 유도] {len(ranges)}개: "
+                + " / ".join(f"{r['title']} / {r['detail']}" for r in ranges))
 
         # 템플릿: GDrive 원본 → job_dir 로컬 사본 (GDrive 원본 무수정 원칙)
         tpl_src = cfg["template_path"]
@@ -220,8 +281,6 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
         log(f"[템플릿] 로컬 사본: {os.path.basename(tpl_local)}")
 
         # relink 맵 — 소스 월 폴더 + 이미지 폴더 사전 스캔
-        with open(meta_path, encoding="utf-8") as f:
-            meta = json.load(f)
         month_folders = []
         for s in meta.get("sources", []):
             mf = s.get("month_folder")
@@ -480,8 +539,16 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
         # ── 게이트 4: 간지/1페이지 텍스트 (스펙 5) ──────────────────
         ganji = report.get("ganji") or {}
         ganji_ok = bool(ganji.get("ok"))
+        # 간지 프레임 속성 대조 (W28-피드백2): 학교명 기재 전 캡처(기대)와
+        # 기재 후 실측의 색/밑줄/크기 스냅샷이 다르면 실패 — JSX가 ok에
+        # 반영하지만, verify에서도 독립적으로 재검한다 (이중 봉합).
+        attr_mismatches = ganji.get("attr_mismatches") or []
+        if attr_mismatches:
+            ganji_ok = False
+            warnings.append("간지 학교명 서식 불일치(기대→실측): "
+                            + ", ".join(str(m) for m in attr_mismatches))
         gates["ganji_ok"] = ganji_ok
-        if not ganji_ok:
+        if not bool(ganji.get("ok")):
             warnings.append("간지/1페이지 기재 실패: "
                             + (ganji.get("error") or "리포트 없음"))
 
