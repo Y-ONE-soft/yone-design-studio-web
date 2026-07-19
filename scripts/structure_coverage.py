@@ -34,6 +34,7 @@ from engines.workbook.parser import (  # noqa: E402 — 현행 파서 판정 경
     _RE_OLD_WB_NUM,
     _RE_OLD_WB_SOURCE,
 )
+from core.structure.header_detect import detect_from_candidates  # noqa: E402 — W31 구조 우선 인식기
 from scripts.extract_structure import classify_line  # noqa: E402 — 후보 재검증 (규칙 단일화)
 
 INV = os.path.join(_REPO, "data_corpus", "manuscript_structure", "inventory.jsonl")
@@ -109,26 +110,44 @@ def load_inventory():
 
 
 def cluster(recs):
-    """shape → {count, files, samples, regex_ok, struct_ok_occurrences}
+    """shape → {count, files, samples, regex_ok, struct_ok, v2_ok}
 
-    Returns: (clusters, stem_clusters) — 발문+출처 라인은 별도 집계.
+    v2_ok = W31 구조 우선 인식기(core/structure/header_detect)의 문서 단위
+    판정 — 레코드의 헤더 후보 리스트를 문서 순으로 detect_from_candidates에
+    넣어 발생(occurrence) 단위로 집계한다 (측정과 실전이 같은 코어).
+
+    Returns: (clusters, stem_clusters, stem_fp) — 발문+출처 라인은 별도
+    집계, stem_fp = 발문이 구조 신호만으로 헤더 승격된 오탐 발생 수.
     """
     clusters = {}
     stem_clusters = Counter()
+    stem_fp = 0
     for r in recs:
+        # 문서 단위 재구성: 후보 재검증(최신 규칙 통일) 후 문서 순 유지
+        doc = []
         for h in r.get("headers", []):
             t, body_next = h["t"], h.get("body_next", False)
-            # 후보 재검증: 추출 시점 규칙이 느슨했던 레코드도 최신 규칙으로 통일
             if classify_line(t) != "header":
                 continue
-            if is_stem(t):
+            doc.append((t, body_next, is_stem(t)))
+        if not doc:
+            continue
+        det = detect_from_candidates(
+            [{"t": t, "body_next": bn} for t, bn, _s in doc],
+            legacy=recognize_regex)
+        for idx, (t, body_next, stem) in enumerate(doc):
+            v2_ok = idx in det.header_idx
+            if stem:
                 stem_clusters[shape_of(t)] += 1
+                if v2_ok and not recognize_regex(t):
+                    stem_fp += 1
                 continue
             sh = shape_of(t)
             c = clusters.setdefault(sh, {
                 "count": 0, "files": set(), "samples": [],
                 "regex_ok": recognize_regex(t),
                 "struct_ok": 0,
+                "v2_ok": 0,
             })
             c["count"] += 1
             c["files"].add(r["path"])
@@ -136,7 +155,9 @@ def cluster(recs):
                 c["samples"].append(t)
             if recognize_struct(t, body_next):
                 c["struct_ok"] += 1
-    return clusters, stem_clusters
+            if v2_ok:
+                c["v2_ok"] += 1
+    return clusters, stem_clusters, stem_fp
 
 
 def _feature_set(r):
@@ -225,7 +246,7 @@ def main():
     ok_recs = [r for r in recs if not r.get("error")]
     err_recs = [r for r in recs if r.get("error")]
 
-    clusters, stem_clusters = cluster(ok_recs)
+    clusters, stem_clusters, stem_fp = cluster(ok_recs)
     total_occ = sum(c["count"] for c in clusters.values())
     regex_occ = sum(c["count"] for c in clusters.values() if c["regex_ok"])
     struct_extra_occ = sum(
@@ -234,10 +255,24 @@ def main():
     regex_rate = 100.0 * regex_occ / total_occ if total_occ else 0.0
     combined_rate = (100.0 * (regex_occ + struct_extra_occ) / total_occ
                      if total_occ else 0.0)
+    # W31 구조 우선 인식기 (문서 단위 발생 집계)
+    v2_occ = sum(c["v2_ok"] for c in clusters.values())
+    v2_rate = 100.0 * v2_occ / total_occ if total_occ else 0.0
 
     unrecognized = sorted(
         ((sh, c) for sh, c in clusters.items() if not c["regex_ok"]),
         key=lambda x: -x[1]["count"],
+    )
+    # 구조 인식기가 새로 잡은 셰이프 (정규식 미인식 → v2 인식)
+    v2_newly = sorted(
+        ((sh, c) for sh, c in clusters.items()
+         if not c["regex_ok"] and c["v2_ok"] > 0),
+        key=lambda x: -x[1]["v2_ok"],
+    )
+    # v2 기준 잔여 미인식 (발생 단위)
+    v2_unrec = sorted(
+        ((sh, c) for sh, c in clusters.items() if c["v2_ok"] < c["count"]),
+        key=lambda x: -(x[1]["count"] - x[1]["v2_ok"]),
     )
 
     # 계열별 인식률
@@ -270,6 +305,16 @@ def main():
         head, dirty = "?", None
     fail_example = "1. p1-no.3과 추가지문"  # 2026-07-06 실조판 실패 실물 헤더
     fail_recognized = recognize_regex(fail_example)
+    # 2026-07-19 실조판 실패(job 376b34d0) 실물 헤더 — 파서 정규식은
+    # 매치했으나 플랜 계층(_HEADER_PATTERNS)이 미인식(계층별 다른 눈).
+    # 구조 인식기는 문서 문맥(직후 영어 본문)으로 계층 무관 인식해야 한다.
+    fail_0719 = "1. L1-p. 13 본문 1"
+    fail_0719_regex = recognize_regex(fail_0719)
+    det_0719 = detect_from_candidates(
+        [{"t": "1. L1-p. 13 본문 1", "body_next": True},
+         {"t": "2. L1-p. 14 본문 2", "body_next": True}],
+        legacy=recognize_regex)
+    fail_0719_v2 = 0 in det_0719.header_idx and 1 in det_0719.header_idx
 
     # ── baseline JSON ──
     baseline = {
@@ -285,6 +330,24 @@ def main():
         "regex_recognition_rate_pct": round(regex_rate, 2),
         "regex_plus_struct_rate_pct": round(combined_rate, 2),
         "unrecognized_shapes": len(unrecognized),
+        # ── W31 구조 우선 인식기 (문서 단위) — 리그레션 지표 ──
+        "struct_v2_rate_pct": round(v2_rate, 2),
+        "struct_v2_recognized_occ": v2_occ,
+        "struct_v2_stem_fp": stem_fp,
+        "struct_v2_unrecognized_occ": total_occ - v2_occ,
+        "fail_20260719_header": fail_0719,
+        "fail_20260719_regex_recognized": fail_0719_regex,
+        "fail_20260719_v2_recognized": fail_0719_v2,
+        "struct_v2_top_newly_recognized": [
+            {"shape": sh, "v2_ok": c["v2_ok"], "count": c["count"],
+             "sample": c["samples"][0]}
+            for sh, c in v2_newly[:20]
+        ],
+        "struct_v2_top_unrecognized": [
+            {"shape": sh, "missed": c["count"] - c["v2_ok"],
+             "count": c["count"], "sample": c["samples"][0]}
+            for sh, c in v2_unrec[:20]
+        ],
         "stem_occurrences": sum(stem_clusters.values()),
         "stem_shapes": len(stem_clusters),
         "top_unrecognized": [
@@ -332,7 +395,29 @@ def main():
     w("|---|---|")
     w("| **정규식 경로 인식률** (`_RE_HEADER_NUM` 계열) | **%.2f%%** |" % regex_rate)
     w("| 정규식+구조 판정 결합 인식률 | %.2f%% |" % combined_rate)
+    w("| **구조 우선 인식기(W31) 인식률** (문서 단위, `core/structure/"
+      "header_detect`) | **%.2f%%** |" % v2_rate)
+    w("| 구조 인식기 발문 오탐 (stem→헤더 승격) | %d건 / 발문 %d건 |"
+      % (stem_fp, sum(stem_clusters.values())))
     w("| 미인식 셰이프 수 | %d |" % len(unrecognized))
+    w("")
+    w("### 구조 우선 인식기가 새로 잡은 셰이프 (정규식 미인식 → v2 인식)")
+    w("")
+    w("| 셰이프 | v2 인식/전체 | 예시 원문 |")
+    w("|---|---|---|")
+    for sh, c in v2_newly[:25]:
+        w("| `%s` | %d/%d | `%s` |"
+          % (sh.replace("|", "\\|"), c["v2_ok"], c["count"],
+             c["samples"][0].replace("|", "\\|")))
+    w("")
+    w("### 구조 우선 인식기 기준 잔여 미인식 톱")
+    w("")
+    w("| 셰이프 | 미인식/전체 | 예시 원문 |")
+    w("|---|---|---|")
+    for sh, c in v2_unrec[:25]:
+        w("| `%s` | %d/%d | `%s` |"
+          % (sh.replace("|", "\\|"), c["count"] - c["v2_ok"], c["count"],
+             c["samples"][0].replace("|", "\\|")))
     w("")
     w("정규식 경로 = `_RE_BRACKET_NUM` / `_RE_HEADER_NUM` / `_RE_KOREAN_BRACKET` "
       "(+옛 마더텅 `N번`/`YY년 M월 K번` 정규화). 구조 판정 = "
@@ -410,9 +495,16 @@ def main():
     print("baseline: %s" % BASELINE)
     print("파일 %d / 헤더 %d / 셰이프 %d / 정규식 인식률 %.2f%% / 결합 %.2f%%"
           % (len(recs), total_occ, len(clusters), regex_rate, combined_rate))
-    print("미인식 톱5:")
+    print("구조 우선 인식기(W31): %.2f%% (%d/%d) / 발문 오탐 %d / "
+          "0719 실패 헤더 인식 %s"
+          % (v2_rate, v2_occ, total_occ, stem_fp, fail_0719_v2))
+    print("미인식 톱5 (정규식):")
     for sh, c in unrecognized[:5]:
         print("  %-40s %5d  예) %s" % (sh, c["count"], c["samples"][0]))
+    print("미인식 톱5 (구조 인식기):")
+    for sh, c in v2_unrec[:5]:
+        print("  %-40s %5d  예) %s"
+              % (sh, c["count"] - c["v2_ok"], c["samples"][0]))
 
 
 if __name__ == "__main__":
