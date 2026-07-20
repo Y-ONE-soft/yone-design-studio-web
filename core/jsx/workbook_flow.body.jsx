@@ -390,6 +390,7 @@ function updatePassageNumbers(doc, flowStories, op) {
         }
         var n = 0;
         var clamped = 0;
+        var labelFrames = [];   // W38: 좌/우 기하 정규화용 (숫자 아닌 라벨만)
         var pages = storyPagesInOrder(rec.story);
         for (var pk = 0; pk < pages.length; pk++) {
             var lab2 = pageLabel[String(pages[pk].documentOffset)];
@@ -408,13 +409,52 @@ function updatePassageNumbers(doc, flowStories, op) {
                         if (clampLabelFrame(tfs[fi], pages[pk], rec.story)) {
                             clamped++;
                         }
+                        labelFrames.push({ tf: tfs[fi], pg: pages[pk] });
                     }
                 } catch (e) {}
+            }
+        }
+        // ── W38 (결함 2): 지문번호 라벨 프레임 좌/우 크기 정규화 ─────────
+        // [원본]워크북_C의 빈칸어휘/빈칸어법 지문번호 프레임은 템플릿
+        // 단계부터 왼쪽/오른쪽 페이지 기하가 다르다 (6b66b750 덤프 실측:
+        // 클램프 후 L 폭 8.9mm vs R 폭 7.72mm — 템플릿 좌변 x1 9.6 vs
+        // 12.78). 사용자 확정: 왼쪽 페이지 크기에 통일. 왼쪽 첫 프레임의
+        // 폭/높이를 기준으로 오른쪽 프레임을 우변(클램프 결과)·상변 고정
+        // 리사이즈한다. 숫자 라벨(v1 파리티)은 위에서 제외 — 무접촉.
+        var canonW = null, canonH = null;
+        for (var lf = 0; lf < labelFrames.length; lf++) {
+            if (pageSideOf(doc, labelFrames[lf].pg) !== "L") { continue; }
+            try {
+                var gL = labelFrames[lf].tf.geometricBounds;
+                canonW = gL[3] - gL[1];
+                canonH = gL[2] - gL[0];
+            } catch (eL) {}
+            break;
+        }
+        var normalized = 0;
+        if (canonW !== null) {
+            for (var rf = 0; rf < labelFrames.length; rf++) {
+                if (pageSideOf(doc, labelFrames[rf].pg) !== "R") { continue; }
+                try {
+                    var gR = labelFrames[rf].tf.geometricBounds;
+                    var wR = gR[3] - gR[1];
+                    var hR = gR[2] - gR[0];
+                    if (Math.abs(wR - canonW) < 0.05
+                            && Math.abs(hR - canonH) < 0.05) { continue; }
+                    labelFrames[rf].tf.geometricBounds =
+                        [gR[0], gR[3] - canonW, gR[0] + canonH, gR[3]];
+                    normalized++;
+                } catch (eR) {}
             }
         }
         if (n > 0) { wlog(steps[si] + " 지문번호 프레임 갱신: " + n + "개"); }
         if (clamped > 0) {
             wlog(steps[si] + " 라벨 프레임 본문 침범 교정: " + clamped + "개");
+        }
+        if (normalized > 0) {
+            wlog(steps[si] + " 라벨 프레임 좌우 크기 통일: " + normalized
+                 + "개 (왼쪽 기준 " + Math.round(canonW * 100) / 100 + "x"
+                 + Math.round(canonH * 100) / 100 + "mm)");
         }
         total += n;
     }
