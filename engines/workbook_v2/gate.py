@@ -280,6 +280,14 @@ _RE_G34_WORDLIST = re.compile(
 _RE_G35_LABEL = re.compile(r"^[\s가-힣A-Za-z()（）]{1,12}[:：]$")
 _RE_G35_BLANK = re.compile(r"^[^_]{0,15}_{3,}[\s_]*[.,]?$")
 
+# G36 (W39 결함 5) — 진위 선택 문항의 "N) 문장 (T/F)" 행 = 선지
+# (출력 검사용 독립 정의)
+_RE_G36_TFREF = re.compile(
+    r"True\s+or\s+False|\(\s*T\s*/\s*F\s*\)|\(\s*O\s*/\s*X\s*\)", re.I)
+_RE_G36_TFROW = re.compile(
+    r"^\s*\d{1,2}\s*\)\s*.+\(\s*(?:T\s*/\s*F|O\s*/\s*X|True\s*/\s*False)"
+    r"\s*\)\s*\.?\s*$", re.I)
+
 # G13/G32 (W38) — 영어 지시문 발문 시그니처 + 요약문 마커 (출력 검사용
 # 독립 정의 — block_grammar와 순환 방지)
 # 명령형만 — WH-의문형("N. Why don't we …?")은 외부지문 '지문 제목'과
@@ -1000,7 +1008,45 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                     continue
                 elif "조건" not in qs and not strong:
                     break       # 한글 비조건 문장 — 블록 종료로 간주
-    # ── G35 [답란] (W39 결함 4): "라벨:" + 밑줄 빈칸 쌍 = 답란 계열 ──────
+    # ── G36 [TF선지] (W39 결함 5): 진위 선택 행 = 선지 스타일 ────────────
+    # 발문(번호 스타일 + True or False/(T/F) 지시) 뒤의 "N) 문장 (T/F)"
+    # 행이 선지 스타일이 아니면 지목 (111번 실증 — 지문 스타일 인쇄).
+    # 현행 플랜은 critical, 구플랜 소급 warning.
+    plan_tf = False
+    for fl in plan.get("flows", []):
+        if fl.get("step") != "step3":
+            continue
+        for u in fl.get("units", []):
+            for p in (u["paras"] if isinstance(u, dict) else u):
+                if _RE_G36_TFROW.match(_clean(p.get("t", ""))) \
+                        and "선지" in (p.get("s") or ""):
+                    plan_tf = True
+                    break
+    tf_miss = []
+    for story in dump.get("stories", []):
+        ps = [p for p in story.get("paragraphs", [])
+              if _clean(p.get("t", ""))]
+        in_tf = False
+        for p in ps:
+            t = _clean(p.get("t", ""))
+            s = p.get("s") or ""
+            if "번호" in s:
+                in_tf = bool(_RE_G36_TFREF.search(t))
+                continue
+            if not in_tf:
+                continue
+            if any(k in s for k in ("배경", "조건", "보기", "다음 글을")):
+                in_tf = False
+                continue
+            if _RE_G36_TFROW.match(t) and "선지" not in s:
+                tf_miss.append(t[:40])
+    stats["tf_choice_miss"] = len(tf_miss)
+    if tf_miss:
+        msg = (f"[TF선지] 진위 선택 행 {len(tf_miss)}개가 선지 스타일이 "
+               f"아님: " + " | ".join(tf_miss[:3]))
+        (critical if plan_tf else warnings).append(msg)
+
+    # ── G35 [답란] (W39 결함 4): "라벨:" + 빈칸 쌍 = 답란 계열 ──────
     # ("주제문:" + "____."가 지문 스타일로 인쇄되던 실증 — 84/85번.
     # 현행 플랜(답란 스타일 실림)은 critical, 구플랜 소급 warning.)
     plan_ansl = False

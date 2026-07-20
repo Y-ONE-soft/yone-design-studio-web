@@ -219,6 +219,29 @@ def is_given_block_form(text, short_only=False):
     return bool(R.P_SENTENCE_END.search(t))
 
 
+# ── T/F 선택 행 (W39 결함 5) ────────────────────────────────────────────────
+# 발문이 진위 선택(True or False / T,F / O,X)을 지시하면, 뒤따르는
+# "N) 문장 (T/F)" 행들은 선지(C)다 — 유형(발문의 선택 지시) + 위치(발문
+# 이후) + 형태(번호 괄호 + 선택 표기 꼬리)의 하향식 배정 (111번 실증:
+# 지문 스타일로 인쇄되던 침묵 지점).
+TF_Q_REF = re.compile(
+    r'True\s+or\s+False|\(\s*T\s*/\s*F\s*\)|\(\s*O\s*/\s*X\s*\)'
+    r'|T\s*/\s*F|O\s*/\s*X', re.I)
+_TF_ROW = re.compile(
+    r'^\s*\d{1,2}\s*\)\s*.+\(\s*(?:T\s*/\s*F|O\s*/\s*X|True\s*/\s*False)'
+    r'\s*\)\s*\.?\s*$', re.I)
+
+
+def is_tf_question(q_text):
+    """발문의 진위 선택 지시 여부 (영/한 무관 — 유형 신호)."""
+    return bool(TF_Q_REF.search(q_text or ""))
+
+
+def is_tf_choice_row(text):
+    """진위 선택 행 형태: 번호 괄호 + 문장 + (T/F)/(O/X) 꼬리."""
+    return bool(_TF_ROW.match(text or ""))
+
+
 # ── 조건 블록 내용물: 단어 나열 (W39 결함 3 — 사용자 확정) ─────────────────
 # 조건 항목("다음 단어를 한 번씩 사용하여 배열하시오")이 참조하는 주어진
 # 단어 나열은 조건 블록의 내용물이다 — v1 pass 15의 '어구 나열은 지문

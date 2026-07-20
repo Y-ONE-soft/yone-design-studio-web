@@ -165,6 +165,13 @@ def classify_paragraphs(paras):
         if kind not in ("P", "UNKNOWN", "K", "Word"):
             continue
 
+        # T/F 선택 행 (W39 결함 5): 발문이 진위 선택을 지시하는 문항의
+        # "N) 문장 (T/F)" 행 = 선지 (111번 실증 — 유형+위치+형태 배정).
+        if (last_q_text and BG.is_tf_question(last_q_text)
+                and BG.is_tf_choice_row(item["text"])):
+            item["kind"] = "C"
+            continue
+
         # 발문 직후 첫 유의 단락인가 — 출처 마커(SRC)와 단독 대괄호 구조
         # 라벨("[Unit 09 - Practice 01]" 등)은 발문과 본문 사이에 끼는
         # 구조 요소라 건너뛴다 (W15 c04 / W39 r7c16 실증).
@@ -217,6 +224,10 @@ def classify_paragraphs(paras):
             if neighbor_p and all(
                     len(out[k]["text"]) >= 80
                     and not R.HANGUL.search(out[k]["text"])
+                    # W39: 보정 대상은 원문자(①)/AB헤더형 오분류만 —
+                    # T/F 선택 행("N) … (T/F)" — 슬롯 배정 C)은 선지 유지
+                    and (R.C_START.match(out[k]["text"])
+                         or R.C_AB_HEADER.match(out[k]["text"]))
                     for k in run):
                 for k in run:
                     out[k]["kind"] = "P"

@@ -114,6 +114,9 @@ _RE_S3_SPEAKER = re.compile(r"^[A-Za-z][A-Za-z .]{0,12}[:：]")
 # 코퍼스에도 19건 존재 — v1 파리티 회복).
 _RE_S3_ARROW = re.compile(
     "^[⬇⇩↓↘⇓⬆↑⇧⇑️]+$")
+# W39 결함 5: T/F 문항의 번호 괄호 영어 행 (선택 표기 꼬리 없는 근접
+# 후보 지목용 — 침묵 강등 금지)
+_RE_S3_TF_NEAR = re.compile(r"^\d{1,2}\s*\)\s+\S")
 
 
 def _is_pua(ch):
@@ -444,6 +447,17 @@ def _s3_assign_slots(pre, BG):
                 or (row["eff"] == "UNKNOWN"
                     and BG.BRACKET_LABEL.match(row["tclean"])):
             continue         # 빈 단락/출처 마커/구조 라벨은 슬롯 비소비
+        # T/F 선택 행 (W39 결함 5 — 구 kind 주석 이중 방어)
+        if last_q and BG.is_tf_question(last_q[1]) \
+                and eff in ("P", "UNKNOWN", "K", "Word"):
+            if BG.is_tf_choice_row(row["tclean"]):
+                row["eff"] = "C"
+                continue
+            if _RE_S3_TF_NEAR.match(row["tclean"]) \
+                    and not _RE_S3_HANGUL.search(row["tclean"]):
+                warn.append(
+                    "[슬롯] 선지행(T/F) 후보가 선택 표기 꼬리 없음 — "
+                    f"배정 불가 지목: '{row['tclean'][:40]}'")
         if given_pending:
             given_pending = False
             verdict = BG.given_slot_scan(

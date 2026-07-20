@@ -407,6 +407,88 @@ def test_gate_g35_detects_answer_pair_styled_as_passage():
     assert rep3["stats"]["ansl_miss"] == 0
 
 
+# ── 결함 5: T/F 선택 행 = 선지 ──────────────────────────────────────────────
+
+_TFQ = ("10. Choose True or False (T/F) based on the content of the "
+        "following text.")
+
+
+def test_tf_forms():
+    assert BG.is_tf_question(_TFQ)
+    assert BG.is_tf_question("다음 글의 내용과 일치하면 T, 일치하지 않으면 "
+                             "F를 고르시오. (T/F)")
+    assert not BG.is_tf_question("다음 글의 주제로 가장 적절한 것은?")
+    assert BG.is_tf_choice_row(
+        "1) Trisha Prabhu is a young scientist from the U.K. (T/F)")
+    assert BG.is_tf_choice_row("5) Kelvin designed a generator. (O/X)")
+    assert not BG.is_tf_choice_row("1) 9단어로 빈칸을 완성하시오.")
+    assert not BG.is_tf_choice_row(
+        "1) Trisha Prabhu is a young scientist.")   # 선택 표기 꼬리 없음
+
+
+def test_classifier_tf_rows_are_choices():
+    """111번 실증 — 진위 선택 문항의 'N) 문장 (T/F)' 행 = 선지."""
+    out = classify_paragraphs([
+        {"text": _TFQ},
+        {"text": "Trisha Prabhu, Kelvin Doe, and John Michael Stagliano "
+                 "are all examples of young social activists who have "
+                 "made significant contributions to society."},
+        {"text": "1) Trisha Prabhu is a young scientist from the U.K. "
+                 "fighting cyberbullying. (T/F)"},
+        {"text": "2) The text mentions that the efforts of these young "
+                 "activists do not utilize technology. (T/F)"},
+    ])
+    assert out[0]["kind"] == "Q"
+    assert out[1]["kind"] == "P"
+    assert out[2]["kind"] == "C" and out[3]["kind"] == "C"
+
+
+def test_plan_tf_rows_dual_defense_and_candidate_warning():
+    r = build_step3(_s3([
+        {"text": _TFQ, "kind": "Q"},
+        {"text": "Trisha Prabhu and Kelvin Doe are young activists.",
+         "kind": "P"},
+        {"text": "1) Trisha Prabhu is a young scientist. (T/F)",
+         "kind": "UNKNOWN"},
+        {"text": "2) Kelvin built his own FM radio station.",
+         "kind": "UNKNOWN"},          # 꼬리 없음 — 후보 지목
+    ]))
+    styles = [p["s"] for p in r["units"][0]]
+    assert styles[2] == _ST_C
+    assert styles[3] == _ST_P
+    assert any("선지행(T/F) 후보" in w for w in r["warnings"])
+
+
+def test_gate_g36_detects_tf_rows_styled_as_passage():
+    """소급 검출 실증 — 수리 전 출력(round16: T/F 행 20개 지문 스타일)."""
+    plan = {"flows": [{"step": "step3", "units": [[
+        {"t": "1) Trisha is a scientist. (T/F)", "s": _ST_C},
+    ]]}], "page_cleanup": {}}
+    dump = _dump([
+        {"t": "Choose True or False (T/F) based on the content of the "
+              "following text.", "s": _ST_Q},
+        {"t": "Trisha Prabhu is fighting cyberbullying with ReThink.",
+         "s": _ST_P},
+        {"t": "1) Trisha Prabhu is a young scientist. (T/F)",
+         "s": _ST_P},                                       # 결함
+        {"t": "2) ReThink uses artificial intelligence. (T/F)",
+         "s": _ST_P},                                       # 결함
+    ])
+    rep = inspect_workbook_finish({}, plan, dump)
+    assert rep["stats"]["tf_choice_miss"] == 2
+    assert any("[TF선지]" in c for c in rep["critical"])
+    rep2 = inspect_workbook_finish(
+        {}, {"flows": [], "page_cleanup": {}}, dump)
+    assert any("[TF선지]" in w for w in rep2["warnings"])
+    # 정상 경로
+    rep3 = inspect_workbook_finish({}, plan, _dump([
+        {"t": "Choose True or False (T/F) based on the text.",
+         "s": _ST_Q},
+        {"t": "1) Trisha Prabhu is a young scientist. (T/F)", "s": _ST_C},
+    ]))
+    assert rep3["stats"]["tf_choice_miss"] == 0
+
+
 def test_gate_g32_detects_angle_sum_marker_not_background():
     """소급 검출: 수리 전 출력(꺾쇠 요약문 = 보기/지문 스타일) 재현."""
     plan = {"flows": [{"step": "step3", "units": [[
