@@ -1673,11 +1673,24 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                 f"[스텝원고미사용] 현행 스텝이 소화 가능한 원고 "
                 f"{len(step_unused)}개가 사용되지 않음 (부분 침묵 유실): "
                 + " | ".join(step_unused[:5]))
-        if other_unused:
+        # 배치 A (W33): warning → critical 승격 — 미라우팅 원고는 부분
+        # 침묵 유실이므로 반침묵(경고 무시 가능)을 금지한다 (감사 §9,
+        # 정답/답지류는 expected_unused로 이미 제외). 예외: 구6스텝
+        # '(구6스텝 미대응)' 마커 — 현행 스텝이 소화 못 하는 종류임을
+        # 선라우팅이 명시한 파일 (W17 설계: 운영 판단 위임, warning 유지).
+        legacy_unmapped = [f for f in other_unused if "구6스텝 미대응" in f]
+        promoted_unused = [f for f in other_unused
+                           if f not in legacy_unmapped]
+        if legacy_unmapped:
             warnings.append(
-                f"[미사용원고] {len(other_unused)}개 파일이 어느 스텝에도 "
-                f"사용되지 않음 (파일명 규칙 확인): "
-                + " | ".join(other_unused[:5]))
+                f"[미사용원고] {len(legacy_unmapped)}개 파일이 어느 스텝에도 "
+                f"사용되지 않음 (구6스텝 미대응 — 운영 판단): "
+                + " | ".join(legacy_unmapped[:5]))
+        if promoted_unused:
+            critical.append(
+                f"[미사용원고] {len(promoted_unused)}개 파일이 어느 스텝에도 "
+                f"사용되지 않음 (침묵 유실 금지 — 파일명 규칙 확인): "
+                + " | ".join(promoted_unused[:5]))
 
     # ── G6 파싱 계층: 구조적 헤더 후보 미인식 (W31 — 파서와 같은 눈) ─────
     # 플랜 빌더(plan._step_header_detection)와 동일한 구조 우선 인식기를

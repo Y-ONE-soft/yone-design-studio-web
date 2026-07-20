@@ -115,7 +115,17 @@ class TextbookWorkbookV2Engine(WorkbookV2Engine):
     def parse(self, uploaded_files, job_dir, log):
         self._prestage_legacy_folder(job_dir, log)
         from engines.textbook_workbook.engine import TextbookWorkbookEngine
-        return TextbookWorkbookEngine().parse(uploaded_files, job_dir, log)
+        json_path = TextbookWorkbookEngine().parse(uploaded_files, job_dir,
+                                                   log)
+        # 배치 A (W33): Step3 쌍방 대조 — 침묵 누락 [오류] (v1 무변경,
+        # 교과서 config는 mockexam 비어 있어 number_matching=False)
+        from engines.workbook_v2 import routing as _routing
+        content = json.load(open(json_path, encoding="utf-8"))
+        _routing.reconcile_step3(
+            os.path.join(job_dir, "uploads", "Step3"),
+            (content.get("steps") or {}).get("step3"), log,
+            number_matching=False)
+        return json_path
 
     @staticmethod
     def _legacy_dest_name(name_nfc, entry_names):
