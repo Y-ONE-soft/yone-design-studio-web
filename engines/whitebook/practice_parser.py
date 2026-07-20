@@ -88,16 +88,21 @@ def _classify_problem_line(text):
     return '문제'  # fallback
 
 
-def parse_practice_docx(docx_path):
+def parse_practice_docx(docx_path, log=None):
     """연습문제 본문 파싱.
     반환: [
       {'num': 1, 'lines': [{'sty': '문제', 'text': '...'}, ...]},
       ...
     ]
+
+    배치 G (W37): log 콜백이 오면 침묵 유실을 가시화한다 — 문제 헤더
+    '(N) ' 형식이 하나도 인식되지 않아 내용 전체가 버려지거나, 첫 문제
+    앞에서 다수 라인이 무시되면 [경고] (동작 무변경, 로그만).
     """
     paras = _extract_paragraphs(docx_path)
     questions = []
     current = None
+    dropped_head = []          # 첫 문제 인식 전 무시된 비어있지 않은 라인
     for raw in paras:
         text = raw.rstrip()
         if not text.strip():
@@ -112,11 +117,25 @@ def parse_practice_docx(docx_path):
             continue
         if current is None:
             # 제목 등 — 무시
+            dropped_head.append(bare)
             continue
         sty = _classify_problem_line(text)
         if sty is None:
             continue
         current['lines'].append({'sty': sty, 'text': text})
+
+    if log is not None:
+        try:
+            if not questions and dropped_head:
+                log(f"[경고] 연습문제 파싱: 문제 헤더 '(N) ' 미인식 — "
+                    f"{len(dropped_head)}개 라인 전체가 무시됐습니다. "
+                    f"첫 라인: {dropped_head[0][:50]!r}")
+            elif len(dropped_head) > 2:   # 제목 1~2줄 초과 무시는 유실 의심
+                log(f"[경고] 연습문제 파싱: 첫 문제 이전 {len(dropped_head)}개 "
+                    f"라인 무시(제목 외 내용 유실 의심). "
+                    f"예: {dropped_head[2][:50]!r}")
+        except Exception:
+            pass
     return questions
 
 
@@ -124,12 +143,15 @@ def _is_choice_or_bogi_continuation(line):
     return False  # placeholder — (N) 패턴은 항상 새 문제로
 
 
-def parse_practice_answer_docx(docx_path):
+def parse_practice_answer_docx(docx_path, log=None):
     """연습문제 답지 파싱.
     반환: [
       {'num': 1, 'lines': [{'sty': '정답지 번호'|'해설_', 'text': '...'}, ...]},
       ...
     ]
+
+    배치 G (W37): log 콜백이 오면 침묵 유실을 가시화 — '해설' 헤더 미발견
+    (전 내용 무시) / 답 항목 0건을 [경고] (동작 무변경, 로그만).
     """
     paras = _extract_paragraphs(docx_path)
     answers = []
@@ -161,6 +183,18 @@ def parse_practice_answer_docx(docx_path):
             current['lines'].append({'sty': '해설_', 'text': text})
         else:
             current['lines'].append({'sty': '정답지 번호', 'text': text.strip()})
+
+    if log is not None:
+        try:
+            has_content = any(p.strip() for p in paras)
+            if not started and has_content:
+                log("[경고] 연습문제 답지 파싱: '해설' 헤더 미발견 — "
+                    "내용 전체가 무시됐습니다 (답지 형식: 제목 → '■ 해설' → 항목).")
+            elif started and not answers and has_content:
+                log("[경고] 연습문제 답지 파싱: '해설' 헤더 이후 답 항목 "
+                    "'(N) ' 형식이 하나도 인식되지 않았습니다.")
+        except Exception:
+            pass
     return answers
 
 

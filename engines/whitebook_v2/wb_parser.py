@@ -106,6 +106,12 @@ def parse_workbook_files(hwpx_files, answer_files=None, log=print):
         log(f"[원고 파싱] {os.path.basename(hwpx_path)}")
         lines = _snap.extract_lines_from_hwpx(hwpx_path)
         day_groups = _snap.split_by_days(lines)
+        # 배치 G (W37): Day 분할 침묵 가시화 — 'Day N' 단독 라인 미인식이면
+        # 원고 전체가 조용히 버려지던 지점 ([경고], 동작 무변경).
+        if not day_groups and any(l.strip() for l in lines):
+            log(f"[경고] {os.path.basename(hwpx_path)}: 'Day N' 헤더가 하나도 "
+                f"인식되지 않아 내용({sum(1 for l in lines if l.strip())}라인)이 "
+                "전부 무시됩니다. Day 표기 형식을 확인하세요.")
         for day_num, day_lines in day_groups:
             sections = split_by_sections_struct(day_lines, day_num=day_num)
             all_days_content[day_num] = {
@@ -125,11 +131,31 @@ def parse_workbook_files(hwpx_files, answer_files=None, log=print):
             log(f"[정답 파싱] {os.path.basename(ans_path)}")
             lines = _snap.extract_lines_from_hwpx(ans_path)
             day_groups = _snap.split_by_days(lines)
+            if not day_groups and any(l.strip() for l in lines):
+                log(f"[경고] {os.path.basename(ans_path)}: 정답 hwpx에서 "
+                    "'Day N' 헤더가 하나도 인식되지 않아 정답 전체가 무시됩니다.")
             for day_num, day_lines in day_groups:
                 all_days_answers[day_num] = _snap.parse_answer_day(day_lines)
                 ans = all_days_answers[day_num]
                 log(f"  Day {day_num}: A={len(ans['A'])} B={len(ans['B'])} "
                     f"C={len(ans['C'])} D={len(ans['D'])} E={len(ans['E'])}")
+                # 배치 G (W37): 정답 섹션 마커 '▶ X' 침묵 가시화 — 스냅샷
+                # ANSWER_SECTION_PAT 미매치 섹션은 조용히 빈 리스트로 남아
+                # 하류(verify 스토리수/단어 보존)에서야 드러났다 ([경고]만,
+                # 스냅샷·동작 무변경. W35 미해결 (2)).
+                empty_secs = [s for s in SECTION_LETTERS if not ans.get(s)]
+                if empty_secs:
+                    marker_like = [
+                        l.strip() for l in day_lines
+                        if "▶" in l and not any(
+                            p.match(l.strip())
+                            for p in _snap.ANSWER_SECTION_PAT.values())
+                    ]
+                    log(f"[경고] Day {day_num} 정답: 섹션 "
+                        f"{'/'.join(empty_secs)} 이 비어 있음 — '▶ X' 마커 "
+                        "미인식 또는 원고 결손 가능.")
+                    for ml in marker_like[:3]:
+                        log(f"    미매치 '▶' 후보 라인: {ml[:50]!r}")
 
     result = {"days": []}
     for day_num in sorted(all_days_content.keys()):

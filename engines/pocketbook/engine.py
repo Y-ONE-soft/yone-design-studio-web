@@ -544,6 +544,9 @@ class PocketbookEngine(BaseEngine):
         cfg = _load_config()
         rt_base = cfg.get("review_test_base", "")
         if not rt_base or not os.path.isdir(rt_base):
+            # 배치 G (W37): 기준 폴더 부재의 침묵 반환 가시화 ([경고]만)
+            log(f"[경고] 리뷰테스트 기준 폴더 부재/미설정: {rt_base!r} — "
+                "전 카테고리 리뷰테스트 자동 탐색을 건너뜁니다.")
             missing = [c for i, c in enumerate(categories) if i < len(file_types) and file_types[i] == "textbook"]
             return {}, missing
 
@@ -617,6 +620,9 @@ class PocketbookEngine(BaseEngine):
                     # 일반 모의고사: "25년3월" or "25년10월" -> yy=25, mm=3 or 10
                     ym = re.search(r"(\d{2})년\s*(\d{1,2})월", nfc_cat)
                     if not ym:
+                        # 배치 G: 년월 미인식 침묵 skip 가시화 ([경고]만)
+                        log(f"[경고] 리뷰테스트: 모의고사 카테고리 '{nfc_cat}'에서 "
+                            "'YY년M월' 표기를 읽지 못해 탐색을 건너뜁니다.")
                         continue
                     yy = ym.group(1)
                     mm = ym.group(2)
@@ -644,6 +650,9 @@ class PocketbookEngine(BaseEngine):
                 # 강 번호 목록 추출 (범위 "10-12,14-16강" 포함)
                 lesson_nums = self._parse_gang_spec(nfc_cat)
                 if not lesson_nums:
+                    # 배치 G: 강 번호 미인식 침묵 skip 가시화 ([경고]만)
+                    log(f"[경고] 리뷰테스트: EBS 카테고리 '{nfc_cat}'에서 "
+                        "강 번호를 읽지 못해 탐색을 건너뜁니다.")
                     continue
                 # 리딩파워: 올림포스와 폴더 구조/명명("Unit N")이 달라 별도 처리
                 if "리딩파워" in nfc_cat or "리파" in nfc_cat:
@@ -761,6 +770,30 @@ class PocketbookEngine(BaseEngine):
                                     search_dirs.append(full)
 
             if not rt_key or not search_dirs:
+                # 배치 G (W37): 폴더 트리 매칭 0건의 완전 침묵 continue 가시화 —
+                # docx 미발견(아래 '못 찾음' 로그)과 달리 여기는 로그 0줄이었고,
+                # textbook이면 missing_tb_cats에도 안 들어가 에러조차 안 났다.
+                # 동작 무변경([경고]만 — 승격은 운영 판단 대기, 감사 §9 G).
+                if rt_key:
+                    _base_by_ft = {
+                        "mockexam": os.path.join(rt_base, "모의고사 작업", grade),
+                        "ebs": os.path.join(rt_base, "EBS 작업"),
+                        "textbook": os.path.join(rt_base, "교과서 작업"),
+                    }
+                    _base = _base_by_ft.get(ft, rt_base)
+                    _cands = []
+                    try:
+                        _cands = sorted(
+                            unicodedata.normalize("NFC", d)
+                            for d in os.listdir(_base)
+                            if os.path.isdir(os.path.join(_base, d))
+                        )[:5]
+                    except Exception:
+                        pass
+                    log(f"[경고] 리뷰테스트: '{nfc_cat}' ({ft}) 폴더 매칭 0건 — "
+                        f"탐색 기준 {_base}")
+                    if _cands:
+                        log(f"    후보 폴더(상위 {len(_cands)}개): {', '.join(_cands)}")
                 continue
 
             # 리뷰테스트 폴더에서 해설지/정답지.docx 찾기
@@ -892,6 +925,14 @@ class PocketbookEngine(BaseEngine):
             file_types.append(st)
             categories.append(cat)
             log(f"  - {os.path.basename(af)} → {type_label.get(st, st)} [{cat}]")
+            # 배치 G (W37): 소스 유형·카테고리 판정 근거가 전혀 없는 폴백 가시화
+            # — textbook은 양성 신호 없는 기본값이라, 카테고리까지 빈 문자열이면
+            # 파일명에서 아무것도 못 읽은 것 (리뷰테스트 탐색·챕터 라벨이 전부
+            # 조용히 어긋나던 지점). 동작 무변경 — [경고]만.
+            if st == "textbook" and not cat:
+                log(f"[경고] 파일명 인식 실패: {os.path.basename(af)} — "
+                    "괄호 카테고리/년월/강 표기가 없어 'textbook' 폴백 + 카테고리 "
+                    "공백으로 진행합니다. 리뷰테스트 자동 탐색이 되지 않습니다.")
 
         # 리뷰테스트 해설지 파싱 (암기테스트용)
         review_files = uploaded_files.get("review_tests", [])

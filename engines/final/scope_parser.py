@@ -86,6 +86,39 @@ def classify_scope(scope):
     return "unknown"
 
 
+def classify_scope_candidates(scope):
+    """unknown 강등 가시화용 후보 리포트 (배치 G — 분류 로직 무변경, fail-open).
+
+    분류가 unknown일 때 '왜 못 읽었는지 / 무엇에 가까운지' 근거를 만든다:
+      - 정규화(공백·언더스코어 제거) 재분류가 unknown이 아니면 그 결과를 후보로
+        (예: '올 림포스3강' → 정규화 시 ebs_olympos).
+      - 부분 신호(숫자+강/과, 년월 조각 등)가 있으면 명시.
+
+    Returns:
+        [str] 후보/근거 설명 리스트 (없으면 빈 리스트).
+    """
+    hints = []
+    try:
+        if not scope:
+            return ["시험범위 텍스트 자체가 비어 있음 (파일명 괄호 미검출)"]
+        s = _nfc(scope)
+        collapsed = re.sub(r"[\s_]+", "", s)
+        if collapsed != s:
+            re_type = classify_scope(collapsed)
+            if re_type != "unknown":
+                hints.append(
+                    f"공백/언더스코어 제거 시 '{collapsed}' → {re_type} (표기 정규화 후보)")
+        if re.search(r"\d+\s*강", s):
+            hints.append("'N강' 표기 존재 — 올림포스/수능특강 계열 가능 (교재명 토큰 미검출)")
+        if re.search(r"\d+\s*과", s):
+            hints.append("'N과' 표기 존재 — 교과서 계열 가능 (출판사/교과 토큰 미검출)")
+        if re.search(r"\d{2,4}\s*년", s) or re.search(r"\d{1,2}\s*월", s):
+            hints.append("년/월 표기 조각 존재 — 모의고사 계열 가능 ('YY년M월' 정형 미매치)")
+    except Exception:
+        return hints  # 가시화 실패가 분류를 막지 않는다 (fail-open)
+    return hints
+
+
 def get_grammar_source(scope_type):
     """시험범위 유형별 어법수정 소스 결정.
 

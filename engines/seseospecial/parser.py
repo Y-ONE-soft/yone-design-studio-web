@@ -170,6 +170,14 @@ def classify_part1(paragraphs: list, log=None) -> dict:
 
     if log:
         log(f"[파서] PART1: {len(entries)}개 단락")
+        # 배치 G (W37): 대분류(출처) 헤더 0건 = _section_name 열거가 못 읽는
+        # 새 교과/출처 명칭 가능 — 소제목·핵심문장_단원 스타일이 통째로 빠진 채
+        # 본문 스타일로 침묵 흡수되던 지점 ([경고]만, 동작 무변경).
+        if entries and prev_section is None:
+            _first = next((e['text'][:50] for e in entries if e['text']), '')
+            log("[경고] PART1: 대분류 헤더(교과서/올림포스/모의고사/수능특강)가 "
+                f"하나도 인식되지 않았습니다 — 새 출처 명칭이면 _section_name "
+                f"열거 확인 필요. 첫 단락: {_first!r}")
     return {
         'paragraphs': [
             {'style': e['style'], 'text': e['text']}
@@ -185,11 +193,60 @@ _HEADER_RE_GM1 = re.compile(r'^(공통영어|올림포스|고\d\s*\d+년|고1 20
 _HEADER_RE_GM2 = re.compile(r'^(영어|올림포스|고\d\s*\d+년|고2 26년|Reading Power)')
 _QUESTION_RE = re.compile(r'^\d+\.\s')
 
+# 배치 G (W37): 광문1/2 하드코딩 데이터화 — 출처 헤더 패턴 + 조건 스타일 유무를
+# part2_profiles.json 데이터 테이블에서 로드 (새 표기/학교 = 테이블 추가).
+# 로드 실패 시 위 리터럴 폴백 (fail-open — 동작 하한 유지).
+_PROFILES_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                              "part2_profiles.json")
+
+
+def _load_part2_profiles():
+    import json
+    try:
+        with open(_PROFILES_PATH, encoding="utf-8") as f:
+            raw = json.load(f)
+        profiles = {}
+        for key, p in raw["profiles"].items():
+            profiles[key] = {
+                "header_re": re.compile(p["header_pattern"]),
+                "has_jogeon": bool(p["has_jogeon"]),
+            }
+        select = raw.get("select", {})
+        return {"profiles": profiles, "select": select}
+    except Exception:
+        # 폴백: 종전 하드코딩과 동일 (데이터 파일 훼손이 조판을 막지 않는다)
+        return {
+            "profiles": {
+                "gm1": {"header_re": _HEADER_RE_GM1, "has_jogeon": False},
+                "gm2": {"header_re": _HEADER_RE_GM2, "has_jogeon": True},
+            },
+            "select": {"school_contains": {"2": "gm2"}, "default": "gm1"},
+        }
+
+
+_PART2_PROFILES = _load_part2_profiles()
+
+
+def _part2_profile(school: str):
+    """학교명 → PART2 프로필 (데이터 테이블 select 규칙 — 종전 `'2' in school`
+    분기와 동일 의미론)."""
+    sel = _PART2_PROFILES.get("select", {})
+    for token, key in (sel.get("school_contains") or {}).items():
+        if token in (school or "") and key in _PART2_PROFILES["profiles"]:
+            return key, _PART2_PROFILES["profiles"][key]
+    default = sel.get("default", "gm1")
+    return default, _PART2_PROFILES["profiles"][default]
+
 
 def classify_part2(paragraphs: list, school: str = "", log=None) -> dict:
     """PART2 실전문제+정답 원고를 분류."""
-    header_re = _HEADER_RE_GM2 if '2' in school else _HEADER_RE_GM1
-    has_jogeon = '2' in school  # 광문2만 조건 스타일 있음
+    profile_key, profile = _part2_profile(school)
+    header_re = profile["header_re"]
+    has_jogeon = profile["has_jogeon"]  # 광문2 계열만 조건 스타일 있음
+    # 배치 G: 출처 후보 미분류 가시화용 — 다른 프로필의 눈 (로그만, 판정 미사용)
+    _other_res = [p["header_re"] for k, p in _PART2_PROFILES["profiles"].items()
+                  if k != profile_key]
+    _demoted_srcs = []
 
     main_entries = []
     answer_entries = []
@@ -287,6 +344,10 @@ def classify_part2(paragraphs: list, school: str = "", log=None) -> dict:
                 style = P2_SEONJI
             else:
                 style = P2_SEONJI  # default
+                # 배치 G: 선택 프로필은 못 읽었지만 다른 프로필이 출처로 보는
+                # 라인 = 출처 후보의 선지 침묵 강등 — 수집해 [경고] (동작 무변경)
+                if any(r.match(t) for r in _other_res):
+                    _demoted_srcs.append(t)
 
         entry = {
             'style': style,
@@ -299,7 +360,14 @@ def classify_part2(paragraphs: list, school: str = "", log=None) -> dict:
         main_entries.append(entry)
 
     if log:
-        log(f"[파서] PART2 본문: {len(main_entries)}개, 정답: {len(answer_entries)}개")
+        log(f"[파서] PART2 본문: {len(main_entries)}개, 정답: {len(answer_entries)}개"
+            f" (프로필 {profile_key})")
+        if _demoted_srcs:
+            log(f"[경고] PART2: 출처 헤더 후보 {len(_demoted_srcs)}건이 프로필 "
+                f"'{profile_key}' 패턴에 미매치되어 선지 스타일로 강등됐습니다 "
+                "(다른 프로필은 출처로 인식하는 표기 — part2_profiles.json 확인):")
+            for t_src in _demoted_srcs[:5]:
+                log(f"    • {t_src[:60]!r}")
 
     return {
         'main': main_entries,
@@ -568,10 +636,16 @@ def parse_all(part1_path: str, part2_path: str, school: str,
     part2_paras = _parse_hwpx_paragraphs(part2_path)
     if is_new_part2_format(part2_paras):
         # 새 형식(문제접근법 intro + [N~M] 문제세트)
+        if log:
+            log("[파서] PART2 형식 판정: 새형식 (선두 150단락 내 '대표유형'/"
+                "'[N~M]' 마커 발견)")  # 배치 G: 형식 분기 근거 가시화
         p2 = classify_part2_new(part2_paras, log)
         part2 = {'intro': p2['intro'], 'main': p2['main'], 'answers': []}
     else:
         # 구 형식(출처→실전문제_번호→지문→…)
+        if log:
+            log("[파서] PART2 형식 판정: 구형식 (새형식 마커 미발견 — 오판 시 "
+                "전체 오분류이므로 원고가 새형식이면 마커 표기를 확인하세요)")
         part2 = classify_part2(part2_paras, school, log)
         part2.setdefault('intro', [])
 
