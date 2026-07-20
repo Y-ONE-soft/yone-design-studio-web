@@ -17,6 +17,7 @@ import sys
 import unicodedata
 
 # 가로 워크북 parser 모듈 재사용
+from engines.workbook import parser as _wbp
 from engines.workbook.parser import parse_manuscript_folder as _workbook_parse
 
 
@@ -214,8 +215,59 @@ def _detect_qnum(text):
     return None
 
 
-def _split_paragraphs_by_qnum(paragraphs):
+# W34 배치 D: 합본 범위("41~42번")·6자리 모의고사 코드 추출 (구조 승격 마커용)
+_RE_STRUCT_RANGE = re.compile(r'(\d{1,3})\s*~\s*(\d{1,3})')
+_RE_STRUCT_CODE = re.compile(r'(?<!\d)(\d{6})(?!\d)')
+
+
+def _struct_marker_extras(paragraphs, known_qnums):
+    """리터럴 마커(_QNUM_MARKER_PATTERNS) 미인식 → 구조 승격 마커 {idx: info}.
+
+    W34 배치 D (docs/인식지점_전수감사.md §9 D안): W31 구조 인식기
+    (core/structure/header_detect)를 문서 단위로 돌려, 리터럴 마커가 못
+    읽는 새 형식 마커를 additive로 승격한다. 오탐 억제를 위해 추출한
+    번호가 known_qnums(STEP3 문항 번호 집합)에 있을 때만 마커로 인정
+    (집합 교차 검증 — W18 D4 sero_v2 parser_ext 준용). known_qnums가
+    없으면(None/빈) 승격하지 않는다. 안전 밸브는 가로 파서와 공유
+    (YONE_PARSER_STRUCT_HEADERS=0 → 빈 결과)."""
+    if not known_qnums or not _wbp.USE_STRUCT_HEADER_DETECT:
+        return {}
+    try:
+        from core.structure.header_detect import detect_headers
+
+        def _legacy(t):
+            return (_detect_qnum(t) is not None
+                    or _wbp._legacy_header_marker(t))
+
+        texts = [p.get("text", "") if isinstance(p, dict) else str(p)
+                 for p in paragraphs]
+        det = detect_headers(texts, legacy=_legacy)
+        extras = {}
+        for i in det.header_idx:
+            t = (texts[i] or "").strip()
+            if _legacy(t):
+                continue        # 기존 경로가 소비하는 라인 — additive 경계
+            q = _wbp._struct_header_qnum(t)
+            if q is None or str(q) not in known_qnums:
+                continue        # 집합 교차 검증 실패 — 마커로 인정 안 함
+            q_end = None
+            m = _RE_STRUCT_RANGE.search(_wbp._RE_SQ_PARENS.sub(' ', t))
+            if m and m.group(1) == str(q):
+                q_end = m.group(2)
+            mc = _RE_STRUCT_CODE.search(t)
+            extras[i] = (str(q), q_end, mc.group(1) if mc else None)
+        return extras
+    except Exception:
+        return {}
+
+
+def _split_paragraphs_by_qnum(paragraphs, known_qnums=None):
     """paragraphs[]를 q_num 마커로 분할.
+
+    known_qnums(STEP3 문항 번호 집합)가 주어지면 리터럴 마커 미인식
+    라인 중 구조 인식기 승격 마커(_struct_marker_extras)도 additive로
+    소비한다 — 리터럴 마커가 인식하던 것은 전부 기존 경로 그대로.
+    미제공(None)이면 기존 동작과 100% 동일.
 
     Returns:
         [{
@@ -227,9 +279,12 @@ def _split_paragraphs_by_qnum(paragraphs):
     """
     sections = []
     current = None
-    for para in paragraphs:
+    extras = _struct_marker_extras(paragraphs, known_qnums)
+    for idx, para in enumerate(paragraphs):
         text = para.get("text", "") if isinstance(para, dict) else str(para)
         info = _detect_qnum(text)
+        if info is None and idx in extras:
+            info = extras[idx]
         if info:
             q_num, q_end, code = info
             current = {
@@ -409,11 +464,15 @@ def parse_manuscript_folder(manuscript_dir, config, grade, year, month, log):
         "step1_c1", "step1_c2",
         "step2_a1", "step2_a1_btm", "step2_b1", "step2_c1", "step2_c2",
     ]
+    # W34 배치 D: 구조 승격 마커의 집합 교차 검증용 — STEP3 문항 번호 집합
+    known_qnums = {str(s3.get("q_num", "")) for s3 in step3_items
+                   if s3.get("q_num")}
+
     splits = {}  # {step_key: {q_num: [paragraphs]}}
     for sk in step_keys:
         step_data = (raw.get("steps") or {}).get(sk, {})
         paras = step_data.get("paragraphs", []) if isinstance(step_data, dict) else []
-        sections = _split_paragraphs_by_qnum(paras)
+        sections = _split_paragraphs_by_qnum(paras, known_qnums=known_qnums)
         m = {}
         for sec in sections:
             qn = sec["q_num"]
