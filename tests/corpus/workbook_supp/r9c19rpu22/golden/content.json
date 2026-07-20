@@ -9772,7 +9772,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "Sum"
       },
       {
        "text": "Instead of treating the situation as a threat, Mark resolved the parking space conflict (A)__________ by avoiding (B)__________ and offering the drivers an emotional reward to show their (C)__________.",
@@ -9782,7 +9782,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "P-CONTEXT"
       },
       {
        "text": "<조건>",
@@ -9863,7 +9863,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "Sum"
       },
       {
        "text": "Tim Burke made the decision to retire because his professional life (A)__________ with his family role, leading him to believe that his (B)__________ as a father and husband was far more (C)__________ than his baseball career.",
@@ -9873,7 +9873,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "P-CONTEXT"
       },
       {
        "text": "<조건>",

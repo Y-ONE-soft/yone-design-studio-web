@@ -351,7 +351,15 @@ def build_step3(step_data):
                     sum_bg = True
                     in_cond = False
                 elif sum_bg:
-                    if eff in ("P", "K", "UNKNOWN") and tclean:
+                    # 구 kind 주석 방어 (W39): 꺾쇠형 <요약문> 시절 Box로
+                    # 주석된 요약 문장도 배경으로 — 단 마커 라인(<보기> 등
+                    # 새 블록 진입)은 전파 종료 (stale Box 콘텐츠 한정).
+                    stale_box = (eff == "Box"
+                                 and not R.BOX_MARKERS["Box"].match(tclean)
+                                 and not R.BOX_MARKERS["Cond"].match(tclean)
+                                 and not R.C_START.match(tclean)
+                                 and not R.C_AB_HEADER.match(tclean))
+                    if eff in ("P", "K", "UNKNOWN") and tclean or stale_box:
                         eff = "P-CONTEXT"
                     else:
                         sum_bg = False

@@ -279,7 +279,8 @@ _RE_Q_EN_SIG = re.compile(
     r"^\d{1,3}\s*[.]\s*(?:Choose|Select|Write|Fill|Complete|Answer|Match"
     r"|Circle|Arrange|Rearrange|Translate|Find|Identify|Underline|Correct"
     r"|Rewrite|Summarize|Read\s+and)\b")
-_RE_SUM_MARKER = re.compile(r"^\s*(?:\[\s*요\s*약\s*문?\s*\]|요약문)\s*$")
+# W39 결함 1: 꺾쇠형(<요약문>/<요약>)도 배경 — 사용자 확정 (Box 관행 폐기)
+_RE_SUM_MARKER = re.compile(r"^\s*(?:[\[<]\s*요\s*약\s*문?\s*[\]>]|요약문)\s*$")
 
 # G8 — 원전 교재 구분선 (파서 _RE_CHAPTER_DIVIDER/_RE_UNIT_DIVIDER 준용.
 # 출력 검사용 독립 정의 — 파서가 틀리면 게이트도 같이 틀리는 순환 방지)

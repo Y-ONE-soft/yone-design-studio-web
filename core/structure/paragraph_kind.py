@@ -116,8 +116,8 @@ def _base_kind(text):
         return "Sym", None
     if any(p.match(text) for p in R.ANS_PATTERNS):
         return "Ans", None
-    # [요약문] 블록 마커 (W38 결함 4) — 꺾쇠형 <요약문>은 Box(보기 테두리)
-    # 관행 유지라 Box보다 먼저 대괄호형만 빼낸다 (block_grammar 실측 주석).
+    # 요약문 블록 마커 (W38 결함 4, W39 결함 1) — 대괄호형·꺾쇠형 모두
+    # Sum. 일반 꺾쇠 마커(Box)가 <요약문>을 삼키지 않도록 Box보다 먼저.
     if BG.SUM_MARKER.match(text):
         return "Sum", None
     bk = _box_kind(text)

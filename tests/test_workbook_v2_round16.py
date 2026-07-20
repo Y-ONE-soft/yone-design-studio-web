@@ -89,11 +89,15 @@ def test_english_question_recognition():
         "1) Trisha Prabhu is a young scientist from the U.K. (T/F)")
 
 
-def test_sum_marker_bracket_only():
+def test_sum_marker_forms():
     assert BG.SUM_MARKER.match("[요약문]")
     assert BG.SUM_MARKER.match("요약문")
-    # 꺾쇠형은 Box(보기 테두리) 관행 유지 — supp/본가 코퍼스 31건 실측
-    assert not BG.SUM_MARKER.match("<요약문>")
+    # W39 결함 1 (사용자 확정 — W38 '꺾쇠형=Box 관행 유지' 폐기):
+    # 꺾쇠형도 대괄호형과 동일한 배경 블록 마커다.
+    assert BG.SUM_MARKER.match("<요약문>")
+    assert BG.SUM_MARKER.match("<요약>")
+    # 보기 마커는 여전히 Box (요약문 계열만 Sum)
+    assert not BG.SUM_MARKER.match("<보기>")
 
 
 # ── 분류기: 결함 3/4/5 파서 계층 가드 ───────────────────────────────────────
