@@ -101,7 +101,7 @@ def _parse_xlsx(filepath, chapter_name, log, section_hint=""):
 
         # 헤더 감지
         col_map = _detect_columns(rows[0])
-        if not col_map.get('word'):
+        if col_map.get('word') is None:
             # 헤더가 없으면 기본 매핑 (A=단어, B=뜻, C=유의어, D=반의어)
             col_map = {'word': 0, 'meaning': 1, 'synonym': 2, 'antonym': 3}
 
@@ -202,7 +202,7 @@ def _parse_csv(filepath, chapter_name, log, delimiter=","):
         return [], False
 
     col_map = _detect_columns(rows[0])
-    if not col_map.get('word'):
+    if col_map.get('word') is None:
         col_map = {'word': 0, 'meaning': 1, 'synonym': 2, 'antonym': 3}
 
     has_def = 'definition' in col_map
@@ -433,7 +433,7 @@ def _parse_docx(filepath, chapter_name, log, section_hint=""):
                 continue
             # 헤더 감지
             col_map = _detect_columns(rows[0])
-            if not col_map.get('word'):
+            if col_map.get('word') is None:
                 # 빈 헤더 + 6열 = HWP 단어장 패턴 (문항번호, 순번, 단어, 뜻, 유의어, 반의어)
                 ncols = len(rows[0])
                 if ncols >= 5:
@@ -494,7 +494,7 @@ def _parse_pdf(filepath, chapter_name, log, section_hint=""):
                 if not table:
                     continue
                 col_map = _detect_columns([_clean(c) if c else "" for c in table[0]])
-                if not col_map.get('word'):
+                if col_map.get('word') is None:
                     col_map = {'word': 0, 'meaning': 1, 'synonym': 2, 'antonym': 3}
                 if 'definition' in col_map:
                     has_def = True
