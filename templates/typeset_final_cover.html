@@ -212,7 +212,9 @@
     resetBtn();
     try {
       const res = await fetch('/api/result/' + jobId);
+      if (window.ResultSession && ResultSession.handle(res, jobId, showErrorCard)) return;  // 401 세션 만료 / 404 job 소멸
       const data = await res.json();
+      if (window.ResultSession) ResultSession.clear();
       if (data.status === 'error' || !data.result) { showErrorCard((data.result && data.result.error) || '알 수 없는 오류'); return; }
       showResultCard(jobId, data.result);
     } catch (err) { showErrorCard(err.message); }
@@ -256,4 +258,5 @@
 
   updatePreview();
 </script>
+<script src="{{ url_for('static', filename='js/result_session.js') }}"></script>
 {% endblock %}
