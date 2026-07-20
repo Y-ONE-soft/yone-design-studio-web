@@ -50,6 +50,12 @@
                   한글 + '것' 종결, 답란 이전)이 조건 스타일이 아닌
                   스타일로 인쇄됨 — critical (W16 c10 실증 3블록 +
                   c04/c05/0a5da924 잠복).
+  G15 확장 (W38): 블록 문맥 우선 계약 — 조건 블록 안의 번호/불릿 항목은
+                  종결어미(시오-체) 무관 조건 항목이다 (사용자 확정,
+                  W16 D3 "시오-체 번호 항목 발문 유지" 폐기. 6b66b750
+                  "1) 9단어로 빈칸을 완성하시오."가 발문 스타일+자동
+                  번호로 인쇄된 실증). 진짜 발문(발문 어휘 선두 또는
+                  번호 시퀀스 이탈)만 블록 종료로 인정.
   G16 [스텝원고미사용] 미사용 원고(G9 suspicious) 중 파일명 콘텐츠 토큰이
                   현행 스텝이 소화 가능한 종류(문장배열/영작배열/실전문제
                   등)인 파일 — 부분 침묵 유실의 강신호라 critical 승격
@@ -75,6 +81,23 @@
                   종결이면 발문 시그니처 ("영어로 번역하세요 [9강 1번]"이
                   지문 스타일로 인쇄된 c18 실증 + 세로 e79f8af9 기출력의
                   "11. (주관식) … 고르세요. [정답 2개]" 잠복 검출).
+  G13 확장 (W38): 영어 지시문 발문 시그니처 — 문항 번호 + 명령형 동사
+                  (Choose/Select/Write/…) 또는 번호 + WH-의문 … ? 가
+                  발문 계열 스타일이 아니면 검출 ("10. Choose True or
+                  False (T/F) …"가 지문 스타일로 인쇄된 6b66b750 실증.
+                  정상 출력은 Q 스타일 + 번호 제거라 번호 접두 자체가
+                  결함 서명이다).
+  G32 [요약문배경] [요약문] 마커와 그 다음 문장 단락이 배경 스타일이
+                  아님 — 마커+요약 문장 = 배경 처리(사용자 확정 스펙,
+                  6b66b750 실증 9블록). 현행 플랜(마커를 배경으로 실은
+                  플랜)은 critical, 구출력은 warning 소급.
+  G33 [라벨프레임기하] 지문번호 라벨(비숫자 — 본문N/추가본문) 단일 프레임의
+                  좌/우 페이지 기하 대조 — 오른쪽 프레임 크기가 같은
+                  높이 계열의 왼쪽 프레임과 0.3mm 초과로 다르면 검출
+                  (템플릿 유래 좌우 불일치: 6b66b750 실측 빈칸어휘/
+                  빈칸어법 L 폭 8.9 vs R 7.72. 실행기 좌우 통일이 계약 —
+                  delete 모드 critical, 아니면 warning. fb 있는 신형
+                  덤프 한정).
   G21 [원문자중복] ①로 시작하면서 본문에 ①이 다시 등장하는 장문(200자+)
                   단락 — 선지 자동번호가 inline 번호 지문(도표/불일치류:
                   선지가 지문 문장에 ①~⑤로 박힘)에 원고에 없는 ①을
@@ -163,8 +186,11 @@
                   지문이 앞 블록에 흡수된 상태 (376b34d0 실증: 'N. L1-
                   추가본문' 미정규화 → 유닛 10개라 ①을 비껴감).
                   per_passage_units 계약 스텝 한정, critical.
-  G28④ 크레딧 (W30-r15 — 사용자 확정 스펙): 마지막 크레딧(판권) 페이지는
-                  항상 왼쪽 + 오른쪽이 비면 메모(M) 페이지. 크레딧 식별 =
+  G28④ 크레딧 (W30-r15, W38 정정 — 사용자 확정 스펙): 크레딧(판권)
+                  페이지는 항상 왼쪽 + **문서의 마지막 페이지** — 책은
+                  오른쪽에서 시작해 왼쪽(크레딧)에서 끝난다. W30의
+                  "크레딧 뒤 오른쪽 메모(M) 추가"는 잘못된 스펙으로
+                  폐기 (크레딧 뒤 잔여 페이지 = 위반). 크레딧 식별 =
                   문서 말미 비-M 페이지가 마스터 없음+텍스트 프레임 0
                   (전 코퍼스 sweep 실측 셰이프). delete 모드 critical
                   (실행기 alignCreditPage 계약), 구출력 warning.
@@ -224,16 +250,36 @@ _Q_STYLE_KEYS = ("번호", "발문", "다음 글을 읽고", "하단 문제", "O
 # 콜론 앞 머리 2+글자. 1글자 머리는 대화문 화자 라벨 "A:")
 _RE_WORD_BAD_HEAD = re.compile(r"^[A-Za-z]\s*[:：]")
 
-# G15 — <조건> 블록 항목 (강신호 한정 — v1 실물 관행: 영어 어구 나열은
-# 지문 유지, 시오-체 번호 항목은 발문 유지. 4ed24266/c15 v1 덤프 실증)
+# G15 — <조건> 블록 항목 (v1 실물 관행: 영어 어구 나열은 지문 유지.
+# W38: "시오-체 번호 항목은 발문 유지" 관행 폐기 — 블록 문맥 우선,
+# 번호/불릿 항목은 종결어미 무관 조건 항목. 진짜 발문은 발문 어휘 선두
+# (번호 + 다음/아래/위/윗+글·문장류)나 번호 시퀀스 이탈로만 인정)
 _RE_COND_BULLET = re.compile(r"^\s*[•⦁◦∙ㆍ·]")
 _RE_COND_GEOT = re.compile(r"것\s*\.?\s*$")
-_RE_COND_NUMSTART = re.compile(r"^\s*\d+\s*[.)]")
+_RE_COND_NUMSTART = re.compile(r"^\s*(\d{1,2})\s*([.)])")
 # 답란 = 밑줄런으로 '끝나는' 줄 한정 — 본문 중간 빈칸 표기("보기의
 # [_______]에서 … 할 것"은 조건 항목)와 구분 (c06 실증)
 _RE_COND_BLOCK_END = re.compile(r"_{6,}\s*[.,)]?\s*$|^\s*(?:정답|→|우리말)")
 _RE_COND_QHINT = re.compile(r"^(?:다음|윗\s*글|위\s*글|글의|밑줄|주어진|"
                             r"\(주관식\)|서술형)")
+# W38: 번호 뒤 발문 어휘 선두 (블록 종료 신호 — block_grammar.QUESTION_LEAD
+# 준용, 출력 검사용 독립 정의)
+_RE_COND_QLEAD = re.compile(
+    r"^\s*\d{1,3}\s*\.\s*(?:(?:다음|아래|위|윗)\s*(?:글|문장|시|중|대화|"
+    r"도표|물음|빈칸|단어)|윗\s*글|글의|밑줄\s*친|주어진|\(주관식\)|"
+    r"\(서술형\)|서술형)")
+
+# G13/G32 (W38) — 영어 지시문 발문 시그니처 + 요약문 마커 (출력 검사용
+# 독립 정의 — block_grammar와 순환 방지)
+# 명령형만 — WH-의문형("N. Why don't we …?")은 외부지문 '지문 제목'과
+# 텍스트만으론 구분 불가라 게이트에선 제외 (r11 외부지문 헤더 실측
+# 반례: "7. Why don't we think different more often?"이 [기본 단락]으로
+# 인쇄되는 게 정상. WH-발문은 분류기(step3 문항 문맥 한정)가 담당).
+_RE_Q_EN_SIG = re.compile(
+    r"^\d{1,3}\s*[.]\s*(?:Choose|Select|Write|Fill|Complete|Answer|Match"
+    r"|Circle|Arrange|Rearrange|Translate|Find|Identify|Underline|Correct"
+    r"|Rewrite|Summarize|Read\s+and)\b")
+_RE_SUM_MARKER = re.compile(r"^\s*(?:\[\s*요\s*약\s*문?\s*\]|요약문)\s*$")
 
 # G8 — 원전 교재 구분선 (파서 _RE_CHAPTER_DIVIDER/_RE_UNIT_DIVIDER 준용.
 # 출력 검사용 독립 정의 — 파서가 틀리면 게이트도 같이 틀리는 순환 방지)
@@ -695,6 +741,38 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
             f"[문장삽입배경] 문장삽입 발문 뒤 배경(주어진 문장 박스) 미부여 "
             f"{len(insert_missing)}건: " + " | ".join(insert_missing[:3]))
 
+    # ── G32 [요약문] 마커 + 요약 문장 배경 (W38 결함 4) ──────────────────
+    # [요약문] 마커와 그 다음 문장 단락은 배경 스타일이어야 한다 (사용자
+    # 확정 스펙 — 6b66b750 실증 9블록이 지문 스타일로 인쇄). 현행 플랜
+    # (마커를 배경으로 실은 플랜)은 critical, 구출력(마커에 배경이 없는
+    # 구플랜)은 warning 소급 (G29 ①b 패턴).
+    plan_sum_bg = False
+    for fl in plan.get("flows", []):
+        for u in fl.get("units", []):
+            for p in (u["paras"] if isinstance(u, dict) else u):
+                if _RE_SUM_MARKER.match(_clean(p.get("t", ""))) \
+                        and "배경" in (p.get("s") or ""):
+                    plan_sum_bg = True
+                    break
+    sum_bg_miss = []
+    for story in dump.get("stories", []):
+        ps = story.get("paragraphs", [])
+        for i, p in enumerate(ps):
+            if not _RE_SUM_MARKER.match(_clean(p.get("t", ""))):
+                continue
+            bad = "배경" not in (p.get("s") or "")
+            nxt = next((q for q in ps[i + 1:]
+                        if _clean(q.get("t", ""))), None)
+            if nxt is not None and "배경" not in (nxt.get("s") or ""):
+                bad = True
+            if bad:
+                sum_bg_miss.append(_clean(p.get("t", ""))[:20])
+    stats["sum_bg_miss"] = len(sum_bg_miss)
+    if sum_bg_miss:
+        msg = (f"[요약문배경] [요약문] 마커/요약 문장 배경 스타일 누락 "
+               f"{len(sum_bg_miss)}건")
+        (critical if plan_sum_bg else warnings).append(msg)
+
     # ── G13 발문 스타일 누락 (W16 c07) ───────────────────────────────────
     # [서술형 N] 접두 태그, 또는 발문 시작 신호("다음/윗글/주어진…") +
     # 시오/세요-체 종결(꼬리 [출처] 태그 제거 후)이 발문 계열 스타일이
@@ -702,7 +780,15 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
     q_style_miss = []
     for t, s in _dump_paras(dump):
         tt = _clean(t)
-        if not tt or not _RE_HANGUL.search(tt):
+        if not tt:
+            continue
+        if not _RE_HANGUL.search(tt):
+            # W38 확장: 영어 지시문 발문 시그니처 (번호 + 명령형/WH-의문 —
+            # 정상 출력은 Q 스타일+번호 제거이므로 번호 접두 잔존 자체가
+            # 미인식 서명. 6b66b750 "10. Choose True or False …" 실증)
+            if _RE_Q_EN_SIG.match(tt) and not any(
+                    k in (s or "") for k in _Q_STYLE_KEYS):
+                q_style_miss.append(tt[:45])
             continue
         core = tt
         while True:
@@ -809,17 +895,20 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         else:
             warnings.append(msg)
 
-    # ── G15 <조건> 블록 항목 스타일 (W16 c10) ────────────────────────────
+    # ── G15 <조건> 블록 항목 스타일 (W16 c10, W38 블록 문맥 우선 확장) ──
     # <조건> 마커부터 답란(밑줄런/정답/→/우리말) 이전까지 스캔. 강신호
-    # 조건 항목(불릿 시작 / 한글 + '것' 종결 / 번호 + 한글 + '것' 종결)이
-    # 조건 스타일이 아니면 검출. 발문 스타일 + 발문 신호(시작 힌트/시오)는
-    # 블록 종료로 간주 (v1 실물: 시오-체 번호 항목은 발문 유지 관행).
+    # 조건 항목(불릿 시작 / 한글 + '것' 종결 / 번호 항목 — W38: 종결어미
+    # 무관)이 조건 스타일이 아니면 검출. 블록 종료는 구조 신호만: 답란/
+    # 보기/배경/다음글읽고 스타일/발문 어휘 선두 번호(_RE_COND_QLEAD)/
+    # 번호 시퀀스 이탈. ("시오-체 번호 항목 발문 유지" W16 D3 관행은
+    # 사용자 확정으로 폐기 — 6b66b750 실증.)
     cond_miss = []
     for story in dump.get("stories", []):
         ps = story.get("paragraphs", [])
         for i, p in enumerate(ps):
             if _clean(p.get("t", "")) != "<조건>":
                 continue
+            cond_no = 1        # 블록 항목 번호 시퀀스 기대값
             for j in range(i + 1, len(ps)):
                 qt = _clean(ps[j].get("t", ""))
                 qs = ps[j].get("s") or ""
@@ -831,10 +920,22 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                     break
                 if any(k in qs for k in ("다음 글을 읽고", "보기", "배경")):
                     break
-                if "번호" in qs and (_RE_COND_QHINT.match(qt)
-                                     or "시오" in qt):
-                    break
-                strong = (_RE_COND_BULLET.match(qt)
+                mnum = _RE_COND_NUMSTART.match(qt)
+                is_item_num = False
+                if mnum:
+                    num, delim = int(mnum.group(1)), mnum.group(2)
+                    if delim == ")":
+                        is_item_num = True
+                        cond_no = num + 1
+                    elif num == cond_no and not (
+                            cond_no == 1 and _RE_COND_QLEAD.match(qt)):
+                        is_item_num = True
+                        cond_no = num + 1
+                if "번호" in qs and not is_item_num and (
+                        _RE_COND_QHINT.match(qt) or _RE_COND_QLEAD.match(qt)
+                        or "시오" in qt):
+                    break       # 진짜 발문 (번호 스타일 + 비항목) — 종료
+                strong = (_RE_COND_BULLET.match(qt) or is_item_num
                           or (_RE_COND_GEOT.search(qt)
                               and _RE_HANGUL.search(qt)))
                 if strong and "조건" not in qs:
@@ -1281,26 +1382,23 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                 nxt = plist[i + 1] if i + 1 < len(plist) else None
                 ok_pos = (pe.get("side") == "R" and nxt
                           and str(nxt.get("m") or "") in ("", "[None]"))
-                # W30-r15: 크레딧 스프레드의 오른쪽 메모(M) 페이지 허용 —
-                # 마지막 M 페이지 + 직전이 크레딧(왼쪽) (사용자 확정 스펙:
-                # 크레딧 왼쪽 + 오른쪽이 비면 메모 페이지)
-                ok_credit_memo = (nxt is None and pe.get("side") == "R"
-                                  and i > 0 and _credit_shape(plist[i - 1])
-                                  and plist[i - 1].get("side") == "L")
-                if not (ok_pos or ok_credit_memo):
+                # W38: W30의 '크레딧 뒤 오른쪽 메모(M)' 허용 폐기 —
+                # 책은 크레딧(왼쪽)에서 끝난다 (사용자 확정 스펙 정정).
+                if not ok_pos:
                     boundary_bad.append(
                         f"M 페이지 p{pe.get('p')} 위치 이상 "
-                        f"(간지 직전 오른쪽/크레딧 뒤 메모만 허용)")
+                        f"(간지 직전 오른쪽 채움만 허용)")
         stats["part_boundary_bad"] = len(boundary_bad)
         if boundary_bad:
             msg = (f"[파트경계] 파트 경계 정렬 이상 {len(boundary_bad)}건: "
                    + " | ".join(boundary_bad[:5]))
             (critical if cleanup_delete else warnings).append(msg)
 
-        # ── G28④ 크레딧 페이지 정렬 (W30-r15 — 결함 7, 사용자 확정 스펙:
-        # 마지막 크레딧 페이지는 항상 왼쪽 + 오른쪽이 비면 메모(M) 페이지.
-        # 376b34d0 실증: 판권 p99가 오른쪽(R) 단독. delete 모드(실행기
-        # alignCreditPage가 계약)는 critical, 구출력은 warning 소급 지목) ──
+        # ── G28④ 크레딧 페이지 정렬 (W30-r15 도입, W38 스펙 정정 — 사용자
+        # 확정: 크레딧은 왼쪽 + 문서의 마지막 페이지. 책은 오른쪽 시작,
+        # 왼쪽(크레딧) 끝 — W30의 '크레딧 뒤 메모(M) 추가'는 잘못된 스펙.
+        # delete 모드(실행기 alignCreditPage가 계약)는 critical, 구출력은
+        # warning 소급 지목) ──
         ci = len(plist) - 1
         while ci >= 0 and str(plist[ci].get("m") or "").startswith("M"):
             ci -= 1
@@ -1310,13 +1408,64 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
             if ce.get("side") == "R":
                 credit_bad.append(
                     f"크레딧 p{ce.get('p')}가 오른쪽 페이지 (왼쪽 정렬 계약)")
-            elif ci == len(plist) - 1:
+            elif ci != len(plist) - 1:
                 credit_bad.append(
-                    f"크레딧 p{ce.get('p')} 오른쪽 메모(M) 페이지 누락")
+                    f"크레딧 p{ce.get('p')} 뒤 잔여 페이지 {len(plist)-1-ci}장 "
+                    f"(크레딧이 마지막 페이지 계약 — 책은 왼쪽 끝)")
         stats["credit_page_bad"] = len(credit_bad)
         if credit_bad:
             msg = "[파트경계] 크레딧 정렬 이상: " + " | ".join(credit_bad)
             (critical if cleanup_delete else warnings).append(msg)
+
+        # ── G33 지문번호 라벨 프레임 좌/우 기하 대조 (W38 — 결함 2) ─────
+        # 비숫자 지문번호 라벨(본문N/추가본문) 단일 프레임의 크기가 좌/우
+        # 페이지에서 같아야 한다 (사용자 확정: 왼쪽 크기에 통일 — 실행기
+        # updatePassageNumbers 좌우 정규화가 계약). 같은 높이 계열(±1mm —
+        # 세로형/가로형 라벨 혼재 구분)의 왼쪽 프레임과 폭/높이 0.3mm 초과
+        # 차이면 검출. fb 없는 구버전 덤프는 검사 생략 (G24② 전례).
+        pn_labels = set(
+            str(x) for x in
+            (plan.get("passage_numbers") or {}).get("labels") or [])
+        pn_labels = {x for x in pn_labels if not _RE_BARE_NUM.match(x)}
+        if pn_labels:
+            lab_geo = []       # (side, w, h, text, page)
+            for story in dump.get("stories", []):
+                ps = story.get("paragraphs", [])
+                if len(ps) != 1:
+                    continue
+                tt = _clean(ps[0].get("t", ""))
+                if tt not in pn_labels:
+                    continue
+                fbs = story.get("fb") or []
+                pgs = story.get("pg") or []
+                if len(fbs) != 1 or len(pgs) != 1:
+                    continue
+                pe2 = pages_inv.get(str(pgs[0]))
+                if not pe2:
+                    continue
+                b = fbs[0]
+                lab_geo.append((pe2.get("side"),
+                                round(b[3] - b[1], 2), round(b[2] - b[0], 2),
+                                tt, pe2.get("p")))
+            lefts = [(w, h) for sd, w, h, _t, _p in lab_geo if sd == "L"]
+            lr_bad = []
+            for sd, w, h, tt, pnum in lab_geo:
+                if sd != "R":
+                    continue
+                fam = [lw for lw, lh in lefts if abs(lh - h) <= 1.0]
+                if fam and abs(fam[0] - w) > 0.3:
+                    lr_bad.append(f"p{pnum} '{tt}' 폭 {w} vs 왼쪽 {fam[0]}")
+                elif not fam:
+                    fam_h = [(lw, lh) for lw, lh in lefts
+                             if abs(lw - w) <= 1.0]
+                    if fam_h and abs(fam_h[0][1] - h) > 0.3:
+                        lr_bad.append(
+                            f"p{pnum} '{tt}' 높이 {h} vs 왼쪽 {fam_h[0][1]}")
+            stats["label_frame_lr_bad"] = len(lr_bad)
+            if lr_bad:
+                msg = (f"[라벨프레임기하] 지문번호 라벨 프레임 좌/우 크기 "
+                       f"불일치 {len(lr_bad)}건: " + " | ".join(lr_bad[:4]))
+                (critical if cleanup_delete else warnings).append(msg)
 
         # ── G28③ 고아 간지 스프레드 (W23 r13 — F2) ──────────────────────
         # 간지 라벨 뒤에 다음 간지/문서 끝까지 플로우 콘텐츠 페이지가 하나도
