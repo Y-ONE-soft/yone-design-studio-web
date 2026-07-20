@@ -30,6 +30,7 @@ _NUM_Q = re.compile(r"^\s*\d{1,3}\s*[.)]")
 _TOKEN = {
     "Q": "Q", "Q-INTRO": "INTRO", "P": "P", "P-CONTEXT": "PC",
     "Sum": "SUM", "Cond": "COND", "Box": "BOX", "C": "C", "Ans": "ANS",
+    "AnsL": "ANSL",
     "Word": "WORD", "K": "K", "Sym": "SYM", "SRC": "SRC",
     "UNKNOWN": "UNK", "GH": None, "A": None, "BLANK": None,
 }
