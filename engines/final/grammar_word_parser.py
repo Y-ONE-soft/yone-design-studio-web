@@ -8,6 +8,10 @@ import os
 import re
 import unicodedata
 
+from engines.final.grammar_finder import (
+    folder_token_match, fuzzy_grammar_match, warn_zero
+)
+
 
 def _nfc(s):
     return unicodedata.normalize("NFC", s)
@@ -38,10 +42,19 @@ def find_grammar_word_files(content_base, subject, publisher, lessons, log=None)
             if _nfc(d) == subject or _nfc(d).replace(" ", "") == subject.replace(" ", ""):
                 subject_dir = os.path.join(textbook_base, d)
                 break
+        if not subject_dir:
+            # 2차 (배치 E): 정규화 토큰 매칭 — 언더스코어/괄호 등 토씨 변형
+            for d in os.listdir(textbook_base):
+                if os.path.isdir(os.path.join(textbook_base, d)) and \
+                        folder_token_match(d, subject):
+                    subject_dir = os.path.join(textbook_base, d)
+                    if log:
+                        log(f"  [어법수정] 과목 폴더 유사 매칭: {_nfc(d)}")
+                    break
 
     if not subject_dir or not os.path.isdir(subject_dir):
         if log:
-            log(f"  [어법수정] 과목 폴더 없음: {subject}")
+            log(f"  [경고] [어법수정] 과목 폴더 없음: {subject}")
         return []
 
     # 교재 폴더 찾기 (subject + publisher)
@@ -52,10 +65,24 @@ def find_grammar_word_files(content_base, subject, publisher, lessons, log=None)
         if publisher in dn or target_name.replace(" ", "") in dn.replace(" ", ""):
             publisher_dir = os.path.join(subject_dir, d)
             break
+    if not publisher_dir:
+        # 2차 (배치 E): 정규화 토큰 매칭 (예: '능률(민)' ↔ '능률민')
+        for d in os.listdir(subject_dir):
+            if os.path.isdir(os.path.join(subject_dir, d)) and \
+                    folder_token_match(d, publisher):
+                publisher_dir = os.path.join(subject_dir, d)
+                if log:
+                    log(f"  [어법수정] 교재 폴더 유사 매칭: {_nfc(d)}")
+                break
 
     if not publisher_dir or not os.path.isdir(publisher_dir):
         if log:
-            log(f"  [어법수정] 교재 폴더 없음: {target_name}")
+            _cands = ", ".join(sorted(
+                _nfc(d) for d in os.listdir(subject_dir)
+                if os.path.isdir(os.path.join(subject_dir, d))
+            )[:8])
+            log(f"  [경고] [어법수정] 교재 폴더 없음: {target_name}"
+                + (f" — 후보 폴더: {_cands}" if _cands else ""))
         return []
 
     # 과 폴더별로 어법수정 문제지 찾기
@@ -89,25 +116,51 @@ def find_grammar_word_files(content_base, subject, publisher, lessons, log=None)
                 lesson_dir = os.path.join(publisher_dir, d)
                 break
 
+        if not lesson_dir and lesson_num.isdigit():
+            # 2차 (배치 E): 정규화 숫자 토큰 매칭 — 공백/0패딩 변형
+            # ('1 과'/'01과', "1과"이 "11과"에 오매칭되지 않게 숫자 경계 가드)
+            from engines.final.grammar_finder import fuzzy_enabled, norm_token
+            if fuzzy_enabled():
+                _pat = re.compile(rf"(?<!\d)0*{int(lesson_num)}과(?!\d)")
+                for d in os.listdir(publisher_dir):
+                    if not os.path.isdir(os.path.join(publisher_dir, d)):
+                        continue
+                    if _pat.search(norm_token(d)):
+                        lesson_dir = os.path.join(publisher_dir, d)
+                        if log:
+                            log(f"  [어법수정] {lesson} 폴더 유사 매칭: {_nfc(d)}")
+                        break
+
         if not lesson_dir:
             if log:
-                log(f"  [어법수정] {lesson} 폴더 없음")
+                _cands = ", ".join(sorted(
+                    _nfc(d) for d in os.listdir(publisher_dir)
+                    if os.path.isdir(os.path.join(publisher_dir, d))
+                )[:8])
+                log(f"  [경고] [어법수정] {lesson} 폴더 없음"
+                    + (f" — 후보 폴더: {_cands}" if _cands else ""))
             continue
 
         # 어법수정 문제지 .docx 찾기 (하위 폴더 포함)
+        _n_before = len(found_files)
         for root, dirs, files in os.walk(lesson_dir):
             # .rsync-partial 등 숨김 dot-디렉토리(미완성 동기화 잔여물) 건너뛰기
             dirs[:] = [d for d in dirs if not d.startswith(".")]
             for f in files:
                 fn = _nfc(f)
                 # "문제지" 표기 + "_문제.docx" 표기 모두 허용 (파일명 오타 대응)
-                if ("어법수정" in fn and ("문제지" in fn or fn.endswith("_문제.docx"))
-                        and fn.endswith(".docx")
-                        and not fn.startswith("~") and "정답" not in fn and "해설" not in fn):
+                _legacy = ("어법수정" in fn and ("문제지" in fn or fn.endswith("_문제.docx"))
+                           and fn.endswith(".docx")
+                           and not fn.startswith("~") and "정답" not in fn and "해설" not in fn)
+                if _legacy or fuzzy_grammar_match(fn):
                     full_path = os.path.join(root, f)
                     found_files.append(full_path)
                     if log:
-                        log(f"  [어법수정] {lesson}: {fn}")
+                        log(f"  [어법수정] {lesson}: {fn}"
+                            + ("" if _legacy else " (유사 매칭)"))
+        if len(found_files) == _n_before:
+            # 침묵 금지 (배치 E): 과 폴더는 있는데 어법수정 매칭 0건
+            warn_zero(log, f"{lesson}", lesson_dir)
 
     return found_files
 
@@ -143,22 +196,32 @@ def find_deeplearning_grammar_files(content_base, subject, publisher, log=None):
         return []
 
     found_files = []
+    dl_dirs = []
     for d in os.listdir(publisher_dir):
         dn = _nfc(d)
         if not os.path.isdir(os.path.join(publisher_dir, d)):
             continue
-        if "Deep Learning" in dn or "DeepLearning" in dn.replace(" ", ""):
+        # 2차 (배치 E): 정규화 토큰 매칭 — 'deep_learning'/'딥러닝' 표기 변형
+        if ("Deep Learning" in dn or "DeepLearning" in dn.replace(" ", "")
+                or folder_token_match(dn, "DeepLearning")
+                or folder_token_match(dn, "딥러닝")):
+            dl_dirs.append(os.path.join(publisher_dir, d))
             for root, dirs, files in os.walk(os.path.join(publisher_dir, d)):
                 # .rsync-partial 등 숨김 dot-디렉토리(미완성 동기화 잔여물) 건너뛰기
                 dirs[:] = [d for d in dirs if not d.startswith(".")]
                 for f in files:
                     fn = _nfc(f)
-                    if ("어법수정" in fn and ("문제지" in fn or fn.endswith("_문제.docx"))
-                            and fn.endswith(".docx")
-                            and not fn.startswith("~") and "정답" not in fn and "해설" not in fn):
+                    _legacy = ("어법수정" in fn and ("문제지" in fn or fn.endswith("_문제.docx"))
+                               and fn.endswith(".docx")
+                               and not fn.startswith("~") and "정답" not in fn and "해설" not in fn)
+                    if _legacy or fuzzy_grammar_match(fn):
                         found_files.append(os.path.join(root, f))
                         if log:
-                            log(f"  [어법수정] 딥러닝 파일: {fn}")
+                            log(f"  [어법수정] 딥러닝 파일: {fn}"
+                                + ("" if _legacy else " (유사 매칭)"))
+    if dl_dirs and not found_files:
+        # 침묵 금지 (배치 E): Deep Learning 폴더는 있는데 매칭 0건
+        warn_zero(log, "딥러닝", dl_dirs)
     return found_files
 
 
@@ -219,11 +282,33 @@ def find_mockexam_grammar_files(content_base, scope_text, grade, log=None):
                 break
 
         if not target_folder or not os.path.isdir(target_folder):
+            # 2차 (배치 E): 숫자 토큰 매칭 — 구분자·4자리 연도 표기와 무관하게
+            # (년, 월) 토큰으로 대조 (배치 A `_find_month_folder` 2차 패턴 확산)
+            from engines.final.grammar_finder import fuzzy_enabled
+            if fuzzy_enabled():
+                for d in os.listdir(mock_base):
+                    dn = _nfc(d)
+                    if not os.path.isdir(os.path.join(mock_base, d)):
+                        continue
+                    my = re.search(r"(\d{2,4})\s*년", dn)
+                    if not my or my.group(1)[-2:] != str(year):
+                        continue
+                    mm = re.search(r"(\d{1,2})\s*월", dn)
+                    if not mm or int(mm.group(1)) != int(month):
+                        continue
+                    target_folder = os.path.join(mock_base, d)
+                    if log:
+                        log(f"  [어법수정] 모의고사 {year}년 {month}월 폴더 "
+                            f"유사 매칭: {dn}")
+                    break
+
+        if not target_folder or not os.path.isdir(target_folder):
             if log:
-                log(f"  [어법수정] 모의고사 {year}년 {month}월 폴더 없음")
+                log(f"  [경고] [어법수정] 모의고사 {year}년 {month}월 폴더 없음")
             continue
 
         yymm = f"{year}{int(month):02d}"
+        _n_before = len(found)
 
         # 폴더 내 + 직전보충 하위에서 어법수정 문제지 찾기.
         # 표준 파일: "..._어법수정_문제지.docx"
@@ -233,20 +318,26 @@ def find_mockexam_grammar_files(content_base, scope_text, grade, log=None):
             dirs[:] = [d for d in dirs if not d.startswith(".")]
             for f in files:
                 fn = _nfc(f)
-                if not (fn.endswith(".docx") and "어법수정" in fn
+                _legacy = False
+                if (fn.endswith(".docx") and "어법수정" in fn
                         and not fn.startswith("~")
                         and "정답" not in fn and "해설" not in fn):
-                    continue
-                is_standard = "문제지" in fn or fn.endswith("_문제.docx")
-                is_range_variant = bool(
-                    re.match(r"^\d+(?:\s*[~\-\u2013\u2014]\s*\d+)?\s*번\s*어법수정", fn)
-                )
-                if not (is_standard or is_range_variant):
+                    is_standard = "문제지" in fn or fn.endswith("_문제.docx")
+                    is_range_variant = bool(
+                        re.match(r"^\d+(?:\s*[~\-\u2013\u2014]\s*\d+)?\s*번\s*어법수정", fn)
+                    )
+                    _legacy = is_standard or is_range_variant
+                if not _legacy and not fuzzy_grammar_match(
+                        fn, allow_range_variant=True):
                     continue
                 full_path = os.path.join(root, f)
                 found.append((full_path, yymm))
                 if log:
-                    log(f"  [어법수정] 모의고사 {year}년 {month}월: {fn}")
+                    log(f"  [어법수정] 모의고사 {year}년 {month}월: {fn}"
+                        + ("" if _legacy else " (유사 매칭)"))
+        if len(found) == _n_before:
+            # 침묵 금지 (배치 E, 감사 실증 #5): 월 폴더는 있는데 매칭 0건
+            warn_zero(log, f"모의고사 {year}년 {month}월", target_folder)
 
     return found
 
@@ -272,6 +363,19 @@ def find_mothertongue_grammar_files(content_base, grade, log=None):
             target_folder = os.path.join(mt_base, d)
             break
     if not target_folder:
+        # 2차 (배치 E): 정규화 토큰 매칭 — 공백/구분자 표기 변형
+        for d in os.listdir(mt_base):
+            if not os.path.isdir(os.path.join(mt_base, d)):
+                continue
+            if (folder_token_match(d, "마더텅예전기출")
+                    and folder_token_match(d, f"한영고{grade_num}")):
+                target_folder = os.path.join(mt_base, d)
+                if log:
+                    log(f"  [어법수정] 마더텅 폴더 유사 매칭: {_nfc(d)}")
+                break
+    if not target_folder:
+        if log:
+            log(f"  [경고] [어법수정] 마더텅 예전 기출 폴더 없음 ({grade})")
         return []
     found = []
     for sub in os.listdir(target_folder):
@@ -285,11 +389,16 @@ def find_mothertongue_grammar_files(content_base, grade, log=None):
             continue
         for f in os.listdir(sub_dir):
             fn = _nfc(f)
-            if ("\uc5b4\ubc95\uc218\uc815" in fn and "\ubb38\uc81c\uc9c0" in fn and fn.endswith(".docx")
-                    and not fn.startswith("~") and "\uc815\ub2f5" not in fn and "\ud574\uc124" not in fn):
+            _legacy = ("\uc5b4\ubc95\uc218\uc815" in fn and "\ubb38\uc81c\uc9c0" in fn and fn.endswith(".docx")
+                       and not fn.startswith("~") and "\uc815\ub2f5" not in fn and "\ud574\uc124" not in fn)
+            if _legacy or fuzzy_grammar_match(fn):
                 found.append((os.path.join(sub_dir, f), section))
                 if log:
-                    log(f"  [\uc5b4\ubc95\uc218\uc815] \ub9c8\ub354\ud145 {section}\uac15: {fn}")
+                    log(f"  [\uc5b4\ubc95\uc218\uc815] \ub9c8\ub354\ud145 {section}\uac15: {fn}"
+                        + ("" if _legacy else " (\uc720\uc0ac \ub9e4\uce6d)"))
+    if not found:
+        # 침묵 금지 (배치 E): 마더텅 폴더는 있는데 매칭 0건
+        warn_zero(log, "\ub9c8\ub354\ud145 \uc608\uc804 \uae30\ucd9c", target_folder)
     return found
 
 
@@ -314,6 +423,7 @@ def find_mockexam_grammar_files_by_codes(content_base, grade, passage_codes=None
     # passage_codes 없으면 전체 년월 폴더 스캔
     found_files = []
     seen_paths = set()
+    _seen_folder_yymms = set()   # 폴더가 존재한 년월 (침묵 금지 대조용)
     for d in os.listdir(mock_base):
         dn = _nfc(d)
         m = re.search(r"(\d{2})\s*\ub144\s*(\d{1,2})\s*\uc6d4", dn)
@@ -328,20 +438,24 @@ def find_mockexam_grammar_files_by_codes(content_base, grade, passage_codes=None
         target = os.path.join(mock_base, d)
         if not os.path.isdir(target):
             continue
+        _seen_folder_yymms.add(yymm)
+        _n_before = len(found_files)
         for root, dirs, files in os.walk(target):
             # .rsync-partial 등 숨김 dot-디렉토리(미완성 동기화 잔여물) 건너뛰기
             dirs[:] = [d for d in dirs if not d.startswith(".")]
             for f in files:
                 fn = _nfc(f)
-                if not (fn.endswith(".docx") and "\uc5b4\ubc95\uc218\uc815" in fn
+                _legacy = False
+                if (fn.endswith(".docx") and "\uc5b4\ubc95\uc218\uc815" in fn
                         and not fn.startswith("~")
                         and "\uc815\ub2f5" not in fn and "\ud574\uc124" not in fn):
-                    continue
-                is_standard = "\ubb38\uc81c\uc9c0" in fn
-                is_range_variant = bool(
-                    re.match(r"^\d+(?:\s*[~\-\u2013\u2014]\s*\d+)?\s*\ubc88\s*\uc5b4\ubc95\uc218\uc815", fn)
-                )
-                if not (is_standard or is_range_variant):
+                    is_standard = "\ubb38\uc81c\uc9c0" in fn
+                    is_range_variant = bool(
+                        re.match(r"^\d+(?:\s*[~\-\u2013\u2014]\s*\d+)?\s*\ubc88\s*\uc5b4\ubc95\uc218\uc815", fn)
+                    )
+                    _legacy = is_standard or is_range_variant
+                if not _legacy and not fuzzy_grammar_match(
+                        fn, allow_range_variant=True):
                     continue
                 full_path = os.path.join(root, f)
                 if full_path in seen_paths:
@@ -349,7 +463,16 @@ def find_mockexam_grammar_files_by_codes(content_base, grade, passage_codes=None
                 seen_paths.add(full_path)
                 found_files.append((full_path, yymm))
                 if log:
-                    log(f"  [\uc5b4\ubc95\uc218\uc815] {yy}\ub144 {mm_int}\uc6d4: {fn}")
+                    log(f"  [\uc5b4\ubc95\uc218\uc815] {yy}\ub144 {mm_int}\uc6d4: {fn}"
+                        + ("" if _legacy else " (유사 매칭)"))
+        if yymm_set and len(found_files) == _n_before:
+            # 침묵 금지 (배치 E): 대상 년월 폴더는 있는데 매칭 0건
+            warn_zero(log, f"모의고사 {yy}년 {mm_int}월", target)
+    if yymm_set and log:
+        # 침묵 금지 (배치 E): 코드가 요구한 년월인데 폴더 자체 미발견
+        for _missing in sorted(yymm_set - _seen_folder_yymms):
+            log(f"  [경고] [어법수정] {_missing[:2]}년 {int(_missing[2:])}월 "
+                f"폴더 미발견 (코드 기반 탐색)")
     return found_files
 
 
@@ -408,15 +531,22 @@ def find_ebs_grammar_files(content_base, scope_text, log=None, grade=None,
                     olympos_base = os.path.join(ebs_base, d)
                     break
 
+        if not olympos_base and log:
+            # 침묵 금지 (배치 E): 올림포스 교재 폴더 자체 미발견
+            log("  [경고] [어법수정] 올림포스 독해기본 폴더 미발견 "
+                f"(EBS 작업 하위, grade={grade})")
         if olympos_base:
             for unit_num in units:
                 # "올림포스 독해기본1 5강" 형태의 폴더 (정확한 매칭: 단어 경계)
                 # "1강"이 "11강"을 부분 매칭하지 않도록 정규식 사용
                 _unit_pat = re.compile(rf"(?<!\d){unit_num}\uAC15(?!\d)")
+                _unit_dir_found = None
+                _n_before = len(found)
                 for d in os.listdir(olympos_base):
                     dn = _nfc(d)
                     if _unit_pat.search(dn):
                         unit_dir = os.path.join(olympos_base, d)
+                        _unit_dir_found = unit_dir
                         # 직접 하위 또는 워크북 하위에서 찾기
                         for root, dirs, files in os.walk(unit_dir):
                             # .rsync-partial 등 숨김 dot-디렉토리(미완성 동기화 잔여물) 건너뛰기
@@ -424,13 +554,20 @@ def find_ebs_grammar_files(content_base, scope_text, log=None, grade=None,
                             for f in files:
                                 fn = _nfc(f)
                                 # "문제지" 표기 + "_문제.docx" 표기 모두 허용 (파일명 오타 대응)
-                                if ("어법수정" in fn and ("문제지" in fn or fn.endswith("_문제.docx"))
-                                        and fn.endswith(".docx")
-                                        and not fn.startswith("~") and "정답" not in fn and "해설" not in fn):
+                                _legacy = ("어법수정" in fn and ("문제지" in fn or fn.endswith("_문제.docx"))
+                                           and fn.endswith(".docx")
+                                           and not fn.startswith("~") and "정답" not in fn and "해설" not in fn)
+                                if _legacy or fuzzy_grammar_match(fn):
                                     found.append((os.path.join(root, f), unit_num))
                                     if log:
-                                        log(f"  [어법수정] 올포 {unit_num}강: {fn}")
+                                        log(f"  [어법수정] 올포 {unit_num}강: {fn}"
+                                            + ("" if _legacy else " (유사 매칭)"))
                         break
+                # 침묵 금지 (배치 E): 강 폴더 미발견 / 폴더는 있는데 매칭 0건
+                if not _unit_dir_found and log:
+                    log(f"  [경고] [어법수정] 올포 {unit_num}강 폴더 미발견")
+                elif _unit_dir_found and len(found) == _n_before:
+                    warn_zero(log, f"올포 {unit_num}강", _unit_dir_found)
 
     # 리딩파워
     elif "리딩파워" in scope or "Reading" in scope:
@@ -459,12 +596,16 @@ def find_ebs_grammar_files(content_base, scope_text, log=None, grade=None,
                     break
         if not rp_base and _rp_cands:
             rp_base = _rp_cands[0][0]  # 폴백: 첫 매칭 (기존 동작)
+        if not rp_base and log:
+            # 침묵 금지 (배치 E): 리딩파워 교재 폴더 자체 미발견
+            log("  [경고] [어법수정] 리딩파워 폴더 미발견 (EBS 작업 하위)")
 
         if rp_base:
             # 중복 파일 방지 (예: "Unit 9~11 Example" + "Unit 9~11 Example 제외" 두 디렉토리 모두 매칭될 때
             # 같은 파일이 여러 번 append되지 않도록)
             _processed_paths = set()
             for unit_num in units:
+                _n_before = len(found)
                 # "Unit 9" / "unit9" 정확 매칭 또는 "Unit 9~11" / "Unit 9-11" 범위 매칭
                 # (예: "Unit 9~11 Example 워크북" 디렉토리는 Unit 9, 10, 11 모두 해당)
                 _unit_rng_pat = re.compile(rf"Unit\s*(\d+)\s*[~\-]\s*(\d+)", re.IGNORECASE)
@@ -493,15 +634,21 @@ def find_ebs_grammar_files(content_base, scope_text, log=None, grade=None,
                             dirs[:] = [d for d in dirs if not d.startswith(".")]
                             for f in files:
                                 fn = _nfc(f)
-                                if ("어법수정" in fn and fn.endswith(".docx")
-                                        and not fn.startswith("~") and "정답" not in fn and "해설" not in fn):
+                                _legacy = ("어법수정" in fn and fn.endswith(".docx")
+                                           and not fn.startswith("~") and "정답" not in fn and "해설" not in fn)
+                                if _legacy or fuzzy_grammar_match(
+                                        fn, require_probsheet=False):
                                     file_path = os.path.join(root, f)
                                     if file_path in _processed_paths:
                                         continue
                                     _processed_paths.add(file_path)
                                     found.append((file_path, unit_num))
                                     if log:
-                                        log(f"  [어법수정] 리딩파워 Unit{unit_num}: {fn} ({_nfc(d)})")
+                                        log(f"  [어법수정] 리딩파워 Unit{unit_num}: {fn} ({_nfc(d)})"
+                                            + ("" if _legacy else " (유사 매칭)"))
+                if len(found) == _n_before and log:
+                    # 침묵 금지 (배치 E): 해당 Unit 매칭 0건 (폴더 미발견 포함)
+                    log(f"  [경고] [어법수정] 리딩파워 Unit {unit_num}: 매칭 0건")
 
     return found
 
@@ -535,23 +682,31 @@ def find_external_ted_grammar_files(content_base, grade, school, exam_period, lo
         ):
             candidate_dirs.append(os.path.join(year_base, d))
     found = []
+    _ted_dirs = []
     for school_dir in candidate_dirs:
         # 시험 시기 폴더: "1. 26-1-중간" / "2. 26-1-기말" 등
         for sd in os.listdir(school_dir):
             sdn = _nfc(sd)
-            if exam_period and exam_period not in sdn:
+            if exam_period and exam_period not in sdn \
+                    and not folder_token_match(sdn, exam_period):
                 continue
             ted_dir = os.path.join(school_dir, sd, "\uc678\ubd80\uc9c0\ubb38 TED")
             if not os.path.isdir(ted_dir):
                 continue
+            _ted_dirs.append(ted_dir)
             for f in os.listdir(ted_dir):
                 fn = _nfc(f)
-                if ("\uc5b4\ubc95\uc218\uc815" in fn and "\ubb38\uc81c\uc9c0" in fn and fn.endswith(".docx")
-                        and not fn.startswith("~") and "\uc815\ub2f5" not in fn and "\ud574\uc124" not in fn):
+                _legacy = ("\uc5b4\ubc95\uc218\uc815" in fn and "\ubb38\uc81c\uc9c0" in fn and fn.endswith(".docx")
+                           and not fn.startswith("~") and "\uc815\ub2f5" not in fn and "\ud574\uc124" not in fn)
+                if _legacy or fuzzy_grammar_match(fn):
                     full = os.path.join(ted_dir, f)
                     found.append(full)
                     if log:
-                        log(f"  [\uc5b4\ubc95\uc218\uc815] TED: {fn}")
+                        log(f"  [\uc5b4\ubc95\uc218\uc815] TED: {fn}"
+                            + ("" if _legacy else " (유사 매칭)"))
+    if _ted_dirs and not found:
+        # 침묵 금지 (배치 E): TED 폴더는 있는데 매칭 0건
+        warn_zero(log, "TED \uc678\ubd80\uc9c0\ubb38", _ted_dirs)
     return found
 
 
@@ -588,6 +743,7 @@ def find_external_grammar_docx(content_base, grade, school, exam_period, log=Non
             candidate_dirs.append(os.path.join(year_base, d))
     found = []
     seen = set()
+    _period_dirs = []
     for school_dir in candidate_dirs:
         try:
             sub = os.listdir(school_dir)
@@ -595,26 +751,33 @@ def find_external_grammar_docx(content_base, grade, school, exam_period, log=Non
             continue
         for sd in sub:
             sdn = _nfc(sd)
-            if exam_period and exam_period not in sdn:
+            if exam_period and exam_period not in sdn \
+                    and not folder_token_match(sdn, exam_period):
                 continue
             period_dir = os.path.join(school_dir, sd)
             if not os.path.isdir(period_dir):
                 continue
+            _period_dirs.append(period_dir)
             for root, dirs, files in os.walk(period_dir):
                 # .rsync-partial 등 숨김 dot-디렉토리(미완성 동기화 잔여물) 건너뛰기
                 dirs[:] = [d for d in dirs if not d.startswith(".")]
                 for f in files:
                     fn = _nfc(f)
-                    if ("\uc5b4\ubc95\uc218\uc815" in fn and "\ubb38\uc81c\uc9c0" in fn
-                            and fn.endswith(".docx") and not fn.startswith("~")
-                            and "\uc815\ub2f5" not in fn and "\ud574\uc124" not in fn):
+                    _legacy = ("\uc5b4\ubc95\uc218\uc815" in fn and "\ubb38\uc81c\uc9c0" in fn
+                               and fn.endswith(".docx") and not fn.startswith("~")
+                               and "\uc815\ub2f5" not in fn and "\ud574\uc124" not in fn)
+                    if _legacy or fuzzy_grammar_match(fn):
                         full = os.path.join(root, f)
                         if full in seen:
                             continue
                         seen.add(full)
                         found.append(full)
                         if log:
-                            log(f"  [\uc5b4\ubc95\uc218\uc815] \uc678\ubd80\uc9c0\ubb38 \uc6d0\uace0 \uc790\ub3d9\ud0d0\uc0c9: {fn}")
+                            log(f"  [\uc5b4\ubc95\uc218\uc815] \uc678\ubd80\uc9c0\ubb38 \uc6d0\uace0 \uc790\ub3d9\ud0d0\uc0c9: {fn}"
+                                + ("" if _legacy else " (유사 매칭)"))
+    if _period_dirs and not found:
+        # 침묵 금지 (배치 E): 시험시기 폴더는 있는데 매칭 0건
+        warn_zero(log, "\uc678\ubd80\uc9c0\ubb38 \uc5b4\ubc95\uc218\uc815", _period_dirs)
     return found
 
 
