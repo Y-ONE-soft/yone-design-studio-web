@@ -122,13 +122,38 @@ def test_cond_propagation_bullets_and_q_demotion():
     assert kinds[5] == "Cond", "조건 문구의 발문 오매칭은 조건으로 강등"
 
 
-def test_cond_propagation_keeps_sio_numbered_questions():
-    """시오-체 번호 항목은 발문 유지 (v1 실물 4ed24266 관행)."""
+def test_cond_block_numbered_sio_items_are_cond():
+    """W38 블록 문맥 우선 — 조건 블록 안 번호 항목은 종결어미(시오-체)
+    무관 조건 항목 (W16 D3 "발문 유지(v1 관행)" 사용자 확정으로 폐기).
+    진짜 발문(발문 어휘 선두 / 번호 시퀀스 이탈)만 블록을 종료한다."""
     out = classify_paragraphs([
         {"text": "<조건>"},
         {"text": "1.(A)는 본문에서 찾아 변형하여 한단어로 쓰시오."},
+        {"text": "2.(B)는 본문에서 찾아 한 단어로 쓰시오"},
+        # 번호 시퀀스 이탈 + 발문 어휘 선두 = 진짜 발문 (블록 종료)
+        {"text": "22. 다음 글의 내용을 한 문장으로 요약하고자 한다. "
+                 "빈칸 (A)에 들어갈 말로 가장 적절한 것은?"},
     ])
-    assert out[1]["kind"] != "Cond"
+    kinds = [o["kind"] for o in out]
+    assert kinds[1] == "Cond" and kinds[2] == "Cond"
+    assert kinds[3] == "Q", "진짜 발문은 블록 종료"
+
+
+def test_cond_block_paren_numbered_sio_items_are_cond():
+    """W38 (6b66b750 실증): '1) 9단어로 빈칸을 완성하시오.' 괄호형 번호
+    항목 — 발문 스타일+자동 번호로 인쇄되던 결함의 파서 계층 가드."""
+    out = classify_paragraphs([
+        {"text": "11. 다음 글을 읽고, 주제문을 주어진 조건에 맞게 완성하시오."},
+        {"text": "The passage body sentence is long enough to be a passage "
+                 "paragraph for the classifier here."},
+        {"text": "[조건]"},
+        {"text": "1) 9단어로 빈칸을 완성하시오."},
+        {"text": "2) 다음 단어를 한 번씩 사용하여 배열하시오."},
+    ])
+    kinds = [o["kind"] for o in out]
+    assert kinds[2] == "Cond"
+    assert kinds[3] == "Cond" and kinds[4] == "Cond"
+    assert kinds[0] == "Q"
 
 
 def test_cond_item_with_inline_blank_not_block_end():

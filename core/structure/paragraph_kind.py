@@ -10,6 +10,7 @@
 다층 방어: 발문은 (1) _taxonomy 분류기 → (2) 구조 폴백(번호+종결어미) 순으로
 판정하므로, 분류기 룰이 한 발문을 놓쳐도 구조 신호가 있으면 Q로 잡힌다.
 """
+from core.structure import block_grammar as BG
 from core.structure import rules as R
 
 
@@ -78,6 +79,11 @@ def _classify_question(text):
                     and not R.Q_START_HINT.search(text):
                 continue
             return "Q", None
+    # 영어 지시문 발문 (W38 결함 5 — "10. Choose True or False (T/F) …"이
+    # 지문으로 인쇄된 실증): 문항 번호 + 명령형/WH-의문 형태만 — 지문 속
+    # 명령문(Let's look at …)은 번호가 없어 오탐하지 않는다.
+    if BG.is_english_question(text):
+        return "Q", None
     return None, None
 
 
@@ -110,6 +116,10 @@ def _base_kind(text):
         return "Sym", None
     if any(p.match(text) for p in R.ANS_PATTERNS):
         return "Ans", None
+    # [요약문] 블록 마커 (W38 결함 4) — 꺾쇠형 <요약문>은 Box(보기 테두리)
+    # 관행 유지라 Box보다 먼저 대괄호형만 빼낸다 (block_grammar 실측 주석).
+    if BG.SUM_MARKER.match(text):
+        return "Sum", None
     bk = _box_kind(text)
     if bk:
         return bk, None
@@ -204,8 +214,12 @@ def classify_paragraphs(paras):
     #        어구 나열 자체는 지문 유지 = v1 실물 관행),
     #   (b) 답란(밑줄런/정답/→/우리말)이 블록의 실질 종료,
     #   (c) 조건 문구가 taxonomy 발문으로 오매칭된 Q(시작 힌트 없음 +
-    #       '것' 종결)는 조건으로 강등 ("반드시 빈칸은 … 쓸 것" 실증.
-    #        시오-체 번호 항목은 발문 유지 = v1 실물 4ed24266 관행),
+    #       '것' 종결)는 조건으로 강등 ("반드시 빈칸은 … 쓸 것" 실증),
+    #   (c2) W38 블록 문맥 우선 — 조건 블록 안의 번호 항목("1) 9단어로
+    #        빈칸을 완성하시오.")은 종결어미 무관 조건 항목. W16 D3의
+    #        "시오-체 번호 항목 발문 유지(v1 관행)"는 사용자 기준으로
+    #        폐기. 진짜 발문(발문 어휘 선두 / 항목 번호 시퀀스 이탈)은
+    #        블록 종료 (block_grammar.cond_item_take — 실측 규칙),
     #   (d) 건너뛴 뒤에는 마커 항목(불릿/번호)만 조건화 — 한글 비율
     #       단독 신호는 인접 항목에만 (원거리 오염 방지).
     for i, item in enumerate(out):
@@ -213,6 +227,7 @@ def classify_paragraphs(paras):
             continue
         j = i + 1
         skipped = False
+        cond_no = 1          # W38: 조건 항목 번호 시퀀스 (마커 직후 1 기대)
         while j < len(out):
             nxt = out[j]
             if nxt["kind"] == "BLANK":
@@ -242,6 +257,12 @@ def classify_paragraphs(paras):
                 break
             marker_item = bool(R.COND_ITEM_START.match(t))
             if nxt["kind"] == "Q":
+                # (c2) W38: 블록 문맥 우선 — 번호 항목이면 조건 항목
+                take, cond_no = BG.cond_item_take(t, cond_no)
+                if take:
+                    nxt["kind"] = "Cond"
+                    j += 1
+                    continue
                 if not R.Q_START_HINT.search(t) \
                         and R.COND_ITEM_END.search(t):
                     nxt["kind"] = "Cond"
@@ -253,15 +274,36 @@ def classify_paragraphs(paras):
                     or R.COND_ITEM_LEAD.match(t)
                     or (not skipped and _korean_ratio(t) >= 0.3)):
                 nxt["kind"] = "Cond"
+                cond_no = BG.cond_item_seen(t, cond_no)
                 j += 1
                 continue
             if nxt["kind"] in ("C", "Word") and marker_item:
                 # v1 pass 9/16: 오분류된 선지·영단어(★불릿 조건)도 재분류
                 nxt["kind"] = "Cond"
+                cond_no = BG.cond_item_seen(t, cond_no)
                 j += 1
                 continue
             skipped = True
             j += 1
+
+    # Sum propagation (W38 결함 4): [요약문] 마커 뒤 이어지는 요약 문장
+    # 단락(P/K/UNKNOWN 연속 구간)은 배경(P-CONTEXT) — 선지(C)/발문/마커
+    # 등 구조 신호에서 종료. ("[요약문] 헤더 + 그 아래 요약 문장 = 배경"
+    # 사용자 확정 스펙 — 6b66b750 실증 12건.)
+    for i, item in enumerate(out):
+        if item["kind"] != "Sum":
+            continue
+        j = i + 1
+        while j < len(out):
+            nxt = out[j]
+            if nxt["kind"] == "BLANK":
+                j += 1
+                continue
+            if nxt["kind"] in ("P", "K", "UNKNOWN") and nxt["text"]:
+                nxt["kind"] = "P-CONTEXT"
+                j += 1
+                continue
+            break
 
     # 밑줄 변형 정보 (P-NOUL / P-WITH-UL은 스타일 매핑 차원 — kind는 P 유지)
     for item in out:

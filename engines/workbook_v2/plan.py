@@ -293,6 +293,11 @@ def _s3_effective_kind(kind, text):
         return "Q"
     if _RE_S3_SEYO.search(text) and _RE_Q_START_HINT.match(text.strip()):
         return "Q"                      # W16 D1 — 해요체 발문 (시작 신호 AND)
+    from core.structure import block_grammar as _BG
+    if _BG.is_english_question(text):
+        return "Q"                      # W38 결함 5 — 영어 지시문 발문
+                                        # (번호 + 명령형/WH — 파서 수리와
+                                        # 이중 방어, 구 kind 주석 재실행용)
     core = text.strip()
     while True:                         # W18 D2 — 꼬리 [출처/태그] 제거
         nx = _RE_S3_TAIL_TAG.sub("", core)
@@ -306,7 +311,15 @@ def _s3_effective_kind(kind, text):
 
 
 def build_step3(step_data):
-    """step3 데이터 {normal:[{question_num, paragraphs}], short:[...]} → 유닛."""
+    """step3 데이터 {normal:[{question_num, paragraphs}], short:[...]} → 유닛.
+
+    W38 — 블록 문맥 오버레이 (core.structure.block_grammar): 파서 kind
+    주석이 구버전(콘텐츠-only 코퍼스 재실행)이어도 <조건>/[요약문] 블록
+    문맥이 라인 판정을 제약하도록 플랜 계층에서 같은 규칙을 적용한다
+    (파서 수리와 이중 방어 — W16 D2 전례). 유닛별 최종 판정 시퀀스는
+    block_grammar.validate_sequence 하드 불변식으로 검증해 [경고] 지목."""
+    from core.structure import block_grammar as BG
+    from core.structure import rules as R
     st_q = _style("STEP3", "Q")
     units = []
     warnings = []
@@ -314,19 +327,52 @@ def build_step3(step_data):
         for item in step_data.get(group, []) or []:
             unit = []
             arrow_pending = False
+            in_cond = False          # W38: <조건> 블록 열림 상태
+            cond_no = 1              # 다음 조건 항목 번호 기대값
+            sum_bg = False           # W38: [요약문] 배경 전파 상태
+            eff_seq = []             # 최종 판정 시퀀스 (블록 문법 검증용)
             for p in item.get("paragraphs", []):
                 text = p.get("text", "")
                 kind = p.get("kind") or "UNKNOWN"
+                tclean = text.strip()
                 if kind in ("GH", "A", "BLANK"):
                     continue          # 제거 대상 (style_map에서 null)
                 if _s3_arrow_para(text):
                     arrow_pending = True     # v1 pass 11: 화살표 단락 삭제
                     continue
-                if _RE_S3_TEXTBOOK_SRC.match(text.strip()):
+                if _RE_S3_TEXTBOOK_SRC.match(tclean):
                     continue    # W30-r15: 교과서 실전문제 출처 라인 제거
                                 # (결함 5 — 배경 대기(arrow_pending)는
                                 # SRC 마커와 동일하게 소비하지 않고 통과)
-                style = _style("STEP3", _s3_effective_kind(kind, text))
+                eff = _s3_effective_kind(kind, text)
+                # ── W38 블록 문맥 오버레이 ──────────────────────────────
+                if BG.SUM_MARKER.match(tclean):
+                    eff = "Sum"
+                    sum_bg = True
+                    in_cond = False
+                elif sum_bg:
+                    if eff in ("P", "K", "UNKNOWN") and tclean:
+                        eff = "P-CONTEXT"
+                    else:
+                        sum_bg = False
+                if R.BOX_MARKERS["Cond"].match(tclean):
+                    in_cond = True
+                    cond_no = 1
+                    sum_bg = False
+                elif in_cond:
+                    if (R.COND_BLOCK_END.search(tclean)
+                            or eff in ("Q-INTRO", "GH", "A", "Ans",
+                                       "Box", "Sum", "C")):
+                        in_cond = False
+                    elif eff == "Q":
+                        take, cond_no = BG.cond_item_take(tclean, cond_no)
+                        if take:
+                            eff = "Cond"   # 블록 문맥 우선 — 조건 항목
+                        else:
+                            in_cond = False   # 진짜 발문 = 블록 종료
+                    elif eff == "Cond":
+                        cond_no = BG.cond_item_seen(tclean, cond_no)
+                style = _style("STEP3", eff)
                 if style is None:
                     continue
                 if arrow_pending and kind != "SRC":
@@ -335,6 +381,7 @@ def build_step3(step_data):
                     # 마커 다음 실제 요약문/주어진 문장에 부여 (W15 c04).
                     style = _style("STEP3", "P-CONTEXT")
                     arrow_pending = False
+                eff_seq.append((eff, tclean))
                 runs = p.get("runs") or []
                 for rx, repl in _S3_GREPS:
                     text, runs = _sub_runs(rx, repl, text, runs)
@@ -343,6 +390,7 @@ def build_step3(step_data):
                 unit.append({"t": text, "s": style, "runs": runs})
             if unit:
                 units.append(unit)
+                warnings.extend(BG.validate_sequence(eff_seq))
     return {"units": units, "warnings": warnings}
 
 
