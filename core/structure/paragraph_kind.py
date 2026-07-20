@@ -4,7 +4,7 @@
 출력: [{"kind": str, "q_code": str|None, "text": str, "para": 원본}]
 
 종류: GH / A / Q / Q-INTRO / P / P-CONTEXT / C / K / Cond / Box / Word
-      / BLANK / UNKNOWN
+      / BLANK / UNKNOWN / Sum / Ans / AnsL(라벨+빈칸 답란 쌍 — W39)
 우선순위와 컨텍스트 규칙은 09 문서 "우선순위 규칙" 절을 따른다.
 
 다층 방어: 발문은 (1) _taxonomy 분류기 → (2) 구조 폴백(번호+종결어미) 순으로
@@ -222,6 +222,21 @@ def classify_paragraphs(paras):
                     out[k]["kind"] = "P"
         i = j
 
+    # 답란 쌍 (W39 결함 4): "라벨:"(콜론 단독 라벨) + 밑줄 빈칸 라인 =
+    # 답란(AnsL — 답 쓰는 곳). 실물 v1 관행 실측(20a3838b): 콜론형 답란은
+    # 선지 계열 스타일. 단독 빈칸(Ans)은 기존 지문 관행 유지 — 쌍만 승격.
+    # Cond 전파보다 먼저 판정해 라벨이 조건으로 흡수되지 않게 한다.
+    for i, item in enumerate(out):
+        if item["kind"] not in ("UNKNOWN", "K"):
+            continue
+        if not BG.ANS_LABEL.match(item["text"]):
+            continue
+        nxt = next((out[j] for j in range(i + 1, len(out))
+                    if out[j]["kind"] != "BLANK"), None)
+        if nxt and nxt["kind"] == "Ans":
+            item["kind"] = "AnsL"
+            nxt["kind"] = "AnsL"
+
     # Cond/Box propagation: 마커 뒤 이어지는 항목 단락을 같은 종류로.
     # Cond는 W16 c10에서 v1 pass 15/16 의미론으로 재구성 —
     #   (a) 비항목(영어 어구 나열)은 중단이 아니라 '건너뛰고 계속'
@@ -253,7 +268,8 @@ def classify_paragraphs(paras):
                 continue
             t = nxt["text"]
             if item["kind"] == "Box":
-                if nxt["kind"] in ("Q", "Q-INTRO", "GH", "A", "Cond", "Box"):
+                if nxt["kind"] in ("Q", "Q-INTRO", "GH", "A", "Cond", "Box",
+                                   "AnsL"):
                     break
                 # 단독 대괄호 마커 라인("[ Type C (2) ]" 유형 구분 마커 등)은
                 # 보기 어구가 아니다 — 전파 차단 (W17 c16: Box 전파가 무한글
@@ -269,7 +285,7 @@ def classify_paragraphs(paras):
                 break
             # ── Cond ──
             if nxt["kind"] in ("Q-INTRO", "GH", "A", "Cond", "Box", "Ans",
-                               "SRC", "P-CONTEXT"):
+                               "AnsL", "SRC", "P-CONTEXT"):
                 break
             if R.COND_BLOCK_END.search(t):
                 break

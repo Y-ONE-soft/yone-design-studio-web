@@ -340,6 +340,73 @@ def test_gate_g34_detects_wordlist_not_cond_style():
     assert any("[조건내용]" in w for w in rep2["warnings"])
 
 
+# ── 결함 4: "주제문:" + 빈칸 = 답란 (AnsL — 선지 계열) ─────────────────────
+
+def test_classifier_answer_label_blank_pair():
+    """라벨 콜론 단독 라인 + 밑줄 빈칸 = 답란 쌍 (실물 v1 콜론형 답란 =
+    S_선지 계열 실측 20a3838b 18건). 단독 빈칸(Ans)은 기존 관행 유지."""
+    out = classify_paragraphs([
+        {"text": "주제문:"},
+        {"text": "__________________________________________."},
+        {"text": ""},
+        {"text": "________________________"},        # 단독 빈칸 = Ans 유지
+    ])
+    assert out[0]["kind"] == "AnsL"
+    assert out[1]["kind"] == "AnsL"
+    assert out[3]["kind"] == "Ans"
+
+
+def test_answer_label_not_absorbed_by_box_propagation():
+    out = classify_paragraphs([
+        {"text": "<보기>"},
+        {"text": "change / to / tackle / design"},
+        {"text": "주제문:"},
+        {"text": "____________________."},
+    ])
+    assert out[1]["kind"] == "Box"
+    assert out[2]["kind"] == "AnsL" and out[3]["kind"] == "AnsL"
+
+
+def test_plan_ansl_style_and_dual_defense():
+    """AnsL → S_선지 올림포스 (실물 콜론형 답란 관행). 구 kind 주석
+    (UNKNOWN) 재실행도 플랜 2패스가 쌍으로 배정."""
+    r = build_step3(_s3([
+        {"text": "11. 다음 글을 읽고, 주제문을 주어진 조건에 맞게 "
+                 "완성하시오.", "kind": "Q"},
+        {"text": "주제문:", "kind": "UNKNOWN"},
+        {"text": "__________________________________________.",
+         "kind": "UNKNOWN"},
+    ]))
+    styles = [p["s"] for p in r["units"][0]]
+    assert styles[1] == _ST_C and styles[2] == _ST_C
+
+
+def test_gate_g35_detects_answer_pair_styled_as_passage():
+    """소급 검출 실증 — 수리 전 출력(round16: 주제문:/빈칸 지문 스타일)."""
+    plan = {"flows": [{"step": "step3", "units": [[
+        {"t": "주제문:", "s": _ST_C},
+        {"t": "____________________.", "s": _ST_C},
+    ]]}], "page_cleanup": {}}
+    dump = _dump([
+        {"t": "주제문:", "s": _ST_P},                       # 결함
+        {"t": "__________________________________________.", "s": _ST_P},
+    ])
+    rep = inspect_workbook_finish({}, plan, dump)
+    assert rep["stats"]["ansl_miss"] == 2
+    assert any("[답란]" in c for c in rep["critical"])
+    rep2 = inspect_workbook_finish(
+        {}, {"flows": [], "page_cleanup": {}}, dump)
+    assert any("[답란]" in w for w in rep2["warnings"])
+    # 정상 경로 + 단독 빈칸(지문 관행)은 무지목
+    rep3 = inspect_workbook_finish({}, plan, _dump([
+        {"t": "주제문:", "s": _ST_C},
+        {"t": "____________________.", "s": _ST_C},
+        {"t": "다음은 재구성한 문장이다.", "s": _ST_P},
+        {"t": "____________________", "s": _ST_P},
+    ]))
+    assert rep3["stats"]["ansl_miss"] == 0
+
+
 def test_gate_g32_detects_angle_sum_marker_not_background():
     """소급 검출: 수리 전 출력(꺾쇠 요약문 = 보기/지문 스타일) 재현."""
     plan = {"flows": [{"step": "step3", "units": [[

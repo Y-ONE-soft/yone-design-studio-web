@@ -458,6 +458,20 @@ def _s3_assign_slots(pre, BG):
                     f"단락을 기대하나 형태 불일치(현재 {eff}): "
                     f"'{row['tclean'][:40]}' (발문: "
                     f"'{(last_q[1] if last_q else '')[:30]}')")
+
+    # 답란 쌍 (W39 결함 4 — 구 kind 주석 이중 방어): "라벨:" + 밑줄 빈칸
+    from core.structure import rules as R
+    meaningful = [r for r in pre if r["tclean"]]
+    for x, row in enumerate(meaningful):
+        if row["eff"] not in ("UNKNOWN", "K") \
+                or not BG.ANS_LABEL.match(row["tclean"]):
+            continue
+        nxt = meaningful[x + 1] if x + 1 < len(meaningful) else None
+        if nxt and (nxt["eff"] in ("Ans", "AnsL")
+                    or any(p.match(nxt["tclean"])
+                           for p in R.ANS_PATTERNS[:2])):
+            row["eff"] = "AnsL"
+            nxt["eff"] = "AnsL"
     return warn
 
 

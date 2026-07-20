@@ -275,6 +275,11 @@ _RE_G34_WORDLIST = re.compile(
     r"^(?!.*[.!?][\"'’”)\]]?\s*$)"
     r".*(?:\S\s*/\s*\S|(?:,[^,]*){3,})")
 
+# G35 (W39 결함 4) — 답란 쌍: "라벨:"(콜론 단독) + 밑줄 빈칸 라인은 답란
+# 계열(선지/답) 스타일이어야 한다 (실물 v1 콜론형 답란 = S_선지 실측)
+_RE_G35_LABEL = re.compile(r"^[\s가-힣A-Za-z()（）]{1,12}[:：]$")
+_RE_G35_BLANK = re.compile(r"^[^_]{0,15}_{3,}[\s_]*[.,]?$")
+
 # G13/G32 (W38) — 영어 지시문 발문 시그니처 + 요약문 마커 (출력 검사용
 # 독립 정의 — block_grammar와 순환 방지)
 # 명령형만 — WH-의문형("N. Why don't we …?")은 외부지문 '지문 제목'과
@@ -995,6 +1000,39 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                     continue
                 elif "조건" not in qs and not strong:
                     break       # 한글 비조건 문장 — 블록 종료로 간주
+    # ── G35 [답란] (W39 결함 4): "라벨:" + 밑줄 빈칸 쌍 = 답란 계열 ──────
+    # ("주제문:" + "____."가 지문 스타일로 인쇄되던 실증 — 84/85번.
+    # 현행 플랜(답란 스타일 실림)은 critical, 구플랜 소급 warning.)
+    plan_ansl = False
+    for fl in plan.get("flows", []):
+        if fl.get("step") != "step3":
+            continue
+        for u in fl.get("units", []):
+            for p in (u["paras"] if isinstance(u, dict) else u):
+                if _RE_G35_LABEL.match(_clean(p.get("t", ""))) \
+                        and any(k in (p.get("s") or "")
+                                for k in ("선지", "답")):
+                    plan_ansl = True
+                    break
+    ansl_miss = []
+    for story in dump.get("stories", []):
+        ps = [p for p in story.get("paragraphs", [])
+              if _clean(p.get("t", ""))]
+        for i in range(len(ps) - 1):
+            t1 = _clean(ps[i].get("t", ""))
+            t2 = _clean(ps[i + 1].get("t", ""))
+            if not (_RE_G35_LABEL.match(t1) and _RE_G35_BLANK.match(t2)):
+                continue
+            for q in (ps[i], ps[i + 1]):
+                qs = q.get("s") or ""
+                if not any(k in qs for k in ("선지", "답")):
+                    ansl_miss.append(_clean(q.get("t", ""))[:25])
+    stats["ansl_miss"] = len(ansl_miss)
+    if ansl_miss:
+        msg = (f"[답란] 라벨+빈칸 답란 쌍 {len(ansl_miss)}개 라인이 답란 "
+               f"계열(선지) 스타일이 아님: " + " | ".join(ansl_miss[:3]))
+        (critical if plan_ansl else warnings).append(msg)
+
     stats["cond_item_miss"] = len(cond_miss)
     stats["cond_content_miss"] = len(cond_content_miss)
     if cond_content_miss:
