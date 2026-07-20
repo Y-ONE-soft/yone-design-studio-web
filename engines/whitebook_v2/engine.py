@@ -1,9 +1,15 @@
 """화이트북 v2 엔진 — 새 아키텍처 운영 래퍼 (blackbook_v2/workbook_v2 패턴).
 
-파이프라인: v1 파서 재사용(외부 parse_whitebook.py + practice_parser —
-WhitebookEngine.parse 위임) → wbwt-flows 렌더 플랜(engines/whitebook_v2/plan.py)
+파이프라인: 인-리포 파서(engines/whitebook/external 스냅샷 재사용 +
+engines/whitebook_v2/wb_parser 구조 섹션 인식 — W35 배치 C) + v1
+practice_parser → wbwt-flows 렌더 플랜(engines/whitebook_v2/plan.py)
 → whitebook_flow JSX(실행만) → 검수 게이트 내장(플랜 단어 보존 + v1
 expected_stories 계승 + 오버플로우 + PDF).
+
+W35 배치 C 이전에는 parse 를 v1(WhitebookEngine.parse — 외부
+parse_whitebook.py subprocess)에 위임했다. 지금은 리포 스냅샷 + 구조
+섹션 분할(침묵 금지)로 직접 파싱한다 — 골든 2케이스 diff 0 계약,
+v1 은 종전대로 외부 경로 사용(운영 무변경).
 
 v1(engines/whitebook) 무변경. 출력 파일명 v1 규칙 + _v2 접미로 공존.
 템플릿/출력 경로는 v1의 engines/whitebook/config.json을 공유한다.
@@ -91,11 +97,60 @@ class WhitebookV2Engine(BaseEngine):
         return open(p, encoding="utf-8").read().strip() \
             if os.path.exists(p) else default
 
-    # ── 1단계: parse — v1 재사용 (외부 파서 + practice_parser 그대로) ────────
+    # ── 1단계: parse — 인-리포 파서 (스냅샷 재사용 + 구조 섹션 인식) ─────────
 
     def parse(self, uploaded_files, job_dir, log):
-        from engines.whitebook.engine import WhitebookEngine
-        return WhitebookEngine().parse(uploaded_files, job_dir, log)
+        """v1 parse 와 동일 파이프라인 (골든 파리티 계약) — 차이 2가지:
+        외부 subprocess 대신 리포 스냅샷 import, 섹션 분할은 wb_parser 의
+        구조 신호 1선 + 발문 프라이어 + 결손/중복 [오류] (침묵 소멸 금지)."""
+        from engines.whitebook.practice_parser import (
+            parse_practice_docx, parse_practice_answer_docx)
+        from engines.whitebook_v2 import wb_parser
+
+        hwpx = [uploaded_files[k] for k in ("w1_main", "w2_main", "w3_main")
+                if k in uploaded_files]
+        main_ans = [uploaded_files[k]
+                    for k in ("w1_main_ans", "w2_main_ans", "w3_main_ans")
+                    if k in uploaded_files]
+        if not hwpx:
+            raise ValueError("원고 hwpx 파일이 없습니다.")
+
+        # 1) 워크북 파서 (인-리포) → Day별 A~E (+정답)
+        data = wb_parser.parse_workbook_files(
+            hwpx, main_ans or None, log=lambda m: log(f"[파서] {m}"))
+
+        # 2) 연습문제(.docx) → 'practices' (v1 parse 블록과 동일)
+        practices = []
+        for week_idx, (pkey, akey) in enumerate(
+            [("w1_practice", "w1_prac_ans"),
+             ("w2_practice", "w2_prac_ans"),
+             ("w3_practice", "w3_prac_ans")], start=1
+        ):
+            entry = {"week": week_idx, "questions": [], "answers": []}
+            if pkey in uploaded_files:
+                try:
+                    entry["questions"] = parse_practice_docx(
+                        uploaded_files[pkey])
+                    log(f"[연습] WEEK{week_idx} 문제: "
+                        f"{len(entry['questions'])}개")
+                except Exception as e:
+                    log(f"[연습] WEEK{week_idx} 문제 파싱 실패: {e}")
+            if akey in uploaded_files:
+                try:
+                    entry["answers"] = parse_practice_answer_docx(
+                        uploaded_files[akey])
+                    log(f"[연습] WEEK{week_idx} 답지: {len(entry['answers'])}개")
+                except Exception as e:
+                    log(f"[연습] WEEK{week_idx} 답지 파싱 실패: {e}")
+            practices.append(entry)
+        data["practices"] = practices
+
+        json_path = os.path.join(job_dir, "content.json")
+        with open(json_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        log(f"[파서] content.json 생성 완료 "
+            f"({os.path.getsize(json_path):,} bytes)")
+        return json_path
 
     # ── 2단계: prepare_jsx — 플랜 빌드 + 템플릿 복사 + JSX 생성 ─────────────
 
