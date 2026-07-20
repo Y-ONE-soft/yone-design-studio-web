@@ -53,6 +53,68 @@ def _load_config():
     return resolve_config(cfg, _PATH_KEYS)
 
 
+def _despace(s):
+    return re.sub(r"[\s_]+", "", _nfc(s))
+
+
+def _numeric_token_indd_fallback(folder, grade_num, year, month,
+                                 require=(), forbid=()):
+    """소스 .indd 2차 매칭 — 숫자 토큰 기반 (W36 배치 F, 감사 §9 F안).
+
+    1차(리터럴: '고{N}' 접두 + '{YY}년' + '{M}월' + 키워드 substring)가
+    0건일 때만 호출한다 — 기존 매칭분 무변경 (배치 A `_find_month_folder`
+    2차 패턴 확산). 파일명에서 (학년, 년, 월) 숫자 토큰을 구분자·접두
+    무관하게 대조하고, 키워드('세로'/'전체')는 공백/언더스코어 제거 후
+    substring으로 판정(랭킹 신호 강등이 아닌 필수 유지 — 세로/가로판
+    오선택은 결합 결과를 통째로 바꾸므로 안전 우선).
+
+    반환: 후보 리스트 (파일명 최단 우선 정렬 — 1차와 동일 휴리스틱).
+    """
+    if not os.path.isdir(folder):
+        return []
+    month_int = int(month)
+    yy = str(year)[-2:]
+    out = []
+    for raw in os.listdir(folder):
+        nfc = _nfc(raw)
+        if not nfc.lower().endswith(".indd"):
+            continue
+        if nfc.startswith("~") or "idlk" in nfc.lower():
+            continue
+        d = _despace(nfc)
+        if any(k in d for k in forbid):
+            continue
+        if not all(k in d for k in require):
+            continue
+        mg = re.search(r"고\s*(\d)", nfc)
+        if not mg or mg.group(1) != str(grade_num):
+            continue
+        my = re.search(r"(\d{2,4})\s*년", nfc)
+        if not my or my.group(1)[-2:] != yy:
+            continue
+        mm = re.search(r"(\d{1,2})\s*월", nfc)
+        if not mm or int(mm.group(1)) != month_int:
+            continue
+        out.append(os.path.join(folder, raw))
+    out.sort(key=lambda p: len(os.path.basename(p)))
+    return out
+
+
+def _list_indd_names(folder, limit=12):
+    """미발견 리포트용 — 폴더 내 .indd 파일명 나열 (침묵 금지, 배치 F)."""
+    try:
+        # 미러 redirect — Drive zombie 시 GDrive listdir EDEADLK 회피
+        from engines.final.extractor import _resolve_local_mirror as _rlm
+        folder = _rlm(folder, None)
+        names = [_nfc(f) for f in os.listdir(folder)
+                 if _nfc(f).lower().endswith(".indd")
+                 and not _nfc(f).startswith("~")]
+    except OSError:
+        return []
+    names.sort()
+    return names[:limit]
+
+
 class MockexamSeroMergeEngine(BaseEngine):
 
     @property
@@ -240,6 +302,11 @@ class MockexamSeroMergeEngine(BaseEngine):
             candidates.append(os.path.join(folder, raw))
 
         if not candidates:
+            # 2차 (배치 F): 숫자 토큰 매칭 — 구분자('고1_25년')·4자리 연도
+            # 표기와 무관. 1차 0건일 때만 진입 (기존 매칭 무변경).
+            candidates = _numeric_token_indd_fallback(
+                folder, grade_num, year, month, require=("세로",))
+        if not candidates:
             return None
         candidates.sort(key=lambda p: len(os.path.basename(p)))
         return candidates[0]
@@ -294,9 +361,16 @@ class MockexamSeroMergeEngine(BaseEngine):
                 if not f:
                     not_found.append(f"{c['year']}년 {int(c['month'])}월")
         if not_found:
+            # 침묵 금지 (배치 F): 폴더 내 .indd 후보를 에러에 동봉 —
+            # '왜 못 찾았는지'를 파일명 수준에서 바로 볼 수 있게.
+            cands = _list_indd_names(gdrive_folder)
+            cand_note = (
+                "\n폴더 내 .indd 후보:\n  " + "\n  ".join(cands)
+                if cands else "\n폴더 내 .indd 후보 없음"
+            )
             raise FileNotFoundError(
                 f"{self._SRC_LABEL} 파일을 찾지 못한 회차:\n  "
-                + "\n  ".join(not_found)
+                + "\n  ".join(not_found) + cand_note
             )
 
         # 코드별 소스 엔트리

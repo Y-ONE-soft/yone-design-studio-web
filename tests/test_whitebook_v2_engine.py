@@ -1,4 +1,8 @@
-"""화이트북 v2 엔진 래퍼 오프라인 테스트 — parse 스모크(v1 위임 파리티) + 플랜.
+"""화이트북 v2 엔진 래퍼 오프라인 테스트 — parse 스모크(골든 파리티) + 플랜.
+
+parse 는 W35 배치 C부터 v1 위임이 아니라 인-리포 파서
+(engines/whitebook/external 스냅샷 + wb_parser 구조 섹션 인식)다 —
+골든 파리티 계약은 동일하게 유지된다.
 
 InDesign 필요 단계(prepare_jsx 템플릿 복사/run_indesign/verify)는
 scripts/e2e_engine_whitebook_v2.py 로 검증한다.
@@ -14,7 +18,7 @@ TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def test_parse_smoke_matches_golden(tmp_path):
-    """v2 parse(v1 위임)가 코퍼스 골든과 동일한 content.json을 산출."""
+    """v2 parse(인-리포 파서)가 코퍼스 골든과 동일한 content.json을 산출."""
     case_dir = os.path.join(TESTS_DIR, "corpus", "whitebook", "3b3ddc5a")
     engine = WhitebookV2Engine()
     job_dir = str(tmp_path / "job")

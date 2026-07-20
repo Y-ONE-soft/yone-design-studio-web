@@ -260,16 +260,27 @@ class AnalysisMergeEngine(BaseEngine):
         # 미러 ∪ GDrive 합집합 — 미러가 stale해도 분석본 .indd 누락 방지
         from engines.final.extractor import list_manuscript_entries
         patterns = patterns or ["분석본"]
-        results = []
-        for nfc, full in list_manuscript_entries(month_folder, None):
-            if not nfc.lower().endswith(".indd"):
-                continue
-            if not any(pat in nfc for pat in patterns):
-                continue
+        entries = [
+            (nfc, full)
+            for nfc, full in list_manuscript_entries(month_folder, None)
+            if nfc.lower().endswith(".indd")
             # ~$ / lock files 제외
-            if nfc.startswith("~") or "idlk" in nfc.lower():
-                continue
-            results.append(full)
+            and not nfc.startswith("~") and "idlk" not in nfc.lower()
+        ]
+        results = [full for nfc, full in entries
+                   if any(pat in nfc for pat in patterns)]
+        if not results:
+            # 2차 (배치 F, 감사 실증 #6 후반 — 배치 A 미해결 (4)): 공백/
+            # 언더스코어 제거 후 패턴 대조 → 그래도 0건이면 '분석' 토큰
+            # 축약형('분석.indd' 등) 허용. 1차 0건일 때만 진입 (기존 무변경).
+            def _ds(s):
+                return re.sub(r"[\s_]+", "", s)
+            ds_pats = [_ds(p) for p in patterns]
+            results = [full for nfc, full in entries
+                       if any(p in _ds(nfc) for p in ds_pats)]
+            if not results and any("분석" in p for p in patterns):
+                results = [full for nfc, full in entries
+                           if "분석" in _ds(nfc)]
         # 짧은 파일명이 우선 (e.g., "분석본.indd" → "분석본 2.indd" → "분석본 짤지문.indd")
         results.sort(key=lambda p: (len(os.path.basename(p)), os.path.basename(p)))
         return results
@@ -387,8 +398,36 @@ class AnalysisMergeEngine(BaseEngine):
             })
 
         if not_found_folders:
+            # 침묵 금지 (배치 F): '왜 못 찾았는지'를 후보 수준에서 동봉 —
+            # 월 폴더 미발견이면 학년 폴더의 하위 폴더 목록을, 분석본 미발견이면
+            # 해당 월 폴더의 .indd 목록을 에러 메시지에 나열.
+            from engines.final.extractor import list_manuscript_entries
+            notes = []
+            if any(ym_to_folder[k] is None for k in ym_to_folder):
+                grade_dir = os.path.join(gdrive_base, f"고{grade_num}")
+                folder_names = sorted(
+                    nfc for nfc, full in
+                    (list_manuscript_entries(grade_dir, None) or [])
+                    if os.path.isdir(full)
+                )[:12]
+                if folder_names:
+                    notes.append("학년 폴더 하위 후보:\n  "
+                                 + "\n  ".join(folder_names))
+            for key, folder in ym_to_folder.items():
+                if folder and not ym_to_sources.get(key):
+                    indd_names = sorted(
+                        nfc for nfc, full in
+                        (list_manuscript_entries(folder, None) or [])
+                        if nfc.lower().endswith(".indd")
+                        and not nfc.startswith("~")
+                    )[:12]
+                    notes.append(
+                        f"{os.path.basename(folder)} 내 .indd 후보:\n  "
+                        + ("\n  ".join(indd_names) if indd_names else "(없음)")
+                    )
             raise FileNotFoundError(
                 "해결되지 않은 코드:\n  " + "\n  ".join(not_found_folders)
+                + ("\n" + "\n".join(notes) if notes else "")
             )
 
         # metadata.json
