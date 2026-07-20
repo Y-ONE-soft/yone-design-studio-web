@@ -317,7 +317,11 @@ def build_step3(step_data):
     주석이 구버전(콘텐츠-only 코퍼스 재실행)이어도 <조건>/[요약문] 블록
     문맥이 라인 판정을 제약하도록 플랜 계층에서 같은 규칙을 적용한다
     (파서 수리와 이중 방어 — W16 D2 전례). 유닛별 최종 판정 시퀀스는
-    block_grammar.validate_sequence 하드 불변식으로 검증해 [경고] 지목."""
+    block_grammar.validate_sequence 하드 불변식으로 검증해 [경고] 지목.
+
+    W39 — 유형 주도 슬롯 배정 (파서와 이중 방어): 1패스(기존 오버레이)로
+    eff를 확정한 뒤, 2패스에서 발문 유형의 기대 슬롯(주어진 블록)을 형태
+    신호로 배정한다. 배정 불가 단락은 침묵 강등하지 않고 [경고]로 지목."""
     from core.structure import block_grammar as BG
     from core.structure import rules as R
     st_q = _style("STEP3", "Q")
@@ -325,12 +329,11 @@ def build_step3(step_data):
     warnings = []
     for group in ("normal", "short"):
         for item in step_data.get(group, []) or []:
-            unit = []
             arrow_pending = False
             in_cond = False          # W38: <조건> 블록 열림 상태
             cond_no = 1              # 다음 조건 항목 번호 기대값
             sum_bg = False           # W38: [요약문] 배경 전파 상태
-            eff_seq = []             # 최종 판정 시퀀스 (블록 문법 검증용)
+            pre = []                 # 1패스 산출 (슬롯 배정 전)
             for p in item.get("paragraphs", []):
                 text = p.get("text", "")
                 kind = p.get("kind") or "UNKNOWN"
@@ -380,17 +383,32 @@ def build_step3(step_data):
                             in_cond = False   # 진짜 발문 = 블록 종료
                     elif eff == "Cond":
                         cond_no = BG.cond_item_seen(tclean, cond_no)
-                style = _style("STEP3", eff)
+                # v1 pass 11: 화살표 다음 단락 → 배경(S3_BG). 출처
+                # 마커(SRC)는 배경을 소비하지 않고 통과 — 배경은 마커
+                # 다음 실제 요약문/주어진 문장에 부여 (W15 c04).
+                arrow_bg = False
+                if arrow_pending and kind != "SRC":
+                    arrow_bg = True
+                    arrow_pending = False
+                pre.append({"text": text, "tclean": tclean, "kind": kind,
+                            "eff": eff, "arrow_bg": arrow_bg,
+                            "q_code": p.get("q_code"),
+                            "runs": p.get("runs") or []})
+
+            # ── 2패스: 유형 주도 슬롯 배정 (W39) ────────────────────────
+            warnings.extend(_s3_assign_slots(pre, BG))
+
+            # ── 3패스: 스타일 확정 + 유닛 생성 ──────────────────────────
+            unit = []
+            eff_seq = []
+            for row in pre:
+                style = _style("STEP3", row["eff"])
                 if style is None:
                     continue
-                if arrow_pending and kind != "SRC":
-                    # v1 pass 11: 화살표 다음 단락 → 배경(S3_BG).
-                    # 출처 마커(SRC)는 배경을 소비하지 않고 통과 — 배경은
-                    # 마커 다음 실제 요약문/주어진 문장에 부여 (W15 c04).
+                if row["arrow_bg"]:
                     style = _style("STEP3", "P-CONTEXT")
-                    arrow_pending = False
-                eff_seq.append((eff, tclean))
-                runs = p.get("runs") or []
+                eff_seq.append((row["eff"], row["tclean"]))
+                text, runs = row["text"], row["runs"]
                 for rx, repl in _S3_GREPS:
                     text, runs = _sub_runs(rx, repl, text, runs)
                 if style == st_q:
@@ -400,6 +418,42 @@ def build_step3(step_data):
                 units.append(unit)
                 warnings.extend(BG.validate_sequence(eff_seq))
     return {"units": units, "warnings": warnings}
+
+
+def _s3_assign_slots(pre, BG):
+    """유형 주도 슬롯 배정 2패스 (파서 컨텍스트 패스와 이중 방어).
+
+    주어진 블록: 발문 유형의 실측 시퀀스(block_sequences.json)가 발문
+    직후 배경 단락을 기대하면, 그 자리의 단락을 형태 신호로 배정한다.
+    배정 불가(형태 불일치) 단락은 침묵 강등 금지 — [경고] + 후보 슬롯."""
+    warn = []
+    last_q = None            # (q_code, 발문 텍스트)
+    given_pending = False    # 발문 직후 첫 유의 단락 대기 상태
+    for row in pre:
+        eff = row["eff"]
+        if eff in ("Q", "Q-INTRO"):
+            last_q = (row.get("q_code"), row["tclean"])
+            given_pending = BG.expects_given_block(last_q[0], last_q[1])
+            continue
+        if not row["tclean"] or row["kind"] == "SRC" \
+                or (row["eff"] == "UNKNOWN"
+                    and BG.BRACKET_LABEL.match(row["tclean"])):
+            continue         # 빈 단락/출처 마커/구조 라벨은 슬롯 비소비
+        if given_pending:
+            given_pending = False
+            verdict = BG.given_slot_scan(
+                eff, row["tclean"], prior_only=not (last_q and last_q[0]))
+            if verdict == "assign":
+                if not row["arrow_bg"]:
+                    row["eff"] = "P-CONTEXT"
+                continue
+            if verdict == "warn":
+                warn.append(
+                    "[슬롯] 주어진 블록 배정 불가 — 발문 유형은 배경 "
+                    f"단락을 기대하나 형태 불일치(현재 {eff}): "
+                    f"'{row['tclean'][:40]}' (발문: "
+                    f"'{(last_q[1] if last_q else '')[:30]}')")
+    return warn
 
 
 # ── W2 공용: v1 JSX 판정 로직의 파이썬 포트 ─────────────────────────────────

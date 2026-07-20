@@ -149,27 +149,42 @@ def classify_paragraphs(paras):
         out.append({"kind": kind, "q_code": code, "text": text, "para": p})
 
     # ── 컨텍스트 패스 ────────────────────────────────────────────────────
+    # 주어진 블록 슬롯 (W39 하향식 전환): 발문 유형(taxonomy leaf)의 실측
+    # 시퀀스(block_sequences.json)가 '발문 직후 배경 단락'을 기대하면, 그
+    # 자리의 단락을 형태 신호로 배정한다. 마커 어휘("주어진 글/문장")는
+    # 유형 미분류일 때의 프라이어 — kind가 P가 아니어도(❮…❯ 래퍼로
+    # UNKNOWN이 된 주어진 문장 등) 유형·위치·형태가 맞으면 배정 (87 실증).
     last_q_code = None
+    last_q_text = ""
     for i, item in enumerate(out):
         kind = item["kind"]
         if kind in ("Q", "Q-INTRO"):
             last_q_code = item["q_code"]
+            last_q_text = item["text"]
             continue
-        if kind != "P":
+        if kind not in ("P", "UNKNOWN", "K", "Word"):
             continue
 
-        # P-CONTEXT 판정 1: 직전 발문이 문장삽입/순서배열 계열이고
-        #   이 단락이 그 발문 뒤 첫 비빈 본문이면 배경/씨앗 단락.
-        #   출처 마커(SRC)는 발문과 본문 사이에 끼는 구조 요소라 건너뛴다
-        #   (W15 c04: 발문→[마커]→주어진 문장 순서에서 배경 미부여 실증).
+        # 발문 직후 첫 유의 단락인가 — 출처 마커(SRC)와 단독 대괄호 구조
+        # 라벨("[Unit 09 - Practice 01]" 등)은 발문과 본문 사이에 끼는
+        # 구조 요소라 건너뛴다 (W15 c04 / W39 r7c16 실증).
         prev_meaning = next(
             (out[j] for j in range(i - 1, -1, -1)
-             if out[j]["kind"] not in ("BLANK", "SRC")),
+             if out[j]["kind"] not in ("BLANK", "SRC")
+             and not (out[j]["kind"] == "UNKNOWN"
+                      and BG.BRACKET_LABEL.match(out[j]["text"]))),
             None,
         )
-        if (prev_meaning and prev_meaning["kind"] in ("Q", "Q-INTRO")
-                and last_q_code and R.P_CONTEXT_Q_CODES.match(last_q_code)):
-            item["kind"] = "P-CONTEXT"
+        first_after_q = (prev_meaning
+                         and prev_meaning["kind"] in ("Q", "Q-INTRO"))
+        if first_after_q and BG.expects_given_block(last_q_code,
+                                                    last_q_text):
+            if BG.given_slot_scan(kind, item["text"],
+                                  prior_only=not last_q_code) == "assign":
+                item["kind"] = "P-CONTEXT"
+                continue
+
+        if kind != "P":
             continue
 
         # P-CONTEXT 판정 2: 다음 비빈 단락이 (A)로 시작하는 순서배열 구성.

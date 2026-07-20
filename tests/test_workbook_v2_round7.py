@@ -422,7 +422,10 @@ def test_round7_c16_plan_anchor():
     assert len(tm) == 6 and len({p["s"] for p in tm}) == 1
     tally = Counter(p["s"].split(">")[-1].strip() for p in paras)
     assert tally["조건 올림포스"] == 7
-    assert tally["배경 올림포스"] == 1      # PUA 화살표 → 삭제+배경 (W14 D2)
+    # 배경 2 = PUA 화살표 → 삭제+배경 (W14 D2) + 순서배열 씨앗 단락 (W39
+    # 하향식 슬롯 배정 — 구조 라벨 "[Unit 09 - Practice 01]"이 발문과 씨앗
+    # 사이에 껴 배경이 누락되던 잠복 결함 회복)
+    assert tally["배경 올림포스"] == 2
 
 
 # ── D5/D6 수리 (c11 실조판 게이트 검출분 — G1 헤더잔존 / G17 워터마크) ───────

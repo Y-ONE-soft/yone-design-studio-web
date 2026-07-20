@@ -50,6 +50,62 @@ def _s3(paras):
             "short": []}
 
 
+# ── 게이트 G12 확장: 문장삽입 배경 — SRC 마커 한정 폐기 (결함 2 소급) ──────
+
+_INSERT_Q = "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳을 고르시오."
+
+
+def _plan_insert(bg=True):
+    return {"flows": [{"step": "step3", "units": [[
+        {"t": _INSERT_Q, "s": _ST_Q},
+        {"t": "He would often do experiments.", "s": _ST_BG if bg else _ST_P},
+        {"t": "Kelvin Doe has been fascinated with electronics.",
+         "s": _ST_P},
+    ]]}], "page_cleanup": {}}
+
+
+def test_gate_g12_detects_insert_bg_missing_without_src_marker():
+    """소급 검출 실증 — 수리 전 출력(6b66b750/round16: ❮주어진 문장❯
+    지문 스타일, 출처 마커 없음)은 W15 SRC 한정 G12가 침묵하던 케이스.
+    현행 플랜(배경 실림)과 어긋나면 critical."""
+    dump = _dump([
+        {"t": _INSERT_Q, "s": _ST_Q},
+        {"t": "〈He would often do experiments.〉", "s": _ST_P},   # 결함
+        {"t": "Kelvin Doe has been fascinated with electronics.",
+         "s": _ST_P},
+    ])
+    rep = inspect_workbook_finish({}, _plan_insert(bg=True), dump)
+    assert any("[문장삽입배경]" in c for c in rep["critical"])
+    # 구플랜(배경 미실림 — W38 이전 산출) 소급은 warning
+    rep2 = inspect_workbook_finish({}, _plan_insert(bg=False), dump)
+    assert any("[문장삽입배경]" in w for w in rep2["warnings"])
+    assert not any("[문장삽입배경]" in c for c in rep2["critical"])
+
+
+def test_gate_g12_clean_and_variant_paths():
+    # 정상: 주어진 문장 배경
+    rep = inspect_workbook_finish({}, _plan_insert(), _dump([
+        {"t": _INSERT_Q, "s": _ST_Q},
+        {"t": "〈He would often do experiments.〉", "s": _ST_BG},
+        {"t": "Kelvin Doe has been fascinated.", "s": _ST_P},
+    ]))
+    assert rep["stats"]["insert_bg_missing"] == 0
+    # 재사용 변형: 주어진 문장 없이 곧장 선지 = 슬롯 부재 정상
+    rep2 = inspect_workbook_finish({}, _plan_insert(), _dump([
+        {"t": _INSERT_Q, "s": _ST_Q},
+        {"t": "① (A)-(C)-(B)", "s": _ST_C},
+        {"t": "② (B)-(A)-(C)", "s": _ST_C},
+    ]))
+    assert rep2["stats"]["insert_bg_missing"] == 0
+    # step1_c1 자동 발문(하단 의미론 — STEP 01 스토리)은 대상 아님
+    rep3 = inspect_workbook_finish({}, _plan_insert(), _dump([
+        {"t": "아래 주어진 문장이 들어갈 위치로 알맞은 곳을 고르시오.",
+         "s": "STEP 01 > C_문장 배열 하단 문제"},
+        {"t": "It was under the sea.", "s": "STEP 01 > C_문장 배열 하단"},
+    ]))
+    assert rep3["stats"]["insert_bg_missing"] == 0
+
+
 # ── 결함 1: <요약문> 꺾쇠형도 배경 ──────────────────────────────────────────
 
 def test_classifier_sum_angle_marker_background():
@@ -84,6 +140,112 @@ def test_plan_sum_angle_stale_box_kinds_get_background():
     assert styles[1] == _ST_BG and styles[2] == _ST_BG
     assert styles[3] == _ST_BOX and styles[4] == _ST_BOX  # 전파 정지
     assert not r["warnings"]
+
+
+# ── 결함 2 / 아키텍처: 유형 주도 주어진 블록 슬롯 배정 ──────────────────────
+
+def test_expects_given_block_from_measured_sequences():
+    """block_sequences.json 실측이 배정의 입력 — 참조형(문장삽입/순서배열)
+    만 발문 직후 배경 슬롯을 기대한다."""
+    assert BG.expects_given_block("OBJ-FLW-INSERT")
+    assert BG.expects_given_block("OBJ-FLW-ORDER")
+    assert not BG.expects_given_block("OBJ-CTN-TOPIC")
+    assert not BG.expects_given_block("SRV-WRT-SUMM")
+    assert not BG.expects_given_block("OBJ-FLW-BLANK-AB")
+
+
+def test_expects_given_block_prior_for_unclassified():
+    # 유형 미분류 발문은 마커 문구가 프라이어
+    assert BG.expects_given_block(None, "다음 글의 흐름으로 보아, 주어진 "
+                                        "문장이 들어갈 곳으로 알맞은 것은?")
+    # '주어진 표현'은 <보기> 내용물 참조 — 주어진 블록 아님 (0a5da924 실측)
+    assert not BG.expects_given_block(
+        None, "다음 글을 읽고, <보기>에 주어진 표현을 글의 흐름에 적절하도록 "
+              "재배열하여 빈칸에 들어갈 말을 쓰시오.")
+    # 빈칸 발문의 '들어가기에'는 프라이어 아님 (r2c02rp15 실측)
+    assert not BG.expects_given_block(
+        None, "다음 빈칸에 들어가기에 적절한 것은?(15-EX)")
+
+
+def test_given_block_form():
+    assert BG.is_given_block_form(
+        "❮He would often do experiments with discarded electronics he "
+        "found in trash cans to create his own inventions.❯")
+    assert BG.is_given_block_form("Nothing is static.")
+    # 구조 라벨/미완결 라인은 후보 아님
+    assert not BG.is_given_block_form("[Unit 09 - Practice 01]")
+    assert not BG.is_given_block_form("p32-no.5")
+    assert not BG.is_given_block_form("주어진 문장")
+
+
+def test_classifier_insert_given_sentence_wrapped():
+    """87번 실증 — '주어진 문장'(❮…❯ 래퍼 → UNKNOWN)이 유형·위치·형태로
+    배경에 배정된다. 마커 어휘 매칭이 아니라 하향식 배정 (68번 '주어진
+    글'은 되고 87번 '주어진 문장'은 안 되던 결함의 해소)."""
+    out = classify_paragraphs([
+        {"text": "14. 글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 "
+                 "적절한 곳을 고르시오."},
+        {"text": "❮He would often do experiments with discarded "
+                 "electronics he found in trash cans to create his own "
+                 "inventions.❯"},
+        {"text": "Kelvin Doe, a self-taught inventor and engineer from "
+                 "Sierra Leone, has been fascinated with electronics "
+                 "since childhood. ①In 2009, at the young age of "
+                 "thirteen, Kelvin built his own FM radio station."},
+    ])
+    assert out[0]["kind"] == "Q" and out[0]["q_code"] == "OBJ-FLW-INSERT"
+    assert out[1]["kind"] == "P-CONTEXT"
+    assert out[2]["kind"] == "P"
+
+
+def test_classifier_bracket_label_does_not_consume_slot():
+    """구조 라벨("[Unit 09 - Practice 01]")은 발문과 본문 사이의 구조
+    요소 — 슬롯을 소비하지 않고 씨앗 단락이 배경을 받는다 (r7c16 실측)."""
+    out = classify_paragraphs([
+        {"text": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것을 "
+                 "고르시오."},
+        {"text": "[Unit 09 - Practice 01]"},
+        {"text": "According to natural law theory, moral principles are "
+                 "grounded in human nature itself."},
+        {"text": "(A) Natural law theorists believe that the natural "
+                 "world reveals moral truths to careful observers."},
+    ])
+    assert out[1]["kind"] == "UNKNOWN"          # 라벨은 라벨대로
+    assert out[2]["kind"] == "P-CONTEXT"        # 씨앗 = 배경
+    assert out[3]["kind"] == "P"
+
+
+def test_plan_given_slot_dual_defense_stale_kinds():
+    """구 kind 주석(UNKNOWN/P) 재실행도 플랜 2패스가 배경으로 배정."""
+    r = build_step3(_s3([
+        {"text": "14. 글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 "
+                 "적절한 곳을 고르시오.", "kind": "Q",
+         "q_code": "OBJ-FLW-INSERT"},
+        {"text": "❮He would often do experiments with discarded "
+                 "electronics to create his own inventions.❯",
+         "kind": "UNKNOWN"},
+        {"text": "Kelvin Doe, a self-taught inventor and engineer from "
+                 "Sierra Leone, has been fascinated with electronics "
+                 "since childhood.", "kind": "P"},
+    ]))
+    styles = [p["s"] for p in r["units"][0]]
+    assert styles[0] == _ST_Q
+    assert styles[1] == _ST_BG
+    assert styles[2] == _ST_P
+    assert not r["warnings"]
+
+
+def test_plan_given_slot_unassignable_warns():
+    """기대 슬롯 배정 불가 = 침묵 강등 금지 — [경고] + 후보 지목."""
+    r = build_step3(_s3([
+        {"text": "14. 글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 "
+                 "적절한 곳을 고르시오.", "kind": "Q",
+         "q_code": "OBJ-FLW-INSERT"},
+        {"text": "이 문단은 한국어 해설이라 주어진 블록 형태가 아니다. "
+                 "발문 유형은 배경 단락을 기대하지만 배정할 수 없다.",
+         "kind": "K"},
+    ]))
+    assert any("[슬롯]" in w for w in r["warnings"])
 
 
 def test_gate_g32_detects_angle_sum_marker_not_background():

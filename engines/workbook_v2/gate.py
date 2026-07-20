@@ -719,28 +719,51 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
             + " | ".join(f"「{k}」 {len(v)}개 (예: {v[0][:30]})"
                          for k, v in sorted(minority.items())[:3]))
 
-    # ── G12 문장삽입 '주어진 문장' 배경 (W15 c04 — warning) ──────────────
-    # 변형 문제모음(출처 마커가 있는 스토리)에서 문장삽입 발문 뒤 3단락 내에
-    # 배경 스타일 단락이 없으면 지목 — 주어진 문장 박스 누락 (v2는 분류
-    # 계층 P-CONTEXT로 부여, v1 실물은 마커에 배경을 줬음 — 어느 쪽이든
-    # '배경 없음'은 결함).
+    # ── G12 문장삽입 '주어진 문장' 배경 (W15 c04, W39 결함 2 전 스토리
+    # 확장) ──────────────────────────────────────────────────────────────
+    # 문장삽입 발문 뒤 3단락 내에 배경 스타일 단락이 없으면 지목 — 주어진
+    # 문장 박스 누락 (v2는 분류 계층 P-CONTEXT로 부여, v1 실물은 마커에
+    # 배경을 줬음 — 어느 쪽이든 '배경 없음'은 결함). W15의 SRC 마커 스토리
+    # 한정을 W39에서 폐기 (87번 "주어진 문장" ❮…❯이 지문 스타일로 인쇄된
+    # 실증 — 마커 없는 실전문제 스토리는 침묵이었다). 현행 플랜(주어진
+    # 블록을 배경으로 실은 플랜)은 critical, 구플랜 소급은 warning
+    # (G32 패턴).
+    plan_insert_bg = False
+    for fl in plan.get("flows", []):
+        if fl.get("step") != "step3":
+            continue
+        fps = [p for u in fl.get("units", [])
+               for p in (u["paras"] if isinstance(u, dict) else u)]
+        for i, p in enumerate(fps):
+            if _RE_INSERT_PROMPT.search(_clean(p.get("t", ""))) \
+                    and any("배경" in (q.get("s") or "")
+                            for q in fps[i + 1:i + 3]):
+                plan_insert_bg = True
+                break
     insert_missing = []
     for story in dump.get("stories", []):
         ps = story.get("paragraphs", [])
-        if not any(_RE_SRC_MARKER.match(_clean(p.get("t", ""))) for p in ps):
+        # step3(실전문제) 스토리 한정 — step1_c1의 자동 발문("아래 주어진
+        # 문장이 …")은 하단(BTM) 스타일 의미론이라 배경 기대가 없다
+        if not any("STEP 03" in (p.get("s") or "") for p in ps):
             continue
         for i, p in enumerate(ps):
             if not _RE_INSERT_PROMPT.search(_clean(p.get("t", ""))):
                 continue
             window = [q for q in ps[i + 1:i + 5]
                       if _clean(q.get("t", ""))][:3]
+            # 주어진 문장 없이 곧장 선지로 가는 재사용 변형("Q C" — 실측
+            # 2/49)은 슬롯 부재가 정상 — 첫 후속이 선지 스타일이면 제외
+            if window and "선지" in (window[0].get("s") or ""):
+                continue
             if not any("배경" in (q.get("s") or "") for q in window):
                 insert_missing.append(_clean(p.get("t", ""))[:40])
     stats["insert_bg_missing"] = len(insert_missing)
     if insert_missing:
-        warnings.append(
-            f"[문장삽입배경] 문장삽입 발문 뒤 배경(주어진 문장 박스) 미부여 "
-            f"{len(insert_missing)}건: " + " | ".join(insert_missing[:3]))
+        msg = (f"[문장삽입배경] 문장삽입 발문 뒤 배경(주어진 문장 박스) "
+               f"미부여 {len(insert_missing)}건: "
+               + " | ".join(insert_missing[:3]))
+        (critical if plan_insert_bg else warnings).append(msg)
 
     # ── G32 [요약문] 마커 + 요약 문장 배경 (W38 결함 4) ──────────────────
     # [요약문] 마커와 그 다음 문장 단락은 배경 스타일이어야 한다 (사용자

@@ -120,7 +120,9 @@ def cond_item_seen(text, expected_no):
     return expected_no
 
 
-# ── 유형별 기대 블록 시퀀스 (실측 데이터 — 조회 전용) ───────────────────────
+# ── 유형별 기대 블록 시퀀스 (실측 데이터) ───────────────────────────────────
+# W38에서는 validate_sequence 전용이었으나 W39부터 **슬롯 배정의 입력**이다
+# (사용자 근본 지적: "유형별 시퀀스를 만들어 놓고 왜 검증에만 쓰냐").
 _DIR = os.path.dirname(os.path.abspath(__file__))
 _SEQ_PATH = os.path.join(_DIR, "block_sequences.json")
 _seq_cache = None
@@ -135,6 +137,114 @@ def load_block_sequences():
         except (OSError, ValueError):
             _seq_cache = {}
     return _seq_cache
+
+
+# ── 유형 주도 하향식 슬롯 배정 (W39) ────────────────────────────────────────
+# 발문 taxonomy 유형 → 기대 블록 시퀀스(실측) → 발문 이후 단락을 기대
+# 슬롯에 '형태 신호'로 배정한다. 마커 문구("주어진 글/문장/…")는 유형이
+# 미분류일 때의 프라이어로 강등 — 미지의 마커 표현이어도 유형·위치·형태가
+# 맞으면 배정된다 (실증: 87번 "주어진 문장" ❮…❯ — '주어진 글'은 되고
+# '주어진 문장'은 안 되던 것이 어휘 매칭의 증거였다. W39 전환 케이스).
+
+# 실측 신뢰 최소 표본 (이하이면 유형 실측을 신뢰하지 않고 폴백)
+_SEQ_MIN_UNITS = 3
+# '주어진 블록' 기대 판정: 관측 시퀀스 중 발문 직후 토큰이 PC인 비율
+_GIVEN_MIN_FRACTION = 0.5
+_given_cache = {}
+
+# 유형 미분류 발문의 마커 프라이어 — '주어진 글/문장/문단/단락' 참조만.
+# '주어진 표현/어구'는 <보기> 박스 내용물 참조(재배열·빈칸 완성 발문)라
+# 주어진 블록이 아니고, 단독 '들어가기에'는 빈칸 발문("빈칸에 들어가기에
+# 적절한 것은?")과 겹친다 (0a5da924/r2c02rp15 전수 diff 실측 오배정 3+1건).
+GIVEN_PRIOR = re.compile(r'주어진\s*(?:글|문장|문단|단락)')
+
+
+def _given_fraction(code):
+    """해당 유형의 관측 시퀀스 중 'Q PC …' 시작 비율 (실측 부재 시 None)."""
+    entry = (load_block_sequences().get("sequences") or {}).get(code)
+    if not entry:
+        return None
+    total = hit = 0
+    for seq, cnt in (entry.get("observed") or {}).items():
+        toks = seq.split()
+        total += cnt
+        if len(toks) >= 2 and toks[0] == "Q" and toks[1] == "PC":
+            hit += cnt
+    if total < _SEQ_MIN_UNITS:
+        return None
+    return hit / total
+
+
+def expects_given_block(q_code, q_text=""):
+    """발문이 '주어진 블록'(발문 직후 배경 단락 슬롯)을 기대하는가.
+
+    1차(유형 실측): block_sequences.json — 해당 leaf의 관측 시퀀스 중
+      발문 직후 PC 비율 >= 0.5 (표본 3+). 2차(실측 부재 폴백): 문장삽입/
+      순서배열 계열 코드 규칙. 3차(유형 미분류 프라이어): 발문 마커 문구.
+    """
+    if q_code:
+        if q_code not in _given_cache:
+            frac = _given_fraction(q_code)
+            if frac is None:
+                _given_cache[q_code] = bool(
+                    R.P_CONTEXT_Q_CODES.match(q_code))
+            else:
+                _given_cache[q_code] = frac >= _GIVEN_MIN_FRACTION
+        return _given_cache[q_code]
+    return bool(GIVEN_PRIOR.search(q_text or ""))
+
+
+# 주어진 블록 후보의 '형태' 신호: 장식 래퍼(❮❯/〈〉/따옴표류)를 벗긴
+# 몸통이 영어 콘텐츠(한글 없음 + 영문 시작 + 완결부호 또는 충분 길이).
+_GIVEN_WRAP = '❮❯〈〉《》«»‹›<>[]()"\'“”‘’ \t'
+_GIVEN_BODY_START = re.compile(r'^[A-Za-z0-9"\'“‘]')
+
+
+def is_given_block_form(text, short_only=False):
+    """주어진 블록(문장/글) 후보 형태 판정 — 문장 완결부호 필수 (구조
+    라벨 "[Unit 09 - Practice 01]" 등 배제, r7c16 전수 diff 실측).
+    short_only=True(마커 프라이어 경로)는 짧은 단문/래퍼 감싸짐만 수용 —
+    지문 전체 오배정 방지."""
+    raw = (text or "").strip()
+    if not raw:
+        return False
+    wrapped = raw[0] in '❮〈《«‹"“‘['
+    t = raw.strip(_GIVEN_WRAP)
+    if not t or R.HANGUL.search(t):
+        return False
+    if not _GIVEN_BODY_START.match(t):
+        return False
+    if short_only and not wrapped and len(t) > 220:
+        return False
+    return bool(R.P_SENTENCE_END.search(t))
+
+
+# 슬롯을 소비하지 않는 구조 라벨 (발문과 본문 사이에 끼는 단독 대괄호
+# 라인 — SRC 마커/유형 마커와 같은 층위. [보기]/[조건]/[요약문]은 kind가
+# Cond/Box/Sum이라 여기 오지 않는다)
+BRACKET_LABEL = re.compile(r'^\[[^\[\]]{1,40}\]$')
+
+
+def given_slot_scan(kind, text, prior_only=False):
+    """발문 직후 첫 유의 단락의 주어진 슬롯 배정 판정.
+
+    Returns: "assign"(배정) / "skip"(슬롯 부재 — 관측 변형: 선지/순서라벨/
+    마커 직행. 프라이어 경로의 형태 불일치 포함 — 프라이어는 경고 없음) /
+    "warn"(유형이 기대하는 슬롯의 배정 불가 — 침묵 강등 금지, [경고]).
+    """
+    t = (text or "").strip()
+    if kind in ("P", "P-CONTEXT"):
+        if prior_only and kind == "P" \
+                and not is_given_block_form(t, short_only=True):
+            return "skip"    # 프라이어만으론 지문 전체를 배경화하지 않음
+        return "assign"
+    if kind in ("UNKNOWN", "K", "Word") \
+            and is_given_block_form(t, short_only=prior_only):
+        return "assign"
+    if kind in ("C", "Cond", "Box", "Sum", "Q", "Q-INTRO", "GH", "A",
+                "Ans", "AnsL") or R.P_ORDER_LABEL.match(t) or prior_only:
+        return "skip"
+    return "warn"
 
 
 # ── 블록 시퀀스 하드 불변식 검증 ([경고] 지목 — 침묵 금지) ──────────────────
