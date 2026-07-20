@@ -371,7 +371,12 @@ def build_step3(step_data):
                     cond_no = 1
                     sum_bg = False
                 elif in_cond:
-                    if (R.COND_BLOCK_END.search(tclean)
+                    # W39 결함 3: 블록 안 단어 나열은 조건 내용물 (구
+                    # kind 주석 P/UNKNOWN/C 방어 — 파서 수리와 이중)
+                    if eff in ("P", "UNKNOWN", "Word", "C", "K") \
+                            and BG.is_cond_wordlist(tclean):
+                        eff = "Cond"
+                    elif (R.COND_BLOCK_END.search(tclean)
                             or eff in ("Q-INTRO", "GH", "A", "Ans",
                                        "Box", "Sum", "C")):
                         in_cond = False

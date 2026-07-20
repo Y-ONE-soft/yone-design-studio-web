@@ -1,2093 +1,2093 @@
 {
-  "grade": 1,
-  "year": 0,
-  "month": 0,
-  "steps": {
-    "step3": {
-      "normal": [
+ "grade": 1,
+ "year": 0,
+ "month": 0,
+ "steps": {
+  "step3": {
+   "normal": [
+    {
+     "question_num": "textbook",
+     "code": "",
+     "paragraphs": [
+      {
+       "text": "다음 글의 빈칸 부분을 <보기>의 단어나 어구를 모두 사용하여 <조건>에 맞게 영어로 서술하시오. [3과]",
+       "runs": [
         {
-          "question_num": "textbook",
-          "code": "",
-          "paragraphs": [
-            {
-              "text": "다음 글의 빈칸 부분을 <보기>의 단어나 어구를 모두 사용하여 <조건>에 맞게 영어로 서술하시오. [3과]",
-              "runs": [
-                {
-                  "t": "다음 글의 빈칸 부분을 <보기>의 단어나 어구를 모두 사용하여 <조건>에 맞게 영어로 서술하시오.",
-                  "ul": false
-                },
-                {
-                  "t": " [3과]",
-                  "ul": false
-                }
-              ],
-              "kind": "UNKNOWN"
-            },
-            {
-              "text": " The octopus was moving around near the edge of the seaweed forest, and I saw a shark tracking her. In an instant, she swam into a crack to escape, but the shark was faster. The shark had taken a bite of one of her arms and was waiting for her. After a while, the shark lost interest, and the octopus used the opportunity to get back to her den, without one of her arms. The next day, I was relieved to see that she had survived. She was weak, and her colors were not as bright. I checked on her every day, wondering if that day would be the last. A short while later, I saw that the wound had healed. 놀랍게도, 작은 팔이 다시 자라기 시작했다. Also, she started to become active again.",
-              "runs": [
-                {
-                  "t": " The octopus was moving around near the edge of the seaweed forest, and I saw a shark tracking her. In an instant, she swam into a crack to escape, but the shark was faster. The shark had taken a bite of one of her arms and was waiting for her. After a while, the shark lost interest, and the octopus used the opportunity to get back to her den, without one of her arms. The next day, I was relieved to see that she had survived. She was weak, and her colors were not as bright. I checked on her every day, wondering if that day would be the last. A short while later, I saw that the wound had healed. ",
-                  "ul": false
-                },
-                {
-                  "t": "놀랍게도, 작은 팔이 다시 자라기 시작했다",
-                  "ul": true
-                },
-                {
-                  "t": ". Also, she started to become active again.",
-                  "ul": false
-                }
-              ],
-              "kind": "UNKNOWN"
-            },
-            {
-              "text": "<조건>",
-              "runs": [
-                {
-                  "t": "<조건>",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "ㆍ<보기>의 밑줄 친 단어 'amaze'를 문맥의 의미에 맞게 올바른 형태로 바꿔서 사용할 것",
-              "runs": [
-                {
-                  "t": "ㆍ<보기>의 밑줄 친 단어 'amaze'를 문맥의 의미에 맞게 올바른 형태로 바꿔서 사용할 것",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "ㆍ필요한 단어를 추가하여 10단어 이하의 한 문장으로 작성할 것",
-              "runs": [
-                {
-                  "t": "ㆍ필요한 단어를 추가하여 10단어 이하의 한 문장으로 작성할 것",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "<보기>",
-              "runs": [
-                {
-                  "t": "<보기>",
-                  "ul": false
-                }
-              ],
-              "kind": "Box"
-            },
-            {
-              "text": "grow back / amaze / a little / started",
-              "runs": [
-                {
-                  "t": "grow back / ",
-                  "ul": false
-                },
-                {
-                  "t": "amaze",
-                  "ul": true
-                },
-                {
-                  "t": " / a little / started",
-                  "ul": false
-                }
-              ],
-              "kind": "Box"
-            },
-            {
-              "text": "정답: ___________________________________________________",
-              "runs": [
-                {
-                  "t": "정답: ___________________________________________________",
-                  "ul": false
-                }
-              ],
-              "kind": "Ans"
-            },
-            {
-              "text": "다음은 글의 내용을 바탕으로 재구성한 문장들이다. <보기>의 문장들을 흐름에 맞게 올바른 순서로 배열하시오. [3과]",
-              "runs": [
-                {
-                  "t": "다음은 글의 내용을 바탕으로 재구성한 문장들이다. <보기>의 문장들을 흐름에 맞게 올바른 순서로 배열하시오.",
-                  "ul": false
-                },
-                {
-                  "t": " [3과]",
-                  "ul": false
-                }
-              ],
-              "kind": "UNKNOWN"
-            },
-            {
-              "text": "Getting Closer",
-              "runs": [
-                {
-                  "t": "Getting Closer",
-                  "ul": false
-                }
-              ],
-              "kind": "UNKNOWN"
-            },
-            {
-              "text": " Danger in the form of pyjama sharks, the area's biggest predators, came with little warning in the sea. The octopus was moving around near the edge of the seaweed forest, and I saw a shark tracking her. In an instant, she swam into a crack to escape, but the shark was faster. The shark had taken a bite of one of her arms and was waiting for her. I wanted to save my friend, but in this environment, I could only observe. She managed to get deeper into the crack, but she was bleeding. After a while, the shark lost interest, and the octopus used the opportunity to get back to her den, without one of her arms. She was in serious danger because her arms function like the hands, legs, nose, and eyes of humans. The next day, I was relieved to see that she had survived. She was weak, and her colors were not as bright as they used to be. I checked on her every day, wondering if that day would be the last. It was emotionally painful to witness these things happening to her.",
-              "runs": [
-                {
-                  "t": " Danger in the form of pyjama sharks, the area's biggest predators, came with little warning in the sea. The octopus was moving around near the edge of the seaweed forest, and I saw a shark tracking her. In an instant, she swam into a crack to escape, but the shark was faster. The shark had taken a bite of one of her arms and was waiting for her. I wanted to save my friend, but in this environment, I could only observe. She managed to get deeper into the crack, but she was bleeding. After a while, the shark lost interest, and the octopus used the opportunity to get back to her den, without one of her arms. She was in serious danger because her arms function like the hands, legs, nose, and eyes of humans. The next day, I was relieved to see that she had survived. She was weak, and her colors were not as bright as they used to be. I checked on her every day, wondering if that day would be the last. It was emotionally painful to witness these things happening to her.",
-                  "ul": false
-                }
-              ],
-              "kind": "P"
-            },
-            {
-              "text": "<보기>",
-              "runs": [
-                {
-                  "t": "<보기>",
-                  "ul": false
-                }
-              ],
-              "kind": "Box"
-            },
-            {
-              "text": "ⓐ The shark lost interest after a while, and the octopus went back to her den without one of her arms.",
-              "runs": [
-                {
-                  "t": "ⓐ The shark lost interest after a while, and the octopus went back to her den without one of her arms.",
-                  "ul": false
-                }
-              ],
-              "kind": "Box"
-            },
-            {
-              "text": "ⓑ The narrator saw the octopus being chased and bitten by a shark near the seaweed forest.",
-              "runs": [
-                {
-                  "t": "ⓑ The narrator saw the octopus being chased and bitten by a shark near the seaweed forest.",
-                  "ul": false
-                }
-              ],
-              "kind": "Box"
-            },
-            {
-              "text": "ⓒ The narrator felt emotional pain as he checked on her every day, not knowing how long she would survive.",
-              "runs": [
-                {
-                  "t": "ⓒ The narrator felt emotional pain as he checked on her every day, not knowing how long she would survive.",
-                  "ul": false
-                }
-              ],
-              "kind": "Box"
-            },
-            {
-              "text": "ⓓ The octopus escaped into a crack, bleeding from her wound.",
-              "runs": [
-                {
-                  "t": "ⓓ The octopus escaped into a crack, bleeding from her wound.",
-                  "ul": false
-                }
-              ],
-              "kind": "Box"
-            },
-            {
-              "text": "ⓔ The next day, the narrator was relieved to see that she had survived, though she looked weak and pale.",
-              "runs": [
-                {
-                  "t": "ⓔ The next day, the narrator was relieved to see that she had survived, though she looked weak and pale.",
-                  "ul": false
-                }
-              ],
-              "kind": "Box"
-            },
-            {
-              "text": "<조건>",
-              "runs": [
-                {
-                  "t": "<조건>",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "1. 문장 기호만 차례대로 쓰고, 문장 자체를 옮겨 쓰지 말 것",
-              "runs": [
-                {
-                  "t": "1. 문장 기호만 차례대로 쓰고, 문장 자체를 옮겨 쓰지 말 것",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "2. 문장 순서 중 하나라도 어색할 경우, 부분 점수 부여되지 않음",
-              "runs": [
-                {
-                  "t": "2. 문장 순서 중 하나라도 어색할 경우, 부분 점수 부여되지 않음",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "정답: _______ - _______ - _______ - _______ - _______",
-              "runs": [
-                {
-                  "t": "정답: _______ - _______ - _______ - _______ - _______",
-                  "ul": false
-                }
-              ],
-              "kind": "UNKNOWN"
-            },
-            {
-              "text": "다음 글을 읽고 물음에 답하시오. [3과]",
-              "runs": [
-                {
-                  "t": "다음 글을 읽고 물음에 답하시오. [3과]",
-                  "ul": false
-                }
-              ],
-              "kind": "Q-INTRO",
-              "q_code": "OBJ-LNG-HEADER"
-            },
-            {
-              "text": "Recovery, Growth, and Sacrifice",
-              "runs": [
-                {
-                  "t": "Recovery, Growth, and Sacrifice",
-                  "ul": false
-                }
-              ],
-              "kind": "UNKNOWN"
-            },
-            {
-              "text": " A short while later, I saw that the wound had healed. To my amazement, a little arm started to grow back, and she started to become active again. I started to compare my life to life in the unforgiving sea. I thought of what was valuable in life. I began to spend more time with my family and friends, and I even started to dive with my young son. He became just as interested in her as I was. As the octopus's arm became more functional, I felt things in my life were improving too. An octopus's average life is about a year, which ends after reproducing. One day, eight months after meeting her, I found her with another octopus. It was bittersweet knowing her final days were approaching even though she would bear young. After mating, she didn't come out of her den. There would be no feeding or hunting. She was timing her final moments for the hatching of her eggs. After the eggs hatched, she died. A few months later, my son found a little octopus. We believe her story continues on.",
-              "runs": [
-                {
-                  "t": " A short while later, I saw that the wound had healed. To my amazement, a little arm started to grow back, and she started to become active again. I started to compare my life to life in the unforgiving sea. I thought of what was valuable in life. I began to spend more time with my family and friends, and I even started to dive with my young son. He became just as interested in her as I was. As the octopus's arm became more functional, I felt things in my life were improving too. An octopus's average life is about a year, which ends after reproducing. One day, eight months after meeting her, I found her with another octopus. It was bittersweet knowing her final days were approaching even though she would bear young. After mating, she didn't come out of her den. There would be no feeding or hunting. She was timing her final moments for the hatching of her eggs. After the eggs hatched, she died. A few months later, my son found a little octopus. ",
-                  "ul": false
-                },
-                {
-                  "t": "We believe her story continues on",
-                  "ul": true
-                },
-                {
-                  "t": ".",
-                  "ul": false
-                }
-              ],
-              "kind": "P"
-            },
-            {
-              "text": "윗글의 내용과 일치하지 않는 것은?",
-              "runs": [
-                {
-                  "t": "윗글의 내용과 일치하지 않는 것은?",
-                  "ul": false
-                }
-              ],
-              "kind": "Q",
-              "q_code": "OBJ-CTN-MATCH"
-            },
-            {
-              "text": "① 문어는 시간이 지나면서 팔이 재생되는 모습을 보였고, 그 모습은 화자를 놀라게 했다.",
-              "runs": [
-                {
-                  "t": "① 문어는 시간이 지나면서 팔이 재생되는 모습을 보였고, 그 모습은 화자를 놀라게 했다.",
-                  "ul": false
-                }
-              ],
-              "kind": "C"
-            },
-            {
-              "text": "② 문어의 삶에 대한 화자의 성찰은 그가 가족과 더 많은 시간을 보내게 만들었다.",
-              "runs": [
-                {
-                  "t": "② 문어의 삶에 대한 화자의 성찰은 그가 가족과 더 많은 시간을 보내게 만들었다.",
-                  "ul": false
-                }
-              ],
-              "kind": "C"
-            },
-            {
-              "text": "③ 문어는 알이 부화할 때까지 보호하기 위해 위장술을 사용했다.",
-              "runs": [
-                {
-                  "t": "③ 문어는 알이 부화할 때까지 보호하기 위해 위장술을 사용했다.",
-                  "ul": false
-                }
-              ],
-              "kind": "C"
-            },
-            {
-              "text": "④ 문어는 알을 낳은 후 먹이를 먹지 않고 부화를 기다렸다.",
-              "runs": [
-                {
-                  "t": "④ 문어는 알을 낳은 후 먹이를 먹지 않고 부화를 기다렸다.",
-                  "ul": false
-                }
-              ],
-              "kind": "C"
-            },
-            {
-              "text": "⑤ 문어가 죽고 몇 달 후, 화자의 아들은 어린 문어 한 마리를 발견했다.",
-              "runs": [
-                {
-                  "t": "⑤ 문어가 죽고 몇 달 후, 화자의 아들은 어린 문어 한 마리를 발견했다.",
-                  "ul": false
-                }
-              ],
-              "kind": "C"
-            },
-            {
-              "text": "윗글에서 밑줄 친 We believe her story continues on이 의미하는 바로 가장 적절한 것은?",
-              "runs": [
-                {
-                  "t": "윗글에서 밑줄 친 We believe her story continues on이 의미하는 바로 가장 적절한 것은?",
-                  "ul": false
-                }
-              ],
-              "kind": "Q",
-              "q_code": "OBJ-VOC-UND-MEAN"
-            },
-            {
-              "text": "① The narrator plans to write a book about the octopus's life.",
-              "runs": [
-                {
-                  "t": "① The narrator plans to write a book about the octopus's life.",
-                  "ul": false
-                }
-              ],
-              "kind": "C"
-            },
-            {
-              "text": "② The octopus was actually seen alive again near the den.",
-              "runs": [
-                {
-                  "t": "② The octopus was actually seen alive again near the den.",
-                  "ul": false
-                }
-              ],
-              "kind": "C"
-            },
-            {
-              "text": "③ The narrator's emotional bond with the octopus helped him recover.",
-              "runs": [
-                {
-                  "t": "③ The narrator's emotional bond with the octopus helped him recover.",
-                  "ul": false
-                }
-              ],
-              "kind": "C"
-            },
-            {
-              "text": "④ The young born from the octopus carry on her life cycle.",
-              "runs": [
-                {
-                  "t": "④ The young born from the octopus carry on her life cycle.",
-                  "ul": false
-                }
-              ],
-              "kind": "C"
-            },
-            {
-              "text": "⑤ The narrator decided to study more sea creatures after the octopus died.",
-              "runs": [
-                {
-                  "t": "⑤ The narrator decided to study more sea creatures after the octopus died.",
-                  "ul": false
-                }
-              ],
-              "kind": "C"
-            },
-            {
-              "text": "윗글에서 다음 조건에 해당하는 문장을 찾아, 해당 문장의 앞에서부터 두 단어, 뒤에서부터 두 단어를 각각 쓰고, 그 문장을 자연스럽게 해석하시오.",
-              "runs": [
-                {
-                  "t": "윗글에서 다음 조건에 해당하는 문장을 찾아, 해당 문장의 앞에서부터 두 단어, 뒤에서부터 두 단어를 각각 쓰고, 그 문장을 자연스럽게 해석하시오.",
-                  "ul": false
-                }
-              ],
-              "kind": "Q"
-            },
-            {
-              "text": "<조건>",
-              "runs": [
-                {
-                  "t": "<조건>",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "1. 가주어-진주어 구문이 사용된 문장을 찾을 것",
-              "runs": [
-                {
-                  "t": "1. 가주어-진주어 구문이 사용된 문장을 찾을 것",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "2. 문장은 마침표(.)로 끝나는 단위임을 명심할 것",
-              "runs": [
-                {
-                  "t": "2. 문장은 마침표(.)로 끝나는 단위임을 명심할 것",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "3. 지문에 포함된 문장이어야 하며, 다른 문장으로 재구성하거나 바꾸지 말 것",
-              "runs": [
-                {
-                  "t": "3. 지문에 포함된 문장이어야 하며, 다른 문장으로 재구성하거나 바꾸지 말 것",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "(1) 앞에서부터 두 단어: __________ __________ ",
-              "runs": [
-                {
-                  "t": "(1) 앞에서부터 두 단어: __________ __________ ",
-                  "ul": false
-                }
-              ],
-              "kind": "UNKNOWN"
-            },
-            {
-              "text": "(2) 뒤에서부터 두 단어: __________ __________ ",
-              "runs": [
-                {
-                  "t": "(2) 뒤에서부터 두 단어: __________ __________ ",
-                  "ul": false
-                }
-              ],
-              "kind": "UNKNOWN"
-            },
-            {
-              "text": "(3) 해석: _______________________________________________",
-              "runs": [
-                {
-                  "t": "(3) 해석: _______________________________________________",
-                  "ul": false
-                }
-              ],
-              "kind": "Ans"
-            },
-            {
-              "text": "다음 글을 읽고 물음에 답하시오. [3과]",
-              "runs": [
-                {
-                  "t": "다음 글을 읽고 물음에 답하시오. [3과]",
-                  "ul": false
-                }
-              ],
-              "kind": "Q-INTRO",
-              "q_code": "OBJ-LNG-HEADER"
-            },
-            {
-              "text": "My Octopus Teacher",
-              "runs": [
-                {
-                  "t": "My Octopus Teacher",
-                  "ul": false
-                }
-              ],
-              "kind": "UNKNOWN"
-            },
-            {
-              "text": " I returned to the Cape of Good Hope, South Africa, where I had spent my childhood, after over 20 years of movie-making. I went diving in the cold sea off the coast of the Cape, and (A)내가 그 문어를 만난 곳은 바로 빽빽한 해초 숲 사이에서였다.",
-              "runs": [
-                {
-                  "t": " I returned to the Cape of Good Hope, South Africa, where I had spent my childhood, after over 20 years of movie-making. I went diving in the cold sea off the coast of the Cape, and (A)",
-                  "ul": false
-                },
-                {
-                  "t": "내가 그 문어를 만난 곳은 바로 빽빽한 해초 숲 사이에서였다",
-                  "ul": true
-                },
-                {
-                  "t": ".",
-                  "ul": false
-                }
-              ],
-              "kind": "UNKNOWN"
-            },
-            {
-              "text": "First Encounter",
-              "runs": [
-                {
-                  "t": "First Encounter",
-                  "ul": false
-                }
-              ],
-              "kind": "UNKNOWN"
-            },
-            {
-              "text": " I saw a fish peacefully ⓐswimming near a heap of shells. Suddenly, an octopus sprang from the heap and grabbed the fish. Amazed at the cleverness of the octopus, I swam a little closer, but it ⓑdisappeared. In fact, it had lifted a piece of seaweed, wrapped it around itself, and was staring at me out of a little gap. What an extraordinary creature! I wondered ⓒwhether would happen if I kept watching it. To see the world from the octopus's perspective, I left a camera near the den and started visiting regularly. I even mapped the environment around the den. Expecting some drama to come, I waited.",
-              "runs": [
-                {
-                  "t": " I saw a fish peacefully ⓐ",
-                  "ul": false
-                },
-                {
-                  "t": "swimming",
-                  "ul": true
-                },
-                {
-                  "t": " near a heap of shells. Suddenly, an octopus sprang from the heap and grabbed the fish. Amazed at the cleverness of the octopus, I swam a little closer, but it ⓑ",
-                  "ul": false
-                },
-                {
-                  "t": "disappeared",
-                  "ul": true
-                },
-                {
-                  "t": ". In fact, it had lifted a piece of seaweed, wrapped it around itself, and was staring at me out of a little gap. What an extraordinary creature! I wondered ⓒ",
-                  "ul": false
-                },
-                {
-                  "t": "whether",
-                  "ul": true
-                },
-                {
-                  "t": " would happen if I kept watching it. To see the world from the octopus's perspective, I left a camera near the den and started visiting regularly. I even mapped the environment around the den. Expecting some drama to come, I waited.",
-                  "ul": false
-                }
-              ],
-              "kind": "P"
-            },
-            {
-              "text": "Making Friends",
-              "runs": [
-                {
-                  "t": "Making Friends",
-                  "ul": false
-                }
-              ],
-              "kind": "UNKNOWN"
-            },
-            {
-              "text": " The octopus became less scared as I visited more often. After about a month, it came near me. I put my hand out, and it reached out to me. After another week, it started to wave like a human friend ⓓsaying, \"Hi, I'm excited to see you.\" I kept still, and it covered my whole hand. Since I had to take a breath, I swam toward the surface. To my surprise, it rode on my hand all the way to the top. There I was, just staring into the eyes of this incredible creature. It sparked my curiosity in a way that I ⓔhad not experienced before. Had I gained its trust? I started reading books about octopuses, but I wanted to learn more about this marvelous creature. The first thing I learned was that \"it\" was a \"she.\"",
-              "runs": [
-                {
-                  "t": " The octopus became less scared as I visited more often. After about a month, it came near me. I put my hand out, and it reached out to me. After another week, it started to wave like a human friend ⓓ",
-                  "ul": false
-                },
-                {
-                  "t": "saying",
-                  "ul": true
-                },
-                {
-                  "t": ", \"Hi, I'm excited to see you.\" I kept still, and it covered my whole hand. Since I had to take a breath, I swam toward the surface. To my surprise, it rode on my hand all the way to the top. There I was, just staring into the eyes of this incredible creature. It sparked my curiosity in a way that I ⓔ",
-                  "ul": false
-                },
-                {
-                  "t": "had not experienced",
-                  "ul": true
-                },
-                {
-                  "t": " before. Had I gained its trust? I started reading books about octopuses, but I wanted to learn more about this marvelous creature. The first thing I learned was that \"it\" was a \"she.\"",
-                  "ul": false
-                }
-              ],
-              "kind": "P"
-            },
-            {
-              "text": "윗글의 내용과 일치하지 않는 것은?",
-              "runs": [
-                {
-                  "t": "윗글의 내용과 일치하지 않는 것은?",
-                  "ul": false
-                }
-              ],
-              "kind": "Q",
-              "q_code": "OBJ-CTN-MATCH"
-            },
-            {
-              "text": "① The writer initially gained the octopus's trust by feeding it regularly during his visits.",
-              "runs": [
-                {
-                  "t": "① The writer initially gained the octopus's trust by feeding it regularly during his visits.",
-                  "ul": false
-                }
-              ],
-              "kind": "C"
-            },
-            {
-              "text": "② After a few weeks, the octopus waved at the writer like a human friend.",
-              "runs": [
-                {
-                  "t": "② After a few weeks, the octopus waved at the writer like a human friend.",
-                  "ul": false
-                }
-              ],
-              "kind": "C"
-            },
-            {
-              "text": "③ The octopus once covered the writer's entire hand with its body.",
-              "runs": [
-                {
-                  "t": "③ The octopus once covered the writer's entire hand with its body.",
-                  "ul": false
-                }
-              ],
-              "kind": "C"
-            },
-            {
-              "text": "④ The writer started reading books about octopuses out of curiosity.",
-              "runs": [
-                {
-                  "t": "④ The writer started reading books about octopuses out of curiosity.",
-                  "ul": false
-                }
-              ],
-              "kind": "C"
-            },
-            {
-              "text": "⑤ The writer found out the octopus was female through what he learned in books.",
-              "runs": [
-                {
-                  "t": "⑤ The writer found out the octopus was female through what he learned in books.",
-                  "ul": false
-                }
-              ],
-              "kind": "C"
-            },
-            {
-              "text": "윗글의 밑줄 친 부분 중, 어법상 어색한 것은?",
-              "runs": [
-                {
-                  "t": "윗글의 밑줄 친 부분 중, 어법상 어색한 것은?",
-                  "ul": false
-                }
-              ],
-              "kind": "Q",
-              "q_code": "OBJ-GRM-UND-WRONG"
-            },
-            {
-              "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ",
-              "runs": [
-                {
-                  "t": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ",
-                  "ul": false
-                }
-              ],
-              "kind": "C"
-            },
-            {
-              "text": "윗글의 밑줄 친 (A)를 아래 <조건>에 맞추어 영작하시오.",
-              "runs": [
-                {
-                  "t": "윗글의 밑줄 친 (A)를 아래 <조건>에 맞추어 영작하시오.",
-                  "ul": false
-                }
-              ],
-              "kind": "Q"
-            },
-            {
-              "text": "<보기>",
-              "runs": [
-                {
-                  "t": "<보기>",
-                  "ul": false
-                }
-              ],
-              "kind": "Box"
-            },
-            {
-              "text": "met / I / where / it / seaweed / the / was /",
-              "runs": [
-                {
-                  "t": "met / I / where / it / seaweed / the / was /",
-                  "ul": false
-                }
-              ],
-              "kind": "Box"
-            },
-            {
-              "text": "forests / an / among / dense / octopus",
-              "runs": [
-                {
-                  "t": "forests / an / among / dense / octopus",
-                  "ul": false
-                }
-              ],
-              "kind": "Box"
-            },
-            {
-              "text": "<조건>",
-              "runs": [
-                {
-                  "t": "<조건>",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "1. <보기>의 단어를 모두 사용하고, 다른 단어는 추가하지 말 것",
-              "runs": [
-                {
-                  "t": "1. <보기>의 단어를 모두 사용하고, 다른 단어는 추가하지 말 것",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "2. 강조 구문을 사용하여, '빽빽한 해초 숲 사이에서'를 강조할 것",
-              "runs": [
-                {
-                  "t": "2. 강조 구문을 사용하여, '빽빽한 해초 숲 사이에서'를 강조할 것",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "3. (A)와 뜻이 정확하게 일치하도록 문장을 완성할 것",
-              "runs": [
-                {
-                  "t": "3. (A)와 뜻이 정확하게 일치하도록 문장을 완성할 것",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "→ _____________________________________________________",
-              "runs": [
-                {
-                  "t": "→ _____________________________________________________",
-                  "ul": false
-                }
-              ],
-              "kind": "Ans"
-            },
-            {
-              "text": "다음 우리말과 같은 의미가 되도록 <조건>에 맞추어 영작하시오. [3과]",
-              "runs": [
-                {
-                  "t": "다음 우리말과 같은 의미가 되도록 <조건>에 맞추어 영작하시오.",
-                  "ul": false
-                },
-                {
-                  "t": " [3과]",
-                  "ul": false
-                }
-              ],
-              "kind": "UNKNOWN"
-            },
-            {
-              "text": "우리가 도착했을 때, 기차는 이미 떠나고 없었다.",
-              "runs": [
-                {
-                  "t": "우리가 도착했을 때, 기차는 이미 떠나고 없었다.",
-                  "ul": false
-                }
-              ],
-              "kind": "UNKNOWN"
-            },
-            {
-              "text": "<조건>",
-              "runs": [
-                {
-                  "t": "<조건>",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "· 우리말과 같은 의미가 되도록 영작하시오.",
-              "runs": [
-                {
-                  "t": "· 우리말과 같은 의미가 되도록 영작하시오.",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "· 관사, 시간 구분에 유의하시오.",
-              "runs": [
-                {
-                  "t": "· 관사, 시간 구분에 유의하시오.",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "· 아래 단어를 반드시 포함하시오. (필요시 형태 변형 사용) - had / arrive / leave",
-              "runs": [
-                {
-                  "t": "· 아래 단어를 반드시 포함하시오. (필요시 형태 변형 사용) - had / arrive / leave",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "· 10단어를 넘지 마시오. (의미가 같아도 감점)",
-              "runs": [
-                {
-                  "t": "· 10단어를 넘지 마시오. (의미가 같아도 감점)",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "→ ______________________________________________________",
-              "runs": [
-                {
-                  "t": "→ ______________________________________________________",
-                  "ul": false
-                }
-              ],
-              "kind": "Ans"
-            },
-            {
-              "text": "다음 우리말과 같은 의미가 되도록 <조건>에 맞추어 영작하시오. [3과]",
-              "runs": [
-                {
-                  "t": "다음 우리말과 같은 의미가 되도록 <조건>에 맞추어 영작하시오.",
-                  "ul": false
-                },
-                {
-                  "t": " [3과]",
-                  "ul": false
-                }
-              ],
-              "kind": "UNKNOWN"
-            },
-            {
-              "text": "놀랍게도, 그는 그의 침구가 그곳에 있는지 몰랐다.",
-              "runs": [
-                {
-                  "t": "놀랍게도, 그는 그의 침구가 그곳에 있는지 몰랐다.",
-                  "ul": false
-                }
-              ],
-              "kind": "UNKNOWN"
-            },
-            {
-              "text": "<조건>",
-              "runs": [
-                {
-                  "t": "<조건>",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "· 우리말을 영어로 옮기되, to one’s 감정명사 표현을 주어 + be동사 + 형용사 + that절 구조로 바꿔 쓰시오.",
-              "runs": [
-                {
-                  "t": "· 우리말을 영어로 옮기되, to one’s 감정명사 표현을 주어 + be동사 + 형용사 + that절 구조로 바꿔 쓰시오.",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "· 시제와 어순, 의미 전달에 유의하시오.",
-              "runs": [
-                {
-                  "t": "· 시제와 어순, 의미 전달에 유의하시오.",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "· 13단어 이하로 작성하시오. ",
-              "runs": [
-                {
-                  "t": "· 13단어 이하로 작성하시오. ",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "→ ______________________________________________________",
-              "runs": [
-                {
-                  "t": "→ ______________________________________________________",
-                  "ul": false
-                }
-              ],
-              "kind": "Ans"
-            },
-            {
-              "text": "다음 글의 밑줄 친 부분 중, 어법에 맞지 않는 단어를 2개 찾아 각각 한 단어로 고쳐 쓰시오. (수정 전후 단어를 모두 쓰지 않으면 오답 처리함) [3과]",
-              "runs": [
-                {
-                  "t": "다음 글의 밑줄 친 부분 중, 어법에 맞지 않는 단어를 2개 찾아 각각 한 단어로 고쳐 쓰시오. (수정 전후 단어를 모두 쓰지 않으면 오답 처리함)",
-                  "ul": false
-                },
-                {
-                  "t": " [3과]",
-                  "ul": false
-                }
-              ],
-              "kind": "Q",
-              "q_code": "SRV-WRD-ONE-EACH"
-            },
-            {
-              "text": " A short while later, I saw that the octopus's wound had healed. To my amazement, a little arm started to grow back, and she started to become active again. I started to compare my life to life in the unforgiving sea. I thought of what was valuable in life. I began to spend more time with my family and friends, and I even started to dive with my young son. He became just as interesting in her as I was. As the octopus's arm became more functional, I felt things in my life was improving too. An octopus's average life is about a year, which ends after reproducing. One day, eight months after meeting her, I found her with another octopus. It was bittersweet knowing her final days were approaching even though she would bear young.",
-              "runs": [
-                {
-                  "t": " A short while later, I saw that the octopus's wound ",
-                  "ul": false
-                },
-                {
-                  "t": "had",
-                  "ul": true
-                },
-                {
-                  "t": " healed. To ",
-                  "ul": false
-                },
-                {
-                  "t": "my",
-                  "ul": true
-                },
-                {
-                  "t": " amazement, a little arm started to grow back, and she started to become active again. I started to compare my life to life in the unforgiving sea. I thought of ",
-                  "ul": false
-                },
-                {
-                  "t": "what",
-                  "ul": true
-                },
-                {
-                  "t": " was valuable in life. I began to spend more time with my family and friends, and I even started to dive with my young son. He became just as ",
-                  "ul": false
-                },
-                {
-                  "t": "interesting",
-                  "ul": true
-                },
-                {
-                  "t": " in her as I was. As the octopus's arm became more functional, I felt things in my life ",
-                  "ul": false
-                },
-                {
-                  "t": "was",
-                  "ul": true
-                },
-                {
-                  "t": " improving too. An octopus's average life is about a year, ",
-                  "ul": false
-                },
-                {
-                  "t": "which",
-                  "ul": true
-                },
-                {
-                  "t": " ends after reproducing. One day, eight months after meeting her, I found her with another octopus. ",
-                  "ul": false
-                },
-                {
-                  "t": "It",
-                  "ul": true
-                },
-                {
-                  "t": " was bittersweet knowing her final days were approaching even though she would bear young.",
-                  "ul": false
-                }
-              ],
-              "kind": "P"
-            },
-            {
-              "text": "(1) ________________ → ________________ ",
-              "runs": [
-                {
-                  "t": "(1) ________________ → ________________ ",
-                  "ul": false
-                }
-              ],
-              "kind": "Ans"
-            },
-            {
-              "text": "(2) ________________ → ________________ ",
-              "runs": [
-                {
-                  "t": "(2) ________________ → ________________ ",
-                  "ul": false
-                }
-              ],
-              "kind": "Ans"
-            },
-            {
-              "text": "다음 글의 밑줄 친 문장이 '문어의 평균 수명은 약 1년이며, 번식 후 그것이 끝난다'라는 뜻이 되도록 빈칸에 관계대명사를 사용하여 4단어의 영어로 영작하시오. [3과]",
-              "runs": [
-                {
-                  "t": "다음 글의 밑줄 친 문장이 '문어의 평균 수명은 약 1년이며, 번식 후 그것이 끝난다'라는 뜻이 되도록 빈칸에 관계대명사를 사용하여 4단어의 영어로 영작하시오.",
-                  "ul": false
-                },
-                {
-                  "t": " [3과]",
-                  "ul": false
-                }
-              ],
-              "kind": "UNKNOWN"
-            },
-            {
-              "text": " An octopus's average life is about a year, _________________________________________. One day, eight months after meeting her, I found her with another octopus. It was bittersweet knowing her final days were approaching even though she would bear young. After mating, she didn't come out of her den. There would be no feeding or hunting. She was timing her final moments for the hatching of her eggs. After the eggs hatched, she died. A few months later, my son found a little octopus. We believe her story continues on.",
-              "runs": [
-                {
-                  "t": " ",
-                  "ul": false
-                },
-                {
-                  "t": "An octopus's average life is about a year, _________________________________________",
-                  "ul": true
-                },
-                {
-                  "t": ". One day, eight months after meeting her, I found her with another octopus. It was bittersweet knowing her final days were approaching even though she would bear young. After mating, she didn't come out of her den. There would be no feeding or hunting. She was timing her final moments for the hatching of her eggs. After the eggs hatched, she died. A few months later, my son found a little octopus. We believe her story continues on.",
-                  "ul": false
-                }
-              ],
-              "kind": "P"
-            },
-            {
-              "text": "<조건>",
-              "runs": [
-                {
-                  "t": "<조건>",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "1. 관계대명사를 사용할 것",
-              "runs": [
-                {
-                  "t": "1. 관계대명사를 사용할 것",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "2. 4단어로 작성할 것",
-              "runs": [
-                {
-                  "t": "2. 4단어로 작성할 것",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "→ _____________________________________________________",
-              "runs": [
-                {
-                  "t": "→ _____________________________________________________",
-                  "ul": false
-                }
-              ],
-              "kind": "Ans"
-            },
-            {
-              "text": "다음 글을 읽고 물음에 답하시오. [3과]",
-              "runs": [
-                {
-                  "t": "다음 글을 읽고 물음에 답하시오. [3과]",
-                  "ul": false
-                }
-              ],
-              "kind": "Q-INTRO",
-              "q_code": "OBJ-LNG-HEADER"
-            },
-            {
-              "text": " A short while later, I saw that the wound had healed. To my amazement, a little arm started to grow back, and she started to become active again. I started to compare my life to life in the ⓐunforgive sea. (A)I / think / in / valuable / life / of / what / be. I began to spend more time with my family and friends, and I even started to dive with my young son. He became just ⓑas interest in her as I was. As the octopus's arm became more functional, I felt things in my life were improving too.",
-              "runs": [
-                {
-                  "t": " A short while later, I saw that the wound had healed. To my amazement, a little arm started to grow back, and she started to become active again. I started to compare my life to life in the ⓐ",
-                  "ul": false
-                },
-                {
-                  "t": "unforgive sea",
-                  "ul": true
-                },
-                {
-                  "t": ". (A)",
-                  "ul": false
-                },
-                {
-                  "t": "I / think / in / valuable / life / of / what / be",
-                  "ul": true
-                },
-                {
-                  "t": ". I began to spend more time with my family and friends, and I even started to dive with my young son. He became just ⓑ",
-                  "ul": false
-                },
-                {
-                  "t": "as interest in her as",
-                  "ul": true
-                },
-                {
-                  "t": " I was. As the octopus's arm became more functional, I felt things in my life were improving too.",
-                  "ul": false
-                }
-              ],
-              "kind": "P"
-            },
-            {
-              "text": "윗글의 밑줄 친 (A) 부분의 영어 단어를 흐름에 맞게 적절히 배열하여 문장을 완성하시오. (필요시 어형변화)",
-              "runs": [
-                {
-                  "t": "윗글의 밑줄 친 (A) 부분의 영어 단어를 흐름에 맞게 적절히 배열하여 문장을 완성하시오. (필요시 어형변화)",
-                  "ul": false
-                }
-              ],
-              "kind": "Q",
-              "q_code": "SRV-WRT-ORDER"
-            },
-            {
-              "text": "→ _____________________________________________________",
-              "runs": [
-                {
-                  "t": "→ _____________________________________________________",
-                  "ul": false
-                }
-              ],
-              "kind": "Ans"
-            },
-            {
-              "text": "윗글의 밑줄 친 ⓐ, ⓑ를 흐름과 어법에 맞게 고쳐 쓰시오.",
-              "runs": [
-                {
-                  "t": "윗글의 밑줄 친 ⓐ, ⓑ를 흐름과 어법에 맞게 고쳐 쓰시오.",
-                  "ul": false
-                }
-              ],
-              "kind": "Q"
-            },
-            {
-              "text": "ⓐ ________________________",
-              "runs": [
-                {
-                  "t": "ⓐ ________________________",
-                  "ul": false
-                }
-              ],
-              "kind": "Ans"
-            },
-            {
-              "text": "ⓑ ________________________",
-              "runs": [
-                {
-                  "t": "ⓑ ________________________",
-                  "ul": false
-                }
-              ],
-              "kind": "Ans"
-            },
-            {
-              "text": "다음 문장을 <보기>와 같이 고치시오. [3과]",
-              "runs": [
-                {
-                  "t": "다음 문장을 <보기>와 같이 고치시오.",
-                  "ul": false
-                },
-                {
-                  "t": " [3과]",
-                  "ul": false
-                }
-              ],
-              "kind": "UNKNOWN"
-            },
-            {
-              "text": "<보기>",
-              "runs": [
-                {
-                  "t": "<보기>",
-                  "ul": false
-                }
-              ],
-              "kind": "Box"
-            },
-            {
-              "text": "I was surprised that the dogs followed my orders.",
-              "runs": [
-                {
-                  "t": "I was surprised that the dogs followed my orders.",
-                  "ul": false
-                }
-              ],
-              "kind": "Box"
-            },
-            {
-              "text": "→ To my surprise, the dogs followed my orders.",
-              "runs": [
-                {
-                  "t": "→ To my surprise, the dogs followed my orders.",
-                  "ul": false
-                }
-              ],
-              "kind": "Box"
-            },
-            {
-              "text": "(1) I was relieved that the presentation went well.",
-              "runs": [
-                {
-                  "t": "(1) I was relieved that the presentation went well.",
-                  "ul": false
-                }
-              ],
-              "kind": "Box"
-            },
-            {
-              "text": "→ ________________________, the presentation went well.",
-              "runs": [
-                {
-                  "t": "→ ________________________, the presentation went well.",
-                  "ul": false
-                }
-              ],
-              "kind": "Box"
-            },
-            {
-              "text": "정답: ___________________________________________________",
-              "runs": [
-                {
-                  "t": "정답: ___________________________________________________",
-                  "ul": false
-                }
-              ],
-              "kind": "Ans"
-            },
-            {
-              "text": "(2) They were disappointed that the event was canceled.",
-              "runs": [
-                {
-                  "t": "(2) They were disappointed that the event was canceled.",
-                  "ul": false
-                }
-              ],
-              "kind": "P"
-            },
-            {
-              "text": "→ ________________________, the event was canceled.",
-              "runs": [
-                {
-                  "t": "→ ________________________, ",
-                  "ul": false
-                },
-                {
-                  "t": "the event was canceled.",
-                  "ul": false
-                }
-              ],
-              "kind": "UNKNOWN"
-            },
-            {
-              "text": "정답: ___________________________________________________",
-              "runs": [
-                {
-                  "t": "정답: ___________________________________________________",
-                  "ul": false
-                }
-              ],
-              "kind": "Ans"
-            },
-            {
-              "text": "다음 우리말을 주어진 <조건>에 맞게 영작하시오. [3과]",
-              "runs": [
-                {
-                  "t": "다음 우리말을 주어진 <조건>에 맞게 영작하시오.",
-                  "ul": false
-                },
-                {
-                  "t": " ",
-                  "ul": false
-                },
-                {
-                  "t": "[3과]",
-                  "ul": false
-                }
-              ],
-              "kind": "Q",
-              "q_code": "SRV-WRT-COND-VAR"
-            },
-            {
-              "text": "<조건>",
-              "runs": [
-                {
-                  "t": "<조건>",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "감정명사, 강조구문, 과거완료를 모두 포함할 것",
-              "runs": [
-                {
-                  "t": "감정명사, 강조구문, 과거완료를 모두 포함할 것",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "주어진 어구를 모두 사용하되, 필요한 경우 어휘 추가 및 형태 변형할 것",
-              "runs": [
-                {
-                  "t": "주어진 어구를 모두 사용하되, 필요한 경우 어휘 추가 및 형태 변형할 것",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "in the drawer / that / leave",
-              "runs": [
-                {
-                  "t": "in the drawer / that / leave",
-                  "ul": false
-                }
-              ],
-              "kind": "UNKNOWN"
-            },
-            {
-              "text": "우리말: (그가) 다행스럽게도, 그가 그의 열쇠를 두었던 곳은 바로 서랍이었다.",
-              "runs": [
-                {
-                  "t": "우리말: (그가) 다행스럽게도, 그가 그의 열쇠를 두었던 곳은 바로 서랍이었다.",
-                  "ul": false
-                }
-              ],
-              "kind": "UNKNOWN"
-            },
-            {
-              "text": "정답: ___________________________________________________",
-              "runs": [
-                {
-                  "t": "정답: ___________________________________________________",
-                  "ul": false
-                }
-              ],
-              "kind": "Ans"
-            },
-            {
-              "text": "다음 글을 읽고 질문에 답하시오. [3과]",
-              "runs": [
-                {
-                  "t": "다음 글을 읽고 질문에 답하시오. [3과]",
-                  "ul": false
-                }
-              ],
-              "kind": "UNKNOWN"
-            },
-            {
-              "text": " Danger in the form of pyjama sharks, the area's biggest predators, came with little warning in the sea. The octopus was moving around near the edge of the seaweed forest, and ⓐI saw a shark tracking her. In an instant, she swam into a crack to escape, but the shark was faster.",
-              "runs": [
-                {
-                  "t": " Danger in the form of pyjama sharks, the area's biggest predators, came with little warning in the sea. The octopus was moving around near the edge of the seaweed forest, and ⓐ",
-                  "ul": false
-                },
-                {
-                  "t": "I saw a shark tracking her",
-                  "ul": true
-                },
-                {
-                  "t": ". In an instant, she swam into a crack to escape, but the shark was faster.",
-                  "ul": false
-                }
-              ],
-              "kind": "P"
-            },
-            {
-              "text": " ⓑThe shark has taken a bite of one of her arms and was waiting for her. I wanted to save my friend, but in this environment, I could only observe. ⓒShe managed to get deeper into the crack, but she was bleeding. After a while, the shark lost interest, and the octopus used the opportunity to get back to her den, without one of her arms. She was in serious danger because her arms function like the hands, legs, nose, and eyes of humans.",
-              "runs": [
-                {
-                  "t": " ⓑ",
-                  "ul": false
-                },
-                {
-                  "t": "The shark has taken a bite of one of her arms",
-                  "ul": true
-                },
-                {
-                  "t": " and was waiting for her. I wanted to save my friend, but in this environment, I could only observe. ⓒ",
-                  "ul": false
-                },
-                {
-                  "t": "She managed to get deeper into the crack",
-                  "ul": true
-                },
-                {
-                  "t": ", but she was bleeding. After a while, the shark lost interest, and the octopus used ",
-                  "ul": false
-                },
-                {
-                  "t": "the opportunity",
-                  "ul": true
-                },
-                {
-                  "t": " to get back to her den, without one of her arms. She was in serious danger because her arms function like the hands, legs, nose, and eyes of humans.",
-                  "ul": false
-                }
-              ],
-              "kind": "UNKNOWN"
-            },
-            {
-              "text": " The next day, ⓓI was relieved to see that she had survived. She was weak, and ⓔher colors were not as bright. I checked on her every day, ⓕwondering whether that day would be the last. It was emotionally painful ⓖto witness these things happened to her.",
-              "runs": [
-                {
-                  "t": " The next day, ⓓ",
-                  "ul": false
-                },
-                {
-                  "t": "I was relieved to see that she had survived",
-                  "ul": true
-                },
-                {
-                  "t": ". She was weak, and ⓔ",
-                  "ul": false
-                },
-                {
-                  "t": "her colors were not as bright",
-                  "ul": true
-                },
-                {
-                  "t": ". I checked on her every day, ⓕ",
-                  "ul": false
-                },
-                {
-                  "t": "wondering whether that day would be the last",
-                  "ul": true
-                },
-                {
-                  "t": ". It was emotionally painful ⓖ",
-                  "ul": false
-                },
-                {
-                  "t": "to witness these things happened to her",
-                  "ul": true
-                },
-                {
-                  "t": ".",
-                  "ul": false
-                }
-              ],
-              "kind": "P"
-            },
-            {
-              "text": "윗글의 밑줄 친 ⓐ~ⓖ 중, 어법상 어색한 것은 모두 몇 개인가?",
-              "runs": [
-                {
-                  "t": "윗글의 밑줄 친 ⓐ~ⓖ 중, 어법상 어색한 것은 모두 몇 개인가?",
-                  "ul": false
-                }
-              ],
-              "kind": "Q",
-              "q_code": "OBJ-GRM-UND-WRONG"
-            },
-            {
-              "text": "① 2개    ② 3개    ③ 4개    ④ 5개    ⑤ 6개",
-              "runs": [
-                {
-                  "t": "① 2개    ② 3개    ③ 4개    ④ 5개    ⑤ 6개",
-                  "ul": false
-                }
-              ],
-              "kind": "C"
-            },
-            {
-              "text": "윗글을 요약하고자 할 때, 밑줄 친 부분 중 문맥상 낱말의 쓰임이 적절한 것은?",
-              "runs": [
-                {
-                  "t": "윗글을 요약하고자 할 때, 밑줄 친 부분 중 문맥상 낱말의 쓰임이 적절한 것은?",
-                  "ul": false
-                }
-              ],
-              "kind": "Q"
-            },
-            {
-              "text": " Danger appeared in the form of pyjama sharks, the top ㉠prey in the area. One day, I saw a shark chasing the octopus near the seaweed forest. Although she tried to escape into her ㉡shelter, the shark bit off one of her arms. She eventually hid deeper in the crack, injured and bleeding. Since her arms are like human hands, legs, and senses, the loss was ㉢limited. The next day, I was relieved to see she had survived, though she was weak and her colors had ㉣faded. I checked on her daily, thinking the ㉤best.",
-              "runs": [
-                {
-                  "t": " Danger appeared in the form of pyjama sharks, the top ㉠",
-                  "ul": false
-                },
-                {
-                  "t": "prey",
-                  "ul": true
-                },
-                {
-                  "t": " in the area. One day, I saw a shark chasing the octopus near the seaweed forest. Although she tried to escape into her ㉡",
-                  "ul": false
-                },
-                {
-                  "t": "shelter",
-                  "ul": true
-                },
-                {
-                  "t": ", the shark bit off one of her arms. She eventually hid deeper in the crack, injured and bleeding. Since her arms are like human hands, legs, and senses, the loss was ㉢",
-                  "ul": false
-                },
-                {
-                  "t": "limited",
-                  "ul": true
-                },
-                {
-                  "t": ". The next day, I was relieved to see she had survived, though she was weak and her colors had ㉣",
-                  "ul": false
-                },
-                {
-                  "t": "faded",
-                  "ul": true
-                },
-                {
-                  "t": ". I checked on her daily, thinking the ㉤",
-                  "ul": false
-                },
-                {
-                  "t": "best",
-                  "ul": true
-                },
-                {
-                  "t": ".",
-                  "ul": false
-                }
-              ],
-              "kind": "P"
-            },
-            {
-              "text": "① ㉠      ② ㉡      ③ ㉢      ④ ㉣      ⑤ ㉤",
-              "runs": [
-                {
-                  "t": "① ",
-                  "ul": false
-                },
-                {
-                  "t": "㉠",
-                  "ul": false
-                },
-                {
-                  "t": "      ② ",
-                  "ul": false
-                },
-                {
-                  "t": "㉡",
-                  "ul": false
-                },
-                {
-                  "t": "      ③ ",
-                  "ul": false
-                },
-                {
-                  "t": "㉢",
-                  "ul": false
-                },
-                {
-                  "t": "      ④ ",
-                  "ul": false
-                },
-                {
-                  "t": "㉣",
-                  "ul": false
-                },
-                {
-                  "t": "      ⑤ ",
-                  "ul": false
-                },
-                {
-                  "t": "㉤",
-                  "ul": false
-                }
-              ],
-              "kind": "C"
-            },
-            {
-              "text": "윗글을 읽고 질문에 대한 답을 <조건>에 맞추어 완성하시오.",
-              "runs": [
-                {
-                  "t": "윗글을 읽고 질문에 대한 답을 <조건>에 맞추어 완성하시오.",
-                  "ul": false
-                }
-              ],
-              "kind": "Q"
-            },
-            {
-              "text": "<조건>",
-              "runs": [
-                {
-                  "t": "<조건>",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "추가나 형태 변형 없이 주어진 어구를 모두 한 번씩 사용할 것",
-              "runs": [
-                {
-                  "t": "추가나 형태 변형 없이 주어진 어구를 모두 한 번씩 사용할 것",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "allowing / and left / when / lost interest / the shark / safely / her den / the octopus / to / return to",
-              "runs": [
-                {
-                  "t": "allowing / and left / when / lost interest / the shark / safely / her den / the octopus / to / return to",
-                  "ul": false
-                }
-              ],
-              "kind": "P"
-            },
-            {
-              "text": "Q: What does \"the opportunity\" refer to in the passage?",
-              "runs": [
-                {
-                  "t": "Q: What does \"",
-                  "ul": false
-                },
-                {
-                  "t": "the opportunity",
-                  "ul": true
-                },
-                {
-                  "t": "\" refer to in the passage?",
-                  "ul": false
-                }
-              ],
-              "kind": "P"
-            },
-            {
-              "text": "A: It refers to the moment ____________________________, ___________________________________________.",
-              "runs": [
-                {
-                  "t": "A: It refers to the moment ____________________________, ___________________________________________.",
-                  "ul": false
-                }
-              ],
-              "kind": "P"
-            },
-            {
-              "text": "정답: ___________________________________________________, ",
-              "runs": [
-                {
-                  "t": "정답: ___________________________________________________, ",
-                  "ul": false
-                }
-              ],
-              "kind": "UNKNOWN"
-            },
-            {
-              "text": "__________________________________________________________",
-              "runs": [
-                {
-                  "t": "__________________________________________________________",
-                  "ul": false
-                }
-              ],
-              "kind": "Ans"
-            },
-            {
-              "text": "다음 글을 읽고, 물음에 답하시오. [3과]",
-              "runs": [
-                {
-                  "t": "다음 글을 읽고, 물음에 답하시오. [3과]",
-                  "ul": false
-                }
-              ],
-              "kind": "Q-INTRO",
-              "q_code": "OBJ-LNG-HEADER"
-            },
-            {
-              "text": " I returned to the Cape of Good Hope, South Africa, where I ⓐhad spent my childhood, after over 20 years of movie-making. I went diving in the cold sea off the coast of the Cape, and it was among the dense seaweed forests ⓑwhere I met an octopus.",
-              "runs": [
-                {
-                  "t": " I returned to the Cape of Good Hope, South Africa, where I ⓐ",
-                  "ul": false
-                },
-                {
-                  "t": "had spent",
-                  "ul": true
-                },
-                {
-                  "t": " my childhood, after over 20 years of movie-making. I went diving in the cold sea off the coast of the Cape, and it was among the dense seaweed forests ⓑ",
-                  "ul": false
-                },
-                {
-                  "t": "where",
-                  "ul": true
-                },
-                {
-                  "t": " I met an octopus.",
-                  "ul": false
-                }
-              ],
-              "kind": "P"
-            },
-            {
-              "text": " I saw a fish peacefully ⓒswum near a heap of shells. Suddenly, an octopus sprang from the heap and grabbed the fish. ⓓAmazing at the cleverness of the octopus, I swam a little closer, but (A)it disappeared. In fact, (B)it had lifted a piece of seaweed, wrapped (C)it around itself, and  was staring at me out of a little gap. What an extraordinary creature! I wondered ⓔwhat would happen if I kept watching (D)it. To see the world from (E)its perspective, I left a camera near the den and started visiting regularly. I even mapped the environment around the den ⓕwhich the octopus hid itself from enemies. Expecting some drama to come, I waited.",
-              "runs": [
-                {
-                  "t": " I saw a fish peacefully ⓒ",
-                  "ul": false
-                },
-                {
-                  "t": "swum",
-                  "ul": true
-                },
-                {
-                  "t": " near a heap of shells. Suddenly, an octopus sprang from the heap and grabbed the fish. ⓓ",
-                  "ul": false
-                },
-                {
-                  "t": "Amazing",
-                  "ul": true
-                },
-                {
-                  "t": " at the cleverness of the octopus, I swam a little closer, but (A)",
-                  "ul": false
-                },
-                {
-                  "t": "it",
-                  "ul": true
-                },
-                {
-                  "t": " disappeared. In fact, (B)",
-                  "ul": false
-                },
-                {
-                  "t": "it",
-                  "ul": true
-                },
-                {
-                  "t": " had lifted a piece of seaweed, wrapped (C)",
-                  "ul": false
-                },
-                {
-                  "t": "it",
-                  "ul": true
-                },
-                {
-                  "t": " around itself, and  was staring at me out of a little gap. What an extraordinary creature! I wondered ⓔ",
-                  "ul": false
-                },
-                {
-                  "t": "what",
-                  "ul": true
-                },
-                {
-                  "t": " would happen if I kept watching (D)",
-                  "ul": false
-                },
-                {
-                  "t": "it",
-                  "ul": true
-                },
-                {
-                  "t": ". To see the world from (E)",
-                  "ul": false
-                },
-                {
-                  "t": "its",
-                  "ul": true
-                },
-                {
-                  "t": " perspective, I left a camera near the den and started visiting regularly. I even mapped the environment around the den ⓕ",
-                  "ul": false
-                },
-                {
-                  "t": "which",
-                  "ul": true
-                },
-                {
-                  "t": " the octopus hid itself from enemies. Expecting some drama to come, I waited.",
-                  "ul": false
-                }
-              ],
-              "kind": "P"
-            },
-            {
-              "text": "윗글의 밑줄 친 ⓐ~ⓕ 중에서 어법상 어색한 부분 3곳의 기호를 쓰고, 적절한 단어로 고치시오.",
-              "runs": [
-                {
-                  "t": "윗글의 밑줄 친 ⓐ~ⓕ 중에서 어법상 어색한 부분 3곳의 기호를 쓰고, 적절한 단어로 고치시오.",
-                  "ul": false
-                }
-              ],
-              "kind": "Q"
-            },
-            {
-              "text": " 어색한 곳의 기호\t\t 적절한 단어",
-              "runs": [
-                {
-                  "t": " 어색한 곳의 기호\t\t 적절한 단어",
-                  "ul": false
-                }
-              ],
-              "kind": "UNKNOWN"
-            },
-            {
-              "text": "(1)________________ → ________________",
-              "runs": [
-                {
-                  "t": "(1)________________ → ________________",
-                  "ul": false
-                }
-              ],
-              "kind": "Ans"
-            },
-            {
-              "text": "(2)________________ → ________________",
-              "runs": [
-                {
-                  "t": "(2)________________ → ________________",
-                  "ul": false
-                }
-              ],
-              "kind": "Ans"
-            },
-            {
-              "text": "(3)________________ → ________________",
-              "runs": [
-                {
-                  "t": "(3)________________ → ________________",
-                  "ul": false
-                }
-              ],
-              "kind": "Ans"
-            },
-            {
-              "text": "윗글의 밑줄 친 (A)~(E) 중에서 가리키는 대상이 나머지 넷과 다른 것은?",
-              "runs": [
-                {
-                  "t": "윗글의 밑줄 친 (A)~(E) 중에서 가리키는 대상이 나머지 넷과 다른 것은?",
-                  "ul": false
-                }
-              ],
-              "kind": "Q",
-              "q_code": "OBJ-DTL-REF"
-            },
-            {
-              "text": "① (A)     ② (B)     ③ (C)     ④ (D)     ⑤ (E)",
-              "runs": [
-                {
-                  "t": "① (A)     ② (B)     ③ (C)     ④ (D)     ⑤ (E)",
-                  "ul": false
-                }
-              ],
-              "kind": "C"
-            },
-            {
-              "text": "다음 글을 읽고, 물음에 답하시오. [3과]",
-              "runs": [
-                {
-                  "t": "다음 글을 읽고, 물음에 답하시오. [3과]",
-                  "ul": false
-                }
-              ],
-              "kind": "Q-INTRO",
-              "q_code": "OBJ-LNG-HEADER"
-            },
-            {
-              "text": " Danger in the form of pyjama sharks, the area's biggest predators, came with little warning in the sea. The octopus was moving around near the edge of the seaweed forest, and I witnessed a shark track her. In an instant, she swam into a crack to escape, but the shark was faster.",
-              "runs": [
-                {
-                  "t": " Danger in the form of pyjama sharks, the area's biggest predators, came with little warning in the sea. The octopus was moving around near the edge of the seaweed forest, and I witnessed a shark track her. In an instant, she swam into a crack to escape, but the shark was faster.",
-                  "ul": false
-                }
-              ],
-              "kind": "P"
-            },
-            {
-              "text": " The shark had taken a bite of one of her arms and was waiting for her. I wanted to save my friend, but in this environment, I could only observe. She managed to get deeper into the crack, but she was bleeding. After a while, the shark lost interest, and the octopus used the opportunity to get back to her den, without one of her arms. She was in serious danger because her arms function like the hands, legs, nose, and eyes of humans.",
-              "runs": [
-                {
-                  "t": " The shark had taken a bite of one of her arms and was waiting for her. I wanted to save my friend, but in this environment, I could only observe. She managed to get deeper into the crack, but she was bleeding. After a while, the shark lost interest, and the octopus used the opportunity to get back to her den, without one of her arms. She was in serious danger because her arms function like the hands, legs, nose, and eyes of humans.",
-                  "ul": false
-                }
-              ],
-              "kind": "P"
-            },
-            {
-              "text": " The next day, ⓐ안심스럽게도, 나는 그녀가 생존했다는 것을 알았다. She was weak, and her colors were not as bright. I checked on her every day, wondering if that day would be the last. It was emotionally painful to witness these things happen to her.",
-              "runs": [
-                {
-                  "t": " The next day, ⓐ",
-                  "ul": false
-                },
-                {
-                  "t": "안심스럽게도, 나는 그녀가 생존했다는 것을 알았다",
-                  "ul": true
-                },
-                {
-                  "t": ". She was weak, and her colors were not as bright. I checked on her every day, wondering if that day would be the last. It was emotionally painful to witness these things happen to her.",
-                  "ul": false
-                }
-              ],
-              "kind": "UNKNOWN"
-            },
-            {
-              "text": "윗글에 관한 내용과 일치하는 것은?",
-              "runs": [
-                {
-                  "t": "윗글에 관한 내용과 일치하는 것은?",
-                  "ul": false
-                }
-              ],
-              "kind": "Q",
-              "q_code": "OBJ-CTN-MATCH"
-            },
-            {
-              "text": "① 그 일대의 가장 큰 포식자인 상어는 작은 경고 소리를 내며 왔다.",
-              "runs": [
-                {
-                  "t": "① 그 일대의 가장 큰 포식자인 상어는 작은 경고 소리를 내며 왔다.",
-                  "ul": false
-                }
-              ],
-              "kind": "C"
-            },
-            {
-              "text": "② 문어는 해초 숲 한가운데서 움직이고 있었고, 상어가 그 문어를 쫓고 있었다.",
-              "runs": [
-                {
-                  "t": "② 문어는 해초 숲 한가운데서 움직이고 있었고, 상어가 그 문어를 쫓고 있었다.",
-                  "ul": false
-                }
-              ],
-              "kind": "C"
-            },
-            {
-              "text": "③ 상어는 문어의 굴을 부수고, 문어가 나오길 기다렸다.",
-              "runs": [
-                {
-                  "t": "③ 상어는 문어의 굴을 부수고, 문어가 나오길 기다렸다.",
-                  "ul": false
-                }
-              ],
-              "kind": "C"
-            },
-            {
-              "text": "④ 문어의 팔들은 사람의 손, 다리, 귀, 눈의 역할을 한다.",
-              "runs": [
-                {
-                  "t": "④ 문어의 팔들은 사람의 손, 다리, 귀, 눈의 역할을 한다.",
-                  "ul": false
-                }
-              ],
-              "kind": "C"
-            },
-            {
-              "text": "⑤ 생존한 문어는 약해졌고 문어의 색은 이전만큼 밝지 않았다.",
-              "runs": [
-                {
-                  "t": "⑤ 생존한 문어는 약해졌고 문어의 색은 이전만큼 밝지 않았다.",
-                  "ul": false
-                }
-              ],
-              "kind": "C"
-            },
-            {
-              "text": "윗글의 우리말 ⓐ의 적절하게 <보기>의 단어들을 이용하여 <조건>에 맞게 영어 문장을 완성하시오.",
-              "runs": [
-                {
-                  "t": "윗글의 우리말 ⓐ의 적절하게 <보기>의 단어들을 이용하여 <조건>에 맞게 영어 문장을 완성하시오.",
-                  "ul": false
-                }
-              ],
-              "kind": "Q"
-            },
-            {
-              "text": "<보기>",
-              "runs": [
-                {
-                  "t": "<보기>",
-                  "ul": false
-                }
-              ],
-              "kind": "Box"
-            },
-            {
-              "text": "find / I / survive / she / relieve / have / that / I",
-              "runs": [
-                {
-                  "t": "find / I / survive / she / relieve / have / that / I",
-                  "ul": false
-                }
-              ],
-              "kind": "Box"
-            },
-            {
-              "text": "<조건>",
-              "runs": [
-                {
-                  "t": "<조건>",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "• <보기>의 단어를 모두 이용할 것",
-              "runs": [
-                {
-                  "t": "• <보기>의 단어를 모두 이용할 것",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "• 필요시 어법과 의미에 맞게 단어의 형태를 바꿀 것",
-              "runs": [
-                {
-                  "t": "• 필요시 어법과 의미에 맞게 단어의 형태를 바꿀 것",
-                  "ul": false
-                }
-              ],
-              "kind": "Cond"
-            },
-            {
-              "text": "정답: ___________________________________________________",
-              "runs": [
-                {
-                  "t": "정답: ___________________________________________________",
-                  "ul": false
-                }
-              ],
-              "kind": "Ans"
-            }
-          ]
+         "t": "다음 글의 빈칸 부분을 <보기>의 단어나 어구를 모두 사용하여 <조건>에 맞게 영어로 서술하시오.",
+         "ul": false
+        },
+        {
+         "t": " [3과]",
+         "ul": false
         }
-      ],
-      "short": [],
-      "normal_count": 1,
-      "short_count": 0
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": " The octopus was moving around near the edge of the seaweed forest, and I saw a shark tracking her. In an instant, she swam into a crack to escape, but the shark was faster. The shark had taken a bite of one of her arms and was waiting for her. After a while, the shark lost interest, and the octopus used the opportunity to get back to her den, without one of her arms. The next day, I was relieved to see that she had survived. She was weak, and her colors were not as bright. I checked on her every day, wondering if that day would be the last. A short while later, I saw that the wound had healed. 놀랍게도, 작은 팔이 다시 자라기 시작했다. Also, she started to become active again.",
+       "runs": [
+        {
+         "t": " The octopus was moving around near the edge of the seaweed forest, and I saw a shark tracking her. In an instant, she swam into a crack to escape, but the shark was faster. The shark had taken a bite of one of her arms and was waiting for her. After a while, the shark lost interest, and the octopus used the opportunity to get back to her den, without one of her arms. The next day, I was relieved to see that she had survived. She was weak, and her colors were not as bright. I checked on her every day, wondering if that day would be the last. A short while later, I saw that the wound had healed. ",
+         "ul": false
+        },
+        {
+         "t": "놀랍게도, 작은 팔이 다시 자라기 시작했다",
+         "ul": true
+        },
+        {
+         "t": ". Also, she started to become active again.",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": "<조건>",
+       "runs": [
+        {
+         "t": "<조건>",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "ㆍ<보기>의 밑줄 친 단어 'amaze'를 문맥의 의미에 맞게 올바른 형태로 바꿔서 사용할 것",
+       "runs": [
+        {
+         "t": "ㆍ<보기>의 밑줄 친 단어 'amaze'를 문맥의 의미에 맞게 올바른 형태로 바꿔서 사용할 것",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "ㆍ필요한 단어를 추가하여 10단어 이하의 한 문장으로 작성할 것",
+       "runs": [
+        {
+         "t": "ㆍ필요한 단어를 추가하여 10단어 이하의 한 문장으로 작성할 것",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "<보기>",
+       "runs": [
+        {
+         "t": "<보기>",
+         "ul": false
+        }
+       ],
+       "kind": "Box"
+      },
+      {
+       "text": "grow back / amaze / a little / started",
+       "runs": [
+        {
+         "t": "grow back / ",
+         "ul": false
+        },
+        {
+         "t": "amaze",
+         "ul": true
+        },
+        {
+         "t": " / a little / started",
+         "ul": false
+        }
+       ],
+       "kind": "Box"
+      },
+      {
+       "text": "정답: ___________________________________________________",
+       "runs": [
+        {
+         "t": "정답: ___________________________________________________",
+         "ul": false
+        }
+       ],
+       "kind": "Ans"
+      },
+      {
+       "text": "다음은 글의 내용을 바탕으로 재구성한 문장들이다. <보기>의 문장들을 흐름에 맞게 올바른 순서로 배열하시오. [3과]",
+       "runs": [
+        {
+         "t": "다음은 글의 내용을 바탕으로 재구성한 문장들이다. <보기>의 문장들을 흐름에 맞게 올바른 순서로 배열하시오.",
+         "ul": false
+        },
+        {
+         "t": " [3과]",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": "Getting Closer",
+       "runs": [
+        {
+         "t": "Getting Closer",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": " Danger in the form of pyjama sharks, the area's biggest predators, came with little warning in the sea. The octopus was moving around near the edge of the seaweed forest, and I saw a shark tracking her. In an instant, she swam into a crack to escape, but the shark was faster. The shark had taken a bite of one of her arms and was waiting for her. I wanted to save my friend, but in this environment, I could only observe. She managed to get deeper into the crack, but she was bleeding. After a while, the shark lost interest, and the octopus used the opportunity to get back to her den, without one of her arms. She was in serious danger because her arms function like the hands, legs, nose, and eyes of humans. The next day, I was relieved to see that she had survived. She was weak, and her colors were not as bright as they used to be. I checked on her every day, wondering if that day would be the last. It was emotionally painful to witness these things happening to her.",
+       "runs": [
+        {
+         "t": " Danger in the form of pyjama sharks, the area's biggest predators, came with little warning in the sea. The octopus was moving around near the edge of the seaweed forest, and I saw a shark tracking her. In an instant, she swam into a crack to escape, but the shark was faster. The shark had taken a bite of one of her arms and was waiting for her. I wanted to save my friend, but in this environment, I could only observe. She managed to get deeper into the crack, but she was bleeding. After a while, the shark lost interest, and the octopus used the opportunity to get back to her den, without one of her arms. She was in serious danger because her arms function like the hands, legs, nose, and eyes of humans. The next day, I was relieved to see that she had survived. She was weak, and her colors were not as bright as they used to be. I checked on her every day, wondering if that day would be the last. It was emotionally painful to witness these things happening to her.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "<보기>",
+       "runs": [
+        {
+         "t": "<보기>",
+         "ul": false
+        }
+       ],
+       "kind": "Box"
+      },
+      {
+       "text": "ⓐ The shark lost interest after a while, and the octopus went back to her den without one of her arms.",
+       "runs": [
+        {
+         "t": "ⓐ The shark lost interest after a while, and the octopus went back to her den without one of her arms.",
+         "ul": false
+        }
+       ],
+       "kind": "Box"
+      },
+      {
+       "text": "ⓑ The narrator saw the octopus being chased and bitten by a shark near the seaweed forest.",
+       "runs": [
+        {
+         "t": "ⓑ The narrator saw the octopus being chased and bitten by a shark near the seaweed forest.",
+         "ul": false
+        }
+       ],
+       "kind": "Box"
+      },
+      {
+       "text": "ⓒ The narrator felt emotional pain as he checked on her every day, not knowing how long she would survive.",
+       "runs": [
+        {
+         "t": "ⓒ The narrator felt emotional pain as he checked on her every day, not knowing how long she would survive.",
+         "ul": false
+        }
+       ],
+       "kind": "Box"
+      },
+      {
+       "text": "ⓓ The octopus escaped into a crack, bleeding from her wound.",
+       "runs": [
+        {
+         "t": "ⓓ The octopus escaped into a crack, bleeding from her wound.",
+         "ul": false
+        }
+       ],
+       "kind": "Box"
+      },
+      {
+       "text": "ⓔ The next day, the narrator was relieved to see that she had survived, though she looked weak and pale.",
+       "runs": [
+        {
+         "t": "ⓔ The next day, the narrator was relieved to see that she had survived, though she looked weak and pale.",
+         "ul": false
+        }
+       ],
+       "kind": "Box"
+      },
+      {
+       "text": "<조건>",
+       "runs": [
+        {
+         "t": "<조건>",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "1. 문장 기호만 차례대로 쓰고, 문장 자체를 옮겨 쓰지 말 것",
+       "runs": [
+        {
+         "t": "1. 문장 기호만 차례대로 쓰고, 문장 자체를 옮겨 쓰지 말 것",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "2. 문장 순서 중 하나라도 어색할 경우, 부분 점수 부여되지 않음",
+       "runs": [
+        {
+         "t": "2. 문장 순서 중 하나라도 어색할 경우, 부분 점수 부여되지 않음",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "정답: _______ - _______ - _______ - _______ - _______",
+       "runs": [
+        {
+         "t": "정답: _______ - _______ - _______ - _______ - _______",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": "다음 글을 읽고 물음에 답하시오. [3과]",
+       "runs": [
+        {
+         "t": "다음 글을 읽고 물음에 답하시오. [3과]",
+         "ul": false
+        }
+       ],
+       "kind": "Q-INTRO",
+       "q_code": "OBJ-LNG-HEADER"
+      },
+      {
+       "text": "Recovery, Growth, and Sacrifice",
+       "runs": [
+        {
+         "t": "Recovery, Growth, and Sacrifice",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": " A short while later, I saw that the wound had healed. To my amazement, a little arm started to grow back, and she started to become active again. I started to compare my life to life in the unforgiving sea. I thought of what was valuable in life. I began to spend more time with my family and friends, and I even started to dive with my young son. He became just as interested in her as I was. As the octopus's arm became more functional, I felt things in my life were improving too. An octopus's average life is about a year, which ends after reproducing. One day, eight months after meeting her, I found her with another octopus. It was bittersweet knowing her final days were approaching even though she would bear young. After mating, she didn't come out of her den. There would be no feeding or hunting. She was timing her final moments for the hatching of her eggs. After the eggs hatched, she died. A few months later, my son found a little octopus. We believe her story continues on.",
+       "runs": [
+        {
+         "t": " A short while later, I saw that the wound had healed. To my amazement, a little arm started to grow back, and she started to become active again. I started to compare my life to life in the unforgiving sea. I thought of what was valuable in life. I began to spend more time with my family and friends, and I even started to dive with my young son. He became just as interested in her as I was. As the octopus's arm became more functional, I felt things in my life were improving too. An octopus's average life is about a year, which ends after reproducing. One day, eight months after meeting her, I found her with another octopus. It was bittersweet knowing her final days were approaching even though she would bear young. After mating, she didn't come out of her den. There would be no feeding or hunting. She was timing her final moments for the hatching of her eggs. After the eggs hatched, she died. A few months later, my son found a little octopus. ",
+         "ul": false
+        },
+        {
+         "t": "We believe her story continues on",
+         "ul": true
+        },
+        {
+         "t": ".",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "윗글의 내용과 일치하지 않는 것은?",
+       "runs": [
+        {
+         "t": "윗글의 내용과 일치하지 않는 것은?",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-CTN-MATCH"
+      },
+      {
+       "text": "① 문어는 시간이 지나면서 팔이 재생되는 모습을 보였고, 그 모습은 화자를 놀라게 했다.",
+       "runs": [
+        {
+         "t": "① 문어는 시간이 지나면서 팔이 재생되는 모습을 보였고, 그 모습은 화자를 놀라게 했다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② 문어의 삶에 대한 화자의 성찰은 그가 가족과 더 많은 시간을 보내게 만들었다.",
+       "runs": [
+        {
+         "t": "② 문어의 삶에 대한 화자의 성찰은 그가 가족과 더 많은 시간을 보내게 만들었다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ 문어는 알이 부화할 때까지 보호하기 위해 위장술을 사용했다.",
+       "runs": [
+        {
+         "t": "③ 문어는 알이 부화할 때까지 보호하기 위해 위장술을 사용했다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ 문어는 알을 낳은 후 먹이를 먹지 않고 부화를 기다렸다.",
+       "runs": [
+        {
+         "t": "④ 문어는 알을 낳은 후 먹이를 먹지 않고 부화를 기다렸다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ 문어가 죽고 몇 달 후, 화자의 아들은 어린 문어 한 마리를 발견했다.",
+       "runs": [
+        {
+         "t": "⑤ 문어가 죽고 몇 달 후, 화자의 아들은 어린 문어 한 마리를 발견했다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "윗글에서 밑줄 친 We believe her story continues on이 의미하는 바로 가장 적절한 것은?",
+       "runs": [
+        {
+         "t": "윗글에서 밑줄 친 We believe her story continues on이 의미하는 바로 가장 적절한 것은?",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-VOC-UND-MEAN"
+      },
+      {
+       "text": "① The narrator plans to write a book about the octopus's life.",
+       "runs": [
+        {
+         "t": "① The narrator plans to write a book about the octopus's life.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② The octopus was actually seen alive again near the den.",
+       "runs": [
+        {
+         "t": "② The octopus was actually seen alive again near the den.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ The narrator's emotional bond with the octopus helped him recover.",
+       "runs": [
+        {
+         "t": "③ The narrator's emotional bond with the octopus helped him recover.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ The young born from the octopus carry on her life cycle.",
+       "runs": [
+        {
+         "t": "④ The young born from the octopus carry on her life cycle.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ The narrator decided to study more sea creatures after the octopus died.",
+       "runs": [
+        {
+         "t": "⑤ The narrator decided to study more sea creatures after the octopus died.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "윗글에서 다음 조건에 해당하는 문장을 찾아, 해당 문장의 앞에서부터 두 단어, 뒤에서부터 두 단어를 각각 쓰고, 그 문장을 자연스럽게 해석하시오.",
+       "runs": [
+        {
+         "t": "윗글에서 다음 조건에 해당하는 문장을 찾아, 해당 문장의 앞에서부터 두 단어, 뒤에서부터 두 단어를 각각 쓰고, 그 문장을 자연스럽게 해석하시오.",
+         "ul": false
+        }
+       ],
+       "kind": "Q"
+      },
+      {
+       "text": "<조건>",
+       "runs": [
+        {
+         "t": "<조건>",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "1. 가주어-진주어 구문이 사용된 문장을 찾을 것",
+       "runs": [
+        {
+         "t": "1. 가주어-진주어 구문이 사용된 문장을 찾을 것",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "2. 문장은 마침표(.)로 끝나는 단위임을 명심할 것",
+       "runs": [
+        {
+         "t": "2. 문장은 마침표(.)로 끝나는 단위임을 명심할 것",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "3. 지문에 포함된 문장이어야 하며, 다른 문장으로 재구성하거나 바꾸지 말 것",
+       "runs": [
+        {
+         "t": "3. 지문에 포함된 문장이어야 하며, 다른 문장으로 재구성하거나 바꾸지 말 것",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "(1) 앞에서부터 두 단어: __________ __________ ",
+       "runs": [
+        {
+         "t": "(1) 앞에서부터 두 단어: __________ __________ ",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": "(2) 뒤에서부터 두 단어: __________ __________ ",
+       "runs": [
+        {
+         "t": "(2) 뒤에서부터 두 단어: __________ __________ ",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": "(3) 해석: _______________________________________________",
+       "runs": [
+        {
+         "t": "(3) 해석: _______________________________________________",
+         "ul": false
+        }
+       ],
+       "kind": "Ans"
+      },
+      {
+       "text": "다음 글을 읽고 물음에 답하시오. [3과]",
+       "runs": [
+        {
+         "t": "다음 글을 읽고 물음에 답하시오. [3과]",
+         "ul": false
+        }
+       ],
+       "kind": "Q-INTRO",
+       "q_code": "OBJ-LNG-HEADER"
+      },
+      {
+       "text": "My Octopus Teacher",
+       "runs": [
+        {
+         "t": "My Octopus Teacher",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": " I returned to the Cape of Good Hope, South Africa, where I had spent my childhood, after over 20 years of movie-making. I went diving in the cold sea off the coast of the Cape, and (A)내가 그 문어를 만난 곳은 바로 빽빽한 해초 숲 사이에서였다.",
+       "runs": [
+        {
+         "t": " I returned to the Cape of Good Hope, South Africa, where I had spent my childhood, after over 20 years of movie-making. I went diving in the cold sea off the coast of the Cape, and (A)",
+         "ul": false
+        },
+        {
+         "t": "내가 그 문어를 만난 곳은 바로 빽빽한 해초 숲 사이에서였다",
+         "ul": true
+        },
+        {
+         "t": ".",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": "First Encounter",
+       "runs": [
+        {
+         "t": "First Encounter",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": " I saw a fish peacefully ⓐswimming near a heap of shells. Suddenly, an octopus sprang from the heap and grabbed the fish. Amazed at the cleverness of the octopus, I swam a little closer, but it ⓑdisappeared. In fact, it had lifted a piece of seaweed, wrapped it around itself, and was staring at me out of a little gap. What an extraordinary creature! I wondered ⓒwhether would happen if I kept watching it. To see the world from the octopus's perspective, I left a camera near the den and started visiting regularly. I even mapped the environment around the den. Expecting some drama to come, I waited.",
+       "runs": [
+        {
+         "t": " I saw a fish peacefully ⓐ",
+         "ul": false
+        },
+        {
+         "t": "swimming",
+         "ul": true
+        },
+        {
+         "t": " near a heap of shells. Suddenly, an octopus sprang from the heap and grabbed the fish. Amazed at the cleverness of the octopus, I swam a little closer, but it ⓑ",
+         "ul": false
+        },
+        {
+         "t": "disappeared",
+         "ul": true
+        },
+        {
+         "t": ". In fact, it had lifted a piece of seaweed, wrapped it around itself, and was staring at me out of a little gap. What an extraordinary creature! I wondered ⓒ",
+         "ul": false
+        },
+        {
+         "t": "whether",
+         "ul": true
+        },
+        {
+         "t": " would happen if I kept watching it. To see the world from the octopus's perspective, I left a camera near the den and started visiting regularly. I even mapped the environment around the den. Expecting some drama to come, I waited.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "Making Friends",
+       "runs": [
+        {
+         "t": "Making Friends",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": " The octopus became less scared as I visited more often. After about a month, it came near me. I put my hand out, and it reached out to me. After another week, it started to wave like a human friend ⓓsaying, \"Hi, I'm excited to see you.\" I kept still, and it covered my whole hand. Since I had to take a breath, I swam toward the surface. To my surprise, it rode on my hand all the way to the top. There I was, just staring into the eyes of this incredible creature. It sparked my curiosity in a way that I ⓔhad not experienced before. Had I gained its trust? I started reading books about octopuses, but I wanted to learn more about this marvelous creature. The first thing I learned was that \"it\" was a \"she.\"",
+       "runs": [
+        {
+         "t": " The octopus became less scared as I visited more often. After about a month, it came near me. I put my hand out, and it reached out to me. After another week, it started to wave like a human friend ⓓ",
+         "ul": false
+        },
+        {
+         "t": "saying",
+         "ul": true
+        },
+        {
+         "t": ", \"Hi, I'm excited to see you.\" I kept still, and it covered my whole hand. Since I had to take a breath, I swam toward the surface. To my surprise, it rode on my hand all the way to the top. There I was, just staring into the eyes of this incredible creature. It sparked my curiosity in a way that I ⓔ",
+         "ul": false
+        },
+        {
+         "t": "had not experienced",
+         "ul": true
+        },
+        {
+         "t": " before. Had I gained its trust? I started reading books about octopuses, but I wanted to learn more about this marvelous creature. The first thing I learned was that \"it\" was a \"she.\"",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "윗글의 내용과 일치하지 않는 것은?",
+       "runs": [
+        {
+         "t": "윗글의 내용과 일치하지 않는 것은?",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-CTN-MATCH"
+      },
+      {
+       "text": "① The writer initially gained the octopus's trust by feeding it regularly during his visits.",
+       "runs": [
+        {
+         "t": "① The writer initially gained the octopus's trust by feeding it regularly during his visits.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② After a few weeks, the octopus waved at the writer like a human friend.",
+       "runs": [
+        {
+         "t": "② After a few weeks, the octopus waved at the writer like a human friend.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ The octopus once covered the writer's entire hand with its body.",
+       "runs": [
+        {
+         "t": "③ The octopus once covered the writer's entire hand with its body.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ The writer started reading books about octopuses out of curiosity.",
+       "runs": [
+        {
+         "t": "④ The writer started reading books about octopuses out of curiosity.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ The writer found out the octopus was female through what he learned in books.",
+       "runs": [
+        {
+         "t": "⑤ The writer found out the octopus was female through what he learned in books.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "윗글의 밑줄 친 부분 중, 어법상 어색한 것은?",
+       "runs": [
+        {
+         "t": "윗글의 밑줄 친 부분 중, 어법상 어색한 것은?",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-GRM-UND-WRONG"
+      },
+      {
+       "text": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ",
+       "runs": [
+        {
+         "t": "① ⓐ      ② ⓑ      ③ ⓒ      ④ ⓓ      ⑤ ⓔ",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "윗글의 밑줄 친 (A)를 아래 <조건>에 맞추어 영작하시오.",
+       "runs": [
+        {
+         "t": "윗글의 밑줄 친 (A)를 아래 <조건>에 맞추어 영작하시오.",
+         "ul": false
+        }
+       ],
+       "kind": "Q"
+      },
+      {
+       "text": "<보기>",
+       "runs": [
+        {
+         "t": "<보기>",
+         "ul": false
+        }
+       ],
+       "kind": "Box"
+      },
+      {
+       "text": "met / I / where / it / seaweed / the / was /",
+       "runs": [
+        {
+         "t": "met / I / where / it / seaweed / the / was /",
+         "ul": false
+        }
+       ],
+       "kind": "Box"
+      },
+      {
+       "text": "forests / an / among / dense / octopus",
+       "runs": [
+        {
+         "t": "forests / an / among / dense / octopus",
+         "ul": false
+        }
+       ],
+       "kind": "Box"
+      },
+      {
+       "text": "<조건>",
+       "runs": [
+        {
+         "t": "<조건>",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "1. <보기>의 단어를 모두 사용하고, 다른 단어는 추가하지 말 것",
+       "runs": [
+        {
+         "t": "1. <보기>의 단어를 모두 사용하고, 다른 단어는 추가하지 말 것",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "2. 강조 구문을 사용하여, '빽빽한 해초 숲 사이에서'를 강조할 것",
+       "runs": [
+        {
+         "t": "2. 강조 구문을 사용하여, '빽빽한 해초 숲 사이에서'를 강조할 것",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "3. (A)와 뜻이 정확하게 일치하도록 문장을 완성할 것",
+       "runs": [
+        {
+         "t": "3. (A)와 뜻이 정확하게 일치하도록 문장을 완성할 것",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "→ _____________________________________________________",
+       "runs": [
+        {
+         "t": "→ _____________________________________________________",
+         "ul": false
+        }
+       ],
+       "kind": "Ans"
+      },
+      {
+       "text": "다음 우리말과 같은 의미가 되도록 <조건>에 맞추어 영작하시오. [3과]",
+       "runs": [
+        {
+         "t": "다음 우리말과 같은 의미가 되도록 <조건>에 맞추어 영작하시오.",
+         "ul": false
+        },
+        {
+         "t": " [3과]",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": "우리가 도착했을 때, 기차는 이미 떠나고 없었다.",
+       "runs": [
+        {
+         "t": "우리가 도착했을 때, 기차는 이미 떠나고 없었다.",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": "<조건>",
+       "runs": [
+        {
+         "t": "<조건>",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "· 우리말과 같은 의미가 되도록 영작하시오.",
+       "runs": [
+        {
+         "t": "· 우리말과 같은 의미가 되도록 영작하시오.",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "· 관사, 시간 구분에 유의하시오.",
+       "runs": [
+        {
+         "t": "· 관사, 시간 구분에 유의하시오.",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "· 아래 단어를 반드시 포함하시오. (필요시 형태 변형 사용) - had / arrive / leave",
+       "runs": [
+        {
+         "t": "· 아래 단어를 반드시 포함하시오. (필요시 형태 변형 사용) - had / arrive / leave",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "· 10단어를 넘지 마시오. (의미가 같아도 감점)",
+       "runs": [
+        {
+         "t": "· 10단어를 넘지 마시오. (의미가 같아도 감점)",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "→ ______________________________________________________",
+       "runs": [
+        {
+         "t": "→ ______________________________________________________",
+         "ul": false
+        }
+       ],
+       "kind": "Ans"
+      },
+      {
+       "text": "다음 우리말과 같은 의미가 되도록 <조건>에 맞추어 영작하시오. [3과]",
+       "runs": [
+        {
+         "t": "다음 우리말과 같은 의미가 되도록 <조건>에 맞추어 영작하시오.",
+         "ul": false
+        },
+        {
+         "t": " [3과]",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": "놀랍게도, 그는 그의 침구가 그곳에 있는지 몰랐다.",
+       "runs": [
+        {
+         "t": "놀랍게도, 그는 그의 침구가 그곳에 있는지 몰랐다.",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": "<조건>",
+       "runs": [
+        {
+         "t": "<조건>",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "· 우리말을 영어로 옮기되, to one’s 감정명사 표현을 주어 + be동사 + 형용사 + that절 구조로 바꿔 쓰시오.",
+       "runs": [
+        {
+         "t": "· 우리말을 영어로 옮기되, to one’s 감정명사 표현을 주어 + be동사 + 형용사 + that절 구조로 바꿔 쓰시오.",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "· 시제와 어순, 의미 전달에 유의하시오.",
+       "runs": [
+        {
+         "t": "· 시제와 어순, 의미 전달에 유의하시오.",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "· 13단어 이하로 작성하시오. ",
+       "runs": [
+        {
+         "t": "· 13단어 이하로 작성하시오. ",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "→ ______________________________________________________",
+       "runs": [
+        {
+         "t": "→ ______________________________________________________",
+         "ul": false
+        }
+       ],
+       "kind": "Ans"
+      },
+      {
+       "text": "다음 글의 밑줄 친 부분 중, 어법에 맞지 않는 단어를 2개 찾아 각각 한 단어로 고쳐 쓰시오. (수정 전후 단어를 모두 쓰지 않으면 오답 처리함) [3과]",
+       "runs": [
+        {
+         "t": "다음 글의 밑줄 친 부분 중, 어법에 맞지 않는 단어를 2개 찾아 각각 한 단어로 고쳐 쓰시오. (수정 전후 단어를 모두 쓰지 않으면 오답 처리함)",
+         "ul": false
+        },
+        {
+         "t": " [3과]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "SRV-WRD-ONE-EACH"
+      },
+      {
+       "text": " A short while later, I saw that the octopus's wound had healed. To my amazement, a little arm started to grow back, and she started to become active again. I started to compare my life to life in the unforgiving sea. I thought of what was valuable in life. I began to spend more time with my family and friends, and I even started to dive with my young son. He became just as interesting in her as I was. As the octopus's arm became more functional, I felt things in my life was improving too. An octopus's average life is about a year, which ends after reproducing. One day, eight months after meeting her, I found her with another octopus. It was bittersweet knowing her final days were approaching even though she would bear young.",
+       "runs": [
+        {
+         "t": " A short while later, I saw that the octopus's wound ",
+         "ul": false
+        },
+        {
+         "t": "had",
+         "ul": true
+        },
+        {
+         "t": " healed. To ",
+         "ul": false
+        },
+        {
+         "t": "my",
+         "ul": true
+        },
+        {
+         "t": " amazement, a little arm started to grow back, and she started to become active again. I started to compare my life to life in the unforgiving sea. I thought of ",
+         "ul": false
+        },
+        {
+         "t": "what",
+         "ul": true
+        },
+        {
+         "t": " was valuable in life. I began to spend more time with my family and friends, and I even started to dive with my young son. He became just as ",
+         "ul": false
+        },
+        {
+         "t": "interesting",
+         "ul": true
+        },
+        {
+         "t": " in her as I was. As the octopus's arm became more functional, I felt things in my life ",
+         "ul": false
+        },
+        {
+         "t": "was",
+         "ul": true
+        },
+        {
+         "t": " improving too. An octopus's average life is about a year, ",
+         "ul": false
+        },
+        {
+         "t": "which",
+         "ul": true
+        },
+        {
+         "t": " ends after reproducing. One day, eight months after meeting her, I found her with another octopus. ",
+         "ul": false
+        },
+        {
+         "t": "It",
+         "ul": true
+        },
+        {
+         "t": " was bittersweet knowing her final days were approaching even though she would bear young.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "(1) ________________ → ________________ ",
+       "runs": [
+        {
+         "t": "(1) ________________ → ________________ ",
+         "ul": false
+        }
+       ],
+       "kind": "Ans"
+      },
+      {
+       "text": "(2) ________________ → ________________ ",
+       "runs": [
+        {
+         "t": "(2) ________________ → ________________ ",
+         "ul": false
+        }
+       ],
+       "kind": "Ans"
+      },
+      {
+       "text": "다음 글의 밑줄 친 문장이 '문어의 평균 수명은 약 1년이며, 번식 후 그것이 끝난다'라는 뜻이 되도록 빈칸에 관계대명사를 사용하여 4단어의 영어로 영작하시오. [3과]",
+       "runs": [
+        {
+         "t": "다음 글의 밑줄 친 문장이 '문어의 평균 수명은 약 1년이며, 번식 후 그것이 끝난다'라는 뜻이 되도록 빈칸에 관계대명사를 사용하여 4단어의 영어로 영작하시오.",
+         "ul": false
+        },
+        {
+         "t": " [3과]",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": " An octopus's average life is about a year, _________________________________________. One day, eight months after meeting her, I found her with another octopus. It was bittersweet knowing her final days were approaching even though she would bear young. After mating, she didn't come out of her den. There would be no feeding or hunting. She was timing her final moments for the hatching of her eggs. After the eggs hatched, she died. A few months later, my son found a little octopus. We believe her story continues on.",
+       "runs": [
+        {
+         "t": " ",
+         "ul": false
+        },
+        {
+         "t": "An octopus's average life is about a year, _________________________________________",
+         "ul": true
+        },
+        {
+         "t": ". One day, eight months after meeting her, I found her with another octopus. It was bittersweet knowing her final days were approaching even though she would bear young. After mating, she didn't come out of her den. There would be no feeding or hunting. She was timing her final moments for the hatching of her eggs. After the eggs hatched, she died. A few months later, my son found a little octopus. We believe her story continues on.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "<조건>",
+       "runs": [
+        {
+         "t": "<조건>",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "1. 관계대명사를 사용할 것",
+       "runs": [
+        {
+         "t": "1. 관계대명사를 사용할 것",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "2. 4단어로 작성할 것",
+       "runs": [
+        {
+         "t": "2. 4단어로 작성할 것",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "→ _____________________________________________________",
+       "runs": [
+        {
+         "t": "→ _____________________________________________________",
+         "ul": false
+        }
+       ],
+       "kind": "Ans"
+      },
+      {
+       "text": "다음 글을 읽고 물음에 답하시오. [3과]",
+       "runs": [
+        {
+         "t": "다음 글을 읽고 물음에 답하시오. [3과]",
+         "ul": false
+        }
+       ],
+       "kind": "Q-INTRO",
+       "q_code": "OBJ-LNG-HEADER"
+      },
+      {
+       "text": " A short while later, I saw that the wound had healed. To my amazement, a little arm started to grow back, and she started to become active again. I started to compare my life to life in the ⓐunforgive sea. (A)I / think / in / valuable / life / of / what / be. I began to spend more time with my family and friends, and I even started to dive with my young son. He became just ⓑas interest in her as I was. As the octopus's arm became more functional, I felt things in my life were improving too.",
+       "runs": [
+        {
+         "t": " A short while later, I saw that the wound had healed. To my amazement, a little arm started to grow back, and she started to become active again. I started to compare my life to life in the ⓐ",
+         "ul": false
+        },
+        {
+         "t": "unforgive sea",
+         "ul": true
+        },
+        {
+         "t": ". (A)",
+         "ul": false
+        },
+        {
+         "t": "I / think / in / valuable / life / of / what / be",
+         "ul": true
+        },
+        {
+         "t": ". I began to spend more time with my family and friends, and I even started to dive with my young son. He became just ⓑ",
+         "ul": false
+        },
+        {
+         "t": "as interest in her as",
+         "ul": true
+        },
+        {
+         "t": " I was. As the octopus's arm became more functional, I felt things in my life were improving too.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "윗글의 밑줄 친 (A) 부분의 영어 단어를 흐름에 맞게 적절히 배열하여 문장을 완성하시오. (필요시 어형변화)",
+       "runs": [
+        {
+         "t": "윗글의 밑줄 친 (A) 부분의 영어 단어를 흐름에 맞게 적절히 배열하여 문장을 완성하시오. (필요시 어형변화)",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "SRV-WRT-ORDER"
+      },
+      {
+       "text": "→ _____________________________________________________",
+       "runs": [
+        {
+         "t": "→ _____________________________________________________",
+         "ul": false
+        }
+       ],
+       "kind": "Ans"
+      },
+      {
+       "text": "윗글의 밑줄 친 ⓐ, ⓑ를 흐름과 어법에 맞게 고쳐 쓰시오.",
+       "runs": [
+        {
+         "t": "윗글의 밑줄 친 ⓐ, ⓑ를 흐름과 어법에 맞게 고쳐 쓰시오.",
+         "ul": false
+        }
+       ],
+       "kind": "Q"
+      },
+      {
+       "text": "ⓐ ________________________",
+       "runs": [
+        {
+         "t": "ⓐ ________________________",
+         "ul": false
+        }
+       ],
+       "kind": "Ans"
+      },
+      {
+       "text": "ⓑ ________________________",
+       "runs": [
+        {
+         "t": "ⓑ ________________________",
+         "ul": false
+        }
+       ],
+       "kind": "Ans"
+      },
+      {
+       "text": "다음 문장을 <보기>와 같이 고치시오. [3과]",
+       "runs": [
+        {
+         "t": "다음 문장을 <보기>와 같이 고치시오.",
+         "ul": false
+        },
+        {
+         "t": " [3과]",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": "<보기>",
+       "runs": [
+        {
+         "t": "<보기>",
+         "ul": false
+        }
+       ],
+       "kind": "Box"
+      },
+      {
+       "text": "I was surprised that the dogs followed my orders.",
+       "runs": [
+        {
+         "t": "I was surprised that the dogs followed my orders.",
+         "ul": false
+        }
+       ],
+       "kind": "Box"
+      },
+      {
+       "text": "→ To my surprise, the dogs followed my orders.",
+       "runs": [
+        {
+         "t": "→ To my surprise, the dogs followed my orders.",
+         "ul": false
+        }
+       ],
+       "kind": "Box"
+      },
+      {
+       "text": "(1) I was relieved that the presentation went well.",
+       "runs": [
+        {
+         "t": "(1) I was relieved that the presentation went well.",
+         "ul": false
+        }
+       ],
+       "kind": "Box"
+      },
+      {
+       "text": "→ ________________________, the presentation went well.",
+       "runs": [
+        {
+         "t": "→ ________________________, the presentation went well.",
+         "ul": false
+        }
+       ],
+       "kind": "Box"
+      },
+      {
+       "text": "정답: ___________________________________________________",
+       "runs": [
+        {
+         "t": "정답: ___________________________________________________",
+         "ul": false
+        }
+       ],
+       "kind": "Ans"
+      },
+      {
+       "text": "(2) They were disappointed that the event was canceled.",
+       "runs": [
+        {
+         "t": "(2) They were disappointed that the event was canceled.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "→ ________________________, the event was canceled.",
+       "runs": [
+        {
+         "t": "→ ________________________, ",
+         "ul": false
+        },
+        {
+         "t": "the event was canceled.",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": "정답: ___________________________________________________",
+       "runs": [
+        {
+         "t": "정답: ___________________________________________________",
+         "ul": false
+        }
+       ],
+       "kind": "Ans"
+      },
+      {
+       "text": "다음 우리말을 주어진 <조건>에 맞게 영작하시오. [3과]",
+       "runs": [
+        {
+         "t": "다음 우리말을 주어진 <조건>에 맞게 영작하시오.",
+         "ul": false
+        },
+        {
+         "t": " ",
+         "ul": false
+        },
+        {
+         "t": "[3과]",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "SRV-WRT-COND-VAR"
+      },
+      {
+       "text": "<조건>",
+       "runs": [
+        {
+         "t": "<조건>",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "감정명사, 강조구문, 과거완료를 모두 포함할 것",
+       "runs": [
+        {
+         "t": "감정명사, 강조구문, 과거완료를 모두 포함할 것",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "주어진 어구를 모두 사용하되, 필요한 경우 어휘 추가 및 형태 변형할 것",
+       "runs": [
+        {
+         "t": "주어진 어구를 모두 사용하되, 필요한 경우 어휘 추가 및 형태 변형할 것",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "in the drawer / that / leave",
+       "runs": [
+        {
+         "t": "in the drawer / that / leave",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "우리말: (그가) 다행스럽게도, 그가 그의 열쇠를 두었던 곳은 바로 서랍이었다.",
+       "runs": [
+        {
+         "t": "우리말: (그가) 다행스럽게도, 그가 그의 열쇠를 두었던 곳은 바로 서랍이었다.",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": "정답: ___________________________________________________",
+       "runs": [
+        {
+         "t": "정답: ___________________________________________________",
+         "ul": false
+        }
+       ],
+       "kind": "Ans"
+      },
+      {
+       "text": "다음 글을 읽고 질문에 답하시오. [3과]",
+       "runs": [
+        {
+         "t": "다음 글을 읽고 질문에 답하시오. [3과]",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": " Danger in the form of pyjama sharks, the area's biggest predators, came with little warning in the sea. The octopus was moving around near the edge of the seaweed forest, and ⓐI saw a shark tracking her. In an instant, she swam into a crack to escape, but the shark was faster.",
+       "runs": [
+        {
+         "t": " Danger in the form of pyjama sharks, the area's biggest predators, came with little warning in the sea. The octopus was moving around near the edge of the seaweed forest, and ⓐ",
+         "ul": false
+        },
+        {
+         "t": "I saw a shark tracking her",
+         "ul": true
+        },
+        {
+         "t": ". In an instant, she swam into a crack to escape, but the shark was faster.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": " ⓑThe shark has taken a bite of one of her arms and was waiting for her. I wanted to save my friend, but in this environment, I could only observe. ⓒShe managed to get deeper into the crack, but she was bleeding. After a while, the shark lost interest, and the octopus used the opportunity to get back to her den, without one of her arms. She was in serious danger because her arms function like the hands, legs, nose, and eyes of humans.",
+       "runs": [
+        {
+         "t": " ⓑ",
+         "ul": false
+        },
+        {
+         "t": "The shark has taken a bite of one of her arms",
+         "ul": true
+        },
+        {
+         "t": " and was waiting for her. I wanted to save my friend, but in this environment, I could only observe. ⓒ",
+         "ul": false
+        },
+        {
+         "t": "She managed to get deeper into the crack",
+         "ul": true
+        },
+        {
+         "t": ", but she was bleeding. After a while, the shark lost interest, and the octopus used ",
+         "ul": false
+        },
+        {
+         "t": "the opportunity",
+         "ul": true
+        },
+        {
+         "t": " to get back to her den, without one of her arms. She was in serious danger because her arms function like the hands, legs, nose, and eyes of humans.",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": " The next day, ⓓI was relieved to see that she had survived. She was weak, and ⓔher colors were not as bright. I checked on her every day, ⓕwondering whether that day would be the last. It was emotionally painful ⓖto witness these things happened to her.",
+       "runs": [
+        {
+         "t": " The next day, ⓓ",
+         "ul": false
+        },
+        {
+         "t": "I was relieved to see that she had survived",
+         "ul": true
+        },
+        {
+         "t": ". She was weak, and ⓔ",
+         "ul": false
+        },
+        {
+         "t": "her colors were not as bright",
+         "ul": true
+        },
+        {
+         "t": ". I checked on her every day, ⓕ",
+         "ul": false
+        },
+        {
+         "t": "wondering whether that day would be the last",
+         "ul": true
+        },
+        {
+         "t": ". It was emotionally painful ⓖ",
+         "ul": false
+        },
+        {
+         "t": "to witness these things happened to her",
+         "ul": true
+        },
+        {
+         "t": ".",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "윗글의 밑줄 친 ⓐ~ⓖ 중, 어법상 어색한 것은 모두 몇 개인가?",
+       "runs": [
+        {
+         "t": "윗글의 밑줄 친 ⓐ~ⓖ 중, 어법상 어색한 것은 모두 몇 개인가?",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-GRM-UND-WRONG"
+      },
+      {
+       "text": "① 2개    ② 3개    ③ 4개    ④ 5개    ⑤ 6개",
+       "runs": [
+        {
+         "t": "① 2개    ② 3개    ③ 4개    ④ 5개    ⑤ 6개",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "윗글을 요약하고자 할 때, 밑줄 친 부분 중 문맥상 낱말의 쓰임이 적절한 것은?",
+       "runs": [
+        {
+         "t": "윗글을 요약하고자 할 때, 밑줄 친 부분 중 문맥상 낱말의 쓰임이 적절한 것은?",
+         "ul": false
+        }
+       ],
+       "kind": "Q"
+      },
+      {
+       "text": " Danger appeared in the form of pyjama sharks, the top ㉠prey in the area. One day, I saw a shark chasing the octopus near the seaweed forest. Although she tried to escape into her ㉡shelter, the shark bit off one of her arms. She eventually hid deeper in the crack, injured and bleeding. Since her arms are like human hands, legs, and senses, the loss was ㉢limited. The next day, I was relieved to see she had survived, though she was weak and her colors had ㉣faded. I checked on her daily, thinking the ㉤best.",
+       "runs": [
+        {
+         "t": " Danger appeared in the form of pyjama sharks, the top ㉠",
+         "ul": false
+        },
+        {
+         "t": "prey",
+         "ul": true
+        },
+        {
+         "t": " in the area. One day, I saw a shark chasing the octopus near the seaweed forest. Although she tried to escape into her ㉡",
+         "ul": false
+        },
+        {
+         "t": "shelter",
+         "ul": true
+        },
+        {
+         "t": ", the shark bit off one of her arms. She eventually hid deeper in the crack, injured and bleeding. Since her arms are like human hands, legs, and senses, the loss was ㉢",
+         "ul": false
+        },
+        {
+         "t": "limited",
+         "ul": true
+        },
+        {
+         "t": ". The next day, I was relieved to see she had survived, though she was weak and her colors had ㉣",
+         "ul": false
+        },
+        {
+         "t": "faded",
+         "ul": true
+        },
+        {
+         "t": ". I checked on her daily, thinking the ㉤",
+         "ul": false
+        },
+        {
+         "t": "best",
+         "ul": true
+        },
+        {
+         "t": ".",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "① ㉠      ② ㉡      ③ ㉢      ④ ㉣      ⑤ ㉤",
+       "runs": [
+        {
+         "t": "① ",
+         "ul": false
+        },
+        {
+         "t": "㉠",
+         "ul": false
+        },
+        {
+         "t": "      ② ",
+         "ul": false
+        },
+        {
+         "t": "㉡",
+         "ul": false
+        },
+        {
+         "t": "      ③ ",
+         "ul": false
+        },
+        {
+         "t": "㉢",
+         "ul": false
+        },
+        {
+         "t": "      ④ ",
+         "ul": false
+        },
+        {
+         "t": "㉣",
+         "ul": false
+        },
+        {
+         "t": "      ⑤ ",
+         "ul": false
+        },
+        {
+         "t": "㉤",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "윗글을 읽고 질문에 대한 답을 <조건>에 맞추어 완성하시오.",
+       "runs": [
+        {
+         "t": "윗글을 읽고 질문에 대한 답을 <조건>에 맞추어 완성하시오.",
+         "ul": false
+        }
+       ],
+       "kind": "Q"
+      },
+      {
+       "text": "<조건>",
+       "runs": [
+        {
+         "t": "<조건>",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "추가나 형태 변형 없이 주어진 어구를 모두 한 번씩 사용할 것",
+       "runs": [
+        {
+         "t": "추가나 형태 변형 없이 주어진 어구를 모두 한 번씩 사용할 것",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "allowing / and left / when / lost interest / the shark / safely / her den / the octopus / to / return to",
+       "runs": [
+        {
+         "t": "allowing / and left / when / lost interest / the shark / safely / her den / the octopus / to / return to",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "Q: What does \"the opportunity\" refer to in the passage?",
+       "runs": [
+        {
+         "t": "Q: What does \"",
+         "ul": false
+        },
+        {
+         "t": "the opportunity",
+         "ul": true
+        },
+        {
+         "t": "\" refer to in the passage?",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "A: It refers to the moment ____________________________, ___________________________________________.",
+       "runs": [
+        {
+         "t": "A: It refers to the moment ____________________________, ___________________________________________.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "정답: ___________________________________________________, ",
+       "runs": [
+        {
+         "t": "정답: ___________________________________________________, ",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": "__________________________________________________________",
+       "runs": [
+        {
+         "t": "__________________________________________________________",
+         "ul": false
+        }
+       ],
+       "kind": "Ans"
+      },
+      {
+       "text": "다음 글을 읽고, 물음에 답하시오. [3과]",
+       "runs": [
+        {
+         "t": "다음 글을 읽고, 물음에 답하시오. [3과]",
+         "ul": false
+        }
+       ],
+       "kind": "Q-INTRO",
+       "q_code": "OBJ-LNG-HEADER"
+      },
+      {
+       "text": " I returned to the Cape of Good Hope, South Africa, where I ⓐhad spent my childhood, after over 20 years of movie-making. I went diving in the cold sea off the coast of the Cape, and it was among the dense seaweed forests ⓑwhere I met an octopus.",
+       "runs": [
+        {
+         "t": " I returned to the Cape of Good Hope, South Africa, where I ⓐ",
+         "ul": false
+        },
+        {
+         "t": "had spent",
+         "ul": true
+        },
+        {
+         "t": " my childhood, after over 20 years of movie-making. I went diving in the cold sea off the coast of the Cape, and it was among the dense seaweed forests ⓑ",
+         "ul": false
+        },
+        {
+         "t": "where",
+         "ul": true
+        },
+        {
+         "t": " I met an octopus.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": " I saw a fish peacefully ⓒswum near a heap of shells. Suddenly, an octopus sprang from the heap and grabbed the fish. ⓓAmazing at the cleverness of the octopus, I swam a little closer, but (A)it disappeared. In fact, (B)it had lifted a piece of seaweed, wrapped (C)it around itself, and  was staring at me out of a little gap. What an extraordinary creature! I wondered ⓔwhat would happen if I kept watching (D)it. To see the world from (E)its perspective, I left a camera near the den and started visiting regularly. I even mapped the environment around the den ⓕwhich the octopus hid itself from enemies. Expecting some drama to come, I waited.",
+       "runs": [
+        {
+         "t": " I saw a fish peacefully ⓒ",
+         "ul": false
+        },
+        {
+         "t": "swum",
+         "ul": true
+        },
+        {
+         "t": " near a heap of shells. Suddenly, an octopus sprang from the heap and grabbed the fish. ⓓ",
+         "ul": false
+        },
+        {
+         "t": "Amazing",
+         "ul": true
+        },
+        {
+         "t": " at the cleverness of the octopus, I swam a little closer, but (A)",
+         "ul": false
+        },
+        {
+         "t": "it",
+         "ul": true
+        },
+        {
+         "t": " disappeared. In fact, (B)",
+         "ul": false
+        },
+        {
+         "t": "it",
+         "ul": true
+        },
+        {
+         "t": " had lifted a piece of seaweed, wrapped (C)",
+         "ul": false
+        },
+        {
+         "t": "it",
+         "ul": true
+        },
+        {
+         "t": " around itself, and  was staring at me out of a little gap. What an extraordinary creature! I wondered ⓔ",
+         "ul": false
+        },
+        {
+         "t": "what",
+         "ul": true
+        },
+        {
+         "t": " would happen if I kept watching (D)",
+         "ul": false
+        },
+        {
+         "t": "it",
+         "ul": true
+        },
+        {
+         "t": ". To see the world from (E)",
+         "ul": false
+        },
+        {
+         "t": "its",
+         "ul": true
+        },
+        {
+         "t": " perspective, I left a camera near the den and started visiting regularly. I even mapped the environment around the den ⓕ",
+         "ul": false
+        },
+        {
+         "t": "which",
+         "ul": true
+        },
+        {
+         "t": " the octopus hid itself from enemies. Expecting some drama to come, I waited.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": "윗글의 밑줄 친 ⓐ~ⓕ 중에서 어법상 어색한 부분 3곳의 기호를 쓰고, 적절한 단어로 고치시오.",
+       "runs": [
+        {
+         "t": "윗글의 밑줄 친 ⓐ~ⓕ 중에서 어법상 어색한 부분 3곳의 기호를 쓰고, 적절한 단어로 고치시오.",
+         "ul": false
+        }
+       ],
+       "kind": "Q"
+      },
+      {
+       "text": " 어색한 곳의 기호\t\t 적절한 단어",
+       "runs": [
+        {
+         "t": " 어색한 곳의 기호\t\t 적절한 단어",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": "(1)________________ → ________________",
+       "runs": [
+        {
+         "t": "(1)________________ → ________________",
+         "ul": false
+        }
+       ],
+       "kind": "Ans"
+      },
+      {
+       "text": "(2)________________ → ________________",
+       "runs": [
+        {
+         "t": "(2)________________ → ________________",
+         "ul": false
+        }
+       ],
+       "kind": "Ans"
+      },
+      {
+       "text": "(3)________________ → ________________",
+       "runs": [
+        {
+         "t": "(3)________________ → ________________",
+         "ul": false
+        }
+       ],
+       "kind": "Ans"
+      },
+      {
+       "text": "윗글의 밑줄 친 (A)~(E) 중에서 가리키는 대상이 나머지 넷과 다른 것은?",
+       "runs": [
+        {
+         "t": "윗글의 밑줄 친 (A)~(E) 중에서 가리키는 대상이 나머지 넷과 다른 것은?",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-DTL-REF"
+      },
+      {
+       "text": "① (A)     ② (B)     ③ (C)     ④ (D)     ⑤ (E)",
+       "runs": [
+        {
+         "t": "① (A)     ② (B)     ③ (C)     ④ (D)     ⑤ (E)",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "다음 글을 읽고, 물음에 답하시오. [3과]",
+       "runs": [
+        {
+         "t": "다음 글을 읽고, 물음에 답하시오. [3과]",
+         "ul": false
+        }
+       ],
+       "kind": "Q-INTRO",
+       "q_code": "OBJ-LNG-HEADER"
+      },
+      {
+       "text": " Danger in the form of pyjama sharks, the area's biggest predators, came with little warning in the sea. The octopus was moving around near the edge of the seaweed forest, and I witnessed a shark track her. In an instant, she swam into a crack to escape, but the shark was faster.",
+       "runs": [
+        {
+         "t": " Danger in the form of pyjama sharks, the area's biggest predators, came with little warning in the sea. The octopus was moving around near the edge of the seaweed forest, and I witnessed a shark track her. In an instant, she swam into a crack to escape, but the shark was faster.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": " The shark had taken a bite of one of her arms and was waiting for her. I wanted to save my friend, but in this environment, I could only observe. She managed to get deeper into the crack, but she was bleeding. After a while, the shark lost interest, and the octopus used the opportunity to get back to her den, without one of her arms. She was in serious danger because her arms function like the hands, legs, nose, and eyes of humans.",
+       "runs": [
+        {
+         "t": " The shark had taken a bite of one of her arms and was waiting for her. I wanted to save my friend, but in this environment, I could only observe. She managed to get deeper into the crack, but she was bleeding. After a while, the shark lost interest, and the octopus used the opportunity to get back to her den, without one of her arms. She was in serious danger because her arms function like the hands, legs, nose, and eyes of humans.",
+         "ul": false
+        }
+       ],
+       "kind": "P"
+      },
+      {
+       "text": " The next day, ⓐ안심스럽게도, 나는 그녀가 생존했다는 것을 알았다. She was weak, and her colors were not as bright. I checked on her every day, wondering if that day would be the last. It was emotionally painful to witness these things happen to her.",
+       "runs": [
+        {
+         "t": " The next day, ⓐ",
+         "ul": false
+        },
+        {
+         "t": "안심스럽게도, 나는 그녀가 생존했다는 것을 알았다",
+         "ul": true
+        },
+        {
+         "t": ". She was weak, and her colors were not as bright. I checked on her every day, wondering if that day would be the last. It was emotionally painful to witness these things happen to her.",
+         "ul": false
+        }
+       ],
+       "kind": "UNKNOWN"
+      },
+      {
+       "text": "윗글에 관한 내용과 일치하는 것은?",
+       "runs": [
+        {
+         "t": "윗글에 관한 내용과 일치하는 것은?",
+         "ul": false
+        }
+       ],
+       "kind": "Q",
+       "q_code": "OBJ-CTN-MATCH"
+      },
+      {
+       "text": "① 그 일대의 가장 큰 포식자인 상어는 작은 경고 소리를 내며 왔다.",
+       "runs": [
+        {
+         "t": "① 그 일대의 가장 큰 포식자인 상어는 작은 경고 소리를 내며 왔다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "② 문어는 해초 숲 한가운데서 움직이고 있었고, 상어가 그 문어를 쫓고 있었다.",
+       "runs": [
+        {
+         "t": "② 문어는 해초 숲 한가운데서 움직이고 있었고, 상어가 그 문어를 쫓고 있었다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "③ 상어는 문어의 굴을 부수고, 문어가 나오길 기다렸다.",
+       "runs": [
+        {
+         "t": "③ 상어는 문어의 굴을 부수고, 문어가 나오길 기다렸다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "④ 문어의 팔들은 사람의 손, 다리, 귀, 눈의 역할을 한다.",
+       "runs": [
+        {
+         "t": "④ 문어의 팔들은 사람의 손, 다리, 귀, 눈의 역할을 한다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "⑤ 생존한 문어는 약해졌고 문어의 색은 이전만큼 밝지 않았다.",
+       "runs": [
+        {
+         "t": "⑤ 생존한 문어는 약해졌고 문어의 색은 이전만큼 밝지 않았다.",
+         "ul": false
+        }
+       ],
+       "kind": "C"
+      },
+      {
+       "text": "윗글의 우리말 ⓐ의 적절하게 <보기>의 단어들을 이용하여 <조건>에 맞게 영어 문장을 완성하시오.",
+       "runs": [
+        {
+         "t": "윗글의 우리말 ⓐ의 적절하게 <보기>의 단어들을 이용하여 <조건>에 맞게 영어 문장을 완성하시오.",
+         "ul": false
+        }
+       ],
+       "kind": "Q"
+      },
+      {
+       "text": "<보기>",
+       "runs": [
+        {
+         "t": "<보기>",
+         "ul": false
+        }
+       ],
+       "kind": "Box"
+      },
+      {
+       "text": "find / I / survive / she / relieve / have / that / I",
+       "runs": [
+        {
+         "t": "find / I / survive / she / relieve / have / that / I",
+         "ul": false
+        }
+       ],
+       "kind": "Box"
+      },
+      {
+       "text": "<조건>",
+       "runs": [
+        {
+         "t": "<조건>",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "• <보기>의 단어를 모두 이용할 것",
+       "runs": [
+        {
+         "t": "• <보기>의 단어를 모두 이용할 것",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "• 필요시 어법과 의미에 맞게 단어의 형태를 바꿀 것",
+       "runs": [
+        {
+         "t": "• 필요시 어법과 의미에 맞게 단어의 형태를 바꿀 것",
+         "ul": false
+        }
+       ],
+       "kind": "Cond"
+      },
+      {
+       "text": "정답: ___________________________________________________",
+       "runs": [
+        {
+         "t": "정답: ___________________________________________________",
+         "ul": false
+        }
+       ],
+       "kind": "Ans"
+      }
+     ]
     }
-  },
-  "workbook_type": "교과서",
-  "subject": "공통영어1",
-  "publisher": "공통영어1 비상(홍)",
-  "lesson": "3과"
+   ],
+   "short": [],
+   "normal_count": 1,
+   "short_count": 0
+  }
+ },
+ "workbook_type": "교과서",
+ "subject": "공통영어1",
+ "publisher": "공통영어1 비상(홍)",
+ "lesson": "3과"
 }

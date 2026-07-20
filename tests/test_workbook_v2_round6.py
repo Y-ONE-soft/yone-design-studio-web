@@ -88,12 +88,13 @@ def test_s3_overlay_speaker_line_not_question():
 
 
 def test_cond_propagation_v1_semantics():
-    """D3 — <조건> 뒤 어구 나열 건너뛰기 + 번호/불릿 항목 조건화 +
-    발문 오매칭(Q) 강등 + 답란 종료 (c10 실증)."""
+    """D3 — <조건> 블록 전파 + 번호/불릿 항목 조건화 + 발문 오매칭(Q)
+    강등 + 답란 종료 (c10 실증). W39 결함 3: 블록 안 단어 나열은 조건
+    내용물 — v1 '지문 유지' 관행은 사용자 확정으로 폐기."""
     out = classify_paragraphs([
         {"text": "<조건>"},
-        {"text": "team, teams, their, even though,"},        # 어구 — skip
-        {"text": "both, tried, won, best, my"},              # 어구 — skip
+        {"text": "team, teams, their, even though,"},        # 어구 = 조건
+        {"text": "both, tried, won, best, my"},              # 어구 = 조건
         {"text": "1. 위 단어들을 어형변화 없이 모두, 한 번씩만 사용할 것"},
         {"text": "2. 위 단어들 외에 3개의 단어를 추가하여 '나의 팀'을 "
                  "강조하는 문장으로 완성할 것"},
@@ -102,7 +103,8 @@ def test_cond_propagation_v1_semantics():
     ])
     kinds = [o["kind"] for o in out]
     assert kinds[0] == "Cond"
-    assert kinds[1] != "Cond" and kinds[2] != "Cond", "어구 나열은 지문 유지"
+    assert kinds[1] == "Cond" and kinds[2] == "Cond", \
+        "블록 안 단어 나열은 조건 (W39 결함 3)"
     assert kinds[3] == "Cond" and kinds[4] == "Cond", "번호 조건 항목"
     assert kinds[6] != "Cond", "답란 이후는 전파 금지"
 
@@ -275,12 +277,15 @@ def test_gate_g15_clean_paths():
         {"t": "<조건>", "s": _ST_COND},
         {"t": "· 우리말과 같은 의미가 되도록 영작하시오.", "s": _ST_COND},
         {"t": "22. 다음 글의 내용을 한 문장으로 요약하고자 한다.", "s": _ST_Q},
-        # 별도 블록: 영어 어구 나열은 지문 유지 (v1 실물 관행 — c15/wordlist)
+        # 별도 블록: 단어 나열도 조건 내용물 (W39 결함 3 — 지문 유지
+        # 관행 폐기. 조건 스타일이면 G34 무지목)
         {"t": "<조건>", "s": _ST_COND},
-        {"t": "end / plot / have / it / a / me / keep / from", "s": _ST_P},
+        {"t": "end / plot / have / it / a / me / keep / from",
+         "s": _ST_COND},
         {"t": "→ ____________________", "s": _ST_P},
     ]))
     assert rep["stats"]["cond_item_miss"] == 0
+    assert rep["stats"]["cond_content_miss"] == 0
 
 
 def test_gate_g15_detects_sio_numbered_items_styled_as_question():

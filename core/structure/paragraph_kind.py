@@ -243,6 +243,9 @@ def classify_paragraphs(paras):
         j = i + 1
         skipped = False
         cond_no = 1          # W38: 조건 항목 번호 시퀀스 (마커 직후 1 기대)
+        # 한글 비율 단독 흡수는 마커 시작 루프에서만 (W39: 항목 시작
+        # 재루프가 답란 라벨("주제문:")을 원거리 흡수하는 것 방지)
+        from_marker = bool(R.BOX_MARKERS["Cond"].match(item["text"]))
         while j < len(out):
             nxt = out[j]
             if nxt["kind"] == "BLANK":
@@ -270,6 +273,14 @@ def classify_paragraphs(paras):
                 break
             if R.COND_BLOCK_END.search(t):
                 break
+            # W39 결함 3: 조건 블록 안 단어 나열은 조건 내용물 (v1 '지문
+            # 유지' 관행 폐기 — 사용자 확정). 나열 뒤 괄호 부연("(필요시
+            # …)")의 인접 흡수는 계속되므로 skipped를 세우지 않는다.
+            if nxt["kind"] in ("P", "UNKNOWN", "Word", "C", "K") \
+                    and BG.is_cond_wordlist(t):
+                nxt["kind"] = "Cond"
+                j += 1
+                continue
             marker_item = bool(R.COND_ITEM_START.match(t))
             if nxt["kind"] == "Q":
                 # (c2) W38: 블록 문맥 우선 — 번호 항목이면 조건 항목
@@ -284,10 +295,14 @@ def classify_paragraphs(paras):
                     j += 1
                     continue
                 break
+            # 답란 라벨("주제문:")은 조건이 아니다 — 한글 비율 흡수 제외
+            # (W39 결함 4: 단어 나열 뒤 라벨이 조건으로 오염되는 것 방지)
             if nxt["kind"] in ("UNKNOWN", "K") and (
                     marker_item or R.COND_ITEM_END.search(t)
                     or R.COND_ITEM_LEAD.match(t)
-                    or (not skipped and _korean_ratio(t) >= 0.3)):
+                    or (from_marker and not skipped
+                        and not BG.ANS_LABEL.match(t)
+                        and _korean_ratio(t) >= 0.3)):
                 nxt["kind"] = "Cond"
                 cond_no = BG.cond_item_seen(t, cond_no)
                 j += 1

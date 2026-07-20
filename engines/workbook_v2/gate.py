@@ -269,6 +269,12 @@ _RE_COND_QLEAD = re.compile(
     r"도표|물음|빈칸|단어)|윗\s*글|글의|밑줄\s*친|주어진|\(주관식\)|"
     r"\(서술형\)|서술형)")
 
+# G34 (W39) — 조건 블록 안 단어 나열 (슬래시 구분 또는 쉼표 3+ 나열,
+# 완결부호 없는 라인 한정 — 출력 검사용 독립 정의)
+_RE_G34_WORDLIST = re.compile(
+    r"^(?!.*[.!?][\"'’”)\]]?\s*$)"
+    r".*(?:\S\s*/\s*\S|(?:,[^,]*){3,})")
+
 # G13/G32 (W38) — 영어 지시문 발문 시그니처 + 요약문 마커 (출력 검사용
 # 독립 정의 — block_grammar와 순환 방지)
 # 명령형만 — WH-의문형("N. Why don't we …?")은 외부지문 '지문 제목'과
@@ -926,6 +932,22 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
     # 보기/배경/다음글읽고 스타일/발문 어휘 선두 번호(_RE_COND_QLEAD)/
     # 번호 시퀀스 이탈. ("시오-체 번호 항목 발문 유지" W16 D3 관행은
     # 사용자 확정으로 폐기 — 6b66b750 실증.)
+    # G34 [조건내용] (W39 결함 3): 블록 안 단어 나열(슬래시/쉼표 나열,
+    # 한글·완결부호 없음)은 조건 내용물 — v1 '지문 유지' 관행 폐기 (사용자
+    # 확정). 현행 플랜(나열을 조건 스타일로 실은 플랜)은 critical, 구플랜
+    # 소급은 warning (G32 패턴).
+    plan_cond_content = False
+    for fl in plan.get("flows", []):
+        if fl.get("step") != "step3":
+            continue
+        for u in fl.get("units", []):
+            for p in (u["paras"] if isinstance(u, dict) else u):
+                if "조건" in (p.get("s") or "") \
+                        and _RE_G34_WORDLIST.search(_clean(p.get("t", ""))) \
+                        and not _RE_HANGUL.search(p.get("t", "")):
+                    plan_cond_content = True
+                    break
+    cond_content_miss = []
     cond_miss = []
     for story in dump.get("stories", []):
         ps = story.get("paragraphs", [])
@@ -966,10 +988,20 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                     cond_miss.append(qt[:45])
                 elif not (_RE_HANGUL.search(qt)
                           or _RE_COND_BULLET.match(qt)):
-                    continue    # 영어 어구 나열 — 지문 유지 관행 (skip)
+                    # W39 결함 3: 블록 안 단어 나열은 조건 내용물 —
+                    # 조건 스타일이 아니면 G34 지목 (지문 유지 관행 폐기)
+                    if _RE_G34_WORDLIST.search(qt) and "조건" not in qs:
+                        cond_content_miss.append(qt[:45])
+                    continue
                 elif "조건" not in qs and not strong:
                     break       # 한글 비조건 문장 — 블록 종료로 간주
     stats["cond_item_miss"] = len(cond_miss)
+    stats["cond_content_miss"] = len(cond_content_miss)
+    if cond_content_miss:
+        msg = (f"[조건내용] <조건> 블록 안 단어 나열 "
+               f"{len(cond_content_miss)}개가 조건 스타일이 아님: "
+               + " | ".join(cond_content_miss[:3]))
+        (critical if plan_cond_content else warnings).append(msg)
     if cond_miss:
         critical.append(
             f"[조건항목] <조건> 블록 항목 {len(cond_miss)}개가 조건 스타일이 "

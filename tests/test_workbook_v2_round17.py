@@ -248,6 +248,98 @@ def test_plan_given_slot_unassignable_warns():
     assert any("[슬롯]" in w for w in r["warnings"])
 
 
+# ── 결함 3: 조건 블록 안 단어 나열 = 조건 내용물 ────────────────────────────
+
+def test_cond_wordlist_form():
+    assert BG.is_cond_wordlist("creator / with / Sierra Leone, / "
+                               "Kelvin Doe, / electronics / from")
+    assert BG.is_cond_wordlist("of / the young / at / thirteen / age")
+    assert BG.is_cond_wordlist("team, teams, their, even though,")
+    # 영문 완결 문장/한글 라인/답란 빈칸은 나열이 아니다
+    assert not BG.is_cond_wordlist(
+        "In 2009, at the young age of thirteen, Kelvin built his own "
+        "FM radio station, a generator, and a windmill.")
+    assert not BG.is_cond_wordlist("1) 11단어로 빈칸을 완성하시오.")
+    assert not BG.is_cond_wordlist("_____________________________.")
+
+
+def test_classifier_cond_block_wordlist_is_cond():
+    """84/85번 실증 — 조건 항목("다음 단어를 …")이 참조하는 단어 나열은
+    조건 블록의 내용물. 뒤따르는 답란 라벨("주제문:")은 흡수 금지."""
+    out = classify_paragraphs([
+        {"text": "11. 다음 글을 읽고, 주제문을 주어진 조건에 맞게 "
+                 "완성하시오."},
+        {"text": "Kelvin Doe, a self-taught inventor and engineer from "
+                 "Sierra Leone, has been fascinated with electronics "
+                 "since childhood and built his own FM radio station."},
+        {"text": "[조건]"},
+        {"text": "1) 11단어로 빈칸을 완성하시오."},
+        {"text": "2) 다음 단어를 한 번씩 사용하여 배열하시오."},
+        {"text": "creator / with / Sierra Leone, / Kelvin Doe, / "
+                 "electronics / from / a self-educated / innovates"},
+        {"text": "주제문:"},
+        {"text": "__________________________________________."},
+    ])
+    kinds = [o["kind"] for o in out]
+    assert kinds[2] == "Cond"
+    assert kinds[3] == "Cond" and kinds[4] == "Cond"
+    assert kinds[5] == "Cond", "단어 나열 = 조건 내용물"
+    assert kinds[6] != "Cond", "답란 라벨은 조건 흡수 금지"
+
+
+def test_classifier_cond_wordlist_then_paren_note_still_absorbed():
+    """나열 뒤 괄호 부연("(필요시 …)")의 인접 흡수는 유지 (r15c25 실측
+    — W30-r15 GH_SUBTITLE 상한 케이스 무회귀)."""
+    out = classify_paragraphs([
+        {"text": "<조건>"},
+        {"text": "1. 20단어 이내로 작성할 것"},
+        {"text": "2. 제시된 단어를 모두 사용할 것"},
+        {"text": "- young, social, inspire, innovate"},
+        {"text": "(필요시 단어의 형태를 변형하거나 단어 중복 사용 가능)"},
+        {"text": "3. 완전한 문장이 되도록 작성할 것"},
+    ])
+    kinds = [o["kind"] for o in out]
+    assert kinds[3] == "Cond" and kinds[4] == "Cond" and kinds[5] == "Cond"
+
+
+def test_plan_cond_wordlist_dual_defense():
+    """구 kind 주석(P/UNKNOWN) 재실행도 플랜 오버레이가 조건으로."""
+    r = build_step3(_s3([
+        {"text": "11. 다음 글을 읽고, 주제문을 주어진 조건에 맞게 "
+                 "완성하시오.", "kind": "Q"},
+        {"text": "[조건]", "kind": "Cond"},
+        {"text": "1) 11단어로 빈칸을 완성하시오.", "kind": "Q"},
+        {"text": "2) 다음 단어를 한 번씩 사용하여 배열하시오.", "kind": "Q"},
+        {"text": "creator / with / Sierra Leone, / Kelvin Doe, / "
+                 "electronics / from", "kind": "P"},
+    ]))
+    styles = [p["s"] for p in r["units"][0]]
+    assert styles[1] == _ST_COND
+    assert styles[2] == _ST_COND and styles[3] == _ST_COND
+    assert styles[4] == _ST_COND, "단어 나열 = 조건 (플랜 이중 방어)"
+
+
+def test_gate_g34_detects_wordlist_not_cond_style():
+    """소급 검출 실증 — 수리 전 출력(round16: 나열이 지문 스타일)."""
+    plan = {"flows": [{"step": "step3", "units": [[
+        {"t": "<조건>", "s": _ST_COND},
+        {"t": "of / the young / at / thirteen / age", "s": _ST_COND},
+    ]]}], "page_cleanup": {}}
+    dump = _dump([
+        {"t": "<조건>", "s": _ST_COND},
+        {"t": "1) 6단어로 빈칸을 완성하시오.", "s": _ST_COND},
+        {"t": "2) 다음 단어를 한 번씩 사용하여 배열하시오.", "s": _ST_COND},
+        {"t": "of / the young / at / thirteen / age", "s": _ST_P},  # 결함
+    ])
+    rep = inspect_workbook_finish({}, plan, dump)
+    assert rep["stats"]["cond_content_miss"] == 1
+    assert any("[조건내용]" in c for c in rep["critical"])
+    # 구플랜(조건 나열 미실림) 소급은 warning
+    rep2 = inspect_workbook_finish(
+        {}, {"flows": [], "page_cleanup": {}}, dump)
+    assert any("[조건내용]" in w for w in rep2["warnings"])
+
+
 def test_gate_g32_detects_angle_sum_marker_not_background():
     """소급 검출: 수리 전 출력(꺾쇠 요약문 = 보기/지문 스타일) 재현."""
     plan = {"flows": [{"step": "step3", "units": [[

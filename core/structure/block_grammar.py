@@ -219,6 +219,32 @@ def is_given_block_form(text, short_only=False):
     return bool(R.P_SENTENCE_END.search(t))
 
 
+# ── 조건 블록 내용물: 단어 나열 (W39 결함 3 — 사용자 확정) ─────────────────
+# 조건 항목("다음 단어를 한 번씩 사용하여 배열하시오")이 참조하는 주어진
+# 단어 나열은 조건 블록의 내용물이다 — v1 pass 15의 '어구 나열은 지문
+# 유지' 관행(W16 D3 이식)은 W39에서 사용자 기준으로 폐기. 형태: 슬래시
+# 구분 나열 또는 쉼표 3+ 나열, 한글 없음, 문장 완결부호 없음(영문 문장
+# 오염 방지 — 나열은 마침표로 끝나지 않는다).
+_COND_WORDLIST_SLASH = re.compile(r'\S\s*/\s*\S')
+_COND_WORDLIST_COMMA = re.compile(r'(?:,[^,]*){3,}')
+
+
+# 답란 라벨 라인 ("주제문:" / "요지:" — 콜론으로 끝나는 짧은 라벨 단독
+# 라인, 내용 없음). W39 결함 4의 답란 쌍 식별 + 조건 블록 한글 흡수 제외.
+ANS_LABEL = re.compile(r'^\s*[가-힣A-Za-z()（）\s]{1,12}[:：]\s*$')
+
+
+def is_cond_wordlist(text):
+    t = (text or "").strip()
+    if not t or R.HANGUL.search(t):
+        return False
+    if R.P_SENTENCE_END.search(t):
+        return False
+    if _COND_WORDLIST_SLASH.search(t):
+        return True
+    return bool(_COND_WORDLIST_COMMA.search(t))
+
+
 # 슬롯을 소비하지 않는 구조 라벨 (발문과 본문 사이에 끼는 단독 대괄호
 # 라인 — SRC 마커/유형 마커와 같은 층위. [보기]/[조건]/[요약문]은 kind가
 # Cond/Box/Sum이라 여기 오지 않는다)

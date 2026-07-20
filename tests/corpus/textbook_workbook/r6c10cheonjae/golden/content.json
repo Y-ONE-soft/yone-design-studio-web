@@ -666,7 +666,7 @@
          "ul": false
         }
        ],
-       "kind": "UNKNOWN"
+       "kind": "Cond"
       },
       {
        "text": "both, tried, won, best, my",
@@ -676,7 +676,7 @@
          "ul": false
         }
        ],
-       "kind": "UNKNOWN"
+       "kind": "Cond"
       },
       {
        "text": "1. 위 단어들을 어형변화 없이 모두, 한 번씩만 사용할 것",

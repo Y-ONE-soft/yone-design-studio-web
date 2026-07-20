@@ -6056,7 +6056,7 @@
          "ul": false
         }
        ],
-       "kind": "UNKNOWN"
+       "kind": "Cond"
       },
       {
        "text": "•  우리말 뜻: 일단 우리의 소유를 업그레이드하면 다시 되돌아가는 것은 매우 어렵다.",
@@ -6358,7 +6358,7 @@
          "ul": false
         }
        ],
-       "kind": "UNKNOWN"
+       "kind": "Cond"
       },
       {
        "text": " the two / the large number of",
@@ -6368,7 +6368,7 @@
          "ul": false
         }
        ],
-       "kind": "UNKNOWN"
+       "kind": "Cond"
       },
       {
        "text": "답: ____________________________________________________",
