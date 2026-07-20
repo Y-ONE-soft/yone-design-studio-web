@@ -33,6 +33,8 @@ from engines.workbook.parser import (  # noqa: E402 — 현행 파서 판정 경
     _RE_KOREAN_BRACKET,
     _RE_OLD_WB_NUM,
     _RE_OLD_WB_SOURCE,
+    _legacy_header_marker as _parser_legacy_marker,
+    USE_STRUCT_HEADER_DETECT as _PARSER_STRUCT_JOINED,
 )
 from core.structure.header_detect import detect_from_candidates  # noqa: E402 — W31 구조 우선 인식기
 from scripts.extract_structure import classify_line  # noqa: E402 — 후보 재검증 (규칙 단일화)
@@ -63,13 +65,12 @@ def is_stem(t):
 # ── 인식 판정 ───────────────────────────────────────────────────────────────
 
 def recognize_regex(t):
-    """현행 파서의 정규식 헤더 인식 경로 (형식 기반)."""
-    if _RE_BRACKET_NUM.match(t) or _RE_HEADER_NUM.match(t) or _RE_KOREAN_BRACKET.match(t):
-        return True
-    # 옛 마더텅 형식은 _normalize_old_workbook_headers가 표준형으로 변환 → 인식 취급
-    if _RE_OLD_WB_NUM.match(t) or _RE_OLD_WB_SOURCE.match(t):
-        return True
-    return False
+    """현행 파서의 정규식 헤더 인식 경로 (형식 기반).
+
+    W34 배치 D부터 파서의 legacy 판정(_legacy_header_marker)과 같은 함수를
+    쓴다 — 정의는 동일(5개 정규식): _RE_BRACKET_NUM/_RE_HEADER_NUM/
+    _RE_KOREAN_BRACKET + 옛 마더텅 _RE_OLD_WB_NUM/_RE_OLD_WB_SOURCE."""
+    return _parser_legacy_marker(t)
 
 
 def recognize_struct(t, body_next):
@@ -330,6 +331,13 @@ def main():
         "regex_recognition_rate_pct": round(regex_rate, 2),
         "regex_plus_struct_rate_pct": round(combined_rate, 2),
         "unrecognized_shapes": len(unrecognized),
+        # ── W34 배치 D: 파서 계층 합류 상태 — v2 지표(detect_from_candidates
+        #    + legacy=파서 정규식)가 곧 합류 후 파서 계층의 인식 경로다
+        #    (engines/workbook/parser._struct_header_extras 와 같은 코어·같은
+        #    legacy). 밸브(YONE_PARSER_STRUCT_HEADERS=0) off면 정규식 단독. ──
+        "parser_struct_joined": _PARSER_STRUCT_JOINED,
+        "parser_joined_rate_pct": round(
+            v2_rate if _PARSER_STRUCT_JOINED else regex_rate, 2),
         # ── W31 구조 우선 인식기 (문서 단위) — 리그레션 지표 ──
         "struct_v2_rate_pct": round(v2_rate, 2),
         "struct_v2_recognized_occ": v2_occ,
@@ -394,6 +402,10 @@ def main():
     w("| 지표 | 값 |")
     w("|---|---|")
     w("| **정규식 경로 인식률** (`_RE_HEADER_NUM` 계열) | **%.2f%%** |" % regex_rate)
+    w("| **파서 계층 합류 인식률** (W34 배치 D — 정규식+구조 승격, "
+      "`_struct_header_extras`%s) | **%.2f%%** |"
+      % ("" if _PARSER_STRUCT_JOINED else " — 밸브 OFF",
+         v2_rate if _PARSER_STRUCT_JOINED else regex_rate))
     w("| 정규식+구조 판정 결합 인식률 | %.2f%% |" % combined_rate)
     w("| **구조 우선 인식기(W31) 인식률** (문서 단위, `core/structure/"
       "header_detect`) | **%.2f%%** |" % v2_rate)

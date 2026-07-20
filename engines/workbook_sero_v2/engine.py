@@ -152,16 +152,10 @@ class WorkbookSeroV2Engine(BaseEngine):
                 if fname.startswith("manuscripts_"):
                     fname = fname[len("manuscripts_"):]
                 fname_nfc = self._stage_fname(_nfc(fname).strip(), log)
-                is_step3 = (
-                    bool(re.search(r"(?:스텝|step)[\s_-]*3(?!\d)",
-                                   fname_nfc, re.I))
-                    or bool(re.search(r"\d+(?:\s*~\s*\d+)?\s*번", fname_nfc))
-                )
-                if self._RE_STEP12_PREFIX.match(fname_nfc):
-                    is_step3 = False    # D3 — 스텝1/2 원고의 'NN번' 오인 차단
-                if is_step3 and self._RE_ANSWERISH.search(fname_nfc):
-                    is_step3 = False    # D3 — 정답/답지 파일은 문제가 아님
-                if is_step3:
+                # 배치 A (W33): 공용 라우터 — D3 가드(스텝1/2 접두·정답류)
+                # 내장 + 'STEP 03' 등 토씨 변형 수용 (workbook_v2/routing.py)
+                from engines.workbook_v2 import routing as _routing
+                if _routing.route_step3(fname_nfc):
                     dest = os.path.join(step3_dir, fname_nfc)
                 else:
                     dest = os.path.join(manuscript_dir, fname_nfc)
@@ -184,6 +178,14 @@ class WorkbookSeroV2Engine(BaseEngine):
             f"고{grade} {year}년 {month}월")
         data = parse_manuscript_folder_v2(manuscript_dir, cfg, grade, year,
                                           month, log)
+
+        # 배치 A (W33): Step3 쌍방 대조 — 세로 파서가 파일명 패턴 미매치로
+        # 조용히 skip한 원고가 남으면 [오류] (steps_view 항목의 filename 대조)
+        from engines.workbook_v2 import routing as _routing
+        _routing.reconcile_step3(
+            os.path.join(manuscript_dir, "Step3"),
+            (data.get("steps") or {}).get("step3"), log,
+            number_matching=False)
 
         json_path = os.path.join(job_dir, "content.json")
         with open(json_path, "w", encoding="utf-8") as f:

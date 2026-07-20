@@ -229,6 +229,24 @@ class AnalysisMergeEngine(BaseEngine):
                 continue
             if os.path.isdir(full):
                 return full
+
+        # 2차 (배치 A W33, 감사 실증 #6): 숫자 토큰 매칭 — 구분자(언더스코어
+        # 등)·연도 4자리 표기와 무관하게 (학년, 년, 월) 토큰 집합으로 대조.
+        # 1차(기존 규칙)가 못 찾은 경우에만 진입 — 기존 인식분 무변경.
+        yy = str(year)[-2:]
+        for nfc, full in entries:
+            if not os.path.isdir(full):
+                continue
+            mg = re.search(r"고\s*(\d)", nfc)
+            if not mg or mg.group(1) != str(grade_num):
+                continue
+            my = re.search(r"(\d{2,4})\s*년", nfc)
+            if not my or my.group(1)[-2:] != yy:
+                continue
+            mm = re.search(r"(\d{1,2})\s*월", nfc)
+            if not mm or int(mm.group(1)) != month_int:
+                continue
+            return full
         return None
 
     @staticmethod

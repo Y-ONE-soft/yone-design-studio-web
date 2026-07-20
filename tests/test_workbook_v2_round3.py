@@ -193,8 +193,9 @@ def test_gate_g9_unused_uploads_classification(tmp_path):
     dump = {"stories": [{"idx": 0, "overflow": False,
                          "paragraphs": [{"t": "x", "s": ""}]}]}
     rep = inspect_workbook_finish(content, plan, dump, uploads_dir=uploads)
-    assert any(w.startswith("[미사용원고]") for w in rep["warnings"])
-    assert rep["ok"], "G9는 warning — critical 아님"
+    # 배치 A (W33): G9 suspicious는 critical 승격 — 반침묵(경고 무시) 금지
+    assert any(c.startswith("[미사용원고]") for c in rep["critical"])
+    assert not rep["ok"], "배치 A: G9 미사용원고는 critical (침묵 유실 금지)"
 
 
 def test_gate_g9_silent_without_uploads_dir():

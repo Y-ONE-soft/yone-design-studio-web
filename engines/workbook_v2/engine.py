@@ -17,6 +17,7 @@ import unicodedata
 from core.base import BaseEngine, safe_copy_indd, safe_copy
 from core.indesign.jsxbuild import build_jsx
 from core.paths import resolve_config
+from engines.workbook_v2 import routing as _routing
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
 _V1_CONFIG = os.path.join(os.path.dirname(_DIR), "workbook", "config.json")
@@ -25,36 +26,20 @@ _RENDER_BODY = os.path.join(os.path.dirname(os.path.dirname(_DIR)),
 
 _RE_WORD = re.compile(r"[A-Za-z][A-Za-z'\-]{3,}")
 
-# 변형문제 문제모음 파일명 (W12): "리딩파워 유형 (기본)-Unit 15- 123문제
-# [변형문제]-.hwp" 류 — Step3(변형문제) 원고로 라우팅한다. 정답/해설/답지
-# 본은 제외 (Step3 본문에 endnote로 합쳐져 있는 관행).
-# W14 c06: "리딩파워 유형완성 기출문제-16강 CR-4(177문제).hwp"처럼 '변형문제'
-# 토큰 없이 문항수 표기만 있는 기출 문제모음도 라우팅 — 붙은 표기 "\d문제"
-# 한정 (전수 인벤토리 20982건 중 36종 전부 문제모음, "DAY23~25 문제" 같은
-# 띄어쓴 표기는 문항수가 아니라 제외).
-_RE_VARIANT_POOL = re.compile(r"변형\s*문제|\d문제")
-_RE_ANSWER_TOKEN = re.compile(r"정답|해설|답지|답안")
-
 
 def _is_variant_pool_filename(fname_nfc):
-    return (bool(_RE_VARIANT_POOL.search(fname_nfc))
-            and not _RE_ANSWER_TOKEN.search(fname_nfc))
+    """변형문제 문제모음 (W12/W14) — 공용 라우터(routing.py)로 위임 (배치 A)."""
+    return _routing.is_variant_pool_filename(fname_nfc)
 
 
 def _routes_to_step3(fname_nfc):
-    """업로드 파일명 → Step3 폴더 라우팅 여부 (v1 주석 참조: Step 3/Step_3/
-    Step-3 + "N번" 패턴 + 변형문제 문제모음(W12)).
+    """업로드 파일명 → Step3 폴더 라우팅 여부.
 
-    정답/답지/해설 파일은 Step3로 라우팅하지 않는다 (W13 c05 실증:
-    "고1_모의고사_25년_10월_STEP3_정답.hwpx" 교사용 정답 hwpx가 Step3 원고
-    폴더로 들어감 — 파일명이 문항 패턴까지 겹치면 정답이 문제로 조판된다.
-    v1 textbook GDrive 경로의 _is_answer_or_explanation 제외와 동일 정책,
-    v1 본가 무변경 — 미라우팅 파일은 루트에 남아 G9 [미사용원고]로 보고)."""
-    return (
-        bool(re.search(r"(?:스텝|step)[\s_-]*3(?!\d)", fname_nfc, re.I))
-        or bool(re.search(r"\d+(?:\s*~\s*\d+)?\s*번", fname_nfc))
-        or _is_variant_pool_filename(fname_nfc)
-    ) and not _RE_ANSWER_TOKEN.search(fname_nfc)
+    배치 A (W33): 판정을 공용 라우터(engines/workbook_v2/routing.py)로 위임 —
+    토큰 정규화(공백/언더스코어/0패딩/NFC) 후 판정해 'STEP 03'·'177 문제'·
+    '변형 문항' 같은 토씨 변형에 견딘다 (감사 실증 #4 해소). 정답/답지류
+    (W13 c05)와 스텝1/2 접두(W18 D3)는 차단. 판정 이력 주석은 routing.py 참조."""
+    return _routing.route_step3(fname_nfc)
 
 
 def _norm_typo(s):
@@ -179,6 +164,10 @@ class WorkbookV2Engine(BaseEngine):
                     fname = fname[len("manuscripts_"):]
                 fname_nfc = _nfc(fname).strip()
                 if _routes_to_step3(fname_nfc):
+                    # 배치 A: v1 소비 규칙('N번.<ext>')에 맞는 규격명으로
+                    # 스테이징 ('20번 (수정).docx' 침묵 누락 — 감사 실증 #1)
+                    fname_nfc = _routing.stage_step3_name(step3_dir,
+                                                          fname_nfc, log)
                     dest = os.path.join(step3_dir, fname_nfc)
                 else:
                     dest = os.path.join(manuscript_dir, fname_nfc)
@@ -200,6 +189,15 @@ class WorkbookV2Engine(BaseEngine):
         log(f"[v2 파서] 시작 (v1 파서 재사용): 고{grade} {year}년 {month}월")
         data = parse_manuscript_folder(manuscript_dir, cfg, grade, year,
                                        month, log)
+
+        # 배치 A (W33): Step3 '입력 파일 전수 ↔ 라우팅 결과' 쌍방 대조 —
+        # 어느 문항에도 실리지 않은 원고가 남으면 [오류] 조판 중단 (침묵 금지)
+        mock = cfg.get("mockexam") or {}
+        _routing.reconcile_step3(
+            os.path.join(manuscript_dir, "Step3"),
+            (data.get("steps") or {}).get("step3"), log,
+            number_matching=bool(mock.get("normal_questions")
+                                 or mock.get("short_questions")))
 
         json_path = os.path.join(job_dir, "content.json")
         with open(json_path, "w", encoding="utf-8") as f:

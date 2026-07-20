@@ -2371,7 +2371,12 @@
     },
     "step1_c1": {
       "filename": "Step1 C1 문장배열.docx",
-      "question_numbers": [],
+      "question_numbers": [
+        1,
+        2,
+        3,
+        4
+      ],
       "paragraph_count": 53,
       "paragraphs": [
         {
@@ -3111,7 +3116,12 @@
     },
     "step1_c2": {
       "filename": "Step1 C2 빈칸어휘 정답지.docx",
-      "question_numbers": [],
+      "question_numbers": [
+        1,
+        2,
+        3,
+        4
+      ],
       "paragraph_count": 62,
       "paragraphs": [
         {
@@ -4996,7 +5006,12 @@
     },
     "step2_a1": {
       "filename": "Step2 A1 어법선택.docx",
-      "question_numbers": [],
+      "question_numbers": [
+        1,
+        2,
+        3,
+        4
+      ],
       "paragraph_count": 11,
       "paragraphs": [
         {
@@ -6292,7 +6307,12 @@
     },
     "step2_b1": {
       "filename": "Step2 B1 어법 OX.docx",
-      "question_numbers": [],
+      "question_numbers": [
+        1,
+        2,
+        3,
+        4
+      ],
       "paragraph_count": 32,
       "paragraphs": [
         {
@@ -6587,7 +6607,12 @@
     },
     "step2_c1": {
       "filename": "Step2 C1 빈칸어법 정답지.docx",
-      "question_numbers": [],
+      "question_numbers": [
+        1,
+        2,
+        3,
+        4
+      ],
       "paragraph_count": 61,
       "paragraphs": [
         {

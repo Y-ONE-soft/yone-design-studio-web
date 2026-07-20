@@ -254,6 +254,7 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ lessons: labels })
           });
+          if (mResp.status === 401) throw new Error('세션이 만료되어 통합을 실행하지 못했습니다. 다시 로그인 후 조판을 다시 실행해 주세요.');
           var mData = await mResp.json();
           (mData.logs || []).forEach(function(line) {
             logArea.textContent += line + '\n';
@@ -316,8 +317,19 @@
           es.close();
           // 결과 조회
           fetch('/api/result/' + jobId)
-            .then(function(r) { return r.json(); })
+            .then(function(r) {
+              if (r.status === 401) {
+                // 세션 만료(12h 절대) — typeset.js가 카드 표시 + job_id 보관, 복귀 시 자동 복원
+                logArea.textContent += '[오류] 세션이 만료되어 결과를 가져오지 못했습니다. 다시 로그인하면 결과가 표시됩니다.\n';
+                logArea.scrollTop = logArea.scrollHeight;
+                if (typeof window.showSessionExpiredCard === 'function') showSessionExpiredCard(jobId);
+                resolve(false);
+                return null;
+              }
+              return r.json();
+            })
             .then(function(d) {
+              if (!d) return;
               var status = d.status === 'done' ? '✓' : '✗';
               logArea.textContent += '[결과] ' + status + ' overflow=' +
                 (d.result && d.result.overflow != null ? d.result.overflow : '?') + '\n';

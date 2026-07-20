@@ -314,6 +314,94 @@ def _is_passage_marker_struct(paragraphs, i):
     return j < len(paragraphs) and _is_body_line(paragraphs[j]['text'].strip())
 
 
+# ── W34 배치 D: 구조 우선 헤더 인식 합류 (W31 core/structure/header_detect) ──
+# v1 공유 파서의 헤더 판정 경로에 문서 단위 구조 인식기를 '합류'시킨다.
+# 안전 계약 (docs/인식지점_전수감사.md §9 D안):
+#   ① 정규식(_RE_HEADER_NUM 계열)이 인식하던 것은 전부 기존 경로 그대로
+#      (하위호환 하한 — 골든 전 코퍼스 diff 0 계약)
+#   ② 구조 인식기 추가 인식분은 additive — 정규식 미인식 라인만 승격
+#   ③ 안전 밸브: 환경변수 YONE_PARSER_STRUCT_HEADERS=0 이면 합류 전체 무효
+#      (정규식 단독 — 기존 동작). W31 plan.py USE_STRUCT_HEADER_DETECT 패턴.
+# 침묵 금지(HeaderSilenceError) 승격은 여기서 하지 않는다 — v1 실서비스
+# 파서에서 예외 승격은 배치 D 범위 밖이고, v2 계열은 플랜/게이트 계층
+# (G6)이 같은 인식기로 이미 감시한다. 파서 합류는 '보강'만 (fail-open).
+USE_STRUCT_HEADER_DETECT = (
+    os.environ.get("YONE_PARSER_STRUCT_HEADERS", "1") != "0"
+)
+
+
+def _legacy_header_marker(text):
+    """기존 정규식 헤더/마커 판정 — detect_headers의 legacy 프라이어.
+
+    이 함수가 True인 라인은 기존 경로가 이미 소비하는 표기이므로 구조
+    승격 대상에서 제외한다 (additive 계약의 경계). 옛 마더텅 형식
+    (`9번`/`17년 11월 21번`)은 _normalize_old_workbook_headers가 표준형으로
+    변환하는 기존 경로가 있어 함께 legacy로 취급한다."""
+    t = (text or "").strip()
+    if not t:
+        return False
+    return bool(
+        _RE_BRACKET_NUM.match(t) or _RE_HEADER_NUM.match(t)
+        or _RE_KOREAN_BRACKET.match(t)
+        or _RE_OLD_WB_NUM.match(t) or _RE_OLD_WB_SOURCE.match(t)
+    )
+
+
+def _struct_header_extras(paragraphs):
+    """정규식 미인식 → 구조 인식 성공으로 '승격'된 라인 인덱스 집합.
+
+    W31 인식기(core/structure/header_detect.detect_headers)를 문서 단위로
+    돌리되, legacy 정규식이 이미 인식하는 라인은 결과에서 제외한다 —
+    그 라인들의 처리는 기존 경로 100% 그대로 (additive 계약).
+    밸브 off 또는 인식기 예외 시 빈 집합 (기존 동작으로 폴백)."""
+    if not USE_STRUCT_HEADER_DETECT:
+        return set()
+    try:
+        from core.structure.header_detect import detect_headers
+        texts = [p['text'] for p in paragraphs]
+        det = detect_headers(texts, legacy=_legacy_header_marker)
+        return {i for i in det.header_idx
+                if not _legacy_header_marker(texts[i])}
+    except Exception:
+        _LOG.warning("struct header detect 실패 — 정규식 단독 폴백",
+                     exc_info=True)
+        return set()
+
+
+# 구조 승격 헤더에서 지문 번호 추출 (확신 가능한 표기만 — 모호하면 None):
+#   no.N / N번(범위 N~M번 포함, 마지막 발생) / 본문N / (괄호부 제거 후) 유일 숫자
+_RE_SQ_PARENS = re.compile(r'\([^)]*\)')
+_RE_SQ_NO = re.compile(r'no\.?\s*(\d{1,3})(?:\s*~\s*\d{1,3})?', re.IGNORECASE)
+_RE_SQ_BEON = re.compile(r'(\d{1,3})(?:\s*~\s*\d{1,3})?\s*번')
+_RE_SQ_BONMUN = re.compile(r'본문\s*(\d{1,3})')
+_RE_SQ_ANYNUM = re.compile(r'\d+')
+
+
+def _struct_header_qnum(text):
+    """구조 승격 헤더 라인 → 지문 번호 (int) 또는 None.
+
+    정규식 헤더의 캡처 그룹이 선택이듯(예: '1. L4-p.82'는 번호 없음),
+    확신할 수 없는 라인은 번호를 추측하지 않고 None을 반환한다 —
+    헤더 인식(제거/분할)과 번호 추출을 분리하는 기존 의미론 유지.
+    범위(41~42번)는 기존 규약대로 첫 번호만."""
+    t = _RE_SQ_PARENS.sub(' ', (text or '').strip())
+    m = _RE_SQ_NO.search(t)
+    if m:
+        return int(m.group(1))
+    hits = _RE_SQ_BEON.findall(t)
+    if hits:
+        # 마지막 발생 — "1강 18번"의 18, "17년 11월 21번"의 21
+        return int(hits[-1])
+    m = _RE_SQ_BONMUN.search(t)
+    if m:
+        return int(m.group(1))
+    nums = _RE_SQ_ANYNUM.findall(t)
+    if len(nums) == 1 and len(nums[0]) <= 3:
+        # 괄호부 제거 후 유일 숫자 — "지문 1 (p. 24)"의 1
+        return int(nums[0])
+    return None
+
+
 def _strip_manuscript_headers(paragraphs):
     """원고 앞부분의 헤더 줄 제거.
 
@@ -324,23 +412,42 @@ def _strip_manuscript_headers(paragraphs):
     이렇게 단순화하면 책 제목/발문/섹션 라벨/부제목이 어떤 형식이든 (출판사/교재 변경 무관) 자동 처리됨.
     본문 마커가 끝까지 없는 STEP은 fallback으로 헤더 패턴 매칭을 사용.
     """
+    starts = []
+
     # 1) 정규식 마커 우선 — 기존 검증된 형식(L1-본문1/p2-no.20/p20-Example 1/[본문1] 등).
     #    이게 잡는 한 예전과 100% 동일하게 동작하므로 회귀가 없다. (구조 판정 단독은
     #    EBS의 'Example' 형식이나 짧은 본문 첫 줄/한글 문장에서 첫 지문을 놓치거나
     #    오인할 수 있어, 검증된 정규식을 먼저 적용한다.)
+    regex_idx = None
     for i, p in enumerate(paragraphs):
         text = p['text'].strip()
         if not text:
             continue
         if (_RE_BRACKET_NUM.match(text) or _RE_HEADER_NUM.match(text)
                 or _RE_KOREAN_BRACKET.match(text)):
-            return paragraphs[i:]
+            regex_idx = i
+            break
+    if regex_idx is not None:
+        starts.append(regex_idx)
+
+    # 1.5) W34 배치 D: 문서 단위 구조 승격 헤더 — 정규식 첫 마커보다 앞선
+    #      승격 헤더가 있으면 그 지점부터 (첫 지문 침묵 유실 방지). 정규식
+    #      첫 마커가 더 앞서면 기존과 동일 (additive — 시작점은 앞으로만 이동).
+    extras = _struct_header_extras(paragraphs)
+    if extras:
+        starts.append(min(extras))
 
     # 2) 정규식이 못 잡는 새 형식(예: 'PROJECT 2-본문1') → 구조 인식으로 보강.
     #    정규식 화이트리스트에 형식을 계속 추가하지 않아도(땜질 회피) 새 형식을 잡는다.
-    for i, p in enumerate(paragraphs):
-        if p['text'].strip() and _is_passage_marker_struct(paragraphs, i):
-            return paragraphs[i:]
+    #    (기존 단계 순서 유지 — 정규식 미발견 시에만 소비하던 경로.)
+    if regex_idx is None:
+        for i, p in enumerate(paragraphs):
+            if p['text'].strip() and _is_passage_marker_struct(paragraphs, i):
+                starts.append(i)
+                break
+
+    if starts:
+        return paragraphs[min(starts):]
 
     # 2) 본문 마커가 끝까지 없음 → fallback: 헤더 패턴 매칭으로 스킵
     start_idx = 0
@@ -358,9 +465,15 @@ def _strip_manuscript_headers(paragraphs):
 
 
 def _extract_question_numbers(paragraphs, step_key):
-    """원고에서 지문번호 목록 추출."""
+    """원고에서 지문번호 목록 추출.
+
+    정규식 인식 라인은 기존 경로 그대로 (하위호환 하한). W34 배치 D:
+    정규식 미인식 라인 중 구조 인식기(_struct_header_extras)가 헤더로
+    승격한 라인은 확신 가능한 표기(_struct_header_qnum)에서만 번호를
+    additive로 추가한다."""
     numbers = []
-    for p in paragraphs:
+    extras = _struct_header_extras(paragraphs)
+    for i, p in enumerate(paragraphs):
         text = p['text'].strip()
         m = _RE_BRACKET_NUM.match(text)
         if m:
@@ -373,6 +486,11 @@ def _extract_question_numbers(paragraphs, step_key):
                 # "41~42" 같은 범위는 첫 번호만 사용
                 num_str = captured.split('~')[0]
                 numbers.append(int(num_str))
+            continue
+        if i in extras:
+            n = _struct_header_qnum(text)
+            if n is not None:
+                numbers.append(n)
     return numbers
 
 
@@ -601,6 +719,19 @@ _RE_S3_JUNK_DATE = re.compile(
 # 꼬리 정답 섹션 표제: "<표제> 정답" (물음표 없음 + 공백/대시 뒤 '정답' 종결)
 _RE_S3_ANSWER_TITLE = re.compile(r'^[^?？]{0,40}[\s\-–—]정답$')
 
+# 배치 B (W33): Step3 정답부 섹션 헤더를 core/structure/rules.A_SECTION_HEADER
+# 와 공유 — 단락종류 판정기(taxonomy 09)와 같은 눈. 구 리터럴 튜플
+# ('정답 및 해설','빠른 정답 찾기','정답지','정답')은 '정답과 해설'/'정답 ·
+# 해설'/'[정답 및 해설]'을 못 잘라 정답표가 문제지에 인쇄됐다 (감사 실증 #3
+# — 판정기는 아는 표기, 서로 다른 눈 재현). 구 튜플이 공유 패턴의 부분집합
+# 임은 tests/test_answer_header_batch_b.py가 가드. rules 로드 실패 시 구
+# 튜플 등가 정규식 폴백 (fail-open — 조판을 막지 않는다).
+try:
+    from core.structure.rules import A_SECTION_HEADER as _RE_S3_SECTION_HEADER
+except Exception:                                            # noqa: BLE001
+    _RE_S3_SECTION_HEADER = re.compile(
+        r'^\s*(?:정답\s*및\s*해설|빠른\s*정답\s*찾기|정답지|정답)\s*$')
+
 
 def _strip_step3_leading_junk(paras):
     """Step3 문제모음 선두의 표제/워터마크 블록 제거 (W17 c16).
@@ -706,11 +837,12 @@ def _strip_step3_answers(paras):
     # 블록이 통째로 인쇄됐음) / "EBS 올림포스 - … 정답"(c16). 발문은
     # '?'로 끝나 매치되지 않고, "■ 정답: …" 문항별 정답은 콜론 뒤 내용이
     # 있어 매치되지 않음 (골든 전수 sweep: c04 2건 외 매치 없음 확인).
-    section_headers = ('정답 및 해설', '빠른 정답 찾기', '정답지', '정답')
+    # 배치 B (W33): 리터럴 튜플 → rules.A_SECTION_HEADER 공유 (모듈 상단
+    # _RE_S3_SECTION_HEADER 주석 참조 — 판정기와 같은 눈, 실증 #3 해소).
     cut_idx = None
     for i, p in enumerate(paras):
         text = p['text'].strip()
-        if text in section_headers or _RE_S3_ANSWER_TITLE.match(text):
+        if _RE_S3_SECTION_HEADER.match(text) or _RE_S3_ANSWER_TITLE.match(text):
             cut_idx = i
             break
     if cut_idx is not None:

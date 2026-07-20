@@ -236,8 +236,17 @@ class SuneungteukgangWorkbookV2Engine(WorkbookV2Engine):
     def parse(self, uploaded_files, job_dir, log):
         from engines.suneungteukgang_workbook.engine import (
             SuneungteukgangWorkbookEngine)
-        return SuneungteukgangWorkbookEngine().parse(uploaded_files, job_dir,
-                                                     log)
+        json_path = SuneungteukgangWorkbookEngine().parse(uploaded_files,
+                                                          job_dir, log)
+        # 배치 A (W33): Step3 쌍방 대조 — 침묵 누락 [오류] (v1 무변경,
+        # 수능특강 config는 mockexam 비어 있어 number_matching=False)
+        from engines.workbook_v2 import routing as _routing
+        content = json.load(open(json_path, encoding="utf-8"))
+        _routing.reconcile_step3(
+            os.path.join(job_dir, "uploads", "Step3"),
+            (content.get("steps") or {}).get("step3"), log,
+            number_matching=False)
+        return json_path
 
     def _load_cfg(self):
         return _load_v1_config()
