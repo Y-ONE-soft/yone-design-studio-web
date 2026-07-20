@@ -288,6 +288,10 @@ _RE_G36_TFROW = re.compile(
     r"^\s*\d{1,2}\s*\)\s*.+\(\s*(?:T\s*/\s*F|O\s*/\s*X|True\s*/\s*False)"
     r"\s*\)\s*\.?\s*$", re.I)
 
+# G37 (W39 결함 6) — 발문의 "밑줄 친 <영어구>" 인용은 밑줄 렌더 (플랜
+# runs 검사 — 덤프에는 문자 서식이 없어 플랜 계층에서 검증. 독립 정의)
+_RE_G37_QUOTE = re.compile(r"밑줄\s*친\s+([^가-힣]+)")
+
 # G13/G32 (W38) — 영어 지시문 발문 시그니처 + 요약문 마커 (출력 검사용
 # 독립 정의 — block_grammar와 순환 방지)
 # 명령형만 — WH-의문형("N. Why don't we …?")은 외부지문 '지문 제목'과
@@ -1008,6 +1012,44 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                     continue
                 elif "조건" not in qs and not strong:
                     break       # 한글 비조건 문장 — 블록 종료로 간주
+    # ── G37 [발문밑줄] (W39 결함 6): 발문 인용구 밑줄 (플랜 runs 검사) ──
+    # 발문(번호 스타일)이 "밑줄 친 <영어구>"를 인용하면 인용구 구간에
+    # 밑줄 run이 있어야 한다. 덤프에는 문자 서식 정보가 없어 플랜에서
+    # 검증 — 플랜에 밑줄 인용 발문이 하나라도 있으면(현행) critical,
+    # 전무하면(구플랜 소급) warning.
+    ulq_miss = []
+    ulq_ok = 0
+    for fl in plan.get("flows", []):
+        if fl.get("step") != "step3":
+            continue
+        for u in fl.get("units", []):
+            for p in (u["paras"] if isinstance(u, dict) else u):
+                if "번호" not in (p.get("s") or ""):
+                    continue
+                mq = _RE_G37_QUOTE.search(p.get("t") or "")
+                if not mq:
+                    continue
+                quote = mq.group(1).rstrip(" '\"’”")
+                if len(quote) < 2 or not re.search(r"[A-Za-z]{2}", quote):
+                    continue      # 표식 참조("(A)"/"ⓐ")는 인용이 아님
+                qs, qe = mq.start(1), mq.start(1) + len(quote)
+                off = 0
+                has_ul = False
+                for r in p.get("runs") or []:
+                    t = r.get("t") or ""
+                    if r.get("ul") and off < qe and off + len(t) > qs:
+                        has_ul = True
+                    off += len(t)
+                if has_ul:
+                    ulq_ok += 1
+                else:
+                    ulq_miss.append(quote[:30])
+    stats["q_quote_ul_miss"] = len(ulq_miss)
+    if ulq_miss:
+        msg = (f"[발문밑줄] 발문 인용구 밑줄 미부여 {len(ulq_miss)}건: "
+               + " | ".join(ulq_miss[:3]))
+        (critical if ulq_ok else warnings).append(msg)
+
     # ── G36 [TF선지] (W39 결함 5): 진위 선택 행 = 선지 스타일 ────────────
     # 발문(번호 스타일 + True or False/(T/F) 지시) 뒤의 "N) 문장 (T/F)"
     # 행이 선지 스타일이 아니면 지목 (111번 실증 — 지문 스타일 인쇄).

@@ -117,6 +117,81 @@ _RE_S3_ARROW = re.compile(
 # W39 결함 5: T/F 문항의 번호 괄호 영어 행 (선택 표기 꼬리 없는 근접
 # 후보 지목용 — 침묵 강등 금지)
 _RE_S3_TF_NEAR = re.compile(r"^\d{1,2}\s*\)\s+\S")
+# W39 결함 6: 발문의 "밑줄 친 <영어구>" 인용 — 조사(가/이/은/는/을/를/의)
+# 앞까지의 비한글 연속. 원문자 나열("밑줄 친 ①~⑤ 중")과 구분하기 위해
+# 영문자 필수. 인용구는 발문에서 밑줄로 인쇄된다 (실물 관행 — 6b66b750
+# 실증: 함축의미 발문 인용구가 평문으로 인쇄).
+_RE_S3_UL_QUOTE = re.compile(r"밑줄\s*친\s+([^가-힣]+)")
+
+
+def _apply_ul_span(text, runs, start, end):
+    """runs의 [start,end) 구간에 ul=True 부여 (기존 서식 run 분할 보존)."""
+    base = runs or [{"t": text, "ul": False}]
+    out = []
+    pos = 0
+    for r in base:
+        t = r.get("t") or ""
+        a, b = pos, pos + len(t)
+        pos = b
+        if not t:
+            continue
+        cuts = sorted({a, b, min(max(start, a), b), min(max(end, a), b)})
+        for x, y in zip(cuts, cuts[1:]):
+            if x >= y:
+                continue
+            seg = dict(r)
+            seg["t"] = t[x - a:y - a]
+            if x >= start and y <= end:
+                seg["ul"] = True
+            out.append(seg)
+    return out
+
+
+def _s3_underline_quotes(unit, st_q, st_p, st_bg, warnings):
+    """W39 결함 6 — 발문이 '밑줄 친 <영어구>'를 인용하면 렌더에서 밑줄.
+
+    (a) 발문 라인의 인용구 자체 (원고 runs 유무 무관 — 실물 관행),
+    (b) 문항에 밑줄 run이 전혀 없으면 지문/배경에서 인용구 유일 일치
+        위치에 부여. 대상 특정이 모호(0 또는 2+ 일치)하면 [경고]
+        (임의 밑줄 금지)."""
+    qi = [i for i, p in enumerate(unit) if p["s"] == st_q]
+    for n, i in enumerate(qi):
+        p = unit[i]
+        m = _RE_S3_UL_QUOTE.search(p["t"])
+        if not m:
+            continue
+        quote = m.group(1).rstrip("  '\"’”")
+        # 영단어(2자+) 인용만 — "(A)"/"ⓐ~ⓖ" 류 표식 참조는 인용이
+        # 아니라 본문 표식 지시라 제외 (r2c14/r4c03 전수 diff 실측)
+        if len(quote) < 2 or not re.search(r"[A-Za-z]{2}", quote):
+            continue
+        s, e = m.start(1), m.start(1) + len(quote)
+        if not any(r.get("ul") for r in _slice_runs(
+                p.get("runs") or [{"t": p["t"], "ul": False}], s, e)):
+            p["runs"] = _apply_ul_span(p["t"], p.get("runs"), s, e)
+        # (b) 문항 범위 = 다음 발문 전까지의 지문/배경 본문
+        hi = qi[n + 1] if n + 1 < len(qi) else len(unit)
+        body = [q for q in unit[i + 1:hi] if q["s"] in (st_p, st_bg)
+                or "지문" in q["s"] or "배경" in q["s"]]
+        if any(r.get("ul") for q in body for r in q.get("runs") or []):
+            continue          # 원고 밑줄 존재 — 그대로 신뢰
+        # 문장/구 인용(3단어+ 또는 15자+)이고 본문이 이 문항 안에 있을
+        # 때만 대상 탐지 — '윗글' 공유 지문 참조(본문이 앞 문항에 있음)는
+        # 원고 밑줄에 위임 (임의 밑줄 금지 — r4c03 실측)
+        if not body or (len(quote) < 15 and len(quote.split()) < 3):
+            continue
+        if re.match(r"\s*(?:윗\s*글|위\s*글)", p["t"]):
+            continue    # '윗글' 참조 — 대상은 앞 공유 지문 (원고 위임)
+        hits = [(q, q["t"].find(quote)) for q in body if quote in q["t"]]
+        if len(hits) == 1 and hits[0][0]["t"].count(quote) == 1:
+            q, at = hits[0]
+            q["runs"] = _apply_ul_span(q["t"], q.get("runs"), at,
+                                       at + len(quote))
+        else:
+            warnings.append(
+                f"[밑줄] 발문 인용구의 본문 대상 특정 불가"
+                f"({len(hits)}건 일치) — 임의 밑줄 미부여: "
+                f"'{quote[:40]}'")
 
 
 def _is_pua(ch):
@@ -423,6 +498,9 @@ def build_step3(step_data):
                     text, runs = _sub_runs(_RE_S3_QNUM, "", text, runs)
                 unit.append({"t": text, "s": style, "runs": runs})
             if unit:
+                _s3_underline_quotes(unit, st_q, _style("STEP3", "P"),
+                                     _style("STEP3", "P-CONTEXT"),
+                                     warnings)
                 units.append(unit)
                 warnings.extend(BG.validate_sequence(eff_seq))
     return {"units": units, "warnings": warnings}

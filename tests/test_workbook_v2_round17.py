@@ -489,6 +489,88 @@ def test_gate_g36_detects_tf_rows_styled_as_passage():
     assert rep3["stats"]["tf_choice_miss"] == 0
 
 
+# ── 결함 6: 발문 "밑줄 친 <영어구>" 인용 밑줄 렌더 ──────────────────────────
+
+def test_plan_underlines_question_quote():
+    """함축의미 발문의 인용구는 발문 라인에서 밑줄로 인쇄 (원고 runs
+    없어도 — 실측: 6b66b750 발문 인용구 평문 인쇄)."""
+    r = build_step3(_s3([
+        {"text": "34. 밑줄 친 You are what you type가 다음 글에서 의미하는 "
+                 "바로 가장 적절한 것은?", "kind": "Q"},
+        {"text": "Trisha Prabhu is fighting cyberbullying. Remember. "
+                 "You are what you type! In 2014, she created ReThink.",
+         "kind": "P",
+         "runs": [{"t": "Trisha Prabhu is fighting cyberbullying. "
+                        "Remember. ", "ul": False},
+                  {"t": "You are what you type", "ul": True},
+                  {"t": "! In 2014, she created ReThink.", "ul": False}]},
+    ]))
+    q = r["units"][0][0]
+    uls = [x["t"] for x in q["runs"] if x.get("ul")]
+    assert uls == ["You are what you type"]
+    assert not r["warnings"]
+
+
+def test_plan_underlines_target_in_body_when_manuscript_has_none():
+    """원고에 밑줄 run이 전혀 없으면 본문의 유일 일치 위치에 부여."""
+    r = build_step3(_s3([
+        {"text": "34. 밑줄 친 You are what you type가 다음 글에서 의미하는 "
+                 "바로 가장 적절한 것은?", "kind": "Q"},
+        {"text": "Trisha Prabhu is fighting cyberbullying. Remember. "
+                 "You are what you type! In 2014, she created ReThink.",
+         "kind": "P"},
+    ]))
+    body = r["units"][0][1]
+    assert [x["t"] for x in body["runs"] if x.get("ul")] \
+        == ["You are what you type"]
+    assert not r["warnings"]
+
+
+def test_plan_underline_ambiguous_target_warns_no_arbitrary():
+    """대상 특정 모호(본문 0건 일치) = [경고] 지목, 임의 밑줄 금지."""
+    r = build_step3(_s3([
+        {"text": "34. 밑줄 친 You are what you type가 다음 글에서 의미하는 "
+                 "바로 가장 적절한 것은?", "kind": "Q"},
+        {"text": "Trisha Prabhu is fighting cyberbullying with her "
+                 "innovative application ReThink today.", "kind": "P"},
+    ]))
+    body = r["units"][0][1]
+    assert not any(x.get("ul") for x in body["runs"] or [])
+    assert any("[밑줄]" in w for w in r["warnings"])
+
+
+def test_plan_underline_marker_refs_and_witgeul_skipped():
+    """표식 참조("(A)"/"ⓐ~ⓖ")와 '윗글' 공유 지문 참조는 임의 밑줄 금지."""
+    r = build_step3(_s3([
+        {"text": "57. 윗글의 밑줄 친 (A)를 아래 <조건>에 맞추어 "
+                 "영작하시오.", "kind": "Q"},
+        {"text": "The octopus was seen near the den again.", "kind": "P"},
+    ]))
+    assert not any(x.get("ul") for p in r["units"][0]
+                   for x in p.get("runs") or [])
+    assert not r["warnings"]
+
+
+def test_gate_g37_detects_missing_quote_underline():
+    """소급 검출 실증 — 수리 전 플랜(round16: 발문 인용구 밑줄 0)."""
+    def plan_with(runs):
+        return {"flows": [{"step": "step3", "units": [[
+            {"t": "밑줄 친 You are what you type가 다음 글에서 의미하는 "
+                  "바로 가장 적절한 것은?", "s": _ST_Q, "runs": runs},
+        ]]}], "page_cleanup": {}}
+    # 구플랜 (밑줄 인용 전무) — warning 소급
+    rep = inspect_workbook_finish({}, plan_with([]), _dump([]))
+    assert rep["stats"]["q_quote_ul_miss"] == 1
+    assert any("[발문밑줄]" in w for w in rep["warnings"])
+    # 현행 플랜 (인용 밑줄 부여) — 무지목
+    ok_runs = [{"t": "밑줄 친 ", "ul": False},
+               {"t": "You are what you type", "ul": True},
+               {"t": "가 다음 글에서 의미하는 바로 가장 적절한 것은?",
+                "ul": False}]
+    rep2 = inspect_workbook_finish({}, plan_with(ok_runs), _dump([]))
+    assert rep2["stats"]["q_quote_ul_miss"] == 0
+
+
 def test_gate_g32_detects_angle_sum_marker_not_background():
     """소급 검출: 수리 전 출력(꺾쇠 요약문 = 보기/지문 스타일) 재현."""
     plan = {"flows": [{"step": "step3", "units": [[
