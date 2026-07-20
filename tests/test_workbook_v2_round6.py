@@ -122,13 +122,38 @@ def test_cond_propagation_bullets_and_q_demotion():
     assert kinds[5] == "Cond", "조건 문구의 발문 오매칭은 조건으로 강등"
 
 
-def test_cond_propagation_keeps_sio_numbered_questions():
-    """시오-체 번호 항목은 발문 유지 (v1 실물 4ed24266 관행)."""
+def test_cond_block_numbered_sio_items_are_cond():
+    """W38 블록 문맥 우선 — 조건 블록 안 번호 항목은 종결어미(시오-체)
+    무관 조건 항목 (W16 D3 "발문 유지(v1 관행)" 사용자 확정으로 폐기).
+    진짜 발문(발문 어휘 선두 / 번호 시퀀스 이탈)만 블록을 종료한다."""
     out = classify_paragraphs([
         {"text": "<조건>"},
         {"text": "1.(A)는 본문에서 찾아 변형하여 한단어로 쓰시오."},
+        {"text": "2.(B)는 본문에서 찾아 한 단어로 쓰시오"},
+        # 번호 시퀀스 이탈 + 발문 어휘 선두 = 진짜 발문 (블록 종료)
+        {"text": "22. 다음 글의 내용을 한 문장으로 요약하고자 한다. "
+                 "빈칸 (A)에 들어갈 말로 가장 적절한 것은?"},
     ])
-    assert out[1]["kind"] != "Cond"
+    kinds = [o["kind"] for o in out]
+    assert kinds[1] == "Cond" and kinds[2] == "Cond"
+    assert kinds[3] == "Q", "진짜 발문은 블록 종료"
+
+
+def test_cond_block_paren_numbered_sio_items_are_cond():
+    """W38 (6b66b750 실증): '1) 9단어로 빈칸을 완성하시오.' 괄호형 번호
+    항목 — 발문 스타일+자동 번호로 인쇄되던 결함의 파서 계층 가드."""
+    out = classify_paragraphs([
+        {"text": "11. 다음 글을 읽고, 주제문을 주어진 조건에 맞게 완성하시오."},
+        {"text": "The passage body sentence is long enough to be a passage "
+                 "paragraph for the classifier here."},
+        {"text": "[조건]"},
+        {"text": "1) 9단어로 빈칸을 완성하시오."},
+        {"text": "2) 다음 단어를 한 번씩 사용하여 배열하시오."},
+    ])
+    kinds = [o["kind"] for o in out]
+    assert kinds[2] == "Cond"
+    assert kinds[3] == "Cond" and kinds[4] == "Cond"
+    assert kinds[0] == "Q"
 
 
 def test_cond_item_with_inline_blank_not_block_end():
@@ -239,19 +264,35 @@ def test_gate_g15_clean_paths():
         {"t": "<조건>", "s": _ST_COND},
         {"t": "- 관계대명사 활용", "s": _ST_COND},
         {"t": "정답: ___________________", "s": _ST_P},
-        # 별도 블록: 시오-체 번호 항목은 발문 유지가 v1 실물 관행 (4ed24266)
+        # 별도 블록 (W38): 시오-체 번호 항목도 조건 스타일이 정상
         {"t": "<조건>", "s": _ST_COND},
-        {"t": "1.(A)는 본문에서 찾아 변형하여 한단어로 쓰시오.", "s": _ST_Q},
-        {"t": "2.(B)는 본문에서 찾아 한 단어로 쓰시오", "s": _ST_Q},
+        {"t": "1.(A)는 본문에서 찾아 변형하여 한단어로 쓰시오.", "s": _ST_COND},
+        {"t": "2.(B)는 본문에서 찾아 한 단어로 쓰시오", "s": _ST_COND},
         # 별도 블록: 발문 시작 신호 발문 = 블록 종료
         {"t": "<조건>", "s": _ST_COND},
         {"t": "다음 글의 주제로 가장 적절한 것은?", "s": _ST_Q},
+        # 별도 블록: 번호 시퀀스 이탈 + 발문 어휘 선두 = 진짜 발문 (종료)
+        {"t": "<조건>", "s": _ST_COND},
+        {"t": "· 우리말과 같은 의미가 되도록 영작하시오.", "s": _ST_COND},
+        {"t": "22. 다음 글의 내용을 한 문장으로 요약하고자 한다.", "s": _ST_Q},
         # 별도 블록: 영어 어구 나열은 지문 유지 (v1 실물 관행 — c15/wordlist)
         {"t": "<조건>", "s": _ST_COND},
         {"t": "end / plot / have / it / a / me / keep / from", "s": _ST_P},
         {"t": "→ ____________________", "s": _ST_P},
     ]))
     assert rep["stats"]["cond_item_miss"] == 0
+
+
+def test_gate_g15_detects_sio_numbered_items_styled_as_question():
+    """W38 확장 (6b66b750 실증): 조건 블록 안 번호 항목이 발문 스타일로
+    인쇄되면 검출 — "시오-체 번호 항목 발문 유지" W16 D3 계약의 폐기."""
+    rep = inspect_workbook_finish({}, _plan_stub(), _dump([
+        {"t": "<조건>", "s": _ST_COND},
+        {"t": "1) 9단어로 빈칸을 완성하시오.", "s": _ST_Q},     # 수리 전
+        {"t": "2) 다음 단어를 한 번씩 사용하여 배열하시오.", "s": _ST_Q},
+    ]))
+    assert any("[조건항목]" in c for c in rep["critical"])
+    assert rep["stats"]["cond_item_miss"] == 2
 
 
 # ── 코퍼스 r6 — c10 커스텀 리플레이 + 플랜 앵커 ─────────────────────────────

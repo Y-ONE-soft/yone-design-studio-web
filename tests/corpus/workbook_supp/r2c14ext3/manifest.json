@@ -3,6 +3,6 @@
   "source_job": "round2-gdrive",
   "note": "W12 후보⑭ 명일여고1 외부지문3 워크북 — 수능 Analysis 헤더 + 올림포스 스텝3([올림포스2 13강 Analysis] 태그). 헤더 미인식 지문 유실 수리 후 출력이 골든.",
   "golden_regenerated": {
-    "commit": "27ab973"
+    "commit": "6f4133a"
   }
 }

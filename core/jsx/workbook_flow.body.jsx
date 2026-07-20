@@ -390,6 +390,7 @@ function updatePassageNumbers(doc, flowStories, op) {
         }
         var n = 0;
         var clamped = 0;
+        var labelFrames = [];   // W38: 좌/우 기하 정규화용 (숫자 아닌 라벨만)
         var pages = storyPagesInOrder(rec.story);
         for (var pk = 0; pk < pages.length; pk++) {
             var lab2 = pageLabel[String(pages[pk].documentOffset)];
@@ -408,13 +409,52 @@ function updatePassageNumbers(doc, flowStories, op) {
                         if (clampLabelFrame(tfs[fi], pages[pk], rec.story)) {
                             clamped++;
                         }
+                        labelFrames.push({ tf: tfs[fi], pg: pages[pk] });
                     }
                 } catch (e) {}
+            }
+        }
+        // ── W38 (결함 2): 지문번호 라벨 프레임 좌/우 크기 정규화 ─────────
+        // [원본]워크북_C의 빈칸어휘/빈칸어법 지문번호 프레임은 템플릿
+        // 단계부터 왼쪽/오른쪽 페이지 기하가 다르다 (6b66b750 덤프 실측:
+        // 클램프 후 L 폭 8.9mm vs R 폭 7.72mm — 템플릿 좌변 x1 9.6 vs
+        // 12.78). 사용자 확정: 왼쪽 페이지 크기에 통일. 왼쪽 첫 프레임의
+        // 폭/높이를 기준으로 오른쪽 프레임을 우변(클램프 결과)·상변 고정
+        // 리사이즈한다. 숫자 라벨(v1 파리티)은 위에서 제외 — 무접촉.
+        var canonW = null, canonH = null;
+        for (var lf = 0; lf < labelFrames.length; lf++) {
+            if (pageSideOf(doc, labelFrames[lf].pg) !== "L") { continue; }
+            try {
+                var gL = labelFrames[lf].tf.geometricBounds;
+                canonW = gL[3] - gL[1];
+                canonH = gL[2] - gL[0];
+            } catch (eL) {}
+            break;
+        }
+        var normalized = 0;
+        if (canonW !== null) {
+            for (var rf = 0; rf < labelFrames.length; rf++) {
+                if (pageSideOf(doc, labelFrames[rf].pg) !== "R") { continue; }
+                try {
+                    var gR = labelFrames[rf].tf.geometricBounds;
+                    var wR = gR[3] - gR[1];
+                    var hR = gR[2] - gR[0];
+                    if (Math.abs(wR - canonW) < 0.05
+                            && Math.abs(hR - canonH) < 0.05) { continue; }
+                    labelFrames[rf].tf.geometricBounds =
+                        [gR[0], gR[3] - canonW, gR[0] + canonH, gR[3]];
+                    normalized++;
+                } catch (eR) {}
             }
         }
         if (n > 0) { wlog(steps[si] + " 지문번호 프레임 갱신: " + n + "개"); }
         if (clamped > 0) {
             wlog(steps[si] + " 라벨 프레임 본문 침범 교정: " + clamped + "개");
+        }
+        if (normalized > 0) {
+            wlog(steps[si] + " 라벨 프레임 좌우 크기 통일: " + normalized
+                 + "개 (왼쪽 기준 " + Math.round(canonW * 100) / 100 + "x"
+                 + Math.round(canonH * 100) / 100 + "mm)");
         }
         total += n;
     }
@@ -957,15 +997,17 @@ function alignPartFillers(doc) {
 // [W22 파트경계 유틸 끝]
 
 // ── W30-r15 op: 크레딧(판권) 페이지 정렬 (delete 모드 — 결함 7) ─────────────
-// 사용자 확정 스펙: 마지막 크레딧 페이지는 항상 왼쪽 + 오른쪽이 비면
-// 메모(M) 페이지 (W22 파트 경계 규칙의 크레딧 확장). 크레딧 = 문서 마지막
+// 사용자 확정 스펙 (W38 정정): 크레딧 페이지는 항상 왼쪽 + **문서의 마지막
+// 페이지** — 책은 오른쪽에서 시작해 왼쪽(크레딧)에서 끝난다. W30의
+// "크레딧 뒤 오른쪽 메모(M) 추가"는 잘못된 스펙으로 폐기 (6b66b750 실증:
+// 크레딧-L 뒤 M-R이 붙어 책이 오른쪽으로 끝남). 크레딧 = 문서 마지막
 // 페이지가 마스터 없음 + 텍스트 프레임 0 (그래픽 전용 판권 — [원본]
 // 워크북_C 말미 페이지. 페이지 정리는 프레임 기반이라 이 페이지는 항상
 // 살아남고, 간지 왼쪽 동반 페이지는 라벨이 뒤따르므로 '마지막'이 될 수
 // 없다 — 전 코퍼스 덤프 sweep 실측). 크레딧이 오른쪽이면 앞에 M 1장을
-// 삽입해 왼쪽으로 보내고(376b34d0 실증: 문제단위킵 페이지 확장 +3이
-// 홀짝을 뒤집어 판권 p99가 오른쪽 단독), 크레딧 스프레드의 오른쪽은
-// 메모(M) 페이지로 채운다. 페이지 수를 바꾸는 모든 op 이후 1회 호출.
+// 삽입해 왼쪽으로 보낸다 (376b34d0 실증: 문제단위킵 페이지 확장 +3이
+// 홀짝을 뒤집어 판권 p99가 오른쪽 단독). 페이지 수를 바꾸는 모든 op
+// 이후 1회 호출.
 function alignCreditPage(doc) {
     if (doc.pages.length < 2) { return; }
     var last = doc.pages[doc.pages.length - 1];
@@ -997,11 +1039,10 @@ function alignCreditPage(doc) {
             np.appliedMaster = mMaster;
             np.move(LocationOptions.BEFORE, last);
             wlog("크레딧 정렬: 판권 p" + last.name
-                 + " 앞 M 마스터 페이지 삽입 (왼쪽 정렬)");
+                 + " 앞 M 마스터 페이지 삽입 (왼쪽 정렬 — 책 끝)");
         }
-        var memo = doc.pages.add(LocationOptions.AT_END);
-        memo.appliedMaster = mMaster;
-        wlog("크레딧 정렬: 판권 오른쪽 메모(M) 페이지 추가");
+        // W38: 크레딧이 마지막 페이지 — 뒤에 메모(M)를 붙이지 않는다
+        // (책은 왼쪽(크레딧)에서 끝난다. 사용자 확정 스펙 정정).
     } catch (e3) {
         wlog("[경고] 크레딧 정렬 실패: " + e3);
     }

@@ -205,23 +205,27 @@ def test_g28_credit_right_critical():
     assert any("크레딧 p3가 오른쪽" in c for c in rep["critical"])
 
 
-def test_g28_credit_left_without_memo_critical():
+def test_g28_credit_left_last_page_ok():
+    """W38 정정 스펙: 크레딧-왼쪽 + 문서 마지막 페이지 = 정상 (책은
+    오른쪽 시작, 왼쪽(크레딧) 끝 — W30의 '뒤 메모 필요'는 폐기)."""
     pages = _pages([("1", "A-마스터", "R", False), ("2", "", "L", False)])
     stories = [{"idx": 0, "pg": ["1"], "fp": ["1"],
                 "paragraphs": [{"t": "content", "s": ""}]}]
     rep = _rep(pages, stories)
-    assert any("메모(M) 페이지 누락" in c for c in rep["critical"])
+    assert not any("크레딧" in c for c in rep["critical"]), rep["critical"]
 
 
-def test_g28_credit_aligned_with_memo_ok():
+def test_g28_credit_trailing_memo_critical():
+    """W38 정정 스펙: 크레딧 뒤 오른쪽 메모(M) 페이지 = 위반 (W30 스펙으로
+    만든 구출력 6b66b750 [p100 크레딧-L, p101 M-R] 소급 검출)."""
     pages = _pages([("1", "A-마스터", "R", False), ("2", "", "L", False),
                     ("3", "M-마스터", "R", False)])
     stories = [{"idx": 0, "pg": ["1"], "fp": ["1"],
                 "paragraphs": [{"t": "content", "s": ""}]}]
     rep = _rep(pages, stories)
-    assert not any("크레딧" in c for c in rep["critical"]), rep["critical"]
-    # 크레딧 뒤 메모 M은 '위치 이상'으로도 잡히지 않는다 (G28② 허용 확장)
-    assert not any("M 페이지" in c for c in rep["critical"]), rep["critical"]
+    assert any("크레딧" in c and "잔여 페이지" in c for c in rep["critical"]), \
+        rep["critical"]
+    assert any("M 페이지" in c for c in rep["critical"])
 
 
 def test_g28_credit_non_delete_downgrades_to_warning():

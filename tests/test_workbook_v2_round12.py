@@ -199,11 +199,11 @@ def test_gate_g28_w21_output_labels_aligned(w21_report):
     assert not align
     orphan = [c for c in w21_report["critical"] if "고아 간지" in c]
     assert orphan and "짤지문" not in orphan[0]  # 라벨 첫 줄('고2 모의고사')로 지목
-    # W30-r15 의미론 갱신: 크레딧 스프레드 규칙(왼쪽 정렬 + 오른쪽 메모 M)
-    # 은 이후 확정된 사용자 스펙 — 구출력(p62 크레딧 왼쪽, 메모 없음)은
-    # G28④가 새로 소급 검출한다 (당시엔 게이트 부류 자체가 없었음).
+    # W38 의미론 재정정: 사용자 확정 스펙은 '크레딧 왼쪽 + 문서 마지막
+    # 페이지' (W30의 '오른쪽 메모 필요'는 잘못된 스펙으로 폐기) —
+    # 구출력(p62 크레딧 왼쪽, 마지막)은 이제 스펙 그대로 = 무결.
     credit = [c for c in w21_report["critical"] if "크레딧" in c]
-    assert credit and "메모(M) 페이지 누락" in credit[0]
+    assert not credit, credit
 
 
 def test_executor_f2_filler_sources():
