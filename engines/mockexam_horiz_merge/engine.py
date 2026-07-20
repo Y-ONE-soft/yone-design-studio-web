@@ -138,6 +138,15 @@ class MockexamHorizMergeEngine(MockexamSeroMergeEngine):
             candidates.append(os.path.join(folder, raw))
 
         if not candidates:
+            # 2차 (배치 F): 숫자 토큰 매칭 — 구분자·4자리 연도 표기 무관.
+            # '전체' 필수 + '세로' 배제 유지 (가로판 의미론 — sero와 공용 헬퍼).
+            from engines.mockexam_sero_merge.engine import (
+                _numeric_token_indd_fallback
+            )
+            candidates = _numeric_token_indd_fallback(
+                folder, grade_num, year, month,
+                require=("전체",), forbid=("세로",))
+        if not candidates:
             return None
         candidates.sort(key=lambda p: len(os.path.basename(p)))
         return candidates[0]

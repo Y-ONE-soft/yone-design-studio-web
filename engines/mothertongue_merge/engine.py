@@ -120,9 +120,17 @@ def _find_fallback_file(fallback_base, lesson_num):
     lesson_int = int(lesson_num)
     # 폴더명: "{N}강 {lesson_name}" — N 은 0-padded 가 아니므로 lesson_int 와 매칭
     target_prefixes = [f"{lesson_int}강", f"{lesson_int:02d}강"]
-    for nfc, full in list_manuscript_entries(fallback_base, None):
-        if not any(nfc.startswith(p) for p in target_prefixes):
-            continue
+    entries = list_manuscript_entries(fallback_base, None)
+    matched = [(nfc, full) for nfc, full in entries
+               if any(nfc.startswith(p) for p in target_prefixes)]
+    if not matched:
+        # 2차 (배치 F): 숫자 토큰 매칭 — 접두가 아니어도 'N강' 토큰이
+        # 있으면 인정 (예: '마더텅 7강 …', '제7강'). "1강"↛"11강" 오매칭
+        # 방지를 위해 숫자 경계 가드. 1차 0건일 때만 진입 (기존 무변경).
+        _pat = re.compile(rf"(?<!\d)0*{lesson_int}\s*강(?!\d)")
+        matched = [(nfc, full) for nfc, full in entries
+                   if _pat.search(nfc)]
+    for nfc, full in matched:
         if not os.path.isdir(full):
             continue
         # 해당 폴더 안에서 .indd 후보 (마더텅 강 파일)
@@ -140,48 +148,25 @@ def _find_fallback_file(fallback_base, lesson_num):
 
 
 def _find_month_folder(gdrive_base, grade_num, year, month):
-    grade_dir = os.path.join(gdrive_base, f"고{grade_num}")
-    # 미러 ∪ GDrive 합집합 — 미러가 stale해도(월 폴더가 GDrive에만 있어도) 누락 방지
-    from engines.final.extractor import list_manuscript_entries
-    entries = list_manuscript_entries(grade_dir, None)
-    if not entries:
-        return None
+    """월 폴더 매칭 — analysis_merge와 같은 눈 (배치 F 합류).
 
-    month_int = int(month)
-    month_variants = [str(month_int)]
-    if month_int < 10:
-        month_variants.append(f"0{month_int}")
-
-    prefix = f"고{grade_num} "
-    for nfc, full in entries:
-        if not nfc.startswith(prefix):
-            continue
-        if f"{year}년" not in nfc:
-            continue
-        if not any(f"{mv}월" in nfc for mv in month_variants):
-            continue
-        if os.path.isdir(full):
-            return full
-    return None
+    종전엔 analysis_merge의 1차(리터럴)만 사본으로 갖고 있어 배치 A(W33)의
+    2차 숫자 토큰 매칭(언더스코어/4자리 연도 — 감사 실증 #6)을 못 받았다.
+    위임으로 단일화 — 1차 로직은 동일했으므로 기존 매칭분 무변경.
+    """
+    from engines.analysis_merge.engine import AnalysisMergeEngine
+    return AnalysisMergeEngine._find_month_folder(
+        gdrive_base, grade_num, year, month)
 
 
 def _find_analysis_files(month_folder, patterns=None):
-    if not month_folder:
-        return []
-    # 미러 ∪ GDrive 합집합 — 미러가 stale해도 분석본 .indd 누락 방지
-    from engines.final.extractor import list_manuscript_entries
-    patterns = patterns or ["분석본"]
-    results = []
-    for nfc, full in list_manuscript_entries(month_folder, None):
-        if not nfc.lower().endswith(".indd"):
-            continue
-        if not any(pat in nfc for pat in patterns):
-            continue
-        if nfc.startswith("~") or "idlk" in nfc.lower():
-            continue
-        results.append(full)
-    results.sort(key=lambda p: (len(os.path.basename(p)), os.path.basename(p)))
-    return results
+    """분석본 후보 매칭 — analysis_merge와 같은 눈 (배치 F 합류).
+
+    1차(리터럴 substring)는 동일, 2차('분석.indd' 축약형 등 정규화 폴백 —
+    배치 A 미해결 (4))를 위임으로 함께 받는다.
+    """
+    from engines.analysis_merge.engine import AnalysisMergeEngine
+    return AnalysisMergeEngine._find_analysis_files(month_folder, patterns)
 
 
 class MothertongueMergeEngine(BaseEngine):
@@ -333,6 +318,7 @@ class MothertongueMergeEngine(BaseEngine):
 
         # ym 캐시 — 같은 (year, month) 월 폴더는 한 번만 스캔
         ym_cache = {}          # (year, month) → list[local_path]
+        ym_folder_cache = {}   # (year, month) → 월 폴더 경로 (후보 리포트용)
 
         # fallback 캐시 — 강 파일 한 번만 복사
         fallback_cache = {}    # lesson_num → local_path
@@ -374,6 +360,7 @@ class MothertongueMergeEngine(BaseEngine):
                 key = (year, month)
                 if key not in ym_cache:
                     folder = _find_month_folder(gdrive_base, grade_num, year, month)
+                    ym_folder_cache[key] = folder
                     if not folder:
                         ym_cache[key] = []
                     else:
@@ -407,7 +394,22 @@ class MothertongueMergeEngine(BaseEngine):
                     }
 
                 if not primary_candidates and not fallback_info:
-                    log(f"  [경고] 해결 불가: 강 {ln} 코드 {code} — 1차/폴백 모두 없음")
+                    # 침묵 금지 (배치 F): 후보 수준 리포트 동봉
+                    _mf = ym_folder_cache.get(key)
+                    if _mf:
+                        from engines.final.extractor import list_manuscript_entries
+                        _names = sorted(
+                            n for n, _f in
+                            (list_manuscript_entries(_mf, None) or [])
+                            if n.lower().endswith(".indd")
+                            and not n.startswith("~")
+                        )[:8]
+                        _extra = (f" (월 폴더 {os.path.basename(_mf)} .indd 후보: "
+                                  + (", ".join(_names) if _names else "없음") + ")")
+                    else:
+                        _extra = " (월 폴더 미발견)"
+                    log(f"  [경고] 해결 불가: 강 {ln} 코드 {code} — "
+                        f"1차/폴백 모두 없음{_extra}")
 
                 passage_entries.append({
                     "code": code,

@@ -62,6 +62,14 @@ def _extract_gang_code(filename):
     if m:
         n = int(m.group(1))
         return f"{n:02d}"
+    # 4차 (배치 F): 공백/언더스코어 제거 후 재시도 — '마더텅_7_강' 류
+    # 구분자 변형 (기존 3단 폴백 실패 시에만 진입 — 기존 인식 무변경)
+    despaced = re.sub(r"[\s_]+", "", filename)
+    if despaced != filename:
+        for pat in (r"마더텅(\d+)강", r"(\d+)강", r"[Ll]esson(\d+)"):
+            m = re.search(pat, despaced)
+            if m:
+                return f"{int(m.group(1)):02d}"
     return None
 
 
@@ -167,10 +175,14 @@ class VertToHorizEngine(BaseEngine):
             m = re.search(r"(\d+)", gang_input)
             gang_code = f"{int(m.group(1)):02d}" if m else None
         else:
-            gang_code = (
-                _extract_gang_code(_nfc(os.path.basename(verti_src)))
-                or "01"
-            )
+            gang_code = _extract_gang_code(_nfc(os.path.basename(verti_src)))
+            if not gang_code:
+                # 침묵 금지 (배치 F): 종전엔 무로그로 '01' 가정 —
+                # 오라우팅(엉뚱한 강 출처로 검증)의 침묵 지점이었다.
+                log(f"  [경고] 강 코드 자동 인식 실패 — '01' 가정 "
+                    f"(파일명: {_nfc(os.path.basename(verti_src))}). "
+                    f"다른 강이면 '마더텅 강' 입력란에 번호를 지정하세요.")
+                gang_code = "01"
 
         # 출처 JSON 검증
         with open(sources_json, encoding="utf-8") as f:
