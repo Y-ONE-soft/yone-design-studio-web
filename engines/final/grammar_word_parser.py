@@ -805,13 +805,16 @@ def _extract_unit_numbers(scope):
     return sorted(numbers)
 
 
-def parse_grammar_word(docx_path, auto_unit_base=None):
+def parse_grammar_word(docx_path, auto_unit_base=None, log=None):
     """어법수정 Word 파일(2열 테이블)에서 텍스트 추출.
 
     Args:
         docx_path: .docx 파일 경로
         auto_unit_base: Chapter 헤더 없는 파일에 대해 페이지 번호 점프로 Unit 자동 증가.
             첫 Unit 번호 (예: 9). page 차이 >= 3이면 current_unit += 1.
+        log: (배치 G, W37) 헤더 변형 의심 라인이 본문으로 병합될 때 [경고]를
+            남길 콜백 — 헤더 미인식 → 본문 병합·번호 밀림의 조용한 오염 가시화
+            (동작 무변경, fail-open).
 
     Returns:
         리스트: [{"header": "1. L2-본문1", "text": "본문 텍스트...", "unit": 9}, ...]
@@ -914,6 +917,19 @@ def parse_grammar_word(docx_path, auto_unit_base=None):
 
             if is_meta or is_section:
                 continue
+
+            # 배치 G (W37): 헤더 앵커 토큰(L/p/SL/TED/Project…)으로 시작하지만
+            # 정식 헤더 패턴에 못 미친 라인 = 헤더 표기 변형 의심 — 종전엔 본문에
+            # 조용히 병합돼 본문번호가 밀렸다. [경고]로 가시화 (동작 무변경).
+            if (not is_header and log is not None
+                    and re.match(r"^\d+\.\s*(?:L\s*\d|[pP]\.?\s*\d|SL\d|Special\s*L|"
+                                 r"TED\s*\d|PROJECT\s*\d|Project\s*\d)", left_text)):
+                try:
+                    log(f"[경고] 어법수정 헤더 변형 의심(본문으로 병합됨): "
+                        f"{left_text[:50]!r} — 헤더로 인식되지 않아 본문번호가 "
+                        f"밀릴 수 있습니다 ({os.path.basename(docx_path)})")
+                except Exception:
+                    pass
 
             if is_header:
                 _seen_real_header = True

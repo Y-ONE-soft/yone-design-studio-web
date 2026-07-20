@@ -106,13 +106,13 @@ class WhitebookEngine(BaseEngine):
             entry = {"week": week_idx, "questions": [], "answers": []}
             if pkey in uploaded_files:
                 try:
-                    entry["questions"] = parse_practice_docx(uploaded_files[pkey])
+                    entry["questions"] = parse_practice_docx(uploaded_files[pkey], log=log)
                     log(f"[연습] WEEK{week_idx} 문제: {len(entry['questions'])}개")
                 except Exception as e:
                     log(f"[연습] WEEK{week_idx} 문제 파싱 실패: {e}")
             if akey in uploaded_files:
                 try:
-                    entry["answers"] = parse_practice_answer_docx(uploaded_files[akey])
+                    entry["answers"] = parse_practice_answer_docx(uploaded_files[akey], log=log)
                     log(f"[연습] WEEK{week_idx} 답지: {len(entry['answers'])}개")
                 except Exception as e:
                     log(f"[연습] WEEK{week_idx} 답지 파싱 실패: {e}")

@@ -71,11 +71,11 @@ class WhitebookProblemEngine(BaseEngine):
 
         problem_days = []
         for p in probs:
-            problem_days += parse_problem_docx(p)
+            problem_days += parse_problem_docx(p, log=log)
         answer_days = []
         for a in ans:
             try:
-                answer_days += parse_answer_docx(a)
+                answer_days += parse_answer_docx(a, log=log)
             except Exception as e:
                 log(f"[파서] 정답 파싱 실패({os.path.basename(a)}): {e}")
 

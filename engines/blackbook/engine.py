@@ -110,7 +110,11 @@ class BlackbookEngine(BaseEngine):
             kind = classify_filename(cleaned)
             if kind is None:
                 unmatched.append(basename)
-                log(f"[파서] 파일명 분류 실패: {basename} (무시)")
+                # 배치 G (W37): 반침묵 강등 가시화 — [경고] 승격 + 판정 근거
+                # (동작 무변경: 종전과 동일하게 무시하되 로그만 상세화)
+                from engines.blackbook.kind_parser import classify_filename_reason
+                log(f"[경고] 파일명 분류 실패(원고 무시됨): {basename}")
+                log(f"    근거: {classify_filename_reason(cleaned)}")
                 continue
             try:
                 sections[kind] = parse_by_kind(kind, fpath)

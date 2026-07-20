@@ -81,6 +81,33 @@ def classify_filename(fname: str) -> Optional[str]:
     return None
 
 
+def classify_filename_reason(fname: str) -> str:
+    """분류 실패(None) 가시화용 근거 문자열 (배치 G — 판정 로직 무변경).
+
+    classify_filename 과 같은 신호를 재평가해 '무엇을 읽었고 무엇이 빠졌는지'
+    를 만든다. 실패 로그에 붙여 반침묵(경고 후 무시)을 진단 가능하게 한다.
+    """
+    try:
+        nfc = unicodedata.normalize("NFC", fname)
+        norm_low = re.sub(r"\s+", "", nfc).lower()
+        part_num = None
+        m = re.search(r"part\s*(\d+)", norm_low)
+        if m:
+            part_num = int(m.group(1))
+        else:
+            m = re.search(r"(?<!\d)(\d+)부", nfc)
+            if m:
+                part_num = int(m.group(1))
+        signals = []
+        signals.append(f"Part번호={'미검출' if part_num is None else part_num}")
+        signals.append("어휘" if "어휘" in nfc else "어휘토큰없음")
+        signals.append("정답/해설" if ("해설" in nfc or "정답" in nfc) else "정답토큰없음")
+        signals.append("문제" if "문제" in nfc else "문제토큰없음")
+        return ", ".join(signals) + " — 5종(part1 문제/어휘/해설, part2 문제/해설) 어디에도 미대응"
+    except Exception:
+        return "근거 평가 실패"
+
+
 # ── docx → 단락 (원시) ─────────────────────────────────────────────────────
 
 def _docx_paragraphs(docx_path: str) -> List[Dict]:

@@ -2071,6 +2071,30 @@ def _is_rp_source(src):
     return ("\ub9ac\ub529\ud30c\uc6cc" in s) or ("Reading" in s)
 
 
+# 배치 G (W37): tier 기타(3, 9999) 강등 가시화 수집기.
+# _canonical_order_key는 정렬 키 함수라 직접 log 콜백을 받을 수 없다(호출 빈도·시그니처).
+# 미인식 헤더를 모듈 수집기에 담아 parse_extracted가 [경고]로 배출한다.
+# 동작 무변경 — 수집·로그만 (fail-open). parse_extracted 시작 시 리셋.
+_CANON_UNKNOWN_HEADERS = set()
+
+
+def _canon_unknown_reset():
+    _CANON_UNKNOWN_HEADERS.clear()
+
+
+def _canon_unknown_report(log, limit=10):
+    """수집된 tier 기타 강등 헤더를 [경고]로 배출 (배치 G — 침묵 금지)."""
+    if not _CANON_UNKNOWN_HEADERS:
+        return
+    items = sorted(_CANON_UNKNOWN_HEADERS)
+    log(f"[경고] 정렬 canon 미인식 헤더 {len(items)}건 — tier '기타'(맨끝)로 "
+        "강등되어 섹션 순서가 의도와 다를 수 있습니다:")
+    for h in items[:limit]:
+        log(f"    • {h!r} (교과서/TED/리딩파워/모의고사/올포 어느 canon 형식에도 미매치)")
+    if len(items) > limit:
+        log(f"    … 외 {len(items) - limit}건")
+
+
 def _canonical_order_key(header, source="", g3=False):
     """전체 섹션 순서 통일 키:
     0: 교과서 (과, 본문번호)  — 단, g3=True면 교과서는 맨끝(3.5)으로 (강·TEST 뒤)
@@ -2157,6 +2181,13 @@ def _canonical_order_key(header, source="", g3=False):
         else:
             _osub = (4, 0)
         return (1.2, int(m_olpo.group(1)), _osub[0], _osub[1])
+    # 배치 G: 어떤 canon 형식에도 못 읽힌 헤더 — 조용한 순서 붕괴의 진원.
+    # 키 값은 종전과 동일(동작 무변경), 수집만 추가 (parse_extracted가 [경고] 배출).
+    if h:
+        try:
+            _CANON_UNKNOWN_HEADERS.add(h)
+        except Exception:
+            pass
     return (3, 9999, 0, h)
 
 
@@ -5636,6 +5667,7 @@ def parse_extracted(extracted_path, vocab_left, vocab_right,
                     exclude_writing=False):
     """추출 데이터 + 웹 입력을 통합하여 content.json 생성."""
     log("[파싱] 추출 데이터 분류 중...")
+    _canon_unknown_reset()  # 배치 G: tier 기타 강등 수집기 리셋 (job 단위)
 
     with open(extracted_path, encoding="utf-8") as f:
         extracted = json.load(f)
@@ -6348,5 +6380,6 @@ def parse_extracted(extracted_path, vocab_left, vocab_right,
     else:
         log("[검증] 통과")
 
+    _canon_unknown_report(log)  # 배치 G: canon 미인식 헤더 [경고] 배출
     log(f"[파싱] content.json 생성 완료")
     return content_path

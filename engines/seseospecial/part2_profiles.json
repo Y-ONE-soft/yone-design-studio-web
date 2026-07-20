@@ -1,0 +1,24 @@
+{
+  "_comment": [
+    "세서특필 PART2 구형식 분류 프로필 (배치 G, W37 — 데이터화).",
+    "종전 parser.py의 _HEADER_RE_GM1/_HEADER_RE_GM2 하드코딩 + \"'2' in school\"",
+    "분기(조건 스타일 유무)를 데이터 테이블로 옮긴 것. 판정 로직·패턴은 동일",
+    "(byte-동작 파리티 — 가드 테스트 tests/test_silence_batch_g.py).",
+    "새 학교/새 출처 표기 대응 = 이 파일에 프로필/패턴 추가 (코드 무수정).",
+    "select.school_contains: 학교명에 키 문자열이 포함되면 해당 프로필 선택."
+  ],
+  "profiles": {
+    "gm1": {
+      "header_pattern": "^(공통영어|올림포스|고\\d\\s*\\d+년|고1 2025년)",
+      "has_jogeon": false
+    },
+    "gm2": {
+      "header_pattern": "^(영어|올림포스|고\\d\\s*\\d+년|고2 26년|Reading Power)",
+      "has_jogeon": true
+    }
+  },
+  "select": {
+    "school_contains": { "2": "gm2" },
+    "default": "gm1"
+  }
+}

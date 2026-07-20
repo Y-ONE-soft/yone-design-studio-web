@@ -75,6 +75,29 @@ def _detect_columns(header_row):
     return col_map
 
 
+def _warn_default_columns(log, where, header_row, detected):
+    """배치 G (W37): 헤더 열 역할 미검출 → 위치 기본 매핑 폴백의 침묵 가시화.
+
+    폴백 자체는 종전 동작 그대로(동작 무변경) — 무엇을 못 읽었고 어떤 헤더였는지
+    [경고]로 남겨, 열 순서가 다른 파일에서의 조용한 오매핑을 진단 가능하게 한다.
+    """
+    if log is None:
+        return
+    # 호출부 조건은 `col_map.get('word') is None` — word가 0열에 감지된 경우
+    # (인덱스 0 falsy)에도 감지 결과를 보존한다. 아래는 방어적 이중 확인:
+    # '역할 자체 미검출'일 때만 경고.
+    if 'word' in (detected or {}):
+        return
+    try:
+        preview = " | ".join(str(_clean(c))[:12] for c in (header_row or [])[:6])
+        log(f"[경고] {where}: 헤더 행에서 'word' 열을 감지하지 못해 위치 기본 "
+            f"매핑(A=단어 B=뜻 C=유의어 D=반의어)으로 폴백합니다. "
+            f"헤더: [{preview}] / 감지된 역할: {detected or '없음'} — 열 순서가 "
+            "다르면 조용한 오매핑이 됩니다.")
+    except Exception:
+        pass
+
+
 def _get_cell(row, col_idx, default=""):
     """행에서 안전하게 셀 값 추출."""
     if col_idx is None or col_idx < 0 or col_idx >= len(row):
@@ -103,6 +126,7 @@ def _parse_xlsx(filepath, chapter_name, log, section_hint=""):
         col_map = _detect_columns(rows[0])
         if col_map.get('word') is None:
             # 헤더가 없으면 기본 매핑 (A=단어, B=뜻, C=유의어, D=반의어)
+            _warn_default_columns(log, f"xlsx 시트 '{sheet_name}'", rows[0], col_map)
             col_map = {'word': 0, 'meaning': 1, 'synonym': 2, 'antonym': 3}
 
         if 'definition' in col_map:
@@ -203,6 +227,7 @@ def _parse_csv(filepath, chapter_name, log, delimiter=","):
 
     col_map = _detect_columns(rows[0])
     if col_map.get('word') is None:
+        _warn_default_columns(log, "csv", rows[0], col_map)
         col_map = {'word': 0, 'meaning': 1, 'synonym': 2, 'antonym': 3}
 
     has_def = 'definition' in col_map
@@ -437,9 +462,11 @@ def _parse_docx(filepath, chapter_name, log, section_hint=""):
                 # 빈 헤더 + 6열 = HWP 단어장 패턴 (문항번호, 순번, 단어, 뜻, 유의어, 반의어)
                 ncols = len(rows[0])
                 if ncols >= 5:
+                    # 알려진 구조(열 수 신호) — 폴백이 아니라 인식이므로 경고 없음
                     col_map = {'word': 2, 'meaning': 3, 'synonym': 4,
                                'antonym': 5 if ncols >= 6 else -1}
                 else:
+                    _warn_default_columns(log, "docx 표", rows[0], col_map)
                     col_map = {'word': 0, 'meaning': 1, 'synonym': 2, 'antonym': 3}
             if 'definition' in col_map:
                 has_def = True
@@ -495,6 +522,7 @@ def _parse_pdf(filepath, chapter_name, log, section_hint=""):
                     continue
                 col_map = _detect_columns([_clean(c) if c else "" for c in table[0]])
                 if col_map.get('word') is None:
+                    _warn_default_columns(log, "pdf 표", table[0], col_map)
                     col_map = {'word': 0, 'meaning': 1, 'synonym': 2, 'antonym': 3}
                 if 'definition' in col_map:
                     has_def = True

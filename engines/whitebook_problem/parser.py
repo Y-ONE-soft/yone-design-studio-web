@@ -76,8 +76,12 @@ def _classify_problem(bare):
     return '지문'                               # 장문 지문 등
 
 
-def parse_problem_docx(path):
+def parse_problem_docx(path, log=None):
+    """배치 G (W37): log 콜백이 오면 'Day N' 헤더 미인식으로 인한 침묵 유실을
+    [경고]로 가시화한다 (동작 무변경, 로그만)."""
     days, cur = [], None
+    dropped = 0                                 # 첫 Day 인식 전 무시된 라인 수
+    first_dropped = None
     for raw in _extract_paragraphs(path):
         t = raw.strip()
         if not t:
@@ -89,13 +93,26 @@ def parse_problem_docx(path):
             days.append(cur)
             continue
         if cur is None:
-            continue                            # 표지/제목
+            dropped += 1                        # 표지/제목
+            if first_dropped is None:
+                first_dropped = bare
+            continue
         cur['lines'].append({'sty': _classify_problem(bare), 'text': _normalize(t)})
+    if log is not None and not days and dropped:
+        try:
+            log(f"[경고] 실전문제 파싱: 'Day N' 헤더가 하나도 인식되지 않아 "
+                f"{dropped}개 라인 전체가 무시됐습니다. "
+                f"첫 라인: {(first_dropped or '')[:50]!r}")
+        except Exception:
+            pass
     return days
 
 
-def parse_answer_docx(path):
+def parse_answer_docx(path, log=None):
+    """배치 G (W37): parse_problem_docx 와 동일한 Day 헤더 침묵 유실 가시화."""
     days, cur = [], None
+    dropped = 0
+    first_dropped = None
     for raw in _extract_paragraphs(path):
         t = raw.strip()
         if not t:
@@ -107,6 +124,10 @@ def parse_answer_docx(path):
             days.append(cur)
             continue
         if cur is None or bare == '해설':
+            if cur is None:
+                dropped += 1
+                if first_dropped is None:
+                    first_dropped = bare
             continue
         qm = _Q_RE.match(bare)
         if qm:
@@ -122,6 +143,13 @@ def parse_answer_docx(path):
         else:
             # 추가 해설 줄 (∙ 예문 해석 / ①~⑤ 오답 해석 / 뜻: / 지문 해석:)
             cur['lines'].append({'sty': '해설_', 'text': _normalize(t)})
+    if log is not None and not days and dropped:
+        try:
+            log(f"[경고] 정답 파싱: 'Day N' 헤더가 하나도 인식되지 않아 "
+                f"{dropped}개 라인 전체가 무시됐습니다. "
+                f"첫 라인: {(first_dropped or '')[:50]!r}")
+        except Exception:
+            pass
     return days
 
 

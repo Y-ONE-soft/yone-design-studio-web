@@ -402,7 +402,7 @@ def _struct_header_qnum(text):
     return None
 
 
-def _strip_manuscript_headers(paragraphs):
+def _strip_manuscript_headers(paragraphs, log=None):
     """원고 앞부분의 헤더 줄 제거.
 
     원고 구조: [책 제목 + 발문 + 섹션 라벨 + (선택적 부제목)] → [본문 마커 + 본문] 반복
@@ -460,6 +460,20 @@ def _strip_manuscript_headers(paragraphs):
             continue
         start_idx = i
         break
+
+    # 배치 G (W37): 3계층(정규식/W34 구조 승격/구조 마커) 전부 미발견 상태에서
+    # 헤더 라벨 패턴이 실제로 선두 단락을 버릴 때만 [경고] — 라벨 오판 시 본문이
+    # 조용히 유실되던 지점의 가시화 (아무것도 안 버리는 no-op 폴백은 무해라 제외.
+    # 예: 세로 C2 'NN번' 헤더 원고 — 코퍼스 실측으로 소음 배제). 동작 무변경.
+    if log is not None and start_idx > 0:
+        try:
+            _dropped = [p['text'].strip() for p in paragraphs[:start_idx]
+                        if p['text'].strip()]
+            log(f"[경고] 본문 마커(지문 헤더) 미발견 — 헤더 라벨 패턴 폴백으로 "
+                f"선두 {len(_dropped)}개 단락을 제거했습니다 (라벨 오판 시 본문 "
+                f"유실). 제거 첫 단락: {(_dropped[0] if _dropped else '')[:50]!r}")
+        except Exception:
+            pass
 
     return paragraphs[start_idx:]
 
@@ -540,7 +554,7 @@ _RE_QUICK_ANSWER = re.compile(
 )
 
 
-def _remove_answer_section(paras):
+def _remove_answer_section(paras, log=None):
     """
     원고에서 정답 섹션 제거.
     감지 패턴:
@@ -548,6 +562,10 @@ def _remove_answer_section(paras):
     - "정답 및 해설" / "정답과 해설" 단독 줄
     - "빠른 정답 찾기" 단독 줄
     패턴이 나타나면 그 이후 모든 단락을 제거.
+
+    배치 G (W37): log 콜백이 오면, 구 눈(위 패턴)이 절단하지 못했는데
+    공유 rules.A_SECTION_HEADER(배치 B의 눈)가 정답부 헤더로 보는 라인이
+    남아 있으면 [경고]를 남긴다 — '서로 다른 눈' 침묵의 가시화 (동작 무변경).
     """
     for i, p in enumerate(paras):
         text = p['text'].strip()
@@ -562,14 +580,33 @@ def _remove_answer_section(paras):
             prev = paras[i - 1]['text'].strip()
             if _RE_ANSWER_SECTION.match(prev) or _RE_ANSWER_HEADER.match(prev):
                 return paras[:i - 1]
+
+    # 절단 없음 — 같은 눈(rules)으로 재검사해 침묵 통과를 가시화 (로그만, fail-open)
+    if log is not None:
+        try:
+            from core.structure.rules import A_SECTION_HEADER as _A_HDR
+            for p in paras:
+                t = p['text'].strip()
+                # "번호/정답" 단독 줄은 위 연속 조건 전용 — 단독 출현은 오탐이 많아 제외
+                if t and _A_HDR.match(t) and not _RE_ANSWER_HEADER.match(t):
+                    log(f"[경고] STEP1/2 정답부 헤더 후보 미절단: {t[:40]!r} — "
+                        "구 감지 패턴이 못 읽는 표기입니다. 정답부가 문제지에 "
+                        "인쇄될 수 있으니 원고를 확인하세요.")
+                    break
+        except Exception:
+            pass
     return paras
 
 
-def _filter_short_questions(paras, short_numbers):
+def _filter_short_questions(paras, short_numbers, log=None):
     """
     짤지문 번호에 해당하는 지문 구간을 제거.
     [18], [19], [25]~[28], [43]~[45] 번호의 지문과 그 내용을 삭제.
     헤더 패턴(p2-no.18 등)도 동일하게 처리.
+
+    배치 G (W37): log 콜백이 오면, 필터 후에도 짤지문 번호가 헤더 표기
+    (no.N / [N])로 잔존하는 라인을 [경고]로 가시화 — 정규식이 못 읽은
+    헤더 형식이면 짤지문이 조용히 인쇄되던 침묵 지점 (동작 무변경, 로그만).
     """
     if not short_numbers:
         return paras
@@ -623,6 +660,27 @@ def _filter_short_questions(paras, short_numbers):
 
         if not skip:
             result.append(p)
+
+    # 배치 G: 짤지문 번호가 헤더 표기로 잔존하면 [경고] (fail-open, 로그만).
+    # 대상 표기는 확신 표기(no.N / [N])만 — 본문 속 우연한 숫자는 오탐이라 제외.
+    if log is not None:
+        try:
+            leftover = set()
+            for p in result:
+                t = p['text'].strip()
+                for m in re.finditer(
+                        r'(?<![A-Za-z])no\.?\s*0*(\d+)|^\[\s*0*(\d+)\s*\]', t,
+                        re.IGNORECASE | re.MULTILINE):
+                    n_str = m.group(1) or m.group(2)
+                    n = int(n_str)
+                    if n in short_set:
+                        leftover.add(n)
+            if leftover:
+                log(f"[경고] 짤지문 필터 미제거 의심: 번호 {sorted(leftover)} 가 "
+                    "필터 후에도 헤더 표기(no.N/[N])로 잔존 — 헤더 형식이 "
+                    "짤지문 매칭 정규식과 달라 해당 지문이 인쇄될 수 있습니다.")
+        except Exception:
+            pass
 
     return result
 
@@ -2051,9 +2109,9 @@ def parse_manuscript_folder(manuscript_dir, config, grade, year, month, log=None
         if step_key == "step1_a1":
             sections = _split_a1_sections(paras)
             for sec_key, sec_paras in sections.items():
-                sec_paras = _strip_manuscript_headers(sec_paras)
-                sec_paras = _remove_answer_section(sec_paras)
-                sec_paras = _filter_short_questions(sec_paras, short_nums)
+                sec_paras = _strip_manuscript_headers(sec_paras, log=log)
+                sec_paras = _remove_answer_section(sec_paras, log=log)
+                sec_paras = _filter_short_questions(sec_paras, short_nums, log=log)
                 cleaned = _clean_empty_lines(sec_paras)
                 q_nums = _extract_question_numbers(cleaned, sec_key)
                 result["steps"][sec_key] = {
@@ -2066,13 +2124,13 @@ def parse_manuscript_folder(manuscript_dir, config, grade, year, month, log=None
             continue
 
         # 정답 구간 제거
-        paras = _remove_answer_section(paras)
+        paras = _remove_answer_section(paras, log=log)
 
         # 헤더 제거
-        paras = _strip_manuscript_headers(paras)
+        paras = _strip_manuscript_headers(paras, log=log)
 
         # 짤지문 필터링 (STEP1~2만, STEP3는 별도 처리)
-        paras = _filter_short_questions(paras, short_nums)
+        paras = _filter_short_questions(paras, short_nums, log=log)
 
         # [L1-9] 마커 제거 (교과서 원고)
         paras = _strip_lesson_markers(paras)

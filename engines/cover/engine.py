@@ -243,7 +243,13 @@ class CoverEngine(BaseEngine):
 
         # 출력 경로 (표지 폴더/하위폴더 + job_dir)
         sub = _resolve_cover_subdir(out_base)
-        cover_dir = os.path.join(_COVER_OUTPUT_DIR, sub)
+        # 배치 G (W37): 하위폴더 결정 가시화 — 키워드 미매칭 기본 폴백은 산출물이
+        # 예상 밖 폴더로 가는 조용한 강등이었다 (동작 무변경, 로그만).
+        if sub == _SUBFOLDER_DEFAULT:
+            log(f"[알림] 표지 하위폴더 키워드(워크북/파이널엣지/포켓북) 미매칭 — "
+                f"기본 '{sub}' 폴더에 저장합니다 (파일명: {out_base})")
+        else:
+            log(f"출력 하위폴더: {sub}")
         os.makedirs(cover_dir, exist_ok=True)
         pdf_path = os.path.join(job_dir, out_base + ".pdf")
         ai_out_path = os.path.join(cover_dir, out_base + ".ai")

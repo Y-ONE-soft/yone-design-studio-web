@@ -44,8 +44,13 @@ def parse_files(paths, log=None):
     for path in sorted(paths):
         kind = classify_filename(_clean_name(path))
         if kind is None:
+            # 배치 G (W37): 판정 근거 동봉 ([경고] 가시화 — 동작 무변경)
+            from engines.blackbook.kind_parser import classify_filename_reason
+            reason = classify_filename_reason(_clean_name(path))
             out["unmatched"].append(_clean_name(path))
-            out["warnings"].append(f"파일 분류 실패: {_clean_name(path)}")
+            out["warnings"].append(
+                f"파일 분류 실패: {_clean_name(path)} ({reason})")
+            _log(f"[경고] 파일명 분류 실패(원고 무시됨): {_clean_name(path)} — {reason}")
             continue
         if kind in ("part1_problem", "part2_problem"):
             doc = build_ir(extract_file_paragraphs(path), log=log)

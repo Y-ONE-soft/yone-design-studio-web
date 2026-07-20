@@ -768,11 +768,18 @@ class FinalEngine(BaseEngine):
             log(f"[고3] 필터링 후: {len(wb_files)}개 파일")
 
         # 2) 시험범위 파싱 + 어법수정 소스 결정
-        from engines.final.scope_parser import parse_all_scopes
+        from engines.final.scope_parser import parse_all_scopes, classify_scope_candidates
         scopes = parse_all_scopes(wb_files)
         log("[범위] 시험범위 분석:")
         for s in scopes:
             log(f"  • {s['scope']} → {s['type']} (어법수정: {s['grammar_source']})")
+            # 배치 G: unknown 강등 침묵 금지 — 어법수정 소스 경로에 도달하지 못하는
+            # 분류 실패를 [경고]+후보 근거로 가시화 (분류/동작 무변경, 로그만).
+            if s["type"] == "unknown":
+                log(f"[경고] 시험범위 분류 실패(unknown): '{s['scope']}' "
+                    f"(파일: {s['file']}) — 어법수정 소스 탐색 경로에 도달하지 못합니다.")
+                for hint in classify_scope_candidates(s["scope"]):
+                    log(f"    후보/근거: {hint}")
 
         # 2.5) 고2 올포기출 xlsx 매핑 미리 로드 (어법수정·문장배열·중요어휘 모두 사용)
         # 시트: EBS 작업/올림포스 고2 기출/고2 올림포스 기출 지문 출처 *.xlsx
@@ -997,6 +1004,14 @@ class FinalEngine(BaseEngine):
                 for tp in ted_paths:
                     word_files.append((tp, "TED"))
 
+            else:
+                # 배치 G: 어법수정 word_file 소스인데 위 분기 어디에도 해당하지 않는
+                # scope 유형(unknown/zaistory 등)은 종전엔 word_files=[]로 완전 침묵
+                # 통과 — 어법수정이 통째로 빠져도 로그 0줄이었다. [경고]로 가시화.
+                log(f"[경고] 어법수정 소스 탐색 미구현/미도달 유형: "
+                    f"'{scope_text}' → {scope_type} — 이 범위의 어법수정 Word는 "
+                    f"수집되지 않습니다 (파일: {s.get('file', '?')}).")
+
             for wf_item in word_files:
                 # textbook: (path, lesson_str), ebs: (path, lecture_int)
                 # mockexam: (path, "YYMM"), 나머지(외부지문 TED 등): (path, "TED") or plain path
@@ -1051,7 +1066,7 @@ class FinalEngine(BaseEngine):
                 # auto_unit_base: 리딩파워 Chapter 헤더 없는 파일에서 페이지 점프로 Unit 자동 증가
                 # (예: Example 제외 워크북 파일 = 9강 p68-p71, 10강 p74-p77, 11강 p80-p81)
                 _auto_base = ebs_lecture if scope_type == "ebs_readingpower" else None
-                blocks = parse_grammar_word(wf, auto_unit_base=_auto_base)
+                blocks = parse_grammar_word(wf, auto_unit_base=_auto_base, log=log)
                 # 올포: 강별 본문 번호 카운터 (N강 본문1, N강 본문2, ...)
                 ebs_body_counter = 0
                 # 교과서(비SL): 블록 순서 기반 본문 카운터
@@ -1324,7 +1339,7 @@ class FinalEngine(BaseEngine):
                     _wf = _local
 
                 try:
-                    _blocks = parse_grammar_word(_wf)
+                    _blocks = parse_grammar_word(_wf, log=log)
                 except Exception as _e:
                     log(f"  [\uc5b4\ubc95\uc218\uc815] \ud30c\uc2f1 \uc2e4\ud328 {_wf_key}: {_e}")
                     try:
@@ -1501,7 +1516,7 @@ class FinalEngine(BaseEngine):
                 _dl_files = find_deeplearning_grammar_files(content_base, _dl_subject, _dl_publisher, log=log)
                 _dl_added = 0
                 for _dlf in _dl_files:
-                    for _b in parse_grammar_word(_dlf):
+                    for _b in parse_grammar_word(_dlf, log=log):
                         _ml = re.search(r"L\s*(\d+)\s*-\s*본문", _b.get("header", ""))
                         if not _ml:
                             continue   # Appendix 등 본문 헤더 없는 junk 블록 스킵
