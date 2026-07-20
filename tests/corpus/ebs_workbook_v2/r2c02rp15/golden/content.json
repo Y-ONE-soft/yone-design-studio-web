@@ -4663,7 +4663,7 @@
          "ul": false
         }
        ],
-       "kind": "UNKNOWN"
+       "kind": "Cond"
       },
       {
        "text": "tasks / completed / for the test / the earlier /",
@@ -4673,7 +4673,7 @@
          "ul": false
         }
        ],
-       "kind": "UNKNOWN"
+       "kind": "Cond"
       },
       {
        "text": "studying / each day / the",
@@ -4683,7 +4683,7 @@
          "ul": false
         }
        ],
-       "kind": "UNKNOWN"
+       "kind": "Cond"
       },
       {
        "text": "__________________________________________________________",
@@ -5635,7 +5635,7 @@
          "ul": false
         }
        ],
-       "kind": "UNKNOWN"
+       "kind": "Cond"
       },
       {
        "text": "more difficult / than / his schedule / into / ",
@@ -5645,7 +5645,7 @@
          "ul": false
         }
        ],
-       "kind": "UNKNOWN"
+       "kind": "Cond"
       },
       {
        "text": "several 15-minute blocks / to fit",
@@ -5655,7 +5655,7 @@
          "ul": false
         }
        ],
-       "kind": "UNKNOWN"
+       "kind": "Cond"
       },
       {
        "text": "3. 문장 부호 및 대소문자 구분은 채점 기준에서 제외",

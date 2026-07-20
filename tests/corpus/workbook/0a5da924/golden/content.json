@@ -50975,7 +50975,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "Sum"
       },
       {
        "text": "Just as individuals develop skills through coaching, children acquire values by (A)__________ various behaviors under parental guidance; otherwise, they will be (B)__________ by external influences, highlighting the necessity for parents to actively assist their children in becoming (C)__________ individuals.",
@@ -50985,7 +50985,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "P-CONTEXT"
       },
       {
        "text": "<조건>",
@@ -52600,7 +52600,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "Sum"
       },
       {
        "text": "Although the ideal approach is to evaluate competing ideas based on facts, people in reality often seek language for (A)__________ to support what they already (B)__________; however, we can transcend this simple self-defense by treating language more (C)__________.",
@@ -52610,7 +52610,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "P-CONTEXT"
       },
       {
        "text": "<조건>",
@@ -54360,7 +54360,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "Sum"
       },
       {
        "text": "To achieve sudden insights for challenging problems, one must maintain broad attention, ensuring that their experiences are not (A)__________ restricted, since a(n) (B)__________ range of knowledge expands the imagination necessary to (C)__________ creativity.",
@@ -54370,7 +54370,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "P-CONTEXT"
       },
       {
        "text": "<조건>",
@@ -56088,7 +56088,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "Sum"
       },
       {
        "text": "While shame centers on identity and acts (A)__________ to harm our self-belief, guilt focuses on behavior and serves as a helpful (B)__________ for making positive amends and (C)__________ negative actions.",
@@ -56098,7 +56098,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "P-CONTEXT"
       },
       {
        "text": "<조건>",
@@ -57814,7 +57814,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "Sum"
       },
       {
        "text": "Although scrolling on social media provides instant (A)__________ by rapidly increasing dopamine, the brain's drive toward homeostasis forces those levels to (B)__________ drop, leaving you in a(n) (C)__________ emotional state than before.",
@@ -57824,7 +57824,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "P-CONTEXT"
       },
       {
        "text": "<조건>",
@@ -59494,7 +59494,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "Sum"
       },
       {
        "text": "Literature remains significant across generations because it (A)__________ captures the human experience, enabling readers to (B)__________ with diverse characters and deepen their (C)__________ of the human condition.",
@@ -59504,7 +59504,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "P-CONTEXT"
       },
       {
        "text": "<조건>",
@@ -61212,7 +61212,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "Sum"
       },
       {
        "text": "A viewfinder aids children in (A)__________ their observation by preventing them from being (B)__________ by the entire scene, provided the card's dimensions are carefully considered to achieve effective (C)__________ of unnecessary visual information.",
@@ -61222,7 +61222,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "P-CONTEXT"
       },
       {
        "text": "<조건>",
@@ -62340,7 +62340,7 @@
          "ul": false
         }
        ],
-       "kind": "UNKNOWN"
+       "kind": "P-CONTEXT"
       },
       {
        "text": "Our world is not just interconnected, but ever-changing, even if we can't sense it. While you're reading this, you're changing. You're aging (a minute amount, thankfully), but the neural networks in your brain are also imperceptibly changing as you perceive each word.  ( ① ) Crucially, even when we're seemingly not doing anything of note, events are taking place outside your immediate surroundings that will change your life in the future, though you won't realize it yet.  ( ② ) Heraclitus, the ancient Greek philosopher, rightly pointed out, \"No man ever steps in the same river twice. For it's not the same river and he's not the same man.\"  ( ③ ) To that, Cratylus, a student of Heraclitus, added that we are not mere passive observers.  ( ④ ) When you step in a river, you change it.  ( ⑤ ) Even microscopic changes add up over time.",
@@ -62894,7 +62894,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "Sum"
       },
       {
        "text": "Since the interconnected world is (A)__________, individuals constantly experience (B)__________ internal shifts while actively transforming their surroundings, demonstrating that even tiny modifications accumulate over time.",
@@ -62904,7 +62904,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "P-CONTEXT"
       },
       {
        "text": "<조건>",
@@ -64524,7 +64524,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "Sum"
       },
       {
        "text": "Research shows that altering study environments facilitates better (A)__________ of information because environmental (B)__________ unconsciously establishes rich (C)__________ that strengthen the learning process.",
@@ -64534,7 +64534,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "P-CONTEXT"
       },
       {
        "text": "<조건>",
@@ -66263,7 +66263,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "Sum"
       },
       {
        "text": "Although humans are evolutionarily wired to respond (A)__________ to various smells, we find it (B)c__________ to describe or identify them, especially out of context, due to the lack of specific olfactory vocabulary in language, which forces us to rely on the (C)__________ of the odors instead.",
@@ -66273,7 +66273,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "P-CONTEXT"
       },
       {
        "text": "<조건>",
@@ -67990,7 +67990,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "Sum"
       },
       {
        "text": "Humans adapt to their environments by (A)__________ modifying their actions based on the outcomes they produce, maintaining habits that offer a (B)__________ or reward, while reducing behaviors that result in (A)__________ consequences or lack of progress.",
@@ -68000,7 +68000,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "P-CONTEXT"
       },
       {
        "text": "<조건>",
@@ -69567,7 +69567,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "Sum"
       },
       {
        "text": "According to case studies, (A)__________ practicing digital minimalism by restricting device usage can significantly lower emotional distress and improve well-being, as reducing constant notifications allows individuals to focus on (B)__________ activities and find mental (C)__________.",
@@ -69577,7 +69577,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "P-CONTEXT"
       },
       {
        "text": "<조건>",
@@ -71246,7 +71246,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "Sum"
       },
       {
        "text": "While the cold and (A)__________ climate of the Ice Age made farming impossible due to the difficulty of plant growth, subsequent warming and increased moisture triggered an environmental (B)__________, leading people to settle where they could cultivate food (C)__________.",
@@ -71256,7 +71256,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "P-CONTEXT"
       },
       {
        "text": "<조건>",
@@ -72942,7 +72942,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "Sum"
       },
       {
        "text": "Unlike long-term memory which requires retrieval into consciousness, working memory allows us to be (A)__________ aware of stored items; however, its processing capacity remains (B)__________, preventing us from maintaining numerous (C)__________ in our immediate awareness simultaneously.",
@@ -72952,7 +72952,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "P-CONTEXT"
       },
       {
        "text": "<조건>",
@@ -74726,7 +74726,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "Sum"
       },
       {
        "text": "Research indicates that (A)__________ gestures while describing an event, whether instructed or done (B)__________, significantly enhances long-term memory because it assists in making the spoken information more (C)__________.",
@@ -74736,7 +74736,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "P-CONTEXT"
       },
       {
        "text": "<조건>",
@@ -76408,7 +76408,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "Sum"
       },
       {
        "text": "Since trees naturally (A)__________ carbon dioxide through photosynthesis, the loss of forests due to deforestation leads to a progressive (B)__________ in atmospheric CO2, causing more solar radiation to be trapped and ultimately raising the planet's average (C)__________.",
@@ -76418,7 +76418,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "P-CONTEXT"
       },
       {
        "text": "<조건>",
@@ -78032,7 +78032,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "Sum"
       },
       {
        "text": "According to Joseph LeDoux, an unconscious mechanism acts as an automatic detector that evaluates safety, meaning our initial responses are triggered (A)__________ rather than logically, which often drives us to later construct reasons to (B)__________ those choices under the illusion that they are entirely (C)__________.",
@@ -78042,7 +78042,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "P-CONTEXT"
       },
       {
        "text": "<조건>",
@@ -79660,7 +79660,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "Sum"
       },
       {
        "text": "While commercial businesses strive for certainty, professional sports rely on (A)__________ to boost attendance and league revenue, even though this absence of predictability causes significant (B)__________ in performance quality, which marketers try to manage by systematically (C)__________ the overall experience.",
@@ -79670,7 +79670,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "P-CONTEXT"
       },
       {
        "text": "<조건>",

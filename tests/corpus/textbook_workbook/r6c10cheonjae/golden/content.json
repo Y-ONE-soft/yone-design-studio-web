@@ -666,7 +666,7 @@
          "ul": false
         }
        ],
-       "kind": "UNKNOWN"
+       "kind": "Cond"
       },
       {
        "text": "both, tried, won, best, my",
@@ -676,7 +676,7 @@
          "ul": false
         }
        ],
-       "kind": "UNKNOWN"
+       "kind": "Cond"
       },
       {
        "text": "1. 위 단어들을 어형변화 없이 모두, 한 번씩만 사용할 것",
@@ -1593,7 +1593,7 @@
          "ul": false
         }
        ],
-       "kind": "UNKNOWN"
+       "kind": "Ans"
       },
       {
        "text": "다음 글을 읽고 물음에 답하시오. [8과]",
@@ -7574,7 +7574,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "Sum"
       },
       {
        "text": "In Gijisi Juldarigi, regardless of the (A)_____________ of the game, participants pull the (B)_______________ rope for their team as a ritual, praying for peace and (C)_____________ in their community.",
@@ -7592,7 +7592,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "P-CONTEXT"
       },
       {
        "text": "      (A)\t    (B)\t\t   (C)",
@@ -7602,7 +7602,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "C"
       },
       {
        "text": "① income\t intangible\tabsence",
@@ -7612,7 +7612,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "C"
       },
       {
        "text": "② outbreak\t backward\tadolescence",
@@ -7622,7 +7622,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "C"
       },
       {
        "text": "③ cause\t slight\t\tabnormality",
@@ -7632,7 +7632,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "C"
       },
       {
        "text": "④ outcome\t huge\t\tabundance",
@@ -7642,7 +7642,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "C"
       },
       {
        "text": "⑤ variability\t reflective\tabundant",
@@ -7652,7 +7652,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "C"
       },
       {
        "text": "위 글의 밑줄 친 (가)를 영작하시오.",
@@ -8819,7 +8819,7 @@
          "ul": false
         }
        ],
-       "kind": "UNKNOWN"
+       "kind": "Ans"
       },
       {
        "text": "다음 글의 밑줄 친 우리말에 맞는 영어문장이 되도록 <보기>의 주어진 단어들을 모두 한 번씩만 사용하여 문장을 완성하시오. 필요하면 어법에 맞게 고쳐 쓰시오 [8과]",

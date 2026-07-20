@@ -114,6 +114,84 @@ _RE_S3_SPEAKER = re.compile(r"^[A-Za-z][A-Za-z .]{0,12}[:：]")
 # 코퍼스에도 19건 존재 — v1 파리티 회복).
 _RE_S3_ARROW = re.compile(
     "^[⬇⇩↓↘⇓⬆↑⇧⇑️]+$")
+# W39 결함 5: T/F 문항의 번호 괄호 영어 행 (선택 표기 꼬리 없는 근접
+# 후보 지목용 — 침묵 강등 금지)
+_RE_S3_TF_NEAR = re.compile(r"^\d{1,2}\s*\)\s+\S")
+# W39 결함 6: 발문의 "밑줄 친 <영어구>" 인용 — 조사(가/이/은/는/을/를/의)
+# 앞까지의 비한글 연속. 원문자 나열("밑줄 친 ①~⑤ 중")과 구분하기 위해
+# 영문자 필수. 인용구는 발문에서 밑줄로 인쇄된다 (실물 관행 — 6b66b750
+# 실증: 함축의미 발문 인용구가 평문으로 인쇄).
+_RE_S3_UL_QUOTE = re.compile(r"밑줄\s*친\s+([^가-힣]+)")
+
+
+def _apply_ul_span(text, runs, start, end):
+    """runs의 [start,end) 구간에 ul=True 부여 (기존 서식 run 분할 보존)."""
+    base = runs or [{"t": text, "ul": False}]
+    out = []
+    pos = 0
+    for r in base:
+        t = r.get("t") or ""
+        a, b = pos, pos + len(t)
+        pos = b
+        if not t:
+            continue
+        cuts = sorted({a, b, min(max(start, a), b), min(max(end, a), b)})
+        for x, y in zip(cuts, cuts[1:]):
+            if x >= y:
+                continue
+            seg = dict(r)
+            seg["t"] = t[x - a:y - a]
+            if x >= start and y <= end:
+                seg["ul"] = True
+            out.append(seg)
+    return out
+
+
+def _s3_underline_quotes(unit, st_q, st_p, st_bg, warnings):
+    """W39 결함 6 — 발문이 '밑줄 친 <영어구>'를 인용하면 렌더에서 밑줄.
+
+    (a) 발문 라인의 인용구 자체 (원고 runs 유무 무관 — 실물 관행),
+    (b) 문항에 밑줄 run이 전혀 없으면 지문/배경에서 인용구 유일 일치
+        위치에 부여. 대상 특정이 모호(0 또는 2+ 일치)하면 [경고]
+        (임의 밑줄 금지)."""
+    qi = [i for i, p in enumerate(unit) if p["s"] == st_q]
+    for n, i in enumerate(qi):
+        p = unit[i]
+        m = _RE_S3_UL_QUOTE.search(p["t"])
+        if not m:
+            continue
+        quote = m.group(1).rstrip("  '\"’”")
+        # 영단어(2자+) 인용만 — "(A)"/"ⓐ~ⓖ" 류 표식 참조는 인용이
+        # 아니라 본문 표식 지시라 제외 (r2c14/r4c03 전수 diff 실측)
+        if len(quote) < 2 or not re.search(r"[A-Za-z]{2}", quote):
+            continue
+        s, e = m.start(1), m.start(1) + len(quote)
+        if not any(r.get("ul") for r in _slice_runs(
+                p.get("runs") or [{"t": p["t"], "ul": False}], s, e)):
+            p["runs"] = _apply_ul_span(p["t"], p.get("runs"), s, e)
+        # (b) 문항 범위 = 다음 발문 전까지의 지문/배경 본문
+        hi = qi[n + 1] if n + 1 < len(qi) else len(unit)
+        body = [q for q in unit[i + 1:hi] if q["s"] in (st_p, st_bg)
+                or "지문" in q["s"] or "배경" in q["s"]]
+        if any(r.get("ul") for q in body for r in q.get("runs") or []):
+            continue          # 원고 밑줄 존재 — 그대로 신뢰
+        # 문장/구 인용(3단어+ 또는 15자+)이고 본문이 이 문항 안에 있을
+        # 때만 대상 탐지 — '윗글' 공유 지문 참조(본문이 앞 문항에 있음)는
+        # 원고 밑줄에 위임 (임의 밑줄 금지 — r4c03 실측)
+        if not body or (len(quote) < 15 and len(quote.split()) < 3):
+            continue
+        if re.match(r"\s*(?:윗\s*글|위\s*글)", p["t"]):
+            continue    # '윗글' 참조 — 대상은 앞 공유 지문 (원고 위임)
+        hits = [(q, q["t"].find(quote)) for q in body if quote in q["t"]]
+        if len(hits) == 1 and hits[0][0]["t"].count(quote) == 1:
+            q, at = hits[0]
+            q["runs"] = _apply_ul_span(q["t"], q.get("runs"), at,
+                                       at + len(quote))
+        else:
+            warnings.append(
+                f"[밑줄] 발문 인용구의 본문 대상 특정 불가"
+                f"({len(hits)}건 일치) — 임의 밑줄 미부여: "
+                f"'{quote[:40]}'")
 
 
 def _is_pua(ch):
@@ -317,7 +395,11 @@ def build_step3(step_data):
     주석이 구버전(콘텐츠-only 코퍼스 재실행)이어도 <조건>/[요약문] 블록
     문맥이 라인 판정을 제약하도록 플랜 계층에서 같은 규칙을 적용한다
     (파서 수리와 이중 방어 — W16 D2 전례). 유닛별 최종 판정 시퀀스는
-    block_grammar.validate_sequence 하드 불변식으로 검증해 [경고] 지목."""
+    block_grammar.validate_sequence 하드 불변식으로 검증해 [경고] 지목.
+
+    W39 — 유형 주도 슬롯 배정 (파서와 이중 방어): 1패스(기존 오버레이)로
+    eff를 확정한 뒤, 2패스에서 발문 유형의 기대 슬롯(주어진 블록)을 형태
+    신호로 배정한다. 배정 불가 단락은 침묵 강등하지 않고 [경고]로 지목."""
     from core.structure import block_grammar as BG
     from core.structure import rules as R
     st_q = _style("STEP3", "Q")
@@ -325,12 +407,11 @@ def build_step3(step_data):
     warnings = []
     for group in ("normal", "short"):
         for item in step_data.get(group, []) or []:
-            unit = []
             arrow_pending = False
             in_cond = False          # W38: <조건> 블록 열림 상태
             cond_no = 1              # 다음 조건 항목 번호 기대값
             sum_bg = False           # W38: [요약문] 배경 전파 상태
-            eff_seq = []             # 최종 판정 시퀀스 (블록 문법 검증용)
+            pre = []                 # 1패스 산출 (슬롯 배정 전)
             for p in item.get("paragraphs", []):
                 text = p.get("text", "")
                 kind = p.get("kind") or "UNKNOWN"
@@ -351,7 +432,15 @@ def build_step3(step_data):
                     sum_bg = True
                     in_cond = False
                 elif sum_bg:
-                    if eff in ("P", "K", "UNKNOWN") and tclean:
+                    # 구 kind 주석 방어 (W39): 꺾쇠형 <요약문> 시절 Box로
+                    # 주석된 요약 문장도 배경으로 — 단 마커 라인(<보기> 등
+                    # 새 블록 진입)은 전파 종료 (stale Box 콘텐츠 한정).
+                    stale_box = (eff == "Box"
+                                 and not R.BOX_MARKERS["Box"].match(tclean)
+                                 and not R.BOX_MARKERS["Cond"].match(tclean)
+                                 and not R.C_START.match(tclean)
+                                 and not R.C_AB_HEADER.match(tclean))
+                    if eff in ("P", "K", "UNKNOWN") and tclean or stale_box:
                         eff = "P-CONTEXT"
                     else:
                         sum_bg = False
@@ -360,7 +449,12 @@ def build_step3(step_data):
                     cond_no = 1
                     sum_bg = False
                 elif in_cond:
-                    if (R.COND_BLOCK_END.search(tclean)
+                    # W39 결함 3: 블록 안 단어 나열은 조건 내용물 (구
+                    # kind 주석 P/UNKNOWN/C 방어 — 파서 수리와 이중)
+                    if eff in ("P", "UNKNOWN", "Word", "C", "K") \
+                            and BG.is_cond_wordlist(tclean):
+                        eff = "Cond"
+                    elif (R.COND_BLOCK_END.search(tclean)
                             or eff in ("Q-INTRO", "GH", "A", "Ans",
                                        "Box", "Sum", "C")):
                         in_cond = False
@@ -372,26 +466,105 @@ def build_step3(step_data):
                             in_cond = False   # 진짜 발문 = 블록 종료
                     elif eff == "Cond":
                         cond_no = BG.cond_item_seen(tclean, cond_no)
-                style = _style("STEP3", eff)
+                # v1 pass 11: 화살표 다음 단락 → 배경(S3_BG). 출처
+                # 마커(SRC)는 배경을 소비하지 않고 통과 — 배경은 마커
+                # 다음 실제 요약문/주어진 문장에 부여 (W15 c04).
+                arrow_bg = False
+                if arrow_pending and kind != "SRC":
+                    arrow_bg = True
+                    arrow_pending = False
+                pre.append({"text": text, "tclean": tclean, "kind": kind,
+                            "eff": eff, "arrow_bg": arrow_bg,
+                            "q_code": p.get("q_code"),
+                            "runs": p.get("runs") or []})
+
+            # ── 2패스: 유형 주도 슬롯 배정 (W39) ────────────────────────
+            warnings.extend(_s3_assign_slots(pre, BG))
+
+            # ── 3패스: 스타일 확정 + 유닛 생성 ──────────────────────────
+            unit = []
+            eff_seq = []
+            for row in pre:
+                style = _style("STEP3", row["eff"])
                 if style is None:
                     continue
-                if arrow_pending and kind != "SRC":
-                    # v1 pass 11: 화살표 다음 단락 → 배경(S3_BG).
-                    # 출처 마커(SRC)는 배경을 소비하지 않고 통과 — 배경은
-                    # 마커 다음 실제 요약문/주어진 문장에 부여 (W15 c04).
+                if row["arrow_bg"]:
                     style = _style("STEP3", "P-CONTEXT")
-                    arrow_pending = False
-                eff_seq.append((eff, tclean))
-                runs = p.get("runs") or []
+                eff_seq.append((row["eff"], row["tclean"]))
+                text, runs = row["text"], row["runs"]
                 for rx, repl in _S3_GREPS:
                     text, runs = _sub_runs(rx, repl, text, runs)
                 if style == st_q:
                     text, runs = _sub_runs(_RE_S3_QNUM, "", text, runs)
                 unit.append({"t": text, "s": style, "runs": runs})
             if unit:
+                _s3_underline_quotes(unit, st_q, _style("STEP3", "P"),
+                                     _style("STEP3", "P-CONTEXT"),
+                                     warnings)
                 units.append(unit)
                 warnings.extend(BG.validate_sequence(eff_seq))
     return {"units": units, "warnings": warnings}
+
+
+def _s3_assign_slots(pre, BG):
+    """유형 주도 슬롯 배정 2패스 (파서 컨텍스트 패스와 이중 방어).
+
+    주어진 블록: 발문 유형의 실측 시퀀스(block_sequences.json)가 발문
+    직후 배경 단락을 기대하면, 그 자리의 단락을 형태 신호로 배정한다.
+    배정 불가(형태 불일치) 단락은 침묵 강등 금지 — [경고] + 후보 슬롯."""
+    warn = []
+    last_q = None            # (q_code, 발문 텍스트)
+    given_pending = False    # 발문 직후 첫 유의 단락 대기 상태
+    for row in pre:
+        eff = row["eff"]
+        if eff in ("Q", "Q-INTRO"):
+            last_q = (row.get("q_code"), row["tclean"])
+            given_pending = BG.expects_given_block(last_q[0], last_q[1])
+            continue
+        if not row["tclean"] or row["kind"] == "SRC" \
+                or (row["eff"] == "UNKNOWN"
+                    and BG.BRACKET_LABEL.match(row["tclean"])):
+            continue         # 빈 단락/출처 마커/구조 라벨은 슬롯 비소비
+        # T/F 선택 행 (W39 결함 5 — 구 kind 주석 이중 방어)
+        if last_q and BG.is_tf_question(last_q[1]) \
+                and eff in ("P", "UNKNOWN", "K", "Word"):
+            if BG.is_tf_choice_row(row["tclean"]):
+                row["eff"] = "C"
+                continue
+            if _RE_S3_TF_NEAR.match(row["tclean"]) \
+                    and not _RE_S3_HANGUL.search(row["tclean"]):
+                warn.append(
+                    "[슬롯] 선지행(T/F) 후보가 선택 표기 꼬리 없음 — "
+                    f"배정 불가 지목: '{row['tclean'][:40]}'")
+        if given_pending:
+            given_pending = False
+            verdict = BG.given_slot_scan(
+                eff, row["tclean"], prior_only=not (last_q and last_q[0]))
+            if verdict == "assign":
+                if not row["arrow_bg"]:
+                    row["eff"] = "P-CONTEXT"
+                continue
+            if verdict == "warn":
+                warn.append(
+                    "[슬롯] 주어진 블록 배정 불가 — 발문 유형은 배경 "
+                    f"단락을 기대하나 형태 불일치(현재 {eff}): "
+                    f"'{row['tclean'][:40]}' (발문: "
+                    f"'{(last_q[1] if last_q else '')[:30]}')")
+
+    # 답란 쌍 (W39 결함 4 — 구 kind 주석 이중 방어): "라벨:" + 밑줄 빈칸
+    from core.structure import rules as R
+    meaningful = [r for r in pre if r["tclean"]]
+    for x, row in enumerate(meaningful):
+        if row["eff"] not in ("UNKNOWN", "K") \
+                or not BG.ANS_LABEL.match(row["tclean"]):
+            continue
+        nxt = meaningful[x + 1] if x + 1 < len(meaningful) else None
+        if nxt and (nxt["eff"] in ("Ans", "AnsL")
+                    or any(p.match(nxt["tclean"])
+                           for p in R.ANS_PATTERNS[:2])):
+            row["eff"] = "AnsL"
+            nxt["eff"] = "AnsL"
+    return warn
 
 
 # ── W2 공용: v1 JSX 판정 로직의 파이썬 포트 ─────────────────────────────────

@@ -4,7 +4,7 @@
 출력: [{"kind": str, "q_code": str|None, "text": str, "para": 원본}]
 
 종류: GH / A / Q / Q-INTRO / P / P-CONTEXT / C / K / Cond / Box / Word
-      / BLANK / UNKNOWN
+      / BLANK / UNKNOWN / Sum / Ans / AnsL(라벨+빈칸 답란 쌍 — W39)
 우선순위와 컨텍스트 규칙은 09 문서 "우선순위 규칙" 절을 따른다.
 
 다층 방어: 발문은 (1) _taxonomy 분류기 → (2) 구조 폴백(번호+종결어미) 순으로
@@ -116,8 +116,8 @@ def _base_kind(text):
         return "Sym", None
     if any(p.match(text) for p in R.ANS_PATTERNS):
         return "Ans", None
-    # [요약문] 블록 마커 (W38 결함 4) — 꺾쇠형 <요약문>은 Box(보기 테두리)
-    # 관행 유지라 Box보다 먼저 대괄호형만 빼낸다 (block_grammar 실측 주석).
+    # 요약문 블록 마커 (W38 결함 4, W39 결함 1) — 대괄호형·꺾쇠형 모두
+    # Sum. 일반 꺾쇠 마커(Box)가 <요약문>을 삼키지 않도록 Box보다 먼저.
     if BG.SUM_MARKER.match(text):
         return "Sum", None
     bk = _box_kind(text)
@@ -149,27 +149,49 @@ def classify_paragraphs(paras):
         out.append({"kind": kind, "q_code": code, "text": text, "para": p})
 
     # ── 컨텍스트 패스 ────────────────────────────────────────────────────
+    # 주어진 블록 슬롯 (W39 하향식 전환): 발문 유형(taxonomy leaf)의 실측
+    # 시퀀스(block_sequences.json)가 '발문 직후 배경 단락'을 기대하면, 그
+    # 자리의 단락을 형태 신호로 배정한다. 마커 어휘("주어진 글/문장")는
+    # 유형 미분류일 때의 프라이어 — kind가 P가 아니어도(❮…❯ 래퍼로
+    # UNKNOWN이 된 주어진 문장 등) 유형·위치·형태가 맞으면 배정 (87 실증).
     last_q_code = None
+    last_q_text = ""
     for i, item in enumerate(out):
         kind = item["kind"]
         if kind in ("Q", "Q-INTRO"):
             last_q_code = item["q_code"]
+            last_q_text = item["text"]
             continue
-        if kind != "P":
+        if kind not in ("P", "UNKNOWN", "K", "Word"):
             continue
 
-        # P-CONTEXT 판정 1: 직전 발문이 문장삽입/순서배열 계열이고
-        #   이 단락이 그 발문 뒤 첫 비빈 본문이면 배경/씨앗 단락.
-        #   출처 마커(SRC)는 발문과 본문 사이에 끼는 구조 요소라 건너뛴다
-        #   (W15 c04: 발문→[마커]→주어진 문장 순서에서 배경 미부여 실증).
+        # T/F 선택 행 (W39 결함 5): 발문이 진위 선택을 지시하는 문항의
+        # "N) 문장 (T/F)" 행 = 선지 (111번 실증 — 유형+위치+형태 배정).
+        if (last_q_text and BG.is_tf_question(last_q_text)
+                and BG.is_tf_choice_row(item["text"])):
+            item["kind"] = "C"
+            continue
+
+        # 발문 직후 첫 유의 단락인가 — 출처 마커(SRC)와 단독 대괄호 구조
+        # 라벨("[Unit 09 - Practice 01]" 등)은 발문과 본문 사이에 끼는
+        # 구조 요소라 건너뛴다 (W15 c04 / W39 r7c16 실증).
         prev_meaning = next(
             (out[j] for j in range(i - 1, -1, -1)
-             if out[j]["kind"] not in ("BLANK", "SRC")),
+             if out[j]["kind"] not in ("BLANK", "SRC")
+             and not (out[j]["kind"] == "UNKNOWN"
+                      and BG.BRACKET_LABEL.match(out[j]["text"]))),
             None,
         )
-        if (prev_meaning and prev_meaning["kind"] in ("Q", "Q-INTRO")
-                and last_q_code and R.P_CONTEXT_Q_CODES.match(last_q_code)):
-            item["kind"] = "P-CONTEXT"
+        first_after_q = (prev_meaning
+                         and prev_meaning["kind"] in ("Q", "Q-INTRO"))
+        if first_after_q and BG.expects_given_block(last_q_code,
+                                                    last_q_text):
+            if BG.given_slot_scan(kind, item["text"],
+                                  prior_only=not last_q_code) == "assign":
+                item["kind"] = "P-CONTEXT"
+                continue
+
+        if kind != "P":
             continue
 
         # P-CONTEXT 판정 2: 다음 비빈 단락이 (A)로 시작하는 순서배열 구성.
@@ -202,10 +224,29 @@ def classify_paragraphs(paras):
             if neighbor_p and all(
                     len(out[k]["text"]) >= 80
                     and not R.HANGUL.search(out[k]["text"])
+                    # W39: 보정 대상은 원문자(①)/AB헤더형 오분류만 —
+                    # T/F 선택 행("N) … (T/F)" — 슬롯 배정 C)은 선지 유지
+                    and (R.C_START.match(out[k]["text"])
+                         or R.C_AB_HEADER.match(out[k]["text"]))
                     for k in run):
                 for k in run:
                     out[k]["kind"] = "P"
         i = j
+
+    # 답란 쌍 (W39 결함 4): "라벨:"(콜론 단독 라벨) + 밑줄 빈칸 라인 =
+    # 답란(AnsL — 답 쓰는 곳). 실물 v1 관행 실측(20a3838b): 콜론형 답란은
+    # 선지 계열 스타일. 단독 빈칸(Ans)은 기존 지문 관행 유지 — 쌍만 승격.
+    # Cond 전파보다 먼저 판정해 라벨이 조건으로 흡수되지 않게 한다.
+    for i, item in enumerate(out):
+        if item["kind"] not in ("UNKNOWN", "K"):
+            continue
+        if not BG.ANS_LABEL.match(item["text"]):
+            continue
+        nxt = next((out[j] for j in range(i + 1, len(out))
+                    if out[j]["kind"] != "BLANK"), None)
+        if nxt and nxt["kind"] == "Ans":
+            item["kind"] = "AnsL"
+            nxt["kind"] = "AnsL"
 
     # Cond/Box propagation: 마커 뒤 이어지는 항목 단락을 같은 종류로.
     # Cond는 W16 c10에서 v1 pass 15/16 의미론으로 재구성 —
@@ -228,6 +269,9 @@ def classify_paragraphs(paras):
         j = i + 1
         skipped = False
         cond_no = 1          # W38: 조건 항목 번호 시퀀스 (마커 직후 1 기대)
+        # 한글 비율 단독 흡수는 마커 시작 루프에서만 (W39: 항목 시작
+        # 재루프가 답란 라벨("주제문:")을 원거리 흡수하는 것 방지)
+        from_marker = bool(R.BOX_MARKERS["Cond"].match(item["text"]))
         while j < len(out):
             nxt = out[j]
             if nxt["kind"] == "BLANK":
@@ -235,7 +279,8 @@ def classify_paragraphs(paras):
                 continue
             t = nxt["text"]
             if item["kind"] == "Box":
-                if nxt["kind"] in ("Q", "Q-INTRO", "GH", "A", "Cond", "Box"):
+                if nxt["kind"] in ("Q", "Q-INTRO", "GH", "A", "Cond", "Box",
+                                   "AnsL"):
                     break
                 # 단독 대괄호 마커 라인("[ Type C (2) ]" 유형 구분 마커 등)은
                 # 보기 어구가 아니다 — 전파 차단 (W17 c16: Box 전파가 무한글
@@ -251,10 +296,18 @@ def classify_paragraphs(paras):
                 break
             # ── Cond ──
             if nxt["kind"] in ("Q-INTRO", "GH", "A", "Cond", "Box", "Ans",
-                               "SRC", "P-CONTEXT"):
+                               "AnsL", "SRC", "P-CONTEXT"):
                 break
             if R.COND_BLOCK_END.search(t):
                 break
+            # W39 결함 3: 조건 블록 안 단어 나열은 조건 내용물 (v1 '지문
+            # 유지' 관행 폐기 — 사용자 확정). 나열 뒤 괄호 부연("(필요시
+            # …)")의 인접 흡수는 계속되므로 skipped를 세우지 않는다.
+            if nxt["kind"] in ("P", "UNKNOWN", "Word", "C", "K") \
+                    and BG.is_cond_wordlist(t):
+                nxt["kind"] = "Cond"
+                j += 1
+                continue
             marker_item = bool(R.COND_ITEM_START.match(t))
             if nxt["kind"] == "Q":
                 # (c2) W38: 블록 문맥 우선 — 번호 항목이면 조건 항목
@@ -269,10 +322,14 @@ def classify_paragraphs(paras):
                     j += 1
                     continue
                 break
+            # 답란 라벨("주제문:")은 조건이 아니다 — 한글 비율 흡수 제외
+            # (W39 결함 4: 단어 나열 뒤 라벨이 조건으로 오염되는 것 방지)
             if nxt["kind"] in ("UNKNOWN", "K") and (
                     marker_item or R.COND_ITEM_END.search(t)
                     or R.COND_ITEM_LEAD.match(t)
-                    or (not skipped and _korean_ratio(t) >= 0.3)):
+                    or (from_marker and not skipped
+                        and not BG.ANS_LABEL.match(t)
+                        and _korean_ratio(t) >= 0.3)):
                 nxt["kind"] = "Cond"
                 cond_no = BG.cond_item_seen(t, cond_no)
                 j += 1

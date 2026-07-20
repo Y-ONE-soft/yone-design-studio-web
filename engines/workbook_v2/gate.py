@@ -269,6 +269,29 @@ _RE_COND_QLEAD = re.compile(
     r"도표|물음|빈칸|단어)|윗\s*글|글의|밑줄\s*친|주어진|\(주관식\)|"
     r"\(서술형\)|서술형)")
 
+# G34 (W39) — 조건 블록 안 단어 나열 (슬래시 구분 또는 쉼표 3+ 나열,
+# 완결부호 없는 라인 한정 — 출력 검사용 독립 정의)
+_RE_G34_WORDLIST = re.compile(
+    r"^(?!.*[.!?][\"'’”)\]]?\s*$)"
+    r".*(?:\S\s*/\s*\S|(?:,[^,]*){3,})")
+
+# G35 (W39 결함 4) — 답란 쌍: "라벨:"(콜론 단독) + 밑줄 빈칸 라인은 답란
+# 계열(선지/답) 스타일이어야 한다 (실물 v1 콜론형 답란 = S_선지 실측)
+_RE_G35_LABEL = re.compile(r"^[\s가-힣A-Za-z()（）]{1,12}[:：]$")
+_RE_G35_BLANK = re.compile(r"^[^_]{0,15}_{3,}[\s_]*[.,]?$")
+
+# G36 (W39 결함 5) — 진위 선택 문항의 "N) 문장 (T/F)" 행 = 선지
+# (출력 검사용 독립 정의)
+_RE_G36_TFREF = re.compile(
+    r"True\s+or\s+False|\(\s*T\s*/\s*F\s*\)|\(\s*O\s*/\s*X\s*\)", re.I)
+_RE_G36_TFROW = re.compile(
+    r"^\s*\d{1,2}\s*\)\s*.+\(\s*(?:T\s*/\s*F|O\s*/\s*X|True\s*/\s*False)"
+    r"\s*\)\s*\.?\s*$", re.I)
+
+# G37 (W39 결함 6) — 발문의 "밑줄 친 <영어구>" 인용은 밑줄 렌더 (플랜
+# runs 검사 — 덤프에는 문자 서식이 없어 플랜 계층에서 검증. 독립 정의)
+_RE_G37_QUOTE = re.compile(r"밑줄\s*친\s+([^가-힣]+)")
+
 # G13/G32 (W38) — 영어 지시문 발문 시그니처 + 요약문 마커 (출력 검사용
 # 독립 정의 — block_grammar와 순환 방지)
 # 명령형만 — WH-의문형("N. Why don't we …?")은 외부지문 '지문 제목'과
@@ -279,7 +302,8 @@ _RE_Q_EN_SIG = re.compile(
     r"^\d{1,3}\s*[.]\s*(?:Choose|Select|Write|Fill|Complete|Answer|Match"
     r"|Circle|Arrange|Rearrange|Translate|Find|Identify|Underline|Correct"
     r"|Rewrite|Summarize|Read\s+and)\b")
-_RE_SUM_MARKER = re.compile(r"^\s*(?:\[\s*요\s*약\s*문?\s*\]|요약문)\s*$")
+# W39 결함 1: 꺾쇠형(<요약문>/<요약>)도 배경 — 사용자 확정 (Box 관행 폐기)
+_RE_SUM_MARKER = re.compile(r"^\s*(?:[\[<]\s*요\s*약\s*문?\s*[\]>]|요약문)\s*$")
 
 # G8 — 원전 교재 구분선 (파서 _RE_CHAPTER_DIVIDER/_RE_UNIT_DIVIDER 준용.
 # 출력 검사용 독립 정의 — 파서가 틀리면 게이트도 같이 틀리는 순환 방지)
@@ -718,28 +742,51 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
             + " | ".join(f"「{k}」 {len(v)}개 (예: {v[0][:30]})"
                          for k, v in sorted(minority.items())[:3]))
 
-    # ── G12 문장삽입 '주어진 문장' 배경 (W15 c04 — warning) ──────────────
-    # 변형 문제모음(출처 마커가 있는 스토리)에서 문장삽입 발문 뒤 3단락 내에
-    # 배경 스타일 단락이 없으면 지목 — 주어진 문장 박스 누락 (v2는 분류
-    # 계층 P-CONTEXT로 부여, v1 실물은 마커에 배경을 줬음 — 어느 쪽이든
-    # '배경 없음'은 결함).
+    # ── G12 문장삽입 '주어진 문장' 배경 (W15 c04, W39 결함 2 전 스토리
+    # 확장) ──────────────────────────────────────────────────────────────
+    # 문장삽입 발문 뒤 3단락 내에 배경 스타일 단락이 없으면 지목 — 주어진
+    # 문장 박스 누락 (v2는 분류 계층 P-CONTEXT로 부여, v1 실물은 마커에
+    # 배경을 줬음 — 어느 쪽이든 '배경 없음'은 결함). W15의 SRC 마커 스토리
+    # 한정을 W39에서 폐기 (87번 "주어진 문장" ❮…❯이 지문 스타일로 인쇄된
+    # 실증 — 마커 없는 실전문제 스토리는 침묵이었다). 현행 플랜(주어진
+    # 블록을 배경으로 실은 플랜)은 critical, 구플랜 소급은 warning
+    # (G32 패턴).
+    plan_insert_bg = False
+    for fl in plan.get("flows", []):
+        if fl.get("step") != "step3":
+            continue
+        fps = [p for u in fl.get("units", [])
+               for p in (u["paras"] if isinstance(u, dict) else u)]
+        for i, p in enumerate(fps):
+            if _RE_INSERT_PROMPT.search(_clean(p.get("t", ""))) \
+                    and any("배경" in (q.get("s") or "")
+                            for q in fps[i + 1:i + 3]):
+                plan_insert_bg = True
+                break
     insert_missing = []
     for story in dump.get("stories", []):
         ps = story.get("paragraphs", [])
-        if not any(_RE_SRC_MARKER.match(_clean(p.get("t", ""))) for p in ps):
+        # step3(실전문제) 스토리 한정 — step1_c1의 자동 발문("아래 주어진
+        # 문장이 …")은 하단(BTM) 스타일 의미론이라 배경 기대가 없다
+        if not any("STEP 03" in (p.get("s") or "") for p in ps):
             continue
         for i, p in enumerate(ps):
             if not _RE_INSERT_PROMPT.search(_clean(p.get("t", ""))):
                 continue
             window = [q for q in ps[i + 1:i + 5]
                       if _clean(q.get("t", ""))][:3]
+            # 주어진 문장 없이 곧장 선지로 가는 재사용 변형("Q C" — 실측
+            # 2/49)은 슬롯 부재가 정상 — 첫 후속이 선지 스타일이면 제외
+            if window and "선지" in (window[0].get("s") or ""):
+                continue
             if not any("배경" in (q.get("s") or "") for q in window):
                 insert_missing.append(_clean(p.get("t", ""))[:40])
     stats["insert_bg_missing"] = len(insert_missing)
     if insert_missing:
-        warnings.append(
-            f"[문장삽입배경] 문장삽입 발문 뒤 배경(주어진 문장 박스) 미부여 "
-            f"{len(insert_missing)}건: " + " | ".join(insert_missing[:3]))
+        msg = (f"[문장삽입배경] 문장삽입 발문 뒤 배경(주어진 문장 박스) "
+               f"미부여 {len(insert_missing)}건: "
+               + " | ".join(insert_missing[:3]))
+        (critical if plan_insert_bg else warnings).append(msg)
 
     # ── G32 [요약문] 마커 + 요약 문장 배경 (W38 결함 4) ──────────────────
     # [요약문] 마커와 그 다음 문장 단락은 배경 스타일이어야 한다 (사용자
@@ -902,6 +949,22 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
     # 보기/배경/다음글읽고 스타일/발문 어휘 선두 번호(_RE_COND_QLEAD)/
     # 번호 시퀀스 이탈. ("시오-체 번호 항목 발문 유지" W16 D3 관행은
     # 사용자 확정으로 폐기 — 6b66b750 실증.)
+    # G34 [조건내용] (W39 결함 3): 블록 안 단어 나열(슬래시/쉼표 나열,
+    # 한글·완결부호 없음)은 조건 내용물 — v1 '지문 유지' 관행 폐기 (사용자
+    # 확정). 현행 플랜(나열을 조건 스타일로 실은 플랜)은 critical, 구플랜
+    # 소급은 warning (G32 패턴).
+    plan_cond_content = False
+    for fl in plan.get("flows", []):
+        if fl.get("step") != "step3":
+            continue
+        for u in fl.get("units", []):
+            for p in (u["paras"] if isinstance(u, dict) else u):
+                if "조건" in (p.get("s") or "") \
+                        and _RE_G34_WORDLIST.search(_clean(p.get("t", ""))) \
+                        and not _RE_HANGUL.search(p.get("t", "")):
+                    plan_cond_content = True
+                    break
+    cond_content_miss = []
     cond_miss = []
     for story in dump.get("stories", []):
         ps = story.get("paragraphs", [])
@@ -942,10 +1005,129 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                     cond_miss.append(qt[:45])
                 elif not (_RE_HANGUL.search(qt)
                           or _RE_COND_BULLET.match(qt)):
-                    continue    # 영어 어구 나열 — 지문 유지 관행 (skip)
+                    # W39 결함 3: 블록 안 단어 나열은 조건 내용물 —
+                    # 조건 스타일이 아니면 G34 지목 (지문 유지 관행 폐기)
+                    if _RE_G34_WORDLIST.search(qt) and "조건" not in qs:
+                        cond_content_miss.append(qt[:45])
+                    continue
                 elif "조건" not in qs and not strong:
                     break       # 한글 비조건 문장 — 블록 종료로 간주
+    # ── G37 [발문밑줄] (W39 결함 6): 발문 인용구 밑줄 (플랜 runs 검사) ──
+    # 발문(번호 스타일)이 "밑줄 친 <영어구>"를 인용하면 인용구 구간에
+    # 밑줄 run이 있어야 한다. 덤프에는 문자 서식 정보가 없어 플랜에서
+    # 검증 — 플랜에 밑줄 인용 발문이 하나라도 있으면(현행) critical,
+    # 전무하면(구플랜 소급) warning.
+    ulq_miss = []
+    ulq_ok = 0
+    for fl in plan.get("flows", []):
+        if fl.get("step") != "step3":
+            continue
+        for u in fl.get("units", []):
+            for p in (u["paras"] if isinstance(u, dict) else u):
+                if "번호" not in (p.get("s") or ""):
+                    continue
+                mq = _RE_G37_QUOTE.search(p.get("t") or "")
+                if not mq:
+                    continue
+                quote = mq.group(1).rstrip(" '\"’”")
+                if len(quote) < 2 or not re.search(r"[A-Za-z]{2}", quote):
+                    continue      # 표식 참조("(A)"/"ⓐ")는 인용이 아님
+                qs, qe = mq.start(1), mq.start(1) + len(quote)
+                off = 0
+                has_ul = False
+                for r in p.get("runs") or []:
+                    t = r.get("t") or ""
+                    if r.get("ul") and off < qe and off + len(t) > qs:
+                        has_ul = True
+                    off += len(t)
+                if has_ul:
+                    ulq_ok += 1
+                else:
+                    ulq_miss.append(quote[:30])
+    stats["q_quote_ul_miss"] = len(ulq_miss)
+    if ulq_miss:
+        msg = (f"[발문밑줄] 발문 인용구 밑줄 미부여 {len(ulq_miss)}건: "
+               + " | ".join(ulq_miss[:3]))
+        (critical if ulq_ok else warnings).append(msg)
+
+    # ── G36 [TF선지] (W39 결함 5): 진위 선택 행 = 선지 스타일 ────────────
+    # 발문(번호 스타일 + True or False/(T/F) 지시) 뒤의 "N) 문장 (T/F)"
+    # 행이 선지 스타일이 아니면 지목 (111번 실증 — 지문 스타일 인쇄).
+    # 현행 플랜은 critical, 구플랜 소급 warning.
+    plan_tf = False
+    for fl in plan.get("flows", []):
+        if fl.get("step") != "step3":
+            continue
+        for u in fl.get("units", []):
+            for p in (u["paras"] if isinstance(u, dict) else u):
+                if _RE_G36_TFROW.match(_clean(p.get("t", ""))) \
+                        and "선지" in (p.get("s") or ""):
+                    plan_tf = True
+                    break
+    tf_miss = []
+    for story in dump.get("stories", []):
+        ps = [p for p in story.get("paragraphs", [])
+              if _clean(p.get("t", ""))]
+        in_tf = False
+        for p in ps:
+            t = _clean(p.get("t", ""))
+            s = p.get("s") or ""
+            if "번호" in s:
+                in_tf = bool(_RE_G36_TFREF.search(t))
+                continue
+            if not in_tf:
+                continue
+            if any(k in s for k in ("배경", "조건", "보기", "다음 글을")):
+                in_tf = False
+                continue
+            if _RE_G36_TFROW.match(t) and "선지" not in s:
+                tf_miss.append(t[:40])
+    stats["tf_choice_miss"] = len(tf_miss)
+    if tf_miss:
+        msg = (f"[TF선지] 진위 선택 행 {len(tf_miss)}개가 선지 스타일이 "
+               f"아님: " + " | ".join(tf_miss[:3]))
+        (critical if plan_tf else warnings).append(msg)
+
+    # ── G35 [답란] (W39 결함 4): "라벨:" + 빈칸 쌍 = 답란 계열 ──────
+    # ("주제문:" + "____."가 지문 스타일로 인쇄되던 실증 — 84/85번.
+    # 현행 플랜(답란 스타일 실림)은 critical, 구플랜 소급 warning.)
+    plan_ansl = False
+    for fl in plan.get("flows", []):
+        if fl.get("step") != "step3":
+            continue
+        for u in fl.get("units", []):
+            for p in (u["paras"] if isinstance(u, dict) else u):
+                if _RE_G35_LABEL.match(_clean(p.get("t", ""))) \
+                        and any(k in (p.get("s") or "")
+                                for k in ("선지", "답")):
+                    plan_ansl = True
+                    break
+    ansl_miss = []
+    for story in dump.get("stories", []):
+        ps = [p for p in story.get("paragraphs", [])
+              if _clean(p.get("t", ""))]
+        for i in range(len(ps) - 1):
+            t1 = _clean(ps[i].get("t", ""))
+            t2 = _clean(ps[i + 1].get("t", ""))
+            if not (_RE_G35_LABEL.match(t1) and _RE_G35_BLANK.match(t2)):
+                continue
+            for q in (ps[i], ps[i + 1]):
+                qs = q.get("s") or ""
+                if not any(k in qs for k in ("선지", "답")):
+                    ansl_miss.append(_clean(q.get("t", ""))[:25])
+    stats["ansl_miss"] = len(ansl_miss)
+    if ansl_miss:
+        msg = (f"[답란] 라벨+빈칸 답란 쌍 {len(ansl_miss)}개 라인이 답란 "
+               f"계열(선지) 스타일이 아님: " + " | ".join(ansl_miss[:3]))
+        (critical if plan_ansl else warnings).append(msg)
+
     stats["cond_item_miss"] = len(cond_miss)
+    stats["cond_content_miss"] = len(cond_content_miss)
+    if cond_content_miss:
+        msg = (f"[조건내용] <조건> 블록 안 단어 나열 "
+               f"{len(cond_content_miss)}개가 조건 스타일이 아님: "
+               + " | ".join(cond_content_miss[:3]))
+        (critical if plan_cond_content else warnings).append(msg)
     if cond_miss:
         critical.append(
             f"[조건항목] <조건> 블록 항목 {len(cond_miss)}개가 조건 스타일이 "

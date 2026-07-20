@@ -75,9 +75,17 @@ def test_ans_pattern_equivalent_to_legacy():
     rng = random.Random(42)
     alpha = list("_()（）0129→:：.-aZ한 \t") + ["_"] * 6 + [" "] * 3 \
         + [" "] * 3
+    # W39 결함 4: 새 패턴은 꼬리 구두점("____." — 6b66b750 실증)만 추가
+    # 수용 — 옛 수용분 전부 수용(무회귀) + 추가분은 꼬리 [.,] 제거 시
+    # 옛 패턴 수용 문자열뿐임을 대조.
+    import re as _re
+    strip_tail = _re.compile("[.,](?=[\\s\\u00a0]*$)")
     for _ in range(5000):
         s = "".join(rng.choice(alpha) for _ in range(rng.randint(0, 22)))
-        assert bool(old.search(s)) == bool(new.search(s)), repr(s)
+        if old.search(s):
+            assert new.search(s), repr(s)
+        elif new.search(s):
+            assert old.search(strip_tail.sub("", s, count=1)), repr(s)
 
 
 # ── D2: hwp 밑줄 추출 pos_ul 의미론 (dict 대체) ────────────────────────────
