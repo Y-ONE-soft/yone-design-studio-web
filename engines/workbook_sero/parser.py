@@ -69,14 +69,26 @@ _LESSON_HEADER_PATTERN = re.compile(
     r'^\s*\d+\s*강\s*\d+(?:~\d+)?\s*번(?:\s*\d{6})?\s*(?:\([^)]*\))?\s*$'
 )
 
-_ANSWER_HEADER_PATTERNS = [
-    re.compile(r'^\s*\[\s*정답\s*\]\s*$'),
-    re.compile(r'^\s*【\s*정답\s*】\s*$'),
-    re.compile(r'^\s*<\s*정답\s*>\s*$'),
-    re.compile(r'^\s*정답\s*및\s*해설\s*$'),
-    re.compile(r'^\s*정답\s*:\s*$'),
-    re.compile(r'^\s*Answers?\s*:?\s*$', re.I),
-]
+# 배치 B (W33): 정답부 섹션 헤더를 rules.A_SECTION_HEADER와 합류 — 가로 파서
+# _strip_step3_answers·단락종류 판정기와 같은 눈 ([정답]/【정답】/<정답>/
+# 정답 및·과·중점 해설 등 전부 포함). 세로 고유 표기('정답:'/'Answers:')는
+# 별도 유지. rules 로드 실패 시 구 리터럴 목록 폴백 (fail-open).
+try:
+    from core.structure.rules import A_SECTION_HEADER as _A_SECTION_HEADER
+    _ANSWER_HEADER_PATTERNS = [
+        _A_SECTION_HEADER,
+        re.compile(r'^\s*정답\s*:\s*$'),
+        re.compile(r'^\s*Answers?\s*:?\s*$', re.I),
+    ]
+except Exception:                                            # noqa: BLE001
+    _ANSWER_HEADER_PATTERNS = [
+        re.compile(r'^\s*\[\s*정답\s*\]\s*$'),
+        re.compile(r'^\s*【\s*정답\s*】\s*$'),
+        re.compile(r'^\s*<\s*정답\s*>\s*$'),
+        re.compile(r'^\s*정답\s*및\s*해설\s*$'),
+        re.compile(r'^\s*정답\s*:\s*$'),
+        re.compile(r'^\s*Answers?\s*:?\s*$', re.I),
+    ]
 
 _ANSWER_LINE_PATTERN = re.compile(
     r'^\s*\d+\s*번\s*[-:].*$'

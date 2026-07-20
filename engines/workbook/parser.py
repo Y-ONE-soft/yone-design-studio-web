@@ -719,6 +719,19 @@ _RE_S3_JUNK_DATE = re.compile(
 # 꼬리 정답 섹션 표제: "<표제> 정답" (물음표 없음 + 공백/대시 뒤 '정답' 종결)
 _RE_S3_ANSWER_TITLE = re.compile(r'^[^?？]{0,40}[\s\-–—]정답$')
 
+# 배치 B (W33): Step3 정답부 섹션 헤더를 core/structure/rules.A_SECTION_HEADER
+# 와 공유 — 단락종류 판정기(taxonomy 09)와 같은 눈. 구 리터럴 튜플
+# ('정답 및 해설','빠른 정답 찾기','정답지','정답')은 '정답과 해설'/'정답 ·
+# 해설'/'[정답 및 해설]'을 못 잘라 정답표가 문제지에 인쇄됐다 (감사 실증 #3
+# — 판정기는 아는 표기, 서로 다른 눈 재현). 구 튜플이 공유 패턴의 부분집합
+# 임은 tests/test_answer_header_batch_b.py가 가드. rules 로드 실패 시 구
+# 튜플 등가 정규식 폴백 (fail-open — 조판을 막지 않는다).
+try:
+    from core.structure.rules import A_SECTION_HEADER as _RE_S3_SECTION_HEADER
+except Exception:                                            # noqa: BLE001
+    _RE_S3_SECTION_HEADER = re.compile(
+        r'^\s*(?:정답\s*및\s*해설|빠른\s*정답\s*찾기|정답지|정답)\s*$')
+
 
 def _strip_step3_leading_junk(paras):
     """Step3 문제모음 선두의 표제/워터마크 블록 제거 (W17 c16).
@@ -824,11 +837,12 @@ def _strip_step3_answers(paras):
     # 블록이 통째로 인쇄됐음) / "EBS 올림포스 - … 정답"(c16). 발문은
     # '?'로 끝나 매치되지 않고, "■ 정답: …" 문항별 정답은 콜론 뒤 내용이
     # 있어 매치되지 않음 (골든 전수 sweep: c04 2건 외 매치 없음 확인).
-    section_headers = ('정답 및 해설', '빠른 정답 찾기', '정답지', '정답')
+    # 배치 B (W33): 리터럴 튜플 → rules.A_SECTION_HEADER 공유 (모듈 상단
+    # _RE_S3_SECTION_HEADER 주석 참조 — 판정기와 같은 눈, 실증 #3 해소).
     cut_idx = None
     for i, p in enumerate(paras):
         text = p['text'].strip()
-        if text in section_headers or _RE_S3_ANSWER_TITLE.match(text):
+        if _RE_S3_SECTION_HEADER.match(text) or _RE_S3_ANSWER_TITLE.match(text):
             cut_idx = i
             break
     if cut_idx is not None:
