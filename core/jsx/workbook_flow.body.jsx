@@ -1521,14 +1521,16 @@ function applyChoiceTabs(doc, flowStories, op) {
                     }
                 }
             }
-            // 프레임 텍스트 폭 + 시작 들여쓰기
-            var lind = 0, frameW = null;
+            // 프레임 텍스트 폭 + 시작 들여쓰기 (0열 시작 = 첫 줄 위치:
+            // 선지 스타일은 내어쓰기(fli<0)라 lind가 아니라 lind+fli)
+            var lind = 0, fli = 0, frameW = null;
             var itemRow = null;
             for (var r4 = 0; r4 < rows.length; r4++) {
                 if (!rows[r4].header) { itemRow = rows[r4]; break; }
             }
             if (itemRow === null) { itemRow = rows[0]; }
             try { lind = paras[itemRow.idx].leftIndent; } catch (e3) {}
+            try { fli = paras[itemRow.idx].firstLineIndent; } catch (e3b) {}
             try {
                 var tf = paras[itemRow.idx].parentTextFrames[0];
                 var gbT = tf.geometricBounds;
@@ -1542,8 +1544,10 @@ function applyChoiceTabs(doc, flowStories, op) {
                 frameW = (gbT[3] - inR) - (gbT[1] + inL);
             } catch (e5) {}
             // 열 스톱 계산 (텍스트 영역 왼쪽 = 0 기준, 그리드 스냅)
+            var col0 = lind + fli;          // 0열 시작 (첫 줄 실제 위치)
+            if (col0 < 0) { col0 = 0; }
             var stops = [];       // stops[c] = c열(1~) 시작 위치
-            var end = lind + (colw[0] || 0);
+            var end = col0 + (colw[0] || 0);
             var overflow = false;
             for (var c2 = 1; c2 <= maxTabs; c2++) {
                 var pos = Math.ceil((end + minGap) / grid) * grid;
@@ -1553,7 +1557,7 @@ function applyChoiceTabs(doc, flowStories, op) {
             if (frameW !== null && end > frameW + 0.2) {
                 // 비그리드 폴백 (최소 간격 패킹)
                 stops = [];
-                end = lind + (colw[0] || 0);
+                end = col0 + (colw[0] || 0);
                 for (var c4 = 1; c4 <= maxTabs; c4++) {
                     var pos2 = end + minGap;
                     stops.push(pos2);
@@ -1588,10 +1592,16 @@ function applyChoiceTabs(doc, flowStories, op) {
                                      - (rows[r5].w[c5] || 0)) / 2;
                         rStops.push(base5 + Math.max(0, shift));
                     }
-                    // 첫 라벨(탭 없음)은 들여쓰기로 열 중앙 정렬
+                    // 첫 라벨(탭 없음)은 첫줄 들여쓰기로 열 중앙 정렬.
+                    // leftIndent를 올리면 내어쓰기(fli<0) 스타일에서 왼쪽
+                    // 들여쓰기 위치의 암묵 탭스톱이 명시 스톱보다 먼저
+                    // 걸려 (B)가 붙어버린다 (1차 재조판 실측) —
+                    // firstLineIndent만 조정 (leftIndent 무접촉).
                     var h0 = ((colw[0] || 0) - (rows[r5].w[0] || 0)) / 2;
                     if (h0 > 0) {
-                        try { p5.leftIndent = lind + h0; } catch (e7) {}
+                        try {
+                            p5.firstLineIndent = col0 + h0 - lind;
+                        } catch (e7) {}
                     }
                 }
                 for (var c6 = 0; c6 < rStops.length; c6++) {
