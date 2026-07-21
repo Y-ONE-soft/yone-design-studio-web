@@ -1656,6 +1656,7 @@ function fixBlankOverflow(doc, op) {
             var guard = 0;
             var applied = false;
             var capped = false;
+            var origTr = null;      // 한도 도달 시 원복용 (과도 축소 금지)
             while (guard < 30) {
                 guard++;
                 var overAmt = 0;
@@ -1678,12 +1679,16 @@ function fixBlankOverflow(doc, op) {
                     } catch (eL) { continue; }
                     if (endX - rim > overAmt) { overAmt = endX - rim; }
                 }
-                if (overAmt <= 0.2) { break; }
+                // 허용 0.8mm — 양끝 정렬/시각적 여백 정렬의 행 끝 돌출
+                // (~0.5mm 상수 — 1차 재조판 실측 18건 전부 +0.51mm)은
+                // 결함이 아니다. 실제 빈칸 넘침(수 mm)만 보정.
+                if (overAmt <= 0.8) { break; }
                 var cur = 0;
                 try {
                     cur = para.tracking;
                     if (typeof cur != "number") { cur = 0; }
                 } catch (eT) { cur = 0; }
+                if (origTr === null) { origTr = cur; }
                 if (cur <= maxNeg) {
                     capped = true;
                     warned++;
@@ -1691,6 +1696,11 @@ function fixBlankOverflow(doc, op) {
                          + ")로도 프레임 수용 불가 (초과 "
                          + (Math.round(overAmt * 100) / 100) + "mm): "
                          + String(para.contents).substr(0, 30));
+                    // 과도 축소 금지 (사용자 확정 스펙) — 원래 자간 복원
+                    try {
+                        para.tracking = origTr;
+                        para.parentStory.recompose();
+                    } catch (eRe) {}
                     break;
                 }
                 try {

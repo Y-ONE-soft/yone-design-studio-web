@@ -196,7 +196,9 @@ try {
                 rimX = hgb[3] - rIn;
             } catch (e) {}
             if (endX === null || rimX === null) { continue; }
-            if (endX <= rimX + 0.2) { continue; }
+            // 허용 0.8mm — 양끝 정렬/시각적 여백 정렬의 행 끝 돌출
+            // (~0.5mm 상수, 1차 재조판 실측)은 결함이 아니다 (G43 짝)
+            if (endX <= rimX + 0.8) { continue; }
             var hPg = "";
             try { hPg = String(hFrame.parentPage.name); } catch (e) {}
             var hSt = -1;
