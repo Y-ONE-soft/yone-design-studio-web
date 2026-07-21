@@ -227,6 +227,10 @@
                   기본 12.7mm 탭 그리드 정렬 (배재2_워크북01 실측) —
                   실행기 applyChoiceTabs가 명시 탭스톱으로 재현.
                   choice_tabs 계약 플랜은 critical, 구덤프는 생략.
+  G43 [빈칸경계] (W40 결함 6): 밑줄 빈칸 런 라인이 프레임 오른쪽 내변
+                  초과 — 덤프 W40 확장 필드 hox 실측. 실행기 blank_fit이
+                  자간(한도 -50)으로 수용하고, 한도 초과 잔존은 warning
+                  지목 (과도 축소 금지 — 사용자 확정 스펙).
 
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
 G24②/G26은 W21 확장 필드(fc / pages)가 필요하다. G29②는 W23 확장 필드
@@ -2169,6 +2173,22 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
     elif ct_contract and not cx_seen:
         warnings.append("[선지열정렬] 덤프에 탭 셀 오프셋(cx) 없음"
                         "(구버전 덤프) — 재덤프 필요")
+
+    # ── G43 빈칸 프레임 경계 초과 (W40 결함 6) ───────────────────────────
+    # 밑줄 빈칸 런 라인이 프레임 오른쪽 내변을 넘음 (덤프 W40 확장 필드
+    # hox — 실측). blank_fit 계약 플랜에서 잔존은 자간 한도 초과분(실행기
+    # [경고] 짝) 또는 보정 실패 — 사람 확인 지목 (warning. G33/시각 검수
+    # 정합 — 경계 밖 텍스트는 시각층에서도 잡힌다).
+    hox = dump.get("hox") or []
+    stats["blank_overflow_lines"] = len(hox)
+    if hox:
+        det = " | ".join(
+            f"p{e.get('p')} +{e.get('over')}mm 「{(e.get('t') or '')[:16]}」"
+            for e in hox[:4])
+        warnings.append(
+            f"[빈칸경계] 밑줄 빈칸 라인 프레임 오른쪽 초과 {len(hox)}건"
+            + (" (자간 한도 내 해소 불가 — 수동 확인)"
+               if plan.get("blank_fit") else "") + ": " + det)
 
     # ── G31 프레임 결손 (W30-r15 — 결함 6) ───────────────────────────────
     # 스토리가 흐르는 페이지의 '그 스토리 프레임 수'가 스토리 대다수

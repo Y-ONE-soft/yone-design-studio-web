@@ -1614,6 +1614,92 @@ function applyChoiceTabs(doc, flowStories, op) {
          + warned + "건");
 }
 
+// ── W40 결함 6: 밑줄 빈칸 라인 프레임 넘침 — 자간 축소로 수용 ───────────────
+// 밑줄 런("_{6,}")은 줄바꿈 기회가 없어 프레임 오른쪽 경계 밖으로
+// 삐져나온다 (0a5da924 실증). 해당 단락 자간(tracking)을 -10씩 낮춰
+// 프레임 내로 수용 — 한도(op.max_tracking, 기본 -50) 초과가 필요하면
+// 과도 축소 대신 [경고]로 지목한다 (사용자 확정 스펙).
+function fixBlankOverflow(doc, op) {
+    var maxNeg = -50;
+    if (op && typeof op === "object" && op.max_tracking !== undefined
+            && op.max_tracking !== null) {
+        maxNeg = op.max_tracking;
+    }
+    var fixed = 0, warned = 0, checked = 0;
+    try {
+        app.findGrepPreferences = NothingEnum.NOTHING;
+        app.findGrepPreferences.findWhat = "_{6,}";
+        var hits = doc.findGrep();
+        var seen = {};
+        for (var hi = 0; hi < hits.length; hi++) {
+            var para = null;
+            try { para = hits[hi].paragraphs[0]; } catch (e) { continue; }
+            if (!para) { continue; }
+            var key = "";
+            try {
+                key = String(hits[hi].parentStory.id) + ":"
+                    + para.characters[0].index;
+            } catch (e) { key = "k" + hi; }
+            if (seen[key]) { continue; }
+            seen[key] = true;
+            checked++;
+            var guard = 0;
+            var applied = false;
+            var capped = false;
+            while (guard < 30) {
+                guard++;
+                var overAmt = 0;
+                var lines = null;
+                try { lines = para.lines.everyItem().getElements(); }
+                catch (e) { break; }
+                if (!lines || lines.length === 0) { break; }
+                for (var li = 0; li < lines.length; li++) {
+                    var rim = null, endX = null;
+                    try {
+                        var lf = lines[li].parentTextFrames[0];
+                        var gb = lf.geometricBounds;
+                        var rIn = 0;
+                        try {
+                            var ins = lf.textFramePreferences.insetSpacing;
+                            rIn = (ins instanceof Array) ? ins[3] : ins;
+                        } catch (eIn) {}
+                        rim = gb[3] - rIn;
+                        endX = lines[li].endHorizontalOffset;
+                    } catch (eL) { continue; }
+                    if (endX - rim > overAmt) { overAmt = endX - rim; }
+                }
+                if (overAmt <= 0.2) { break; }
+                var cur = 0;
+                try {
+                    cur = para.tracking;
+                    if (typeof cur != "number") { cur = 0; }
+                } catch (eT) { cur = 0; }
+                if (cur <= maxNeg) {
+                    capped = true;
+                    warned++;
+                    wlog("[경고] 빈칸넘침: 자간 한도(" + maxNeg
+                         + ")로도 프레임 수용 불가 (초과 "
+                         + (Math.round(overAmt * 100) / 100) + "mm): "
+                         + String(para.contents).substr(0, 30));
+                    break;
+                }
+                try {
+                    para.tracking = Math.max(maxNeg, cur - 10);
+                    applied = true;
+                } catch (eA) { break; }
+                try { para.parentStory.recompose(); } catch (eR) {}
+            }
+            if (applied && !capped) { fixed++; }
+        }
+        app.findGrepPreferences = NothingEnum.NOTHING;
+    } catch (e) {
+        wlog("[경고] 빈칸넘침 보정 실패: " + e);
+        try { app.findGrepPreferences = NothingEnum.NOTHING; } catch (e2) {}
+    }
+    wlog("빈칸넘침 보정: 검사 " + checked + "단락 / 자간 조정 " + fixed
+         + "건 / 한도 초과 [경고] " + warned + "건");
+}
+
 function textbookPostprocess(doc) {
     var bMaster = null, dMaster = null;
     try { bMaster = doc.masterSpreads.itemByName("B-마스터"); bMaster.name; } catch (e) { bMaster = null; }
@@ -1892,6 +1978,12 @@ try {
         app.doScript(function () { textbookPostprocess(doc); },
                      ScriptLanguage.JAVASCRIPT, undefined,
                      UndoModes.ENTIRE_SCRIPT, "wb_v2 textbook_post");
+    }
+    if (plan.blank_fit) {
+        // W40 결함 6 — 페이지 수를 바꾸는 모든 op 이후, 저장 직전
+        app.doScript(function () { fixBlankOverflow(doc, plan.blank_fit); },
+                     ScriptLanguage.JAVASCRIPT, undefined,
+                     UndoModes.ENTIRE_SCRIPT, "wb_v2 blank_fit");
     }
     if (plan.choice_tabs) {
         // W40 결함 1 — 다열 선지 열 정렬 (탭스톱 자동 적용)
