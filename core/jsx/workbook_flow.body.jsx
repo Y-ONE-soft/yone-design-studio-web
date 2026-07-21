@@ -1417,6 +1417,203 @@ function updateDividerPages(doc, line1, line2) {
 
 // ── 교과서 후처리 (v1 run.jsx 16.8 이식 — plan.textbook_postprocess) ────────
 // 빈 A-마스터 페이지 → B-마스터, 빈 C-마스터 페이지 → D-마스터.
+// ── W40 결함 1: 다열 선지 열 정렬 — 자동 탭스톱 (v1 실물 실측 관행) ─────────
+// v1 손마무리 실물(배재2_워크북01 실측 120단락): 명시 탭스톱 없이 기본
+// 12.7mm 탭 그리드에 열을 앉히고, 열이 어긋나면 탭/공백을 손으로 추가해
+// 모든 행이 같은 그리드 스톱에 정렬되게 맞춘다 (헤더 (A)는 열 내용 위에
+// 공백으로 눈대중 센터링). 자동화: 그룹(연속 탭 선지 단락)별로 열 최장
+// 항목을 실측해 다음 그리드 스톱(최장 끝 + min_gap 이상)에 명시 LEFT
+// 탭스톱을 부여 — 손 결과와 같은 기하를 결정적으로 재현한다. 헤더 행은
+// 각 열 중앙에 라벨이 오도록 자체 스톱/들여쓰기 부여. 그리드로 프레임을
+// 넘치면 비그리드 최소 간격으로 폴백, 그래도 넘치면 [경고].
+function applyChoiceTabs(doc, flowStories, op) {
+    var grid = op.grid || 12.7;
+    var minGap = (op.min_gap === undefined || op.min_gap === null)
+        ? 2 : op.min_gap;
+    var styleTok = op.style_contains || "선지";   // "선지"
+    var steps = op.steps || [];
+    var groups = 0, warned = 0;
+
+    function cellWidths(para, txt) {
+        // 탭 구분 셀별 렌더 폭 실측 (문자 단위 — 줄바꿈 무관)
+        var widths = [];
+        var cur = 0;
+        var chars = para.characters;
+        var n = Math.min(chars.length, txt.length);
+        for (var ci = 0; ci < n; ci++) {
+            var ch = txt.charAt(ci);
+            if (ch == "\t") { widths.push(cur); cur = 0; continue; }
+            if (ch == "\r" || ch == "\n") { break; }
+            try {
+                cur += chars[ci].endHorizontalOffset
+                    - chars[ci].horizontalOffset;
+            } catch (e) {}
+        }
+        widths.push(cur);
+        return widths;
+    }
+
+    function isHeaderRow(t) {
+        var s = t.replace(/^[\s ]+/, "");
+        return s.charAt(0) == "(" && s.indexOf("_") < 0;
+    }
+
+    for (var sti = 0; sti < steps.length; sti++) {
+        var rec = flowStories[steps[sti]];
+        if (!rec) { continue; }
+        var story = rec.story;
+        try { story.recompose(); } catch (e0) {}
+        var texts = [], styles = [], paras = null;
+        try {
+            texts = story.paragraphs.everyItem().contents;
+            styles = story.paragraphs.everyItem().appliedParagraphStyle;
+            if (!(texts instanceof Array)) { texts = [texts]; }
+            if (!(styles instanceof Array)) { styles = [styles]; }
+        } catch (e1) { continue; }
+
+        function isTabRow(x) {
+            if (String(texts[x]).indexOf("\t") < 0) { return false; }
+            var nm = "";
+            try { nm = styles[x].name; } catch (e) {}
+            return nm.indexOf(styleTok) >= 0;
+        }
+
+        var i = 0;
+        while (i < texts.length) {
+            if (!isTabRow(i)) { i++; continue; }
+            var j = i;
+            while (j < texts.length && isTabRow(j)) { j++; }
+            // ── 그룹 [i, j) 처리 ──
+            if (paras === null) {
+                try { paras = story.paragraphs.everyItem().getElements(); }
+                catch (e2) { break; }
+            }
+            var rows = [];
+            var maxTabs = 0;
+            for (var r = i; r < j; r++) {
+                var t = String(texts[r]);
+                var w = cellWidths(paras[r], t);
+                var nTabs = w.length - 1;
+                if (nTabs > maxTabs) { maxTabs = nTabs; }
+                rows.push({ idx: r, txt: t, w: w,
+                            header: isHeaderRow(t) });
+            }
+            if (maxTabs === 0) { i = j; continue; }
+            // 열 최장 폭 (헤더 제외 — 헤더는 자체 스톱)
+            var colw = [];
+            var hasItem = false;
+            for (var r2 = 0; r2 < rows.length; r2++) {
+                if (rows[r2].header) { continue; }
+                hasItem = true;
+                for (var c = 0; c < rows[r2].w.length; c++) {
+                    if (colw[c] === undefined || rows[r2].w[c] > colw[c]) {
+                        colw[c] = rows[r2].w[c];
+                    }
+                }
+            }
+            if (!hasItem) {
+                for (var r3 = 0; r3 < rows.length; r3++) {
+                    for (var c3 = 0; c3 < rows[r3].w.length; c3++) {
+                        if (colw[c3] === undefined
+                                || rows[r3].w[c3] > colw[c3]) {
+                            colw[c3] = rows[r3].w[c3];
+                        }
+                    }
+                }
+            }
+            // 프레임 텍스트 폭 + 시작 들여쓰기
+            var lind = 0, frameW = null;
+            var itemRow = null;
+            for (var r4 = 0; r4 < rows.length; r4++) {
+                if (!rows[r4].header) { itemRow = rows[r4]; break; }
+            }
+            if (itemRow === null) { itemRow = rows[0]; }
+            try { lind = paras[itemRow.idx].leftIndent; } catch (e3) {}
+            try {
+                var tf = paras[itemRow.idx].parentTextFrames[0];
+                var gbT = tf.geometricBounds;
+                var inL = 0, inR = 0;
+                try {
+                    var insT = tf.textFramePreferences.insetSpacing;
+                    if (insT instanceof Array) {
+                        inL = insT[1]; inR = insT[3];
+                    } else { inL = insT; inR = insT; }
+                } catch (e4) {}
+                frameW = (gbT[3] - inR) - (gbT[1] + inL);
+            } catch (e5) {}
+            // 열 스톱 계산 (텍스트 영역 왼쪽 = 0 기준, 그리드 스냅)
+            var stops = [];       // stops[c] = c열(1~) 시작 위치
+            var end = lind + (colw[0] || 0);
+            var overflow = false;
+            for (var c2 = 1; c2 <= maxTabs; c2++) {
+                var pos = Math.ceil((end + minGap) / grid) * grid;
+                stops.push(pos);
+                end = pos + (colw[c2] || 0);
+            }
+            if (frameW !== null && end > frameW + 0.2) {
+                // 비그리드 폴백 (최소 간격 패킹)
+                stops = [];
+                end = lind + (colw[0] || 0);
+                for (var c4 = 1; c4 <= maxTabs; c4++) {
+                    var pos2 = end + minGap;
+                    stops.push(pos2);
+                    end = pos2 + (colw[c4] || 0);
+                }
+                if (end > frameW + 0.2) {
+                    warned++;
+                    wlog("[경고] 선지열정렬: 열 합계가 프레임 폭 초과 ("
+                         + (Math.round(end * 10) / 10) + " > "
+                         + (Math.round(frameW * 10) / 10) + "mm): "
+                         + rows[0].txt.substr(0, 30));
+                }
+            }
+            // 적용 — 항목 행: LEFT 스톱, 헤더 행: 열 중앙 정렬 스톱
+            for (var r5 = 0; r5 < rows.length; r5++) {
+                var p5 = paras[rows[r5].idx];
+                try {
+                    // 상한 가드 — remove()가 침묵 no-op이 되는 DOM 변이
+                    // 사고 이력(dev guide) 대비 무한 루프 방지
+                    var rmGuard = 0;
+                    while (p5.tabStops.length > 0 && rmGuard < 40) {
+                        rmGuard++;
+                        p5.tabStops[0].remove();
+                    }
+                } catch (e6) {}
+                var rStops = stops;
+                if (rows[r5].header && hasItem) {
+                    rStops = [];
+                    for (var c5 = 1; c5 <= maxTabs; c5++) {
+                        var base5 = stops[c5 - 1];
+                        var shift = ((colw[c5] || 0)
+                                     - (rows[r5].w[c5] || 0)) / 2;
+                        rStops.push(base5 + Math.max(0, shift));
+                    }
+                    // 첫 라벨(탭 없음)은 들여쓰기로 열 중앙 정렬
+                    var h0 = ((colw[0] || 0) - (rows[r5].w[0] || 0)) / 2;
+                    if (h0 > 0) {
+                        try { p5.leftIndent = lind + h0; } catch (e7) {}
+                    }
+                }
+                for (var c6 = 0; c6 < rStops.length; c6++) {
+                    try {
+                        p5.tabStops.add({
+                            alignment: TabStopAlignment.LEFT_ALIGN,
+                            position: rStops[c6]
+                        });
+                    } catch (e8) {}
+                }
+            }
+            groups++;
+            if (groups % 20 === 0) {
+                wlog("선지열정렬 진행: " + groups + "그룹");
+            }
+            i = j;
+        }
+    }
+    wlog("선지열정렬: " + groups + "그룹 탭스톱 적용 / 프레임 초과 [경고] "
+         + warned + "건");
+}
+
 function textbookPostprocess(doc) {
     var bMaster = null, dMaster = null;
     try { bMaster = doc.masterSpreads.itemByName("B-마스터"); bMaster.name; } catch (e) { bMaster = null; }
@@ -1695,6 +1892,12 @@ try {
         app.doScript(function () { textbookPostprocess(doc); },
                      ScriptLanguage.JAVASCRIPT, undefined,
                      UndoModes.ENTIRE_SCRIPT, "wb_v2 textbook_post");
+    }
+    if (plan.choice_tabs) {
+        // W40 결함 1 — 다열 선지 열 정렬 (탭스톱 자동 적용)
+        app.doScript(function () { applyChoiceTabs(doc, flowStories, plan.choice_tabs); },
+                     ScriptLanguage.JAVASCRIPT, undefined,
+                     UndoModes.ENTIRE_SCRIPT, "wb_v2 choice_tabs");
     }
 
     var ovf = 0;

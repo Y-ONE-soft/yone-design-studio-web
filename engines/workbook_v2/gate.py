@@ -221,6 +221,12 @@
                   실측 대조 — stem_keep 계약 플랜은 critical, 구출력
                   소급 warning. 발문+본문 1줄 케이스는 실행기
                   enforceStemKeep이 담당 (라인 정보는 덤프에 없음).
+  G42 [선지열정렬] (W40 결함 1): 다열 선지 그룹("(A)(B)(C)" 헤더 +
+                  "①x\ty\tz" 행)의 탭 셀 시작 오프셋이 행 간 불일치 —
+                  덤프 W40 확장 필드 cx 실측 (±0.3mm). v1 실물 관행은
+                  기본 12.7mm 탭 그리드 정렬 (배재2_워크북01 실측) —
+                  실행기 applyChoiceTabs가 명시 탭스톱으로 재현.
+                  choice_tabs 계약 플랜은 critical, 구덤프는 생략.
 
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
 G24②/G26은 W21 확장 필드(fc / pages)가 필요하다. G29②는 W23 확장 필드
@@ -2107,6 +2113,62 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                f"{len(stem_orphans)}건 (본문이 다음 프레임에서 시작): "
                + " | ".join(stem_orphans[:4]))
         (critical if stem_keep_contract else warnings).append(msg)
+
+    # ── G42 다열 선지 열 정렬 (W40 결함 1) ───────────────────────────────
+    # 연속 탭 선지 단락 그룹에서 항목 행(원문자 시작)의 탭 셀 시작 오프셋
+    # (덤프 W40 확장 필드 cx)이 열별로 일치해야 한다 (±0.3mm). 그룹이
+    # 프레임 경계에서 갈라질 수 있어 행 시작(cx[0])이 1mm 이내인 부분
+    # 그룹끼리만 대조. choice_tabs 계약 플랜은 critical, 구덤프(cx 없음)는
+    # 검사 생략 + 계약 시 재덤프 경고.
+    tab_misaligned = []
+    cx_seen = False
+    for story in dump.get("stories", []):
+        ps = story.get("paragraphs", [])
+        i = 0
+        while i < len(ps):
+            s = ps[i].get("s") or ""
+            if "선지" not in s or "\t" not in ps[i].get("t", ""):
+                i += 1
+                continue
+            j = i
+            rows = []
+            while j < len(ps):
+                sj = ps[j].get("s") or ""
+                if "선지" not in sj or "\t" not in ps[j].get("t", ""):
+                    break
+                t = _clean(ps[j].get("t", ""))
+                cx = ps[j].get("cx")
+                if cx:
+                    cx_seen = True
+                if t[:1] in "①②③④⑤" and cx and len(cx) >= 2:
+                    rows.append((t, cx))
+                j += 1
+            # 부분 그룹 (cx[0] 1mm 이내) 별 열 오프셋 대조
+            sub = {}
+            for t, cx in rows:
+                key = round(cx[0])
+                sub.setdefault(key, []).append((t, cx))
+            for key, srows in sub.items():
+                if len(srows) < 2:
+                    continue
+                ncol = min(len(cx) for _, cx in srows)
+                for c in range(1, ncol):
+                    vals = [cx[c] for _, cx in srows]
+                    if max(vals) - min(vals) > 0.3:
+                        tab_misaligned.append(
+                            f"「{srows[0][0][:20]}」열{c} 편차 "
+                            f"{round(max(vals) - min(vals), 2)}mm")
+                        break
+            i = max(j, i + 1)
+    stats["choice_tab_misaligned"] = len(tab_misaligned)
+    ct_contract = bool(plan.get("choice_tabs"))
+    if tab_misaligned:
+        msg = (f"[선지열정렬] 다열 선지 열 불일치 {len(tab_misaligned)}그룹: "
+               + " | ".join(tab_misaligned[:4]))
+        (critical if ct_contract else warnings).append(msg)
+    elif ct_contract and not cx_seen:
+        warnings.append("[선지열정렬] 덤프에 탭 셀 오프셋(cx) 없음"
+                        "(구버전 덤프) — 재덤프 필요")
 
     # ── G31 프레임 결손 (W30-r15 — 결함 6) ───────────────────────────────
     # 스토리가 흐르는 페이지의 '그 스토리 프레임 수'가 스토리 대다수

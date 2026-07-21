@@ -71,13 +71,36 @@ try {
             if (!(texts instanceof Array)) { texts = [texts]; }
             if (!(styles instanceof Array)) { styles = [styles]; }
         } catch (e) { texts = []; styles = []; }
+        // W40 additive: cx = 탭 포함 단락의 첫 라인 셀 시작 수평 오프셋
+        // (탭 뒤 문자 horizontalOffset, mm 아님 — 문서 좌표계 그대로.
+        // 게이트 G42가 다열 선지 열 정렬 실측에 사용). 탭 단락에만 개별
+        // DOM 접근 — 대량 벌크 게터 경로는 무변경.
+        var paraEls = null;
         var sb = [];
         for (var pi = 0; pi < texts.length; pi++) {
             var txt = texts[pi];
             if (typeof txt != "string") { txt = String(txt); }
             var sty = "";
             try { sty = styleFullName(styles[pi]); } catch (e) {}
-            sb.push("{\"t\":\"" + esc(txt) + "\",\"s\":\"" + esc(sty) + "\"}");
+            var cxj = "";
+            if (txt.indexOf("\t") >= 0 && txt.length < 200) {
+                try {
+                    if (paraEls === null) {
+                        paraEls = st.paragraphs.everyItem().getElements();
+                    }
+                    var pObj = paraEls[pi];
+                    var cells = [];
+                    var chs = pObj.characters;
+                    cells.push(String(Math.round(chs[0].horizontalOffset * 100) / 100));
+                    for (var cxi = 0; cxi < txt.length - 1 && cxi < 150; cxi++) {
+                        if (txt.charAt(cxi) == "\t") {
+                            cells.push(String(Math.round(chs[cxi + 1].horizontalOffset * 100) / 100));
+                        }
+                    }
+                    cxj = ",\"cx\":[" + cells.join(",") + "]";
+                } catch (e) { cxj = ""; }
+            }
+            sb.push("{\"t\":\"" + esc(txt) + "\",\"s\":\"" + esc(sty) + "\"" + cxj + "}");
         }
         if (si % 10 == 0) {   // 하트비트 — 러너 행 감지(5분 무갱신) 방지
             wlog("진행: 스토리 " + (si + 1) + "/" + stories.length);
