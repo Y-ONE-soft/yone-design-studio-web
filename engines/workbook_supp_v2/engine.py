@@ -228,7 +228,8 @@ class WorkbookSuppV2Engine(WorkbookV2Engine):
             deco = {"page_cleanup": {"empty": "delete"},
                     "section_masters": True}
         # W23 r13 F4 — 문제 단위 펼침면 킵 (opt-in, base prepare_jsx가
-        # True 센티널을 question_keep_op 계약으로 확장)
+        # True 센티널을 question_keep_op 계약으로 확장. W40 결함 2 —
+        # question_keep_op가 stem_keep(발문 고아 방지 프레임판)을 포함)
         deco["question_keep"] = True
         try:
             content = json.load(open(os.path.join(job_dir, "content.json"),

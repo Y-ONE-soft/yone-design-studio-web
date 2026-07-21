@@ -2022,4 +2022,9 @@ def question_keep_op(plan, steps=("step3",)):
             flows_cfg[fl["step"]] = {"starts": starts}
     if not flows_cfg:
         return None
-    return {"flows": flows_cfg, "q_styles": sorted(q_styles)}
+    # W40 결함 2 — 발문 고아 방지 (프레임판 question_keep): 프레임 하단에
+    # 발문만 남거나 발문+본문 1줄만 남으면 문제 시작을 다음 프레임으로
+    # 민다 (실행기 enforceStemKeep 계약 — min_lines = 발문 뒤 최소 동반
+    # 본문 줄수. 게이트 G41이 stem_keep 유무로 critical/warning 분기).
+    return {"flows": flows_cfg, "q_styles": sorted(q_styles),
+            "stem_keep": {"min_lines": 2}}

@@ -1233,6 +1233,103 @@ function enforceQuestionKeep(doc, flowStories, op) {
     }
 }
 
+// ── W40 결함 2: 발문 고아 방지 (프레임판 question_keep) ─────────────────────
+// 프레임 하단에 발문만 남거나 발문+본문 minLines-1줄 이하만 남고 문제가
+// 다음 프레임으로 이어지면, 발문(문제 시작)을 다음 프레임으로 민다.
+// starts는 question_keep 계약(문제 시작 단락 인덱스)을 재사용. 반드시
+// enforceQuestionKeep(스프레드 킵) 이후 호출 — step3 페이지는 프레임
+// 1개라 NEXT_FRAME 밀기가 스프레드를 새로 넘길 수 있는 케이스(오른쪽
+// 페이지 하단)는 스프레드 킵이 먼저 NEXT_PAGE로 해소한 상태다.
+function enforceStemKeep(doc, flowStories, op) {
+    var minLines = (op.stem_keep && op.stem_keep.min_lines) || 2;
+    var flowsCfg = (op && op.flows) || {};
+    for (var step in flowsCfg) {
+        var rec = flowStories[step];
+        if (!rec) { continue; }
+        var story = rec.story;
+        var starts = flowsCfg[step].starts || [];
+        if (starts.length === 0) { continue; }
+        var pushed = 0;
+        var iter = 0;
+        var noFix = {};
+        var limit = starts.length + 10;
+        while (iter < limit) {
+            iter++;
+            try { story.recompose(); } catch (e0) {}
+            var paras = story.paragraphs.everyItem().getElements();
+            var hit = -1;
+            for (var k = 0; k < starts.length; k++) {
+                if ((k + 1) % 40 === 0) {
+                    wlog("발문고아 검사 진행: " + step + " " + (k + 1)
+                         + "/" + starts.length);
+                }
+                var si = starts[k];
+                if (si <= 0 || si >= paras.length || noFix[si]) { continue; }
+                var ei = (k + 1 < starts.length
+                          && starts[k + 1] <= paras.length)
+                    ? starts[k + 1] - 1 : paras.length - 1;
+                if (ei <= si) { continue; }
+                var stem = paras[si];
+                var f = null;
+                try { f = stem.parentTextFrames[0]; } catch (e1) {}
+                if (!f) { continue; }   // overset — 확장이 처리
+                var fLines = [];
+                try { fLines = f.lines.everyItem().getElements(); }
+                catch (e2) { fLines = []; }
+                if (!fLines || fLines.length === 0) { continue; }
+                var stemStart = -1, stemLen = 0;
+                try {
+                    stemStart = stem.characters[0].index;
+                    stemLen = stem.characters.length;
+                } catch (e3) { continue; }
+                var stemEnd = stemStart + stemLen;
+                // 프레임 첫 라인이 이미 발문이면(프레임 최상단) 밀어도
+                // 해소 불가 — 스킵 (무한 밀기 방지)
+                var firstIdx = -1;
+                try { firstIdx = fLines[0].characters[0].index; }
+                catch (e4) {}
+                if (firstIdx >= stemStart) { noFix[si] = true; continue; }
+                var bodyLines = 0;
+                var lastEnd = -1;
+                for (var li = 0; li < fLines.length; li++) {
+                    var c0 = -1, cn = 0;
+                    try {
+                        c0 = fLines[li].characters[0].index;
+                        cn = fLines[li].characters.length;
+                    } catch (e5) { continue; }
+                    if (c0 + cn - 1 > lastEnd) { lastEnd = c0 + cn - 1; }
+                    if (c0 >= stemEnd) { bodyLines++; }
+                }
+                var qEnd = -1;
+                try {
+                    var eP = paras[ei];
+                    qEnd = eP.characters[0].index + eP.characters.length - 1;
+                } catch (e6) { continue; }
+                if (qEnd <= lastEnd) { continue; }   // 문제가 프레임 안에서 끝남
+                if (bodyLines >= minLines) { continue; }
+                hit = si;
+                break;
+            }
+            if (hit < 0) { break; }
+            try {
+                paras[hit].startParagraph = StartParagraph.NEXT_FRAME;
+                pushed++;
+                noFix[hit] = true;
+                wlog("발문고아킵: " + step + " 단락 " + hit
+                     + " 다음 프레임으로 밀기 (" + pushed + "건째)");
+            } catch (e7) {
+                noFix[hit] = true;
+                wlog("[경고] 발문고아킵 밀기 실패(단락 " + hit + "): " + e7);
+            }
+            var grew = expandStoryOverflow(doc, step + " 발문고아킵", story);
+            if (grew > 0) {
+                wlog(step + " 발문고아킵: 오버플로우 페이지 +" + grew);
+            }
+        }
+        wlog("발문고아킵: " + step + " 밀기 " + pushed + "건");
+    }
+}
+
 // ── W21 op: 섹션 시작 좌/우 마스터 정합 (plan.section_masters가 있을 때만) ──
 // 페이지 정리로 섹션 시작이 좌→우(또는 우→좌)로 밀리면 시작 페이지 마스터를
 // 좌/우 변형으로 교체한다. [원본]워크북_C 실측: STEP1 섹션이 오른쪽에서
@@ -1557,6 +1654,12 @@ try {
         // alignPartFillers를 재실행한다 (멱등 — 라벨이 왼쪽일 때만 삽입).
         app.doScript(function () {
             enforceQuestionKeep(doc, flowStories, plan.question_keep);
+            if (plan.question_keep.stem_keep) {
+                // W40 결함 2 — 프레임판 발문 고아 방지 (스프레드 킵 이후.
+                // 밀기로 스프레드 걸침이 새로 생길 수 있어 재검 1회)
+                enforceStemKeep(doc, flowStories, plan.question_keep);
+                enforceQuestionKeep(doc, flowStories, plan.question_keep);
+            }
             if (plan.page_cleanup
                     && (typeof plan.page_cleanup === "object")
                     && plan.page_cleanup.empty === "delete") {

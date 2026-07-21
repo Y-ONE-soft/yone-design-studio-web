@@ -214,6 +214,13 @@
                   (G35)의 괄호 라벨형 확장 (0a5da924 실증: <보기 B> 아래
                   답란이 Box 전파에 삼켜져 보기 스타일). 현행 플랜은
                   critical, 구출력 소급 warning.
+  G41 [발문고아] (W40 결함 2): 프레임 하단에 발문만 남고 문제 본문이
+                  다음 프레임에서 시작 — question_keep의 프레임판 (W23
+                  스프레드 킵의 프레임 층. 0a5da924 실증: "다음 글에서
+                  전체 흐름과 관계 없는 문장은?" 발문 단독 잔류). fc
+                  실측 대조 — stem_keep 계약 플랜은 critical, 구출력
+                  소급 warning. 발문+본문 1줄 케이스는 실행기
+                  enforceStemKeep이 담당 (라인 정보는 덤프에 없음).
 
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
 G24②/G26은 W21 확장 필드(fc / pages)가 필요하다. G29②는 W23 확장 필드
@@ -2044,6 +2051,62 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         warnings.append(
             f"[문제단위킵] 한 문제가 스프레드 초과 {len(keep_manual)}건 — "
             f"밀기로 해소 불가 (수동 확인): " + " | ".join(keep_manual[:3]))
+
+    # ── G41 발문 고아 (W40 결함 2) ───────────────────────────────────────
+    # 프레임 하단에 발문만 남고 문제 본문이 다음 프레임에서 시작 — 발문
+    # 단락의 프레임과 다음 유의 단락의 프레임을 fc(프레임 첫 문자 인덱스)
+    # 실측으로 대조한다 (발문+본문 1줄 케이스는 라인 정보가 덤프에 없어
+    # 실행기 enforceStemKeep이 담당 — 게이트는 발문 단독 고아를 잡는다).
+    # stem_keep 계약 플랜은 critical, 구출력 소급 warning.
+    stem_keep_contract = bool(qk.get("stem_keep")) if qk else False
+    stem_orphans = []
+    for fl in plan.get("flows", []):
+        if fl.get("step") not in qk_steps:
+            continue
+        story = _find_flow_story(dump, fl)
+        if story is None:
+            continue
+        ps = story.get("paragraphs", [])
+        fc = [c for c in story.get("fc") or []
+              if isinstance(c, int) and c >= 0]
+        if not fc or len(fc) < 2:
+            continue
+        fcs = sorted(fc)
+
+        def _frame_of(off, _fcs=fcs):
+            fi = -1
+            for x, c in enumerate(_fcs):
+                if c <= off:
+                    fi = x
+                else:
+                    break
+            return fi
+
+        offs = []
+        cum = 0
+        for p in ps:
+            offs.append(cum)
+            cum += len(p.get("t", ""))
+        for i, p in enumerate(ps):
+            if not _is_q_boundary_style(p.get("s") or ""):
+                continue
+            body = next((j for j in range(i + 1, len(ps))
+                         if _clean(ps[j].get("t", ""))
+                         and not _is_q_boundary_style(
+                             ps[j].get("s") or "")), None)
+            if body is None:
+                continue
+            stem_last = offs[i] + max(0, len(ps[i].get("t", "")) - 1)
+            f_stem = _frame_of(stem_last)
+            f_body = _frame_of(offs[body])
+            if f_stem >= 0 and f_body > f_stem:
+                stem_orphans.append(_clean(p.get("t", ""))[:30])
+    stats["stem_orphans"] = len(stem_orphans)
+    if stem_orphans:
+        msg = (f"[발문고아] 프레임 하단 발문 단독 잔류 "
+               f"{len(stem_orphans)}건 (본문이 다음 프레임에서 시작): "
+               + " | ".join(stem_orphans[:4]))
+        (critical if stem_keep_contract else warnings).append(msg)
 
     # ── G31 프레임 결손 (W30-r15 — 결함 6) ───────────────────────────────
     # 스토리가 흐르는 페이지의 '그 스토리 프레임 수'가 스토리 대다수
