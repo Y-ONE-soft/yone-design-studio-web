@@ -2017,7 +2017,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "    (A)      (B)       (C)",
@@ -2098,7 +2098,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "       (A)          (B)          (C)",
@@ -2352,7 +2352,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "      (A)            (B)         ",
@@ -3860,7 +3860,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "    (A) \t  (B)\t\t (C)",
@@ -4268,7 +4268,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "\t(A)\t  (B)\t   (C)\t    (D)",
@@ -4390,7 +4390,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "      (A)       (B)       (C)",
@@ -4471,7 +4471,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "      (A)           (B)        (C)",
@@ -4692,7 +4692,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "       (A)           (B)      ",
@@ -5670,7 +5670,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "     (A)            (B)            (C)",
@@ -7108,7 +7108,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "      (A)             (B)             (C)",
@@ -7438,7 +7438,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "    (A)\t(B)\t            (C)",
@@ -8636,7 +8636,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "      (A)                  (B)",
@@ -8717,7 +8717,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "       (A)              (B)             (C)",
@@ -8798,7 +8798,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "      (A)           (B)",
@@ -9416,7 +9416,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "        (A)            (B)           (C)",
@@ -10178,7 +10178,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "\t",
@@ -10309,7 +10309,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "(B)_____________________",
@@ -10319,7 +10319,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "(C)_____________________",
@@ -10329,7 +10329,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "(D)_____________________",
@@ -10339,7 +10339,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "(D)_____________________",
@@ -10349,7 +10349,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "(F)_____________________",
@@ -10359,7 +10359,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       }
      ]
     }

@@ -1658,7 +1658,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(B): _________________",
@@ -1668,7 +1668,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "위 글의 빈칸 (C)에 들어갈 가장 어울리는 단어를 지문에 사용된 어휘를 활용해서 적는다면?",
@@ -2429,7 +2429,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "      (A)           (B)           (C)",
@@ -4252,7 +4252,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "       (A)\t\t           (B)",
@@ -4456,7 +4456,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "      (A)                   (B)",
@@ -9326,7 +9326,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "     (A)\t\t　　 (B)\t\t　　　 (C)",

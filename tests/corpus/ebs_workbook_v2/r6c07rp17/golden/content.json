@@ -888,7 +888,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "   (A)      (B) \t       (C)",
@@ -968,7 +968,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "    (A)     (B) \t         (C) \t       (D)",
@@ -1120,7 +1120,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "    (A)             (B)\t          (C)",
@@ -1343,7 +1343,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "      (A)\t    (B)\t\t  (C)\t",
@@ -1424,7 +1424,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "     (A)\t   (B)\t      (C)",
@@ -1615,7 +1615,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "     (A)\t     (B)\t          (C)",
@@ -3494,7 +3494,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "(B)________________________________________________",
@@ -3504,7 +3504,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "(C)________________________________________________",
@@ -3514,7 +3514,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "(D)________________________________________________",
@@ -3524,7 +3524,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "다음 글의 주제로 가장 적절한 것은? [Review 17강 -1번]",
@@ -3909,7 +3909,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "        (A)            (B)           (C)",

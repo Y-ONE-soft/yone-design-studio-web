@@ -3,6 +3,6 @@
   "source_job": "round3-gdrive",
   "note": "W13 후보⑤ 고1 25-10 모의고사 워크북 — 폴더 전체 업로드(STEP1~3 정답 hwpx 포함). 정답 라우팅 차단(D3)·파서 행 2종(D1/D2) 수리 후 출력이 골든. 정답 hwpx 3종은 G9 expected-unused.",
   "golden_regenerated": {
-    "commit": "7fa05bc"
+    "commit": "0110146"
   }
 }

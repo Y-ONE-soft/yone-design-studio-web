@@ -685,7 +685,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "(B): _____________________",
@@ -695,7 +695,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "(C): _____________________",
@@ -705,7 +705,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?[Unit 16-2]",
@@ -2471,7 +2471,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "(2)___________________________",
@@ -2481,7 +2481,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "(3)___________________________",
@@ -2491,7 +2491,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "위 글의 밑줄 친 ⓐ~ⓔ 중, 어법상 어색한 것을 하나 고르고 한 단어로 바르게 수정하시오.",
@@ -2975,7 +2975,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "     (A)\t   \t(B)\t\t   (C)",
@@ -3080,7 +3080,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "    (A)\t\t    (B)\t\t  (C)",
@@ -3161,7 +3161,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "     (A)\t  \t (B)\t\t   (C)",
@@ -3595,7 +3595,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "\t(A)\t     (B)\t\t   (C)",
@@ -3737,7 +3737,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "(A) b__________ ___________: to cause someone to become involved in a process, activity, etc",
@@ -3960,7 +3960,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "      (A)\t\t    \t(B)",
@@ -4126,7 +4126,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "      (A)               (B)                   (C)",
@@ -5226,7 +5226,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "     (A)                (B)",
@@ -5455,7 +5455,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "\t(A)\t\t(B)",
@@ -6426,7 +6426,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "\t(A)\t\t    (B)",
@@ -6507,7 +6507,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "\t(A) \t    - \t\t(B)",
@@ -7884,7 +7884,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "(B)___________________",
@@ -7894,7 +7894,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "(C)___________________",
@@ -7904,7 +7904,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "위 글을 읽고 아래 질문에 각각 10자 이내의 우리말로 답하시오.",
@@ -8337,7 +8337,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "(B): ___________________",
@@ -8347,7 +8347,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "(C): ___________________",
@@ -8357,7 +8357,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "위 글을 읽고, 주어진 단어를 사용하여 글의 요약문을 완성하시오. (16-4)",
@@ -8467,7 +8467,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "  (A)\t\t(B)          \t (C)",
@@ -11337,7 +11337,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "    (A)\t\t (B)\t\t  (C)",
@@ -11418,7 +11418,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "      (A)\t     (B)\t\t   (C)",

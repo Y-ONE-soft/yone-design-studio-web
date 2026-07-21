@@ -118,7 +118,9 @@ def test_r10c21_plan_anchor():
     paras = [p for u in fl["units"]
              for p in (u["paras"] if isinstance(u, dict) else u)]
     assert len(paras) == 746            # E2E 실측 (2026-07-13)
-    assert sum(1 for p in paras if "배경" in (p.get("s") or "")) == 33
+    # 33 → 29 (W40 결함 4): 괄호 낱말/어법·빈칸 (A)(B) 선택형의 재인쇄
+    # 지문 4개가 배경에서 지문으로 강등 (지문 배경 오적용 수리)
+    assert sum(1 for p in paras if "배경" in (p.get("s") or "")) == 29
 
 
 def test_r10c22_plan_anchor():
@@ -138,7 +140,9 @@ def test_r10c22_plan_anchor():
     paras = [p for u in fl["units"]
              for p in (u["paras"] if isinstance(u, dict) else u)]
     assert len(fl["units"]) == 25           # E2E 실측 (18 normal + 7 short)
-    assert sum(1 for p in paras if "배경" in (p.get("s") or "")) == 28
+    # 28 → 27 (W40 결함 4): short[3] 괄호 어법 선택형 재인쇄 지문 1개
+    # 배경 → 지문 강등 (지문 배경 오적용 수리)
+    assert sum(1 for p in paras if "배경" in (p.get("s") or "")) == 27
 
 
 # ── 세로 divider op 이식 (W20 — G22 소급 c17) ───────────────────────────────
