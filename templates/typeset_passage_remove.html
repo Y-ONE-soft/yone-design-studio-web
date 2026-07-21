@@ -51,6 +51,8 @@
            placeholder="비워두면 원본명_지문제거.indd">
     <div class="input-hint">결과는 <code>조판/교재/지문제거/</code> 폴더에 저장. 원본은 수정되지 않습니다.</div>
   </div>
+  {% include "_review_agent_opt.html" %}
+
   <button type="submit" class="run-btn" id="run-btn">
     <span class="btn-icon">&#9654;</span> 선택 지문 제거 실행
   </button>
@@ -208,6 +210,9 @@
     formData.append('inventory_id', _inventoryId);
     formData.append('selected', selected.join(','));
     formData.append('result_name', document.getElementById('result-name').value.trim());
+    // W41 후속 — 검수 에이전트 opt-in 전파 (수동 FormData 경로)
+    const _raCb = document.querySelector('#typeset-form input[name="review_agent"]');
+    if (_raCb && _raCb.checked) formData.append('review_agent', '1');
 
     const runBtn = document.getElementById('run-btn');
     runBtn.disabled = true;
@@ -311,6 +316,8 @@
         ${pdfPath ? `<p style="margin:4px 0; font-size:13px; word-break:break-all;">PDF: ${pdfPath}</p>` : ''}
         ${warnings.length ? `<ul class="warn-list">${warnings.map(w => '<li>' + escapeHtml(w) + '</li>').join('')}</ul>` : ''}
       </div>`;
+    // W41 후속 — AI 검수 카드(판정 그룹+재조판 버튼, 공용 review_agent_ui.js)
+    if (window.ReviewAgentUI) ReviewAgentUI.append(area, jobId, result.review_agent);
     setStep('verify');
   }
 
@@ -333,4 +340,5 @@
   }
 </script>
 <script src="{{ url_for('static', filename='js/result_session.js') }}"></script>
+<script src="{{ url_for('static', filename='js/review_agent_ui.js') }}"></script>
 {% endblock %}

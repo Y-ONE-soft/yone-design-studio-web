@@ -124,6 +124,8 @@
   <input type="hidden" name="_target_material" id="target-material" value="">
 
   <!-- v2 (베타): 세로버전 버튼 없음 — 세로 조판은 v1 워크북 페이지 사용 -->
+  {% include "_review_agent_opt.html" %}
+
   <div class="button-row" style="display:flex; gap:10px;">
     <button type="submit" class="run-btn" id="run-btn">
       <span class="btn-icon">▶</span> 조판 실행 (v2 베타)
@@ -188,6 +190,7 @@
   }
   // handleFileSelect / handleDrop → typeset.js에서 멀티파일 지원으로 통합 정의
 </script>
+<script src="{{ url_for('static', filename='js/review_agent_ui.js') }}"></script>
 <script src="{{ url_for('static', filename='js/typeset.js') }}?v=sero1"
         data-material="{{ engine.material_id }}"></script>
 {% endblock %}

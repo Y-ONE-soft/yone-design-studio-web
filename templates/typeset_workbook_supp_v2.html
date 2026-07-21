@@ -122,6 +122,8 @@
     </div>
   </details>
 
+  {% include "_review_agent_opt.html" %}
+
   <button type="submit" class="run-btn" id="run-btn">
     <span class="btn-icon">▶</span> 조판 실행 (v2 베타)
   </button>
@@ -215,6 +217,7 @@
       school ? `${school}_워크북${stem}_내지_v2.indd` : `워크북${stem}_내지_v2.indd`;
   }
 </script>
+<script src="{{ url_for('static', filename='js/review_agent_ui.js') }}"></script>
 <script src="{{ url_for('static', filename='js/typeset.js') }}"
         data-material="{{ engine.material_id }}"></script>
 {% endblock %}

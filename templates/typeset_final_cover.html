@@ -74,6 +74,8 @@
     <div class="filename-preview filename-preview--multiline" id="filename-preview">학교를 선택하세요</div>
   </div>
 
+  {% include "_review_agent_opt.html" %}
+
   <button type="submit" class="run-btn" id="run-btn">
     <span class="btn-icon">&#9654;</span> 표지 생성
   </button>
@@ -235,6 +237,8 @@
           ? '<div class="action-row"><a href="/download/' + jobId + '/pdf" class="download-btn">&#128229; 다운로드</a></div>'
           : '<p class="no-pdf">PDF가 생성되지 않았습니다.</p>') +
       '</div>';
+    // W41 후속 — AI 검수 카드(판정 그룹+재조판 버튼, 공용 review_agent_ui.js)
+    if (window.ReviewAgentUI) ReviewAgentUI.append(area, jobId, result.review_agent);
     setStep('verify');
   }
 
@@ -259,4 +263,5 @@
   updatePreview();
 </script>
 <script src="{{ url_for('static', filename='js/result_session.js') }}"></script>
+<script src="{{ url_for('static', filename='js/review_agent_ui.js') }}"></script>
 {% endblock %}

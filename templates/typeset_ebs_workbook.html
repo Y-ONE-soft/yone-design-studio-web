@@ -55,6 +55,8 @@
     </div>
   </div>
 
+  {% include "_review_agent_opt.html" %}
+
   <button type="submit" class="run-btn" id="run-btn">
     <span class="btn-icon">&#9654;</span> 조판 실행
   </button>
@@ -169,6 +171,7 @@
       'EBS_리딩파워_' + unitShort + '_전체(C).indd';
   }
 </script>
+<script src="{{ url_for('static', filename='js/review_agent_ui.js') }}"></script>
 <script src="{{ url_for('static', filename='js/typeset.js') }}"
         data-material="{{ engine.material_id }}"></script>
 {% endblock %}

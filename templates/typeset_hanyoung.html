@@ -63,6 +63,8 @@
   </div>
   <div class="file-list" id="file-list"></div>
 
+  {% include "_review_agent_opt.html" %}
+
   <button type="submit" class="run-btn" id="run-btn">
     <span class="btn-icon">▶</span> 조판 실행
   </button>
@@ -407,6 +409,8 @@
           ? '<div class="action-row"><a href="http://localhost:8501?file=' + encodeURIComponent(result.mockup_file) + '" target="_blank" class="mockup-btn">🎨 목업에서 열기</a></div>'
           : ''}
       </div>`;
+    // W41 후속 — AI 검수 카드(판정 그룹+재조판 버튼, 공용 review_agent_ui.js)
+    if (window.ReviewAgentUI) ReviewAgentUI.append(area, jobId, result.review_agent);
     setStep('verify');
   }
 
@@ -429,4 +433,5 @@
   }
 </script>
 <script src="{{ url_for('static', filename='js/result_session.js') }}"></script>
+<script src="{{ url_for('static', filename='js/review_agent_ui.js') }}"></script>
 {% endblock %}

@@ -41,6 +41,8 @@
       <input type="checkbox" id="export-pdf" checked> PDF 함께 출력
     </label>
   </div>
+  {% include "_review_agent_opt.html" %}
+
   <button type="submit" class="run-btn" id="run-btn">
     <span class="btn-icon">&#9654;</span> 세로 변환 실행 (InDesign — 수십 분 소요 가능)
   </button>
@@ -131,6 +133,9 @@
     formData.append('result_name', document.getElementById('result-name').value.trim());
     formData.append('export_pdf',
       document.getElementById('export-pdf').checked ? 'on' : 'off');
+    // W41 후속 — 검수 에이전트 opt-in 전파 (수동 FormData 경로)
+    const _raCb = document.querySelector('#typeset-form input[name="review_agent"]');
+    if (_raCb && _raCb.checked) formData.append('review_agent', '1');
 
     const runBtn = document.getElementById('run-btn');
     runBtn.disabled = true;
@@ -234,6 +239,8 @@
         ${pdfPath ? `<p style="margin:4px 0; font-size:13px; word-break:break-all;">PDF: ${escapeHtml(pdfPath)}</p>` : ''}
         ${warnings.length ? `<ul class="warn-list">${warnings.map(w => '<li>' + escapeHtml(w) + '</li>').join('')}</ul>` : ''}
       </div>`;
+    // W41 후속 — AI 검수 카드(판정 그룹+재조판 버튼, 공용 review_agent_ui.js)
+    if (window.ReviewAgentUI) ReviewAgentUI.append(area, jobId, result.review_agent);
     setStep('verify');
   }
 
@@ -256,4 +263,5 @@
   }
 </script>
 <script src="{{ url_for('static', filename='js/result_session.js') }}"></script>
+<script src="{{ url_for('static', filename='js/review_agent_ui.js') }}"></script>
 {% endblock %}
