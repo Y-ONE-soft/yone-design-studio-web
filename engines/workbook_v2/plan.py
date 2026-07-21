@@ -557,11 +557,18 @@ def _s3_assign_slots(pre, BG):
     warn = []
     last_q = None            # (q_code, 발문 텍스트)
     given_pending = False    # 발문 직후 첫 유의 단락 대기 상태
+    demote_pending = False   # W40 결함 4: 유형이 슬롯 비기대 — 구 주석 강등
     for row in pre:
         eff = row["eff"]
         if eff in ("Q", "Q-INTRO"):
             last_q = (row.get("q_code"), row["tclean"])
             given_pending = BG.expects_given_block(last_q[0], last_q[1])
+            # 유형이 분류됐는데 주어진 블록을 기대하지 않으면(선지 직행
+            # 실측 — OBJ-GRM-PAREN 등), 발문 직후 P-CONTEXT 구 주석은
+            # 판정 2 오배정 잔재다 (0a5da924 215번 실증) — 지문으로 강등.
+            # Q 한정 (Q-INTRO 묶음 인트로 뒤 장문 배열형의 주어진 글 보존).
+            demote_pending = (eff == "Q" and bool(last_q[0])
+                              and not given_pending)
             continue
         if not row["tclean"] or row["kind"] == "SRC" \
                 or (row["eff"] == "UNKNOWN"

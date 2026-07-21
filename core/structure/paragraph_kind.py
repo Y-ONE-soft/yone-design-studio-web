@@ -156,11 +156,13 @@ def classify_paragraphs(paras):
     # UNKNOWN이 된 주어진 문장 등) 유형·위치·형태가 맞으면 배정 (87 실증).
     last_q_code = None
     last_q_text = ""
+    last_q_kind = None
     for i, item in enumerate(out):
         kind = item["kind"]
         if kind in ("Q", "Q-INTRO"):
             last_q_code = item["q_code"]
             last_q_text = item["text"]
+            last_q_kind = kind
             continue
         if kind not in ("P", "UNKNOWN", "K", "Word"):
             continue
@@ -195,13 +197,32 @@ def classify_paragraphs(paras):
             continue
 
         # P-CONTEXT 판정 2: 다음 비빈 단락이 (A)로 시작하는 순서배열 구성.
+        # W40 결함 4: "(A)\t(B)\t(C)" 다열 선지 헤더(kind C)도
+        # P_ORDER_LABEL에 걸려 네모 어법 선택형 지문이 배경으로 오배정
+        # (0a5da924 215번 실증) — 순서배열 항목은 "(A) 문장…"(kind P)만.
+        # 유형이 분류됐고 그 유형이 주어진 블록을 기대하지 않으면
+        # (OBJ-GRM-PAREN 등 선지 직행 실측) 발동 금지 (유형 신호 우선).
         nxt = next(
             (out[j] for j in range(i + 1, len(out)) if out[j]["kind"] != "BLANK"),
             None,
         )
         if (prev_meaning and prev_meaning["kind"] in ("Q", "Q-INTRO")
                 and nxt and R.P_ORDER_LABEL.match(nxt["text"])):
-            item["kind"] = "P-CONTEXT"
+            if (nxt["kind"] == "P"
+                    and not (last_q_kind == "Q" and last_q_code
+                             and not BG.expects_given_block(last_q_code,
+                                                            last_q_text))):
+                # 순서배열 주어진 글. 유형 veto는 Q 한정 — Q-INTRO(묶음
+                # 인트로) 뒤 장문 배열형(r9c20 41~42)은 기존 판정 유지.
+                item["kind"] = "P-CONTEXT"
+            elif (nxt["kind"] in ("C", "Ans", "AnsL")
+                    and BG.is_summary_blank_form(item["text"])):
+                # 요약 빈칸형: 발문 직후 요약문 + "(A) (B)" 선지 헤더
+                # (선택형) 또는 "(A) ___" 답란(서술형) — 요약문은 배경
+                # (r10c21rp11/r2c02rp15 골든 관행 보존). 긴 재인쇄
+                # 지문(빈칸 (A),(B) 유형)은 형태 판정(길이 상한)에서
+                # 걸러져 지문 유지 (W40 결함 4).
+                item["kind"] = "P-CONTEXT"
 
     # 본문 인라인 번호 문장 보정: P 사이에 낀 1~2개짜리 C 연쇄가 "긴 영어
     # 완결문"이면 선지가 아니라 ①~⑤ 마커가 문장 앞에 붙은 지문 단락이다

@@ -268,6 +268,24 @@ def is_cond_wordlist(text):
     return bool(_COND_WORDLIST_COMMA.search(t))
 
 
+# 요약 빈칸 선택형의 요약문 형태 (W40 결함 4 보조): 짧은 영어 문장 +
+# 인라인 (A)·(B) 빈칸 — 라벨 뒤가 공백/NBSP(" (A) ") 또는 밑줄 런
+# ("(A)__________"). 둘 다 코퍼스 실측 표기 (0a5da924 / r10c21rp11).
+# 네모 어법 선택형 지문의 "(A)[many / far]"는 라벨 뒤 대괄호가 붙어
+# 매치되지 않고, 전체 지문은 길이 상한(400)에 걸린다 — 요약문(배경)과
+# 지문(P)을 형태로 구분하는 신호.
+_SUM_BLANK_A = re.compile(r'\(\s*A\s*\)[\s_]')
+_SUM_BLANK_B = re.compile(r'\(\s*B\s*\)(?:[\s_]|$)')
+
+
+def is_summary_blank_form(text, max_len=400):
+    """발문 직후 단락이 '요약문 + 인라인 (A)/(B) 빈칸' 형태인가."""
+    t = (text or "").strip()
+    if not t or len(t) > max_len or R.HANGUL.search(t):
+        return False
+    return bool(_SUM_BLANK_A.search(t) and _SUM_BLANK_B.search(t))
+
+
 # 슬롯을 소비하지 않는 구조 라벨 (발문과 본문 사이에 끼는 단독 대괄호
 # 라인 — SRC 마커/유형 마커와 같은 층위. [보기]/[조건]/[요약문]은 kind가
 # Cond/Box/Sum이라 여기 오지 않는다)

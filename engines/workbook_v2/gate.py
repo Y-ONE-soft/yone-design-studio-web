@@ -204,6 +204,11 @@
                   2열 표(번호 셀|순열 셀)의 번호 셀이 정답 제거에 오인
                   삭제된 결함 (0a5da924 실증 90행). 현행 플랜(원문자+선지
                   순열 행이 실림)은 critical, 구출력 소급 warning.
+  G39 [지문배경] (W40 결함 4): 네모/괄호 낱말·어법 선택형 발문 직후의
+                  재인쇄 지문에 배경 스타일 오적용 — 지문은 지문 스타일
+                  (215번 실증: 판정 2의 P_ORDER_LABEL 휴리스틱이 "(A)\t
+                  (B)\t(C)" 선지 헤더를 순서배열 항목으로 오인). 현행
+                  플랜은 critical, 구출력 소급 warning.
 
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
 G24②/G26은 W21 확장 필드(fc / pages)가 필요하다. G29②는 W23 확장 필드
@@ -307,6 +312,12 @@ _RE_G38_PERM_BARE = re.compile(
 _RE_G38_PERM_NUMBERED = re.compile(
     r"^[①②③④⑤]\s*\(([ABC])\)\s*[-–—−－]\s*\(([ABC])\)"
     r"\s*[-–—−－]\s*\(([ABC])\)$")
+
+# G39 (W40 결함 4) — 네모/괄호 낱말·어법 선택형 발문 직후의 재인쇄
+# 지문은 배경 스타일이 아니다 (지문이다 — 215번 실증: 판정 2 오배정).
+# 발문 시그니처: (A) 라벨 + 네모/괄호/[ ] 토큰 + '에서' + 낱말/표현 계열.
+_RE_G39_TOKEN = re.compile(r"네모|괄호|\[\s*\]")
+_RE_G39_SUBJECT = re.compile(r"낱말|표현|어법|문맥")
 
 # G13/G32 (W38) — 영어 지시문 발문 시그니처 + 요약문 마커 (출력 검사용
 # 독립 정의 — block_grammar와 순환 방지)
@@ -1167,6 +1178,47 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         msg = (f"[순서선지] 순서배열 선지 순열 행 {len(perm_bad)}개 결함 "
                f"(원문자 누락/선지 스타일 아님): " + " | ".join(perm_bad[:4]))
         (critical if plan_perm else warnings).append(msg)
+
+    # ── G39 [지문배경] (W40 결함 4): 네모/괄호 선택형 지문 ≠ 배경 ───────
+    # 발문(번호 스타일 + 네모/괄호 시그니처) 직후 유의 단락이 배경
+    # 스타일이면 지목 — 재인쇄 지문은 지문 스타일이 계약 (215번 실증).
+    def _g39_is_paren_q(t):
+        return ("(A)" in t and _RE_G39_TOKEN.search(t)
+                and "에서" in t and _RE_G39_SUBJECT.search(t))
+
+    plan_paren_fixed = False
+    for fl in plan.get("flows", []):
+        if fl.get("step") != "step3":
+            continue
+        paras = [p for u in fl.get("units", [])
+                 for p in (u["paras"] if isinstance(u, dict) else u)]
+        for i, p in enumerate(paras):
+            if "번호" not in (p.get("s") or "") \
+                    or not _g39_is_paren_q(_clean(p.get("t", ""))):
+                continue
+            for q in paras[i + 1:]:
+                if not _clean(q.get("t", "")):
+                    continue
+                if "배경" not in (q.get("s") or ""):
+                    plan_paren_fixed = True
+                break
+            if plan_paren_fixed:
+                break
+    paren_bg = []
+    for story in dump.get("stories", []):
+        ps = [p for p in story.get("paragraphs", [])
+              if _clean(p.get("t", ""))]
+        for i, p in enumerate(ps):
+            s = p.get("s") or ""
+            if "번호" not in s or not _g39_is_paren_q(_clean(p.get("t", ""))):
+                continue
+            if i + 1 < len(ps) and "배경" in (ps[i + 1].get("s") or ""):
+                paren_bg.append(_clean(ps[i + 1].get("t", ""))[:32])
+    stats["paren_q_bg"] = len(paren_bg)
+    if paren_bg:
+        msg = (f"[지문배경] 네모/괄호 선택형 지문 {len(paren_bg)}개에 배경 "
+               f"스타일 오적용 (지문이어야 함): " + " | ".join(paren_bg[:3]))
+        (critical if plan_paren_fixed else warnings).append(msg)
 
     stats["cond_item_miss"] = len(cond_miss)
     stats["cond_content_miss"] = len(cond_content_miss)
