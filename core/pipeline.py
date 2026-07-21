@@ -160,6 +160,33 @@ def run_pipeline(engine, job_id: str, job_dir: str, uploaded: dict):
             except Exception as _ve:
                 log(f"[시각검수] 건너뜀 (검수 실패가 조판을 막지 않음): {_ve}")
 
+        # ── 검수 에이전트 2층 (opt-in: YONE_REVIEW_AGENT=1 또는 UI 체크박스, W41) ──
+        # headless claude -p 로 표본 페이지 이미지를 직접 보고 사람 눈 검수를
+        # 대행 → job_dir/review_result.json. 판정은 advisory — ok는 바꾸지
+        # 않고, 원고오류/운영판단 항목만 warnings로 합류한다 (fail-open).
+        # 자동수정가능(auto_fixable) 항목은 UI가 "재조판" 버튼을 제안할 뿐
+        # 여기서 재조판을 실행하지 않는다 (무단 재조판 금지).
+        if (os.environ.get("YONE_REVIEW_AGENT") == "1"
+                or os.path.exists(os.path.join(job_dir, "review_agent.txt"))):
+            try:
+                from core.review_agent import run_review_agent
+                log("[AI검수] 검수 에이전트 준비 중...")
+                ra = run_review_agent(job_dir, log, result=result)
+                if ra is not None:
+                    result["review_agent"] = ra
+                    for fd in ra.get("findings", []):
+                        j = fd.get("judgement")
+                        if j == "manuscript_error":
+                            result.setdefault("warnings", []).append(
+                                f"[AI검수] 📝 원고 오류 의심 p{fd.get('page')}: "
+                                f"{fd.get('detail')}")
+                        elif j == "operator_judgment":
+                            result.setdefault("warnings", []).append(
+                                f"[AI검수] 👁 확인 필요 p{fd.get('page')}: "
+                                f"{fd.get('detail')}")
+            except Exception as _ra_e:
+                log(f"[AI검수] 건너뜀 (검수 실패가 조판을 막지 않음): {_ra_e}")
+
         # PDF를 목업 IN 폴더에 자동 복사
         pdf_path = result.get("pdf_path")
         if pdf_path and os.path.exists(pdf_path):

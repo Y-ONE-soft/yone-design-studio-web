@@ -199,6 +199,39 @@
                   2단 템플릿 페이지를 1단으로 만든 결함 (376b34d0 실증
                   p95~97). question_keep/delete 계약 플랜 critical.
 
+  G38 [순서선지] (W40 결함 3): 순서배열 선지 순열 행("(A) － (C) － (B)")
+                  이 원문자 없이 인쇄되거나 선지 스타일이 아님 — hwpx
+                  2열 표(번호 셀|순열 셀)의 번호 셀이 정답 제거에 오인
+                  삭제된 결함 (0a5da924 실증 90행). 현행 플랜(원문자+선지
+                  순열 행이 실림)은 critical, 구출력 소급 warning.
+  G39 [지문배경] (W40 결함 4): 네모/괄호 낱말·어법 선택형 발문 직후의
+                  재인쇄 지문에 배경 스타일 오적용 — 지문은 지문 스타일
+                  (215번 실증: 판정 2의 P_ORDER_LABEL 휴리스틱이 "(A)\t
+                  (B)\t(C)" 선지 헤더를 순서배열 항목으로 오인). 현행
+                  플랜은 critical, 구출력 소급 warning.
+  G40 [괄호답란] (W40 결함 5): 보기/조건 블록 뒤 괄호 라벨 답란("(A)
+                  ______")이 답란 계열(선지) 스타일이 아님 — W39 콜론형
+                  (G35)의 괄호 라벨형 확장 (0a5da924 실증: <보기 B> 아래
+                  답란이 Box 전파에 삼켜져 보기 스타일). 현행 플랜은
+                  critical, 구출력 소급 warning.
+  G41 [발문고아] (W40 결함 2): 프레임 하단에 발문만 남고 문제 본문이
+                  다음 프레임에서 시작 — question_keep의 프레임판 (W23
+                  스프레드 킵의 프레임 층. 0a5da924 실증: "다음 글에서
+                  전체 흐름과 관계 없는 문장은?" 발문 단독 잔류). fc
+                  실측 대조 — stem_keep 계약 플랜은 critical, 구출력
+                  소급 warning. 발문+본문 1줄 케이스는 실행기
+                  enforceStemKeep이 담당 (라인 정보는 덤프에 없음).
+  G42 [선지열정렬] (W40 결함 1): 다열 선지 그룹("(A)(B)(C)" 헤더 +
+                  "①x\ty\tz" 행)의 탭 셀 시작 오프셋이 행 간 불일치 —
+                  덤프 W40 확장 필드 cx 실측 (±0.3mm). v1 실물 관행은
+                  기본 12.7mm 탭 그리드 정렬 (배재2_워크북01 실측) —
+                  실행기 applyChoiceTabs가 명시 탭스톱으로 재현.
+                  choice_tabs 계약 플랜은 critical, 구덤프는 생략.
+  G43 [빈칸경계] (W40 결함 6): 밑줄 빈칸 런 라인이 프레임 오른쪽 내변
+                  초과 — 덤프 W40 확장 필드 hox 실측. 실행기 blank_fit이
+                  자간(한도 -50)으로 수용하고, 한도 초과 잔존은 warning
+                  지목 (과도 축소 금지 — 사용자 확정 스펙).
+
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
 G24②/G26은 W21 확장 필드(fc / pages)가 필요하다. G29②는 W23 확장 필드
 (fonts / style_fonts), G30은 W23 확장 필드(fp — 프레임별 페이지, fc 병렬)가
@@ -291,6 +324,28 @@ _RE_G36_TFROW = re.compile(
 # G37 (W39 결함 6) — 발문의 "밑줄 친 <영어구>" 인용은 밑줄 렌더 (플랜
 # runs 검사 — 덤프에는 문자 서식이 없어 플랜 계층에서 검증. 독립 정의)
 _RE_G37_QUOTE = re.compile(r"밑줄\s*친\s+([^가-힣]+)")
+
+# G38 (W40 결함 3) — 순서배열 선지 순열 행("(A) － (C) － (B)")은 원문자
+# 접두 + 선지 스타일이어야 한다 (출력 검사용 독립 정의 — 0a5da924 실증:
+# hwpx 2열 표의 번호 셀이 정답 제거에 오인 삭제돼 번호 없이 지문 스타일로
+# 인쇄. 세 라벨이 서로 다른 순열일 때만 매치 — 지문의 "(A) 문장" 배제).
+_RE_G38_PERM_BARE = re.compile(
+    r"^\(([ABC])\)\s*[-–—−－]\s*\(([ABC])\)\s*[-–—−－]\s*\(([ABC])\)$")
+_RE_G38_PERM_NUMBERED = re.compile(
+    r"^[①②③④⑤]\s*\(([ABC])\)\s*[-–—−－]\s*\(([ABC])\)"
+    r"\s*[-–—−－]\s*\(([ABC])\)$")
+
+# G39 (W40 결함 4) — 네모/괄호 낱말·어법 선택형 발문 직후의 재인쇄
+# 지문은 배경 스타일이 아니다 (지문이다 — 215번 실증: 판정 2 오배정).
+# 발문 시그니처: (A) 라벨 + 네모/괄호/[ ] 토큰 + '에서' + 낱말/표현 계열.
+_RE_G39_TOKEN = re.compile(r"네모|괄호|\[\s*\]")
+_RE_G39_SUBJECT = re.compile(r"낱말|표현|어법|문맥")
+
+# G40 (W40 결함 5) — 보기/조건 블록 뒤 괄호 라벨 답란("(A) ______" /
+# "(A) : ______")은 답란 계열(선지) 스타일이어야 한다 (출력 검사용 독립
+# 정의 — 0a5da924 실증: <보기 B> 아래 답란이 보기 스타일로 인쇄).
+_RE_G40_PAREN_BLANK = re.compile(
+    r"^[(（]\s*[A-Za-z가-힣0-9]{1,3}\s*[)）]\s*[:：]?\s*_{3,}[\s_]*[.,]?$")
 
 # G13/G32 (W38) — 영어 지시문 발문 시그니처 + 요약문 마커 (출력 검사용
 # 독립 정의 — block_grammar와 순환 방지)
@@ -1121,6 +1176,122 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                f"계열(선지) 스타일이 아님: " + " | ".join(ansl_miss[:3]))
         (critical if plan_ansl else warnings).append(msg)
 
+    # ── G38 [순서선지] (W40 결함 3): 순열 행 = 원문자 + 선지 스타일 ─────
+    # 현행 플랜(원문자+선지 순열 행이 실린 플랜)은 critical, 구출력 소급
+    # warning (G36/G35 패턴).
+    plan_perm = False
+    for fl in plan.get("flows", []):
+        if fl.get("step") != "step3":
+            continue
+        for u in fl.get("units", []):
+            for p in (u["paras"] if isinstance(u, dict) else u):
+                if _RE_G38_PERM_NUMBERED.match(_clean(p.get("t", ""))) \
+                        and "선지" in (p.get("s") or ""):
+                    plan_perm = True
+                    break
+    perm_bad = []
+    for story in dump.get("stories", []):
+        for p in story.get("paragraphs", []):
+            t = _clean(p.get("t", ""))
+            s = p.get("s") or ""
+            m = _RE_G38_PERM_BARE.match(t)
+            if m and len(set(m.groups())) == 3:
+                perm_bad.append(f"원문자 누락 「{t[:24]}」")
+                continue
+            m = _RE_G38_PERM_NUMBERED.match(t)
+            if m and len(set(m.groups())) == 3 and "선지" not in s:
+                perm_bad.append(f"스타일 「{s[-20:]}」 「{t[:24]}」")
+    stats["perm_row_bad"] = len(perm_bad)
+    if perm_bad:
+        msg = (f"[순서선지] 순서배열 선지 순열 행 {len(perm_bad)}개 결함 "
+               f"(원문자 누락/선지 스타일 아님): " + " | ".join(perm_bad[:4]))
+        (critical if plan_perm else warnings).append(msg)
+
+    # ── G39 [지문배경] (W40 결함 4): 네모/괄호 선택형 지문 ≠ 배경 ───────
+    # 발문(번호 스타일 + 네모/괄호 시그니처) 직후 유의 단락이 배경
+    # 스타일이면 지목 — 재인쇄 지문은 지문 스타일이 계약 (215번 실증).
+    def _g39_is_paren_q(t):
+        return ("(A)" in t and _RE_G39_TOKEN.search(t)
+                and "에서" in t and _RE_G39_SUBJECT.search(t))
+
+    plan_paren_fixed = False
+    for fl in plan.get("flows", []):
+        if fl.get("step") != "step3":
+            continue
+        paras = [p for u in fl.get("units", [])
+                 for p in (u["paras"] if isinstance(u, dict) else u)]
+        for i, p in enumerate(paras):
+            if "번호" not in (p.get("s") or "") \
+                    or not _g39_is_paren_q(_clean(p.get("t", ""))):
+                continue
+            for q in paras[i + 1:]:
+                if not _clean(q.get("t", "")):
+                    continue
+                if "배경" not in (q.get("s") or ""):
+                    plan_paren_fixed = True
+                break
+            if plan_paren_fixed:
+                break
+    paren_bg = []
+    for story in dump.get("stories", []):
+        ps = [p for p in story.get("paragraphs", [])
+              if _clean(p.get("t", ""))]
+        for i, p in enumerate(ps):
+            s = p.get("s") or ""
+            if "번호" not in s or not _g39_is_paren_q(_clean(p.get("t", ""))):
+                continue
+            if i + 1 < len(ps) and "배경" in (ps[i + 1].get("s") or ""):
+                paren_bg.append(_clean(ps[i + 1].get("t", ""))[:32])
+    stats["paren_q_bg"] = len(paren_bg)
+    if paren_bg:
+        msg = (f"[지문배경] 네모/괄호 선택형 지문 {len(paren_bg)}개에 배경 "
+               f"스타일 오적용 (지문이어야 함): " + " | ".join(paren_bg[:3]))
+        (critical if plan_paren_fixed else warnings).append(msg)
+
+    # ── G40 [괄호답란] (W40 결함 5): 보기/조건 뒤 "(A) ___" = 답란 ──────
+    # 위치 신호(직전 유의 단락이 보기/조건 계열 또는 같은 답란 체인) +
+    # 형태 신호(괄호 라벨 + 밑줄 런) — 선지 계열 스타일이 계약.
+    plan_pblank = False
+    for fl in plan.get("flows", []):
+        if fl.get("step") != "step3":
+            continue
+        paras = [p for u in fl.get("units", [])
+                 for p in (u["paras"] if isinstance(u, dict) else u)]
+        prev_s = ""
+        for p in paras:
+            t = _clean(p.get("t", ""))
+            if not t:
+                continue
+            if _RE_G40_PAREN_BLANK.match(t) \
+                    and any(k in prev_s for k in ("보기", "조건")) \
+                    and "선지" in (p.get("s") or ""):
+                plan_pblank = True
+                break
+            prev_s = p.get("s") or ""
+    pblank_miss = []
+    for story in dump.get("stories", []):
+        ps = [p for p in story.get("paragraphs", [])
+              if _clean(p.get("t", ""))]
+        chain = False       # 보기/조건 뒤 답란 체인 진행 상태
+        prev_s = ""
+        for p in ps:
+            t = _clean(p.get("t", ""))
+            s = p.get("s") or ""
+            if _RE_G40_PAREN_BLANK.match(t) and (
+                    chain or any(k in prev_s for k in ("보기", "조건"))):
+                chain = True
+                if "선지" not in s and "답" not in s:
+                    pblank_miss.append(t[:25])
+            else:
+                chain = False
+            prev_s = s
+    stats["paren_blank_miss"] = len(pblank_miss)
+    if pblank_miss:
+        msg = (f"[괄호답란] 보기/조건 뒤 괄호 라벨 답란 {len(pblank_miss)}"
+               f"개가 답란 계열(선지) 스타일이 아님: "
+               + " | ".join(pblank_miss[:3]))
+        (critical if plan_pblank else warnings).append(msg)
+
     stats["cond_item_miss"] = len(cond_miss)
     stats["cond_content_miss"] = len(cond_content_miss)
     if cond_content_miss:
@@ -1890,6 +2061,134 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         warnings.append(
             f"[문제단위킵] 한 문제가 스프레드 초과 {len(keep_manual)}건 — "
             f"밀기로 해소 불가 (수동 확인): " + " | ".join(keep_manual[:3]))
+
+    # ── G41 발문 고아 (W40 결함 2) ───────────────────────────────────────
+    # 프레임 하단에 발문만 남고 문제 본문이 다음 프레임에서 시작 — 발문
+    # 단락의 프레임과 다음 유의 단락의 프레임을 fc(프레임 첫 문자 인덱스)
+    # 실측으로 대조한다 (발문+본문 1줄 케이스는 라인 정보가 덤프에 없어
+    # 실행기 enforceStemKeep이 담당 — 게이트는 발문 단독 고아를 잡는다).
+    # stem_keep 계약 플랜은 critical, 구출력 소급 warning.
+    stem_keep_contract = bool(qk.get("stem_keep")) if qk else False
+    stem_orphans = []
+    for fl in plan.get("flows", []):
+        if fl.get("step") not in qk_steps:
+            continue
+        story = _find_flow_story(dump, fl)
+        if story is None:
+            continue
+        ps = story.get("paragraphs", [])
+        fc = [c for c in story.get("fc") or []
+              if isinstance(c, int) and c >= 0]
+        if not fc or len(fc) < 2:
+            continue
+        fcs = sorted(fc)
+
+        def _frame_of(off, _fcs=fcs):
+            fi = -1
+            for x, c in enumerate(_fcs):
+                if c <= off:
+                    fi = x
+                else:
+                    break
+            return fi
+
+        offs = []
+        cum = 0
+        for p in ps:
+            offs.append(cum)
+            cum += len(p.get("t", ""))
+        for i, p in enumerate(ps):
+            if not _is_q_boundary_style(p.get("s") or ""):
+                continue
+            body = next((j for j in range(i + 1, len(ps))
+                         if _clean(ps[j].get("t", ""))
+                         and not _is_q_boundary_style(
+                             ps[j].get("s") or "")), None)
+            if body is None:
+                continue
+            stem_last = offs[i] + max(0, len(ps[i].get("t", "")) - 1)
+            f_stem = _frame_of(stem_last)
+            f_body = _frame_of(offs[body])
+            if f_stem >= 0 and f_body > f_stem:
+                stem_orphans.append(_clean(p.get("t", ""))[:30])
+    stats["stem_orphans"] = len(stem_orphans)
+    if stem_orphans:
+        msg = (f"[발문고아] 프레임 하단 발문 단독 잔류 "
+               f"{len(stem_orphans)}건 (본문이 다음 프레임에서 시작): "
+               + " | ".join(stem_orphans[:4]))
+        (critical if stem_keep_contract else warnings).append(msg)
+
+    # ── G42 다열 선지 열 정렬 (W40 결함 1) ───────────────────────────────
+    # 연속 탭 선지 단락 그룹에서 항목 행(원문자 시작)의 탭 셀 시작 오프셋
+    # (덤프 W40 확장 필드 cx)이 열별로 일치해야 한다 (±0.3mm). 그룹이
+    # 프레임 경계에서 갈라질 수 있어 행 시작(cx[0])이 1mm 이내인 부분
+    # 그룹끼리만 대조. choice_tabs 계약 플랜은 critical, 구덤프(cx 없음)는
+    # 검사 생략 + 계약 시 재덤프 경고.
+    tab_misaligned = []
+    cx_seen = False
+    for story in dump.get("stories", []):
+        ps = story.get("paragraphs", [])
+        i = 0
+        while i < len(ps):
+            s = ps[i].get("s") or ""
+            if "선지" not in s or "\t" not in ps[i].get("t", ""):
+                i += 1
+                continue
+            j = i
+            rows = []
+            while j < len(ps):
+                sj = ps[j].get("s") or ""
+                if "선지" not in sj or "\t" not in ps[j].get("t", ""):
+                    break
+                t = _clean(ps[j].get("t", ""))
+                cx = ps[j].get("cx")
+                if cx:
+                    cx_seen = True
+                if t[:1] in "①②③④⑤" and cx and len(cx) >= 2:
+                    rows.append((t, cx))
+                j += 1
+            # 부분 그룹 (cx[0] 1mm 이내) 별 열 오프셋 대조
+            sub = {}
+            for t, cx in rows:
+                key = round(cx[0])
+                sub.setdefault(key, []).append((t, cx))
+            for key, srows in sub.items():
+                if len(srows) < 2:
+                    continue
+                ncol = min(len(cx) for _, cx in srows)
+                for c in range(1, ncol):
+                    vals = [cx[c] for _, cx in srows]
+                    if max(vals) - min(vals) > 0.3:
+                        tab_misaligned.append(
+                            f"「{srows[0][0][:20]}」열{c} 편차 "
+                            f"{round(max(vals) - min(vals), 2)}mm")
+                        break
+            i = max(j, i + 1)
+    stats["choice_tab_misaligned"] = len(tab_misaligned)
+    ct_contract = bool(plan.get("choice_tabs"))
+    if tab_misaligned:
+        msg = (f"[선지열정렬] 다열 선지 열 불일치 {len(tab_misaligned)}그룹: "
+               + " | ".join(tab_misaligned[:4]))
+        (critical if ct_contract else warnings).append(msg)
+    elif ct_contract and not cx_seen:
+        warnings.append("[선지열정렬] 덤프에 탭 셀 오프셋(cx) 없음"
+                        "(구버전 덤프) — 재덤프 필요")
+
+    # ── G43 빈칸 프레임 경계 초과 (W40 결함 6) ───────────────────────────
+    # 밑줄 빈칸 런 라인이 프레임 오른쪽 내변을 넘음 (덤프 W40 확장 필드
+    # hox — 실측). blank_fit 계약 플랜에서 잔존은 자간 한도 초과분(실행기
+    # [경고] 짝) 또는 보정 실패 — 사람 확인 지목 (warning. G33/시각 검수
+    # 정합 — 경계 밖 텍스트는 시각층에서도 잡힌다).
+    hox = dump.get("hox") or []
+    stats["blank_overflow_lines"] = len(hox)
+    if hox:
+        det = " | ".join(
+            f"p{e.get('p')} +{e.get('over')}mm 「{(e.get('t') or '')[:16]}」"
+            for e in hox[:4])
+        warnings.append(
+            f"[빈칸경계] 밑줄 빈칸 라인 프레임 오른쪽 초과 {len(hox)}건"
+            + (" (자간 한도 내 해소 불가 — 수동 확인)"
+               if plan.get("blank_fit") else "") + ": " + det)
 
     # ── G31 프레임 결손 (W30-r15 — 결함 6) ───────────────────────────────
     # 스토리가 흐르는 페이지의 '그 스토리 프레임 수'가 스토리 대다수

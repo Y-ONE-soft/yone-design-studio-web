@@ -71,13 +71,36 @@ try {
             if (!(texts instanceof Array)) { texts = [texts]; }
             if (!(styles instanceof Array)) { styles = [styles]; }
         } catch (e) { texts = []; styles = []; }
+        // W40 additive: cx = 탭 포함 단락의 첫 라인 셀 시작 수평 오프셋
+        // (탭 뒤 문자 horizontalOffset, mm 아님 — 문서 좌표계 그대로.
+        // 게이트 G42가 다열 선지 열 정렬 실측에 사용). 탭 단락에만 개별
+        // DOM 접근 — 대량 벌크 게터 경로는 무변경.
+        var paraEls = null;
         var sb = [];
         for (var pi = 0; pi < texts.length; pi++) {
             var txt = texts[pi];
             if (typeof txt != "string") { txt = String(txt); }
             var sty = "";
             try { sty = styleFullName(styles[pi]); } catch (e) {}
-            sb.push("{\"t\":\"" + esc(txt) + "\",\"s\":\"" + esc(sty) + "\"}");
+            var cxj = "";
+            if (txt.indexOf("\t") >= 0 && txt.length < 200) {
+                try {
+                    if (paraEls === null) {
+                        paraEls = st.paragraphs.everyItem().getElements();
+                    }
+                    var pObj = paraEls[pi];
+                    var cells = [];
+                    var chs = pObj.characters;
+                    cells.push(String(Math.round(chs[0].horizontalOffset * 100) / 100));
+                    for (var cxi = 0; cxi < txt.length - 1 && cxi < 150; cxi++) {
+                        if (txt.charAt(cxi) == "\t") {
+                            cells.push(String(Math.round(chs[cxi + 1].horizontalOffset * 100) / 100));
+                        }
+                    }
+                    cxj = ",\"cx\":[" + cells.join(",") + "]";
+                } catch (e) { cxj = ""; }
+            }
+            sb.push("{\"t\":\"" + esc(txt) + "\",\"s\":\"" + esc(sty) + "\"" + cxj + "}");
         }
         if (si % 10 == 0) {   // 하트비트 — 러너 행 감지(5분 무갱신) 방지
             wlog("진행: 스토리 " + (si + 1) + "/" + stories.length);
@@ -141,6 +164,55 @@ try {
                  ",\"fb\":[" + fbs.join(",") + "]" +
                  (b0 !== null ? ",\"b\":" + b0 : "") +
                  ",\"paragraphs\":[" + sb.join(",") + "]}");
+    }
+    // W40 additive: hox = 프레임 오른쪽 경계를 벗어난 라인 실측 (밑줄
+    // 빈칸 런 "_{6,}" 포함 라인 한정 — findGrep 1회, 게이트 G43 입력).
+    // 라인 끝 수평 오프셋 > 프레임 우측 내변(geometricBounds - inset)이면
+    // 기록. 문서 좌표계(mm) 그대로 — fb와 동일 기준.
+    var hoxBuf = [];
+    try {
+        app.findGrepPreferences = NothingEnum.NOTHING;
+        app.findGrepPreferences.findWhat = "_{6,}";
+        var hits = doc.findGrep();
+        var stIdById = {};
+        for (var hsi = 0; hsi < stories.length; hsi++) {
+            try { stIdById[stories[hsi].id] = hsi; } catch (e) {}
+        }
+        for (var hi = 0; hi < hits.length && hoxBuf.length < 200; hi++) {
+            var hLine = null, hFrame = null;
+            try { hLine = hits[hi].lines[0]; } catch (e) { continue; }
+            if (!hLine) { continue; }
+            try { hFrame = hLine.parentTextFrames[0]; } catch (e) {}
+            if (!hFrame) { continue; }
+            var endX = null, rimX = null;
+            try { endX = hLine.endHorizontalOffset; } catch (e) {}
+            try {
+                var hgb = hFrame.geometricBounds;
+                var rIn = 0;
+                try {
+                    var ins = hFrame.textFramePreferences.insetSpacing;
+                    rIn = (ins instanceof Array) ? ins[3] : ins;
+                } catch (e) {}
+                rimX = hgb[3] - rIn;
+            } catch (e) {}
+            if (endX === null || rimX === null) { continue; }
+            // 허용 0.8mm — 양끝 정렬/시각적 여백 정렬의 행 끝 돌출
+            // (~0.5mm 상수, 1차 재조판 실측)은 결함이 아니다 (G43 짝)
+            if (endX <= rimX + 0.8) { continue; }
+            var hPg = "";
+            try { hPg = String(hFrame.parentPage.name); } catch (e) {}
+            var hSt = -1;
+            try { hSt = stIdById[hits[hi].parentStory.id]; } catch (e) {}
+            if (hSt === undefined) { hSt = -1; }
+            var hTxt = "";
+            try { hTxt = String(hLine.contents).substr(0, 40); } catch (e) {}
+            hoxBuf.push("{\"st\":" + hSt + ",\"p\":\"" + esc(hPg) +
+                        "\",\"over\":" + (Math.round((endX - rimX) * 100) / 100) +
+                        ",\"t\":\"" + esc(hTxt) + "\"}");
+        }
+        app.findGrepPreferences = NothingEnum.NOTHING;
+    } catch (e) {
+        try { app.findGrepPreferences = NothingEnum.NOTHING; } catch (e2) {}
     }
     // W11: 잔여 사이클 페이지 검출 — 다중 프레임 스토리(=사이클 본문) 프레임이
     // 있는데 전부 빈 페이지 (지문번호/발문 등 단일 프레임 장식만 남은 페이지).
@@ -251,6 +323,7 @@ try {
              ",\"pages\":[" + pagesInfo.join(",") + "]" +
              ",\"fonts\":[" + fontsInfo.join(",") + "]" +
              ",\"style_fonts\":[" + styleFonts.join(",") + "]" +
+             ",\"hox\":[" + hoxBuf.join(",") + "]" +
              ",\"stale_pages\":[" + stale.join(",") + "]}");
     var out = new File(OUT);
     out.encoding = "UTF-8";

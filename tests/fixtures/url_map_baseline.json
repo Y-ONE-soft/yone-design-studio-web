@@ -1,548 +1,556 @@
 [
-  {
-    "rule": "/",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "index",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/analysis-merge/ebs-books",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "api_am_ebs_books",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/analysis-merge/ebs-units",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "api_am_ebs_units",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/analysis-merge/tb-lessons",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "api_am_tb_lessons",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/analysis-merge/tb-publishers",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "api_am_tb_publishers",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/analysis-merge/tb-subjects",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "api_am_tb_subjects",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/browse-folder",
-    "methods": [
-      "POST"
-    ],
-    "endpoint_func": "api_browse_folder",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/cancel/<job_id>",
-    "methods": [
-      "POST"
-    ],
-    "endpoint_func": "api_cancel",
-    "signature": "(job_id)"
-  },
-  {
-    "rule": "/api/diagnose",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "api_diagnose",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/ebs-workbook/files",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "api_ebs_files",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/ebs-workbook/units",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "api_ebs_units",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/final/detect-workbooks",
-    "methods": [
-      "POST"
-    ],
-    "endpoint_func": "api_final_detect",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/health",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "api_health",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/indesign/start",
-    "methods": [
-      "GET",
-      "POST"
-    ],
-    "endpoint_func": "api_indesign_start",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/mockexam/schools",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "api_mockexam_schools",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/mockup/render",
-    "methods": [
-      "POST"
-    ],
-    "endpoint_func": "api_mockup_render",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/mockup/render_binding",
-    "methods": [
-      "POST"
-    ],
-    "endpoint_func": "api_mockup_render_binding",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/mockup/upload",
-    "methods": [
-      "POST"
-    ],
-    "endpoint_func": "api_mockup_upload",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/mothertongue/lessons",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "api_mothertongue_lessons",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/passage-remove/inventory",
-    "methods": [
-      "POST"
-    ],
-    "endpoint_func": "api_passage_remove_inventory",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/passage-remove/scan-dir",
-    "methods": [
-      "POST"
-    ],
-    "endpoint_func": "api_passage_remove_scan_dir",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/pocketbook/scan-dir",
-    "methods": [
-      "POST"
-    ],
-    "endpoint_func": "api_pocketbook_scan",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/processing/workbook/active-info",
-    "methods": [
-      "POST"
-    ],
-    "endpoint_func": "api_wb_active_info",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/processing/workbook/compare",
-    "methods": [
-      "POST"
-    ],
-    "endpoint_func": "api_wb_compare",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/processing/workbook/convert-docx",
-    "methods": [
-      "POST"
-    ],
-    "endpoint_func": "api_wb_convert_docx",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/processing/workbook/download",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "api_wb_download",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/processing/workbook/identify-rounds",
-    "methods": [
-      "POST"
-    ],
-    "endpoint_func": "api_wb_identify_rounds",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/processing/workbook/job-files",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "api_wb_job_files",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/processing/workbook/list-candidates",
-    "methods": [
-      "POST"
-    ],
-    "endpoint_func": "api_wb_list_candidates",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/processing/workbook/passage-detect",
-    "methods": [
-      "POST"
-    ],
-    "endpoint_func": "api_wb_passage_detect",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/processing/workbook/passage-select",
-    "methods": [
-      "POST"
-    ],
-    "endpoint_func": "api_wb_passage_select",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/processing/workbook/remove-rounds",
-    "methods": [
-      "POST"
-    ],
-    "endpoint_func": "api_wb_remove_rounds",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/processing/workbook/remove-seo",
-    "methods": [
-      "POST"
-    ],
-    "endpoint_func": "api_wb_remove_seo",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/processing/workbook/save",
-    "methods": [
-      "POST"
-    ],
-    "endpoint_func": "api_wb_save",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/processing/workbook/upload",
-    "methods": [
-      "POST"
-    ],
-    "endpoint_func": "api_wb_upload",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/result/<job_id>",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "api_result",
-    "signature": "(job_id)"
-  },
-  {
-    "rule": "/api/run/<material_id>",
-    "methods": [
-      "POST"
-    ],
-    "endpoint_func": "api_run",
-    "signature": "(material_id)"
-  },
-  {
-    "rule": "/api/schools",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "api_schools_get",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/schools",
-    "methods": [
-      "POST"
-    ],
-    "endpoint_func": "api_schools_add",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/schools/<grade>/<school_name>",
-    "methods": [
-      "DELETE"
-    ],
-    "endpoint_func": "api_schools_delete",
-    "signature": "(grade, school_name)"
-  },
-  {
-    "rule": "/api/stream/<job_id>",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "api_stream",
-    "signature": "(job_id)"
-  },
-  {
-    "rule": "/api/suneungteukgang-workbook-v2/merge",
-    "methods": [
-      "POST"
-    ],
-    "endpoint_func": "api_st_v2_merge",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/suneungteukgang-workbook/files",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "api_st_files",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/suneungteukgang-workbook/merge",
-    "methods": [
-      "POST"
-    ],
-    "endpoint_func": "api_st_merge",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/suneungteukgang-workbook/units",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "api_st_units",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/textbook-workbook/files",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "api_tw_files",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/textbook-workbook/lessons",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "api_tw_lessons",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/textbook-workbook/publishers",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "api_tw_publishers",
-    "signature": "()"
-  },
-  {
-    "rule": "/api/textbook-workbook/subjects",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "api_tw_subjects",
-    "signature": "()"
-  },
-  {
-    "rule": "/chat",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "chat_page",
-    "signature": "()"
-  },
-  {
-    "rule": "/chat/conversations",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "chat_conversations",
-    "signature": "()"
-  },
-  {
-    "rule": "/chat/conversations/<conv_id>/append",
-    "methods": [
-      "POST"
-    ],
-    "endpoint_func": "chat_append",
-    "signature": "(conv_id)"
-  },
-  {
-    "rule": "/chat/conversations/<conv_id>/messages",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "chat_messages",
-    "signature": "(conv_id)"
-  },
-  {
-    "rule": "/chat/conversations/create",
-    "methods": [
-      "POST"
-    ],
-    "endpoint_func": "chat_create_conv",
-    "signature": "()"
-  },
-  {
-    "rule": "/chat/folders",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "chat_folders",
-    "signature": "()"
-  },
-  {
-    "rule": "/chat/send",
-    "methods": [
-      "POST"
-    ],
-    "endpoint_func": "chat_send",
-    "signature": "()"
-  },
-  {
-    "rule": "/chat/watch/<conv_id>",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "chat_watch",
-    "signature": "(conv_id)"
-  },
-  {
-    "rule": "/cover",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "cover_index",
-    "signature": "()"
-  },
-  {
-    "rule": "/debug/safecopy",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "debug_safecopy",
-    "signature": "()"
-  },
-  {
-    "rule": "/diagnose",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "diagnose_page",
-    "signature": "()"
-  },
-  {
-    "rule": "/download/<job_id>/pdf",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "download_pdf",
-    "signature": "(job_id)"
-  },
-  {
-    "rule": "/login",
-    "methods": [
-      "GET",
-      "POST"
-    ],
-    "endpoint_func": "login_page",
-    "signature": "()"
-  },
-  {
-    "rule": "/logout",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "logout_page",
-    "signature": "()"
-  },
-  {
-    "rule": "/mockup",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "mockup_page",
-    "signature": "()"
-  },
-  {
-    "rule": "/processing",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "processing_index",
-    "signature": "()"
-  },
-  {
-    "rule": "/processing/workbook_edit",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "processing_workbook_edit",
-    "signature": "()"
-  },
-  {
-    "rule": "/static/<path:filename>",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "<lambda>",
-    "signature": "(**kw)"
-  },
-  {
-    "rule": "/typeset/<material_id>",
-    "methods": [
-      "GET"
-    ],
-    "endpoint_func": "typeset_page",
-    "signature": "(material_id)"
-  }
+ {
+  "rule": "/",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "index",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/analysis-merge/ebs-books",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "api_am_ebs_books",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/analysis-merge/ebs-units",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "api_am_ebs_units",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/analysis-merge/tb-lessons",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "api_am_tb_lessons",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/analysis-merge/tb-publishers",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "api_am_tb_publishers",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/analysis-merge/tb-subjects",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "api_am_tb_subjects",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/browse-folder",
+  "methods": [
+   "POST"
+  ],
+  "endpoint_func": "api_browse_folder",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/cancel/<job_id>",
+  "methods": [
+   "POST"
+  ],
+  "endpoint_func": "api_cancel",
+  "signature": "(job_id)"
+ },
+ {
+  "rule": "/api/diagnose",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "api_diagnose",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/ebs-workbook/files",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "api_ebs_files",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/ebs-workbook/units",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "api_ebs_units",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/final/detect-workbooks",
+  "methods": [
+   "POST"
+  ],
+  "endpoint_func": "api_final_detect",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/health",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "api_health",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/indesign/start",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "endpoint_func": "api_indesign_start",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/mockexam/schools",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "api_mockexam_schools",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/mockup/render",
+  "methods": [
+   "POST"
+  ],
+  "endpoint_func": "api_mockup_render",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/mockup/render_binding",
+  "methods": [
+   "POST"
+  ],
+  "endpoint_func": "api_mockup_render_binding",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/mockup/upload",
+  "methods": [
+   "POST"
+  ],
+  "endpoint_func": "api_mockup_upload",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/mothertongue/lessons",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "api_mothertongue_lessons",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/passage-remove/inventory",
+  "methods": [
+   "POST"
+  ],
+  "endpoint_func": "api_passage_remove_inventory",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/passage-remove/scan-dir",
+  "methods": [
+   "POST"
+  ],
+  "endpoint_func": "api_passage_remove_scan_dir",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/pocketbook/scan-dir",
+  "methods": [
+   "POST"
+  ],
+  "endpoint_func": "api_pocketbook_scan",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/processing/workbook/active-info",
+  "methods": [
+   "POST"
+  ],
+  "endpoint_func": "api_wb_active_info",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/processing/workbook/compare",
+  "methods": [
+   "POST"
+  ],
+  "endpoint_func": "api_wb_compare",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/processing/workbook/convert-docx",
+  "methods": [
+   "POST"
+  ],
+  "endpoint_func": "api_wb_convert_docx",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/processing/workbook/download",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "api_wb_download",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/processing/workbook/identify-rounds",
+  "methods": [
+   "POST"
+  ],
+  "endpoint_func": "api_wb_identify_rounds",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/processing/workbook/job-files",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "api_wb_job_files",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/processing/workbook/list-candidates",
+  "methods": [
+   "POST"
+  ],
+  "endpoint_func": "api_wb_list_candidates",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/processing/workbook/passage-detect",
+  "methods": [
+   "POST"
+  ],
+  "endpoint_func": "api_wb_passage_detect",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/processing/workbook/passage-select",
+  "methods": [
+   "POST"
+  ],
+  "endpoint_func": "api_wb_passage_select",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/processing/workbook/remove-rounds",
+  "methods": [
+   "POST"
+  ],
+  "endpoint_func": "api_wb_remove_rounds",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/processing/workbook/remove-seo",
+  "methods": [
+   "POST"
+  ],
+  "endpoint_func": "api_wb_remove_seo",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/processing/workbook/save",
+  "methods": [
+   "POST"
+  ],
+  "endpoint_func": "api_wb_save",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/processing/workbook/upload",
+  "methods": [
+   "POST"
+  ],
+  "endpoint_func": "api_wb_upload",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/rerun/<job_id>",
+  "methods": [
+   "POST"
+  ],
+  "endpoint_func": "api_rerun",
+  "signature": "(job_id)"
+ },
+ {
+  "rule": "/api/result/<job_id>",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "api_result",
+  "signature": "(job_id)"
+ },
+ {
+  "rule": "/api/run/<material_id>",
+  "methods": [
+   "POST"
+  ],
+  "endpoint_func": "api_run",
+  "signature": "(material_id)"
+ },
+ {
+  "rule": "/api/schools",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "api_schools_get",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/schools",
+  "methods": [
+   "POST"
+  ],
+  "endpoint_func": "api_schools_add",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/schools/<grade>/<school_name>",
+  "methods": [
+   "DELETE"
+  ],
+  "endpoint_func": "api_schools_delete",
+  "signature": "(grade, school_name)"
+ },
+ {
+  "rule": "/api/stream/<job_id>",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "api_stream",
+  "signature": "(job_id)"
+ },
+ {
+  "rule": "/api/suneungteukgang-workbook-v2/merge",
+  "methods": [
+   "POST"
+  ],
+  "endpoint_func": "api_st_v2_merge",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/suneungteukgang-workbook/files",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "api_st_files",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/suneungteukgang-workbook/merge",
+  "methods": [
+   "POST"
+  ],
+  "endpoint_func": "api_st_merge",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/suneungteukgang-workbook/units",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "api_st_units",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/textbook-workbook/files",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "api_tw_files",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/textbook-workbook/lessons",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "api_tw_lessons",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/textbook-workbook/publishers",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "api_tw_publishers",
+  "signature": "()"
+ },
+ {
+  "rule": "/api/textbook-workbook/subjects",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "api_tw_subjects",
+  "signature": "()"
+ },
+ {
+  "rule": "/chat",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "chat_page",
+  "signature": "()"
+ },
+ {
+  "rule": "/chat/conversations",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "chat_conversations",
+  "signature": "()"
+ },
+ {
+  "rule": "/chat/conversations/<conv_id>/append",
+  "methods": [
+   "POST"
+  ],
+  "endpoint_func": "chat_append",
+  "signature": "(conv_id)"
+ },
+ {
+  "rule": "/chat/conversations/<conv_id>/messages",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "chat_messages",
+  "signature": "(conv_id)"
+ },
+ {
+  "rule": "/chat/conversations/create",
+  "methods": [
+   "POST"
+  ],
+  "endpoint_func": "chat_create_conv",
+  "signature": "()"
+ },
+ {
+  "rule": "/chat/folders",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "chat_folders",
+  "signature": "()"
+ },
+ {
+  "rule": "/chat/send",
+  "methods": [
+   "POST"
+  ],
+  "endpoint_func": "chat_send",
+  "signature": "()"
+ },
+ {
+  "rule": "/chat/watch/<conv_id>",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "chat_watch",
+  "signature": "(conv_id)"
+ },
+ {
+  "rule": "/cover",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "cover_index",
+  "signature": "()"
+ },
+ {
+  "rule": "/debug/safecopy",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "debug_safecopy",
+  "signature": "()"
+ },
+ {
+  "rule": "/diagnose",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "diagnose_page",
+  "signature": "()"
+ },
+ {
+  "rule": "/download/<job_id>/pdf",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "download_pdf",
+  "signature": "(job_id)"
+ },
+ {
+  "rule": "/login",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "endpoint_func": "login_page",
+  "signature": "()"
+ },
+ {
+  "rule": "/logout",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "logout_page",
+  "signature": "()"
+ },
+ {
+  "rule": "/mockup",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "mockup_page",
+  "signature": "()"
+ },
+ {
+  "rule": "/processing",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "processing_index",
+  "signature": "()"
+ },
+ {
+  "rule": "/processing/workbook_edit",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "processing_workbook_edit",
+  "signature": "()"
+ },
+ {
+  "rule": "/static/<path:filename>",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "<lambda>",
+  "signature": "(**kw)"
+ },
+ {
+  "rule": "/typeset/<material_id>",
+  "methods": [
+   "GET"
+  ],
+  "endpoint_func": "typeset_page",
+  "signature": "(material_id)"
+ }
 ]

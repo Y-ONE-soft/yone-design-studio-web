@@ -1,11 +1,15 @@
 """조판 실행 API — /api/run, /api/stream(SSE), /api/cancel, /api/result,
 /download/<job_id>/pdf (app.py에서 분리, C2-9). 파이프라인 본체는 core/pipeline.py."""
+import json
 import os
+import re
+import shutil
 import threading
 
 from flask import (Blueprint, Response, jsonify, request, send_file,
                    stream_with_context)
 
+import config
 import core.job_manager as jm
 from core.pipeline import run_pipeline
 from core.uploads import sanitize_filename, allowed_by_accept
@@ -69,6 +73,10 @@ def api_run(material_id):
         if val:
             open(os.path.join(job_dir, f"{meta_key}.txt"), "w",
                  encoding="utf-8").write(val)
+
+    # 검수 에이전트 opt-in (UI 체크박스, W41) — 파이프라인 훅이 이 파일 존재로 판단
+    if request.form.get("review_agent", "").strip() == "1":
+        open(os.path.join(job_dir, "review_agent.txt"), "w").write("1")
 
     # 부교재 워크북: 파일명 stem (학교명_{stem}_내지.indd 의 stem 부분)
     filename_stem = request.form.get("filename_stem", "").strip()
@@ -148,6 +156,16 @@ def api_run(material_id):
                 jm.fail(job_id, f"필수 파일 누락: {slot['label']}")
                 return jsonify({"job_id": job_id, "error": f"필수 파일 누락: {slot['label']}"}), 400
 
+    # 재조판(/api/rerun) 재료 영속화 (W41) — uploaded 매핑 + material_id.
+    # 실패해도 본 조판에는 영향 없음 (fail-open).
+    try:
+        with open(os.path.join(job_dir, "uploaded.json"), "w",
+                  encoding="utf-8") as _uf:
+            json.dump(uploaded, _uf, ensure_ascii=False, indent=1)
+        open(os.path.join(job_dir, "material_id.txt"), "w").write(material_id)
+    except Exception as _pe:
+        print(f"[rerun-persist-error] {_pe}", flush=True)
+
     threading.Thread(
         target=run_pipeline,
         args=(engine, job_id, job_dir, uploaded),
@@ -155,6 +173,75 @@ def api_run(material_id):
     ).start()
 
     return jsonify({"job_id": job_id})
+
+
+@bp.route("/api/rerun/<job_id>", methods=["POST"])
+def api_rerun(job_id):
+    """검수 에이전트 auto_fixable 제안에 대한 사용자 승인 재조판 (W41).
+
+    같은 원고(uploads)와 메타데이터로 새 job을 만들어 파이프라인을 다시
+    실행한다 — 검수 에이전트는 제안만 하고, 실제 재조판은 이 라우트를
+    호출하는 사용자 클릭으로만 일어난다 (무단 재조판 금지).
+    """
+    # job_id는 uuid 앞 8자리 hex — 경로 조작 차단
+    if not re.fullmatch(r"[0-9a-f]{8}", job_id or ""):
+        return jsonify({"error": "잘못된 job id"}), 400
+    old_dir = os.path.join(config.JOBS_DIR, job_id)
+    mid_path = os.path.join(old_dir, "material_id.txt")
+    up_path = os.path.join(old_dir, "uploaded.json")
+    if not (os.path.isdir(old_dir) and os.path.isfile(mid_path)
+            and os.path.isfile(up_path)):
+        return jsonify({"error": "재조판 재료 없음 (원 job 소멸)"}), 404
+    material_id = open(mid_path).read().strip()
+    try:
+        engine = registry.get(material_id)
+    except KeyError:
+        return jsonify({"error": f"교재 없음 (id: {material_id})"}), 404
+    with open(up_path, encoding="utf-8") as f:
+        old_uploaded = json.load(f)
+
+    new_id = jm.create_job(material_id)
+    new_dir = jm.get_job(new_id)["dir"]
+    new_upload_dir = os.path.join(new_dir, "uploads")
+
+    # 메타데이터(.txt) 복사 — school/issue_num/exclude/review_agent 등 전부.
+    # (재조판 재료 파일 자체는 새 실행이 다시 쓰므로 제외)
+    for name in sorted(os.listdir(old_dir)):
+        if name.endswith(".txt") and name != "조판_로그.txt":
+            shutil.copy2(os.path.join(old_dir, name),
+                         os.path.join(new_dir, name))
+    # 업로드 파일 복사 + uploaded 매핑 경로 재작성
+    old_up_prefix = os.path.join(old_dir, "uploads")
+
+    def _carry(p):
+        if isinstance(p, str) and p.startswith(old_up_prefix):
+            dst = os.path.join(new_upload_dir, os.path.basename(p))
+            shutil.copy2(p, dst)
+            return dst
+        return p
+
+    uploaded = {}
+    for key, val in old_uploaded.items():
+        if isinstance(val, list):
+            uploaded[key] = [_carry(v) for v in val]
+        else:
+            uploaded[key] = _carry(val)
+
+    # 연쇄 재조판 대비 — 새 job에도 재료 영속화 (fail-open)
+    try:
+        with open(os.path.join(new_dir, "uploaded.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump(uploaded, f, ensure_ascii=False, indent=1)
+    except Exception as _pe:
+        print(f"[rerun-persist-error] {_pe}", flush=True)
+
+    threading.Thread(
+        target=run_pipeline,
+        args=(engine, new_id, new_dir, uploaded),
+        daemon=True
+    ).start()
+
+    return jsonify({"job_id": new_id, "rerun_of": job_id})
 
 
 @bp.route("/api/stream/<job_id>")

@@ -228,8 +228,17 @@ class WorkbookSuppV2Engine(WorkbookV2Engine):
             deco = {"page_cleanup": {"empty": "delete"},
                     "section_masters": True}
         # W23 r13 F4 — 문제 단위 펼침면 킵 (opt-in, base prepare_jsx가
-        # True 센티널을 question_keep_op 계약으로 확장)
+        # True 센티널을 question_keep_op 계약으로 확장. W40 결함 2 —
+        # question_keep_op가 stem_keep(발문 고아 방지 프레임판)을 포함)
         deco["question_keep"] = True
+        # W40 결함 1 — 다열 선지 열 정렬 (v1 실물 실측: 기본 12.7mm 탭
+        # 그리드 관행 — 실행기 applyChoiceTabs가 그룹별 최장 열 실측으로
+        # 명시 탭스톱 부여). step3 실전문제 한정.
+        deco["choice_tabs"] = {"steps": ["step3"], "style_contains": "선지",
+                               "grid": 12.7, "min_gap": 2}
+        # W40 결함 6 — 밑줄 빈칸 라인 프레임 넘침 자간 보정 (한도 -50,
+        # 초과 필요 시 [경고] — 과도 축소 금지, 사용자 확정 스펙)
+        deco["blank_fit"] = {"max_tracking": -50}
         try:
             content = json.load(open(os.path.join(job_dir, "content.json"),
                                      encoding="utf-8"))

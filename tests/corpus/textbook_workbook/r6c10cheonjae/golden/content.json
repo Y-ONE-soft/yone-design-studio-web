@@ -6033,7 +6033,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(B) _____________________________________________________",
@@ -6043,7 +6043,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(C) _____________________________________________________",
@@ -6053,7 +6053,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "다음 글을 읽고 물음에 답하시오. [8과]",
@@ -10203,7 +10203,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "(B) You may think that tug of war is just a playground event for children or an exercise for adults that helps build a team spirit. In fact, it was a team sport in the Olymics from 1900 to 1920. Interestingly, a country could send more than one team to the Olympics, so it could earn multiple medals in the event. For example, the United States won all three medals in 1904 when the Olympic Games were held in St. Louis. Great Britain won all the medals in the 1908 London Olympics. Tug of war is not an Olympic event anymore. However, there is an international organization that is dedicated to the promotion of tug of war. It holds world championships every year and tries hard to ________________________________. The organization hopes that tug of war will regain its old glory. Will we soon be able to cheer for our national tug of war team to win a gold medal in the Olympics?",

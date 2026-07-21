@@ -117,6 +117,12 @@ _RE_S3_ARROW = re.compile(
 # W39 결함 5: T/F 문항의 번호 괄호 영어 행 (선택 표기 꼬리 없는 근접
 # 후보 지목용 — 침묵 강등 금지)
 _RE_S3_TF_NEAR = re.compile(r"^\d{1,2}\s*\)\s+\S")
+# W40 결함 3: 순서배열 선지 순열 행("(A) － (C) － (B)") — 세 라벨이
+# 서로 다른 A/B/C 순열일 때만 (지문의 "(A) 문장" 항목과 형태로 구분).
+# 구분자: ASCII/유니코드 대시류 + 전각 하이픈(－ U+FF0D — 0a5da924 실증).
+_RE_S3_PERM_ROW = re.compile(
+    r"^\(([ABC])\)\s*[-–—−－]\s*\(([ABC])\)\s*[-–—−－]\s*\(([ABC])\)$")
+_S3_CIRCLED = ["①", "②", "③", "④", "⑤"]
 # W39 결함 6: 발문의 "밑줄 친 <영어구>" 인용 — 조사(가/이/은/는/을/를/의)
 # 앞까지의 비한글 연속. 원문자 나열("밑줄 친 ①~⑤ 중")과 구분하기 위해
 # 영문자 필수. 인용구는 발문에서 밑줄로 인쇄된다 (실물 관행 — 6b66b750
@@ -479,6 +485,7 @@ def build_step3(step_data):
                             "runs": p.get("runs") or []})
 
             # ── 2패스: 유형 주도 슬롯 배정 (W39) ────────────────────────
+            _s3_number_order_rows(pre)
             warnings.extend(_s3_assign_slots(pre, BG))
 
             # ── 3패스: 스타일 확정 + 유닛 생성 ──────────────────────────
@@ -506,6 +513,41 @@ def build_step3(step_data):
     return {"units": units, "warnings": warnings}
 
 
+def _s3_number_order_rows(pre):
+    """순서배열 선지 순열 행 5연속에 원문자 부여 + 선지(eff C) 확정.
+
+    W40 결함 3: 원고의 hwpx 2열 표(번호 셀|순열 셀) 병합은 파서
+    (_merge_step3_split_choice_numbers 선호출)가 1선. 이 함수는 (a) 병합
+    이전에 수집된 구 content.json 재플랜과 (b) 원고 자체에 번호가 없는
+    원고의 폴백 — **순열 형태 행 5연속 + 전부 번호 없음**일 때만 ①~⑤를
+    부여한다 (기존 자동번호와 같은 글리프. 파서가 병합한 행은 ①로 시작해
+    C_START(kind C)로 이미 선지 — 여기 오지 않는다)."""
+    i, n = 0, len(pre)
+    while i < n:
+        m = _RE_S3_PERM_ROW.match(pre[i]["tclean"])
+        if not m or len(set(m.groups())) != 3:
+            i += 1
+            continue
+        j = i
+        run = []
+        while j < n:
+            mj = _RE_S3_PERM_ROW.match(pre[j]["tclean"])
+            if not mj or len(set(mj.groups())) != 3:
+                break
+            run.append(pre[j])
+            j += 1
+        if len(run) == 5:
+            for d, row in zip(_S3_CIRCLED, run):
+                prefix = d + " "
+                row["text"] = prefix + row["text"]
+                row["tclean"] = prefix + row["tclean"]
+                row["eff"] = "C"
+                if row["runs"]:
+                    row["runs"] = ([{"t": prefix, "ul": False}]
+                                   + list(row["runs"]))
+        i = j
+
+
 def _s3_assign_slots(pre, BG):
     """유형 주도 슬롯 배정 2패스 (파서 컨텍스트 패스와 이중 방어).
 
@@ -515,16 +557,31 @@ def _s3_assign_slots(pre, BG):
     warn = []
     last_q = None            # (q_code, 발문 텍스트)
     given_pending = False    # 발문 직후 첫 유의 단락 대기 상태
+    demote_pending = False   # W40 결함 4: 유형이 슬롯 비기대 — 구 주석 강등
     for row in pre:
         eff = row["eff"]
         if eff in ("Q", "Q-INTRO"):
             last_q = (row.get("q_code"), row["tclean"])
             given_pending = BG.expects_given_block(last_q[0], last_q[1])
+            # 유형이 분류됐는데 주어진 블록을 기대하지 않으면(선지 직행
+            # 실측 — OBJ-GRM-PAREN 등), 발문 직후 P-CONTEXT 구 주석은
+            # 판정 2 오배정 잔재다 (0a5da924 215번 실증) — 지문으로 강등.
+            # Q 한정 (Q-INTRO 묶음 인트로 뒤 장문 배열형의 주어진 글 보존).
+            demote_pending = (eff == "Q" and bool(last_q[0])
+                              and not given_pending)
             continue
         if not row["tclean"] or row["kind"] == "SRC" \
                 or (row["eff"] == "UNKNOWN"
                     and BG.BRACKET_LABEL.match(row["tclean"])):
             continue         # 빈 단락/출처 마커/구조 라벨은 슬롯 비소비
+        if demote_pending:
+            # 발문 직후 첫 유의 단락에만 적용 (W40 결함 4). 요약 빈칸
+            # 선택형의 요약문 형태(인라인 (A)/(B) 빈칸)는 배경 유지.
+            demote_pending = False
+            if eff == "P-CONTEXT" and not row["arrow_bg"] \
+                    and not BG.is_summary_blank_form(row["tclean"]):
+                row["eff"] = "P"
+                eff = "P"
         # T/F 선택 행 (W39 결함 5 — 구 kind 주석 이중 방어)
         if last_q and BG.is_tf_question(last_q[1]) \
                 and eff in ("P", "UNKNOWN", "K", "Word"):
@@ -564,6 +621,18 @@ def _s3_assign_slots(pre, BG):
                            for p in R.ANS_PATTERNS[:2])):
             row["eff"] = "AnsL"
             nxt["eff"] = "AnsL"
+
+    # 괄호 라벨 답란 (W40 결함 5 — 구 kind 주석 이중 방어): 보기/조건
+    # 블록 내용 직후의 "(A) ______" 라인은 답란(AnsL)이다 — 파서 수리
+    # 이전 content의 Box 흡수 주석(보기 스타일)·Ans 주석(지문 관행)을
+    # 위치(블록 뒤) + 형태(괄호 라벨 + 밑줄 런) 신호로 승격.
+    prev_eff = None
+    for row in meaningful:
+        if row["eff"] in ("Box", "Ans", "Cond") \
+                and BG.ANS_PAREN_BLANK.match(row["tclean"]) \
+                and prev_eff in ("Box", "Cond", "AnsL"):
+            row["eff"] = "AnsL"
+        prev_eff = row["eff"]
     return warn
 
 
@@ -1953,4 +2022,9 @@ def question_keep_op(plan, steps=("step3",)):
             flows_cfg[fl["step"]] = {"starts": starts}
     if not flows_cfg:
         return None
-    return {"flows": flows_cfg, "q_styles": sorted(q_styles)}
+    # W40 결함 2 — 발문 고아 방지 (프레임판 question_keep): 프레임 하단에
+    # 발문만 남거나 발문+본문 1줄만 남으면 문제 시작을 다음 프레임으로
+    # 민다 (실행기 enforceStemKeep 계약 — min_lines = 발문 뒤 최소 동반
+    # 본문 줄수. 게이트 G41이 stem_keep 유무로 critical/warning 분기).
+    return {"flows": flows_cfg, "q_styles": sorted(q_styles),
+            "stem_keep": {"min_lines": 2}}

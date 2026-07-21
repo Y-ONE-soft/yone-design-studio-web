@@ -83,6 +83,12 @@
     {% endfor %}
   </div>
 
+  <!-- ── 검수 에이전트 opt-in (W41) ─────────────────────────── -->
+  <label class="review-agent-opt" style="display:flex;align-items:center;gap:8px;margin:12px 0;font-size:14px;cursor:pointer;">
+    <input type="checkbox" name="review_agent" value="1">
+    🔍 조판 후 AI 검수 에이전트 실행 (표본 페이지를 눈으로 검수 — 약 2~5분 추가)
+  </label>
+
   <button type="submit" class="run-btn" id="run-btn">
     <span class="btn-icon">▶</span> 조판 실행
   </button>

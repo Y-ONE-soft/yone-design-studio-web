@@ -50237,54 +50237,74 @@
        "kind": "P"
       },
       {
-       "text": "(A) － (C) － (B)",
+       "text": "① (A) － (C) － (B)",
        "runs": [
+        {
+         "t": "① ",
+         "ul": false
+        },
         {
          "t": "(A) － (C) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (A) － (C)",
+       "text": "② (B) － (A) － (C)",
        "runs": [
+        {
+         "t": "② ",
+         "ul": false
+        },
         {
          "t": "(B) － (A) － (C)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (C) － (A)",
+       "text": "③ (B) － (C) － (A)",
        "runs": [
+        {
+         "t": "③ ",
+         "ul": false
+        },
         {
          "t": "(B) － (C) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (A) － (B)",
+       "text": "④ (C) － (A) － (B)",
        "runs": [
+        {
+         "t": "④ ",
+         "ul": false
+        },
         {
          "t": "(C) － (A) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (B) － (A)",
+       "text": "⑤ (C) － (B) － (A)",
        "runs": [
+        {
+         "t": "⑤ ",
+         "ul": false
+        },
         {
          "t": "(C) － (B) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
        "text": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳을 고르시오. ",
@@ -50444,7 +50464,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "(A)\t(B)\t(C)",
@@ -51035,7 +51055,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(B) : _______________",
@@ -51045,7 +51065,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(C) : _______________",
@@ -51055,7 +51075,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "다음 글을 읽고, <보기>에 주어진 표현을 글의 흐름에 적절하도록 재배열하여 빈칸 (A), (B)에 들어갈 가장 적절한 말을 작성하시오.",
@@ -51126,7 +51146,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "(B) _________________________________________________________________",
@@ -51136,7 +51156,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       }
      ]
     },
@@ -52004,54 +52024,74 @@
        "kind": "P"
       },
       {
-       "text": "(A) － (C) － (B)",
+       "text": "① (A) － (C) － (B)",
        "runs": [
+        {
+         "t": "① ",
+         "ul": false
+        },
         {
          "t": "(A) － (C) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (A) － (C)",
+       "text": "② (B) － (A) － (C)",
        "runs": [
+        {
+         "t": "② ",
+         "ul": false
+        },
         {
          "t": "(B) － (A) － (C)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (C) － (A)",
+       "text": "③ (B) － (C) － (A)",
        "runs": [
+        {
+         "t": "③ ",
+         "ul": false
+        },
         {
          "t": "(B) － (C) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (A) － (B)",
+       "text": "④ (C) － (A) － (B)",
        "runs": [
+        {
+         "t": "④ ",
+         "ul": false
+        },
         {
          "t": "(C) － (A) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (B) － (A)",
+       "text": "⑤ (C) － (B) － (A)",
        "runs": [
+        {
+         "t": "⑤ ",
+         "ul": false
+        },
         {
          "t": "(C) － (B) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
        "text": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳을 고르시오.",
@@ -52203,7 +52243,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "(A)\t(B)\t(C)",
@@ -52660,7 +52700,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(B) : _______________",
@@ -52670,7 +52710,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(C) : _______________",
@@ -52680,7 +52720,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "다음 글을 읽고, <보기>에 주어진 표현을 글의 흐름에 적절하도록 재배열하여 빈칸 (A), (B)에 들어갈 가장 적절한 말을 작성하시오.",
@@ -52751,7 +52791,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "(B) _________________________________________________________________",
@@ -52761,7 +52801,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       }
      ]
     },
@@ -53629,54 +53669,74 @@
        "kind": "P"
       },
       {
-       "text": "(A) － (C) － (B)",
+       "text": "① (A) － (C) － (B)",
        "runs": [
+        {
+         "t": "① ",
+         "ul": false
+        },
         {
          "t": "(A) － (C) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (A) － (C)",
+       "text": "② (B) － (A) － (C)",
        "runs": [
+        {
+         "t": "② ",
+         "ul": false
+        },
         {
          "t": "(B) － (A) － (C)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (C) － (A)",
+       "text": "③ (B) － (C) － (A)",
        "runs": [
+        {
+         "t": "③ ",
+         "ul": false
+        },
         {
          "t": "(B) － (C) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (A) － (B)",
+       "text": "④ (C) － (A) － (B)",
        "runs": [
+        {
+         "t": "④ ",
+         "ul": false
+        },
         {
          "t": "(C) － (A) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (B) － (A)",
+       "text": "⑤ (C) － (B) － (A)",
        "runs": [
+        {
+         "t": "⑤ ",
+         "ul": false
+        },
         {
          "t": "(C) － (B) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
        "text": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳을 고르시오.",
@@ -53828,7 +53888,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "(A)\t(B)\t(C)",
@@ -54420,7 +54480,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(B) : _______________",
@@ -54430,7 +54490,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(C) : _______________",
@@ -54440,7 +54500,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "다음 글을 읽고, <보기>에 주어진 표현을 글의 흐름에 적절하도록 재배열하여 빈칸 (A), (B)에 들어갈 가장 적절한 말을 작성하시오.",
@@ -54511,7 +54571,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "(B) _________________________________________________________________",
@@ -54521,7 +54581,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       }
      ]
     },
@@ -55389,54 +55449,74 @@
        "kind": "P"
       },
       {
-       "text": "(A) － (C) － (B)",
+       "text": "① (A) － (C) － (B)",
        "runs": [
+        {
+         "t": "① ",
+         "ul": false
+        },
         {
          "t": "(A) － (C) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (A) － (C)",
+       "text": "② (B) － (A) － (C)",
        "runs": [
+        {
+         "t": "② ",
+         "ul": false
+        },
         {
          "t": "(B) － (A) － (C)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (C) － (A)",
+       "text": "③ (B) － (C) － (A)",
        "runs": [
+        {
+         "t": "③ ",
+         "ul": false
+        },
         {
          "t": "(B) － (C) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (A) － (B)",
+       "text": "④ (C) － (A) － (B)",
        "runs": [
+        {
+         "t": "④ ",
+         "ul": false
+        },
         {
          "t": "(C) － (A) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (B) － (A)",
+       "text": "⑤ (C) － (B) － (A)",
        "runs": [
+        {
+         "t": "⑤ ",
+         "ul": false
+        },
         {
          "t": "(C) － (B) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
        "text": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳을 고르시오.",
@@ -55588,7 +55668,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "(A)\t(B)\t(C)",
@@ -56148,7 +56228,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(B) : _______________",
@@ -56158,7 +56238,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(C) : _______________",
@@ -56168,7 +56248,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "다음 글을 읽고, <보기>에 주어진 표현을 글의 흐름에 적절하도록 재배열하여 빈칸 (A), (B)에 들어갈 가장 적절한 말을 작성하시오.",
@@ -56239,7 +56319,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "(B) _________________________________________________________________",
@@ -56249,7 +56329,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       }
      ]
     },
@@ -57117,54 +57197,74 @@
        "kind": "P"
       },
       {
-       "text": "(A) － (C) － (B)",
+       "text": "① (A) － (C) － (B)",
        "runs": [
+        {
+         "t": "① ",
+         "ul": false
+        },
         {
          "t": "(A) － (C) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (A) － (C)",
+       "text": "② (B) － (A) － (C)",
        "runs": [
+        {
+         "t": "② ",
+         "ul": false
+        },
         {
          "t": "(B) － (A) － (C)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (C) － (A)",
+       "text": "③ (B) － (C) － (A)",
        "runs": [
+        {
+         "t": "③ ",
+         "ul": false
+        },
         {
          "t": "(B) － (C) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (A) － (B)",
+       "text": "④ (C) － (A) － (B)",
        "runs": [
+        {
+         "t": "④ ",
+         "ul": false
+        },
         {
          "t": "(C) － (A) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (B) － (A)",
+       "text": "⑤ (C) － (B) － (A)",
        "runs": [
+        {
+         "t": "⑤ ",
+         "ul": false
+        },
         {
          "t": "(C) － (B) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
        "text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
@@ -57254,7 +57354,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "(A)\t(B)\t(C)",
@@ -57864,7 +57964,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(B) : _______________",
@@ -57874,7 +57974,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(C) : _______________",
@@ -57884,7 +57984,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "다음 글을 읽고, <보기>에 주어진 표현을 글의 흐름에 적절하도록 재배열하여 빈칸 (A), (B)에 들어갈 가장 적절한 말을 작성하시오.",
@@ -57955,7 +58055,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "(B) _________________________________________________________________",
@@ -57965,7 +58065,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       }
      ]
     },
@@ -58833,54 +58933,74 @@
        "kind": "P"
       },
       {
-       "text": "(A) － (C) － (B)",
+       "text": "① (A) － (C) － (B)",
        "runs": [
+        {
+         "t": "① ",
+         "ul": false
+        },
         {
          "t": "(A) － (C) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (A) － (C)",
+       "text": "② (B) － (A) － (C)",
        "runs": [
+        {
+         "t": "② ",
+         "ul": false
+        },
         {
          "t": "(B) － (A) － (C)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (C) － (A)",
+       "text": "③ (B) － (C) － (A)",
        "runs": [
+        {
+         "t": "③ ",
+         "ul": false
+        },
         {
          "t": "(B) － (C) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (A) － (B)",
+       "text": "④ (C) － (A) － (B)",
        "runs": [
+        {
+         "t": "④ ",
+         "ul": false
+        },
         {
          "t": "(C) － (A) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (B) － (A)",
+       "text": "⑤ (C) － (B) － (A)",
        "runs": [
+        {
+         "t": "⑤ ",
+         "ul": false
+        },
         {
          "t": "(C) － (B) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
        "text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
@@ -58970,7 +59090,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "(A)\t(B)\t(C)",
@@ -59554,7 +59674,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(B) : _______________",
@@ -59564,7 +59684,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(C) : _______________",
@@ -59574,7 +59694,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "다음 글을 읽고, <보기>에 주어진 표현을 글의 흐름에 적절하도록 재배열하여 빈칸 (A), (B)에 들어갈 가장 적절한 말을 작성하시오.",
@@ -59645,7 +59765,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "(B) _________________________________________________________________",
@@ -59655,7 +59775,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       }
      ]
     },
@@ -60523,54 +60643,74 @@
        "kind": "P"
       },
       {
-       "text": "(A) － (C) － (B)",
+       "text": "① (A) － (C) － (B)",
        "runs": [
+        {
+         "t": "① ",
+         "ul": false
+        },
         {
          "t": "(A) － (C) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (A) － (C)",
+       "text": "② (B) － (A) － (C)",
        "runs": [
+        {
+         "t": "② ",
+         "ul": false
+        },
         {
          "t": "(B) － (A) － (C)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (C) － (A)",
+       "text": "③ (B) － (C) － (A)",
        "runs": [
+        {
+         "t": "③ ",
+         "ul": false
+        },
         {
          "t": "(B) － (C) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (A) － (B)",
+       "text": "④ (C) － (A) － (B)",
        "runs": [
+        {
+         "t": "④ ",
+         "ul": false
+        },
         {
          "t": "(C) － (A) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (B) － (A)",
+       "text": "⑤ (C) － (B) － (A)",
        "runs": [
+        {
+         "t": "⑤ ",
+         "ul": false
+        },
         {
          "t": "(C) － (B) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
        "text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
@@ -60660,7 +60800,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "(A)\t(B)\t(C)",
@@ -61272,7 +61412,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(B) : _______________",
@@ -61282,7 +61422,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(C) : _______________",
@@ -61292,7 +61432,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "다음 글을 읽고, <보기>에 주어진 표현을 글의 흐름에 적절하도록 재배열하여 빈칸 (A), (B)에 들어갈 가장 적절한 말을 작성하시오.",
@@ -61363,7 +61503,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "(B) _________________________________________________________________",
@@ -61373,7 +61513,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       }
      ]
     },
@@ -62241,54 +62381,74 @@
        "kind": "P"
       },
       {
-       "text": "(A) － (C) － (B)",
+       "text": "① (A) － (C) － (B)",
        "runs": [
+        {
+         "t": "① ",
+         "ul": false
+        },
         {
          "t": "(A) － (C) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (A) － (C)",
+       "text": "② (B) － (A) － (C)",
        "runs": [
+        {
+         "t": "② ",
+         "ul": false
+        },
         {
          "t": "(B) － (A) － (C)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (C) － (A)",
+       "text": "③ (B) － (C) － (A)",
        "runs": [
+        {
+         "t": "③ ",
+         "ul": false
+        },
         {
          "t": "(B) － (C) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (A) － (B)",
+       "text": "④ (C) － (A) － (B)",
        "runs": [
+        {
+         "t": "④ ",
+         "ul": false
+        },
         {
          "t": "(C) － (A) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (B) － (A)",
+       "text": "⑤ (C) － (B) － (A)",
        "runs": [
+        {
+         "t": "⑤ ",
+         "ul": false
+        },
         {
          "t": "(C) － (B) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
        "text": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳을 고르시오.",
@@ -62440,7 +62600,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "(A)\t(B)\t(C)",
@@ -62954,7 +63114,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(B) : _______________",
@@ -62964,7 +63124,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(C) : _______________",
@@ -62974,7 +63134,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "다음 글을 읽고, <보기>에 주어진 표현을 글의 흐름에 적절하도록 재배열하여 빈칸에 들어갈 가장 적절한 말을 작성하시오.",
@@ -63892,54 +64052,74 @@
        "kind": "P"
       },
       {
-       "text": "(A) － (C) － (B)",
+       "text": "① (A) － (C) － (B)",
        "runs": [
+        {
+         "t": "① ",
+         "ul": false
+        },
         {
          "t": "(A) － (C) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (A) － (C)",
+       "text": "② (B) － (A) － (C)",
        "runs": [
+        {
+         "t": "② ",
+         "ul": false
+        },
         {
          "t": "(B) － (A) － (C)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (C) － (A)",
+       "text": "③ (B) － (C) － (A)",
        "runs": [
+        {
+         "t": "③ ",
+         "ul": false
+        },
         {
          "t": "(B) － (C) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (A) － (B)",
+       "text": "④ (C) － (A) － (B)",
        "runs": [
+        {
+         "t": "④ ",
+         "ul": false
+        },
         {
          "t": "(C) － (A) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (B) － (A)",
+       "text": "⑤ (C) － (B) － (A)",
        "runs": [
+        {
+         "t": "⑤ ",
+         "ul": false
+        },
         {
          "t": "(C) － (B) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
        "text": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳을 고르시오.",
@@ -64091,7 +64271,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "(A)\t(B)\t(C)",
@@ -64584,7 +64764,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(B) : _______________",
@@ -64594,7 +64774,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(C) : _______________",
@@ -64604,7 +64784,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "다음 글을 읽고, <보기>에 주어진 표현을 글의 흐름에 적절하도록 재배열하여 빈칸 (A), (B)에 들어갈 가장 적절한 말을 작성하시오.",
@@ -64675,7 +64855,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "(B) _________________________________________________________________",
@@ -64685,7 +64865,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       }
      ]
     },
@@ -65553,54 +65733,74 @@
        "kind": "P"
       },
       {
-       "text": "(A) － (C) － (B)",
+       "text": "① (A) － (C) － (B)",
        "runs": [
+        {
+         "t": "① ",
+         "ul": false
+        },
         {
          "t": "(A) － (C) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (A) － (C)",
+       "text": "② (B) － (A) － (C)",
        "runs": [
+        {
+         "t": "② ",
+         "ul": false
+        },
         {
          "t": "(B) － (A) － (C)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (C) － (A)",
+       "text": "③ (B) － (C) － (A)",
        "runs": [
+        {
+         "t": "③ ",
+         "ul": false
+        },
         {
          "t": "(B) － (C) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (A) － (B)",
+       "text": "④ (C) － (A) － (B)",
        "runs": [
+        {
+         "t": "④ ",
+         "ul": false
+        },
         {
          "t": "(C) － (A) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (B) － (A)",
+       "text": "⑤ (C) － (B) － (A)",
        "runs": [
+        {
+         "t": "⑤ ",
+         "ul": false
+        },
         {
          "t": "(C) － (B) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
        "text": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳을 고르시오.",
@@ -65752,7 +65952,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "(A)\t(B)\t(C)",
@@ -66324,7 +66524,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(B) : _______________",
@@ -66334,7 +66534,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(C) : _______________",
@@ -66344,7 +66544,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "다음 글을 읽고, <보기>에 주어진 표현을 글의 흐름에 적절하도록 재배열하여 빈칸 (A), (B)에 들어갈 가장 적절한 말을 작성하시오.",
@@ -66415,7 +66615,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "(B) _________________________________________________________________",
@@ -66425,7 +66625,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       }
      ]
     },
@@ -67293,54 +67493,74 @@
        "kind": "P"
       },
       {
-       "text": "(A) － (C) － (B)",
+       "text": "① (A) － (C) － (B)",
        "runs": [
+        {
+         "t": "① ",
+         "ul": false
+        },
         {
          "t": "(A) － (C) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (A) － (C)",
+       "text": "② (B) － (A) － (C)",
        "runs": [
+        {
+         "t": "② ",
+         "ul": false
+        },
         {
          "t": "(B) － (A) － (C)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (C) － (A)",
+       "text": "③ (B) － (C) － (A)",
        "runs": [
+        {
+         "t": "③ ",
+         "ul": false
+        },
         {
          "t": "(B) － (C) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (A) － (B)",
+       "text": "④ (C) － (A) － (B)",
        "runs": [
+        {
+         "t": "④ ",
+         "ul": false
+        },
         {
          "t": "(C) － (A) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (B) － (A)",
+       "text": "⑤ (C) － (B) － (A)",
        "runs": [
+        {
+         "t": "⑤ ",
+         "ul": false
+        },
         {
          "t": "(C) － (B) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
        "text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
@@ -67430,7 +67650,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "(A)\t(B)\t(C)",
@@ -68050,7 +68270,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(B) : _______________",
@@ -68060,7 +68280,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(C) : _______________",
@@ -68070,7 +68290,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "다음 글을 읽고, <보기>에 주어진 표현을 글의 흐름에 적절하도록 재배열하여 빈칸 (A), (B)에 들어갈 가장 적절한 말을 작성하시오.",
@@ -68999,54 +69219,74 @@
        "kind": "P"
       },
       {
-       "text": "(A) － (C) － (B)",
+       "text": "① (A) － (C) － (B)",
        "runs": [
+        {
+         "t": "① ",
+         "ul": false
+        },
         {
          "t": "(A) － (C) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (A) － (C)",
+       "text": "② (B) － (A) － (C)",
        "runs": [
+        {
+         "t": "② ",
+         "ul": false
+        },
         {
          "t": "(B) － (A) － (C)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (C) － (A)",
+       "text": "③ (B) － (C) － (A)",
        "runs": [
+        {
+         "t": "③ ",
+         "ul": false
+        },
         {
          "t": "(B) － (C) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (A) － (B)",
+       "text": "④ (C) － (A) － (B)",
        "runs": [
+        {
+         "t": "④ ",
+         "ul": false
+        },
         {
          "t": "(C) － (A) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (B) － (A)",
+       "text": "⑤ (C) － (B) － (A)",
        "runs": [
+        {
+         "t": "⑤ ",
+         "ul": false
+        },
         {
          "t": "(C) － (B) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
        "text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
@@ -69136,7 +69376,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "(A)\t(B)\t(C)",
@@ -69627,7 +69867,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(B) : _______________",
@@ -69637,7 +69877,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(C) : _______________",
@@ -69647,7 +69887,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "다음 글을 읽고, <보기>에 주어진 표현을 글의 흐름에 적절하도록 재배열하여 빈칸에 들어갈 가장 적절한 말을 작성하시오. (필요시 어형 변화 가능)",
@@ -70565,54 +70805,74 @@
        "kind": "P"
       },
       {
-       "text": "(A) － (C) － (B)",
+       "text": "① (A) － (C) － (B)",
        "runs": [
+        {
+         "t": "① ",
+         "ul": false
+        },
         {
          "t": "(A) － (C) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (A) － (C)",
+       "text": "② (B) － (A) － (C)",
        "runs": [
+        {
+         "t": "② ",
+         "ul": false
+        },
         {
          "t": "(B) － (A) － (C)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (C) － (A)",
+       "text": "③ (B) － (C) － (A)",
        "runs": [
+        {
+         "t": "③ ",
+         "ul": false
+        },
         {
          "t": "(B) － (C) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (A) － (B)",
+       "text": "④ (C) － (A) － (B)",
        "runs": [
+        {
+         "t": "④ ",
+         "ul": false
+        },
         {
          "t": "(C) － (A) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (B) － (A)",
+       "text": "⑤ (C) － (B) － (A)",
        "runs": [
+        {
+         "t": "⑤ ",
+         "ul": false
+        },
         {
          "t": "(C) － (B) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
        "text": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳을 고르시오.",
@@ -70764,7 +71024,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "(A)\t(B)\t(C)",
@@ -71306,7 +71566,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(B) : _______________",
@@ -71316,7 +71576,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(C) : _______________",
@@ -71326,7 +71586,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "다음 글을 읽고, <보기>에 주어진 표현을 글의 흐름에 적절하도록 재배열하여 빈칸 (A), (B)에 들어갈 가장 적절한 말을 작성하시오. (필요시 어형 변화 가능)",
@@ -71397,7 +71657,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "(B) _________________________________________________________________",
@@ -71407,7 +71667,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       }
      ]
     },
@@ -72279,54 +72539,74 @@
        "kind": "P"
       },
       {
-       "text": "(A) － (C) － (B)",
+       "text": "① (A) － (C) － (B)",
        "runs": [
+        {
+         "t": "① ",
+         "ul": false
+        },
         {
          "t": "(A) － (C) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (A) － (C)",
+       "text": "② (B) － (A) － (C)",
        "runs": [
+        {
+         "t": "② ",
+         "ul": false
+        },
         {
          "t": "(B) － (A) － (C)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (C) － (A)",
+       "text": "③ (B) － (C) － (A)",
        "runs": [
+        {
+         "t": "③ ",
+         "ul": false
+        },
         {
          "t": "(B) － (C) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (A) － (B)",
+       "text": "④ (C) － (A) － (B)",
        "runs": [
+        {
+         "t": "④ ",
+         "ul": false
+        },
         {
          "t": "(C) － (A) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (B) － (A)",
+       "text": "⑤ (C) － (B) － (A)",
        "runs": [
+        {
+         "t": "⑤ ",
+         "ul": false
+        },
         {
          "t": "(C) － (B) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
        "text": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳을 고르시오.",
@@ -72478,7 +72758,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "(A)\t(B)\t(C)",
@@ -73002,7 +73282,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(B) : _______________",
@@ -73012,7 +73292,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(C) : _______________",
@@ -73022,7 +73302,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "다음 글을 읽고, <보기>에 주어진 표현을 글의 흐름에 적절하도록 재배열하여 빈칸 (A), (B)에 들어갈 가장 적절한 말을 작성하시오. (필요시 어형 변화 가능)",
@@ -73093,7 +73373,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "(B) _________________________________________________________________",
@@ -73103,7 +73383,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       }
      ]
     },
@@ -73975,54 +74255,74 @@
        "kind": "P"
       },
       {
-       "text": "(A) － (C) － (B)",
+       "text": "① (A) － (C) － (B)",
        "runs": [
+        {
+         "t": "① ",
+         "ul": false
+        },
         {
          "t": "(A) － (C) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (A) － (C)",
+       "text": "② (B) － (A) － (C)",
        "runs": [
+        {
+         "t": "② ",
+         "ul": false
+        },
         {
          "t": "(B) － (A) － (C)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (C) － (A)",
+       "text": "③ (B) － (C) － (A)",
        "runs": [
+        {
+         "t": "③ ",
+         "ul": false
+        },
         {
          "t": "(B) － (C) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (A) － (B)",
+       "text": "④ (C) － (A) － (B)",
        "runs": [
+        {
+         "t": "④ ",
+         "ul": false
+        },
         {
          "t": "(C) － (A) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (B) － (A)",
+       "text": "⑤ (C) － (B) － (A)",
        "runs": [
+        {
+         "t": "⑤ ",
+         "ul": false
+        },
         {
          "t": "(C) － (B) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
        "text": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳을 고르시오.",
@@ -74174,7 +74474,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "(A)\t(B)\t(C)",
@@ -74786,7 +75086,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(B) : _______________",
@@ -74796,7 +75096,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(C) : _______________",
@@ -74806,7 +75106,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "다음 글을 읽고, <보기>에 주어진 표현을 글의 흐름에 적절하도록 재배열하여 빈칸 (A), (B)에 들어갈 가장 적절한 말을 작성하시오.",
@@ -74877,7 +75177,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "(B) _________________________________________________________________",
@@ -74887,7 +75187,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       }
      ]
     },
@@ -75755,54 +76055,74 @@
        "kind": "P"
       },
       {
-       "text": "(A) － (C) － (B)",
+       "text": "① (A) － (C) － (B)",
        "runs": [
+        {
+         "t": "① ",
+         "ul": false
+        },
         {
          "t": "(A) － (C) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (A) － (C)",
+       "text": "② (B) － (A) － (C)",
        "runs": [
+        {
+         "t": "② ",
+         "ul": false
+        },
         {
          "t": "(B) － (A) － (C)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (C) － (A)",
+       "text": "③ (B) － (C) － (A)",
        "runs": [
+        {
+         "t": "③ ",
+         "ul": false
+        },
         {
          "t": "(B) － (C) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (A) － (B)",
+       "text": "④ (C) － (A) － (B)",
        "runs": [
+        {
+         "t": "④ ",
+         "ul": false
+        },
         {
          "t": "(C) － (A) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (B) － (A)",
+       "text": "⑤ (C) － (B) － (A)",
        "runs": [
+        {
+         "t": "⑤ ",
+         "ul": false
+        },
         {
          "t": "(C) － (B) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
        "text": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳을 고르시오.",
@@ -75954,7 +76274,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "(A)\t(B)\t(C)",
@@ -76468,7 +76788,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(B) : _______________",
@@ -76478,7 +76798,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(C) : _______________",
@@ -76488,7 +76808,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "다음 글을 읽고, <보기>에 주어진 표현을 글의 흐름에 적절하도록 재배열하여 빈칸 (A), (B)에 들어갈 가장 적절한 말을 작성하시오. (필요시 어형 변화 가능)",
@@ -76559,7 +76879,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "(B) _________________________________________________________________",
@@ -76569,7 +76889,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       }
      ]
     },
@@ -77437,54 +77757,74 @@
        "kind": "P"
       },
       {
-       "text": "(A) － (C) － (B)",
+       "text": "① (A) － (C) － (B)",
        "runs": [
+        {
+         "t": "① ",
+         "ul": false
+        },
         {
          "t": "(A) － (C) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (A) － (C)",
+       "text": "② (B) － (A) － (C)",
        "runs": [
+        {
+         "t": "② ",
+         "ul": false
+        },
         {
          "t": "(B) － (A) － (C)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (C) － (A)",
+       "text": "③ (B) － (C) － (A)",
        "runs": [
+        {
+         "t": "③ ",
+         "ul": false
+        },
         {
          "t": "(B) － (C) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (A) － (B)",
+       "text": "④ (C) － (A) － (B)",
        "runs": [
+        {
+         "t": "④ ",
+         "ul": false
+        },
         {
          "t": "(C) － (A) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (B) － (A)",
+       "text": "⑤ (C) － (B) － (A)",
        "runs": [
+        {
+         "t": "⑤ ",
+         "ul": false
+        },
         {
          "t": "(C) － (B) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
        "text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
@@ -77574,7 +77914,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "(A)\t(B)\t(C)",
@@ -78082,7 +78422,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(B) : _______________",
@@ -78092,7 +78432,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(C) : _______________",
@@ -78102,7 +78442,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "다음 글을 읽고, <보기>에 주어진 표현을 글의 흐름에 적절하도록 재배열하여 빈칸 (A), (B)에 들어갈 가장 적절한 말을 작성하시오.",
@@ -78173,7 +78513,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       },
       {
        "text": "(B) _________________________________________________________________",
@@ -78183,7 +78523,7 @@
          "ul": false
         }
        ],
-       "kind": "Box"
+       "kind": "AnsL"
       }
      ]
     },
@@ -79051,54 +79391,74 @@
        "kind": "P"
       },
       {
-       "text": "(A) － (C) － (B)",
+       "text": "① (A) － (C) － (B)",
        "runs": [
+        {
+         "t": "① ",
+         "ul": false
+        },
         {
          "t": "(A) － (C) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (A) － (C)",
+       "text": "② (B) － (A) － (C)",
        "runs": [
+        {
+         "t": "② ",
+         "ul": false
+        },
         {
          "t": "(B) － (A) － (C)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(B) － (C) － (A)",
+       "text": "③ (B) － (C) － (A)",
        "runs": [
+        {
+         "t": "③ ",
+         "ul": false
+        },
         {
          "t": "(B) － (C) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (A) － (B)",
+       "text": "④ (C) － (A) － (B)",
        "runs": [
+        {
+         "t": "④ ",
+         "ul": false
+        },
         {
          "t": "(C) － (A) － (B)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
-       "text": "(C) － (B) － (A)",
+       "text": "⑤ (C) － (B) － (A)",
        "runs": [
+        {
+         "t": "⑤ ",
+         "ul": false
+        },
         {
          "t": "(C) － (B) － (A)",
          "ul": false
         }
        ],
-       "kind": "P"
+       "kind": "C"
       },
       {
        "text": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳을 고르시오.",
@@ -79250,7 +79610,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "(A)\t(B)\t(C)",
@@ -79720,7 +80080,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(B) : _______________",
@@ -79730,7 +80090,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "(C) : _______________",
@@ -79740,7 +80100,7 @@
          "ul": false
         }
        ],
-       "kind": "Ans"
+       "kind": "AnsL"
       },
       {
        "text": "다음 글을 읽고, <보기>에 주어진 표현을 글의 흐름에 적절하도록 재배열하여 빈칸에 들어갈 가장 적절한 말을 작성하시오. (필요시 어형 변화 가능)",
@@ -79819,7 +80179,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "(A)\t(B)\t(C)",
@@ -80225,7 +80585,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "(A)\t(B)\t(C)",
@@ -80428,7 +80788,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "(A)\t(B)\t(C)",
@@ -81682,7 +82042,7 @@
          "ul": false
         }
        ],
-       "kind": "P-CONTEXT"
+       "kind": "P"
       },
       {
        "text": "(A)\t(B)\t(C)",
