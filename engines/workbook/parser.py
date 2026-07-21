@@ -1700,6 +1700,13 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
         # 보존 가드 스냅샷 — 책 헤더(변형문제/수능특강)는 의도적 제거이므로
         # 스냅샷에서도 제외해 허위 "내용 손실" 경고를 막는다(헤더 외 손실은 그대로 감지).
         _raw_words = _step3_content_words(_strip_step3_book_markers(paras))
+        # 표형 선지 번호 셀(①~⑤) 병합 — 반드시 _strip_step3_answers *이전*
+        # (W40 결함 3: 순서배열 선지가 hwpx 2열 표(번호 셀|순열 셀)로
+        # 작성된 원고에서, 아래 answers 제거가 단독 ①~⑤ 셀을 정답 번호로
+        # 오인 제거해 "(A) － (C) － (B)" 행이 번호 없이 인쇄됨 —
+        # 0a5da924 '고1 26년 6월 N번.hwpx' 실증. 교과서(textbook) 경로는
+        # 이미 같은 순서로 호출한다 — 번호 매칭 경로만 빠져 있었다.)
+        paras = _merge_step3_split_choice_numbers(paras)
         # Step3 정답/해설 줄 제거 (level 3 제외 후에도 level 1에 남은 정답 줄 처리)
         paras = _strip_step3_answers(paras)
         # Step3 유형 섹션 태그 제거 ("[유형 1] ...", "(심경, 분위기, ...)")

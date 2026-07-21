@@ -199,6 +199,12 @@
                   2단 템플릿 페이지를 1단으로 만든 결함 (376b34d0 실증
                   p95~97). question_keep/delete 계약 플랜 critical.
 
+  G38 [순서선지] (W40 결함 3): 순서배열 선지 순열 행("(A) － (C) － (B)")
+                  이 원문자 없이 인쇄되거나 선지 스타일이 아님 — hwpx
+                  2열 표(번호 셀|순열 셀)의 번호 셀이 정답 제거에 오인
+                  삭제된 결함 (0a5da924 실증 90행). 현행 플랜(원문자+선지
+                  순열 행이 실림)은 critical, 구출력 소급 warning.
+
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
 G24②/G26은 W21 확장 필드(fc / pages)가 필요하다. G29②는 W23 확장 필드
 (fonts / style_fonts), G30은 W23 확장 필드(fp — 프레임별 페이지, fc 병렬)가
@@ -291,6 +297,16 @@ _RE_G36_TFROW = re.compile(
 # G37 (W39 결함 6) — 발문의 "밑줄 친 <영어구>" 인용은 밑줄 렌더 (플랜
 # runs 검사 — 덤프에는 문자 서식이 없어 플랜 계층에서 검증. 독립 정의)
 _RE_G37_QUOTE = re.compile(r"밑줄\s*친\s+([^가-힣]+)")
+
+# G38 (W40 결함 3) — 순서배열 선지 순열 행("(A) － (C) － (B)")은 원문자
+# 접두 + 선지 스타일이어야 한다 (출력 검사용 독립 정의 — 0a5da924 실증:
+# hwpx 2열 표의 번호 셀이 정답 제거에 오인 삭제돼 번호 없이 지문 스타일로
+# 인쇄. 세 라벨이 서로 다른 순열일 때만 매치 — 지문의 "(A) 문장" 배제).
+_RE_G38_PERM_BARE = re.compile(
+    r"^\(([ABC])\)\s*[-–—−－]\s*\(([ABC])\)\s*[-–—−－]\s*\(([ABC])\)$")
+_RE_G38_PERM_NUMBERED = re.compile(
+    r"^[①②③④⑤]\s*\(([ABC])\)\s*[-–—−－]\s*\(([ABC])\)"
+    r"\s*[-–—−－]\s*\(([ABC])\)$")
 
 # G13/G32 (W38) — 영어 지시문 발문 시그니처 + 요약문 마커 (출력 검사용
 # 독립 정의 — block_grammar와 순환 방지)
@@ -1120,6 +1136,37 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         msg = (f"[답란] 라벨+빈칸 답란 쌍 {len(ansl_miss)}개 라인이 답란 "
                f"계열(선지) 스타일이 아님: " + " | ".join(ansl_miss[:3]))
         (critical if plan_ansl else warnings).append(msg)
+
+    # ── G38 [순서선지] (W40 결함 3): 순열 행 = 원문자 + 선지 스타일 ─────
+    # 현행 플랜(원문자+선지 순열 행이 실린 플랜)은 critical, 구출력 소급
+    # warning (G36/G35 패턴).
+    plan_perm = False
+    for fl in plan.get("flows", []):
+        if fl.get("step") != "step3":
+            continue
+        for u in fl.get("units", []):
+            for p in (u["paras"] if isinstance(u, dict) else u):
+                if _RE_G38_PERM_NUMBERED.match(_clean(p.get("t", ""))) \
+                        and "선지" in (p.get("s") or ""):
+                    plan_perm = True
+                    break
+    perm_bad = []
+    for story in dump.get("stories", []):
+        for p in story.get("paragraphs", []):
+            t = _clean(p.get("t", ""))
+            s = p.get("s") or ""
+            m = _RE_G38_PERM_BARE.match(t)
+            if m and len(set(m.groups())) == 3:
+                perm_bad.append(f"원문자 누락 「{t[:24]}」")
+                continue
+            m = _RE_G38_PERM_NUMBERED.match(t)
+            if m and len(set(m.groups())) == 3 and "선지" not in s:
+                perm_bad.append(f"스타일 「{s[-20:]}」 「{t[:24]}」")
+    stats["perm_row_bad"] = len(perm_bad)
+    if perm_bad:
+        msg = (f"[순서선지] 순서배열 선지 순열 행 {len(perm_bad)}개 결함 "
+               f"(원문자 누락/선지 스타일 아님): " + " | ".join(perm_bad[:4]))
+        (critical if plan_perm else warnings).append(msg)
 
     stats["cond_item_miss"] = len(cond_miss)
     stats["cond_content_miss"] = len(cond_content_miss)
