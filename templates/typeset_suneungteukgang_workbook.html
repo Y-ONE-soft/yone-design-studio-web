@@ -52,6 +52,8 @@
     </div>
   </div>
 
+  {% include "_review_agent_opt.html" %}
+
   <button type="submit" class="run-btn" id="run-btn">
     <span class="btn-icon">&#9654;</span> 조판 실행
   </button>
@@ -287,6 +289,9 @@
     fd.append('lesson', label);
     fd.append('lesson_folder', folder);
     fd.append('workbook_type', 'EBS');
+    // W41 후속 — 다중 강 경로도 검수 에이전트 opt-in 전파 (단일 강은 typeset.js가 폼 전체 직렬화)
+    var raCb = document.querySelector('#typeset-form input[name="review_agent"]');
+    if (raCb && raCb.checked) fd.append('review_agent', '1');
     var resp = await fetch('/api/run/suneungteukgang_workbook', { method: 'POST', body: fd });
     var data = await resp.json();
     if (!resp.ok || data.error) throw new Error(data.error || ('서버 오류 ' + resp.status));
@@ -320,6 +325,10 @@
               logArea.textContent += '[결과] ' + status + ' overflow=' +
                 (d.result && d.result.overflow != null ? d.result.overflow : '?') + '\n';
               logArea.scrollTop = logArea.scrollHeight;
+              // W41 후속 — 강별 AI 검수 카드(판정 그룹+재조판 버튼) 누적 표시
+              if (d.result && d.result.review_agent && window.ReviewAgentUI) {
+                ReviewAgentUI.append(document.getElementById('result-area'), jobId, d.result.review_agent);
+              }
               resolve(d.status === 'done');
             })
             .catch(function() { resolve(false); });
@@ -336,6 +345,7 @@
     });
   }
 </script>
+<script src="{{ url_for('static', filename='js/review_agent_ui.js') }}"></script>
 <script src="{{ url_for('static', filename='js/typeset.js') }}"
         data-material="{{ engine.material_id }}"></script>
 {% endblock %}

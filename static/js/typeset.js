@@ -361,7 +361,9 @@ function showResultCard(jobId, result) {
     : '';
 
   // AI 검수 에이전트 리포트 (W41 — opt-in 실행 시에만 존재)
-  const raHtml = _reviewAgentHtml(jobId, result.review_agent);
+  // 렌더는 공용 static/js/review_agent_ui.js (인라인 폴링 템플릿과 공유).
+  const raHtml = window.ReviewAgentUI
+    ? ReviewAgentUI.html(jobId, result.review_agent) : '';
 
   area.innerHTML = `
     <div class="result-card ${ok ? 'ok' : 'warn'}">
@@ -390,89 +392,10 @@ function showResultCard(jobId, result) {
 }
 
 // ── AI 검수 에이전트 리포트 렌더 (W41) ────────────────────────────────────
-// judgement 분류: auto_fixable(재조판 제안 — 사용자 클릭 시에만 실행),
-// manuscript_error(원고 오류 — 원고 수정 필요), operator_judgment(운영 확인).
-
-function _escapeHtml(s) {
-  return String(s ?? '').replace(/[&<>"']/g, c => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-  }[c]));
-}
-
-function _reviewAgentHtml(jobId, ra) {
-  if (!ra) return '';
-  const verdictBadge = {
-    pass: '✅ 통과', suspect: '👁 확인 필요', fail: '❌ 결함 발견'
-  }[ra.verdict] || _escapeHtml(ra.verdict || '?');
-  const judgeLabel = {
-    auto_fixable: ['🔁 자동 수정 가능(재조판 제안)', 'fixable'],
-    manuscript_error: ['📝 원고 오류 (원고 수정 필요)', 'manuscript'],
-    operator_judgment: ['👁 운영 판단 필요', 'operator'],
-  };
-  const groups = { auto_fixable: [], manuscript_error: [], operator_judgment: [] };
-  (ra.findings || []).forEach(f => {
-    (groups[f.judgement] || groups.operator_judgment).push(f);
-  });
-  let items = '';
-  for (const [j, list] of Object.entries(groups)) {
-    if (!list.length) continue;
-    const [label] = judgeLabel[j];
-    items += `<div class="ra-group"><div class="ra-group-label">${label} — ${list.length}건</div>
-      <ul class="warn-list">${list.map(f =>
-        `<li>p${_escapeHtml(f.page)} [${_escapeHtml(f.check || f.type)}] ${_escapeHtml(f.detail)}` +
-        (f.suggestion ? ` <em>(${_escapeHtml(f.suggestion)})</em>` : '') + `</li>`).join('')}
-      </ul></div>`;
-  }
-  const nAuto = (ra.counts && ra.counts.auto_fixable) || 0;
-  const rerunBtn = nAuto > 0
-    ? `<div class="action-row">
-         <button type="button" class="mockup-btn" id="rerun-btn"
-                 onclick="rerunJob('${_escapeHtml(jobId)}')">🔁 재조판 실행 (자동 수정 제안 ${nAuto}건)</button>
-       </div>`
-    : '';
-  const meta = [
-    ra.pages_reviewed && ra.pages_reviewed.length
-      ? `표본 ${ra.pages_reviewed.length}페이지 검수` : '',
-    ra.wall_s ? `${ra.wall_s}초` : '',
-  ].filter(Boolean).join(' · ');
-  return `
-    <div class="ra-card" style="margin-top:12px;padding:12px;border:1px solid #d0d4dc;border-radius:8px;">
-      <div class="result-header">
-        <span class="result-badge">🔍 AI 검수: ${verdictBadge}</span>
-        <span style="font-size:12px;color:#667;">${_escapeHtml(meta)}</span>
-      </div>
-      ${items || '<p style="font-size:13px;">발견된 결함이 없습니다.</p>'}
-      ${ra.notes ? `<p style="font-size:12px;color:#667;">${_escapeHtml(ra.notes)}</p>` : ''}
-      ${rerunBtn}
-    </div>`;
-}
-
-async function rerunJob(jobId) {
-  const btn = document.getElementById('rerun-btn');
-  if (btn) { btn.disabled = true; btn.textContent = '재조판 시작 중...'; }
-  try {
-    const res = await fetch(`/api/rerun/${jobId}`, { method: 'POST' });
-    const data = await res.json();
-    if (!res.ok || data.error) {
-      appendLog(`[재조판 오류] ${data.error || '서버 오류'}`);
-      if (btn) { btn.disabled = false; btn.textContent = '🔁 재조판 실행'; }
-      return;
-    }
-    // 새 job으로 진행 영역 전환 (기존 결과 카드는 대체)
-    document.getElementById('progress-area').classList.remove('hidden');
-    document.getElementById('result-area').classList.add('hidden');
-    document.getElementById('result-area').innerHTML = '';
-    document.getElementById('log-area').textContent = '';
-    setStep(null);
-    appendLog(`[재조판] 새 작업 시작 (job ${data.job_id} — 원본 ${jobId})`);
-    _currentJobId = data.job_id;
-    _showCancelBtn(true);
-    startStream(data.job_id);
-  } catch (err) {
-    appendLog(`[재조판 오류] ${err.message}`);
-    if (btn) { btn.disabled = false; btn.textContent = '🔁 재조판 실행'; }
-  }
-}
+// W41 후속: 렌더(_reviewAgentHtml)와 재조판(rerunJob)은 공용
+// static/js/review_agent_ui.js로 이동 — 인라인 폴링 템플릿 19곳과 공유.
+// 이 파일을 로드하는 템플릿은 review_agent_ui.js를 먼저 include한다.
+// (rerunJob의 취소 버튼/현재 job 연동은 window._tsSetCurrent 경유.)
 
 function showErrorCard(msg) {
   const area = document.getElementById('result-area');
