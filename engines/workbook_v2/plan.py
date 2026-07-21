@@ -621,6 +621,18 @@ def _s3_assign_slots(pre, BG):
                            for p in R.ANS_PATTERNS[:2])):
             row["eff"] = "AnsL"
             nxt["eff"] = "AnsL"
+
+    # 괄호 라벨 답란 (W40 결함 5 — 구 kind 주석 이중 방어): 보기/조건
+    # 블록 내용 직후의 "(A) ______" 라인은 답란(AnsL)이다 — 파서 수리
+    # 이전 content의 Box 흡수 주석(보기 스타일)·Ans 주석(지문 관행)을
+    # 위치(블록 뒤) + 형태(괄호 라벨 + 밑줄 런) 신호로 승격.
+    prev_eff = None
+    for row in meaningful:
+        if row["eff"] in ("Box", "Ans", "Cond") \
+                and BG.ANS_PAREN_BLANK.match(row["tclean"]) \
+                and prev_eff in ("Box", "Cond", "AnsL"):
+            row["eff"] = "AnsL"
+        prev_eff = row["eff"]
     return warn
 
 

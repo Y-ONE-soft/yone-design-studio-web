@@ -209,6 +209,11 @@
                   (215번 실증: 판정 2의 P_ORDER_LABEL 휴리스틱이 "(A)\t
                   (B)\t(C)" 선지 헤더를 순서배열 항목으로 오인). 현행
                   플랜은 critical, 구출력 소급 warning.
+  G40 [괄호답란] (W40 결함 5): 보기/조건 블록 뒤 괄호 라벨 답란("(A)
+                  ______")이 답란 계열(선지) 스타일이 아님 — W39 콜론형
+                  (G35)의 괄호 라벨형 확장 (0a5da924 실증: <보기 B> 아래
+                  답란이 Box 전파에 삼켜져 보기 스타일). 현행 플랜은
+                  critical, 구출력 소급 warning.
 
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
 G24②/G26은 W21 확장 필드(fc / pages)가 필요하다. G29②는 W23 확장 필드
@@ -318,6 +323,12 @@ _RE_G38_PERM_NUMBERED = re.compile(
 # 발문 시그니처: (A) 라벨 + 네모/괄호/[ ] 토큰 + '에서' + 낱말/표현 계열.
 _RE_G39_TOKEN = re.compile(r"네모|괄호|\[\s*\]")
 _RE_G39_SUBJECT = re.compile(r"낱말|표현|어법|문맥")
+
+# G40 (W40 결함 5) — 보기/조건 블록 뒤 괄호 라벨 답란("(A) ______" /
+# "(A) : ______")은 답란 계열(선지) 스타일이어야 한다 (출력 검사용 독립
+# 정의 — 0a5da924 실증: <보기 B> 아래 답란이 보기 스타일로 인쇄).
+_RE_G40_PAREN_BLANK = re.compile(
+    r"^[(（]\s*[A-Za-z가-힣0-9]{1,3}\s*[)）]\s*[:：]?\s*_{3,}[\s_]*[.,]?$")
 
 # G13/G32 (W38) — 영어 지시문 발문 시그니처 + 요약문 마커 (출력 검사용
 # 독립 정의 — block_grammar와 순환 방지)
@@ -1219,6 +1230,50 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         msg = (f"[지문배경] 네모/괄호 선택형 지문 {len(paren_bg)}개에 배경 "
                f"스타일 오적용 (지문이어야 함): " + " | ".join(paren_bg[:3]))
         (critical if plan_paren_fixed else warnings).append(msg)
+
+    # ── G40 [괄호답란] (W40 결함 5): 보기/조건 뒤 "(A) ___" = 답란 ──────
+    # 위치 신호(직전 유의 단락이 보기/조건 계열 또는 같은 답란 체인) +
+    # 형태 신호(괄호 라벨 + 밑줄 런) — 선지 계열 스타일이 계약.
+    plan_pblank = False
+    for fl in plan.get("flows", []):
+        if fl.get("step") != "step3":
+            continue
+        paras = [p for u in fl.get("units", [])
+                 for p in (u["paras"] if isinstance(u, dict) else u)]
+        prev_s = ""
+        for p in paras:
+            t = _clean(p.get("t", ""))
+            if not t:
+                continue
+            if _RE_G40_PAREN_BLANK.match(t) \
+                    and any(k in prev_s for k in ("보기", "조건")) \
+                    and "선지" in (p.get("s") or ""):
+                plan_pblank = True
+                break
+            prev_s = p.get("s") or ""
+    pblank_miss = []
+    for story in dump.get("stories", []):
+        ps = [p for p in story.get("paragraphs", [])
+              if _clean(p.get("t", ""))]
+        chain = False       # 보기/조건 뒤 답란 체인 진행 상태
+        prev_s = ""
+        for p in ps:
+            t = _clean(p.get("t", ""))
+            s = p.get("s") or ""
+            if _RE_G40_PAREN_BLANK.match(t) and (
+                    chain or any(k in prev_s for k in ("보기", "조건"))):
+                chain = True
+                if "선지" not in s and "답" not in s:
+                    pblank_miss.append(t[:25])
+            else:
+                chain = False
+            prev_s = s
+    stats["paren_blank_miss"] = len(pblank_miss)
+    if pblank_miss:
+        msg = (f"[괄호답란] 보기/조건 뒤 괄호 라벨 답란 {len(pblank_miss)}"
+               f"개가 답란 계열(선지) 스타일이 아님: "
+               + " | ".join(pblank_miss[:3]))
+        (critical if plan_pblank else warnings).append(msg)
 
     stats["cond_item_miss"] = len(cond_miss)
     stats["cond_content_miss"] = len(cond_content_miss)

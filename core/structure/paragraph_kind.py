@@ -303,6 +303,21 @@ def classify_paragraphs(paras):
                 if nxt["kind"] in ("Q", "Q-INTRO", "GH", "A", "Cond", "Box",
                                    "AnsL"):
                     break
+                # W40 결함 5: 보기 블록 뒤 괄호 라벨 답란("(A) ______") —
+                # 무한글 흡수가 답란을 보기 스타일로 삼키던 것 차단.
+                # 연속 답란 라인을 AnsL로 승격하고 블록 종료 (답란 =
+                # 블록의 실질 종료 — Cond의 (b) 규칙과 같은 의미론).
+                if BG.ANS_PAREN_BLANK.match(t):
+                    while j < len(out):
+                        if out[j]["kind"] == "BLANK":
+                            j += 1
+                            continue
+                        if BG.ANS_PAREN_BLANK.match(out[j]["text"]):
+                            out[j]["kind"] = "AnsL"
+                            j += 1
+                            continue
+                        break
+                    break
                 # 단독 대괄호 마커 라인("[ Type C (2) ]" 유형 구분 마커 등)은
                 # 보기 어구가 아니다 — 전파 차단 (W17 c16: Box 전파가 무한글
                 # 판정으로 유형 마커를 보기 스타일로 오염). 어구 나열
@@ -316,6 +331,19 @@ def classify_paragraphs(paras):
                     continue
                 break
             # ── Cond ──
+            # W40 결함 5: 조건 블록 뒤 괄호 라벨 답란("(A) : ______")도
+            # 보기와 동일하게 AnsL 승격 후 블록 종료 (위치+형태 신호).
+            if BG.ANS_PAREN_BLANK.match(t):
+                while j < len(out):
+                    if out[j]["kind"] == "BLANK":
+                        j += 1
+                        continue
+                    if BG.ANS_PAREN_BLANK.match(out[j]["text"]):
+                        out[j]["kind"] = "AnsL"
+                        j += 1
+                        continue
+                    break
+                break
             if nxt["kind"] in ("Q-INTRO", "GH", "A", "Cond", "Box", "Ans",
                                "AnsL", "SRC", "P-CONTEXT"):
                 break
