@@ -103,8 +103,11 @@ def collect_jobs(jobs_dir, out=None):
             content = json.load(open(cp, encoding="utf-8"))
         except (OSError, ValueError):
             continue
-        steps = content.get("steps")
-        plan_ready = isinstance(steps, dict) and bool(steps)
+        # W46 — 워크북 계열 외(블랙북/세서특필/화이트북)도 예측 어댑터가
+        # 있으면 플랜 가능 (core.reverse_learn.adapters).
+        series = guess_series(content, os.path.basename(indd))
+        from core.reverse_learn.adapters import can_predict
+        plan_ready = can_predict(content, series, jdir)
         c_m = os.path.getmtime(cp)
         i_m = os.path.getmtime(indd) if exists else 0.0
         delta_h = round((i_m - c_m) / 3600.0, 2) if exists else None
@@ -130,7 +133,7 @@ def collect_jobs(jobs_dir, out=None):
             "indd_exists": exists,
             "indd_mtime_delta_h": delta_h,
             "plan_ready": plan_ready,
-            "series": guess_series(content, os.path.basename(indd)),
+            "series": series,
             "school": settings.get("school") or _read_meta(jdir, "school"),
             "subject": content.get("subject") or "",
             "publisher": content.get("publisher") or "",
