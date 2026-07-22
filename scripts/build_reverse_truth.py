@@ -53,12 +53,60 @@ def apply_flags():
         _plan.PROMOTE_C1_MISSED_HDR = False
 
 
-def build_plan(content):
-    from engines.workbook_v2.plan import ensure_step3_kinds, steps_to_plan
-    steps = content.get("steps") or {}
-    ensure_step3_kinds(steps.get("step3"))
-    return steps_to_plan(steps,
-                         workbook_type=content.get("workbook_type") or "모의고사")
+def build_plan(content, series="", job_dir=None):
+    """현행 파이프라인 예측 — 계열별 어댑터 (W46: 워크북 외 계열 편입)."""
+    from core.reverse_learn.adapters import build_plan as _bp
+    plan, _name = _bp(content, series=series, job_dir=job_dir)
+    return plan
+
+
+# 계열별 step_map — 정렬 지면 특정(align.story_scope)에만 쓴다. 예측(플랜)은
+# 기존과 같이 기본 STEP_MAP으로 만들어 채점 비교 가능성을 유지한다.
+_MAP_FILES = {
+    "기본": "engines/workbook_v2/step_map.json",
+    "교과서": "engines/textbook_workbook_v2/step_map.json",
+    "EBS": "engines/ebs_workbook_v2/step_map.json",
+    "supp": "engines/workbook_supp_v2/step_map.json",
+}
+_STG = "engines/suneungteukgang_workbook_v2/step_map.json"
+
+
+def _load_map(rel):
+    try:
+        return json.load(open(os.path.join(REPO, rel), encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def step_targets(workbook_type):
+    """스텝 → {"markers": [...], "masters": [...]} — 계열별 표기 차를 우선순위
+    리스트로 합친다 (앞쪽이 우선). align.story_scope가 지면을 특정하는 근거."""
+    order = ["기본"]
+    if workbook_type == "교과서":
+        order = ["교과서", "기본", "supp"]
+    elif workbook_type == "EBS":
+        order = ["EBS", "stg", "기본"]
+    else:
+        order = ["기본", "supp", "교과서"]
+    maps = []
+    for name in order:
+        if name == "stg":
+            stg = _load_map(_STG)
+            maps.append(stg.get("analysis") or {})
+            maps.append(stg.get("problem") or {})
+        else:
+            maps.append(_load_map(_MAP_FILES[name]))
+    out = {}
+    for m in maps:
+        for step, t in m.items():
+            if step.startswith("_") or not isinstance(t, dict):
+                continue
+            d = out.setdefault(step, {"markers": [], "masters": []})
+            if t.get("marker") and t["marker"] not in d["markers"]:
+                d["markers"].append(t["marker"])
+            if t.get("master") and t["master"] not in d["masters"]:
+                d["masters"].append(t["master"])
+    return out
 
 
 def get_dump(pair, log, force=False, timeout=900):
@@ -88,14 +136,19 @@ def get_dump(pair, log, force=False, timeout=900):
 
 def process(pair, log, min_conf=MIN_CONF, force=False):
     from core.reverse_learn.align import (align_document, flatten_dump,
-                                          flatten_plan, norm_key)
+                                          flatten_plan, norm_key, story_scope)
     t0 = time.time()
     content = json.load(open(pair["content_json"], encoding="utf-8"))
-    plan = build_plan(content)
+    plan = build_plan(content, series=pair.get("series") or "",
+                      job_dir=pair.get("job_dir"))
     pp = flatten_plan(plan)
     dump, how = get_dump(pair, log, force=force)
     gg = flatten_dump(dump)
-    res = align_document(pp, gg)
+    scope = {}
+    if os.environ.get("YONE_W46_TARGET_SCOPE") != "0":
+        scope = story_scope(dump, step_targets(
+            pair.get("workbook_type") or content.get("workbook_type") or ""))
+    res = align_document(pp, gg, step_stories=scope)
     doc = os.path.basename(pair["indd_path"])
     recs = []
     for x in res["pairs"]:
@@ -125,7 +178,12 @@ def process(pair, log, min_conf=MIN_CONF, force=False):
             "align_how": x["how"],
         })
     stats = dict(res["stats"])
-    stats.pop("steps", None)
+    steps_stat = stats.pop("steps", None) or []
+    stats["scope_target"] = sum(1 for s in steps_stat
+                                if s.get("scope") == "target")
+    stats["scope_vote"] = sum(1 for s in steps_stat if not s.get("scope"))
+    stats["scope_target_empty"] = sum(1 for s in steps_stat
+                                      if s.get("scope") == "target_empty")
     return recs, {
         "job": pair.get("job_id"), "doc": doc, "series": pair["series"],
         "human_edited": pair.get("human_edited"), "dump_source": how,

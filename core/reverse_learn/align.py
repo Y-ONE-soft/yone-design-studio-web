@@ -230,13 +230,94 @@ def _stats(pairs, n_p, n_g):
     }
 
 
+def _norm_marker(s):
+    return norm_key(s)
+
+
+def story_scope(dump, step_targets, marker_max_paras=2):
+    """플랜 target(stepStoryMap) → 스텝별 허용 스토리 집합 (W46 권고 ④).
+
+    같은 본문이 여러 스텝(step1_a2/b1 등)에 재등장하면 "키 득표"만으로는
+    스텝↔스토리 대응이 겹쳐(교차오염) 앞 스텝이 뒤 스텝의 스토리를 선점한다.
+    조판 계약(step_map.json)의 target은 각 스텝이 **어느 지면에** 놓이는지를
+    이미 알고 있으므로, 그 지면에 속한 스토리로 후보를 먼저 좁힌다.
+
+    - target["marker"] : 그 마커 텍스트만 담은 짧은 스토리가 놓인 페이지들
+      (완성본은 페이지가 늘고 줄기 때문에 target["page"] 번호는 쓰지 않는다).
+    - target["master"] : 페이지 마스터 이름의 접두("O" → "O-마스터").
+
+    반환: {step: set(story_idx)} — 근거를 못 찾은 스텝은 키를 만들지 않는다
+    (호출자는 그런 스텝에서 기존 득표 방식으로 폴백한다).
+    """
+    page_master = {str(p.get("p")): (p.get("m") or "")
+                   for p in (dump.get("pages") or [])}
+    st_pages, st_masters = {}, {}
+    marker_pages = {}          # norm(marker) → set(page)
+    for st in dump.get("stories") or []:
+        sidx = st.get("idx")
+        pgs = [str(x) for x in (st.get("pg") or [])]
+        st_pages[sidx] = set(pgs)
+        st_masters[sidx] = {page_master.get(p, "") for p in pgs}
+        paras = [p for p in (st.get("paragraphs") or [])
+                 if norm_key(p.get("t") or "")]
+        if 0 < len(paras) <= marker_max_paras:
+            k = norm_key(paras[0].get("t") or "")
+            if 2 <= len(k) <= 24:
+                marker_pages.setdefault(k, set()).update(pgs)
+
+    def _pages_for(markers):
+        # (1) 마커 완전일치 우선 — "어휘 선택 1"/"어휘 선택 2" 구분 보존
+        for m in markers:
+            k = _norm_marker(m)
+            if k and marker_pages.get(k):
+                return set(marker_pages[k])
+        # (2) 접두 일치 폴백 (계열별 마커 표기 차: "어법 선택"/"어법 수정")
+        for m in markers:
+            k = _norm_marker(m)
+            if not k:
+                continue
+            hit = set()
+            for mk, pgs in marker_pages.items():
+                if (mk.startswith(k) or k.startswith(mk)) \
+                        and abs(len(mk) - len(k)) <= 2:
+                    hit |= pgs
+            if hit:
+                return hit
+        return set()
+
+    scope = {}
+    for step, target in (step_targets or {}).items():
+        if not isinstance(target, dict):
+            continue
+        masters = target.get("masters") or (
+            [target["master"]] if target.get("master") else [])
+        if masters:
+            for master in masters:
+                allow = {s for s, ms in st_masters.items()
+                         if any(m.startswith(master) for m in ms if m)}
+                if allow:
+                    scope[step] = allow
+                    break
+            continue
+        markers = target.get("markers") or (
+            [target["marker"]] if target.get("marker") else [])
+        pages = _pages_for(markers)
+        if pages:
+            scope[step] = {s for s, pg in st_pages.items() if pg & pages}
+    return scope
+
+
 def align_document(plan_paras, dump_paras, th_fuzzy=TH_FUZZY,
-                   min_story_hits=3):
+                   min_story_hits=3, step_stories=None):
     """문서 전체 정렬 — 스텝(플로우)별로 대응 스토리를 먼저 고르고 정렬.
 
     조판 결과의 스토리 순서(문서 배치 순서)와 플랜의 스텝 순서는 다르므로
     전역 단조 정렬을 그대로 걸면 대부분의 스텝이 버려진다. 스텝 ↔ 스토리
     대응(키 완전일치 득표)을 먼저 잡고, 그 안에서만 단조 정렬한다.
+
+    step_stories: {step: set(story_idx)} — story_scope()가 플랜 target으로
+        만든 스텝별 허용 스토리. 주어지면 득표 후보를 여기로 **먼저 좁힌다**
+        (교차오염 차단). 교집합이 비면 기존 득표 결과로 폴백한다.
     """
     gk = [norm_key(g["text"]) for g in dump_paras]
     by_story = {}
@@ -270,9 +351,19 @@ def align_document(plan_paras, dump_paras, th_fuzzy=TH_FUZZY,
                       key=lambda s: -votes[s])
         # 상위 득표 스토리들(같은 스텝이 여러 스토리에 흐르는 경우 포함).
         # 임계: 최다 득표의 15% 이상 — 잡음 스토리 배제.
+        # W46: 플랜 target으로 지면이 특정되면 그 스토리로 먼저 좁힌다.
+        scope_used = ""
+        allow = (step_stories or {}).get(step)
+        if allow:
+            narrowed = [s for s in cand if s in allow]
+            if narrowed:
+                cand, scope_used = narrowed, "target"
+            else:
+                scope_used = "target_empty"
         if not cand:
             step_stats.append({"step": step, "stories": [], "aligned": 0,
-                               "plan_paragraphs": len(idxs)})
+                               "plan_paragraphs": len(idxs),
+                               "scope": scope_used})
             continue
         top = votes[cand[0]]
         chosen = [s for s in cand if votes[s] >= max(min_story_hits,
@@ -290,6 +381,7 @@ def align_document(plan_paras, dump_paras, th_fuzzy=TH_FUZZY,
         st = dict(res["stats"])
         st["step"] = step
         st["stories"] = chosen
+        st["scope"] = scope_used
         step_stats.append(st)
 
     pairs.sort(key=lambda d: d["p"])

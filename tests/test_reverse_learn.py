@@ -1,11 +1,12 @@
-"""역학습 인프라 가드 (W44) — 정렬기 + 완성본 대조로 나온 규칙 보강 1건."""
+"""역학습 인프라 가드 (W44/W46) — 정렬기 + 계열 어댑터 + 규칙 보강."""
 import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from core.reverse_learn.adapters import adapter_for, can_predict  # noqa: E402
 from core.reverse_learn.align import (align, align_document, flatten_dump,  # noqa: E402
-                                      flatten_plan, norm_key)
+                                      flatten_plan, norm_key, story_scope)
 from engines.workbook_v2 import plan as P  # noqa: E402
 
 BODY = ("Farmers welcome visitors to their fields every single summer "
@@ -64,6 +65,107 @@ def test_align_skips_human_inserted_paragraph():
     res = align(pp, gg)
     assert res["stats"]["aligned"] == 2
     assert [gg[x["g"]]["idx"] for x in res["pairs"]] == [0, 2]
+
+
+# ── W46 정렬 교차오염 차단 (플랜 target 우선) ───────────────────────────────
+
+def _xcontam_fixture():
+    """같은 본문이 두 스텝(a2/b1)에 재등장 — 득표만으로는 대응이 겹친다."""
+    body = [BODY, "Second sentence of the very same passage body text here."]
+    plan = {"flows": [
+        {"step": "step1_a2", "target": {"marker": "본문 O/X"},
+         "units": [[{"t": t, "s": "P-A2"} for t in body]]},
+        {"step": "step1_b1", "target": {"marker": "본문 정리"},
+         "units": [[{"t": t, "s": "P-B1"} for t in body]]},
+    ]}
+    # 덤프(문서 배치) 순서는 플랜 순서와 다르다 — b1 지면이 앞에 온다.
+    dump = {
+        "pages": [{"p": "7", "m": "A-마스터"}, {"p": "40", "m": "A-마스터"}],
+        "stories": [
+            {"idx": 0, "pg": ["40"],
+             "paragraphs": [{"t": "본문 정리", "s": "마커"}]},
+            {"idx": 1, "pg": ["40"],
+             "paragraphs": [{"t": t, "s": "GOLD_B1"} for t in body]},
+            {"idx": 2, "pg": ["7"],
+             "paragraphs": [{"t": "본문 O/X", "s": "마커"}]},
+            {"idx": 3, "pg": ["7"],
+             "paragraphs": [{"t": t, "s": "GOLD_A2"} for t in body]},
+        ]}
+    return plan, dump
+
+
+def test_story_scope_maps_steps_by_marker_page():
+    plan, dump = _xcontam_fixture()
+    targets = {f["step"]: {"markers": [f["target"]["marker"]]}
+               for f in plan["flows"]}
+    scope = story_scope(dump, targets)
+    assert scope["step1_a2"] == {2, 3}
+    assert scope["step1_b1"] == {0, 1}
+
+
+def test_story_scope_master_prefix():
+    dump = {"pages": [{"p": "3", "m": "O-마스터"}, {"p": "4", "m": "A-마스터"}],
+            "stories": [{"idx": 0, "pg": ["3"], "paragraphs": []},
+                        {"idx": 1, "pg": ["4"], "paragraphs": []}]}
+    assert story_scope(dump, {"step3": {"masters": ["O"]}}) == {"step3": {0}}
+
+
+def test_align_document_target_scope_blocks_cross_contamination():
+    plan, dump = _xcontam_fixture()
+    pp, gg = flatten_plan(plan), flatten_dump(dump)
+    targets = {f["step"]: {"markers": [f["target"]["marker"]]}
+               for f in plan["flows"]}
+    scope = story_scope(dump, targets)
+
+    def golds(res):
+        return {(pp[x["p"]]["step"], gg[x["g"]]["style"]) for x in res["pairs"]}
+
+    before = golds(align_document(pp, gg, min_story_hits=1))
+    after = golds(align_document(pp, gg, min_story_hits=1, step_stories=scope))
+    # 교차오염: 득표만 쓰면 b1이 a2 스토리(또는 그 잔여)에 붙는다
+    assert ("step1_b1", "GOLD_A2") in before
+    assert after == {("step1_a2", "GOLD_A2"), ("step1_b1", "GOLD_B1")}
+
+
+def test_align_document_falls_back_when_scope_misses():
+    """target이 지면을 못 찾으면(마커 없는 완성본) 기존 득표 동작 유지."""
+    plan, dump = _xcontam_fixture()
+    pp, gg = flatten_plan(plan), flatten_dump(dump)
+    base = align_document(pp, gg, min_story_hits=1)
+    same = align_document(pp, gg, min_story_hits=1,
+                          step_stories=story_scope(dump, {"step1_a2": {
+                              "markers": ["존재하지 않는 마커"]}}))
+    assert base["pairs"] == same["pairs"]
+
+
+# ── W46 계열 어댑터 ─────────────────────────────────────────────────────────
+
+def test_adapter_for_by_series_and_shape():
+    assert adapter_for("교과서워크북") == "workbook"
+    assert adapter_for("블랙북") == "blackbook"
+    assert adapter_for("세서스페셜") == "seseospecial"
+    assert adapter_for("화이트북") == "whitebook"
+    assert adapter_for("", {"days": []}) == "whitebook"
+    assert adapter_for("포켓북", {"analysis_files": []}) is None
+
+
+def test_can_predict_requires_payload():
+    assert not can_predict({"steps": {}}, "워크북")
+    assert can_predict({"steps": {"step3": {}}}, "워크북")
+    assert not can_predict({"sections": {"part1_problem": []}}, "블랙북")
+    assert can_predict({"sections": {"problems_p1": None}}, "블랙북")
+    assert can_predict({"part1": {"paragraphs": []}}, "세서스페셜")
+    assert not can_predict({"practices": []}, "화이트북")
+
+
+def test_seseospecial_adapter_normalizes_area_to_step():
+    from core.reverse_learn.adapters import build_plan as _bp
+    content = {"part1": {"paragraphs": [{"text": "hello", "style_code": 0}]},
+               "part2": {"passages": []}}
+    plan, name = _bp(content, series="세서스페셜")
+    assert name == "seseospecial"
+    assert [f["step"] for f in plan["flows"]][:1] == ["part1"]
+    assert flatten_plan(plan)[0]["text"] == "hello"
 
 
 # ── W44 규칙 보강: step1_c1 헤더 부분 인식 ──────────────────────────────────
