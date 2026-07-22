@@ -231,6 +231,14 @@
                   초과 — 덤프 W40 확장 필드 hox 실측. 실행기 blank_fit이
                   자간(한도 -50)으로 수용하고, 한도 초과 잔존은 warning
                   지목 (과도 축소 금지 — 사용자 확정 스펙).
+  G44 [답란스타일] (W45): 답란(콜론형 G35 / 괄호형 G40)은 답란 전용
+                  스타일 `S_답란`(지문 스타일 복제 + 들여쓰기 0)으로
+                  인쇄한다 — 사용자 확정 스펙. 완성본 다수가 답란을 지문
+                  스타일로 갖고 있던 건 의도가 아니라 회피였다(선지
+                  들여쓰기 때문에 손으로 바꿈 — 역학습 W44 61건/13문서).
+                  fail-open: 템플릿에 S_답란이 없으면 선지 폴백 + 들여쓰기
+                  0 로컬 오버라이드 브릿지 → warning. 있는데 미적용이면
+                  critical.
 
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
 G24②/G26은 W21 확장 필드(fc / pages)가 필요하다. G29②는 W23 확장 필드
@@ -248,6 +256,10 @@ from engines.workbook_v2.plan import (GLYPH_PRINT_TABLE, PUA_PRINT_TABLE,
                                       SUBSCRIPT_PRINT_TABLE,
                                       is_header_line, is_a1_header,
                                       passage_labels, _norm_header)
+
+# G44 (W45) — 답란 전용 단락스타일 이름 (그룹 안 마지막 토큰). 템플릿 생성은
+# scripts/add_ansline_style.py, 매핑은 core/structure/style_map.json.
+ANSLINE_STYLE_NAME = "S_답란"
 
 _RE_BARE_NUM = re.compile(r"^\d{1,3}(?:\s*~\s*\d{1,3})?$")
 # G21 — 원문자 선지 번호 (①~⑮: 지문 inline 번호도 같은 집합)
@@ -1264,7 +1276,9 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                 continue
             if _RE_G40_PAREN_BLANK.match(t) \
                     and any(k in prev_s for k in ("보기", "조건")) \
-                    and "선지" in (p.get("s") or ""):
+                    and any(k in (p.get("s") or "")
+                            for k in ("선지", "답")):
+                # W45: 답란 계열 = 선지(구) 또는 S_답란(신). 둘 다 계약 충족
                 plan_pblank = True
                 break
             prev_s = p.get("s") or ""
@@ -1291,6 +1305,59 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                f"개가 답란 계열(선지) 스타일이 아님: "
                + " | ".join(pblank_miss[:3]))
         (critical if plan_pblank else warnings).append(msg)
+
+    # ── G44 [답란스타일] (W45): 답란은 S_답란 (템플릿에 있으면) ──────────
+    # 사용자 확정 스펙 — 답란 전용 스타일(지문 복제 + 들여쓰기 0). 완성본
+    # 다수가 답란을 지문 스타일로 갖고 있던 건 의도가 아니라 회피였다
+    # (선지 들여쓰기 때문에 손으로 바꿈 — 역학습 W44 61건/13문서).
+    # fail-open: 템플릿에 S_답란이 없으면 선지 폴백 + 들여쓰기 0 브릿지 —
+    # critical 아님(경고만). 있으면 답란 라인은 반드시 S_답란이어야 한다.
+    plan_ansline = False
+    for fl in plan.get("flows", []):
+        for u in fl.get("units", []):
+            for p in (u["paras"] if isinstance(u, dict) else u):
+                if ANSLINE_STYLE_NAME in (p.get("s") or ""):
+                    plan_ansline = True
+                    break
+    doc_has_ansline = any(
+        ANSLINE_STYLE_NAME in (p.get("s") or "")
+        for story in dump.get("stories", [])
+        for p in story.get("paragraphs", []))
+    ansline_miss = []
+    if plan_ansline and doc_has_ansline:
+        for story in dump.get("stories", []):
+            ps = [p for p in story.get("paragraphs", [])
+                  if _clean(p.get("t", ""))]
+            chain = False
+            prev_s = ""
+            for i, p in enumerate(ps):
+                t = _clean(p.get("t", ""))
+                s = p.get("s") or ""
+                is_ansline = False
+                if _RE_G40_PAREN_BLANK.match(t) and (
+                        chain or any(k in prev_s for k in ("보기", "조건"))):
+                    is_ansline = True
+                    chain = True
+                else:
+                    chain = False
+                if (i + 1 < len(ps) and _RE_G35_LABEL.match(t)
+                        and _RE_G35_BLANK.match(_clean(ps[i + 1].get("t", "")))):
+                    is_ansline = True
+                if is_ansline and ANSLINE_STYLE_NAME not in s:
+                    ansline_miss.append(t[:25])
+                prev_s = s
+    stats["ansline_style_miss"] = len(ansline_miss)
+    stats["ansline_style_present"] = bool(doc_has_ansline)
+    if ansline_miss:
+        critical.append(
+            f"[답란스타일] 답란 {len(ansline_miss)}개가 {ANSLINE_STYLE_NAME} "
+            f"스타일이 아님 (템플릿에 존재하는데 미적용): "
+            + " | ".join(ansline_miss[:3]))
+    elif plan_ansline and not doc_has_ansline:
+        warnings.append(
+            f"[답란스타일] 템플릿에 {ANSLINE_STYLE_NAME}이 없어 선지 스타일로 "
+            f"폴백했습니다 (들여쓰기 0 로컬 오버라이드 브릿지 적용 — "
+            f"scripts/add_ansline_style.py 로 템플릿에 스타일을 추가하세요)")
 
     stats["cond_item_miss"] = len(cond_miss)
     stats["cond_content_miss"] = len(cond_content_miss)

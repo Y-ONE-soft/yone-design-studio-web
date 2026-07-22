@@ -1772,6 +1772,29 @@ try {
         wlog("[경고] 스타일 없음(자동 생성 안 함): " + name);
         return null;
     }
+    // ── W45 답란(S_답란) 폴백 + 들여쓰기 0 브릿지 ──────────────────────────
+    // 플랜의 답란 단락은 s="… > S_답란"(1선) + s_fb="… > S_선지 …"(폴백) +
+    // ind0=true 를 갖는다. 템플릿에 S_답란이 아직 없으면 선지로 폴백하되,
+    // 선지 스타일의 들여쓰기 때문에 답란 정렬이 깨지므로(사용자 지목 —
+    // 완성본에서 손으로 지문 스타일로 바꾸던 회피의 원인) **그 단락에만**
+    // firstLineIndent/leftIndent 로컬 오버라이드 0을 건다. 스타일 자체는
+    // 건드리지 않고(문서 전역 무영향), 원값을 캡처해 로그에 남긴다(W28
+    // 서식 유실 전례 — 침묵 변경 금지).
+    var fbCount = 0;        // 폴백(선지)로 인쇄된 답란 단락 수
+    var ind0Count = 0;      // 들여쓰기 0 로컬 오버라이드를 건 단락 수
+    var ind0Sample = "";
+    function applyAnslineIndentZero(para) {
+        var fli = null, lind = null;
+        try { fli = Number(para.firstLineIndent); } catch (e) {}
+        try { lind = Number(para.leftIndent); } catch (e) {}
+        try { para.firstLineIndent = 0; } catch (e) {}
+        try { para.leftIndent = 0; } catch (e) {}
+        ind0Count++;
+        if (ind0Sample === "") {
+            ind0Sample = "원값 " + fli + "/" + lind + " → 0/0";
+        }
+    }
+
     var noneCS = doc.characterStyles[0];
     // 밑줄 문자스타일 — 플로우별 ul_style 우선, 폴백은 v1 CS_UNDERLINE 순서
     var ulCache = {};
@@ -1851,7 +1874,18 @@ try {
         }
         for (var pi = 0; pi < flat.length && pi < paras.length; pi++) {
             var ps2 = styleOf(flat[pi].s);
-            if (ps2) { paras[pi].appliedParagraphStyle = ps2; }
+            var usedFb = false;
+            if (!ps2 && flat[pi].s_fb) {          // W45: S_답란 없음 → 선지
+                ps2 = styleOf(flat[pi].s_fb);
+                usedFb = !!ps2;
+            }
+            if (ps2) {
+                paras[pi].appliedParagraphStyle = ps2;
+                if (usedFb) {
+                    fbCount++;
+                    if (flat[pi].ind0) { applyAnslineIndentZero(paras[pi]); }
+                }
+            }
             if (flow.break_per_unit && pi > 0 && isStart[pi]) {
                 try {
                     paras[pi].startParagraph = (isStart[pi] === "page")
@@ -1931,6 +1965,15 @@ try {
                          ScriptLanguage.JAVASCRIPT, undefined,
                          UndoModes.ENTIRE_SCRIPT, "wb_v2 " + fl.step);
         })(plan.flows[fi2]);
+    }
+
+    // W45 답란 폴백 결산 (침묵 금지 — 템플릿에 S_답란이 없으면 여기 남는다)
+    if (fbCount > 0) {
+        wlog("[답란] S_답란 없음 → 선지 폴백 " + fbCount + "개 단락"
+             + (ind0Count > 0
+                ? " / 들여쓰기 0 로컬 오버라이드 " + ind0Count + "개 ("
+                  + ind0Sample + ")"
+                : ""));
     }
 
     relockIcons();   // v1 relockItem — 아이콘 원본/레이어 잠금 복원

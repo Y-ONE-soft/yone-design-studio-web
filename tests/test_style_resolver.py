@@ -10,6 +10,25 @@ from core.structure.style_resolver import resolve_style
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
+def _resolved_with_fallback(table, kind, style, inventory):
+    """인벤토리 가드의 fail-open 규칙 (W45).
+
+    `<kind>@fallback` 키가 있는 매핑은 '아직 템플릿에 없을 수 있는 신설
+    스타일'이다 (예: AnsL → S_답란). 본 스타일이 인벤토리에 없어도 폴백이
+    있으면 통과 — 렌더가 s→s_fb 순으로 해석하기 때문(침묵 실패 아님:
+    JSX가 [답란] 폴백 로그, 게이트 G44가 warning 지목).
+    템플릿에 신설 스타일이 반영되면 자동으로 다시 엄격해진다."""
+    if style in inventory:
+        return True
+    fb = table.get(kind + "@fallback")
+    if fb is None:
+        return False
+    for f in (fb if isinstance(fb, list) else [fb]):
+        if f and f not in inventory:
+            return False
+    return True
+
+
 def test_step3_basics():
     assert resolve_style("workbook", "STEP3", "Q") \
         == "STEP 03 > S_실전문제 번호 수정 올림포스"
@@ -70,7 +89,8 @@ def test_style_map_names_exist_in_template_inventory():
     for step, table in smap["workbook"].items():
         for kind, style in table.items():
             for s in (style if isinstance(style, list) else [style]):
-                if s and s not in inventory:
+                if s and not _resolved_with_fallback(table, kind, s,
+                                                     inventory):
                     missing.append(f"{step}/{kind}: {s}")
     assert not missing, f"템플릿에 없는 스타일 참조: {missing}"
 
@@ -153,12 +173,14 @@ def test_gdrive_workbook_v2_templates_inventory():
     실제로 갖고 있는지 고정한다. 픽스처는 core.template_spec으로
     [원본] 로컬 사본에서 추출 (2026-07-04).
     """
-    def used_styles(smap, steps):
+    def missing_styles(smap, steps, inv):
+        """플랜이 실제 방출하는 스타일 중 인벤토리에 없는 것 (W45 폴백 허용)."""
         out = set()
         for st in steps:
-            for kind, v in smap[st].items():
+            table = smap[st]
+            for kind, v in table.items():
                 s = v[0] if isinstance(v, list) else v
-                if s:
+                if s and not _resolved_with_fallback(table, kind, s, inv):
                     out.add(s)
         return out
 
@@ -185,7 +207,7 @@ def test_gdrive_workbook_v2_templates_inventory():
         spec = json.load(open(os.path.join(TESTS_DIR, "fixtures", fixture),
                               encoding="utf-8"))
         inv = set(spec["paragraph_styles"])
-        missing = used_styles(smap, steps) - inv
+        missing = missing_styles(smap, steps, inv)
         assert not missing, (fixture, missing)
         assert masters <= {m["prefix"] for m in spec["masters"]}, fixture
         labels = {li["label"] for li in spec["labeled_items"]}

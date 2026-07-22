@@ -1,6 +1,6 @@
 {
  "_doc": "단락스타일 룩업 (docs/taxonomy/11_워크북_스타일매핑.md 데이터화). (step_unit × 단락종류[× 조건]) → InDesign 단락스타일 '그룹 > 이름'. null = 출력 제거 대상. 스타일명 변경/학교 커스텀은 이 파일(또는 엔진 오버라이드 데이터)만 수정 — JSX/코드 수정 불필요.",
- "_version": "2026-07-04 v6 — whitebook 섹션 추가 (v1 run.jsx STYLES 표 보존)",
+ "_version": "2026-07-23 v7 — 답란 전용 스타일 S_답란 신설 (W45). workbook.STEP3.AnsL이 S_답란을 1선으로 요구하고, 템플릿에 없으면 AnsL@fallback(선지)으로 폴백한다(fail-open — 렌더가 들여쓰기 0 로컬 오버라이드를 브릿지로 적용).",
  "workbook": {
   "STEP3": {
    "GH": null,
@@ -23,7 +23,8 @@
    "K": "STEP 03 > 실전 문제 지문 올림포스_",
    "Sym": "STEP 03 > 실전 문제 지문 올림포스_",
    "Ans": "STEP 03 > 실전 문제 지문 올림포스_",
-   "AnsL": "STEP 03 > S_선지 올림포스",
+   "AnsL": "STEP 03 > S_답란",
+   "AnsL@fallback": "STEP 03 > S_선지 올림포스",
    "SRC": "STEP 03 > 실전 문제 지문 올림포스_",
    "UNKNOWN": "STEP 03 > 실전 문제 지문 올림포스_"
   },

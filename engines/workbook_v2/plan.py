@@ -394,6 +394,29 @@ def _s3_effective_kind(kind, text):
     return kind
 
 
+def _ansline_fields(eff, arrow_bg=False):
+    """답란(AnsL) 단락의 폴백/브릿지 필드 (W45).
+
+    사용자 확정 스펙: 답란은 **답란 전용 스타일 `S_답란`**(지문 스타일 복제 +
+    들여쓰기 0)로 인쇄한다. 완성본 다수가 답란을 '지문 스타일'로 갖고 있던 건
+    의도가 아니라 회피였다 — 선지 스타일의 들여쓰기 때문에 답란 정렬이
+    깨져서 손으로 바꾼 것 (역학습 W44, 61건/13문서).
+
+    조판 템플릿에 `S_답란`이 아직 없을 수 있으므로 fail-open:
+      s     = "STEP 03 > S_답란"          (1선)
+      s_fb  = "STEP 03 > S_선지 올림포스"  (템플릿에 s가 없을 때 렌더 폴백)
+      ind0  = True                        (폴백을 쓴 경우에만 들여쓰기 0
+                                           로컬 오버라이드 — 브릿지)
+    JSX(workbook_flow / workbook_sero_flow)가 s→s_fb 순으로 해석하고,
+    s_fb를 쓴 단락에만 ind0를 적용한다 (S_답란이 있으면 오버라이드 없음)."""
+    if eff != "AnsL" or arrow_bg:
+        return {}
+    fb = _style("STEP3", "AnsL@fallback", default_kind="C")
+    if not fb:
+        return {}
+    return {"s_fb": fb, "ind0": True}
+
+
 def build_step3(step_data):
     """step3 데이터 {normal:[{question_num, paragraphs}], short:[...]} → 유닛.
 
@@ -503,7 +526,9 @@ def build_step3(step_data):
                     text, runs = _sub_runs(rx, repl, text, runs)
                 if style == st_q:
                     text, runs = _sub_runs(_RE_S3_QNUM, "", text, runs)
-                unit.append({"t": text, "s": style, "runs": runs})
+                para = {"t": text, "s": style, "runs": runs}
+                para.update(_ansline_fields(row["eff"], row["arrow_bg"]))
+                unit.append(para)
             if unit:
                 _s3_underline_quotes(unit, st_q, _style("STEP3", "P"),
                                      _style("STEP3", "P-CONTEXT"),

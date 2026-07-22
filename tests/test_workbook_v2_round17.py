@@ -33,6 +33,7 @@ _ST_P = "STEP 03 > 실전 문제 지문 올림포스_"
 _ST_COND = "STEP 03 > 조건 올림포스"
 _ST_BG = "STEP 03 > 배경 올림포스"
 _ST_C = "STEP 03 > S_선지 올림포스"
+_ST_ANSL = "STEP 03 > S_답란"    # W45 답란 전용 스타일
 _ST_BOX = "STEP 03 > 보기 올림포스"
 
 _DELETE_PLAN = {"flows": [], "page_cleanup": {"empty": "delete"}}
@@ -368,8 +369,9 @@ def test_answer_label_not_absorbed_by_box_propagation():
 
 
 def test_plan_ansl_style_and_dual_defense():
-    """AnsL → S_선지 올림포스 (실물 콜론형 답란 관행). 구 kind 주석
-    (UNKNOWN) 재실행도 플랜 2패스가 쌍으로 배정."""
+    """AnsL → S_답란 (W45 사용자 확정 — 답란 전용 스타일. 템플릿에 없으면
+    s_fb=S_선지 올림포스 폴백 + 들여쓰기 0 브릿지). 구 kind 주석(UNKNOWN)
+    재실행도 플랜 2패스가 쌍으로 배정."""
     r = build_step3(_s3([
         {"text": "11. 다음 글을 읽고, 주제문을 주어진 조건에 맞게 "
                  "완성하시오.", "kind": "Q"},
@@ -377,8 +379,11 @@ def test_plan_ansl_style_and_dual_defense():
         {"text": "__________________________________________.",
          "kind": "UNKNOWN"},
     ]))
-    styles = [p["s"] for p in r["units"][0]]
-    assert styles[1] == _ST_C and styles[2] == _ST_C
+    unit = r["units"][0]
+    styles = [p["s"] for p in unit]
+    assert styles[1] == _ST_ANSL and styles[2] == _ST_ANSL
+    # fail-open — 폴백(구 관행 = 선지) + 들여쓰기 0 브릿지가 함께 실린다
+    assert all(p["s_fb"] == _ST_C and p["ind0"] for p in unit[1:3])
 
 
 def test_gate_g35_detects_answer_pair_styled_as_passage():

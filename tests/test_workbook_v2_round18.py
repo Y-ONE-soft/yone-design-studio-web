@@ -44,6 +44,7 @@ _ST_Q = "STEP 03 > S_실전문제 번호 수정 올림포스"
 _ST_P = "STEP 03 > 실전 문제 지문 올림포스_"
 _ST_BG = "STEP 03 > 배경 올림포스"
 _ST_C = "STEP 03 > S_선지 올림포스"
+_ST_ANSL = "STEP 03 > S_답란"    # W45 답란 전용 스타일
 _ST_BOX = "STEP 03 > 보기 올림포스"
 
 _ORDER_Q = "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것을 고르시오."
@@ -238,8 +239,10 @@ def test_plan_stale_box_blank_promoted():
         _p("(A) " + "_" * 60, "Box"), _p("(B) " + "_" * 60, "Box"),
     ]))
     unit = built["units"][0]
-    assert unit[2]["s"] == _ST_C and unit[3]["s"] == _ST_C, \
+    # W45: 답란 → S_답란 (폴백 s_fb=선지 + 들여쓰기 0 브릿지 동반)
+    assert unit[2]["s"] == _ST_ANSL and unit[3]["s"] == _ST_ANSL, \
         [(p["t"][:12], p["s"]) for p in unit]
+    assert all(p["s_fb"] == _ST_C and p["ind0"] for p in unit[2:4])
     assert unit[1]["s"] == _ST_BOX
 
 
