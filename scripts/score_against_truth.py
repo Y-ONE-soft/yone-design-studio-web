@@ -38,6 +38,45 @@ _BASIC = {"$basic", "[기본 단락]", "[basic paragraph]", "[기본단락]",
           "[no paragraph style]", "기본 단락"}
 
 
+# ── W45: "완성본 회피 관행" 태깅 ────────────────────────────────────────────
+# 답란("(A): _____", "주제문:", "____.")을 완성본이 **지문 스타일**로 갖고
+# 있는 건 조판 의도가 아니라 회피다 — 선지 스타일에 들여쓰기가 있어 답란
+# 정렬이 깨지므로 사람이 손으로 지문 스타일로 바꾼 것(사용자 확인, W44에서
+# 61건/13문서로 관측). 이런 행을 정답으로 채점하면 판정기가 회피를 학습한다.
+# → 태깅 후 정답을 답란 전용 스타일(S_답란)로 재정의한다.
+ANSLINE_STYLE_NAME = "S_답란"
+AVOIDANCE_TAG = "ansline_avoidance"
+LEGACY_CHOICE_TAG = "ansline_legacy_choice"
+_RE_ANS_PAREN = re.compile(
+    r"^[(（]\s*[A-Za-z가-힣0-9]{1,3}\s*[)）]\s*[:：]?\s*_{3,}[\s_]*[.,]?$")
+_RE_ANS_LABEL = re.compile(r"^[\s가-힣A-Za-z()（）]{1,12}[:：]$")
+_RE_ANS_BLANK = re.compile(r"^[^_]{0,15}_{3,}[\s_]*[.,]?$")
+
+
+def is_ansline_text(text):
+    t = re.sub(r"\s+", " ", (text or "").replace("\r", "")).strip()
+    return bool(_RE_ANS_PAREN.match(t) or _RE_ANS_LABEL.match(t)
+                or _RE_ANS_BLANK.match(t))
+
+
+def ansline_avoidance(pred_style, gold_style, text):
+    """이 행이 '완성본 회피 관행'(답란 → 지문 스타일)인가."""
+    return (is_ansline_text(text)
+            and "지문" in (gold_style or "")
+            and any(k in (pred_style or "")
+                    for k in ("선지", ANSLINE_STYLE_NAME)))
+
+
+def ansline_legacy_choice(pred_style, gold_style, text):
+    """완성본이 답란을 '선지 스타일'로 갖고 있는 구 관행 행 (W45).
+
+    S_답란 신설 전에는 선지가 답란의 표준이었다 — 새 계약(S_답란)에서는
+    이것도 정답 재정의 대상이다 (회피 관행과 달리 결함은 아니었다)."""
+    return (is_ansline_text(text)
+            and "선지" in (gold_style or "")
+            and ANSLINE_STYLE_NAME in (pred_style or ""))
+
+
 def canon(style):
     s = unicodedata.normalize("NFC", (style or "").strip())
     if s.lower() in _BASIC or s in _BASIC:
@@ -96,7 +135,9 @@ def predict(job_to_content):
     return out
 
 
-def score(rows, preds, min_conf=0.9):
+def score(rows, preds, min_conf=0.9, ansline_retag=True):
+    """ansline_retag=True: 회피 관행 행의 정답을 S_답란(예측 답란 계열)로
+    재정의해 채점한다 (W45). False면 W44와 동일한 원본 정답표 채점."""
     from core.reverse_learn.align import norm_key
     res = []
     miss = 0
@@ -117,9 +158,22 @@ def score(rows, preds, min_conf=0.9):
             else:
                 miss += 1
                 continue
-        res.append({**r, "pred_style": canon(got[1]),
-                    "gold": canon(r["gold_style"]),
-                    "ok": canon(got[1]) == canon(r["gold_style"])})
+        pred, gold = canon(got[1]), canon(r["gold_style"])
+        tag = ""
+        if ansline_legacy_choice(pred, gold, r["text"]):
+            tag = LEGACY_CHOICE_TAG
+            if ansline_retag:
+                gold = pred
+        elif ansline_avoidance(pred, gold, r["text"]):
+            tag = AVOIDANCE_TAG
+            if ansline_retag:
+                # 정답 재정의 — 답란은 답란 전용 스타일이 정답이다.
+                # (템플릿에 S_답란이 아직 없는 완성본이라 정답표에는
+                #  존재할 수 없는 값 — 예측이 답란 계열이면 정답 처리)
+                gold = pred if ANSLINE_STYLE_NAME in pred else \
+                    canon(re.sub(r"[^>]+$", ANSLINE_STYLE_NAME, pred))
+        res.append({**r, "pred_style": pred, "gold": gold, "tag": tag,
+                    "ok": pred == gold})
     return res, miss
 
 
@@ -155,6 +209,12 @@ def summarize(res):
             key=lambda t: (t[1] / t[2]) if t[2] else 1)[:8],
         "clusters": clusters.most_common(20),
         "examples": {str(k): v for k, v in examples.items()},
+        # W45 — 회피 관행(답란 → 지문 스타일) 태깅 결산
+        "avoidance_rows": sum(1 for r in res if r.get("tag") == AVOIDANCE_TAG),
+        "avoidance_docs": len({r["doc"] for r in res
+                               if r.get("tag") == AVOIDANCE_TAG}),
+        "legacy_choice_rows": sum(1 for r in res
+                                  if r.get("tag") == LEGACY_CHOICE_TAG),
     }
 
 
@@ -168,7 +228,12 @@ def fmt_report(s, meta):
     L.append(f"- 채점 대상(신뢰도 {meta.get('min_conf')} 이상): {s['rows']}행 "
              f"/ 예측 재매칭 실패 {meta.get('miss')}행")
     L.append(f"- **정확도: {s['accuracy'] * 100:.2f}%** "
-             f"({s['correct']}/{s['rows']})\n")
+             f"({s['correct']}/{s['rows']})")
+    L.append(f"- 회피 관행 태깅(답란 → 지문 스타일, W45): "
+             f"{s.get('avoidance_rows', 0)}행 / "
+             f"{s.get('avoidance_docs', 0)}문서 (+ 구 선지 관행 {s.get('legacy_choice_rows', 0)}행) — 정답 재정의 "
+             f"{'적용' if meta.get('ansline_retag') else '미적용'}\n")
+
     L.append("## 계열별\n")
     L.append("| 계열 | 정확도 | 맞음/전체 |\n|---|---|---|")
     for k, (a, b) in s["by_series"].items():
@@ -202,6 +267,9 @@ def main():
     ap.add_argument("--min-conf", type=float, default=0.9)
     ap.add_argument("--report", default="")
     ap.add_argument("--json-out", default="")
+    ap.add_argument("--no-ansline-retag", action="store_true",
+                    help="W45 회피 관행(답란 → 지문 스타일) 정답 재정의 끄기 "
+                         "— W44와 같은 원본 정답표 채점")
     args = ap.parse_args()
 
     flags = apply_flags()
@@ -211,7 +279,8 @@ def main():
            if p.get("job_id") and p.get("content_json")}
     jobs = {r["job"] for r in rows}
     preds = predict({j: j2c[j] for j in jobs if j in j2c})
-    res, miss = score(rows, preds, min_conf=args.min_conf)
+    res, miss = score(rows, preds, min_conf=args.min_conf,
+                      ansline_retag=not args.no_ansline_retag)
     s = summarize(res)
 
     brep = {}
@@ -225,9 +294,12 @@ def main():
         "pairs_ok": brep.get("pairs_ok"),
         "align_rate_mean": brep.get("align_rate_mean"),
         "flags": flags,
+        "ansline_retag": not args.no_ansline_retag,
     }
     print(json.dumps({"accuracy": s["accuracy"], "rows": s["rows"],
                       "miss": miss,
+                      "avoidance_rows": s.get("avoidance_rows"),
+                      "avoidance_docs": s.get("avoidance_docs"),
                       "top": s["clusters"][:8]}, ensure_ascii=False, indent=1))
     if args.report:
         with open(args.report, "w", encoding="utf-8") as f:
