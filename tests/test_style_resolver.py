@@ -11,22 +11,15 @@ TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def _resolved_with_fallback(table, kind, style, inventory):
-    """인벤토리 가드의 fail-open 규칙 (W45).
+    """인벤토리 가드 — W47부터 **엄격**(폴백 면제 없음).
 
-    `<kind>@fallback` 키가 있는 매핑은 '아직 템플릿에 없을 수 있는 신설
-    스타일'이다 (예: AnsL → S_답란). 본 스타일이 인벤토리에 없어도 폴백이
-    있으면 통과 — 렌더가 s→s_fb 순으로 해석하기 때문(침묵 실패 아님:
-    JSX가 [답란] 폴백 로그, 게이트 G44가 warning 지목).
-    템플릿에 신설 스타일이 반영되면 자동으로 다시 엄격해진다."""
-    if style in inventory:
-        return True
-    fb = table.get(kind + "@fallback")
-    if fb is None:
-        return False
-    for f in (fb if isinstance(fb, list) else [fb]):
-        if f and f not in inventory:
-            return False
-    return True
+    W45에는 신설 스타일 `S_답란`이 아직 실물 템플릿에 없어서
+    `<kind>@fallback` 키가 있으면 통과시키는 fail-open 규칙을 뒀다.
+    W47에서 8종 원본 템플릿에 S_답란을 실제로 적용했으므로(픽스처 재추출
+    완료) 면제를 제거하고 다시 엄격하게 본다 — 신설 스타일이 템플릿에서
+    빠지면 즉시 가드가 잡는다. (렌더/게이트의 폴백 자체는 그대로 유지 —
+    아직 손대지 않은 계열 템플릿을 위한 런타임 fail-open.)"""
+    return style in inventory
 
 
 def test_step3_basics():
@@ -93,6 +86,27 @@ def test_style_map_names_exist_in_template_inventory():
                                                      inventory):
                     missing.append(f"{step}/{kind}: {s}")
     assert not missing, f"템플릿에 없는 스타일 참조: {missing}"
+
+
+def test_ansline_style_applied_to_real_templates():
+    """W47 — 답란 전용 스타일 `S_답란`이 실물 원본 템플릿에 실제로 존재.
+
+    2026-07-23 원본 8종(= 실물 6파일)에 적용하고 스펙을 재추출했다.
+    폴백(AnsL@fallback=선지)이 아니라 정식 경로로 인쇄되는 근거이며,
+    누군가 템플릿에서 스타일을 지우면 이 테스트가 잡는다."""
+    smap = json.load(open(os.path.join(
+        os.path.dirname(TESTS_DIR), "core", "structure", "style_map.json"),
+        encoding="utf-8"))["workbook"]
+    ansl = smap["STEP3"]["AnsL"]
+    ansl = ansl[0] if isinstance(ansl, list) else ansl
+    for fx in ("template_spec_workbookC.json",
+               "template_spec_ebs_readingpower.json",
+               "template_spec_workbook_sero.json",
+               "template_spec_suneungteukgang_analysis.json",
+               "template_spec_suneungteukgang_problem.json"):
+        inv = set(json.load(open(os.path.join(TESTS_DIR, "fixtures", fx),
+                                 encoding="utf-8"))["paragraph_styles"])
+        assert ansl in inv, f"{fx}에 {ansl} 없음"
 
 
 def test_whitebook_style_map_exists_in_template_inventory():

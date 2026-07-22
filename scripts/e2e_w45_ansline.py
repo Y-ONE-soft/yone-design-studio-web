@@ -61,7 +61,12 @@ _RE_ANSLINE = re.compile(
 
 def main():
     want_png = "--no-png" not in sys.argv
-    if not os.path.isfile(TEMPLATE):
+    # W47 — 원본 템플릿에 S_답란을 실제 적용한 뒤에는 사본이 아니라 **정식
+    # 경로**(config의 indd_original)로 회귀를 돌려 폴백이 아님을 실증한다.
+    use_real = "--real-template" in sys.argv
+    if use_real:
+        print("[모드] 정식 템플릿(config indd_original) 사용 — 사본 우회 없음")
+    elif not os.path.isfile(TEMPLATE):
         print(f"[중단] S_답란 사본 템플릿이 없습니다: {TEMPLATE}\n"
               f"  먼저: python3 scripts/add_ansline_style.py --mode copy "
               f"--targets workbook --use-existing-copy")
@@ -85,8 +90,9 @@ def main():
     def _patched():
         cfg = real_load()
         cfg["indd_output_dir"] = out
-        cfg["indd_original"] = dict(cfg.get("indd_original", {}))
-        cfg["indd_original"]["_default"] = TEMPLATE
+        if not use_real:
+            cfg["indd_original"] = dict(cfg.get("indd_original", {}))
+            cfg["indd_original"]["_default"] = TEMPLATE
         return cfg
 
     base_mod._load_v1_config = _patched
