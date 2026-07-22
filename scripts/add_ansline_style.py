@@ -102,6 +102,9 @@ EXISTING_COPIES = {
 }
 
 COPY_DIR = os.path.join(REPO, "data_corpus", "template_ansline")
+# apply 모드 전용 — GDrive 원본을 InDesign으로 직접 열지 않기 위한 작업 사본/백업
+WORK_DIR = os.path.join(COPY_DIR, "_apply")
+BACKUP_DIR = os.path.join(COPY_DIR, "_backup")
 
 
 def _load_env():
@@ -204,12 +207,75 @@ def prepare_copy(t, orig, use_existing, log):
 
 
 def backup_original(orig, log):
+    """원본 백업. GDrive 원본이면 백업도 로컬(BACKUP_DIR)에 남긴다.
+
+    (GDrive 폴더에 .bak 파일을 만들면 그 자체가 클라우드 쓰기 + 동기화
+    부하 + 미러 rsync 대상 증가 — CLAUDE.md '직접 수정 금지' 정신에 맞춰
+    로컬에 둔다.)"""
     from core.base import safe_copy_indd
     stamp = datetime.datetime.now().strftime("%Y%m%d%H%M")
-    bak = f"{os.path.splitext(orig)[0]}.bak-{stamp}.indd"
+    if _is_gdrive(orig):
+        os.makedirs(BACKUP_DIR, exist_ok=True)
+        stem = os.path.splitext(os.path.basename(orig))[0]
+        bak = os.path.join(BACKUP_DIR, f"{stem}.bak-{stamp}.indd")
+    else:
+        bak = f"{os.path.splitext(orig)[0]}.bak-{stamp}.indd"
     real = safe_copy_indd(orig, bak)
     log(f"  원본 백업: {real}")
     return real
+
+
+def _is_gdrive(path):
+    import unicodedata
+    p = unicodedata.normalize("NFC", path or "")
+    return "/CloudStorage/GoogleDrive" in p or "/내 드라이브/" in p
+
+
+def apply_via_local(t, orig, src_style, dst_style, log):
+    """GDrive 원본 적용 — 로컬 사본 경유 (원본을 InDesign으로 직접 열지 않음).
+
+    절차: ① 원본 → 로컬 작업 사본(_stream_copy: 미러 우회 + 백오프)
+         ② 작업 사본에 S_답란 생성(JSX, 저장)
+         ③ 작업 사본 → 원본 자리에 안전 복사(.tmp + os.rename 원자 교체)
+         ④ 로컬 미러가 있으면 미러도 같은 내용으로 갱신 (파이프라인 즉시 반영)
+    실패하면 어느 단계든 원본은 그대로다 (③ 이전엔 원본 미접촉).
+    """
+    from core.base import _stream_copy
+    from engines.final.extractor import _resolve_local_mirror
+    os.makedirs(WORK_DIR, exist_ok=True)
+    work = os.path.join(WORK_DIR, os.path.basename(orig))
+    if os.path.exists(work):
+        os.remove(work)
+    _stream_copy(orig, work)
+    log(f"  작업 사본: {work} ({os.path.getsize(work)} bytes)")
+
+    rep = run_on(work, src_style, dst_style, True, log)
+    if rep.get("error"):
+        rep["copied_back"] = False
+        return rep
+    if not rep.get("created") and rep.get("skipped"):
+        # 멱등 — 이미 있는 경우엔 원본을 건드리지 않는다
+        rep["copied_back"] = False
+        return rep
+
+    work_size = os.path.getsize(work)
+    _stream_copy(work, orig)
+    back_size = os.path.getsize(orig)
+    if back_size != work_size:
+        rep["error"] = (f"복사 반영 크기 불일치: work={work_size} "
+                        f"orig={back_size}")
+        rep["copied_back"] = False
+        return rep
+    rep["copied_back"] = True
+    rep["applied_size"] = back_size
+    log(f"  원본 반영 완료 ({back_size} bytes): {orig}")
+
+    mirror = _resolve_local_mirror(orig)
+    if mirror and mirror != orig and os.path.exists(mirror):
+        _stream_copy(work, mirror)
+        rep["mirror"] = mirror
+        log(f"  로컬 미러 갱신: {mirror}")
+    return rep
 
 
 def main():
@@ -244,6 +310,7 @@ def main():
     log(f"[사전] InDesign 열린 문서: {before}")
 
     results = []
+    done_originals = {}          # 같은 원본을 가리키는 대상 중복 적용 방지
     for t in targets:
         log(f"\n== {t['name']} ({t['engine']}:{t['key']})")
         orig = resolve_target(t)
@@ -252,8 +319,33 @@ def main():
             results.append({"target": t["name"], "skipped_missing": True,
                             "path": orig})
             continue
+        if args.mode == "apply" and orig in done_originals:
+            prev = done_originals[orig]
+            log(f"  같은 원본 — {prev['target']} 결과 공유 (재적용 안 함)")
+            share = dict(prev)
+            share.update({"target": t["name"], "shared_with": prev["target"]})
+            results.append(share)
+            continue
         if args.mode == "apply":
-            backup_original(orig, log)
+            backup = backup_original(orig, log)
+            if _is_gdrive(orig):
+                log("  [GDrive] 원본 직접 수정 금지 — 로컬 사본 경유 적용")
+                rep = apply_via_local(t, orig, t["src"], t["dst"], log)
+                rep.update({"target": t["name"], "mode": args.mode,
+                            "source_template": orig, "backup": backup,
+                            "via_local_copy": True})
+                results.append(rep)
+                done_originals[orig] = rep
+                if rep.get("error"):
+                    log(f"  [오류] {rep['error']}")
+                elif rep.get("skipped"):
+                    log(f"  이미 있음 — 건너뜀 ({t['dst']})")
+                else:
+                    log(f"  생성 완료 ({t['dst']}) 원본반영="
+                        f"{rep.get('copied_back')} 들여쓰기 "
+                        f"{rep.get('before', {}).get('firstLineIndent')}/"
+                        f"{rep.get('before', {}).get('leftIndent')} → 0/0")
+                continue
             path, do_save = orig, True
         elif args.mode == "dry":
             path, do_save = orig, False
@@ -265,6 +357,8 @@ def main():
         rep["mode"] = args.mode
         rep["source_template"] = orig
         results.append(rep)
+        if args.mode == "apply":
+            done_originals[orig] = rep
         if rep.get("error"):
             log(f"  [오류] {rep['error']}")
         elif rep.get("skipped"):
