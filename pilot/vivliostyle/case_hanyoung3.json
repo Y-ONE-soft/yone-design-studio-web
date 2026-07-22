@@ -1,0 +1,17 @@
+{
+  "_doc": "한영3 동형모의고사 파일럿 케이스 설정. 여기 값들은 원고가 아니라 InDesign 템플릿에 수기로 입력돼 있는 '템플릿 비품'(머리표 테이블/문제유형 박스) — 실물 PDF(data_corpus/e2e_v2/029c4385/한영3_동형_v2.pdf) 기재값을 그대로 옮김.",
+  "corpus_case": "tests/corpus/mockexam/029c4385",
+  "reference_pdf": "data_corpus/e2e_v2/029c4385/한영3_동형_v2.pdf",
+  "subject_code": "08",
+  "subject_title": "영어독해와작문",
+  "exam_title": "2026학년도 1학기 기말고사",
+  "date_line": "( 6 )월 ( 29 )일 ( 1 )교시",
+  "target_line": "( 3 )학년 ( 1 ~ 12 )반",
+  "teachers": "한O희, 정O기, 김O연",
+  "school_full": "한영고등학교",
+  "qtype_box": {
+    "select_items": 27, "select_points": 70,
+    "essay_items": 6, "essay_points": 30
+  },
+  "copyright_line": "이 시험 문제의 저작권은 한영고등학교에 있습니다. 저작권법에 의해 보호받는 저작물이므로 무단 전재와 복제는 금지되며, 이를 어길시 저작권법에 의거 처벌될 수 있습니다."
+}

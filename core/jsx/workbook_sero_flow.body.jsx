@@ -372,6 +372,22 @@ try {
         wlog("[경고] 스타일 없음(자동 생성 안 함): " + name);
         return null;
     }
+    // W45 답란(S_답란) 폴백 + 들여쓰기 0 브릿지 — workbook_flow와 동일 의미론
+    var fbCount = 0;
+    var ind0Count = 0;
+    var ind0Sample = "";
+    function applyAnslineIndentZero(para) {
+        var fli = null, lind = null;
+        try { fli = Number(para.firstLineIndent); } catch (e) {}
+        try { lind = Number(para.leftIndent); } catch (e) {}
+        try { para.firstLineIndent = 0; } catch (e) {}
+        try { para.leftIndent = 0; } catch (e) {}
+        ind0Count++;
+        if (ind0Sample === "") {
+            ind0Sample = "원값 " + fli + "/" + lind + " → 0/0";
+        }
+    }
+
     var noneCS = doc.characterStyles[0];
     var ulCache = {};
     function ulStyleFor(entry) {
@@ -420,7 +436,18 @@ try {
         }
         for (var pi = 0; pi < flat.length && pi < paras.length; pi++) {
             var ps2 = styleOf(flat[pi].s);
-            if (ps2) { paras[pi].appliedParagraphStyle = ps2; }
+            var usedFb = false;
+            if (!ps2 && flat[pi].s_fb) {          // W45: S_답란 없음 → 선지
+                ps2 = styleOf(flat[pi].s_fb);
+                usedFb = !!ps2;
+            }
+            if (ps2) {
+                paras[pi].appliedParagraphStyle = ps2;
+                if (usedFb) {
+                    fbCount++;
+                    if (flat[pi].ind0) { applyAnslineIndentZero(paras[pi]); }
+                }
+            }
             if (pi > 0 && isStart[pi]) {
                 try {
                     paras[pi].startParagraph = (isStart[pi] === "page")
@@ -726,6 +753,15 @@ try {
                  + (plan.divider.line2 || "") + ")");
         }, ScriptLanguage.JAVASCRIPT, undefined,
            UndoModes.ENTIRE_SCRIPT, "wb_sero_v2 divider");
+    }
+
+    // W45 답란 폴백 결산 (침묵 금지)
+    if (fbCount > 0) {
+        wlog("[답란] S_답란 없음 → 선지 폴백 " + fbCount + "개 단락"
+             + (ind0Count > 0
+                ? " / 들여쓰기 0 로컬 오버라이드 " + ind0Count + "개 ("
+                  + ind0Sample + ")"
+                : ""));
     }
 
     relockIcons();

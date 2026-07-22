@@ -27,3 +27,6 @@ uploads/
 _macbook_*
 _imac_*
 data_corpus/
+
+# Vivliostyle 파일럿 (W42)
+pilot/vivliostyle/node_modules/

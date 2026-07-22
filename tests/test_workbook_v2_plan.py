@@ -49,7 +49,12 @@ def test_step3_builder_corpus():
     assert len(s3["units"]) == 22
     assert s3["target"] == {"master": "O"}
     styles = {p["s"] for u in s3["units"] for p in u}
-    assert all(s in inv for s in styles), styles - inv
+    # W45: 답란 신설 스타일(S_답란)은 템플릿 반영 전이라 인벤토리에 없을 수
+    # 있다 — 그 단락은 반드시 폴백(s_fb, 인벤토리 존재)을 함께 실어야 한다.
+    pending = {p["s"] for u in s3["units"] for p in u if p.get("s_fb")}
+    assert all(p.get("s_fb") in inv for u in s3["units"] for p in u
+               if p.get("s_fb"))
+    assert all(s in inv for s in styles - pending), styles - inv - pending
     # 정답/그룹헤더는 제거돼야 함 (kind GH/A → 미포함)
     texts = [p["t"] for u in s3["units"] for p in u]
     assert not any(t.strip() in ("정답", "[정답]") for t in texts)

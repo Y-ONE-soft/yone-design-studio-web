@@ -394,6 +394,29 @@ def _s3_effective_kind(kind, text):
     return kind
 
 
+def _ansline_fields(eff, arrow_bg=False):
+    """답란(AnsL) 단락의 폴백/브릿지 필드 (W45).
+
+    사용자 확정 스펙: 답란은 **답란 전용 스타일 `S_답란`**(지문 스타일 복제 +
+    들여쓰기 0)로 인쇄한다. 완성본 다수가 답란을 '지문 스타일'로 갖고 있던 건
+    의도가 아니라 회피였다 — 선지 스타일의 들여쓰기 때문에 답란 정렬이
+    깨져서 손으로 바꾼 것 (역학습 W44, 61건/13문서).
+
+    조판 템플릿에 `S_답란`이 아직 없을 수 있으므로 fail-open:
+      s     = "STEP 03 > S_답란"          (1선)
+      s_fb  = "STEP 03 > S_선지 올림포스"  (템플릿에 s가 없을 때 렌더 폴백)
+      ind0  = True                        (폴백을 쓴 경우에만 들여쓰기 0
+                                           로컬 오버라이드 — 브릿지)
+    JSX(workbook_flow / workbook_sero_flow)가 s→s_fb 순으로 해석하고,
+    s_fb를 쓴 단락에만 ind0를 적용한다 (S_답란이 있으면 오버라이드 없음)."""
+    if eff != "AnsL" or arrow_bg:
+        return {}
+    fb = _style("STEP3", "AnsL@fallback", default_kind="C")
+    if not fb:
+        return {}
+    return {"s_fb": fb, "ind0": True}
+
+
 def build_step3(step_data):
     """step3 데이터 {normal:[{question_num, paragraphs}], short:[...]} → 유닛.
 
@@ -503,7 +526,9 @@ def build_step3(step_data):
                     text, runs = _sub_runs(rx, repl, text, runs)
                 if style == st_q:
                     text, runs = _sub_runs(_RE_S3_QNUM, "", text, runs)
-                unit.append({"t": text, "s": style, "runs": runs})
+                para = {"t": text, "s": style, "runs": runs}
+                para.update(_ansline_fields(row["eff"], row["arrow_bg"]))
+                unit.append(para)
             if unit:
                 _s3_underline_quotes(unit, st_q, _style("STEP3", "P"),
                                      _style("STEP3", "P-CONTEXT"),
@@ -1526,6 +1551,62 @@ def _c1_remove_gap_blank(items, st_btm, st_btm_t):
         i -= 1
 
 
+# W44: step1_c1 헤더 **부분 인식** 보강 스위치 (False = W43 이전 동작).
+PROMOTE_C1_MISSED_HDR = True
+_RE_C1_ORDINAL = re.compile(r"^\s*(\d{1,3})\s*[.)]")
+
+
+def _c1_promote_missed_headers(items, orig_texts, warnings):
+    """GREP 열거가 놓친 지문 헤더를 {라벨}로 승격 (가산 전용).
+
+    items: build_step1_c1의 작업 리스트 (GREP 정규화 후, in-place 수정)
+    orig_texts: GREP 이전 원문 (인덱스 일치)
+    """
+    n = len(items)
+    known = [i for i in range(n) if _RE_C1_HEADER.match(items[i]["t"])]
+    if not known:
+        return
+    try:
+        det = detect_headers(list(orig_texts))
+    except Exception:                                          # noqa: BLE001
+        return
+    cand = sorted(i for i in det.header_idx
+                  if i < n and not _RE_C1_HEADER.match(items[i]["t"]))
+    if not cand:
+        return
+    # 인식 헤더의 원문 순번 (없으면 승격 판단 불가 → 종료)
+    ords = {}
+    for i in known:
+        m = _RE_C1_ORDINAL.match(orig_texts[i] if i < len(orig_texts) else "")
+        if m:
+            ords[i] = int(m.group(1))
+    if not ords:
+        return
+    promoted = 0
+    for i in cand:
+        m = _RE_C1_ORDINAL.match(orig_texts[i])
+        if not m:
+            continue
+        prev = max((k for k in ords if k < i), default=None)
+        if prev is None or int(m.group(1)) != ords[prev] + 1:
+            continue
+        nxt = min((k for k in known if k > i), default=n)
+        if not any(_RE_C1_CHOICE.match(items[j]["t"])
+                   for j in range(i + 1, nxt)):
+            continue
+        mb = re.search(r"본문\s*(\d+)", orig_texts[i])
+        label = ("본문" + mb.group(1)) if mb else m.group(1)
+        new_t = "{" + label + "}"
+        items[i]["t"] = new_t
+        items[i]["runs"] = [{"t": new_t, "ul": False}]
+        ords[i] = int(m.group(1))
+        known = sorted(known + [i])
+        promoted += 1
+    if promoted:
+        warnings.append("step1_c1: 구조 인식기로 미인식 헤더 %d개 승격 "
+                        "(부분 인식 보강 — W44)" % promoted)
+
+
 def build_step1_c1(step_data, workbook_type="모의고사", exclude_btm=False,
                    split_condition=True):
     # split_condition: v1 conditionIdxList 잔존 해석의 NEXT_FRAME 유닛 분리.
@@ -1547,6 +1628,8 @@ def build_step1_c1(step_data, workbook_type="모의고사", exclude_btm=False,
 
     # 1) 공백만 있는 bracket 단락 제거: [   ] → 삭제
     items = [it for it in items if not _RE_C1_EMPTY_BRACKET.match(it["t"])]
+    # GREP 정규화 전 원문 (W44 부분 인식 보강의 순번·구조 판정 기준)
+    orig_texts = [it["t"] for it in items]
 
     # 2) 헤더 정규화 GREP 체인 + 레지듀얼 정리(3회)
     for it in items:
@@ -1586,6 +1669,20 @@ def build_step1_c1(step_data, workbook_type="모의고사", exclude_btm=False,
             warnings.append("step1_c1: 구조 인식기로 헤더 %d개 검출 "
                             "(정규식 열거 미인식 형식)"
                             % len(det.header_idx))
+    # W44 (역학습 실증 — 완성본 대조): **부분 인식** 보강. GREP 열거가 일부
+    # 헤더만 잡으면(예: "N. L4-본문N(p.94)"는 잡히고 "7. L4-Read More(p.109)"
+    # 는 못 잡음) 위 폴백이 발동하지 않아, 못 잡은 블록의 (A)~(J) 배열
+    # 항목이 통째로 스타일 없이($BASIC) 인쇄된다 (완성본 ac9fc469
+    # 영어Ⅰ_미래엔(김)_4과: 10단락이 실제로는 C1_문장 배열 스타일).
+    # 승격 조건(가산만 — 기존 인식분은 절대 건드리지 않음):
+    #   (a) 구조 인식기가 헤더로 본 라인이고,
+    #   (b) 원문 선두 순번이 직전 인식 헤더의 순번 +1로 이어지고,
+    #   (c) 그 블록에 (A)~(Z) 배열 선지가 실제로 뒤따른다.
+    # 세 조건이 동시에 성립할 때만 {라벨}로 정규화한다.
+    if first_hdr >= 0 and USE_STRUCT_HEADER_DETECT and PROMOTE_C1_MISSED_HDR:
+        _c1_promote_missed_headers(items, orig_texts, warnings)
+        first_hdr = next((i for i, it in enumerate(items)
+                          if _RE_C1_HEADER.match(it["t"])), first_hdr)
     if first_hdr > 0:
         if not any(_RE_C1_CHOICE.match(items[i]["t"])
                    for i in range(first_hdr)):
