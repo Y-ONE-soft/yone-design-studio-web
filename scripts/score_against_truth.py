@@ -78,10 +78,22 @@ def ansline_legacy_choice(pred_style, gold_style, text):
 
 
 def canon(style):
+    """스타일 표기 정규화.
+
+    W46: **직계 그룹 1단계까지만** 비교한다 — 정답(덤프)의 styleFullName은
+    dump_stories.jsx가 '직계 그룹 > 이름'만 기록하는데(engines/seseospecial_v2/
+    engine.py::_dump_style_name 참조) 예측(style_map)은 전체 경로를 갖는 계열이
+    있어("A ver > 실전문제 > 지문" ↔ "실전문제 > 지문") 같은 스타일이 불일치로
+    잡힌다. 워크북/블랙북/화이트북 스타일은 1단계뿐이라 무영향.
+    """
     s = unicodedata.normalize("NFC", (style or "").strip())
     if s.lower() in _BASIC or s in _BASIC:
         return "$BASIC"
-    return re.sub(r"\s+", " ", s)
+    s = re.sub(r"\s+", " ", s)
+    parts = [p.strip() for p in s.split(">")]
+    if len(parts) > 2:
+        s = " > ".join(parts[-2:])
+    return s
 
 
 def load_truth(path):
@@ -106,17 +118,19 @@ def apply_flags():
 
 
 def predict(job_to_content):
-    """job → {(step, unit, idx): style, "_bykey": {step: {key: [styles]}}}"""
+    """job → {(step, unit, idx): style, "_bykey": {step: {key: [styles]}}}
+
+    job_to_content: {job: (content_json, series, job_dir)} — 계열별 예측
+    어댑터(core.reverse_learn.adapters)를 태운다 (W46).
+    """
+    from core.reverse_learn.adapters import build_plan
     from core.reverse_learn.align import norm_key
-    from engines.workbook_v2.plan import ensure_step3_kinds, steps_to_plan
     out = {}
-    for job, cpath in job_to_content.items():
+    for job, meta in job_to_content.items():
+        cpath, series, jdir = meta if isinstance(meta, tuple) else (meta, "", None)
         try:
             content = json.load(open(cpath, encoding="utf-8"))
-            steps = content.get("steps") or {}
-            ensure_step3_kinds(steps.get("step3"))
-            plan = steps_to_plan(
-                steps, workbook_type=content.get("workbook_type") or "모의고사")
+            plan, _ = build_plan(content, series=series, job_dir=jdir)
         except Exception as e:                                 # noqa: BLE001
             out[job] = {"_error": str(e)[:200]}
             continue
@@ -189,6 +203,16 @@ def summarize(res):
     }
     clusters = Counter((r["step"], r["pred_style"], r["gold"])
                        for r in res if not r["ok"])
+    # W46 — 유형별 문서 분산. 소수 문서에만 나타나는 유형은 "표본 부족"으로
+    # 분류하고 규칙화하지 않는다 (문서 편중 = 그 책 사정일 가능성).
+    cl_docs = defaultdict(set)
+    cl_top_doc = defaultdict(Counter)
+    for r in res:
+        if r["ok"]:
+            continue
+        k = (r["step"], r["pred_style"], r["gold"])
+        cl_docs[k].add(r["doc"])
+        cl_top_doc[k][r["doc"]] += 1
     examples = defaultdict(list)
     for r in res:
         if r["ok"]:
@@ -208,6 +232,9 @@ def summarize(res):
             [(d, c[0], c[1]) for d, c in by("doc").items()],
             key=lambda t: (t[1] / t[2]) if t[2] else 1)[:8],
         "clusters": clusters.most_common(20),
+        "cluster_docs": {str(k): (len(v), cl_top_doc[k].most_common(1)[0][1])
+                         for k, v in cl_docs.items()},
+        "docs_total": len({r["doc"] for r in res}),
         "examples": {str(k): v for k, v in examples.items()},
         # W45 — 회피 관행(답란 → 지문 스타일) 태깅 결산
         "avoidance_rows": sum(1 for r in res if r.get("tag") == AVOIDANCE_TAG),
@@ -233,7 +260,6 @@ def fmt_report(s, meta):
              f"{s.get('avoidance_rows', 0)}행 / "
              f"{s.get('avoidance_docs', 0)}문서 (+ 구 선지 관행 {s.get('legacy_choice_rows', 0)}행) — 정답 재정의 "
              f"{'적용' if meta.get('ansline_retag') else '미적용'}\n")
-
     L.append("## 계열별\n")
     L.append("| 계열 | 정확도 | 맞음/전체 |\n|---|---|---|")
     for k, (a, b) in s["by_series"].items():
@@ -248,9 +274,14 @@ def fmt_report(s, meta):
                             key=lambda kv: kv[1][0] / kv[1][1]):
         L.append(f"| {k} | {a / b * 100:.2f}% | {a}/{b} |")
     L.append("\n## 오답 유형 (예측 → 완성본 실제)\n")
-    L.append("| # | STEP | 현행 예측 | 완성본 정답 | 건수 |\n|---|---|---|---|---|")
+    L.append(f"문서수 = 이 유형이 나타난 완성본 수 (전체 {s.get('docs_total', 0)}"
+             "문서). 최다문서 = 그중 한 문서가 차지하는 건수 — 편중이 크면"
+             " 규칙화 대신 '표본 부족'.\n")
+    L.append("| # | STEP | 현행 예측 | 완성본 정답 | 건수 | 문서수 | 최다문서 |"
+             "\n|---|---|---|---|---|---|---|")
     for i, ((st, p, g), c) in enumerate(s["clusters"], 1):
-        L.append(f"| {i} | {st} | `{p}` | `{g}` | {c} |")
+        nd, top = s.get("cluster_docs", {}).get(str((st, p, g)), (0, 0))
+        L.append(f"| {i} | {st} | `{p}` | `{g}` | {c} | {nd} | {top} |")
     L.append("\n### 대표 사례 (상위 8유형)\n")
     for (st, p, g), c in s["clusters"][:8]:
         L.append(f"**{st}: `{p}` → `{g}` ({c}건)**\n")
@@ -275,7 +306,9 @@ def main():
     flags = apply_flags()
     rows = load_truth(args.truth)
     pdata = json.load(open(args.pairs, encoding="utf-8"))
-    j2c = {p["job_id"]: p["content_json"] for p in pdata["pairs"]
+    j2c = {p["job_id"]: (p["content_json"], p.get("series") or "",
+                         p.get("job_dir"))
+           for p in pdata["pairs"]
            if p.get("job_id") and p.get("content_json")}
     jobs = {r["job"] for r in rows}
     preds = predict({j: j2c[j] for j in jobs if j in j2c})
