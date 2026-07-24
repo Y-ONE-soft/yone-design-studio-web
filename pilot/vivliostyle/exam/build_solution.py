@@ -32,8 +32,14 @@ from build import _today_short, norm  # noqa: E402
 
 def qc_content(doc, raw_paras):
     """원고 글자가 해설지에 전량 반영됐는지 (difflib 12자 이상 결손)."""
-    src = norm(" ".join(p["text"] for p in raw_paras
-                        if not re.match(r"^\s*정답\s*및\s*해설\s*$", p["text"].strip())))
+    # 출처 줄 `[...] 정답 X` 은 해설지에서 '번호 배지 + 정답 X' 로 바뀐다.
+    # 대조 시 접두어([...]와 '정답' 글자)를 떼고 정답 기호만 남긴다.
+    def _strip(t):
+        t = t.strip()
+        if re.match(r"^\s*정답\s*및\s*해설\s*$", t):
+            return ""
+        return re.sub(r"^\[[^\]]+\]\s*정답\s*", "", t)
+    src = norm(" ".join(_strip(p["text"]) for p in raw_paras))
     seq = []
     for it in doc["items"]:
         seq.append(it["answer"])
@@ -45,10 +51,7 @@ def qc_content(doc, raw_paras):
     gaps = []
     for tag, i1, i2, _j1, _j2 in sm.get_opcodes():
         if tag in ("delete", "replace") and i2 - i1 >= 12:
-            chunk = src[i1:i2]
-            # 출처 줄([...])은 해설지에서 번호 배지로 대체되므로 결손 아님
-            if not re.fullmatch(r"\[?\d{0,2}년?\d*월?고?\d*번?\]?", chunk):
-                gaps.append({"len": i2 - i1, "text": chunk[:120]})
+            gaps.append({"len": i2 - i1, "text": src[i1:i2][:120]})
     return {"src_chars": len(src), "out_chars": len(out), "gaps": gaps}
 
 

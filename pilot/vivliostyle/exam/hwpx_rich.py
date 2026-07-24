@@ -36,6 +36,16 @@ def fix_chars(s):
     return _FIX_RE.sub(lambda m: CHAR_FIX[m.group(0)], s)
 
 
+# HWP 페이지 푸터가 본문 흐름에 유출된 조각 (원고 결함) — 지문 중간에 박힌다.
+# 예: "2022학년도 6월 전국연합학력평가 정답 및 해설 고2 11"
+_RUNNING_FOOTER = re.compile(
+    r"\s*\d{4}학년도\s*\d{1,2}월\s*전국연합학력평가\s*정답\s*및\s*해설\s*고\d\s*\d*\s*")
+
+
+def strip_footer(s):
+    return _RUNNING_FOOTER.sub(" ", s)
+
+
 def _unescape(s):
     return (s.replace("&lt;", "<").replace("&gt;", ">")
              .replace("&quot;", '"').replace("&apos;", "'")
@@ -102,7 +112,7 @@ def extract(path):
                 for t in NS_T.findall(chunk))
             if not txt:
                 continue
-            txt = fix_chars(unicodedata.normalize("NFC", txt))
+            txt = strip_footer(fix_chars(unicodedata.normalize("NFC", txt)))
             if runs and all(runs[-1][k] == attrs[k] for k in base):
                 runs[-1]["t"] += txt
             else:
