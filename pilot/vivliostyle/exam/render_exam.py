@@ -112,27 +112,11 @@ def build_html(doc, cfg, answers=None, css="exam_theme.css"):
         f'<title>{esc(cfg["title"])}</title>'
         f'<link rel="stylesheet" href="{css}">'
     )
-    n_obj = len(items)
-    total = round(sum(it.get("score") or 0 for it in items), 1)
     masthead = (
         '<header class="masthead">'
-        '<table class="hdr"><tbody>'
-        '<tr>'
-        f'<td class="sub" rowspan="2">{esc(cfg["subtitle"])}</td>'
-        '<th class="lbl">일시</th>'
-        f'<td class="val">{esc(cfg.get("exam_date", ""))}</td>'
-        f'<td class="title" rowspan="2"><span class="period">'
-        f'{esc(cfg["period"])}</span><span class="maintitle">'
-        f'{esc(cfg["title"])}</span></td>'
-        '<th class="lbl2" rowspan="2">문제유형</th>'
-        '<th class="type-h">선택형</th>'
-        '</tr>'
-        '<tr>'
-        '<th class="lbl">대상</th>'
-        f'<td class="val">{esc(cfg.get("target", ""))}</td>'
-        f'<td class="type-v">( {n_obj} ) 문항 / ( {total:g} ) 점</td>'
-        '</tr>'
-        '</tbody></table>'
+        f'<p class="line1">{esc(cfg["subtitle"])}</p>'
+        f'<h1><span class="period">{esc(cfg["period"])}</span>'
+        f'<span class="maintitle">{esc(cfg["title"])}</span></h1>'
         '</header>'
     )
     running = (

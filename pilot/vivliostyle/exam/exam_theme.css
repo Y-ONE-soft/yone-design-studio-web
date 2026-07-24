@@ -45,8 +45,7 @@ ol, ul { list-style: none; }
   }
 }
 @page :first {
-  @top-center { content: none; }
-  @top-right { content: none; }
+  @top-center { content: none; }   /* 1쪽은 러닝 제목 대신 표지 머리표 */
 }
 
 html {
@@ -77,46 +76,38 @@ body { margin: 0; }
   letter-spacing: .02em;
 }
 
-/* 표지 머리표 — 실물 동형모의고사 형식(과목코드/일시/대상 + 결재란 + 문제유형표) */
+/* 표지 머리표 — 부제목 줄 + 교시 배지 + 큰 제목 (아래 가로줄은 .flow 의 border-top) */
 .masthead {
   column-span: all;
   padding-bottom: 4mm;
-  margin-bottom: 4mm;
+  text-align: center;
   font-family: "HCR Dotum", "함초롬돋움", sans-serif;
 }
-.masthead table {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-}
-.masthead th, .masthead td {
-  border: .8pt solid var(--rule);
-  padding: 1.1mm 1.6mm;
-  font-size: 10.5pt;
-  font-weight: 400;
+.masthead .line1 {
+  font-weight: 700;
+  font-size: 12pt;
+  letter-spacing: -.01em;
   text-align: center;
-  vertical-align: middle;
+  padding-bottom: 3mm;
 }
-.masthead .hdr .sub    { width: 15%; font-weight: 700; }
-.masthead .hdr .lbl    { width: 6%; }
-.masthead .hdr .val    { width: 17%; }
-.masthead .hdr .lbl2   { width: 9%; }
-.masthead .hdr .type-h { width: 17%; font-weight: 700; }
-.masthead .hdr .type-v { width: 17%; }
-.masthead .hdr .title {
-  width: 36%;
-  padding: 2.4mm 2mm 2.8mm;
+.masthead h1 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7mm;
+  font-weight: 400;
 }
 .masthead .period {
-  display: block;
-  font-size: 10.5pt;
+  font-size: 13pt;
   font-weight: 700;
-  letter-spacing: .12em;
-  padding-bottom: .8mm;
+  letter-spacing: .04em;
+  border: 1.2pt solid var(--rule);
+  border-radius: 999px;
+  padding: 1.6mm 5mm;
+  white-space: nowrap;
 }
 .masthead .maintitle {
-  display: block;
-  font-size: 25pt;
+  font-size: 27pt;
   font-weight: 700;
   letter-spacing: .01em;
   white-space: nowrap;

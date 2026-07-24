@@ -281,8 +281,8 @@ def main():
 
     cfg = {
         "title": "세서특필 모의고사",
-        "subtitle": "2026학년도 여름방학",
-        "period": "제 1 교시",
+        "subtitle": "2026학년도 여름방학 세서특필 모의고사",
+        "period": "제 3 교시",
         "total_score": 100,
         "exam_date": _today(),
         "target": "( 1 )학년",
