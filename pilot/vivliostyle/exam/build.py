@@ -136,6 +136,55 @@ def _collect(pdf_path, col_split_pt=420.9):
     return lines
 
 
+def _zones(pdf_path, doc):
+    """{(page, col): [(문항번호, top_y, bottom_y), ...]} — 정답 섹션 제외."""
+    lines = _collect(pdf_path)
+    cut = next((k for k, r in enumerate(lines) if r[4].strip() == "정답"), len(lines))
+    lines = lines[:cut]
+    order = [it["n"] for it in doc["items"]]
+    idx = {}
+    for k, r in enumerate(lines):
+        for n in order:
+            if n not in idx and re.match(rf"^\s*{n}\.\s", r[4]):
+                idx[n] = k
+    zones = {}
+    for pos, n in enumerate(order):
+        if n not in idx:
+            continue
+        a = idx[n]
+        b = min((idx[m] for m in order[pos + 1:] if m in idx), default=len(lines))
+        seg = lines[a:b]
+        if seg:
+            zones.setdefault((seg[0][0], seg[0][1]), []).append(
+                (n, seg[0][2], max(r[3] for r in seg)))
+    for z in zones:
+        zones[z].sort(key=lambda t: t[1])
+    return zones
+
+
+def row_align_deltas(pdf_path, doc):
+    """좌/우 단의 k번째 문항이 같은 높이에서 시작하도록 필요한 추가 여백(mm).
+
+    같은 페이지 좌단 k번째와 우단 k번째 중 아래에서 시작하는 쪽에 맞춰,
+    위에 있는 쪽의 (k-1)번째 문항 뒤 여백을 늘린다. k=0 은 단 머리라 이미 맞다.
+    반환: {문항번호: 추가 mm}, 최대 어긋남(pt)
+    """
+    zones = _zones(pdf_path, doc)
+    pages = {p for p, _c in zones}
+    add, worst = {}, 0.0
+    for p in pages:
+        c0, c1 = zones.get((p, 0), []), zones.get((p, 1), [])
+        for k in range(1, min(len(c0), len(c1))):
+            target = max(c0[k][1], c1[k][1])
+            for col in (c0, c1):
+                d = target - col[k][1]
+                if d > 0.5:
+                    worst = max(worst, d)
+                    prev = col[k - 1][0]
+                    add[prev] = add.get(prev, 0) + d / 72 * 25.4
+    return add, worst
+
+
 def column_fill(pdf_path, doc, safety=0.94, cap_mm=22.0):
     """단 하단에 죽는 여백을 그 단 안 문항 사이로 재분배.
 
@@ -250,22 +299,45 @@ def main():
         t1 = time.time()
         cli = os.path.join(HERE, "..", "node_modules", ".bin", "vivliostyle")
         cmd = [cli, "build", hp, "-o", pdf, "-f", "pdf"]
-        r = subprocess.run(cmd, capture_output=True, text=True)
-        report["steps"]["pdf_s"] = round(time.time() - t1, 2)
+        def emit(pads):
+            extra = "".join(f"#q{n}{{padding-bottom:calc(8mm + {v:.2f}mm)}}"
+                            for n, v in sorted(pads.items()) if v > 0.05)
+            open(hp, "w", encoding="utf-8").write(
+                html.replace("</head>", f"<style>{extra}</style></head>")
+                if extra else html)
+            return subprocess.run(cmd, capture_output=True, text=True)
+
+        r = emit({})
         if r.returncode != 0:
             report["pdf_error"] = (r.stdout + r.stderr)[-3000:]
         else:
-            # 2패스: 단 하단 잔여를 문항 사이로 재분배해 다시 조판
-            fills = column_fill(pdf, doc)
-            if fills:
-                extra = "".join(f"#q{n}{{padding-bottom:{v}mm}}"
-                                for n, v in sorted(fills.items()))
-                open(hp, "w", encoding="utf-8").write(
-                    html.replace("</head>", f"<style>{extra}</style></head>"))
-                r2 = subprocess.run(cmd, capture_output=True, text=True)
-                if r2.returncode != 0:
-                    report["pdf_error_pass2"] = (r2.stdout + r2.stderr)[-2000:]
-                report["column_fill"] = {"adjusted": len(fills)}
+            # 좌/우 단의 같은 순번 문항이 같은 높이에서 시작하도록 반복 정렬한다.
+            # 여백을 늘리면 흐름이 바뀌므로 매 회 재조판 후 실측하고, 페이지 수가
+            # 늘거나 문항이 쪼개지면 직전 상태로 되돌린다(퇴행 금지).
+            base = qc_pdf(pdf, doc)
+            best, best_q = {}, base
+            pads = {}
+            hist = []
+            for _ in range(4):
+                add, worst = row_align_deltas(pdf, doc)
+                hist.append(round(worst, 1))
+                if worst < 2.0 or not add:
+                    break
+                cand = dict(pads)
+                for n, v in add.items():
+                    cand[n] = cand.get(n, 0) + v
+                if emit(cand).returncode != 0:
+                    emit(best)
+                    break
+                q2 = qc_pdf(pdf, doc)
+                if q2["pages"] > base["pages"] or q2["split_items"]:
+                    emit(best)          # 퇴행 -> 마지막 정상 상태 복원
+                    break
+                pads, best, best_q = cand, cand, q2
+            else:
+                pass
+            report["row_align"] = {"adjusted": len(best),
+                                   "worst_misalign_pt": hist}
             report["steps"]["pdf_s"] = round(time.time() - t1, 2)
             report["qc_pdf"] = qc_pdf(pdf, doc)
 
