@@ -18,14 +18,12 @@ NS_T = re.compile(r"<hp:t>(.*?)</hp:t>", re.S)
 # 원고에 섞여 들어오는 이형 문자 -> 표준 문자.
 # (소프트하이픈/수정자 마이너스가 단어 중간에 박혀 있는 사례가 실제로 있음)
 CHAR_FIX = {
-    "­": "-",   # SOFT HYPHEN  (multi­dimensional -> multi-dimensional)
-    "˗": "-",   # MODIFIER LETTER MINUS (self˗expression)
-    "‐": "-", "‑": "-", "‒": "-",
-    "⁃": "-",
-    "‒": "-",
-    "ǀ": "|",
-    "✗": "×",   # ✗ -> × (Noto CJK 글리프 없음)
-    "b": "⬇",  # HWP 사설영역 요약 화살표
+    "\u00ad": "-",   # SOFT HYPHEN   (multi\u00addimensional -> multi-dimensional)
+    "\u02d7": "-",   # MODIFIER LETTER MINUS (self\u02d7expression)
+    "\u2010": "-", "\u2011": "-", "\u2012": "-",   # hyphen / nb-hyphen / figure dash
+    "\u2043": "-",   # HYPHEN BULLET
+    "\u2717": "\u00d7",       # \u2717 -> \u00d7 (Noto Sans CJK KR \uae00\ub9ac\ud504 \uc5c6\uc74c)
+    "\U000f003b": "\u2b07",   # HWP \uc0ac\uc124\uc601\uc5ed \uc694\uc57d \ud654\uc0b4\ud45c
 }
 _FIX_RE = re.compile("|".join(re.escape(k) for k in CHAR_FIX))
 
