@@ -124,9 +124,11 @@ def build_html(doc, cfg, answers=None, css="exam_theme.css"):
         f"{total:g}점",
         cfg.get("exam_date_short", ""),
     ) if x)
+    logo = cfg.get("logo", "")
     masthead = (
         '<header class="masthead">'
-        f'<p class="line1">{esc(cfg["subtitle"])}</p>'
+        + (f'<img class="logo" src="{esc(logo)}" alt="">' if logo else "")
+        + f'<p class="line1">{esc(cfg["subtitle"])}</p>'
         f'<h1><span class="period">{esc(cfg["period"])}</span>'
         f'<span class="maintitle">{esc(cfg["title"])}</span></h1>'
         f'<p class="info">{esc(info)}</p>'

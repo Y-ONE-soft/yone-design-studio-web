@@ -85,7 +85,7 @@ body { margin: 0; }
 }
 
 /* 표지 머리표 — 부제목 줄 + 교시 배지 + 큰 제목 (아래 가로줄은 .flow 의 border-top) */
-.logohead { position: running(logohead); }
+.logohead { position: running(logohead); padding-bottom: 2.2mm; }
 .logohead img { display: block; width: 26mm; }
 
 .masthead {
