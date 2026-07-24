@@ -78,7 +78,7 @@ def qc_content(doc, raw_paras):
     return {"src_chars": len(src), "out_chars": len(out), "gaps": gaps}
 
 
-def qc_pdf(pdf_path, doc, col_split_pt=420.9):
+def qc_pdf(pdf_path, doc, col_split_pt=None):
     """PDF 기하 실측.
 
     핵심 게이트: **한 문항이 단/쪽 경계를 넘지 않는다.**
@@ -120,12 +120,27 @@ def qc_pdf(pdf_path, doc, col_split_pt=420.9):
             "heads_found": len(heads), "split_items": splits}
 
 
-COL_BOTTOM = 1134.3     # 페이지 1191pt - 아래여백 20mm
+# --- 지면 기하 : exam_theme.css 의 @page 와 반드시 일치시킬 것 (mm) ---
+PAGE_W_MM, PAGE_H_MM = 257, 364          # B4
+MARGIN_T_MM, MARGIN_X_MM, MARGIN_B_MM = 20, 16, 15
 
 
-def _collect(pdf_path, col_split_pt=420.9):
+def _pt(mm):
+    return mm / 25.4 * 72
+
+
+PAGE_W, PAGE_H = _pt(PAGE_W_MM), _pt(PAGE_H_MM)
+CONTENT_X0, CONTENT_X1 = _pt(MARGIN_X_MM), PAGE_W - _pt(MARGIN_X_MM)
+COL_BOTTOM = PAGE_H - _pt(MARGIN_B_MM)       # 본문 하단 한계
+COL_SPLIT = (CONTENT_X0 + CONTENT_X1) / 2    # 좌/우단 경계
+HEAD_CUT = _pt(MARGIN_T_MM) * 0.85           # 러닝 헤더 영역 (제외)
+FOOT_CUT = COL_BOTTOM + _pt(2)               # 푸터(아래 여백 안)는 제외
+
+
+def _collect(pdf_path, col_split_pt=None):
     """PDF -> 본문 줄 목록 [(page, col, y0, y1, text)] (헤더/푸터 제외)"""
     import fitz
+    split = COL_SPLIT if col_split_pt is None else col_split_pt
     d = fitz.open(pdf_path)
     lines = []
     for i, pg in enumerate(d):
@@ -133,8 +148,8 @@ def _collect(pdf_path, col_split_pt=420.9):
             for l in b.get("lines", []):
                 t = "".join(s["text"] for s in l["spans"])
                 x0, y0, _x1, y1 = l["bbox"]
-                if t.strip() and 50 < y0 < 1140:
-                    lines.append((i + 1, 0 if x0 < col_split_pt else 1, y0, y1, t))
+                if t.strip() and HEAD_CUT < y0 < FOOT_CUT:
+                    lines.append((i + 1, 0 if x0 < split else 1, y0, y1, t))
     d.close()
     # 표지 머리표는 두 단에 걸쳐 있어(column-span:all) 오른쪽 셀이 우단 줄로
     # 잡힌다. 그러면 1번 문항 구간이 좌/우단에 걸친 것처럼 보여 가짜 '분할'이
@@ -196,7 +211,7 @@ def row_align_deltas(pdf_path, doc):
     return add, worst
 
 
-BASE_GAP_MM = 12.0      # exam_theme.css 의 .q padding-bottom
+BASE_GAP_MM = 10.0      # exam_theme.css 의 .q padding-bottom
 
 
 def page_fill_deltas(pdf_path, doc, safety=0.92, base_gap_mm=BASE_GAP_MM):
@@ -344,7 +359,7 @@ def main():
         cli = os.path.join(HERE, "..", "node_modules", ".bin", "vivliostyle")
         cmd = [cli, "build", hp, "-o", pdf, "-f", "pdf"]
         def emit(pads):
-            extra = "".join(f"#q{n}{{padding-bottom:calc(12mm + {v:.2f}mm)}}"
+            extra = "".join(f"#q{n}{{padding-bottom:calc(10mm + {v:.2f}mm)}}"
                             for n, v in sorted(pads.items()) if v > 0.05)
             open(hp, "w", encoding="utf-8").write(
                 html.replace("</head>", f"<style>{extra}</style></head>")

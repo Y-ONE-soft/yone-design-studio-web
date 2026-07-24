@@ -39,8 +39,13 @@ def _run_html(r, boxify=False):
     return t
 
 
+# (A)/(B)/(C) 라벨과 그 뒤 네모가 줄바꿈으로 갈라지지 않게 묶는다.
+_LABEL_BOX = re.compile(r'(\((?:A|B|C)\)\s*)(<span class="boxword">[^<]*</span>)')
+
+
 def _runs_html(runs, boxify=False):
-    return "".join(_run_html(r, boxify) for r in runs)
+    out = "".join(_run_html(r, boxify) for r in runs)
+    return _LABEL_BOX.sub(r'<span class="nb">\1\2</span>', out)
 
 
 def _choices_html(item):
