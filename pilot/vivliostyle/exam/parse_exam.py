@@ -69,6 +69,26 @@ def _pull_text(runs):
     return "".join(r["t"] for r in runs)
 
 
+# 묶음형 지시문 -> 단독 문항 지시문. 원고의 발문은 원 출처가 [31~34] 같은
+# 묶음이라 "…것을 고르시오."로 돼 있는데, 재번호 후에는 단독 문항이므로
+# 실제 학평 단독 문항 표기인 "…것은?"으로 맞춘다.
+RE_GROUP_TAIL = re.compile(r"것을\s*고르시오\s*\.?\s*$")
+
+
+def _normalize_stem(runs):
+    """발문 꼬리를 단독형으로 정규화. (바뀌었으면 True)"""
+    text = _pull_text(runs)
+    m = RE_GROUP_TAIL.search(text)
+    if not m:
+        return runs, False
+    out = _cut_tail([dict(r) for r in runs], len(text) - m.start())
+    if not out:
+        return runs, False
+    out[-1] = dict(out[-1])
+    out[-1]["t"] += "것은?"
+    return out, True
+
+
 def _cut_tail(runs, n):
     """runs 전체 텍스트 끝에서 n글자 제거."""
     out = [dict(r) for r in runs]
@@ -279,6 +299,10 @@ def parse(paras, classify=None):
             if not passage[-1]:
                 passage.pop()
 
+        q_runs, normalized = _normalize_stem(q_runs)
+        if normalized:
+            warnings.append(f"{src}: 묶음형 발문을 단독형으로 정규화 "
+                            f"(…것을 고르시오. → …것은?)")
         q_clean = _pull_text(q_runs)
         code = label = None
         if classify:
