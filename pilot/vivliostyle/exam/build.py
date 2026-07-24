@@ -116,6 +116,72 @@ def qc_pdf(pdf_path, doc, col_split_pt=420.9):
             "heads_found": len(heads), "split_items": splits}
 
 
+COL_BOTTOM = 1134.3     # 페이지 1191pt - 아래여백 20mm
+
+
+def _collect(pdf_path, col_split_pt=420.9):
+    """PDF -> 본문 줄 목록 [(page, col, y0, y1, text)] (헤더/푸터 제외)"""
+    import fitz
+    d = fitz.open(pdf_path)
+    lines = []
+    for i, pg in enumerate(d):
+        for b in pg.get_text("dict")["blocks"]:
+            for l in b.get("lines", []):
+                t = "".join(s["text"] for s in l["spans"])
+                x0, y0, _x1, y1 = l["bbox"]
+                if t.strip() and 50 < y0 < 1140:
+                    lines.append((i + 1, 0 if x0 < col_split_pt else 1, y0, y1, t))
+    d.close()
+    lines.sort(key=lambda r: (r[0], r[1], r[2]))
+    return lines
+
+
+def column_fill(pdf_path, doc, safety=0.94):
+    """단 하단에 죽는 여백을 그 단 안 문항 사이로 재분배.
+
+    다단 흘림에서는 세로 균등정렬(vertical justification)이 CSS 에 없다.
+    그래서 1패스로 조판해 단별 잔여 높이를 실측하고, 그 단에 든 문항 사이
+    간격에 나눠 얹는 2패스를 돈다. 마지막 문항 뒤 간격은 눈에 안 보이므로
+    (k-1)개 간격에만 배분하면 단이 정확히 채워진다.
+
+    반환: {문항번호: 추가 padding mm}
+    """
+    lines = _collect(pdf_path)
+    cut = next((k for k, r in enumerate(lines) if r[4].strip() == "정답"), len(lines))
+    lines = lines[:cut]
+
+    # 문항 -> 그 문항이 속한 (page, col) 및 마지막 줄 bottom
+    zones = {}
+    order = [it["n"] for it in doc["items"]]
+    idx = {}
+    for k, r in enumerate(lines):
+        for n in order:
+            if n not in idx and re.match(rf"^\s*{n}\.\s", r[4]):
+                idx[n] = k
+    for pos, n in enumerate(order):
+        if n not in idx:
+            continue
+        a = idx[n]
+        b = min((idx[m] for m in order[pos + 1:] if m in idx), default=len(lines))
+        seg = lines[a:b]
+        if not seg:
+            continue
+        zones.setdefault((seg[0][0], seg[0][1]), []).append((n, max(r[3] for r in seg)))
+
+    last_zone = max(zones) if zones else None
+    out = {}
+    for z, qs in zones.items():
+        if z == last_zone or len(qs) < 2:
+            continue                       # 흐름 마지막 단은 자연스러운 여백 유지
+        leftover = COL_BOTTOM - max(y for _n, y in qs)
+        if leftover <= 4:
+            continue
+        add = leftover * safety / (len(qs) - 1)
+        for n, _y in sorted(qs)[:-1]:
+            out[n] = round(add / 72 * 25.4, 2)     # pt -> mm
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("manuscript")
@@ -185,6 +251,18 @@ def main():
         if r.returncode != 0:
             report["pdf_error"] = (r.stdout + r.stderr)[-3000:]
         else:
+            # 2패스: 단 하단 잔여를 문항 사이로 재분배해 다시 조판
+            fills = column_fill(pdf, doc)
+            if fills:
+                extra = "".join(f"#q{n}{{padding-bottom:{v}mm}}"
+                                for n, v in sorted(fills.items()))
+                open(hp, "w", encoding="utf-8").write(
+                    html.replace("</head>", f"<style>{extra}</style></head>"))
+                r2 = subprocess.run(cmd, capture_output=True, text=True)
+                if r2.returncode != 0:
+                    report["pdf_error_pass2"] = (r2.stdout + r2.stderr)[-2000:]
+                report["column_fill"] = {"adjusted": len(fills)}
+            report["steps"]["pdf_s"] = round(time.time() - t1, 2)
             report["qc_pdf"] = qc_pdf(pdf, doc)
 
     report["steps"]["total_s"] = round(time.time() - t0, 2)

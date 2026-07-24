@@ -169,14 +169,15 @@ body { margin: 0; }
   text-indent: 0;
 }
 
-/* 밑줄: text-decoration 은 양쪽정렬로 벌어진 어간에 안 그려져 끊긴다.
- * 인라인 박스 전체를 덮는 배경 그라디언트로 그리면 연속선이 된다. */
+/* 밑줄: text-decoration 은 텍스트 run 단위로 그려져 한글/영문 폰트 폴백 경계와
+ * 양쪽정렬로 벌어진 어간에서 끊긴다. 인라인 박스의 border 로 그리면 그 줄 전체를
+ * 한 선으로 덮는다. (배경 그라디언트는 Vivliostyle PDF 출력에서 아예 안 나옴) */
 u {
   text-decoration: none;
-  background-image: linear-gradient(to top, currentColor .5pt, transparent .5pt);
-  background-position: 0 .06em;
-  background-repeat: repeat-x;
-  padding-bottom: .06em;
+  border-bottom: .5pt solid currentColor;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;      /* 줄바꿈된 조각에도 각각 밑줄 */
+  padding-bottom: .04em;
 }
 
 /* ---------- 선지 ---------- */
