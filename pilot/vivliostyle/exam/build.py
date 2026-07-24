@@ -136,7 +136,7 @@ def _collect(pdf_path, col_split_pt=420.9):
     return lines
 
 
-def column_fill(pdf_path, doc, safety=0.94):
+def column_fill(pdf_path, doc, safety=0.94, cap_mm=22.0):
     """단 하단에 죽는 여백을 그 단 안 문항 사이로 재분배.
 
     다단 흘림에서는 세로 균등정렬(vertical justification)이 CSS 에 없다.
@@ -176,9 +176,13 @@ def column_fill(pdf_path, doc, safety=0.94):
         leftover = COL_BOTTOM - max(y for _n, y in qs)
         if leftover <= 4:
             continue
-        add = leftover * safety / (len(qs) - 1)
+        # 간격 추가에는 상한을 둔다. 잔여를 전부 한두 개 간격에 몰아넣으면
+        # 문항 사이가 텅 비어 오히려 더 나빠 보인다 (단 하단 여백이 자연스럽다).
+        add_mm = min(leftover * safety / (len(qs) - 1) / 72 * 25.4, cap_mm)
+        if add_mm < 1:
+            continue
         for n, _y in sorted(qs)[:-1]:
-            out[n] = round(add / 72 * 25.4, 2)     # pt -> mm
+            out[n] = round(add_mm, 2)
     return out
 
 

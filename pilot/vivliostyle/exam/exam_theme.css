@@ -115,7 +115,7 @@ body { margin: 0; }
 /* ---------- 문항 ---------- */
 .q {
   break-inside: avoid;      /* ← 한 문항이 단/쪽을 넘어가지 않는다 */
-  padding-bottom: 11mm;     /* 단 하단에 죽는 여백을 문항 사이로 돌린다 */
+  padding-bottom: 8mm;      /* 기본 문항 간격 (2패스에서 단별로 더 얹는다) */
 }
 .q .stem {
   text-align: left;
