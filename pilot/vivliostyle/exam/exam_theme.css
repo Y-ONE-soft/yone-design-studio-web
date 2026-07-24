@@ -35,27 +35,6 @@ ol, ul { list-style: none; }
     padding-top: 4mm;
   }
 }
-@page :left {
-  @top-left {
-    content: counter(page);
-    font-family: "HCR Dotum", sans-serif;
-    font-weight: 700;
-    font-size: 30pt;
-    vertical-align: bottom;
-    padding-bottom: 1mm;
-  }
-}
-@page :right {
-  @top-right {
-    content: counter(page);
-    font-family: "HCR Dotum", sans-serif;
-    font-weight: 700;
-    font-size: 30pt;
-    vertical-align: bottom;
-    padding-bottom: 1mm;
-    text-align: right;
-  }
-}
 @page :first {
   @top-center { content: none; }
   @top-right { content: none; }
@@ -96,12 +75,6 @@ body { margin: 0; }
   margin-bottom: 4mm;
   font-family: "HCR Dotum", "함초롬돋움", sans-serif;
 }
-.masthead .copy {
-  font-size: 7.6pt;
-  text-align: center;
-  padding-bottom: 1.2mm;
-  letter-spacing: -.02em;
-}
 .masthead table {
   width: 100%;
   border-collapse: collapse;
@@ -115,19 +88,15 @@ body { margin: 0; }
   text-align: center;
   vertical-align: middle;
 }
-.masthead .hdr .code-h { width: 9%; }
-.masthead .hdr .lbl    { width: 5.5%; }
-.masthead .hdr .val    { width: 21%; text-align: center; }
-.masthead .hdr .code {
-  font-size: 20pt;
-  font-weight: 700;
-  letter-spacing: .04em;
-}
-.masthead .hdr .sign   { width: 9%; }
-.masthead .hdr .signbox { height: 13mm; font-size: 9.5pt; }
+.masthead .hdr .sub    { width: 15%; font-weight: 700; }
+.masthead .hdr .lbl    { width: 6%; }
+.masthead .hdr .val    { width: 17%; }
+.masthead .hdr .lbl2   { width: 9%; }
+.masthead .hdr .type-h { width: 17%; font-weight: 700; }
+.masthead .hdr .type-v { width: 17%; }
 .masthead .hdr .title {
-  width: 30%;
-  padding: 2mm 2mm 2.4mm;
+  width: 36%;
+  padding: 2.4mm 2mm 2.8mm;
 }
 .masthead .period {
   display: block;
@@ -143,11 +112,6 @@ body { margin: 0; }
   letter-spacing: .01em;
   white-space: nowrap;
 }
-.masthead .types {
-  width: 62%;
-  margin-top: 2.5mm;
-}
-.masthead .types .lbl2 { width: 22%; }
 
 /* ---------- 2단 흐름 ---------- */
 .flow {
