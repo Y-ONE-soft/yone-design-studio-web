@@ -1,0 +1,225 @@
+/* 학평 선별 모의고사 시험지 — A3 2단, 한 문항 = 한 단 완결
+ *
+ * 기준 실물: 26-1-기말 광문고1 세희어택 모의고사 (A3 297x420, 함초롬바탕 11.3pt)
+ * 핵심 규약:
+ *   .q { break-inside: avoid }  -> 문항이 단/쪽 경계에서 쪼개지지 않는다.
+ *   여백은 전부 padding 으로 (다단 fragmentainer 에서 margin-top 이 소실됨 — 파일럿 실측)
+ */
+
+:root {
+  --ink: #000;
+  --rule: #000;
+  --body-size: 11.3pt;
+  --body-lh: 1.42;
+  --col-gap: 9mm;
+}
+
+* { box-sizing: border-box; }
+p, ol, ul, li, h1, h2 { margin: 0; padding: 0; }
+ol, ul { list-style: none; }
+
+@page {
+  size: 297mm 420mm;
+  margin: 22mm 20mm 20mm;
+
+  @top-center {
+    content: element(runhead);
+    vertical-align: bottom;
+  }
+  @bottom-center {
+    content: counter(page) " / " counter(pages);
+    font-family: "HCR Batang", "Batang", serif;
+    font-size: 10.5pt;
+    letter-spacing: .06em;
+    padding-top: 4mm;
+  }
+}
+@page :first {
+  @top-center { content: none; }
+}
+
+html {
+  font-family: "HCR Batang", "함초롬바탕", "Batang", serif;
+  font-size: var(--body-size);
+  line-height: var(--body-lh);
+  color: var(--ink);
+  /* 한국어 금칙: 어절 중간 꺾기 허용(실물과 동일), 행두/행말 금칙은 strict */
+  line-break: strict;
+  hyphens: none;
+  text-align: justify;
+  text-justify: inter-word;
+}
+body { margin: 0; }
+
+/* ---------- 러닝 헤더 / 표지 ---------- */
+.runhead {
+  position: running(runhead);
+  width: 100%;
+  border-bottom: 1.6pt solid var(--rule);
+  padding-bottom: 1.5mm;
+  text-align: center;
+}
+.rh-title {
+  font-family: "HCR Dotum", "함초롬돋움", sans-serif;
+  font-weight: 700;
+  font-size: 15pt;
+  letter-spacing: .02em;
+}
+
+.masthead {
+  column-span: all;
+  border-bottom: 1.6pt solid var(--rule);
+  padding-bottom: 3mm;
+  margin-bottom: 5mm;
+  text-align: center;
+}
+.masthead .line1 {
+  font-family: "HCR Dotum", "함초롬돋움", sans-serif;
+  font-weight: 700;
+  font-size: 12pt;
+  letter-spacing: -.01em;
+  text-align: center;
+  padding-bottom: 2.5mm;
+}
+.masthead h1 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6mm;
+  font-weight: 400;
+}
+.masthead .period {
+  font-family: "HCR Dotum", "함초롬돋움", sans-serif;
+  font-size: 13pt;
+  font-weight: 700;
+  border: 1.2pt solid var(--rule);
+  border-radius: 999px;
+  padding: 1.4mm 4.5mm;
+  white-space: nowrap;
+}
+.masthead .maintitle {
+  font-family: "HCR Dotum", "함초롬돋움", sans-serif;
+  font-size: 26pt;
+  font-weight: 700;
+  letter-spacing: .01em;
+}
+
+/* ---------- 2단 흐름 ---------- */
+.flow {
+  column-count: 2;
+  column-gap: var(--col-gap);
+  column-fill: auto;
+  column-rule: .5pt solid #000;
+}
+
+/* ---------- 문항 ---------- */
+.q {
+  break-inside: avoid;      /* ← 한 문항이 단/쪽을 넘어가지 않는다 */
+  padding-bottom: 6.5mm;
+}
+.q .stem {
+  text-align: left;
+  text-indent: -6.4mm;
+  padding-left: 6.4mm;
+  padding-bottom: 1.6mm;
+  line-height: 1.35;
+}
+.qnum {
+  font-family: "HCR Batang", serif;
+  font-weight: 700;
+  font-style: italic;
+  font-size: 12.2pt;
+  padding-right: 1.2mm;
+}
+.score { white-space: nowrap; }
+
+/* 지문 박스 */
+.passage {
+  border: .6pt solid var(--rule);
+  padding: 2.4mm 2.6mm 2.2mm;
+}
+.passage p { text-indent: 1em; }
+.passage p + p { padding-top: .8mm; }
+.passage .note {
+  text-indent: 0;
+  padding-top: 1.4mm;
+  font-size: 9.2pt;
+  line-height: 1.3;
+  text-align: left;
+}
+
+/* 원고에서 밑줄이 붕괴된 빈칸 자리 */
+.blank {
+  display: inline-block;
+  width: 24mm;
+  border-bottom: .7pt solid var(--ink);
+  vertical-align: -.12em;
+  margin: 0 .12em;
+}
+
+/* 어휘 선택 네모 (원고의 글자 테두리 run) */
+.boxword {
+  display: inline-block;
+  border: .6pt solid var(--ink);
+  padding: 0 .9mm;
+  margin: 0 .12em;
+  line-height: 1.16;
+  text-align: center;
+  vertical-align: middle;
+  text-indent: 0;
+}
+
+/* ---------- 선지 ---------- */
+.choices { padding-top: 1.8mm; }
+.choices li {
+  display: flex;
+  align-items: baseline;
+  gap: .9mm;
+  padding-top: .5mm;
+  text-align: left;
+}
+.choices .mk { flex: none; }
+.choices .ct { flex: 1; }
+
+/* 짧은 선지: 한 줄에 5개 */
+.choices.inline { display: flex; gap: 0; }
+.choices.inline li { flex: 1; padding-top: 0; }
+
+/* (A)(B)(C) 3열 격자 */
+.choices.abc li {
+  display: grid;
+  grid-template-columns: 5.2mm 1fr 1fr 1fr;
+  gap: 0 1.2mm;
+  align-items: baseline;
+}
+.choices.abc li span { text-align: left; }
+.choices.abc .abc-head span {
+  font-weight: 700;
+  text-align: center;
+  padding-bottom: .4mm;
+}
+
+/* ---------- 정답 ---------- */
+.answers {
+  break-before: page;
+  column-span: all;
+}
+.answers h2 {
+  font-family: "HCR Dotum", sans-serif;
+  font-size: 16pt;
+  padding-bottom: 3mm;
+  text-align: center;
+}
+.anslist {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1.4mm;
+}
+.anslist li {
+  display: flex;
+  align-items: baseline;
+  gap: 1.6mm;
+  border: .5pt solid var(--rule);
+  padding: 1.2mm 2mm;
+}
+.anslist .mk { font-weight: 700; min-width: 6mm; }

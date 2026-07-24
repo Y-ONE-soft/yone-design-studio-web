@@ -197,6 +197,12 @@ def parse(paras, classify=None):
         head = _strip_prefix_from_runs(head, RE_LEAD_NUM)
         if _looks_like_question(_pull_text(head)):
             q_runs, rest = head, blk[1:]
+        elif q_by_num.get(RE_SRC.match(src).group(4)):
+            ref = q_by_num[RE_SRC.match(src).group(4)]
+            q_runs, rest = [dict(r) for r in ref], blk
+            warnings.append(f"{src}: 발문 단락 없음 — 같은 원 문항번호"
+                            f"({RE_SRC.match(src).group(4)}번) 발문 승계 "
+                            f"({_pull_text(q_runs)[:34]}…)")
         elif items:
             q_runs, rest = [dict(r) for r in items[-1]["question"]], blk
             warnings.append(f"{src}: 발문 단락 없음 — 직전 문항 발문 승계 "
