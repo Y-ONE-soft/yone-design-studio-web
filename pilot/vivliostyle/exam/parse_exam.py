@@ -92,7 +92,9 @@ def _extract_footnotes(runs):
     note = m.group(1).strip()
     if len(note) > 220 or ":" not in note:
         return runs, []
-    notes = [n.strip() for n in re.split(r"(?=\*\*?\s*\S)", note) if n.strip()]
+    # 각주 마커는 *, ** 로 개수가 다르다. 앞쪽에서 자르면 ** 가 * + * 로
+    # 쪼개져 별표만 있는 고아 줄이 생긴다 -> 마커+본문 덩어리로 통째 추출.
+    notes = [n.strip() for n in re.findall(r"\*+\s*[^*]+", note) if n.strip()]
     return _rstrip_runs(_cut_tail(runs, len(text) - m.start())), notes
 
 
@@ -129,15 +131,23 @@ def _split_choices(runs):
     return out
 
 
-def _mark_blanks(runs):
-    """공백/언더스코어로 붕괴된 빈칸을 blank run 으로 승격."""
+def _mark_blanks(runs, space_blank=True):
+    """공백/언더스코어로 붕괴된 빈칸을 blank run 으로 승격.
+
+    space_blank=False 면 언더스코어 빈칸만 인정한다 — 빈칸형이 아닌 문항에서
+    선지 앞 공백 등을 빈칸으로 오검출하지 않기 위해.
+    """
     out = []
     for r in runs:
         t = r["t"]
         parts, last = [], 0
-        for m in (list(RE_UNDERSCORE_BLANK.finditer(t))
-                  + list(RE_BLANK.finditer(t))
-                  + list(RE_BLANK_PUNCT.finditer(t))):
+        cands = list(RE_UNDERSCORE_BLANK.finditer(t))
+        if space_blank:
+            cands += list(RE_BLANK.finditer(t)) + list(RE_BLANK_PUNCT.finditer(t))
+        for m in cands:
+            # 원문자 선지 바로 앞 공백은 빈칸이 아니다
+            if t[m.end():m.end() + 1] in "①②③④⑤":
+                continue
             parts.append((m.start(), m.end()))
         parts.sort()
         merged = []
@@ -269,8 +279,6 @@ def parse(paras, classify=None):
             if not passage[-1]:
                 passage.pop()
 
-        passage = [_mark_blanks(r) for r in passage if r]
-
         q_clean = _pull_text(q_runs)
         code = label = None
         if classify:
@@ -278,6 +286,11 @@ def parse(paras, classify=None):
                 code, label, _kind = classify(q_clean)
             except Exception:
                 pass
+
+        # 공백 붕괴로 추정하는 빈칸은 **빈칸형 문항에서만** 승격한다.
+        # (흐름무관 35번의 "weak.  ①For" 같은 선지 앞 공백을 빈칸으로 오검출한 사례)
+        space_blank = bool(code and "BLANK" in code)
+        passage = [_mark_blanks(r, space_blank) for r in passage if r]
 
         items.append({
             "n": k + 1,

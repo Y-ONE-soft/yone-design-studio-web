@@ -154,7 +154,7 @@ body { margin: 0; }
   width: 24mm;
   border-bottom: .7pt solid var(--ink);
   vertical-align: -.12em;
-  margin: 0 .12em;
+  margin: 0 .35em;      /* 앞 단어에 붙어 보이지 않게 */
 }
 
 /* 어휘 선택 네모 (원고의 글자 테두리 run) */

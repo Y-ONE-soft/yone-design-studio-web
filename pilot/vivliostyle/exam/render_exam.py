@@ -63,9 +63,10 @@ def _choices_html(item):
                 '<span>(A)</span><span>(B)</span><span>(C)</span></li>')
         return f'<ol class="choices abc">{head}{"".join(rows)}</ol>'
 
-    # 아주 짧은 선지(원문자 기호 등)는 한 줄에 5개
+    # 한 줄 배열은 기호형 선지(ⓐ ⓑ …)에만. 낱말 선지까지 인라인으로 돌리면
+    # 그 문항만 지면 형식이 튀고 선지 간격이 제각각이 된다 (검수 지적).
     cls = "choices"
-    if max(len(t) for t in texts) <= 12:
+    if max(len(t) for t in texts) <= 4:
         cls += " inline"
     lis = "".join(
         f'<li><span class="mk">{esc(c["label"])}</span>'
