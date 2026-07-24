@@ -187,7 +187,10 @@ def row_align_deltas(pdf_path, doc):
     return add, worst
 
 
-def page_fill_deltas(pdf_path, doc, safety=0.92):
+BASE_GAP_MM = 12.0      # exam_theme.css 의 .q padding-bottom
+
+
+def page_fill_deltas(pdf_path, doc, safety=0.92, base_gap_mm=BASE_GAP_MM):
     """행 정렬을 유지한 채 페이지 하단 잔여를 문항 사이로 흡수.
 
     좌/우단이 이미 행 정렬돼 있으므로, **같은 행 번호의 두 문항에 똑같은 양**을
@@ -201,7 +204,10 @@ def page_fill_deltas(pdf_path, doc, safety=0.92):
         rows = min(len(c0), len(c1))
         if rows < 2:
             continue
-        left = min(COL_BOTTOM - col[rows - 1][2] for col in (c0, c1))
+        # 마지막 문항의 기본 여백도 break-inside:avoid 상자 안이라 단 높이를
+        # 차지한다. 그만큼 빼지 않으면 마지막 문항이 다음 단으로 밀려난다.
+        pad = base_gap_mm / 25.4 * 72
+        left = min(COL_BOTTOM - col[rows - 1][2] - pad for col in (c0, c1))
         if left <= 6:
             continue
         per = left * safety / (rows - 1) / 72 * 25.4
