@@ -14,6 +14,10 @@ import unicodedata
 import zipfile
 
 NS_T = re.compile(r"<hp:t>(.*?)</hp:t>", re.S)
+# <hp:t> 안에는 탭 같은 요소가 중첩된다: <hp:t><hp:tab .../>(A) ...</hp:t>
+# 걷어내지 않으면 원시 마크업이 그대로 본문에 인쇄된다.
+_TAB_EL = re.compile(r"<hp:tab\b[^>]*/?>")
+_ANY_EL = re.compile(r"<[^>]+>")
 
 # 원고에 섞여 들어오는 이형 문자 -> 표준 문자.
 # (소프트하이픈/수정자 마이너스가 단어 중간에 박혀 있는 사례가 실제로 있음)
@@ -91,7 +95,11 @@ def extract(path):
         for m in re.finditer(r'<hp:run charPrIDRef="(\d+)".*?</hp:run>', p, re.S):
             cid, chunk = m.group(1), m.group(0)
             attrs = props.get(cid, base)
-            txt = "".join(_unescape(t) for t in NS_T.findall(chunk))
+            # 중첩 요소 제거는 반드시 _unescape 앞에서 (원고의 &lt; 를 태그로
+            # 오인하지 않도록). 탭은 공백으로 살린다.
+            txt = "".join(
+                _unescape(_ANY_EL.sub("", _TAB_EL.sub(" ", t)))
+                for t in NS_T.findall(chunk))
             if not txt:
                 continue
             txt = fix_chars(unicodedata.normalize("NFC", txt))

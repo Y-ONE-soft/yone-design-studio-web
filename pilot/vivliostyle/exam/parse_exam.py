@@ -19,6 +19,8 @@ RE_CIRCLED = re.compile(r"[①-⑤]")          # ①~⑤
 RE_CIRCLED_SPLIT = re.compile(r"(?=[①-⑤])")
 RE_FOOTNOTE = re.compile(r"(\*+\s*[^*]+?:\s*[^*]+?)(?=\*|$)")
 RE_ABC_TAIL = re.compile(r"(?:\(\s*[ABC]\s*\)\s*){2,}$")
+# 문단 전체가 어휘 각주인 경우 ("* levy: 부과하다 ** caliph: …")
+RE_NOTE_PARA = re.compile(r"^\s*\*+\s*\S")
 # 빈칸: 원고에서 밑줄이 공백으로 붕괴된 자리.
 #  (a) 문장 한가운데의 2칸 이상 공백
 #  (b) 영문에서 구두점 바로 앞의 공백 ("... included ." <- 빈칸이 1칸으로 붕괴)
@@ -258,11 +260,18 @@ def parse(paras, classify=None):
         # (A)(B)(C) 헤더 행 (어휘 네모 문항)
         abc_header = False
         passage = []
+        para_notes = []
         for p in body:
             runs = _rstrip_runs(p["runs"])
             if not runs:
                 continue
             txt = _pull_text(runs)
+            # 어휘 각주가 지문 꼬리가 아니라 **독립 문단**으로 오는 원고가 있다.
+            # ("* levy: 부과하다 ** caliph: …" 한 줄이 통째로 한 문단)
+            if RE_NOTE_PARA.match(txt) and ":" in txt:
+                para_notes += [n.strip() for n in re.findall(r"\*+\s*[^*]+", txt)
+                               if n.strip()]
+                continue
             m = RE_ABC_TAIL.search(txt)
             if m:
                 abc_header = True
@@ -292,12 +301,13 @@ def parse(paras, classify=None):
                 r["t"] = RE_SCORE.sub("", r["t"])
             q_runs = _rstrip_runs(q_runs)
 
-        # 어휘 주석 분리 (마지막 지문 단락 꼬리)
+        # 어휘 주석 분리 (마지막 지문 단락 꼬리) + 독립 문단으로 온 각주
         notes = []
         if passage:
             passage[-1], notes = _extract_footnotes(passage[-1])
             if not passage[-1]:
                 passage.pop()
+        notes = notes + para_notes
 
         q_runs, normalized = _normalize_stem(q_runs)
         if normalized:

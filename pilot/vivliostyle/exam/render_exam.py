@@ -77,7 +77,7 @@ def _choices_html(item):
 def _item_html(item):
     boxify = item["abc_header"]
     q = _runs_html(item["question"])
-    score = f' <span class="score">[{item["score"]:g}점]</span>' if item["score"] else ""
+    score = f' <span class="score">[{item["score"]:.1f}점]</span>' if item["score"] else ""
 
     body = []
     for runs in item["passage"]:
