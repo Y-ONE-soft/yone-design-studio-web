@@ -307,6 +307,7 @@ def main():
         "total_score": 100,
         "exam_date": _today(),
         "exam_date_short": _today_short(),
+        "logo": "logo.png",
         "target": "( 1 )학년",
     }
     if a.config:
@@ -348,6 +349,9 @@ def main():
     hp = os.path.join(build, "exam.html")
     open(hp, "w", encoding="utf-8").write(html)
     shutil.copy(os.path.join(HERE, "exam_theme.css"), build)
+    logo_src = os.path.join(HERE, "assets", "logo_sehui.png")
+    if cfg.get("logo") and os.path.exists(logo_src):
+        shutil.copy(logo_src, os.path.join(build, cfg["logo"]))
     json.dump({"items": [{k: v for k, v in it.items() if k != "question"}
                          for it in doc["items"]]},
               open(os.path.join(build, "ir.json"), "w", encoding="utf-8"),

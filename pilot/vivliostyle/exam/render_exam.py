@@ -135,6 +135,8 @@ def build_html(doc, cfg, answers=None, css="exam_theme.css"):
     running = (
         '<div class="runhead" role="presentation">'
         f'<span class="rh-title">{esc(cfg["title"])}</span></div>'
+        + (f'<div class="logohead" role="presentation">'
+           f'<img src="{esc(logo)}" alt=""></div>' if logo else "")
     )
     body = "".join(_item_html(it) for it in items)
     ans = _answer_table(items, answers) if answers else ""

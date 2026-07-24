@@ -36,6 +36,12 @@ ol, ul { list-style: none; }
     text-align: right;
     padding-bottom: .5mm;
   }
+  /* 2쪽부터 왼쪽 위 작은 로고 */
+  @top-left {
+    content: element(logohead);
+    vertical-align: bottom;
+    text-align: left;
+  }
   @bottom-center {
     content: counter(page) " / " counter(pages);
     font-family: "HCR Batang", "Batang", serif;
@@ -45,7 +51,9 @@ ol, ul { list-style: none; }
   }
 }
 @page :first {
-  @top-center { content: none; }   /* 1쪽은 러닝 제목 대신 표지 머리표 */
+  /* 1쪽은 러닝 제목/로고 대신 표지 머리표가 대신한다 */
+  @top-center { content: none; }
+  @top-left { content: none; }
 }
 
 html {
@@ -77,11 +85,21 @@ body { margin: 0; }
 }
 
 /* 표지 머리표 — 부제목 줄 + 교시 배지 + 큰 제목 (아래 가로줄은 .flow 의 border-top) */
+.logohead { position: running(logohead); }
+.logohead img { display: block; width: 26mm; }
+
 .masthead {
+  position: relative;          /* 로고 절대배치 기준 */
   column-span: all;
   padding-bottom: 4mm;
   text-align: center;
   font-family: "HCR Dotum", "함초롬돋움", sans-serif;
+}
+.masthead .logo {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 44mm;
 }
 .masthead .line1 {
   font-weight: 700;
