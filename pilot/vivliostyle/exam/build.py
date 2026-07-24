@@ -30,6 +30,12 @@ import render_exam as R   # noqa: E402
 import scoring            # noqa: E402
 
 
+def _today():
+    from datetime import date
+    d = date.today()
+    return f"{d.year}년 {d.month}월 {d.day}일"
+
+
 def norm(s):
     return re.sub(r"\s+", "", unicodedata.normalize("NFC", s))
 
@@ -181,6 +187,30 @@ def row_align_deltas(pdf_path, doc):
     return add, worst
 
 
+def page_fill_deltas(pdf_path, doc, safety=0.92):
+    """행 정렬을 유지한 채 페이지 하단 잔여를 문항 사이로 흡수.
+
+    좌/우단이 이미 행 정렬돼 있으므로, **같은 행 번호의 두 문항에 똑같은 양**을
+    더하면 정렬이 유지되면서 두 단이 함께 내려온다. 배분량은 그 페이지 두 단 중
+    잔여가 **작은 쪽** 기준 — 큰 쪽에 맞추면 작은 쪽이 넘쳐 문항이 밀린다.
+    """
+    zones = _zones(pdf_path, doc)
+    add = {}
+    for p in {pg for pg, _c in zones}:
+        c0, c1 = zones.get((p, 0), []), zones.get((p, 1), [])
+        rows = min(len(c0), len(c1))
+        if rows < 2:
+            continue
+        left = min(COL_BOTTOM - col[rows - 1][2] for col in (c0, c1))
+        if left <= 6:
+            continue
+        per = left * safety / (rows - 1) / 72 * 25.4
+        for k in range(rows - 1):
+            for col in (c0, c1):
+                add[col[k][0]] = add.get(col[k][0], 0) + per
+    return add
+
+
 def column_fill(pdf_path, doc, safety=0.94, cap_mm=22.0):
     """단 하단에 죽는 여백을 그 단 안 문항 사이로 재분배.
 
@@ -245,15 +275,8 @@ def main():
         "subtitle": "2026학년도 여름방학",
         "period": "제 1 교시",
         "total_score": 100,
-        "subject_code": "08",
-        "exam_date": "(   )월 (   )일 ( 1 )교시",
+        "exam_date": _today(),
         "target": "( 1 )학년",
-        "teachers": "",
-        "subjective_count": 0,
-        "subjective_score": 0,
-        "copyright": "이 시험 문제의 저작권은 Y.ONE STUDIO 에 있습니다. "
-                     "저작권법에 의해 보호받는 저작물이므로 무단 전재와 복제는 "
-                     "금지되며, 이를 어길 시 저작권법에 의거 처벌될 수 있습니다.",
     }
     if a.config:
         cfg.update(json.load(open(a.config, encoding="utf-8")))
@@ -305,7 +328,7 @@ def main():
         cli = os.path.join(HERE, "..", "node_modules", ".bin", "vivliostyle")
         cmd = [cli, "build", hp, "-o", pdf, "-f", "pdf"]
         def emit(pads):
-            extra = "".join(f"#q{n}{{padding-bottom:calc(8mm + {v:.2f}mm)}}"
+            extra = "".join(f"#q{n}{{padding-bottom:calc(12mm + {v:.2f}mm)}}"
                             for n, v in sorted(pads.items()) if v > 0.05)
             open(hp, "w", encoding="utf-8").write(
                 html.replace("</head>", f"<style>{extra}</style></head>")
@@ -323,11 +346,18 @@ def main():
             best, best_q = {}, base
             pads = {}
             hist = []
-            for _ in range(4):
+            filled = False
+            for _ in range(6):
                 add, worst = row_align_deltas(pdf, doc)
                 hist.append(round(worst, 1))
                 if worst < 2.0 or not add:
-                    break
+                    # 정렬이 맞았으면 하단 잔여를 문항 사이로 한 번 흡수하고
+                    # 다시 정렬 확인 (흡수가 정렬을 흔들 수 있으므로)
+                    if filled:
+                        break
+                    add, filled = page_fill_deltas(pdf, doc), True
+                    if not add:
+                        break
                 cand = dict(pads)
                 for n, v in add.items():
                     cand[n] = cand.get(n, 0) + v

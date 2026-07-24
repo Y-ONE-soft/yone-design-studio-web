@@ -26,7 +26,16 @@ ol, ul { list-style: none; }
     content: element(runhead);
     vertical-align: bottom;
   }
-  /* 큰 쪽번호는 바깥쪽(짝수=왼쪽 / 홀수=오른쪽)에 — 실물 시험지 관례 */
+  /* 큰 쪽번호 — 전 페이지 오른쪽 */
+  @top-right {
+    content: counter(page);
+    font-family: "HCR Dotum", sans-serif;
+    font-weight: 700;
+    font-size: 30pt;
+    vertical-align: bottom;
+    text-align: right;
+    padding-bottom: .5mm;
+  }
   @bottom-center {
     content: counter(page) " / " counter(pages);
     font-family: "HCR Batang", "Batang", serif;
@@ -54,11 +63,11 @@ html {
 body { margin: 0; }
 
 /* ---------- 러닝 헤더 / 표지 ---------- */
+/* 러닝 헤더는 글자만. 아래 가로줄은 여백상자 폭(가운데 3분의 1)에 갇히므로
+ * 본문 폭 전체를 덮도록 .flow 의 top border 로 그린다. */
 .runhead {
   position: running(runhead);
-  width: 100%;
-  border-bottom: 1.6pt solid var(--rule);
-  padding-bottom: 1.5mm;
+  padding-bottom: 1mm;
   text-align: center;
 }
 .rh-title {
@@ -119,12 +128,17 @@ body { margin: 0; }
   column-gap: var(--col-gap);
   column-fill: auto;
   column-rule: .5pt solid #000;
+  /* 매 페이지 상단 가로줄 + 헤더와 첫 문항 사이 간격 (clone 이라 전 조각에 적용) */
+  border-top: 1.6pt solid var(--rule);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  padding-top: 6mm;
 }
 
 /* ---------- 문항 ---------- */
 .q {
   break-inside: avoid;      /* ← 한 문항이 단/쪽을 넘어가지 않는다 */
-  padding-bottom: 8mm;      /* 기본 문항 간격 (2패스에서 단별로 더 얹는다) */
+  padding-bottom: 12mm;     /* 기본 문항 간격 (2패스에서 단별로 더 얹는다) */
 }
 .q .stem {
   text-align: left;
