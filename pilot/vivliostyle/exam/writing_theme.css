@@ -58,7 +58,7 @@ body { margin: 0; }
 }
 
 /* ---------- 세트 ---------- */
-.wset { padding-bottom: 5mm; }
+.wset { padding-bottom: 5mm; break-inside: avoid; }
 .setnum { break-after: avoid; padding-bottom: 1.4mm; }
 .snum {
   font-family: "HCR Dotum", sans-serif; font-weight: 700; font-size: 11pt;
