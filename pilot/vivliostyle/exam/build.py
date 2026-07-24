@@ -34,27 +34,32 @@ def norm(s):
 
 
 def qc_content(doc, raw_paras):
-    """원고 글자가 산출물 IR 에 전량 살아 있는지 (공백 무시 substring)."""
-    ir = norm(" ".join(
-        [it["question_text"] for it in doc["items"]]
-        + [P._pull_text(r) for it in doc["items"] for r in it["passage"]]
-        + [n for it in doc["items"] for n in it["notes"]]
-        + [c["label"] + "".join(x["t"] for x in c["runs"])
-           for it in doc["items"] for c in it["choices"]]
-    ))
-    missing = []
-    for p in raw_paras:
-        t = norm(p["text"])
-        if len(t) < 8:
-            continue
-        if P.RE_SRC.match(p["text"].strip()):
-            continue
-        # 원고에 있던 머리번호/묶음마커/배점은 조판에서 의도적으로 제거된다
-        t2 = norm(re.sub(r"\[\s*\d\s*점\s*\]", "",
-                         P.RE_LEAD_NUM.sub("", P.RE_GROUP_HEAD.sub("", p["text"]))))
-        if t2 and t2 not in ir:
-            missing.append(p["text"][:70])
-    return missing
+    """원고 글자가 산출물에 전량 살아 있는지.
+
+    조판이 의도적으로 지우는 것(출처 줄·머리번호·묶음마커·배점·빈칸 공백)이
+    있으므로 단순 substring 으로는 판정할 수 없다. 문서 전체를 정규화해
+    difflib 로 정렬하고, **연속 12자 이상 사라진 구간**만 결손으로 본다.
+    """
+    import difflib
+    src = norm(" ".join(
+        re.sub(r"\[\s*\d\s*점\s*\]", "",
+               P.RE_LEAD_NUM.sub("", P.RE_GROUP_HEAD.sub("", p["text"])))
+        for p in raw_paras if not P.RE_SRC.match(p["text"].strip())))
+    # 원고와 같은 문서 순서로 이어붙여야 difflib 정렬이 성립한다.
+    seq = []
+    for it in doc["items"]:
+        seq.append(it["question_text"])
+        seq += [P._pull_text(r) for r in it["passage"]]
+        seq += it["notes"]
+        seq += [c["label"] + "".join(x["t"] for x in c["runs"])
+                for c in it["choices"]]
+    out = norm(" ".join(seq))
+    sm = difflib.SequenceMatcher(None, src, out, autojunk=False)
+    gaps = []
+    for tag, i1, i2, _j1, _j2 in sm.get_opcodes():
+        if tag in ("delete", "replace") and i2 - i1 >= 12:
+            gaps.append({"len": i2 - i1, "text": src[i1:i2][:120]})
+    return {"src_chars": len(src), "out_chars": len(out), "gaps": gaps}
 
 
 def qc_pdf(pdf_path):
