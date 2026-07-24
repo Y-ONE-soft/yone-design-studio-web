@@ -113,6 +113,14 @@ body { margin: 0; }
   white-space: nowrap;
 }
 
+.masthead .info {
+  font-size: 10pt;
+  letter-spacing: .01em;
+  color: #333;
+  text-align: center;
+  padding-top: 2.6mm;
+}
+
 /* ---------- 2단 흐름 ---------- */
 .flow {
   column-count: 2;

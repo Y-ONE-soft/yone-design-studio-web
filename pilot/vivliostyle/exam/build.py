@@ -36,6 +36,12 @@ def _today():
     return f"{d.year}년 {d.month}월 {d.day}일"
 
 
+def _today_short():
+    from datetime import date
+    d = date.today()
+    return f"{d.year}. {d.month}. {d.day}."
+
+
 def norm(s):
     return re.sub(r"\s+", "", unicodedata.normalize("NFC", s))
 
@@ -285,6 +291,7 @@ def main():
         "period": "제 3 교시",
         "total_score": 100,
         "exam_date": _today(),
+        "exam_date_short": _today_short(),
         "target": "( 1 )학년",
     }
     if a.config:

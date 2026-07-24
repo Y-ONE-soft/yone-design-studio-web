@@ -112,11 +112,19 @@ def build_html(doc, cfg, answers=None, css="exam_theme.css"):
         f'<title>{esc(cfg["title"])}</title>'
         f'<link rel="stylesheet" href="{css}">'
     )
+    # 제목 아래 한 줄 정보 — 문항 수·총점은 조판 데이터에서 계산한다.
+    total = round(sum(it.get("score") or 0 for it in items), 1)
+    info = " · ".join(x for x in (
+        f"선택형 {len(items)}문항",
+        f"{total:g}점",
+        cfg.get("exam_date_short", ""),
+    ) if x)
     masthead = (
         '<header class="masthead">'
         f'<p class="line1">{esc(cfg["subtitle"])}</p>'
         f'<h1><span class="period">{esc(cfg["period"])}</span>'
         f'<span class="maintitle">{esc(cfg["title"])}</span></h1>'
+        f'<p class="info">{esc(info)}</p>'
         '</header>'
     )
     running = (
