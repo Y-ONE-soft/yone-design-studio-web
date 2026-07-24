@@ -115,7 +115,7 @@ body { margin: 0; }
 /* ---------- 문항 ---------- */
 .q {
   break-inside: avoid;      /* ← 한 문항이 단/쪽을 넘어가지 않는다 */
-  padding-bottom: 6.5mm;
+  padding-bottom: 11mm;     /* 단 하단에 죽는 여백을 문항 사이로 돌린다 */
 }
 .q .stem {
   text-align: left;
@@ -145,7 +145,7 @@ body { margin: 0; }
   padding-top: 1.4mm;
   font-size: 9.2pt;
   line-height: 1.3;
-  text-align: left;
+  text-align: right;      /* 어휘 각주는 오른쪽 정렬 */
 }
 
 /* 원고에서 밑줄이 붕괴된 빈칸 자리 */
@@ -157,16 +157,26 @@ body { margin: 0; }
   margin: 0 .35em;      /* 앞 단어에 붙어 보이지 않게 */
 }
 
-/* 어휘 선택 네모 (원고의 글자 테두리 run) */
+/* 어휘 선택 네모 (원고의 글자 테두리 run) — 한 줄, 슬래시 구분 */
 .boxword {
   display: inline-block;
-  border: .6pt solid var(--ink);
-  padding: 0 .9mm;
-  margin: 0 .12em;
-  line-height: 1.16;
-  text-align: center;
-  vertical-align: middle;
+  border: .5pt solid var(--ink);
+  padding: 0 1mm;
+  margin: 0 .15em;
+  line-height: 1.2;
+  white-space: nowrap;
+  vertical-align: baseline;
   text-indent: 0;
+}
+
+/* 밑줄: text-decoration 은 양쪽정렬로 벌어진 어간에 안 그려져 끊긴다.
+ * 인라인 박스 전체를 덮는 배경 그라디언트로 그리면 연속선이 된다. */
+u {
+  text-decoration: none;
+  background-image: linear-gradient(to top, currentColor .5pt, transparent .5pt);
+  background-position: 0 .06em;
+  background-repeat: repeat-x;
+  padding-bottom: .06em;
 }
 
 /* ---------- 선지 ---------- */
@@ -193,9 +203,10 @@ body { margin: 0; }
   align-items: baseline;
 }
 .choices.abc li span { text-align: left; }
+/* 헤더 (A)(B)(C) 는 아래 낱말 열 시작선에 맞춘다 (가운데 정렬하면 우측으로 쏠림) */
 .choices.abc .abc-head span {
   font-weight: 700;
-  text-align: center;
+  text-align: left;
   padding-bottom: .4mm;
 }
 

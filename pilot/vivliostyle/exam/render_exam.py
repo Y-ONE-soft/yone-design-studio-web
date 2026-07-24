@@ -22,11 +22,10 @@ def _run_html(r, boxify=False):
     if not t:
         return ""
     if r.get("box") or (boxify and r.get("ul")):
+        # 네모 안 낱말은 한 줄에 두고 슬래시로 구분한다 (2줄 스택 금지 — 행간이 튄다)
         words = [w.strip() for w in re.split(r"\s*/\s*", r["t"].strip()) if w.strip()]
-        if len(words) >= 2:
-            inner = "<br>".join(esc(w) for w in words)
-            return f'<span class="boxword">{inner}</span>'
-        return f'<span class="boxword">{t}</span>'
+        inner = esc(" / ".join(words)) if words else t
+        return f'<span class="boxword">{inner}</span>'
     if r.get("ul"):
         t = f"<u>{t}</u>"
     if r.get("bold"):
@@ -78,7 +77,7 @@ def _choices_html(item):
 def _item_html(item):
     boxify = item["abc_header"]
     q = _runs_html(item["question"])
-    score = f' <span class="score">[{item["score"]}점]</span>' if item["score"] else ""
+    score = f' <span class="score">[{item["score"]:g}점]</span>' if item["score"] else ""
 
     body = []
     for runs in item["passage"]:

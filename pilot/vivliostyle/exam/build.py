@@ -27,6 +27,7 @@ sys.path.insert(0, ROOT)
 import hwpx_rich          # noqa: E402
 import parse_exam as P    # noqa: E402
 import render_exam as R   # noqa: E402
+import scoring            # noqa: E402
 
 
 def norm(s):
@@ -125,9 +126,10 @@ def main():
     a = ap.parse_args()
 
     cfg = {
-        "title": "세희어택 모의고사",
-        "subtitle": "2026학년도 1학기 기말 광문고1 세희어택 전범위 모의고사",
+        "title": "세서특필 모의고사",
+        "subtitle": "2026학년도 여름방학 세서특필 모의고사",
         "period": "제 1 교시",
+        "total_score": 100,
     }
     if a.config:
         cfg.update(json.load(open(a.config, encoding="utf-8")))
@@ -153,6 +155,9 @@ def main():
         answers = P.parse_answers(hwpx_rich.extract(a.answers))
     report["answers_matched"] = sum(
         1 for it in doc["items"] if it["src"] in answers)
+
+    # 배점 분배 (합 = 총점 보장). 원고의 원 [3점]은 난이도 보조 신호로만 쓴다.
+    report["scoring"] = scoring.assign(doc["items"], cfg.get("total_score", 100))
 
     # --- QC 1~3 (조판 전) ---
     report["qc_missing_text"] = qc_content(doc, paras)
