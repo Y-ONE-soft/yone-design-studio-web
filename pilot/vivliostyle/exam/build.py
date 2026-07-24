@@ -62,27 +62,57 @@ def qc_content(doc, raw_paras):
     return {"src_chars": len(src), "out_chars": len(out), "gaps": gaps}
 
 
-def qc_pdf(pdf_path):
-    """PDF 기하 실측: 문항 헤드가 단 경계를 넘어 쪼개졌는지 / 빈 페이지."""
+def qc_pdf(pdf_path, doc, col_split_pt=420.9):
+    """PDF 기하 실측.
+
+    핵심 게이트: **한 문항이 단/쪽 경계를 넘지 않는다.**
+    문항의 첫 글자(번호 헤드)와 마지막 글자(마지막 선지 꼬리)가 같은 페이지·
+    같은 단에 있어야 통과. 두 지점 사이의 모든 줄도 같은 단이어야 한다.
+    """
     import fitz
     d = fitz.open(pdf_path)
     pages = len(d)
-    empty = []
-    for i, pg in enumerate(d):
-        if not pg.get_text().strip():
-            empty.append(i + 1)
-    # 문항 번호 헤드 위치 수집: "N." 로 시작하는 굵은 이탤릭 span
-    heads = {}
+    empty = [i + 1 for i, pg in enumerate(d) if not pg.get_text().strip()]
+
+    # (page, col, y, x, text) 로 본문 줄만 수집 — 러닝 헤더/푸터는 제외해야
+    # 문항 구간에 섞여 들어가 가짜 '단 분할'로 잡히지 않는다 (실측 y: 헤더 36, 푸터 1161)
+    lines = []
     for i, pg in enumerate(d):
         for b in pg.get_text("dict")["blocks"]:
             for l in b.get("lines", []):
-                for s in l["spans"]:
-                    m = re.match(r"^\s*(\d{1,2})\.\s*$", s["text"])
-                    if m and s["size"] > 11.6:
-                        n = int(m.group(1))
-                        heads.setdefault(n, (i + 1, s["bbox"][0], s["bbox"][1]))
+                t = "".join(s["text"] for s in l["spans"])
+                y0, x0 = l["bbox"][1], l["bbox"][0]
+                if t.strip() and 50 < y0 < 1140:
+                    lines.append((i + 1, 0 if x0 < col_split_pt else 1, y0, x0, t))
+    lines.sort(key=lambda r: (r[0], r[1], r[2]))
+
+    flat = [(r[0], r[1], r[4]) for r in lines]
+    # 정답 섹션은 문항 구간 판정에서 제외 (마지막 문항의 꼬리로 잡히지 않게)
+    cut = next((k for k, (_p, _c, t) in enumerate(flat)
+                if t.strip() == "정답"), len(flat))
+    flat = flat[:cut]
+    heads = {}
+    splits = []
+    for it in doc["items"]:
+        n = it["n"]
+        # 문항 시작: "N." 로 시작하는 줄 (번호는 문서에서 한 번만 헤드로 등장)
+        hi = next((k for k, (_p, _c, t) in enumerate(flat)
+                   if re.match(rf"^\s*{n}\.\s", t)), None)
+        if hi is None:
+            splits.append({"n": n, "why": "번호 헤드를 PDF에서 못 찾음"})
+            continue
+        # 문항 끝: 다음 문항 헤드 직전
+        nj = next((k for k, (_p, _c, t) in enumerate(flat)
+                   if k > hi and re.match(rf"^\s*{n + 1}\.\s", t)), len(flat))
+        seg = flat[hi:nj]
+        heads[n] = {"page": seg[0][0], "col": seg[0][1], "lines": len(seg)}
+        zones = {(p, c) for p, c, _t in seg}
+        if len(zones) > 1:
+            splits.append({"n": n, "why": "단/쪽 분할",
+                           "zones": sorted(zones)})
     d.close()
-    return {"pages": pages, "empty_pages": empty, "heads": heads}
+    return {"pages": pages, "empty_pages": empty,
+            "heads_found": len(heads), "split_items": splits}
 
 
 def main():
@@ -150,7 +180,7 @@ def main():
         if r.returncode != 0:
             report["pdf_error"] = (r.stdout + r.stderr)[-3000:]
         else:
-            report["qc_pdf"] = qc_pdf(pdf)
+            report["qc_pdf"] = qc_pdf(pdf, doc)
 
     report["steps"]["total_s"] = round(time.time() - t0, 2)
     json.dump(report, open(os.path.join(a.out, "report.json"), "w",
@@ -160,7 +190,7 @@ def main():
     if "qc_pdf" in report:
         q = report["qc_pdf"]
         print(f"pages={q['pages']} empty={q['empty_pages']} "
-              f"heads_found={len(q['heads'])}")
+              f"heads_found={q['heads_found']} splits={len(q['split_items'])}")
 
 
 if __name__ == "__main__":
