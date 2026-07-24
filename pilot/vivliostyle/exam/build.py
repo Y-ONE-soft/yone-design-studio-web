@@ -65,7 +65,10 @@ def qc_content(doc, raw_paras):
     gaps = []
     for tag, i1, i2, _j1, _j2 in sm.get_opcodes():
         if tag in ("delete", "replace") and i2 - i1 >= 12:
-            gaps.append({"len": i2 - i1, "text": src[i1:i2][:120]})
+            chunk = src[i1:i2]
+            # 원고의 밑줄 빈칸(_____)은 조판에서 빈칸 요소로 바뀌므로 결손이 아니다
+            if chunk.strip("_"):
+                gaps.append({"len": i2 - i1, "text": chunk[:120]})
     return {"src_chars": len(src), "out_chars": len(out), "gaps": gaps}
 
 
