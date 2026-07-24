@@ -1,0 +1,161 @@
+/* 해설지 — 문제지와 동일 판형(B4)·머리표·로고. 본문은 연속 흐름 2단. */
+
+:root {
+  --ink: #000;
+  --rule: #000;
+  --body-size: 9.3pt;
+  --body-lh: 1.4;
+  --col-gap: 7mm;
+  --accent: #1a1a1a;
+}
+
+* { box-sizing: border-box; }
+p, ol, ul, li, h1, h2 { margin: 0; padding: 0; }
+ol, ul { list-style: none; }
+
+@page {
+  size: 257mm 364mm;
+  margin: 20mm 16mm 15mm;
+  @top-center { content: element(runhead); vertical-align: bottom; }
+  @top-left { content: element(logohead); vertical-align: bottom; text-align: left; }
+  @top-right {
+    content: counter(page);
+    font-family: "HCR Dotum", sans-serif;
+    font-weight: 700; font-size: 24pt;
+    vertical-align: bottom; text-align: right; padding-bottom: .5mm;
+  }
+  @bottom-center {
+    content: counter(page) " / " counter(pages);
+    font-family: "HCR Batang", "Batang", serif;
+    font-size: 9.5pt; letter-spacing: .06em; padding-top: 4mm;
+  }
+}
+@page :first { @top-center { content: none; } @top-left { content: none; } }
+
+html {
+  font-family: "HCR Batang", "함초롬바탕", "Batang", serif;
+  font-size: var(--body-size);
+  line-height: var(--body-lh);
+  color: var(--ink);
+  line-break: strict; hyphens: none;
+  text-align: justify; text-justify: inter-word;
+}
+body { margin: 0; }
+
+/* ---------- 러닝 헤더 / 로고 / 표지 (문제지와 동일) ---------- */
+.runhead { position: running(runhead); padding-bottom: 1mm; text-align: center; }
+.rh-title {
+  font-family: "HCR Dotum", "함초롬돋움", sans-serif;
+  font-weight: 700; font-size: 13pt; letter-spacing: .02em;
+}
+.logohead { position: running(logohead); padding-bottom: 2.2mm; }
+.logohead img { display: block; width: 26mm; }
+
+.masthead {
+  position: relative;
+  column-span: all;
+  padding-bottom: 4mm;
+  text-align: center;
+  font-family: "HCR Dotum", "함초롬돋움", sans-serif;
+}
+.masthead .logo { position: absolute; left: 0; bottom: 3mm; width: 34mm; }
+.masthead .line1 {
+  font-weight: 700; font-size: 10.5pt; letter-spacing: -.01em;
+  text-align: center; padding-bottom: 3mm;
+}
+.masthead h1 {
+  display: flex; align-items: center; justify-content: center;
+  gap: 7mm; font-weight: 400;
+}
+.masthead .period {
+  font-size: 11.5pt; font-weight: 700; letter-spacing: .04em;
+  border: 1.2pt solid var(--rule); border-radius: 999px;
+  padding: 1.6mm 5mm; white-space: nowrap;
+}
+.masthead .maintitle {
+  font-size: 23pt; font-weight: 700; letter-spacing: .01em; white-space: nowrap;
+}
+.masthead .info {
+  font-size: 9pt; letter-spacing: .01em; color: #333;
+  text-align: right; padding-top: 2.6mm;
+}
+
+/* ---------- 빠른 정답표 ---------- */
+.ans-quick {
+  column-span: all;
+  border-top: 1.6pt solid var(--rule);
+  border-bottom: .8pt solid var(--rule);
+  padding: 3mm 0 3.5mm;
+  margin-bottom: 4mm;
+}
+.ans-quick h2 {
+  font-family: "HCR Dotum", sans-serif;
+  font-size: 11pt; font-weight: 700;
+  text-align: center; padding-bottom: 2.5mm;
+}
+.anslist {
+  display: grid; grid-template-columns: repeat(10, 1fr); gap: 1.2mm;
+  font-family: "HCR Dotum", sans-serif;
+}
+.anslist li {
+  display: flex; align-items: baseline; gap: 1.4mm;
+  border: .5pt solid var(--rule); padding: 1mm 1.4mm; font-size: 8.6pt;
+}
+.anslist .mk { font-weight: 700; min-width: 5mm; }
+.anslist .av { font-weight: 700; }
+
+/* ---------- 2단 흐름 ---------- */
+.flow {
+  column-count: 2;
+  column-gap: var(--col-gap);
+  column-fill: auto;
+  column-rule: .5pt solid #bbb;
+}
+
+/* ---------- 해설 문항 ---------- */
+.sol {
+  break-inside: auto;         /* 해설은 단 경계 넘김 허용 (정답지 관례) */
+  padding-bottom: 4.5mm;
+}
+.sol .solhead {
+  break-after: avoid;
+  display: flex; align-items: center; gap: 2mm;
+  padding-bottom: 1.4mm;
+}
+.snum {
+  font-family: "HCR Dotum", sans-serif;
+  font-weight: 700; font-size: 11pt;
+  color: #fff; background: var(--accent);
+  min-width: 6mm; height: 6mm; padding: 0 1.4mm;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 1.2mm;
+}
+.sans {
+  font-family: "HCR Dotum", sans-serif;
+  font-weight: 700; font-size: 13pt;
+}
+.sans::before { content: "정답 "; font-size: 8.5pt; font-weight: 400; color: #555; }
+
+/* 섹션 (라벨 + 본문) */
+.sec { padding-bottom: 1mm; }
+.seclab {
+  font-family: "HCR Dotum", sans-serif;
+  font-weight: 700; font-size: 8.3pt;
+  color: var(--accent);
+  border: .5pt solid var(--accent); border-radius: 1mm;
+  padding: 0 1mm; margin-right: 1.4mm;
+  white-space: nowrap;
+}
+.sectext { text-indent: 0; }
+div.sec > .seclab + .sectext { }
+
+/* 선지 해석 */
+.sol-choices { padding-top: .8mm; padding-left: 2mm; }
+.sol-choices li {
+  display: flex; align-items: baseline; gap: 1mm;
+  text-align: left; padding-top: .3mm;
+}
+.sol-choices .mk { flex: none; }
+.sol-choices .ct { flex: 1; }
+.sec:has(.sol-choices) { display: block; }
+.sec:has(.sol-choices) .seclab { display: inline-block; margin-bottom: .6mm; }
