@@ -98,8 +98,8 @@ body { margin: 0; }
 .masthead .logo {
   position: absolute;
   left: 0;
-  bottom: 0;
-  width: 44mm;
+  bottom: 3mm;          /* 아래 가로줄과 간격 */
+  width: 34mm;
 }
 .masthead .line1 {
   font-weight: 700;
