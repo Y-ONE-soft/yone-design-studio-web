@@ -112,11 +112,44 @@ def build_html(doc, cfg, answers=None, css="exam_theme.css"):
         f'<title>{esc(cfg["title"])}</title>'
         f'<link rel="stylesheet" href="{css}">'
     )
+    n_obj = len(items)
+    total = round(sum(it.get("score") or 0 for it in items), 1)
     masthead = (
         '<header class="masthead">'
-        f'<p class="line1">{esc(cfg["subtitle"])}</p>'
-        f'<h1><span class="period">{esc(cfg["period"])}</span>'
-        f'<span class="maintitle">{esc(cfg["title"])}</span></h1>'
+        f'<p class="copy">{esc(cfg.get("copyright", ""))}</p>'
+        '<table class="hdr"><tbody>'
+        # 1행: 과목코드 / 구분-일시 / 시험명 / 결재란
+        '<tr>'
+        '<th class="code-h">과목코드</th>'
+        '<th class="lbl">구분</th>'
+        f'<td class="val">{esc(cfg["subtitle"])}</td>'
+        f'<td class="title" rowspan="3"><span class="period">'
+        f'{esc(cfg["period"])}</span><span class="maintitle">'
+        f'{esc(cfg["title"])}</span></td>'
+        '<th class="sign">출제교사</th><th class="sign">부장</th>'
+        '<th class="sign">교감</th>'
+        '</tr>'
+        '<tr>'
+        f'<td class="code" rowspan="2">{esc(cfg.get("subject_code", ""))}</td>'
+        '<th class="lbl">일시</th>'
+        f'<td class="val">{esc(cfg.get("exam_date", ""))}</td>'
+        f'<td class="signbox" rowspan="2">{esc(cfg.get("teachers", ""))}</td>'
+        '<td class="signbox" rowspan="2"></td>'
+        '<td class="signbox" rowspan="2"></td>'
+        '</tr>'
+        '<tr>'
+        '<th class="lbl">대상</th>'
+        f'<td class="val">{esc(cfg.get("target", ""))}</td>'
+        '</tr>'
+        '</tbody></table>'
+        # 문제유형 표
+        '<table class="types"><tbody>'
+        '<tr><th class="lbl2" rowspan="2">문제유형</th>'
+        '<th>선택형</th><th>서답형</th></tr>'
+        f'<tr><td>( {n_obj} ) 문항 / ( {total:g} ) 점</td>'
+        f'<td>( {cfg.get("subjective_count", 0)} ) 문항 / '
+        f'( {cfg.get("subjective_score", 0):g} ) 점</td></tr>'
+        '</tbody></table>'
         '</header>'
     )
     running = (

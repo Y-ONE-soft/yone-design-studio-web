@@ -74,19 +74,9 @@ def qc_pdf(pdf_path, doc, col_split_pt=420.9):
     d = fitz.open(pdf_path)
     pages = len(d)
     empty = [i + 1 for i, pg in enumerate(d) if not pg.get_text().strip()]
+    d.close()
 
-    # (page, col, y, x, text) 로 본문 줄만 수집 — 러닝 헤더/푸터는 제외해야
-    # 문항 구간에 섞여 들어가 가짜 '단 분할'로 잡히지 않는다 (실측 y: 헤더 36, 푸터 1161)
-    lines = []
-    for i, pg in enumerate(d):
-        for b in pg.get_text("dict")["blocks"]:
-            for l in b.get("lines", []):
-                t = "".join(s["text"] for s in l["spans"])
-                y0, x0 = l["bbox"][1], l["bbox"][0]
-                if t.strip() and 50 < y0 < 1140:
-                    lines.append((i + 1, 0 if x0 < col_split_pt else 1, y0, x0, t))
-    lines.sort(key=lambda r: (r[0], r[1], r[2]))
-
+    lines = _collect(pdf_path, col_split_pt)
     flat = [(r[0], r[1], r[4]) for r in lines]
     # 정답 섹션은 문항 구간 판정에서 제외 (마지막 문항의 꼬리로 잡히지 않게)
     cut = next((k for k, (_p, _c, t) in enumerate(flat)
@@ -111,7 +101,6 @@ def qc_pdf(pdf_path, doc, col_split_pt=420.9):
         if len(zones) > 1:
             splits.append({"n": n, "why": "단/쪽 분할",
                            "zones": sorted(zones)})
-    d.close()
     return {"pages": pages, "empty_pages": empty,
             "heads_found": len(heads), "split_items": splits}
 
@@ -132,6 +121,13 @@ def _collect(pdf_path, col_split_pt=420.9):
                 if t.strip() and 50 < y0 < 1140:
                     lines.append((i + 1, 0 if x0 < col_split_pt else 1, y0, y1, t))
     d.close()
+    # 표지 머리표는 두 단에 걸쳐 있어(column-span:all) 오른쪽 셀이 우단 줄로
+    # 잡힌다. 그러면 1번 문항 구간이 좌/우단에 걸친 것처럼 보여 가짜 '분할'이
+    # 난다 -> 1쪽에서 첫 문항 머리 위쪽 줄은 전부 버린다.
+    first = min((y0 for pg, _c, y0, _y1, t in lines
+                 if pg == 1 and re.match(r"^\s*1\.\s", t)), default=None)
+    if first is not None:
+        lines = [r for r in lines if not (r[0] == 1 and r[2] < first - 1)]
     lines.sort(key=lambda r: (r[0], r[1], r[2]))
     return lines
 
@@ -246,9 +242,18 @@ def main():
 
     cfg = {
         "title": "세서특필 모의고사",
-        "subtitle": "2026학년도 여름방학 세서특필 모의고사",
+        "subtitle": "2026학년도 여름방학",
         "period": "제 1 교시",
         "total_score": 100,
+        "subject_code": "08",
+        "exam_date": "(   )월 (   )일 ( 1 )교시",
+        "target": "( 1 )학년",
+        "teachers": "",
+        "subjective_count": 0,
+        "subjective_score": 0,
+        "copyright": "이 시험 문제의 저작권은 Y.ONE STUDIO 에 있습니다. "
+                     "저작권법에 의해 보호받는 저작물이므로 무단 전재와 복제는 "
+                     "금지되며, 이를 어길 시 저작권법에 의거 처벌될 수 있습니다.",
     }
     if a.config:
         cfg.update(json.load(open(a.config, encoding="utf-8")))

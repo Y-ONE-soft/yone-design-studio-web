@@ -26,6 +26,7 @@ ol, ul { list-style: none; }
     content: element(runhead);
     vertical-align: bottom;
   }
+  /* 큰 쪽번호는 바깥쪽(짝수=왼쪽 / 홀수=오른쪽)에 — 실물 시험지 관례 */
   @bottom-center {
     content: counter(page) " / " counter(pages);
     font-family: "HCR Batang", "Batang", serif;
@@ -34,8 +35,30 @@ ol, ul { list-style: none; }
     padding-top: 4mm;
   }
 }
+@page :left {
+  @top-left {
+    content: counter(page);
+    font-family: "HCR Dotum", sans-serif;
+    font-weight: 700;
+    font-size: 30pt;
+    vertical-align: bottom;
+    padding-bottom: 1mm;
+  }
+}
+@page :right {
+  @top-right {
+    content: counter(page);
+    font-family: "HCR Dotum", sans-serif;
+    font-weight: 700;
+    font-size: 30pt;
+    vertical-align: bottom;
+    padding-bottom: 1mm;
+    text-align: right;
+  }
+}
 @page :first {
   @top-center { content: none; }
+  @top-right { content: none; }
 }
 
 html {
@@ -66,43 +89,65 @@ body { margin: 0; }
   letter-spacing: .02em;
 }
 
+/* 표지 머리표 — 실물 동형모의고사 형식(과목코드/일시/대상 + 결재란 + 문제유형표) */
 .masthead {
   column-span: all;
-  border-bottom: 1.6pt solid var(--rule);
-  padding-bottom: 3mm;
-  margin-bottom: 5mm;
-  text-align: center;
-}
-.masthead .line1 {
+  padding-bottom: 4mm;
+  margin-bottom: 4mm;
   font-family: "HCR Dotum", "함초롬돋움", sans-serif;
-  font-weight: 700;
-  font-size: 12pt;
-  letter-spacing: -.01em;
-  text-align: center;
-  padding-bottom: 2.5mm;
 }
-.masthead h1 {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6mm;
+.masthead .copy {
+  font-size: 7.6pt;
+  text-align: center;
+  padding-bottom: 1.2mm;
+  letter-spacing: -.02em;
+}
+.masthead table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.masthead th, .masthead td {
+  border: .8pt solid var(--rule);
+  padding: 1.1mm 1.6mm;
+  font-size: 10.5pt;
   font-weight: 400;
+  text-align: center;
+  vertical-align: middle;
+}
+.masthead .hdr .code-h { width: 9%; }
+.masthead .hdr .lbl    { width: 5.5%; }
+.masthead .hdr .val    { width: 21%; text-align: center; }
+.masthead .hdr .code {
+  font-size: 20pt;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+.masthead .hdr .sign   { width: 9%; }
+.masthead .hdr .signbox { height: 13mm; font-size: 9.5pt; }
+.masthead .hdr .title {
+  width: 30%;
+  padding: 2mm 2mm 2.4mm;
 }
 .masthead .period {
-  font-family: "HCR Dotum", "함초롬돋움", sans-serif;
-  font-size: 13pt;
+  display: block;
+  font-size: 10.5pt;
   font-weight: 700;
-  border: 1.2pt solid var(--rule);
-  border-radius: 999px;
-  padding: 1.4mm 4.5mm;
-  white-space: nowrap;
+  letter-spacing: .12em;
+  padding-bottom: .8mm;
 }
 .masthead .maintitle {
-  font-family: "HCR Dotum", "함초롬돋움", sans-serif;
-  font-size: 26pt;
+  display: block;
+  font-size: 25pt;
   font-weight: 700;
   letter-spacing: .01em;
+  white-space: nowrap;
 }
+.masthead .types {
+  width: 62%;
+  margin-top: 2.5mm;
+}
+.masthead .types .lbl2 { width: 22%; }
 
 /* ---------- 2단 흐름 ---------- */
 .flow {
