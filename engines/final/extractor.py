@@ -164,6 +164,24 @@ def _gdrive_safe_copy(src, dst, log=None, retries=5):
     backoffs = [1, 3, 8, 15, 30]
     last_err = ""
 
+    # [근본 경로] FileProvider(CloudStorage) 파일이면 NSFileCoordinator 조율 복사를
+    # 1차로 시도한다. 조율 하에서는 FileProvider 락과 충돌하지 않아 EDEADLK가 원천
+    # 차단된다. 실패/비활성 시 아래 기존 폴백 사다리(chunk copy → ditto → Finder)로
+    # 그대로 진행하므로 더 나빠지지 않는다. (W48 — core/gdrive_io.py)
+    try:
+        from core.gdrive_io import coord_read_to, is_fileprovider_path
+        if is_fileprovider_path(src_resolved):
+            _ok, _cerr, _method = coord_read_to(src_resolved, dst, log=log)
+            if _ok:
+                if os.path.exists(dst) and os.path.getsize(dst) == expected_size:
+                    return True, ""
+            elif log:
+                log(f"  [GDrive 복사] 조율 복사 미성공 → 기존 폴백 진행: {_cerr}")
+    except Exception as _e:
+        if log:
+            log(f"  [GDrive 복사] 조율 모듈 예외 → 기존 폴백 진행: "
+                f"{type(_e).__name__}: {_e}")
+
     def _chunk_copy(src_path, dst_path):
         """Python pure chunked copy — fcopyfile syscall 우회.
 

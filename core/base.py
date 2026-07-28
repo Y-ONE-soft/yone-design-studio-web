@@ -80,6 +80,18 @@ def _stream_copy(src, dst):
     from engines.final.extractor import _resolve_local_mirror
     src = _resolve_local_mirror(src, log=None)
 
+    # [근본 경로] 미러가 없어 src가 여전히 FileProvider(CloudStorage) 경로면
+    # NSFileCoordinator 조율 복사를 1차로 시도 (EDEADLK 원천 차단). 실패 시 아래
+    # 기존 raw_copy → cp -c → /tmp 폴백으로 진행 (더 나빠지지 않음). W48.
+    try:
+        from core.gdrive_io import coord_read_to, is_fileprovider_path
+        if is_fileprovider_path(src):
+            _ok, _err, _m = coord_read_to(src, dst, log=None)
+            if _ok and os.path.getsize(dst) == os.path.getsize(src):
+                return
+    except Exception:
+        pass  # 조율 실패는 침묵 폴백 — 아래 기존 사다리가 처리
+
     tmp = dst + ".tmp"
 
     def _cleanup_tmp():
