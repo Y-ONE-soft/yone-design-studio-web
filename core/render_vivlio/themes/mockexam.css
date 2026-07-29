@@ -1,0 +1,231 @@
+/* 동형모의고사 시리즈 테마 (W51) — 파일럿 theme.css 를 실서비스 백엔드로 승격.
+ * 파일럿에서 검증된 값을 무손실 이관(page 8=8, 스타일 8/8 재현). 공통 골격(@page·
+ * 러닝헤더/푸터·쪽번호)은 `_base.css` 로 분리 문서화돼 있으나, 검증된 파일럿 산출을
+ * 회귀 없이 재현하기 위해 이 파일은 **자체 완결**로 유지한다(2번째 시리즈 편입 시
+ * _base 를 @import 하도록 리팩터 예정 — 그 전까지 mockexam.css 가 진실).
+ *
+ * 모든 수치는 실물 InDesign 출력(data_corpus/e2e_v2/029c4385/한영3_동형_v2.pdf)을
+ * PyMuPDF로 실측한 값 (tests/fixtures/template_spec_dh_hanyoung3.json 프레임 좌표 대조).
+ *  - 페이지 263×370mm, 본문 시작 y=52.15mm, 단 폭 108.2mm ×2, 단 간격 5.2mm
+ *  - 지문 10pt/14pt, 선지 10pt/15pt(내어쓰기 12.75pt), 발문 10.5pt 볼드(+HY견고딕 번호)
+ */
+
+/* ---------- 폰트 (실물과 동일 서체 — 로컬 설치본을 fonts/ 로 복사해 참조) ---------- */
+@font-face { font-family: "HCR Dotum"; src: url("fonts/HANDotum.ttf"); font-weight: 400; }
+@font-face { font-family: "HCR Dotum"; src: url("fonts/HANDotumB.ttf"); font-weight: 700; }
+@font-face { font-family: "HCR Batang"; src: url("fonts/HANBatang.ttf"); font-weight: 400; }
+@font-face { font-family: "HCR Batang"; src: url("fonts/HANBatangB.ttf"); font-weight: 700; }
+@font-face { font-family: "HYGothic-Extra"; src: url("fonts/H2GTRE.TTF"); }
+@font-face { font-family: "NanumMyeongjoOTF"; src: url("fonts/NanumMyeongjo.otf"); font-weight: 400; }
+@font-face { font-family: "NanumMyeongjoOTF"; src: url("fonts/NanumMyeongjoBold.otf"); font-weight: 700; }
+/* BatangChe(바탕체)는 .ttc — @font-face 로드가 불안정해 local() 참조, 실패 시 HCR Batang 폴백 */
+
+/* ---------- 페이지 ---------- */
+@page {
+    size: 263mm 370mm;
+    margin: 52.15mm 20.5mm 28mm 21.05mm;
+    @top-center {
+        content: element(pageHeader);
+        vertical-align: bottom;
+    }
+    @bottom-center {
+        content: element(pageFooter);
+        vertical-align: top;
+    }
+}
+
+/* ---------- 러닝 헤더 (저작권 문구 + 시험 정보 머리표 — 매 페이지) ---------- */
+.page-header {
+    position: running(pageHeader);
+    width: 221.6mm;
+    margin-bottom: 4mm;
+    font-family: "HCR Batang", serif;
+}
+.copyright {
+    font-size: 8pt;
+    text-align: center;
+    margin-bottom: 1mm;
+    letter-spacing: 0.02em;
+}
+table.exam-head {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 10.7pt;
+}
+table.exam-head td {
+    border: 0.5pt solid #000;
+    text-align: center;
+    vertical-align: middle;
+    padding: 0.6mm 0.5mm;
+}
+table.exam-head { border: 1pt solid #000; }
+table.exam-head td:nth-child(1) { width: 16.6mm; }
+table.exam-head td.lbl { font-size: 10.7pt; }
+table.exam-head td.code { font-size: 21.4pt; }
+table.exam-head td.val { width: 43.4mm; font-size: 10.7pt; white-space: nowrap; }
+table.exam-head td.title {
+    width: 78.3mm;
+    font-size: 31.2pt;
+    letter-spacing: -0.01em;
+    padding: 0;
+}
+table.exam-head td.wide { width: 42mm; }
+table.exam-head tr:nth-child(1) td { height: 6.5mm; }
+table.exam-head tr:nth-child(2) td { height: 5.5mm; }
+table.exam-head tr:nth-child(3) td { height: 5.5mm; }
+table.exam-head td { padding: 0.3mm 0.5mm; }
+
+/* ---------- 러닝 푸터 (계속 표시 + 괘선 + 쪽번호/학교명) ---------- */
+.page-footer, .page-footer-last {
+    width: 221.6mm;
+    font-family: "NanumMyeongjoOTF", serif;
+}
+.page-footer { position: running(pageFooter); }
+.page-footer-last { position: running(pageFooterLast); }
+.cont-line {
+    text-align: right;
+    font-family: "BatangChe", "HCR Batang", serif;
+    font-size: 10.9pt;
+    height: 4mm;
+    padding-top: 0;
+    line-height: 1;
+}
+.cont-line .end-mark { font-weight: 700; font-family: "HCR Batang", serif; }
+.foot-row {
+    position: relative;
+    border-top: 0.4pt solid #000;
+    padding-top: 1.6mm;
+    text-align: center;
+    font-size: 11pt;
+    font-weight: 700;
+}
+.foot-row .pgnum::after {
+    content: counter(page) " / ( " counter(pages) " )";
+}
+.foot-school {
+    position: absolute;
+    right: 0;
+    top: 1.6mm;
+    font-size: 10pt;
+    font-weight: 400;
+}
+
+/* ---------- 본문 플로우 (2단) ---------- */
+html, body { margin: 0; padding: 0; }
+body {
+    font-family: "HCR Dotum", sans-serif;
+    font-size: 10pt;
+    color: #000;
+    line-break: strict;
+    hyphens: none;
+    orphans: 1;
+    widows: 1;
+}
+.flow {
+    column-count: 2;
+    column-gap: 5.2mm;
+    column-rule: 0.35pt solid #000;
+    column-fill: auto;
+}
+.flow p { margin: 0; }
+
+/* 문제유형 박스 — 1페이지 왼쪽 단 최상단 */
+table.qtype-box {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: "HCR Batang", serif;
+    font-size: 11pt;
+    margin-bottom: 5mm;
+}
+table.qtype-box td {
+    border: 0.75pt solid #000;
+    text-align: center;
+    padding: 1.2mm 0.5mm;
+}
+table.qtype-box td.qt-lbl { width: 25mm; }
+
+/* 발문 (문제 번호): HCR돋움 볼드 10.5/14 + HY견고딕 자동 번호 */
+p.q, p.intro {
+    font-weight: 700;
+    font-size: 10.5pt;
+    line-height: 14pt;
+    margin-top: 19.5pt;
+    margin-bottom: 9.8pt;
+    text-align: justify;
+    break-after: avoid;
+}
+span.qnum {
+    font-family: "HYGothic-Extra", "HCR Dotum", sans-serif;
+    font-weight: 400;
+    font-size: 10pt;
+}
+
+/* 서술형 발문: 볼드 10/14 + [서술형 N] 자동 번호 */
+p.srv {
+    font-weight: 700;
+    font-size: 10pt;
+    line-height: 14pt;
+    margin-top: 19.5pt;
+    margin-bottom: 9.8pt;
+    text-align: justify;
+    break-after: avoid;
+}
+
+/* 지문: 10/14, 들여쓰기 3mm, 양끝 정렬 */
+p.passage, p.pnum, p.word {
+    line-height: 14pt;
+    text-indent: 8.5pt;
+    text-align: justify;
+}
+
+/* 순서(A)(B)(C)/요약 문단 */
+p.porder {
+    line-height: 14pt;
+    text-align: justify;
+    margin-top: 7pt;
+}
+
+/* 선지: 10/15, 내어쓰기 12.75pt, 탭 스톱 34.4pt */
+p.choice {
+    line-height: 15pt;
+    padding-left: 12.75pt;
+    text-indent: -12.75pt;
+    text-align: justify;
+    white-space: pre-wrap;
+    tab-size: 34.4pt;
+}
+p.choice-first { margin-top: 19.9pt; }
+
+/* 조건: 실물 미사용(이 케이스) — 보수적 근사 */
+p.cond {
+    line-height: 14pt;
+    text-align: justify;
+}
+
+/* 테두리 박스 ((A)(B) 요약 헤더 등) */
+div.box {
+    border: 0.5pt solid #000;
+    padding: 0.8mm 1.5mm;
+    margin: 8pt 0 4pt;
+}
+p.boxline {
+    line-height: 14pt;
+    white-space: pre-wrap;
+    tab-size: 34.4pt;
+}
+
+/* 서술형 답지: 12/14.4 */
+p.ans {
+    font-size: 12pt;
+    line-height: 14.4pt;
+}
+
+p.score { line-height: 14pt; }
+
+u { text-underline-offset: 0.16em; text-decoration-thickness: 0.06em; }
+
+span.arrow {
+    font-weight: 700;
+    font-size: 12pt;
+}

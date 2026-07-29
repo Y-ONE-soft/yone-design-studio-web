@@ -233,3 +233,19 @@ class BaseEngine(abc.ABC):
                 "warnings": [str]
             }
         """
+
+    # ── 렌더 백엔드 선택 (W51) ────────────────────────────────────────────
+    # "indesign"(기본) = 기존 JSX 경로. "vivliostyle" = core.render_vivlio 경로.
+    # 파이프라인(core/pipeline.py)이 이 값으로 2단계를 분기한다. 기본값이
+    # "indesign" 이므로 기존 엔진은 전부 무변경(회귀 0). vivlio 엔진만 override.
+    render_backend = "indesign"
+
+    def render_vivlio(self, json_path: str, job_dir: str, log) -> None:
+        """render_backend == "vivliostyle" 인 엔진이 구현한다.
+
+        content.json → 렌더 플랜 → core.render_vivlio → PDF 를 생성하고,
+        job_dir/.settings.json 에 산출물(pdf_path 등)을 남겨 verify/시각검수가
+        찾을 수 있게 한다. 기본 구현은 명확히 실패(오구현 방지)."""
+        raise NotImplementedError(
+            f"{self.material_id}: render_backend='vivliostyle' 인데 "
+            f"render_vivlio 미구현")

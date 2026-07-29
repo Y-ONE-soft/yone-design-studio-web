@@ -1,0 +1,50 @@
+/* Vivliostyle 공통 골격 (W51) — 계열 테마가 공유할 페이지/러닝요소 스켈레톤.
+ *
+ * 목적: 새 계열 테마(`themes/<계열>.css`)를 만들 때 @page 지오메트리·러닝 헤더/
+ * 푸터 러닝 요소·쪽번호 카운터 같은 '어느 계열에나 공통'인 규칙을 여기서 물려받고,
+ * 계열 고유의 본문 스타일(발문/지문/선지 치수)만 계열 테마에 두게 하기 위한 것.
+ *
+ * 현재 상태: `mockexam.css` 는 파일럿 검증 산출을 회귀 없이 재현하려고 **자체
+ * 완결**로 유지한다(이 파일을 import 하지 않음). 두 번째 계열이 편입되어 공통부가
+ * 실증되면, 그때 계열 테마들이 이 파일을 `@import "_base.css";` 하도록 리팩터한다.
+ * 지금은 향후 계열의 출발점 + 공통 구조의 단일 문서 소스로만 존재한다.
+ *
+ * 수치를 계열별로 반드시 재정의해야 하는 항목은 아래 var 로 노출한다.
+ */
+
+:root {
+    --page-width: 210mm;
+    --page-height: 297mm;
+    --page-margin: 20mm;
+    --running-width: 170mm;
+    --body-font: serif;
+    --body-size: 10pt;
+}
+
+/* ---------- 페이지 (러닝 헤더/푸터 슬롯) ---------- */
+@page {
+    size: var(--page-width) var(--page-height);
+    margin: var(--page-margin);
+    @top-center { content: element(pageHeader); vertical-align: bottom; }
+    @bottom-center { content: element(pageFooter); vertical-align: top; }
+}
+
+/* ---------- 러닝 요소 (계열 테마가 내부 마크업/치수 상세를 채움) ---------- */
+.page-header { position: running(pageHeader); width: var(--running-width); }
+.page-footer { position: running(pageFooter); width: var(--running-width); }
+.page-footer-last { position: running(pageFooterLast); width: var(--running-width); }
+
+/* ---------- 쪽번호 (N / ( M ) 관용 표기) ---------- */
+.foot-row .pgnum::after { content: counter(page) " / ( " counter(pages) " )"; }
+
+/* ---------- 본문 기본 ---------- */
+html, body { margin: 0; padding: 0; }
+body {
+    font-family: var(--body-font);
+    font-size: var(--body-size);
+    color: #000;
+    line-break: strict;
+    hyphens: none;
+    orphans: 1;
+    widows: 1;
+}
