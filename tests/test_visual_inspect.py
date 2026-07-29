@@ -139,14 +139,20 @@ def test_overset_unknown_page_doc_flag(tmp_path):
     assert any(f["code"] == "OVERSET" for f in rep["doc_flags"])
 
 
+# 본문(non-furniture) 스토리를 만드는 긴 텍스트 (>64자 → furniture 아님)
+_BODY = [{"t": "x" * 80}]
+
+
 def test_geometry_oob_and_overlap():
     pages = [{"p": "1", "b": [0, 0, 280, 210]}, {"p": "2", "b": [0, 0, 280, 210]}]
     stories = [
         # 다중 프레임(본문 플로우) 스토리가 페이지를 6% 이탈 (아래로) → critical
-        {"idx": 0, "fp": ["1", "2"], "fb": [[250, 20, 297, 190], [50, 20, 120, 190]]},
-        # 프레임 겹침 (스토리 1 × 2, 교차 > 30%) → review
-        {"idx": 1, "fp": ["1"], "fb": [[50, 20, 120, 190]]},
-        {"idx": 2, "fp": ["1"], "fb": [[80, 20, 150, 190]]},
+        {"idx": 0, "fp": ["1", "2"],
+         "fb": [[250, 20, 297, 190], [50, 20, 120, 190]], "paragraphs": _BODY},
+        # 실콘텐츠 스토리 겹침 (스토리 1 × 2, 교차 > 30%) → review
+        # (W49: 양쪽 non-furniture라 이중 조판 겹침으로 그대로 검출)
+        {"idx": 1, "fp": ["1"], "fb": [[50, 20, 120, 190]], "paragraphs": _BODY},
+        {"idx": 2, "fp": ["1"], "fb": [[80, 20, 150, 190]], "paragraphs": _BODY},
     ]
     flags = geometry_checks(_dump(stories, pages))
     codes = {(f["code"], f["level"]) for f in flags["1"]}
@@ -154,15 +160,25 @@ def test_geometry_oob_and_overlap():
     assert ("GEOM_OVERLAP", "review") in codes
 
 
-def test_geometry_oob_single_frame_decoration_is_review():
-    """단일 프레임 장식(섹션 탭/라벨)의 재단선 밖 배치는 review (W30 —
-    r13 실측: 상단 탭 -21.5mm는 의도적 블리드 디자인)."""
+def test_geometry_oob_furniture_bleed_suppressed_gross_flagged():
+    """W49: 단일 프레임 짧은 라벨 furniture(섹션 탭/지문번호 라벨)의 재단선 밖
+    블리드(≤12%)는 오탐 제외. 단 (a) 통째로 엉뚱한 위치(>12%)로 떨어진 대이탈은
+    그대로 검출, (b) 장문 본문 단일 프레임 이탈은 furniture 아니라 그대로 검출."""
     pages = [{"p": "1", "b": [0, 0, 297, 210]}]
-    stories = [{"idx": 0, "fp": ["1"], "fb": [[-21.5, 39, 4.5, 115.25]]}]
-    flags = geometry_checks(_dump(stories, pages))
-    fl = flags["1"]
-    assert len(fl) == 1
-    assert fl[0]["code"] == "GEOM_OOB" and fl[0]["level"] == "review"
+    # (a) 짧은 라벨(어휘 선택 1)이 상단으로 7.2% 블리드 → 제외 (플래그 0)
+    label = {"idx": 0, "fp": ["1"], "fb": [[-21.5, 39, 4.5, 115.25]],
+             "paragraphs": [{"t": "어휘 선택 1"}]}
+    assert geometry_checks(_dump([label], pages)).get("1", []) == []
+    # (b) 같은 라벨이 왼쪽으로 크게(≈29%) 이탈 → 블리드 초과라 검출
+    gross = {"idx": 1, "fp": ["1"], "fb": [[20, -60, 60, 10]],
+             "paragraphs": [{"t": "어휘 선택 1"}]}
+    fl = geometry_checks(_dump([gross], pages)).get("1", [])
+    assert any(f["code"] == "GEOM_OOB" for f in fl)
+    # (c) 장문 본문(non-furniture)이 상단 7.2% 이탈 → 그대로 review
+    body = {"idx": 2, "fp": ["1"], "fb": [[-21.5, 39, 4.5, 115.25]],
+            "paragraphs": _BODY}
+    fl2 = geometry_checks(_dump([body], pages)).get("1", [])
+    assert any(f["code"] == "GEOM_OOB" and f["level"] == "review" for f in fl2)
 
 
 def test_geometry_oob_page_relative_right_page_no_false_flag():
@@ -180,8 +196,12 @@ def test_geometry_label_body_overlap_r13_regression():
     프레임이 본문 플로우 프레임과 36~41% 교차 → GEOM_OVERLAP review."""
     pages = [{"p": "14", "b": [0, 0, 297, 210]}]
     stories = [
-        {"idx": 29, "fp": ["14"], "fb": [[32, 9.6, 84.92, 27.22]]},     # 라벨
-        {"idx": 54, "fp": ["14"], "fb": [[32, 20, 282.75, 188]]},       # 본문
+        # 라벨(추가지문 — 짧은 텍스트 → furniture) 이 본문 플로우를 침범.
+        {"idx": 29, "fp": ["14"], "fb": [[32, 9.6, 84.92, 27.22]],
+         "paragraphs": [{"t": "추가지문"}]},
+        # 본문(장문 → non-furniture): 한쪽만 furniture라 W49에서도 검출된다.
+        {"idx": 54, "fp": ["14"], "fb": [[32, 20, 282.75, 188]],
+         "paragraphs": _BODY},
     ]
     flags = geometry_checks(_dump(stories, pages))
     codes = {(f["code"], f["level"]) for f in flags["14"]}
