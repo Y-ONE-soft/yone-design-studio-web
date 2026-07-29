@@ -16,6 +16,7 @@ from engines.suneungteukgang_workbook.engine import SuneungteukgangWorkbookEngin
 from engines.seseospecial.engine import SeseoSpecialEngine
 from engines.mockexam.engine import MockexamEngine
 from engines.mockexam_v2.engine import MockexamV2Engine
+from engines.mockexam_v2_viv.engine import MockexamV2VivEngine
 from engines.blackbook_v2.engine import BlackbookV2Engine
 from engines.workbook_v2.engine import WorkbookV2Engine
 from engines.workbook_supp_v2.engine import WorkbookSuppV2Engine
@@ -61,6 +62,7 @@ _ENGINE_LIST = [
     MothertongueMergeEngine(),
     VertToHorizEngine(),
     MockexamV2Engine(),
+    MockexamV2VivEngine(),
     BlackbookV2Engine(),
     WorkbookV2Engine(),
     WorkbookSuppV2Engine(),
