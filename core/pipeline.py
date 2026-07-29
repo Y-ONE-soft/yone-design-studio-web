@@ -11,6 +11,25 @@ import core.job_manager as jm
 from core.indesign import runner as indesign
 
 
+def _render_backend(engine, job_dir):
+    """조판 백엔드 결정 (W51). 우선순위: job override 파일 > 엔진 속성 > 기본.
+
+    반환값은 "indesign"(기본) 또는 "vivliostyle". job_dir/render_backend.txt 가
+    있으면 그 값을 우선(단일 카드 라디오 선택 UI 대비). 없으면 엔진의
+    render_backend 속성(BaseEngine 기본 "indesign")."""
+    default = getattr(engine, "render_backend", "indesign") or "indesign"
+    try:
+        p = os.path.join(job_dir, "render_backend.txt")
+        if os.path.exists(p):
+            with open(p, encoding="utf-8") as f:
+                v = f.read().strip()
+            if v in ("indesign", "vivliostyle"):
+                return v
+    except Exception:
+        pass
+    return default
+
+
 def _classify_failure(msg):
     """실패 메시지를 유형으로 분류 — 향후 유형별 집계용."""
     if not msg:
@@ -75,8 +94,18 @@ def run_pipeline(engine, job_id: str, job_dir: str, uploaded: dict):
         if jm.is_cancelled(job_id):
             return
 
-        # ── 2단계: InDesign 조판 (skip_indesign이면 건너뛰기) ────────
-        if not skip_id:
+        # ── 2단계: 조판 (skip_indesign이면 건너뛰기) ────────
+        # 렌더 백엔드 분기 (W51): "indesign"(기본, 기존 경로 무변경) /
+        # "vivliostyle"(신규 opt-in). job_dir/render_backend.txt 오버라이드도 허용
+        # (단일 카드 라디오 선택 계층이 이 파일을 쓰면 그대로 동작).
+        backend = _render_backend(engine, job_dir)
+        if (not skip_id) and backend == "vivliostyle":
+            stage = "vivliostyle"
+            log("━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+            log("[2/3] Vivliostyle 조판 중...")
+            engine.render_vivlio(json_path, job_dir, log)
+            log("[2/3] 조판 완료 ✓")
+        elif not skip_id:
             stage = "indesign"
             log("━━━━━━━━━━━━━━━━━━━━━━━━━━━")
             log("[2/3] InDesign 조판 중...")
