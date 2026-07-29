@@ -86,7 +86,7 @@ def test_inventory_matches_known_set():
     """전수 목록이 변하면(추가/제거) 이 테스트가 알린다 — 새 템플릿이
     무가드로 폴링을 추가하는 것을 아래 401 테스트와 함께 이중 가드."""
     names = _inline_polling_templates()
-    assert len(names) == 19, "인라인 /api/result 폴링 템플릿 수 변동: %r" % names
+    assert len(names) == 20, "인라인 /api/result 폴링 템플릿 수 변동: %r" % names
 
 
 @pytest.mark.parametrize("name", _inline_polling_templates())
