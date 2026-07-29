@@ -675,9 +675,18 @@ _RE_B2_QNUM = re.compile(r"^\s*\(\d+\)")                    # v1 reNumStart
 _RE_B2_CHOICE = re.compile(r"^\s*[①-⑳]")          # v1 reCircled
 
 # v1 insertHeaderBreaks의 헤더 패턴 (run.jsx headerPatterns — compact form 매칭)
+#
+# W49 (실서비스 0e3e6469 영어Ⅱ_YBM(박) 1과 실증): 지문번호는 단일 순번(본문2)
+# 뿐 아니라 하위분할(major-minor) 순번(본문2-1, 본문2-2)을 가진다 — 한 지문이
+# 분량상 둘로 쪼개진 경우. 하위분할 '-M'도 순번의 일부이므로 `본문\d+` 뒤에
+# `-M`이 오면 기존 패턴이 매칭에 실패해(본문2 뒤 '('/'$'만 허용) legacy 인식이
+# 0 → 구조 인식기의 seq(단조성)로만 잡혀, seq 제외 규칙이 있는 step2_c2가 헤더를
+# 못 지우고 원문 그대로 인쇄(G1 [헤더잔존]). 어휘 특례가 아니라 '순번은 계층적
+# (major.minor)일 수 있다'는 구조 일반화로 `_ORD`를 도입해 전 패턴 공유한다.
+_ORD = r"\d+(?:[-–—.]\d+)*"     # 계층적 순번: 3, 2-1, 4.2 …
 _HEADER_PATTERNS = [
-    re.compile(r"^L\d+[-–—]본문\d+(?:\([^\)]{0,40}\))?$"),
-    re.compile(r"^[A-Za-z]{1,15}\d*[-–—]본문\d+(?:\([^\)]{0,40}\))?$"),
+    re.compile(r"^L\d+[-–—]본문" + _ORD + r"(?:\([^\)]{0,40}\))?$"),
+    re.compile(r"^[A-Za-z]{1,15}\d*[-–—]본문" + _ORD + r"(?:\([^\)]{0,40}\))?$"),
     re.compile(r"^L\d+[-–—][A-Za-z]{1,30}(?:\([^\)]{0,40}\))?$"),
     re.compile(r"^L\d+[-–—]p\.?\d+(?:~\d+)?(?:[A-Za-z]{1,20})?$", re.I),
     re.compile(r"^p\d+[-–—\.]?(?:no\.)?\d+(?:~\d+)?(?:\([^\)]{0,40}\))?$",
@@ -1462,7 +1471,11 @@ _C1_GREPS = [
     # (W30-r15 — 실서비스 376b34d0 실측. v1 JSX도 같은 순서라 동일 증상
     # 이었을 형태지만 이 헤더형("N. L1-p. 13 본문 1")은 v2 첫 실사용 —
     # 완제품 기준 교정. "N. L1-본문1"류 기존 경로는 '-' 선행이라 무영향).
-    (re.compile(r"(?<!\{)(본문)\s*(\d+)"), r"{\1\2}"),
+    # W49: `\d+` → 하위분할 순번(본문2-1)까지 라벨에 포함. `\d+`만 잡으면
+    # "본문2-1(p.18)" → "{본문2}-1(p.18)"로 (a) 라벨 충돌(2-1·2-2 둘 다 {본문2}),
+    # (b) "-1(p.18)" 잔재 인쇄, (c) 마커가 `^{…}$` 아님 → 프레임브레이크 게이트
+    # 오검(0e3e6469 step1_c1). 순번은 계층적 → 하위분할 전체를 라벨로.
+    (re.compile(r"(?<!\{)(본문)\s*(\d+(?:\s*[-–—.]\s*\d+)*)"), r"{\1\2}"),
     (re.compile(r"\b(\d+)\.\s*L\d+\s*[-–—.]?\s*p\.?\s*\d+\b"),
      r"{본문\1}"),
     # 교과서 L-한글라벨형 (W30-r15 — "6. L1-추가본문" → "{추가본문}"):
@@ -1485,8 +1498,9 @@ _C1_RESID = [
     (re.compile(r"(^|,)\s+(\{)"), r"\1\2"),
 ]
 # v1 "Clean up header remnants" (최종)
+# W49: 라벨의 하위분할 순번(본문2-1) 뒤 "(p.18)" 잔재도 제거 (\d+ → 계층 순번).
 _C1_REMNANT = [
-    (re.compile(r"(\{본문\d+\})\([^)]*\)"), r"\1"),
+    (re.compile(r"(\{본문\d+(?:[-–—.]\d+)*\})\([^)]*\)"), r"\1"),
     (re.compile(r"(\{[A-Za-z][A-Za-z\s]+\})\([^)]*\)"), r"\1"),
 ]
 
@@ -1594,8 +1608,8 @@ def _c1_promote_missed_headers(items, orig_texts, warnings):
         if not any(_RE_C1_CHOICE.match(items[j]["t"])
                    for j in range(i + 1, nxt)):
             continue
-        mb = re.search(r"본문\s*(\d+)", orig_texts[i])
-        label = ("본문" + mb.group(1)) if mb else m.group(1)
+        mb = re.search(r"본문\s*(\d+(?:\s*[-–—.]\s*\d+)*)", orig_texts[i])
+        label = ("본문" + re.sub(r"\s+", "", mb.group(1))) if mb else m.group(1)
         new_t = "{" + label + "}"
         items[i]["t"] = new_t
         items[i]["runs"] = [{"t": new_t, "ul": False}]
