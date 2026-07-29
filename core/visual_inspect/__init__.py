@@ -202,6 +202,27 @@ def _rect_area(a):
     return max(0.0, a[2] - a[0]) * max(0.0, a[3] - a[1])
 
 
+# W49 (실서비스 0e3e6469 실증): 템플릿 furniture — 지문번호 라벨(본문2-1),
+# STEP 섹션 탭(어휘 선택 1/본문 O/X/문장 배열…), 러닝 헤더/푸터(STEP BY STEP,
+# STEP01, FRAME), 간지 목차(A1 어휘 선택 A2 본문 O/X…) — 은 디자인상 재단선
+# 밖·여백에 고정되고 배경 밴드와 겹쳐 배치된다. 전부 '단일 프레임 + 짧은 라벨
+# 텍스트' 스토리다. 본문 플로우(다중 프레임/장문)와 구조적으로 구별되므로
+# GEOM_OOB(단일 프레임 review)·GEOM_OVERLAP(furniture끼리)에서 오탐 제외한다.
+# 어휘 특례가 아니라 furniture의 구조 지문(단일 프레임·소형 라벨)으로 판정.
+_FURNITURE_TEXT_MAX = 64        # 라벨/탭/목차 furniture 최대 텍스트 길이
+_FURNITURE_OOB_BLEED = 0.12     # furniture OOB를 오탐으로 볼 최대 이탈(블리드 관행)
+
+
+def _story_text_len(st):
+    return sum(len((p.get("t") or "").strip())
+               for p in st.get("paragraphs", []) or [])
+
+
+def _is_label_furniture(st, n_placed):
+    """단일 프레임 + 짧은 라벨 텍스트 = 템플릿 furniture (GEOM 오탐 제외 대상)."""
+    return n_placed <= 1 and _story_text_len(st) <= _FURNITURE_TEXT_MAX
+
+
 def geometry_checks(dump, th=None):
     """덤프의 프레임 지오메트리(fb, additive)로 경계 이탈/겹침 검출.
 
@@ -220,11 +241,12 @@ def geometry_checks(dump, th=None):
         fps = st.get("fp") or []
         fbs = st.get("fb") or []
         n_placed = sum(1 for fp, fb in zip(fps, fbs) if fp and fb)
+        furniture = _is_label_furniture(st, n_placed)
         for fp, fb in zip(fps, fbs):
             if not fp or not fb:
                 continue
             frames_by_page.setdefault(fp, []).append(
-                (st.get("idx"), fb, n_placed))
+                (st.get("idx"), fb, n_placed, furniture))
 
     flags = {}
 
@@ -242,7 +264,7 @@ def geometry_checks(dump, th=None):
     for pg, frames in frames_by_page.items():
         pb = page_bounds.get(pg)
         if pb:
-            for idx, fb, n_placed in frames:
+            for idx, fb, n_placed, furniture in frames:
                 # 페이지 밖으로 나간 깊이 (각 변, 페이지 크기 비율).
                 # 좌표계 이중 해석 (W30 r13 실측): 덤프 fb는 룰러 원점에 따라
                 # 페이지 상대일 수 있는데 페이지 b는 스프레드 좌표라, 오른쪽
@@ -251,6 +273,13 @@ def geometry_checks(dump, th=None):
                 # 덤프든 진짜 이탈만 남는다 (세로 축은 두 해석이 동일).
                 over = min(_oob_frac(fb, pb),
                            _oob_frac(fb, [0, 0, pb[2] - pb[0], pb[3] - pb[1]]))
+                # W49: 단일 프레임 짧은 라벨 furniture(지문번호 사이드 라벨·
+                # STEP 섹션 탭·러닝 헤더/푸터)가 재단선 밖으로 나가는 건 의도적
+                # 블리드 디자인(실서비스 0e3e6469: 7.2% 이탈 22건 전부 섹션 탭)
+                # → 오탐 제외. 단, 블리드 관행 범위(_FURNITURE_OOB_BLEED)까지만
+                # 봐준다 — 라벨이 통째로 엉뚱한 위치로 떨어진 대이탈은 그대로 검출.
+                if furniture and over <= _FURNITURE_OOB_BLEED:
+                    continue
                 # 단일 프레임 장식 스토리(섹션 탭/라벨)는 의도적 재단선 밖
                 # 배치가 관행(r13 실측: 상단 탭 -21.5mm) — review로 낮춘다.
                 # 다중 프레임(본문 플로우) 이탈은 내용 잘림 위험 → critical.
@@ -267,6 +296,14 @@ def geometry_checks(dump, th=None):
                 si, ra = frames[i][0], frames[i][1]
                 sj, rb = frames[j][0], frames[j][1]
                 if si == sj:
+                    continue
+                # W49: furniture끼리(러닝 헤더/푸터·STEP 탭·FRAME·간지 목차 등
+                # 라벨 장식)의 겹침은 레이어드 디자인 관행 → 오탐 제외. 실서비스
+                # 0e3e6469 doc_flags 16건 전부가 이 furniture×furniture 부류였다.
+                # '한쪽만 furniture'(라벨 프레임이 본문 플로우를 침범 — r13
+                # 추가지문 라벨×본문 실결함)는 그대로 검출한다. 본문 이중 조판
+                # (양쪽 실콘텐츠)도 마찬가지로 검출.
+                if frames[i][3] and frames[j][3]:
                     continue
                 inter = _rect_intersection(ra, rb)
                 if not inter:

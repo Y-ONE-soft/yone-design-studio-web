@@ -333,6 +333,33 @@ def invoke_claude(prompt, job_dir, log, model=None, timeout=None, budget=None):
 
 # ── job 레벨 진입점 (파이프라인 훅) ──────────────────────────────────────────
 
+def _write_error_report(job_dir, exc, queue):
+    """검수 에이전트 실행/파싱 실패를 review_result.json에 영속화 (진단용).
+
+    침묵 실패 금지 — review_input.json은 있는데 review_result.json이 없는
+    '원인 미상' 상태를 없앤다. verdict="error"이므로 UI/파이프라인은 정상
+    판정과 구분해 처리하고, 판정 자체는 여전히 advisory(ok 무영향)다."""
+    try:
+        report = {
+            "reviewer": "claude-review-agent",
+            "date": time.strftime("%Y-%m-%d"),
+            "verdict": "error",
+            "error": str(exc)[:800],
+            "error_type": type(exc).__name__,
+            "pages_reviewed": [],
+            "findings": [],
+            "notes": ("검수 에이전트 실행 실패 — review_input.json은 생성됐으나 "
+                      "headless 검수 호출/파싱 단계에서 예외. 원인은 error 필드 "
+                      "참조 (인증/타임아웃/예산/CLI 부재 등)."),
+            "queue_pages": [q.get("page") for q in queue],
+        }
+        with open(os.path.join(job_dir, REPORT_FILENAME), "w",
+                  encoding="utf-8") as f:
+            json.dump(report, f, ensure_ascii=False, indent=1)
+    except OSError:
+        pass
+
+
 def run_review_agent(job_dir, log, result=None):
     """조판 job 산출물에 대해 검수 에이전트 실행 → review_result.json.
 
@@ -403,9 +430,18 @@ def run_review_agent(job_dir, log, result=None):
     if log:
         log(f"[AI검수] 검수 에이전트 실행 — 표본 {len(queue)}페이지 "
             f"({[q['page'] for q in queue]})")
-    structured, meta = invoke_claude(build_prompt(), job_dir, log)
-    if not structured:
-        raise RuntimeError(f"검수 에이전트 구조화 출력 없음 (meta={meta})")
+    # W49 (실서비스 0e3e6469 실증 — 침묵 실패 금지): invoke/파싱 실패는 지금까지
+    # 파이프라인 훅이 로그(휘발성 SSE)만 남기고 삼켜서, review_input.json은
+    # 있는데 review_result.json이 없는 '진단 불가' 상태가 됐다. 실패해도 반드시
+    # review_result.json(verdict="error")을 남겨 사후 원인 규명이 가능하게 한다
+    # (fail-open은 유지 — 여전히 위로 rethrow해 조판 결과 전달은 정상).
+    try:
+        structured, meta = invoke_claude(build_prompt(), job_dir, log)
+        if not structured:
+            raise RuntimeError(f"검수 에이전트 구조화 출력 없음 (meta={meta})")
+    except Exception as exc:                                    # noqa: BLE001
+        _write_error_report(job_dir, exc, queue)
+        raise
 
     findings = structured.get("findings") or []
     counts = {"auto_fixable": 0, "manuscript_error": 0, "operator_judgment": 0}
