@@ -474,6 +474,7 @@
                     var cnt = range.endIdx - range.startIdx + 1;
                     pageCounter += cnt;
                     tempPdfPaths.push(tempPdf.fsName);
+                    expectedRows.push(tempPdf.fsName + '\t' + cnt + '\t' + label);
                     writeLog(label + ": p" + range.startIdx + "~" +
                              range.endIdx + " (" + cnt + "p) export OK");
                 } else {
@@ -487,6 +488,19 @@
         // export preferences 복원
         try { app.pdfExportPreferences.pageRange           = savedRange;   } catch (e1) {}
         try { app.pdfExportPreferences.exportReaderSpreads = savedSpreads; } catch (e2) {}
+
+        // 부분 PDF 기대 페이지수 기록 — JSX 는 PDF 페이지수를 셀 수 없으므로
+        // 실제 대조는 engine.verify(Python) 가 한다.
+        try {
+            var expFile = new File(PARTS_DIR + '/_expected.txt');
+            expFile.encoding = 'UTF-8';
+            expFile.lineFeed = 'Unix';
+            expFile.open('w');
+            expFile.write(expectedRows.join('\n'));
+            expFile.close();
+        } catch (eExpW) {
+            writeLog("[경고] 기대 페이지수 기록 실패: " + eExpW.message);
+        }
 
         if (tempPdfPaths.length === 0) {
             fail("처리된 코드가 없습니다 — 부분 PDF 0개");

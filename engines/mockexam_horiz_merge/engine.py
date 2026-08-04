@@ -220,6 +220,65 @@ class MockexamHorizMergeEngine(MockexamSeroMergeEngine):
 
     # ─── verify ────────────────────────────────────────────────────
 
+    @staticmethod
+    def _pdf_page_count(path):
+        """PDF 페이지 수 — pypdf 없으면 None (검증 스킵)."""
+        try:
+            from pypdf import PdfReader
+        except ImportError:
+            return None
+        try:
+            return len(PdfReader(path).pages)
+        except Exception:
+            return None
+
+    def _verify_part_pages(self, settings, log):
+        """부분 PDF 실제 페이지수 vs JSX 기대치 대조 + 최종 PDF 합계 확인."""
+        warnings = []
+        parts_dir = settings.get("pdf_parts_dir", "")
+        exp_path = os.path.join(parts_dir, "_expected.txt")
+        if not parts_dir or not os.path.exists(exp_path):
+            return warnings
+
+        rows = []
+        with open(exp_path, encoding="utf-8") as f:
+            for line in f:
+                line = line.rstrip("\n")
+                if not line.strip():
+                    continue
+                cols = line.split("\t")
+                if len(cols) < 2:
+                    continue
+                try:
+                    rows.append((cols[0], int(cols[1]),
+                                 cols[2] if len(cols) > 2 else ""))
+                except ValueError:
+                    continue
+        if not rows:
+            return warnings
+
+        total_expected = 0
+        for path, expected, label in rows:
+            total_expected += expected
+            actual = self._pdf_page_count(path)
+            if actual is None:
+                continue
+            if actual != expected:
+                warnings.append(
+                    f"구간 추출 실패: {label or os.path.basename(path)} — "
+                    f"기대 {expected}p / 실제 {actual}p"
+                )
+
+        actual_total = self._pdf_page_count(settings.get("output_pdf", ""))
+        if actual_total is not None and actual_total != total_expected:
+            warnings.append(
+                f"결합 PDF 페이지수 불일치: 기대 {total_expected}p / "
+                f"실제 {actual_total}p"
+            )
+        elif actual_total is not None:
+            log(f"[검증] 결합 PDF {actual_total}p — 기대치 일치")
+        return warnings
+
     def verify(self, job_dir, log):
         settings_path = os.path.join(job_dir, ".settings.json")
         with open(settings_path, encoding="utf-8") as f:
@@ -251,6 +310,11 @@ class MockexamHorizMergeEngine(MockexamSeroMergeEngine):
                 pass
         else:
             warnings.append("job 로그 없음 — JSX 미실행 의심")
+
+        # 부분 PDF 페이지수 대조 — pageRange 가 무시돼 소스 전체가 통째로
+        # 나와도 JSX 로그는 "export OK"로 찍힌다(2026-08-04 실측: 5개 중
+        # 4개가 256~317p). 실제 페이지수를 세어야만 잡힌다.
+        warnings.extend(self._verify_part_pages(settings, log))
 
         ok = os.path.exists(pdf_out) and len(warnings) == 0
 
