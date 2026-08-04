@@ -418,20 +418,28 @@ class WorkbookSelectEngine(BaseEngine):
         warnings = []
 
         log_path = os.path.join(job_dir, "조판_로그.txt")
-        overflow = steps_done = None
+        steps_done = None
         if os.path.exists(log_path):
             content = open(log_path, encoding="utf-8",
                            errors="ignore").read()
             m = re.search(r"STEP완료:\s*(\d+)개", content)
             steps_done = int(m.group(1)) if m else None
-            m = re.search(r"오버플로우:\s*(\d+)개", content)
-            overflow = int(m.group(1)) if m else None
-            if overflow is None:
-                warnings.append("오버플로우 수치 확인 불가")
-            elif overflow > 0:
-                warnings.append("오버플로우 %d개 발생" % overflow)
         else:
             warnings.append("조판 로그 없음 — JSX 미실행 의심")
+
+        # 최종 오버플로우 = trim 후 잔여치 (run.jsx 로그의 "오버플로우: N개"는
+        # 흡수용 추가 페이지 수라 판정 기준이 아니다)
+        overflow = None
+        trim_log = os.path.join(job_dir, "trim_로그.txt")
+        if os.path.exists(trim_log):
+            tcontent = open(trim_log, encoding="utf-8",
+                            errors="ignore").read()
+            m = re.search(r"잔여 오버플로우:\s*(\d+)개", tcontent)
+            overflow = int(m.group(1)) if m else None
+        if overflow is None:
+            warnings.append("잔여 오버플로우 수치 확인 불가 (trim 로그)")
+        elif overflow > 0:
+            warnings.append("오버플로우 %d개 발생 — 내용 잘림 의심" % overflow)
 
         # 문항 커버리지 — 스텝별 누락 문항 노출
         cov_path = os.path.join(job_dir, "coverage.json")

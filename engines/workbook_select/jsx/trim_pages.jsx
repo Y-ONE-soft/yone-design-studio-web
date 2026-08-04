@@ -51,17 +51,28 @@
                 var st = null;
                 try { st = tfs[t].parentStory; } catch (e2) { continue; }
                 if (!st || st.textContainers.length <= 1) continue;  // 정적 라벨
-                var c = "";
-                try { c = tfs[t].contents || ""; } catch (e3) {}
-                if (typeof c !== "string") c = String(c);
-                c = c.replace(/[\s\r\n\uFFFC]+/g, "");
-                if (c.length > 0) { hasContent = true; break; }
+                // raw 문자수 기준 - 공백 문단만 든 프레임도 "내용"이다.
+                // 스토리 흐름 중간의 공백 프레임을 지우면 그 공백이 뒤
+                // 프레임으로 되흘러 꼬리 내용이 프레임 밖으로 밀려난다
+                // (2026-08-04 실측: step3 31k자 / b1 6.8k자 잘림).
+                var n = 0;
+                try { n = tfs[t].characters.length; } catch (e3) {}
+                if (n > 0) { hasContent = true; break; }
             }
             if (!hasContent) {
                 try { pg.remove(); removed++; } catch (e4) {}
             }
         }
         W("미사용 페이지 삭제: " + removed + "개 / 잔여 " + d.pages.length + "p");
+
+        // 잔여 오버플로우 집계 - run.jsx 로그의 "오버플로우: N개"는 흡수용
+        // 추가 페이지 수라 최종 상태가 아니다. 검수는 이 값을 본다.
+        try { d.recompose(); } catch (eRc) {}
+        var ovStories = 0;
+        for (var s2 = 0; s2 < d.stories.length; s2++) {
+            try { if (d.stories[s2].overflows) ovStories++; } catch (e9) {}
+        }
+        W("잔여 오버플로우: " + ovStories + "개");
 
         // 간지 2단락(회차 표기) 교체
         var line2 = (settings.divider_line2 !== undefined)
