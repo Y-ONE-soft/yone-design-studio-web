@@ -212,17 +212,18 @@
                 break;
             }
         }
-        if (endIdx === null) {
-            // 마지막 마커 — 문서 끝까지 삼키지 않도록 A마스터가 끊기는 곳까지
-            endIdx = srcDoc.pages.length - 1;
-            for (var k = startIdx + 1; k < srcDoc.pages.length; k++) {
-                var mn;
-                try { mn = srcDoc.pages[k].appliedMaster.name; }
-                catch (e) { mn = ''; }
-                if (!mn || mn.charAt(0).toUpperCase() !== 'A') {
-                    endIdx = k - 1;
-                    break;
-                }
+        if (endIdx === null) endIdx = srcDoc.pages.length - 1;
+
+        // A마스터가 끊기는 지점을 넘지 않는다. 다음 A마스터 마커까지로만
+        // 자르면 사이에 낀 B마스터(= 다음 섹션 시작) 페이지를 흡수한다
+        // (실측: 23년3월 32번 구간에 다른 섹션의 33번 p13 이 딸려옴).
+        for (var k = startIdx + 1; k <= endIdx; k++) {
+            var mn;
+            try { mn = srcDoc.pages[k].appliedMaster.name; }
+            catch (e) { mn = ''; }
+            if (!mn || mn.charAt(0).toUpperCase() !== 'A') {
+                endIdx = k - 1;
+                break;
             }
         }
         if (endIdx < startIdx) endIdx = startIdx;
