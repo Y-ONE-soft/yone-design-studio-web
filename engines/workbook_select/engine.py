@@ -332,6 +332,34 @@ class WorkbookSelectEngine(BaseEngine):
 
     # ─── run_indesign: 본 조판 + PDF export ────────────────────────
 
+    @staticmethod
+    def _wait_indesign_ready(log, max_wait=600):
+        """InDesign이 AppleEvents에 응답할 때까지 대기.
+
+        run.jsx 완료 로그 후에도 대형 문서 recompose/save 로 수 분간
+        바쁠 수 있고, 그 동안 do script 제출은 AppleScript 용어 조회
+        실패("expected end of line but found script")로 죽는다
+        (2026-08-04 실측 — trim/export 제출 실패의 원인).
+        """
+        import subprocess, time
+        deadline = time.time() + max_wait
+        probe = ('with timeout of 15 seconds\n'
+                 'tell application "Adobe InDesign 2026" to do script '
+                 '"1+1" language javascript\n'
+                 'end timeout')
+        waited = False
+        while time.time() < deadline:
+            r = subprocess.run(["osascript", "-e", probe],
+                               capture_output=True, timeout=30)
+            if r.returncode == 0:
+                if waited:
+                    log("[InDesign] 응답 회복 — 다음 단계 진행")
+                return True
+            waited = True
+            time.sleep(10)
+        log("[경고] InDesign %d초 무응답 — 그대로 제출 시도" % max_wait)
+        return False
+
     def run_indesign(self, job_dir, log):
         from core.indesign import runner
         settings_path = os.path.join(job_dir, ".settings.json")
@@ -344,12 +372,14 @@ class WorkbookSelectEngine(BaseEngine):
                        stall_limit=900)
 
         # 후처리 1: 미사용 페이지 제거 + 간지 텍스트 (선택 조판 전용)
+        self._wait_indesign_ready(log)
         trim_log = os.path.join(job_dir, "trim_로그.txt")
         runner.run_jsx(os.path.join(job_dir, "trim_pages.jsx"), log,
                        poll_log_path=trim_log, timeout=1200, stall_limit=600,
                        completion_marker="===== trim 완료 =====")
 
         # 후처리 2: PDF export (run.jsx는 저장까지만 한다)
+        self._wait_indesign_ready(log)
         export_jsx = os.path.join(job_dir, "export_pdf.jsx")
         indd = settings["indd_path"].replace("\\", "\\\\").replace('"', '\\"')
         pdf = settings["pdf_path"].replace("\\", "\\\\").replace('"', '\\"')
