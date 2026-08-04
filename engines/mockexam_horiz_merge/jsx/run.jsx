@@ -335,21 +335,23 @@
         var inddFile = new File(inddPath);
         var firstSrc = codeFileMap[validCodes[0]].doc;
 
-        // 빈 새 문서에 구간 페이지를 순서대로 복제한다.
-        // 첫 소스를 saveACopy 한 뒤 범위 밖 페이지를 지우는 기존 방식은,
-        // 본편이 하나로 연결된(threaded) 스토리라 삭제된 페이지의 텍스트가
-        // 남은 프레임으로 되흘러 첫 페이지 내용이 통째로 바뀐다
-        // (실측 2026-08-04: p1 이 32번 대신 그 회차 20번 지문으로 나옴 +
-        //  오버셋 스토리 1건). 나머지 코드에 이미 쓰이는 cross-doc
-        // duplicate 는 마스터/스타일을 함께 가져오므로 전 구간에 적용한다.
-        var newDoc = app.documents.add(false);
+        // 첫 소스의 사본을 그릇으로 쓴다 — 마스터/스타일/스와치를 그대로
+        // 물려받기 위해서다(빈 새 문서에 duplicate 하면 마스터가 없어
+        // 상단 장식과 푸터가 통째로 빠진다 — 실측 2026-08-04).
+        //
+        // 단, 사본에서 "범위 밖 페이지를 지워 첫 구간만 남기는" 기존 방식은
+        // 쓰지 않는다. 본편이 하나로 연결된(threaded) 스토리라 삭제된
+        // 페이지의 텍스트가 남은 프레임으로 되흘러 첫 페이지가 그 회차
+        // 20번 지문으로 바뀌었다(+ 오버셋 1건).
+        //
+        // 대신 (1) 필요한 구간을 전부 맨 뒤에 duplicate 하고 — 복제본은
+        // 원본 스토리와 무관한 독립 사본이다 — (2) 원래 페이지 전체를
+        // 지운다. 되흐름은 어차피 전부 삭제될 페이지들 사이에서만 일어난다.
+        firstSrc.saveACopy(inddFile);
+
+        var newDoc = app.open(inddFile, false);
         try {
-            try {
-                var sp = firstSrc.documentPreferences;
-                newDoc.documentPreferences.pageWidth   = sp.pageWidth;
-                newDoc.documentPreferences.pageHeight  = sp.pageHeight;
-                newDoc.documentPreferences.facingPages = sp.facingPages;
-            } catch (ePref) {}
+            var origCount = newDoc.pages.length;
 
             for (var ci2 = 0; ci2 < validCodes.length; ci2++) {
                 var c    = validCodes[ci2];
@@ -365,12 +367,16 @@
                 }
             }
 
-            // 문서 생성 시 딸려온 맨 앞 빈 페이지 제거
-            if (newDoc.pages.length > 1) {
-                try { newDoc.pages[0].remove(); } catch (eRm) {}
+            if (newDoc.pages.length <= origCount) {
+                return { ok: false, error: '구간 복제 0건' };
             }
 
-            newDoc.save(inddFile);
+            // 그릇으로 쓴 원본 페이지 전량 제거 (뒤에서 앞으로)
+            for (var p3 = origCount - 1; p3 >= 0; p3--) {
+                try { newDoc.pages[p3].remove(); } catch (eRm) {}
+            }
+
+            newDoc.save();
             return { ok: true, path: inddFile.fsName };
         } finally {
             try { newDoc.close(SaveOptions.NO); } catch (eClose) {}
