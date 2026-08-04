@@ -349,9 +349,14 @@ class WorkbookSelectEngine(BaseEngine):
                  'end timeout')
         waited = False
         while time.time() < deadline:
-            r = subprocess.run(["osascript", "-e", probe],
-                               capture_output=True, timeout=30)
-            if r.returncode == 0:
+            try:
+                r = subprocess.run(["osascript", "-e", probe],
+                                   capture_output=True, timeout=30)
+                ok = (r.returncode == 0)
+            except (subprocess.TimeoutExpired, OSError):
+                # osascript 자체가 행 — InDesign busy. 재시도.
+                ok = False
+            if ok:
                 if waited:
                     log("[InDesign] 응답 회복 — 다음 단계 진행")
                 return True
