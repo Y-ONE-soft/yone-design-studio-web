@@ -15,23 +15,31 @@
 (function () {
     var settingsPath = "__SETTINGS_PATH__";
 
-    var sf = new File(settingsPath);
-    sf.encoding = "UTF-8";
-    sf.open("r");
-    var settings = eval("(" + sf.read() + ")");
-    sf.close();
-
-    var logFile = new File(settings.output_dir + "/trim_로그.txt");
+    // 로그를 가장 먼저 연다 — 러너의 전달 확인/스톨 감지가 이 파일의
+    // 갱신을 하트비트로 삼는다 (긴 removal 루프 중 무갱신이면 600초
+    // 스톨 오탐으로 작업이 보류됨 — 2026-08-04 실측).
+    var logFile = new File(settingsPath.replace(/\.settings\.json$/,
+                                                "trim_로그.txt"));
     logFile.encoding = "UTF-8";
     logFile.lineFeed = "Unix";
     function W(s) { logFile.open("a"); logFile.writeln(s); logFile.close(); }
+    W("trim 시작");
 
     try {
+        var sf = new File(settingsPath);
+        sf.encoding = "UTF-8";
+        sf.open("r");
+        var settings = eval("(" + sf.read() + ")");
+        sf.close();
+
         var d = app.open(new File(settings.indd_path), false);
         try { d.adjustLayoutPreferences.enableAdjustLayout = false; } catch (e0) {}
 
         var removed = 0;
+        var scanned = 0;
         for (var i = d.pages.length - 1; i >= 0; i--) {
+            scanned++;
+            if (scanned % 40 === 0) W("스캔 " + scanned + "p...");
             var pg = d.pages[i];
             var mn = "";
             try { mn = pg.appliedMaster ? pg.appliedMaster.name : ""; } catch (e1) {}
