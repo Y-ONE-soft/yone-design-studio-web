@@ -332,24 +332,26 @@
         }
         if (validCodes.length === 0) return { ok: false, error: '유효한 코드 없음' };
 
-        var inddFile  = new File(inddPath);
-        var firstCode = validCodes[0];
-        var firstSrc  = codeFileMap[firstCode].doc;
-        var firstUri  = codeFileMap[firstCode].uri;
-        var firstRng  = getCodeRange(markersCache[firstUri], firstCode, firstSrc);
-        if (!firstRng) return { ok: false, error: '첫 코드 페이지 범위 계산 실패' };
+        var inddFile = new File(inddPath);
+        var firstSrc = codeFileMap[validCodes[0]].doc;
 
-        firstSrc.saveACopy(inddFile);
-
-        var newDoc = app.open(inddFile, false);
+        // 빈 새 문서에 구간 페이지를 순서대로 복제한다.
+        // 첫 소스를 saveACopy 한 뒤 범위 밖 페이지를 지우는 기존 방식은,
+        // 본편이 하나로 연결된(threaded) 스토리라 삭제된 페이지의 텍스트가
+        // 남은 프레임으로 되흘러 첫 페이지 내용이 통째로 바뀐다
+        // (실측 2026-08-04: p1 이 32번 대신 그 회차 20번 지문으로 나옴 +
+        //  오버셋 스토리 1건). 나머지 코드에 이미 쓰이는 cross-doc
+        // duplicate 는 마스터/스타일을 함께 가져오므로 전 구간에 적용한다.
+        var newDoc = app.documents.add(false);
         try {
-            for (var p = newDoc.pages.length - 1; p >= 0; p--) {
-                if (p < firstRng.startIdx || p > firstRng.endIdx) {
-                    try { newDoc.pages[p].remove(); } catch (er) {}
-                }
-            }
+            try {
+                var sp = firstSrc.documentPreferences;
+                newDoc.documentPreferences.pageWidth   = sp.pageWidth;
+                newDoc.documentPreferences.pageHeight  = sp.pageHeight;
+                newDoc.documentPreferences.facingPages = sp.facingPages;
+            } catch (ePref) {}
 
-            for (var ci2 = 1; ci2 < validCodes.length; ci2++) {
+            for (var ci2 = 0; ci2 < validCodes.length; ci2++) {
                 var c    = validCodes[ci2];
                 var sd   = codeFileMap[c].doc;
                 var sUri = codeFileMap[c].uri;
@@ -363,7 +365,12 @@
                 }
             }
 
-            newDoc.save();
+            // 문서 생성 시 딸려온 맨 앞 빈 페이지 제거
+            if (newDoc.pages.length > 1) {
+                try { newDoc.pages[0].remove(); } catch (eRm) {}
+            }
+
+            newDoc.save(inddFile);
             return { ok: true, path: inddFile.fsName };
         } finally {
             try { newDoc.close(SaveOptions.NO); } catch (eClose) {}
