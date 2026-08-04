@@ -318,12 +318,14 @@
 
     function saveAsIndd(orderedCodes, codeFileMap, markersCache, inddPath) {
         var validCodes = [];
-        var seenM = {};   // 같은 물리 마커(장문 범위)는 1회만
+        var seenM = {};   // 같은 페이지 구간은 1회만 (PDF 쪽 seenRanges 와 동일 기준)
         for (var ci = 0; ci < orderedCodes.length; ci++) {
             var c0 = orderedCodes[ci];
             if (!codeFileMap[c0]) continue;
-            var mi0 = findMarkerIndex(markersCache[codeFileMap[c0].uri], c0);
-            var k0 = codeFileMap[c0].uri + "#" + mi0;
+            var u0  = codeFileMap[c0].uri;
+            var rg0 = getCodeRange(markersCache[u0], c0, codeFileMap[c0].doc);
+            if (!rg0) continue;
+            var k0 = u0 + "#" + rg0.startIdx + "-" + rg0.endIdx;
             if (seenM[k0]) continue;
             seenM[k0] = true;
             validCodes.push(c0);
@@ -434,7 +436,12 @@
         var tempPdfPaths = [];
         var expectedRows = [];  // 부분 PDF 기대 페이지수 (Python verify 대조용)
         var pageCounter  = 1;   // 결합 PDF 순차 폴리오
-        var seenMarkers  = {};  // 장문([41~42])이 여러 번호로 지목돼도 1회만 삽입
+        // 같은 페이지 구간이 여러 코드로 지목돼도 1회만 삽입.
+        // 키는 마커 인덱스가 아니라 "구간"이어야 한다 — 가로판은 한 페이지에
+        // 문항이 2개라 32번/33번이 서로 다른 마커면서 같은 페이지를 가리키고,
+        // 마커 인덱스로 키를 잡으면 같은 페이지가 두 번 실린다(실측: 15p 중
+        // 2p가 중복 — 23년11월 32/33, 21년11월 32/33).
+        var seenRanges   = {};
 
         for (var ci = 0; ci < orderedCodes.length; ci++) {
             var code = orderedCodes[ci];
@@ -452,19 +459,20 @@
 
             var srcDoc  = codeFileMap[code].doc;
             var srcUri  = codeFileMap[code].uri;
-            var mIdx    = findMarkerIndex(markersCache[srcUri], code);
-            var mKey    = srcUri + "#" + mIdx;
-            if (seenMarkers[mKey]) {
-                writeLog("[정보] 중복 지문 — 건너뜀: " + label);
-                continue;
-            }
-            seenMarkers[mKey] = true;
             var range   = getCodeRange(markersCache[srcUri], code, srcDoc);
 
             if (!range) {
                 writeLog("[경고] 페이지 범위 계산 실패: " + label);
                 continue;
             }
+
+            var rKey = srcUri + '#' + range.startIdx + '-' + range.endIdx;
+            if (seenRanges[rKey]) {
+                writeLog("[정보] 같은 페이지에 이미 실림 — 건너뜀: " + label +
+                         " (" + seenRanges[rKey] + " 와 동일 페이지)");
+                continue;
+            }
+            seenRanges[rKey] = label;
 
             var tempPdf = new File(PARTS_DIR + '/part_' +
                                    (ci < 10 ? '0' + ci : ci) + '_' + code + '.pdf');
