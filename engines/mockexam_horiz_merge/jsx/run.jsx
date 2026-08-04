@@ -97,59 +97,88 @@
     // 지문 시작을 [32] 같은 문제번호 표기로 적는 경우가 많다 (E2E 실측:
     // 26년 3월 전체(C) 마커 0개 / c20 덤프 [20]~[35] 실증) —
     // MergeMockExamSero.jsx 의 검증된 마커 로직(qNum + sameAsLast)을 사용.
-    function findAllMarkers(doc) {
-        var markers = [];
-        var code6Pat = /\b(\d{6})\b/;
-        var qNumPat  = /\[\s*(\d{1,2})(?:\s*[~\-]\s*(\d{1,2}))?\s*\]/;
+    // 문단구분자(U+2029)/공백으로 시작하는 프레임 contents 선두 정리.
+    // 원시 U+2029 를 소스에 직접 쓰면 컴파일이 깨지므로 charCode 로 비교.
+    function lstrip(s) {
+        while (s.length) {
+            var cc = s.charCodeAt(0);
+            if (cc === 0x2029 || cc === 0x2028 || cc <= 32) s = s.substring(1);
+            else break;
+        }
+        return s;
+    }
 
-        for (var i = 0; i < doc.pages.length; i++) {
-            var page = doc.pages[i];
-            try {
-                var masterName = page.appliedMaster.name;
-                if (!masterName || masterName.charAt(0).toUpperCase() !== 'A') continue;
-            } catch (e) { continue; }
+    // 페이지 1장에서 마커 후보를 "전부" 수집.
+    // wantCode=true  → 6자리 코드 (페이지 내 여러 개 모두)
+    // wantCode=false → 지문 앞 문항번호("33 Anthropologist", "41~42 A ball")
+    //                  및 대괄호 표기 [32]
+    function collectPageMarkers(page, wantCode) {
+        var found = [];
+        var seen  = {};
+        var items;
+        try { items = page.allPageItems; } catch (ep) { return found; }
 
-            var foundCode = null;
-            var foundQ    = null;
-            var foundQEnd = null;
-            try {
-                var items = page.allPageItems;
-                for (var f = 0; f < items.length; f++) {
-                    try {
-                        var txt = items[f].contents;
-                        if (typeof txt !== 'string') continue;
-                        if (!foundCode) {
-                            var m6 = code6Pat.exec(txt);
-                            if (m6) foundCode = m6[1];
-                        }
-                        if (!foundQ) {
-                            var mq = qNumPat.exec(txt);
-                            if (mq) { foundQ = mq[1]; foundQEnd = mq[2] || null; }
-                        }
-                        if (foundCode && foundQ) break;
-                    } catch (ef) {}
-                }
-            } catch (ep) {}
+        for (var f = 0; f < items.length; f++) {
+            var txt;
+            try { txt = items[f].contents; } catch (ef) { continue; }
+            if (typeof txt !== 'string' || !txt) continue;
 
-            if (foundCode || foundQ) {
-                var lastM = markers.length > 0 ? markers[markers.length - 1] : null;
-                var sameAsLast = false;
-                if (lastM) {
-                    if (foundCode && foundCode === lastM.code) sameAsLast = true;
-                    else if (!foundCode && foundQ &&
-                             foundQ === lastM.qNum &&
-                             (foundQEnd || '') === (lastM.qNumEnd || '')) sameAsLast = true;
+            if (wantCode) {
+                var codes = txt.match(/\d{6}/g);
+                if (!codes) continue;
+                for (var c = 0; c < codes.length; c++) {
+                    if (seen['c' + codes[c]]) continue;
+                    seen['c' + codes[c]] = true;
+                    found.push({ code: codes[c], qNum: null, qNumEnd: null });
                 }
-                if (!sameAsLast) {
-                    markers.push({
-                        code: foundCode, qNum: foundQ, qNumEnd: foundQEnd,
-                        pageIndex: i, pageName: page.name
-                    });
+            } else {
+                var head = lstrip(txt);
+                var mq = /^(\d{1,2})(?:\s*[~\-]\s*(\d{1,2}))?\s+[A-Z]/.exec(head);
+                if (!mq) {
+                    mq = /\[\s*(\d{1,2})(?:\s*[~\-]\s*(\d{1,2}))?\s*\]/.exec(txt);
                 }
+                if (!mq) continue;
+                var key = 'q' + mq[1] + '-' + (mq[2] || '');
+                if (seen[key]) continue;
+                seen[key] = true;
+                found.push({ code: null, qNum: mq[1], qNumEnd: mq[2] || null });
             }
         }
-        markers.sort(function (a, b) { return a.pageIndex - b.pageIndex; });
-        return markers;
+        return found;
+    }
+
+    function findAllMarkers(doc) {
+        // A마스터 페이지 목록
+        var aPages = [];
+        for (var i = 0; i < doc.pages.length; i++) {
+            var page = doc.pages[i];
+            var mn;
+            try { mn = page.appliedMaster.name; } catch (e) { continue; }
+            if (!mn || mn.charAt(0).toUpperCase() !== 'A') continue;
+            aPages.push({ page: page, index: i });
+        }
+
+        // 회차별 표기 방식 판정 — A파트에 6자리 코드가 하나라도 있으면 코드 모드,
+        // 전무하면(23년11월/24년6월/23년6월 실측) 문항번호 모드.
+        var hasCode = false;
+        for (var a = 0; a < aPages.length && !hasCode; a++) {
+            if (collectPageMarkers(aPages[a].page, true).length > 0) hasCode = true;
+        }
+
+        var markers = [];
+        for (var b = 0; b < aPages.length; b++) {
+            var got = collectPageMarkers(aPages[b].page, hasCode);
+            for (var g = 0; g < got.length; g++) {
+                markers.push({
+                    code:      got[g].code,
+                    qNum:      got[g].qNum,
+                    qNumEnd:   got[g].qNumEnd,
+                    pageIndex: aPages[b].index,
+                    pageName:  aPages[b].page.name
+                });
+            }
+        }
+        return markers;   // 페이지 순으로 push — 별도 정렬 불필요
     }
 
     // 코드 → 마커 인덱스: 6자리 코드 일치 우선, 없으면 [QQ]/[QQ~QQ] 범위 매칭
@@ -172,9 +201,31 @@
         var idx = findMarkerIndex(markers, code);
         if (idx === -1) return null;
         var startIdx = markers[idx].pageIndex;
-        var endIdx   = (idx < markers.length - 1)
-                         ? markers[idx + 1].pageIndex - 1
-                         : srcDoc.pages.length - 1;
+
+        // 한 페이지에 문항이 2개면 마커도 2개(같은 pageIndex) — 단순히
+        // markers[idx+1] 을 쓰면 endIdx < startIdx 가 된다. 페이지가
+        // "실제로 넘어가는" 다음 마커를 찾는다.
+        var endIdx = null;
+        for (var j = idx + 1; j < markers.length; j++) {
+            if (markers[j].pageIndex > startIdx) {
+                endIdx = markers[j].pageIndex - 1;
+                break;
+            }
+        }
+        if (endIdx === null) {
+            // 마지막 마커 — 문서 끝까지 삼키지 않도록 A마스터가 끊기는 곳까지
+            endIdx = srcDoc.pages.length - 1;
+            for (var k = startIdx + 1; k < srcDoc.pages.length; k++) {
+                var mn;
+                try { mn = srcDoc.pages[k].appliedMaster.name; }
+                catch (e) { mn = ''; }
+                if (!mn || mn.charAt(0).toUpperCase() !== 'A') {
+                    endIdx = k - 1;
+                    break;
+                }
+            }
+        }
+        if (endIdx < startIdx) endIdx = startIdx;
         return { startIdx: startIdx, endIdx: endIdx };
     }
 
@@ -232,7 +283,12 @@
         }
 
         // Phase 4: 내보내기
-        var newRange = startNum + '-' + (startNum + pageCount - 1);
+        // pageRange 는 "섹션 페이지 번호"가 아니라 "+n" 절대 페이지 문법으로
+        // 지정한다. 번호 기반("1-2")은 continueNumbering=true 인 섹션이
+        // 대피 대상에서 빠져 같은 번호가 문서에 중복 존재할 때 InDesign 이
+        // 범위를 무시하고 전 페이지를 내보낸다 (실측: 부분 PDF 5개 중 4개가
+        // 소스 전체 256~317p 로 나옴 — 2026-08-04).
+        var newRange = '+' + (startIdx + 1) + '-+' + (endIdx + 1);
         app.pdfExportPreferences.pageRange = newRange;
 
         try {
@@ -375,6 +431,7 @@
         }
 
         var tempPdfPaths = [];
+        var expectedRows = [];  // 부분 PDF 기대 페이지수 (Python verify 대조용)
         var pageCounter  = 1;   // 결합 PDF 순차 폴리오
         var seenMarkers  = {};  // 장문([41~42])이 여러 번호로 지목돼도 1회만 삽입
 
