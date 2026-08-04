@@ -303,6 +303,8 @@ class WorkbookSelectEngine(BaseEngine):
             "month": merged.get("month", 10),
             "exclude": [],
             "pdf_path": os.path.splitext(indd_out)[0] + ".pdf",
+            # 회차 혼합본이므로 간지의 "YY년 MM월" 표기는 비운다
+            "divider_line2": "",
         }
         settings_path = os.path.join(job_dir, ".settings.json")
         with open(settings_path, "w", encoding="utf-8") as f:
@@ -315,6 +317,15 @@ class WorkbookSelectEngine(BaseEngine):
         jsx_copy = os.path.join(job_dir, "run.jsx")
         with open(jsx_copy, "w", encoding="utf-8") as f:
             f.write(jsx_src)
+
+        # 후처리 trim JSX (미사용 페이지 제거 + 간지 텍스트)
+        trim_tpl = os.path.join(_DIR, "jsx", "trim_pages.jsx")
+        with open(trim_tpl, encoding="utf-8") as f:
+            trim_src = f.read()
+        trim_src = trim_src.replace("__SETTINGS_PATH__", settings_path)
+        with open(os.path.join(job_dir, "trim_pages.jsx"), "w",
+                  encoding="utf-8") as f:
+            f.write(trim_src)
 
         log("[JSX] 준비 완료")
         return jsx_copy
@@ -332,7 +343,13 @@ class WorkbookSelectEngine(BaseEngine):
                        poll_log_path=log_file, timeout=self.jsx_timeout,
                        stall_limit=900)
 
-        # 후처리: PDF export (run.jsx는 저장까지만 한다)
+        # 후처리 1: 미사용 페이지 제거 + 간지 텍스트 (선택 조판 전용)
+        trim_log = os.path.join(job_dir, "trim_로그.txt")
+        runner.run_jsx(os.path.join(job_dir, "trim_pages.jsx"), log,
+                       poll_log_path=trim_log, timeout=1200, stall_limit=600,
+                       completion_marker="===== trim 완료 =====")
+
+        # 후처리 2: PDF export (run.jsx는 저장까지만 한다)
         export_jsx = os.path.join(job_dir, "export_pdf.jsx")
         indd = settings["indd_path"].replace("\\", "\\\\").replace('"', '\\"')
         pdf = settings["pdf_path"].replace("\\", "\\\\").replace('"', '\\"')
