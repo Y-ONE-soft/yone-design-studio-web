@@ -392,6 +392,8 @@ class WorkbookSelectEngine(BaseEngine):
         with open(export_jsx, "w", encoding="utf-8") as f:
             f.write(
                 '#target indesign\n'
+                # runner.run_jsx 는 JSX 안의 settingsPath 변수를 요구한다
+                'var settingsPath = "%s";\n' % settings_path.replace("\\", "\\\\") +
                 '(function () {\n'
                 '    var lf = new File("%s");\n'
                 '    lf.encoding = "UTF-8"; lf.lineFeed = "Unix";\n'

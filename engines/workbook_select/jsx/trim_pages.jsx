@@ -65,6 +65,31 @@
         }
         W("미사용 페이지 삭제: " + removed + "개 / 잔여 " + d.pages.length + "p");
 
+        // 잔여 오버플로우 해소 - run.jsx ensureNoOverflow는 스토리당
+        // 10페이지 상한이라 긴 스텝(본문정리 등)에서 부족할 수 있다
+        // (2026-08-04 실측: b1 17문항에서 6.8k자 잔여). 상한을 넉넉히.
+        var grown = 0;
+        for (var g = 0; g < d.stories.length; g++) {
+            var stG = d.stories[g];
+            var guard = 0;
+            try {
+                while (stG.overflows && guard < 40) {
+                    var lastTF = stG.textContainers[stG.textContainers.length - 1];
+                    var lastPg = lastTF.parentPage;
+                    if (!lastPg) break;
+                    var newPg = d.pages.add(LocationOptions.AFTER, lastPg);
+                    try { newPg.appliedMaster = lastPg.appliedMaster; } catch (eM) {}
+                    var nTF = newPg.textFrames.add();
+                    nTF.geometricBounds = lastTF.geometricBounds;
+                    lastTF.nextTextFrame = nTF;
+                    guard++; grown++;
+                    try { stG.recompose(); } catch (eR) {}
+                }
+            } catch (eG) {}
+            if (guard) W("스토리#" + g + " 페이지 " + guard + "개 추가");
+        }
+        if (grown) W("오버플로우 해소 페이지 추가: 총 " + grown + "개");
+
         // 잔여 오버플로우 집계 - run.jsx 로그의 "오버플로우: N개"는 흡수용
         // 추가 페이지 수라 최종 상태가 아니다. 검수는 이 값을 본다.
         try { d.recompose(); } catch (eRc) {}
