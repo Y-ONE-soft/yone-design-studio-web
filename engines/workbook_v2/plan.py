@@ -332,7 +332,12 @@ def apply_subscript_print_map(obj):
 # 인쇄될 문자)에만 적용. 1:1(한 글자) 치환 — 텍스트/runs 오프셋 보존.
 # content 원본은 무변형 (골든/파서 산출 보존 — W20 PUA 전례).
 # 게이트 G29가 등재 문자의 출력 잔존을 소급 검출한다.
-GLYPH_PRINT_TABLE = {"❮": "〈", "❯": "〉"}
+# W? (2026-08-06 실측 — 선택 워크북 조판 게이트 warning 55건):
+# ⦁(U+2981 Z NOTATION SPOT)도 Noto Sans CJK KR cmap 미지원(core.fontcov
+# 실측 False). 조건/보기 블록의 항목 표시로 쓰여 tofu 로 인쇄된다.
+# 커버 실측 결과 •(U+2022) True / ●(U+25CF) True / ∙(U+2219) False —
+# 원표기(중간 크기 점)와 가장 가까운 •(U+2022) 채택.
+GLYPH_PRINT_TABLE = {"❮": "〈", "❯": "〉", "⦁": "•"}
 _GLYPH_PRINT_TRANS = str.maketrans(GLYPH_PRINT_TABLE)
 
 
