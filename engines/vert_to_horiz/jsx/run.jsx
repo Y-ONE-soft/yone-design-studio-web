@@ -247,21 +247,30 @@
         return matchByPositionLoose(srcMains, tgtMains);
     }
 
+    // 프레임 중심을 "자기 페이지 좌상단 기준"으로 정규화 — 스프레드 좌표계에서
+    // 좌/우 페이지 파리티가 다르면 절대 x 비교가 무너져 2단 페이지의 좌우가
+    // 뒤바뀐다 (2026-08-05 실측: 실전 세트 첫 페이지 칼럼 역순).
+    function pageRelCenter(tf) {
+        var b = tf.geometricBounds;
+        var cx = (b[1] + b[3]) / 2, cy = (b[0] + b[2]) / 2;
+        try {
+            var pb = tf.parentPage.bounds;
+            return { x: cx - pb[1], y: cy - pb[0] };
+        } catch (e) { return { x: cx, y: cy }; }
+    }
+
     // 개수 달라도 가능한 한 위치 기반 매칭 (매핑 안 된 tgt 는 그대로 둠)
     function matchByPositionLoose(srcMains, tgtMains) {
         var matches = [];
         if (srcMains.length === 0 || tgtMains.length === 0) return matches;
         var usedTgt = {};
         for (var i = 0; i < srcMains.length; i++) {
-            var sb = srcMains[i].geometricBounds;
-            var sCx = (sb[1] + sb[3]) / 2;
-            var sCy = (sb[0] + sb[2]) / 2;
+            var sc = pageRelCenter(srcMains[i]);
             var bestJ = -1, bestDist = Infinity;
             for (var j = 0; j < tgtMains.length; j++) {
                 if (usedTgt[j]) continue;
-                var tb = tgtMains[j].geometricBounds;
-                var dist = Math.abs(sCx - (tb[1]+tb[3])/2) +
-                           Math.abs(sCy - (tb[0]+tb[2])/2);
+                var tc = pageRelCenter(tgtMains[j]);
+                var dist = Math.abs(sc.x - tc.x) + Math.abs(sc.y - tc.y);
                 if (dist < bestDist) { bestDist = dist; bestJ = j; }
             }
             if (bestJ >= 0) {
