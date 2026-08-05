@@ -700,7 +700,25 @@
                 }
             }
         }
-        return regions;
+
+        // 같은 라벨의 마스터 기반 영역(실전 등)이 M페이지 등으로 쪼개져 여러 개
+        // 감지되면 하나로 병합 — lesson_all 이 영역마다 처음부터 다시 부어
+        // 중복 런이 생기는 것을 방지 (2026-08-05 신규 내지 실측: O런 4개 →
+        // 실전 76p 중복). 런이 1개인 기존 템플릿에서는 결과 무변화.
+        var merged = [];
+        var byLabel = {};
+        for (var mi = 0; mi < regions.length; mi++) {
+            var rg = regions[mi];
+            if (rg.config && rg.config.mode === "lesson_all" && byLabel[rg.label]) {
+                var first = byLabel[rg.label];
+                first.endP = rg.endP;
+                for (var pp = 0; pp < rg.pages.length; pp++) first.pages.push(rg.pages[pp]);
+                continue;
+            }
+            if (rg.config && rg.config.mode === "lesson_all") byLabel[rg.label] = rg;
+            merged.push(rg);
+        }
+        return merged;
     }
 
     // ───────────────────────────────────────────────────────────────
