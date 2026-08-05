@@ -815,7 +815,10 @@
                 }
             }
         } else if (config.mode === "lesson_all") {
-            var horizP = region.startP;
+            // 병합 region 대응: 페이지 번호 연속 증가 대신 region.pages(O페이지
+            // 목록)를 순회 — 사이에 낀 M/간지/판권 페이지를 침범하지 않는다.
+            // 목록 소진 시 문서 끝에 O-마스터 페이지 추가 (기존 동작 유지).
+            var slotIdx = 0;
             region.pageLessonMap = {};  // 가로 페이지 → 지문 N 매핑 (라벨링 시 사용)
             for (var n = 0; n < lessons.length; n++) {
                 var lesson = lessons[n];
@@ -825,7 +828,10 @@
                     continue;
                 }
                 for (var s = 0; s < srcPages.length; s++) {
-                    while (horizP > horiz.pages.length) {
+                    var horizP;
+                    if (slotIdx < region.pages.length) {
+                        horizP = region.pages[slotIdx];
+                    } else {
                         var newPage = horiz.pages.add(LocationOptions.AT_END);
                         try {
                             for (var m = 0; m < horiz.masterSpreads.length; m++) {
@@ -836,12 +842,14 @@
                             }
                         } catch (e) {}
                         info("  (페이지 추가) p" + newPage.name);
+                        horizP = horiz.pages.length;
+                        region.pages.push(horizP);
                     }
+                    slotIdx++;
                     var srcP = srcPages[s];
                     var r = copyPageContent(verti.pages[srcP - 1], horiz.pages[horizP - 1], config.tfPos);
                     info("  p" + horizP + " : 지문" + lesson.num + " 세로 p" + srcP + " (실전) → " + (r.ok ? "OK" : "FAIL " + r.reason));
                     region.pageLessonMap[horizP] = lesson.num;
-                    horizP++;
                 }
             }
         }
@@ -913,6 +921,18 @@
             var lastSmallTF = getSmallLabelTFRef(lastPage);
 
             info("  [" + r.label + "] 슬롯 " + current + " → " + (current + pagesToAdd * slotsPerPage) + ", " + pagesToAdd + "p 추가");
+            // 반대 파리티 페이지로 duplicate 하면 스프레드 좌표계에서 프레임이
+            // 페이지 밖으로 나가 parentPage 를 잃는다 (2026-08-05 실측: 신규
+            // 내지 어휘2 확장 페이지의 main TF 소실 → 문항 7개 누락).
+            // 원점을 페이지 기준으로 임시 전환해 bounds 를 페이지 로컬로 재설정.
+            var savedOrigin = null;
+            try {
+                savedOrigin = horiz.viewPreferences.rulerOrigin;
+                horiz.viewPreferences.rulerOrigin = RulerOrigin.PAGE_ORIGIN;
+            } catch (eOr) {}
+            var mainBounds = [];
+            for (var mb = 0; mb < lastMains.length; mb++) mainBounds.push(lastMains[mb].geometricBounds.slice(0));
+            var smallBounds = lastSmallTF ? lastSmallTF.geometricBounds.slice(0) : null;
             var prev = lastPage;
             for (var pa = 0; pa < pagesToAdd; pa++) {
                 var newPage = horiz.pages.add(LocationOptions.AFTER, prev);
@@ -920,15 +940,18 @@
                 for (var mi = 0; mi < lastMains.length; mi++) {
                     var src = lastMains[mi];
                     var dup = src.duplicate(newPage);
-                    dup.geometricBounds = src.geometricBounds.slice(0);
+                    dup.geometricBounds = mainBounds[mi];
                     try { dup.contents = ""; } catch (e) {}
                 }
                 if (lastSmallTF) {
                     var dupSmall = lastSmallTF.duplicate(newPage);
-                    dupSmall.geometricBounds = lastSmallTF.geometricBounds.slice(0);
+                    dupSmall.geometricBounds = smallBounds;
                     try { dupSmall.contents = ""; } catch (e) {}
                 }
                 prev = newPage;
+            }
+            if (savedOrigin !== null) {
+                try { horiz.viewPreferences.rulerOrigin = savedOrigin; } catch (eOr2) {}
             }
             // endP/pages 갱신
             var oldEnd = r.endP;
