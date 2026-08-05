@@ -1,9 +1,9 @@
 {
   "indd_output_dir": "조판/교재/워크북",
   "indd_original": {
-    "모의고사": "조판/인디자인 원본/[원본]워크북_C(모의고사)_내지.indd",
+    "모의고사": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/인디자인 파일/Y.ONE WEB/인디자인 원본/[원본]워크북(모의고사)_내지.indd",
     "모의고사_세종고": "조판/인디자인 원본/[원본]워크북(세종)_내지.indd",
-    "_default": "조판/인디자인 원본/[원본]워크북_C(모의고사)_내지.indd",
+    "_default": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/인디자인 파일/Y.ONE WEB/인디자인 원본/[원본]워크북(모의고사)_내지.indd",
     "세종1": "조판/인디자인 원본/[원본]워크북(세종)_내지.indd"
   },
   "manuscript_base": {
@@ -16,15 +16,63 @@
   },
   "log_filename": "조판_로그.txt",
   "mockexam": {
-    "normal_questions": [20, 21, 22, 23, 24, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42],
-    "short_questions": [18, 19, 25, 26, 27, 28, 43, 44, 45],
-    "combined_questions": {"41-42": [41, 42], "43-45": [43, 44, 45]}
+    "normal_questions": [
+      20,
+      21,
+      22,
+      23,
+      24,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42
+    ],
+    "short_questions": [
+      18,
+      19,
+      25,
+      26,
+      27,
+      28,
+      43,
+      44,
+      45
+    ],
+    "combined_questions": {
+      "41-42": [
+        41,
+        42
+      ],
+      "43-45": [
+        43,
+        44,
+        45
+      ]
+    }
   },
   "step_order": [
-    "step1_a1", "step1_a2", "step1_b1", "step1_b2",
-    "step1_c1", "step1_c2",
-    "step2_a1", "step2_b1", "step2_c1", "step2_c2",
-    "step3", "step3_short"
+    "step1_a1",
+    "step1_a2",
+    "step1_b1",
+    "step1_b2",
+    "step1_c1",
+    "step1_c2",
+    "step2_a1",
+    "step2_b1",
+    "step2_c1",
+    "step2_c2",
+    "step3",
+    "step3_short"
   ],
   "manuscript_file_map": {
     "step1_a1": "Step1 A1 어휘선택.docx",
@@ -39,7 +87,11 @@
     "step2_c1": "Step2 C1 빈칸어법 정답지.docx",
     "step2_c2": "Step2 C2 영작배열(서술형).hwpx"
   },
-  "needs_underline": ["step2_a1", "step2_a1_btm", "step3"],
+  "needs_underline": [
+    "step2_a1",
+    "step2_a1_btm",
+    "step3"
+  ],
   "verify": {
     "expected_steps": 12,
     "max_overflow": 0
