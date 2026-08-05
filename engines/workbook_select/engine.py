@@ -385,6 +385,10 @@ class WorkbookSelectEngine(BaseEngine):
         with open(settings_path, encoding="utf-8") as f:
             settings = json.load(f)
 
+        # 본조판 제출 전에도 응답성 확인 — 직전 작업(다른 엔진 포함)의
+        # recompose/save 로 InDesign 이 바쁘면 do script 가 AppleScript
+        # 용어 조회 실패로 죽는다 (2026-08-05 실측: run.jsx 2회 연속 실패).
+        self._wait_indesign_ready(log)
         log_file = os.path.join(job_dir, "조판_로그.txt")
         runner.run_jsx(os.path.join(job_dir, "run.jsx"), log,
                        poll_log_path=log_file, timeout=self.jsx_timeout,
