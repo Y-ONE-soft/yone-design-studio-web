@@ -2,5 +2,11 @@
   "manuscript_base": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/모의고사 작업",
   "indd_original": "조판/테스트 파일/[원본]워크북_C(모의고사)_내지.indd",
   "output_base": "조판/교재/모의고사가로결합",
-  "log_filename": "조판_로그.txt"
+  "log_filename": "조판_로그.txt",
+
+  "_comment_file_map_override": "workbook 엔진 기본 config 는 빈칸어휘/빈칸어법에 '정답지'를 쓴다(정답 단어 목록). 학생용 워크북은 문제지(빈칸 뚫린 본문)여야 하므로 여기서 덮어쓴다. 문제지 파일은 21년~26년 전 회차에 같은 이름·형식으로 존재함(2026-08-05 확인).",
+  "manuscript_file_map_override": {
+    "step1_c2": "Step1 C2 빈칸어휘.docx",
+    "step2_c1": "Step2 C1 빈칸어법.docx"
+  }
 }
