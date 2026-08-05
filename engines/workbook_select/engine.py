@@ -204,6 +204,20 @@ class WorkbookSelectEngine(BaseEngine):
         cfg = _load_config()
         wb_cfg = _load_workbook_config()
 
+        # 원고 파일 선택 오버라이드 — workbook 기본 config 는 빈칸어휘/빈칸어법에
+        # '정답지'(정답 단어 목록)를 지정한다. 학생용 워크북에 그대로 부으면
+        # 정답이 그대로 조판된다(2026-08-05 실측: "1. 521. suggests …").
+        # 문제지 파일은 21~26년 전 회차에 동일 이름·형식으로 존재.
+        override = cfg.get("manuscript_file_map_override") or {}
+        if override:
+            wb_cfg = dict(wb_cfg)
+            fm = dict(wb_cfg.get("manuscript_file_map", {}))
+            for k, v in override.items():
+                if fm.get(k) != v:
+                    log("[원고 선택] %s: %s → %s" % (k, fm.get(k), v))
+                fm[k] = v
+            wb_cfg["manuscript_file_map"] = fm
+
         codes_text = uploaded_files.get("codes", "") or \
             self._get_meta(job_dir, "codes", "")
         codes = self._parse_codes(codes_text)
