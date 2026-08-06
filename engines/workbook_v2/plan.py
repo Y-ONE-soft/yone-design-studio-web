@@ -1156,6 +1156,10 @@ def _cut_span(text, runs, start, end):
 
 
 # ── STEP1 A2: 본문 O/X — v1 processStep1A2 ──────────────────────────────────
+_RE_A2_CHOICE = re.compile(r"[①-⑩]")
+_RE_A2_QUESTION = re.compile(r"\d+\s*[.)]\s*(?:윗글|다음)")
+
+
 # 전체 기본 단락 → bracket 뒤 영어 본문 = A2_본문 박스, ❮T/F❯ 토큰 단락 =
 # A2_OX문제 + 토큰 제거 + TF 버튼 duplicate 삽입. bracket 위 빈 단락 제거(≤5),
 # bracket 기준 유닛 분할(=프레임브레이크). bracket/빈 단락은 [기본 단락] 유지.
@@ -1163,10 +1167,13 @@ def _cut_span(text, runs, start, end):
 def build_step1_a2(step_data):
     st_box = _style("STEP1A2", "P")
     st_ox = _style("STEP1A2", "OX")
+    # 5지선다 선지 전용 (템플릿 실측: STEP 01 > 하단 문제_선지)
+    st_choice = "STEP 01 > 하단 문제_선지"
     units = []
     warnings = []
     cur = []
     seen_bracket = False
+    in_choice = False
     for p in step_data.get("paragraphs", []) or []:
         text = p.get("text") or ""
         runs = p.get("runs") or []
@@ -1200,9 +1207,25 @@ def build_step1_a2(step_data):
         if _is_blank(text):
             cur.append(_mk(text, "$BASIC", runs))   # v1: 기본 단락 유지
             continue
+        # 5지선다(①~⑤) 구간 — 일부 회차는 O/X 문항 앞에 5지선다 문제가
+        # 하나 더 붙는다. 발문("1. 윗글의 …")과 그 선지를 종전 규칙은
+        # "bracket 뒤 영어" 하나로 묶어 **지문 박스**로 인쇄했다
+        # (2026-08-06 사용자 지적 + 실측 p21: ①~⑤ 전부 A2_본문 박스).
+        # 선지는 전용 스타일(하단 문제_선지), 발문은 기본 단락으로 분리.
+        if _RE_A2_CHOICE.match(text.lstrip()):
+            in_choice = True
+            cur.append(_mk(text, st_choice, runs))
+            continue
+        if _RE_A2_QUESTION.match(text.lstrip()):
+            in_choice = False
+            cur.append(_mk(text, "$BASIC", runs))   # 발문은 지문 아님
+            continue
         if seen_bracket and re.search(r"[A-Za-z]", text):
-            cur.append(_mk(text, st_box, runs))     # bracket 뒤 영어 → 박스
+            # 선지 구간 안의 이어짐(줄바꿈된 긴 선지)도 선지 스타일 유지
+            style = st_choice if in_choice else st_box
+            cur.append(_mk(text, style, runs))
         else:
+            in_choice = False
             cur.append(_mk(text, "$BASIC", runs))   # 섹션 제목 등 비영어
     if cur:
         units.append(cur)
