@@ -257,7 +257,8 @@ class WorkbookSelectEngine(BaseEngine):
                 + "\n(교재팀에 해당 회차 워크북 원고 업로드를 요청하세요)")
 
         # 병합
-        merged, coverage = merge_selected(sources, codes, log=log)
+        merged, coverage, defects = merge_selected(sources, codes,
+                                                   log=log)
         merged["grade"] = int(grade_num)
 
         json_path = os.path.join(job_dir, "content.json")
@@ -266,8 +267,23 @@ class WorkbookSelectEngine(BaseEngine):
 
         with open(os.path.join(job_dir, "coverage.json"), "w",
                   encoding="utf-8") as f:
-            json.dump({"codes": codes, "coverage": coverage}, f,
+            json.dump({"codes": codes, "coverage": coverage,
+                       "defects": defects}, f,
                       ensure_ascii=False, indent=2)
+
+        # 원고 결손 목록을 별도 파일로 — 교재팀 재요청 근거 (사용자 요청
+        # 2026-08-06: "예전 원고라서 없을 때는 따로 요청해야 되니까 로그 남게")
+        if defects:
+            req = os.path.join(job_dir, "원고재요청.txt")
+            with open(req, "w", encoding="utf-8") as f:
+                f.write("워크북 조판 중 발견한 원고 결손 목록\n")
+                f.write("(코드는 원고에 있으나 내용이 비었거나 정답만 있음)\n\n")
+                for d in defects:
+                    yy, mm, qq = d["code"][:2], d["code"][2:4], d["code"][4:6]
+                    f.write("- 고%s %s년 %s월 %s번 [%s] %s / %s\n"
+                            % (grade_num, yy, int(mm), int(qq), d["code"],
+                               d["step"], d["reason"]))
+            log("[원고재요청] %s (%d건)" % (req, len(defects)))
 
         # 커버리지 요약 로그 — 스텝별 누락 즉시 노출 (침묵 금지)
         for step_key, cov in coverage.items():

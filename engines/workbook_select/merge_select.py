@@ -212,8 +212,9 @@ def merge_selected(sources, codes, log=None):
         codes: ["231133", "211132", ...] 사용자 순서 그대로
         log: callable
     Returns:
-        (merged_content, coverage)
+        (merged_content, coverage, defects)
         coverage: {step_key: {code: True/False}} — 원고에 그 문항이 있었는가
+        defects: [{"step","code","reason"}] — 코드는 있으나 내용 미달
     """
     if log is None:
         log = lambda s: None
@@ -246,6 +247,7 @@ def merge_selected(sources, codes, log=None):
 
     merged_steps = {}
     coverage = {}
+    defects = []          # 원고 결손 (코드는 있으나 내용 미달)
 
     for step_key in ALL_STEP_KEYS:
         out_paras = []
@@ -283,6 +285,12 @@ def merge_selected(sources, codes, log=None):
             else:  # BEON
                 out_paras.append(b["boundary"])
 
+            bad = _check_block(step_key, b["paras"])
+            if bad:
+                defects.append({"step": step_key, "code": pc["code"],
+                                "reason": bad})
+                log("[원고결손] %s %s: %s — 교재팀 원고 재요청 필요"
+                    % (step_key, pc["code"], bad))
             out_paras.extend(_normalize_para(p) for p in b["paras"])
             # 블록 경계 사이 빈 단락 1개 보장 (원고 관례 유지)
             if b["paras"] and not _blank(b["paras"][-1].get("text", "")):
@@ -333,4 +341,7 @@ def merge_selected(sources, codes, log=None):
         "month": parsed_codes[0]["mm"],
         "steps": merged_steps,
     }
-    return merged, coverage
+    if defects:
+        log("[원고결손] 총 %d건 — coverage 는 통과하나 내용 미달 "
+            "(교재팀 원고 재요청 대상)" % len(defects))
+    return merged, coverage, defects
