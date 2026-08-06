@@ -308,9 +308,18 @@ def merge_selected(sources, codes, log=None):
             if step_key in BRACKET_STEPS:
                 out_paras.append(_marker_para(pc["code"]))
             elif step_key in HEADER_STEPS:
-                # 원 헤더 유지하되 서수만 병합 순서로 재부여
+                # 원 헤더 유지하되 (1) 서수를 병합 순서로 재부여하고
+                # (2) no.QQ 의 문항번호를 6자리 코드로 바꾼다.
+                # 조판기는 헤더 꼬리를 뽑아 {N} 라벨을 만드는데, 원고
+                # 그대로면 회차 없는 모의고사 번호("33")가 지면에 남아
+                # 브래킷 스텝의 [YYMMQQ] 와 표기가 갈린다 (2026-08-06
+                # 사용자 지적). 꼬리 추출 정규식이 \d+ 라 6자리도 잡는다.
                 btxt = b["boundary"]["text"]
                 new_txt = re.sub(r"^\s*\d+\.", "%d." % ordinal, btxt, count=1)
+                new_txt = re.sub(
+                    r"(no\.?\s*)\d{1,3}(?:\s*[~\-]\s*\d{1,3})?",
+                    lambda mm: mm.group(1) + pc["code"], new_txt, count=1,
+                    flags=re.I)
                 bb = dict(b["boundary"])
                 bb["text"] = new_txt
                 bb["runs"] = [{"t": new_txt, "ul": False}]
