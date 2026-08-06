@@ -1421,8 +1421,13 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         elif any(_clean(p.get("t", "")) in plan_texts
                  for p in ps if len(_clean(p.get("t", ""))) >= 4):
             content_pages.update(pgs)
-    orphan_pages = sorted(num_pages - content_pages, key=lambda x: (
-        int(x) if str(x).isdigit() else 10**9, str(x)))
+    # 마스터 스프레드 페이지 제외 — 덤프의 pg 값에는 문서 페이지 번호와
+    # 함께 마스터 페이지 이름(A/B/C/D/O/간지)이 섞여 들어온다. 마스터에
+    # 있는 번호 프레임(지문번호 placeholder)은 원래 콘텐츠가 없으므로
+    # 잔여 페이지가 아니다 (2026-08-07 실측: pA~pO 5개가 상시 critical).
+    orphan_pages = sorted(
+        (x for x in (num_pages - content_pages) if str(x).isdigit()),
+        key=lambda x: int(x))
     stats["orphan_number_pages"] = len(orphan_pages)
     if orphan_pages:
         msg = (f"[잔여페이지] 번호 프레임만 있고 콘텐츠 없는 페이지 "
