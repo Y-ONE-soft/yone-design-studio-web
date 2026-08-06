@@ -74,6 +74,12 @@ def _mockexam_divider(job_dir):
         return {}
     if not (g and y and m):
         return {}
+    # 선택 워크북(여러 회차 문항 병합)은 회차 한 개로 표기할 수 없다.
+    # merge_select 가 넣은 표식이 있으면 2행(회차)을 비운다 — 첫 코드의
+    # year/month 를 그대로 쓰면 "23년 11월" 처럼 실제와 다른 회차가
+    # 간지에 찍힌다 (2026-08-06 실측: 10개 회차 혼합본).
+    if content.get("_mixed_rounds"):
+        return {"divider": {"line1": f"고{g} 모의고사", "line2": ""}}
     return {"divider": {"line1": f"고{g} 모의고사",
                         "line2": f"{y}년 {m}월"}}
 

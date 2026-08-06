@@ -374,6 +374,11 @@ def merge_selected(sources, codes, log=None):
         "month": parsed_codes[0]["mm"],
         "steps": merged_steps,
     }
+    # 여러 회차가 섞였음을 표식 — 간지 2행(회차 표기)을 비우는 근거.
+    # year/month 는 첫 코드값이라 그대로 쓰면 실제와 다른 회차가 찍힌다.
+    rounds = {(pc["yy"], pc["mm"]) for pc in parsed_codes}
+    if len(rounds) > 1:
+        merged["_mixed_rounds"] = sorted("%02d%02d" % r for r in rounds)
     if defects:
         log("[원고결손] 총 %d건 — coverage 는 통과하나 내용 미달 "
             "(교재팀 원고 재요청 대상)" % len(defects))
