@@ -39,8 +39,104 @@ _RE_HDR = re.compile(
 _RE_BEON = re.compile(r"^\s*(\d{1,3})(?:\s*[~\-]\s*(\d{1,3}))?\s*번\s*$")
 
 
+# ── 원고 세대차 정규화 ───────────────────────────────────────────────────
+# 회차마다 원고 세대가 달라 같은 의미를 다른 표기로 쓴다. 한 회차만 조판할
+# 때는 드러나지 않지만, 여러 회차를 한 책에 병합하면 한 섹션 안에서 표기가
+# 섞인다. 병합 시점에 최신(다수) 표기로 통일한다.
+#
+# (1) 어휘/어법 선택지 마커: 구형 일부 회차가 □ 를 쓴다
+#     실측 2026-08-06: 23년11월 a1 = "❮ □ same / □ different ❯",
+#                      21년11월 a1 = "❮ ⓐ obscures / ⓑ defines ❯"
+#     완성 조판본은 ⓐⓑ 표기이므로 □ → ⓐⓑ… 순번으로 치환한다.
+#     한 괄호 안에서만 순번을 매긴다 (선택지 3개 이상도 대응).
+_CIRCLED = "ⓐⓑⓒⓓⓔⓕⓖ"
+_RE_CHOICE_GROUP = re.compile(r"❮[^❯]*❯|\[[^\]]*\]")
+
+
+def _normalize_choice_markers(text):
+    """선택지 괄호 안의 □ 를 ⓐⓑ… 순번으로 치환. □ 가 없으면 무변경."""
+    if "□" not in text:
+        return text
+
+    def repl(m):
+        seg = m.group(0)
+        if "□" not in seg:
+            return seg
+        out = []
+        n = 0
+        for ch in seg:
+            if ch == "□" and n < len(_CIRCLED):
+                out.append(_CIRCLED[n])
+                n += 1
+            else:
+                out.append(ch)
+        return "".join(out)
+
+    return _RE_CHOICE_GROUP.sub(repl, text)
+
+
+def _normalize_para(para):
+    """단락 1개 정규화 — 텍스트 길이 보존(runs 오프셋 유지)."""
+    text = para.get("text") or ""
+    new = _normalize_choice_markers(text)
+    if new == text:
+        return para
+    out = dict(para)
+    out["text"] = new
+    runs = para.get("runs")
+    if runs:
+        # □ 는 1:1 치환이라 run 경계가 유지된다 — run별로 같은 변환 적용
+        out["runs"] = [dict(r, t=_normalize_choice_markers(r.get("t") or ""))
+                       for r in runs]
+    return out
+
+
 def _blank(text):
     return not text.strip()
+
+
+# ── 블록 내용 이상 감지 (원고 결손 조기 경보) ────────────────────────────
+# 코드가 원고에 "있기는 한데" 내용이 비어 있거나 정답만 남은 경우가 있다.
+# 실측 2026-08-06: 24년9월 문장배열 32번 블록이 선지 0개 + 정답
+# ("B-C-A-G-F-E-D")만 3단락 → 조판 결과 p86이 63자짜리 반쪽 페이지.
+# coverage=True 라 종전 검수는 통과했다. 스텝별 최소 구성 요건을 두고
+# 미달 블록을 경고로 남겨, 교재팀에 원고 재요청할 근거를 만든다.
+_RE_CHOICE_TAG = re.compile(r"\([A-G]\)")
+_RE_ORDER_ANSWER = re.compile(r"\b[A-G](?:\s*-\s*[A-G]){2,}\b")
+
+# step_key: (최소 본문 문자수, 최소 선지 수, 설명)
+_BLOCK_MIN = {
+    "step1_c1": (200, 3, "문장배열 (A)(B)(C) 선지"),
+    "step1_a1": (150, 0, "어휘선택 지문"),
+    "step1_a1_2": (150, 0, "어휘선택2 지문"),
+    "step1_a2": (150, 0, "본문 O/X 지문"),
+    "step1_b1": (150, 0, "본문정리 지문"),
+    "step1_b2": (150, 0, "내용종합 지문"),
+    "step1_c2": (150, 0, "빈칸어휘 본문"),
+    "step2_a1": (150, 0, "어법선택 지문"),
+    "step2_b1": (150, 0, "어법 O/X 지문"),
+    "step2_c1": (150, 0, "빈칸어법 본문"),
+    "step2_c2": (80, 0, "영작배열 문항"),
+}
+
+
+def _check_block(step_key, paras):
+    """블록 내용 건전성 검사 → 문제 있으면 사유 문자열, 없으면 None."""
+    req = _BLOCK_MIN.get(step_key)
+    if not req:
+        return None
+    min_chars, min_choice, label = req
+    body = " ".join((p.get("text") or "") for p in paras)
+    compact = re.sub(r"\s+", "", body)
+    n_choice = len(_RE_CHOICE_TAG.findall(body))
+    if len(compact) < min_chars:
+        extra = ""
+        if _RE_ORDER_ANSWER.search(body):
+            extra = " (정답만 있음)"
+        return "%s 본문 %d자%s" % (label, len(compact), extra)
+    if min_choice and n_choice < min_choice:
+        return "%s %d개뿐" % (label, n_choice)
+    return None
 
 
 def _nums_from_match(m):
@@ -187,7 +283,7 @@ def merge_selected(sources, codes, log=None):
             else:  # BEON
                 out_paras.append(b["boundary"])
 
-            out_paras.extend(b["paras"])
+            out_paras.extend(_normalize_para(p) for p in b["paras"])
             # 블록 경계 사이 빈 단락 1개 보장 (원고 관례 유지)
             if b["paras"] and not _blank(b["paras"][-1].get("text", "")):
                 out_paras.append(_blank_para())
