@@ -75,19 +75,52 @@ def _normalize_choice_markers(text):
     return _RE_CHOICE_GROUP.sub(repl, text)
 
 
+# (2) 빈칸 폭: 원고의 [ ] 안 공백은 24칸 고정이다. 세로판(좁은 단)에서는
+#     적당하지만 가로판(폭 168mm)에서는 밑줄이 페이지 끝까지 늘어나고
+#     양쪽정렬이 실제 글자 사이를 벌려 "N o t  o n l y" 처럼 흩어진다.
+#     완성본 실측(25년10월 p94 vs 우리 산출물): 밑줄 평균 71.9pt vs 94.1pt
+#     → 목표 비율 0.76. 24칸 × 0.76 ≒ 18칸으로 줄인다.
+#     (공백 수를 줄여도 연속이라 밑줄은 끊기지 않는다 — 자간 압축은 양쪽
+#      정렬에서 밑줄이 끊기는 반대 상황용 대책이라 여기선 불필요.)
+_BLANK_TARGET = 18
+_RE_BLANK_SLOT = re.compile(r"(\[[A-Za-z]?)([ \u00a0]{8,})(\])")
+
+
+def _shrink_blank_slots(text):
+    """[x                        ] 형태의 빈칸 공백을 목표 칸수로 축소."""
+    if "[" not in text:
+        return text
+
+    def repl(m):
+        head, blanks, tail = m.group(1), m.group(2), m.group(3)
+        if len(blanks) <= _BLANK_TARGET:
+            return m.group(0)
+        return head + (" " * _BLANK_TARGET) + tail
+
+    return _RE_BLANK_SLOT.sub(repl, text)
+
+
 def _normalize_para(para):
     """단락 1개 정규화 — 텍스트 길이 보존(runs 오프셋 유지)."""
     text = para.get("text") or ""
-    new = _normalize_choice_markers(text)
+    new = _shrink_blank_slots(_normalize_choice_markers(text))
     if new == text:
         return para
     out = dict(para)
     out["text"] = new
     runs = para.get("runs")
     if runs:
-        # □ 는 1:1 치환이라 run 경계가 유지된다 — run별로 같은 변환 적용
-        out["runs"] = [dict(r, t=_normalize_choice_markers(r.get("t") or ""))
-                       for r in runs]
+        marker_only = _normalize_choice_markers(text)
+        if marker_only == new:
+            # □ 치환만 발생 — 1:1 이라 run 경계 유지
+            out["runs"] = [dict(r, t=_normalize_choice_markers(r.get("t") or ""))
+                           for r in runs]
+        else:
+            # 빈칸 축소로 길이가 바뀜 — run 오프셋을 유지할 수 없으므로
+            # 밑줄 여부만 승계해 단일 run 으로 평탄화한다. 빈칸어휘/어법
+            # 원고에는 run 단위 밑줄 서식이 없어 정보 손실이 없다.
+            ul = any(r.get("ul") for r in runs)
+            out["runs"] = [{"t": new, "ul": ul}]
     return out
 
 

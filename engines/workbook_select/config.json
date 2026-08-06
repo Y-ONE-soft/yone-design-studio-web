@@ -3,5 +3,9 @@
   "indd_original": "조판/테스트 파일/[원본]워크북_C(모의고사)_내지.indd",
   "output_base": "조판/교재/모의고사가로결합",
   "log_filename": "조판_로그.txt",
-  "_comment_file_map_override": "빈칸어휘/빈칸어법은 '정답지'(해설지)로 조판한다 — 사용자 확정 2026-08-06. 문제지(빈칸.docx)는 [ ] 안 공백이 24칸 고정이라 가로 프레임에서 밑줄이 튀어나온다. workbook 기본 config 설정이 옳으므로 override 없음."
+  "_comment_file_map_override": "빈칸어휘/빈칸어법은 문제지(빈칸.docx)를 쓴다. workbook 기본 config 의 '정답지'는 구형 회차(21~24년)에서 정답 단어 목록뿐이라 그대로 조판하면 정답이 노출된다(2026-08-06 실측: '41. 561. attention'). 완성본과 형태가 일치하는 건 문제지이며, 밑줄이 길어지는 문제는 소스가 아니라 [ ] 안 공백 24칸이 원인 — merge_select._shrink_blank_slots 로 18칸 압축해 해결.",
+  "manuscript_file_map_override": {
+    "step1_c2": "Step1 C2 빈칸어휘.docx",
+    "step2_c1": "Step2 C1 빈칸어법.docx"
+  }
 }
