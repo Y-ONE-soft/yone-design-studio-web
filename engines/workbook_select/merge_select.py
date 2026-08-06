@@ -315,8 +315,12 @@ def merge_selected(sources, codes, log=None):
                 bb["text"] = new_txt
                 bb["runs"] = [{"t": new_txt, "ul": False}]
                 out_paras.append(bb)
-            else:  # BEON
-                out_paras.append(b["boundary"])
+            else:  # BEON (영작 배열)
+                # 원고는 "30번" 형식이지만 완성본은 "[20]" 대괄호 라벨이다
+                # (2026-08-06 실측: 완성본 p168 = "[20]", 우리 = "33번").
+                # 대괄호 라벨이라야 템플릿의 라벨 처리(GREP/문자스타일)가
+                # 걸린다 — 다른 브래킷 스텝과 같은 [YYMMQQ] 로 통일한다.
+                out_paras.append(_marker_para(pc["code"]))
 
             bad = _check_block(step_key, b["paras"])
             if bad:
