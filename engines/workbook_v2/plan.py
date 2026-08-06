@@ -671,7 +671,10 @@ def _s3_assign_slots(pre, BG):
     # 형태인데 지문 스타일로 인쇄되고 있었다. 열 머리는 괄호 라벨만
     # 2개 이상, 기입 줄은 괄호 + 밑줄 + 화살표로 판별한다.
     for x, row in enumerate(meaningful):
-        if row["eff"] in ("Ans", "AnsL"):
+        # 이미 AnsL 이면 통과. "Ans" 는 **지문 스타일**로 인쇄되므로
+        # 답란 표의 기입 줄이면 AnsL 로 승격해야 한다 (2026-08-06 실측:
+        # 열 머리만 S_답란 이 되고 기입 줄 2개가 지문 스타일로 남음).
+        if row["eff"] == "AnsL":
             continue
         t = row["tclean"]
         is_head = (len(_RE_PAREN_LABEL.findall(t)) >= 2
