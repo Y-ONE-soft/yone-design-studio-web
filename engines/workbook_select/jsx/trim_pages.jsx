@@ -65,6 +65,46 @@
         }
         W("미사용 페이지 삭제: " + removed + "개 / 잔여 " + d.pages.length + "p");
 
+        // 고아 간지 제거 — trim 으로 뒤따르던 콘텐츠가 모두 사라진 간지는
+        // 남겨두면 "간지 다음에 바로 판권" 이 된다 (2026-08-06 실측 p222).
+        // 간지 = [None]/간지 마스터 + 짧은 텍스트("고N 모의고사").
+        var orphan = 0;
+        for (var oi = d.pages.length - 1; oi >= 0; oi--) {
+            var opg = d.pages[oi];
+            var omn = "";
+            try { omn = opg.appliedMaster ? opg.appliedMaster.name : ""; }
+            catch (eo1) {}
+            var isDiv = (omn === "" || omn === "[None]"
+                         || omn.indexOf("간지") !== -1);
+            if (!isDiv) continue;
+            var dtxt = "";
+            for (var ot = 0; ot < opg.textFrames.length; ot++) {
+                try { dtxt += opg.textFrames[ot].contents; } catch (eo2) {}
+            }
+            if (dtxt.indexOf("모의고사") === -1) continue;
+            // 이 간지 뒤에 콘텐츠 마스터 페이지가 있는가?
+            var hasAfter = false;
+            for (var oj = oi + 1; oj < d.pages.length; oj++) {
+                var amn = "";
+                try { amn = d.pages[oj].appliedMaster
+                            ? d.pages[oj].appliedMaster.name : ""; }
+                catch (eo3) {}
+                if (amn && amn !== "[None]" && amn.indexOf("간지") === -1) {
+                    var ac = 0;
+                    for (var at = 0; at < d.pages[oj].textFrames.length; at++) {
+                        try { ac += d.pages[oj].textFrames[at].characters.length; }
+                        catch (eo4) {}
+                    }
+                    if (ac > 0) { hasAfter = true; break; }
+                }
+            }
+            if (!hasAfter) {
+                try { opg.remove(); orphan++; W("고아 간지 삭제: p" + opg.name); }
+                catch (eo5) {}
+            }
+        }
+        if (orphan) W("고아 간지 제거: " + orphan + "개 / 잔여 " + d.pages.length + "p");
+
         // 잔여 오버플로우 해소 - run.jsx ensureNoOverflow는 스토리당
         // 10페이지 상한이라 긴 스텝(본문정리 등)에서 부족할 수 있다
         // (2026-08-04 실측: b1 17문항에서 6.8k자 잔여). 상한을 넉넉히.

@@ -663,6 +663,28 @@ def _s3_assign_slots(pre, BG):
                 and prev_eff in ("Box", "Cond", "AnsL"):
             row["eff"] = "AnsL"
         prev_eff = row["eff"]
+
+    # 서답형 답란 표 (2026-08-06 사용자 지적: "(기호)(어색한 표현)
+    # (고친 표현) 이런 게 지문이 아니잖아"). 어법 수정 문항의 답란은
+    #   "(기호)  (어색한 표현)  (고친 표현)"      ← 열 머리
+    #   "(     ) ____________ → ____________"    ← 기입 줄 ×N
+    # 형태인데 지문 스타일로 인쇄되고 있었다. 열 머리는 괄호 라벨만
+    # 2개 이상, 기입 줄은 괄호 + 밑줄 + 화살표로 판별한다.
+    for x, row in enumerate(meaningful):
+        if row["eff"] in ("Ans", "AnsL"):
+            continue
+        t = row["tclean"]
+        is_head = (len(_RE_PAREN_LABEL.findall(t)) >= 2
+                   and len(t) <= 40 and "_" not in t)
+        is_row = bool(_RE_ANS_ARROW_ROW.match(t))
+        if not (is_head or is_row):
+            continue
+        # 열 머리는 바로 뒤에 기입 줄이 와야 한다 (오검출 차단)
+        if is_head:
+            nxt = meaningful[x + 1] if x + 1 < len(meaningful) else None
+            if not (nxt and _RE_ANS_ARROW_ROW.match(nxt["tclean"])):
+                continue
+        row["eff"] = "AnsL"
     return warn
 
 
@@ -994,6 +1016,11 @@ def build_step1_b2(step_data):
     if cur:
         units.append(cur)
     return {"units": units, "warnings": warnings}
+
+
+# 서답형 답란 표 판별 (아래 _promote_ansline 에서 사용)
+_RE_PAREN_LABEL = re.compile(r"\([^()]{1,12}\)")
+_RE_ANS_ARROW_ROW = re.compile(r"^\s*\([^()]{0,8}\)\s*_{3,}.*(?:→|->).*_{3,}")
 
 
 # ── STEP1 C2 / STEP2 C1: 빈칸 어휘/어법 — v1 processStep1C2/2C1 ─────────────
