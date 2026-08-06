@@ -538,6 +538,15 @@ def build_step3(step_data):
                 _s3_underline_quotes(unit, st_q, _style("STEP3", "P"),
                                      _style("STEP3", "P-CONTEXT"),
                                      warnings)
+                # 지문번호 라벨 — v1 processStep3 파리티.
+                # v1(run.jsx)은 문항마다 "{code}" 단락을 맨 앞에 넣는데
+                # v2 빌더에는 이 처리가 없어 실전 섹션에만 지문번호가
+                # 통째로 빠져 있었다 (2026-08-07 실측: 실전 55p 코드 0개.
+                # 문서 전체 코드 검사는 통과해 기계검증이 못 잡음).
+                code = (item.get("code") or "").strip()
+                if code:
+                    unit.insert(0, {"t": "{" + code + "}", "s": "$BASIC",
+                                    "runs": []})
                 units.append(unit)
                 warnings.extend(BG.validate_sequence(eff_seq))
     return {"units": units, "warnings": warnings}
