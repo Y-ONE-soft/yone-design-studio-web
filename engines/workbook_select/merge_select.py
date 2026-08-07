@@ -348,10 +348,23 @@ def merge_selected(sources, codes, log=None, labels=None):
         cov = {}
         used_blocks = set()   # (yy,mm,boundary id) — 범위 블록 중복 방지
         ordinal = 0
+        def _place_holder(code):
+            """짝 스텝과의 정렬을 지키는 빈 유닛. ordinal 은 바깥 것을 쓴다."""
+            htxt = "%d. p0-no.%s" % (ordinal, _lab(code))
+            out_paras.append({"text": htxt,
+                              "runs": [{"t": htxt, "ul": False}]})
+            out_paras.append(_blank_para())
+            log("[자리보존] %s %s: 원고 없음 — 빈 유닛 삽입" % (step_key, code))
+
         for pc in parsed_codes:
             sp = blocks_for(pc["yy"], pc["mm"], step_key)
             if sp is None:
                 cov[pc["code"]] = False
+                # 회차 원고에 이 스텝이 통째로 없는 경우도 자리는 지켜야 한다
+                # (22년 6월·9월은 어법하단 원고 파일 자체가 없다).
+                if step_key in ALIGNED_STEPS:
+                    ordinal += 1
+                    _place_holder(pc["code"])
                 continue
             _pre, blocks = sp
             b = _find_block(blocks, pc["qq"], pc["code"])
@@ -375,12 +388,7 @@ def merge_selected(sources, codes, log=None, labels=None):
                     # 자리를 지키는 빈 유닛 — 짝 스텝과의 정렬을 보존한다.
                     # (건너뛰면 뒤 문항이 당겨져 상·하단이 어긋난다)
                     ordinal += 1
-                    htxt = "%d. p0-no.%s" % (ordinal, _lab(pc["code"]))
-                    out_paras.append({"text": htxt,
-                                      "runs": [{"t": htxt, "ul": False}]})
-                    out_paras.append(_blank_para())
-                    log("[자리보존] %s %s: 원고 없음 — 빈 유닛 삽입"
-                        % (step_key, pc["code"]))
+                    _place_holder(pc["code"])
                 continue
             bid = (pc["yy"], pc["mm"], id(b))
             if bid in used_blocks:
