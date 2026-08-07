@@ -1,7 +1,8 @@
 {
-  "template_path": "조판/인디자인 원본/[원본]워크북(모의고사_세로)_내지.indd",
+  "template_path": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/인디자인 파일/Y.ONE WEB/인디자인 원본/[원본]워크북(세로)_내지.indd",
   "gdrive_base": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/인디자인 파일/워크북/모의고사",
   "output_base": "조판/교재/모의고사세로결합",
   "log_filename": "merge_log.txt",
-  "keep_head": 3
+  "keep_head": 3,
+  "_comment_template_path": "세로 내지 정본 (사용자 확정 2026-08-07). 정본 폴더는 'Y.ONE WEB/인디자인 원본/'. 기존 '조판/인디자인 원본/...' 상대경로는 그 폴더에 파일이 없어 resolve 가 /Users/nhj/dev/ 밑으로 떨어져 [오류] 템플릿 없음 이 났다. C버전 내지는 다른 물건이므로 쓰지 말 것."
 }
