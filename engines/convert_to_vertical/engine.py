@@ -172,7 +172,7 @@ class ConvertToVerticalEngine(BaseEngine):
 
     @property
     def description(self):
-        return ("조판된 모의고사 워크북 전체(C) .indd를 지문별 사이클의 "
+        return ("조판된 모의고사 워크북 전체 .indd를 지문별 사이클의 "
                 "세로버전으로 변환 (수동 ConvertToVertical.jsx 웹 흡수)")
 
     @property
@@ -195,7 +195,7 @@ class ConvertToVerticalEngine(BaseEngine):
     def upload_spec(self):
         return {
             "slots": [
-                {"key": "indd", "label": "전체(C) .indd (업로드)",
+                {"key": "indd", "label": "전체 .indd (업로드)",
                  "type": "file", "accept": ".indd", "required": False},
                 {"key": "doc_path", "label": "서버 파일 경로 (폴더 스캔 선택)",
                  "type": "text", "required": False},
@@ -223,7 +223,7 @@ class ConvertToVerticalEngine(BaseEngine):
             doc_path = (uploaded_files.get("doc_path") or "").strip()
             if not doc_path:
                 raise ValueError(
-                    "전체(C) .indd를 업로드하거나 서버 파일을 선택하세요")
+                    "전체 .indd를 업로드하거나 서버 파일을 선택하세요")
             src = os.path.abspath(os.path.expanduser(doc_path))
         if not (os.path.isfile(src) and src.lower().endswith(".indd")):
             raise FileNotFoundError(f".indd 파일을 찾을 수 없습니다: {src}")

@@ -106,7 +106,7 @@ class SlimMergeEngine(BaseEngine):
             "slots": [
                 {
                     "key": "src_indd",
-                    "label": "대상 .indd (워크북 전체 C)",
+                    "label": "대상 .indd (워크북 전체)",
                     "type": "file",
                     "accept": ".indd",
                     "required": True,

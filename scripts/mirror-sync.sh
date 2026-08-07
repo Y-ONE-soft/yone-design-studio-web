@@ -64,11 +64,20 @@ for sub in "${SUBPATHS[@]}"; do
     # 안에서 만나면 그 사이클 내내 못 풀린다. 대기 후 재시도하면 대부분 회복.
     # --partial: 일부 전송된 파일 보존 (재시도가 이어 받음)
     # --partial-dir: stale 부분 파일을 별도 폴더에 격리 (조판 코드가 안 읽도록)
+    # --delete: GDrive에서 rename/삭제된 파일을 미러에서도 제거.
+    #   (2026-08-07 사고: '전체(C)→전체' 일괄 rename 후 미러에 옛 이름이
+    #    영구 잔존 → mockexam_sero_merge가 미러만 listdir 해서 옛 목록을 보고
+    #    "세로버전 파일을 찾지 못한 회차" 오류. 미러 58개 중 49개가 유령이었다.)
+    #   안전: rsync는 I/O 오류(EDEADLK 등)가 발생한 실행에서는 삭제를 스킵한다
+    #   (--ignore-errors 미지정 시 기본 동작) → 부분 실패로 미러가 비는 일 없음.
+    #   --exclude 대상은 --delete-excluded 없이는 삭제되지 않는다.
     attempt=0
     success=0
     while [ $attempt -lt 3 ]; do
         attempt=$((attempt + 1))
-        if rsync -a --exclude=".*" --partial \
+        # --fuzzy: rename된 파일은 목적지의 유사 이름 파일을 basis로 써서
+        #   GDrive 재다운로드를 피한다 (전체(C)→전체 같은 일괄 rename 대비).
+        if rsync -a --delete --fuzzy --exclude=".*" --partial \
                  --partial-dir=".rsync-partial" \
                  "$src" "$dst" >> "$LOG" 2>&1; then
             success=1

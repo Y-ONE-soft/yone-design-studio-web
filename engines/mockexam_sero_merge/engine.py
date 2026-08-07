@@ -57,8 +57,28 @@ def _despace(s):
     return re.sub(r"[\s_]+", "", _nfc(s))
 
 
+def indd_entries(folder):
+    """완성본 폴더의 .indd 목록 — 미러 ∪ GDrive 합집합 [(name_nfc, path)].
+
+    미러만 listdir 하면 안 되는 이유 (2026-08-07 실측): mirror-sync는 주기
+    스냅샷이라 GDrive의 rename/신규가 늦게 반영된다. '전체(C)→전체' 일괄
+    rename 직후 미러엔 옛 이름 49개가 유령으로 남고 새 이름 44개는 아예
+    없어서, 미러만 본 _find_vertical_file이 "찾지 못한 회차" 오류를 냈다.
+    읽기 경로는 미러본이 있으면 미러(EDEADLK 회피), 없으면 GDrive 원본 —
+    list_manuscript_entries(원고 폴더용)와 동일 계약.
+    """
+    from engines.final.extractor import list_manuscript_entries
+    out = []
+    for name, path in (list_manuscript_entries(folder, None) or []):
+        n = _nfc(name)
+        if not n.lower().endswith(".indd") or n.startswith("~"):
+            continue
+        out.append((n, path))
+    return out
+
+
 def _numeric_token_indd_fallback(folder, grade_num, year, month,
-                                 require=(), forbid=()):
+                                 require=(), forbid=(), entries=None):
     """소스 .indd 2차 매칭 — 숫자 토큰 기반 (W36 배치 F, 감사 §9 F안).
 
     1차(리터럴: '고{N}' 접두 + '{YY}년' + '{M}월' + 키워드 substring)가
@@ -70,16 +90,15 @@ def _numeric_token_indd_fallback(folder, grade_num, year, month,
 
     반환: 후보 리스트 (파일명 최단 우선 정렬 — 1차와 동일 휴리스틱).
     """
-    if not os.path.isdir(folder):
-        return []
+    if entries is None:
+        if not os.path.isdir(folder):
+            return []
+        entries = indd_entries(folder)
     month_int = int(month)
     yy = str(year)[-2:]
     out = []
-    for raw in os.listdir(folder):
-        nfc = _nfc(raw)
-        if not nfc.lower().endswith(".indd"):
-            continue
-        if nfc.startswith("~") or "idlk" in nfc.lower():
+    for nfc, path in entries:
+        if "idlk" in nfc.lower():
             continue
         d = _despace(nfc)
         if any(k in d for k in forbid):
@@ -95,23 +114,23 @@ def _numeric_token_indd_fallback(folder, grade_num, year, month,
         mm = re.search(r"(\d{1,2})\s*월", nfc)
         if not mm or int(mm.group(1)) != month_int:
             continue
-        out.append(os.path.join(folder, raw))
+        out.append(path)
     out.sort(key=lambda p: len(os.path.basename(p)))
     return out
 
 
-def _list_indd_names(folder, limit=12):
-    """미발견 리포트용 — 폴더 내 .indd 파일명 나열 (침묵 금지, 배치 F)."""
+def _list_indd_names(folder, limit=12, entries=None):
+    """미발견 리포트용 — 폴더 내 .indd 파일명 나열 (침묵 금지, 배치 F).
+
+    미러 ∪ GDrive 합집합(indd_entries) — 에러 메시지가 옛 미러 목록을
+    보여주면 진단이 통째로 어긋난다 (2026-08-07 사고).
+    """
     try:
-        # 미러 redirect — Drive zombie 시 GDrive listdir EDEADLK 회피
-        from engines.final.extractor import _resolve_local_mirror as _rlm
-        folder = _rlm(folder, None)
-        names = [_nfc(f) for f in os.listdir(folder)
-                 if _nfc(f).lower().endswith(".indd")
-                 and not _nfc(f).startswith("~")]
+        if entries is None:
+            entries = indd_entries(folder)
     except OSError:
         return []
-    names.sort()
+    names = sorted(n for n, _ in entries)
     return names[:limit]
 
 
@@ -277,9 +296,8 @@ class MockexamSeroMergeEngine(BaseEngine):
         """GDrive 폴더에서 vertical .indd 매칭 (JSX 와 동일 규칙)."""
         if not os.path.isdir(folder):
             return None
-        # 미러 redirect — Drive zombie 시 GDrive listdir EDEADLK 회피
-        from engines.final.extractor import _resolve_local_mirror as _rlm
-        folder = _rlm(folder, None)
+        # 미러 ∪ GDrive 합집합 — 미러만 보면 rename/신규가 안 보인다
+        entries = indd_entries(folder)
 
         month_int = int(month)
         month_variants = [str(month_int)]
@@ -287,10 +305,7 @@ class MockexamSeroMergeEngine(BaseEngine):
             month_variants.append(f"0{month_int}")
 
         candidates = []
-        for raw in os.listdir(folder):
-            nfc = _nfc(raw)
-            if not nfc.lower().endswith(".indd"):
-                continue
+        for nfc, path in entries:
             if "세로" not in nfc:
                 continue
             if not nfc.startswith(f"고{grade_num}"):
@@ -299,13 +314,14 @@ class MockexamSeroMergeEngine(BaseEngine):
                 continue
             if not any(f"{mv}월" in nfc for mv in month_variants):
                 continue
-            candidates.append(os.path.join(folder, raw))
+            candidates.append(path)
 
         if not candidates:
             # 2차 (배치 F): 숫자 토큰 매칭 — 구분자('고1_25년')·4자리 연도
             # 표기와 무관. 1차 0건일 때만 진입 (기존 매칭 무변경).
             candidates = _numeric_token_indd_fallback(
-                folder, grade_num, year, month, require=("세로",))
+                folder, grade_num, year, month, require=("세로",),
+                entries=entries)
         if not candidates:
             return None
         candidates.sort(key=lambda p: len(os.path.basename(p)))

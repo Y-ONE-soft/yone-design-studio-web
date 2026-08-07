@@ -62,7 +62,7 @@ class WorkbookSelectEngine(BaseEngine):
     @property
     def description(self):
         return ("여러 회차 모의고사 워크북 원고에서 선택한 문항(YYMMQQ)만 "
-                "뽑아 입력 순서대로 전체(C) 워크북 조판 → .indd + PDF")
+                "뽑아 입력 순서대로 전체 워크북 조판 → .indd + PDF")
 
     @property
     def template_name(self):

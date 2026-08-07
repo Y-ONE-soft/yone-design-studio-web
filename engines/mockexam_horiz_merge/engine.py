@@ -56,7 +56,7 @@ class MockexamHorizMergeEngine(MockexamSeroMergeEngine):
 
     @property
     def description(self):
-        return ("여러 회차 가로판(전체 C) 모의고사에서 문제 코드 기준으로 "
+        return ("여러 회차 가로판(전체) 모의고사에서 문제 코드 기준으로 "
                 "페이지를 추출·결합 → PDF (+.indd)")
 
     @property
@@ -114,8 +114,9 @@ class MockexamHorizMergeEngine(MockexamSeroMergeEngine):
         """
         if not os.path.isdir(folder):
             return None
-        from engines.final.extractor import _resolve_local_mirror as _rlm
-        folder = _rlm(folder, None)
+        # 미러 ∪ GDrive 합집합 (sero와 공용 헬퍼) — 미러만 보면 rename/신규 실종
+        from engines.mockexam_sero_merge.engine import indd_entries
+        entries = indd_entries(folder)
 
         month_int = int(month)
         month_variants = [str(month_int)]
@@ -123,10 +124,7 @@ class MockexamHorizMergeEngine(MockexamSeroMergeEngine):
             month_variants.append(f"0{month_int}")
 
         candidates = []
-        for raw in os.listdir(folder):
-            nfc = _nfc(raw)
-            if not nfc.lower().endswith(".indd"):
-                continue
+        for nfc, path in entries:
             if "전체" not in nfc or "세로" in nfc:
                 continue
             if not nfc.startswith(f"고{grade_num}"):
@@ -135,7 +133,7 @@ class MockexamHorizMergeEngine(MockexamSeroMergeEngine):
                 continue
             if not any(f"{mv}월" in nfc for mv in month_variants):
                 continue
-            candidates.append(os.path.join(folder, raw))
+            candidates.append(path)
 
         if not candidates:
             # 2차 (배치 F): 숫자 토큰 매칭 — 구분자·4자리 연도 표기 무관.
@@ -145,7 +143,7 @@ class MockexamHorizMergeEngine(MockexamSeroMergeEngine):
             )
             candidates = _numeric_token_indd_fallback(
                 folder, grade_num, year, month,
-                require=("전체",), forbid=("세로",))
+                require=("전체",), forbid=("세로",), entries=entries)
         if not candidates:
             return None
         candidates.sort(key=lambda p: len(os.path.basename(p)))

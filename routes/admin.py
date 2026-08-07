@@ -208,7 +208,7 @@ def debug_safecopy():
     F = ('/Users/nhj/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/'
          '내 드라이브/콘텐츠 관리/내신대비/'
          '인디자인 파일/워크북/모의고사/고1/'
-         '고1_25년_3월_전체(C).indd')
+         '고1_25년_3월_전체.indd')
     out = []
     out.append(f"PID: {os.getpid()}, thread: {threading.current_thread().name}")
     out.append("")

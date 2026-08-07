@@ -5,14 +5,14 @@
 <div class="page-header">
   <a href="/processing" class="back-link">가공 선택</a>
   <h1>워크북 세로 변환 <span style="font-size:14px; color:#888;">(베타)</span></h1>
-  <p>조판된 모의고사 워크북 전체(C) .indd(섹션별 구성)를 지문별 사이클의 세로버전으로 변환합니다.
+  <p>조판된 모의고사 워크북 전체 .indd(섹션별 구성)를 지문별 사이클의 세로버전으로 변환합니다.
      구분 페이지 삭제 → 어휘 페이지 결합 → 지문별 재배치 → 세로 마스터/스타일 동기화 + 간지 처리.
      원본은 수정되지 않습니다.</p>
 </div>
 
 <!-- 1단계: 문서 선택 -->
 <div class="school-section">
-  <div class="section-label">① 전체(C) .indd 선택</div>
+  <div class="section-label">① 전체 .indd 선택</div>
   <div style="display:flex; flex-direction:column; gap:10px;">
     <div>
       <input type="file" id="indd-file" accept=".indd" class="form-input">
@@ -35,7 +35,7 @@
   <div class="school-section">
     <div class="section-label">② 결과 파일명 (선택)</div>
     <input type="text" name="result_name" id="result-name" class="form-input"
-           placeholder="비워두면 원본명의 '전체'→'세로' (예: 고1_25년_6월_세로(C))">
+           placeholder="비워두면 원본명의 '전체'→'세로' (예: 고1_25년_6월_세로)">
     <div class="input-hint">결과는 <code>조판/교재/세로변환/</code> 폴더에 저장됩니다.</div>
     <label style="display:block; margin-top:8px; cursor:pointer; font-size:13px;">
       <input type="checkbox" id="export-pdf" checked> PDF 함께 출력
