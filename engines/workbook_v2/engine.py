@@ -313,6 +313,13 @@ class WorkbookV2Engine(BaseEngine):
                               for v in qk["flows"].values())) + "개 계약")
             else:
                 plan.pop("question_keep", None)
+        # W40 결함 1 — 다열 선지 열 정렬 계약. question_keep 과 같은 이유로
+        # 데코 훅이 flows 를 못 보므로 여기서 계산해 얹는다.
+        ct = choice_tabs_op(plan)
+        if ct:
+            plan["choice_tabs"] = ct
+            log("[v2] 선지열정렬: " + ", ".join(ct["steps"])
+                + " 탭 선지 " + str(ct.pop("_rows")) + "단락 계약")
         plan_path = os.path.abspath(os.path.join(job_dir, "render_plan.json"))
         with open(plan_path, "w", encoding="utf-8") as f:
             json.dump(plan, f, ensure_ascii=False)
