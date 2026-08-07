@@ -2192,6 +2192,13 @@ def parse_manuscript_folder(manuscript_dir, config, grade, year, month, log=None
                     "paragraphs": cleaned,
                 }
                 log(f"[파서] → {sec_key}: {len(cleaned)}개 단락, 지문 {len(q_nums)}개")
+            # 보충 원고 흡수 — 본 A1 파일에 없는 문항이 별도 파일로 추가되는
+            # 관행이 있다 (실증: 고1 23년 11월 'Step1 A1 어휘선택(2단계
+            # 34번).docx' — 본 파일의 2단계 섹션에 34번이 없어 어휘선택2에서
+            # 통째로 누락됐다). 폴더에 남은 파일 중 첫 줄이 A1 섹션 헤더인
+            # 것을 찾아 같은 섹션 키에 이어붙인다.
+            _absorb_a1_supplements(manuscript_dir, used_files, result,
+                                   short_nums, log)
             continue
 
         # 정답 구간 제거
