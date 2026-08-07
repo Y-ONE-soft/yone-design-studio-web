@@ -29,6 +29,7 @@ from core.paths import resolve_config
 from engines.workbook.engine import _load_config as _load_workbook_config
 from engines.workbook.parser import parse_manuscript_folder
 from engines.workbook_select.merge_select import merge_selected
+from engines.workbook_select import motherteng as _mt
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
 _CONFIG_PATH = os.path.join(_DIR, "config.json")
@@ -221,7 +222,30 @@ class WorkbookSelectEngine(BaseEngine):
         codes_text = uploaded_files.get("codes", "") or \
             self._get_meta(job_dir, "codes", "")
         codes = self._parse_codes(codes_text)
-        log("[코드] %d개 (입력 순서 유지)" % len(codes))
+        log("[코드] %d개" % len(codes))
+
+        # 마더텅 지문번호 — 엑셀(강별 열 × 행)에서 조달. 사용자 확정 스펙
+        # (2026-08-07): 조판 순서와 지문번호를 이 번호로 맞춘다. 순차
+        # 1,2,3,4 로 다시 매기지 않는다 (짝수만 뽑힌 워크북이면 2,4,6…).
+        mt_numbers = {}
+        mt_gang = self._get_meta(job_dir, "mt_gang", "") or cfg.get("mt_gang")
+        try:
+            mt_gang = int(mt_gang) if mt_gang else None
+        except (TypeError, ValueError):
+            mt_gang = None
+        mt_index = _mt.load_index(cfg.get("motherteng_xlsx"))
+        if mt_index:
+            mt_numbers = _mt.numbers_for(mt_index, codes, gang=mt_gang)
+            if mt_numbers:
+                codes = _mt.sort_by_number(codes, mt_numbers)
+                log("[마더텅] %d/%d개 번호 매핑, 번호순 정렬 (%s)"
+                    % (len(mt_numbers), len(codes),
+                       ", ".join(str(mt_numbers[c]) for c in codes
+                                 if c in mt_numbers)))
+            else:
+                log("[마더텅] 엑셀에 매칭 코드 없음 — 입력 순서 유지")
+        else:
+            log("[마더텅] 지문 출처 엑셀 없음 — 입력 순서 유지")
 
         grade = self._get_meta(job_dir, "grade", "고1")
         grade_num = grade.replace("고", "").strip() or "1"
@@ -284,9 +308,15 @@ class WorkbookSelectEngine(BaseEngine):
                 + "\n(교재팀에 해당 회차 워크북 원고 업로드를 요청하세요)")
 
         # 병합
-        merged, coverage, defects = merge_selected(sources, codes,
-                                                   log=log)
+        merged, coverage, defects = merge_selected(
+            sources, codes, log=log,
+            labels={c: str(n) for c, n in mt_numbers.items()})
         merged["grade"] = int(grade_num)
+        if mt_numbers:
+            # 독립 지문번호 프레임(workbook_v2 passage_numbers)도 같은 번호를
+            # 쓰도록 전달 — 코드 뒤 2자리(문항번호) 폴백을 덮는다.
+            merged["_passage_labels"] = [str(mt_numbers[c])
+                                         for c in codes if c in mt_numbers]
 
         json_path = os.path.join(job_dir, "content.json")
         with open(json_path, "w", encoding="utf-8") as f:

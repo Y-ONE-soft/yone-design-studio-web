@@ -286,6 +286,15 @@ class WorkbookV2Engine(BaseEngine):
         # 판정하면(숫자/자릿수) 평범한 회차 워크북도 '41~42' 같은 묶음 라벨
         # 하나 때문에 발동해 18개 실측 job 중 16개가 걸렸다 — 프레임과
         # 원고가 이미 정합인 문서까지 갱신하게 되는 광범위 동작 변경.
+        # 상위 엔진(workbook_select)이 확정한 지문번호가 있으면 그대로 쓴다 —
+        # 마더텅 워크북은 엑셀의 강별 행번호가 지문번호이며, 코드에서 유도할
+        # 수 없다 (짝수만 뽑힌 워크북이면 2,4,6…).
+        labels = list(content.get("_passage_labels") or [])
+        if labels:
+            deco["passage_numbers"] = {"labels": labels,
+                                       "steps": ["step1_c2", "step2_b1",
+                                                 "step2_c1"]}
+            return deco
         labels = passage_labels(content.get("steps", {}) or {})
         if labels and content.get("_mixed_rounds"):
             # 사용자 확정 스펙: 프레임에는 문항번호만 남긴다 — 모의고사

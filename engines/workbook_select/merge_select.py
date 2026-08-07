@@ -237,13 +237,16 @@ def _blank_para():
     return {"text": "", "runs": [{"t": "", "ul": False}]}
 
 
-def merge_selected(sources, codes, log=None):
+def merge_selected(sources, codes, log=None, labels=None):
     """병합 실행.
 
     Args:
         sources: [{"yy": 21, "mm": 11, "content": <parsed dict>}, ...]
         codes: ["231133", "211132", ...] 사용자 순서 그대로
         log: callable
+        labels: {code: 표기할 지문번호} — 지정 시 마커/헤더에 코드 대신 이 값을
+            쓴다. 마더텅 워크북은 엑셀의 강별 행번호가 지문번호다 (사용자 확정
+            스펙 2026-08-07: 순차 1,2,3,4 로 재번호 금지).
     Returns:
         (merged_content, coverage, defects)
         coverage: {step_key: {code: True/False}} — 원고에 그 문항이 있었는가
@@ -251,6 +254,9 @@ def merge_selected(sources, codes, log=None):
     """
     if log is None:
         log = lambda s: None
+
+    labels = labels or {}
+    _lab = lambda c: str(labels.get(c, c))
 
     by_ym = {}
     for s in sources:
@@ -306,7 +312,7 @@ def merge_selected(sources, codes, log=None):
             ordinal += 1
 
             if step_key in BRACKET_STEPS:
-                out_paras.append(_marker_para(pc["code"]))
+                out_paras.append(_marker_para(_lab(pc["code"])))
             elif step_key in HEADER_STEPS:
                 # 원 헤더 유지하되 (1) 서수를 병합 순서로 재부여하고
                 # (2) no.QQ 의 문항번호를 6자리 코드로 바꾼다.
@@ -318,7 +324,7 @@ def merge_selected(sources, codes, log=None):
                 new_txt = re.sub(r"^\s*\d+\.", "%d." % ordinal, btxt, count=1)
                 new_txt = re.sub(
                     r"(no\.?\s*)\d{1,3}(?:\s*[~\-]\s*\d{1,3})?",
-                    lambda mm: mm.group(1) + pc["code"], new_txt, count=1,
+                    lambda mm: mm.group(1) + _lab(pc["code"]), new_txt, count=1,
                     flags=re.I)
                 bb = dict(b["boundary"])
                 bb["text"] = new_txt
@@ -329,7 +335,7 @@ def merge_selected(sources, codes, log=None):
                 # (2026-08-06 실측: 완성본 p168 = "[20]", 우리 = "33번").
                 # 대괄호 라벨이라야 템플릿의 라벨 처리(GREP/문자스타일)가
                 # 걸린다 — 다른 브래킷 스텝과 같은 [YYMMQQ] 로 통일한다.
-                out_paras.append(_marker_para(pc["code"]))
+                out_paras.append(_marker_para(_lab(pc["code"])))
 
             bad = _check_block(step_key, b["paras"])
             if bad:
