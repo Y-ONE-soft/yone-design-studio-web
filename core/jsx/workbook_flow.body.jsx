@@ -2025,8 +2025,13 @@ try {
         }, ScriptLanguage.JAVASCRIPT, undefined,
            UndoModes.ENTIRE_SCRIPT, "wb_v2 question_keep");
     }
-    if (plan.page_cleanup && (typeof plan.page_cleanup === "object")
-            && plan.page_cleanup.empty === "delete") {
+    if (plan.page_cleanup && (typeof plan.page_cleanup === "object")) {
+        // W40 결함 8: 호출 조건을 empty==="delete" 에서 page_cleanup 전반으로
+        // 넓힌다. 본가(모의고사)는 empty_master:"M" 모드라 이 op 가 한 번도
+        // 돌지 않아 판권이 오른쪽으로 납품됐다 (게이트 G28④ v15 실증:
+        // 크레딧 p235 오른쪽). 크레딧 정렬은 빈 페이지 삭제 여부와 무관하고,
+        // 함수 자체가 마지막 페이지 셰이프(마스터 없음+프레임 0)로 대상을
+        // 좁히므로 비대상 문서에서는 no-op 이다.
         // W30-r15 (결함 7): 크레딧(판권) 정렬 — 페이지 수를 바꾸는 모든
         // op(page_cleanup 삭제·간지 채움·question_keep 오버플로우 확장)
         // 이후 1회. 376b34d0 실증: 문제단위킵 확장 +3이 홀짝을 뒤집어
