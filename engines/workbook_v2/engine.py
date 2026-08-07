@@ -269,6 +269,24 @@ class WorkbookV2Engine(BaseEngine):
         deco = {"page_cleanup": {"empty_master": "M"},
                 "question_keep": True}
         deco.update(_mockexam_divider(job_dir))
+        # W40 결함 7 — 지문번호 프레임 갱신. 본가는 "내지 번호 프레임(20~45)이
+        # 원고 문항번호와 정합"이라 미적용이었는데, 그 전제는 단일 회차
+        # 워크북에서만 성립한다. 다회차 선택 워크북(workbook_select)은 라벨이
+        # YYMMQQ 6자리라 템플릿의 20~40이 그대로 남아 인쇄됐다 (게이트 G3
+        # v15 실증: p89~105/125~141/142~158 에 17개씩 3구간 잔존).
+        # 라벨이 평문 문항번호(3자리 이하 숫자)면 기존대로 미적용 — 단일 회차
+        # 동작 무변경.
+        from engines.workbook_v2.plan import passage_labels
+        try:
+            content = json.load(open(os.path.join(job_dir, "content.json"),
+                                     encoding="utf-8"))
+        except (OSError, ValueError):
+            content = {}
+        labels = passage_labels(content.get("steps", {}) or {})
+        if labels and any((not s.isdigit()) or len(s) > 3 for s in labels):
+            deco["passage_numbers"] = {"labels": labels,
+                                       "steps": ["step1_c2", "step2_b1",
+                                                 "step2_c1"]}
         return deco
 
     # ── 2단계: prepare_jsx — 플랜 빌드 + 템플릿 복사 + JSX 생성 ─────────────
