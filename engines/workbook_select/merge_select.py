@@ -388,6 +388,15 @@ def merge_selected(sources, codes, log=None, labels=None):
                     r"(no\.?\s*)\d{1,3}(?:\s*[~\-]\s*\d{1,3})?",
                     lambda mm: mm.group(1) + _lab(pc["code"]), new_txt, count=1,
                     flags=re.I)
+                # 보충 원고 방언("1. p11강-no.20번 161131")을 표준형으로.
+                # run.jsx 의 헤더 제거 정규식(rePNo)은 p 뒤에 숫자만 오는 형태만
+                # 잡아, 강 표기와 번호 꼬리가 남으면 헤더가 제거되지 않고
+                # 지면에 그대로 인쇄된다 (2026-08-08 실측: 어법선택 p143·148·156
+                # 에 "10. p11강-no.20번 161131" 노출).
+                new_txt = re.sub(r"^(\s*\d+\.\s*)p\.?\s*\d+\s*강",
+                                 r"\1p0", new_txt, count=1)
+                new_txt = re.sub(r"(no\.?\s*\d{1,3})\s*번\s*\d{6}",
+                                 r"\1", new_txt, count=1, flags=re.I)
                 bb = dict(b["boundary"])
                 bb["text"] = new_txt
                 bb["runs"] = [{"t": new_txt, "ul": False}]

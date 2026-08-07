@@ -394,6 +394,48 @@ class WorkbookSelectEngine(WorkbookV2Engine):
         log("[출력 폴더] %s" % out_dir)
         return WorkbookV2Engine.prepare_jsx(self, json_path, job_dir, log)
 
+    def run_indesign(self, job_dir, log, **kwargs):
+        """v2 조판 후 trim 후처리(jsx/trim_pages.jsx)를 이어서 실행한다.
+
+        선택 조판은 문항 수가 템플릿 용량(18문항)보다 적어 섹션마다 미사용
+        페이지가 남는데, run.jsx 16.5(전 프레임 빈 페이지만 삭제)는 템플릿
+        유래 정적 잔재(발문 보일러플레이트·낡은 지문번호 라벨)가 있는
+        페이지를 지우지 못한다. trim_pages.jsx 는 그 판정을 "스레드 스토리에
+        실내용이 있는가"로 하고 고아 간지까지 정리한다.
+
+        연결이 빠져 있어 2026-08-08 빌드에 빈 페이지 19개가 잔존했다
+        (개발가이드 "trim 후처리가 v1 경로에만 연결" 건과 같은 원인).
+        verify() 가 trim_로그.txt 의 "잔여 오버플로우"를 읽는 것도 이 단계가
+        돌아야 성립한다.
+        """
+        from core.indesign.runner import run_jsx
+
+        # v2 는 (job_dir, log) 만 받는다 — kwargs 를 넘기지 않는다
+        WorkbookV2Engine.run_indesign(self, job_dir, log)
+
+        settings_path = os.path.join(job_dir, ".settings.json")
+        tpl = os.path.join(_DIR, "jsx", "trim_pages.jsx")
+        if not os.path.exists(tpl):
+            log("[trim] 템플릿 없음 — 건너뜀: %s" % tpl)
+            return
+        with open(tpl, encoding="utf-8") as f:
+            src = f.read()
+        src = src.replace("__SETTINGS_PATH__", settings_path)
+        out = os.path.join(job_dir, "trim_pages.jsx")
+        with open(out, "w", encoding="utf-8") as f:
+            f.write(src)
+
+        trim_log = os.path.join(job_dir, "trim_로그.txt")
+        try:
+            os.remove(trim_log)
+        except OSError:
+            pass
+        log("[trim] 미사용 페이지 정리 시작")
+        run_jsx(out, log, poll_log_path=trim_log,
+                timeout=1800,
+                completion_marker="===== trim 완료 =====",
+                stall_limit=900)
+
     def verify(self, job_dir, log):
         settings_path = os.path.join(job_dir, ".settings.json")
         with open(settings_path, encoding="utf-8") as f:
