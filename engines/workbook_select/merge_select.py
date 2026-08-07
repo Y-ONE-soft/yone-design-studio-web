@@ -46,6 +46,13 @@ BEON_STEPS = ["step2_c2"]
 
 ALL_STEP_KEYS = BRACKET_STEPS + HEADER_STEPS + BEON_STEPS
 
+# 같은 페이지에 짝지어 조판되는 스텝 — 결손 문항을 건너뛰면 뒤 문항이 당겨져
+# 상·하단이 다른 지문끼리 붙는다. 원고가 없어도 자리를 지키는 빈 유닛을 넣는다.
+#   실측 2026-08-08: 어법하단 3개 결손(마더텅 8·22·32) → 마더텅 8 페이지부터
+#   13개 페이지의 하단 문제가 전부 다음 지문 것으로 밀렸다. 오버셋·링크·폰트·
+#   중복 검사 전부 통과해 텍스트 교차대조로만 잡혔다.
+ALIGNED_STEPS = {"step2_a1_btm": "step2_a1"}
+
 _RE_BRACKET = re.compile(r"^\s*\[(\d{1,6})(?:\s*[~\-]\s*(\d{1,6}))?\]\s*$")
 # 보충 원고 마커 방언 — "[11강 - 20번 161131]" (강/마더텅번호/코드 혼재).
 # 숫자만 허용하는 _RE_BRACKET 으로는 경계 자체가 안 잡혀 블록이 통째로
@@ -364,6 +371,16 @@ def merge_selected(sources, codes, log=None, labels=None):
                                 % (step_key, pc["code"], alt_key))
             if b is None:
                 cov[pc["code"]] = False
+                if step_key in ALIGNED_STEPS:
+                    # 자리를 지키는 빈 유닛 — 짝 스텝과의 정렬을 보존한다.
+                    # (건너뛰면 뒤 문항이 당겨져 상·하단이 어긋난다)
+                    ordinal += 1
+                    htxt = "%d. p0-no.%s" % (ordinal, _lab(pc["code"]))
+                    out_paras.append({"text": htxt,
+                                      "runs": [{"t": htxt, "ul": False}]})
+                    out_paras.append(_blank_para())
+                    log("[자리보존] %s %s: 원고 없음 — 빈 유닛 삽입"
+                        % (step_key, pc["code"]))
                 continue
             bid = (pc["yy"], pc["mm"], id(b))
             if bid in used_blocks:
