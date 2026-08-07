@@ -300,6 +300,20 @@ def merge_selected(sources, codes, log=None, labels=None):
                 continue
             _pre, blocks = sp
             b = _find_block(blocks, pc["qq"])
+            # 보조 소스 폴백 — 같은 섹션의 다른 원고 파일에만 그 문항이 있는
+            # 경우가 있다 (실증 2026-08-07: 22년 6월 영작 32번이 서술형 .hwp
+            # 에는 없고 'Step2 C2 영작배열.docx' 에만 단어 목록이 있어,
+            # 조판 결과에 원문만 두 줄 나오고 배열 문제가 통째로 빠졌다).
+            if b is None or _is_thin_block(step_key, b):
+                alt_key = _ALT_SOURCE.get(step_key)
+                if alt_key:
+                    sp2 = blocks_for(pc["yy"], pc["mm"], alt_key)
+                    if sp2:
+                        b2 = _find_block(sp2[1], pc["qq"])
+                        if b2 is not None and not _is_thin_block(step_key, b2):
+                            b = b2
+                            log("[폴백] %s %s: 보조 원고(%s)에서 조달"
+                                % (step_key, pc["code"], alt_key))
             if b is None:
                 cov[pc["code"]] = False
                 continue

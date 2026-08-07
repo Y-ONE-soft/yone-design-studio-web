@@ -422,6 +422,10 @@ def _ansline_fields(eff, arrow_bg=False):
     return {"s_fb": fb, "ind0": True}
 
 
+_STEP3_SET_INTRO = "다음 글을 읽고 물음에 답하시오."
+_STEP3_SET_INTRO_KEY = "물음에 답하시오"
+
+
 def build_step3(step_data):
     """step3 데이터 {normal:[{question_num, paragraphs}], short:[...]} → 유닛.
 
@@ -543,6 +547,16 @@ def build_step3(step_data):
                 # v2 빌더에는 이 처리가 없어 실전 섹션에만 지문번호가
                 # 통째로 빠져 있었다 (2026-08-07 실측: 실전 55p 코드 0개.
                 # 문서 전체 코드 검사는 통과해 기계검증이 못 잡음).
+                # 다문항 세트 안내문 (사용자 확정 스펙 2026-08-07: "한 지문에
+                # 여러 문제 달려있는 문제들은 원고에 없더라도 '다음 글을 읽고
+                # 물음에 답하시오.' 넣어야 돼"). 실측: 17개 세트 전부 발문이
+                # 2개 이상인데 안내문은 2개 세트에만 있었다.
+                nq = sum(1 for p in unit if p.get("s") == st_q)
+                if nq > 1 and not any(
+                        _STEP3_SET_INTRO_KEY in (p.get("t") or "")
+                        for p in unit):
+                    unit.insert(0, {"t": _STEP3_SET_INTRO, "s": "$BASIC",
+                                    "runs": []})
                 code = (item.get("code") or "").strip()
                 if code:
                     unit.insert(0, {"t": "{" + code + "}", "s": "$BASIC",
@@ -689,12 +703,19 @@ def _s3_assign_slots(pre, BG):
         is_head = (len(_RE_PAREN_LABEL.findall(t)) >= 2
                    and len(t) <= 40 and "_" not in t)
         is_row = bool(_RE_ANS_ARROW_ROW.match(t))
+        # 괄호 없는 변형 (원문자 열 머리 / "㉠ ____" 기입 줄)
+        if not is_head:
+            is_head = _is_anslabel_head(t)
+        if not is_row:
+            is_row = bool(_RE_ANS_BLANK_ROW.match(t))
         if not (is_head or is_row):
             continue
         # 열 머리는 바로 뒤에 기입 줄이 와야 한다 (오검출 차단)
         if is_head:
             nxt = meaningful[x + 1] if x + 1 < len(meaningful) else None
-            if not (nxt and _RE_ANS_ARROW_ROW.match(nxt["tclean"])):
+            if not (nxt and (_RE_ANS_ARROW_ROW.match(nxt["tclean"])
+                             or _RE_ANS_BLANK_ROW.match(nxt["tclean"])
+                             or _is_anslabel_head(nxt["tclean"]))):
                 continue
         row["eff"] = "AnsL"
     return warn
@@ -1033,6 +1054,28 @@ def build_step1_b2(step_data):
 # 서답형 답란 표 판별 (아래 _promote_ansline 에서 사용)
 _RE_PAREN_LABEL = re.compile(r"\([^()]{1,12}\)")
 _RE_ANS_ARROW_ROW = re.compile(r"^\s*\([^()]{0,8}\)\s*_{3,}.*(?:→|->).*_{3,}")
+
+# 괄호 없는 답란 표 (2026-08-07 사용자 지적: "㉠ ㉡ ㉢, 기호 알맞게 고친
+# 표현 — 선지 위에 있는 건데 왜 지문으로 들어가 있어? 이건 선지 헤더잖아").
+# 이 원고의 열 머리는 괄호가 아니라 원문자/맨텍스트라 _RE_PAREN_LABEL 기반
+# 규칙에 하나도 걸리지 않아 29건이 지문 스타일로 인쇄됐다.
+#   "㉠\t\t㉡\t㉢"                 ← 원문자 열 머리
+#   "기호        알맞게 고친 표현"   ← 라벨 열 머리
+#   "㉠ _____________________"      ← 기입 줄
+_RE_CIRCLED = re.compile(r"[㉠-㉭①-⑮ⓐ-ⓞ]")
+_RE_ANS_HEAD_WORDS = re.compile(
+    r"(기호|어색한\s*표현|고친\s*표현|알맞게\s*고친)")
+_RE_ANS_BLANK_ROW = re.compile(
+    r"^\s*[㉠-㉭①-⑮ⓐ-ⓞ]\s*_{3,}\s*$")
+
+
+def _is_anslabel_head(t):
+    """괄호 없는 답란 표의 열 머리인가 (원문자 2개 이상 / 라벨 어휘)."""
+    if len(t) > 40 or "_" in t:
+        return False
+    if len(_RE_CIRCLED.findall(t)) >= 2:
+        return True
+    return len(_RE_ANS_HEAD_WORDS.findall(t)) >= 2
 
 
 # ── STEP1 C2 / STEP2 C1: 빈칸 어휘/어법 — v1 processStep1C2/2C1 ─────────────
