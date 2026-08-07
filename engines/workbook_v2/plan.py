@@ -1153,14 +1153,38 @@ def build_step2_a1(step_data):
 # 원문자(①~⑳) 없는 단락 전부 삭제, 지문 1개 = 유닛 1개(프레임 1개),
 # 전 단락 → A1_어법 선택 하단. 밑줄은 지문 밑줄 문자스타일 (v1 CS_PASSAGE_UL).
 
+_RE_EN_WORD = re.compile(r"[A-Za-z']+")
+
+
 def build_step2_a1_btm(step_data):
     st = _style("STEP2A1Practice", "P")
     units = []
-    for p in step_data.get("paragraphs", []) or []:
+    # 유닛 경계는 **헤더**다 (문항 1개 = 프레임 1개).
+    # 예전에는 "원문자(①~⑤) 있는 단락 1개 = 유닛 1개" 였는데, 네모형 문항은
+    # 지문 외에 선지 ①~⑤ 줄이 따로 있어 한 문항이 여러 유닛으로 쪼개졌다.
+    # 그러면 상단(어법선택)과 유닛 수가 어긋나 다른 지문끼리 짝지어진다.
+    det = _step_header_detection(step_data, "step2_a1_btm",
+                                 legacy=is_header_line)
+    cur = None
+    for i, p in enumerate(step_data.get("paragraphs", []) or []):
         text = p.get("text") or ""
-        if not _has_circled(text):
-            continue    # 책 제목/발문/헤더/빈 단락 = 삭제 대상 (v1 동일)
-        units.append([_mk(text, st, p.get("runs") or [])])
+        if det.is_header(i):
+            cur = []
+            units.append(cur)
+            continue
+        if cur is None:
+            continue    # 헤더 이전(책 제목/공통 발문) = 삭제 대상 (v1 동일)
+        if p.get("placeholder"):
+            continue    # 자리보존 — 유닛은 유지하고 내용만 비운다
+        # 원문자(①~⑤)가 있으면 지문 또는 선지. 원문자가 없어도 영문 본문이면
+        # 지문이다 — 네모형 문항의 지문은 (A)(B)(C) 표기라 원문자가 없어서,
+        # 원문자만 보던 예전 필터가 지문을 통째로 버리고 선지만 남겼다
+        # (2026-08-08 실측: 마더텅 26 = 230631).
+        if not _has_circled(text) and len(_RE_EN_WORD.findall(text)) < 8:
+            continue    # 발문/책 제목/빈 단락 = 삭제 대상 (v1 동일)
+        cur.append(_mk(text, st, p.get("runs") or []))
+    # 내용이 없는 유닛도 버리지 않는다 — 자리를 지켜야 상·하단이 안 어긋난다
+    units = [u if u else [_mk(" ", st, [])] for u in units]
     return {"units": units, "warnings": [],
             "ul_style": "공통 > 지문 밑줄"}
 
