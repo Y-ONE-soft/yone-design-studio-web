@@ -165,7 +165,7 @@ class WorkbookSeroEngine(BaseEngine):
 
         yy = str(year)[-2:]
         mm = str(month).zfill(2)
-        out_name = f"고{grade}_{yy}년_{mm}월_전체(C세로).indd"
+        out_name = f"고{grade}_{yy}년_{mm}월_세로.indd"
         indd_path = os.path.join(cfg["indd_output_dir"], out_name)
 
         # 원본 .indd 경로 결정 — 로컬 원본 우선, 없으면 GDrive

@@ -277,7 +277,7 @@
     var school = document.getElementById('school-select').value || '';
     var schoolSuffix = school ? '(' + school + ')' : '';
     document.getElementById('filename-preview').textContent =
-      subject + '_' + pubShort + '_' + lesson + '_전체(C)' + schoolSuffix + '.indd';
+      subject + '_' + pubShort + '_' + lesson + '_전체' + schoolSuffix + '.indd';
   }
 </script>
 <script src="{{ url_for('static', filename='js/review_agent_ui.js') }}"></script>

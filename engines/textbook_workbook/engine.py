@@ -447,7 +447,7 @@ class TextbookWorkbookEngine(BaseEngine):
             pub_short = publisher[len(subject):].strip()
         # 세종 등 학교 선택 시 끝에 (학교) 접미사로 공통본과 구분
         school_suffix = f"({school})" if school else ""
-        out_name = f"{subject}_{pub_short}_{lesson}_전체(C){school_suffix}.indd"
+        out_name = f"{subject}_{pub_short}_{lesson}_전체{school_suffix}.indd"
         indd_path = os.path.join(cfg["indd_output_dir"], out_name)
 
         # 원본 indd: 학교 키 → "_default"(공통) fallback. 구버전 문자열 config 호환.

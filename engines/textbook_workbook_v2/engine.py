@@ -8,7 +8,7 @@ v1(engines/textbook_workbook)과의 차이는 전부 훅으로 표현:
   - _workbook_type: "교과서" 고정 (plan의 C1 교과서 분기 — 《제목》 하단 구조)
   - _step_map: None = 모의고사 기본 STEP_MAP (v1 textbook은 settings에
     stepStoryMap을 안 넣어 run.jsx 기본 매핑 사용 — 내지도 동일 [원본]워크북_C)
-  - _output_name: {subject}_{pub}_{lesson}_전체(C)(학교)_v2.indd
+  - _output_name: {subject}_{pub}_{lesson}_전체(학교)_v2.indd
   - _select_template: 학교 키 → "_default" 폴백 (구버전 문자열 config 호환)
   - _plan_decorations: 간지(subject+publisher / lesson — v1 run.jsx 16.7)
     + 교과서 후처리(빈 페이지 마스터 재할당 — v1 16.8)
@@ -220,10 +220,10 @@ class TextbookWorkbookV2Engine(WorkbookV2Engine):
 
     def _output_name(self, job_dir, grade, year, month, workbook_type,
                      school):
-        """v1 규칙({subject}_{pub}_{lesson}_전체(C)(학교)) + _v2 접미."""
+        """v1 규칙({subject}_{pub}_{lesson}_전체(학교)) + _v2 접미."""
         subject, pub_short, lesson = self._textbook_meta(job_dir)
         school_suffix = f"({school})" if school else ""
-        return f"{subject}_{pub_short}_{lesson}_전체(C){school_suffix}_v2.indd"
+        return f"{subject}_{pub_short}_{lesson}_전체{school_suffix}_v2.indd"
 
     def _select_template(self, cfg, workbook_type, school, log):
         """학교 키 → "_default" 폴백 (v1 동일, 구버전 문자열 config 호환)."""

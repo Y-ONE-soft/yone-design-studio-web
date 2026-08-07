@@ -157,7 +157,7 @@ class WorkbookEngine(BaseEngine):
         # 출력 파일명 생성
         yy = str(year)[-2:]
         mm = str(month).zfill(2)
-        out_name = f"고{grade}_{yy}년_{mm}월_전체(C).indd"
+        out_name = f"고{grade}_{yy}년_{mm}월_전체.indd"
         indd_path = os.path.join(cfg["indd_output_dir"], out_name)
 
         # 원본 indd → 작업 경로로 복사 (JSX에서 기존 문서를 별도 저장 후 닫음)

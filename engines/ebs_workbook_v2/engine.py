@@ -11,7 +11,7 @@ v1(engines/ebs_workbook)과의 차이는 전부 훅으로 표현:
         연속해서 흐름)
   - _step_map: engines/ebs_workbook_v2/step_map.json — v1 settings의
     ebs_step_story_map + step3 마스터 O (리딩파워 내지 페이지 구성)
-  - _output_name: EBS_리딩파워_{단원}_전체(C)_v2.indd
+  - _output_name: EBS_리딩파워_{단원}_전체_v2.indd
   - _select_template: 단일 indd_original (구버전 dict 호환)
 
 v1 무변경. 출력 파일명 _v2 접미로 공존. run/verify는 WorkbookV2Engine
@@ -173,10 +173,10 @@ class EbsWorkbookV2Engine(WorkbookV2Engine):
 
     def _output_name(self, job_dir, grade, year, month, workbook_type,
                      school):
-        """v1 규칙(EBS_리딩파워_{단원}_전체(C)) + _v2 접미."""
+        """v1 규칙(EBS_리딩파워_{단원}_전체) + _v2 접미."""
         unit = self._read_meta_str(job_dir, "lesson", "")
         unit_short = re.sub(r"\s+", "", unit) if unit else "단원"
-        return f"EBS_리딩파워_{unit_short}_전체(C)_v2.indd"
+        return f"EBS_리딩파워_{unit_short}_전체_v2.indd"
 
     def _select_template(self, cfg, workbook_type, school, log):
         """단일 원본 indd (구버전 dict config 호환 — v1 동일)."""

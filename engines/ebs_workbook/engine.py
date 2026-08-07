@@ -351,9 +351,9 @@ class EbsWorkbookEngine(BaseEngine):
         series = cfg.get("fixed_series", "")
         unit = self._read_meta_str(job_dir, "lesson", "")
 
-        # 출력 파일명: "EBS_리딩파워_{단원}_전체(C).indd"
+        # 출력 파일명: "EBS_리딩파워_{단원}_전체.indd"
         unit_short = re.sub(r'\s+', '', unit) if unit else "단원"
-        out_name = f"EBS_리딩파워_{unit_short}_전체(C).indd"
+        out_name = f"EBS_리딩파워_{unit_short}_전체.indd"
         indd_path = os.path.join(cfg["indd_output_dir"], out_name)
 
         # 원본 indd 복사 — _gdrive_safe_copy로 EDEADLK 폴백 (7-경로 syscall + 백오프)

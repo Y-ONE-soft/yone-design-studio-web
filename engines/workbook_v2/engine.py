@@ -218,7 +218,7 @@ class WorkbookV2Engine(BaseEngine):
         """출력 .indd 파일명 — v1 워크북 규칙 + _v2 접미."""
         yy = str(year)[-2:]
         mm = str(month).zfill(2)
-        return f"고{grade}_{yy}년_{mm}월_전체(C)_v2.indd"
+        return f"고{grade}_{yy}년_{mm}월_전체_v2.indd"
 
     def _select_template(self, cfg, workbook_type, school, log):
         """원본 indd 선택 — v1과 동일: 학교 전용 템플릿 우선 → 유형 기본."""
