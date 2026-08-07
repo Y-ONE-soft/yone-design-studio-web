@@ -251,6 +251,33 @@ class WorkbookSelectEngine(BaseEngine):
                 ms_dir, wb_cfg, int(grade_num), yy, mm, log=log)
             sources.append({"yy": yy, "mm": mm, "content": content})
 
+        # 보충 원고 폴더 — 회차 폴더가 없는 옛 기출은 교재팀이 워크북 단위로
+        # 따로 준다 (실증 2026-08-07: 마더텅 11강 zip 에 16년11월/19년6월/
+        # 21년6월 3개 지문이 회차 구분 없이 한 폴더로 들어옴). 한 번 파싱해
+        # 못 찾은 회차 전부에 같은 content 를 등록하면, merge_selected 가
+        # 코드로 블록을 골라내므로 회차가 섞여 있어도 정확히 뽑힌다.
+        if not_found:
+            sup = cfg.get("supplement_dir")
+            sup = os.path.expanduser(sup) if sup else None
+            if sup and os.path.isdir(sup):
+                log("[보충원고] %s" % sup)
+                sup_ms = os.path.join(job_dir, "ms_supplement")
+                self._copy_manuscripts(sup, sup_ms, log)
+                sup_content = parse_manuscript_folder(
+                    sup_ms, wb_cfg, int(grade_num), 0, 0, log=log)
+                still = []
+                for entry in not_found:
+                    yy, mm = entry.split("년")[0].strip(), \
+                        entry.split("년")[1].split("월")[0].strip()
+                    try:
+                        yy, mm = int(yy), int(mm)
+                    except ValueError:
+                        still.append(entry)
+                        continue
+                    sources.append({"yy": yy, "mm": mm,
+                                    "content": sup_content})
+                    log("[보충원고] %d년 %d월 → 보충 폴더로 대체" % (yy, mm))
+                not_found = still
         if not_found:
             raise FileNotFoundError(
                 "원고 폴더를 찾지 못한 회차:\n  " + "\n  ".join(not_found)

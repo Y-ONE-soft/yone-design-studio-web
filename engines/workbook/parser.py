@@ -1886,6 +1886,66 @@ _STEP_CONTENT_SIGNATURES = {
 }
 
 
+def _absorb_a1_supplements(manuscript_dir, used_files, result, short_nums,
+                           log=None):
+    """A1(어휘선택) 보충 원고를 같은 섹션 키에 이어붙인다.
+
+    본 파일에 빠진 문항을 'Step1 A1 어휘선택(2단계 34번).docx' 처럼 별도
+    파일로 덧붙이는 관행 대응. 파일명이 아니라 **첫 줄이 A1 섹션 헤더**
+    (`1. 어휘1단계_Hard` / `2. 어휘2단계`)인지로 판별한다."""
+    import unicodedata
+    used = used_files if used_files is not None else set()
+    # 경로 비교는 반드시 NFC 정규화 후 — os.listdir 은 NFD, config 유래
+    # 경로는 NFC 라 그냥 비교하면 이미 소비한 본 파일을 '남은 파일'로 보고
+    # 통째로 다시 흡수한다 (단락 2배).
+    _n = lambda s: unicodedata.normalize("NFC", s)
+    used_n = {_n(u) for u in used}
+    try:
+        names = sorted(os.listdir(manuscript_dir))
+    except OSError:
+        return
+    for name in names:
+        fpath = os.path.join(manuscript_dir, name)
+        if _n(fpath) in used_n or not os.path.isfile(fpath):
+            continue
+        ext = os.path.splitext(name)[1].lower()
+        try:
+            if ext == ".docx":
+                paras = _docx_extract_paragraphs(fpath, False)
+            elif ext in (".hwp", ".hwpx"):
+                paras = _hwp_extract_paragraphs(fpath, False)
+            else:
+                continue
+        except Exception:
+            continue
+        if not paras:
+            continue
+        head = (paras[0].get("text") if isinstance(paras[0], dict)
+                else str(paras[0])) or ""
+        if not _RE_A1_SECTION.match(head.strip()):
+            continue
+        for sec_key, sec_paras in _split_a1_sections(paras).items():
+            sec_paras = _strip_manuscript_headers(sec_paras, log=None)
+            sec_paras = _remove_answer_section(sec_paras, log=None)
+            sec_paras = _filter_short_questions(sec_paras, short_nums, log=None)
+            cleaned = _clean_empty_lines(sec_paras)
+            if not cleaned:
+                continue
+            tgt = result["steps"].setdefault(
+                sec_key, {"filename": name, "question_numbers": [],
+                          "paragraph_count": 0, "paragraphs": []})
+            tgt["paragraphs"] = (tgt.get("paragraphs") or []) + cleaned
+            tgt["paragraph_count"] = len(tgt["paragraphs"])
+            tgt["question_numbers"] = _extract_question_numbers(
+                tgt["paragraphs"], sec_key)
+            if log:
+                log(f"[파서] {sec_key}: 보충 원고 '{name}' 흡수 "
+                    f"(+{len(cleaned)}단락 → 지문 "
+                    f"{len(tgt['question_numbers'])}개)")
+        used.add(fpath)
+        used_n.add(_n(fpath))
+
+
 def _find_manuscript_file_by_content(manuscript_dir, step_key, used_files,
                                      log=None):
     """이름 매칭이 실패했을 때 폴더의 남은 원고를 **내용**으로 골라낸다."""
