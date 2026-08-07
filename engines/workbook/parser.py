@@ -1939,16 +1939,84 @@ def _annotate_step3_kinds(items, log=None):
 # 정규화해도 공통 글자가 거의 없어(LCS 비율 0.45 < 0.70) 이름 매칭으로는
 # 원리적으로 못 잇는다 — 10개 회차에서 하단 문제가 통째로 누락된 원인.
 # 각 항목: (필수 키워드 전부 포함, 제외 키워드 하나도 없음) 을 앞부분에서 검사.
+# 값은 시그니처 1개(dict) 또는 후보 여러 개(list) — 앞에서부터 먼저 맞는 것 채택.
 _STEP_CONTENT_SIGNATURES = {
     # 하단 문제 발문: "다음 글의 밑줄 친 부분 중, 어법 상 틀린 것을 모두 고르시오"
     # 배제 대상은 어법선택 본문("[ ] 안에서 어법 상 알맞은 것을 고르시오").
     # avoid 에 "[" 를 쓰면 안 된다 — 원고 첫 줄의 회차 표기
     # "고1_2023_11월(경기도)[12월시행]" 에 걸려 10개 중 5개를 놓쳤다.
-    "step2_a1_btm": {
-        "need": ["밑줄", "어법", "틀린"],
-        "avoid": ["알맞은 것을 고르"],
-    },
+    "step2_a1_btm": [
+        {
+            "need": ["밑줄", "어법", "틀린"],
+            "avoid": ["알맞은 것을 고르"],
+        },
+        # 문항별 발문형 원고(23년 6월·9월 'Step2 A1 어법선택에 들어갈 문법 기본
+        # 문제.hwpx')는 1번 문항이 네모형("(A), (B), (C)의 각 네모 안에서 어법에
+        # 맞는 표현으로…")이라 앞 6단락에 '밑줄/틀린'이 없다 — 위 시그니처만
+        # 쓰면 파일이 실재하는데도 '파일 없음'으로 건너뛴다(23년 9월 실측).
+        {
+            "need": ["네모", "어법"],
+            "avoid": ["알맞은 것을 고르"],
+        },
+    ],
 }
+
+
+# 문항별 발문형 하단 문제 헤더: "1. 다음 글의 밑줄 친 부분 중, 어법상 틀린 것은? [20]"
+# 표준형("1. p2-no.20  (정답 1개)")과 달리 순번·발문·지문번호가 한 줄에 붙어
+# 있고 지문번호가 줄 끝 대괄호다. 표준 헤더 정규식(_RE_HEADER_NUM)이 못 잡아
+# 파일 전체가 "지문 0개"로 읽혔다(23년 6월 실측).
+_RE_BTM_TAIL_HEADER = re.compile(
+    r'^\s*(\d{1,2})\s*[\.\)]\s*(.+?)\s*\[(\d{1,3})\]\s*$')
+# 발문 안의 정답 개수 표기 "(정답 2개)" → 표준 헤더 꼬리로 옮긴다
+_RE_BTM_ANSWER_COUNT = re.compile(r'\(\s*정답\s*(\d+)\s*개\s*\)')
+
+
+def _normalize_bracket_tail_headers(paragraphs):
+    """문항별 발문형 하단 문제 헤더를 표준 형식으로 정규화.
+
+    변환:
+        "1. 다음 글의 밑줄 친 부분 중, 어법상 틀린 것은? [20]"
+            → "1. p0-no.20"
+        "2. … 틀린 것을 모두 고르면? (정답 2개) [21]"
+            → "2. p0-no.21  (정답 2개)"
+
+    밑줄형 발문은 섹션 고정 발문과 같은 말이라 버리고, 네모형 등 **다른 유형**의
+    발문만 본문으로 남긴다 — 완성본(세로중간본 p167·p196)이 네모형에만 발문을
+    따로 인쇄한 것과 같은 구성.
+
+    step2_a1_btm 에서만 호출한다 (다른 섹션 원고의 대괄호 줄에 영향 없음).
+    """
+    result = []
+    for p in paragraphs:
+        text = (p.get('text') or '').strip()
+        m = _RE_BTM_TAIL_HEADER.match(text)
+        if not m:
+            result.append(p)
+            continue
+        prompt = m.group(2).strip()
+        if '어법' not in prompt and '밑줄' not in prompt:
+            result.append(p)
+            continue
+
+        m_cnt = _RE_BTM_ANSWER_COUNT.search(prompt)
+        header = "%s. p0-no.%s" % (m.group(1), m.group(3))
+        if m_cnt:
+            header += "  (정답 %s개)" % m_cnt.group(1)
+            prompt = _RE_BTM_ANSWER_COUNT.sub('', prompt).strip()
+        result.append({
+            "text": header,
+            "runs": [{"t": header, "ul": False}],
+        })
+
+        # 밑줄형은 고정 발문과 중복 → 버림. 그 외(네모형 등)는 본문으로 유지.
+        if '밑줄' in prompt and '네모' not in prompt:
+            continue
+        result.append({
+            "text": prompt,
+            "runs": [{"t": prompt, "ul": False}],
+        })
+    return result
 
 
 def _absorb_a1_supplements(manuscript_dir, used_files, result, short_nums,
@@ -2017,6 +2085,7 @@ def _find_manuscript_file_by_content(manuscript_dir, step_key, used_files,
     sig = _STEP_CONTENT_SIGNATURES.get(step_key)
     if not sig:
         return None
+    sigs = sig if isinstance(sig, list) else [sig]
     used = used_files or set()
     try:
         names = sorted(os.listdir(manuscript_dir))
@@ -2041,9 +2110,15 @@ def _find_manuscript_file_by_content(manuscript_dir, step_key, used_files,
             for p in (paras or [])[:6])
         if not head:
             continue
-        if any(k not in head for k in sig["need"]):
-            continue
-        if any(k in head for k in sig.get("avoid", [])):
+        matched = False
+        for s in sigs:
+            if any(k not in head for k in s["need"]):
+                continue
+            if any(k in head for k in s.get("avoid", [])):
+                continue
+            matched = True
+            break
+        if not matched:
             continue
         if log:
             log(f"[파서] {step_key}: 내용 매칭으로 '{name}' 채택 "
@@ -2288,6 +2363,11 @@ def parse_manuscript_folder(manuscript_dir, config, grade, year, month, log=None
         else:
             log(f"[파서] 미지원 형식: {ext}")
             continue
+
+        # 문항별 발문형 하단 문제 헤더("1. …틀린 것은? [20]") → 표준 형식
+        # 하단 문제 섹션에서만 — 다른 섹션 원고의 대괄호 줄은 건드리지 않는다
+        if step_key == 'step2_a1_btm':
+            paras = _normalize_bracket_tail_headers(paras)
 
         # 옛 형식 워크북 헤더("9번"/"17년 11월 21번") → 표준 형식으로 정규화
         # 정상 원고에는 매치되지 않으므로 안전
