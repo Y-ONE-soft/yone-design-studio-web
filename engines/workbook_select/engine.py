@@ -25,6 +25,7 @@ import shutil
 import unicodedata
 
 from core.base import BaseEngine, safe_copy_indd, safe_copy
+from engines.workbook_v2.engine import WorkbookV2Engine
 from core.paths import resolve_config
 from engines.workbook.engine import _load_config as _load_workbook_config
 from engines.workbook.parser import parse_manuscript_folder
@@ -50,7 +51,7 @@ def _load_config():
                                 "output_base"])
 
 
-class WorkbookSelectEngine(BaseEngine):
+class WorkbookSelectEngine(WorkbookV2Engine):
 
     @property
     def material_id(self):
@@ -351,162 +352,47 @@ class WorkbookSelectEngine(BaseEngine):
 
     # ─── prepare_jsx ───────────────────────────────────────────────
 
-    def prepare_jsx(self, json_path, job_dir, log):
-        cfg = _load_config()
-        grade = self._get_meta(job_dir, "grade", "고1")
-        school = _nfc(self._get_meta(job_dir, "school", "학교미지정"))
-        exam_period = self._get_meta(job_dir, "exam_period", "기간미지정")
-        result_name = self._get_meta(job_dir, "result_name", "").strip()
-        if not result_name:
-            raise ValueError("결과 파일명을 입력하세요.")
+    # ── 조판: workbook_v2 경로 사용 (사용자 확정 스펙 2026-08-07) ─────────
+    # 이전에는 v1 engines/workbook/jsx/run.jsx 를 직접 실행했다. v1 경로는
+    # 지문번호 프레임 갱신(passage_numbers)·간지 표기·선지 정렬 등 v2 에만
+    # 있는 계약을 전부 못 받아, 신규 3건 조판에서 지문 1개만 나오고 간지가
+    # '고2 모의고사'로 찍히는 결함이 났다. 이제 v2 엔진의 prepare_jsx /
+    # run_indesign 을 그대로 상속하고, 출력 경로·파일명만 여기서 정한다.
 
-        output_dir = os.path.join(cfg["output_base"], grade, exam_period,
-                                  school)
-        os.makedirs(output_dir, exist_ok=True)
-        log("[출력 폴더] %s" % output_dir)
+    def _load_cfg(self):
+        """v2 가 쓰는 config 에 선택 결합용 출력 경로/템플릿을 얹는다."""
+        cfg = dict(_load_workbook_config())
+        sel = _load_config()
+        cfg["indd_output_dir"] = self._select_output_dir
+        cfg["indd_original"] = sel["indd_original"]
+        return cfg
 
-        indd_out = os.path.join(output_dir, "%s.indd" % result_name)
-        n = 2
-        while os.path.exists(indd_out) and n < 1000:
-            indd_out = os.path.join(output_dir,
-                                    "%s_%d.indd" % (result_name, n))
-            n += 1
-
+    def _select_template(self, cfg, workbook_type, school, log):
+        """선택 결합은 내지가 하나로 고정 — v2 의 학교별 매핑(dict)을 쓰지
+        않고 config 의 단일 경로를 그대로 쓴다."""
         src = cfg["indd_original"]
         if not os.path.exists(src):
             raise FileNotFoundError("워크북 원본 템플릿 없음: %s" % src)
-        indd_out = safe_copy_indd(src, indd_out)
-        log("[내지] 원본 복사: %s" % os.path.basename(indd_out))
+        log("[내지] %s" % os.path.basename(src))
+        return src
 
-        with open(json_path, encoding="utf-8") as f:
-            merged = json.load(f)
+    def _output_name(self, job_dir, grade, year, month, workbook_type,
+                     school):
+        name = self._get_meta(job_dir, "result_name", "").strip()
+        if not name:
+            raise ValueError("결과 파일명을 입력하세요.")
+        return "%s.indd" % name
 
-        settings = {
-            "json_path": json_path,
-            "indd_path": indd_out,
-            "output_dir": job_dir,
-            "grade": merged.get("grade", 1),
-            "year": merged.get("year", 25),
-            "month": merged.get("month", 10),
-            "exclude": [],
-            "pdf_path": os.path.splitext(indd_out)[0] + ".pdf",
-            # 회차 혼합본이므로 간지의 "YY년 MM월" 표기는 비운다
-            "divider_line2": "",
-        }
-        settings_path = os.path.join(job_dir, ".settings.json")
-        with open(settings_path, "w", encoding="utf-8") as f:
-            json.dump(settings, f, ensure_ascii=False)
-
-        with open(_JSX_TEMPLATE, encoding="utf-8") as f:
-            jsx_src = f.read()
-        jsx_src = re.sub(r'var settingsPath\s*=\s*"[^"]*";',
-                         'var settingsPath = "%s";' % settings_path, jsx_src)
-        jsx_copy = os.path.join(job_dir, "run.jsx")
-        with open(jsx_copy, "w", encoding="utf-8") as f:
-            f.write(jsx_src)
-
-        # 후처리 trim JSX (미사용 페이지 제거 + 간지 텍스트)
-        trim_tpl = os.path.join(_DIR, "jsx", "trim_pages.jsx")
-        with open(trim_tpl, encoding="utf-8") as f:
-            trim_src = f.read()
-        trim_src = trim_src.replace("__SETTINGS_PATH__", settings_path)
-        with open(os.path.join(job_dir, "trim_pages.jsx"), "w",
-                  encoding="utf-8") as f:
-            f.write(trim_src)
-
-        log("[JSX] 준비 완료")
-        return jsx_copy
-
-    # ─── run_indesign: 본 조판 + PDF export ────────────────────────
-
-    @staticmethod
-    def _wait_indesign_ready(log, max_wait=600):
-        """InDesign이 AppleEvents에 응답할 때까지 대기.
-
-        run.jsx 완료 로그 후에도 대형 문서 recompose/save 로 수 분간
-        바쁠 수 있고, 그 동안 do script 제출은 AppleScript 용어 조회
-        실패("expected end of line but found script")로 죽는다
-        (2026-08-04 실측 — trim/export 제출 실패의 원인).
-        """
-        import subprocess, time
-        deadline = time.time() + max_wait
-        probe = ('with timeout of 15 seconds\n'
-                 'tell application "Adobe InDesign 2026" to do script '
-                 '"1+1" language javascript\n'
-                 'end timeout')
-        waited = False
-        while time.time() < deadline:
-            try:
-                r = subprocess.run(["osascript", "-e", probe],
-                                   capture_output=True, timeout=30)
-                ok = (r.returncode == 0)
-            except (subprocess.TimeoutExpired, OSError):
-                # osascript 자체가 행 — InDesign busy. 재시도.
-                ok = False
-            if ok:
-                if waited:
-                    log("[InDesign] 응답 회복 — 다음 단계 진행")
-                return True
-            waited = True
-            time.sleep(10)
-        log("[경고] InDesign %d초 무응답 — 그대로 제출 시도" % max_wait)
-        return False
-
-    def run_indesign(self, job_dir, log):
-        from core.indesign import runner
-        settings_path = os.path.join(job_dir, ".settings.json")
-        with open(settings_path, encoding="utf-8") as f:
-            settings = json.load(f)
-
-        # 본조판 제출 전에도 응답성 확인 — 직전 작업(다른 엔진 포함)의
-        # recompose/save 로 InDesign 이 바쁘면 do script 가 AppleScript
-        # 용어 조회 실패로 죽는다 (2026-08-05 실측: run.jsx 2회 연속 실패).
-        self._wait_indesign_ready(log)
-        log_file = os.path.join(job_dir, "조판_로그.txt")
-        runner.run_jsx(os.path.join(job_dir, "run.jsx"), log,
-                       poll_log_path=log_file, timeout=self.jsx_timeout,
-                       stall_limit=900)
-
-        # 후처리 1: 미사용 페이지 제거 + 간지 텍스트 (선택 조판 전용)
-        self._wait_indesign_ready(log)
-        trim_log = os.path.join(job_dir, "trim_로그.txt")
-        runner.run_jsx(os.path.join(job_dir, "trim_pages.jsx"), log,
-                       poll_log_path=trim_log, timeout=1200, stall_limit=600,
-                       completion_marker="===== trim 완료 =====")
-
-        # 후처리 2: PDF export (run.jsx는 저장까지만 한다)
-        self._wait_indesign_ready(log)
-        export_jsx = os.path.join(job_dir, "export_pdf.jsx")
-        indd = settings["indd_path"].replace("\\", "\\\\").replace('"', '\\"')
-        pdf = settings["pdf_path"].replace("\\", "\\\\").replace('"', '\\"')
-        export_log = os.path.join(job_dir, "export_로그.txt")
-        with open(export_jsx, "w", encoding="utf-8") as f:
-            f.write(
-                '#target indesign\n'
-                # runner.run_jsx 는 JSX 안의 settingsPath 변수를 요구한다
-                'var settingsPath = "%s";\n' % settings_path.replace("\\", "\\\\") +
-                '(function () {\n'
-                '    var lf = new File("%s");\n'
-                '    lf.encoding = "UTF-8"; lf.lineFeed = "Unix";\n'
-                '    function W(s) { lf.open("a"); lf.writeln(s); lf.close(); }\n'
-                '    try {\n'
-                '        var f = new File("%s");\n'
-                '        var d = app.open(f, false);\n'
-                '        app.pdfExportPreferences.pageRange = PageRange.ALL_PAGES;\n'
-                '        app.pdfExportPreferences.exportReaderSpreads = false;\n'
-                '        try { app.pdfExportPreferences.viewPDF = false; } catch (e0) {}\n'
-                '        d.exportFile(ExportFormat.PDF_TYPE, new File("%s"), false);\n'
-                '        d.close(SaveOptions.NO);\n'
-                '        W("===== PDF export 완료 =====");\n'
-                '    } catch (e) { W("[오류] " + e.message); }\n'
-                '})();\n'
-                % (export_log.replace("\\", "\\\\").replace('"', '\\"'),
-                   indd, pdf))
-        runner.run_jsx(export_jsx, log, poll_log_path=export_log,
-                       timeout=1200, stall_limit=600,
-                       completion_marker="===== PDF export 완료 =====")
-
-    # ─── verify ────────────────────────────────────────────────────
+    def prepare_jsx(self, json_path, job_dir, log):
+        sel = _load_config()
+        grade = self._get_meta(job_dir, "grade", "고1")
+        school = _nfc(self._get_meta(job_dir, "school", "학교미지정"))
+        exam_period = self._get_meta(job_dir, "exam_period", "기간미지정")
+        out_dir = os.path.join(sel["output_base"], grade, exam_period, school)
+        os.makedirs(out_dir, exist_ok=True)
+        self._select_output_dir = out_dir
+        log("[출력 폴더] %s" % out_dir)
+        return WorkbookV2Engine.prepare_jsx(self, json_path, job_dir, log)
 
     def verify(self, job_dir, log):
         settings_path = os.path.join(job_dir, ".settings.json")
