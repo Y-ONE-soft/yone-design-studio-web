@@ -390,6 +390,7 @@ function updatePassageNumbers(doc, flowStories, op) {
         }
         var n = 0;
         var clamped = 0;
+        var widened = 0;
         var labelFrames = [];   // W38: 좌/우 기하 정규화용 (숫자 아닌 라벨만)
         var pages = storyPagesInOrder(rec.story);
         for (var pk = 0; pk < pages.length; pk++) {
@@ -403,6 +404,27 @@ function updatePassageNumbers(doc, flowStories, op) {
                     if (!RE_BARE_NUM.test(String(fst.contents || ""))) { continue; }
                     fst.contents = lab2;
                     n++;
+                    // W40 결함 7b: 번호 프레임은 템플릿에서 2자리("20")용
+                    // 폭이라, 다회차 선택 워크북의 6자리 코드("231133")를
+                    // 넣으면 오버셋된다 (v16 실증: 오버플로우 34개 —
+                    // 후처리 trim 이 이걸 메우려 페이지를 40개씩 추가).
+                    // 라벨 프레임은 본문 좌변 바깥 여백에 있으므로 왼쪽으로
+                    // 넓혀 수용한다 (오른쪽은 본문 침범 — clampLabelFrame 이
+                    // 반대 방향으로 막는 경계).
+                    var gN = 0;
+                    while (gN < 30) {
+                        var ovfN = false;
+                        try { ovfN = tfs[fi].overflows; } catch (eN0) { break; }
+                        if (!ovfN) { break; }
+                        var gbN = tfs[fi].geometricBounds;
+                        if (gbN[1] - 1.5 < 0) { break; }   // 페이지 밖 금지
+                        try {
+                            tfs[fi].geometricBounds = [gbN[0], gbN[1] - 1.5,
+                                                       gbN[2], gbN[3]];
+                        } catch (eN1) { break; }
+                        gN++;
+                    }
+                    if (gN > 0) { widened++; }
                     // W30: 숫자 아닌 긴 라벨만 본문 침범 클램프 (숫자 라벨은
                     // v1 파리티 경로 — 프레임 무접촉)
                     if (!RE_BARE_NUM.test(String(lab2))) {
@@ -447,7 +469,10 @@ function updatePassageNumbers(doc, flowStories, op) {
                 } catch (eR) {}
             }
         }
-        if (n > 0) { wlog(steps[si] + " 지문번호 프레임 갱신: " + n + "개"); }
+        if (n > 0) {
+            wlog(steps[si] + " 지문번호 프레임 갱신: " + n + "개"
+                 + (widened > 0 ? " (폭 확장 " + widened + "개)" : ""));
+        }
         if (clamped > 0) {
             wlog(steps[si] + " 라벨 프레임 본문 침범 교정: " + clamped + "개");
         }
