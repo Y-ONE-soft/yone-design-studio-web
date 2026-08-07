@@ -26,12 +26,12 @@ def test_output_name(engine, tmp_path):
     job = str(tmp_path)
     _write_meta(job, lesson="Unit 15")
     assert engine._output_name(job, 0, 0, 0, "EBS", "") \
-        == "EBS_리딩파워_Unit15_전체(C)_v2.indd"
+        == "EBS_리딩파워_Unit15_전체_v2.indd"
     # lesson 미지정 폴백
     job2 = str(tmp_path / "j2")
     os.makedirs(job2)
     assert engine._output_name(job2, 0, 0, 0, "EBS", "") \
-        == "EBS_리딩파워_단원_전체(C)_v2.indd"
+        == "EBS_리딩파워_단원_전체_v2.indd"
 
 
 def test_select_template(engine, tmp_path):
@@ -78,7 +78,7 @@ def test_prepare_jsx_offline(engine, tmp_path, monkeypatch):
     assert settings["engine"] == "ebs_workbook_v2"
     assert settings["workbook_type"] == "EBS"
     assert os.path.basename(settings["indd_path"]) \
-        == "EBS_리딩파워_Unit15_전체(C)_v2.indd"
+        == "EBS_리딩파워_Unit15_전체_v2.indd"
     assert os.path.exists(settings["indd_path"])
 
     plan = json.load(open(settings["plan_path"], encoding="utf-8"))

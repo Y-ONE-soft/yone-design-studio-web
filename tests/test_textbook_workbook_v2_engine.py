@@ -32,9 +32,9 @@ def test_output_name(engine, tmp_path):
     _write_meta(job, subject="공통영어1", publisher="공통영어1 능률(오)",
                 lesson="2과")
     assert engine._output_name(job, 1, 0, 0, "교과서", "") \
-        == "공통영어1_능률(오)_2과_전체(C)_v2.indd"
+        == "공통영어1_능률(오)_2과_전체_v2.indd"
     assert engine._output_name(job, 1, 0, 0, "교과서", "세종") \
-        == "공통영어1_능률(오)_2과_전체(C)(세종)_v2.indd"
+        == "공통영어1_능률(오)_2과_전체(세종)_v2.indd"
 
 
 def test_select_template(engine, tmp_path):
@@ -91,7 +91,7 @@ def test_prepare_jsx_offline(engine, tmp_path, monkeypatch):
     assert settings["engine"] == "textbook_workbook_v2"
     assert settings["workbook_type"] == "교과서"
     assert os.path.basename(settings["indd_path"]) \
-        == "공통영어1_능률(오)_2과_전체(C)_v2.indd"
+        == "공통영어1_능률(오)_2과_전체_v2.indd"
     assert os.path.exists(settings["indd_path"])
     assert os.path.exists(os.path.join(str(job), "run.jsx"))
 

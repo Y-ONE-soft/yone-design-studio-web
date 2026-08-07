@@ -77,4 +77,4 @@ def test_v1_workbook_v2_output_name_unchanged(tmp_path):
     from engines.workbook_v2.engine import WorkbookV2Engine
     base = WorkbookV2Engine()
     assert base._output_name(str(tmp_path), 1, 25, 10, "모의고사", "") \
-        == "고1_25년_10월_전체(C)_v2.indd"
+        == "고1_25년_10월_전체_v2.indd"

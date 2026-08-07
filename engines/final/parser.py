@@ -5170,7 +5170,7 @@ def _merge_mock_insert_blocks(insert_blocks, mock_blocks, sentence_blocks=None, 
     """모의고사 통합 워크북에서 추출한 문장삽입 블록을 insert_blocks에 병합.
 
     mock_blocks: [{"qnum": "38", "paras": [{"s":..., "t":...}, ...],
-                   "source_file": "고1_25년_6월_전체(C).indd",
+                   "source_file": "고1_25년_6월_전체.indd",
                    "scope_text": "25년6월"}]
     변환: 워크북 워크북05 파일(광문1_워크북05(25년6월)_내지.indd)의 source로 기록하여
            기존 매칭 로직(소스별 exam_idx 등)과 호환.
@@ -5697,7 +5697,7 @@ def parse_extracted(extracted_path, vocab_left, vocab_right,
         stories, grade, rp_scope_lectures=_rp_scope_lecs, log=log)
 
     # 모의고사 통합 워크북에서 추출한 문장삽입 블록을 insert_blocks에 병합
-    # (사용자 지정 출처: "고1_25년_6월_전체(C).indd" 등 통합 파일)
+    # (사용자 지정 출처: "고1_25년_6월_전체.indd" 등 통합 파일)
     if mock_insert_blocks and grade in ("\uace01", "\uace02"):
         _merge_mock_insert_blocks(insert_blocks, mock_insert_blocks,
                                   sentence_blocks=sentence_blocks, log=log)

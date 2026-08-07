@@ -75,9 +75,12 @@ for sub in "${SUBPATHS[@]}"; do
     success=0
     while [ $attempt -lt 3 ]; do
         attempt=$((attempt + 1))
-        # --fuzzy: rename된 파일은 목적지의 유사 이름 파일을 basis로 써서
-        #   GDrive 재다운로드를 피한다 (전체(C)→전체 같은 일괄 rename 대비).
-        if rsync -a --delete --fuzzy --exclude=".*" --partial \
+        # --fuzzy + --delete-after: rename된 파일은 목적지의 유사 이름 파일을
+        #   basis로 재구성해 GDrive 재다운로드를 피한다. 삭제를 전송 뒤로
+        #   미루는 --delete-after 가 필수 — 기본 --delete-during 이면 basis가
+        #   먼저 지워져 fuzzy가 무력화되고 전량 재다운로드가 된다
+        #   (2026-08-07 실측: 모의고사 폴더 9GB 전량 재전송).
+        if rsync -a --delete-after --fuzzy --exclude=".*" --partial \
                  --partial-dir=".rsync-partial" \
                  "$src" "$dst" >> "$LOG" 2>&1; then
             success=1

@@ -1705,7 +1705,7 @@ class FinalEngine(BaseEngine):
 
         # 5.5) 모의고사 통합 워크북 파일에서 '문장삽입' 블록만 추가 추출
         #      현재 학교 워크북에는 문장삽입 섹션이 없는 모의고사 파일이 많으므로,
-        #      "고1_25년_6월_전체(C).indd" 같은 통합 파일에서 발문 기준으로 추출한다.
+        #      "고1_25년_6월_전체.indd" 같은 통합 파일에서 발문 기준으로 추출한다.
         mock_insert_data = []
         mock_base = os.path.expanduser(cfg.get("mockexam_insert_base", ""))
         if mock_base and os.path.isdir(mock_base) and grade in ("고1", "고2"):
@@ -1729,7 +1729,7 @@ class FinalEngine(BaseEngine):
                 mm = m_year.group(2)
                 mm_zero = mm.zfill(2)
 
-                # 통합 파일 경로: 모의고사/{grade}/{grade}_{yy}년_{mm}월_전체(C).indd
+                # 통합 파일 경로: 모의고사/{grade}/{grade}_{yy}년_{mm}월_전체.indd
                 grade_dir = os.path.join(mock_base, grade)
                 if not os.path.isdir(grade_dir):
                     continue
