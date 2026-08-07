@@ -436,6 +436,35 @@ class WorkbookSelectEngine(WorkbookV2Engine):
                 completion_marker="===== trim 완료 =====",
                 stall_limit=900)
 
+        # trim 이 페이지를 지운 뒤이므로 PDF 를 다시 뽑는다 — 안 하면 PDF 만
+        # trim 이전 상태로 남는다 (2026-08-08 실측 INDD 292p vs PDF 310p).
+        self._reexport_pdf(job_dir, settings_path, log)
+
+    def _reexport_pdf(self, job_dir, settings_path, log):
+        from core.indesign.runner import run_jsx
+
+        tpl = os.path.join(_DIR, "jsx", "reexport_pdf.jsx")
+        if not os.path.exists(tpl):
+            log("[재출력] 템플릿 없음 — 건너뜀: %s" % tpl)
+            return
+        with open(tpl, encoding="utf-8") as f:
+            src = f.read()
+        src = src.replace("__SETTINGS_PATH__", settings_path)
+        out = os.path.join(job_dir, "reexport_pdf.jsx")
+        with open(out, "w", encoding="utf-8") as f:
+            f.write(src)
+
+        re_log = os.path.join(job_dir, "reexport_로그.txt")
+        try:
+            os.remove(re_log)
+        except OSError:
+            pass
+        log("[재출력] trim 반영 PDF 재출력 시작")
+        run_jsx(out, log, poll_log_path=re_log,
+                timeout=3600,
+                completion_marker="===== 재출력 완료 =====",
+                stall_limit=2700)
+
     def verify(self, job_dir, log):
         settings_path = os.path.join(job_dir, ".settings.json")
         with open(settings_path, encoding="utf-8") as f:
