@@ -29,10 +29,16 @@ from engines.workbook_sero.parser import (
 
 # 정규 모의고사 워크북 지문 헤더: "1. p2-no.20", "18. p11-no.41~42",
 # "1. p2-no.20  (정답 1개)" — 선두 순번은 버리고 no.NN이 문항 번호.
+# p 뒤 토큰은 숫자만이 아니다 — 보충 원고(워크북 단위 묶음)는 "1. p11강-no.31"
+# 처럼 강 표기를 쓴다. p\d+ 로 고정하면 이 방언이 전부 미매칭돼 step1/step2
+# 12개 섹션이 통째로 '비움'이 된다 (2026-08-07 실증: 마더텅 11강 보충 3건).
+# 가로 경로(merge_select._RE_HDR)와 같은 자리, 같은 원인.
 _RE_Q_PNNO = re.compile(
-    r'^\s*\d+\s*\.\s*p\d+\s*-\s*no\s*\.\s*(\d{1,3})'
+    r'^\s*\d+\s*\.\s*p\s*[^\s\-–—]{0,8}\s*-\s*no\s*\.\s*(\d{1,3})'
     r'(?:\s*~\s*(?:no\s*\.\s*)?(\d{1,3}))?')
 # 오토큐엠 세대 지문 마커: "고1 #20"
+# 보충 원고 브래킷 마커: "[11강 - 20번 161131]" (강/마더텅번호/코드 혼재)
+_RE_Q_BRACKET_CODE = re.compile(r'^\s*\[[^\]]*?(\d{6})\s*\]\s*$')
 _RE_Q_HASH = re.compile(r'^\s*고\s*\d\s*#\s*(\d{1,3})(?:\s*~\s*(\d{1,3}))?\s*$')
 # 단독 번호 라인: "20." (b1) / "20번" (2c2 서술형) — step3 문항 번호
 # 집합에 있을 때만 마커로 인정 (항목 번호 "1." 오인 방지)
@@ -64,6 +70,12 @@ def _detect_qnum_v2(text, known_qnums):
     m = _RE_Q_HASH.match(txt)
     if m:
         return (m.group(1), m.group(2), None)
+    m = _RE_Q_BRACKET_CODE.match(txt)
+    if m:
+        # "[11강 - 20번 161131]" — 브래킷 스텝(a1/a2/b2 등)의 보충 원고 마커.
+        # 앞 숫자는 마더텅 번호라 사이클 키(모의고사 문항번호)와 다르다.
+        # 끝의 6자리 코드 뒤 2자리가 문항번호다 (2026-08-07 실증).
+        return (str(int(m.group(1)[4:])), None, None)
     m = _RE_Q_BARE.match(txt)
     if m and m.group(1) in known_qnums:
         return (m.group(1), m.group(2), None)
