@@ -288,6 +288,12 @@ class WorkbookV2Engine(BaseEngine):
         # 원고가 이미 정합인 문서까지 갱신하게 되는 광범위 동작 변경.
         labels = passage_labels(content.get("steps", {}) or {})
         if labels and content.get("_mixed_rounds"):
+            # 사용자 확정 스펙: 프레임에는 문항번호만 남긴다 — 모의고사
+            # 코드 YYMMQQ 의 뒤 2자리(QQ). 250621 -> 21, 240340 -> 40.
+            # 6자리라 프레임(2자리 폭)이 넘치던 문제도 이걸로 해소된다.
+            # 마더텅(비 6자리)은 대상 아님 — 추후 마더텅 번호로 별도 처리.
+            labels = [s[-2:] if re.fullmatch(r"\d{6}", s) else s
+                      for s in labels]
             deco["passage_numbers"] = {"labels": labels,
                                        "steps": ["step1_c2", "step2_b1",
                                                  "step2_c1"]}
