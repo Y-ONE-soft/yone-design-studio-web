@@ -121,49 +121,62 @@ def _resolve_local_mirror(src, log=None):
 def list_manuscript_entries(orig_folder, log=None):
     """원고 폴더 엔트리(파일/하위폴더)를 '미러 + GDrive 원본' 합집합으로 열거.
 
-    미러는 1회성 스냅샷이라, GDrive에 나중에 추가된 파일(예: 'Step3.hwpx')이
-    미러엔 없을 수 있다. 기존 코드는 미러 폴더만 listdir 해서 그런 파일을
-    조용히 누락시켰다(공백/단어 차이가 아니라 '미러에 아예 없음'이 원인).
-    이 함수는 미러에 없는 GDrive 전용 파일을 합집합으로 보강해 누락을 막는다.
+    **어떤 엔트리가 존재하는가는 GDrive가 정본**이고, 미러는 그 엔트리를 더 빨리
+    (EDEADLK 없이) 읽기 위한 경로만 제공한다.
 
-    - 각 엔트리의 읽기 경로(src): 미러본이 있으면 미러(빠르고 EDEADLK 회피),
-      없으면 GDrive 원본.
+    예전에는 미러 목록을 먼저 채우고 GDrive로 보강하는 순서라, 미러에만 남은
+    유령(rename/삭제 전 이름)이 결과에 섞였다 — 2026-08-07 실측: 모의고사 완성본
+    고2 폴더에서 `..._세로(C).indd`(유령)와 `..._세로.indd`(실물)가 동시에 후보로
+    올라와, 파일명 길이 tie-break 우연에 기대는 상태였다. 지금은 GDrive에 없는
+    이름은 아예 결과에 넣지 않는다.
+
+    - 엔트리 집합: GDrive listdir (정본)
+    - 각 엔트리의 읽기 경로(src): 같은 이름의 미러본이 있으면 미러, 없으면 GDrive
     - GDrive listdir이 EDEADLK 등으로 실패하면 미러만으로 진행하되 로그를 남긴다
       (조용한 누락 금지 — 무엇을 못 봤는지 항상 노출).
 
     Returns: 정렬된 [(name_nfc, src_path), ...] (파일·하위폴더 모두 포함)
     """
-    mirror_folder = _resolve_local_mirror(orig_folder, log=None)
-    entries = {}  # name_nfc -> src_path (미러 우선)
+    mirror_folder = mirror_candidate(orig_folder)
+    if mirror_folder and not os.path.isdir(mirror_folder):
+        mirror_folder = None
+    entries = {}  # name_nfc -> src_path
 
-    if mirror_folder and os.path.isdir(mirror_folder):
+    gdrive_ok = False
+    if orig_folder and os.path.isdir(orig_folder):
         try:
-            for raw in os.listdir(mirror_folder):
-                n = unicodedata.normalize("NFC", raw)
-                if n.startswith("."):
-                    continue
-                entries[n] = os.path.join(mirror_folder, raw)
-        except OSError as e:
-            if log:
-                log(f"  [원고목록] 미러 listdir 실패: {e}")
-
-    # GDrive 원본과 합집합 — 미러에 없는 파일 보강 (미러가 원본과 다를 때만)
-    if orig_folder and orig_folder != mirror_folder and os.path.isdir(orig_folder):
-        try:
-            gdrive_only = []
             for raw in os.listdir(orig_folder):
                 n = unicodedata.normalize("NFC", raw)
                 if n.startswith("."):
                     continue
-                if n not in entries:
-                    entries[n] = os.path.join(orig_folder, raw)
-                    gdrive_only.append(n)
-            if gdrive_only and log:
-                log(f"  [원고목록] 미러에 없어 GDrive에서 보강 {len(gdrive_only)}개: "
-                    f"{', '.join(gdrive_only)}")
+                entries[n] = os.path.join(orig_folder, raw)
+            gdrive_ok = True
         except OSError as e:
             if log:
-                log(f"  [원고목록] GDrive listdir 실패 → 미러만 사용: {e}")
+                log(f"  [원고목록] GDrive listdir 실패 → 미러로 폴백: {e}")
+
+    if mirror_folder:
+        try:
+            mirror_names = {}
+            for raw in os.listdir(mirror_folder):
+                n = unicodedata.normalize("NFC", raw)
+                if n.startswith("."):
+                    continue
+                mirror_names[n] = os.path.join(mirror_folder, raw)
+            if gdrive_ok:
+                # 읽기 경로만 미러로 교체 (엔트리 집합은 GDrive 정본 유지)
+                for n in list(entries):
+                    if n in mirror_names:
+                        entries[n] = mirror_names[n]
+                ghosts = [n for n in mirror_names if n not in entries]
+                if ghosts and log:
+                    log(f"  [원고목록] 미러 유령(GDrive에 없음) {len(ghosts)}개 제외: "
+                        f"{', '.join(sorted(ghosts)[:8])}")
+            else:
+                entries = mirror_names
+        except OSError as e:
+            if log:
+                log(f"  [원고목록] 미러 listdir 실패: {e}")
 
     return sorted(entries.items())
 

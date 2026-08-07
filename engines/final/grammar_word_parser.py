@@ -824,7 +824,10 @@ def parse_grammar_word(docx_path, auto_unit_base=None, log=None):
     except ImportError:
         raise ImportError("python-docx 패키지가 필요합니다: pip install python-docx")
 
-    doc = Document(docx_path)
+    # 파일 읽기는 미러 우선 (EDEADLK 회피) — 디렉터리 redirect가
+    # 폐지되면서(2026-08-07) 경로가 GDrive 정본으로 오므로 여기서 건다.
+    from engines.final.extractor import _resolve_local_mirror
+    doc = Document(_resolve_local_mirror(docx_path, None))
 
     if not doc.tables:
         # 테이블 없으면 단락에서 추출

@@ -59,8 +59,10 @@ def _parse_docx_table1(docx_path, log=None):
         if log:
             log(f"  [마더텅어법] python-docx 없음: {e}")
         return []
+    # 파일 읽기는 미러 우선 (EDEADLK 회피) — 2026-08-07 디렉터리 redirect 폐지 대응
+    from engines.final.extractor import _resolve_local_mirror
     try:
-        doc = Document(docx_path)
+        doc = Document(_resolve_local_mirror(docx_path, None))
     except Exception as e:
         if log:
             log(f"  [마더텅어법] 문서 열기 실패 {os.path.basename(docx_path)}: {e}")
@@ -287,7 +289,9 @@ def _load_legacy_passage_words(sect_dir):
                 paths.append(os.path.join(root, fn))
     for p in paths:
         try:
-            wb = openpyxl.load_workbook(p, data_only=True, read_only=True)
+            from engines.final.extractor import _resolve_local_mirror as _m
+            wb = openpyxl.load_workbook(_m(p, None), data_only=True,
+                                        read_only=True)
         except Exception:
             continue
         for ws in wb.worksheets:

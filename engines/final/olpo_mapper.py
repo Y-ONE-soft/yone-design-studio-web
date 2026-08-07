@@ -48,8 +48,11 @@ def load_olpo_lecture_map(xlsx_path, year='2026', log=None):
             log(f"[OLPO MAP] xlsx 없음: {xlsx_path}")
         return {}
 
+    # 파일 읽기는 미러 우선 (EDEADLK 회피) — 2026-08-07 디렉터리 redirect 폐지 대응
+    from engines.final.extractor import _resolve_local_mirror
     try:
-        wb = load_workbook(xlsx_path, data_only=True)
+        wb = load_workbook(_resolve_local_mirror(xlsx_path, None),
+                           data_only=True)
     except Exception as e:
         if log:
             log(f"[OLPO MAP] 로드 실패: {e}")
