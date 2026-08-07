@@ -1629,6 +1629,60 @@ def _warn_step3_content_loss(raw_words, out_paras, label, log=None):
                              word_re=_RE_STEP3_CONTENT_WORD)
 
 
+# "11강 20번 – 고1 16년 11월 31번" → (마더텅번호, 학년, YY, M, QQ)
+_RE_STEP3_MULTI_HEAD = re.compile(
+    r"^\s*(\d{1,2})\s*강\s*(\d{1,3})\s*번\s*[–\-—]\s*"
+    r"고\s*(\d)\s*(\d{2})\s*년\s*(\d{1,2})\s*월\s*(\d{1,3})\s*번")
+
+
+def _absorb_step3_multi(step3_dir, used_files, normal_items, log=None):
+    """한 파일에 지문 여러 개가 든 Step3 원고를 헤더로 잘라 항목화."""
+    import unicodedata
+    used = {unicodedata.normalize("NFC", p) for p in (used_files or {}).values()}
+    have = {str(it.get("code") or "") for it in normal_items}
+    try:
+        names = sorted(os.listdir(step3_dir))
+    except OSError:
+        return
+    for raw in names:
+        fpath = os.path.join(step3_dir, raw)
+        if unicodedata.normalize("NFC", fpath) in used:
+            continue
+        ext = os.path.splitext(raw)[1].lower()
+        try:
+            if ext == ".docx":
+                paras = _docx_extract_paragraphs(fpath, True)
+            elif ext in (".hwp", ".hwpx"):
+                paras = _hwp_extract_paragraphs(fpath, True)
+            else:
+                continue
+        except Exception:
+            continue
+        heads = []
+        for i, p in enumerate(paras or []):
+            t = (p.get("text") if isinstance(p, dict) else str(p)) or ""
+            m = _RE_STEP3_MULTI_HEAD.match(t.strip())
+            if m:
+                heads.append((i, m))
+        if not heads:
+            continue
+        for k, (i, m) in enumerate(heads):
+            end = heads[k + 1][0] if k + 1 < len(heads) else len(paras)
+            code = "%s%02d%02d" % (m.group(4), int(m.group(5)),
+                                   int(m.group(6)))
+            if code in have:
+                continue
+            have.add(code)
+            normal_items.append({
+                "question_num": m.group(6),
+                "code": code,
+                "paragraphs": paras[i + 1:end],   # 헤더 줄 제외
+            })
+            if log:
+                log("[파서] step3: 복수지문 파일 '%s' → %s (마더텅 %s번)"
+                    % (_nfc(raw), code, m.group(2)))
+
+
 def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
                         short_questions, combined_questions, extract_underline=True,
                         step3_exclude_footnotes=True, log=None):
@@ -1737,6 +1791,12 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
 
     for q in sorted(short_questions):
         _process_question(q, short_items)
+
+    # 복수 지문 1파일 형식 (보충 원고) — 파일명에 문항번호가 없고 한 파일에
+    # 여러 지문이 들어 있다. 실측 2026-08-07: '11강 없는 지문 변형문제.docx'
+    # 안에 "11강 20번 – 고1 16년 11월 31번" 헤더로 지문 2개가 이어져 있어
+    # 파일명 규칙(고1 25년 9월 20번.hwp) 기반 탐색으로는 0개가 나온다.
+    _absorb_step3_multi(step3_dir, files, normal_items, log)
 
     # 마더텅 Step3: 파일명에 "N강 M번 YYMMQQ" 형태 (한영고1 마더텅 예전 기출)
     # — 정규 모의고사 normal/short 매칭에 안 잡혔지만 파일은 있을 때
