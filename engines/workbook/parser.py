@@ -1629,9 +1629,14 @@ def _warn_step3_content_loss(raw_words, out_paras, label, log=None):
                              word_re=_RE_STEP3_CONTENT_WORD)
 
 
-# "11강 20번 – 고1 16년 11월 31번" → (마더텅번호, 학년, YY, M, QQ)
+# 복수 지문 1파일 원고의 지문 헤더. 강 표기가 번호형/이름형 두 가지이고
+# 숫자와 단위 사이에 공백이 섞인다 (실측 2026-08-07):
+#   "11강 20번 – 고1 16년 11월 31번"
+#   "빈칸 추론 40 번 – 고 1 21 년 6 월 32 번"
+# 앞부분(강 표기)은 형태가 제각각이라 고정하지 않고, "NN번 – 고G YY년 M월
+# QQ번" 꼬리만 확정 패턴으로 잡는다. group(1)=마더텅 번호.
 _RE_STEP3_MULTI_HEAD = re.compile(
-    r"^\s*(\d{1,2})\s*강\s*(\d{1,3})\s*번\s*[–\-—]\s*"
+    r"^\s*(?:\d{1,2}\s*강|[^\d\n]*?)\s*(\d{1,3})\s*번\s*[–\-—~]\s*"
     r"고\s*(\d)\s*(\d{2})\s*년\s*(\d{1,2})\s*월\s*(\d{1,3})\s*번")
 
 
@@ -1668,19 +1673,19 @@ def _absorb_step3_multi(step3_dir, used_files, normal_items, log=None):
             continue
         for k, (i, m) in enumerate(heads):
             end = heads[k + 1][0] if k + 1 < len(heads) else len(paras)
-            code = "%s%02d%02d" % (m.group(4), int(m.group(5)),
-                                   int(m.group(6)))
+            code = "%s%02d%02d" % (m.group(3), int(m.group(4)),
+                                   int(m.group(5)))
             if code in have:
                 continue
             have.add(code)
             normal_items.append({
-                "question_num": m.group(6),
+                "question_num": m.group(5),
                 "code": code,
                 "paragraphs": paras[i + 1:end],   # 헤더 줄 제외
             })
             if log:
                 log("[파서] step3: 복수지문 파일 '%s' → %s (마더텅 %s번)"
-                    % (_nfc(raw), code, m.group(2)))
+                    % (_nfc(raw), code, m.group(1)))
 
 
 def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
