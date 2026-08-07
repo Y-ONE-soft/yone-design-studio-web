@@ -282,8 +282,12 @@ class WorkbookV2Engine(BaseEngine):
                                      encoding="utf-8"))
         except (OSError, ValueError):
             content = {}
+        # 조건은 반드시 "다회차 선택 워크북"으로 좁힌다. 라벨 모양으로
+        # 판정하면(숫자/자릿수) 평범한 회차 워크북도 '41~42' 같은 묶음 라벨
+        # 하나 때문에 발동해 18개 실측 job 중 16개가 걸렸다 — 프레임과
+        # 원고가 이미 정합인 문서까지 갱신하게 되는 광범위 동작 변경.
         labels = passage_labels(content.get("steps", {}) or {})
-        if labels and any((not s.isdigit()) or len(s) > 3 for s in labels):
+        if labels and content.get("_mixed_rounds"):
             deco["passage_numbers"] = {"labels": labels,
                                        "steps": ["step1_c2", "step2_b1",
                                                  "step2_c1"]}
