@@ -1385,6 +1385,14 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         ps = story.get("paragraphs", [])
         if len(ps) != 1:
             continue
+        # 마스터 스프레드의 프레임 제외 — 덤프 pg 값에는 문서 페이지 번호와
+        # 마스터 이름(A/B/C/D/O/간지)이 섞인다. 마스터의 스텝 표시 원
+        # ("1","2","3","01","02","03")은 템플릿 잔재가 아니라 디자인 요소인데
+        # 이걸 잔재로 세고 있었다 (v17 실증: 실제 잔재 20~40 을 전부 없앤
+        # 뒤에도 6종이 critical 로 남음 — G4b 잔여페이지와 같은 오탐 계열).
+        pgs = story.get("pg") or []
+        if pgs and not any(str(x).isdigit() for x in pgs):
+            continue
         tt = _clean(ps[0].get("t", ""))
         if _RE_BARE_NUM.match(tt):
             bare_frames.append(tt)

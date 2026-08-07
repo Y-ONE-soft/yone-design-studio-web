@@ -172,6 +172,34 @@
         }
         W("간지 2단락 교체: " + fixed + "곳 → \"" + line2 + "\"");
 
+        // 크레딧(판권) 좌우 정렬 — 반드시 페이지 삭제 뒤에 한다.
+        // run.jsx 의 alignCreditPage 는 조판 직후에 돌지만, 그 뒤 이 trim 이
+        // 홀수 개(v17 실측: 미사용 36 + 고아 간지 1 = 37p)를 지우면서 좌우
+        // 짝을 뒤집어 판권이 다시 오른쪽으로 갔다 (게이트 G28④ 재발).
+        // 책은 왼쪽(판권)에서 끝난다 — 오른쪽이면 앞에 M 마스터 1장을 끼운다.
+        try {
+            var lastP = d.pages[d.pages.length - 1];
+            var lmn = lastP.appliedMaster
+                ? String(lastP.appliedMaster.name) : "";
+            if ((lmn === "" || lmn === "[None]")
+                    && lastP.textFrames.length === 0
+                    && (d.pages.length % 2 === 1)) {
+                var mM = null, mss = d.masterSpreads.everyItem().getElements();
+                for (var mi = 0; mi < mss.length; mi++) {
+                    if (String(mss[mi].namePrefix) === "M") { mM = mss[mi]; break; }
+                }
+                if (mM) {
+                    var npg = d.pages.add(LocationOptions.AT_END);
+                    npg.appliedMaster = mM;
+                    npg.move(LocationOptions.BEFORE, lastP);
+                    W("크레딧 정렬: 판권 앞 M 페이지 삽입 / 잔여 "
+                      + d.pages.length + "p");
+                } else {
+                    W("[경고] M 마스터 없음 — 크레딧 정렬 생략");
+                }
+            }
+        } catch (eC) { W("[경고] 크레딧 정렬 실패: " + eC); }
+
         d.save();
         d.close(SaveOptions.NO);
         W("===== trim 완료 =====");
