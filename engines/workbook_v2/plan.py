@@ -2208,6 +2208,43 @@ def question_keep_op(plan, steps=("step3",)):
             "stem_keep": {"min_lines": 2}}
 
 
+def normalize_choice_tabs(plan, steps=("step3",)):
+    """W40 결함 1b — 다열 선지 행의 탭 구분자 정규화 (탭스톱 적용 전 필수).
+
+    원고는 기본 12.7mm 그리드에서 긴 항목이 다음 스톱으로 밀리는 걸 사람이
+    탭/공백을 더 넣어 눈대중으로 맞춘 흔적을 갖고 있다 (`① draw\\t\\t was`
+    vs `③ drawn\\t was`). 명시 탭스톱을 부여하는 지금은 이 여분이 오히려
+    같은 열을 행마다 다른 셀 인덱스에 앉혀 어긋나게 만든다. 게이트 G42는
+    행 간 min(셀수)까지만 대조해 이 잔여 어긋남을 통과시킨다 (v14 실증:
+    `① boosts`의 where=269.6 vs `⑤ boosts`의 where=282.3).
+
+    연속 탭과 탭 직후 선행 공백을 단일 탭으로 접어 셀 인덱스를 의미 단위로
+    맞춘다. runs 는 문자 인덱스가 아니라 텍스트 조각이라 같은 규칙을 적용해
+    동기화하고, 합계가 어긋나면 그 단락은 건드리지 않는다 (fail-safe)."""
+    n = 0
+    for fl in plan.get("flows", []):
+        if fl.get("step") not in steps:
+            continue
+        for u in fl.get("units", []):
+            for p in unit_paras(u):
+                t = p.get("t") or ""
+                if "선지" not in (p.get("s") or "") or "\t" not in t:
+                    continue
+                new_t = re.sub(r"\t[\t ]+", "\t", t)
+                if new_t == t:
+                    continue
+                runs = p.get("runs") or []
+                new_runs = [dict(r, t=re.sub(r"\t[\t ]+", "\t", r.get("t") or ""))
+                            for r in runs]
+                if runs and "".join(r.get("t") or "" for r in new_runs) != new_t:
+                    continue          # 탭이 run 경계에 걸침 — 원본 유지
+                p["t"] = new_t
+                if runs:
+                    p["runs"] = new_runs
+                n += 1
+    return n
+
+
 def choice_tabs_op(plan, steps=("step3",)):
     """W40 결함 1 — 다열 선지 열 정렬 op 계산 (실행기 applyChoiceTabs 계약).
 

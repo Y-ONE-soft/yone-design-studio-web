@@ -277,7 +277,8 @@ class WorkbookV2Engine(BaseEngine):
         from engines.workbook_v2.plan import (steps_to_plan,
                                               ensure_step3_kinds,
                                               question_keep_op,
-                                              choice_tabs_op)
+                                              choice_tabs_op,
+                                              normalize_choice_tabs)
 
         cfg = self._load_cfg()
         grade = self._read_meta(job_dir, "grade", 1)
@@ -315,6 +316,9 @@ class WorkbookV2Engine(BaseEngine):
                 plan.pop("question_keep", None)
         # W40 결함 1 — 다열 선지 열 정렬 계약. question_keep 과 같은 이유로
         # 데코 훅이 flows 를 못 보므로 여기서 계산해 얹는다.
+        nz = normalize_choice_tabs(plan)
+        if nz:
+            log(f"[v2] 선지탭정규화: {nz}단락 (연속탭/선행공백 접기)")
         ct = choice_tabs_op(plan)
         if ct:
             plan["choice_tabs"] = ct
