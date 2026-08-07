@@ -3,9 +3,5 @@
   "indd_original": "조판/인디자인 원본/[원본]워크북(모의고사)_내지.indd",
   "output_base": "조판/교재/모의고사가로결합",
   "log_filename": "조판_로그.txt",
-  "_comment_file_map_override": "빈칸어휘/빈칸어법은 문제지(빈칸.docx)를 쓴다. workbook 기본 config 의 '정답지'는 구형 회차(21~24년)에서 정답 단어 목록뿐이라 그대로 조판하면 정답이 노출된다(2026-08-06 실측: '41. 561. attention'). 완성본과 형태가 일치하는 건 문제지이며, 밑줄이 길어지는 문제는 소스가 아니라 [ ] 안 공백 24칸이 원인 — merge_select._shrink_blank_slots 로 18칸 압축해 해결.",
-  "manuscript_file_map_override": {
-    "step1_c2": "Step1 C2 빈칸어휘.docx",
-    "step2_c1": "Step2 C1 빈칸어법.docx"
-  }
+  "_comment_file_map_override": "사용자 확정 스펙(2026-08-07): 빈칸어휘/빈칸어법은 **해설지(정답지)** 로 조판한다. 해설지가 없는 지문만 문제지로 폴백하고, 그 경우 빈칸은 텍스트 공백이 아니라 **도형 라인(GraphicLine)** 을 그려 채운다. 이전 override(문제지 강제)는 오판이라 제거 — 2026-08-06 에 '구형 회차 정답지는 정답 단어 목록뿐'이라는 이유로 문제지로 돌렸으나, 사용자 기준은 해설지이며 폴백 조건만 예외다."
 }
