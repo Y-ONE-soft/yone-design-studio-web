@@ -289,18 +289,16 @@ def find_olpo_xlsx_path(content_base):
     경로: EBS 작업/올림포스 고2 기출/고2 올림포스 기출 지문 출처 *.xlsx
     """
     base = os.path.join(content_base, "EBS 작업", "올림포스 고2 기출")
-    # 미러 redirect — Drive zombie 시 GDrive listdir EDEADLK 회피
-    from engines.final.extractor import _resolve_local_mirror as _rlm
-    base = _rlm(base, None)
-    if not os.path.isdir(base):
-        return None
-    for f in os.listdir(base):
-        fn = _nfc(f)
+    # 미러 ∪ GDrive 합집합 — 미러 단독 listdir 금지 (2026-08-07 사고).
+    # 미러는 주기 스냅샷이라 GDrive의 rename/신규가 늦고, --delete 이전에
+    # 지워진 파일이 유령으로 남는다. 읽기는 미러 우선(EDEADLK 회피).
+    from engines.final.extractor import list_manuscript_entries
+    for fn, path in list_manuscript_entries(base, None):
         if (
             fn.endswith(".xlsx")
             and "출처" in fn
             and "고2" in fn
-            and not f.startswith("~")
+            and not fn.startswith("~")
         ):
-            return os.path.join(base, f)
+            return path
     return None

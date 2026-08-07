@@ -92,12 +92,10 @@ class EbsWorkbookEngine(BaseEngine):
         """리딩파워(고정 시리즈) 안의 워크북 단원 목록."""
         cfg = _load_config()
         base = EbsWorkbookEngine._series_path()
-        # 미러 redirect — Drive zombie 시 GDrive listdir EDEADLK 회피
-        from engines.final.extractor import _resolve_local_mirror as _rlm
-        base = _rlm(base, None)
+        # 미러 ∪ GDrive 합집합 — 미러 단독 listdir 금지 (2026-08-07 사고).
+        # 새로 만든 단원 폴더가 미러 동기화 전이면 UI 목록에서 통째로 사라진다.
+        from engines.final.extractor import list_manuscript_entries
         excludes = set(cfg.get("exclude_folders", []))
-        if not os.path.isdir(base):
-            return []
 
         def _unit_sort_key(folder):
             # "Unit 1", "Unit 11 3, 4번" 등 → 첫 숫자 추출 후 자연 정렬
@@ -105,12 +103,10 @@ class EbsWorkbookEngine(BaseEngine):
             return (int(m.group()) if m else 9999, folder)
 
         result = []
-        for raw in sorted(os.listdir(base)):
-            name = _nfc(raw)
+        for name, full in list_manuscript_entries(base, None):
             stripped = name.strip()
             if stripped.startswith(".") or stripped in excludes:
                 continue
-            full = os.path.join(base, raw)
             if not os.path.isdir(full):
                 continue
             if "워크북" not in stripped:
@@ -241,14 +237,14 @@ class EbsWorkbookEngine(BaseEngine):
 
         # 1) 단원 폴더에서 파일 복사
         unit_dir = self._read_meta_str(job_dir, "manuscript_folder", "")
-        # 폴더 listing도 미러로 우회 — Drive zombie 시 GDrive listdir EDEADLK 회피.
-        from engines.final.extractor import _resolve_local_mirror as _rlm
-        unit_dir = _rlm(unit_dir, log)
+        # 미러 ∪ GDrive 합집합 — 미러 단독 listdir 금지 (2026-08-07 사고).
+        # 미러 동기화 전에 추가·교체된 원고가 조용히 누락된다.
+        from engines.final.extractor import list_manuscript_entries
         if unit_dir and os.path.isdir(unit_dir):
             log(f"[파서] 단원 폴더: {os.path.basename(unit_dir)}")
-            for raw in os.listdir(unit_dir):
-                src = os.path.join(unit_dir, raw)
-                name = _nfc(raw)
+            unit_entries = list_manuscript_entries(unit_dir, log)
+            unit_names = {n for n, _ in unit_entries}
+            for name, src in unit_entries:
                 if name.startswith("."):
                     continue
                 if os.path.isfile(src):
@@ -267,17 +263,17 @@ class EbsWorkbookEngine(BaseEngine):
                         if name in alternatives:
                             target = alternatives[name]
                             target_path = os.path.join(manuscript_dir, target)
-                            orig_path = os.path.join(unit_dir, target)
-                            if not os.path.exists(target_path) and not os.path.exists(orig_path):
+                            # 원본 폴더 존재 여부는 합집합 목록으로 판정
+                            # (미러/GDrive 어느 쪽에 있어도 '있음')
+                            if not os.path.exists(target_path) \
+                                    and _nfc(target) not in unit_names:
                                 dest_name = target
                                 log(f"[파서] 대체 파일명: {name} -> {target}")
                         _safe_copy(src, os.path.join(manuscript_dir, dest_name))
                 elif os.path.isdir(src):
                     lower = name.lower()
                     if "step3" in lower or "스텝3" in _nfc(lower):
-                        for raw2 in os.listdir(src):
-                            src2 = os.path.join(src, raw2)
-                            name2 = _nfc(raw2)
+                        for name2, src2 in list_manuscript_entries(src, log):
                             if name2.startswith(".") or not os.path.isfile(src2):
                                 continue
                             ext2 = os.path.splitext(name2)[1].lower()
