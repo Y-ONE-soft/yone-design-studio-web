@@ -33,8 +33,45 @@ _LOCAL_MIRROR_BASE = os.path.expanduser(
 _GDRIVE_CONTENT_MARKER = "/내 드라이브/콘텐츠 관리/내신대비/"
 
 
+def mirror_candidate(src):
+    """GDrive 경로에 대응하는 미러 경로 (존재할 때만). 없으면 None.
+
+    `_resolve_local_mirror`가 디렉터리를 더 이상 redirect하지 않게 되면서
+    (2026-08-07), '미러 ∪ GDrive 합집합'을 만드는 쪽은 미러 디렉터리 경로를
+    직접 알아야 한다. 정책 판단 없이 경로만 돌려준다.
+    """
+    nfc_src = unicodedata.normalize("NFC", src or "")
+    if not nfc_src or _GDRIVE_CONTENT_MARKER not in nfc_src:
+        return None
+    rest = nfc_src.split(_GDRIVE_CONTENT_MARKER, 1)[1]
+    mirror_path = os.path.join(_LOCAL_MIRROR_BASE, rest)
+    for cand in [
+        mirror_path,
+        unicodedata.normalize("NFC", mirror_path),
+        unicodedata.normalize("NFD", mirror_path),
+    ]:
+        if os.path.exists(cand):
+            return cand
+    return None
+
+
 def _resolve_local_mirror(src, log=None):
-    """GDrive 경로를 로컬 미러로 redirect (미러가 존재할 때만)."""
+    """GDrive 경로를 로컬 미러로 redirect — **파일에 한해서**.
+
+    미러의 존재 이유는 FileProvider 파일 읽기의 EDEADLK 회피다. 그런데 이 함수가
+    **디렉터리까지** redirect하는 바람에, 목록 열거(os.listdir/walk)가 30분 주기
+    스냅샷을 정본으로 착각하는 사고가 반복됐다 (2026-08-07 실측):
+      - mirror-sync가 `--delete` 없이 돌아 rename된 옛 이름이 유령으로 잔존
+        (모의고사 완성본 고2 폴더: 유령 49 / 새 이름 누락 44) → "세로버전 파일을
+        찾지 못한 회차" 오류 + 에러 리포트의 후보 목록마저 유령이라 오진 유발.
+      - 동기화 지연분은 아예 안 보임 (교과서 작업 663건, EBS 작업 471건,
+        올림포스 고2 기출 286건, 수능특강 2027 20건 누락 — 개정본 원고 포함).
+    그래서 **디렉터리는 리다이렉트하지 않는다**: 목록은 항상 GDrive(정본)에서 읽고,
+    파일 읽기/복사만 미러로 우회한다. GDrive 디렉터리를 못 읽을 때(좀비 Drive,
+    EDEADLK)만 미러로 폴백해 기존 내성을 유지한다.
+
+    파일 경로에 대한 동작은 종전과 100% 동일하다.
+    """
     nfc_src = unicodedata.normalize("NFC", src)
     if _GDRIVE_CONTENT_MARKER not in nfc_src:
         if log:
@@ -54,6 +91,18 @@ def _resolve_local_mirror(src, log=None):
             log(f"  [DEBUG mirror] cand exists={exists}: {cand!r}")
         if exists:
             if os.path.isdir(cand):
+                # 디렉터리 — 정본(GDrive)을 읽을 수 있으면 미러를 쓰지 않는다.
+                # 목록 stale은 '조용한 누락'이라 EDEADLK보다 위험하다.
+                try:
+                    os.listdir(src)
+                    if log:
+                        log(f"  [로컬 미러] 디렉터리는 GDrive 정본 사용 → "
+                            f"{os.path.basename(src)}")
+                    return src
+                except OSError as e:
+                    # 좀비 Drive 등으로 GDrive 목록을 못 읽을 때만 미러 폴백
+                    if log:
+                        log(f"  [로컬 미러] GDrive 목록 실패({e.errno}) → 미러 폴백")
                 try:
                     if not os.listdir(cand):
                         if log:
