@@ -30,6 +30,7 @@ from core.paths import resolve_config
 from engines.workbook.engine import _load_config as _load_workbook_config
 from engines.workbook.parser import parse_manuscript_folder
 from engines.workbook_select.merge_select import merge_selected
+from engines.workbook_select.merge_select import load_fill as _load_fill
 from engines.workbook_select import motherteng as _mt
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
@@ -309,9 +310,19 @@ class WorkbookSelectEngine(WorkbookV2Engine):
                 + "\n(교재팀에 해당 회차 워크북 원고 업로드를 요청하세요)")
 
         # 병합
+        # 보충 데이터 — 원고가 아예 없는 칸을 이전 산출물(.indd)에서 뽑아둔 것.
+        # job 폴더의 fill.json 이 있으면 그것을, 없으면 config 경로를 쓴다.
+        fill_path = os.path.join(job_dir, "fill.json")
+        if not os.path.exists(fill_path):
+            fill_path = cfg.get("fill_json") or ""
+            if fill_path.startswith("~"):
+                fill_path = os.path.expanduser(fill_path)
+        fill = _load_fill(fill_path, log)
+
         merged, coverage, defects = merge_selected(
             sources, codes, log=log,
-            labels={c: str(n) for c, n in mt_numbers.items()})
+            labels={c: str(n) for c, n in mt_numbers.items()},
+            fill=fill)
         merged["grade"] = int(grade_num)
         if mt_numbers:
             # 독립 지문번호 프레임(workbook_v2 passage_numbers)도 같은 번호를

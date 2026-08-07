@@ -377,27 +377,41 @@ def merge_selected(sources, codes, log=None, labels=None, fill=None):
             e = (fill or {}).get(step_key, {}).get(code)
             return e if (e and e.get("paras")) else None
 
-        def _place_holder(code):
-            """짝 스텝과의 정렬을 지키는 유닛. ordinal 은 바깥 것을 쓴다.
+        def _emit_missing(code):
+            """원고에 없는 칸 처리. True 면 이 코드 처리를 끝낸 것.
 
-            보충 데이터가 있으면 빈 유닛 대신 그 내용을 싣는다."""
-            htxt = "%d. p0-no.%s" % (ordinal, _lab(code))
-            out_paras.append({"text": htxt,
-                              "runs": [{"t": htxt, "ul": False}]})
+            1순위: 보충 데이터(이전 산출물에서 뽑은 내용)로 채운다.
+            2순위: 짝 스텝이 있는 스텝이면 자리보존 빈 유닛을 넣는다.
+                   (건너뛰면 뒤 문항이 당겨져 상·하단이 어긋난다)
+            """
+            nonlocal ordinal
             ent = _fill_entry(code)
+            aligned = step_key in ALIGNED_STEPS
+            if not ent and not aligned:
+                return False
+            ordinal += 1
+            if step_key in BRACKET_STEPS:
+                out_paras.append(_marker_para(_lab(code)))
+            else:
+                htxt = "%d. p0-no.%s" % (ordinal, _lab(code))
+                out_paras.append({"text": htxt,
+                                  "runs": [{"t": htxt, "ul": False}]})
             if ent:
                 for p in ent["paras"]:
                     out_paras.append({"text": p.get("text") or "",
                                       "runs": p.get("runs") or []})
                 log("[보충] %s %s: 이전 산출물에서 %d단락 조달"
                     % (step_key, code, len(ent["paras"])))
-                return
-            # placeholder 플래그 — 조판 플랜 빌더가 이 단락을 "빈 유닛"으로
-            # 만들어 자리를 지킨다. 플래그 없이 빈 단락만 넣으면
-            # build_step2_a1_btm 이 원문자(①~⑤) 없는 단락을 전부 버려서
-            # 자리가 다시 사라진다 (2026-08-08 v4·v5 실측: 12페이지 어긋남).
-            out_paras.append({"text": "", "runs": [], "placeholder": True})
-            log("[자리보존] %s %s: 원고 없음 — 빈 유닛 삽입" % (step_key, code))
+            else:
+                # placeholder 플래그 — 플랜 빌더가 이 단락을 "빈 유닛"으로
+                # 만들어 자리를 지킨다. 플래그 없이 빈 단락만 넣으면
+                # build_step2_a1_btm 이 원문자(①~⑤) 없는 단락을 전부 버려
+                # 자리가 다시 사라진다 (2026-08-08 v4·v5 실측: 12페이지 어긋남).
+                out_paras.append({"text": "", "runs": [],
+                                  "placeholder": True})
+                log("[자리보존] %s %s: 원고 없음 — 빈 유닛 삽입"
+                    % (step_key, code))
+            return True
 
         for pc in parsed_codes:
             sp = blocks_for(pc["yy"], pc["mm"], step_key)
@@ -405,9 +419,7 @@ def merge_selected(sources, codes, log=None, labels=None, fill=None):
                 cov[pc["code"]] = False
                 # 회차 원고에 이 스텝이 통째로 없는 경우도 자리는 지켜야 한다
                 # (22년 6월·9월은 어법하단 원고 파일 자체가 없다).
-                if step_key in ALIGNED_STEPS:
-                    ordinal += 1
-                    _place_holder(pc["code"])
+                _emit_missing(pc["code"])
                 continue
             _pre, blocks = sp
             b = _find_block(blocks, pc["qq"], pc["code"])
@@ -427,11 +439,7 @@ def merge_selected(sources, codes, log=None, labels=None, fill=None):
                                 % (step_key, pc["code"], alt_key))
             if b is None:
                 cov[pc["code"]] = False
-                if step_key in ALIGNED_STEPS:
-                    # 자리를 지키는 빈 유닛 — 짝 스텝과의 정렬을 보존한다.
-                    # (건너뛰면 뒤 문항이 당겨져 상·하단이 어긋난다)
-                    ordinal += 1
-                    _place_holder(pc["code"])
+                _emit_missing(pc["code"])
                 continue
             bid = (pc["yy"], pc["mm"], id(b))
             if bid in used_blocks:
