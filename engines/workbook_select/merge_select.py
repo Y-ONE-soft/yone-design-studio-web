@@ -22,6 +22,8 @@ step3(실전)는 파서가 문항별 item(code 포함)으로 이미 분리해 �
 코드 필터 + 순서 정렬만 한다.
 """
 
+import json
+import os
 import re
 
 BRACKET_STEPS = ["step1_a1", "step1_a1_2", "step1_a2", "step1_b1", "step1_b2"]
@@ -292,7 +294,30 @@ def _blank_para():
     return {"text": "", "runs": [{"t": "", "ul": False}]}
 
 
-def merge_selected(sources, codes, log=None, labels=None):
+def load_fill(path, log=None):
+    """원고가 없는 칸을 채우는 보충 데이터.
+
+    형식: {step_key: {code: {"prompt": str, "paras": [{"text","runs"}]}}}
+    옛 기출은 회차 워크북 원고 자체가 없는 칸이 있는데(실측: 22년 6월·9월
+    어법하단, 신규 3문항 어휘선택), 그 내용이 **이전 산출물(.indd)** 에는
+    남아 있다. 거기서 뽑아 이 파일에 넣으면 조판에 그대로 실린다.
+    """
+    if not path or not os.path.exists(path):
+        return {}
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception as e:                      # noqa: BLE001
+        if log:
+            log("[보충데이터] 읽기 실패 — 무시: %s" % e)
+        return {}
+    if log:
+        n = sum(len(v) for v in data.values() if isinstance(v, dict))
+        log("[보충데이터] %s (%d칸)" % (os.path.basename(path), n))
+    return data
+
+
+def merge_selected(sources, codes, log=None, labels=None, fill=None):
     """병합 실행.
 
     Args:
@@ -348,11 +373,25 @@ def merge_selected(sources, codes, log=None, labels=None):
         cov = {}
         used_blocks = set()   # (yy,mm,boundary id) — 범위 블록 중복 방지
         ordinal = 0
+        def _fill_entry(code):
+            e = (fill or {}).get(step_key, {}).get(code)
+            return e if (e and e.get("paras")) else None
+
         def _place_holder(code):
-            """짝 스텝과의 정렬을 지키는 빈 유닛. ordinal 은 바깥 것을 쓴다."""
+            """짝 스텝과의 정렬을 지키는 유닛. ordinal 은 바깥 것을 쓴다.
+
+            보충 데이터가 있으면 빈 유닛 대신 그 내용을 싣는다."""
             htxt = "%d. p0-no.%s" % (ordinal, _lab(code))
             out_paras.append({"text": htxt,
                               "runs": [{"t": htxt, "ul": False}]})
+            ent = _fill_entry(code)
+            if ent:
+                for p in ent["paras"]:
+                    out_paras.append({"text": p.get("text") or "",
+                                      "runs": p.get("runs") or []})
+                log("[보충] %s %s: 이전 산출물에서 %d단락 조달"
+                    % (step_key, code, len(ent["paras"])))
+                return
             # placeholder 플래그 — 조판 플랜 빌더가 이 단락을 "빈 유닛"으로
             # 만들어 자리를 지킨다. 플래그 없이 빈 단락만 넣으면
             # build_step2_a1_btm 이 원문자(①~⑤) 없는 단락을 전부 버려서
