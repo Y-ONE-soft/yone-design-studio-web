@@ -57,7 +57,11 @@ _RE_HDR = re.compile(
     # 꼬리 주석 허용 — 어법 하단 원고 헤더는 "1. p2-no.20  (정답 1개)" 처럼
     # 괄호 주석이 붙는다. $ 로 끝나면 이 방언이 전부 미매칭돼 섹션이 통째로
     # 병합에서 빠진다 (2026-08-07 실증: step2_a1_btm 0/20).
-    r"^\s*\d+\.\s*p\.?\s*\d+\s*[-–—]\s*no\.\s*(\d{1,3})(?:\s*[~\-]\s*(\d{1,3}))?"
+    # 페이지 토큰은 숫자만이 아니다 — 보충 원고(워크북 단위 묶음)는
+    # "1. p11강-no.20번 161131" 처럼 강 표기를 쓰고 번호 뒤에 '번'과 6자리
+    # 코드가 붙는다. p 뒤를 느슨하게, 꼬리(번/코드/괄호주석)를 허용한다.
+    r"^\s*\d+\.\s*p\.?\s*[^\s\-–—]{0,8}\s*[-–—]\s*no\.\s*(\d{1,3})"
+    r"(?:\s*[~\-]\s*(\d{1,3}))?\s*번?\s*(?:\d{6})?"
     r"\s*(?:\([^()]{0,20}\))?\s*$")
 _RE_BEON = re.compile(r"^\s*(\d{1,3})(?:\s*[~\-]\s*(\d{1,3}))?\s*번\s*$")
 
@@ -234,7 +238,10 @@ def _boundary_match(step_key, text):
     if step_key in HEADER_STEPS:
         return _RE_HDR.match(text)
     if step_key in BEON_STEPS:
-        return _RE_BEON.match(text)
+        # 영작은 "30번" 이 표준이지만 보충 원고는 헤더형("1. p11강-no.20번
+        # 161131")을 쓴다 — 폴백으로 헤더 정규식도 본다 (2026-08-07 실증:
+        # 원본에 3개 다 있는데 병합 결과 0개).
+        return _RE_BEON.match(text) or _RE_HDR.match(text)
     return None
 
 
@@ -246,7 +253,8 @@ def split_blocks(step_key, paragraphs):
     for p in paragraphs:
         m = _boundary_match(step_key, p.get("text", ""))
         if m:
-            cur = {"nums": _nums_from_match(m), "codes": _codes_in(t),
+            cur = {"nums": _nums_from_match(m),
+                   "codes": _codes_in(p.get("text", "")),
                    "boundary": p, "paras": []}
             blocks.append(cur)
             continue
