@@ -1268,7 +1268,11 @@ function enforceStemKeep(doc, flowStories, op) {
                 var ei = (k + 1 < starts.length
                           && starts[k + 1] <= paras.length)
                     ? starts[k + 1] - 1 : paras.length - 1;
-                if (ei <= si) { continue; }
+                // W40 r2 — 발문 단독(뒤따르는 답란/본문 단락 0개. 원고에
+                // 답란이 빠진 문항)도 프레임 최하단이면 고아다. 기존 계약은
+                // ei<=si 를 통째로 건너뛰어 이 케이스를 못 밀었다.
+                var stemOnly = (ei <= si);
+                if (stemOnly && k + 1 >= starts.length) { continue; }
                 var stem = paras[si];
                 var f = null;
                 try { f = stem.parentTextFrames[0]; } catch (e1) {}
@@ -1299,6 +1303,13 @@ function enforceStemKeep(doc, flowStories, op) {
                     } catch (e5) { continue; }
                     if (c0 + cn - 1 > lastEnd) { lastEnd = c0 + cn - 1; }
                     if (c0 >= stemEnd) { bodyLines++; }
+                }
+                if (stemOnly) {
+                    // 프레임의 마지막 줄이 이 발문이면 고아 — 다음 프레임으로
+                    // 민다. 뒤에 다른 내용이 남아 있으면 고아가 아니다.
+                    if (lastEnd > stemEnd - 1) { continue; }
+                    hit = si;
+                    break;
                 }
                 var qEnd = -1;
                 try {
