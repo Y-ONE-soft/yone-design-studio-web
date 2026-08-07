@@ -25,6 +25,21 @@ step3(실전)는 파서가 문항별 item(code 포함)으로 이미 분리해 �
 import re
 
 BRACKET_STEPS = ["step1_a1", "step1_a1_2", "step1_a2", "step1_b1", "step1_b2"]
+
+# 섹션별 보조 원고 (본 소스에 문항이 없거나 내용이 미달일 때만 사용)
+_ALT_SOURCE = {"step2_c2": "step2_c2_alt"}
+
+
+def _is_thin_block(step_key, block):
+    """그 섹션의 필수 형태가 빠진 블록인가 (있으나 마나 한 내용)."""
+    if step_key != "step2_c2":
+        return False
+    # 영작 배열은 "( a / b / c )" 단어 목록이 있어야 문제가 성립한다.
+    for p in block:
+        t = (p.get("text") if isinstance(p, dict) else str(p)) or ""
+        if "/" in t and "(" in t:
+            return False
+    return True
 HEADER_STEPS = ["step1_c1", "step1_c2", "step2_a1", "step2_a1_btm",
                 "step2_b1", "step2_c1"]
 BEON_STEPS = ["step2_c2"]
