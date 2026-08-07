@@ -47,10 +47,18 @@ BEON_STEPS = ["step2_c2"]
 ALL_STEP_KEYS = BRACKET_STEPS + HEADER_STEPS + BEON_STEPS
 
 _RE_BRACKET = re.compile(r"^\s*\[(\d{1,6})(?:\s*[~\-]\s*(\d{1,6}))?\]\s*$")
+# 보충 원고 마커 방언 — "[11강 - 20번 161131]" (강/마더텅번호/코드 혼재).
+# 숫자만 허용하는 _RE_BRACKET 으로는 경계 자체가 안 잡혀 블록이 통째로
+# 하나로 뭉친다. 끝에 붙은 6자리 코드를 문항 식별자로 쓴다.
+_RE_BRACKET_CODE = re.compile(r"^\s*\[[^\]]*?(\d{6})\s*\]\s*$")
 _RE_HASH = re.compile(r"^\s*고\s*\d\s*#\s*(\d{1,3})\s*$")
 _RE_DOT = re.compile(r"^\s*(\d{1,2})\.\s*$")
 _RE_HDR = re.compile(
-    r"^\s*\d+\.\s*p\.?\s*\d+\s*[-–—]\s*no\.\s*(\d{1,3})(?:\s*[~\-]\s*(\d{1,3}))?\s*$")
+    # 꼬리 주석 허용 — 어법 하단 원고 헤더는 "1. p2-no.20  (정답 1개)" 처럼
+    # 괄호 주석이 붙는다. $ 로 끝나면 이 방언이 전부 미매칭돼 섹션이 통째로
+    # 병합에서 빠진다 (2026-08-07 실증: step2_a1_btm 0/20).
+    r"^\s*\d+\.\s*p\.?\s*\d+\s*[-–—]\s*no\.\s*(\d{1,3})(?:\s*[~\-]\s*(\d{1,3}))?"
+    r"\s*(?:\([^()]{0,20}\))?\s*$")
 _RE_BEON = re.compile(r"^\s*(\d{1,3})(?:\s*[~\-]\s*(\d{1,3}))?\s*번\s*$")
 
 
@@ -203,10 +211,22 @@ def _nums_from_match(m):
     return nums
 
 
+_RE_ANY_CODE = re.compile(r"\b(\d{6})\b")
+
+
+def _codes_in(text):
+    """경계 줄에 박힌 6자리 코드 집합.
+
+    보충 원고(교재팀이 워크북 단위로 주는 묶음)는 마커가
+    "[11강 - 20번 161131]" 형식이고 블록 번호가 **마더텅 번호**라
+    문항번호(qq) 로는 절대 안 잡힌다. 코드로도 찾을 수 있게 함께 보관한다."""
+    return set(_RE_ANY_CODE.findall(text or ""))
+
+
 def _boundary_match(step_key, text):
     """이 단락이 문항 경계인가? 매치되면 re.Match, 아니면 None."""
     if step_key in BRACKET_STEPS:
-        for rx in (_RE_BRACKET, _RE_HASH, _RE_DOT, _RE_HDR):
+        for rx in (_RE_BRACKET, _RE_BRACKET_CODE, _RE_HASH, _RE_DOT, _RE_HDR):
             m = rx.match(text)
             if m:
                 return m
@@ -226,7 +246,8 @@ def split_blocks(step_key, paragraphs):
     for p in paragraphs:
         m = _boundary_match(step_key, p.get("text", ""))
         if m:
-            cur = {"nums": _nums_from_match(m), "boundary": p, "paras": []}
+            cur = {"nums": _nums_from_match(m), "codes": _codes_in(t),
+                   "boundary": p, "paras": []}
             blocks.append(cur)
             continue
         if cur is None:
@@ -236,7 +257,11 @@ def split_blocks(step_key, paragraphs):
     return preamble, blocks
 
 
-def _find_block(blocks, qq):
+def _find_block(blocks, qq, code=None):
+    if code:
+        for b in blocks:
+            if code in (b.get("codes") or ()):
+                return b
     for b in blocks:
         if qq in b["nums"]:
             return b
@@ -314,7 +339,7 @@ def merge_selected(sources, codes, log=None, labels=None):
                 cov[pc["code"]] = False
                 continue
             _pre, blocks = sp
-            b = _find_block(blocks, pc["qq"])
+            b = _find_block(blocks, pc["qq"], pc["code"])
             # 보조 소스 폴백 — 같은 섹션의 다른 원고 파일에만 그 문항이 있는
             # 경우가 있다 (실증 2026-08-07: 22년 6월 영작 32번이 서술형 .hwp
             # 에는 없고 'Step2 C2 영작배열.docx' 에만 단어 목록이 있어,
@@ -324,7 +349,7 @@ def merge_selected(sources, codes, log=None, labels=None):
                 if alt_key:
                     sp2 = blocks_for(pc["yy"], pc["mm"], alt_key)
                     if sp2:
-                        b2 = _find_block(sp2[1], pc["qq"])
+                        b2 = _find_block(sp2[1], pc["qq"], pc["code"])
                         if b2 is not None and not _is_thin_block(step_key, b2):
                             b = b2
                             log("[폴백] %s %s: 보조 원고(%s)에서 조달"
