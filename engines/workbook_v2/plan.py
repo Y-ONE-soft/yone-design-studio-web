@@ -2206,3 +2206,32 @@ def question_keep_op(plan, steps=("step3",)):
     # 본문 줄수. 게이트 G41이 stem_keep 유무로 critical/warning 분기).
     return {"flows": flows_cfg, "q_styles": sorted(q_styles),
             "stem_keep": {"min_lines": 2}}
+
+
+def choice_tabs_op(plan, steps=("step3",)):
+    """W40 결함 1 — 다열 선지 열 정렬 op 계산 (실행기 applyChoiceTabs 계약).
+
+    실행기는 있었는데 플랜 쪽 계약 생성부가 없어 계약 미발행 상태였고,
+    그래서 명시 탭스톱 없이 InDesign 기본 12.7mm 탭 그리드로 떨어져 열이
+    행마다 한 스톱씩 어긋났다 (게이트 G42가 편차 12.7mm로 지목 — v13
+    33그룹). 대상 스텝에 탭 선지 단락이 없으면 None (op 미적용).
+
+    grid/min_gap 은 v1 손마무리 실물 관행값 (배재2_워크북01 실측)."""
+    hits = 0
+    target = []
+    for fl in plan.get("flows", []):
+        step = fl.get("step")
+        if step not in steps:
+            continue
+        n = 0
+        for u in fl.get("units", []):
+            for p in unit_paras(u):
+                if "선지" in (p.get("s") or "") and "\t" in (p.get("t") or ""):
+                    n += 1
+        if n:
+            target.append(step)
+            hits += n
+    if not target:
+        return None
+    return {"steps": target, "grid": 12.7, "min_gap": 2,
+            "style_contains": "선지", "_rows": hits}

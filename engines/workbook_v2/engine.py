@@ -276,7 +276,8 @@ class WorkbookV2Engine(BaseEngine):
     def prepare_jsx(self, json_path, job_dir, log):
         from engines.workbook_v2.plan import (steps_to_plan,
                                               ensure_step3_kinds,
-                                              question_keep_op)
+                                              question_keep_op,
+                                              choice_tabs_op)
 
         cfg = self._load_cfg()
         grade = self._read_meta(job_dir, "grade", 1)
