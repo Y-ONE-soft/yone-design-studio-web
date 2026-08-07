@@ -2237,6 +2237,14 @@ def _find_manuscript_file(manuscript_dir, expected_filename, used_files=None):
         # 제치고 선택되던 버그 차단. 답안본 명명이 해설/정답지/답안 어느 쪽이든 답안본 우선.
         if exp_has_ans and not cand_has_ans:
             continue
+        # 반대 방향 — '문제' 슬롯(기대명에 답안 토큰 없음)에는 정답/해설본을
+        # 쓰지 않는다. 이 검사가 ratio 분기에만 있어서, 정답지 파일명이 기대명을
+        # subsequence 로 품으면 partial 1순위로 뽑혔다.
+        #   실측 2026-08-08: 24년 9월 폴더에 '문장배열(순서, 삽입).docx'(문제지)와
+        #   '문장배열(순서, 삽입) 정답지.docx' 가 함께 있는데 정답지가 선택돼,
+        #   (A)~(G) 선지 본문이 통째로 빠지고 정답만 조판됐다.
+        if cand_has_ans and not exp_has_ans:
+            continue
         if _is_subseq(f_norm, norm_expected) or _is_subseq(norm_expected, f_norm):
             partial.append((fp, _lcs_len(f_norm, norm_expected)))
             continue
