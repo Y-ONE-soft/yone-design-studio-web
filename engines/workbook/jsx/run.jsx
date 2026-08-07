@@ -100,9 +100,8 @@
     // 디스크에서 새로 열기 (항상 원본 템플릿 사용)
     doc = app.open(workFile);
     $.sleep(3000);
-    if (!doc || !doc.isValid) {
-        try { doc = app.activeDocument; } catch(_) {}
-    }
+    // app.activeDocument 폴백 금지 — open 실패 시 사용자가 열어둔 남의 문서를
+    // 조판 대상으로 잡아 통째로 오염시킨다(광문2 사고 패턴). 실패는 실패로 끝낸다.
     if (!doc || !doc.isValid) {
         alert("InDesign 파일을 열 수 없습니다: " + inddPath);
         return;
