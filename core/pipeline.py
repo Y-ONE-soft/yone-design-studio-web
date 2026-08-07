@@ -112,7 +112,19 @@ def run_pipeline(engine, job_id: str, job_dir: str, uploaded: dict):
             jsx_path = engine.prepare_jsx(json_path, job_dir, log)
             # 엔진에 전용 InDesign 실행기가 있으면 사용
             if hasattr(engine, 'run_indesign'):
-                engine.run_indesign(job_dir, log)
+                # 전용 실행기가 cancel_check를 받도록 선언한 엔진에만 전달
+                # (기존 (job_dir, log) 시그니처 엔진은 호출 형태 무변경).
+                import inspect as _inspect
+                try:
+                    _accepts_cancel = "cancel_check" in _inspect.signature(
+                        engine.run_indesign).parameters
+                except (TypeError, ValueError):
+                    _accepts_cancel = False
+                if _accepts_cancel:
+                    engine.run_indesign(job_dir, log,
+                                        cancel_check=lambda: jm.is_cancelled(job_id))
+                else:
+                    engine.run_indesign(job_dir, log)
             else:
                 log_filename = getattr(engine, "log_filename", "조판_로그.txt")
                 # settings.json의 output_dir에서 로그 경로 결정 (/tmp일 수 있음)

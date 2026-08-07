@@ -323,7 +323,7 @@ class ConvertToVerticalEngine(BaseEngine):
 
     # ── 3단계: run_indesign ─────────────────────────────────────────────────
 
-    def run_indesign(self, job_dir, log):
+    def run_indesign(self, job_dir, log, cancel_check=None):
         from core.indesign.runner import run_jsx
         settings = json.load(open(os.path.join(job_dir, ".settings.json"),
                                   encoding="utf-8"))
@@ -335,6 +335,7 @@ class ConvertToVerticalEngine(BaseEngine):
         run_jsx(settings["jsx_path"], log,
                 poll_log_path=settings["log_path"],
                 timeout=self.jsx_timeout,
+                cancel_check=cancel_check,
                 completion_marker="세로 변환 완료",
                 stall_limit=1800)
 

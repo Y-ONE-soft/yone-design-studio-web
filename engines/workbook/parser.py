@@ -1867,6 +1867,62 @@ def _annotate_step3_kinds(items, log=None):
                     para["q_code"] = r["q_code"]
 
 
+# 파일명이 아니라 **내용(발문)** 으로 스텝을 판별하는 서명 테이블.
+# 사용자 지시(2026-08-07): "파일명 토씨 하나에 집착하지 마라. 분석을 해라."
+# 실증: 어법선택 하단 문제 원고를 config 는 'Step2 A1 어법선택(객관식).docx'
+# 로 기대하는데 회차 폴더는 전부 'Step2 B2 문법 기본 문제.docx' 다. 두 이름은
+# 정규화해도 공통 글자가 거의 없어(LCS 비율 0.45 < 0.70) 이름 매칭으로는
+# 원리적으로 못 잇는다 — 10개 회차에서 하단 문제가 통째로 누락된 원인.
+# 각 항목: (필수 키워드 전부 포함, 제외 키워드 하나도 없음) 을 앞부분에서 검사.
+_STEP_CONTENT_SIGNATURES = {
+    "step2_a1_btm": {
+        "need": ["밑줄", "어법", "틀린"],
+        "avoid": ["[", "O/X", "OX"],
+    },
+}
+
+
+def _find_manuscript_file_by_content(manuscript_dir, step_key, used_files,
+                                     log=None):
+    """이름 매칭이 실패했을 때 폴더의 남은 원고를 **내용**으로 골라낸다."""
+    sig = _STEP_CONTENT_SIGNATURES.get(step_key)
+    if not sig:
+        return None
+    used = used_files or set()
+    try:
+        names = sorted(os.listdir(manuscript_dir))
+    except OSError:
+        return None
+    for name in names:
+        fpath = os.path.join(manuscript_dir, name)
+        if fpath in used or not os.path.isfile(fpath):
+            continue
+        ext = os.path.splitext(name)[1].lower()
+        try:
+            if ext == ".docx":
+                paras = _docx_extract_paragraphs(fpath, False)
+            elif ext in (".hwp", ".hwpx"):
+                paras = _hwp_extract_paragraphs(fpath, False)
+            else:
+                continue
+        except Exception:
+            continue
+        head = " ".join(
+            (p.get("text") if isinstance(p, dict) else str(p)) or ""
+            for p in (paras or [])[:6])
+        if not head:
+            continue
+        if any(k not in head for k in sig["need"]):
+            continue
+        if any(k in head for k in sig.get("avoid", [])):
+            continue
+        if log:
+            log(f"[파서] {step_key}: 내용 매칭으로 '{name}' 채택 "
+                f"(파일명 불일치 — 발문 기준)")
+        return fpath
+    return None
+
+
 def _find_manuscript_file(manuscript_dir, expected_filename, used_files=None):
     """config에 지정된 파일명이 없을 때 유사 파일을 찾는 fallback.
 
@@ -2079,6 +2135,10 @@ def parse_manuscript_folder(manuscript_dir, config, grade, year, month, log=None
         if not os.path.exists(fpath):
             # fallback: 파일명 공백/확장자 유연 매칭 (used_files 제외)
             found = _find_manuscript_file(manuscript_dir, filename, used_files)
+            if not found:
+                # 이름으로 못 찾으면 내용(발문)으로 판별 — 파일명 방언 흡수
+                found = _find_manuscript_file_by_content(
+                    manuscript_dir, step_key, used_files, log)
             if found:
                 fpath = found
                 filename = os.path.basename(found)

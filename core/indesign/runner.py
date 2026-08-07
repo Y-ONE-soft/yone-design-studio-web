@@ -217,6 +217,16 @@ def _run_jsx_once(jsx_path: str, log, poll_log_path: str = None, timeout: int = 
             except OSError:
                 pass
 
+        # JSX 제출 직전의 로그 크기 — 폴링 구간에서 UI로 중계할 시작 지점.
+        # 위 삭제로 보통 0이지만, 출력 폴더 공용 로그(누적)를 poll 대상으로
+        # 쓰는 엔진에서 과거 실행분이 통째로 UI에 쏟아지는 것을 막는다.
+        relay_offset = 0
+        if poll_log_path:
+            try:
+                relay_offset = os.path.getsize(poll_log_path)
+            except OSError:
+                relay_offset = 0
+
         # settings.json 경로 추출 (JSX 파일에서)
         with open(jsx_path, encoding="utf-8") as f:
             jsx_content = f.read()
@@ -306,9 +316,10 @@ def _run_jsx_once(jsx_path: str, log, poll_log_path: str = None, timeout: int = 
             if delivery_ok:
                 # 스크립트 전달 확인 후 osascript 종료 (응답 대기 불필요)
                 proc.kill()
-                log("[InDesign] 스크립트 전달 확인, 폴링 시작")
+                log("[InDesign] 스크립트 전달 확인, 폴링 시작 (JSX 진행 로그를 이어서 표시합니다)")
                 _wait_for_completion(poll_log_path, log, timeout, cancel_check,
-                                     completion_marker, stall_limit=stall_limit)
+                                     completion_marker, stall_limit=stall_limit,
+                                     relay_offset=relay_offset)
             else:
                 proc.kill()
                 raise RuntimeError("InDesign 스크립트 시작 안 됨 (120초 대기) — InDesign 상태를 확인하세요")
@@ -325,10 +336,17 @@ def _run_jsx_once(jsx_path: str, log, poll_log_path: str = None, timeout: int = 
 
 def _wait_for_completion(log_path: str, log, timeout: int, cancel_check=None,
                          completion_marker: str = None,
-                         stall_limit: int = None):
+                         stall_limit: int = None,
+                         relay_offset: int = 0):
     elapsed = 0
     last_mtime = 0
     stall_seconds = 0
+    # JSX 진행 로그 중계 상태 (relay_offset = 제출 직전 크기 = 중계 시작점).
+    # 이게 없으면 '폴링 시작' 이후 완료/스톨까지 UI가 완전 무출력이라
+    # 정상 진행과 행(hang)을 사람이 구분할 수 없다 (수십 분 걸리는 엔진).
+    relay_pos = relay_offset
+    relayed = 0
+    RELAY_MAX = 3000          # UI 폭주 방지 상한 (초과분은 서버 로그 파일에 그대로 남음)
     # 로그 갱신 없이 5분(기본) 경과하면 행(hang) 판정 — 대형 문서 엔진은
     # run_jsx(stall_limit=...)로 상향 (PDF export가 로그 없이 5분+ 소요)
     STALL_LIMIT = stall_limit or 300
@@ -364,6 +382,34 @@ def _wait_for_completion(log_path: str, log, timeout: int, cancel_check=None,
                         stall_seconds = 0
             except OSError:
                 pass
+
+        # JSX가 새로 쓴 줄을 UI로 중계. ExtendScript File.writeln 기본 개행이
+        # \r(Macintosh)이므로 splitlines()로 \r/\n/\r\n을 모두 처리한다.
+        if log_path:
+            try:
+                cur_size = os.path.getsize(log_path)
+            except OSError:
+                cur_size = 0
+            if cur_size < relay_pos:      # 재생성/절단 → 처음부터 다시
+                relay_pos = 0
+            if cur_size > relay_pos and relayed < RELAY_MAX:
+                try:
+                    with open(log_path, "rb") as _rf:
+                        _rf.seek(relay_pos)
+                        raw = _rf.read()
+                    relay_pos = cur_size
+                    for ln in raw.decode("utf-8", errors="ignore").splitlines():
+                        ln = ln.strip()
+                        if not ln:
+                            continue
+                        if relayed >= RELAY_MAX:
+                            log(f"[InDesign] 진행 로그 {RELAY_MAX}줄 초과 — "
+                                f"이후 중계 생략 ({log_path})")
+                            break
+                        log("  " + ln[:300])
+                        relayed += 1
+                except OSError:
+                    pass
 
         content = _read_any_log()
         if not content:
