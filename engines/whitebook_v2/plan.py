@@ -229,15 +229,52 @@ def _unit_answers(answers, A, CH):
 
 # ── 연습문제 유닛 (v1 practices 루프 + applyUnderlineMarkers 이식) ───────────
 
+# 발문 앞 원고 번호("1. "/"(1) ") — 템플릿 '문제' 스타일이 자동 번호를
+# 달므로 이중 번호가 된다 → 제거 (사용자 피드백 2026-08-11)
+_RE_Q_NUM = re.compile(r"^\s*(?:\(\d+\)|\d+\.)\s*")
+# 한 줄에 뭉친 선지("① a   ② b   ③ c") → 원문자 앞에서 단락 분리
+_RE_CIRCLED = re.compile(r"[①②③④⑤⑥⑦⑧⑨⑩]")
+
+
+def _split_choices(text):
+    """선지 라인에 원문자가 2개 이상이면 각 원문자 앞에서 분리.
+
+    밑줄 마커(<u>)가 있는 라인은 분리 지점이 마커 쌍을 가를 수 있어
+    분리하지 않는다(실측: 다중 선지 압축 라인에는 밑줄이 없음)."""
+    if "<u>" in text:
+        return [text]
+    marks = [m.start() for m in _RE_CIRCLED.finditer(text)]
+    if len(marks) < 2:
+        return [text]
+    cuts = [m for m in marks if m > 0]
+    out = []
+    prev = 0
+    for c in cuts:
+        seg = text[prev:c].rstrip()
+        if seg:
+            out.append(seg)
+        prev = c
+    tail = text[prev:].rstrip()
+    if tail:
+        out.append(tail)
+    return out or [text]
+
+
 def _unit_prac_main(prac, PR):
     qs = prac.get("questions") or []
     if not qs:
         return {"skip": True}
     paras = []
     for qi, q in enumerate(qs):
-        for ln in q["lines"]:
-            clean, runs = _ul_runs(ln["text"])
-            paras.append(_p(clean, PR[ln["sty"]], runs))
+        for li, ln in enumerate(q["lines"]):
+            text = ln["text"]
+            if li == 0 and ln["sty"] == "문제":
+                text = _RE_Q_NUM.sub("", text, count=1)
+            pieces = ([text] if ln["sty"] != "선지"
+                      else _split_choices(text))
+            for piece in pieces:
+                clean, runs = _ul_runs(piece)
+                paras.append(_p(clean, PR[ln["sty"]], runs))
         if qi < len(qs) - 1:
             paras.append(_p("", PR["선지"]))   # v1: 문제 사이 빈줄(선지 스타일)
     return {"paras": paras}

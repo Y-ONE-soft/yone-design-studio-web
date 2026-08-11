@@ -611,6 +611,66 @@ try {
         processFlow(plan.flows[fi]);
     }
 
+    // ── 실전문제 빈 페이지 정리 ─────────────────────────────────────────────
+    // 템플릿은 주당 40문항 기준이라 20문항이면 스레드 꼬리 페이지가 통째로
+    // 빈다. prac 스토리 체인이 걸린 완전 빈 페이지의 연속 구간에서
+    // 짝수 개만 제거 — 홀수 개 제거 시 이후 전체 페이지의 좌/우가 뒤집혀
+    // 마스터(홀짝 여백·푸터)가 깨진다. (사용자 요청 2026-08-11)
+    try {
+        var pracPageIds = {};
+        var pracAreas = ["prac_main", "prac_ans"];
+        for (var pa = 0; pa < pracAreas.length; pa++) {
+            var pstories = storiesByArea[pracAreas[pa]] || [];
+            for (var psi = 0; psi < pstories.length; psi++) {
+                var conts = pstories[psi].textContainers;
+                for (var pci = 0; pci < conts.length; pci++) {
+                    try {
+                        var ppg = conts[pci].parentPage;
+                        if (ppg) { pracPageIds[ppg.id] = true; }
+                    } catch (ePc) {}
+                }
+            }
+        }
+        function pageIsEmpty(pg) {
+            try {
+                if (pg.allGraphics.length > 0) { return false; }
+                var ptfs = pg.textFrames;
+                for (var pt = 0; pt < ptfs.length; pt++) {
+                    if (String(ptfs[pt].contents).replace(/[\s\r￼]/g, "") !== "") {
+                        return false;
+                    }
+                }
+                return true;
+            } catch (ePe) { return false; }
+        }
+        // 후보 수집 (문서 순서) → 연속 구간 그룹 → 구간별 짝수 개 제거
+        var emptyRuns = [];
+        var curRun = [];
+        var prevOff = -99;
+        for (var pgi = 0; pgi < doc.pages.length; pgi++) {
+            var pg2 = doc.pages[pgi];
+            if (pracPageIds[pg2.id] && pageIsEmpty(pg2)) {
+                if (pg2.documentOffset !== prevOff + 1 && curRun.length) {
+                    emptyRuns.push(curRun);
+                    curRun = [];
+                }
+                curRun.push(pg2);
+                prevOff = pg2.documentOffset;
+            }
+        }
+        if (curRun.length) { emptyRuns.push(curRun); }
+        var removedPages = 0;
+        for (var er = 0; er < emptyRuns.length; er++) {
+            var run = emptyRuns[er];
+            var nRemove = Math.floor(run.length / 2) * 2;
+            for (var rr = 0; rr < nRemove; rr++) {
+                try { run[rr].remove(); removedPages++; } catch (eRm2) {}
+            }
+        }
+        wlog("실전문제 빈 페이지 제거: " + removedPages + "개 (구간 " +
+             emptyRuns.length + "곳)");
+    } catch (eClean) { wlog("[경고] 빈 페이지 정리 실패: " + eClean); }
+
     // 페이스트보드 스트레이 정리 — 템플릿에 남아 있던 페이지 밖(오버셋)
     // 프레임은 프리플라이트 오류만 만들고 인쇄에는 안 나온다. 프레임
     // remove()는 직후 전체 재조판에서 InDesign 크래시를 유발해 금지
