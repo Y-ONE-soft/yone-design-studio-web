@@ -1473,63 +1473,52 @@ var RE_DIVIDER_LINE2 = /^\s*(?:\d+\s*년\s*\d+\s*월|\d+\s*강|\d+\s*과|Unit\s*
 
 function updateDividerPages(doc, line1, line2) {
     var n = 0;
-    var diag = [];   // W51 진단: 후보 탈락 페이지 상태 (0개일 때만 로그)
-    // W51 2차 (refix3 진단 실증): 마스터 전제 조건 폐기 — 실행 시점의 간지
-    // 페이지는 마스터가 적용된 상태여서 '[None] 페이지' 게이트가 전부
-    // 건너뛰었다 (진단: [None]은 간지 왼쪽 빈 페이지들뿐). 판정을 페이지
-    // 속성이 아니라 **프레임 내용 구조**로만 한다: 스토리 2~3행 + 첫 행
-    // 한글 + 2행이 간지 기수 표기(YY년 M월·N강·N과·Unit N). 기수 표기
-    // 필수라 발문/러닝헤더류 한글 프레임과 충돌하지 않는다.
-    for (var dpi = 0; dpi < doc.pages.length; dpi++) {
-        var dpg = doc.pages[dpi];
-        // 그룹 내부 프레임 포함 전체 텍스트프레임 수집
-        var tfs = [];
-        try {
-            var itemsAll = dpg.allPageItems;
-            for (var ai = 0; ai < itemsAll.length; ai++) {
-                try {
-                    if (itemsAll[ai] instanceof TextFrame) { tfs.push(itemsAll[ai]); }
-                } catch (eI) {}
+    var diag = [];   // W51 진단: 후보 탈락 상태 (0개일 때만 로그)
+    // W51 3차 (refix3/4 진단 실증): 페이지→프레임 열거 자체를 폐기하고
+    // **문서 전역 스토리**를 훑는다. 실행 시점의 간지 텍스트는 페이지
+    // 프레임이 아니라 '간지' 마스터 스프레드의 프레임에 있을 수 있고
+    // (page.allPageItems에 안 잡힘 — [None] 게이트/프레임 열거가 전부
+    // 헛돎), doc.stories는 마스터 프레임 스토리까지 포함한다. 마스터
+    // 원본을 갱신하면 그 마스터를 쓰는 간지 페이지 전부가 갱신된다.
+    // 간지 스토리 판정(내용 구조): 2~3행 + 첫 행 한글 + 2행이 기수 표기
+    // (YY년 M월·N강·N과·Unit N) — 발문/러닝헤더류와 충돌하지 않는다.
+    for (var si = 0; si < doc.stories.length; si++) {
+        var st = doc.stories[si];
+        var whole = "";
+        try { whole = String(st.contents || ""); } catch (eW) { continue; }
+        if (whole.length > 120) { continue; }
+        var segs = whole.replace(/[\r\n]+$/, "").split(/[\r\n]/);
+        if (segs.length < 2 || segs.length > 3) { continue; }
+        if (!/[가-힣]/.test(segs[0])) { continue; }
+        if (!RE_DIVIDER_LINE2.test(segs[1])) {
+            if (diag.length < 4 && /[년월강과]|Unit/i.test(segs[1])) {
+                diag.push("l2미매치=" + String(segs[1]).substr(0, 16));
             }
-        } catch (eA) {}
-        for (var ti = 0; ti < tfs.length; ti++) {
-            var cps = tfs[ti].paragraphs;
-            var whole = "";
-            try { whole = String(tfs[ti].parentStory.contents || ""); } catch (eW) {}
-            var segs = whole.replace(/[\r\n]+$/, "").split(/[\r\n]/);
-            if (segs.length < 2 || segs.length > 3) { continue; }
-            if (!/[가-힣]/.test(segs[0])) { continue; }
-            if (!RE_DIVIDER_LINE2.test(segs[1])) {
-                if (diag.length < 4) {
-                    diag.push("p" + dpg.name + " l2미매치="
-                              + String(segs[1]).substr(0, 16));
-                }
-                continue;
-            }
-            try {
-                if (cps.length >= 2) {
-                    // 단락 2개형 (모의고사 원본 내지)
-                    cps[0].contents = line1 + "\r";
-                    cps[1].contents = line2 + "\r";
-                } else {
-                    // 강제 줄바꿈 1단락형 (수특라이트 커스텀 내지 실측) —
-                    // 행별 문자 범위 교체 (서식 보존)
-                    var dst = tfs[ti].parentStory;
-                    var t0 = String(dst.contents || "");
-                    var b0 = t0.search(/[\n\r]/);
-                    if (b0 <= 0) { continue; }
-                    dst.characters.itemByRange(0, b0 - 1).contents = line1;
-                    var t1 = String(dst.contents || "");
-                    var b1 = t1.search(/[\n\r]/);
-                    var tail = t1.replace(/[\r\n]+$/, "");
-                    if (b1 >= 0 && b1 + 1 <= tail.length - 1) {
-                        dst.characters.itemByRange(b1 + 1, tail.length - 1)
-                            .contents = line2;
-                    }
-                }
-                n++;
-            } catch (e) {}
+            continue;
         }
+        try {
+            var cps = st.paragraphs;
+            if (cps.length >= 2) {
+                // 단락 2개형 (모의고사 원본 내지)
+                cps[0].contents = line1 + "\r";
+                cps[1].contents = line2 + "\r";
+            } else {
+                // 강제 줄바꿈 1단락형 (수특라이트 커스텀 내지 실측) —
+                // 행별 문자 범위 교체 (서식 보존)
+                var t0 = String(st.contents || "");
+                var b0 = t0.search(/[\n\r]/);
+                if (b0 <= 0) { continue; }
+                st.characters.itemByRange(0, b0 - 1).contents = line1;
+                var t1 = String(st.contents || "");
+                var b1 = t1.search(/[\n\r]/);
+                var tail = t1.replace(/[\r\n]+$/, "");
+                if (b1 >= 0 && b1 + 1 <= tail.length - 1) {
+                    st.characters.itemByRange(b1 + 1, tail.length - 1)
+                        .contents = line2;
+                }
+            }
+            n++;
+        } catch (e) {}
     }
     wlog("간지 텍스트 업데이트: " + n + "개 (" + line1 + " / " + line2 + ")");
     if (n === 0) {
