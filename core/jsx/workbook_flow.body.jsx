@@ -1473,6 +1473,7 @@ var RE_DIVIDER_LINE2 = /^\s*(?:\d+\s*년\s*\d+\s*월|\d+\s*강|\d+\s*과|Unit\s*
 
 function updateDividerPages(doc, line1, line2) {
     var n = 0;
+    var diag = [];   // W51 진단: [None] 페이지별 후보 상태 (0개일 때만 로그)
     for (var dpi = 0; dpi < doc.pages.length; dpi++) {
         var dpg = doc.pages[dpi];
         var masterName = "";
@@ -1503,7 +1504,19 @@ function updateDividerPages(doc, line1, line2) {
                          mode: (cps.length >= 2) ? "para" : "break",
                          l2: segs[1] });
         }
-        if (cands.length === 0) { continue; }
+        if (cands.length === 0) {
+            if (diag.length < 4) {
+                var d0 = "p" + dpg.name + " tfs=" + tfs.length;
+                try {
+                    if (tfs.length > 0) {
+                        d0 += " s0=" + String(tfs[0].parentStory.contents || "")
+                            .replace(/[\r\n]/g, "|").substr(0, 24);
+                    }
+                } catch (eD) {}
+                diag.push(d0);
+            }
+            continue;
+        }
         var target = null;
         if (cands.length === 1) {
             target = cands[0];
@@ -1541,7 +1554,8 @@ function updateDividerPages(doc, line1, line2) {
     if (n === 0) {
         // W51: 침묵 금지 — 간지를 하나도 못 찾으면 [경고]로 지목
         wlog("[경고] 간지 텍스트 업데이트 0개 — 간지 프레임 구조가 "
-             + "기대(마스터 없음 페이지 + 한글 2단락 프레임)와 다름");
+             + "기대(마스터 없음 페이지 + 한글 2행 프레임)와 다름"
+             + (diag.length ? " | 진단: " + diag.join(" / ") : ""));
     }
 }
 
