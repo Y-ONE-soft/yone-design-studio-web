@@ -179,7 +179,9 @@ def main():
     # 발문 유형 == 문제 유형 (네모형은 (A)(B)(C), 밑줄형은 ①~⑤)
     bad_prompt = []
     for p, _t, b, prompt in rows:
-        box_q = bool(re.search(r'\(\s*A\s*\).{0,80}\(\s*B\s*\)', b))
+        # 네모형 지문은 (A)…(B)…(C) 가 문단 전체에 흩어져 있다 — 근접
+        # 조건(80자)을 걸면 정상 네모형이 밑줄형으로 오판된다(v9 실측 2건).
+        box_q = ("(A)" in b or "(A) " in b) and "(B)" in b and "(C)" in b
         box_p = "네모" in prompt
         if box_q != box_p:
             bad_prompt.append((p, "네모형 문제/밑줄형 발문" if box_q

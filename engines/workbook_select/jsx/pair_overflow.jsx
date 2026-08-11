@@ -160,6 +160,22 @@
 
         var n = Math.min(topOnly.length, btmOnly.length);
         var made = 0;
+        // 삽입 기준점 = **첫 고아 하단 페이지 바로 앞** 프레임.
+        // 상단만 있는 페이지보다 앞을 기준으로 잡으면(=체인 맨 뒤) 새 프레임이
+        // 꼬리에 붙어 내용이 흘러오지 않는다 (2026-08-08 v9 실측: p156·p157
+        // 에 빈 프레임만 생기고 p154·p155 가 그대로 남았다).
+        var anchorPage = btmOnly[0];
+        var chain = btmStory.textContainers;
+        var prev = null;
+        for (j = 0; j < chain.length; j++) {
+            if (pageNum(chain[j]) < anchorPage) prev = chain[j];
+        }
+        if (prev === null) {
+            W("[경고] 기준 프레임 없음 — 건너뜀");
+            d.close(SaveOptions.NO);
+            W("===== 짝 정리 완료 =====");
+            return;
+        }
         for (var m = 0; m < n; m++) {
             var tgtPage = d.pages[topOnly[m]];
             var ref = refFor(tgtPage.side);
@@ -179,17 +195,11 @@
                     refBtm.textFramePreferences.insetSpacing;
             } catch (e6) {}
 
-            // 체인 중간 삽입: 이 페이지보다 앞에 있는 마지막 하단 프레임 뒤
-            var tc = btmStory.textContainers;
-            var prev = null;
-            for (j = 0; j < tc.length; j++) {
-                if (pageNum(tc[j]) < topOnly[m]) prev = tc[j];
-            }
-            if (prev === null) { W("[경고] 앞선 하단 프레임 없음 — 건너뜀");
-                                 ntf.remove(); continue; }
+            // 체인 삽입: 기준 프레임 뒤에 이어 붙인다(순서 보존)
             var after = prev.nextTextFrame;
             prev.nextTextFrame = ntf;
             if (after) { ntf.nextTextFrame = after; }
+            prev = ntf;
 
             // 발문 프레임 복제
             var pf = promptFrameOn(ref);
