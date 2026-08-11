@@ -1488,14 +1488,20 @@ function updateDividerPages(doc, line1, line2) {
                 } catch (eI) {}
             }
         } catch (eA) {}
-        // 간지 후보: 단락 2개 이상 + 첫 단락 한글
-        var cands = [];
+        // 간지 후보: 2행 구조 + 첫 행 한글. 행 = 단락 2개(모의고사 원본
+        // 내지) 또는 강제 줄바꿈(\n) 1단락(수특라이트 커스텀 내지 실측 —
+        // W51: 프레임 paras=1이라 기존 '단락 2개' 가정이 0개 매치).
+        var cands = [];   // {tf, mode: 'para'|'break', l2}
         for (var ti = 0; ti < tfs.length; ti++) {
             var cps = tfs[ti].paragraphs;
-            if (cps.length < 2) { continue; }
-            var c1 = String(cps[0].contents || "").replace(/[\r\n]+$/, "");
-            if (!/[가-힣]/.test(c1)) { continue; }
-            cands.push(tfs[ti]);
+            var whole = "";
+            try { whole = String(tfs[ti].parentStory.contents || ""); } catch (eW) {}
+            var segs = whole.replace(/[\r\n]+$/, "").split(/[\r\n]/);
+            if (segs.length < 2) { continue; }
+            if (!/[가-힣]/.test(segs[0])) { continue; }
+            cands.push({ tf: tfs[ti],
+                         mode: (cps.length >= 2) ? "para" : "break",
+                         l2: segs[1] });
         }
         if (cands.length === 0) { continue; }
         var target = null;
@@ -1504,16 +1510,30 @@ function updateDividerPages(doc, line1, line2) {
         } else {
             // 복수 후보면 2행이 간지 기수 표기인 프레임만
             for (var ci = 0; ci < cands.length; ci++) {
-                var c2 = String(cands[ci].paragraphs[1].contents || "")
-                    .replace(/[\r\n]+$/, "");
-                if (RE_DIVIDER_LINE2.test(c2)) { target = cands[ci]; break; }
+                if (RE_DIVIDER_LINE2.test(cands[ci].l2)) { target = cands[ci]; break; }
             }
         }
         if (!target) { continue; }
-        var divParas = target.paragraphs;
         try {
-            divParas[0].contents = line1 + "\r";
-            divParas[1].contents = line2 + "\r";
+            if (target.mode === "para") {
+                var divParas = target.tf.paragraphs;
+                divParas[0].contents = line1 + "\r";
+                divParas[1].contents = line2 + "\r";
+            } else {
+                // 강제 줄바꿈 1단락 — 행별 문자 범위 교체 (서식 보존)
+                var dst = target.tf.parentStory;
+                var t0 = String(dst.contents || "");
+                var b0 = t0.search(/[\n\r]/);
+                if (b0 < 0) { continue; }
+                if (b0 > 0) { dst.characters.itemByRange(0, b0 - 1).contents = line1; }
+                var t1 = String(dst.contents || "");
+                var b1 = t1.search(/[\n\r]/);
+                var tail = t1.replace(/[\r\n]+$/, "");
+                if (b1 >= 0 && b1 + 1 <= tail.length - 1) {
+                    dst.characters.itemByRange(b1 + 1, tail.length - 1)
+                        .contents = line2;
+                }
+            }
             n++;
         } catch (e) {}
     }
