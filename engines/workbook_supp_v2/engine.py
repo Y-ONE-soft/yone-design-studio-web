@@ -168,6 +168,16 @@ class WorkbookSuppV2Engine(WorkbookV2Engine):
         line1 = (self._read_meta_str(job_dir, "divider_line1", "")
                  or self._read_meta_str(job_dir, "divider_text", ""))
         line2 = self._read_meta_str(job_dir, "divider_line2", "")
+        if not line2:
+            # W53 (475e4d58 실증 — 사용자 스펙 '입력 안 하면 자동으로
+            # 읽어서'): line2 미입력이면 파일명 stem/업로드명에서 범위
+            # 표기(N강/N과/Unit N)를 유도한다. 유도 실패 시 비움 —
+            # 원본 문구('26년 3월')가 남는 것보다 빈 칸이 낫다.
+            stem = self._read_meta_str(job_dir, "filename_stem", "")
+            m = re.search(r"(\d+\s*강|\d+\s*과|Unit\s*\.?\s*\d+)",
+                          unicodedata.normalize("NFC", stem), re.I)
+            if m:
+                line2 = re.sub(r"\s+", "", m.group(1))
         if line1:
             return {"divider": {"line1": line1, "line2": line2,
                                 "source": "user"}}
