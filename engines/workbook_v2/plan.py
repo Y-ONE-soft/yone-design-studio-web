@@ -70,6 +70,10 @@ _S3_GREPS = [
     (re.compile(r"<\s*조\s*건\s*>"), "<조건>"),
     (re.compile(r"\[\s*보기\s*\]"), "<보기>"),
     (re.compile(r"\[\s*조건\s*\]"), "<조건>"),
+    # W50: CJK 꺾쇠/전각 이형 — 인쇄 표기도 책 관행("<보기>")으로 통일
+    (re.compile(r"[〈《＜]\s*보\s*기\s*[〉》＞]"), "<보기>"),
+    (re.compile(r"[〈《＜]\s*조\s*건\s*[〉》＞]"), "<조건>"),
+    (re.compile(r"[〈《＜]\s*요\s*약\s*문\s*[〉》＞]"), "<요약문>"),
 ]
 # v1 pass 10 — 번호(S3_NUM) 단락의 "숫자. " 접두 제거 (run.jsx 2423~2431)
 _RE_S3_QNUM = re.compile(r"^\d+\.\s")
@@ -464,8 +468,10 @@ def build_step3(step_data):
                                 # (결함 5 — 배경 대기(arrow_pending)는
                                 # SRC 마커와 동일하게 소비하지 않고 통과)
                 eff = _s3_effective_kind(kind, text)
+                # W50: 마커 판정용 괄호 이형 정규화 (표기는 tclean 보존)
+                tmark = R.norm_brackets(tclean)
                 # ── W38 블록 문맥 오버레이 ──────────────────────────────
-                if BG.SUM_MARKER.match(tclean):
+                if BG.SUM_MARKER.match(tmark):
                     eff = "Sum"
                     sum_bg = True
                     in_cond = False
@@ -474,15 +480,15 @@ def build_step3(step_data):
                     # 주석된 요약 문장도 배경으로 — 단 마커 라인(<보기> 등
                     # 새 블록 진입)은 전파 종료 (stale Box 콘텐츠 한정).
                     stale_box = (eff == "Box"
-                                 and not R.BOX_MARKERS["Box"].match(tclean)
-                                 and not R.BOX_MARKERS["Cond"].match(tclean)
+                                 and not R.BOX_MARKERS["Box"].match(tmark)
+                                 and not R.BOX_MARKERS["Cond"].match(tmark)
                                  and not R.C_START.match(tclean)
                                  and not R.C_AB_HEADER.match(tclean))
                     if eff in ("P", "K", "UNKNOWN") and tclean or stale_box:
                         eff = "P-CONTEXT"
                     else:
                         sum_bg = False
-                if R.BOX_MARKERS["Cond"].match(tclean):
+                if R.BOX_MARKERS["Cond"].match(tmark):
                     in_cond = True
                     cond_no = 1
                     sum_bg = False

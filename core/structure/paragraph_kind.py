@@ -118,12 +118,14 @@ def _base_kind(text):
         return "Ans", None
     # 요약문 블록 마커 (W38 결함 4, W39 결함 1) — 대괄호형·꺾쇠형 모두
     # Sum. 일반 꺾쇠 마커(Box)가 <요약문>을 삼키지 않도록 Box보다 먼저.
-    if BG.SUM_MARKER.match(text):
+    # W50: 괄호 이형(〈〉《》【】…)은 마커 판정 직전에 정규화 — 표기 보존.
+    bt = R.norm_brackets(text)
+    if BG.SUM_MARKER.match(bt):
         return "Sum", None
-    bk = _box_kind(text)
+    bk = _box_kind(bt)
     if bk:
         return bk, None
-    if R.BOX_INLINE.match(text):
+    if R.BOX_INLINE.match(bt):
         return "Box", None
     qk, code = _classify_question(text)
     if qk:
@@ -292,7 +294,8 @@ def classify_paragraphs(paras):
         cond_no = 1          # W38: 조건 항목 번호 시퀀스 (마커 직후 1 기대)
         # 한글 비율 단독 흡수는 마커 시작 루프에서만 (W39: 항목 시작
         # 재루프가 답란 라벨("주제문:")을 원거리 흡수하는 것 방지)
-        from_marker = bool(R.BOX_MARKERS["Cond"].match(item["text"]))
+        from_marker = bool(R.BOX_MARKERS["Cond"].match(
+            R.norm_brackets(item["text"])))
         while j < len(out):
             nxt = out[j]
             if nxt["kind"] == "BLANK":

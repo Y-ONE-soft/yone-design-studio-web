@@ -370,7 +370,10 @@ _RE_Q_EN_SIG = re.compile(
     r"|Circle|Arrange|Rearrange|Translate|Find|Identify|Underline|Correct"
     r"|Rewrite|Summarize|Read\s+and)\b")
 # W39 결함 1: 꺾쇠형(<요약문>/<요약>)도 배경 — 사용자 확정 (Box 관행 폐기)
-_RE_SUM_MARKER = re.compile(r"^\s*(?:[\[<]\s*요\s*약\s*문?\s*[\]>]|요약문)\s*$")
+# W50: CJK 꺾쇠(〈〉《》)·전각(＜＞)·모난 괄호(【】) 이형 포함 — 플랜/파서와
+# 같은 정규화 폭 (이형 원고에서 G32가 동반 실명하던 것 봉합)
+_RE_SUM_MARKER = re.compile(
+    r"^\s*(?:[\[<〈《＜【]\s*요\s*약\s*문?\s*[\]>〉》＞】]|요약문)\s*$")
 
 # G8 — 원전 교재 구분선 (파서 _RE_CHAPTER_DIVIDER/_RE_UNIT_DIVIDER 준용.
 # 출력 검사용 독립 정의 — 파서가 틀리면 게이트도 같이 틀리는 순환 방지)

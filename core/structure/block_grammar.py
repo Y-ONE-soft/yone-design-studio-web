@@ -360,7 +360,7 @@ def validate_sequence(entries):
                 f"[블록문법] 발문 직후 번호 재시작 발문 — 조건/하위 항목 "
                 f"오분류 의심: '{t1[:30]}' → '{t2[:30]}'")
     for x, (k, t) in enumerate(meaningful):
-        if k == "Cond" and R.BOX_MARKERS["Cond"].match(t):
+        if k == "Cond" and R.BOX_MARKERS["Cond"].match(R.norm_brackets(t)):
             has_item = False
             for k2, t2 in meaningful[x + 1:]:
                 if k2 == "Cond":

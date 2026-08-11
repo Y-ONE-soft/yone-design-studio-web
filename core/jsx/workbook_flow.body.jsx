@@ -205,6 +205,12 @@ function _ensureEndPad(para, ip, pad) {
     return ip;
 }
 
+// W50: place 실패 추적 — 링크 파일이 GDrive 실경로라 실체화 지연/스톨 시
+// place가 문항마다 조용히 실패해 아이콘이 통째로 빠졌다 (2026-08-11
+// de909e4d 실증: step2_b1 OX 버튼 0/90, 경고 0). place 실패는 문서 내
+// 원본 duplicate로 폴백하고, 건수를 [경고]로 남긴다 (침묵 금지).
+var _iconPlaceFallback = {};   // label -> place 실패 → duplicate 폴백 건수
+
 // 단락 1개에 아이콘 1개 삽입. 성공 1 / 실패 0.
 function insertIconAt(doc, story, para, ic) {
     var pos = (ic.pos === "start") ? "start" : "end";
@@ -212,26 +218,32 @@ function insertIconAt(doc, story, para, ic) {
     if (ic.mode === "place") {
         // v1 processStep2B1: 링크 파일 place + 원본 너비 스케일
         var info = _iconLinkInfo(doc, ic.label);
-        if (info.missing) { return 0; }
-        var ip = _endIP(para);
-        if (pad) { ip = _ensureEndPad(para, ip, pad); }
-        try {
-            var placed = story.insertionPoints[ip.index].place(File(info.path))[0];
-            try { placed.anchoredObjectSettings.anchorType = AnchorPosition.INLINE_POSITION; } catch (e) {}
+        var pf = null;
+        if (!info.missing) {
+            try { pf = File(info.path); } catch (ef) { pf = null; }
+        }
+        if (pf && pf.exists) {
+            var ip = _endIP(para);
+            if (pad) { ip = _ensureEndPad(para, ip, pad); }
             try {
-                placed.fit(FitOptions.FRAME_TO_CONTENT);
-                var pgb = placed.geometricBounds;
-                var pw = pgb[3] - pgb[1];
-                if (pw > 0 && info.width) {
-                    var sc = (info.width / pw) * 100;
-                    placed.absoluteHorizontalScale = sc;
-                    placed.absoluteVerticalScale = sc;
-                }
-            } catch (e) {}
-            return 1;
-        } catch (e) { return 0; }
+                var placed = story.insertionPoints[ip.index].place(pf)[0];
+                try { placed.anchoredObjectSettings.anchorType = AnchorPosition.INLINE_POSITION; } catch (e) {}
+                try {
+                    placed.fit(FitOptions.FRAME_TO_CONTENT);
+                    var pgb = placed.geometricBounds;
+                    var pw = pgb[3] - pgb[1];
+                    if (pw > 0 && info.width) {
+                        var sc = (info.width / pw) * 100;
+                        placed.absoluteHorizontalScale = sc;
+                        placed.absoluteVerticalScale = sc;
+                    }
+                } catch (e) {}
+                return 1;
+            } catch (e) { /* W50: 아래 duplicate 폴백으로 계속 */ }
+        }
+        _iconPlaceFallback[ic.label] = (_iconPlaceFallback[ic.label] || 0) + 1;
     }
-    // 기본: duplicate 인라인 앵커 (v1 insertInlineIcon)
+    // 기본: duplicate 인라인 앵커 (v1 insertInlineIcon) — place 실패 폴백 겸용
     var entry = _iconSource(doc, ic.label);
     if (entry.missing) { return 0; }
     var ip2 = (pos === "start") ? para.insertionPoints[0] : _endIP(para);
@@ -1962,10 +1974,13 @@ try {
         // 아이콘 패스 — 밑줄 runs·프레임브레이크 적용 이후 마지막, 역순
         // (아이콘 삽입은 텍스트 길이를 바꾸므로 뒤 단락부터 → 인덱스 안정)
         var iconCounts = {};
+        var iconWant = {};
         var iconDone = 0;
+        _iconPlaceFallback = {};   // W50: 플로우 단위 폴백 집계
         for (var xi = flat.length - 1; xi >= 0; xi--) {
             var ic = flat[xi].icon;
             if (!ic || xi >= paras.length) { continue; }
+            iconWant[ic.label] = (iconWant[ic.label] || 0) + 1;
             if (insertIconAt(doc, story, paras[xi], ic)) {
                 iconCounts[ic.label] = (iconCounts[ic.label] || 0) + 1;
             }
@@ -1977,6 +1992,20 @@ try {
         }
         for (var lb in iconCounts) {
             wlog(flow.step + " 아이콘 삽입: " + iconCounts[lb] + "개 (" + lb + ")");
+        }
+        // W50: 침묵 금지 — 지시 대비 미달/폴백을 [경고]로 남긴다
+        for (var lbw in iconWant) {
+            var fbn = _iconPlaceFallback[lbw] || 0;
+            if (fbn > 0) {
+                wlog("[경고] " + flow.step + " 아이콘 place 실패 " + fbn
+                     + "건 → duplicate 폴백 (" + lbw + ")");
+            }
+            var gotN = iconCounts[lbw] || 0;
+            if (gotN < iconWant[lbw]) {
+                wlog("[경고] " + flow.step + " 아이콘 누락: "
+                     + (iconWant[lbw] - gotN) + "/" + iconWant[lbw]
+                     + "개 (" + lbw + ")");
+            }
         }
 
         // 스토리 오버플로우 시 마스터 유지 페이지 추가 (v1 ensureNoOverflow 의미론)
