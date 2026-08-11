@@ -235,57 +235,70 @@ function expandFrameAndMoveBelow(story, moveStyles) {
 
 var ICON_LETTERS = ["A", "B", "C", "D", "E"];
 
-// 템플릿 원형 아이콘 은행: 낱자 A~E + [기본 단락] + 오버셋 없음인 앵커
-// 프레임을 글자별로 찾아, 앵커에서 분리(release)한 프로토타입 사본을
-// 페이스트보드에 만들어 둔다. 앵커된 객체를 직접 duplicate→재앵커하면
-// 컴포저 상태가 깨져 전체 재조판 시 InDesign이 크래시한다(2026-08-11
-// 3회 재현) — 반드시 '분리된 일반 프레임'을 복제 원본으로 쓴다.
-function buildIconBank(doc) {
-    var bank = {};
-    var need = 5;
-    var stories = doc.stories;
-    for (var s = 0; s < stories.length && need > 0; s++) {
+// v1의 '새 프레임 + 앵커' 방식(베타2에서 크래시 0으로 검증된 유일한
+// 경로)을 유지하되 베타2 결함 2가지를 직접 수정:
+//   ① 새 프레임이 문서 기본 단락스타일(D 단어 박스 new, 고정행간 16pt)을
+//      상속해 글자가 오버셋 → [기본 단락] + 행간 AUTO 명시 (템플릿 원형
+//      아이콘 실측 속성: 고도B 12pt, baselineShift -1)
+//   ② 사각형 → convertShape로 원형 변환 (템플릿 아이콘과 동일한 외형)
+// 템플릿 아이콘 duplicate/release 재앵커는 전체 재조판 시 InDesign
+// 크래시·행을 유발해 금지 (2026-08-11 5회 재현 끝에 확정).
+
+var ICON_COLORS = [
+    [65, 36, 22, 0],
+    [19, 42, 56, 0],
+    [52, 27, 39, 9],
+    [20, 41, 10, 0],
+    [44, 43, 52, 0]
+];
+
+function findOrCreateColor(doc, c, m, y, k) {
+    for (var ci = 0; ci < doc.colors.length; ci++) {
         try {
-            var st = stories[s];
-            if (st.paragraphs.length !== 1) { continue; }
-            var t = String(st.contents).replace(/[\s\r﻿￼]+/g, "");
-            if (t.length !== 1 || "ABCDE".indexOf(t) === -1) { continue; }
-            if (bank[t]) { continue; }
-            if (st.paragraphs[0].appliedParagraphStyle.name !== "[기본 단락]") { continue; }
-            var tf = st.textContainers[0];
-            if (tf.overflows) { continue; }
-            var proto = tf.duplicate();
-            try { proto.anchoredObjectSettings.releaseAnchoredObject(); } catch (eRel) {}
-            // 프로토타입은 1페이지 페이스트보드 왼쪽 바깥에 보관
-            try {
-                var sp = doc.pages[0].parent;
-                proto.move(sp);
-                proto.move(undefined, [-40 - 8 * need, 10]);
-            } catch (eMv) {}
-            bank[t] = proto;
-            need--;
+            var col = doc.colors[ci];
+            var v = col.colorValue;
+            if (v && Math.abs(v[0] - c) < 0.5 && Math.abs(v[1] - m) < 0.5 &&
+                    Math.abs(v[2] - y) < 0.5 && Math.abs(v[3] - k) < 0.5) { return col; }
         } catch (e) {}
     }
-    return bank;
+    return doc.colors.add({
+        model: ColorModel.PROCESS,
+        space: ColorSpace.CMYK,
+        colorValue: [c, m, y, k],
+        name: "SecIcon_" + c + "_" + m + "_" + y + "_" + k
+    });
 }
 
-function insertSectionIcon(doc, para, sectionIdx, iconBank) {
+function insertSectionIcon(doc, para, sectionIdx) {
     var letter = ICON_LETTERS[sectionIdx];
-    var src = iconBank ? iconBank[letter] : null;
-    if (!src || !src.isValid) {
-        throw "템플릿 원형 아이콘(" + letter + ") 없음 — 복제 불가";
-    }
-    var tf = src.duplicate();
+    var cv = ICON_COLORS[sectionIdx];
+    var color = findOrCreateColor(doc, cv[0], cv[1], cv[2], cv[3]);
+    var page = para.parentTextFrames[0].parentPage;
+    var tf = page.textFrames.add();
+    tf.geometricBounds = [0, 0, 6.3, 6.3];
+    try { tf.convertShape(ConvertShapeOptions.CONVERT_TO_OVAL); } catch (eCv) {}
+    tf.fillColor = color;
+    tf.strokeColor = color;
+    tf.strokeWeight = 1;
+    tf.contents = letter;
+    var tp = tf.parentStory.paragraphs[0];
     try {
-        // v1 v3: A=pos0, B/C/D/E=pos1 (사용자 수정본 규칙)
-        var ipIdx = (sectionIdx === 0) ? 0 : 1;
-        var ip = para.insertionPoints[ipIdx];
-        tf.anchoredObjectSettings.insertAnchoredObject(ip, AnchorPosition.INLINE_POSITION);
-    } catch (eAnchor) {
-        // 앵커 실패 시 방금 만든 (비앵커) 사본은 지워 위치 이상을 방지
-        try { tf.remove(); } catch (eRm) {}
-        throw eAnchor;
+        var basePs = doc.paragraphStyles.itemByName("[기본 단락]");
+        if (basePs.isValid) { tp.appliedParagraphStyle = basePs; }
+    } catch (ePs) {}
+    tp.pointSize = 12;
+    tp.leading = Leading.AUTO;
+    tp.baselineShift = -1;
+    try { tp.appliedFont = doc.fonts.itemByName("고도 B\tRegular"); } catch (e) {
+        try { tp.appliedFont = app.fonts.itemByName("Godo B\tRegular"); } catch (e2) {}
     }
+    tp.justification = Justification.CENTER_ALIGN;
+    tp.fillColor = doc.colors.itemByName("Paper");
+    // v1 v3: A=pos0, B/C/D/E=pos1 (사용자 수정본 규칙)
+    var ipIdx = (sectionIdx === 0) ? 0 : 1;
+    var ip = para.insertionPoints[ipIdx];
+    tf.anchoredObjectSettings.insertAnchoredObject(ip, AnchorPosition.INLINE_POSITION);
+    tf.anchoredObjectSettings.anchorYoffset = -0.72;
 }
 
 var doc = null;
@@ -337,15 +350,6 @@ try {
         storiesByArea[fl0.area] = st0;
         wlog("스토리수 " + fl0.area + ": " + st0.length);
     }
-
-    // 섹션 아이콘 은행 (배치 전 1회 — 정답지 아이콘은 템플릿 원형 복제)
-    var ICON_BANK = buildIconBank(doc);
-    var bankLetters = [];
-    for (var bl = 0; bl < ICON_LETTERS.length; bl++) {
-        if (ICON_BANK[ICON_LETTERS[bl]]) { bankLetters.push(ICON_LETTERS[bl]); }
-    }
-    wlog("아이콘 은행: " + bankLetters.join("") +
-         (bankLetters.length < 5 ? " [경고] 일부 글자 원형 아이콘 미발견" : ""));
 
     // ── 주차 텍스트 치환 (v1 issueNum GREP — 마스터 + 본문) ────────────────
     if (plan.week_text) {
@@ -445,7 +449,7 @@ try {
         for (var ii = 0; ii < icons.length; ii++) {
             if (icons[ii].p >= paras.length) { continue; }
             try {
-                insertSectionIcon(doc, paras[icons[ii].p], icons[ii].sec, ICON_BANK);
+                insertSectionIcon(doc, paras[icons[ii].p], icons[ii].sec);
                 iconOk++;
             }
             catch (e) { wlog("[경고] " + area + "[" + idx + "] 아이콘 실패: " + e); }
