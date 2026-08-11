@@ -328,6 +328,90 @@ def _hwp_build_charshape_ul(hwp):
     return ul_map
 
 
+def _hwp_build_charshape_red(hwp):
+    """DocInfo CHAR_SHAPE(tagid=21)에서 빨간 글자색 여부 맵 생성 (W51).
+
+    CharShape offset 52-55: COLORREF textColor (0x00BBGGRR).
+    순빨강(0x0000FF)만 정답 마킹으로 본다 — 인라인 정답형 원고(아잉카
+    변형문제)가 정답/해설 표기를 빨간 글자로 구분하는 관행 실측."""
+    red_map = {}
+    idx = 0
+    for rec in hwp.docinfo.records():
+        if rec.get('tagid') != 21:
+            continue
+        payload = rec.get('payload', b'')
+        is_red = False
+        if len(payload) >= 56:
+            color = struct.unpack_from('<I', payload, 52)[0]
+            is_red = (color == 0x0000FF)
+        red_map[idx] = is_red
+        idx += 1
+    return red_map
+
+
+# 발문(question) 종결 시그니처 — 인라인 정답 표의 선행 라인 판정 (W51).
+# "…고르시오." "…쓰시오." "…배열하시오." "…가장 적절한 것은?" 류.
+_RE_Q_TAIL = re.compile(r'(?:시오|것은\s*\?)\s*[.?]?\s*$')
+
+
+def _strip_inline_answer_tables(paragraphs, metas):
+    """발문 직후 인라인 정답 표(level>=2) 제거 (W51 — 구조 기반).
+
+    아잉카류 변형문제 원고는 문항 발문 '바로 다음'에 정답 표를 인라인으로
+    둔다 (객관식=정답 선지+[해설], 배열/영작=정답 문장 단일 셀, 어법=빨간
+    마킹 정답 전문, 어휘=단어 정답). 기존 파이프라인은 이 표들이 level 3
+    (각주 아님)이라 보존했고, '한국어 없는 긴 영문 표 셀 = 본문' 보호
+    휴리스틱까지 겹쳐 정답이 대량 인쇄됐다 (2026-08-11 job 0645d4a7 실증).
+
+    형식 감지(문서 단위): 발문-직후 level>=2 표 그룹 중 빨간 글자 또는
+    '[해설]' 텍스트를 품은 그룹이 2개 이상이면 인라인 정답형으로 판정,
+    **발문-직후 그룹 전부**를 제거한다 (증거 없는 그룹 = 배열/영작 정답
+    문장도 같은 위치 규칙의 정답이다). 발문-직후가 아닌 표(답란
+    '틀린 부분/수정', 책 표지)는 보존. 감지 미달 문서는 무변경."""
+    n = len(paragraphs)
+    if n != len(metas):
+        return paragraphs
+    # 연속 level>=2 그룹 수집
+    groups = []          # [(start, end_exclusive)]
+    i = 0
+    while i < n:
+        if metas[i]["lv"] >= 2:
+            j = i
+            while j < n and metas[j]["lv"] >= 2:
+                j += 1
+            groups.append((i, j))
+            i = j
+        else:
+            i += 1
+    q_adjacent = []
+    evidence = 0
+    for (a, b) in groups:
+        # 선행 비빈 level-1 라인
+        k = a - 1
+        while k >= 0 and (metas[k]["lv"] >= 2
+                          or not (paragraphs[k].get("text") or "").strip()):
+            if metas[k]["lv"] >= 2:
+                break
+            k -= 1
+        if k < 0 or metas[k]["lv"] >= 2:
+            continue
+        prev = (paragraphs[k].get("text") or "").strip()
+        if not _RE_Q_TAIL.search(prev):
+            continue
+        q_adjacent.append((a, b))
+        has_red = any(metas[x].get("red") for x in range(a, b))
+        has_expl = any("[해설]" in (paragraphs[x].get("text") or "")
+                       for x in range(a, b))
+        if has_red or has_expl:
+            evidence += 1
+    if evidence < 2:
+        return paragraphs
+    drop = set()
+    for (a, b) in q_adjacent:
+        drop.update(range(a, b))
+    return [p for x, p in enumerate(paragraphs) if x not in drop]
+
+
 def _hwp_text_with_underline(para_text_payload, charshape_pairs, ul_map):
     """PARA_TEXT payload를 디코딩하면서 charshape 기반 밑줄 run 생성."""
     # 원본 위치별 밑줄 여부 매핑
@@ -457,11 +541,15 @@ def _normalize_circled_numbers(paras):
 _RE_SRC_BAR = re.compile(r'┃[^┃]*?월\s*\d+(?:\s*~\s*\d+)?\s*번[^┃]*?┃')
 
 
-def _hwp_extract_paragraphs(hwp_path, extract_underline=False, exclude_footnotes=False):
+def _hwp_extract_paragraphs(hwp_path, extract_underline=False, exclude_footnotes=False,
+                            strip_inline_answers=False):
     """
     hwp 파일 파싱. hwpx(ZIP)이면 hwpx 파서 사용, 아니면 pyhwp + struct 디코딩.
     밑줄 추출: CHAR_SHAPE + PARA_CHAR_SHAPE 레코드 활용.
     exclude_footnotes: True면 level 3 레코드를 전부 제외 (Step3용 — 각주/미주 완전 제거).
+    strip_inline_answers: True면 발문 직후 인라인 정답 표(level>=2, 빨간
+        마킹/[해설] 증거 2개+ 문서에 한정)를 제거 (W51 — Step3 전용.
+        hwpx 경로는 해당 형식 실측 전이라 미적용).
     """
     if _hwp_is_hwpx(hwp_path):
         return _normalize_circled_numbers(
@@ -478,6 +566,8 @@ def _hwp_extract_paragraphs(hwp_path, extract_underline=False, exclude_footnotes
 
     hwp = Hwp5File(hwp_path)
     ul_map = _hwp_build_charshape_ul(hwp) if extract_underline else {}
+    red_map = _hwp_build_charshape_red(hwp) if strip_inline_answers else {}
+    metas = []   # W51: 단락별 (lv, red) — 인라인 정답 표 제거 판정용
     # HWP 본문은 여러 BodyText 섹션(Section0/1/2…)으로 나뉠 수 있다.
     # section(0)만 읽으면 두 번째 섹션 이후 단락이 통째로 누락된다.
     #   예) "스텝3 실전문제.hwp"는 54문제가 3개 섹션(4/50/0)에 흩어져 있어
@@ -634,6 +724,11 @@ def _hwp_extract_paragraphs(hwp_path, extract_underline=False, exclude_footnotes
 
         if txt:
             paragraphs.append({"text": txt, "runs": runs})
+            if strip_inline_answers:
+                has_red = any(red_map.get(sid) for _pos, sid in cs_pairs)
+                metas.append({"lv": rec_level, "red": has_red})
         i += 1
 
+    if strip_inline_answers:
+        paragraphs = _strip_inline_answer_tables(paragraphs, metas)
     return _normalize_circled_numbers(paragraphs)

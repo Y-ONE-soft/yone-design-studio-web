@@ -84,6 +84,13 @@ _RE_S3_QNUM = re.compile(r"^\d+\.\s")
 # 본문 영어 문장은 '_'가 붙은 선두 토큰 + 'N과_N' 꼬리를 동시에 갖지
 # 않아 오매치 없음 (골든 코퍼스 전수 재빌드 diff 0으로 증명).
 _RE_S3_TEXTBOOK_SRC = re.compile(r"^\S+_\S+\s+\d+과_\d+(?:\s*~\s*\d+)?$")
+# W51 (job 0645d4a7 수특라이트 실증): 부교재 변형문제 원고의 유형/출처 구분
+# 마커 "[ Type A ]" / "[ Type D (1) 어법 ]" / "[01강 - Exercise 01]" 단독
+# 라인 — kind UNKNOWN → 지문 스타일로 인쇄됨. 완제품에 불필요 — 제거
+# (교과서 출처 라인과 같은 계층 — v1 무변경, 플랜 전용).
+_RE_S3_TYPE_MARKER = re.compile(r"^\[\s*Type\b[^\[\]]{0,30}\]$", re.I)
+_RE_S3_EXERCISE_MARKER = re.compile(
+    r"^\[\s*\d+\s*강\s*[-–—]\s*Exercise\s*\d+\s*\]$", re.I)
 # v1 pass 5 번호/INTRO 휴리스틱 (run.jsx 2253~2272) — 분류기(kind)가 약한
 # 판정(UNKNOWN/K/Cond)을 내린 단락에만 오버레이. v1 실물 dump 대조에서
 # "(주관식) …쓰시오." / "…것은? [2-N]" 발문이 분류기 미인식으로 번호 스타일
@@ -467,6 +474,9 @@ def build_step3(step_data):
                     continue    # W30-r15: 교과서 실전문제 출처 라인 제거
                                 # (결함 5 — 배경 대기(arrow_pending)는
                                 # SRC 마커와 동일하게 소비하지 않고 통과)
+                if (_RE_S3_TYPE_MARKER.match(tclean)
+                        or _RE_S3_EXERCISE_MARKER.match(tclean)):
+                    continue    # W51: 유형/Exercise 출처 마커 제거
                 eff = _s3_effective_kind(kind, text)
                 # W50: 마커 판정용 괄호 이형 정규화 (표기는 tclean 보존)
                 tmark = R.norm_brackets(tclean)
@@ -2090,9 +2100,24 @@ def build_step1_c1(step_data, workbook_type="모의고사", exclude_btm=False,
 
     seen_header = False
     block_bottom_done = True
+    prev_hdr_label = None
     for it in items:
         is_hdr = bool(_RE_C1_HEADER.match(it["t"]))
         if is_hdr:
+            label = re.sub(r"\s+", "", it["t"])
+            # W51 (job 0645d4a7 수특라이트 실증): 원고가 같은 지문 헤더를
+            # 상단(카드)·하단(주어진 문장+지문) 블록에 각각 반복 표기하는
+            # 형식 — 두 번째 동일 라벨 헤더를 새 지문(NEXT_PAGE)으로 처리해
+            # 상·하단이 서로 다른 페이지로 찢어졌다. 직전 헤더와 라벨이
+            # 같으면 같은 지문의 섹션 재표기 — 유닛 경계는 하단 스타일
+            # 단락(NEXT_FRAME)이 만들므로 헤더 라인은 흡수(미출력)한다.
+            if seen_header and label == prev_hdr_label:
+                _flush()
+                cur = []
+                cur_page_break = False
+                block_bottom_done = False
+                continue
+            prev_hdr_label = label
             _flush()
             cur = []
             cur_page_break = seen_header and not is_ebs

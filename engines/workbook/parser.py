@@ -1755,7 +1755,8 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
             paras = _docx_extract_paragraphs(fpath, extract_underline)
         else:
             paras = _hwp_extract_paragraphs(fpath, extract_underline,
-                                            exclude_footnotes=step3_exclude_footnotes)
+                                            exclude_footnotes=step3_exclude_footnotes,
+                                            strip_inline_answers=True)
         # 보존 가드 스냅샷 — 책 헤더(변형문제/수능특강)는 의도적 제거이므로
         # 스냅샷에서도 제외해 허위 "내용 손실" 경고를 막는다(헤더 외 손실은 그대로 감지).
         _raw_words = _step3_content_words(_strip_step3_book_markers(paras))
@@ -1821,7 +1822,8 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
                 paras = _docx_extract_paragraphs(fpath, extract_underline)
             else:
                 paras = _hwp_extract_paragraphs(fpath, extract_underline,
-                                                exclude_footnotes=step3_exclude_footnotes)
+                                                exclude_footnotes=step3_exclude_footnotes,
+                                                strip_inline_answers=True)
             _raw_words = _step3_content_words(_strip_step3_book_markers(paras))  # 보존 가드 스냅샷(헤더 제외)
             # 첫 단락 "N강 M번 YYMMQQ" 헤더 제거
             if paras:
@@ -1878,7 +1880,8 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
                 paras = _docx_extract_paragraphs(fpath, extract_underline)
             else:
                 paras = _hwp_extract_paragraphs(fpath, extract_underline,
-                                                exclude_footnotes=step3_exclude_footnotes)
+                                                exclude_footnotes=step3_exclude_footnotes,
+                                                strip_inline_answers=True)
             # 선두/꼬리 표제·워터마크 제거 (W17 c16/c11 — 스냅샷 전에)
             paras = _strip_step3_leading_junk(paras)
             paras = _strip_step3_trailing_junk(paras)

@@ -339,6 +339,23 @@ class WorkbookV2Engine(BaseEngine):
                              workbook_type=workbook_type,
                              step_map=self._step_map())
         plan.update(self._plan_decorations(job_dir, cfg))
+        # W51 (job 0645d4a7 실증): 제외/미지원 스텝의 섹션 마커 텍스트를
+        # page_cleanup에 전달 — 제외 섹션 첫 페이지의 러닝헤더 마커 프레임
+        # ('내용 종합' 등)이 '텍스트 있는 프레임'으로 삭제 판정을 비껴가
+        # 빈 섹션 페이지가 잔존했다. 실행기는 이 텍스트와 일치하는 단일
+        # 프레임을 빈 프레임으로 취급한다 (플로우 콘텐츠 페이지의 같은
+        # 마커는 페이지에 콘텐츠가 있어 삭제 판정 자체가 안 걸린다).
+        if isinstance(plan.get("page_cleanup"), dict):
+            placed = {fl["step"] for fl in plan.get("flows", [])}
+            smap = self._step_map() or _plan_module.STEP_MAP
+            ex_markers = sorted({
+                (v.get("marker") or "").strip()
+                for k, v in smap.items()
+                if k not in placed and isinstance(v, dict) and v.get("marker")})
+            ex_markers = [m for m in ex_markers if m]
+            if ex_markers:
+                plan["page_cleanup"]["excluded_markers"] = ex_markers
+                log("[v2] 제외 섹션 마커 정리 대상: " + ", ".join(ex_markers))
         # W23 r13 F4 — question_keep 센티널(True) 확장: 데코 훅은 플랜
         # (flows)을 못 보므로 여기서 문제 시작 인덱스/스타일 계약을 계산해
         # 치환한다 (대상 스텝에 시작점이 없으면 키 제거 — 실행기 no-op).
