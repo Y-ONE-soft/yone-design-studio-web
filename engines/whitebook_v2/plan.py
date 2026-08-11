@@ -287,6 +287,10 @@ def content_to_plan(content, issue_num=""):
         "format": "wbwt-flows-v1",
         "week_text": f"{issue_num}주 차" if issue_num else None,
         "ul_style": CH["UL"],
+        # DAY 러닝헤더 = 섹션 마커(템플릿 '11'~'20') → 실제 Day 번호로
+        # 순서 매핑 (JSX가 재지정). 주차 마커('01'~'03' 0패딩)는 제외.
+        "day_numbers": [d.get("day_num") for d in days
+                        if d.get("day_num") is not None],
         "flows": flows,
     }
 

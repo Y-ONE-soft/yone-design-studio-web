@@ -390,6 +390,43 @@ try {
         }
     }
 
+    // ── DAY 러닝헤더 치환 (섹션 마커 재매핑) ────────────────────────────────
+    // 템플릿의 DAY 번호는 라이브 텍스트가 아니라 doc.sections 마커
+    // ('11'~'20', 워크북/정답지 섹션이 같은 번호 공유)로 마스터가 렌더.
+    // 주차 마커('01'~'03', 0패딩)와 'EXERCISE' 등 비숫자는 건드리지 않는다.
+    if (plan.day_numbers && plan.day_numbers.length > 0) {
+        var tplDays = [];
+        var seenM = {};
+        for (var sc = 0; sc < doc.sections.length; sc++) {
+            var mk = "";
+            try { mk = String(doc.sections[sc].marker); } catch (eM) {}
+            if (!mk.match(/^[1-9]\d*$/)) { continue; }   // 0패딩(주차)·비숫자 제외
+            if (!seenM[mk]) { seenM[mk] = true; tplDays.push(parseInt(mk, 10)); }
+        }
+        tplDays.sort(function (a, b) { return a - b; });
+        if (tplDays.length !== plan.day_numbers.length) {
+            wlog("[경고] DAY 마커 " + tplDays.length + "개 vs 실제 Day " +
+                 plan.day_numbers.length + "개 — 앞에서부터 순서 매핑");
+        }
+        var dayMap = {};
+        var nMap = Math.min(tplDays.length, plan.day_numbers.length);
+        for (var dm = 0; dm < nMap; dm++) {
+            dayMap[String(tplDays[dm])] = String(plan.day_numbers[dm]);
+        }
+        var remapped = 0;
+        for (var sc2 = 0; sc2 < doc.sections.length; sc2++) {
+            try {
+                var cur = String(doc.sections[sc2].marker);
+                if (dayMap[cur] !== undefined && dayMap[cur] !== cur) {
+                    doc.sections[sc2].marker = dayMap[cur];
+                    remapped++;
+                }
+            } catch (eS) {}
+        }
+        wlog("DAY 마커 재매핑: " + remapped + "개 섹션 (" +
+             tplDays.join(",") + " -> " + plan.day_numbers.join(",") + ")");
+    }
+
     // ── 유닛 배치 (v1 replaceContent + ops) ─────────────────────────────────
     function placeUnit(story, unit, area, idx) {
         var uParas = unit.paras || [];
