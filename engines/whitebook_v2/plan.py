@@ -283,9 +283,11 @@ def content_to_plan(content, issue_num=""):
          "units": [_unit_prac_ans(p, PR) for p in practices]},
     ]
     issue_num = str(issue_num or "").strip()
+    # 발행호 "01" → 주차 표기는 "1주 차" (앞자리 0 제거 — 사용자 확인)
+    week_num = issue_num.lstrip("0") or issue_num
     return {
         "format": "wbwt-flows-v1",
-        "week_text": f"{issue_num}주 차" if issue_num else None,
+        "week_text": f"{week_num}주 차" if issue_num else None,
         "ul_style": CH["UL"],
         # DAY 러닝헤더 = 섹션 마커(템플릿 '11'~'20') → 실제 Day 번호로
         # 순서 매핑 (JSX가 재지정). 주차 마커('01'~'03' 0패딩)는 제외.
