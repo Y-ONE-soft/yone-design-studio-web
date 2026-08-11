@@ -105,7 +105,10 @@ def _classify_problem_line(text):
     # 기타 (보기 박스 마지막 줄: "① a    ② b ...") — 선지로 처리
     if re.search(r'[①②③④⑤]', bare):
         return '선지'
-    return '문제'  # fallback
+    # 발문 뒤 비선지·비보기 긴 지문(빈칸 추론 등)은 문제(번호 매김)가
+    # 아니라 보기 박스로 — '문제' fallback이면 자동 번호가 밀린다
+    # (구형식 파일에는 이 fallback 라인이 0건 — 회귀 없음 확인)
+    return '보기'
 
 
 def parse_practice_docx(docx_path, log=None):
