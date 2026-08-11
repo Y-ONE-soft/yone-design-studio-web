@@ -529,6 +529,15 @@ class WorkbookSelectEngine(WorkbookV2Engine):
         WorkbookV2Engine.run_indesign(self, job_dir, log)
 
         settings_path = os.path.join(job_dir, ".settings.json")
+
+        # trim 보다 먼저 — 짝 스텝(상단/하단)이 따로 오버플로우 페이지를
+        # 만들어 갈라진 것을 합친다. 합치면 꼬리 프레임이 비고, 그 페이지는
+        # 바로 뒤 trim 이 지운다.
+        self._run_post_jsx(job_dir, settings_path, log,
+                           "pair_overflow.jsx", "pair_로그.txt",
+                           "===== 짝 정리 완료 =====", "[짝정리]",
+                           timeout=1800, stall=900)
+
         tpl = os.path.join(_DIR, "jsx", "trim_pages.jsx")
         if not os.path.exists(tpl):
             log("[trim] 템플릿 없음 — 건너뜀: %s" % tpl)
@@ -554,6 +563,30 @@ class WorkbookSelectEngine(WorkbookV2Engine):
         # trim 이 페이지를 지운 뒤이므로 PDF 를 다시 뽑는다 — 안 하면 PDF 만
         # trim 이전 상태로 남는다 (2026-08-08 실측 INDD 292p vs PDF 310p).
         self._reexport_pdf(job_dir, settings_path, log)
+
+    def _run_post_jsx(self, job_dir, settings_path, log, tpl_name,
+                      log_name, marker, tag, timeout=1800, stall=900):
+        """엔진 jsx/ 의 후처리 템플릿 하나를 실행한다."""
+        from core.indesign.runner import run_jsx
+
+        tpl = os.path.join(_DIR, "jsx", tpl_name)
+        if not os.path.exists(tpl):
+            log("%s 템플릿 없음 — 건너뜀: %s" % (tag, tpl))
+            return
+        with open(tpl, encoding="utf-8") as f:
+            src = f.read()
+        src = src.replace("__SETTINGS_PATH__", settings_path)
+        out = os.path.join(job_dir, tpl_name)
+        with open(out, "w", encoding="utf-8") as f:
+            f.write(src)
+        poll = os.path.join(job_dir, log_name)
+        try:
+            os.remove(poll)
+        except OSError:
+            pass
+        log("%s 시작" % tag)
+        run_jsx(out, log, poll_log_path=poll, timeout=timeout,
+                completion_marker=marker, stall_limit=stall)
 
     def _reexport_pdf(self, job_dir, settings_path, log):
         from core.indesign.runner import run_jsx
