@@ -1098,6 +1098,8 @@ def _build_wordfill(step_data, step_unit):
                 units.append(cur)
                 cur = []
             continue    # v1: 헤더 단락은 비우고 프레임브레이크만 남김
+        if det.is_absorbed(i):
+            continue    # W50: 헤더 직전 섹션 타이틀 줄 (헤더 블록 일부)
         if _is_blank(text):
             continue    # v1: insertHeaderBreaks 말미의 빈 줄 일괄 제거
         for piece_text, piece_runs in _split_tabs(text, p.get("runs") or []):
@@ -1134,6 +1136,8 @@ def build_step2_a1(step_data):
     for i, p in enumerate(step_data.get("paragraphs", []) or []):
         text = p.get("text") or ""
         runs = p.get("runs") or []
+        if det.is_absorbed(i):
+            continue    # W50: 헤더 직전 섹션 타이틀 줄 (헤더 블록 일부)
         if is_a1_header(text) or det.is_header(i):
             if seen_header and cur:
                 units.append(cur)
@@ -1168,6 +1172,8 @@ def build_step2_a1_btm(step_data):
     cur = None
     for i, p in enumerate(step_data.get("paragraphs", []) or []):
         text = p.get("text") or ""
+        if det.is_absorbed(i):
+            continue    # W50: 헤더 직전 섹션 타이틀 줄 (헤더 블록 일부)
         if det.is_header(i):
             cur = []
             units.append(cur)
@@ -1449,6 +1455,8 @@ def build_step2_b1(step_data):
                 units.append(cur)
                 cur = []
             continue
+        if det.is_absorbed(i):
+            continue    # W50: 헤더 직전 섹션 타이틀 줄 (헤더 블록 일부)
         if _is_blank(text):
             continue    # v1 insertHeaderBreaks 말미 GREP이 빈 줄 일괄 제거
         item = _mk(text, st, p.get("runs") or [])
@@ -1506,6 +1514,8 @@ def build_step2_c2(step_data, workbook_type="모의고사"):
         if (det.is_header(i) and not _c2_is_bracket(text)
                 and det.via(i) != "seq"):
             continue
+        if det.is_absorbed(i) and not _c2_is_bracket(text):
+            continue    # W50: 헤더 직전 섹션 타이틀 줄 (헤더 블록 일부)
         has_br = "[" in text and "]" in text
         eng_only = (re.search(r"[A-Za-z]", text)
                     and not re.search("[가-힣]", text)
@@ -1776,6 +1786,17 @@ def build_step1_c1(step_data, workbook_type="모의고사", exclude_btm=False,
 
     # 1) 공백만 있는 bracket 단락 제거: [   ] → 삭제
     items = [it for it in items if not _RE_C1_EMPTY_BRACKET.match(it["t"])]
+    # W50: 헤더 직전 섹션 타이틀 줄(Further Reading 류) 제거 — C1은 유닛
+    # 분할을 det가 아니라 {라벨} GREP이 담당하므로, 흡수 줄만 여기서
+    # 미리 걷어낸다 (de909e4d 실증: 타이틀 줄이 $BASIC으로 인쇄).
+    try:
+        _det_c1 = detect_headers([it["t"] for it in items],
+                                 legacy=is_header_line)
+        if _det_c1.absorbed_idx:
+            items = [it for k, it in enumerate(items)
+                     if not _det_c1.is_absorbed(k)]
+    except Exception:                                          # noqa: BLE001
+        pass
     # GREP 정규화 전 원문 (W44 부분 인식 보강의 순번·구조 판정 기준)
     orig_texts = [it["t"] for it in items]
 

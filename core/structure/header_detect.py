@@ -46,6 +46,14 @@ _RE_STEM_TAIL = re.compile(
     r"(시오\s*\.?|것은\s*\??|고르시오|것을|한다면|바꾸\S*)\s*$")
 # 정답/해설 마커 — 정답지 구간 라벨은 지문 헤더가 아니다
 _RE_ANSWERISH = re.compile(r"정답|해설|답안|답지|answer", re.I)
+# 꼬리 괄호 주석 — 헤더 본체가 아닌 부가 정보 ("1. L1-본문1(p.17) (정답 1개)"
+# 의 "(정답 1개)"). answerish는 '정답지 구간 라벨'을 배제하는 신호인데,
+# 꼬리 주석의 '정답' 토큰까지 라벨로 오인해 진짜 지문 헤더를 후보에서
+# 원천 탈락시켰다 (2026-08-11 job de909e4d 실증: step2_a1_btm 8개 헤더 전부
+# 탈락 → 24단락 무단 드롭 + 후보 0이라 침묵 가드도 미발동). answerish
+# 판정만 꼬리 괄호를 벗긴 본체로 한다 (다른 신호는 원문 그대로 — 마커
+# 토큰 "(p.17)"은 첫 괄호라 영향 없음).
+_RE_TAIL_PARENS = re.compile(r"(?:\s*\([^()]{0,30}\))+\s*$")
 # 페이지/지문 마커 토큰 (구조 신호 — 특정 헤더 '문장'이 아니라 토큰 존재만 봄)
 _MARKER_CUES = [
     re.compile(r"^\s*\[[^\]]{1,25}\]\s*$"),                   # [20], [본문1]
@@ -105,7 +113,7 @@ def line_signals(text):
         "numbered": bool(_RE_NUMBERED.match(t)),
         "marker": any(c.search(t) for c in _MARKER_CUES),
         "stem": bool(_RE_STEM.search(t) or _RE_STEM_TAIL.search(t)),
-        "answerish": bool(_RE_ANSWERISH.search(t)),
+        "answerish": bool(_RE_ANSWERISH.search(_RE_TAIL_PARENS.sub("", t))),
         "circled_row": len(_RE_CIRCLED.findall(t)) >= 2,
     }
     return sig
@@ -143,9 +151,19 @@ class Detection(object):
         self.header_idx = set()
         self.candidates = []
         self.anchor_shapes = {}
+        # 헤더 블록으로 흡수된 인접 타이틀 줄 인덱스 (Further Reading 류 —
+        # 인식된 헤더 직전의 짧은 섹션 타이틀. 유닛 경계는 아니고 제거 대상)
+        self.absorbed_idx = set()
+        # 후보 필터(answerish 등)에서 탈락했지만 강한 헤더 신호
+        # (numbered+marker+body_next)를 모두 가진 라인 수 — 침묵 가드용
+        self.suppressed_strong = 0
 
     def is_header(self, i):
         return i in self.header_idx
+
+    def is_absorbed(self, i):
+        """헤더 직전 타이틀 줄(헤더 블록의 일부) — 본문에서 제거 대상."""
+        return i in self.absorbed_idx
 
     def via(self, i):
         """인덱스 i 헤더의 인식 경로 ("legacy"/"anchor"/"shape"/"seq"/None)."""
@@ -167,8 +185,12 @@ class Detection(object):
     def silent(self):
         """침묵 실패 — 강한 구조 후보가 2+개인데 인식이 0~1개.
 
+        suppressed_strong(후보 필터에서 탈락한 강신호 라인)도 합산한다 —
+        필터 자체가 틀리면 후보가 0이 되어 가드까지 눈이 머는 구멍 봉합
+        (2026-08-11 de909e4d "(정답 1개)" 꼬리 실증).
+
         True면 호출측은 [오류]로 조판을 중단해야 한다 (경고 금지)."""
-        return (len(self.strong_candidates()) >= 2
+        return (len(self.strong_candidates()) + self.suppressed_strong >= 2
                 and len(self.header_idx) <= 1)
 
     def describe(self, limit=12):
@@ -200,8 +222,13 @@ def _detect(entries, legacy=None):
         sig = line_signals(t)
         sig["body_next"] = bool(entries[i].get("body_next"))
         sig["legacy"] = bool(t) and bool(legacy(entries[i]["t"]))
-        infos.append({"i": i, "t": t, "sig": sig,
-                      "cand": is_structural_candidate(t, sig)})
+        cand = is_structural_candidate(t, sig)
+        # 후보 탈락했지만 강한 헤더 신호 3종을 모두 가진 라인 — 침묵
+        # 가드 합산용 (필터 오류로 후보가 0이 돼도 가드는 발동해야 한다)
+        if (not cand and sig["numbered"] and sig["marker"]
+                and sig["body_next"]):
+            det.suppressed_strong += 1
+        infos.append({"i": i, "t": t, "sig": sig, "cand": cand})
 
     # 호환성 계약: legacy 인식 라인은 무조건 헤더 (제거 없음 — diff 0 하한)
     for info in infos:
@@ -335,7 +362,38 @@ def detect_headers(texts, legacy=None):
         body_next = (j < len(stripped)
                      and _eng_words(stripped[j]) >= _BODY_ENG_MIN)
         entries.append({"t": t, "body_next": body_next})
-    return _detect(entries, legacy=legacy)
+    det = _detect(entries, legacy=legacy)
+    _absorb_title_lines(det, stripped)
+    return det
+
+
+def _absorb_title_lines(det, stripped):
+    """인식된 헤더 직전의 섹션 타이틀 줄을 헤더 블록으로 흡수 (W50).
+
+    원고는 지문 헤더 위에 섹션 타이틀을 별도 줄로 둘 수 있다:
+        Further Reading                  ← 타이틀 (숫자·마커 없음)
+        8. L1-Further Reading(p.26-27)   ← 지문 헤더 (인식됨)
+    타이틀 줄은 숫자 토큰이 없어 구조 후보에서 원천 탈락 → 본문으로
+    인쇄됐다 (2026-08-11 de909e4d 실증: 5개 스텝 누출). 이름 열거
+    (_RE_SUPP 'Supplementary Reading' 특례)가 아니라 구조로 잡는다:
+    인접성(직전 비빈 줄) + 내용-포함(타이틀 텍스트 ⊂ 헤더 텍스트).
+    흡수 줄은 유닛 경계가 아니라 제거 대상 (is_absorbed로 노출 —
+    경계로 삼으면 상·하단 유닛 수가 어긋난다)."""
+    for h in sorted(det.header_idx):
+        j = h - 1
+        while j >= 0 and not stripped[j]:
+            j -= 1
+        if j < 0 or j in det.header_idx or j in det.absorbed_idx:
+            continue
+        t = stripped[j]
+        sig = line_signals(t)
+        if (not sig["short"] or sig["numbered"] or sig["stem"]
+                or sig["answerish"] or sig["circled_row"]):
+            continue
+        ct = re.sub(r"\s+", "", t).lower()
+        ch = re.sub(r"\s+", "", stripped[h]).lower()
+        if len(ct) >= 3 and ct in ch:
+            det.absorbed_idx.add(j)
 
 
 def detect_from_candidates(cands, legacy=None):
@@ -356,9 +414,11 @@ class HeaderSilenceError(ValueError):
         self.step_name = step_name
         self.detection = det
         strong = len(det.strong_candidates())
-        msg = ("[오류] %s: 구조적 헤더 후보 %d개(강한 후보 %d개) 중 인식 "
-               "%d개 — 새 헤더 형식으로 보임. 지문 분할 없이 조판하면 "
-               "통짜 유닛이 되므로 중단합니다.\n후보(신호 점수):\n%s"
+        msg = ("[오류] %s: 구조적 헤더 후보 %d개(강한 후보 %d개, 필터 "
+               "탈락 강신호 %d개) 중 인식 %d개 — 새 헤더 형식으로 보임. "
+               "지문 분할 없이 조판하면 통짜 유닛이 되므로 중단합니다.\n"
+               "후보(신호 점수):\n%s"
                % (step_name, len(det.candidates), strong,
-                  len(det.header_idx), det.describe()))
+                  det.suppressed_strong, len(det.header_idx),
+                  det.describe()))
         super(HeaderSilenceError, self).__init__(msg)
