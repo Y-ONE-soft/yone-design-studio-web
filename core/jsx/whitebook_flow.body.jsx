@@ -477,13 +477,17 @@ try {
             }
         }
 
-        // 섹션 아이콘 (v1: numbering/문자스타일 뒤) — 템플릿 원형 복제
+        // 섹션 아이콘 (v1: numbering/문자스타일 뒤).
+        // 캐시(getElements) 단락 참조는 앞쪽 앵커 문자(￼) 삽입마다 한
+        // 글자씩 밀려 C/D/E 아이콘이 이전 항목 단락 한가운데 박힌다
+        // (베타2 '위치 이상' 실측: 64→63 'make for￼', 104→103 'bu￼d').
+        // → 역순(E→A) + 매회 라이브 단건 재조회(v1 semantics)로 삽입.
         var icons = ops.icons || [];
         var iconOk = 0;
-        for (var ii = 0; ii < icons.length; ii++) {
-            if (icons[ii].p >= paras.length) { continue; }
+        for (var ii = icons.length - 1; ii >= 0; ii--) {
+            if (icons[ii].p >= story.paragraphs.length) { continue; }
             try {
-                insertSectionIcon(doc, paras[icons[ii].p], icons[ii].sec);
+                insertSectionIcon(doc, story.paragraphs[icons[ii].p], icons[ii].sec);
                 iconOk++;
             }
             catch (e) { wlog("[경고] " + area + "[" + idx + "] 아이콘 실패: " + e); }
