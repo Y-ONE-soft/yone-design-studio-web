@@ -2130,6 +2130,13 @@ def _find_manuscript_file_by_content(manuscript_dir, step_key, used_files,
     return None
 
 
+# 직전 _find_manuscript_file 호출의 채택/탈락 근거 (G1 침묵 금지).
+# 호출부가 로그로 남긴다 — "어떤 후보가 있었고 왜 이걸 골랐나"가 없으면
+# 오선택을 사람이 못 잡는다 (2026-08-08: 정답지를 문제지 대신 골라
+# 선지 본문이 통째로 빠졌는데 "원고 결손"으로 보고됨).
+_LAST_PICK = {}
+
+
 def _find_manuscript_file(manuscript_dir, expected_filename, used_files=None):
     """config에 지정된 파일명이 없을 때 유사 파일을 찾는 fallback.
 
@@ -2267,28 +2274,41 @@ def _find_manuscript_file(manuscript_dir, expected_filename, used_files=None):
         if ratio >= 0.70:
             ratio_match.append((fp, lcs, ratio))
 
+    def _pick(path, why):
+        _LAST_PICK.clear()
+        _LAST_PICK.update({
+            "picked": os.path.basename(path), "why": why,
+            "candidates": sorted(
+                os.path.basename(x) for x in
+                (exact + paren_variant + [c[0] for c in partial]
+                 + [c[0] for c in ratio_match])),
+        })
+        return path
+
     if exact:
         for c in exact:
             if os.path.splitext(c)[1].lower() == ext_expected:
-                return c
-        return exact[0]
+                return _pick(c, "파일명 일치")
+        return _pick(exact[0], "파일명 일치(확장자 다름)")
     # 괄호 변형(같은 base + 양쪽 괄호 있음)을 subsequence partial보다 우선.
     # 예: expected '...(객관식)' 있을 때 폴더에 '...(문법 기본 문제)'와 '...어법선택(괄호 없음)' 둘 다
     # 있으면, 괄호 변형인 '(문법 기본 문제)'가 정답이지 괄호 없는 본체가 아님.
     if paren_variant:
         for fp in paren_variant:
             if os.path.splitext(fp)[1].lower() == ext_expected:
-                return fp
-        return paren_variant[0]
+                return _pick(fp, "괄호 변형(같은 base)")
+        return _pick(paren_variant[0], "괄호 변형(확장자 다름)")
     if partial:
         partial.sort(key=lambda x: (
             -x[1],
             0 if os.path.splitext(x[0])[1].lower() == ext_expected else 1,
         ))
-        for fp, _ in partial:
+        for fp, sc in partial:
             if os.path.splitext(fp)[1].lower() == ext_expected:
-                return fp
-        return partial[0][0]
+                return _pick(fp, "부분 일치 LCS=%d (후보 %d개)"
+                             % (sc, len(partial)))
+        return _pick(partial[0][0], "부분 일치 LCS=%d (확장자 다름)"
+                     % partial[0][1])
     # LCS 비율 매칭 — 파일명에 토씨/공백/단어가 빠지거나 바뀌어도 의미 토큰이 충분히 겹치면 매칭.
     # 예: 기대 '어법선택(객관식)' ↔ 후보 '어법 객관식 문제' (공통 '어법객관식', 비율 86%)
     if ratio_match:
@@ -2297,10 +2317,13 @@ def _find_manuscript_file(manuscript_dir, expected_filename, used_files=None):
             -x[1],
             0 if os.path.splitext(x[0])[1].lower() == ext_expected else 1,
         ))
-        for fp, _, _ in ratio_match:
+        for fp, sc, ra in ratio_match:
             if os.path.splitext(fp)[1].lower() == ext_expected:
-                return fp
-        return ratio_match[0][0]
+                return _pick(fp, "유사도 %.2f (후보 %d개)"
+                             % (ra, len(ratio_match)))
+        return _pick(ratio_match[0][0], "유사도 %.2f (확장자 다름)"
+                     % ratio_match[0][2])
+    _LAST_PICK.clear()
     return None
 
 
