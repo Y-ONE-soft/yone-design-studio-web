@@ -107,10 +107,12 @@ def _unit_b(content, A):
         if b.get("kor"):
             keep_kor.append(len(paras))
             paras.append(_p(b["kor"], A["B_kor"]))
-    # keep_pairs: 문항(영문)과 해석이 페이지 경계에서 갈라지지 않게 결속
+    # pair_break: 문항(영문)과 해석이 프레임/페이지 경계에서 갈라지면
+    # 영문을 다음 프레임으로 브레이크 (keep 옵션은 자동크기 프레임과
+    # 맞물려 컴포저 무한루프를 유발하므로 금지 — 2026-08-11 실측)
     return {"paras": paras,
             "ops": {"expand_last": True,
-                    "keep_pairs": {"eng": keep_eng, "kor": keep_kor}}}
+                    "pair_break": {"eng": keep_eng, "kor": keep_kor}}}
 
 
 def _unit_c(content, A):

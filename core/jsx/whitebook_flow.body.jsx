@@ -402,28 +402,6 @@ try {
 
         var ops = unit.ops || {};
 
-        // 문항-해석 쌍 페이지 분리 방지 (베타2 결함: 영문과 해석이 다른
-        // 페이지로 갈라짐) — 영문 단락은 다음 1줄과 결속, 해석 단락은
-        // 줄 분리 금지 (로컬 오버라이드만 — 스타일 무수정)
-        var kp = ops.keep_pairs;
-        if (kp) {
-            var kEng = kp.eng || [];
-            for (var ke = 0; ke < kEng.length; ke++) {
-                if (kEng[ke] < paras.length) {
-                    try { paras[kEng[ke]].keepWithNext = 1; } catch (e) {}
-                }
-            }
-            var kKor = kp.kor || [];
-            for (var kk = 0; kk < kKor.length; kk++) {
-                if (kKor[kk] < paras.length) {
-                    try {
-                        paras[kKor[kk]].keepLinesTogether = true;
-                        paras[kKor[kk]].keepAllLinesTogether = true;
-                    } catch (e) {}
-                }
-            }
-        }
-
         // numberingContinue=false (v1 postProcessAnswerStory)
         var nr = ops.numbering_restart || [];
         for (var ni = 0; ni < nr.length; ni++) {
@@ -467,6 +445,38 @@ try {
 
         // 프레임 ops
         if (ops.expand_last) { expandChainLastFrame(story); }
+
+        // 문항-해석 쌍 페이지 분리 방지 (베타2 결함) — keep 옵션은 자동크기
+        // 프레임과 맞물려 컴포저 무한루프(UI 정지)를 유발해 금지. 대신
+        // 조판 확정 후 갈라진 쌍의 영문 단락만 다음 프레임으로 브레이크
+        // (일회성 하드 브레이크 — 루프 불가). expand_last 뒤에 실행해야
+        // 마지막 프레임이 늘어난 상태에서 판정한다.
+        var pb = ops.pair_break;
+        if (pb) {
+            var pbEng = pb.eng || [];
+            var pbKor = pb.kor || [];
+            var pbN = Math.min(pbEng.length, pbKor.length);
+            var broke = 0;
+            for (var pi2 = 0; pi2 < pbN; pi2++) {
+                try {
+                    if (pbKor[pi2] >= paras.length) { continue; }
+                    var pe = paras[pbEng[pi2]];
+                    var pk = paras[pbKor[pi2]];
+                    var ef = pe.parentTextFrames;
+                    var kf = pk.parentTextFrames;
+                    if (ef.length === 0 || kf.length === 0) { continue; }
+                    if (ef[ef.length - 1].id !== kf[0].id) {
+                        pe.startParagraph = StartParagraph.NEXT_FRAME;
+                        broke++;
+                    }
+                } catch (ePb) {}
+            }
+            if (broke > 0) {
+                wlog(area + "[" + idx + "] 문항-해석 쌍 프레임브레이크: " + broke);
+                // 브레이크 후 내용이 늘어난 마지막 프레임 재확장
+                if (ops.expand_last) { expandChainLastFrame(story); }
+            }
+        }
         if (ops.expand_move) { expandFrameAndMoveBelow(story, ops.expand_move); }
         if (ops.ans_frame_fix) {
             try {
