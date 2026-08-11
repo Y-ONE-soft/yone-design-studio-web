@@ -236,8 +236,11 @@ function expandFrameAndMoveBelow(story, moveStyles) {
 
 var ICON_LETTERS = ["A", "B", "C", "D", "E"];
 
-// 템플릿 원형 아이콘 은행: 낱자 A~E + [기본 단락] + 오버셋 없음인
-// 앵커 프레임을 글자별 1개 수집 (배치 전 1회 스캔)
+// 템플릿 원형 아이콘 은행: 낱자 A~E + [기본 단락] + 오버셋 없음인 앵커
+// 프레임을 글자별로 찾아, 앵커에서 분리(release)한 프로토타입 사본을
+// 페이스트보드에 만들어 둔다. 앵커된 객체를 직접 duplicate→재앵커하면
+// 컴포저 상태가 깨져 전체 재조판 시 InDesign이 크래시한다(2026-08-11
+// 3회 재현) — 반드시 '분리된 일반 프레임'을 복제 원본으로 쓴다.
 function buildIconBank(doc) {
     var bank = {};
     var need = 5;
@@ -252,7 +255,15 @@ function buildIconBank(doc) {
             if (st.paragraphs[0].appliedParagraphStyle.name !== "[기본 단락]") { continue; }
             var tf = st.textContainers[0];
             if (tf.overflows) { continue; }
-            bank[t] = tf;
+            var proto = tf.duplicate();
+            try { proto.anchoredObjectSettings.releaseAnchoredObject(); } catch (eRel) {}
+            // 프로토타입은 1페이지 페이스트보드 왼쪽 바깥에 보관
+            try {
+                var sp = doc.pages[0].parent;
+                proto.move(sp);
+                proto.move(undefined, [-40 - 8 * need, 10]);
+            } catch (eMv) {}
+            bank[t] = proto;
             need--;
         } catch (e) {}
     }
@@ -265,16 +276,14 @@ function insertSectionIcon(doc, para, sectionIdx, iconBank) {
     if (!src || !src.isValid) {
         throw "템플릿 원형 아이콘(" + letter + ") 없음 — 복제 불가";
     }
-    var page = para.parentTextFrames[0].parentPage;
-    var tf = null;
-    try { tf = src.duplicate(page); } catch (eDup) { tf = src.duplicate(); }
+    var tf = src.duplicate();
     try {
         // v1 v3: A=pos0, B/C/D/E=pos1 (사용자 수정본 규칙)
         var ipIdx = (sectionIdx === 0) ? 0 : 1;
         var ip = para.insertionPoints[ipIdx];
         tf.anchoredObjectSettings.insertAnchoredObject(ip, AnchorPosition.INLINE_POSITION);
     } catch (eAnchor) {
-        // 앵커 실패 시 페이지 구석에 프레임을 남기지 않는다(위치 이상 방지)
+        // 앵커 실패 시 방금 만든 (비앵커) 사본은 지워 위치 이상을 방지
         try { tf.remove(); } catch (eRm) {}
         throw eAnchor;
     }
@@ -526,8 +535,10 @@ try {
     }
 
     // 페이스트보드 스트레이 정리 — 템플릿에 남아 있던 페이지 밖(오버셋)
-    // 프레임은 프리플라이트 오류만 만들고 인쇄에는 안 나온다 → 제거
-    var strayRemoved = 0;
+    // 프레임은 프리플라이트 오류만 만들고 인쇄에는 안 나온다. 프레임
+    // remove()는 직후 전체 재조판에서 InDesign 크래시를 유발해 금지
+    // (2026-08-11 재현) — 텍스트만 비워 오버셋을 해소한다.
+    var strayCleared = 0;
     var allTfs0 = doc.textFrames.everyItem().getElements();
     for (var sr = 0; sr < allTfs0.length; sr++) {
         try {
@@ -537,16 +548,14 @@ try {
                     srTxt = String(allTfs0[sr].parentStory.paragraphs[0].contents)
                         .substr(0, 20).replace(/\r/g, "");
                 } catch (eS) {}
-                allTfs0[sr].remove();
-                strayRemoved++;
-                wlog("페이스트보드 오버셋 프레임 제거: \"" + srTxt + "...\"");
+                allTfs0[sr].parentStory.contents = "";
+                strayCleared++;
+                wlog("페이스트보드 오버셋 텍스트 비움: \"" + srTxt + "...\"");
             }
         } catch (e) {}
     }
-    if (strayRemoved > 0) { wlog("페이스트보드 정리: " + strayRemoved + "개 제거"); }
+    if (strayCleared > 0) { wlog("페이스트보드 정리: " + strayCleared + "개 비움"); }
 
-    // 리플로우를 한 번에 확정(keep/자동크기/앵커 삽입 뒤 개별 recompose 반복 방지)
-    try { doc.recompose(); } catch (eRc) {}
     wlog("오버플로우 집계 시작");
 
     // 오버플로우 집계 — v1 파리티: doc.textFrames 순회 (앵커된 아이콘 소형
