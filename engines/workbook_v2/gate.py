@@ -2437,6 +2437,35 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                 f"{len(det.candidates)}개 중 인식 0개 — 새 헤더 형식 의심: "
                 + det.candidates[0]["t"][:40])
 
+    # ── G35 [정답누출] (W53) — 해설/원문변형 마커가 출력에 인쇄됨 ────────
+    # 인라인 정답형 원고(아잉카류)의 정답 표가 스트립을 비껴가면 '[해설]'
+    # 블록·'⚹ 원문 변형' 표기·원문→수정(→) 쌍이 문제면에 그대로 인쇄된다
+    # (475e4d58 2강 실증: 발문 '…문장은?'이 발문 판정을 비껴가 무관문장
+    # 정답 표 누출 — AI 검수는 CLI 미로그인으로 죽어 있어 아무도 못 잡음).
+    # AI 검수와 별개로 결정론 게이트가 마커를 직접 지목한다.
+    ans_leak = []
+    for t, _s in _dump_paras(dump):
+        tt = _clean(t)
+        if not tt:
+            continue
+        if ("[해설]" in tt or re.search(r"[⚹*✱]?\s*원문\s*변형", tt)
+                or tt.startswith("모범답안") or "모범 답안" in tt[:12]):
+            ans_leak.append(tt[:60])
+            continue
+        # 원문→수정 쌍의 수정문: '→' 시작 + 긴 영문 문장 (475e4d58 실증 —
+        # [해설] 마커 셀은 각주 분류로 이미 제거되고 수정문만 살아남는다).
+        # 답란 '→ m____'/'→\t' 류는 영단어가 적어 안 걸리고, 빈칸 라벨
+        # ((ㄱ)/(A) 류)이 있는 줄은 채울 문제 재료라 제외.
+        if tt.startswith("→") and "_" not in tt \
+                and not re.search(r"\(\s*[ㄱ-ㅎA-E가-힣]\s*\)", tt) \
+                and len(re.findall(r"[A-Za-z][A-Za-z']{2,}", tt)) >= 8:
+            ans_leak.append(tt[:60])
+    stats["answer_leak_markers"] = len(ans_leak)
+    if ans_leak:
+        critical.append(f"[정답누출] {len(ans_leak)}개 단락에 해설/원문변형 "
+                        f"마커가 인쇄됨 — 문제면에 정답 노출: "
+                        + " | ".join(sorted(set(ans_leak))[:5]))
+
     # ── G34 [아이콘누락] (W50) — 플랜 아이콘 지시 vs 출력 앵커(￼) 수 ────
     # place 모드 아이콘(어법OX TF 버튼)이 링크 파일 접근 실패로 문항마다
     # 조용히 0을 리턴해 90개 전부 빠졌는데 어떤 게이트도 안 잡았다

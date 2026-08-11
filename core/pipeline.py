@@ -226,7 +226,14 @@ def run_pipeline(engine, job_id: str, job_dir: str, uploaded: dict):
                                 f"[AI검수] 👁 확인 필요 p{fd.get('page')}: "
                                 f"{fd.get('detail')}")
             except Exception as _ra_e:
-                log(f"[AI검수] 건너뜀 (검수 실패가 조판을 막지 않음): {_ra_e}")
+                # W53: 침묵 금지 — 검수 에이전트가 죽으면 사용자에게 보이는
+                # warnings에 합류시킨다 (475e4d58 실증: CLI 미로그인으로
+                # 검수가 매번 죽는데 review_result.json에만 남아 아무도
+                # 몰랐다). 판정은 여전히 advisory — ok 무영향.
+                log(f"[AI검수] ⚠ 검수 에이전트 실행 실패: {_ra_e}")
+                result.setdefault("warnings", []).append(
+                    f"[AI검수] ⚠ 검수 에이전트가 실행되지 못했습니다 — "
+                    f"이번 조판은 AI 검수 없이 나갔습니다: {_ra_e}")
 
         # PDF를 목업 IN 폴더에 자동 복사
         pdf_path = result.get("pdf_path")

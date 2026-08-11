@@ -87,7 +87,10 @@ _FALLBACK_CHECKLIST = """\
 | C5 | 여백/빈 공간 | 비정상 공백, 반쯤 빈 페이지, 여백 침범 |
 | C6 | 간지/머리말 | 간지 제목·머리말·쪽번호가 단원과 일치 |
 | C7 | 이미지/아이콘 | 깨짐, 저해상, placeholder, 어긋난 인라인 아이콘 |
-| C8 | 좌/우 마스터 | 좌우 페이지 여백 방향·단 구성 |"""
+| C8 | 좌/우 마스터 | 좌우 페이지 여백 방향·단 구성 |
+| C9 | 정답 누출 | 문제면에 정답이 보임: 발문 직후 정답 번호(①~⑤ 단독), \
+[해설] 블록, '원문 변형' 표기, 원문→수정(→) 문장 쌍, 빈칸 없는 정답 완성문. \
+문제책에 정답·해설이 인쇄되면 무조건 fail |"""
 
 
 def _repo_root():
@@ -303,13 +306,33 @@ def invoke_claude(prompt, job_dir, log, model=None, timeout=None, budget=None):
                         stdin=subprocess.DEVNULL, capture_output=True,
                         text=True)
     wall_s = round(time.time() - t0, 1)
+    # W53: 실패 원인을 사람이 읽을 수 있게 — CLI 결과 JSON의 result 필드
+    # (예: "Not logged in · Please run /login")를 앞세운다. 기존에는 JSON
+    # 꼬리 500자만 남아 usage 덤프에 원인이 묻혔다 (0645d4a7·475e4d58
+    # 실증: 검수가 매번 인증 실패로 죽는데 아무도 몰랐다).
+    def _cli_reason(stdout_text):
+        try:
+            o = json.loads((stdout_text or "").strip().splitlines()[-1])
+            if o.get("is_error"):
+                return str(o.get("result") or "")[:200]
+        except (ValueError, IndexError):
+            pass
+        return ""
     if cp.returncode != 0:
-        tail = (cp.stderr or cp.stdout or "")[-500:]
-        raise RuntimeError(f"claude 종료코드 {cp.returncode}: {tail}")
+        reason = _cli_reason(cp.stdout)
+        tail = reason or (cp.stderr or cp.stdout or "")[-500:]
+        hint = (" — 서버에서 claude CLI 로그인 필요 (터미널에서 `claude` "
+                "실행 후 /login)") if "Not logged in" in (reason or tail) else ""
+        raise RuntimeError(f"claude 종료코드 {cp.returncode}: {tail}{hint}")
     try:
         obj = json.loads(cp.stdout.strip().splitlines()[-1])
     except (ValueError, IndexError):
         raise RuntimeError(f"claude 출력 JSON 파싱 실패: {cp.stdout[-300:]}")
+    if obj.get("is_error"):
+        reason = str(obj.get("result") or "")[:200]
+        hint = (" — 서버에서 claude CLI 로그인 필요 (터미널에서 `claude` "
+                "실행 후 /login)") if "Not logged in" in reason else ""
+        raise RuntimeError(f"claude 실행 오류: {reason}{hint}")
     meta = {
         "wall_s": wall_s,
         "cost_usd": obj.get("total_cost_usd"),
