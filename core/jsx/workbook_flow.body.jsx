@@ -659,6 +659,24 @@ function cleanupPages(doc, flowStories, op) {
     // 대신 삭제한다 (실사용 0e3108fd: 빈 M 페이지 84개 잔존이 사용자 지목
     // 결함. 'M 마스터 보존'은 v1 관행이었으나 완제품 기준으로 폐기 확정).
     var deleteEmpty = (op.empty === "delete");
+    // W51: 제외/미지원 스텝의 섹션 마커 텍스트 — 이 텍스트만 남은 단일
+    // 프레임은 빈 프레임 취급 (제외 섹션 첫 페이지의 러닝헤더 마커
+    // '내용 종합'이 '텍스트 있음'으로 삭제 판정을 비껴가 잔존 —
+    // job 0645d4a7 실증. 배치 섹션의 같은 마커 페이지는 플로우 콘텐츠가
+    // 있어 삭제 판정에 애초에 안 걸린다).
+    var exMarkers = {};
+    if (op.excluded_markers && op.excluded_markers.length) {
+        for (var xm = 0; xm < op.excluded_markers.length; xm++) {
+            exMarkers[String(op.excluded_markers[xm])] = true;
+        }
+    }
+    function isExcludedMarkerFrame(tf, pst, nConts) {
+        if (nConts !== 1) { return false; }
+        var c = "";
+        try { c = String(pst.contents || ""); } catch (e) { return false; }
+        c = c.replace(/^[\s\r\n ￼]+|[\s\r\n ￼]+$/g, "");
+        return !!(c && exMarkers[c]);
+    }
     // 1) 보호 경계 계산
     var cleanStart = -1;      // 첫 콘텐츠 섹션 페이지 offset
     var step3Story = null;
@@ -824,6 +842,10 @@ function cleanupPages(doc, flowStories, op) {
             var frameBlank = isBlankFrameContent(tfs[tf]);
             var frameBareNum = (nConts === 1
                                 && RE_BARE_NUM.test(String(pst.contents || "")));
+            // W51: 제외 섹션 마커만 남은 단일 프레임 = 빈 프레임 취급
+            if (!frameBlank && isExcludedMarkerFrame(tfs[tf], pst, nConts)) {
+                frameBlank = true;
+            }
             // W22 r12 (delete 모드): 수집된 반복 장식 텍스트와 같은 단일
             // 프레임(발문/섹션 탭)은 빈 프레임 취급 — p34/p47류 잔존 교정
             var frameFurn = false;
@@ -1441,6 +1463,14 @@ function fixSectionMasters(doc, flowStories) {
 // p122 잔재 — v1 16.7도 같은 조건이라 실물 동일), 이 계열 내지에서 마스터
 // [None]+프레임 1개+한글 첫 단락 조합은 간지뿐이라 좌우 무관하게 안전
 // (c04/c05/c20 덤프 실측 — 매칭 스토리 전부 간지 라벨).
+// W51 (job 0645d4a7 수특라이트 실증): 커스텀 내지의 간지 프레임이 그룹
+// 안에 있거나 페이지에 장식 프레임이 더 있으면 기존 '직속 텍스트프레임
+// 정확히 1개' 조건이 실패해 업데이트 0개 — 원본 문구('26년 3월')가 그대로
+// 인쇄됐다. 프레임 열거를 allPageItems(그룹 내부 포함)로 넓히고, 판정을
+// 프레임 수가 아니라 '간지 프레임 구조'(단락 2+ / 첫 단락 한글 / 2행이
+// 기수 표기(YY년 M월·N강·N과·Unit N) 또는 후보 유일)로 바꾼다.
+var RE_DIVIDER_LINE2 = /^\s*(?:\d+\s*년\s*\d+\s*월|\d+\s*강|\d+\s*과|Unit\s*\.?\s*\d*)\s*$/i;
+
 function updateDividerPages(doc, line1, line2) {
     var n = 0;
     for (var dpi = 0; dpi < doc.pages.length; dpi++) {
@@ -1448,12 +1478,39 @@ function updateDividerPages(doc, line1, line2) {
         var masterName = "";
         try { masterName = dpg.appliedMaster ? dpg.appliedMaster.name : ""; } catch (e) {}
         if (masterName !== "" && masterName !== "[None]") { continue; }
-        if (dpg.textFrames.length !== 1) { continue; }
-        var divTf = dpg.textFrames[0];
-        var divParas = divTf.paragraphs;
-        if (divParas.length < 2) { continue; }
-        var p1 = String(divParas[0].contents || "").replace(/[\r\n]+$/, "");
-        if (!/[가-힣]/.test(p1)) { continue; }
+        // 그룹 내부 프레임 포함 전체 텍스트프레임 수집
+        var tfs = [];
+        try {
+            var itemsAll = dpg.allPageItems;
+            for (var ai = 0; ai < itemsAll.length; ai++) {
+                try {
+                    if (itemsAll[ai] instanceof TextFrame) { tfs.push(itemsAll[ai]); }
+                } catch (eI) {}
+            }
+        } catch (eA) {}
+        // 간지 후보: 단락 2개 이상 + 첫 단락 한글
+        var cands = [];
+        for (var ti = 0; ti < tfs.length; ti++) {
+            var cps = tfs[ti].paragraphs;
+            if (cps.length < 2) { continue; }
+            var c1 = String(cps[0].contents || "").replace(/[\r\n]+$/, "");
+            if (!/[가-힣]/.test(c1)) { continue; }
+            cands.push(tfs[ti]);
+        }
+        if (cands.length === 0) { continue; }
+        var target = null;
+        if (cands.length === 1) {
+            target = cands[0];
+        } else {
+            // 복수 후보면 2행이 간지 기수 표기인 프레임만
+            for (var ci = 0; ci < cands.length; ci++) {
+                var c2 = String(cands[ci].paragraphs[1].contents || "")
+                    .replace(/[\r\n]+$/, "");
+                if (RE_DIVIDER_LINE2.test(c2)) { target = cands[ci]; break; }
+            }
+        }
+        if (!target) { continue; }
+        var divParas = target.paragraphs;
         try {
             divParas[0].contents = line1 + "\r";
             divParas[1].contents = line2 + "\r";
@@ -1461,6 +1518,11 @@ function updateDividerPages(doc, line1, line2) {
         } catch (e) {}
     }
     wlog("간지 텍스트 업데이트: " + n + "개 (" + line1 + " / " + line2 + ")");
+    if (n === 0) {
+        // W51: 침묵 금지 — 간지를 하나도 못 찾으면 [경고]로 지목
+        wlog("[경고] 간지 텍스트 업데이트 0개 — 간지 프레임 구조가 "
+             + "기대(마스터 없음 페이지 + 한글 2단락 프레임)와 다름");
+    }
 }
 
 // ── 교과서 후처리 (v1 run.jsx 16.8 이식 — plan.textbook_postprocess) ────────

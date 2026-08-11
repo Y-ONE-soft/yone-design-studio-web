@@ -346,8 +346,9 @@ class WorkbookV2Engine(BaseEngine):
         # 프레임을 빈 프레임으로 취급한다 (플로우 콘텐츠 페이지의 같은
         # 마커는 페이지에 콘텐츠가 있어 삭제 판정 자체가 안 걸린다).
         if isinstance(plan.get("page_cleanup"), dict):
+            from engines.workbook_v2.plan import STEP_MAP as _DEFAULT_STEP_MAP
             placed = {fl["step"] for fl in plan.get("flows", [])}
-            smap = self._step_map() or _plan_module.STEP_MAP
+            smap = self._step_map() or _DEFAULT_STEP_MAP
             ex_markers = sorted({
                 (v.get("marker") or "").strip()
                 for k, v in smap.items()

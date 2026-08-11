@@ -351,7 +351,10 @@ def _hwp_build_charshape_red(hwp):
 
 # 발문(question) 종결 시그니처 — 인라인 정답 표의 선행 라인 판정 (W51).
 # "…고르시오." "…쓰시오." "…배열하시오." "…가장 적절한 것은?" 류.
-_RE_Q_TAIL = re.compile(r'(?:시오|것은\s*\?)\s*[.?]?\s*$')
+# 꼬리 괄호 주석 허용: "…고치시오. (틀린 부분 3개)" (0645d4a7 실측 —
+# 이 꼬리 때문에 어법수정 6문항의 빨간 정답 전문이 판정을 비껴갔다).
+_RE_Q_TAIL = re.compile(
+    r'(?:시오|것은\s*\?)\s*[.?]?\s*(?:\([^()]{0,30}\)\s*)?$')
 
 
 def _strip_inline_answer_tables(paragraphs, metas):
