@@ -80,10 +80,18 @@ class WorkbookSelectEngine(WorkbookV2Engine):
         return {
             "slots": [
                 {
-                    "key": "codes",
-                    "label": "문항 코드 (YYMMQQ, 순서대로 — 줄바꿈/콤마 구분)",
+                    "key": "mt_gang",
+                    "label": "마더텅 강 번호 (예: 11) — 넣으면 코드는 "
+                             "지문 출처 엑셀에서 자동 조달",
                     "type": "text",
-                    "required": True,
+                    "required": False,
+                },
+                {
+                    "key": "codes",
+                    "label": "문항 코드 (YYMMQQ, 순서대로 — 줄바꿈/콤마 구분). "
+                             "강 번호를 넣었으면 비워둘 것",
+                    "type": "text",
+                    "required": False,
                 },
                 {
                     "key": "result_name",
@@ -223,20 +231,44 @@ class WorkbookSelectEngine(WorkbookV2Engine):
 
         codes_text = uploaded_files.get("codes", "") or \
             self._get_meta(job_dir, "codes", "")
-        codes = self._parse_codes(codes_text)
-        log("[코드] %d개" % len(codes))
 
-        # 마더텅 지문번호 — 엑셀(강별 열 × 행)에서 조달. 사용자 확정 스펙
-        # (2026-08-07): 조판 순서와 지문번호를 이 번호로 맞춘다. 순차
-        # 1,2,3,4 로 다시 매기지 않는다 (짝수만 뽑힌 워크북이면 2,4,6…).
-        mt_numbers = {}
-        mt_gang = self._get_meta(job_dir, "mt_gang", "") or cfg.get("mt_gang")
+        mt_gang = (uploaded_files.get("mt_gang", "")
+                   or self._get_meta(job_dir, "mt_gang", "")
+                   or cfg.get("mt_gang"))
         try:
             mt_gang = int(mt_gang) if mt_gang else None
         except (TypeError, ValueError):
             mt_gang = None
-        mt_index = _mt.load_index(cfg.get("motherteng_xlsx"))
-        if mt_index:
+
+        # 코드를 직접 안 주면 강 번호로 엑셀에서 조달한다 (사용자 요청
+        # 2026-08-08: "엑셀에서 해당 번호 읽어서 바로 작업"). 코드를 준
+        # 경우는 그쪽이 우선 — 강 밖 지문을 섞는 워크북도 가능해야 한다.
+        mt_numbers = {}
+        if not codes_text.strip():
+            if mt_gang is None:
+                raise ValueError(
+                    "문항 코드를 입력하거나 마더텅 강 번호를 지정하세요.")
+            codes, mt_numbers, col = _mt.codes_for_gang(
+                cfg.get("motherteng_xlsx"), mt_gang, log=log)
+            if not codes:
+                raise ValueError(
+                    "마더텅 %s강을 지문 출처 엑셀에서 찾지 못했습니다: %s"
+                    % (mt_gang, cfg.get("motherteng_xlsx")))
+            log("[코드] %d개 — 엑셀 '%s' 에서 조달" % (len(codes), col))
+        else:
+            codes = self._parse_codes(codes_text)
+            log("[코드] %d개 (직접 입력)" % len(codes))
+
+        # 마더텅 지문번호 — 엑셀(강별 열 × 행)에서 조달. 사용자 확정 스펙
+        # (2026-08-07): 조판 순서와 지문번호를 이 번호로 맞춘다. 순차
+        # 1,2,3,4 로 다시 매기지 않는다 (짝수만 뽑힌 워크북이면 2,4,6…).
+        mt_index = {} if mt_numbers else _mt.load_index(
+            cfg.get("motherteng_xlsx"))
+        if mt_numbers:
+            codes = _mt.sort_by_number(codes, mt_numbers)
+            log("[마더텅] 지문번호 %s"
+                % ", ".join(str(mt_numbers[c]) for c in codes))
+        elif mt_index:
             mt_numbers = _mt.numbers_for(mt_index, codes, gang=mt_gang)
             if mt_numbers:
                 codes = _mt.sort_by_number(codes, mt_numbers)

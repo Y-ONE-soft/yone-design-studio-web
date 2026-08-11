@@ -87,6 +87,91 @@ def load_index(xlsx_path, header_row=3, first_col=1):
     return index
 
 
+def load_columns(xlsx_path, header_row=3, first_col=1):
+    """엑셀 → [(강번호, 열이름, [(no, code), ...])] — 열을 합치지 않고 그대로.
+
+    load_index 는 강별로 항목이 많은 열 하나만 남기지만, **조판 대상 선택분은
+    항목이 적은 쪽 열**인 경우가 있다(실측: '11 빈칸 추론' 75개=전체,
+    '11 빈칸추론' 20개=이 워크북의 선택분). 강 번호만으로 코드를 뽑으려면
+    두 열을 다 봐야 한다.
+    """
+    path = os.path.expanduser(xlsx_path or "")
+    if not path or not os.path.exists(path):
+        return []
+    try:
+        import openpyxl
+    except ImportError:
+        return []
+    try:
+        wb = openpyxl.load_workbook(path, data_only=True, read_only=True)
+    except Exception:
+        return []
+    sheet = wb[wb.sheetnames[0]]
+    rows = [list(r) for r in sheet.iter_rows(values_only=True)]
+    if len(rows) < header_row:
+        return []
+    header = rows[header_row - 1]
+
+    cols = []
+    for ci in range(first_col, len(header)):
+        name = _nfc(header[ci])
+        if not name:
+            continue
+        m = _RE_GANG.match(name)
+        if not m:
+            continue
+        entries = []
+        for r in rows[header_row:]:
+            if ci >= len(r):
+                continue
+            code = _nfc(r[ci])
+            if not _RE_CODE.match(code):
+                continue
+            try:
+                no = int(_nfc(r[0]))
+            except (TypeError, ValueError):
+                continue
+            entries.append((no, code))
+        if entries:
+            cols.append((int(m.group(1)), name, entries))
+    return cols
+
+
+def codes_for_gang(xlsx_path, gang, log=None):
+    """강 번호만으로 조판 대상 코드를 뽑는다 → (codes, numbers, 채택열이름).
+
+    codes  : 마더텅 번호 오름차순 코드 리스트 (그대로 조판 순서)
+    numbers: {code: 마더텅 지문번호}
+
+    선택 규칙 — 같은 강에 열이 여럿이면 **항목이 적은 쪽(부분집합)** 이
+    이 워크북의 선택분이다. 번호는 어느 열에서 읽어도 같은 행 기준이라
+    동일하다. 열이 하나뿐이면 그 열 전체가 대상.
+    침묵 금지: 어느 열을 왜 골랐는지 로그로 남긴다.
+    """
+    cols = [c for c in load_columns(xlsx_path) if c[0] == int(gang)]
+    if not cols:
+        if log:
+            log("[마더텅] 엑셀에 %s강 열 없음" % gang)
+        return [], {}, ""
+    cols.sort(key=lambda c: len(c[2]))
+    gang_no, name, entries = cols[0]
+    if log and len(cols) > 1:
+        log("[마더텅] %d강 열 %d개 — '%s'(%d개) 채택 / 후보: %s"
+            % (gang_no, len(cols), name, len(entries),
+               ", ".join("'%s'(%d)" % (c[1], len(c[2])) for c in cols)))
+    elif log:
+        log("[마더텅] %d강 '%s' %d개" % (gang_no, name, len(entries)))
+    entries = sorted(entries, key=lambda t: t[0])
+    codes, numbers, seen = [], {}, set()
+    for no, code in entries:
+        if code in seen:
+            continue
+        seen.add(code)
+        codes.append(code)
+        numbers[code] = no
+    return codes, numbers, name
+
+
 def numbers_for(index, codes, gang=None):
     """코드 리스트 → {code: 마더텅 번호}. gang 지정 시 그 강만 인정."""
     out = {}
