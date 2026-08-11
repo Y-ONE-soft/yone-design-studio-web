@@ -2373,6 +2373,12 @@ def parse_manuscript_folder(manuscript_dir, config, grade, year, month, log=None
         if not os.path.exists(fpath):
             # fallback: 파일명 공백/확장자 유연 매칭 (used_files 제외)
             found = _find_manuscript_file(manuscript_dir, filename, used_files)
+            if found and _LAST_PICK:
+                # G1 침묵 금지 — 어떤 후보 중 무엇을 왜 골랐는지 남긴다
+                log("[선택] %s: '%s' — %s / 후보: %s"
+                    % (step_key, _LAST_PICK.get("picked"),
+                       _LAST_PICK.get("why"),
+                       ", ".join(_LAST_PICK.get("candidates") or []) or "없음"))
             if not found:
                 # 이름으로 못 찾으면 내용(발문)으로 판별 — 파일명 방언 흡수
                 found = _find_manuscript_file_by_content(
@@ -2382,7 +2388,8 @@ def parse_manuscript_folder(manuscript_dir, config, grade, year, month, log=None
                 filename = os.path.basename(found)
                 used_files.add(found)
             else:
-                log(f"[파서] 파일 없음, 건너뜀: {filename}")
+                log(f"[파서] 파일 없음, 건너뜀: {filename} "
+                    f"(기대 파일명 기준 매칭 후보 0개)")
                 continue
 
         extract_ul = step_key in needs_ul

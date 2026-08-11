@@ -40,6 +40,10 @@ _JSX_TEMPLATE = os.path.join(
 
 _MS_EXTS = (".docx", ".hwp", ".hwpx")
 
+# 문항당 유닛 수가 원래 가변인 스텝 (문장배열=순서+삽입, 본문정리=지문+문제)
+# — 나머지 스텝은 "문항 1개 = 유닛 1개"가 계약이다.
+_VARIABLE_UNIT_STEPS = {"step1_b1", "step1_c1"}
+
 
 def _nfc(s):
     return unicodedata.normalize("NFC", s)
@@ -435,7 +439,75 @@ class WorkbookSelectEngine(WorkbookV2Engine):
         os.makedirs(out_dir, exist_ok=True)
         self._select_output_dir = out_dir
         log("[출력 폴더] %s" % out_dir)
-        return WorkbookV2Engine.prepare_jsx(self, json_path, job_dir, log)
+        jsx_path = WorkbookV2Engine.prepare_jsx(self, json_path, job_dir, log)
+        self._check_plan_invariants(job_dir, json_path, log)
+        return jsx_path
+
+    # ── G2: 구조 불변식 — 조판 전에 깨지면 멈춘다 ───────────────────────
+    #
+    # 조판이 끝난 뒤엔 이 결함들이 오버셋·링크·폰트·중복 검사를 전부
+    # 통과해버려 사람 눈에만 걸린다. 실측 2026-08-08:
+    #   - 짝 스텝 유닛수 불일치(20 vs 17) → 상·하단 13페이지가 다른 지문끼리
+    #   - 원문자 단락마다 유닛 분할(17문항이 48·57유닛) → 프레임 3배
+    # 둘 다 플랜 단계에서 숫자 하나로 잡힌다.
+
+    def _check_plan_invariants(self, job_dir, json_path, log):
+        from engines.workbook_select.merge_select import ALIGNED_STEPS
+
+        plan_path = os.path.join(job_dir, "render_plan.json")
+        if not os.path.exists(plan_path):
+            settings = os.path.join(job_dir, ".settings.json")
+            if os.path.exists(settings):
+                plan_path = json.load(
+                    open(settings, encoding="utf-8")).get("plan_path", "")
+        if not plan_path or not os.path.exists(plan_path):
+            log("[불변식] render_plan.json 없음 — 검사 생략")
+            return
+
+        plan = json.load(open(plan_path, encoding="utf-8"))
+        units = {f.get("step"): len(f.get("units") or [])
+                 for f in plan.get("flows") or []}
+        cov_path = os.path.join(job_dir, "coverage.json")
+        n_codes = 0
+        if os.path.exists(cov_path):
+            n_codes = len(json.load(
+                open(cov_path, encoding="utf-8")).get("codes") or [])
+
+        errors = []
+
+        # (1) 짝 스텝은 유닛 수가 같아야 한다 — 한 페이지에 같이 얹히므로
+        for a, b in ALIGNED_STEPS.items():
+            if a in units and b in units and units[a] != units[b]:
+                errors.append(
+                    "짝 스텝 유닛수 불일치: %s=%d vs %s=%d "
+                    "(그대로 조판하면 상·하단이 다른 지문끼리 붙는다)"
+                    % (a, units[a], b, units[b]))
+
+        # (2) 문항 1개 = 유닛 1개인 스텝은 유닛 수가 문항 수와 정확히 같아야
+        #     한다. 문장배열(순서+삽입)·본문정리처럼 문항당 유닛 수가 원래
+        #     가변인 스텝은 제외하고 로그만 남긴다.
+        if n_codes:
+            for step, n in sorted(units.items()):
+                if step in _VARIABLE_UNIT_STEPS:
+                    if n < n_codes:
+                        errors.append(
+                            "%s 유닛수 %d < 문항수 %d (문항 누락)"
+                            % (step, n, n_codes))
+                    continue
+                if n != n_codes:
+                    errors.append(
+                        "%s 유닛수 %d ≠ 문항수 %d "
+                        "(한 문항이 여러 프레임으로 쪼개졌거나 빠졌다)"
+                        % (step, n, n_codes))
+
+        log("[불변식] 문항 %d개 / 유닛: %s"
+            % (n_codes, ", ".join("%s=%d" % (k, v)
+                                  for k, v in sorted(units.items()))))
+        if errors:
+            for e in errors:
+                log("[불변식 실패] " + e)
+            raise ValueError("조판 전 구조 검사 실패:\n  " + "\n  ".join(errors))
+        log("[불변식] 통과")
 
     def run_indesign(self, job_dir, log, **kwargs):
         """v2 조판 후 trim 후처리(jsx/trim_pages.jsx)를 이어서 실행한다.
