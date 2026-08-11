@@ -568,6 +568,7 @@ try {
     var ovfPages = [];
     var allTfs = doc.textFrames.everyItem().getElements();
     for (var s3 = 0; s3 < allTfs.length; s3++) {
+        if (s3 % 50 === 0) { wlog("  집계 " + s3 + "/" + allTfs.length); }
         try {
             if (allTfs[s3].overflows) {
                 ovf++;
