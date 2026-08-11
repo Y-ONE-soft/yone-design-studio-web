@@ -173,18 +173,17 @@ function expandChainLastFrame(story) {
     try {
         var c = story.textContainers;
         if (c.length === 0) { return; }
-        // 베타2 결함: 자동 크기 기준점이 CENTER면 프레임이 페이지 중앙으로
-        // 수축한다(내용이 페이지 가운데 떠 있음). 체인 전체를 TOP 고정으로.
-        for (var i = 0; i < c.length; i++) {
-            try {
-                var tfp = c[i].textFramePreferences;
-                if (i === c.length - 1 || Number(tfp.autoSizingType) != AUTOSIZE_OFF_VAL) {
-                    tfp.autoSizingReferencePoint =
-                        AutoSizingReferenceEnum.TOP_CENTER_POINT;
-                }
-            } catch (e1) {}
-        }
-        c[c.length - 1].textFramePreferences.autoSizingType = HEIGHT_ONLY_VAL;
+        // 베타2 결함: 자동 크기 기준점이 CENTER면 마지막 프레임이 페이지
+        // 중앙으로 수축한다(내용이 가운데 떠 있음) → 마지막 프레임만 TOP
+        // 고정. 체인 중간 프레임의 환경설정은 절대 건드리지 않는다 —
+        // 중간 프레임 autosize 기준점 변경은 전체 재조판 시 InDesign
+        // 크래시 의심 지점(2026-08-11).
+        var lastTfp = c[c.length - 1].textFramePreferences;
+        try {
+            lastTfp.autoSizingReferencePoint =
+                AutoSizingReferenceEnum.TOP_CENTER_POINT;
+        } catch (e1) {}
+        lastTfp.autoSizingType = HEIGHT_ONLY_VAL;
     } catch (e) {}
 }
 
@@ -540,9 +539,12 @@ try {
     // (2026-08-11 재현) — 텍스트만 비워 오버셋을 해소한다.
     var strayCleared = 0;
     var allTfs0 = doc.textFrames.everyItem().getElements();
+    wlog("페이스트보드 정리 시작 (프레임 " + allTfs0.length + "개)");
     for (var sr = 0; sr < allTfs0.length; sr++) {
         try {
-            if (allTfs0[sr].overflows && allTfs0[sr].parentPage === null) {
+            // parentPage 판정을 먼저 — .overflows는 스토리 compose를 강제하므로
+            // 페이스트보드 프레임에만 묻는다 (전수 compose는 집계 단계에서)
+            if (allTfs0[sr].parentPage === null && allTfs0[sr].overflows) {
                 var srTxt = "";
                 try {
                     srTxt = String(allTfs0[sr].parentStory.paragraphs[0].contents)
