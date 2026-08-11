@@ -172,9 +172,19 @@ function expandChainLastFrame(story) {
     if (!story || !story.isValid) { return; }
     try {
         var c = story.textContainers;
-        if (c.length > 0) {
-            c[c.length - 1].textFramePreferences.autoSizingType = HEIGHT_ONLY_VAL;
+        if (c.length === 0) { return; }
+        // 베타2 결함: 자동 크기 기준점이 CENTER면 프레임이 페이지 중앙으로
+        // 수축한다(내용이 페이지 가운데 떠 있음). 체인 전체를 TOP 고정으로.
+        for (var i = 0; i < c.length; i++) {
+            try {
+                var tfp = c[i].textFramePreferences;
+                if (i === c.length - 1 || Number(tfp.autoSizingType) != AUTOSIZE_OFF_VAL) {
+                    tfp.autoSizingReferencePoint =
+                        AutoSizingReferenceEnum.TOP_CENTER_POINT;
+                }
+            } catch (e1) {}
         }
+        c[c.length - 1].textFramePreferences.autoSizingType = HEIGHT_ONLY_VAL;
     } catch (e) {}
 }
 
@@ -206,6 +216,9 @@ function expandFrameAndMoveBelow(story, moveStyles) {
                 for (var s = 0; s < moveStyles.length; s++) {
                     if (osty === baseName(moveStyles[s])) {
                         var ob = other.geometricBounds;
+                        // 확장 프레임보다 위에 있는 프레임(같은 스타일의 상단
+                        // 발문 등)은 밀지 않는다 — 아래쪽만 이동
+                        if (ob[0] <= oldTop + 0.5) { break; }
                         other.geometricBounds = [ob[0] + delta, ob[1], ob[2] + delta, ob[3]];
                         break;
                     }
@@ -215,57 +228,56 @@ function expandFrameAndMoveBelow(story, moveStyles) {
     } catch (e) {}
 }
 
-// ── 섹션 아이콘 A~E (v1 insertSectionIcon 이식) ─────────────────────────────
+// ── 섹션 아이콘 A~E ─────────────────────────────────────────────────────────
+// 베타2 결함 수정: 프레임을 새로 만들면 문서 기본 단락스타일("D 단어 박스
+// new" 상속 — 고정행간 16pt)이 붙어 글자가 전량 오버셋되고 사각형으로
+// 보인다(원본 아이콘은 원형). 템플릿 워크시트 발문에 이미 있는 원형 아이콘
+// (낱자 A~E, [기본 단락], 오버셋 없음)을 글자별로 복제해 앵커한다.
 
-var ICON_COLORS = [
-    [65, 36, 22, 0],
-    [19, 42, 56, 0],
-    [52, 27, 39, 9],
-    [20, 41, 10, 0],
-    [44, 43, 52, 0]
-];
 var ICON_LETTERS = ["A", "B", "C", "D", "E"];
 
-function findOrCreateColor(doc, c, m, y, k) {
-    for (var ci = 0; ci < doc.colors.length; ci++) {
+// 템플릿 원형 아이콘 은행: 낱자 A~E + [기본 단락] + 오버셋 없음인
+// 앵커 프레임을 글자별 1개 수집 (배치 전 1회 스캔)
+function buildIconBank(doc) {
+    var bank = {};
+    var need = 5;
+    var stories = doc.stories;
+    for (var s = 0; s < stories.length && need > 0; s++) {
         try {
-            var col = doc.colors[ci];
-            var v = col.colorValue;
-            if (v && Math.abs(v[0] - c) < 0.5 && Math.abs(v[1] - m) < 0.5 &&
-                    Math.abs(v[2] - y) < 0.5 && Math.abs(v[3] - k) < 0.5) { return col; }
+            var st = stories[s];
+            if (st.paragraphs.length !== 1) { continue; }
+            var t = String(st.contents).replace(/[\s\r﻿￼]+/g, "");
+            if (t.length !== 1 || "ABCDE".indexOf(t) === -1) { continue; }
+            if (bank[t]) { continue; }
+            if (st.paragraphs[0].appliedParagraphStyle.name !== "[기본 단락]") { continue; }
+            var tf = st.textContainers[0];
+            if (tf.overflows) { continue; }
+            bank[t] = tf;
+            need--;
         } catch (e) {}
     }
-    return doc.colors.add({
-        model: ColorModel.PROCESS,
-        space: ColorSpace.CMYK,
-        colorValue: [c, m, y, k],
-        name: "SecIcon_" + c + "_" + m + "_" + y + "_" + k
-    });
+    return bank;
 }
 
-function insertSectionIcon(doc, para, sectionIdx) {
+function insertSectionIcon(doc, para, sectionIdx, iconBank) {
     var letter = ICON_LETTERS[sectionIdx];
-    var cv = ICON_COLORS[sectionIdx];
-    var color = findOrCreateColor(doc, cv[0], cv[1], cv[2], cv[3]);
-    var page = para.parentTextFrames[0].parentPage;
-    var tf = page.textFrames.add();
-    tf.geometricBounds = [0, 0, 6.3, 6.3];
-    tf.fillColor = color;
-    tf.strokeColor = color;
-    tf.strokeWeight = 1;
-    tf.contents = letter;
-    var tp = tf.parentStory.paragraphs[0];
-    tp.pointSize = 12;
-    try { tp.appliedFont = doc.fonts.itemByName("고도 B\tRegular"); } catch (e) {
-        try { tp.appliedFont = app.fonts.itemByName("Godo B\tRegular"); } catch (e2) {}
+    var src = iconBank ? iconBank[letter] : null;
+    if (!src || !src.isValid) {
+        throw "템플릿 원형 아이콘(" + letter + ") 없음 — 복제 불가";
     }
-    tp.justification = Justification.CENTER_ALIGN;
-    tp.fillColor = doc.colors.itemByName("Paper");
-    // v1 v3: A=pos0, B/C/D/E=pos1
-    var ipIdx = (sectionIdx === 0) ? 0 : 1;
-    var ip = para.insertionPoints[ipIdx];
-    tf.anchoredObjectSettings.insertAnchoredObject(ip, AnchorPosition.INLINE_POSITION);
-    tf.anchoredObjectSettings.anchorYoffset = -0.72;
+    var page = para.parentTextFrames[0].parentPage;
+    var tf = null;
+    try { tf = src.duplicate(page); } catch (eDup) { tf = src.duplicate(); }
+    try {
+        // v1 v3: A=pos0, B/C/D/E=pos1 (사용자 수정본 규칙)
+        var ipIdx = (sectionIdx === 0) ? 0 : 1;
+        var ip = para.insertionPoints[ipIdx];
+        tf.anchoredObjectSettings.insertAnchoredObject(ip, AnchorPosition.INLINE_POSITION);
+    } catch (eAnchor) {
+        // 앵커 실패 시 페이지 구석에 프레임을 남기지 않는다(위치 이상 방지)
+        try { tf.remove(); } catch (eRm) {}
+        throw eAnchor;
+    }
 }
 
 var doc = null;
@@ -317,6 +329,15 @@ try {
         storiesByArea[fl0.area] = st0;
         wlog("스토리수 " + fl0.area + ": " + st0.length);
     }
+
+    // 섹션 아이콘 은행 (배치 전 1회 — 정답지 아이콘은 템플릿 원형 복제)
+    var ICON_BANK = buildIconBank(doc);
+    var bankLetters = [];
+    for (var bl = 0; bl < ICON_LETTERS.length; bl++) {
+        if (ICON_BANK[ICON_LETTERS[bl]]) { bankLetters.push(ICON_LETTERS[bl]); }
+    }
+    wlog("아이콘 은행: " + bankLetters.join("") +
+         (bankLetters.length < 5 ? " [경고] 일부 글자 원형 아이콘 미발견" : ""));
 
     // ── 주차 텍스트 치환 (v1 issueNum GREP — 마스터 + 본문) ────────────────
     if (plan.week_text) {
@@ -381,6 +402,28 @@ try {
 
         var ops = unit.ops || {};
 
+        // 문항-해석 쌍 페이지 분리 방지 (베타2 결함: 영문과 해석이 다른
+        // 페이지로 갈라짐) — 영문 단락은 다음 1줄과 결속, 해석 단락은
+        // 줄 분리 금지 (로컬 오버라이드만 — 스타일 무수정)
+        var kp = ops.keep_pairs;
+        if (kp) {
+            var kEng = kp.eng || [];
+            for (var ke = 0; ke < kEng.length; ke++) {
+                if (kEng[ke] < paras.length) {
+                    try { paras[kEng[ke]].keepWithNext = 1; } catch (e) {}
+                }
+            }
+            var kKor = kp.kor || [];
+            for (var kk = 0; kk < kKor.length; kk++) {
+                if (kKor[kk] < paras.length) {
+                    try {
+                        paras[kKor[kk]].keepLinesTogether = true;
+                        paras[kKor[kk]].keepAllLinesTogether = true;
+                    } catch (e) {}
+                }
+            }
+        }
+
         // numberingContinue=false (v1 postProcessAnswerStory)
         var nr = ops.numbering_restart || [];
         for (var ni = 0; ni < nr.length; ni++) {
@@ -410,13 +453,13 @@ try {
             }
         }
 
-        // 섹션 아이콘 (v1: numbering/문자스타일 뒤)
+        // 섹션 아이콘 (v1: numbering/문자스타일 뒤) — 템플릿 원형 복제
         var icons = ops.icons || [];
         var iconOk = 0;
         for (var ii = 0; ii < icons.length; ii++) {
             if (icons[ii].p >= paras.length) { continue; }
             try {
-                insertSectionIcon(doc, paras[icons[ii].p], icons[ii].sec);
+                insertSectionIcon(doc, paras[icons[ii].p], icons[ii].sec, ICON_BANK);
                 iconOk++;
             }
             catch (e) { wlog("[경고] " + area + "[" + idx + "] 아이콘 실패: " + e); }
@@ -471,6 +514,26 @@ try {
                          UndoModes.ENTIRE_SCRIPT, "wbwt_v2 " + fl.area);
         })(plan.flows[fi]);
     }
+
+    // 페이스트보드 스트레이 정리 — 템플릿에 남아 있던 페이지 밖(오버셋)
+    // 프레임은 프리플라이트 오류만 만들고 인쇄에는 안 나온다 → 제거
+    var strayRemoved = 0;
+    var allTfs0 = doc.textFrames.everyItem().getElements();
+    for (var sr = 0; sr < allTfs0.length; sr++) {
+        try {
+            if (allTfs0[sr].overflows && allTfs0[sr].parentPage === null) {
+                var srTxt = "";
+                try {
+                    srTxt = String(allTfs0[sr].parentStory.paragraphs[0].contents)
+                        .substr(0, 20).replace(/\r/g, "");
+                } catch (eS) {}
+                allTfs0[sr].remove();
+                strayRemoved++;
+                wlog("페이스트보드 오버셋 프레임 제거: \"" + srTxt + "...\"");
+            }
+        } catch (e) {}
+    }
+    if (strayRemoved > 0) { wlog("페이스트보드 정리: " + strayRemoved + "개 제거"); }
 
     // 오버플로우 집계 — v1 파리티: doc.textFrames 순회 (앵커된 아이콘 소형
     // 프레임의 의사 오버플로우 제외 — 앵커 프레임은 doc.textFrames에 없음)

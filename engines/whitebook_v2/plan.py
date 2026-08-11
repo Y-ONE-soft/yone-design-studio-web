@@ -98,11 +98,19 @@ def _unit_b(content, A):
     if not content.get("B"):
         return {"skip": True}
     paras = []
+    keep_eng = []
+    keep_kor = []
     for b in content["B"]:
+        if b.get("kor"):
+            keep_eng.append(len(paras))
         paras.append(_p(f"{b['num']}. {b['eng']}", A["B_eng"]))
         if b.get("kor"):
+            keep_kor.append(len(paras))
             paras.append(_p(b["kor"], A["B_kor"]))
-    return {"paras": paras, "ops": {"expand_last": True}}
+    # keep_pairs: 문항(영문)과 해석이 페이지 경계에서 갈라지지 않게 결속
+    return {"paras": paras,
+            "ops": {"expand_last": True,
+                    "keep_pairs": {"eng": keep_eng, "kor": keep_kor}}}
 
 
 def _unit_c(content, A):
@@ -138,7 +146,10 @@ def _unit_d_item(content, A):
     d = content.get("D") or {}
     if not d.get("items"):
         return {"skip": True}
-    return {"paras": [_p(it["text"], A["D_item"]) for it in d["items"]]}
+    # 항목 수가 템플릿 프레임 용량을 넘으면 오버셋(베타2 P8/P88) —
+    # D박스와 동일하게 프레임을 늘리고 아래(발문·E전치사)를 밀어낸다
+    return {"paras": [_p(it["text"], A["D_item"]) for it in d["items"]],
+            "ops": {"expand_move": ["발문", A["E_sent"]]}}
 
 
 def _unit_e(content, A):
@@ -193,8 +204,10 @@ def _unit_answers(answers, A, CH):
         elif p["s"] == ITEM:
             if section >= 0 and not section_had_first[section]:
                 section_had_first[section] = True
-                if section > 0:
-                    restart.append(i)
+                # 첫 섹션(A)도 재시작 — v1은 section>0만 재시작해 A 섹션
+                # 번호가 02부터 시작했다(베타2 실측: 헤더가 리스트 1번을
+                # 소비, numberingContinue=true라 이어짐)
+                restart.append(i)
         elif p["s"] == SOL and "[문제" in p["t"]:
             sol_idx.append(i)
     for si in sol_idx:
