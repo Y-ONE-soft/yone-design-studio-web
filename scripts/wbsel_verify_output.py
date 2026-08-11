@@ -128,17 +128,23 @@ def main():
         sec_of[i + 1] = cur
 
     # 구조적 페이지는 빈 페이지가 정상이다:
-    #   간지("고N 모의고사" 한 줄) / 마지막 판권 정렬용 페이지
+    #   앞부속(p1~2) / 판권부(뒤 3p) / 간지 스프레드(빈 좌측 + "고N 모의고사" 우측)
+    def _is_divider(idx):
+        return (idx < len(texts) and "모의고사" in texts[idx]
+                and len(re.sub(r'\s', '', texts[idx])) < 25)
+
     blank_real = []
     for i, t in enumerate(texts):
         if len(re.sub(r'\s', '', t)) >= 25:
             continue
-        if i + 1 >= doc.page_count - 1:
-            continue        # 판권 + 그 앞 정렬용 페이지 (trim 이 넣는다)
-        if "모의고사" in t:                   # 간지
-            continue
+        if i + 1 <= 2 or i + 1 >= doc.page_count - 2:
+            continue                      # 앞부속 / 판권부
+        if _is_divider(i):
+            continue                      # 간지 우측
+        if _is_divider(i + 1):
+            continue                      # 간지 좌측(빈 페이지 + 다음이 간지)
         blank_real.append(i + 1)
-    print("3) 빈 페이지: %d개 %s (간지·판권부 제외)"
+    print("3) 빈 페이지: %d개 %s (앞부속·간지·판권부 제외)"
           % (len(blank_real), blank_real[:10]))
     if blank_real:
         fails.append("빈 페이지 %d개" % len(blank_real))

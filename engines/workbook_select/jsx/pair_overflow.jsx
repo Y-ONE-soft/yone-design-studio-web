@@ -37,27 +37,58 @@
         var BTM_MIN = 150;     // 하단(발문/문제) 프레임 y1 하한
         var i, j;
 
-        // ── 1) 상단/하단 스토리 찾기 (프레임이 가장 많은 것) ──────────
-        function longestStoryAt(pred) {
-            var best = null, bestN = 0;
+        // ── 1) 짝 스토리 찾기 ─────────────────────────────────────────
+        // 하단 스토리 = 전 프레임이 하단 영역(y1>BTM_MIN)인 최장 스토리.
+        //   이 조건은 문서에서 어법하단 하나뿐이라 유일하게 잡힌다.
+        // 상단 스토리 = y1<TOP_MAX 스토리 중 **하단과 페이지를 가장 많이
+        //   공유하는** 것. 단순히 "y1<TOP_MAX 최장"으로 고르면 STEP3 실전
+        //   스토리(172프레임)가 잡혀 짝 정리가 통째로 헛돈다(2026-08-08 실측).
+        function storiesWhere(pred) {
+            var out = [];
             for (i = 0; i < d.stories.length; i++) {
                 var st = d.stories[i];
                 var tc = st.textContainers;
                 if (tc.length < 3) continue;
                 var hit = 0;
                 for (j = 0; j < tc.length; j++) {
-                    try {
-                        if (pred(tc[j].geometricBounds[0])) hit++;
-                    } catch (e2) {}
+                    try { if (pred(tc[j].geometricBounds[0])) hit++; } catch (e2) {}
                 }
-                if (hit === tc.length && tc.length > bestN) {
-                    best = st; bestN = tc.length;
-                }
+                if (hit === tc.length) out.push(st);
             }
-            return best;
+            return out;
         }
-        var topStory = longestStoryAt(function (y) { return y < TOP_MAX; });
-        var btmStory = longestStoryAt(function (y) { return y > BTM_MIN; });
+        function pageSet(st) {
+            var s = {}, tc = st.textContainers;
+            for (var k = 0; k < tc.length; k++) {
+                try { s[tc[k].parentPage.documentOffset] = true; } catch (e7) {}
+            }
+            return s;
+        }
+        var btmCands = storiesWhere(function (y) { return y > BTM_MIN; });
+        var btmStory = null;
+        for (i = 0; i < btmCands.length; i++) {
+            if (!btmStory ||
+                    btmCands[i].textContainers.length >
+                    btmStory.textContainers.length) {
+                btmStory = btmCands[i];
+            }
+        }
+        var topStory = null;
+        if (btmStory) {
+            var bset = pageSet(btmStory);
+            var topCands = storiesWhere(function (y) { return y < TOP_MAX; });
+            var bestOverlap = 0;
+            for (i = 0; i < topCands.length; i++) {
+                var tset = pageSet(topCands[i]), ov = 0;
+                for (var pk in tset) {
+                    if (tset.hasOwnProperty(pk) && bset[pk]) ov++;
+                }
+                if (ov > bestOverlap) { bestOverlap = ov; topStory = topCands[i]; }
+            }
+            W("짝 후보: 하단 " + btmStory.textContainers.length + "프레임 / "
+              + "상단 후보 " + topCands.length + "개 중 페이지공유 "
+              + bestOverlap + " 채택");
+        }
         if (!topStory || !btmStory) {
             W("상단/하단 스토리를 찾지 못함 — 건너뜀");
             d.close(SaveOptions.NO);
@@ -174,7 +205,7 @@
         }
 
         W("합친 페이지 " + made + "개 — 꼬리 빈 페이지는 trim 이 정리한다");
-        d.save();
+        if (made > 0) { d.save(); } else { W("변경 없음 — 저장 안 함"); }
         d.close(SaveOptions.NO);
         W("===== 짝 정리 완료 =====");
     } catch (eMain) {
