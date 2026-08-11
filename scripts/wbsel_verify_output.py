@@ -57,14 +57,18 @@ def _same_passage(top, btm, window=40, take=8):
     return False
 
 
-def _pair_rows(doc):
+def _pair_rows(doc, sec_of):
     """짝 스텝(상단+하단) 페이지 → [(page, top, btm, prompt)]"""
     rows = []
     for pno in range(doc.page_count):
         page = doc[pno]
         raw = page.get_text()
+        # 실전(STEP3)은 1지문 다문항이라 상·하단 짝 개념이 없다.
+        # 러닝헤더 문자열만 보면 놓치므로 섹션 구간으로도 거른다.
         if "STEP03" in raw or "실전 문제" in raw:
-            continue            # 1지문 다문항이라 짝 개념 없음
+            continue
+        if sec_of.get(pno + 1) == "S 실전 문제":
+            continue
         blocks = sorted(page.get_text("blocks"), key=lambda b: b[1])
         py, prompt = None, ""
         for b in blocks:
@@ -116,21 +120,28 @@ def main():
     if residue:
         fails.append("헤더 잔재 %d건" % len(residue))
 
-    blank = [i + 1 for i, t in enumerate(texts)
-             if len(re.sub(r'\s', '', t)) < 25]
-    # 마지막 페이지는 판권 정렬용 빈 페이지일 수 있다 (구조적)
-    blank_real = [p for p in blank if p != doc.page_count]
-    print("3) 빈 페이지: %d개 %s (마지막 판권 정렬 페이지 제외)"
-          % (len(blank_real), blank_real[:10]))
-    if blank_real:
-        fails.append("빈 페이지 %d개" % len(blank_real))
-
     cur, sec_of = None, {}
     for i, t in enumerate(texts):
         m = _SEC.search(t)
         if m:
             cur = re.sub(r'\s+', ' ', m.group(1))
         sec_of[i + 1] = cur
+
+    # 구조적 페이지는 빈 페이지가 정상이다:
+    #   간지("고N 모의고사" 한 줄) / 마지막 판권 정렬용 페이지
+    blank_real = []
+    for i, t in enumerate(texts):
+        if len(re.sub(r'\s', '', t)) >= 25:
+            continue
+        if i + 1 >= doc.page_count - 1:
+            continue        # 판권 + 그 앞 정렬용 페이지 (trim 이 넣는다)
+        if "모의고사" in t:                   # 간지
+            continue
+        blank_real.append(i + 1)
+    print("3) 빈 페이지: %d개 %s (간지·판권부 제외)"
+          % (len(blank_real), blank_real[:10]))
+    if blank_real:
+        fails.append("빈 페이지 %d개" % len(blank_real))
     first = collections.defaultdict(list)
     for i, t in enumerate(texts):
         for line in t.split("\n"):
@@ -150,7 +161,7 @@ def main():
     if dupes:
         fails.append("지문 중복 %d건" % len(dupes))
 
-    rows = _pair_rows(doc)
+    rows = _pair_rows(doc, sec_of)
     mism = [(p, t, b) for p, t, b, _ in rows if not _same_passage(t, b)]
     print("5) 짝 스텝 상·하단 지문 일치: %d/%d (불일치 %d)"
           % (len(rows) - len(mism), len(rows), len(mism)))
