@@ -265,7 +265,9 @@ def _unit_prac_main(prac, PR):
     if not qs:
         return {"skip": True}
     paras = []
+    q_starts = []
     for qi, q in enumerate(qs):
+        q_starts.append(len(paras))
         for li, ln in enumerate(q["lines"]):
             text = ln["text"]
             if li == 0 and ln["sty"] == "문제":
@@ -277,7 +279,10 @@ def _unit_prac_main(prac, PR):
                 paras.append(_p(clean, PR[ln["sty"]], runs))
         if qi < len(qs) - 1:
             paras.append(_p("", PR["선지"]))   # v1: 문제 사이 빈줄(선지 스타일)
-    return {"paras": paras}
+    # 실전문제는 프레임당 1문항 설계(페이지당 4프레임) — 2번째 문항부터
+    # 발문에 NEXT_FRAME 브레이크 (사용자 확인 2026-08-11)
+    return {"paras": paras,
+            "ops": {"frame_breaks": q_starts[1:]}}
 
 
 def _unit_prac_ans(prac, PR):
