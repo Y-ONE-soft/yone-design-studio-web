@@ -370,6 +370,8 @@ class WorkbookSelectEngine(WorkbookV2Engine):
         with open(json_path, "w", encoding="utf-8") as f:
             json.dump(merged, f, ensure_ascii=False)
 
+        self._write_prompts(job_dir, merged, fill, log)
+
         with open(os.path.join(job_dir, "coverage.json"), "w",
                   encoding="utf-8") as f:
             json.dump({"codes": codes, "coverage": coverage,
@@ -538,6 +540,12 @@ class WorkbookSelectEngine(WorkbookV2Engine):
                            "===== 짝 정리 완료 =====", "[짝정리]",
                            timeout=1800, stall=900)
 
+        # 발문 유형 교정 (네모형 문항에 밑줄형 발문이 붙는 것 방지)
+        self._run_post_jsx(job_dir, settings_path, log,
+                           "fix_prompt.jsx", "prompt_로그.txt",
+                           "===== 발문 교정 완료 =====", "[발문]",
+                           timeout=900, stall=600)
+
         tpl = os.path.join(_DIR, "jsx", "trim_pages.jsx")
         if not os.path.exists(tpl):
             log("[trim] 템플릿 없음 — 건너뜀: %s" % tpl)
@@ -563,6 +571,54 @@ class WorkbookSelectEngine(WorkbookV2Engine):
         # trim 이 페이지를 지운 뒤이므로 PDF 를 다시 뽑는다 — 안 하면 PDF 만
         # trim 이전 상태로 남는다 (2026-08-08 실측 INDD 292p vs PDF 310p).
         self._reexport_pdf(job_dir, settings_path, log)
+
+    # ── 하단 문제 발문 — 유형이 다른 문항만 원고 발문으로 교체 ──────────
+    #
+    # 발문은 템플릿 정적 프레임이라 밑줄형 문구가 고정돼 있다. 네모형
+    # ((A)(B)(C) 고르기) 문항에는 맞지 않는다. 문구를 지어내지 않고
+    # **원고(또는 보충 데이터)에 있는 발문**을 그대로 쓴다.
+    _RE_EN8 = re.compile(r"[A-Za-z']+")
+
+    def _write_prompts(self, job_dir, merged, fill, log):
+        step = "step2_a1_btm"
+        specs = []
+
+        def match_of(paras):
+            for p in paras:
+                t = (p.get("text") if isinstance(p, dict) else str(p)) or ""
+                if len(self._RE_EN8.findall(t)) >= 8:
+                    return t[:80]
+            return ""
+
+        # (1) 회차 원고 유래 — 병합 결과에서 네모형 발문 단락을 찾는다
+        st = (merged.get("steps") or {}).get(step) or {}
+        paras = st.get("paragraphs") if isinstance(st, dict) else st
+        paras = paras if isinstance(paras, list) else []
+        pending = None
+        for p in paras:
+            t = (p.get("text") if isinstance(p, dict) else str(p)) or ""
+            if "네모" in t and "어법" in t:
+                pending = t.strip()
+                continue
+            if pending and len(self._RE_EN8.findall(t)) >= 8:
+                specs.append({"match": t[:80], "prompt": pending})
+                pending = None
+
+        # (2) 보충 데이터 유래 — fill 의 prompt
+        for code, ent in ((fill or {}).get(step) or {}).items():
+            pr = (ent.get("prompt") or "").strip()
+            if "네모" not in pr:
+                continue
+            mt = match_of(ent.get("paras") or [])
+            if mt:
+                specs.append({"match": mt, "prompt": pr})
+
+        path = os.path.join(job_dir, "prompts.json")
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(specs, f, ensure_ascii=False, indent=1)
+        if specs:
+            log("[발문] 유형이 다른 문항 %d건 — 원고 발문으로 교체 예약"
+                % len(specs))
 
     def _run_post_jsx(self, job_dir, settings_path, log, tpl_name,
                       log_name, marker, tag, timeout=1800, stall=900):
