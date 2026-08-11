@@ -535,11 +535,17 @@ try {
     }
     if (strayRemoved > 0) { wlog("페이스트보드 정리: " + strayRemoved + "개 제거"); }
 
+    // 리플로우를 한 번에 확정(keep/자동크기/앵커 삽입 뒤 개별 recompose 반복 방지)
+    try { doc.recompose(); } catch (eRc) {}
+    wlog("오버플로우 집계 시작");
+
     // 오버플로우 집계 — v1 파리티: doc.textFrames 순회 (앵커된 아이콘 소형
-    // 프레임의 의사 오버플로우 제외 — 앵커 프레임은 doc.textFrames에 없음)
+    // 프레임의 의사 오버플로우 제외 — 앵커 프레임은 doc.textFrames에 없음).
+    // 라이브 컬렉션 인덱싱은 위 remove() 후 길이/인덱스가 흔들려 스크립트가
+    // 조용히 죽을 수 있다(2026-08-11 실측) → 스냅샷 순회
     var ovf = 0;
     var ovfPages = [];
-    var allTfs = doc.textFrames;
+    var allTfs = doc.textFrames.everyItem().getElements();
     for (var s3 = 0; s3 < allTfs.length; s3++) {
         try {
             if (allTfs[s3].overflows) {
