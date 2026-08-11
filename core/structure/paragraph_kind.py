@@ -328,6 +328,13 @@ def classify_paragraphs(paras):
                 if (t.startswith("[") and t.endswith("]")
                         and "/" not in t and "," not in t):
                     break
+                # W52 (0645d4a7 v2_6 사용자 지적 2): 화살표 답란("→ m_____")
+                # — 보기 블록 뒤 기입 줄이다. 무한글 흡수가 보기 스타일로
+                # 삼키던 것을 답란(AnsL) 승격 후 블록 종료 (ANS_PAREN_BLANK
+                # 와 같은 의미론 — 답란 = 블록의 실질 종료).
+                if t.lstrip().startswith("→"):
+                    nxt["kind"] = "AnsL"
+                    break
                 if R.BOX_WORDLIST.search(t) or not R.HANGUL.search(t):
                     nxt["kind"] = "Box"
                     j += 1

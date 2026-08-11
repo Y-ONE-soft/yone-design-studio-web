@@ -1306,7 +1306,9 @@ function enforceStemKeep(doc, flowStories, op) {
         var rec = flowStories[step];
         if (!rec) { continue; }
         var story = rec.story;
-        var starts = flowsCfg[step].starts || [];
+        // W52: 세트 킵(starts)과 별개로 발문 고아 방지는 모든 발문 대상
+        var starts = flowsCfg[step].stem_starts
+            || flowsCfg[step].starts || [];
         if (starts.length === 0) { continue; }
         var pushed = 0;
         var iter = 0;
@@ -1406,6 +1408,58 @@ function enforceStemKeep(doc, flowStories, op) {
 // 시작하면 B-마스터(어휘 선택 2, p13), 왼쪽이면 A-마스터. STEP2는 C/D 쌍.
 // 쌍 데이터는 flow.target.master_pair (step_map.json 계약) — 계약 없는
 // 플로우/내지는 무접촉. 반드시 page_cleanup 이후 호출 (좌/우 확정 후).
+// ── W52: 스텝3 콘텐츠 페이지 마스터 정규화 ──────────────────────────────────
+// 문제단위킵 밀기/확장으로 스텝3 본문이 템플릿의 MEMO(M) 여백 페이지까지
+// 흘러들면, 내용이 있는 페이지에 MEMO 헤더·점 그리드가 그대로 남는다
+// (0645d4a7 v2_6 실증: p51 — 사용자 지적 '빈 페이지가 아닌데 왜 메모
+// 마스터'). 스텝3 스토리 페이지들의 다수 마스터(최빈값)를 기준으로,
+// 내용이 실린 소수 마스터 페이지를 다수 마스터로 재할당한다.
+function normalizeStep3ContentMasters(doc, flowStories) {
+    for (var step in flowStories) {
+        var rec = flowStories[step];
+        if (!rec || !rec.isMaster) { continue; }
+        var pages = [];
+        try { pages = storyPagesInOrder(rec.story); } catch (e0) { continue; }
+        if (pages.length < 2) { continue; }
+        var counts = {};
+        var best = null;
+        for (var pi = 0; pi < pages.length; pi++) {
+            var mn = "";
+            try {
+                mn = pages[pi].appliedMaster ? pages[pi].appliedMaster.name : "";
+            } catch (e1) {}
+            if (!mn) { continue; }
+            counts[mn] = (counts[mn] || 0) + 1;
+            if (!best || counts[mn] > counts[best]) { best = mn; }
+        }
+        if (!best || counts[best] < 2) { continue; }
+        var fixed = 0;
+        for (var pj = 0; pj < pages.length; pj++) {
+            var mn2 = "";
+            try {
+                mn2 = pages[pj].appliedMaster ? pages[pj].appliedMaster.name : "";
+            } catch (e2) {}
+            if (mn2 === best) { continue; }
+            // 내용이 실린 페이지만 (빈 꼬리 페이지는 page_cleanup 소관)
+            var hasContent = false;
+            try {
+                var pfs = framesOfStoryOnPage(rec.story, pages[pj]);
+                for (var fi = 0; fi < pfs.length; fi++) {
+                    if (!isBlankFrameContent(pfs[fi])) { hasContent = true; break; }
+                }
+            } catch (e3) {}
+            if (!hasContent) { continue; }
+            try {
+                pages[pj].appliedMaster = doc.masterSpreads.itemByName(best);
+                fixed++;
+            } catch (e4) {}
+        }
+        if (fixed > 0) {
+            wlog(step + " 콘텐츠 페이지 마스터 정규화: " + fixed + "개 → " + best);
+        }
+    }
+}
+
 function fixSectionMasters(doc, flowStories) {
     var n = 0;
     var masterCache = {};
@@ -2142,6 +2196,7 @@ try {
                     && plan.page_cleanup.empty === "delete") {
                 alignPartFillers(doc);
             }
+            normalizeStep3ContentMasters(doc, flowStories);
         }, ScriptLanguage.JAVASCRIPT, undefined,
            UndoModes.ENTIRE_SCRIPT, "wb_v2 question_keep");
     }

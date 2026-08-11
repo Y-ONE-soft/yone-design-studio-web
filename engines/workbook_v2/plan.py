@@ -716,6 +716,15 @@ def _s3_assign_slots(pre, BG):
         if row["eff"] == "AnsL":
             continue
         t = row["tclean"]
+        # W52 (0645d4a7 v2_6 사용자 지적 1): 원문자 시작 + 실내용이 있는
+        # 행은 **선지**다 — 순서배열 선지 "① (A)-(C)-(B)\t② (B)-(A)-(C)"가
+        # 괄호 라벨 2개+ 규칙에 걸려 답란으로 오분류됐다(선지 스타일·탭
+        # 정렬 모두 이탈). 원문자 답란 열("ⓐ   ⓑ   "/"㉠ ___")은 마커·공백·
+        # 밑줄뿐이라 잔여물이 없다 — 잔여물 유무로 가른다.
+        if re.match(r"^\s*[①-⑳ⓐ-ⓩ㉠-㉭❶-❿]", t):
+            residue = re.sub(r"[①-⑳ⓐ-ⓩ㉠-㉭❶-❿\s_,~:.·]+", "", t)
+            if residue:
+                continue    # 선지 행 — 답란 승격 금지
         is_head = (len(_RE_PAREN_LABEL.findall(t)) >= 2
                    and len(t) <= 40 and "_" not in t)
         is_row = bool(_RE_ANS_ARROW_ROW.match(t))
@@ -723,7 +732,8 @@ def _s3_assign_slots(pre, BG):
         if not is_head:
             is_head = _is_anslabel_head(t)
         if not is_row:
-            is_row = bool(_RE_ANS_BLANK_ROW.match(t))
+            is_row = bool(_RE_ANS_BLANK_ROW.match(t)
+                          or _RE_ANS_PAREN_COLON.match(t))
         if not (is_head or is_row):
             continue
         # 열 머리는 바로 뒤에 기입 줄이 와야 한다 (오검출 차단)
@@ -731,6 +741,7 @@ def _s3_assign_slots(pre, BG):
             nxt = meaningful[x + 1] if x + 1 < len(meaningful) else None
             if not (nxt and (_RE_ANS_ARROW_ROW.match(nxt["tclean"])
                              or _RE_ANS_BLANK_ROW.match(nxt["tclean"])
+                             or _RE_ANS_PAREN_COLON.match(nxt["tclean"])
                              or _is_anslabel_head(nxt["tclean"]))):
                 continue
         row["eff"] = "AnsL"
@@ -1079,8 +1090,11 @@ _RE_ANS_ARROW_ROW = re.compile(r"^\s*\([^()]{0,8}\)\s*_{3,}.*(?:→|->).*_{3,}")
 #   "기호        알맞게 고친 표현"   ← 라벨 열 머리
 #   "㉠ _____________________"      ← 기입 줄
 _RE_CIRCLED = re.compile(r"[㉠-㉭①-⑮ⓐ-ⓞ]")
+# W52: '번호     수정안' 열 머리 + '(    ) :      ' 기입 줄 (아잉카류
+# 어법 고르기 답란 표 — 0645d4a7 v2_6 사용자 지적 4: 지문 스타일로 인쇄)
 _RE_ANS_HEAD_WORDS = re.compile(
-    r"(기호|어색한\s*표현|고친\s*표현|알맞게\s*고친)")
+    r"(기호|어색한\s*표현|고친\s*표현|알맞게\s*고친|번호|수정안)")
+_RE_ANS_PAREN_COLON = re.compile(r"^\s*\(\s*\)\s*:\s*_*\s*$")
 _RE_ANS_BLANK_ROW = re.compile(
     r"^\s*[㉠-㉭①-⑮ⓐ-ⓞ]\s*_{3,}\s*$")
 
@@ -2309,14 +2323,26 @@ def question_keep_op(plan, steps=("step3",)):
         if fl.get("step") not in steps:
             continue
         starts = []
+        stem_starts = []
         idx = 0
         for u in fl.get("units", []):
             for p in unit_paras(u):
                 if p.get("s") in q_styles and idx > 0:
-                    starts.append(idx)
+                    # W52 (0645d4a7 v2_6 사용자 지적 3): '윗글' 참조 발문은
+                    # 위에 이미 인쇄된 지문의 세트 멤버 — 독립 시작으로
+                    # 삼으면 지문(※ 인트로+본문)과 문항이 페이지 경계에서
+                    # 갈라진다. 세트 시작(Q-INTRO/'다음 글' 발문)만 킵
+                    # 경계로 남겨 지문+문항이 한 덩어리로 밀리게 한다.
+                    # 발문고아킵(stem_keep)은 모든 발문에 계속 적용 —
+                    # stem_starts 별도 전달.
+                    stem_starts.append(idx)
+                    t = (p.get("t") or "").lstrip()
+                    if not re.match(r"^윗\s*글|^위\s*글", t):
+                        starts.append(idx)
                 idx += 1
         if starts:
-            flows_cfg[fl["step"]] = {"starts": starts}
+            flows_cfg[fl["step"]] = {"starts": starts,
+                                     "stem_starts": stem_starts}
     if not flows_cfg:
         return None
     # W40 결함 2 — 발문 고아 방지 (프레임판 question_keep): 프레임 하단에
