@@ -373,10 +373,59 @@ try {
         wlog("주차 텍스트 치환: " + plan.week_text);
     }
 
+    // 단락 하나에 밑줄 runs 적용 (placeUnit/청크 배치 공용)
+    function applyRunsToPara(para, runs) {
+        if (!runs || runs.length === 0 || !csUL) { return; }
+        var off = 0;
+        for (var ri = 0; ri < runs.length; ri++) {
+            var rl = runs[ri].t ? runs[ri].t.length : 0;
+            if (rl > 0 && runs[ri].ul) {
+                var a = off, b = off + rl - 1;
+                if (a < para.characters.length && b < para.characters.length) {
+                    para.characters.itemByRange(a, b)
+                        .appliedCharacterStyle = csUL;
+                }
+            }
+            off += rl;
+        }
+    }
+
     // ── 유닛 배치 (v1 replaceContent + ops) ─────────────────────────────────
     function placeUnit(story, unit, area, idx) {
         var uParas = unit.paras || [];
         if (uParas.length === 0) { return; }
+        var isPrac = String(area).indexOf("prac") === 0;
+        if (isPrac) {
+            // 실전문제(다중 프레임 스레드): 통째 대입은 이후 compose에서
+            // InDesign 정지를 유발(2026-08-11 실측) → 검증된 청크 분할
+            // 배치(비우고 20단락씩 붙이며 스타일/밑줄 적용)로 채운다.
+            story.contents = "";
+            var CH = 20;
+            var placedCnt = 0;
+            while (placedCnt < uParas.length) {
+                var hi = Math.min(placedCnt + CH, uParas.length);
+                var buf = [];
+                for (var ci = placedCnt; ci < hi; ci++) { buf.push(uParas[ci].t); }
+                story.insertionPoints[-1].contents = buf.join("\r") + "\r";
+                var paras2 = story.paragraphs.everyItem().getElements();
+                for (var ci2 = placedCnt; ci2 < hi && ci2 < paras2.length; ci2++) {
+                    var ps2 = styleOf(uParas[ci2].s);
+                    if (ps2) { paras2[ci2].appliedParagraphStyle = ps2; }
+                    applyRunsToPara(paras2[ci2], uParas[ci2].runs);
+                }
+                placedCnt = hi;
+                wlog(area + "[" + idx + "] 청크: " + placedCnt + "/" + uParas.length);
+            }
+            // 마지막 append가 남긴 잔여 빈 단락 정리 (plan 단락 수와 일치화)
+            try {
+                var pAll = story.paragraphs;
+                while (pAll.length > uParas.length &&
+                       String(pAll[-1].contents).replace(/\r/g, "") === "") {
+                    pAll[-1].remove();
+                }
+            } catch (eTrim) {}
+            return 0;
+        }
         var texts = [];
         for (var i = 0; i < uParas.length; i++) { texts.push(uParas[i].t); }
         var joined = texts.join("\r");
@@ -391,22 +440,7 @@ try {
         for (var pi = 0; pi < uParas.length && pi < paras.length; pi++) {
             var ps = styleOf(uParas[pi].s);
             if (ps) { paras[pi].appliedParagraphStyle = ps; }
-            var runs = uParas[pi].runs;
-            if (runs && runs.length > 0 && csUL) {
-                var off = 0;
-                for (var ri = 0; ri < runs.length; ri++) {
-                    var rl = runs[ri].t ? runs[ri].t.length : 0;
-                    if (rl > 0 && runs[ri].ul) {
-                        var a = off, b = off + rl - 1;
-                        if (a < paras[pi].characters.length &&
-                                b < paras[pi].characters.length) {
-                            paras[pi].characters.itemByRange(a, b)
-                                .appliedCharacterStyle = csUL;
-                        }
-                    }
-                    off += rl;
-                }
-            }
+            applyRunsToPara(paras[pi], uParas[pi].runs);
             if ((pi + 1) % 50 === 0) {
                 wlog(area + "[" + idx + "] 스타일: " + (pi + 1) + "/" + uParas.length);
             }
@@ -528,13 +562,12 @@ try {
         if (iconTotal > 0) { wlog("아이콘삽입 " + flow.area + ": " + iconTotal); }
     }
 
+    // undo 그룹(doScript ENTIRE_SCRIPT) 래퍼 금지 — 다중 프레임 스레드
+    // (실전문제 40여 프레임)에 대량 텍스트 대입을 undo 그룹 안에서 하면
+    // 이후 해당 스레드 compose에서 InDesign이 정지한다(2026-08-11 실측:
+    // 래퍼 없는 별도 세션 배치는 동일 내용 통과). v1도 래퍼 없이 실행.
     for (var fi = 0; fi < plan.flows.length; fi++) {
-        // 플로우 단위 Undo 그룹화 (개별 undo 트랜잭션 감속 방지 — workbook_v2 실측)
-        (function (fl) {
-            app.doScript(function () { processFlow(fl); },
-                         ScriptLanguage.JAVASCRIPT, undefined,
-                         UndoModes.ENTIRE_SCRIPT, "wbwt_v2 " + fl.area);
-        })(plan.flows[fi]);
+        processFlow(plan.flows[fi]);
     }
 
     // 페이스트보드 스트레이 정리 — 템플릿에 남아 있던 페이지 밖(오버셋)
