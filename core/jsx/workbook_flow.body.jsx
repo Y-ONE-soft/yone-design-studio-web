@@ -1473,12 +1473,15 @@ var RE_DIVIDER_LINE2 = /^\s*(?:\d+\s*년\s*\d+\s*월|\d+\s*강|\d+\s*과|Unit\s*
 
 function updateDividerPages(doc, line1, line2) {
     var n = 0;
-    var diag = [];   // W51 진단: [None] 페이지별 후보 상태 (0개일 때만 로그)
+    var diag = [];   // W51 진단: 후보 탈락 페이지 상태 (0개일 때만 로그)
+    // W51 2차 (refix3 진단 실증): 마스터 전제 조건 폐기 — 실행 시점의 간지
+    // 페이지는 마스터가 적용된 상태여서 '[None] 페이지' 게이트가 전부
+    // 건너뛰었다 (진단: [None]은 간지 왼쪽 빈 페이지들뿐). 판정을 페이지
+    // 속성이 아니라 **프레임 내용 구조**로만 한다: 스토리 2~3행 + 첫 행
+    // 한글 + 2행이 간지 기수 표기(YY년 M월·N강·N과·Unit N). 기수 표기
+    // 필수라 발문/러닝헤더류 한글 프레임과 충돌하지 않는다.
     for (var dpi = 0; dpi < doc.pages.length; dpi++) {
         var dpg = doc.pages[dpi];
-        var masterName = "";
-        try { masterName = dpg.appliedMaster ? dpg.appliedMaster.name : ""; } catch (e) {}
-        if (masterName !== "" && masterName !== "[None]") { continue; }
         // 그룹 내부 프레임 포함 전체 텍스트프레임 수집
         var tfs = [];
         try {
@@ -1489,66 +1492,44 @@ function updateDividerPages(doc, line1, line2) {
                 } catch (eI) {}
             }
         } catch (eA) {}
-        // 간지 후보: 2행 구조 + 첫 행 한글. 행 = 단락 2개(모의고사 원본
-        // 내지) 또는 강제 줄바꿈(\n) 1단락(수특라이트 커스텀 내지 실측 —
-        // W51: 프레임 paras=1이라 기존 '단락 2개' 가정이 0개 매치).
-        var cands = [];   // {tf, mode: 'para'|'break', l2}
         for (var ti = 0; ti < tfs.length; ti++) {
             var cps = tfs[ti].paragraphs;
             var whole = "";
             try { whole = String(tfs[ti].parentStory.contents || ""); } catch (eW) {}
             var segs = whole.replace(/[\r\n]+$/, "").split(/[\r\n]/);
-            if (segs.length < 2) { continue; }
+            if (segs.length < 2 || segs.length > 3) { continue; }
             if (!/[가-힣]/.test(segs[0])) { continue; }
-            cands.push({ tf: tfs[ti],
-                         mode: (cps.length >= 2) ? "para" : "break",
-                         l2: segs[1] });
-        }
-        if (cands.length === 0) {
-            if (diag.length < 4) {
-                var d0 = "p" + dpg.name + " tfs=" + tfs.length;
-                try {
-                    if (tfs.length > 0) {
-                        d0 += " s0=" + String(tfs[0].parentStory.contents || "")
-                            .replace(/[\r\n]/g, "|").substr(0, 24);
-                    }
-                } catch (eD) {}
-                diag.push(d0);
-            }
-            continue;
-        }
-        var target = null;
-        if (cands.length === 1) {
-            target = cands[0];
-        } else {
-            // 복수 후보면 2행이 간지 기수 표기인 프레임만
-            for (var ci = 0; ci < cands.length; ci++) {
-                if (RE_DIVIDER_LINE2.test(cands[ci].l2)) { target = cands[ci]; break; }
-            }
-        }
-        if (!target) { continue; }
-        try {
-            if (target.mode === "para") {
-                var divParas = target.tf.paragraphs;
-                divParas[0].contents = line1 + "\r";
-                divParas[1].contents = line2 + "\r";
-            } else {
-                // 강제 줄바꿈 1단락 — 행별 문자 범위 교체 (서식 보존)
-                var dst = target.tf.parentStory;
-                var t0 = String(dst.contents || "");
-                var b0 = t0.search(/[\n\r]/);
-                if (b0 < 0) { continue; }
-                if (b0 > 0) { dst.characters.itemByRange(0, b0 - 1).contents = line1; }
-                var t1 = String(dst.contents || "");
-                var b1 = t1.search(/[\n\r]/);
-                var tail = t1.replace(/[\r\n]+$/, "");
-                if (b1 >= 0 && b1 + 1 <= tail.length - 1) {
-                    dst.characters.itemByRange(b1 + 1, tail.length - 1)
-                        .contents = line2;
+            if (!RE_DIVIDER_LINE2.test(segs[1])) {
+                if (diag.length < 4) {
+                    diag.push("p" + dpg.name + " l2미매치="
+                              + String(segs[1]).substr(0, 16));
                 }
+                continue;
             }
-            n++;
-        } catch (e) {}
+            try {
+                if (cps.length >= 2) {
+                    // 단락 2개형 (모의고사 원본 내지)
+                    cps[0].contents = line1 + "\r";
+                    cps[1].contents = line2 + "\r";
+                } else {
+                    // 강제 줄바꿈 1단락형 (수특라이트 커스텀 내지 실측) —
+                    // 행별 문자 범위 교체 (서식 보존)
+                    var dst = tfs[ti].parentStory;
+                    var t0 = String(dst.contents || "");
+                    var b0 = t0.search(/[\n\r]/);
+                    if (b0 <= 0) { continue; }
+                    dst.characters.itemByRange(0, b0 - 1).contents = line1;
+                    var t1 = String(dst.contents || "");
+                    var b1 = t1.search(/[\n\r]/);
+                    var tail = t1.replace(/[\r\n]+$/, "");
+                    if (b1 >= 0 && b1 + 1 <= tail.length - 1) {
+                        dst.characters.itemByRange(b1 + 1, tail.length - 1)
+                            .contents = line2;
+                    }
+                }
+                n++;
+            } catch (e) {}
+        }
     }
     wlog("간지 텍스트 업데이트: " + n + "개 (" + line1 + " / " + line2 + ")");
     if (n === 0) {
