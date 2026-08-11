@@ -610,17 +610,6 @@ try {
     var allTfs = doc.textFrames.everyItem().getElements();
     for (var s3 = 0; s3 < allTfs.length; s3++) {
         if (s3 % 50 === 0) { wlog("  집계 " + s3 + "/" + allTfs.length); }
-        if (s3 >= 295) {
-            // 정지 구간 진단 (2026-08-11): 어느 프레임 compose에서 멈추는지
-            var dbg = "";
-            try {
-                var dpg = allTfs[s3].parentPage;
-                dbg = "p" + (dpg ? dpg.name : "PB");
-                dbg += " '" + String(allTfs[s3].parentStory.paragraphs[0].contents)
-                    .substr(0, 12).replace(/[\r\n]/g, "") + "'";
-            } catch (eDbg) { dbg += "?"; }
-            wlog("  집계#" + s3 + " " + dbg);
-        }
         try {
             if (allTfs[s3].overflows) {
                 ovf++;
