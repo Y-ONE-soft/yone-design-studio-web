@@ -2422,8 +2422,8 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
             legacy=lambda t: (is_header_line(_norm_header(t))
                               or is_a1_header(t)
                               or _norm_header(t).startswith("[")))
-        if not det.candidates:
-            continue
+        if not det.candidates and not det.suppressed_strong:
+            continue    # W50: 필터 탈락 강신호(suppressed)는 침묵 검사 대상
         if det.silent():
             critical.append(
                 f"[헤더미인식] {key}: 구조적 헤더 후보 "
@@ -2436,6 +2436,35 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                 f"[헤더미인식] {key}: 구조적 헤더 후보 "
                 f"{len(det.candidates)}개 중 인식 0개 — 새 헤더 형식 의심: "
                 + det.candidates[0]["t"][:40])
+
+    # ── G34 [아이콘누락] (W50) — 플랜 아이콘 지시 vs 출력 앵커(￼) 수 ────
+    # place 모드 아이콘(어법OX TF 버튼)이 링크 파일 접근 실패로 문항마다
+    # 조용히 0을 리턴해 90개 전부 빠졌는데 어떤 게이트도 안 잡았다
+    # (2026-08-11 de909e4d 실증). 플로우별 아이콘 지시 수와 매핑 스토리의
+    # 인라인 앵커 문자(U+FFFC) 수를 대조한다. 템플릿 유래 앵커가 이미
+    # 있을 수 있어 초과는 허용, 미달만 지목한다.
+    icon_missing = []
+    for fl in plan.get("flows", []):
+        want = 0
+        for u in fl.get("units", []):
+            for p in (u["paras"] if isinstance(u, dict) else u):
+                if p.get("icon"):
+                    want += 1
+        if not want:
+            continue
+        story = _find_flow_story(dump, fl)
+        if not story:
+            continue    # 스토리 미매핑은 다른 게이트(G7 등) 소관
+        got = sum((p.get("t") or "").count("￼")
+                  for p in story.get("paragraphs", []))
+        stats[f"icons_{fl.get('step')}"] = f"{got}/{want}"
+        if got < want:
+            icon_missing.append(
+                f"{fl.get('step')}: 앵커 {got}/{want}")
+    if icon_missing:
+        critical.append("[아이콘누락] 플랜 아이콘 지시 대비 출력 앵커 미달 "
+                        "(place 실패/링크 파일 접근 불가 의심): "
+                        + " | ".join(icon_missing))
 
     return {"ok": not critical, "critical": critical, "warnings": warnings,
             "stats": stats}
