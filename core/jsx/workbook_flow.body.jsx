@@ -1222,6 +1222,7 @@ function spreadIdOf(doc, pg) {
 
 function enforceQuestionKeep(doc, flowStories, op) {
     var flowsCfg = (op && op.flows) || {};
+    var totalPushed = 0;
     for (var step in flowsCfg) {
         var rec = flowStories[step];
         if (!rec) { continue; }
@@ -1289,7 +1290,9 @@ function enforceQuestionKeep(doc, flowStories, op) {
         }
         wlog("문제단위킵: " + step + " 밀기 " + pushed + "건 / 해소 불가 "
              + skipped + "건");
+        totalPushed += pushed;
     }
+    return totalPushed;
 }
 
 // ── W55: 문제단위킵 밀기 완화 (ratchet 해제) ────────────────────────────────
@@ -1303,6 +1306,7 @@ function enforceQuestionKeep(doc, flowStories, op) {
 // 다음 후보들은 갱신된 상태에서 재평가된다.
 function relaxQuestionKeep(doc, flowStories, op) {
     var flowsCfg = (op && op.flows) || {};
+    var totalRelaxed = 0;
     for (var step in flowsCfg) {
         var rec = flowStories[step];
         if (!rec) { continue; }
@@ -1386,7 +1390,9 @@ function relaxQuestionKeep(doc, flowStories, op) {
                 wlog("문제단위킵 완화: 빈 꼬리 페이지 " + trimmed + "개 정리");
             }
         }
+        totalRelaxed += relaxed;
     }
+    return totalRelaxed;
 }
 
 // ── W40 결함 2: 발문 고아 방지 (프레임판 question_keep) ─────────────────────
@@ -2359,15 +2365,29 @@ try {
                 enforceStemKeep(doc, flowStories, plan.question_keep);
                 enforceQuestionKeep(doc, flowStories, plan.question_keep);
             }
-            // W55: 수렴 후 불필요해진 밀기 해제 (컬럼/페이지 공백 회수) —
-            // 완화가 새 걸침을 만들면 안 되므로 완화 패스 자체가 위반 시
-            // 즉시 복원하고, 마지막에 enforce 1회로 안전망을 친다.
+            // W55: 수렴 후 불필요해진 밀기 해제 (컬럼/페이지 공백 회수).
+            // 완화가 지면을 당기면 새 걸침이 생겨 enforce가 다시 밀고, 그
+            // 밀기들이 서로를 다시 무효화한다(refix3 실증: 완화 15건 해제
+            // 직후 enforce가 11건 재밀기 → p95 구멍). 완화↔강제를
+            // 고정점(둘 다 0건)까지 반복한다 (상한 4라운드 — 진동 가드,
+            // 마지막 연산은 항상 enforce라 스프레드 걸침 0은 보장).
             // 완화로 당겨진 배치가 발문 고아를 새로 만들 수 있어(refix2
-            // 실증 3건) 발문고아킵도 한 번 더 돈다.
-            relaxQuestionKeep(doc, flowStories, plan.question_keep);
-            enforceQuestionKeep(doc, flowStories, plan.question_keep);
+            // 실증 3건) 발문고아킵 후에도 한 쌍 더 돈다.
+            var kkRound = 0;
+            while (kkRound < 4) {
+                kkRound++;
+                var kkR = relaxQuestionKeep(doc, flowStories,
+                                            plan.question_keep);
+                var kkP = enforceQuestionKeep(doc, flowStories,
+                                              plan.question_keep);
+                wlog("문제단위킵 라운드 " + kkRound + ": 완화 " + kkR
+                     + " / 재밀기 " + kkP);
+                if (kkR === 0 && kkP === 0) { break; }
+            }
             if (plan.question_keep.stem_keep) {
                 enforceStemKeep(doc, flowStories, plan.question_keep);
+                enforceQuestionKeep(doc, flowStories, plan.question_keep);
+                relaxQuestionKeep(doc, flowStories, plan.question_keep);
                 enforceQuestionKeep(doc, flowStories, plan.question_keep);
             }
             if (plan.page_cleanup
