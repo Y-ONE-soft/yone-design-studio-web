@@ -72,6 +72,43 @@
         }
     }
 
+    // ── W53: 발문 인용구 밑줄 ────────────────────────────────────────────
+    // "밑줄 친 <영어 인용문>가 …" 형태의 발문은 인용문 자체에 밑줄이 들어가야
+    // 한다 (배재1 워크북01 검수 21건 실측 — v1은 마커(ⓐ/(A)) 뒤 영어만 처리해
+    // 이 유형이 통째로 빠졌다). 한글 조사 앞에서 끊기므로 조사/구두점은
+    // 자연히 제외된다. 이미 밑줄된 인용구는 건드리지 않는다.
+    var quoted = 0;
+    try {
+        app.findGrepPreferences = NothingEnum.NOTHING;
+        app.changeGrepPreferences = NothingEnum.NOTHING;
+        // 밑줄 친 + 영문으로 시작하는 인용구 (한글/줄바꿈 앞까지)
+        app.findGrepPreferences.findWhat =
+            "(?<=밑줄 친 )[A-Za-z][^가-힣\\r]{1,120}";
+        var found = doc.findGrep();
+        for (var fi = 0; fi < found.length; fi++) {
+            var t = found[fi];
+            var s = String(t.contents);
+            // 꼬리 공백/구두점 정리 — 인용문 본체만 밑줄
+            var keep = s.replace(/[\s"'”’]+$/, "");
+            if (keep.length < 2 || !/[A-Za-z]{2}/.test(keep)) { continue; }
+            var rng = t;
+            try {
+                if (keep.length < s.length) {
+                    rng = t.characters.itemByRange(0, keep.length - 1);
+                }
+            } catch (_e0) { rng = t; }
+            var st = null;
+            try { st = rng.underline; } catch (_e1) {}
+            if (st === true) { continue; }          // 이미 밑줄
+            try {
+                rng.appliedCharacterStyle = csUL;
+                quoted++;
+            } catch (_e2) {}
+        }
+        app.findGrepPreferences = NothingEnum.NOTHING;
+        app.changeGrepPreferences = NothingEnum.NOTHING;
+    } catch (_e3) {}
+
     app.scriptPreferences.enableRedraw = true;
-    alert("밑줄 적용 완료: " + count + "개 구간");
+    alert("밑줄 적용 완료: 마커 " + count + "개 / 발문 인용구 " + quoted + "개");
 })();
