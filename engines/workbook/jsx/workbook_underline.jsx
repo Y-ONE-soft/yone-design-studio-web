@@ -88,8 +88,11 @@
         for (var fi = 0; fi < found.length; fi++) {
             var t = found[fi];
             var s = String(t.contents);
-            // 꼬리 공백/구두점 정리 — 인용문 본체만 밑줄
-            var keep = s.replace(/[\s"'”’]+$/, "");
+            // 뒤쪽 공백만 제거. 여는 큰따옴표가 있으면 닫는 따옴표까지가
+            // 인용문이라 남긴다 (the “mother of forensic science.” 실측).
+            var keep = s.replace(/\s+$/, "");
+            var hasQuote = /[“"]/.test(keep);
+            if (!hasQuote) { keep = keep.replace(/[”’']+$/, ""); }
             if (keep.length < 2 || !/[A-Za-z]{2}/.test(keep)) { continue; }
             var rng = t;
             try {
@@ -99,7 +102,9 @@
             } catch (_e0) { rng = t; }
             var st = null;
             try { st = rng.underline; } catch (_e1) {}
-            if (st === true) { continue; }          // 이미 밑줄
+            // 인용부호는 특수문자라 범위 underline 판정에서 빠진다 —
+            // 따옴표 인용문은 상태와 무관하게 재적용(idempotent).
+            if (st === true && !hasQuote) { continue; }  // 이미 밑줄
             try {
                 rng.appliedCharacterStyle = csUL;
                 quoted++;
