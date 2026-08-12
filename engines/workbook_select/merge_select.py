@@ -41,11 +41,25 @@ _SENTENCE_STEPS = ("step1_c2", "step2_c1")
 _RE_EN_W = re.compile(r"[A-Za-z']+")
 
 
+def _block_paras(block):
+    """블록의 단락 리스트. 블록은 {nums,codes,boundary,paras} dict 다.
+
+    ⚠ dict 를 그냥 for 로 돌면 **키 문자열**이 나온다 — 예전 구현이 그래서
+      _is_thin_block 이 모든 블록을 '미달'로 판정했고(2026-08-08 발견),
+      빈칸어휘/빈칸어법 폴백이 조건상 절대 성립하지 않아 해설지(정답 단어
+      목록)가 그대로 조판됐다.
+    """
+    if isinstance(block, dict):
+        return block.get("paras") or []
+    return block or []
+
+
 def _is_thin_block(step_key, block):
     """그 섹션의 필수 형태가 빠진 블록인가 (있으나 마나 한 내용)."""
+    paras = _block_paras(block)
     if step_key in _SENTENCE_STEPS:
         # 빈칸 문장이 하나도 없고 "N. word" 목록만 = 해설지 정답 목록
-        for p in block:
+        for p in paras:
             t = (p.get("text") if isinstance(p, dict) else str(p)) or ""
             if len(_RE_EN_W.findall(t)) >= 8:
                 return False
@@ -53,11 +67,13 @@ def _is_thin_block(step_key, block):
     if step_key != "step2_c2":
         return False
     # 영작 배열은 "( a / b / c )" 단어 목록이 있어야 문제가 성립한다.
-    for p in block:
+    for p in paras:
         t = (p.get("text") if isinstance(p, dict) else str(p)) or ""
         if "/" in t and "(" in t:
             return False
     return True
+
+
 HEADER_STEPS = ["step1_c1", "step1_c2", "step2_a1", "step2_a1_btm",
                 "step2_b1", "step2_c1"]
 BEON_STEPS = ["step2_c2"]
@@ -253,7 +269,14 @@ def _codes_in(text):
 
 
 def _boundary_match(step_key, text):
-    """이 단락이 문항 경계인가? 매치되면 re.Match, 아니면 None."""
+    """이 단락이 문항 경계인가? 매치되면 re.Match, 아니면 None.
+
+    보조 원고(_alt)는 본 소스와 같은 형식이다 — 접미사를 떼고 판정하지
+    않으면 어느 목록에도 없어 경계가 0개가 되고, 폴백이 성립할 수 없다
+    (2026-08-08: 빈칸어휘/어법 폴백이 이것 때문에 무력화돼 있었다).
+    """
+    if step_key.endswith("_alt"):
+        step_key = step_key[:-4]
     if step_key in BRACKET_STEPS:
         for rx in (_RE_BRACKET, _RE_BRACKET_CODE, _RE_HASH, _RE_DOT, _RE_HDR):
             m = rx.match(text)
