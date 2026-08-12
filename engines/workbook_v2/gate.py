@@ -275,7 +275,8 @@ _RE_SRC_MARKER = re.compile(r"^\[[^\[\]]{2,}변형\]$")
 # G1 확장 (W30-r15) — 교과서 실전문제 출처 라인 ("공통영어2_YBM(김) 1과_03"
 # / "… 1과_01~02" — 밑줄 포함 과목_출판사 토큰 + 'N과_NN[~NN]' 전체 라인.
 # 출력 검사용 독립 정의 — plan._RE_S3_TEXTBOOK_SRC와 순환 방지)
-_RE_S3_SRC_LINE = re.compile(r"^\S+_\S+\s+\d+과_\d+(?:\s*~\s*\d+)?$")
+_RE_S3_SRC_LINE = re.compile(
+    r"^\S+_\S+\s+\d+과_(?:\d+(?:\s*~\s*\d+)?|[\w가-힣]{1,12})$")
 _RE_SRC_POLLUTED = re.compile(r"^[①-⑤]\[[^\[\]]{2,}변형\]$")
 # G12 — 문장삽입 발문 (주어진 문장 배경 박스 기대)
 _RE_INSERT_PROMPT = re.compile(r"주어진 문장이 들어가|들어갈 위치|"

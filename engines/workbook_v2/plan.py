@@ -83,7 +83,11 @@ _RE_S3_QNUM = re.compile(r"^\d+\.\s")
 # 형태: <과목_출판사 토큰(밑줄 포함)> + 공백 + <N과_NN[~NN]> 전체 라인.
 # 본문 영어 문장은 '_'가 붙은 선두 토큰 + 'N과_N' 꼬리를 동시에 갖지
 # 않아 오매치 없음 (골든 코퍼스 전수 재빌드 diff 0으로 증명).
-_RE_S3_TEXTBOOK_SRC = re.compile(r"^\S+_\S+\s+\d+과_\d+(?:\s*~\s*\d+)?$")
+# W54: 출처 꼬리는 숫자형(03/01~02) 외에 한글 코너명형(딥러닝 등)도 있다
+# (1bda7f01 실증: "공통영어2_미래김 1과_딥러닝"이 미매치 → 조건 박스에
+# 흡수돼 인쇄). 12자 이하 무공백 꼬리로 한정 — 본문 문장은 공백/길이로 배제.
+_RE_S3_TEXTBOOK_SRC = re.compile(
+    r"^\S+_\S+\s+\d+과_(?:\d+(?:\s*~\s*\d+)?|[\w가-힣]{1,12})$")
 # W51 (job 0645d4a7 수특라이트 실증): 부교재 변형문제 원고의 유형/출처 구분
 # 마커 "[ Type A ]" / "[ Type D (1) 어법 ]" / "[01강 - Exercise 01]" 단독
 # 라인 — kind UNKNOWN → 지문 스타일로 인쇄됨. 완제품에 불필요 — 제거
@@ -588,6 +592,15 @@ def build_step3(step_data):
                     continue
                 if row["arrow_bg"]:
                     style = _style("STEP3", "P-CONTEXT")
+                # W54 (1bda7f01 실증 — 사용자 지적 5): 지문 스타일의 GREP
+                # (원문자 뒤 영단어 → 지문 밑줄)은 어법 지문(원고가 ⓐ~ⓔ 뒤
+                # 단어에 밑줄 의도)용이다. 문장삽입/무관문장 지문의 ①~⑤
+                # 위치 마커에도 발동해 원고에 없는 밑줄이 생긴다 — 원고
+                # runs에 밑줄이 전혀 없는 ①~⑤ 마커 지문은 '밑줄제거' 변형
+                # 스타일(스타일맵 P 리스트 2번째)로 보낸다.
+                if row["eff"] == "P" and _RE_S3_NUM_CIRCLED.search(row["tclean"]) \
+                        and not any(r.get("ul") for r in (row["runs"] or [])):
+                    style = _s3_p_no_underline_style() or style
                 eff_seq.append((row["eff"], row["tclean"]))
                 text, runs = row["text"], row["runs"]
                 for rx, repl in _S3_GREPS:
@@ -624,8 +637,18 @@ def build_step3(step_data):
                 if nq > 1 and not aggregate and not any(
                         _STEP3_SET_INTRO_KEY in (p.get("t") or "")
                         for p in unit):
-                    unit.insert(0, {"t": _STEP3_SET_INTRO, "s": "$BASIC",
-                                    "runs": []})
+                    unit.insert(0, {"t": _STEP3_SET_INTRO,
+                                    "s": _style("STEP3", "Q-INTRO")
+                                    or "$BASIC", "runs": []})
+                # W54 (1bda7f01 미래엔김 실증 — 사용자 지적 2): 통짜
+                # (textbook) 아이템은 위 유닛 단위 삽입 대신 **세트 단위**로
+                # 판정한다 — 원고가 세트마다 안내문을 갖고 있어도 첫 세트
+                # 등 일부에 없으면 그 세트만 누락된 채 인쇄됐다. 지문 블록
+                # 시작(직전이 선지/답란/조건 등 이전 세트 꼬리)마다 다음
+                # 지문 시작 전까지 발문 수를 세고, 2개 이상인데 직전에
+                # 안내문이 없으면 그 지문 앞에 삽입한다 (원고 안내문 보존).
+                if aggregate:
+                    _s3_insert_set_intros(unit, st_q)
                 code = (item.get("code") or "").strip()
                 if code:
                     unit.insert(0, {"t": "{" + code + "}", "s": "$BASIC",
@@ -633,6 +656,50 @@ def build_step3(step_data):
                 units.append(unit)
                 warnings.extend(BG.validate_sequence(eff_seq))
     return {"units": units, "warnings": warnings}
+
+
+def _s3_insert_set_intros(unit, st_q):
+    """통짜(textbook) step3 유닛의 세트 단위 안내문 삽입 (W54).
+
+    세트 = 지문 블록(지문/배경 스타일 연속, 사이의 (A)류 라벨 허용) +
+    그 뒤 발문들. 지문 블록 시작 인덱스마다 다음 지문 블록 전까지의
+    발문(st_q) 수를 세고, 2개 이상인데 지문 직전 단락이 안내문
+    (물음에 답하시오)이 아니면 안내문을 삽입한다."""
+    intro_style = _style("STEP3", "Q-INTRO") or "$BASIC"
+
+    def _is_passage(p):
+        s = p.get("s") or ""
+        return "실전 문제 지문" in s or s == _style("STEP3", "P-CONTEXT")
+
+    # 지문 블록 시작 수집 (직전 비빈 단락이 지문/라벨이 아닌 P 단락)
+    starts = []
+    prev_passage = False
+    for i, p in enumerate(unit):
+        t = (p.get("t") or "").strip()
+        if _is_passage(p):
+            if not prev_passage:
+                starts.append(i)
+            prev_passage = True
+        elif not t or re.match(r"^\(\s*[A-E]\s*\)$", t):
+            pass    # 빈 줄/(A)류 위치 라벨은 지문 블록 연속으로 취급
+        else:
+            prev_passage = False
+    starts_set = sorted(starts) + [len(unit)]
+    # 역순 삽입 (인덱스 안정)
+    for k in range(len(starts_set) - 2, -1, -1):
+        a, b = starts_set[k], starts_set[k + 1]
+        nq = sum(1 for p in unit[a:b] if p.get("s") == st_q)
+        if nq < 2:
+            continue
+        prev = None
+        for j in range(a - 1, -1, -1):
+            if (unit[j].get("t") or "").strip():
+                prev = unit[j]
+                break
+        if prev is not None and _STEP3_SET_INTRO_KEY in (prev.get("t") or ""):
+            continue
+        unit.insert(a, {"t": _STEP3_SET_INTRO, "s": intro_style,
+                        "runs": []})
 
 
 def _s3_number_order_rows(pre):
@@ -767,6 +834,13 @@ def _s3_assign_slots(pre, BG):
         # 답란 표의 기입 줄이면 AnsL 로 승격해야 한다 (2026-08-06 실측:
         # 열 머리만 S_답란 이 되고 기입 줄 2개가 지문 스타일로 남음).
         if row["eff"] == "AnsL":
+            continue
+        # W54 (1bda7f01 미래엔김 실증 — 사용자 지적 1): 이미 구조 역할이
+        # 확정된 단락(발문/인트로/선지/조건/보기/요약문/출처)은 답란으로
+        # 강등하지 않는다 — 발문 "윗글의 밑줄 친 ⓐ~ⓔ중 어법상 어색한
+        # 것은?"(원문자 2개+40자 이하)이 원문자 열 머리로 오인돼 S_답란이
+        # 되면서 문항 번호·발문 스타일이 통째로 빠졌다.
+        if row["eff"] in ("Q", "Q-INTRO", "C", "Cond", "Box", "Sum", "SRC"):
             continue
         t = row["tclean"]
         # W52 (0645d4a7 v2_6 사용자 지적 1): 원문자 시작 + 실내용이 있는
