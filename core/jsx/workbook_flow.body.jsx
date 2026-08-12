@@ -212,6 +212,27 @@ function _ensureEndPad(para, ip, pad) {
 var _iconPlaceFallback = {};   // label -> place 실패 → duplicate 폴백 건수
 
 // 단락 1개에 아이콘 1개 삽입. 성공 1 / 실패 0.
+// W58: 삽입 후 앵커 앞 공백 보정 — 경로(place/duplicate 폴백)에 따라
+// pad가 앵커 뒤로 밀리는 케이스가 있어("Monday￼ " — 사용자 지적: 버튼이
+// 본문에 딱 붙음) 삽입 결과를 직접 검사해 앵커 '앞'에 pad를 보장한다.
+function _fixAnchorPad(para, pad) {
+    if (!pad) { return; }
+    try {
+        var c = String(para.contents || "").replace(/\r$/, "");
+        var ai = c.lastIndexOf("￼");
+        if (ai > 0 && c.charAt(ai - 1) !== pad.charAt(pad.length - 1)) {
+            para.insertionPoints[ai].contents = pad;
+        }
+        // 앵커 뒤에 남은 잉여 pad 제거 (pad가 뒤로 밀렸던 흔적)
+        c = String(para.contents || "").replace(/\r$/, "");
+        ai = c.lastIndexOf("￼");
+        if (ai >= 0 && ai + 1 < c.length
+                && c.substring(ai + 1) === pad) {
+            para.characters.itemByRange(ai + 1, c.length - 1).contents = "";
+        }
+    } catch (e) {}
+}
+
 function insertIconAt(doc, story, para, ic) {
     var pos = (ic.pos === "start") ? "start" : "end";
     var pad = ic.pad || "";
@@ -238,6 +259,7 @@ function insertIconAt(doc, story, para, ic) {
                         placed.absoluteVerticalScale = sc;
                     }
                 } catch (e) {}
+                if (pos === "end") { _fixAnchorPad(para, pad); }
                 return 1;
             } catch (e) { /* W50: 아래 duplicate 폴백으로 계속 */ }
         }
@@ -263,6 +285,7 @@ function insertIconAt(doc, story, para, ic) {
         // 앵커(￼) 직후에 pad (v1 1B1: 아이콘 다음 탭)
         try { para.insertionPoints[1].contents = pad; } catch (e) {}
     }
+    if (pos === "end") { _fixAnchorPad(para, pad); }   // W58
     return 1;
 }
 
