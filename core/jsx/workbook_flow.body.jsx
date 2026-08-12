@@ -1304,6 +1304,116 @@ function enforceQuestionKeep(doc, flowStories, op) {
 // 수렴 후 문서 순서로: NEXT_PAGE 발문을 시험 삼아 풀고(ANYWHERE) 재조판해
 // 스프레드 걸침이 재발하면 복원, 아니면 완화 확정. 완화로 뒤가 당겨지면
 // 다음 후보들은 갱신된 상태에서 재평가된다.
+// W56: 발문고아킵(NEXT_FRAME) 완화 — 발문 밀기도 단락 속성이라 후속
+// 리플로우로 무효화돼도 남아 단 하나가 반쯤 비는 구멍을 만든다
+// (v2_5 실증: 50번 조건박스 아래·80번 지문 아래 단 하단 대공백 —
+// 사용자 재재지적). 시험 완화 후 고아 조건(발문고아)·스프레드 걸침이
+// 재발하면 복원한다.
+function _stemOrphanAt(paras, starts, k, minLines) {
+    var si = starts[k];
+    if (si <= 0 || si >= paras.length) { return false; }
+    var ei = (k + 1 < starts.length && starts[k + 1] <= paras.length)
+        ? starts[k + 1] - 1 : paras.length - 1;
+    var stemOnly = (ei <= si);
+    var stem = paras[si];
+    var f = null;
+    try { f = stem.parentTextFrames[0]; } catch (e1) {}
+    if (!f) { return true; }   // overset 상태 — 복원이 안전
+    var fLines = [];
+    try { fLines = f.lines.everyItem().getElements(); } catch (e2) {}
+    if (!fLines || fLines.length === 0) { return false; }
+    var stemStart = -1, stemLen = 0;
+    try {
+        stemStart = stem.characters[0].index;
+        stemLen = stem.characters.length;
+    } catch (e3) { return false; }
+    var stemEnd = stemStart + stemLen;
+    var bodyLines = 0;
+    var lastEnd = -1;
+    for (var li = 0; li < fLines.length; li++) {
+        var c0 = -1, cn = 0;
+        try {
+            c0 = fLines[li].characters[0].index;
+            cn = fLines[li].characters.length;
+        } catch (e5) { continue; }
+        if (c0 + cn - 1 > lastEnd) { lastEnd = c0 + cn - 1; }
+        if (c0 >= stemEnd) { bodyLines++; }
+    }
+    if (stemOnly) { return lastEnd <= stemEnd - 1; }
+    var qEnd = -1;
+    try {
+        var eP = paras[ei];
+        qEnd = eP.characters[0].index + eP.characters.length - 1;
+    } catch (e6) { return false; }
+    if (qEnd <= lastEnd) { return false; }   // 문항이 프레임 안에서 끝남
+    return bodyLines < minLines;
+}
+
+function relaxStemKeep(doc, flowStories, op) {
+    var minLines = (op.stem_keep && op.stem_keep.min_lines) || 2;
+    var flowsCfg = (op && op.flows) || {};
+    var totalRelaxed = 0;
+    for (var step in flowsCfg) {
+        var rec = flowStories[step];
+        if (!rec) { continue; }
+        var story = rec.story;
+        var starts = flowsCfg[step].stem_starts
+            || flowsCfg[step].starts || [];
+        if (starts.length === 0) { continue; }
+        var relaxed = 0;
+        for (var k = 0; k < starts.length; k++) {
+            if ((k + 1) % 40 === 0) {
+                wlog("발문고아 완화 진행: " + step + " "
+                     + (k + 1) + "/" + starts.length);
+            }
+            var si = starts[k];
+            try { story.recompose(); } catch (e0) {}
+            var paras = story.paragraphs.everyItem().getElements();
+            if (si <= 0 || si >= paras.length) { continue; }
+            var cur = null;
+            try { cur = paras[si].startParagraph; } catch (e1) { continue; }
+            if (cur !== StartParagraph.NEXT_FRAME) { continue; }
+            try {
+                paras[si].startParagraph = StartParagraph.ANYWHERE;
+                story.recompose();
+            } catch (e2) { continue; }
+            paras = story.paragraphs.everyItem().getElements();
+            var bad = _stemOrphanAt(paras, starts, k, minLines);
+            if (!bad) {
+                // 스프레드 걸침 재발 검사 (당겨진 시작이 오른쪽 페이지로
+                // 올라가며 문항이 다음 장에 걸칠 수 있다)
+                var ei = (k + 1 < starts.length
+                          && starts[k + 1] <= paras.length)
+                    ? starts[k + 1] - 1 : paras.length - 1;
+                try {
+                    var sf = paras[si].parentTextFrames[0];
+                    var efs = paras[ei].parentTextFrames;
+                    var ef = efs[efs.length - 1];
+                    var sp = sf.parentPage, ep = ef.parentPage;
+                    if (!sp || !ep) { bad = true; }
+                    else if (spreadIdOf(doc, ep) > spreadIdOf(doc, sp)) {
+                        bad = true;
+                    }
+                } catch (e3) { bad = true; }
+            }
+            if (bad) {
+                try {
+                    paras[si].startParagraph = StartParagraph.NEXT_FRAME;
+                    story.recompose();
+                } catch (e4) {}
+            } else {
+                relaxed++;
+            }
+        }
+        if (relaxed > 0) {
+            wlog("발문고아 완화: " + step + " 불필요 밀기 " + relaxed
+                 + "건 해제");
+        }
+        totalRelaxed += relaxed;
+    }
+    return totalRelaxed;
+}
+
 function relaxQuestionKeep(doc, flowStories, op) {
     var flowsCfg = (op && op.flows) || {};
     var totalRelaxed = 0;
@@ -1405,6 +1515,7 @@ function relaxQuestionKeep(doc, flowStories, op) {
 function enforceStemKeep(doc, flowStories, op) {
     var minLines = (op.stem_keep && op.stem_keep.min_lines) || 2;
     var flowsCfg = (op && op.flows) || {};
+    var totalPushed = 0;
     for (var step in flowsCfg) {
         var rec = flowStories[step];
         if (!rec) { continue; }
@@ -1502,7 +1613,9 @@ function enforceStemKeep(doc, flowStories, op) {
             }
         }
         wlog("발문고아킵: " + step + " 밀기 " + pushed + "건");
+        totalPushed += pushed;
     }
+    return totalPushed;
 }
 
 // ── W21 op: 섹션 시작 좌/우 마스터 정합 (plan.section_masters가 있을 때만) ──
@@ -2373,22 +2486,32 @@ try {
             // 마지막 연산은 항상 enforce라 스프레드 걸침 0은 보장).
             // 완화로 당겨진 배치가 발문 고아를 새로 만들 수 있어(refix2
             // 실증 3건) 발문고아킵 후에도 한 쌍 더 돈다.
+            // W56: 페이지 밀기(NEXT_PAGE)와 단 밀기(NEXT_FRAME) 둘 다
+            // 톱니라 두 완화·두 강제를 한 고정점 루프로 통합한다 —
+            // 라운드의 마지막 연산이 항상 강제라 스프레드 걸침·발문
+            // 고아 0은 보장되고, 불필요 밀기(공백)는 다음 라운드가
+            // 회수한다. 전부 0건이면 수렴.
             var kkRound = 0;
-            while (kkRound < 4) {
+            while (kkRound < 5) {
                 kkRound++;
-                var kkR = relaxQuestionKeep(doc, flowStories,
-                                            plan.question_keep);
-                var kkP = enforceQuestionKeep(doc, flowStories,
-                                              plan.question_keep);
-                wlog("문제단위킵 라운드 " + kkRound + ": 완화 " + kkR
-                     + " / 재밀기 " + kkP);
-                if (kkR === 0 && kkP === 0) { break; }
-            }
-            if (plan.question_keep.stem_keep) {
-                enforceStemKeep(doc, flowStories, plan.question_keep);
-                enforceQuestionKeep(doc, flowStories, plan.question_keep);
-                relaxQuestionKeep(doc, flowStories, plan.question_keep);
-                enforceQuestionKeep(doc, flowStories, plan.question_keep);
+                var kkRQ = relaxQuestionKeep(doc, flowStories,
+                                             plan.question_keep);
+                var kkRS = plan.question_keep.stem_keep
+                    ? relaxStemKeep(doc, flowStories, plan.question_keep)
+                    : 0;
+                var kkPQ = enforceQuestionKeep(doc, flowStories,
+                                               plan.question_keep);
+                var kkPS = plan.question_keep.stem_keep
+                    ? enforceStemKeep(doc, flowStories, plan.question_keep)
+                    : 0;
+                var kkPQ2 = (kkPS > 0)
+                    ? enforceQuestionKeep(doc, flowStories,
+                                          plan.question_keep)
+                    : 0;
+                wlog("문제단위킵 라운드 " + kkRound + ": 완화 "
+                     + (kkRQ + kkRS) + " (P" + kkRQ + "/F" + kkRS
+                     + ") / 재밀기 " + (kkPQ + kkPS + kkPQ2));
+                if (kkRQ + kkRS + kkPQ + kkPS + kkPQ2 === 0) { break; }
             }
             if (plan.page_cleanup
                     && (typeof plan.page_cleanup === "object")
