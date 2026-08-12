@@ -436,6 +436,48 @@ def _ansline_fields(eff, arrow_bg=False):
 _STEP3_SET_INTRO = "다음 글을 읽고 물음에 답하시오."
 _STEP3_SET_INTRO_KEY = "물음에 답하시오"
 
+# W53 (배재1 워크북01 p69 실측 2026-08-12): 지문 단락 끝에 **다음 문항의
+# 발문**이 줄바꿈 없이 이어붙어 한 단락이 된다 ("…a lot of fun.1. 다음 글의
+# 주제로 가장 적절한 것은?"). 그 문항은 번호 스타일을 못 받아 지문 꼬리에
+# 묻히고 이후 문항 번호가 하나씩 밀린다. 원고 자체가 붙어 오는 경우
+# (꼼꼼변형 파일 경계·조판자 편집 등 상류가 무엇이든) 플랜에서 되돌린다.
+#   조건: 문장부호로 끝난 뒤 → 번호 + 한글 발문 도입어. 앞부분이 40자
+#   이상(라벨·선지 오분리 방지)일 때만 자른다.
+_RE_S3_MERGED_Q = re.compile(
+    r"(?<=[.!?\"'”’\)])\s*"
+    r"(?=\d{1,3}\.\s*(?:다음|밑줄|윗\s*글|위\s*글|주어진|아래|글의|"
+    r"<\s*보기\s*>))")
+
+
+def _s3_split_merged_questions(paragraphs, warnings):
+    """지문에 이어붙은 발문을 별도 단락으로 분리 (W53 — 가산 전용)."""
+    out = []
+    for p in paragraphs:
+        text = p.get("text") or ""
+        ms = [m for m in _RE_S3_MERGED_Q.finditer(text) if m.start() >= 40]
+        if not ms:
+            out.append(p)
+            continue
+        runs = p.get("runs") or []
+        spans, prev = [], 0
+        for m in ms:
+            spans.append((prev, m.start()))
+            prev = m.end()
+        spans.append((prev, len(text)))
+        for idx, (a, b) in enumerate(spans):
+            if not text[a:b].strip():
+                continue
+            seg = dict(p)
+            seg["text"] = text[a:b]
+            seg["runs"] = _slice_runs(runs, a, b) if runs else []
+            if idx > 0:                     # 뒤쪽 조각 = 새 문항 발문
+                seg["kind"] = "Q"
+                seg.pop("q_code", None)
+            out.append(seg)
+        warnings.append("step3: 지문 끝에 이어붙은 발문 %d개 분리 "
+                        "(문항 병합 방어 — W53)" % len(ms))
+    return out
+
 
 def build_step3(step_data):
     """step3 데이터 {normal:[{question_num, paragraphs}], short:[...]} → 유닛.
@@ -461,7 +503,8 @@ def build_step3(step_data):
             cond_no = 1              # 다음 조건 항목 번호 기대값
             sum_bg = False           # W38: [요약문] 배경 전파 상태
             pre = []                 # 1패스 산출 (슬롯 배정 전)
-            for p in item.get("paragraphs", []):
+            for p in _s3_split_merged_questions(
+                    item.get("paragraphs", []), warnings):
                 text = p.get("text", "")
                 kind = p.get("kind") or "UNKNOWN"
                 tclean = text.strip()
