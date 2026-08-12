@@ -29,11 +29,27 @@ import re
 BRACKET_STEPS = ["step1_a1", "step1_a1_2", "step1_a2", "step1_b1", "step1_b2"]
 
 # 섹션별 보조 원고 (본 소스에 문항이 없거나 내용이 미달일 때만 사용)
-_ALT_SOURCE = {"step2_c2": "step2_c2_alt"}
+_ALT_SOURCE = {"step2_c2": "step2_c2_alt",
+               # 빈칸어휘/빈칸어법 — 해설지가 '정답 단어 목록'뿐인 회차는
+               # 문제지로 폴백 (아래 _is_thin_block 이 판정)
+               "step1_c2": "step1_c2_alt",
+               "step2_c1": "step2_c1_alt"}
+
+# 문장이 있어야 문제가 성립하는 스텝 — 영문 8어절 이상 단락이 하나도 없으면
+# 그 블록은 '정답 목록'이다.
+_SENTENCE_STEPS = ("step1_c2", "step2_c1")
+_RE_EN_W = re.compile(r"[A-Za-z']+")
 
 
 def _is_thin_block(step_key, block):
     """그 섹션의 필수 형태가 빠진 블록인가 (있으나 마나 한 내용)."""
+    if step_key in _SENTENCE_STEPS:
+        # 빈칸 문장이 하나도 없고 "N. word" 목록만 = 해설지 정답 목록
+        for p in block:
+            t = (p.get("text") if isinstance(p, dict) else str(p)) or ""
+            if len(_RE_EN_W.findall(t)) >= 8:
+                return False
+        return True
     if step_key != "step2_c2":
         return False
     # 영작 배열은 "( a / b / c )" 단어 목록이 있어야 문제가 성립한다.
