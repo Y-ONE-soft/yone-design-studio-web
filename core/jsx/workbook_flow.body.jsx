@@ -1509,6 +1509,77 @@ function fixSectionMasters(doc, flowStories) {
     wlog("섹션 시작 마스터 정합: " + n + "개 교체");
 }
 
+// ── W53 op: 스텝 콘텐츠 페이지의 빈(M) 마스터 복구 ──────────────────────────
+// 배재2 워크북01 실측 (검수자 지적 "머리 부분 디자인이 안 입혀 있습니다"):
+// STEP1 C2(빈칸 어휘) 스토리가 템플릿 MEMO(M) 여백 페이지까지 흘러들어
+// p106만 헤더 바·사이드탭·페이지번호가 통째로 없이 납품됐다. W52
+// normalizeStep3ContentMasters는 스텝3 메인 스토리(rec.isMaster)만 대상이라
+// 섹션 스토리는 무방비였다.
+//   대상: 콘텐츠가 실린 페이지 & 마스터가 M/없음 (그 외 소수 마스터는
+//         무접촉 — 좌/우 변형(A/B·C/D)을 다수결로 뭉개지 않는다)
+//   제외: 섹션 시작 페이지(pages[0]) — 좌/우 계약은 fixSectionMasters 소관
+//   게이트: master_pair 계약이 있는 스토리만 (계약 없는 커스텀 내지 무접촉)
+function repairStepContentMasters(doc, flowStories) {
+    var fixed = 0;
+    for (var step in flowStories) {
+        var rec = flowStories[step];
+        if (!rec || rec.isMaster || !rec.masterPair) { continue; }
+        var pages = [];
+        try { pages = storyPagesInOrder(rec.story); } catch (e0) { continue; }
+        if (pages.length < 2) { continue; }
+        // 다수 마스터 (섹션 시작 페이지 제외 — 좌/우 변형이 최빈값을 흔든다)
+        var counts = {};
+        var best = null;
+        for (var pi = 1; pi < pages.length; pi++) {
+            var mn = "";
+            try {
+                mn = pages[pi].appliedMaster
+                    ? String(pages[pi].appliedMaster.name) : "";
+            } catch (e1) {}
+            if (!mn || isEmptyMasterName(doc, mn)) { continue; }
+            counts[mn] = (counts[mn] || 0) + 1;
+            if (!best || counts[mn] > counts[best]) { best = mn; }
+        }
+        if (!best) { continue; }
+        for (var pj = 1; pj < pages.length; pj++) {
+            var cur = "";
+            try {
+                cur = pages[pj].appliedMaster
+                    ? String(pages[pj].appliedMaster.name) : "";
+            } catch (e2) {}
+            if (cur && !isEmptyMasterName(doc, cur)) { continue; }
+            var hasContent = false;
+            try {
+                var pfs = framesOfStoryOnPage(rec.story, pages[pj]);
+                for (var fi = 0; fi < pfs.length; fi++) {
+                    if (!isBlankFrameContent(pfs[fi])) {
+                        hasContent = true;
+                        break;
+                    }
+                }
+            } catch (e3) {}
+            if (!hasContent) { continue; }   // 빈 꼬리 페이지는 정리 소관
+            try {
+                pages[pj].appliedMaster = doc.masterSpreads.itemByName(best);
+                fixed++;
+                wlog("콘텐츠 마스터 복구: " + step + " p" + pages[pj].name
+                     + " (" + (cur || "없음") + " → " + best + ")");
+            } catch (e4) {}
+        }
+    }
+    wlog("스텝 콘텐츠 페이지 빈 마스터 복구: " + fixed + "개");
+}
+
+// 빈(메모) 마스터 판정 — namePrefix "M" (내지 공통 규약. 이름 문자열은
+// 한글 NFD라 접두만 비교한다).
+function isEmptyMasterName(doc, name) {
+    if (!name || name === "[None]") { return true; }
+    var pfx = "";
+    try { pfx = String(doc.masterSpreads.itemByName(name).namePrefix); }
+    catch (e) { return false; }
+    return pfx === "M";
+}
+
 // ── 간지 텍스트 업데이트 (v1 run.jsx 16.7 이식 — plan.divider가 있을 때만) ──
 // 간지 페이지 = 마스터 [None](또는 없음) + 텍스트프레임 1개 + 첫 단락에
 // 한글. 1단락=line1, 2단락=line2.
@@ -2220,6 +2291,12 @@ try {
         app.doScript(function () { fixSectionMasters(doc, flowStories); },
                      ScriptLanguage.JAVASCRIPT, undefined,
                      UndoModes.ENTIRE_SCRIPT, "wb_v2 section_masters");
+        // W53: 섹션 시작 마스터 확정 이후 — 스텝 콘텐츠 페이지의 빈(M)
+        // 마스터 복구 (헤더 없는 본문 페이지 방지). 반드시 이 순서.
+        app.doScript(function () {
+            repairStepContentMasters(doc, flowStories);
+        }, ScriptLanguage.JAVASCRIPT, undefined,
+           UndoModes.ENTIRE_SCRIPT, "wb_v2 step_content_masters");
     }
     if (plan.divider && plan.divider.line1) {
         app.doScript(function () {
