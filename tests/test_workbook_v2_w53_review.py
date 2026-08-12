@@ -87,3 +87,56 @@ def test_step3_numbered_set_keeps_intro_spec():
     units = _step3_units("20", 3)
     texts = [q["t"] for u in units for q in u]
     assert any("다음 글을 읽고 물음에 답하시오." == t for t in texts), texts[:5]
+
+
+# ── 문항 병합 방어 (배재1 워크북01 p69 실측) ─────────────────────────────────
+_MERGED = ("We tried to practice once a week through a video chat app, but we "
+           "encountered several problems. Since each of us prefers a different "
+           "genre of music, we all ended up learning a lot about different kinds "
+           "of music. It was interesting and a lot of fun."
+           "1. 다음 글의 주제로 가장 적절한 것은?")
+
+
+def _plan_step3(paras):
+    out = build_step3({"normal": [{"question_num": "textbook",
+                                   "paragraphs": paras}]})
+    return [q for u in out["units"] for q in u], out["warnings"]
+
+
+def test_step3_merged_question_is_split():
+    """지문 끝에 이어붙은 발문이 별도 단락 + 발문 스타일로 분리된다."""
+    flat, warns = _plan_step3([
+        {"text": _MERGED, "kind": "P"},
+        {"text": "① The power of music for good health", "kind": "C"},
+    ])
+    assert not any("a lot of fun." in q["t"] and "다음 글" in q["t"]
+                   for q in flat), [q["t"][-60:] for q in flat]
+    stem = [q for q in flat if "다음 글의 주제로" in q["t"]]
+    assert len(stem) == 1, [q["t"] for q in flat]
+    assert "번호" in stem[0]["s"], stem[0]["s"]        # 자동번호 발문 스타일
+    assert any("문항 병합 방어" in w for w in warns), warns
+
+
+def test_step3_underline_runs_survive_split():
+    """분리 시 밑줄 run 오프셋이 각 조각에 맞게 잘려 따라간다."""
+    text = ("The band members put our heads together and devised a better way. "
+            "It was interesting and a lot of fun."
+            "2. 밑줄 친 put our heads together가 의미하는 바로 적절한 것은?")
+    at = text.index("put our heads together")
+    runs = [{"t": text[:at], "ul": False},
+            {"t": "put our heads together", "ul": True},
+            {"t": text[at + len("put our heads together"):], "ul": False}]
+    flat, _ = _plan_step3([{"text": text, "runs": runs, "kind": "P"}])
+    body = [q for q in flat if q["t"].startswith("The band members")]
+    assert body and any(r.get("ul") for r in body[0]["runs"])
+    joined = "".join(r["t"] for q in flat for r in (q.get("runs") or []))
+    assert "put our heads together" in joined
+
+
+def test_step3_no_split_for_short_label_or_choice():
+    """회귀 가드: 짧은 라벨·선지는 자르지 않는다 (40자 미만 앞부분)."""
+    flat, warns = _plan_step3([
+        {"text": "1. 다음 글의 주제로 가장 적절한 것은?", "kind": "Q"},
+        {"text": "Passage body sentence here.", "kind": "P"},
+    ])
+    assert not any("문항 병합 방어" in w for w in warns), warns
