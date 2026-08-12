@@ -2362,8 +2362,14 @@ try {
             // W55: 수렴 후 불필요해진 밀기 해제 (컬럼/페이지 공백 회수) —
             // 완화가 새 걸침을 만들면 안 되므로 완화 패스 자체가 위반 시
             // 즉시 복원하고, 마지막에 enforce 1회로 안전망을 친다.
+            // 완화로 당겨진 배치가 발문 고아를 새로 만들 수 있어(refix2
+            // 실증 3건) 발문고아킵도 한 번 더 돈다.
             relaxQuestionKeep(doc, flowStories, plan.question_keep);
             enforceQuestionKeep(doc, flowStories, plan.question_keep);
+            if (plan.question_keep.stem_keep) {
+                enforceStemKeep(doc, flowStories, plan.question_keep);
+                enforceQuestionKeep(doc, flowStories, plan.question_keep);
+            }
             if (plan.page_cleanup
                     && (typeof plan.page_cleanup === "object")
                     && plan.page_cleanup.empty === "delete") {
