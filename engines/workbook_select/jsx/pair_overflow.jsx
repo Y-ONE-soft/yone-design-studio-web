@@ -160,58 +160,77 @@
 
         var n = Math.min(topOnly.length, btmOnly.length);
         var made = 0;
-        // 삽입 기준점 = **첫 고아 하단 페이지 바로 앞** 프레임.
-        // 상단만 있는 페이지보다 앞을 기준으로 잡으면(=체인 맨 뒤) 새 프레임이
-        // 꼬리에 붙어 내용이 흘러오지 않는다 (2026-08-08 v9 실측: p156·p157
-        // 에 빈 프레임만 생기고 p154·p155 가 그대로 남았다).
+
+        // ⚠ 프레임을 add 하면 textContainers/textFrames 컬렉션 참조가 무효화된다
+        //    ("이 요청에 대한 개체가 잘못되었습니다" — 개발가이드 기록 함정).
+        //    루프 전에 **숫자와 id 로만** 필요한 것을 뽑아두고, 프레임은 매번
+        //    id 로 다시 resolve 한다.
+        var refInfo = {};          // side → {bounds, promptId}
+        for (var r in btmPages) {
+            if (!btmPages.hasOwnProperty(r)) continue;
+            if (!topPages[r]) continue;
+            var rpg = btmPages[r].parentPage;
+            var sd = String(rpg.side);
+            if (refInfo[sd]) continue;
+            var pfr = promptFrameOn(rpg);
+            refInfo[sd] = {
+                bounds: btmPages[r].geometricBounds,
+                promptId: pfr ? pfr.id : 0
+            };
+        }
+
+        // 삽입 기준점 = **첫 고아 하단 페이지 바로 앞** 프레임 (id 로 고정).
+        // 상단만 있는 페이지 기준으로 잡으면 체인 맨 뒤에 붙어 내용이 흘러오지
+        // 않는다 (2026-08-08 v9 실측: 빈 프레임만 생기고 원래 페이지가 잔존).
         var anchorPage = btmOnly[0];
         var chain = btmStory.textContainers;
-        var prev = null;
+        var prevId = 0;
         for (j = 0; j < chain.length; j++) {
-            if (pageNum(chain[j]) < anchorPage) prev = chain[j];
+            if (pageNum(chain[j]) < anchorPage) prevId = chain[j].id;
         }
-        if (prev === null) {
+        if (!prevId) {
             W("[경고] 기준 프레임 없음 — 건너뜀");
             d.close(SaveOptions.NO);
             W("===== 짝 정리 완료 =====");
             return;
         }
+
         for (var m = 0; m < n; m++) {
             var tgtPage = d.pages[topOnly[m]];
-            var ref = refFor(tgtPage.side);
-            if (!ref) { W("[경고] 같은 side 기준 페이지 없음 — p"
-                          + (topOnly[m] + 1) + " 건너뜀"); continue; }
-            var refBtm = btmPages[ref.documentOffset];
-            var rb = refBtm.geometricBounds;
+            var info = refInfo[String(tgtPage.side)];
+            if (!info) {
+                W("[경고] 같은 side 기준 페이지 없음 — p"
+                  + (topOnly[m] + 1) + " 건너뜀");
+                continue;
+            }
+            var prevF = d.textFrames.itemByID(prevId);
+            if (!prevF || !prevF.isValid) {
+                W("[경고] 기준 프레임 무효 — 중단");
+                break;
+            }
+            var after = prevF.nextTextFrame;
 
-            // 새 하단 프레임
             var ntf = tgtPage.textFrames.add();
-            ntf.geometricBounds = rb;
-            try {
-                ntf.appliedObjectStyle = refBtm.appliedObjectStyle;
-            } catch (e5) {}
-            try {
-                ntf.textFramePreferences.insetSpacing =
-                    refBtm.textFramePreferences.insetSpacing;
-            } catch (e6) {}
+            ntf.geometricBounds = info.bounds;
+            prevF.nextTextFrame = ntf;
+            if (after && after.isValid) { ntf.nextTextFrame = after; }
+            prevId = ntf.id;
 
-            // 체인 삽입: 기준 프레임 뒤에 이어 붙인다(순서 보존)
-            var after = prev.nextTextFrame;
-            prev.nextTextFrame = ntf;
-            if (after) { ntf.nextTextFrame = after; }
-            prev = ntf;
-
-            // 발문 프레임 복제
-            var pf = promptFrameOn(ref);
-            if (pf) {
+            var okPrompt = false;
+            if (info.promptId) {
                 try {
-                    var np = pf.duplicate(tgtPage);
-                    np.geometricBounds = pf.geometricBounds;
+                    var pf2 = d.textFrames.itemByID(info.promptId);
+                    if (pf2 && pf2.isValid) {
+                        var gbp = pf2.geometricBounds;
+                        var np = pf2.duplicate(tgtPage);
+                        np.geometricBounds = gbp;
+                        okPrompt = true;
+                    }
                 } catch (e7) { W("[경고] 발문 복제 실패: " + e7); }
             }
             made++;
             W("  p" + (topOnly[m] + 1) + ": 하단 프레임 생성 + 체인 삽입"
-              + (pf ? " + 발문 복제" : ""));
+              + (okPrompt ? " + 발문 복제" : ""));
         }
 
         W("합친 페이지 " + made + "개 — 꼬리 빈 페이지는 trim 이 정리한다");
