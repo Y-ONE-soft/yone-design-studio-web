@@ -439,6 +439,21 @@ def _ansline_fields(eff, arrow_bg=False):
 
 _STEP3_SET_INTRO = "다음 글을 읽고 물음에 답하시오."
 _STEP3_SET_INTRO_KEY = "물음에 답하시오"
+# W54: 문장삽입/무관문장 지문의 ①~⑤ 위치 마커 (밑줄제거 스타일 판정용)
+_RE_S3_NUM_CIRCLED = re.compile(r"[①②③④⑤]")
+
+
+def _s3_p_no_underline_style():
+    """스타일맵 STEP3.P 리스트의 '밑줄제거' 변형 (없으면 None)."""
+    try:
+        v = resolve_style("workbook", "STEP3", "P")
+    except KeyError:
+        return None
+    if isinstance(v, list):
+        for s in v:
+            if "밑줄제거" in s:
+                return s
+    return None
 
 # W53 (배재1 워크북01 p69 실측 2026-08-12): 지문 단락 끝에 **다음 문항의
 # 발문**이 줄바꿈 없이 이어붙어 한 단락이 된다 ("…a lot of fun.1. 다음 글의
@@ -649,6 +664,10 @@ def build_step3(step_data):
                 # 안내문이 없으면 그 지문 앞에 삽입한다 (원고 안내문 보존).
                 if aggregate:
                     _s3_insert_set_intros(unit, st_q)
+                # W54 (사용자 지적 4): 서술형 문항(선지·답란이 전혀 없는
+                # 발문 블록)은 답을 쓸 여백이 없다 — 발문 블록 끝에 답란
+                # 스타일 빈 단락 2개를 삽입해 필기 공간을 준다.
+                _s3_insert_answer_space(unit, st_q)
                 code = (item.get("code") or "").strip()
                 if code:
                     unit.insert(0, {"t": "{" + code + "}", "s": "$BASIC",
@@ -700,6 +719,54 @@ def _s3_insert_set_intros(unit, st_q):
             continue
         unit.insert(a, {"t": _STEP3_SET_INTRO, "s": intro_style,
                         "runs": []})
+
+
+def _s3_insert_answer_space(unit, st_q):
+    """선지·답란 없는 서술형 발문 블록 끝에 답란 빈 단락 2개 삽입 (W54).
+
+    발문(st_q)부터 다음 발문/안내문/지문 블록 시작 전까지를 문항 블록으로
+    보고, 블록 안에 선지(C)·답란(AnsL) 스타일이 하나도 없으면 블록 끝에
+    빈 답란 단락을 넣는다 (사용자 스펙: "서술형은 답 쓸 칸 없으면 여백
+    일부 — 엔터쳐서 답란/선지 스타일")."""
+    st_c = _style("STEP3", "C")
+    st_ansl = _style("STEP3", "AnsL")
+    intro_style = _style("STEP3", "Q-INTRO")
+
+    def _is_passage(p):
+        s = p.get("s") or ""
+        return "실전 문제 지문" in s or s == _style("STEP3", "P-CONTEXT")
+
+    def _prev_meaningful(j):
+        for k in range(j - 1, -1, -1):
+            if (unit[k].get("t") or "").strip():
+                return unit[k]
+        return None
+
+    q_idx = [i for i, p in enumerate(unit) if p.get("s") == st_q]
+    for qi in reversed(q_idx):
+        # 서술형 발문만 (시오-체, '고르시오' 제외) — 지문 내 ①~⑤ 선택형
+        # ('…곳을 고르시오' / '…것은?')은 답 쓸 여백이 필요 없다.
+        qt = (unit[qi].get("t") or "").strip()
+        if not re.search(r"시오\s*[.?]?\s*$", qt) or "고르시오" in qt:
+            continue
+        # 문항 블록 끝 = 다음 발문/안내문, 또는 **새 세트의 지문**(직전이
+        # 발문이 아닌 지문 블록 시작 — 발문 바로 뒤 지문은 문항 내부 지문).
+        end = len(unit)
+        for j in range(qi + 1, len(unit)):
+            p = unit[j]
+            if p.get("s") in (st_q, intro_style):
+                end = j
+                break
+            if _is_passage(p) and not _is_passage(unit[j - 1] if j else {}):
+                prev = _prev_meaningful(j)
+                if prev is not None and prev.get("s") != st_q:
+                    end = j
+                    break
+        span = unit[qi + 1:end]
+        if any(p.get("s") in (st_c, st_ansl) for p in span):
+            continue
+        for _ in range(2):
+            unit.insert(end, {"t": "", "s": st_ansl, "runs": []})
 
 
 def _s3_number_order_rows(pre):
