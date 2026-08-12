@@ -1292,6 +1292,103 @@ function enforceQuestionKeep(doc, flowStories, op) {
     }
 }
 
+// ── W55: 문제단위킵 밀기 완화 (ratchet 해제) ────────────────────────────────
+// 밀기(NEXT_PAGE)는 단락 속성이라 이후 다른 밀기/리플로우로 위치가 바뀌어
+// 밀 필요가 없어져도 남는다 — 앞 문제가 왼쪽 페이지 1단에서 끝나는데 다음
+// 문제가 강제로 새 페이지로 가며 2단이 통째로 빈다 (local_mrk_refix1 실증:
+// p68 2단 공백 — 단락 263이 1라운드에 밀린 뒤 15건의 후속 밀기로 무효화.
+// 사용자 지적 "문제가 붙어도 되는 부분에 왜 떨어져 있어").
+// 수렴 후 문서 순서로: NEXT_PAGE 발문을 시험 삼아 풀고(ANYWHERE) 재조판해
+// 스프레드 걸침이 재발하면 복원, 아니면 완화 확정. 완화로 뒤가 당겨지면
+// 다음 후보들은 갱신된 상태에서 재평가된다.
+function relaxQuestionKeep(doc, flowStories, op) {
+    var flowsCfg = (op && op.flows) || {};
+    for (var step in flowsCfg) {
+        var rec = flowStories[step];
+        if (!rec) { continue; }
+        var story = rec.story;
+        var starts = flowsCfg[step].starts || [];
+        if (starts.length === 0) { continue; }
+        var relaxed = 0;
+        for (var k = 0; k < starts.length; k++) {
+            if ((k + 1) % 40 === 0) {
+                wlog("문제단위킵 완화 진행: " + step + " "
+                     + (k + 1) + "/" + starts.length);
+            }
+            var si = starts[k];
+            try { story.recompose(); } catch (e0) {}
+            var paras = story.paragraphs.everyItem().getElements();
+            if (si <= 0 || si >= paras.length) { continue; }
+            var cur = null;
+            try { cur = paras[si].startParagraph; } catch (e1) { continue; }
+            if (cur !== StartParagraph.NEXT_PAGE) { continue; }
+            try {
+                paras[si].startParagraph = StartParagraph.ANYWHERE;
+                story.recompose();
+            } catch (e2) { continue; }
+            // 재평가 — 스프레드 걸침이면 복원
+            paras = story.paragraphs.everyItem().getElements();
+            var ei = (k + 1 < starts.length && starts[k + 1] <= paras.length)
+                ? starts[k + 1] - 1 : paras.length - 1;
+            var bad = false;
+            try {
+                var sf = paras[si].parentTextFrames[0];
+                var efs = paras[ei].parentTextFrames;
+                var ef = efs[efs.length - 1];
+                var sp = sf.parentPage, ep = ef.parentPage;
+                if (!sp || !ep) { bad = true; }
+                else if (spreadIdOf(doc, ep) > spreadIdOf(doc, sp)) { bad = true; }
+            } catch (e3) { bad = true; }
+            if (bad) {
+                try {
+                    paras[si].startParagraph = StartParagraph.NEXT_PAGE;
+                    story.recompose();
+                } catch (e4) {}
+            } else {
+                relaxed++;
+            }
+        }
+        if (relaxed > 0) {
+            wlog("문제단위킵 완화: " + step + " 불필요 밀기 " + relaxed
+                 + "건 해제");
+            // 완화로 뒤가 당겨지며 빈 꼬리 페이지가 생길 수 있다 — 스토리
+            // 마지막 페이지부터 스토리 프레임이 전부 빈 페이지를 제거.
+            var trimmed = 0;
+            var guard = 0;
+            while (guard < 30) {
+                guard++;
+                var spgs = storyPagesInOrder(story);
+                if (spgs.length === 0) { break; }
+                var lastPg = spgs[spgs.length - 1];
+                var fs = framesOfStoryOnPage(story, lastPg);
+                var allBlank = fs.length > 0;
+                for (var fi = 0; fi < fs.length; fi++) {
+                    if (!isBlankFrameContent(fs[fi])) { allBlank = false; break; }
+                }
+                if (!allBlank) { break; }
+                var others = false;
+                try {
+                    var tfsAll = lastPg.textFrames;
+                    for (var ti = 0; ti < tfsAll.length; ti++) {
+                        var stId = null;
+                        try { stId = tfsAll[ti].parentStory.id; } catch (eT) {}
+                        if (stId !== story.id
+                                && !isBlankFrameContent(tfsAll[ti])) {
+                            others = true;
+                            break;
+                        }
+                    }
+                } catch (e5) {}
+                if (others) { break; }
+                try { lastPg.remove(); trimmed++; } catch (e6) { break; }
+            }
+            if (trimmed > 0) {
+                wlog("문제단위킵 완화: 빈 꼬리 페이지 " + trimmed + "개 정리");
+            }
+        }
+    }
+}
+
 // ── W40 결함 2: 발문 고아 방지 (프레임판 question_keep) ─────────────────────
 // 프레임 하단에 발문만 남거나 발문+본문 minLines-1줄 이하만 남고 문제가
 // 다음 프레임으로 이어지면, 발문(문제 시작)을 다음 프레임으로 민다.
@@ -2262,6 +2359,11 @@ try {
                 enforceStemKeep(doc, flowStories, plan.question_keep);
                 enforceQuestionKeep(doc, flowStories, plan.question_keep);
             }
+            // W55: 수렴 후 불필요해진 밀기 해제 (컬럼/페이지 공백 회수) —
+            // 완화가 새 걸침을 만들면 안 되므로 완화 패스 자체가 위반 시
+            // 즉시 복원하고, 마지막에 enforce 1회로 안전망을 친다.
+            relaxQuestionKeep(doc, flowStories, plan.question_keep);
+            enforceQuestionKeep(doc, flowStories, plan.question_keep);
             if (plan.page_cleanup
                     && (typeof plan.page_cleanup === "object")
                     && plan.page_cleanup.empty === "delete") {
