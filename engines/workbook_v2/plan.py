@@ -567,18 +567,8 @@ def build_step3(step_data):
                 # 여러 문제 달려있는 문제들은 원고에 없더라도 '다음 글을 읽고
                 # 물음에 답하시오.' 넣어야 돼"). 실측: 17개 세트 전부 발문이
                 # 2개 이상인데 안내문은 2개 세트에만 있었다.
-                # W53 (배재2 워크북01 검수 실증 2026-08-12): 교과서/부교재
-                # 계열은 STEP3 전체가 question_num="textbook" 단일 통짜
-                # 아이템이라(코퍼스 35건 중 30건) nq>1이 항상 참 — 세트
-                # 안내문이 '실전 문제 섹션 맨 앞'에 1개 얹혀 인쇄된다
-                # (검수자 삭제 지시 3건 = 과당 1건. 원고에 안내문이 있는
-                # 통짜 아이템은 dedup에 걸려 조용히 지나갔을 뿐).
-                # 위 스펙은 문항번호가 있는 '세트' 단위 아이템 대상이므로
-                # 통짜 아이템에는 삽입하지 않는다 (원고 안내문은 보존).
                 nq = sum(1 for p in unit if p.get("s") == st_q)
-                aggregate = (str(item.get("question_num") or "").strip()
-                             .lower() == "textbook")
-                if nq > 1 and not aggregate and not any(
+                if nq > 1 and not any(
                         _STEP3_SET_INTRO_KEY in (p.get("t") or "")
                         for p in unit):
                     unit.insert(0, {"t": _STEP3_SET_INTRO, "s": "$BASIC",
@@ -1754,60 +1744,6 @@ PROMOTE_C1_MISSED_HDR = True
 _RE_C1_ORDINAL = re.compile(r"^\s*(\d{1,3})\s*[.)]")
 
 
-# W53 (배재2 워크북01 검수 실증 2026-08-12): 교과서 보충지문 코너명.
-# C1 문장배열 헤더 "8. L1-Further Reading(p.26-27)"은 '본문N'이 없어 선두
-# 순번 폴백으로 {8}이 라벨이 됐다. 같은 책의 어휘선택/빈칸어휘 섹션은 원고
-# 대괄호 라벨이라 이미 [Further Reading 1]/[Further Reading 2] — 같은 책
-# 안의 정상 구간이 컨벤션의 정답이다. 코너명 집합은 final 엔진의 교과서
-# 보충지문 마커와 동일 계열(Further Reading / Read More / Read Culture).
-_RE_C1_CORNER = re.compile(
-    r"(further\s*reading|read\s*more|read\s*culture)", re.I)
-_C1_CORNER_CANON = {"furtherreading": "Further Reading",
-                    "readmore": "Read More",
-                    "readculture": "Read Culture"}
-
-
-def _c1_corner_name(text):
-    """헤더 원문에서 교과서 보충지문 코너명 추출 (없으면 None)."""
-    m = _RE_C1_CORNER.search(text or "")
-    if not m:
-        return None
-    key = re.sub(r"\s+", "", m.group(1)).lower()
-    return _C1_CORNER_CANON.get(key)
-
-
-def _c1_corner_labels(items, orig_texts):
-    """순번만 남은 코너명 지문 라벨을 코너명으로 교정 (W53 — 가산 전용).
-
-    대상은 `{8}`처럼 **숫자 라벨**인 헤더 중 원문에 코너명이 있는 것뿐이다
-    (본문N·이미 코너명인 라벨은 무접촉 → 모의고사 계열 숫자 라벨 회귀 없음).
-    같은 코너명이 2개 이상이면 등장 순서로 1,2… 접미, 1개면 접미 없음
-    (어휘선택 섹션 원고 라벨과 동일 규칙 — 1과 [Further Reading],
-    2·3과 [Further Reading 1]/[Further Reading 2] 실측).
-    """
-    hits = []
-    for i, it in enumerate(items):
-        m = re.match(r"^\s*\{([^}]+)\}\s*$", it.get("t") or "")
-        if not m or not re.match(r"^\d+$", m.group(1).strip()):
-            continue
-        name = _c1_corner_name(orig_texts[i] if i < len(orig_texts) else "")
-        if name:
-            hits.append((i, name))
-    if not hits:
-        return 0
-    total = {}
-    for _, name in hits:
-        total[name] = total.get(name, 0) + 1
-    seen = {}
-    for i, name in hits:
-        seen[name] = seen.get(name, 0) + 1
-        label = name if total[name] == 1 else "%s %d" % (name, seen[name])
-        new_t = "{" + label + "}"
-        items[i]["t"] = new_t
-        items[i]["runs"] = [{"t": new_t, "ul": False}]
-    return len(hits)
-
-
 def _c1_promote_missed_headers(items, orig_texts, warnings):
     """GREP 열거가 놓친 지문 헤더를 {라벨}로 승격 (가산 전용).
 
@@ -1946,12 +1882,6 @@ def build_step1_c1(step_data, workbook_type="모의고사", exclude_btm=False,
         _c1_promote_missed_headers(items, orig_texts, warnings)
         first_hdr = next((i for i, it in enumerate(items)
                           if _RE_C1_HEADER.match(it["t"])), first_hdr)
-    # W53: 코너명 지문 라벨 교정 ({8} → {Further Reading 1}). orig_texts와
-    # 인덱스가 어긋나기 전(프리앰블 절단 앞)에 수행한다.
-    _n_corner = _c1_corner_labels(items, orig_texts)
-    if _n_corner:
-        warnings.append("step1_c1: 코너명 지문 라벨 %d개 교정 "
-                        "(순번 → Further Reading 류)" % _n_corner)
     if first_hdr > 0:
         if not any(_RE_C1_CHOICE.match(items[i]["t"])
                    for i in range(first_hdr)):
