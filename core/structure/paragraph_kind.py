@@ -114,6 +114,12 @@ def _base_kind(text):
         return "A", None
     if R.SYM_LINE.match(text):
         return "Sym", None
+    # W57: 밑줄런 답란 ("▶ ______"/"______") — Ans 패턴(지문 스타일 인쇄)
+    # 보다 먼저 확정해야 S_답란이 되고, Box 전파 종료 목록에 AnsL이 있어
+    # 보기 블록 뒤 무한글 흡수(보기 스타일)도 막힌다 (미래엔김 실증:
+    # 같은 ▶ 답란이 보기/지문 스타일로 갈라짐).
+    if R.ANS_UL_ROW.match(text):
+        return "AnsL", None
     if any(p.match(text) for p in R.ANS_PATTERNS):
         return "Ans", None
     # 요약문 블록 마커 (W38 결함 4, W39 결함 1) — 대괄호형·꺾쇠형 모두

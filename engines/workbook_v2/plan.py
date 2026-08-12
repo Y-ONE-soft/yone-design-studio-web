@@ -927,7 +927,8 @@ def _s3_assign_slots(pre, BG):
             is_head = _is_anslabel_head(t)
         if not is_row:
             is_row = bool(_RE_ANS_BLANK_ROW.match(t)
-                          or _RE_ANS_PAREN_COLON.match(t))
+                          or _RE_ANS_PAREN_COLON.match(t)
+                          or R.ANS_UL_ROW.match(t))    # W57: 밑줄런 답란
         if not (is_head or is_row):
             continue
         # 열 머리는 바로 뒤에 기입 줄이 와야 한다 (오검출 차단)
