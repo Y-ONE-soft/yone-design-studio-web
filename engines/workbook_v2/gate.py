@@ -278,6 +278,16 @@ _RE_SRC_MARKER = re.compile(r"^\[[^\[\]]{2,}변형\]$")
 _RE_S3_SRC_LINE = re.compile(
     r"^\S+_\S+\s+\d+과_(?:\d+(?:\s*~\s*\d+)?|[\w가-힣]{1,12})$")
 _RE_SRC_POLLUTED = re.compile(r"^[①-⑤]\[[^\[\]]{2,}변형\]$")
+# G45 (W66) — 원고 편집용 대괄호 인덱스 (출력 검사용 독립 정의).
+# 보존 계약: 내용 마커/기출 출처/배점·유형 태그/문장은 인쇄된다.
+_RE_G45_LABEL = re.compile(r"^\[([^\[\]]{1,60})\]$")
+_RE_G45_KEEP = re.compile(
+    r"변형|수능특강|수능완성|수능|모의고사|학력평가|학평|모평|교육청|평가원|"
+    r"기출|\d{2}\s*년\s*\d{1,2}\s*월|\d{6}\s*[A-Za-z]\s*\d")
+_RE_G45_SENT = re.compile(r"[.?!。？]\s*$|시오|세요|십시오|합니다|입니다")
+_RE_G45_TAG = re.compile(
+    r"^\d+\s*점$|^(?:서술형|논술형|단답형|주관식|객관식)\s*\d*$|"
+    r"^(?:보기|조건|요약문?|정답|해답|답|해설|해석)\s*[A-Za-z0-9]{0,2}$")
 # G12 — 문장삽입 발문 (주어진 문장 배경 박스 기대)
 _RE_INSERT_PROMPT = re.compile(r"주어진 문장이 들어가|들어갈 위치|"
                                r"들어가기에 가장 적절한 곳")
@@ -685,6 +695,43 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         critical.append(f"[출처잔존] {len(src_leaks)}개 단락이 실전문제 "
                         f"출처 라인 그대로 인쇄됨: "
                         + " | ".join(sorted(set(src_leaks))[:5]))
+
+    # ── G45 (W66): 원고 편집용 대괄호 인덱스 잔존 ────────────────────────
+    # "[08강 - Exercise 05~06]" / "[Unit 17 - Practice 01~02]" / "[1]" 류.
+    # 플랜(build_step3)이 구조 판정으로 제거하므로 출력 잔존 = 미적용.
+    # 출력 검사용 독립 정의 (플랜과 순환 방지) — 보존 대상(내용 마커/기출
+    # 출처/배점·유형 태그)은 같은 계약으로 면제한다.
+    idx_leaks = []
+    for t, _s in _dump_paras(dump):
+        tt = _clean(t)
+        if not tt or not _RE_G45_LABEL.match(tt):
+            continue
+        if _s in _BASIC_ALIASES:
+            continue            # 엔진이 만든 지문번호 라벨([01]) — G23 계약
+        inner = _RE_G45_LABEL.match(tt).group(1).strip()
+        if not _RE_DIGIT.search(inner):
+            continue            # 서수 없는 라벨은 인덱스로 보지 않는다
+        if (_RE_G45_KEEP.search(inner) or _RE_G45_SENT.search(inner)
+                or _RE_G45_TAG.match(inner)):
+            continue
+        idx_leaks.append(tt[:60])
+    stats["step3_index_label_leaks"] = len(idx_leaks)
+    if idx_leaks:
+        critical.append(f"[인덱스잔존] {len(idx_leaks)}개 단락이 원고 "
+                        f"편집용 대괄호 인덱스 그대로 인쇄됨: "
+                        + " | ".join(sorted(set(idx_leaks))[:5]))
+
+    # ── G46 (W66): 답표 헤더가 평문 두 줄로 잔존 ─────────────────────────
+    # "틀린 부분"/"수정"은 원고 2열 표의 헤더 — 플랜이 표 op으로 바꾼다.
+    # 평문 단락으로 남아 있으면 표 삽입이 안 된 것 (실행기 미적용).
+    tbl_leaks = [
+        _clean(t) for t, _s in _dump_paras(dump)
+        if _clean(t) in ("틀린 부분", "틀린부분")]
+    stats["answer_table_leaks"] = len(tbl_leaks)
+    if tbl_leaks:
+        critical.append(f"[답표미생성] 답표 헤더('틀린 부분')가 평문 "
+                        f"단락으로 {len(tbl_leaks)}개 인쇄됨 — 표 삽입 "
+                        f"미적용")
 
     # ── G2 정답 블록 잔존 ────────────────────────────────────────────────
     ans = find_leaked_answers(dump)
