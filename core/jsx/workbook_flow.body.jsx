@@ -440,6 +440,11 @@ function updatePassageNumbers(doc, flowStories, op) {
                     if (fst.textContainers.length !== 1) { continue; }
                     if (!RE_BARE_NUM.test(String(fst.contents || ""))) { continue; }
                     fst.contents = lab2;
+                    // W59: 방금 넣은 텍스트는 아직 컴포즈 전이라
+                    // overflows가 false로 보고된다 — 아래 폭/세로/축소
+                    // 보정이 전부 헛돌았다(라벨 18개 잘림 실증). 강제
+                    // 재조판 후 판정한다.
+                    try { fst.recompose(); } catch (eRC) {}
                     n++;
                     // W40 결함 7b: 번호 프레임은 템플릿에서 2자리("20")용
                     // 폭이라, 다회차 선택 워크북의 6자리 코드("231133")를
