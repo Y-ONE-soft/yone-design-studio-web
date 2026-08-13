@@ -415,6 +415,26 @@ def _absorb_title_lines(det, stripped):
         ch = re.sub(r"\s+", "", stripped[h]).lower()
         if len(ct) >= 3 and ct in ch:
             det.absorbed_idx.add(j)
+    # W61 (비상(황) 실증): 지문 헤더 **직전에 반복 등장하는 동일 라인**은
+    # 교재 출처/과 제목이다("Lesson 1 Our Meaningful Life" — 8지문 전부
+    # 지문 끝에 붙어 본문으로 인쇄, 통짜 빈 페이지까지 유발). 내용-포함
+    # 규칙(위)은 헤더와 글자가 겹칠 때만 잡아 이 형태를 놓쳤다. 이름을
+    # 열거하지 않고 '헤더 앞 반복'이라는 구조로 제거한다 (2회 이상 반복 +
+    # 짧은 비문장 라인만 — 1회성 본문 문장은 대상 아님).
+    prevs = {}
+    for h in sorted(det.header_idx):
+        j = h - 1
+        while j >= 0 and not stripped[j]:
+            j -= 1
+        if j < 0 or j in det.header_idx:
+            continue
+        t = stripped[j]
+        if not t or len(t) > _SHORT_MAX or t.endswith((".", "?", "!")):
+            continue
+        prevs.setdefault(t, []).append(j)
+    for t, idxs in prevs.items():
+        if len(idxs) >= 2:
+            det.absorbed_idx.update(idxs)
 
 
 def detect_from_candidates(cands, legacy=None):

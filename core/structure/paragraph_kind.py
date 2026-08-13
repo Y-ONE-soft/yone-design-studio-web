@@ -148,6 +148,9 @@ def _base_kind(text):
     return "UNKNOWN", None
 
 
+_RE_CHOICE_LEAD = re.compile(r'^\s*[①②③④⑤⑥⑦⑧⑨⑩]')
+
+
 def classify_paragraphs(paras):
     """단락 목록 전체 판정 (2-pass: 1차 종류 → 컨텍스트 보정)."""
     out = []
@@ -155,6 +158,27 @@ def classify_paragraphs(paras):
         text = (p.get("text") or "").strip() if isinstance(p, dict) else str(p).strip()
         kind, code = _base_kind(text)
         out.append({"kind": kind, "q_code": code, "text": text, "para": p})
+
+    # W61 (비상(황) 실증 — 사용자 지적 "선지에 왜 발문 단락스타일"):
+    # 원문자 선지 중 서술 종결("…태도다." / "…바꾸었다.")이 발문 분류기에
+    # 걸려 Q로 튀었다. 원문자 선지는 형제와 함께 온다 — 앞뒤 비빈 이웃에
+    # 다른 원문자 선지가 있으면 그 라인은 선지(C)다 (형제 문맥이 개별
+    # 어미 판정보다 강한 신호).
+    for i, item in enumerate(out):
+        if item["kind"] != "Q" or not _RE_CHOICE_LEAD.match(item["text"]):
+            continue
+        sib = False
+        for step in (-1, 1):
+            j = i + step
+            while 0 <= j < len(out) and out[j]["kind"] == "BLANK":
+                j += step
+            if 0 <= j < len(out) and out[j]["kind"] == "C" \
+                    and _RE_CHOICE_LEAD.match(out[j]["text"]):
+                sib = True
+                break
+        if sib:
+            item["kind"] = "C"
+            item["q_code"] = None
 
     # ── 컨텍스트 패스 ────────────────────────────────────────────────────
     # 주어진 블록 슬롯 (W39 하향식 전환): 발문 유형(taxonomy leaf)의 실측

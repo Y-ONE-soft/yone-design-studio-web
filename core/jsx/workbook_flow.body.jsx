@@ -305,10 +305,6 @@ var RE_BARE_NUM = /^\s*\d{1,3}(?:\s*~\s*\d{1,3})?\s*$/;
 // 숫자 라벨(v1 파리티 경로)은 호출부에서 배제 — 기존 동작 무변경.
 var LABEL_CLAMP_GAP = 1.5;   // 본문 좌변과의 간격 (mm)
 var LABEL_MIN_W = 5;         // 클램프 후 최소 프레임 폭 (mm — 한글 12pt 1자)
-// W60: 라벨 프레임 기하 보장값 — 좌변을 페이지 좌변에서 이만큼 띄우고
-// (폭 확보), 높이를 최소 이만큼으로 (긴 라벨 2줄 수용).
-var LABEL_LEAD = 3.5;        // 페이지 좌변 ~ 라벨 프레임 좌변 (mm)
-var LABEL_MIN_H = 120;       // 라벨 프레임 최소 높이 (mm)
 function clampLabelFrame(tf, page, flowStory) {
     var bodyL = null;
     var conts = flowStory.textContainers;
@@ -359,6 +355,28 @@ function storyPagesInOrder(story) {
 // ("1")은 앞 단어에 붙여 줄 수를 줄인다 — "Main Reading 1" → "Main /
 // Reading 1"(2줄), "Critical Thinking" → "Critical / Thinking".
 // 공백 없는 라벨(숫자 "20", 한글 "본문1")은 그대로 (기존 동작 무변경).
+// W61 (사용자 지시 2026-08-13): 좁은 라벨 프레임을 넘는 긴 라벨은 **줄임말**
+// 로 바꾼다 (프레임을 늘리지 않는다 — 템플릿 기하는 디자인이다).
+//   영문 다단어 → 각 단어 이니셜 + 숫자 유지: "Main Reading 1"→"MR1",
+//     "Read More"→"RM", "Critical Thinking"→"CT"
+//   한글 다단어 → 첫 단어: "추가 본문"→"추가"
+// 축약은 '프레임에 안 들어갈 때만' 적용한다 (짧은 라벨·기존 원고 무영향).
+function abbreviateLabel(lab) {
+    var s = String(lab === undefined || lab === null ? "" : lab).replace(
+        /^\s+|\s+$/g, "");
+    if (s.indexOf(" ") < 0) { return s; }
+    var toks = s.split(/\s+/);
+    if (/[가-힣]/.test(s)) { return toks[0]; }
+    var ini = "", num = "";
+    for (var i = 0; i < toks.length; i++) {
+        if (/^[0-9]+$/.test(toks[i])) { num = toks[i]; continue; }
+        var ch = toks[i].charAt(0);
+        if (/[A-Za-z]/.test(ch)) { ini += ch.toUpperCase(); }
+    }
+    if (!ini) { return s; }
+    return ini + num;
+}
+
 function labelWithBreaks(lab) {
     var s = String(lab === undefined || lab === null ? "" : lab);
     if (s.indexOf(" ") < 0) { return s; }
@@ -456,6 +474,7 @@ function updatePassageNumbers(doc, flowStories, op) {
         var widened = 0;
         var heightened = 0;   // W59: 라벨 프레임 세로 확장 건수
         var shrunkN = 0;      // W59: 라벨 글자 축소 건수
+        var abbrN = 0;        // W61: 라벨 줄임말 대체 건수
         var labelFrames = [];   // W38: 좌/우 기하 정규화용 (숫자 아닌 라벨만)
         var pages = storyPagesInOrder(rec.story);
         for (var pk = 0; pk < pages.length; pk++) {
@@ -467,12 +486,23 @@ function updatePassageNumbers(doc, flowStories, op) {
                     var fst = tfs[fi].parentStory;
                     if (fst.textContainers.length !== 1) { continue; }
                     if (!RE_BARE_NUM.test(String(fst.contents || ""))) { continue; }
+                    // W61: 원 라벨 → (넘치면) 줄임말. 프레임 기하는
+                    // 손대지 않는다 (템플릿 디자인 보존 — 어법OX의 가로형
+                    // 라벨 프레임을 세로로 늘려 조판을 망친 W60 반성).
                     fst.contents = labelWithBreaks(lab2);
-                    // W59: 방금 넣은 텍스트는 아직 컴포즈 전이라
-                    // overflows가 false로 보고된다 — 아래 폭/세로/축소
-                    // 보정이 전부 헛돌았다(라벨 18개 잘림 실증). 강제
-                    // 재조판 후 판정한다.
                     try { fst.recompose(); } catch (eRC) {}
+                    var ovfL = false;
+                    try { ovfL = tfs[fi].overflows; } catch (eL0) {}
+                    if (ovfL) {
+                        var ab = abbreviateLabel(lab2);
+                        if (ab && ab !== lab2) {
+                            try {
+                                fst.contents = ab;
+                                fst.recompose();
+                                abbrN++;
+                            } catch (eL1) {}
+                        }
+                    }
                     n++;
                     // W40 결함 7b: 번호 프레임은 템플릿에서 2자리("20")용
                     // 폭이라, 다회차 선택 워크북의 6자리 코드("231133")를
@@ -496,64 +526,6 @@ function updatePassageNumbers(doc, flowStories, op) {
                         gN++;
                     }
                     if (gN > 0) { widened++; }
-                    // W59 (비상(황) 실증): 좌측 여백만으론 못 담는 긴 영문
-                    // 라벨("Main Reading 1"/"Extended Reading 1")은 폭 확장
-                    // 후에도 오버셋으로 남아 라벨이 통째로 안 보였다
-                    // (오버플로우 18개 = 라벨 프레임 전량). clampLabelFrame
-                    // 의 세로 확장은 '본문 침범이 있을 때'만 도는 경로라
-                    // 이 케이스를 못 탄다 — 아래로 늘려 수용한다 (라벨
-                    // 프레임은 좌측 여백의 세로 박스, 하단 여백이 남는다).
-                    var hG = 0;
-                    while (hG < 40) {
-                        try { tfs[fi].parentStory.recompose(); } catch (eRR) {}
-                        var ovfH = false;
-                        try { ovfH = tfs[fi].overflows; } catch (eH0) { break; }
-                        if (!ovfH) { break; }
-                        var gbH = tfs[fi].geometricBounds;
-                        var pgB = pages[pk].bounds;
-                        if (gbH[2] + 5 > pgB[2]) { break; }   // 페이지 하단 가드
-                        try {
-                            tfs[fi].geometricBounds = [gbH[0], gbH[1],
-                                                       gbH[2] + 5, gbH[3]];
-                        } catch (eH1) { break; }
-                        hG++;
-                    }
-                    if (hG > 0) { heightened++; }
-                    // W59 (비상(황) 실증 2차): 폭·세로 확장으로도 안 담기는
-                    // 긴 영문 라벨("Main Reading 1" — 단어 하나가 프레임
-                    // 폭보다 넓어 줄바꿈으로도 해소 불가)은 글자 크기를
-                    // 줄여 수용한다. 라벨 내용을 바꾸지 않는 마지막 수단 —
-                    // 축소해도 안 되면 [경고]로 지목 (침묵 금지).
-                    var shrunk = false;
-                    var sG = 0;
-                    var ps0 = null;
-                    try { ps0 = tfs[fi].parentStory.texts[0].pointSize; }
-                    catch (eP0) { ps0 = null; }
-                    while (sG < 30 && ps0) {
-                        try { tfs[fi].parentStory.recompose(); } catch (eRR) {}
-                        var ovfS = false;
-                        try { ovfS = tfs[fi].overflows; } catch (eS0) { break; }
-                        if (!ovfS) { break; }
-                        try {
-                            var tx = tfs[fi].parentStory.texts[0];
-                            var ps = tx.pointSize;
-                            // W59: 하한은 절대값이 아니라 원래 크기의 비율 —
-                            // 문서 측정 단위가 mm면 pointSize도 mm로 오므로
-                            // 절대 하한(5)은 즉시 break 돼 축소가 아예 안
-                            // 돌았다 (실측: 라벨 4.23mm≒12pt).
-                            if (ps <= ps0 * 0.55) { break; }
-                            tx.pointSize = ps * 0.94;
-                            shrunk = true;
-                        } catch (eS1) { break; }
-                        sG++;
-                    }
-                    if (shrunk) { shrunkN++; }
-                    var stillOvf = false;
-                    try { stillOvf = tfs[fi].overflows; } catch (eS2) {}
-                    if (stillOvf) {
-                        wlog("[경고] 지문번호 라벨 프레임 오버셋 잔존: '"
-                             + lab2 + "' (프레임 폭 부족 — 라벨 축약 필요)");
-                    }
                     // W30: 숫자 아닌 긴 라벨만 본문 침범 클램프 (숫자 라벨은
                     // v1 파리티 경로 — 프레임 무접촉)
                     if (!RE_BARE_NUM.test(String(lab2))) {
@@ -604,28 +576,9 @@ function updatePassageNumbers(doc, flowStories, op) {
         // ("Main Reading 1")이 최종본에서 "Main"만 보이고 잘렸다
         // (비상(황) 실증: 오버플로우 18 = 라벨 프레임 전량). 크기 계약을
         // 깨지 않도록 **글자 크기 축소만** 마지막에 적용한다.
-        var fitN = 0, fitFail = 0, geoN = 0;
+        var fitN = 0, fitFail = 0;
         for (var qf = 0; qf < labelFrames.length; qf++) {
             var qtf = labelFrames[qf].tf;
-            // W60: 기하 보장 — 좌변을 페이지 좌변 + LABEL_LEAD 로 밀어
-            // 폭을 확보하고 높이를 최소 LABEL_MIN_H 로 맞춘다. 템플릿에서
-            // 넓혀 두어도 clampLabelFrame(우변 클램프)·좌우 크기 통일이
-            // 되돌리므로, 모든 크기 조정이 끝난 이 자리에서 확정한다.
-            try {
-                var qpg = labelFrames[qf].pg;
-                var qpb = qpg.bounds;
-                var qgb = qtf.geometricBounds;
-                var wantL = qpb[1] + LABEL_LEAD;
-                var wantB = qgb[0] + LABEL_MIN_H;
-                if (wantB < qgb[2]) { wantB = qgb[2]; }
-                if (Math.abs(qgb[1] - wantL) > 0.05
-                        || Math.abs(qgb[2] - wantB) > 0.05) {
-                    if (wantL < qgb[3] - 3) {
-                        qtf.geometricBounds = [qgb[0], wantL, wantB, qgb[3]];
-                        geoN++;
-                    }
-                }
-            } catch (eG) {}
             var base = null;
             try {
                 qtf.parentStory.recompose();
@@ -654,9 +607,8 @@ function updatePassageNumbers(doc, flowStories, op) {
             try { qleft = qtf.overflows; } catch (eQ3) {}
             if (qleft) { fitFail++; }
         }
-        if (geoN > 0) {
-            wlog(steps[si] + " 라벨 프레임 기하 보장: " + geoN + "개 (좌변 "
-                 + LABEL_LEAD + "mm / 최소 높이 " + LABEL_MIN_H + "mm)");
+        if (abbrN > 0) {
+            wlog(steps[si] + " 라벨 줄임말 대체: " + abbrN + "개 (프레임 초과)");
         }
         if (fitN > 0) {
             wlog(steps[si] + " 라벨 글자 맞춤 축소: " + fitN + "개");

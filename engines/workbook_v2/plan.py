@@ -93,6 +93,11 @@ _RE_S3_TEXTBOOK_SRC = re.compile(
 # 라인 — kind UNKNOWN → 지문 스타일로 인쇄됨. 완제품에 불필요 — 제거
 # (교과서 출처 라인과 같은 계층 — v1 무변경, 플랜 전용).
 _RE_S3_TYPE_MARKER = re.compile(r"^\[\s*Type\b[^\[\]]{0,30}\]$", re.I)
+# W61 (비상(황) 실증): step3 원고 선두 표제 — "영어 독해와 작문 비상(황)
+# 1과 Step3 (74문항)". 교재/과 + Step 표기 + (N문항)이 한 줄에 오는
+# 파일 표제라 완제품에 불필요(첫 문항 위에 지문 스타일로 인쇄됨).
+_RE_S3_DOC_TITLE = re.compile(
+    r"^.{0,40}?\d+\s*[과강]\s*(?:step\s*\d+|스텝\s*\d+).{0,20}$", re.I)
 _RE_S3_EXERCISE_MARKER = re.compile(
     r"^\[\s*\d+\s*강\s*[-–—]\s*Exercise\s*\d+\s*\]$", re.I)
 # v1 pass 5 번호/INTRO 휴리스틱 (run.jsx 2253~2272) — 분류기(kind)가 약한
@@ -539,6 +544,8 @@ def build_step3(step_data):
                 if (_RE_S3_TYPE_MARKER.match(tclean)
                         or _RE_S3_EXERCISE_MARKER.match(tclean)):
                     continue    # W51: 유형/Exercise 출처 마커 제거
+                if _RE_S3_DOC_TITLE.match(tclean):
+                    continue    # W61: 원고 선두 표제(교재/과/StepN) 제거
                 eff = _s3_effective_kind(kind, text)
                 # W50: 마커 판정용 괄호 이형 정규화 (표기는 tclean 보존)
                 tmark = R.norm_brackets(tclean)
@@ -716,6 +723,11 @@ def _s3_insert_set_intros(unit, st_q):
                 prev = unit[j]
                 break
         if prev is not None and _STEP3_SET_INTRO_KEY in (prev.get("t") or ""):
+            continue
+        # W61 (사용자 지적 "발문 다음에 왜 다음 글을 읽고가 나와?"):
+        # 직전이 발문이면 이 지문은 그 발문에 딸린 자료다 — 안내문을
+        # 끼우면 '발문 → 안내문 → 지문' 순서가 된다. 삽입 금지.
+        if prev is not None and prev.get("s") == st_q:
             continue
         unit.insert(a, {"t": _STEP3_SET_INTRO, "s": intro_style,
                         "runs": []})
@@ -1018,6 +1030,19 @@ def _is_blank(text):
 # b2는 미분류 [경고]까지 냈다. 구조 인식기(header_detect)는 "1과 MR1"을
 # 정확히 잡으므로, **bracket 헤더가 문서에 하나도 없을 때만** 구조 헤더를
 # bracket 대용 경계로 승격한다 (기존 bracket 원고는 무영향 — 회귀 0).
+def _absorbed_idx(paragraphs):
+    """W61: 헤더 블록으로 흡수된 라인(출처/과 제목 반복) 인덱스 —
+    bracket 유무와 무관하게 제거 대상."""
+    texts = [(p.get("text") or "") for p in paragraphs or []]
+    if not texts:
+        return set()
+    try:
+        det = detect_headers(texts, legacy=is_header_line)
+    except Exception:                                          # noqa: BLE001
+        return set()
+    return set(det.absorbed_idx)
+
+
 def _bracket_fallback_idx(paragraphs):
     """bracket 부재 시 구조 헤더 인덱스 집합 (있으면 empty set)."""
     texts = [(p.get("text") or "") for p in paragraphs or []]
@@ -1225,9 +1250,12 @@ def build_step1_a1(step_data):
     cur = []
     seen_bracket = False
     _fb = _bracket_fallback_idx(step_data.get("paragraphs"))   # W59
+    _ab = _absorbed_idx(step_data.get("paragraphs"))           # W61 출처
     for _i, raw in enumerate(step_data.get("paragraphs", []) or []):
         p = _map_chars(raw, _A1_TABLE)
         text = p["text"]
+        if _i in _ab:
+            continue    # W61: 헤더 앞 반복 출처 라인 제거
         if _is_blank(text) or _RE_HARD.match(text):
             continue    # v1: \r{2,}→\r + Hard 단락 remove()
         if _is_bracket_para(text) or _i in _fb:
@@ -1265,9 +1293,12 @@ def build_step1_b2(step_data):
     in_body = False     # [N] 직후 본문 구간 (v1: ']' 닫힘 뒤 ~ (N)/원문자 전)
     prev_style = st_body
     _fb = _bracket_fallback_idx(paras)                          # W59
+    _ab = _absorbed_idx(paras)                                  # W61 출처
     for _i, p in enumerate(paras):
         text = p.get("text") or ""
         runs = p.get("runs") or []
+        if _i in _ab:
+            continue    # W61: 헤더 앞 반복 출처 라인 제거
         if _is_bracket_para(text) or _i in _fb:
             if seen_bracket and cur:
                 units.append(cur)
@@ -1508,9 +1539,12 @@ def build_step1_a2(step_data):
     seen_bracket = False
     in_choice = False
     _fb = _bracket_fallback_idx(step_data.get("paragraphs"))    # W59
+    _ab = _absorbed_idx(step_data.get("paragraphs"))            # W61 출처
     for _i, p in enumerate(step_data.get("paragraphs", []) or []):
         text = p.get("text") or ""
         runs = p.get("runs") or []
+        if _i in _ab:
+            continue    # W61: 헤더 앞 반복 출처 라인 제거
         if _is_bracket_para(text) or _i in _fb:
             if seen_bracket and cur:
                 # v1 insertFrameBreaksAtBrackets: bracket 위 빈 단락 제거(최대 5)
