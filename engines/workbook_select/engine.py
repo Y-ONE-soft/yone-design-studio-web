@@ -730,8 +730,22 @@ class WorkbookSelectEngine(WorkbookV2Engine):
         if indd_path and not os.path.exists(indd_path):
             warnings.append(".indd 미생성")
 
+        # ── 빈칸 개수 ↔ 원고 대조 (G3) ──────────────────────────────────
+        # 빈칸은 "글자가 없는 내용"이라 오버셋·링크·폰트·텍스트 대조 어디에도
+        # 안 걸린다. 2026-08-13 실측: 원고에 없는 밑줄 16개가 검수 여러 번을
+        # 통과했다. 이 대조만이 유일한 자동 검출 수단이다.
+        blank_checked = 0
+        if indd_path and os.path.exists(indd_path):
+            try:
+                blank_checked, blank_fails = self._check_blanks(
+                    job_dir, indd_path, log)
+                warnings.extend(blank_fails)
+            except Exception as e:                        # noqa: BLE001
+                warnings.append("빈칸 대조 실패(검사 못 함): %s" % e)
+
         ok = (overflow == 0 and pdf_path is not None and
-              not any("원고에 없는" in w for w in warnings))
+              not any("원고에 없는" in w for w in warnings) and
+              not any(w.startswith("빈칸") for w in warnings))
         result = {
             "ok": ok,
             "overflow": overflow,
@@ -742,6 +756,37 @@ class WorkbookSelectEngine(WorkbookV2Engine):
                                        os.path.exists(indd_path)) else None,
             "warnings": warnings,
         }
-        log("[검수] %s | 오버플로우 %s | STEP %s | 경고 %d건"
-            % ("통과" if ok else "경고", overflow, steps_done, len(warnings)))
+        log("[검수] %s | 오버플로우 %s | STEP %s | 빈칸대조 %d지문 | 경고 %d건"
+            % ("통과" if ok else "경고", overflow, steps_done,
+               blank_checked, len(warnings)))
         return result
+
+    def _check_blanks(self, job_dir, indd_path, log):
+        """빈칸 개수를 원고와 대조. → (검사 지문 수, [실패 메시지])"""
+        from engines.workbook_select import blankcheck
+
+        cfg = _load_config()
+        cov_path = os.path.join(job_dir, "coverage.json")
+        codes = []
+        if os.path.exists(cov_path):
+            codes = json.load(open(cov_path, encoding="utf-8")).get("codes") or []
+        if not codes:
+            return 0, []
+
+        # 지문번호(마더텅 N) ↔ 코드 — 라벨로 원고를 찾으려면 이 역매핑이 필요
+        mt_gang = self._get_meta(job_dir, "mt_gang", "") or cfg.get("mt_gang")
+        try:
+            mt_gang = int(mt_gang) if mt_gang else None
+        except (TypeError, ValueError):
+            mt_gang = None
+        idx = _mt.load_index(cfg.get("motherteng_xlsx"))
+        numbers = _mt.numbers_for(idx, codes, gang=mt_gang) if idx else {}
+        if not numbers:
+            log("[빈칸] 지문번호 매핑 없음 — 대조 생략")
+            return 0, []
+        num2code = {n: c for c, n in numbers.items()}
+
+        grade = self._get_meta(job_dir, "grade", "고1")
+        log("[빈칸] 원고 대조 시작 (%d문항)" % len(num2code))
+        return blankcheck.run(indd_path, num2code, cfg["manuscript_base"],
+                              grade.replace("고", "").strip() or "1", log)
