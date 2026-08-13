@@ -304,6 +304,27 @@ def _detect(entries, legacy=None):
             info["sig"]["shape"] = True
             det.header_idx.add(info["i"])
 
+    # 패스 2a': 접두 계열 전파 (W59 — 비상(황) 실증) — 앵커들이 공유하는
+    # 선두 토큰("1과 MR1"/"1과 ER1"의 '1과')을 학습해, 같은 선두 토큰 +
+    # 직후 영어 본문을 가진 미승격 후보를 같은 지문 라벨 계열로 승격한다.
+    # 셰이프 클러스터(2a)는 숫자 꼬리가 있는 라벨만 묶어서, 숫자 없는
+    # 막내 라벨("1과 CT")이 지문 1개짜리 계열로 남아 통째로 누락됐다.
+    anchor_lead = {}
+    for a in anchors:
+        toks = a["t"].split()
+        if toks:
+            anchor_lead[toks[0]] = anchor_lead.get(toks[0], 0) + 1
+    for info in infos:
+        if info["i"] in det.header_idx or not info["cand"]:
+            continue
+        if not info["sig"].get("body_next"):
+            continue
+        toks = info["t"].split()
+        if len(toks) < 2 or anchor_lead.get(toks[0], 0) < 2:
+            continue
+        info["sig"]["shape"] = True
+        det.header_idx.add(info["i"])
+
     # 패스 2b: 순번 단조성 교차 검증 — 인식 헤더의 선행 순번 시퀀스에
     # 자연스럽게 끼는(strictly increasing) 미승격 후보 승격
     seq = []      # (entries 인덱스, 선행 순번) — 문서 순
