@@ -57,10 +57,16 @@
         return s;
     }
 
+    // 러닝 라벨은 한쪽 페이지에만 있는 경우가 있다 — 마지막 값을 이어서 쓴다.
+    // (이 처리가 없으면 홀수 페이지가 통째로 검사에서 빠져 20문항 중 9개만
+    //  대조됐다 — 2026-08-13 실측)
     var out = [];
+    var lastSec = "";
     for (i = 0; i < doc.pages.length; i++) {
         var pg = doc.pages[i];
         var sec = sectionOf(pg);
+        if (sec.replace(/\s/g, "") !== "") { lastSec = sec; }
+        else { sec = lastSec; }
         if (sec.indexOf("빈칸") < 0) { continue; }
         // 지문번호 = 본문 밖 짧은 숫자 프레임
         var label = "";
