@@ -498,7 +498,10 @@ function updatePassageNumbers(doc, flowStories, op) {
                     // 축소해도 안 되면 [경고]로 지목 (침묵 금지).
                     var shrunk = false;
                     var sG = 0;
-                    while (sG < 24) {
+                    var ps0 = null;
+                    try { ps0 = tfs[fi].parentStory.texts[0].pointSize; }
+                    catch (eP0) { ps0 = null; }
+                    while (sG < 30 && ps0) {
                         try { tfs[fi].parentStory.recompose(); } catch (eRR) {}
                         var ovfS = false;
                         try { ovfS = tfs[fi].overflows; } catch (eS0) { break; }
@@ -506,8 +509,12 @@ function updatePassageNumbers(doc, flowStories, op) {
                         try {
                             var tx = tfs[fi].parentStory.texts[0];
                             var ps = tx.pointSize;
-                            if (ps <= 5) { break; }
-                            tx.pointSize = ps - 0.5;
+                            // W59: 하한은 절대값이 아니라 원래 크기의 비율 —
+                            // 문서 측정 단위가 mm면 pointSize도 mm로 오므로
+                            // 절대 하한(5)은 즉시 break 돼 축소가 아예 안
+                            // 돌았다 (실측: 라벨 4.23mm≒12pt).
+                            if (ps <= ps0 * 0.55) { break; }
+                            tx.pointSize = ps * 0.94;
                             shrunk = true;
                         } catch (eS1) { break; }
                         sG++;
