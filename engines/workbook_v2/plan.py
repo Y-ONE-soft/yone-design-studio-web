@@ -1030,6 +1030,27 @@ def _is_blank(text):
 # b2는 미분류 [경고]까지 냈다. 구조 인식기(header_detect)는 "1과 MR1"을
 # 정확히 잡으므로, **bracket 헤더가 문서에 하나도 없을 때만** 구조 헤더를
 # bracket 대용 경계로 승격한다 (기존 bracket 원고는 무영향 — 회귀 0).
+_RE_LEAD_LESSON = re.compile(r"^\s*\d+\s*[과강]\s*")
+
+
+def _bracket_label_text(text):
+    """W62: bracket 대용 헤더를 정상 교재와 같은 `[라벨]` 형태로 정규화.
+
+    비상(황) 실증 — 이 원고의 지문번호는 "1과 MR1" 평문이라 템플릿의
+    지문번호 GREP(대괄호/중괄호 표기 → 지문번호 문자스타일)이 하나도
+    걸리지 않아 본문과 똑같이 인쇄됐다(사용자 지적 "지문번호도 안
+    입혀져있다"). `[MR1]`로 감싸면 기존 스타일 체계가 그대로 적용된다.
+    선행 과/강 접두("1과 ")는 라벨의 일부가 아니라 문서 전체 공통값이라
+    제거한다."""
+    t = re.sub(r"\s+", " ", (text or "")).strip()
+    t = _RE_LEAD_LESSON.sub("", t)
+    if not t:
+        return text
+    if t.startswith("[") and t.endswith("]"):
+        return t
+    return "[" + t + "]"
+
+
 def _absorbed_idx(paragraphs):
     """W61: 헤더 블록으로 흡수된 라인(출처/과 제목 반복) 인덱스 —
     bracket 유무와 무관하게 제거 대상."""
@@ -1263,6 +1284,9 @@ def build_step1_a1(step_data):
                 units.append(cur)
                 cur = []
             seen_bracket = True
+            if _i in _fb:          # W62: 평문 헤더 → [라벨] 정규화
+                text = _bracket_label_text(text)
+                p = {"text": text, "runs": [{"t": text, "ul": False}]}
             cur.append(_mk(text, "$BASIC", p["runs"]))
         else:
             cur.append(_mk(text, st_body, p["runs"]))
@@ -1305,6 +1329,9 @@ def build_step1_b2(step_data):
                 cur = []
             seen_bracket = True
             in_body = True
+            if _i in _fb:          # W62: 평문 헤더 → [라벨] 정규화
+                text = _bracket_label_text(text)
+                runs = [{"t": text, "ul": False}]
             cur.append(_mk(text, st_num, runs))
             prev_style = st_num
             continue
@@ -1555,6 +1582,9 @@ def build_step1_a2(step_data):
                 units.append(cur)
                 cur = []
             seen_bracket = True
+            if _i in _fb:          # W62: 평문 헤더 → [라벨] 정규화
+                text = _bracket_label_text(text)
+                runs = [{"t": text, "ul": False}]
             cur.append(_mk(text, "$BASIC", runs))
             continue
         n_tok = 0
