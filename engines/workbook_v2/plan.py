@@ -3008,6 +3008,12 @@ def steps_to_plan(steps, exclude=None, workbook_type="모의고사",
         flows.append(flow)
     return {"format": "wb-flows-v1", "flows": flows,
             "unsupported": sorted(unsupported),
+            # W66 ④ (사용자 지적 2026-08-14): 유닛 꼬리 몇 줄이 다음 칸으로
+            # 새면 그 칸을 통째로 버린다 — 자간/행간으로 흡수(한도 안에서만,
+            # 못 담으면 원복). "정말 아주 길어서 다음 페이지까지 넘어가야
+            # 하는 경우만 제외하고는 웬만해선 한 프레임에" (사용자 스펙).
+            "unit_fit": {"max_tracking": -25, "max_leading": 1,
+                         "max_spill_lines": 5},
             "warnings": warnings}
 
 

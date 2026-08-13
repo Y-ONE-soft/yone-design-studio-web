@@ -289,6 +289,112 @@ function insertIconAt(doc, story, para, ic) {
     return 1;
 }
 
+// ── W66 op: 답표 삽입 (plan 단락의 table 스펙 — 사용자 지적 ②) ────────────
+// 원고의 "틀린 부분 / 수정" 두 줄은 hwp 2열 표가 평탄화된 것이라 그대로
+// 인쇄하면 평문 두 줄이 된다. 완제품(사용자 수작업 실측 — 페이스트보드
+// 표)과 같은 2열 표를 본문 흐름 안에 만든다:
+//   2열 각 (단폭-0.25)/2mm, 헤더 행 4.822mm / 답 행 6.233mm,
+//   헤더 채움 "C=44 M=0 Y=0 K=14" 50%, 4변 0.5pt, 셀 여백 1mm, 헤더 가운데.
+// 행 수는 발문의 "(틀린 부분 N개)" — 플랜이 계산해 spec.rows로 준다.
+var TBL_HDR_SWATCH = "C=44 M=0 Y=0 K=14";
+var TBL_HDR_TINT = 50;
+var TBL_STROKE = 0.5;
+var TBL_INSET = 1;
+var TBL_H_HEAD = 4.822;
+var TBL_H_BODY = 6.233;
+var _tblSwatch = undefined;
+
+function answerTableSwatch(doc) {
+    if (_tblSwatch !== undefined) { return _tblSwatch; }
+    _tblSwatch = null;
+    try {
+        var sw = doc.swatches.itemByName(TBL_HDR_SWATCH);
+        sw.name;                      // 강제 평가 (없으면 예외)
+        _tblSwatch = sw;
+    } catch (e) {
+        try {                         // 완제품과 같은 이름/값으로 생성
+            _tblSwatch = doc.colors.add({
+                name: TBL_HDR_SWATCH, model: ColorModel.PROCESS,
+                space: ColorSpace.CMYK, colorValue: [44, 0, 0, 14]});
+            wlog("[답표] 헤더 색상 스와치 신규 생성: " + TBL_HDR_SWATCH);
+        } catch (e2) {
+            _tblSwatch = null;
+            wlog("[경고] 답표 헤더 색상 없음(무채움 진행): " + e2);
+        }
+    }
+    return _tblSwatch;
+}
+
+function insertAnswerTable(doc, para, spec, styleOf) {
+    var cols = spec.cols || [];
+    var nrow = spec.rows || 1;
+    if (cols.length < 1) { return false; }
+    var colW = null;
+    try {
+        var tf = para.parentTextFrames[0];
+        var gb = tf.geometricBounds;
+        var inset = [0, 0, 0, 0];
+        try {
+            var ins = tf.textFramePreferences.insetSpacing;
+            inset = (ins instanceof Array) ? ins : [ins, ins, ins, ins];
+        } catch (eI) {}
+        var w = (gb[3] - inset[3]) - (gb[1] + inset[1]);
+        var ncol = tf.textFramePreferences.textColumnCount;
+        if (ncol > 1) {
+            var gut = tf.textFramePreferences.textColumnGutter;
+            w = (w - gut * (ncol - 1)) / ncol;
+        }
+        colW = (w - 0.25) / cols.length;
+    } catch (e) { colW = null; }
+    var tbl = null;
+    try {
+        tbl = para.insertionPoints[0].tables.add();
+        tbl.columnCount = cols.length;
+        tbl.bodyRowCount = nrow + 1;          // 헤더 행 + 답 행
+    } catch (e) {
+        wlog("[경고] 답표 생성 실패: " + e);
+        try { if (tbl && tbl.isValid) { tbl.remove(); } } catch (e2) {}
+        return false;
+    }
+    var sw = answerTableSwatch(doc);
+    var hdrStyle = spec.header_style ? styleOf(spec.header_style) : null;
+    try {
+        var allCells = tbl.cells.everyItem();
+        allCells.topEdgeStrokeWeight = TBL_STROKE;
+        allCells.bottomEdgeStrokeWeight = TBL_STROKE;
+        allCells.leftEdgeStrokeWeight = TBL_STROKE;
+        allCells.rightEdgeStrokeWeight = TBL_STROKE;
+        allCells.topInset = TBL_INSET;
+        allCells.bottomInset = TBL_INSET;
+        allCells.leftInset = TBL_INSET;
+        allCells.rightInset = TBL_INSET;
+        allCells.verticalJustification = VerticalJustification.CENTER_ALIGN;
+    } catch (e) {}
+    for (var c = 0; c < cols.length; c++) {
+        try { if (colW) { tbl.columns[c].width = colW; } } catch (e) {}
+        var cell = null;
+        try { cell = tbl.rows[0].cells[c]; } catch (e) { continue; }
+        try { cell.contents = String(cols[c]); } catch (e) {}
+        try { if (sw) { cell.fillColor = sw; cell.fillTint = TBL_HDR_TINT; } }
+        catch (e) {}
+        try {
+            if (hdrStyle) {
+                cell.texts[0].appliedParagraphStyle = hdrStyle;
+            }
+            cell.texts[0].justification = Justification.CENTER_ALIGN;
+        } catch (e) {}
+    }
+    for (var r = 0; r < tbl.rows.length; r++) {
+        try {
+            tbl.rows[r].height = (r === 0) ? TBL_H_HEAD : TBL_H_BODY;
+        } catch (e) {}
+        // 표가 프레임 사이에서 쪼개지지 않게 (답표는 작다)
+        try { tbl.rows[r].keepWithNextRow = (r < tbl.rows.length - 1); }
+        catch (e) {}
+    }
+    return true;
+}
+
 // ── W11 op: 독립 지문번호 프레임 갱신 (plan.passage_numbers가 있을 때만) ────
 // 빈칸어휘/어법OX/빈칸어법 섹션은 지문번호가 메인 스토리 밖 단일 프레임
 // 스토리("20" 등 모의고사 문항번호 잔재). 스텝 스토리의 k번째 콘텐츠 페이지의
@@ -2278,6 +2384,136 @@ function fixBlankOverflow(doc, op) {
          + "건 / 한도 초과 [경고] " + warned + "건");
 }
 
+// ── W66 op: 유닛(지문+문제) 한 프레임 수용 — 자간/행간 미세 조정 ───────────
+// 사용자 지적 ④ (2026-08-14): "본문이 살짝 길어서 일부만 다음 칸으로
+// 넘어가는" 경우가 지면을 통째로 버린다 (break_per_unit 플로우는 유닛마다
+// 프레임 브레이크라, 꼬리 두어 줄이 다음 칸으로 새면 그 칸을 못 쓴다).
+//   1) 자간(tracking)을 -5씩 (한도 op.max_tracking, 기본 -25)
+//   2) 그래도 남으면 행간(leading)을 0.25pt씩 (한도 op.max_leading, 기본 1pt)
+//   3) 한도 안에서 못 담으면 **전부 원복** (정말 긴 지문은 넘기는 게 맞다)
+// 조정 대상은 산문 단락(40자 이상)만 — 발문/선지 한 줄짜리는 건드리지 않아
+// 다른 유닛과 시각적으로 어긋나지 않는다.
+function fitUnitsInFrames(doc, flowStories, op) {
+    op = (op && typeof op === "object") ? op : {};
+    var maxTr = (op.max_tracking !== undefined && op.max_tracking !== null)
+        ? op.max_tracking : -25;
+    var maxLead = (op.max_leading !== undefined && op.max_leading !== null)
+        ? op.max_leading : 1;
+    var maxSpill = (op.max_spill_lines !== undefined
+                    && op.max_spill_lines !== null) ? op.max_spill_lines : 5;
+    var steps = op.steps || null;   // null이면 break_per_unit 플로우 전부
+    var fixed = 0, gaveUp = 0, checked = 0;
+
+    function frameIdAt(para, last) {
+        try {
+            var tfs = para.parentTextFrames;
+            if (!tfs || tfs.length === 0) { return null; }
+            return tfs[last ? tfs.length - 1 : 0].id;
+        } catch (e) { return null; }
+    }
+
+    function spillLines(paras, a, b, headId) {
+        // 유닛 첫 프레임 밖으로 나간 줄 수
+        var n = 0;
+        for (var i = b; i >= a; i--) {
+            var lines = null;
+            try { lines = paras[i].lines.everyItem().getElements(); }
+            catch (e) { continue; }
+            for (var li = lines.length - 1; li >= 0; li--) {
+                var fid = null;
+                try { fid = lines[li].parentTextFrames[0].id; } catch (e2) {}
+                if (fid !== null && fid !== headId) { n++; }
+            }
+            if (n > 0 && i < b && n > maxSpill) { return n; }
+        }
+        return n;
+    }
+
+    for (var step in flowStories) {
+        if (steps && !steps[step]) { continue; }
+        var fs = flowStories[step];
+        if (!fs || !fs.unitStart || fs.unitStart.length < 2) { continue; }
+        var story = fs.story;
+        var paras = null;
+        try { paras = story.paragraphs.everyItem().getElements(); }
+        catch (e) { continue; }
+        var us = fs.unitStart;
+        for (var u = 0; u < us.length; u++) {
+            var a = us[u];
+            var b = (u + 1 < us.length) ? us[u + 1] - 1 : paras.length - 1;
+            if (a >= paras.length || b < a) { continue; }
+            checked++;
+            var headId = frameIdAt(paras[a], false);
+            if (headId === null) { continue; }
+            if (frameIdAt(paras[b], true) === headId) { continue; }  // 이미 OK
+            var spill = spillLines(paras, a, b, headId);
+            if (spill === 0 || spill > maxSpill) {
+                // 정말 긴 유닛(step3 문제 pool 등)은 대상이 아니다 —
+                // 조용히 통과 (침묵 금지 대상은 '시도했는데 실패'만)
+                continue;
+            }
+            // 조정 대상 = 산문 단락
+            var targets = [], origTr = [], origLd = [];
+            for (var pi = a; pi <= b; pi++) {
+                var tx = "";
+                try { tx = String(paras[pi].contents); } catch (e) { tx = ""; }
+                if (tx.length < 40) { continue; }
+                targets.push(paras[pi]);
+                var tr = 0, ld = null;
+                try { tr = Number(paras[pi].tracking) || 0; } catch (e) {}
+                try {
+                    ld = Number(paras[pi].leading);
+                    if (isNaN(ld)) { ld = null; }
+                } catch (e) { ld = null; }
+                origTr.push(tr);
+                origLd.push(ld);
+            }
+            if (targets.length === 0) { continue; }
+            var ok = false, guard = 0;
+            var trNow = 0, ldCut = 0;
+            while (guard < 20 && !ok) {
+                guard++;
+                if (trNow > maxTr) {
+                    trNow = Math.max(maxTr, trNow - 5);
+                    for (var t1 = 0; t1 < targets.length; t1++) {
+                        try { targets[t1].tracking = origTr[t1] + trNow; }
+                        catch (e) {}
+                    }
+                } else if (ldCut < maxLead) {
+                    ldCut = Math.min(maxLead, ldCut + 0.25);
+                    for (var t2 = 0; t2 < targets.length; t2++) {
+                        if (origLd[t2] === null) { continue; }
+                        try { targets[t2].leading = origLd[t2] - ldCut; }
+                        catch (e) {}
+                    }
+                } else { break; }
+                try { story.recompose(); } catch (e) {}
+                if (frameIdAt(paras[b], true) === headId) { ok = true; }
+            }
+            if (ok) {
+                fixed++;
+                wlog("[유닛수용] " + step + " 유닛 " + (u + 1) + ": 자간 "
+                     + trNow + " / 행간 -" + ldCut + "pt (넘침 " + spill
+                     + "줄 흡수)");
+            } else {
+                gaveUp++;
+                for (var t3 = 0; t3 < targets.length; t3++) {
+                    try { targets[t3].tracking = origTr[t3]; } catch (e) {}
+                    if (origLd[t3] !== null) {
+                        try { targets[t3].leading = origLd[t3]; } catch (e) {}
+                    }
+                }
+                try { story.recompose(); } catch (e) {}
+                wlog("[경고] 유닛수용 실패(원복): " + step + " 유닛 "
+                     + (u + 1) + " — 넘침 " + spill + "줄, 한도 자간 "
+                     + maxTr + "/행간 " + maxLead + "pt");
+            }
+        }
+    }
+    wlog("유닛 프레임 수용: 검사 " + checked + " / 조정 " + fixed
+         + " / 미해결 " + gaveUp);
+}
+
 function textbookPostprocess(doc) {
     var bMaster = null, dMaster = null;
     try { bMaster = doc.masterSpreads.itemByName("B-마스터"); bMaster.name; } catch (e) { bMaster = null; }
@@ -2518,6 +2754,32 @@ try {
             }
         }
 
+        // ── W66 답표 패스 — 아이콘 이후(아이콘은 단락 인덱스 불변), 역순.
+        // 표 삽입은 단락 수를 바꾸므로 뒤 단락부터 넣고, 늘어난 만큼
+        // unitStart(후처리 op가 쓰는 유닛 첫 단락 인덱스)를 보정한다.
+        var tblShift = [];      // [flatIndex, delta]
+        var tblMade = 0;
+        for (var ti = flat.length - 1; ti >= 0; ti--) {
+            var tspec = flat[ti].table;
+            if (!tspec || ti >= paras.length) { continue; }
+            var nBefore = story.paragraphs.length;
+            if (insertAnswerTable(doc, paras[ti], tspec, styleOf)) {
+                tblMade++;
+                tblShift.push([ti, story.paragraphs.length - nBefore]);
+            }
+        }
+        if (tblMade > 0) {
+            wlog(flow.step + " 답표 삽입: " + tblMade + "개");
+            var uss = flowStories[flow.step].unitStart;
+            for (var ui = 0; ui < uss.length; ui++) {
+                var add = 0;
+                for (var si = 0; si < tblShift.length; si++) {
+                    if (tblShift[si][0] < uss[ui]) { add += tblShift[si][1]; }
+                }
+                uss[ui] += add;
+            }
+        }
+
         // 스토리 오버플로우 시 마스터 유지 페이지 추가 (v1 ensureNoOverflow 의미론)
         // safety 상한 60 (W12): 123문제 변형문제 문제모음이 상한 10을 넘겨
         // 초과분이 overset(미인쇄)으로 잘렸다. 상한은 무한 루프 가드일 뿐
@@ -2663,6 +2925,16 @@ try {
         app.doScript(function () { textbookPostprocess(doc); },
                      ScriptLanguage.JAVASCRIPT, undefined,
                      UndoModes.ENTIRE_SCRIPT, "wb_v2 textbook_post");
+    }
+    if (plan.unit_fit) {
+        // W66 ④ — 유닛 꼬리 몇 줄이 다음 칸으로 새는 것을 자간/행간으로
+        // 흡수. 페이지 수를 바꾸는 op(정리/킵) 이후, blank_fit 직전.
+        app.doScript(function () {
+            fitUnitsInFrames(doc, flowStories,
+                             (typeof plan.unit_fit === "object")
+                                 ? plan.unit_fit : {});
+        }, ScriptLanguage.JAVASCRIPT, undefined,
+           UndoModes.ENTIRE_SCRIPT, "wb_v2 unit_fit");
     }
     if (plan.blank_fit) {
         // W40 결함 6 — 페이지 수를 바꾸는 모든 op 이후, 저장 직전
