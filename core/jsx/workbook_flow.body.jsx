@@ -305,6 +305,10 @@ var RE_BARE_NUM = /^\s*\d{1,3}(?:\s*~\s*\d{1,3})?\s*$/;
 // 숫자 라벨(v1 파리티 경로)은 호출부에서 배제 — 기존 동작 무변경.
 var LABEL_CLAMP_GAP = 1.5;   // 본문 좌변과의 간격 (mm)
 var LABEL_MIN_W = 5;         // 클램프 후 최소 프레임 폭 (mm — 한글 12pt 1자)
+// W60: 라벨 프레임 기하 보장값 — 좌변을 페이지 좌변에서 이만큼 띄우고
+// (폭 확보), 높이를 최소 이만큼으로 (긴 라벨 2줄 수용).
+var LABEL_LEAD = 3.5;        // 페이지 좌변 ~ 라벨 프레임 좌변 (mm)
+var LABEL_MIN_H = 120;       // 라벨 프레임 최소 높이 (mm)
 function clampLabelFrame(tf, page, flowStory) {
     var bodyL = null;
     var conts = flowStory.textContainers;
@@ -600,9 +604,28 @@ function updatePassageNumbers(doc, flowStories, op) {
         // ("Main Reading 1")이 최종본에서 "Main"만 보이고 잘렸다
         // (비상(황) 실증: 오버플로우 18 = 라벨 프레임 전량). 크기 계약을
         // 깨지 않도록 **글자 크기 축소만** 마지막에 적용한다.
-        var fitN = 0, fitFail = 0;
+        var fitN = 0, fitFail = 0, geoN = 0;
         for (var qf = 0; qf < labelFrames.length; qf++) {
             var qtf = labelFrames[qf].tf;
+            // W60: 기하 보장 — 좌변을 페이지 좌변 + LABEL_LEAD 로 밀어
+            // 폭을 확보하고 높이를 최소 LABEL_MIN_H 로 맞춘다. 템플릿에서
+            // 넓혀 두어도 clampLabelFrame(우변 클램프)·좌우 크기 통일이
+            // 되돌리므로, 모든 크기 조정이 끝난 이 자리에서 확정한다.
+            try {
+                var qpg = labelFrames[qf].pg;
+                var qpb = qpg.bounds;
+                var qgb = qtf.geometricBounds;
+                var wantL = qpb[1] + LABEL_LEAD;
+                var wantB = qgb[0] + LABEL_MIN_H;
+                if (wantB < qgb[2]) { wantB = qgb[2]; }
+                if (Math.abs(qgb[1] - wantL) > 0.05
+                        || Math.abs(qgb[2] - wantB) > 0.05) {
+                    if (wantL < qgb[3] - 3) {
+                        qtf.geometricBounds = [qgb[0], wantL, wantB, qgb[3]];
+                        geoN++;
+                    }
+                }
+            } catch (eG) {}
             var base = null;
             try {
                 qtf.parentStory.recompose();
@@ -630,6 +653,10 @@ function updatePassageNumbers(doc, flowStories, op) {
             var qleft = false;
             try { qleft = qtf.overflows; } catch (eQ3) {}
             if (qleft) { fitFail++; }
+        }
+        if (geoN > 0) {
+            wlog(steps[si] + " 라벨 프레임 기하 보장: " + geoN + "개 (좌변 "
+                 + LABEL_LEAD + "mm / 최소 높이 " + LABEL_MIN_H + "mm)");
         }
         if (fitN > 0) {
             wlog(steps[si] + " 라벨 글자 맞춤 축소: " + fitN + "개");
