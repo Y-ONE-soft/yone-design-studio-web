@@ -847,6 +847,11 @@ def _s3_answer_tables(unit, st_q, warnings):
     남은 짧은 한글 열머리 2줄(문장부호·영문·숫자·원문자 없음)이 연달아
     오면 그것이 원고 답표(hwp 2열 표)의 헤더가 평탄화된 것이다. 두 줄을
     지우고 표 op 단락 하나로 바꾼다 — 행 수는 발문의 "(… N개)"."""
+    def _is_passage(p):
+        s = p.get("s") or ""
+        return ("실전 문제 지문" in s or s == _style("STEP3", "P-CONTEXT")
+                or s == _style("STEP3", "Word"))
+
     def _is_hdr_cell(p):
         t = (p.get("t") or "").strip()
         if not (1 <= len(t) <= 12):
@@ -859,12 +864,30 @@ def _s3_answer_tables(unit, st_q, warnings):
             return False
         if _RE_S3_CIRCLED_LTR.search(t) or re.search(r"[①-⑮]", t):
             return False
+        # 블록 마커(<조건>/[보기])·조건 항목(불릿/"…할 것")은 답표 헤더가
+        # 아니다 — 같은 '짧은 한글 두 줄' 모양이라 반드시 배제한다.
+        if re.search(r"[<>\[\]〈〉《》]|^[\s•·⦁◦∙ㆍ\-–—*]", t):
+            return False
+        if re.search(r"것\s*$", t):
+            return False
+        if p.get("s") in (_style("STEP3", "Cond"), _style("STEP3", "Box")):
+            return False
         return True
 
     i = 0
     made = 0
     while i < len(unit) - 1:
         if not (_is_hdr_cell(unit[i]) and _is_hdr_cell(unit[i + 1])):
+            i += 1
+            continue
+        # 답표는 '지문 뒤'에 온다 — 직전 비빈 단락이 지문/어휘가 아니면
+        # (원고 표제·메타 표의 짧은 두 줄 등) 답표가 아니다.
+        prev = None
+        for k in range(i - 1, -1, -1):
+            if (unit[k].get("t") or "").strip():
+                prev = unit[k]
+                break
+        if prev is None or not _is_passage(prev):
             i += 1
             continue
         j = i + 2
@@ -882,7 +905,12 @@ def _s3_answer_tables(unit, st_q, warnings):
             if unit[k].get("s") == st_q:
                 qi = k
                 break
-        if qi is None:
+        # 답표는 '발문 → 지문 → 답표' 자리다. 발문과 두 줄 사이에 지문/
+        # 어휘 외의 것(선지·조건·보기·다른 발문)이 끼면 답표가 아니다.
+        # (실용문 지문은 불릿 줄이 많아 '거리'로는 못 자른다 — 585a48a5)
+        if qi is None or not all(
+                _is_passage(unit[k]) or not (unit[k].get("t") or "").strip()
+                for k in range(qi + 1, i)):
             i += 1
             continue
         qt = (unit[qi].get("t") or "").strip()
