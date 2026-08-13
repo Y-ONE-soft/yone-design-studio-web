@@ -1010,6 +1010,30 @@ def _is_blank(text):
     return bool(_RE_BLANK.match(text or ""))
 
 
+# ── W59: bracket 없는 지문 라벨 원고의 구조 폴백 ────────────────────────────
+# 비상(황) 실증(2026-08-13): 이 원고는 스텝마다 지문 라벨 형식이 다르다 —
+# step1_a1/a1_2/a2/b2는 "1과 MR1"(대괄호 없음), step1_c2/step2_*는
+# "1. p1-Main Reading 1". bracket([N]) 기준으로만 유닛을 나누는 빌더들이
+# 경계를 하나도 못 찾아 **전 지문이 1유닛 통짜**로 배치됐고(a1/a1_2/a2/b2),
+# b2는 미분류 [경고]까지 냈다. 구조 인식기(header_detect)는 "1과 MR1"을
+# 정확히 잡으므로, **bracket 헤더가 문서에 하나도 없을 때만** 구조 헤더를
+# bracket 대용 경계로 승격한다 (기존 bracket 원고는 무영향 — 회귀 0).
+def _bracket_fallback_idx(paragraphs):
+    """bracket 부재 시 구조 헤더 인덱스 집합 (있으면 empty set)."""
+    texts = [(p.get("text") or "") for p in paragraphs or []]
+    if not texts or any(_is_bracket_para(t) for t in texts):
+        return set()
+    try:
+        det = detect_headers(texts, legacy=is_header_line)
+    except Exception:                                          # noqa: BLE001
+        return set()
+    # 강한 근거(직후 영어 본문)를 가진 헤더만 — 라벨 오검출로 유닛이
+    # 잘게 쪼개지는 것 방지
+    strong = {c["i"] for c in det.candidates
+              if c["signals"].get("body_next")}
+    return {i for i in det.header_idx if i in strong}
+
+
 def _is_bracket_para(text):
     """v1 isBracketPara: [XX] 단독 단락 (내용 없는 [  ]는 제외)."""
     if not _RE_BRACKET.match(text or ""):
@@ -1200,12 +1224,13 @@ def build_step1_a1(step_data):
     warnings = []
     cur = []
     seen_bracket = False
-    for raw in step_data.get("paragraphs", []) or []:
+    _fb = _bracket_fallback_idx(step_data.get("paragraphs"))   # W59
+    for _i, raw in enumerate(step_data.get("paragraphs", []) or []):
         p = _map_chars(raw, _A1_TABLE)
         text = p["text"]
         if _is_blank(text) or _RE_HARD.match(text):
             continue    # v1: \r{2,}→\r + Hard 단락 remove()
-        if _is_bracket_para(text):
+        if _is_bracket_para(text) or _i in _fb:
             if seen_bracket and cur:
                 units.append(cur)
                 cur = []
@@ -1239,10 +1264,11 @@ def build_step1_b2(step_data):
     seen_bracket = False
     in_body = False     # [N] 직후 본문 구간 (v1: ']' 닫힘 뒤 ~ (N)/원문자 전)
     prev_style = st_body
-    for p in paras:
+    _fb = _bracket_fallback_idx(paras)                          # W59
+    for _i, p in enumerate(paras):
         text = p.get("text") or ""
         runs = p.get("runs") or []
-        if _is_bracket_para(text):
+        if _is_bracket_para(text) or _i in _fb:
             if seen_bracket and cur:
                 units.append(cur)
                 cur = []
@@ -1481,10 +1507,11 @@ def build_step1_a2(step_data):
     cur = []
     seen_bracket = False
     in_choice = False
-    for p in step_data.get("paragraphs", []) or []:
+    _fb = _bracket_fallback_idx(step_data.get("paragraphs"))    # W59
+    for _i, p in enumerate(step_data.get("paragraphs", []) or []):
         text = p.get("text") or ""
         runs = p.get("runs") or []
-        if _is_bracket_para(text):
+        if _is_bracket_para(text) or _i in _fb:
             if seen_bracket and cur:
                 # v1 insertFrameBreaksAtBrackets: bracket 위 빈 단락 제거(최대 5)
                 guard = 5
@@ -2473,6 +2500,32 @@ def passage_labels(steps):
                 label = re.sub(r"\s+", " ", m.group(1)).strip()
                 if label and label not in labels:
                     labels.append(label)
+        if labels:
+            return labels
+    # W59 (비상(황) 실증): 형식 열거가 전부 실패하면 구조 인식기 폴백 —
+    # 이 원고의 라벨은 숫자가 아니라 텍스트다("1. p1-Main Reading 1").
+    # 라벨 = 헤더 라인에서 선행 순번("1.")과 페이지 마커("p1-")를 벗긴
+    # 나머지. 라벨이 비면 passage_numbers가 빈 배열이 되어 템플릿 잔재
+    # 번호(20,21,…)가 그대로 인쇄된다 ([지문번호] critical의 뿌리).
+    for key in _LABEL_STEPS:
+        data = steps.get(key) or {}
+        texts = [(p.get("text") or "")
+                 for p in data.get("paragraphs", []) or []]
+        if not texts:
+            continue
+        try:
+            det = detect_headers(texts, legacy=is_header_line)
+        except Exception:                                      # noqa: BLE001
+            continue
+        labels = []
+        for i in sorted(det.header_idx):
+            t = _norm_header(texts[i])
+            t = re.sub(r"^\s*\d{1,3}\s*[.)]\s*", "", t)         # 선행 순번
+            t = re.sub(r"^p\.?\s*\d+\s*[-–—.]?\s*", "", t, flags=re.I)
+            t = re.sub(r"^no\.?\s*", "", t, flags=re.I)
+            t = re.sub(r"\s+", " ", t).strip(" -–—")
+            if t and t not in labels:
+                labels.append(t)
         if labels:
             return labels
     return []
