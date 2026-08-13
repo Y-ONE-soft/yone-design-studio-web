@@ -570,6 +570,50 @@ function updatePassageNumbers(doc, flowStories, op) {
                 } catch (eR) {}
             }
         }
+        // ── W59: 라벨 오버셋 최종 해소 (모든 크기 조정 이후) ─────────────
+        // 갱신 직후의 폭/세로 확장은 뒤따르는 clampLabelFrame(우변 클램프)
+        // 과 좌우 크기 통일(L 기준 리사이즈)이 되돌려, 긴 영문 라벨
+        // ("Main Reading 1")이 최종본에서 "Main"만 보이고 잘렸다
+        // (비상(황) 실증: 오버플로우 18 = 라벨 프레임 전량). 크기 계약을
+        // 깨지 않도록 **글자 크기 축소만** 마지막에 적용한다.
+        var fitN = 0, fitFail = 0;
+        for (var qf = 0; qf < labelFrames.length; qf++) {
+            var qtf = labelFrames[qf].tf;
+            var base = null;
+            try {
+                qtf.parentStory.recompose();
+                base = qtf.parentStory.texts[0].pointSize;
+            } catch (eQ0) { continue; }
+            var qg = 0;
+            var did = false;
+            while (qg < 40) {
+                var qov = false;
+                try {
+                    qtf.parentStory.recompose();
+                    qov = qtf.overflows;
+                } catch (eQ1) { break; }
+                if (!qov) { break; }
+                try {
+                    var qtx = qtf.parentStory.texts[0];
+                    var qps = qtx.pointSize;
+                    if (qps <= base * 0.4) { break; }
+                    qtx.pointSize = qps * 0.94;
+                    did = true;
+                } catch (eQ2) { break; }
+                qg++;
+            }
+            if (did) { fitN++; }
+            var qleft = false;
+            try { qleft = qtf.overflows; } catch (eQ3) {}
+            if (qleft) { fitFail++; }
+        }
+        if (fitN > 0) {
+            wlog(steps[si] + " 라벨 글자 맞춤 축소: " + fitN + "개");
+        }
+        if (fitFail > 0) {
+            wlog("[경고] " + steps[si] + " 지문번호 라벨 " + fitFail
+                 + "개가 프레임에 안 담김 — 라벨 축약 필요 (예: MR1)");
+        }
         if (n > 0) {
             wlog(steps[si] + " 지문번호 프레임 갱신: " + n + "개"
                  + (widened > 0 ? " (폭 확장 " + widened + "개)" : "")
