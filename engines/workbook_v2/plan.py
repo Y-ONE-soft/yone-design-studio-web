@@ -127,6 +127,9 @@ _RE_S3_LBL_SENTENCE = re.compile(
 _RE_S3_LBL_ENGWORD = re.compile(r"[A-Za-z]{2,}")
 
 
+_RE_S3_LBL_SENT_END = re.compile(r"[.!?][\"'”’\)\]]?\s*$")
+
+
 def _s3_is_prose(text):
     """영어 산문 줄인가 — 지문 내부 판정용 (K2)."""
     return len(_RE_S3_LBL_ENGWORD.findall(text or "")) >= 6
@@ -152,8 +155,13 @@ def _s3_is_index_label(tclean, prev_text, next_text, R):
         return False
     if _RE_S3_LBL_ORIGIN.search(inner):            # K3 기출 출처
         return False
-    if _s3_is_prose(prev_text) and _s3_is_prose(next_text):
-        return False                               # K2 지문 내부 라벨
+    if (_s3_is_prose(prev_text) and _s3_is_prose(next_text)
+            and not _RE_S3_LBL_SENT_END.search((prev_text or "").strip())):
+        # K2 지문 내부 라벨 — 앞뒤가 본문이고, 앞 문장이 '끝나지 않은'
+        # 자리(실용문 버튼/제목 "…, or click / [Book Now] / This package…").
+        # 문장이 끝난 자리의 라벨은 지문 사이 경계 = 인덱스다 (0645d4a7
+        # 실증: 같은 지문 반복 사이의 "[01강 - Exercise 03]").
+        return False
     if _s3_is_prose(inner):                        # 라벨이 아니라 문장
         return False
     return True
@@ -584,8 +592,9 @@ def build_step3(step_data):
             cond_no = 1              # 다음 조건 항목 번호 기대값
             sum_bg = False           # W38: [요약문] 배경 전파 상태
             pre = []                 # 1패스 산출 (슬롯 배정 전)
-            for p in _s3_split_merged_questions(
-                    item.get("paragraphs", []), warnings):
+            seq = _s3_split_merged_questions(
+                item.get("paragraphs", []), warnings)
+            for _pi, p in enumerate(seq):
                 text = p.get("text", "")
                 kind = p.get("kind") or "UNKNOWN"
                 tclean = text.strip()
@@ -598,9 +607,13 @@ def build_step3(step_data):
                     continue    # W30-r15: 교과서 실전문제 출처 라인 제거
                                 # (결함 5 — 배경 대기(arrow_pending)는
                                 # SRC 마커와 동일하게 소비하지 않고 통과)
-                if (_RE_S3_TYPE_MARKER.match(tclean)
-                        or _RE_S3_EXERCISE_MARKER.match(tclean)):
-                    continue    # W51: 유형/Exercise 출처 마커 제거
+                if _s3_is_index_label(
+                        tclean,
+                        (seq[_pi - 1].get("text") or "") if _pi else "",
+                        (seq[_pi + 1].get("text") or "")
+                        if _pi + 1 < len(seq) else "", R):
+                    continue    # W66: 원고 편집용 대괄호 인덱스 제거
+                                # (구 W51 Type/Exercise 화이트리스트 대체)
                 if _RE_S3_DOC_TITLE.match(tclean):
                     continue    # W61: 원고 선두 표제(교재/과/StepN) 제거
                 eff = _s3_effective_kind(kind, text)
