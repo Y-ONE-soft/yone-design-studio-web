@@ -706,8 +706,9 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         tt = _clean(t)
         if not tt or not _RE_G45_LABEL.match(tt):
             continue
-        if _s in _BASIC_ALIASES:
-            continue            # 엔진이 만든 지문번호 라벨([01]) — G23 계약
+        if _s in _BASIC_ALIASES or str(_s).rstrip().endswith("번호"):
+            continue            # 엔진이 만든 지문번호 라벨([01]/[3과 추가
+                                # 지문]) — G23 계약(기본 단락 또는 번호 스타일)
         inner = _RE_G45_LABEL.match(tt).group(1).strip()
         if not _RE_DIGIT.search(inner):
             continue            # 서수 없는 라벨은 인덱스로 보지 않는다
