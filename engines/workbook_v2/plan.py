@@ -1059,6 +1059,30 @@ def _abbrev_label(t):
     return (ini + num) if ini else t
 
 
+# W63: 라벨 통일 모드 — 같은 원고 안에 축약형 지문번호("1과 MR1")와
+# 완전형("1. p1-Main Reading 1")이 **공존**할 때만 축약형으로 통일한다.
+# 완전형만 쓰는 기존 교재("[Further Reading]", "[3과 추가지문]")는 무변경.
+_LABEL_ABBREV = False
+
+
+def _detect_label_abbrev(steps):
+    """원고 전 스텝 헤더에 '공백 없는 축약 라벨'이 있으면 통일 모드 ON."""
+    for sd in (steps or {}).values():
+        if not isinstance(sd, dict):
+            continue
+        for p in (sd.get("paragraphs") or [])[:400]:
+            t = re.sub(r"\s+", " ", (p.get("text") or "")).strip()
+            t = re.sub(r"^\[|\]$", "", t).strip()
+            m = _RE_LEAD_LESSON.match(t)
+            if not m:
+                continue
+            rest = t[m.end():].strip()
+            if rest and " " not in rest and len(rest) <= 6 \
+                    and re.match(r"^[A-Za-z]{1,3}\d*$", rest):
+                return True
+    return False
+
+
 def _header_label(text):
     """W63 (사용자 지시): 지문 헤더 → **전 스텝 공통** 지문번호 라벨.
 
@@ -1070,6 +1094,8 @@ def _header_label(text):
     t = _RE_LEAD_ORD.sub("", t)
     t = _RE_LEAD_PAGE.sub("", t)
     t = _RE_LEAD_NO.sub("", t)
+    if not _LABEL_ABBREV:
+        return t.strip(" -–—")          # 통일 모드 아님 — 정규화만
     t = _RE_LEAD_LESSON.sub("", t)
     t = t.strip(" -–—")
     return _abbrev_label(t)
@@ -1496,7 +1522,9 @@ def build_step2_a1(step_data):
             seen_header = True
             tail = extract_tail(text)
             if tail:
-                text = "{" + tail.strip() + "}"
+                # W63: 축약 라벨 원고만 다른 스텝과 통일 (그 외 기존 유지)
+                lab_t = _header_label(tail) if _LABEL_ABBREV else tail.strip()
+                text = "{" + (lab_t or tail.strip()) + "}"
                 runs = [{"t": text, "ul": False}]
         cur.append(_mk(text, st, runs))
     if cur:
@@ -1782,6 +1810,12 @@ def build_step1_b1(step_data):
     for item in out:
         t = item["t"]
         if _is_bracket_para(t):
+            # W63: 지문번호 표기를 다른 스텝과 통일 ("[1과 MR1]"→"[MR1]")
+            inner = re.sub(r"^\s*\[|\]\s*$", "", t)
+            lab = _header_label(inner)
+            if lab and lab != inner.strip():
+                t = "[" + lab + "]"
+                item["t"] = t
             if seen_bracket and cur:
                 units.append(cur)
                 cur = []
@@ -2167,8 +2201,10 @@ def _c1_promote_missed_headers(items, orig_texts, warnings):
         mb = re.search(r"본문\s*(\d+(?:\s*[-–—.]\s*\d+)*)", orig_texts[i])
         if mb:
             label = "본문" + re.sub(r"\s+", "", mb.group(1))
-        else:   # W63: 다른 스텝과 동일 라벨 규칙
+        elif _LABEL_ABBREV:   # W63: 축약 라벨 원고만
             label = _header_label(orig_texts[i]) or m.group(1)
+        else:
+            label = m.group(1)
         new_t = "{" + label + "}"
         items[i]["t"] = new_t
         items[i]["runs"] = [{"t": new_t, "ul": False}]
@@ -2242,9 +2278,12 @@ def build_step1_c1(step_data, workbook_type="모의고사", exclude_btm=False,
                 m = re.search(r"본문\s*(\d+)", t)
                 if m:
                     label = "본문" + m.group(1)
-                else:
-                    # W63: 다른 스텝과 동일 라벨 규칙 (순번 나열 금지)
+                elif _LABEL_ABBREV:
+                    # W63: 축약 라벨 원고만 — 다른 스텝과 동일 규칙
                     label = _header_label(t) or str(ordinal)
+                else:
+                    m = re.match(r"^\s*(\d{1,3})\s*[.)]", t)
+                    label = m.group(1) if m else str(ordinal)
                 new_t = "{" + label + "}"
                 items[i]["t"] = new_t
                 items[i]["runs"] = [{"t": new_t, "ul": False}]
@@ -2678,6 +2717,8 @@ def steps_to_plan(steps, exclude=None, workbook_type="모의고사",
         지정 시 매핑에 없는 스텝은 배치 불가 → unsupported로 보고
         (EBS/수능특강 내지는 스텝 페이지 구성이 다르다).
     """
+    global _LABEL_ABBREV
+    _LABEL_ABBREV = _detect_label_abbrev(steps)
     exclude = set(exclude or [])
     smap = STEP_MAP if step_map is None else step_map
     flows = []
