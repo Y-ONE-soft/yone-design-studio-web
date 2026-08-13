@@ -1033,6 +1033,48 @@ def _is_blank(text):
 _RE_LEAD_LESSON = re.compile(r"^\s*\d+\s*[과강]\s*")
 
 
+_RE_LEAD_ORD = re.compile(r"^\s*\d{1,3}\s*[.)]\s*")
+_RE_LEAD_PAGE = re.compile(r"^p\.?\s*\d+\s*[-–—.]?\s*", re.I)
+_RE_LEAD_NO = re.compile(r"^no\.?\s*", re.I)
+
+
+def _abbrev_label(t):
+    """W63: 긴 라벨 줄임말 (JSX abbreviateLabel과 같은 규칙 — 표기 일치).
+
+    영문 다단어 → 각 단어 이니셜 + 숫자("Main Reading 1"→"MR1"),
+    한글 다단어 → 첫 단어("추가 본문"→"추가"). 8자 이하는 그대로."""
+    t = (t or "").strip()
+    if " " not in t or len(t) <= 8:
+        return t
+    toks = t.split()
+    if re.search(r"[가-힣]", t):
+        return toks[0]
+    ini, num = "", ""
+    for tok in toks:
+        if tok.isdigit():
+            num = tok
+            continue
+        if tok[:1].isalpha():
+            ini += tok[0].upper()
+    return (ini + num) if ini else t
+
+
+def _header_label(text):
+    """W63 (사용자 지시): 지문 헤더 → **전 스텝 공통** 지문번호 라벨.
+
+    "1. p1-Main Reading 1" / "1과 MR1" → "MR1". 선행 순번("1.")·페이지
+    마커("p1-")·"no."·과 접두("1과 ")를 벗기고 줄임말 규칙을 적용한다.
+    문장배열(C1)이 이 함수를 안 쓰고 선행 순번을 그대로 라벨로 삼아
+    "{1}{2}{3}…"이 되면서 다른 스텝({MR1}/[MR1])과 어긋났다."""
+    t = re.sub(r"\s+", " ", (text or "")).strip()
+    t = _RE_LEAD_ORD.sub("", t)
+    t = _RE_LEAD_PAGE.sub("", t)
+    t = _RE_LEAD_NO.sub("", t)
+    t = _RE_LEAD_LESSON.sub("", t)
+    t = t.strip(" -–—")
+    return _abbrev_label(t)
+
+
 def _bracket_label_text(text):
     """W62: bracket 대용 헤더를 정상 교재와 같은 `[라벨]` 형태로 정규화.
 
@@ -2123,7 +2165,10 @@ def _c1_promote_missed_headers(items, orig_texts, warnings):
                    for j in range(i + 1, nxt)):
             continue
         mb = re.search(r"본문\s*(\d+(?:\s*[-–—.]\s*\d+)*)", orig_texts[i])
-        label = ("본문" + re.sub(r"\s+", "", mb.group(1))) if mb else m.group(1)
+        if mb:
+            label = "본문" + re.sub(r"\s+", "", mb.group(1))
+        else:   # W63: 다른 스텝과 동일 라벨 규칙
+            label = _header_label(orig_texts[i]) or m.group(1)
         new_t = "{" + label + "}"
         items[i]["t"] = new_t
         items[i]["runs"] = [{"t": new_t, "ul": False}]
@@ -2198,8 +2243,8 @@ def build_step1_c1(step_data, workbook_type="모의고사", exclude_btm=False,
                 if m:
                     label = "본문" + m.group(1)
                 else:
-                    m = re.match(r"^\s*(\d{1,3})\s*[.)]", t)
-                    label = m.group(1) if m else str(ordinal)
+                    # W63: 다른 스텝과 동일 라벨 규칙 (순번 나열 금지)
+                    label = _header_label(t) or str(ordinal)
                 new_t = "{" + label + "}"
                 items[i]["t"] = new_t
                 items[i]["runs"] = [{"t": new_t, "ul": False}]
