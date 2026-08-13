@@ -107,7 +107,10 @@ _RE_S3_DOC_TITLE = re.compile(
 #     K2 지문 내부 라인 — 앞뒤가 영어 산문인 라벨 (실용문 "[Book Now]")
 #     K3 기출 출처 표기 — 변형/시험코드/연월/시험명 (G11 인쇄 관행 계약)
 #     K4 문장인 라인    — 종결부호·물음표가 있으면 라벨이 아니다
-#   새 표기(범위·오타·다른 교재의 새 라벨)가 와도 K1~K4에 안 걸리면
+#     K5 서수가 없는 라벨 — 인덱스는 '번호를 매긴다'. 숫자도 없고 같은
+#        꼴의 계열 변주(Type A/Type B)도 아니면 인덱스로 보지 않는다
+#        (실용문 버튼 "[Book Now]" / EBS "[Gateway]" 보존).
+#   새 표기(범위·오타·다른 교재의 새 라벨)가 와도 K1~K5에 안 걸리면
 #   자동 제거된다 — 정규식을 더 추가할 필요가 없다.
 _RE_S3_BRACKET_LABEL = re.compile(r"^\[([^\[\]]{1,60})\]$")
 # K1 — 내용 블록 마커 (본문/답 영역의 의미 라벨). BOX_MARKERS(보기/조건)는
@@ -115,7 +118,9 @@ _RE_S3_BRACKET_LABEL = re.compile(r"^\[([^\[\]]{1,60})\]$")
 _RE_S3_LBL_CONTENT = re.compile(
     r"^(?:보기|조건|요약문?|요지|주제|정답|해답|답|해설|해석|풀이|"
     r"answer|key|note|hint|summary|words?|vocabulary)"
-    r"\s*[A-Za-z0-9]{0,2}$", re.I)
+    r"\s*[A-Za-z0-9]{0,2}$|"
+    # 문항에 인쇄되는 표시 — 배점/유형 태그 ("[3점]" "[서술형 2]")
+    r"^\d+\s*점$|^(?:서술형|논술형|단답형|주관식|객관식)\s*\d*$", re.I)
 # K3 — 기출 출처 표기 (완제품에 인쇄되는 관행 — gate G11과 같은 계약).
 # 변형 접미("…_변형"), 시험 코드(202506H2), 연월(25년 6월), 시험명.
 _RE_S3_LBL_ORIGIN = re.compile(
@@ -128,6 +133,34 @@ _RE_S3_LBL_ENGWORD = re.compile(r"[A-Za-z]{2,}")
 
 
 _RE_S3_LBL_SENT_END = re.compile(r"[.!?][\"'”’\)\]]?\s*$")
+_RE_S3_LBL_DIGIT = re.compile(r"\d")
+# K5 — 계열 골격: 숫자→'#', 홀로 선 대문자→'@' (Type A / Type B 계열)
+_RE_S3_LBL_SKEL_NUM = re.compile(r"\d+")
+_RE_S3_LBL_SKEL_ALPHA = re.compile(r"(?<![A-Za-z])[A-Z](?![A-Za-z])")
+
+
+def _s3_label_skeleton(inner):
+    s = _RE_S3_LBL_SKEL_NUM.sub("#", inner)
+    return _RE_S3_LBL_SKEL_ALPHA.sub("@", s)
+
+
+def _s3_label_series(step_data):
+    """원고 전체에서 '계열로 변주되는' 대괄호 라벨 골격 집합 (K5).
+
+    인덱스는 번호를 매긴다 — 같은 골격이 서로 다른 값으로 2개 이상 나오면
+    (Type A / Type B, 01강 / 02강) 그 골격은 인덱스 계열이다. 같은 문구가
+    그대로 반복되는 라벨(실용문 "[Book Now]")은 계열이 아니다."""
+    seen = {}
+    for group in ("normal", "short"):
+        for item in step_data.get(group, []) or []:
+            for p in item.get("paragraphs", []) or []:
+                t = (p.get("text") or "").strip()
+                m = _RE_S3_BRACKET_LABEL.match(t)
+                if not m:
+                    continue
+                inner = m.group(1).strip()
+                seen.setdefault(_s3_label_skeleton(inner), set()).add(inner)
+    return set(k for k, v in seen.items() if len(v) > 1)
 
 
 def _s3_is_prose(text):
@@ -135,16 +168,20 @@ def _s3_is_prose(text):
     return len(_RE_S3_LBL_ENGWORD.findall(text or "")) >= 6
 
 
-def _s3_is_index_label(tclean, prev_text, next_text, R):
+def _s3_is_index_label(tclean, prev_text, next_text, R, series=()):
     """단독 대괄호 라벨이 '원고 편집용 인덱스'인가 (제거 대상).
 
-    W66 — 형태 열거가 아니라 보존 조건(K1~K4)의 여집합으로 판정한다.
-    prev/next는 지문 내부 라벨(K2) 판정용 이웃 단락 텍스트."""
+    W66 — 형태 열거가 아니라 보존 조건(K1~K5)의 여집합으로 판정한다.
+    prev/next는 지문 내부 라벨(K2) 판정용 이웃 단락 텍스트,
+    series는 _s3_label_series가 뽑은 계열 골격 집합(K5)."""
     m = _RE_S3_BRACKET_LABEL.match(R.norm_brackets(tclean))
     if not m:
         return False
     inner = m.group(1).strip()
     if not inner:
+        return False
+    if not (_RE_S3_LBL_DIGIT.search(inner)          # K5 서수 없는 라벨
+            or _s3_label_skeleton(inner) in series):
         return False
     if _RE_S3_LBL_SENTENCE.search(inner):          # K4 문장
         return False
@@ -585,6 +622,7 @@ def build_step3(step_data):
     st_q = _style("STEP3", "Q")
     units = []
     warnings = []
+    lbl_series = _s3_label_series(step_data)     # W66 K5 — 계열 골격
     for group in ("normal", "short"):
         for item in step_data.get(group, []) or []:
             arrow_pending = False
@@ -611,7 +649,7 @@ def build_step3(step_data):
                         tclean,
                         (seq[_pi - 1].get("text") or "") if _pi else "",
                         (seq[_pi + 1].get("text") or "")
-                        if _pi + 1 < len(seq) else "", R):
+                        if _pi + 1 < len(seq) else "", R, lbl_series):
                     continue    # W66: 원고 편집용 대괄호 인덱스 제거
                                 # (구 W51 Type/Exercise 화이트리스트 대체)
                 if _RE_S3_DOC_TITLE.match(tclean):
