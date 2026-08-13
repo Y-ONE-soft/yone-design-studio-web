@@ -10,6 +10,7 @@
 다층 방어: 발문은 (1) _taxonomy 분류기 → (2) 구조 폴백(번호+종결어미) 순으로
 판정하므로, 분류기 룰이 한 발문을 놓쳐도 구조 신호가 있으면 Q로 잡힌다.
 """
+import re
 from core.structure import block_grammar as BG
 from core.structure import rules as R
 
