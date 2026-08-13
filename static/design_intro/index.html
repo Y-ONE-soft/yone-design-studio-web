@@ -1,0 +1,2949 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Y.ONE DESIGN — 교재 디자인 스튜디오</title>
+<meta name="description" content="영어 교재 전문 디자인 스튜디오. 단어장·문제집·참고서의 표지 디자인부터 내지 조판, 인쇄용 PDF까지. 투명한 공개 단가로 제작합니다." />
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&display=swap" />
+<style>
+  /* ============================================================
+     Y.ONE DESIGN — Studio Site
+     Editorial. Image-first. Paper-white canvas, ink typography.
+     ============================================================ */
+
+  :root {
+    --paper:    #faf9f7;
+    --paper-2:  #f3f1ed;
+    --paper-3:  #edeae4;
+    --ink:      #141413;
+    --ink-2:    rgba(20, 20, 19, 0.64);
+    --ink-3:    rgba(20, 20, 19, 0.45);
+    --ink-4:    rgba(20, 20, 19, 0.28);
+    --line:     rgba(20, 20, 19, 0.12);
+    --line-soft:rgba(20, 20, 19, 0.07);
+    --accent:   #8a3033;
+    --accent-soft: rgba(138, 48, 51, 0.07);
+
+    --ease: cubic-bezier(0.22, 0.61, 0.21, 1);
+    --wrap: 1240px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  .serif { font-family: 'Noto Serif KR', 'Pretendard', serif; }
+
+  html {
+    background: var(--paper);
+    scroll-behavior: smooth;
+    scroll-padding-top: 88px;
+    overscroll-behavior-y: none;  /* 모바일 당겨서 새로고침(PTR) 차단 */
+  }
+
+  body {
+    font-family: 'Pretendard', 'Pretendard Variable', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    letter-spacing: -0.005em;
+    color: var(--ink);
+    background: var(--paper);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'tnum' 1;
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
+  }
+
+  /* 모바일: 네비 blur 제거 — 스크롤 중 backdrop-filter는 GPU 부하 */
+  @media (max-width: 820px), (pointer: coarse) {
+    .nav.is-scrolled {
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+      background: rgba(250, 249, 247, 0.97);
+    }
+  }
+
+
+  /* paper grain */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    pointer-events: none;
+    opacity: 0.028;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 160px 160px;
+  }
+
+  ::selection { background: var(--ink); color: var(--paper); }
+
+  a { color: inherit; }
+
+  a:focus-visible, button:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+    border-radius: 2px;
+  }
+
+  img { display: block; max-width: 100%; }
+
+  .wrap {
+    max-width: var(--wrap);
+    margin: 0 auto;
+    padding: 0 48px;
+  }
+
+  .num, td { font-variant-numeric: tabular-nums; }
+
+  /* ============================================================
+     Reveal on scroll
+     ============================================================ */
+    /* ============================================================
+     Nav
+     ============================================================ */
+  .nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    transition: background 0.35s var(--ease), box-shadow 0.35s var(--ease);
+  }
+  .nav.is-scrolled {
+    background: rgba(250, 249, 247, 0.86);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    backdrop-filter: blur(20px) saturate(160%);
+    box-shadow: 0 1px 0 var(--line-soft);
+  }
+  .nav-inner {
+    max-width: var(--wrap);
+    margin: 0 auto;
+    padding: 0 48px;
+    height: 68px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .nav-brand {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .nav-brand span { color: var(--ink-3); font-weight: 500; }
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    list-style: none;
+  }
+  .nav-links a {
+    display: block;
+    padding: 8px 14px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink-2);
+    text-decoration: none;
+    background:
+      linear-gradient(var(--ink), var(--ink)) no-repeat left calc(100% - 4px) / 0 1px;
+    transition: color 0.25s var(--ease), background-size 0.3s var(--ease);
+  }
+  .nav-links a:hover { color: var(--ink); background-size: calc(100% - 28px) 1px; }
+  .nav-links a.is-active { color: var(--ink); background-size: calc(100% - 28px) 1px; }
+  .nav-cta {
+    display: inline-block;
+    padding: 10px 22px;
+    font-size: 13.5px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--paper) !important;
+    background: var(--ink);
+    border-radius: 2px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: transform 0.25s var(--ease), opacity 0.25s var(--ease);
+  }
+  .nav-cta:hover { transform: translateY(-1px); opacity: 0.9; }
+
+  /* ============================================================
+     Hero
+     ============================================================ */
+  .hero {
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 160px 0 72px;
+    position: relative;
+  }
+  .hero-eyebrow {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 28px;
+  }
+  .hero h1 {
+    font-size: clamp(52px, 8.6vw, 116px);
+    font-weight: 750;
+    line-height: 1.04;
+    letter-spacing: -0.045em;
+    max-width: 12em;
+  }
+  .hero h1 em {
+    font-style: normal;
+    font-family: 'Noto Serif KR', serif;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+  .hero-lead {
+    margin-top: 36px;
+    font-size: clamp(16px, 1.6vw, 19px);
+    line-height: 1.75;
+    color: var(--ink-2);
+    max-width: 560px;
+  }
+  .hero-cta-row {
+    margin-top: 44px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 32px;
+    font-size: 14.5px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+    border-radius: 2px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: transform 0.25s var(--ease), opacity 0.25s var(--ease), background 0.25s var(--ease), border-color 0.25s var(--ease);
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .btn-primary { background: var(--ink); color: var(--paper); }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-ghost { border-color: var(--line); color: var(--ink); background: transparent; }
+  .btn-ghost:hover { border-color: var(--ink); }
+  .btn .arr { transition: transform 0.25s var(--ease); }
+  .btn:hover .arr { transform: translateX(3px); }
+
+  .hero-foot {
+    margin-top: 72px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 24px;
+    font-size: 13px;
+    color: var(--ink-3);
+  }
+  .hero-foot a { color: var(--ink-2); text-decoration: none; border-bottom: 1px solid var(--line); padding-bottom: 1px; }
+  .hero-foot a:hover { color: var(--ink); border-color: var(--ink); }
+
+  /* ============================================================
+     Section scaffolding — editorial
+     ============================================================ */
+  .sec { padding-top: 150px; }
+  .sec-head {
+    border-top: 1px solid var(--ink);
+    padding-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 24px;
+  }
+  .sec-kicker {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+  .sec-idx {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    color: var(--ink-4);
+  }
+  .sec-title {
+    margin-top: 44px;
+    font-size: clamp(34px, 4.6vw, 58px);
+    font-weight: 700;
+    line-height: 1.14;
+    letter-spacing: -0.035em;
+    max-width: 18em;
+  }
+  .sec-lead {
+    margin-top: 20px;
+    font-size: 17px;
+    line-height: 1.75;
+    color: var(--ink-2);
+    max-width: 620px;
+  }
+
+  /* sub-section header inside pricing */
+  .sub-head {
+    margin: 110px 0 32px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    border-top: 1px solid var(--line);
+    padding-top: 18px;
+  }
+  .sub-head:first-of-type { margin-top: 64px; }
+  .sub-title {
+    font-size: clamp(22px, 2.6vw, 30px);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+  }
+  .sub-note-inline { font-size: 13px; color: var(--ink-3); text-align: right; }
+  .sub-lead { margin: -20px 0 28px; font-size: 15px; color: var(--ink-2); max-width: 600px; }
+
+  /* ============================================================
+     Works — center-stage carousel + physical books
+     ============================================================ */
+  .sec-works { padding-top: clamp(60px, 8vw, 120px); }
+
+  .shelf {
+    position: relative;
+    padding: clamp(96px, 10vw, 150px) 0 clamp(84px, 9vw, 130px);
+    overflow: hidden;
+  }
+
+  .shelf-marquee {
+    position: absolute;
+    left: 0;
+    display: flex;
+    white-space: nowrap;
+    font-size: clamp(42px, 5vw, 76px);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    color: transparent;
+    -webkit-text-stroke: 1.2px rgba(20, 20, 19, 0.20);
+    pointer-events: none;
+    user-select: none;
+    will-change: transform;
+  }
+  .shelf-marquee.m-top { top: 6px; }
+  .shelf-marquee.m-bot { bottom: 6px; }
+
+  .shelf-track {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    gap: clamp(56px, 7vw, 110px);
+    width: max-content;
+    padding: 0 40px;
+    will-change: transform;
+  }
+  /* 모바일: 초광폭 레일/마퀴의 상시 GPU 레이어 승격 해제 (합성 메모리 절약) */
+  @media (max-width: 820px), (pointer: coarse) {
+    .shelf-track, .shelf-marquee { will-change: auto; }
+  }
+
+  .shelf-group {
+    display: flex;
+    align-items: flex-end;
+    gap: clamp(26px, 3vw, 46px);
+    transform: scale(0.88);
+    transform-origin: center bottom;
+    opacity: 0.42;
+    filter: saturate(0.85);
+    transition: transform 0.75s var(--ease), opacity 0.75s var(--ease), filter 0.75s var(--ease);
+  }
+  .shelf-group.is-active {
+    transform: scale(1.08);
+    opacity: 1;
+    filter: none;
+  }
+
+  .shelf-nav {
+    position: absolute;
+    top: 44%;
+    transform: translateY(-50%);
+    width: 64px; height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    background: none;
+    padding: 0;
+    font-family: inherit;
+    font-size: 38px;
+    font-weight: 100;
+    line-height: 1;
+    color: var(--ink-4);
+    cursor: pointer;
+    z-index: 6;
+    transition: color 0.3s var(--ease), transform 0.3s var(--ease);
+  }
+  .shelf-nav:hover { color: var(--ink); }
+  .shelf-nav-l { left: clamp(14px, 2.5vw, 36px); }
+  .shelf-nav-r { right: clamp(14px, 2.5vw, 36px); }
+  .shelf-nav-l:hover { transform: translateY(-50%) translateX(-3px); }
+  .shelf-nav-r:hover { transform: translateY(-50%) translateX(3px); }
+
+  /* ── 3D book ─────────────────────────────────────── */
+  .book3d {
+    --bh: clamp(300px, 30vw, 470px);
+    --pw: calc(var(--bh) * 0.707);
+    --depth: calc(var(--bh) * 0.05);
+    --hp: calc(var(--bh) * 0.98 / 21);
+    position: relative;
+    height: var(--bh);
+    width: var(--pw);
+    border: 0;
+    background: none;
+    padding: 0;
+    cursor: pointer;
+    perspective: calc(var(--bh) * 2.6);
+    font: inherit;
+    color: inherit;
+    transition: width 0.9s var(--ease);
+  }
+  .book3d.is-open { width: calc(var(--pw) * 2); }
+  /* 모바일: width 트랜지션 금지 — 펼침 0.9s 동안 매 프레임 초광폭 레일 전체가
+     재배치·재도색되어 iOS WebKit 탭 크래시(웨일 새로고침)의 직접 원인 */
+  @media (max-width: 820px), (pointer: coarse) {
+    .book3d { transition: none; }
+  }
+
+  .b3d {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+    transform: rotateY(-24deg);
+    transition: transform 0.9s var(--ease);
+  }
+  @media (hover: hover) {
+    .book3d:not(.is-open):hover .b3d { transform: rotateY(-20deg) translateY(-5px); }
+  }
+  .book3d.is-open .b3d { transform: rotateY(0deg); }
+
+  .b3d-shadow {
+    /* 광원 좌상단 → 그림자는 밑변(투영 y 101~103%) 아래에서 우측으로 치우쳐 떨어짐 */
+    position: absolute;
+    left: 10%; right: -7%;
+    bottom: calc(var(--bh) * -0.092);
+    height: calc(var(--bh) * 0.07);
+    background:
+      radial-gradient(44% 58% at 52% 16%,
+        rgba(20, 20, 19, 0.32),
+        rgba(20, 20, 19, 0.11) 55%,
+        rgba(20, 20, 19, 0) 78%),
+      radial-gradient(52% 66% at 72% 24%,
+        rgba(20, 20, 19, 0.10),
+        rgba(20, 20, 19, 0) 80%);
+    transform: rotate(-1.3deg);
+    filter: blur(3px);
+    transition: all 0.9s var(--ease);
+    pointer-events: none;
+  }
+  .book3d:not(.is-open):hover .b3d-shadow { transform: rotate(-1.3deg) translateY(4px); opacity: 0.75; }
+  .book3d.is-open .b3d-shadow {
+    left: 4%; right: -3%;
+    bottom: calc(var(--bh) * -0.045);
+    height: calc(var(--bh) * 0.045);
+    transform: rotate(0deg);
+  }
+
+  /* 종이 두께 레이어 */
+  .sheet {
+    position: absolute;
+    top: 0.5%; bottom: 0.5%; right: 0.3%;
+    width: calc(var(--pw) * 0.985);
+    background: #f7f5f1;
+    box-shadow: inset -1.5px 0 0 rgba(20, 20, 19, 0.10), inset 0 -1px 0 rgba(20, 20, 19, 0.06);
+  }
+  .sheet.s1 { transform: translateZ(calc(var(--depth) * -0.33)); }
+  .sheet.s2 { transform: translateZ(calc(var(--depth) * -0.66)); background: #f3f1ec; }
+  .sheet.s3 { transform: translateZ(calc(var(--depth) * -1)); background: #efece6;
+              box-shadow: inset -2px 0 0 rgba(20, 20, 19, 0.13); }
+
+  .pageR {
+    position: absolute;
+    top: 0; right: 0;
+    width: var(--pw); height: 100%;
+    background: #fff;
+  }
+  .pageR img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .pageR::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(118deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 30%, rgba(0, 0, 0, 0) 65%, rgba(0, 0, 0, 0.06) 100%);
+  }
+  .pageR .gutterR {
+    position: absolute;
+    top: 0; bottom: 0; left: 0;
+    width: 8%;
+    background: linear-gradient(to right, rgba(20, 18, 15, 0.17), rgba(20, 18, 15, 0) 92%);
+    opacity: 0;
+    transition: opacity 0.9s var(--ease);
+    pointer-events: none;
+  }
+  .book3d.is-open .pageR .gutterR { opacity: 1; }
+
+  /* ── 낱장(실제 페이지) — 2분할 폴드로 종이 휨 표현 ── */
+  .leaf {
+    position: absolute;
+    top: 0; right: 0;
+    width: var(--pw); height: 100%;
+    transform-style: preserve-3d;
+    pointer-events: none;
+  }
+  .leaf .seg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 50%; height: 100%;
+    transform-origin: left center;
+    transform-style: preserve-3d;
+    transform: rotateY(0deg) translateZ(var(--lz));
+    transition: transform 0.74s cubic-bezier(0.3, 0.05, 0.22, 1);
+  }
+  .leaf.l1 .seg { --lz: 2px; transition-delay: 0.1s; }
+  .leaf.l2 .seg { --lz: 1px; transition-delay: 0s; }
+  .book3d.is-open .leaf.l1 .seg { transform: rotateY(-180deg) translateZ(2px); transition-delay: 0.16s; }
+  .book3d.is-open .leaf.l2 .seg { transform: rotateY(-180deg) translateZ(1px); transition-delay: 0.36s; }
+
+  .leaf .seg2 {
+    position: absolute;
+    top: 0; left: 100%;
+    width: 100%; height: 100%;
+    transform-origin: left center;
+    transform: rotateY(0deg);
+    transform-style: preserve-3d;
+  }
+  .book3d.is-open .leaf.l1 .seg2 { animation: leaf-bend-in 0.74s cubic-bezier(0.3, 0.05, 0.22, 1) 0.16s both; }
+  .book3d.is-open .leaf.l2 .seg2 { animation: leaf-bend-in 0.74s cubic-bezier(0.3, 0.05, 0.22, 1) 0.4s both; }
+  .book3d.closing .leaf.l1 .seg2 { animation: leaf-bend-out 0.74s cubic-bezier(0.3, 0.05, 0.22, 1) 0.1s both; }
+  .book3d.closing .leaf.l2 .seg2 { animation: leaf-bend-out 0.74s cubic-bezier(0.3, 0.05, 0.22, 1) 0s both; }
+
+  /* 음수 스프레드(첫 페이지 방향) = 실제 리프를 오른쪽으로 되접기.
+     spm1: l2 복귀 → (p2|p3), spm1+spm2: l1도 복귀 → (표지안쪽|p1).
+     첫 페이지에서 덮으면 리프는 이미 오른쪽이라 표지만 접힘(실물과 동일). */
+  .book3d.is-open.spm1 .leaf.l2 .seg,
+  .book3d.is-open.spm2 .leaf.l2 .seg { transform: rotateY(0deg) translateZ(1px); transition-delay: 0s; }
+  .book3d.is-open.spm2 .leaf.l1 .seg { transform: rotateY(0deg) translateZ(2px); transition-delay: 0s; }
+  .book3d.is-open.spm1 .leaf.l2 .seg2,
+  .book3d.is-open.spm2 .leaf.l2 .seg2 { animation: leaf-bend-out 0.74s cubic-bezier(0.3, 0.05, 0.22, 1) both; }
+  .book3d.is-open.spm2 .leaf.l1 .seg2 { animation: leaf-bend-out 0.74s cubic-bezier(0.3, 0.05, 0.22, 1) both; }
+  @keyframes leaf-bend-in {
+    0% { transform: rotateY(0deg); }
+    30% { transform: rotateY(52deg); }
+    62% { transform: rotateY(12deg); }
+    82% { transform: rotateY(22deg); }
+    100% { transform: rotateY(0deg); }
+  }
+  @keyframes leaf-bend-out {
+    0% { transform: rotateY(0deg); }
+    36% { transform: rotateY(-42deg); }
+    70% { transform: rotateY(-9deg); }
+    100% { transform: rotateY(0deg); }
+  }
+
+  .leaf .pf, .leaf .pb {
+    position: absolute;
+    inset: 0;
+    background-size: 200% 100%;
+    background-color: #fff;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+  .leaf .seg > .pf { background-image: var(--pf); background-position: 0 0; }
+  .leaf .seg > .pb { background-image: var(--pb); background-position: 100% 0; transform: rotateY(180deg); }
+  .leaf .seg2 > .pf { background-image: var(--pf); background-position: 100% 0; }
+  .leaf .seg2 > .pb { background-image: var(--pb); background-position: 0 0; transform: rotateY(180deg); }
+
+  /* 접지(스파인) 그림자를 낱장 면 자체에 탑재 — 터너 등장/퇴장 시 그림자 팝 방지.
+     seg는 반 페이지 폭이라 15% ≈ 전체 페이지의 7.5% (gutterR 8%와 일치) */
+  .leaf .seg > .pf::after, .leaf .seg > .pb::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .leaf .seg > .pf::after { background: linear-gradient(to right, rgba(20, 18, 15, 0.17), rgba(20, 18, 15, 0) 15%); }
+  .leaf .seg > .pb::after { background: linear-gradient(to left, rgba(20, 18, 15, 0.15), rgba(20, 18, 15, 0) 15%); }
+
+  /* ── 수동 페이지 넘김 터너 ── */
+  .leaf.turner { visibility: hidden; }
+  .leaf.turner.show { visibility: visible; }
+  .leaf.turner .seg {
+    --lz: 0.5px;
+    transition: transform 0.7s cubic-bezier(0.3, 0.05, 0.22, 1);
+    transition-delay: 0s;
+  }
+  .leaf.turner.snap .seg { transition: none; }
+  .leaf.turner.fwd .seg { transform: rotateY(-180deg) translateZ(var(--lz)); }
+  .leaf.turner.fwd:not(.snap) .seg2 { animation: leaf-bend-in 0.7s cubic-bezier(0.3, 0.05, 0.22, 1) both; }
+  .leaf.turner.bwd .seg2 { animation: leaf-bend-out 0.7s cubic-bezier(0.3, 0.05, 0.22, 1) both; }
+  /* 펼침 연속 리플용 2번 터너 — 우측 스택에선 turner 아래, 좌측 안착 시 turner 위 */
+  .leaf.turner2 .seg { --lz: 0.25px; transition-duration: 0.74s; }
+  .leaf.turner.auto .seg { transition-duration: 0.74s; }
+  .leaf.turner.auto.fwd:not(.snap) .seg2, .leaf.turner2.fwd:not(.snap) .seg2 {
+    animation-duration: 0.74s;
+  }
+
+  /* ── 표지 ── */
+  .flap {
+    position: absolute;
+    top: 0; right: 0;
+    width: var(--pw); height: 100%;
+    transform-origin: left center;
+    transform: rotateY(0deg) translateZ(3px);
+    transition: transform 0.85s var(--ease) 0.18s;
+    transform-style: preserve-3d;
+  }
+  .book3d.peeking .flap {
+    transform: rotateY(-14deg) translateZ(3px);
+    transition-delay: 0s;
+  }
+  .book3d.peeking .leaf.l1 .seg {
+    transform: rotateY(-6deg) translateZ(2px);
+    transition-delay: 0.06s;
+  }
+  .book3d.is-open .flap { transform: rotateY(-180deg) translateZ(3px); transition-delay: 0s; }
+
+  .f-front, .f-back {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+  .f-front img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .f-front .tex {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(to right,
+        rgba(255, 255, 255, 0.11) 0%,
+        rgba(255, 255, 255, 0.03) 14%,
+        rgba(0, 0, 0, 0) 42%,
+        rgba(0, 0, 0, 0.07) 74%,
+        rgba(0, 0, 0, 0.15) 100%),
+      linear-gradient(to bottom,
+        rgba(255, 255, 255, 0.09),
+        rgba(255, 255, 255, 0) 4%,
+        rgba(0, 0, 0, 0) 88%,
+        rgba(0, 0, 0, 0.06) 100%),
+      linear-gradient(to right, rgba(0, 0, 0, 0.09), rgba(0, 0, 0, 0) 1.6%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0.10 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23p)'/%3E%3C/svg%3E");
+    background-size: 100% 100%, 100% 100%, 100% 100%, 140px 140px;
+  }
+  .f-front .gloss {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg, rgba(255,255,255,0) 42%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 58%);
+    background-size: 260% 100%;
+    background-position: 92% 0;
+    transition: background-position 0.9s var(--ease);
+    pointer-events: none;
+  }
+  .book3d:hover .f-front .gloss { background-position: 8% 0; }
+  .f-back {
+    transform: rotateY(180deg);
+    background: #fbfaf8;
+  }
+  .f-back .shade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to left, rgba(20, 18, 15, 0.10), rgba(20, 18, 15, 0.02) 55%, rgba(20, 18, 15, 0.06));
+    pointer-events: none;
+  }
+
+  /* ── 무선제본: 표지 힌지(제본 눌림) 라인 ── */
+  .book-glue .f-front::before {
+    content: "";
+    position: absolute;
+    top: 0; bottom: 0; left: 0;
+    width: 7%;
+    background:
+      linear-gradient(to right,
+        rgba(20, 18, 15, 0.0) calc(52% - 1px),
+        rgba(20, 18, 15, 0.14) 52%,
+        rgba(20, 18, 15, 0.0) calc(52% + 1.5px)),
+      linear-gradient(to right,
+        rgba(20, 18, 15, 0.07),
+        rgba(20, 18, 15, 0.02) 45%,
+        rgba(255, 255, 255, 0.06) 62%,
+        rgba(0, 0, 0, 0) 100%);
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  /* ── 스프링 제본: 관통 코일 + 타공 (지면 끝까지 인쇄) ── */
+  .book-coil .pageR::before,
+  .book-coil .leaf .seg > .pf::before,
+  .book-coil .f-front::before {
+    content: "";
+    position: absolute;
+    top: 1%;
+    height: 98%;
+    width: 6px;
+    left: 4.4%;
+    background: repeating-linear-gradient(to bottom,
+      transparent 0 calc(var(--hp) * 0.35),
+      rgba(15, 13, 11, 0.46) calc(var(--hp) * 0.35) calc(var(--hp) * 0.63),
+      rgba(255, 255, 255, 0.25) calc(var(--hp) * 0.63) calc(var(--hp) * 0.67),
+      transparent calc(var(--hp) * 0.67) var(--hp));
+    pointer-events: none;
+    z-index: 2;
+  }
+  .book-coil .f-front::before { opacity: 0.8; }
+  .book-coil .leaf .seg > .pf::before { left: 8.8%; }
+  .book-coil .leaf .seg > .pb::before { right: 8.8%; }
+  .book-coil .leaf .seg > .pb::before {
+    content: "";
+    position: absolute;
+    top: 1%;
+    height: 98%;
+    width: 6px;
+    right: 4.4%;
+    background: repeating-linear-gradient(to bottom,
+      transparent 0 calc(var(--hp) * 0.35),
+      rgba(15, 13, 11, 0.46) calc(var(--hp) * 0.35) calc(var(--hp) * 0.63),
+      rgba(255, 255, 255, 0.25) calc(var(--hp) * 0.63) calc(var(--hp) * 0.67),
+      transparent calc(var(--hp) * 0.67) var(--hp));
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .coil {
+    position: absolute;
+    top: 1%;
+    height: 98%;
+    left: calc(100% - var(--pw));
+    width: clamp(30px, calc(var(--bh) * 0.115), 50px);
+    transform: translateX(-50%) translateZ(4px);
+    background-image: url("portfolio/v10/coil_ring.png");
+    background-repeat: repeat-y;
+    background-position: 0 0;
+    background-size: 100% var(--hp);
+    pointer-events: none;
+  }
+
+  /* ============================================================
+     3분 견적 계산기
+     ============================================================ */
+  .calc {
+    margin-top: 64px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+    gap: clamp(32px, 4vw, 64px);
+    align-items: start;
+  }
+  .calc-field { margin-bottom: 36px; }
+  .calc-label {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--ink-2);
+    margin-bottom: 14px;
+  }
+  .calc-label .n { font-size: 11px; color: var(--ink-4); letter-spacing: 0.1em; }
+  .seg-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .seg-btn {
+    padding: 11px 18px;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    background: none;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink-2);
+    cursor: pointer;
+    transition: all 0.22s var(--ease);
+  }
+  .seg-btn:hover { border-color: var(--ink); color: var(--ink); }
+  .seg-btn.on { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+  .seg-btn small { display: block; font-size: 11px; font-weight: 400; opacity: 0.65; margin-top: 2px; }
+  .calc-pages {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .calc-pages input {
+    width: 130px;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    background: none;
+    font: inherit;
+    font-size: 18px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+  .calc-pages input:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .calc-pages .unit { font-size: 14px; color: var(--ink-3); }
+  .calc-checks { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chk-btn {
+    padding: 9px 16px;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    background: none;
+    font: inherit;
+    font-size: 13.5px;
+    color: var(--ink-2);
+    cursor: pointer;
+    transition: all 0.22s var(--ease);
+  }
+  .chk-btn.on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+  .calc-hint { margin-top: 10px; font-size: 12.5px; color: var(--ink-4); }
+
+  .calc-result {
+    border: 1px solid var(--ink);
+    border-radius: 4px;
+    padding: 30px 28px 28px;
+    background: var(--paper);
+  }
+  .calc-result-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .calc-lines { list-style: none; margin-top: 18px; }
+  .calc-lines li {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    padding: 9px 0;
+    border-top: 1px solid var(--line-soft);
+    font-size: 14px;
+  }
+  .calc-lines li .k { color: var(--ink-2); }
+  .calc-lines li .k small { display: block; font-size: 12px; color: var(--ink-4); }
+  .calc-lines li .v { font-weight: 600; white-space: nowrap; }
+  .calc-lines li.disc .v { color: var(--accent); }
+  .calc-total {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--ink);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .calc-total .k { font-size: 13px; color: var(--ink-3); }
+  .calc-total .v {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .calc-vat { margin-top: 6px; text-align: right; font-size: 13px; color: var(--ink-3); }
+  .calc-days { margin-top: 14px; font-size: 13.5px; color: var(--ink-2); }
+  .calc-extra-note { margin-top: 12px; font-size: 12.5px; color: var(--ink-3); line-height: 1.6; }
+  .calc-order {
+    display: flex;
+    justify-content: center;
+    margin-top: 22px;
+    width: 100%;
+  }
+  .calc-note { margin-top: 14px; font-size: 12px; color: var(--ink-4); line-height: 1.6; }
+
+  /* 상세 단가표 접기 */
+  .sec-fold { padding-top: clamp(40px, 5vw, 72px); }
+  .pricing-fold > summary {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    cursor: pointer;
+    width: min(640px, calc(100% - 48px));
+    margin: 0 auto;
+    padding: 18px 32px;
+    border: 1px solid var(--ink);
+    border-radius: 2px;
+    font-size: 15.5px;
+    font-weight: 700;
+    transition: background 0.25s var(--ease), color 0.25s var(--ease);
+  }
+  .pricing-fold > summary:hover { background: var(--ink); color: var(--paper); }
+  .pricing-fold > summary:hover .chev { color: var(--paper); }
+  .pricing-fold > summary::-webkit-details-marker { display: none; }
+  .pricing-fold > summary .chev { color: var(--ink-3); transition: transform 0.3s var(--ease); }
+  .pricing-fold[open] > summary .chev { transform: rotate(45deg); }
+  .pricing-fold-wrap { max-width: var(--wrap); margin: 0 auto; }
+
+  
+  /* Lightbox */
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(16px, 4vw, 56px);
+  }
+  .lightbox[hidden] { display: none; }
+  .lightbox-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(20, 20, 19, 0.82);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+  }
+  .lightbox-panel {
+    position: relative;
+    max-width: 1160px;
+    width: 100%;
+    max-height: 92svh;
+    display: flex;
+    flex-direction: column;
+  }
+  .lightbox-panel img {
+    width: 100%;
+    height: auto;
+    max-height: 82svh;
+    object-fit: contain;
+    border-radius: 4px;
+    background: var(--paper-2);
+  }
+  .lightbox-caption {
+    padding: 16px 4px 0;
+    color: rgba(250, 249, 247, 0.85);
+    font-size: 14px;
+    display: flex;
+    gap: 14px;
+    align-items: baseline;
+  }
+  .lightbox-caption strong { font-size: 16px; color: #fff; }
+  .lightbox-close {
+    position: absolute;
+    top: -48px;
+    right: 0;
+    width: 40px; height: 40px;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(250, 249, 247, 0.14);
+    color: #fff;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.25s var(--ease);
+  }
+  .lightbox-close:hover { background: rgba(250, 249, 247, 0.28); }
+  body.lightbox-open { overflow: hidden; }
+
+  /* ============================================================
+     Principles band — quiet statement
+     ============================================================ */
+  .principles {
+    margin-top: 150px;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 120px 0;
+  }
+  .principles .p-kicker {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(250, 249, 247, 0.5);
+  }
+  .principles h2 {
+    margin-top: 32px;
+    font-size: clamp(30px, 4.4vw, 54px);
+    font-weight: 700;
+    line-height: 1.22;
+    letter-spacing: -0.03em;
+    max-width: 17em;
+  }
+  .principles h2 em { font-style: normal; font-family: 'Noto Serif KR', serif; font-weight: 600; color: rgba(250, 249, 247, 0.62); }
+  .principle-list {
+    margin-top: 72px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+    list-style: none;
+  }
+  .principle-list li {
+    border-top: 1px solid rgba(250, 249, 247, 0.22);
+    padding-top: 20px;
+  }
+  .principle-list .p-num { font-size: 13px; color: rgba(250, 249, 247, 0.45); letter-spacing: 0.08em; }
+  .principle-list h3 { margin-top: 14px; font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+  .principle-list p { margin-top: 10px; font-size: 14.5px; line-height: 1.7; color: rgba(250, 249, 247, 0.66); }
+
+  /* ============================================================
+     Service — what we make
+     ============================================================ */
+  .service-list { margin-top: 64px; list-style: none; }
+  .service-list li {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 320px) 1fr;
+    gap: 32px;
+    align-items: baseline;
+    padding: 36px 4px;
+    border-top: 1px solid var(--line-soft);
+  }
+  .service-list li:last-child { border-bottom: 1px solid var(--line-soft); }
+  .service-num { font-size: 13px; color: var(--ink-4); letter-spacing: 0.08em; }
+  .service-name { font-size: clamp(20px, 2.4vw, 26px); font-weight: 700; letter-spacing: -0.02em; }
+  .service-desc { font-size: 15px; color: var(--ink-2); line-height: 1.7; max-width: 560px; }
+
+  /* ============================================================
+     Pricing
+     ============================================================ */
+  .pricing-subnav {
+    position: sticky;
+    top: 67px;
+    z-index: 50;
+    margin-top: 56px;
+    background: rgba(250, 249, 247, 0.88);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    border-top: 1px solid var(--line-soft);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .pricing-subnav ul {
+    list-style: none;
+    display: flex;
+    gap: 2px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 10px 0;
+  }
+  .pricing-subnav ul::-webkit-scrollbar { display: none; }
+  .pricing-subnav a {
+    display: block;
+    padding: 6px 14px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--ink-2);
+    text-decoration: none;
+    white-space: nowrap;
+    background: linear-gradient(var(--ink), var(--ink)) no-repeat left calc(100% - 3px) / 0 1px;
+    transition: color 0.25s var(--ease), background-size 0.3s var(--ease);
+  }
+  .pricing-subnav a:hover { color: var(--ink); background-size: calc(100% - 28px) 1px; }
+
+  /* overview strip */
+  .overview-strip {
+    margin-top: 64px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    list-style: none;
+  }
+  .overview-strip li {
+    border-left: 1px solid var(--line);
+    padding: 6px 24px 6px 24px;
+  }
+  .overview-strip li:first-child { border-left: 0; padding-left: 4px; }
+  .overview-num { display: block; font-size: clamp(19px, 2.2vw, 24px); font-weight: 700; letter-spacing: -0.02em; }
+  .overview-label { display: block; margin-top: 6px; font-size: 13px; color: var(--ink-3); }
+  .overview-scope { margin-top: 28px; font-size: 13.5px; color: var(--ink-3); }
+
+  /* tier cards */
+  .tier-grid {
+    margin-top: 40px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  .tier-card {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 32px 28px 30px;
+    background: transparent;
+    transition: border-color 0.3s var(--ease);
+  }
+  .tier-card:hover { border-color: var(--ink); }
+  .tier-card.tier-premium { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .tier-name { font-size: 13px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+  .tier-card.tier-deluxe .tier-name { color: var(--accent); }
+  .tier-tag { margin-top: 18px; font-size: clamp(19px, 2vw, 22px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.35; }
+  .tier-points { margin-top: 18px; list-style: none; }
+  .tier-points li {
+    padding: 9px 0;
+    font-size: 14px;
+    color: var(--ink-2);
+    border-top: 1px solid var(--line-soft);
+    line-height: 1.55;
+  }
+  .tier-card.tier-premium .tier-points li { color: rgba(250, 249, 247, 0.75); border-color: rgba(250, 249, 247, 0.16); }
+
+  /* badges */
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 2px;
+    border: 1px solid var(--line);
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+  .badge-deluxe { color: var(--accent); border-color: rgba(138, 48, 51, 0.35); background: var(--accent-soft); }
+  .badge-premium { color: var(--paper); background: var(--ink); border-color: var(--ink); }
+
+  /* tables */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table {
+    width: 100%;
+    min-width: 560px;
+    border-collapse: collapse;
+    font-size: 15px;
+  }
+  thead th {
+    text-align: left;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink-3);
+    letter-spacing: 0.02em;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--ink);
+  }
+  td {
+    padding: 16px;
+    border-bottom: 1px solid var(--line-soft);
+    vertical-align: top;
+  }
+  .num-col { text-align: right; }
+  td.num-col { font-weight: 600; }
+  tr.type-header td {
+    padding: 44px 16px 12px;
+    font-size: 16px;
+    font-weight: 700;
+    border-bottom: 1px solid var(--line);
+    letter-spacing: -0.01em;
+  }
+  tr.type-header:first-child td { padding-top: 8px; }
+  .type-sub { font-size: 13px; font-weight: 400; color: var(--ink-3); margin-left: 10px; }
+  tbody tr:not(.type-header):hover td { background: rgba(20, 20, 19, 0.018); }
+
+  /* notes */
+  .note { margin-top: 24px; }
+  .note ul { list-style: none; }
+  .note li {
+    position: relative;
+    padding: 6px 0 6px 18px;
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: var(--ink-2);
+  }
+  .note li::before {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: 15px;
+    width: 5px; height: 1px;
+    background: var(--ink-3);
+  }
+  .note a { color: var(--ink); }
+
+  /* callouts (시리즈 할인 / 최소 작업비) */
+  .callout-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .callout {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 36px 32px;
+  }
+  .callout-eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .callout-headline {
+    margin-top: 16px;
+    font-size: clamp(20px, 2.2vw, 25px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.35;
+  }
+  .callout-headline strong { color: var(--accent); }
+  .callout-list { margin-top: 18px; list-style: none; }
+  .callout-list li {
+    position: relative;
+    padding: 7px 0 7px 18px;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--ink-2);
+  }
+  .callout-list li::before {
+    content: "";
+    position: absolute;
+    left: 2px; top: 16px;
+    width: 5px; height: 1px;
+    background: var(--ink-3);
+  }
+
+  /* compare (라인 비교) */
+  .compare-section {
+    border-top: 1px solid var(--line-soft);
+  }
+  .compare-section:last-of-type { border-bottom: 1px solid var(--line-soft); }
+  .compare-section summary {
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    padding: 26px 4px;
+    font-size: clamp(19px, 2.2vw, 24px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    transition: color 0.25s var(--ease);
+  }
+  .compare-section summary::-webkit-details-marker { display: none; }
+  .compare-section summary:hover { color: var(--accent); }
+  .compare-kind { font-size: 12px; font-weight: 600; letter-spacing: 0.16em; color: var(--ink-4); text-transform: uppercase; }
+  .compare-section summary .chev {
+    margin-left: auto;
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--ink-3);
+    transition: transform 0.3s var(--ease);
+  }
+  .compare-section[open] summary .chev { transform: rotate(45deg); }
+  .compare-table { padding: 4px 4px 40px; }
+  .compare-head, .compare-row {
+    display: grid;
+    grid-template-columns: 110px repeat(3, 1fr);
+    gap: 20px;
+  }
+  .compare-head { padding-bottom: 12px; border-bottom: 1px solid var(--ink); }
+  .compare-line-label { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-2); }
+  .compare-line-label.deluxe { color: var(--accent); }
+  .compare-row { padding: 16px 0; border-bottom: 1px solid var(--line-soft); }
+  .compare-attr { font-size: 13px; font-weight: 600; color: var(--ink-3); padding-top: 2px; }
+  .compare-row > div:not(.compare-attr) { font-size: 14px; line-height: 1.65; color: var(--ink-2); }
+  .compare-row strong { color: var(--ink); font-weight: 600; }
+  .compare-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 4px 32px;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--ink);
+    text-decoration: none;
+    border-bottom: 1px solid var(--ink);
+    padding-bottom: 2px;
+  }
+  .compare-cta:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* estimate examples */
+  .estimate-examples { margin-top: 28px; }
+  .estimate-examples > summary {
+    list-style: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 13px 26px;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    font-size: 14.5px;
+    font-weight: 600;
+    transition: border-color 0.25s var(--ease);
+  }
+  .estimate-examples > summary::-webkit-details-marker { display: none; }
+  .estimate-examples > summary:hover { border-color: var(--ink); }
+  .estimate-examples > summary .chev { color: var(--ink-3); transition: transform 0.3s var(--ease); }
+  .estimate-examples[open] > summary .chev { transform: rotate(45deg); }
+  .example-grid {
+    margin-top: 32px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  .example-card {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 26px 24px 24px;
+    display: flex;
+    flex-direction: column;
+  }
+  .example-card-head h3 { font-size: 15.5px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.45; }
+  .example-card-badge {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--ink-3);
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    padding: 2px 10px;
+  }
+  .example-lines { margin-top: 18px; list-style: none; flex-grow: 1; }
+  .example-lines li {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    padding: 8px 0;
+    border-top: 1px solid var(--line-soft);
+    font-size: 13.5px;
+  }
+  .ex-label { color: var(--ink-2); }
+  .ex-label small { display: block; font-size: 12px; color: var(--ink-4); margin-top: 2px; }
+  .ex-price { font-weight: 600; white-space: nowrap; }
+  .example-note { margin-top: 10px; font-size: 12.5px; color: var(--ink-3); }
+  .example-total {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--ink);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 17px;
+    font-weight: 700;
+  }
+  .example-total .label { font-size: 12.5px; font-weight: 500; color: var(--ink-3); }
+  .example-vat { margin-top: 6px; font-size: 12.5px; color: var(--ink-3); text-align: right; }
+
+  /* deadline tabs */
+  .deadline-tabs { display: flex; gap: 8px; margin-bottom: 24px; }
+  .deadline-tab {
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--ink-2);
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.25s var(--ease);
+  }
+  .deadline-tab:hover { border-color: var(--ink); color: var(--ink); }
+  .deadline-tab.active { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+  .contract-badge {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 2px 8px;
+    border-radius: 2px;
+    background: var(--accent);
+    color: #fff;
+    margin-left: 6px;
+    vertical-align: 1px;
+  }
+  .deadline-tab.active .contract-badge { background: var(--paper); color: var(--ink); }
+  .deadline-panel { display: none; }
+  .deadline-panel.active { display: block; }
+
+  /* ============================================================
+     Extra costs
+     ============================================================ */
+  .incl-grid {
+    margin-top: 64px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .incl-col { border: 1px solid var(--line); border-radius: 6px; padding: 30px 28px; }
+  .incl-col.incl-yes { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .incl-head { font-size: 12px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; }
+  .incl-col.incl-yes .incl-head { color: rgba(250, 249, 247, 0.6); }
+  .incl-col.incl-no .incl-head { color: var(--ink-3); }
+  .incl-col ul { margin-top: 18px; list-style: none; }
+  .incl-col li {
+    padding: 9px 0;
+    font-size: 14.5px;
+    border-top: 1px solid var(--line-soft);
+  }
+  .incl-col.incl-yes li { border-color: rgba(250, 249, 247, 0.16); }
+
+  .extra-list { margin-top: 56px; }
+  .extra-row {
+    display: grid;
+    grid-template-columns: minmax(0, 260px) 1fr minmax(0, 180px);
+    gap: 32px;
+    padding: 26px 4px;
+    border-top: 1px solid var(--line-soft);
+    align-items: baseline;
+  }
+  .extra-row:last-child { border-bottom: 1px solid var(--line-soft); }
+  .extra-row h3 { font-size: 16.5px; font-weight: 700; letter-spacing: -0.01em; }
+  .extra-row p { font-size: 14px; color: var(--ink-2); line-height: 1.65; max-width: 520px; }
+  .extra-rate { font-size: 14px; font-weight: 600; text-align: right; line-height: 1.6; }
+
+  /* ============================================================
+     Process
+     ============================================================ */
+  .payment-notice {
+    margin-top: 64px;
+    border: 1px solid var(--ink);
+    border-radius: 6px;
+    padding: 26px 30px;
+  }
+  .payment-notice-row { font-size: 15.5px; padding: 4px 0; }
+  .payment-notice-row strong { font-weight: 700; }
+
+  .stepper { margin-top: 48px; list-style: none; }
+  .step {
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    gap: 32px;
+    padding: 30px 4px;
+    border-top: 1px solid var(--line-soft);
+  }
+  .step:last-child { border-bottom: 1px solid var(--line-soft); }
+  .step-num {
+    font-size: clamp(26px, 3vw, 34px);
+    font-weight: 250;
+    letter-spacing: -0.02em;
+    color: var(--ink-4);
+    line-height: 1.1;
+  }
+  .step-title { font-size: 17.5px; font-weight: 700; letter-spacing: -0.01em; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .step-desc { margin-top: 8px; font-size: 14.5px; color: var(--ink-2); line-height: 1.7; max-width: 640px; }
+  .step-badge {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 3px 10px;
+    border-radius: 2px;
+    background: var(--accent);
+    color: #fff;
+  }
+  .step-payment .step-num { color: var(--accent); font-weight: 400; }
+  .step-final .step-num { color: var(--ink); font-weight: 400; }
+
+  /* ============================================================
+     Policy
+     ============================================================ */
+  .policy-list { margin-top: 64px; }
+  .policy-card { border-top: 1px solid var(--line-soft); }
+  .policy-card:last-of-type { border-bottom: 1px solid var(--line-soft); }
+  .policy-card summary {
+    list-style: none;
+    display: flex;
+    align-items: baseline;
+    gap: 24px;
+    padding: 26px 4px;
+    cursor: pointer;
+    transition: color 0.25s var(--ease);
+  }
+  .policy-card summary::-webkit-details-marker { display: none; }
+  .policy-card summary:hover { color: var(--accent); }
+  .policy-num { font-size: 13px; color: var(--ink-4); letter-spacing: 0.08em; }
+  .policy-title { font-size: clamp(17px, 2vw, 20px); font-weight: 700; letter-spacing: -0.015em; }
+  .policy-chevron { margin-left: auto; font-size: 18px; color: var(--ink-3); transition: transform 0.3s var(--ease); }
+  .policy-card[open] .policy-chevron { transform: rotate(45deg); }
+  .policy-body { padding: 0 4px 32px 41px; max-width: 720px; }
+  .policy-body p { font-size: 14.5px; color: var(--ink-2); line-height: 1.7; margin-bottom: 10px; }
+  .policy-body strong { color: var(--ink); font-weight: 600; }
+  .policy-body ul { list-style: none; }
+  .policy-body li {
+    position: relative;
+    padding: 6px 0 6px 18px;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--ink-2);
+  }
+  .policy-body li::before {
+    content: "";
+    position: absolute;
+    left: 2px; top: 15px;
+    width: 5px; height: 1px;
+    background: var(--ink-3);
+  }
+  .policy-footer { margin-top: 40px; font-size: 13px; color: var(--ink-3); max-width: 640px; }
+
+  /* ============================================================
+     Contact
+     ============================================================ */
+  .contact-sec { padding: 170px 0 150px; }
+  .contact-sec .sec-head { border-top-color: var(--ink); }
+  .contact-mail {
+    display: inline-block;
+    margin-top: 56px;
+    font-size: clamp(26px, 5vw, 62px);
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    line-height: 1.15;
+    text-decoration: none;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 6px;
+    transition: color 0.3s var(--ease), border-color 0.3s var(--ease);
+    word-break: break-all;
+  }
+  .contact-mail:hover { color: var(--accent); border-color: var(--accent); }
+  .contact-guide {
+    margin-top: 36px;
+    font-size: 15px;
+    color: var(--ink-2);
+    max-width: 560px;
+    line-height: 1.75;
+  }
+  .contact-secondary { margin-top: 40px; display: flex; flex-wrap: wrap; gap: 10px; }
+  .contact-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 18px;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    font-size: 13.5px;
+    color: var(--ink-3);
+  }
+  .contact-pending-tag {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink-4);
+    border: 1px solid var(--line-soft);
+    border-radius: 2px;
+    padding: 1px 8px;
+  }
+  .contact-note { margin-top: 44px; font-size: 13.5px; color: var(--ink-3); line-height: 1.8; max-width: 640px; }
+  .contact-note strong { color: var(--ink-2); font-weight: 600; }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 36px 0 44px;
+  }
+  .footer-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-size: 13px;
+    color: var(--ink-3);
+  }
+  .footer-brand { font-weight: 800; letter-spacing: 0.06em; color: var(--ink); font-size: 14px; }
+  footer a { color: var(--ink-2); text-decoration: none; }
+  footer a:hover { color: var(--ink); }
+
+  /* ============================================================
+     Responsive
+     ============================================================ */
+  @media (max-width: 1024px) {
+    .extra-row { grid-template-columns: minmax(0, 220px) 1fr minmax(0, 150px); gap: 24px; }
+  }
+
+  @media (max-width: 880px) {
+    .wrap { padding: 0 24px; }
+    .nav-inner { padding: 0 24px; height: 60px; }
+    .nav-links { display: none; }
+    html { scroll-padding-top: 72px; }
+    .pricing-subnav { top: 59px; }
+
+    .hero { padding-top: 120px; }
+    .hero-foot { flex-direction: column; gap: 8px; }
+
+    .sec { padding-top: 104px; }
+    .sec-title { margin-top: 32px; }
+
+    .shelf-track { gap: 40px; padding: 0 20px; }
+    .calc { grid-template-columns: 1fr; }
+    .pricing-fold > summary { margin: 40px 24px 0; }
+    .book3d { --bh: clamp(210px, 56vw, 280px); }
+    .shelf-marquee { -webkit-text-stroke-width: 0.7px; }
+    .shelf-nav { width: 48px; height: 64px; font-size: 30px; }
+
+    .principles { margin-top: 104px; padding: 84px 0; }
+    .principle-list { grid-template-columns: 1fr; gap: 28px; margin-top: 52px; }
+
+    .service-list li { grid-template-columns: 48px 1fr; gap: 16px 20px; padding: 28px 0; }
+    .service-desc { grid-column: 2; }
+
+    .overview-strip { grid-template-columns: 1fr 1fr; gap: 20px 0; }
+    .overview-strip li:nth-child(odd) { border-left: 0; padding-left: 4px; }
+
+    .tier-grid { grid-template-columns: 1fr; }
+    .example-grid { grid-template-columns: 1fr; }
+    .callout-row { grid-template-columns: 1fr; }
+    .incl-grid { grid-template-columns: 1fr; }
+
+    .compare-head { display: none; }
+    .compare-row { grid-template-columns: 1fr; gap: 10px; padding: 20px 0; }
+    .compare-attr { font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; }
+    .compare-row > div:not(.compare-attr) { padding-left: 14px; position: relative; }
+    .compare-row > div:not(.compare-attr)::before {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      margin-bottom: 2px;
+    }
+    .compare-row .compare-basic-cell::before { content: "Basic"; }
+    .compare-row .compare-deluxe-cell::before { content: "Deluxe"; color: var(--accent); }
+    .compare-row .compare-premium-cell::before { content: "Premium"; }
+
+    .extra-row { grid-template-columns: 1fr; gap: 8px; }
+    .extra-rate { text-align: left; }
+
+    .step { grid-template-columns: 56px 1fr; gap: 20px; }
+
+    .policy-body { padding-left: 4px; }
+
+    .sub-head { flex-direction: column; gap: 6px; margin-top: 84px; }
+    .sub-note-inline { text-align: left; }
+    .contact-sec { padding: 120px 0 104px; }
+  }
+
+  @media (max-width: 480px) {
+    .wrap { padding: 0 18px; }
+    .nav-inner { padding: 0 18px; }
+    .hero h1 { font-size: clamp(42px, 12.5vw, 60px); }
+    .btn { padding: 13px 22px; font-size: 14px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     Nav
+     ============================================================ -->
+<nav class="nav" id="siteNav" aria-label="주 메뉴">
+  <div class="nav-inner">
+    <a class="nav-brand" href="#top">Y.ONE<span>&nbsp;DESIGN</span></a>
+    <ul class="nav-links">
+      <li><a href="#works">작업물</a></li>
+      <li><a href="#service">서비스</a></li>
+      <li><a href="#process">절차</a></li>
+      <li><a href="#policy">계약·권리</a></li>
+    </ul>
+    <a class="nav-cta" href="#contact">견적 문의</a>
+  </div>
+</nav>
+
+<div id="smooth-wrapper"><div id="smooth-content">
+<main id="top">
+
+  <!-- ============================================================
+       Hero
+       ============================================================ -->
+  <header class="hero">
+    <div class="wrap">
+      <p class="hero-eyebrow">Y.ONE DESIGN — 교재 디자인 스튜디오</p>
+      <h1>학원 교재를<br /><em>브랜드북처럼.</em></h1>
+      <p class="hero-lead">
+        표지 · 내지 · 조판 · 인쇄용 PDF까지 —
+        원고만 보내면 바로 배포 가능한 교재로 완성합니다.
+      </p>
+      <div class="hero-cta-row">
+        <a class="btn btn-primary" href="#works">작업물 보기 <span class="arr">→</span></a>
+      </div>
+      <div class="hero-foot">
+        <span>이메일 · <a href="mailto:yungienglish.lab@gmail.com">yungienglish.lab@gmail.com</a></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============================================================
+       Selected Works
+       ============================================================ -->
+  <section id="works" class="sec sec-works">
+    <div class="shelf" id="workShelf">
+      <div class="shelf-marquee m-top" id="shelfMarquee" aria-hidden="true"><span>SELECTED WORKS&ensp;·&ensp;Y.ONE DESIGN&ensp;·&ensp;SELECTED WORKS&ensp;·&ensp;Y.ONE DESIGN&ensp;·&ensp;SELECTED WORKS&ensp;·&ensp;Y.ONE DESIGN&ensp;·&ensp;SELECTED WORKS&ensp;·&ensp;Y.ONE DESIGN&ensp;·&ensp;SELECTED WORKS&ensp;·&ensp;Y.ONE DESIGN&ensp;·&ensp;SELECTED WORKS&ensp;·&ensp;Y.ONE DESIGN&ensp;·&ensp;</span></div>
+      <div class="shelf-marquee m-bot" id="shelfMarquee2" aria-hidden="true"><span>SELECTED WORKS&ensp;·&ensp;Y.ONE DESIGN&ensp;·&ensp;SELECTED WORKS&ensp;·&ensp;Y.ONE DESIGN&ensp;·&ensp;SELECTED WORKS&ensp;·&ensp;Y.ONE DESIGN&ensp;·&ensp;SELECTED WORKS&ensp;·&ensp;Y.ONE DESIGN&ensp;·&ensp;SELECTED WORKS&ensp;·&ensp;Y.ONE DESIGN&ensp;·&ensp;SELECTED WORKS&ensp;·&ensp;Y.ONE DESIGN&ensp;·&ensp;</span></div>
+      <div class="shelf-track" id="shelfTrack">
+        <div class="shelf-group">
+          <button class="book3d book-coil" type="button" aria-expanded="false" data-key="vocab_a" aria-label="배재보카 — 눌러서 펼쳐 보기">
+            <span class="b3d-shadow" aria-hidden="true"></span>
+            <span class="b3d">
+              <span class="sheet s3" aria-hidden="true"></span>
+              <span class="sheet s2" aria-hidden="true"></span>
+              <span class="sheet s1" aria-hidden="true"></span>
+              <span class="pageR"><img src="portfolio/v10/pr_vocab_a.jpg" alt="" loading="lazy" /><span class="gutterR" aria-hidden="true"></span></span>
+              <span class="leaf l1" aria-hidden="true"><span class="seg" style="--pf:url('portfolio/v10/p1_vocab_a.jpg');--pb:url('portfolio/v10/p2_vocab_a.jpg')"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="leaf l2" aria-hidden="true"><span class="seg" style="--pf:url('portfolio/v10/p3_vocab_a.jpg');--pb:url('portfolio/v10/p4_vocab_a.jpg')"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="leaf turner" aria-hidden="true"><span class="seg"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="flap">
+                <span class="f-front"><img src="portfolio/v10/cover_vocab_a.jpg" alt="배재보카 표지" loading="lazy" /><span class="tex" aria-hidden="true"></span><span class="gloss" aria-hidden="true"></span></span>
+                <span class="f-back"><span class="shade" aria-hidden="true"></span></span>
+              </span>
+            <span class="coil" aria-hidden="true"></span>
+            </span>
+          </button>
+        </div>
+
+        <div class="shelf-group">
+          <button class="book3d book-glue" type="button" aria-expanded="false" data-key="gakin1" aria-label="각인보카 Lv.1 — 눌러서 펼쳐 보기">
+            <span class="b3d-shadow" aria-hidden="true"></span>
+            <span class="b3d">
+              <span class="sheet s3" aria-hidden="true"></span>
+              <span class="sheet s2" aria-hidden="true"></span>
+              <span class="sheet s1" aria-hidden="true"></span>
+              <span class="pageR"><img src="portfolio/v10/pr_gakin1.jpg" alt="" loading="lazy" /><span class="gutterR" aria-hidden="true"></span></span>
+              <span class="leaf l1" aria-hidden="true"><span class="seg" style="--pf:url('portfolio/v10/p1_gakin1.jpg');--pb:url('portfolio/v10/p2_gakin1.jpg')"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="leaf l2" aria-hidden="true"><span class="seg" style="--pf:url('portfolio/v10/p3_gakin1.jpg');--pb:url('portfolio/v10/p4_gakin1.jpg')"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="leaf turner" aria-hidden="true"><span class="seg"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="flap">
+                <span class="f-front"><img src="portfolio/v10/cover_gakin1.jpg" alt="각인보카 Lv.1 표지" loading="lazy" /><span class="tex" aria-hidden="true"></span><span class="gloss" aria-hidden="true"></span></span>
+                <span class="f-back"><span class="shade" aria-hidden="true"></span></span>
+              </span>
+            </span>
+          </button>
+          <button class="book3d book-glue" type="button" aria-expanded="false" data-key="gakin2" aria-label="각인보카 Lv.2 — 눌러서 펼쳐 보기">
+            <span class="b3d-shadow" aria-hidden="true"></span>
+            <span class="b3d">
+              <span class="sheet s3" aria-hidden="true"></span>
+              <span class="sheet s2" aria-hidden="true"></span>
+              <span class="sheet s1" aria-hidden="true"></span>
+              <span class="pageR"><img src="portfolio/v10/pr_gakin2.jpg" alt="" loading="lazy" /><span class="gutterR" aria-hidden="true"></span></span>
+              <span class="leaf l1" aria-hidden="true"><span class="seg" style="--pf:url('portfolio/v10/p1_gakin2.jpg');--pb:url('portfolio/v10/p2_gakin2.jpg')"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="leaf l2" aria-hidden="true"><span class="seg" style="--pf:url('portfolio/v10/p3_gakin2.jpg');--pb:url('portfolio/v10/p4_gakin2.jpg')"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="leaf turner" aria-hidden="true"><span class="seg"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="flap">
+                <span class="f-front"><img src="portfolio/v10/cover_gakin2.jpg" alt="각인보카 Lv.2 표지" loading="lazy" /><span class="tex" aria-hidden="true"></span><span class="gloss" aria-hidden="true"></span></span>
+                <span class="f-back"><span class="shade" aria-hidden="true"></span></span>
+              </span>
+            </span>
+          </button>
+        </div>
+
+        <div class="shelf-group">
+          <button class="book3d book-glue" type="button" aria-expanded="false" data-key="reading101" aria-label="리딩메소드 101 — 눌러서 펼쳐 보기">
+            <span class="b3d-shadow" aria-hidden="true"></span>
+            <span class="b3d">
+              <span class="sheet s3" aria-hidden="true"></span>
+              <span class="sheet s2" aria-hidden="true"></span>
+              <span class="sheet s1" aria-hidden="true"></span>
+              <span class="pageR"><img src="portfolio/v10/pr_reading101.jpg" alt="" loading="lazy" /><span class="gutterR" aria-hidden="true"></span></span>
+              <span class="leaf l1" aria-hidden="true"><span class="seg" style="--pf:url('portfolio/v10/p1_reading101.jpg');--pb:url('portfolio/v10/p2_reading101.jpg')"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="leaf l2" aria-hidden="true"><span class="seg" style="--pf:url('portfolio/v10/p3_reading101.jpg');--pb:url('portfolio/v10/p4_reading101.jpg')"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="leaf turner" aria-hidden="true"><span class="seg"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="flap">
+                <span class="f-front"><img src="portfolio/v10/cover_reading101.jpg" alt="리딩메소드 101 표지" loading="lazy" /><span class="tex" aria-hidden="true"></span><span class="gloss" aria-hidden="true"></span></span>
+                <span class="f-back"><span class="shade" aria-hidden="true"></span></span>
+              </span>
+            </span>
+          </button>
+          <button class="book3d book-glue" type="button" aria-expanded="false" data-key="reading201" aria-label="리딩메소드 201 — 눌러서 펼쳐 보기">
+            <span class="b3d-shadow" aria-hidden="true"></span>
+            <span class="b3d">
+              <span class="sheet s3" aria-hidden="true"></span>
+              <span class="sheet s2" aria-hidden="true"></span>
+              <span class="sheet s1" aria-hidden="true"></span>
+              <span class="pageR"><img src="portfolio/v10/pr_reading201.jpg" alt="" loading="lazy" /><span class="gutterR" aria-hidden="true"></span></span>
+              <span class="leaf l1" aria-hidden="true"><span class="seg" style="--pf:url('portfolio/v10/p1_reading201.jpg');--pb:url('portfolio/v10/p2_reading201.jpg')"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="leaf l2" aria-hidden="true"><span class="seg" style="--pf:url('portfolio/v10/p3_reading201.jpg');--pb:url('portfolio/v10/p4_reading201.jpg')"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="leaf turner" aria-hidden="true"><span class="seg"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="flap">
+                <span class="f-front"><img src="portfolio/v10/cover_reading201.jpg" alt="리딩메소드 201 표지" loading="lazy" /><span class="tex" aria-hidden="true"></span><span class="gloss" aria-hidden="true"></span></span>
+                <span class="f-back"><span class="shade" aria-hidden="true"></span></span>
+              </span>
+            </span>
+          </button>
+        </div>
+
+        <div class="shelf-group">
+          <button class="book3d book-coil" type="button" aria-expanded="false" data-key="analysis" aria-label="STEP UP 분석본 — 눌러서 펼쳐 보기">
+            <span class="b3d-shadow" aria-hidden="true"></span>
+            <span class="b3d">
+              <span class="sheet s3" aria-hidden="true"></span>
+              <span class="sheet s2" aria-hidden="true"></span>
+              <span class="sheet s1" aria-hidden="true"></span>
+              <span class="pageR"><img src="portfolio/v10/pr_analysis.jpg" alt="" loading="lazy" /><span class="gutterR" aria-hidden="true"></span></span>
+              <span class="leaf l1" aria-hidden="true"><span class="seg" style="--pf:url('portfolio/v10/p1_analysis.jpg');--pb:url('portfolio/v10/p2_analysis.jpg')"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="leaf l2" aria-hidden="true"><span class="seg" style="--pf:url('portfolio/v10/p3_analysis.jpg');--pb:url('portfolio/v10/p4_analysis.jpg')"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="leaf turner" aria-hidden="true"><span class="seg"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="flap">
+                <span class="f-front"><img src="portfolio/v10/cover_analysis.jpg" alt="STEP UP 분석본 표지" loading="lazy" /><span class="tex" aria-hidden="true"></span><span class="gloss" aria-hidden="true"></span></span>
+                <span class="f-back"><span class="shade" aria-hidden="true"></span></span>
+              </span>
+            <span class="coil" aria-hidden="true"></span>
+            </span>
+          </button>
+          <button class="book3d book-glue" type="button" aria-expanded="false" data-key="stepbystep" aria-label="STEP BY STEP 워크북 — 눌러서 펼쳐 보기">
+            <span class="b3d-shadow" aria-hidden="true"></span>
+            <span class="b3d">
+              <span class="sheet s3" aria-hidden="true"></span>
+              <span class="sheet s2" aria-hidden="true"></span>
+              <span class="sheet s1" aria-hidden="true"></span>
+              <span class="pageR"><img src="portfolio/v10/pr_stepbystep.jpg" alt="" loading="lazy" /><span class="gutterR" aria-hidden="true"></span></span>
+              <span class="leaf l1" aria-hidden="true"><span class="seg" style="--pf:url('portfolio/v10/p1_stepbystep.jpg');--pb:url('portfolio/v10/p2_stepbystep.jpg')"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="leaf l2" aria-hidden="true"><span class="seg" style="--pf:url('portfolio/v10/p3_stepbystep.jpg');--pb:url('portfolio/v10/p4_stepbystep.jpg')"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="leaf turner" aria-hidden="true"><span class="seg"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="flap">
+                <span class="f-front"><img src="portfolio/v10/cover_stepbystep.jpg" alt="STEP BY STEP 워크북 표지" loading="lazy" /><span class="tex" aria-hidden="true"></span><span class="gloss" aria-hidden="true"></span></span>
+                <span class="f-back"><span class="shade" aria-hidden="true"></span></span>
+              </span>
+            </span>
+          </button>
+          <button class="book3d book-coil" type="button" aria-expanded="false" data-key="pocket" aria-label="포켓북 — 눌러서 펼쳐 보기">
+            <span class="b3d-shadow" aria-hidden="true"></span>
+            <span class="b3d">
+              <span class="sheet s3" aria-hidden="true"></span>
+              <span class="sheet s2" aria-hidden="true"></span>
+              <span class="sheet s1" aria-hidden="true"></span>
+              <span class="pageR"><img src="portfolio/v10/pr_pocket.jpg" alt="" loading="lazy" /><span class="gutterR" aria-hidden="true"></span></span>
+              <span class="leaf l1" aria-hidden="true"><span class="seg" style="--pf:url('portfolio/v10/p1_pocket.jpg');--pb:url('portfolio/v10/p2_pocket.jpg')"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="leaf l2" aria-hidden="true"><span class="seg" style="--pf:url('portfolio/v10/p3_pocket.jpg');--pb:url('portfolio/v10/p4_pocket.jpg')"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="leaf turner" aria-hidden="true"><span class="seg"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="flap">
+                <span class="f-front"><img src="portfolio/v10/cover_pocket.jpg" alt="포켓북 표지" loading="lazy" /><span class="tex" aria-hidden="true"></span><span class="gloss" aria-hidden="true"></span></span>
+                <span class="f-back"><span class="shade" aria-hidden="true"></span></span>
+              </span>
+            <span class="coil" aria-hidden="true"></span>
+            </span>
+          </button>
+        </div>
+
+        <div class="shelf-group">
+          <button class="book3d book-glue" type="button" aria-expanded="false" data-key="writing" aria-label="서술형 101 — 눌러서 펼쳐 보기">
+            <span class="b3d-shadow" aria-hidden="true"></span>
+            <span class="b3d">
+              <span class="sheet s3" aria-hidden="true"></span>
+              <span class="sheet s2" aria-hidden="true"></span>
+              <span class="sheet s1" aria-hidden="true"></span>
+              <span class="pageR"><img src="portfolio/v10/pr_writing.jpg" alt="" loading="lazy" /><span class="gutterR" aria-hidden="true"></span></span>
+              <span class="leaf l1" aria-hidden="true"><span class="seg" style="--pf:url('portfolio/v10/p1_writing.jpg');--pb:url('portfolio/v10/p2_writing.jpg')"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="leaf l2" aria-hidden="true"><span class="seg" style="--pf:url('portfolio/v10/p3_writing.jpg');--pb:url('portfolio/v10/p4_writing.jpg')"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="leaf turner" aria-hidden="true"><span class="seg"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="flap">
+                <span class="f-front"><img src="portfolio/v10/cover_writing.jpg" alt="서술형 101 표지" loading="lazy" /><span class="tex" aria-hidden="true"></span><span class="gloss" aria-hidden="true"></span></span>
+                <span class="f-back"><span class="shade" aria-hidden="true"></span></span>
+              </span>
+            </span>
+          </button>
+          <button class="book3d book-glue" type="button" aria-expanded="false" data-key="writing201" aria-label="서술형 201 — 눌러서 펼쳐 보기">
+            <span class="b3d-shadow" aria-hidden="true"></span>
+            <span class="b3d">
+              <span class="sheet s3" aria-hidden="true"></span>
+              <span class="sheet s2" aria-hidden="true"></span>
+              <span class="sheet s1" aria-hidden="true"></span>
+              <span class="pageR"><img src="portfolio/v10/pr_writing201.jpg" alt="" loading="lazy" /><span class="gutterR" aria-hidden="true"></span></span>
+              <span class="leaf l1" aria-hidden="true"><span class="seg" style="--pf:url('portfolio/v10/p1_writing201.jpg');--pb:url('portfolio/v10/p2_writing201.jpg')"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="leaf l2" aria-hidden="true"><span class="seg" style="--pf:url('portfolio/v10/p3_writing201.jpg');--pb:url('portfolio/v10/p4_writing201.jpg')"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="leaf turner" aria-hidden="true"><span class="seg"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="flap">
+                <span class="f-front"><img src="portfolio/v10/cover_writing201.jpg" alt="서술형 201 표지" loading="lazy" /><span class="tex" aria-hidden="true"></span><span class="gloss" aria-hidden="true"></span></span>
+                <span class="f-back"><span class="shade" aria-hidden="true"></span></span>
+              </span>
+            </span>
+          </button>
+        </div>
+
+        <div class="shelf-group">
+          <button class="book3d book-glue" type="button" aria-expanded="false" data-key="grammar101" aria-label="그래머 101 — 눌러서 펼쳐 보기">
+            <span class="b3d-shadow" aria-hidden="true"></span>
+            <span class="b3d">
+              <span class="sheet s3" aria-hidden="true"></span>
+              <span class="sheet s2" aria-hidden="true"></span>
+              <span class="sheet s1" aria-hidden="true"></span>
+              <span class="pageR"><img src="portfolio/v10/pr_grammar101.jpg" alt="" loading="lazy" /><span class="gutterR" aria-hidden="true"></span></span>
+              <span class="leaf l1" aria-hidden="true"><span class="seg" style="--pf:url('portfolio/v10/p1_grammar101.jpg');--pb:url('portfolio/v10/p2_grammar101.jpg')"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="leaf l2" aria-hidden="true"><span class="seg" style="--pf:url('portfolio/v10/p3_grammar101.jpg');--pb:url('portfolio/v10/p4_grammar101.jpg')"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="leaf turner" aria-hidden="true"><span class="seg"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="flap">
+                <span class="f-front"><img src="portfolio/v10/cover_grammar101.jpg" alt="그래머 101 표지" loading="lazy" /><span class="tex" aria-hidden="true"></span><span class="gloss" aria-hidden="true"></span></span>
+                <span class="f-back"><span class="shade" aria-hidden="true"></span></span>
+              </span>
+            </span>
+          </button>
+        </div>
+
+        <div class="shelf-group">
+          <button class="book3d book-glue" type="button" aria-expanded="false" data-key="workbook_a" aria-label="FINAL EDGE 분석편 — 눌러서 펼쳐 보기">
+            <span class="b3d-shadow" aria-hidden="true"></span>
+            <span class="b3d">
+              <span class="sheet s3" aria-hidden="true"></span>
+              <span class="sheet s2" aria-hidden="true"></span>
+              <span class="sheet s1" aria-hidden="true"></span>
+              <span class="pageR"><img src="portfolio/v10/pr_workbook_a.jpg" alt="" loading="lazy" /><span class="gutterR" aria-hidden="true"></span></span>
+              <span class="leaf l1" aria-hidden="true"><span class="seg" style="--pf:url('portfolio/v10/p1_workbook_a.jpg');--pb:url('portfolio/v10/p2_workbook_a.jpg')"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="leaf l2" aria-hidden="true"><span class="seg" style="--pf:url('portfolio/v10/p3_workbook_a.jpg');--pb:url('portfolio/v10/p4_workbook_a.jpg')"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="leaf turner" aria-hidden="true"><span class="seg"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="flap">
+                <span class="f-front"><img src="portfolio/v10/cover_workbook_a.jpg" alt="FINAL EDGE 분석편 표지" loading="lazy" /><span class="tex" aria-hidden="true"></span><span class="gloss" aria-hidden="true"></span></span>
+                <span class="f-back"><span class="shade" aria-hidden="true"></span></span>
+              </span>
+            </span>
+          </button>
+          <button class="book3d book-glue" type="button" aria-expanded="false" data-key="workbook" aria-label="FINAL EDGE 문제편 — 눌러서 펼쳐 보기">
+            <span class="b3d-shadow" aria-hidden="true"></span>
+            <span class="b3d">
+              <span class="sheet s3" aria-hidden="true"></span>
+              <span class="sheet s2" aria-hidden="true"></span>
+              <span class="sheet s1" aria-hidden="true"></span>
+              <span class="pageR"><img src="portfolio/v10/pr_workbook.jpg" alt="" loading="lazy" /><span class="gutterR" aria-hidden="true"></span></span>
+              <span class="leaf l1" aria-hidden="true"><span class="seg" style="--pf:url('portfolio/v10/p1_workbook.jpg');--pb:url('portfolio/v10/p2_workbook.jpg')"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="leaf l2" aria-hidden="true"><span class="seg" style="--pf:url('portfolio/v10/p3_workbook.jpg');--pb:url('portfolio/v10/p4_workbook.jpg')"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="leaf turner" aria-hidden="true"><span class="seg"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="flap">
+                <span class="f-front"><img src="portfolio/v10/cover_workbook.jpg" alt="FINAL EDGE 문제편 표지" loading="lazy" /><span class="tex" aria-hidden="true"></span><span class="gloss" aria-hidden="true"></span></span>
+                <span class="f-back"><span class="shade" aria-hidden="true"></span></span>
+              </span>
+            </span>
+          </button>
+        </div>
+
+        <div class="shelf-group">
+          <button class="book3d book-glue" type="button" aria-expanded="false" data-key="nobe" aria-label="노베특강 — 눌러서 펼쳐 보기">
+            <span class="b3d-shadow" aria-hidden="true"></span>
+            <span class="b3d">
+              <span class="sheet s3" aria-hidden="true"></span>
+              <span class="sheet s2" aria-hidden="true"></span>
+              <span class="sheet s1" aria-hidden="true"></span>
+              <span class="pageR"><img src="portfolio/v10/pr_nobe.jpg" alt="" loading="lazy" /><span class="gutterR" aria-hidden="true"></span></span>
+              <span class="leaf l1" aria-hidden="true"><span class="seg" style="--pf:url('portfolio/v10/p1_nobe.jpg');--pb:url('portfolio/v10/p2_nobe.jpg')"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="leaf l2" aria-hidden="true"><span class="seg" style="--pf:url('portfolio/v10/p3_nobe.jpg');--pb:url('portfolio/v10/p4_nobe.jpg')"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="leaf turner" aria-hidden="true"><span class="seg"><span class="pf"></span><span class="pb"></span><span class="seg2"><span class="pf"></span><span class="pb"></span></span></span></span>
+              <span class="flap">
+                <span class="f-front"><img src="portfolio/v10/cover_nobe.jpg" alt="노베특강 표지" loading="lazy" /><span class="tex" aria-hidden="true"></span><span class="gloss" aria-hidden="true"></span></span>
+                <span class="f-back"><span class="shade" aria-hidden="true"></span></span>
+              </span>
+            </span>
+          </button>
+        </div>
+      </div>
+      <button type="button" class="shelf-nav shelf-nav-l" id="shelfPrev" aria-label="이전 교재">‹</button>
+      <button type="button" class="shelf-nav shelf-nav-r" id="shelfNext" aria-label="다음 교재">›</button>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       Principles — quiet statement band
+       ============================================================ -->
+  <section class="principles" aria-label="디자인 원칙">
+    <div class="wrap">
+      <p class="p-kicker" data-reveal>Approach</p>
+      <h2 data-reveal>교재 디자인의 목적은 장식이 아니라<br /><em>학생이 더 잘 읽고, 더 잘 푸는 것.</em></h2>
+      <ul class="principle-list">
+        <li data-reveal>
+          <span class="p-num">01</span>
+          <h3>읽히는 위계</h3>
+          <p>발문 · 지문 · 보기 · 해설이 눈으로 구분되도록 타이포그래피 위계를 먼저 설계합니다. 예쁘기 전에, 읽혀야 합니다.</p>
+        </li>
+        <li data-reveal data-reveal-delay="1">
+          <span class="p-num">02</span>
+          <h3>학습 흐름을 따르는 조판</h3>
+          <p>필기 여백, 문항 간격, 페이지 리듬까지 실제 수업에서 쓰이는 흐름에 맞춰 지면을 배치합니다.</p>
+        </li>
+        <li data-reveal data-reveal-delay="2">
+          <span class="p-num">03</span>
+          <h3>인쇄까지 책임지는 데이터</h3>
+          <p>화면용 시안이 아니라 CMYK 4도 인쇄용 PDF 기준으로 작업합니다. 재단선 · 도련까지 인쇄소에 바로 넘길 수 있는 데이터로 납품합니다.</p>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       Service
+       ============================================================ -->
+  <section id="service" class="sec">
+    <div class="wrap">
+      <div class="sec-head" data-reveal>
+        <span class="sec-kicker">Service</span>
+        <span class="sec-idx">02</span>
+      </div>
+      <h2 class="sec-title" data-reveal>무엇을 만들 수 있나요.</h2>
+      <ul class="service-list">
+        <li data-reveal>
+          <span class="service-num">01</span>
+          <span class="service-name">표지 디자인</span>
+          <span class="service-desc">앞면만 · 앞+뒤 · 책등 포함 전체 표지까지. 시리즈 아이덴티티를 만들고, 후속권은 리스킨으로 이어갑니다.</span>
+        </li>
+        <li data-reveal>
+          <span class="service-num">02</span>
+          <span class="service-name">내지 편집 · 조판</span>
+          <span class="service-desc">단어장 · 문제집 · 참고서의 본문 조판. 원고(한글 · 워드)를 받아 학습 구조에 맞는 지면으로 완성합니다.</span>
+        </li>
+        <li data-reveal>
+          <span class="service-num">03</span>
+          <span class="service-name">교재 한 권 통합 제작</span>
+          <span class="service-desc">표지 + 내지 + 인쇄용 PDF까지 한 권 단위 완성. 신규 시리즈는 템플릿 세팅부터 시작해 후속권 단가를 낮춥니다.</span>
+        </li>
+        <li data-reveal>
+          <span class="service-num">04</span>
+          <span class="service-name">마케팅 인쇄물</span>
+          <span class="service-desc">학원 리플렛 · 브로셔 · 안내물. 교재와 같은 톤으로 학원 브랜드를 정리합니다.</span>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       3분 견적 계산기
+       ============================================================ -->
+  <section id="process" class="sec">
+    <div class="wrap">
+      <div class="sec-head" data-reveal>
+        <span class="sec-kicker">Process</span>
+        <span class="sec-idx">05</span>
+      </div>
+      <h2 class="sec-title" data-reveal>의뢰에서 납품까지,<br />여덟 단계.</h2>
+      <p class="sec-lead" data-reveal>착수금 → 작업 → 최종 확인 → 잔금 → 최종 PDF 전달 순서로 진행됩니다.</p>
+
+      <div class="payment-notice" data-reveal>
+        <div class="payment-notice-row">최종 파일은 <strong>잔금 결제 확인 후</strong> 전달됩니다.</div>
+        <div class="payment-notice-row">잔금 결제 후 <strong>인쇄용 PDF 및 디지털 PDF를 최종 전달</strong>합니다.</div>
+      </div>
+
+      <ol class="stepper">
+        <li class="step" data-reveal>
+          <div class="step-num">01</div>
+          <div>
+            <div class="step-title">문의 접수</div>
+            <div class="step-desc">교재 종류 · 분량 · 희망 일정 · 원고 상태를 <strong>이메일로 공유</strong>합니다. (구글폼은 현재 준비 중)</div>
+          </div>
+        </li>
+        <li class="step" data-reveal>
+          <div class="step-num">02</div>
+          <div>
+            <div class="step-title">견적 확정</div>
+            <div class="step-desc">견적서 PDF 발송 → 의뢰자 확정.</div>
+          </div>
+        </li>
+        <li class="step step-payment" data-reveal>
+          <div class="step-num">03</div>
+          <div>
+            <div class="step-title">착수금 결제 <span class="step-badge">결제 1단계</span></div>
+            <div class="step-desc"><strong>견적의 50% 착수금 입금 확인 후 작업 시작</strong>. 세금계산서 발행 가능.</div>
+          </div>
+        </li>
+        <li class="step" data-reveal>
+          <div class="step-num">04</div>
+          <div>
+            <div class="step-title">원고 전달 · 작업 착수</div>
+            <div class="step-desc">정리된 원고 전달 시점부터 <strong>마감 일정 카운트 시작</strong>. 원고 지연 시 일정도 함께 밀림.</div>
+          </div>
+        </li>
+        <li class="step" data-reveal>
+          <div class="step-num">05</div>
+          <div>
+            <div class="step-title">시안 전달 · 수정 (2회 무료)</div>
+            <div class="step-desc">초안 시안 → 1차 수정 → 2차 수정. 이후 유상 수정으로 진행됩니다(범위·비용은 별도 안내). <strong>이 단계까지 워터마크 미리보기만 제공</strong>.</div>
+          </div>
+        </li>
+        <li class="step" data-reveal>
+          <div class="step-num">06</div>
+          <div>
+            <div class="step-title">최종 확인</div>
+            <div class="step-desc">의뢰자가 최종 시안을 확정 → 인쇄 직전 검수 완료.</div>
+          </div>
+        </li>
+        <li class="step step-payment" data-reveal>
+          <div class="step-num">07</div>
+          <div>
+            <div class="step-title">잔금 결제 <span class="step-badge">결제 2단계</span></div>
+            <div class="step-desc"><strong>잔금 50% 입금 확인 후 최종 파일 전달</strong>. 잔금 결제 전에는 워터마크 PDF만 제공.</div>
+          </div>
+        </li>
+        <li class="step step-final" data-reveal>
+          <div class="step-num">08</div>
+          <div>
+            <div class="step-title">최종 인쇄용 PDF 전달</div>
+            <div class="step-desc"><strong>잔금 결제 후 인쇄용 PDF(CMYK 4도) + 디지털 배포용 PDF를 최종 전달</strong>합니다. InDesign 원본(.indd)은 별도 협의.</div>
+          </div>
+        </li>
+      </ol>
+
+      <div class="note" data-reveal>
+        <ul>
+          <li><strong>최종 파일은 잔금 결제 확인 후 전달됩니다.</strong> 잔금 결제 전에는 워터마크 미리보기 PDF만 제공.</li>
+          <li><strong>소액 의뢰</strong>: 소액 작업은 작업 완료 후 일시 결제로 진행 가능.</li>
+          <li><strong>결제 방법</strong>: 계좌이체 또는 세금계산서 발행 후 입금. 카드결제 미지원.</li>
+          <li><strong>VAT 별도</strong>: 견적서 · 계산서 모두 부가세 별도로 청구됩니다.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       Policy
+       ============================================================ -->
+  <section id="policy" class="sec">
+    <div class="wrap">
+      <div class="sec-head" data-reveal>
+        <span class="sec-kicker">FAQ · Terms</span>
+        <span class="sec-idx">06</span>
+      </div>
+      <h2 class="sec-title" data-reveal>계약과 권리,<br />미리 명확하게.</h2>
+      <p class="sec-lead" data-reveal>의뢰 전 반드시 확인해 주세요. 항목을 누르면 상세 내용이 펼쳐집니다.</p>
+
+      <div class="policy-list">
+        <details class="policy-card" data-reveal>
+          <summary>
+            <span class="policy-num">01</span>
+            <span class="policy-title">계약 및 착수금</span>
+            <span class="policy-chevron">＋</span>
+          </summary>
+          <div class="policy-body">
+            <p>견적서 합의 + <strong>착수금 50% 입금 시점부터 계약이 성립</strong>합니다.</p>
+            <ul>
+              <li>별도 계약서가 필요한 경우 양식을 제공합니다 (전자서명 가능).</li>
+              <li>일반 의뢰는 착수금 입금 확인 후 작업 시작.</li>
+              <li>소액 의뢰는 작업 완료 후 일시 결제로 진행 가능.</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="policy-card" data-reveal>
+          <summary>
+            <span class="policy-num">02</span>
+            <span class="policy-title">환불 기준</span>
+            <span class="policy-chevron">＋</span>
+          </summary>
+          <div class="policy-body">
+            <ul>
+              <li><strong>작업 착수 전</strong>: <strong>착수금 100% 환불</strong></li>
+              <li><strong>작업 시작 ~ 초안 시안 전달 전</strong>: 착수금 70% 환불</li>
+              <li><strong>초안 시안 전달 후</strong>: 환불 불가 (이미 수행된 디자인 시간 비용)</li>
+              <li><strong>의뢰자 귀책 지연</strong>(원고 미전달 · 연락 두절 30일↑): 자동 종결 + 환불 불가</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="policy-card" data-reveal>
+          <summary>
+            <span class="policy-num">03</span>
+            <span class="policy-title">저작권 및 사용 범위</span>
+            <span class="policy-chevron">＋</span>
+          </summary>
+          <div class="policy-body">
+            <ul>
+              <li><strong>최종 PDF의 사용 권리는 의뢰자에게 양도</strong> — 인쇄, 배포, 교재 판매 등 자유롭게 활용 가능.</li>
+              <li>디자인 저작권(레이아웃 · 일러스트 · 인포그래픽)은 <strong>Y.ONE DESIGN에 귀속</strong>됩니다. 의뢰자는 사용권만 갖습니다.</li>
+              <li><strong>제3자 양도 · 재판매</strong>(다른 출판사 · 학원에 디자인 자체를 넘기는 행위)는 별도 협의 후 가능.</li>
+              <li>유료 폰트 · 이미지 · 스톡 소스는 의뢰자 라이선스 또는 별도 구매가 필요합니다.</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="policy-card" data-reveal>
+          <summary>
+            <span class="policy-num">04</span>
+            <span class="policy-title">원본파일 제공 여부</span>
+            <span class="policy-chevron">＋</span>
+          </summary>
+          <div class="policy-body">
+            <p>기본 납품은 <strong>인쇄용 PDF(CMYK 4도) + 디지털 배포용 PDF</strong>입니다.</p>
+            <ul>
+              <li><strong>InDesign 원본(.indd) 파일은 기본 제공이 아닙니다</strong>. 별도 협의로 진행.</li>
+              <li>원본 파일 전달은 별도 협의로 진행됩니다.</li>
+              <li>전달 후 디자인 사용 범위는 해당 교재 시리즈에 한정됩니다.</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="policy-card" data-reveal>
+          <summary>
+            <span class="policy-num">05</span>
+            <span class="policy-title">포트폴리오 사용 가능 여부</span>
+            <span class="policy-chevron">＋</span>
+          </summary>
+          <div class="policy-body">
+            <p>제작물은 <strong>Y.ONE DESIGN의 포트폴리오 · 홍보 자료로 사용될 수 있습니다</strong> (웹사이트 / 영업 자료). 이때 학교명 · 강사명 · 브랜드 로고는 마스킹 처리합니다.</p>
+            <ul>
+              <li><strong>비공개 요청 가능</strong> — 계약 시 알려주시면 포트폴리오 사용을 제외합니다 (추가 비용 10%).</li>
+              <li>특정 페이지만 노출하거나 일부만 마스킹 처리 등 세부 조정 가능.</li>
+              <li>비밀유지(NDA): 의뢰자가 제공한 원고 · 내부 자료는 작업 외 목적으로 사용하지 않습니다.</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="policy-card" data-reveal>
+          <summary>
+            <span class="policy-num">06</span>
+            <span class="policy-title">수정 범위 및 추가 비용</span>
+            <span class="policy-chevron">＋</span>
+          </summary>
+          <div class="policy-body">
+            <p>시안 확정 후 <strong>2회까지 무료 수정</strong>, 이후 유상 수정으로 진행됩니다(범위·비용은 별도 안내).</p>
+            <ul>
+              <li><strong>무료 수정 범위</strong>: 단어 교체, 텍스트 오타, 페이지 순서, 일부 색상 미세 조정 등 부수적 변경.</li>
+              <li><strong>별도 견적 범위</strong>: 시안 확정 후 레이아웃 · 폰트 시스템 · 컬러 시스템 · 디자인 컨셉 변경, 본문 전면 교체 등 골격에 영향을 주는 수정.</li>
+              <li>긴급 작업 · 반복 수정이 잦은 경우 별도 견적으로 사전 합의.</li>
+            </ul>
+          </div>
+        </details>
+      </div>
+
+      <p class="policy-footer" data-reveal>
+        분쟁 해결: 본 계약과 관련된 분쟁은 우선 협의로 해결하며, 협의 불가 시 의뢰자 주소지 관할 법원을 1심 관할 법원으로 합니다.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       Contact
+       ============================================================ -->
+  <section id="contact" class="sec contact-sec">
+    <div class="wrap">
+      <div class="sec-head" data-reveal>
+        <span class="sec-kicker">Contact</span>
+        <span class="sec-idx">07</span>
+      </div>
+      <h2 class="sec-title" data-reveal>다음 교재,<br /><em class="serif" style="font-style:normal;font-weight:600;">같이 만들어 볼까요.</em></h2>
+
+      <a class="contact-mail" data-reveal href="mailto:yungienglish.lab@gmail.com?subject=%5BY.ONE%20DESIGN%5D%20%EA%B2%AC%EC%A0%81%20%EB%AC%B8%EC%9D%98&body=%EA%B5%90%EC%9E%AC%20%EC%A2%85%EB%A5%98%3A%20%0A%EC%98%88%EC%83%81%20%ED%8E%98%EC%9D%B4%EC%A7%80%20%EC%88%98%3A%20%0A%EB%9D%BC%EC%9D%B8(Basic%2FDeluxe%2FPremium)%3A%20%0A%ED%9D%AC%EB%A7%9D%20%EC%9D%BC%EC%A0%95%3A%20%0A%EC%9B%90%EA%B3%A0%20%EC%A4%80%EB%B9%84%20%EC%83%81%ED%83%9C%3A%20%0A%EA%B8%B0%ED%83%80%20%EC%9A%94%EC%B2%AD%EC%82%AC%ED%95%AD%3A%20">yungienglish.lab@gmail.com</a>
+
+      <p class="contact-guide" data-reveal>
+        교재 종류 · 페이지 수 · 라인(Basic/Deluxe/Premium) · 희망 일정 · 원고 상태를 함께 보내주세요.
+        위 주소를 누르면 기본 정보가 자동 입력된 메일 양식이 열립니다.
+      </p>
+
+      <div class="contact-secondary" data-reveal>
+        <span class="contact-chip">카카오 채널 <span class="contact-pending-tag">준비 중</span></span>
+        <span class="contact-chip">구글폼 <span class="contact-pending-tag">준비 중</span></span>
+      </div>
+
+      <p class="contact-note" data-reveal>
+        <strong>응답 시간</strong> · 평일 1~2일 내. 마감이 급한 경우 메일 제목에 [긴급]을 넣어주세요.<br />
+        <strong>운영 시간</strong> · 평일 10:00~19:00 (주말 · 공휴일 응답 지연 가능).
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap footer-inner">
+    <span class="footer-brand">Y.ONE DESIGN</span>
+    <span>교재 디자인 스튜디오 — 단어장 · 문제집 · 참고서 · 마케팅 인쇄물</span>
+    <a href="mailto:yungienglish.lab@gmail.com">yungienglish.lab@gmail.com</a>
+  </div>
+</footer>
+</div></div><!-- /smooth -->
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-labelledby="lightboxTitle" hidden>
+  <div class="lightbox-overlay" data-lb-close></div>
+  <div class="lightbox-panel" role="document">
+    <button class="lightbox-close" id="lightboxClose" aria-label="닫기" data-lb-close>×</button>
+    <img id="lightboxImg" alt="" />
+    <div class="lightbox-caption">
+      <strong id="lightboxTitle"></strong>
+      <span id="lightboxCat"></span>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollSmoother.min.js"></script>
+<script>
+  // ─── Nav: scrolled state ───
+  (function () {
+    var nav = document.getElementById('siteNav');
+    if (!nav) return;
+    function onScroll() {
+      nav.classList.toggle('is-scrolled', window.scrollY > 24);
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  })();
+
+  // ─── Nav: scroll-spy ───
+  (function () {
+    var links = document.querySelectorAll('.nav-links a');
+    if (!links.length || !('IntersectionObserver' in window)) return;
+    var sections = Array.prototype.map.call(links, function (a) {
+      return document.querySelector(a.getAttribute('href'));
+    }).filter(Boolean);
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          links.forEach(function (l) { l.classList.remove('is-active'); });
+          var active = document.querySelector('.nav-links a[href="#' + entry.target.id + '"]');
+          if (active) active.classList.add('is-active');
+        }
+      });
+    }, { rootMargin: '-30% 0px -60% 0px' });
+    sections.forEach(function (s) { observer.observe(s); });
+  })();
+
+  // ─── GSAP: smooth scroll + reveals + anchors ───
+  var smoother = null;
+  (function () {
+    if (!window.gsap) return;
+    gsap.registerPlugin(ScrollTrigger, ScrollSmoother);
+    var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // 터치 기기는 네이티브 스크롤 사용 — 모바일에서 transform 스크롤은 크래시/버벅임 원인
+    var coarse = window.matchMedia('(pointer: coarse)').matches;
+    if (!reduced && !coarse && window.ScrollSmoother) {
+      smoother = ScrollSmoother.create({
+        wrapper: '#smooth-wrapper',
+        content: '#smooth-content',
+        smooth: 1.1,
+        effects: true
+      });
+    }
+
+    gsap.utils.toArray('[data-reveal]').forEach(function (el) {
+      if (reduced) return;
+      gsap.fromTo(el,
+        { y: 36, autoAlpha: 0 },
+        { y: 0, autoAlpha: 1, duration: 1.1, ease: 'power3.out',
+          scrollTrigger: { trigger: el, start: 'top 88%', once: true } });
+    });
+
+    document.querySelectorAll('a[href^="#"]').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        var sel = a.getAttribute('href');
+        if (!sel || sel === '#') return;
+        var t = document.querySelector(sel);
+        if (!t) return;
+        e.preventDefault();
+        if (smoother) smoother.scrollTo(t, true, 'top 90px');
+        else t.scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+  })();
+
+  // ─── Lightbox ───
+  (function () {
+    var lightbox = document.getElementById('lightbox');
+    var lbImg = document.getElementById('lightboxImg');
+    var lbTitle = document.getElementById('lightboxTitle');
+    var lbCat = document.getElementById('lightboxCat');
+    var lbClose = document.getElementById('lightboxClose');
+    if (!lightbox || !lbImg) return;
+
+    var lastFocus = null;
+    var isOpen = false;
+
+    function open(src, title, cat, alt) {
+      lastFocus = document.activeElement;
+      lbImg.src = src;
+      lbImg.alt = alt || title || '';
+      lbTitle.textContent = title || '';
+      lbCat.textContent = cat || '';
+      lightbox.hidden = false;
+      document.body.classList.add('lightbox-open');
+      isOpen = true;
+      if (lbClose) lbClose.focus();
+    }
+    function close() {
+      lightbox.hidden = true;
+      lbImg.src = '';
+      document.body.classList.remove('lightbox-open');
+      isOpen = false;
+      if (lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
+    }
+
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-lb-src]');
+      if (!btn || !btn.dataset.lbSrc) return;
+      open(btn.dataset.lbSrc, btn.dataset.lbTitle, btn.dataset.lbCat, (btn.dataset.lbTitle || '') + ' 펼침면');
+    });
+
+    lightbox.querySelectorAll('[data-lb-close]').forEach(function (el) {
+      el.addEventListener('click', close);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && isOpen) close();
+    });
+  })();
+
+  // ─── Center-stage carousel: 슉-스냅 + 중앙 확대 + 역방향 마퀴 ───
+  (function () {
+    var shelf = document.getElementById('workShelf');
+    var track = document.getElementById('shelfTrack');
+    var marquee = document.getElementById('shelfMarquee');
+    var btnPrev = document.getElementById('shelfPrev');
+    var btnNext = document.getElementById('shelfNext');
+    if (!shelf || !track || !window.gsap) return;
+
+    var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // 모바일 = 저해상 자산 세트(v10/m/, h800) — 1600px 원본은 디코딩 메모리 초과로 탭 크래시 유발
+    var IS_MOBILE = window.matchMedia('(pointer: coarse), (max-width: 820px)').matches;
+    var ASSET_DIR = IS_MOBILE ? 'portfolio/v10/m/' : 'portfolio/v10/';
+    if (IS_MOBILE) {
+      track.querySelectorAll('img').forEach(function (im) {
+        var s = im.getAttribute('src');
+        if (s && s.indexOf('portfolio/v10/') === 0) im.src = s.replace('portfolio/v10/', 'portfolio/v10/m/');
+      });
+      track.querySelectorAll('.leaf .seg[style]').forEach(function (sg) {
+        sg.setAttribute('style', sg.getAttribute('style').split('portfolio/v10/').join('portfolio/v10/m/'));
+      });
+    }
+
+    function openBook() { return track.querySelector('.book3d.is-open'); }
+    function closeAll() {
+      track.querySelectorAll('.book3d.is-open').forEach(function (b) { closeBook(b); });
+    }
+
+    // 마퀴: 스팬 복제 → 정확한 반복 주기(스팬 폭) 확보. 위/아래 두 라인(반대 방향)
+    var marquee2 = document.getElementById('shelfMarquee2');
+    var mspan = marquee ? marquee.querySelector('span') : null;
+    if (mspan) marquee.appendChild(mspan.cloneNode(true));
+    var mspan2 = marquee2 ? marquee2.querySelector('span') : null;
+    if (mspan2) marquee2.appendChild(mspan2.cloneNode(true));
+
+    // 3세트 복제(A|B|C) — 가운데 세트를 앵커로 양쪽에 항상 콘텐츠 유지
+    var originals = Array.prototype.slice.call(track.children);
+    var NG = originals.length;
+    for (var c = 0; c < 2; c++) {
+      originals.forEach(function (item) {
+        var clone = item.cloneNode(true);
+        clone.setAttribute('aria-hidden', 'true');
+        clone.querySelectorAll('button').forEach(function (b) { b.tabIndex = -1; });
+        track.appendChild(clone);
+      });
+    }
+    var groups = Array.prototype.slice.call(track.children);
+
+    var state = { pos: 0 };
+    var idx = 0, P = 0, centers = [], hovering = false, autoTimer = null;
+    var mTravel = 0;
+    var peekTimers = [];
+
+    function clearPeek() {
+      peekTimers.forEach(clearTimeout);
+      peekTimers = [];
+      track.querySelectorAll('.book3d.peeking').forEach(function (b) { b.classList.remove('peeking'); });
+    }
+
+    // 도착 후 1회: 표지가 열릴 듯 말 듯 (펼침과 같은 트랜지션 엔진 사용 → 각도 초과 불가)
+    function schedulePeek() {
+      clearPeek();
+      var k = ((idx % NG) + NG) % NG;
+      groups.forEach(function (g, i) {
+        if (i % NG !== k) return;
+        Array.prototype.forEach.call(g.querySelectorAll('.book3d'), function (b, bi) {
+          peekTimers.push(setTimeout(function () {
+            if (b.classList.contains('is-open') || b.classList.contains('closing')) return;
+            b.classList.add('peeking');
+            peekTimers.push(setTimeout(function () { b.classList.remove('peeking'); }, 620));
+          }, 750 + bi * 200));
+        });
+      });
+    }
+
+    function measure() {
+      P = groups[NG].offsetLeft - groups[0].offsetLeft;
+      centers = originals.map(function (g) {
+        return g.offsetLeft + g.offsetWidth / 2;
+      });
+    }
+
+    function baseFor(k) {
+      return P + centers[k] - shelf.clientWidth / 2;
+    }
+
+    function apply() {
+      track.style.transform = 'translate3d(' + (-state.pos) + 'px, 0, 0)';
+    }
+
+    function applyMarquee() {
+      if (mspan) {
+        var mw = mspan.offsetWidth || 1;
+        var mx = -(((mTravel) % mw) + mw) % mw;
+        marquee.style.transform = 'translate3d(' + mx + 'px, 0, 0)';
+      }
+      if (mspan2) {
+        var mw2 = mspan2.offsetWidth || 1;
+        var mx2 = ((((mTravel) % mw2) + mw2) % mw2) - mw2; // 반대 방향
+        marquee2.style.transform = 'translate3d(' + mx2 + 'px, 0, 0)';
+      }
+    }
+
+    // 상시 흐름: 캐러셀과 별개로 계속 흐르고, 캐러셀 이동분은 반대 방향으로 가산
+    (function mtick(ts) {
+      if (mtick.last === undefined) mtick.last = ts || 0;
+      var dt = Math.min(0.05, ((ts || 0) - mtick.last) / 1000);
+      mtick.last = ts || 0;
+      mTravel += 20 * dt;
+      applyMarquee();
+      requestAnimationFrame(mtick);
+    })(0);
+
+    function activate() {
+      var k = ((idx % NG) + NG) % NG;
+      groups.forEach(function (g, i) {
+        g.classList.toggle('is-active', i % NG === k);
+      });
+      // 중앙에 온 그룹의 넘김 페이지 선로딩 (클릭 전 캐시 확보)
+      Array.prototype.forEach.call(originals[k].querySelectorAll('.book3d'), preloadTurnPages);
+    }
+
+    function goto(i, dir, instant) {
+      closeAll();
+      measure();
+      idx = i;
+      activate();
+      var k = ((i % NG) + NG) % NG;
+      var base = baseFor(k);
+      var t = base;
+      if (dir > 0) { while (t <= state.pos + 2) t += P; while (t - P > state.pos + 2) t -= P; }
+      if (dir < 0) { while (t >= state.pos - 2) t -= P; while (t + P < state.pos - 2) t += P; }
+      gsap.killTweensOf(state);
+      if (instant || reduced) {
+        state.pos = base;
+        apply();
+        schedulePeek();
+        return;
+      }
+      gsap.to(state, {
+        pos: t,
+        duration: 0.8,
+        ease: 'power3.inOut',
+        onUpdate: apply,
+        onComplete: function () { state.pos = base; apply(); schedulePeek(); }
+      });
+    }
+
+    function next() { goto(idx + 1, 1); }
+    function prev() { goto(idx - 1, -1); }
+    if (btnNext) btnNext.addEventListener('click', function () { stopAuto(); next(); startAuto(); });
+    if (btnPrev) btnPrev.addEventListener('click', function () { stopAuto(); prev(); startAuto(); });
+
+    function startAuto() {
+      if (reduced || IS_MOBILE) return;  // 모바일: 상시 트랙 애니메이션 금지 (GPU 재래스터 부하)
+      stopAuto();
+      autoTimer = setInterval(function () {
+        if (hovering || openBook() || document.hidden) return;
+        next();
+      }, 4200);
+    }
+    function stopAuto() { if (autoTimer) { clearInterval(autoTimer); autoTimer = null; } }
+
+    shelf.addEventListener('pointerenter', function (e) {
+      if (e.pointerType && e.pointerType !== 'mouse') return;
+      hovering = true;
+    });
+    shelf.addEventListener('pointerleave', function (e) {
+      if (e.pointerType && e.pointerType !== 'mouse') return;
+      hovering = false;
+    });
+
+    // 클릭: 활성 그룹 책 = 펼침/닫힘, 비활성 그룹 = 그 그룹으로 이동
+    // 스프레드 s ∈ -2..2 : (표지안쪽白|p1) (p2|p3) (p4|pr) (nl1|nr1) (nl2|nr2)
+    var PAGE_SEQ = [null, 'p1', 'p2', 'p3', 'p4', 'pr', 'nl1', 'nr1', 'nl2', 'nr2'];
+    var S_MIN = -2, S_MAX = 2;
+    function pagesFor(key) {
+      return PAGE_SEQ.map(function (n) { return n ? ASSET_DIR + n + '_' + key + '.jpg' : null; });
+    }
+    function faceVal(src) { return src ? "url('" + src + "')" : 'none'; }
+
+    // 넘김용 페이지 사전 로드 — 클릭 시점 로드로 흰 페이지가 보이는 것 방지.
+    // 활성 그룹 진입 시 + 호버 시 미리 받아둔다.
+    var _preloadedTurns = {};
+    var _turnCache = [];  // GC 방지: Image 객체 유지
+    function preloadTurnPages(book) {
+      var key = book.dataset.key;
+      if (!key || _preloadedTurns[key]) return;
+      _preloadedTurns[key] = 1;
+      pagesFor(key).forEach(function (p) {
+        if (!p) return;
+        var im = new Image();
+        im.src = p;
+        if (im.decode) im.decode().catch(function () {});
+        _turnCache.push(im);
+      });
+    }
+    track.addEventListener('pointerover', function (e) {
+      var b = e.target.closest('.book3d');
+      if (b) preloadTurnPages(b);
+    });
+    // 초기 렌더가 끝난 뒤 전권 선로딩 — 어느 책을 언제 열어도 흰 페이지 없음
+    // (모바일은 메모리 보호를 위해 생략 — 활성 그룹/호버 선로딩만 사용)
+    if (!IS_MOBILE) setTimeout(function () {
+      originals.forEach(function (g) {
+        Array.prototype.forEach.call(g.querySelectorAll('.book3d'), preloadTurnPages);
+      });
+    }, 1800);
+
+    function cancelAutoFlip(book) {
+      if (book._autoFlip) { book._autoFlip.forEach(clearTimeout); book._autoFlip = null; }
+      if (book._autoFinalize) { var f = book._autoFinalize; book._autoFinalize = null; f(); }
+    }
+
+    function snapReset(t) {
+      t.classList.add('snap');
+      t.classList.remove('show', 'fwd', 'bwd');
+      t.getBoundingClientRect();
+      t.classList.remove('snap');
+    }
+
+    function ensureTurner2(book) {
+      var t2 = book.querySelector('.leaf.turner2');
+      if (!t2) {
+        var t1 = book.querySelector('.leaf.turner');
+        t2 = t1.cloneNode(true);
+        t2.classList.add('turner2');
+        t1.parentNode.insertBefore(t2, t1.nextSibling);
+      }
+      return t2;
+    }
+
+    // 펼침 = 처음부터 끝까지: 리프 리플(flap→l1→l2)에 이어 터너 2장이 같은 속도(0.2s 간격,
+    // 0.74s)로 연속으로 넘어가 마지막 스프레드에 안착. 리플과 동일한 캐스케이드로 보이도록
+    // 터너를 t=0부터 우측 스택에 세워두고 시점만 지연 발동.
+    function openToEnd(book) {
+      var key = book.dataset.key;
+      var pages = pagesFor(key);
+      var t1 = book.querySelector('.leaf.turner:not(.turner2)');
+      var t2 = ensureTurner2(book);
+      var l2seg = book.querySelector('.leaf.l2 .seg');
+      var prImg = book.querySelector('.pageR img');
+      book.dataset.turning = '1';
+      t1.classList.add('auto');
+
+      var s1 = t1.querySelector('.seg'), s2 = t2.querySelector('.seg');
+      s1.style.setProperty('--pf', faceVal(pages[5]));  // pr
+      s1.style.setProperty('--pb', faceVal(pages[6]));  // nl1
+      s2.style.setProperty('--pf', faceVal(pages[7]));  // nr1
+      s2.style.setProperty('--pb', faceVal(pages[8]));  // nl2
+      l2seg.style.setProperty('--pb', faceVal(pages[4]));  // p4 — 재펼침 잔상 방지
+      prImg.src = pages[9];  // nr2
+      snapReset(t1); snapReset(t2);
+      t1.classList.add('show'); t2.classList.add('show');
+
+      function finalize() {
+        book._autoFlip = null;
+        book._autoFinalize = null;
+        l2seg.style.setProperty('--pb', faceVal(pages[8]));  // nl2
+        snapReset(t1); snapReset(t2);
+        t1.classList.remove('auto');
+        book.dataset.spread = '2';
+        delete book.dataset.turning;
+      }
+      book._autoFinalize = finalize;
+      book._autoFlip = [
+        setTimeout(function () { t1.classList.add('fwd'); }, 560),
+        setTimeout(function () { t2.classList.add('fwd'); }, 780),
+        setTimeout(finalize, 1620)
+      ];
+    }
+
+    function closeBook(book) {
+      cancelAutoFlip(book);
+      book.classList.remove('is-open');
+      book.setAttribute('aria-expanded', 'false');
+      book.classList.add('closing');
+      book._restoreT = setTimeout(function () {
+        book._restoreT = null;
+        book.classList.remove('closing');
+        // 넘긴 페이지 원상복구 (덮인 뒤에)
+        var key = book.dataset.key;
+        var l2seg = book.querySelector('.leaf.l2 .seg');
+        var prImg = book.querySelector('.pageR img');
+        if (l2seg) l2seg.style.setProperty('--pb', "url('" + ASSET_DIR + "p4_" + key + ".jpg')");
+        if (prImg) prImg.src = ASSET_DIR + 'pr_' + key + '.jpg';
+        book.classList.remove('spm1', 'spm2');
+        book.dataset.spread = '0';
+      }, 1100);
+    }
+
+    function turnPage(book, dir) {
+      if (book.dataset.turning) return;
+      var key = book.dataset.key;
+      var s = parseInt(book.dataset.spread || '0', 10);
+      var t = s + dir;
+      if (t < S_MIN || t > S_MAX) return;
+
+      // 음수 구간 = 실제 리프(l1/l2)를 되접기/펴기 — 이미지 스왑 없음(실물 그대로)
+      if (t < 0 || s < 0) {
+        book.dataset.turning = '1';
+        if (dir < 0) book.classList.add(t === -1 ? 'spm1' : 'spm2');
+        else book.classList.remove(s === -1 ? 'spm1' : 'spm2');
+        setTimeout(function () {
+          book.dataset.spread = String(t);
+          delete book.dataset.turning;
+        }, 740);
+        return;
+      }
+
+      var pages = pagesFor(key);
+      function L(sp) { return pages[(sp + 2) * 2]; }
+      function R(sp) { return pages[(sp + 2) * 2 + 1]; }
+      var turner = book.querySelector('.leaf.turner:not(.turner2)');
+      var seg = turner.querySelector('.seg');
+      var l2seg = book.querySelector('.leaf.l2 .seg');
+      var prImg = book.querySelector('.pageR img');
+      book.dataset.turning = '1';
+
+      if (dir > 0) {
+        seg.style.setProperty('--pf', faceVal(R(s)));
+        seg.style.setProperty('--pb', faceVal(L(t)));
+        prImg.src = R(t);
+        turner.classList.add('snap');
+        turner.classList.remove('fwd', 'bwd');
+        turner.getBoundingClientRect();
+        turner.classList.add('show');
+        turner.classList.remove('snap');
+        turner.getBoundingClientRect();
+        turner.classList.add('fwd');
+        setTimeout(function () {
+          l2seg.style.setProperty('--pb', faceVal(L(t)));
+          turner.classList.add('snap');
+          turner.classList.remove('show', 'fwd');
+          turner.getBoundingClientRect();
+          turner.classList.remove('snap');
+          book.dataset.spread = String(t);
+          delete book.dataset.turning;
+        }, 740);
+      } else {
+        seg.style.setProperty('--pf', faceVal(R(t)));
+        seg.style.setProperty('--pb', faceVal(L(s)));
+        l2seg.style.setProperty('--pb', faceVal(L(t)));
+        turner.classList.add('snap', 'fwd');
+        turner.getBoundingClientRect();
+        turner.classList.add('show', 'bwd');
+        turner.classList.remove('snap');
+        turner.getBoundingClientRect();
+        turner.classList.remove('fwd');
+        setTimeout(function () {
+          prImg.src = R(t);
+          turner.classList.add('snap');
+          turner.classList.remove('show', 'bwd');
+          turner.getBoundingClientRect();
+          turner.classList.remove('snap');
+          book.dataset.spread = String(t);
+          delete book.dataset.turning;
+        }, 740);
+      }
+    }
+
+    track.addEventListener('click', function (e) {
+      var book = e.target.closest('.book3d');
+      if (!book) return;
+      var gi = groups.indexOf(book.closest('.shelf-group')) % NG;
+      var cur = ((idx % NG) + NG) % NG;
+      if (gi !== cur) {
+        var fwd = ((gi - cur) + NG) % NG;
+        var bwd = ((cur - gi) + NG) % NG;
+        if (fwd <= bwd) goto(idx + fwd, 1);
+        else goto(idx - bwd, -1);
+        return;
+      }
+      if (book.classList.contains('is-open')) {
+        // 자동 리플 중 클릭 = 즉시 마지막 장으로 스킵 (이후 클릭부터 좌/우 넘김)
+        if (book._autoFlip || book._autoFinalize) { cancelAutoFlip(book); return; }
+        // 펼침 상태: 오른쪽 클릭 = 다음 장, 왼쪽 클릭 = 이전 장 (첫 스프레드면 덮기)
+        var r = book.getBoundingClientRect();
+        var frac = (e.clientX - r.left) / r.width;
+        var s = parseInt(book.dataset.spread || '0', 10);
+        if (frac > 0.5) turnPage(book, 1);
+        else if (s > S_MIN) turnPage(book, -1);
+        else closeBook(book);
+        return;
+      }
+      clearPeek();
+      closeAll();
+      // 직전 닫힘의 복구 타이머가 새 펼침을 덮어쓰지 않게 정리
+      if (book._restoreT) { clearTimeout(book._restoreT); book._restoreT = null; }
+      book.classList.remove('closing', 'spm1', 'spm2');
+      book.dataset.spread = '0';
+      book.classList.add('is-open');
+      book.setAttribute('aria-expanded', 'true');
+      // 처음부터 끝까지: 리프 리플과 같은 속도의 터너 캐스케이드로 마지막 스프레드에 안착
+      openToEnd(book);
+    });
+
+    function init() { measure(); goto(0, 0, true); }
+    init();
+    window.addEventListener('resize', function () { goto(idx, 0, true); });
+    track.querySelectorAll('img').forEach(function (img) {
+      if (!img.complete) img.addEventListener('load', function () { goto(idx, 0, true); }, { once: true });
+    });
+    startAuto();
+  })();
+
+  // ─── 3분 견적 계산기 ───
+  (function () {
+    var form = document.getElementById('calcForm');
+    if (!form) return;
+
+    var RATES = {
+      inner: {
+        vocab:     { B: [1500, 1200, 1000, 900],  D: [2000, 1600, 1300, 1200], P: [2800, 2200, 1800, 1600] },
+        workbook:  { B: [2500, 2000, 1800, 1700], D: [3300, 2700, 2400, 2200], P: [4500, 3800, 3400, 3100] },
+        reference: { B: [4500, 4200, 4000, 3800], D: [7000, 6500, 6200, 6000], P: [12000, 11500, 11000, 10500] }
+      },
+      cover: {
+        front: { B: 50000, D: 75000, P: 100000 },
+        fb:    { B: 80000, D: 100000, P: 130000 },
+        full:  { B: 100000, D: 125000, P: 150000 }
+      },
+      setting: { B: 100000, D: 150000, P: 200000 },
+      face: 50000,
+      minimum: 100000,
+      surcharge: { std: 0, d3: 0.3, d1: 0.5 }
+    };
+    var KIND_LABEL = { vocab: '단어장', workbook: '문제집', reference: '참고서', leaflet: '리플렛', brochure: '브로셔' };
+    var LINE_LABEL = { B: 'Basic', D: 'Deluxe', P: 'Premium' };
+    var COVER_LABEL = { none: '표지 없음', front: '앞면만', fb: '앞+뒤', full: '앞+뒤+책등' };
+    var DAYS_LABEL = { std: '표준 7~10일 (정리된 원고 전달일 기준)', d3: '3일 이내 · 긴급 +30%', d1: '24시간 이내 · 긴급 +50%' };
+
+    var state = { kind: 'vocab', pages: 80, faces: 4, line: 'D', cover: 'fb', series: 'first', deadline: 'std', extras: [] };
+
+    function bracket(p) { return p <= 50 ? 0 : p <= 100 ? 1 : p <= 200 ? 2 : 3; }
+    function won(n) { return Math.round(n).toLocaleString('ko-KR') + '원'; }
+    function isBook() { return state.kind === 'vocab' || state.kind === 'workbook' || state.kind === 'reference'; }
+
+    function compute() {
+      var lines = [];
+      var subtotal = 0;
+      if (isBook()) {
+        var p = Math.max(1, Math.min(999, state.pages || 0));
+        var rate = RATES.inner[state.kind][state.line][bracket(p)];
+        var inner = p * rate;
+        lines.push({ k: '내지 ' + p + 'p', s: rate.toLocaleString('ko-KR') + '원 × ' + p + 'p · ' + LINE_LABEL[state.line], v: inner });
+        subtotal += inner;
+        if (state.series === 'next') {
+          var disc = -Math.round(inner * 0.4);
+          lines.push({ k: '시리즈 할인', s: '동일 시리즈 후속권 내지 -40%', v: disc, disc: true });
+          subtotal += disc;
+        }
+        if (state.cover !== 'none') {
+          var cov = RATES.cover[state.cover][state.line];
+          if (state.series === 'next') {
+            cov = cov * 0.5;
+            lines.push({ k: '표지 (' + COVER_LABEL[state.cover] + ')', s: '리스킨 · 정가 -50%', v: cov });
+          } else {
+            lines.push({ k: '표지 (' + COVER_LABEL[state.cover] + ')', s: LINE_LABEL[state.line] + ' 정가', v: cov });
+          }
+          subtotal += cov;
+        }
+        if (state.series === 'first') {
+          var set = RATES.setting[state.line];
+          lines.push({ k: '템플릿 세팅비', s: '신규 시리즈 첫 권 1회', v: set });
+          subtotal += set;
+        } else {
+          lines.push({ k: '템플릿 세팅비', s: '후속권 면제', v: 0 });
+        }
+      } else {
+        var f = state.faces;
+        var mkt = f * RATES.face;
+        lines.push({ k: KIND_LABEL[state.kind] + ' ' + f + '면', s: '면당 50,000원 단일가', v: mkt });
+        subtotal += mkt;
+      }
+      var sur = subtotal * RATES.surcharge[state.deadline];
+      if (sur > 0) lines.push({ k: '긴급 할증', s: state.deadline === 'd3' ? '3일 이내 +30%' : '24시간 이내 +50%', v: sur });
+      var total = subtotal + sur;
+      var minApplied = false;
+      if (total < RATES.minimum) { minApplied = true; total = RATES.minimum; }
+      return { lines: lines, total: total, minApplied: minApplied };
+    }
+
+    function render() {
+      var r = compute();
+      var ul = document.getElementById('calcLines');
+      ul.innerHTML = r.lines.map(function (l) {
+        return '<li' + (l.disc ? ' class="disc"' : '') + '><span class="k">' + l.k +
+          (l.s ? '<small>' + l.s + '</small>' : '') + '</span><span class="v">' +
+          (l.v === 0 ? '면제' : won(l.v)) + '</span></li>';
+      }).join('');
+      if (r.minApplied) {
+        ul.innerHTML += '<li><span class="k">최소 작업비 적용<small>합계 10만원 미만 → 10만원 청구</small></span><span class="v">' + won(RATES.minimum) + '</span></li>';
+      }
+      document.getElementById('calcTotal').textContent = won(r.total);
+      document.getElementById('calcVat').textContent = 'VAT 포함 시 ' + won(r.total * 1.1);
+      document.getElementById('calcDays').innerHTML = '<strong>예상 작업 기간</strong> · ' + DAYS_LABEL[state.deadline];
+      document.getElementById('calcExtras').innerHTML = state.extras.length
+        ? '<strong>별도 협의 항목</strong> · ' + state.extras.join(', ') + ' — 원고 확인 후 별도 견적'
+        : '';
+
+      var body = '[3분 견적 계산기 결과]%0A'
+        + '교재 종류: ' + KIND_LABEL[state.kind] + '%0A'
+        + (isBook()
+            ? ('페이지 수: ' + state.pages + 'p%0A라인: ' + LINE_LABEL[state.line] + '%0A표지: ' + COVER_LABEL[state.cover] + '%0A시리즈: ' + (state.series === 'first' ? '신규 첫 권' : '후속권') + '%0A')
+            : ('면 수: ' + state.faces + '면%0A'))
+        + '마감: ' + DAYS_LABEL[state.deadline] + '%0A'
+        + '예상 견적: ' + won(r.total) + ' (VAT 별도)%0A'
+        + (state.extras.length ? '별도 협의 항목: ' + state.extras.join(', ') + '%0A' : '')
+        + '%0A---%0A원고 준비 상태: %0A희망 일정: %0A기타 요청사항: ';
+      document.getElementById('calcOrder').href =
+        'mailto:yungienglish.lab@gmail.com?subject=' + encodeURIComponent('[Y.ONE DESIGN] 주문 요청 — ' + KIND_LABEL[state.kind] + ' 견적 ' + won(r.total)) + '&body=' + body;
+
+      form.querySelectorAll('[data-book]').forEach(function (el) { el.hidden = !isBook(); });
+      form.querySelectorAll('[data-mkt]').forEach(function (el) { el.hidden = isBook(); });
+    }
+
+    form.querySelectorAll('.seg-row').forEach(function (row) {
+      var name = row.dataset.name;
+      row.addEventListener('click', function (e) {
+        var btn = e.target.closest('.seg-btn');
+        if (!btn) return;
+        row.querySelectorAll('.seg-btn').forEach(function (b) { b.classList.toggle('on', b === btn); });
+        var v = btn.dataset.v;
+        if (name === 'faces') state.faces = parseInt(v, 10);
+        else state[name] = v;
+        if (name === 'kind') {
+          if (state.kind === 'leaflet') { state.faces = Math.min(state.faces, 8); }
+          if (state.kind === 'brochure') {
+            var fr = form.querySelector('[data-name="faces"]');
+            fr.innerHTML = '<button type="button" class="seg-btn on" data-v="8">8면</button><button type="button" class="seg-btn" data-v="12">12면</button><button type="button" class="seg-btn" data-v="16">16면</button>';
+            state.faces = 8;
+          } else if (state.kind === 'leaflet') {
+            var fr2 = form.querySelector('[data-name="faces"]');
+            fr2.innerHTML = '<button type="button" class="seg-btn on" data-v="4">4면<small>2단접지</small></button><button type="button" class="seg-btn" data-v="6">6면<small>3단접지</small></button><button type="button" class="seg-btn" data-v="8">8면<small>4단접지</small></button>';
+            state.faces = 4;
+          }
+        }
+        render();
+      });
+    });
+    form.querySelector('[data-name="extras"]').addEventListener('click', function (e) {
+      var btn = e.target.closest('.chk-btn');
+      if (!btn) return;
+      btn.classList.toggle('on');
+      var v = btn.dataset.v;
+      var i = state.extras.indexOf(v);
+      if (i >= 0) state.extras.splice(i, 1); else state.extras.push(v);
+      render();
+    });
+    document.getElementById('calcPages').addEventListener('input', function () {
+      state.pages = parseInt(this.value, 10) || 0;
+      render();
+    });
+
+    render();
+  })();
+
+  // ─── Deadline tabs ───
+  document.querySelectorAll('.deadline-tab').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      var target = tab.dataset.target;
+      document.querySelectorAll('.deadline-tab').forEach(function (t) {
+        var isActive = t === tab;
+        t.classList.toggle('active', isActive);
+        t.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      });
+      document.querySelectorAll('.deadline-panel').forEach(function (p) {
+        p.classList.toggle('active', p.dataset.panel === target);
+      });
+    });
+  });
+</script>
+
+</body>
+</html>
