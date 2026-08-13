@@ -783,6 +783,10 @@ def build_step3(step_data):
                 # 발문 블록)은 답을 쓸 여백이 없다 — 발문 블록 끝에 답란
                 # 스타일 빈 단락 2개를 삽입해 필기 공간을 준다.
                 _s3_insert_answer_space(unit, st_q)
+                # W66 ②③ (사용자 지적 2026-08-14): 답 영역 실물화 —
+                # 원문자 기입 줄 칸 길이 통일 + 답표 헤더 2줄 → 표 op
+                _s3_widen_answer_rows(unit)
+                _s3_answer_tables(unit, st_q, warnings)
                 code = (item.get("code") or "").strip()
                 if code:
                     unit.insert(0, {"t": "{" + code + "}", "s": "$BASIC",
@@ -790,6 +794,119 @@ def build_step3(step_data):
                 units.append(unit)
                 warnings.extend(BG.validate_sequence(eff_seq))
     return {"units": units, "warnings": warnings}
+
+
+# ── W66 (사용자 지적 2026-08-14 ②③): 답 영역 실물화 ─────────────────────
+# 원고의 답 영역은 hwp 표/공백으로만 표시돼 조판에서 '평문 두 줄'이나
+# '짧은 밑줄'로 인쇄된다. 수작업 완성본(사용자 페이스트보드 실측)에 맞춘다.
+#   ② "틀린 부분 / 수정" 두 줄 → 2열 표 (헤더 1행 + 답 N행).
+#      N은 발문의 "(틀린 부분 4개)"에서 읽는다 — 없으면 기본 8행.
+#   ③ "ⓐ    ⓑ    ⓒ" 기입 줄 → 칸 길이를 완성본과 같은 35칸으로.
+# 실측(워크북수특라이트영어독해_내지_v2.indd 페이스트보드):
+#   표 = 2열 각 40.875mm(단 폭 82mm), 헤더 행 4.822mm/답 행 6.233mm,
+#        헤더 채움 "C=44 M=0 Y=0 K=14" 50%, 4변 0.5pt, 셀 여백 1mm
+#   답란 = 원문자 + 밑줄 공백 35칸 (3칸이 82mm 단에 정확히 한 줄)
+_S3_ANSROW_SPACES = 35
+_RE_S3_CIRCLED_LTR = re.compile(r"[ⓐ-ⓩⒶ-Ⓩ㉠-㉭]")
+_RE_S3_ANSROW_GAP = re.compile(r"[ \t　\xa0]{3,}")
+_RE_S3_WRONG_COUNT = re.compile(r"(\d+)\s*개")
+_S3_ANSTABLE_ROWS_DEFAULT = 8
+
+
+def _s3_widen_answer_rows(unit):
+    """원문자 기입 줄("ⓐ   ⓑ   ⓒ")의 밑줄 칸을 완성본 길이로 (W66 ③).
+
+    구조 판정: 단락이 원문자와 공백'만'으로 이뤄지고(=쓸 내용이 없는 기입
+    줄), 3칸 이상 공백 구간이 있으면 답 쓰는 칸이다. 원고가 몇 칸을 줬든
+    (14칸/15칸/전각공백) 완성본과 같은 35칸으로 통일하고 밑줄 run을 준다."""
+    n = 0
+    for p in unit:
+        t = p.get("t") or ""
+        if not t.strip():
+            continue
+        marks = _RE_S3_CIRCLED_LTR.findall(t)
+        if not marks or not _RE_S3_ANSROW_GAP.search(t):
+            continue
+        if _RE_S3_CIRCLED_LTR.sub("", t).strip():
+            continue          # 원문자 외 내용이 있으면 기입 줄이 아니다
+        runs, text = [], []
+        for mk in marks:
+            runs.append({"t": mk, "ul": False})
+            runs.append({"t": " " * _S3_ANSROW_SPACES, "ul": True})
+            text.append(mk + " " * _S3_ANSROW_SPACES)
+        p["t"] = "".join(text)
+        p["runs"] = runs
+        n += 1
+    return n
+
+
+def _s3_answer_tables(unit, st_q, warnings):
+    """답표 헤더 두 줄("틀린 부분"/"수정") → 표 op 한 단락으로 (W66 ②).
+
+    구조 판정: 서술형 발문("…쓰시오/고치시오") 블록의 **끝**에, 지문 뒤로
+    남은 짧은 한글 열머리 2줄(문장부호·영문·숫자·원문자 없음)이 연달아
+    오면 그것이 원고 답표(hwp 2열 표)의 헤더가 평탄화된 것이다. 두 줄을
+    지우고 표 op 단락 하나로 바꾼다 — 행 수는 발문의 "(… N개)"."""
+    def _is_hdr_cell(p):
+        t = (p.get("t") or "").strip()
+        if not (1 <= len(t) <= 12):
+            return False
+        if not re.search(r"[가-힣]", t):
+            return False
+        if re.search(r"[A-Za-z0-9]", t):
+            return False
+        if re.search(r"[.?!,:;]|시오|세요", t):
+            return False
+        if _RE_S3_CIRCLED_LTR.search(t) or re.search(r"[①-⑮]", t):
+            return False
+        return True
+
+    i = 0
+    made = 0
+    while i < len(unit) - 1:
+        if not (_is_hdr_cell(unit[i]) and _is_hdr_cell(unit[i + 1])):
+            i += 1
+            continue
+        j = i + 2
+        while j < len(unit) and not (unit[j].get("t") or "").strip():
+            j += 1          # 뒤따르는 빈 줄은 답 여백 — 블록 끝으로 본다
+        # 블록 끝 조건: 다음 내용이 없거나 새 발문/새 지문 (= 답 영역 종료)
+        nxt = unit[j] if j < len(unit) else None
+        if nxt is not None and nxt.get("s") not in (st_q,) \
+                and "실전 문제 지문" not in (nxt.get("s") or ""):
+            i += 1
+            continue
+        # 직전 발문 찾기 (서술형 + 행 수)
+        qi = None
+        for k in range(i - 1, -1, -1):
+            if unit[k].get("s") == st_q:
+                qi = k
+                break
+        if qi is None:
+            i += 1
+            continue
+        qt = (unit[qi].get("t") or "").strip()
+        if not re.search(r"시오\s*[.?]?\s*$|시오\s*\(", qt) \
+                and "쓰시오" not in qt and "고치시오" not in qt:
+            i += 1
+            continue
+        m = _RE_S3_WRONG_COUNT.search(qt)
+        rows = int(m.group(1)) if m else _S3_ANSTABLE_ROWS_DEFAULT
+        rows = max(1, min(rows, 20))
+        if not m:
+            warnings.append(
+                "step3: 답표 행 수를 발문에서 못 읽어 기본 %d행 — %s"
+                % (_S3_ANSTABLE_ROWS_DEFAULT, qt[:40]))
+        headers = [(unit[i].get("t") or "").strip(),
+                   (unit[i + 1].get("t") or "").strip()]
+        unit[i:i + 2] = [{
+            "t": "", "s": unit[i].get("s") or "$BASIC", "runs": [],
+            "table": {"cols": headers, "rows": rows,
+                      "header_style": unit[i].get("s") or "$BASIC"},
+        }]
+        made += 1
+        i += 1
+    return made
 
 
 def _s3_insert_set_intros(unit, st_q):
