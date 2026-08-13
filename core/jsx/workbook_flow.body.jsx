@@ -426,6 +426,7 @@ function updatePassageNumbers(doc, flowStories, op) {
         var n = 0;
         var clamped = 0;
         var widened = 0;
+        var heightened = 0;   // W59: 라벨 프레임 세로 확장 건수
         var labelFrames = [];   // W38: 좌/우 기하 정규화용 (숫자 아닌 라벨만)
         var pages = storyPagesInOrder(rec.story);
         for (var pk = 0; pk < pages.length; pk++) {
@@ -460,6 +461,28 @@ function updatePassageNumbers(doc, flowStories, op) {
                         gN++;
                     }
                     if (gN > 0) { widened++; }
+                    // W59 (비상(황) 실증): 좌측 여백만으론 못 담는 긴 영문
+                    // 라벨("Main Reading 1"/"Extended Reading 1")은 폭 확장
+                    // 후에도 오버셋으로 남아 라벨이 통째로 안 보였다
+                    // (오버플로우 18개 = 라벨 프레임 전량). clampLabelFrame
+                    // 의 세로 확장은 '본문 침범이 있을 때'만 도는 경로라
+                    // 이 케이스를 못 탄다 — 아래로 늘려 수용한다 (라벨
+                    // 프레임은 좌측 여백의 세로 박스, 하단 여백이 남는다).
+                    var hG = 0;
+                    while (hG < 40) {
+                        var ovfH = false;
+                        try { ovfH = tfs[fi].overflows; } catch (eH0) { break; }
+                        if (!ovfH) { break; }
+                        var gbH = tfs[fi].geometricBounds;
+                        var pgB = pages[pk].bounds;
+                        if (gbH[2] + 5 > pgB[2]) { break; }   // 페이지 하단 가드
+                        try {
+                            tfs[fi].geometricBounds = [gbH[0], gbH[1],
+                                                       gbH[2] + 5, gbH[3]];
+                        } catch (eH1) { break; }
+                        hG++;
+                    }
+                    if (hG > 0) { heightened++; }
                     // W30: 숫자 아닌 긴 라벨만 본문 침범 클램프 (숫자 라벨은
                     // v1 파리티 경로 — 프레임 무접촉)
                     if (!RE_BARE_NUM.test(String(lab2))) {
@@ -506,7 +529,8 @@ function updatePassageNumbers(doc, flowStories, op) {
         }
         if (n > 0) {
             wlog(steps[si] + " 지문번호 프레임 갱신: " + n + "개"
-                 + (widened > 0 ? " (폭 확장 " + widened + "개)" : ""));
+                 + (widened > 0 ? " (폭 확장 " + widened + "개)" : "")
+                 + (heightened > 0 ? " (세로 확장 " + heightened + "개)" : ""));
         }
         if (clamped > 0) {
             wlog(steps[si] + " 라벨 프레임 본문 침범 교정: " + clamped + "개");
