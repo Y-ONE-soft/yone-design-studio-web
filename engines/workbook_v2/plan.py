@@ -88,18 +88,75 @@ _RE_S3_QNUM = re.compile(r"^\d+\.\s")
 # 흡수돼 인쇄). 12자 이하 무공백 꼬리로 한정 — 본문 문장은 공백/길이로 배제.
 _RE_S3_TEXTBOOK_SRC = re.compile(
     r"^\S+_\S+\s+\d+과_(?:\d+(?:\s*~\s*\d+)?|[\w가-힣]{1,12})$")
-# W51 (job 0645d4a7 수특라이트 실증): 부교재 변형문제 원고의 유형/출처 구분
-# 마커 "[ Type A ]" / "[ Type D (1) 어법 ]" / "[01강 - Exercise 01]" 단독
-# 라인 — kind UNKNOWN → 지문 스타일로 인쇄됨. 완제품에 불필요 — 제거
-# (교과서 출처 라인과 같은 계층 — v1 무변경, 플랜 전용).
-_RE_S3_TYPE_MARKER = re.compile(r"^\[\s*Type\b[^\[\]]{0,30}\]$", re.I)
 # W61 (비상(황) 실증): step3 원고 선두 표제 — "영어 독해와 작문 비상(황)
 # 1과 Step3 (74문항)". 교재/과 + Step 표기 + (N문항)이 한 줄에 오는
 # 파일 표제라 완제품에 불필요(첫 문항 위에 지문 스타일로 인쇄됨).
 _RE_S3_DOC_TITLE = re.compile(
     r"^.{0,40}?\d+\s*[과강]\s*(?:step\s*\d+|스텝\s*\d+).{0,20}$", re.I)
-_RE_S3_EXERCISE_MARKER = re.compile(
-    r"^\[\s*\d+\s*강\s*[-–—]\s*Exercise\s*\d+\s*\]$", re.I)
+
+# ── W66 (사용자 지적 2026-08-14): 대괄호 라벨 = 구조 판정 ────────────────
+# "[08강 - Exercise 05~06]"이 또 인쇄됐다. 구 규칙(_RE_S3_TYPE_MARKER /
+# _RE_S3_EXERCISE_MARKER)은 "[N강 - Exercise N]" 같은 **형태를 열거하는
+# 화이트리스트**라, 번호가 범위(05~06)로 바뀌는 것 하나에 무너진다 —
+# W51에서 이미 같은 땜질을 했고 또 뚫렸다. 규칙을 뒤집는다.
+#
+#   기본값 = 제거. step3의 '단독 대괄호 라벨 라인'은 원고 편집용 인덱스
+#   (강/과/Unit/Chapter/Exercise/Type/문항번호…)가 압도적 다수이고,
+#   완제품에 인쇄될 이유가 없다. 인쇄돼야 하는 것만 보존한다:
+#     K1 내용 블록 마커 — <보기>/[조건]/[요약문]/[정답]/[Answer] …
+#     K2 지문 내부 라인 — 앞뒤가 영어 산문인 라벨 (실용문 "[Book Now]")
+#     K3 기출 출처 표기 — 변형/시험코드/연월/시험명 (G11 인쇄 관행 계약)
+#     K4 문장인 라인    — 종결부호·물음표가 있으면 라벨이 아니다
+#   새 표기(범위·오타·다른 교재의 새 라벨)가 와도 K1~K4에 안 걸리면
+#   자동 제거된다 — 정규식을 더 추가할 필요가 없다.
+_RE_S3_BRACKET_LABEL = re.compile(r"^\[([^\[\]]{1,60})\]$")
+# K1 — 내용 블록 마커 (본문/답 영역의 의미 라벨). BOX_MARKERS(보기/조건)는
+# rules에서 별도 검사하고, 여기서는 답/요약/해석 계열을 본다.
+_RE_S3_LBL_CONTENT = re.compile(
+    r"^(?:보기|조건|요약문?|요지|주제|정답|해답|답|해설|해석|풀이|"
+    r"answer|key|note|hint|summary|words?|vocabulary)"
+    r"\s*[A-Za-z0-9]{0,2}$", re.I)
+# K3 — 기출 출처 표기 (완제품에 인쇄되는 관행 — gate G11과 같은 계약).
+# 변형 접미("…_변형"), 시험 코드(202506H2), 연월(25년 6월), 시험명.
+_RE_S3_LBL_ORIGIN = re.compile(
+    r"변형|수능특강|수능완성|수능|모의고사|학력평가|학평|모평|교육청|평가원|"
+    r"기출|\d{2}\s*년\s*\d{1,2}\s*월|\d{6}\s*[A-Za-z]\s*\d")
+# K4 — 문장(발문/조건/본문 한 줄)이면 라벨이 아니다.
+_RE_S3_LBL_SENTENCE = re.compile(
+    r"[.?!。？]\s*$|시오|세요|십시오|합니다|입니다|하시오")
+_RE_S3_LBL_ENGWORD = re.compile(r"[A-Za-z]{2,}")
+
+
+def _s3_is_prose(text):
+    """영어 산문 줄인가 — 지문 내부 판정용 (K2)."""
+    return len(_RE_S3_LBL_ENGWORD.findall(text or "")) >= 6
+
+
+def _s3_is_index_label(tclean, prev_text, next_text, R):
+    """단독 대괄호 라벨이 '원고 편집용 인덱스'인가 (제거 대상).
+
+    W66 — 형태 열거가 아니라 보존 조건(K1~K4)의 여집합으로 판정한다.
+    prev/next는 지문 내부 라벨(K2) 판정용 이웃 단락 텍스트."""
+    m = _RE_S3_BRACKET_LABEL.match(R.norm_brackets(tclean))
+    if not m:
+        return False
+    inner = m.group(1).strip()
+    if not inner:
+        return False
+    if _RE_S3_LBL_SENTENCE.search(inner):          # K4 문장
+        return False
+    if _RE_S3_LBL_CONTENT.match(inner):            # K1 내용 블록 마커
+        return False
+    if (R.BOX_MARKERS["Cond"].match(inner)         # K1 (보기/조건 이형)
+            or R.BOX_MARKERS["Box"].match(inner)):
+        return False
+    if _RE_S3_LBL_ORIGIN.search(inner):            # K3 기출 출처
+        return False
+    if _s3_is_prose(prev_text) and _s3_is_prose(next_text):
+        return False                               # K2 지문 내부 라벨
+    if _s3_is_prose(inner):                        # 라벨이 아니라 문장
+        return False
+    return True
 # v1 pass 5 번호/INTRO 휴리스틱 (run.jsx 2253~2272) — 분류기(kind)가 약한
 # 판정(UNKNOWN/K/Cond)을 내린 단락에만 오버레이. v1 실물 dump 대조에서
 # "(주관식) …쓰시오." / "…것은? [2-N]" 발문이 분류기 미인식으로 번호 스타일
