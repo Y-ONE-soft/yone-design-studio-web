@@ -349,6 +349,30 @@ function storyPagesInOrder(story) {
     return pages;
 }
 
+// W60 (사용자 지시 2026-08-13): 긴 지문번호 라벨은 좁은 세로 라벨 프레임
+// 안에서 자동 줄바꿈이 단어를 어중간하게 끊는다("Main Read/ing 1"). 단어
+// 경계에 강제 줄바꿈(\n)을 넣어 끊는 자리를 결정한다. 숫자만인 꼬리 토큰
+// ("1")은 앞 단어에 붙여 줄 수를 줄인다 — "Main Reading 1" → "Main /
+// Reading 1"(2줄), "Critical Thinking" → "Critical / Thinking".
+// 공백 없는 라벨(숫자 "20", 한글 "본문1")은 그대로 (기존 동작 무변경).
+function labelWithBreaks(lab) {
+    var s = String(lab === undefined || lab === null ? "" : lab);
+    if (s.indexOf(" ") < 0) { return s; }
+    // 한글 라벨("3과 추가지문")은 기존 자동 줄바꿈 유지 — 회귀 0
+    if (/[가-힣]/.test(s)) { return s; }
+    var raw = s.split(/\s+/);
+    var toks = [];
+    for (var i = 0; i < raw.length; i++) {
+        if (raw[i] === "") { continue; }
+        if (toks.length > 0 && /^[0-9]+$/.test(raw[i])) {
+            toks[toks.length - 1] += " " + raw[i];   // 숫자 꼬리는 앞에 결합
+        } else {
+            toks.push(raw[i]);
+        }
+    }
+    return toks.join("\n");
+}
+
 function updatePassageNumbers(doc, flowStories, op) {
     var labels = op.labels || [];
     var steps = op.steps || [];
@@ -439,7 +463,7 @@ function updatePassageNumbers(doc, flowStories, op) {
                     var fst = tfs[fi].parentStory;
                     if (fst.textContainers.length !== 1) { continue; }
                     if (!RE_BARE_NUM.test(String(fst.contents || ""))) { continue; }
-                    fst.contents = lab2;
+                    fst.contents = labelWithBreaks(lab2);
                     // W59: 방금 넣은 텍스트는 아직 컴포즈 전이라
                     // overflows가 false로 보고된다 — 아래 폭/세로/축소
                     // 보정이 전부 헛돌았다(라벨 18개 잘림 실증). 강제
