@@ -455,6 +455,7 @@ function updatePassageNumbers(doc, flowStories, op) {
                     // 반대 방향으로 막는 경계).
                     var gN = 0;
                     while (gN < 30) {
+                        try { tfs[fi].parentStory.recompose(); } catch (eRR) {}
                         var ovfN = false;
                         try { ovfN = tfs[fi].overflows; } catch (eN0) { break; }
                         if (!ovfN) { break; }
@@ -476,6 +477,7 @@ function updatePassageNumbers(doc, flowStories, op) {
                     // 프레임은 좌측 여백의 세로 박스, 하단 여백이 남는다).
                     var hG = 0;
                     while (hG < 40) {
+                        try { tfs[fi].parentStory.recompose(); } catch (eRR) {}
                         var ovfH = false;
                         try { ovfH = tfs[fi].overflows; } catch (eH0) { break; }
                         if (!ovfH) { break; }
@@ -497,6 +499,7 @@ function updatePassageNumbers(doc, flowStories, op) {
                     var shrunk = false;
                     var sG = 0;
                     while (sG < 24) {
+                        try { tfs[fi].parentStory.recompose(); } catch (eRR) {}
                         var ovfS = false;
                         try { ovfS = tfs[fi].overflows; } catch (eS0) { break; }
                         if (!ovfS) { break; }
