@@ -305,6 +305,9 @@ var RE_BARE_NUM = /^\s*\d{1,3}(?:\s*~\s*\d{1,3})?\s*$/;
 // 숫자 라벨(v1 파리티 경로)은 호출부에서 배제 — 기존 동작 무변경.
 var LABEL_CLAMP_GAP = 1.5;   // 본문 좌변과의 간격 (mm)
 var LABEL_MIN_W = 5;         // 클램프 후 최소 프레임 폭 (mm — 한글 12pt 1자)
+// W61: 이 길이를 넘는 지문번호 라벨은 줄임말로 대체 (좁은 라벨 프레임
+// 기준 — "Main Reading 1"→"MR1"). 짧은 기존 라벨("3과 추가지문")은 유지.
+var LABEL_MAX_CHARS = 8;
 function clampLabelFrame(tf, page, flowStory) {
     var bodyL = null;
     var conts = flowStory.textContainers;
@@ -486,23 +489,17 @@ function updatePassageNumbers(doc, flowStories, op) {
                     var fst = tfs[fi].parentStory;
                     if (fst.textContainers.length !== 1) { continue; }
                     if (!RE_BARE_NUM.test(String(fst.contents || ""))) { continue; }
-                    // W61: 원 라벨 → (넘치면) 줄임말. 프레임 기하는
-                    // 손대지 않는다 (템플릿 디자인 보존 — 어법OX의 가로형
-                    // 라벨 프레임을 세로로 늘려 조판을 망친 W60 반성).
-                    fst.contents = labelWithBreaks(lab2);
-                    try { fst.recompose(); } catch (eRC) {}
-                    var ovfL = false;
-                    try { ovfL = tfs[fi].overflows; } catch (eL0) {}
-                    if (ovfL) {
+                    // W61: 긴 라벨은 **넣을 때부터 줄임말**로 (프레임 기하
+                    // 무접촉 — 템플릿 디자인 보존). 넘친 뒤에 고치려 하면
+                    // 그 전에 clamp/폭·세로 확장이 프레임을 변형해 어법OX의
+                    // 가로형 라벨 프레임까지 세로로 늘어난다 (W60 반성).
+                    var labUse = lab2;
+                    if (String(lab2).length > LABEL_MAX_CHARS) {
                         var ab = abbreviateLabel(lab2);
-                        if (ab && ab !== lab2) {
-                            try {
-                                fst.contents = ab;
-                                fst.recompose();
-                                abbrN++;
-                            } catch (eL1) {}
-                        }
+                        if (ab && ab !== lab2) { labUse = ab; abbrN++; }
                     }
+                    fst.contents = labelWithBreaks(labUse);
+                    try { fst.recompose(); } catch (eRC) {}
                     n++;
                     // W40 결함 7b: 번호 프레임은 템플릿에서 2자리("20")용
                     // 폭이라, 다회차 선택 워크북의 6자리 코드("231133")를
