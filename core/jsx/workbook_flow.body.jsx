@@ -427,6 +427,7 @@ function updatePassageNumbers(doc, flowStories, op) {
         var clamped = 0;
         var widened = 0;
         var heightened = 0;   // W59: 라벨 프레임 세로 확장 건수
+        var shrunkN = 0;      // W59: 라벨 글자 축소 건수
         var labelFrames = [];   // W38: 좌/우 기하 정규화용 (숫자 아닌 라벨만)
         var pages = storyPagesInOrder(rec.story);
         for (var pk = 0; pk < pages.length; pk++) {
@@ -483,6 +484,33 @@ function updatePassageNumbers(doc, flowStories, op) {
                         hG++;
                     }
                     if (hG > 0) { heightened++; }
+                    // W59 (비상(황) 실증 2차): 폭·세로 확장으로도 안 담기는
+                    // 긴 영문 라벨("Main Reading 1" — 단어 하나가 프레임
+                    // 폭보다 넓어 줄바꿈으로도 해소 불가)은 글자 크기를
+                    // 줄여 수용한다. 라벨 내용을 바꾸지 않는 마지막 수단 —
+                    // 축소해도 안 되면 [경고]로 지목 (침묵 금지).
+                    var shrunk = false;
+                    var sG = 0;
+                    while (sG < 24) {
+                        var ovfS = false;
+                        try { ovfS = tfs[fi].overflows; } catch (eS0) { break; }
+                        if (!ovfS) { break; }
+                        try {
+                            var tx = tfs[fi].parentStory.texts[0];
+                            var ps = tx.pointSize;
+                            if (ps <= 5) { break; }
+                            tx.pointSize = ps - 0.5;
+                            shrunk = true;
+                        } catch (eS1) { break; }
+                        sG++;
+                    }
+                    if (shrunk) { shrunkN++; }
+                    var stillOvf = false;
+                    try { stillOvf = tfs[fi].overflows; } catch (eS2) {}
+                    if (stillOvf) {
+                        wlog("[경고] 지문번호 라벨 프레임 오버셋 잔존: '"
+                             + lab2 + "' (프레임 폭 부족 — 라벨 축약 필요)");
+                    }
                     // W30: 숫자 아닌 긴 라벨만 본문 침범 클램프 (숫자 라벨은
                     // v1 파리티 경로 — 프레임 무접촉)
                     if (!RE_BARE_NUM.test(String(lab2))) {
@@ -530,7 +558,8 @@ function updatePassageNumbers(doc, flowStories, op) {
         if (n > 0) {
             wlog(steps[si] + " 지문번호 프레임 갱신: " + n + "개"
                  + (widened > 0 ? " (폭 확장 " + widened + "개)" : "")
-                 + (heightened > 0 ? " (세로 확장 " + heightened + "개)" : ""));
+                 + (heightened > 0 ? " (세로 확장 " + heightened + "개)" : "")
+                 + (shrunkN > 0 ? " (글자 축소 " + shrunkN + "개)" : ""));
         }
         if (clamped > 0) {
             wlog(steps[si] + " 라벨 프레임 본문 침범 교정: " + clamped + "개");
