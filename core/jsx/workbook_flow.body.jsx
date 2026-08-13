@@ -324,15 +324,9 @@ function clampLabelFrame(tf, page, flowStory) {
     if (gb[3] <= newR + 0.01) { return false; }        // 침범 없음 — 무접촉
     if (newR - gb[1] < LABEL_MIN_W) { return false; }  // 무리한 축소 금지
     try { tf.geometricBounds = [gb[0], gb[1], gb[2], newR]; } catch (e1) { return false; }
-    var guard = 0;
-    while (guard < 40) {
-        var ovf = false;
-        try { ovf = tf.overflows; } catch (e2) { break; }
-        if (!ovf) { break; }
-        var g2 = tf.geometricBounds;
-        try { tf.geometricBounds = [g2[0], g2[1], g2[2] + 5, g2[3]]; } catch (e3) { break; }
-        guard++;
-    }
+    // W61: 세로 확장 제거 — 라벨이 길면 줄임말로 줄이지(abbreviateLabel)
+    // 프레임을 늘리지 않는다. 템플릿 기하(어법OX의 가로형 라벨 박스 등)는
+    // 디자인이므로 조판이 임의로 바꾸면 안 된다 (사용자 지적).
     return true;
 }
 
@@ -474,8 +468,6 @@ function updatePassageNumbers(doc, flowStories, op) {
         }
         var n = 0;
         var clamped = 0;
-        var widened = 0;
-        var heightened = 0;   // W59: 라벨 프레임 세로 확장 건수
         var shrunkN = 0;      // W59: 라벨 글자 축소 건수
         var abbrN = 0;        // W61: 라벨 줄임말 대체 건수
         var labelFrames = [];   // W38: 좌/우 기하 정규화용 (숫자 아닌 라벨만)
@@ -501,28 +493,6 @@ function updatePassageNumbers(doc, flowStories, op) {
                     fst.contents = labelWithBreaks(labUse);
                     try { fst.recompose(); } catch (eRC) {}
                     n++;
-                    // W40 결함 7b: 번호 프레임은 템플릿에서 2자리("20")용
-                    // 폭이라, 다회차 선택 워크북의 6자리 코드("231133")를
-                    // 넣으면 오버셋된다 (v16 실증: 오버플로우 34개 —
-                    // 후처리 trim 이 이걸 메우려 페이지를 40개씩 추가).
-                    // 라벨 프레임은 본문 좌변 바깥 여백에 있으므로 왼쪽으로
-                    // 넓혀 수용한다 (오른쪽은 본문 침범 — clampLabelFrame 이
-                    // 반대 방향으로 막는 경계).
-                    var gN = 0;
-                    while (gN < 30) {
-                        try { tfs[fi].parentStory.recompose(); } catch (eRR) {}
-                        var ovfN = false;
-                        try { ovfN = tfs[fi].overflows; } catch (eN0) { break; }
-                        if (!ovfN) { break; }
-                        var gbN = tfs[fi].geometricBounds;
-                        if (gbN[1] - 1.5 < 0) { break; }   // 페이지 밖 금지
-                        try {
-                            tfs[fi].geometricBounds = [gbN[0], gbN[1] - 1.5,
-                                                       gbN[2], gbN[3]];
-                        } catch (eN1) { break; }
-                        gN++;
-                    }
-                    if (gN > 0) { widened++; }
                     // W30: 숫자 아닌 긴 라벨만 본문 침범 클램프 (숫자 라벨은
                     // v1 파리티 경로 — 프레임 무접촉)
                     if (!RE_BARE_NUM.test(String(lab2))) {
@@ -616,8 +586,6 @@ function updatePassageNumbers(doc, flowStories, op) {
         }
         if (n > 0) {
             wlog(steps[si] + " 지문번호 프레임 갱신: " + n + "개"
-                 + (widened > 0 ? " (폭 확장 " + widened + "개)" : "")
-                 + (heightened > 0 ? " (세로 확장 " + heightened + "개)" : "")
                  + (shrunkN > 0 ? " (글자 축소 " + shrunkN + "개)" : ""));
         }
         if (clamped > 0) {
