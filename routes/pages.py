@@ -1,5 +1,7 @@
 """페이지 라우트 — 인덱스 (조판/표지/가공) + /typeset/<material_id> (app.py에서 분리, C2-9)."""
-from flask import Blueprint, render_template, request
+import os
+
+from flask import Blueprint, redirect, render_template, request, send_from_directory
 
 from core.webdata import load_schools, load_subjects
 from engines import registry
@@ -120,3 +122,26 @@ def typeset_page(material_id):
     return render_template(tmpl, engine=engine, schools=schools,
                            active_nav=nav, exam_periods=exam_periods,
                            current_period=current_period)
+
+
+# ── 외부 공개 소개 페이지 (단가표에서 견적계산·가격 섹션 제외판) ──────────
+# 인증 예외는 routes/auth.py check_auth의 /design 허용 참조.
+# 원본: 디자인/기타/제작단가표(외부용_3라인).html (가격 포함 백업: 같은 폴더 .bak-with-pricing-20260813)
+_DESIGN_INTRO_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static", "design_intro")
+
+
+@bp.route("/design")
+def design_intro_redirect():
+    # 상대경로(portfolio/...)가 /design/ 기준으로 풀리도록 슬래시로 고정
+    return redirect("/design/", code=308)
+
+
+@bp.route("/design/")
+def design_intro_index():
+    return send_from_directory(_DESIGN_INTRO_DIR, "index.html")
+
+
+@bp.route("/design/<path:asset_path>")
+def design_intro_asset(asset_path):
+    return send_from_directory(_DESIGN_INTRO_DIR, asset_path)

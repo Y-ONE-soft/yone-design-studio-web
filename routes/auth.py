@@ -161,6 +161,9 @@ def check_auth():
     # 로그인 페이지와 static 파일은 인증 불필요
     if request.path in ("/login", "/logout", "/api/health") or request.path.startswith("/static/"):
         return
+    # 외부 공개 소개 페이지 (routes/pages.py /design — 가격 제외 단가표)
+    if request.path == "/design" or request.path.startswith("/design/"):
+        return
     # [임시 진단] /debug/* 인증 우회
     if request.path.startswith("/debug/"):
         return
@@ -200,12 +203,17 @@ def add_no_cache(response):
     # 이 지시문이 켜지면 fetch가 https://localhost:5010 으로 강제 업그레이드되어 실패.
     _host = (request.host or "").split(":")[0]
     _is_local = _host in ("localhost", "127.0.0.1", "::1")
+    # /design(외부 공개 소개 페이지)만 CDN 폰트·GSAP 허용 — 나머지 경로는 기존 정책 유지
+    _is_design = request.path == "/design" or request.path.startswith("/design/")
+    _script_extra = " https://cdn.jsdelivr.net" if _is_design else ""
+    _style_extra = " https://cdn.jsdelivr.net https://fonts.googleapis.com" if _is_design else ""
+    _font_extra = " https://cdn.jsdelivr.net https://fonts.gstatic.com" if _is_design else ""
     _csp = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline'; "
-        "style-src 'self' 'unsafe-inline'; "
+        "script-src 'self' 'unsafe-inline'" + _script_extra + "; "
+        "style-src 'self' 'unsafe-inline'" + _style_extra + "; "
         "img-src 'self' data: blob:; "
-        "font-src 'self' data:; "
+        "font-src 'self' data:" + _font_extra + "; "
         "connect-src 'self'; "
         "media-src 'self' blob:; "
         "object-src 'none'; "
