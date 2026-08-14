@@ -389,6 +389,13 @@ function insertAnswerTable(doc, para, spec, styleOf) {
             if (hdrStyle) {
                 cell.texts[0].appliedParagraphStyle = hdrStyle;
             }
+            // 셀 텍스트는 삽입점의 문자 서식을 물려받는다 — 스텝 스토리의
+            // 마커는 '투명 0.1pt'라 그대로 두면 헤더가 안 보인다(1차 검증
+            // 조판 실증: 표는 맞는데 "틀린 부분/수정"이 투명 0.1pt로 인쇄).
+            // 문자스타일 [없음] + 로컬 오버라이드 제거로 단락스타일 값만 남긴다.
+            cell.texts[0].appliedCharacterStyle = doc.characterStyles[0];
+            try { cell.texts[0].clearOverrides(OverrideType.CHARACTER_ONLY); }
+            catch (eO) { try { cell.texts[0].clearOverrides(); } catch (eO2) {} }
             cell.texts[0].justification = Justification.CENTER_ALIGN;
         } catch (e) {}
     }
