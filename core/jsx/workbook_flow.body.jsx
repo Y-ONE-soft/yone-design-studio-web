@@ -2377,6 +2377,63 @@ function applyChoiceTabs(doc, flowStories, op) {
 // 삐져나온다 (0a5da924 실증). 해당 단락 자간(tracking)을 -10씩 낮춰
 // 프레임 내로 수용 — 한도(op.max_tracking, 기본 -50) 초과가 필요하면
 // 과도 축소 대신 [경고]로 지목한다 (사용자 확정 스펙).
+// ── W67: 지문 속 빈칸(줄바꿈 없는 공백 런)이 프레임 밖으로 나가는 것 교정 ──
+// 플랜이 빈칸을 U+00A0(줄바꿈 없는 공백)으로 만들어 '줄 끝에서 증발'은
+// 막았지만, 원고가 준 길이(8강 실측 43칸)가 단 폭보다 길면 InDesign은
+// 어디서도 끊을 수 없어 오른쪽으로 삐져나온다(사용자 지적 "빈칸 튀어나오는
+// 거"). 자간 조정 대신 **빈칸 길이를 실측으로 깎는다** — 빈칸은 길이가
+// 의미를 갖지 않고, 본문 자간을 건드리지 않는 게 안전하다. 최소 6칸 보장.
+function fitBlankRuns(doc) {
+    var MIN_KEEP = 6, TOL = 0.8;
+    var fixed = 0, trimmed = 0, capped = 0;
+    try {
+        app.findGrepPreferences = NothingEnum.NOTHING;
+        app.changeGrepPreferences = NothingEnum.NOTHING;
+        app.findGrepPreferences.findWhat = "\\x{00A0}{3,}";
+        var hits = doc.findGrep();
+        for (var hi = hits.length - 1; hi >= 0; hi--) {
+            var run = hits[hi];
+            var guard = 0, did = false;
+            while (guard < 60) {
+                guard++;
+                var over = 0;
+                try {
+                    var lines = run.lines.everyItem().getElements();
+                    for (var li = 0; li < lines.length; li++) {
+                        var lf = lines[li].parentTextFrames[0];
+                        var gb = lf.geometricBounds;
+                        var rIn = 0;
+                        try {
+                            var ins = lf.textFramePreferences.insetSpacing;
+                            rIn = (ins instanceof Array) ? ins[3] : ins;
+                        } catch (eI) {}
+                        var d = lines[li].endHorizontalOffset - (gb[3] - rIn);
+                        if (d > over) { over = d; }
+                    }
+                } catch (e) { break; }
+                if (over <= TOL) { break; }
+                var len = 0;
+                try { len = run.characters.length; } catch (e) { break; }
+                if (len <= MIN_KEEP) { capped++; break; }
+                try {
+                    run.characters[-1].remove();
+                    trimmed++;
+                    did = true;
+                } catch (e) { break; }
+                try { run.parentStory.recompose(); } catch (e) {}
+            }
+            if (did) { fixed++; }
+        }
+        app.findGrepPreferences = NothingEnum.NOTHING;
+    } catch (e) {
+        wlog("[경고] 빈칸 길이 보정 실패: " + e);
+        try { app.findGrepPreferences = NothingEnum.NOTHING; } catch (e2) {}
+    }
+    wlog("빈칸 길이 보정: " + fixed + "개 빈칸 / " + trimmed + "칸 축소"
+         + (capped > 0 ? " / [경고] 최소 길이로도 수용 불가 " + capped + "개"
+            : ""));
+}
+
 function fixBlankOverflow(doc, op) {
     var maxNeg = -50;
     if (op && typeof op === "object" && op.max_tracking !== undefined
@@ -3022,6 +3079,10 @@ try {
                      ScriptLanguage.JAVASCRIPT, undefined,
                      UndoModes.ENTIRE_SCRIPT, "wb_v2 textbook_post");
     }
+    // W67: 빈칸(줄바꿈 없는 공백) 길이 실측 보정 — 레이아웃 확정 이후
+    app.doScript(function () { fitBlankRuns(doc); },
+                 ScriptLanguage.JAVASCRIPT, undefined,
+                 UndoModes.ENTIRE_SCRIPT, "wb_v2 blank_runs");
     if (plan.blank_fit) {
         // W40 결함 6 — 페이지 수를 바꾸는 모든 op 이후, 저장 직전
         app.doScript(function () { fixBlankOverflow(doc, plan.blank_fit); },
