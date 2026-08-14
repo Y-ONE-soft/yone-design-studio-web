@@ -787,6 +787,8 @@ def build_step3(step_data):
                 # 원문자 기입 줄 칸 길이 통일 + 답표 헤더 2줄 → 표 op
                 _s3_widen_answer_rows(unit)
                 _s3_answer_tables(unit, st_q, warnings)
+                # W67: 지문 속 빈칸(밑줄 공백)이 줄 끝에서 증발하는 것 방지
+                _s3_fix_blank_runs(unit)
                 code = (item.get("code") or "").strip()
                 if code:
                     unit.insert(0, {"t": "{" + code + "}", "s": "$BASIC",
@@ -837,6 +839,44 @@ def _s3_widen_answer_rows(unit):
         p["t"] = "".join(text)
         p["runs"] = runs
         n += 1
+    return n
+
+
+_S3_NBSP = " "
+
+
+def _s3_fix_blank_runs(unit):
+    """지문 속 빈칸(밑줄 친 공백 런)이 줄 끝에서 사라지는 것 방지 (W67).
+
+    사용자 지적 2026-08-14 "스텝3 빈칸 튀어나오는 거": 빈칸 문항의 빈칸은
+    원고에서 '밑줄 친 공백'이라, 그 자리가 줄 끝이면 InDesign이 공백을
+    흘려버려 빈칸이 통째로 사라지고 뒤따르는 마침표만 다음 줄에 남는다
+    (8강 실측: "These trends are" + 공백 44칸 + "."). 마지막 한 칸만
+    보통 공백으로 남기고 나머지를 줄바꿈 없는 공백(U+00A0)으로 바꾸면
+    빈칸은 소멸하지 않고, 빈칸 뒤에서만 줄이 바뀐다.
+
+    원문자 기입 줄(답란)은 제외 — 그쪽은 칸 사이에서 줄이 바뀌어야 한다."""
+    n = 0
+    for p in unit:
+        runs = p.get("runs") or []
+        t = p.get("t") or ""
+        if not runs or not t.strip():
+            continue
+        if not _s3_is_prose(t):
+            continue          # 지문(산문)만 — 답란/기입 줄은 줄바꿈 기회가
+                              # 필요하고, 줄 끝 공백 소멸도 무해하다
+        if sum(len(r.get("t") or "") for r in runs) != len(t):
+            continue          # run 오프셋 불일치 — 손대지 않는다
+        changed = False
+        for r in runs:
+            rt = r.get("t") or ""
+            if not r.get("ul") or len(rt) < 3 or rt.strip():
+                continue      # 밑줄 친 '공백만' 있는 런
+            r["t"] = _S3_NBSP * (len(rt) - 1) + rt[-1]
+            changed = True
+        if changed:
+            p["t"] = "".join(r.get("t") or "" for r in runs)
+            n += 1
     return n
 
 

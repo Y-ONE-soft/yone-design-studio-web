@@ -2906,6 +2906,18 @@ try {
         }, ScriptLanguage.JAVASCRIPT, undefined,
            UndoModes.ENTIRE_SCRIPT, "wb_v2 passage_numbers");
     }
+    if (plan.unit_fit) {
+        // W66 ④ — 유닛 꼬리 몇 줄이 다음 칸으로 새는 것을 자간/행간으로 흡수.
+        // W67: 반드시 page_cleanup **이전**. 수용에 성공하면 유닛이 한 칸씩
+        // 당겨져 섹션 끝에 빈 페이지가 새로 생기는데(8강 p9/p47 실증 —
+        // 사용자 지적), 정리 뒤에 돌리면 그 페이지가 그대로 남는다.
+        app.doScript(function () {
+            fitUnitsInFrames(doc, flowStories,
+                             (typeof plan.unit_fit === "object")
+                                 ? plan.unit_fit : {});
+        }, ScriptLanguage.JAVASCRIPT, undefined,
+           UndoModes.ENTIRE_SCRIPT, "wb_v2 unit_fit");
+    }
     if (plan.page_cleanup) {
         app.doScript(function () {
             cleanupPages(doc, flowStories,
@@ -3009,16 +3021,6 @@ try {
         app.doScript(function () { textbookPostprocess(doc); },
                      ScriptLanguage.JAVASCRIPT, undefined,
                      UndoModes.ENTIRE_SCRIPT, "wb_v2 textbook_post");
-    }
-    if (plan.unit_fit) {
-        // W66 ④ — 유닛 꼬리 몇 줄이 다음 칸으로 새는 것을 자간/행간으로
-        // 흡수. 페이지 수를 바꾸는 op(정리/킵) 이후, blank_fit 직전.
-        app.doScript(function () {
-            fitUnitsInFrames(doc, flowStories,
-                             (typeof plan.unit_fit === "object")
-                                 ? plan.unit_fit : {});
-        }, ScriptLanguage.JAVASCRIPT, undefined,
-           UndoModes.ENTIRE_SCRIPT, "wb_v2 unit_fit");
     }
     if (plan.blank_fit) {
         // W40 결함 6 — 페이지 수를 바꾸는 모든 op 이후, 저장 직전
