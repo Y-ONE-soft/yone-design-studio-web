@@ -370,7 +370,23 @@ function insertAnswerTable(doc, para, spec, styleOf) {
         allCells.leftInset = TBL_INSET;
         allCells.rightInset = TBL_INSET;
         allCells.verticalJustification = VerticalJustification.TOP_ALIGN;
+        allCells.firstBaselineOffset = FirstBaseline.EMBOX_HEIGHT;
     } catch (e) {}
+    // 답 행(빈 칸)은 완성본 실측대로 [기본 단락] 12pt/자동행간 —
+    // 그래야 행 높이가 6.233mm로 자라 손으로 만든 표와 같아진다.
+    // (삽입점에서 물려받는 '투명 0.1pt' 서식을 그대로 두면 행이 납작해진다)
+    var basicPs = styleOf("$BASIC");
+    for (var br = 1; br < tbl.rows.length; br++) {
+        for (var bc = 0; bc < tbl.columns.length; bc++) {
+            try {
+                var bx = tbl.rows[br].cells[bc].texts[0];
+                if (basicPs) { bx.appliedParagraphStyle = basicPs; }
+                bx.appliedCharacterStyle = doc.characterStyles[0];
+                try { bx.clearOverrides(OverrideType.CHARACTER_ONLY); }
+                catch (eB) { try { bx.clearOverrides(); } catch (eB2) {} }
+            } catch (e) {}
+        }
+    }
     try {
         var blk = doc.swatches.itemByName("Black");
         blk.name;
@@ -418,8 +434,9 @@ function insertAnswerTable(doc, para, spec, styleOf) {
 // 들어가는데(로그 실증) 뒤따르는 리플로우/정리 op를 거치면 스토리 기본
 // 문자서식('투명 0.1pt' 마커 잔재)으로 되돌아가 헤더가 안 보였다.
 // 결정적 사후 보정 — 아이콘 pad 보정(_fixAnchorPad)과 같은 패턴.
-function refixAnswerTableHeaders(doc) {
+function refixAnswerTableHeaders(doc, styleOf) {
     if (!_answerTableIds.length) { return; }
+    var basicPs = styleOf ? styleOf("$BASIC") : null;
     var want = {};
     for (var i = 0; i < _answerTableIds.length; i++) {
         want[String(_answerTableIds[i])] = true;
@@ -443,6 +460,17 @@ function refixAnswerTableHeaders(doc) {
                     cx.justification = Justification.CENTER_ALIGN;
                     if (Number(cx.pointSize) < 1) { bad++; }
                 } catch (e) {}
+            }
+            for (var r2 = 1; r2 < tb.rows.length; r2++) {
+                for (var c2 = 0; c2 < tb.columns.length; c2++) {
+                    try {
+                        var bx2 = tb.rows[r2].cells[c2].texts[0];
+                        if (basicPs) { bx2.appliedParagraphStyle = basicPs; }
+                        bx2.appliedCharacterStyle = doc.characterStyles[0];
+                        try { bx2.clearOverrides(OverrideType.CHARACTER_ONLY); }
+                        catch (e3) { try { bx2.clearOverrides(); } catch (e4) {} }
+                    } catch (e) {}
+                }
             }
             n++;
         }
@@ -3006,7 +3034,7 @@ try {
     }
 
     // W66: 답표 헤더 서식 재확정 — 모든 op 이후, 저장 직전
-    app.doScript(function () { refixAnswerTableHeaders(doc); },
+    app.doScript(function () { refixAnswerTableHeaders(doc, styleOf); },
                  ScriptLanguage.JAVASCRIPT, undefined,
                  UndoModes.ENTIRE_SCRIPT, "wb_v2 answer_table_headers");
 
