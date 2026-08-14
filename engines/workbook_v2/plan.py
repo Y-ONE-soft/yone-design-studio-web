@@ -872,7 +872,10 @@ def _s3_fix_blank_runs(unit):
             rt = r.get("t") or ""
             if not r.get("ul") or len(rt) < 3 or rt.strip():
                 continue      # 밑줄 친 '공백만' 있는 런
-            r["t"] = _S3_NBSP * (len(rt) - 1) + rt[-1]
+            # 앞뒤 한 칸은 보통 공백 — 빈칸 앞에 줄바꿈 기회를 남긴다
+            # (전부 U+00A0이면 앞 단어까지 한 덩어리가 돼 "ar|e"처럼
+            #  단어가 쪼개진 채 줄이 바뀐다 — 8강 1차 재조판 실측).
+            r["t"] = " " + _S3_NBSP * (len(rt) - 2) + rt[-1]
             changed = True
         if changed:
             p["t"] = "".join(r.get("t") or "" for r in runs)
