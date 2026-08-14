@@ -44,6 +44,14 @@
         // 삭제 범위에서 제외할 마스터 (간지/백지)
         protect_masters: ["M", "간지"],
 
+        // 간지 스프레드 정렬 — 간지 블록([없음] 마스터 연속 런)의 마지막 페이지가
+        // 왼쪽으로 밀리면 그 앞에 메모 페이지를 끼워 (왼쪽,오른쪽) 2P 구성을 복원
+        fix_divider_spreads: true,
+        memo_master: "M",
+
+        // true 면 삭제/병합/파리티 보정을 건너뛰고 간지 정렬만 수행 (증분 보정용)
+        skip_slim: false,
+
         log_path: ""
     };
 
@@ -511,11 +519,15 @@
     // ─────────────────────────────────────────────────────────────
     sections.sort(function (a, b) { return b.start - a.start; });
 
-    for (var s = 0; s < sections.length; s++) {
-        var sec = sections[s];
-        if (inList(CFG.delete_sections, sec.label))      deleteSection(sec);
-        else if (inList(CFG.merge_half_sections, sec.label))  mergeHalf(sec);
-        else if (inList(CFG.merge_stack_sections, sec.label)) mergeStack(sec);
+    if (CFG.skip_slim) {
+        log("[스킵] skip_slim=true — 삭제/병합/파리티 보정 생략, 간지 정렬만 수행");
+    } else {
+        for (var s = 0; s < sections.length; s++) {
+            var sec = sections[s];
+            if (inList(CFG.delete_sections, sec.label))      deleteSection(sec);
+            else if (inList(CFG.merge_half_sections, sec.label))  mergeHalf(sec);
+            else if (inList(CFG.merge_stack_sections, sec.label)) mergeStack(sec);
+        }
     }
     flushLog();
 
@@ -533,6 +545,7 @@
 
     markerFrameIds = {};
     var after = buildSections();
+    if (CFG.skip_slim) { after = []; }
     log("[마스터 파리티 보정]");
     for (var a = 0; a < after.length; a++) {
         var pg2 = doc.pages[after[a].start];
@@ -555,6 +568,119 @@
                 log("[경고] 마스터 " + want + " 없음 — p" + pg2.name + " 미보정");
             }
         }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 간지 스프레드 정렬 (메모 페이지 삽입)
+    //
+    // 간지 블록 = 마스터가 [없음]인 페이지의 연속 런.
+    //   왼쪽 페이지 = 스프레드 전체를 덮는 배경 사각형
+    //   오른쪽 페이지 = 단원 제목 (흰 글자 — 배경이 없으면 안 보인다)
+    // 슬림 변환으로 앞 섹션이 왼쪽 페이지에서 끝나면 이 블록이 한 칸 밀려
+    // 배경이 pasteboard로 나가고 제목이 흰 배경에 얹힌다.
+    // → 블록 앞(오른쪽 페이지 자리)에 메모 페이지를 끼워 2P 구성을 복원한다.
+    // ─────────────────────────────────────────────────────────────
+    function isRight(page) {
+        try { return page.side === PageSideOptions.RIGHT_HAND; }
+        catch (e) { return false; }
+    }
+
+    function noMasterRuns() {
+        var runs = [], cur = null;
+        for (var i = 0; i < doc.pages.length; i++) {
+            var none = (masterPrefix(doc.pages[i]) === "");
+            if (none) {
+                if (cur === null) cur = { start: i, end: i };
+                else cur.end = i;
+            } else if (cur !== null) {
+                runs.push(cur); cur = null;
+            }
+        }
+        if (cur !== null) runs.push(cur);
+        return runs;
+    }
+
+    function fixDividerSpreads() {
+        var memoMaster = masterByPrefix(CFG.memo_master);
+        if (!memoMaster) {
+            log("[경고] 메모 마스터 '" + CFG.memo_master + "' 없음 — 간지 정렬 생략");
+            return 0;
+        }
+        var inserted = 0, guard = 0;
+        while (guard++ < 50) {
+            var runs = noMasterRuns();
+            var target = -1;
+            for (var r = 0; r < runs.length; r++) {
+                var lastPg = doc.pages[runs[r].end];
+                if (!isRight(lastPg)) { target = r; break; }
+            }
+            if (target < 0) break;
+
+            var run = runs[target];
+            if (run.start === 0) {
+                log("[경고] 문서 첫 블록은 보정 대상 아님 — 중단");
+                break;
+            }
+            var dividerName = doc.pages[run.start].name;
+            // 인덱스 지정자는 페이지 추가 시 다른 페이지를 가리키게 되므로
+            // 실체 참조(getElements)로 앞 페이지를 고정한 뒤 AFTER 로 삽입한다.
+            // pages.add(BEFORE, ...) 는 facing pages 셔플 때문에 한 칸 앞
+            // (콘텐츠 페이지 사이)에 끼는 사례가 확인됨.
+            var prevRef = doc.pages[run.start - 1].getElements()[0];
+            var prevName = prevRef.name;
+            var newPage;
+            try {
+                newPage = doc.pages.add(LocationOptions.AFTER, prevRef);
+            } catch (e) {
+                log("[오류] 메모 페이지 삽입 실패 (p" + dividerName + " 앞): " +
+                    e.message);
+                break;
+            }
+            if (newPage.documentOffset !== run.start) {
+                log("  삽입 슬롯 어긋남(" + newPage.documentOffset +
+                    " != " + run.start + ") — move 로 보정");
+                try { newPage.move(LocationOptions.AFTER, prevRef); }
+                catch (e2) { log("[오류] 위치 보정 실패: " + e2.message); }
+            }
+            // 최종 인접성 검증: 앞=콘텐츠 마지막 페이지, 뒤=간지 블록 첫 페이지
+            var okPos = (newPage.documentOffset === run.start) &&
+                        (doc.pages[newPage.documentOffset - 1].id === prevRef.id) &&
+                        (masterPrefix(doc.pages[newPage.documentOffset + 1]) === "");
+            if (!okPos) {
+                log("[오류] 메모 페이지가 잘못된 위치에 삽입됨 — 되돌리고 중단 " +
+                    "(off=" + newPage.documentOffset + ", 기대=" + run.start + ")");
+                try { newPage.remove(); } catch (e4) {}
+                break;
+            }
+            try { newPage.appliedMaster = memoMaster; } catch (e3) {
+                log("[경고] 메모 마스터 적용 실패: " + e3.message);
+            }
+            inserted++;
+            log("  메모 페이지 삽입 → p" + newPage.name +
+                " (" + (isRight(newPage) ? "오른쪽" : "왼쪽") + " 페이지) : " +
+                "앞 p" + prevName + " / 뒤 간지 p" +
+                doc.pages[newPage.documentOffset + 1].name);
+        }
+        return inserted;
+    }
+
+    if (CFG.fix_divider_spreads) {
+        log("[간지 스프레드 정렬]");
+        var runsBefore = noMasterRuns();
+        for (var rb = 0; rb < runsBefore.length; rb++) {
+            var s0 = doc.pages[runsBefore[rb].start], e0 = doc.pages[runsBefore[rb].end];
+            log("  블록 p" + s0.name + "~p" + e0.name +
+                " 끝=" + (isRight(e0) ? "오른쪽 OK" : "왼쪽 ← 보정 필요"));
+        }
+        var n = fixDividerSpreads();
+        log("  메모 페이지 " + n + "장 삽입");
+        var runsAfter = noMasterRuns();
+        var bad = 0;
+        for (var ra = 0; ra < runsAfter.length; ra++) {
+            if (!isRight(doc.pages[runsAfter[ra].end])) bad++;
+        }
+        if (bad > 0) log("[경고] 정렬 후에도 어긋난 간지 블록 " + bad + "건");
+        else log("  간지 블록 " + runsAfter.length + "개 전부 (왼쪽,오른쪽) 구성 확인");
     }
 
     // ─────────────────────────────────────────────────────────────
