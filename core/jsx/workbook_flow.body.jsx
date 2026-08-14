@@ -397,7 +397,13 @@ function insertAnswerTable(doc, para, spec, styleOf) {
             try { cell.texts[0].clearOverrides(OverrideType.CHARACTER_ONLY); }
             catch (eO) { try { cell.texts[0].clearOverrides(); } catch (eO2) {} }
             cell.texts[0].justification = Justification.CENTER_ALIGN;
-        } catch (e) {}
+            if (c === 0) {
+                wlog("[답표] 헤더 서식: cs="
+                     + cell.texts[0].appliedCharacterStyle.name + " size="
+                     + cell.texts[0].pointSize + " fill="
+                     + cell.texts[0].fillColor.name);
+            }
+        } catch (e) { wlog("[경고] 답표 헤더 서식 실패: " + e); }
     }
     for (var r = 0; r < tbl.rows.length; r++) {
         // 행 높이는 '지정하지 않는다' — 완성본 실측(사용자 페이스트보드
