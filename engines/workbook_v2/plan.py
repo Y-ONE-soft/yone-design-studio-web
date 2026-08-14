@@ -843,6 +843,8 @@ def _s3_widen_answer_rows(unit):
 
 
 _S3_NBSP = " "
+# 빈칸 최대 칸 수 — 8pt 기준 15칸 ≈ 10mm (82mm 단에서 항상 한 줄에 수용)
+_S3_BLANK_MAX = 15
 
 
 def _s3_fix_blank_runs(unit):
@@ -872,10 +874,13 @@ def _s3_fix_blank_runs(unit):
             rt = r.get("t") or ""
             if not r.get("ul") or len(rt) < 3 or rt.strip():
                 continue      # 밑줄 친 '공백만' 있는 런
-            # 앞뒤 한 칸은 보통 공백 — 빈칸 앞에 줄바꿈 기회를 남긴다
-            # (전부 U+00A0이면 앞 단어까지 한 덩어리가 돼 "ar|e"처럼
-            #  단어가 쪼개진 채 줄이 바뀐다 — 8강 1차 재조판 실측).
-            r["t"] = " " + _S3_NBSP * (len(rt) - 2) + rt[-1]
+            # 길이는 상한(_S3_BLANK_MAX)까지만 — 원고가 준 칸 수(8강 실측
+            # 43칸)는 임의값이라 그대로 두면 줄 끝에서 갈 곳이 없어
+            # 프레임 밖으로 나가거나(튀어나옴) 앞 단어가 "ar|e"처럼
+            # 쪼개진 채 줄이 바뀐다. 앞뒤 한 칸은 보통 공백으로 남겨
+            # 줄바꿈 기회를 준다.
+            k = min(len(rt), _S3_BLANK_MAX)
+            r["t"] = " " + _S3_NBSP * (k - 2) + rt[-1]
             changed = True
         if changed:
             p["t"] = "".join(r.get("t") or "" for r in runs)
