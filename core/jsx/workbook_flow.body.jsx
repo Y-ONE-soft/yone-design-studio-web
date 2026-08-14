@@ -300,8 +300,8 @@ var TBL_HDR_SWATCH = "C=44 M=0 Y=0 K=14";
 var TBL_HDR_TINT = 50;
 var TBL_STROKE = 0.5;
 var TBL_INSET = 1;
-var TBL_H_HEAD = 4.822;
-var TBL_H_BODY = 6.233;
+// (행 높이는 지정하지 않는다 — 완성본 실측값 헤더 4.822 / 답 6.233mm는
+//  autoGrow 결과값이다. 아래 insertAnswerTable 주석 참조)
 var _tblSwatch = undefined;
 
 function answerTableSwatch(doc) {
@@ -368,7 +368,15 @@ function insertAnswerTable(doc, para, spec, styleOf) {
         allCells.bottomInset = TBL_INSET;
         allCells.leftInset = TBL_INSET;
         allCells.rightInset = TBL_INSET;
-        allCells.verticalJustification = VerticalJustification.CENTER_ALIGN;
+        allCells.verticalJustification = VerticalJustification.TOP_ALIGN;
+    } catch (e) {}
+    try {
+        var blk = doc.swatches.itemByName("Black");
+        blk.name;
+        tbl.cells.everyItem().topEdgeStrokeColor = blk;
+        tbl.cells.everyItem().bottomEdgeStrokeColor = blk;
+        tbl.cells.everyItem().leftEdgeStrokeColor = blk;
+        tbl.cells.everyItem().rightEdgeStrokeColor = blk;
     } catch (e) {}
     for (var c = 0; c < cols.length; c++) {
         try { if (colW) { tbl.columns[c].width = colW; } } catch (e) {}
@@ -385,9 +393,11 @@ function insertAnswerTable(doc, para, spec, styleOf) {
         } catch (e) {}
     }
     for (var r = 0; r < tbl.rows.length; r++) {
-        try {
-            tbl.rows[r].height = (r === 0) ? TBL_H_HEAD : TBL_H_BODY;
-        } catch (e) {}
+        // 행 높이는 '지정하지 않는다' — 완성본 실측(사용자 페이스트보드
+        // 표)도 autoGrow + 기본 최소높이라 헤더 4.822 / 답 6.233mm는
+        // 스타일에서 나온 결과값이다. 높이를 강제하면 헤더 텍스트가
+        // 셀 오버셋으로 사라진다 (1차 검증 조판에서 실증).
+        try { tbl.rows[r].autoGrow = true; } catch (e) {}
         // 표가 프레임 사이에서 쪼개지지 않게 (답표는 작다)
         try { tbl.rows[r].keepWithNextRow = (r < tbl.rows.length - 1); }
         catch (e) {}
