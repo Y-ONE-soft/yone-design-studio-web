@@ -2303,6 +2303,10 @@ def build_step2_c2(step_data, workbook_type="모의고사"):
 # 유닛 분할(헤더=NEXT_PAGE|EBS는 NEXT_FRAME, 블록 첫 하단 단락=NEXT_FRAME).
 
 _RE_C1_HEADER = re.compile(r"^\s*\{[^}]+\}")
+# W68: 원고에만 있는 발문 표기("Q. …") / 강 표제("11강. 흐름에 무관한 …").
+# 엔진이 넣는 발문은 "Q."로 시작하지 않는다 — 그래서 이 둘만 안전하게 걷힌다.
+_RE_C1_MANU_PROMPT = re.compile(r"^\s*Q\s*[.:]\s*\S")
+_RE_C1_LESSON_TITLE = re.compile(r"^\s*\d{1,2}\s*[강과]\s*[.,]\s*\S")
 _RE_C1_CHOICE = re.compile(r"^\s*\([A-Z]\)")
 _RE_C1_ABC = re.compile(r"^\s*\(([ABC])\)")
 _RE_C1_EMPTY_BRACKET = re.compile(
@@ -2572,6 +2576,19 @@ def build_step1_c1(step_data, workbook_type="모의고사", exclude_btm=False,
 
     # 1) 공백만 있는 bracket 단락 제거: [   ] → 삭제
     items = [it for it in items if not _RE_C1_EMPTY_BRACKET.match(it["t"])]
+    # W68 (11강 실증 — 사용자 지적 "문장배열쪽에 발문도 노출"): C1의 발문은
+    # **엔진이 삽입**하는 것이 계약이라(아래 발문 삽입 패스), 원고에 적힌
+    # 발문("Q. 문맥 상 … 쓰시오.")과 강 표제("11강. 흐름에 무관한 문장 찾기")
+    # 는 중복·원고 편집용이다. 엔진 삽입문은 'Q.'로 시작하지 않으므로
+    # 이 두 형태만 걷어낸다 (발문 자체를 지우는 위험 없음).
+    _c1_drop = [it for it in items
+                if _RE_C1_MANU_PROMPT.match(it["t"])
+                or _RE_C1_LESSON_TITLE.match(it["t"])]
+    if _c1_drop:
+        items = [it for it in items if it not in _c1_drop]
+        warnings.append("step1_c1: 원고 발문/표제 %d줄 제거 (엔진 발문과 "
+                        "중복) — %s" % (len(_c1_drop),
+                                       _c1_drop[0]["t"][:30]))
     # W50: 헤더 직전 섹션 타이틀 줄(Further Reading 류) 제거 — C1은 유닛
     # 분할을 det가 아니라 {라벨} GREP이 담당하므로, 흡수 줄만 여기서
     # 미리 걷어낸다 (de909e4d 실증: 타이틀 줄이 $BASIC으로 인쇄).

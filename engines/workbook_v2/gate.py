@@ -2546,3 +2546,119 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
 
     return {"ok": not critical, "critical": critical, "warnings": warnings,
             "stats": stats}
+
+
+# ── W68: 원고 교차검증 (조판 '전' 단계 — 사용자 눈 대신 파이프라인이 잡는다) ──
+# 사용자 지적 2026-08-15: "지문번호 인식을 못하는 건 언제까지 잡아야 하나."
+# 라벨/파일 형식은 강마다 바뀌므로 형식을 맞추는 싸움은 끝나지 않는다.
+# 대신 **형식과 무관한 불변식**을 조판 전에 검사해, 원고 사고와 인식 실패가
+# 완제품이 아니라 로그에서 걸리게 한다:
+#   M1 지문 기반 스텝인데 지문(긴 영어 본문)이 하나도 없다 → 잘못된 파일
+#      (11강 실증: 빈칸어휘가 '단어 목록만 있는 정답지'로 조판됨)
+#   M2 어떤 스텝의 지문 어휘가 다른 스텝들과 거의 안 겹친다 → 다른 교재/단원
+#      원고 혼입 (11강 실증: 빈칸어휘 문제지가 '공통영어2 능률' 교과서 파일)
+#   M3 스텝별 지문 수가 서로 크게 다르다 → 어느 한 스텝의 지문번호 인식 실패
+#      (11강 실증: 어휘선택 5지문이 1유닛으로 뭉침)
+_PASSAGE_STEPS = ("step1_a1", "step1_a1_2", "step1_a2", "step1_b1",
+                  "step1_b2", "step1_c1", "step1_c2", "step2_a1",
+                  "step2_b1", "step2_c1", "step2_c2")
+_RE_M_WORD = re.compile(r"[A-Za-z][A-Za-z'\-]{2,}")
+
+
+def _m_passages(step_data):
+    """스텝 원고의 '지문 단락'(영어 12단어 이상) 목록."""
+    out = []
+    for p in (step_data or {}).get("paragraphs", []) or []:
+        t = (p.get("text") or "")
+        if len(_RE_M_WORD.findall(t)) >= 12:
+            out.append(t)
+    return out
+
+
+def _m_vocab(texts):
+    v = set()
+    for t in texts:
+        for w in _RE_M_WORD.findall(t):
+            if len(w) >= 5:
+                v.add(w.lower())
+    return v
+
+
+def inspect_manuscript_consistency(content, log=None):
+    """원고 자체의 정합성 검사 (조판 전). → (critical, warnings, stats)"""
+    steps = (content or {}).get("steps") or {}
+    critical, warnings, stats = [], [], {}
+    per = {}
+    for key in _PASSAGE_STEPS:
+        sd = steps.get(key)
+        if not isinstance(sd, dict) or not sd.get("paragraphs"):
+            continue
+        per[key] = _m_passages(sd)
+
+    # M1 — 지문이 하나도 없는 지문 기반 스텝
+    empty = [k for k, v in per.items() if not v]
+    stats["manuscript_no_passage"] = len(empty)
+    for k in empty:
+        critical.append(
+            f"[원고이상] {k}: 원고에 지문(영어 본문)이 하나도 없습니다 — "
+            f"파일 '{(steps.get(k) or {}).get('filename', '')}'이(가) "
+            f"정답 목록/다른 자료일 수 있습니다 (원고 확인 필요)")
+
+    # M2 — 다른 스텝들과 지문 어휘가 거의 안 겹치는 스텝
+    vocab = {k: _m_vocab(v) for k, v in per.items() if v}
+    if len(vocab) >= 3:
+        for k, vk in vocab.items():
+            others = set()
+            for k2, v2 in vocab.items():
+                if k2 != k:
+                    others |= v2
+            if not vk or not others:
+                continue
+            share = len(vk & others) / float(len(vk))
+            stats[f"vocab_share_{k}"] = round(share, 3)
+            if share < 0.15:
+                critical.append(
+                    f"[원고이상] {k}: 지문 어휘가 다른 스텝과 "
+                    f"{int(share * 100)}%%밖에 겹치지 않습니다 — 다른 "
+                    f"강/교재 원고 혼입 의심 (파일 "
+                    f"'{(steps.get(k) or {}).get('filename', '')}')")
+
+    if log:
+        for m in critical:
+            log("⚠️ " + m)
+        for m in warnings:
+            log("⚠️ " + m)
+    return critical, warnings, stats
+
+
+# M3 — 스텝별 '유닛 수'(=지문 수) 편차. 지문 1개당 유닛 1개인 스텝들만 본다
+# (문장배열/본문정리/영작은 지문당 문항이 여러 개라 제외). 여기서 어긋나면
+# 그 스텝의 지문번호/블록 인식이 깨진 것이다 — 11강 실증: 어휘선택 계열이
+# 5지문인데 1유닛(라벨 미인식)이었고, 어법 계열은 4로 정상이었다.
+_ONE_UNIT_PER_PASSAGE = ("step1_a1", "step1_a1_2", "step1_a2", "step1_b2",
+                         "step2_a1", "step2_a1_btm", "step2_b1", "step2_c1")
+
+
+def inspect_plan_units(plan, log=None):
+    """플랜의 스텝별 유닛 수 교차검증 → (critical, warnings, stats)"""
+    critical, warnings, stats = [], [], {}
+    counts = {}
+    for fl in (plan or {}).get("flows", []) or []:
+        step = fl.get("step")
+        if step in _ONE_UNIT_PER_PASSAGE:
+            counts[step] = len(fl.get("units") or [])
+    stats["unit_counts"] = dict(counts)
+    if len(counts) >= 3:
+        vals = sorted(counts.values())
+        mode = max(set(vals), key=vals.count)
+        stats["unit_count_mode"] = mode
+        odd = {k: n for k, n in counts.items() if abs(n - mode) > 1}
+        if odd:
+            critical.append(
+                "[지문수불일치] 이 강의 지문은 %d개인데 " % mode
+                + ", ".join("%s=%d" % (k, n) for k, n in sorted(odd.items()))
+                + " — 해당 스텝의 지문번호/블록 인식 실패 (라벨 형식 확인)")
+    if log:
+        for m in critical:
+            log("⚠️ " + m)
+    return critical, warnings, stats
