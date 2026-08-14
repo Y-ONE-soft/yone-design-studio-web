@@ -2398,6 +2398,7 @@ function fitBlankRuns(doc) {
                 guard++;
                 var over = 0;
                 try {
+                    // 이 빈칸이 놓인 '줄'의 넘침만 본다 (단락 전체가 아니라)
                     var lines = run.lines.everyItem().getElements();
                     for (var li = 0; li < lines.length; li++) {
                         var lf = lines[li].parentTextFrames[0];
@@ -2414,9 +2415,15 @@ function fitBlankRuns(doc) {
                 if (over <= TOL) { break; }
                 var len = 0;
                 try { len = run.characters.length; } catch (e) { break; }
-                if (len <= MIN_KEEP) { capped++; break; }
+                if (len <= MIN_KEEP) {
+                    capped++;
+                    wlog("[경고] 빈칸 길이: 최소 " + MIN_KEEP + "칸으로도 "
+                         + Math.round(over * 100) / 100 + "mm 넘침 — "
+                         + String(run.paragraphs[0].contents).substr(0, 40));
+                    break;
+                }
                 try {
-                    run.characters[-1].remove();
+                    run.characters.itemByRange(len - 1, len - 1).remove();
                     trimmed++;
                     did = true;
                 } catch (e) { break; }
