@@ -553,6 +553,16 @@ _RE_ANSWER_AND_EXPLANATION = re.compile(
 _RE_QUICK_ANSWER = re.compile(
     r'^\s*빠른\s*정답\s*찾기\s*$', re.UNICODE
 )
+# W68 (수특라이트 11강 실증 — 사용자 지적 "영작배열도 기출 로그 노출"):
+# 정답부 제목이 "11강. 흐름에 무관한 문장 찾기  —  정답"처럼 **유형명이
+# 앞에 붙은** 형태로 와서 위 열거 패턴이 전부 빗나갔다(→ 정답부가 문제지에
+# 그대로 인쇄 + 지문이 2배). 형태를 더 열거하는 대신 의미로 본다:
+# '한글이 있는 짧은 단독 줄이 정답/해설로 끝나면 그 아래는 정답부'.
+# 발문(…시오/…것은?)·본문 문장은 종결형/길이로 배제한다.
+_RE_ANSWER_TITLE_TAIL = re.compile(
+    r'^(?=.*[가-힣])(?!.*(?:시오|세요|것은|하시오)\s*[.?]?\s*$)'
+    r'.{0,40}?[\s\-–—:·,]*(?:정답|해설)\s*(?:지|표)?\s*$', re.UNICODE
+)
 
 
 def _remove_answer_section(paras, log=None):
@@ -575,6 +585,10 @@ def _remove_answer_section(paras, log=None):
         if _RE_ANSWER_AND_EXPLANATION.match(text):
             return paras[:i]
         if _RE_QUICK_ANSWER.match(text):
+            return paras[:i]
+        if _RE_ANSWER_TITLE_TAIL.match(text):
+            if log:
+                log(f"[파서] 정답부 절단: {text[:40]!r} 이후 제거")
             return paras[:i]
         # "번호" 단독 줄 + "정답" 단독 줄 연속 = 정답 테이블 시작
         if _RE_ANSWER_HEADER.match(text) and i > 0:

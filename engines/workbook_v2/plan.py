@@ -1417,6 +1417,11 @@ def _bracket_label_text(text):
         return text
     if t.startswith("[") and t.endswith("]"):
         return t
+    # W68: "1번"/"1" 꼴은 다른 스텝의 지문번호(01,02…)와 같은 표기로 —
+    # 한 강 안에서 섹션마다 번호 표기가 달라 보이지 않게 한다.
+    m = re.match(r"^(\d{1,2})\s*번?$", t)
+    if m:
+        t = "%02d" % int(m.group(1))
     return "[" + t + "]"
 
 
@@ -1434,9 +1439,17 @@ def _absorbed_idx(paragraphs):
 
 
 def _bracket_fallback_idx(paragraphs):
-    """bracket 부재 시 구조 헤더 인덱스 집합 (있으면 empty set)."""
+    """지문 시작 구조 헤더 인덱스 집합 (bracket 라벨을 보완).
+
+    W68 (수특라이트 11강 실증 — 사용자 지적 "지문번호 인식 못했어"):
+    이 원고의 지문 라벨은 `[gateway]` **하나만** 대괄호고 나머지 넷은
+    평문("11강 1번")이다. 구 규칙은 '대괄호가 하나라도 있으면 구조
+    폴백을 끈다'였기 때문에 라벨 5개 중 1개만 앵커가 되어 지문 5개가
+    한 유닛으로 뭉쳤다(=지문번호 실종). 대괄호 수보다 구조 헤더가
+    많으면 둘의 합집합을 앵커로 쓴다 — 대괄호가 제대로 라벨 노릇을
+    하는 기존 원고(대괄호 ≥ 구조 헤더)는 판정이 그대로다."""
     texts = [(p.get("text") or "") for p in paragraphs or []]
-    if not texts or any(_is_bracket_para(t) for t in texts):
+    if not texts:
         return set()
     try:
         det = detect_headers(texts, legacy=is_header_line)
@@ -1446,7 +1459,11 @@ def _bracket_fallback_idx(paragraphs):
     # 잘게 쪼개지는 것 방지
     strong = {c["i"] for c in det.candidates
               if c["signals"].get("body_next")}
-    return {i for i in det.header_idx if i in strong}
+    heads = {i for i in det.header_idx if i in strong}
+    n_bracket = sum(1 for t in texts if _is_bracket_para(t))
+    if n_bracket and len(heads) <= n_bracket:
+        return set()        # 대괄호가 라벨 노릇을 하고 있다 — 기존 동작
+    return heads
 
 
 def _is_bracket_para(text):
