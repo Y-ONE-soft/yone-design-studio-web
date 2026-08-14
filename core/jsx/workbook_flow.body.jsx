@@ -2486,7 +2486,7 @@ function fitUnitsInFrames(doc, flowStories, op) {
     var maxSpill = (op.max_spill_lines !== undefined
                     && op.max_spill_lines !== null) ? op.max_spill_lines : 5;
     var steps = op.steps || null;   // null이면 break_per_unit 플로우 전부
-    var fixed = 0, gaveUp = 0, checked = 0;
+    var fixed = 0, gaveUp = 0, checked = 0, skipped = 0;
 
     function frameIdAt(para, last) {
         try {
@@ -2532,8 +2532,8 @@ function fitUnitsInFrames(doc, flowStories, op) {
             if (frameIdAt(paras[b], true) === headId) { continue; }  // 이미 OK
             var spill = spillLines(paras, a, b, headId);
             if (spill === 0 || spill > maxSpill) {
-                // 정말 긴 유닛(step3 문제 pool 등)은 대상이 아니다 —
-                // 조용히 통과 (침묵 금지 대상은 '시도했는데 실패'만)
+                // 정말 긴 유닛(step3 문제 pool 등)은 대상 밖 — 건수만 집계
+                if (spill > maxSpill) { skipped++; }
                 continue;
             }
             // 조정 대상 = 산문 단락
@@ -2595,7 +2595,7 @@ function fitUnitsInFrames(doc, flowStories, op) {
         }
     }
     wlog("유닛 프레임 수용: 검사 " + checked + " / 조정 " + fixed
-         + " / 미해결 " + gaveUp);
+         + " / 미해결 " + gaveUp + " / 대상밖(장문) " + skipped);
 }
 
 function textbookPostprocess(doc) {
