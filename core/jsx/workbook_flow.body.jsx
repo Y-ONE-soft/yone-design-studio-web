@@ -2393,6 +2393,11 @@ function fitBlankRuns(doc) {
         var hits = doc.findGrep();
         for (var hi = hits.length - 1; hi >= 0; hi--) {
             var run = hits[hi];
+            // 우리가 만든 '빈칸'만 — 밑줄 친 공백 런 (원고에 원래 들어있던
+            // U+00A0은 본문 문자다. 길이를 건드리면 내용 변조가 된다)
+            var isUl = false;
+            try { isUl = (run.underline === true); } catch (e) { isUl = false; }
+            if (!isUl) { continue; }
             var guard = 0, did = false;
             while (guard < 60) {
                 guard++;
