@@ -2140,8 +2140,25 @@ def build_step2_c2(step_data, workbook_type="모의고사"):
     det = _step_header_detection(
         step_data, "step2_c2",
         legacy=lambda t: is_header_line(_norm_header(t)), strict=False)
-    for i, p in enumerate(step_data.get("paragraphs", []) or []):
+    # W67 (사용자 지적 2026-08-14 "영작배열은 왜 지문 번호 없이 다 이어져서
+    # 들어갔어"): C2의 유닛 분할·지문번호는 bracket 단락이 담당하는데,
+    # 이 원고의 지문 헤더는 "1. p50-no.01" p형이라 bracket이 하나도 없어
+    # 전부 '헤더 제거' 대상이 됐다 → 유닛 1개, 라벨 0개. bracket이 없는
+    # 원고에선 구조 헤더를 [라벨]로 정규화해 그 자리를 대신하게 한다
+    # (A1/B1이 W59/W62에서 쓰는 _bracket_fallback_idx와 같은 계약).
+    # bracket이 하나도 없는 원고에서만 발동 — 기존 bracket 원고는 무영향.
+    _c2_paras = step_data.get("paragraphs", []) or []
+    _no_bracket = not any(_c2_is_bracket(q.get("text") or "")
+                          for q in _c2_paras)
+    for i, p in enumerate(_c2_paras):
         text = p.get("text") or ""
+        if _no_bracket and det.is_header(i) and det.via(i) != "seq":
+            lab = re.sub(r"^\s*\[|\]\s*$", "", _header_label(text) or "")
+            lab = lab.strip()
+            if lab:
+                kept.append({"text": "[" + lab + "]",
+                             "runs": [{"t": "[" + lab + "]", "ul": False}]})
+                continue
         if _RE_C2_SOLO_NUM.match(text):
             continue
         if _is_blank(text):

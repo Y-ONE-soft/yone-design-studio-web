@@ -16,6 +16,7 @@ docx/hwp 원고 → 단락 목록 → STEP별 분류 → content.json
   {"text": str, "runs": [{"t": str, "ul": bool}]}
 """
 
+import hashlib
 import html
 import json
 import logging
@@ -2022,6 +2023,36 @@ def _normalize_bracket_tail_headers(paragraphs):
     return result
 
 
+def _same_content_as_used(fpath, used_files):
+    """이미 소비한 원고와 **내용이 같은 파일**인가 (W67).
+
+    통합웹 업로드는 원본을 'manuscripts_<원래이름>'으로 저장하고, 엔진이
+    같은 폴더에 접두를 뗀 사본('<원래이름>')을 또 만든다 — 폴더에 같은
+    원고가 두 벌 있게 된다. 이름이 다르니 '남은 파일'로 보여 A1 보충
+    흡수가 통째로 한 번 더 먹었고, 지문이 정확히 2배가 됐다 (사용자 지적
+    2026-08-14: "어휘선택1 어휘선택2 어휘선택1"). 이름 규칙이 아니라
+    **바이트 동일성**으로 판정한다 — 접두 규칙이 바뀌어도 안 깨진다."""
+    try:
+        size = os.path.getsize(fpath)
+    except OSError:
+        return False
+    digest = None
+    for u in used_files or ():
+        try:
+            if os.path.getsize(u) != size:
+                continue
+        except OSError:
+            continue
+        if digest is None:
+            digest = hashlib.md5(open(fpath, "rb").read()).hexdigest()
+        try:
+            if hashlib.md5(open(u, "rb").read()).hexdigest() == digest:
+                return True
+        except OSError:
+            continue
+    return False
+
+
 def _absorb_a1_supplements(manuscript_dir, used_files, result, short_nums,
                            log=None):
     """A1(어휘선택) 보충 원고를 같은 섹션 키에 이어붙인다.
@@ -2044,6 +2075,8 @@ def _absorb_a1_supplements(manuscript_dir, used_files, result, short_nums,
         fpath = os.path.join(manuscript_dir, name)
         if _n(fpath) in used_n or not os.path.isfile(fpath):
             continue
+        if _same_content_as_used(fpath, used):
+            continue    # W67: 업로드 원본/엔진 사본 두 벌 — 같은 원고 재흡수 금지
         ext = os.path.splitext(name)[1].lower()
         try:
             if ext == ".docx":
@@ -2098,6 +2131,8 @@ def _find_manuscript_file_by_content(manuscript_dir, step_key, used_files,
         fpath = os.path.join(manuscript_dir, name)
         if fpath in used or not os.path.isfile(fpath):
             continue
+        if _same_content_as_used(fpath, used):
+            continue    # W67: 업로드 원본/엔진 사본 두 벌 — 같은 원고 재선택 금지
         ext = os.path.splitext(name)[1].lower()
         try:
             if ext == ".docx":
