@@ -303,6 +303,7 @@ var TBL_INSET = 1;
 // (행 높이는 지정하지 않는다 — 완성본 실측값 헤더 4.822 / 답 6.233mm는
 //  autoGrow 결과값이다. 아래 insertAnswerTable 주석 참조)
 var _tblSwatch = undefined;
+var _answerTableIds = [];      // 삽입한 답표 id — 저장 직전 서식 재확정용
 
 function answerTableSwatch(doc) {
     if (_tblSwatch !== undefined) { return _tblSwatch; }
@@ -397,12 +398,6 @@ function insertAnswerTable(doc, para, spec, styleOf) {
             try { cell.texts[0].clearOverrides(OverrideType.CHARACTER_ONLY); }
             catch (eO) { try { cell.texts[0].clearOverrides(); } catch (eO2) {} }
             cell.texts[0].justification = Justification.CENTER_ALIGN;
-            if (c === 0) {
-                wlog("[답표] 헤더 서식: cs="
-                     + cell.texts[0].appliedCharacterStyle.name + " size="
-                     + cell.texts[0].pointSize + " fill="
-                     + cell.texts[0].fillColor.name);
-            }
         } catch (e) { wlog("[경고] 답표 헤더 서식 실패: " + e); }
     }
     for (var r = 0; r < tbl.rows.length; r++) {
@@ -415,7 +410,45 @@ function insertAnswerTable(doc, para, spec, styleOf) {
         try { tbl.rows[r].keepWithNextRow = (r < tbl.rows.length - 1); }
         catch (e) {}
     }
+    try { _answerTableIds.push(tbl.id); } catch (e) {}
     return true;
+}
+
+// 저장 직전 답표 헤더 서식 재확정 — 삽입 시점엔 [없음]/8pt/Black으로
+// 들어가는데(로그 실증) 뒤따르는 리플로우/정리 op를 거치면 스토리 기본
+// 문자서식('투명 0.1pt' 마커 잔재)으로 되돌아가 헤더가 안 보였다.
+// 결정적 사후 보정 — 아이콘 pad 보정(_fixAnchorPad)과 같은 패턴.
+function refixAnswerTableHeaders(doc) {
+    if (!_answerTableIds.length) { return; }
+    var want = {};
+    for (var i = 0; i < _answerTableIds.length; i++) {
+        want[String(_answerTableIds[i])] = true;
+    }
+    var n = 0, bad = 0;
+    for (var s = 0; s < doc.stories.length; s++) {
+        var tbs = null;
+        try { tbs = doc.stories[s].tables; } catch (e) { continue; }
+        for (var t = 0; t < tbs.length; t++) {
+            var tb = tbs[t];
+            var tid = "";
+            try { tid = String(tb.id); } catch (e) { continue; }
+            if (!want[tid]) { continue; }
+            for (var c = 0; c < tb.columns.length; c++) {
+                try {
+                    var cx = tb.rows[0].cells[c].texts[0];
+                    if (!String(cx.contents)) { continue; }
+                    cx.appliedCharacterStyle = doc.characterStyles[0];
+                    try { cx.clearOverrides(OverrideType.CHARACTER_ONLY); }
+                    catch (e1) { try { cx.clearOverrides(); } catch (e2) {} }
+                    cx.justification = Justification.CENTER_ALIGN;
+                    if (Number(cx.pointSize) < 1) { bad++; }
+                } catch (e) {}
+            }
+            n++;
+        }
+    }
+    wlog("답표 헤더 서식 재확정: " + n + "개"
+         + (bad > 0 ? " / [경고] 미해결 " + bad + "셀" : ""));
 }
 
 // ── W11 op: 독립 지문번호 프레임 갱신 (plan.passage_numbers가 있을 때만) ────
@@ -2971,6 +3004,11 @@ try {
                      ScriptLanguage.JAVASCRIPT, undefined,
                      UndoModes.ENTIRE_SCRIPT, "wb_v2 choice_tabs");
     }
+
+    // W66: 답표 헤더 서식 재확정 — 모든 op 이후, 저장 직전
+    app.doScript(function () { refixAnswerTableHeaders(doc); },
+                 ScriptLanguage.JAVASCRIPT, undefined,
+                 UndoModes.ENTIRE_SCRIPT, "wb_v2 answer_table_headers");
 
     var ovf = 0;
     for (var s3 = 0; s3 < doc.stories.length; s3++) {
