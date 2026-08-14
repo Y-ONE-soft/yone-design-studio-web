@@ -2544,6 +2544,20 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                         "(place 실패/링크 파일 접근 불가 의심): "
                         + " | ".join(icon_missing))
 
+    # W68 — 원고/플랜 교차검증 (형식 무관 불변식). 사용자가 눈으로 잡던
+    # '지문번호 미인식/원고 사고'를 완제품 게이트에서 강제로 세운다.
+    try:
+        mc, mw, ms = inspect_manuscript_consistency(content)
+        pc, pw, ps = inspect_plan_units(plan)
+        critical.extend(mc)
+        critical.extend(pc)
+        warnings.extend(mw)
+        warnings.extend(pw)
+        stats.update(ms)
+        stats.update(ps)
+    except Exception as e:                                     # noqa: BLE001
+        warnings.append(f"[교차검증] 실행 실패: {e}")
+
     return {"ok": not critical, "critical": critical, "warnings": warnings,
             "stats": stats}
 
@@ -2655,9 +2669,10 @@ def inspect_plan_units(plan, log=None):
         odd = {k: n for k, n in counts.items() if abs(n - mode) > 1}
         if odd:
             critical.append(
-                "[지문수불일치] 이 강의 지문은 %d개인데 " % mode
-                + ", ".join("%s=%d" % (k, n) for k, n in sorted(odd.items()))
-                + " — 해당 스텝의 지문번호/블록 인식 실패 (라벨 형식 확인)")
+                "[지문수불일치] 스텝별 지문 수가 어긋납니다 ("
+                + ", ".join("%s=%d" % (k, n) for k, n in sorted(counts.items()))
+                + ") — 다수(%d개)와 다른 %s의 지문번호/블록 인식 실패"
+                % (mode, "/".join(sorted(odd))))
     if log:
         for m in critical:
             log("⚠️ " + m)

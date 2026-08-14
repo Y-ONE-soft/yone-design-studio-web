@@ -209,6 +209,14 @@ class WorkbookV2Engine(BaseEngine):
         with open(json_path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
         log(f"[v2 파서] 완료: {len(data.get('steps', {}))}개 STEP")
+        # W68: 원고 자체의 정합성을 조판 '전에' 본다 — 잘못된 파일/다른 강
+        # 원고가 섞이면 여기서 [원고이상]으로 뜬다 (사용자 육안 검수 대체)
+        try:
+            from engines.workbook_v2.gate import (
+                inspect_manuscript_consistency)
+            inspect_manuscript_consistency(data, log=log)
+        except Exception as e:                                 # noqa: BLE001
+            log(f"[교차검증] 원고 검사 실패(무시하고 진행): {e}")
         return json_path
 
     # ── 파생 엔진 훅 (workbook_supp_v2 등이 오버라이드 — 기본은 v1 규칙) ────
