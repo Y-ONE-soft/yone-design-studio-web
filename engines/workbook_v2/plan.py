@@ -1417,10 +1417,12 @@ def _bracket_label_text(text):
         return text
     if t.startswith("[") and t.endswith("]"):
         return t
-    # W68: "1번"/"1" 꼴은 다른 스텝의 지문번호(01,02…)와 같은 표기로 —
-    # 한 강 안에서 섹션마다 번호 표기가 달라 보이지 않게 한다.
-    m = re.match(r"^(\d{1,2})\s*번?$", t)
-    if m:
+    # W68: "1번"/"1"/"exercise 01" 꼴은 다른 스텝의 지문번호(01,02…)와 같은
+    # 표기로 — 한 강 안에서 섹션마다 번호 표기가 달라 보이지 않게 한다.
+    # ("MR1"처럼 공백 없이 붙은 코너명은 라벨 자체라 건드리지 않는다.)
+    m = re.match(r"^(?:\d{1,2}강\s*[.,]?\s*)?"
+                 r"(?:exercise|ex|no\.?|번호)?\s*(\d{1,3})\s*번?$", t, re.I)
+    if m and m.group(1):
         t = "%02d" % int(m.group(1))
     return "[" + t + "]"
 
@@ -2122,11 +2124,41 @@ def build_step1_b1(step_data):
             item["icon"] = dict(_ICON_STEP1_Q)
 
     # 6) 유닛 분할: bracket(2번째+) + 모든 "다음" 발문 (v1 프레임브레이크 대상)
+    # W68 (11강 실증 — 사용자 지적 "본문정리는 또 왜 이러는 건데"): 이 원고의
+    # 지문 라벨은 대괄호가 아니라 평문("11강 exercise 01")이라 경계가 되지
+    # 못했고, 다음 지문 블록이 앞 문항(하단)의 꼬리에 그대로 붙었다.
+    # a1/a2/b2와 같은 계약으로 구조 헤더도 경계·지문번호로 쓴다.
+    # (인덱스는 위 병합/빈줄 삽입으로 밀리므로 **텍스트**로 대조한다.)
+    _b1_src = step_data.get("paragraphs") or []
+    _b1_fb = _bracket_fallback_idx(_b1_src)
+    _b1_labels = set()
+    for _i in _b1_fb:
+        _lt = re.sub(r"\s+", " ", (_b1_src[_i].get("text") or "")).strip()
+        if _lt:
+            _b1_labels.add(_lt)
+    # 첫 지문의 라벨은 detect_headers가 '앞 문맥 없음'으로 후보에서 빼므로
+    # (11강 '11강., Gateway') 선두 짧은 라벨 한 줄을 같은 자격으로 인정한다.
+    for _p in _b1_src:
+        _lt = re.sub(r"\s+", " ", (_p.get("text") or "")).strip()
+        if not _lt:
+            continue
+        if (len(_lt) <= 30 and not re.search(r"[.?!]\s*$", _lt)
+                and len(re.findall(r"[A-Za-z]{2,}", _lt)) <= 3):
+            _b1_labels.add(_lt)
+        break
+
     units = []
     cur = []
     seen_bracket = False
     for item in out:
         t = item["t"]
+        _norm = re.sub(r"\s+", " ", t).strip()
+        if not _is_bracket_para(t) and _norm and _norm in _b1_labels:
+            # 평문 라벨 → 다른 스텝과 같은 [라벨] 표기로 (지문번호 스타일)
+            t = _bracket_label_text(_norm)
+            item["t"] = t
+            item["runs"] = [{"t": t, "ul": False}]
+            item["s"] = "$BASIC"
         if _is_bracket_para(t):
             # W63: 지문번호 표기를 다른 스텝과 통일 ("[1과 MR1]"→"[MR1]")
             inner = re.sub(r"^\s*\[|\]\s*$", "", t)
