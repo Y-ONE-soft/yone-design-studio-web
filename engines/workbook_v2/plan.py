@@ -2934,6 +2934,33 @@ def build_step1_c1(step_data, workbook_type="모의고사", exclude_btm=False,
             para["icon"] = it["icon"]
         cur.append(para)
     _flush()
+
+    # W68 (11강 실증 — 사용자 지적 "왜 여기가 말썽이야"): 지문번호만 있고
+    # 내용이 없는 유닛이 프레임을 한 칸 차지해, 상단(배열)/하단(문장삽입)
+    # 짝이 어긋나고 페이지 절반이 비었다. 원인은 원고가 같은 지문을 여러
+    # 문항에 재사용하는 형식(1.p74-no.01 … 4.p74-no.01)이라, 지문번호
+    # 헤더 바로 뒤에 하단 스타일 단락이 오면 헤더 직후에 또 프레임을
+    # 끊기 때문. 라벨만 남은 유닛은 **다음 유닛의 머리로 병합**한다
+    # (프레임 시작 동작은 다음 유닛 것을 따른다 — 새 페이지로 밀지 않음).
+    if len(units) > 1:
+        merged, i, orphan = [], 0, 0
+        while i < len(units):
+            u = units[i]
+            body = [p for p in u["paras"] if (p.get("t") or "").strip()]
+            if (i + 1 < len(units) and len(body) == 1
+                    and _RE_C1_HEADER.match(body[0].get("t") or "")):
+                nxt = units[i + 1]
+                nxt["paras"] = list(u["paras"]) + list(nxt["paras"])
+                orphan += 1
+                i += 1
+                continue
+            merged.append(u)
+            i += 1
+        if orphan:
+            units = merged
+            warnings.append(
+                "step1_c1: 라벨만 있는 빈 유닛 %d개를 다음 블록에 병합 "
+                "(상·하단 프레임 짝 맞춤)" % orphan)
     return {"units": units, "warnings": warnings}
 
 
