@@ -2129,6 +2129,78 @@ def _absorb_a1_supplements(manuscript_dir, used_files, result, short_nums,
         used_n.add(_n(fpath))
 
 
+# W68 (11강 실증): 이름으로 고른 파일에 '지문'이 아예 없으면 잘못 고른
+# 것이다 — 같은 스텝의 다른 후보 중 지문이 있는 파일로 갈아탄다.
+# (11강 빈칸어휘: config가 가리키는 '정답지'에는 정답 단어 목록만 있고,
+#  실제 지문+빈칸은 나중에 올라온 '해설지'에 있었다. 파일명 규칙을 또
+#  늘리는 대신 '내용에 지문이 있는가'로 자가 교정한다.)
+_RE_MANU_ENG_WORD = re.compile(r"[A-Za-z][A-Za-z'\-]{2,}")
+_MANU_PASSAGE_STEPS = {"step1_a1", "step1_a2", "step1_b1", "step1_b2",
+                       "step1_c1", "step1_c2", "step2_a1", "step2_a1_btm",
+                       "step2_b1", "step2_c1", "step2_c2"}
+
+
+def _manu_passage_count(paras):
+    n = 0
+    for p in paras or []:
+        t = (p.get("text") if isinstance(p, dict) else str(p)) or ""
+        if len(_RE_MANU_ENG_WORD.findall(t)) >= 12:
+            n += 1
+    return n
+
+
+def _manu_core_name(filename):
+    """'Step1 C2 빈칸어휘 정답지.docx' → 'step1c2빈칸어휘' (정답/해설/문제 꼬리 제거)"""
+    base = os.path.splitext(unicodedata.normalize("NFC", filename))[0]
+    base = re.sub(r"(정답지?|해설지?|문제지?)", "", base)
+    return re.sub(r"[^A-Za-z0-9가-힣]", "", base).lower()
+
+
+def _find_passage_alternative(manuscript_dir, expected_filename, used_files,
+                              extract_ul, log=None):
+    """같은 스텝 이름 계열 파일 중 '지문이 있는' 대체 후보 → (path, paras)"""
+    core = _manu_core_name(expected_filename)
+    if len(core) < 6:
+        return None, None
+    used = {unicodedata.normalize("NFC", u) for u in (used_files or set())}
+    best = None
+    try:
+        names = sorted(os.listdir(manuscript_dir))
+    except OSError:
+        return None, None
+    for name in names:
+        fpath = os.path.join(manuscript_dir, name)
+        if unicodedata.normalize("NFC", fpath) in used:
+            continue
+        if not os.path.isfile(fpath):
+            continue
+        if core not in _manu_core_name(name):
+            continue
+        ext = os.path.splitext(name)[1].lower()
+        try:
+            if ext == ".docx":
+                paras = _docx_extract_paragraphs(fpath, extract_ul)
+            elif ext in (".hwp", ".hwpx"):
+                paras = _hwp_extract_paragraphs(fpath, extract_ul)
+            else:
+                continue
+        except Exception:                                      # noqa: BLE001
+            continue
+        n = _manu_passage_count(paras)
+        if n == 0:
+            continue
+        # 정답/해설 표기가 붙은 원고 우선 (config가 그 계열을 가리킨다)
+        rank = (1 if re.search(r"(해설|정답)", name) else 0, n)
+        if best is None or rank > best[0]:
+            best = (rank, fpath, paras)
+    if best is None:
+        return None, None
+    if log:
+        log("[선택] 지문 없는 원고 교체: '%s' → '%s' (지문 %d개)"
+            % (expected_filename, os.path.basename(best[1]), best[0][1]))
+    return best[1], best[2]
+
+
 def _find_manuscript_file_by_content(manuscript_dir, step_key, used_files,
                                      log=None):
     """이름 매칭이 실패했을 때 폴더의 남은 원고를 **내용**으로 골라낸다."""
@@ -2453,6 +2525,20 @@ def parse_manuscript_folder(manuscript_dir, config, grade, year, month, log=None
         else:
             log(f"[파서] 미지원 형식: {ext}")
             continue
+
+        # W68: 고른 원고에 지문이 하나도 없으면 같은 계열의 다른 파일로 교체
+        if (step_key in _MANU_PASSAGE_STEPS
+                and _manu_passage_count(paras) == 0):
+            alt_path, alt_paras = _find_passage_alternative(
+                manuscript_dir, filename, used_files, extract_ul, log)
+            if alt_path:
+                used_files.add(alt_path)
+                fpath, filename, paras = (alt_path,
+                                          os.path.basename(alt_path),
+                                          alt_paras)
+            else:
+                log(f"⚠️ [원고이상] {step_key}: '{filename}'에 지문이 없고 "
+                    f"대체 원고도 없습니다 — 원고 확인 필요")
 
         # 문항별 발문형 하단 문제 헤더("1. …틀린 것은? [20]") → 표준 형식
         # 하단 문제 섹션에서만 — 다른 섹션 원고의 대괄호 줄은 건드리지 않는다
