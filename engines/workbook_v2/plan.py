@@ -1413,6 +1413,7 @@ def _bracket_label_text(text):
     제거한다."""
     t = re.sub(r"\s+", " ", (text or "")).strip()
     t = _RE_LEAD_LESSON.sub("", t)
+    t = t.lstrip(" .,·-–—")          # W68: "11강., Gateway" → "Gateway"
     if not t:
         return text
     if t.startswith("[") and t.endswith("]"):
@@ -2138,7 +2139,9 @@ def build_step1_b1(step_data):
             _b1_labels.add(_lt)
     # 첫 지문의 라벨은 detect_headers가 '앞 문맥 없음'으로 후보에서 빼므로
     # (11강 '11강., Gateway') 선두 짧은 라벨 한 줄을 같은 자격으로 인정한다.
-    for _p in _b1_src:
+    # 단, 이미 구조 라벨이 잡힌 원고(=대괄호 라벨이 없는 원고)에서만 —
+    # 대괄호로 라벨이 오는 기존 교재는 판정이 그대로다.
+    for _p in (_b1_src if _b1_fb else []):
         _lt = re.sub(r"\s+", " ", (_p.get("text") or "")).strip()
         if not _lt:
             continue
