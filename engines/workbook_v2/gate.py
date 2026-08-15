@@ -2505,7 +2505,16 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         # [해설] 마커 셀은 각주 분류로 이미 제거되고 수정문만 살아남는다).
         # 답란 '→ m____'/'→\t' 류는 영단어가 적어 안 걸리고, 빈칸 라벨
         # ((ㄱ)/(A) 류)이 있는 줄은 채울 문제 재료라 제외.
-        if tt.startswith("→") and "_" not in tt \
+        # W68: 빈칸이 있는 줄은 정답문이 아니라 '채울 문제'다. 빈칸 표기는
+        # 밑줄(_)만이 아니라 원문자+공백런(ⓐ____)도 있고, 공백런은 _clean이
+        # 한 칸으로 접어버리므로 **원문(t)** 에서 검사한다 (11강 실증:
+        # "→ some parents may ⓐ___ and ⓑ___ to arranged marriages…"가
+        # 정답 누출로 오검출돼 게이트가 헛되이 FAIL).
+        raw = t or ""
+        has_blank = ("_" in tt
+                     or re.search(r"[_ ]{3,}", raw)
+                     or re.search(r"[ⓐ-ⓩ①-⑮][\s ]{2,}", raw))
+        if tt.startswith("→") and not has_blank \
                 and not re.search(r"\(\s*[ㄱ-ㅎA-E가-힣]\s*\)", tt) \
                 and len(re.findall(r"[A-Za-z][A-Za-z']{2,}", tt)) >= 8:
             ans_leak.append(tt[:60])
