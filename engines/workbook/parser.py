@@ -2150,10 +2150,15 @@ def _manu_passage_count(paras):
 
 
 def _manu_core_name(filename):
-    """'Step1 C2 빈칸어휘 정답지.docx' → 'step1c2빈칸어휘' (정답/해설/문제 꼬리 제거)"""
+    """'Step1 C2 빈칸어휘 정답지.docx' → 'step1c2빈칸어휘'.
+
+    업로드 접두(manuscripts_)와 이중 확장자('… 정답지. docx.docx'),
+    정답/해설/문제 꼬리를 모두 벗겨 스텝 계열 이름만 남긴다."""
     base = os.path.splitext(unicodedata.normalize("NFC", filename))[0]
+    base = re.sub(r"^manuscripts_", "", base)
     base = re.sub(r"(정답지?|해설지?|문제지?)", "", base)
-    return re.sub(r"[^A-Za-z0-9가-힣]", "", base).lower()
+    base = re.sub(r"[^A-Za-z0-9가-힣]", "", base).lower()
+    return re.sub(r"docx?$", "", base)
 
 
 def _find_passage_alternative(manuscript_dir, expected_filename, used_files,
@@ -2174,7 +2179,8 @@ def _find_passage_alternative(manuscript_dir, expected_filename, used_files,
             continue
         if not os.path.isfile(fpath):
             continue
-        if core not in _manu_core_name(name):
+        cand_core = _manu_core_name(name)
+        if not (core in cand_core or cand_core in core):
             continue
         ext = os.path.splitext(name)[1].lower()
         try:
