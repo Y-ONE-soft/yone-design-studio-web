@@ -126,10 +126,14 @@ class BaenjeV2Engine(BaseEngine):
                     break
             if first is None:
                 continue
-            lm = _RE_LESSON.search(os.path.basename(path))
-            text = f"{subject} Lesson {lm.group(1)}" if (lm and subject) \
-                else (f"Lesson {lm.group(1)}" if lm else os.path.splitext(
-                    os.path.basename(path))[0])
+            # macOS/GDrive 파일명은 NFD로 오므로 정규화 후 매칭
+            base = _nfc(os.path.basename(path))
+            lm = _RE_LESSON.search(base)
+            if lm:
+                text = f"{subject} Lesson {lm.group(1)}".strip() if subject \
+                    else f"Lesson {lm.group(1)}"
+            else:
+                text = os.path.splitext(base)[0]
             labels.append({"start_q": first, "text": text})
             if seen_first is None:
                 seen_first = first

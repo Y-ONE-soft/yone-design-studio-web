@@ -235,20 +235,27 @@ class WorkbookSelectEngine(WorkbookV2Engine):
             return [], "마더텅 예전 기출 폴더 없음: %s" % gdir
 
         gang_re = re.compile(r"^%d\s*강(?:\s|$)" % int(gang))
-        found = []
+        found, skipped = [], []
         for pool in sorted(pools):
             for raw in sorted(os.listdir(pool)):
                 n = _nfc(raw)
                 gp = os.path.join(pool, raw)
                 if not os.path.isdir(gp) or not gang_re.match(n):
                     continue
+                wb = None
                 for raw2 in os.listdir(gp):
                     if _nfc(raw2) == "워크북" and \
                             os.path.isdir(os.path.join(gp, raw2)):
-                        found.append(os.path.join(gp, raw2))
+                        wb = os.path.join(gp, raw2)
                         break
+                if wb:
+                    found.append(wb)
                 else:
-                    return [], "'%s' 안에 워크북 폴더 없음" % n
+                    # 강 폴더는 있는데 워크북 하위 폴더가 없다 — 다른 후보를
+                    # 버리지 말고 사유만 남긴다
+                    skipped.append("'%s' 안에 워크북 폴더 없음" % n)
+        if not found and skipped:
+            return [], " / ".join(skipped)
         if not found:
             names = ", ".join(sorted(_nfc(x) for x in os.listdir(pools[0]))[:12])
             return [], "%d강 폴더 없음 (%s 내: %s)" % (

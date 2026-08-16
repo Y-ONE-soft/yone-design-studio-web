@@ -42,11 +42,14 @@ def _python():
     global _py_cache
     if _py_cache:
         return _py_cache
+    # 탐색할 때도 PYTHONPATH 를 비운다 — Flask 가 물고 있는 3.9 site-packages 가
+    # 후보 파이썬에 섞이면 numpy import 가 깨져 멀쩡한 인터프리터가 탈락한다.
+    clean = {k: v for k, v in os.environ.items() if k != "PYTHONPATH"}
     tried = []
     for p in _PY_CANDIDATES:
         if not p or not os.path.exists(p):
             continue
-        r = subprocess.run([p, "-c", _NEEDED], capture_output=True, text=True)
+        r = subprocess.run([p, "-c", _NEEDED], capture_output=True, text=True, env=clean)
         if r.returncode == 0:
             _py_cache = p
             return p
@@ -129,8 +132,13 @@ def run():
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 400
 
+    try:
+        py = _python()
+    except RuntimeError as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
     env = dict(os.environ, COVER_SETTINGS=meta["설정"], COVER_ROOT=GEN_ROOT)
-    cmd = [sys.executable, os.path.join(GEN, "web_spine.py"),
+    env.pop("PYTHONPATH", None)      # Flask 의 3.9 site-packages 가 섞이면 import 가 꼬인다
+    cmd = [py, os.path.join(GEN, "web_spine.py"),
            "--school", vid, "--volume", vol, "--pages", str(pages)]
     if apply_:
         cmd.append("--apply")
