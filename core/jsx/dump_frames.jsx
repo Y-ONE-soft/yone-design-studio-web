@@ -54,13 +54,17 @@ try {
             try { gb = f.geometricBounds; } catch (eB) {}
             var nch = 0;
             try { nch = f.characters.length; } catch (eC) { nch = 0; }
-            var head = "", tail = "";
+            // 전문(全文)까지 담는다 — 스레드 안에서 지문 코드 마커가 프레임
+            // 중간에 나오는 경우를 잡으려면 머리 160자로는 부족하다
+            // (26년 6월 실전에서 지문 30·33이 정확히 이 형태였다).
+            var head = "", tail = "", full = "";
             if (nch > 0) {
-                try { head = f.texts[0].contents.substr(0, 160); } catch (eH) {}
                 try {
-                    var all = f.texts[0].contents;
-                    tail = all.substr(Math.max(0, all.length - 80));
-                } catch (eT) {}
+                    full = f.texts[0].contents;
+                    if (full.length > 12000) { full = full.substr(0, 12000); }
+                } catch (eF) {}
+                head = full.substr(0, 160);
+                tail = full.substr(Math.max(0, full.length - 80));
             }
             var sid = "", prev = "", next = "";
             try { sid = f.parentStory.id; } catch (eI) {}
@@ -83,6 +87,7 @@ try {
                 ',"gb":[' + num(gb[0]) + "," + num(gb[1]) + "," + num(gb[2]) + "," + num(gb[3]) + "]" +
                 ',"head":' + esc(head) +
                 ',"tail":' + esc(tail) +
+                ',"text":' + esc(full) +
                 "}");
         }
     }
