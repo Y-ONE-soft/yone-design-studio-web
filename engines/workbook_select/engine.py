@@ -114,6 +114,26 @@ class WorkbookSelectEngine(WorkbookV2Engine):
             return open(path, encoding="utf-8").read().strip()
         return default
 
+    def _resolve_mt_gang(self, uploaded_files, job_dir):
+        """이 job 의 마더텅 강 번호 — 미지정이면 None (엑셀을 아예 안 본다).
+
+        ⚠ config 기본값을 폴백으로 쓰지 않는다. 폴백을 쓰면 강 번호를 넣지
+        않은 **일반 모의고사 결합 job 까지 마더텅 job 이 되어**, 겹치는 코드가
+        마더텅 지문번호로 라벨되고 조판 순서까지 재정렬된다
+        (실측 2026-08-13: 강 미지정인데 231133·240632·250620 → 마더텅
+        2·6·17 로 매칭). 마더텅은 이 엔진의 편의 기능일 뿐이고,
+        기본 계약은 "라벨=YYMMQQ, 순서=입력순" 이다.
+        """
+        raw = ((uploaded_files or {}).get("mt_gang", "")
+               or self._get_meta(job_dir, "mt_gang", ""))
+        raw = str(raw or "").strip()
+        if not raw:
+            return None
+        try:
+            return int(raw)
+        except (TypeError, ValueError):
+            return None
+
     @staticmethod
     def _parse_codes(text):
         """입력 텍스트 → 순서 보존 6자리 코드 리스트 (중복 제거).
@@ -185,6 +205,57 @@ class WorkbookSelectEngine(WorkbookV2Engine):
         return None, "워크북 폴더 없음 (%s 내: %s)" % (wanted[0], listing)
 
     @staticmethod
+    def _find_gang_manuscript_dirs(base, grade_num, gang):
+        """마더텅 N강 원고 폴더(들)를 GDrive 에서 찾는다 → [워크북 폴더 경로].
+
+        실제 구조 (사용자 확인 2026-08-13):
+            {base}/고N/{학교}고N 마더텅 예전 기출/{gang}강 {유형}/워크북/
+                        Step1 A1 어휘선택.docx … Step3
+
+        회차 폴더(고N YY년 M월)가 없는 옛 기출은 여기에만 원고가 있다.
+        이전 구현은 /Users/Shared/wbsel_supplement 라는 **로컬 단일 폴더**를
+        봤는데, 그 사본이 불완전해 "보충 묶음에 A1 어휘선택이 없다"는
+        오진을 냈다(실제로는 11강 폴더에 있었다). 로컬 사본을 만들지 말고
+        원본 폴더를 직접 본다.
+
+        NFD 파일명 때문에 glob 은 못 쓴다 — listdir + NFC 정규화.
+        """
+        gdir = os.path.join(base, "고%s" % grade_num)
+        if not os.path.isdir(gdir):
+            return [], "학년 폴더 없음: %s" % gdir
+
+        # "한영고1 마더텅 예전 기출" 류 — 학교명이 앞에 붙어 있어 부분일치
+        pools = []
+        for raw in os.listdir(gdir):
+            n = _nfc(raw)
+            p = os.path.join(gdir, raw)
+            if os.path.isdir(p) and "마더텅" in n and "기출" in n:
+                pools.append(p)
+        if not pools:
+            return [], "마더텅 예전 기출 폴더 없음: %s" % gdir
+
+        gang_re = re.compile(r"^%d\s*강(?:\s|$)" % int(gang))
+        found = []
+        for pool in sorted(pools):
+            for raw in sorted(os.listdir(pool)):
+                n = _nfc(raw)
+                gp = os.path.join(pool, raw)
+                if not os.path.isdir(gp) or not gang_re.match(n):
+                    continue
+                for raw2 in os.listdir(gp):
+                    if _nfc(raw2) == "워크북" and \
+                            os.path.isdir(os.path.join(gp, raw2)):
+                        found.append(os.path.join(gp, raw2))
+                        break
+                else:
+                    return [], "'%s' 안에 워크북 폴더 없음" % n
+        if not found:
+            names = ", ".join(sorted(_nfc(x) for x in os.listdir(pools[0]))[:12])
+            return [], "%d강 폴더 없음 (%s 내: %s)" % (
+                int(gang), os.path.basename(pools[0]), names)
+        return found, None
+
+    @staticmethod
     def _copy_manuscripts(src_dir, dst_dir, log):
         """원고 파일 로컬 복사 — 루트 원고(.docx/.hwp/.hwpx) + Step3 폴더.
 
@@ -236,13 +307,7 @@ class WorkbookSelectEngine(WorkbookV2Engine):
         codes_text = uploaded_files.get("codes", "") or \
             self._get_meta(job_dir, "codes", "")
 
-        mt_gang = (uploaded_files.get("mt_gang", "")
-                   or self._get_meta(job_dir, "mt_gang", "")
-                   or cfg.get("mt_gang"))
-        try:
-            mt_gang = int(mt_gang) if mt_gang else None
-        except (TypeError, ValueError):
-            mt_gang = None
+        mt_gang = self._resolve_mt_gang(uploaded_files, job_dir)
 
         # 코드를 직접 안 주면 강 번호로 엑셀에서 조달한다 (사용자 요청
         # 2026-08-08: "엑셀에서 해당 번호 읽어서 바로 작업"). 코드를 준
@@ -266,24 +331,31 @@ class WorkbookSelectEngine(WorkbookV2Engine):
         # 마더텅 지문번호 — 엑셀(강별 열 × 행)에서 조달. 사용자 확정 스펙
         # (2026-08-07): 조판 순서와 지문번호를 이 번호로 맞춘다. 순차
         # 1,2,3,4 로 다시 매기지 않는다 (짝수만 뽑힌 워크북이면 2,4,6…).
-        mt_index = {} if mt_numbers else _mt.load_index(
-            cfg.get("motherteng_xlsx"))
+        # ⚠ 강 번호가 없는 job 은 엑셀을 아예 조회하지 않는다 (_resolve_mt_gang
+        #    주석 참조). 마더텅 코드 224개는 일반 모의고사 기출 코드와 같은
+        #    번호라, 조회만 해도 모의고사 job 의 라벨·순서가 오염된다.
         if mt_numbers:
             codes = _mt.sort_by_number(codes, mt_numbers)
             log("[마더텅] 지문번호 %s"
                 % ", ".join(str(mt_numbers[c]) for c in codes))
-        elif mt_index:
-            mt_numbers = _mt.numbers_for(mt_index, codes, gang=mt_gang)
-            if mt_numbers:
-                codes = _mt.sort_by_number(codes, mt_numbers)
-                log("[마더텅] %d/%d개 번호 매핑, 번호순 정렬 (%s)"
-                    % (len(mt_numbers), len(codes),
-                       ", ".join(str(mt_numbers[c]) for c in codes
-                                 if c in mt_numbers)))
+        elif mt_gang is not None:
+            mt_index = _mt.load_index(cfg.get("motherteng_xlsx"))
+            if not mt_index:
+                log("[마더텅] 지문 출처 엑셀 없음 — 입력 순서 유지")
             else:
-                log("[마더텅] 엑셀에 매칭 코드 없음 — 입력 순서 유지")
+                mt_numbers = _mt.numbers_for(mt_index, codes, gang=mt_gang)
+                if mt_numbers:
+                    codes = _mt.sort_by_number(codes, mt_numbers)
+                    log("[마더텅] %d/%d개 번호 매핑, 번호순 정렬 (%s)"
+                        % (len(mt_numbers), len(codes),
+                           ", ".join(str(mt_numbers[c]) for c in codes
+                                     if c in mt_numbers)))
+                else:
+                    log("[마더텅] %d강에 매칭 코드 없음 — 입력 순서 유지"
+                        % mt_gang)
         else:
-            log("[마더텅] 지문 출처 엑셀 없음 — 입력 순서 유지")
+            log("[라벨] 마더텅 강 미지정 — 지문번호=코드(YYMMQQ), "
+                "조판 순서=입력 순서 (엑셀 미조회)")
 
         grade = self._get_meta(job_dir, "grade", "고1")
         grade_num = grade.replace("고", "").strip() or "1"
@@ -297,13 +369,13 @@ class WorkbookSelectEngine(WorkbookV2Engine):
         log("[회차] %s" % ", ".join("%d년 %d월" % ym for ym in rounds))
 
         # 회차별 원고 폴더 매칭 → 로컬 복사 → 파싱
-        not_found = []
+        missing = []          # [(yy, mm, 사유)]
         sources = []
         for yy, mm in rounds:
             src_dir, err = self._find_manuscript_dir(
                 cfg["manuscript_base"], grade_num, yy, mm)
             if src_dir is None:
-                not_found.append("%d년 %d월 — %s" % (yy, mm, err))
+                missing.append((yy, mm, err))
                 continue
             log("[원고] %d년 %d월: %s" % (yy, mm,
                                           os.path.basename(src_dir)))
@@ -313,46 +385,66 @@ class WorkbookSelectEngine(WorkbookV2Engine):
                 ms_dir, wb_cfg, int(grade_num), yy, mm, log=log)
             sources.append({"yy": yy, "mm": mm, "content": content})
 
-        # 보충 원고 폴더 — 회차 폴더가 없는 옛 기출은 교재팀이 워크북 단위로
-        # 따로 준다 (실증 2026-08-07: 마더텅 11강 zip 에 16년11월/19년6월/
-        # 21년6월 3개 지문이 회차 구분 없이 한 폴더로 들어옴). 한 번 파싱해
-        # 못 찾은 회차 전부에 같은 content 를 등록하면, merge_selected 가
-        # 코드로 블록을 골라내므로 회차가 섞여 있어도 정확히 뽑힌다.
-        if not_found:
-            sup = cfg.get("supplement_dir")
-            sup = os.path.expanduser(sup) if sup else None
-            if sup and os.path.isdir(sup):
-                log("[보충원고] %s" % sup)
+        # 보충 원고 — 회차 폴더가 없는 옛 기출은 마더텅 N강 폴더의 워크북
+        # 원고에 회차 구분 없이 한 묶음으로 들어 있다 (실증 2026-08-07:
+        # 11강에 16년11월/19년6월/21년6월 3개 지문). 한 번 파싱해 못 찾은
+        # 회차 전부에 같은 content 를 등록하면, merge_selected 가 코드로
+        # 블록을 골라내므로 회차가 섞여 있어도 정확히 뽑힌다.
+        if missing:
+            sup_dirs, sup_err = [], None
+            if mt_gang is not None:
+                sup_dirs, sup_err = self._find_gang_manuscript_dirs(
+                    cfg["manuscript_base"], grade_num, mt_gang)
+            manual = cfg.get("supplement_dir") or ""
+            manual = os.path.expanduser(manual) if manual else ""
+            if manual and os.path.isdir(manual):
+                # config 에 명시했으면 그쪽이 우선 (수동 오버라이드)
+                log("[보충원고] config supplement_dir 지정: %s" % manual)
+                sup_dirs = [manual] + sup_dirs
+            elif mt_gang is None:
+                log("[보충원고] 강 번호·supplement_dir 둘 다 없음 — 탐색 생략")
+            elif sup_dirs:
+                log("[보충원고] 마더텅 %d강 후보 %d개 — '%s' 채택%s"
+                    % (mt_gang, len(sup_dirs),
+                       os.path.basename(os.path.dirname(sup_dirs[0])),
+                       "" if len(sup_dirs) == 1 else
+                       " / 후보: " + ", ".join(
+                           os.path.basename(os.path.dirname(d))
+                           for d in sup_dirs)))
+            else:
+                log("[보충원고] 마더텅 %d강 폴더 못 찾음 — %s"
+                    % (mt_gang, sup_err))
+
+            if sup_dirs:
                 sup_ms = os.path.join(job_dir, "ms_supplement")
-                self._copy_manuscripts(sup, sup_ms, log)
+                self._copy_manuscripts(sup_dirs[0], sup_ms, log)
                 sup_content = parse_manuscript_folder(
                     sup_ms, wb_cfg, int(grade_num), 0, 0, log=log)
-                still = []
-                for entry in not_found:
-                    yy, mm = entry.split("년")[0].strip(), \
-                        entry.split("년")[1].split("월")[0].strip()
-                    try:
-                        yy, mm = int(yy), int(mm)
-                    except ValueError:
-                        still.append(entry)
-                        continue
+                for yy, mm, _err in missing:
                     sources.append({"yy": yy, "mm": mm,
                                     "content": sup_content})
-                    log("[보충원고] %d년 %d월 → 보충 폴더로 대체" % (yy, mm))
-                not_found = still
-        if not_found:
+                    log("[보충원고] %d년 %d월 → 보충 원고로 대체" % (yy, mm))
+                missing = []
+        if missing:
             raise FileNotFoundError(
-                "원고 폴더를 찾지 못한 회차:\n  " + "\n  ".join(not_found)
+                "원고 폴더를 찾지 못한 회차:\n  "
+                + "\n  ".join("%d년 %d월 — %s" % m for m in missing)
                 + "\n(교재팀에 해당 회차 워크북 원고 업로드를 요청하세요)")
 
         # 병합
         # 보충 데이터 — 원고가 아예 없는 칸을 이전 산출물(.indd)에서 뽑아둔 것.
-        # job 폴더의 fill.json 이 있으면 그것을, 없으면 config 경로를 쓴다.
+        # **job 폴더의 fill.json 만 쓴다.** config 에 특정 강 파일을 기본값으로
+        # 박아두면 다른 강 job 에 남의 강 내용이 섞인다(2026-08-13 발견:
+        # hanyoung1_11gang.json 이 전 job 기본값이었다). config.fill_json 은
+        # 비워 두는 것이 정상이고, 값이 있을 때만 폴백으로 쓴다.
         fill_path = os.path.join(job_dir, "fill.json")
         if not os.path.exists(fill_path):
             fill_path = cfg.get("fill_json") or ""
             if fill_path.startswith("~"):
                 fill_path = os.path.expanduser(fill_path)
+            if fill_path:
+                log("[보충데이터] job 폴더에 fill.json 없음 — config 폴백 사용: "
+                    "%s" % fill_path)
         fill = _load_fill(fill_path, log)
 
         merged, coverage, defects = merge_selected(
@@ -773,18 +865,28 @@ class WorkbookSelectEngine(WorkbookV2Engine):
         if not codes:
             return 0, []
 
-        # 지문번호(마더텅 N) ↔ 코드 — 라벨로 원고를 찾으려면 이 역매핑이 필요
-        mt_gang = self._get_meta(job_dir, "mt_gang", "") or cfg.get("mt_gang")
-        try:
-            mt_gang = int(mt_gang) if mt_gang else None
-        except (TypeError, ValueError):
-            mt_gang = None
-        idx = _mt.load_index(cfg.get("motherteng_xlsx"))
-        numbers = _mt.numbers_for(idx, codes, gang=mt_gang) if idx else {}
-        if not numbers:
+        # 지문번호 ↔ 코드 — 라벨로 원고를 찾으려면 이 역매핑이 필요하다.
+        # 마더텅 job 이면 라벨이 마더텅 번호, 아니면 라벨이 코드 그 자체
+        # (merge_selected 의 labels 기본값 = 코드).
+        mt_gang = self._resolve_mt_gang({}, job_dir)
+        if mt_gang is None:
+            num2code = {}
+            for c in codes:
+                try:
+                    num2code[int(c)] = c
+                except (TypeError, ValueError):
+                    continue
+            log("[빈칸] 마더텅 강 미지정 — 라벨=코드로 대조")
+        else:
+            idx = _mt.load_index(cfg.get("motherteng_xlsx"))
+            numbers = _mt.numbers_for(idx, codes, gang=mt_gang) if idx else {}
+            if not numbers:
+                log("[빈칸] 지문번호 매핑 없음 — 대조 생략")
+                return 0, []
+            num2code = {n: c for c, n in numbers.items()}
+        if not num2code:
             log("[빈칸] 지문번호 매핑 없음 — 대조 생략")
             return 0, []
-        num2code = {n: c for c, n in numbers.items()}
 
         grade = self._get_meta(job_dir, "grade", "고1")
         log("[빈칸] 원고 대조 시작 (%d문항)" % len(num2code))
