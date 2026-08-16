@@ -198,6 +198,12 @@
         "name": "파이널 직전보충 표지",
         "prefix": "파이널직전보충표지",
         "engine_id": "final_cover"
+      },
+      {
+        "name": "2026 표지 세네카",
+        "prefix": "2026표지세네카",
+        "engine_id": "cover2026",
+        "url": "/cover2026"
       }
     ]
   },
