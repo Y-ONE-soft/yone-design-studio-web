@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block title %}2026 표지 세네카{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <a href="/cover" class="back-link">표지 메뉴</a>
+  <h1>2026 표지 세네카</h1>
+  <p>학교와 권을 고르고 쪽수를 넣으면 워크북 스프레드를 다시 만듭니다. 업로드할 파일은 없습니다.</p>
+</div>
+
+<form id="typeset-form" class="upload-form" onsubmit="return false">
+
+  <div class="cover-calc-section">
+    <div class="section-label">학교 · 권</div>
+    <div class="calc-row">
+      <select id="school" class="form-select" onchange="onSchool()"></select>
+      <select id="volume" class="form-select" onchange="onVolume()"></select>
+    </div>
+    <div class="calc-result" id="cur-info">→ 불러오는 중…</div>
+  </div>
+
+  <div class="cover-calc-section">
+    <div class="section-label">내지 페이지 수 <span class="calc-hint">(무선제본 · 뉴플러스 80g)</span></div>
+    <div class="calc-row">
+      <input type="number" id="pages" class="calc-input" placeholder="예: 120" min="1"
+             oninput="calc()">
+      <button type="button" class="calc-btn" onclick="calc()">계산</button>
+    </div>
+    <div class="calc-result" id="calc-result">→ 페이지 수를 입력하세요</div>
+  </div>
+
+  <div class="cover-calc-section">
+    <label class="paper-option">
+      <input type="checkbox" id="apply"> 납품 폴더에도 반영 (체크 안 하면 미리보기만)
+    </label>
+    <div class="calc-hint u-mt-2">
+      반영하면 기존 파일은 <b>_백업/날짜시간/</b> 에 자동 복사된 뒤 교체됩니다.
+      검사에 하나라도 걸리면 납품 폴더는 건드리지 않습니다.
+    </div>
+  </div>
+
+  <button type="button" class="run-btn" id="run" onclick="run()">세네카 다시 만들기</button>
+</form>
+
+<div id="result"></div>
+
+<script>
+let DATA = null;
+
+async function boot() {
+  const res = await fetch('/api/cover2026/schools?project=2026');
+  DATA = await res.json();
+  if (!DATA.ok) { document.getElementById('cur-info').textContent = '오류: ' + DATA.error; return; }
+  const sel = document.getElementById('school');
+  sel.innerHTML = DATA.schools.map(s =>
+    `<option value="${s.id}">${s.label} (${s.branch})</option>`).join('');
+  onSchool();
+}
+
+function cur() { return DATA.schools.find(s => s.id === document.getElementById('school').value); }
+
+function onSchool() {
+  const s = cur(); const vsel = document.getElementById('volume');
+  const vols = s.volumes.length ? s.volumes : [{vol: '01', pages: null, spine: null}];
+  vsel.innerHTML = vols.map(v => `<option value="${v.vol}">${v.vol}권</option>`).join('')
+                 + `<option value="__new">+ 새 권 추가</option>`;
+  onVolume();
+}
+
+function onVolume() {
+  const s = cur(); const v = document.getElementById('volume').value;
+  const info = document.getElementById('cur-info');
+  if (v === '__new') {
+    const next = String(s.volumes.length + 1).padStart(2, '0');
+    info.textContent = `→ 새 권 ${next} 를 만듭니다. 쪽수를 입력하세요.`;
+    document.getElementById('pages').value = '';
+  } else {
+    const hit = s.volumes.find(x => x.vol === v);
+    if (hit) {
+      info.textContent = `→ 현재 ${hit.pages}p · 세네카 ${hit.spine}mm`;
+      document.getElementById('pages').value = hit.pages;
+    } else { info.textContent = '→ 아직 쪽수가 정해지지 않았습니다 (기본 4mm)'; }
+  }
+  calc();
+}
+
+function calc() {
+  const p = parseInt(document.getElementById('pages').value, 10);
+  const el = document.getElementById('calc-result');
+  if (!p || p < 1) { el.textContent = '→ 페이지 수를 입력하세요'; return; }
+  const mult = DATA.paper.newplus;
+  let raw = (p / 2) * mult;
+  let mm = Math.ceil(Math.ceil(raw * 2) / 2 + 0.5);
+  el.textContent = `→ 세네카 ${mm}mm  (전체 판형 ${(3 + 210 + mm + 210 + 3)}mm × 303mm)`;
+}
+
+async function run() {
+  const btn = document.getElementById('run');
+  const s = cur();
+  let vol = document.getElementById('volume').value;
+  if (vol === '__new') vol = String(s.volumes.length + 1).padStart(2, '0');
+  const pages = parseInt(document.getElementById('pages').value, 10);
+  if (!pages) { alert('쪽수를 입력하세요'); return; }
+  btn.disabled = true; btn.textContent = '만드는 중… (약 15초)';
+  document.getElementById('result').innerHTML = '';
+  try {
+    const res = await fetch('/api/cover2026/run', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({project: '2026', school: s.id, volume: vol, pages: pages,
+                            apply: document.getElementById('apply').checked})
+    });
+    show(await res.json());
+  } catch (e) {
+    show({ok: false, error: String(e)});
+  }
+  btn.disabled = false; btn.textContent = '세네카 다시 만들기';
+}
+
+function show(r) {
+  const box = document.getElementById('result');
+  if (!r.ok) {
+    box.innerHTML = `<div class="msg msg-error"><b>실패</b><br>${r.error || ''}
+      <pre class="log-area">${(r.log || '').slice(-1500)}</pre></div>`;
+    return;
+  }
+  const q = p => '/api/cover2026/file?p=' + encodeURIComponent(p);
+  box.innerHTML = `
+    <div class="msg msg-ok">
+      <b>${r.label} · ${r.volume}권</b><br>
+      쪽수 ${r.pages}p → 세네카 <b>${r.spine_mm}mm</b> · 판형 ${r.size_mm[0]} × ${r.size_mm[1]}mm
+      ${r.applied ? `<br>납품 반영됨: <b>${r.delivered}</b><br>검사: ${r.verify || ''}<br>
+                     <span class="calc-hint">백업: ${r.backup}</span>`
+                  : '<br><span class="calc-hint">미리보기만 만들었습니다 (납품 폴더 그대로)</span>'}
+      <div class="u-mt-3">
+        <a class="download-btn" href="${q(r.pdf)}&dl=1">PDF 내려받기</a>
+      </div>
+      <img src="${q(r.preview)}" style="width:100%;max-width:760px;margin-top:14px;border-radius:10px">
+    </div>`;
+}
+
+boot();
+</script>
+{% endblock %}

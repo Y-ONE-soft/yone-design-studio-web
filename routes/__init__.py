@@ -5,6 +5,7 @@
 - typeset: 조판 실행 API (/api/run, /api/stream, /api/cancel, /api/result, /download/<job_id>/pdf)
 - folders: 엔진별 폴더 탐색/스캔 API + 학교 관리 API
 - tools:   워크북 가공 (페이지+API) + 목업 (페이지+API)
+- cover2026: 2026 표지 세네카 재생성 (업로드 없음 · 생성기 직접 호출)
 - admin:   서버 진단 (/diagnose, /api/health, /api/diagnose, InDesign 시작, /debug) + 원격 채팅 (/chat*)
 """
 from routes.auth import bp as auth_bp
@@ -13,5 +14,7 @@ from routes.typeset import bp as typeset_bp
 from routes.folders import bp as folders_bp
 from routes.tools import bp as tools_bp
 from routes.admin import bp as admin_bp
+from routes.cover2026 import bp as cover2026_bp
 
-ALL_BLUEPRINTS = [auth_bp, pages_bp, typeset_bp, folders_bp, tools_bp, admin_bp]
+ALL_BLUEPRINTS = [auth_bp, pages_bp, typeset_bp, folders_bp, tools_bp, admin_bp,
+                  cover2026_bp]
