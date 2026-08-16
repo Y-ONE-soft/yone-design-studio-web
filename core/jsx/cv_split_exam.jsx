@@ -44,8 +44,13 @@ try {
     d.viewPreferences.rulerOrigin = RulerOrigin.PAGE_ORIGIN;
     L("페이지 " + d.pages.length + "개, 대상 " + cfg.targets.length + "건");
 
+    // 뒤 → 앞. 한 프레임에 마커가 여럿인 구간(영작 배열)이 있으므로
+    // 페이지가 같으면 오프셋 큰 것부터 — 그래야 앞 마커의 오프셋이 안 밀린다.
     var tg = cfg.targets.slice(0);
-    tg.sort(function (a, b) { return b.page - a.page; });   // 뒤 → 앞
+    tg.sort(function (a, b) {
+        if (b.page !== a.page) { return b.page - a.page; }
+        return b.offset - a.offset;
+    });
 
     for (var t = 0; t < tg.length; t++) {
         var T = tg[t];
