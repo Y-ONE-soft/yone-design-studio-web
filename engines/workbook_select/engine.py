@@ -98,6 +98,15 @@ class WorkbookSelectEngine(WorkbookV2Engine):
                     "required": False,
                 },
                 {
+                    "key": "fill",
+                    "label": "보충 데이터 fill.json (선택) — 원고가 아예 없는 "
+                             "칸을 이전 산출물에서 뽑아둔 파일. 강 번호를 "
+                             "넣으면 보관소에서 자동으로 찾으므로 보통 비워둠",
+                    "type": "file",
+                    "accept": ".json",
+                    "required": False,
+                },
+                {
                     "key": "result_name",
                     "label": "결과 파일명 (확장자 제외)",
                     "type": "text",
@@ -291,6 +300,70 @@ class WorkbookSelectEngine(WorkbookV2Engine):
         log("  원고 %d개 파일 복사" % copied)
         return copied
 
+    # ─── 보충 데이터(fill) 조달 ─────────────────────────────────────────
+    #
+    # 원고가 아예 없는 칸을 이전 산출물(.indd)에서 뽑아둔 데이터.
+    # config 에 특정 강 파일을 **기본값으로 박아두면** 다른 강 job 에 남의 강
+    # 내용이 섞인다(2026-08-13 사고). 그래서 자동 조달은 "이 job 의 학년·강과
+    # 정확히 일치하는 보관소 항목"일 때만 하고, 무엇을 왜 골랐는지 로그에 남긴다.
+    #
+    # 우선순위: 업로드 > job 폴더 fill.json > 보관소(학년+강 일치) > config
+    _FILL_DIR = os.path.join(_DIR, "fill")
+    _FILL_INDEX = os.path.join(_FILL_DIR, "index.json")
+
+    def _fill_from_library(self, grade_num, mt_gang, log):
+        """보관소에서 (학년, 강) 이 정확히 일치하는 항목을 찾는다."""
+        if mt_gang is None or not os.path.exists(self._FILL_INDEX):
+            return ""
+        try:
+            with open(self._FILL_INDEX, encoding="utf-8") as f:
+                entries = (json.load(f) or {}).get("entries") or []
+        except (OSError, ValueError) as e:                  # noqa: BLE001
+            log("[보충데이터] 보관소 index.json 읽기 실패 — 무시: %s" % e)
+            return ""
+        for ent in entries:
+            try:
+                same = (int(ent.get("grade")) == int(grade_num)
+                        and int(ent.get("gang")) == int(mt_gang))
+            except (TypeError, ValueError):
+                continue
+            if not same:
+                continue
+            path = os.path.join(self._FILL_DIR, ent.get("file") or "")
+            if not os.path.exists(path):
+                log("[보충데이터] 보관소 항목의 파일이 없음: %s" % path)
+                return ""
+            log("[보충데이터] 보관소 자동 조달 — 고%s %s강 → %s%s"
+                % (grade_num, mt_gang, ent.get("file"),
+                   (" (%s)" % ent["note"]) if ent.get("note") else ""))
+            return path
+        log("[보충데이터] 보관소에 고%s %s강 항목 없음 — 보충 없이 진행"
+            % (grade_num, mt_gang))
+        return ""
+
+    def _resolve_fill_path(self, uploaded_files, job_dir, grade_num,
+                           mt_gang, cfg, log):
+        up = (uploaded_files or {}).get("fill") or ""
+        if up and os.path.exists(up):
+            log("[보충데이터] 업로드 파일 사용: %s" % os.path.basename(up))
+            return up
+
+        job_fill = os.path.join(job_dir, "fill.json")
+        if os.path.exists(job_fill):
+            log("[보충데이터] job 폴더 fill.json 사용")
+            return job_fill
+
+        lib = self._fill_from_library(grade_num, mt_gang, log)
+        if lib:
+            return lib
+
+        path = cfg.get("fill_json") or ""
+        if path.startswith("~"):
+            path = os.path.expanduser(path)
+        if path:
+            log("[보충데이터] config 폴백 사용: %s" % path)
+        return path
+
     # ─── parse ─────────────────────────────────────────────────────
 
     def parse(self, uploaded_files, job_dir, log):
@@ -441,19 +514,8 @@ class WorkbookSelectEngine(WorkbookV2Engine):
                 + "\n(교재팀에 해당 회차 워크북 원고 업로드를 요청하세요)")
 
         # 병합
-        # 보충 데이터 — 원고가 아예 없는 칸을 이전 산출물(.indd)에서 뽑아둔 것.
-        # **job 폴더의 fill.json 만 쓴다.** config 에 특정 강 파일을 기본값으로
-        # 박아두면 다른 강 job 에 남의 강 내용이 섞인다(2026-08-13 발견:
-        # hanyoung1_11gang.json 이 전 job 기본값이었다). config.fill_json 은
-        # 비워 두는 것이 정상이고, 값이 있을 때만 폴백으로 쓴다.
-        fill_path = os.path.join(job_dir, "fill.json")
-        if not os.path.exists(fill_path):
-            fill_path = cfg.get("fill_json") or ""
-            if fill_path.startswith("~"):
-                fill_path = os.path.expanduser(fill_path)
-            if fill_path:
-                log("[보충데이터] job 폴더에 fill.json 없음 — config 폴백 사용: "
-                    "%s" % fill_path)
+        fill_path = self._resolve_fill_path(
+            uploaded_files, job_dir, grade_num, mt_gang, cfg, log)
         fill = _load_fill(fill_path, log)
 
         # 병합은 **항상 코드(YYMMQQ) 라벨로** 한다 — 마더텅이어도 마찬가지.

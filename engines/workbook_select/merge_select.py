@@ -499,10 +499,11 @@ def merge_selected(sources, codes, log=None, labels=None, fill=None):
                 # 사용자 지적). 꼬리 추출 정규식이 \d+ 라 6자리도 잡는다.
                 btxt = b["boundary"]["text"]
                 new_txt = re.sub(r"^\s*\d+\.", "%d." % ordinal, btxt, count=1)
-                new_txt = re.sub(
-                    r"(no\.?\s*)\d{1,3}(?:\s*[~\-]\s*\d{1,3})?",
-                    lambda mm: mm.group(1) + _lab(pc["code"]), new_txt, count=1,
-                    flags=re.I)
+                # ⚠ 방언 정리를 **번호 치환보다 먼저** 한다. 뒤에 하면 정리
+                # 정규식의 \d{1,3} 이 이미 치환된 라벨 길이에 걸려 실패한다
+                # (라벨=6자리 코드면 "no.161131번 161131" 처럼 꼬리가 남아
+                #  지면에 인쇄됐다 — 2026-08-17 실측).
+                #
                 # 보충 원고 방언("1. p11강-no.20번 161131")을 표준형으로.
                 # run.jsx 의 헤더 제거 정규식(rePNo)은 p 뒤에 숫자만 오는 형태만
                 # 잡아, 강 표기와 번호 꼬리가 남으면 헤더가 제거되지 않고
@@ -512,6 +513,10 @@ def merge_selected(sources, codes, log=None, labels=None, fill=None):
                                  r"\1p0", new_txt, count=1)
                 new_txt = re.sub(r"(no\.?\s*\d{1,3})\s*번\s*\d{6}",
                                  r"\1", new_txt, count=1, flags=re.I)
+                new_txt = re.sub(
+                    r"(no\.?\s*)\d{1,3}(?:\s*[~\-]\s*\d{1,3})?",
+                    lambda mm: mm.group(1) + _lab(pc["code"]), new_txt, count=1,
+                    flags=re.I)
                 bb = dict(b["boundary"])
                 bb["text"] = new_txt
                 bb["runs"] = [{"t": new_txt, "ul": False}]
