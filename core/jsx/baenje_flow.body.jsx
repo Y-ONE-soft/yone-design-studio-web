@@ -286,6 +286,25 @@ function keepBlocksInSpread(doc, story, numStyleName) {
     return moved;
 }
 
+// 잔존 걸침 재검사 (검수 게이트 B3의 근거)
+function blocksCrossingSpread(story, numStyleName) {
+    var out = [];
+    var ps = story.paragraphs;
+    var starts = [];
+    for (var i = 0; i < ps.length; i++) {
+        if (ps[i].appliedParagraphStyle.name === numStyleName) starts.push(i);
+    }
+    for (var b = 0; b < starts.length; b++) {
+        var s = starts[b];
+        var e = (b + 1 < starts.length) ? starts[b + 1] - 1 : ps.length - 1;
+        while (e > s && ps[e].contents.replace(/[\s\r\n]/g, "").length === 0) e--;
+        var sp = paraStartPage(ps[s]), ep = paraEndPage(ps[e]);
+        if (!sp || !ep || sp.parent === ep.parent) continue;
+        out.push(ps[s].contents.replace(/[\r\n]/g, "") + "번(p" + sp.name + "→p" + ep.name + ")");
+    }
+    return out;
+}
+
 // ── 유닛 시작 스프레드 마스터 ───────────────────────────────────────────
 function applyUnitMasters(doc, story, labelParas, prefixes, label) {
     var mL = findMaster(doc, prefixes.left);
@@ -417,6 +436,12 @@ try {
     if (ops.keep_block_in_spread === "answers" && ansStory && ansLabels.length >= 0) {
         keepBlocksInSpread(doc, ansStory, "정답_문제 번호");
         expandStory(doc, ansStory, "정답지(블록 정리 후)");
+        try { doc.recompose(); } catch (e) {}
+        RESULTS.blocks_crossing_after = blocksCrossingSpread(ansStory, "정답_문제 번호");
+        if (RESULTS.blocks_crossing_after.length > 0) {
+            warn("정답지 펼침면 걸침 잔존 " + RESULTS.blocks_crossing_after.length + "건 "
+                 + "(한 펼침면보다 긴 블록)");
+        }
     }
 
     var um = ops.unit_masters || {};

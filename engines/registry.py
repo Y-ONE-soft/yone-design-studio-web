@@ -18,6 +18,7 @@ from engines.mockexam.engine import MockexamEngine
 from engines.mockexam_v2.engine import MockexamV2Engine
 from engines.mockexam_v2_viv.engine import MockexamV2VivEngine
 from engines.blackbook_v2.engine import BlackbookV2Engine
+from engines.baenje_v2.engine import BaenjeV2Engine
 from engines.workbook_v2.engine import WorkbookV2Engine
 from engines.workbook_supp_v2.engine import WorkbookSuppV2Engine
 from engines.workbook_sero_v2.engine import WorkbookSeroV2Engine
@@ -65,6 +66,7 @@ _ENGINE_LIST = [
     MockexamV2Engine(),
     MockexamV2VivEngine(),
     BlackbookV2Engine(),
+    BaenjeV2Engine(),
     WorkbookV2Engine(),
     WorkbookSuppV2Engine(),
     WorkbookSeroV2Engine(),
