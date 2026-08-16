@@ -1,0 +1,147 @@
+"""배N제 v2 렌더 플랜 빌더 — content.json → bj-flows-v1 플랜.
+
+플랜 포맷 (core/jsx/baenje_flow.body.jsx가 실행):
+{
+  "format": "bj-flows-v1",
+  "flows": [
+    {"area": "body",    "units": [{"paras":[{t,s,runs,align}], "page_break": bool,
+                                   "unit_label": str|null, "no": int}]},
+    {"area": "answers", "units": [{"paras":[...], "page_break": bool,
+                                   "unit_label": str|null, "no": int}]}
+  ],
+  "ops": {
+    "unit_masters": {"body":    {"left":"L0","right":"L2","cont":"L1"},
+                     "answers": {"left":"C0","right":"C2","cont":"C1"}},
+    "unit_char_style": "유닛",       # 러닝헤드 텍스트 변수가 찾는 문자스타일
+    "wide_space_style": "한글",       # 전각 공백 .notdef 방지
+    "memo_master": "B",              # 뒤쪽 빈 페이지
+    "keep_block_in_spread": "answers" # 한 문항 블록이 펼침면을 넘지 않게
+  },
+  "warnings": [...]
+}
+
+배치 의미론 = v1(engines/baenje/jsx/run.jsx)과 동일하되 차이 두 가지:
+  - v1은 JSX 상태머신이 단락 종류를 판정 → v2는 파서가 판정하고 플랜에 스타일
+    이름을 실어 보낸다 (JSX는 이름으로 스타일을 찾아 적용만).
+  - v1은 프레임 브레이크를 JSX가 재탐색해 걸었다 → v2는 유닛 경계가 곧
+    프레임 브레이크(문항 1개 = 유닛 1개). 텍스트 무변형이라 검수 1:1 대조 가능.
+"""
+from core.structure.style_resolver import load_style_map
+
+_MATERIAL = "baenje"
+
+
+def _tables():
+    smap = load_style_map()[_MATERIAL]
+    return smap["BODY"], smap["ANS"]
+
+
+def _para(text, style, runs=None, align=None):
+    p = {"t": text, "s": style}
+    if runs:
+        p["runs"] = runs
+    if align:
+        p["align"] = align
+    return p
+
+
+def _has_long_blank(text):
+    """긴 밑줄 답란 — 양끝정렬 시 자간이 벌어지므로 왼쪽 정렬."""
+    if len(text) > 200:
+        return False
+    run = 0
+    for ch in text:
+        if ch in ("＿", "_"):
+            run += 1
+            if run >= 5:
+                return True
+        else:
+            run = 0
+    return False
+
+
+def content_to_plan(content, log=None):
+    body_tbl, ans_tbl = _tables()
+    warnings = list(content.get("warnings") or [])
+    units = content.get("units") or []
+    unit_by_q = {u["start_q"]: u["label"] for u in units}
+
+    body_units = []
+    for prob in content.get("problems") or []:
+        paras = []
+        for p in prob["paras"]:
+            style = body_tbl.get(p["kind"])
+            if style is None:
+                style = body_tbl.get("passage")
+                warnings.append(
+                    f"[플랜] 스타일 미정의 종류 '{p['kind']}' → 지문으로 대체 "
+                    f"({prob['no']}번)")
+            paras.append(_para(p["t"], style, p.get("runs"),
+                               "left" if _has_long_blank(p["t"]) else None))
+        label = unit_by_q.get(prob["no"])
+        body_units.append({
+            "no": prob["no"],
+            "paras": paras,
+            # 유닛 시작 문항은 새 페이지에서 (머리말이 그 페이지에 걸린다)
+            "page_break": bool(label) and prob["no"] != (
+                units[0]["start_q"] if units else None),
+            "unit_label": label,
+        })
+
+    ans_units = []
+    for blk in content.get("answers") or []:
+        paras = []
+        for p in blk["paras"]:
+            style = ans_tbl.get(p["kind"])
+            if style is None:
+                style = ans_tbl.get("cont")
+                warnings.append(
+                    f"[플랜] 정답지 스타일 미정의 종류 '{p['kind']}' "
+                    f"({blk['no']}번)")
+            paras.append(_para(p["t"], style, p.get("runs")))
+        label = unit_by_q.get(blk["no"])
+        ans_units.append({
+            "no": blk["no"],
+            "paras": paras,
+            "page_break": bool(label) and blk["no"] != (
+                units[0]["start_q"] if units else None),
+            "unit_label": label,
+        })
+
+    plan = {
+        "format": "bj-flows-v1",
+        "flows": [
+            {"area": "body", "units": body_units},
+            {"area": "answers", "units": ans_units},
+        ],
+        "ops": {
+            "unit_masters": {
+                "body": {"left": "L0", "right": "L2", "cont": "L1"},
+                "answers": {"left": "C0", "right": "C2", "cont": "C1"},
+            },
+            "unit_char_style": "유닛",
+            "wide_space_style": "한글",
+            "memo_master": "B",
+            "keep_block_in_spread": "answers",
+        },
+        "warnings": warnings,
+    }
+    if log:
+        log(f"[플랜] 본문 {len(body_units)}유닛 / 정답지 {len(ans_units)}유닛 "
+            f"/ 경고 {len(warnings)}")
+    return plan
+
+
+def flow_paras(plan, area):
+    """검수용 — 영역의 모든 단락 (텍스트, 스타일) 시퀀스."""
+    for flow in plan.get("flows") or []:
+        if flow["area"] != area:
+            continue
+        out = []
+        for unit in flow["units"]:
+            if unit.get("unit_label"):
+                out.append((unit["unit_label"], None))    # 보이지 않는 라벨 단락
+            for p in unit["paras"]:
+                out.append((p["t"], p["s"]))
+        return out
+    return []
