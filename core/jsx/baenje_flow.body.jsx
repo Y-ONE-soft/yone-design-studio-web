@@ -65,6 +65,19 @@ function paraEndPage(p) {
     catch (e) { return null; }
 }
 
+// 문자스타일: 전체 경로 → 실패 시 그룹 무관 이름 탐색 (v1 getPStyle 파리티)
+function findCharStyleAnywhere(doc, name) {
+    if (!name) return null;
+    var st = findCharacterStyleByPath(doc, name);
+    if (st) return st;
+    var all = doc.allCharacterStyles;
+    var leaf = name.split(">").pop().replace(/^\s+|\s+$/g, "");
+    for (var i = 0; i < all.length; i++) {
+        if (all[i].name === leaf) return all[i];
+    }
+    return null;
+}
+
 function findMaster(doc, prefix) {
     for (var i = 0; i < doc.masterSpreads.length; i++) {
         if (doc.masterSpreads[i].namePrefix === prefix) return doc.masterSpreads[i];
@@ -110,9 +123,9 @@ function placeFlow(doc, story, flow, ops) {
     try { story.texts[0].appliedCharacterStyle = doc.characterStyles[0]; } catch (e) {}
 
     var cache = {}, missing = {};
-    var csUL = doc.characterStyles.itemByName("밑줄");
-    var csUnit = doc.characterStyles.itemByName(ops.unit_char_style || "유닛");
-    if (!csUnit.isValid) {
+    var csUL = findCharStyleAnywhere(doc, "밑줄");
+    var csUnit = findCharStyleAnywhere(doc, ops.unit_char_style || "유닛");
+    if (!csUnit) {
         warn("'" + (ops.unit_char_style || "유닛") + "' 문자스타일 없음 — 머리말 비활성");
         RESULTS.missing_styles.push(ops.unit_char_style || "유닛");
     }
@@ -127,7 +140,7 @@ function placeFlow(doc, story, flow, ops) {
         var m = meta[k], para = paras[k];
         if (m.isLabel) {
             // 보이지 않는 유닛 라벨 (러닝헤드 변수 소스)
-            if (csUnit.isValid) {
+            if (csUnit) {
                 try { para.appliedCharacterStyle = csUnit; } catch (e) {}
                 try { para.pointSize = 0.1; } catch (e) {}
                 try { para.leading = 0.1; } catch (e) {}
@@ -150,7 +163,7 @@ function placeFlow(doc, story, flow, ops) {
             if (m.align === "left") {
                 try { para.justification = Justification.LEFT_ALIGN; } catch (e) {}
             }
-            if (m.runs && csUL.isValid) {
+            if (m.runs && csUL) {
                 var off = 0;
                 for (var ri = 0; ri < m.runs.length; ri++) {
                     var rl = m.runs[ri].t.length;
@@ -351,8 +364,7 @@ function applyUnitMasters(doc, story, labelParas, prefixes, label) {
 
 // ── 전각 공백(U+3000) — 영문 문자스타일에서 .notdef 방지 ────────────────
 function fixWideSpaces(doc, story, styleName, label) {
-    var cs = null;
-    try { cs = doc.characterStyles.itemByName(styleName); if (!cs.isValid) cs = null; } catch (e) {}
+    var cs = findCharStyleAnywhere(doc, styleName);
     if (!cs) { warn("전각공백 보정용 '" + styleName + "' 문자스타일 없음"); return; }
     app.findGrepPreferences = NothingEnum.NOTHING;
     app.changeGrepPreferences = NothingEnum.NOTHING;
