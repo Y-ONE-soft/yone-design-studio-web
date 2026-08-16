@@ -526,7 +526,8 @@ class WorkbookSelectEngine(WorkbookV2Engine):
 
         # 병합
         fill_path = self._resolve_fill_path(
-            uploaded_files, job_dir, grade_num, mt_gang, cfg, log)
+            uploaded_files, job_dir, grade_num, mt_gang, cfg, log,
+            school=self._get_meta(job_dir, "school", ""))
         fill = _load_fill(fill_path, log)
 
         # 병합은 **항상 코드(YYMMQQ) 라벨로** 한다 — 마더텅이어도 마찬가지.
@@ -576,11 +577,23 @@ class WorkbookSelectEngine(WorkbookV2Engine):
                                d["step"], d["reason"]))
             log("[원고재요청] %s (%d건)" % (req, len(defects)))
 
-        # 커버리지 요약 로그 — 스텝별 누락 즉시 노출 (침묵 금지)
+        # 커버리지 요약 로그 — 스텝별 누락 즉시 노출 (침묵 금지).
+        # 보충 데이터로 **채운 칸**과 **빈 자리로 나간 칸**을 구분한다 —
+        # 뭉뚱그리면 담당자가 조치 대상을 못 가린다 (verify 경고와 같은 기준).
         for step_key, cov in coverage.items():
+            if not any(cov.values()):
+                continue
             missing = [c for c, ok in cov.items() if not ok]
-            if missing and any(cov.values()):
-                log("[경고] %s: 원고에 없는 문항 %s" % (step_key, missing))
+            if not missing:
+                continue
+            done = set(filled.get(step_key) or [])
+            if done:
+                log("[알림] %s: 원고에 없어 보충 데이터로 채운 문항 %s"
+                    % (step_key, sorted(done)))
+            blank = [c for c in missing if c not in done]
+            if blank:
+                log("[경고] %s: 원고에 없는 문항 %s — 빈 자리로 조판됨"
+                    % (step_key, blank))
         return json_path
 
     # ─── 지문번호 표기 — 파이프라인 맨 마지막 단계 ──────────────────────

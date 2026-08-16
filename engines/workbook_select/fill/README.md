@@ -29,6 +29,16 @@ python3 scripts/wbsel_build.py --codes ... --fill <경로>   # 코드 job 은 �
 2. `index.json` 의 `entries` 에 `grade` / `gang` / `file` / `note` 추가
 3. `python3 scripts/wbsel_test_mtgate.py` 로 색인 정합 확인 (적힌 파일이 실제로 있는지 검사한다)
 
+### ⚠ 학교 전용 데이터는 `school` 을 반드시 넣는다
+
+```json
+{"grade": 1, "gang": 7, "school": "한영1", "file": "…json"}
+```
+
+`school` 이 있으면 그 학교 job 에만 조달된다. **비워 두면 학교 무관**으로
+취급하므로, 기출 문항 코드(YYMMQQ)를 키로 쓰는 학교 무관 데이터만 비운다.
+학교 전용 내용을 `school` 없이 등록하면 타 학교 job 으로 샌다.
+
 ## 먼저 원고를 확인할 것
 
 fill 은 최후 수단이다. 회차 폴더(`고N YY년 M월/워크북`)가 없는 옛 기출은

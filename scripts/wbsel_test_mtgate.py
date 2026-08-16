@@ -115,7 +115,8 @@ def _run_parse(codes_text="", gang="", grade="고1"):
         printed = dict(zip(codes_in_order, marks))
         # 코드가 그대로 찍혔으면 "표기 안 바뀜" — 라벨 없음으로 본다
         labels = {c: v for c, v in printed.items() if v != c}
-        return codes_in_order, labels, lines, hits
+        frames = list(out.get("_passage_labels") or [])
+        return codes_in_order, labels, lines, hits, frames
     finally:
         eng_mod._mt.load_index = orig["load_index"]
         eng_mod._mt.codes_for_gang = orig["codes_for_gang"]
@@ -132,7 +133,7 @@ def _run_parse(codes_text="", gang="", grade="고1"):
 
 def test_gate_off():
     """강 번호 없는 job — 엑셀 미조회 · 라벨 없음 · 입력 순서 유지."""
-    codes, labels, lines, hits = _run_parse(codes_text=_MT_CODES)
+    codes, labels, lines, hits, frames = _run_parse(codes_text=_MT_CODES)
     want = _MT_CODES.split(",")
     _check("강 미지정: 입력 순서 유지 (재정렬 안 함)", codes == want,
            "기대 %s / 실제 %s" % (want, codes))
@@ -140,11 +141,15 @@ def test_gate_off():
            "라벨 %s" % labels)
     _check("강 미지정: 엑셀 조회 0회", hits["load_index"] == 0,
            "load_index %d회" % hits["load_index"])
+    # 프레임 라벨이 비면 passage_numbers op 이 스킵돼 템플릿 잔재 번호가
+    # 인쇄된다 — parse 를 끝까지 돌린 산출물에서 직접 확인한다
+    _check("강 미지정: 프레임 라벨 = 문항번호(QQ)",
+           frames == ["20", "33", "32"], str(frames))
 
 
 def test_gate_on():
     """강 번호를 넣은 job — 마더텅 번호로 라벨·정렬 (기존 기능 보존)."""
-    codes, labels, lines, hits = _run_parse(codes_text=_MT_CODES, gang="11")
+    codes, labels, lines, hits, frames = _run_parse(codes_text=_MT_CODES, gang="11")
     _check("11강 지정: 11강 코드만 라벨됨",
            sorted(labels) == _MT_CODES_G11, "라벨 %s" % labels)
     _check("11강 지정: 타 강(250620) 라벨 안 붙음",
@@ -154,15 +159,22 @@ def test_gate_on():
         _check("11강 지정: 번호 오름차순 정렬", nums == sorted(nums),
                "번호 %s" % nums)
     _check("11강 지정: 엑셀 조회함", hits["load_index"] >= 1)
+    # 강 밖 코드(250620)는 마더텅 번호가 없다 → 프레임엔 6자리가 아니라
+    # 문항번호(QQ)가 들어가야 한다 (프레임 폭이 2자리다)
+    _check("11강 지정: 프레임에 6자리 코드가 섞이지 않음",
+           frames == ["2", "6", "20"], str(frames))
 
 
 def test_gang_only():
     """코드 없이 강 번호만 — 엑셀에서 코드 조달 (기존 기능 보존)."""
-    codes, labels, lines, hits = _run_parse(gang="11")
+    codes, labels, lines, hits, frames = _run_parse(gang="11")
     _check("11강만 입력: 코드 조달됨", len(codes) >= 10,
            "%d개" % len(codes))
     _check("11강만 입력: 라벨 = 코드 수", len(labels) == len(codes),
            "라벨 %d / 코드 %d" % (len(labels), len(codes)))
+    _check("11강만 입력: 프레임 라벨 = 마더텅 번호 (짝수 2·4·6…)",
+           len(frames) == len(codes) and frames[:4] == ["2", "4", "6", "8"],
+           "%d개 %s" % (len(frames), frames[:6]))
 
 
 def test_no_input():
@@ -266,7 +278,23 @@ def test_final_labels():
            m.get("_passage_labels") == ["31", "32"],
            str(m.get("_passage_labels")))
 
-    # (3) 회차가 하나뿐이어도 프레임 라벨이 채워져야 한다 (옛 구멍)
+    # (3) step3(실전)는 단락이 아니라 item["code"] 로 라벨을 만든다 —
+    #     여기서 안 바꾸면 실전 섹션만 6자리 코드로 인쇄된다
+    m = mk()
+    m["steps"]["step3"] = {
+        "normal": [{"question_num": "33", "code": "161131", "paragraphs": []},
+                   {"question_num": "32", "code": "999999", "paragraphs": []}],
+        "short": [{"question_num": "40", "code": "240632", "paragraphs": []}],
+        "normal_count": 2, "short_count": 1}
+    eng._apply_final_labels(m, {"161131": "20", "240632": "6"}, lines.append)
+    s3 = m["steps"]["step3"]
+    _check("마더텅: step3(실전) 코드도 교체",
+           s3["normal"][0]["code"] == "20" and s3["short"][0]["code"] == "6",
+           "%s / %s" % (s3["normal"][0]["code"], s3["short"][0]["code"]))
+    _check("마더텅: 매핑 없는 step3 코드는 그대로",
+           s3["normal"][1]["code"] == "999999", s3["normal"][1]["code"])
+
+    # (4) 회차가 하나뿐이어도 프레임 라벨이 채워져야 한다 (옛 구멍)
     m = {"steps": {"step1_a1": {"paragraphs": [
         _para("[250620]"), _para("Body."),
         _para("[250631]"), _para("Body."),
@@ -342,6 +370,37 @@ def test_fill_resolution():
         _check("fill: job 폴더 fill.json 이 보관소보다 우선",
                eng._resolve_fill_path({}, job, "1", 11, cfg,
                                       lines.append) == jf)
+        os.remove(jf)
+        os.remove(up)
+        # 학교 전용 항목은 그 학교 job 에만 — 타 학교로 새면 안 된다
+        lib_dir = eng._FILL_DIR
+        tmp_json = os.path.join(lib_dir, "_test_school_scope.json")
+        idx_path = eng._FILL_INDEX
+        orig_idx = open(idx_path, encoding="utf-8").read()
+        try:
+            with open(tmp_json, "w", encoding="utf-8") as f:
+                f.write("{}")
+            with open(idx_path, "w", encoding="utf-8") as f:
+                json.dump({"entries": [
+                    {"grade": 1, "gang": 7, "school": "한영1",
+                     "file": "_test_school_scope.json"}]}, f)
+            got_same = eng._resolve_fill_path({}, job, "1", 7, cfg,
+                                              lines.append, school="한영1")
+            got_other = eng._resolve_fill_path({}, job, "1", 7, cfg,
+                                               lines.append, school="명일1")
+            got_none = eng._resolve_fill_path({}, job, "1", 7, cfg,
+                                              lines.append, school="")
+            _check("fill: 학교 전용 항목은 그 학교 job 에 조달",
+                   got_same.endswith("_test_school_scope.json"),
+                   got_same or "(없음)")
+            _check("fill: 학교 전용 항목이 타 학교로 새지 않음",
+                   got_other == "", got_other or "(없음)")
+            _check("fill: 학교 미지정 job 에도 안 샘",
+                   got_none == "", got_none or "(없음)")
+        finally:
+            with open(idx_path, "w", encoding="utf-8") as f:
+                f.write(orig_idx)
+            os.remove(tmp_json)
         # 보관소 색인 정합 — 적힌 파일이 실제로 있어야 한다
         idx = json.load(open(eng._FILL_INDEX, encoding="utf-8"))
         bad = [e["file"] for e in idx.get("entries") or []
