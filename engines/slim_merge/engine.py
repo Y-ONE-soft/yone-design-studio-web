@@ -402,6 +402,7 @@ class SlimMergeEngine(BaseEngine):
         overset = 0
         pages_before = pages_after = 0
         memo_inserted = 0
+        renamed = 0
         if log_path and os.path.exists(log_path):
             try:
                 content = open(log_path, encoding="utf-8",
@@ -409,10 +410,14 @@ class SlimMergeEngine(BaseEngine):
                 warn_count = len(re.findall(r"\[경고\]|\[오류\]", content))
                 if warn_count > 0:
                     warnings.append(f"JSX 경고/오류 {warn_count}건 (로그 확인)")
+                m = re.search(r"마커 교체 합계: (\d+)건", content)
+                if m:
+                    renamed = int(m.group(1))
                 m = re.search(r"병합 그룹: (\d+)개", content)
                 if m:
                     merged = int(m.group(1))
-                    if merged == 0:
+                    # 마커 교체만 요청한 실행은 섹션 액션이 0개가 정상
+                    if merged == 0 and renamed == 0:
                         warnings.append("처리된 섹션 0개 — 마커 미탐지 확인")
                 m = re.search(r"오버셋 스토리: (\d+)건", content)
                 if m:
@@ -431,7 +436,10 @@ class SlimMergeEngine(BaseEngine):
                 if ("간지 정렬" in content
                         and "간지 블록" not in content.split("간지 정렬")[-1]):
                     warnings.append("간지 정렬 결과 미기록 — 로그 확인")
-                if pages_before and pages_after and pages_after >= pages_before:
+                # 섹션 액션을 걸었는데 페이지가 그대로면 미적용 의심
+                # (마커 교체 전용 실행은 페이지 수가 그대로인 게 정상)
+                if (merged > 0 and pages_before and pages_after
+                        and pages_after >= pages_before):
                     warnings.append(
                         f"페이지 수가 줄지 않음 ({pages_before}p → {pages_after}p)"
                         " — 액션이 적용됐는지 확인")
@@ -452,6 +460,7 @@ class SlimMergeEngine(BaseEngine):
                 "처리 섹션": merged,
                 "페이지": f"{pages_before} → {pages_after}",
                 "메모 페이지 삽입": memo_inserted,
+                "마커 교체": renamed,
             },
             "pdf_path": None,
             "pdf_paths": [],
