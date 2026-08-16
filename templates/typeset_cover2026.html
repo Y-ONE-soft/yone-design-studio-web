@@ -95,7 +95,8 @@ function calc() {
   const mult = DATA.paper.newplus;
   let raw = (p / 2) * mult;
   let mm = Math.ceil(Math.ceil(raw * 2) / 2 + 0.5);
-  el.textContent = `→ 세네카 ${mm}mm  (전체 판형 ${(3 + 210 + mm + 210 + 3)}mm × 303mm)`;
+  const warn = mm <= 3 ? '  ⚠ 3mm 이하 — 세네카 글자는 자동으로 빼고 색 띠만 넣습니다' : '';
+  el.textContent = `→ 세네카 ${mm}mm  (전체 판형 ${(3 + 210 + mm + 210 + 3)}mm × 303mm)` + warn;
 }
 
 function fatal(html) {
@@ -147,6 +148,7 @@ function show(r) {
       <div class="result-header"><span class="result-badge">✅ 세네카 생성 완료</span></div>
       <b>${r.label} · ${r.volume}권</b><br>
       쪽수 ${r.pages}p → 세네카 <b>${r.spine_mm}mm</b> · 판형 ${r.size_mm[0]} × ${r.size_mm[1]}mm
+      ${r['세네카글자'] === false ? '<br><b>세네카 글자 없음</b> — 3mm 이하라 사내 규칙대로 색 띠만 넣었습니다' : ''}
       ${r.applied ? `<br>납품 반영됨: <b>${r.delivered}</b><br>검사: ${r.verify || ''}<br>
                      <span class="calc-hint">백업: ${r.backup}</span>`
                   : '<br><span class="calc-hint">미리보기만 만들었습니다 (납품 폴더 그대로)</span>'}
