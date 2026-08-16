@@ -47,6 +47,34 @@ def find_boundaries(frames):
     return out
 
 
+def page_info(frames_json):
+    """페이지 → {master, has_content}. 간지/빈 페이지를 블록에서 빼기 위함."""
+    d = json.load(open(frames_json, encoding="utf-8"))
+    info = {}
+    for f in d["frames"]:
+        pg = f["pidx"] + 1
+        rec = info.setdefault(pg, {"master": f.get("master") or "", "chars": 0})
+        if f["gb"][0] > 0:
+            rec["chars"] += f["chars"]
+    for pg, rec in info.items():
+        rec["has_content"] = rec["chars"] > 0
+        rec["structural"] = ("간지" in rec["master"]) or not rec["master"]
+    return info
+
+
+def trim_block(pages, info):
+    """블록에서 구조 페이지(간지/[none])를 빼고, 꼬리의 빈 페이지를 잘라낸다.
+
+    이걸 안 하면 마지막 블록이 문서 끝의 빈 O 페이지·뒤부속까지 흡수한다
+    (26년 6월: 짤지문 43이 p263~273 으로 11p 로 잡혔다 — 실제 내용은 263~269).
+    """
+    out = [p for p in pages
+           if not info.get(p, {}).get("structural")]
+    while out and not info.get(out[-1], {}).get("has_content"):
+        out.pop()
+    return out
+
+
 def blocks_from_boundaries(boundaries, last_page):
     """경계 → 지문별 페이지 구간.
 
@@ -79,15 +107,18 @@ def split_targets(blocks):
             for b in blocks if b["needs_split"]]
 
 
-def partition(blocks, canon):
-    """canon 지문 블록 / 짤지문 블록으로 가른다."""
+def partition(blocks, canon, info=None):
+    """canon 지문 블록 / 짤지문 블록으로 가른다. info 를 주면 구조 페이지를 제외."""
     exam, tail = {}, []
     for b in blocks:
+        pages = trim_block(b["pages"], info) if info else b["pages"]
+        if not pages:
+            continue
         c = resolve_to_canon(b["code"], canon)
         if c:
-            exam.setdefault(c, []).extend(b["pages"])
+            exam.setdefault(c, []).extend(pages)
         else:
-            tail.append({"code": b["code"], "src_pages": b["pages"]})
+            tail.append({"code": b["code"], "src_pages": pages})
     return exam, tail
 
 
