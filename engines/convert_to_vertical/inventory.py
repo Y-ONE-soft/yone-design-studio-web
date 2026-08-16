@@ -97,6 +97,60 @@ def code_of(text):
     return None
 
 
+def master_runs(frames_json):
+    """페이지 순서대로 [(마스터, 시작p, 끝p, 장수)]."""
+    d = json.load(open(frames_json, encoding="utf-8"))
+    m = {}
+    for f in d["frames"]:
+        m.setdefault(f["pidx"] + 1, f.get("master") or "")
+    runs = []
+    for pg in sorted(m):
+        name = m[pg]
+        if runs and runs[-1][0] == name and runs[-1][2] == pg - 1:
+            runs[-1][2] = pg
+            runs[-1][3] += 1
+        else:
+            runs.append([name, pg, pg, 1])
+    return runs
+
+
+def detect_sections(frames_json, n_problems):
+    """섹션 페이지 범위를 자동 산출한다 (회차마다 페이지가 밀리므로 하드코딩 금지).
+
+    구조: front → 어휘(2N/2) → A섹션 5종(각 N) → sep → C구간 4종(각 N) → sep → 실전
+    A/C/O 마스터 구간과 지문 수 N 으로 나눈다.
+    """
+    runs = master_runs(frames_json)
+
+    def span(prefix):
+        """해당 마스터가 처음~마지막으로 쓰인 구간을 통째로 잡는다.
+
+        마스터 필터로 페이지를 모으면 안 된다 — 원본에 마스터가 잘못 걸린
+        페이지가 섞여 있다 (26년 6월 원본 p13 이 A 구간 한가운데인데 B-마스터).
+        """
+        hits = [(a, b) for name, a, b, _n in runs if name.startswith(prefix)]
+        if not hits:
+            return []
+        return list(range(min(h[0] for h in hits), max(h[1] for h in hits) + 1))
+
+    a_pages, c_pages = span("A-"), span("C-")
+    if len(a_pages) < 6 * n_problems or len(c_pages) < 4 * n_problems:
+        raise ValueError("섹션 페이지 부족: A=%d(필요 %d) C=%d(필요 %d)"
+                         % (len(a_pages), 6 * n_problems,
+                            len(c_pages), 4 * n_problems))
+    out, i = {}, 0
+    for name in ("어휘", "본문", "내용정리", "내용종합", "문장배열", "빈칸어휘"):
+        chunk = a_pages[i:i + n_problems]
+        out[name] = (chunk[0], chunk[-1])
+        i += n_problems
+    j = 0
+    for name in ("어법", "어법OX", "빈칸어법", "영작배열"):
+        chunk = c_pages[j:j + n_problems]
+        out[name] = (chunk[0], chunk[-1])
+        j += n_problems
+    return out
+
+
 def load_frames(frames_json):
     """본문 프레임만 (머리말 y<=0 제외, 빈 프레임 제외)."""
     d = json.load(open(frames_json, encoding="utf-8"))
@@ -170,7 +224,17 @@ def thread_marks(stories_json, first_page):
     return best_marks
 
 
-def build_inventory(frames_json, stories_json, sections, canon):
+def build_inventory(frames_json, stories_json, sections, canon, threaded=None):
+    """threaded: 텍스트 내부 마커로 봐야 하는 섹션 집합.
+
+    분할(Phase 1) 전에는 영작 배열이 스레드라 THREADED 기본값을 쓰고,
+    분할 후에는 페이지 단위로 잡히므로 `threaded=set()` 을 넘긴다.
+    """
+    return _build_inventory(frames_json, stories_json, sections, canon,
+                            THREADED if threaded is None else threaded)
+
+
+def _build_inventory(frames_json, stories_json, sections, canon, threaded):
     """섹션 정의 + canon 지문 목록 → 지문별 슬롯 인벤토리 + 검증 리포트.
 
     sections: {섹션명: (first_page, last_page)}
@@ -187,7 +251,7 @@ def build_inventory(frames_json, stories_json, sections, canon):
             report.append({"section": name, "status": "범위 미정의"})
             continue
         first, last = rng
-        if name in THREADED:
+        if name in threaded:
             marks = thread_marks(stories_json, first)
             seen = set()
             extra = []
