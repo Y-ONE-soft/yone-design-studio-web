@@ -1,22 +1,33 @@
-"""펼침면 압축 엔진 (수동 Slim_Merge.jsx / Slim_Merge2.jsx 웹 흡수).
+"""워크북 슬림 변환 엔진 (수동 Slim_Ver / Slim_Merge / Slim_Merge2 웹 흡수).
 
-워크북 전체(C) .indd에서 특정 단원 섹션의 짝(왼쪽)-홀(오른쪽) 페이지를
-한 페이지로 병합해 펼침면을 압축한다. 섹션 탐지는 '단원' 스타일
-(문자 스타일 그룹 '마스터페이지' > '단원' → 문서 문자 스타일 → 단락
-스타일 순 폴백)이 적용된 텍스트의 마커 문자열 포함 여부.
+완성된 워크북 .indd 에서 섹션별로 액션을 적용해 슬림 판을 만든다.
+섹션 탐지는 '단원' 스타일(문자 스타일 그룹 '마스터페이지' > '단원' →
+문서 문자 스타일 → 단락 스타일 순 폴백)이 적용된 파스트보드 숨김 마커
+프레임 — 마스터 러닝헤더 텍스트변수의 소스라 내지 개편에 강건하다.
 
-두 가지 모드 (수동 스크립트 2종과 1:1 대응, 기본값 파리티):
-  - ox      (Slim_Merge.jsx, 2026-05-26): '본문 O/X' 섹션.
-            왼쪽 면적최대 프레임을 상단 절반으로 축소 + 오른쪽 면적최대
-            프레임을 왼쪽 하단 절반으로 move → 비워진 오른쪽 페이지 삭제.
-  - arrange (Slim_Merge2.jsx, 2026-05-06): '문장 배열' 섹션.
-            스레드 스토리 독립화 → 하단(y>100) 프레임 삭제 → 오른쪽
-            페이지 프레임을 왼쪽으로 duplicate + 고정 좌표 배치 → 오른쪽
-            페이지 삭제.
+섹션 액션 3종:
+  - delete      (Slim_Ver.jsx)    섹션 페이지 전량 삭제. 범위 끝의
+                                  간지/백지([없음]·M·간지 마스터)는 가드로 제외.
+  - merge_half  (Slim_Merge.jsx)  전체높이 프레임 1개짜리 섹션을 2p→1p.
+                                  host 프레임을 상단 절반으로 축소 +
+                                  다음 페이지 개체를 하단 절반으로 이동.
+  - merge_stack (Slim_Merge2.jsx) 상단(문제)+하단(부가문제) 2프레임 섹션을
+                                  2p→1p. 하단 프레임 삭제 후 다음 페이지
+                                  상단 프레임을 host 아래에 적층.
 
-입력: .indd 업로드 + 모드 선택. 출력: 압축된 .indd (원본 무접촉 —
-job_dir 사본을 출력 경로로 복사 후 in-place 수정). PDF export 없음
-(수동 스크립트 파리티 — 압축본은 후속 조판 작업의 중간 산출물).
+후처리 2종(자동):
+  - 섹션 첫 페이지 마스터 좌/우 보정 (A↔B, C↔D — 헤더 탭이 있는 변형 선택)
+  - 간지 스프레드 정렬 — 간지 블록([없음] 마스터 연속 런)의 마지막 페이지가
+    왼쪽으로 밀리면 블록 앞에 메모 페이지(M 마스터)를 삽입해 (왼쪽,오른쪽)
+    2P 구성을 복원. 밀리면 간지 배경이 pasteboard로 나가고 흰 글자 제목이
+    흰 배경에 얹혀 통째로 안 보인다 (오버셋·링크·폰트로는 안 잡히는 결함).
+
+입력: .indd 업로드 + 섹션별 액션(또는 학교 프리셋). 출력: 슬림 .indd
+(원본 무접촉 — job_dir 사본을 출력 경로로 복사 후 in-place 수정).
+PDF export 없음 (슬림본은 후속 작업의 중간 산출물).
+
+구 2모드(merge_mode=ox|arrange)는 하위호환 — config.modes 의 action 으로
+액션 목록에 합류시킨다.
 """
 
 import json
@@ -52,16 +63,16 @@ class SlimMergeEngine(BaseEngine):
 
     @property
     def display_name(self):
-        return "펼침면 압축"
+        return "워크북 슬림 변환"
 
     @property
     def description(self):
-        return ("본문 O/X · 문장 배열 섹션의 짝-홀 페이지를 병합해 "
-                "펼침면을 압축한 .indd 생성")
+        return ("완성 워크북 .indd에서 섹션을 빼거나 두 페이지를 한 페이지로 "
+                "병합해 슬림 판 생성 (간지 스프레드 정렬 포함)")
 
     @property
     def subject_prefix(self):
-        return "펼침면압축"
+        return "슬림변환"
 
     @property
     def template_name(self):
@@ -112,8 +123,38 @@ class SlimMergeEngine(BaseEngine):
                     "required": True,
                 },
                 {
+                    "key": "preset",
+                    "label": "학교 프리셋 (config.presets 키)",
+                    "type": "text",
+                    "required": False,
+                },
+                {
+                    "key": "delete_sections",
+                    "label": "삭제할 섹션 (콤마 구분 마커)",
+                    "type": "text",
+                    "required": False,
+                },
+                {
+                    "key": "merge_half_sections",
+                    "label": "반쪽 병합할 섹션 (콤마 구분 마커)",
+                    "type": "text",
+                    "required": False,
+                },
+                {
+                    "key": "merge_stack_sections",
+                    "label": "적층 병합할 섹션 (콤마 구분 마커)",
+                    "type": "text",
+                    "required": False,
+                },
+                {
+                    "key": "fix_divider",
+                    "label": "간지 스프레드 정렬 (0=끄기)",
+                    "type": "text",
+                    "required": False,
+                },
+                {
                     "key": "merge_mode",
-                    "label": "병합 대상 섹션 (ox=본문 O/X, arrange=문장 배열)",
+                    "label": "[구] 병합 모드 (ox / arrange) — 하위호환",
                     "type": "text",
                     "required": False,
                 },
@@ -122,7 +163,7 @@ class SlimMergeEngine(BaseEngine):
                     "label": "결과 파일명 (확장자 제외)",
                     "type": "text",
                     "required": False,
-                    "placeholder": "비워두면 원본 파일명_압축 으로 자동",
+                    "placeholder": "비워두면 원본 파일명_슬림 으로 자동",
                 },
             ]
         }

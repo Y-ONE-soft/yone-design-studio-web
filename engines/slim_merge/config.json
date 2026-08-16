@@ -1,18 +1,53 @@
 {
-  "output_base": "조판/교재/펼침면압축",
+  "_doc": [
+    "워크북 슬림 변환 — 섹션별 액션(유지/삭제/반쪽병합/적층병합) + 간지 스프레드 정렬.",
+    "sections: UI 체크 목록 (marker = 파스트보드 '단원' 마커 텍스트, 공백 무시 비교).",
+    "presets: 학교별 고정 조합 — 새 학교는 여기 한 블록만 추가하면 된다.",
+    "modes: 구 2모드(ox/arrange) 하위호환 — engine 이 액션 목록으로 변환."
+  ],
+  "output_base": "조판/교재/슬림변환",
   "log_filename": "slim_log.txt",
   "unit_style_name": "단원",
   "unit_style_group": "마스터페이지",
+  "stack_drop_y": 100,
+  "stack_gap": 6.85,
+  "master_pairs": [["A", "B"], ["C", "D"]],
+  "protect_masters": ["M", "간지"],
+  "memo_master": "M",
+  "sections": [
+    {"marker": "어휘 선택 1", "label": "A1 어휘 선택 1", "step": "STEP 01"},
+    {"marker": "어휘 선택 2", "label": "A1 어휘 선택 2", "step": "STEP 01"},
+    {"marker": "어휘 선택",   "label": "A1 어휘 선택 (EBS)", "step": "STEP 01"},
+    {"marker": "본문 O/X",    "label": "A2 본문 O/X", "step": "STEP 01"},
+    {"marker": "본문 정리",   "label": "B1 본문 정리", "step": "STEP 01"},
+    {"marker": "내용 종합",   "label": "B2 내용 종합", "step": "STEP 01"},
+    {"marker": "문장 배열",   "label": "C1 문장 배열", "step": "STEP 01"},
+    {"marker": "빈칸 어휘",   "label": "C2 빈칸 어휘", "step": "STEP 01"},
+    {"marker": "어법 선택",   "label": "A1 어법 선택", "step": "STEP 02"},
+    {"marker": "어법 수정",   "label": "A1 어법 수정", "step": "STEP 02"},
+    {"marker": "어법 O/X",    "label": "B1 어법 O/X", "step": "STEP 02"},
+    {"marker": "빈칸 어법",   "label": "C1 빈칸 어법", "step": "STEP 02"},
+    {"marker": "영작 배열",   "label": "C2 영작 배열", "step": "STEP 02"}
+  ],
+  "presets": {
+    "gwangmun": {
+      "label": "광문고 슬림",
+      "hint": "어휘 선택 2 · 본문 정리 · 내용 종합 · 어법 O/X · 빈칸 어법 삭제 + 본문 O/X 반쪽병합 + 문장 배열 적층병합",
+      "delete": ["어휘 선택 2", "본문 정리", "내용 종합", "어법 O/X", "빈칸 어법"],
+      "merge_half": ["본문 O/X"],
+      "merge_stack": ["문장 배열"]
+    }
+  },
   "modes": {
     "ox": {
       "label": "본문 O/X",
-      "marker": "본문 O/X"
+      "marker": "본문 O/X",
+      "action": "merge_half"
     },
     "arrange": {
       "label": "문장 배열",
       "marker": "문장 배열",
-      "left_bounds": [160.249999999867, 20, 404.74999999596, 187.9999999999936],
-      "right_bounds": [160.249999999867, 22, 404.74999999596, 189.9999999999936],
+      "action": "merge_stack",
       "bottom_y_threshold": 100
     }
   }
