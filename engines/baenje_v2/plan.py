@@ -13,6 +13,7 @@
     "unit_masters": {"body":    {"left":"L0","right":"L2","cont":"L1"},
                      "answers": {"left":"C0","right":"C2","cont":"C1"}},
     "unit_char_style": "유닛",       # 러닝헤드 텍스트 변수가 찾는 문자스타일
+    "label_style": "[기본 단락]",     # 라벨 단락(자동번호 없는 중립 스타일)
     "wide_space_style": "한글",       # 전각 공백 .notdef 방지
     "memo_master": "B",              # 뒤쪽 빈 페이지
     "keep_block_in_spread": "answers" # 한 문항 블록이 펼침면을 넘지 않게
@@ -122,6 +123,7 @@ def content_to_plan(content, log=None):
                 "answers": {"left": "C0", "right": "C2", "cont": "C1"},
             },
             "unit_char_style": "유닛",
+            "label_style": "[기본 단락]",
             "wide_space_style": "한글",
             "memo_master": "B",
             "keep_block_in_spread": "answers",

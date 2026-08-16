@@ -133,6 +133,11 @@ function placeFlow(doc, story, flow, ops) {
         warn("'" + (ops.unit_char_style || "유닛") + "' 문자스타일 없음 — 머리말 비활성");
         RESULTS.missing_styles.push(ops.unit_char_style || "유닛");
     }
+    // 유닛 라벨 단락은 자동번호가 없는 중립 스타일이어야 한다.
+    // (정답지 스토리의 기본 스타일이 '해설_시작'이면 라벨 자리에 '해설 |' 라벨이
+    //  그대로 찍힌다 — 문자 크기/색 override로는 안 감춰짐)
+    var psLabel = findParagraphStyleByPath(doc, ops.label_style || "[기본 단락]");
+    if (!psLabel) { try { psLabel = doc.paragraphStyles[0]; } catch (e) {} }
     var labelParas = [];
     var paras = story.paragraphs;
     var n = Math.min(meta.length, paras.length);
@@ -145,6 +150,7 @@ function placeFlow(doc, story, flow, ops) {
         if (m.isLabel) {
             // 보이지 않는 유닛 라벨 (러닝헤드 변수 소스)
             if (csUnit) {
+                try { if (psLabel) para.appliedParagraphStyle = psLabel; } catch (e) {}
                 try { para.appliedCharacterStyle = csUnit; } catch (e) {}
                 try { para.pointSize = 0.1; } catch (e) {}
                 try { para.leading = 0.1; } catch (e) {}

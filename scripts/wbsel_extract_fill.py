@@ -6,7 +6,7 @@
 
 스펙 파일(JSON) 예:
     {
-      "out": "/Users/Shared/wbsel_fill/hanyoung1_11gang.json",
+      "out": "engines/workbook_select/fill/hanyoung1_gang11.json",
       "sources": [
         {"indd": "/…/한영1_워크북01_신규3_v2.indd",
          "mode": "marker",

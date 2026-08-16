@@ -361,8 +361,10 @@ class WorkbookSelectEngine(WorkbookV2Engine):
                     log("[마더텅] %d강에 매칭 코드 없음 — 입력 순서 유지"
                         % mt_gang)
         else:
-            log("[라벨] 마더텅 강 미지정 — 지문번호=코드(YYMMQQ), "
-                "조판 순서=입력 순서 (엑셀 미조회)")
+            # 병합 라벨(마커·헤더)은 코드 전체, 독립 지문번호 프레임은
+            # workbook_v2 가 코드 뒤 2자리(QQ)로 찍는다 — 둘이 다르니 명시.
+            log("[라벨] 마더텅 강 미지정 — 마커=코드(YYMMQQ) / "
+                "지문번호 프레임=문항번호(QQ), 조판 순서=입력 순서 (엑셀 미조회)")
 
         grade = self._get_meta(job_dir, "grade", "고1")
         grade_num = grade.replace("고", "").strip() or "1"
