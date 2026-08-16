@@ -534,10 +534,21 @@ class WorkbookSelectEngine(WorkbookV2Engine):
 
         self._write_prompts(job_dir, merged, fill, log)
 
+        # coverage 는 "원고에 있었는가"라, 보충 데이터로 **내용을 채운 칸**도
+        # False 로 남는다. 그대로 두면 검수가 "원고에 없는 문항"이라며 실패로
+        # 판정해, 담당자가 빈 자리로 나간 칸(진짜 조치 대상)과 구분할 수 없다.
+        # 어느 칸이 채워졌는지를 따로 남긴다.
+        filled = {}
+        for step_key, cov in coverage.items():
+            got = [c for c, ok in cov.items()
+                   if not ok and
+                   ((fill or {}).get(step_key, {}).get(c) or {}).get("paras")]
+            if got:
+                filled[step_key] = got
         with open(os.path.join(job_dir, "coverage.json"), "w",
                   encoding="utf-8") as f:
             json.dump({"codes": codes, "coverage": coverage,
-                       "defects": defects}, f,
+                       "defects": defects, "filled": filled}, f,
                       ensure_ascii=False, indent=2)
 
         # 원고 결손 목록을 별도 파일로 — 교재팀 재요청 근거 (사용자 요청
@@ -946,13 +957,36 @@ class WorkbookSelectEngine(WorkbookV2Engine):
         cov_path = os.path.join(job_dir, "coverage.json")
         if os.path.exists(cov_path):
             cov = json.load(open(cov_path, encoding="utf-8"))
+            filled_map = cov.get("filled") or {}
             for step_key, per_code in cov["coverage"].items():
                 if not any(per_code.values()):
                     continue  # 원고 전체에 없는 스텝 (예: a1_btm)
                 missing = [c for c, ok in per_code.items() if not ok]
-                if missing:
+                if not missing:
+                    continue
+                done = set(filled_map.get(step_key) or [])
+                # 보충 데이터로 채운 칸 = 내용은 들어갔다 (알림만)
+                if done:
                     warnings.append(
-                        "%s: 원고에 없는 문항 %s" % (step_key, missing))
+                        "%s: 원고에 없어 보충 데이터로 채운 문항 %s "
+                        "(내용은 조판됨 · 교재팀 원고 요청 대상)"
+                        % (step_key, sorted(done)))
+                # 아무것도 못 채운 칸 = 빈 자리로 조판됐다 (조치 필요)
+                blank = [c for c in missing if c not in done]
+                if blank:
+                    warnings.append(
+                        "%s: 원고에 없는 문항 %s — 빈 자리로 조판됨"
+                        % (step_key, blank))
+            # 내용 미달(코드는 있으나 비었거나 정답만 있음)도 노출한다.
+            # 지금까지 job 폴더의 원고재요청.txt 에만 있어 웹 사용자는
+            # 결손을 모른 채 산출물을 받았다.
+            for d in cov.get("defects") or []:
+                warnings.append("원고 결손: %s %s — %s"
+                                % (d.get("step"), d.get("code"),
+                                   d.get("reason")))
+            req = os.path.join(job_dir, "원고재요청.txt")
+            if os.path.exists(req):
+                warnings.append("교재팀 재요청 목록: %s" % req)
 
         # PDF 페이지수
         pdf_path = settings.get("pdf_path", "")

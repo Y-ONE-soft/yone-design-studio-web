@@ -3,17 +3,31 @@
 원고가 **아예 없는 칸**을 이전 산출물(.indd)에서 뽑아 채우는 데이터.
 형식: `{step_key: {code: {"prompt": str, "paras": [{"text","runs"}]}}}`
 
-## 자동 적용되지 않는다 (의도된 설계)
+## 조달 우선순위
 
-config 에 특정 강 파일을 기본값으로 박아두면 **다른 강 job 에 남의 강 내용이
-섞인다**(2026-08-13 발견: `hanyoung1_11gang.json` 이 전 job 기본값이었다).
-그래서 `config.fill_json` 은 비어 있고, 엔진은 **job 폴더의 `fill.json`** 만
-읽는다. 여기 파일은 쓰려면 명시적으로 지정한다:
+| 순위 | 출처 | 언제 |
+|---|---|---|
+| 1 | 웹 업로드 슬롯 `fill` | 조판 화면에서 .json 을 직접 올렸을 때 |
+| 2 | `job_dir/fill.json` | CLI `--fill` 로 넘겼을 때(job 폴더로 복사됨) |
+| 3 | **이 보관소** (`index.json`) | job 의 **학년·강이 정확히 일치**하는 항목이 있을 때 |
+| 4 | `config.fill_json` | 비워 두는 것이 정상. 값이 있을 때만 폴백 |
+
+**보관소 자동 조달은 (학년, 강) 완전 일치일 때만** 한다. 부분일치·기본값·
+폴백은 금지 — 특정 강 파일이 모든 job 의 기본값이라 남의 강 내용이 섞인
+사고가 있었다(2026-08-13). 무엇을 왜 골랐는지는 항상 로그에 남는다.
+강 번호가 없는 **코드 job 은 키가 없어 자동 조달 대상이 아니다** — 업로드나
+`--fill` 을 쓴다.
 
 ```bash
-python3 scripts/wbsel_build.py --gang 11 --fill engines/workbook_select/fill/hanyoung1_gang11.json ...
-python3 scripts/wbsel_preflight.py --gang 11 --fill engines/workbook_select/fill/hanyoung1_gang11.json
+python3 scripts/wbsel_build.py --gang 11 ...          # 보관소에서 자동
+python3 scripts/wbsel_build.py --codes ... --fill <경로>   # 코드 job 은 명시
 ```
+
+## 항목 추가 방법
+
+1. `scripts/wbsel_extract_fill.py` 로 이전 산출물에서 뽑아 이 폴더에 저장
+2. `index.json` 의 `entries` 에 `grade` / `gang` / `file` / `note` 추가
+3. `python3 scripts/wbsel_test_mtgate.py` 로 색인 정합 확인 (적힌 파일이 실제로 있는지 검사한다)
 
 ## 먼저 원고를 확인할 것
 

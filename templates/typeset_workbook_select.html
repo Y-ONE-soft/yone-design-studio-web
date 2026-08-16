@@ -83,6 +83,24 @@
     <div id="codes-recognized" class="input-hint"></div>
   </div>
 
+  <!-- 보충 데이터 (선택) -->
+  <div class="school-section">
+    <div class="section-label">보충 데이터 fill.json <span class="input-hint">(선택)</span></div>
+    <div class="input-label u-mt-4">
+      <b>원고가 아예 없는 칸</b>을 이전 산출물에서 뽑아둔 파일입니다.
+      보통은 비워두세요 — 강 번호를 넣으면 보관소
+      (<code>engines/workbook_select/fill/</code>)에서 그 학년·강에 해당하는
+      파일을 자동으로 찾습니다.
+    </div>
+    <input type="file" name="fill" id="fill-json" class="form-input"
+           accept=".json" style="max-width:420px">
+    <div class="input-hint">
+      조판이 끝나면 결과의 <b>경고 목록</b>에 원고 결손 문항이 표시됩니다.
+      결손이 남으면 그 칸은 빈 자리로 조판되니, 교재팀에 원고를 요청하거나
+      여기에 보충 데이터를 올려 다시 돌리세요.
+    </div>
+  </div>
+
   <!-- 결과 파일명 -->
   <div class="school-section">
     <div class="section-label">결과 파일명 <span class="required">*</span></div>

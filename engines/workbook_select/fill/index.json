@@ -1,0 +1,12 @@
+{
+  "_comment": "보충 데이터(fill) 보관소 색인. 엔진은 이 job 의 (학년, 강)과 **정확히 일치하는** 항목만 자동 조달한다 — 부분일치·기본값·폴백 금지(2026-08-13 사고: 특정 강 파일이 모든 job 의 기본값이라 남의 강 내용이 섞였다). 강 번호가 없는 코드 job 은 키가 없으므로 자동 조달 대상이 아니다(업로드 또는 job 폴더 fill.json 을 쓴다).",
+  "_how_to_add": "1) scripts/wbsel_extract_fill.py 로 이전 산출물에서 뽑아 이 폴더에 저장 2) 아래 entries 에 grade/gang/file/note 추가 3) python3 scripts/wbsel_test_mtgate.py 로 색인 정합 확인",
+  "entries": [
+    {
+      "grade": 1,
+      "gang": 11,
+      "file": "hanyoung1_gang11.json",
+      "note": "한영1 마더텅 11강 — step2_a1_btm 3칸(220632·220932·220633). 22년 6·9월 어법선택(객관식) 원고 자체에 그 문항이 없다. step1_a1 6칸도 들어 있으나 11강 폴더 원고 자동조달로 이제 불필요"
+    }
+  ]
+}

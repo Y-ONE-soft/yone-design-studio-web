@@ -308,6 +308,52 @@ def test_header_dialect_order():
     _check("표준 헤더 치환", got == "3. p22-no.231133", got)
 
 
+def test_fill_resolution():
+    """보충 데이터(fill) 조달 — 학년·강이 **정확히** 맞을 때만 자동 조달.
+
+    막으려는 것: 저장해 둔 fill 파일이 다른 강 job 에 섞이는 것
+    (2026-08-13 사고의 재발). 우선순위는 업로드 > job > 보관소 > config.
+    """
+    eng = WorkbookSelectEngine()
+    cfg = eng_mod._load_config()
+    job = tempfile.mkdtemp(prefix="wbsel_fill_")
+    lines = []
+    try:
+        p = eng._resolve_fill_path({}, job, "1", 11, cfg, lines.append)
+        _check("fill: 고1 11강 → 보관소 자동 조달",
+               p.endswith("hanyoung1_gang11.json"), p or "(없음)")
+        _check("fill: 보관소 항목 없는 강(13)은 조달 안 함",
+               eng._resolve_fill_path({}, job, "1", 13, cfg, lines.append) == "")
+        _check("fill: 강 없는 코드 job 은 조달 안 함",
+               eng._resolve_fill_path({}, job, "1", None, cfg,
+                                      lines.append) == "")
+        _check("fill: 학년 다르면 조달 안 함 (고2 11강)",
+               eng._resolve_fill_path({}, job, "2", 11, cfg,
+                                      lines.append) == "")
+        up = os.path.join(job, "uploaded_fill.json")
+        with open(up, "w", encoding="utf-8") as f:
+            f.write("{}")
+        _check("fill: 업로드가 보관소보다 우선",
+               eng._resolve_fill_path({"fill": up}, job, "1", 11, cfg,
+                                      lines.append) == up)
+        jf = os.path.join(job, "fill.json")
+        with open(jf, "w", encoding="utf-8") as f:
+            f.write("{}")
+        _check("fill: job 폴더 fill.json 이 보관소보다 우선",
+               eng._resolve_fill_path({}, job, "1", 11, cfg,
+                                      lines.append) == jf)
+        # 보관소 색인 정합 — 적힌 파일이 실제로 있어야 한다
+        idx = json.load(open(eng._FILL_INDEX, encoding="utf-8"))
+        bad = [e["file"] for e in idx.get("entries") or []
+               if not os.path.exists(os.path.join(eng._FILL_DIR, e["file"]))]
+        _check("fill: 보관소 색인의 파일이 전부 존재", not bad, str(bad))
+        # 업로드 슬롯이 실제로 노출되는가
+        keys = [s["key"] for s in eng.upload_spec["slots"]]
+        _check("fill: 웹 업로드 슬롯 존재", "fill" in keys, str(keys))
+    finally:
+        shutil.rmtree(job, ignore_errors=True)
+
+
 def main():
     test_config_clean()
     test_gate_off()
@@ -316,6 +362,7 @@ def main():
     test_no_input()
     test_final_labels()
     test_header_dialect_order()
+    test_fill_resolution()
     test_supplement_lookup()
     bad = [n for n, ok, _ in _results if not ok]
     print("\n%d/%d 통과" % (len(_results) - len(bad), len(_results)))
