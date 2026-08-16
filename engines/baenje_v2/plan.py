@@ -4,10 +4,10 @@
 {
   "format": "bj-flows-v1",
   "flows": [
-    {"area": "body",    "units": [{"paras":[{t,s,runs,align}], "page_break": bool,
-                                   "unit_label": str|null, "no": int}]},
-    {"area": "answers", "units": [{"paras":[...], "page_break": bool,
-                                   "unit_label": str|null, "no": int}]}
+    {"area": "body",    "break_per_unit": true,
+     "units": [{"paras":[{t,s,runs,align}], "page_break": bool,
+                "unit_label": str|null, "no": int}]},
+    {"area": "answers", "break_per_unit": false, "units": [...]}
   ],
   "ops": {
     "unit_masters": {"body":    {"left":"L0","right":"L2","cont":"L1"},
@@ -111,8 +111,10 @@ def content_to_plan(content, log=None):
     plan = {
         "format": "bj-flows-v1",
         "flows": [
-            {"area": "body", "units": body_units},
-            {"area": "answers", "units": ans_units},
+            # 본문: 문항 1개 = 프레임 1개 (v1 파리티)
+            {"area": "body", "break_per_unit": True, "units": body_units},
+            # 정답지: 이어 흘리고, 유닛(과) 시작만 새 페이지
+            {"area": "answers", "break_per_unit": False, "units": ans_units},
         ],
         "ops": {
             "unit_masters": {

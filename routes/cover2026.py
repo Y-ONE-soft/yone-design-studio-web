@@ -23,6 +23,37 @@ bp = Blueprint("cover2026", __name__)
 GEN_ROOT = os.path.expanduser("~/dev/yone-cover2026")
 GEN = os.path.join(GEN_ROOT, "gen")
 
+# 생성기를 돌릴 파이썬을 **직접 찾는다**. `sys.executable` 을 쓰면 안 된다 —
+# Flask 는 /usr/bin/python3(3.9) 로 뜨는데 생성기는 pypdf·PyMuPDF·numpy·skimage 를
+# 쓰고 그 3.9 환경엔 없다. (2026-08-17: 이것 때문에 웹 버튼이 아무 반응도 없었다)
+_PY_CANDIDATES = [
+    "/Library/Frameworks/Python.framework/Versions/3.14/bin/python3",
+    "/Library/Frameworks/Python.framework/Versions/3.13/bin/python3",
+    "/opt/homebrew/bin/python3",
+    "/usr/local/bin/python3",
+    sys.executable,
+]
+_NEEDED = "import fitz, pypdf, numpy, PIL"
+_py_cache = None
+
+
+def _python():
+    """생성기 의존성이 설치된 파이썬 경로. 없으면 무엇이 없는지 알려준다."""
+    global _py_cache
+    if _py_cache:
+        return _py_cache
+    tried = []
+    for p in _PY_CANDIDATES:
+        if not p or not os.path.exists(p):
+            continue
+        r = subprocess.run([p, "-c", _NEEDED], capture_output=True, text=True)
+        if r.returncode == 0:
+            _py_cache = p
+            return p
+        tried.append(f"{p}: {r.stderr.strip().splitlines()[-1] if r.stderr.strip() else '실패'}")
+    raise RuntimeError("생성기를 돌릴 파이썬을 찾지 못했다 (fitz·pypdf·numpy·PIL 필요)\n"
+                       + "\n".join(tried))
+
 # 프로젝트 = 표지 시안 한 벌. 새 시안이 생기면 여기에 한 줄 추가한다.
 PROJECTS = {
     "2026": {

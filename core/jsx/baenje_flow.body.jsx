@@ -96,13 +96,16 @@ function findMaster(doc, prefix) {
 function placeFlow(doc, story, flow, ops) {
     var texts = [], meta = [];      // meta[i] = {s, runs, align, isLabel, unitIdx, unitStart}
     var units = flow.units;
+    // 유닛 경계마다 프레임을 분리할지 (본문=문항 1개 1프레임, 정답지=이어 흘림)
+    var perUnit = (flow.break_per_unit !== false);
     for (var u = 0; u < units.length; u++) {
         var unit = units[u];
         var first = true;
         if (unit.unit_label) {
             texts.push(unit.unit_label);
             meta.push({ s: null, isLabel: true, unitIdx: u, unitStart: true,
-                        brk: unit.page_break ? "page" : (u > 0 ? "frame" : null) });
+                        brk: unit.page_break ? "page"
+                             : ((perUnit && u > 0) ? "frame" : null) });
             first = false;
         }
         for (var i = 0; i < unit.paras.length; i++) {
@@ -111,7 +114,8 @@ function placeFlow(doc, story, flow, ops) {
             meta.push({
                 s: p.s, runs: p.runs || null, align: p.align || null,
                 isLabel: false, unitIdx: u, unitStart: first,
-                brk: first ? (unit.page_break ? "page" : (u > 0 ? "frame" : null)) : null
+                brk: first ? (unit.page_break ? "page"
+                              : ((perUnit && u > 0) ? "frame" : null)) : null
             });
             first = false;
         }

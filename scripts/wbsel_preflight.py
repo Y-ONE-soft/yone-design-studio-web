@@ -44,6 +44,9 @@ def main():
     ap.add_argument("--grade", default="고1")
     ap.add_argument("--keep", action="store_true",
                     help="작업 폴더를 지우지 않고 남긴다 (content.json 확인용)")
+    ap.add_argument("--fill", default="",
+                    help="보충 데이터 fill.json 경로 (원고에 아예 없는 칸용). "
+                         "지정한 job 에만 적용된다 — config 기본값은 없다")
     args = ap.parse_args()
     if not args.gang and not args.codes:
         ap.error("--gang 또는 --codes 중 하나는 필요합니다")
@@ -54,6 +57,11 @@ def main():
     if args.gang:
         with open(os.path.join(job, "mt_gang.txt"), "w", encoding="utf-8") as f:
             f.write(str(args.gang))
+    if args.fill:
+        src = os.path.expanduser(args.fill)
+        if not os.path.exists(src):
+            ap.error("--fill 파일 없음: %s" % src)
+        shutil.copy2(src, os.path.join(job, "fill.json"))
 
     picks = []
 

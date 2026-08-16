@@ -45,6 +45,10 @@ def main():
     ap.add_argument("--exam-period", default="기간미지정")
     ap.add_argument("--name", required=True, help="결과 파일명(확장자 제외)")
     ap.add_argument("--job", default="", help="job 폴더 이름 (기본: 자동)")
+    ap.add_argument("--fill", default="",
+                    help="보충 데이터 fill.json 경로 (원고에 아예 없는 칸용). "
+                         "job 폴더로 복사돼 이 job 에만 적용된다 — "
+                         "config 기본값은 없다(다른 강 오염 방지)")
     args = ap.parse_args()
     if not args.gang and not args.codes:
         ap.error("--gang 또는 --codes 중 하나는 필요합니다")
@@ -61,6 +65,12 @@ def main():
     for k, v in meta.items():
         with open(os.path.join(job, "%s.txt" % k), "w", encoding="utf-8") as f:
             f.write(v)
+    if args.fill:
+        import shutil
+        src = os.path.expanduser(args.fill)
+        if not os.path.exists(src):
+            ap.error("--fill 파일 없음: %s" % src)
+        shutil.copy2(src, os.path.join(job, "fill.json"))
 
     t0 = time.time()
 
