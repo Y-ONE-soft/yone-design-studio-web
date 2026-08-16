@@ -26,7 +26,7 @@ _INDD_KEYS = ("indd_path", "output_indd", "indd_output", "output_path")
 
 # 조판 시점 UI 가 넘기는 폼 키 (routes/typeset.py 가 job_dir/*.txt 로 저장)
 FORM_KEYS = ("slim_preset", "slim_delete", "slim_half", "slim_stack",
-             "slim_fix_divider")
+             "slim_rename", "slim_fix_divider")
 
 
 def _read(job_dir, key):
@@ -66,9 +66,24 @@ def _target_indd(job_dir):
     return ""
 
 
+def parse_renames(raw):
+    """'어법 선택>어법 수정, A>B' → {from: to} (slim_merge 엔진과 같은 규칙)."""
+    out = {}
+    for pair in str(raw or "").split(","):
+        if ">" not in pair:
+            continue
+        a, b = pair.split(">", 1)
+        a, b = a.strip(), b.strip()
+        if a and b:
+            out[a] = b
+    return out
+
+
 def wanted(job_dir):
-    """이 job 에 슬림 후처리가 요청됐는지."""
-    return any(_read(job_dir, k) for k in FORM_KEYS[:4])
+    """이 job 에 슬림 후처리가 요청됐는지 (섹션 액션 또는 마커 교체)."""
+    return any(_read(job_dir, k) for k in
+               ("slim_preset", "slim_delete", "slim_half", "slim_stack",
+                "slim_rename"))
 
 
 def resolve_actions(job_dir, cfg, log):
@@ -114,9 +129,12 @@ def run_slim_postprocess(engine, job_dir, log, cancel_check=None):
 
     cfg = _load_slim_config()
     actions = resolve_actions(job_dir, cfg, log)
-    if not any(actions.values()):
-        log("[슬림] 적용할 섹션 액션이 없습니다 — 후처리 생략")
+    renames = parse_renames(_read(job_dir, "slim_rename"))
+    if not any(actions.values()) and not renames:
+        log("[슬림] 적용할 작업이 없습니다 — 후처리 생략")
         return None
+    for _a, _b in renames.items():
+        log(f"[슬림] 마커 교체: {_a} → {_b}")
 
     for key, label in (("delete", "삭제"), ("merge_half", "반쪽 병합"),
                        ("merge_stack", "적층 병합")):
@@ -136,6 +154,7 @@ def run_slim_postprocess(engine, job_dir, log, cancel_check=None):
         "merge_half_sections": actions["merge_half"],
         "merge_stack_sections": actions["merge_stack"],
         "fix_divider_spreads": fix_divider,
+        "rename_markers": renames or None,
         "memo_master": cfg.get("memo_master", "M"),
         "unit_style_name": cfg.get("unit_style_name", "단원"),
         "unit_style_group": cfg.get("unit_style_group", "마스터페이지"),

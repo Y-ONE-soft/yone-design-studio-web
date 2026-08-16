@@ -45,6 +45,10 @@
       </tbody>
     </table>
 
+    <label class="grade-radio" style="display:block; margin-top:8px;">
+      <input type="checkbox" id="slim-rename-grammar"> 어법 선택 &rarr; 어법 수정으로 표기 변경
+    </label>
+
     <label class="grade-radio" style="margin-top:8px; display:inline-block;">
       <input type="checkbox" id="slim-fixdiv" checked> 간지가 (왼쪽·오른쪽) 2P 구성이 되도록 메모 페이지 자동 삽입
     </label>
@@ -55,6 +59,7 @@
     <input type="hidden" name="slim_delete" id="slim-h-delete">
     <input type="hidden" name="slim_half" id="slim-h-half">
     <input type="hidden" name="slim_stack" id="slim-h-stack">
+    <input type="hidden" name="slim_rename" id="slim-h-rename">
     <input type="hidden" name="slim_fix_divider" id="slim-h-fixdiv">
   </div>
 </details>
@@ -88,7 +93,12 @@
     d.value = picked.delete.join(',');
     h.value = picked.half.join(',');
     s.value = picked.stack.join(',');
-    var any = picked.delete.length + picked.half.length + picked.stack.length;
+    var rn = document.getElementById('slim-rename-grammar');
+    var renameOn = !!(rn && rn.checked);
+    document.getElementById('slim-h-rename').value =
+      renameOn ? '어법 선택>어법 수정' : '';
+    var any = picked.delete.length + picked.half.length + picked.stack.length
+              + (renameOn ? 1 : 0);
     // 액션이 없으면 fix_divider 도 비워 둔다 — 후처리 자체가 no-op 이어야 한다.
     f.value = any ? (document.getElementById('slim-fixdiv').checked ? '1' : '0') : '';
   }
