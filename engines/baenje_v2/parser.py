@@ -154,10 +154,11 @@ def classify_problem_paragraphs(rows, warnings, src=""):
             state, kind = "summary", "summary"
         elif RE_BOGI.match(t):
             state, kind = "bogi", "bogi"
+        elif state == "cond":
+            # v1 파리티: <조건> 안에서는 ①②… 항목도 조건 스타일이다
+            kind = "cond"
         elif RE_CHOICE.match(t):
             state, kind = None, "choice"
-        elif state == "cond":
-            kind = "cond"
         elif state == "bogi" and (
                 RE_LETTER_ITEM.match(t) or RE_CIRCLED_LETTER.match(t)
                 or RE_HANGUL_ITEM.match(t) or " / " in t):

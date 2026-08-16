@@ -11,9 +11,11 @@ def test_registry_subjects_template_consistency():
     engines = {e.material_id: e for e in registry.all_engines()}
     assert "mockexam_v2" in engines
     assert "blackbook_v2" in engines
+    assert "baenje_v2" in engines
     assert "workbook_v2" in engines
     assert "mockexam" in engines            # 기존 엔진 유지 (삭제 금지 규칙)
     assert "blackbook" in engines
+    assert "baenje" in engines           # v1 유지
     assert "workbook" in engines
     assert len(engines) >= 24
 
@@ -21,9 +23,11 @@ def test_registry_subjects_template_consistency():
                encoding="utf-8").read()
     assert '"engine_id": "mockexam_v2"' in raw     # 카드 존재
     assert '"engine_id": "blackbook_v2"' in raw
+    assert '"engine_id": "baenje_v2"' in raw
     assert '"engine_id": "workbook_v2"' in raw
     assert '"engine_id": "mockexam"' in raw        # 기존 카드 유지
     assert '"engine_id": "blackbook"' in raw
+    assert '"engine_id": "baenje"' in raw
     assert '"engine_id": "workbook"' in raw
 
     e = engines["mockexam_v2"]
