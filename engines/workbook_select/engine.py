@@ -311,8 +311,13 @@ class WorkbookSelectEngine(WorkbookV2Engine):
     _FILL_DIR = os.path.join(_DIR, "fill")
     _FILL_INDEX = os.path.join(_FILL_DIR, "index.json")
 
-    def _fill_from_library(self, grade_num, mt_gang, log):
-        """보관소에서 (학년, 강) 이 정확히 일치하는 항목을 찾는다."""
+    def _fill_from_library(self, grade_num, mt_gang, school, log):
+        """보관소에서 (학년, 강[, 학교]) 가 정확히 일치하는 항목을 찾는다.
+
+        항목에 `school` 이 있으면 그 학교 job 에만 쓴다 — 학교 전용 보충
+        데이터가 타 학교 job 으로 새는 것을 막는다. 기출 문항 코드 키 데이터는
+        학교 무관이라 `school` 을 비워 둔다.
+        """
         if mt_gang is None or not os.path.exists(self._FILL_INDEX):
             return ""
         try:
@@ -329,10 +334,16 @@ class WorkbookSelectEngine(WorkbookV2Engine):
                 continue
             if not same:
                 continue
+            want_school = _nfc(str(ent.get("school") or "")).strip()
+            if want_school and want_school != _nfc(str(school or "")).strip():
+                log("[보충데이터] 보관소 항목 '%s' 는 %s 전용 — 이 job(%s)엔 "
+                    "안 씀" % (ent.get("file"), want_school, school or "학교미지정"))
+                continue
             path = os.path.join(self._FILL_DIR, ent.get("file") or "")
             if not os.path.exists(path):
-                log("[보충데이터] 보관소 항목의 파일이 없음: %s" % path)
-                return ""
+                # 다음 항목을 계속 본다 — 여기서 멈추면 조용히 미조달된다
+                log("[보충데이터] 보관소 항목의 파일이 없음(건너뜀): %s" % path)
+                continue
             log("[보충데이터] 보관소 자동 조달 — 고%s %s강 → %s%s"
                 % (grade_num, mt_gang, ent.get("file"),
                    (" (%s)" % ent["note"]) if ent.get("note") else ""))
@@ -342,7 +353,7 @@ class WorkbookSelectEngine(WorkbookV2Engine):
         return ""
 
     def _resolve_fill_path(self, uploaded_files, job_dir, grade_num,
-                           mt_gang, cfg, log):
+                           mt_gang, cfg, log, school=""):
         up = (uploaded_files or {}).get("fill") or ""
         if up and os.path.exists(up):
             log("[보충데이터] 업로드 파일 사용: %s" % os.path.basename(up))
@@ -353,7 +364,7 @@ class WorkbookSelectEngine(WorkbookV2Engine):
             log("[보충데이터] job 폴더 fill.json 사용")
             return job_fill
 
-        lib = self._fill_from_library(grade_num, mt_gang, log)
+        lib = self._fill_from_library(grade_num, mt_gang, school, log)
         if lib:
             return lib
 
@@ -629,6 +640,25 @@ class WorkbookSelectEngine(WorkbookV2Engine):
                             p, t[:m.start(2)] + code2label[m.group(2)]
                             + t[m.end(2):])
                         swapped += 1
+            # step3(실전)는 단락이 아니라 item["code"] 로 라벨을 만든다
+            # (workbook_v2/plan.py 가 "{code}" 단락을 앞에 끼운다). 여기서
+            # 같이 바꾸지 않으면 **실전 섹션만 6자리 코드로 인쇄된다.**
+            s3 = steps.get("step3")
+            if isinstance(s3, dict):
+                for bucket in ("normal", "short"):
+                    items = s3.get(bucket)
+                    if not isinstance(items, list):
+                        continue
+                    for i, it in enumerate(items):
+                        if not isinstance(it, dict):
+                            continue
+                        c = str(it.get("code") or "").strip()
+                        if c in code2label:
+                            # 원본 파싱 결과와 공유되는 dict 이라 사본으로 교체
+                            it = dict(it)
+                            it["code"] = code2label[c]
+                            items[i] = it
+                            swapped += 1
             log("[지문번호] 마더텅 번호로 교체 %d곳 (조판 직전 마지막 단계)"
                 % swapped)
 
@@ -637,12 +667,10 @@ class WorkbookSelectEngine(WorkbookV2Engine):
         # 회차가 하나뿐인 선택 job 이 그 구멍에 빠져 있었다 (2026-08-17 실측:
         # 250620·250631·250632 → 프레임 20·21·22).
         labels = list(passage_labels(steps) or [])
-        if not code2label:
-            # 코드 표기 job — 프레임은 폭이 2자리라 문항번호(QQ)만 남긴다
-            # (workbook_v2 의 _mixed_rounds 규칙과 동일. 이제 회차 수와
-            #  무관하게 항상 적용한다)
-            labels = [s[-2:] if re.fullmatch(r"\d{6}", s) else s
-                      for s in labels]
+        # 프레임 폭이 2자리라 6자리 코드는 문항번호(QQ)만 남긴다. 강을 지정해도
+        # **강 밖 코드는 마더텅 번호가 없어** 6자리가 섞이므로, 모드와 무관하게
+        # 남은 6자리를 전부 줄인다 (전엔 마더텅 job 이면 그대로 뒀다).
+        labels = [s[-2:] if re.fullmatch(r"\d{6}", s) else s for s in labels]
         if labels:
             merged["_passage_labels"] = labels
             log("[지문번호] 프레임 라벨 %d개: %s"
