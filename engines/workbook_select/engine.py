@@ -877,13 +877,23 @@ class WorkbookSelectEngine(WorkbookV2Engine):
         # (merge_selected 의 labels 기본값 = 코드).
         mt_gang = self._resolve_mt_gang({}, job_dir)
         if mt_gang is None:
-            num2code = {}
+            # 강 없는 job 의 지문번호 프레임에는 코드 뒤 2자리(QQ)가 들어간다
+            # (workbook_v2 의 _mixed_rounds 처리). dump_blanks.jsx 도 그
+            # 프레임(1~3자리 숫자)에서 라벨을 읽으므로 QQ 로 역매핑해야 한다.
+            # 회차가 달라도 QQ 가 같을 수 있으니(250620·240620 → 20),
+            # 겹치는 번호는 대조에서 뺀다 — 엉뚱한 원고와 비교하느니 건너뛴다.
+            seen = {}
             for c in codes:
                 try:
-                    num2code[int(c)] = c
+                    seen.setdefault(int(c[4:6]), []).append(c)
                 except (TypeError, ValueError):
                     continue
-            log("[빈칸] 마더텅 강 미지정 — 라벨=코드로 대조")
+            num2code = {n: v[0] for n, v in seen.items() if len(v) == 1}
+            dup = sorted(n for n, v in seen.items() if len(v) > 1)
+            log("[빈칸] 강 미지정 — 라벨(문항번호 QQ)로 대조 %d개%s"
+                % (len(num2code),
+                   "" if not dup else " / 번호 중복으로 제외: %s"
+                   % ", ".join(str(d) for d in dup)))
         else:
             idx = _mt.load_index(cfg.get("motherteng_xlsx"))
             numbers = _mt.numbers_for(idx, codes, gang=mt_gang) if idx else {}

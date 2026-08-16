@@ -13,8 +13,8 @@
   <div class="cover-calc-section">
     <div class="section-label">학교 · 권</div>
     <div class="calc-row">
-      <select id="school" class="form-select" onchange="onSchool()"></select>
-      <select id="volume" class="form-select" onchange="onVolume()"></select>
+      <select id="school" class="form-select"></select>
+      <select id="volume" class="form-select"></select>
     </div>
     <div class="calc-result" id="cur-info">→ 불러오는 중…</div>
   </div>
@@ -22,9 +22,8 @@
   <div class="cover-calc-section">
     <div class="section-label">내지 페이지 수 <span class="calc-hint">(무선제본 · 뉴플러스 80g)</span></div>
     <div class="calc-row">
-      <input type="number" id="pages" class="calc-input" placeholder="예: 120" min="1"
-             oninput="calc()">
-      <button type="button" class="calc-btn" onclick="calc()">계산</button>
+      <input type="number" id="pages" class="calc-input" placeholder="예: 120" min="1">
+      <button type="button" class="calc-btn" id="btn-calc">계산</button>
     </div>
     <div class="calc-result" id="calc-result">→ 페이지 수를 입력하세요</div>
   </div>
@@ -39,7 +38,7 @@
     </div>
   </div>
 
-  <button type="button" class="run-btn" id="run" onclick="run()">세네카 다시 만들기</button>
+  <button type="button" class="run-btn" id="btn-run">세네카 다시 만들기</button>
 </form>
 
 <div id="result" class="result-area"></div>
@@ -106,8 +105,8 @@ function fatal(html) {
      + '<span class="result-badge">⚠️ 문제가 있습니다</span></div><p>' + html + '</p></div>';
 }
 
-async function run() {
-  const btn = document.getElementById('run');
+async function runSpine() {
+  const btn = document.getElementById('btn-run');
   // 목록이 안 실려 있으면 여기서 조용히 죽는다 — 반드시 눈에 보이게 알린다
   if (!DATA || !DATA.ok) { fatal('학교 목록이 아직 로드되지 않았습니다. 새로고침해 주세요.'); return; }
   const s = cur();
@@ -157,6 +156,14 @@ function show(r) {
       <img src="${q(r.preview)}" style="width:100%;max-width:760px;margin-top:14px;border-radius:10px">
     </div>`;
 }
+
+// 이벤트는 addEventListener 로 건다. 인라인 onclick 은 폼 안에서 id 와 이름이 겹치면
+// 함수 대신 엘리먼트를 집어 조용히 죽는다(2026-08-17: 버튼 무반응의 진짜 원인).
+document.getElementById('school').addEventListener('change', onSchool);
+document.getElementById('volume').addEventListener('change', onVolume);
+document.getElementById('pages').addEventListener('input', calc);
+document.getElementById('btn-calc').addEventListener('click', calc);
+document.getElementById('btn-run').addEventListener('click', runSpine);
 
 boot().catch(e => fatal('초기화 실패: ' + e));
 </script>
