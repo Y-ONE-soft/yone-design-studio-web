@@ -45,9 +45,25 @@
     </div>
   </div>
 
+  <!-- 마더텅 강 번호 (엑셀 자동 조달) -->
+  <div class="school-section">
+    <div class="section-label">마더텅 강 번호</div>
+    <div class="input-label u-mt-4">
+      강 번호만 넣으면 <b>지문 출처 엑셀</b>에서 그 강의 문항 코드와 지문번호를
+      자동으로 가져옵니다. 아래 문제 코드는 비워두세요.<br>
+      예) <code>11</code> (11 빈칸 추론) &middot; <code>13</code> (13 문장 배열)
+    </div>
+    <input type="text" name="mt_gang" id="mt-gang" class="form-input"
+           placeholder="예: 11" inputmode="numeric" style="max-width:180px">
+    <div class="input-hint">
+      강 번호를 넣으면 문제 코드 입력은 무시됩니다. 강 밖 지문을 섞으려면
+      강 번호를 비우고 코드를 직접 입력하세요.
+    </div>
+  </div>
+
   <!-- 문제 코드 -->
   <div class="school-section">
-    <div class="section-label">문제 코드 <span class="required">*</span></div>
+    <div class="section-label">문제 코드</div>
     <div class="input-label u-mt-4">
       6자리 코드 또는 자연어로 입력 &middot; 줄바꿈 또는 쉼표로 구분 (학년은 위에서 선택)<br>
       예) <code>250632</code> &middot; <code>25년 6월 32번</code> &middot;
@@ -312,15 +328,25 @@
     const formData = new FormData(form);
     const runBtn = document.getElementById('run-btn');
 
-    const parsed = parseCodes();
-    if (parsed.errors.length) {
-      alert('인식하지 못한 줄이 있습니다. 수정 후 다시 시도하세요:\n\n' +
-            parsed.errors.join('\n'));
-      return;
-    }
-    if (parsed.items.length === 0) {
-      alert('인식된 문제가 없습니다.\n예: 25년 6월 32번  또는  250632');
-      return;
+    // 강 번호를 넣었으면 코드는 엑셀에서 조달하므로 검증을 건너뛴다
+    const gang = (document.getElementById('mt-gang').value || '').trim();
+    if (gang) {
+      if (!/^\d{1,2}$/.test(gang)) {
+        alert('마더텅 강 번호는 숫자만 입력하세요. 예: 11');
+        return;
+      }
+    } else {
+      const parsed = parseCodes();
+      if (parsed.errors.length) {
+        alert('인식하지 못한 줄이 있습니다. 수정 후 다시 시도하세요:\n\n' +
+              parsed.errors.join('\n'));
+        return;
+      }
+      if (parsed.items.length === 0) {
+        alert('마더텅 강 번호를 넣거나, 문제 코드를 입력하세요.\n' +
+              '예) 강 번호 11  또는  25년 6월 32번');
+        return;
+      }
     }
     if (!formData.get('result_name').trim()) { alert('결과 파일명을 입력하세요.'); return; }
 
