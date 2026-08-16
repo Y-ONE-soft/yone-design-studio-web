@@ -111,6 +111,18 @@ class SlimMergeEngine(BaseEngine):
                        stall_limit=900,
                        completion_marker="===== 완료 =====")
 
+    # ─── UI 데이터 (템플릿이 engine.* 로 읽음 — config 단일 소스) ───────
+
+    @property
+    def ui_sections(self):
+        """섹션 체크 목록 — config.sections 그대로."""
+        return _load_config().get("sections", [])
+
+    @property
+    def ui_presets(self):
+        """학교 프리셋 — {key: {label, hint, delete, merge_half, merge_stack}}."""
+        return _load_config().get("presets", {})
+
     @property
     def upload_spec(self):
         return {
@@ -170,6 +182,76 @@ class SlimMergeEngine(BaseEngine):
 
     # ─── parse ─────────────────────────────────────────────────────
 
+    @staticmethod
+    def _split_markers(raw):
+        """콤마 구분 문자열 → 마커 리스트 (NFC 정규화 + 공백 제거)."""
+        if not raw:
+            return []
+        return [_nfc(s).strip() for s in str(raw).split(",") if s.strip()]
+
+    def _resolve_actions(self, uploaded_files, cfg, log):
+        """프리셋 → 개별 입력 → 구 merge_mode 순으로 액션 3종을 합성.
+
+        개별 입력은 프리셋 위에 덮어쓰지 않고 **합집합**이다 (프리셋을 고른
+        뒤 한 섹션만 더 빼는 흐름이 자연스럽다). 같은 섹션이 두 액션에
+        중복되면 delete > merge_half > merge_stack 우선순위로 하나만 남긴다.
+        """
+        actions = {"delete": [], "merge_half": [], "merge_stack": []}
+
+        preset_key = (uploaded_files.get("preset") or "").strip()
+        if preset_key:
+            presets = cfg.get("presets", {})
+            if preset_key not in presets:
+                raise ValueError(
+                    f"알 수 없는 프리셋: {preset_key!r} — "
+                    f"{', '.join(sorted(presets)) or '(없음)'} 중 선택"
+                )
+            preset = presets[preset_key]
+            for key in actions:
+                actions[key].extend(preset.get(key, []))
+            log(f"[프리셋] {preset_key} ({preset.get('label', '')})")
+
+        actions["delete"].extend(
+            self._split_markers(uploaded_files.get("delete_sections")))
+        actions["merge_half"].extend(
+            self._split_markers(uploaded_files.get("merge_half_sections")))
+        actions["merge_stack"].extend(
+            self._split_markers(uploaded_files.get("merge_stack_sections")))
+
+        # 구 2모드 하위호환 — config.modes[mode].action 으로 합류
+        mode = (uploaded_files.get("merge_mode") or "").strip().lower()
+        if mode:
+            modes = cfg.get("modes", {})
+            if mode not in modes:
+                raise ValueError(
+                    f"알 수 없는 모드: {mode!r} — "
+                    f"{', '.join(sorted(modes))} 중 선택"
+                )
+            mode_cfg = modes[mode]
+            act = mode_cfg.get("action", "merge_half")
+            actions[act].append(mode_cfg["marker"])
+            log(f"[구 모드] {mode} → {act} ({mode_cfg['label']})")
+
+        # 중복 제거 + 액션 간 우선순위 (공백 무시 비교)
+        seen = set()
+        for key in ("delete", "merge_half", "merge_stack"):
+            uniq = []
+            for m in actions[key]:
+                norm = re.sub(r"\s+", "", _nfc(m))
+                if norm in seen:
+                    log(f"[경고] 섹션 중복 지정 무시: {m} ({key})")
+                    continue
+                seen.add(norm)
+                uniq.append(m)
+            actions[key] = uniq
+
+        if not any(actions.values()):
+            raise ValueError(
+                "적용할 섹션 액션이 없습니다 — 프리셋을 고르거나 "
+                "삭제/병합할 섹션을 지정하세요"
+            )
+        return actions
+
     def parse(self, uploaded_files, job_dir, log):
         cfg = _load_config()
 
@@ -177,14 +259,15 @@ class SlimMergeEngine(BaseEngine):
         if not src or not os.path.exists(src):
             raise FileNotFoundError(".indd 파일이 업로드되지 않았습니다")
 
-        mode = (uploaded_files.get("merge_mode") or "ox").strip().lower()
-        if mode not in cfg["modes"]:
-            raise ValueError(
-                f"알 수 없는 모드: {mode!r} — "
-                f"{', '.join(sorted(cfg['modes']))} 중 선택"
-            )
-        mode_cfg = cfg["modes"][mode]
-        log(f"[모드] {mode} ({mode_cfg['label']} 섹션)")
+        actions = self._resolve_actions(uploaded_files, cfg, log)
+        for key, label in (("delete", "삭제"), ("merge_half", "반쪽 병합"),
+                           ("merge_stack", "적층 병합")):
+            if actions[key]:
+                log(f"[{label}] {', '.join(actions[key])}")
+
+        fix_div_raw = (uploaded_files.get("fix_divider") or "").strip()
+        fix_divider = fix_div_raw not in ("0", "false", "off", "no")
+        log(f"[간지 정렬] {'ON' if fix_divider else 'OFF'}")
 
         # 업로드 사본 → job_dir (원본 무접촉)
         src_base = _nfc(os.path.basename(src))
@@ -201,13 +284,14 @@ class SlimMergeEngine(BaseEngine):
             base = src_base
             if base.lower().endswith(".indd"):
                 base = base[:-5]
-            result_name = f"{base}_압축"
+            result_name = f"{base}_슬림"
         log(f"[결과 파일명] {result_name}")
 
         meta = {
             "src_path": local_path,
             "src_original_name": src_base,
-            "mode": mode,
+            "actions": actions,
+            "fix_divider": fix_divider,
             "result_name": result_name,
         }
         meta_path = os.path.join(job_dir, "metadata.json")
@@ -239,18 +323,21 @@ class SlimMergeEngine(BaseEngine):
         # 사본을 출력 경로로 미리 복사 — JSX는 output_indd를 열어 in-place 처리
         shutil.copy2(meta["src_path"], indd_out)
 
-        mode_cfg = cfg["modes"][meta["mode"]]
+        actions = meta.get("actions") or {}
         settings = {
             "output_indd": indd_out,
             "output_dir": output_dir,
-            "mode": meta["mode"],
-            "marker_text": mode_cfg["marker"],
+            "delete_sections": actions.get("delete", []),
+            "merge_half_sections": actions.get("merge_half", []),
+            "merge_stack_sections": actions.get("merge_stack", []),
+            "fix_divider_spreads": bool(meta.get("fix_divider", True)),
+            "memo_master": cfg.get("memo_master", "M"),
             "unit_style_name": cfg.get("unit_style_name", "단원"),
             "unit_style_group": cfg.get("unit_style_group", "마스터페이지"),
-            # arrange 모드 파라미터 (수동 Slim_Merge2.jsx 하드코딩 값과 동일)
-            "arrange_left_bounds": mode_cfg.get("left_bounds"),
-            "arrange_right_bounds": mode_cfg.get("right_bounds"),
-            "arrange_bottom_y": mode_cfg.get("bottom_y_threshold", 100),
+            "stack_drop_y": cfg.get("stack_drop_y", 100),
+            "stack_gap": cfg.get("stack_gap", 6.85),
+            "master_pairs": cfg.get("master_pairs", [["A", "B"], ["C", "D"]]),
+            "protect_masters": cfg.get("protect_masters", ["M", "간지"]),
             "log_path": os.path.join(output_dir, self.log_filename),
             "log_paths": [os.path.join(job_dir, self.log_filename)],
         }
@@ -284,6 +371,9 @@ class SlimMergeEngine(BaseEngine):
         log_paths = settings.get("log_paths") or []
         log_path = log_paths[0] if log_paths else settings.get("log_path", "")
         merged = 0
+        overset = 0
+        pages_before = pages_after = 0
+        memo_inserted = 0
         if log_path and os.path.exists(log_path):
             try:
                 content = open(log_path, encoding="utf-8",
@@ -295,8 +385,29 @@ class SlimMergeEngine(BaseEngine):
                 if m:
                     merged = int(m.group(1))
                     if merged == 0:
-                        warnings.append("병합된 섹션 그룹 0개 — 마커 미탐지 확인")
-        # 병합 완료 마커가 아예 없으면 JSX가 끝까지 못 간 것
+                        warnings.append("처리된 섹션 0개 — 마커 미탐지 확인")
+                m = re.search(r"오버셋 스토리: (\d+)건", content)
+                if m:
+                    overset = int(m.group(1))
+                m = re.search(r"변환 전 페이지: (\d+)", content)
+                if m:
+                    pages_before = int(m.group(1))
+                m = re.search(r"변환 후 페이지: (\d+)", content)
+                if m:
+                    pages_after = int(m.group(1))
+                m = re.search(r"간지 정렬: 메모 페이지 (\d+)장 삽입", content)
+                if m:
+                    memo_inserted = int(m.group(1))
+                # 간지 블록이 (왼쪽,오른쪽)으로 정렬됐는지 — 어긋나면 간지
+                # 배경이 pasteboard로 나가 제목이 통째로 안 보인다.
+                if ("간지 정렬" in content
+                        and "간지 블록" not in content.split("간지 정렬")[-1]):
+                    warnings.append("간지 정렬 결과 미기록 — 로그 확인")
+                if pages_before and pages_after and pages_after >= pages_before:
+                    warnings.append(
+                        f"페이지 수가 줄지 않음 ({pages_before}p → {pages_after}p)"
+                        " — 액션이 적용됐는지 확인")
+                # 완료 마커가 아예 없으면 JSX가 끝까지 못 간 것
                 if "===== 완료 =====" not in content:
                     warnings.append("완료 마커 없음 — JSX 중단 의심")
             except OSError:
@@ -308,8 +419,12 @@ class SlimMergeEngine(BaseEngine):
 
         return {
             "ok": ok,
-            "overflow": 0,
-            "stories": {"merged_groups": merged},
+            "overflow": overset,
+            "stories": {
+                "처리 섹션": merged,
+                "페이지": f"{pages_before} → {pages_after}",
+                "메모 페이지 삽입": memo_inserted,
+            },
             "pdf_path": None,
             "pdf_paths": [],
             "indd_path": indd_out if os.path.exists(indd_out) else None,

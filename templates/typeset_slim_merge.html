@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% block title %}펼침면 압축{% endblock %}
+{% block title %}워크북 슬림 변환{% endblock %}
 
 {% block content %}
 <div class="page-header">
   <a href="/processing" class="back-link">가공 도구 선택</a>
-  <h1>펼침면 압축</h1>
-  <p>워크북 전체 .indd 의 본문 O/X · 문장 배열 섹션 짝-홀 페이지를 한 페이지로 병합해 압축본을 만듭니다.</p>
+  <h1>워크북 슬림 변환</h1>
+  <p>완성된 워크북 .indd 에서 섹션을 빼거나 두 페이지를 한 페이지로 병합해 학교별 슬림 판을 만듭니다.</p>
 </div>
 
 <form id="typeset-form" class="upload-form" enctype="multipart/form-data">
@@ -15,26 +15,75 @@
     <div class="section-label">대상 .indd <span class="required">*</span></div>
     <input type="file" name="src_indd" id="src-indd" accept=".indd" required class="form-input">
     <div class="input-hint">
-      원본은 수정하지 않습니다 — 사본을 만들어 압축한 결과가
-      <code>조판/교재/펼침면압축/</code> 폴더에 저장됩니다.
+      원본은 수정하지 않습니다 — 사본을 만들어 변환한 결과가
+      <code>조판/교재/슬림변환/</code> 폴더에 저장됩니다.
     </div>
   </div>
 
-  <!-- 병합 대상 섹션 -->
+  <!-- 프리셋 -->
   <div class="school-section">
-    <div class="section-label">병합 대상 섹션 <span class="required">*</span></div>
-    <div class="grade-radio-group">
-      <label class="grade-radio">
-        <input type="radio" name="merge_mode" value="ox" checked> 본문 O/X
-      </label>
-      <label class="grade-radio">
-        <input type="radio" name="merge_mode" value="arrange"> 문장 배열
-      </label>
+    <div class="section-label">학교 프리셋</div>
+    <select id="preset-select" class="form-input">
+      <option value="">직접 선택</option>
+      {% for key, p in engine.ui_presets.items() %}
+      <option value="{{ key }}" data-delete="{{ p.delete | join('|') }}"
+              data-half="{{ p.merge_half | join('|') }}"
+              data-stack="{{ p.merge_stack | join('|') }}">{{ p.label }}</option>
+      {% endfor %}
+    </select>
+    <div class="input-hint" id="preset-hint">
+      프리셋을 고르면 아래 섹션 액션이 자동으로 채워집니다. 고른 뒤 개별 수정도 가능합니다.
     </div>
+  </div>
+
+  <!-- 섹션별 액션 -->
+  <div class="school-section">
+    <div class="section-label">섹션별 액션 <span class="required">*</span></div>
+    <table class="slim-section-table">
+      <thead>
+        <tr>
+          <th style="text-align:left;">섹션</th>
+          <th>유지</th>
+          <th>삭제</th>
+          <th>반쪽 병합</th>
+          <th>적층 병합</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in engine.ui_sections %}
+        <tr data-marker="{{ s.marker }}">
+          <td style="text-align:left;">
+            <span class="slim-step-tag">{{ s.step }}</span> {{ s.label }}
+          </td>
+          <td><input type="radio" name="act_{{ loop.index }}" value="keep" checked></td>
+          <td><input type="radio" name="act_{{ loop.index }}" value="delete"></td>
+          <td><input type="radio" name="act_{{ loop.index }}" value="half"></td>
+          <td><input type="radio" name="act_{{ loop.index }}" value="stack"></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
     <div class="input-hint">
-      본문 O/X: 왼쪽 프레임 상단 축소 + 오른쪽 프레임을 왼쪽 하단으로 이동.<br>
-      문장 배열: 하단 답지 프레임 제거 후 오른쪽 페이지 프레임을 왼쪽으로 복제·배치.
-      두 섹션 모두 압축하려면 결과 파일로 한 번 더 실행하세요.
+      <b>반쪽 병합</b>: 전체높이 프레임 1개짜리 섹션(본문 O/X)을 2p→1p — 위/아래 절반에 나눠 담습니다.<br>
+      <b>적층 병합</b>: 상단 문제 + 하단 부가문제 2프레임 섹션(문장 배열)을 2p→1p — 하단 부가문제를 빼고
+      다음 페이지 문제를 아래에 붙입니다.<br>
+      해당 교재에 없는 섹션을 골라도 무시됩니다 (마커 미탐지).
+    </div>
+    <input type="hidden" name="delete_sections" id="h-delete">
+    <input type="hidden" name="merge_half_sections" id="h-half">
+    <input type="hidden" name="merge_stack_sections" id="h-stack">
+  </div>
+
+  <!-- 간지 정렬 -->
+  <div class="school-section">
+    <div class="section-label">간지 스프레드 정렬</div>
+    <label class="grade-radio">
+      <input type="checkbox" id="fix-divider-cb" checked> 간지가 (왼쪽·오른쪽) 2P 구성이 되도록 메모 페이지 자동 삽입
+    </label>
+    <input type="hidden" name="fix_divider" id="h-fixdiv" value="1">
+    <div class="input-hint">
+      섹션을 빼면 간지가 한 칸 밀려 배경이 페이지 밖으로 나가고 흰 글자 제목이 안 보이게 됩니다.
+      앞 섹션이 왼쪽에서 끝나면 오른쪽에 메모 페이지를 넣어 정렬을 복원합니다. (특별한 이유가 없으면 켜두세요)
     </div>
   </div>
 
@@ -42,16 +91,24 @@
   <div class="school-section">
     <div class="section-label">결과 파일명</div>
     <input type="text" name="result_name" id="result-name" class="form-input"
-           placeholder="비워두면 원본 파일명_압축.indd 으로 자동">
+           placeholder="비워두면 원본 파일명_슬림.indd 으로 자동">
     <div class="input-hint">확장자(.indd)는 자동으로 붙습니다.</div>
   </div>
 
   {% include "_review_agent_opt.html" %}
 
   <button type="submit" class="run-btn" id="run-btn">
-    <span class="btn-icon">&#9654;</span> 압축 실행
+    <span class="btn-icon">&#9654;</span> 슬림 변환 실행
   </button>
 </form>
+
+<style>
+  .slim-section-table { width:100%; border-collapse:collapse; font-size:13px; margin-top:6px; }
+  .slim-section-table th, .slim-section-table td { padding:6px 8px; text-align:center;
+    border-bottom:1px solid var(--border, #e5e5e5); }
+  .slim-section-table thead th { font-weight:600; font-size:12px; opacity:.75; }
+  .slim-step-tag { display:inline-block; font-size:11px; opacity:.6; min-width:52px; }
+</style>
 
 <!-- 진행 상태 -->
 <div id="progress-area" class="progress-area hidden">
@@ -63,7 +120,7 @@
     <div class="step-indicators">
       <span class="step" id="step-parse">&#9312; 파일 준비</span>
       <span class="step-sep">&rarr;</span>
-      <span class="step" id="step-typeset">&#9313; InDesign 병합</span>
+      <span class="step" id="step-typeset">&#9313; InDesign 변환</span>
       <span class="step-sep">&rarr;</span>
       <span class="step" id="step-verify">&#9314; 검수</span>
     </div>
@@ -101,13 +158,54 @@
     _currentJobId = null;
   }
 
+  // ── 섹션 액션 ↔ hidden 필드 ────────────────────────────────────────
+  function sectionRows() {
+    return Array.from(document.querySelectorAll('.slim-section-table tbody tr'));
+  }
+
+  function collectActions() {
+    const picked = { delete: [], half: [], stack: [] };
+    sectionRows().forEach(tr => {
+      const marker = tr.dataset.marker;
+      const sel = tr.querySelector('input[type=radio]:checked');
+      if (!sel || sel.value === 'keep') return;
+      picked[sel.value].push(marker);
+    });
+    document.getElementById('h-delete').value = picked.delete.join(',');
+    document.getElementById('h-half').value = picked.half.join(',');
+    document.getElementById('h-stack').value = picked.stack.join(',');
+    document.getElementById('h-fixdiv').value =
+      document.getElementById('fix-divider-cb').checked ? '1' : '0';
+    return picked.delete.length + picked.half.length + picked.stack.length;
+  }
+
+  // 프리셋 선택 → 라디오 자동 설정
+  document.getElementById('preset-select').addEventListener('change', (ev) => {
+    const opt = ev.target.selectedOptions[0];
+    const pick = (attr) => (opt && opt.dataset[attr] ? opt.dataset[attr].split('|') : []);
+    const map = { delete: pick('delete'), half: pick('half'), stack: pick('stack') };
+    sectionRows().forEach(tr => {
+      const marker = tr.dataset.marker;
+      let act = 'keep';
+      for (const key of ['delete', 'half', 'stack']) {
+        if (map[key].indexOf(marker) >= 0) { act = key; break; }
+      }
+      const radio = tr.querySelector(`input[type=radio][value="${act}"]`);
+      if (radio) radio.checked = true;
+    });
+  });
+
   document.getElementById('typeset-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const form = e.target;
-    const formData = new FormData(form);
     const runBtn = document.getElementById('run-btn');
 
     if (!document.getElementById('src-indd').files[0]) { alert('.indd 파일을 선택하세요.'); return; }
+    if (collectActions() === 0) {
+      alert('적용할 섹션 액션이 없습니다 — 프리셋을 고르거나 섹션을 하나 이상 지정하세요.');
+      return;
+    }
+    const formData = new FormData(form);
 
     runBtn.disabled = true;
     runBtn.textContent = '실행 중...';
@@ -163,8 +261,8 @@
   }
 
   function updateStepFromLog(msg) {
-    if (msg.includes('[복사]') || msg.includes('[모드]') || msg.includes('[1/')) setStep('parse');
-    else if (msg.includes('[출력]') || msg.includes('[2/') || msg.includes('병합')) setStep('typeset');
+    if (msg.includes('[복사]') || msg.includes('[프리셋]') || msg.includes('[삭제]') || msg.includes('[1/')) setStep('parse');
+    else if (msg.includes('[출력]') || msg.includes('[2/') || msg.includes('병합') || msg.includes('간지')) setStep('typeset');
     else if (msg.includes('[3/') || msg.includes('검수') || msg.includes('===== 완료')) setStep('verify');
   }
 
@@ -203,7 +301,7 @@
     area.innerHTML = `
       <div class="result-card ${cardClass}">
         <div class="result-header">
-          <span class="result-badge">${ok ? '압축 완료' : '확인 필요'}</span>
+          <span class="result-badge">${ok ? '슬림 변환 완료' : '확인 필요'}</span>
         </div>
         ${inddPath ? `<p style="margin:8px 0; font-size:13px; word-break:break-all;">결과: ${inddPath}</p>` : ''}
         ${warnings.length ? `<ul class="warn-list">${warnings.map(w => '<li>' + w + '</li>').join('')}</ul>` : ''}
@@ -228,7 +326,7 @@
   function resetBtn() {
     const btn = document.getElementById('run-btn');
     btn.disabled = false;
-    btn.innerHTML = '<span class="btn-icon">&#9654;</span> 압축 실행';
+    btn.innerHTML = '<span class="btn-icon">&#9654;</span> 슬림 변환 실행';
   }
 </script>
 <script src="{{ url_for('static', filename='js/result_session.js') }}"></script>
