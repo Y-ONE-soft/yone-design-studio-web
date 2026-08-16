@@ -117,9 +117,17 @@ def typeset_page(material_id):
     else:
         schools = load_schools()
 
+    # 조판 시점 슬림 변환 옵션(_slim_opt.html)이 쓰는 섹션/프리셋 목록.
+    # 실패해도 페이지는 떠야 하므로 조용히 None (include 가 {% if %} 로 가드).
+    try:
+        from core.slim_post import _load_slim_config
+        slim_cfg = _load_slim_config()
+    except Exception:
+        slim_cfg = None
+
     return render_template(tmpl, engine=engine, schools=schools,
                            active_nav=nav, exam_periods=exam_periods,
-                           current_period=current_period)
+                           current_period=current_period, slim_cfg=slim_cfg)
 
 
 # ── 외부 공개 소개 페이지 — Cloudflare Pages로 이전 (2026-08-13) ─────────

@@ -90,6 +90,16 @@ def api_run(material_id):
         open(os.path.join(job_dir, "exclude.txt"), "w",
              encoding="utf-8").write(",".join(exclude_list))
 
+    # 조판 시점 슬림 변환 (core/slim_post.py) — 업로드 슬롯이 아니라
+    # 공통 폼 필드로 받는다 (엔진별 upload_spec 무변경). 값이 없으면
+    # 파일을 만들지 않으므로 후처리는 no-op.
+    from core.slim_post import FORM_KEYS as _SLIM_KEYS
+    for _key in _SLIM_KEYS:
+        _val = request.form.get(_key, "").strip()
+        if _val:
+            open(os.path.join(job_dir, f"{_key}.txt"), "w",
+                 encoding="utf-8").write(_val)
+
     # 업로드 파일 및 텍스트 필드 저장
     # — 진단 로그: multipart 파싱 결과 (Werkzeug 3.x form 한도 디버그용)
     try:

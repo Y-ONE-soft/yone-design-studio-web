@@ -141,6 +141,16 @@ def run_pipeline(engine, job_id: str, job_dir: str, uploaded: dict):
                                  cancel_check=lambda: jm.is_cancelled(job_id))
             log("[2/3] 조판 완료 ✓")
 
+            # 슬림 후처리 (조판 시점 섹션 선택) — job_dir/slim_*.txt 가
+            # 있을 때만 동작. 없으면 no-op 이라 기존 엔진 흐름 무영향.
+            try:
+                from core.slim_post import run_slim_postprocess
+                run_slim_postprocess(
+                    engine, job_dir, log,
+                    cancel_check=lambda: jm.is_cancelled(job_id))
+            except Exception as _slim_err:
+                log(f"[슬림] [오류] 후처리 실패: {_slim_err}")
+
         if jm.is_cancelled(job_id):
             return
 
