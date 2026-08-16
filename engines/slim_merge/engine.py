@@ -165,6 +165,12 @@ class SlimMergeEngine(BaseEngine):
                     "required": False,
                 },
                 {
+                    "key": "rename_markers",
+                    "label": "단원 마커 교체 (예: 어법 선택>어법 수정, 콤마 구분)",
+                    "type": "text",
+                    "required": False,
+                },
+                {
                     "key": "merge_mode",
                     "label": "[구] 병합 모드 (ox / arrange) — 하위호환",
                     "type": "text",
@@ -188,6 +194,20 @@ class SlimMergeEngine(BaseEngine):
         if not raw:
             return []
         return [_nfc(s).strip() for s in str(raw).split(",") if s.strip()]
+
+    @staticmethod
+    def _parse_renames(raw):
+        """'어법 선택>어법 수정, A>B' → {from: to}. 마커 텍스트를 바꾸면
+        마스터 러닝헤더 표기가 따라 바뀐다 (어법 선택 → 어법 수정 교체용)."""
+        out = {}
+        for pair in str(raw or "").split(","):
+            if ">" not in pair:
+                continue
+            a, b = pair.split(">", 1)
+            a, b = _nfc(a).strip(), _nfc(b).strip()
+            if a and b:
+                out[a] = b
+        return out
 
     def _resolve_actions(self, uploaded_files, cfg, log):
         """프리셋 → 개별 입력 → 구 merge_mode 순으로 액션 3종을 합성.
@@ -245,11 +265,6 @@ class SlimMergeEngine(BaseEngine):
                 uniq.append(m)
             actions[key] = uniq
 
-        if not any(actions.values()):
-            raise ValueError(
-                "적용할 섹션 액션이 없습니다 — 프리셋을 고르거나 "
-                "삭제/병합할 섹션을 지정하세요"
-            )
         return actions
 
     def parse(self, uploaded_files, job_dir, log):
@@ -260,6 +275,12 @@ class SlimMergeEngine(BaseEngine):
             raise FileNotFoundError(".indd 파일이 업로드되지 않았습니다")
 
         actions = self._resolve_actions(uploaded_files, cfg, log)
+        if not any(actions.values()) and not self._parse_renames(
+                uploaded_files.get("rename_markers")):
+            raise ValueError(
+                "적용할 작업이 없습니다 — 프리셋을 고르거나 삭제/병합할 "
+                "섹션 또는 마커 교체를 지정하세요"
+            )
         for key, label in (("delete", "삭제"), ("merge_half", "반쪽 병합"),
                            ("merge_stack", "적층 병합")):
             if actions[key]:
@@ -287,11 +308,17 @@ class SlimMergeEngine(BaseEngine):
             result_name = f"{base}_슬림"
         log(f"[결과 파일명] {result_name}")
 
+        renames = self._parse_renames(uploaded_files.get("rename_markers"))
+        if renames:
+            for a, b in renames.items():
+                log(f"[마커 교체] {a} → {b}")
+
         meta = {
             "src_path": local_path,
             "src_original_name": src_base,
             "actions": actions,
             "fix_divider": fix_divider,
+            "rename_markers": renames,
             "result_name": result_name,
         }
         meta_path = os.path.join(job_dir, "metadata.json")
@@ -331,6 +358,7 @@ class SlimMergeEngine(BaseEngine):
             "merge_half_sections": actions.get("merge_half", []),
             "merge_stack_sections": actions.get("merge_stack", []),
             "fix_divider_spreads": bool(meta.get("fix_divider", True)),
+            "rename_markers": meta.get("rename_markers") or None,
             "memo_master": cfg.get("memo_master", "M"),
             "unit_style_name": cfg.get("unit_style_name", "단원"),
             "unit_style_group": cfg.get("unit_style_group", "마스터페이지"),

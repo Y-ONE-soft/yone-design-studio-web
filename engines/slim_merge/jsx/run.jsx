@@ -549,6 +549,51 @@
     writeLog("마스터 보정: " + fixedMasters + "건");
 
     // ───────────────────────────────────────────────────────────────
+    // 단원 마커 텍스트 교체 (예: '어법 선택' → '어법 수정')
+    //
+    // 마커는 파스트보드 숨김 프레임이자 마스터 러닝헤더 텍스트변수의 소스라,
+    // 이 텍스트를 바꾸면 섹션 헤더 표기가 따라 바뀐다. 문자 스타일을 조건에
+    // 걸어 본문의 같은 문구는 건드리지 않는다.
+    // ───────────────────────────────────────────────────────────────
+    function renameMarkers(map) {
+        var total = 0;
+        for (var from in map) {
+            if (!map.hasOwnProperty(from)) continue;
+            var to = map[from];
+            if (!to || to === from) continue;
+            try {
+                app.findGrepPreferences = NothingEnum.nothing;
+                app.changeGrepPreferences = NothingEnum.nothing;
+                app.findGrepPreferences.findWhat = from;
+                if (unitInfo.type === "character") {
+                    app.findGrepPreferences.appliedCharacterStyle = unitInfo.style;
+                } else {
+                    app.findGrepPreferences.appliedParagraphStyle = unitInfo.style;
+                }
+                app.changeGrepPreferences.changeTo = to;
+                var hits = doc.changeGrep();
+                var n = hits ? hits.length : 0;
+                total += n;
+                writeLog("마커 교체: '" + from + "' → '" + to + "' (" + n + "건)");
+                if (n === 0) {
+                    writeLog("[경고] 마커 '" + from + "' 미발견 — 교체 없음");
+                }
+            } catch (eR) {
+                writeLog("[경고] 마커 교체 실패 (" + from + "): " + eR);
+            }
+            app.findGrepPreferences = NothingEnum.nothing;
+            app.changeGrepPreferences = NothingEnum.nothing;
+        }
+        return total;
+    }
+
+    var RENAME = settings.rename_markers || null;
+    if (RENAME) {
+        var renamed = renameMarkers(RENAME);
+        writeLog("마커 교체 합계: " + renamed + "건");
+    }
+
+    // ───────────────────────────────────────────────────────────────
     // 간지 스프레드 정렬 (메모 페이지 삽입)
     //
     // 간지 블록 = 마스터가 [없음]인 페이지의 연속 런.
@@ -568,6 +613,15 @@
         return runs;
     }
 
+    // 간지 블록만 대상 — 런의 마지막 페이지에 단원 제목 프레임이 있어야 한다.
+    // 판권(크레딧) 페이지도 [없음] 마스터지만 텍스트 프레임이 0개이고,
+    // **판권은 왼쪽이 정상**(책은 오른쪽에서 시작해 왼쪽에서 끝난다)이라
+    // 이 필터가 없으면 판권 앞에 메모를 끼워 파리티를 되레 깨뜨린다.
+    function isDividerRun(run) {
+        try { return doc.pages[run.end].textFrames.length > 0; }
+        catch (e) { return false; }
+    }
+
     function fixDividerSpreads() {
         var memoMaster = masterByPrefix(MEMO_MASTER);
         if (!memoMaster) {
@@ -580,6 +634,7 @@
             var runs = noMasterRuns();
             var target = -1;
             for (var r = 0; r < runs.length; r++) {
+                if (!isDividerRun(runs[r])) { continue; }   // 판권 등 제외
                 if (!isRight(doc.pages[runs[r].end])) { target = r; break; }
             }
             if (target < 0) break;
@@ -629,12 +684,14 @@
         var nIns = fixDividerSpreads();
         writeLog("간지 정렬: 메모 페이지 " + nIns + "장 삽입");
         var runsAfter = noMasterRuns();
-        var bad = 0;
+        var bad = 0, nDiv = 0;
         for (var ra = 0; ra < runsAfter.length; ra++) {
+            if (!isDividerRun(runsAfter[ra])) continue;
+            nDiv++;
             if (!isRight(doc.pages[runsAfter[ra].end])) bad++;
         }
         if (bad > 0) writeLog("[경고] 정렬 후에도 어긋난 간지 블록 " + bad + "건");
-        else writeLog("간지 블록 " + runsAfter.length + "개 전부 (왼쪽,오른쪽) 확인");
+        else writeLog("간지 블록 " + nDiv + "개 전부 (왼쪽,오른쪽) 확인");
     }
 
     // ───────────────────────────────────────────────────────────────
