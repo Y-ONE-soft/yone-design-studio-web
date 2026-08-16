@@ -456,16 +456,15 @@ class WorkbookSelectEngine(WorkbookV2Engine):
                     "%s" % fill_path)
         fill = _load_fill(fill_path, log)
 
+        # 병합은 **항상 코드(YYMMQQ) 라벨로** 한다 — 마더텅이어도 마찬가지.
+        # 커버리지·결손·발문·빈칸 판정이 전부 코드 하나로 돌아가고,
+        # 마더텅 번호는 아래 _apply_final_labels 에서 **마지막에** 얹는다.
         merged, coverage, defects = merge_selected(
-            sources, codes, log=log,
-            labels={c: str(n) for c, n in mt_numbers.items()},
-            fill=fill)
+            sources, codes, log=log, fill=fill)
         merged["grade"] = int(grade_num)
-        if mt_numbers:
-            # 독립 지문번호 프레임(workbook_v2 passage_numbers)도 같은 번호를
-            # 쓰도록 전달 — 코드 뒤 2자리(문항번호) 폴백을 덮는다.
-            merged["_passage_labels"] = [str(mt_numbers[c])
-                                         for c in codes if c in mt_numbers]
+
+        self._apply_final_labels(
+            merged, {c: str(n) for c, n in mt_numbers.items()}, log)
 
         json_path = os.path.join(job_dir, "content.json")
         with open(json_path, "w", encoding="utf-8") as f:
@@ -499,6 +498,86 @@ class WorkbookSelectEngine(WorkbookV2Engine):
             if missing and any(cov.values()):
                 log("[경고] %s: 원고에 없는 문항 %s" % (step_key, missing))
         return json_path
+
+    # ─── 지문번호 표기 — 파이프라인 맨 마지막 단계 ──────────────────────
+    #
+    # 병합·커버리지·결손·발문은 전부 **코드(YYMMQQ)** 로 끝낸다. 코드는
+    # 회차까지 담은 유일 키라 어디서 꼬여도 추적이 되지만, 마더텅 번호(2·4·6…)
+    # 는 강 안에서만 의미가 있어 중간 단계에 섞이면 원고·검수와 대조가 안 된다.
+    # 그래서 표기 교체는 여기 한 곳에서만 한다 (사용자 지시 2026-08-17:
+    # "마더텅 선택했을 때만, 다 끝나고 마지막에 마더텅 번호로").
+    #
+    # 바꾸는 표기는 두 가지뿐이다 — merge_select 가 그 둘만 찍는다:
+    #   브래킷/영작 스텝 : 단락 전체가 "[YYMMQQ]"
+    #   헤더 스텝        : 헤더 안의 "no.YYMMQQ"
+    # 6자리 코드는 본문에 우연히 나올 수 없어 오치환 위험이 없다.
+
+    _RE_MARKER_ONLY = re.compile(r"^\s*\[(\d{6})\]\s*$")
+    _RE_HDR_NO = re.compile(r"(no\.?\s*)(\d{6})", re.I)
+
+    @staticmethod
+    def _retext_para(p, new_text):
+        """단락 텍스트 교체 — runs 가 1개면 같이 바꾸고, 여러 개면 통합한다.
+
+        라벨 단락은 merge_select 가 항상 run 1개로 만든다(밑줄 없음).
+        """
+        p["text"] = new_text
+        p["runs"] = [{"t": new_text, "ul": False}]
+
+    def _apply_final_labels(self, merged, code2label, log):
+        """조판 직전 마지막 단계 — 지문번호 표기 확정.
+
+        code2label 이 있으면(마더텅 job) 코드 → 마더텅 번호로 교체하고,
+        없으면 코드 표기를 그대로 둔다. 어느 쪽이든 독립 지문번호 프레임용
+        `_passage_labels` 를 **병합 결과에서 직접 뽑아** 채운다 — 요청 코드
+        목록이 아니라 실제 조판된 유닛에서 뽑아야 게이트의 개수 대조가 맞는다.
+        """
+        from engines.workbook_v2.plan import passage_labels
+
+        steps = merged.get("steps") or {}
+        swapped = 0
+        if code2label:
+            for _key, st in steps.items():
+                paras = st.get("paragraphs") if isinstance(st, dict) else st
+                if not isinstance(paras, list):
+                    continue
+                for p in paras:
+                    if not isinstance(p, dict):
+                        continue
+                    t = p.get("text") or ""
+                    m = self._RE_MARKER_ONLY.match(t)
+                    if m and m.group(1) in code2label:
+                        self._retext_para(p, "[%s]" % code2label[m.group(1)])
+                        swapped += 1
+                        continue
+                    m = self._RE_HDR_NO.search(t)
+                    if m and m.group(2) in code2label:
+                        self._retext_para(
+                            p, t[:m.start(2)] + code2label[m.group(2)]
+                            + t[m.end(2):])
+                        swapped += 1
+            log("[지문번호] 마더텅 번호로 교체 %d곳 (조판 직전 마지막 단계)"
+                % swapped)
+
+        # 독립 지문번호 프레임(workbook_v2 passage_numbers). 이 값이 없으면
+        # op 자체가 스킵돼 **템플릿 잔재 번호(20·21·22…)가 그대로 인쇄된다.**
+        # 회차가 하나뿐인 선택 job 이 그 구멍에 빠져 있었다 (2026-08-17 실측:
+        # 250620·250631·250632 → 프레임 20·21·22).
+        labels = list(passage_labels(steps) or [])
+        if not code2label:
+            # 코드 표기 job — 프레임은 폭이 2자리라 문항번호(QQ)만 남긴다
+            # (workbook_v2 의 _mixed_rounds 규칙과 동일. 이제 회차 수와
+            #  무관하게 항상 적용한다)
+            labels = [s[-2:] if re.fullmatch(r"\d{6}", s) else s
+                      for s in labels]
+        if labels:
+            merged["_passage_labels"] = labels
+            log("[지문번호] 프레임 라벨 %d개: %s"
+                % (len(labels), ", ".join(labels[:12])
+                   + (" …" if len(labels) > 12 else "")))
+        else:
+            log("[지문번호] ⚠ 병합 결과에서 라벨을 못 뽑았다 — 프레임에 "
+                "템플릿 잔재 번호가 남는다")
 
     # ─── prepare_jsx ───────────────────────────────────────────────
 
