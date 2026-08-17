@@ -88,6 +88,16 @@ def run_pipeline(engine, job_id: str, job_dir: str, uploaded: dict):
         stage = "parse"
         log("━━━━━━━━━━━━━━━━━━━━━━━━━━━")
         log(f"[1/{total}] 원고 파싱 중...")
+
+        # 어법수정 원고 스왑 — '어법 선택 → 어법 수정' 요청이 있고 업로드에
+        # 어법수정 문제지가 있으면 STEP2 A1 슬롯 원고를 교체한다.
+        # 요청이 없으면 no-op (전 엔진 무영향).
+        try:
+            from core.grammar_swap import swap_grammar_manuscript
+            swap_grammar_manuscript(job_dir, uploaded, log)
+        except Exception as _gs_err:
+            log(f"[어법교체] [경고] 스왑 실패, 원본 원고로 진행: {_gs_err}")
+
         json_path = engine.parse(uploaded, job_dir, log)
         log(f"[1/{total}] 파싱 완료 ✓")
 

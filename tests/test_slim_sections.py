@@ -211,3 +211,120 @@ def test_slim_opt_included_in_workbook_templates():
                  "typeset_textbook_workbook_v2.html"):
         src = open(os.path.join(tpl_dir, name), encoding="utf-8").read()
         assert "_slim_opt.html" in src, f"{name} 에 슬림 옵션 include 없음"
+
+
+# ── 어법수정 원고 스왑 (core/grammar_swap) ─────────────────────────────
+
+from core import grammar_swap                                  # noqa: E402
+
+# 실측 파일명 — 폴더가 계열마다 달라 이름도 완전히 일치하지 않는다
+_REAL_GRAMMAR_FILES = [
+    "고2_2026_06월-읽기영역(18~45번)_어법수정_문제지.docx",          # 모의고사(회차 루트)
+    "고2_2022_09월(인천시)읽기영역(18~45번)_어법수정_문제지.docx",   # 모의고사(직전보충)
+    "공통영어2_NE능률민병천-Lesson1.BondingwithOthers_어법수정_문제지.docx",
+    "공통영어1_YBM김은형-LESSON1.BelieveThatYouCanDoBetter_어법수정_문제지.docx",
+    "올림포스영어독해기본2(2024.10)-Unit07학술문내용불일치_어법수정_문제지.docx",
+    "* 직전 보충 자료.docx",                                      # EBS 수특라이트 예외
+]
+
+
+@pytest.mark.parametrize("name", _REAL_GRAMMAR_FILES)
+def test_grammar_fix_detected_for_real_names(name):
+    assert grammar_swap.is_grammar_fix_manuscript(name)
+
+
+@pytest.mark.parametrize("name", [
+    "고2_2026_06월-읽기영역(18~45번)_어법수정_해설지.docx",
+    "* 직전 보충 자료 정답지.docx",
+    "Step2 A1 어법선택.docx",
+    "Step2 A1 어법선택 정답지.docx",
+    "Step1 A1 어휘선택.docx",
+])
+def test_answer_and_plain_files_excluded(name):
+    """해설지/정답지가 문제지 자리에 들어가면 정답이 그대로 인쇄된다."""
+    assert not grammar_swap.is_grammar_fix_manuscript(name)
+
+
+def test_swap_replaces_step2_a1_slot(tmp_path):
+    up = tmp_path / "uploads"
+    up.mkdir()
+    names = ["manuscripts_Step1 A1 어휘선택.docx",
+             "manuscripts_Step2 A1 어법선택.docx",
+             "manuscripts_고2_2026_06월-읽기영역(18~45번)_어법수정_문제지.docx"]
+    paths = []
+    for n in names:
+        p = up / n
+        p.write_text(n, encoding="utf-8")
+        paths.append(str(p))
+    uploaded = {"manuscripts": list(paths)}
+    (tmp_path / "slim_rename.txt").write_text("어법 선택>어법 수정",
+                                              encoding="utf-8")
+    logs = []
+    res = grammar_swap.swap_grammar_manuscript(str(tmp_path), uploaded,
+                                               logs.append)
+    assert res is not None
+    finals = [os.path.basename(p) for p in uploaded["manuscripts"]]
+    # 기존 어법선택 원고는 빠지고, 그 슬롯 이름을 어법수정본이 물려받는다
+    assert "manuscripts_Step2 A1 어법선택.docx" in finals
+    assert not any("어법수정_문제지" in f for f in finals)
+    swapped = up / "manuscripts_Step2 A1 어법선택.docx"
+    assert "어법수정_문제지" in swapped.read_text(encoding="utf-8")
+
+
+def test_swap_is_noop_without_request(tmp_path):
+    """마커 교체를 요청하지 않으면 원고를 건드리지 않는다."""
+    up = tmp_path / "uploads"
+    up.mkdir()
+    p = up / "manuscripts_Step2 A1 어법선택.docx"
+    p.write_text("x", encoding="utf-8")
+    uploaded = {"manuscripts": [str(p)]}
+    logs = []
+    assert grammar_swap.swap_grammar_manuscript(
+        str(tmp_path), uploaded, logs.append) is None
+    assert uploaded["manuscripts"] == [str(p)]
+    assert logs == []
+
+
+def test_swap_warns_when_manuscript_missing(tmp_path):
+    """어법수정 원고가 업로드에 없으면 표기만 바뀐다는 안내."""
+    up = tmp_path / "uploads"
+    up.mkdir()
+    p = up / "manuscripts_Step2 A1 어법선택.docx"
+    p.write_text("x", encoding="utf-8")
+    uploaded = {"manuscripts": [str(p)]}
+    (tmp_path / "slim_rename.txt").write_text("어법 선택>어법 수정",
+                                              encoding="utf-8")
+    logs = []
+    assert grammar_swap.swap_grammar_manuscript(
+        str(tmp_path), uploaded, logs.append) is None
+    assert any("표기만" in m for m in logs)
+    assert uploaded["manuscripts"] == [str(p)]
+
+
+def test_swap_flags_stale_answer_sheet(tmp_path):
+    """지문만 어법수정본이고 정답지는 어법선택 것이면 불일치 경고."""
+    up = tmp_path / "uploads"
+    up.mkdir()
+    names = ["manuscripts_Step2 A1 어법선택.docx",
+             "manuscripts_Step2 A1 어법선택 정답지.docx",
+             "manuscripts_공통영어2_NE능률민병천-L1_어법수정_문제지.docx"]
+    paths = []
+    for n in names:
+        p = up / n
+        p.write_text(n, encoding="utf-8")
+        paths.append(str(p))
+    uploaded = {"manuscripts": list(paths)}
+    (tmp_path / "slim_rename.txt").write_text("어법 선택>어법 수정",
+                                              encoding="utf-8")
+    logs = []
+    res = grammar_swap.swap_grammar_manuscript(str(tmp_path), uploaded,
+                                               logs.append)
+    assert res["stale_answers"]
+    assert any("정답지가 남아" in m for m in logs)
+
+
+def test_pipeline_swaps_before_parse():
+    src = open(os.path.join(REPO, "core", "pipeline.py"),
+               encoding="utf-8").read()
+    assert "swap_grammar_manuscript" in src
+    assert src.index("swap_grammar_manuscript") < src.index("engine.parse(")
