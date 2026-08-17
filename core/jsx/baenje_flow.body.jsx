@@ -287,7 +287,11 @@ function packChoices(story, absIdxList, columns) {
     try {
         var sChar = ps[first].characters[0].index;
         var eP = ps[last];
-        var eChar = eP.characters[eP.characters.length - 1].index;
+        var eLen = eP.characters.length;
+        var lastCh = "";
+        try { lastCh = eP.characters[eLen - 1].contents; } catch (e) {}
+        var eIdx = (lastCh === "\r" && eLen >= 2) ? eLen - 2 : eLen - 1;
+        var eChar = eP.characters[eIdx].index;
         var rng = story.characters.itemByRange(sChar, eChar);
         if (!rng.isValid) return false;
         rng.contents = rows.join("\r");
@@ -347,6 +351,14 @@ function growFrameIfSpills(story, startIdx, endIdx, maxGrowMm) {
     return 0;
 }
 
+function countStyle(story, styleName) {
+    var n = 0, ps = story.paragraphs;
+    for (var i = 0; i < ps.length; i++) {
+        if (ps[i].appliedParagraphStyle.name === styleName) n++;
+    }
+    return n;
+}
+
 function applyChoiceLayout(story, flow, starts) {
     var aligned = 0, packed = 0, grown = 0;
     // 인덱스 변동을 피해 뒤 유닛부터 처리
@@ -374,7 +386,13 @@ function applyChoiceLayout(story, flow, starts) {
     }
     wlog("선지 레이아웃: 머리행 정렬 " + aligned + " / 3열 묶기 " + packed +
          " / 프레임 확장 " + grown);
-    RESULTS.choice_layout = { aligned: aligned, packed: packed, grown: grown };
+    var stems = countStyle(story, "문제");
+    RESULTS.choice_layout = { aligned: aligned, packed: packed, grown: grown,
+                              stems: stems, units: flow.units.length };
+    if (stems !== flow.units.length) {
+        warn("레이아웃 후 발문 단락 수 불일치: " + stems + " vs 유닛 " +
+             flow.units.length + " (자동번호 밀림 위험)");
+    }
 }
 
 // ── 빈칸(전각 공백) 밑줄 ────────────────────────────────────────────────

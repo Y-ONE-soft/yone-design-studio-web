@@ -22,6 +22,7 @@ v1 대비 달라진 점
   B4 러닝헤드    — 유닛 수만큼 머리말 소스가 페이지에 걸리지 않으면 실패
   B5 오버플로우  — 본문/정답지 오버플로우 > 0이면 실패(위치 지목)
   B6 스타일/마스터 부재 — 실행기가 [경고]로 남긴 것이 있으면 실패
+  B7 발문 단락 수 = 문항 수 — 선지 레이아웃이 발문을 삼키면 실패
 """
 import json
 import os
@@ -323,6 +324,18 @@ class BaenjeV2Engine(BaseEngine):
             warnings.append(f"❌ B5 오버플로우 {overflow}개: "
                             f"{(result.get('overflow_heads') or [])[:3]}")
         log(f"[검수] B5 오버플로우: {overflow}개 / 페이지 {result.get('pages')}")
+
+        # B7 레이아웃 후 발문 단락 수 = 문항 수 (자동번호 밀림 감지)
+        cl = result.get("choice_layout") or {}
+        if cl.get("stems") is not None and cl.get("units") is not None:
+            if cl["stems"] != cl["units"]:
+                ok = False
+                warnings.append(
+                    f"❌ B7 발문 단락 {cl['stems']} ≠ 문항 {cl['units']} — "
+                    "선지 레이아웃이 발문을 삼켰을 수 있음(자동번호 밀림)")
+        log(f"[검수] B7 발문 단락: {cl.get('stems')} / 문항 {cl.get('units')} "
+            f"| 3열 {cl.get('packed')} · 머리행 {cl.get('aligned')} · "
+            f"프레임확장 {cl.get('grown')}")
 
         # B6 스타일·마스터 부재
         miss = list(result.get("missing_styles") or []) + \
