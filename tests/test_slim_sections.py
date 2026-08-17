@@ -367,3 +367,20 @@ def test_swap_keeps_objective_variant(tmp_path):
     assert "manuscripts_Step2 A1 어법선택(객관식).docx" in finals
     swapped = up / "manuscripts_Step2 A1 어법선택.docx"
     assert "직전 보충 자료" in swapped.read_text(encoding="utf-8")
+
+
+def test_jsx_divider_align_runs_before_master_fix(jsx):
+    """간지 정렬이 페이지를 삽입하면 이후 좌/우가 뒤집힌다 —
+    페이지 수가 확정된 **뒤에** 마스터 보정을 해야 보정이 유효하다."""
+    i_div = jsx.index("function fixDividerSpreads")
+    i_mst = jsx.index("var after = buildSections()")   # 마스터 보정 진입점
+    assert i_div < i_mst, "간지 정렬이 마스터 보정보다 뒤에 있으면 보정이 무효"
+
+
+def test_jsx_has_idempotency_guard(jsx):
+    """섹션 삭제/병합은 되돌릴 수 없다 — 두 번 돌리면 이미 병합된 페이지를
+    또 병합해 내용이 넘친다. 문서 라벨로 적용 이력을 남겨 막아야 한다."""
+    assert "yoneSlimApplied" in jsx
+    assert "extractLabel" in jsx and "insertLabel" in jsx
+    # 이미 적용된 문서면 액션 목록을 비운다
+    assert "if (alreadySlim) { sections = []; }" in jsx

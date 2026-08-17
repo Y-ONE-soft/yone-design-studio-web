@@ -7,8 +7,8 @@
 //   1) settings.output_indd (엔진이 미리 복사해 둔 사본) 를 창 없이 열기
 //   2) '단원' 스타일 마커(파스트보드 숨김 프레임)로 섹션 경계 인식
 //   3) 섹션별 액션 — delete / merge_half / merge_stack (뒤 섹션부터 처리)
-//   4) 섹션 첫 페이지 마스터 좌/우 보정 (A↔B, C↔D)
-//   5) 간지 스프레드 정렬 — 간지 블록이 (왼쪽,오른쪽) 2P 가 되도록 메모 삽입
+//   4) 간지 스프레드 정렬 — 간지 블록이 (왼쪽,오른쪽) 2P 가 되도록 메모 삽입
+//   5) 섹션 첫 페이지 마스터 좌/우 보정 (A↔B, C↔D) — 페이지 수 확정 후
 //   6) 검증(오버셋/누락링크/섹션) → 저장 + 닫기 (사용자 문서 무접촉)
 #target indesign
 
@@ -110,6 +110,18 @@
 
     writeLog("슬림 변환 시작 — " + doc.name);
     writeLog("변환 전 페이지: " + doc.pages.length);
+
+    // 멱등 가드 — 섹션 삭제/병합은 되돌릴 수 없고 두 번 돌리면 이미 병합된
+    // 페이지를 또 병합해 내용이 넘친다. 적용 이력을 문서 라벨에 남겨
+    // 재실행 시 액션을 건너뛰고 보정(마스터/간지/마커)만 재적용한다.
+    var SLIM_LABEL = "yoneSlimApplied";
+    var alreadySlim = "";
+    try { alreadySlim = String(doc.extractLabel(SLIM_LABEL) || ""); }
+    catch (eLb) { alreadySlim = ""; }
+    if (alreadySlim) {
+        writeLog("[경고] 이미 슬림 변환된 문서입니다 (" + alreadySlim + ")" +
+                 " — 섹션 삭제/병합을 건너뛰고 마스터·간지·마커만 재적용합니다");
+    }
 
     var prevRuler = doc.viewPreferences.rulerOrigin;
     try { doc.adjustLayoutPreferences.enableAdjustLayout = false; } catch (eAdj) {}
@@ -538,6 +550,7 @@
     // ───────────────────────────────────────────────────────────────
     var actionCount = 0;
     sections.sort(function (a, b) { return b.start - a.start; });
+    if (alreadySlim) { sections = []; }
     for (var s = 0; s < sections.length; s++) {
         var sec = sections[s];
         try {
@@ -550,95 +563,9 @@
     }
     writeLog("처리 섹션: " + actionCount + "개");
 
-    // ───────────────────────────────────────────────────────────────
-    // 섹션 첫 페이지 마스터 좌/우 보정 (A↔B, C↔D)
-    // ───────────────────────────────────────────────────────────────
-    function masterByPrefix(pfx) {
-        for (var i = 0; i < doc.masterSpreads.length; i++) {
-            if (String(doc.masterSpreads[i].namePrefix) === pfx) {
-                return doc.masterSpreads[i];
-            }
-        }
-        return null;
-    }
-
-    markerFrameIds = {};
-    var after = buildSections();
-    var fixedMasters = 0;
-    for (var a = 0; a < after.length; a++) {
-        var pg2 = doc.pages[after[a].start];
-        var pfx = masterPrefix(pg2);
-        var right = isRight(pg2);
-        var want = null;
-        for (var mp = 0; mp < PAIRS.length; mp++) {
-            var L = PAIRS[mp][0], R = PAIRS[mp][1];
-            if (pfx === L && right) want = R;
-            if (pfx === R && !right) want = L;
-        }
-        if (want) {
-            var ms = masterByPrefix(want);
-            if (ms) {
-                try {
-                    pg2.appliedMaster = ms;
-                    fixedMasters++;
-                    writeLog("마스터 보정 p" + pg2.name + " " + after[a].label +
-                             " : " + pfx + " → " + want +
-                             (right ? " (오른쪽 시작)" : " (왼쪽 시작)"));
-                } catch (eM) {
-                    writeLog("[경고] 마스터 적용 실패 p" + pg2.name + ": " + eM);
-                }
-            } else {
-                writeLog("[경고] 마스터 " + want + " 없음 — p" + pg2.name + " 미보정");
-            }
-        }
-    }
-    writeLog("마스터 보정: " + fixedMasters + "건");
-
-    // ───────────────────────────────────────────────────────────────
-    // 단원 마커 텍스트 교체 (예: '어법 선택' → '어법 수정')
-    //
-    // 마커는 파스트보드 숨김 프레임이자 마스터 러닝헤더 텍스트변수의 소스라,
-    // 이 텍스트를 바꾸면 섹션 헤더 표기가 따라 바뀐다. 문자 스타일을 조건에
-    // 걸어 본문의 같은 문구는 건드리지 않는다.
-    // ───────────────────────────────────────────────────────────────
-    function renameMarkers(map) {
-        var total = 0;
-        for (var from in map) {
-            if (!map.hasOwnProperty(from)) continue;
-            var to = map[from];
-            if (!to || to === from) continue;
-            try {
-                app.findGrepPreferences = NothingEnum.nothing;
-                app.changeGrepPreferences = NothingEnum.nothing;
-                app.findGrepPreferences.findWhat = from;
-                if (unitInfo.type === "character") {
-                    app.findGrepPreferences.appliedCharacterStyle = unitInfo.style;
-                } else {
-                    app.findGrepPreferences.appliedParagraphStyle = unitInfo.style;
-                }
-                app.changeGrepPreferences.changeTo = to;
-                var hits = doc.changeGrep();
-                var n = hits ? hits.length : 0;
-                total += n;
-                writeLog("마커 교체: '" + from + "' → '" + to + "' (" + n + "건)");
-                if (n === 0) {
-                    writeLog("[경고] 마커 '" + from + "' 미발견 — 교체 없음");
-                }
-            } catch (eR) {
-                writeLog("[경고] 마커 교체 실패 (" + from + "): " + eR);
-            }
-            app.findGrepPreferences = NothingEnum.nothing;
-            app.changeGrepPreferences = NothingEnum.nothing;
-        }
-        return total;
-    }
-
-    var RENAME = settings.rename_markers || null;
-    if (RENAME) {
-        var renamed = renameMarkers(RENAME);
-        writeLog("마커 교체 합계: " + renamed + "건");
-    }
-
+    // 실행 순서 주의: 간지 정렬이 페이지를 삽입하면 이후 페이지의
+    // 좌/우가 뒤집힌다 → **페이지 수가 확정된 뒤에** 마스터 보정을
+    // 해야 한다 (거꾸로 하면 보정이 통째로 무효가 된다).
     // ───────────────────────────────────────────────────────────────
     // 간지 스프레드 정렬 (메모 페이지 삽입)
     //
@@ -741,6 +668,95 @@
     }
 
     // ───────────────────────────────────────────────────────────────
+    // 섹션 첫 페이지 마스터 좌/우 보정 (A↔B, C↔D)
+    // ───────────────────────────────────────────────────────────────
+    function masterByPrefix(pfx) {
+        for (var i = 0; i < doc.masterSpreads.length; i++) {
+            if (String(doc.masterSpreads[i].namePrefix) === pfx) {
+                return doc.masterSpreads[i];
+            }
+        }
+        return null;
+    }
+
+    markerFrameIds = {};
+    var after = buildSections();
+    var fixedMasters = 0;
+    for (var a = 0; a < after.length; a++) {
+        var pg2 = doc.pages[after[a].start];
+        var pfx = masterPrefix(pg2);
+        var right = isRight(pg2);
+        var want = null;
+        for (var mp = 0; mp < PAIRS.length; mp++) {
+            var L = PAIRS[mp][0], R = PAIRS[mp][1];
+            if (pfx === L && right) want = R;
+            if (pfx === R && !right) want = L;
+        }
+        if (want) {
+            var ms = masterByPrefix(want);
+            if (ms) {
+                try {
+                    pg2.appliedMaster = ms;
+                    fixedMasters++;
+                    writeLog("마스터 보정 p" + pg2.name + " " + after[a].label +
+                             " : " + pfx + " → " + want +
+                             (right ? " (오른쪽 시작)" : " (왼쪽 시작)"));
+                } catch (eM) {
+                    writeLog("[경고] 마스터 적용 실패 p" + pg2.name + ": " + eM);
+                }
+            } else {
+                writeLog("[경고] 마스터 " + want + " 없음 — p" + pg2.name + " 미보정");
+            }
+        }
+    }
+    writeLog("마스터 보정: " + fixedMasters + "건");
+
+    // ───────────────────────────────────────────────────────────────
+    // 단원 마커 텍스트 교체 (예: '어법 선택' → '어법 수정')
+    //
+    // 마커는 파스트보드 숨김 프레임이자 마스터 러닝헤더 텍스트변수의 소스라,
+    // 이 텍스트를 바꾸면 섹션 헤더 표기가 따라 바뀐다. 문자 스타일을 조건에
+    // 걸어 본문의 같은 문구는 건드리지 않는다.
+    // ───────────────────────────────────────────────────────────────
+    function renameMarkers(map) {
+        var total = 0;
+        for (var from in map) {
+            if (!map.hasOwnProperty(from)) continue;
+            var to = map[from];
+            if (!to || to === from) continue;
+            try {
+                app.findGrepPreferences = NothingEnum.nothing;
+                app.changeGrepPreferences = NothingEnum.nothing;
+                app.findGrepPreferences.findWhat = from;
+                if (unitInfo.type === "character") {
+                    app.findGrepPreferences.appliedCharacterStyle = unitInfo.style;
+                } else {
+                    app.findGrepPreferences.appliedParagraphStyle = unitInfo.style;
+                }
+                app.changeGrepPreferences.changeTo = to;
+                var hits = doc.changeGrep();
+                var n = hits ? hits.length : 0;
+                total += n;
+                writeLog("마커 교체: '" + from + "' → '" + to + "' (" + n + "건)");
+                if (n === 0) {
+                    writeLog("[경고] 마커 '" + from + "' 미발견 — 교체 없음");
+                }
+            } catch (eR) {
+                writeLog("[경고] 마커 교체 실패 (" + from + "): " + eR);
+            }
+            app.findGrepPreferences = NothingEnum.nothing;
+            app.changeGrepPreferences = NothingEnum.nothing;
+        }
+        return total;
+    }
+
+    var RENAME = settings.rename_markers || null;
+    if (RENAME) {
+        var renamed = renameMarkers(RENAME);
+        writeLog("마커 교체 합계: " + renamed + "건");
+    }
+
+    // ───────────────────────────────────────────────────────────────
     // 검증
     // ───────────────────────────────────────────────────────────────
     var overset = 0;
@@ -771,6 +787,19 @@
     writeLog("병합 그룹: " + actionCount + "개");
 
     // ───────────────────────────────────────────────────────────────
+    if (actionCount > 0 && !alreadySlim) {
+        var stampParts = [];
+        if (DEL_LIST.length) stampParts.push("삭제" + DEL_LIST.length);
+        if (HALF_LIST.length) stampParts.push("반쪽" + HALF_LIST.length);
+        if (STACK_LIST.length) stampParts.push("적층" + STACK_LIST.length);
+        try {
+            doc.insertLabel(SLIM_LABEL, stampParts.join("/") || "applied");
+            writeLog("슬림 적용 표식 기록 (" + stampParts.join("/") + ")");
+        } catch (eIl) {
+            writeLog("[경고] 슬림 표식 기록 실패: " + eIl);
+        }
+    }
+
     try { doc.viewPreferences.rulerOrigin = prevRuler; } catch (eRu) {}
     try {
         doc.save();
