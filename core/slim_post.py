@@ -161,6 +161,9 @@ def run_slim_postprocess(engine, job_dir, log, cancel_check=None):
     except OSError as e:
         log(f"[슬림] [오류] 사본 생성 실패 — 후처리 생략: {e}")
         return None
+    if _read(job_dir, "grammar_swapped"):
+        log("[슬림] ※ 어법수정 원고로 조판됨 — 보존되는 '풀버전'도 어법수정본"
+            "입니다 (어법선택 풀버전은 어법 교체를 끄고 별도 조판)")
     log(f"[슬림] 풀버전 보존: {os.path.basename(indd_path)}")
     log(f"[슬림] 슬림본 생성: {os.path.basename(slim_indd)}")
 

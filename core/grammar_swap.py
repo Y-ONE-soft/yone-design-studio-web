@@ -178,6 +178,18 @@ def swap_grammar_manuscript(job_dir, uploaded, log):
         paths.append(dst)
 
     log(f"[어법교체] {os.path.basename(src)} → {slot_base} 슬롯으로 투입")
+    # 이 조판은 어법수정 원고로 이뤄진다 = **슬림 전용 조판**.
+    # 조판 결과 자체가 어법수정이므로 풀버전도 어법수정이 된다.
+    # 어법선택 풀버전이 따로 필요하면 어법 교체를 끄고 한 번 더 조판해야 한다.
+    log("[어법교체] ※ 이 조판은 슬림 전용입니다 — 산출물(풀버전 포함)이 "
+        "어법수정으로 조판됩니다. 어법선택 풀버전이 필요하면 어법 교체를 "
+        "끄고 따로 조판하세요")
+    try:
+        with open(os.path.join(job_dir, "grammar_swapped.txt"), "w",
+                  encoding="utf-8") as f:
+            f.write(os.path.basename(src))
+    except OSError:
+        pass
 
     # 지문만 어법수정본으로 바뀌고 정답지는 어법선택 것이 남으면 불일치 —
     # 조판에서 정답을 쓰는 경로가 있으면 틀린 답이 실린다. 고지만 한다
