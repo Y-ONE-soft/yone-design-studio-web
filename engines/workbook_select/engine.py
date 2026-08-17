@@ -147,28 +147,127 @@ class WorkbookSelectEngine(WorkbookV2Engine):
     def _parse_codes(text):
         """입력 텍스트 → 순서 보존 6자리 코드 리스트 (중복 제거).
 
-        허용: "231133" / "23년 11월 33번" / 콤마·줄바꿈 혼합
+        사용자가 쓰는 표기를 최대한 그대로 받는다. **회차(YYMM)를 문맥으로
+        기억**하면서 왼쪽부터 훑기 때문에, 회차를 한 번 쓰고 문항번호만
+        나열하는 실제 사용 방식이 그대로 통한다.
+
+            250632                     → 250632
+            25년 6월 32번               → 250632
+            25년 9월 21~42번            → 250921 … 250942
+            250939~41 / 250939~250942  → 250939 … (끝번호까지)
+            250921,22,30~32            → 250921 250922 250930 250931 250932
+            25년 6월 32번, 25년 9월 31번 → 250632 250931
+
+        범위는 **문항번호를 하나씩 펼친다.** 41~42 같은 장문 세트는 병합
+        단계가 같은 블록으로 묶어 지문 1개로 처리하므로(merge_select 의 범위
+        블록 판정) 여기서 세트를 알 필요가 없다.
+
+        구분자(콤마·줄바꿈·공백·`번`)와 물결표 변형(~ - – — 〜)·전각 숫자를
+        모두 흡수한다.
         """
-        codes = []
-        seen = set()
-        for piece in re.split(r"[,\n]+", text):
-            piece = piece.strip()
-            if not piece:
-                continue
-            m = re.fullmatch(r"(\d{6})", piece)
-            if not m:
-                m2 = re.fullmatch(
-                    r"(\d{2})\s*년\s*(\d{1,2})\s*월\s*(\d{1,2})\s*번?", piece)
-                if not m2:
-                    raise ValueError("코드 형식 인식 실패: %r" % piece)
-                code = "%s%02d%02d" % (m2.group(1), int(m2.group(2)),
-                                       int(m2.group(3)))
-            else:
-                code = m.group(1)
+        raw = text or ""
+        # 전각 숫자·기호 → 반각, 물결표 변형 통일
+        trans = {}
+        for i in range(10):
+            trans[ord("０") + i] = str(i)
+        for ch in "～〜–—−ー":
+            trans[ord(ch)] = "~"
+        trans[ord("／")] = "/"
+        trans[ord("，")] = ","
+        s = raw.translate(trans)
+        s = s.replace("-", "~")
+        s = re.sub(r"번", " ", s)          # "32번" / "21번~42번"
+        s = re.sub(r"[,\n\r\t/·;]+", " ", s)
+        s = re.sub(r"\s+", " ", s).strip()
+        if not s:
+            raise ValueError("문항 코드가 입력되지 않았습니다.")
+
+        # 왼쪽부터 훑으며 회차 문맥(cur)을 갱신한다. 순서는 길이가 긴 패턴부터.
+        pats = [
+            # 25년 9월 / 25년09월 — 회차만 지정
+            ("round", re.compile(r"(\d{2})\s*년\s*(\d{1,2})\s*월")),
+            # 250939~250942 (두 코드 범위)
+            ("range6_6", re.compile(r"(\d{6})\s*~\s*(\d{6})")),
+            # 250939~41 (코드 + 끝 문항번호)
+            ("range6_2", re.compile(r"(\d{6})\s*~\s*(\d{1,2})(?!\d)")),
+            ("code6", re.compile(r"(\d{6})(?!\d)")),
+            # 30~32 (문맥 회차의 문항 범위)
+            ("range2_2", re.compile(r"(\d{1,2})\s*~\s*(\d{1,2})(?!\d)")),
+            ("num", re.compile(r"(\d{1,2})(?!\d)")),
+        ]
+
+        def mk(yy, mm, qq):
+            if not (1 <= mm <= 12):
+                raise ValueError("월이 올바르지 않습니다: %d월" % mm)
+            if not (1 <= qq <= 99):
+                raise ValueError("문항번호가 올바르지 않습니다: %d번" % qq)
+            return "%02d%02d%02d" % (yy, mm, qq)
+
+        codes, seen = [], set()
+
+        def add(code):
             if code in seen:
-                continue
+                return
             seen.add(code)
             codes.append(code)
+
+        cur = None          # (yy, mm)
+        pos = 0
+        while pos < len(s):
+            if s[pos] == " ":
+                pos += 1
+                continue
+            hit = None
+            for kind, rx in pats:
+                m = rx.match(s, pos)
+                if m:
+                    hit = (kind, m)
+                    break
+            if not hit:
+                raise ValueError(
+                    "코드 형식 인식 실패: %r (전체 입력: %r)"
+                    % (s[pos:pos + 20], raw.strip()[:60]))
+            kind, m = hit
+            if kind == "round":
+                cur = (int(m.group(1)), int(m.group(2)))
+            elif kind == "code6":
+                c = m.group(1)
+                cur = (int(c[:2]), int(c[2:4]))
+                add(mk(cur[0], cur[1], int(c[4:6])))
+            elif kind in ("range6_6", "range6_2"):
+                c = m.group(1)
+                cur = (int(c[:2]), int(c[2:4]))
+                start = int(c[4:6])
+                if kind == "range6_6":
+                    e = m.group(2)
+                    if e[:4] != c[:4]:
+                        raise ValueError(
+                            "범위의 앞뒤 회차가 다릅니다: %s~%s "
+                            "(회차별로 나눠 입력하세요)" % (c, e))
+                    end = int(e[4:6])
+                else:
+                    end = int(m.group(2))
+                if end < start:
+                    raise ValueError("범위가 거꾸로입니다: %s~%s"
+                                     % (c, m.group(2)))
+                for q in range(start, end + 1):
+                    add(mk(cur[0], cur[1], q))
+            else:
+                if cur is None:
+                    raise ValueError(
+                        "회차를 알 수 없습니다: %r — 앞에 '25년 9월' 또는 "
+                        "6자리 코드를 먼저 쓰세요" % m.group(0))
+                if kind == "range2_2":
+                    start, end = int(m.group(1)), int(m.group(2))
+                    if end < start:
+                        raise ValueError("범위가 거꾸로입니다: %d~%d"
+                                         % (start, end))
+                    for q in range(start, end + 1):
+                        add(mk(cur[0], cur[1], q))
+                else:
+                    add(mk(cur[0], cur[1], int(m.group(1))))
+            pos = m.end()
+
         if not codes:
             raise ValueError("문항 코드가 입력되지 않았습니다.")
         return codes

@@ -336,6 +336,61 @@ def test_header_dialect_order():
     _check("표준 헤더 치환", got == "3. p22-no.231133", got)
 
 
+def test_code_input_freeform():
+    """문제 코드 입력은 **사용자가 쓰는 방식대로** 받아야 한다.
+
+    실사고 2026-08-17: 웹 안내문이 광고하던 범위 표기(`20-23번`)조차
+    파서가 못 받아 "코드 형식 인식 실패"로 조판이 시작도 못 했다.
+    회차를 한 번 쓰고 문항번호만 나열하는 실제 사용 방식이 핵심.
+    """
+    P = WorkbookSelectEngine._parse_codes
+    ok_cases = [
+        ("25년 9월 21~42번", ["2509%02d" % q for q in range(21, 43)]),
+        ("250939~41", ["250939", "250940", "250941"]),
+        ("250939~42", ["250939", "250940", "250941", "250942"]),
+        ("250921,22,30~32",
+         ["250921", "250922", "250930", "250931", "250932"]),
+        ("250632", ["250632"]),
+        ("25년 6월 32번", ["250632"]),
+        ("25년 6월 20-23번, 29번",
+         ["250620", "250621", "250622", "250623", "250629"]),
+        ("25년 6월 20~21, 29~30",
+         ["250620", "250621", "250629", "250630"]),
+        ("25년 6월 32번, 25년 9월 31번", ["250632", "250931"]),
+        ("250939~250942", ["250939", "250940", "250941", "250942"]),
+        ("25년9월21번~24번",
+         ["250921", "250922", "250923", "250924"]),
+        ("250921 250922\n250930", ["250921", "250922", "250930"]),
+        ("２５０９２１", ["250921"]),
+        ("250921, 250921", ["250921"]),
+        ("25년 9월 21, 22, 25년 3월 30", ["250921", "250922", "250330"]),
+    ]
+    bad = []
+    for src, want in ok_cases:
+        try:
+            got = P(src)
+        except Exception as e:                              # noqa: BLE001
+            bad.append("%r → 예외 %s" % (src, e))
+            continue
+        if got != want:
+            bad.append("%r → %s (기대 %s)" % (src, got[:4], want[:4]))
+    _check("코드 입력: 자유 표기 %d종" % len(ok_cases), not bad,
+           " / ".join(bad[:2]))
+
+    ng_cases = ["", "abc", "30~32", "250942~39", "250939~251001"]
+    bad2 = []
+    for src in ng_cases:
+        try:
+            P(src)
+            bad2.append(repr(src))
+        except ValueError:
+            pass
+        except Exception as e:                              # noqa: BLE001
+            bad2.append("%r → ValueError 아님(%s)" % (src, type(e).__name__))
+    _check("코드 입력: 잘못된 입력은 ValueError", not bad2,
+           " / ".join(bad2[:2]))
+
+
 def test_fill_resolution():
     """보충 데이터(fill) 조달 — 학년·강이 **정확히** 맞을 때만 자동 조달.
 
@@ -421,6 +476,7 @@ def main():
     test_no_input()
     test_final_labels()
     test_header_dialect_order()
+    test_code_input_freeform()
     test_fill_resolution()
     test_supplement_lookup()
     bad = [n for n, ok, _ in _results if not ok]
