@@ -552,6 +552,27 @@ function underlineBlanks(story, label) {
         }
         app.changeGrepPreferences = NothingEnum.NOTHING;
     }
+    // 전각 밑줄문자(＿)도 폰트에 따라 .notdef가 된다 → 같은 폭의 밑줄 친 공백으로.
+    // (빈칸 표현을 '밑줄 친 공백' 하나로 통일하면 폰트가 무엇이든 깨지지 않는다)
+    app.findGrepPreferences = NothingEnum.NOTHING;
+    app.changeGrepPreferences = NothingEnum.NOTHING;
+    app.findGrepPreferences.findWhat = "\\x{FF3F}+";
+    var uf = [];
+    try { uf = story.findGrep(); } catch (e) {}
+    app.findGrepPreferences = NothingEnum.NOTHING;
+    for (var u2 = uf.length - 1; u2 >= 0; u2--) {
+        var cnt = 0;
+        try { cnt = uf[u2].contents.length; } catch (e) { continue; }
+        var sp = "";
+        for (var z = 0; z < cnt * 4; z++) { sp += " "; }
+        try {
+            uf[u2].contents = sp;
+            uf[u2].underline = true;
+            uf[u2].underlineOffset = 1.2;
+            uf[u2].underlineWeight = 0.5;
+            total++;
+        } catch (e) {}
+    }
     RESULTS.blanks_underlined += total;
     wlog(label + " 빈칸 밑줄: " + total + "건");
 }

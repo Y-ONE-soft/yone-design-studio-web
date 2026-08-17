@@ -331,7 +331,10 @@ class BaenjeV2Engine(BaseEngine):
         #    공백/탭 정규화 후 이어붙여 비교 → 누락·병합·중복·순서 뒤바뀜을 잡는다.
         #    (3열 묶기·머리행 재작성은 공백만 달라지므로 정규화로 흡수된다)
         def _flat(txts):
-            return re.sub(r"[\s\u3000]+", "", _nfc(_norm_typo("".join(txts))))
+            # 빈칸 표현(전각공백/＿)은 조판에서 '밑줄 친 공백'으로 바뀌므로
+            # 양쪽 모두에서 제거하고 실제 내용만 비교한다.
+            t = _nfc(_norm_typo("".join(txts)))
+            return re.sub(r"[\s\u3000\uff3f_]+", "", t)
 
         dump_by_story = []
         for st in dump["stories"]:
