@@ -347,12 +347,14 @@ class BaenjeV2Engine(BaseEngine):
                 for pp in unit["paras"]:
                     want.append(pp["t"])
             wtxt = _flat(want)
-            best, best_n = None, -1
+            best, best_diff = None, None
             for paras in dump_by_story:
                 got = _flat([p["t"] for p in paras])
-                n = len(got)
-                if abs(n - len(wtxt)) < abs(best_n - len(wtxt)) if best is not None else True:
-                    best, best_n = got, n
+                if not got:
+                    continue
+                diff = abs(len(got) - len(wtxt))
+                if best_diff is None or diff < best_diff:
+                    best, best_diff = got, diff
             if best is None:
                 continue
             if best != wtxt:

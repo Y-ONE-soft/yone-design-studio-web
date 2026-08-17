@@ -252,6 +252,46 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
                 mapping.setdefault(nfd, mapping[name])
         return mapping
 
+    # ─── 간지 1P 가이드 버전 (1주차 전용) ──────────────────────────
+
+    # 첫 주차(순번 1)로 나가는 분석본은 간지 1P를 가이드 버전으로 넣는다.
+    # 2주차부터는 템플릿 기본 1P 그대로 (2026-08-17 지시).
+    # 키=템플릿에 들어있는 링크 파일명, 값=같은 폴더에 있는 가이드 짝.
+    GUIDE_1P_PAIRS = {
+        "1P.pdf": "1P(guide).pdf",       # D버전
+        "1P.ai": "1P (step up guide).ai",  # C버전
+    }
+
+    def build_guide_1p(self, cfg, issue_num, log):
+        """1주차면 가이드 1P 교체 설정을 만든다 (JSX가 relink로 적용).
+
+        실제 짝 찾기는 JSX가 '현재 링크와 같은 폴더' 우선으로 하고,
+        여기 map은 폴백 절대경로다 (버전 폴더가 바뀌어도 안 놓치게).
+        """
+        enabled = str(issue_num or "").strip() == "1"
+        mapping = {}
+        if enabled:
+            scan = {}
+            for d in cfg.get("image_dirs", []):
+                self._scan_dir_for_files(d, scan)
+            for base, guide in self.GUIDE_1P_PAIRS.items():
+                path = (scan.get(guide)
+                        or scan.get(unicodedata.normalize("NFD", guide)))
+                if path:
+                    mapping[base] = path
+            if mapping:
+                log(f"[간지 1P] 1주차(순번 {issue_num}) — 가이드 버전으로 교체: "
+                    + ", ".join(f"{k}→{os.path.basename(v)}"
+                                for k, v in mapping.items()))
+            else:
+                log("[간지 1P][경고] 1주차인데 가이드 파일을 이미지 폴더에서 "
+                    "찾지 못했습니다 — JSX가 링크 폴더에서 재탐색합니다")
+        return {
+            "enabled": enabled,
+            "pairs": dict(self.GUIDE_1P_PAIRS),
+            "map": mapping,
+        }
+
     # ─── parse ─────────────────────────────────────────────────────
 
     def parse(self, uploaded_files, job_dir, log):
@@ -464,6 +504,7 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
             "ganji_school": ganji_school,
             "ranges": ranges,
             "relink_map": meta.get("relink_map") or {},
+            "guide_1p": self.build_guide_1p(cfg, issue_num, log),
             "sources": meta["sources"],
             # GDrive 최종 저장 정보 (파이썬 verify 전용 — JSX는 GDrive 무접촉)
             "gdrive_save": {
@@ -616,6 +657,22 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
                 f"미임베드 {n_unembedded}개 "
                 f"(리링크 {links.get('relinked', 0)}건, 임베드 {links.get('embedded', 0)}건)")
 
+        # ── 게이트 3-1: 1주차 간지 1P 가이드 버전 ───────────────────
+        # 1주차(순번 1)에만 적용 — 켜졌는데 교체가 0건이면 실패로 남긴다
+        # (조용히 기본 1P로 나가면 육안으로 못 잡는다).
+        g1p = report.get("guide_1p") or {}
+        guide_ok = True
+        if g1p.get("enabled"):
+            applied = g1p.get("applied") or []
+            g_missing = g1p.get("missing") or []
+            g_failed = g1p.get("failed") or []
+            guide_ok = bool(applied) and not g_missing and not g_failed
+            if not guide_ok:
+                warnings.append(
+                    "1주차 간지 1P 가이드 교체 실패 — "
+                    f"교체 {len(applied)}건, 파일 없음 {g_missing}, 오류 {g_failed}")
+        gates["guide_1p_ok"] = guide_ok
+
         # ── 게이트 4: 간지/1페이지 텍스트 (스펙 5) ──────────────────
         ganji = report.get("ganji") or {}
         ganji_ok = bool(ganji.get("ok"))
@@ -732,6 +789,7 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
                 "oversized_drift": oversized,
             },
             "links": links,
+            "guide_1p": g1p,
             "ganji": ganji,
             "doc_sources": doc_srcs,
             "preexisting_overflow": preexisting_ovf,
