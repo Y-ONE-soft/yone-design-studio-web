@@ -162,12 +162,23 @@ def content_to_plan(content, log=None):
             "memo_master": "B",
             "keep_block_in_spread": "answers",
             # 마지막 페이지 크레딧 (배재보카 크레딧 스니펫 — 서식 그대로)
-            "credit": {"items": [
-                {"file": os.path.join(_ASSETS, "credit_yone.idms"),
-                 "x": 23.0, "y": 96.0},
-                {"file": os.path.join(_ASSETS, "copyright_yone.idms"),
-                 "x": 23.0, "y": 258.0},
-            ]},
+            "credit": {
+                "items": [
+                    {"file": os.path.join(_ASSETS, "credit_yone.idms"),
+                     "x": 23.0, "y": 96.0},
+                    {"file": os.path.join(_ASSETS, "copyright_yone.idms"),
+                     "x": 23.0, "y": 258.0},
+                ],
+                # 라벨이 옅어 잘 안 보인다 → 본문 메인 색(문제번호와 같은 남색)
+                "label_color": "C=100 M=78 Y=13 K=16",
+                "labels": ["Writer", "Assistant", "Design", "Production",
+                           "Marketer"],
+            },
+            # 마지막 페이지 장식(N)만 다른 팔레트라 본문 마스터 색으로 맞춘다
+            "last_page_colors": {
+                "c52m89y63k13": "c93m2y42k21",   # 자주 → 청록
+                "c41m17y0k0": "c76m49y0k0",      # 옅은 파랑 → 마스터 파랑
+            },
         },
         "warnings": warnings,
     }

@@ -24,7 +24,8 @@ var RESULTS = {
     memo_pages: [], wide_space_fixed: 0, blanks_underlined: 0,
     frames_grown: [], choice_layout: {}, mixed_format: [],
     oneline_fitted: 0, oneline_failed: [], credit_placed: [],
-    answer_line_as_passage: [], warnings: []
+    answer_line_as_passage: [], trimmed_pages: 0, orphan_moved: [],
+    recolored: 0, warnings: []
 };
 
 function readJSONFile(path) {
@@ -538,11 +539,22 @@ function underlineBlanks(story, label) {
         app.findGrepPreferences = NothingEnum.NOTHING;
         app.changeGrepPreferences = NothingEnum.NOTHING;
         app.findGrepPreferences.findWhat = pats[i];
-        app.changeGrepPreferences.underline = true;
-        try { total += story.changeGrep().length; } catch (e) {
-            warn(label + " 빈칸 밑줄 오류: " + e.message);
+        var found = [];
+        try { found = story.findGrep(); } catch (e) {
+            warn(label + " 빈칸 탐색 오류: " + e.message);
         }
         app.findGrepPreferences = NothingEnum.NOTHING;
+        for (var k = 0; k < found.length; k++) {
+            try {
+                found[k].underline = true;
+                // 밑줄 위치/두께를 명시해야 폰트가 섞여도 한 줄로 이어진다
+                // (기본값은 폰트 메트릭을 따라가 계단처럼 어긋난다)
+                found[k].underlineOffset = 1.2;
+                found[k].underlineWeight = 0.5;
+                found[k].underlineType = app.strokeStyles.item("Solid");
+                total++;
+            } catch (e) {}
+        }
         app.changeGrepPreferences = NothingEnum.NOTHING;
     }
     RESULTS.blanks_underlined += total;
@@ -599,7 +611,57 @@ function placeCredit(doc, credit) {
         } catch (e) { warn("크레딧 위치 지정 실패: " + e.message); }
         RESULTS.credit_placed.push(it.file.split("/").pop());
     }
+    // 라벨(Writer/Assistant/…)이 옅어 잘 안 보인다 → 본문 메인 색으로
+    if (credit.label_color) {
+        var col = null;
+        try { col = doc.colors.itemByName(credit.label_color); if (!col.isValid) col = null; } catch (e) {}
+        if (col) {
+            var n = 0;
+            var labels = credit.labels || ["Writer", "Assistant", "Design",
+                                           "Production", "Marketer"];
+            var frames = last.textFrames;
+            for (var t = 0; t < frames.length; t++) {
+                var ps2;
+                try { ps2 = frames[t].paragraphs; } catch (e) { continue; }
+                for (var q = 0; q < ps2.length; q++) {
+                    var txt = ps2[q].contents.replace(/[\r\n\s]/g, "");
+                    for (var L = 0; L < labels.length; L++) {
+                        if (txt === labels[L]) {
+                            try { ps2[q].fillColor = col; n++; } catch (e) {}
+                        }
+                    }
+                }
+            }
+            wlog("크레딧 라벨 색: " + n + "개 → " + credit.label_color);
+        } else { warn("크레딧 라벨 색 없음: " + credit.label_color); }
+    }
     wlog("크레딧 배치: " + RESULTS.credit_placed.length + "건 (p" + last.name + ")");
+}
+
+// 마지막 페이지 장식(N 그래픽) 색을 본문 마스터 팔레트로 맞춘다
+function recolorLastPage(doc, mapping) {
+    if (!mapping) return;
+    var last = doc.pages[doc.pages.length - 1];
+    var items = last.allPageItems, n = 0;
+    for (var i = 0; i < items.length; i++) {
+        for (var from in mapping) {
+            var to = null;
+            try { to = doc.colors.itemByName(mapping[from]); if (!to.isValid) to = null; } catch (e) {}
+            if (!to) continue;
+            try {
+                if (items[i].fillColor && items[i].fillColor.name === from) {
+                    items[i].fillColor = to; n++;
+                }
+            } catch (e) {}
+            try {
+                if (items[i].strokeColor && items[i].strokeColor.name === from) {
+                    items[i].strokeColor = to; n++;
+                }
+            } catch (e) {}
+        }
+    }
+    RESULTS.recolored = n;
+    wlog("마지막 페이지 색 정합: " + n + "개 항목");
 }
 
 // ── 오버플로우 시 페이지·프레임 증설 ────────────────────────────────────
@@ -703,6 +765,54 @@ function keepBlocksInSpread(doc, story, numStyleName) {
         if (!did) break;
     }
     wlog("정답지 펼침면 걸침 정리: " + moved + "블록");
+    return moved;
+}
+
+// 블록 시작이 프레임 하단에 몰려 몇 줄만 걸치면 통째로 다음 칼럼으로 민다.
+// (번호만 덩그러니 남거나 한두 줄만 남는 꼴 방지 — 옆 칼럼/페이지가 비어 있다)
+function pushOrphanBlocks(doc, story, numStyleName, minLines) {
+    var moved = 0, guard = 0, movedKey = {};
+    while (guard < 300) {
+        guard++;
+        try { doc.recompose(); } catch (e) {}
+        var ps = story.paragraphs;
+        var starts = [];
+        for (var i = 0; i < ps.length; i++) {
+            if (ps[i].appliedParagraphStyle.name === numStyleName) starts.push(i);
+        }
+        var did = false;
+        for (var b = 0; b < starts.length; b++) {
+            var s0 = starts[b];
+            var e0 = (b + 1 < starts.length) ? starts[b + 1] - 1 : ps.length - 1;
+            var startFrame = null;
+            try { startFrame = ps[s0].parentTextFrames[0]; } catch (e) { continue; }
+            if (!startFrame) continue;
+            // 시작 프레임에 담긴 이 블록의 줄 수
+            var linesInFrame = 0, spills = false;
+            for (var q = s0; q <= e0; q++) {
+                var lns;
+                try { lns = ps[q].lines; } catch (e) { continue; }
+                for (var li = 0; li < lns.length; li++) {
+                    var f = null;
+                    try { f = lns[li].parentTextFrames[0]; } catch (e) {}
+                    if (f === startFrame) linesInFrame++;
+                    else spills = true;
+                }
+            }
+            if (!spills || linesInFrame > minLines) continue;
+            var key = ps[s0].contents.replace(/[\r\n]/g, "");
+            if (movedKey[key]) continue;
+            try { ps[s0].startParagraph = StartParagraph.NEXT_FRAME; }
+            catch (e2) { continue; }
+            movedKey[key] = true;
+            moved++;
+            RESULTS.orphan_moved.push(key);
+            did = true;
+            break;
+        }
+        if (!did) break;
+    }
+    wlog("정답지 고아 블록 이동: " + moved + "건");
     return moved;
 }
 
@@ -814,6 +924,49 @@ function auditAnswerLines(story, passageStyleLeaf) {
     }
 }
 
+// ── 뒤쪽 빈 페이지 제거 (짝수 유지에 필요한 만큼만 남긴다) ───────────────
+// 프레임 증설이 2쪽 단위라 본문/정답지 끝에 빈 스프레드가 남을 수 있다.
+function trimTrailingEmptyPages(doc, story, label) {
+    function isEmptyFrame(tf) {
+        try { return tf.contents.replace(/[\s\r\n]/g, "").length === 0; }
+        catch (e) { return false; }
+    }
+    var removed = 0, guard = 0;
+    while (guard < 60) {
+        guard++;
+        var tc = story.textContainers;
+        if (tc.length <= 2) break;
+        var last = tc[tc.length - 1];
+        if (!isEmptyFrame(last)) break;
+        var pg = pageOfFrame(last);
+        if (!pg) break;
+        // 이 페이지의 본문 칼럼이 전부 비어 있어야 삭제
+        var tfs = pg.textFrames, allEmpty = true, counted = 0;
+        for (var i = 0; i < tfs.length; i++) {
+            var gb;
+            try { gb = tfs[i].geometricBounds; } catch (e) { continue; }
+            if ((gb[2] - gb[0]) < 100) continue;
+            counted++;
+            if (!isEmptyFrame(tfs[i])) { allEmpty = false; break; }
+        }
+        if (!allEmpty || counted === 0) break;
+        try { pg.remove(); removed++; } catch (e) { break; }
+    }
+    if (removed > 0) {
+        // 짝수 페이지 유지: 홀수 개 지웠으면 한 쪽 되돌린다
+        if (doc.pages.length % 2 !== 0) {
+            try {
+                var tc2 = story.textContainers;
+                var anchor = pageOfFrame(tc2[tc2.length - 1]);
+                if (anchor) { doc.pages.add(LocationOptions.AFTER, anchor); removed--; }
+            } catch (e) {}
+        }
+        wlog(label + " 뒤쪽 빈 페이지 제거: " + removed + "쪽 (총 " + doc.pages.length + "쪽)");
+    }
+    RESULTS.trimmed_pages += removed;
+    return removed;
+}
+
 // ── 뒤쪽 빈 페이지 → 메모 마스터 ────────────────────────────────────────
 function memoizeBlankPages(doc, memoPrefix, unitPrefixes) {
     var memo = findMaster(doc, memoPrefix);
@@ -894,6 +1047,7 @@ try {
     try { doc.recompose(); } catch (e) {}
 
     if (ops.keep_block_in_spread === "answers" && ansStory && ansLabels.length >= 0) {
+        pushOrphanBlocks(doc, ansStory, "정답_문제 번호", 2);
         keepBlocksInSpread(doc, ansStory, "정답_문제 번호");
         expandStory(doc, ansStory, "정답지(블록 정리 후)");
         try { doc.recompose(); } catch (e) {}
@@ -910,7 +1064,11 @@ try {
 
     auditAnswerLines(bodyStory, "!박스-내용_");
 
+    trimTrailingEmptyPages(doc, bodyStory, "본문");
+    if (ansStory) trimTrailingEmptyPages(doc, ansStory, "정답지");
+
     if (ops.credit) placeCredit(doc, ops.credit);
+    if (ops.last_page_colors) recolorLastPage(doc, ops.last_page_colors);
 
     if (ops.memo_master) {
         var prefixes = [];
