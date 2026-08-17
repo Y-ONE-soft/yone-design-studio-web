@@ -53,7 +53,34 @@
                             .replace(/[^A-Za-z ]/g, "").toLowerCase();
         }
 
-        var fixed = 0, i, j, k;
+        var fixed = 0, sized = 0, i, j, k;
+
+        // 발문 프레임 안에서 **비정상적으로 작은 런**을 지배 크기로 되돌린다.
+        // → true 면 실제로 고친 것이 있다.
+        function fixSizes(tf, pgName) {
+            var changed = false;
+            try {
+                var big = 0, rr;
+                var tsr = tf.textStyleRanges;
+                for (rr = 0; rr < tsr.length; rr++) {
+                    if (tsr[rr].pointSize > big) { big = tsr[rr].pointSize; }
+                }
+                if (!big) { return false; }
+                // 크기를 바꾸면 인접 런이 병합돼 컬렉션이 줄어든다 → 역순
+                for (rr = tsr.length - 1; rr >= 0; rr--) {
+                    var sz = tsr[rr].pointSize;
+                    if (sz < big * 0.5) {
+                        W("  p" + pgName + ": [서식교정] " + sz + "pt → "
+                          + big + "pt  \""
+                          + String(tsr[rr].contents).substring(0, 14)
+                              .replace(/[\r\n\t]/g, "~") + "\"");
+                        tsr[rr].pointSize = big;
+                        changed = true;
+                    }
+                }
+            } catch (eSz) { W("  [경고] 서식 교정 실패: " + eSz); }
+            return changed;
+        }
         for (i = 0; i < d.pages.length; i++) {
             var pg = d.pages[i];
             var tfs = pg.textFrames;
@@ -72,8 +99,7 @@
             }
             if (!promptTf || !bodyTxt) continue;
 
-            var nb2 = norm(bodyTxt);
-            var nb = nb2;
+            var nb = norm(bodyTxt);
             for (k = 0; k < specs.length; k++) {
                 var m = norm(specs[k].match);
                 if (!m || nb.indexOf(m) !== 0) continue;
@@ -103,8 +129,8 @@
                 break;
             }
         }
-        W("발문 교체 " + fixed + "건");
-        if (fixed > 0) { d.save(); }
+        W("발문 교체 " + fixed + "건 / 서식 교정 " + sized + "건");
+        if (fixed > 0 || sized > 0) { d.save(); }
         d.close(SaveOptions.NO);
         W("===== 발문 교정 완료 =====");
     } catch (eMain) {
