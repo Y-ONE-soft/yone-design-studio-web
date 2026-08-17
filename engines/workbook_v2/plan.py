@@ -1520,7 +1520,35 @@ def _step_header_detection(step_data, step_name, legacy, strict=True):
            if USE_STRUCT_HEADER_DETECT else _legacy_only(texts, legacy))
     if strict and USE_STRUCT_HEADER_DETECT and det.silent():
         raise HeaderSilenceError(step_name, det)
+    _drop_shape_outliers(det, texts, step_name)
     return det
+
+
+# 한 스텝 안의 지문 헤더는 **형태가 같다**("1. p3-no.250921" 처럼 no. 표기).
+# 구조 인식기의 anchor 규칙은 "짧은 번호 줄 + 뒤에 영어 본문"을 헤더 후보로
+# 보는데, 본문 안의 짧은 번호 문장이 그 모양과 같으면 헤더로 오인한다.
+#   실측 2026-08-17 (고2 25년 9월 어법OX): "29.  The examples are endlessly."
+#   가 헤더로 잡혀 유닛이 16→17로 갈리고 그 문장이 지면에서 사라졌다.
+#   (조판 전 구조 검사가 막아 조판은 시작도 못 했다)
+# 다수파가 no. 표기를 갖는데 소수가 안 갖는다면 그 소수는 본문이다.
+_RE_HDR_NO = re.compile(r"no\.?\s*\d", re.I)
+
+
+def _drop_shape_outliers(det, texts, step_name):
+    idx = sorted(det.header_idx)
+    if len(idx) < 3:
+        return                      # 표본이 적으면 다수파를 못 정한다
+    with_no = [i for i in idx if _RE_HDR_NO.search(texts[i] or "")]
+    if len(with_no) < 2 or len(with_no) == len(idx):
+        return                      # no. 형식 원고가 아니거나 이미 균일
+    if len(with_no) < len(idx) * 0.7:
+        return                      # 다수파라 할 수 없으면 건드리지 않는다
+    for i in idx:
+        if i in with_no:
+            continue
+        det.header_idx.discard(i)
+        print("[헤더인식] %s: 본문으로 정정 (다수 헤더는 no. 표기) — %r"
+              % (step_name, (texts[i] or "")[:40]), flush=True)
 
 
 def _legacy_only(texts, legacy):
