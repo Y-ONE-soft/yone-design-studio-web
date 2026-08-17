@@ -208,13 +208,21 @@
                 W("[경고] 기준 프레임 무효 — 중단");
                 break;
             }
-            var after = prevF.nextTextFrame;
 
             var ntf = tgtPage.textFrames.add();
             ntf.geometricBounds = info.bounds;
+            // ⚠ prevF.nextTextFrame = ntf 는 InDesign 이 **체인 중간에 자동으로
+            //    끼워 넣는다** (2026-08-17 실측: prev -> ntf -> 기존next 로
+            //    스플라이스, 프레임 20 -> 21). 예전 next 를 따로 잡아
+            //    ntf.nextTextFrame 으로 다시 이으려 하면 이미 이어진 것을 다시
+            //    잇는 셈이라 "이 요청에 대한 개체가 잘못되었습니다" 로 죽고
+            //    **후처리 전체가 중단된다**(프레임 1개만 만든 채 짝정리·trim·
+            //    PDF 재출력이 전부 날아간다). 재연결하지 않는다.
             prevF.nextTextFrame = ntf;
-            if (after && after.isValid) { ntf.nextTextFrame = after; }
             prevId = ntf.id;
+            W("  체인 확인: prev " + prevF.id + " -> 신규 " + ntf.id + " -> "
+              + (ntf.nextTextFrame ? ntf.nextTextFrame.id : "(끝)")
+              + " / 하단 프레임 " + ntf.parentStory.textContainers.length);
 
             var okPrompt = false;
             if (info.promptId) {
