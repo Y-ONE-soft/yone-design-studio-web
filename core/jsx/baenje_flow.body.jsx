@@ -786,8 +786,16 @@ function fixWideSpaces(doc, story, styleName, label) {
     app.findGrepPreferences = NothingEnum.NOTHING;
     app.changeGrepPreferences = NothingEnum.NOTHING;
     app.findGrepPreferences.findWhat = "\\x{3000}+";
-    try { app.changeGrepPreferences.appliedFont = fontName; } catch (e) {}
-    if (fontStyle) { try { app.changeGrepPreferences.fontStyle = fontStyle; } catch (e) {} }
+    // 폰트 지정은 "패밀리\t스타일" 토큰이라야 확실히 먹는다.
+    // (패밀리만 주면 조용히 무시돼 전각공백이 다시 .notdef 상자가 된다)
+    var token = fontName;
+    if (token.indexOf("\t") < 0) { token = fontName + "\t" + (fontStyle || "Regular"); }
+    var applied = false;
+    try { app.changeGrepPreferences.appliedFont = token; applied = true; } catch (e) {}
+    if (!applied) {
+        try { app.changeGrepPreferences.appliedFont = fontName; } catch (e) {}
+        if (fontStyle) { try { app.changeGrepPreferences.fontStyle = fontStyle; } catch (e) {} }
+    }
     var n = 0;
     try { n = story.changeGrep().length; } catch (e) {
         warn(label + " 전각공백 보정 오류: " + e.message);
@@ -795,7 +803,7 @@ function fixWideSpaces(doc, story, styleName, label) {
     app.findGrepPreferences = NothingEnum.NOTHING;
     app.changeGrepPreferences = NothingEnum.NOTHING;
     RESULTS.wide_space_fixed += n;
-    wlog(label + " 전각공백 보정: " + n + "건 (" + fontName + ")");
+    wlog(label + " 전각공백 보정: " + n + "건 (" + token + ")");
 }
 
 // ── 출력물 불변식 계측 (파서/플랜과 독립 — gate.py 원칙) ────────────────
