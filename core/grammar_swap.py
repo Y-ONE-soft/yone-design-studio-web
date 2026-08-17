@@ -34,8 +34,8 @@ _TOK_SUPPLEMENT = "직전보충자료"
 # 답안류 — 문제지 자리에 들어가면 정답이 그대로 인쇄된다 (절대 제외)
 _ANSWER_TOKENS = ("정답", "해설", "답지", "답안")
 
-# STEP2 A1 슬롯으로 라우팅되는 기존 원고 (교체 대상)
-_RE_STEP2_A1 = re.compile(r"step2.*a1.*어법", re.I)
+# STEP2 A1 어법 슬롯 (상단 '분석' — 교체 대상)
+_RE_STEP2_A1 = re.compile(r"step2.*a1.*어법(선택|수정)", re.I)
 
 _DEFAULT_SLOT_NAME = "Step2 A1 어법선택.docx"
 
@@ -79,14 +79,31 @@ def find_grammar_fix(paths):
     return sorted(explicit or hits)[0]
 
 
+def _is_main_a1(stem):
+    """STEP2 A1 **상단(분석)** 슬롯인가.
+
+    같은 A1 계열이라도 괄호 수식어가 붙은 것은 하단/부가 슬롯이다:
+        Step2 A1 어법선택.docx            → 상단 분석  (교체 대상)
+        Step2 A1 어법선택(객관식).docx     → 하단 객관식 (건드리지 않음)
+        Step2 A1 어법선택(문법 기본 문제).docx → 부가      (건드리지 않음)
+    하단 객관식은 어법 선택/수정이 같은 문항이라 교체할 필요가 없다
+    (사용자 확정 스펙: 상단 분석 + 마커만).
+    """
+    m = _RE_STEP2_A1.search(stem)
+    if not m:
+        return False
+    rest = re.sub(r"\.[A-Za-z0-9]+$", "", stem[m.end():]).strip()
+    return rest == ""
+
+
 def _slot_targets(paths):
-    """교체 대상 — STEP2 A1 어법 슬롯으로 라우팅되는 기존 원고들."""
+    """교체 대상 — STEP2 A1 상단(분석) 슬롯 원고."""
     out = []
     for p in paths:
         base = _nfc(os.path.basename(p))
         # routes 가 붙인 슬롯 접두어(manuscripts_) 제거 후 판정
         stem = base.split("_", 1)[1] if base.startswith("manuscripts_") else base
-        if _RE_STEP2_A1.search(stem) and not is_answer_file(stem):
+        if _is_main_a1(stem) and not is_answer_file(stem):
             out.append(p)
     return out
 

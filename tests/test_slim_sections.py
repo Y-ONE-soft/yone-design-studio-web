@@ -328,3 +328,42 @@ def test_pipeline_swaps_before_parse():
                encoding="utf-8").read()
     assert "swap_grammar_manuscript" in src
     assert src.index("swap_grammar_manuscript") < src.index("engine.parse(")
+
+
+@pytest.mark.parametrize("stem,expected", [
+    ("Step2 A1 어법선택.docx", True),            # 상단 분석 — 교체 대상
+    ("Step2 A1 어법수정.docx", True),
+    ("Step2 A1 어법선택(객관식).docx", False),    # 하단 객관식 — 유지
+    ("Step2 A1 어법선택(문법 기본 문제).docx", False),
+    ("Step2 A1 어법선택 정답지.docx", False),
+    ("Step2 B1 어법 OX.docx", False),
+    ("Step1 A1 어휘선택.docx", False),
+])
+def test_only_main_a1_slot_is_swapped(stem, expected):
+    """괄호 수식어가 붙은 A1 변형(하단 객관식 등)은 건드리면 안 된다 —
+    어법수정 지문이 하단 슬롯에 들어가면 상단이 비고 배치가 뒤집힌다."""
+    assert grammar_swap._is_main_a1(stem) is expected
+
+
+def test_swap_keeps_objective_variant(tmp_path):
+    """실제 수특라이트 워크북 구성 — (객관식)은 그대로 남아야 한다."""
+    up = tmp_path / "uploads"
+    up.mkdir()
+    names = ["manuscripts_Step2 A1 어법선택.docx",
+             "manuscripts_Step2 A1 어법선택(객관식).docx",
+             "manuscripts_직전 보충 자료.docx"]
+    paths = []
+    for n in names:
+        p = up / n
+        p.write_text(n, encoding="utf-8")
+        paths.append(str(p))
+    uploaded = {"manuscripts": list(paths)}
+    (tmp_path / "slim_rename.txt").write_text("어법 선택>어법 수정",
+                                              encoding="utf-8")
+    res = grammar_swap.swap_grammar_manuscript(str(tmp_path), uploaded,
+                                               lambda m: None)
+    finals = [os.path.basename(p) for p in uploaded["manuscripts"]]
+    assert res["slot"] == "manuscripts_Step2 A1 어법선택.docx"
+    assert "manuscripts_Step2 A1 어법선택(객관식).docx" in finals
+    swapped = up / "manuscripts_Step2 A1 어법선택.docx"
+    assert "직전 보충 자료" in swapped.read_text(encoding="utf-8")
