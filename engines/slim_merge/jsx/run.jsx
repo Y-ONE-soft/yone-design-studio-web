@@ -342,6 +342,42 @@
         }
         try { refFrame.geometricBounds = targetBounds; }
         catch (e5) { writeLog("[경고] 프레임 배치 실패: " + e5); }
+        return items;
+    }
+
+    // 반쪽 병합 분할선 적응 — 기본은 중앙(정본 파리티)이지만 한쪽이
+    // 넘치면(지문 길이 차) 분할선을 옮겨 수용한다. 오버셋은 곧 내용 잘림이라
+    // 중앙 고정보다 우선한다. 반대쪽이 넘치기 직전에서 멈춘다.
+    function fitHalfSplit(hostFrame, srcFrame, extras, top, bottom, x1, x2) {
+        var splitY = (top + bottom) / 2;
+        var minY = top + 30, maxY = bottom - 30;
+        var step = 4, guard = 0;
+
+        function place(y) {
+            var prev = srcFrame.geometricBounds[0];
+            hostFrame.geometricBounds = [top, x1, y, x2];
+            srcFrame.geometricBounds = [y, x1, bottom, x2];
+            var dy = y - prev;
+            for (var i = 0; i < extras.length; i++) {
+                if (extras[i] === srcFrame) continue;
+                try { extras[i].move(undefined, [0, dy]); } catch (e) {}
+            }
+        }
+
+        // 하단이 넘치면 분할선을 위로 (상단이 넘치기 직전까지)
+        while (srcFrame.overflows && splitY - step >= minY && guard++ < 60) {
+            place(splitY - step);
+            if (hostFrame.overflows) { place(splitY); break; }
+            splitY -= step;
+        }
+        // 상단이 넘치면 분할선을 아래로
+        guard = 0;
+        while (hostFrame.overflows && splitY + step <= maxY && guard++ < 60) {
+            place(splitY + step);
+            if (srcFrame.overflows) { place(splitY); break; }
+            splitY += step;
+        }
+        return splitY;
     }
 
     function growUntilFits(tf, maxBottom) {
@@ -420,13 +456,23 @@
             var hb = hostFrame.geometricBounds.slice(0);
             var splitY = (hb[0] + hb[2]) / 2;
             hostFrame.geometricBounds = [hb[0], hb[1], splitY, hb[3]];
+            var moved = movePageContents(src, host, srcFrame,
+                                         [splitY, hb[1], hb[2], hb[3]]);
+            var fitY = splitY;
+            if (hostFrame.overflows || srcFrame.overflows) {
+                fitY = fitHalfSplit(hostFrame, srcFrame, moved,
+                                    hb[0], hb[2], hb[1], hb[3]);
+                if (Math.abs(fitY - splitY) > 0.5) {
+                    writeLog("  p" + host.name + " 분할선 조정 " +
+                             splitY.toFixed(1) + " → " + fitY.toFixed(1) +
+                             " (지문 길이 수용)");
+                }
+            }
             if (hostFrame.overflows) {
                 writeLog("[경고] p" + host.name +
                          " 상단 절반 오버셋 — 내용 확인 필요: " +
                          preview(hostFrame));
             }
-            movePageContents(src, host, srcFrame,
-                             [splitY, hb[1], hb[2], hb[3]]);
             if (srcFrame.overflows) {
                 writeLog("[경고] p" + host.name +
                          " 하단 절반 오버셋 — 내용 확인 필요: " +
@@ -434,7 +480,7 @@
             }
             removed.push(src);
             writeLog("  p" + host.name + " ← p" + src.name +
-                     " (splitY=" + splitY.toFixed(2) + ")");
+                     " (splitY=" + fitY.toFixed(2) + ")");
         }
         removeEmptied(removed);
     }
