@@ -180,10 +180,13 @@
                             cl.anchoredObjectSettings.insertAnchoredObject(
                                 promptTf.insertionPoints[0],
                                 AnchorPosition.INLINE_POSITION);
-                            // 템플릿 발문은 "￼ 다음…" 처럼 아이콘 뒤에 공백이
-                            // 있다. 없으면 아이콘이 글자에 붙어 튄다.
+                            // 템플릿 발문은 아이콘 뒤에 **EM SPACE(U+2003)** 로
+                            // 띄운다. 일반 공백만 검사하면 EM SPACE 를 "없음"
+                            // 으로 보고 공백을 하나 더 끼워 넣는다 (실측
+                            // 2026-08-17: 멀쩡한 발문 18개에 여분 공백 삽입).
                             var after2 = String(promptTf.contents);
-                            if (after2.length > 1 && after2.charAt(1) !== " ") {
+                            if (after2.length > 1 && after2.charAt(1) !== " "
+                                    && after2.charCodeAt(1) !== 0x2003) {
                                 promptTf.insertionPoints[1].contents = " ";
                             }
                             iconed++;
