@@ -180,6 +180,12 @@
                             cl.anchoredObjectSettings.insertAnchoredObject(
                                 promptTf.insertionPoints[0],
                                 AnchorPosition.INLINE_POSITION);
+                            // 템플릿 발문은 "￼ 다음…" 처럼 아이콘 뒤에 공백이
+                            // 있다. 없으면 아이콘이 글자에 붙어 튄다.
+                            var after2 = String(promptTf.contents);
+                            if (after2.length > 1 && after2.charAt(1) !== " ") {
+                                promptTf.insertionPoints[1].contents = " ";
+                            }
                             iconed++;
                             W("  p" + pg.name + ": [아이콘] 앵커 아이콘 복구");
                         } else {
