@@ -183,9 +183,18 @@ class WorkbookSelectEngine(WorkbookV2Engine):
             raise ValueError("문항 코드가 입력되지 않았습니다.")
 
         # 왼쪽부터 훑으며 회차 문맥(cur)을 갱신한다. 순서는 길이가 긴 패턴부터.
+        # ⚠ 인식 못 하는 **글자**(모의고사·괄호·설명 등)는 건너뛴다. 사용자는
+        #   "25년 9월 모의고사(21,22,29~40)" 처럼 쓰고, 거기서 죽으면 안 된다.
+        #   다만 **숫자 덩어리**는 뜻이 있으므로, 못 읽으면 조용히 버리지 않고
+        #   오류로 알린다(예: 4자리 "2509" 를 21·22 로 오독하는 사고 방지).
         pats = [
-            # 25년 9월 / 25년09월 — 회차만 지정
-            ("round", re.compile(r"(\d{2})\s*년\s*(\d{1,2})\s*월")),
+            # 숫자를 품었지만 문항번호가 아닌 것들 — 먼저 걸러 버린다
+            ("skip", re.compile(
+                r"고\s*\d|\d+\s*(?:학년|학기|회차|회|문항|개|쪽|페이지)|p\.?\s*\d+")),
+            # 2025년 9월 / 25년 9월 / 25년09월
+            ("round", re.compile(r"(\d{2,4})\s*년\s*(\d{1,2})\s*월")),
+            ("year", re.compile(r"(\d{2,4})\s*년")),
+            ("month", re.compile(r"(\d{1,2})\s*월")),
             # 250939~250942 (두 코드 범위)
             ("range6_6", re.compile(r"(\d{6})\s*~\s*(\d{6})")),
             # 250939~41 (코드 + 끝 문항번호)
@@ -212,9 +221,11 @@ class WorkbookSelectEngine(WorkbookV2Engine):
             codes.append(code)
 
         cur = None          # (yy, mm)
+        pend_year = None    # "25년" 만 나온 경우
         pos = 0
         while pos < len(s):
-            if s[pos] == " ":
+            ch = s[pos]
+            if ch == " ":
                 pos += 1
                 continue
             hit = None
@@ -224,12 +235,33 @@ class WorkbookSelectEngine(WorkbookV2Engine):
                     hit = (kind, m)
                     break
             if not hit:
-                raise ValueError(
-                    "코드 형식 인식 실패: %r (전체 입력: %r)"
-                    % (s[pos:pos + 20], raw.strip()[:60]))
+                if ch.isdigit():
+                    # 숫자인데 어떤 형태로도 안 읽힌다 → 조용히 버리지 않는다
+                    run = re.match(r"\d+", s[pos:]).group(0)
+                    raise ValueError(
+                        "숫자 %r 를 문항번호로 읽을 수 없습니다 "
+                        "(전체 입력: %r) — 6자리 코드나 '25년 9월 21번' "
+                        "형태로 써 주세요" % (run, raw.strip()[:60]))
+                pos += 1        # 글자·괄호 등은 그냥 건너뛴다
+                continue
             kind, m = hit
+            if kind == "skip":
+                pos = m.end()
+                continue
+            if kind == "year":
+                pend_year = int(m.group(1)) % 100
+                pos = m.end()
+                continue
+            if kind == "month":
+                yy = pend_year if pend_year is not None else (
+                    cur[0] if cur else None)
+                if yy is None:
+                    raise ValueError("연도를 알 수 없습니다: %r" % m.group(0))
+                cur = (yy, int(m.group(1)))
+                pos = m.end()
+                continue
             if kind == "round":
-                cur = (int(m.group(1)), int(m.group(2)))
+                cur = (int(m.group(1)) % 100, int(m.group(2)))
             elif kind == "code6":
                 c = m.group(1)
                 cur = (int(c[:2]), int(c[2:4]))
