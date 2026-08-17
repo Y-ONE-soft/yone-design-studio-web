@@ -52,6 +52,8 @@ RE_BLANKS_ONLY = re.compile(r"^[\s＿_（）()　\-－–—.．ㅡ]+$")
 # 긴 빈칸이 들어간 짧은 문장 = 학생이 답을 쓰는 답란 (지문 박스가 아니다)
 RE_LONG_BLANK = re.compile(r"[＿_]{5,}")
 _ANSWER_LINE_MAX = 200
+# 요약형 문항: 발문이 '요약'을 지시하고 선지가 있으면, 선지 직전 본문 단락이 요약문
+RE_SUMMARY_STEM = re.compile(r"요약")
 RE_ANS_NUM = re.compile(r"^\s*(\d{1,3})\s*$")
 RE_ANS_MARK = re.compile(r"^\s*\[(정답|해석|해설|어휘)\]\s*")
 
@@ -275,6 +277,29 @@ def classify_answer_paragraphs(rows, warnings, src=""):
     return blocks
 
 
+def mark_summary_sentence(prob):
+    """요약형 문항의 요약문 단락을 표시한다 (배경 부여 대상).
+
+    구조: 발문(요약하고자 한다) → 지문 → **요약문(빈칸 (A)(B))** → 선지
+    선지가 없는 서술형 요약(빈칸 완성)은 답란이 따로 있으므로 대상이 아니다.
+    """
+    paras = prob["paras"]
+    if not paras or not RE_SUMMARY_STEM.search(paras[0]["t"]):
+        return False
+    first_choice = None
+    for i, p in enumerate(paras):
+        if p["kind"] == "choice":
+            first_choice = i
+            break
+    if first_choice is None:
+        return False
+    for i in range(first_choice - 1, 0, -1):
+        if paras[i]["kind"] in ("passage", "answer_line", "summary"):
+            paras[i]["kind"] = "summary"
+            return True
+    return False
+
+
 def parse_manuscripts(problem_files, answer_files, unit_labels, log=None):
     """원고 파일 묶음 → content dict."""
     warnings = []
@@ -282,6 +307,8 @@ def parse_manuscripts(problem_files, answer_files, unit_labels, log=None):
     for path in problem_files:
         rows = _extract(path)
         got = classify_problem_paragraphs(rows, warnings, os.path.basename(path))
+        for prob in got:
+            mark_summary_sentence(prob)
         if log:
             log(f"[파서] 문제 {os.path.basename(path)}: {len(got)}문항")
         problems.extend(got)

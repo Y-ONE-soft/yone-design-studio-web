@@ -218,7 +218,7 @@
   }
  },
  "baenje": {
-  "_doc": "배N제 v2 — [원본]배재2_배N제_내지 실물 인벤토리(tests/fixtures/template_spec_baenje.json) 대조. 키 = 파서 kind. 주의: '문제'는 루트와 '독해 > 문제' 두 개가 있는데 자동번호(^#^t)와 원고번호 투명 GREP을 가진 쪽은 루트다(v1 allParagraphStyles 첫 매치와 동일). 나머지 본문 스타일은 '독해' 그룹, 정답지는 '정답 및 해설' 그룹.",
+  "_doc": "배N제 v2 — [원본]배재2_배N제_내지 실물 인벤토리(tests/fixtures/template_spec_baenje.json) 대조. 키 = 파서 kind. 주의: '문제'는 루트와 '독해 > 문제' 두 개가 있는데 자동번호(^#^t)와 원고번호 투명 GREP을 가진 쪽은 루트다(v1 allParagraphStyles 첫 매치와 동일). 나머지 본문 스타일은 '독해' 그룹, 정답지는 '정답 및 해설' 그룹. 답란(answer_line)=배경·테두리 없는 '지문'(학생이 답을 쓰는 칸), 요약문(summary)=배경 있는 '!작은박스'.",
   "BODY": {
    "stem": "문제",
    "passage": "독해 > !박스-내용_",
@@ -229,7 +229,7 @@
    "dialogue": "독해 > !작은박스",
    "unknown": "독해 > !박스-내용_",
    "given": "독해 > !작은박스",
-   "answer_line": "독해 > !작은박스"
+   "answer_line": "지문"
   },
   "ANS": {
    "num": "정답 및 해설 > 정답_문제 번호",
