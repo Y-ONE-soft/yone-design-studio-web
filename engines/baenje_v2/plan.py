@@ -27,9 +27,17 @@
   - v1은 프레임 브레이크를 JSX가 재탐색해 걸었다 → v2는 유닛 경계가 곧
     프레임 브레이크(문항 1개 = 유닛 1개). 텍스트 무변형이라 검수 1:1 대조 가능.
 """
+import re
+
 from core.structure.style_resolver import load_style_map
 
 _MATERIAL = "baenje"
+
+# (A)  (B) 2단 선지 머리행 — 아래 선지의 두 칸 위치에 맞춰 정렬해야 한다
+_RE_AB_HEADER = re.compile(r"^\(A\)[\s\u3000]+\(B\)\s*$")
+# 조합형 짧은 선지(① (a), (b) …) — 3열로 묶어 배치
+_SHORT_CHOICE_MAX = 22
+_PACK_MIN_CHOICES = 4
 
 
 def _tables():
@@ -61,6 +69,22 @@ def _has_long_blank(text):
     return False
 
 
+def _choice_layout(paras):
+    """유닛 안의 선지 배치 힌트 — (머리행 인덱스, 3열 묶음 인덱스들)."""
+    ab_header = None
+    choice_idx = []
+    for i, p in enumerate(paras):
+        if p["kind"] != "choice":
+            continue
+        if _RE_AB_HEADER.match(p["t"]):
+            ab_header = i
+            continue
+        choice_idx.append(i)
+    pack = (len(choice_idx) >= _PACK_MIN_CHOICES
+            and all(len(paras[i]["t"]) <= _SHORT_CHOICE_MAX for i in choice_idx))
+    return ab_header, (choice_idx if pack else [])
+
+
 def content_to_plan(content, log=None):
     body_tbl, ans_tbl = _tables()
     warnings = list(content.get("warnings") or [])
@@ -80,14 +104,20 @@ def content_to_plan(content, log=None):
             paras.append(_para(p["t"], style, p.get("runs"),
                                "left" if _has_long_blank(p["t"]) else None))
         label = unit_by_q.get(prob["no"])
-        body_units.append({
+        ab_header, pack_idx = _choice_layout(prob["paras"])
+        unit = {
             "no": prob["no"],
             "paras": paras,
             # 유닛 시작 문항은 새 페이지에서 (머리말이 그 페이지에 걸린다)
             "page_break": bool(label) and prob["no"] != (
                 units[0]["start_q"] if units else None),
             "unit_label": label,
-        })
+        }
+        if ab_header is not None:
+            unit["ab_header"] = ab_header          # 머리행 단락 인덱스
+        if pack_idx:
+            unit["choice_pack"] = {"columns": 3, "idx": pack_idx}
+        body_units.append(unit)
 
     ans_units = []
     for blk in content.get("answers") or []:

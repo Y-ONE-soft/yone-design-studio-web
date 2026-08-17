@@ -52,6 +52,11 @@ RE_BLANKS_ONLY = re.compile(r"^[\s＿_（）()　\-－–—.．ㅡ]+$")
 RE_ANS_NUM = re.compile(r"^\s*(\d{1,3})\s*$")
 RE_ANS_MARK = re.compile(r"^\s*\[(정답|해석|해설|어휘)\]\s*")
 
+# 주어진 글/문장 (발문이 지시하는 구조) — 지문 앞에 오는 별도 블록
+RE_GIVEN = re.compile(r"주어진\s*(글|문장|\(A\))")
+RE_GIVEN_MULTI = re.compile(r"주어진\s*\([A-E]\)|두\s*문장")
+RE_LABELED_PARA = re.compile(r"^\s*\([A-E]\)\s")
+
 # 발문 종결 신호 (한국어 지시문)
 RE_STEM_SIGNAL = re.compile(r"([가-힣]\?|시\s*오\.|고르면\?|것은\?|쓰시오|하시오)")
 
@@ -127,6 +132,7 @@ def classify_problem_paragraphs(rows, warnings, src=""):
     cur = None
     state = None          # None | "bogi" | "cond" | "summary"
     prev_kind = None
+    given_pending = None  # None | "single" | "multi" — 발문이 예고한 '주어진' 블록
 
     for row in rows:
         text, runs = row["text"], row["runs"]
@@ -140,6 +146,11 @@ def classify_problem_paragraphs(rows, warnings, src=""):
             problems.append(cur)
             state = None
             prev_kind = "stem"
+            # 발문이 '주어진 글/문장'을 예고하면 뒤따르는 블록을 given으로 잡는다
+            if RE_GIVEN.search(t):
+                given_pending = "multi" if RE_GIVEN_MULTI.search(t) else "single"
+            else:
+                given_pending = None
             cur["paras"].append({"t": t, "kind": "stem", "runs": _merge_runs(runs)})
             continue
 
@@ -148,6 +159,25 @@ def classify_problem_paragraphs(rows, warnings, src=""):
             continue
 
         kind = None
+        # '주어진 글/문장' 블록 — 지문 박스가 아니라 작은박스 배경
+        if given_pending and not RE_CHOICE.match(t) and not RE_BOGI.match(t) \
+                and not RE_COND.match(t) and not RE_SUMMARY.match(t):
+            if given_pending == "multi":
+                if RE_LABELED_PARA.match(t):
+                    cur["paras"].append({"t": t, "kind": "given",
+                                         "runs": _merge_runs(runs)})
+                    prev_kind = "given"
+                    continue
+                given_pending = None          # 라벨 문단이 끝나면 지문 시작
+            elif re.match(r"^[A-Za-z\"“‘(]", t):
+                cur["paras"].append({"t": t, "kind": "given",
+                                     "runs": _merge_runs(runs)})
+                given_pending = None
+                prev_kind = "given"
+                continue
+            else:
+                given_pending = None
+
         if RE_COND.match(t):
             state, kind = "cond", "cond"
         elif RE_SUMMARY.match(t):

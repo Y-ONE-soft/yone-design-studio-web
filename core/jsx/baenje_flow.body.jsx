@@ -21,7 +21,8 @@ var RESULT = "__RESULT_PATH__";
 var RESULTS = {
     areas: {}, missing_styles: [], missing_masters: [], header_texts: [],
     moved_blocks: [], overflow: 0, overflow_heads: [], pages: 0,
-    memo_pages: [], wide_space_fixed: 0, warnings: []
+    memo_pages: [], wide_space_fixed: 0, blanks_underlined: 0,
+    frames_grown: [], choice_layout: {}, warnings: []
 };
 
 function readJSONFile(path) {
@@ -94,13 +95,14 @@ function findMaster(doc, prefix) {
 // ── 플로우 배치 ─────────────────────────────────────────────────────────
 // 반환: {labelParas: [단락], count: 배치 단락 수}
 function placeFlow(doc, story, flow, ops) {
-    var texts = [], meta = [];      // meta[i] = {s, runs, align, isLabel, unitIdx, unitStart}
+    var texts = [], meta = [], unitStarts = [];
     var units = flow.units;
     // 유닛 경계마다 프레임을 분리할지 (본문=문항 1개 1프레임, 정답지=이어 흘림)
     var perUnit = (flow.break_per_unit !== false);
     for (var u = 0; u < units.length; u++) {
         var unit = units[u];
         var first = true;
+        unitStarts.push(texts.length);      // 유닛 첫 단락(라벨 포함) 인덱스
         if (unit.unit_label) {
             texts.push(unit.unit_label);
             meta.push({ s: null, isLabel: true, unitIdx: u, unitStart: true,
@@ -202,7 +204,198 @@ function placeFlow(doc, story, flow, ops) {
     }
     RESULTS.areas[flow.area] = { paras: n, units: units.length,
                                  labels: labelParas.length };
-    return labelParas;
+    return { labels: labelParas, starts: unitStarts };
+}
+
+// ── 선지 레이아웃 보정 ──────────────────────────────────────────────────
+// (1) "(A)   (B)" 머리행: 아래 선지의 두 칸 x좌표를 실측해 들여쓰기/탭으로 정렬
+// (2) 조합형 짧은 선지: 3열로 묶어 배치 (프레임이 모자라면 하단을 조금 늘림)
+var _RE_SEP = /[·⋯…]{2,}/;
+
+function charX(para, idx) {
+    try { return para.characters[idx].horizontalOffset; } catch (e) { return null; }
+}
+
+function frameTextLeft(para) {
+    try {
+        var tf = para.parentTextFrames[0];
+        var gb = tf.geometricBounds;
+        var inset = 0;
+        try { inset = tf.textFramePreferences.insetSpacing[1]; } catch (e) {}
+        return gb[1] + inset;
+    } catch (e) { return null; }
+}
+
+function alignAbHeader(story, absIdx) {
+    var ps = story.paragraphs;
+    if (absIdx < 0 || absIdx >= ps.length) return false;
+    var hdr = ps[absIdx];
+    if (!/^\(A\)/.test(hdr.contents)) return false;
+    // 뒤따르는 선지 줄에서 1칸/2칸 시작 x 실측
+    var left = frameTextLeft(hdr);
+    if (left === null) return false;
+    var x1 = null, x2 = null;
+    for (var k = absIdx + 1; k < Math.min(absIdx + 7, ps.length); k++) {
+        var t = ps[k].contents.replace(/[\r\n]/g, "");
+        if (!/^[①-⑳]/.test(t)) break;
+        var m = _RE_SEP.exec(t);
+        if (!m) continue;
+        var a = charX(ps[k], 2);                       // ① + 공백 다음
+        var b = charX(ps[k], m.index + m[0].length + 1);  // 구분자 다음 칸
+        if (a === null || b === null) continue;
+        if (x1 === null || a < x1) x1 = a;
+        if (x2 === null || b < x2) x2 = b;
+    }
+    if (x1 === null || x2 === null) return false;
+    try {
+        hdr.contents = "(A)\t(B)";
+        hdr.leftIndent = 0;
+        hdr.firstLineIndent = Math.max(0, x1 - left);
+        hdr.justification = Justification.LEFT_ALIGN;
+        var ts = hdr.tabStops;
+        while (ts.length > 0) { ts[0].remove(); ts = hdr.tabStops; }
+        hdr.tabStops.add({ alignment: TabStopAlignment.LEFT_ALIGN,
+                           position: Math.max(1, x2 - left) });
+        return true;
+    } catch (e) { warn("(A)(B) 머리행 정렬 실패: " + e.message); return false; }
+}
+
+function packChoices(story, absIdxList, columns) {
+    if (!absIdxList || absIdxList.length === 0) return false;
+    var ps = story.paragraphs;
+    var first = absIdxList[0], last = absIdxList[absIdxList.length - 1];
+    if (last >= ps.length) return false;
+    var items = [];
+    for (var i = 0; i < absIdxList.length; i++) {
+        items.push(ps[absIdxList[i]].contents.replace(/[\r\n]/g, ""));
+    }
+    var width = 0;
+    try {
+        var tf = ps[first].parentTextFrames[0];
+        var gb = tf.geometricBounds;
+        var ins = [0, 0, 0, 0];
+        try { ins = tf.textFramePreferences.insetSpacing; } catch (e) {}
+        width = (gb[3] - gb[1]) - ins[1] - ins[3];
+    } catch (e) { return false; }
+    if (width <= 0) return false;
+
+    var rows = [];
+    for (var r = 0; r < items.length; r += columns) {
+        rows.push(items.slice(r, r + columns).join("\t"));
+    }
+    var style = ps[first].appliedParagraphStyle;
+    try {
+        var sChar = ps[first].characters[0].index;
+        var eP = ps[last];
+        var eChar = eP.characters[eP.characters.length - 1].index;
+        var rng = story.characters.itemByRange(sChar, eChar);
+        if (!rng.isValid) return false;
+        rng.contents = rows.join("\r");
+    } catch (e) { warn("선지 3열 묶기 실패: " + e.message); return false; }
+
+    // 새로 만들어진 행에 스타일 + 탭 정지
+    ps = story.paragraphs;
+    var step = width / columns;
+    for (var q = 0; q < rows.length; q++) {
+        var para = ps[first + q];
+        try { para.appliedParagraphStyle = style; } catch (e) {}
+        try {
+            var ts = para.tabStops;
+            while (ts.length > 0) { ts[0].remove(); ts = para.tabStops; }
+            for (var cnum = 1; cnum < columns; cnum++) {
+                para.tabStops.add({ alignment: TabStopAlignment.LEFT_ALIGN,
+                                    position: step * cnum });
+            }
+        } catch (e) {}
+    }
+    return true;
+}
+
+// 묶은 뒤에도 문항이 한 프레임에 안 들어가면 프레임 하단을 조금 늘린다
+function growFrameIfSpills(story, startIdx, endIdx, maxGrowMm) {
+    var ps = story.paragraphs;
+    if (startIdx >= ps.length || endIdx >= ps.length) return 0;
+    function sameFrame() {
+        var a = paraStartPage(ps[startIdx]), b = paraEndPage(ps[endIdx]);
+        if (!a || !b) return true;
+        var fa = null, fb = null;
+        try { fa = ps[startIdx].parentTextFrames[0]; } catch (e) {}
+        try {
+            var tfs = ps[endIdx].parentTextFrames;
+            fb = tfs[tfs.length - 1];
+        } catch (e) {}
+        return (fa && fb && fa === fb);
+    }
+    if (sameFrame()) return 0;
+    var tf = null;
+    try { tf = ps[startIdx].parentTextFrames[0]; } catch (e) { return 0; }
+    if (!tf) return 0;
+    var gb0 = tf.geometricBounds.slice ? tf.geometricBounds.slice(0)
+        : [tf.geometricBounds[0], tf.geometricBounds[1],
+           tf.geometricBounds[2], tf.geometricBounds[3]];
+    var grown = 0;
+    while (grown < maxGrowMm) {
+        grown += 2;
+        try {
+            tf.geometricBounds = [gb0[0], gb0[1], gb0[2] + grown, gb0[3]];
+            doc.recompose();
+        } catch (e) { break; }
+        ps = story.paragraphs;
+        if (sameFrame()) { return grown; }
+    }
+    try { tf.geometricBounds = gb0; doc.recompose(); } catch (e) {}
+    return 0;
+}
+
+function applyChoiceLayout(story, flow, starts) {
+    var aligned = 0, packed = 0, grown = 0;
+    // 인덱스 변동을 피해 뒤 유닛부터 처리
+    for (var u = flow.units.length - 1; u >= 0; u--) {
+        var unit = flow.units[u];
+        var base = starts[u] + (unit.unit_label ? 1 : 0);
+        if (unit.ab_header !== undefined && unit.ab_header !== null) {
+            if (alignAbHeader(story, base + unit.ab_header)) aligned++;
+        }
+        if (unit.choice_pack && unit.choice_pack.idx.length > 0) {
+            var abs = [];
+            for (var i = 0; i < unit.choice_pack.idx.length; i++) {
+                abs.push(base + unit.choice_pack.idx[i]);
+            }
+            if (packChoices(story, abs, unit.choice_pack.columns || 3)) {
+                packed++;
+                try { doc.recompose(); } catch (e) {}
+                var rows = Math.ceil(unit.choice_pack.idx.length /
+                                     (unit.choice_pack.columns || 3));
+                var endIdx = abs[0] + rows - 1;
+                var g = growFrameIfSpills(story, starts[u], endIdx, 10);
+                if (g > 0) { grown++; RESULTS.frames_grown.push(unit.no + "번 +" + g + "mm"); }
+            }
+        }
+    }
+    wlog("선지 레이아웃: 머리행 정렬 " + aligned + " / 3열 묶기 " + packed +
+         " / 프레임 확장 " + grown);
+    RESULTS.choice_layout = { aligned: aligned, packed: packed, grown: grown };
+}
+
+// ── 빈칸(전각 공백) 밑줄 ────────────────────────────────────────────────
+// "is 　(A)　 for" 처럼 (X) 앞뒤의 전각 공백은 학생이 답을 쓰는 빈칸이다.
+// 한글 문자스타일(.notdef 방지) 위에 밑줄을 얹어 빈칸이 보이게 한다.
+function underlineBlanks(story, label) {
+    var pats = ["\\x{3000}+(?=\\([A-Za-z0-9]\\))", "(?<=\\([A-Za-z0-9]\\))\\x{3000}+"];
+    var total = 0;
+    for (var i = 0; i < pats.length; i++) {
+        app.findGrepPreferences = NothingEnum.NOTHING;
+        app.changeGrepPreferences = NothingEnum.NOTHING;
+        app.findGrepPreferences.findWhat = pats[i];
+        app.changeGrepPreferences.underline = true;
+        try { total += story.changeGrep().length; } catch (e) {
+            warn(label + " 빈칸 밑줄 오류: " + e.message);
+        }
+        app.findGrepPreferences = NothingEnum.NOTHING;
+        app.changeGrepPreferences = NothingEnum.NOTHING;
+    }
+    RESULTS.blanks_underlined += total;
+    wlog(label + " 빈칸 밑줄: " + total + "건");
 }
 
 // ── 오버플로우 시 페이지·프레임 증설 ────────────────────────────────────
@@ -439,12 +632,15 @@ try {
         if (plan.flows[f].area === "answers") ansFlow = plan.flows[f];
     }
 
-    var bodyLabels = bodyFlow ? placeFlow(doc, bodyStory, bodyFlow, ops) : [];
+    var bodyRes = bodyFlow ? placeFlow(doc, bodyStory, bodyFlow, ops)
+        : { labels: [], starts: [] };
+    var bodyLabels = bodyRes.labels;
     expandStory(doc, bodyStory, "본문");
 
     var ansLabels = [];
     if (ansFlow && ansStory && ansFlow.units.length > 0) {
-        ansLabels = placeFlow(doc, ansStory, ansFlow, ops);
+        var ansRes = placeFlow(doc, ansStory, ansFlow, ops);
+        ansLabels = ansRes.labels;
         expandStory(doc, ansStory, "정답지");
     }
 
@@ -452,6 +648,14 @@ try {
         fixWideSpaces(doc, bodyStory, ops.wide_space_style, "본문");
         if (ansStory) fixWideSpaces(doc, ansStory, ops.wide_space_style, "정답지");
     }
+
+    // 선지 머리행 정렬 + 3열 묶기 (전각공백 문자스타일 적용 뒤 = 실측 좌표 확정)
+    try { doc.recompose(); } catch (e) {}
+    if (bodyFlow) applyChoiceLayout(bodyStory, bodyFlow, bodyRes.starts);
+    // 빈칸((X) 앞뒤 전각공백)에 밑줄 — 머리행을 탭으로 바꾼 뒤에 실행해야
+    // 머리행의 칸 사이 공백이 밑줄로 오인되지 않는다
+    underlineBlanks(bodyStory, "본문");
+    expandStory(doc, bodyStory, "본문(레이아웃 후)");
 
     try { doc.recompose(); } catch (e) {}
 
