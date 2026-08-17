@@ -168,9 +168,11 @@ def _manuscript_path(base, grade_num, code, kind, filename=None):
             break
     if not wb:
         return None
-    want_file = filename or _FILE_MAP[kind][-1]
+    if not filename:
+        cands = _manuscript_paths(base, grade_num, code, kind)
+        return cands[0] if cands else None
     for raw in os.listdir(wb):
-        if _nfc(raw) == want_file:
+        if _nfc(raw) == filename:
             return os.path.join(wb, raw)
     return None
 
