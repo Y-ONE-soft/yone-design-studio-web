@@ -236,6 +236,53 @@ function frameTextLeft(para) {
     } catch (e) { return null; }
 }
 
+// 2단 선지("① word1 ······ word2")의 둘째 칸을 탭으로 정렬한다.
+// 구분자가 인라인 텍스트라 칸 시작 x가 선지마다 들쭉날쭉 → 머리행을 맞출 기준이 없다.
+function alignAbOptions(story, absIdx) {
+    var ps = story.paragraphs;
+    var idxs = [], sepX = null;
+    var left = frameTextLeft(ps[absIdx]);
+    if (left === null) return [];
+    for (var k = absIdx + 1; k < Math.min(absIdx + 8, ps.length); k++) {
+        var t = ps[k].contents.replace(/[\r\n]/g, "");
+        if (!/^[①-⑳]/.test(t)) break;
+        var m = _RE_SEP.exec(t);
+        if (!m) continue;
+        var x = charX(ps[k], m.index);
+        if (x !== null && (sepX === null || x > sepX)) sepX = x;
+        idxs.push(k);
+    }
+    if (idxs.length === 0 || sepX === null) return [];
+    var pos = Math.max(1, sepX - left + 0.8);      // 가장 긴 첫 칸 + 여백(mm)
+    // 구분자 앞 공백 → 탭
+    for (var i = idxs.length - 1; i >= 0; i--) {
+        ps = story.paragraphs;
+        var para = ps[idxs[i]];
+        var txt = para.contents.replace(/[\r\n]/g, "");
+        var mm = _RE_SEP.exec(txt);
+        if (!mm) continue;
+        var st = mm.index;
+        while (st > 0 && (txt.charAt(st - 1) === " " || txt.charAt(st - 1) === "\u3000")) st--;
+        if (st <= 0) continue;
+        try {
+            var rng = story.characters.itemByRange(para.characters[st].index,
+                                                   para.characters[mm.index - 1].index);
+            if (rng.isValid) rng.contents = "\t";
+        } catch (e) { warn("2단 선지 탭 변환 실패: " + e.message); }
+    }
+    ps = story.paragraphs;
+    for (var j = 0; j < idxs.length; j++) {
+        try {
+            var pp = ps[idxs[j]];
+            var ts = pp.tabStops;
+            while (ts.length > 0) { ts[0].remove(); ts = pp.tabStops; }
+            pp.tabStops.add({ alignment: TabStopAlignment.LEFT_ALIGN, position: pos });
+        } catch (e) {}
+    }
+    try { doc.recompose(); } catch (e) {}
+    return idxs;
+}
+
 function alignAbHeader(story, absIdx) {
     var ps = story.paragraphs;
     if (absIdx < 0 || absIdx >= ps.length) return false;
@@ -414,6 +461,7 @@ function applyChoiceLayout(story, flow, starts) {
         var unit = flow.units[u];
         var base = starts[u] + (unit.unit_label ? 1 : 0);
         if (unit.ab_header !== undefined && unit.ab_header !== null) {
+            alignAbOptions(story, base + unit.ab_header);
             if (alignAbHeader(story, base + unit.ab_header)) aligned++;
         }
         if (unit.choice_pack && unit.choice_pack.idx.length > 0) {
