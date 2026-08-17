@@ -13,11 +13,17 @@ slim_stack.txt 중 하나라도 있을 때만. 없으면 아무 것도 하지 �
 
 경로 계약: 대상 .indd 는 job_dir/.settings.json 에서 찾는다
 (indd_path → output_indd → indd_output 순).
+
+**조판 산출물(풀버전)은 보존한다** — 슬림은 `{원본}_슬림.indd` 사본에 적용해
+두 판을 모두 남긴다. 학교마다 풀/슬림이 갈리고, 슬림은 되돌릴 수 없다.
+verify(조판 게이트)도 풀버전을 검사하므로 "슬림으로 뺀 섹션"을 내용 누락으로
+오판하지 않는다.
 """
 
 import json
 import os
 import re
+import shutil
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
 _SLIM_DIR = os.path.join(os.path.dirname(_DIR), "engines", "slim_merge")
@@ -145,11 +151,24 @@ def run_slim_postprocess(engine, job_dir, log, cancel_check=None):
     fix_divider = fix_raw not in ("0", "false", "off", "no")
     log(f"[슬림] 간지 정렬 {'ON' if fix_divider else 'OFF'}")
 
+    # 풀버전 보존 — 조판 산출물은 그대로 두고 사본에 슬림을 적용한다
+    base, ext = os.path.splitext(indd_path)
+    slim_indd = f"{base}_슬림{ext}"
+    try:
+        if os.path.exists(slim_indd):
+            os.remove(slim_indd)
+        shutil.copy2(indd_path, slim_indd)
+    except OSError as e:
+        log(f"[슬림] [오류] 사본 생성 실패 — 후처리 생략: {e}")
+        return None
+    log(f"[슬림] 풀버전 보존: {os.path.basename(indd_path)}")
+    log(f"[슬림] 슬림본 생성: {os.path.basename(slim_indd)}")
+
     log_name = "slim_log.txt"
     slim_log = os.path.join(job_dir, log_name)
     settings = {
-        "output_indd": indd_path,
-        "output_dir": os.path.dirname(indd_path),
+        "output_indd": slim_indd,
+        "output_dir": os.path.dirname(slim_indd),
         "delete_sections": actions["delete"],
         "merge_half_sections": actions["merge_half"],
         "merge_stack_sections": actions["merge_stack"],
@@ -185,7 +204,8 @@ def run_slim_postprocess(engine, job_dir, log, cancel_check=None):
                    stall_limit=900, completion_marker="===== 완료 =====",
                    cancel_check=cancel_check)
 
-    summary = {"indd_path": indd_path, "actions": actions}
+    summary = {"indd_path": slim_indd, "full_path": indd_path,
+               "actions": actions}
     if os.path.exists(slim_log):
         try:
             content = open(slim_log, encoding="utf-8", errors="ignore").read()
@@ -198,6 +218,7 @@ def run_slim_postprocess(engine, job_dir, log, cancel_check=None):
             summary["warnings"] = warns
             log(f"[슬림] 완료 — {before}p → {after}p"
                 + (f" (경고 {warns}건)" if warns else ""))
+            log(f"[슬림] 슬림본: {slim_indd}")
         except OSError:
             pass
     return summary

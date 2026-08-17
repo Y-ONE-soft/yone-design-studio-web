@@ -384,3 +384,13 @@ def test_jsx_has_idempotency_guard(jsx):
     assert "extractLabel" in jsx and "insertLabel" in jsx
     # 이미 적용된 문서면 액션 목록을 비운다
     assert "if (alreadySlim) { sections = []; }" in jsx
+
+
+def test_postprocess_preserves_full_version():
+    """조판 시점 슬림은 산출물을 덮어쓰지 않고 '_슬림' 사본에 적용해야 한다 —
+    풀/슬림을 학교별로 나눠 쓰고, 슬림은 되돌릴 수 없다."""
+    src = open(os.path.join(REPO, "core", "slim_post.py"),
+               encoding="utf-8").read()
+    assert '_슬림{ext}' in src
+    assert '"output_indd": slim_indd' in src
+    assert '"full_path": indd_path' in src
