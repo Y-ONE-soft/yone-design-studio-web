@@ -176,25 +176,34 @@ class VertToHorizEngine(BaseEngine):
             gang_code = f"{int(m.group(1)):02d}" if m else None
         else:
             gang_code = _extract_gang_code(_nfc(os.path.basename(verti_src)))
-            if not gang_code:
-                # 침묵 금지 (배치 F): 종전엔 무로그로 '01' 가정 —
-                # 오라우팅(엉뚱한 강 출처로 검증)의 침묵 지점이었다.
-                log(f"  [경고] 강 코드 자동 인식 실패 — '01' 가정 "
-                    f"(파일명: {_nfc(os.path.basename(verti_src))}). "
-                    f"다른 강이면 '마더텅 강' 입력란에 번호를 지정하세요.")
-                gang_code = "01"
 
-        # 출처 JSON 검증
-        with open(sources_json, encoding="utf-8") as f:
-            sources_data = json.load(f)
-        if gang_code not in sources_data:
-            available = ", ".join(sorted(sources_data.keys()))
-            raise ValueError(
-                f"엑셀에 강 '{gang_code}' 데이터가 없습니다. "
-                f"등록된 강: {available}"
-            )
-        sources_list = sources_data[gang_code]
-        log(f"[강] {gang_code} ({len(sources_list)}개 지문)")
+        # 출처 JSON — **마더텅 job 일 때만** 쓴다.
+        # 마더텅 엑셀은 가로 페이지 ↔ 세로 지문 매핑을 "출처 코드"로 정확히
+        # 맞추는 용도이고, 없으면 JSX 가 **영역 내 순서 = 세로 지문 순서**로
+        # 폴백한다(run.jsx: "fallback: 영역 내 페이지 순서 = 세로 지문 순서").
+        # 일반 모의고사 선택 결합은 강이라는 개념 자체가 없고 순서가 곧
+        # 사용자가 고른 순서이므로 폴백이 오히려 정확하다.
+        #
+        # ⚠ 종전엔 강을 못 찾으면 '01' 로 가정하고 엑셀을 뒤져서,
+        #   마더텅이 아닌 job 이 "엑셀에 강 '01' 데이터가 없습니다" 로 죽었다
+        #   (2026-08-18 실측: 세로결합_고2_25년9월 → 변환 자체가 불가).
+        #   강 추정도 하지 않는다 — 엉뚱한 강으로 매핑하면 지문이 뒤섞인다.
+        sources_list = []
+        if gang_code:
+            with open(sources_json, encoding="utf-8") as f:
+                sources_data = json.load(f)
+            if gang_code not in sources_data:
+                available = ", ".join(sorted(sources_data.keys()))
+                raise ValueError(
+                    f"엑셀에 강 '{gang_code}' 데이터가 없습니다. "
+                    f"등록된 강: {available}"
+                )
+            sources_list = sources_data[gang_code]
+            log(f"[강] {gang_code} ({len(sources_list)}개 지문)")
+        else:
+            log("[강] 마더텅 강 미지정 — 출처 엑셀 미사용, "
+                "**세로 지문 순서 그대로** 가로에 매핑합니다. "
+                "마더텅 교재면 '마더텅 강' 입력란에 번호를 넣으세요.")
 
         # 가로 원본 + 세로 .indd 를 job_dir 로 복사 (cross-document duplicate 시 원본 영향 방지)
         horiz_local = os.path.join(job_dir, f"horiz_{_nfc(os.path.basename(horiz_template))}")
