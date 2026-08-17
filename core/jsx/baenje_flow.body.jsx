@@ -771,39 +771,28 @@ function applyUnitMasters(doc, story, labelParas, prefixes, label) {
 
 // ── 전각 공백(U+3000) — 영문 문자스타일에서 .notdef 방지 ────────────────
 function fixWideSpaces(doc, story, styleName, label) {
-    // 문자스타일을 통째로 씌우면 그 스타일의 크기(10pt)까지 따라와 전각공백이
-    // 본문보다 넓어진다(답란이 한 줄을 넘김) → 폰트만 바꿔 .notdef를 막는다.
+    // 전각공백을 한글 폰트로 바꿔 .notdef(검은 상자)를 막는다.
+    // 문자스타일(한글)에는 크기 10pt가 박혀 있어 그대로 씌우면 전각공백이
+    // 본문보다 넓어져 답란이 한 줄을 넘긴다 → 스타일 적용 후 크기를 단락 크기로 되돌린다.
     var cs = findCharStyleAnywhere(doc, styleName);
-    var fontName = null, fontStyle = null;
-    if (cs) {
-        try { fontName = String(cs.appliedFont); } catch (e) {}
-        try { fontStyle = cs.fontStyle; } catch (e) {}
-    }
-    if (!fontName || fontName === "undefined" || fontName === "") {
-        fontName = "Noto Sans CJK KR";
-        fontStyle = "Regular";
-    }
+    if (!cs) { warn("전각공백 보정용 '" + styleName + "' 문자스타일 없음"); return; }
     app.findGrepPreferences = NothingEnum.NOTHING;
     app.changeGrepPreferences = NothingEnum.NOTHING;
     app.findGrepPreferences.findWhat = "\\x{3000}+";
-    // 폰트 지정은 "패밀리\t스타일" 토큰이라야 확실히 먹는다.
-    // (패밀리만 주면 조용히 무시돼 전각공백이 다시 .notdef 상자가 된다)
-    var token = fontName;
-    if (token.indexOf("\t") < 0) { token = fontName + "\t" + (fontStyle || "Regular"); }
-    var applied = false;
-    try { app.changeGrepPreferences.appliedFont = token; applied = true; } catch (e) {}
-    if (!applied) {
-        try { app.changeGrepPreferences.appliedFont = fontName; } catch (e) {}
-        if (fontStyle) { try { app.changeGrepPreferences.fontStyle = fontStyle; } catch (e) {} }
-    }
-    var n = 0;
-    try { n = story.changeGrep().length; } catch (e) {
-        warn(label + " 전각공백 보정 오류: " + e.message);
-    }
+    var found = [];
+    try { found = story.findGrep(); } catch (e) { warn(label + " 전각공백 탐색 오류: " + e.message); }
     app.findGrepPreferences = NothingEnum.NOTHING;
     app.changeGrepPreferences = NothingEnum.NOTHING;
+    var n = 0;
+    for (var i = 0; i < found.length; i++) {
+        var size = null;
+        try { size = found[i].paragraphs[0].appliedParagraphStyle.pointSize; } catch (e) {}
+        try { found[i].appliedCharacterStyle = cs; } catch (e) { continue; }
+        if (size) { try { found[i].pointSize = size; } catch (e) {} }
+        n++;
+    }
     RESULTS.wide_space_fixed += n;
-    wlog(label + " 전각공백 보정: " + n + "건 (" + token + ")");
+    wlog(label + " 전각공백 보정: " + n + "건");
 }
 
 // ── 출력물 불변식 계측 (파서/플랜과 독립 — gate.py 원칙) ────────────────
