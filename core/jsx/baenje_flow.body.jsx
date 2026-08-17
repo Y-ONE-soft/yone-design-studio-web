@@ -25,7 +25,7 @@ var RESULTS = {
     frames_grown: [], choice_layout: {}, mixed_format: [],
     oneline_fitted: 0, oneline_failed: [], credit_placed: [],
     answer_line_as_passage: [], trimmed_pages: 0, orphan_moved: [],
-    recolored: 0, warnings: []
+    recolored: 0, orphan_remaining: [], warnings: []
 };
 
 function readJSONFile(path) {
@@ -785,7 +785,27 @@ function keepBlocksInSpread(doc, story, numStyleName) {
 
 // 블록 시작이 프레임 하단에 몰려 몇 줄만 걸치면 통째로 다음 칼럼으로 민다.
 // (번호만 덩그러니 남거나 한두 줄만 남는 꼴 방지 — 옆 칼럼/페이지가 비어 있다)
-function pushOrphanBlocks(doc, story, numStyleName, minLines) {
+function blockLinesInStartFrame(ps, s0, e0) {
+    // 블록 시작 프레임에 담긴 '번호 이후' 줄 수와, 다음 프레임으로 넘어가는지 반환
+    var startFrame = null;
+    try { startFrame = ps[s0].parentTextFrames[0]; } catch (e) { return null; }
+    if (!startFrame) return null;
+    var after = 0, spills = false;
+    for (var q = s0; q <= e0; q++) {
+        var lns;
+        try { lns = ps[q].lines; } catch (e) { continue; }
+        for (var li = 0; li < lns.length; li++) {
+            var f = null;
+            try { f = lns[li].parentTextFrames[0]; } catch (e) {}
+            if (f === startFrame) { if (q > s0) after++; }
+            else spills = true;
+        }
+    }
+    return { after: after, spills: spills, frame: startFrame };
+}
+
+// 블록 시작이 프레임 하단에 몰려 번호+한두 줄만 걸치면 통째로 다음 칼럼으로 민다.
+function pushOrphanBlocks(doc, story, numStyleName, minAfter) {
     var moved = 0, guard = 0, movedKey = {};
     while (guard < 300) {
         guard++;
@@ -799,22 +819,8 @@ function pushOrphanBlocks(doc, story, numStyleName, minLines) {
         for (var b = 0; b < starts.length; b++) {
             var s0 = starts[b];
             var e0 = (b + 1 < starts.length) ? starts[b + 1] - 1 : ps.length - 1;
-            var startFrame = null;
-            try { startFrame = ps[s0].parentTextFrames[0]; } catch (e) { continue; }
-            if (!startFrame) continue;
-            // 시작 프레임에 담긴 이 블록의 줄 수
-            var linesInFrame = 0, spills = false;
-            for (var q = s0; q <= e0; q++) {
-                var lns;
-                try { lns = ps[q].lines; } catch (e) { continue; }
-                for (var li = 0; li < lns.length; li++) {
-                    var f = null;
-                    try { f = lns[li].parentTextFrames[0]; } catch (e) {}
-                    if (f === startFrame) linesInFrame++;
-                    else spills = true;
-                }
-            }
-            if (!spills || linesInFrame > minLines) continue;
+            var info = blockLinesInStartFrame(ps, s0, e0);
+            if (!info || !info.spills || info.after >= minAfter) continue;
             var key = ps[s0].contents.replace(/[\r\n]/g, "");
             if (movedKey[key]) continue;
             try { ps[s0].startParagraph = StartParagraph.NEXT_FRAME; }
@@ -827,8 +833,26 @@ function pushOrphanBlocks(doc, story, numStyleName, minLines) {
         }
         if (!did) break;
     }
-    wlog("정답지 고아 블록 이동: " + moved + "건");
+    if (moved > 0) wlog("정답지 고아 블록 이동: " + moved + "건");
     return moved;
+}
+
+// 남아 있는 고아 블록 목록 (검수 게이트 근거)
+function orphanBlocksRemaining(story, numStyleName, minAfter) {
+    var out = [];
+    var ps = story.paragraphs;
+    var starts = [];
+    for (var i = 0; i < ps.length; i++) {
+        if (ps[i].appliedParagraphStyle.name === numStyleName) starts.push(i);
+    }
+    for (var b = 0; b < starts.length; b++) {
+        var s0 = starts[b];
+        var e0 = (b + 1 < starts.length) ? starts[b + 1] - 1 : ps.length - 1;
+        var info = blockLinesInStartFrame(ps, s0, e0);
+        if (!info || !info.spills || info.after >= minAfter) continue;
+        out.push(ps[s0].contents.replace(/[\r\n]/g, "") + "번(" + info.after + "줄)");
+    }
+    return out;
 }
 
 // 잔존 걸침 재검사 (검수 게이트 B3의 근거)
@@ -1055,9 +1079,19 @@ try {
     try { doc.recompose(); } catch (e) {}
 
     if (ops.keep_block_in_spread === "answers" && ansStory && ansLabels.length >= 0) {
-        pushOrphanBlocks(doc, ansStory, "정답_문제 번호", 2);
-        keepBlocksInSpread(doc, ansStory, "정답_문제 번호");
-        expandStory(doc, ansStory, "정답지(블록 정리 후)");
+        // 두 규칙(펼침면 걸침 / 고아)은 서로 배치를 바꾸므로 안정될 때까지 번갈아 적용
+        for (var rd = 0; rd < 6; rd++) {
+            var m1 = pushOrphanBlocks(doc, ansStory, "정답_문제 번호", 3);
+            var m2 = keepBlocksInSpread(doc, ansStory, "정답_문제 번호");
+            expandStory(doc, ansStory, "정답지(블록 정리 " + (rd + 1) + "회)");
+            if (m1 === 0 && m2 === 0) break;
+        }
+        try { doc.recompose(); } catch (e) {}
+        RESULTS.orphan_remaining = orphanBlocksRemaining(ansStory, "정답_문제 번호", 3);
+        if (RESULTS.orphan_remaining.length > 0) {
+            warn("정답지 고아 블록 잔존 " + RESULTS.orphan_remaining.length + "건: " +
+                 RESULTS.orphan_remaining.join(", "));
+        }
         try { doc.recompose(); } catch (e) {}
         RESULTS.blocks_crossing_after = blocksCrossingSpread(ansStory, "정답_문제 번호");
         if (RESULTS.blocks_crossing_after.length > 0) {

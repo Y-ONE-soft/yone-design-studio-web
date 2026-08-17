@@ -383,6 +383,12 @@ class BaenjeV2Engine(BaseEngine):
             ok = False
             warnings.append(f"❌ B9 재작성 단락 문자 서식 불균일 {len(mixed)}건: {mixed[:3]}")
         orphan = result.get("orphan_moved") or []
+        orphan_left = result.get("orphan_remaining") or []
+        if orphan_left:
+            ok = False
+            warnings.append(
+                f"❌ B9 정답지 고아 블록 잔존 {len(orphan_left)}건 "
+                f"(번호+2줄 이하만 남고 넘어감): {orphan_left[:4]}")
         trimmed = result.get("trimmed_pages") or 0
         of = result.get("oneline_failed") or []
         if of:
