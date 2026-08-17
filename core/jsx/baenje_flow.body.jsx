@@ -771,18 +771,31 @@ function applyUnitMasters(doc, story, labelParas, prefixes, label) {
 
 // ── 전각 공백(U+3000) — 영문 문자스타일에서 .notdef 방지 ────────────────
 function fixWideSpaces(doc, story, styleName, label) {
+    // 문자스타일을 통째로 씌우면 그 스타일의 크기(10pt)까지 따라와 전각공백이
+    // 본문보다 넓어진다(답란이 한 줄을 넘김) → 폰트만 바꿔 .notdef를 막는다.
     var cs = findCharStyleAnywhere(doc, styleName);
-    if (!cs) { warn("전각공백 보정용 '" + styleName + "' 문자스타일 없음"); return; }
+    var fontName = null, fontStyle = null;
+    if (cs) {
+        try { fontName = String(cs.appliedFont); } catch (e) {}
+        try { fontStyle = cs.fontStyle; } catch (e) {}
+    }
+    if (!fontName || fontName === "undefined" || fontName === "") {
+        fontName = "Noto Sans CJK KR";
+        fontStyle = "Regular";
+    }
     app.findGrepPreferences = NothingEnum.NOTHING;
     app.changeGrepPreferences = NothingEnum.NOTHING;
     app.findGrepPreferences.findWhat = "\\x{3000}+";
-    app.changeGrepPreferences.appliedCharacterStyle = cs;
+    try { app.changeGrepPreferences.appliedFont = fontName; } catch (e) {}
+    if (fontStyle) { try { app.changeGrepPreferences.fontStyle = fontStyle; } catch (e) {} }
     var n = 0;
-    try { n = story.changeGrep().length; } catch (e) {}
+    try { n = story.changeGrep().length; } catch (e) {
+        warn(label + " 전각공백 보정 오류: " + e.message);
+    }
     app.findGrepPreferences = NothingEnum.NOTHING;
     app.changeGrepPreferences = NothingEnum.NOTHING;
     RESULTS.wide_space_fixed += n;
-    wlog(label + " 전각공백 보정: " + n + "건");
+    wlog(label + " 전각공백 보정: " + n + "건 (" + fontName + ")");
 }
 
 // ── 출력물 불변식 계측 (파서/플랜과 독립 — gate.py 원칙) ────────────────

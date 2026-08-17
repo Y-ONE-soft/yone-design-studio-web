@@ -815,10 +815,13 @@
                 writeLog("[경고] 1주차 간지 1P 가이드 파일 없음: " + cfg.pairs[nm]);
                 continue;
             }
+            var gName = String(gf.name);
+            // File.name은 URI 인코딩("%20") — 로그/리포트는 원래 이름으로
+            try { gName = decodeURI(gName); } catch (eDe) {}
             try {
                 lk.relink(gf);
-                rep.applied.push({ from: nm, to: String(gf.name) });
-                writeLog("간지 1P → 가이드 버전 교체: " + nm + " → " + gf.name);
+                rep.applied.push({ from: nm, to: gName });
+                writeLog("간지 1P → 가이드 버전 교체: " + nm + " → " + gName);
             } catch (eRl) {
                 rep.failed.push(nm + ": " + (eRl.message || eRl));
                 writeLog("[경고] 간지 1P 가이드 교체 실패: " + nm +
