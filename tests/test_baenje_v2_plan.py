@@ -114,6 +114,56 @@ def test_long_blank_answer_line_is_left_aligned():
     assert paras[1]["align"] == "left"
 
 
+def test_given_block_is_small_box():
+    """'주어진 글/문장'은 지문 박스가 아니라 작은박스(배경) — 발문 구조로 판정."""
+    from engines.baenje_v2.parser import classify_problem_paragraphs
+    from engines.baenje_v2.plan import content_to_plan
+    warns = []
+    got = classify_problem_paragraphs(_rows(
+        "1. 주어진 글 다음에 이어질 글의 순서로 가장 적절한 것을 고르면?",
+        "After the peace treaty, the gangs started partying together.",
+        "(A) At that party, using two turntables at the same time, Herc played two copies.",
+        "① (A) - (C) - (B)",
+        "2. 글의 흐름으로 보아, 주어진 (A), (B) 두 문장이 들어가기에 적절한 곳을 고르시오.",
+        "(A) This shift changes what a company is really selling.",
+        "(B) Such tastes are hardest to satisfy with a single standard product.",
+        "The subscription economy is highly relevant to how people consume goods.",
+    ), warns)
+    assert [p["kind"] for p in got[0]["paras"]] == [
+        "stem", "given", "passage", "choice"]
+    assert [p["kind"] for p in got[1]["paras"]] == [
+        "stem", "given", "given", "passage"]
+    plan = content_to_plan({"units": [], "problems": got, "answers": [],
+                            "warnings": []})
+    styles = [p["s"] for p in plan["flows"][0]["units"][1]["paras"]]
+    assert styles[1].endswith("!작은박스") and styles[2].endswith("!작은박스")
+    assert styles[3].endswith("!박스-내용_")
+
+
+def test_choice_layout_hints():
+    """(A)(B) 머리행과 조합형 짧은 선지(3열 묶기) 힌트."""
+    from engines.baenje_v2.plan import content_to_plan
+    paras = [{"t": "1. 다음 …?", "kind": "stem"},
+             {"t": "Body.", "kind": "passage"},
+             {"t": "(A)　　　(B)", "kind": "choice"}]
+    for t in ("① lengthen ······ centerpiece", "② lengthen ······ afterthought",
+              "③ shorten ······ centerpiece", "④ extend ······ conclusion",
+              "⑤ conceal ······ centerpiece"):
+        paras.append({"t": t, "kind": "choice"})
+    short = [{"t": "2. 다음 …?", "kind": "stem"}]
+    for t in ("① (a), (b)", "② (a), (b), (d)", "③ (a), (c), (e)",
+              "④ (b), (d)", "⑤ (c), (d), (e)"):
+        short.append({"t": t, "kind": "choice"})
+    plan = content_to_plan({"units": [], "answers": [], "warnings": [],
+                            "problems": [{"no": 1, "paras": paras},
+                                         {"no": 2, "paras": short}]})
+    u1, u2 = plan["flows"][0]["units"]
+    assert u1["ab_header"] == 2                 # 머리행 단락 인덱스
+    assert "choice_pack" not in u1              # 긴 선지는 3열 대상 아님
+    assert u2["choice_pack"]["columns"] == 3
+    assert u2["choice_pack"]["idx"] == [1, 2, 3, 4, 5]
+
+
 def test_style_map_exists_in_template_inventory():
     """style_map 배N제 섹션의 모든 스타일이 실물 [원본] 템플릿에 존재."""
     smap = json.load(open(os.path.join(
