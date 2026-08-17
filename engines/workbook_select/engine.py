@@ -862,6 +862,17 @@ class WorkbookSelectEngine(WorkbookV2Engine):
                 completion_marker="===== trim 완료 =====",
                 stall_limit=900)
 
+        # 지문번호 프레임 보정 — **trim 뒤**에 돈다. 템플릿에는 섹션당 번호
+        # 프레임이 17개뿐이라, 문항이 그보다 많으면 남는 지문에 번호가 없고
+        # 마지막 프레임엔 템플릿 잔재("41-42")가 인쇄된다. v2 의
+        # passage_numbers op 은 있는 프레임만 갱신해 이 구멍을 못 메운다
+        # (2026-08-17 실측: 3섹션 × 3지문 = 9곳). 페이지 삭제가 끝난 뒤라야
+        # 페이지 순서가 확정돼 라벨 배정이 맞는다.
+        self._run_post_jsx(job_dir, settings_path, log,
+                           "fix_passage_numbers.jsx", "passagenum_로그.txt",
+                           "===== 지문번호 보정 완료 =====", "[지문번호]",
+                           timeout=900, stall=600)
+
         # trim 이 페이지를 지운 뒤이므로 PDF 를 다시 뽑는다 — 안 하면 PDF 만
         # trim 이전 상태로 남는다 (2026-08-08 실측 INDD 292p vs PDF 310p).
         self._reexport_pdf(job_dir, settings_path, log)
