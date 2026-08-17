@@ -307,6 +307,48 @@
     }
 
     // ───────────────────────────────────────────────────────────────
+    // 좌표계 정규화 — geometricBounds는 문서의 눈금자 원점(rulerOrigin)
+    //   기준이라 소스와 결합본의 설정이 다르면 같은 위치가 다른 수치로
+    //   읽힌다. 실사고(2026-08-17 한영2): 소스는 PAGE_ORIGIN(오른쪽 페이지
+    //   프레임 x=22mm), 템플릿은 SPREAD_ORIGIN(x=232mm) → 아래 restoreGeo가
+    //   페이지폭 210mm를 "드리프트"로 오인해 오른쪽 페이지 프레임을 전부
+    //   왼쪽 페이지로 210+4mm 밀어버렸다.
+    //   → 캡처/복원 구간 동안 양쪽 문서를 PAGE_ORIGIN + zeroPoint(0,0)로
+    //     맞추고, 끝나면 원래 설정으로 되돌린다(문서 원본 설정 보존).
+    // ───────────────────────────────────────────────────────────────
+
+    function normalizeRuler(doc) {
+        // 반환값을 restoreRuler에 그대로 넘기면 원상복구된다.
+        var prev = { origin: null, zero: null };
+        try {
+            prev.origin = doc.viewPreferences.rulerOrigin;
+            if (prev.origin !== RulerOrigin.PAGE_ORIGIN) {
+                doc.viewPreferences.rulerOrigin = RulerOrigin.PAGE_ORIGIN;
+            } else {
+                prev.origin = null;   // 변경 없음 — 되돌릴 것도 없음
+            }
+        } catch (eRo) { prev.origin = null; }
+        try {
+            var z = doc.zeroPoint;
+            if (Math.abs(z[0]) > 0.001 || Math.abs(z[1]) > 0.001) {
+                prev.zero = [z[0], z[1]];
+                doc.zeroPoint = [0, 0];
+            }
+        } catch (eZp) { prev.zero = null; }
+        return prev;
+    }
+
+    function restoreRuler(doc, prev) {
+        if (!prev) return;
+        try {
+            if (prev.zero !== null) doc.zeroPoint = prev.zero;
+        } catch (eZr) {}
+        try {
+            if (prev.origin !== null) doc.viewPreferences.rulerOrigin = prev.origin;
+        } catch (eOr) {}
+    }
+
+    // ───────────────────────────────────────────────────────────────
     // [스펙2] 프레임 지오메트리 캡처/복원
     //   실측(repro1): 문서 간 page.duplicate가 콘텐츠 아이템을 페이지 기준
     //   LEFT +2mm / RIGHT +4mm 순수 평행이동시킨다 (슬러그 탭은 무이동).
@@ -314,22 +356,37 @@
     //   move는 회전/크기를 건드리지 않는 순수 이동이라 안전.
     // ───────────────────────────────────────────────────────────────
 
-    function collectGeo(page) {
+    // 실측 드리프트는 LEFT +2 / RIGHT +4mm. 이 상한을 넘는 값은 좌표계
+    // 불일치·아이템 순서 어긋남 신호이므로 "교정"하지 않고 실패로 남긴다
+    // (조용히 밀면 페이지 하나만큼 어긋난 조판이 그대로 납품된다).
+    var GEO_MAX_DRIFT_MM = 20;
+
+    // 페이지의 pageItems는 라이브 컬렉션이라 아이템이 이동으로 페이지
+    // 소속을 벗어나면 인덱스가 밀린다 → 미리 배열로 스냅샷한다.
+    function snapItems(page) {
+        try { return page.pageItems.everyItem().getElements(); }
+        catch (eEv) {}
         var arr = [];
         try {
-            var items = page.pageItems;
-            for (var i = 0; i < items.length; i++) {
-                var gb;
-                try { gb = items[i].geometricBounds; } catch (eG) { gb = null; }
-                arr.push(gb);
-            }
+            var it = page.pageItems;
+            for (var i = 0; i < it.length; i++) arr.push(it[i]);
         } catch (eP) {}
         return arr;
     }
 
+    function collectGeo(page) {
+        var arr = [];
+        var items = snapItems(page);
+        for (var i = 0; i < items.length; i++) {
+            var gb;
+            try { gb = items[i].geometricBounds; } catch (eG) { gb = null; }
+            arr.push(gb);
+        }
+        return arr;
+    }
+
     function restoreGeo(newPage, srcGeo, geoRep, srcLabel) {
-        var items;
-        try { items = newPage.pageItems; } catch (eI) { return; }
+        var items = snapItems(newPage);
         var n = Math.min(items.length, srcGeo.length);
         var maxBefore = 0, maxAfter = 0;
         if (items.length !== srcGeo.length) {
@@ -346,6 +403,18 @@
             var dy = want[0] - cur[0];
             var drift = Math.max(Math.abs(dx), Math.abs(dy));
             if (drift > maxBefore) maxBefore = drift;
+            if (drift > GEO_MAX_DRIFT_MM) {
+                geoRep.oversized_drift.push({
+                    page: String(newPage.name), src: srcLabel, item: i,
+                    dx: round3(dx), dy: round3(dy)
+                });
+                writeLog("[경고] 지오메트리 드리프트 과대 p" + newPage.name +
+                         " item" + i + " (dx=" + round3(dx) + ", dy=" +
+                         round3(dy) + "mm > 상한 " + GEO_MAX_DRIFT_MM +
+                         "mm) — 이동 생략, 게이트 실패로 남김");
+                if (drift > maxAfter) maxAfter = drift;
+                continue;
+            }
             if (drift > 0.01) {
                 try {
                     try { items[i].locked = false; } catch (eLk) {}
@@ -789,7 +858,7 @@
     var report = {
         unresolved: [],
         geometry: { max_drift_before_mm: 0, max_residual_mm: 0,
-                    count_mismatch_pages: [], pages: [] },
+                    count_mismatch_pages: [], oversized_drift: [], pages: [] },
         links: {},
         ganji: { ok: false },
         overflow_pages: [],
