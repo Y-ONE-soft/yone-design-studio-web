@@ -1040,6 +1040,23 @@ class WorkbookSelectEngine(WorkbookV2Engine):
             if os.path.exists(req):
                 warnings.append("교재팀 재요청 목록: %s" % req)
 
+        # 지문번호 — 보정 후 실제 지면 값이 기대 순서와 같은지 (JSX 자체 검증)
+        # 프레임 개수는 템플릿마다 다르므로 "몇 개 갱신했나"로는 판정할 수 없다.
+        # 2026-08-17 실측: 갱신 17개인데 지문은 20개라 3지문이 템플릿 잔재
+        # 번호("41-42")로 인쇄됐는데 기계 검증이 전부 통과했다.
+        pn_log = os.path.join(job_dir, "passagenum_로그.txt")
+        if os.path.exists(pn_log):
+            pn = open(pn_log, encoding="utf-8", errors="ignore").read()
+            for m in re.finditer(r"\[검증\] (\S+) FAIL", pn):
+                if m.group(1) == "전체":
+                    continue          # 섹션별 FAIL 로 이미 보고됨
+                warnings.append("지문번호 불일치: %s — 지면 번호가 기대 순서와 "
+                                "다름 (passagenum_로그.txt 확인)" % m.group(1))
+            if "[검증]" not in pn:
+                warnings.append("지문번호 검증 결과 없음 — 보정 단계 확인")
+        else:
+            warnings.append("지문번호 보정 로그 없음 — 후처리 미실행 의심")
+
         # PDF 페이지수
         pdf_path = settings.get("pdf_path", "")
         pdf_pages = None
@@ -1073,6 +1090,7 @@ class WorkbookSelectEngine(WorkbookV2Engine):
 
         ok = (overflow == 0 and pdf_path is not None and
               not any("원고에 없는" in w for w in warnings) and
+              not any(w.startswith("지문번호") for w in warnings) and
               not any(w.startswith("빈칸") for w in warnings))
         result = {
             "ok": ok,

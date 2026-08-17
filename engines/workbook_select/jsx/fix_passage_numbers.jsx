@@ -182,6 +182,34 @@
         }
 
         W("생성 " + made + "건 / 교체 " + fixed + "건");
+
+        // ── 자체 검증 — 보정 후 실제로 찍힌 번호를 다시 읽어 기대치와 대조 ──
+        //    프레임 개수는 템플릿마다 다르고(17 고정이 아니다) 지문이 2페이지에
+        //    걸치는 배치도 있을 수 있어, "몇 개를 고쳤나"가 아니라 **결과가
+        //    기대 순서와 같은가**로 판정한다. 어긋나면 로그에 FAIL 을 남겨
+        //    파이썬 검수(verify)가 경고로 올린다.
+        var allOk = true;
+        for (var vi = 0; vi < order.length; vi++) {
+            var vkey = order[vi], vpages = bySec[vkey], seen = [];
+            for (var vp = 0; vp < vpages.length; vp++) {
+                if (bodyLen(vpages[vp]) < MIN_BODY) { continue; }
+                var vf = numFrameOn(vpages[vp]);
+                seen.push(vf ? String(vf.contents).replace(/[\r\n\s]/g, "")
+                             : "(없음)");
+            }
+            var want = labels.join(",");
+            var got = seen.join(",");
+            if (want === got) {
+                W("[검증] " + vkey + " PASS — " + seen.length + "개 " + got);
+            } else {
+                allOk = false;
+                W("[검증] " + vkey + " FAIL");
+                W("   기대: " + want);
+                W("   실제: " + got);
+            }
+        }
+        W(allOk ? "[검증] 전체 PASS" : "[검증] 전체 FAIL — 지문번호 확인 필요");
+
         if (made > 0 || fixed > 0) { doc.save(); W("저장 완료"); }
         W("===== 지문번호 보정 완료 =====");
     } catch (eMain) {
