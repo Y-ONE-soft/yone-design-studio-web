@@ -531,9 +531,9 @@ function applyChoiceLayout(story, flow, starts) {
 // 한글 문자스타일(.notdef 방지) 위에 밑줄을 얹어 빈칸이 보이게 한다.
 function underlineBlanks(story, label) {
     // 빈칸은 라벨((A))까지 포함해 하나의 연속 밑줄이어야 빈칸으로 읽힌다.
-    var pats = ["\\x{3000}+\\([A-Za-z0-9]\\)\\x{3000}+",   // 　(A)　  통짜
-                "\\x{3000}+(?=\\([A-Za-z0-9]\\))",          // 한쪽만 있는 경우
-                "(?<=\\([A-Za-z0-9]\\))\\x{3000}+"];
+    var pats = [" {3,}\\([A-Za-z0-9]\\) {3,}",     // ___(A)___ 통짜
+                " {3,}(?=\\([A-Za-z0-9]\\))",
+                "(?<=\\([A-Za-z0-9]\\)) {3,}"];
     var total = 0;
     for (var i = 0; i < pats.length; i++) {
         app.findGrepPreferences = NothingEnum.NOTHING;
@@ -545,15 +545,10 @@ function underlineBlanks(story, label) {
         }
         app.findGrepPreferences = NothingEnum.NOTHING;
         for (var k = 0; k < found.length; k++) {
-            try {
-                found[k].underline = true;
-                // 밑줄 위치/두께를 명시해야 폰트가 섞여도 한 줄로 이어진다
-                // (기본값은 폰트 메트릭을 따라가 계단처럼 어긋난다)
-                found[k].underlineOffset = 1.2;
-                found[k].underlineWeight = 0.5;
-                found[k].underlineType = app.strokeStyles.item("Solid");
-                total++;
-            } catch (e) {}
+            try { found[k].underline = true; total++; } catch (e) {}
+            // 밑줄 높이/두께를 명시해 폰트가 섞여도 한 줄로 이어지게
+            try { found[k].underlineOffset = 1.2; } catch (e) {}
+            try { found[k].underlineWeight = 0.5; } catch (e) {}
         }
         app.changeGrepPreferences = NothingEnum.NOTHING;
     }
@@ -881,28 +876,21 @@ function applyUnitMasters(doc, story, labelParas, prefixes, label) {
 
 // ── 전각 공백(U+3000) — 영문 문자스타일에서 .notdef 방지 ────────────────
 function fixWideSpaces(doc, story, styleName, label) {
-    // 전각공백을 한글 폰트로 바꿔 .notdef(검은 상자)를 막는다.
-    // 문자스타일(한글)에는 크기 10pt가 박혀 있어 그대로 씌우면 전각공백이
-    // 본문보다 넓어져 답란이 한 줄을 넘긴다 → 스타일 적용 후 크기를 단락 크기로 되돌린다.
-    var cs = findCharStyleAnywhere(doc, styleName);
-    if (!cs) { warn("전각공백 보정용 '" + styleName + "' 문자스타일 없음"); return; }
+    // 전각공백(U+3000)은 영문 폰트에 글리프가 없어 .notdef 상자가 되고,
+    // 한글 폰트를 섞으면 밑줄이 폰트마다 다른 높이로 끊긴다.
+    // → 같은 폭의 일반 공백으로 바꿔 '한 폰트 한 런'으로 만든다 (빈칸 밑줄이 한 줄로 이어짐).
     app.findGrepPreferences = NothingEnum.NOTHING;
     app.changeGrepPreferences = NothingEnum.NOTHING;
-    app.findGrepPreferences.findWhat = "\\x{3000}+";
-    var found = [];
-    try { found = story.findGrep(); } catch (e) { warn(label + " 전각공백 탐색 오류: " + e.message); }
-    app.findGrepPreferences = NothingEnum.NOTHING;
-    app.changeGrepPreferences = NothingEnum.NOTHING;
+    app.findGrepPreferences.findWhat = "\\x{3000}";
+    app.changeGrepPreferences.changeTo = "    ";      // 전각 1칸 ≈ 일반 4칸
     var n = 0;
-    for (var i = 0; i < found.length; i++) {
-        var size = null;
-        try { size = found[i].paragraphs[0].appliedParagraphStyle.pointSize; } catch (e) {}
-        try { found[i].appliedCharacterStyle = cs; } catch (e) { continue; }
-        if (size) { try { found[i].pointSize = size; } catch (e) {} }
-        n++;
+    try { n = story.changeGrep().length; } catch (e) {
+        warn(label + " 전각공백 치환 오류: " + e.message);
     }
+    app.findGrepPreferences = NothingEnum.NOTHING;
+    app.changeGrepPreferences = NothingEnum.NOTHING;
     RESULTS.wide_space_fixed += n;
-    wlog(label + " 전각공백 보정: " + n + "건");
+    wlog(label + " 전각공백 → 일반공백: " + n + "건");
 }
 
 // ── 출력물 불변식 계측 (파서/플랜과 독립 — gate.py 원칙) ────────────────
