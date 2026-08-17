@@ -72,21 +72,34 @@
             }
             if (!promptTf || !bodyTxt) continue;
 
-            var nb = norm(bodyTxt);
+            var nb2 = norm(bodyTxt);
+            var nb = nb2;
             for (k = 0; k < specs.length; k++) {
                 var m = norm(specs[k].match);
                 if (!m || nb.indexOf(m) !== 0) continue;
                 var want = String(specs[k].prompt);
                 var cur = String(promptTf.contents);
-                if (cur.indexOf(want) >= 0) break;      // 이미 맞음
-                // 앵커 아이콘(￼)은 보존하고 글자만 바꾼다
-                var keep = "";
-                if (cur.length && cur.charCodeAt(0) === 0xFFFC) {
-                    keep = cur.charAt(0) + " ";
+                var already = (cur.indexOf(want) >= 0);
+                if (!already) {
+                    // 앵커 아이콘(￼)은 보존하고 글자만 바꾼다
+                    var keep = "";
+                    if (cur.length && cur.charCodeAt(0) === 0xFFFC) {
+                        keep = cur.charAt(0) + " ";
+                    }
+                    promptTf.contents = keep + want;
+                    fixed++;
+                    W("  p" + pg.name + ": 발문 교체 → "
+                      + want.substring(0, 40));
                 }
-                promptTf.contents = keep + want;
-                fixed++;
-                W("  p" + pg.name + ": 발문 교체 → " + want.substring(0, 40));
+                // ⚠ 크기 교정은 **교체를 건너뛴 경우에도** 반드시 돈다.
+                //    통짜 contents 대입은 기존 문자 서식 범위를 새 글자에
+                //    물려준다. 실측 2026-08-17: 템플릿 발문에 남아 있던
+                //    0.9pt 런이 새 문구 앞부분에 걸려 "(A), (B), (C)" 가
+                //    0.9pt 로 찍혀 지면에서 사라졌다(", , 의 각 네모…").
+                //    글자는 남아 있어 텍스트 대조·오버셋·프리플라이트가 전부
+                //    통과한다 — 렌더 육안으로만 잡히는 종류다. 그래서 "이미
+                //    문구가 맞음"으로 빠져나가면 영영 안 고쳐진다.
+                if (fixSizes(promptTf, pg.name)) { sized++; }
                 break;
             }
         }
