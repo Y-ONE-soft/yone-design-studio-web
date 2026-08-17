@@ -212,6 +212,16 @@ function placeFlow(doc, story, flow, ops) {
 // (2) 조합형 짧은 선지: 3열로 묶어 배치 (프레임이 모자라면 하단을 조금 늘림)
 var _RE_SEP = /[·⋯…]{2,}/;
 
+function skipSpaces(text, from) {
+    var i = from;
+    while (i < text.length) {
+        var ch = text.charAt(i);
+        if (ch !== " " && ch !== "\u3000" && ch !== "\t") break;
+        i++;
+    }
+    return i;
+}
+
 function charX(para, idx) {
     try { return para.characters[idx].horizontalOffset; } catch (e) { return null; }
 }
@@ -240,8 +250,11 @@ function alignAbHeader(story, absIdx) {
         if (!/^[①-⑳]/.test(t)) break;
         var m = _RE_SEP.exec(t);
         if (!m) continue;
-        var a = charX(ps[k], 2);                       // ① + 공백 다음
-        var b = charX(ps[k], m.index + m[0].length + 1);  // 구분자 다음 칸
+        // 마커/구분자 뒤의 공백을 건너뛴 '첫 글자' 위치를 실측한다
+        var ia = skipSpaces(t, 1);                        // ① 다음
+        var ib = skipSpaces(t, m.index + m[0].length);    // 구분자 다음
+        var a = charX(ps[k], ia);
+        var b = charX(ps[k], ib);
         if (a === null || b === null) continue;
         if (x1 === null || a < x1) x1 = a;
         if (x2 === null || b < x2) x2 = b;
