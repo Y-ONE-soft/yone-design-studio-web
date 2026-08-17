@@ -49,6 +49,9 @@ RE_SPEAKER = re.compile(r"^\s*[A-Z][A-Za-z.'\-]{0,14}\s*:\s")
 RE_BULLET = re.compile(r"^\s*[·•･]")
 RE_END_MARK = re.compile(r"^[\s\-–—]*끝[\s\-–—]*$")
 RE_BLANKS_ONLY = re.compile(r"^[\s＿_（）()　\-－–—.．ㅡ]+$")
+# 긴 빈칸이 들어간 짧은 문장 = 학생이 답을 쓰는 답란 (지문 박스가 아니다)
+RE_LONG_BLANK = re.compile(r"[＿_]{5,}")
+_ANSWER_LINE_MAX = 200
 RE_ANS_NUM = re.compile(r"^\s*(\d{1,3})\s*$")
 RE_ANS_MARK = re.compile(r"^\s*\[(정답|해석|해설|어휘)\]\s*")
 
@@ -207,6 +210,9 @@ def classify_problem_paragraphs(rows, warnings, src=""):
             kind = "dialogue"
         elif RE_BLANKS_ONLY.match(t):
             kind = "choice"
+        elif RE_LONG_BLANK.search(t) and len(t) <= _ANSWER_LINE_MAX:
+            # 서술형 답란 — 지문(긴 영문)과 길이·빈칸 구조로 구분
+            kind = "answer_line"
         elif re.match(r"^[A-Za-z\"“‘(]", t):
             kind = "passage"
         elif " / " in t:

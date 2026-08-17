@@ -770,6 +770,67 @@
         try { return doc.links.everyItem().getElements(); } catch (e) { return []; }
     }
 
+    // ───────────────────────────────────────────────────────────────
+    // [1주차] 간지 1P 가이드 버전 교체
+    //   첫 주차(순번 1)로 나가는 분석본만 간지 1P를 가이드 버전으로 넣는다.
+    //   2주차부터는 템플릿 기본 1P 그대로.
+    //   템플릿의 1P는 간지-마스터에 임베드된 링크(실측: 1P.pdf, D버전)라
+    //   relink로 교체한다 — 임베드 링크도 relink가 되고 배치/스케일이
+    //   그대로 보존된다(실측: gb 오차 0.00002mm). 교체 후 processLinks가
+    //   다시 임베드한다.
+    // ───────────────────────────────────────────────────────────────
+
+    function guideFileFor(link, cfg) {
+        var nm = "";
+        try { nm = String(link.name); } catch (eN) { return null; }
+        var alt = cfg.pairs[nm];
+        if (!alt) return null;
+        // ① 현재 링크와 같은 폴더(C버전/D버전 등)에서 먼저 찾는다 —
+        //    버전 폴더가 바뀌어도 짝을 놓치지 않는다.
+        try {
+            var cur = new File(link.filePath);
+            var sib = new File(cur.parent.fsName + "/" + alt);
+            if (sib.exists) return sib;
+        } catch (eS) {}
+        // ② 파이썬이 이미지 폴더를 스캔해 넘긴 절대경로 폴백
+        var p = cfg.map ? cfg.map[nm] : null;
+        if (p) {
+            var f = new File(p);
+            if (f.exists) return f;
+        }
+        return null;
+    }
+
+    function applyGuide1P(doc, cfg, rep) {
+        rep.enabled = !!(cfg && cfg.enabled);
+        if (!rep.enabled) return;
+        var els = linkEls(doc);
+        for (var i = 0; i < els.length; i++) {
+            var lk = els[i], nm = "";
+            try { nm = String(lk.name); } catch (eN) { continue; }
+            if (!cfg.pairs[nm]) continue;
+            var gf = guideFileFor(lk, cfg);
+            if (!gf) {
+                rep.missing.push(cfg.pairs[nm]);
+                writeLog("[경고] 1주차 간지 1P 가이드 파일 없음: " + cfg.pairs[nm]);
+                continue;
+            }
+            try {
+                lk.relink(gf);
+                rep.applied.push({ from: nm, to: String(gf.name) });
+                writeLog("간지 1P → 가이드 버전 교체: " + nm + " → " + gf.name);
+            } catch (eRl) {
+                rep.failed.push(nm + ": " + (eRl.message || eRl));
+                writeLog("[경고] 간지 1P 가이드 교체 실패: " + nm +
+                         " — " + (eRl.message || eRl));
+            }
+        }
+        if (!rep.applied.length && !rep.missing.length && !rep.failed.length) {
+            rep.failed.push("교체 대상 링크 없음 (1P.pdf/1P.ai 미발견)");
+            writeLog("[경고] 1주차인데 간지 1P 링크를 찾지 못했습니다 — 교체 없음");
+        }
+    }
+
     function processLinks(doc, relinkMap, linkRep) {
         var els = linkEls(doc);
         linkRep.total = els.length;
@@ -868,7 +929,8 @@
         // verify가 경고로만 노출한다. 결합이 새로 만든 오버셋은 여전히
         // overflow_pages로 게이트 실패.
         preexisting_overflow_pages: [],
-        doc_sources: []
+        doc_sources: [],
+        guide_1p: { enabled: false, applied: [], missing: [], failed: [] }
     };
 
     // ── [W28-확장] 유틸 ────────────────────────────────────────────
@@ -1267,6 +1329,14 @@
             report.ganji.ok = false;
             report.ganji.error = eGj.message || String(eGj);
             writeLog("[경고] 간지 기재 실패: " + report.ganji.error);
+        }
+
+        // [1주차] 간지 1P 가이드 버전 교체 — 임베드(processLinks) 前에 수행
+        try {
+            applyGuide1P(newDoc, settings.guide_1p, report.guide_1p);
+        } catch (eG1) {
+            report.guide_1p.failed.push(eG1.message || String(eG1));
+            writeLog("[경고] 간지 1P 가이드 교체 오류: " + (eG1.message || eG1));
         }
 
         // [스펙4] 링크 리링크 + 전부 임베드 (저장 전)

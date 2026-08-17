@@ -23,6 +23,8 @@ v1 대비 달라진 점
   B5 오버플로우  — 본문/정답지 오버플로우 > 0이면 실패(위치 지목)
   B6 스타일/마스터 부재 — 실행기가 [경고]로 남긴 것이 있으면 실패
   B7 발문 단락 수 = 문항 수 — 선지 레이아웃이 발문을 삼키면 실패
+  B8 플랜 ↔ 완제품 텍스트 대조 — 누락·병합·순서 뒤바뀜 감지
+  B9 출력물 불변식 — 답란이 지문 스타일/재작성 단락 서식 불균일/크레딧
 """
 import json
 import os
@@ -324,6 +326,65 @@ class BaenjeV2Engine(BaseEngine):
             warnings.append(f"❌ B5 오버플로우 {overflow}개: "
                             f"{(result.get('overflow_heads') or [])[:3]}")
         log(f"[검수] B5 오버플로우: {overflow}개 / 페이지 {result.get('pages')}")
+
+        # B8 플랜 ↔ 완제품 대조 (영역별 텍스트 전량 + 스타일)
+        #    공백/탭 정규화 후 이어붙여 비교 → 누락·병합·중복·순서 뒤바뀜을 잡는다.
+        #    (3열 묶기·머리행 재작성은 공백만 달라지므로 정규화로 흡수된다)
+        def _flat(txts):
+            return re.sub(r"[\s\u3000]+", "", _nfc(_norm_typo("".join(txts))))
+
+        dump_by_story = []
+        for st in dump["stories"]:
+            dump_by_story.append(st["paragraphs"])
+        for area, flow in (("body", plan["flows"][0]),
+                           ("answers", plan["flows"][1] if len(plan["flows"]) > 1 else None)):
+            if not flow or not flow["units"]:
+                continue
+            want = []
+            for unit in flow["units"]:
+                if unit.get("unit_label"):
+                    want.append(unit["unit_label"])
+                for pp in unit["paras"]:
+                    want.append(pp["t"])
+            wtxt = _flat(want)
+            best, best_n = None, -1
+            for paras in dump_by_story:
+                got = _flat([p["t"] for p in paras])
+                n = len(got)
+                if abs(n - len(wtxt)) < abs(best_n - len(wtxt)) if best is not None else True:
+                    best, best_n = got, n
+            if best is None:
+                continue
+            if best != wtxt:
+                ok = False
+                # 첫 불일치 지점 보고
+                i = 0
+                while i < min(len(best), len(wtxt)) and best[i] == wtxt[i]:
+                    i += 1
+                warnings.append(
+                    f"❌ B8 {area} 플랜↔완제품 텍스트 불일치 "
+                    f"(플랜 {len(wtxt)}자 / 완제품 {len(best)}자, 첫 차이 {i}자째: "
+                    f"플랜 '{wtxt[i:i+24]}' vs 완제품 '{best[i:i+24]}')")
+            else:
+                log(f"[검수] B8 {area} 플랜↔완제품 텍스트 일치 ({len(wtxt)}자)")
+
+        # B9 출력물 불변식 (파서와 독립 — 완제품을 직접 검사)
+        alp = result.get("answer_line_as_passage") or []
+        if alp:
+            ok = False
+            warnings.append(f"❌ B9 서술형 답란이 지문 스타일로 조판됨 {len(alp)}건: {alp[:3]}")
+        mixed = result.get("mixed_format") or []
+        if mixed:
+            ok = False
+            warnings.append(f"❌ B9 재작성 단락 문자 서식 불균일 {len(mixed)}건: {mixed[:3]}")
+        of = result.get("oneline_failed") or []
+        if of:
+            warnings.append(f"⚠️ B9 답란 한 줄 맞춤 실패 {len(of)}건: {of[:2]}")
+        if not result.get("credit_placed"):
+            warnings.append("⚠️ B9 마지막 페이지 크레딧 미배치")
+        log(f"[검수] B9 답란-지문 {len(alp)} / 서식불균일 {len(mixed)} / "
+            f"한줄맞춤 {result.get('oneline_fitted')} / 크레딧 "
+            f"{len(result.get('credit_placed') or [])}")
 
         # B7 레이아웃 후 발문 단락 수 = 문항 수 (자동번호 밀림 감지)
         cl = result.get("choice_layout") or {}

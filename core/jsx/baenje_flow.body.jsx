@@ -22,7 +22,9 @@ var RESULTS = {
     areas: {}, missing_styles: [], missing_masters: [], header_texts: [],
     moved_blocks: [], overflow: 0, overflow_heads: [], pages: 0,
     memo_pages: [], wide_space_fixed: 0, blanks_underlined: 0,
-    frames_grown: [], choice_layout: {}, warnings: []
+    frames_grown: [], choice_layout: {}, mixed_format: [],
+    oneline_fitted: 0, oneline_failed: [], credit_placed: [],
+    answer_line_as_passage: [], warnings: []
 };
 
 function readJSONFile(path) {
@@ -212,6 +214,29 @@ function placeFlow(doc, story, flow, ops) {
 // (2) 조합형 짧은 선지: 3열로 묶어 배치 (프레임이 모자라면 하단을 조금 늘림)
 var _RE_SEP = /[·⋯…]{2,}/;
 
+// 우리가 다시 쓴 단락은 문자 서식이 균일해야 한다.
+// (전각공백에 입힌 한글 문자스타일이 남아 (B)만 다른 폰트로 찍히는 사고 방지)
+function resetCharFormat(doc, para) {
+    try { para.texts[0].appliedCharacterStyle = doc.characterStyles[0]; } catch (e) {}
+    try { para.texts[0].clearOverrides(OverrideType.CHARACTER_ONLY); } catch (e) {}
+}
+
+function fontSignature(para) {
+    var sig = null, mixed = false;
+    try {
+        var tsr = para.textStyleRanges;
+        for (var i = 0; i < tsr.length; i++) {
+            var t = tsr[i].contents.replace(/[\s\r\n\t]/g, "");
+            if (t.length === 0) continue;      // 공백/탭만 있는 런은 무시
+            var k = String(tsr[i].appliedFont) + "|" + tsr[i].fontStyle + "|" +
+                    tsr[i].pointSize;
+            if (sig === null) sig = k;
+            else if (k !== sig) mixed = true;
+        }
+    } catch (e) {}
+    return { sig: sig, mixed: mixed };
+}
+
 function skipSpaces(text, from) {
     var i = from;
     while (i < text.length) {
@@ -320,6 +345,7 @@ function alignAbHeader(story, absIdx) {
         hRange.contents = "(A)\t(B)";
         ps = story.paragraphs;
         hdr = ps[absIdx];
+        resetCharFormat(doc, hdr);
         hdr.leftIndent = 0;
         hdr.firstLineIndent = Math.max(0, x1 - left);
         hdr.justification = Justification.LEFT_ALIGN;
@@ -327,6 +353,11 @@ function alignAbHeader(story, absIdx) {
         while (ts.length > 0) { ts[0].remove(); ts = hdr.tabStops; }
         hdr.tabStops.add({ alignment: TabStopAlignment.LEFT_ALIGN,
                            position: Math.max(1, x2 - left) });
+        var fs = fontSignature(hdr);
+        if (fs.mixed) {
+            RESULTS.mixed_format.push("(A)(B) 머리행");
+            warn("(A)(B) 머리행 문자 서식 불균일");
+        }
         var got = hdr.contents.replace(/[\r\n]/g, "");
         if (got !== "(A)\t(B)") {
             warn("(A)(B) 머리행 내용 이상: " + got.substr(0, 40));
@@ -398,6 +429,9 @@ function packChoices(story, absIdxList, columns) {
     for (var q = 0; q < rows.length; q++) {
         var para = ps[first + q];
         try { para.appliedParagraphStyle = style; } catch (e) {}
+        resetCharFormat(doc, para);
+        var fq = fontSignature(para);
+        if (fq.mixed) RESULTS.mixed_format.push("3열 선지행");
         try {
             var ts = para.tabStops;
             while (ts.length > 0) { ts[0].remove(); ts = para.tabStops; }
@@ -495,7 +529,10 @@ function applyChoiceLayout(story, flow, starts) {
 // "is 　(A)　 for" 처럼 (X) 앞뒤의 전각 공백은 학생이 답을 쓰는 빈칸이다.
 // 한글 문자스타일(.notdef 방지) 위에 밑줄을 얹어 빈칸이 보이게 한다.
 function underlineBlanks(story, label) {
-    var pats = ["\\x{3000}+(?=\\([A-Za-z0-9]\\))", "(?<=\\([A-Za-z0-9]\\))\\x{3000}+"];
+    // 빈칸은 라벨((A))까지 포함해 하나의 연속 밑줄이어야 빈칸으로 읽힌다.
+    var pats = ["\\x{3000}+\\([A-Za-z0-9]\\)\\x{3000}+",   // 　(A)　  통짜
+                "\\x{3000}+(?=\\([A-Za-z0-9]\\))",          // 한쪽만 있는 경우
+                "(?<=\\([A-Za-z0-9]\\))\\x{3000}+"];
     var total = 0;
     for (var i = 0; i < pats.length; i++) {
         app.findGrepPreferences = NothingEnum.NOTHING;
@@ -510,6 +547,59 @@ function underlineBlanks(story, label) {
     }
     RESULTS.blanks_underlined += total;
     wlog(label + " 빈칸 밑줄: " + total + "건");
+}
+
+// ── (4) 답란류 단락이 두 줄로 넘치면 자간을 줄여 한 줄에 맞춘다 ──────────
+// 대상: 괄호/빈칸만으로 이뤄진 답란 (내용 글자가 없어 자간 축소가 안전)
+function fitAnswerLinesToOneLine(story, label) {
+    var fixed = 0, failed = [];
+    var ps = story.paragraphs;
+    for (var i = 0; i < ps.length; i++) {
+        var t = ps[i].contents.replace(/[\r\n]/g, "");
+        if (t.replace(/[\s　]/g, "").length === 0) continue;
+        // 괄호·빈칸·구분자만 있는 줄 (예: "（   ）－（   ）－…")
+        if (/[A-Za-z가-힣]/.test(t)) continue;
+        if (!/[（(]|[＿_]/.test(t)) continue;
+        var lines = 0;
+        try { lines = ps[i].lines.length; } catch (e) { continue; }
+        if (lines <= 1) continue;
+        var tr = 0;
+        while (lines > 1 && tr > -80) {
+            tr -= 10;
+            try { ps[i].tracking = tr; } catch (e) { break; }
+            try { doc.recompose(); } catch (e) {}
+            ps = story.paragraphs;
+            try { lines = ps[i].lines.length; } catch (e) { break; }
+        }
+        if (lines <= 1) { fixed++; }
+        else { failed.push(t.substr(0, 30)); try { ps[i].tracking = 0; } catch (e) {} }
+    }
+    RESULTS.oneline_fitted += fixed;
+    if (failed.length) RESULTS.oneline_failed = RESULTS.oneline_failed.concat(failed);
+    wlog(label + " 답란 한 줄 맞춤: " + fixed + "건" +
+         (failed.length ? " / 실패 " + failed.length : ""));
+}
+
+// ── (5) 마지막 페이지 크레딧 (스니펫 배치) ──────────────────────────────
+function placeCredit(doc, credit) {
+    if (!credit || !credit.items) return;
+    var last = doc.pages[doc.pages.length - 1];
+    for (var i = 0; i < credit.items.length; i++) {
+        var it = credit.items[i];
+        var f = new File(it.file);
+        if (!f.exists) { warn("크레딧 스니펫 없음: " + it.file); continue; }
+        var placed = null;
+        try { placed = last.place(f); } catch (e) { warn("크레딧 배치 실패: " + e.message); continue; }
+        var obj = (placed instanceof Array) ? placed[0] : placed;
+        if (!obj) continue;
+        try {
+            var gb = obj.geometricBounds;
+            var h = gb[2] - gb[0], w = gb[3] - gb[1];
+            obj.geometricBounds = [it.y, it.x, it.y + h, it.x + w];
+        } catch (e) { warn("크레딧 위치 지정 실패: " + e.message); }
+        RESULTS.credit_placed.push(it.file.split("/").pop());
+    }
+    wlog("크레딧 배치: " + RESULTS.credit_placed.length + "건 (p" + last.name + ")");
 }
 
 // ── 오버플로우 시 페이지·프레임 증설 ────────────────────────────────────
@@ -695,6 +785,25 @@ function fixWideSpaces(doc, story, styleName, label) {
     wlog(label + " 전각공백 보정: " + n + "건");
 }
 
+// ── 출력물 불변식 계측 (파서/플랜과 독립 — gate.py 원칙) ────────────────
+// 긴 빈칸이 들어간 짧은 단락이 '지문' 스타일이면 서술형 답란이 지문처럼 조판된 것.
+function auditAnswerLines(story, passageStyleLeaf) {
+    var ps = story.paragraphs;
+    for (var i = 0; i < ps.length; i++) {
+        var t = ps[i].contents.replace(/[\r\n]/g, "");
+        if (t.length > 200) continue;
+        if (!/[＿_]{5,}/.test(t)) continue;
+        var nm = ps[i].appliedParagraphStyle.name;
+        if (nm === passageStyleLeaf) {
+            RESULTS.answer_line_as_passage.push(t.substr(0, 40));
+        }
+    }
+    if (RESULTS.answer_line_as_passage.length > 0) {
+        warn("답란이 지문 스타일로 조판됨: " +
+             RESULTS.answer_line_as_passage.length + "건");
+    }
+}
+
 // ── 뒤쪽 빈 페이지 → 메모 마스터 ────────────────────────────────────────
 function memoizeBlankPages(doc, memoPrefix, unitPrefixes) {
     var memo = findMaster(doc, memoPrefix);
@@ -769,6 +878,7 @@ try {
     // 빈칸((X) 앞뒤 전각공백)에 밑줄 — 머리행을 탭으로 바꾼 뒤에 실행해야
     // 머리행의 칸 사이 공백이 밑줄로 오인되지 않는다
     underlineBlanks(bodyStory, "본문");
+    fitAnswerLinesToOneLine(bodyStory, "본문");
     expandStory(doc, bodyStory, "본문(레이아웃 후)");
 
     try { doc.recompose(); } catch (e) {}
@@ -787,6 +897,10 @@ try {
     var um = ops.unit_masters || {};
     if (um.body) applyUnitMasters(doc, bodyStory, bodyLabels, um.body, "본문");
     if (um.answers && ansStory) applyUnitMasters(doc, ansStory, ansLabels, um.answers, "정답지");
+
+    auditAnswerLines(bodyStory, "!박스-내용_");
+
+    if (ops.credit) placeCredit(doc, ops.credit);
 
     if (ops.memo_master) {
         var prefixes = [];

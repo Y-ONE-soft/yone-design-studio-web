@@ -27,9 +27,13 @@
   - v1은 프레임 브레이크를 JSX가 재탐색해 걸었다 → v2는 유닛 경계가 곧
     프레임 브레이크(문항 1개 = 유닛 1개). 텍스트 무변형이라 검수 1:1 대조 가능.
 """
+import os
 import re
 
 from core.structure.style_resolver import load_style_map
+
+_ASSETS = os.path.join(os.path.dirname(os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__)))), "core", "assets")
 
 _MATERIAL = "baenje"
 
@@ -157,6 +161,13 @@ def content_to_plan(content, log=None):
             "wide_space_style": "한글",
             "memo_master": "B",
             "keep_block_in_spread": "answers",
+            # 마지막 페이지 크레딧 (배재보카 크레딧 스니펫 — 서식 그대로)
+            "credit": {"items": [
+                {"file": os.path.join(_ASSETS, "credit_yone.idms"),
+                 "x": 23.0, "y": 96.0},
+                {"file": os.path.join(_ASSETS, "copyright_yone.idms"),
+                 "x": 23.0, "y": 258.0},
+            ]},
         },
         "warnings": warnings,
     }
