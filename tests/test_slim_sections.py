@@ -394,3 +394,20 @@ def test_postprocess_preserves_full_version():
     assert '_슬림{ext}' in src
     assert '"output_indd": slim_indd' in src
     assert '"full_path": indd_path' in src
+
+
+def test_swap_removes_leftover_source_copy(tmp_path):
+    """업로드 사본의 원본을 남기면 게이트가 '미사용 원고'로 지목한다."""
+    up = tmp_path / "uploads"
+    up.mkdir()
+    names = ["manuscripts_Step2 A1 어법선택.docx",
+             "manuscripts_직전 보충 자료.docx"]
+    for n in names:
+        (up / n).write_text(n, encoding="utf-8")
+    uploaded = {"manuscripts": [str(up / n) for n in names]}
+    (tmp_path / "slim_rename.txt").write_text("어법 선택>어법 수정",
+                                              encoding="utf-8")
+    grammar_swap.swap_grammar_manuscript(str(tmp_path), uploaded,
+                                         lambda m: None)
+    assert not (up / "manuscripts_직전 보충 자료.docx").exists()
+    assert (up / "manuscripts_Step2 A1 어법선택.docx").exists()

@@ -167,6 +167,13 @@ def swap_grammar_manuscript(job_dir, uploaded, log):
         shutil.copy2(src, dst)
         if src in paths:
             paths.remove(src)
+        # 업로드 사본의 원본 파일을 남겨 두면 검수 게이트가 '미사용 원고'로
+        # 지목한다 (슬롯 이름으로 이미 복사했으므로 내용 손실 없음 —
+        # job_dir/uploads 사본일 뿐 GDrive 원고는 무접촉).
+        try:
+            os.remove(src)
+        except OSError:
+            pass
     if dst not in paths:
         paths.append(dst)
 
