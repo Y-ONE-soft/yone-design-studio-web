@@ -100,8 +100,15 @@ class VertToHorizEngine(BaseEngine):
         return "convert_log.txt"
 
     @property
+    def completion_marker(self):
+        # run.jsx 마지막 줄. 이 표식이 없으면 러너가 로그 무갱신만 보고
+        # 판정해, **정상 완료를 스톨로 오보고**한다 (2026-08-18 실측:
+        # 00:42:53 저장 완료 → 00:47 "InDesign 스톨" 실패 처리).
+        return "=== 작업 완료 ==="
+
+    @property
     def jsx_timeout(self):
-        return 900  # 15분
+        return 1800  # 30분 — 실측 21분 (개발가이드 기록)
 
     @property
     def upload_spec(self):

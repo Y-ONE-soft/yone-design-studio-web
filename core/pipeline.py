@@ -146,8 +146,16 @@ def run_pipeline(engine, job_id: str, job_dir: str, uploaded: dict):
                 else:
                     log_file = os.path.join(job_dir, log_filename)
                 jsx_timeout = getattr(engine, "jsx_timeout", 300)
+                # 엔진이 완료 표식을 선언하면 러너가 그 줄을 보고 즉시 끝낸다.
+                # 없으면 종전대로 로그 무갱신(stall)로만 판정하는데, 그러면
+                # **정상 완료가 스톨로 오보고**된다 (2026-08-18 실측:
+                # vert_to_horiz 가 "=== 작업 완료 ===" 를 찍고 끝냈는데 러너가
+                # 300초 더 기다린 뒤 "InDesign 스톨 — 작업 보류"로 실패 처리.
+                # 산출물은 멀쩡히 저장돼 있었다). 선언 안 한 엔진은 무영향.
+                _marker = getattr(engine, "completion_marker", None)
                 indesign.run_jsx(jsx_path, log, poll_log_path=log_file,
                                  timeout=jsx_timeout,
+                                 completion_marker=_marker,
                                  cancel_check=lambda: jm.is_cancelled(job_id))
             log("[2/3] 조판 완료 ✓")
 
