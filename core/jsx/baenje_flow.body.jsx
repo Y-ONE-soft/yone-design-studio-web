@@ -552,26 +552,25 @@ function underlineBlanks(story, label) {
         }
         app.changeGrepPreferences = NothingEnum.NOTHING;
     }
-    // 전각 밑줄문자(＿)도 폰트에 따라 .notdef가 된다 → 같은 폭의 밑줄 친 공백으로.
-    // (빈칸 표현을 '밑줄 친 공백' 하나로 통일하면 폰트가 무엇이든 깨지지 않는다)
-    app.findGrepPreferences = NothingEnum.NOTHING;
-    app.changeGrepPreferences = NothingEnum.NOTHING;
-    app.findGrepPreferences.findWhat = "\\x{FF3F}+";
-    var uf = [];
-    try { uf = story.findGrep(); } catch (e) {}
-    app.findGrepPreferences = NothingEnum.NOTHING;
-    for (var u2 = uf.length - 1; u2 >= 0; u2--) {
-        var cnt = 0;
-        try { cnt = uf[u2].contents.length; } catch (e) { continue; }
-        var sp = "";
-        for (var z = 0; z < cnt * 4; z++) { sp += " "; }
-        try {
-            uf[u2].contents = sp;
-            uf[u2].underline = true;
-            uf[u2].underlineOffset = 1.2;
-            uf[u2].underlineWeight = 0.5;
-            total++;
-        } catch (e) {}
+    // 전각 밑줄문자(＿)는 글리프 자체가 빈칸 선이다 — 공백으로 바꾸면 줄바꿈에서
+    // 사라지므로 그대로 두고, 폰트만 한글 폰트로 바꿔 .notdef를 막는다.
+    var csK = findCharStyleAnywhere(doc, "한글");
+    if (csK) {
+        app.findGrepPreferences = NothingEnum.NOTHING;
+        app.changeGrepPreferences = NothingEnum.NOTHING;
+        app.findGrepPreferences.findWhat = "\\x{FF3F}+";
+        var uf = [];
+        try { uf = story.findGrep(); } catch (e) {}
+        app.findGrepPreferences = NothingEnum.NOTHING;
+        var fixedU = 0;
+        for (var u2 = 0; u2 < uf.length; u2++) {
+            var size = null;
+            try { size = uf[u2].paragraphs[0].appliedParagraphStyle.pointSize; } catch (e) {}
+            try { uf[u2].appliedCharacterStyle = csK; } catch (e) { continue; }
+            if (size) { try { uf[u2].pointSize = size; } catch (e) {} }
+            fixedU++;
+        }
+        wlog(label + " 전각 밑줄문자 폰트 보정: " + fixedU + "건");
     }
     RESULTS.blanks_underlined += total;
     wlog(label + " 빈칸 밑줄: " + total + "건");
