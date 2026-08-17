@@ -285,6 +285,25 @@ function alignAbHeader(story, absIdx) {
             warn("(A)(B) 머리행 내용 이상: " + got.substr(0, 40));
             return false;
         }
+        // 실측 보정: 조판 결과의 실제 x가 목표(x1/x2)와 어긋나면 그만큼 당긴다
+        // (탭/들여쓰기 기준점이 프레임 인셋과 다를 수 있어 좌표 계산만으론 부족)
+        for (var it = 0; it < 4; it++) {
+            try { doc.recompose(); } catch (e) {}
+            ps = story.paragraphs;
+            hdr = ps[absIdx];
+            var curA = charX(hdr, 0);
+            var curB = charX(hdr, 4);
+            if (curA === null || curB === null) break;
+            var dA = x1 - curA, dB = x2 - curB;
+            if (Math.abs(dA) < 0.2 && Math.abs(dB) < 0.2) break;
+            try {
+                if (Math.abs(dA) >= 0.2) hdr.firstLineIndent = hdr.firstLineIndent + dA;
+                if (Math.abs(dB) >= 0.2) {
+                    var t0 = hdr.tabStops[0];
+                    t0.position = t0.position + dB - (Math.abs(dA) >= 0.2 ? dA : 0);
+                }
+            } catch (e) { break; }
+        }
         return true;
     } catch (e) { warn("(A)(B) 머리행 정렬 실패: " + e.message); return false; }
 }
