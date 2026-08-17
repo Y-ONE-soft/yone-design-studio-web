@@ -81,6 +81,27 @@
     var newSpineCenterX = spineLeftX + newSpine / 2;
     var abHeight = abTop - abBottom;
 
+    // 안내선(가이드) 판별.
+    // 세로 안내선은 geometricBounds 폭이 0이라 currentSpine이 작을 때(허용오차 5mm 안)
+    // 세네카 박스로 오인된다 → newSpine/0 = Infinity → resize() Error 1242.
+    // 인쇄되지 않는 개체이므로 조정 대상에서 통째로 제외한다.
+    function isGuideItem(item) {
+        try {
+            if (item.typename === "PathItem" || item.typename === "CompoundPathItem") {
+                return item.guides === true;
+            }
+        } catch (e) {}
+        return false;
+    }
+
+    // resize 배율(%) 안전 계산 — 폭이 0/음수이거나 결과가 비정상이면 null (호출부에서 스킵)
+    function safeScalePercent(targetW, currentW) {
+        if (!(currentW > 0.001)) return null;
+        var s = (targetW / currentW) * 100;
+        if (!isFinite(s) || !(s > 0)) return null;
+        return s;
+    }
+
     // 그룹 안에 세네카 박스 후보(폭이 현재 세네카와 비슷하고 높이가 충분한 path/image)가 있는지 검사.
     // 컨테이너 그룹(BG + 텍스트 묶음) → true: 재귀해서 박스 리사이즈, 텍스트 개별 정렬
     // 단위 그룹(로고/장식) → false: 그룹째 중앙정렬, 내부 분해 안 함
@@ -88,6 +109,7 @@
         if (!group.pageItems || group.pageItems.length === 0) return false;
         for (var hi = 0; hi < group.pageItems.length; hi++) {
             var hc = group.pageItems[hi];
+            if (isGuideItem(hc)) continue;
             var hb = hc.geometricBounds;
             var hw = hb[2] - hb[0];
             var hh = hb[1] - hb[3];
@@ -135,6 +157,7 @@
         var count = 0;
         for (var bi = 0; bi < group.pageItems.length; bi++) {
             var bc = group.pageItems[bi];
+            if (isGuideItem(bc)) continue;
             var bb = bc.geometricBounds;
             var bw = bb[2] - bb[0];
             var bh = bb[1] - bb[3];
@@ -147,10 +170,14 @@
                 && Math.abs(bw - currentSpine) < SPINE_BOX_WIDTH_TOL
                 && bh > abHeight * 0.5) {
                 // 박스 발견 → 새 세네카 중앙 + newSpine 폭으로 리사이즈
+                var bsx = safeScalePercent(newSpine, bw);
+                if (bsx === null) {
+                    log("  [경고] 그룹 안 박스 폭 비정상(" + bw + "pt) — 리사이즈 스킵");
+                    continue;
+                }
                 var bcx = (bb[0] + bb[2]) / 2;
                 var bdx = newSpineCenterX - bcx;
                 if (Math.abs(bdx) > 0.001) bc.translate(bdx, 0);
-                var bsx = (newSpine / bw) * 100;
                 bc.resize(bsx, 100, true, true, true, true, false, Transformation.CENTER);
                 count++;
             } else if (bc.typename === "GroupItem") {
@@ -167,6 +194,8 @@
     //   - 앞표지 그룹 / 뒤표지 그룹 → 통째로 이동 (또는 고정)
     //   - 단일 아이템 → 세네카 박스 감지 후 리사이즈 또는 강제 중앙정렬
     function processItemRecursive(item) {
+        if (isGuideItem(item)) return;   // 안내선은 인쇄 대상이 아니므로 손대지 않음
+
         var wasLocked = item.locked;
         if (wasLocked) item.locked = false;
 
@@ -197,8 +226,12 @@
                         // 그룹 가로 확대는 자식 모두 같이 확대돼 디자인 깨짐 → 스킵
                         skippedBG++;
                     } else {
-                        var bgScale = (itemWidth + diff) / itemWidth * 100;
-                        item.resize(bgScale, 100, true, true, true, true, true, Transformation.TOPLEFT);
+                        var bgScale = safeScalePercent(itemWidth + diff, itemWidth);
+                        if (bgScale !== null) {
+                            item.resize(bgScale, 100, true, true, true, true, true, Transformation.TOPLEFT);
+                        } else {
+                            log("  [경고] 배경 폭 비정상(" + itemWidth + "pt) — 리사이즈 스킵");
+                        }
                         skippedBG++;
                     }
                 } else {
@@ -249,16 +282,19 @@
                 var widthMatchesSpine = Math.abs(itemWidth - currentSpine) < SPINE_BOX_WIDTH_TOL;
                 var heightMatchesCover = itemHeight > abHeight * SPINE_BOX_HEIGHT_RATIO;
                 var isSpineBox = isPath && widthMatchesSpine && heightMatchesCover;
+                var sx = isSpineBox ? safeScalePercent(newSpine, itemWidth) : null;
 
-                if (isSpineBox && hasSpineChange) {
+                if (isSpineBox && hasSpineChange && sx !== null) {
                     // 세네카 박스 → 새 세네카 중앙에 맞추고 newSpine 폭으로 리사이즈
                     var boxCenterDx = newSpineCenterX - itemCenterX;
                     if (Math.abs(boxCenterDx) > 0.001) item.translate(boxCenterDx, 0);
-                    var sx = (newSpine / itemWidth) * 100;
                     item.resize(sx, 100, true, true, true, true, false, Transformation.CENTER);
                     resizedSpine++;
                     log("  세네카 박스 리사이즈: " + item.typename
                          + " (" + Math.round(itemWidth/MM*10)/10 + "mm → " + Math.round(newSpine/MM*10)/10 + "mm)");
+                } else if (isSpineBox && hasSpineChange) {
+                    log("  [경고] 세네카 박스 폭 비정상(" + itemWidth + "pt) — 리사이즈 스킵: " + item.typename);
+                    skippedBG++;
                 } else {
                     // 일반 세네카 아이템(텍스트/로고/장식) → 새 세네카 중앙으로 강제 정렬
                     var dx = newSpineCenterX - itemCenterX;
@@ -279,6 +315,8 @@
     // 아웃라인 후 재중앙정렬 (PDF 출력 직전에 호출) — 글리프 바운드 기준 정확 정렬
     function recenterSpineItemsRecursive(newLeft, newRight, newCenter) {
         function recurse(item) {
+            if (isGuideItem(item)) return;   // 안내선 제외 (메인 패스와 동일)
+
             var wasLocked = item.locked;
             if (wasLocked) item.locked = false;
 
