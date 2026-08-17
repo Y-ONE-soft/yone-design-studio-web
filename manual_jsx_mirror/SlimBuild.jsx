@@ -600,6 +600,15 @@
         return runs;
     }
 
+    // 간지 블록만 대상 — 런의 마지막 페이지에 단원 제목 프레임이 있어야 한다.
+    // 판권(크레딧) 페이지도 [없음] 마스터지만 텍스트 프레임이 0개이고,
+    // 판권은 왼쪽이 정상(책은 오른쪽에서 시작해 왼쪽에서 끝난다)이라
+    // 이 필터가 없으면 판권 앞에 메모를 끼워 파리티를 되레 깨뜨린다.
+    function isDividerRun(run) {
+        try { return doc.pages[run.end].textFrames.length > 0; }
+        catch (e) { return false; }
+    }
+
     function fixDividerSpreads() {
         var memoMaster = masterByPrefix(CFG.memo_master);
         if (!memoMaster) {
@@ -611,8 +620,8 @@
             var runs = noMasterRuns();
             var target = -1;
             for (var r = 0; r < runs.length; r++) {
-                var lastPg = doc.pages[runs[r].end];
-                if (!isRight(lastPg)) { target = r; break; }
+                if (!isDividerRun(runs[r])) { continue; }   // 판권 등 제외
+                if (!isRight(doc.pages[runs[r].end])) { target = r; break; }
             }
             if (target < 0) break;
 
@@ -668,6 +677,7 @@
         log("[간지 스프레드 정렬]");
         var runsBefore = noMasterRuns();
         for (var rb = 0; rb < runsBefore.length; rb++) {
+            if (!isDividerRun(runsBefore[rb])) continue;
             var s0 = doc.pages[runsBefore[rb].start], e0 = doc.pages[runsBefore[rb].end];
             log("  블록 p" + s0.name + "~p" + e0.name +
                 " 끝=" + (isRight(e0) ? "오른쪽 OK" : "왼쪽 ← 보정 필요"));
@@ -675,12 +685,14 @@
         var n = fixDividerSpreads();
         log("  메모 페이지 " + n + "장 삽입");
         var runsAfter = noMasterRuns();
-        var bad = 0;
+        var bad = 0, nDiv = 0;
         for (var ra = 0; ra < runsAfter.length; ra++) {
+            if (!isDividerRun(runsAfter[ra])) continue;
+            nDiv++;
             if (!isRight(doc.pages[runsAfter[ra].end])) bad++;
         }
         if (bad > 0) log("[경고] 정렬 후에도 어긋난 간지 블록 " + bad + "건");
-        else log("  간지 블록 " + runsAfter.length + "개 전부 (왼쪽,오른쪽) 구성 확인");
+        else log("  간지 블록 " + nDiv + "개 전부 (왼쪽,오른쪽) 구성 확인");
     }
 
     // ─────────────────────────────────────────────────────────────
