@@ -20,8 +20,23 @@
             }
         } catch (e) {}
     }
-    // 한글 경로는 NFD/NFC 가 갈려 비교가 실패한다 — 문서가 하나뿐이면 그것을 쓴다
-    if (doc === null && app.documents.length === 1) { doc = app.documents[0]; }
+    // ☠ "문서가 하나뿐이면 그것을 쓴다" 폴백 금지 — 한글 경로는 NFD/NFC 가
+    //    갈려 위 비교가 자주 실패하는데, 그때 **다른 세션/사용자가 열어둔 남의
+    //    문서**를 대상으로 삼는다. 실측 2026-08-17: 검수 시점에 열려 있던
+    //    '한영2_분석본01' 을 덤프해 빈칸 0건([])이 나왔고, 그 빈 결과가
+    //    타임아웃으로 이어져 **빈칸 대조가 통째로 건너뛰어졌다**.
+    //    이름(파일명)으로 한 번 더 찾고, 그래도 없으면 경로로 연다
+    //    (이미 열려 있으면 app.open 이 그 문서 참조를 돌려준다).
+    if (doc === null) {
+        var wantName = String(new File(INDD).name);
+        for (i = 0; i < app.documents.length; i++) {
+            try {
+                if (String(app.documents[i].name) == wantName) {
+                    doc = app.documents[i]; break;
+                }
+            } catch (e) {}
+        }
+    }
     if (doc === null) {
         doc = app.open(new File(INDD), false);
         openedByUs = true;

@@ -54,9 +54,13 @@ def dump(indd, timeout=480):
         'tell application id "com.adobe.InDesign" to do script '
         '(POSIX file "%s") language javascript' % run,
     ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    # ⚠ "크기 > 2" 로 기다리면 빈 결과 "[]"(정확히 2바이트)를 영영 못 받아
+    #    8분을 다 쓰고 타임아웃한다 — 검사가 안 돈 것과 구분도 안 된다
+    #    (실측 2026-08-17). 빈 배열도 **정상 응답**으로 받고, 0건이라는 사실을
+    #    호출부가 판단하게 한다.
     for _ in range(timeout // 2):
         time.sleep(2)
-        if os.path.exists(_DUMP) and os.path.getsize(_DUMP) > 2:
+        if os.path.exists(_DUMP) and os.path.getsize(_DUMP) >= 2:
             time.sleep(2)
             try:
                 return json.load(open(_DUMP, encoding="utf-8"))
@@ -123,6 +127,11 @@ def run(indd, num2code, manuscript_base, grade_num="1", log=None):
     rows = dump(indd)
     if rows is None:
         return 0, ["빈칸 대조: InDesign 덤프 실패 (검사 못 함)"]
+    if not rows:
+        # 빈칸 섹션을 한 페이지도 못 찾았다 = 대상 문서를 잘못 잡았거나
+        # 러닝 라벨이 없다. "0건 일치"로 통과시키면 안 된다.
+        return 0, ["빈칸 대조: 빈칸 섹션을 찾지 못함 — 대상 문서/러닝 라벨 확인 "
+                   "(검사 못 함)"]
 
     got = {}
     for r in rows:
