@@ -248,7 +248,18 @@ function alignAbHeader(story, absIdx) {
     }
     if (x1 === null || x2 === null) return false;
     try {
-        hdr.contents = "(A)\t(B)";
+        // 단락 객체에 contents를 대입하면 끝의 단락기호까지 교체돼 다음 선지가
+        // 병합된다 → 단락기호를 뺀 문자 범위만 교체
+        var hLen = hdr.characters.length;
+        var hLast = "";
+        try { hLast = hdr.characters[hLen - 1].contents; } catch (e) {}
+        var hEnd = (hLast === "\r" && hLen >= 2) ? hLen - 2 : hLen - 1;
+        var hRange = story.characters.itemByRange(hdr.characters[0].index,
+                                                 hdr.characters[hEnd].index);
+        if (!hRange.isValid) return false;
+        hRange.contents = "(A)\t(B)";
+        ps = story.paragraphs;
+        hdr = ps[absIdx];
         hdr.leftIndent = 0;
         hdr.firstLineIndent = Math.max(0, x1 - left);
         hdr.justification = Justification.LEFT_ALIGN;
@@ -256,6 +267,11 @@ function alignAbHeader(story, absIdx) {
         while (ts.length > 0) { ts[0].remove(); ts = hdr.tabStops; }
         hdr.tabStops.add({ alignment: TabStopAlignment.LEFT_ALIGN,
                            position: Math.max(1, x2 - left) });
+        var got = hdr.contents.replace(/[\r\n]/g, "");
+        if (got !== "(A)\t(B)") {
+            warn("(A)(B) 머리행 내용 이상: " + got.substr(0, 40));
+            return false;
+        }
         return true;
     } catch (e) { warn("(A)(B) 머리행 정렬 실패: " + e.message); return false; }
 }
