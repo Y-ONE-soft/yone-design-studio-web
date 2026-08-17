@@ -22,6 +22,7 @@ import json
 import os
 import re
 import shutil
+import time
 import unicodedata
 
 from core.base import BaseEngine, safe_copy_indd, safe_copy
@@ -1192,12 +1193,26 @@ class WorkbookSelectEngine(WorkbookV2Engine):
         pdf_path = settings.get("pdf_path", "")
         pdf_pages = None
         if pdf_path and os.path.exists(pdf_path):
-            try:
-                from pypdf import PdfReader
-                pdf_pages = len(PdfReader(pdf_path).pages)
-                log("[검수] PDF %dp 생성 확인" % pdf_pages)
-            except Exception:
-                warnings.append("PDF 페이지수 확인 실패")
+            # export 직후라 파일이 아직 다 안 쓰였거나(대형 PDF), GDrive/iCloud
+            # 파일이 materialize 전이면 읽기가 실패한다 — 한 번에 포기하지 말고
+            # 잠깐 기다렸다 다시 본다. 그리고 **왜 실패했는지 반드시 남긴다**
+            # (2026-08-17: "PDF 페이지수 확인 실패"만 뜨고 원인을 알 수 없었다.
+            #  재실행하니 멀쩡히 읽혔다).
+            err = None
+            for attempt in range(3):
+                try:
+                    from pypdf import PdfReader
+                    pdf_pages = len(PdfReader(pdf_path).pages)
+                    log("[검수] PDF %dp 생성 확인" % pdf_pages)
+                    err = None
+                    break
+                except Exception as e:                    # noqa: BLE001
+                    err = "%s: %s" % (type(e).__name__, e)
+                    if attempt < 2:
+                        log("[검수] PDF 읽기 재시도 (%s)" % err)
+                        time.sleep(5)
+            if err:
+                warnings.append("PDF 페이지수 확인 실패 — %s" % err)
         else:
             warnings.append("PDF 미생성")
             pdf_path = None

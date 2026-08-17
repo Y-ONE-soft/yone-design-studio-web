@@ -45,6 +45,10 @@ _OBJ = "￼"
 _FILE_KEY = {"어휘": "빈칸어휘", "어법": "빈칸어법"}
 
 
+class _ManuscriptUnreadable(Exception):
+    """원고 파일 하나를 못 읽었다 — 그 후보만 건너뛰기 위한 표식."""
+
+
 def _nfc(s):
     return unicodedata.normalize("NFC", s)
 
@@ -80,10 +84,47 @@ def dump(indd, timeout=480):
     return None
 
 
+def _materialize(path, tries=3):
+    """GDrive/iCloud 파일을 실제로 내려받게 강제한다 → 성공 여부.
+
+    파일이 목록에는 보이지만 아직 로컬에 없으면(dataless) 읽기가 실패하거나
+    앞부분만 읽혀 "File is not a zip file" 이 난다. 2026-08-17 실측: 조판
+    직후 검수에서 이 이유로 빈칸 대조가 통째로 죽었는데, 잠시 뒤 다시
+    돌리니 32지문 전부 정상이었다.
+    """
+    for attempt in range(tries):
+        try:
+            with open(path, "rb") as f:
+                head = f.read(4)
+                while f.read(1 << 20):
+                    pass
+            if head[:2] == b"PK":       # docx = zip
+                return True
+        except OSError:
+            pass
+        if attempt < tries - 1:
+            time.sleep(3)
+    return False
+
+
 def _ms_blanks(path, qq):
-    """원고 파일에서 no.qq 블록의 영문 문장별 빈칸 개수 리스트."""
+    """원고 파일에서 no.qq 블록의 영문 문장별 빈칸 개수 리스트.
+
+    읽기 실패는 None 으로 돌려 **그 후보만 건너뛴다** — 원고 하나 때문에
+    검사 전체가 죽으면 안 된다(2026-08-17: 후보 한 개가 못 읽혀
+    "빈칸 대조 실패(검사 못 함)" 로 32지문 검사가 통째로 날아갔다).
+    """
     from engines.workbook.parser import _docx_extract_paragraphs
-    paras = _docx_extract_paragraphs(path, False)
+    try:
+        paras = _docx_extract_paragraphs(path, False)
+    except Exception:                                       # noqa: BLE001
+        if not _materialize(path):
+            raise _ManuscriptUnreadable(os.path.basename(path))
+        try:
+            paras = _docx_extract_paragraphs(path, False)
+        except Exception as e:                              # noqa: BLE001
+            raise _ManuscriptUnreadable(
+                "%s (%s)" % (os.path.basename(path), e))
     txt = [(p.get("text") if isinstance(p, dict) else str(p)) or ""
            for p in paras]
     hdr = re.compile(r"^\s*\d+\.\s*p\S*-no\.%d\s*$" % qq)
@@ -222,9 +263,16 @@ def run(indd, num2code, manuscript_base, grade_num="1", log=None):
         stray = sum(len(re.findall(_OBJ, _OUT_SLOT.sub("", t)))
                     for _p, t in sentences)
         tried = []
+        unread = []
         matched = None
         for cand in cands:
-            exp = _ms_blanks(cand, int(code[4:6]))
+            try:
+                exp = _ms_blanks(cand, int(code[4:6]))
+            except _ManuscriptUnreadable as e:
+                # 이 후보만 건너뛴다 — 다른 후보로 대조가 될 수 있다
+                unread.append(str(e))
+                log("  [빈칸] 원고 읽기 실패, 건너뜀: %s" % e)
+                continue
             if exp is None:
                 continue
             tried.append((os.path.basename(cand), sum(exp)))
@@ -232,6 +280,12 @@ def run(indd, num2code, manuscript_base, grade_num="1", log=None):
                 matched = (os.path.basename(cand), sum(exp))
                 break
         if not tried:
+            if unread:
+                # 후보를 하나도 못 읽었다 = 검사를 못 한 것 (통과 아님)
+                checked += 1
+                fails.append("빈칸 대조 불가: p%s 마더텅%s %s — 원고를 못 읽음 "
+                             "(%s)" % (sentences[0][0], lbl, kind,
+                                       ", ".join(unread[:2])))
             continue
         checked += 1
         page = sentences[0][0]
