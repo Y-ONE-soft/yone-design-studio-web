@@ -961,6 +961,11 @@
 
         allowShuffleAll(newDoc);
 
+        // 좌표계 정규화 — 결합(복제+지오메트리 복원) 구간 동안만 PAGE_ORIGIN.
+        // 결합이 끝나면 rulerPrevNew로 템플릿 원래 설정을 되돌린다.
+        var rulerPrevNew = normalizeRuler(newDoc);
+        var rulerPrevSrc = {};   // uri -> prev (소스 문서 원상복구용)
+
         // [W28-확장] 템플릿 페이지 크기 (doc 소스 호환성 대조 기준)
         var TPL_W = 0, TPL_H = 0;
         try {
@@ -991,6 +996,8 @@
                 try {
                     var got = getDoc(cf, docCache);
                     if (got.opened) openedByUs[uri] = true;
+                    // 소스도 결합본과 같은 좌표계로 (닫기 전 원상복구)
+                    rulerPrevSrc[uri] = normalizeRuler(got.doc);
                     // doc 소스(교과서/EBS)는 마커 매칭을 쓰지 않는다
                     fileMarkers[uri] = isDoc ? [] : findAllMarkers(got.doc);
                     try { tagStoryLabels(got.doc); } catch (eTag) {}
@@ -1237,6 +1244,12 @@
             }
         }
 
+        // 결합 끝 — 좌표계 원상복구 (이후 간지/저장은 템플릿 원래 설정 기준)
+        restoreRuler(newDoc, rulerPrevNew);
+        for (var uriR in rulerPrevSrc) {
+            try { restoreRuler(docCache[uriR], rulerPrevSrc[uriR]); } catch (eRr2) {}
+        }
+
         // rethread
         for (var rgi = 0; rgi < codeRanges.length; rgi++) {
             try {
@@ -1324,7 +1337,11 @@
                      report.unresolved.join(", "));
         }
         writeLog("지오메트리: 교정 전 최대 " + report.geometry.max_drift_before_mm +
-                 "mm → 잔여 " + report.geometry.max_residual_mm + "mm");
+                 "mm → 잔여 " + report.geometry.max_residual_mm + "mm" +
+                 (report.geometry.oversized_drift.length
+                     ? " / 과대 드리프트 " +
+                       report.geometry.oversized_drift.length + "건(이동 생략)"
+                     : ""));
 
         writeReport(report);
 

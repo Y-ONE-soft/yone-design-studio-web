@@ -584,8 +584,11 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
         geo = report.get("geometry") or {}
         max_drift = geo.get("max_residual_mm")
         mismatch = geo.get("count_mismatch_pages") or []
+        # 좌표계 불일치(소스 PAGE_ORIGIN vs 템플릿 SPREAD_ORIGIN)면 페이지폭
+        # 만큼의 드리프트가 잡힌다 — JSX가 이동을 생략하고 여기에 기록한다.
+        oversized = geo.get("oversized_drift") or []
         geo_ok = (max_drift is not None and max_drift <= self.GEO_TOL_MM
-                  and not mismatch)
+                  and not mismatch and not oversized)
         gates["geometry_ok"] = geo_ok
         if max_drift is None:
             warnings.append("지오메트리 리포트 없음")
@@ -595,6 +598,11 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
                 f"(교정 전 최대 {geo.get('max_drift_before_mm')}mm)")
         if mismatch:
             warnings.append(f"페이지 아이템 수 불일치: {mismatch}")
+        if oversized:
+            pages = sorted({str(o.get("page")) for o in oversized})
+            warnings.append(
+                f"과대 드리프트 {len(oversized)}건(이동 생략, 좌표계 불일치 "
+                f"의심) — 페이지 {', '.join(pages)}")
 
         # ── 게이트 3: 링크 (스펙 4) ─────────────────────────────────
         links = report.get("links") or {}
@@ -721,6 +729,7 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
             "geometry": {
                 "max_drift_before_mm": geo.get("max_drift_before_mm"),
                 "max_residual_mm": max_drift,
+                "oversized_drift": oversized,
             },
             "links": links,
             "ganji": ganji,
