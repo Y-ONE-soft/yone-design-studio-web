@@ -158,20 +158,25 @@ function frameStoryOnPage(page, story) {
 }
 
 // ── 페이지 추가 (블록 안에서만) ─────────────────────────────────────────────
-// 기준 페이지를 복제해 바로 뒤에 넣고, 지정 영역 프레임들을 비워서 돌려준다.
+// 기준 페이지가 속한 '스프레드'를 복제해 바로 뒤에 넣는다.
+// 한 장씩 넣으면 홀수 장이 추가된 순간 이후 페이지의 좌/우가 뒤집혀
+// 좌우 전용 마스터(헤더 있는 쪽/없는 쪽)가 어긋난다.
 function appendPageLike(refPage, cat) {
-    var np;
-    try { np = refPage.duplicate(LocationOptions.AFTER, refPage); }
-    catch (e) { wlog("[경고] 페이지 복제 실패: " + e); return []; }
-    var info = pageInfo(np);
+    var sp, ns;
+    try { sp = refPage.parent; } catch (e0) { return []; }
+    try { ns = sp.duplicate(LocationOptions.AFTER, sp); }
+    catch (e) { wlog("[경고] 스프레드 복제 실패: " + e); return []; }
     var out = [];
-    for (var i = 0; i < info.frames.length; i++) {
-        if (info.cat !== cat) { break; }
-        var fr = info.frames[i];
-        try { fr.previousTextFrame = null; } catch (e2) {}
-        try { fr.nextTextFrame = null; } catch (e3) {}
-        try { fr.contents = ""; } catch (e4) {}
-        out.push(fr);
+    for (var q = 0; q < ns.pages.length; q++) {
+        var info = pageInfo(ns.pages[q]);
+        if (info.cat !== cat) { continue; }
+        for (var i = 0; i < info.frames.length; i++) {
+            var fr = info.frames[i];
+            try { fr.previousTextFrame = null; } catch (e2) {}
+            try { fr.nextTextFrame = null; } catch (e3) {}
+            try { fr.contents = ""; } catch (e4) {}
+            out.push(fr);
+        }
     }
     return out;
 }
@@ -333,7 +338,7 @@ try {
             }
             pre++;
         }
-        if (pre) { wlog(label + ": 페이지 " + pre + "장 선확보 (프레임 " + frames.length + ")"); }
+        if (pre) { wlog(label + ": 스프레드 " + pre + "개 선확보 (프레임 " + frames.length + ")"); }
         var story = chainFrames(frames);
         if (!story) { wlog("[경고] " + label + ": 스토리 없음"); return; }
 
@@ -427,7 +432,7 @@ try {
             checkBudget(label + " 해설 페이지 선확보");
             stepStart();
         }
-        if (pre) { wlog(label + ": 페이지 " + pre + "장 선확보 (프레임 " + have + ")"); }
+        if (pre) { wlog(label + ": 스프레드 " + pre + "개 선확보 (프레임 " + have + ")"); }
         stepStart();
         wlog(label + ": 배치 시작 (단락 " + paras.length + ")");
         placeParagraphs(story, paras);

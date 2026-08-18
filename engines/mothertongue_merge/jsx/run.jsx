@@ -469,6 +469,15 @@
         }
         writeLog("베이스 정리 → " + newDoc.pages.length + " 페이지 보존");
 
+        // 좌표계 정규화 — 결합(복제+지오메트리 복원) 구간에만 PAGE_ORIGIN.
+        // 소스 문서는 열 때마다 정규화하고(rulerPrevSrc), 끝나면 전부 원복.
+        var rulerPrevNew = normalizeRuler(newDoc);
+        var rulerPrevSrc = {};
+        for (var uriN in docCache) {
+            try { rulerPrevSrc[uriN] = normalizeRuler(docCache[uriN]); }
+            catch (eNr) {}
+        }
+
         var totalPages = newDoc.pages.length;
         var codeRanges = [];
         var unresolved = [];
@@ -541,6 +550,8 @@
 
             var grpStart = newDoc.pages.length;
             for (var p2 = matchedRange.startIdx; p2 <= matchedRange.endIdx; p2++) {
+                // [지오메트리] 소스 좌표 캡처 → 복제 → 원위치 복원
+                var srcGeo = collectGeo(matchedDoc.pages[p2]);
                 try {
                     allowShuffleTail(newDoc);
                     matchedDoc.pages[p2].duplicate(
@@ -550,6 +561,14 @@
                 } catch (eDup) {
                     writeLog("[경고] " + code + " p" + p2 +
                              " 복제 실패: " + eDup.message);
+                    continue;
+                }
+                try {
+                    restoreGeo(newDoc.pages.lastItem(), srcGeo,
+                               matchedName + " p" + (p2 + 1));
+                } catch (eRg) {
+                    writeLog("[경고] 지오메트리 복원 오류 p" + (p2 + 1) + ": " +
+                             eRg.message);
                 }
             }
             var grpEnd = newDoc.pages.length - 1;
@@ -561,6 +580,16 @@
                          " (" + (matchedRange.endIdx - matchedRange.startIdx + 1) + "p)");
             }
         }
+
+        // 좌표계 원복 — 이후 단계(rethread/저장)는 문서 원래 설정으로
+        for (var uriR in rulerPrevSrc) {
+            try { restoreRuler(docCache[uriR], rulerPrevSrc[uriR]); } catch (eRr) {}
+        }
+        restoreRuler(newDoc, rulerPrevNew);
+        writeLog("지오메트리: 교정 전 최대 " + geoRep.max_drift_before_mm +
+                 "mm → 잔여 " + geoRep.max_residual_mm + "mm" +
+                 (geoRep.oversized ? " / 과대 드리프트 " + geoRep.oversized +
+                                     "건(이동 생략)" : ""));
 
         for (var rgi = 0; rgi < codeRanges.length; rgi++) {
             try {
