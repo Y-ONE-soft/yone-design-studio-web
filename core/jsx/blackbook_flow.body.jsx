@@ -192,7 +192,11 @@ function trimBlankSpreads(pages, cat, keepPage) {
             }
         }
         if (blank && hasFrame) {
-            try { ent.spread.remove(); removed++; }
+            var nm = [];
+            for (var q = 0; q < ent.spread.pages.length; q++) {
+                try { nm.push(ent.spread.pages[q].name); } catch (e3) { nm.push("?"); }
+            }
+            try { ent.spread.remove(); removed++; wlog("   삭제: 스프레드[" + nm.join(",") + "]"); }
             catch (e2) { wlog("[경고] 빈 스프레드 삭제 실패: " + e2); }
         }
     }
