@@ -397,92 +397,112 @@ try {
              (trimmed ? " (빈 스프레드 " + trimmed + "개 삭제)" : ""));
     }
 
-    // 해설 — 슬롯 스토리에 흘리고, 넘치면 슬롯 영역 안에 페이지 삽입
-    function placeAnswers(slot, paras, label, limitPage) {
-        if (!paras.length) { return; }
-        var story = slot.story;
-        // 해설 프레임이 모자라면 오버셋 상태로 스타일이 적용돼 극단적으로 느려진다.
-        // 단락 4개당 프레임 1개로 넉넉히 잡아 미리 확보하고, 끝나면 빈 스프레드 삭제.
-        var want = Math.ceil(paras.length / 4) + 4;
-        var have = story.textContainers.length;
-        var pre = 0;
-        while (have < want && pre < 60) {
-            var anchorPg = slot.lastPage;
-            var addedPre = appendPageLike(anchorPg, "narrow");
-            if (!addedPre.length) { break; }
-            var tailF = null;
-            var contsPre = story.textContainers;
-            for (var c0 = 0; c0 < contsPre.length; c0++) {
-                var pg0 = contsPre[c0].parentPage;
-                if (pg0 && pageIndexOf(pg0) <= pageIndexOf(slot.lastPage)) { tailF = contsPre[c0]; }
+    // 해설 — 해설 영역(narrow) 프레임을 페이지 순서로 모아 과 순서대로 흘린다.
+    // (템플릿의 기존 스토리 분할은 과 경계와 무관하게 엇갈려 있어 쓰지 않는다)
+    function narrowFrames() {
+        var blocks = buildBlocks(doc);
+        var out = [];
+        for (var b = 0; b < blocks.length; b++) {
+            if (blocks[b].cat !== "narrow") { continue; }
+            for (var f = 0; f < blocks[b].frames.length; f++) { out.push(blocks[b].frames[f]); }
+        }
+        return out;
+    }
+
+    function usedFrameCount(story) {
+        var conts = story.textContainers, used = 0;
+        for (var c = 0; c < conts.length; c++) {
+            var t = "";
+            try { t = String(conts[c].contents); } catch (e) {}
+            if (t.replace(/\s/g, "").length > 0) { used = c + 1; }
+        }
+        return used;
+    }
+
+    function placeAllAnswers(lessons) {
+        var frames = narrowFrames();
+        if (!frames.length) { wlog("[경고] 해설 영역 없음"); return; }
+        var cursor = 0;
+        for (var li = 0; li < lessons.length; li++) {
+            var paras = lessons[li].answers || [];
+            if (!paras.length) { continue; }
+            var tag = (lessons[li].label || ("과" + (li + 1))) + " 해설";
+
+            // 과가 바뀌면 항상 새 스프레드에서 시작
+            var startIdx = cursor;
+            if (li > 0 && cursor < frames.length) {
+                var curSpread = null;
+                try { curSpread = String(frames[cursor - 1].parentPage.parent.id); } catch (e) {}
+                while (startIdx < frames.length) {
+                    var sid = null;
+                    try { sid = String(frames[startIdx].parentPage.parent.id); } catch (e2) {}
+                    if (sid !== curSpread) { break; }
+                    startIdx++;
+                }
             }
-            if (!tailF) { tailF = contsPre[contsPre.length - 1]; }
-            var afterF = null;
-            try { afterF = tailF.nextTextFrame; } catch (e0) {}
-            var prevF = tailF;
-            for (var a0 = 0; a0 < addedPre.length; a0++) {
-                try { prevF.nextTextFrame = addedPre[a0]; prevF = addedPre[a0]; } catch (e1) {}
+
+            // 프레임 확보 (단락 4개당 1프레임 + 여유) — 부족하면 영역 끝에 스프레드 복제
+            var want = Math.ceil(paras.length / 4) + 4;
+            var pre = 0;
+            while ((frames.length - startIdx) < want && pre < 60) {
+                var added = appendPageLike(frames[frames.length - 1].parentPage, "narrow");
+                if (!added.length) { break; }
+                frames = narrowFrames();
+                pre++;
+                checkBudget(tag + " 프레임 확보");
+                stepStart();
             }
-            if (afterF && afterF.isValid) {
-                try { prevF.nextTextFrame = afterF; } catch (e2) {}
-            }
-            slot.lastPage = addedPre[addedPre.length - 1].parentPage;
-            have = story.textContainers.length;
-            pre++;
-            checkBudget(label + " 해설 페이지 선확보");
+            if (pre) { wlog(tag + ": 스프레드 " + pre + "개 선확보"); }
+            if (startIdx >= frames.length) { wlog("[경고] " + tag + ": 남은 해설 프레임 없음"); return; }
+
+            var slice = frames.slice(startIdx);
+            var story = chainFrames(slice);
+            if (!story) { wlog("[경고] " + tag + ": 스토리 없음"); return; }
+            var startPage = null;
+            try { startPage = slice[0].parentPage; } catch (e3) {}
+            applyHeaderMaster(startPage, tag);
+            if (lessons[li].subtitle) { setSubtitle(startPage, lessons[li].subtitle); }
+
             stepStart();
-        }
-        if (pre) { wlog(label + ": 스프레드 " + pre + "개 선확보 (프레임 " + have + ")"); }
-        stepStart();
-        wlog(label + ": 배치 시작 (단락 " + paras.length + ")");
-        placeParagraphs(story, paras);
-        wlog(label + ": 스타일 적용 완료");
-        checkBudget(label + " 해설 스타일 적용");
-        stepStart();
-        var guard = 0;
-        function lastFrameInRegion() {
-            var conts = story.textContainers, best = null;
-            for (var c = 0; c < conts.length; c++) {
-                var pg = conts[c].parentPage;
-                if (!pg) { continue; }
-                if (pageIndexOf(pg) <= pageIndexOf(slot.lastPage)) { best = conts[c]; }
+            wlog(tag + ": 배치 시작 (단락 " + paras.length + ")");
+            placeParagraphs(story, paras);
+            checkBudget(tag + " 스타일 적용");
+            stepStart();
+
+            var used = usedFrameCount(story);
+            var tail = story.textContainers[story.textContainers.length - 1];
+            var guard = 0;
+            while (tail && tail.overflows && guard < 40) {
+                var more = appendPageLike(tail.parentPage, "narrow");
+                if (!more.length) { break; }
+                var prevF = tail;
+                for (var mm = 0; mm < more.length; mm++) {
+                    try { prevF.nextTextFrame = more[mm]; prevF = more[mm]; } catch (e4) {}
+                }
+                frames = narrowFrames();
+                tail = story.textContainers[story.textContainers.length - 1];
+                used = usedFrameCount(story);
+                guard++;
+                checkBudget(tag + " 페이지 추가");
+                stepStart();
             }
-            return best || story.textContainers[story.textContainers.length - 1];
+            cursor = startIdx + used;
+            wlog(tag + ": 단락 " + paras.length + " / 사용 프레임 " + used +
+                 (guard ? " (페이지 추가 " + guard + ")" : ""));
+            frames = narrowFrames();
         }
-        var tail = story.textContainers[story.textContainers.length - 1];
-        while (tail && tail.overflows && guard < 60) {
-            var anchor = lastFrameInRegion();
-            var after = null;
-            try { after = anchor.nextTextFrame; } catch (e) {}
-            var added = appendPageLike(anchor.parentPage, "narrow");
-            if (!added.length) { break; }
-            var prev = anchor;
-            for (var a = 0; a < added.length; a++) {
-                try { prev.nextTextFrame = added[a]; prev = added[a]; } catch (e2) {}
-            }
-            if (after && after.isValid) {
-                try { prev.nextTextFrame = after; } catch (e3) {}
-            }
-            slot.lastPage = added[added.length - 1].parentPage;
-            tail = story.textContainers[story.textContainers.length - 1];
-            guard++;
-            checkBudget(label + " 해설 페이지 추가");
+
+        // 마지막 과 뒤에 남은 빈 스프레드 정리
+        var restPages = [], seenP = {};
+        for (var r = cursor; r < frames.length; r++) {
+            try {
+                var pg = frames[r].parentPage;
+                var pid = String(pg.id);
+                if (!seenP[pid]) { seenP[pid] = true; restPages.push(pg); }
+            } catch (e5) {}
         }
-        applyHeaderMaster(slot.firstPage, label);
-        // 정리 범위: 이 슬롯 시작부터 다음 해설 슬롯 직전(또는 해설 구간 끝)까지 —
-        // 스토리가 안 닿은 뒤쪽 빈 페이지까지 지워야 빈 장이 남지 않는다
-        var regionPages = [];
-        var startIdx = pageIndexOf(slot.firstPage);
-        var stopIdx = limitPage ? pageIndexOf(limitPage) : doc.pages.length;
-        for (var rp = startIdx; rp < stopIdx && rp < doc.pages.length; rp++) {
-            var pgR = doc.pages[rp];
-            if (pageInfo(pgR).cat !== "narrow") { break; }
-            regionPages.push(pgR);
-        }
-        var trimmedA = trimBlankSpreads(regionPages, "narrow", slot.firstPage);
-        wlog(label + ": 단락 " + paras.length + " / 프레임 " +
-             story.textContainers.length + (guard ? " (페이지 추가 " + guard + ")" : "") +
-             (trimmedA ? " (빈 스프레드 " + trimmedA + "개 삭제)" : ""));
+        var removed = trimBlankSpreads(restPages, "narrow", null);
+        if (removed) { wlog("해설: 남은 빈 스프레드 " + removed + "개 삭제"); }
     }
 
     // ── 부제목(러닝 헤더) 슬롯 ──────────────────────────────────────────────
@@ -692,17 +712,10 @@ try {
             wlog("[경고] " + tag + ": 배치할 과 슬롯 없음 — 미조판");
         }
 
-        if ((les.answers || []).length) {
-            var aSlots2 = answerSlots(buildBlocks(doc));
-            if (li < aSlots2.length) {
-                if (les.subtitle) { setSubtitle(aSlots2[li].firstPage, les.subtitle); }
-                var limitPg = (li + 1 < aSlots2.length) ? aSlots2[li + 1].firstPage : null;
-                placeAnswers(aSlots2[li], les.answers, tag + " 해설", limitPg);
-            } else {
-                wlog("[경고] " + tag + ": 해설 슬롯 없음 — 미조판");
-            }
-        }
     }
+
+    // 해설은 본문 배치가 모두 끝난 뒤 한 번에 (페이지 증감의 영향을 받지 않도록)
+    placeAllAnswers(lessons);
 
     // 남는 슬롯의 견본 텍스트 제거
     var restSlots = lessonSlots(buildBlocks(doc));
