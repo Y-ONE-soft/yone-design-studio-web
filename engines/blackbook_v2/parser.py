@@ -14,11 +14,12 @@ import os
 import unicodedata
 
 from engines.blackbook.kind_parser import (
-    _sniff_paragraphs, book_title_of, classify_file, classify_filename_reason,
-    lesson_of, parse_by_kind, subtitle_of,
+    _sniff_paragraphs, book_title_of, classify_file, classify_filename,
+    classify_filename_reason, lesson_of, parse_by_kind, subtitle_of,
 )
 from engines.mockexam_v2.parser import build_ir, extract_file_paragraphs
 
+_PART1_LABEL = "PART1"
 _PART2_LABEL = "PART2"
 
 
@@ -77,10 +78,15 @@ def parse_files(paths, log=None):
             _log(f"[경고] 원고 분류 실패(무시됨): {name} — {reason}")
             continue
 
+        # 파일명에 Part 표기가 있는 구형 원고는 Part 단위로 묶는다.
+        # (어휘 원고 안의 `<3과 본문1>` 헤더 때문에 PART1이 쪼개지면 안 됨)
+        legacy = classify_filename(name) is not None
         is_part2 = kind.startswith("part2_")
-        num = None if is_part2 else lesson_of(path, texts)
+        num = None if (legacy or is_part2) else lesson_of(path, texts)
         if is_part2:
             key, label = _PART2_LABEL, _PART2_LABEL
+        elif legacy:
+            key, label = _PART1_LABEL, _PART1_LABEL
         elif num is not None:
             key, label = f"L{num}", f"{num}과"
         else:
@@ -120,7 +126,7 @@ def parse_files(paths, log=None):
         les = buckets[key]
         if not (les["vocab"] or les["problems"] or les["answers"]):
             continue
-        les["subtitle"] = (les["book"] or "") if key == _PART2_LABEL \
+        les["subtitle"] = (les["book"] or "") if les["num"] is None \
             else subtitle_of(les["book"], les["num"])
         out["lessons"].append(les)
 
