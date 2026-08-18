@@ -14,8 +14,8 @@ import os
 import unicodedata
 
 from engines.blackbook.kind_parser import (
-    _sniff_paragraphs, book_title_of, classify_file, classify_filename,
-    classify_filename_reason, lesson_of, parse_by_kind, subtitle_of,
+    _sniff_paragraphs, book_title_of, classify_file, classify_filename_reason,
+    has_part_token, lesson_of, parse_by_kind, subtitle_of,
 )
 from engines.mockexam_v2.parser import build_ir, extract_file_paragraphs
 
@@ -80,7 +80,7 @@ def parse_files(paths, log=None):
 
         # 파일명에 Part 표기가 있는 구형 원고는 Part 단위로 묶는다.
         # (어휘 원고 안의 `<3과 본문1>` 헤더 때문에 PART1이 쪼개지면 안 됨)
-        legacy = classify_filename(name) is not None
+        legacy = has_part_token(name)
         is_part2 = kind.startswith("part2_")
         num = None if (legacy or is_part2) else lesson_of(path, texts)
         if is_part2:

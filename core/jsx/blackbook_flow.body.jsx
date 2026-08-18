@@ -207,6 +207,10 @@ try {
     var plan = readJSONFile(PLAN);
     doc = app.open(File(TEMPLATE), false);
     try { doc.viewPreferences.rulerOrigin = RulerOrigin.PAGE_ORIGIN; } catch (e) {}
+    try { app.scriptPreferences.enableRedraw = false; } catch (e) {}
+    // 스마트 텍스트 리플로우가 켜져 있으면 배치 중 InDesign이 제멋대로
+    // 페이지를 붙였다 떼며 매번 재조판한다 (블록 경계도 무너짐)
+    try { doc.textPreferences.smartTextReflow = false; } catch (e) {}
 
     var styleCache = {};
     var missing = {};
@@ -260,9 +264,13 @@ try {
         // 유닛마다 프레임 하나를 쓰므로(프레임브레이크) 텍스트를 넣기 전에
         // 필요한 만큼 페이지를 미리 확보한다. 배치 뒤에 한 장씩 늘리면
         // 그때마다 스토리 전체가 재조판돼 급격히 느려진다.
+        // 유닛 수와 프레임 수가 빠듯하면(오버셋 상태) 프레임브레이크를 걸 때마다
+        // 스토리 전체가 재조판되며 급격히 느려진다. 넉넉히 확보한 뒤,
+        // 배치가 끝나면 안 쓴 스프레드를 지운다.
         var frames = block.frames.slice();
+        var want = Math.ceil(units.length * 1.7) + 2;
         var pre = 0;
-        while (frames.length < units.length && pre < 80) {
+        while (frames.length < want && pre < 80) {
             var pgAdd = appendPageLike(frames[frames.length - 1].parentPage, block.cat);
             if (!pgAdd.length) { break; }
             for (var pa = 0; pa < pgAdd.length; pa++) {
@@ -290,6 +298,7 @@ try {
             if (starts[s] < sp.length) {
                 try { sp[starts[s]].startParagraph = StartParagraph.NEXT_FRAME; } catch (e) {}
             }
+            if (s % 20 === 0) { wlog(label + ": 프레임브레이크 " + s + "/" + (starts.length - 1)); }
         }
         // 프레임 부족 → 블록 마지막 페이지 복제해서 이어붙임
         var guard = 0;

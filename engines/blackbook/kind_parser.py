@@ -433,6 +433,15 @@ def classify_content(path: str, texts: Optional[List[str]] = None) -> Optional[s
     return None
 
 
+def has_part_token(fname: str) -> bool:
+    """파일명에 'Part1' / '2부' 같은 Part 표기가 실제로 있는지."""
+    nfc = unicodedata.normalize("NFC", fname)
+    norm_low = re.sub(r"\s+", "", nfc).lower()
+    if re.search(r"part\s*\d+", norm_low):
+        return True
+    return bool(re.search(r"(?<!\d)(\d+)부", nfc))
+
+
 def classify_file(path: str, texts: Optional[List[str]] = None) -> Optional[str]:
     """파일명 우선, 실패 시 원고 구조로 분류."""
     name = os.path.basename(path)
