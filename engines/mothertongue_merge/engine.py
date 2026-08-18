@@ -305,10 +305,16 @@ class MothertongueMergeEngine(BaseEngine):
                     "required": True,
                 },
                 {
-                    "key": "result_name",
-                    "label": "결과 파일명 (확장자 제외)",
+                    "key": "issue_num",
+                    "label": "분석본 순번(주차) — 간지·파일명에 함께 쓰임",
                     "type": "text",
-                    "required": True,
+                    "required": False,
+                },
+                {
+                    "key": "result_name",
+                    "label": "결과 파일명 (확장자 제외 — 비우면 자동 생성)",
+                    "type": "text",
+                    "required": False,
                 },
             ]
         }
@@ -524,7 +530,17 @@ class MothertongueMergeEngine(BaseEngine):
                     log(f"  [경고] 해결 불가: 강 {ln} 코드 {code} — "
                         f"1차/폴백 모두 없음{_extra}")
 
+                # 헤더(머리말) — 마더텅 지문번호 "13강 | 1번"
+                #   라벨칸=강, 코드칸=엑셀 순서 기준 지문 번호(row_offset+1).
+                #   원본 코드("고1 23년 9월 36번")를 그대로 두면 마더텅 교재
+                #   번호와 어긋난다(2026-08-18 피드백).
+                try:
+                    _ln_int = int(str(ln).lstrip("0") or "0")
+                except ValueError:
+                    _ln_int = ln
                 passage_entries.append({
+                    "header_label": f"{_ln_int}강",
+                    "header_code": f"{row_offset + 1}번",
                     "code": code,
                     "year": year,
                     "month": month,
@@ -549,14 +565,67 @@ class MothertongueMergeEngine(BaseEngine):
 
     # ─── prepare_jsx ───────────────────────────────────────────────
 
+    @staticmethod
+    def _school_abbrev(school):
+        """폴더/엑셀용 학교명 → 파일명 축약. "한영고1" → "한영1"."""
+        return re.sub(r"고(\d)$", r"\1", _nfc(school or "").strip())
+
+    def default_result_name(self, school, issue_num, lessons_sel):
+        """명명 규칙: {학교축약}_분석본{NN}(마더텅{강}강)_내지 — 공백 없음.
+
+        예: 한영1_분석본02(마더텅13강)_내지
+        (사용자가 파일명을 직접 타이핑하지 않아도 되게 — 2026-08-18 요청)
+        """
+        try:
+            nn = f"{int(issue_num):02d}"
+        except (TypeError, ValueError):
+            nn = "01"
+        nums = []
+        for l in lessons_sel:
+            try:
+                n = str(int(str(l.get("lesson_num", "")).lstrip("0") or "0"))
+            except ValueError:
+                n = str(l.get("lesson_num", ""))
+            if n and n not in nums:
+                nums.append(n)
+        body = f"마더텅{','.join(nums)}강" if nums else "마더텅"
+        name = f"{self._school_abbrev(school)}_분석본{nn}({body})_내지"
+        name = re.sub(r'[/\\:*?"<>|]', "", name)
+        return re.sub(r"\s+", "", name)
+
     def prepare_jsx(self, json_path, job_dir, log):
         cfg = _load_config()
         grade = self._get_meta(job_dir, "grade", "고1")
         school = _nfc(self._get_meta(job_dir, "school", "한영고1"))
         exam_period = self._get_meta(job_dir, "exam_period", "기간미지정")
+        issue_num = self._get_meta(job_dir, "issue_num", "").strip()
+
+        with open(json_path, encoding="utf-8") as f:
+            _meta_pre = json.load(f)
+        lessons_sel = _meta_pre.get("selected_lessons") or []
+
+        # 간지 범위 — "마더텅 13강" / "문장 배열" (2026-08-18 사용자 확정)
+        ranges = []
+        for l in lessons_sel:
+            try:
+                n = int(str(l.get("lesson_num", "")).lstrip("0") or "0")
+            except ValueError:
+                n = l.get("lesson_num", "")
+            ranges.append({
+                "title": f"마더텅 {n}강",
+                "detail": (l.get("lesson_name") or "").strip(),
+            })
+
+        # 간지 학교 표기 — "2026 한영고1" (연도는 시험 기간 앞 두 자리)
+        yy = (exam_period or "")[:2]
+        year_full = f"20{yy}" if yy.isdigit() else ""
+        ganji_school = f"{year_full} {school}".strip()
+
         result_name = self._get_meta(job_dir, "result_name", "").strip()
         if not result_name:
-            raise ValueError("결과 파일명을 입력하세요.")
+            # 자동 생성 — 학교축약_분석본NN(마더텅N강)_내지
+            result_name = self.default_result_name(school, issue_num, lessons_sel)
+            log(f"[파일명 자동] {result_name}")
 
         output_dir = os.path.join(
             STUDIO_ROOT, "조판", "교재", "마더텅결합",
@@ -576,8 +645,7 @@ class MothertongueMergeEngine(BaseEngine):
                 n += 1
         pdf_out = os.path.splitext(indd_out)[0] + ".pdf"
 
-        with open(json_path, encoding="utf-8") as f:
-            meta = json.load(f)
+        meta = _meta_pre
 
         settings = {
             "template_path": cfg["template_path"],
@@ -587,6 +655,9 @@ class MothertongueMergeEngine(BaseEngine):
             "log_path": os.path.join(output_dir, self.log_filename),
             "log_paths": [os.path.join(job_dir, self.log_filename)],
             "keep_head": cfg.get("keep_head", 1),
+            "ganji_school": ganji_school,
+            "issue_num": issue_num or "1",
+            "ranges": ranges,
             "school": school,
             "grade": grade,
             "exam_period": exam_period,

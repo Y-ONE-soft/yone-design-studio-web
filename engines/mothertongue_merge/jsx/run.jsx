@@ -163,6 +163,292 @@
     }
 
     // ───────────────────────────────────────────────────────────────
+    // [간지] 1페이지 기재 — 학교명/순번/범위
+    //   analysis_merge_v2 [스펙5] 이식. 마더텅 결합은 종전에 간지를 손대지
+    //   않아 템플릿의 예전 학교(광문고1)·순번·범위가 그대로 남아 나갔다.
+    //     · 간지-마스터 학교명 프레임: 문자스타일 '챕터_숫자' ("2026 한영고1")
+    //     · 순번 프레임: 내용이 숫자뿐인 작은 프레임 (주차)
+    //     · 범위 프레임쌍: 마스터 '범위'/'범위_추가내용'을 페이지로 오버라이드
+    // ───────────────────────────────────────────────────────────────
+
+    var GANJI_RANGE_Y  = 232;     // 오버라이드 후 범위 프레임 y1 (v2 실측)
+    var GANJI_DETAIL_Y = 242.5;   // 오버라이드 후 추가내용 프레임 y1
+    var GANJI_PAIR_STEP = 21.5;   // 범위쌍 추가 간격
+
+    function frameCS(tf) {
+        try { return tf.texts[0].textStyleRanges[0].appliedCharacterStyle.name; }
+        catch (e) { return ""; }
+    }
+
+    function findCharStyle(doc, name) {
+        // itemByName 은 스타일 그룹 내부를 못 찾음 — allCharacterStyles 탐색
+        try {
+            var all = doc.allCharacterStyles;
+            for (var i = 0; i < all.length; i++) {
+                if (all[i].name === name) return all[i];
+            }
+        } catch (e) {}
+        return null;
+    }
+
+    // 문자스타일 재적용이 색·밑줄을 스타일 정의값으로 되돌리지 않도록
+    // 로컬 서식을 캡처→복원한다 (v2 W28-피드백2 계열).
+    var KEEP_COLOR_ATTRS = [
+        "fillColor", "fillTint", "strokeColor", "strokeTint",
+        "underline", "underlineColor", "underlineTint",
+        "underlineWeight", "underlineOffset", "underlineType"
+    ];
+
+    function captureTextAttrs(r0) {
+        var keep = {};
+        try { keep.appliedFont = r0.appliedFont; } catch (e1) {}
+        try { keep.pointSize = r0.pointSize; } catch (e2) {}
+        try { keep.leading = r0.leading; } catch (e3) {}
+        for (var i = 0; i < KEEP_COLOR_ATTRS.length; i++) {
+            var k = KEEP_COLOR_ATTRS[i];
+            try { keep[k] = r0[k]; } catch (eK) {}
+        }
+        return keep;
+    }
+
+    function applyTextAttrs(t, keep) {
+        try { if (keep.appliedFont) t.appliedFont = keep.appliedFont; } catch (e1) {}
+        try { if (keep.pointSize !== undefined) t.pointSize = keep.pointSize; } catch (e2) {}
+        try { if (keep.leading !== undefined) t.leading = keep.leading; } catch (e3) {}
+        for (var i = 0; i < KEEP_COLOR_ATTRS.length; i++) {
+            var k = KEEP_COLOR_ATTRS[i];
+            if (keep[k] === undefined) continue;
+            try { t[k] = keep[k]; } catch (eK) {}
+        }
+    }
+
+    function setFrameText(doc, tf, text, csName) {
+        // 오버셋 상태에서 tf.texts[0] 은 빈 범위가 되어 서식 대입이 침묵
+        // no-op 이 된다 → 서식 조작은 parentStory 기준 (v2 실측).
+        var keep = null;
+        try { keep = captureTextAttrs(tf.parentStory.textStyleRanges[0]); }
+        catch (eKeep) {}
+        try { tf.contents = String(text); } catch (eSet) {
+            writeLog("[경고] 프레임 기재 실패: " + (eSet.message || eSet));
+            return;
+        }
+        var storyText = null;
+        try { storyText = tf.parentStory.texts[0]; } catch (eSt) {}
+        if (csName) {
+            var cs = findCharStyle(doc, csName);
+            if (cs) {
+                try { if (storyText) storyText.appliedCharacterStyle = cs; } catch (eA) {}
+            } else {
+                writeLog("[경고] 문자스타일 없음: " + csName);
+            }
+        }
+        if (keep !== null && storyText) applyTextAttrs(storyText, keep);
+    }
+
+    function moveToY(item, y1) {
+        var gb = item.geometricBounds;
+        item.move(undefined, [0, y1 - gb[0]]);
+    }
+
+    function overrideOrReuse(masterItem, page) {
+        // 이미 오버라이드돼 있으면 그 항목 재사용 (중복 override 오류 방지)
+        try {
+            var pis = page.pageItems;
+            for (var i = 0; i < pis.length; i++) {
+                try {
+                    var om = pis[i].overriddenMasterPageItem;
+                    if (om && om.id === masterItem.id) return pis[i];
+                } catch (eOm) {}
+            }
+        } catch (eP) {}
+        return masterItem.override(page);
+    }
+
+    function applyGanji(doc) {
+        var school = settings.ganji_school || "";
+        var ranges = settings.ranges || [];
+        if (!school && !ranges.length && !settings.issue_num) {
+            writeLog("간지 기재: 설정 없음 — 건너뜀");
+            return;
+        }
+        var page0 = doc.pages[0];
+        var master = null;
+        try { master = page0.appliedMaster; } catch (eM) {}
+        if (!master || String(master.name).indexOf("간지") === -1) {
+            try { master = doc.masterSpreads.itemByName("간지-마스터"); } catch (eM2) {}
+        }
+        if (!master || !master.isValid) {
+            writeLog("[경고] 간지 마스터를 찾지 못함 — 간지 기재 생략");
+            return;
+        }
+
+        var mSchool = null, mIssue = null, mRange = null, mDetail = null;
+        var mtf = master.textFrames;
+        for (var i = 0; i < mtf.length; i++) {
+            var tf = mtf[i];
+            var cs = frameCS(tf);
+            var txt = "";
+            try { txt = String(tf.contents); } catch (eT) {}
+            if (cs === "챕터_숫자") mSchool = tf;
+            else if (cs === "범위") mRange = tf;
+            else if (cs === "범위_추가내용") mDetail = tf;
+            else if (/^\s*\d+\s*$/.test(txt)) mIssue = tf;
+        }
+        var edited = [];
+        if (mSchool && school) {
+            setFrameText(doc, mSchool, school, "챕터_숫자");
+            edited.push({ tf: mSchool, name: "간지 학교명" });
+        } else if (!mSchool) {
+            writeLog("[경고] 간지 학교명 프레임(챕터_숫자) 미발견");
+        }
+        var issueNum = String(parseInt(settings.issue_num, 10) || 1);
+        if (mIssue) {
+            try { mIssue.contents = issueNum; } catch (eIN) {}
+            edited.push({ tf: mIssue, name: "간지 순번" });
+        } else {
+            writeLog("[경고] 간지 순번 프레임 미발견");
+        }
+
+        // 페이지1 상단 슬러그(y<0) — 범위/범위_추가내용
+        var titles = [], details = [];
+        for (var r = 0; r < ranges.length; r++) {
+            if (ranges[r].title) titles.push(ranges[r].title);
+            if (ranges[r].detail) details.push(ranges[r].detail);
+        }
+        var p0tf = page0.textFrames;
+        for (var s2 = 0; s2 < p0tf.length; s2++) {
+            var stf = p0tf[s2], gbS;
+            try { gbS = stf.geometricBounds; } catch (eG) { continue; }
+            if (gbS[0] >= 0) continue;
+            var scs = frameCS(stf);
+            if (scs === "범위") {
+                setFrameText(doc, stf, titles.join(" / "), "범위");
+                edited.push({ tf: stf, name: "슬러그 범위" });
+            } else if (scs === "범위_추가내용") {
+                setFrameText(doc, stf, details.join(" / "), "범위_추가내용");
+                edited.push({ tf: stf, name: "슬러그 추가내용" });
+            }
+        }
+
+        // 범위 프레임쌍 — 마스터 오버라이드 후 위치 이동, 여러 개면 아래로 복제
+        var pairs = 0;
+        if (mRange && mDetail && ranges.length) {
+            var ovrRange = overrideOrReuse(mRange, page0);
+            var ovrDetail = overrideOrReuse(mDetail, page0);
+            moveToY(ovrRange, GANJI_RANGE_Y);
+            moveToY(ovrDetail, GANJI_DETAIL_Y);
+            setFrameText(doc, ovrRange, ranges[0].title || " ", "범위");
+            setFrameText(doc, ovrDetail, ranges[0].detail || " ", "범위_추가내용");
+            edited.push({ tf: ovrRange, name: "범위쌍1 범위" });
+            edited.push({ tf: ovrDetail, name: "범위쌍1 추가내용" });
+            pairs = 1;
+            for (var k = 1; k < ranges.length; k++) {
+                var dupR = ovrRange.duplicate();
+                var dupD = ovrDetail.duplicate();
+                moveToY(dupR, GANJI_RANGE_Y + GANJI_PAIR_STEP * k);
+                moveToY(dupD, GANJI_DETAIL_Y + GANJI_PAIR_STEP * k);
+                setFrameText(doc, dupR, ranges[k].title || " ", "범위");
+                setFrameText(doc, dupD, ranges[k].detail || " ", "범위_추가내용");
+                edited.push({ tf: dupR, name: "범위쌍" + (k + 1) + " 범위" });
+                edited.push({ tf: dupD, name: "범위쌍" + (k + 1) + " 추가내용" });
+                pairs++;
+            }
+        } else if (!mRange || !mDetail) {
+            writeLog("[경고] 간지 범위/범위_추가내용 마스터 프레임 미발견");
+        }
+
+        // 기재 프레임 오버셋 게이트 — 넘치면 조용히 잘려 나간다
+        var oversetNames = [];
+        for (var ov = 0; ov < edited.length; ov++) {
+            var isOver = false;
+            try { isOver = edited[ov].tf.overflows; } catch (eOvf) {}
+            if (isOver) oversetNames.push(edited[ov].name);
+        }
+        if (oversetNames.length) {
+            writeLog("[경고] 간지 기재 프레임 오버셋: " + oversetNames.join(", "));
+        }
+        writeLog("간지 기재: " + school + " / 순번 " + issueNum +
+                 " / 범위쌍 " + pairs + "개" +
+                 (oversetNames.length ? " / 오버셋 " + oversetNames.length + "건" : ""));
+    }
+
+    // ───────────────────────────────────────────────────────────────
+    // [헤더] 지문 머리말을 마더텅 지문번호로 교체 — "13강 | 1번"
+    //   레이아웃은 [라벨칸] | [코드칸] 2단. 코드칸에는 소스의
+    //   "고1 23년 9월 36번" 이 그대로 실려 오고, 라벨칸은 소스 마스터에
+    //   있던 항목이라 결합본에서는 비어 있다(구형 소스) 또는 페이지
+    //   항목으로 따라온다(신형 지문별 분석본 "외부지문").
+    //   → 코드 프레임을 마커로 찾고, 같은 높이대에서 그보다 왼쪽에 있는
+    //     프레임을 라벨로 본다. 페이지에 없으면 마스터에서 같은 조건으로
+    //     찾아 오버라이드한다.
+    // ───────────────────────────────────────────────────────────────
+
+    function vOverlap(a, b) {
+        return (a[0] < b[2] - 1) && (b[0] < a[2] - 1);
+    }
+
+    function rewriteHeader(page, labelText, codeText, tag) {
+        var frames = [], i;
+        try { frames = page.textFrames.everyItem().getElements(); }
+        catch (eF) { return false; }
+
+        // 1) 코드 프레임 — 내용이 마커 패턴인 짧은 프레임
+        var codeTF = null;
+        for (i = 0; i < frames.length; i++) {
+            var c = "";
+            try { c = String(frames[i].contents); } catch (eC) { continue; }
+            if (c.length > 40) continue;
+            if (MARKER_PAT.test(c)) { codeTF = frames[i]; break; }
+        }
+        if (!codeTF) {
+            writeLog("[경고] 헤더 코드 프레임 미발견 (" + tag + ")");
+            return false;
+        }
+        var codeGB;
+        try { codeGB = codeTF.geometricBounds; } catch (eGB) { return false; }
+
+        // 2) 라벨 프레임 — 같은 높이대에서 코드보다 왼쪽. 페이지 → 마스터 순
+        var labelTF = null;
+        for (i = 0; i < frames.length; i++) {
+            if (frames[i] === codeTF) continue;
+            var gb;
+            try { gb = frames[i].geometricBounds; } catch (eG2) { continue; }
+            if (!vOverlap(gb, codeGB)) continue;
+            if (gb[1] >= codeGB[1]) continue;      // 코드보다 왼쪽만
+            if (!labelTF) labelTF = frames[i];
+        }
+        if (!labelTF) {
+            var mst = null;
+            try { mst = page.appliedMaster; } catch (eM) {}
+            if (mst && mst.isValid) {
+                var mfs = [];
+                try { mfs = mst.textFrames.everyItem().getElements(); } catch (eMF) {}
+                for (i = 0; i < mfs.length; i++) {
+                    var mgb;
+                    try { mgb = mfs[i].geometricBounds; } catch (eG3) { continue; }
+                    if (!vOverlap(mgb, codeGB)) continue;
+                    if (mgb[1] >= codeGB[1]) continue;
+                    try { labelTF = overrideOrReuse(mfs[i], page); } catch (eOv) {}
+                    if (labelTF) break;
+                }
+            }
+        }
+
+        setFrameText(newDocRef, codeTF, codeText, null);
+        if (labelTF) {
+            setFrameText(newDocRef, labelTF, labelText, null);
+        } else {
+            writeLog("[경고] 헤더 라벨 프레임 미발견 (" + tag +
+                     ") — 코드칸만 기재");
+        }
+        var over = false;
+        try { over = codeTF.overflows || (labelTF && labelTF.overflows); }
+        catch (eO) {}
+        if (over) writeLog("[경고] 헤더 프레임 오버셋 (" + tag + ")");
+        return true;
+    }
+
+    // ───────────────────────────────────────────────────────────────
     // [지오메트리] 좌표계 정규화 + 프레임 위치 복원
     //   문서 간 page.duplicate 는 콘텐츠 아이템을 페이지 기준으로 평행이동
     //   시킨다(실측: 왼쪽 페이지 +2mm 오른쪽·-1.33mm 위 — 2026-08-18 마더텅
@@ -176,6 +462,9 @@
 
     var geoRep = { max_drift_before_mm: 0, max_residual_mm: 0,
                    oversized: 0, count_mismatch: 0 };
+
+    // 결합본 참조 — 헬퍼(setFrameText 등)에서 스타일 조회에 쓴다
+    var newDocRef = null;
 
     function round3(v) { return Math.round(v * 1000) / 1000; }
 
@@ -404,6 +693,8 @@
         try { newDoc = app.open(outFile, false); }
         catch (eOpen) { fail("사본 열기 실패: " + eOpen.message); return; }
 
+        newDocRef = newDoc;
+
         // 내지 전부 스프레드 재편성 허용 — 복제 전 문서 기본값 보정
         allowShuffleAll(newDoc);
 
@@ -574,6 +865,18 @@
             var grpEnd = newDoc.pages.length - 1;
             if (grpEnd >= grpStart) {
                 codeRanges.push({ code: code, startIdx: grpStart, endIdx: grpEnd });
+                // 헤더를 마더텅 지문번호로 교체 — 머리말은 그룹 첫 페이지에만
+                if (P.header_label || P.header_code) {
+                    try {
+                        rewriteHeader(newDoc.pages[grpStart],
+                                      P.header_label || "",
+                                      P.header_code || "",
+                                      code);
+                    } catch (eHd) {
+                        writeLog("[경고] 헤더 교체 실패 " + code + ": " +
+                                 (eHd.message || eHd));
+                    }
+                }
                 writeLog("  " + code + " [강" + lessonNum + " " + matchedSrc + "] ← " +
                          matchedName + " p" + (matchedRange.startIdx + 1) +
                          "..p" + (matchedRange.endIdx + 1) +
@@ -600,6 +903,10 @@
         }
 
         try { cleanLabels(newDoc); } catch (eCl) {}
+
+        // 간지(1페이지) 기재 — 학교/순번/범위
+        try { applyGanji(newDoc); }
+        catch (eGj) { writeLog("[경고] 간지 기재 실패: " + (eGj.message || eGj)); }
 
         // 내지 전부 스프레드 재편성 허용 — 복제된 분석본 spread 까지 모두 풀기
         try {

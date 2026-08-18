@@ -42,6 +42,12 @@
           <option value="26-2-기말">26-2-기말</option>
         </select>
       </div>
+      <div>
+        <label class="input-label">분석본 순번(주차) <span class="required">*</span></label>
+        <input type="number" name="issue_num" id="issue-num" class="form-input"
+               min="1" max="99" value="1">
+        <div class="input-hint">간지의 주차 숫자 + 파일명(분석본NN)에 함께 들어갑니다.</div>
+      </div>
     </div>
   </div>
 
@@ -62,10 +68,12 @@
 
   <!-- 결과 파일명 -->
   <div class="school-section">
-    <div class="section-label">결과 파일명 <span class="required">*</span></div>
+    <div class="section-label">결과 파일명</div>
     <input type="text" name="result_name" id="result-name"
-           class="form-input" placeholder="예: 한영1_마더텅_3-4강">
-    <div class="input-hint">확장자(.indd / .pdf)는 자동으로 붙습니다.</div>
+           class="form-input" placeholder="(자동) 학교_분석본NN(마더텅N강)_내지">
+    <div class="input-hint">
+      비워두면 학교·순번·선택한 강으로 자동 생성됩니다. 확장자(.indd / .pdf)는 자동.
+    </div>
   </div>
 
   <!-- 출력 경로 미리보기 -->
@@ -165,8 +173,22 @@
     updatePreview();
   }
 
+  // 서버 default_result_name 과 같은 규칙 — 학교축약_분석본NN(마더텅N강)_내지
+  function autoResultName() {
+    const school = document.getElementById('school-select').value || '';
+    const abbrev = school.replace(/고(\d)$/, '$1');
+    const nn = ('0' + (parseInt(document.getElementById('issue-num').value, 10) || 1)).slice(-2);
+    const sel = (document.getElementById('lessons-hidden').value || '')
+                  .split(',').map(v => String(parseInt(v, 10))).filter(v => v !== 'NaN');
+    const body = sel.length ? `마더텅${sel.join(',')}강` : '마더텅';
+    return `${abbrev}_분석본${nn}(${body})_내지`.replace(/\s+/g, '');
+  }
+
   function updatePreview() {
-    const name = document.getElementById('result-name').value.trim();
+    const input = document.getElementById('result-name');
+    const auto = autoResultName();
+    input.placeholder = `(자동) ${auto}`;
+    const name = input.value.trim() || auto;
     const preview = document.getElementById('filename-preview');
     if (!name) { preview.textContent = '—'; return; }
     const grade = currentGrade();
@@ -186,6 +208,7 @@
   document.getElementById('school-select').addEventListener('change', loadLessons);
   document.getElementById('result-name').addEventListener('input', updatePreview);
   document.getElementById('exam-period').addEventListener('change', updatePreview);
+  document.getElementById('issue-num').addEventListener('input', updatePreview);
 
   // 취소
   let _currentJobId = null;
@@ -218,7 +241,10 @@
     const runBtn = document.getElementById('run-btn');
 
     if (!formData.get('lessons')) { alert('강을 1개 이상 선택하세요.'); return; }
-    if (!formData.get('result_name').trim()) { alert('결과 파일명을 입력하세요.'); return; }
+    // 파일명은 비워도 됨 — 서버와 같은 규칙으로 자동 생성해 넘긴다
+    if (!String(formData.get('result_name') || '').trim()) {
+      formData.set('result_name', autoResultName());
+    }
 
     runBtn.disabled = true;
     runBtn.textContent = '실행 중...';
