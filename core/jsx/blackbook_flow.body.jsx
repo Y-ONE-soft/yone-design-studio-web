@@ -120,6 +120,16 @@ function answerSlots(blocks) {
     return slots;
 }
 
+function blockRange(block) {
+    var names = [];
+    for (var i = 0; i < block.pages.length; i++) {
+        try { if (block.pages[i].isValid) { names.push(block.pages[i].name); } else { names.push("삭제됨"); } }
+        catch (e) { names.push("?"); }
+    }
+    if (names.length <= 4) { return names.join(","); }
+    return names[0] + "~" + names[names.length - 1] + "(" + names.length + "쪽)";
+}
+
 function pageIndexOf(page) {
     try { return page.documentOffset; } catch (e) { return -1; }
 }
@@ -289,6 +299,7 @@ try {
         // 스토리 전체가 재조판되며 급격히 느려진다. 넉넉히 확보한 뒤,
         // 배치가 끝나면 안 쓴 스프레드를 지운다.
         var frames = block.frames.slice();
+        wlog(label + ": 블록 페이지 " + blockRange(block) + " / 프레임 " + frames.length);
         var want = Math.ceil(units.length * 1.7) + 2;
         var pre = 0;
         while (frames.length < want && pre < 80) {
@@ -348,6 +359,14 @@ try {
             checkBudget(label + " 페이지 추가");
         }
         wlog(label + ": 프레임브레이크 완료" + (guard ? " / 페이지 추가 " + guard : ""));
+        var stPages = [];
+        var stConts = story.textContainers;
+        for (var sc = 0; sc < stConts.length; sc++) {
+            try { if (stConts[sc].parentPage) { stPages.push(stConts[sc].parentPage.name); } } catch (e) {}
+        }
+        wlog(label + ": 스토리 프레임 페이지 " + (stPages.length > 4
+             ? stPages[0] + "~" + stPages[stPages.length - 1] + "(" + stPages.length + ")"
+             : stPages.join(",")));
         var trimmed = trimBlankSpreads(block.pages, block.cat, block.pages[0]);
         wlog(label + ": 유닛 " + units.length + " / 프레임 " +
              story.textContainers.length + (guard ? " (페이지 추가 " + guard + ")" : "") +
