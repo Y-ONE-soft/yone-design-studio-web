@@ -61,6 +61,19 @@ function pageInfo(page) {
     return { cat: cat, frames: cat ? sortByPosition(byCat[cat]) : [] };
 }
 
+// InDesign에서 인덱스로 얻은 개체(doc.pages[3] 등)는 '지정자'라서,
+// 앞쪽 페이지가 삭제되면 같은 참조가 다른 페이지를 가리킨다.
+// 스캔 시점에 ID 기반 참조로 바꿔 고정한다.
+function byIdPage(doc, page) {
+    try { return doc.pages.itemByID(page.id); } catch (e) { return page; }
+}
+function byIdFrame(doc, frame) {
+    try {
+        var f = doc.textFrames.itemByID(frame.id);
+        return (f && f.isValid) ? f : frame;
+    } catch (e) { return frame; }
+}
+
 // 연속 같은 영역 페이지 = 한 블록
 function buildBlocks(doc) {
     var blocks = [], cur = null;
@@ -71,8 +84,10 @@ function buildBlocks(doc) {
             cur = { cat: info.cat, pages: [], frames: [] };
             blocks.push(cur);
         }
-        cur.pages.push(doc.pages[p]);
-        for (var i = 0; i < info.frames.length; i++) { cur.frames.push(info.frames[i]); }
+        cur.pages.push(byIdPage(doc, doc.pages[p]));
+        for (var i = 0; i < info.frames.length; i++) {
+            cur.frames.push(byIdFrame(doc, info.frames[i]));
+        }
     }
     return blocks;
 }
@@ -507,97 +522,93 @@ try {
         } catch (e3) { wlog("[경고] 부제목 기입 실패: " + e3); }
     }
 
-    // ── 슬롯 준비 ───────────────────────────────────────────────────────────
-    var blocks = buildBlocks(doc);
-    var slots = lessonSlots(blocks);
-    var aSlots = answerSlots(blocks);
-    var lessons = plan.lessons || [];
-    wlog("템플릿 슬롯: 과 " + slots.length + " / 해설 " + aSlots.length +
-         " · 원고 과 " + lessons.length + "개");
-
-    // 과가 슬롯보다 많으면 마지막 슬롯 스프레드를 복제해 이어붙임
-    function duplicateSlot(srcSlot) {
-        var pages = srcSlot.vocab.pages.concat(srcSlot.problems.pages);
-        var spreads = [], seenSp = {};
-        for (var p = 0; p < pages.length; p++) {
-            var sp = pages[p].parent;
-            var sid = String(sp.id);
-            if (!seenSp[sid]) { seenSp[sid] = true; spreads.push(sp); }
-        }
-        var after = spreads[spreads.length - 1];
-        var newSpreads = [];
-        for (var s = 0; s < spreads.length; s++) {
+    // ── 슬롯 복제 (원고 과가 템플릿 세트보다 많을 때) ───────────────────────
+    function spreadsOfPages(pages) {
+        var out = [], seen = {};
+        for (var i = 0; i < pages.length; i++) {
             try {
-                var ns = spreads[s].duplicate(LocationOptions.AFTER, after);
-                after = ns;
-                newSpreads.push(ns);
-            } catch (e) { wlog("[경고] 슬롯 복제 실패: " + e); return null; }
+                if (!pages[i].isValid) { continue; }
+                var sp = pages[i].parent, sid = String(sp.id);
+                if (!seen[sid]) { seen[sid] = true; out.push(sp); }
+            } catch (e) {}
         }
-        var vocFrames = [], modFrames = [], vocPages = [], modPages = [];
-        for (var n = 0; n < newSpreads.length; n++) {
-            for (var q = 0; q < newSpreads[n].pages.length; q++) {
-                var pg = newSpreads[n].pages[q];
-                var info = pageInfo(pg);
-                if (info.cat === "large") {
-                    vocPages.push(pg);
-                    for (var v = 0; v < info.frames.length; v++) { vocFrames.push(info.frames[v]); }
-                } else if (info.cat === "module") {
-                    modPages.push(pg);
-                    for (var m = 0; m < info.frames.length; m++) { modFrames.push(info.frames[m]); }
-                }
-            }
+        return out;
+    }
+
+    function duplicateSlot(srcSlot) {
+        var spreads = spreadsOfPages(srcSlot.vocab.pages.concat(srcSlot.problems.pages));
+        if (!spreads.length) { return false; }
+        var after = spreads[spreads.length - 1];
+        for (var s = 0; s < spreads.length; s++) {
+            try { after = spreads[s].duplicate(LocationOptions.AFTER, after); }
+            catch (e) { wlog("[경고] 슬롯 복제 실패: " + e); return false; }
         }
-        return { vocab: { cat: "large", pages: vocPages, frames: vocFrames },
-                 problems: { cat: "module", pages: modPages, frames: modFrames } };
+        return true;
     }
 
     function duplicateAnswerSlot(srcSlot) {
-        var spreads = [], seenSp = {};
+        var pages = [];
         var conts = srcSlot.story.textContainers;
         for (var c = 0; c < conts.length; c++) {
             var pg = conts[c].parentPage;
-            if (!pg || pageIndexOf(pg) > pageIndexOf(srcSlot.lastPage)) { continue; }
-            var sp = pg.parent, sid = String(sp.id);
-            if (!seenSp[sid]) { seenSp[sid] = true; spreads.push(sp); }
+            if (pg && pageIndexOf(pg) <= pageIndexOf(srcSlot.lastPage)) { pages.push(pg); }
         }
-        if (!spreads.length) { return null; }
+        var spreads = spreadsOfPages(pages);
+        if (!spreads.length) { return false; }
         var after = spreads[spreads.length - 1];
-        var frames = [], firstPage = null, lastPage = null;
-        for (var s = 0; s < spreads.length; s++) {
-            var ns;
-            try { ns = spreads[s].duplicate(LocationOptions.AFTER, after); }
-            catch (e) { wlog("[경고] 해설 슬롯 복제 실패: " + e); return null; }
-            after = ns;
-            for (var q = 0; q < ns.pages.length; q++) {
-                var info = pageInfo(ns.pages[q]);
+        var newSpreads = [];
+        for (var s2 = 0; s2 < spreads.length; s2++) {
+            try {
+                after = spreads[s2].duplicate(LocationOptions.AFTER, after);
+                newSpreads.push(after);
+            } catch (e2) { wlog("[경고] 해설 슬롯 복제 실패: " + e2); return false; }
+        }
+        // 복제된 해설 프레임을 하나의 새 스토리로 연결 (과별 독립 스토리 유지)
+        var frames = [];
+        for (var n = 0; n < newSpreads.length; n++) {
+            for (var q = 0; q < newSpreads[n].pages.length; q++) {
+                var info = pageInfo(newSpreads[n].pages[q]);
                 if (info.cat !== "narrow") { continue; }
-                if (!firstPage) { firstPage = ns.pages[q]; }
-                lastPage = ns.pages[q];
                 for (var f = 0; f < info.frames.length; f++) { frames.push(info.frames[f]); }
             }
         }
-        var story = chainFrames(frames);
-        if (!story) { return null; }
-        return { story: story, firstPage: firstPage, lastPage: lastPage };
-    }
-
-    while (slots.length < lessons.length && slots.length > 0) {
-        var ns2 = duplicateSlot(slots[slots.length - 1]);
-        if (!ns2) { break; }
-        slots.push(ns2);
-        wlog("과 슬롯 복제: " + slots.length + "번째 세트 추가");
-    }
-    while (aSlots.length < lessons.length && aSlots.length > 0) {
-        var na = duplicateAnswerSlot(aSlots[aSlots.length - 1]);
-        if (!na) { break; }
-        aSlots.push(na);
-        wlog("해설 슬롯 복제: " + aSlots.length + "번째 추가");
+        chainFrames(frames);
+        return true;
     }
 
     // ── 과별 배치 ───────────────────────────────────────────────────────────
+    // 배치·정리로 페이지가 지워지면 앞서 스캔해 둔 참조가 어긋나므로,
+    // 과를 시작할 때마다 문서를 다시 스캔한다.
+    var lessons = plan.lessons || [];
+    var scan0 = buildBlocks(doc);
+    wlog("템플릿 슬롯: 과 " + lessonSlots(scan0).length +
+         " / 해설 " + answerSlots(scan0).length + " · 원고 과 " + lessons.length + "개");
+
     for (var li = 0; li < lessons.length; li++) {
         var les = lessons[li];
         var tag = les.label || ("과" + (li + 1));
+        var blocks = buildBlocks(doc);
+        var slots = lessonSlots(blocks);
+        var aSlots = answerSlots(blocks);
+
+        // 과가 템플릿 슬롯보다 많으면 마지막 세트를 복제해 이어붙인다
+        var dupGuard = 0;
+        while (slots.length < li + 1 && slots.length > 0 && dupGuard < 20) {
+            if (!duplicateSlot(slots[slots.length - 1])) { break; }
+            wlog("과 슬롯 복제: " + (slots.length + 1) + "번째 세트 추가");
+            blocks = buildBlocks(doc);
+            slots = lessonSlots(blocks);
+            dupGuard++;
+        }
+        dupGuard = 0;
+        while (aSlots.length < li + 1 && aSlots.length > 0 && dupGuard < 20) {
+            if (!duplicateAnswerSlot(aSlots[aSlots.length - 1])) { break; }
+            wlog("해설 슬롯 복제: " + (aSlots.length + 1) + "번째 추가");
+            blocks = buildBlocks(doc);
+            aSlots = answerSlots(blocks);
+            dupGuard++;
+        }
+
         if (li < slots.length) {
             var slot = slots[li];
             if (les.subtitle) {
@@ -606,14 +617,19 @@ try {
                 setSubtitle(subPage, les.subtitle);
             }
             placeUnitsInBlock(slot.vocab, les.vocab || [], tag + " 어휘");
-            placeUnitsInBlock(slot.problems, les.problems || [], tag + " 문제");
+            // 어휘 배치로 페이지가 늘거나 줄었을 수 있어 문제 블록은 다시 잡는다
+            var slots2 = lessonSlots(buildBlocks(doc));
+            var probBlock = (li < slots2.length) ? slots2[li].problems : slot.problems;
+            placeUnitsInBlock(probBlock, les.problems || [], tag + " 문제");
         } else {
             wlog("[경고] " + tag + ": 배치할 과 슬롯 없음 — 미조판");
         }
+
         if ((les.answers || []).length) {
-            if (li < aSlots.length) {
-                if (les.subtitle) { setSubtitle(aSlots[li].firstPage, les.subtitle); }
-                placeAnswers(aSlots[li], les.answers, tag + " 해설");
+            var aSlots2 = answerSlots(buildBlocks(doc));
+            if (li < aSlots2.length) {
+                if (les.subtitle) { setSubtitle(aSlots2[li].firstPage, les.subtitle); }
+                placeAnswers(aSlots2[li], les.answers, tag + " 해설");
             } else {
                 wlog("[경고] " + tag + ": 해설 슬롯 없음 — 미조판");
             }
@@ -621,8 +637,9 @@ try {
     }
 
     // 남는 슬롯의 견본 텍스트 제거
-    for (var r = lessons.length; r < slots.length; r++) {
-        var rest = slots[r].vocab.frames.concat(slots[r].problems.frames);
+    var restSlots = lessonSlots(buildBlocks(doc));
+    for (var r = lessons.length; r < restSlots.length; r++) {
+        var rest = restSlots[r].vocab.frames.concat(restSlots[r].problems.frames);
         for (var rf = 0; rf < rest.length; rf++) {
             try { rest[rf].contents = ""; } catch (e) {}
         }
