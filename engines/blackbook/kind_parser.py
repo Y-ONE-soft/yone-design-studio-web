@@ -378,3 +378,127 @@ def parse_by_kind(kind: str, path: str) -> List[Dict]:
     if kind in ("part1_answer", "part2_answer"):
         return parse_answers(path)
     raise ValueError(f"알 수 없는 kind: {kind}")
+
+
+# ── 구조 기반 분류 (파일명 분류 실패 시 폴백) ──────────────────────────────
+#
+# 파일명 규칙(`Part1 문제`)은 호마다 바뀐다 — `블랙북01_문제_교과서_1과.docx`
+# 처럼 Part 표기가 없는 원고가 통째로 버려지던 문제(W38) 대응.
+# 파일명으로 판정되면 그 결과를 그대로 쓰고, 실패했을 때만 원고 구조를 읽는다.
+
+_RE_ANSWER_MARK = re.compile(r"^\s*\[\s*정답\s*\]")
+_RE_EXPL_MARK   = re.compile(r"^\s*\[\s*해설\s*\]")
+_RE_CHOICE_MARK = re.compile(r"^\s*[①-⑳]")   # ①~⑳
+_RE_TYPE_HEADER = re.compile(r"^\s*\d+\s*유형\s*[×x*]\s*\d+\s*문항")
+_RE_LESSON_KO   = re.compile(r"(\d+)\s*(?:과|강)")
+_RE_LESSON_EN   = re.compile(r"\bLesson\s*(\d+)", re.I)
+
+
+def _sniff_paragraphs(path: str, limit: int = 400) -> List[str]:
+    """원고 앞부분 단락 텍스트 (구조 판정용). 실패하면 빈 목록."""
+    try:
+        paras = _raw_paragraphs(path)
+    except Exception:
+        return []
+    return [unicodedata.normalize("NFC", p.get("text", "")) for p in paras[:limit]]
+
+
+def classify_content(path: str, texts: Optional[List[str]] = None) -> Optional[str]:
+    """원고 구조로 5종 분류. 판정 불가면 None.
+
+    앵커 (형식이 아니라 구조):
+        어휘 — `<N과 본문M>` 헤더 + `〈연관 어휘〉` 카테고리
+        해설 — `[정답]` 줄 반복
+        문제 — `N.` 발문 + `①`~ 선지 반복 (`N유형 × M문항` 헤더면 part2)
+    """
+    if texts is None:
+        texts = _sniff_paragraphs(path)
+    if not texts:
+        return None
+
+    vocab_hdr = sum(1 for t in texts if _RE_VOCAB_HEADER.match(t))
+    vocab_cat = sum(1 for t in texts if _RE_VOCAB_CATEGORY.match(t))
+    answers   = sum(1 for t in texts if _RE_ANSWER_MARK.match(t))
+    expls     = sum(1 for t in texts if _RE_EXPL_MARK.match(t))
+    problems  = sum(1 for t in texts if _RE_PROBLEM_NUM.match(t))
+    choices   = sum(1 for t in texts if _RE_CHOICE_MARK.match(t))
+    is_type   = any(_RE_TYPE_HEADER.match(t) for t in texts[:5])
+
+    if vocab_cat >= 1 and (vocab_hdr >= 1 or vocab_cat >= 2):
+        return "part1_vocab"
+    if answers >= 2 or (answers >= 1 and expls >= 1):
+        return "part2_answer" if is_type else "part1_answer"
+    if problems >= 2 and choices >= 2:
+        return "part2_problem" if is_type else "part1_problem"
+    return None
+
+
+def classify_file(path: str, texts: Optional[List[str]] = None) -> Optional[str]:
+    """파일명 우선, 실패 시 원고 구조로 분류."""
+    name = os.path.basename(path)
+    for prefix in ("manuscript_", "answers_"):
+        if name.startswith(prefix):
+            name = name[len(prefix):]
+            break
+    kind = classify_filename(name)
+    if kind:
+        return kind
+    return classify_content(path, texts)
+
+
+def lesson_of(path: str, texts: Optional[List[str]] = None) -> Optional[int]:
+    """원고가 다루는 과(강) 번호. 파일명 → 원고 헤더 순으로 찾는다."""
+    name = unicodedata.normalize("NFC", os.path.basename(path))
+    stem = os.path.splitext(name)[0]
+    # 파일명의 '블랙북01' 같은 호번호는 과 표기가 아니므로 '과/강' 접미만 본다
+    m = _RE_LESSON_KO.search(stem)
+    if m:
+        return int(m.group(1))
+    if texts is None:
+        texts = _sniff_paragraphs(path, limit=60)
+    for t in texts[:60]:
+        m = _RE_VOCAB_HEADER.match(t) or None
+        if m:
+            m2 = _RE_LESSON_KO.search(t)
+            if m2:
+                return int(m2.group(1))
+        m3 = _RE_LESSON_EN.search(t)
+        if m3:
+            return int(m3.group(1))
+        m4 = _RE_LESSON_KO.search(t)
+        if m4:
+            return int(m4.group(1))
+    return None
+
+
+def book_title_of(texts: Optional[List[str]]) -> Optional[str]:
+    """원고 첫 줄에서 교재명만 추출.
+
+        '공통영어2 능률(오)  Lesson 1  A Band United by a Name'
+            → '공통영어2 능률(오)'
+    """
+    if not texts:
+        return None
+    for t in texts[:5]:
+        t = (t or "").strip()
+        if not t or _RE_VOCAB_HEADER.match(t) or _RE_VOCAB_CATEGORY.match(t):
+            continue    # 어휘 원고 헤더(<N과 본문M>)는 교재명이 아니다
+        m = _RE_LESSON_EN.search(t)
+        if m:
+            head = t[:m.start()].strip()
+            return head or None
+        m2 = _RE_LESSON_KO.search(t)
+        if m2 and m2.start() > 0:
+            head = t[:m2.start()].strip()
+            if len(head) >= 2:
+                return head
+        return None
+    return None
+
+
+def subtitle_of(book: Optional[str], lesson_num: Optional[int]) -> str:
+    """러닝 헤더용 부제목 문자열. 예: '공통영어2 능률(오)  1과'."""
+    label = f"{lesson_num}과" if lesson_num is not None else ""
+    if book and label:
+        return f"{book}  {label}"
+    return book or label
