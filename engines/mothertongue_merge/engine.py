@@ -111,10 +111,43 @@ def _parse_excel_lessons(excel_path, header_row=3, first_data_row=4):
     return lessons
 
 
-def _find_fallback_file(fallback_base, lesson_num):
-    """fallback_base 안에서 {N}강... 시작 폴더 → 안의 .indd 첫 후보 반환."""
-    if not fallback_base:
+def _gdrive_subdir(base, name_nfc):
+    """GDrive 원본 폴더(base) 안에서 name_nfc 와 같은 이름의 하위 폴더 경로.
+
+    디스크 이름이 NFD 라 단순 join 이 빗나갈 수 있어 NFC 비교로 되찾는다.
+    """
+    if not base or not os.path.isdir(base):
         return None
+    direct = os.path.join(base, name_nfc)
+    if os.path.isdir(direct):
+        return direct
+    try:
+        for raw in os.listdir(base):
+            if _nfc(raw) == name_nfc:
+                cand = os.path.join(base, raw)
+                if os.path.isdir(cand):
+                    return cand
+    except OSError:
+        pass
+    return None
+
+
+# 파일명이 특정 지문 하나를 가리키는지 — JSX 마커와 같은 식별자
+# ("고1 16년 6월 36번 분석본.indd"). 이 이름은 후보를 고르는 힌트일 뿐,
+# 실제 페이지 선택은 JSX 의 마커 매칭이 결정한다.
+_PASSAGE_NAME_RE = re.compile(
+    r"(?:고\d+\s*)?\d{1,2}\s*년\s*\d{1,2}\s*월\s*\d{1,2}\s*(?:[-~]\s*\d{1,2})?\s*번"
+)
+
+
+def _lesson_indd_entries(fallback_base, lesson_num):
+    """마더텅 {N}강 폴더 최상위의 .indd 목록 → [(name_nfc, full_path), ...].
+
+    잠금/백업/템플릿 사본은 제외. 강 파일과 지문별 파일을 모두 포함한다
+    (분류는 호출부에서 `_PASSAGE_NAME_RE` 로).
+    """
+    if not fallback_base:
+        return []
     # 미러 ∪ GDrive 합집합 — 미러가 stale해도 강 폴더 누락 방지
     from engines.final.extractor import list_manuscript_entries
     lesson_int = int(lesson_num)
@@ -130,20 +163,53 @@ def _find_fallback_file(fallback_base, lesson_num):
         _pat = re.compile(rf"(?<!\d)0*{lesson_int}\s*강(?!\d)")
         matched = [(nfc, full) for nfc, full in entries
                    if _pat.search(nfc)]
+    out = []
     for nfc, full in matched:
         if not os.path.isdir(full):
             continue
-        # 해당 폴더 안에서 .indd 후보 (마더텅 강 파일)
-        for raw_f in os.listdir(full):
-            nfc_f = _nfc(raw_f)
+        # 강 폴더 **안쪽**도 미러 ∪ GDrive 합집합으로 본다. 종전에는
+        # os.listdir(full) 이었는데 full 이 미러 경로라, 미러가 아직 못 받은
+        # 새 파일이 통째로 안 보였다(2026-08-18 13강 지문별 분석본 3개 실측:
+        # 미러 0개 / GDrive 3개).
+        sub = _gdrive_subdir(fallback_base, nfc) or full
+        for nfc_f, full_f in list_manuscript_entries(sub, None):
             if not nfc_f.lower().endswith(".indd"):
                 continue
             if nfc_f.startswith("~") or "idlk" in nfc_f.lower():
                 continue
             # "분석본_내지(마스터).indd" 같은 템플릿 사본 제외
-            if "마스터" in nfc_f:
+            if "마스터" in nfc_f or "템플릿" in nfc_f:
                 continue
-            return os.path.join(full, raw_f)
+            out.append((nfc_f, full_f))
+    out.sort(key=lambda t: t[0])
+    return out
+
+
+def _find_lesson_passage_files(fallback_base, lesson_num):
+    """강 폴더 안의 **지문별 분석본** .indd (예: "고1 16년 6월 36번 분석본.indd").
+
+    마더텅 옛날 지문은 월 폴더(모의고사 작업/고1/고1 YY년 M월)가 아예 없어서
+    1차 후보가 0개다. 이 파일들을 primary 후보로 붙여 JSX 마커 매칭이
+    페이지를 고르게 한다 — 실측 구조는 월 폴더 분석본과 동일
+    (p1 간지-마스터 / p2 마커 / p3 이어지는 면).
+    """
+    return [full for nfc, full in _lesson_indd_entries(fallback_base, lesson_num)
+            if _PASSAGE_NAME_RE.search(nfc)]
+
+
+def _find_fallback_file(fallback_base, lesson_num):
+    """강 폴더의 **강 단위** 파일 하나 (고정 페이지 인덱스용).
+
+    지문 하나를 가리키는 파일(_PASSAGE_NAME_RE)은 제외한다 — 강 파일로
+    잘못 잡히면 row_offset 기반 고정 인덱스가 엉뚱한 페이지를 가리켜
+    조용히 틀린 지문이 실린다(2026-08-18 13강에 지문별 파일이 들어오며 실제
+    위험 발생). 지문별 파일은 `_find_lesson_passage_files` 로 primary 후보에
+    붙어 마커로 판정된다.
+    """
+    for nfc, full in _lesson_indd_entries(fallback_base, lesson_num):
+        if _PASSAGE_NAME_RE.search(nfc):
+            continue
+        return full
     return None
 
 
@@ -352,6 +418,9 @@ class MothertongueMergeEngine(BaseEngine):
         # fallback 캐시 — 강 파일 한 번만 복사
         fallback_cache = {}    # lesson_num → local_path
 
+        # 강 폴더의 지문별 분석본 캐시 — 강마다 한 번만 스캔·복사
+        lesson_passage_cache = {}   # lesson_num → list[local_path]
+
         # GDrive 파일은 EDEADLK 회피를 위해 7-경로 폴백 + 지수 백오프 사용
         # (.claude/rules/gdrive_copy_robust.md 참조)
         from engines.final.extractor import _gdrive_safe_copy
@@ -400,6 +469,21 @@ class MothertongueMergeEngine(BaseEngine):
                             log(f"    로컬 복사: {os.path.basename(f)}")
                         ym_cache[key] = locals_
                 primary_candidates = list(ym_cache[key])
+
+                # 1.5차 후보: 마더텅 {N}강 폴더의 **지문별** 분석본
+                #   옛날 지문(16/17/19년 등)은 월 폴더 자체가 없어 1차가 0개다.
+                #   월 폴더 후보 뒤에 붙이므로 기존 매칭 순서는 바뀌지 않고,
+                #   채택 여부는 JSX 마커 매칭이 결정한다.
+                if ln not in lesson_passage_cache:
+                    lp_srcs = _find_lesson_passage_files(fallback_base, ln)
+                    lp_locals = []
+                    for lp in lp_srcs:
+                        lp_locals.append(_local_copy(lp))
+                        log(f"    지문별 분석본 로컬 복사: {os.path.basename(lp)} (강 {ln})")
+                    lesson_passage_cache[ln] = lp_locals
+                for lp_local in lesson_passage_cache[ln]:
+                    if lp_local not in primary_candidates:
+                        primary_candidates.append(lp_local)
 
                 # 2차 후보 (fallback): {fallback_base}/{N}강 .../*.indd 의 고정 위치
                 fallback_info = None

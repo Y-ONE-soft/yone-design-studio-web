@@ -88,6 +88,27 @@ def _answers_to_unit(items, v1_map):
 
 
 def sections_to_plan(sections):
+    """과(강) 단위 렌더 플랜. lessons가 없으면 구형 플랜으로 폴백."""
+    if not sections.get("lessons"):
+        return _legacy_plan(sections)
+
+    flow_map, v1_map = _tables()
+    lessons = []
+    for les in sections["lessons"]:
+        ir = les.get("problems") or {}
+        lessons.append({
+            "label": les.get("label") or "",
+            "subtitle": les.get("subtitle") or "",
+            "vocab": [_vocab_item_to_unit(it, v1_map)
+                      for it in (les.get("vocab") or [])],
+            "problems": [_ir_item_to_unit(it, flow_map)
+                         for it in (ir.get("items") or [])],
+            "answers": _answers_to_unit(les.get("answers") or [], v1_map),
+        })
+    return {"format": "bb-lessons-v1", "lessons": lessons}
+
+
+def _legacy_plan(sections):
     flow_map, v1_map = _tables()
     flows = []
 

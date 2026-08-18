@@ -122,8 +122,14 @@ class BlackbookV2Engine(BaseEngine):
         plan_path = os.path.abspath(os.path.join(job_dir, "render_plan.json"))
         with open(plan_path, "w", encoding="utf-8") as f:
             json.dump(plan, f, ensure_ascii=False)
-        log(f"[v2] 플랜: " + ", ".join(
-            f"{fl['area']} {len(fl['units'])}" for fl in plan["flows"]))
+        if plan.get("lessons") is not None:
+            log("[v2] 플랜(과 단위): " + ", ".join(
+                f"{les['label'] or '(과 미표기)'} 어휘{len(les['vocab'])}"
+                f"/문제{len(les['problems'])}/해설{len(les['answers'])}"
+                for les in plan["lessons"]))
+        else:
+            log("[v2] 플랜: " + ", ".join(
+                f"{fl['area']} {len(fl['units'])}" for fl in plan["flows"]))
 
         issue_num = _nfc(self._get_meta(job_dir, "issue_num", ""))
         out_name = (f"{cfg.get('indd_name_prefix', '블랙북')}"
