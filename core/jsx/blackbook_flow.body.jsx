@@ -154,10 +154,13 @@ function appendPageLike(refPage, cat) {
 // 내용이 하나도 안 들어간 스프레드 삭제 (한쪽만 비는 일이 없도록 스프레드 단위)
 // keepPage(블록 첫 페이지 — 부제목 슬롯이 있는 페이지)는 항상 남긴다.
 function trimBlankSpreads(pages, cat, keepPage) {
-    var groups = {}, order = [];
+    var groups = {}, order = [], seenPg = {};
     for (var i = 0; i < pages.length; i++) {
         var pg = pages[i];
         if (!pg || !pg.isValid) { continue; }
+        var pid = String(pg.id);
+        if (seenPg[pid]) { continue; }   // 프레임 수만큼 중복 push된 페이지 제거
+        seenPg[pid] = true;
         var sp = pg.parent, sid = String(sp.id);
         if (!groups[sid]) { groups[sid] = { spread: sp, pages: [] }; order.push(sid); }
         groups[sid].pages.push(pg);
@@ -327,7 +330,39 @@ try {
     function placeAnswers(slot, paras, label) {
         if (!paras.length) { return; }
         var story = slot.story;
+        // 해설 프레임이 모자라면 오버셋 상태로 스타일이 적용돼 극단적으로 느려진다.
+        // 단락 4개당 프레임 1개로 넉넉히 잡아 미리 확보하고, 끝나면 빈 스프레드 삭제.
+        var want = Math.ceil(paras.length / 4) + 4;
+        var have = story.textContainers.length;
+        var pre = 0;
+        while (have < want && pre < 60) {
+            var anchorPg = slot.lastPage;
+            var addedPre = appendPageLike(anchorPg, "narrow");
+            if (!addedPre.length) { break; }
+            var tailF = null;
+            var contsPre = story.textContainers;
+            for (var c0 = 0; c0 < contsPre.length; c0++) {
+                var pg0 = contsPre[c0].parentPage;
+                if (pg0 && pageIndexOf(pg0) <= pageIndexOf(slot.lastPage)) { tailF = contsPre[c0]; }
+            }
+            if (!tailF) { tailF = contsPre[contsPre.length - 1]; }
+            var afterF = null;
+            try { afterF = tailF.nextTextFrame; } catch (e0) {}
+            var prevF = tailF;
+            for (var a0 = 0; a0 < addedPre.length; a0++) {
+                try { prevF.nextTextFrame = addedPre[a0]; prevF = addedPre[a0]; } catch (e1) {}
+            }
+            if (afterF && afterF.isValid) {
+                try { prevF.nextTextFrame = afterF; } catch (e2) {}
+            }
+            slot.lastPage = addedPre[addedPre.length - 1].parentPage;
+            have = story.textContainers.length;
+            pre++;
+        }
+        if (pre) { wlog(label + ": 페이지 " + pre + "장 선확보 (프레임 " + have + ")"); }
+        wlog(label + ": 배치 시작 (단락 " + paras.length + ")");
         placeParagraphs(story, paras);
+        wlog(label + ": 스타일 적용 완료");
         var guard = 0;
         function lastFrameInRegion() {
             var conts = story.textContainers, best = null;
