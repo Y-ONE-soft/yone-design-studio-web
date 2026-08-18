@@ -1266,6 +1266,57 @@
             warn("자동 검수 실패: " + eAudit.message);
         }
 
+        // 5.5 오버셋 해소 — 세로→가로는 단 폭이 좁아져 지문 꼬리가 프레임
+        //     밖으로 밀린다. 글자가 남아 있어 슬롯 검수(fingerprint)는 전부
+        //     통과하지만 **지면에서는 잘려 나간다**
+        //     (2026-08-18 실측: 실전 16곳 756자 은닉, 176슬롯 검수는 OK).
+        //     프레임은 건드리지 않는다 — 크기를 바꾸면 리플로우로 장식이
+        //     어긋나고 하단 여백(277pt)도 넘는다. 문단 간격만 0.25pt 씩
+        //     줄여 담는다(스타일 아닌 로컬 오버라이드). 실측: 16곳 중 15곳이
+        //     0.25pt 한 번, 최대 1.5pt 로 전부 해소.
+        try {
+            var ovFixed = 0, ovFail = 0;
+            for (var si = 0; si < horiz.stories.length; si++) {
+                var stO = horiz.stories[si];
+                if (!stO.overflows) { continue; }
+                var tfO = stO.textContainers[0];
+                var pgO = "?";
+                try { pgO = tfO.parentPage.name; } catch (eP) {}
+                var psO = stO.paragraphs, steps = 0;
+                while (steps < 12 && tfO.overflows) {
+                    steps++;
+                    for (var pi = 0; pi < psO.length; pi++) {
+                        if (psO[pi].spaceBefore > 0) {
+                            psO[pi].spaceBefore = Math.max(
+                                0, psO[pi].spaceBefore - 0.25);
+                        }
+                        if (psO[pi].spaceAfter > 0) {
+                            psO[pi].spaceAfter = Math.max(
+                                0, psO[pi].spaceAfter - 0.25);
+                        }
+                    }
+                }
+                if (tfO.overflows) {
+                    ovFail++;
+                    warn("오버셋 미해소: p" + pgO + " — 내용이 지면에서 잘린다");
+                } else {
+                    ovFixed++;
+                    info("  [오버셋] p" + pgO + " 문단간격 -"
+                         + (steps * 0.25) + "pt 로 해소");
+                }
+            }
+            if (ovFixed || ovFail) {
+                info("[오버셋] 해소 " + ovFixed + " / 미해소 " + ovFail);
+            }
+            var ovLeft = 0;
+            for (var sk = 0; sk < horiz.stories.length; sk++) {
+                if (horiz.stories[sk].overflows) { ovLeft++; }
+            }
+            info("[검수] 잔여 오버셋 스토리: " + ovLeft + "개");
+        } catch (eOv) {
+            warn("오버셋 해소 실패: " + eOv.message);
+        }
+
         // 6. 저장
         horiz.save();
         info("\n[저장] " + horiz.fullName);
