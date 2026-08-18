@@ -408,14 +408,16 @@
         try { codeGB = codeTF.geometricBounds; } catch (eGB) { return false; }
 
         // 2) 라벨 프레임 — 같은 높이대에서 코드보다 왼쪽. 페이지 → 마스터 순
-        var labelTF = null;
+        var codeH = codeGB[2] - codeGB[0];
+        var labelTF = null, labelRight = -1e9;
         for (i = 0; i < frames.length; i++) {
             if (frames[i] === codeTF) continue;
             var gb;
             try { gb = frames[i].geometricBounds; } catch (eG2) { continue; }
             if (!vOverlap(gb, codeGB)) continue;
-            if (gb[1] >= codeGB[1]) continue;      // 코드보다 왼쪽만
-            if (!labelTF) labelTF = frames[i];
+            if (gb[1] >= codeGB[1]) continue;              // 코드보다 왼쪽만
+            if ((gb[2] - gb[0]) > codeH * 3) continue;     // 본문 프레임 제외
+            if (gb[3] > labelRight) { labelRight = gb[3]; labelTF = frames[i]; }
         }
         if (!labelTF) {
             var mst = null;
@@ -423,13 +425,20 @@
             if (mst && mst.isValid) {
                 var mfs = [];
                 try { mfs = mst.textFrames.everyItem().getElements(); } catch (eMF) {}
+                var mBest = null, mRight = -1e9;
                 for (i = 0; i < mfs.length; i++) {
                     var mgb;
                     try { mgb = mfs[i].geometricBounds; } catch (eG3) { continue; }
                     if (!vOverlap(mgb, codeGB)) continue;
                     if (mgb[1] >= codeGB[1]) continue;
-                    try { labelTF = overrideOrReuse(mfs[i], page); } catch (eOv) {}
-                    if (labelTF) break;
+                    if ((mgb[2] - mgb[0]) > codeH * 3) continue;
+                    if (mgb[3] > mRight) { mRight = mgb[3]; mBest = mfs[i]; }
+                }
+                if (mBest) {
+                    try { labelTF = overrideOrReuse(mBest, page); } catch (eOv) {
+                        writeLog("[경고] 헤더 라벨 마스터 오버라이드 실패 (" +
+                                 tag + "): " + (eOv.message || eOv));
+                    }
                 }
             }
         }
