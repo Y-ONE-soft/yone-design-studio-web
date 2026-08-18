@@ -83,7 +83,52 @@
                 if (!m || m.length !== 1) { ok = false; break; }
                 ids.push(m[0]);
             }
-            if (!ok) { skip++; W("  [건너뜀] 매핑 불완전 (" + ks2.length + "프레임)"); continue; }
+            if (!ok) {
+                // 빈 프레임(내용 1자)은 키가 "##1" 로 같아 후보가 여러 개다.
+                // 유일하게 잡힌 프레임들의 **페이지 범위 안**에서, 아직 안 쓴
+                // 후보만 남기면 대개 하나로 좁혀진다
+                // (2026-08-18: 이 1건 때문에 지문 하나가 매번 안 이어졌다).
+                ids = [];
+                var uniq = [], lo = 1e9, hi = -1;
+                for (var u = 0; u < ks2.length; u++) {
+                    var mu = idx[ks2[u]];
+                    if (mu && mu.length === 1) {
+                        uniq.push(mu[0]);
+                        var pgu = Math.floor(ord[mu[0]] / 100);
+                        if (pgu < lo) { lo = pgu; }
+                        if (pgu > hi) { hi = pgu; }
+                    }
+                }
+                if (uniq.length >= 2) {
+                    var used = {}, ok2 = true;
+                    for (var u2 = 0; u2 < uniq.length; u2++) { used[uniq[u2]] = 1; }
+                    for (var f5 = 0; f5 < ks2.length; f5++) {
+                        var mm = idx[ks2[f5]];
+                        if (!mm) { ok2 = false; break; }
+                        if (mm.length === 1) { ids.push(mm[0]); continue; }
+                        var cand = [];
+                        for (var c5 = 0; c5 < mm.length; c5++) {
+                            var pgc = Math.floor(ord[mm[c5]] / 100);
+                            if (!used[mm[c5]] && pgc >= lo - 1 && pgc <= hi + 1) {
+                                cand.push(mm[c5]);
+                            }
+                        }
+                        if (cand.length !== 1) { ok2 = false; break; }
+                        ids.push(cand[0]);
+                        used[cand[0]] = 1;
+                    }
+                    if (ok2) {
+                        W("  [보정] 빈 프레임 후보를 페이지 범위(p" + (lo + 1)
+                          + "~p" + (hi + 1) + ")로 좁혀 매핑");
+                        ok = true;
+                    }
+                }
+                if (!ok) {
+                    skip++;
+                    W("  [건너뜀] 매핑 불완전 (" + ks2.length + "프레임)");
+                    continue;
+                }
+            }
             ids.sort(function (a, b) { return ord[a] - ord[b]; });
             var frames = [];
             for (var f2 = 0; f2 < ids.length; f2++) { frames.push(h.textFrames.itemByID(ids[f2])); }

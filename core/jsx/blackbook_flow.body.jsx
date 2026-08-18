@@ -151,6 +151,41 @@ function appendPageLike(refPage, cat) {
     return out;
 }
 
+// 내용이 하나도 안 들어간 스프레드 삭제 (한쪽만 비는 일이 없도록 스프레드 단위)
+// keepPage(블록 첫 페이지 — 부제목 슬롯이 있는 페이지)는 항상 남긴다.
+function trimBlankSpreads(pages, cat, keepPage) {
+    var groups = {}, order = [];
+    for (var i = 0; i < pages.length; i++) {
+        var pg = pages[i];
+        if (!pg || !pg.isValid) { continue; }
+        var sp = pg.parent, sid = String(sp.id);
+        if (!groups[sid]) { groups[sid] = { spread: sp, pages: [] }; order.push(sid); }
+        groups[sid].pages.push(pg);
+    }
+    var removed = 0;
+    for (var o = 0; o < order.length; o++) {
+        var ent = groups[order[o]];
+        if (ent.pages.length !== ent.spread.pages.length) { continue; }
+        var blank = true, hasFrame = false;
+        for (var p = 0; p < ent.pages.length && blank; p++) {
+            if (ent.pages[p] === keepPage) { blank = false; break; }
+            var info = pageInfo(ent.pages[p]);
+            if (info.cat !== cat) { blank = false; break; }
+            hasFrame = true;
+            for (var f = 0; f < info.frames.length; f++) {
+                var c = "";
+                try { c = String(info.frames[f].contents); } catch (e) {}
+                if (c.replace(/\s/g, "").length > 0) { blank = false; break; }
+            }
+        }
+        if (blank && hasFrame) {
+            try { ent.spread.remove(); removed++; }
+            catch (e2) { wlog("[경고] 빈 스프레드 삭제 실패: " + e2); }
+        }
+    }
+    return removed;
+}
+
 // ── 스토리 연결/배치 ────────────────────────────────────────────────────────
 function chainFrames(frames) {
     for (var i = 0; i < frames.length; i++) {
@@ -222,7 +257,22 @@ try {
             wlog("[경고] " + label + ": 배치할 프레임 없음");
             return;
         }
+        // 유닛마다 프레임 하나를 쓰므로(프레임브레이크) 텍스트를 넣기 전에
+        // 필요한 만큼 페이지를 미리 확보한다. 배치 뒤에 한 장씩 늘리면
+        // 그때마다 스토리 전체가 재조판돼 급격히 느려진다.
         var frames = block.frames.slice();
+        var pre = 0;
+        while (frames.length < units.length && pre < 80) {
+            var pgAdd = appendPageLike(frames[frames.length - 1].parentPage, block.cat);
+            if (!pgAdd.length) { break; }
+            for (var pa = 0; pa < pgAdd.length; pa++) {
+                frames.push(pgAdd[pa]);
+                block.pages.push(pgAdd[pa].parentPage);
+                block.frames.push(pgAdd[pa]);
+            }
+            pre++;
+        }
+        if (pre) { wlog(label + ": 페이지 " + pre + "장 선확보 (프레임 " + frames.length + ")"); }
         var story = chainFrames(frames);
         if (!story) { wlog("[경고] " + label + ": 스토리 없음"); return; }
 
@@ -255,8 +305,10 @@ try {
             lastFrame = story.textContainers[story.textContainers.length - 1];
             guard++;
         }
+        var trimmed = trimBlankSpreads(block.pages, block.cat, block.pages[0]);
         wlog(label + ": 유닛 " + units.length + " / 프레임 " +
-             story.textContainers.length + (guard ? " (페이지 추가 " + guard + ")" : ""));
+             story.textContainers.length + (guard ? " (페이지 추가 " + guard + ")" : "") +
+             (trimmed ? " (빈 스프레드 " + trimmed + "개 삭제)" : ""));
     }
 
     // 해설 — 슬롯 스토리에 흘리고, 넘치면 슬롯 영역 안에 페이지 삽입
@@ -292,8 +344,14 @@ try {
             tail = story.textContainers[story.textContainers.length - 1];
             guard++;
         }
+        var regionPages = [];
+        for (var rp = pageIndexOf(slot.firstPage); rp <= pageIndexOf(slot.lastPage); rp++) {
+            try { regionPages.push(doc.pages[rp]); } catch (e4) {}
+        }
+        var trimmedA = trimBlankSpreads(regionPages, "narrow", slot.firstPage);
         wlog(label + ": 단락 " + paras.length + " / 프레임 " +
-             story.textContainers.length + (guard ? " (페이지 추가 " + guard + ")" : ""));
+             story.textContainers.length + (guard ? " (페이지 추가 " + guard + ")" : "") +
+             (trimmedA ? " (빈 스프레드 " + trimmedA + "개 삭제)" : ""));
     }
 
     // ── 부제목(러닝 헤더) 슬롯 ──────────────────────────────────────────────
