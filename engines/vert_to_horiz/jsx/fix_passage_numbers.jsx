@@ -23,7 +23,7 @@
         sf.encoding = "UTF-8"; sf.open("r");
         var settings = eval("(" + sf.read() + ")");
         sf.close();
-        d = app.open(new File(settings.indd_path), false);
+        d = app.open(new File(settings.output_indd || settings.indd_path), false);
         try { d.adjustLayoutPreferences.enableAdjustLayout = false; } catch (e0) {}
         try { d.viewPreferences.rulerOrigin = RulerOrigin.PAGE_ORIGIN; } catch (e1) {}
 

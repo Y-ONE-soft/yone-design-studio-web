@@ -27,7 +27,7 @@
         var settings = eval("(" + sf.read() + ")");
         sf.close();
 
-        d = app.open(new File(settings.indd_path), false);
+        d = app.open(new File(settings.output_indd || settings.indd_path), false);
         try { d.adjustLayoutPreferences.enableAdjustLayout = false; } catch (e0) {}
 
         var before = d.pages.length, removed = 0, scanned = 0;

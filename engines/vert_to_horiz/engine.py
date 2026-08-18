@@ -110,6 +110,64 @@ class VertToHorizEngine(BaseEngine):
     def jsx_timeout(self):
         return 1800  # 30분 — 실측 21분 (개발가이드 기록)
 
+    # ─── 후처리 ────────────────────────────────────────────────────────
+    # 파이프라인은 run_indesign 이 있으면 그것만 호출한다. 본 변환(run.jsx)을
+    # 돌린 뒤 후처리 3종을 이어서 실행한다.
+    #   1) 미사용 슬롯 페이지 제거 — 가로 템플릿은 슬롯이 넉넉해 선택 문항이
+    #      적으면 빈 페이지가 대량 남는다 (실측 16문항 → 283p 중 54p)
+    #   2) STEP3 재스레드 — 프레임 단위 duplicate 로 스레드가 끊겨, 편집 시
+    #      리플로우가 안 되고 문항 자동번호가 프레임마다 01 로 재시작한다
+    #      (실측: 번호 138개 중 9개 중복 → 재스레드 후 세로 원본과 동일한 129개)
+    #   3) 지문번호 프레임 교정 — 본문만 옮기면 템플릿 잔재 번호가 인쇄된다
+    # 순서 중요: 페이지를 지운 **뒤에** 번호를 매겨야 순서가 맞는다.
+    _POST = [
+        ("trim_unused.jsx", "trim_로그.txt",
+         "===== 정리 완료 =====", "[정리]"),
+        ("rethread_step3.jsx", "rethread_로그.txt",
+         "===== 재스레드 완료 =====", "[재스레드]"),
+        ("fix_passage_numbers.jsx", "passagenum_로그.txt",
+         "===== 지문번호 교정 완료 =====", "[지문번호]"),
+    ]
+
+    def run_indesign(self, job_dir, log, cancel_check=None):
+        from core.indesign import runner as indesign
+        import os as _os
+
+        settings_path = _os.path.join(job_dir, ".settings.json")
+        jsx_path = _os.path.join(job_dir, "run.jsx")
+        out_dir = job_dir
+        if _os.path.exists(settings_path):
+            try:
+                with open(settings_path, encoding="utf-8") as f:
+                    out_dir = json.load(f).get("output_dir", job_dir)
+            except (OSError, ValueError):
+                pass
+        log_file = _os.path.join(out_dir, self.log_filename)
+        indesign.run_jsx(jsx_path, log, poll_log_path=log_file,
+                         timeout=self.jsx_timeout,
+                         completion_marker=self.completion_marker,
+                         cancel_check=cancel_check)
+
+        for tpl, logname, marker, tag in self._POST:
+            src = _os.path.join(_DIR, "jsx", tpl)
+            if not _os.path.exists(src):
+                log("%s 템플릿 없음 — 건너뜀: %s" % (tag, tpl))
+                continue
+            with open(src, encoding="utf-8") as f:
+                code = f.read().replace("__SETTINGS_PATH__", settings_path)
+            dst = _os.path.join(job_dir, tpl)
+            with open(dst, "w", encoding="utf-8") as f:
+                f.write(code)
+            poll = settings_path.replace(".settings.json", logname)
+            try:
+                _os.remove(poll)
+            except OSError:
+                pass
+            log("%s 시작" % tag)
+            indesign.run_jsx(dst, log, poll_log_path=poll, timeout=1800,
+                             completion_marker=marker, stall_limit=900,
+                             cancel_check=cancel_check)
+
     @property
     def upload_spec(self):
         return {
