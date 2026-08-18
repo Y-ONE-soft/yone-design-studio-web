@@ -316,6 +316,30 @@
     // 결합 .indd 저장 (수동 saveAsIndd 동일)
     // ───────────────────────────────────────────────────────────────
 
+    // ───────────────────────────────────────────────────────────────
+    // 스프레드 재편성 허용 — 내지 전부 allowPageShuffle = true
+    //   소스의 잠긴(island) spread 가 그대로 복제되면 결과 문서의 spread 도
+    //   "재편성 비허용"으로 남아, 이후 duplicate 가 새 스프레드를 만들지 못하고
+    //   같은 스프레드에 계속 붙는다(→ 페이지가 2P 쌍으로 나뉘지 않고 한
+    //   스프레드에 쭉 이어지고, 10페이지에서 "스프레드의 페이지 수는 10 이하여야
+    //   합니다" 로 복제 실패).
+    //   가로판은 베이스 자체가 첫 소스의 saveACopy 라 소스의 island 상태를
+    //   그대로 물려받는다.
+    //   (mothertongue_merge / analysis_merge 와 동일 패턴)
+    // ───────────────────────────────────────────────────────────────
+
+    function allowShuffleAll(doc) {
+        try { doc.documentPreferences.allowPageShuffle = true; } catch (eDPS) {}
+        for (var s = 0; s < doc.spreads.length; s++) {
+            try { doc.spreads[s].allowPageShuffle = true; } catch (eSh) {}
+        }
+    }
+
+    // 복제 직전 가드 — 마지막 스프레드만 즉시 재편성 허용으로 풀어 둔다.
+    function allowShuffleTail(doc) {
+        try { doc.spreads.lastItem().allowPageShuffle = true; } catch (eSt) {}
+    }
+
     function saveAsIndd(orderedCodes, codeFileMap, markersCache, inddPath) {
         var validCodes = [];
         var seenM = {};   // 같은 페이지 구간은 1회만 (PDF 쪽 seenRanges 와 동일 기준)
@@ -351,6 +375,9 @@
 
         var newDoc = app.open(inddFile, false);
         try {
+            // 내지 전부 스프레드 재편성 허용 — 복제 전 문서 기본값 보정
+            allowShuffleAll(newDoc);
+
             var origCount = newDoc.pages.length;
 
             for (var ci2 = 0; ci2 < validCodes.length; ci2++) {
@@ -361,9 +388,13 @@
                 if (!rg) continue;
                 for (var p2 = rg.startIdx; p2 <= rg.endIdx; p2++) {
                     try {
+                        allowShuffleTail(newDoc);
                         sd.pages[p2].duplicate(
                             LocationOptions.AT_END, newDoc.pages.lastItem());
-                    } catch (eDup) {}
+                    } catch (eDup) {
+                        writeLog("[경고] " + c + " p" + p2 +
+                                 " 복제 실패: " + eDup.message);
+                    }
                 }
             }
 
@@ -375,6 +406,12 @@
             for (var p3 = origCount - 1; p3 >= 0; p3--) {
                 try { newDoc.pages[p3].remove(); } catch (eRm) {}
             }
+
+            // 내지 전부 스프레드 재편성 허용 — 복제된 소스 spread 까지 모두 풀기
+            try {
+                allowShuffleAll(newDoc);
+                writeLog("스프레드 재편성 허용 설정: " + newDoc.spreads.length + " spread");
+            } catch (eShf) { writeLog("[경고] 재편성 허용 설정 실패: " + eShf.message); }
 
             newDoc.save();
             return { ok: true, path: inddFile.fsName };

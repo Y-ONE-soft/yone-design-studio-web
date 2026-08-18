@@ -91,6 +91,28 @@
         return { doc: doc, opened: true };
     }
 
+    // ───────────────────────────────────────────────────────────────
+    // 스프레드 재편성 허용 — 내지 전부 allowPageShuffle = true
+    //   소스의 잠긴(island) spread 가 그대로 복제되면 결과 문서의 spread 도
+    //   "재편성 비허용"으로 남아, 이후 duplicate 가 새 스프레드를 만들지 못하고
+    //   같은 스프레드에 계속 붙는다(→ 페이지가 2P 쌍으로 나뉘지 않고 한
+    //   스프레드에 쭉 이어지고, 10페이지에서 "스프레드의 페이지 수는 10 이하여야
+    //   합니다" 로 복제 실패).
+    //   (mothertongue_merge / analysis_merge / engines/final/indesign_stepper.py 와 동일 패턴)
+    // ───────────────────────────────────────────────────────────────
+
+    function allowShuffleAll(doc) {
+        try { doc.documentPreferences.allowPageShuffle = true; } catch (eDPS) {}
+        for (var s = 0; s < doc.spreads.length; s++) {
+            try { doc.spreads[s].allowPageShuffle = true; } catch (eSh) {}
+        }
+    }
+
+    // 복제 직전 가드 — 마지막 스프레드만 즉시 재편성 허용으로 풀어 둔다.
+    function allowShuffleTail(doc) {
+        try { doc.spreads.lastItem().allowPageShuffle = true; } catch (eSt) {}
+    }
+
     // Story threading 보존
     var SID_PFX = '__sero_sid:';
     var SID_SEP = '|';
@@ -295,6 +317,9 @@
         try { newDoc = app.open(outFile, false); }
         catch (eOpen) { fail("사본 열기 실패: " + eOpen.message); return; }
 
+        // 내지 전부 스프레드 재편성 허용 — 복제 전 문서 기본값 보정
+        allowShuffleAll(newDoc);
+
         // 소스 파일 열기 + 마커 수집
         var docCache   = {};
         var openedByUs = {};
@@ -376,6 +401,7 @@
             var grpStart = newDoc.pages.length;
             for (var p2 = rg.startIdx; p2 <= rg.endIdx; p2++) {
                 try {
+                    allowShuffleTail(newDoc);
                     sd.pages[p2].duplicate(LocationOptions.AT_END, newDoc.pages.lastItem());
                     totalPages++;
                 } catch (eDup) {
@@ -410,6 +436,12 @@
         }
 
         try { cleanLabels(newDoc); } catch (eCl) {}
+
+        // 내지 전부 스프레드 재편성 허용 — 복제된 소스 spread 까지 모두 풀기
+        try {
+            allowShuffleAll(newDoc);
+            writeLog("스프레드 재편성 허용 설정: " + newDoc.spreads.length + " spread");
+        } catch (eShf) { writeLog("[경고] 재편성 허용 설정 실패: " + eShf.message); }
 
         // 저장
         try { newDoc.save(); } catch (eS) { fail("저장 실패: " + eS.message); }
