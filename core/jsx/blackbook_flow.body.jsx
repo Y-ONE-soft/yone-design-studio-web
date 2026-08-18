@@ -208,8 +208,8 @@ function chainFrames(frames) {
 // 어떤 이유로든 한 구간이 길어지면 스스로 중단하고 문서를 닫는다.
 // (InDesign이 붙잡힌 채 사용자가 Esc를 눌러야 하는 상황을 만들지 않기 위함)
 var T0 = new Date().getTime();
-var BUDGET_MS = 8 * 60 * 1000;
-var STEP_MS = 90 * 1000;
+var BUDGET_MS = 15 * 60 * 1000;   // 전체 상한
+var STEP_MS = 120 * 1000;        // 한 구간이 진전 없이 지속되는 상한
 var tStep = T0;
 function stepStart() { tStep = new Date().getTime(); }
 function checkBudget(where) {
@@ -296,6 +296,7 @@ try {
             if (!pgAdd.length) { break; }
             for (var pa = 0; pa < pgAdd.length; pa++) {
                 checkBudget(label + " 페이지 선확보");
+                stepStart();   // 페이지가 늘고 있으면 진전으로 인정
                 frames.push(pgAdd[pa]);
                 block.pages.push(pgAdd[pa].parentPage);
                 block.frames.push(pgAdd[pa]);
@@ -385,6 +386,8 @@ try {
             slot.lastPage = addedPre[addedPre.length - 1].parentPage;
             have = story.textContainers.length;
             pre++;
+            checkBudget(label + " 해설 페이지 선확보");
+            stepStart();
         }
         if (pre) { wlog(label + ": 페이지 " + pre + "장 선확보 (프레임 " + have + ")"); }
         stepStart();
