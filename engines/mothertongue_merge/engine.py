@@ -159,14 +159,43 @@ def _find_month_folder(gdrive_base, grade_num, year, month):
         gdrive_base, grade_num, year, month)
 
 
-def _find_analysis_files(month_folder, patterns=None):
+def _find_analysis_files(month_folder, patterns=None, log=None):
     """분석본 후보 매칭 — analysis_merge와 같은 눈 (배치 F 합류).
 
     1차(리터럴 substring)는 동일, 2차('분석.indd' 축약형 등 정규화 폴백 —
     배치 A 미해결 (4))를 위임으로 함께 받는다.
+
+    3차 — 구조 폴백: **파일명은 우선순위 힌트일 뿐 판정 기준이 아니다.**
+    월 폴더 최상위의 나머지 .indd 도 뒤에 붙여 후보로 넘기고, 실제 채택은
+    JSX 의 마커("고N YY년 M월 QQ번") 매칭이 결정한다. 23년 폴더가
+    '분석본' 대신 '고1 23년 6월 모의고사(New).indd' 로 명명돼 있어 8개 코드가
+    통째로 '해결 불가' 로 빠진 사례(2026-08-18) 방지 — 실측 결과 이 파일들은
+    24/25년 분석본과 동일 구조(37p, 짝수 페이지마다 마커)였다.
+    이름 매칭분이 항상 앞이라 기존 매칭 순서는 바뀌지 않는다.
     """
     from engines.analysis_merge.engine import AnalysisMergeEngine
-    return AnalysisMergeEngine._find_analysis_files(month_folder, patterns)
+    named = AnalysisMergeEngine._find_analysis_files(month_folder, patterns)
+    if not month_folder:
+        return named
+
+    from engines.final.extractor import list_manuscript_entries
+    seen = set(named)
+    extras = []
+    for nfc, full in list_manuscript_entries(month_folder, None):
+        if full in seen or not nfc.lower().endswith(".indd"):
+            continue
+        if nfc.startswith("~") or "idlk" in nfc.lower():
+            continue
+        # 템플릿/마스터 사본은 분석본이 아니다
+        if "마스터" in nfc or "템플릿" in nfc:
+            continue
+        extras.append(full)
+    extras.sort(key=lambda p: (len(os.path.basename(p)), os.path.basename(p)))
+    if extras and log:
+        # 침묵 금지 — 이름이 안 맞아 들어온 후보를 항상 노출
+        log("    [후보 보강] 이름 비매칭 .indd " + str(len(extras)) + "개 추가: "
+            + ", ".join(os.path.basename(e) for e in extras[:4]))
+    return named + extras
 
 
 class MothertongueMergeEngine(BaseEngine):
@@ -364,7 +393,7 @@ class MothertongueMergeEngine(BaseEngine):
                     if not folder:
                         ym_cache[key] = []
                     else:
-                        files = _find_analysis_files(folder, patterns)
+                        files = _find_analysis_files(folder, patterns, log=log)
                         locals_ = []
                         for f in files:
                             locals_.append(_local_copy(f))
