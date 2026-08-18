@@ -398,7 +398,7 @@ try {
     }
 
     // 해설 — 슬롯 스토리에 흘리고, 넘치면 슬롯 영역 안에 페이지 삽입
-    function placeAnswers(slot, paras, label) {
+    function placeAnswers(slot, paras, label, limitPage) {
         if (!paras.length) { return; }
         var story = slot.story;
         // 해설 프레임이 모자라면 오버셋 상태로 스타일이 적용돼 극단적으로 느려진다.
@@ -468,9 +468,16 @@ try {
             guard++;
             checkBudget(label + " 해설 페이지 추가");
         }
+        applyHeaderMaster(slot.firstPage, label);
+        // 정리 범위: 이 슬롯 시작부터 다음 해설 슬롯 직전(또는 해설 구간 끝)까지 —
+        // 스토리가 안 닿은 뒤쪽 빈 페이지까지 지워야 빈 장이 남지 않는다
         var regionPages = [];
-        for (var rp = pageIndexOf(slot.firstPage); rp <= pageIndexOf(slot.lastPage); rp++) {
-            try { regionPages.push(doc.pages[rp]); } catch (e4) {}
+        var startIdx = pageIndexOf(slot.firstPage);
+        var stopIdx = limitPage ? pageIndexOf(limitPage) : doc.pages.length;
+        for (var rp = startIdx; rp < stopIdx && rp < doc.pages.length; rp++) {
+            var pgR = doc.pages[rp];
+            if (pageInfo(pgR).cat !== "narrow") { break; }
+            regionPages.push(pgR);
         }
         var trimmedA = trimBlankSpreads(regionPages, "narrow", slot.firstPage);
         wlog(label + ": 단락 " + paras.length + " / 프레임 " +
@@ -500,14 +507,14 @@ try {
     }
     if (!subtitleSrc) { wlog("[경고] 부제목 입력칸을 찾지 못함 — 부제목 미기입"); }
 
+    // 러닝 헤더가 읽을 부제목 슬롯을 해당 페이지에 심는다(있으면 재사용).
     function setSubtitle(page, text) {
-        if (!subtitleSrc || !page || !text) { return; }
+        if (!subtitleSrc || !page || !page.isValid || !text) { return; }
         var target = null;
-        // 이미 그 페이지에 입력칸이 있으면 재사용
         var tfs = page.textFrames;
         for (var t = 0; t < tfs.length; t++) {
-            if (tfs[t] === subtitleSrc) { target = tfs[t]; break; }
             try {
+                if (tfs[t] === subtitleSrc) { target = tfs[t]; break; }
                 if (tfs[t].texts.length &&
                     tfs[t].texts[0].appliedCharacterStyle === subtitleCS) {
                     target = tfs[t]; break;
@@ -525,6 +532,61 @@ try {
             target.contents = text;
             target.texts[0].appliedCharacterStyle = subtitleCS;
         } catch (e3) { wlog("[경고] 부제목 기입 실패: " + e3); }
+    }
+
+    // 부제목 헤더가 있는 마스터 찾기.
+    // 반드시 '그 페이지가 지금 쓰는 마스터와 같은 계열(기반 마스터가 같은)'
+    // 안에서만 고른다 — 계열이 다르면(예: 문제용 A2) 페이지 디자인이 통째로 바뀐다.
+    function masterBaseName(ms) {
+        try {
+            if (ms.appliedMaster && ms.appliedMaster.isValid) { return ms.appliedMaster.name; }
+        } catch (e) {}
+        return ms ? ms.name : "";
+    }
+
+    function masterHasSubtitleOnSide(ms, side) {
+        var items;
+        try { items = ms.allPageItems; } catch (e) { return false; }
+        for (var i = 0; i < items.length; i++) {
+            var it = items[i];
+            try {
+                if (it.constructor.name !== "TextFrame") { continue; }
+                var ins = it.parentStory.textVariableInstances;
+                var hit = false;
+                for (var k = 0; k < ins.length; k++) {
+                    if (ins[k].associatedTextVariable.name === "부제목") { hit = true; break; }
+                }
+                if (!hit) { continue; }
+                var pp = it.parentPage;
+                var sd = (pp && pp.side === PageSideOptions.LEFT_HAND) ? "L" : "R";
+                if (sd === side) { return true; }
+            } catch (e2) {}
+        }
+        return false;
+    }
+
+    function applyHeaderMaster(page, label) {
+        if (!page || !page.isValid) { return; }
+        var side, cur;
+        try {
+            side = (page.side === PageSideOptions.LEFT_HAND) ? "L" : "R";
+            cur = page.appliedMaster;
+        } catch (e) { return; }
+        if (!cur || !cur.isValid) { return; }
+        if (masterHasSubtitleOnSide(cur, side)) { return; }   // 이미 헤더 있음
+        var base = masterBaseName(cur);
+        for (var m = 0; m < doc.masterSpreads.length; m++) {
+            var ms = doc.masterSpreads[m];
+            if (ms.name === cur.name) { continue; }
+            if (masterBaseName(ms) !== base && ms.name !== base) { continue; }
+            if (!masterHasSubtitleOnSide(ms, side)) { continue; }
+            try {
+                page.appliedMaster = ms;
+                wlog(label + ": 헤더 마스터 적용(" + ms.name + ", " + page.name + "쪽)");
+            } catch (e2) { wlog("[경고] " + label + " 헤더 마스터 적용 실패: " + e2); }
+            return;
+        }
+        wlog("[경고] " + label + ": " + page.name + "쪽에 맞는 헤더 마스터 없음 — 부제목이 안 보일 수 있음");
     }
 
     // ── 슬롯 복제 (원고 과가 템플릿 세트보다 많을 때) ───────────────────────
@@ -634,7 +696,8 @@ try {
             var aSlots2 = answerSlots(buildBlocks(doc));
             if (li < aSlots2.length) {
                 if (les.subtitle) { setSubtitle(aSlots2[li].firstPage, les.subtitle); }
-                placeAnswers(aSlots2[li], les.answers, tag + " 해설");
+                var limitPg = (li + 1 < aSlots2.length) ? aSlots2[li + 1].firstPage : null;
+                placeAnswers(aSlots2[li], les.answers, tag + " 해설", limitPg);
             } else {
                 wlog("[경고] " + tag + ": 해설 슬롯 없음 — 미조판");
             }
