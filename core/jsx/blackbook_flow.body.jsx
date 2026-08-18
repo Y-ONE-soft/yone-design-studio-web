@@ -281,7 +281,9 @@ try {
             starts.push(flat.length);
             for (var k = 0; k < units[u].length; k++) { flat.push(units[u][k]); }
         }
+        wlog(label + ": 배치 시작 (단락 " + flat.length + ")");
         var sp = placeParagraphs(story, flat);
+        wlog(label + ": 스타일 적용 완료");
         // 프레임브레이크는 스타일 적용 뒤에 (InDesign 2026에서 스타일 대입이
         // startParagraph override를 ANYWHERE로 되돌림)
         for (var s = 1; s < starts.length; s++) {
@@ -305,6 +307,7 @@ try {
             lastFrame = story.textContainers[story.textContainers.length - 1];
             guard++;
         }
+        wlog(label + ": 프레임브레이크 완료" + (guard ? " / 페이지 추가 " + guard : ""));
         var trimmed = trimBlankSpreads(block.pages, block.cat, block.pages[0]);
         wlog(label + ": 유닛 " + units.length + " / 프레임 " +
              story.textContainers.length + (guard ? " (페이지 추가 " + guard + ")" : "") +
