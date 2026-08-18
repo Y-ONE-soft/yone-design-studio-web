@@ -204,6 +204,24 @@ function chainFrames(frames) {
     return frames.length ? frames[0].parentStory : null;
 }
 
+// ── 시간 예산 워치독 ────────────────────────────────────────────────────────
+// 어떤 이유로든 한 구간이 길어지면 스스로 중단하고 문서를 닫는다.
+// (InDesign이 붙잡힌 채 사용자가 Esc를 눌러야 하는 상황을 만들지 않기 위함)
+var T0 = new Date().getTime();
+var BUDGET_MS = 8 * 60 * 1000;
+var STEP_MS = 90 * 1000;
+var tStep = T0;
+function stepStart() { tStep = new Date().getTime(); }
+function checkBudget(where) {
+    var now = new Date().getTime();
+    if (now - T0 > BUDGET_MS) {
+        throw new Error("시간 예산 초과(전체 " + Math.round((now - T0) / 1000) + "초) — " + where);
+    }
+    if (now - tStep > STEP_MS) {
+        throw new Error("구간 지연(" + Math.round((now - tStep) / 1000) + "초) — " + where);
+    }
+}
+
 var doc = null;
 try {
     wlog("블랙북 v2 조판 시작: " + TEMPLATE);
@@ -277,6 +295,7 @@ try {
             var pgAdd = appendPageLike(frames[frames.length - 1].parentPage, block.cat);
             if (!pgAdd.length) { break; }
             for (var pa = 0; pa < pgAdd.length; pa++) {
+                checkBudget(label + " 페이지 선확보");
                 frames.push(pgAdd[pa]);
                 block.pages.push(pgAdd[pa].parentPage);
                 block.frames.push(pgAdd[pa]);
@@ -292,16 +311,23 @@ try {
             starts.push(flat.length);
             for (var k = 0; k < units[u].length; k++) { flat.push(units[u][k]); }
         }
+        stepStart();
         wlog(label + ": 배치 시작 (단락 " + flat.length + ")");
         var sp = placeParagraphs(story, flat);
         wlog(label + ": 스타일 적용 완료");
+        checkBudget(label + " 스타일 적용");
+        stepStart();
         // 프레임브레이크는 스타일 적용 뒤에 (InDesign 2026에서 스타일 대입이
         // startParagraph override를 ANYWHERE로 되돌림)
         for (var s = 1; s < starts.length; s++) {
             if (starts[s] < sp.length) {
                 try { sp[starts[s]].startParagraph = StartParagraph.NEXT_FRAME; } catch (e) {}
             }
-            if (s % 20 === 0) { wlog(label + ": 프레임브레이크 " + s + "/" + (starts.length - 1)); }
+            if (s % 20 === 0) {
+                wlog(label + ": 프레임브레이크 " + s + "/" + (starts.length - 1));
+                checkBudget(label + " 프레임브레이크");
+                stepStart();
+            }
         }
         // 프레임 부족 → 블록 마지막 페이지 복제해서 이어붙임
         var guard = 0;
@@ -318,6 +344,7 @@ try {
             }
             lastFrame = story.textContainers[story.textContainers.length - 1];
             guard++;
+            checkBudget(label + " 페이지 추가");
         }
         wlog(label + ": 프레임브레이크 완료" + (guard ? " / 페이지 추가 " + guard : ""));
         var trimmed = trimBlankSpreads(block.pages, block.cat, block.pages[0]);
@@ -360,9 +387,12 @@ try {
             pre++;
         }
         if (pre) { wlog(label + ": 페이지 " + pre + "장 선확보 (프레임 " + have + ")"); }
+        stepStart();
         wlog(label + ": 배치 시작 (단락 " + paras.length + ")");
         placeParagraphs(story, paras);
         wlog(label + ": 스타일 적용 완료");
+        checkBudget(label + " 해설 스타일 적용");
+        stepStart();
         var guard = 0;
         function lastFrameInRegion() {
             var conts = story.textContainers, best = null;
@@ -390,6 +420,7 @@ try {
             slot.lastPage = added[added.length - 1].parentPage;
             tail = story.textContainers[story.textContainers.length - 1];
             guard++;
+            checkBudget(label + " 해설 페이지 추가");
         }
         var regionPages = [];
         for (var rp = pageIndexOf(slot.firstPage); rp <= pageIndexOf(slot.lastPage); rp++) {
@@ -590,4 +621,6 @@ try {
 } catch (e) {
     wlog("[오류] " + e);
     try { if (doc) { doc.close(SaveOptions.NO); } } catch (e2) {}
+    try { app.scriptPreferences.enableRedraw = true; } catch (e3) {}
+    wlog("블랙북 v2 조판 중단");
 }
