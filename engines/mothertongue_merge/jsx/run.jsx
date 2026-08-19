@@ -163,6 +163,62 @@
     }
 
     // ───────────────────────────────────────────────────────────────
+    // [스타일 색상 정렬] 레거시 문자스타일 → 템플릿 현행(D_) 정의
+    //   실측(2026-08-18): 결합본의 '지문 번호' 문자스타일이
+    //   C=44 M=20 Y=46 K=2(초록)로 잡혀 모든 지문번호 배지가 초록으로 나왔다.
+    //   템플릿에는 '지문 번호' 자체가 없고 현행 디자인은 'D_지문번호'
+    //   (C=74 M=48 Y=12 K=19 남색)를 쓴다. 소스 대부분도 남색인데,
+    //   **처음 복제된 소스의 정의가 결합본에 새 스타일로 만들어지고
+    //   이후 소스는 같은 이름이라 그 정의를 따라간다** — 초록 소스 하나가
+    //   먼저 들어오면 전 페이지가 초록이 된다.
+    //   → 템플릿의 현행 정의(D_)를 기준으로 레거시 스타일 색을 맞춘다.
+    //     색상값을 코드에 박지 않고 템플릿 정의를 읽어 쓴다.
+    // ───────────────────────────────────────────────────────────────
+
+    // [레거시 이름, 템플릿 현행 이름]
+    var STYLE_COLOR_SYNC = [["지문 번호", "D_지문번호"]];
+
+    function colorLabel(c) {
+        if (c === null || c === undefined) return "-";
+        try {
+            var v = "";
+            try { v = c.colorValue.join(","); } catch (eV) {}
+            return c.name + "(" + v + ")";
+        } catch (e) { return "?"; }
+    }
+
+    function syncLegacyStyleColors(doc) {
+        var pairs = settings.style_color_sync || STYLE_COLOR_SYNC;
+        for (var i = 0; i < pairs.length; i++) {
+            var legacyName = pairs[i][0], designName = pairs[i][1];
+            var legacy = findCharStyle(doc, legacyName);
+            var design = findCharStyle(doc, designName);
+            if (!legacy) continue;                    // 소스에서 안 들어옴 — 정상
+            if (!design) {
+                writeLog("[경고] 색상 기준 스타일 없음: " + designName +
+                         " — '" + legacyName + "' 색 정렬 생략");
+                continue;
+            }
+            var before = null, want = null;
+            try { before = legacy.fillColor; } catch (eB) {}
+            try { want = design.fillColor; } catch (eW) {}
+            if (!want) continue;
+            var same = false;
+            try { same = (before && before.id === want.id); } catch (eS) {}
+            if (same) continue;
+            try {
+                legacy.fillColor = want;
+                writeLog("스타일 색상 정렬: '" + legacyName + "' " +
+                         colorLabel(before) + " → " + colorLabel(want) +
+                         " ('" + designName + "' 기준)");
+            } catch (eSet) {
+                writeLog("[경고] 스타일 색상 정렬 실패 '" + legacyName + "': " +
+                         (eSet.message || eSet));
+            }
+        }
+    }
+
+    // ───────────────────────────────────────────────────────────────
     // [간지] 1페이지 기재 — 학교명/순번/범위
     //   analysis_merge_v2 [스펙5] 이식. 마더텅 결합은 종전에 간지를 손대지
     //   않아 템플릿의 예전 학교(광문고1)·순번·범위가 그대로 남아 나갔다.
@@ -912,6 +968,10 @@
         }
 
         try { cleanLabels(newDoc); } catch (eCl) {}
+
+        // 지문번호 등 레거시 스타일 색을 템플릿 현행(D_) 정의에 맞춤
+        try { syncLegacyStyleColors(newDoc); }
+        catch (eSc) { writeLog("[경고] 스타일 색상 정렬 실패: " + (eSc.message || eSc)); }
 
         // 간지(1페이지) 기재 — 학교/순번/범위
         try { applyGanji(newDoc); }
