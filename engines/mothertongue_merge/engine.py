@@ -655,6 +655,9 @@ class MothertongueMergeEngine(BaseEngine):
             "log_path": os.path.join(output_dir, self.log_filename),
             "log_paths": [os.path.join(job_dir, self.log_filename)],
             "keep_head": cfg.get("keep_head", 1),
+            # PDF 추출 스위치 — 현재 꺼둠(사용자 요청 2026-08-19).
+            # 켜면 도련 포함으로 고정 출력된다(JSX useDocumentBleedWithPDF).
+            "export_pdf": bool(cfg.get("export_pdf", True)),
             "ganji_school": ganji_school,
             "issue_num": issue_num or "1",
             "ranges": ranges,
@@ -676,7 +679,10 @@ class MothertongueMergeEngine(BaseEngine):
             f.write(jsx_code)
 
         log(f"[결과 .indd] {os.path.basename(indd_out)}")
-        log(f"[결과 PDF]  {os.path.basename(pdf_out)}")
+        if cfg.get("export_pdf", True):
+            log(f"[결과 PDF]  {os.path.basename(pdf_out)}")
+        else:
+            log("[결과 PDF]  (추출 꺼짐 — .indd 만 생성)")
         return jsx_dst
 
     # ─── verify ────────────────────────────────────────────────────
@@ -689,10 +695,12 @@ class MothertongueMergeEngine(BaseEngine):
         indd_out = settings["output_indd"]
         pdf_out = settings["output_pdf"]
 
+        export_pdf = bool(settings.get("export_pdf", True))
+
         warnings = []
         if not os.path.exists(indd_out):
             warnings.append(f".indd 미생성: {os.path.basename(indd_out)}")
-        if not os.path.exists(pdf_out):
+        if export_pdf and not os.path.exists(pdf_out):
             warnings.append(f"PDF 미생성: {os.path.basename(pdf_out)}")
 
         # job 전용 로그(이번 실행분만) 우선 — 공용 로그 누적 오염 방지
@@ -708,7 +716,9 @@ class MothertongueMergeEngine(BaseEngine):
             except OSError:
                 pass
 
-        ok = os.path.exists(pdf_out) and len(warnings) == 0
+        # PDF 추출이 꺼져 있으면 .indd 생성 여부로 판정한다
+        ok = (os.path.exists(pdf_out) if export_pdf
+              else os.path.exists(indd_out)) and len(warnings) == 0
 
         return {
             "ok": ok,

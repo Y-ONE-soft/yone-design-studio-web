@@ -746,6 +746,7 @@
         var TEMPLATE_PATH = settings.template_path;
         var OUTPUT_INDD   = settings.output_indd;
         var OUTPUT_PDF    = settings.output_pdf;
+        var EXPORT_PDF    = (settings.export_pdf !== false);   // 기본 켜짐
         var KEEP_HEAD     = (settings.keep_head != null) ? settings.keep_head : 1;
 
         var tplFile = new File(TEMPLATE_PATH);
@@ -991,14 +992,27 @@
             writeLog("[경고] 해결 안 된 코드 " + unresolved.length + "개: " + unresolved.join(", "));
         }
 
-        // PDF export — 사용자 UI 잔존 설정(페이지별 분할/페이지 범위) 상속 방지
-        // (세로결합 2026-05-28 폴더 분할 사례와 동일 계열). 프리셋/품질은
-        // 기존과 동일하게 현재 설정을 따른다.
+        // PDF export — 사용자 UI 잔존 설정(페이지별 분할/페이지 범위/도련) 상속 방지
+        // (세로결합 2026-05-28 폴더 분할 사례와 동일 계열).
+        //   · 도련(재단 여백)은 **문서 도련 사용**으로 고정 — InDesign 재시작 등
+        //     으로 잔존 설정이 초기화되면 도련이 조용히 빠졌다(2026-08-19 실측:
+        //     612x858pt → 595x842pt). 프리셋/품질은 종전대로 현재 설정을 따른다.
+        //   · settings.export_pdf 가 false 면 추출 자체를 건너뛴다
+        //     (2026-08-19 사용자 요청 — 지금은 .indd 만 필요. config.json
+        //      "export_pdf": true 로 되돌리면 그대로 다시 켜진다).
+        if (!EXPORT_PDF) {
+            writeLog("PDF 추출: 꺼짐(설정) — .indd 만 저장");
+        } else
         try {
             var pdfFile = new File(OUTPUT_PDF);
             try { app.pdfExportPreferences.pageRange = PageRange.ALL_PAGES; } catch (ePr) {}
             try { app.pdfExportPreferences.exportAsSinglePages = false; } catch (eSp) {}
             try { app.pdfExportPreferences.viewPDF = false; } catch (eVp) {}
+            // 도련 포함 고정 (문서 도련 사용 + 슬러그 제외)
+            try { app.pdfExportPreferences.useDocumentBleedWithPDF = true; } catch (eBl) {
+                writeLog("[경고] 도련 설정 실패: " + (eBl.message || eBl));
+            }
+            try { app.pdfExportPreferences.includeSlugWithPDF = false; } catch (eSl) {}
             newDoc.exportFile(ExportFormat.PDF_TYPE, pdfFile, false);
             // 파일 시스템 반영 지연 대비 — 최대 10초 대기 후 판정
             for (var wPdf = 0; wPdf < 20 && !pdfFile.exists; wPdf++) { $.sleep(500); }
