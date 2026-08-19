@@ -366,7 +366,10 @@ def classify_paragraphs(paras):
                 if t.lstrip().startswith("→"):
                     nxt["kind"] = "AnsL"
                     break
-                if R.BOX_WORDLIST.search(t) or not R.HANGUL.search(t):
+                if (R.BOX_WORDLIST.search(t) or not R.HANGUL.search(t)
+                        or R.BOX_ITEM_LABEL.match(t)):
+                    # W59: `(a) 한글 문장` 형태의 보기 항목 — 한글 비율만 보고
+                    # 끊으면 보기 상자가 첫 줄만 남고 갈라진다(블랙북 실증).
                     nxt["kind"] = "Box"
                     j += 1
                     continue

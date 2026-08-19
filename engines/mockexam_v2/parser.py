@@ -225,8 +225,10 @@ def build_ir(paras, meta=None, log=None):
                 warnings.append(f"발문 이전 고아 단락: {text[:50]!r}")
             continue
 
-        if kind in ("P", "P-CONTEXT", "K") and pending_sum:
-            # 화살표 다음 단락 = 요약문 (박스로 조판)
+        if pending_sum and kind not in ("Q", "Q-INTRO", "GH", "A", "C",
+                                        "Cond", "Box"):
+            # 화살표 다음 단락 = 요약문 (박스로 조판). 밑줄이 길어 답란(Ans)
+            # 으로, 영영풀이라 UNKNOWN 으로 잡히더라도 화살표 신호가 우선.
             pending_sum = False
             block = {"kind": "text", "label": "Sum", "content": text}
             cur["stimulus"]["blocks"].append(block)
