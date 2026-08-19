@@ -275,6 +275,14 @@ function ctl(p) {
       <input type="range" id="c-${p.key}" min="${p.min}" max="${p.max}"
              step="${p.step}" value="${v}">${hint}
     </div>`;
+  if (p.type === 'select') return `
+    <div class="st-row">
+      <div class="st-label"><span>${p.label}</span></div>
+      <select class="st-select" id="c-${p.key}">
+        ${p.options.map(o => `<option value="${esc(o.v)}"${
+            String(o.v) === String(v) ? ' selected' : ''}>${o.t}</option>`).join('')}
+      </select>${hint}
+    </div>`;
   if (p.type === 'color') return `
     <div class="st-row">
       <div class="st-label"><span>${p.label}</span></div>
@@ -430,6 +438,132 @@ async function ask() {
 $('btn-ask').addEventListener('click', ask);
 window.addEventListener('resize', () => { if (SPEC && SPEC.kind === 'html') draw(); });
 $('ask').addEventListener('keydown', e => { if (e.key === 'Enter') ask(); });
+
+// ── 설정 · 새 표지 ────────────────────────────────────────────────────────
+// 학년·권종은 개수가 변하는 목록이라 슬라이더로 안 된다. 줄을 넣고 빼는 UI 로 만든다.
+let CFG = null, MODE = 'edit';
+
+const esc2 = s => String(s == null ? '' : s).replace(/"/g, '&quot;');
+
+function gradeRow(g) {
+  return `<div class="st-item st-item--g" data-row="grade">
+    <input class="st-text" data-f="name" value="${esc2(g.name)}" placeholder="예) 서현고1">
+    <button class="st-x" data-del>✕</button></div>`;
+}
+
+function bookRow(b, colors) {
+  const paper = (colors.paper || {})[b.id] || '#EAF3FF';
+  const acc = (colors.accent || {})[b.id] || '#2E6BE6';
+  return `<div class="st-item st-item--b" data-row="book" data-id="${esc2(b.id || '')}">
+    <input class="st-text" data-f="label" value="${esc2(b.label)}" placeholder="본교재">
+    <input class="st-text" data-f="badge" value="${esc2(b.badge)}" placeholder="본">
+    <input class="st-text" data-f="desc" value="${esc2(b.desc)}" placeholder="한 줄 설명">
+    <input type="color" data-f="paper" value="${paper}">
+    <input type="color" data-f="accent" value="${acc}">
+    <button class="st-x" data-del>✕</button></div>`;
+}
+
+function fillModal(cfg, mode) {
+  CFG = cfg; MODE = mode;
+  $('m-title').textContent = mode === 'new' ? '새 표지' : '표지 설정';
+  $('m-sub').textContent = mode === 'new'
+    ? '이름과 권종만 정하면 바로 표지가 나옵니다. 나머지는 뒤에서 고칩니다.'
+    : '여기서 고친 값은 파일에 바로 저장됩니다.';
+  $('m-folder-wrap').style.display = mode === 'new' ? '' : 'none';
+  $('m-folder').value = '';
+  $('m-brand').value = cfg.brand || '';
+  $('m-exam').value = cfg.exam || '';
+  $('m-teacher').value = cfg.teacher || '';
+  $('m-teacher-kr').value = cfg.teacher_kr || '';
+  $('m-slogan1').value = (cfg.slogan || [])[0] || '';
+  $('m-slogan2').value = (cfg.slogan || [])[1] || '';
+  $('m-back-lead').value = cfg.back_lead || '';
+  $('m-grades').innerHTML = (cfg.grades || []).map(gradeRow).join('');
+  $('m-books').innerHTML = (cfg.books || []).map(b => bookRow(b, cfg.colors || {})).join('');
+  say($('m-msg'), '');
+  $('modal').classList.add('st-modal--on');
+}
+
+document.addEventListener('click', e => {
+  if (e.target.matches('[data-del]')) e.target.closest('[data-row]').remove();
+});
+$('m-add-grade').addEventListener('click', () =>
+  $('m-grades').insertAdjacentHTML('beforeend', gradeRow({ name: '' })));
+$('m-add-book').addEventListener('click', () =>
+  $('m-books').insertAdjacentHTML('beforeend', bookRow({}, {})));
+$('m-cancel').addEventListener('click', () =>
+  $('modal').classList.remove('st-modal--on'));
+
+function readModal() {
+  const cfg = Object.assign({}, CFG);
+  cfg.brand = $('m-brand').value.trim();
+  cfg.exam = $('m-exam').value.trim();
+  cfg.teacher = $('m-teacher').value.trim();
+  cfg.teacher_kr = $('m-teacher-kr').value.trim();
+  cfg.slogan = [$('m-slogan1').value, $('m-slogan2').value];
+  cfg.back_lead = $('m-back-lead').value;
+
+  const val = (row, f) => row.querySelector(`[data-f="${f}"]`).value.trim();
+  cfg.grades = [...$('m-grades').children].map((row, i) => ({
+    id: (CFG.grades && CFG.grades[i] ? CFG.grades[i].id : '') || `g${i + 1}`,
+    name: val(row, 'name'), range: '' })).filter(g => g.name);
+
+  const colors = Object.assign({}, cfg.colors || {});
+  colors.paper = {}; colors.accent = {};
+  cfg.books = [...$('m-books').children].map((row, i) => {
+    // id 를 유지해야 색·쪽수가 딴 권종으로 옮겨가지 않는다
+    const id = row.dataset.id || `b${i + 1}`;
+    colors.paper[id] = val(row, 'paper');
+    colors.accent[id] = val(row, 'accent');
+    return { id, label: val(row, 'label'), badge: val(row, 'badge'),
+             desc: val(row, 'desc'),
+             spine: (CFG.books && CFG.books[i] ? CFG.books[i].spine : 9.0) };
+  }).filter(b => b.label);
+  cfg.colors = colors;
+  return cfg;
+}
+
+$('btn-config').addEventListener('click', async () => {
+  const r = await fetch(api('config'));
+  const body = await r.text();
+  if (!r.ok) { say($('msg'), tidy(body), 'err'); return; }
+  const cfg = JSON.parse(body);
+  if (cfg.error) { say($('msg'), cfg.error, 'err'); return; }
+  fillModal(cfg, 'edit');
+});
+
+$('btn-new').addEventListener('click', () => fillModal({
+  brand: '', exam: '2학기 중간', teacher: '', teacher_kr: '',
+  slogan: ['', ''], back_lead: '',
+  grades: [{ name: '' }],
+  books: [{ id: 'b1', label: '본교재', badge: '본', desc: '' },
+          { id: 'b2', label: '문제집', badge: '문제집', desc: '' }],
+  colors: {}
+}, 'new'));
+
+$('m-ok').addEventListener('click', async () => {
+  const btn = $('m-ok'); btn.disabled = true;
+  try {
+    const cfg = readModal();
+    if (!cfg.grades.length || !cfg.books.length) {
+      say($('m-msg'), '학년과 권종이 각각 하나는 있어야 합니다.', 'err'); return;
+    }
+    let url, payload;
+    if (MODE === 'new') {
+      const folder = $('m-folder').value.trim();
+      if (!folder) { say($('m-msg'), '폴더 이름을 적어주세요.', 'err'); return; }
+      url = api('create'); payload = { folder, config: cfg };
+    } else {
+      url = api('config-save'); payload = { project: PROJECT, config: cfg };
+    }
+    const r = await fetch(url, { method: 'POST',
+      headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    const body = await r.text();
+    if (!r.ok) { say($('m-msg'), tidy(body), 'err'); return; }
+    const d = JSON.parse(body);
+    location.href = '/cover-studio?p=' + encodeURIComponent(d.key || PROJECT);
+  } finally { btn.disabled = false; }
+});
 
 // ── 시작
 (async () => {
