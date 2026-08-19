@@ -413,7 +413,8 @@ def api_reference():
     W, H = tw + bl * 2, th + bl * 2
 
     out = _ask_claude_blocks(bin_, path, W, H, cfg,
-                             (request.form.get("note") or "").strip())
+                             (request.form.get("note") or "").strip(),
+                             _base_preset())
     if isinstance(out, tuple):
         return out
     return jsonify({"blocks": out.get("blocks", []),
@@ -434,8 +435,35 @@ BLOCK_SCHEMA = {
 }
 
 
-def _ask_claude_blocks(bin_, image_path, W, H, cfg, note):
+def _base_preset():
+    """검증된 레이아웃 하나를 출발점으로 준다.
+
+    백지에서 좌표를 찍게 하면 결과가 조악하다 — 여백·글자 크기·정렬이 전부
+    감으로 찍힌 숫자가 된다. 실측과 반려를 거쳐 확정된 값을 보여주고
+    "이 결을 유지한 채 레퍼런스 쪽으로 옮겨라" 라고 시키는 편이 훨씬 낫다.
+    """
+    try:
+        sys.path.insert(0, CORE)
+        from yone_cover import project as PJ
+        ps = PJ.presets()
+        return ps.get("songayoung_a") or (list(ps.values())[0] if ps else None)
+    except Exception:
+        return None
+
+
+def _ask_claude_blocks(bin_, image_path, W, H, cfg, note, base=None):
     books = ", ".join(b.get("label", "") for b in (cfg.get("books") or []))
+    ref_block = ""
+    if base:
+        ref_block = f"""
+── 출발점: 이미 인쇄까지 나간 우리 표지의 레이아웃이다 ──
+{json.dumps({'name': base.get('name'), 'note': base.get('note'),
+             'blocks': base.get('blocks')}, ensure_ascii=False, indent=1)}
+
+이 값들은 **실측과 반려를 거쳐 확정된 것**이다(각 블록의 _note 참고).
+여백 16mm, 워드마크 캡하이트 20mm 대, 본문 글자 3.6~4.4mm, 1mm 격자 —
+이 결을 유지한 채 **레퍼런스의 구성으로 옮겨라.** 좌표를 감으로 새로 찍지 마라.
+"""
     prompt = f"""레퍼런스 표지 이미지를 보고, 같은 **구성**으로 우리 교재 표지를 만들 blocks 를 짜라.
 이미지 파일: {os.path.basename(image_path)}  (Read 도구로 읽어라)
 
@@ -455,9 +483,14 @@ def _ask_claude_blocks(bin_, image_path, W, H, cfg, note):
   @accent(권종 강조색) @paper(바탕) @ink(잉크)
 우리 교재 정보: 브랜드 {cfg.get('brand','')} · 권종 {books} · 회차 {cfg.get('exam','')}
 
+{ref_block}
 규칙:
 - **레퍼런스를 베끼지 말고 구성만 가져와라.** 무엇이 어디에 얼마나 크게 놓였는지,
   여백이 어떻게 잡혔는지, 무엇이 가장 먼저 읽히는지.
+- **크기는 위 출발점의 척도를 따라라.** 제목급 12~21mm · 소제목 5~7mm ·
+  본문·라벨 3.2~4.4mm. 레퍼런스가 커 보인다고 30mm 를 찍지 마라.
+- 좌표는 **1mm 격자**(정수)로. 여백은 좌우 16mm 를 기본으로 잡는다.
+- 글자 블록의 w 는 실제로 그 글자가 놓일 폭이다. 정렬(align)과 함께 맞춰라.
 - 레퍼런스의 로고·사진·문구를 그대로 옮기지 마라. 우리 자리표시자로 바꿔라.
 - 바탕은 blocks 로 깔지 않아도 된다(권종 바탕색이 이미 깔린다). 색면이 구성의
   일부일 때만 rect 를 쓴다.
