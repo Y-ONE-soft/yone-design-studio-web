@@ -6,36 +6,32 @@
   `/cover2026`  = 쪽수 고르면 생성기가 다시 렌더 (업로드 없음)
   여기          = **값을 만지는 동안 미리보기가 계속 바뀐다.** 마음에 들면 저장.
 
+표지 목록은 하드코딩하지 않는다 — `디자인/표지/` 아래에서 `cover_project.py` 가
+있는 폴더를 찾는다. **새 표지를 만들면 저절로 여기 나타난다.** 그게 이 화면의
+존재 이유다(표지 하나 만들 때마다 조절판을 새로 짜지 않게 하려는 것).
+
 생성기를 이 프로세스에서 import 하지 않고 subprocess 로 부른다. 생성기가 모듈
 전역 상수로 돌아가서, 한 요청의 오버라이드가 다음 요청에 남기 때문이다.
 프로세스를 매번 새로 띄우면 그 오염이 원천적으로 없다 (실측 70ms).
-
-조절 항목은 교재 폴더의 `params.py` 가 정한다 — 항목을 추가해도 이 파일과
-템플릿은 안 고친다. 새 교재를 붙일 때도 그쪽에 `studio.py`·`params.py` 만
-만들면 되고, PROJECTS 에 한 줄 추가한다.
 """
 import json
 import os
 import subprocess
 import sys
+import time
+import unicodedata as u
 
 from flask import Blueprint, Response, jsonify, render_template, request
 
 bp = Blueprint("cover_studio", __name__)
 
 STUDIO_ROOT = os.path.expanduser("~/Documents/작업/Y.ONE STUDIO")
+COVER_ROOT = os.path.join(STUDIO_ROOT, "디자인/표지")
+CORE = os.path.expanduser("~/dev/yone-cover")
 
-# 교재 = 작업대 한 벌. 새 선생님 표지가 생기면 여기에 한 줄 추가한다.
-PROJECTS = {
-    "ansc": {
-        "표기": "안성찬T · 영동고 (2학기 중간)",
-        "폴더": os.path.join(STUDIO_ROOT, "디자인/표지/안성찬T/일러스트_교복"),
-    },
-}
-DEFAULT = "ansc"
-
-# 미리보기는 순수 파이썬이라 Flask 가 뜬 3.9 로도 돈다. 내보내기(PDF)는
-# fitz·pypdf·PIL 이 필요해 그때만 무거운 파이썬을 찾는다.
+# 생성기는 Flask 가 뜬 파이썬(3.9)에 없는 것들을 쓴다 — SVG 계보는 순수
+# 파이썬이라 상관없지만, HTML 계보는 폰트 메트릭 때문에 fontTools 가 필요하고
+# 납품 PDF 는 fitz·pypdf·PIL 이 필요하다. 그래서 항상 생성기용 파이썬을 찾는다.
 _PY_CANDIDATES = [
     "/Library/Frameworks/Python.framework/Versions/3.14/bin/python3",
     "/Library/Frameworks/Python.framework/Versions/3.13/bin/python3",
@@ -44,10 +40,11 @@ _PY_CANDIDATES = [
     sys.executable,
 ]
 _py_cache = None
+_scan_cache = (0, {})
 
 
-def _heavy_python():
-    """PDF 를 뽑을 수 있는 파이썬. 없으면 무엇이 없는지 알려준다."""
+def _gen_python():
+    """생성기를 돌릴 수 있는 파이썬. 없으면 무엇이 없는지 알려준다."""
     global _py_cache
     if _py_cache:
         return _py_cache
@@ -58,66 +55,104 @@ def _heavy_python():
     for p in _PY_CANDIDATES:
         if not p or not os.path.exists(p):
             continue
-        r = subprocess.run([p, "-c", "import fitz, pypdf, PIL"],
+        r = subprocess.run([p, "-c", "import fontTools, PIL"],
                            capture_output=True, text=True, env=clean)
         if r.returncode == 0:
             _py_cache = p
             return p
         tail = r.stderr.strip().splitlines()
         tried.append(f"{p}: {tail[-1] if tail else '실패'}")
-    raise RuntimeError("PDF 를 뽑을 파이썬을 찾지 못했다 (fitz·pypdf·PIL 필요)\n"
+    raise RuntimeError("생성기를 돌릴 파이썬을 찾지 못했다 (fontTools·PIL 필요)\n"
                        + "\n".join(tried))
 
 
+def projects():
+    """`cover_project.py` 가 있는 폴더를 찾는다 (2단계까지). 30초 캐시."""
+    global _scan_cache
+    now = time.time()
+    if now - _scan_cache[0] < 30 and _scan_cache[1]:
+        return _scan_cache[1]
+    found = {}
+    if os.path.isdir(COVER_ROOT):
+        for name in sorted(os.listdir(COVER_ROOT)):
+            if name.startswith("_") or name.startswith("."):
+                continue
+            top = os.path.join(COVER_ROOT, name)
+            if not os.path.isdir(top):
+                continue
+            # 하위는 밑줄로 시작해도 본다 — 생성기가 `_생성기/` 에 있는 표지가 있다.
+            # 다만 백업·보류 폴더에는 사본이 들어 있어 제외한다.
+            cands = [top] + [os.path.join(top, s) for s in sorted(os.listdir(top))
+                             if os.path.isdir(os.path.join(top, s))
+                             and not s.startswith(("_백업", "_보류", "."))]
+            for d in cands:
+                if os.path.isfile(os.path.join(d, "cover_project.py")):
+                    # macOS 파일시스템은 한글을 NFD 로 준다. URL 쿼리는 NFC 로
+                    # 오므로 키를 NFC 로 맞춰두지 않으면 조회가 조용히 빗나간다.
+                    key = u.normalize("NFC", name)
+                    found[key] = {"폴더": d, "표기": key}
+                    break
+    _scan_cache = (now, found)
+    return found
+
+
 def _project(key=None):
-    p = PROJECTS.get(key or request.args.get("p") or DEFAULT)
-    if not p:
-        raise ValueError("모르는 교재")
-    return p
+    ps = projects()
+    if not ps:
+        raise ValueError(f"표지를 찾지 못했다 — {COVER_ROOT} 아래에 "
+                         "cover_project.py 가 있는 폴더가 없다")
+    want = u.normalize("NFC", key or request.args.get("p") or "")
+    p = ps.get(want)
+    return p or ps[sorted(ps)[0]]
 
 
 def _run(proj, args, stdin_data=None, python=None, timeout=120):
-    """교재 폴더의 studio.py 를 부른다."""
-    cmd = [python or sys.executable, os.path.join(proj["폴더"], "studio.py")] + args
+    """코어 작업대를 부른다 — 프로젝트는 cover_project.py 만 제공한다."""
+    cmd = [python or _gen_python(), "-m", "yone_cover.studio", proj["폴더"]] + args
     env = {k: v for k, v in os.environ.items() if k != "PYTHONPATH"}
+    env["PYTHONPATH"] = CORE
     return subprocess.run(cmd, input=stdin_data, capture_output=True, text=True,
                           cwd=proj["폴더"], env=env, timeout=timeout)
 
 
 @bp.route("/cover-studio")
 def studio():
-    key = request.args.get("p") or DEFAULT
+    ps = projects()
+    key = request.args.get("p") or (sorted(ps)[0] if ps else "")
     return render_template("cover_studio.html",
-                           projects=PROJECTS, project_key=key,
-                           project=PROJECTS.get(key, {}), active_nav="표지")
+                           projects=ps, project_key=key,
+                           project=ps.get(key, {}), active_nav="표지")
 
 
 @bp.route("/api/cover-studio/spec")
 def api_spec():
     try:
         r = _run(_project(), ["spec"])
-    except (ValueError, subprocess.TimeoutExpired) as e:
+    except (ValueError, RuntimeError, subprocess.TimeoutExpired) as e:
         return jsonify({"error": str(e)}), 400
     if r.returncode != 0:
         return jsonify({"error": r.stderr[-800:] or "spec 실패"}), 500
     return Response(r.stdout, mimetype="application/json")
 
 
-@bp.route("/api/cover-studio/preview", methods=["POST"])
-def api_preview():
+@bp.route("/api/cover-studio/render", methods=["POST"])
+def api_render():
     d = request.get_json(silent=True) or {}
-    book, week = d.get("book", ""), str(d.get("week", ""))
-    if not book.isalnum() or not week.isdigit():
-        return jsonify({"error": "학년·주차 값이 이상하다"}), 400
+    variant, unit = str(d.get("variant", "")), str(d.get("unit", ""))
+    # 셸을 거치지 않지만 값이 그대로 인자로 들어가므로 모양을 확인한다
+    if not variant or any(c in variant + unit for c in "/\\;|&$`\n"):
+        return jsonify({"error": "고른 값이 이상하다"}), 400
     try:
-        r = _run(_project(d.get("project")), ["preview", book, week],
+        r = _run(_project(d.get("project")), ["render", variant, unit],
                  stdin_data=json.dumps(d.get("ov") or {}, ensure_ascii=False),
                  timeout=60)
-    except (ValueError, subprocess.TimeoutExpired) as e:
+    except (ValueError, RuntimeError, subprocess.TimeoutExpired) as e:
         return jsonify({"error": str(e)}), 400
     if r.returncode != 0:
         return jsonify({"error": r.stderr[-800:] or "미리보기 실패"}), 500
-    return Response(r.stdout, mimetype="image/svg+xml")
+    kind = d.get("kind") or "svg"
+    return Response(r.stdout,
+                    mimetype="image/svg+xml" if kind == "svg" else "text/html")
 
 
 @bp.route("/api/cover-studio/prompt", methods=["POST"])
@@ -138,7 +173,7 @@ def api_prompt():
     try:
         proj = _project(d.get("project"))
         spec = _run(proj, ["spec"])
-    except (ValueError, subprocess.TimeoutExpired) as e:
+    except (ValueError, RuntimeError, subprocess.TimeoutExpired) as e:
         return jsonify({"error": str(e)}), 400
     if spec.returncode != 0:
         return jsonify({"error": spec.stderr[-800:] or "spec 실패"}), 500
@@ -208,25 +243,10 @@ def api_prompt():
         return jsonify({"error": "응답을 이해하지 못했습니다"}), 502
 
     # 모르는 key·범위 밖 값은 버린다 — 화면이 만들지 않은 값이 들어오면 안 된다
-    by_key = {p["key"]: p for p in info["params"]}
-    clean = {}
-    for k, v in (out.get("changes") or {}).items():
-        p = by_key.get(k)
-        if not p:
-            continue
-        if p["type"] == "range":
-            try:
-                v = min(float(p["max"]), max(float(p["min"]), float(v)))
-            except (TypeError, ValueError):
-                continue
-        elif p["type"] == "color":
-            v = str(v).strip()
-            if not (v.startswith("#") and len(v) == 7):
-                continue
-        else:
-            v = str(v)
-        clean[k] = v
-    return jsonify({"changes": clean, "note": out.get("note", "")})
+    sys.path.insert(0, CORE)
+    from yone_cover import knobs as K
+    return jsonify({"changes": K.clean(info["params"], out.get("changes")),
+                    "note": out.get("note", "")})
 
 
 def _structured(stdout):
@@ -255,7 +275,7 @@ def api_save():
     try:
         r = _run(_project(d.get("project")), ["save"],
                  stdin_data=json.dumps(d.get("ov") or {}, ensure_ascii=False))
-    except (ValueError, subprocess.TimeoutExpired) as e:
+    except (ValueError, RuntimeError, subprocess.TimeoutExpired) as e:
         return jsonify({"error": str(e)}), 400
     if r.returncode != 0:
         return jsonify({"error": r.stderr[-800:] or "저장 실패"}), 500

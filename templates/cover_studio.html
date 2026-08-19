@@ -50,6 +50,8 @@
               min-height: 60vh; position: relative; }
   .st-stage svg, .st-stage img { max-height: 78vh; width: auto;
               box-shadow: 0 18px 60px rgba(0,0,0,.5); border-radius: 3px; }
+  .st-stage iframe { border: 0; background: #fff; border-radius: 3px;
+              box-shadow: 0 18px 60px rgba(0,0,0,.5); transform-origin: top center; }
   .st-busy { position: absolute; top: 12px; right: 16px; font-size: 12px;
              color: var(--muted); opacity: 0; transition: opacity .15s; }
   .st-busy--on { opacity: 1; }
@@ -90,7 +92,7 @@
 <div class="st-wrap">
   <div>
     <div class="st-panel">
-      <div class="st-group-name">학년 · 주차</div>
+      <div class="st-group-name" id="pick-title">보기</div>
       <div class="st-pick" id="pick-book"></div>
       <div class="st-pick" id="pick-week"></div>
     </div>
@@ -124,7 +126,7 @@
 {% block scripts %}
 <script>
 const PROJECT = {{ project_key|tojson }};
-let SPEC = null, BASE = {}, OV = {}, book = null, week = 1, seq = 0;
+let SPEC = null, BASE = {}, OV = {}, variant = null, unit = '', seq = 0;
 
 const $ = id => document.getElementById(id);
 const api = p => `/api/cover-studio/${p}?p=${encodeURIComponent(PROJECT)}`;
@@ -209,10 +211,10 @@ function chips(el, items, isOn, onPick) {
 }
 
 function renderPicks() {
-  chips($('pick-book'), SPEC.books.map(b => ({ v: b.key, label: b.label })),
-        it => it.v === book, v => { book = v; renderPicks(); draw(); });
-  chips($('pick-week'), SPEC.weeks.map(w => ({ v: w.no, label: w.no + '주차' })),
-        it => String(it.v) === String(week), v => { week = v; renderPicks(); draw(); });
+  chips($('pick-book'), SPEC.variants.map(b => ({ v: b.key, label: b.label })),
+        it => it.v === variant, v => { variant = v; renderPicks(); draw(); });
+  chips($('pick-week'), SPEC.units.map(u => ({ v: u.key, label: u.label })),
+        it => String(it.v) === String(unit), v => { unit = v; renderPicks(); draw(); });
 }
 
 // ── 미리보기 — 늦게 온 응답이 최신 그림을 덮지 않게 순번을 확인한다
@@ -223,14 +225,14 @@ function draw() {
     const my = ++seq;
     $('busy').classList.add('st-busy--on');
     try {
-      const r = await fetch(api('preview'), {
+      const r = await fetch(api('render'), {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ project: PROJECT, book, week, ov: OV })
+        body: JSON.stringify({ project: PROJECT, variant, unit, kind: SPEC.kind, ov: OV })
       });
       const body = await r.text();
       if (my !== seq) return;
       if (!r.ok) { say($('msg'), tidy(body), 'err'); return; }
-      $('stage').innerHTML = body;
+      show(body);
       say($('msg'), '');
     } catch (e) {
       if (my === seq) say($('msg'), String(e), 'err');
@@ -238,6 +240,23 @@ function draw() {
       if (my === seq) $('busy').classList.remove('st-busy--on');
     }
   }, 60);
+}
+
+function show(body) {
+  const stage = $('stage');
+  if (SPEC.kind !== 'html') { stage.innerHTML = body; return; }
+  // HTML 계보는 mm 단위 절대배치라 iframe 에 넣고 통째로 축소한다.
+  // (innerHTML 로 박으면 페이지 CSS 와 섞여 레이아웃이 깨진다)
+  const W = 216, H = 303;                        // mm — 판형
+  const px = 3.7795;                             // 1mm
+  const scale = Math.min(1, (window.innerHeight * 0.74) / (H * px));
+  stage.innerHTML = '<iframe id="pv" sandbox="allow-same-origin"></iframe>';
+  const f = $('pv');
+  f.style.width = (W * px) + 'px';
+  f.style.height = (H * px) + 'px';
+  f.style.transform = `scale(${scale})`;
+  stage.style.height = (H * px * scale + 8) + 'px';
+  f.srcdoc = body;
 }
 
 function tidy(body) {
@@ -269,12 +288,17 @@ $('btn-reset').addEventListener('click', () => {
   OV = {}; buildControls(); draw(); say($('msg'), '저장된 값으로 되돌렸습니다.');
 });
 
-$('btn-svg').addEventListener('click', () => {
-  const svg = $('stage').innerHTML;
-  if (!svg.trim()) return;
+$('btn-svg').addEventListener('click', async () => {
+  const r = await fetch(api('render'), {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ project: PROJECT, variant, unit, kind: SPEC.kind, ov: OV })
+  });
+  if (!r.ok) { say($('msg'), tidy(await r.text()), 'err'); return; }
+  const ext = SPEC.kind === 'html' ? 'html' : 'svg';
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
-  a.download = `cover_${book}_w${week}.svg`;
+  a.href = URL.createObjectURL(new Blob([await r.text()],
+           { type: SPEC.kind === 'html' ? 'text/html' : 'image/svg+xml' }));
+  a.download = `${PROJECT}_${variant}${unit ? '_' + unit : ''}.${ext}`;
   a.click();
   URL.revokeObjectURL(a.href);
 });
@@ -288,7 +312,7 @@ async function ask() {
   try {
     const r = await fetch(api('prompt'), {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ project: PROJECT, ask: q, ov: OV, book, week })
+      body: JSON.stringify({ project: PROJECT, ask: q, ov: OV, variant, unit })
     });
     const body = await r.text();
     if (!r.ok) { say($('ask-msg'), tidy(body), 'err'); return; }
@@ -318,8 +342,12 @@ $('ask').addEventListener('keydown', e => { if (e.key === 'Enter') ask(); });
   if (!r.ok) { say($('msg'), tidy(body), 'err'); return; }
   SPEC = JSON.parse(body);
   BASE = SPEC.values;
-  book = SPEC.books[0].key;
-  week = SPEC.weeks[0].no;
+  variant = SPEC.variants[0].key;
+  unit = SPEC.units.length ? SPEC.units[0].key : '';
+  if (SPEC.title) document.querySelector('.st-sub').textContent =
+      SPEC.title + ' — 값을 움직이면 미리보기가 따라 바뀝니다';
+  if (!SPEC.can_save) $('btn-save').style.display = 'none';
+  $('btn-svg').textContent = SPEC.kind === 'html' ? '이 표지 HTML 받기' : '이 표지 SVG 받기';
   renderPicks();
   buildControls();
   draw();
