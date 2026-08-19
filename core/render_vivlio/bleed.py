@@ -180,16 +180,23 @@ def finish(pdf, spec, log=None, out=None):
 
     target = out or (pdf.replace(".pdf", spec["suffix"] + ".pdf")
                      if spec.get("suffix") else pdf)
-    if os.path.abspath(target) == os.path.abspath(pdf):
-        tmp = pdf + ".tmp"
+    # 항상 임시 파일에 쓰고 바꿔치운다. 교재 폴더는 클라우드 동기화 경로라
+    # 큰 파일 저장이 `Operation timed out` 으로 끊길 수 있는데, 목적지에 직접
+    # 쓰면 **납품본이 반쪽짜리로 덮인다**. 실패하면 목적지는 손대지 않은 채 남는다.
+    tmp = target + ".tmp"
+    try:
         doc.save(tmp, garbage=3, deflate=True)
         n = doc.page_count
         doc.close()
-        os.replace(tmp, pdf)
-    else:
-        doc.save(target, garbage=3, deflate=True)
-        n = doc.page_count
-        doc.close()
+        os.replace(tmp, target)
+    except Exception:
+        try:
+            doc.close()
+        except Exception:
+            pass
+        if os.path.exists(tmp):
+            os.remove(tmp)
+        raise
     for a in opened:
         try:
             a.close()
