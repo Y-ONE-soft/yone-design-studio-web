@@ -295,6 +295,17 @@ class MothertongueMergeEngine(BaseEngine):
         return 1200  # 20분 — 여러 .indd 열기 + 큰 강 (11강 72지문) 대비
 
     @property
+    def completion_marker(self):
+        """JSX 완료 표식 — 러너가 이 줄을 보면 즉시 끝낸다.
+
+        선언하지 않으면 러너는 로그에 "PDF:"가 뜨는 것으로 완료를 판정한다.
+        PDF 추출을 끄면(export_pdf=false) 그 줄이 영원히 안 나와 정상 완료가
+        **스톨(300초 미갱신)로 오보고**된다 — 2026-08-19 웹 실행 실측
+        (JSX는 12:21:02에 정상 종료했는데 잡은 '작업 보류'로 실패 처리).
+        """
+        return "===== 완료 ====="
+
+    @property
     def upload_spec(self):
         return {
             "slots": [
