@@ -23,6 +23,9 @@
       <label class="paper-option">
         <input type="radio" name="paper_type" value="mojo" onchange="onPaperChange()"> 모조지 80g
       </label>
+      <label class="paper-option">
+        <input type="radio" name="paper_type" value="mojo_100" onchange="onPaperChange()"> 모조지 100g
+      </label>
     </div>
     <div class="calc-row">
       <label class="calc-label">내지 페이지 수</label>
@@ -102,10 +105,14 @@
   const MATERIAL_ID = "cover";
 
   // ── 세네카 계산기 ──────────────────────────────────────────
+  // 계수는 코어 yone_cover/spine.py 의 PAPER_MULT 와 같아야 한다.
+  // 모조 80g 을 0.11 로 쓰던 것은 오류였다 — 0.11 은 모조 100g 값이고 80g 은 0.09 다
+  // (안성찬T 표지에서 실물 대조로 확인, 2026-08-19). 고치기 전에는 약 22% 두껍게 나왔다.
   const PAPER_SPEC = {
     newplus:     { mult: 0.08, name: '뉴플러스 80g' },
     newplus_100: { mult: 0.10, name: '뉴플러스 100g' },
-    mojo:        { mult: 0.11, name: '모조지 80g' }
+    mojo:        { mult: 0.09, name: '모조지 80g' },
+    mojo_100:    { mult: 0.11, name: '모조지 100g' }
   };
 
   function getPaperSpec() {
