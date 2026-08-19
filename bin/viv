@@ -1,0 +1,14 @@
+#!/bin/bash
+# 책 한 권 조판 — Vivliostyle 엔진 (core/render_vivlio).
+#
+#   bin/viv <책폴더> [data|theme|build|verify|all] [--sample] [--nomemo] …
+#
+# 교재 폴더에는 config.json + 원고만 있으면 된다(코드는 전부 리포에).
+# 예)
+#   bin/viv "…/단어장/상일보카/26-2-중간" all
+#   bin/viv "…/단어장/상일보카/26-2-중간" build --nomemo
+#   bin/viv "…/프리미엄북/블랙북/26-2-중간" build --nomeasure
+set -e
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$REPO"
+exec python3 -m core.render_vivlio.book "$@"

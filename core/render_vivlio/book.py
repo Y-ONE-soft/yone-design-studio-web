@@ -50,7 +50,12 @@ def verify(cfg, log=print, pdf=None, **opts):
     texts = probe.page_texts(pdf)
     report.note(f"쪽수 {len(texts)}")
 
-    skip = tuple(vcfg.get("skip_pages") or ())
+    # 뒤에 붙인 원본 아트워크(간지·MEMO)는 우리가 조판한 면이 아니다 →
+    # 판면·도련 검사에서 뺀다. `skip_last` 는 "마지막 N 면".
+    skip = list(vcfg.get("skip_pages") or ())
+    n_last = vcfg.get("skip_last") or 0
+    skip += [len(texts) - k for k in range(n_last)]
+    skip = tuple(sorted(set(p for p in skip if 1 <= p <= len(texts))))
     if vcfg.get("frame"):
         gate.check_overflow(pdf, vcfg["frame"], report, skip_pages=skip)
     if cfg.page["bleed"]:
