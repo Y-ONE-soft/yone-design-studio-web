@@ -1,0 +1,296 @@
+/* 블랙북 계열(blackbook) 스타일시트 — 프리미엄북 교과 단원 문제집.
+ *
+ * A4(210×297) + 도련 3mm = 216×303mm. 수치는 인디자인 완성본 실측 이식
+ * (원본: [원본]배재1_블랙북_Part_내지.indd → 블랙북_1_v2_9.pdf).
+ *
+ * 지금은 계열에 책이 한 권뿐이라 서체·색·판면이 여기 그대로 있다. **두 번째 책이
+ * 들어올 때** 달라지는 값만 config(③)로 끌어올린다 — 단어장에서 그랬듯이, 무엇이
+ * 책마다 다른지는 두 번째 책이 알려준다. 책이 통째로 다른 테마를 쓰려면 config 의
+ * `theme` 에 .css 경로를 주면 된다.
+ *
+ * 함정(여기서 실제로 겪은 것):
+ *  · `@page` 배경은 **층마다 position/size 를 명시**해야 한다. 안 하면 뒤 층이 앞 층의
+ *    크기를 물려받아 방패 뒤에 회색 띠가 조각으로 찍힌다.
+ *  · 얇은 괘선을 `linear-gradient` 의 색 정지점으로 그리면 72dpi 로 래스터화돼
+ *    사라진다 → 단색 그라디언트를 **선 두께만 한 상자**로 깔 것.
+ *  · 마진 박스는 `@bottom-center` 가 무시된다. 쪽번호는 `@bottom-*-corner`
+ *    (여백 밖으로 넘쳐도 잘리지 않는다), 나머지 문구는 배경 이미지로.
+ *  · `.vunit:first-of-type` 은 앞에 있는 `.sechdr`(같은 div) 때문에 맞지 않는다
+ *    → `.vunit + .vunit`.
+ */
+
+/* ------------------------------------------------------------------ 서체 */
+@font-face { font-family: Minion; src: url(fonts/MinionPro-Regular.otf); }
+@font-face { font-family: Minion; font-weight: 700; src: url(fonts/MinionPro-Bold.otf); }
+@font-face { font-family: Minion; font-style: italic; src: url(fonts/MinionPro-It.otf); }
+@font-face { font-family: Noto; src: url(fonts/NotoSansCJKkr-Regular.otf); }
+@font-face { font-family: Noto; font-weight: 500; src: url(fonts/NotoSansCJKkr-Medium.otf); }
+@font-face { font-family: Noto; font-weight: 700; src: url(fonts/NotoSansCJKkr-Bold.otf); }
+@font-face { font-family: Elice; src: url(fonts/EliceDigitalBaeumOTF_Regular.otf); }
+@font-face { font-family: Elice; font-weight: 700; src: url(fonts/EliceDigitalBaeumOTF_Bold.otf); }
+@font-face { font-family: Neolli; src: url(fonts/EliceDXNeolliOTF-Light.otf); }
+@font-face { font-family: Ghana; src: url(fonts/Ghanachocolate.otf); }
+@font-face { font-family: PyeongChang; font-weight: 700; src: url(fonts/PyeongChang-Bold.otf); }
+
+/* ------------------------------------------------------------------ 색 */
+:root {
+  --ink:      #231f20;   /* 본문 먹 */
+  --gray:     #404041;   /* 탭 · 해설 본문 */
+  --gold:     #908400;   /* 강조(번호·Date) */
+  --band:     #939598;   /* Exercise 머리 띠 */
+  --band-ans: #c2d0dd;   /* 해설 머리 띠 */
+  --box:      #808285;   /* 지문 상자 선 */
+  --chip-b:   #7cadc3;   /* 본문 라벨 */
+  --chip-v:   #cbc4b1;   /* 연관 어휘 라벨 */
+  --syn:      #4978bc;   /* 동의어 */
+  --ant:      #dd6d55;   /* 반의어 */
+  --pgnum:    #074481;   /* 쪽번호 */
+  --sep:      #5ea1d7;   /* 구분자 · 해설 라벨 */
+  --cream:    #fef5ee;   /* 요약문 바탕 */
+  --crit:     #d9e7f6;   /* 채점 기준 바탕 */
+  --dlg:      #f1f4f8;   /* 대화문 바탕 */
+}
+
+/* ------------------------------------------------------------------ 판형 */
+/* 배경 층: [브랜드/방패] · [푸터 조판물] · [머리 띠+괘선]  — 층마다 위치·크기 명시 */
+@page {
+  size: 216mm 303mm;
+  margin: 31.5mm 26mm 26.5mm 23mm;
+
+  @bottom-left-corner  { content: none; }
+  @bottom-right-corner { content: none; }
+  @bottom-left  { content: none; }
+  @bottom-right { content: none; }
+}
+
+/* 왼쪽(짝수) 면 */
+@page :left {
+  margin-left: 23mm; margin-right: 26mm;
+  background:
+    url(assets/brand.png) no-repeat 18.5mm 12.04mm / 43.59mm 3.43mm,
+    url(assets/footL.png) no-repeat 20.75mm 286.1mm / 20.96mm 2.78mm;
+
+  @bottom-left-corner {
+    content: counter(page);
+    text-align: left; padding-left: 15.89mm;
+    vertical-align: top; padding-top: 9.3mm;
+    font: 6pt/1 Noto; color: var(--pgnum); white-space: pre;
+  }
+}
+
+/* 오른쪽(홀수) 면 */
+@page :right {
+  margin-left: 26mm; margin-right: 23mm;
+  background:
+    url(assets/shield.png) no-repeat 191.49mm 9.55mm / 14.94mm 9.41mm,
+    url(assets/footR.png) no-repeat 195.76mm 286.1mm / 0.16mm 2.78mm;
+
+  @bottom-right-corner {
+    content: counter(page);
+    text-align: left; padding-left: 5.93mm;
+    vertical-align: top; padding-top: 9.3mm;
+    font: 6pt/1 Noto; color: var(--pgnum); white-space: pre;
+  }
+  @bottom-right {
+    content: string(sec);
+    text-align: right; margin-right: -1.2mm;
+    vertical-align: top; padding-top: 9.3mm;
+    font: 6pt/1 Noto; color: var(--ink); white-space: pre;
+  }
+}
+
+/* 섹션별 머리 띠 — 이름있는 페이지(섹션 사이엔 어차피 강제 개면) */
+@page voca:left {
+  background:
+    url(assets/brand.png) no-repeat 18.5mm 12.04mm / 43.59mm 3.43mm,
+    url(assets/footL.png) no-repeat 20.75mm 286.1mm / 20.96mm 2.78mm,
+    linear-gradient(var(--ink), var(--ink)) no-repeat 0 20.25mm / 216mm 0.353mm;
+}
+@page voca:right {
+  background:
+    url(assets/shield.png) no-repeat 191.49mm 9.55mm / 14.94mm 9.41mm,
+    url(assets/footR.png) no-repeat 195.76mm 286.1mm / 0.16mm 2.78mm,
+    linear-gradient(var(--ink), var(--ink)) no-repeat 0 20.25mm / 216mm 0.353mm;
+}
+@page exer:left {
+  background:
+    url(assets/brand.png) no-repeat 18.5mm 12.04mm / 43.59mm 3.43mm,
+    url(assets/footL.png) no-repeat 20.75mm 286.1mm / 20.96mm 2.78mm,
+    linear-gradient(var(--ink), var(--ink)) no-repeat 0 20.25mm / 216mm 0.353mm,
+    linear-gradient(var(--band), var(--band)) no-repeat 0 0 / 216mm 23mm;
+}
+@page exer:right {
+  background:
+    url(assets/shield.png) no-repeat 191.49mm 9.55mm / 14.94mm 9.41mm,
+    url(assets/footR.png) no-repeat 195.76mm 286.1mm / 0.16mm 2.78mm,
+    linear-gradient(var(--ink), var(--ink)) no-repeat 0 20.25mm / 216mm 0.353mm,
+    linear-gradient(var(--band), var(--band)) no-repeat 0 0 / 216mm 23mm;
+}
+@page ansr:left {
+  background:
+    url(assets/footL.png) no-repeat 20.75mm 286.1mm / 20.96mm 2.78mm,
+    linear-gradient(#fff, #fff) no-repeat 0 20.25mm / 216mm 0.353mm,
+    linear-gradient(var(--band-ans), var(--band-ans)) no-repeat 0 0 / 216mm 23mm;
+}
+@page ansr:right {
+  background:
+    url(assets/shield.png) no-repeat 191.49mm 9.55mm / 14.94mm 9.41mm,
+    url(assets/footR.png) no-repeat 195.76mm 286.1mm / 0.16mm 2.78mm,
+    linear-gradient(#fff, #fff) no-repeat 0 20.25mm / 216mm 0.353mm,
+    linear-gradient(var(--band-ans), var(--band-ans)) no-repeat 0 0 / 216mm 23mm;
+}
+
+/* 빈 면(개면 파리티) · 간지 — 머리·꼬리 없음 */
+@page :blank {
+  background: none;
+  @bottom-left-corner { content: none; }
+  @bottom-right-corner { content: none; }
+  @bottom-right { content: none; }
+}
+@page blank {
+  background: none;
+  @bottom-left-corner { content: none; }
+  @bottom-right-corner { content: none; }
+  @bottom-right { content: none; }
+}
+
+/* ------------------------------------------------------------------ 기본 */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { font: 8.86pt/4.585mm Minion, Noto, serif; color: var(--ink); }
+body { widows: 2; orphans: 2; }
+u { text-decoration: underline; text-decoration-thickness: 0.5pt;
+    text-underline-offset: 0.5mm; }
+
+/* 지문 속 공백 빈칸 → 밑줄 빈칸 */
+.blk { text-decoration: underline; text-decoration-thickness: 0.5pt;
+       text-underline-offset: 0.5mm; }
+.mk  { font-size: 0.1pt; line-height: 0; color: #fff; }
+
+.sec        { break-before: left; }
+.sec-voca   { page: voca; }
+.sec-exer   { page: exer; }
+.sec-ans    { page: ansr; }
+.secmark    { height: 0; font-size: 0; line-height: 0; string-set: sec content(); }
+
+/* 간지 자리(빌드 때 원본 아트워크로 교체) */
+.divider { page: blank; break-before: right; break-after: page; height: 240mm; }
+.divider.left { break-before: page; }
+
+/* --------------------------------------------------- 섹션 머리(첫 면에만) */
+.sechdr { position: relative; height: 0; }
+.sechdr > * { position: absolute; }
+
+.sechdr .mask {            /* 짝수 면 브랜드 문구를 덮는 흰 바탕 */
+  left: -10.5mm; top: -31.5mm; width: 186.5mm; height: 20.25mm; background: #fff;
+}
+.sechdr .panel {           /* 흰 둥근 패널 */
+  left: -10.5mm; top: -20.58mm; width: 186.5mm; height: 14.11mm;
+  background: #fff; border: 0.5pt solid var(--gray); border-radius: 2mm;
+}
+.sechdr.ans .panel { border-color: var(--chip-v); }
+.sechdr .tab {             /* 라벨 탭 */
+  left: -5mm; top: -20.9mm; width: 34.1mm; height: 14.1mm;
+  background: var(--gray); border-radius: 1mm 7.05mm 7.05mm 1mm;
+  box-shadow: 0.4mm 0.42mm 0 0 var(--ink);
+  color: #fff; text-align: center; white-space: nowrap;
+}
+.sechdr.ans .tab { background: var(--chip-v); box-shadow: 0.4mm 0.42mm 0 0 var(--gold); }
+.sechdr .tab .u  { font: 700 15pt/14.1mm Elice; color: var(--gold); }
+.sechdr .tab .n  { font: 24pt/14.1mm Ghana; color: #fff; vertical-align: -1.05mm; }
+.sechdr .tab .x  { font: italic 700 15pt/14.1mm Elice; color: #fff; }
+.sechdr .ttl {             /* 머리 제목 */
+  left: 32.25mm; top: -20.6mm; width: 150mm; height: 14.1mm;
+  font: 18pt/14.1mm Elice; color: var(--ink); white-space: nowrap;
+}
+.sechdr.voca .ttl  { top: -23.5mm; }   /* 패널이 없어 괘선과 겹친다 — 위로 */
+.sechdr.ans .ttl   { font: 18pt/14.1mm Neolli; color: var(--gold); }
+.sechdr.ans .ttl b { font: 15pt/14.1mm Elice; color: var(--ink); font-weight: normal; }
+.sechdr .meta {            /* Date | Time | 점수 */
+  left: 98.5mm; top: -20.6mm; width: 95mm; height: 14.1mm;
+  font: 8pt/14.1mm Noto; color: var(--gold); white-space: pre;
+}
+
+/* ---------------------------------------------------------- 연관어휘 */
+.vunit + .vunit { break-before: page; }
+.chip {
+  display: inline-block; height: 5.88mm; padding: 0 2.1mm;
+  font: 700 11pt/5.88mm Elice; color: #fff; background: var(--chip-b);
+}
+.chip-v { background: var(--chip-v); }
+.chipline { display: flex; justify-content: flex-end; }
+.rule   { height: 0; border-top: 1pt solid var(--chip-b); }
+.rule-v { border-top-color: var(--chip-v); }
+
+.pbox {
+  margin-top: 2.47mm; padding: 1.48mm 2mm 1.5mm;
+  border: 0.5pt solid var(--box);
+}
+.pbox p { text-align: justify; }
+.vwords { margin-top: 1.5mm; }
+.vw { margin-top: 3.4mm; break-inside: avoid; }
+.vw:first-child { margin-top: 0; }
+.vw .wh { font: 500 9pt/4.585mm Noto, Minion; }
+.vw .wh b { font-weight: 500; }
+.vw .rel {
+  font: 500 8pt/4.585mm Noto, Minion;
+  padding-left: 8.78mm; text-indent: -8.78mm;
+}
+.vw .rel .lab { font: 8pt/4.585mm Elice; color: var(--syn); }
+.vw .rel.ant .lab { color: var(--ant); }
+.vw .rel .gap { display: inline-block; width: 0.9mm; }
+
+/* ------------------------------------------------------------- 문제 */
+.q { break-inside: avoid; }
+.q .head {
+  padding-left: 10mm; text-indent: -10mm;
+  font: 9pt/5mm Elice, Noto; margin-bottom: 2.6mm;
+}
+.q .head .no {
+  font: 700 14pt/5mm PyeongChang; color: var(--gold);
+  display: inline-block; width: 10mm; text-indent: 0;
+}
+.q .pbox { margin-top: 0; }
+.q .arrow { text-align: center; font: 12pt/6mm Noto; }
+.dlg {
+  background: var(--dlg); padding: 1.2mm 1.6mm; margin: 1.2mm 0;
+}
+.dlg p { text-align: left; }
+.pbox > .dlg:last-child { margin-bottom: 0; }
+.q .summary {
+  background: var(--cream); padding: 1.6mm 2mm; text-align: justify;
+}
+.q .bogi {
+  display: table; margin-top: 3.2mm; padding: 1.4mm 2.6mm;
+  border: 0.5pt solid var(--chip-v);
+}
+.q .bogi .t { font: 8.63pt/4.585mm Noto; }
+.pbox + .ch, .summary + .ch, .bogi + .ch, .ansline + .ch { margin-top: 3.48mm; }
+.q .ch {
+  padding-left: 3.92mm; text-indent: -3.92mm;
+  font: 8.73pt/4.94mm Minion, Noto; text-align: justify;
+}
+.q .ch .m { font: 9.26pt/4.94mm Noto; }
+.q .ansline { margin-top: 3.2mm; font: 8.63pt/5.4mm Noto, Minion; }
+.q .crit {
+  display: table; margin-top: 3.2mm; padding: 1.4mm 2.6mm;
+  background: var(--crit); font: 8.2pt/4.585mm Noto;
+}
+.q .bogi + .ansline, .q .summary + .ansline { margin-top: 3.4mm; }
+
+/* ------------------------------------------------------------- 해설 */
+.answers { column-count: 2; column-gap: 2.46mm; column-fill: auto; }
+.a {
+  padding-bottom: 2.4mm; margin-bottom: 2.5mm;
+  border-bottom: 0.71pt solid var(--band-ans);
+}
+.a.brk { break-before: left; }  /* 펼침면 단위로 끊는다 */
+.a .no  { font: 700 14pt/5mm PyeongChang; color: var(--gold); }
+.a .ans { font: 7pt/5mm Noto, Minion; }
+.a .expl {
+  margin-top: 1.3mm; padding-left: 8mm; text-indent: -8mm;
+  font: 500 7pt/4.05mm Noto, Minion; color: var(--gray); text-align: justify;
+}
+.a .expl:not(.lead) { text-indent: 0; margin-top: 0; }
+.a .expl .lab { font: 700 7pt/4.05mm Noto; color: var(--sep); }
+.a .expl.tr { color: var(--ink); }
+.a .expl .lab.tr { color: var(--gold); }
