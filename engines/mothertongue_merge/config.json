@@ -5,7 +5,7 @@
   "log_filename": "merge_log.txt",
   "keep_head": 1,
   "_export_pdf_주석": "PDF 추출 스위치 — true 로 바꾸면 도련 포함 PDF까지 함께 출력",
-  "export_pdf": true,
+  "export_pdf": false,
   "file_patterns": ["분석본"],
   "schools": {
     "고1-한영고1": {
