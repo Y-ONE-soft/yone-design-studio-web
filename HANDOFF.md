@@ -20,6 +20,24 @@
 
 ## 최근 인계 메모 (최신이 위)
 
+### 2026-08-20 (아이맥) — Claude Code
+
+**Vivliostyle 조판 엔진 3계층 구축 완료** — 문서: `docs/vivliostyle_엔진.md`
+
+- 교재 폴더의 `automation/` 두 벌(상일보카·블랙북)을 리포로 승격:
+  `core/render_vivlio/`(공용 백엔드: cli·stage·probe·paged·measure·bleed·verify·svg·config·book)
+  + `series/vocabook/`·`series/blackbook/`(계열) + 교재 폴더 `config.json`(책 1권).
+- 교재 폴더에는 이제 **config.json + 원고만** 있다. 실행은 `bin/viv "<책폴더>" all`,
+  목록은 `bin/viv --list`. 납품 시점 코드·PDF 는 각 책 `_backup/` 에 보존.
+- **회귀 대조 통과**: 상일보카 4종(견본/전권/메모없음/최종) + 블랙북 1종을 config 만으로
+  다시 조판해 납품본과 쪽수·쪽별 텍스트·블록 좌표 전부 일치(좌표 차 0.000mm).
+- npm 을 `core/render_vivlio/` 소유로 이관(`npm --prefix core/render_vivlio ci`).
+  `pilot/vivliostyle` 는 폴백으로만 남음.
+- 테스트 `tests/test_render_vivlio_engine.py` 19개 추가. 전체 스위트 실패 47건은
+  **착수 전(c0346f1)과 동일한 기존 실패**(workbook_v2 계열) — 이번 작업과 무관.
+- 남은 것: 두 번째 단어장(배재보카, InDesign→Vivliostyle 이식 선행 필요) /
+  두 번째 블랙북 / 통합웹 카드 등록(업로드→config 합성 매핑이 아직 미정).
+
 ### 2026-05-14 03:30 (아이맥) — Claude Code (2차)
 
 추가 자동 진행 완료:
