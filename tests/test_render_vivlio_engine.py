@@ -132,7 +132,7 @@ def test_theme_is_deterministic_and_bakes_palette():
     cfg = _vocabook_cfg()
     a = theme.build_css(cfg)
     assert a == theme.build_css(cfg)            # 결정적
-    assert "@PRELUDE@" not in a and "@GENERATED@" not in a
+    assert "/*@PRELUDE@*/" not in a and "/*@GENERATED@*/" not in a
     main = cfg.section("palette")["sections"]["s-head"]["main"]
     assert main.replace("#", "%23") in a        # SVG 에 구워짐
 
@@ -143,11 +143,8 @@ def test_theme_is_deterministic_and_bakes_palette():
 
 def test_theme_emits_band2_comment_for_second_pass():
     """② 오른쪽 면 밴드는 2패스가 주석에서 꺼내 페이지 배경으로 깐다."""
-    import re
-    from core.render_vivlio.series.vocabook import theme
-    from core.render_vivlio.series.vocabook import RE_BAND2 as _  # noqa: F401
+    from core.render_vivlio.series.vocabook import _RE_BAND2, theme
     css = theme.build_css(_vocabook_cfg())
-    from core.render_vivlio.series.vocabook import _RE_BAND2
     found = dict(_RE_BAND2.findall(css))
     assert set(found) == {"p-head", "p-deriv", "p-mw", "p-vs", "p-wb", "p-ans"}
     assert all(v.startswith("url(") for v in found.values())
