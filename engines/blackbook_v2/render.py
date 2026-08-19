@@ -14,6 +14,8 @@
 배치 의미론은 v1 run.jsx와 동일 (연결 스토리 + 문제 블록 프레임브레이크,
 프레임 부족 시 해당 영역 마지막 페이지 복제). 스타일 결정은 여기(데이터).
 """
+import re
+
 from core.structure.style_resolver import load_style_map
 
 
@@ -37,13 +39,24 @@ def _ir_item_to_unit(item, flow_map):
     emit(q_line, "Q")
 
     from engines.mockexam_v2.render import _runs_from_marks
+
+    # W59: 원고 순서를 지킨다 — 지문/요약 → 보기 → 선지 → 답란 → 채점 기준.
+    # IR이 답란(Ans)을 지문 블록에 섞어 두기 때문에, 그대로 흘리면 답란이
+    # 선지·보기보다 먼저 찍힌다(수동 완성본·원고와 어긋남).
+    body, anslines = [], []
     for block in (item.get("stimulus") or {}).get("blocks", []):
         kind = "P-CONTEXT" if block.get("kind") == "para" else "P"
         label = block.get("label")
-        if label in ("Word", "K", "Ans", "UNKNOWN"):
+        if label in ("Word", "K", "Ans", "UNKNOWN", "Sym"):
             kind = label
-        emit(block["content"], kind,
-             _runs_from_marks(block["content"], block.get("marks")))
+        elif label == "Sum":            # ↓ 다음 요약문 — 박스로
+            kind = "Box@summary"
+        runs = _runs_from_marks(block["content"], block.get("marks"))
+        (anslines if kind in ("Ans", "AnsL") else body).append(
+            (block["content"], kind, runs))
+
+    for text, kind, runs in body:
+        emit(text, kind, runs)
 
     given = item.get("given")
     if given and given.get("content"):
@@ -54,15 +67,21 @@ def _ir_item_to_unit(item, flow_map):
             if line.strip():
                 emit(line, box_kind)
 
-    if item.get("constraints"):
-        emit("<조건>", "Cond")
-        for c in item["constraints"]:
-            emit(c, "Cond")
-
     if item.get("choices"):
         for ch in item["choices"]["items"]:
             label = ch.get("label") or ""
             emit(f"{label} {ch['content']}".strip(), "C")
+
+    for text, kind, runs in anslines:
+        emit(text, kind, runs)
+
+    if item.get("constraints"):
+        cons = list(item["constraints"])
+        # 원고가 이미 라벨을 들고 있으면([채점 기준]) 합성 <조건>을 넣지 않는다
+        if not re.match(r"^\s*[<\[]", cons[0] or ""):
+            emit("<조건>", "Cond")
+        for c in cons:
+            emit(c, "Cond")
     return unit
 
 
@@ -81,6 +100,11 @@ def _answers_to_unit(items, v1_map):
     for a in items:
         unit.append({"t": f"{a['num']}.  {a['answer']}",
                      "s": v1_map["answer"], "runs": []})
+        # W59: 원고에 [해석]이 있으면 싣는다(예전엔 파서에서 조용히 유실).
+        if a.get("translation"):
+            unit.append({"t": a["translation"],
+                         "s": v1_map.get("translation") or v1_map["explanation"],
+                         "runs": []})
         if a.get("explanation"):
             unit.append({"t": a["explanation"], "s": v1_map["explanation"],
                          "runs": []})

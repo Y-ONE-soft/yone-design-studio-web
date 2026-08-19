@@ -56,8 +56,10 @@ def ir_to_render_plan(doc, overrides=None):
         for block in (item.get("stimulus") or {}).get("blocks", []):
             kind = "P-CONTEXT" if block.get("kind") == "para" else "P"
             label = block.get("label")
-            if label in ("Word", "K", "Ans", "UNKNOWN"):
+            if label in ("Word", "K", "Ans", "UNKNOWN", "Sym"):
                 kind = label
+            elif label == "Sum":
+                kind = "Sum"
             emit(block["content"], kind,
                  _runs_from_marks(block["content"], block.get("marks")))
 

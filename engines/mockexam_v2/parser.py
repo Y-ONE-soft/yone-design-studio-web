@@ -119,10 +119,18 @@ def build_ir(paras, meta=None, log=None):
     cur = None
     group_intro = None       # 직전 Q-INTRO의 group 정보 (묶음 문항 상속)
     pending_stimulus = []    # 발문보다 앞에 온 공유 지문 (묶음/서답형 배치)
+    pending_sum = False      # ↓ 화살표 직후 단락 = 요약문(구조 신호)
     seq = 0
 
     for r in annotated:
         kind, text = r["kind"], r["text"]
+        # W59: 화살표(↓)는 지문과 요약문을 가르는 **구조 신호**다.
+        # 통째로 버리면 요약문이 지문에 붙어 한 상자에 뭉친다(블랙북 실증).
+        if kind == "Sym" and cur is not None:
+            cur["stimulus"]["blocks"].append(
+                {"kind": "text", "label": "Sym", "content": text})
+            pending_sum = True
+            continue
         if kind in ("BLANK", "GH", "A", "Sym"):
             continue
 
@@ -185,6 +193,7 @@ def build_ir(paras, meta=None, log=None):
             }
             if intro_text:
                 cur["_group_intro"] = intro_text
+            pending_sum = False
             if pending_stimulus:
                 for pr in pending_stimulus:
                     if pr["kind"] == "Box":
@@ -215,6 +224,14 @@ def build_ir(paras, meta=None, log=None):
             if text:
                 warnings.append(f"발문 이전 고아 단락: {text[:50]!r}")
             continue
+
+        if kind in ("P", "P-CONTEXT", "K") and pending_sum:
+            # 화살표 다음 단락 = 요약문 (박스로 조판)
+            pending_sum = False
+            block = {"kind": "text", "label": "Sum", "content": text}
+            cur["stimulus"]["blocks"].append(block)
+            continue
+        pending_sum = False
 
         if kind in ("P", "P-CONTEXT"):
             block = {"kind": "para" if kind == "P-CONTEXT" else "text",

@@ -137,9 +137,9 @@
    "Q-INTRO": "독해 > 다음 글을 읽고",
    "P": "!박스_지문",
    "P-CONTEXT": "독해 > 배경",
-   "Sum": "독해 > 배경",
+   "Sum": "독해 > 박스",
    "C": "독해 > !선지",
-   "Cond": "독해 > !선지",
+   "Cond": "독해 > 조건",
    "Box": "독해 > 보기",
    "Box@summary": "독해 > 박스",
    "Word": "독해 > 보기",
@@ -155,7 +155,8 @@
    "vocab_category": "Vocabulary+ > 카테고리",
    "vocab_item": "Vocabulary+ > !연관 어휘",
    "answer": "정답 및 해설 > 정답",
-   "explanation": "정답 및 해설 > 해설"
+   "explanation": "정답 및 해설 > 해설",
+   "translation": "정답 및 해설 > 해설"
   }
  },
  "whitebook": {

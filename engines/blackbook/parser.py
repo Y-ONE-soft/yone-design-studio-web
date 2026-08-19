@@ -298,14 +298,18 @@ def _split_into_days(paras: list) -> list:
 
 def _parse_answer_lines(lines: list) -> list:
     """
-    정답 텍스트 줄 목록 → [{"num": int, "answer": str, "explanation": str}]
+    정답 텍스트 줄 목록 → [{"num", "answer", "translation", "explanation"}]
     지원 형식:
       HWPX: "N [정답] ANSWER" 한 줄, 이후 "[해설]" 줄, 해설 줄들
       HWP:  순수 숫자 줄, "[정답] ANSWER", "[해설] TEXT"
+
+    W59: `[해석]` 블록이 있는 원고(교과서 블랙북)는 해석이 통째로 버려지고 있었다
+    (어느 분기에도 걸리지 않아 조용히 유실). 원고에 있으면 싣는다.
     """
     answers = []
     current = None
     in_explanation = False
+    in_translation = False
 
     for line in lines:
         line_s = line.strip()
@@ -324,14 +328,25 @@ def _parse_answer_lines(lines: list) -> list:
             current = {
                 'num': int(m.group(1)),
                 'answer': m.group(2).strip(),
+                'translation': '',
                 'explanation': '',
             }
-            in_explanation = False
+            in_explanation = in_translation = False
             continue
 
         # "[해설]" 단독 줄
         if line_s == '[해설]':
-            in_explanation = True
+            in_explanation, in_translation = True, False
+            continue
+
+        # "[해석]" — 단독 줄 / 인라인 모두
+        if line_s.startswith('[해석]'):
+            body = line_s[len('[해석]'):].strip()
+            if body:
+                sep = '\n' if current and current.get('translation') else ''
+                if current is not None:
+                    current['translation'] = current.get('translation', '') + sep + body
+            in_translation, in_explanation = True, False
             continue
 
         # 순수 숫자 줄 → HWP 바이너리 형식 번호
@@ -340,8 +355,9 @@ def _parse_answer_lines(lines: list) -> list:
             if 1 <= num <= 200:
                 if current is not None:
                     answers.append(current)
-                current = {'num': num, 'answer': '', 'explanation': ''}
-                in_explanation = False
+                current = {'num': num, 'answer': '', 'translation': '',
+                           'explanation': ''}
+                in_explanation = in_translation = False
             continue
 
         if current is None:
@@ -350,19 +366,22 @@ def _parse_answer_lines(lines: list) -> list:
         # "[정답] ANSWER" — HWP 형식
         if line_s.startswith('[정답]'):
             current['answer'] = line_s[len('[정답]'):].strip()
-            in_explanation = False
+            in_explanation = in_translation = False
             continue
 
         # "[해설] TEXT" — HWP 인라인 해설
         if line_s.startswith('[해설]'):
             current['explanation'] = line_s[len('[해설]'):].strip()
-            in_explanation = True
+            in_explanation, in_translation = True, False
             continue
 
         # 해설 이어지는 줄
         if in_explanation:
             sep = '\n' if current['explanation'] else ''
             current['explanation'] += sep + line_s
+        elif in_translation:
+            sep = '\n' if current.get('translation') else ''
+            current['translation'] = current.get('translation', '') + sep + line_s
 
     if current is not None:
         answers.append(current)
