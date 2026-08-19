@@ -291,7 +291,7 @@ def api_prompt():
                     "note": out.get("note", "")})
 
 
-def _structured(stdout):
+def _structured(stdout, want="changes"):
     """claude -p --output-format json 응답에서 구조화 결과를 꺼낸다."""
     try:
         top = json.loads(stdout)
@@ -299,16 +299,16 @@ def _structured(stdout):
         return None
     for key in ("structured_output", "structuredOutput", "result", "content"):
         v = top.get(key) if isinstance(top, dict) else None
-        if isinstance(v, dict) and "changes" in v:
+        if isinstance(v, dict) and want in v:
             return v
         if isinstance(v, str):
             try:
                 d = json.loads(v)
-                if isinstance(d, dict) and "changes" in d:
+                if isinstance(d, dict) and want in d:
                     return d
             except json.JSONDecodeError:
                 pass
-    return top if isinstance(top, dict) and "changes" in top else None
+    return top if isinstance(top, dict) and want in top else None
 
 
 @bp.route("/api/cover-studio/config")
@@ -366,6 +366,130 @@ def _bust():
     """폴더가 늘거나 설정이 바뀌면 캐시를 버린다."""
     global _scan_cache
     _scan_cache = (0, {})
+
+
+@bp.route("/api/cover-studio/reference", methods=["POST"])
+def api_reference():
+    """레퍼런스 이미지를 등록하고, 그 구성을 읽어 표지 blocks 를 만든다.
+
+    표지 하나에 레이아웃이 박혀 있으면 새 선생님마다 코드를 새로 짜야 한다.
+    레퍼런스를 보고 **구성을 데이터로 뽑아** 두면 그 다음은 조절만 남는다.
+
+    이미지를 읽어야 하므로 여기서는 Read 도구를 연다 — 다만 레퍼런스가 놓인
+    폴더 안만 보게 하고 쓰기 도구는 전부 막는다.
+    """
+    from core.review_agent import find_claude_bin
+
+    try:
+        proj = _project(request.form.get("project"))
+    except (ValueError, RuntimeError) as e:
+        return jsonify({"error": str(e)}), 400
+
+    f = request.files.get("image")
+    if not f or not f.filename:
+        return jsonify({"error": "레퍼런스 이미지를 골라주세요"}), 400
+    ext = os.path.splitext(f.filename)[1].lower()
+    if ext not in (".png", ".jpg", ".jpeg", ".webp"):
+        return jsonify({"error": "png · jpg · webp 만 됩니다"}), 400
+
+    ref_dir = os.path.join(proj["폴더"], "reference")
+    os.makedirs(ref_dir, exist_ok=True)
+    name = "ref" + ext
+    path = os.path.join(ref_dir, name)
+    f.save(path)
+
+    bin_ = find_claude_bin()
+    if not bin_:
+        return jsonify({"error": "claude CLI 를 찾을 수 없습니다. "
+                                 "터미널에서 `claude` 실행 후 /login 하세요."}), 503
+
+    try:
+        spec = _run(proj, ["config"])
+        cfg = json.loads(spec.stdout) if spec.returncode == 0 else {}
+    except Exception:
+        cfg = {}
+    tw, th = (cfg.get("trim") or [216, 303])
+    bl = cfg.get("bleed", 3)
+    W, H = tw + bl * 2, th + bl * 2
+
+    out = _ask_claude_blocks(bin_, path, W, H, cfg,
+                             (request.form.get("note") or "").strip())
+    if isinstance(out, tuple):
+        return out
+    return jsonify({"blocks": out.get("blocks", []),
+                    "back_blocks": out.get("back_blocks", []),
+                    "note": out.get("note", ""), "reference": name})
+
+
+BLOCK_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "blocks": {"type": "array", "items": {"type": "object",
+                                              "additionalProperties": True}},
+        "back_blocks": {"type": "array", "items": {"type": "object",
+                                                   "additionalProperties": True}},
+        "note": {"type": "string"},
+    },
+    "required": ["blocks", "note"],
+}
+
+
+def _ask_claude_blocks(bin_, image_path, W, H, cfg, note):
+    books = ", ".join(b.get("label", "") for b in (cfg.get("books") or []))
+    prompt = f"""레퍼런스 표지 이미지를 보고, 같은 **구성**으로 우리 교재 표지를 만들 blocks 를 짜라.
+이미지 파일: {os.path.basename(image_path)}  (Read 도구로 읽어라)
+
+판면은 {W}×{H}mm (도련 포함). 좌표는 mm, 왼쪽 위가 원점이다.
+
+블록 종류와 쓸 수 있는 값:
+  rect   x y w h color radius opacity      색면·띠
+  line   x y w h color opacity             가는 선 (h 를 0.3~1 로)
+  text   x y w text size font color align weight tracking leading
+         size 는 **mm 단위 글자 높이**. align 은 left|center|right
+  hero   x y w h text color                주인공 조형(부풀린/압출 타이포)
+  image  x y w h src opacity
+
+글자·색은 **자리표시자**를 써라. 학년·권종을 바꿔도 따라온다:
+  @brand @exam @teacher @teacher_kr @grade @book @badge @desc
+  @slogan1 @slogan2 @series @lead
+  @accent(권종 강조색) @paper(바탕) @ink(잉크)
+우리 교재 정보: 브랜드 {cfg.get('brand','')} · 권종 {books} · 회차 {cfg.get('exam','')}
+
+규칙:
+- **레퍼런스를 베끼지 말고 구성만 가져와라.** 무엇이 어디에 얼마나 크게 놓였는지,
+  여백이 어떻게 잡혔는지, 무엇이 가장 먼저 읽히는지.
+- 레퍼런스의 로고·사진·문구를 그대로 옮기지 마라. 우리 자리표시자로 바꿔라.
+- 바탕은 blocks 로 깔지 않아도 된다(권종 바탕색이 이미 깔린다). 색면이 구성의
+  일부일 때만 rect 를 쓴다.
+- 판면 밖으로 나가지 않게. 재단선(도련 {cfg.get('bleed',3)}mm)에 걸리는 글자는 두지 마라.
+- 블록은 8~16개. 그보다 많으면 조절이 어렵다.
+- back_blocks(뒤표지)도 같은 결로 간단히 짜라. 없으면 빈 배열.
+- note 는 "레퍼런스에서 무엇을 가져왔는지" 한국어 두 줄.
+{('추가 요구: ' + note) if note else ''}"""
+    cmd = [bin_, "-p", prompt,
+           "--model", os.environ.get("YONE_COVER_STUDIO_MODEL", "sonnet"),
+           "--output-format", "json",
+           "--json-schema", json.dumps(BLOCK_SCHEMA, ensure_ascii=False),
+           "--tools", "Read", "--allowedTools", "Read",
+           "--disallowedTools", "Bash,Edit,Write,WebFetch,WebSearch,Task",
+           "--permission-mode", "default", "--no-session-persistence",
+           "--max-budget-usd", os.environ.get("YONE_COVER_REF_BUDGET_USD", "1.0")]
+    env = dict(os.environ)
+    env["PATH"] = os.pathsep.join(
+        [os.path.dirname(bin_), env.get("PATH", ""), "/usr/bin", "/bin"])
+    try:
+        cp = subprocess.run(cmd, env=env, capture_output=True, text=True,
+                            cwd=os.path.dirname(image_path), timeout=300)
+    except subprocess.TimeoutExpired:
+        return jsonify({"error": "레퍼런스 분석이 너무 오래 걸립니다"}), 504
+    if cp.returncode != 0:
+        tail = (cp.stderr or cp.stdout or "").strip()[-400:]
+        hint = (" — 서버에서 claude CLI 로그인 필요" if "Not logged in" in tail else "")
+        return jsonify({"error": f"레퍼런스 분석 실패{hint}\n{tail}"}), 502
+    out = _structured(cp.stdout, "blocks")
+    if out is None:
+        return jsonify({"error": "분석 결과를 이해하지 못했습니다"}), 502
+    return out
 
 
 @bp.route("/api/cover-studio/save", methods=["POST"])

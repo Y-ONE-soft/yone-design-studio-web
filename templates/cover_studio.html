@@ -74,6 +74,13 @@
   .st-ask { display: flex; gap: 8px; }
   .st-ask input { flex: 1; }
 
+  .st-ref { border: 1px dashed var(--border-strong); border-radius: 12px;
+            padding: 14px; text-align: center; cursor: pointer; }
+  .st-ref:hover { border-color: var(--accent); }
+  .st-ref img { max-width: 100%; max-height: 150px; border-radius: 7px;
+                display: block; margin: 0 auto 8px; }
+  .st-ref small { color: var(--muted); font-size: 11.5px; line-height: 1.5; }
+
   /* 설정 · 새 표지 — 표지를 만들거나 고칠 때만 열린다 */
   .st-modal { position: fixed; inset: 0; background: rgba(4,4,8,.72);
               backdrop-filter: blur(6px); z-index: 60; display: none;
@@ -132,6 +139,20 @@
       <div class="st-group-name" id="pick-title">보기</div>
       <div class="st-pick" id="pick-book"></div>
       <div class="st-pick" id="pick-week"></div>
+    </div>
+
+    <div class="st-panel">
+      <div class="st-group-name">레퍼런스</div>
+      <div class="st-ref" id="ref-drop">
+        <div id="ref-view"><small>참고할 표지 이미지를 올리면<br>
+          그 구성으로 새로 짭니다</small></div>
+      </div>
+      <input type="file" id="ref-file" accept="image/png,image/jpeg,image/webp" hidden>
+      <input class="st-text" id="ref-note" style="margin-top:8px"
+             placeholder="원하는 점이 있으면 (예: 제목을 더 크게)">
+      <button class="st-btn st-btn--primary" id="btn-ref"
+              style="width:100%;margin-top:8px">이 구성으로 짜기</button>
+      <div class="st-msg" id="ref-msg"></div>
     </div>
 
     <div class="st-panel">
@@ -438,6 +459,61 @@ async function ask() {
 $('btn-ask').addEventListener('click', ask);
 window.addEventListener('resize', () => { if (SPEC && SPEC.kind === 'html') draw(); });
 $('ask').addEventListener('keydown', e => { if (e.key === 'Enter') ask(); });
+
+// ── 레퍼런스 → 구성 ────────────────────────────────────────────────────────
+// 표지 하나에 레이아웃이 박혀 있으면 새 선생님마다 코드를 새로 짜야 한다.
+// 레퍼런스를 보고 blocks 를 뽑아 두면 그다음은 조절만 남는다.
+let REF_FILE = null;
+
+$('ref-drop').addEventListener('click', () => $('ref-file').click());
+$('ref-drop').addEventListener('dragover', e => { e.preventDefault();
+  $('ref-drop').style.borderColor = 'var(--accent)'; });
+$('ref-drop').addEventListener('dragleave', () => {
+  $('ref-drop').style.borderColor = ''; });
+$('ref-drop').addEventListener('drop', e => {
+  e.preventDefault(); $('ref-drop').style.borderColor = '';
+  if (e.dataTransfer.files[0]) setRef(e.dataTransfer.files[0]);
+});
+$('ref-file').addEventListener('change', e => {
+  if (e.target.files[0]) setRef(e.target.files[0]);
+});
+
+function setRef(file) {
+  REF_FILE = file;
+  const url = URL.createObjectURL(file);
+  $('ref-view').innerHTML = `<img src="${url}"><small>${file.name}</small>`;
+}
+
+$('btn-ref').addEventListener('click', async () => {
+  if (!REF_FILE) { say($('ref-msg'), '이미지를 먼저 올려주세요.'); return; }
+  const btn = $('btn-ref'); btn.disabled = true;
+  say($('ref-msg'), '레퍼런스를 읽는 중… (한 번에 1~3분 걸립니다)');
+  try {
+    const fd = new FormData();
+    fd.append('image', REF_FILE);
+    fd.append('project', PROJECT);
+    fd.append('note', $('ref-note').value || '');
+    const r = await fetch(api('reference'), { method: 'POST', body: fd });
+    const body = await r.text();
+    if (!r.ok) { say($('ref-msg'), tidy(body), 'err'); return; }
+    const d = JSON.parse(body);
+    if (!d.blocks || !d.blocks.length) {
+      say($('ref-msg'), d.note || '구성을 못 읽었습니다.', 'err'); return;
+    }
+    // 설정에 blocks 를 넣어 저장하면 다음 렌더부터 그 구성으로 나온다
+    const cr = await fetch(api('config'));
+    const cfg = JSON.parse(await cr.text());
+    cfg.blocks = d.blocks;
+    if (d.back_blocks && d.back_blocks.length) cfg.back_blocks = d.back_blocks;
+    cfg.reference = d.reference || null;
+    const sr = await fetch(api('config-save'), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ project: PROJECT, config: cfg }) });
+    if (!sr.ok) { say($('ref-msg'), tidy(await sr.text()), 'err'); return; }
+    say($('ref-msg'), (d.note || '') + ` — 블록 ${d.blocks.length}개`, 'ok');
+    draw();
+  } finally { btn.disabled = false; }
+});
 
 // ── 설정 · 새 표지 ────────────────────────────────────────────────────────
 // 학년·권종은 개수가 변하는 목록이라 슬라이더로 안 된다. 줄을 넣고 빼는 UI 로 만든다.
