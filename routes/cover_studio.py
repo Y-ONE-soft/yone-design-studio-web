@@ -20,6 +20,7 @@ import subprocess
 import sys
 import time
 import unicodedata as u
+from urllib.parse import quote, unquote
 
 from flask import Blueprint, Response, jsonify, render_template, request
 
@@ -151,8 +152,49 @@ def api_render():
     if r.returncode != 0:
         return jsonify({"error": r.stderr[-800:] or "미리보기 실패"}), 500
     kind = d.get("kind") or "svg"
-    return Response(r.stdout,
+    body = r.stdout
+    if kind == "html":
+        # 생성기는 Chrome 이 `file://` 로 직접 열던 걸 전제해 절대경로를 박는다.
+        # 브라우저는 http 페이지에서 file:// 을 못 읽으므로 서버가 대신 준다.
+        body = _serve_assets(body, _project(d.get("project")))
+    return Response(body,
                     mimetype="image/svg+xml" if kind == "svg" else "text/html")
+
+
+def _asset_root(proj):
+    """에셋을 찾을 최상위. 생성기 폴더의 부모까지 본다 (`_에셋3d/` 가 형제다)."""
+    return os.path.realpath(os.path.dirname(proj["폴더"]))
+
+
+def _serve_assets(html, proj):
+    import re
+    root = _asset_root(proj)
+    key = u.normalize("NFC", os.path.basename(os.path.dirname(proj["폴더"])))
+
+    def swap(m):
+        path = os.path.realpath(unquote(m.group(1)))
+        if not path.startswith(root + os.sep):
+            return "''"                     # 프로젝트 밖은 내주지 않는다
+        rel = quote(u.normalize("NFC", os.path.relpath(path, root)))
+        return f"'/api/cover-studio/asset?p={quote(key)}&f={rel}'"
+
+    return re.sub(r"'file://([^']+)'", swap, html)
+
+
+@bp.route("/api/cover-studio/asset")
+def api_asset():
+    """미리보기 HTML 이 참조하는 그림. 프로젝트 폴더 안으로만 제한한다."""
+    from flask import send_file
+    try:
+        proj = _project()
+    except ValueError as e:
+        return str(e), 404
+    root = _asset_root(proj)
+    full = os.path.realpath(os.path.join(root, u.normalize("NFC",
+                                                           request.args.get("f", ""))))
+    if not full.startswith(root + os.sep) or not os.path.isfile(full):
+        return "not found", 404
+    return send_file(full)
 
 
 @bp.route("/api/cover-studio/prompt", methods=["POST"])

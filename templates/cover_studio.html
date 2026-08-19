@@ -249,7 +249,11 @@ function show(body) {
   // (innerHTML 로 박으면 페이지 CSS 와 섞여 레이아웃이 깨진다)
   const W = 216, H = 303;                        // mm — 판형
   const px = 3.7795;                             // 1mm
-  const scale = Math.min(1, (window.innerHeight * 0.74) / (H * px));
+  // 로드 직후엔 innerHeight 가 0 으로 잡히는 순간이 있다 — 그대로 쓰면 scale(0)
+  // 이 돼서 미리보기가 통째로 사라진다. 폴백과 하한을 둔다.
+  const avail = (window.innerHeight || document.documentElement.clientHeight
+                 || 900) * 0.74;
+  const scale = Math.max(0.15, Math.min(1, avail / (H * px)));
   stage.innerHTML = '<iframe id="pv" sandbox="allow-same-origin"></iframe>';
   const f = $('pv');
   f.style.width = (W * px) + 'px';
@@ -333,6 +337,7 @@ async function ask() {
   } finally { btn.disabled = false; }
 }
 $('btn-ask').addEventListener('click', ask);
+window.addEventListener('resize', () => { if (SPEC && SPEC.kind === 'html') draw(); });
 $('ask').addEventListener('keydown', e => { if (e.key === 'Enter') ask(); });
 
 // ── 시작
