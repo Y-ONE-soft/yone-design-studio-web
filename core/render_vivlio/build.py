@@ -9,21 +9,22 @@ InDesign 경로와 완전히 독립적이다(별도 Node 프로세스). 실서�
 """
 import os
 import shutil
-import subprocess
-import time
+import subprocess  # noqa: F401 — 하위 호환(외부에서 참조)
+import time        # noqa: F401
+
+from core.render_vivlio import cli as _cli
+from core.render_vivlio import stage as _stage
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
-THEMES_DIR = os.path.join(HERE, "themes")
+THEMES_DIR = _stage.THEMES_DIR
 
-# 파일럿에 설치된 @vivliostyle/cli 11.1.0 (core 2.44.1) 재사용.
-# node_modules 는 리포에 커밋되지 않으므로(.gitignore), 백엔드 사용 전
-#   cd pilot/vivliostyle && npm ci
-# 로 설치돼 있어야 한다. 설치 안 됨 = cli_available() False → 명확한 오류.
-PILOT_DIR = os.path.join(REPO, "pilot", "vivliostyle")
-CLI_BIN = os.path.join(PILOT_DIR, "node_modules", ".bin", "vivliostyle")
+# CLI 위치·실행은 `core.render_vivlio.cli` 가 단일 소스다. 아래 이름들은 기존
+# 호출부(engines/mockexam_v2_viv 등) 호환을 위해 남긴 별칭.
+PILOT_DIR = _cli.PILOT_DIR
+CLI_BIN = _cli.cli_path() or _cli._CANDIDATES[0]
 ASSETS_DIR = os.path.join(PILOT_DIR, "assets")
-CLI_VERSION = "11.1.0"  # 기록용 (package.json 의 @vivliostyle/cli)
+CLI_VERSION = _cli.CLI_VERSION
 
 # 실물이 쓰는 서체의 로컬 설치 파일 (실측: pdffonts + fc-list). 없으면 스킵.
 DEFAULT_FONT_FILES = [
@@ -37,78 +38,34 @@ DEFAULT_FONT_FILES = [
 ]
 
 
-class VivliostyleUnavailable(RuntimeError):
-    """vivliostyle CLI 가 설치돼 있지 않음 (opt-in 백엔드 전제 조건 미충족)."""
+VivliostyleUnavailable = _cli.VivliostyleUnavailable
 
 
 def cli_available():
-    return os.path.exists(CLI_BIN)
+    return _cli.cli_available()
 
 
 def count_pdf_pages(path):
-    try:
-        import fitz
-        with fitz.open(path) as doc:
-            return len(doc)
-    except Exception:
-        return None
+    from core.render_vivlio import probe
+    return probe.page_count(path)
 
 
 def _run_cli(html_path, pdf_path, log, timeout):
-    if not cli_available():
-        raise VivliostyleUnavailable(
-            f"vivliostyle CLI 없음: {CLI_BIN} — "
-            f"`cd {PILOT_DIR} && npm ci` 로 설치 필요")
-    cmd = [CLI_BIN, "build", os.path.basename(html_path),
-           "-o", os.path.abspath(pdf_path)]
-    t0 = time.time()
-    proc = subprocess.run(
-        cmd, cwd=os.path.dirname(os.path.abspath(html_path)),
-        capture_output=True, text=True, timeout=timeout,
-        env=dict(os.environ, PATH=os.environ.get("PATH", "")))
-    dt = time.time() - t0
-    if log:
-        log(f"[vivlio] build {dt:.1f}s (exit {proc.returncode})")
-    if proc.returncode != 0:
-        if log:
-            log((proc.stdout or "")[-2000:])
-            log((proc.stderr or "")[-2000:])
-        raise RuntimeError(f"vivliostyle build 실패 (exit {proc.returncode})")
-    return dt
+    return _cli.run_build(html_path, pdf_path, log=log, timeout=timeout)
 
 
 def _copy_theme(theme, build_dir, log):
-    """`themes/<theme>.css` → build_dir/theme.css. 공통 골격 `_base.css` 도
-    함께 복사(시리즈 css 가 @import 하는 경우 대비)."""
-    src = os.path.join(THEMES_DIR, f"{theme}.css")
-    if not os.path.exists(src):
-        raise FileNotFoundError(f"테마 없음: {src}")
-    shutil.copy2(src, os.path.join(build_dir, "theme.css"))
-    base = os.path.join(THEMES_DIR, "_base.css")
-    if os.path.exists(base):
-        shutil.copy2(base, os.path.join(build_dir, "_base.css"))
+    """`themes/<theme>.css` → build_dir/theme.css (+ 공통 골격 `_base.css`)."""
+    return _stage.stage_theme(build_dir, theme, log)
 
 
 def _copy_fonts(build_dir, font_files, log):
-    fonts_dir = os.path.join(build_dir, "fonts")
-    os.makedirs(fonts_dir, exist_ok=True)
-    missing = []
-    for f_ in (font_files or DEFAULT_FONT_FILES):
-        p = os.path.expanduser(f_)
-        if os.path.exists(p):
-            shutil.copy2(p, fonts_dir)
-        else:
-            missing.append(os.path.basename(f_))
-    if missing and log:
-        log(f"[vivlio][경고] 폰트 없음(대체 폴백 사용): {', '.join(missing)}")
+    _stage.stage_fonts(build_dir, font_files or DEFAULT_FONT_FILES, log,
+                       required=False)
 
 
 def _copy_assets(build_dir):
-    if os.path.isdir(ASSETS_DIR):
-        dst = os.path.join(build_dir, "assets")
-        if os.path.isdir(dst):
-            shutil.rmtree(dst)
-        shutil.copytree(ASSETS_DIR, dst)
+    return _stage.stage_assets(build_dir, ASSETS_DIR)
 
 
 def render_html_to_pdf(html_text, theme, out_pdf, log, *, build_dir=None,

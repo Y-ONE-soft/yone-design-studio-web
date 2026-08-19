@@ -1,0 +1,38 @@
+"""계열 레지스트리 — 이름 → Series 인스턴스.
+
+새 계열을 붙일 때 손대는 곳은 여기 한 줄뿐이다.
+"""
+_CACHE = {}
+
+_FACTORIES = {}
+
+
+def register(name, factory):
+    _FACTORIES[name] = factory
+
+
+def get(name):
+    if name not in _CACHE:
+        if name not in _FACTORIES:
+            raise KeyError(f"등록되지 않은 계열: {name} "
+                           f"(등록됨: {', '.join(sorted(_FACTORIES))})")
+        _CACHE[name] = _FACTORIES[name]()
+    return _CACHE[name]
+
+
+def names():
+    return sorted(_FACTORIES)
+
+
+def _vocabook():
+    from core.render_vivlio.series.vocabook import VocabookSeries
+    return VocabookSeries()
+
+
+def _blackbook():
+    from core.render_vivlio.series.blackbook import BlackbookSeries
+    return BlackbookSeries()
+
+
+register("vocabook", _vocabook)
+register("blackbook", _blackbook)

@@ -1,18 +1,31 @@
-"""Vivliostyle 렌더 백엔드 (W51) — 파일럿(`pilot/vivliostyle/`)을 실서비스
-재사용 백엔드로 승격한 것.
+"""Vivliostyle 렌더 백엔드 — HTML/CSS → @vivliostyle/cli → PDF.
 
-핵심 계약: **렌더 플랜(list[{"t","s","runs"}]) → 시맨틱 HTML + CSS 테마 →
-@vivliostyle/cli → PDF**. 렌더 플랜은 기존 v2 파이프라인(예: mockexam_v2 의
-`ir_to_render_plan`)이 만든 데이터 그대로다 — 같은 플랜을 InDesign 백엔드로도,
-이 백엔드로도 조판할 수 있다(백엔드 무관 자산).
+**3계층**으로 나뉜다. 계열이 늘어도 손대는 곳이 정해져 있게 하기 위한 것이다.
 
-공개 API:
-    build.render_plan_to_pdf(plan, theme, out_pdf, log, *, case=None, ...)
-        시리즈 테마(`themes/<theme>.css`)를 골라 플랜을 PDF로 렌더.
-    build.render_html_to_pdf(...)  — HTML 문자열을 직접 받는 하위 레벨 함수.
+  ① 공용 백엔드 = 이 패키지 루트
+     cli(설치·실행) · stage(서체/테마/자산 배치) · probe(PDF 계측) ·
+     paged(2패스 면 지정) · measure(자연 높이 실측) · bleed(도련·TrimBox·간지) ·
+     verify(검수 게이트) · svg(배경 SVG) · config/book(책 오케스트레이션)
+     — 어느 계열에도 없는 것이 없고, 어느 계열에만 있는 것도 없다.
 
-Node/CLI 의존은 실서비스 Python 3.9 와 **무관한 별도 프로세스**다.
-CLI 위치·버전은 `build.py` 상단 상수 참조(파일럿 node_modules 재사용).
+  ② 계열 = `series/<이름>/`
+     원고 인식 + 마크업 + 스타일. 단어장(vocabook), 프리미엄북 블랙북(blackbook),
+     그리고 앞으로 늘어날 것들. 새 계열은 `series/base.Series` 네 훅만 채운다.
+
+  ③ 책 1권 = 교재 폴더의 `config.json` + 원고
+     판형·도련 · 팔레트 · 원고 파일명 · 간지 경로 · 계열 옵션. 교재 폴더는 git 이
+     아니므로 **코드를 두지 않는다**(복사하는 순간 포크가 늘고 롤백이 안 된다).
+
+두 갈래 진입점이 있다:
+
+  · 책 한 권 조판 (단어장·블랙북 …)
+        from core.render_vivlio import book
+        book.main(["<책폴더>", "build"])
+
+  · 렌더 플랜 백엔드 (동형모의고사 v2 — InDesign 과 같은 플랜을 CSS 로 조판)
+        from core.render_vivlio.build import render_plan_to_pdf
+
+Node/CLI 의존은 실서비스 Python 과 **무관한 별도 프로세스**다.
 """
 
 from core.render_vivlio.build import (  # noqa: F401
