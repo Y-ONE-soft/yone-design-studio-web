@@ -499,7 +499,8 @@
             }
         }
 
-        setFrameText(newDocRef, codeTF, codeText, null);
+        // 코드칸: 값이 있을 때만 교체 (비우면 원래 출처 지문번호 유지)
+        if (codeText) setFrameText(newDocRef, codeTF, codeText, null);
         if (labelTF) {
             setFrameText(newDocRef, labelTF, labelText, null);
         } else {

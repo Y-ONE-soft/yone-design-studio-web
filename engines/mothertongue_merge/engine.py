@@ -530,17 +530,17 @@ class MothertongueMergeEngine(BaseEngine):
                     log(f"  [경고] 해결 불가: 강 {ln} 코드 {code} — "
                         f"1차/폴백 모두 없음{_extra}")
 
-                # 헤더(머리말) — 마더텅 지문번호 "13강 | 1번"
-                #   라벨칸=강, 코드칸=엑셀 순서 기준 지문 번호(row_offset+1).
-                #   원본 코드("고1 23년 9월 36번")를 그대로 두면 마더텅 교재
-                #   번호와 어긋난다(2026-08-18 피드백).
+                # 헤더(머리말) — "13강 1번 | 고1 23년 9월 36번"
+                #   라벨칸=강+마더텅 지문번호(엑셀 순서), 코드칸=원래 출처
+                #   지문번호 그대로 유지(2026-08-19 사용자 확정).
+                #   header_code 를 비우면 JSX 가 코드칸을 건드리지 않는다.
                 try:
                     _ln_int = int(str(ln).lstrip("0") or "0")
                 except ValueError:
                     _ln_int = ln
                 passage_entries.append({
-                    "header_label": f"{_ln_int}강",
-                    "header_code": f"{row_offset + 1}번",
+                    "header_label": f"{_ln_int}강 {row_offset + 1}번",
+                    "header_code": "",
                     "code": code,
                     "year": year,
                     "month": month,
