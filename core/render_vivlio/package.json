@@ -1,0 +1,13 @@
+{
+  "name": "yone-render-vivlio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Vivliostyle 조판 백엔드 — core/render_vivlio 가 실행하는 CLI. 파일럿(pilot/vivliostyle)에 빌붙어 있던 설치를 리포 소유로 옮긴 것.",
+  "type": "commonjs",
+  "scripts": {
+    "postinstall": "node -e \"console.log('vivliostyle CLI ready: ' + require('path').resolve('node_modules/.bin/vivliostyle'))\""
+  },
+  "dependencies": {
+    "@vivliostyle/cli": "11.1.0"
+  }
+}

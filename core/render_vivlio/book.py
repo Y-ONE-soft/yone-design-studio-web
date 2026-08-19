@@ -6,6 +6,7 @@
     python3 -m core.render_vivlio.book <책폴더> build     조판 → PDF (+마감)
     python3 -m core.render_vivlio.book <책폴더> verify    검수 게이트
     python3 -m core.render_vivlio.book <책폴더> all       data → build → verify
+    python3 -m core.render_vivlio.book --list            교재 트리의 책 목록
 
 계열별 옵션은 `--키` / `--키=값` 으로 그대로 흘려보낸다(예: `--sample`, `--nomemo`).
 """
@@ -67,6 +68,44 @@ def verify(cfg, log=print, pdf=None, **opts):
     return report
 
 
+# ── 책 목록 ─────────────────────────────────────────────────────────────
+def discover(root=None, max_depth=6):
+    """교재 트리에서 `config.json`(series 키가 있는 것)을 찾는다.
+
+    책 목록을 따로 관리하는 표를 두지 않는다 — 표와 실제 폴더가 어긋나는 순간
+    쓸모가 없어지기 때문이다. 진실은 교재 폴더에 있는 config.json 이다.
+    """
+    root = root or os.path.join(bookconfig._studio_root(), "조판", "교재")
+    out = []
+    if not os.path.isdir(root):
+        return out
+    base = root.rstrip(os.sep).count(os.sep)
+    for dirpath, dirnames, filenames in os.walk(root):
+        if dirpath.count(os.sep) - base >= max_depth:
+            dirnames[:] = []
+            continue
+        dirnames[:] = [d for d in dirnames
+                       if not d.startswith(("_", ".")) and d != "build"]
+        if "config.json" not in filenames:
+            continue
+        try:
+            cfg = bookconfig.load(os.path.join(dirpath, "config.json"))
+        except Exception:
+            continue
+        out.append(cfg)
+    return sorted(out, key=lambda c: (c.series, c.root))
+
+
+def print_books(log=print, root=None):
+    books = discover(root)
+    log(f"■ Vivliostyle 책 {len(books)}권 "
+        f"(계열: {', '.join(series_registry.names())})")
+    for c in books:
+        rel = c.root.replace(bookconfig._studio_root() + os.sep, "")
+        log(f"  [{c.series}] {c.book.get('title', '?')} — {rel}")
+    return books
+
+
 # ── CLI ─────────────────────────────────────────────────────────────────
 def _parse_opts(argv):
     opts = {}
@@ -83,6 +122,9 @@ def main(argv=None):
     if not argv:
         print(__doc__)
         return 2
+    if argv[0] in ("--list", "-l", "list"):
+        print_books()
+        return 0
     book = argv[0]
     steps = [a for a in argv[1:] if not a.startswith("--")] or ["build"]
     opts = _parse_opts(argv[1:])

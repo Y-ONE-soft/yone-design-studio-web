@@ -30,3 +30,4 @@ data_corpus/
 
 # Vivliostyle 파일럿 (W42)
 pilot/vivliostyle/node_modules/
+core/render_vivlio/node_modules/
