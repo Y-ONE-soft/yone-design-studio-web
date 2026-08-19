@@ -1,0 +1,328 @@
+{% extends "base.html" %}
+{% block title %}표지 작업대{% endblock %}
+
+{% block content %}
+<style>
+  .st-wrap { display: grid; grid-template-columns: 340px 1fr; gap: 20px;
+             align-items: start; }
+  @media (max-width: 900px) { .st-wrap { grid-template-columns: 1fr; } }
+
+  .st-panel { background: var(--glass-bg); border: 1px solid var(--glass-border);
+              border-radius: 16px; padding: 16px 18px; backdrop-filter: var(--glass-blur); }
+  .st-panel + .st-panel { margin-top: 14px; }
+
+  .st-head { display: flex; align-items: baseline; justify-content: space-between;
+             margin-bottom: 14px; gap: 12px; flex-wrap: wrap; }
+  .st-title { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+  .st-sub { color: var(--muted); font-size: 13px; }
+
+  .st-group { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 12px; }
+  .st-group:first-of-type { border-top: 0; padding-top: 0; margin-top: 0; }
+  .st-group-name { font-size: 11px; letter-spacing: 0.12em; color: var(--muted);
+                   text-transform: uppercase; margin-bottom: 10px; }
+
+  .st-row { margin-bottom: 12px; }
+  .st-label { display: flex; justify-content: space-between; align-items: baseline;
+              font-size: 13px; margin-bottom: 5px; gap: 8px; }
+  .st-val { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+  .st-hint { font-size: 11px; color: var(--muted); line-height: 1.45; margin-top: 3px; }
+
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  .st-text, .st-select { width: 100%; background: rgba(0,0,0,0.28);
+      border: 1px solid var(--border); border-radius: 8px; color: var(--text);
+      padding: 7px 9px; font-size: 13px; font-family: var(--font); }
+  .st-color { display: flex; gap: 8px; align-items: center; }
+  .st-color input[type=color] { width: 42px; height: 30px; padding: 0; border: 0;
+      border-radius: 7px; background: none; cursor: pointer; }
+  .st-color input[type=text] { flex: 1; font-family: var(--mono); font-size: 12px; }
+
+  .st-pick { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .st-chip { border: 1px solid var(--border); background: var(--surface);
+             color: var(--text); border-radius: 999px; padding: 6px 13px;
+             font-size: 13px; cursor: pointer; }
+  .st-chip--on { border-color: var(--accent); color: var(--accent);
+                 box-shadow: 0 0 0 1px var(--accent) inset; }
+
+  .st-stage { background: repeating-conic-gradient(rgba(255,255,255,.045) 0 25%,
+                transparent 0 50%) 0 0 / 22px 22px, #14141a;
+              border: 1px solid var(--glass-border); border-radius: 16px;
+              padding: 20px; display: flex; justify-content: center;
+              min-height: 60vh; position: relative; }
+  .st-stage svg, .st-stage img { max-height: 78vh; width: auto;
+              box-shadow: 0 18px 60px rgba(0,0,0,.5); border-radius: 3px; }
+  .st-busy { position: absolute; top: 12px; right: 16px; font-size: 12px;
+             color: var(--muted); opacity: 0; transition: opacity .15s; }
+  .st-busy--on { opacity: 1; }
+
+  .st-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .st-btn { border: 1px solid var(--border-strong); background: var(--surface);
+            color: var(--text); border-radius: 9px; padding: 9px 15px;
+            font-size: 13px; cursor: pointer; font-family: var(--font); }
+  .st-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .st-btn--primary { background: var(--accent); border-color: var(--accent);
+                     color: #14141a; font-weight: 600; }
+  .st-btn--primary:hover { color: #14141a; opacity: .88; }
+  .st-btn:disabled { opacity: .4; cursor: default; }
+
+  .st-msg { margin-top: 10px; font-size: 12.5px; line-height: 1.5; min-height: 18px; }
+  .st-msg--ok { color: var(--ok); }
+  .st-msg--err { color: var(--err); white-space: pre-wrap; font-family: var(--mono);
+                 font-size: 11.5px; }
+
+  .st-ask { display: flex; gap: 8px; }
+  .st-ask input { flex: 1; }
+</style>
+
+<div class="st-head">
+  <div>
+    <div class="st-title">표지 작업대</div>
+    <div class="st-sub">{{ project.표기 or '' }} — 값을 움직이면 미리보기가 따라 바뀝니다</div>
+  </div>
+  {% if projects|length > 1 %}
+  <select class="st-select" style="width:auto" onchange="location.href='/cover-studio?p='+this.value">
+    {% for k, p in projects.items() %}
+      <option value="{{ k }}" {% if k == project_key %}selected{% endif %}>{{ p.표기 }}</option>
+    {% endfor %}
+  </select>
+  {% endif %}
+</div>
+
+<div class="st-wrap">
+  <div>
+    <div class="st-panel">
+      <div class="st-group-name">학년 · 주차</div>
+      <div class="st-pick" id="pick-book"></div>
+      <div class="st-pick" id="pick-week"></div>
+    </div>
+
+    <div class="st-panel">
+      <div class="st-ask">
+        <input class="st-text" id="ask" placeholder="예) 체크를 조금 더 크게">
+        <button class="st-btn" id="btn-ask">보내기</button>
+      </div>
+      <div class="st-msg" id="ask-msg"></div>
+    </div>
+
+    <div class="st-panel" id="controls"></div>
+  </div>
+
+  <div>
+    <div class="st-stage">
+      <div class="st-busy" id="busy">그리는 중…</div>
+      <div id="stage"></div>
+    </div>
+    <div class="st-btns">
+      <button class="st-btn st-btn--primary" id="btn-save">문구·색 저장</button>
+      <button class="st-btn" id="btn-reset">되돌리기</button>
+      <button class="st-btn" id="btn-svg">이 표지 SVG 받기</button>
+    </div>
+    <div class="st-msg" id="msg"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const PROJECT = {{ project_key|tojson }};
+let SPEC = null, BASE = {}, OV = {}, book = null, week = 1, seq = 0;
+
+const $ = id => document.getElementById(id);
+const api = p => `/api/cover-studio/${p}?p=${encodeURIComponent(PROJECT)}`;
+
+function say(el, text, kind) {
+  el.className = 'st-msg' + (kind ? ' st-msg--' + kind : '');
+  el.textContent = text || '';
+}
+
+// ── 조절판 — params.py 가 준 목록으로 그린다. 항목이 늘어도 여기는 안 고친다
+function buildControls() {
+  const groups = {};
+  SPEC.params.forEach(p => (groups[p.group] = groups[p.group] || []).push(p));
+  $('controls').innerHTML = Object.entries(groups).map(([name, items]) => `
+    <div class="st-group">
+      <div class="st-group-name">${name}</div>
+      ${items.map(ctl).join('')}
+    </div>`).join('');
+
+  SPEC.params.forEach(p => {
+    const el = $('c-' + p.key);
+    if (!el) return;
+    const ev = p.type === 'range' ? 'input' : 'change';
+    el.addEventListener(ev, () => {
+      let v = el.value;
+      if (p.type === 'range') {
+        v = parseFloat(v);
+        $('v-' + p.key).textContent = fmt(v, p);
+      }
+      const hex = $('h-' + p.key);
+      if (hex && hex !== el) hex.value = v;
+      OV[p.key] = v;
+      draw();
+    });
+    const hex = $('h-' + p.key);
+    if (hex && hex !== el) hex.addEventListener('change', () => {
+      if (!/^#[0-9A-Fa-f]{6}$/.test(hex.value)) return;
+      el.value = hex.value; OV[p.key] = hex.value; draw();
+    });
+  });
+}
+
+function fmt(v, p) {
+  const dec = (p.step && p.step < 1) ? String(p.step).split('.')[1].length : 0;
+  return v.toFixed(dec) + (p.unit ? ' ' + p.unit : '');
+}
+
+function ctl(p) {
+  const v = cur(p.key);
+  const hint = p.hint ? `<div class="st-hint">${p.hint}</div>` : '';
+  if (p.type === 'range') return `
+    <div class="st-row">
+      <div class="st-label"><span>${p.label}</span>
+        <span class="st-val" id="v-${p.key}">${fmt(Number(v), p)}</span></div>
+      <input type="range" id="c-${p.key}" min="${p.min}" max="${p.max}"
+             step="${p.step}" value="${v}">${hint}
+    </div>`;
+  if (p.type === 'color') return `
+    <div class="st-row">
+      <div class="st-label"><span>${p.label}</span></div>
+      <div class="st-color">
+        <input type="color" id="c-${p.key}" value="${v}">
+        <input type="text" class="st-text" id="h-${p.key}" value="${v}">
+      </div>${hint}
+    </div>`;
+  return `
+    <div class="st-row">
+      <div class="st-label"><span>${p.label}</span></div>
+      <input type="text" class="st-text" id="c-${p.key}" value="${esc(v)}">${hint}
+    </div>`;
+}
+
+const esc = s => String(s).replace(/"/g, '&quot;');
+const cur = k => (k in OV) ? OV[k] : BASE[k];
+
+function chips(el, items, isOn, onPick) {
+  el.innerHTML = items.map(it =>
+    `<button class="st-chip${isOn(it) ? ' st-chip--on' : ''}" data-v="${it.v}">${it.label}</button>`
+  ).join('');
+  el.querySelectorAll('.st-chip').forEach(b =>
+    b.addEventListener('click', () => { onPick(b.dataset.v); }));
+}
+
+function renderPicks() {
+  chips($('pick-book'), SPEC.books.map(b => ({ v: b.key, label: b.label })),
+        it => it.v === book, v => { book = v; renderPicks(); draw(); });
+  chips($('pick-week'), SPEC.weeks.map(w => ({ v: w.no, label: w.no + '주차' })),
+        it => String(it.v) === String(week), v => { week = v; renderPicks(); draw(); });
+}
+
+// ── 미리보기 — 늦게 온 응답이 최신 그림을 덮지 않게 순번을 확인한다
+let timer = null;
+function draw() {
+  clearTimeout(timer);
+  timer = setTimeout(async () => {
+    const my = ++seq;
+    $('busy').classList.add('st-busy--on');
+    try {
+      const r = await fetch(api('preview'), {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ project: PROJECT, book, week, ov: OV })
+      });
+      const body = await r.text();
+      if (my !== seq) return;
+      if (!r.ok) { say($('msg'), tidy(body), 'err'); return; }
+      $('stage').innerHTML = body;
+      say($('msg'), '');
+    } catch (e) {
+      if (my === seq) say($('msg'), String(e), 'err');
+    } finally {
+      if (my === seq) $('busy').classList.remove('st-busy--on');
+    }
+  }, 60);
+}
+
+function tidy(body) {
+  try { return JSON.parse(body).error || body; } catch (e) { return body; }
+}
+
+// ── 저장 / 되돌리기 / 내려받기
+$('btn-save').addEventListener('click', async () => {
+  const btn = $('btn-save'); btn.disabled = true;
+  try {
+    const r = await fetch(api('save'), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ project: PROJECT, ov: OV })
+    });
+    const body = await r.text();
+    if (!r.ok) { say($('msg'), tidy(body), 'err'); return; }
+    const d = JSON.parse(body);
+    if (d.saved && d.saved.length) {
+      say($('msg'), '저장했습니다 — ' + d.saved.join(' · ') + ' (content.py)', 'ok');
+      d.saved.forEach(() => {});
+      Object.keys(OV).forEach(k => { BASE[k] = OV[k]; });
+    } else {
+      say($('msg'), '저장할 문구·색 변경이 없습니다. 수치는 코드라 저장 대상이 아닙니다.');
+    }
+  } finally { btn.disabled = false; }
+});
+
+$('btn-reset').addEventListener('click', () => {
+  OV = {}; buildControls(); draw(); say($('msg'), '저장된 값으로 되돌렸습니다.');
+});
+
+$('btn-svg').addEventListener('click', () => {
+  const svg = $('stage').innerHTML;
+  if (!svg.trim()) return;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
+  a.download = `cover_${book}_w${week}.svg`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+// ── 프롬프트
+async function ask() {
+  const q = $('ask').value.trim();
+  if (!q) return;
+  const btn = $('btn-ask'); btn.disabled = true;
+  say($('ask-msg'), '생각하는 중…');
+  try {
+    const r = await fetch(api('prompt'), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ project: PROJECT, ask: q, ov: OV, book, week })
+    });
+    const body = await r.text();
+    if (!r.ok) { say($('ask-msg'), tidy(body), 'err'); return; }
+    const d = JSON.parse(body);
+    if (!d.changes || !Object.keys(d.changes).length) {
+      say($('ask-msg'), d.note || '바꿀 값을 못 찾았습니다.');
+      return;
+    }
+    Object.assign(OV, d.changes);
+    buildControls();
+    draw();
+    const names = Object.keys(d.changes).map(k => {
+      const p = SPEC.params.find(x => x.key === k);
+      return (p ? p.label : k) + ' → ' + d.changes[k];
+    });
+    say($('ask-msg'), (d.note ? d.note + ' / ' : '') + names.join(' · '), 'ok');
+    $('ask').value = '';
+  } finally { btn.disabled = false; }
+}
+$('btn-ask').addEventListener('click', ask);
+$('ask').addEventListener('keydown', e => { if (e.key === 'Enter') ask(); });
+
+// ── 시작
+(async () => {
+  const r = await fetch(api('spec'));
+  const body = await r.text();
+  if (!r.ok) { say($('msg'), tidy(body), 'err'); return; }
+  SPEC = JSON.parse(body);
+  BASE = SPEC.values;
+  book = SPEC.books[0].key;
+  week = SPEC.weeks[0].no;
+  renderPicks();
+  buildControls();
+  draw();
+})();
+</script>
+{% endblock %}
