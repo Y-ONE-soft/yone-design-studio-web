@@ -475,6 +475,10 @@ def _ask_claude_blocks(bin_, image_path, W, H, cfg, note, base=None):
   text   x y w text size font color align weight tracking leading
          size 는 **mm 단위 글자 높이**. align 은 left|center|right
   hero   x y w h text color                주인공 조형(부풀린/압출 타이포)
+         **text 는 @brand 를 써라.** @book 같은 짧은 말을 넣으면 한 글자가
+         블록을 가득 채워 이상해진다. 조형은 브랜드를 세우는 자리다.
+         레퍼런스에 큰 조형이 없으면 hero 블록을 아예 넣지 마라 —
+         억지로 넣는 것보다 안 넣는 편이 낫다.
   image  x y w h src opacity
 
 글자·색은 **자리표시자**를 써라. 학년·권종을 바꿔도 따라온다:
