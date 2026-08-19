@@ -73,6 +73,39 @@
 
   .st-ask { display: flex; gap: 8px; }
   .st-ask input { flex: 1; }
+
+  /* 설정 · 새 표지 — 표지를 만들거나 고칠 때만 열린다 */
+  .st-modal { position: fixed; inset: 0; background: rgba(4,4,8,.72);
+              backdrop-filter: blur(6px); z-index: 60; display: none;
+              overflow-y: auto; padding: 40px 20px; }
+  .st-modal--on { display: block; }
+  .st-sheet { max-width: 720px; margin: 0 auto; background: #16161d;
+              border: 1px solid var(--glass-border); border-radius: 18px;
+              padding: 22px 24px; box-shadow: var(--glass-shadow-lifted); }
+  .st-sheet h3 { font-size: 17px; margin-bottom: 4px; }
+  .st-sheet .st-hint { margin-bottom: 16px; }
+  .st-fld { margin-bottom: 13px; }
+  .st-fld > label { display: block; font-size: 12.5px; color: var(--muted);
+                    margin-bottom: 5px; }
+  .st-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .st-list { border: 1px solid var(--border); border-radius: 10px; padding: 10px;
+             margin-bottom: 8px; }
+  .st-item { display: grid; gap: 7px; align-items: center; margin-bottom: 7px; }
+  .st-item--g { grid-template-columns: 1fr 40px; }
+  .st-item--b { grid-template-columns: 1.1fr .7fr 1.5fr 46px 46px 40px; }
+  .st-item input { min-width: 0; }
+  .st-x { border: 1px solid var(--border); background: none; color: var(--muted);
+          border-radius: 8px; padding: 7px 0; cursor: pointer; font-size: 13px; }
+  .st-x:hover { color: var(--err); border-color: var(--err); }
+  .st-add { border: 1px dashed var(--border-strong); background: none;
+            color: var(--muted); border-radius: 9px; padding: 7px 12px;
+            font-size: 12.5px; cursor: pointer; width: 100%; }
+  .st-add:hover { color: var(--accent); border-color: var(--accent); }
+  .st-cols { font-size: 11.5px; color: var(--muted); display: grid; gap: 7px;
+             margin-bottom: 4px; }
+  .st-swatch { display: flex; gap: 6px; align-items: center; }
+  .st-swatch input[type=color] { width: 40px; height: 30px; padding: 0; border: 0;
+             border-radius: 7px; background: none; cursor: pointer; }
 </style>
 
 <div class="st-head">
@@ -80,13 +113,17 @@
     <div class="st-title">표지 작업대</div>
     <div class="st-sub">{{ project.표기 or '' }} — 값을 움직이면 미리보기가 따라 바뀝니다</div>
   </div>
-  {% if projects|length > 1 %}
-  <select class="st-select" style="width:auto" onchange="location.href='/cover-studio?p='+this.value">
-    {% for k, p in projects.items() %}
-      <option value="{{ k }}" {% if k == project_key %}selected{% endif %}>{{ p.표기 }}</option>
-    {% endfor %}
-  </select>
-  {% endif %}
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    {% if projects %}
+    <select class="st-select" style="width:auto" onchange="location.href='/cover-studio?p='+this.value">
+      {% for k, p in projects.items() %}
+        <option value="{{ k }}" {% if k == project_key %}selected{% endif %}>{{ p.표기 }}</option>
+      {% endfor %}
+    </select>
+    {% endif %}
+    <button class="st-btn" id="btn-config">설정</button>
+    <button class="st-btn st-btn--primary" id="btn-new">+ 새 표지</button>
+  </div>
 </div>
 
 <div class="st-wrap">
@@ -119,6 +156,60 @@
       <button class="st-btn" id="btn-svg">이 표지 SVG 받기</button>
     </div>
     <div class="st-msg" id="msg"></div>
+  </div>
+</div>
+
+<div class="st-modal" id="modal">
+  <div class="st-sheet">
+    <h3 id="m-title">표지 설정</h3>
+    <div class="st-hint" id="m-sub">여기서 고친 값은 파일에 바로 저장됩니다.</div>
+
+    <div class="st-fld" id="m-folder-wrap">
+      <label>폴더 이름 <span style="opacity:.6">— 선생님 이름을 씁니다</span></label>
+      <input class="st-text" id="m-folder" placeholder="예) 김민수T">
+    </div>
+
+    <div class="st-grid2">
+      <div class="st-fld"><label>브랜드 (앞표지 큰 글자)</label>
+        <input class="st-text" id="m-brand"></div>
+      <div class="st-fld"><label>회차</label>
+        <input class="st-text" id="m-exam" placeholder="예) 2학기 중간"></div>
+      <div class="st-fld"><label>강사 (영문)</label>
+        <input class="st-text" id="m-teacher"></div>
+      <div class="st-fld"><label>강사 (한글)</label>
+        <input class="st-text" id="m-teacher-kr"></div>
+    </div>
+
+    <div class="st-fld">
+      <label>학년 · 학교</label>
+      <div class="st-list"><div id="m-grades"></div>
+        <button class="st-add" id="m-add-grade">+ 학년 추가</button></div>
+    </div>
+
+    <div class="st-fld">
+      <label>권종</label>
+      <div class="st-list">
+        <div class="st-cols st-item st-item--b">
+          <span>권종명</span><span>배지</span><span>한 줄 설명</span>
+          <span>바탕</span><span>강조</span><span></span></div>
+        <div id="m-books"></div>
+        <button class="st-add" id="m-add-book">+ 권종 추가</button></div>
+    </div>
+
+    <div class="st-grid2">
+      <div class="st-fld"><label>슬로건 1줄</label>
+        <input class="st-text" id="m-slogan1"></div>
+      <div class="st-fld"><label>슬로건 2줄</label>
+        <input class="st-text" id="m-slogan2"></div>
+    </div>
+    <div class="st-fld"><label>뒤표지 리드</label>
+      <input class="st-text" id="m-back-lead"></div>
+
+    <div class="st-btns">
+      <button class="st-btn st-btn--primary" id="m-ok">저장</button>
+      <button class="st-btn" id="m-cancel">닫기</button>
+    </div>
+    <div class="st-msg" id="m-msg"></div>
   </div>
 </div>
 {% endblock %}

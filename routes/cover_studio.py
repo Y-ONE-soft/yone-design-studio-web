@@ -311,6 +311,63 @@ def _structured(stdout):
     return top if isinstance(top, dict) and "changes" in top else None
 
 
+@bp.route("/api/cover-studio/config")
+def api_config():
+    try:
+        r = _run(_project(), ["config"])
+    except (ValueError, RuntimeError, subprocess.TimeoutExpired) as e:
+        return jsonify({"error": str(e)}), 400
+    if r.returncode != 0:
+        return jsonify({"error": r.stderr[-800:] or "설정 읽기 실패"}), 500
+    return Response(r.stdout, mimetype="application/json")
+
+
+@bp.route("/api/cover-studio/config-save", methods=["POST"])
+def api_config_save():
+    d = request.get_json(silent=True) or {}
+    try:
+        r = _run(_project(d.get("project")), ["config-save"],
+                 stdin_data=json.dumps(d.get("config") or {}, ensure_ascii=False))
+    except (ValueError, RuntimeError, subprocess.TimeoutExpired) as e:
+        return jsonify({"error": str(e)}), 400
+    if r.returncode != 0:
+        return jsonify({"error": r.stderr[-800:] or "설정 저장 실패"}), 500
+    _bust()
+    return Response(r.stdout, mimetype="application/json")
+
+
+@bp.route("/api/cover-studio/create", methods=["POST"])
+def api_create():
+    """새 표지 한 벌. 폴더 이름은 선생님 이름을 쓴다."""
+    d = request.get_json(silent=True) or {}
+    name = u.normalize("NFC", (d.get("folder") or "").strip())
+    if not name or os.sep in name or name.startswith((".", "_")):
+        return jsonify({"error": "이름이 이상합니다 (경로 문자·앞머리 _ 는 못 씁니다)"}), 400
+    folder = os.path.join(COVER_ROOT, name)
+    if os.path.exists(folder):
+        return jsonify({"error": f"'{name}' 은 이미 있습니다"}), 409
+    try:
+        py = _gen_python()
+    except RuntimeError as e:
+        return jsonify({"error": str(e)}), 400
+    cmd = [py, "-m", "yone_cover.studio", folder, "create"]
+    env = {k: v for k, v in os.environ.items() if k != "PYTHONPATH"}
+    env["PYTHONPATH"] = CORE
+    r = subprocess.run(cmd, input=json.dumps(d.get("config") or {},
+                                             ensure_ascii=False),
+                       capture_output=True, text=True, env=env, timeout=60)
+    if r.returncode != 0:
+        return jsonify({"error": r.stderr[-800:] or "만들기 실패"}), 500
+    _bust()
+    return jsonify({"ok": True, "key": name})
+
+
+def _bust():
+    """폴더가 늘거나 설정이 바뀌면 캐시를 버린다."""
+    global _scan_cache
+    _scan_cache = (0, {})
+
+
 @bp.route("/api/cover-studio/save", methods=["POST"])
 def api_save():
     d = request.get_json(silent=True) or {}
