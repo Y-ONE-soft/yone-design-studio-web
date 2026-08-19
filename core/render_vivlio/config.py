@@ -26,19 +26,32 @@ import json
 import os
 
 
+def _is_studio(root):
+    """스튜디오 루트인가 — 조판/교재 와 디자인 이 **둘 다** 있어야 한다.
+
+    이 기계에는 `~/dev/조판` 같은 부분 사본이 남아 있어서, `조판/교재` 만 보고
+    고르면 간지·표지(디자인/)를 못 찾는다.
+    """
+    return (os.path.isdir(os.path.join(root, "조판", "교재"))
+            and os.path.isdir(os.path.join(root, "디자인")))
+
+
 def _studio_root():
     env = os.environ.get("YONE_STUDIO_ROOT")
     if env:
         return env
-    # 리포 config 가 있으면 그 값, 없으면 실제 스튜디오 폴더 후보
+    cands = []
     try:
         from config import STUDIO_ROOT
-        if os.path.isdir(os.path.join(STUDIO_ROOT, "조판", "교재")):
-            return STUDIO_ROOT
+        cands.append(STUDIO_ROOT)
     except Exception:
         pass
-    for c in (os.path.expanduser("~/Documents/작업/Y.ONE STUDIO"),
-              os.path.expanduser("~/dev")):
+    cands += [os.path.expanduser("~/Documents/작업/Y.ONE STUDIO"),
+              os.path.expanduser("~/dev")]
+    for c in cands:
+        if _is_studio(c):
+            return c
+    for c in cands:                     # 완전 일치가 없으면 조판/교재 라도
         if os.path.isdir(os.path.join(c, "조판", "교재")):
             return c
     return os.path.expanduser("~")
@@ -76,7 +89,7 @@ class BookConfig(object):
             s = (value.replace("${BOOK}", self.root)
                       .replace("${STUDIO}", _studio_root()))
             s = os.path.expanduser(s)
-            if s and not os.path.isabs(s) and ("/" in s or "." in s):
+            if s and not os.path.isabs(s):
                 s = os.path.normpath(os.path.join(self.root, s))
             return s
         if isinstance(value, list):

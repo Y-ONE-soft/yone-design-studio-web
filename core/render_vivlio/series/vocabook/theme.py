@@ -18,8 +18,10 @@ import os
 from core.render_vivlio import svg
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-THEME_SRC = os.path.join(os.path.dirname(os.path.dirname(
-    os.path.abspath(__file__))), "themes", "vocabook.css")
+# 계열 스타일시트 = core/render_vivlio/themes/vocabook.css
+THEME_SRC = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    "themes", "vocabook.css")
 
 # 계열 기본 치수 — 배재보카03 완성본 PDF/AI 실측. 책이 필요하면 metrics 로 덮는다.
 DEFAULT_METRICS = {
