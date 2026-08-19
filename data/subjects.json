@@ -210,6 +210,12 @@
         "prefix": "2026표지세네카",
         "engine_id": "cover2026",
         "url": "/cover2026"
+      },
+      {
+        "name": "표지 작업대",
+        "prefix": "작업대",
+        "engine_id": "cover_studio",
+        "url": "/cover-studio"
       }
     ]
   },
