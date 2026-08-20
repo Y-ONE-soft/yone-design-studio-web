@@ -75,6 +75,11 @@
             }
         }
 
+        // 이미 스레드된 스토리 수 — 재실행 판정용
+        var alreadyThreaded = 0;
+        for (var a0 = 0; a0 < h.stories.length; a0++) {
+            if (h.stories[a0].textContainers.length > 1) { alreadyThreaded++; }
+        }
         var done = 0, skip = 0;
         for (var g = 0; g < groups.length; g++) {
             var ks2 = groups[g], ids = [], ok = true;
@@ -125,7 +130,12 @@
                 }
                 if (!ok) {
                     skip++;
-                    W("  [건너뜀] 매핑 불완전 (" + ks2.length + "프레임)");
+                    // 이미 스레드된 문서를 다시 돌리면 프레임의 contents 가
+                    // **스토리 전체**를 반환해 키가 전부 같아진다 → 매핑 실패로
+                    // 보이지만 실은 할 일이 없는 것. 재실행 시 오해를 막는다.
+                    W("  [건너뜀] " + ks2.length + "프레임 — 매핑 불완전"
+                      + (alreadyThreaded >= groups.length
+                         ? " (이미 스레드된 문서로 보임)" : ""));
                     continue;
                 }
             }
