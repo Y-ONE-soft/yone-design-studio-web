@@ -2446,6 +2446,12 @@ _C1_RESID = [
 # v1 "Clean up header remnants" (최종)
 # W49: 라벨의 하위분할 순번(본문2-1) 뒤 "(p.18)" 잔재도 제거 (\d+ → 계층 순번).
 _C1_REMNANT = [
+    # W71: 라벨 뒤 유형 표기 제거 ("{01}  [문장삽입]" → "{01}"). 유형을 헤더
+    # 앞에 적는 원고("2. [문단배열] p82-no.03")는 _C1_RESID 가 앞부분을
+    # 걷어내지만, 뒤에 적는 원고("3. p80-no.01  [문장배열]", 12강 최종본)는
+    # 잔재가 남아 지문번호 자리에 인쇄되고 — 라벨이 블록마다 달라져
+    # 지문별 슬롯 묶음(W70)까지 무력화된다.
+    (re.compile(r"(\{[^}]+\})\s*\[[^\]]*\]\s*$"), r"\1"),
     (re.compile(r"(\{본문\d+(?:[-–—.]\d+)*\})\([^)]*\)"), r"\1"),
     (re.compile(r"(\{[A-Za-z][A-Za-z\s]+\})\([^)]*\)"), r"\1"),
 ]
@@ -2949,9 +2955,14 @@ def build_step1_c1(step_data, workbook_type="모의고사", exclude_btm=False,
             it["t"], it["runs"] = t, r
 
     # 4e) BTM(3+공백 잔존) 뒤 (A|B|C) 시퀀스 → C1_하단 지문
+    # W71: 판정 기준을 "BTM 단락 뒤에 (A)(B)(C) 가 온다"로 넓힌다. 주어진
+    # 문장을 표 셀로 넣는 원고는 3연속 공백으로 BTM 이 잡히지만, 평문
+    # 한 줄로 적는 원고(12강 최종본)는 4b(헤더 다음 첫 비빈 단락 → BTM)로만
+    # 잡혀 여기서 걸러졌다 → 문단배열의 (A)(B)(C)가 상단 배열 카드 스타일로
+    # 인쇄되고 발문도 붙지 않았다. 문장배열 블록은 4c 가 (A)를 이미
+    # 카드 스타일로 덮어써 이 루프의 시작 조건(s == st_btm)에 걸리지 않는다.
     for i in range(n):
-        if items[i]["s"] != st_btm or not (
-                items[i].get("_gap3") or _RE_3GAPS.search(items[i]["t"])):
+        if items[i]["s"] != st_btm:
             continue
         j = i + 1
         while j < n and _is_blank(items[j]["t"]):
