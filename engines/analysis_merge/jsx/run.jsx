@@ -186,7 +186,67 @@
 
     var MARKER_PAT = /(?:고\d+\s*)?(\d{1,2})\s*년\s*(\d{1,2})\s*월\s*(\d{1,2})\s*(?:[\-~]\s*(\d{1,2}))?\s*번/;
 
-    function findAllMarkers(doc) {
+    // 헤더가 '연·월' 프레임과 '문항번호' 프레임으로 쪼개진 분석본 대응
+    // (2026-08-21 실측: 고2 24년 9월 분석본(New) — 사이드 라벨이 "20번"만이고
+    //  "고2 24년 9월"은 별도 프레임/마스터에 남아 MARKER_PAT 이 0건).
+    // 오탐 방지: 프레임 내용이 통째로 번호 토큰일 때만 + 전체 마커가 0건인
+    // 파일에서만 사용하고, 연·월은 파이썬이 월 폴더 기준으로 넘긴
+    // (year, month)로 채운다 — 기존 인식분(전체 마커 파일)은 무변경.
+    var QNUM_ONLY_PAT = /^\s*(\d{1,2})\s*(?:[\-~]\s*(\d{1,2}))?\s*번\s*$/;
+    var QNUM_ONLY_MAXLEN = 12;
+
+    function isGanjiPage(page) {
+        try {
+            var masterName = page.appliedMaster.name;
+            if (masterName) {
+                if (masterName.indexOf("간지") !== -1) return true;
+                if (masterName.indexOf("표지") !== -1) return true;
+            }
+        } catch (eM) {}
+        return false;
+    }
+
+    function findQNumOnlyMarkers(doc, fbYear, fbMonth) {
+        var markers = [];
+        var seenKey = {};
+        for (var i = 0; i < doc.pages.length; i++) {
+            var page = doc.pages[i];
+            if (isGanjiPage(page)) continue;
+
+            var foundQ = null, foundQEnd = null;
+            try {
+                var items = page.allPageItems;
+                for (var f = 0; f < items.length; f++) {
+                    try {
+                        var txt = items[f].contents;
+                        if (typeof txt !== "string") continue;
+                        if (txt.length === 0 || txt.length > QNUM_ONLY_MAXLEN) continue;
+                        var m = QNUM_ONLY_PAT.exec(txt);
+                        if (m) {
+                            foundQ = m[1];
+                            foundQEnd = m[2] || null;
+                            break;
+                        }
+                    } catch (ef) {}
+                }
+            } catch (ep) {}
+
+            if (foundQ) {
+                var key = foundQ + "-" + (foundQEnd || "");
+                if (seenKey[key]) continue;
+                seenKey[key] = true;
+                markers.push({
+                    year: fbYear, month: fbMonth,
+                    qNum: foundQ, qNumEnd: foundQEnd,
+                    pageIndex: i, qnumOnly: true
+                });
+            }
+        }
+        markers.sort(function (a, b) { return a.pageIndex - b.pageIndex; });
+        return markers;
+    }
+
+    function findAllMarkers(doc, fbYear, fbMonth) {
         var markers = [];
         var seenKey = {};  // "Y-M-Q-QE" → 이미 같은 식별자의 마커가 잡혔는지
 
@@ -237,6 +297,9 @@
             }
         }
         markers.sort(function (a, b) { return a.pageIndex - b.pageIndex; });
+        if (markers.length === 0 && fbYear && fbMonth) {
+            markers = findQNumOnlyMarkers(doc, fbYear, fbMonth);
+        }
         return markers;
     }
 
@@ -316,10 +379,15 @@
                 try {
                     var got = getDoc(cf, docCache);
                     if (got.opened) openedByUs[uri] = true;
-                    fileMarkers[uri] = findAllMarkers(got.doc);
+                    // 폴백 연·월 = 이 후보를 담고 있던 월 폴더의 (year, month)
+                    fileMarkers[uri] = findAllMarkers(got.doc, src.year, src.month);
                     try { tagStoryLabels(got.doc); } catch (eTag) {}
+                    var mkList = fileMarkers[uri];
+                    var qOnly = (mkList.length > 0 && mkList[0].qnumOnly);
                     writeLog("열기: " + cf.displayName +
-                             " (markers=" + fileMarkers[uri].length + ")");
+                             " (markers=" + mkList.length +
+                             (qOnly ? ", 번호전용 헤더 → " + src.year + "년 " +
+                                      parseInt(src.month, 10) + "월로 보정" : "") + ")");
                 } catch (eOp) {
                     writeLog("[경고] 열기 실패: " + cf.fsName + " — " + eOp.message);
                 }

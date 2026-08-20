@@ -234,7 +234,64 @@
 
     var MARKER_PAT = /(?:고\d+\s*)?(\d{1,2})\s*년\s*(\d{1,2})\s*월\s*(\d{1,2})\s*(?:[\-~]\s*(\d{1,2}))?\s*번/;
 
-    function findAllMarkers(doc) {
+    // 헤더가 '연·월' 프레임과 '문항번호' 프레임으로 쪼개진 분석본 대응 (v1 동일)
+    // — 전체 마커가 0건인 파일에서만, 프레임 내용이 통째로 번호 토큰일 때만
+    // 마커로 인정하고 연·월은 파이썬이 넘긴 (year, month)로 채운다.
+    var QNUM_ONLY_PAT = /^\s*(\d{1,2})\s*(?:[\-~]\s*(\d{1,2}))?\s*번\s*$/;
+    var QNUM_ONLY_MAXLEN = 12;
+
+    function isGanjiPage(page) {
+        try {
+            var masterName = page.appliedMaster.name;
+            if (masterName) {
+                if (masterName.indexOf("간지") !== -1) return true;
+                if (masterName.indexOf("표지") !== -1) return true;
+            }
+        } catch (eM) {}
+        return false;
+    }
+
+    function findQNumOnlyMarkers(doc, fbYear, fbMonth) {
+        var markers = [];
+        var seenKey = {};
+        for (var i = 0; i < doc.pages.length; i++) {
+            var page = doc.pages[i];
+            if (isGanjiPage(page)) continue;
+
+            var foundQ = null, foundQEnd = null;
+            try {
+                var items = page.allPageItems;
+                for (var f = 0; f < items.length; f++) {
+                    try {
+                        var txt = items[f].contents;
+                        if (typeof txt !== "string") continue;
+                        if (txt.length === 0 || txt.length > QNUM_ONLY_MAXLEN) continue;
+                        var m = QNUM_ONLY_PAT.exec(txt);
+                        if (m) {
+                            foundQ = m[1];
+                            foundQEnd = m[2] || null;
+                            break;
+                        }
+                    } catch (ef) {}
+                }
+            } catch (ep) {}
+
+            if (foundQ) {
+                var key = foundQ + "-" + (foundQEnd || "");
+                if (seenKey[key]) continue;
+                seenKey[key] = true;
+                markers.push({
+                    year: fbYear, month: fbMonth,
+                    qNum: foundQ, qNumEnd: foundQEnd,
+                    pageIndex: i, qnumOnly: true
+                });
+            }
+        }
+        markers.sort(function (a, b) { return a.pageIndex - b.pageIndex; });
+        return markers;
+    }
+
+    function findAllMarkers(doc, fbYear, fbMonth) {
         var markers = [];
         var seenKey = {};
 
@@ -279,6 +336,9 @@
             }
         }
         markers.sort(function (a, b) { return a.pageIndex - b.pageIndex; });
+        if (markers.length === 0 && fbYear && fbMonth) {
+            markers = findQNumOnlyMarkers(doc, fbYear, fbMonth);
+        }
         return markers;
     }
 
