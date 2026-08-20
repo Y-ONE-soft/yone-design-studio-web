@@ -2456,6 +2456,9 @@ _C1_REMNANT = [
     (re.compile(r"(\{[A-Za-z][A-Za-z\s]+\})\([^)]*\)"), r"\1"),
 ]
 
+# W71: 원고 헤더의 문항 유형 표기 — "[문단배열]" / "[문장배열]" / "[문장삽입]".
+_RE_C1_KIND = re.compile(r"\[\s*(문단\s*배열|순서\s*배열|문장\s*배열|"
+                         r"문장\s*삽입)\s*\]")
 _RE_TAB = re.compile(r"\t")
 _RE_LEAD3WS = re.compile(r"^\s{3,}")
 # W69: 주어진 문장(BTM) 단락의 앞뒤 공백·개행 — docx 표 셀 추출 잔재.
@@ -2816,6 +2819,15 @@ def build_step1_c1(step_data, workbook_type="모의고사", exclude_btm=False,
     # GREP 정규화 전 원문 (W44 부분 인식 보강의 순번·구조 판정 기준)
     orig_texts = [it["t"] for it in items]
 
+    # W71: 헤더의 유형 표기("3. p80-no.01  [문장배열]")를 GREP 이 라벨을
+    # 정규화하며 지우기 전에 기록해 둔다. 유형 표기가 있는 원고에서는
+    # 문단배열(하단 슬롯)과 문장배열(상단 배열 카드)을 추측이 아니라
+    # 원고가 명시한 대로 가를 수 있다.
+    for it in items:
+        m = _RE_C1_KIND.search(it["t"])
+        if m:
+            it["_kind"] = re.sub(r"\s+", "", m.group(1))
+
     # 2) 헤더 정규화 GREP 체인 + 레지듀얼 정리(3회)
     for it in items:
         t, r = it["t"], it["runs"]
@@ -2969,6 +2981,19 @@ def build_step1_c1(step_data, workbook_type="모의고사", exclude_btm=False,
             j += 1
         if j >= n or not _RE_C1_ABC.match(items[j]["t"]):
             continue
+        if not (items[i].get("_gap3") or _RE_3GAPS.search(items[i]["t"])):
+            # W71: 표 셀 유래(3연속 공백)가 아닌 **평문** 주어진 문장은,
+            # 원고가 헤더에 '문단배열'이라 표기한 블록에서만 하단으로 본다.
+            # 표기가 없는 원고(수능특강 29강·Test2 워크북: 헤더 → 지문 첫
+            # 문장 → (A)~(H))에서는 문단배열과 상단 배열 카드를 가를 근거가
+            # 없으므로 종전 동작(카드)을 유지한다 — 추측으로 바꾸면 이미
+            # 납품된 교재가 통째로 다른 모양이 된다.
+            h = i
+            while h >= 0 and not _RE_C1_HEADER.match(items[h]["t"]):
+                h -= 1
+            kind = items[h].get("_kind") if h >= 0 else None
+            if kind not in ("문단배열", "순서배열"):
+                continue
         k = j
         while k < n:
             t = items[k]["t"]
