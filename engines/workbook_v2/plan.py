@@ -2102,8 +2102,41 @@ def build_step1_b1(step_data):
         items.append({"t": text, "runs": runs, "tag": None})
         i += 1
 
+    # W72 (job c1new 12강 실증 — 사용자 지적 "지문에 단락스타일이 본문
+    # 정리로 들어갔다"): 지문 라벨 집합을 **스타일 결정 전에** 만든다.
+    # 아래 '라벨 다음 단락 = 본문 박스' 판정이 대괄호 라벨만 보고 있어서,
+    # 라벨을 평문으로 적는 원고(12강 '12강 gateway', 11강 '11강 exercise 01')
+    # 는 지문이 본문 박스를 못 받고 기본값(B1_내용 정리)으로 인쇄됐다
+    # — 완제품(광문2 수특라이트영독3강 p16)은 크림색 본문 박스다.
+    # W68이 유닛 경계용으로 만들던 집합을 그대로 앞으로 당겨 공유한다.
+    _b1_src = step_data.get("paragraphs") or []
+    _b1_fb = _bracket_fallback_idx(_b1_src)
+    _b1_labels = set()
+    for _i in _b1_fb:
+        _lt = re.sub(r"\s+", " ", (_b1_src[_i].get("text") or "")).strip()
+        if _lt:
+            _b1_labels.add(_lt)
+    # 첫 지문의 라벨은 detect_headers가 '앞 문맥 없음'으로 후보에서 빼므로
+    # (11강 '11강., Gateway') 선두 짧은 라벨 한 줄을 같은 자격으로 인정한다.
+    # 단, 이미 구조 라벨이 잡힌 원고(=대괄호 라벨이 없는 원고)에서만 —
+    # 대괄호로 라벨이 오는 기존 교재는 판정이 그대로다.
+    for _p in (_b1_src if _b1_fb else []):
+        _lt = re.sub(r"\s+", " ", (_p.get("text") or "")).strip()
+        if not _lt:
+            continue
+        if (len(_lt) <= 30 and not re.search(r"[.?!]\s*$", _lt)
+                and len(re.findall(r"[A-Za-z]{2,}", _lt)) <= 3):
+            _b1_labels.add(_lt)
+        break
+
     # 2) 스타일 결정 (v1 적용 순서: 전체 B1 → 선지 → 하단 → 지문/본문박스
     #    → 주제/제목 → '[' 시작 단락 [기본 단락])
+    def _b1_is_label(t):
+        if _is_bracket_para(t):
+            return True
+        n = re.sub(r"\s+", " ", t or "").strip()
+        return bool(n) and n in _b1_labels
+
     out = []
     for it in items:
         text = it["t"]
@@ -2117,7 +2150,7 @@ def build_step1_b1(step_data):
         if (_RE_DAEUM.match(items[k]["t"])
                 and re.search(r"[A-Za-z]", items[k + 1]["t"])):
             out[k + 1]["s"] = st_jim
-        if _is_bracket_para(items[k]["t"]):
+        if _b1_is_label(items[k]["t"]):
             out[k + 1]["s"] = st_box
     for k, it in enumerate(items):
         if it["tag"] == "주제":
@@ -2158,26 +2191,6 @@ def build_step1_b1(step_data):
     # 못했고, 다음 지문 블록이 앞 문항(하단)의 꼬리에 그대로 붙었다.
     # a1/a2/b2와 같은 계약으로 구조 헤더도 경계·지문번호로 쓴다.
     # (인덱스는 위 병합/빈줄 삽입으로 밀리므로 **텍스트**로 대조한다.)
-    _b1_src = step_data.get("paragraphs") or []
-    _b1_fb = _bracket_fallback_idx(_b1_src)
-    _b1_labels = set()
-    for _i in _b1_fb:
-        _lt = re.sub(r"\s+", " ", (_b1_src[_i].get("text") or "")).strip()
-        if _lt:
-            _b1_labels.add(_lt)
-    # 첫 지문의 라벨은 detect_headers가 '앞 문맥 없음'으로 후보에서 빼므로
-    # (11강 '11강., Gateway') 선두 짧은 라벨 한 줄을 같은 자격으로 인정한다.
-    # 단, 이미 구조 라벨이 잡힌 원고(=대괄호 라벨이 없는 원고)에서만 —
-    # 대괄호로 라벨이 오는 기존 교재는 판정이 그대로다.
-    for _p in (_b1_src if _b1_fb else []):
-        _lt = re.sub(r"\s+", " ", (_p.get("text") or "")).strip()
-        if not _lt:
-            continue
-        if (len(_lt) <= 30 and not re.search(r"[.?!]\s*$", _lt)
-                and len(re.findall(r"[A-Za-z]{2,}", _lt)) <= 3):
-            _b1_labels.add(_lt)
-        break
-
     units = []
     cur = []
     seen_bracket = False
