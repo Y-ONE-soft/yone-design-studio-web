@@ -2629,24 +2629,32 @@ def _c1_promote_missed_headers(items, orig_texts, warnings):
                         "(부분 인식 보강 — W44)" % promoted)
 
 
-def _c1_label_sort_key(labels):
-    """지문 라벨 표시 순서. 숫자 라벨은 숫자 오름차순, 비숫자(gateway 등)는
-    앞에 둔다 — 같은 교재의 다른 스텝(step1_a1/a2/b2 의 [12강 gateway] →
-    [12강 1번] … 순)이 쓰는 순서와 같다. 코너명 라벨이 여럿 섞인 원고
-    (Further Reading, 본문2-1 류)는 정렬 근거가 없으므로 원순서를 유지한다.
+def _c1_order_labels(labels):
+    """지문 라벨 표시 순서.
+
+    원칙은 **원고 순서 보존**이다. 원고가 이미 지문번호 순이면(정상 형식)
+    손대지 않는다 — job ea9c65b4(영어독해 8강)처럼 {01}…{05~06} 으로
+    정렬돼 온 원고를 건드리면 그 자체가 회귀다. 12강처럼 문항이 유형
+    순환이라 지문번호가 03·05·01… 로 흩어진 경우에만 재배치한다.
+
+    재배치 순서는 같은 교재 다른 스텝(step1_a1/a2/b2 의 [12강 gateway] →
+    [12강 1번] …)과 같게 비숫자 라벨(gateway)을 앞, 숫자를 오름차순으로.
+    비숫자 라벨이 둘 이상이면 정렬 근거가 없으므로 원순서를 유지한다.
     """
-    nums, others = [], []
+    nums = []
     for lb in labels:
-        m = re.match(r"^\{\s*0*(\d{1,3})\s*\}$", lb)
-        (nums if m else others).append(lb)
-    if len(nums) < 2 or len(others) > 1:
-        return {lb: i for i, lb in enumerate(labels)}
-    order = {}
-    for i, lb in enumerate(others):
-        order[lb] = -1000 + i
-    for lb in nums:
-        order[lb] = int(re.match(r"^\{\s*0*(\d{1,3})\s*\}$", lb).group(1))
-    return order
+        m = re.search(r"\d+", lb)
+        nums.append(int(m.group()) if m else None)
+    if all(n is not None for n in nums):
+        if nums == sorted(nums):
+            return list(labels)                 # 이미 지문번호 순 — 보존
+    if sum(1 for n in nums if n is None) > 1:
+        return list(labels)                     # 코너명 라벨 다수 — 보존
+    idx = {lb: i for i, lb in enumerate(labels)}
+    return sorted(labels,
+                  key=lambda lb: (0, 0, idx[lb])
+                  if re.search(r"\d+", lb) is None
+                  else (1, int(re.search(r"\d+", lb).group()), idx[lb]))
 
 
 def _c1_group_slot_units(items, st_c1, st_btm, st_btm_t, st_hadan, warnings):
@@ -2719,8 +2727,7 @@ def _c1_group_slot_units(items, st_c1, st_btm, st_btm_t, st_hadan, warnings):
             out.append(para)
         return out
 
-    order = _c1_label_sort_key(labels)
-    ordered = sorted(labels, key=lambda lb: (order[lb], labels.index(lb)))
+    ordered = _c1_order_labels(labels)
     if ordered != labels:
         warnings.append("step1_c1: 지문 %d개를 지문번호 순으로 재배치 "
                         "(원고는 유형 순환 순서 — %s → %s)"
