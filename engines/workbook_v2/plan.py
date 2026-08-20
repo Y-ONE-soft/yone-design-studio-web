@@ -2629,6 +2629,132 @@ def _c1_promote_missed_headers(items, orig_texts, warnings):
                         "(부분 인식 보강 — W44)" % promoted)
 
 
+def _c1_label_sort_key(labels):
+    """지문 라벨 표시 순서. 숫자 라벨은 숫자 오름차순, 비숫자(gateway 등)는
+    앞에 둔다 — 같은 교재의 다른 스텝(step1_a1/a2/b2 의 [12강 gateway] →
+    [12강 1번] … 순)이 쓰는 순서와 같다. 코너명 라벨이 여럿 섞인 원고
+    (Further Reading, 본문2-1 류)는 정렬 근거가 없으므로 원순서를 유지한다.
+    """
+    nums, others = [], []
+    for lb in labels:
+        m = re.match(r"^\{\s*0*(\d{1,3})\s*\}$", lb)
+        (nums if m else others).append(lb)
+    if len(nums) < 2 or len(others) > 1:
+        return {lb: i for i, lb in enumerate(labels)}
+    order = {}
+    for i, lb in enumerate(others):
+        order[lb] = -1000 + i
+    for lb in nums:
+        order[lb] = int(re.match(r"^\{\s*0*(\d{1,3})\s*\}$", lb).group(1))
+    return order
+
+
+def _c1_group_slot_units(items, st_c1, st_btm, st_btm_t, st_hadan, warnings):
+    """지문 라벨로 블록을 묶어 상단(배열 카드)/하단(순서·삽입) 슬롯에 배치.
+
+    W70 (job a3d13ab3 실증 — 사용자 지적 "문장배열 조판 완전 엉망").
+    완제품 계약 (광문2 워크북02 수특라이트영독3강 p28~30, 수특라이트11강
+    p25·p27 실측): **한 페이지 = 한 지문**이고
+      상단 프레임 = 지문번호 + 문장배열 카드((A)~(Z) + 화살표 답란)
+      하단 프레임 = 지문번호 **없이** 발문 + 주어진 문장 + 본문 박스
+    이다. 원고가 지문별로 상단·하단을 연속 표기하면 예전의 '원고 순서대로
+    프레임에 흘리기'가 우연히 맞았지만, 12강처럼 문항이 [문단배열]→
+    [문장삽입]→[문장배열] 유형 순환이고 지문번호가 03·05·01…로 흩어진
+    원고에서는 문단배열이 상단을 차지하고 배열 카드가 밀리며, 하단 블록의
+    지문번호까지 그대로 인쇄된다(라벨이 달라 W51 흡수 규칙이 안 걸린다).
+
+    반환 None = 이 형식이 아님 → 호출자가 기존 순서대로 경로를 쓴다.
+    """
+    hdr_idx = [i for i, it in enumerate(items)
+               if _RE_C1_HEADER.match(it["t"])]
+    if len(hdr_idx) < 2:
+        return None
+    bottom_styles = {st_btm, st_btm_t, st_hadan}
+    pre = items[:hdr_idx[0]]
+    blocks = []
+    bounds = hdr_idx + [len(items)]
+    for b in range(len(bounds) - 1):
+        head = items[bounds[b]]
+        body = items[bounds[b] + 1:bounds[b + 1]]
+        is_card = any(it["s"] == st_c1 for it in body)
+        is_btm = any(it["s"] in bottom_styles for it in body)
+        if is_card and is_btm:
+            return None          # 한 블록에 상·하단이 섞인 형식 — 기존 경로
+        if not is_card and not is_btm:
+            return None          # 유형 판정 불가 — 기존 경로
+        # 하단 블록의 세부 유형 — 완제품(수특라이트11강 p25→p27) 순서는
+        # 문단배열(순서 쓰시오) 다음 문장삽입(위치 고르시오)이다. 엔진이
+        # 넣은 발문으로 판정한다 (본문 형태보다 안정적).
+        sub = 0
+        for it in body:
+            if it["s"] == st_hadan and it["t"].strip() == _PROMPT_CIRC:
+                sub = 1       # 문장삽입 — 문단배열 뒤에 온다
+                break
+        blocks.append({"label": re.sub(r"\s+", "", head["t"]),
+                       "head": head, "body": body, "sub": sub,
+                       "kind": "card" if is_card else "bottom"})
+    labels = []
+    groups = {}
+    for blk in blocks:
+        if blk["label"] not in groups:
+            groups[blk["label"]] = {"card": [], "bottom": []}
+            labels.append(blk["label"])
+        groups[blk["label"]][blk["kind"]].append(blk)
+    # 라벨이 지문마다 한 번씩만 나오는 원고(= 상·하단 짝 개념이 없음)나
+    # 카드/하단 한쪽만 있는 원고는 이 배치의 대상이 아니다.
+    if len(labels) == len(blocks):
+        return None
+    if not any(g["card"] for g in groups.values()):
+        return None
+    if not any(g["bottom"] for g in groups.values()):
+        return None
+
+    def _paras(its):
+        out = []
+        for it in its:
+            para = _mk(it["t"], it["s"] if it["s"] is not None else "$BASIC",
+                       it["runs"])
+            if it.get("icon"):
+                para["icon"] = it["icon"]
+            out.append(para)
+        return out
+
+    order = _c1_label_sort_key(labels)
+    ordered = sorted(labels, key=lambda lb: (order[lb], labels.index(lb)))
+    if ordered != labels:
+        warnings.append("step1_c1: 지문 %d개를 지문번호 순으로 재배치 "
+                        "(원고는 유형 순환 순서 — %s → %s)"
+                        % (len(ordered), labels[0], ordered[0]))
+    units = []
+    first = True
+    for lb in ordered:
+        g = groups[lb]
+        cards = g["card"]
+        # 하단이 둘 이상이면 문단배열 → 문장삽입 순 (완제품 실측 순서).
+        btms = sorted(g["bottom"], key=lambda b: b["sub"])
+        for i in range(max(len(cards), len(btms), 1)):
+            head_it = (cards[i]["head"] if i < len(cards)
+                       else (btms[i]["head"] if i < len(btms) else None))
+            top = _paras([head_it]) if head_it is not None else []
+            if i < len(cards):
+                top += _paras(cards[i]["body"])
+            if first and pre:
+                top = _paras(pre) + top
+            unit = {"paras": top}
+            if not first:
+                unit["page_break"] = True
+            units.append(unit)
+            first = False
+            if i < len(btms):
+                # 하단 프레임: 지문번호(헤더 단락)를 넣지 않는다 — 완제품
+                # 실측에서 하단에는 지문번호가 없다.
+                units.append({"paras": _paras(btms[i]["body"])})
+    warnings.append("step1_c1: 지문별 상·하단 슬롯 배치 %d지문 / %d유닛 "
+                    "(완제품 계약 — 상단=배열 카드, 하단=순서·삽입 문제)"
+                    % (len(ordered), len(units)))
+    return units
+
+
 def build_step1_c1(step_data, workbook_type="모의고사", exclude_btm=False,
                    split_condition=True):
     # split_condition: v1 conditionIdxList 잔존 해석의 NEXT_FRAME 유닛 분리.
@@ -2965,6 +3091,14 @@ def build_step1_c1(step_data, workbook_type="모의고사", exclude_btm=False,
         items = [it for it in items
                  if it["s"] not in (st_btm, st_btm_t, st_hadan)]
         n = len(items)
+
+    # 10a) W70: 완제품 계약(한 페이지 = 한 지문, 상단 배열 카드 / 하단
+    #      지문번호 없는 순서·삽입 문제)에 맞는 지문별 슬롯 배치. 이 형식이
+    #      아니면 None 을 돌려주고 아래 기존 경로로 떨어진다.
+    _slot = _c1_group_slot_units(items, st_c1, st_btm, st_btm_t, st_hadan,
+                                 warnings)
+    if _slot is not None:
+        return {"units": _slot, "warnings": warnings}
 
     # 10) 유닛 분할 — v1 "FRAME BREAK 재적용"의 실효 동작:
     #     헤더(2번째+) = NEXT_PAGE (EBS는 NEXT_FRAME),
