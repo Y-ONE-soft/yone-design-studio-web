@@ -2388,6 +2388,14 @@ _C1_GREPS = [
     (re.compile(r"\bno\.\s*(\d{1,3}(?:~\d{1,3})?[가-힣][가-힣0-9\s]*[가-힣0-9])"),
      r"{\1}"),
     (re.compile(r"\bno\.\s*(\d{1,3}(?:~\d{1,3})?)"), r"{\1}"),
+    # W69 (job a3d13ab3 수특라이트 12강 — 사용자 확정): EBS 강 대표지문
+    # 헤더 "N. [문장삽입] p78-Gateway"는 no.N 형식이 아니라 어느 룰에도
+    # 안 걸렸다 → 헤더 줄이 본문에 그대로 인쇄(9번)되거나, W44 승격이
+    # 문항번호를 라벨로 올려 {14} 같은 가짜 지문번호가 찍혔다(14번).
+    # 다른 스텝(step1_a1/b1)이 원고의 [12강 gateway]/[gateway] 라벨을
+    # 그대로 인쇄하는 관행에 맞춰 {gateway}로 정규화한다.
+    (re.compile(r"\bp\.?\s*\d+\s*[-–—]?\s*Gateway\b", re.I),
+     "{gateway}"),
     (re.compile(r"\bExample\s+(\d{1,3})"), r"{\1}"),
     (re.compile(r"\b(\d+)\.\s*p\d+\s*[-–—]?\s*Example\b"),
      r"{\1}"),
