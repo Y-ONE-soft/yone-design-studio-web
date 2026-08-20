@@ -2444,6 +2444,9 @@ _C1_REMNANT = [
 
 _RE_TAB = re.compile(r"\t")
 _RE_LEAD3WS = re.compile(r"^\s{3,}")
+# W69: 주어진 문장(BTM) 단락의 앞뒤 공백·개행 — docx 표 셀 추출 잔재.
+_RE_C1_EDGE_BREAK = re.compile(
+    "^[\\s\u2028\u2029]+|[\\s\u2028\u2029]+$")
 
 _PROMPT_CIRC = "아래 주어진 문장이 들어갈 위치로 알맞은 곳을 고르시오."
 _PROMPT_ORDER = "아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오."
@@ -2782,18 +2785,32 @@ def build_step1_c1(step_data, workbook_type="모의고사", exclude_btm=False,
             it["s"] = st_c1
 
     # 4d) 3+공백 단락 → C1_BTM, BTM 단락의 탭 + 선행 공백(3+) 제거
+    # W69 (job a3d13ab3 수특라이트 12강 실증 — 사용자 지적 "문장배열 조판
+    # 잘못됨"): 이 패스의 탭 제거가 4e의 판정 근거(_RE_3GAPS)를 파괴한다.
+    # docx 표 셀에서 온 주어진 문장은 "\n\t*8 문장 \n\t*7" 형태라 탭을
+    # 지우면 개행 하나만 남아 3연속 공백이 사라진다 → 4e 미발동 →
+    # [문단배열] 유형의 (A)(B)(C)가 하단 지문 스타일을 못 받고 $BASIC으로
+    # 인쇄되고, 6) 발문 삽입(_PROMPT_ORDER)과 답란도 통째로 누락됐다.
+    # 제거 **전에** 플래그로 기록해 4e가 그것을 보게 한다 (판정 집합은
+    # 기존의 상위집합 — 제거 후에도 3GAPS가 남던 케이스는 그대로 통과).
     for it in items:
         if _RE_3GAPS.search(it["t"]):
             it["s"] = st_btm
+            it["_gap3"] = True
     for it in items:
         if it["s"] == st_btm:
             t, r = _sub_runs(_RE_TAB, "", it["t"], it["runs"])
             t, r = _sub_runs(_RE_LEAD3WS, "", t, r)
+            # W69: 표 셀 유래 앞뒤 개행 제거. 남겨두면 박스 안에서 강제
+            # 개행이 되어 한 줄짜리 문장이 양쪽정렬로 늘어나 글자 사이가
+            # 벌어진 채 인쇄된다 (a3d13ab3 p33/p35 실증).
+            t, r = _sub_runs(_RE_C1_EDGE_BREAK, "", t, r)
             it["t"], it["runs"] = t, r
 
     # 4e) BTM(3+공백 잔존) 뒤 (A|B|C) 시퀀스 → C1_하단 지문
     for i in range(n):
-        if items[i]["s"] != st_btm or not _RE_3GAPS.search(items[i]["t"]):
+        if items[i]["s"] != st_btm or not (
+                items[i].get("_gap3") or _RE_3GAPS.search(items[i]["t"])):
             continue
         j = i + 1
         while j < n and _is_blank(items[j]["t"]):
