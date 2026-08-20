@@ -1124,11 +1124,18 @@
                     // 소스도 결합본과 같은 좌표계로 (닫기 전 원상복구)
                     rulerPrevSrc[uri] = normalizeRuler(got.doc);
                     // doc 소스(교과서/EBS)는 마커 매칭을 쓰지 않는다
-                    fileMarkers[uri] = isDoc ? [] : findAllMarkers(got.doc);
+                    // 폴백 연·월 = 이 후보를 담고 있던 월 폴더의 (year, month)
+                    fileMarkers[uri] = isDoc
+                        ? [] : findAllMarkers(got.doc, src.year, src.month);
                     try { tagStoryLabels(got.doc); } catch (eTag) {}
+                    var mkList = fileMarkers[uri];
+                    var qOnly = (!isDoc && mkList.length > 0 && mkList[0].qnumOnly);
                     writeLog("열기: " + cf.displayName +
                              (isDoc ? " (doc 소스)"
-                                    : " (markers=" + fileMarkers[uri].length + ")"));
+                                    : " (markers=" + mkList.length +
+                                      (qOnly ? ", 번호전용 헤더 → " + src.year +
+                                               "년 " + parseInt(src.month, 10) +
+                                               "월로 보정" : "") + ")"));
                 } catch (eOp) {
                     writeLog("[경고] 열기 실패: " + cf.fsName + " — " + eOp.message);
                 }
