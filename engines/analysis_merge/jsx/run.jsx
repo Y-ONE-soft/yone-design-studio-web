@@ -180,6 +180,124 @@
     }
 
     // ───────────────────────────────────────────────────────────────
+    // 지오메트리 복원 (analysis_merge_v2 [스펙2] 이식 — 2026-08-21)
+    //   실측: 문서 간 page.duplicate 가 콘텐츠 프레임을 페이지 기준
+    //   LEFT +2mm / RIGHT +4mm 순수 평행이동시킨다(사이드 라벨은 무이동).
+    //   결합본 전체가 오른쪽으로 밀려 보이는 증상의 원인.
+    //   → 복제 직전 소스 좌표를 캡처하고, 복제 직후 item.move 로 되돌린다.
+    //
+    //   geometricBounds 는 문서의 눈금자 원점(rulerOrigin) 기준이라 소스와
+    //   결합본 설정이 다르면 같은 위치가 다른 수치로 읽힌다 (v2 실사고:
+    //   SPREAD_ORIGIN 문서의 오른쪽 페이지가 페이지폭 210mm 만큼 밀려 보여
+    //   전부 왼쪽 페이지로 이동됐다) → 캡처/복원 구간 동안만 양쪽 문서를
+    //   PAGE_ORIGIN + zeroPoint(0,0) 로 맞추고 끝나면 되돌린다.
+    // ───────────────────────────────────────────────────────────────
+
+    function round3(n) { return Math.round(n * 1000) / 1000; }
+
+    function normalizeRuler(doc) {
+        var prev = { origin: null, zero: null };
+        try {
+            prev.origin = doc.viewPreferences.rulerOrigin;
+            if (prev.origin !== RulerOrigin.PAGE_ORIGIN) {
+                doc.viewPreferences.rulerOrigin = RulerOrigin.PAGE_ORIGIN;
+            } else {
+                prev.origin = null;   // 변경 없음 — 되돌릴 것도 없음
+            }
+        } catch (eRo) { prev.origin = null; }
+        try {
+            var z = doc.zeroPoint;
+            if (Math.abs(z[0]) > 0.001 || Math.abs(z[1]) > 0.001) {
+                prev.zero = [z[0], z[1]];
+                doc.zeroPoint = [0, 0];
+            }
+        } catch (eZp) { prev.zero = null; }
+        return prev;
+    }
+
+    function restoreRuler(doc, prev) {
+        if (!prev) return;
+        try { if (prev.zero !== null) doc.zeroPoint = prev.zero; } catch (eZr) {}
+        try {
+            if (prev.origin !== null) doc.viewPreferences.rulerOrigin = prev.origin;
+        } catch (eOr) {}
+    }
+
+    // 실측 드리프트는 LEFT +2 / RIGHT +4mm. 상한을 넘는 값은 좌표계 불일치·
+    // 아이템 순서 어긋남 신호이므로 "교정"하지 않고 경고로 남긴다
+    // (조용히 밀면 페이지 하나만큼 어긋난 조판이 그대로 납품된다).
+    var GEO_MAX_DRIFT_MM = 20;
+
+    // 페이지의 pageItems 는 라이브 컬렉션이라 이동으로 페이지 소속이 바뀌면
+    // 인덱스가 밀린다 → 미리 배열로 스냅샷.
+    function snapItems(page) {
+        try { return page.pageItems.everyItem().getElements(); } catch (eEv) {}
+        var arr = [];
+        try {
+            var it = page.pageItems;
+            for (var i = 0; i < it.length; i++) arr.push(it[i]);
+        } catch (eP) {}
+        return arr;
+    }
+
+    function collectGeo(page) {
+        var arr = [];
+        var items = snapItems(page);
+        for (var i = 0; i < items.length; i++) {
+            var gb;
+            try { gb = items[i].geometricBounds; } catch (eG) { gb = null; }
+            arr.push(gb);
+        }
+        return arr;
+    }
+
+    function restoreGeo(newPage, srcGeo, geoRep, srcLabel) {
+        var items = snapItems(newPage);
+        var n = Math.min(items.length, srcGeo.length);
+        var maxBefore = 0, maxAfter = 0;
+        if (items.length !== srcGeo.length) {
+            geoRep.mismatch++;
+            writeLog("[경고] 아이템 수 불일치 p" + newPage.name + "(" + srcLabel +
+                     "): " + srcGeo.length + "->" + items.length);
+        }
+        for (var i = 0; i < n; i++) {
+            var want = srcGeo[i];
+            if (!want) continue;
+            var cur;
+            try { cur = items[i].geometricBounds; } catch (eC) { continue; }
+            var dx = want[1] - cur[1];
+            var dy = want[0] - cur[0];
+            var drift = Math.max(Math.abs(dx), Math.abs(dy));
+            if (drift > maxBefore) maxBefore = drift;
+            if (drift > GEO_MAX_DRIFT_MM) {
+                geoRep.oversized++;
+                writeLog("[경고] 지오메트리 드리프트 과대 p" + newPage.name +
+                         " item" + i + " (dx=" + round3(dx) + ", dy=" +
+                         round3(dy) + "mm > 상한 " + GEO_MAX_DRIFT_MM +
+                         "mm) — 이동 생략");
+                if (drift > maxAfter) maxAfter = drift;
+                continue;
+            }
+            if (drift > 0.01) {
+                try {
+                    try { items[i].locked = false; } catch (eLk) {}
+                    items[i].move(undefined, [dx, dy]);
+                } catch (eMv) {
+                    writeLog("[경고] 지오메트리 복원 실패 p" + newPage.name +
+                             " item" + i + ": " + eMv.message);
+                }
+            }
+            var after;
+            try { after = items[i].geometricBounds; } catch (eA) { continue; }
+            var resid = Math.max(Math.abs(want[1] - after[1]),
+                                 Math.abs(want[0] - after[0]));
+            if (resid > maxAfter) maxAfter = resid;
+        }
+        if (maxBefore > geoRep.max_before) geoRep.max_before = round3(maxBefore);
+        if (maxAfter > geoRep.max_residual) geoRep.max_residual = round3(maxAfter);
+    }
+
+    // ───────────────────────────────────────────────────────────────
     // 분석본 마커 탐색 — "(고N) {YY}년 {M}월 {QQ}(-/~{QQ})번"
     //   고 고  년 년  월 월  번 번
     // ───────────────────────────────────────────────────────────────
@@ -358,6 +476,12 @@
         // 내지 전부 스프레드 재편성 허용 — 복제 전 문서 기본값 보정
         allowShuffleAll(newDoc);
 
+        // 좌표계 정규화 — 결합(복제+지오메트리 복원) 구간 동안만 PAGE_ORIGIN.
+        // 결합이 끝나면 rulerPrevNew 로 템플릿 원래 설정을 되돌린다.
+        var rulerPrevNew = normalizeRuler(newDoc);
+        var rulerPrevSrc = {};   // uri → prev (소스 문서 원상복구용)
+        var geoRep = { max_before: 0, max_residual: 0, mismatch: 0, oversized: 0 };
+
         // 후보 파일 dedup + open + markers 수집
         var docCache    = {};
         var openedByUs  = {};
@@ -379,6 +503,8 @@
                 try {
                     var got = getDoc(cf, docCache);
                     if (got.opened) openedByUs[uri] = true;
+                    // 소스도 결합본과 같은 좌표계로 (닫기 전 원상복구)
+                    rulerPrevSrc[uri] = normalizeRuler(got.doc);
                     // 폴백 연·월 = 이 후보를 담고 있던 월 폴더의 (year, month)
                     fileMarkers[uri] = findAllMarkers(got.doc, src.year, src.month);
                     try { tagStoryLabels(got.doc); } catch (eTag) {}
@@ -458,6 +584,8 @@
 
             var grpStart = newDoc.pages.length;
             for (var p2 = matchedRange.startIdx; p2 <= matchedRange.endIdx; p2++) {
+                // 소스 지오메트리 캡처 → 복제 → 복원 (duplicate 수평 드리프트 교정)
+                var srcGeo = collectGeo(matchedDoc.pages[p2]);
                 try {
                     matchedDoc.pages[p2].duplicate(
                         LocationOptions.AT_END, newDoc.pages.lastItem()
@@ -466,6 +594,14 @@
                 } catch (eDup) {
                     writeLog("[경고] " + code + " p" + p2 +
                              " 복제 실패: " + eDup.message);
+                    continue;
+                }
+                try {
+                    restoreGeo(newDoc.pages.lastItem(), srcGeo, geoRep,
+                               matchedFileName + " p" + (p2 + 1));
+                } catch (eRg) {
+                    writeLog("[경고] 지오메트리 복원 오류 p" + (p2 + 1) + ": " +
+                             eRg.message);
                 }
             }
             var grpEnd = newDoc.pages.length - 1;
@@ -477,6 +613,16 @@
                          " (" + (matchedRange.endIdx - matchedRange.startIdx + 1) + "p)");
             }
         }
+
+        // 결합 끝 — 좌표계 원상복구 (이후 저장/PDF는 문서 원래 설정 기준)
+        restoreRuler(newDoc, rulerPrevNew);
+        for (var uriR in rulerPrevSrc) {
+            try { restoreRuler(docCache[uriR], rulerPrevSrc[uriR]); } catch (eRr) {}
+        }
+        writeLog("지오메트리: 교정 전 최대 " + geoRep.max_before + "mm → 잔여 " +
+                 geoRep.max_residual + "mm" +
+                 (geoRep.mismatch ? " / 아이템 수 불일치 " + geoRep.mismatch + "면" : "") +
+                 (geoRep.oversized ? " / 과대 드리프트 " + geoRep.oversized + "건(이동 생략)" : ""));
 
         // rethread (threaded story 가 있을 때만 의미 있음)
         for (var rgi = 0; rgi < codeRanges.length; rgi++) {
