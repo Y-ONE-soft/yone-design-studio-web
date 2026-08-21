@@ -330,9 +330,22 @@ function chips(el, items, isOn, onPick) {
     b.addEventListener('click', () => { onPick(b.dataset.v); }));
 }
 
+// 권마다 면이 다르다(무선=스프레드 1장 / 중철=낱장 앞뒤). 권을 바꾸면 면을 다시 받는다.
+async function reloadUnits() {
+  try {
+    const r = await fetch(api('spec') + '&v=' + encodeURIComponent(variant));
+    const d = await r.json();
+    if (!d.units) return;
+    SPEC.units = d.units;
+    if (!SPEC.units.some(u => String(u.key) === String(unit)))
+      unit = SPEC.units.length ? SPEC.units[0].key : '';
+  } catch (e) { /* 면 목록을 못 받아도 미리보기는 그대로 그린다 */ }
+}
+
 function renderPicks() {
   chips($('pick-book'), SPEC.variants.map(b => ({ v: b.key, label: b.label })),
-        it => it.v === variant, v => { variant = v; renderPicks(); draw(); });
+        it => it.v === variant,
+        async v => { variant = v; await reloadUnits(); renderPicks(); draw(); });
   chips($('pick-week'), SPEC.units.map(u => ({ v: u.key, label: u.label })),
         it => String(it.v) === String(unit), v => { unit = v; renderPicks(); draw(); });
 }
@@ -649,6 +662,7 @@ $('m-ok').addEventListener('click', async () => {
   SPEC = JSON.parse(body);
   BASE = SPEC.values;
   variant = SPEC.variants[0].key;
+  await reloadUnits();
   unit = SPEC.units.length ? SPEC.units[0].key : '';
   if (SPEC.title) document.querySelector('.st-sub').textContent =
       SPEC.title + ' — 값을 움직이면 미리보기가 따라 바뀝니다';

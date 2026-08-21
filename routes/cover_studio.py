@@ -127,8 +127,13 @@ def studio():
 
 @bp.route("/api/cover-studio/spec")
 def api_spec():
+    # 면(units)은 고른 권에 따라 달라진다 — 무선은 스프레드 한 장, 중철은 낱장
+    # 앞/뒤 2쪽이다. variant 를 같이 넘겨야 그 권의 면이 온다.
+    v = str(request.args.get("v") or "")
+    if any(c in v for c in "/\\;|&$`\n"):
+        return jsonify({"error": "고른 값이 이상하다"}), 400
     try:
-        r = _run(_project(), ["spec"])
+        r = _run(_project(), ["spec"] + ([v] if v else []))
     except (ValueError, RuntimeError, subprocess.TimeoutExpired) as e:
         return jsonify({"error": str(e)}), 400
     if r.returncode != 0:
