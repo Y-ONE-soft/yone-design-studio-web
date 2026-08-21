@@ -41,6 +41,9 @@ _JSX_TEMPLATE = os.path.join(
 
 _MS_EXTS = (".docx", ".hwp", ".hwpx")
 
+# 워크북 스텝 원고 파일명 — "Step1 A1 어휘선택.docx", "STEP2 Build Up A…"
+_RE_STEP_MS = re.compile(r"^\s*(?:step|스텝)\s*\d", re.I)
+
 # 문항당 유닛 수가 원래 가변인 스텝 (문장배열=순서+삽입, 본문정리=지문+문제)
 # — 나머지 스텝은 "문항 1개 = 유닛 1개"가 계약이다.
 _VARIABLE_UNIT_STEPS = {"step1_b1", "step1_c1"}
@@ -338,12 +341,58 @@ class WorkbookSelectEngine(WorkbookV2Engine):
             elif "워크북" in n and "이전" not in n:
                 fuzzy.append(p)
         if exact:
-            return exact, None
+            return WorkbookSelectEngine._descend_to_manuscripts(exact), None
         if fuzzy:
             fuzzy.sort(key=lambda p: len(os.path.basename(p)))
-            return fuzzy[0], None
+            return WorkbookSelectEngine._descend_to_manuscripts(fuzzy[0]), None
         listing = ", ".join(sorted(_nfc(x) for x in os.listdir(ym_dir))[:15])
         return None, "워크북 폴더 없음 (%s 내: %s)" % (wanted[0], listing)
+
+    @staticmethod
+    def _descend_to_manuscripts(wb_dir):
+        """워크북 폴더가 원고를 직접 안 담고 하위 폴더에 담은 경우 내려간다.
+
+        일부 회차는 전 문항이 아니라 **그 강에 쓰인 문항만** 뒤늦게 만들어
+        '워크북/36-37번 워크북/Step1 A1 …' 처럼 한 단계 더 들어간다
+        (실측 2026-08-20: 고1 21년 9월). _copy_manuscripts 는 루트 원고와
+        Step3 만 복사하므로, 그대로 두면 원고 0개 → 전 스텝 결손이 된다.
+
+        판정 기준은 "원고 파일이 있는가"가 아니라 **"Step 원고가 있는가"**다.
+        21년 9월 워크북 폴더 루트에는 '36-37번 직전 보충 자료.docx' 같은
+        다른 용도 문서가 있어서, 확장자만 보면 하위로 내려가지 않는다.
+        루트에 Step 원고가 하나라도 있으면 손대지 않는다 — 기존 회차의
+        동작을 바꾸지 않기 위해서다.
+        """
+        def _n_steps(d):
+            try:
+                return sum(1 for r in os.listdir(d)
+                           if os.path.isfile(os.path.join(d, r)) and
+                           _nfc(r).lower().endswith(_MS_EXTS) and
+                           _RE_STEP_MS.match(_nfc(r)))
+            except OSError:
+                return 0
+
+        if _n_steps(wb_dir):
+            return wb_dir
+        try:
+            entries = os.listdir(wb_dir)
+        except OSError:
+            return wb_dir
+        cands = []
+        for raw in entries:
+            p = os.path.join(wb_dir, raw)
+            n = _nfc(raw)
+            if not os.path.isdir(p) or n in ("Step3", "스텝3", "step3"):
+                continue
+            if "이전" in n:
+                continue
+            n_ms = _n_steps(p)
+            if n_ms:
+                cands.append((n_ms, p))
+        if not cands:
+            return wb_dir
+        cands.sort(reverse=True)
+        return cands[0][1]
 
     @staticmethod
     def _find_gang_manuscript_dirs(base, grade_num, gang):
@@ -602,8 +651,11 @@ class WorkbookSelectEngine(WorkbookV2Engine):
             if src_dir is None:
                 missing.append((yy, mm, err))
                 continue
-            log("[원고] %d년 %d월: %s" % (yy, mm,
-                                          os.path.basename(src_dir)))
+            # 하위 폴더로 내려간 경우가 보이도록 부모까지 찍는다
+            log("[원고] %d년 %d월: %s" % (
+                yy, mm,
+                os.path.join(os.path.basename(os.path.dirname(src_dir)),
+                             os.path.basename(src_dir))))
             ms_dir = os.path.join(job_dir, "ms_%02d%02d" % (yy, mm))
             self._copy_manuscripts(src_dir, ms_dir, log)
             content = parse_manuscript_folder(
