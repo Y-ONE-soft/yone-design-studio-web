@@ -455,6 +455,38 @@ def classify_paragraphs(paras):
                 continue
             break
 
+    # 답란 줄바꿈 연속 (W68 — 2026-08-21 비상(홍) 2과 실증, 사용자 지적
+    # "다음 글을 읽고 아래에 지문이 없고 서술형 답란이 혼입"): 서술형 답란이
+    # 여러 줄로 접히면 2번째 줄부터는 밑줄 사이에 영문 어구가 껴 있어
+    # ("____ outside of Korea (2)____") ANS_PATTERNS/ANS_UL_ROW 어느 쪽에도
+    # 걸리지 않고 UNKNOWN → 지문 스타일로 인쇄됐다. 게다가 plan의 세트
+    # 안내문 삽입(_s3_insert_set_intros)이 그 '지문'을 새 지문 블록 시작으로
+    # 보고 앞에 "다음 글을 읽고 물음에 답하시오."까지 끼워 넣어, 안내문 밑에
+    # 지문 대신 답란이 오는 유령 세트가 생겼다.
+    # 답란 줄이 밑줄로 끝나면 기입란이 아직 안 닫힌 것 — 다음 줄은 같은
+    # 답란의 연속이다 (연속 줄도 밑줄 run을 가져야 승격, 종결 줄에서 정지).
+    # 승격 kind는 블록 첫 줄을 승계해 한 답란이 두 스타일로 갈라지지 않게 한다.
+    for i, item in enumerate(out):
+        if item["kind"] not in ("Ans", "AnsL"):
+            continue
+        if not R.ANS_WRAP_OPEN.search(item["text"]):
+            continue
+        cont_kind = item["kind"]
+        j = i + 1
+        while j < len(out):
+            nxt = out[j]
+            if nxt["kind"] == "BLANK":
+                j += 1
+                continue
+            if nxt["kind"] not in ("UNKNOWN", "K", "P", "Word", "Ans"):
+                break
+            if not R.ANS_UL_RUN.search(nxt["text"]):
+                break
+            nxt["kind"] = cont_kind
+            if not R.ANS_WRAP_OPEN.search(nxt["text"]):
+                break        # 기입란이 닫힌 줄 = 답란 블록 종료
+            j += 1
+
     # 밑줄 변형 정보 (P-NOUL / P-WITH-UL은 스타일 매핑 차원 — kind는 P 유지)
     for item in out:
         if item["kind"] in ("P", "P-CONTEXT") and isinstance(item["para"], dict):
