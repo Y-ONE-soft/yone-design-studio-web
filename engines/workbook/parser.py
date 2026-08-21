@@ -2301,6 +2301,14 @@ def _find_manuscript_file(manuscript_dir, expected_filename, used_files=None):
     def _normalize(name):
         nfc = unicodedata.normalize("NFC", name)
         base = os.path.splitext(nfc)[0]
+        # 원고 세대 방언 — 22년 11월 이후 일부 회차는 섹션 표기를
+        # "STEP2 Build Up A. 어법선택.docx" 로 쓴다. 기대 파일명
+        # ("Step2 A1 어법선택.docx") 과 공통 토큰이 모자라 매칭 후보 0개가
+        # 되고, 그러면 그 회차의 어법 OX·빈칸어법이 통째로 빠진다
+        # (실측 2026-08-20: 고1 22년 11월 — 37번이 3개 스텝에서 결손,
+        #  게다가 하단용 '(문법 기본 문제)' 파일이 상단 슬롯에 잘못 매칭).
+        base = re.sub(r'(?i)build\s*[-_]?\s*up\s*([A-Za-z])\b',
+                      r'\1 1', base)
         cleaned = re.sub(r'[^A-Za-z0-9가-힣]', '', base).lower()
         return cleaned
 
