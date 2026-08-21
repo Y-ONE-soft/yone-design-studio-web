@@ -156,27 +156,63 @@ def api_render():
     if kind == "html":
         # 생성기는 Chrome 이 `file://` 로 직접 열던 걸 전제해 절대경로를 박는다.
         # 브라우저는 http 페이지에서 file:// 을 못 읽으므로 서버가 대신 준다.
-        body = _serve_assets(body, _project(d.get("project")))
+        body = _serve_assets(body, _project(d.get("project")),
+                             key=d.get("project"))
     return Response(body,
                     mimetype="image/svg+xml" if kind == "svg" else "text/html")
 
 
-def _asset_root(proj):
-    """에셋을 찾을 최상위. 생성기 폴더의 부모까지 본다 (`_에셋3d/` 가 형제다)."""
-    return os.path.realpath(os.path.dirname(proj["폴더"]))
+_roots_cache = {}
 
 
-def _serve_assets(html, proj):
+def _declared_roots(proj):
+    """어댑터가 `ASSET_ROOTS` 로 밝힌 곳. spec 을 한 번 불러 캐시한다.
+
+    에셋이 늘 프로젝트 폴더 옆에 있지는 않다 — 2026 리뉴얼은 생성기 저장소
+    (`~/dev/yone-cover2026/assets`, 71MB)에 두고 쓴다. 밝히지 않은 곳은 여전히
+    안 내준다: 미리보기 한 장 때문에 디스크 전체가 열리면 안 된다.
+    """
+    folder = proj["폴더"]
+    if folder in _roots_cache:
+        return _roots_cache[folder]
+    roots = []
+    try:
+        r = _run(proj, ["spec"], timeout=60)
+        if r.returncode == 0:
+            roots = [os.path.realpath(x)
+                     for x in (json.loads(r.stdout).get("asset_roots") or [])]
+    except (ValueError, RuntimeError, subprocess.TimeoutExpired,
+            json.JSONDecodeError):
+        roots = []
+    _roots_cache[folder] = roots
+    return roots
+
+
+def _asset_roots(proj):
+    """에셋을 찾을 최상위들. 첫째는 생성기 폴더의 부모(`_에셋3d/` 가 형제다)."""
+    out = [os.path.realpath(os.path.dirname(proj["폴더"]))]
+    for r in _declared_roots(proj):
+        if r not in out:
+            out.append(r)
+    return out
+
+
+def _serve_assets(html, proj, key=None):
     import re
-    root = _asset_root(proj)
-    key = u.normalize("NFC", os.path.basename(os.path.dirname(proj["폴더"])))
+    roots = _asset_roots(proj)
+    # 프로젝트 키는 목록에 등록된 이름을 그대로 쓴다. 폴더 이름에서 되짚으면
+    # `cover_project.py` 가 폴더 맨 위에 있는 표지에서 엉뚱한 이름이 나온다
+    # (`디자인/표지/2026…` → "표지").
+    key = u.normalize("NFC", key or proj.get("표기") or "")
 
     def swap(m):
         path = os.path.realpath(unquote(m.group(1)))
-        if not path.startswith(root + os.sep):
-            return "''"                     # 프로젝트 밖은 내주지 않는다
-        rel = quote(u.normalize("NFC", os.path.relpath(path, root)))
-        return f"'/api/cover-studio/asset?p={quote(key)}&f={rel}'"
+        for i, root in enumerate(roots):
+            if path.startswith(root + os.sep):
+                rel = quote(u.normalize("NFC", os.path.relpath(path, root)))
+                return (f"'/api/cover-studio/asset?p={quote(key)}"
+                        f"&r={i}&f={rel}'")
+        return "''"                         # 밝히지 않은 곳은 내주지 않는다
 
     return re.sub(r"'file://([^']+)'", swap, html)
 
@@ -189,7 +225,11 @@ def api_asset():
         proj = _project()
     except ValueError as e:
         return str(e), 404
-    root = _asset_root(proj)
+    roots = _asset_roots(proj)
+    try:
+        root = roots[int(request.args.get("r", 0))]
+    except (ValueError, IndexError):
+        return "not found", 404
     full = os.path.realpath(os.path.join(root, u.normalize("NFC",
                                                            request.args.get("f", ""))))
     if not full.startswith(root + os.sep) or not os.path.isfile(full):
@@ -366,6 +406,7 @@ def _bust():
     """폴더가 늘거나 설정이 바뀌면 캐시를 버린다."""
     global _scan_cache
     _scan_cache = (0, {})
+    _roots_cache.clear()
 
 
 @bp.route("/api/cover-studio/reference", methods=["POST"])
