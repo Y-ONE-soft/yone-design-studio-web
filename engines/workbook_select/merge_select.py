@@ -87,7 +87,9 @@ ALL_STEP_KEYS = BRACKET_STEPS + HEADER_STEPS + BEON_STEPS
 #   중복 검사 전부 통과해 텍스트 교차대조로만 잡혔다.
 ALIGNED_STEPS = {"step2_a1_btm": "step2_a1"}
 
-_RE_BRACKET = re.compile(r"^\s*\[(\d{1,6})(?:\s*[~\-]\s*(\d{1,6}))?\]\s*$")
+# '번' 꼬리 허용 — [36] / [36번] 두 세대가 섞인다 (parser._RE_BRACKET_NUM 과 동일 기준)
+_RE_BRACKET = re.compile(
+    r"^\s*\[(\d{1,6})\s*번?(?:\s*[~\-]\s*(\d{1,6})\s*번?)?\]\s*$")
 # 보충 원고 마커 방언 — "[11강 - 20번 161131]" (강/마더텅번호/코드 혼재).
 # 숫자만 허용하는 _RE_BRACKET 으로는 경계 자체가 안 잡혀 블록이 통째로
 # 하나로 뭉친다. 끝에 붙은 6자리 코드를 문항 식별자로 쓴다.
