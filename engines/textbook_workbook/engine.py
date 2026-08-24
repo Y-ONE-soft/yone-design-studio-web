@@ -1,7 +1,9 @@
+import errno
 import json
 import os
 import re
 import shutil
+import time
 import unicodedata
 
 from core.base import BaseEngine, safe_copy_indd
@@ -25,6 +27,40 @@ def _load_config() -> dict:
 
 def _nfc(s):
     return unicodedata.normalize("NFC", s)
+
+
+def _safe_listdir(path, log=None):
+    """GDrive Stream 폴더 열거 — EDEADLK(Errno 11) 내성.
+
+    실증(2026-08-24 job a1dccc52, 능률(민) SL1): 아직 materialize 안 된
+    Step3 하위폴더를 처음 열거할 때 FileProvider가 'Resource deadlock
+    avoided'를 던져 /api/textbook-workbook/files 가 500 → 브라우저가
+    manuscript_folder hidden 필드를 못 채움 → parse가 '워크북 폴더 없음'
+    으로 조용히 넘어가 0유닛 오류로 끝났다.
+    실측상 재시도하면 성공하므로 짧게 재시도하고, 그래도 실패하면 로컬
+    미러로 폴백한다 (목록 정본은 GDrive — 미러는 최후 수단)."""
+    last = None
+    for attempt in range(3):
+        try:
+            return os.listdir(path)
+        except OSError as e:
+            last = e
+            if e.errno not in (errno.EDEADLK, errno.EIO, errno.EAGAIN):
+                raise
+            if log:
+                log(f"[GDrive] 폴더 열거 실패({e.errno}) 재시도 "
+                    f"{attempt + 1}/3: {os.path.basename(path)}")
+            time.sleep(0.4 * (attempt + 1))
+    try:
+        from engines.final.extractor import _resolve_local_mirror
+        alt = _resolve_local_mirror(path)
+    except Exception:
+        alt = path
+    if alt and alt != path and os.path.isdir(alt):
+        if log:
+            log(f"[GDrive] EDEADLK — 로컬 미러 폴백: {os.path.basename(alt)}")
+        return os.listdir(alt)
+    raise last
 
 
 def _is_step3_name(name_nfc: str) -> bool:
@@ -91,7 +127,7 @@ class TextbookWorkbookEngine(BaseEngine):
         if not os.path.isdir(base):
             return []
         result = []
-        for raw in sorted(os.listdir(base)):
+        for raw in sorted(_safe_listdir(base)):
             name = _nfc(raw)
             if name.startswith(".") or name in excludes:
                 continue
@@ -107,7 +143,7 @@ class TextbookWorkbookEngine(BaseEngine):
         if not os.path.isdir(base):
             return []
         result = []
-        for raw in sorted(os.listdir(base)):
+        for raw in sorted(_safe_listdir(base)):
             name = _nfc(raw)
             if name.startswith("."):
                 continue
@@ -128,7 +164,7 @@ class TextbookWorkbookEngine(BaseEngine):
         publisher_no_paren = re.sub(r'\s*\([^)]*\)', '', publisher).strip()
 
         result = []
-        for raw in sorted(os.listdir(base)):
+        for raw in sorted(_safe_listdir(base)):
             name = _nfc(raw)
             if name.startswith("."):
                 continue
@@ -147,7 +183,7 @@ class TextbookWorkbookEngine(BaseEngine):
             elif subject and name.startswith(subject):
                 group_label = name[len(subject):].strip()
             try:
-                sub_raws = sorted(os.listdir(full))
+                sub_raws = sorted(_safe_listdir(full))
             except OSError:
                 continue
             for sub_raw in sub_raws:
@@ -166,22 +202,30 @@ class TextbookWorkbookEngine(BaseEngine):
         return result
 
     @staticmethod
-    def list_files(subject, publisher, lesson_folder):
-        """워크북 폴더 안의 원고 파일 목록 반환. 사용 여부를 함께 표시."""
+    def find_workbook_dir(subject, publisher, lesson_folder, log=None):
+        """과 폴더 안의 '…워크북' 서브폴더 경로 (없으면 None).
+
+        list_files(브라우저 미리보기)와 parse(실제 조판)가 같은 규칙을
+        쓰도록 분리 — 미리보기 API가 실패해도 parse가 스스로 폴더를 찾을
+        수 있어야 한다 (job a1dccc52: API 500 → 원고 0개 조판)."""
         cfg = _load_config()
-        workbook_dir = None
         lesson_path = os.path.join(
             cfg["textbook_base"], subject, publisher, lesson_folder
         )
         if not os.path.isdir(lesson_path):
-            return {"workbook_dir": None, "files": []}
-
-        # 워크북 서브폴더 찾기
-        for raw in os.listdir(lesson_path):
+            return None
+        for raw in _safe_listdir(lesson_path, log):
             name = _nfc(raw)
             if "워크북" in name and os.path.isdir(os.path.join(lesson_path, raw)):
-                workbook_dir = os.path.join(lesson_path, raw)
-                break
+                return os.path.join(lesson_path, raw)
+        return None
+
+    @staticmethod
+    def list_files(subject, publisher, lesson_folder):
+        """워크북 폴더 안의 원고 파일 목록 반환. 사용 여부를 함께 표시."""
+        cfg = _load_config()
+        workbook_dir = TextbookWorkbookEngine.find_workbook_dir(
+            subject, publisher, lesson_folder)
 
         if not workbook_dir:
             return {"workbook_dir": None, "files": []}
@@ -218,7 +262,7 @@ class TextbookWorkbookEngine(BaseEngine):
 
         # 모든 원고 파일명 수집 (매칭 시뮬레이션용)
         all_names = []
-        for raw in sorted(os.listdir(workbook_dir)):
+        for raw in sorted(_safe_listdir(workbook_dir)):
             name = _nfc(raw)
             if name.startswith("."):
                 continue
@@ -241,7 +285,7 @@ class TextbookWorkbookEngine(BaseEngine):
                 used_files.add(alt_name)
 
         files = []
-        for raw in sorted(os.listdir(workbook_dir)):
+        for raw in sorted(_safe_listdir(workbook_dir)):
             name = _nfc(raw)
             if name.startswith("."):
                 continue
@@ -259,7 +303,7 @@ class TextbookWorkbookEngine(BaseEngine):
                 if ("step3" in lower or "스텝3" in _nfc(lower)) and "원본" not in name:
                     # Step3 폴더 내 후보 파일 수집 (정답해설 제외)
                     step3_candidates = []
-                    for raw2 in sorted(os.listdir(full)):
+                    for raw2 in sorted(_safe_listdir(full)):
                         name2 = _nfc(raw2)
                         if name2.startswith("."):
                             continue
@@ -273,7 +317,7 @@ class TextbookWorkbookEngine(BaseEngine):
                     mixed_set = {n for n in step3_candidates if "MIXED" in n.upper()}
                     used_step3 = mixed_set if mixed_set else set(step3_candidates)
                     # 모든 파일 표시 (used 여부만 차별)
-                    for raw2 in sorted(os.listdir(full)):
+                    for raw2 in sorted(_safe_listdir(full)):
                         name2 = _nfc(raw2)
                         if name2.startswith("."):
                             continue
@@ -326,6 +370,20 @@ class TextbookWorkbookEngine(BaseEngine):
 
         # 1) 구글 드라이브 워크북 폴더에서 파일 복사
         orig_workbook = self._read_meta_str(job_dir, "manuscript_folder", "")
+        # manuscript_folder 는 브라우저가 /api/textbook-workbook/files 응답으로
+        # 채우는 hidden 필드다. 그 API가 실패하면(2026-08-24 job a1dccc52:
+        # GDrive EDEADLK로 500) 값이 빈 채 제출돼 '워크북 폴더 없음 → 0유닛'
+        # 으로 조용히 끝났다. 메타가 비면 과 폴더에서 직접 찾는다 —
+        # 수능특강 워크북 엔진의 자동 계산과 같은 폴백.
+        if not orig_workbook and subject and publisher and lesson_folder:
+            orig_workbook = self.find_workbook_dir(
+                subject, publisher, lesson_folder, log) or ""
+            if orig_workbook:
+                log(f"[파서] manuscript_folder 자동 계산: "
+                    f"{os.path.basename(orig_workbook)}")
+                with open(os.path.join(job_dir, "manuscript_folder.txt"), "w",
+                          encoding="utf-8") as _f:
+                    _f.write(orig_workbook)
         # 파일 목록은 '미러 + GDrive 합집합'으로 열거 — 미러가 stale(=GDrive에
         # 나중 추가된 파일이 미러엔 없음)일 때 파일이 조용히 누락되던 문제 차단.
         # 읽기 경로는 미러본 우선(EDEADLK 회피), 미러에 없으면 GDrive 원본.
@@ -363,7 +421,7 @@ class TextbookWorkbookEngine(BaseEngine):
                     #   raw .hwp가 step3_dir로 흘러들어 Step3.hwpx와 함께 조판됨.
                     lower = name.lower()
                     if ("step3" in lower or "스텝3" in _nfc(lower)) and "원본" not in name:
-                        for raw2 in os.listdir(src):
+                        for raw2 in _safe_listdir(src, log):
                             src2 = os.path.join(src, raw2)
                             name2 = _nfc(raw2)
                             if name2.startswith(".") or not os.path.isfile(src2):
