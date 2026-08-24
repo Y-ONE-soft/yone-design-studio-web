@@ -55,8 +55,25 @@ DEFAULT_METRICS = {
 
     "memo": {"w": 11.8, "h": 23.9, "right": 0.0, "top": 26.48},
 
-    "pg_out": 9.67,         # 쪽번호 — 바깥 재단선에서
-    "pg_top": 195.36,       # 쪽번호 윗변(재단선 기준)
+    # 항목(표제어 블록) 세로 리듬 — 완성본 베이스라인 실측에서 역산한 CSS 값
+    "rule_w": 0.176,        # 괘선 0.5pt
+    "w_pad_t": 2.05,
+    "w_pad_b": 3.84,
+    "no_w": 4.73,           # 번호 열 폭(회독칸 시작점을 고정한다)
+    "chk": 1.82, "chk_gap": 0.73, "chk_mt": 0.25,
+    "word_mt": 1.15, "pron_mt": 0.84,
+    "deriv_mt": 1.37, "deriv_lh": 4.18,
+    "def_slot": 11.0, "def_lh": 4.23, "def_hang": 3.58, "def_mb": 1.06,
+    "en_lh": 3.39, "kr_lh": 3.52, "kr_mt": 0.94, "pair_mt": 2.62,
+
+    "tab_txt_mt": 9.21,     # ③ 탭 글자
+    "unit_ttl": {"x": 27.52, "y": 8.40},        # ① "UNIT"  (재단선+도련 포함 좌표)
+    "unit_num": {"x": 40.01, "y": 8.06},        # ① 큰 번호
+    "cover": {"mark_x": 44.18, "mark_y": 66.99, "mark_w": 67.36, "mark_h": 62.275,
+              "ttl_x": 31.95, "ttl_y": 135.39},
+
+    "pg_out": 5.33,         # 쪽번호 — 판면 바깥쪽으로 내미는 양
+    "pg_mt": 5.50,
     "tight": "-.005em",
 }
 
@@ -162,9 +179,40 @@ def prelude(cfg):
     for k, v in pal.items():
         if isinstance(v, str):
             o.append(f"    --c-{k}: {v};")
-    o.append(f"    --bleed: {bleed}mm;")
-    o.append(f"    --col-w: {m['col_w']}mm;")
-    o.append(f"    --col-gap: {m['col_gap']}mm;")
+    mm_vars = [
+        ("bleed", bleed), ("media-w", PW), ("media-h", PH),
+        ("mgn-out", m["mgn_out"] + bleed), ("mgn-in", m["mgn_in"] + bleed),
+        ("margin-top", m["margin_top"] + bleed),
+        ("head-h", m["margin_top_open"] + bleed),
+        ("col-w", m["col_w"]), ("col-gap", m["col_gap"]),
+        ("rule-w", m["rule_w"]),
+        ("w-pad-t", m["w_pad_t"]), ("w-pad-b", m["w_pad_b"]),
+        ("no-w", m["no_w"]), ("chk", m["chk"]), ("chk-gap", m["chk_gap"]),
+        ("chk-mt", m["chk_mt"]),
+        ("word-mt", m["word_mt"]), ("pron-mt", m["pron_mt"]),
+        ("deriv-mt", m["deriv_mt"]), ("deriv-lh", m["deriv_lh"]),
+        ("def-slot", m["def_slot"]), ("def-lh", m["def_lh"]),
+        ("def-hang", m["def_hang"]), ("def-mb", m["def_mb"]),
+        ("en-lh", m["en_lh"]), ("kr-lh", m["kr_lh"]), ("kr-mt", m["kr_mt"]),
+        ("pair-mt", m["pair_mt"]),
+        ("tabtxt-mt", m["tab_txt_mt"]),
+        ("tab-x", m["tab"]["x"] + bleed), ("tab-w", m["tab"]["w"]),
+        ("pg-out", m["pg_out"]), ("pg-mt", m["pg_mt"]),
+        ("logo-pr", m["logo"]["text_right"] + bleed),
+        ("logo-pt", m["logo"]["text_top"] + bleed),
+    ]
+    for k, v in mm_vars:
+        o.append(f"    --{k}: {round(v, 3)}mm;")
+    o.append(f"    --logo-size: {m['logo']['text_size']}pt;")
+    o.append(f"    --logo-track: {m['logo']['track']}em;")
+    for k in ("unit_ttl", "unit_num"):
+        g = m[k]
+        n = k.replace("_", "-")
+        o.append(f"    --{n}-x: {g['x'] + bleed}mm; --{n}-y: {g['y'] + bleed}mm;")
+    cv = m["cover"]
+    o.append(f"    --cover-mark-x: {cv['mark_x']}mm; --cover-mark-y: {cv['mark_y']}mm;")
+    o.append(f"    --cover-mark-w: {cv['mark_w']}mm; --cover-mark-h: {cv['mark_h']}mm;")
+    o.append(f"    --cover-ttl-x: {cv['ttl_x']}mm; --cover-ttl-y: {cv['ttl_y']}mm;")
     o.append(f"    --tight: {m['tight']};")
     o.append("}")
 
