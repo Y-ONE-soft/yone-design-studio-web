@@ -522,7 +522,7 @@
         return null;
     }
 
-    function copyPageContent(srcPage, tgtPage, tfPos) {
+    function copyPageContent(srcPage, tgtPage, tfPos, keepLeftover) {
         var srcMains = getSrcTFsByPos(srcPage, tfPos);
         var tgtMains = getMainTFs(tgtPage);
         if (srcMains.length === 0) return { ok: false, reason: "세로 매핑 대상 없음" };
@@ -574,13 +574,38 @@
                 tgtBounds: matches[i].tgtTF.geometricBounds.slice(0)
             });
         }
+        var lastNewTF = null, usedSrc = {};
         for (var i = 0; i < ops.length; i++) {
             var op = ops[i];
             var newTF = op.srcTF.duplicate(tgtPage);
             newTF.geometricBounds = op.tgtBounds;
             op.tgtTF.remove();
+            lastNewTF = newTF;
+            usedSrc[op.srcTF.id] = 1;
         }
-        return { ok: true, reason: "복제 (" + ops.length + ")" };
+        // 짝을 못 찾은 세로 프레임 — 버리면 그 내용이 통째로 사라진다.
+        // 실전(STEP3)은 세로 프레임 수가 가로보다 많은 페이지가 있어, 이
+        // 유실이 "문항이 선지 중간에서 끊기는" 증상으로 나타났다
+        // (2026-08-25 실측: 10번 선지가 ③에서 끊기고 ④⑤ 소실).
+        // 마지막으로 옮긴 프레임의 스토리 끝에 이어 붙인다. 넘치는 분량은
+        // 오버셋으로 남고, 후처리 rethread 가 프레임을 이으면 리플로우된다.
+        var carried = 0;
+        if (keepLeftover && lastNewTF) {
+            for (var L = 0; L < srcMains.length; L++) {
+                if (usedSrc[srcMains[L].id]) { continue; }
+                try {
+                    var lt = srcMains[L].texts[0];
+                    if (!lt || lt.characters.length === 0) { continue; }
+                    lt.duplicate(LocationOptions.AT_END,
+                                 lastNewTF.parentStory.insertionPoints[-1]);
+                    carried++;
+                } catch (eLo) {
+                    warn("    남은 프레임 이어붙이기 실패: " + (eLo.message || eLo));
+                }
+            }
+        }
+        return { ok: true, reason: "복제 (" + ops.length + ")" +
+                 (carried ? " + 이어붙임 " + carried : "") };
     }
 
     // ───────────────────────────────────────────────────────────────
@@ -856,7 +881,7 @@
                     }
                     slotIdx++;
                     var srcP = srcPages[s];
-                    var r = copyPageContent(verti.pages[srcP - 1], horiz.pages[horizP - 1], config.tfPos);
+                    var r = copyPageContent(verti.pages[srcP - 1], horiz.pages[horizP - 1], config.tfPos, true);
                     info("  p" + horizP + " : 지문" + lesson.num + " 세로 p" + srcP + " (실전) → " + (r.ok ? "OK" : "FAIL " + r.reason));
                     region.pageLessonMap[horizP] = lesson.num;
                 }
