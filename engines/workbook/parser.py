@@ -2160,6 +2160,60 @@ _STEP_CONTENT_SIGNATURES = {
 }
 
 
+# W73 (능률(민) SL1 실증 — 사용자 지적 "지문번호 인식을 못해서 조판이 엉망"):
+# 이 원고의 A형 지문 라벨은 대괄호 뒤에 본문 제목이 직결돼 있다 —
+# "[본문1]<A Wonder under the Waves>". _RE_KOREAN_BRACKET은 줄 전체가
+# 대괄호일 때만("^\[...\]$") 매칭하므로 이 형태를 헤더로 못 봤고,
+# _strip_manuscript_headers가 구조 인식 폴백으로 넘어가 **본문1·2를 통째로
+# 잘라냈다**(실측: step1_a1 16단락 → 10단락, 5지문 중 3지문만 조판).
+# 정규식을 넓히는 대신 **한 단락을 두 단락으로 분리**한다 — 라벨은
+# "[본문1]" 단독이 되어 기존 경로가 100% 그대로 소비하고, "<제목>"은
+# 다른 스텝(step2_a1/c1)에서 이미 본문 첫 줄로 오는 것과 같은 자리에 선다.
+# 대괄호 안이 짧은 라벨일 때만 — 발문형 대괄호("[다음 글의 …]")는 제외.
+_RE_BRACKET_TITLE = re.compile(r'^\s*(\[[^\]]{1,20}\])\s*(<[^>]{1,120}>)\s*$')
+
+
+def _slice_runs(runs, text, start, end):
+    """runs를 문자 오프셋 [start, end) 구간으로 잘라 재구성 (밑줄 정보 보존)."""
+    out, pos = [], 0
+    for r in runs or []:
+        t = r.get("t") or ""
+        if not t:
+            continue
+        a, b = pos, pos + len(t)
+        pos = b
+        lo, hi = max(a, start), min(b, end)
+        if lo >= hi:
+            continue
+        piece = dict(r)
+        piece["t"] = t[lo - a:hi - a]
+        out.append(piece)
+    if not out:
+        out = [{"t": text[start:end], "ul": False}]
+    return out
+
+
+def _split_bracket_title_headers(paragraphs):
+    """`[본문N]<제목>` 한 단락 → `[본문N]` + `<제목>` 두 단락 (W73).
+
+    매칭되지 않는 단락은 객체 그대로 통과 — 기존 원고에는 영향이 없다."""
+    result = []
+    for p in paragraphs:
+        text = p.get("text") or ""
+        m = _RE_BRACKET_TITLE.match(text)
+        if not m:
+            result.append(p)
+            continue
+        label, title = m.group(1), m.group(2)
+        runs = p.get("runs") or []
+        li, ti = text.index(label), text.index(title, m.start(2))
+        result.append({"text": label,
+                       "runs": _slice_runs(runs, text, li, li + len(label))})
+        result.append({"text": title,
+                       "runs": _slice_runs(runs, text, ti, ti + len(title))})
+    return result
+
+
 # 문항별 발문형 하단 문제 헤더: "1. 다음 글의 밑줄 친 부분 중, 어법상 틀린 것은? [20]"
 # 표준형("1. p2-no.20  (정답 1개)")과 달리 순번·발문·지문번호가 한 줄에 붙어
 # 있고 지문번호가 줄 끝 대괄호다. 표준 헤더 정규식(_RE_HEADER_NUM)이 못 잡아
@@ -2738,6 +2792,10 @@ def parse_manuscript_folder(manuscript_dir, config, grade, year, month, log=None
         # 하단 문제 섹션에서만 — 다른 섹션 원고의 대괄호 줄은 건드리지 않는다
         if step_key == 'step2_a1_btm':
             paras = _normalize_bracket_tail_headers(paras)
+
+        # W73: "[본문1]<A Wonder under the Waves>" → "[본문1]" + "<제목>"
+        # 두 단락으로 분리 (정상 원고에는 매치되지 않으므로 안전)
+        paras = _split_bracket_title_headers(paras)
 
         # 옛 형식 워크북 헤더("9번"/"17년 11월 21번") → 표준 형식으로 정규화
         # 정상 원고에는 매치되지 않으므로 안전
