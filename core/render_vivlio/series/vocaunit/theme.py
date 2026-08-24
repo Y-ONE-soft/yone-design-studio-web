@@ -50,8 +50,8 @@ DEFAULT_METRICS = {
              "crest_right": 9.935, "crest_top": 6.598,   # 재단선 기준
              "pill_w": 8.8, "pill_h": 3.0,
              "pill_right": 10.7, "pill_top": 10.55,
-             "text_right": 20.861, "text_top": 8.9,
-             "text_size": 7.0, "track": 0.1},
+             "text_right": 21.29, "text_top": 10.93,
+             "text_size": 7.0, "track": 0.109},
 
     "memo": {"w": 11.8, "h": 23.9, "right": 0.0, "top": 26.48},
 
@@ -67,8 +67,9 @@ DEFAULT_METRICS = {
     "en_lh": 3.39, "kr_lh": 3.52, "kr_mt": 0.94, "pair_mt": 2.62,
 
     "tab_txt_mt": 9.21,     # ③ 탭 글자
-    "unit_ttl": {"x": 27.52, "y": 8.40},        # ① "UNIT"  (재단선+도련 포함 좌표)
-    "unit_num": {"x": 40.01, "y": 8.06},        # ① 큰 번호
+    # ① 헤더 글자는 `.unit-head` 안(=페이지 왼쪽 위 원점)이라 **도련 포함 좌표**다
+    "unit_ttl": {"x": 27.52, "y": 8.40},        # "UNIT"
+    "unit_num": {"x": 40.01, "y": 8.06},        # 큰 번호
     "cover": {"mark_x": 44.18, "mark_y": 66.99, "mark_w": 67.36, "mark_h": 62.275,
               "ttl_x": 31.95, "ttl_y": 135.39},
 
@@ -210,7 +211,7 @@ def prelude(cfg):
     for k in ("unit_ttl", "unit_num"):
         g = m[k]
         n = k.replace("_", "-")
-        o.append(f"    --{n}-x: {g['x'] + bleed}mm; --{n}-y: {g['y'] + bleed}mm;")
+        o.append(f"    --{n}-x: {g['x']}mm; --{n}-y: {g['y']}mm;")
     cv = m["cover"]
     o.append(f"    --cover-mark-x: {cv['mark_x']}mm; --cover-mark-y: {cv['mark_y']}mm;")
     o.append(f"    --cover-mark-w: {cv['mark_w']}mm; --cover-mark-h: {cv['mark_h']}mm;")
