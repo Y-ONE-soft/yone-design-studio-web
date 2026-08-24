@@ -163,6 +163,10 @@ class Renderer(object):
                         + self.unit_head(u)
                         + "".join(self.word(w) for w in u["words"])
                         + "</section>")
+        if self.o.get("tail_memo", True):
+            # 마지막 면을 왼쪽으로 — `break-before: left` 라 총 쪽수가 짝수가 된다
+            body.append('<section class="memo-tail" style="page:p-memo">'
+                        + self.running("", off=True) + "</section>")
         return ('<!doctype html><html lang="ko"><head><meta charset="utf-8">'
                 f"<title>{esc(self.title)}</title>"
                 '<link rel="stylesheet" href="theme.css">'

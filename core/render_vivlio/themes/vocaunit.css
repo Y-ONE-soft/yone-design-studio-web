@@ -146,7 +146,11 @@ b.pos { font-family: "Kor"; font-weight: 700; font-size: 7pt;
     width: var(--cover-mark-w); height: var(--cover-mark-h); }
 .cover .ttl { position: absolute;
     left: var(--cover-ttl-x); top: var(--cover-ttl-y);
-    font: 400 30pt/1 "Disp"; color: var(--c-cover-mark);
-    letter-spacing: .02em; white-space: nowrap; }
+    font: 400 var(--cover-ttl-size)/1 "Disp"; color: var(--c-cover-mark);
+    letter-spacing: var(--cover-ttl-track); white-space: nowrap; }
+
+/* ---------- 맨 뒤 MEMO 면 ---------- */
+/* `break-before: left` 라 이 면은 반드시 왼쪽(짝수) → 총 쪽수가 언제나 짝수가 된다 */
+.memo-tail { break-before: left; height: 1mm; }
 
 /*@GENERATED@*/

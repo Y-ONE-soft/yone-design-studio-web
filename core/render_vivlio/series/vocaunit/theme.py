@@ -53,6 +53,7 @@ DEFAULT_METRICS = {
              "text_right": 21.29, "text_top": 10.93,
              "text_size": 7.0, "track": 0.109},
 
+    # MEMO 탭 — 오른쪽은 **도련 끝에 붙는다**(재단 후 페이지 밖으로 나감)
     "memo": {"w": 11.8, "h": 23.9, "right": 0.0, "top": 26.48},
 
     # 항목(표제어 블록) 세로 리듬 — 완성본 베이스라인 실측에서 역산한 CSS 값
@@ -71,7 +72,7 @@ DEFAULT_METRICS = {
     "unit_ttl": {"x": 27.52, "y": 8.40},        # "UNIT"
     "unit_num": {"x": 40.01, "y": 8.06},        # 큰 번호
     "cover": {"mark_x": 44.18, "mark_y": 66.99, "mark_w": 67.36, "mark_h": 62.275,
-              "ttl_x": 31.95, "ttl_y": 135.39},
+              "ttl_x": 31.95, "ttl_y": 135.39, "ttl_size": 30, "ttl_track": -0.035},
 
     "pg_out": 5.33,         # 쪽번호 — 판면 바깥쪽으로 내미는 양
     "pg_mt": 5.50,
@@ -108,30 +109,32 @@ def band(pale, rule, PW, h, rule_h, bleed, at_top=True):
 
 
 def grid(color, PW, h, pitch, width, bleed, phase_right=False):
-    """모눈 — 헤더(①②)와 MEMO 면 공통. 책등 쪽에 위상을 맞춘다(펼침면 연속)."""
+    """①② 모눈 헤더 — 위상은 **책등 쪽 재단선**에 맞춘다(펼침면에서 이어지도록).
+    왼쪽 면은 책등이 오른쪽이므로 오른쪽 재단선부터, 오른쪽 면은 왼쪽부터."""
     H = h + bleed
     body = []
-    n = int(H / pitch) + 2
-    for i in range(n):
-        y = round(H - i * pitch, 3) if False else round(i * pitch, 3)
-        if y <= H:
+    for i in range(int(H / pitch) + 2):
+        y = round(bleed + i * pitch, 3)
+        if 0 <= y <= H:
             body.append(svg.line(0, y, PW, y, color, width))
     n = int(PW / pitch) + 2
     for i in range(n):
-        x = round(PW - i * pitch, 3) if phase_right else round(i * pitch, 3)
+        x = round((PW - bleed - i * pitch) if phase_right else (bleed + i * pitch), 3)
         if 0 <= x <= PW:
             body.append(svg.line(x, 0, x, H, color, width))
     return svg.data_uri(PW, H, "".join(body))
 
 
-def grid_full(color, PW, PH, pitch, width, phase_right=False):
+def grid_full(color, PW, PH, pitch, width, bleed=0.0, phase_right=False):
+    """MEMO 면 전면 모눈 — 위상은 재단선 기준(원본과 같은 자리에 선이 오게)."""
     body = []
     for i in range(int(PH / pitch) + 2):
-        y = round(i * pitch, 3)
-        if y <= PH:
+        y = round(bleed + i * pitch, 3)
+        if 0 <= y <= PH:
             body.append(svg.line(0, y, PW, y, color, width))
-    for i in range(int(PW / pitch) + 2):
-        x = round(PW - i * pitch, 3) if phase_right else round(i * pitch, 3)
+    n = int(PW / pitch) + 2
+    for i in range(n):
+        x = round((PW - bleed - i * pitch) if phase_right else (bleed + i * pitch), 3)
         if 0 <= x <= PW:
             body.append(svg.line(x, 0, x, PH, color, width))
     return svg.data_uri(PW, PH, "".join(body))
@@ -181,7 +184,8 @@ def prelude(cfg):
     o.append("\n:root {")
     for k, v in pal.items():
         if isinstance(v, str):
-            o.append(f"    --c-{k}: {v};")
+            # config 는 `cover_mark`, CSS 는 `--c-cover-mark` — 밑줄을 하이픈으로
+            o.append(f"    --c-{k.replace('_', '-')}: {v};")
     mm_vars = [
         ("bleed", bleed), ("media-w", PW), ("media-h", PH),
         ("mgn-out", m["mgn_out"] + bleed), ("mgn-in", m["mgn_in"] + bleed),
@@ -216,6 +220,8 @@ def prelude(cfg):
     o.append(f"    --cover-mark-x: {cv['mark_x']}mm; --cover-mark-y: {cv['mark_y']}mm;")
     o.append(f"    --cover-mark-w: {cv['mark_w']}mm; --cover-mark-h: {cv['mark_h']}mm;")
     o.append(f"    --cover-ttl-x: {cv['ttl_x']}mm; --cover-ttl-y: {cv['ttl_y']}mm;")
+    o.append(f"    --cover-ttl-size: {cv['ttl_size']}pt; "
+             f"--cover-ttl-track: {cv['ttl_track']}em;")
     o.append(f"    --tight: {m['tight']};")
     o.append("}")
 
@@ -257,16 +263,24 @@ def prelude(cfg):
 
     # MEMO 면 — 강제 개행으로 생긴 빈 면
     g_full_r = grid_full(pal["grid"], PW, PH, m["grid_pitch"], m["grid_width"],
-                         phase_right=False)
+                         bleed=bleed)
     memo = m["memo"]
+    memo_bg = (f"url(\"assets/memotab.png\") "
+               f"right {memo['right']}mm top {memo['top'] + bleed}mm / "
+               f"{memo['w']}mm {memo['h']}mm no-repeat, {bg_bands}, "
+               f"{g_full_r} top left / {PW}mm {PH}mm")
+    off = ("    @top-left { content: none; }\n"
+           "    @bottom-left { content: none; } @bottom-right { content: none; }")
     o.append("\n/* 강제 개행으로 생긴 빈 페이지 = MEMO 면 */")
     o.append("@page p-body:blank {")
-    o.append("    @top-left { content: none; }")
-    o.append("    @bottom-left { content: none; } @bottom-right { content: none; }")
-    o.append(f"    background: url(\"assets/memotab.png\") "
-             f"right {memo['right'] + bleed}mm top {memo['top'] + bleed}mm / "
-             f"{memo['w']}mm {memo['h']}mm no-repeat, {bg_bands}, "
-             f"{g_full_r} top left / {PW}mm {PH}mm;")
+    o.append(off)
+    o.append(f"    background: {memo_bg};")
+    o.append("}")
+    # 맨 뒤 MEMO 면 — `break-before: left` 로 붙이므로 **총 쪽수가 언제나 짝수**가 된다
+    o.append("\n/* 맨 뒤 MEMO 면 (마지막 면을 왼쪽으로 맞춘다) */")
+    o.append("@page p-memo {")
+    o.append(off)
+    o.append(f"    background: {memo_bg};")
     o.append("}")
     return "\n".join(o)
 
