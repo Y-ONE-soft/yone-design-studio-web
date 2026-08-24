@@ -23,6 +23,7 @@
 import re
 
 RUNNING_HEAD = "running_head"
+EMPTY_BRACKET = "empty_bracket"
 PROMPT = "prompt"
 ANSWER_BLANK = "answer_blank"
 
@@ -110,3 +111,17 @@ def classify(text):
     if is_prompt(text):
         return PROMPT
     return None
+
+
+_RE_EMPTY_BRACKET = re.compile(
+    r"^[\s\u200b\u00a0]*[(\[{<（［｛〈]"
+    r"[\s\u200b\u00a0\-–—_]*"
+    r"[)\]}>）］｝〉][\s\u200b\u00a0]*$")
+
+
+def is_empty_bracket(text):
+    """내용 없이 괄호쌍만 남은 줄 — "()" / "[  ]" / "{ }".
+
+    원고에서 채울 자리를 표시하다 비워둔 잔재다. 조판물에 인쇄되면
+    빈 괄호가 덩그러니 남는다 (2026-08-25 SL1 step2_c2 실측 1건)."""
+    return bool(_RE_EMPTY_BRACKET.match(text or ""))

@@ -3604,6 +3604,12 @@ def steps_to_plan(steps, exclude=None, workbook_type="모의고사",
         if built.get("ul_style"):
             flow["ul_style"] = built["ul_style"]
         flows.append(flow)
+    # 전 스텝 공통 최종 패스 — 내용 없이 괄호쌍만 남은 단락 제거.
+    # 원고가 채울 자리를 표시하다 비워둔 잔재라 어느 스텝에서도 내용이
+    # 아니다 (2026-08-25 SL1 step2_c2: "()" 1줄이 완제품에 인쇄).
+    _eb = _drop_empty_brackets(flows)
+    if _eb:
+        warnings.append("빈 괄호 단락 %d줄 제거 (원고 잔재)" % _eb)
     return {"format": "wb-flows-v1", "flows": flows,
             "unsupported": sorted(unsupported),
             # W66 ④ (사용자 지적 2026-08-14): 유닛 꼬리 몇 줄이 다음 칸으로
@@ -3613,6 +3619,24 @@ def steps_to_plan(steps, exclude=None, workbook_type="모의고사",
             "unit_fit": {"max_tracking": -25, "max_leading": 1,
                          "max_spill_lines": 5},
             "warnings": warnings}
+
+
+def _drop_empty_brackets(flows):
+    """유닛에서 빈 괄호쌍 단락 제거 — 제거 수 반환 (구조 판정)."""
+    from core.structure import manuscript_noise as _mn
+    n = 0
+    for fl in flows:
+        for i, u in enumerate(fl.get("units") or []):
+            paras = u["paras"] if isinstance(u, dict) else u
+            keep = [p for p in paras
+                    if not _mn.is_empty_bracket(p.get("t") or "")]
+            n += len(paras) - len(keep)
+            if len(keep) != len(paras):
+                if isinstance(u, dict):
+                    u["paras"] = keep
+                else:
+                    fl["units"][i] = keep
+    return n
 
 
 def question_keep_op(plan, steps=("step3",)):
