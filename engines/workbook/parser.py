@@ -1994,11 +1994,23 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
             "paragraphs": paras,
         })
 
-    for q in sorted(normal_questions):
-        _process_question(q, normal_items)
+    # 회차 미지정(보충 원고 폴더: year=0, month=0)에서는 폴더 연·월로 만든
+    # 코드가 "00036" 같은 쓰레기라 아무 데도 매칭되지 않는다. 그런 항목이
+    # 섞이면 코드로 거르는 가로 병합에서는 조용히 무시되지만, q_num 으로
+    # 사이클을 만드는 세로 파서에서는 **빈 사이클**로 실체화된다
+    # (실측 2026-08-24: 13강 보충 3지문이 5사이클로 조판).
+    # 회차 표기는 아래 _absorb_step3_ym 이 파일명/헤더에서 읽는다.
+    _no_round = str(year) in ("0", "00") or str(month) in ("0", "00")
+    if _no_round:
+        if log:
+            log("[파서] step3: 회차 미지정 폴더 — 파일명 번호 매칭 생략 "
+                "(회차는 파일명/헤더에서 읽는다)")
+    else:
+        for q in sorted(normal_questions):
+            _process_question(q, normal_items)
 
-    for q in sorted(short_questions):
-        _process_question(q, short_items)
+        for q in sorted(short_questions):
+            _process_question(q, short_items)
 
     # 복수 지문 1파일 형식 (보충 원고) — 파일명에 문항번호가 없고 한 파일에
     # 여러 지문이 들어 있다. 실측 2026-08-07: '11강 없는 지문 변형문제.docx'
