@@ -541,6 +541,19 @@ def parse_manuscript_folder(manuscript_dir, config, grade, year, month, log):
                 "code": sec.get("code"),
                 "paragraphs": sec_paras,
             }
+            # 문장배열은 한 문항에 블록이 둘이다 — 상단(순서배열 (A)~(H))과
+            # 하단(문장삽입)을 **같은 헤더로 두 번** 쓰는 원고 세대가 있다
+            # (실측 2026-08-24: 고1 21년 9월 36-37번, 마더텅 13강 보충).
+            # 덮어쓰면 상단이 통째로 사라진다 — 조판 결과에 하단만 남는다.
+            # 같은 문항의 후속 블록은 이어붙인다(하단 도입부의 3칸+ 들여쓰기는
+            # _augment_step1_c1_passage 가 이미 붙여 뒀다).
+            prev = m.get(qn)
+            if sk == "step1_c1" and prev is not None:
+                if prev["paragraphs"] and \
+                        (prev["paragraphs"][-1].get("text") or "").strip():
+                    prev["paragraphs"].append({"text": "", "runs": []})
+                prev["paragraphs"].extend(sec_paras)
+                continue
             m[qn] = entry
             # 회차가 섞인 보충 원고는 문항번호가 겹친다(16년 6월 36번 ·
             # 17년 9월 36번 → 둘 다 q_num=36). q_num 키만 쓰면 뒤엣것이
