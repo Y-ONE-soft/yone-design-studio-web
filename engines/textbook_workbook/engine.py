@@ -32,6 +32,14 @@ def _is_step3_name(name_nfc: str) -> bool:
     return bool(re.search(r'(?:[Ss]tep\s*3|스텝\s*3)', name_nfc))
 
 
+def _is_step3_name_content(name_nfc: str) -> bool:
+    """파일명이 실전(STEP3) 원고의 관행적 이름인지 — Step3 토큰이 없는 경우.
+
+    "…_예상문제 1회.hwp" / "…실전모의고사 2회.hwpx" 처럼 원고 폴더의 Step3
+    하위폴더 안에서만 구분되던 이름들. 업로드 경로에서만 쓴다 (W73)."""
+    return bool(re.search(r'(?:예상문제|실전\s*모의고사|실전문제)', name_nfc))
+
+
 def _is_answer_or_explanation(name_nfc: str) -> bool:
     """파일명에 정답/해설 토큰이 포함되어 있는지."""
     return ("정답" in name_nfc) or ("해설" in name_nfc)
@@ -381,6 +389,15 @@ class TextbookWorkbookEngine(BaseEngine):
                     (_is_step3_name(fname_nfc) and not _is_answer_or_explanation(fname_nfc))
                     or "번.hwp" in fname_nfc or "번.hwpx" in fname_nfc
                     or "번.docx" in fname_nfc
+                    # W73 (능률(민) SL1 실증): 원고 폴더의 Step3 하위폴더에
+                    # 들어 있는 실전 원고는 **파일명에 Step3 토큰이 없다**
+                    # ("…_Special Lesson1_예상문제 1회.hwp"). 폴더에서 복사할
+                    # 때는 하위폴더 descent가 처리하지만, 사용자가 같은 파일을
+                    # 직접 업로드하면 판정이 파일명에만 의존해 루트로 떨어지고
+                    # step3가 통째로 빈다 (실측: STEP3 0단락 → 실전 페이지
+                    # 217개 삭제, 침묵 유실). 실전 원고의 관행적 이름을 더 본다.
+                    or (_is_step3_name_content(fname_nfc)
+                        and not _is_answer_or_explanation(fname_nfc))
                 )
                 if is_step3:
                     dest = os.path.join(step3_dir, fname)

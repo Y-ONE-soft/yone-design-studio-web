@@ -1417,17 +1417,26 @@ def _header_label(text):
     마커("p1-")·"no."·과 접두("1과 ")를 벗기고 줄임말 규칙을 적용한다.
     문장배열(C1)이 이 함수를 안 쓰고 선행 순번을 그대로 라벨로 삼아
     "{1}{2}{3}…"이 되면서 다른 스텝({MR1}/[MR1])과 어긋났다."""
-    t = re.sub(r"\s+", " ", (text or "")).strip()
-    t = _RE_LEAD_ORD.sub("", t)
-    t = _RE_LEAD_LESSON_NAME.sub("", t)     # W73: "Special Lesson 1-p. 52 …"
-    t = _RE_LEAD_PAGE.sub("", t)
-    t = _RE_LEAD_NO.sub("", t)
-    t = _RE_BONMUN_SP.sub(r"본문\1", t)     # W73: "본문 1" → "본문1"
-    if not _LABEL_ABBREV:
-        return t.strip(" -–—")          # 통일 모드 아님 — 정규화만
-    t = _RE_LEAD_LESSON.sub("", t)
-    t = t.strip(" -–—")
-    return _abbrev_label(t)
+    base = re.sub(r"\s+", " ", (text or "")).strip()
+    base = _RE_LEAD_ORD.sub("", base)
+    # W73: 강 이름 접두를 벗긴 쪽을 먼저 쓰되, 그 결과가 **비면** 벗기지 않은
+    # 원래 경로로 되돌린다 — "1. L1-p.17"은 접두("L1-")와 페이지("p.17")를
+    # 둘 다 벗기면 라벨이 통째로 사라진다(코퍼스 실측 회귀). 라벨이 남는
+    # 헤더("… 본문 1", "… Further Reading")에서만 접두 제거가 발효된다.
+    result = ""
+    for cand in (_RE_LEAD_LESSON_NAME.sub("", base), base):
+        t = _RE_LEAD_PAGE.sub("", cand)
+        t = _RE_LEAD_NO.sub("", t)
+        t = _RE_BONMUN_SP.sub(r"본문\1", t)   # W73: "본문 1" → "본문1"
+        if not _LABEL_ABBREV:
+            result = t.strip(" -–—")        # 통일 모드 아님 — 정규화만
+        else:
+            result = _abbrev_label(_RE_LEAD_LESSON.sub("", t).strip(" -–—"))
+        # 꼬리 주석("(정답 1개)")만 남은 것도 라벨이 사라진 것과 같다 —
+        # "1. L1-p.17  (정답 1개)" 는 접두·페이지를 벗기면 본체가 없다.
+        if re.sub(r"\s*\([^)]*\)\s*$", "", result).strip():
+            return result
+    return result
 
 
 def _bracket_label_text(text):
