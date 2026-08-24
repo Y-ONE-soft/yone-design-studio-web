@@ -2191,7 +2191,7 @@ function dropStandalonePrompts(doc, flowStories) {
         if (!/[가-힣]/.test(t) || !re.test(t)) { continue; }
         try { st.contents = ""; n++; } catch (e3) {}
     }
-    log("  템플릿 안내문 제거: " + n + "개");
+    wlog("  템플릿 안내문 제거: " + n + "개");
     return n;
 }
 
