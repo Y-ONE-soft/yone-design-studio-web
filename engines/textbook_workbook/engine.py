@@ -421,9 +421,20 @@ class TextbookWorkbookEngine(BaseEngine):
                     #   raw .hwp가 step3_dir로 흘러들어 Step3.hwpx와 함께 조판됨.
                     lower = name.lower()
                     if ("step3" in lower or "스텝3" in _nfc(lower)) and "원본" not in name:
-                        for raw2 in _safe_listdir(src, log):
-                            src2 = os.path.join(src, raw2)
-                            name2 = _nfc(raw2)
+                        # 하위폴더는 GDrive(정본) 목록으로 다시 연다.
+                        # list_manuscript_entries는 **폴더 엔트리**의 읽기
+                        # 경로도 미러로 바꿔주는데, 미러가 stale하면(2026-08-24
+                        # 능률(민) SL1: 미러 Step3가 빈 폴더) 실전 원고 4개가
+                        # 통째로 조용히 사라진다. 폴더 목록의 정본은 GDrive다.
+                        sub = []
+                        gd_sub = (os.path.join(orig_workbook, name)
+                                  if orig_workbook else "")
+                        if gd_sub and os.path.isdir(gd_sub):
+                            sub = list_manuscript_entries(gd_sub, log)
+                        if not sub:
+                            sub = [(_nfc(r), os.path.join(src, r))
+                                   for r in _safe_listdir(src, log)]
+                        for name2, src2 in sub:
                             if name2.startswith(".") or not os.path.isfile(src2):
                                 continue
                             ext2 = os.path.splitext(name2)[1].lower()
@@ -463,6 +474,17 @@ class TextbookWorkbookEngine(BaseEngine):
                     dest = os.path.join(manuscript_dir, fname)
                 if fpath != dest:
                     _safe_copy(fpath, dest)
+
+        # 원고가 한 개도 없으면 여기서 끊는다 — 그대로 두면 InDesign까지
+        # 간 뒤 '렌더할 유닛이 0개'(원인 불명) 로 끝난다 (job a1dccc52).
+        _n_src = sum(
+            1 for _r, _d, _fs in os.walk(manuscript_dir) for _f in _fs
+            if os.path.splitext(_f)[1].lower() in (".docx", ".hwp", ".hwpx"))
+        if _n_src == 0:
+            raise ValueError(
+                "원고 파일이 0개입니다 — 워크북 폴더를 찾지 못했습니다"
+                + (f" (탐색 경로: {lesson_folder})" if lesson_folder else "")
+                + ". 구글 드라이브 동기화 상태를 확인하고 과를 다시 선택하세요")
 
         # 파서 실행 (기존 워크북 파서 재사용)
         log(f"[파서] 파싱 시작")

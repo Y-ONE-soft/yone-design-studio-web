@@ -89,7 +89,21 @@ def api_tw_files():
     subject = request.args.get("subject", "")
     publisher = request.args.get("publisher", "")
     lesson_folder = request.args.get("lesson_folder", "")
-    return jsonify(TextbookWorkbookEngine.list_files(subject, publisher, lesson_folder))
+    try:
+        return jsonify(TextbookWorkbookEngine.list_files(
+            subject, publisher, lesson_folder))
+    except OSError as e:
+        # GDrive Stream 일시 장애(EDEADLK 등)로 500이 나면 브라우저가
+        # manuscript_folder hidden 필드를 못 채워 '0유닛' 조판으로 이어졌다.
+        # 목록은 못 줘도 폴더 경로는 돌려주고, 실패를 화면에 노출한다.
+        try:
+            wb = TextbookWorkbookEngine.find_workbook_dir(
+                subject, publisher, lesson_folder)
+        except OSError:
+            wb = None
+        return jsonify({"workbook_dir": wb, "files": [],
+                        "error": f"폴더 목록을 읽지 못했습니다 ({e.errno}) — "
+                                 f"구글 드라이브 동기화 후 다시 시도하세요"})
 
 
 # ── EBS 리딩파워 워크북 폴더 탐색 API ─────────────────────────────────────────

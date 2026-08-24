@@ -157,6 +157,14 @@ class TextbookWorkbookV2Engine(WorkbookV2Engine):
         스테이징 경로로 재작성한다 (원경로는 manuscript_folder_original.txt
         보존). GDrive 원본 무접촉 — 읽기 전용 복사만 수행."""
         folder = self._read_meta_str(job_dir, "manuscript_folder", "")
+        if not folder:
+            # hidden 필드가 빈 채 제출된 경우(파일목록 API 실패) — v1 parse와
+            # 같은 규칙으로 과 폴더에서 직접 찾는다 (job a1dccc52).
+            from engines.textbook_workbook.engine import TextbookWorkbookEngine
+            folder = TextbookWorkbookEngine.find_workbook_dir(
+                self._read_meta_str(job_dir, "subject", ""),
+                self._read_meta_str(job_dir, "publisher", ""),
+                self._read_meta_str(job_dir, "lesson_folder", ""), log) or ""
         if not folder or not os.path.isdir(folder):
             return
         from engines.final.extractor import (_gdrive_safe_copy,
