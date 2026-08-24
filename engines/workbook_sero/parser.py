@@ -226,6 +226,14 @@ def _detect_qnum(text):
         if not m:
             continue
         groups = m.groups()
+        if len(groups) == 1:
+            # 6자리 코드만 있는 마커 ("[250920]", "[13강 - 16번 160636]").
+            # 그룹이 1개면 아래 두 분기가 모두 걸리지 않아 마커가 조용히
+            # 버려졌다(실측 2026-08-24: 보충 원고 어휘선택/내용종합 0개 분할).
+            g = groups[0]
+            if g and len(g) == 6:
+                return (g[-2:].lstrip('0') or g[-2:], None, g)
+            return (g, None, None)
         if len(groups) == 3 and groups[2]:
             # 마더텅 강 단위: q_num, q_num_end, code (6자리)
             return (groups[0], groups[1], groups[2])
@@ -471,9 +479,18 @@ def parse_manuscript_folder(manuscript_dir, config, grade, year, month, log):
     raw_step3 = (raw.get("steps") or {}).get("step3", {}) or {}
     _normal = raw_step3.get("normal", []) if isinstance(raw_step3, dict) else []
     _short = raw_step3.get("short", []) if isinstance(raw_step3, dict) else []
-    if step3_items and (len(_normal) + len(_short)) > len(step3_items):
+    _raw_all = list(_normal) + list(_short)
+    _raw_has_code = bool(_raw_all) and all(it.get("code") for it in _raw_all)
+    _dir_has_code = bool(step3_items) and all(it.get("code") for it in step3_items)
+    if step3_items and _raw_has_code and not _dir_has_code and \
+            len(_raw_all) >= len(step3_items):
+        # 개수가 같아도 회차 코드가 붙은 쪽이 정확하다 — 보충 폴더처럼
+        # 회차가 섞이면 코드 없이는 문항을 가릴 수 없다.
+        log(f"[파서/sero] STEP3 가로 파서 결과에 회차 코드 있음 — 그쪽 채택")
+        step3_items = []
+    if step3_items and (len(_raw_all)) > len(step3_items):
         log(f"[파서/sero] STEP3 가로 파서가 더 많이 인식 "
-            f"({len(_normal) + len(_short)} > {len(step3_items)}) — 그쪽 채택")
+            f"({len(_raw_all)} > {len(step3_items)}) — 그쪽 채택")
         step3_items = []
     if not step3_items:
         normal, short = _normal, _short
@@ -546,7 +563,17 @@ def parse_manuscript_folder(manuscript_dir, config, grade, year, month, log):
         }
         for sk in step_keys:
             qm = splits.get(sk, {})
-            entry = qm.get(qn)
+            entry = None
+            # 코드(YYMMQQ) 우선 — 보충 원고는 회차가 섞여 있어 문항번호가
+            # 겹친다(16년 6월 36번 · 17년 9월 36번 둘 다 q_num=36).
+            # q_num 으로만 맞추면 한쪽이 덮여 사라진다.
+            if cycle.get("code"):
+                for e in qm.values():
+                    if str(e.get("code") or "") == str(cycle["code"]):
+                        entry = e
+                        break
+            if entry is None:
+                entry = qm.get(qn)
             if entry:
                 cycle["steps"][sk] = entry.get("paragraphs", [])
             else:
