@@ -14,10 +14,10 @@ REPO = os.path.dirname(TESTS_DIR)
 
 
 # ── 계층 경계 ───────────────────────────────────────────────────────────
-def test_series_registry_has_both_series():
+def test_series_registry_has_all_series():
     from core.render_vivlio import series
-    assert set(series.names()) >= {"vocabook", "blackbook"}
-    for name in ("vocabook", "blackbook"):
+    assert set(series.names()) >= {"vocabook", "vocaunit", "blackbook"}
+    for name in ("vocabook", "vocaunit", "blackbook"):
         s = series.get(name)
         assert s.name == name and s.display
 
@@ -229,3 +229,98 @@ def test_discover_finds_config_books():
     assert all(c.series for c in books)
     assert {c.series for c in books} <= set(
         __import__("core.render_vivlio.series", fromlist=["x"]).names())
+
+
+# ── 계열 vocaunit (광문보카) ─────────────────────────────────────────────
+@pytest.fixture()
+def unit_cfg(tmp_path):
+    from core.render_vivlio import config
+    (tmp_path / "config.json").write_text(json.dumps({
+        "series": "vocaunit",
+        "book": {"title": "광문보카", "brand": "GWANGMUN VOCA"},
+        "page": {"width": 148, "height": 210, "bleed": 3},
+        "palette": {"ink": "#231f20", "accent": "#6f7dbd", "pron": "#939598",
+                    "pos": "#6d6e71", "hl": "#f68b62", "rule": "#cbcee8",
+                    "chk": "#d9cbde", "band": "#d9cbde", "rule2": "#c7b9db",
+                    "logo": "#c7b9db", "crest": "#cbcee8", "tab": "#a0b0d7",
+                    "circle": "#cab6d4", "unitnum": "#8094cb", "grid": "#d2d2d2",
+                    "cover_bg": "#f4f0f6", "cover_mark": "#ffffff"},
+        "fonts": [], "options": {}, "metrics": {},
+    }, ensure_ascii=False), encoding="utf-8")
+    return config.load(str(tmp_path))
+
+
+def test_vocaunit_parses_manuscript_by_structure():
+    """블록 인식은 '번호 행'이 앵커 — 마커 문구('DAY15 / 회독')에 기대지 않는다."""
+    from core.render_vivlio.series.vocaunit import data
+    rows = [("아무말", "무엇이든", ""),
+            ("1", "sensible", "[형] 분별력 있는 (↔ senseless 어리석은)"),
+            ("", "[ˈsɛnsəbəl]", ""),
+            ("", "sensibility [명] 감수성", "It wasn't [sensible] to go out."),
+            ("", "", "밖에 나간 것은 [현명하지] 않았다."),
+            ("", "", "")]
+    blocks = data.parse_unit(rows, "Unit 15")
+    assert len(blocks) == 1
+    b = blocks[0]
+    assert b["word"] == "sensible" and b["pron"] == "[ˈsɛnsəbəl]"
+    assert b["deriv"] == ["sensibility [명] 감수성"]
+    assert b["pairs"] == [["It wasn't [sensible] to go out.",
+                           "밖에 나간 것은 [현명하지] 않았다."]]
+
+
+def test_vocaunit_splits_run_on_derivatives():
+    """파생어 칸은 여러 개가 이어 붙어 온다 — `영단어 + [품사]` 가 경계."""
+    from core.render_vivlio.series.vocaunit import data
+    got = data.split_deriv(
+        "sensitivity [명] 1. 민감함; (예술적) 감수성 sensibility [명] 감정")
+    assert got == ["sensitivity [명] 1. 민감함; (예술적) 감수성",
+                   "sensibility [명] 감정"]
+    # 한 파생어 안의 두 번째 품사는 자르지 않는다(앞이 영단어가 아니다)
+    assert data.split_deriv("finance [명] 재정, 재무 [동] 자금을 대다") == \
+        ["finance [명] 재정, 재무 [동] 자금을 대다"]
+
+
+def test_vocaunit_gate_stops_on_missing_pieces():
+    """인식 게이트 — 기대 수량/구조가 어긋나면 조판하지 않고 중단."""
+    from core.render_vivlio.series.vocaunit import data
+    d = {"units": [{"sheet": "Unit 15", "words": [
+        {"no": 1, "word": "x", "meaning": "[형] 뜻", "pron": "", "pairs": [1]}]}],
+        "counts": {"units": 1, "words": 1}}
+    with pytest.raises(SystemExit):
+        data.gate(d, {"expect": {"units": 1, "words": 1}}, lambda *_: None)
+
+
+def test_vocaunit_meaning_marks_pos_sense_and_notes():
+    """뜻 표기 변환 — 품사마다 줄바꿈 · 1. → ① · (= …) 와 (한글만) 은 작은 글자."""
+    from core.render_vivlio.series.vocaunit import render
+    html = render.meaning("[형] 1. 민감한 (↔ insensitive 둔감한) 2. (과실의) 섬세한")
+    assert html.count("<p>") == 1                      # 품사 하나 → 한 줄
+    assert '<b class="pos">[형]</b>' in html
+    assert '<span class="n">①</span>' in html and '<span class="n">②</span>' in html
+    assert '<span class="note">(↔ insensitive 둔감한)</span>' in html
+    assert '<span class="q">(과실의)</span>' in html
+    assert render.meaning("[명] 뜻 [동] 뜻").count("<p>") == 2
+
+
+def test_vocaunit_theme_bakes_palette_and_keeps_page_names(unit_cfg):
+    """팔레트는 배경 SVG 안에 구워진다 → 색을 바꾸면 테마를 다시 만들어야 한다."""
+    from core.render_vivlio.series.vocaunit import theme
+    css = theme.build_css(unit_cfg)
+    assert "%23cab6d4" in css            # ① 큰 원
+    assert "%23a0b0d7" in css            # ③ 탭
+    assert "--c-cover-mark: #ffffff;" in css   # config 의 밑줄 → CSS 하이픈
+    assert "@page p-body" in css and "@page p-memo" in css
+    # 도련은 옮기는 게 아니라 늘리는 것 — 여백에 도련이 더해져 있다
+    assert "margin: 23.09mm 21.0mm 20.0mm 18.0mm;" in css
+
+
+def test_vocaunit_second_pass_names_pages_and_lowers_open_margin(unit_cfg,
+                                                                 tmp_path):
+    """②(모눈 헤더 면)는 배경뿐 아니라 상단 여백도 내려간다 — 이름과 함께 지정."""
+    from core.render_vivlio.series.vocaunit import VocaunitSeries
+    out = tmp_path / "pages.css"
+    VocaunitSeries._write_pages_css(unit_cfg, [2, 8], 20, str(out))
+    css = out.read_text(encoding="utf-8")
+    assert "@page p-body:nth(2)" in css and "@page p-body:nth(3)" in css
+    assert "margin-top: 28.09mm" in css
+    assert "@top-left { content: none; }" in css
