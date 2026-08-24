@@ -234,26 +234,24 @@ def prelude(cfg):
              f"{m['mgn_in'] + bleed}mm {m['margin_bottom'] + bleed}mm "
              f"{m['mgn_out'] + bleed}mm;")
     o.append(f"    background: {bg_bands};")
+    # ⚠ @top-right 는 폭이 좁아 러닝 요소가 잘린다 → 좌우 다 @top-left 슬롯을 쓴다
     o.append("    @top-left     { content: element(hdrL); vertical-align: top; }")
-    o.append("    @top-right    { content: element(hdrR); vertical-align: top; }")
     o.append("    @bottom-left  { content: element(footL); vertical-align: top; }")
     o.append("    @bottom-right { content: element(footR); vertical-align: top; }")
     o.append("}")
     o.append(f"@page :left  {{ margin-left: {m['mgn_out'] + bleed}mm; "
              f"margin-right: {m['mgn_in'] + bleed}mm;")
-    o.append("               @top-right { content: none; } "
-             "@bottom-right { content: none; } }")
+    o.append("               @bottom-right { content: none; } }")
     o.append(f"@page :right {{ margin-left: {m['mgn_in'] + bleed}mm; "
              f"margin-right: {m['mgn_out'] + bleed}mm;")
-    o.append("               @top-left { content: none; } "
+    o.append("               @top-left { content: element(hdrR); } "
              "@bottom-left { content: none; } }")
 
     # 본문 페이지(이름 있는 규칙) — `@page :nth()` 는 이름과 **함께** 써야 먹는다
     o.append("\n@page p-body { }")
     o.append("@page p-cover {")
     o.append(f"    background: {pal['cover_bg']};")
-    o.append("    margin: 0; @top-left { content: none; } "
-             "@top-right { content: none; }")
+    o.append("    margin: 0; @top-left { content: none; }")
     o.append("    @bottom-left { content: none; } @bottom-right { content: none; } }")
 
     # MEMO 면 — 강제 개행으로 생긴 빈 면
@@ -262,7 +260,7 @@ def prelude(cfg):
     memo = m["memo"]
     o.append("\n/* 강제 개행으로 생긴 빈 페이지 = MEMO 면 */")
     o.append("@page p-body:blank {")
-    o.append("    @top-left { content: none; } @top-right { content: none; }")
+    o.append("    @top-left { content: none; }")
     o.append("    @bottom-left { content: none; } @bottom-right { content: none; }")
     o.append(f"    background: url(\"assets/memotab.png\") "
              f"right {memo['right'] + bleed}mm top {memo['top'] + bleed}mm / "
@@ -285,27 +283,19 @@ def generated(cfg):
     t = m["tab"]
     o.append(f".hdr-l {{ background: {tab(pal['tab'], t, bleed)} "
              f"{t['x'] + bleed - 1}mm {t['y'] + bleed - 1}mm / "
-             f"{t['w'] + 2}mm {t['h'] + 2}mm no-repeat; }}")
+             f"{t['w'] + 2}mm {t['h'] + 2}mm; }}")
     o.append(f".hdr-l.mir {{ background: {tab(pal['tab'], t, bleed, mirror=True)} "
              f"{PW - t['x'] - bleed - t['w'] - 1}mm {t['y'] + bleed - 1}mm / "
-             f"{t['w'] + 2}mm {t['h'] + 2}mm no-repeat; }}")
-    o.append(f".hdr-l i {{ display: block; position: absolute; "
-             f"left: {t['x'] + bleed}mm; top: {t['y'] + bleed}mm; "
-             f"width: {t['w']}mm; height: {t['h']}mm; "
-             f"line-height: {t['h']}mm; }}")
-
+             f"{t['w'] + 2}mm {t['h'] + 2}mm; }}")
     # ④ 로고 (오른쪽 면) — 크레스트 SVG + 알약 PNG + 라이브 글자
     o.append(f".hdr-r {{ background: "
              f"url(\"assets/pill2026.png\") "
-             f"right {lg['pill_right'] + bleed}mm top {lg['pill_top'] + bleed}mm / "
-             f"{lg['pill_w']}mm {lg['pill_h']}mm no-repeat, "
+             f"no-repeat right {lg['pill_right'] + bleed}mm "
+             f"top {lg['pill_top'] + bleed}mm / "
+             f"{lg['pill_w']}mm {lg['pill_h']}mm, "
              f"{crest(pal['crest'], lg['crest_w'], lg['crest_h'])} "
              f"right {lg['crest_right'] + bleed}mm top {lg['crest_top'] + bleed}mm / "
-             f"{lg['crest_w']}mm {lg['crest_h']}mm no-repeat; }}")
-    o.append(f".hdr-r b {{ position: absolute; right: {lg['text_right'] + bleed}mm; "
-             f"top: {lg['text_top'] + bleed}mm; font: 400 {lg['text_size']}pt "
-             f'"Tab"; color: var(--c-logo); letter-spacing: {lg["track"]}em; }}')
-
+             f"{lg['crest_w']}mm {lg['crest_h']}mm; }}")
     # ① Unit 시작 면 — 모눈 + 큰 원 (인플로우 `.unit-head` 안에서 그린다)
     gh = m["grid_h"]
     g_l = grid(pal["grid"], PW, gh, m["grid_pitch"], m["grid_width"], bleed,
@@ -315,17 +305,17 @@ def generated(cfg):
     o.append(f"/* 모눈 헤더 ①②: 왼쪽면 {g_l} top left / {PW}mm {gh + bleed}mm */")
     o.append(f"/* 모눈 헤더 ①②: 오른쪽면 {g_r} top left / {PW}mm {gh + bleed}mm */")
     o.append(f".unit-head {{ background: {circle(pal['circle'], m['circle'], bleed, PW)} "
-             f"top left / {PW}mm {m['circle']['cy'] + bleed + m['circle']['r'] + 1}mm "
-             f"no-repeat, {g_l} top left / {PW}mm {gh + bleed}mm no-repeat; }}")
+             f"top left / {PW}mm {m['circle']['cy'] + bleed + m['circle']['r'] + 1}mm"
+             f", {g_l} top left / {PW}mm {gh + bleed}mm; }}")
     o.append(f".unit-head.mir {{ background: "
              f"{circle(pal['circle'], m['circle'], bleed, PW)} "
-             f"top left / {PW}mm {m['circle']['cy'] + bleed + m['circle']['r'] + 1}mm "
-             f"no-repeat, {g_r} top left / {PW}mm {gh + bleed}mm no-repeat; }}")
+             f"top left / {PW}mm {m['circle']['cy'] + bleed + m['circle']['r'] + 1}mm"
+             f", {g_r} top left / {PW}mm {gh + bleed}mm; }}")
 
     # 간지 크레스트
     cv = m.get("cover") or {}
     o.append(f".cover .crest {{ background: "
-             f"{crest(pal['cover_mark'], 67.36, 62.275)} center / contain no-repeat; }}")
+             f"{crest(pal['cover_mark'], 67.36, 62.275)} center / contain; }}")
     o.append("/* ▲▲ 생성 규칙 끝 ▲▲ */")
     return "\n".join(o)
 

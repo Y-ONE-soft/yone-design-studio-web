@@ -40,14 +40,19 @@ body {
 .foot-r { position: running(footR); }
 
 /* ③ 왼쪽 면 둥근 탭 — 도형은 배경 SVG, 글자만 여기 */
-.hdr-l { width: var(--media-w); margin-left: calc(-1 * var(--mgn-out)); }
+/* ⚠ 배경은 **요소 상자 안**에서만 그려진다 — 높이를 상단 여백만큼 잡지 않으면
+ *    탭·크레스트의 아래쪽이 잘린다(실제로 겪음). 여백보다 크면 마진 박스가 자른다. */
+.hdr-l { width: var(--media-w); height: var(--margin-top);
+         margin-left: calc(-1 * var(--mgn-out)); }
 .hdr-l i {
     display: block; margin: var(--tabtxt-mt) 0 0 var(--tab-x);
     width: var(--tab-w); font: 400 12pt/1 "Tab"; color: #fff;
     text-align: center; font-style: normal; letter-spacing: .02em;
 }
 /* ④ 오른쪽 면 로고 — 크레스트 SVG + 알약 PNG 는 배경, 글자만 여기 */
-.hdr-r { width: var(--media-w); margin-left: calc(-1 * var(--mgn-in)); }
+.hdr-r { width: var(--media-w); height: var(--margin-top);
+         margin-left: calc(-1 * var(--mgn-in)); }
+/* ⚠ ④ 로고는 @top-left 슬롯에 들어간다 — @top-right 는 폭이 좁아 잘린다 */
 .hdr-r b {
     display: block; padding: var(--logo-pt) var(--logo-pr) 0 0;
     text-align: right; font: 400 var(--logo-size)/1 "Tab";
