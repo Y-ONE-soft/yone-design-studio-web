@@ -583,6 +583,71 @@
         return { ok: true, reason: "복제 (" + ops.length + ")" };
     }
 
+
+    // 실전(STEP3) 전용 페이지 복제.
+    //
+    // copyPageContent 는 세로 프레임 ↔ 가로 프레임을 1:1 로 짝지어 옮긴다.
+    // 실전은 세로 한 페이지의 프레임 수가 가로보다 많은 경우가 있고, 그때
+    // **짝을 못 찾은 세로 프레임이 통째로 버려져** 문항이 선지 중간에서
+    // 끊긴다(2026-08-25 실측: 10번 선지가 ③에서 끊기고 ④⑤ 소실).
+    //
+    // 여기서는 가로 프레임을 먼저 읽기 순서로 잇고, 세로 내용을 순서대로
+    // 흘려 넣는다. 프레임 경계는 리플로우가 정한다 → 유실이 없다.
+    function copyPracticePage(srcPage, tgtPage) {
+        var srcs = getMainTFs(srcPage);
+        var tgts = getMainTFs(tgtPage);
+        if (srcs.length === 0) { return { ok: false, reason: "세로 매핑 대상 없음" }; }
+        // 세로는 위→아래(같으면 왼→오), 가로는 왼단→오른단(같으면 위→아래)
+        srcs.sort(function (a, b) {
+            var dy = a.geometricBounds[0] - b.geometricBounds[0];
+            return Math.abs(dy) > 2 ? dy : (a.geometricBounds[1] - b.geometricBounds[1]);
+        });
+        if (tgts.length === 0) {
+            for (var d0 = 0; d0 < srcs.length; d0++) { srcs[d0].duplicate(tgtPage); }
+            return { ok: true, reason: "직접 복제 (" + srcs.length + ")" };
+        }
+        tgts.sort(function (a, b) {
+            var dx = a.geometricBounds[1] - b.geometricBounds[1];
+            return Math.abs(dx) > 2 ? dx : (a.geometricBounds[0] - b.geometricBounds[0]);
+        });
+        // 가로 프레임 잇기 (이미 이어져 있으면 그대로)
+        for (var t = 1; t < tgts.length; t++) {
+            try {
+                if (!tgts[t].previousTextFrame ||
+                        tgts[t].previousTextFrame.id !== tgts[t - 1].id) {
+                    tgts[t - 1].nextTextFrame = tgts[t];
+                }
+            } catch (eThread) {}
+        }
+        // 가로 기존 내용 비우기
+        try {
+            var hs = tgts[0].parentStory;
+            if (hs.characters.length > 0) { hs.texts[0].remove(); }
+        } catch (eClr) {}
+        // 세로 내용 순서대로 붓기 (프레임 단위 텍스트 → 서식 보존)
+        var moved = 0;
+        for (var m = 0; m < srcs.length; m++) {
+            try {
+                var stx = srcs[m].texts[0];
+                if (!stx || stx.characters.length === 0) { continue; }
+                var story = tgts[0].parentStory;
+                if (story.characters.length === 0) {
+                    stx.duplicate(LocationOptions.AT_BEGINNING, story.insertionPoints[0]);
+                } else {
+                    stx.duplicate(LocationOptions.AT_END, story.insertionPoints[-1]);
+                }
+                moved++;
+            } catch (eDup) {
+                warn("    실전 복제 실패: " + (eDup.message || eDup));
+            }
+        }
+        var ovf = false;
+        try { ovf = tgts[tgts.length - 1].overflows; } catch (eO) {}
+        return { ok: moved > 0,
+                 reason: "흘려넣기 " + moved + "/" + srcs.length +
+                         (ovf ? " [오버셋]" : "") };
+    }
+
     // ───────────────────────────────────────────────────────────────
     // 세로 분석
     // ───────────────────────────────────────────────────────────────
@@ -856,7 +921,7 @@
                     }
                     slotIdx++;
                     var srcP = srcPages[s];
-                    var r = copyPageContent(verti.pages[srcP - 1], horiz.pages[horizP - 1], config.tfPos);
+                    var r = copyPracticePage(verti.pages[srcP - 1], horiz.pages[horizP - 1]);
                     info("  p" + horizP + " : 지문" + lesson.num + " 세로 p" + srcP + " (실전) → " + (r.ok ? "OK" : "FAIL " + r.reason));
                     region.pageLessonMap[horizP] = lesson.num;
                 }
