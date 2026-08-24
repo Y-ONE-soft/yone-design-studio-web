@@ -31,6 +31,13 @@ _RE_NUM_HEAD = re.compile(r"^\s*[\[\{]?\d{1,6}[\]\}]?\s*")
 _RE_SERO_HEAD = re.compile(
     r"^\s*[A-C]\s*(본문|내용|어휘|어법|빈칸|문장|영작|실전)")
 _RE_DIGITS = re.compile(r"\d+")
+# 빈칸 표기는 세로("424[￼]")와 가로(번호 재매김·앵커 처리)가 다르게 찍힌다.
+# 글자만 남긴 형태로도 비교해 이 차이를 흡수한다.
+_RE_WORDCHARS = re.compile(r"[^0-9A-Za-z가-힣]+")
+
+
+def _letters(s):
+    return _RE_WORDCHARS.sub("", _RE_DIGITS.sub("", unicodedata.normalize("NFC", s)))
 
 
 def _norm(s):
@@ -93,6 +100,9 @@ def main():
         # 빈칸 번호는 후처리(fix_passage_numbers)가 정당하게 다시 매긴다.
         # 숫자를 뗀 형태로도 넣어 그 차이를 흡수한다.
         hset.add(_RE_DIGITS.sub("", n))
+        lt = _letters(t)
+        if len(lt) >= 12:
+            hset.add("L:" + lt)
 
     missing = []
     total = 0
@@ -110,6 +120,9 @@ def main():
         if _norm(_RE_NUM_HEAD.sub("", t)) in hset:
             continue
         if _RE_DIGITS.sub("", n) in hset:
+            continue
+        lt = _letters(t)
+        if len(lt) >= 12 and ("L:" + lt) in hset:
             continue
         missing.append((page, t))
 
