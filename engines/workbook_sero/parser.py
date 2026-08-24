@@ -535,12 +535,19 @@ def parse_manuscript_folder(manuscript_dir, config, grade, year, month, log):
             if sk == "step1_c1":
                 sec_paras = _augment_step1_c1_passage(sec_paras)
             # 합본은 첫 번호만 키로 사용 (마지막은 q_num_end)
-            m[qn] = {
+            entry = {
                 "q_num": qn,
                 "q_num_end": sec.get("q_num_end"),
                 "code": sec.get("code"),
                 "paragraphs": sec_paras,
             }
+            m[qn] = entry
+            # 회차가 섞인 보충 원고는 문항번호가 겹친다(16년 6월 36번 ·
+            # 17년 9월 36번 → 둘 다 q_num=36). q_num 키만 쓰면 뒤엣것이
+            # 앞엣것을 덮어 지문이 사라진다. 코드 키를 함께 넣어 사이클
+            # 구성의 코드 우선 매칭이 정확히 찾게 한다.
+            if sec.get("code"):
+                m[str(sec["code"])] = entry
         splits[sk] = m
         log(f"[파서/sero] {sk}: {len(m)}개 q_num 분할 (총 {len(paras)} paragraphs)")
 
