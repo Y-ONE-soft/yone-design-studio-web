@@ -2758,6 +2758,25 @@ def _c1_order_labels(labels):
 _RE_C1_TYPE_PROMPT = re.compile(
     r"^\s*\d{1,2}\s+(?:문단\s*배열|문장\s*배열|문장\s*삽입|순서\s*배열)\s")
 _RE_C1_TYPE_INSERT = re.compile(r"^\s*\d{1,2}\s+문장\s*삽입\s")
+# W73: 원고 섹션 구분줄 — "WORKSHEET  |  문장배열 + 문장삽입". 하단 스타일을
+# 쓰지만 하단 **본문**이 아니라 문항 묶음의 표제다.
+_RE_C1_SECTION_DIV = re.compile(r"^\s*(?:WORKSHEET|워크시트)\s*[|｜]")
+
+
+def _c1_is_bottom_body(it, st_btm, st_btm_t, st_hadan):
+    """이 단락이 하단 프레임의 **본문**인가 (W73).
+
+    st_btm("C1_문장 배열 하단")은 하단 본문뿐 아니라 유형 표기 발문·섹션
+    구분줄에도 쓰인다. 그것까지 하단으로 세면 카드 블록이 '상·하단 섞임'으로
+    판정돼 슬롯 배치가 통째로 꺼진다(능률(민) SL1 실증). 두 표제 형태만
+    판정에서 뺀다 — 기존 하단 본문 판정은 그대로다."""
+    s = it["s"]
+    if s in (st_btm_t, st_hadan):
+        return True
+    if s != st_btm:
+        return False
+    t = it["t"]
+    return not (_RE_C1_TYPE_PROMPT.match(t) or _RE_C1_SECTION_DIV.match(t))
 
 
 def _c1_group_slot_units(items, st_c1, st_btm, st_btm_t, st_hadan, warnings):
@@ -2813,7 +2832,8 @@ def _c1_group_slot_units(items, st_c1, st_btm, st_btm_t, st_hadan, warnings):
         carry = []
         if b < len(raw) - 1:
             has_card = any(it["s"] == st_c1 for it in body)
-            has_btm = any(it["s"] in bottom_styles for it in body)
+            has_btm = any(_c1_is_bottom_body(it, st_btm, st_btm_t, st_hadan)
+                          for it in body)
             if not has_card and not has_btm:
                 carry = body
                 continue
@@ -2827,7 +2847,8 @@ def _c1_group_slot_units(items, st_c1, st_btm, st_btm_t, st_hadan, warnings):
     blocks = []
     for head, body in raw:
         is_card = any(it["s"] == st_c1 for it in body)
-        is_btm = any(it["s"] in bottom_styles for it in body)
+        is_btm = any(_c1_is_bottom_body(it, st_btm, st_btm_t, st_hadan)
+                     for it in body)
         if is_card and is_btm:
             return None          # 한 블록에 상·하단이 섞인 형식 — 기존 경로
         if not is_card and not is_btm:
