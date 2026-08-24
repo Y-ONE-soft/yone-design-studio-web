@@ -74,20 +74,21 @@ def _dump(indd, tag, log):
     return rows
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("verti")
-    ap.add_argument("horiz")
-    ap.add_argument("--max", type=int, default=40)
-    args = ap.parse_args()
+def compare(verti, horiz, log=None):
+    """세로/가로 .indd 를 덤프해 대조 → (대조한 문단 수, 유실 목록).
 
-    def log(m):
-        print("  " + str(m), flush=True)
+    유실 목록은 [(세로 페이지, 문단 텍스트)]. 빈 리스트면 손실 0.
+    파이프라인(scripts/mt_pipeline.py)이 완료 판정에 그대로 쓴다 — CLI 와
+    같은 판정을 쓰려고 함수로 떼어냈다(로직 분기 금지).
+    """
+    if log is None:
+        def log(m):
+            print("  " + str(m), flush=True)
 
     print("[대조] 세로 덤프…", flush=True)
-    v = _dump(args.verti, "v", log)
+    v = _dump(verti, "v", log)
     print("[대조] 가로 덤프…", flush=True)
-    h = _dump(args.horiz, "h", log)
+    h = _dump(horiz, "h", log)
 
     # 가로 문단 집합 — 라벨 차이를 흡수하려고 "번호 뗀 형태"도 함께 넣는다
     hset = set()
@@ -125,6 +126,18 @@ def main():
         if len(lt) >= 12 and ("L:" + lt) in hset:
             continue
         missing.append((page, t))
+
+    return total, missing
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("verti")
+    ap.add_argument("horiz")
+    ap.add_argument("--max", type=int, default=40)
+    args = ap.parse_args()
+
+    total, missing = compare(args.verti, args.horiz)
 
     print("")
     print("=" * 60)

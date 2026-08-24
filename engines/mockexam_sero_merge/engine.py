@@ -327,6 +327,56 @@ class MockexamSeroMergeEngine(BaseEngine):
         candidates.sort(key=lambda p: len(os.path.basename(p)))
         return candidates[0]
 
+    # ─── 사전 조사 ─────────────────────────────────────────────────
+
+    def probe_sources(self, codes_text, grade="고1", log=None):
+        """코드별 세로 완성본 유무만 조사한다 — 복사·조판 없음, job 불필요.
+
+        parse 는 못 찾은 회차가 하나라도 있으면 예외로 죽는다(결합은 소스가
+        다 있어야 성립하니 맞는 계약이다). 하지만 **착수 전에** "어느 코드가
+        비어 있나"를 알아야 신규 조판 노선을 세울 수 있다. 그 판정만 떼어낸
+        읽기 전용 조사다.
+
+        반환: [{"code","year","month","qNum","display","path"}]
+              path 가 None 이면 그 회차 세로 완성본이 없다는 뜻.
+        """
+        cfg = self._config()
+        grade_num = str(grade).replace("고", "")
+        parsed = []
+        for piece in self._split_entries(codes_text):
+            piece = piece.strip().strip(",").strip()
+            if piece:
+                parsed.extend(self._parse_line(piece))
+        codes, seen = [], set()
+        for c in parsed:
+            if c["raw"] not in seen:
+                seen.add(c["raw"])
+                codes.append(c)
+
+        gdrive_folder = os.path.join(cfg["gdrive_base"], grade)
+        if not os.path.isdir(gdrive_folder):
+            raise FileNotFoundError(
+                "GDrive 폴더를 찾을 수 없습니다: %s" % gdrive_folder)
+
+        file_by_ym = {}
+        out = []
+        for c in codes:
+            ym = (c["year"], c["month"])
+            if ym not in file_by_ym:
+                file_by_ym[ym] = self._find_vertical_file(
+                    gdrive_folder, grade_num, c["year"], c["month"])
+            out.append({
+                "code": c["raw"], "year": c["year"], "month": c["month"],
+                "qNum": c["qNum"], "display": c["display"],
+                "path": file_by_ym[ym],
+            })
+            if log:
+                log("  %s (%s) → %s"
+                    % (c["display"], c["raw"],
+                       os.path.basename(file_by_ym[ym]) if file_by_ym[ym]
+                       else "**세로 완성본 없음**"))
+        return out
+
     # ─── parse ─────────────────────────────────────────────────────
 
     def parse(self, uploaded_files, job_dir, log):
@@ -364,10 +414,29 @@ class MockexamSeroMergeEngine(BaseEngine):
             raise FileNotFoundError(f"GDrive 폴더를 찾을 수 없습니다: {gdrive_folder}")
         log(f"[GDrive] {gdrive_folder}")
 
+        # 코드별 소스 지정 (source_override) — 세로 **완성본이 없는** 회차를
+        # 원고에서 새로 조판한 세로본으로 대신 쓰기 위한 통로다. 마더텅 강은
+        # 옛 기출(16·17·19년 등)을 섞어 쓰는데 그 회차 세로 완성본은 GDrive 에
+        # 없다. 종전엔 이 경우 parse 가 통째로 죽어서, 신규 조판분을 섞으려면
+        # metadata/settings 를 손으로 고쳐야 했다(2026-08-24 13강 실측).
+        # ⚠ 가산적: 키가 없으면 종전과 완전히 동일하게 동작한다.
+        override = dict(uploaded_files.get("source_override") or {})
+        for k, v in override.items():
+            if not os.path.exists(v):
+                raise FileNotFoundError(
+                    "source_override 파일 없음: %s → %s" % (k, v))
+
         # 회차(년/월)별 세로버전 파일 1회 매칭 — 같은 회차의 여러 문제는 파일 공유
         file_by_ym = {}
+        file_by_code = {}
         not_found = []
         for c in codes:
+            if c["raw"] in override:
+                file_by_code[c["raw"]] = override[c["raw"]]
+                log("  - %s (%s) → [지정] %s"
+                    % (c["display"], c["raw"],
+                       os.path.basename(override[c["raw"]])))
+                continue
             ym = (c["year"], c["month"])
             if ym not in file_by_ym:
                 f = self._find_vertical_file(
@@ -376,6 +445,7 @@ class MockexamSeroMergeEngine(BaseEngine):
                 file_by_ym[ym] = f
                 if not f:
                     not_found.append(f"{c['year']}년 {int(c['month'])}월")
+            file_by_code[c["raw"]] = file_by_ym[ym]
         if not_found:
             # 침묵 금지 (배치 F): 폴더 내 .indd 후보를 에러에 동봉 —
             # '왜 못 찾았는지'를 파일명 수준에서 바로 볼 수 있게.
@@ -392,7 +462,7 @@ class MockexamSeroMergeEngine(BaseEngine):
         # 코드별 소스 엔트리
         sources = []
         for c in codes:
-            f = file_by_ym[(c["year"], c["month"])]
+            f = file_by_code[c["raw"]]
             sources.append({
                 "code": c["raw"],
                 "year": c["year"],

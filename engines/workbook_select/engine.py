@@ -326,6 +326,29 @@ class WorkbookSelectEngine(WorkbookV2Engine):
             if _nfc(raw) in wanted:
                 ym_dir = os.path.join(grade_dir, raw)
                 break
+        if ym_dir is None:
+            # 2차: 연도 묶음 폴더 안에 회차 폴더가 있는 해가 있다 —
+            # '고1 21년(3,6,9,10,11월)/고1 21년 9월' (실측 21~25년). 1차가
+            # 0건일 때만 진입하므로 기존 매칭은 무변경.
+            for raw in os.listdir(grade_dir):
+                sub = os.path.join(grade_dir, raw)
+                n = _nfc(raw)
+                if not os.path.isdir(sub):
+                    continue
+                if not n.startswith("고%s %d년" % (grade_num, yy)):
+                    continue
+                try:
+                    inner = os.listdir(sub)
+                except OSError:
+                    continue
+                for raw2 in inner:
+                    if _nfc(raw2) in wanted:
+                        cand = os.path.join(sub, raw2)
+                        if os.path.isdir(cand):
+                            ym_dir = cand
+                            break
+                if ym_dir:
+                    break
         if ym_dir is None or not os.path.isdir(ym_dir):
             return None, "회차 폴더 없음: %s" % wanted[0]
 
