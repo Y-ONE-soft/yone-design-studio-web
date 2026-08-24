@@ -1320,6 +1320,14 @@ _HEADER_PATTERNS = [
     # 기존 패턴 무변경 append.
     re.compile(r"^L\d+[-–—]p\.?\d+(?:~\d+)?[가-힣][가-힣0-9]{0,30}"
                r"(?:\([^\)]{0,40}\))?$", re.I),
+    # 교과서 강이름-p-코너명형 (W73 — 능률(민) SL1 실증): "1. Special
+    # Lesson 1-p. 52 본문 1" → compact "SpecialLesson1-p.52본문1". 위의
+    # L-p 패턴은 강 코드가 `L\d+` 축약일 때만 매칭해, 강 이름을 풀네임으로
+    # 쓰는 원전이 오면 헤더 미인식 → 유닛 미분할 + 헤더 원문 인쇄 +
+    # 지문번호 라벨이 헤더 전문이 되어 JSX 줄임말이 전 지문을 "Special"
+    # 하나로 뭉갠다. 기존 패턴 무변경 append.
+    re.compile(r"^[A-Za-z]{2,30}\d{0,3}[-–—]p\.?\d+(?:~\d+)?"
+               r"[가-힣][가-힣0-9]{0,30}(?:\([^\)]{0,40}\))?$", re.I),
     # 교과서 L-한글라벨형 (W30-r15 — 같은 원고): "6. L1-추가본문" →
     # compact "L1-추가본문". 페이지/숫자 없이 한글 라벨만 직결된 형태.
     # 숫자 없는 한글 꼬리라 기존 어느 패턴에도 안 걸렸다.
@@ -1346,6 +1354,15 @@ _RE_LEAD_LESSON = re.compile(r"^\s*\d+\s*[과강]\s*")
 _RE_LEAD_ORD = re.compile(r"^\s*\d{1,3}\s*[.)]\s*")
 _RE_LEAD_PAGE = re.compile(r"^p\.?\s*\d+\s*[-–—.]?\s*", re.I)
 _RE_LEAD_NO = re.compile(r"^no\.?\s*", re.I)
+# W73 (능률(민) SL1 실증): 페이지 마커 앞의 강 이름 접두 ("Special Lesson 1-").
+# **뒤에 페이지 마커가 실제로 올 때만**(lookahead) 벗긴다 — "L1-본문1(p.17)"
+# 처럼 접두 뒤가 곧바로 라벨인 기존 표기는 건드리지 않는다.
+_RE_LEAD_LESSON_NAME = re.compile(
+    r"^[A-Za-z][A-Za-z]{0,14}(?:\s+[A-Za-z][A-Za-z]{0,14}){0,2}"
+    r"\s*\d{0,3}\s*[-–—]\s*(?=p\.?\s*\d)", re.I)
+# W73: "본문 1" / "본문1" 표기 혼재 → 공백 없는 쪽으로 통일. 같은 지문을
+# 스텝마다 다른 문자열로 가리키면 지문번호 프레임 갱신이 짝을 못 찾는다.
+_RE_BONMUN_SP = re.compile(r"본문\s+(\d)")
 
 
 def _abbrev_label(t):
@@ -1402,8 +1419,10 @@ def _header_label(text):
     "{1}{2}{3}…"이 되면서 다른 스텝({MR1}/[MR1])과 어긋났다."""
     t = re.sub(r"\s+", " ", (text or "")).strip()
     t = _RE_LEAD_ORD.sub("", t)
+    t = _RE_LEAD_LESSON_NAME.sub("", t)     # W73: "Special Lesson 1-p. 52 …"
     t = _RE_LEAD_PAGE.sub("", t)
     t = _RE_LEAD_NO.sub("", t)
+    t = _RE_BONMUN_SP.sub(r"본문\1", t)     # W73: "본문 1" → "본문1"
     if not _LABEL_ABBREV:
         return t.strip(" -–—")          # 통일 모드 아님 — 정규화만
     t = _RE_LEAD_LESSON.sub("", t)
