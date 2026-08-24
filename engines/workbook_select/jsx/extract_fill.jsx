@@ -131,6 +131,52 @@
                             }
                         }
                     }
+                } else if (src.mode === "style") {
+                    // 단락스타일로 칸을 특정한다 — 가로판 완성본은 한 페이지에
+                    // 상단(A1_어법 선택)과 하단(A1_어법 선택 하단)이 같이
+                    // 있어 y 좌표로는 안전하게 못 가른다.
+                    var spg = pageOf(A.doc, it.page);
+                    var stfs = spg.textFrames.everyItem().getElements();
+                    var sacc = [], spmt = "";
+                    for (fi = 0; fi < stfs.length; fi++) {
+                        try {
+                            var sname = "";
+                            var sps = stfs[fi].paragraphs;
+                            for (var sk2 = 0; sk2 < sps.length && sk2 < 3;
+                                    sk2++) {
+                                var nm = String(
+                                    sps[sk2].appliedParagraphStyle.name);
+                                if (nm === it.style) { sname = nm; break; }
+                            }
+                            if (!sname) { continue; }
+                            var spr = parasOf(stfs[fi]);
+                            for (var sk3 = 0; sk3 < spr.length; sk3++) {
+                                var st3 = spr[sk3].text
+                                    .replace(/\uFFFC/g, "")
+                                    .replace(/^\s+/, "");
+                                if (st3 === "") { continue; }
+                                if (isKorPrompt(st3) && st3.length < 80) {
+                                    if (spmt === "") { spmt = st3; }
+                                    continue;
+                                }
+                                spr[sk3].text = st3;
+                                if (spr[sk3].runs.length > 0) {
+                                    spr[sk3].runs[0].t =
+                                        String(spr[sk3].runs[0].t)
+                                        .replace(/\uFFFC/g, "")
+                                        .replace(/^\s+/, "");
+                                    if (spr[sk3].runs[0].t === "") {
+                                        spr[sk3].runs.shift();
+                                    }
+                                }
+                                sacc.push(spr[sk3]);
+                            }
+                        } catch (e5) {
+                            W("  [오류] p" + it.page + " frame " + fi + ": "
+                              + (e5.message || e5));
+                        }
+                    }
+                    put(it.step, it.code, sacc, spmt);
                 } else {
                     var bpg = pageOf(A.doc, it.page);
                     var btfs = bpg.textFrames.everyItem().getElements();
