@@ -91,14 +91,21 @@ body {
 
 /* ---------- 표제어 항목 ---------- */
 .w {
-    display: flex; break-inside: avoid;
+    /* ⚠ 2열을 flex 로 짜면 `break-inside: avoid` 가 **마지막 항목에서 무시돼**
+     *    판면 아래 띠까지 넘친다(실측: Unit 19 마지막 표제어). 표(table)로 짜면
+     *    조각화가 제대로 걸린다. 세로 정렬은 table-cell 의 vertical-align 으로. */
+    display: table; table-layout: fixed; width: 100%;
+    break-inside: avoid; page-break-inside: avoid;
+    /* 위 괘선 = border, 아래 괘선 = 배경 상자. 아래를 border 로 두면 이웃 항목과
+     * 겹치려 음수 마진이 필요한데, 배경으로 깔면 padding 상자 바닥에 그려져
+     * **다음 항목의 border-top 과 정확히 겹친다**(음수 마진 없이). */
     border-top: var(--rule-w) solid var(--c-rule);
-    border-bottom: var(--rule-w) solid var(--c-rule);
-    margin-bottom: calc(-1 * var(--rule-w));   /* 이웃한 괘선을 한 줄로 겹친다 */
+    background: linear-gradient(var(--c-rule), var(--c-rule))
+                no-repeat bottom left / 100% var(--rule-w);
     padding: var(--w-pad-t) 0 var(--w-pad-b);
 }
-.w-l { width: var(--col-w); flex: none; }
-.w-r { flex: 1 1 auto; padding-left: var(--col-gap); min-width: 0; }
+.w-l { display: table-cell; width: var(--col-w); vertical-align: top; }
+.w-r { display: table-cell; vertical-align: top; padding-left: var(--col-gap); }
 
 /* 왼쪽 열 — 번호 · 회독칸 · 표제어 · 발음기호 · 파생어 */
 .w-top { display: flex; align-items: flex-start; }
