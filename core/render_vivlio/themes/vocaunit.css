@@ -1,0 +1,131 @@
+/* UNIT형 단어장(vocaunit) 스타일시트 — 광문보카 계보.
+ *
+ * 이 파일에는 **책마다 달라지지 않는 것만** 둔다. 판형·여백·팔레트·서체·배경 SVG는
+ * 책 config(③)에서 `series/vocaunit/theme.py` 가 만들어 아래 두 자리에 끼운다:
+ *   @PRELUDE@    서체 · 색 · @page 지오메트리 · 간지 면 · MEMO 면
+ *   @GENERATED@  띠 · 탭 · 큰 원 · 모눈 · 로고(크레스트+알약) — 전부 배경 SVG/PNG
+ *
+ * 4면 체계: ①Unit 시작(왼쪽)=모눈+큰 원+UNIT NN ②이어지는 오른쪽=모눈+로고
+ * ③이후 왼쪽=상단 띠+둥근 탭 ④이후 오른쪽=상단 띠+로고. ①은 인플로우
+ * `.unit-head` 가, ②는 2패스가 만든 `pages.css` 가 `@page :nth()` 로 넣는다.
+ *
+ * 세로 리듬은 전부 **완성본 PDF 의 베이스라인 실측**이다(단위 mm, 항목 괘선 기준):
+ *   왼쪽 열  번호 3.95 · 표제어 9.03 · 발음기호 12.75 · 파생어 17.28(줄간 4.18)
+ *   오른쪽 열 뜻(줄간 4.23)은 괘선에서 7.73mm 지점을 축으로 **위아래 가운데**,
+ *            예문 첫 영문 16.90 · 영문 줄간 3.39 · 영→한 4.27 · 한→다음 영 6.20
+ * 원본(InDesign)은 오른쪽 열에 세로 균등배분이 걸려 있어 항목마다 ±1mm 흔들린다.
+ * 여기서는 고정 간격으로 둔다 — 읽는 눈으로는 구분되지 않고, 흔들림이 없는 쪽이
+ * 다음 책에 물려주기 쉽다.
+ */
+
+/*@PRELUDE@*/
+
+html, body { margin: 0; padding: 0; }
+p { margin: 0; }              /* 기본 문단 여백 제거 — 간격은 명시값으로만 */
+body {
+    font: 500 7pt/1 "Word"; color: var(--c-ink);
+    letter-spacing: var(--tight);
+    line-break: strict; hyphens: none; word-break: keep-all;
+    overflow-wrap: break-word;
+}
+
+/* ---------- 러닝 요소 ---------- */
+.hdr-l  { position: running(hdrL); }
+.hdr-r  { position: running(hdrR); }
+.foot-l { position: running(footL); }
+.foot-r { position: running(footR); }
+
+/* ③ 왼쪽 면 둥근 탭 — 도형은 배경 SVG, 글자만 여기 */
+.hdr-l { width: var(--media-w); margin: 0 0 0 calc(-1 * var(--mgn-out)); }
+.hdr-l i {
+    display: block; font: 400 12pt "Tab"; color: #fff;
+    text-align: center; font-style: normal; letter-spacing: .02em;
+}
+/* ④ 오른쪽 면 로고 — 크레스트 SVG + 알약 PNG 는 배경, "GWANGMUN VOCA" 만 글자 */
+.hdr-r { width: var(--media-w); margin: 0 calc(-1 * var(--mgn-out)) 0 0;
+         text-align: right; }
+.hdr-r b { display: block; font-weight: 400; }
+/* 간지처럼 표식이 없는 면 — 러닝 요소는 남아 있으므로 색만 지운다 */
+.hdr-l.off, .hdr-r.off { background: none !important; }
+.hdr-l.off *, .hdr-r.off * { color: transparent !important; }
+
+.foot-l, .foot-r { font: 700 6pt/1 "Num"; color: var(--c-accent);
+                   letter-spacing: 0; }
+.foot-l { margin-left: calc(-1 * var(--pg-out)); }
+.foot-r { text-align: right; margin-right: calc(-1 * var(--pg-out)); }
+.foot-l::before { content: counter(page); }
+.foot-r::after  { content: counter(page); }
+.foot-l.off::before, .foot-r.off::after { content: none; }
+
+/* ---------- ① Unit 시작 면 ---------- */
+/* 2패스 빌드가 이 면을 찾는 표식 — 보이지 않지만 PDF 텍스트로는 추출된다 */
+.mk { position: absolute; font-size: .5pt; color: transparent; }
+.unit-open { break-before: left; }
+.unit-head {
+    position: relative;
+    height: var(--head-h);                    /* 아래 본문이 시작하는 지점 */
+    margin: calc(-1 * var(--margin-top)) calc(-1 * var(--mgn-in))
+            0 calc(-1 * var(--mgn-out));
+}
+.unit-head .ttl, .unit-head .num { position: absolute; }
+.unit-head .ttl { font: 400 14pt "Tab"; color: #fff; }
+.unit-head .num { font: 400 34pt/1 "Disp"; color: var(--c-unitnum); }
+
+/* ---------- 표제어 항목 ---------- */
+.w {
+    display: flex; break-inside: avoid;
+    border-top: var(--rule-w) solid var(--c-rule);
+    border-bottom: var(--rule-w) solid var(--c-rule);
+    margin-bottom: calc(-1 * var(--rule-w));  /* 이웃한 괘선은 한 줄로 겹친다 */
+    padding-bottom: var(--w-pad-b);
+}
+.w-l { width: var(--col-w); flex: none; }
+.w-r { flex: 1 1 auto; padding-left: var(--col-gap); }
+
+/* 왼쪽 열 — 번호 · 회독칸 · 표제어 · 발음기호 · 파생어 */
+.w-top { display: flex; align-items: center; height: var(--no-h); }
+.w-no  { font: 700 6pt/1 "Word"; color: var(--c-accent); letter-spacing: .06em; }
+.chk   { display: flex; margin-left: var(--chk-x); }
+.chk i { display: block; width: var(--chk); height: var(--chk);
+         margin-right: var(--chk-gap); border: var(--rule-w) solid var(--c-chk);
+         border-radius: .25mm; }
+.w-word { font: 700 12pt/1 "Word"; margin-top: var(--word-mt);
+          letter-spacing: -.01em; }
+.w-word.long  { font-size: 10.5pt; }
+.w-word.xlong { font-size: 9pt; }
+.w-pron { font: 700 7pt/1 "Pron"; color: var(--c-pron); margin-top: var(--pron-mt);
+          letter-spacing: 0; }
+.w-deriv { margin-top: var(--deriv-mt); }
+.w-deriv p { font: 500 7pt/var(--deriv-lh) "Word"; }
+
+/* 오른쪽 열 — 뜻(가운데 정렬 슬롯) · 예문 */
+.w-def {
+    min-height: var(--def-slot); display: flex; flex-direction: column;
+    justify-content: center; margin-bottom: var(--def-mb);
+}
+.w-def p {
+    font: 500 8.5pt/var(--def-lh) "Kor";
+    text-indent: calc(-1 * var(--def-hang)); padding-left: var(--def-hang);
+}
+.w-def .n { color: var(--c-accent); }
+.w-def .q { font-size: 6pt; }                 /* (과실의) 같은 쓰임 설명 */
+.w-def .note { font-size: 6pt; color: var(--c-pos); }   /* (= …) (↔ …) */
+b.pos { font: 700 7pt "Kor"; color: var(--c-pos); }
+
+.w-ex .pair { margin-top: var(--pair-mt); }
+.w-ex .pair:first-child { margin-top: 0; }
+.w-ex .en { font: 500 8pt/var(--en-lh) "Word"; text-align: justify; }
+.w-ex .kr { font: 500 7pt/var(--kr-lh) "Word"; text-align: justify;
+            margin-top: var(--kr-mt); }
+.w-ex em { font-style: normal; color: var(--c-hl); }
+
+/* ---------- 간지 ---------- */
+.cover { break-before: right; height: var(--media-h); position: relative;
+         text-align: center; }
+.cover .crest { position: absolute; left: 0; right: 0;
+                top: var(--cover-mark-t); height: var(--cover-mark-h); }
+.cover .ttl { position: absolute; left: 0; right: 0; top: var(--cover-ttl-t);
+              font: 400 30pt/1 "Disp"; color: var(--c-cover-mark);
+              letter-spacing: .02em; }
+
+/*@GENERATED@*/
