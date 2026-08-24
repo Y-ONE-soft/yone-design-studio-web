@@ -1722,7 +1722,7 @@ def _strip_step3_tail_answers(paras):
 
 
 def _absorb_step3_ym(step3_dir, used_files, normal_items, log=None,
-                     extract_underline=True):
+                     extract_underline=True, short_items=None):
     """회차 표기가 **파일 안 헤더**나 **파일명**에 있는 Step3 원고를 흡수한다.
 
     두 방언을 처리한다 — 어느 쪽도 폴더 연·월로는 코드를 만들 수 없다:
@@ -1735,6 +1735,7 @@ def _absorb_step3_ym(step3_dir, used_files, normal_items, log=None,
     import unicodedata
     used = {unicodedata.normalize("NFC", p) for p in (used_files or {}).values()}
     have = {str(it.get("code") or "") for it in normal_items}
+    have |= {str(it.get("code") or "") for it in (short_items or [])}
     try:
         names = sorted(os.listdir(step3_dir))
     except OSError:
@@ -1755,14 +1756,21 @@ def _absorb_step3_ym(step3_dir, used_files, normal_items, log=None,
 
     for raw in names:
         fpath = os.path.join(step3_dir, raw)
-        if unicodedata.normalize("NFC", fpath) in used:
-            continue
         if not os.path.isfile(fpath):
             continue
         fname = _nfc(raw)
         ext = os.path.splitext(fname)[1].lower()
         if ext not in (".docx", ".hwp", ".hwpx"):
             continue
+        # 파일명 방언은 **이미 다른 코드로 쓰인 파일도** 봐야 한다 — 보충
+        # 폴더는 회차가 섞여 있어 "36번" 파일이 여러 개고, 폴더 연·월 기준
+        # 파일 키(files["36"])는 그중 하나만 남긴다.
+        m_fn = _RE_STEP3_FNAME_YM.search(fname)
+        fn_code = ("%s%02d%02d" % (m_fn.group(1), int(m_fn.group(2)),
+                                   int(m_fn.group(3)))) if m_fn else None
+        is_used = unicodedata.normalize("NFC", fpath) in used
+        if is_used and (not fn_code or fn_code in have):
+            continue    # 정규 경로가 이미 처리 — 내용 추출 생략(비용)
         try:
             if ext == ".docx":
                 paras = _docx_extract_paragraphs(fpath, extract_underline)
@@ -1806,20 +1814,16 @@ def _absorb_step3_ym(step3_dir, used_files, normal_items, log=None,
             continue
 
         # (2) 파일명 방언
-        m = _RE_STEP3_FNAME_YM.search(fname)
-        if not m:
+        if not fn_code or fn_code in have:
             continue
-        code = "%s%02d%02d" % (m.group(1), int(m.group(2)), int(m.group(3)))
-        if code in have:
-            continue
-        have.add(code)
+        have.add(fn_code)
         normal_items.append({
-            "question_num": m.group(3),
-            "code": code,
+            "question_num": m_fn.group(3),
+            "code": fn_code,
             "paragraphs": _finish(paras),
         })
         if log:
-            log("[파서] step3: 파일명 회차 '%s' → %s" % (fname, code))
+            log("[파서] step3: 파일명 회차 '%s' → %s" % (fname, fn_code))
 
     for it in normal_items:
         it.pop("_ym_absorb", None)
@@ -1992,7 +1996,8 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
     # 회차 표기가 파일 안 헤더/파일명에만 있는 원고 (폴더 연·월로는 코드를
     # 못 만드는 경우) — 보충 폴더와 회차 통합 원고.
     _absorb_step3_ym(step3_dir, files, normal_items, log,
-                     extract_underline=extract_underline)
+                     extract_underline=extract_underline,
+                     short_items=short_items)
 
     # 마더텅 Step3: 파일명에 "N강 M번 YYMMQQ" 형태 (한영고1 마더텅 예전 기출)
     # — 정규 모의고사 normal/short 매칭에 안 잡혔지만 파일은 있을 때
