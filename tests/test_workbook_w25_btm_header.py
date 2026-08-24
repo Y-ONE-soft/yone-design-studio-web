@@ -231,3 +231,31 @@ def test_legacy_header_is_exempt_from_outlier_drop():
     assert is_header_line(texts[0])
     _drop_shape_outliers(det, texts, "step2_a1_btm", legacy=is_header_line)
     assert sorted(det.header_idx) == [0, 2, 4, 6], sorted(det.header_idx)
+
+
+# ── W25 3단: 코너명형 지문의 지문번호 라벨 누락 ─────────────────────────────
+# 코너명형 헤더는 no. 번호가 없어 라벨 정규식이 전부 놓친다. 한 스텝에
+# 표기가 섞이면(코너명 1 + no.형 3) 라벨이 지문보다 적어져, 남는 번호
+# 프레임에 템플릿 잔재가 그대로 인쇄된다 (올림포스 독해기본2 실측:
+# 지문 4개 / 라벨 3개). 라벨 문구는 step2_a1의 {분석} 표기와 맞춘다.
+
+def _step(*texts):
+    return {"paragraphs": [{"text": t, "runs": [{"t": t, "ul": False}]}
+                           for t in texts]}
+
+
+def test_corner_passage_gets_label_in_place():
+    from engines.workbook_v2.plan import passage_labels
+    steps = {"step1_c2": _step(
+        "1. p8-수능 대비 ANALYSIS", "본문 일부",
+        "2. p10-no.01", "본문 일부",
+        "3. p11-no.02", "본문 일부",
+        "4. p12-no.03", "본문 일부")}
+    assert passage_labels(steps) == ["분석", "01", "02", "03"]
+
+
+def test_corner_label_does_not_change_plain_manuscripts():
+    """코너명형이 없는 원고의 라벨은 그대로 (채택 스텝·표기 무변경)."""
+    from engines.workbook_v2.plan import passage_labels
+    steps = {"step1_c2": _step("1. p2-no.20", "본문", "2. p3-no.21", "본문")}
+    assert passage_labels(steps) == ["20", "21"]

@@ -3324,6 +3324,12 @@ _RE_LABEL_HEADER = re.compile(
 # 외부지문 무-p형 헤더 "1. no.1" → no-번호 (W21 r11 — p-형과 동일 규칙)
 _RE_LABEL_HEADER_NOP = re.compile(
     r"^\s*\d+\s*[.)]\s*no\.\s*(\d+(?:\s*~\s*\d+)?)\s*$", re.I)
+# W25 — 번호 없는 코너명형 헤더 ("1. p8-수능 대비 ANALYSIS" /
+# "1. p80-수능 Analysis"). extract_tail이 "분석"/"분석N"을 내는 두 꼴과
+# 같은 범위로 좁혀 둔다 — 라벨 판정을 더 넓히면 채택 스텝이 바뀐다.
+_RE_CORNER_ANALYSIS = re.compile(
+    r"^\s*\d+\s*[.)]\s*p\.?\s*\d+\s*[-–—.]?\s*수능\s*(?:대비\s*)?"
+    r"analysis\s*(?:\([^)]*\))?\s*$", re.I)
 # bracket 지문번호 "[3과 추가지문]" / "[20]" → 내용부
 _RE_LABEL_BRACKET = re.compile(r"^\s*\[([^\]]+)\]\s*$")
 
@@ -3340,6 +3346,7 @@ def passage_labels(steps):
     for key in _LABEL_STEPS:
         data = steps.get(key) or {}
         labels = []
+        corner = []
         for p in data.get("paragraphs", []) or []:
             text = _norm_header(p.get("text") or "")
             m = _RE_LABEL_HEADER.match(text)
@@ -3351,7 +3358,26 @@ def passage_labels(steps):
                 label = re.sub(r"\s+", " ", m.group(1)).strip()
                 if label and label not in labels:
                     labels.append(label)
+                continue
+            # W25 — 번호 없는 코너명형 헤더("1. p8-수능 대비 ANALYSIS")는
+            # 위 정규식이 전부 놓쳐 **그 지문 몫의 라벨이 통째로 빠진다**.
+            # 한 스텝에 표기가 섞이면(코너명 1 + no.형 3) 라벨이 지문보다
+            # 적어져, 남는 번호 프레임에 템플릿 잔재가 그대로 인쇄된다
+            # (올림포스 독해기본2 실측: 지문 4개 / 라벨 3개 — 전 강 공통).
+            # 라벨 문구는 step2_a1 헤더 변환과 같은 규칙(extract_tail)을 써
+            # "분석"으로 맞춘다 — 어법 선택 상단이 이미 그렇게 찍고 있다.
+            # 채택 스텝과 기존 라벨 문자열은 건드리지 않는다: 코너명 라벨을
+            # **원래 자리에 끼워 넣기만** 한다 (라벨 판정을 넓히면 채택
+            # 스텝 자체가 바뀌어 다른 교재의 번호 표기가 통째로 달라진다 —
+            # 코퍼스 실측으로 확인된 회귀).
+            if _RE_CORNER_ANALYSIS.match(text):
+                lab = re.sub(r"\s+", " ", extract_tail(text) or "").strip()
+                if lab:
+                    corner.append((len(labels), lab))
         if labels:
+            for off, (pos, lab) in enumerate(corner):
+                if lab not in labels:
+                    labels.insert(pos + off, lab)
             return labels
     # W59 (비상(황) 실증): 형식 열거가 전부 실패하면 구조 인식기 폴백 —
     # 이 원고의 라벨은 숫자가 아니라 텍스트다("1. p1-Main Reading 1").

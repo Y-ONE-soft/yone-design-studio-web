@@ -358,6 +358,70 @@ def load_fill(path, log=None):
     return data
 
 
+# ── 문장배열 하단(문장삽입) — 헤더 반복 방식 원고 흡수 ───────────────────
+#
+# 문장배열 원고는 한 문항에 상단(순서배열 (A)~(H))과 하단(문장삽입)을 같이
+# 담는데, 하단의 시작 표기가 원고 세대마다 다르다:
+#
+#   들여쓰기 방식 : 헤더 1개 + (A)~(H) + **들여쓴 삽입문장** + 지문
+#                   (23년 6월·22년 3월·25년 회차 등)
+#   헤더 반복 방식: 같은 헤더를 **다시 쓰고** 삽입문장 + 지문
+#                   (21년 9월, 마더텅 보충 원고)
+#
+# _find_block 은 코드/번호가 맞는 **첫 블록**만 돌려주므로, 헤더 반복 방식은
+# 하단이 통째로 버려진다 (실측 2026-08-24: 마더텅 13강 9·16·18·22·23번의
+# 문장배열 하단이 백지로 조판됐다). 두 번째 블록을 이어붙이고, 그 첫 단락에
+# 들여쓰기를 부여해 플랜 빌더(build_step1_c1)의 하단 판정(3칸+ 공백으로
+# 하단 시작)이 들여쓰기 방식과 똑같이 걸리게 한다.
+#
+# 문항당 유닛 수가 원래 가변인 step1_c1 에만 적용한다 — 다른 헤더 스텝은
+# "문항 1개 = 블록 1개"가 계약이라 두 번째 블록을 흡수하면 유닛 수 불변식이
+# 깨진다.
+_REPEAT_BLOCK_STEPS = ("step1_c1",)
+_BTM_INDENT = " " * 9
+
+
+def _absorb_repeat_blocks(step_key, blocks, first, pc, out_paras,
+                          used_blocks, log=None):
+    """같은 문항을 가리키는 **뒤따르는** 블록을 하단으로 이어붙인다."""
+    if step_key not in _REPEAT_BLOCK_STEPS:
+        return
+    try:
+        start = blocks.index(first) + 1
+    except ValueError:
+        return
+    n = 0
+    for b2 in blocks[start:]:
+        same = (pc["code"] in (b2.get("codes") or ())) or \
+            (not b2.get("codes") and pc["qq"] in b2["nums"])
+        if not same:
+            break          # 다음 문항으로 넘어갔다 — 연속 블록만 본다
+        bid = (pc["yy"], pc["mm"], id(b2))
+        if bid in used_blocks:
+            break
+        used_blocks.add(bid)
+        paras = [_normalize_para(p) for p in b2["paras"]]
+        # 하단 시작 신호(들여쓰기)를 첫 실내용 단락에 부여
+        for q in paras:
+            if _blank(q.get("text", "")):
+                continue
+            if len(q["text"]) - len(q["text"].lstrip(" \u3000\t")) < 3:
+                q["text"] = _BTM_INDENT + q["text"]
+                if q.get("runs"):
+                    q["runs"] = [dict(q["runs"][0],
+                                      t=_BTM_INDENT + (q["runs"][0].get("t")
+                                                       or ""))] \
+                        + list(q["runs"][1:])
+                else:
+                    q["runs"] = [{"t": q["text"], "ul": False}]
+            break
+        out_paras.append(_blank_para())
+        out_paras.extend(paras)
+        n += 1
+    if n and log:
+        log("[문장배열 하단] %s: 헤더 반복 블록 %d개 흡수" % (pc["code"], n))
+
+
 def merge_selected(sources, codes, log=None, labels=None, fill=None):
     """병합 실행.
 
@@ -537,6 +601,8 @@ def merge_selected(sources, codes, log=None, labels=None, fill=None):
                 log("[원고결손] %s %s: %s — 교재팀 원고 재요청 필요"
                     % (step_key, pc["code"], bad))
             out_paras.extend(_normalize_para(p) for p in b["paras"])
+            _absorb_repeat_blocks(step_key, blocks, b, pc, out_paras,
+                                  used_blocks, log)
             # 블록 경계 사이 빈 단락 1개 보장 (원고 관례 유지)
             if b["paras"] and not _blank(b["paras"][-1].get("text", "")):
                 out_paras.append(_blank_para())
