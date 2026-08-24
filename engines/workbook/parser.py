@@ -1667,6 +1667,164 @@ _RE_STEP3_MULTI_HEAD = re.compile(
     r"고\s*(\d)\s*(\d{2})\s*년\s*(\d{1,2})\s*월\s*(\d{1,3})\s*번")
 
 
+# 회차 통합 Step3 원고 헤더 방언 — "2021년_고1_9월_인천광역시 교육청_학력평가_36번"
+# 한 파일에 36·37번이 같이 들어 있고, 같은 헤더가 변형문제마다 반복된다
+# (실측 2026-08-20: 고1 21년 9월 '2021년 9월 36-37번 변형문제.hwpx' — 헤더 14개,
+#  36번 8블록 + 37번 6블록). 파일명 규칙(고1 25년 9월 20번.hwp)에도,
+# 기존 보충 방언(_RE_STEP3_MULTI_HEAD)에도 안 걸려 그 회차 step3 가 통째로 빈다.
+_RE_STEP3_YM_HEAD = re.compile(
+    r"^\s*(?:19|20)?(\d{2})\s*년\s*[_\s]*고\s*\d\s*[_\s]*"
+    r"(\d{1,2})\s*월[^\n]*?[_\s](\d{1,3})\s*번\s*$")
+
+# 파일명 방언 — "고1 16년 6월 36번.hwpx" 가 **폴더 회차와 다른** 회차일 때.
+# 보충 원고 폴더(마더텅 N강)는 회차가 섞여 있어 폴더 연·월(0년 0월)로
+# 코드를 만들 수 없다 (실측 2026-08-21: 13강 Step3 = 16년 6월·17년 9월·19년 9월).
+_RE_STEP3_FNAME_YM = re.compile(
+    r"고\s*\d\s*(\d{2})\s*년\s*(\d{1,2})\s*월\s*(\d{1,3})(?:~\d{1,3})?\s*번")
+
+# 발문 꼬리에 붙은 정답 — "…가장 적절한 것은? ⑤",
+# "…적절하지 않은 것은? ④: prevent → create", "…쓰시오. ⓓ which → where".
+# 별도 줄 정답만 지우는 _strip_step3_answers 로는 안 걸려 학생용에 정답이
+# 그대로 인쇄된다. 회차 통합 원고 흡수 경로에서만 적용한다.
+_RE_STEP3_TAIL_ANSWER = re.compile(
+    r"(?<=[?？])\s*(?:\d{1,3}\s*번)?\s*[①-⑳ⓐ-ⓩ][^\n]*$"
+    r"|(?<=[?？])\s*\d{1,3}\s*번\s*$"
+    r"|(?<=시오[.])\s*[①-⑳ⓐ-ⓩ][^\n]*$")
+
+
+def _strip_step3_tail_answers(paras):
+    """발문 줄 끝에 붙은 정답 꼬리를 잘라낸다 (runs 도 같이 자름)."""
+    out = []
+    for p in paras or []:
+        if not isinstance(p, dict):
+            out.append(p)
+            continue
+        text = p.get("text") or ""
+        cut = _RE_STEP3_TAIL_ANSWER.sub("", text).rstrip()
+        if cut == text or not cut:
+            out.append(p)
+            continue
+        # runs 를 새 길이에 맞춰 자른다 (오프셋 정합 유지)
+        runs, off = [], 0
+        for r in p.get("runs") or []:
+            t = r.get("t") or ""
+            if off >= len(cut):
+                break
+            keep = t[:max(0, len(cut) - off)]
+            if keep:
+                runs.append(dict(r, t=keep))
+            off += len(t)
+        q = dict(p)
+        q["text"] = cut
+        q["runs"] = runs or [{"t": cut, "ul": False}]
+        out.append(q)
+    return out
+
+
+def _absorb_step3_ym(step3_dir, used_files, normal_items, log=None,
+                     extract_underline=True):
+    """회차 표기가 **파일 안 헤더**나 **파일명**에 있는 Step3 원고를 흡수한다.
+
+    두 방언을 처리한다 — 어느 쪽도 폴더 연·월로는 코드를 만들 수 없다:
+      (1) 파일 안 헤더: "2021년_고1_9월_…_36번" 이 변형문제마다 반복.
+          같은 코드의 연속 블록은 **한 문항으로 합친다** (헤더 줄만 제거).
+      (2) 파일명: "고1 16년 6월 36번.hwpx" — 보충 폴더처럼 회차가 섞인 경우.
+
+    이미 코드가 잡힌 문항은 건드리지 않는다(정규 경로 우선).
+    """
+    import unicodedata
+    used = {unicodedata.normalize("NFC", p) for p in (used_files or {}).values()}
+    have = {str(it.get("code") or "") for it in normal_items}
+    try:
+        names = sorted(os.listdir(step3_dir))
+    except OSError:
+        return
+
+    def _finish(paras):
+        paras = _strip_step3_tail_answers(paras)
+        paras = _merge_step3_split_choice_numbers(paras)
+        paras = _strip_step3_answers_section(paras)
+        paras = _strip_step3_answers(paras)
+        paras = _strip_step3_type_tags(paras)
+        paras = _add_step3_choice_numbers(paras)
+        paras = _strip_step3_book_markers(paras)
+        paras = _fix_step3_order_label_position(paras)
+        paras = _merge_step3_ab_pairs(paras)
+        paras = _merge_step3_column_table(paras)
+        return paras
+
+    for raw in names:
+        fpath = os.path.join(step3_dir, raw)
+        if unicodedata.normalize("NFC", fpath) in used:
+            continue
+        if not os.path.isfile(fpath):
+            continue
+        fname = _nfc(raw)
+        ext = os.path.splitext(fname)[1].lower()
+        if ext not in (".docx", ".hwp", ".hwpx"):
+            continue
+        try:
+            if ext == ".docx":
+                paras = _docx_extract_paragraphs(fpath, extract_underline)
+            else:
+                paras = _hwp_extract_paragraphs(
+                    fpath, extract_underline, exclude_footnotes=True,
+                    strip_inline_answers=True)
+        except Exception:
+            continue
+        if not paras:
+            continue
+
+        # (1) 파일 안 헤더 방언 — 같은 코드 연속 블록은 한 문항으로 합친다
+        heads = []
+        for i, p in enumerate(paras):
+            t = (p.get("text") if isinstance(p, dict) else str(p)) or ""
+            m = _RE_STEP3_YM_HEAD.match(t.strip())
+            if m:
+                code = "%s%02d%02d" % (m.group(1), int(m.group(2)),
+                                       int(m.group(3)))
+                heads.append((i, code))
+        if heads:
+            for k, (i, code) in enumerate(heads):
+                end = heads[k + 1][0] if k + 1 < len(heads) else len(paras)
+                if code in have:
+                    # 같은 코드가 이어지면 앞 블록에 이어붙인다 (변형문제 묶음)
+                    for it in normal_items:
+                        if str(it.get("code")) == code and it.get("_ym_absorb"):
+                            it["paragraphs"].extend(_finish(paras[i + 1:end]))
+                            break
+                    continue
+                have.add(code)
+                normal_items.append({
+                    "question_num": code[4:],
+                    "code": code,
+                    "paragraphs": _finish(paras[i + 1:end]),
+                    "_ym_absorb": True,
+                })
+                if log:
+                    log("[파서] step3: 회차통합 '%s' → %s" % (fname, code))
+            continue
+
+        # (2) 파일명 방언
+        m = _RE_STEP3_FNAME_YM.search(fname)
+        if not m:
+            continue
+        code = "%s%02d%02d" % (m.group(1), int(m.group(2)), int(m.group(3)))
+        if code in have:
+            continue
+        have.add(code)
+        normal_items.append({
+            "question_num": m.group(3),
+            "code": code,
+            "paragraphs": _finish(paras),
+        })
+        if log:
+            log("[파서] step3: 파일명 회차 '%s' → %s" % (fname, code))
+
+    for it in normal_items:
+        it.pop("_ym_absorb", None)
+
+
 def _absorb_step3_multi(step3_dir, used_files, normal_items, log=None):
     """한 파일에 지문 여러 개가 든 Step3 원고를 헤더로 잘라 항목화."""
     import unicodedata
@@ -1830,6 +1988,11 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
     # 안에 "11강 20번 – 고1 16년 11월 31번" 헤더로 지문 2개가 이어져 있어
     # 파일명 규칙(고1 25년 9월 20번.hwp) 기반 탐색으로는 0개가 나온다.
     _absorb_step3_multi(step3_dir, files, normal_items, log)
+
+    # 회차 표기가 파일 안 헤더/파일명에만 있는 원고 (폴더 연·월로는 코드를
+    # 못 만드는 경우) — 보충 폴더와 회차 통합 원고.
+    _absorb_step3_ym(step3_dir, files, normal_items, log,
+                     extract_underline=extract_underline)
 
     # 마더텅 Step3: 파일명에 "N강 M번 YYMMQQ" 형태 (한영고1 마더텅 예전 기출)
     # — 정규 모의고사 normal/short 매칭에 안 잡혔지만 파일은 있을 때
