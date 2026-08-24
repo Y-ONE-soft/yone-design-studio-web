@@ -1297,6 +1297,15 @@ _HEADER_PATTERNS = [
     # 부교재 코너명형 (W12): "1. p80-수능 Analysis" — compact "p80-수능Analysis".
     # 기존 패턴 무변경 append.
     re.compile(r"^p\d+[-–—]?수능Analysis$", re.I),
+    # 부교재 코너명 일반형 (W25): 위 두 패턴이 "수능대비ANALYSIS"/"수능
+    # Analysis" 라는 **특정 코너 문구**를 하드코딩한 탓에, 같은 꼴의 다른
+    # 코너명(원전 교재마다 다르다 — "수능 대비 ANALYSIS", "수능 유형
+    # ANALYSIS" …)이 오면 또 미인식 → 헤더 인쇄 + 유닛 미분할이 재발한다.
+    # 문구가 아니라 **꼴**로 매치한다: pN- + 한글 코너명 + 영문 코너명.
+    # (compact 매칭이라 공백은 이미 제거된 상태. 순수 한글 꼬리형은 위의
+    #  '한글 꼬리' 패턴이, 순수 영문형은 Example/Practice 패턴이 담당.)
+    re.compile(r"^p\d+[-–—]+[가-힣][가-힣0-9]{0,15}[A-Za-z][A-Za-z0-9]{0,20}$",
+               re.I),
     # 외부지문 무-p형 (W21 r11 — 성덕 외부지문 실사용 실증): "1. no.1" 처럼
     # 페이지 없이 지문 순번만 있는 헤더. v1 isHeaderLine도 미인식이라 v1
     # 렌더 출력엔 헤더가 그대로 인쇄됐고(3664cc0e 조판_로그 '헤더 0개'),
@@ -1488,6 +1497,21 @@ def _norm_header(s):
     return re.sub(r"[ \t]+", " ", s).strip()
 
 
+# W25: 헤더 꼬리 주석 "(정답 1개)" — 본체 패턴 매칭 **전에** 벗긴다.
+# 꼬리 그룹 `(?:\([^\)]{0,40}\))?` 을 각 패턴이 개별로 달고 있던 탓에, 꼬리를
+# 안 단 패턴(코너명형 수능Analysis/수능대비ANALYSIS, Practice형, 서술형
+# Practice, no.N형, L-p형)은 "(정답 N개)"가 붙은 헤더를 통째로 놓쳤다.
+# 하단 문제(step2_a1_btm) 헤더는 관행적으로 항상 이 꼬리가 붙기 때문에
+# 그 스텝의 헤더가 legacy 프라이어에서 전멸한다 —
+# 코퍼스 r2c12ext2/r2c14ext3 실측: step2_a1_btm 헤더 4/4개 False.
+# (v2는 구조 인식기가 구제하지만 legacy는 '항상 유지'하는 하위호환 하한선
+#  이라 여기가 뚫리면 구조 신호가 약한 원고에서 그대로 미인식이 된다.
+#  v1 run.jsx isHeaderLine도 같은 구조라 헤더가 지면에 인쇄됐다.)
+# 패턴마다 꼬리 그룹을 덧붙이는 대신 한 곳에서 벗겨, 새 패턴이 추가돼도
+# 같은 함정에 다시 빠지지 않게 한다.
+_RE_HDR_TAIL_PARENS = re.compile(r"(?:\s*\([^()]{0,40}\))+\s*$")
+
+
 def is_header_line(text):
     """v1 isHeaderLine: 'N. p2-no.20' 류 지문 헤더 (제거+프레임 분리 대상)."""
     hn = _norm_header(text)
@@ -1499,6 +1523,14 @@ def is_header_line(text):
     if not body or len(body) > 50:
         return False
     compact = re.sub(r"\s+", "", body)
+    if any(p.match(compact) for p in _HEADER_PATTERNS):
+        return True
+    # 기존 판정이 False일 때만 꼬리 주석을 벗겨 재시도 (additive — 기존
+    # True 판정은 위에서 그대로 반환되므로 회귀 없음).
+    stripped = _RE_HDR_TAIL_PARENS.sub("", body).strip()
+    if not stripped or stripped == body:
+        return False
+    compact = re.sub(r"\s+", "", stripped)
     return any(p.match(compact) for p in _HEADER_PATTERNS)
 
 
