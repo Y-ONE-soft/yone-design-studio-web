@@ -118,6 +118,15 @@ def _resolve_local_mirror(src, log=None):
     return src
 
 
+def _is_office_lock(name):
+    """Word/Excel 소유자 잠금 임시 파일("~$문서.docx") — 원고가 아니다.
+
+    문서를 열어 두면 같은 폴더에 생기고 닫으면 사라진다. 원고 목록에
+    섞이면 조판에는 안 쓰이면서 '미사용 원고' critical 만 남긴다
+    (2026-08-25 능률(민) SL1 실증: "~$ep2 C2 영작배열.docx")."""
+    return name.startswith("~$")
+
+
 def list_manuscript_entries(orig_folder, log=None):
     """원고 폴더 엔트리(파일/하위폴더)를 '미러 + GDrive 원본' 합집합으로 열거.
 
@@ -147,7 +156,7 @@ def list_manuscript_entries(orig_folder, log=None):
         try:
             for raw in os.listdir(orig_folder):
                 n = unicodedata.normalize("NFC", raw)
-                if n.startswith("."):
+                if n.startswith(".") or _is_office_lock(n):
                     continue
                 entries[n] = os.path.join(orig_folder, raw)
             gdrive_ok = True
@@ -160,7 +169,7 @@ def list_manuscript_entries(orig_folder, log=None):
             mirror_names = {}
             for raw in os.listdir(mirror_folder):
                 n = unicodedata.normalize("NFC", raw)
-                if n.startswith("."):
+                if n.startswith(".") or _is_office_lock(n):
                     continue
                 mirror_names[n] = os.path.join(mirror_folder, raw)
             if gdrive_ok:

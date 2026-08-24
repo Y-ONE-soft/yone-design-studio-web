@@ -603,9 +603,9 @@ def find_unused_uploads(content, uploads_dir):
         in_step3 = "step3" in unicodedata.normalize(
             "NFC", os.path.relpath(root, uploads_dir)).lower()
         for f in sorted(files):
-            if f.startswith(".") or os.path.splitext(f)[1].lower() \
-                    not in _MS_EXTS:
-                continue
+            if f.startswith(".") or f.startswith("~$") \
+                    or os.path.splitext(f)[1].lower() not in _MS_EXTS:
+                continue        # Office 잠금 임시 파일은 원고가 아니다
             nf = unicodedata.normalize("NFC", f)
             key = _norm_fname(nf)
             if key in used:
