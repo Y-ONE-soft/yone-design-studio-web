@@ -280,8 +280,23 @@
         /^p\d+[-\u2013\u2014]?Example\d+$/i,
         /^p\d+[-\u2013\u2014][A-Za-z]{1,15}\.?\d+(?:~\d+)?$/i,
         /^p\d+[-\u2013\u2014](?:\uC11C\uC220\uD615|\uB17C\uC220\uD615)Practice$/i,
-        /^p\d+[-\u2013\u2014]+\uC218\uB2A5\uB300\uBE44ANALYSIS$/i
+        /^p\d+[-\u2013\u2014]+\uC218\uB2A5\uB300\uBE44ANALYSIS$/i,
+        // W25 \u2014 v2 plan._HEADER_PATTERNS \uC640 \uB3D9\uAE30\uD654(additive). \uBD80\uAD50\uC7AC \uCF54\uB108\uBA85\uD615
+        // ("p80-\uC218\uB2A5Analysis"), \uCF54\uB108\uBA85 \uC77C\uBC18\uD615(pN-\uD55C\uAE00+\uC601\uBB38), \uAD50\uACFC\uC11C \uD55C\uAE00
+        // \uAF2C\uB9AC\uD615("p1-no.3\uACFC \uCD94\uAC00\uC9C0\uBB38"), L-p \uD55C\uAE00\uD615("L1-p.13\uBCF8\uBB381"),
+        // L-\uD55C\uAE00\uB77C\uBCA8\uD615("L1-\uCD94\uAC00\uBCF8\uBB38"), \uBB34-p \uC21C\uBC88\uD615("no.1") \u2014 \uD30C\uC774\uC36C\uCABD\uC5D0\uB9CC
+        // \uC788\uC5B4 v1 \uB80C\uB354\uB294 \uAC19\uC740 \uD5E4\uB354\uB97C \uC9C0\uBA74\uC5D0 \uADF8\uB300\uB85C \uC778\uC1C4\uD588\uB2E4.
+        /^p\d+[-\u2013\u2014]?\uC218\uB2A5Analysis$/i,
+        /^p\d+[-\u2013\u2014]+[\uAC00-\uD7A3][\uAC00-\uD7A30-9]{0,15}[A-Za-z][A-Za-z0-9]{0,20}$/i,
+        /^p\d+[-\u2013\u2014\.]?(?:no\.)?\d+(?:~\d+)?[\uAC00-\uD7A3][\uAC00-\uD7A30-9]{0,30}(?:\([^\)]{0,40}\))?$/i,
+        /^L\d+[-\u2013\u2014]p\.?\d+(?:~\d+)?[\uAC00-\uD7A3][\uAC00-\uD7A30-9]{0,30}(?:\([^\)]{0,40}\))?$/,
+        /^L\d+[-\u2013\u2014][\uAC00-\uD7A3][\uAC00-\uD7A30-9]{0,30}(?:\([^\)]{0,40}\))?$/,
+        /^no\.?\d+(?:~\d+)?$/i
     ];
+    // W25 \u2014 \uD5E4\uB354 \uAF2C\uB9AC \uC8FC\uC11D "(\uC815\uB2F5 1\uAC1C)". \uD328\uD134\uB9C8\uB2E4 \uAF2C\uB9AC \uADF8\uB8F9\uC744 \uB2EC\uB358 \uD0D3\uC5D0
+    // \uAF2C\uB9AC \uC5C6\uB294 \uD328\uD134(\uCF54\uB108\uBA85\uD615/Practice\uD615/no.N\uD615)\uC740 \uD558\uB2E8 \uBB38\uC81C(step2_a1_btm)
+    // \uD5E4\uB354\uCC98\uB7FC \uAF2C\uB9AC\uAC00 \uD56D\uC0C1 \uBD99\uB294 \uC6D0\uACE0\uB97C \uD1B5\uC9F8\uB85C \uB193\uCCE0\uB2E4 \u2014 \uD55C \uACF3\uC5D0\uC11C \uBC97\uAE34\uB2E4.
+    var reHdrTailParens = /(\s*\([^()]{0,40}\))+\s*$/;
     var reSupp = /^Supplementary Reading$/i;
 
     function normHeader(s) {
@@ -300,7 +315,11 @@
         var body = hn.replace(/^\d+\s*[.)]?\s*/, "");
         if (body.length === 0 || body.length > 50) return false;
         var compact = body.replace(/\s+/g, "");
-        return _matchAnyHeader(compact);
+        if (_matchAnyHeader(compact)) return true;
+        // \uAE30\uC874 \uD310\uC815\uC774 false \uC77C \uB54C\uB9CC \uAF2C\uB9AC \uC8FC\uC11D\uC744 \uBC97\uACA8 \uC7AC\uC2DC\uB3C4 (additive)
+        var stripped = body.replace(reHdrTailParens, "").replace(/^\s+|\s+$/g, "");
+        if (stripped.length === 0 || stripped === body) return false;
+        return _matchAnyHeader(stripped.replace(/\s+/g, ""));
     }
 
     // ========================================================================
