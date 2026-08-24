@@ -2753,6 +2753,13 @@ def _c1_order_labels(labels):
                   else (1, int(re.search(r"\d+", lb).group()), idx[lb]))
 
 
+# W73: 원고가 문항 앞에 다는 유형 표기 발문 — "02  문단배열   주어진 문장
+# 다음에 이어질 글의 순서를 쓰시오." / "01  문장배열 …" / "02  문장삽입 …".
+_RE_C1_TYPE_PROMPT = re.compile(
+    r"^\s*\d{1,2}\s+(?:문단\s*배열|문장\s*배열|문장\s*삽입|순서\s*배열)\s")
+_RE_C1_TYPE_INSERT = re.compile(r"^\s*\d{1,2}\s+문장\s*삽입\s")
+
+
 def _c1_group_slot_units(items, st_c1, st_btm, st_btm_t, st_hadan, warnings):
     """지문 라벨로 블록을 묶어 상단(배열 카드)/하단(순서·삽입) 슬롯에 배치.
 
@@ -2775,11 +2782,50 @@ def _c1_group_slot_units(items, st_c1, st_btm, st_btm_t, st_hadan, warnings):
         return None
     bottom_styles = {st_btm, st_btm_t, st_hadan}
     pre = items[:hdr_idx[0]]
-    blocks = []
     bounds = hdr_idx + [len(items)]
-    for b in range(len(bounds) - 1):
-        head = items[bounds[b]]
-        body = items[bounds[b] + 1:bounds[b + 1]]
+    raw = [(items[bounds[b]], items[bounds[b] + 1:bounds[b + 1]])
+           for b in range(len(bounds) - 1)]
+
+    # W73 (능률(민) SL1 실증 — C1이 문항당 한 페이지를 먹고 하단이 계속
+    # 비었다): 이 원고는 다음 문항의 **유형 표기 발문**("02  문단배열  주어진
+    # 문장 다음에…")이 앞 블록 꼬리에 붙어 온다. 헤더로 블록을 자르면 카드
+    # 블록이 하단 스타일 줄을 하나 물고 있게 되어 아래 '상·하단 섞임' 판정에
+    # 걸리고, 슬롯 배치가 통째로 꺼진 채 원고 순서대로 흘러 지문 5개가
+    # 39유닛/20쪽이 됐다. 꼬리의 유형 표기 줄은 **다음 블록의 것**이므로
+    # 옮겨 준다 (표기 줄이 꼬리에 없는 기존 원고는 무영향).
+    for b in range(len(raw) - 1):
+        body = raw[b][1]
+        j = len(body) - 1
+        while j >= 0 and _is_blank(body[j]["t"]):
+            j -= 1
+        if j >= 0 and _RE_C1_TYPE_PROMPT.match(body[j]["t"]):
+            raw[b] = (raw[b][0], body[:j])
+            raw[b + 1] = (raw[b + 1][0], body[j:] + raw[b + 1][1])
+
+    # 유형 표기 줄을 넘기고 나면 카드도 하단도 없는 '구분줄만' 블록이 남는다
+    # ("WORKSHEET | 문장배열 + 문장삽입"). 그 자체로는 문항이 아니므로 다음
+    # 블록의 머리에 붙인다 — 기존 경로가 쓰던 '라벨만 있는 빈 유닛 병합'과
+    # 같은 계약. 마지막 블록이면 옮길 곳이 없으니 그대로 둔다.
+    merged = []
+    carry = []
+    for b, (head, body) in enumerate(raw):
+        body = carry + body
+        carry = []
+        if b < len(raw) - 1:
+            has_card = any(it["s"] == st_c1 for it in body)
+            has_btm = any(it["s"] in bottom_styles for it in body)
+            if not has_card and not has_btm:
+                carry = body
+                continue
+        merged.append((head, body))
+    if carry and merged:
+        merged[-1] = (merged[-1][0], merged[-1][1] + carry)
+    raw = merged
+    if len(raw) < 2:
+        return None
+
+    blocks = []
+    for head, body in raw:
         is_card = any(it["s"] == st_c1 for it in body)
         is_btm = any(it["s"] in bottom_styles for it in body)
         if is_card and is_btm:
@@ -2794,6 +2840,13 @@ def _c1_group_slot_units(items, st_c1, st_btm, st_btm_t, st_hadan, warnings):
             if it["s"] == st_hadan and it["t"].strip() == _PROMPT_CIRC:
                 sub = 1       # 문장삽입 — 문단배열 뒤에 온다
                 break
+        # W73: 원고 유형 표기가 남아 있으면 그것으로도 판정 (엔진 발문이
+        # 아직 안 붙은 원고 — 표기 줄을 앞 블록에서 넘겨받은 경우).
+        if not sub:
+            for it in body:
+                if _RE_C1_TYPE_INSERT.match(it["t"]):
+                    sub = 1
+                    break
         blocks.append({"label": re.sub(r"\s+", "", head["t"]),
                        "head": head, "body": body, "sub": sub,
                        "kind": "card" if is_card else "bottom"})
