@@ -1552,7 +1552,7 @@ def _step_header_detection(step_data, step_name, legacy, strict=True):
            if USE_STRUCT_HEADER_DETECT else _legacy_only(texts, legacy))
     if strict and USE_STRUCT_HEADER_DETECT and det.silent():
         raise HeaderSilenceError(step_name, det)
-    _drop_shape_outliers(det, texts, step_name)
+    _drop_shape_outliers(det, texts, step_name, legacy)
     return det
 
 
@@ -1563,10 +1563,22 @@ def _step_header_detection(step_data, step_name, legacy, strict=True):
 #   가 헤더로 잡혀 유닛이 16→17로 갈리고 그 문장이 지면에서 사라졌다.
 #   (조판 전 구조 검사가 막아 조판은 시작도 못 했다)
 # 다수파가 no. 표기를 갖는데 소수가 안 갖는다면 그 소수는 본문이다.
+#
+# W25 — 단, 이 '소수파 정정'은 **구조 인식기가 승격한 라인**에만 적용해야
+# 한다. legacy 프라이어(정규식 열거)가 헤더라고 확언한 라인까지 떨어뜨리면
+# header_detect의 호환성 계약("legacy 인식분은 항상 유지")을 깨고, 한 스텝
+# 안에 표기가 섞인 정상 원고에서 그 소수 표기의 지문이 통째로 사라진다.
+#   실측 2026-08-24 (올림포스 독해기본2 1강 어법선택 하단 문제 — 사용자
+#   지목): 헤더 4개 중 3개가 "N. pN-no.0N", 1개가 코너명형
+#   "1. p8-수능 대비 ANALYSIS". 다수파 규칙이 그 1개를 본문으로 정정해
+#   유닛이 4→3으로 줄고 1번 지문(Bloom Cookie)이 지면에서 사라졌다.
+#   같은 헤더가 다른 스텝에서는 본문 단락으로 남아 그대로 인쇄됐다.
+# 원래 막으려던 오탐("29.  The examples are endlessly.")은 legacy가 False라
+# 여전히 정정 대상 — 가드의 효력은 그대로다.
 _RE_HDR_NO = re.compile(r"no\.?\s*\d", re.I)
 
 
-def _drop_shape_outliers(det, texts, step_name):
+def _drop_shape_outliers(det, texts, step_name, legacy=None):
     idx = sorted(det.header_idx)
     if len(idx) < 3:
         return                      # 표본이 적으면 다수파를 못 정한다
@@ -1578,6 +1590,8 @@ def _drop_shape_outliers(det, texts, step_name):
     for i in idx:
         if i in with_no:
             continue
+        if callable(legacy) and legacy(texts[i] or ""):
+            continue                # legacy 확언 헤더 — 정정 대상 아님
         det.header_idx.discard(i)
         print("[헤더인식] %s: 본문으로 정정 (다수 헤더는 no. 표기) — %r"
               % (step_name, (texts[i] or "")[:40]), flush=True)
