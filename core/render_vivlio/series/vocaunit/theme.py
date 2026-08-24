@@ -1,0 +1,319 @@
+"""UNIT형 단어장 테마 생성 — 팔레트/치수(③) + 계열 스타일시트(②) → build/theme.css.
+
+치수는 전부 **재단선 기준 mm** 다. 도련은 "옮기는 게 아니라 늘리는 것"이라
+(→ `docs/vivliostyle_엔진.md`) 여백에 도련을 더하고, 재단선에 닿는 색면만 도련만큼
+더 그린다. 원본 완성본 PDF(광문1_광문보카_내지(샘플).pdf)에서 실측한 값이
+`DEFAULT_METRICS` 이고, 책이 다르면 config 의 `metrics` 로 덮는다.
+
+도형은 예외 없이 배경 SVG 다(마진 박스 제약 → `core/render_vivlio/svg.py` 주석).
+글자가 들어가는 도형만 "배경 SVG + 러닝 요소 글자"로 나눈다.
+
+4면 체계
+  ① Unit 시작(왼쪽) = 모눈 헤더 + 큰 원 + UNIT NN     ← 인플로우 `.unit-head`
+  ② 이어지는 오른쪽 = 모눈 헤더 + 로고                ← 2패스 `@page :nth()`
+  ③ 이후 왼쪽       = 상단 띠 + 둥근 탭(UNIT NN)
+  ④ 이후 오른쪽     = 상단 띠 + 로고
+"""
+import os
+
+from core.render_vivlio import svg
+from core.render_vivlio.series.vocaunit import art
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+THEME_SRC = os.path.join(os.path.dirname(os.path.dirname(HERE)),
+                         "themes", "vocaunit.css")
+ASSETS_SRC = os.path.join(os.path.dirname(os.path.dirname(HERE)),
+                          "assets", "vocaunit")
+
+# 계열 기본 치수 — 광문보카 완성본 실측(재단선 기준 mm). config `metrics` 로 덮는다.
+DEFAULT_METRICS = {
+    "mgn_out": 15.0,        # 바깥(책배) 여백
+    "mgn_in": 18.0,         # 안쪽(책등) 여백
+    "margin_top": 20.09,    # ③④ 본문 상단
+    "margin_top_open": 25.09,   # ①② 모눈 헤더 면의 본문 상단
+    "margin_bottom": 17.0,
+
+    "col_w": 43.33,         # 표제어 열
+    "col_gap": 0.95,        # 뜻 열 왼쪽 안여백
+
+    "band_h": 3.75,         # 위·아래 띠(재단선 안쪽 높이)
+    "band_rule": 0.353,     # 띠 안쪽 가장자리 1pt 선
+
+    "grid_h": 20.0,         # ①② 모눈 헤더 높이(재단선 기준)
+    "grid_pitch": 2.794,
+    "grid_width": 0.15,
+
+    "tab": {"x": 14.0, "y": 3.2, "w": 29.15, "h": 10.65, "r": 3.0},
+    "circle": {"cx": 37.13, "cy": -7.06, "r": 25.29},
+
+    "logo": {"crest_w": 10.753, "crest_h": 9.941,
+             "crest_right": 9.935, "crest_top": 6.598,   # 재단선 기준
+             "pill_w": 8.8, "pill_h": 3.0,
+             "pill_right": 10.7, "pill_top": 10.55,
+             "text_right": 20.861, "text_top": 8.9,
+             "text_size": 7.0, "track": 0.1},
+
+    "memo": {"w": 11.8, "h": 23.9, "right": 0.0, "top": 26.48},
+
+    "pg_out": 9.67,         # 쪽번호 — 바깥 재단선에서
+    "pg_top": 195.36,       # 쪽번호 윗변(재단선 기준)
+    "tight": "-.005em",
+}
+
+
+def metrics_of(cfg):
+    m = {k: (dict(v) if isinstance(v, dict) else v)
+         for k, v in DEFAULT_METRICS.items()}
+    for k, v in (cfg.section("metrics") or {}).items():
+        if isinstance(v, dict) and isinstance(m.get(k), dict):
+            m[k].update(v)
+        else:
+            m[k] = v
+    return m
+
+
+def _c(cfg, key, default=""):
+    return (cfg.section("palette") or {}).get(key, default)
+
+
+# ── 배경 SVG ────────────────────────────────────────────────────────────
+def band(pale, rule, PW, h, rule_h, bleed, at_top=True):
+    """위/아래 띠 — 재단선 밖(도련)까지 채우고, 안쪽 가장자리에 1pt 선."""
+    H = h + bleed
+    if at_top:                      # 띠는 페이지 위 → 선은 아래 가장자리
+        body = svg.rect(0, 0, PW, H - rule_h, pale) + \
+            svg.rect(0, H - rule_h, PW, rule_h, rule)
+    else:                           # 아래 띠 → 선은 위 가장자리
+        body = svg.rect(0, rule_h, PW, H - rule_h, pale) + \
+            svg.rect(0, 0, PW, rule_h, rule)
+    return svg.data_uri(PW, H, body)
+
+
+def grid(color, PW, h, pitch, width, bleed, phase_right=False):
+    """모눈 — 헤더(①②)와 MEMO 면 공통. 책등 쪽에 위상을 맞춘다(펼침면 연속)."""
+    H = h + bleed
+    body = []
+    n = int(H / pitch) + 2
+    for i in range(n):
+        y = round(H - i * pitch, 3) if False else round(i * pitch, 3)
+        if y <= H:
+            body.append(svg.line(0, y, PW, y, color, width))
+    n = int(PW / pitch) + 2
+    for i in range(n):
+        x = round(PW - i * pitch, 3) if phase_right else round(i * pitch, 3)
+        if 0 <= x <= PW:
+            body.append(svg.line(x, 0, x, H, color, width))
+    return svg.data_uri(PW, H, "".join(body))
+
+
+def grid_full(color, PW, PH, pitch, width, phase_right=False):
+    body = []
+    for i in range(int(PH / pitch) + 2):
+        y = round(i * pitch, 3)
+        if y <= PH:
+            body.append(svg.line(0, y, PW, y, color, width))
+    for i in range(int(PW / pitch) + 2):
+        x = round(PW - i * pitch, 3) if phase_right else round(i * pitch, 3)
+        if 0 <= x <= PW:
+            body.append(svg.line(x, 0, x, PH, color, width))
+    return svg.data_uri(PW, PH, "".join(body))
+
+
+def tab(main, t, bleed, mirror=False):
+    """③ 둥근 탭 — 위 모서리는 각지고 아래만 둥글다(띠에서 흘러내린 모양)."""
+    W, H = t["w"] + 2, t["h"] + 2
+    x, y, w, h, r = 1.0, 1.0, t["w"], t["h"], t["r"]
+    d = (f"M{x} {y} L{x + w} {y} L{x + w} {y + h - r} "
+         f"C{x + w} {y + h - r * .45:.3f} {x + w - r * .45:.3f} {y + h} "
+         f"{x + w - r} {y + h} L{x + r} {y + h} "
+         f"C{x + r * .45:.3f} {y + h} {x} {y + h - r * .45:.3f} {x} {y + h - r} Z")
+    body = svg.path(d, fill=main)
+    if mirror:
+        body = svg.mirror(body, W)
+    return svg.data_uri(W, H, body)
+
+
+def circle(main, c, bleed, PW):
+    """① 큰 원 — 재단선 위로 넘어간다. 박스는 도련까지 키워 잘리지 않게."""
+    cx, cy, r = c["cx"] + bleed, c["cy"] + bleed, c["r"]
+    W, H = PW, cy + r + 1
+    body = (f"<circle cx='{cx}' cy='{cy}' r='{r}' fill='{svg.h(main)}'/>")
+    return svg.data_uri(W, H, body)
+
+
+def crest(color, w, h):
+    return svg.data_uri(w, h, art.crest(color), viewbox=art.CREST_VIEWBOX)
+
+
+# ── 프렐류드 ────────────────────────────────────────────────────────────
+def prelude(cfg):
+    m = metrics_of(cfg)
+    p = cfg.page
+    bleed, PW, PH = p["bleed"], p["media_w"], p["media_h"]
+    pal = cfg.section("palette") or {}
+    o = ["/* ---------- 서체 (로컬 설치본을 build/fonts 로 복사해 임베드) ---------- */"]
+    for f in cfg.get("fonts") or []:
+        st = f" font-style: {f['style']};" if f.get("style") else ""
+        o.append(f'@font-face {{ font-family: "{f["family"]}"; '
+                 f'src: url("fonts/{os.path.basename(f["file"])}"); '
+                 f'font-weight: {f.get("weight", 400)};{st} }}')
+
+    o.append("\n:root {")
+    for k, v in pal.items():
+        if isinstance(v, str):
+            o.append(f"    --c-{k}: {v};")
+    o.append(f"    --bleed: {bleed}mm;")
+    o.append(f"    --col-w: {m['col_w']}mm;")
+    o.append(f"    --col-gap: {m['col_gap']}mm;")
+    o.append(f"    --tight: {m['tight']};")
+    o.append("}")
+
+    # ── 페이지 ──
+    band_top = band(pal["band"], pal["rule2"], PW, m["band_h"], m["band_rule"],
+                    bleed, at_top=True)
+    band_bot = band(pal["band"], pal["rule2"], PW, m["band_h"], m["band_rule"],
+                    bleed, at_top=False)
+    bh = m["band_h"] + bleed
+    bg_bands = (f"{band_bot} bottom left / {PW}mm {bh}mm, "
+                f"{band_top} top left / {PW}mm {bh}mm")
+    o.append("\n/* ---------- 페이지 ---------- */")
+    o.append("@page {")
+    o.append(f"    size: {PW}mm {PH}mm;"
+             f"          /* {p['width']}×{p['height']} + 도련 {bleed}mm */")
+    o.append(f"    margin: {m['margin_top'] + bleed}mm "
+             f"{m['mgn_in'] + bleed}mm {m['margin_bottom'] + bleed}mm "
+             f"{m['mgn_out'] + bleed}mm;")
+    o.append(f"    background: {bg_bands};")
+    o.append("    @top-left     { content: element(hdrL); vertical-align: top; }")
+    o.append("    @top-right    { content: element(hdrR); vertical-align: top; }")
+    o.append("    @bottom-left  { content: element(footL); vertical-align: top; }")
+    o.append("    @bottom-right { content: element(footR); vertical-align: top; }")
+    o.append("}")
+    o.append(f"@page :left  {{ margin-left: {m['mgn_out'] + bleed}mm; "
+             f"margin-right: {m['mgn_in'] + bleed}mm;")
+    o.append("               @top-right { content: none; } "
+             "@bottom-right { content: none; } }")
+    o.append(f"@page :right {{ margin-left: {m['mgn_in'] + bleed}mm; "
+             f"margin-right: {m['mgn_out'] + bleed}mm;")
+    o.append("               @top-left { content: none; } "
+             "@bottom-left { content: none; } }")
+
+    # 본문 페이지(이름 있는 규칙) — `@page :nth()` 는 이름과 **함께** 써야 먹는다
+    o.append("\n@page p-body { }")
+    o.append("@page p-cover {")
+    o.append(f"    background: {pal['cover_bg']};")
+    o.append("    margin: 0; @top-left { content: none; } "
+             "@top-right { content: none; }")
+    o.append("    @bottom-left { content: none; } @bottom-right { content: none; } }")
+
+    # MEMO 면 — 강제 개행으로 생긴 빈 면
+    g_full_r = grid_full(pal["grid"], PW, PH, m["grid_pitch"], m["grid_width"],
+                         phase_right=False)
+    memo = m["memo"]
+    o.append("\n/* 강제 개행으로 생긴 빈 페이지 = MEMO 면 */")
+    o.append("@page p-body:blank {")
+    o.append("    @top-left { content: none; } @top-right { content: none; }")
+    o.append("    @bottom-left { content: none; } @bottom-right { content: none; }")
+    o.append(f"    background: url(\"assets/memotab.png\") "
+             f"right {memo['right'] + bleed}mm top {memo['top'] + bleed}mm / "
+             f"{memo['w']}mm {memo['h']}mm no-repeat, {bg_bands}, "
+             f"{g_full_r} top left / {PW}mm {PH}mm;")
+    o.append("}")
+    return "\n".join(o)
+
+
+# ── 생성 규칙(배경 SVG) ─────────────────────────────────────────────────
+def generated(cfg):
+    m = metrics_of(cfg)
+    p = cfg.page
+    bleed, PW, PH = p["bleed"], p["media_w"], p["media_h"]
+    pal = cfg.section("palette") or {}
+    lg = m["logo"]
+    o = ["/* ▼▼ 생성 규칙 — series/vocaunit/theme.py 가 만든다. 직접 고치지 말 것 ▼▼ */"]
+
+    # ③ 탭 (왼쪽 면) — 배경 SVG + 러닝 요소 글자
+    t = m["tab"]
+    o.append(f".hdr-l {{ background: {tab(pal['tab'], t, bleed)} "
+             f"{t['x'] + bleed - 1}mm {t['y'] + bleed - 1}mm / "
+             f"{t['w'] + 2}mm {t['h'] + 2}mm no-repeat; }}")
+    o.append(f".hdr-l.mir {{ background: {tab(pal['tab'], t, bleed, mirror=True)} "
+             f"{PW - t['x'] - bleed - t['w'] - 1}mm {t['y'] + bleed - 1}mm / "
+             f"{t['w'] + 2}mm {t['h'] + 2}mm no-repeat; }}")
+    o.append(f".hdr-l i {{ display: block; position: absolute; "
+             f"left: {t['x'] + bleed}mm; top: {t['y'] + bleed}mm; "
+             f"width: {t['w']}mm; height: {t['h']}mm; "
+             f"line-height: {t['h']}mm; }}")
+
+    # ④ 로고 (오른쪽 면) — 크레스트 SVG + 알약 PNG + 라이브 글자
+    o.append(f".hdr-r {{ background: "
+             f"url(\"assets/pill2026.png\") "
+             f"right {lg['pill_right'] + bleed}mm top {lg['pill_top'] + bleed}mm / "
+             f"{lg['pill_w']}mm {lg['pill_h']}mm no-repeat, "
+             f"{crest(pal['crest'], lg['crest_w'], lg['crest_h'])} "
+             f"right {lg['crest_right'] + bleed}mm top {lg['crest_top'] + bleed}mm / "
+             f"{lg['crest_w']}mm {lg['crest_h']}mm no-repeat; }}")
+    o.append(f".hdr-r b {{ position: absolute; right: {lg['text_right'] + bleed}mm; "
+             f"top: {lg['text_top'] + bleed}mm; font: 400 {lg['text_size']}pt "
+             f'"Tab"; color: var(--c-logo); letter-spacing: {lg["track"]}em; }}')
+
+    # ① Unit 시작 면 — 모눈 + 큰 원 (인플로우 `.unit-head` 안에서 그린다)
+    gh = m["grid_h"]
+    g_l = grid(pal["grid"], PW, gh, m["grid_pitch"], m["grid_width"], bleed,
+               phase_right=True)
+    g_r = grid(pal["grid"], PW, gh, m["grid_pitch"], m["grid_width"], bleed,
+               phase_right=False)
+    o.append(f"/* 모눈 헤더 ①②: 왼쪽면 {g_l} top left / {PW}mm {gh + bleed}mm */")
+    o.append(f"/* 모눈 헤더 ①②: 오른쪽면 {g_r} top left / {PW}mm {gh + bleed}mm */")
+    o.append(f".unit-head {{ background: {circle(pal['circle'], m['circle'], bleed, PW)} "
+             f"top left / {PW}mm {m['circle']['cy'] + bleed + m['circle']['r'] + 1}mm "
+             f"no-repeat, {g_l} top left / {PW}mm {gh + bleed}mm no-repeat; }}")
+    o.append(f".unit-head.mir {{ background: "
+             f"{circle(pal['circle'], m['circle'], bleed, PW)} "
+             f"top left / {PW}mm {m['circle']['cy'] + bleed + m['circle']['r'] + 1}mm "
+             f"no-repeat, {g_r} top left / {PW}mm {gh + bleed}mm no-repeat; }}")
+
+    # 간지 크레스트
+    cv = m.get("cover") or {}
+    o.append(f".cover .crest {{ background: "
+             f"{crest(pal['cover_mark'], 67.36, 62.275)} center / contain no-repeat; }}")
+    o.append("/* ▲▲ 생성 규칙 끝 ▲▲ */")
+    return "\n".join(o)
+
+
+def open_page_css(cfg, m=None):
+    """2패스가 쓰는 ①② 면 배경 — (왼쪽면 배경, 오른쪽면 배경, ② 상단여백)."""
+    m = m or metrics_of(cfg)
+    p = cfg.page
+    bleed, PW = p["bleed"], p["media_w"]
+    pal = cfg.section("palette") or {}
+    gh = m["grid_h"]
+    band_bot = band(pal["band"], pal["rule2"], PW, m["band_h"], m["band_rule"],
+                    bleed, at_top=False)
+    bh = m["band_h"] + bleed
+
+    def bg(phase_right):
+        g = grid(pal["grid"], PW, gh, m["grid_pitch"], m["grid_width"], bleed,
+                 phase_right=phase_right)
+        return (f"{band_bot} bottom left / {PW}mm {bh}mm, "
+                f"{g} top left / {PW}mm {gh + bleed}mm")
+
+    return bg(True), bg(False), m["margin_top_open"] + bleed
+
+
+def build_css(cfg):
+    src = open(THEME_SRC, encoding="utf-8").read()
+    return (src.replace("/*@PRELUDE@*/", prelude(cfg))
+               .replace("/*@GENERATED@*/", generated(cfg)))
+
+
+def write(cfg, path, log=None):
+    css = build_css(cfg)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(css)
+    if log:
+        m = metrics_of(cfg)
+        log(f"[테마] {len(css.splitlines())}줄 생성 "
+            f"(띠 {m['band_h']}mm · 모눈 {m['grid_h']}mm/{m['grid_pitch']}mm) "
+            f"→ {os.path.basename(path)}")
+    return path
