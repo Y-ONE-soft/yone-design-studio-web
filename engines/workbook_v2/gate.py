@@ -239,6 +239,11 @@
                   fail-open: 템플릿에 S_답란이 없으면 선지 폴백 + 들여쓰기
                   0 로컬 오버라이드 브릿지 → warning. 있는데 미적용이면
                   critical.
+  G47 [원고잔재] 원고 편집용 부속물(파이프 머리글 / '…시오' 지시문 /
+                  라벨+밑줄 기입란)이 출력에 인쇄됨 — critical. 발문은
+                  엔진이 발문을 삽입하는 스텝(C1) 스토리에서만 검사
+                  (step3의 발문은 문항 내용). 2026-08-24 능률(민) SL1
+                  실증: 34줄/11페이지 오염을 기존 게이트가 전부 통과.
 
 G4/G5는 dump_stories.jsx의 W11 확장 필드(stale_pages / pg / b)가 필요하다.
 G24②/G26은 W21 확장 필드(fc / pages)가 필요하다. G29②는 W23 확장 필드
@@ -733,6 +738,56 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         critical.append(f"[답표미생성] 답표 헤더('틀린 부분')가 평문 "
                         f"단락으로 {len(tbl_leaks)}개 인쇄됨 — 표 삽입 "
                         f"미적용")
+
+    # ── G47: 원고 편집용 부속물(머리글/발문/기입란) 잔존 ─────────────────
+    # 원고는 편집용 워크시트라 완제품이 자기 계약으로 다시 만드는 부속물이
+    # 섞여 있다 — 페이지 머리글("WORKSHEET | 문장배열 + 문장삽입"), 유형
+    # 발문("02  문단배열   …쓰시오."), 답 기입란("정답 순서 ______").
+    # 플랜(build_step1_c1)이 구조 판정으로 제거하므로 출력 잔존 = 미적용.
+    # 2026-08-24 능률(민) SL1 실증(사용자 지적): 11개 페이지에 34줄이 그대로
+    # 인쇄됐는데 게이트가 전부 통과시켰다 — 유닛수/오버플로우/PDF만 봤기
+    # 때문. 내용 오염은 내용을 봐야 잡힌다.
+    #
+    # 발문(prompt)은 스텝마다 계약이 다르다 — step3의 "다음 글을 읽고 물음에
+    # 답하시오."는 문항 내용이다. 그래서 발문은 **엔진이 발문을 삽입하는
+    # 스텝(C1)** 의 스토리에서만 검사하고, 머리글·기입란은 전 스토리에서
+    # 본다 (어느 스텝에서도 완제품 내용이 아니다).
+    from core.structure import manuscript_noise as _mn
+    _c1_story_ids = set()
+    for fl in (plan.get("flows") or []):
+        if fl.get("step") != "step1_c1":
+            continue
+        _st = _find_story_with_text(dump, _flow_probe_text(fl))
+        if _st is not None:
+            _c1_story_ids.add(id(_st))
+    noise = {}
+    for story in dump.get("stories", []):
+        in_c1 = id(story) in _c1_story_ids
+        for para in story.get("paragraphs", []):
+            tt = _clean(para.get("t", ""))
+            if not tt:
+                continue
+            kind = _mn.classify(tt)
+            if kind is None:
+                continue
+            if kind == _mn.PROMPT:
+                if not in_c1:
+                    continue    # 발문이 내용인 스텝 — 계약상 정상
+                # 엔진이 삽입한 발문은 발문 계열 스타일로 인쇄된다
+                # (C1 하단 = "하단 문제"). 원고 잔재는 지문/기본 스타일로
+                # 남으므로 스타일이 두 경우를 가른다.
+                if any(k in (para.get("s") or "") for k in _Q_STYLE_KEYS):
+                    continue
+            noise.setdefault(kind, []).append(tt[:60])
+    stats["manuscript_noise"] = {k: len(v) for k, v in noise.items()}
+    if noise:
+        _label = {_mn.RUNNING_HEAD: "원고 머리글",
+                  _mn.PROMPT: "원고 발문(엔진 발문과 중복)",
+                  _mn.ANSWER_BLANK: "원고 기입란"}
+        for kind, hits in sorted(noise.items()):
+            critical.append(
+                f"[원고잔재] {_label.get(kind, kind)} {len(hits)}줄이 출력에 "
+                f"그대로 인쇄됨: " + " | ".join(sorted(set(hits))[:3]))
 
     # ── G2 정답 블록 잔존 ────────────────────────────────────────────────
     ans = find_leaked_answers(dump)

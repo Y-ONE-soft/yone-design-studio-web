@@ -55,7 +55,13 @@ def is_running_head(text):
         return False
     if len(_RE_PIPE.findall(t)) < 1:
         return False
-    if len(_fields(t)) < 2:
+    fields = _fields(t)
+    if len(fields) < 2:
+        return False
+    # 머리글은 '메타 정보'라 최소 한 필드가 이름 길이를 갖는다. 한두 글자
+    # 필드만 있는 줄은 표의 열 머리다 ("O | X" — 본문 O/X 선택지, 실측
+    # 오탐). 내용 표를 머리글로 오인하지 않도록 길이 하한을 둔다.
+    if max(len(f) for f in fields) < 4 or len(t) < 8:
         return False
     if _RE_SENT_END.search(t) or _RE_PROMPT_END.search(t):
         return False

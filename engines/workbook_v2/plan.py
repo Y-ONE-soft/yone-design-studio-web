@@ -2953,19 +2953,39 @@ def build_step1_c1(step_data, workbook_type="모의고사", exclude_btm=False,
 
     # 1) 공백만 있는 bracket 단락 제거: [   ] → 삭제
     items = [it for it in items if not _RE_C1_EMPTY_BRACKET.match(it["t"])]
-    # W68 (11강 실증 — 사용자 지적 "문장배열쪽에 발문도 노출"): C1의 발문은
-    # **엔진이 삽입**하는 것이 계약이라(아래 발문 삽입 패스), 원고에 적힌
-    # 발문("Q. 문맥 상 … 쓰시오.")과 강 표제("11강. 흐름에 무관한 문장 찾기")
-    # 는 중복·원고 편집용이다. 엔진 삽입문은 'Q.'로 시작하지 않으므로
-    # 이 두 형태만 걷어낸다 (발문 자체를 지우는 위험 없음).
-    _c1_drop = [it for it in items
-                if _RE_C1_MANU_PROMPT.match(it["t"])
-                or _RE_C1_LESSON_TITLE.match(it["t"])]
+    # C1의 발문·머리글·기입란은 **엔진/템플릿이 자기 계약으로 만든다**
+    # (아래 발문 삽입 패스, 마스터 러닝헤드, 상·하단 슬롯). 원고에 적힌
+    # 같은 부속물은 전부 중복이다.
+    #
+    # W68까지는 `^Q[.:]` 리터럴만 걷어냈는데, 원고마다 발문 표기가 달라
+    # 그대로 통과했다 — 2026-08-24 능률(민) SL1 실증(사용자 지적):
+    #   "02  문단배열   주어진 문장 다음에 이어질 글의 순서를 쓰시오."  (발문 중복)
+    #   "WORKSHEET  |  문장배열 + 문장삽입"                          (원고 머리글)
+    #   "정답 순서  ______________"                                  (원고 기입란)
+    # 이 11개 페이지에 그대로 인쇄됐다. 그래서 리터럴이 아니라 구조로
+    # 판정한다 (core/structure/manuscript_noise — 파이프 필드 막대 /
+    # '…시오' 종결 지시문 / 밑줄만 남는 기입란). 문장 속 빈칸이나
+    # 선지·지문은 구조가 달라 걸리지 않는다.
+    from core.structure import manuscript_noise as _mn
+    _c1_kinds = {}
+    for it in items:
+        k = _mn.classify(it["t"])
+        if k or _RE_C1_MANU_PROMPT.match(it["t"]) \
+                or _RE_C1_LESSON_TITLE.match(it["t"]):
+            _c1_kinds[id(it)] = k or "prompt"
+    _c1_drop = [it for it in items if id(it) in _c1_kinds]
     if _c1_drop:
-        items = [it for it in items if it not in _c1_drop]
-        warnings.append("step1_c1: 원고 발문/표제 %d줄 제거 (엔진 발문과 "
-                        "중복) — %s" % (len(_c1_drop),
-                                       _c1_drop[0]["t"][:30]))
+        items = [it for it in items if id(it) not in _c1_kinds]
+        _cnt = {}
+        for it in _c1_drop:
+            _k = _c1_kinds[id(it)]
+            _cnt[_k] = _cnt.get(_k, 0) + 1
+        warnings.append(
+            "step1_c1: 원고 부속물 %d줄 제거 (엔진 발문/템플릿 머리글과 "
+            "중복) — %s — 예: %s"
+            % (len(_c1_drop),
+               ", ".join("%s %d" % (k, v) for k, v in sorted(_cnt.items())),
+               _c1_drop[0]["t"][:30]))
     # W50: 헤더 직전 섹션 타이틀 줄(Further Reading 류) 제거 — C1은 유닛
     # 분할을 det가 아니라 {라벨} GREP이 담당하므로, 흡수 줄만 여기서
     # 미리 걷어낸다 (de909e4d 실증: 타이틀 줄이 $BASIC으로 인쇄).
