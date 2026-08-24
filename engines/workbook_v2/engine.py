@@ -535,6 +535,16 @@ class WorkbookV2Engine(BaseEngine):
         except Exception as e:                                  # noqa: BLE001
             warnings.append(f"⚠️ 완제품 게이트 실행 실패: {e}")
 
+        # (f) 기준 완성본 대조 — 파생 엔진이 훅을 구현하면 실행 (기본 no-op).
+        #     "기존 파일을 보고 거기에 맞추면 된다"(사용자 반복 지침)를
+        #     육안이 아니라 검수 단계에서 자동으로 수행한다.
+        try:
+            hook = getattr(self, "_reference_findings", None)
+            if hook:
+                warnings.extend(hook(job_dir, dump, log))
+        except Exception as e:                                  # noqa: BLE001
+            warnings.append(f"⚠️ 기준대조 실행 실패: {e}")
+
         # 플랜 빌더 경고 (헤더 미인식 등 — steps_to_plan이 수집)
         warnings.extend(f"⚠️ 플랜: {w}"
                         for w in (plan.get("warnings") or [])[:5])

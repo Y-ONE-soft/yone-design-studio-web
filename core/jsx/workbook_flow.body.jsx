@@ -2163,6 +2163,38 @@ function updateDividerPages(doc, line1, line2) {
     }
 }
 
+// ── 템플릿 상주 안내문 제거 (plan.drop_standalone_prompts) ─────────────────
+// 내지 원본에 미리 박혀 있는 섹션 안내문("각 문장에서 어법상 틀린 곳이
+// 있다면 …수정하세요")은 원고에서 오는 게 아니라 템플릿 텍스트다.
+// 사용자 지침(2026-08-25): 교과서 워크북에서는 불필요 — 지운다.
+// 구조 판정: (1) 플로우에 스레드되지 않은 독립 프레임이고
+//            (2) 프레임 전체 내용이 한국어 지시문 한 줄('…시오/…세요')
+// 프레임 자체는 남기고 내용만 비운다 (프레임 remove 는 마스터/스레드
+// 참조를 깨뜨린다 — 화이트북 교훈).
+function dropStandalonePrompts(doc, flowStories) {
+    var flowIds = {};
+    for (var step in flowStories) {          // flowStories = {step: {story:…}}
+        try { flowIds[flowStories[step].story.id] = true; } catch (e) {}
+    }
+    var re = /(?:시오|세요|십시오)\s*[.?!]?\s*$/;
+    var n = 0;
+    var stories = doc.stories;
+    for (var si = 0; si < stories.length; si++) {
+        var st = stories[si];
+        if (flowIds[st.id]) { continue; }
+        var txt;
+        try { txt = String(st.contents); } catch (e2) { continue; }
+        var t = txt.replace(/^[\s\r\n\u0016\uFFFC]+/, "")
+                   .replace(/[\s\r\n]+$/, "");
+        if (!t || t.length > 80) { continue; }
+        if (t.indexOf("\r") >= 0 || t.indexOf("\n") >= 0) { continue; }
+        if (!/[가-힣]/.test(t) || !re.test(t)) { continue; }
+        try { st.contents = ""; n++; } catch (e3) {}
+    }
+    log("  템플릿 안내문 제거: " + n + "개");
+    return n;
+}
+
 // ── 교과서 후처리 (v1 run.jsx 16.8 이식 — plan.textbook_postprocess) ────────
 // 빈 A-마스터 페이지 → B-마스터, 빈 C-마스터 페이지 → D-마스터.
 // ── W40 결함 1: 다열 선지 열 정렬 — 자동 탭스톱 (v1 실물 실측 관행) ─────────
@@ -3090,6 +3122,12 @@ try {
         app.doScript(function () { textbookPostprocess(doc); },
                      ScriptLanguage.JAVASCRIPT, undefined,
                      UndoModes.ENTIRE_SCRIPT, "wb_v2 textbook_post");
+    }
+    if (plan.drop_standalone_prompts) {
+        app.doScript(function () {
+            dropStandalonePrompts(doc, flowStories);
+        }, ScriptLanguage.JAVASCRIPT, undefined,
+           UndoModes.ENTIRE_SCRIPT, "wb_v2 drop_prompts");
     }
     // W67: 빈칸(줄바꿈 없는 공백) 길이 실측 보정 — 레이아웃 확정 이후
     app.doScript(function () { fitBlankRuns(doc); },

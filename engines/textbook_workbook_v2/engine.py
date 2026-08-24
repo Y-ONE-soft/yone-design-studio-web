@@ -256,6 +256,85 @@ class TextbookWorkbookV2Engine(WorkbookV2Engine):
         STEP_MAP과 같은 마커/페이지/pos, section_masters op가 소비)."""
         return dict(_STEP_MAP)
 
+    # ── 기준 완성본 대조 (사용자 지침: "기존 파일 보고 거기에 맞춰라") ────
+
+    _REF_CACHE = os.path.join(
+        os.path.expanduser("~"), "Library", "Application Support",
+        "yone-design-web", "refdump")
+
+    def _find_reference_indd(self, job_dir):
+        """같은 과목·출판사의 다른 과 완성본 (관행의 정본) 경로."""
+        subject = self._read_meta_str(job_dir, "subject", "")
+        publisher = self._read_meta_str(job_dir, "publisher", "")
+        lesson = self._read_meta_str(job_dir, "lesson", "")
+        pub_short = publisher
+        if subject and publisher.startswith(subject):
+            pub_short = publisher[len(subject):].strip()
+        base = os.path.join(
+            os.path.expanduser("~"), "Library", "CloudStorage",
+            "GoogleDrive-etyrano11@gmail.com", "내 드라이브", "콘텐츠 관리",
+            "내신대비", "인디자인 파일", "워크북", "교과서", subject, pub_short)
+        if not os.path.isdir(base):
+            return None
+        cands = []
+        for raw in sorted(os.listdir(base)):
+            n = unicodedata.normalize("NFC", raw)
+            if not n.lower().endswith(".indd") or n.startswith("."):
+                continue
+            if lesson and lesson in n:
+                continue        # 같은 과는 기준이 아니다 (자기 대조 금지)
+            full = os.path.join(base, raw)
+            cands.append((os.path.getmtime(full), full))
+        if not cands:
+            return None
+        return sorted(cands)[-1][1]     # 가장 최근 완성본
+
+    def _reference_dump(self, ref_indd, log):
+        """완성본 덤프 (mtime 캐시 — 매 조판마다 InDesign 재실행 방지)."""
+        import hashlib
+        from core.inspect import dump_indd
+        os.makedirs(self._REF_CACHE, exist_ok=True)
+        key = hashlib.sha1(
+            ("%s|%s" % (ref_indd, os.path.getmtime(ref_indd)))
+            .encode("utf-8")).hexdigest()[:16]
+        cached = os.path.join(self._REF_CACHE, key + ".json")
+        if os.path.isfile(cached):
+            return json.load(open(cached, encoding="utf-8"))
+        # GDrive 원본 무접촉 — 로컬 사본을 열어 덤프한다
+        import shutil
+        import tempfile
+        tmp = os.path.join(tempfile.gettempdir(),
+                           "ref_" + key + ".indd")
+        shutil.copy2(ref_indd, tmp)
+        try:
+            return dump_indd(tmp, cached, log, timeout=900)
+        finally:
+            try:
+                os.remove(tmp)
+            except OSError:
+                pass
+
+    def _reference_findings(self, job_dir, dump, log):
+        """신규 출력에만 있는 구조 표기 — 기준 완성본 대조 결과."""
+        from core.inspect.reference_diff import compare
+        ref = self._find_reference_indd(job_dir)
+        if not ref:
+            log("[기준대조] 같은 출판사 완성본을 찾지 못함 — 대조 생략")
+            return []
+        name = os.path.basename(ref)
+        log(f"[기준대조] 기준 완성본: {name}")
+        try:
+            ref_dump = self._reference_dump(ref, log)
+        except Exception as e:                              # noqa: BLE001
+            log(f"[기준대조] 기준 덤프 실패 — 대조 생략 ({str(e)[:120]})")
+            return []
+        findings, missing, stats = compare(dump, ref_dump, name)
+        log("[기준대조] 새 출력에만 있는 구조 %d건 / 기준에만 %d건"
+            % (stats["only_new"], stats["only_ref"]))
+        for m in missing:
+            log("  [기준대조·참고] " + m)
+        return ["🔎 [기준대조] " + f for f in findings]
+
     def _plan_decorations(self, job_dir, cfg):
         """v1 run.jsx 16.7(간지) + 16.8(빈 페이지 마스터 재할당) opt-in
         + 완제품 후처리 op (W13 — c13/c15 실조판 실증 + W24 r14 확산).
@@ -289,6 +368,11 @@ class TextbookWorkbookV2Engine(WorkbookV2Engine):
             "page_cleanup": {"empty": "delete"},
             "section_masters": True,
             "question_keep": True,
+            # 내지 원본에 상주하는 섹션 안내문("각 문장에서 어법상 틀린 곳이
+            # 있다면 …수정하세요") 제거 — 사용자 지침(2026-08-25). 원고가
+            # 아니라 템플릿 텍스트라 플랜으로는 지울 수 없어 실행기 op로
+            # 뺀다. 교과서 워크북 전용 (다른 계열 내지 관행 무변경).
+            "drop_standalone_prompts": True,
         }
         try:
             content = json.load(open(os.path.join(job_dir, "content.json"),
