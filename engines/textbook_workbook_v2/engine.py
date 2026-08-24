@@ -262,8 +262,11 @@ class TextbookWorkbookV2Engine(WorkbookV2Engine):
         os.path.expanduser("~"), "Library", "Application Support",
         "yone-design-web", "refdump")
 
-    def _find_reference_indd(self, job_dir):
-        """같은 과목·출판사의 다른 과 완성본 (관행의 정본) 경로."""
+    def _find_reference_indd(self, job_dir, limit=3):
+        """같은 과목·출판사의 다른 과 완성본들 (관행의 정본) — 최신순 N개.
+
+        한 권만 보면 그 권 고유의 사정(과가 달라 없는 섹션 등)이 오탐으로
+        올라온다. 여러 권을 보고 **어느 완성본에도 없는** 구조만 보고한다."""
         subject = self._read_meta_str(job_dir, "subject", "")
         publisher = self._read_meta_str(job_dir, "publisher", "")
         lesson = self._read_meta_str(job_dir, "lesson", "")
@@ -275,7 +278,7 @@ class TextbookWorkbookV2Engine(WorkbookV2Engine):
             "GoogleDrive-etyrano11@gmail.com", "내 드라이브", "콘텐츠 관리",
             "내신대비", "인디자인 파일", "워크북", "교과서", subject, pub_short)
         if not os.path.isdir(base):
-            return None
+            return []
         cands = []
         for raw in sorted(os.listdir(base)):
             n = unicodedata.normalize("NFC", raw)
@@ -285,9 +288,15 @@ class TextbookWorkbookV2Engine(WorkbookV2Engine):
                 continue        # 같은 과는 기준이 아니다 (자기 대조 금지)
             full = os.path.join(base, raw)
             cands.append((os.path.getmtime(full), full))
-        if not cands:
-            return None
-        return sorted(cands)[-1][1]     # 가장 최근 완성본
+        # 같은 계열(예: SL1 ↔ SL2)을 먼저 본다 — '가장 비슷한 기존 파일'이
+        # 관행의 정본이다. 그다음 최신순. (계열 접두 = 과 표기의 앞 글자들)
+        kin = re.match(r"[A-Za-z]+", lesson or "")
+        kin = kin.group(0).lower() if kin else ""
+        def _rank(item):
+            mtime, path = item
+            name = unicodedata.normalize("NFC", os.path.basename(path)).lower()
+            return (0 if kin and kin in name else 1, -mtime)
+        return [p for _m, p in sorted(cands, key=_rank)[:limit]]
 
     def _reference_dump(self, ref_indd, log):
         """완성본 덤프 (mtime 캐시 — 매 조판마다 InDesign 재실행 방지)."""
@@ -317,23 +326,35 @@ class TextbookWorkbookV2Engine(WorkbookV2Engine):
     def _reference_findings(self, job_dir, dump, log):
         """신규 출력에만 있는 구조 표기 — 기준 완성본 대조 결과."""
         from core.inspect.reference_diff import compare
-        ref = self._find_reference_indd(job_dir)
-        if not ref:
+        refs = self._find_reference_indd(job_dir)
+        if not refs:
             log("[기준대조] 같은 출판사 완성본을 찾지 못함 — 대조 생략")
             return []
-        name = os.path.basename(ref)
-        log(f"[기준대조] 기준 완성본: {name}")
-        try:
-            ref_dump = self._reference_dump(ref, log)
-        except Exception as e:                              # noqa: BLE001
-            log(f"[기준대조] 기준 덤프 실패 — 대조 생략 ({str(e)[:120]})")
+        per_ref, names = [], []
+        for ref in refs:
+            name = os.path.basename(ref)
+            try:
+                ref_dump = self._reference_dump(ref, log)
+            except Exception as e:                          # noqa: BLE001
+                log(f"[기준대조] {name} 덤프 실패 — 건너뜀 ({str(e)[:90]})")
+                continue
+            findings, missing, stats = compare(dump, ref_dump, name)
+            names.append(name)
+            per_ref.append({f.split(" 는 기준")[0]: f for f in findings})
+            log("[기준대조] %s — 새 출력에만 %d건 / 기준에만 %d건"
+                % (name, stats["only_new"], stats["only_ref"]))
+            for m in missing[:20]:
+                log("  [기준대조·참고] " + m)
+        if not per_ref:
             return []
-        findings, missing, stats = compare(dump, ref_dump, name)
-        log("[기준대조] 새 출력에만 있는 구조 %d건 / 기준에만 %d건"
-            % (stats["only_new"], stats["only_ref"]))
-        for m in missing:
-            log("  [기준대조·참고] " + m)
-        return ["🔎 [기준대조] " + f for f in findings]
+        # 교집합만 보고: 어느 완성본에도 없는 구조 = 진짜 새것
+        common = set(per_ref[0])
+        for d in per_ref[1:]:
+            common &= set(d)
+        log("[기준대조] 완성본 %d권(%s) 공통으로 없는 구조 %d건"
+            % (len(names), ", ".join(names), len(common)))
+        return ["🔎 [기준대조] " + per_ref[0][k] + " (완성본 %d권 모두에 없음)"
+                % len(names) for k in sorted(common)]
 
     def _plan_decorations(self, job_dir, cfg):
         """v1 run.jsx 16.7(간지) + 16.8(빈 페이지 마스터 재할당) opt-in
