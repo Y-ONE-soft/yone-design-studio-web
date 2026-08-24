@@ -149,3 +149,85 @@ def test_jsx_recognizes_same_btm_headers(text):
 @pytest.mark.parametrize("text", NON_HEADERS)
 def test_jsx_does_not_promote_body_lines(text):
     assert not _jsx_is_header_line(text, _jsx_header_patterns()), text
+
+
+# ── W25 2단: 다수파 정정(_drop_shape_outliers)이 legacy 헤더를 떨어뜨림 ────
+# 꼬리 주석을 살려도 그 뒤에서 한 번 더 떨어졌다. 한 스텝 안에 표기가 섞인
+# 원고(코너명형 1 + no.형 3)에서 "다수 헤더는 no. 표기" 규칙이 소수 표기
+# 헤더를 본문으로 정정해, 그 지문이 유닛에서 통째로 빠지고 다른 스텝에서는
+# 본문 단락으로 남아 인쇄됐다 — 올림포스 독해기본2 1강 실원고 실증
+# (step2_a1_btm 유닛 4→3, step1_c2/step2_b1/step2_c1 헤더 잔존).
+
+_MIXED_SHAPE = [
+    "1. p8-수능 대비 ANALYSIS  (정답 1개)",      # 소수 표기 (no. 없음)
+    "Dear Bloom Cookie ①customers, With our lease coming to an end, "
+    "we have ②finally made the ③decision to ④move ⑤there.",
+    "",
+    "2. p10-no.01  (정답 1개)",
+    "Dear ①valued players, Recently we ②discovered that two songs in "
+    "our ③game ④were ⑤licensed.",
+    "",
+    "3. p11-no.02  (정답 1개)",
+    "Dear Mr. Lewis, We ①trust this message ②finds you in good spirits "
+    "and ③hope ④you ⑤agree.",
+    "",
+    "4. p12-no.03  (정답 1개)",
+    "Dear Valued Customer, We ①thank you for ②choosing our new fall "
+    "collection ③this ④past ⑤season.",
+]
+
+
+def test_minority_shape_header_survives_majority_rule():
+    """legacy가 확언한 헤더는 다수파 정정에서 살아남아야 한다."""
+    from engines.workbook_v2.plan import _step_header_detection
+    step_data = {"paragraphs": [{"text": t, "runs": [{"t": t, "ul": False}]}
+                                for t in _MIXED_SHAPE]}
+    det = _step_header_detection(step_data, "step2_a1_btm",
+                                 legacy=is_header_line)
+    assert sorted(det.header_idx) == [0, 3, 6, 9], sorted(det.header_idx)
+
+
+def test_mixed_shape_manuscript_keeps_all_units():
+    step_data = {"paragraphs": [{"text": t, "runs": [{"t": t, "ul": False}]}
+                                for t in _MIXED_SHAPE]}
+    out = build_step2_a1_btm(step_data)
+    assert len(out["units"]) == 4, out["units"]
+    flat = " ".join(p["t"] for u in out["units"] for p in unit_paras(u))
+    assert "Bloom Cookie" in flat, "소수 표기 헤더의 지문이 사라졌다"
+    assert "ANALYSIS" not in flat, flat
+
+
+def test_body_sentence_outlier_is_still_corrected():
+    """원래 가드의 효력 유지 — legacy False인 아웃라이어는 여전히 정정된다.
+
+    실측 2026-08-17 (고2 25년 9월 어법OX): "29.  The examples are
+    endlessly." 가 헤더로 오인돼 유닛이 갈렸다. legacy 예외를 넣은 뒤에도
+    이 정정이 살아 있는지 _drop_shape_outliers를 직접 태워 확인한다
+    (구조 인식기가 그 문장을 승격한 상태를 손으로 구성)."""
+    from core.structure.header_detect import Detection
+    from engines.workbook_v2.plan import _drop_shape_outliers
+
+    texts = ["1. p3-no.20", "body", "2. p4-no.21",
+             "29.  The examples are endlessly varied across cultures.",
+             "3. p5-no.22", "body"]
+    det = Detection()
+    det.header_idx = {0, 2, 3, 4}
+    assert not is_header_line(texts[3])          # legacy는 헤더로 안 본다
+    _drop_shape_outliers(det, texts, "step2_b1", legacy=is_header_line)
+    assert sorted(det.header_idx) == [0, 2, 4], sorted(det.header_idx)
+
+
+def test_legacy_header_is_exempt_from_outlier_drop():
+    """같은 함수에 legacy True인 소수 표기를 넣으면 살아남는다."""
+    from core.structure.header_detect import Detection
+    from engines.workbook_v2.plan import _drop_shape_outliers
+
+    texts = ["1. p8-수능 대비 ANALYSIS  (정답 1개)", "body",
+             "2. p10-no.01  (정답 1개)", "body",
+             "3. p11-no.02  (정답 1개)", "body",
+             "4. p12-no.03  (정답 1개)", "body"]
+    det = Detection()
+    det.header_idx = {0, 2, 4, 6}
+    assert is_header_line(texts[0])
+    _drop_shape_outliers(det, texts, "step2_a1_btm", legacy=is_header_line)
+    assert sorted(det.header_idx) == [0, 2, 4, 6], sorted(det.header_idx)
