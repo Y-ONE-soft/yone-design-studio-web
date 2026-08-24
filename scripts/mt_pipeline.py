@@ -101,7 +101,7 @@ def _load(run_dir):
         return json.load(f)
 
 
-def _job(run_dir, prefix, meta):
+def _job(prefix, meta):
     """엔진용 job 폴더 생성 — 메타는 {key}.txt 로 떨어뜨린다(엔진 계약)."""
     jd = os.path.join(config.JOBS_DIR, "%s_%s" % (prefix, uuid.uuid4().hex[:6]))
     os.makedirs(os.path.join(jd, "uploads"), exist_ok=True)
@@ -270,7 +270,7 @@ def stage_sero_new(st, log, run_dir):
             % (label, len(files), ", ".join(codes)))
         log("           %s" % folder)
 
-        jd = _job(run_dir, "mtsero", {
+        jd = _job("mtsero", {
             "grade": st["grade"], "school": st["school"],
             "exam_period": st["exam_period"], "year": yy, "month": mm,
             "workbook_type": "모의고사",
@@ -351,7 +351,7 @@ def stage_sero_merge(st, log, run_dir):
             log("[세로결합] %s — 완료본 재사용" % vol["sero_name"])
             continue
         log.head("세로결합: %s (%d문항)" % (vol["sero_name"], len(vol["codes"])))
-        jd = _job(run_dir, "mtmerge", {
+        jd = _job("mtmerge", {
             "grade": st["grade"], "school": st["school"],
             "exam_period": st["exam_period"], "result_name": vol["sero_name"],
         })
@@ -387,7 +387,7 @@ def stage_v2h(st, log, run_dir):
             log("[가로변환] %s — 완료본 재사용" % vol["horiz_name"])
             continue
         log.head("가로변환: %s" % vol["horiz_name"])
-        jd = _job(run_dir, "mtv2h", {
+        jd = _job("mtv2h", {
             "grade": st["grade"], "school": st["school"],
             "exam_period": st["exam_period"],
         })
@@ -415,18 +415,61 @@ def stage_v2h(st, log, run_dir):
 
 # ── 6) 세로↔가로 전문 대조 ──────────────────────────────────────────
 
+def _repair(vol, log, run_dir):
+    """유실 페이지 복구 — 세로 페이지를 가로에 페이지째 다시 넣는다.
+
+    최후 수단이다(repage_recover.jsx 헤더 참조). 넣은 페이지는 세로판
+    레이아웃 그대로이므로 눈으로 확인해야 한다. --repair 일 때만 돈다.
+    """
+    src = os.path.join(_ROOT, "engines", "vert_to_horiz", "jsx",
+                       "repage_recover.jsx")
+    jlog = os.path.join(run_dir, "repair_%d.log" % vol["idx"])
+    dst = os.path.join(run_dir, "repair_%d.jsx" % vol["idx"])
+    code = (open(src, encoding="utf-8").read()
+            .replace("__LOG__", jlog)
+            .replace("__VERTI__", vol["sero_indd"])
+            .replace("__HORIZ__", vol["horiz_indd"])
+            .replace("__DRY__", "false"))
+    with open(dst, "w", encoding="utf-8") as f:
+        f.write(code)
+    try:
+        os.remove(jlog)
+    except OSError:
+        pass
+    log("[복구] 시작 — 세로 페이지를 가로에 페이지째 삽입한다")
+    run_jsx(dst, log, poll_log_path=jlog, timeout=1800,
+            completion_marker="===== 페이지 복구 완료 =====")
+    if os.path.exists(jlog):
+        for line in open(jlog, encoding="utf-8", errors="ignore"):
+            log("   " + line.rstrip())
+
+
 def stage_verify(st, log, run_dir):
     from scripts.v2h_content_diff import compare
     failed = []
     for vol in st["volumes"]:
         log.head("대조검수: %s" % vol["horiz_name"])
         total, missing = compare(vol["sero_indd"], vol["horiz_indd"], log=log)
-        vol["verify"] = {"total": total, "missing": len(missing)}
         log("[대조] 세로 문단 %d개 중 가로에서 못 찾음 %d개" % (total, len(missing)))
         for page, t in missing[:40]:
             log("   세로 p%-4s %s" % (page, t[:80]))
         if len(missing) > 40:
             log("   … 외 %d개" % (len(missing) - 40))
+
+        if missing and st.get("repair"):
+            _repair(vol, log, run_dir)
+            log("[대조] 복구 후 재대조")
+            total, missing = compare(vol["sero_indd"], vol["horiz_indd"],
+                                     log=log)
+            log("[대조] 재대조 결과 — 유실 %d개" % len(missing))
+            for page, t in missing[:40]:
+                log("   세로 p%-4s %s" % (page, t[:80]))
+            vol["repaired"] = True
+            if not missing:
+                log("[복구] 손실 0 도달 — ⚠ 교체된 페이지는 세로판 레이아웃"
+                    "이다. 납품 전 반드시 눈으로 확인할 것")
+
+        vol["verify"] = {"total": total, "missing": len(missing)}
         if missing:
             failed.append(vol["horiz_name"])
         _save(st, run_dir)
@@ -483,6 +526,10 @@ def main():
     ap.add_argument("--run", default="", help="기존 run 이어서 (run 폴더명)")
     ap.add_argument("--from", dest="from_stage", default="",
                     choices=[""] + STAGES, help="이 단계부터 강제 재실행")
+    ap.add_argument("--repair", action="store_true",
+                    help="대조에서 유실이 나오면 세로 페이지를 페이지째 넣어 "
+                         "복구 시도 (최후 수단 — 그 페이지는 세로판 레이아웃이 "
+                         "되므로 눈으로 확인 필요)")
     ap.add_argument("--plan-only", action="store_true",
                     help="코드 조달·세로 유무 판정까지만 (InDesign 무접촉)")
     args = ap.parse_args()
@@ -492,6 +539,8 @@ def main():
         if not os.path.exists(_state_path(run_dir)):
             ap.error("state.json 없음: %s" % run_dir)
         st = _load(run_dir)
+        if args.repair:
+            st["repair"] = True
     else:
         if not args.gang:
             ap.error("--gang 또는 --run 이 필요합니다")
@@ -506,7 +555,7 @@ def main():
             "school": args.school, "exam_period": args.exam_period,
             "split": args.split, "workbook_start": args.workbook_start,
             "codes_input": args.codes, "done": [],
-            "run_dir": run_dir,
+            "repair": args.repair, "run_dir": run_dir,
         }
         _save(st, run_dir)
 
@@ -564,8 +613,10 @@ def main():
         log("· %s" % vol["horiz_name"])
         log("    세로중간본: %s" % vol["sero_indd"])
         log("    가로 결과물: %s" % vol["horiz_indd"])
-        log("    대조: 세로 문단 %d개 / 유실 %d개"
-            % (vol["verify"]["total"], vol["verify"]["missing"]))
+        log("    대조: 세로 문단 %d개 / 유실 %d개%s"
+            % (vol["verify"]["total"], vol["verify"]["missing"],
+               "  (페이지 복구 수행 — 눈으로 확인 필요)"
+               if vol.get("repaired") else ""))
     return 0
 
 
