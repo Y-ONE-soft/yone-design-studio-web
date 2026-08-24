@@ -459,10 +459,21 @@ def parse_manuscript_folder(manuscript_dir, config, grade, year, month, log):
     log(f"[파서/sero] STEP3 (폴더 직접 파싱): {len(step3_items)}개")
 
     # workbook parser 결과가 더 풍부하면 (예: 정규 모의고사) 보조로 사용
+    #
+    # 폴더 직접 파싱은 **파일 1개 = 문항 1개**를 전제한다. 한 파일에 여러
+    # 문항이 든 회차통합 원고("2021년 9월 36-37번 변형문제.hwpx")는 1개로
+    # 세어져 사이클이 그만큼 빠진다(실측 2026-08-24: 36·37번 중 37번만
+    # 조판). 가로 파서는 파일 안 헤더로 갈라 2개를 만들므로, **더 많이
+    # 인식한 쪽**을 채택한다. 같거나 적으면 기존대로 폴더 파싱을 쓴다.
+    raw_step3 = (raw.get("steps") or {}).get("step3", {}) or {}
+    _normal = raw_step3.get("normal", []) if isinstance(raw_step3, dict) else []
+    _short = raw_step3.get("short", []) if isinstance(raw_step3, dict) else []
+    if step3_items and (len(_normal) + len(_short)) > len(step3_items):
+        log(f"[파서/sero] STEP3 가로 파서가 더 많이 인식 "
+            f"({len(_normal) + len(_short)} > {len(step3_items)}) — 그쪽 채택")
+        step3_items = []
     if not step3_items:
-        raw_step3 = (raw.get("steps") or {}).get("step3", {}) or {}
-        normal = raw_step3.get("normal", []) if isinstance(raw_step3, dict) else []
-        short = raw_step3.get("short", []) if isinstance(raw_step3, dict) else []
+        normal, short = _normal, _short
         if normal or short:
             log(f"[파서/sero] STEP3 fallback (workbook parser): normal={len(normal)}, short={len(short)}")
             for it in (normal + short):
