@@ -1,0 +1,183 @@
+"""UNIT형 단어장 렌더러 — data.json → build/index.html (Vivliostyle 입력).
+
+문서 구조: 간지 → Unit 1 → Unit 2 → … (Unit 은 왼쪽 면에서 시작, 남는 오른쪽
+면은 MEMO 면). 책마다 다른 것(브랜드·Unit 이름·번호 자릿수)은 전부 config 에서 온다.
+
+원고 표기 → 조판 표기(전부 **구조**로 바꾼다. 문구 화이트리스트를 쓰지 않는다):
+  · `[명] [동] [형] …`  품사 대괄호 → 회색 라벨. 품사가 나오면 **줄을 바꾼다**
+  · `1. 2. 3.`          의미 번호 → `① ② ③` (보조색)
+  · `(한글만)`          쓰임 설명 → 작은 글자
+  · `(= …)` `(↔ …)`    유의어·반의어 → 작은 글자 + 회색
+  · `[단어]`            예문 안 대괄호 → 강조색 (영문·해석 공통)
+"""
+import html
+import os
+import re
+
+_RE_POS = re.compile(r"\[([명동형부전접대감조])\]")
+_RE_SENSE = re.compile(r"(?<![0-9A-Za-z])([1-9])\.(?=\s)")
+_RE_BRACKET = re.compile(r"\[([^\[\]]+)\]")
+_RE_PAREN = re.compile(r"\(([^()]*)\)")
+_RE_HAS_LATIN = re.compile(r"[A-Za-z]")
+_CIRCLED = "①②③④⑤⑥⑦⑧⑨"
+
+
+def esc(s):
+    return html.escape(s or "", quote=False)
+
+
+def _sense(s):
+    return _RE_SENSE.sub(
+        lambda m: f'<span class="n">{_CIRCLED[int(m.group(1)) - 1]}</span>', s)
+
+
+def _paren(s):
+    """괄호 주석 — 유의어/반의어(= ↔)와 쓰임 설명(한글만)을 작은 글자로."""
+    def one(m):
+        inner = m.group(1)
+        head = inner.lstrip()[:1]
+        if head in ("=", "↔", "≠"):
+            return f'<span class="note">({inner})</span>'
+        if inner and not _RE_HAS_LATIN.search(inner):
+            return f'<span class="q">({inner})</span>'
+        return m.group(0)
+    return _RE_PAREN.sub(one, s)
+
+
+def meaning(s):
+    """뜻 — 품사마다 한 줄. 품사 라벨은 회색, 의미 번호는 보조색."""
+    hits = list(_RE_POS.finditer(s or ""))
+    if not hits:
+        return f"<p>{_paren(_sense(esc(s)))}</p>"
+    out = []
+    head = s[:hits[0].start()].strip()
+    if head:
+        out.append(("", head))
+    for i, m in enumerate(hits):
+        end = hits[i + 1].start() if i + 1 < len(hits) else len(s)
+        out.append((m.group(1), s[m.end():end].strip()))
+    return "".join(
+        f'<p>{f"""<b class="pos">[{esc(pos)}]</b> """ if pos else ""}'
+        f"{_paren(_sense(esc(body)))}</p>"
+        for pos, body in out)
+
+
+def deriv(line):
+    """파생어 한 줄 — `단어 [품사] 뜻`. 품사 라벨만 회색으로."""
+    s = _paren(_sense(esc(line)))
+    return _RE_POS.sub(lambda m: f'<b class="pos">[{m.group(1)}]</b>', s)
+
+
+def example(s):
+    """예문 — `[단어]` 는 강조. 해석의 대괄호도 같은 강조색을 쓴다."""
+    return _RE_BRACKET.sub(lambda m: f"<em>{esc(m.group(1))}</em>", esc(s))
+
+
+def _wcls(w):
+    n = len(w or "")
+    return " xlong" if n >= 17 else (" long" if n >= 13 else "")
+
+
+class Renderer(object):
+
+    def __init__(self, cfg, mirror=(), sample=False):
+        self.cfg = cfg
+        o = cfg.section("options") or {}
+        self.o = o
+        self.brand = o.get("brand") or cfg.book.get("brand", "")
+        self.title = cfg.book.get("title", "")
+        self.pad = int(o.get("no_pad", 3))
+        self.mirror = set(mirror or ())
+        self.sample = sample
+        self._op = 0
+
+    # ── 러닝 요소 ────────────────────────────────────────────────────────
+    def running(self, tab, off=False):
+        """③탭(왼쪽) · ④로고(오른쪽) · 쪽번호.
+
+        off=True 는 간지처럼 표식이 없는 면 — 러닝 요소는 다음 값이 올 때까지
+        남으므로 **빈 값을 명시적으로 흘려보내는 것**이 요점이다.
+        """
+        k = " off" if off else ""
+        return (f'<div class="hdr-l{k}"><i>{esc(tab)}</i></div>'
+                f'<div class="hdr-r{k}"><b>{esc(self.brand)}</b></div>'
+                f'<div class="foot-l{k}"></div><div class="foot-r{k}"></div>')
+
+    def _mir(self):
+        self._op += 1
+        return " mir" if self._op in self.mirror else ""
+
+    # ── ① Unit 시작 헤더 ────────────────────────────────────────────────
+    def unit_head(self, unit):
+        word = self.o.get("unit_word", "UNIT")
+        return (f'<div class="unit-head{self._mir()}">'
+                '<u class="mk">DAYOPEN</u>'
+                f'<span class="ttl">{esc(word)}</span>'
+                f'<span class="num">{unit["num"]:02d}</span></div>')
+
+    # ── 표제어 항목 ─────────────────────────────────────────────────────
+    def word(self, w):
+        chk = '<span class="chk"><i></i><i></i><i></i></span>'
+        der = "".join(f"<p>{deriv(x)}</p>" for x in w["deriv"])
+        pairs = []
+        for en, kr in w["pairs"]:
+            pairs.append('<div class="pair">'
+                         f'<p class="en">{example(en)}</p>'
+                         + (f'<p class="kr">{example(kr)}</p>' if kr else "")
+                         + "</div>")
+        return (
+            '<article class="w"><div class="w-l">'
+            f'<div class="w-top"><span class="w-no">{w["no"]:0{self.pad}d}</span>'
+            f'{chk}</div>'
+            f'<div class="w-word{_wcls(w["word"])}">{esc(w["word"])}</div>'
+            f'<div class="w-pron">{esc(w["pron"])}</div>'
+            + (f'<div class="w-deriv">{der}</div>' if der else "")
+            + '</div><div class="w-r">'
+            f'<div class="w-def">{meaning(w["meaning"])}</div>'
+            f'<div class="w-ex">{"".join(pairs)}</div>'
+            "</div></article>")
+
+    # ── 간지 ────────────────────────────────────────────────────────────
+    def cover(self):
+        return ('<section class="cover" style="page:p-cover">'
+                + self.running("", off=True)
+                + '<div class="crest"></div>'
+                f'<div class="ttl">{esc(self.brand)}</div></section>')
+
+    # ── 문서 조립 ───────────────────────────────────────────────────────
+    def document(self, d):
+        units = d["units"]
+        if self.sample:
+            s = self.o.get("sample") or {}
+            units = units[:int(s.get("units", 1))]
+            if s.get("words"):
+                units = [dict(u, words=u["words"][:int(s["words"])])
+                         for u in units]
+
+        body = []
+        if self.o.get("cover", True):
+            body.append(self.cover())
+        for u in units:
+            body.append(f'<section class="unit unit-open" style="page:p-body">'
+                        + self.running(u["label"])
+                        + self.unit_head(u)
+                        + "".join(self.word(w) for w in u["words"])
+                        + "</section>")
+        return ('<!doctype html><html lang="ko"><head><meta charset="utf-8">'
+                f"<title>{esc(self.title)}</title>"
+                '<link rel="stylesheet" href="theme.css">'
+                '<link rel="stylesheet" href="pages.css"></head><body>'
+                + "".join(body) + "</body></html>")
+
+
+def write(cfg, data, build_dir, mirror=(), sample=False, log=None):
+    r = Renderer(cfg, mirror=mirror, sample=sample)
+    text = r.document(data)
+    os.makedirs(build_dir, exist_ok=True)
+    out = os.path.join(build_dir, "index.html")
+    with open(out, "w", encoding="utf-8") as f:
+        f.write(text)
+    if log:
+        log(f"[렌더] {'견본' if sample else '전권'} {len(text) // 1024}KB "
+            f"→ {os.path.basename(out)}")
+    return out

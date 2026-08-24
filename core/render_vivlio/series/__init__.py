@@ -29,10 +29,16 @@ def _vocabook():
     return VocabookSeries()
 
 
+def _vocaunit():
+    from core.render_vivlio.series.vocaunit import VocaunitSeries
+    return VocaunitSeries()
+
+
 def _blackbook():
     from core.render_vivlio.series.blackbook import BlackbookSeries
     return BlackbookSeries()
 
 
 register("vocabook", _vocabook)
+register("vocaunit", _vocaunit)
 register("blackbook", _blackbook)

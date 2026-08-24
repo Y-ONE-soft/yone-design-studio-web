@@ -171,8 +171,10 @@ def prelude(cfg):
     o = ["/* ---------- 서체 (로컬 설치본을 build/fonts 로 복사해 임베드) ---------- */"]
     for f in cfg.get("fonts") or []:
         st = f" font-style: {f['style']};" if f.get("style") else ""
+        # 한글 파일명은 build/fonts 에 ASCII 별칭(`as`)으로 놓인다 (→ __init__._stage_fonts)
+        fn = f.get("as") or os.path.basename(f["file"])
         o.append(f'@font-face {{ font-family: "{f["family"]}"; '
-                 f'src: url("fonts/{os.path.basename(f["file"])}"); '
+                 f'src: url("fonts/{fn}"); '
                  f'font-weight: {f.get("weight", 400)};{st} }}')
 
     o.append("\n:root {")
