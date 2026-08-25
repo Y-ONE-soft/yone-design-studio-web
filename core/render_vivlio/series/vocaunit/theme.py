@@ -64,7 +64,10 @@ DEFAULT_METRICS = {
     "chk": 1.82, "chk_gap": 0.73, "chk_mt": 0.25,
     "word_mt": 1.15, "pron_mt": 0.84,
     "deriv_mt": 1.37, "deriv_lh": 4.18,
-    "def_slot": 11.0, "def_lh": 4.23, "def_hang": 3.58, "def_mb": 1.06,
+    "def_slot": 11.0, "def_lh": 4.23, "def_hang": 3.75, "def_mb": 1.06,
+    # 품사 네모 배지
+    "pos_box": 2.75, "pos_gap": 1.0, "pos_size": 5.2, "pos_r": 0.5,
+    "pos_va": 0.45,
     "en_lh": 3.39, "kr_lh": 3.52, "kr_mt": 0.94, "pair_mt": 2.62,
 
     "tab_txt_mt": 9.21,     # ③ 탭 글자
@@ -200,6 +203,8 @@ def prelude(cfg):
         ("deriv-mt", m["deriv_mt"]), ("deriv-lh", m["deriv_lh"]),
         ("def-slot", m["def_slot"]), ("def-lh", m["def_lh"]),
         ("def-hang", m["def_hang"]), ("def-mb", m["def_mb"]),
+        ("pos-box", m["pos_box"]), ("pos-gap", m["pos_gap"]),
+        ("pos-r", m["pos_r"]), ("pos-va", m["pos_va"]),
         ("en-lh", m["en_lh"]), ("kr-lh", m["kr_lh"]), ("kr-mt", m["kr_mt"]),
         ("pair-mt", m["pair_mt"]),
         ("tabtxt-mt", m["tab_txt_mt"]),
@@ -210,6 +215,7 @@ def prelude(cfg):
     ]
     for k, v in mm_vars:
         o.append(f"    --{k}: {round(v, 3)}mm;")
+    o.append(f"    --pos-size: {m['pos_size']}pt;")
     o.append(f"    --logo-size: {m['logo']['text_size']}pt;")
     o.append(f"    --logo-track: {m['logo']['track']}em;")
     for k in ("unit_ttl", "unit_num"):

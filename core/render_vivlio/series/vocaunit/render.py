@@ -4,7 +4,7 @@
 면은 MEMO 면). 책마다 다른 것(브랜드·Unit 이름·번호 자릿수)은 전부 config 에서 온다.
 
 원고 표기 → 조판 표기(전부 **구조**로 바꾼다. 문구 화이트리스트를 쓰지 않는다):
-  · `[명] [동] [형] …`  품사 대괄호 → 회색 라벨. 품사가 나오면 **줄을 바꾼다**
+  · `[명] [동] [형] …`  품사 대괄호 → **네모 배지 글리프**. 품사가 나오면 **줄을 바꾼다**
   · `1. 2. 3.`          의미 번호 → `① ② ③` (보조색)
   · `(한글만)`          쓰임 설명 → 작은 글자
   · `(= …)` `(↔ …)`    유의어·반의어 → 작은 글자 + 회색
@@ -57,15 +57,15 @@ def meaning(s):
         end = hits[i + 1].start() if i + 1 < len(hits) else len(s)
         out.append((m.group(1), s[m.end():end].strip()))
     return "".join(
-        f'<p>{f"""<b class="pos">[{esc(pos)}]</b> """ if pos else ""}'
+        f'<p>{f'<b class="pos">{esc(pos)}</b>' if pos else ""}'
         f"{_paren(_sense(esc(body)))}</p>"
         for pos, body in out)
 
 
 def deriv(line):
-    """파생어 한 줄 — `단어 [품사] 뜻`. 품사 라벨만 회색으로."""
+    """파생어 한 줄 — `단어 [품사] 뜻`. 품사만 네모 배지로."""
     s = _paren(_sense(esc(line)))
-    return _RE_POS.sub(lambda m: f'<b class="pos">[{m.group(1)}]</b>', s)
+    return _RE_POS.sub(lambda m: f'<b class="pos">{m.group(1)}</b>', s)
 
 
 def example(s):

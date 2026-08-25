@@ -136,8 +136,19 @@ body {
 .w-def .n { color: var(--c-accent); }        /* ① ② ③ 의미 번호 */
 .w-def .q { font-size: 6pt; }                /* (과실의) 같은 쓰임 설명 */
 .w-def .note { font-size: 6pt; color: var(--c-pos); }   /* (= …) (↔ …) */
-b.pos { font-family: "Kor"; font-weight: 700; font-size: 7pt;
-        color: var(--c-pos); }
+/* 품사 = 네모 배지 글리프. 대괄호 대신 옅은 바탕의 정사각 상자에 글자 하나.
+ * ⚠ inline-block 이 줄 상자를 밀어 올리지 않도록 vertical-align 을 맞춰 둔다 —
+ *    어긋나면 뜻 줄간(4.23mm)이 통째로 늘어나 세로 리듬이 무너진다.
+ * ⚠ `text-indent` 는 **상속돼 배지 안까지 들어온다** — 뜻 문단의 내어쓰기
+ *    (-3.75mm)가 배지 안에서 또 걸려 글자만 상자 밖으로 밀려났다. 0 으로 끊을 것. */
+b.pos {
+    display: inline-block; box-sizing: border-box;
+    width: var(--pos-box); height: var(--pos-box);
+    margin-right: var(--pos-gap); vertical-align: var(--pos-va);
+    font: 500 var(--pos-size)/var(--pos-box) "Kor"; letter-spacing: 0;
+    text-align: center; text-indent: 0; color: var(--c-pos);
+    background: var(--c-pos-bg); border-radius: var(--pos-r);
+}
 
 .w-ex .pair { margin-top: var(--pair-mt); }
 .w-ex .pair:first-child { margin-top: 0; }
