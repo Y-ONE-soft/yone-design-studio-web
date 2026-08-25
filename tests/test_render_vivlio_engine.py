@@ -291,11 +291,11 @@ def test_vocaunit_gate_stops_on_missing_pieces():
 
 
 def test_vocaunit_meaning_marks_pos_sense_and_notes():
-    """뜻 표기 변환 — 품사마다 줄바꿈 · 1. → ① · (= …) 와 (한글만) 은 작은 글자."""
+    """뜻 표기 변환 — 품사 배지 · 줄바꿈 · 1. → ① · (= …) 와 (한글만) 은 작은 글자."""
     from core.render_vivlio.series.vocaunit import render
     html = render.meaning("[형] 1. 민감한 (↔ insensitive 둔감한) 2. (과실의) 섬세한")
     assert html.count("<p>") == 1                      # 품사 하나 → 한 줄
-    assert '<b class="pos">[형]</b>' in html
+    assert '<b class="pos">형</b>' in html
     assert '<span class="n">①</span>' in html and '<span class="n">②</span>' in html
     assert '<span class="note">(↔ insensitive 둔감한)</span>' in html
     assert '<span class="q">(과실의)</span>' in html
@@ -324,3 +324,48 @@ def test_vocaunit_second_pass_names_pages_and_lowers_open_margin(unit_cfg,
     assert "@page p-body:nth(2)" in css and "@page p-body:nth(3)" in css
     assert "margin-top: 28.09mm" in css
     assert "@top-left { content: none; }" in css
+
+
+def test_vocaunit_pos_is_badge_glyph_not_brackets():
+    """품사는 대괄호가 아니라 네모 배지 — 마크업에 `[` `]` 가 남으면 안 된다."""
+    from core.render_vivlio.series.vocaunit import render
+    html = render.meaning("[형] 분별력 있는")
+    assert '<b class="pos">형</b>' in html and "[형]" not in html
+    assert '<b class="pos">명</b>' in render.deriv("sensibility [명] 감수성")
+
+
+def test_vocaunit_badge_stops_inherited_text_indent():
+    """⚠ text-indent 는 inline-block 안까지 상속된다 — 배지에서 끊어야 글자가
+    상자 안에 남는다(안 끊으면 뜻 문단의 내어쓰기만큼 글자가 밖으로 밀린다)."""
+    import os
+    css = open(os.path.join(REPO, "core", "render_vivlio", "themes",
+                            "vocaunit.css"), encoding="utf-8").read()
+    badge = css[css.index("b.pos {"):]
+    badge = badge[:badge.index("}")]
+    assert "text-indent: 0" in badge
+
+
+def test_vocaunit_retints_asset_pngs_from_palette(unit_cfg, tmp_path):
+    """자산 PNG 는 색이 파일에 박혀 있다 → 팔레트를 바꾸면 다시 구워야 한다."""
+    pytest.importorskip("PIL")
+    pytest.importorskip("numpy")
+    import numpy as np
+    from PIL import Image
+    from core.render_vivlio.series.vocaunit import assets
+
+    src = tmp_path / "src"
+    src.mkdir()
+    base = (0xc7, 0xb9, 0xdb)
+    a = np.zeros((4, 4, 4), dtype=np.uint8)
+    a[..., :3] = base
+    a[0, 0, :3] = 255                    # 흰 글자 한 점
+    a[..., 3] = 255
+    a[3, 3, 3] = 0                       # 투명 한 점
+    Image.fromarray(a).save(src / "pill2026.png")
+
+    build = tmp_path / "build"
+    assets.retint(unit_cfg, str(build), str(src))
+    got = np.asarray(Image.open(build / "assets" / "pill2026.png").convert("RGBA"))
+    assert tuple(got[1, 1, :3]) == (0xc7, 0xb9, 0xdb)   # 픽스처 팔레트의 logo 색
+    assert tuple(got[0, 0, :3]) == (255, 255, 255)      # 흰 글자는 그대로
+    assert got[3, 3, 3] == 0                            # 알파 보존
