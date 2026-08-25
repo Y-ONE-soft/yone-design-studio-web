@@ -392,6 +392,17 @@ class WorkbookV2Engine(BaseEngine):
             json.dump(plan, f, ensure_ascii=False)
         log("[v2] 플랜: " + ", ".join(
             f"{fl['step']} {len(fl['units'])}유닛" for fl in plan["flows"]))
+        # W74: 지문 수 교차검증(M3)을 **조판 전에** 본다. 예전에는 verify
+        # (완제품 게이트)에서만 돌아, 지문번호 인식이 깨진 채로 InDesign이
+        # 40분을 돌고 나서야 알 수 있었다. 여기서는 중단하지 않고 알린다 —
+        # 스텝별 지문 수가 다를 수 있는 원고도 있기 때문 (판단은 사람).
+        try:
+            from engines.workbook_v2.gate import inspect_plan_units
+            _pc, _pw, _ps = inspect_plan_units(plan)
+            for _m in _pc:
+                log("⚠️ [조판전검수] " + _m)
+        except Exception as _e:                                # noqa: BLE001
+            log(f"[조판전검수] 유닛 수 교차검증 실패(무시): {_e}")
         if plan["unsupported"]:
             log(f"[v2] ⚠️ 미지원 스텝(렌더 제외): "
                 + ", ".join(plan["unsupported"]))
