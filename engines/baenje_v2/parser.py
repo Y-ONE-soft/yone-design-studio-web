@@ -300,10 +300,36 @@ def mark_summary_sentence(prob):
     return False
 
 
+def _renumber_sequential(chunks, warnings, label, log=None):
+    """파일(유닛)별 번호를 책 전체 기준으로 이어 붙인다.
+
+    원고는 두 가지로 온다 — 파일마다 1부터 다시 시작(과별 원고)하거나,
+    책 전체 통번호(1~120). 조판/자동번호는 통번호이므로 여기서 통일한다.
+    각 파일의 첫 번호가 직전까지의 마지막 번호보다 크지 않으면 offset을 건다.
+    """
+    out, last, offset_total = [], 0, 0
+    for src, items in chunks:
+        if not items:
+            continue
+        first = items[0]["no"]
+        offset = 0
+        if first <= last:
+            offset = last - first + 1
+            offset_total += 1
+            if log:
+                log(f"[파서] {label} 번호 이어붙임: {src} {first}~{items[-1]['no']}"
+                    f" → {first + offset}~{items[-1]['no'] + offset}")
+        for it in items:
+            it["no"] += offset
+            out.append(it)
+        last = out[-1]["no"]
+    return out
+
+
 def parse_manuscripts(problem_files, answer_files, unit_labels, log=None):
     """원고 파일 묶음 → content dict."""
     warnings = []
-    problems = []
+    prob_chunks = []
     for path in problem_files:
         rows = _extract(path)
         got = classify_problem_paragraphs(rows, warnings, os.path.basename(path))
@@ -311,15 +337,24 @@ def parse_manuscripts(problem_files, answer_files, unit_labels, log=None):
             mark_summary_sentence(prob)
         if log:
             log(f"[파서] 문제 {os.path.basename(path)}: {len(got)}문항")
-        problems.extend(got)
+        prob_chunks.append((os.path.basename(path), got))
+    problems = _renumber_sequential(prob_chunks, warnings, "문제", log)
 
-    answers = []
+    ans_chunks = []
     for path in answer_files:
         rows = _extract(path)
         got = classify_answer_paragraphs(rows, warnings, os.path.basename(path))
         if log:
             log(f"[파서] 해설 {os.path.basename(path)}: {len(got)}블록")
-        answers.extend(got)
+        ans_chunks.append((os.path.basename(path), got))
+    answers = _renumber_sequential(ans_chunks, warnings, "해설", log)
+
+    # 정답지 번호 단락은 조판되는 텍스트이므로 이어붙인 번호로 갱신한다
+    for blk in answers:
+        for pp in blk["paras"]:
+            if pp["kind"] == "num":
+                pp["t"] = str(blk["no"])
+                break
 
     # 번호 연속성 (침묵 금지 — 어긋나면 경고로 남기고 게이트가 판정)
     for name, arr in (("문제", problems), ("해설", answers)):

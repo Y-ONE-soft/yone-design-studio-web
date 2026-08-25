@@ -80,8 +80,10 @@ def main():
         return unicodedata.normalize("NFC", x)
     problems = [os.path.join(src_dir, f) for f in files
                 if "문제" in _nfc(f) and f.lower().endswith((".docx", ".hwpx"))]
+    # 해설 원고 파일명은 '해설' 또는 '정답'으로 온다
     answers = [os.path.join(src_dir, f) for f in files
-               if "해설" in _nfc(f) and f.lower().endswith((".docx", ".hwpx"))]
+               if ("해설" in _nfc(f) or "정답" in _nfc(f))
+               and f.lower().endswith((".docx", ".hwpx"))]
     print(f"원고: 문제 {len(problems)} / 해설 {len(answers)}  ({src_dir})")
     if not problems:
         print("문제 원고 없음 — 중단")
