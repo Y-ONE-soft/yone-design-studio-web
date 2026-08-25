@@ -38,9 +38,6 @@ function readJSONFile(path) {
     return eval("(" + s + ")");
 }
 
-function alen(st) { try { return st ? st.length : -1; } catch (e) { return -2; } }
-function phase(tag, st) { wlog("[진단] " + tag + " 정답지길이=" + alen(st)); }
-
 function warn(msg) {
     RESULTS.warnings.push(msg);
     wlog("[경고] " + msg);
@@ -1126,25 +1123,20 @@ try {
     if (ansFlow && ansStory && ansFlow.units.length > 0) {
         var ansRes = placeFlow(doc, ansStory, ansFlow, ops);
         ansLabels = ansRes.labels;
-    phase("A-배치후", ansStory);
         expandStory(doc, ansStory, "정답지");
     }
 
     if (ops.wide_space_style) {
-    phase("B-전각공백전", ansStory);
         fixWideSpaces(doc, bodyStory, ops.wide_space_style, "본문");
         if (ansStory) fixWideSpaces(doc, ansStory, ops.wide_space_style, "정답지");
     }
 
     // 선지 머리행 정렬 + 3열 묶기 (전각공백 문자스타일 적용 뒤 = 실측 좌표 확정)
     try { doc.recompose(); } catch (e) {}
-    phase("C-선지레이아웃전", ansStory);
     if (bodyFlow) applyChoiceLayout(bodyStory, bodyFlow, bodyRes.starts);
     // 빈칸((X) 앞뒤 전각공백)에 밑줄 — 머리행을 탭으로 바꾼 뒤에 실행해야
     // 머리행의 칸 사이 공백이 밑줄로 오인되지 않는다
-    phase("D-밑줄전", ansStory);
     underlineBlanks(bodyStory, "본문");
-    phase("E-한줄맞춤전", ansStory);
     fitAnswerLinesToOneLine(bodyStory, "본문");
     expandStory(doc, bodyStory, "본문(레이아웃 후)");
 
@@ -1180,10 +1172,7 @@ try {
 
     trimTrailingEmptyPages(doc, bodyStory, "본문");
     if (ansStory) trimTrailingEmptyPages(doc, ansStory, "정답지");
-
-    phase("F-크레딧전", ansStory);
     if (ops.credit) placeCredit(doc, ops.credit);
-    phase("G-크레딧후", ansStory);
     if (ops.last_page_colors) recolorLastPage(doc, ops.last_page_colors);
 
     if (ops.memo_master) {
@@ -1219,7 +1208,6 @@ try {
         app.findTextPreferences = NothingEnum.NOTHING;
         app.changeTextPreferences = NothingEnum.NOTHING;
     })();
-    phase("H-최종", ansStory);
     RESULTS.pages = doc.pages.length;
     wlog("오버플로우: " + RESULTS.overflow + "개 / 페이지: " + RESULTS.pages);
 

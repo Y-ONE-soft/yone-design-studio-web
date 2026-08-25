@@ -178,3 +178,16 @@ def test_style_map_exists_in_template_inventory():
             if style not in inv:
                 missing.append(f"{table}/{kind}: {style}")
     assert not missing, f"템플릿에 없는 스타일 참조: {missing}"
+
+
+def test_cross_file_renumbering():
+    """과별 원고가 저마다 1부터 시작하면 책 전체 통번호로 이어 붙인다."""
+    from engines.baenje_v2.parser import _renumber_sequential
+    warns = []
+    chunks = [("2과.docx", [{"no": n, "paras": []} for n in range(1, 4)]),
+              ("3과.docx", [{"no": n, "paras": []} for n in range(1, 4)])]
+    out = _renumber_sequential(chunks, warns, "문제")
+    assert [x["no"] for x in out] == [1, 2, 3, 4, 5, 6]
+    # 이미 통번호면 그대로
+    chunks2 = [("a", [{"no": 1, "paras": []}]), ("b", [{"no": 2, "paras": []}])]
+    assert [x["no"] for x in _renumber_sequential(chunks2, warns, "문제")] == [1, 2]
