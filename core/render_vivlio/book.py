@@ -92,8 +92,24 @@ def verify(cfg, log=print, pdf=None, **opts):
         gate.check_bleed_coverage(pdf, report, bleed=cfg.page["bleed"],
                                   skip_pages=skip)
     gate.check_blanks(texts, report, ignore_chars=vcfg.get("blank_ignore", ""))
+    _check_print_fresh(cfg, pdf, report)
     s.verify(cfg, log, report)
     return report
+
+
+def _check_print_fresh(cfg, src, report):
+    """인쇄 원고가 조판본보다 오래됐는가 — 조용히 뒤처지면 옛 색으로 납품된다."""
+    pc = cfg.section("print") or {}
+    if not pc:
+        return
+    out = cfg.out_pdf(pc.get("out", "_인쇄"))
+    if not os.path.exists(out):
+        return report.fail(f"인쇄 원고 없음: {os.path.basename(out)} — `print` 를 돌릴 것")
+    if os.path.getmtime(out) < os.path.getmtime(src) - 1:
+        return report.fail(
+            f"인쇄 원고가 조판본보다 오래됐다 "
+            f"({os.path.basename(out)}) — `print` 를 다시 돌릴 것")
+    report.note(f"인쇄 원고 최신 ({os.path.basename(out)})")
 
 
 # ── 책 목록 ─────────────────────────────────────────────────────────────
@@ -161,7 +177,9 @@ def main(argv=None):
     log(f"■ {cfg.book.get('title', '')} · 계열 {cfg.series} · {cfg.root}")
 
     if "all" in steps:
-        steps = ["data", "build", "verify"]
+        # ⚠ 인쇄본을 빼면 조판본만 갱신돼 **인쇄 원고가 조용히 뒤처진다**
+        #    (실제로 겪음). `print` 절이 있는 책은 all 에 포함한다.
+        steps = ["data", "build"] + (["print"] if cfg.get("print") else []) + ["verify"]
     rc = 0
     for st in steps:
         if st == "data":
