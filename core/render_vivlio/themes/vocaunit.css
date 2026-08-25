@@ -74,7 +74,11 @@ body {
 
 /* ---------- ① Unit 시작 면 ---------- */
 /* 2패스 빌드가 이 면을 찾는 표식 — 보이지 않지만 PDF 텍스트로는 추출된다 */
-.mk { position: absolute; font-size: .5pt; color: transparent; }
+/* ⚠ `text-decoration: none` 이 없으면 <u> 의 밑줄이 **투명한 사각형 도형**으로
+ *    남는다 — 잉크는 안 나가지만 인쇄 원고에 리치블랙 + 투명도가 끼어 프리플라이트
+ *    에 걸린다(Unit 시작면 9곳에서 실측). */
+.mk { position: absolute; font-size: .5pt; color: transparent;
+      text-decoration: none; }
 .unit-open { break-before: left; }
 .unit-head {
     position: relative; height: var(--head-h);
