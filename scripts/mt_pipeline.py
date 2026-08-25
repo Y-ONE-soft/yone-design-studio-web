@@ -63,6 +63,12 @@ STAGES = ["codes", "survey", "sero_new", "sero_merge", "v2h", "verify"]
 # 6분 7초 걸린 적이 있다(2026-08-25 13강 보충 조판: 10:00 저장 완료 →
 # 10:06 PDF 성공). 그때 러너가 스톨로 오판해 **정상 작업을 중단**했다.
 _STALL = 900
+
+# JSX 전체 제한. 엔진 기본값(세로결합 900초)은 이 규모에 짧다 — 같은
+# 16문항 결합이 어제는 3.5분, 오늘은 13.5분 걸렸다(2026-08-25 실측).
+# 차이는 InDesign 에 열린 문서 수·iCloud 동기화 부하다. 조판 자체는
+# 정상인데 시간만 더 걸리는 경우가 있으니 넉넉히 준다.
+_TIMEOUT = 3600
 _MS_EXTS = (".docx", ".hwp", ".hwpx")
 
 
@@ -287,8 +293,7 @@ def stage_sero_new(st, log, run_dir):
         jsx = eng.prepare_jsx(jp, jd, log)
         stt = json.load(open(os.path.join(jd, ".settings.json"), encoding="utf-8"))
         run_jsx(jsx, log, poll_log_path=os.path.join(jd, "조판_로그.txt"),
-                timeout=getattr(eng, "jsx_timeout", 1800),
-                stall_limit=_STALL)
+                timeout=_TIMEOUT, stall_limit=_STALL)
         try:
             eng.verify(jd, log)
         except Exception as e:                               # noqa: BLE001
@@ -409,7 +414,7 @@ def stage_sero_merge(st, log, run_dir):
         jsx = eng.prepare_jsx(jp, jd, log)
         stt = json.load(open(os.path.join(jd, ".settings.json"), encoding="utf-8"))
         run_jsx(jsx, log, poll_log_path=stt["log_paths"][0],
-                timeout=getattr(eng, "jsx_timeout", 1800),
+                timeout=_TIMEOUT,
                 completion_marker=getattr(eng, "completion_marker", None),
                 stall_limit=_STALL)
         res = eng.verify(jd, log)
@@ -483,7 +488,7 @@ def _repair(vol, log, run_dir):
     except OSError:
         pass
     log("[복구] 시작 — 세로 페이지를 가로에 페이지째 삽입한다")
-    run_jsx(dst, log, poll_log_path=jlog, timeout=1800,
+    run_jsx(dst, log, poll_log_path=jlog, timeout=_TIMEOUT,
             completion_marker="===== 페이지 복구 완료 =====",
             stall_limit=_STALL)
     if os.path.exists(jlog):
@@ -556,6 +561,46 @@ def report(st, log):
                 log("      ⚠ 원고가 없습니다 — 이대로면 이 단계에서 중단된다")
 
 
+# ── 착수 전 점검 ────────────────────────────────────────────────────
+
+def _preflight_indesign(log):
+    """InDesign 이 스크립트를 받을 상태인지 착수 전에 확인한다.
+
+    열린 문서가 쌓이면 조판이 급격히 느려진다 — 같은 16문항 세로결합이
+    3.5분(문서 3개) vs 13.5분(문서 17개)이었다. 더 나쁜 건 AppleScript 가
+    아예 응답하지 않게 되는 상태다. 그때는 파이프라인을 시작해봐야
+    타임아웃까지 기다렸다 죽으므로, 먼저 물어보고 안 되면 그 자리에서 멈춘다.
+    """
+    import subprocess
+    from core.indesign.runner import find_indesign_app
+    try:
+        app = find_indesign_app()
+    except Exception as e:                                   # noqa: BLE001
+        raise RuntimeError("InDesign 확인 실패: %s" % e)
+    script = 'tell application "%s" to count documents' % app
+    try:
+        r = subprocess.run(["osascript", "-e", script],
+                           capture_output=True, text=True, timeout=60)
+    except subprocess.TimeoutExpired:
+        raise RuntimeError(
+            "InDesign 이 AppleScript 에 응답하지 않습니다(60초).\n"
+            "  이전 JSX 가 아직 InDesign 안에서 돌고 있거나 대화상자가 떠 "
+            "있을 수 있습니다.\n"
+            "  화면을 확인하고, 필요하면 InDesign 을 재시작한 뒤 --run 으로 "
+            "이어서 실행하세요.")
+    out = (r.stdout or "").strip()
+    try:
+        n = int(out)
+    except ValueError:
+        log("[점검] 열린 문서 수 확인 실패 (%s) — 계속 진행" % (out or r.stderr))
+        return
+    log("[점검] InDesign 응답 OK — 열린 문서 %d개" % n)
+    if n >= 8:
+        log("[점검] ⚠ 열린 문서가 많습니다(%d개). 조판이 크게 느려지고 "
+            "메모리 압박으로 실패할 수 있습니다 — 쓰지 않는 문서를 닫고 "
+            "시작하는 것을 권합니다." % n)
+
+
 # ── main ────────────────────────────────────────────────────────────
 
 def main():
@@ -610,6 +655,8 @@ def main():
     log.head("마더텅 %s강 워크북 파이프라인 — run %s"
              % (st["gang"], os.path.basename(run_dir)))
     log("run 폴더: %s" % run_dir)
+    if not args.plan_only:
+        _preflight_indesign(log)
 
     if args.from_stage:
         i = STAGES.index(args.from_stage)
