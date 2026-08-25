@@ -115,6 +115,58 @@ def neutralize(doc, gray_map=None, tol=2, log=None):
     return n
 
 
+_RE_GS = re.compile(rb"/([A-Za-z0-9]+)\s+gs")
+
+
+def _alpha_zero_names(doc, page):
+    """이 면의 ExtGState 중 `ca == 0`(완전 투명)인 이름들."""
+    eg = doc.xref_get_key(page.xref, "Resources/ExtGState")
+    if not eg or eg[0] not in ("dict", "xref"):
+        return set()
+    body = eg[1] if eg[0] == "dict" else doc.xref_object(int(eg[1].split()[0]))
+    out = set()
+    for m in re.finditer(r"/(\w+)\s+(?:(\d+)\s+0\s+R|<<(.*?)>>)", body, re.S):
+        d = m.group(3) or doc.xref_object(int(m.group(2)))
+        if re.search(r"/ca\s+0(?![\d.])", d):
+            out.add(m.group(1).encode())
+    return out
+
+
+def strip_invisible(doc, log=None):
+    """`ca 0` (잉크가 전혀 안 나가는) 그리기를 지운다.
+
+    2패스용 DAYOPEN 마커가 `color: transparent` 라 **완전 투명한 검정 글자**로 남는다.
+    잉크는 안 나가지만 인쇄 원고 색 점검에 리치블랙으로 잡히고 투명도까지 끌고
+    들어와, 인쇄소 프리플라이트에서 불필요한 확인이 생긴다.
+
+    ⚠ `/Gxx gs` 는 **자기 q/Q 블록 안에 있지 않다.** 클리핑 블록 한가운데서 상태만
+    바꾸고 바로 뒤 `/G3 gs` 가 되돌린다 — 앞쪽 `q` 를 찾아 통째로 지우면 같은 블록에
+    있는 **보이는 내용까지 날아간다**(실측). 그래서 "색 지정 + gs + 바로 뒤 BT…ET"
+    딱 그만큼만 지운다. 호출한 쪽이 지우기 전후 렌더를 비교해 안전망을 건다(→ `make`).
+    """
+    n = 0
+    for page in doc:
+        names = _alpha_zero_names(doc, page)
+        if not names:
+            continue
+        pat = re.compile(
+            rb"(?:(?:[\d.]+\s+){3}(?:RG|rg)\s*){0,2}"      # 앞선 색 지정(있으면)
+            rb"/(" + b"|".join(re.escape(x) for x in sorted(names)) + rb")\s+gs"
+            rb"(?:(?!\bgs\b).)*?\bET\b",                   # 다음 gs 전까지의 BT…ET
+            re.S)
+        for xref in page.get_contents():
+            data = doc.xref_stream(xref)
+            if not data:
+                continue
+            out, cnt = pat.subn(b"", data)
+            if cnt:
+                doc.update_stream(xref, out)
+                n += cnt
+    if log and n:
+        log(f"[인쇄] 완전 투명(잉크 0) 그리기 {n}곳 제거")
+    return n
+
+
 def run_gs(src, dst, profile=None, log=None, timeout=900):
     """Ghostscript 로 CMYK 변환(고품질 인쇄). DeviceGray 는 건드리지 않는다."""
     gs = shutil.which("gs")
@@ -155,11 +207,27 @@ def make(src, dst, bleed=3.0, profile=None, gray_map=None, log=None):
     if profile and not icc:
         log(f"[경고] ICC 프로파일 못 찾음: {profile} — 기본 변환으로 진행")
 
-    tmp_rgb = dst + ".gray.pdf"
+    # ① 무채색 → DeviceGray
+    tmp_gray = dst + ".gray.pdf"
     doc = fitz.open(src)
     n = neutralize(doc, gray_map, log=log)
-    doc.save(tmp_rgb, garbage=3, deflate=True)
+    doc.save(tmp_gray, garbage=3, deflate=True)
     doc.close()
+
+    # ② 잉크 0 블록 제거 — **①의 결과와** 비교해야 한다(①은 색을 바꾸므로)
+    tmp_rgb = tmp_gray
+    doc = fitz.open(tmp_gray)
+    if strip_invisible(doc, log=log):
+        tmp_strip = dst + ".strip.pdf"
+        doc.save(tmp_strip, garbage=3, deflate=True)
+        doc.close()
+        if _same_render(tmp_gray, tmp_strip):
+            tmp_rgb = tmp_strip
+        else:
+            log("[경고] 투명 블록 제거가 지면을 바꿨다 — 제거하지 않고 진행")
+            os.remove(tmp_strip)
+    else:
+        doc.close()
 
     tmp_cmyk = dst + ".cmyk.pdf"
     try:
@@ -174,12 +242,29 @@ def make(src, dst, bleed=3.0, profile=None, gray_map=None, log=None):
         doc.close()
         os.replace(tmp, dst)
     finally:
-        for f in (tmp_rgb, tmp_cmyk):
+        for f in (tmp_gray, tmp_rgb, tmp_cmyk):
             if os.path.exists(f):
                 os.remove(f)
     log(f"[인쇄] {pages}p · CMYK({os.path.basename(icc) if icc else '기본'}) · "
         f"도련 {bleed}mm → {os.path.basename(dst)}")
     return {"pdf": dst, "pages": pages, "gray_ops": n, "profile": icc}
+
+
+def _same_render(a, b, dpi=120):
+    """두 PDF 를 렌더해 픽셀이 같은지. 투명 블록 제거의 안전망."""
+    import fitz
+    da, db = fitz.open(a), fitz.open(b)
+    try:
+        if da.page_count != db.page_count:
+            return False
+        for i in range(da.page_count):
+            if (da[i].get_pixmap(dpi=dpi).samples
+                    != db[i].get_pixmap(dpi=dpi).samples):
+                return False
+        return True
+    finally:
+        da.close()
+        db.close()
 
 
 def stamp_boxes(doc, bleed=3.0):

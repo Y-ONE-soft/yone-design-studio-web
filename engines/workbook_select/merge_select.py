@@ -94,8 +94,17 @@ _RE_BRACKET = re.compile(
 # 숫자만 허용하는 _RE_BRACKET 으로는 경계 자체가 안 잡혀 블록이 통째로
 # 하나로 뭉친다. 끝에 붙은 6자리 코드를 문항 식별자로 쓴다.
 _RE_BRACKET_CODE = re.compile(r"^\s*\[[^\]]*?(\d{6})\s*\]\s*$")
-_RE_HASH = re.compile(r"^\s*고\s*\d\s*#\s*(\d{1,3})\s*$")
-_RE_DOT = re.compile(r"^\s*(\d{1,2})\.\s*$")
+# 학년 접두 라벨 — 회차마다 표기가 다르다. '#' 은 있을 수도 없을 수도 있고
+# 꼬리 마침표·범위도 섞인다 (실측: 23년11월 "고1 #18" / 24년3월 "고2 18." ·
+# "고2 41-42."). '#' 만 허용하면 24년3월 원고가 통째로 경계 0개가 돼
+# a1/a1_2/a2/b2 네 섹션이 병합에서 빠진다 (2026-08-25 실증).
+_RE_HASH = re.compile(
+    r"^\s*고\s*\d\s*#?\s*(\d{1,3})"
+    r"(?:\s*[~\-–—]\s*(\d{1,3}))?\s*\.?\s*$")
+# 숫자 단독 라벨도 범위를 쓴다 — "41~42." (24년3월 b1). 범위를 못 읽으면
+# 그 블록이 앞 문항에 흡수돼 41·42 를 영영 못 고른다.
+_RE_DOT = re.compile(
+    r"^\s*(\d{1,2})(?:\s*[~\-–—]\s*(\d{1,2}))?\s*\.\s*$")
 _RE_HDR = re.compile(
     # 꼬리 주석 허용 — 어법 하단 원고 헤더는 "1. p2-no.20  (정답 1개)" 처럼
     # 괄호 주석이 붙는다. $ 로 끝나면 이 방언이 전부 미매칭돼 섹션이 통째로
@@ -295,15 +304,86 @@ def _boundary_match(step_key, text):
     return None
 
 
+# ── 구조 폴백: 라벨 '형식' 이 아니라 '자리' 로 경계를 잡는다 ──────────────
+# 회차마다 라벨 표기가 갈린다([20] / 고1 #18 / 고2 18. / 20.). 표기를 하나씩
+# 정규식에 추가하는 방식은 새 원고가 올 때마다 같은 사고가 난다. 형식과
+# 무관한 불변 구조는 하나뿐이다 — **짧은 번호줄 바로 다음에 긴 영어 지문이
+# 온다**. 그것만 본다.
+_RE_CHOICE_HEAD = re.compile(r"^\s*[①-⑳ⓐ-ⓩ㉠-㉾]")
+
+
+def _en_words(text):
+    return len(_RE_EN_W.findall(text or ""))
+
+
+def _structural_boundary_idx(paragraphs):
+    """형식 불문 '문항 라벨 자리' 인덱스 집합."""
+    idx = set()
+    for i, p in enumerate(paragraphs):
+        t = (p.get("text") or "").strip()
+        if not t or len(t) > 25:
+            continue
+        if not re.search(r"\d", t):
+            continue
+        if _en_words(t) > 2:                 # 영어가 섞이면 지문/선지다
+            continue
+        if _RE_CHOICE_HEAD.match(t):         # ① May 25 같은 선지
+            continue
+        if t.endswith("?"):                  # 발문
+            continue
+        # 바로 뒤(빈 단락 건너뛰고)에 실제 지문이 와야 라벨이다
+        for q in paragraphs[i + 1:i + 3]:
+            qt = (q.get("text") or "").strip()
+            if not qt:
+                continue
+            if _en_words(qt) >= 20:
+                idx.add(i)
+            break
+    return idx
+
+
+def _nums_from_text(text):
+    """구조 경계줄에서 문항번호 집합 — 정규식 그룹 없이 숫자만 읽는다."""
+    nums = set()
+    for g in re.findall(r"\d{1,6}", text or ""):
+        n = int(g)
+        if n >= 100000:
+            n = n % 100
+        elif n > 99:
+            continue                 # 학년(고2)·연도 같은 잡음은 버린다
+        nums.add(n)
+    if len(nums) == 2:
+        lo, hi = min(nums), max(nums)
+        nums = set(range(lo, hi + 1))
+    return nums
+
+
 def split_blocks(step_key, paragraphs):
     """단락 리스트 → (preamble, [ {nums, boundary_idx, paras} ])."""
+    base = step_key[:-4] if step_key.endswith("_alt") else step_key
+    hits = {}
+    for i, p in enumerate(paragraphs):
+        m = _boundary_match(step_key, p.get("text", ""))
+        if m:
+            hits[i] = _nums_from_match(m)
+
+    # 정규식이 잡은 경계가 구조가 말하는 경계보다 확연히 적으면(표기 방언을
+    # 통째로 못 읽었다는 뜻) 구조 판정을 합집합으로 얹는다. 브래킷 하나가
+    # 섞여 있다고 폴백이 꺼지면 안 되므로 '0개' 가 아니라 '절반 미만' 이
+    # 기준이다.
+    if base in BRACKET_STEPS:
+        struct = _structural_boundary_idx(paragraphs)
+        if len(struct) >= 2 and len(struct) >= 2 * len(hits):
+            for i in struct:
+                if i not in hits:
+                    hits[i] = _nums_from_text(paragraphs[i].get("text", ""))
+
     blocks = []
     preamble = []
     cur = None
-    for p in paragraphs:
-        m = _boundary_match(step_key, p.get("text", ""))
-        if m:
-            cur = {"nums": _nums_from_match(m),
+    for i, p in enumerate(paragraphs):
+        if i in hits:
+            cur = {"nums": hits[i],
                    "codes": _codes_in(p.get("text", "")),
                    "boundary": p, "paras": []}
             blocks.append(cur)
