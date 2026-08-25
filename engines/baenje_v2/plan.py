@@ -179,7 +179,7 @@ def content_to_plan(content, log=None):
                 # 라벨은 본문 포인트 색(청록) + 고딕 볼드 9pt
                 "label_color": "c99m29y42k28",
                 "label_font": {"family": "Gmarket Sans", "style": "Bold",
-                               "size": 9.0, "space_after_add": 1.7},
+                               "size": 9.0, "space_after_add": 1.75},
                 "labels": ["Writer", "Assistant", "Design", "Production",
                            "Marketer"],
             },

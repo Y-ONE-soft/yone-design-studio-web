@@ -645,6 +645,17 @@ function fitAnswerLinesToOneLine(story, label) {
          (failed.length ? " / 실패 " + failed.length : ""));
 }
 
+// 포인트 값을 문서 눈금 단위로 — 숫자를 그냥 대입하면 문서 단위(mm 등)로 해석된다
+function ptToDoc(doc, pt) {
+    var u;
+    try { u = doc.viewPreferences.verticalMeasurementUnits; } catch (e) { return pt; }
+    if (u === MeasurementUnits.MILLIMETERS) return pt * 25.4 / 72;
+    if (u === MeasurementUnits.CENTIMETERS) return pt * 2.54 / 72;
+    if (u === MeasurementUnits.INCHES) return pt / 72;
+    if (u === MeasurementUnits.PICAS) return pt / 12;
+    return pt;
+}
+
 // ── (5) 마지막 페이지 크레딧 (스니펫 배치) ──────────────────────────────
 function placeCredit(doc, credit) {
     if (!credit) return;
@@ -733,7 +744,8 @@ function placeCredit(doc, credit) {
                             try { if (lsize) ps2[q].pointSize = lsize; } catch (e) {}
                             try {
                                 if (lspace) ps2[q].spaceAfter =
-                                    (ps2[q].spaceAfter || 0) + lspace;
+                                    (ps2[q].spaceAfter || 0) +
+                                    ptToDoc(doc, lspace);
                             } catch (e) {}
                             n++;
                         }
