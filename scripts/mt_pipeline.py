@@ -501,7 +501,10 @@ def stage_verify(st, log, run_dir):
     failed = []
     for vol in st["volumes"]:
         log.head("대조검수: %s" % vol["horiz_name"])
-        total, missing = compare(vol["sero_indd"], vol["horiz_indd"], log=log)
+        unprinted = []
+        total, missing = compare(vol["sero_indd"], vol["horiz_indd"], log=log,
+                                 unprinted_out=unprinted)
+        vol["unprinted"] = len(unprinted)
         log("[대조] 세로 문단 %d개 중 가로에서 못 찾음 %d개" % (total, len(missing)))
         for page, t in missing[:40]:
             log("   세로 p%-4s %s" % (page, t[:80]))
@@ -521,7 +524,8 @@ def stage_verify(st, log, run_dir):
                 log("[복구] 손실 0 도달 — ⚠ 교체된 페이지는 세로판 레이아웃"
                     "이다. 납품 전 반드시 눈으로 확인할 것")
 
-        vol["verify"] = {"total": total, "missing": len(missing)}
+        vol["verify"] = {"total": total, "missing": len(missing),
+                         "unprinted": len(unprinted)}
         if missing:
             failed.append(vol["horiz_name"])
         _save(st, run_dir)
@@ -707,6 +711,8 @@ def main():
         log("· %s" % vol["horiz_name"])
         log("    세로중간본: %s" % vol["sero_indd"])
         log("    가로 결과물: %s" % vol["horiz_indd"])
+        log("    (세로에서 인쇄되지 않아 대조 제외: %d개)"
+            % vol["verify"].get("unprinted", 0))
         log("    대조: 세로 문단 %d개 / 유실 %d개%s"
             % (vol["verify"]["total"], vol["verify"]["missing"],
                "  (페이지 복구 수행 — 눈으로 확인 필요)"

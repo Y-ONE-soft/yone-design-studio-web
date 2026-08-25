@@ -39,11 +39,22 @@
                 try { t = String(ps[p].contents); } catch (e2) { continue; }
                 t = t.replace(/[\r\n\t]+/g, " ");
                 if (t.replace(/\s/g, "").length === 0) { continue; }
-                // 문단이 놓인 페이지 (첫 컨테이너 기준)
+                // 문단이 놓인 페이지 (첫 컨테이너 기준).
+                // 지면에 **안 나오는** 문단은 사유를 구분해 찍는다 —
+                //   OVF = 오버셋(어느 프레임에도 그려지지 않음)
+                //   PB  = 붙임 영역(페이지 밖 프레임)
+                // 둘 다 세로에서도 인쇄되지 않으므로 가로에 요구할 수 없다.
+                // 대조는 이들을 제외하되 별도로 세어 보고한다(묻지 않는다).
                 var pg = "?";
                 try {
-                    var tf = ps[p].parentTextFrames[0];
-                    if (tf && tf.parentPage) { pg = String(tf.parentPage.name); }
+                    var tfs = ps[p].parentTextFrames;
+                    if (!tfs || tfs.length === 0) {
+                        pg = "OVF";
+                    } else if (!tfs[0].parentPage) {
+                        pg = "PB";
+                    } else {
+                        pg = String(tfs[0].parentPage.name);
+                    }
                 } catch (e3) {}
                 out.writeln(pg + "\t" + t);
                 n++;

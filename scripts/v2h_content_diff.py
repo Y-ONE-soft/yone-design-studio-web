@@ -75,12 +75,21 @@ def _dump(indd, tag, log, stall_limit=None):
     return rows
 
 
-def compare(verti, horiz, log=None, stall_limit=900):
+# 지면에 나오지 않는 문단(덤프가 사유를 찍는다) — 대조 대상이 아니다.
+# 세로에서도 인쇄되지 않으므로 "가로에 없다"가 결함이 아니다. 다만 이 수를
+# 조용히 0으로 만들지는 않는다: 세로 쪽 오버셋은 세로 자체의 문제이므로
+# 호출부가 볼 수 있게 따로 돌려준다.
+_UNPRINTED = ("OVF", "PB", "?")
+
+
+def compare(verti, horiz, log=None, stall_limit=900, unprinted_out=None):
     """세로/가로 .indd 를 덤프해 대조 → (대조한 문단 수, 유실 목록).
 
     유실 목록은 [(세로 페이지, 문단 텍스트)]. 빈 리스트면 손실 0.
     파이프라인(scripts/mt_pipeline.py)이 완료 판정에 그대로 쓴다 — CLI 와
     같은 판정을 쓰려고 함수로 떼어냈다(로직 분기 금지).
+
+    unprinted_out: 리스트를 주면 세로에서 인쇄되지 않는 문단을 담아 준다.
     """
     if log is None:
         def log(m):
@@ -108,9 +117,15 @@ def compare(verti, horiz, log=None, stall_limit=900):
 
     missing = []
     total = 0
+    unprinted = 0
     for page, t in v:
         n = _norm(t)
         if not n or len(n) < 12:          # 너무 짧은 조각은 오탐이 많다
+            continue
+        if page in _UNPRINTED:
+            unprinted += 1
+            if unprinted_out is not None:
+                unprinted_out.append((page, t))
             continue
         if _RE_LABEL_ONLY.match(t.strip()):
             continue
@@ -128,6 +143,9 @@ def compare(verti, horiz, log=None, stall_limit=900):
             continue
         missing.append((page, t))
 
+    if unprinted:
+        log("세로에서 인쇄되지 않는 문단 %d개 — 대조 제외 "
+            "(OVF=오버셋 / PB=붙임 영역)" % unprinted)
     return total, missing
 
 
