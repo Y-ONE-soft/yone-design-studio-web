@@ -2466,6 +2466,87 @@ def _find_passage_alternative(manuscript_dir, expected_filename, used_files,
     return best[1], best[2]
 
 
+# W69 (올포기출 13강 실증): 같은 스텝의 '답안 원고'가 두 세대 공존할 때 —
+# 구세대 export는 지문 문장 일부가 통째로 빠지고 "264. perform" 같은 정답
+# 목록 줄로 대체돼 있다. config가 가리키는 이름("… 정답지")이 구세대에
+# 정확히 일치하면 그쪽이 뽑히고, 새로 올린 온전한 답안 원고("… 해설지")는
+# 답지류로 분류돼 조판에서 제외된다 (13강: 빈칸어휘 178줄 / 빈칸어법 416줄이
+# 지문 대신 인쇄됨). 파일명이 아니라 **구조**로 고른다 — 정답 목록 줄이
+# 있으면 퇴화본, 인라인 빈칸(`125[partial]`) 단락이 온전한 답안본.
+_RE_ANS_LIST_LINE = re.compile(
+    r"^\s*\d+\s*[.)]\s*[A-Za-z][A-Za-z'\u2019\-]*\s*$")
+_RE_INLINE_BLANK = re.compile(r"\d+\s*\[[^\]]{1,40}\]")
+_RE_ANSWER_TOKEN = re.compile(r"(정답|해설|답안)")
+
+
+def _manu_blank_shape(paras):
+    """(정답목록줄 수, 인라인 빈칸 단락 수) — 답안 원고의 온전성 지표."""
+    n_list = n_inline = 0
+    for p in paras or []:
+        t = (p.get("text") if isinstance(p, dict) else str(p)) or ""
+        if _RE_ANS_LIST_LINE.match(t):
+            n_list += 1
+        elif _RE_INLINE_BLANK.search(t):
+            n_inline += 1
+    return n_list, n_inline
+
+
+def _find_filled_answer_alternative(manuscript_dir, expected_filename,
+                                    used_files, extract_ul, cur_inline,
+                                    log=None):
+    """정답 목록 줄로 퇴화한 답안 원고 → 같은 계열의 온전한 답안 원고.
+
+    후보 조건 (전부 구조 판정):
+      - 같은 스텝 계열 이름 (_manu_core_name 포함 관계)
+      - 파일명에 답안 토큰(정답/해설/답안) — 문제지로 갈아타 정답이
+        통째로 빠지는 사고 방지
+      - 정답 목록 줄 0개 + 인라인 빈칸 단락이 현재본 이상
+    """
+    core = _manu_core_name(expected_filename)
+    if len(core) < 6:
+        return None, None
+    used = {unicodedata.normalize("NFC", u) for u in (used_files or set())}
+    best = None
+    try:
+        names = sorted(os.listdir(manuscript_dir))
+    except OSError:
+        return None, None
+    for name in names:
+        fpath = os.path.join(manuscript_dir, name)
+        if unicodedata.normalize("NFC", fpath) in used:
+            continue
+        if not os.path.isfile(fpath):
+            continue
+        if not _RE_ANSWER_TOKEN.search(unicodedata.normalize("NFC", name)):
+            continue
+        cand_core = _manu_core_name(name)
+        if not (core in cand_core or cand_core in core):
+            continue
+        ext = os.path.splitext(name)[1].lower()
+        try:
+            if ext == ".docx":
+                paras = _docx_extract_paragraphs(fpath, extract_ul)
+            elif ext in (".hwp", ".hwpx"):
+                paras = _hwp_extract_paragraphs(fpath, extract_ul)
+            else:
+                continue
+        except Exception:                                      # noqa: BLE001
+            continue
+        n_list, n_inline = _manu_blank_shape(paras)
+        if n_list or n_inline < max(cur_inline, 1):
+            continue
+        if best is None or n_inline > best[0]:
+            best = (n_inline, fpath, paras)
+    if best is None:
+        return None, None
+    if log:
+        log("[선택] 정답목록 퇴화본 교체: '%s' → '%s' "
+            "(인라인 빈칸 단락 %d → %d)"
+            % (expected_filename, os.path.basename(best[1]),
+               cur_inline, best[0]))
+    return best[1], best[2]
+
+
 def _find_manuscript_file_by_content(manuscript_dir, step_key, used_files,
                                      log=None):
     """이름 매칭이 실패했을 때 폴더의 남은 원고를 **내용**으로 골라낸다."""
@@ -2812,6 +2893,27 @@ def parse_manuscript_folder(manuscript_dir, config, grade, year, month, log=None
             else:
                 log(f"⚠️ [원고이상] {step_key}: '{filename}'에 지문이 없고 "
                     f"대체 원고도 없습니다 — 원고 확인 필요")
+
+        # W69: 답안 원고가 '정답 목록 줄'로 퇴화한 구세대 export면 같은
+        # 계열의 온전한 답안 원고로 교체 (13강 빈칸어휘/빈칸어법 실증 —
+        # 정답 목록이 지문 대신 조판되던 침묵 사고).
+        if (step_key in _MANU_PASSAGE_STEPS
+                and _RE_ANSWER_TOKEN.search(
+                    unicodedata.normalize("NFC", filename))):
+            _n_list, _n_inline = _manu_blank_shape(paras)
+            if _n_list >= 3:
+                alt_path, alt_paras = _find_filled_answer_alternative(
+                    manuscript_dir, filename, used_files, extract_ul,
+                    _n_inline, log)
+                if alt_path:
+                    used_files.add(alt_path)
+                    fpath, filename, paras = (alt_path,
+                                              os.path.basename(alt_path),
+                                              alt_paras)
+                else:
+                    log(f"⚠️ [원고이상] {step_key}: '{filename}'에 정답 목록 "
+                        f"줄 {_n_list}개 — 지문이 정답 목록으로 대체된 "
+                        f"원고일 수 있습니다 (대체본 없음, 원고 확인 필요)")
 
         # 문항별 발문형 하단 문제 헤더("1. …틀린 것은? [20]") → 표준 형식
         # 하단 문제 섹션에서만 — 다른 섹션 원고의 대괄호 줄은 건드리지 않는다
