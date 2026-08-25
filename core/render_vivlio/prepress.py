@@ -23,6 +23,10 @@ import subprocess
 
 PT = 72 / 25.4
 
+# 화면 표기색 → 인쇄 CMYK(0~100). 이전 판과 **색을 정확히 맞춰야 하는** 색만 넣는다.
+# ICC 변환은 값이 미묘하게 달라지므로, 지정한 색은 아예 변환을 거치지 않게 한다.
+DEFAULT_CMYK_MAP = {}
+
 # 화면 표기색 → K 비율. 조판 팔레트의 무채색을 인쇄 값으로 옮기는 표다.
 DEFAULT_GRAY_MAP = {
     "#231f20": 1.00,     # 본문 먹  (완성본 K100)
@@ -58,14 +62,18 @@ def _hex(r, g, b):
     return "#%02x%02x%02x" % (round(r * 255), round(g * 255), round(b * 255))
 
 
-def neutralize(doc, gray_map=None, tol=2, log=None):
-    """`r g b rg|RG` 중 표에 있는 색을 `gray g|G` 로 바꾼다. 바뀐 횟수를 돌려준다.
+def neutralize(doc, gray_map=None, tol=2, log=None, cmyk_map=None):
+    """`r g b rg|RG` 를 표대로 `gray g|G`(무채색) 또는 `c m y k k`(지정색)로 바꾼다.
 
     tol 은 8비트 채널 허용 오차 — 조판 결과의 반올림(0.137255 …)을 흡수한다.
+    `cmyk_map` 은 **이전 판과 정확히 같아야 하는 색**용이다(예: 예문 강조어를
+    완성본과 동일한 C0 M56 Y64 로). 여기 넣은 색은 ICC 변환을 타지 않는다.
     """
     table = {k.lower(): v for k, v in (gray_map or DEFAULT_GRAY_MAP).items()}
     want = [(tuple(int(k[i:i + 2], 16) for i in (1, 3, 5)), v)
             for k, v in table.items()]
+    spot = [(tuple(int(k.lower()[i:i + 2], 16) for i in (1, 3, 5)), v)
+            for k, v in (cmyk_map or DEFAULT_CMYK_MAP).items()]
     n = 0
 
     def sub(m):
@@ -80,6 +88,12 @@ def neutralize(doc, gray_map=None, tol=2, log=None):
                 n += 1
                 op = b"g" if m.group(4) == b"rg" else b"G"
                 return b"%s %s" % (f"{1.0 - k:.6g}".encode(), op)
+        for ref, v in spot:
+            if all(abs(c[i] - ref[i]) <= tol for i in range(3)):
+                n += 1
+                op = b"k" if m.group(4) == b"rg" else b"K"
+                vals = " ".join(f"{x / 100.0:.6g}" for x in v)
+                return b"%s %s" % (vals.encode(), op)
         return m.group(0)
 
     seen = set()
@@ -110,8 +124,12 @@ def neutralize(doc, gray_map=None, tol=2, log=None):
             if out != data:
                 doc.update_stream(xref, out)
     if log:
-        log(f"[인쇄] 무채색 → DeviceGray {n}곳 "
-            f"({', '.join(f'{k}=K{int(v * 100)}' for k, v in table.items())})")
+        note = ", ".join(f"{k}=K{int(v * 100)}" for k, v in table.items())
+        if cmyk_map:
+            note += " | " + ", ".join(
+                f"{k}=C{v[0]:g}M{v[1]:g}Y{v[2]:g}K{v[3]:g}"
+                for k, v in cmyk_map.items())
+        log(f"[인쇄] 색 고정 {n}곳 ({note})")
     return n
 
 
@@ -198,7 +216,8 @@ def run_gs(src, dst, profile=None, log=None, timeout=900):
     return dst
 
 
-def make(src, dst, bleed=3.0, profile=None, gray_map=None, log=None):
+def make(src, dst, bleed=3.0, profile=None, gray_map=None, log=None,
+         cmyk_map=None):
     """RGB 조판본 → CMYK 인쇄 원고. Returns: {"pdf", "gray_ops", "profile"}."""
     import fitz
 
@@ -210,7 +229,7 @@ def make(src, dst, bleed=3.0, profile=None, gray_map=None, log=None):
     # ① 무채색 → DeviceGray
     tmp_gray = dst + ".gray.pdf"
     doc = fitz.open(src)
-    n = neutralize(doc, gray_map, log=log)
+    n = neutralize(doc, gray_map, log=log, cmyk_map=cmyk_map)
     doc.save(tmp_gray, garbage=3, deflate=True)
     doc.close()
 

@@ -45,6 +45,7 @@ def print_pdf(cfg, log=print, **opts):
     config 의 `print` 절:
       suffix   원본 PDF 접미사(어느 산출을 변환할지) / out  결과 접미사
       profile  ICC 이름 또는 절대경로 / gray_map  화면색 → K 비율 표
+      cmyk_map 화면색 → 고정 CMYK(이전 판과 색을 정확히 맞춰야 하는 것만)
     """
     from core.render_vivlio import prepress
     pc = cfg.section("print") or {}
@@ -54,7 +55,8 @@ def print_pdf(cfg, log=print, **opts):
     dst = cfg.out_pdf(pc.get("out", "_인쇄"))
     res = prepress.make(src, dst, bleed=cfg.page["bleed"],
                         profile=pc.get("profile"),
-                        gray_map=pc.get("gray_map"), log=log)
+                        gray_map=pc.get("gray_map"),
+                        cmyk_map=pc.get("cmyk_map"), log=log)
     a = prepress.audit(dst)
     log(f"  판형 {a['media_mm'][2]}×{a['media_mm'][3]}mm · "
         f"재단 {a['trim_mm']} · 색연산자 {a['ops']}")
