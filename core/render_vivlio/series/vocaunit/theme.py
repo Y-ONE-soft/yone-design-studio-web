@@ -119,16 +119,20 @@ def grid(color, PW, h, pitch, width, bleed, phase_right=False):
     """①② 모눈 헤더 — 위상은 **책등 쪽 재단선**에 맞춘다(펼침면에서 이어지도록).
     왼쪽 면은 책등이 오른쪽이므로 오른쪽 재단선부터, 오른쪽 면은 왼쪽부터."""
     H = h + bleed
-    body = []
+    body, ys = [], []
     for i in range(int(H / pitch) + 2):
         y = round(bleed + i * pitch, 3)
         if 0 <= y <= H:
+            ys.append(y)
             body.append(svg.line(0, y, PW, y, color, width))
+    # ⚠ 세로선을 상자 끝(H)까지 그리면 **마지막 가로선 아래로 꼬리가 삐져나온다**
+    #    (칸 크기가 높이를 딱 나누지 않으므로). 마지막 가로선에서 끊는다.
+    bottom = ys[-1] if ys else H
     n = int(PW / pitch) + 2
     for i in range(n):
         x = round((PW - bleed - i * pitch) if phase_right else (bleed + i * pitch), 3)
         if 0 <= x <= PW:
-            body.append(svg.line(x, 0, x, H, color, width))
+            body.append(svg.line(x, 0, x, bottom, color, width))
     return svg.data_uri(PW, H, "".join(body))
 
 
