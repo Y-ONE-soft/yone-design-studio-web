@@ -631,14 +631,17 @@ class PocketbookEngine(BaseEngine):
                         continue
                     seen_keys.add(rt_key)
                     # 검색 경로: 모의고사 작업/{grade}/{grade} {YY}년 {M}월/
+                    # 회차 폴더가 연도 묶음 폴더 안으로 내려간 해가 있다
+                    # ('고1 25년(3,6,9,10,11월)/고1 25년 3월' — 실측
+                    # 2026-08-25). 평면 목록으로 합쳐서 본다. 묶음 폴더가
+                    # 목록에 남으면 느슨한 substring 조건(yy·mm 포함)에
+                    # 걸려 **다른 달 리뷰테스트까지** 후보로 들어온다.
+                    from core.mock_folders import month_dir_entries
                     mock_base = os.path.join(rt_base, "모의고사 작업", grade)
                     if os.path.isdir(mock_base):
-                        for raw in os.listdir(mock_base):
-                            nfc = unicodedata.normalize("NFC", raw)
+                        for nfc, full in month_dir_entries(mock_base):
                             if yy in nfc and str(int(mm)) in nfc:
-                                full = os.path.join(mock_base, raw)
-                                if os.path.isdir(full):
-                                    search_dirs.append(full)
+                                search_dirs.append(full)
 
             elif ft == "ebs":
                 # 카테고리 "올포3강" or "올포3,4강" -> 강 번호 추출
@@ -783,11 +786,18 @@ class PocketbookEngine(BaseEngine):
                     _base = _base_by_ft.get(ft, rt_base)
                     _cands = []
                     try:
-                        _cands = sorted(
-                            unicodedata.normalize("NFC", d)
-                            for d in os.listdir(_base)
-                            if os.path.isdir(os.path.join(_base, d))
-                        )[:5]
+                        if ft == "mockexam":
+                            # 연도 묶음 폴더를 펼쳐서 — 후보로 묶음 이름만
+                            # 보여주면 진단이 오히려 오답을 가리킨다.
+                            from core.mock_folders import month_dir_entries
+                            _cands = [n for n, _ in
+                                      month_dir_entries(_base)][:5]
+                        else:
+                            _cands = sorted(
+                                unicodedata.normalize("NFC", d)
+                                for d in os.listdir(_base)
+                                if os.path.isdir(os.path.join(_base, d))
+                            )[:5]
                     except Exception:
                         pass
                     log(f"[경고] 리뷰테스트: '{nfc_cat}' ({ft}) 폴더 매칭 0건 — "
@@ -1261,9 +1271,11 @@ class PocketbookEngine(BaseEngine):
                 mock_base = os.path.join(rt_base, "모의고사 작업", grade) if rt_base else ""
                 if mock_base and os.path.isdir(mock_base):
                     from engines.pocketbook.parser import parse_review_test
+                    # 회차 폴더가 연도 묶음 폴더 안에 들어간 학년이 있다
+                    # ('고1 25년(3,6,9,10,11월)/고1 25년 3월'). 평면 목록.
+                    from core.mock_folders import month_dir_entries
                     added_count = 0
-                    for raw in os.listdir(mock_base):
-                        nfc_raw = unicodedata.normalize("NFC", raw)
+                    for nfc_raw, full_dir in month_dir_entries(mock_base):
                         ym_m = re.search(r"(\d{2})년?\s*(\d{1,2})월", nfc_raw)
                         if not ym_m:
                             continue
@@ -1271,7 +1283,6 @@ class PocketbookEngine(BaseEngine):
                         if rt_key in review_test_map:
                             continue
                         # 리뷰테스트 해설지 탐색
-                        full_dir = os.path.join(mock_base, raw)
                         if not os.path.isdir(full_dir):
                             continue
                         dirs_to_check = [full_dir]
