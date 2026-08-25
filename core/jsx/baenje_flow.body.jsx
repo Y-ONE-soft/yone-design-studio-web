@@ -647,8 +647,42 @@ function fitAnswerLinesToOneLine(story, label) {
 
 // ── (5) 마지막 페이지 크레딧 (스니펫 배치) ──────────────────────────────
 function placeCredit(doc, credit) {
-    if (!credit || !credit.items) return;
+    if (!credit) return;
     var last = doc.pages[doc.pages.length - 1];
+    // 크레딧 면 배경 = 완성 디자인 아트(큰 N·밴드·로고). 텍스트만 얹는다.
+    if (credit.background) {
+        var bgf = new File(credit.background.file);
+        if (!bgf.exists) warn("크레딧 배경 없음: " + credit.background.file);
+        else {
+            // 기존 장식(옛 N·로고·밴드)은 지우고 배경 하나로 대체한다
+            var olds = last.pageItems, killed = 0;
+            for (var k = olds.length - 1; k >= 0; k--) {
+                var pi = olds[k].getElements()[0];
+                if (pi.constructor.name === "TextFrame") continue;
+                try { pi.remove(); killed++; } catch (e) {}
+            }
+            var b = credit.background;
+            var fr = last.rectangles.add(
+                {geometricBounds: [b.y, b.x, b.y + b.h, b.x + b.w]});
+            try {
+                fr.strokeColor = doc.swatches.itemByName("None");
+                fr.fillColor = doc.swatches.itemByName("None");
+            } catch (e) {}
+            try {
+                app.pdfPlacePreferences.pageNumber = 1;
+                app.pdfPlacePreferences.pdfCrop = PDFCrop.CROP_MEDIA;
+                app.pdfPlacePreferences.transparentBackground = true;
+                fr.place(bgf);
+                fr.fit(FitOptions.CONTENT_TO_FRAME);
+                try { fr.graphics[0].itemLink.unlink(); } catch (e2) {}
+                try { fr.sendToBack(); } catch (e2) {}
+                RESULTS.credit_placed.push(
+                    String(b.file).split("/").pop());
+                wlog("크레딧 배경 배치 (옛 장식 " + killed + "개 제거)");
+            } catch (e) { warn("크레딧 배경 배치 실패: " + e.message); }
+        }
+    }
+    if (!credit.items) return;
     for (var i = 0; i < credit.items.length; i++) {
         var it = credit.items[i];
         var f = new File(it.file);
@@ -664,11 +698,24 @@ function placeCredit(doc, credit) {
         } catch (e) { warn("크레딧 위치 지정 실패: " + e.message); }
         RESULTS.credit_placed.push(it.file.split("/").pop());
     }
-    // 라벨(Writer/Assistant/…)이 옅어 잘 안 보인다 → 본문 메인 색으로
-    if (credit.label_color) {
+    // 라벨(Writer/Assistant/…) — 본문 포인트 색 + 지정 폰트(고딕 볼드)
+    if (credit.label_color || credit.label_font) {
         var col = null;
         try { col = doc.colors.itemByName(credit.label_color); if (!col.isValid) col = null; } catch (e) {}
-        if (col) {
+        var lfont = null, lsize = 0;
+        if (credit.label_font) {
+            var cand = [credit.label_font.family + "\t" + credit.label_font.style,
+                        credit.label_font.family];
+            for (var c = 0; c < cand.length && !lfont; c++) {
+                try {
+                    var ff = app.fonts.itemByName(cand[c]);
+                    if (ff.isValid) lfont = ff;
+                } catch (e) {}
+            }
+            if (!lfont) warn("크레딧 라벨 폰트 없음: " + credit.label_font.family);
+            lsize = credit.label_font.size || 0;
+        }
+        if (col || lfont) {
             var n = 0;
             var labels = credit.labels || ["Writer", "Assistant", "Design",
                                            "Production", "Marketer"];
@@ -680,13 +727,17 @@ function placeCredit(doc, credit) {
                     var txt = ps2[q].contents.replace(/[\r\n\s]/g, "");
                     for (var L = 0; L < labels.length; L++) {
                         if (txt === labels[L]) {
-                            try { ps2[q].fillColor = col; n++; } catch (e) {}
+                            try { if (col) ps2[q].fillColor = col; } catch (e) {}
+                            try { if (lfont) ps2[q].appliedFont = lfont; } catch (e) {}
+                            try { if (lsize) ps2[q].pointSize = lsize; } catch (e) {}
+                            n++;
                         }
                     }
                 }
             }
-            wlog("크레딧 라벨 색: " + n + "개 → " + credit.label_color);
-        } else { warn("크레딧 라벨 색 없음: " + credit.label_color); }
+            wlog("크레딧 라벨 서식: " + n + "개 → " + credit.label_color +
+                 (lfont ? " / " + lfont.name : ""));
+        } else { warn("크레딧 라벨 서식 적용 불가: " + credit.label_color); }
     }
     wlog("크레딧 배치: " + RESULTS.credit_placed.length + "건 (p" + last.name + ")");
 }

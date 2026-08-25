@@ -163,21 +163,25 @@ def content_to_plan(content, log=None):
             "keep_block_in_spread": "answers",
             # 마지막 페이지 크레딧 (배재보카 크레딧 스니펫 — 서식 그대로)
             "credit": {
+                # 크레딧 면 배경 = 배N제 뒷면 디자인(큰 N·회색 밴드·연구소 로고).
+                # 텍스트만 제거한 벡터 아트라 판형·색이 완성본과 1:1로 맞는다.
+                "background": {
+                    "file": os.path.join(_ASSETS, "baenje_credit_bg.pdf"),
+                    "x": -3.0, "y": -3.0, "w": 216.0, "h": 303.0,   # 도련 포함 전면
+                },
                 "items": [
                     {"file": os.path.join(_ASSETS, "credit_yone.idms"),
                      "x": 23.0, "y": 96.0},
+                    # 저작권 줄은 로고 바로 아래
                     {"file": os.path.join(_ASSETS, "copyright_yone.idms"),
-                     "x": 23.0, "y": 258.0},
+                     "x": 23.0, "y": 267.5},
                 ],
-                # 라벨이 옅어 잘 안 보인다 → 본문 메인 색(문제번호와 같은 남색)
-                "label_color": "C=100 M=78 Y=13 K=16",
+                # 라벨은 본문 포인트 색(청록) + 고딕 볼드 9pt
+                "label_color": "c99m29y42k28",
+                "label_font": {"family": "Gmarket Sans", "style": "Bold",
+                               "size": 9.0},
                 "labels": ["Writer", "Assistant", "Design", "Production",
                            "Marketer"],
-            },
-            # 마지막 페이지 장식(N)만 다른 팔레트라 본문 마스터 색으로 맞춘다
-            "last_page_colors": {
-                "c52m89y63k13": "c93m2y42k21",   # 자주 → 청록
-                "c41m17y0k0": "c76m49y0k0",      # 옅은 파랑 → 마스터 파랑
             },
         },
         "warnings": warnings,

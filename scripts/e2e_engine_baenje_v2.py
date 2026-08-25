@@ -30,13 +30,19 @@ if os.path.exists(_ENV):
             os.environ.setdefault(_k.strip(), _v.strip().strip('"').strip("'"))
 
 TEMPLATE_DIR = os.path.join(REPO, "data_corpus", "template_test")
-OUT_DIR = os.path.join(REPO, "data_corpus", "bj_engine_e2e")
+# 결과물은 리포(dev) 밖 — 교재 폴더로 내보낸다. 환경변수로 지정하지 않으면
+# 종전대로 data_corpus 아래(E2E 검증용)를 쓴다.
+OUT_DIR = os.environ.get("BJ_OUT_DIR") or os.path.join(
+    REPO, "data_corpus", "bj_engine_e2e")
 DEFAULT_SRC = os.path.expanduser(
     "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/"
     "콘텐츠 관리/내신대비/2026년/고2/배재고2/3. 26-2-중간/배N제")
 
 
 def _ensure_local_template():
+    env = os.environ.get("BJ_TEMPLATE")
+    if env and os.path.isfile(os.path.expanduser(env)):
+        return os.path.expanduser(env)
     local = os.path.join(TEMPLATE_DIR, "배N제_원본.indd")
     if os.path.isfile(local) and os.path.getsize(local) > 0:
         return local
