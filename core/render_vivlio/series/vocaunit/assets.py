@@ -14,7 +14,7 @@ import shutil
 
 # (파일명, 원본 바탕색, 새 색을 가져올 팔레트 키, 팔레트에 없을 때 기본색)
 TINTED = (
-    ("pill2026.png", (0xc7, 0xb9, 0xdb), "logo", None),
+    ("pill2026.png", (0xc7, 0xb9, 0xdb), "pill", None),
     ("memotab.png",  (0xd1, 0xdf, 0xc4), "memo", "#d1dfc4"),
 )
 
@@ -35,6 +35,8 @@ def retint(cfg, build_dir, src_dir, log=None):
         if not os.path.exists(src):
             continue
         want = pal.get(key) or default
+        if key == "pill" and not want:
+            want = pal.get("logo")          # 따로 안 정하면 로고 글자색을 따른다
         dst = os.path.join(dst_dir, name)
         if not want:
             shutil.copy2(src, dst)

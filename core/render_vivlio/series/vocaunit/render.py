@@ -16,7 +16,10 @@ import os
 import re
 
 _RE_POS = re.compile(r"\[([명동형부전접대감조])\]")
-_RE_SENSE = re.compile(r"(?<![0-9A-Za-z])([1-9])\.(?=\s)")
+# 파생어에선 품사 뒤 공백까지 먹는다 — 배지 자체 여백이 있어 겹치면 벌어져 보인다
+_RE_POS_SP = re.compile(r"\[([명동형부전접대감조])\]\s*")
+# 의미 번호 — 뒤따르는 공백까지 먹는다(줄바꿈 불가 공백으로 바꿔 붙이려고)
+_RE_SENSE = re.compile(r"(?<![0-9A-Za-z])([1-9])\.[ \t]")
 _RE_BRACKET = re.compile(r"\[([^\[\]]+)\]")
 _RE_PAREN = re.compile(r"\(([^()]*)\)")
 _RE_HAS_LATIN = re.compile(r"[A-Za-z]")
@@ -32,8 +35,10 @@ def esc(s):
 
 
 def _sense(s):
+    """`1.` → `①`. 번호와 뒤 낱말을 **줄바꿈 불가 공백**으로 묶는다 —
+    안 묶으면 번호만 줄 끝에 덩그러니 남는다(`… 연쇄 ②` / 다음 줄 `계승(권)`)."""
     return _RE_SENSE.sub(
-        lambda m: f'<span class="n">{_CIRCLED[int(m.group(1)) - 1]}</span>', s)
+        lambda m: f'<span class="n">{_CIRCLED[int(m.group(1)) - 1]}</span>\u00a0', s)
 
 
 def drop_notes(s):
@@ -110,7 +115,7 @@ def deriv(line, notes="small"):
     if notes == "drop":
         line = drop_notes(line)
     s = _paren(_sense(esc(line)))
-    return _RE_POS.sub(lambda m: f'<b class="pos">{m.group(1)}</b>', s)
+    return _RE_POS_SP.sub(lambda m: f'<b class="pos">{m.group(1)}</b>', s)
 
 
 def example(s):

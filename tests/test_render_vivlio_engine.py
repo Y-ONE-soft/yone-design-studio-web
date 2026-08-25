@@ -340,7 +340,7 @@ def test_vocaunit_badge_stops_inherited_text_indent():
     import os
     css = open(os.path.join(REPO, "core", "render_vivlio", "themes",
                             "vocaunit.css"), encoding="utf-8").read()
-    badge = css[css.index("b.pos {"):]
+    badge = css[css.index("\nb.pos {"):]     # `.w-deriv b.pos` 가 아니라 본 규칙
     badge = badge[:badge.index("}")]
     assert "text-indent: 0" in badge
 
@@ -398,7 +398,9 @@ def test_vocaunit_badge_is_outline_not_filled():
     import os
     css = open(os.path.join(REPO, "core", "render_vivlio", "themes",
                             "vocaunit.css"), encoding="utf-8").read()
-    badge = css[css.index("b.pos {"):]
+    badge = css[css.index("\nb.pos {"):]
     badge = badge[:badge.index("}")]
     assert "border: var(--pos-line-w) solid var(--c-pos-line)" in badge
     assert "background" not in badge
+    # 파생어 배지는 무채색으로 덮어쓴다
+    assert ".w-deriv b.pos { color: var(--c-pos); border-color: var(--c-pos); }" in css
