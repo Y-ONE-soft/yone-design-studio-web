@@ -57,6 +57,12 @@ from engines.workbook_sero.engine import WorkbookSeroEngine  # noqa: E402
 from engines.vert_to_horiz.engine import VertToHorizEngine   # noqa: E402
 
 STAGES = ["codes", "survey", "sero_new", "sero_merge", "v2h", "verify"]
+
+# 로그 무갱신 행(hang) 판정선. 기본 300초는 이 파이프라인에 짧다 —
+# JSX 는 저장·PDF 내보내기 구간에서 로그를 전혀 쓰지 않고, 그게 실측
+# 6분 7초 걸린 적이 있다(2026-08-25 13강 보충 조판: 10:00 저장 완료 →
+# 10:06 PDF 성공). 그때 러너가 스톨로 오판해 **정상 작업을 중단**했다.
+_STALL = 900
 _MS_EXTS = (".docx", ".hwp", ".hwpx")
 
 
@@ -281,7 +287,8 @@ def stage_sero_new(st, log, run_dir):
         jsx = eng.prepare_jsx(jp, jd, log)
         stt = json.load(open(os.path.join(jd, ".settings.json"), encoding="utf-8"))
         run_jsx(jsx, log, poll_log_path=os.path.join(jd, "조판_로그.txt"),
-                timeout=getattr(eng, "jsx_timeout", 1800))
+                timeout=getattr(eng, "jsx_timeout", 1800),
+                stall_limit=_STALL)
         try:
             eng.verify(jd, log)
         except Exception as e:                               # noqa: BLE001
@@ -343,9 +350,47 @@ def _volumes(st):
 
 # ── 4) 세로결합 → 세로중간본 ────────────────────────────────────────
 
+def _close_if_open(paths, log):
+    """소스로 쓸 .indd 가 InDesign 에 열려 있으면 닫는다 (저장하지 않음).
+
+    열린 .indd 를 그대로 복사하면 사본이 손상되고, 그 사본을 여는 JSX 가
+    크래시한다(과거 실측). 세로결합은 소스를 job 폴더로 복사해서 쓰므로,
+    직전 단계에서 방금 조판한 세로본이 열린 채면 정확히 그 상황이 된다.
+    이미 저장까지 끝난 문서라 저장 없이 닫아도 잃을 변경이 없다.
+    """
+    names = set(_nfc(os.path.basename(p)) for p in paths if p)
+    if not names:
+        return
+    from core.indesign.runner import find_indesign_app
+    app = find_indesign_app()
+    for n in sorted(names):
+        script = (
+            'tell application "%s"\n'
+            '  repeat with d in documents\n'
+            '    if (name of d) is "%s" then\n'
+            '      close d saving no\n'
+            '      return "closed"\n'
+            '    end if\n'
+            '  end repeat\n'
+            'end tell\n'
+            'return "not open"' % (app, n))
+        try:
+            import subprocess
+            r = subprocess.run(["osascript", "-e", script],
+                               capture_output=True, text=True, timeout=60)
+            out = (r.stdout or "").strip()
+            if out == "closed":
+                log("[정리] InDesign 에서 닫음: %s" % n)
+        except Exception as e:                               # noqa: BLE001
+            log("[정리] 닫기 실패(계속): %s — %s" % (n, e))
+
+
 def stage_sero_merge(st, log, run_dir):
     st.setdefault("volumes", _volumes(st))
     override = st.get("sero_new", {}).get("by_code", {})
+    # 신규 조판본은 방금 InDesign 이 만들어 연 채로 두었을 수 있다 —
+    # 복사 전에 닫는다(위 _close_if_open 주석 참조).
+    _close_if_open(set(override.values()), log)
     for vol in st["volumes"]:
         if vol.get("sero_indd") and os.path.exists(vol["sero_indd"]):
             log("[세로결합] %s — 완료본 재사용" % vol["sero_name"])
@@ -365,7 +410,8 @@ def stage_sero_merge(st, log, run_dir):
         stt = json.load(open(os.path.join(jd, ".settings.json"), encoding="utf-8"))
         run_jsx(jsx, log, poll_log_path=stt["log_paths"][0],
                 timeout=getattr(eng, "jsx_timeout", 1800),
-                completion_marker=getattr(eng, "completion_marker", None))
+                completion_marker=getattr(eng, "completion_marker", None),
+                stall_limit=_STALL)
         res = eng.verify(jd, log)
         if res.get("warnings"):
             log("[세로결합] 경고: %s" % "; ".join(res["warnings"]))
@@ -397,7 +443,7 @@ def stage_v2h(st, log, run_dir):
                         "result_name": vol["horiz_name"]}, jd, log)
         eng.prepare_jsx(jp, jd, log)
         # run_indesign 이 본 변환 + 후처리 3종(정리·재스레드·지문번호)을 순서대로
-        eng.run_indesign(jd, log)
+        eng.run_indesign(jd, log, stall_limit=_STALL)
         try:
             eng.verify(jd, log)
         except Exception as e:                               # noqa: BLE001
@@ -438,7 +484,8 @@ def _repair(vol, log, run_dir):
         pass
     log("[복구] 시작 — 세로 페이지를 가로에 페이지째 삽입한다")
     run_jsx(dst, log, poll_log_path=jlog, timeout=1800,
-            completion_marker="===== 페이지 복구 완료 =====")
+            completion_marker="===== 페이지 복구 완료 =====",
+            stall_limit=_STALL)
     if os.path.exists(jlog):
         for line in open(jlog, encoding="utf-8", errors="ignore"):
             log("   " + line.rstrip())

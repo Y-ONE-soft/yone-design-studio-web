@@ -46,7 +46,7 @@ def _norm(s):
     return s
 
 
-def _dump(indd, tag, log):
+def _dump(indd, tag, log, stall_limit=None):
     out = "/tmp/v2hdiff_%s.txt" % tag
     jsx = "/tmp/v2hdiff_%s.jsx" % tag
     jlog = "/tmp/v2hdiff_%s.log" % tag
@@ -61,7 +61,8 @@ def _dump(indd, tag, log):
         f.write(code)
     from core.indesign.runner import run_jsx
     run_jsx(jsx, log, poll_log_path=jlog, timeout=1800,
-            completion_marker="===== 덤프 완료 =====")
+            completion_marker="===== 덤프 완료 =====",
+            stall_limit=stall_limit)
     if not os.path.exists(out):
         raise RuntimeError("덤프 실패: %s" % indd)
     rows = []
@@ -74,7 +75,7 @@ def _dump(indd, tag, log):
     return rows
 
 
-def compare(verti, horiz, log=None):
+def compare(verti, horiz, log=None, stall_limit=900):
     """세로/가로 .indd 를 덤프해 대조 → (대조한 문단 수, 유실 목록).
 
     유실 목록은 [(세로 페이지, 문단 텍스트)]. 빈 리스트면 손실 0.
@@ -86,9 +87,9 @@ def compare(verti, horiz, log=None):
             print("  " + str(m), flush=True)
 
     print("[대조] 세로 덤프…", flush=True)
-    v = _dump(verti, "v", log)
+    v = _dump(verti, "v", log, stall_limit=stall_limit)
     print("[대조] 가로 덤프…", flush=True)
-    h = _dump(horiz, "h", log)
+    h = _dump(horiz, "h", log, stall_limit=stall_limit)
 
     # 가로 문단 집합 — 라벨 차이를 흡수하려고 "번호 뗀 형태"도 함께 넣는다
     hset = set()

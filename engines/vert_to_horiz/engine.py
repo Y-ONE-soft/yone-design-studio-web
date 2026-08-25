@@ -129,7 +129,7 @@ class VertToHorizEngine(BaseEngine):
          "===== 지문번호 교정 완료 =====", "[지문번호]"),
     ]
 
-    def run_indesign(self, job_dir, log, cancel_check=None):
+    def run_indesign(self, job_dir, log, cancel_check=None, stall_limit=None):
         from core.indesign import runner as indesign
         import os as _os
 
@@ -143,10 +143,13 @@ class VertToHorizEngine(BaseEngine):
             except (OSError, ValueError):
                 pass
         log_file = _os.path.join(out_dir, self.log_filename)
+        # stall_limit: 본 변환은 저장·PDF 구간에서 로그가 오래 멈춘다
+        # (실측 6분 7초). 기본 300초면 정상 작업을 스톨로 오판한다.
+        # 인자를 안 주면 종전 기본값 — Flask 경로는 무변경.
         indesign.run_jsx(jsx_path, log, poll_log_path=log_file,
                          timeout=self.jsx_timeout,
                          completion_marker=self.completion_marker,
-                         cancel_check=cancel_check)
+                         cancel_check=cancel_check, stall_limit=stall_limit)
 
         for tpl, logname, marker, tag in self._POST:
             src = _os.path.join(_DIR, "jsx", tpl)
