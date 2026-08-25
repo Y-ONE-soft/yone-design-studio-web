@@ -484,6 +484,14 @@ function refixAnswerTableHeaders(doc, styleOf) {
 // 스토리("20" 등 모의고사 문항번호 잔재). 스텝 스토리의 k번째 콘텐츠 페이지의
 // 순수 숫자 단일 프레임을 원고 지문번호 labels[k]로 갱신한다.
 var RE_BARE_NUM = /^\s*\d{1,3}(?:\s*~\s*\d{1,3})?\s*$/;
+// W74: 페이지 정리 전용 — 번호 프레임의 범위 표기는 물결(41~42)만이
+// 아니라 하이픈(41-42)도 쓴다. [원본]워크북_C 템플릿의 마지막 번호
+// 프레임이 "41-42"라, 물결만 보던 RE_BARE_NUM 이 이 프레임을 번호로
+// 못 알아봐 **내용 없는 잔여 페이지가 섹션마다 1장씩 남았다**
+// (올포기출 13강 실측: 빈칸어휘 p107 / 어법OX p144 / 빈칸어법 p162 —
+// 페이지에 "41-42" 한 줄만 인쇄). 갱신 대상 판정(passage_numbers)은
+// 종전 RE_BARE_NUM 그대로 — 여기서는 삭제 판정에만 쓴다.
+var RE_NUMLIKE_FRAME = /^\s*\d{1,3}(?:\s*[-\u2013\u2014~]\s*\d{1,3})?\s*$/;
 
 // W30: 긴 한글 라벨(추가지문/외부지문형)의 본문 침범 교정 — 모의고사 내지의
 // 지문번호 프레임은 박스 우측이 본문 프레임 좌변(x≈20)을 이미 넘는다
@@ -1134,7 +1142,7 @@ function cleanupPages(doc, flowStories, op) {
             } catch (e) { allBlankOrNum = false; continue; }
             var frameBlank = isBlankFrameContent(tfs[tf]);
             var frameBareNum = (nConts === 1
-                                && RE_BARE_NUM.test(String(pst.contents || "")));
+                                && RE_NUMLIKE_FRAME.test(String(pst.contents || "")));
             // W51: 제외 섹션 마커만 남은 단일 프레임 = 빈 프레임 취급
             if (!frameBlank && isExcludedMarkerFrame(tfs[tf], pst, nConts)) {
                 frameBlank = true;
