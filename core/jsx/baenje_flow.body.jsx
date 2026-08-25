@@ -702,7 +702,7 @@ function placeCredit(doc, credit) {
     if (credit.label_color || credit.label_font) {
         var col = null;
         try { col = doc.colors.itemByName(credit.label_color); if (!col.isValid) col = null; } catch (e) {}
-        var lfont = null, lsize = 0;
+        var lfont = null, lsize = 0, lspace = 0;
         if (credit.label_font) {
             var cand = [credit.label_font.family + "\t" + credit.label_font.style,
                         credit.label_font.family];
@@ -714,6 +714,7 @@ function placeCredit(doc, credit) {
             }
             if (!lfont) warn("크레딧 라벨 폰트 없음: " + credit.label_font.family);
             lsize = credit.label_font.size || 0;
+            lspace = credit.label_font.space_after_add || 0;
         }
         if (col || lfont) {
             var n = 0;
@@ -730,6 +731,10 @@ function placeCredit(doc, credit) {
                             try { if (col) ps2[q].fillColor = col; } catch (e) {}
                             try { if (lfont) ps2[q].appliedFont = lfont; } catch (e) {}
                             try { if (lsize) ps2[q].pointSize = lsize; } catch (e) {}
+                            try {
+                                if (lspace) ps2[q].spaceAfter =
+                                    (ps2[q].spaceAfter || 0) + lspace;
+                            } catch (e) {}
                             n++;
                         }
                     }

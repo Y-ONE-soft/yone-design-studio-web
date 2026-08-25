@@ -172,14 +172,14 @@ def content_to_plan(content, log=None):
                 "items": [
                     {"file": os.path.join(_ASSETS, "credit_yone.idms"),
                      "x": 23.0, "y": 96.0},
-                    # 저작권 줄은 로고 바로 아래
+                    # 저작권 줄은 로고(왼쪽 20mm)와 왼쪽을 맞춰 바로 아래
                     {"file": os.path.join(_ASSETS, "copyright_yone.idms"),
-                     "x": 23.0, "y": 267.5},
+                     "x": 20.0, "y": 270.0},
                 ],
                 # 라벨은 본문 포인트 색(청록) + 고딕 볼드 9pt
                 "label_color": "c99m29y42k28",
                 "label_font": {"family": "Gmarket Sans", "style": "Bold",
-                               "size": 9.0},
+                               "size": 9.0, "space_after_add": 1.7},
                 "labels": ["Writer", "Assistant", "Design", "Production",
                            "Marketer"],
             },
