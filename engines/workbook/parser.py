@@ -731,6 +731,12 @@ _RE_A1_SECTION = re.compile(
 )
 
 
+from core.structure.rules import A_SECTION_HEADER as _A_SECTION_HEADER
+
+# A1 지문 블록 라벨 — 선행 순번으로 시작하는 짧은 줄
+_RE_A1_BLOCK_LABEL = re.compile(r'^\d{1,3}\s*[.)]\s+\S')
+
+
 def _split_a1_sections(paras):
     """
     A1 원고를 섹션별로 분리.
@@ -754,6 +760,14 @@ def _split_a1_sections(paras):
 
     for p in paras:
         text = p['text'].strip()
+        # W74: 정답부 표제("정답 및 해설" / "빠른 정답 찾기") 단독 줄도
+        # 섹션 종료다. 누적 저장으로 바꾸기 전에는 뒤따르는 "N. 어휘M단계
+        # _정답" 마커가 앞 섹션을 통째로 덮어써서 이 줄이 저절로 사라졌다.
+        if _A_SECTION_HEADER.match(text):
+            _stash()
+            current_key = None
+            current_paras = []
+            continue
         if _RE_A1_SECTION.match(text):
             # 이전 섹션 저장
             _stash()
@@ -782,6 +796,34 @@ def _split_a1_sections(paras):
     # 빈 결과면 원본 그대로 step1_a1에 넣기
     if not sections:
         sections["step1_a1"] = paras
+
+    # W74: 누적 저장의 부작용 차단 — 한 원고에 같은 지문 블록이 두 벌
+    # 들어 있는 재-export 본(코퍼스 dce9c922 실측: 지문 3~17이 두 번)은
+    # 예전엔 마지막 대입이 앞을 덮어써 저절로 하나만 남았다. 지문 라벨
+    # ("N. …" 선행 순번 줄)로 블록을 갈라 **내용까지 똑같은 블록의
+    # 재등장만** 버린다 (라벨이 2개 미만이면 판정 근거가 없으니 무변경.
+    # 라벨만 같고 내용이 다르면 개정본이므로 둘 다 남긴다).
+    for key in list(sections):
+        items = sections[key]
+        heads = [i for i, q in enumerate(items)
+                 if _RE_A1_BLOCK_LABEL.match((q.get('text') or '').strip())]
+        if len(heads) < 2:
+            continue
+        seen = set()
+        keep = []
+        bounds = heads + [len(items)]
+        if heads[0] > 0:
+            keep.extend(items[:heads[0]])
+        for b in range(len(bounds) - 1):
+            blk = tuple((items[q].get('text') or '').strip()
+                        for q in range(bounds[b], bounds[b + 1]))
+            key_blk = tuple(t for t in blk if t)
+            if key_blk in seen:
+                continue        # 내용까지 같은 블록만 중복으로 본다
+            seen.add(key_blk)
+            keep.extend(items[bounds[b]:bounds[b + 1]])
+        if len(keep) != len(items):
+            sections[key] = keep
 
     return sections
 
