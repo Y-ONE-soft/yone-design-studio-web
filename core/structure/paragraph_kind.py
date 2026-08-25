@@ -224,6 +224,18 @@ def classify_paragraphs(paras):
             out[_meaning[_y]]["kind"] = "Box"
         out[marker_idx]["box_caption_start"] = _meaning[_si]
         _trailing_caption.add(marker_idx)
+        # 마커 뒤 기입란은 **답란**이다 (보기 내용은 앞에 있었다) — 구
+        # 전방 전파가 보기 스타일로 삼키던 줄. 위치+형태로 답란 확정.
+        for _y in range(_mi + 1, len(_meaning)):
+            _j = _meaning[_y]
+            if BG.is_box_content(out[_j]["text"]):
+                break
+            if out[_j]["kind"] not in ("UNKNOWN", "P", "K", "Word", "Box",
+                                       "Ans"):
+                break
+            if not R.ANS_UL_RUN.search(out[_j]["text"]):
+                break
+            out[_j]["kind"] = "AnsL"
 
     # ── 컨텍스트 패스 ────────────────────────────────────────────────────
     # 주어진 블록 슬롯 (W39 하향식 전환): 발문 유형(taxonomy leaf)의 실측

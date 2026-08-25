@@ -711,6 +711,12 @@ def build_step3(step_data):
 
             # ── 2패스: 유형 주도 슬롯 배정 (W39) ────────────────────────
             _s3_number_order_rows(pre)
+            # 2026-08-25 사용자 지적 — 선지 헤더/후치 보기 캡션 구조 인식.
+            # 슬롯 배정(_s3_assign_slots) 앞: 여기서 확정된 C/Box 는
+            # _promote_ansline 의 '구조 역할 확정' 제외 목록에 걸려 답란으로
+            # 강등되지 않는다.
+            _s3_choice_headers(pre, R)
+            _s3_box_captions(pre, BG, R)
             warnings.extend(_s3_assign_slots(pre, BG))
 
             # ── 3패스: 스타일 확정 + 유닛 생성 ──────────────────────────
@@ -785,7 +791,7 @@ def build_step3(step_data):
                 _s3_insert_answer_space(unit, st_q)
                 # W66 ②③ (사용자 지적 2026-08-14): 답 영역 실물화 —
                 # 원문자 기입 줄 칸 길이 통일 + 답표 헤더 2줄 → 표 op
-                _s3_widen_answer_rows(unit)
+                _s3_widen_answer_rows(unit, _style("STEP3", "C"))
                 _s3_answer_tables(unit, st_q, warnings)
                 # W67: 지문 속 빈칸(밑줄 공백)이 줄 끝에서 증발하는 것 방지
                 _s3_fix_blank_runs(unit)
@@ -809,20 +815,32 @@ def build_step3(step_data):
 #        헤더 채움 "C=44 M=0 Y=0 K=14" 50%, 4변 0.5pt, 셀 여백 1mm
 #   답란 = 원문자 + 밑줄 공백 35칸 (3칸이 82mm 단에 정확히 한 줄)
 _S3_ANSROW_SPACES = 35
+# 열 머리 판정은 구조 룰(core.structure.rules)과 같은 눈을 쓴다 — 표기가
+# 하나 바뀌어도(ⓐ/㉠/(a)) 두 모듈이 갈라지지 않도록 별칭으로만 둔다.
+from core.structure.rules import (COL_MARK_TOKEN as _RE_COL_MARKS,
+                                  choice_columns as _RE_COL_COLUMNS)
 _RE_S3_CIRCLED_LTR = re.compile(r"[ⓐ-ⓩⒶ-Ⓩ㉠-㉭]")
 _RE_S3_ANSROW_GAP = re.compile(r"[ \t　\xa0]{3,}")
 _RE_S3_WRONG_COUNT = re.compile(r"(\d+)\s*개")
 _S3_ANSTABLE_ROWS_DEFAULT = 8
 
 
-def _s3_widen_answer_rows(unit):
+def _s3_widen_answer_rows(unit, choice_style=None):
     """원문자 기입 줄("ⓐ   ⓑ   ⓒ")의 밑줄 칸을 완성본 길이로 (W66 ③).
 
     구조 판정: 단락이 원문자와 공백'만'으로 이뤄지고(=쓸 내용이 없는 기입
     줄), 3칸 이상 공백 구간이 있으면 답 쓰는 칸이다. 원고가 몇 칸을 줬든
-    (14칸/15칸/전각공백) 완성본과 같은 35칸으로 통일하고 밑줄 run을 준다."""
+    (14칸/15칸/전각공백) 완성본과 같은 35칸으로 통일하고 밑줄 run을 준다.
+
+    2026-08-25 사용자 지적("선지 헤더 abc 뒤에 자꾸 밑줄이 들어간다"):
+    **다열 선지의 열 머리**("ⓐ  ⓑ  ⓒ" 위에 선지 ①~⑤가 오는 줄)는 형태가
+    기입 줄과 똑같아 여기 걸렸다 — 원고 runs 에는 밑줄이 전혀 없는데
+    35칸 밑줄이 새로 붙었다. 답란인지 열 머리인지는 **다음 줄**이 가른다:
+    다음 유의 단락이 같은 열 수의 선지면 열 머리다. 판정을 _s3_choice_headers
+    와 같은 눈(R.choice_columns)으로 두 겹 건다 — ① 확정된 선지 스타일
+    제외 ② 스타일이 어긋나도 구조로 재확인."""
     n = 0
-    for p in unit:
+    for pi, p in enumerate(unit):
         t = p.get("t") or ""
         if not t.strip():
             continue
@@ -831,6 +849,13 @@ def _s3_widen_answer_rows(unit):
             continue
         if _RE_S3_CIRCLED_LTR.sub("", t).strip():
             continue          # 원문자 외 내용이 있으면 기입 줄이 아니다
+        if choice_style and p.get("s") == choice_style:
+            continue          # 선지 헤더로 확정된 줄 — 답란이 아니다
+        _nx = next((q for q in unit[pi + 1:] if (q.get("t") or "").strip()),
+                   None)
+        if _nx is not None and _RE_COL_MARKS.findall(t) \
+                and _RE_COL_COLUMNS(_nx.get("t") or "") == len(marks):
+            continue          # 다음 줄이 같은 열 수의 선지 = 열 머리
         runs, text = [], []
         for mk in marks:
             runs.append({"t": mk, "ul": False})
@@ -1117,6 +1142,74 @@ def _s3_number_order_rows(pre):
         i = j
 
 
+def _s3_choice_headers(pre, R):
+    """다열 선지 열 머리 → 선지(C) — 표기 불문 구조 인식 (파서와 이중 방어).
+
+    2026-08-25 사용자 지적: "선지 헤더로 들어가는 abc 뒤에 자꾸 밑줄이
+    들어간다. 선지 헤더면 선지 단락스타일이어야 하는데 지문으로 처리된다."
+      윗글의 괄호 ⓐ, ⓑ, ⓒ에서 흐름상 알맞은 말로 …             ← 발문
+      ⓐ      ⓑ      ⓒ                                        ← 열 머리
+      ① excited  confident  convenience                      ← 선지
+    기존 인식(R.C_AB_HEADER)은 `(A)` **리터럴**만 봐서 ⓐ/㉠/(a) 표기의 열
+    머리를 전부 놓쳤고(kind UNKNOWN → 지문 스타일), 아래 _s3_widen_answer_rows
+    는 같은 줄을 '답란 기입 줄'로 보고 원고에 없던 밑줄 35칸을 붙였다
+    (같은 줄을 두 모듈이 다른 눈으로 본 결과 — 지문 스타일 + 가짜 밑줄).
+    열 머리는 표기가 아니라 위치+형태로 잡는다: 열 라벨만으로 이뤄진 줄이고
+    바로 다음 유의 단락이 같은 열 수의 원문자 선지일 때만."""
+    n = 0
+    rows = [r for r in pre if r["tclean"]]
+    for x, row in enumerate(rows):
+        if row["eff"] in ("Q", "Q-INTRO", "GH", "A", "C", "Cond", "Box",
+                          "Sum", "SRC"):
+            continue
+        marks = R.choice_header_marks(row["tclean"])
+        if not marks:
+            continue
+        nxt = rows[x + 1] if x + 1 < len(rows) else None
+        if not nxt or nxt["eff"] != "C":
+            continue
+        if R.choice_columns(nxt["tclean"]) != len(marks):
+            continue
+        row["eff"] = "C"
+        row["choice_header"] = True
+        n += 1
+    return n
+
+
+def _s3_box_captions(pre, BG, R):
+    """후치 <보기> 캡션 — 라벨이 자기 내용 **뒤**에 오는 원고 (2026-08-25).
+
+    원고(hwp)의 보기 상자는 캡션이 표 뒤에 추출돼 스트림이
+      confident / appreciate / stylish /   ← 보기 내용
+      the way / feel / help                ← 보기 내용
+      보기                                 ← 마커 (내용 뒤!)
+    순서로 온다. 마커 뒤만 보는 전방 전파는 이 형태에서 ① 앞의 어구 나열을
+    직전 <조건> 블록이 흡수해 조건 상자에 인쇄하고 ② 보기 상자는 빈 채로
+    인쇄하고 ③ 마커 뒤 답란을 보기 스타일로 삼킨다 (사용자 실증 스크린샷).
+    마커 뒤에 보기 내용이 없고 앞에 붙어 있으면 그 앞이 이 마커의 내용이다 —
+    구간을 Box 로 되돌리고 라벨을 구간 맨 앞으로 옮긴다(라벨이 상자 머리)."""
+    idxs = [i for i, r in enumerate(pre) if r["tclean"]]
+    moves = []
+    for mi, si in BG.trailing_box_captions([pre[i]["tclean"] for i in idxs]):
+        for y in range(si, mi):
+            pre[idxs[y]]["eff"] = "Box"
+        pre[idxs[mi]]["eff"] = "Box"
+        moves.append((idxs[mi], idxs[si]))
+        # 마커 뒤에 붙어 있던 Box 는 구 전방 전파가 삼킨 **답란**이다
+        # (보기 내용은 앞에 있었다) — 기입란이면 답란으로 되돌린다.
+        for y in range(mi + 1, len(idxs)):
+            row = pre[idxs[y]]
+            if row["eff"] != "Box":
+                break
+            t = row["tclean"]
+            if BG.is_box_content(t):
+                break
+            row["eff"] = "AnsL" if R.ANS_UL_RUN.search(t) else "P"
+    for marker_i, start_i in reversed(moves):
+        pre.insert(start_i, pre.pop(marker_i))
+    return len(moves)
+
+
 def _s3_assign_slots(pre, BG):
     """유형 주도 슬롯 배정 2패스 (파서 컨텍스트 패스와 이중 방어).
 
@@ -1241,6 +1334,7 @@ def _s3_assign_slots(pre, BG):
         if not is_row:
             is_row = bool(_RE_ANS_BLANK_ROW.match(t)
                           or _RE_ANS_PAREN_COLON.match(t)
+                          or R.ANS_MARK_BLANK_ROW.match(t)  # ⓐ __ ⓑ __
                           or R.ANS_UL_ROW.match(t))    # W57: 밑줄런 답란
         if not (is_head or is_row):
             continue
