@@ -25,7 +25,7 @@ var RESULTS = {
     frames_grown: [], choice_layout: {}, mixed_format: [],
     oneline_fitted: 0, oneline_failed: [], credit_placed: [],
     answer_line_as_passage: [], trimmed_pages: 0, orphan_moved: [],
-    recolored: 0, orphan_remaining: [], warnings: []
+    recolored: 0, orphan_remaining: [], story_len_drift: [], warnings: []
 };
 
 function readJSONFile(path) {
@@ -683,6 +683,24 @@ function recolorLastPage(doc, mapping) {
 }
 
 // ── 오버플로우 시 페이지·프레임 증설 ────────────────────────────────────
+// 프레임 속성 이식 (텍스트는 옮기지 않는다)
+function copyFrameProps(src, dst) {
+    var tp = ["insetSpacing", "textColumnCount", "textColumnGutter",
+              "verticalJustification", "firstBaselineOffset",
+              "autoSizingType", "autoSizingReferencePoint",
+              "ignoreWrap", "useFlexibleColumnWidth"];
+    for (var i = 0; i < tp.length; i++) {
+        try { dst.textFramePreferences[tp[i]] = src.textFramePreferences[tp[i]]; }
+        catch (e) {}
+    }
+    var fp = ["strokeWeight", "strokeColor", "fillColor", "strokeTint",
+              "fillTint", "cornerRadius", "textWrapPreferences"];
+    for (var j = 0; j < fp.length; j++) {
+        try { dst[fp[j]] = src[fp[j]]; } catch (e) {}
+    }
+    try { dst.appliedObjectStyle = src.appliedObjectStyle; } catch (e) {}
+}
+
 function frameGeomOfPage(pg) {
     var arr = [], tfs = pg.textFrames;
     for (var i = 0; i < tfs.length; i++) {
@@ -695,6 +713,8 @@ function frameGeomOfPage(pg) {
 }
 
 function expandStory(doc, story, label) {
+    var _len0 = -1;
+    try { _len0 = story.length; } catch (e) {}
     var left = null, right = null;
     var tc = story.textContainers;
     for (var i = 0; i < tc.length; i++) {
@@ -732,16 +752,13 @@ function expandStory(doc, story, label) {
             var list = isLeft ? left : right;
             var proto = isLeft ? protoL : protoR;
             for (var g = 0; g < list.length; g++) {
+                // 프레임 복제(duplicate)는 원본의 '보이는 텍스트'까지 복사해
+                // 스레드에 붙는 순간 스토리에 그 조각이 끼어든다(실측: 정답지 +70자).
+                // → 빈 프레임을 새로 만들고 속성만 옮긴다.
                 var nf = null;
-                try {
-                    nf = proto.duplicate(pg2);
-                    nf.geometricBounds = list[g].gb;
-                    try { nf.contents = ""; } catch (e) {}
-                } catch (e) { nf = null; }
-                if (nf === null) {
-                    try { nf = pg2.textFrames.add({ geometricBounds: list[g].gb }); }
-                    catch (e2) { warn(label + " 프레임 생성 실패: " + e2.message); continue; }
-                }
+                try { nf = pg2.textFrames.add({ geometricBounds: list[g].gb }); }
+                catch (e2) { warn(label + " 프레임 생성 실패: " + e2.message); continue; }
+                copyFrameProps(proto, nf);
                 try { lf.nextTextFrame = nf; lf = nf; added++; }
                 catch (e3) { warn(label + " 스레드 연결 실패: " + e3.message); }
             }
@@ -749,6 +766,13 @@ function expandStory(doc, story, label) {
         lf = lastFrame();
     }
     if (added > 0) wlog(label + " 프레임 증설: " + added + "개 (총 " + story.textContainers.length + ")");
+    var _len1 = -1;
+    try { _len1 = story.length; } catch (e) {}
+    if (_len0 >= 0 && _len1 >= 0 && _len1 !== _len0) {
+        RESULTS.story_len_drift.push(label + ": " + _len0 + "→" + _len1);
+        warn(label + " 페이지 증설 중 스토리 길이 변동 " + _len0 + "→" + _len1 +
+             " (프레임 복제가 텍스트를 끌고 왔을 가능성)");
+    }
     return added;
 }
 

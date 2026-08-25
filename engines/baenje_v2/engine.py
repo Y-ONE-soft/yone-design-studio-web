@@ -378,6 +378,10 @@ class BaenjeV2Engine(BaseEngine):
         if alp:
             ok = False
             warnings.append(f"❌ B9 서술형 답란이 지문 스타일로 조판됨 {len(alp)}건: {alp[:3]}")
+        drift = result.get("story_len_drift") or []
+        if drift:
+            ok = False
+            warnings.append(f"❌ B9 페이지 증설 중 스토리 길이 변동: {drift[:3]}")
         mixed = result.get("mixed_format") or []
         if mixed:
             ok = False
