@@ -404,3 +404,19 @@ def test_vocaunit_badge_is_outline_not_filled():
     assert "background" not in badge
     # 파생어 배지는 무채색으로 덮어쓴다
     assert ".w-deriv b.pos { color: var(--c-pos); border-color: var(--c-pos); }" in css
+
+
+def test_vocaunit_sense_number_never_ends_a_line():
+    """의미 번호는 뒤 낱말과 줄바꿈 불가 공백으로 묶는다 —
+    안 묶으면 `… 연쇄 ②` 로 줄이 끊기고 다음 줄이 `계승(권)` 이 된다."""
+    from core.render_vivlio.series.vocaunit import render
+    html = render.meaning("[명] 1. 연속, 잇따름 2. 계승(권)")
+    assert '<span class="n">①</span> 연속' in html
+    assert '<span class="n">②</span> 계승' in html
+
+
+def test_vocaunit_derivative_badge_eats_following_space():
+    """파생어의 품사 뒤 공백은 배지가 먹는다 — 배지 자체 여백과 겹치면 벌어진다."""
+    from core.render_vivlio.series.vocaunit import render
+    assert render.deriv("successor [명] 후계자") == \
+        'successor <b class="pos">명</b>후계자'
