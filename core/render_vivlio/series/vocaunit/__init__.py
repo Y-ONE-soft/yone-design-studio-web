@@ -24,6 +24,7 @@ import unicodedata
 from core.render_vivlio import bleed as bleed_mod
 from core.render_vivlio import cli, paged, probe, stage
 from core.render_vivlio.series.base import Series
+from core.render_vivlio.series.vocaunit import assets as assets_mod
 from core.render_vivlio.series.vocaunit import data as data_mod
 from core.render_vivlio.series.vocaunit import render as render_mod
 from core.render_vivlio.series.vocaunit import theme as theme_mod
@@ -54,7 +55,8 @@ class VocaunitSeries(Series):
         out = cfg.out_pdf("_견본" if sample else "")
 
         _stage_fonts(build_dir, cfg, log)
-        stage.stage_assets(build_dir, theme_mod.ASSETS_SRC)
+        # 자산 PNG 는 배경 SVG 와 달리 색이 파일에 박혀 있다 → 팔레트 색으로 다시 굽는다
+        assets_mod.retint(cfg, build_dir, theme_mod.ASSETS_SRC, log)
         theme_mod.write(cfg, os.path.join(build_dir, "theme.css"), log)
 
         pages_css = stage.write_css(build_dir, "pages.css")
