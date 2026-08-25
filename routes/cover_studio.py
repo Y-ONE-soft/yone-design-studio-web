@@ -51,7 +51,8 @@ def _gen_python():
         return _py_cache
     # 탐색할 때 PYTHONPATH 를 비운다 — Flask 가 물고 있는 3.9 site-packages 가
     # 후보 파이썬에 섞이면 멀쩡한 인터프리터가 탈락한다 (cover2026 에서 겪음).
-    clean = {k: v for k, v in os.environ.items() if k != "PYTHONPATH"}
+    clean = _env()
+    clean.pop("PYTHONPATH", None)
     tried = []
     for p in _PY_CANDIDATES:
         if not p or not os.path.exists(p):
@@ -107,13 +108,31 @@ def _project(key=None):
     return p or ps[sorted(ps)[0]]
 
 
+# 생성기는 글자 폭을 재려고 `fc-match`(fontconfig)를 부른다. 그 명령은 홈브루에
+# 있는데, launchd 가 띄운 Flask 의 PATH 는 `/usr/bin:/bin:/usr/sbin:/sbin` 뿐이라
+# 웹으로 열면 `FileNotFoundError: 'fc-match'` 로 미리보기가 빈 화면이 된다.
+# 터미널에서 같은 명령을 돌리면 멀쩡해서(그쪽 PATH 에는 있다) 놓치기 쉽다.
+_EXTRA_PATH = ["/opt/homebrew/bin", "/usr/local/bin"]
+
+
+def _env(**extra):
+    """생성기를 돌릴 환경. PYTHONPATH 는 코어로 고정하고 PATH 를 보강한다."""
+    env = {k: v for k, v in os.environ.items() if k != "PYTHONPATH"}
+    parts = [p for p in (env.get("PATH") or "").split(os.pathsep) if p]
+    for p in _EXTRA_PATH:
+        if p not in parts and os.path.isdir(p):
+            parts.append(p)
+    env["PATH"] = os.pathsep.join(parts)
+    env["PYTHONPATH"] = CORE
+    env.update(extra)
+    return env
+
+
 def _run(proj, args, stdin_data=None, python=None, timeout=120):
     """코어 작업대를 부른다 — 프로젝트는 cover_project.py 만 제공한다."""
     cmd = [python or _gen_python(), "-m", "yone_cover.studio", proj["폴더"]] + args
-    env = {k: v for k, v in os.environ.items() if k != "PYTHONPATH"}
-    env["PYTHONPATH"] = CORE
     return subprocess.run(cmd, input=stdin_data, capture_output=True, text=True,
-                          cwd=proj["폴더"], env=env, timeout=timeout)
+                          cwd=proj["폴더"], env=_env(), timeout=timeout)
 
 
 @bp.route("/cover-studio")
@@ -396,11 +415,9 @@ def api_create():
     except RuntimeError as e:
         return jsonify({"error": str(e)}), 400
     cmd = [py, "-m", "yone_cover.studio", folder, "create"]
-    env = {k: v for k, v in os.environ.items() if k != "PYTHONPATH"}
-    env["PYTHONPATH"] = CORE
     r = subprocess.run(cmd, input=json.dumps(d.get("config") or {},
                                              ensure_ascii=False),
-                       capture_output=True, text=True, env=env, timeout=60)
+                       capture_output=True, text=True, env=_env(), timeout=60)
     if r.returncode != 0:
         return jsonify({"error": r.stderr[-800:] or "만들기 실패"}), 500
     _bust()
