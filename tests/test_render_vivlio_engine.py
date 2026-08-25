@@ -402,8 +402,21 @@ def test_vocaunit_badge_is_outline_not_filled():
     badge = badge[:badge.index("}")]
     assert "border: var(--pos-line-w) solid var(--c-pos-line)" in badge
     assert "background" not in badge
-    # 파생어 배지는 무채색으로 덮어쓴다
-    assert ".w-deriv b.pos { color: var(--c-pos); border-color: var(--c-pos); }" in css
+    # 파생어 배지는 무채색으로, 세로 정렬은 7pt 줄에 맞춰 따로 덮어쓴다
+    deriv = css[css.index(".w-deriv b.pos {"):]
+    deriv = deriv[:deriv.index("}")]
+    assert "color: var(--c-pos)" in deriv and "border-color: var(--c-pos)" in deriv
+    assert "vertical-align: var(--pos-va-deriv)" in deriv
+
+
+def test_vocaunit_uses_complement_for_content_emphasis():
+    """구조는 주색, 내용 강조는 보색 — 의미 번호·강조어가 주색을 그대로 쓰면
+    지면이 2도 인쇄처럼 보인다."""
+    import os
+    css = open(os.path.join(REPO, "core", "render_vivlio", "themes",
+                            "vocaunit.css"), encoding="utf-8").read()
+    assert "color: var(--c-sense)" in css      # ①②③ 는 accent 가 아니라 sense
+    assert "color: var(--c-hl)" in css or "var(--c-hl)" in css
 
 
 def test_vocaunit_sense_number_never_ends_a_line():
