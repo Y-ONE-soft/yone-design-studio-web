@@ -362,9 +362,21 @@ def parse_manuscripts(problem_files, answer_files, unit_labels, log=None):
         if nums and nums != list(range(nums[0], nums[0] + len(nums))):
             warnings.append(f"[파서] {name} 번호 불연속: {nums[:5]} … {nums[-5:]}")
 
+    # 유닛 시작 번호는 '재번호 뒤' 각 파일의 첫 문항 번호다.
+    # (과별 원고가 저마다 1부터 시작하므로 파일명에서 뽑은 start_q는 신뢰할 수 없다)
     units = []
-    for u in unit_labels or []:
-        units.append({"label": u["text"], "start_q": int(u["start_q"])})
+    labels = list(unit_labels or [])
+    starts = [c[1][0]["no"] for c in prob_chunks if c[1]]
+    if labels and len(labels) == len(starts):
+        for lab, st in zip(labels, starts):
+            units.append({"label": lab["text"], "start_q": st})
+    else:
+        for u in labels:
+            units.append({"label": u["text"], "start_q": int(u["start_q"])})
+        if labels and len(labels) != len(starts):
+            warnings.append(
+                f"[파서] 유닛 라벨 {len(labels)}개 vs 원고 파일 {len(starts)}개 — "
+                "파일명 start_q 그대로 사용")
 
     return {
         "format": "baenje-content-v1",
