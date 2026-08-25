@@ -50,7 +50,7 @@ body {
          margin-left: calc(-1 * var(--mgn-out)); }
 .hdr-l i {
     display: block; margin: var(--tabtxt-mt) 0 0 var(--tab-x);
-    width: var(--tab-w); font: 400 12pt/1 "Tab"; color: #fff;
+    width: var(--tab-w); font: 400 12pt/1 "Tab"; color: var(--c-headtxt);
     text-align: center; font-style: normal; letter-spacing: .02em;
 }
 /* ④ 오른쪽 면 로고 — 크레스트 SVG + 알약 PNG 는 배경, 글자만 여기 */
@@ -98,7 +98,7 @@ body {
                  margin-right: calc(-1 * var(--mgn-out)); }
 .unit-head .ttl, .unit-head .num { position: absolute; }
 .unit-head .ttl { left: var(--unit-ttl-x); top: var(--unit-ttl-y);
-                  font: 400 14pt/1 "Tab"; color: #fff; }
+                  font: 400 14pt/1 "Tab"; color: var(--c-headtxt); }
 .unit-head .num { left: var(--unit-num-x); top: var(--unit-num-y);
                   font: 400 34pt/1 "Disp"; color: var(--c-unitnum); }
 

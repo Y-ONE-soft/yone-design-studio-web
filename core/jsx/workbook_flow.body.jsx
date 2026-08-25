@@ -2865,6 +2865,13 @@ try {
                     if (flat[pi].ind0) { applyAnslineIndentZero(paras[pi]); }
                 }
             }
+            // W74: 단락 정렬 오버라이드 (각주 — "* dyslexia: 난독증"은
+            // 지문과 같은 스타일에 오른쪽 정렬). 플랜이 명시할 때만 —
+            // 없으면 단락 스타일 그대로 (기존 동작 무변경).
+            if (flat[pi].align === "right") {
+                try { paras[pi].justification = Justification.RIGHT_ALIGN; }
+                catch (eAl) {}
+            }
             if (flow.break_per_unit && pi > 0 && isStart[pi]) {
                 try {
                     paras[pi].startParagraph = (isStart[pi] === "page")

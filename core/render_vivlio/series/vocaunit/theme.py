@@ -202,6 +202,9 @@ def prelude(cfg):
         if isinstance(v, str):
             # config 는 `cover_mark`, CSS 는 `--c-cover-mark` — 밑줄을 하이픈으로
             o.append(f"    --c-{k.replace('_', '-')}: {v};")
+    if not pal.get("headtxt"):
+        o.append("    --c-headtxt: #fff;"
+                 "                 /* ①③ 헤더 글자 — 따로 안 정하면 흰색 */")
     if not pal.get("sense"):
         o.append("    --c-sense: var(--c-accent);"
                  "     /* 의미 번호 — 따로 안 정하면 주색상 */")

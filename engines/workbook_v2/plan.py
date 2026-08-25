@@ -1802,6 +1802,19 @@ def extract_tail(text):
                  s, re.I)
     if m:
         return m.group(1)
+    # W74 (올포기출 13강 실증 — 사용자 지적 "어법선택 상단프레임 지문번호에
+    # 문자스타일 안 입혀짐"): 위 형식 열거가 전부 빗나가면 꼬리가 빈
+    # 문자열이라 헤더가 **원문 그대로** 인쇄된다 ({tail} 로 안 감싸이니
+    # 템플릿의 지문번호 GREP도 안 걸린다). 페이지 마커(p12) 없이 강 번호만
+    # 쓰는 원고("1. 13강 지문1 (2025년 3월 고1 31번)")가 그 경우다.
+    # 구조로 꼬리를 남긴다 — 선행 순번 + 꼬리 괄호(출처) + 강/과 접두를
+    # 벗긴 나머지. 벗길 게 하나도 없으면 종전대로 빈 문자열(원문 유지).
+    t = re.sub(r"^\s*\d{1,3}\s*[.)]\s*", "", s)
+    t = re.sub(r"(?:\s*\([^()]*\))+\s*$", "", t)
+    t = _RE_LEAD_LESSON.sub("", t).strip(" .,·-–—")
+    t = re.sub(r"\s+", " ", t)
+    if t and len(t) <= 30 and t != s.strip():
+        return t
     return ""
 
 
@@ -2223,6 +2236,10 @@ def build_step1_a2(step_data):
 # {주제}/{제목} 정규화(단독줄은 다음 단락과 병합), bracket(2번째+)·"다음" 발문
 # 기준 유닛 분할, 선지 위/제목 앞 빈 줄 보장, "다음" 발문에 STEP1 문제아이콘+탭.
 
+# W74: 각주(어휘 풀이) 줄 — 별표 머리 + "단어: 뜻" (※/＊ 이형 포함)
+_RE_GLOSS_NOTE = re.compile(r"^\s*[*※＊✻∗]{1,3}\s*\S[^\r\n]{0,120}?[:：]")
+
+
 def build_step1_b1(step_data):
     st_all = _style("STEP1B1", "*")
     st_subj = _style("STEP1B1", "SUBJ")
@@ -2337,6 +2354,22 @@ def build_step1_b1(step_data):
         zs = re.sub("^[\\s\u00a0\u2000-\u200b]+", "", it["t"])
         if re.match("^[\\[［]", zs):
             out[k]["s"] = "$BASIC"      # v1: bracket 단락 → 기본 단락
+
+    # 2b) W74: 각주(어휘 풀이) — "* dyslexia: 난독증 ** voraciously: 탐욕스럽게".
+    # 원고에서 지문 바로 뒤에 오는 이 줄은 지문의 일부다. 예전엔 어떤
+    # 스타일 패스에도 안 걸려 기본값(B1_내용 정리)으로 지문 박스 **밖에**
+    # 따로 찍혔다 (사용자 지적: "하단 문제_지문 단락스타일로 들어가서
+    # 오른쪽 정렬되어야 하는데 별도로 조판됨"). 앞 단락이 지문이면 같은
+    # 스타일 + 오른쪽 정렬로 붙인다 — 별표 머리 + 콜론이라는 구조로만
+    # 판정하므로 표기가 바뀌어도(※, ＊) 걸린다.
+    for k in range(1, len(out)):
+        if not _RE_GLOSS_NOTE.match(items[k]["t"]):
+            continue
+        prev_s = out[k - 1]["s"]
+        if prev_s not in (st_jim, st_box):
+            continue
+        out[k]["s"] = prev_s
+        out[k]["align"] = "right"
 
     # 3) 선지(원문자) 위 빈 줄 보장 (역순 — v1과 동일 조건)
     k = len(out) - 1
@@ -2473,6 +2506,10 @@ def build_step2_c2(step_data, workbook_type="모의고사"):
         if _no_bracket and det.is_header(i) and det.via(i) != "seq":
             lab = re.sub(r"^\s*\[|\]\s*$", "", _header_label(text) or "")
             lab = lab.strip()
+            # W74: 강 접두("13강 지문 1")는 문서 전체 공통값이라 지문번호가
+            # 아니다 — a1/b1이 _bracket_label_text에서 벗기는 것과 같은 계약.
+            # 교과서의 "3과 추가지문"(과 접두)은 라벨 자체라 건드리지 않는다.
+            lab = re.sub(r"^\d{1,2}\s*강\s*", "", lab).strip() or lab
             if lab:
                 kept.append({"text": "[" + lab + "]",
                              "runs": [{"t": "[" + lab + "]", "ul": False}]})
@@ -2696,6 +2733,19 @@ def _sub_runs(rx, repl, text, runs):
     out_t.append(text[last:])
     out_r.extend(_slice_runs(runs, last, len(text)))
     return "".join(out_t), out_r
+
+
+_RE_C1_SENT_NORM = re.compile(r"[\s\u2028\u2029]+")
+_C1_SENT_TRANS = {ord("\u2019"): "'", ord("\u2018"): "'",
+                  ord("\u201c"): '"', ord("\u201d"): '"',
+                  ord("\u2013"): "-", ord("\u2014"): "-",
+                  ord("\u2015"): "-", ord("\u2500"): "-"}
+
+
+def _c1_norm_sent(text):
+    """문장 대조용 정규화 — 공백 접기 + 따옴표/대시 이형 통일 + 소문자."""
+    t = (text or "").translate(_C1_SENT_TRANS)
+    return _RE_C1_SENT_NORM.sub(" ", t).strip().lower()
 
 
 def _c1_true_empty(text):
@@ -3249,6 +3299,46 @@ def build_step1_c1(step_data, workbook_type="모의고사", exclude_btm=False,
             # 벌어진 채 인쇄된다 (a3d13ab3 p33/p35 실증).
             t, r = _sub_runs(_RE_C1_EDGE_BREAK, "", t, r)
             it["t"], it["runs"] = t, r
+
+    # 4d-2) W74 (올포기출 13강 실증 — 사용자 지적 "문장배열 15번 하단
+    # 프레임 주어진 문장이 별도로 조판되고 문제가 다음 페이지로 넘어감"):
+    # 이 원고는 지문 15개는 주어진 문장 앞에 3연속 공백이 있는데 **한
+    # 지문만 없다**(원고 사고). 그러면 4d가 BTM을 못 잡고, 그 줄은 3b의
+    # 조건(_cond) 단락으로 남아 **혼자 한 프레임**을 차지한다 (하단 발문
+    # +본문은 다음 페이지로 밀림).
+    # 공백 표기에 기대지 않는 구조 근거를 쓴다 — 주어진 문장은 배열
+    # 카드((A)~(Z)) 중 하나와 **같은 문장**이다. 카드 뒤에 BTM이 하나도
+    # 없는 블록에서만, 카드와 문장이 일치하는 줄을 BTM으로 승격한다
+    # (기존 원고는 이미 BTM이 잡혀 있어 무발동 — 회귀 0).
+    _hdr2 = [i for i, it in enumerate(items) if _RE_C1_HEADER.match(it["t"])]
+    _ends2 = _hdr2 + [len(items)]
+    _rescued = 0
+    for _b in range(len(_ends2) - 1):
+        _b0, _b1 = _ends2[_b], _ends2[_b + 1]
+        _cards = [i for i in range(_b0, _b1) if items[i]["s"] == st_c1]
+        if not _cards:
+            continue
+        if any(items[i]["s"] == st_btm for i in range(_cards[-1] + 1, _b1)):
+            continue
+        _ctxt = set()
+        for i in _cards:
+            _ctxt.add(_c1_norm_sent(_RE_C1_CHOICE.sub("", items[i]["t"], 1)))
+        _ctxt.discard("")
+        for i in range(_cards[-1] + 1, _b1):
+            it = items[i]
+            if _is_blank(it["t"]):
+                continue
+            if _RE_C1_CIRCLED_WIDE.search(it["t"]):
+                break               # 하단 본문이 시작됐다
+            if it["s"] is not None:
+                continue
+            if _c1_norm_sent(it["t"]) in _ctxt:
+                it["s"] = st_btm
+                _rescued += 1
+                break
+    if _rescued:
+        warnings.append("step1_c1: 주어진 문장 %d개를 카드 대조로 복원 "
+                        "(원고에 3연속 공백 표기 없음)" % _rescued)
 
     # 4e) BTM(3+공백 잔존) 뒤 (A|B|C) 시퀀스 → C1_하단 지문
     # W71: 판정 기준을 "BTM 단락 뒤에 (A)(B)(C) 가 온다"로 넓힌다. 주어진
