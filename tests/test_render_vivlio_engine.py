@@ -499,3 +499,29 @@ def test_prepress_pins_exact_cmyk_for_matched_colors():
     out = doc.xref_stream(xref).decode("latin-1")
     assert n == 1 and "0 0.56 0.64 0 k" in out
     doc.close()
+
+
+def test_verify_flags_stale_print_pdf(tmp_path, monkeypatch):
+    """인쇄 원고가 조판본보다 오래되면 결함 — 조용히 뒤처지면 옛 색으로 납품된다."""
+    import os
+    import time
+    from core.render_vivlio import book, verify as gate
+    (tmp_path / "config.json").write_text(json.dumps({
+        "series": "vocaunit", "page": {"width": 148, "height": 210, "bleed": 3},
+        "output": {"dir": ".", "stem": "책"},
+        "print": {"out": "_인쇄"},
+    }, ensure_ascii=False), encoding="utf-8")
+    from core.render_vivlio import config as bookconfig
+    cfg = bookconfig.load(str(tmp_path))
+    src, out = tmp_path / "책.pdf", tmp_path / "책_인쇄.pdf"
+    out.write_bytes(b"old")
+    time.sleep(0.01)
+    src.write_bytes(b"new")
+    os.utime(out, (0, 0))
+    rep = gate.Report()
+    book._check_print_fresh(cfg, str(src), rep)
+    assert rep.fails and "오래됐다" in rep.fails[0]
+    os.utime(out, None)                       # 다시 최신으로
+    rep2 = gate.Report()
+    book._check_print_fresh(cfg, str(src), rep2)
+    assert rep2.ok
