@@ -7,7 +7,8 @@
   · `[명] [동] [형] …`  품사 대괄호 → **네모 배지 글리프**. 품사가 나오면 **줄을 바꾼다**
   · `1. 2. 3.`          의미 번호 → `① ② ③` (보조색)
   · `(한글만)`          쓰임 설명 → 작은 글자
-  · `(= …)` `(↔ …)`    유의어·반의어 → 작은 글자 + 회색
+  · `(= …)` `(↔ …)`    유의어·반의어 → 작은 글자 + 회색, 또는 **통째로 뺀다**
+                        (`options.notes: "drop"` — 광문보카는 뺀다)
   · `[단어]`            예문 안 대괄호 → 강조색 (영문·해석 공통)
 """
 import html
@@ -19,6 +20,10 @@ _RE_SENSE = re.compile(r"(?<![0-9A-Za-z])([1-9])\.(?=\s)")
 _RE_BRACKET = re.compile(r"\[([^\[\]]+)\]")
 _RE_PAREN = re.compile(r"\(([^()]*)\)")
 _RE_HAS_LATIN = re.compile(r"[A-Za-z]")
+# 유의어/반의어 주석 — 통째로 뺄 때 쓰는 패턴
+_RE_NOTE = re.compile(r"\s*\(\s*[=↔≠][^()]*\)")
+_RE_SPACE_PUNCT = re.compile(r"\s+([,;.)\]])")
+_RE_MULTISPACE = re.compile(r"\s{2,}")
 _CIRCLED = "①②③④⑤⑥⑦⑧⑨"
 
 
@@ -29,6 +34,18 @@ def esc(s):
 def _sense(s):
     return _RE_SENSE.sub(
         lambda m: f'<span class="n">{_CIRCLED[int(m.group(1)) - 1]}</span>', s)
+
+
+def drop_notes(s):
+    """`(= …)` `(↔ …)` 를 통째로 뺀다. 지우고 남는 공백·구두점 앞 공백까지 정리."""
+    out = _RE_NOTE.sub("", s or "")
+    out = _RE_SPACE_PUNCT.sub(r"\1", out)
+    return _RE_MULTISPACE.sub(" ", out).strip()
+
+
+def has_note(s):
+    """빼지 못하고 남은 주석이 있는가 — 침묵 유실 방지용 확인."""
+    return bool(re.search(r"\(\s*[=↔≠]", s or ""))
 
 
 def _paren(s):
@@ -44,8 +61,10 @@ def _paren(s):
     return _RE_PAREN.sub(one, s)
 
 
-def meaning(s):
-    """뜻 — 품사마다 한 줄. 품사 라벨은 회색, 의미 번호는 보조색."""
+def meaning(s, notes="small"):
+    """뜻 — 품사마다 한 줄. 품사는 네모 배지, 의미 번호는 보조색."""
+    if notes == "drop":
+        s = drop_notes(s)
     hits = list(_RE_POS.finditer(s or ""))
     if not hits:
         return f"<p>{_paren(_sense(esc(s)))}</p>"
@@ -62,8 +81,10 @@ def meaning(s):
         for pos, body in out)
 
 
-def deriv(line):
+def deriv(line, notes="small"):
     """파생어 한 줄 — `단어 [품사] 뜻`. 품사만 네모 배지로."""
+    if notes == "drop":
+        line = drop_notes(line)
     s = _paren(_sense(esc(line)))
     return _RE_POS.sub(lambda m: f'<b class="pos">{m.group(1)}</b>', s)
 
@@ -87,6 +108,7 @@ class Renderer(object):
         self.brand = o.get("brand") or cfg.book.get("brand", "")
         self.title = cfg.book.get("title", "")
         self.pad = int(o.get("no_pad", 3))
+        self.notes = o.get("notes", "small")     # "small" | "drop"
         self.mirror = set(mirror or ())
         self.sample = sample
         self._op = 0
@@ -118,7 +140,7 @@ class Renderer(object):
     # ── 표제어 항목 ─────────────────────────────────────────────────────
     def word(self, w):
         chk = '<span class="chk"><i></i><i></i><i></i></span>'
-        der = "".join(f"<p>{deriv(x)}</p>" for x in w["deriv"])
+        der = "".join(f"<p>{deriv(x, self.notes)}</p>" for x in w["deriv"])
         pairs = []
         for en, kr in w["pairs"]:
             pairs.append('<div class="pair">'
