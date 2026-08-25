@@ -411,3 +411,18 @@ def test_swap_removes_leftover_source_copy(tmp_path):
                                          lambda m: None)
     assert not (up / "manuscripts_직전 보충 자료.docx").exists()
     assert (up / "manuscripts_Step2 A1 어법선택.docx").exists()
+
+
+def test_jsx_refuses_to_delete_open_ended_section(jsx):
+    """문서 마지막 마커 섹션은 범위가 '문서 끝까지'라 확정 불가 —
+    마커 없는 영작 배열·STEP3 실전이 흡수돼 지워진 실사고(고2 6강)."""
+    assert "openEnded" in jsx
+    body = jsx.split("function deleteSection")[1][:900]
+    assert "sec.openEnded" in body and "return;" in body
+
+
+def test_jsx_delete_limited_to_master_family(jsx):
+    """삭제는 같은 마스터 계열이 이어지는 동안만 — 실전(O)/간지/메모에서 끊는다."""
+    assert "function masterFamily" in jsx
+    body = jsx.split("function deleteSection")[1][:2000]
+    assert "masterFamily" in body

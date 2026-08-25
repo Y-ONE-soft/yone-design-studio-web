@@ -230,9 +230,10 @@
             var start = markers[i].off;
             var j = i + 1;
             while (j < markers.length && markers[j].label === label) j++;
-            var end = (j < markers.length) ? markers[j].off - 1
-                                           : doc.pages.length - 1;
-            secs.push({ label: label, start: start, end: end });
+            var isLast = (j >= markers.length);
+            var end = isLast ? doc.pages.length - 1 : markers[j].off - 1;
+            secs.push({ label: label, start: start, end: end,
+                        openEnded: isLast });
             i = j;
         }
         return secs;
@@ -439,6 +440,17 @@
     }
 
     function deleteSection(sec) {
+        // 문서의 마지막 마커 섹션은 범위가 '문서 끝까지'라 확정할 수 없다.
+        // 마커 없는 뒤쪽(영작 배열 · STEP3 실전)이 통째로 흡수돼 삭제되는
+        // 사고가 실제로 났다 (2026-08-25 고2 6강: 영작 배열 + 실전 11p 소실).
+        // 되돌릴 수 없는 작업이므로 지우지 않고 사용자에게 넘긴다.
+        if (sec.openEnded) {
+            writeLog("[경고] '" + sec.label + "' 은 문서의 마지막 섹션이라 " +
+                     "삭제 범위를 확정할 수 없습니다 (뒤에 영작 배열·실전이 " +
+                     "마커 없이 이어질 수 있음) — 삭제하지 않았습니다. " +
+                     "필요하면 해당 페이지를 직접 지우세요");
+            return;
+        }
         // 섹션 범위는 '다음 마커 직전까지'라, 마커가 없는 뒤쪽(STEP3 실전 ·
         // 간지 · 메모 · 판권)이 마지막 섹션에 통째로 흡수된다. 삭제 대상이
         // 그런 섹션이면 문서 끝까지 지워진다 → **같은 마스터 계열이 이어지는
