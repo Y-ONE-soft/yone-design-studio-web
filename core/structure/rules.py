@@ -138,6 +138,44 @@ Q_INTRO_FALLBACK = [
 C_START = re.compile(r'^[①②③④⑤]')
 C_AB_HEADER = re.compile(r'^\(A\)(?:\s{2,}|\t)')                # (A)  (B)  (C) 헤더
 
+# ── C: 다열 선지 열 머리 (선지 헤더) — 표기 불문 구조 판정 ────────────────────
+# 2026-08-25 사용자 지적: "선지 헤더로 들어가는 abc 뒤에 자꾸 밑줄이 들어간다.
+# 선지 헤더면 선지 단락스타일이어야 하는데 지문으로 처리된다."
+#   윗글의 괄호 ⓐ, ⓑ, ⓒ에서 흐름상 알맞은 말로 바르게 연결된 것은?   ← 발문
+#   ⓐ      ⓑ      ⓒ                                              ← 열 머리(선지 헤더)
+#   ① excited  confident  convenience                            ← 선지
+# 위 C_AB_HEADER 는 `(A)` **리터럴**만 봐서 ⓐ/㉠/(a) 표기의 열 머리를 전부
+# 놓쳤다 (kind UNKNOWN → 지문 스타일). 열 머리는 표기가 아니라 구조로 잡는다:
+#   ① 열 라벨과 공백'만'으로 이뤄진 줄 (라벨 2개 이상)
+#   ② 바로 다음 유의 단락이 같은 열 수의 원문자 선지
+# 두 조건이 같이 성립할 때만 헤더 — 뒤에 기입 줄이 오면 답란(AnsL) 그대로다.
+COL_MARK_TOKEN = re.compile(r'\([A-Za-z0-9]{1,2}\)|[ⓐ-ⓩⒶ-Ⓩ㉠-㉭]')
+_COL_CHOICE_LEAD = re.compile(r'^[\s\u00a0]*[①-⑮][\s\u00a0]*')
+_COL_SPLIT = re.compile(r'\t+|[ \u00a0\u3000]{2,}')
+COL_MARK_ROW_MAX_LEN = 80
+
+
+def choice_header_marks(text):
+    """열 라벨만으로 이뤄진 줄이면 라벨 목록, 아니면 [] (표기 불문)."""
+    t = (text or "").strip()
+    if not t or len(t) > COL_MARK_ROW_MAX_LEN or "_" in t:
+        return []                 # 밑줄이 있으면 기입 줄(답란)이지 헤더가 아니다
+    marks = COL_MARK_TOKEN.findall(t)
+    if len(marks) < 2:
+        return []
+    if COL_MARK_TOKEN.sub("", t).strip():
+        return []                 # 라벨 외 내용이 있으면 헤더가 아니다
+    return marks
+
+
+def choice_columns(text):
+    """원문자 선지 줄의 열 수 (탭/2칸+ 공백 구분). 선지가 아니면 0."""
+    t = (text or "").strip()
+    stripped = _COL_CHOICE_LEAD.sub("", t)
+    if stripped == t:
+        return 0
+    return len([c for c in _COL_SPLIT.split(stripped) if c.strip()])
+
 # ── P: 영어 본문 ─────────────────────────────────────────────────────────────
 P_MIN_LEN = 80
 P_ENGLISH_START = re.compile(r'^[A-Za-z"\'“‘(\[]')
@@ -195,6 +233,13 @@ ANS_PATTERNS = [
     re.compile(r'^\([\s\u00a0]*\)[\s\u00a0]*→?\s*$'),        # "(      ) →"
     re.compile(r'^<[가-힣\s]+>[\s\u00a0]*<[가-힣\s]+>$'),       # "<기호>  <올바른 형태>"
 ]
+
+# 한 줄에 마커+기입란이 여러 쌍 ("ⓐ ______  ⓑ ______") — 쌍 개수 불문.
+# 2026-08-25 실증: 기존 답란 정규식은 마커 1개짜리만 봐서 2쌍 이상인 줄이
+# UNKNOWN 으로 남고, 앞의 <보기> 마커 전파에 흡수돼 **보기 스타일**로 인쇄됐다.
+ANS_MARK_BLANK_ROW = re.compile(
+    r'^[\s\u00a0]*(?:(?:\([A-Za-z0-9]{1,2}\)|[①-⑮ⓐ-ⓩⒶ-Ⓩ㉠-㉭])'
+    r'[\s\u00a0]*[:：]?[\s\u00a0]*_{3,}[\s\u00a0]*)+$')
 
 # ── P 보조: 짧은 영어 완결문 (주어진 문장 등 — 종결부호 필수) ─────────────────
 P_SHORT_MIN_LEN = 30

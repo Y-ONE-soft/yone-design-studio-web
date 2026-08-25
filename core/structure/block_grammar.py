@@ -280,6 +280,56 @@ def is_cond_wordlist(text):
     return bool(_COND_WORDLIST_COMMA.search(t))
 
 
+# ── 후치 <보기> 캡션 (2026-08-25 실증) ──────────────────────────────────────
+# 원고(hwp)의 보기 상자는 캡션이 표 **뒤**에 추출되는 경우가 있어 스트림이
+#   confident / appreciate / stylish /     ← 보기 내용
+#   the way / feel / help                  ← 보기 내용
+#   보기                                   ← 마커 (내용 뒤!)
+# 순서로 온다. 마커 뒤만 보는 전방 전파는 이 형태에서 세 가지를 동시에
+# 틀린다: ① 앞의 어구 나열을 직전 <조건> 블록이 흡수해 조건 상자에 인쇄
+# ② 보기 상자는 빈 채로 인쇄 ③ 마커 뒤 답란을 보기 스타일로 흡수.
+# 방향은 표기가 아니라 내용의 위치로 정한다 — 마커 뒤에 보기 내용이 없고
+# 앞에 붙어 있으면 그 앞이 이 마커의 내용이다.
+BOX_CONTENT_MAX_LEN = 120
+
+
+def is_box_content(text):
+    """보기 상자 내용 줄인가 — 어구 나열(슬래시/쉼표 3+) 또는 (a) 항목."""
+    t = (text or "").strip()
+    if not t or len(t) > BOX_CONTENT_MAX_LEN:
+        return False
+    if R.COND_ITEM_START.match(t):
+        return False          # 조건 항목(불릿/번호)은 보기 내용이 아니다
+    if R.BOX_MARKERS["Box"].match(R.norm_brackets(t)) \
+            or R.BOX_MARKERS["Cond"].match(R.norm_brackets(t)):
+        return False
+    if R.HANGUL.search(t):
+        return bool(R.BOX_ITEM_LABEL.match(t))
+    if "_" in t:
+        return False          # 기입란(답란)은 보기 내용이 아니다
+    return bool(R.BOX_WORDLIST.search(t))
+
+
+def trailing_box_captions(texts):
+    """후치 보기 캡션 위치 목록 [(marker_idx, start_idx)].
+
+    texts: 유의 단락 텍스트 목록(빈 줄 제외한 것). marker_idx 의 '보기'
+    라벨이 start_idx..marker_idx-1 을 내용으로 갖는다는 뜻 — 호출자는 그
+    구간을 Box 로 되돌리고 라벨을 start_idx 앞으로 옮긴다."""
+    out = []
+    for i, t in enumerate(texts):
+        if not R.BOX_MARKERS["Box"].match(R.norm_brackets((t or "").strip())):
+            continue
+        if i + 1 < len(texts) and is_box_content(texts[i + 1]):
+            continue          # 정상(전치) 마커 — 기존 전방 전파에 맡긴다
+        start = i
+        while start - 1 >= 0 and is_box_content(texts[start - 1]):
+            start -= 1
+        if start != i:
+            out.append((i, start))
+    return out
+
+
 # 요약 빈칸 선택형의 요약문 형태 (W40 결함 4 보조): 짧은 영어 문장 +
 # 인라인 (A)·(B) 빈칸 — 라벨 뒤가 공백/NBSP(" (A) ") 또는 밑줄 런
 # ("(A)__________"). 둘 다 코퍼스 실측 표기 (0a5da924 / r10c21rp11).

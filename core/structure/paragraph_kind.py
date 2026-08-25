@@ -121,6 +121,11 @@ def _base_kind(text):
     # 같은 ▶ 답란이 보기/지문 스타일로 갈라짐).
     if R.ANS_UL_ROW.match(text):
         return "AnsL", None
+    # 2026-08-25: 한 줄에 마커+기입란이 여러 쌍("ⓐ ____  ⓑ ____")인 답란.
+    # 기존 답란 정규식은 마커 1개짜리만 봐서 UNKNOWN 으로 남고, 앞의 <보기>
+    # 마커 전파에 흡수돼 보기 스타일로 인쇄됐다.
+    if R.ANS_MARK_BLANK_ROW.match(text):
+        return "AnsL", None
     if any(p.match(text) for p in R.ANS_PATTERNS):
         return "Ans", None
     # 요약문 블록 마커 (W38 결함 4, W39 결함 1) — 대괄호형·꺾쇠형 모두
@@ -180,6 +185,45 @@ def classify_paragraphs(paras):
         if sib:
             item["kind"] = "C"
             item["q_code"] = None
+
+    # 다열 선지 열 머리 (2026-08-25 사용자 지적 "선지 헤더인데 지문으로
+    # 처리되고 밑줄까지 붙는다"): 열 라벨만으로 이뤄진 줄 + 바로 다음이
+    # 같은 열 수의 원문자 선지 = 선지 헤더(C). 기존 R.C_AB_HEADER 는
+    # `(A)` 리터럴만 봐서 ⓐ/㉠/(a) 표기를 전부 놓쳤다 — 표기가 아니라
+    # 위치+형태로 잡는다. 뒤에 기입 줄이 오는 경우는 답란(AnsL) 그대로.
+    for i, item in enumerate(out):
+        if item["kind"] not in ("UNKNOWN", "P", "K", "Word", "Ans", "AnsL"):
+            continue
+        marks = R.choice_header_marks(item["text"])
+        if not marks:
+            continue
+        nxt = next((out[j] for j in range(i + 1, len(out))
+                    if out[j]["kind"] != "BLANK"), None)
+        if not nxt or nxt["kind"] != "C":
+            continue
+        if R.choice_columns(nxt["text"]) != len(marks):
+            continue
+        item["kind"] = "C"
+        item["q_code"] = None
+        item["choice_header"] = True
+
+    # 후치 <보기> 캡션 (2026-08-25 실증 — 원고 hwp 표 캡션이 내용 뒤에
+    # 추출되는 형태). 마커 뒤에 보기 내용이 없고 앞의 어구 나열이 이
+    # 마커의 내용이면, 그 나열을 Box 로 되돌리고 **전방 전파는 하지
+    # 않는다** (마커 뒤 답란을 보기 스타일로 삼키던 결함까지 같이 닫힘).
+    # 아래 Cond/Box 전파 루프보다 먼저 — 그래야 앞선 <조건> 블록이 이
+    # 나열을 조건으로 흡수하지 못하고 Box 에서 멈춘다.
+    _meaning = [i for i, it in enumerate(out) if it["kind"] != "BLANK"]
+    _trailing_caption = set()
+    for _mi, _si in BG.trailing_box_captions(
+            [out[i]["text"] for i in _meaning]):
+        marker_idx = _meaning[_mi]
+        if out[marker_idx]["kind"] != "Box":
+            continue
+        for _y in range(_si, _mi):
+            out[_meaning[_y]]["kind"] = "Box"
+        out[marker_idx]["box_caption_start"] = _meaning[_si]
+        _trailing_caption.add(marker_idx)
 
     # ── 컨텍스트 패스 ────────────────────────────────────────────────────
     # 주어진 블록 슬롯 (W39 하향식 전환): 발문 유형(taxonomy leaf)의 실측
@@ -320,6 +364,8 @@ def classify_paragraphs(paras):
     for i, item in enumerate(out):
         if item["kind"] not in ("Cond", "Box"):
             continue
+        if i in _trailing_caption:
+            continue        # 후치 캡션 — 내용은 이미 앞에서 흡수했다
         j = i + 1
         skipped = False
         cond_no = 1          # W38: 조건 항목 번호 시퀀스 (마커 직후 1 기대)
