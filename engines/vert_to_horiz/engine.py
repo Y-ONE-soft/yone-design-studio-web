@@ -129,7 +129,8 @@ class VertToHorizEngine(BaseEngine):
          "===== 지문번호 교정 완료 =====", "[지문번호]"),
     ]
 
-    def run_indesign(self, job_dir, log, cancel_check=None, stall_limit=None):
+    def run_indesign(self, job_dir, log, cancel_check=None, stall_limit=None,
+                     skip_post=()):
         from core.indesign import runner as indesign
         import os as _os
 
@@ -152,6 +153,9 @@ class VertToHorizEngine(BaseEngine):
                          cancel_check=cancel_check, stall_limit=stall_limit)
 
         for tpl, logname, marker, tag in self._POST:
+            if tpl in (skip_post or ()):
+                log("%s 건너뜀 (호출부 지정): %s" % (tag, tpl))
+                continue
             src = _os.path.join(_DIR, "jsx", tpl)
             if not _os.path.exists(src):
                 log("%s 템플릿 없음 — 건너뜀: %s" % (tag, tpl))
