@@ -20,8 +20,8 @@ _RE_SENSE = re.compile(r"(?<![0-9A-Za-z])([1-9])\.(?=\s)")
 _RE_BRACKET = re.compile(r"\[([^\[\]]+)\]")
 _RE_PAREN = re.compile(r"\(([^()]*)\)")
 _RE_HAS_LATIN = re.compile(r"[A-Za-z]")
-# 유의어/반의어 주석 — 통째로 뺄 때 쓰는 패턴
-_RE_NOTE = re.compile(r"\s*\(\s*[=↔≠][^()]*\)")
+# 유의어/반의어 주석 — 여는 자리만 찾고, 닫는 자리는 깊이를 세어 찾는다(중첩 괄호)
+_RE_NOTE_OPEN = re.compile(r"\s*(\()\s*[=↔≠]")
 _RE_SPACE_PUNCT = re.compile(r"\s+([,;.)\]])")
 _RE_MULTISPACE = re.compile(r"\s{2,}")
 _CIRCLED = "①②③④⑤⑥⑦⑧⑨"
@@ -37,10 +37,34 @@ def _sense(s):
 
 
 def drop_notes(s):
-    """`(= …)` `(↔ …)` 를 통째로 뺀다. 지우고 남는 공백·구두점 앞 공백까지 정리."""
-    out = _RE_NOTE.sub("", s or "")
-    out = _RE_SPACE_PUNCT.sub(r"\1", out)
-    return _RE_MULTISPACE.sub(" ", out).strip()
+    """`(= …)` `(↔ …)` 를 통째로 뺀다. 지우고 남는 공백·구두점 앞 공백까지 정리.
+
+    ⚠ 괄호 안을 `[^()]*` 로 훑는 정규식으로는 **안 된다** — 주석 안에 괄호가 또 들어온다
+    (`(= judg(e)ment)` · `(↔ uncertainty … 불확실(성))`). 여는 괄호부터 깊이를
+    세어 닫는 자리를 찾는다.
+    """
+    src = s or ""
+    out, i = [], 0
+    while i < len(src):
+        m = _RE_NOTE_OPEN.match(src, i)
+        if not m:
+            out.append(src[i])
+            i += 1
+            continue
+        depth, j = 0, m.start(1)          # m.group(1) = 여는 괄호
+        while j < len(src):
+            if src[j] == "(":
+                depth += 1
+            elif src[j] == ")":
+                depth -= 1
+                if depth == 0:
+                    break
+            j += 1
+        i = j + 1                          # 닫는 괄호까지 통째로 버린다
+        while out and out[-1] == " ":      # 주석 앞 공백도 같이
+            out.pop()
+    res = _RE_SPACE_PUNCT.sub(r"\1", "".join(out))
+    return _RE_MULTISPACE.sub(" ", res).strip()
 
 
 def has_note(s):
@@ -155,7 +179,7 @@ class Renderer(object):
             f'<div class="w-pron">{esc(w["pron"])}</div>'
             + (f'<div class="w-deriv">{der}</div>' if der else "")
             + '</div><div class="w-r">'
-            f'<div class="w-def">{meaning(w["meaning"])}</div>'
+            f'<div class="w-def">{meaning(w["meaning"], self.notes)}</div>'
             f'<div class="w-ex">{"".join(pairs)}</div>'
             "</div></article>")
 

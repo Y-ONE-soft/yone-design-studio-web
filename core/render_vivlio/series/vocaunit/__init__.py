@@ -18,6 +18,7 @@ Unit 경계를 넘지 못하므로 보통 한 번 더 돌면 멎는다. 안 멎�
 — 조용히 어긋난 면에 헤더를 그리는 것보다 낫다.
 """
 import os
+import re
 import shutil
 import unicodedata
 
@@ -129,6 +130,13 @@ class VocaunitSeries(Series):
         # 보이지 않아야 할 2패스 마커가 눈에 보이면 사고다
         if any("DAYOPEN" in t for t in texts) and not opens:
             report.fail("DAYOPEN 마커가 조판면에 보인다")
+        # 유의어·반의어 주석을 빼기로 했으면 한 톨도 남으면 안 된다
+        # (중첩 괄호 `(= judg(e)ment)` 때문에 실제로 3건이 남았던 자리다)
+        if (cfg.section("options") or {}).get("notes") == "drop":
+            hit = [i + 1 for i, t in enumerate(texts)
+                   if re.search(r"\(\s*[=↔≠]", t)]
+            if hit:
+                report.fail(f"빼기로 한 유의어·반의어 주석이 남은 면: {hit[:10]}")
         return report
 
 

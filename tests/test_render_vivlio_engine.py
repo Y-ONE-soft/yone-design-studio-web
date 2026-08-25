@@ -369,3 +369,36 @@ def test_vocaunit_retints_asset_pngs_from_palette(unit_cfg, tmp_path):
     assert tuple(got[1, 1, :3]) == (0xc7, 0xb9, 0xdb)   # 픽스처 팔레트의 logo 색
     assert tuple(got[0, 0, :3]) == (255, 255, 255)      # 흰 글자는 그대로
     assert got[3, 3, 3] == 0                            # 알파 보존
+
+
+def test_vocaunit_drops_synonym_notes_including_nested_parens():
+    """`(= …)` `(↔ …)` 빼기 — ⚠ 주석 안에 괄호가 또 들어온다(`(= judg(e)ment)`).
+    `\\([^()]*\\)` 류 정규식은 이 셋을 조용히 남긴다."""
+    from core.render_vivlio.series.vocaunit import render
+    cases = [
+        ("[형] 사려 깊은, 이해심이 있는 (= thoughtful)(↔ inconsiderate 사려 깊지 못한)",
+         "[형] 사려 깊은, 이해심이 있는"),
+        ("succession [명] 1. 연속, 잇따름 (= series); 연쇄 2. 계승(권)",
+         "succession [명] 1. 연속, 잇따름; 연쇄 2. 계승(권)"),
+        ("[명] 1. 문장 2. 선고, 판결 (= judg(e)ment) [동] 선고하다",
+         "[명] 1. 문장 2. 선고, 판결 [동] 선고하다"),
+        ("miraculous [형] 기적적인 (= marvel(l)ous)", "miraculous [형] 기적적인"),
+    ]
+    for src, want in cases:
+        got = render.drop_notes(src)
+        assert got == want, f"{src!r} → {got!r} (기대 {want!r})"
+        assert not render.has_note(got)
+    # 기본값은 남긴다(작은 글자) — 빼는 것은 책이 고르는 것
+    assert "thoughtful" in render.meaning("[형] 깊은 (= thoughtful)")
+    assert "thoughtful" not in render.meaning("[형] 깊은 (= thoughtful)", notes="drop")
+
+
+def test_vocaunit_badge_is_outline_not_filled():
+    """품사 배지는 라인형 — 바탕을 채우지 않고 테두리로 그린다."""
+    import os
+    css = open(os.path.join(REPO, "core", "render_vivlio", "themes",
+                            "vocaunit.css"), encoding="utf-8").read()
+    badge = css[css.index("b.pos {"):]
+    badge = badge[:badge.index("}")]
+    assert "border: var(--pos-line-w) solid var(--c-pos-line)" in badge
+    assert "background" not in badge
