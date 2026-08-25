@@ -267,18 +267,25 @@ def find_mockexam_grammar_files(content_base, scope_text, grade, log=None):
             log(f"  [어법수정] 모의고사 폴더 없음: {mock_base}")
         return []
 
+    # 회차 폴더는 학년 폴더 바로 밑에 있기도 하고, 연도 묶음 폴더 안에
+    # 있기도 하다 ('고1 25년(3,6,9,10,11월)/고1 25년 3월' — 실측 2026-08-25).
+    # 평면 목록으로 합쳐서 본다. 묶음 폴더 자체는 목록에서 빠지는데, 그게
+    # 없으면 "25년"+"11월" 을 모두 포함하는 묶음 이름이 11월 회차로 잡혀
+    # **묶음 전체를 os.walk** 해 다른 달 원고까지 2511 로 라벨링됐다.
+    from core.mock_folders import month_dir_entries
+    round_dirs = month_dir_entries(mock_base)
+
     found = []
     for year, month in pairs:
         # "고1 25년 10월" 형태의 폴더 찾기
         target_folder = None
-        for d in os.listdir(mock_base):
-            dn = _nfc(d)
+        for dn, dpath in round_dirs:
             if f"{year}년" in dn and f"{month}월" in dn:
-                target_folder = os.path.join(mock_base, d)
+                target_folder = dpath
                 break
             # "25년 3월" → "25년 03월" 도 시도
             if f"{year}년" in dn and f"{int(month)}월" in dn:
-                target_folder = os.path.join(mock_base, d)
+                target_folder = dpath
                 break
 
         if not target_folder or not os.path.isdir(target_folder):
@@ -286,17 +293,14 @@ def find_mockexam_grammar_files(content_base, scope_text, grade, log=None):
             # (년, 월) 토큰으로 대조 (배치 A `_find_month_folder` 2차 패턴 확산)
             from engines.final.grammar_finder import fuzzy_enabled
             if fuzzy_enabled():
-                for d in os.listdir(mock_base):
-                    dn = _nfc(d)
-                    if not os.path.isdir(os.path.join(mock_base, d)):
-                        continue
+                for dn, dpath in round_dirs:
                     my = re.search(r"(\d{2,4})\s*년", dn)
                     if not my or my.group(1)[-2:] != str(year):
                         continue
                     mm = re.search(r"(\d{1,2})\s*월", dn)
                     if not mm or int(mm.group(1)) != int(month):
                         continue
-                    target_folder = os.path.join(mock_base, d)
+                    target_folder = dpath
                     if log:
                         log(f"  [어법수정] 모의고사 {year}년 {month}월 폴더 "
                             f"유사 매칭: {dn}")

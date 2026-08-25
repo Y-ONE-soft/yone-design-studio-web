@@ -170,17 +170,23 @@ def _manuscript_paths(base, grade_num, code, kind):
     return out
 
 
-def _workbook_dir(base, grade_num, code):
-    yy, mm = int(code[:2]), int(code[2:4])
+def _round_dir(base, grade_num, yy, mm):
+    """회차 폴더 — 연도 묶음 폴더('고1 25년(3,6,9,10,11월)') 안쪽까지 본다."""
+    from core.mock_folders import month_dir_entries
     gdir = os.path.join(base, "고%s" % grade_num)
     if not os.path.isdir(gdir):
         return None
-    want = "고%s %d년 %d월" % (grade_num, yy, mm)
-    ym = None
-    for raw in os.listdir(gdir):
-        if _nfc(raw) == want:
-            ym = os.path.join(gdir, raw)
-            break
+    wanted = ("고%s %d년 %d월" % (grade_num, yy, mm),
+              "고%s %d년 %02d월" % (grade_num, yy, mm))
+    for n, p in month_dir_entries(gdir):
+        if n in wanted:
+            return p
+    return None
+
+
+def _workbook_dir(base, grade_num, code):
+    yy, mm = int(code[:2]), int(code[2:4])
+    ym = _round_dir(base, grade_num, yy, mm)
     if not ym:
         return None
     for raw in os.listdir(ym):
@@ -191,15 +197,7 @@ def _workbook_dir(base, grade_num, code):
 
 def _manuscript_path(base, grade_num, code, kind, filename=None):
     yy, mm = int(code[:2]), int(code[2:4])
-    gdir = os.path.join(base, "고%s" % grade_num)
-    if not os.path.isdir(gdir):
-        return None
-    ym = None
-    want = "고%s %d년 %d월" % (grade_num, yy, mm)
-    for raw in os.listdir(gdir):
-        if _nfc(raw) == want:
-            ym = os.path.join(gdir, raw)
-            break
+    ym = _round_dir(base, grade_num, yy, mm)
     if not ym:
         return None
     wb = None

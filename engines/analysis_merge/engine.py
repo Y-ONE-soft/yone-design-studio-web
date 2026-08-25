@@ -205,12 +205,21 @@ class AnalysisMergeEngine(BaseEngine):
         """모의고사 작업/고{N}/ 안에서 (year, month)에 해당하는 월 폴더 찾기.
 
         폴더명 패턴: `고{N} {YY}년 {M}월` (또는 0-padded M)
+
+        회차 폴더는 학년 폴더 바로 밑에 있기도 하고(고2 전체·고1 20년 이전·
+        고1 26년), 연도 묶음 폴더 안으로 한 단계 내려가 있기도 하다
+        (`고1 25년(3,6,9,10,11월)/고1 25년 3월` — 실측 2026-08-25). 두 배치를
+        `month_dir_entries` 가 하나의 평면 목록으로 돌려준다. 묶음 폴더 자체는
+        목록에서 빠지므로 1차 substring 매칭이 "11월" 을 품은 묶음 이름을
+        11월 회차로 오인하던 사고도 함께 막힌다.
         """
         grade_dir = os.path.join(gdrive_base, f"고{grade_num}")
         # 미러 ∪ GDrive 합집합 — 미러가 stale해도(월 폴더가 GDrive에만 있어도)
         # 누락 방지. 읽기는 미러 우선이라 EDEADLK 회피 유지.
         from engines.final.extractor import list_manuscript_entries
-        entries = list_manuscript_entries(grade_dir, None)
+        from core.mock_folders import month_dir_entries
+        entries = month_dir_entries(
+            grade_dir, lambda d: list_manuscript_entries(d, None))
         if not entries:
             return None
 
@@ -405,10 +414,12 @@ class AnalysisMergeEngine(BaseEngine):
             notes = []
             if any(ym_to_folder[k] is None for k in ym_to_folder):
                 grade_dir = os.path.join(gdrive_base, f"고{grade_num}")
+                # 연도 묶음 폴더를 펼친 평면 목록 — 후보 목록에 묶음 이름만
+                # 뜨면 "왜 못 찾았는지"가 아니라 오답을 보여주게 된다.
+                from core.mock_folders import month_dir_entries
                 folder_names = sorted(
-                    nfc for nfc, full in
-                    (list_manuscript_entries(grade_dir, None) or [])
-                    if os.path.isdir(full)
+                    nfc for nfc, full in month_dir_entries(
+                        grade_dir, lambda d: list_manuscript_entries(d, None))
                 )[:12]
                 if folder_names:
                     notes.append("학년 폴더 하위 후보:\n  "

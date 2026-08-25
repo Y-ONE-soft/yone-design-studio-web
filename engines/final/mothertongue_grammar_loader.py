@@ -151,12 +151,13 @@ def _modern_folder_for_yymm(content_base, grade, yymm):
     mock_base = os.path.join(content_base, "\ubaa8\uc758\uace0\uc0ac \uc791\uc5c5", grade)
     if not os.path.isdir(mock_base):
         return None
+    # 회차 폴더는 연도 묶음 폴더 안에 있기도 하다
+    # ('고1 25년(3,6,9,10,11월)/고1 25년 3월' — 실측 2026-08-25).
+    from core.mock_folders import month_dir_entries
     # 폴더 후보 (YY년 M월 또는 YY년 MM월)
-    for d in os.listdir(mock_base):
-        dn = _nfc(d)
+    for dn, full in month_dir_entries(mock_base):
         # "고1 25년 10월" 매칭
         if re.search(rf"\b{yy}\ub144\s*0?{mm_int}\uc6d4\b", dn):
-            full = os.path.join(mock_base, d)
             if os.path.isdir(full):
                 return full
     return None
