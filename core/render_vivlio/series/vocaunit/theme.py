@@ -76,6 +76,10 @@ DEFAULT_METRICS = {
     "unit_num": {"x": 40.01, "y": 8.06},        # 큰 번호
     "cover": {"mark_x": 44.18, "mark_y": 66.99, "mark_w": 67.36, "mark_h": 62.275,
               "ttl_x": 31.95, "ttl_y": 135.39, "ttl_size": 30, "ttl_track": -0.035},
+    # 판권면(맨 뒤) — 완성본 66쪽 실측. 좌표는 페이지 왼쪽 위(도련 포함) 원점.
+    "colophon": {"mark_x": 17.997, "mark_y": 186.999,
+                 "mark_w": 27.843, "mark_h": 5.197,
+                 "txt_x": 18.0, "txt_y": 195.579, "txt_size": 6.6},
 
     "pg_out": 5.33,         # 쪽번호 — 판면 바깥쪽으로 내미는 양
     "pg_mt": 5.50,
@@ -169,6 +173,11 @@ def crest(color, w, h):
     return svg.data_uri(w, h, art.crest(color), viewbox=art.CREST_VIEWBOX)
 
 
+def mark(color, w, h):
+    """판권면 로고 — 크레스트와 같이 벡터로 뽑아 색만 바꿔 쓴다."""
+    return svg.data_uri(w, h, art.mark(color), viewbox=art.MARK_VIEWBOX)
+
+
 # ── 프렐류드 ────────────────────────────────────────────────────────────
 def prelude(cfg):
     m = metrics_of(cfg)
@@ -223,6 +232,11 @@ def prelude(cfg):
         g = m[k]
         n = k.replace("_", "-")
         o.append(f"    --{n}-x: {g['x']}mm; --{n}-y: {g['y']}mm;")
+    cp = m["colophon"]
+    o.append(f"    --colo-mark-x: {cp['mark_x']}mm; --colo-mark-y: {cp['mark_y']}mm;")
+    o.append(f"    --colo-mark-w: {cp['mark_w']}mm; --colo-mark-h: {cp['mark_h']}mm;")
+    o.append(f"    --colo-txt-x: {cp['txt_x']}mm; --colo-txt-y: {cp['txt_y']}mm;")
+    o.append(f"    --colo-txt-size: {cp['txt_size']}pt;")
     cv = m["cover"]
     o.append(f"    --cover-mark-x: {cv['mark_x']}mm; --cover-mark-y: {cv['mark_y']}mm;")
     o.append(f"    --cover-mark-w: {cv['mark_w']}mm; --cover-mark-h: {cv['mark_h']}mm;")
@@ -335,9 +349,13 @@ def generated(cfg):
              f", {g_r} top left / {PW}mm {gh + bleed}mm; }}")
 
     # 간지 크레스트
-    cv = m.get("cover") or {}
     o.append(f".cover .crest {{ background: "
              f"{crest(pal['cover_mark'], 67.36, 62.275)} center / contain; }}")
+    # 판권면 로고 — 색을 안 정하면 주색상(accent)을 따른다
+    cp = m["colophon"]
+    o.append(f".colophon .mark {{ background: "
+             f"{mark(pal.get('mark') or pal['accent'], cp['mark_w'], cp['mark_h'])} "
+             f"center / contain; }}")
     o.append("/* ▲▲ 생성 규칙 끝 ▲▲ */")
     return "\n".join(o)
 

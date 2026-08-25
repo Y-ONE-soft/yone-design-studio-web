@@ -1,7 +1,8 @@
 """UNIT형 단어장 렌더러 — data.json → build/index.html (Vivliostyle 입력).
 
-문서 구조: 간지 → Unit 1 → Unit 2 → … (Unit 은 왼쪽 면에서 시작, 남는 오른쪽
-면은 MEMO 면). 책마다 다른 것(브랜드·Unit 이름·번호 자릿수)은 전부 config 에서 온다.
+문서 구조: 간지 → Unit 1 → Unit 2 → … → 판권면(맨 뒤 왼쪽 면). Unit 은 왼쪽 면에서
+시작하고, 그 때문에 남는 오른쪽 면은 MEMO 면이 된다. 책마다 다른 것(브랜드·Unit
+이름·번호 자릿수·판권 문구)은 전부 config 에서 온다.
 
 원고 표기 → 조판 표기(전부 **구조**로 바꾼다. 문구 화이트리스트를 쓰지 않는다):
   · `[명] [동] [형] …`  품사 대괄호 → **네모 배지 글리프**. 품사가 나오면 **줄을 바꾼다**
@@ -188,6 +189,15 @@ class Renderer(object):
             f'<div class="w-ex">{"".join(pairs)}</div>'
             "</div></article>")
 
+    # ── 판권면 ──────────────────────────────────────────────────────────
+    def colophon(self):
+        cr = self.o.get("copyright", "")
+        return ('<section class="colophon" style="page:p-cover">'
+                + self.running("", off=True)
+                + '<div class="mark"></div>'
+                + (f'<div class="cr">{esc(cr)}</div>' if cr else "")
+                + "</section>")
+
     # ── 간지 ────────────────────────────────────────────────────────────
     def cover(self):
         return ('<section class="cover" style="page:p-cover">'
@@ -214,10 +224,9 @@ class Renderer(object):
                         + self.unit_head(u)
                         + "".join(self.word(w) for w in u["words"])
                         + "</section>")
-        if self.o.get("tail_memo", True):
+        if self.o.get("colophon", True):
             # 마지막 면을 왼쪽으로 — `break-before: left` 라 총 쪽수가 짝수가 된다
-            body.append('<section class="memo-tail" style="page:p-memo">'
-                        + self.running("", off=True) + "</section>")
+            body.append(self.colophon())
         return ('<!doctype html><html lang="ko"><head><meta charset="utf-8">'
                 f"<title>{esc(self.title)}</title>"
                 '<link rel="stylesheet" href="theme.css">'

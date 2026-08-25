@@ -173,8 +173,16 @@ b.pos {
     font: 400 var(--cover-ttl-size)/1 "Disp"; color: var(--c-cover-mark);
     letter-spacing: var(--cover-ttl-track); white-space: nowrap; }
 
-/* ---------- 맨 뒤 MEMO 면 ---------- */
-/* `break-before: left` 라 이 면은 반드시 왼쪽(짝수) → 총 쪽수가 언제나 짝수가 된다 */
-.memo-tail { break-before: left; height: 1mm; }
+/* ---------- 맨 뒤 판권면 ---------- */
+/* `break-before: left` 라 이 면은 반드시 왼쪽(짝수) → **총 쪽수가 언제나 짝수**가
+ * 되고, 앞에 한 면이 비면 그 면은 MEMO 면이 된다. 배경은 간지와 같은 `p-cover`. */
+.colophon { break-before: left; position: relative; height: var(--media-h); }
+.colophon .mark { position: absolute;
+    left: var(--colo-mark-x); top: var(--colo-mark-y);
+    width: var(--colo-mark-w); height: var(--colo-mark-h); }
+.colophon .cr { position: absolute;
+    left: var(--colo-txt-x); top: var(--colo-txt-y);
+    font: 400 var(--colo-txt-size)/1 "Kor"; color: var(--c-ink);
+    letter-spacing: 0; white-space: nowrap; }
 
 /*@GENERATED@*/
