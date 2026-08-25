@@ -308,6 +308,15 @@ class BaenjeV2Engine(BaseEngine):
             warnings.append(f"❌ B3 정답지 블록 펼침면 걸침 {len(crossed)}건: {crossed[:5]}")
         log(f"[검수] B3 블록 유지: 이동 {len(result.get('moved_blocks') or [])}건")
 
+        # B4-2 머리말 소스 개수 = 배치한 라벨 수 (묵은 라벨이 남으면 옛 유닛명이 찍힘)
+        src_cnt = result.get("unit_label_sources")
+        placed = len(result.get("header_texts") or [])
+        if src_cnt is not None and placed and src_cnt != placed:
+            ok = False
+            warnings.append(
+                f"❌ B4 머리말 소스 {src_cnt}개 ≠ 배치 라벨 {placed}개 — "
+                f"묵은 유닛 라벨 잔존 가능 (제거 {len(result.get('stale_unit_purged') or [])}건)")
+
         # B4 러닝헤드 소스
         want_units = len(content.get("units") or [])
         got_heads = result.get("header_texts") or []

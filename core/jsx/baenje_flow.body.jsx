@@ -25,7 +25,8 @@ var RESULTS = {
     frames_grown: [], choice_layout: {}, mixed_format: [],
     oneline_fitted: 0, oneline_failed: [], credit_placed: [],
     answer_line_as_passage: [], trimmed_pages: 0, orphan_moved: [],
-    recolored: 0, orphan_remaining: [], story_len_drift: [], warnings: []
+    recolored: 0, orphan_remaining: [], story_len_drift: [],
+    stale_unit_purged: [], unit_label_sources: 0, warnings: []
 };
 
 function readJSONFile(path) {
@@ -96,6 +97,43 @@ function findMaster(doc, prefix) {
         }
     }
     return null;
+}
+
+// ── 묵은 유닛 라벨 제거 ─────────────────────────────────────────────────
+// 머리말(러닝헤드 변수)의 소스는 이번 실행이 심은 라벨뿐이어야 한다.
+// 템플릿에 지난 판의 라벨이 남아 있으면 변수가 그걸 먼저 찾아 옛 유닛명이 찍힌다
+// (실측: 템플릿 2쪽에 남아 있던 'Lesson 1'이 새 판 머리말로 표시됨).
+// 마스터 페이지의 라벨(실전문제/정답 및 해설 등)은 디자인이므로 건드리지 않는다.
+function purgeStaleUnitLabels(doc, csName) {
+    var cs = findCharStyleAnywhere(doc, csName || "유닛");
+    if (!cs) return 0;
+    app.findTextPreferences = NothingEnum.NOTHING;
+    app.changeTextPreferences = NothingEnum.NOTHING;
+    app.findTextPreferences.appliedCharacterStyle = cs;
+    app.findChangeTextOptions.includeMasterPages = false;
+    var found = [];
+    try { found = doc.findText(); } catch (e) {}
+    app.findTextPreferences = NothingEnum.NOTHING;
+    app.changeTextPreferences = NothingEnum.NOTHING;
+    var n = 0;
+    for (var i = found.length - 1; i >= 0; i--) {
+        var txt = "";
+        try { txt = String(found[i].contents).replace(/[\r\n]/g, ""); } catch (e) {}
+        try {
+            var para = found[i].paragraphs[0];
+            // 라벨만 담긴 단락이면 단락째, 아니면 문자스타일만 해제
+            if (String(para.contents).replace(/[\r\n]/g, "") === txt) {
+                para.remove();
+            } else {
+                found[i].appliedCharacterStyle = doc.characterStyles[0];
+            }
+            n++;
+            RESULTS.stale_unit_purged.push(txt.substr(0, 40));
+        } catch (e) {}
+    }
+    if (n > 0) wlog("묵은 유닛 라벨 제거: " + n + "건 (" +
+                    RESULTS.stale_unit_purged.join(" / ") + ")");
+    return n;
 }
 
 // ── 플로우 배치 ─────────────────────────────────────────────────────────
@@ -1077,6 +1115,8 @@ try {
         if (plan.flows[f].area === "answers") ansFlow = plan.flows[f];
     }
 
+    purgeStaleUnitLabels(doc, ops.unit_char_style);
+
     var bodyRes = bodyFlow ? placeFlow(doc, bodyStory, bodyFlow, ops)
         : { labels: [], starts: [] };
     var bodyLabels = bodyRes.labels;
@@ -1167,6 +1207,18 @@ try {
             }
         }
     }
+    // 머리말 소스 개수 = 심은 라벨 수 여야 한다 (묵은 라벨 잔존 감지)
+    (function () {
+        var cs = findCharStyleAnywhere(doc, ops.unit_char_style || "유닛");
+        if (!cs) return;
+        app.findTextPreferences = NothingEnum.NOTHING;
+        app.changeTextPreferences = NothingEnum.NOTHING;
+        app.findTextPreferences.appliedCharacterStyle = cs;
+        app.findChangeTextOptions.includeMasterPages = false;
+        try { RESULTS.unit_label_sources = doc.findText().length; } catch (e) {}
+        app.findTextPreferences = NothingEnum.NOTHING;
+        app.changeTextPreferences = NothingEnum.NOTHING;
+    })();
     phase("H-최종", ansStory);
     RESULTS.pages = doc.pages.length;
     wlog("오버플로우: " + RESULTS.overflow + "개 / 페이지: " + RESULTS.pages);
