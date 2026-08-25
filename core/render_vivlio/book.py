@@ -5,6 +5,7 @@
     python3 -m core.render_vivlio.book <책폴더> theme     팔레트 → 테마 재생성
     python3 -m core.render_vivlio.book <책폴더> build     조판 → PDF (+마감)
     python3 -m core.render_vivlio.book <책폴더> verify    검수 게이트
+    python3 -m core.render_vivlio.book <책폴더> print     인쇄 원고(CMYK) 만들기
     python3 -m core.render_vivlio.book <책폴더> all       data → build → verify
     python3 -m core.render_vivlio.book --list            교재 트리의 책 목록
 
@@ -36,6 +37,31 @@ def gen_theme(cfg, log=print):
 
 def build(cfg, log=print, **opts):
     return _series(cfg).build(cfg, log, **opts)
+
+
+def print_pdf(cfg, log=print, **opts):
+    """RGB 조판본 → CMYK 인쇄 원고. 계열과 무관해 백엔드가 직접 한다.
+
+    config 의 `print` 절:
+      suffix   원본 PDF 접미사(어느 산출을 변환할지) / out  결과 접미사
+      profile  ICC 이름 또는 절대경로 / gray_map  화면색 → K 비율 표
+    """
+    from core.render_vivlio import prepress
+    pc = cfg.section("print") or {}
+    src = cfg.out_pdf(pc.get("suffix", cfg.section("verify").get("suffix", "")))
+    if not os.path.exists(src):
+        raise FileNotFoundError(f"조판본 없음: {src} — 먼저 build")
+    dst = cfg.out_pdf(pc.get("out", "_인쇄"))
+    res = prepress.make(src, dst, bleed=cfg.page["bleed"],
+                        profile=pc.get("profile"),
+                        gray_map=pc.get("gray_map"), log=log)
+    a = prepress.audit(dst)
+    log(f"  판형 {a['media_mm'][2]}×{a['media_mm'][3]}mm · "
+        f"재단 {a['trim_mm']} · 색연산자 {a['ops']}")
+    if a["rgb_left"]:
+        log(f"  [경고] DeviceRGB 연산자가 {a['rgb_left']}개 남았다")
+    res["audit"] = a
+    return res
 
 
 def verify(cfg, log=print, pdf=None, **opts):
@@ -142,6 +168,8 @@ def main(argv=None):
             gen_theme(cfg, log)
         elif st == "build":
             build(cfg, log, **opts)
+        elif st == "print":
+            print_pdf(cfg, log, **opts)
         elif st == "verify":
             if not verify(cfg, log, **opts).print(log):
                 rc = 1
