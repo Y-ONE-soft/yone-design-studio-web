@@ -742,12 +742,21 @@ def _split_a1_sections(paras):
     current_key = None
     current_paras = []
 
+    def _stash():
+        # W74 (올포기출 13강 실증 — 사용자 지적 "어휘선택 2지문 빼고 전부
+        # 누락"): 예전 코드는 `sections[key] = paras` 대입이라 같은 키가
+        # 다시 나오면 앞 섹션이 통째로 사라졌다. 이 원고는 지문마다
+        # "1. 어휘1단계 / 2. 어휘2단계"를 번갈아 적어(지문 17개 × 2단계)
+        # 마지막 지문 하나만 남았다. 단계별로 **누적**한다 — 단계 블록이
+        # 한 번씩만 나오는 기존 원고는 결과가 같다 (append == 대입).
+        if current_key and current_paras:
+            sections.setdefault(current_key, []).extend(current_paras)
+
     for p in paras:
         text = p['text'].strip()
         if _RE_A1_SECTION.match(text):
             # 이전 섹션 저장
-            if current_key and current_paras:
-                sections[current_key] = current_paras
+            _stash()
 
             # 정답 섹션 판별
             is_answer = '정답' in text
@@ -768,8 +777,7 @@ def _split_a1_sections(paras):
             current_paras.append(p)
 
     # 마지막 섹션 저장
-    if current_key and current_paras:
-        sections[current_key] = current_paras
+    _stash()
 
     # 빈 결과면 원본 그대로 step1_a1에 넣기
     if not sections:
