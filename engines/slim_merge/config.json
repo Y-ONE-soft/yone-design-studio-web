@@ -11,31 +11,106 @@
   "unit_style_group": "마스터페이지",
   "stack_drop_y": 100,
   "stack_gap": 6.85,
-  "master_pairs": [["A", "B"], ["C", "D"]],
-  "protect_masters": ["M", "간지"],
+  "master_pairs": [
+    [
+      "A",
+      "B"
+    ],
+    [
+      "C",
+      "D"
+    ]
+  ],
+  "protect_masters": [
+    "M",
+    "간지",
+    "O"
+  ],
   "memo_master": "M",
   "sections": [
-    {"marker": "어휘 선택 1", "label": "A1 어휘 선택 1", "step": "STEP 01"},
-    {"marker": "어휘 선택 2", "label": "A1 어휘 선택 2", "step": "STEP 01"},
-    {"marker": "어휘 선택",   "label": "A1 어휘 선택 (EBS)", "step": "STEP 01"},
-    {"marker": "본문 O/X",    "label": "A2 본문 O/X", "step": "STEP 01"},
-    {"marker": "본문 정리",   "label": "B1 본문 정리", "step": "STEP 01"},
-    {"marker": "내용 종합",   "label": "B2 내용 종합", "step": "STEP 01"},
-    {"marker": "문장 배열",   "label": "C1 문장 배열", "step": "STEP 01"},
-    {"marker": "빈칸 어휘",   "label": "C2 빈칸 어휘", "step": "STEP 01"},
-    {"marker": "어법 선택",   "label": "A1 어법 선택", "step": "STEP 02"},
-    {"marker": "어법 수정",   "label": "A1 어법 수정", "step": "STEP 02"},
-    {"marker": "어법 O/X",    "label": "B1 어법 O/X", "step": "STEP 02"},
-    {"marker": "빈칸 어법",   "label": "C1 빈칸 어법", "step": "STEP 02"},
-    {"marker": "영작 배열",   "label": "C2 영작 배열", "step": "STEP 02"}
+    {
+      "marker": "어휘 선택 1",
+      "label": "A1 어휘 선택 1",
+      "step": "STEP 01"
+    },
+    {
+      "marker": "어휘 선택 2",
+      "label": "A1 어휘 선택 2",
+      "step": "STEP 01"
+    },
+    {
+      "marker": "어휘 선택",
+      "label": "A1 어휘 선택 (EBS)",
+      "step": "STEP 01"
+    },
+    {
+      "marker": "본문 O/X",
+      "label": "A2 본문 O/X",
+      "step": "STEP 01"
+    },
+    {
+      "marker": "본문 정리",
+      "label": "B1 본문 정리",
+      "step": "STEP 01"
+    },
+    {
+      "marker": "내용 종합",
+      "label": "B2 내용 종합",
+      "step": "STEP 01"
+    },
+    {
+      "marker": "문장 배열",
+      "label": "C1 문장 배열",
+      "step": "STEP 01"
+    },
+    {
+      "marker": "빈칸 어휘",
+      "label": "C2 빈칸 어휘",
+      "step": "STEP 01"
+    },
+    {
+      "marker": "어법 선택",
+      "label": "A1 어법 선택",
+      "step": "STEP 02"
+    },
+    {
+      "marker": "어법 수정",
+      "label": "A1 어법 수정",
+      "step": "STEP 02"
+    },
+    {
+      "marker": "어법 O/X",
+      "label": "B1 어법 O/X",
+      "step": "STEP 02"
+    },
+    {
+      "marker": "빈칸 어법",
+      "label": "C1 빈칸 어법",
+      "step": "STEP 02"
+    },
+    {
+      "marker": "영작 배열",
+      "label": "C2 영작 배열",
+      "step": "STEP 02"
+    }
   ],
   "presets": {
     "gwangmun": {
       "label": "광문고 슬림",
       "hint": "어휘 선택 2 · 본문 정리 · 내용 종합 · 어법 O/X · 빈칸 어법 삭제 + 본문 O/X 반쪽병합 + 문장 배열 적층병합",
-      "delete": ["어휘 선택 2", "본문 정리", "내용 종합", "어법 O/X", "빈칸 어법"],
-      "merge_half": ["본문 O/X"],
-      "merge_stack": ["문장 배열"]
+      "delete": [
+        "어휘 선택 2",
+        "본문 정리",
+        "내용 종합",
+        "어법 O/X",
+        "빈칸 어법"
+      ],
+      "merge_half": [
+        "본문 O/X"
+      ],
+      "merge_stack": [
+        "문장 배열"
+      ]
     }
   },
   "modes": {

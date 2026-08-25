@@ -430,13 +430,40 @@
     // ───────────────────────────────────────────────────────────────
     // 액션 3종
     // ───────────────────────────────────────────────────────────────
+    // 섹션 마스터 계열 (A↔B, C↔D 는 같은 섹션의 좌/우 변형)
+    function masterFamily(pfx) {
+        for (var i = 0; i < PAIRS.length; i++) {
+            if (PAIRS[i][0] === pfx || PAIRS[i][1] === pfx) return PAIRS[i];
+        }
+        return [pfx];
+    }
+
     function deleteSection(sec) {
-        var end = sec.end;
-        while (end > sec.start && isProtected(doc.pages[end])) {
-            writeLog("  [가드] p" + doc.pages[end].name + " (마스터=" +
-                     (masterPrefix(doc.pages[end]) || "[없음]") +
-                     ") 삭제 범위 제외");
-            end--;
+        // 섹션 범위는 '다음 마커 직전까지'라, 마커가 없는 뒤쪽(STEP3 실전 ·
+        // 간지 · 메모 · 판권)이 마지막 섹션에 통째로 흡수된다. 삭제 대상이
+        // 그런 섹션이면 문서 끝까지 지워진다 → **같은 마스터 계열이 이어지는
+        // 동안만** 삭제하고, 다른 계열(O 실전 / M / 간지 / [없음])을 만나면
+        // 거기서 끊는다.
+        var startPfx = masterPrefix(doc.pages[sec.start]);
+        var family = masterFamily(startPfx);
+        var end = sec.start;
+        for (var q = sec.start + 1; q <= sec.end; q++) {
+            var mp = masterPrefix(doc.pages[q]);
+            var same = false;
+            for (var f = 0; f < family.length; f++) {
+                if (family[f] === mp) { same = true; break; }
+            }
+            if (!same) {
+                writeLog("  [가드] p" + doc.pages[q].name + " (마스터=" +
+                         (mp || "[없음]") + ") 부터는 다른 파트 — 삭제 범위 제외");
+                break;
+            }
+            end = q;
+        }
+        if (end < sec.end) {
+            writeLog("  삭제 범위 축소: p" + doc.pages[sec.start].name +
+                     "~p" + doc.pages[sec.end].name + " → ~p" +
+                     doc.pages[end].name);
         }
         writeLog("[삭제] " + sec.label + " p" + (sec.start + 1) + "~p" +
                  (end + 1) + " (" + (end - sec.start + 1) + "p)");
