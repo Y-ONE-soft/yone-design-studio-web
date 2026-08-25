@@ -385,7 +385,77 @@ def detect_headers(texts, legacy=None):
         entries.append({"t": t, "body_next": body_next})
     det = _detect(entries, legacy=legacy)
     _absorb_title_lines(det, stripped)
+    _absorb_meta_after_header(det, stripped)
     return det
+
+
+def _absorb_meta_after_header(det, stripped):
+    """인식된 헤더 **직후**의 반복 메타 줄을 헤더 블록으로 흡수 (W74).
+
+    원고는 지문 라벨을 두 줄로 나눠 쓸 수 있다 (올림포스 기출 고1 13강
+    실증 — 본문정리/영작배열):
+
+        13강  지문 1                   ← 지문번호(라벨)
+        2025년 3월 고1 학력평가 31번    ← 출처 (같은 헤더 블록)
+        Plato argued that ...          ← 본문
+
+    이때 '직후 영어 본문'을 보는 앵커 규칙은 **둘째 줄**을 헤더로 잡는다.
+    그러면 (a) 지문번호 자리에 출처가 찍히고 (b) 첫 줄은 앞 지문의 꼬리에
+    남아 선지 아래에 인쇄되며 (c) 상·하단 프레임이 한 칸씩 밀린다
+    (사용자 지적: "상단 프레임에 지문번호만 있고 내용이 하단으로").
+
+    구조로 판정한다 — 헤더 직후의 **짧고 숫자를 가진 비문장 줄**이 문서
+    안에서 같은 셰이프로 반복되면(헤더 다수에 걸쳐) 그건 지문마다 붙는
+    메타(출처)다. 흡수 줄은 제거 대상이고, 그 블록의 머리(첫 줄)가
+    지문번호 라벨이다 — 머리에 body_next/shape 신호를 승계해 뒤따르는
+    판정(구조 폴백·라벨 정규화)이 블록 단위로 보게 한다.
+    """
+    n = len(stripped)
+    heads = sorted(det.header_idx)
+    if len(heads) < 2:
+        return
+    groups = {}
+    for h in heads:
+        j = h + 1
+        while j < n and not stripped[j]:
+            j += 1
+        if j >= n or j in det.absorbed_idx:
+            continue
+        # 둘째 줄이 (직후 본문 신호로) 헤더로도 잡힌 경우가 이 결함의
+        # 본체다 — 블록의 머리는 첫 줄이므로 둘째 줄을 흡수로 강등한다.
+        t = stripped[j]
+        sig = line_signals(t)
+        if not (sig["short"] and sig["digit"] and sig["few_eng"]):
+            continue
+        if (sig["stem"] or sig["answerish"] or sig["circled_row"]
+                or sig["numbered"]):
+            continue
+        if t[:1] in "([{（【":
+            continue                       # 선지/보기 머리 — 메타 아님
+        if _eng_words(t) >= _BODY_ENG_MIN:
+            continue                       # 본문이 이미 시작됐다
+        groups.setdefault(shape_of(t), []).append((h, j))
+    if not groups:
+        return
+    need = max(2, int(len(heads) * 0.4))
+    for _sh, pairs in groups.items():
+        if len(pairs) < need:
+            continue
+        for h, j in pairs:
+            det.absorbed_idx.add(j)
+            det.header_idx.discard(j)
+            k = j + 1
+            while k < n and not stripped[k]:
+                k += 1
+            body = (k < n and _eng_words(stripped[k]) >= _BODY_ENG_MIN)
+            for c in det.candidates:
+                if c["i"] == h:
+                    c["signals"]["shape"] = True
+                    if body:
+                        c["signals"]["body_next"] = True
+                    c["via"] = "shape"
+                elif c["i"] == j:
+                    c["via"] = None
 
 
 def _absorb_title_lines(det, stripped):

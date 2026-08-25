@@ -2233,6 +2233,13 @@ def build_step1_b1(step_data):
     st_box = _style("STEP1B1", "Box")
     src = list(step_data.get("paragraphs", []) or [])
     warnings = []
+    # W74: 헤더 블록으로 흡수된 줄(라벨 다음 줄의 출처 — "2025년 3월 고1
+    # 학력평가 31번") 제거. a1/b2는 이미 _absorbed_idx로 걷어내는데 b1만
+    # 빠져 있어, 출처가 라벨로 오인되면 그 줄이 본문 박스를 차지하고
+    # 지문이 밀렸다 (올포기출 13강 실증).
+    _ab_b1 = _absorbed_idx(src)
+    if _ab_b1:
+        src = [q for _k, q in enumerate(src) if _k not in _ab_b1]
 
     # 1) {주제}/{제목} 정규화 — v1 grepChange 3종 + 스타일 패스의 합성.
     #    단독줄("주제")은 다음 비공백 단락과 병합("{주제} <내용>"), 인라인은
