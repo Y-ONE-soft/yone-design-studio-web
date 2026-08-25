@@ -482,3 +482,20 @@ def test_vocaunit_page_closing_rule_is_drawn_once():
     entry = entry[:entry.index("}")]
     assert "border-top" in entry and "border-bottom" not in entry
     assert "box-decoration-break: clone" in css
+
+
+def test_prepress_pins_exact_cmyk_for_matched_colors():
+    """이전 판과 색을 정확히 맞춰야 하는 것은 ICC 를 태우지 않고 CMYK 로 못 박는다
+    (예문 강조어 = 완성본과 같은 C0 M56 Y64 K0)."""
+    import fitz
+    from core.render_vivlio import prepress
+    doc = fitz.open()
+    page = doc.new_page(width=100, height=100)
+    page.draw_rect(fitz.Rect(0, 0, 1, 1), color=(0, 0, 0))
+    xref = page.get_contents()[0]
+    doc.update_stream(xref, b"0.964706 0.545098 0.384314 rg 0 0 9 9 re f\n")
+    n = prepress.neutralize(doc, gray_map={},
+                            cmyk_map={"#f68b62": [0, 56, 64, 0]})
+    out = doc.xref_stream(xref).decode("latin-1")
+    assert n == 1 and "0 0.56 0.64 0 k" in out
+    doc.close()

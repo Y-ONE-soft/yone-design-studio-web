@@ -179,6 +179,8 @@ bin/viv "<책폴더>" print        # config 의 `print` 절을 따른다
 
 그 밖의 함정:
 
+- 이전 판과 **색을 정확히 맞춰야 하는 것**(브랜드색·전 학기 강조색)은 ICC 를
+  태우면 값이 미묘하게 달라진다 → `print.cmyk_map` 에 넣어 CMYK 로 못 박는다.
 - ⚠ `-dSAFER` 는 입출력 밖 파일 읽기를 막는다 — ICC 가 시스템 폴더에 있으면
   "Permission denied" 로 죽는다. `--permit-file-read=<icc>` 로 그 파일만 열어 준다.
 - ⚠ **Ghostscript 는 TrimBox/BleedBox 를 흘려버린다** → 변환 뒤 다시 찍는다.
