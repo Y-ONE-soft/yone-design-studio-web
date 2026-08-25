@@ -318,7 +318,13 @@ def trailing_box_captions(texts):
     구간을 Box 로 되돌리고 라벨을 start_idx 앞으로 옮긴다."""
     out = []
     for i, t in enumerate(texts):
-        if not R.BOX_MARKERS["Box"].match(R.norm_brackets((t or "").strip())):
+        bt = R.norm_brackets((t or "").strip())
+        # BOX_MARKERS["Box"] 는 일반 꺾쇠 마커(<한글 1~4자>)까지 받는다 —
+        # <조건>/<요약문>도 걸린다. 판정 순서(Cond·Sum 선점)를 여기서도
+        # 그대로 지킨다 (585a48a5 실증: <조건>이 보기 캡션으로 옮겨졌다).
+        if R.BOX_MARKERS["Cond"].match(bt) or SUM_MARKER.match(bt):
+            continue
+        if not R.BOX_MARKERS["Box"].match(bt):
             continue
         if i + 1 < len(texts) and is_box_content(texts[i + 1]):
             continue          # 정상(전치) 마커 — 기존 전방 전파에 맡긴다

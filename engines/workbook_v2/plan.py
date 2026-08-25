@@ -1191,6 +1191,8 @@ def _s3_box_captions(pre, BG, R):
     idxs = [i for i, r in enumerate(pre) if r["tclean"]]
     moves = []
     for mi, si in BG.trailing_box_captions([pre[i]["tclean"] for i in idxs]):
+        if pre[idxs[mi]]["eff"] not in ("Box", "UNKNOWN"):
+            continue          # <조건>/<요약문> 등 다른 블록 마커 (이중 방어)
         for y in range(si, mi):
             pre[idxs[y]]["eff"] = "Box"
         pre[idxs[mi]]["eff"] = "Box"
