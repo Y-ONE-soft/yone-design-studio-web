@@ -82,7 +82,39 @@ def _dump(indd, tag, log, stall_limit=None):
 _UNPRINTED = ("OVF", "PB", "?")
 
 
-def compare(verti, horiz, log=None, stall_limit=900, unprinted_out=None):
+def _template_paras(template_indd, log, stall_limit):
+    """세로 템플릿의 문단 집합 — 조판으로 채워지지 않은 자리의 샘플 텍스트.
+
+    세로결합은 템플릿 위에 내용을 얹는다. 원고가 없는 자리에는 템플릿의
+    **샘플 문장이 그대로 남는다**(실측: "All experimental equipment must be
+    handled with care." 가 세로중간본 p123·p223 에 잔존). 가로는 trim_unused
+    가 그 미사용 페이지를 지우므로 없는 게 정상이다. 유실로 세면 안 된다.
+
+    덤프는 8초쯤 걸려서 파일 mtime 기준으로 캐시한다.
+    """
+    import hashlib
+    if not template_indd or not os.path.exists(template_indd):
+        return set()
+    sig = hashlib.md5(
+        ("%s|%s" % (template_indd, os.path.getmtime(template_indd)))
+        .encode("utf-8")).hexdigest()[:12]
+    cache = "/tmp/v2hdiff_tpl_%s.txt" % sig
+    if not os.path.exists(cache):
+        rows = _dump(template_indd, "tpl", log, stall_limit=stall_limit)
+        with open(cache, "w", encoding="utf-8") as f:
+            for _, t in rows:
+                f.write(t.replace("\n", " ") + "\n")
+    out = set()
+    for line in open(cache, encoding="utf-8", errors="ignore"):
+        n = _norm(line.rstrip("\n"))
+        if len(n) >= 12:
+            out.add(n)
+    log("템플릿 샘플 문단 %d개 로드 (대조에서 잔재로 분류)" % len(out))
+    return out
+
+
+def compare(verti, horiz, log=None, stall_limit=900, unprinted_out=None,
+            template_indd=None, leftover_out=None):
     """세로/가로 .indd 를 덤프해 대조 → (대조한 문단 수, 유실 목록).
 
     유실 목록은 [(세로 페이지, 문단 텍스트)]. 빈 리스트면 손실 0.
@@ -90,10 +122,15 @@ def compare(verti, horiz, log=None, stall_limit=900, unprinted_out=None):
     같은 판정을 쓰려고 함수로 떼어냈다(로직 분기 금지).
 
     unprinted_out: 리스트를 주면 세로에서 인쇄되지 않는 문단을 담아 준다.
+    template_indd: 세로 템플릿 경로. 주면 그 안의 샘플 문단은 유실이 아니라
+        **템플릿 잔재**로 분류한다(_template_paras 주석 참조).
+    leftover_out: 리스트를 주면 그 잔재를 담아 준다.
     """
     if log is None:
         def log(m):
             print("  " + str(m), flush=True)
+
+    tpl = _template_paras(template_indd, log, stall_limit)
 
     print("[대조] 세로 덤프…", flush=True)
     v = _dump(verti, "v", log, stall_limit=stall_limit)
@@ -141,11 +178,19 @@ def compare(verti, horiz, log=None, stall_limit=900, unprinted_out=None):
         lt = _letters(t)
         if len(lt) >= 12 and ("L:" + lt) in hset:
             continue
+        if n in tpl:
+            # 원고가 안 채운 자리의 템플릿 샘플 — 가로엔 없는 게 정상
+            if leftover_out is not None:
+                leftover_out.append((page, t))
+            continue
         missing.append((page, t))
 
     if unprinted:
         log("세로에서 인쇄되지 않는 문단 %d개 — 대조 제외 "
             "(OVF=오버셋 / PB=붙임 영역)" % unprinted)
+    if leftover_out:
+        log("템플릿 잔재 %d개 — 대조 제외 (원고가 안 채운 자리의 샘플 문장)"
+            % len(leftover_out))
     return total, missing
 
 
@@ -154,9 +199,13 @@ def main():
     ap.add_argument("verti")
     ap.add_argument("horiz")
     ap.add_argument("--max", type=int, default=40)
+    ap.add_argument("--template", default="",
+                    help="세로 템플릿 .indd — 채워지지 않은 자리의 샘플 문장을 "
+                         "유실이 아니라 잔재로 분류한다")
     args = ap.parse_args()
 
-    total, missing = compare(args.verti, args.horiz)
+    total, missing = compare(args.verti, args.horiz,
+                             template_indd=args.template or None)
 
     print("")
     print("=" * 60)

@@ -466,6 +466,17 @@ def stage_v2h(st, log, run_dir):
 
 # ── 6) 세로↔가로 전문 대조 ──────────────────────────────────────────
 
+def _sero_template():
+    """세로결합이 쓰는 템플릿 .indd — 대조에서 잔재 판정 기준으로 쓴다."""
+    cfg_path = os.path.join(_ROOT, "engines", "mockexam_sero_merge",
+                            "config.json")
+    try:
+        with open(cfg_path, encoding="utf-8") as f:
+            return os.path.expanduser(json.load(f).get("template_path", ""))
+    except (OSError, ValueError):
+        return ""
+
+
 def _repair(vol, log, run_dir):
     """유실 페이지 복구 — 세로 페이지를 가로에 페이지째 다시 넣는다.
 
@@ -501,9 +512,11 @@ def stage_verify(st, log, run_dir):
     failed = []
     for vol in st["volumes"]:
         log.head("대조검수: %s" % vol["horiz_name"])
-        unprinted = []
+        unprinted, leftover = [], []
         total, missing = compare(vol["sero_indd"], vol["horiz_indd"], log=log,
-                                 unprinted_out=unprinted)
+                                 unprinted_out=unprinted,
+                                 template_indd=_sero_template(),
+                                 leftover_out=leftover)
         vol["unprinted"] = len(unprinted)
         log("[대조] 세로 문단 %d개 중 가로에서 못 찾음 %d개" % (total, len(missing)))
         for page, t in missing[:40]:
@@ -525,7 +538,8 @@ def stage_verify(st, log, run_dir):
                     "이다. 납품 전 반드시 눈으로 확인할 것")
 
         vol["verify"] = {"total": total, "missing": len(missing),
-                         "unprinted": len(unprinted)}
+                         "unprinted": len(unprinted),
+                         "template_leftover": len(leftover)}
         if missing:
             failed.append(vol["horiz_name"])
         _save(st, run_dir)
@@ -711,8 +725,9 @@ def main():
         log("· %s" % vol["horiz_name"])
         log("    세로중간본: %s" % vol["sero_indd"])
         log("    가로 결과물: %s" % vol["horiz_indd"])
-        log("    (세로에서 인쇄되지 않아 대조 제외: %d개)"
-            % vol["verify"].get("unprinted", 0))
+        log("    (대조 제외 — 인쇄 안 됨 %d개 / 템플릿 잔재 %d개)"
+            % (vol["verify"].get("unprinted", 0),
+               vol["verify"].get("template_leftover", 0)))
         log("    대조: 세로 문단 %d개 / 유실 %d개%s"
             % (vol["verify"]["total"], vol["verify"]["missing"],
                "  (페이지 복구 수행 — 눈으로 확인 필요)"
