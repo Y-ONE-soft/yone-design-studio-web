@@ -67,7 +67,7 @@ DEFAULT_METRICS = {
     "def_slot": 11.0, "def_lh": 4.23, "def_hang": 3.75, "def_mb": 1.06,
     # 품사 네모 배지 (라인형)
     "pos_box": 2.75, "pos_gap": 1.0, "pos_size": 5.2, "pos_r": 0.5,
-    "pos_va": 0.45, "pos_line_w": 0.15,
+    "pos_va": 0.45, "pos_va_deriv": 0.22, "pos_line_w": 0.15,
     "en_lh": 3.39, "kr_lh": 3.52, "kr_mt": 0.94, "pair_mt": 2.62,
 
     "tab_txt_mt": 9.21,     # ③ 탭 글자
@@ -198,6 +198,9 @@ def prelude(cfg):
         if isinstance(v, str):
             # config 는 `cover_mark`, CSS 는 `--c-cover-mark` — 밑줄을 하이픈으로
             o.append(f"    --c-{k.replace('_', '-')}: {v};")
+    if not pal.get("sense"):
+        o.append("    --c-sense: var(--c-accent);"
+                 "     /* 의미 번호 — 따로 안 정하면 주색상 */")
     mm_vars = [
         ("bleed", bleed), ("media-w", PW), ("media-h", PH),
         ("mgn-out", m["mgn_out"] + bleed), ("mgn-in", m["mgn_in"] + bleed),
@@ -214,7 +217,7 @@ def prelude(cfg):
         ("def-hang", m["def_hang"]), ("def-mb", m["def_mb"]),
         ("pos-box", m["pos_box"]), ("pos-gap", m["pos_gap"]),
         ("pos-r", m["pos_r"]), ("pos-va", m["pos_va"]),
-        ("pos-line-w", m["pos_line_w"]),
+        ("pos-line-w", m["pos_line_w"]), ("pos-va-deriv", m["pos_va_deriv"]),
         ("en-lh", m["en_lh"]), ("kr-lh", m["kr_lh"]), ("kr-mt", m["kr_mt"]),
         ("pair-mt", m["pair_mt"]),
         ("tabtxt-mt", m["tab_txt_mt"]),

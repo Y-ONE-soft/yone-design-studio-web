@@ -131,8 +131,11 @@ body {
           margin-top: var(--pron-mt); letter-spacing: 0; }
 .w-deriv { margin-top: var(--deriv-mt); }
 .w-deriv p { font: 500 7pt/var(--deriv-lh) "Word"; }
-/* 파생어의 품사 배지는 무채색 — 표제어 뜻의 배지(주색상)와 층을 나눈다 */
-.w-deriv b.pos { color: var(--c-pos); border-color: var(--c-pos); }
+/* 파생어의 품사 배지는 무채색 — 표제어 뜻의 배지(주색상)와 층을 나눈다.
+ * ⚠ 세로 정렬은 뜻(8.5pt)과 **따로** 잡아야 한다 — 같은 vertical-align 을 쓰면
+ *   7pt 줄에서는 배지가 0.3mm 위로 뜬다(실측). */
+.w-deriv b.pos { color: var(--c-pos); border-color: var(--c-pos);
+                 vertical-align: var(--pos-va-deriv); }
 
 /* 오른쪽 열 — 뜻(가운데 정렬 슬롯) · 예문 */
 .w-def {
@@ -143,7 +146,7 @@ body {
     font: 500 8.5pt/var(--def-lh) "Kor";
     text-indent: calc(-1 * var(--def-hang)); padding-left: var(--def-hang);
 }
-.w-def .n { color: var(--c-accent); }        /* ① ② ③ 의미 번호 */
+.w-def .n { color: var(--c-sense); }         /* ① ② ③ 의미 번호 */
 .w-def .q { font-size: 6pt; }                /* (과실의) 같은 쓰임 설명 */
 .w-def .note { font-size: 6pt; color: var(--c-pos); }   /* (= …) (↔ …) */
 /* 품사 = 네모 배지 글리프(라인형). 대괄호 대신 가는 테두리 정사각 상자에 글자 하나.
