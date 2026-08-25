@@ -239,6 +239,14 @@
                   fail-open: 템플릿에 S_답란이 없으면 선지 폴백 + 들여쓰기
                   0 로컬 오버라이드 브릿지 → warning. 있는데 미적용이면
                   critical.
+  G48 [선지헤더] 다열 선지 열 머리("ⓐ  ⓑ  ⓒ" 위에 선지 ①~⑤가 오는 줄)가
+                  선지 스타일이 아님 — critical. 표기(ⓐ/㉠/(A)/(a)) 불문
+                  구조 판정(core.structure.rules.choice_header_marks). 지문
+                  처리되면 답란 확장(_s3_widen_answer_rows)이 원고에 없던
+                  밑줄 35칸을 붙이므로 두 결함을 한 검사로 잡는다.
+  G49 [빈보기] 보기 상자가 내용 없이 라벨('보기')만 인쇄됨 — critical.
+                  원고가 보기 캡션을 내용 **뒤**에 주는 형태를 전방 전파가
+                  놓치면 어구가 앞 <조건> 상자로 새고 보기 상자는 빈다.
   G47 [원고잔재] 원고 편집용 부속물(파이프 머리글 / '…시오' 지시문 /
                   라벨+밑줄 기입란)이 출력에 인쇄됨 — critical. 발문은
                   엔진이 발문을 삽입하는 스텝(C1) 스토리에서만 검사
@@ -261,6 +269,9 @@ from engines.workbook_v2.plan import (GLYPH_PRINT_TABLE, PUA_PRINT_TABLE,
                                       SUBSCRIPT_PRINT_TABLE,
                                       is_header_line, is_a1_header,
                                       passage_labels, _norm_header)
+
+# G49 — '보기' 라벨만 있는 단락 (내용 없는 상자 판정용)
+_RE_BOX_LABEL_ONLY = re.compile(r'^[<\[]?\s*보\s*기\s*[A-Z0-9]?\s*[>\]]?$')
 
 # G44 (W45) — 답란 전용 단락스타일 이름 (그룹 안 마지막 토큰). 템플릿 생성은
 # scripts/add_ansline_style.py, 매핑은 core/structure/style_map.json.
@@ -788,6 +799,62 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
             critical.append(
                 f"[원고잔재] {_label.get(kind, kind)} {len(hits)}줄이 출력에 "
                 f"그대로 인쇄됨: " + " | ".join(sorted(set(hits))[:3]))
+
+    # ── G48 [선지헤더] 다열 선지 열 머리가 지문 스타일 / 없던 밑줄 ───────
+    # 2026-08-25 사용자 지적: "선지 헤더로 들어가는 abc 뒤에 자꾸 밑줄이
+    # 들어간다. 선지 헤더면 선지 단락스타일이어야 하는데 지문으로 처리된다."
+    # 열 머리는 표기가 아니라 위치+형태로 잡는다 (플랜 _s3_choice_headers 와
+    # 같은 눈): 열 라벨만으로 이뤄진 줄 + 다음 줄이 같은 열 수의 선지.
+    # 이 검사는 스타일 오류와 **원고에 없던 35칸 밑줄 주입**을 동시에 잡는다
+    # (밑줄 주입 줄은 라벨 사이가 공백런이라 열 머리 형태 그대로 남는다).
+    from core.structure import rules as _R48
+    hdr_bad = []
+    for story in dump.get("stories", []):
+        paras = story.get("paragraphs", [])
+        for i, para in enumerate(paras):
+            tt = _clean(para.get("t", ""))
+            marks = _R48.choice_header_marks(tt)
+            if not marks:
+                continue
+            nxt = next((q for q in paras[i + 1:]
+                        if _clean(q.get("t", ""))), None)
+            if nxt is None:
+                continue
+            if _R48.choice_columns(_clean(nxt.get("t", ""))) != len(marks):
+                continue
+            if "선지" in (para.get("s") or ""):
+                continue
+            hdr_bad.append(f"{tt[:30]} ({para.get('s')})")
+    stats["choice_header_misstyled"] = len(hdr_bad)
+    if hdr_bad:
+        critical.append(f"[선지헤더] 다열 선지 열 머리 {len(hdr_bad)}개가 "
+                        f"선지 스타일이 아님(지문 처리 → 밑줄 주입 동반): "
+                        + " | ".join(hdr_bad[:5]))
+
+    # ── G49 [빈보기] 보기 상자가 내용 없이 라벨만 인쇄 ────────────────────
+    # 2026-08-25 사용자 지적(스크린샷): 보기 어구가 앞 <조건> 상자에 들어가고
+    # 보기 상자는 '보기' 글자만 남은 채 인쇄됨. 원고(hwp)가 보기 캡션을 내용
+    # **뒤**에 주는 형태를, 마커 뒤만 보는 전방 전파가 놓친 결과.
+    box_empty = []
+    for story in dump.get("stories", []):
+        paras = story.get("paragraphs", [])
+        for i, para in enumerate(paras):
+            st = para.get("s") or ""
+            if "보기" not in st:
+                continue
+            tt = _clean(para.get("t", ""))
+            if not _RE_BOX_LABEL_ONLY.match(tt):
+                continue
+            sib = [q for q in (paras[i - 1:i] + paras[i + 1:i + 2])
+                   if "보기" in (q.get("s") or "")
+                   and _clean(q.get("t", ""))
+                   and not _RE_BOX_LABEL_ONLY.match(_clean(q.get("t", "")))]
+            if not sib:
+                box_empty.append(tt[:20])
+    stats["empty_box_frames"] = len(box_empty)
+    if box_empty:
+        critical.append(f"[빈보기] 보기 상자 {len(box_empty)}개가 내용 없이 "
+                        f"라벨만 인쇄됨 — 보기 어구가 다른 상자로 샜다")
 
     # ── G2 정답 블록 잔존 ────────────────────────────────────────────────
     ans = find_leaked_answers(dump)
