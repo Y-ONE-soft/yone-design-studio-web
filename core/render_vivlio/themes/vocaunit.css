@@ -80,6 +80,11 @@ body {
 .mk { position: absolute; font-size: .5pt; color: transparent;
       text-decoration: none; }
 .unit-open { break-before: left; }
+/* 면 아래를 닫는 괘선 — 항목마다 아래 border 를 또 그리면 이웃 항목의 위 border 와
+ * 겹쳐 **70곳이 165㎛ 대신 198㎛** 로 나갔다(실측). 흐름 상자에 `clone` 으로
+ * 아래 테두리만 두면 **면마다 한 번씩** 그려져 겹침이 없다. */
+.unit { border-bottom: var(--rule-w) solid var(--c-rule);
+        box-decoration-break: clone; -webkit-box-decoration-break: clone; }
 .unit-head {
     position: relative; height: var(--head-h);
     margin: calc(-1 * var(--margin-top)) calc(-1 * var(--mgn-in))
@@ -100,12 +105,11 @@ body {
      *    조각화가 제대로 걸린다. 세로 정렬은 table-cell 의 vertical-align 으로. */
     display: table; table-layout: fixed; width: 100%;
     break-inside: avoid; page-break-inside: avoid;
-    /* 위 괘선 = border, 아래 괘선 = 배경 상자. 아래를 border 로 두면 이웃 항목과
-     * 겹치려 음수 마진이 필요한데, 배경으로 깔면 padding 상자 바닥에 그려져
-     * **다음 항목의 border-top 과 정확히 겹친다**(음수 마진 없이). */
+    /* ⚠ 아래 괘선을 `linear-gradient` 배경으로 깔면 **래스터 이미지로 나간다**
+     *    (페이지마다 3260×5px 이미지가 항목 수만큼). 위 괘선(border)은 벡터라
+     *    둘이 겹친 자리는 굵고 흐릿하게 보이고, 인쇄 원고도 무거워진다.
+     *    위아래 다 border 로 두고 **음수 마진으로 한 줄로 겹친다.** */
     border-top: var(--rule-w) solid var(--c-rule);
-    background: linear-gradient(var(--c-rule), var(--c-rule))
-                no-repeat bottom left / 100% var(--rule-w);
     padding: var(--w-pad-t) 0 var(--w-pad-b);
 }
 .w-l { display: table-cell; width: var(--col-w); vertical-align: top; }

@@ -420,3 +420,52 @@ def test_vocaunit_derivative_badge_eats_following_space():
     from core.render_vivlio.series.vocaunit import render
     assert render.deriv("successor [명] 후계자") == \
         'successor <b class="pos">명</b>후계자'
+
+
+# ── 인쇄 원고(prepress) ─────────────────────────────────────────────────
+def test_prepress_maps_neutrals_to_devicegray():
+    """조판 백엔드는 무조건 DeviceRGB 로 쓴다 — 먹·회색은 K 단색이 되게 미리 바꾼다.
+    그냥 ICC 로 넘기면 본문 먹이 리치블랙(C80 M80 Y77 K60)이 된다."""
+    import fitz
+    from core.render_vivlio import prepress
+    doc = fitz.open()
+    page = doc.new_page(width=100, height=100)
+    page.draw_rect(fitz.Rect(0, 0, 1, 1), color=(0, 0, 0))   # 콘텐츠 스트림 생성
+    xref = page.get_contents()[0]
+    doc.update_stream(xref, (
+        b"0.137255 0.121569 0.12549 rg 0 0 10 10 re f\n"      # #231f20 → K100
+        b"0.427451 0.431373 0.443137 RG 0 0 m 5 5 l S\n"      # #6d6e71 → K70
+        b"0.811765 0.282353 0.533333 rg 0 0 5 5 re f\n"))     # 유채색 → 그대로
+    n = prepress.neutralize(doc)
+    out = doc.xref_stream(xref).decode("latin-1")
+    assert n == 2
+    assert "0 g" in out and "0.3 G" in out
+    assert "0.811765 0.282353 0.533333 rg" in out    # 유채색은 건드리지 않는다
+    doc.close()
+
+
+def test_prepress_stamps_trim_and_bleed_boxes():
+    """Ghostscript 는 TrimBox/BleedBox 를 흘려버린다 → 마지막에 다시 찍는다."""
+    import fitz
+    from core.render_vivlio import prepress
+    doc = fitz.open()
+    doc.new_page(width=154 * prepress.PT, height=216 * prepress.PT)
+    prepress.stamp_boxes(doc, bleed=3.0)
+    p = doc[0]
+    trim = [round(v / prepress.PT, 2) for v in p.trimbox]
+    bleed = [round(v / prepress.PT, 2) for v in p.bleedbox]
+    assert trim == [3.0, 3.0, 151.0, 213.0]
+    assert bleed == [0.0, 0.0, 154.0, 216.0]
+    doc.close()
+
+
+def test_vocaunit_page_closing_rule_is_drawn_once():
+    """항목마다 위·아래 border 를 다 그리면 이웃과 겹쳐 굵어진다(실측 70곳).
+    아래 괘선은 흐름 상자에 `box-decoration-break: clone` 으로 **면마다 한 번**."""
+    import os
+    css = open(os.path.join(REPO, "core", "render_vivlio", "themes",
+                            "vocaunit.css"), encoding="utf-8").read()
+    entry = css[css.index("\n.w {"):]
+    entry = entry[:entry.index("}")]
+    assert "border-top" in entry and "border-bottom" not in entry
+    assert "box-decoration-break: clone" in css
