@@ -641,8 +641,14 @@ def _s3_answer_cell_idx(seq):
     for i in range(n - 1):
         t = (seq[i].get("text") or "")
         tc = t.strip()
-        if not tc or len(tc) > 8:
+        # 라벨 셀은 표의 '머리 칸'이라 아주 짧다 (ⓐ / 답 / (1) / ①).
+        # 길이를 넉넉히 주면 보기 단어('turning')·조건 항목('- 총 12단어')·
+        # 표제('Unit 18')처럼 뒤에 우연히 공백 셀이 오는 줄까지 걸린다
+        # (코퍼스 실측 5잡).
+        if not tc or len(tc) > 3:
             continue
+        if seq[i].get("kind") in ("Box", "Cond", "Sum", "GH", "A", "C"):
+            continue        # 보기/조건/요약 블록 내용물은 답표 셀이 아니다
         if re.search(r"[.?!]\s*$|시오|세요", tc):
             continue
         if not re.sub(r"[()\[\]{}\s_]", "", tc):
