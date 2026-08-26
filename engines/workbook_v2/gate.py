@@ -2813,6 +2813,19 @@ def inspect_plan_units(plan, log=None):
         mode = max(set(vals), key=vals.count)
         stats["unit_count_mode"] = mode
         odd = {k: n for k, n in counts.items() if abs(n - mode) > 1}
+        # W77: 1개 차이는 critical 로 세우면 정상 원고(STEP1 5 / STEP2 4
+        # 처럼 반쪽끼리 한 지문 차이)가 대량 오검출된다(코퍼스 213잡 중
+        # 32→62). 대신 **경고로 지목**한다 — 수특라이트 15강처럼 한 스텝
+        # 원고에만 지문 하나가 빠진 사고(빈칸어휘 2 vs 나머지 3)를
+        # 사람이 볼 수 있게 (조판은 막지 않는다).
+        odd1 = {k: n for k, n in counts.items()
+                if n != mode and abs(n - mode) <= 1}
+        if odd1:
+            warnings.append(
+                "[지문수차이] 스텝별 지문 수가 1개 다릅니다 ("
+                + ", ".join("%s=%d" % (k, n)
+                            for k, n in sorted(counts.items()))
+                + ") — %s 원고에 지문이 빠졌는지 확인" % "/".join(sorted(odd1)))
         if odd:
             critical.append(
                 "[지문수불일치] 스텝별 지문 수가 어긋납니다 ("
