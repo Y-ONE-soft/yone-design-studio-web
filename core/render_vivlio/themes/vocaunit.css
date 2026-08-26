@@ -276,16 +276,16 @@ b.pos {
 /* 발음기호도 파생어도 없다 → 한 줄. 번호·회독칸·표제어를 한 줄에 눕히고
  * 뜻은 같은 자리(오른쪽 열)에 두어 블록형 지면과 세로선이 맞는다. */
 .w.flat { padding: 1.35mm 0 1.35mm; }
-.w.flat .w-l  { vertical-align: middle; white-space: nowrap; }
+.w.flat .w-l  { width: var(--col-w-flat); vertical-align: middle;
+                white-space: nowrap; }
 .w.flat .w-r  { vertical-align: middle; }
 .w.flat .w-no { display: inline-block; width: var(--no-w);
                 vertical-align: middle; }
 .w.flat .chk  { display: inline-flex; vertical-align: middle;
                 margin: 0 var(--flat-chk-gap) 0 0; }
+/* 크기는 렌더러가 낱말마다 실측해 넣는다(구간 분류 아님) → 여기선 기본값만 */
 .w.flat .w-word { display: inline; font-size: 10pt; margin: 0;
-                  vertical-align: middle; white-space: normal; }
-.w.flat .w-word.long  { font-size: 9pt; }
-.w.flat .w-word.xlong { font-size: 7.5pt; }
+                  vertical-align: middle; white-space: nowrap; }
 .w.flat .w-def { min-height: 0; margin-bottom: 0; display: block; }
 .w.flat .w-def p { font-size: 8pt; text-indent: 0; padding-left: 0; }
 

@@ -16,6 +16,8 @@ import html
 import os
 import re
 
+from core.render_vivlio.series.vocaunit import theme
+
 _RE_POS = re.compile(r"\[([명동형부전접대감조])\]")
 # 파생어에선 품사 뒤 공백까지 먹는다 — 배지 자체 여백이 있어 겹치면 벌어져 보인다
 _RE_POS_SP = re.compile(r"\[([명동형부전접대감조])\]\s*")
@@ -151,6 +153,51 @@ def highlight(sentence, words):
     return "".join(out)
 
 
+class TextWidth(object):
+    """서체 실측 글자폭 — 표제어를 **한 줄에** 넣으려면 어림으로는 안 된다.
+
+    `International Monetary Fund` 는 글자 수로는 27자지만 실제 폭은 13.33em 이라,
+    글자 수 구간(13자↑ 9pt, 17자↑ 7.5pt)으로 줄여서는 열을 넘겨 두 줄이 된다.
+    서체 파일에서 advance width 를 읽어 **그 낱말에 맞는 크기**를 낸다.
+    서체를 못 읽으면 어림치(라틴 0.62em)로 물러난다 — 조판은 계속돼야 한다.
+    """
+
+    def __init__(self, font_file=None):
+        self.cmap = self.hmtx = None
+        self.upm = 1000
+        try:
+            from fontTools.ttLib import TTFont
+
+            from core.render_vivlio import stage
+            path = stage.find_font(font_file) if font_file else None
+            if path:
+                ft = TTFont(path, lazy=True)
+                self.upm = ft["head"].unitsPerEm
+                self.cmap = ft.getBestCmap()
+                self.hmtx = ft["hmtx"]
+        except Exception:                       # noqa: BLE001 — 어림치로 진행
+            self.cmap = None
+
+    def em(self, text):
+        if not self.cmap:
+            return _w_em(text)
+        tot = 0
+        for ch in text or "":
+            g = self.cmap.get(ord(ch)) or "space"
+            try:
+                tot += self.hmtx[g][0]
+            except KeyError:
+                tot += self.upm * 0.62
+        return tot / self.upm
+
+    def fit(self, text, mm, cap, floor=6.5):
+        """`mm` 안에 들어가는 글자 크기(pt). `cap` 을 넘지 않고 `floor` 아래로도 안 간다."""
+        w = self.em(text)
+        if w <= 0:
+            return cap
+        return round(max(floor, min(cap, mm / (w * 0.3528))), 2)
+
+
 def _w_em(t):
     """Tab(잘난체) 기준 글자폭 합 — 한글 1em, 라틴 0.62em, 공백 0.3em."""
     tot = 0.0
@@ -188,6 +235,13 @@ class Renderer(object):
         self._op = 0
         # 둥근 탭 안쪽 폭(양옆 1.2mm 씩 여유) — 글자 크기를 여기 맞춘다
         self.tab_mm = float(o.get("tab_mm", 26.7))
+        # 표형 표제어가 쓸 수 있는 폭 = 왼쪽 열 - (번호 + 회독칸)
+        m = theme.metrics_of(cfg)
+        self.word_mm = (m["col_w_flat"] - m["no_w"]
+                        - 3 * (m["chk"] + m["chk_gap"]) - m["flat_chk_gap"])
+        bold = next((f["file"] for f in (cfg.get("fonts") or [])
+                     if f.get("family") == "Word" and f.get("weight") == 700), None)
+        self.tw = TextWidth(bold)
 
     # ── 러닝 요소 ────────────────────────────────────────────────────────
     def running(self, tab, off=False, part=0):
@@ -250,12 +304,18 @@ class Renderer(object):
 
     # ── 표형(낱말표) 항목 ───────────────────────────────────────────────
     def word_flat(self, w):
-        """한 줄짜리 항목 — 번호·회독칸·표제어 | 뜻. 발음기호도 파생어도 없다."""
+        """한 줄짜리 항목 — 번호·회독칸·표제어 | 뜻. 발음기호도 파생어도 없다.
+
+        표제어는 **낱말마다 폭에 맞춰** 크기를 정한다(구간으로 줄이면 긴 낱말이
+        열을 넘겨 두 줄이 되고, 둘째 줄이 번호 밑까지 흘러 어긋나 보인다).
+        """
         chk = '<span class="chk"><i></i><i></i><i></i></span>'
+        pt = self.tw.fit(w["word"], self.word_mm, 10)
+        st = f' style="font-size:{pt}pt"' if pt < 10 else ""
         return (
             '<article class="w flat"><div class="w-l">'
             f'<span class="w-no">{w["no"]:0{self.pad}d}</span>{chk}'
-            f'<span class="w-word{_wcls(w["word"])}">{esc(w["word"])}</span>'
+            f'<span class="w-word"{st}>{esc(w["word"])}</span>'
             '</div><div class="w-r">'
             f'<div class="w-def">{meaning(w["meaning"], self.notes)}</div>'
             "</div></article>")

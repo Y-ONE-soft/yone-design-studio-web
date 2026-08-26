@@ -82,6 +82,9 @@ DEFAULT_METRICS = {
                  "txt_x": 18.0, "txt_y": 195.579, "txt_size": 6.6},
 
     "flat_chk_gap": 1.6,    # 표형 항목의 회독칸 ↔ 표제어 사이
+    # 표형은 표제어가 길다(`International Monetary Fund` 13.33em) → 왼쪽 열을 넓힌다.
+    # 뜻은 90%가 11자 안쪽이라 오른쪽이 좁아져도 눌리지 않는다.
+    "col_w_flat": 54.0,
 
     # 대단원 간지 — 판면 왼쪽 정렬선(재단선 기준)
     "part_x": 18.0,
@@ -270,6 +273,7 @@ def prelude(cfg):
         # 표제어가 시작하는 x — 묶음 예문도 **여기에 맞춘다**(같은 세로 축).
         # 두 값을 따로 적으면 언젠가 어긋난다 → 한 곳에서 계산해 변수로 내보낸다.
         ("run-x", m["no_w"] + 3 * (m["chk"] + m["chk_gap"]) + m["flat_chk_gap"]),
+        ("col-w-flat", m["col_w_flat"]),
         ("flat-chk-gap", m["flat_chk_gap"]),
         ("part-x", m["part_x"] + bleed),
         ("unit-top-y", m["unit_ttl"]["y"] - m["unit_top_up"]),
