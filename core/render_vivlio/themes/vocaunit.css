@@ -212,8 +212,12 @@ b.pos {
 /* 기존 표제지(.cover)와 같은 말투 — 옅은 면색 + 커다란 흰 마크. 대단원 색은
  * `.pN` 이 CSS 변수를 갈아끼워 따라온다(배경 SVG 는 theme.py 가 따로 낸다). */
 .part-cover, .part-toc {
+    /* ⚠ box-sizing 을 안 잡으면 상단 여백(41mm)이 높이에 **더해져** 면 밖으로
+     *   삐져나간다 — 아래쪽 기준(bottom) 위치가 통째로 어긋난다(크레스트 잘림). */
+    box-sizing: border-box;
     break-before: left; position: relative; height: var(--media-h);
     padding: calc(38mm + var(--bleed)) var(--part-x) 0;
+    overflow: hidden;
 }
 .part-toc { break-before: right; }
 .part-cover .no {
@@ -226,6 +230,11 @@ b.pos {
 }
 .part-cover .sub {
     font: 500 9pt/1.6 "Kor"; color: var(--c-ink); opacity: .6; margin-top: 4mm;
+}
+/* 큰 크레스트 = 흰 워터마크. 표제지(.cover)와 같은 말투로 면을 채운다 */
+.part-cover .crest {
+    position: absolute; left: calc(50% - 31mm);
+    bottom: calc(22mm + var(--bleed)); width: 62mm; height: 57.3mm;
 }
 .part-cover .mark {
     position: absolute; left: var(--part-x); bottom: calc(26mm + var(--bleed));
@@ -253,6 +262,9 @@ b.pos {
  * 머리 다음에 바로 낱말이 와야 하므로 `break-after: avoid`. */
 .g-head { break-after: avoid; page-break-after: avoid;
           margin: 4.2mm 0 1.2mm; }
+/* 한 묶음(낱말들 + 그 예문)은 갈라지지 않는다 — 가장 큰 묶음이 8낱말이라
+ * 한 면(약 170mm)에 넉넉히 들어간다 */
+.run { break-inside: avoid; page-break-inside: avoid; }
 .unit-head + .g-head { margin-top: 1.5mm; }
 .g-head span {
     display: inline-block; padding: .9mm 2.4mm .8mm;

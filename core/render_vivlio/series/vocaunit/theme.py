@@ -423,8 +423,11 @@ def _shapes(cfg, pal, pre, n):
              f", {g_r} top left / {PW}mm {gh + bleed}mm; }}")
 
     # 대단원 간지 로고 — 면 색 위에 흰 마크
+    o.append(f"{pre}.part-cover .crest {{ background: "
+             f"{crest(pal.get('cover_mark') or '#fff', 62.0, 57.3)} "
+             f"center / contain; }}")
     o.append(f"{pre}.part-cover .mark {{ background: "
-             f"{mark(pal.get('cover_mark') or '#fff', 27.843, 5.197)} "
+             f"{mark(pal.get('mark') or pal['accent'], 27.843, 5.197)} "
              f"center / contain; }}")
     if n > 1:
         return o

@@ -287,7 +287,7 @@ class Renderer(object):
                 + f'<div class="no">PART {n}</div>'
                 + f'<div class="ttl">{esc(part["name"])}</div>'
                 + (f'<div class="sub">{esc(sub)}</div>' if sub else "")
-                + '<div class="mark"></div>'
+                + '<div class="crest"></div><div class="mark"></div>'
                 + "</section>")
         rows = "".join(f"<li><b>{esc(u['head'])}</b>"
                        f"<span>{u['words']}</span></li>" for u in part["toc"])
@@ -357,9 +357,12 @@ class Renderer(object):
 
     def group(self, g):
         """소단원 하나 — 머리 + (낱말들 + 그 묶음의 예문) 되풀이."""
+        # 낱말들과 그 묶음의 예문은 **한 상자**다 — 안 묶으면 예문만 다음 면
+        # 맨 위로 넘어가 "누구 예문인지 모를 문장"이 홀로 남는다(실제로 겪었다).
         return ((self.group_head(g["label"]) if g["label"] else "")
-                + "".join("".join(self.word_flat(w) for w in r["words"])
-                          + self.run_ex(r) for r in g["runs"]))
+                + "".join('<div class="run">'
+                          + "".join(self.word_flat(w) for w in r["words"])
+                          + self.run_ex(r) + "</div>" for r in g["runs"]))
 
     def unit(self, u, n):
         """단원 하나 — 블록형은 항목을 죽 잇고, 표형은 소단원·묶음으로 나눈다."""
