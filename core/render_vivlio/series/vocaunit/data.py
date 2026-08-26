@@ -1,6 +1,18 @@
 """UNIT형 단어장 원고(xlsx) → data.json.
 
-원고 = 시트 하나가 Unit 하나. 한 표제어는 **빈 행으로 끊기는 블록**이고, 블록 안의
+원고 형식이 **두 가지**다. 어느 쪽인지는 시트를 열어 **구조로 판정한다**
+(파일 이름·머리글 문구에 기대지 않는다).
+
+  블록형  한 표제어가 여러 행에 걸친다(발음기호·파생어·예문 짝). 행이 드문드문
+          차 있어 **행당 채워진 칸이 평균 2칸 남짓**이다. → `parse_unit`
+  표형    한 행이 한 낱말이다(`No · 낱말 · 단원 · 뜻 · 예문`). 모든 행이 꽉 차
+          **행당 4~5칸**이고, 한 열의 값이 크게 반복된다(그게 단원 열이다).
+          → `parse_flat`
+
+책은 **대단원(part)** 여러 개로 짜인다. 대단원 하나가 원고 하나(또는 시트 하나)이고,
+대단원마다 간지 2면과 지면 색을 갖는다. config `parts` 가 순서·이름·색상을 정한다.
+
+블록형 원고 = 시트 하나가 Unit 하나. 한 표제어는 **빈 행으로 끊기는 블록**이고, 블록 안의
 행 역할은 열 위치가 아니라 **구조**로 읽는다(형식 화이트리스트 금지):
 
     B      C            D
@@ -94,31 +106,248 @@ def parse_unit(rows, unit_label):
     return blocks
 
 
-def build(cfg, log=print):
-    import openpyxl
+# ── 표형 원고 ───────────────────────────────────────────────────────────
+_RE_UNIT_SPLIT = re.compile(r"\s+-\s+")
+_RE_LATIN = re.compile(r"[A-Za-z]")
+_RE_HANGUL = re.compile(r"[가-힣]")
+_RE_TAIL_NUM = re.compile(r"(\d+)\s*$")
 
-    o = cfg.section("options") or {}
-    path = cfg.manuscript("words")
-    wb = openpyxl.load_workbook(path, data_only=True)
 
-    units, total = [], 0
-    for ws in wb:
-        blocks = parse_unit(_rows(ws), ws.title)
-        if not blocks:
+def _filled(rows):
+    """행당 채워진 칸 수의 평균 — 블록형/표형을 가르는 구조 지표."""
+    live = [r for r in rows if any(r)]
+    if not live:
+        return 0.0
+    return sum(sum(1 for c in r if c) for r in live) / len(live)
+
+
+def is_flat(rows):
+    """표형인가 — 행이 꽉 차 있고, 값이 크게 반복되는 열(=단원)이 있다."""
+    live = [r for r in rows if any(r)]
+    if len(live) < 5 or _filled(rows) < 3.5:
+        return False
+    n = max(len(r) for r in live)
+    for c in range(n):
+        col = [r[c] for r in live if c < len(r) and r[c]]
+        if len(col) > len(live) * 0.9 and len(set(col)) < len(col) * 0.5:
+            return True
+    return False
+
+
+def _roles(cols):
+    """열 → 역할. 이름이 아니라 **값의 성질**로 가른다.
+
+    번호  = 거의 다 정수        단원 = 값이 크게 반복된다
+    예문  = 가장 긴 영문         낱말 = 남은 영문 중 짧은 쪽
+    뜻    = 한글이 있는 남은 열
+    """
+    def stat(col):
+        vals = [v for v in col if v]
+        n = max(len(vals), 1)
+        return {
+            "num": sum(1 for v in vals if v.isdigit()) / n,
+            "lat": sum(1 for v in vals if _RE_LATIN.search(v)) / n,
+            "kor": sum(1 for v in vals if _RE_HANGUL.search(v)) / n,
+            "len": sum(len(v) for v in vals) / n,
+            "uniq": len(set(vals)) / n,
+        }
+
+    st = {i: stat(c) for i, c in enumerate(cols)}
+    left = set(st)
+    role = {}
+
+    def take(name, key, pick=max, among=None):
+        pool = [i for i in (among if among is not None else left)]
+        if not pool:
+            return None
+        i = pick(pool, key=lambda i: st[i][key])
+        role[name] = i
+        left.discard(i)
+        return i
+
+    take("ex", "len")                                    # 가장 긴 열 = 예문
+    take("unit", "uniq", pick=min)                       # 가장 덜 다양한 열 = 단원
+    nums = [i for i in left if st[i]["num"] > 0.9]
+    if nums:
+        role["no"] = nums[0]
+        left.discard(nums[0])
+    lat = [i for i in left if st[i]["lat"] > 0.7]
+    if lat:
+        take("word", "len", pick=min, among=lat)
+    kor = [i for i in left if st[i]["kor"] > 0.5]
+    if kor:
+        take("meaning", "kor", among=kor)
+    return role
+
+
+def _split_unit(v):
+    """`Unit 01 - Analysis` → (`Unit 01`, `Analysis`). 구분자가 없으면 소단원 없음."""
+    bits = _RE_UNIT_SPLIT.split(v or "", 1)
+    return bits[0].strip(), (bits[1].strip() if len(bits) > 1 else "")
+
+
+def parse_flat(rows, sheet, log=print):
+    """표형 시트 → 단원(head) 목록. 단원 값 `A - B` 의 A 가 단원, B 가 소단원."""
+    live = [r for r in rows if any(r)]
+    width = max(len(r) for r in live)
+    cols = [[(r[c] if c < len(r) else "") for r in live] for c in range(width)]
+    role = _roles(cols)
+    for need in ("word", "meaning", "unit"):
+        if need not in role:
+            raise SystemExit(f"[원고] {sheet}: {need} 열을 찾지 못했다 "
+                             f"(찾은 역할 {sorted(role)})")
+
+    def cell(r, name):
+        i = role.get(name)
+        return (r[i] if i is not None and i < len(r) else "").strip()
+
+    # 머리글 행(`No · word · 단원 · meaning · 예문`)은 **역할에 맞지 않아서** 빠진다
+    # — 문구를 알아보는 게 아니라, 번호 칸이 숫자가 아니고 뜻 칸에 한글이 없다는
+    # 구조로 가른다. 몇 줄을 버렸는지는 반드시 남긴다(침묵 유실 금지).
+    kor_col = ("meaning" in role
+               and sum(1 for v in cols[role["meaning"]] if _RE_HANGUL.search(v))
+               > 0.8 * sum(1 for v in cols[role["meaning"]] if v))
+
+    def is_data(r):
+        if not cell(r, "word") or not cell(r, "meaning"):
+            return False
+        if "no" in role and not cell(r, "no").isdigit():
+            return False
+        if kor_col and not _RE_HANGUL.search(cell(r, "meaning")):
+            return False
+        return True
+
+    skipped = [r for r in live if not is_data(r)]
+    if skipped:
+        log(f"[원고] {sheet}: 역할에 맞지 않아 건너뛴 행 {len(skipped)}개 "
+            f"(첫 행 {skipped[0][:3]})")
+
+    units, seen = [], {}
+    for r in live:
+        if not is_data(r):
             continue
-        units.append({"sheet": ws.title,
-                      "label": unit_label(ws.title, o),
-                      "num": unit_num(ws.title),
-                      "words": blocks})
-        total += len(blocks)
+        w, mean = cell(r, "word"), cell(r, "meaning")
+        head, tail = _split_unit(cell(r, "unit"))
+        u = seen.get(head)
+        if u is None:
+            u = {"sheet": sheet, "head": head, "groups": [], "kind": "flat"}
+            seen[head] = u
+            units.append(u)
+        g = u["groups"][-1] if u["groups"] and u["groups"][-1]["label"] == tail else None
+        if g is None:
+            g = {"label": tail, "runs": []}
+            u["groups"].append(g)
+        ex = cell(r, "ex")
+        # 같은 예문이 이어지는 낱말들 = 한 묶음. 예문은 묶음에 한 번만 싣는다
+        run = g["runs"][-1] if g["runs"] and g["runs"][-1]["ex"] == ex else None
+        if run is None:
+            run = {"ex": ex, "words": []}
+            g["runs"].append(run)
+        run["words"].append({"word": w, "meaning": mean})
 
-    d = {"units": units, "counts": {"units": len(units), "words": total}}
+    n = 0
+    for u in units:
+        for g in u["groups"]:
+            for run in g["runs"]:
+                for w in run["words"]:
+                    n += 1
+                    w["no"] = n
+        u["words"] = [w for g in u["groups"] for run in g["runs"]
+                      for w in run["words"]]
+    return units
+
+
+# ── 대단원(part) 조립 ───────────────────────────────────────────────────
+def _head_slots(part_name, head, single):
+    """① 큰 원의 세 칸 — 눈썹(대단원명) · 작은 글자 · 큰 글자.
+
+    `Unit 15` → (어휘끝, UNIT, 15) · `Special Lesson 2` → (교과서, Special Lesson, 2)
+    `2024년 9월` → (모의고사, 2024년, 9월). 끝의 숫자를 큰 칸으로 떼고, 없으면
+    마지막 낱말을 큰 칸으로 쓴다.
+    """
+    m = _RE_TAIL_NUM.search(head or "")
+    if m:
+        return part_name, head[:m.start()].strip(), m.group(1)
+    bits = (head or part_name).split()
+    if len(bits) >= 2:
+        return part_name, " ".join(bits[:-1]), bits[-1]
+    return ("", part_name, head) if single and head else (part_name, "", head)
+
+
+def _tab(part_name, ttl, num):
+    """③ 둥근 탭 글자 — 좁아서 `대단원명 + 번호` 까지만 넣는다."""
+    return " ".join(x for x in (part_name, num) if x) or ttl or part_name
+
+
+def _sheets(cfg, key, cache):
+    """원고 파일 → {시트명: 행목록}. 같은 파일을 대단원마다 다시 열지 않는다."""
+    if key not in cache:
+        import openpyxl
+        wb = openpyxl.load_workbook(cfg.manuscript(key), data_only=True)
+        cache[key] = [(ws.title, _rows(ws)) for ws in wb]
+    return cache[key]
+
+
+def _part_units(cfg, spec, log):
+    """대단원 하나 → 단원 목록. 형식(블록형/표형)은 시트를 열어 구조로 판정한다."""
+    o = cfg.section("options") or {}
+    sheets = _sheets(cfg, spec.get("from", "words"), _part_units.cache)
+    want = spec.get("sheet")
+    if want:
+        sheets = [(t, r) for t, r in sheets if t == want]
+        if not sheets:
+            raise SystemExit(f"[원고] 시트 없음: {want} ({spec.get('name')})")
+
+    units = []
+    for title, rows in sheets:
+        if is_flat(rows):
+            units += parse_flat(rows, title, log)
+        else:
+            blocks = parse_unit(rows, title)
+            if blocks:
+                units.append({"sheet": title, "kind": "block",
+                              "head": f"{o.get('unit_word', 'UNIT')} "
+                                      f"{unit_num(title):02d}",
+                              "words": blocks})
+    return units
+
+
+_part_units.cache = {}
+
+
+def build(cfg, log=print):
+    o = cfg.section("options") or {}
+    specs = cfg.section("parts") or [{"name": "", "from": "words"}]
+    _part_units.cache = {}
+
+    parts, units, total = [], [], 0
+    for i, spec in enumerate(specs, 1):
+        name = spec.get("name") or ""
+        us = _part_units(cfg, spec, log)
+        single = len(us) == 1
+        for u in us:
+            top, ttl, num = _head_slots(name, u["head"], single)
+            u.update(part=i, part_name=name, head_top=top,
+                     head_ttl=ttl, head_num=num,
+                     label=_tab(name, ttl, num),
+                     num=int(_RE_NUM.search(num).group(1))
+                          if _RE_NUM.search(num) else i)
+        parts.append({"idx": i, "name": name, "hue": spec.get("hue"),
+                      "sub": spec.get("sub", ""),
+                      "units": [u["head"] for u in us],
+                      "words": sum(len(u["words"]) for u in us)})
+        units += us
+        total += sum(len(u["words"]) for u in us)
+
+    d = {"parts": parts, "units": units,
+         "counts": {"parts": len(parts), "units": len(units), "words": total}}
     gate(d, o, log)
 
     out = os.path.join(cfg.root, "data.json")
     with open(out, "w", encoding="utf-8") as f:
         json.dump(d, f, ensure_ascii=False, indent=1)
-    log(f"[원고] Unit {len(units)}개 · 표제어 {total}개 → {os.path.basename(out)}")
+    log("[원고] " + " · ".join(f"{p['name']} {p['words']}개" for p in parts)
+        + f" (단원 {len(units)}개 · 낱말 {total}개) → {os.path.basename(out)}")
     return out
 
 
