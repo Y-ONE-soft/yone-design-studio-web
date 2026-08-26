@@ -47,14 +47,19 @@ _RE_DERIV_SPLIT = re.compile(rf"(?<=\S)\s+(?=[A-Za-z][A-Za-z'’\- ]*\[[{_POS}]\
 
 
 def _rows(ws):
-    """시트 → [(B, C, D)] 문자열 3튜플."""
+    """시트 → 행마다 **모든 열**의 문자열 목록.
+
+    ⚠ 예전엔 여기서 B·C·D 세 칸만 잘라 돌려줬다 — 블록형만 있던 시절의 잔재다.
+    표형은 다섯 칸을 다 쓰므로 자르면 형식 판정부터 실패한다(대단원이 통째로
+    0개가 되는 사고를 실제로 겪었다).
+    """
     out = []
     for row in ws.iter_rows(values_only=True):
         vals = [("" if v is None else str(v).replace(" ", " ").strip())
                 for v in row]
         while len(vals) < 4:
             vals.append("")
-        out.append((vals[1], vals[2], vals[3]))
+        out.append(vals)
     return out
 
 
@@ -73,7 +78,8 @@ def parse_unit(rows, unit_label):
     구조가 잡히므로 문구에 기대지 않는다.
     """
     blocks, cur = [], None
-    for b, c, d in rows:
+    for row in rows:
+        b, c, d = row[1], row[2], row[3]
         if b.isdigit():                                   # ① 번호 · 표제어 · 뜻
             cur = {"no": int(b), "unit": unit_label, "word": c, "meaning": d,
                    "pron": "", "deriv": [], "ex": []}
@@ -365,28 +371,52 @@ def unit_label(sheet, o):
 
 
 def gate(d, o, log):
-    """인식 게이트 — 기대와 어긋나면 조판하지 않는다."""
+    """인식 게이트 — 기대와 어긋나면 조판하지 않는다.
+
+    `options.expect` 는 두 가지로 쓴다.
+      · 책 전체    `{"units": 9, "words": 270}`
+      · 대단원별   `{"parts": {"어휘끝": {"units": 9, "words": 270}, …}}`
+    """
     exp = o.get("expect") or {}
     bad = []
     if exp.get("units") and d["counts"]["units"] != exp["units"]:
-        bad.append(f"Unit {d['counts']['units']}개 (기대 {exp['units']})")
+        bad.append(f"단원 {d['counts']['units']}개 (기대 {exp['units']})")
     if exp.get("words") and d["counts"]["words"] != exp["words"]:
-        bad.append(f"표제어 {d['counts']['words']}개 (기대 {exp['words']})")
+        bad.append(f"낱말 {d['counts']['words']}개 (기대 {exp['words']})")
+    for name, want in (exp.get("parts") or {}).items():
+        got = next((p for p in d["parts"] if p["name"] == name), None)
+        if got is None:
+            bad.append(f"대단원 없음: {name}")
+            continue
+        if want.get("units") is not None and len(got["units"]) != want["units"]:
+            bad.append(f"{name}: 단원 {len(got['units'])}개 (기대 {want['units']})")
+        if want.get("words") is not None and got["words"] != want["words"]:
+            bad.append(f"{name}: 낱말 {got['words']}개 (기대 {want['words']})")
     per = exp.get("words_per_unit")
     if per:
-        off = [u["sheet"] for u in d["units"] if len(u["words"]) != per]
+        off = [u["sheet"] for u in d["units"]
+               if u.get("kind") != "flat" and len(u["words"]) != per]
         if off:
-            bad.append(f"표제어 수가 {per}개가 아닌 Unit: {', '.join(off)}")
-    # 구조 결손 — 조용히 비면 조판 사고다
+            bad.append(f"낱말 수가 {per}개가 아닌 단원: {', '.join(off)}")
+
+    # 구조 결손 — 조용히 비면 조판 사고다. 표형 원고에는 발음기호·해석이 없으므로
+    # **형식마다 있어야 할 것이 다르다**(없는 걸 요구하면 게이트가 늘 실패한다).
     for u in d["units"]:
+        flat = u.get("kind") == "flat"
         for w in u["words"]:
             where = f"{u['sheet']} {w['no']:02d} {w['word']}"
             if not w["word"] or not w["meaning"]:
-                bad.append(f"표제어/뜻 없음: {where}")
+                bad.append(f"낱말/뜻 없음: {where}")
+            elif flat:
+                continue
             elif not w["pron"]:
                 bad.append(f"발음기호 없음: {where}")
             elif not w["pairs"]:
                 bad.append(f"예문 없음: {where}")
+        if flat:
+            empty = [g["label"] for g in u["groups"] if not g["runs"]]
+            if empty:
+                bad.append(f"{u['head']}: 빈 소단원 {empty}")
     if bad:
         for b in bad[:20]:
             log(f"  - {b}")

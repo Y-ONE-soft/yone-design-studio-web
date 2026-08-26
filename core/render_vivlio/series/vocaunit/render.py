@@ -124,6 +124,33 @@ def example(s):
     return _RE_BRACKET.sub(lambda m: f"<em>{esc(m.group(1))}</em>", esc(s))
 
 
+_SUFFIX = "(?:e?s|e?d|ing|ies|ied|ly|r|st)?"
+
+
+def highlight(sentence, words):
+    """예문에서 그 묶음의 표제어들을 강조.
+
+    표형 원고는 대괄호 표시가 없다. 낱말이 원형으로 적혀 있고 문장엔 굴절형이
+    나오므로(`individual` → `individuals`) 흔한 어미까지 같이 잡는다. 겹치는
+    구간은 **긴 쪽을 남긴다** — `ticket office` 와 `office` 가 같이 걸리면
+    짧은 쪽이 긴 쪽을 잘라 먹는다.
+    """
+    spans = []
+    for w in sorted(set(words), key=len, reverse=True):
+        pat = re.compile(r"\b" + re.escape(w).replace(r"\ ", r"\s+")
+                         + _SUFFIX + r"\b", re.I)
+        for m in pat.finditer(sentence):
+            if all(m.end() <= a or m.start() >= b for a, b in spans):
+                spans.append((m.start(), m.end()))
+    out, at = [], 0
+    for a, b in sorted(spans):
+        out.append(esc(sentence[at:a]))
+        out.append(f"<em>{esc(sentence[a:b])}</em>")
+        at = b
+    out.append(esc(sentence[at:]))
+    return "".join(out)
+
+
 def _wcls(w):
     n = len(w or "")
     return " xlong" if n >= 17 else (" long" if n >= 13 else "")
@@ -144,14 +171,15 @@ class Renderer(object):
         self._op = 0
 
     # ── 러닝 요소 ────────────────────────────────────────────────────────
-    def running(self, tab, off=False):
+    def running(self, tab, off=False, part=0):
         """③탭(왼쪽) · ④로고(오른쪽) · 쪽번호.
 
         off=True 는 간지처럼 표식이 없는 면 — 러닝 요소는 다음 값이 올 때까지
         남으므로 **빈 값을 명시적으로 흘려보내는 것**이 요점이다.
         """
-        k = " off" if off else ""
-        return (f'<div class="hdr-l{k}"><i>{esc(tab)}</i></div>'
+        k = (" off" if off else "") + (f" p{part}" if part else "")
+        t = " tab-long" if len(tab) >= 8 else ""
+        return (f'<div class="hdr-l{k}"><i class="{t.strip()}">{esc(tab)}</i></div>'
                 f'<div class="hdr-r{k}"><b>{esc(self.brand)}</b></div>'
                 f'<div class="foot-l{k}"></div><div class="foot-r{k}"></div>')
 
@@ -161,11 +189,20 @@ class Renderer(object):
 
     # ── ① Unit 시작 헤더 ────────────────────────────────────────────────
     def unit_head(self, unit):
-        word = self.o.get("unit_word", "UNIT")
+        """큰 원 = 눈썹(대단원명) · 작은 글자 · 큰 글자.
+
+        세 칸 다 **원고에서 온 문자열**이다 — `UNIT 15` 도 `Special Lesson 2` 도
+        `2024년 9월` 도 같은 틀에 들어간다. 작은 글자는 길면 줄여 넣는다.
+        """
+        top = unit.get("head_top", "")
+        ttl = unit.get("head_ttl", self.o.get("unit_word", "UNIT"))
+        num = unit.get("head_num") or f"{unit.get('num', 0):02d}"
+        k = " ttl-long" if len(ttl) >= 8 else ""
         return (f'<div class="unit-head{self._mir()}">'
                 '<u class="mk">DAYOPEN</u>'
-                f'<span class="ttl">{esc(word)}</span>'
-                f'<span class="num">{unit["num"]:02d}</span></div>')
+                + (f'<span class="top">{esc(top)}</span>' if top else "")
+                + f'<span class="ttl{k}">{esc(ttl)}</span>'
+                f'<span class="num">{esc(num)}</span></div>')
 
     # ── 표제어 항목 ─────────────────────────────────────────────────────
     def word(self, w):
@@ -189,6 +226,56 @@ class Renderer(object):
             f'<div class="w-ex">{"".join(pairs)}</div>'
             "</div></article>")
 
+    # ── 표형(낱말표) 항목 ───────────────────────────────────────────────
+    def word_flat(self, w):
+        """한 줄짜리 항목 — 번호·회독칸·표제어 | 뜻. 발음기호도 파생어도 없다."""
+        chk = '<span class="chk"><i></i><i></i><i></i></span>'
+        return (
+            '<article class="w flat"><div class="w-l">'
+            f'<span class="w-no">{w["no"]:0{self.pad}d}</span>{chk}'
+            f'<span class="w-word{_wcls(w["word"])}">{esc(w["word"])}</span>'
+            '</div><div class="w-r">'
+            f'<div class="w-def">{meaning(w["meaning"], self.notes)}</div>'
+            "</div></article>")
+
+    def group_head(self, label):
+        """소단원 머리 — `Analysis` · `1번` · `본문1` · `20번`."""
+        return f'<div class="g-head"><span>{esc(label)}</span></div>'
+
+    def run_ex(self, run):
+        """묶음 예문 — 같은 문장에서 나온 낱말들을 한 번에 강조해 한 번만 싣는다."""
+        if not run.get("ex"):
+            return ""
+        words = [w["word"] for w in run["words"]]
+        return (f'<div class="run-ex"><p class="en">'
+                f'{highlight(run["ex"], words)}</p></div>')
+
+    # ── 대단원 간지(2면) ────────────────────────────────────────────────
+    def part_cover(self, part):
+        """왼쪽 = 대단원 표지 · 오른쪽 = 그 대단원의 차례.
+
+        두 면은 **형제 섹션**이다(중첩하면 페이지 이름이 겹친다). 왼쪽 면에
+        `break-before: left` 가 걸려 있어 언제나 펼침면으로 열린다.
+        """
+        n = part["idx"]
+        sub = part.get("sub") or ""
+        left = (f'<section class="part-cover p{n}" style="page:p-part{n}">'
+                + self.running("", off=True, part=n)
+                + f'<div class="no">PART {n}</div>'
+                + f'<div class="ttl">{esc(part["name"])}</div>'
+                + (f'<div class="sub">{esc(sub)}</div>' if sub else "")
+                + '<div class="mark"></div>'
+                + "</section>")
+        rows = "".join(f"<li><b>{esc(u['head'])}</b>"
+                       f"<span>{u['words']}</span></li>" for u in part["toc"])
+        right = (f'<section class="part-toc p{n}" style="page:p-part{n}b">'
+                 + self.running("", off=True, part=n)
+                 + f'<h2>{esc(part["name"])}</h2>'
+                 + f'<ol>{rows}</ol>'
+                 + f'<div class="cnt">모두 {part["words"]}개</div>'
+                 + "</section>")
+        return left + right
+
     # ── 판권면 ──────────────────────────────────────────────────────────
     def colophon(self):
         cr = self.o.get("copyright", "")
@@ -208,22 +295,34 @@ class Renderer(object):
     # ── 문서 조립 ───────────────────────────────────────────────────────
     def document(self, d):
         units = d["units"]
+        parts = d.get("parts") or []
         if self.sample:
             s = self.o.get("sample") or {}
             units = units[:int(s.get("units", 1))]
             if s.get("words"):
                 units = [dict(u, words=u["words"][:int(s["words"])])
                          for u in units]
+            keep = {u["part"] for u in units}
+            parts = [p for p in parts if p["idx"] in keep]
+
+        # 간지의 차례는 **실제로 조판되는 단원**에서 만든다(견본이면 견본대로)
+        for p in parts:
+            p["toc"] = [{"head": u["head"], "words": len(u["words"])}
+                        for u in units if u["part"] == p["idx"]]
+            p["words"] = sum(t["words"] for t in p["toc"])
 
         body = []
         if self.o.get("cover", True):
             body.append(self.cover())
+        seen = set()
         for u in units:
-            body.append(f'<section class="unit unit-open" style="page:p-body">'
-                        + self.running(u["label"])
-                        + self.unit_head(u)
-                        + "".join(self.word(w) for w in u["words"])
-                        + "</section>")
+            n = u.get("part", 0)
+            if n and n not in seen:
+                seen.add(n)
+                pt = next((p for p in parts if p["idx"] == n), None)
+                if pt and self.o.get("part_cover", True):
+                    body.append(self.part_cover(pt))
+            body.append(self.unit(u, n))
         if self.o.get("colophon", True):
             # 마지막 면을 왼쪽으로 — `break-before: left` 라 총 쪽수가 짝수가 된다
             body.append(self.colophon())
@@ -232,6 +331,23 @@ class Renderer(object):
                 '<link rel="stylesheet" href="theme.css">'
                 '<link rel="stylesheet" href="pages.css"></head><body>'
                 + "".join(body) + "</body></html>")
+
+    def group(self, g):
+        """소단원 하나 — 머리 + (낱말들 + 그 묶음의 예문) 되풀이."""
+        return ((self.group_head(g["label"]) if g["label"] else "")
+                + "".join("".join(self.word_flat(w) for w in r["words"])
+                          + self.run_ex(r) for r in g["runs"]))
+
+    def unit(self, u, n):
+        """단원 하나 — 블록형은 항목을 죽 잇고, 표형은 소단원·묶음으로 나눈다."""
+        cls = f"unit unit-open{f' p{n}' if n else ''}"
+        if u.get("kind") == "flat":
+            inner = "".join(self.group(g) for g in u["groups"])
+        else:
+            inner = "".join(self.word(w) for w in u["words"])
+        return (f'<section class="{cls}" style="page:p-body">'
+                + self.running(u["label"], part=n)
+                + self.unit_head(u) + inner + "</section>")
 
 
 def write(cfg, data, build_dir, mirror=(), sample=False, log=None):
