@@ -2067,6 +2067,7 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
                                             strip_inline_answers=True)
         # 보존 가드 스냅샷 — 책 헤더(변형문제/수능특강)는 의도적 제거이므로
         # 스냅샷에서도 제외해 허위 "내용 손실" 경고를 막는다(헤더 외 손실은 그대로 감지).
+        paras = _strip_step3_item_numbers(paras)        # W75
         _raw_words = _step3_content_words(_strip_step3_book_markers(paras))
         # 표형 선지 번호 셀(①~⑤) 병합 — 반드시 _strip_step3_answers *이전*
         # (W40 결함 3: 순서배열 선지가 hwpx 2열 표(번호 셀|순열 셀)로
@@ -2211,6 +2212,9 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
             # 선두/꼬리 표제·워터마크 제거 (W17 c16/c11 — 스냅샷 전에)
             paras = _strip_step3_leading_junk(paras)
             paras = _strip_step3_trailing_junk(paras)
+            # W75: 원고 문항 번호 줄 제거 — 스냅샷 **앞**에서 (조판이
+            # 번호를 매기므로 의도된 제거. 책 헤더 제거와 같은 취급)
+            paras = _strip_step3_item_numbers(paras)
             _raw_words = _step3_content_words(_strip_step3_book_markers(paras))  # 보존 가드 스냅샷(헤더 제외)
             # 표형 선지 번호 셀(①~⑤) 병합 — _strip_step3_answers가 단독 ①~⑤를 제거하기 전에 수행
             paras = _merge_step3_split_choice_numbers(paras)
