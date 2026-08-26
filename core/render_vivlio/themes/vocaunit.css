@@ -234,7 +234,7 @@ b.pos {
 /* 큰 크레스트 = 흰 워터마크. 표제지(.cover)와 같은 말투로 면을 채운다 */
 .part-cover .crest {
     position: absolute; left: calc(50% - 31mm);
-    bottom: calc(22mm + var(--bleed)); width: 62mm; height: 57.3mm;
+    bottom: calc(37mm + var(--bleed)); width: 62mm; height: 57.3mm;
 }
 .part-cover .mark {
     position: absolute; left: var(--part-x); bottom: calc(26mm + var(--bleed));
