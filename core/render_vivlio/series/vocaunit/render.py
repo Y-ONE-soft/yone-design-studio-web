@@ -151,6 +151,23 @@ def highlight(sentence, words):
     return "".join(out)
 
 
+def _w_em(t):
+    """Tab(잘난체) 기준 글자폭 합 — 한글 1em, 라틴 0.62em, 공백 0.3em."""
+    tot = 0.0
+    for ch in t or "":
+        tot += 0.3 if ch == " " else (1.0 if ord(ch) > 0x2000 else 0.62)
+    return tot
+
+
+def fit_pt(text, mm, cap):
+    """`mm` 폭 안에 들어가는 최대 글자 크기(pt). 큰 원 안은 자리가 정해져 있어
+    긴 이름(`Special Lesson`)을 그대로 두면 큰 숫자를 덮는다."""
+    w = _w_em(text)
+    if w <= 0:
+        return cap
+    return round(min(cap, mm / (w * 0.3528)), 2)
+
+
 def _wcls(w):
     n = len(w or "")
     return " xlong" if n >= 17 else (" long" if n >= 13 else "")
@@ -169,6 +186,8 @@ class Renderer(object):
         self.mirror = set(mirror or ())
         self.sample = sample
         self._op = 0
+        # 둥근 탭 안쪽 폭(양옆 1.2mm 씩 여유) — 글자 크기를 여기 맞춘다
+        self.tab_mm = float(o.get("tab_mm", 26.7))
 
     # ── 러닝 요소 ────────────────────────────────────────────────────────
     def running(self, tab, off=False, part=0):
@@ -178,8 +197,9 @@ class Renderer(object):
         남으므로 **빈 값을 명시적으로 흘려보내는 것**이 요점이다.
         """
         k = (" off" if off else "") + (f" p{part}" if part else "")
-        t = " tab-long" if len(tab) >= 8 else ""
-        return (f'<div class="hdr-l{k}"><i class="{t.strip()}">{esc(tab)}</i></div>'
+        st = (f' style="font-size:{fit_pt(tab, self.tab_mm, 12)}pt"'
+              if tab else "")
+        return (f'<div class="hdr-l{k}"><i{st}>{esc(tab)}</i></div>'
                 f'<div class="hdr-r{k}"><b>{esc(self.brand)}</b></div>'
                 f'<div class="foot-l{k}"></div><div class="foot-r{k}"></div>')
 
@@ -197,12 +217,14 @@ class Renderer(object):
         top = unit.get("head_top", "")
         ttl = unit.get("head_ttl", self.o.get("unit_word", "UNIT"))
         num = unit.get("head_num") or f"{unit.get('num', 0):02d}"
-        k = " ttl-long" if len(ttl) >= 8 else ""
+        slot = float(self.o.get("head_slot_mm", 12.2))
+        st = f' style="font-size:{fit_pt(ttl, slot, 14)}pt"' if ttl else ""
+        sp = f' style="font-size:{fit_pt(top, slot, 7.5)}pt"' if top else ""
         return (f'<div class="unit-head{self._mir()}">'
                 '<u class="mk">DAYOPEN</u>'
-                + (f'<span class="top">{esc(top)}</span>' if top else "")
-                + f'<span class="ttl{k}">{esc(ttl)}</span>'
-                f'<span class="num">{esc(num)}</span></div>')
+                + (f'<span class="top"{sp}>{esc(top)}</span>' if top else "")
+                + (f'<span class="ttl"{st}>{esc(ttl)}</span>' if ttl else "")
+                + f'<span class="num">{esc(num)}</span></div>')
 
     # ── 표제어 항목 ─────────────────────────────────────────────────────
     def word(self, w):
@@ -261,6 +283,7 @@ class Renderer(object):
         sub = part.get("sub") or ""
         left = (f'<section class="part-cover p{n}" style="page:p-part{n}">'
                 + self.running("", off=True, part=n)
+                + f'<u class="mk">PARTOPEN</u>'
                 + f'<div class="no">PART {n}</div>'
                 + f'<div class="ttl">{esc(part["name"])}</div>'
                 + (f'<div class="sub">{esc(sub)}</div>' if sub else "")

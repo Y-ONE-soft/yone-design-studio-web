@@ -81,6 +81,10 @@ DEFAULT_METRICS = {
                  "mark_w": 27.843, "mark_h": 5.197,
                  "txt_x": 18.0, "txt_y": 195.579, "txt_size": 6.6},
 
+    # 대단원 간지 — 판면 왼쪽 정렬선(재단선 기준)
+    "part_x": 18.0,
+    "unit_top_up": 3.45,    # 큰 원 안 눈썹(대단원명)을 작은 글자 위로 올리는 양
+
     "pg_out": 5.33,         # 쪽번호 — 판면 바깥쪽으로 내미는 양
     "pg_mt": 5.50,
     "tight": "-.005em",
@@ -261,6 +265,8 @@ def prelude(cfg):
         ("tabtxt-mt", m["tab_txt_mt"]),
         ("tab-x", m["tab"]["x"] + bleed), ("tab-w", m["tab"]["w"]),
         ("pg-out", m["pg_out"]), ("pg-mt", m["pg_mt"]),
+        ("part-x", m["part_x"] + bleed),
+        ("unit-top-y", m["unit_ttl"]["y"] - m["unit_top_up"]),
         ("logo-pr", m["logo"]["text_right"] + bleed),
         ("logo-pt", m["logo"]["text_top"] + bleed),
     ]
@@ -433,16 +439,23 @@ def _shapes(cfg, pal, pre, n):
     return o
 
 
-def open_page_css(cfg, m=None):
-    """2패스가 쓰는 ①② 면 배경 — (왼쪽면 배경, 오른쪽면 배경, ② 상단여백)."""
+def open_page_css(cfg, pal=None, m=None):
+    """2패스가 쓰는 면 배경 — (①왼쪽, ①오른쪽, ② 상단여백, 보통 면 띠, MEMO 면).
+
+    `pal` 을 주면 그 대단원 팔레트로 굽는다(안 주면 책 기본 팔레트).
+    """
     m = m or metrics_of(cfg)
     p = cfg.page
-    bleed, PW = p["bleed"], p["media_w"]
-    pal = cfg.section("palette") or {}
+    bleed, PW, PH = p["bleed"], p["media_w"], p["media_h"]
+    pal = pal or (cfg.section("palette") or {})
     gh = m["grid_h"]
+    band_top = band(pal["band"], pal["rule2"], PW, m["band_h"], m["band_rule"],
+                    bleed, at_top=True)
     band_bot = band(pal["band"], pal["rule2"], PW, m["band_h"], m["band_rule"],
                     bleed, at_top=False)
     bh = m["band_h"] + bleed
+    bands = (f"{band_bot} bottom left / {PW}mm {bh}mm, "
+             f"{band_top} top left / {PW}mm {bh}mm")
 
     def bg(phase_right):
         g = grid(pal["grid"], PW, gh, m["grid_pitch"], m["grid_width"], bleed,
@@ -450,7 +463,14 @@ def open_page_css(cfg, m=None):
         return (f"{band_bot} bottom left / {PW}mm {bh}mm, "
                 f"{g} top left / {PW}mm {gh + bleed}mm")
 
-    return bg(True), bg(False), m["margin_top_open"] + bleed
+    g_full = grid_full(pal["grid"], PW, PH, m["grid_pitch"], m["grid_width"],
+                       bleed=bleed)
+    mm = m["memo"]
+    memo = (f"url(\"assets/memotab.png\") "
+            f"right {mm['right']}mm top {mm['top'] + bleed}mm / "
+            f"{mm['w']}mm {mm['h']}mm no-repeat, {bands}, "
+            f"{g_full} top left / {PW}mm {PH}mm")
+    return bg(True), bg(False), m["margin_top_open"] + bleed, bands, memo
 
 
 def build_css(cfg):

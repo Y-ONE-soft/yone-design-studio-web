@@ -66,17 +66,19 @@ class VocaunitSeries(Series):
 
         texts = probe.page_texts(out)
         opens = paged.find_open_pages(texts)
+        pstarts = paged.find_open_pages(texts, "PARTOPEN")
         passes = 1
         while passes < MAX_PASS:
-            self._write_pages_css(cfg, opens, len(texts), pages_css)
+            self._write_pages_css(cfg, opens, texts, pages_css, pstarts)
             secs += cli.run_build(html_path, out, log=log)
             passes += 1
             texts = probe.page_texts(out)
             now = paged.find_open_pages(texts)
-            if now == opens:
+            now_p = paged.find_open_pages(texts, "PARTOPEN")
+            if now == opens and now_p == pstarts:
                 break
             log(f"[2패스] 시작 면이 움직였다 {opens} → {now} — 다시 조판")
-            opens = now
+            opens, pstarts = now, now_p
         else:
             log(f"[경고] 시작 면이 {MAX_PASS}패스 안에 멎지 않았다 — "
                 f"헤더 면 지정을 눈으로 확인할 것")
@@ -94,22 +96,37 @@ class VocaunitSeries(Series):
         return res
 
     @staticmethod
-    def _write_pages_css(cfg, opens, npages, path):
+    def _write_pages_css(cfg, opens, texts, path, pstarts=()):
         """①②(모눈 헤더 면)에 배경을 깔고 ②의 상단 여백을 내린다.
+        대단원이 여럿이면 **면마다 그 대단원 색**으로 띠·모눈·MEMO 배경을 깐다.
 
         ⚠ 이름 없는 `@page :nth()` 는 `@page p-body` 같은 이름 규칙에 명시도로
         밀린다 → **이름과 함께** 지정해야 상단 띠가 실제로 꺼진다.
+        ⚠ 배경 SVG 는 색이 파일에 구워져 들어간다 → CSS 변수로는 못 바꾼다.
+        대단원 색을 바꾸려면 **면마다 규칙을 내는 수밖에 없다**.
         """
-        bg_l, bg_r, mtop = theme_mod.open_page_css(cfg)
+        npages = len(texts)
+        pals = theme_mod.part_palettes(cfg)
+        part_of = _part_map(pstarts, npages)
+        css = {n: theme_mod.open_page_css(cfg, pals[n]) for n in pals}
         rules = paged.PageRules(("p-body",))
-        for p in opens:
+        multi = len(pals) > 1
+
+        opens = set(opens)
+        for p in range(1, npages + 1):
+            n = part_of.get(p, 1)
+            bg_l, bg_r, mtop, bands, memo = css[n]
             left = (p % 2 == 0)             # 짝수 쪽번호 = 왼쪽(verso) 면
-            rules.nth(p, f"background: {bg_l if left else bg_r}; "
-                         f"@top-left {{ content: none; }}")
-            nxt = p + 1
-            if nxt <= npages:
-                rules.nth(nxt, f"background: {bg_r if left else bg_l}; "
-                               f"margin-top: {mtop}mm;")
+            if p in opens:
+                rules.nth(p, f"background: {bg_l if left else bg_r}; "
+                             f"@top-left {{ content: none; }}")
+            elif p - 1 in opens:
+                rules.nth(p, f"background: {bg_r if left else bg_l}; "
+                             f"margin-top: {mtop}mm;")
+            elif multi and n > 1:
+                # 빈 면(MEMO)인지는 조판 결과로만 안다 — 글자가 없으면 MEMO 면
+                blank = not (texts[p - 1] or "").strip()
+                rules.nth(p, f"background: {memo if blank else bands};")
         return rules.write(path)
 
     # ── ④ 계열 검수 ──
@@ -138,6 +155,18 @@ class VocaunitSeries(Series):
             if hit:
                 report.fail(f"빼기로 한 유의어·반의어 주석이 남은 면: {hit[:10]}")
         return report
+
+
+def _part_map(pstarts, npages):
+    """면 번호 → 대단원 번호. 대단원 간지가 시작한 면부터 그 대단원이다."""
+    out, n = {}, 1
+    starts = list(pstarts)
+    for p in range(1, npages + 1):
+        if starts and p == starts[0]:
+            n = len(pstarts) - len(starts) + 1
+            starts.pop(0)
+        out[p] = n
+    return out
 
 
 def _stage_fonts(build_dir, cfg, log):

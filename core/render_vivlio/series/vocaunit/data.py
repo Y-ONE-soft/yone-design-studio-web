@@ -264,6 +264,14 @@ def parse_flat(rows, sheet, log=print):
 
 
 # ── 대단원(part) 조립 ───────────────────────────────────────────────────
+def _short(ttl):
+    """큰 원 안의 작은 글자 — 자리가 12mm 뿐이라 길면 **마지막 낱말만** 남긴다.
+    `Special Lesson` → `LESSON`. 안 줄이면 4pt 까지 작아져 읽히지 않는다."""
+    if " " in ttl and len(ttl) > 5:
+        ttl = ttl.split()[-1]
+    return ttl.upper() if ttl.isascii() else ttl
+
+
 def _head_slots(part_name, head, single):
     """① 큰 원의 세 칸 — 눈썹(대단원명) · 작은 글자 · 큰 글자.
 
@@ -273,7 +281,7 @@ def _head_slots(part_name, head, single):
     """
     m = _RE_TAIL_NUM.search(head or "")
     if m:
-        return part_name, head[:m.start()].strip(), m.group(1)
+        return part_name, _short(head[:m.start()].strip()), m.group(1)
     bits = (head or part_name).split()
     if len(bits) >= 2:
         return part_name, " ".join(bits[:-1]), bits[-1]
