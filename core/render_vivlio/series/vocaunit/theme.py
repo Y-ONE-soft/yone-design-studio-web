@@ -81,6 +81,8 @@ DEFAULT_METRICS = {
                  "mark_w": 27.843, "mark_h": 5.197,
                  "txt_x": 18.0, "txt_y": 195.579, "txt_size": 6.6},
 
+    "flat_chk_gap": 1.6,    # 표형 항목의 회독칸 ↔ 표제어 사이
+
     # 대단원 간지 — 판면 왼쪽 정렬선(재단선 기준)
     "part_x": 18.0,
     "unit_top_up": 3.45,    # 큰 원 안 눈썹(대단원명)을 작은 글자 위로 올리는 양
@@ -265,6 +267,10 @@ def prelude(cfg):
         ("tabtxt-mt", m["tab_txt_mt"]),
         ("tab-x", m["tab"]["x"] + bleed), ("tab-w", m["tab"]["w"]),
         ("pg-out", m["pg_out"]), ("pg-mt", m["pg_mt"]),
+        # 표제어가 시작하는 x — 묶음 예문도 **여기에 맞춘다**(같은 세로 축).
+        # 두 값을 따로 적으면 언젠가 어긋난다 → 한 곳에서 계산해 변수로 내보낸다.
+        ("run-x", m["no_w"] + 3 * (m["chk"] + m["chk_gap"]) + m["flat_chk_gap"]),
+        ("flat-chk-gap", m["flat_chk_gap"]),
         ("part-x", m["part_x"] + bleed),
         ("unit-top-y", m["unit_ttl"]["y"] - m["unit_top_up"]),
         ("logo-pr", m["logo"]["text_right"] + bleed),

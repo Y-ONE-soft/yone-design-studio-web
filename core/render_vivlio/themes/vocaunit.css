@@ -281,7 +281,7 @@ b.pos {
 .w.flat .w-no { display: inline-block; width: var(--no-w);
                 vertical-align: middle; }
 .w.flat .chk  { display: inline-flex; vertical-align: middle;
-                margin: 0 1.6mm 0 0; }
+                margin: 0 var(--flat-chk-gap) 0 0; }
 .w.flat .w-word { display: inline; font-size: 10pt; margin: 0;
                   vertical-align: middle; white-space: normal; }
 .w.flat .w-word.long  { font-size: 9pt; }
@@ -293,7 +293,11 @@ b.pos {
  * (원고는 낱말마다 같은 문장을 되풀이한다 — 894개 중 468개가 중복이었다) */
 .run-ex {
     break-inside: avoid; page-break-inside: avoid;
-    padding: 1.4mm 0 2.4mm 4mm; border-top: var(--rule-w) dotted var(--c-chk);
+    /* 들여쓰기는 **표제어가 시작하는 자리**(--run-x) — 낱말과 그 예문이 한 축에서
+     * 시작하고, 번호·회독칸 열은 여백으로 남는다. 아무 값이나(4mm) 주면 어디에도
+     * 맞지 않아 줄이 흔들려 보인다. */
+    padding: 1.4mm 0 2.4mm var(--run-x);
+    border-top: var(--rule-w) dotted var(--c-chk);
     margin-top: 1.2mm;
 }
 .w.flat + .run-ex { margin-top: 0; }
