@@ -345,7 +345,14 @@ def _detect(entries, legacy=None):
             nxt = [(i, v) for i, v in seq if i > info["i"]]
             prev_ok = (not prev) or (prev[-1][1] < num <= prev[-1][1] + 3)
             next_ok = (not nxt) or (num < nxt[0][1])
-            if prev and prev_ok and next_ok:
+            # W75 (수특라이트 13강 실증): 인식 헤더보다 **앞선** 후보는
+            # prev 가 비어 있어 영영 승격되지 않았다 — 첫 지문 헤더가
+            # 다른 형식이면(01번은 "N. pN-Gateway", 나머지는 "N. pN-no.0M")
+            # 그 지문이 통째로 앞 블록에 붙거나 사라진다. 뒤 시퀀스에
+            # 자연스럽게 이어지는 선행 후보도 같은 근거로 승격한다
+            # (prev 쪽 규칙과 대칭 — 간격 3 이내).
+            head_ok = (not prev) and bool(nxt) and 0 < nxt[0][1] - num <= 3
+            if (prev and prev_ok and next_ok) or head_ok:
                 info["sig"]["seq"] = True
                 det.header_idx.add(info["i"])
 

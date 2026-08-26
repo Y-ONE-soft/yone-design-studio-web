@@ -605,6 +605,63 @@ def _s3_split_merged_questions(paragraphs, warnings):
     return out
 
 
+# ── W75: 원고 답표(hwp 표)가 평탄화된 '라벨 셀 + 기입 셀' 쌍 ────────────────
+# 사용자 지적 2026-08-26: "서술형 문제에 abcd 이런 건 답란으로 들어가야 되는데
+# 지문으로 들어가있고 답 쓸 수 있는 밑줄도 없다. 단, abcd가 들어갈 경우 밑줄
+# 이런 식으로 하면 선지 헤더나 다른 데에 잘못 들어가니까 그런 방식은 안 된다."
+#
+# 그래서 표기(ⓐ/ⓑ)가 아니라 **원고 표의 구조**로 잡는다. hwp 답표가 평탄화되면
+# 라벨 셀과 기입 셀이 각각 한 단락이 되는데, 기입 셀은 '공백만 있고 비어 있지는
+# 않은' 단락(' ')이라 단락 경계의 빈 줄('')과 구분된다:
+#     ⓐ        ← 라벨 셀
+#     ' '       ← 기입 셀 (답 쓰는 칸)
+#     ⓑ
+#     ' '
+# 선지 헤더("ⓐ  ⓑ  ⓒ" 한 줄 + 다음 줄이 선지)는 뒤에 기입 셀이 없으므로
+# 이 판정에 걸리지 않는다 — W72 결함의 재발 경로를 원천 차단한다.
+_RE_S3_CELL_FILL = re.compile(r"^[\s\u00a0\u3000]+$")
+
+
+def _s3_is_kor_hdr_cell(t):
+    """답표 **열 머리** 셀인가 (한글 짧은 라벨 — '틀린 부분'/'수정'/'번호')."""
+    t = (t or "").strip()
+    if not (1 <= len(t) <= 12):
+        return False
+    if not re.search(r"[가-힣]", t):
+        return False
+    if re.search(r"[A-Za-z0-9]", t):
+        return False
+    return not re.search(r"[.?!,:;]|시오|세요", t)
+
+
+def _s3_answer_cell_idx(seq):
+    """라벨 셀(= 답란으로 실물화할 단락) 인덱스 집합."""
+    out = set()
+    n = len(seq)
+    for i in range(n - 1):
+        t = (seq[i].get("text") or "")
+        tc = t.strip()
+        if not tc or len(tc) > 8:
+            continue
+        if re.search(r"[.?!]\s*$|시오|세요", tc):
+            continue
+        if not re.sub(r"[()\[\]{}\s_]", "", tc):
+            continue        # '(   )' 처럼 내용 없는 셀은 라벨이 아니다
+        nt = seq[i + 1].get("text") or ""
+        if nt == "" or not _RE_S3_CELL_FILL.match(nt):
+            continue        # 바로 다음이 기입 셀(' ')이 아니면 표가 아니다
+        prev = None
+        for k in range(i - 1, -1, -1):
+            if (seq[k].get("text") or "").strip():
+                prev = (seq[k].get("text") or "").strip()
+                break
+        if prev is not None and _s3_is_kor_hdr_cell(prev) \
+                and _s3_is_kor_hdr_cell(tc):
+            continue        # 열 머리 2줄('틀린 부분'/'수정') — 답표 op 담당
+        out.add(i)
+    return out
+
+
 def build_step3(step_data):
     """step3 데이터 {normal:[{question_num, paragraphs}], short:[...]} → 유닛.
 
@@ -632,10 +689,21 @@ def build_step3(step_data):
             pre = []                 # 1패스 산출 (슬롯 배정 전)
             seq = _s3_split_merged_questions(
                 item.get("paragraphs", []), warnings)
+            ans_cells = _s3_answer_cell_idx(seq)      # W75
             for _pi, p in enumerate(seq):
                 text = p.get("text", "")
                 kind = p.get("kind") or "UNKNOWN"
                 tclean = text.strip()
+                if _pi in ans_cells:
+                    # W75: 원고 답표의 라벨 셀 → 답란 행(라벨 + 밑줄 칸).
+                    _blank = " " * _S3_ANSROW_SPACES
+                    pre.append({
+                        "text": tclean + " " + _blank, "tclean": tclean,
+                        "kind": kind, "eff": "AnsL", "arrow_bg": False,
+                        "q_code": None,
+                        "runs": [{"t": tclean + " ", "ul": False},
+                                 {"t": _blank, "ul": True}]})
+                    continue
                 if kind in ("GH", "A", "BLANK"):
                     continue          # 제거 대상 (style_map에서 null)
                 if _s3_arrow_para(text):
@@ -1700,6 +1768,15 @@ def _step_header_detection(step_data, step_name, legacy, strict=True):
 # 원래 막으려던 오탐("29.  The examples are endlessly.")은 legacy가 False라
 # 여전히 정정 대상 — 가드의 효력은 그대로다.
 _RE_HDR_NO = re.compile(r"no\.?\s*\d", re.I)
+# W75 (수특라이트 13강 실증 — 사용자 지적 "어법선택 객관식 게이트웨이 문제가
+# 누락됐어"): 이 정정이 노린 오탐("29.  The examples are endlessly.")은 지문
+# 마커가 **없는** 본문 문장이다. 반면 소수 표기 헤더("1. p86-Gateway")는
+# 다수와 같은 페이지 마커(pN)를 갖는 같은 계열 헤더다 — 표기(no.) 하나로
+# 지우면 그 지문이 통째로 사라지거나(하단 문제) 헤더 원문이 인쇄된다
+# (빈칸어법). 마커를 가진 줄은 정정 대상에서 뺀다.
+_RE_HDR_MARKER = re.compile(
+    r"\bp\.?\s*\d|\bno\.?\s*\d|\bL\s*\d|\bU\s*\d|본문\s*\d|"
+    r"\d\s*[과강]", re.I)
 
 
 def _drop_shape_outliers(det, texts, step_name, legacy=None):
@@ -1716,6 +1793,8 @@ def _drop_shape_outliers(det, texts, step_name, legacy=None):
             continue
         if callable(legacy) and legacy(texts[i] or ""):
             continue                # legacy 확언 헤더 — 정정 대상 아님
+        if _RE_HDR_MARKER.search(texts[i] or ""):
+            continue                # W75: 같은 계열 마커 보유 — 헤더 유지
         det.header_idx.discard(i)
         print("[헤더인식] %s: 본문으로 정정 (다수 헤더는 no. 표기) — %r"
               % (step_name, (texts[i] or "")[:40]), flush=True)
@@ -3646,6 +3725,11 @@ _RE_LABEL_HEADER_NOP = re.compile(
 # W25 — 번호 없는 코너명형 헤더 ("1. p8-수능 대비 ANALYSIS" /
 # "1. p80-수능 Analysis"). extract_tail이 "분석"/"분석N"을 내는 두 꼴과
 # 같은 범위로 좁혀 둔다 — 라벨 판정을 더 넓히면 채택 스텝이 바뀐다.
+# W75: 코너명형 헤더 일반 — "N. pN-<번호 아닌 꼬리>" (Gateway/Further
+# Reading/수능 Analysis…). no.형 번호 헤더는 위 _RE_LABEL_HEADER 담당.
+_RE_LABEL_CORNER = re.compile(
+    r"^\s*\d+\s*[.)]\s*p\.?\s*\d+(?!\d)\s*[-–—.]?\s*"
+    r"(?!\s*(?:no\.?\s*)?\d)\S", re.I)
 _RE_CORNER_ANALYSIS = re.compile(
     r"^\s*\d+\s*[.)]\s*p\.?\s*\d+\s*[-–—.]?\s*수능\s*(?:대비\s*)?"
     r"analysis\s*(?:\([^)]*\))?\s*$", re.I)
@@ -3689,8 +3773,16 @@ def passage_labels(steps):
             # **원래 자리에 끼워 넣기만** 한다 (라벨 판정을 넓히면 채택
             # 스텝 자체가 바뀌어 다른 교재의 번호 표기가 통째로 달라진다 —
             # 코퍼스 실측으로 확인된 회귀).
-            if _RE_CORNER_ANALYSIS.match(text):
+            # W75 (수특라이트 13강 실증 — 사용자 지적 "gateway가 첫번째인데
+            # 하나도 안 맞아"): 코너명 헤더를 'ANALYSIS' 한 종류로 열거하던
+            # 것을 구조로 넓힌다 — 선행 순번 + 페이지 마커 뒤 꼬리가 번호가
+            # **아닌** 헤더는 전부 코너명형이다(Gateway/Further Reading/…).
+            # 라벨이 하나라도 빠지면 그 뒤 지문의 번호 프레임이 통째로 한
+            # 칸씩 밀린다. 라벨 문구는 다른 스텝과 같은 규칙(extract_tail),
+            # 꼬리 주석("(정답 1개)")은 라벨이 아니므로 벗긴다.
+            if _RE_CORNER_ANALYSIS.match(text) or _RE_LABEL_CORNER.match(text):
                 lab = re.sub(r"\s+", " ", extract_tail(text) or "").strip()
+                lab = re.sub(r"(?:\s*\([^()]*\))+\s*$", "", lab).strip()
                 if lab:
                     corner.append((len(labels), lab))
         if labels:

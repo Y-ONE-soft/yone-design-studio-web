@@ -1178,6 +1178,61 @@ def _add_step3_choice_numbers(paras):
     return paras
 
 
+# ── W75: 원고 문항 번호 줄 제거 ─────────────────────────────────────────────
+# 사용자 지적 2026-08-26 "스텝3에 문제 번호인지 뭔지 쓸데없는 거 들어갔어".
+# 수특라이트 13강 통합변형문제 원고는 문항마다 번호를 **단독 줄**로 적는다:
+#     01
+#     23번 주제  다음 글의 주제로 가장 적절한 것은?
+#     <지문> …
+# 조판은 문제 번호를 자기 스타일(자동 번호)로 매기므로 이 줄은 중복이다.
+# 게다가 _add_step3_choice_numbers 가 "※ ①~⑤ 중 …" 발문 다음의 이 숫자
+# 줄을 선지로 오인해 ①을 붙여 "①07" 같은 기형까지 만들었다.
+# 형식(점 유무·자릿수)이 아니라 **구조**로 판정한다: 단독 숫자 줄이고 바로
+# 다음 유의 단락이 한글 지시문인 쌍이, 문서 순으로 1씩 증가하는 계열을
+# 이룰 때만(5개 이상) 그 계열을 지운다. 낱개 숫자 줄(표 셀·정답)은 계열을
+# 못 이루므로 영향 없다.
+_RE_STEP3_ITEM_NUM = re.compile(r'^\s*(\d{1,3})\s*$')
+
+
+def _strip_step3_item_numbers(paras):
+    def _txt(p):
+        return (p.get('text', '') if isinstance(p, dict) else str(p)).strip()
+
+    n = len(paras)
+    cand = []           # (idx, value)
+    for i in range(n):
+        m = _RE_STEP3_ITEM_NUM.match(_txt(paras[i]))
+        if not m:
+            continue
+        j = i + 1
+        while j < n and not _txt(paras[j]):
+            j += 1
+        if j >= n:
+            continue
+        nxt = _txt(paras[j])
+        if not re.search(r'[가-힣]', nxt):
+            continue        # 다음 줄이 한글 지시문이 아니면 문항 번호 아님
+        if _RE_STEP3_ITEM_NUM.match(nxt):
+            continue        # 숫자 줄이 이어지면 표 셀 계열
+        cand.append((i, int(m.group(1))))
+    if len(cand) < 5:
+        return paras
+    best, run = [], [cand[0]]
+    for prev, cur in zip(cand, cand[1:]):
+        if cur[1] == prev[1] + 1:
+            run.append(cur)
+        else:
+            if len(run) > len(best):
+                best = run
+            run = [cur]
+    if len(run) > len(best):
+        best = run
+    if len(best) < 5:
+        return paras
+    drop = set(i for i, _v in best)
+    return [p for k, p in enumerate(paras) if k not in drop]
+
+
 # 표형 5지선다 번호 셀 — 단독 ①~⑤ 한 글자 단락 (정답 "②, ③"는 제외)
 _RE_STEP3_LONE_CIRCLED = re.compile(r'^\s*([①②③④⑤])\s*$')
 
@@ -1806,6 +1861,7 @@ def _absorb_step3_ym(step3_dir, used_files, normal_items, log=None,
 
     def _finish(paras):
         paras = _strip_step3_tail_answers(paras)
+        paras = _strip_step3_item_numbers(paras)
         paras = _merge_step3_split_choice_numbers(paras)
         paras = _strip_step3_answers_section(paras)
         paras = _strip_step3_answers(paras)
