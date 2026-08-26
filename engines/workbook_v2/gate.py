@@ -2790,8 +2790,13 @@ def inspect_manuscript_consistency(content, log=None):
 # (문장배열/본문정리/영작은 지문당 문항이 여러 개라 제외). 여기서 어긋나면
 # 그 스텝의 지문번호/블록 인식이 깨진 것이다 — 11강 실증: 어휘선택 계열이
 # 5지문인데 1유닛(라벨 미인식)이었고, 어법 계열은 4로 정상이었다.
+# W77 (수특라이트 15강 실증): step1_c2(빈칸 어휘)도 '지문 1개 = 유닛 1개'다.
+# 이 강은 빈칸어휘 원고에만 Gateway 지문이 빠져 있어(다른 7스텝은 3지문,
+# 빈칸어휘만 2) 섹션 하나가 조용히 한 지문 적게 나갔다. 코퍼스 213잡
+# 소급 검사 신규 오검출 0 — 불변식에 포함한다.
 _ONE_UNIT_PER_PASSAGE = ("step1_a1", "step1_a1_2", "step1_a2", "step1_b2",
-                         "step2_a1", "step2_a1_btm", "step2_b1", "step2_c1")
+                         "step1_c2", "step2_a1", "step2_a1_btm",
+                         "step2_b1", "step2_c1")
 
 
 def inspect_plan_units(plan, log=None):
