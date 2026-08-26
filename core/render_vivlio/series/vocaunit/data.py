@@ -4,8 +4,8 @@
 행 역할은 열 위치가 아니라 **구조**로 읽는다(형식 화이트리스트 금지):
 
     B      C            D
-    DAYnn  회독                     ← 블록 시작 마커 (문구는 무엇이든, 두 칸이 차 있고
-                                        아래에 번호 행이 온다는 구조가 앵커)
+    DAYnn  회독                     ← 블록 시작 마커 (문구는 무엇이든, **B 가 숫자가
+                                        아닌 채로 차 있다**는 것이 앵커)
     1      sensible     [형] 분별력…  ← 번호 · 표제어 · 뜻
            [ˈsɛnsəbəl]                ← 발음기호 (대괄호로 열고 닫는 한 줄)
            sensitivity [명] …  It was… ← 파생어(C) · 예문 첫 줄(D)
@@ -17,7 +17,9 @@
 
 파생어 셀은 여러 파생어가 한 칸에 이어 붙어 온다 —
 `sensitivity [명] … sensibility [명] …`. `영단어 + [품사]` 를 경계로 잘라 줄을
-나눈다(품사 대괄호가 앵커라 파생어 개수·순서에 의존하지 않는다).
+나눈다(품사 대괄호가 앵커라 파생어 개수·순서에 의존하지 않는다). 다만 품사
+대괄호는 **자르는 경계일 뿐 파생어의 조건이 아니다** — 품사가 없는 파생어도
+그대로 살린다.
 """
 import json
 import os
@@ -65,19 +67,24 @@ def parse_unit(rows, unit_label):
                    "pron": "", "deriv": [], "ex": []}
             blocks.append(cur)
             continue
+        if b:                                              # ② 블록 시작 마커 행
+            continue                                       #    (B 가 차 있고 숫자가 아니다)
         if cur is None:
             continue
-        if c and _RE_PRON.match(c) and not cur["pron"]:    # ② 발음기호
+        if c and _RE_PRON.match(c) and not cur["pron"]:    # ③ 발음기호
             cur["pron"] = c
             if d:
                 cur["ex"].append(d)
             continue
-        if c and _RE_POS.search(c):                        # ③ 파생어
+        if c:                                              # ④ 파생어
+            # 품사 대괄호는 **여러 파생어를 자르는 경계**일 뿐, 파생어인지를
+            # 가리는 조건이 아니다. 마커 행을 위에서 걸렀으니 남은 C 는 파생어다.
+            # (조건으로 쓰면 품사 없는 파생어가 조용히 사라진다 — legally 사고)
             cur["deriv"] += split_deriv(c)
             if d:
                 cur["ex"].append(d)
             continue
-        if d:                                              # ④ 예문 / 해석
+        if d:                                              # ⑤ 예문 / 해석
             cur["ex"].append(d)
     for blk in blocks:
         # 예문은 영/한 짝 — 홀수로 끝나면 해석이 빈 짝으로 남는다(원고 그대로)
