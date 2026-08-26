@@ -48,6 +48,8 @@ body {
  *    탭·크레스트의 아래쪽이 잘린다(실제로 겪음). 여백보다 크면 마진 박스가 자른다. */
 .hdr-l { width: var(--media-w); height: var(--margin-top);
          margin-left: calc(-1 * var(--mgn-out)); }
+/* 탭 글자가 길어지면(`올림포스 01`) 줄여 넣는다 — 탭 폭은 29.15mm 고정이다 */
+.hdr-l i.tab-long { font-size: 8.5pt; }
 .hdr-l i {
     display: block; margin: var(--tabtxt-mt) 0 0 var(--tab-x);
     width: var(--tab-w); font: 400 12pt/1 "Tab"; color: var(--c-headtxt);
@@ -96,9 +98,15 @@ body {
 }
 .unit-head.mir { margin-left: calc(-1 * var(--mgn-in));
                  margin-right: calc(-1 * var(--mgn-out)); }
-.unit-head .ttl, .unit-head .num { position: absolute; }
+.unit-head .top, .unit-head .ttl, .unit-head .num { position: absolute; }
+/* 눈썹 = 대단원명(어휘끝 · 올림포스 · 교과서 · 모의고사). 작은 글자 위에 얹는다 */
+.unit-head .top { left: var(--unit-ttl-x); top: var(--unit-top-y);
+                  font: 400 7.5pt/1 "Tab"; color: var(--c-headtxt);
+                  letter-spacing: .04em; opacity: .85; }
 .unit-head .ttl { left: var(--unit-ttl-x); top: var(--unit-ttl-y);
                   font: 400 14pt/1 "Tab"; color: var(--c-headtxt); }
+/* `Special Lesson` 처럼 긴 이름은 줄여 넣는다 — 큰 숫자와 부딪히면 안 된다 */
+.unit-head .ttl.ttl-long { font-size: 8pt; top: calc(var(--unit-ttl-y) + 1.6mm); }
 .unit-head .num { left: var(--unit-num-x); top: var(--unit-num-y);
                   font: 400 34pt/1 "Disp"; color: var(--c-unitnum); }
 
@@ -199,5 +207,86 @@ b.pos {
     left: var(--colo-txt-x); top: var(--colo-txt-y);
     font: 400 var(--colo-txt-size)/1 "Kor"; color: var(--c-ink);
     letter-spacing: 0; white-space: nowrap; }
+
+/* ---------- 대단원 간지(2면) ---------- */
+/* 기존 표제지(.cover)와 같은 말투 — 옅은 면색 + 커다란 흰 마크. 대단원 색은
+ * `.pN` 이 CSS 변수를 갈아끼워 따라온다(배경 SVG 는 theme.py 가 따로 낸다). */
+.part-cover, .part-toc {
+    break-before: left; position: relative; height: var(--media-h);
+    padding: calc(38mm + var(--bleed)) var(--part-x) 0;
+}
+.part-toc { break-before: right; }
+.part-cover .no {
+    font: 400 8pt/1 "Tab"; color: var(--c-accent);
+    letter-spacing: .28em; opacity: .75;
+}
+.part-cover .ttl {
+    font: 400 30pt/1 "Disp"; color: var(--c-accent);
+    letter-spacing: var(--tight); margin-top: 5mm;
+}
+.part-cover .sub {
+    font: 500 9pt/1.6 "Kor"; color: var(--c-ink); opacity: .6; margin-top: 4mm;
+}
+.part-cover .mark {
+    position: absolute; left: var(--part-x); bottom: calc(26mm + var(--bleed));
+    width: 27.843mm; height: 5.197mm;
+}
+/* 오른쪽 면 = 그 대단원의 차례 */
+.part-toc h2 {
+    font: 400 11pt/1 "Tab"; color: var(--c-accent); margin-bottom: 6mm;
+}
+.part-toc ol { list-style: none; }
+.part-toc li {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font: 500 9pt/1 "Kor"; padding: 2.6mm 0;
+    border-bottom: var(--rule-w) solid var(--c-rule);
+}
+.part-toc li b { font: 700 9.5pt/1 "Word"; }
+.part-toc li span { font: 500 7.5pt/1 "Kor"; color: var(--c-pron); }
+.part-toc .cnt {
+    margin-top: 5mm; text-align: right;
+    font: 500 7.5pt/1 "Kor"; color: var(--c-pron);
+}
+
+/* ---------- 소단원 머리 (표형) ---------- */
+/* 표형 원고는 한 단원 안이 소단원(Analysis · 1번 · 본문2 · 20번)으로 갈린다.
+ * 머리 다음에 바로 낱말이 와야 하므로 `break-after: avoid`. */
+.g-head { break-after: avoid; page-break-after: avoid;
+          margin: 4.2mm 0 1.2mm; }
+.unit-head + .g-head { margin-top: 1.5mm; }
+.g-head span {
+    display: inline-block; padding: .9mm 2.4mm .8mm;
+    background: var(--c-band); border-radius: 1.2mm;
+    font: 400 7.5pt/1 "Tab"; color: var(--c-accent); letter-spacing: .02em;
+}
+
+/* ---------- 표형 항목 ---------- */
+/* 발음기호도 파생어도 없다 → 한 줄. 번호·회독칸·표제어를 한 줄에 눕히고
+ * 뜻은 같은 자리(오른쪽 열)에 두어 블록형 지면과 세로선이 맞는다. */
+.w.flat { padding: 1.35mm 0 1.35mm; }
+.w.flat .w-l  { vertical-align: middle; white-space: nowrap; }
+.w.flat .w-r  { vertical-align: middle; }
+.w.flat .w-no { display: inline-block; width: var(--no-w);
+                vertical-align: middle; }
+.w.flat .chk  { display: inline-flex; vertical-align: middle;
+                margin: 0 1.6mm 0 0; }
+.w.flat .w-word { display: inline; font-size: 10pt; margin: 0;
+                  vertical-align: middle; white-space: normal; }
+.w.flat .w-word.long  { font-size: 9pt; }
+.w.flat .w-word.xlong { font-size: 7.5pt; }
+.w.flat .w-def { min-height: 0; margin-bottom: 0; display: block; }
+.w.flat .w-def p { font-size: 8pt; text-indent: 0; padding-left: 0; }
+
+/* 묶음 예문 — 같은 문장에서 나온 낱말들을 한 번에 강조해 **한 번만** 싣는다
+ * (원고는 낱말마다 같은 문장을 되풀이한다 — 894개 중 468개가 중복이었다) */
+.run-ex {
+    break-inside: avoid; page-break-inside: avoid;
+    padding: 1.4mm 0 2.4mm 4mm; border-top: var(--rule-w) dotted var(--c-chk);
+    margin-top: 1.2mm;
+}
+.w.flat + .run-ex { margin-top: 0; }
+.run-ex .en { font: 500 7.5pt/3.25mm "Word"; text-align: justify;
+              color: var(--c-pos); }
+.run-ex em { font-style: normal; color: var(--c-hl); }
 
 /*@GENERATED@*/

@@ -102,6 +102,37 @@ def _c(cfg, key, default=""):
     return (cfg.section("palette") or {}).get(key, default)
 
 
+# ── 대단원별 팔레트 ─────────────────────────────────────────────────────
+# 색상만 돌리는 키 = "분홍 계열" 전부. 버터(큰 원·둥근 탭)와 연하늘(크레스트·
+# MEMO 탭), 예문 강조 주황, 무채색은 대단원이 바뀌어도 그대로 둔다 — 그래야
+# 지면이 "같은 책의 다른 단원"으로 읽히지, 다른 책처럼 보이지 않는다.
+HUE_KEYS = ("accent", "sense", "rule", "chk", "band", "rule2", "logo", "pill",
+            "unitnum", "grid", "cover_bg", "mark", "headtxt")
+
+
+def part_palettes(cfg):
+    """{대단원 번호: 팔레트}. 색상각(`parts[].hue`)이 없으면 기본 팔레트 그대로."""
+    from core.render_vivlio import color
+
+    base = cfg.section("palette") or {}
+    parts = cfg.section("parts") or []
+    if not parts:
+        return {1: base}
+    base_hue = parts[0].get("hue")
+    out = {}
+    for i, spec in enumerate(parts, 1):
+        hue = spec.get("hue")
+        if hue is None or hue == base_hue:
+            out[i] = dict(base)
+            continue
+        pal = dict(base)
+        for k in HUE_KEYS:
+            if isinstance(base.get(k), str) and base[k].startswith("#"):
+                pal[k] = color.rotate(base[k], hue)
+        out[i] = pal
+    return out
+
+
 # ── 배경 SVG ────────────────────────────────────────────────────────────
 def band(pale, rule, PW, h, rule_h, bleed, at_top=True):
     """위/아래 띠 — 재단선 밖(도련)까지 채우고, 안쪽 가장자리에 1pt 선."""
@@ -313,28 +344,55 @@ def prelude(cfg):
     o.append(off)
     o.append(f"    background: {memo_bg};")
     o.append("}")
+
+    # ── 대단원 ──
+    # 글자·괘선 색은 **CSS 변수**로 갈아끼운다(`.p2` 안에서 --c-accent 가 바뀌면
+    # 그 아래 전부가 따라온다). 배경 SVG 는 색이 구워져 들어가므로 변수로는
+    # 못 바꾼다 → `generated()` 가 대단원마다 규칙을 따로 낸다.
+    pp = part_palettes(cfg)
+    if len(pp) > 1:
+        o.append("\n/* ---------- 대단원 ---------- */")
+        for n, ppal in sorted(pp.items()):
+            if n > 1:
+                o.append(f".p{n} {{ " + " ".join(
+                    f"--c-{k.replace('_', '-')}: {ppal[k]};" for k in HUE_KEYS
+                    if isinstance(ppal.get(k), str)) + " }")
+            o.append(f"@page p-part{n}, p-part{n}b {{ margin: 0;"
+                     f" background: {ppal['cover_bg']};")
+            o.append("    @top-left { content: none; } "
+                     "@bottom-left { content: none; } "
+                     "@bottom-right { content: none; } }")
     return "\n".join(o)
 
 
 # ── 생성 규칙(배경 SVG) ─────────────────────────────────────────────────
 def generated(cfg):
+    o = ["/* ▼▼ 생성 규칙 — series/vocaunit/theme.py 가 만든다. 직접 고치지 말 것 ▼▼ */"]
+    pp = part_palettes(cfg)
+    for n, ppal in sorted(pp.items()):
+        # 1번 대단원은 셀렉터 없이(기본), 나머지는 `.pN` 안에서만
+        o += _shapes(cfg, ppal, "" if n == 1 else f".p{n} ", n)
+    o.append("/* ▲▲ 생성 규칙 끝 ▲▲ */")
+    return "\n".join(o)
+
+
+def _shapes(cfg, pal, pre, n):
     m = metrics_of(cfg)
     p = cfg.page
     bleed, PW, PH = p["bleed"], p["media_w"], p["media_h"]
-    pal = cfg.section("palette") or {}
     lg = m["logo"]
-    o = ["/* ▼▼ 생성 규칙 — series/vocaunit/theme.py 가 만든다. 직접 고치지 말 것 ▼▼ */"]
+    o = []
 
     # ③ 탭 (왼쪽 면) — 배경 SVG + 러닝 요소 글자
     t = m["tab"]
-    o.append(f".hdr-l {{ background: {tab(pal['tab'], t, bleed)} "
+    o.append(f"{pre}.hdr-l {{ background: {tab(pal['tab'], t, bleed)} "
              f"{t['x'] + bleed - 1}mm {t['y'] + bleed - 1}mm / "
              f"{t['w'] + 2}mm {t['h'] + 2}mm; }}")
-    o.append(f".hdr-l.mir {{ background: {tab(pal['tab'], t, bleed, mirror=True)} "
+    o.append(f"{pre}.hdr-l.mir {{ background: {tab(pal['tab'], t, bleed, mirror=True)} "
              f"{PW - t['x'] - bleed - t['w'] - 1}mm {t['y'] + bleed - 1}mm / "
              f"{t['w'] + 2}mm {t['h'] + 2}mm; }}")
     # ④ 로고 (오른쪽 면) — 크레스트 SVG + 알약 PNG + 라이브 글자
-    o.append(f".hdr-r {{ background: "
+    o.append(f"{pre}.hdr-r {{ background: "
              f"url(\"assets/pill2026.png\") "
              f"no-repeat right {lg['pill_right'] + bleed}mm "
              f"top {lg['pill_top'] + bleed}mm / "
@@ -350,14 +408,20 @@ def generated(cfg):
                phase_right=False)
     o.append(f"/* 모눈 헤더 ①②: 왼쪽면 {g_l} top left / {PW}mm {gh + bleed}mm */")
     o.append(f"/* 모눈 헤더 ①②: 오른쪽면 {g_r} top left / {PW}mm {gh + bleed}mm */")
-    o.append(f".unit-head {{ background: {circle(pal['circle'], m['circle'], bleed, PW)} "
+    o.append(f"{pre}.unit-head {{ background: {circle(pal['circle'], m['circle'], bleed, PW)} "
              f"top left / {PW}mm {m['circle']['cy'] + bleed + m['circle']['r'] + 1}mm"
              f", {g_l} top left / {PW}mm {gh + bleed}mm; }}")
-    o.append(f".unit-head.mir {{ background: "
+    o.append(f"{pre}.unit-head.mir {{ background: "
              f"{circle(pal['circle'], m['circle'], bleed, PW)} "
              f"top left / {PW}mm {m['circle']['cy'] + bleed + m['circle']['r'] + 1}mm"
              f", {g_r} top left / {PW}mm {gh + bleed}mm; }}")
 
+    # 대단원 간지 로고 — 면 색 위에 흰 마크
+    o.append(f"{pre}.part-cover .mark {{ background: "
+             f"{mark(pal.get('cover_mark') or '#fff', 27.843, 5.197)} "
+             f"center / contain; }}")
+    if n > 1:
+        return o
     # 간지 크레스트
     o.append(f".cover .crest {{ background: "
              f"{crest(pal['cover_mark'], 67.36, 62.275)} center / contain; }}")
@@ -366,8 +430,7 @@ def generated(cfg):
     o.append(f".colophon .mark {{ background: "
              f"{mark(pal.get('mark') or pal['accent'], cp['mark_w'], cp['mark_h'])} "
              f"center / contain; }}")
-    o.append("/* ▲▲ 생성 규칙 끝 ▲▲ */")
-    return "\n".join(o)
+    return o
 
 
 def open_page_css(cfg, m=None):
