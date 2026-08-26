@@ -3995,15 +3995,24 @@ def question_keep_op(plan, steps=("step3",)):
         # **한 줄짜리 페이지**가 생긴다(게이트 G41 [발문고아] critical).
         # 다음 발문까지 비발문 내용이 하나도 없으면 앞 블록의 꼬리다.
         _flat = [q for u in fl.get("units", []) for q in unit_paras(u)]
+        _intro_style = _style("STEP3", "Q-INTRO")
+        _ansl_style = _style("STEP3", "AnsL")
         _tail_only = set()
         for _i, _q in enumerate(_flat):
             if _q.get("s") not in q_styles:
                 continue
+            if _q.get("s") == _intro_style:
+                continue        # 세트 안내문은 원래 자기 본문이 없다 —
+                                # 뒤따르는 발문과 한 덩어리로 밀려야 한다
+            if len((_q.get("t") or "").strip()) > 60:
+                continue        # 긴 줄은 지시문이 아니라 (오분류된) 지문
             _body = 0
             for _j in range(_i + 1, len(_flat)):
                 if _flat[_j].get("s") in q_styles:
                     break
-                if (_flat[_j].get("t") or "").strip():
+                # 답 여백(공백만 있는 줄·답란 스타일·표)도 그 문항의 몸통이다
+                if (_flat[_j].get("t") or "") or _flat[_j].get("table") \
+                        or _flat[_j].get("s") == _ansl_style:
                     _body += 1
                     break
             if not _body:
