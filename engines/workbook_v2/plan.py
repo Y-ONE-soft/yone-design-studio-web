@@ -3988,10 +3988,31 @@ def question_keep_op(plan, steps=("step3",)):
             continue
         starts = []
         stem_starts = []
+        # W75 (수특라이트 13강 실증): 자기 본문이 **없는** 발문은 문제
+        # 시작이 아니다 — 이 원고의 문맥어휘/어법 문항은 지문 뒤에
+        # "※ ①~⑤ 중 … 고르시오." 지시문이 한 줄 더 붙는데, 그것까지
+        # 시작으로 세면 킵이 그 줄만 남기고 다음 문제를 새 페이지로 밀어
+        # **한 줄짜리 페이지**가 생긴다(게이트 G41 [발문고아] critical).
+        # 다음 발문까지 비발문 내용이 하나도 없으면 앞 블록의 꼬리다.
+        _flat = [q for u in fl.get("units", []) for q in unit_paras(u)]
+        _tail_only = set()
+        for _i, _q in enumerate(_flat):
+            if _q.get("s") not in q_styles:
+                continue
+            _body = 0
+            for _j in range(_i + 1, len(_flat)):
+                if _flat[_j].get("s") in q_styles:
+                    break
+                if (_flat[_j].get("t") or "").strip():
+                    _body += 1
+                    break
+            if not _body:
+                _tail_only.add(_i)
         idx = 0
         for u in fl.get("units", []):
             for p in unit_paras(u):
-                if p.get("s") in q_styles and idx > 0:
+                if p.get("s") in q_styles and idx > 0 \
+                        and idx not in _tail_only:
                     # W52 (0645d4a7 v2_6 사용자 지적 3): '윗글' 참조 발문은
                     # 위에 이미 인쇄된 지문의 세트 멤버 — 독립 시작으로
                     # 삼으면 지문(※ 인트로+본문)과 문항이 페이지 경계에서
