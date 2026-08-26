@@ -203,12 +203,21 @@ _GIVEN_WRAP = '❮❯〈〉《》«»‹›<>[]()"\'“”‘’▶►▸➤➔�
 _GIVEN_BODY_START = re.compile(r'^[A-Za-z0-9"\'“‘]')
 
 
+# W76: 주어진 문장을 **대괄호 라벨**로 표기하는 원고 ("[주어진 문장] If not, …").
+# 라벨이 몸통 앞에 붙어 있어 한글 검사에 걸려 배경 배정이 통째로 실패했다
+# (수특라이트 13강 실증 — 게이트 [문장삽입배경] 경고). 라벨은 마커지 내용이
+# 아니므로 형태 판정 전에 벗긴다 (GIVEN_PRIOR 와 같은 어휘 계약).
+GIVEN_LABEL_PREFIX = re.compile(
+    r'^\s*[\[\(〈《<【]\s*주어진\s*(?:글|문장|문단|단락)\s*'
+    r'[\]\)〉》>】]\s*')
+
+
 def is_given_block_form(text, short_only=False):
     """주어진 블록(문장/글) 후보 형태 판정 — 문장 완결부호 필수 (구조
     라벨 "[Unit 09 - Practice 01]" 등 배제, r7c16 전수 diff 실측).
     short_only=True(마커 프라이어 경로)는 짧은 단문/래퍼 감싸짐만 수용 —
     지문 전체 오배정 방지."""
-    raw = (text or "").strip()
+    raw = GIVEN_LABEL_PREFIX.sub("", (text or "").strip()).strip()
     if not raw:
         return False
     wrapped = raw[0] in '❮〈《«‹"“‘['
