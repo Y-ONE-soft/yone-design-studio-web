@@ -277,6 +277,7 @@ _RE_BOX_LABEL_ONLY = re.compile(r'^[<\[]?\s*보\s*기\s*[A-Z0-9]?\s*[>\]]?$')
 # scripts/add_ansline_style.py, 매핑은 core/structure/style_map.json.
 ANSLINE_STYLE_NAME = "S_답란"
 
+_RE_G41_TAIL = re.compile(r"^[※*]\s*\S")
 _RE_BARE_NUM = re.compile(r"^\d{1,3}(?:\s*~\s*\d{1,3})?$")
 # G21 — 원문자 선지 번호 (①~⑮: 지문 inline 번호도 같은 집합)
 _CIRCLED_DIGITS = "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮"
@@ -2353,6 +2354,15 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
             cum += len(p.get("t", ""))
         for i, p in enumerate(ps):
             if not _is_q_boundary_style(p.get("s") or ""):
+                continue
+            # W75: 지문 뒤 꼬리 지시문("※ ①~⑤ 중 … 고르시오.")은 자기
+            # 본문이 없다 — 그 줄의 지문은 **위에** 있다. 다음 발문의
+            # 본문을 자기 본문으로 잘못 찾아 '고아'로 오검출된다.
+            _nx = next((j for j in range(i + 1, len(ps))
+                        if _clean(ps[j].get("t", ""))), None)
+            if (_RE_G41_TAIL.match(_clean(p.get("t", "")))
+                    and _nx is not None
+                    and _is_q_boundary_style(ps[_nx].get("s") or "")):
                 continue
             body = next((j for j in range(i + 1, len(ps))
                          if _clean(ps[j].get("t", ""))
