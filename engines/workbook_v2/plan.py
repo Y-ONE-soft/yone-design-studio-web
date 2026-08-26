@@ -668,6 +668,84 @@ def _s3_answer_cell_idx(seq):
     return out
 
 
+# ── W76: STEP3 발문 앞 유형 태그 / 꼬리 지시문 / 주어진 문장 라벨 ───────────
+# 사용자 지적 2026-08-26:
+#   ① "앞에 왜 번호랑 어법, 문맥상 어휘 이런 게 들어갔어 … 발문만 들어가면 돼"
+#   ② "[주어진 문장] 이건 필요없고 주어진 문장에 단락스타일 배경만 잘 입혀지면 돼"
+#   ③ "갑자기 뭔 고르시오. 발문이 들어가?" (지문 뒤 ※ 꼬리 지시문)
+# 원고(통합변형문제)는 발문을 "<N번> <유형명>␣␣<발문>" 으로 적고, 문항 끝에
+# "※ ①~⑤ 중 … 고르시오." 를 한 줄 더 붙인다. 셋 다 조판에는 없어야 한다.
+_RE_S3_QTYPE_TAG = re.compile(
+    r"^\s*(?:\d{1,3}(?:\s*[~-]\s*\d{1,3})?\s*번\s*)?"
+    r"(?:[가-힣][가-힣\s]{0,11})\s{2,}(?=\S)")
+# 유형 태그를 벗긴 나머지가 '진짜 발문 시작'이어야 한다 (rules.Q_START_HINT
+# 와 같은 눈) — 그래야 "다음 글을 읽고␣␣물음에 답하시오." 같은 안내문의
+# 가운데 두 칸을 태그 경계로 오인하지 않는다.
+
+
+def _s3_strip_qtype_tags(pre, q_effs=("Q",)):
+    """발문 앞 유형 태그 제거 — 문서 안에서 3회 이상 반복될 때만."""
+    from core.structure import rules as R
+    hits = []
+    for row in pre:
+        if row["eff"] not in q_effs:
+            continue
+        t = row["tclean"]
+        m = _RE_S3_QTYPE_TAG.match(t)
+        if not m:
+            continue
+        rest = t[m.end():].strip()
+        if not rest or not R.Q_START_HINT.match(rest):
+            continue
+        hits.append((row, m.end()))
+    if len(hits) < 3:
+        return 0
+    for row, cut in hits:
+        raw = row["text"]
+        off = len(raw) - len(raw.lstrip())        # 원문 선두 공백 보정
+        row["text"], row["runs"] = _cut_span(raw, row["runs"], 0, off + cut)
+        row["tclean"] = row["text"].strip()
+    return len(hits)
+
+
+def _s3_drop_tail_directives(pre, q_effs=("Q",)):
+    """지문 뒤 꼬리 지시문(※ …) 제거 — 자기 본문이 없는 발문만."""
+    drop = []
+    n = len(pre)
+    for i, row in enumerate(pre):
+        if row["eff"] not in q_effs:
+            continue
+        if not _RE_S3_TAIL_DIRECTIVE.match(row["tclean"]):
+            continue
+        if _STEP3_SET_INTRO_KEY in row["tclean"]:
+            continue        # 세트 머리 안내문("※ 다음 …물음에 답하시오.")
+        # 꼬리 지시문은 **자기 문항의 지문 뒤**에 온다. 직전 유의 단락이
+        # 그 문항의 내용(지문/어휘/보기/조건/답란)일 때만 꼬리로 본다 —
+        # 선지 뒤/문서 머리에 오는 ※ 는 다음 세트의 머리 안내문이다
+        # (코퍼스 65cf0265 '※ 다음 도표를 보고 물음에 답하시오.' 실증).
+        _prev = None
+        for k in range(i - 1, -1, -1):
+            if pre[k]["tclean"]:
+                _prev = pre[k]
+                break
+        if _prev is None or _prev["eff"] not in (
+                "P", "P-CONTEXT", "Word", "Box", "Cond", "Sum",
+                "Ans", "AnsL", "SRC", "UNKNOWN"):
+            continue
+        body = False
+        for j in range(i + 1, n):
+            if pre[j]["eff"] in ("Q", "Q-INTRO"):
+                break
+            if pre[j]["tclean"]:
+                body = True
+                break
+        if not body:
+            drop.append(i)
+    for i in reversed(drop):
+        del pre[i]
+    return len(drop)
+
+
 def build_step3(step_data):
     """step3 데이터 {normal:[{question_num, paragraphs}], short:[...]} → 유닛.
 
@@ -728,6 +806,14 @@ def build_step3(step_data):
                                 # (구 W51 Type/Exercise 화이트리스트 대체)
                 if _RE_S3_DOC_TITLE.match(tclean):
                     continue    # W61: 원고 선두 표제(교재/과/StepN) 제거
+                # W76 ②: "[주어진 문장] …" 라벨은 마커지 내용이 아니다 —
+                # 벗겨야 배경(주어진 문장 박스) 형태 판정이 걸린다.
+                _mgl = BG.GIVEN_LABEL_PREFIX.match(text)
+                if _mgl and text[_mgl.end():].strip():
+                    text, p_runs = _cut_span(text, p.get("runs") or [],
+                                             0, _mgl.end())
+                    tclean = text.strip()
+                    p = dict(p, text=text, runs=p_runs)
                 eff = _s3_effective_kind(kind, text)
                 # W50: 마커 판정용 괄호 이형 정규화 (표기는 tclean 보존)
                 tmark = R.norm_brackets(tclean)
@@ -784,6 +870,16 @@ def build_step3(step_data):
                             "runs": p.get("runs") or []})
 
             # ── 2패스: 유형 주도 슬롯 배정 (W39) ────────────────────────
+            # W76: 발문 앞 유형 태그 제거 + 꼬리 지시문(※) 제거 — 슬롯
+            # 배정 앞에서 (발문 본문이 정리돼야 유형 판정이 정확하다)
+            _n_tag = _s3_strip_qtype_tags(pre)
+            if _n_tag:
+                warnings.append("step3: 발문 유형 태그 %d개 제거 "
+                                "(원고 표기 — 조판은 발문만)" % _n_tag)
+            _n_tail = _s3_drop_tail_directives(pre)
+            if _n_tail:
+                warnings.append("step3: 지문 뒤 꼬리 지시문 %d개 제거 "
+                                "(발문 중복 — ※ …)" % _n_tail)
             _s3_number_order_rows(pre)
             # 2026-08-25 사용자 지적 — 선지 헤더/후치 보기 캡션 구조 인식.
             # 슬롯 배정(_s3_assign_slots) 앞: 여기서 확정된 C/Box 는
