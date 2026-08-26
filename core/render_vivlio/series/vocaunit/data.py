@@ -128,16 +128,14 @@ def _filled(rows):
 
 
 def is_flat(rows):
-    """표형인가 — 행이 꽉 차 있고, 값이 크게 반복되는 열(=단원)이 있다."""
+    """표형인가 — **행이 꽉 차 있는가**로 가른다.
+
+    실측: 블록형은 행당 채워진 칸이 1.5칸(한 표제어가 여러 행에 흩어진다),
+    표형은 5.0칸(한 행이 한 낱말이다). 사이가 텅 비어 있어 3.0을 경계로 삼으면
+    시트가 몇 줄뿐이어도 흔들리지 않는다. (열 이름은 보지 않는다.)
+    """
     live = [r for r in rows if any(r)]
-    if len(live) < 5 or _filled(rows) < 3.5:
-        return False
-    n = max(len(r) for r in live)
-    for c in range(n):
-        col = [r[c] for r in live if c < len(r) and r[c]]
-        if len(col) > len(live) * 0.9 and len(set(col)) < len(col) * 0.5:
-            return True
-    return False
+    return bool(live) and max(len(r) for r in live) >= 4 and _filled(rows) >= 3.0
 
 
 def _roles(cols):
@@ -173,7 +171,8 @@ def _roles(cols):
 
     take("ex", "len")                                    # 가장 긴 열 = 예문
     take("unit", "uniq", pick=min)                       # 가장 덜 다양한 열 = 단원
-    nums = [i for i in left if st[i]["num"] > 0.9]
+    # 과반이면 번호 열로 본다 — 머리글 한 줄 때문에 100%가 안 되기 때문이다
+    nums = [i for i in left if st[i]["num"] > 0.5]
     if nums:
         role["no"] = nums[0]
         left.discard(nums[0])
@@ -212,7 +211,7 @@ def parse_flat(rows, sheet, log=print):
     # 구조로 가른다. 몇 줄을 버렸는지는 반드시 남긴다(침묵 유실 금지).
     kor_col = ("meaning" in role
                and sum(1 for v in cols[role["meaning"]] if _RE_HANGUL.search(v))
-               > 0.8 * sum(1 for v in cols[role["meaning"]] if v))
+               > 0.5 * sum(1 for v in cols[role["meaning"]] if v))
 
     def is_data(r):
         if not cell(r, "word") or not cell(r, "meaning"):

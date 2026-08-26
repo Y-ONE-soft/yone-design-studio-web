@@ -253,12 +253,12 @@ def unit_cfg(tmp_path):
 def test_vocaunit_parses_manuscript_by_structure():
     """블록 인식은 '번호 행'이 앵커 — 마커 문구('DAY15 / 회독')에 기대지 않는다."""
     from core.render_vivlio.series.vocaunit import data
-    rows = [("아무말", "무엇이든", ""),
-            ("1", "sensible", "[형] 분별력 있는 (↔ senseless 어리석은)"),
-            ("", "[ˈsɛnsəbəl]", ""),
-            ("", "sensibility [명] 감수성", "It wasn't [sensible] to go out."),
-            ("", "", "밖에 나간 것은 [현명하지] 않았다."),
-            ("", "", "")]
+    rows = [("", "아무말", "무엇이든", ""),
+            ("", "1", "sensible", "[형] 분별력 있는 (↔ senseless 어리석은)"),
+            ("", "", "[ˈsɛnsəbəl]", ""),
+            ("", "", "sensibility [명] 감수성", "It wasn't [sensible] to go out."),
+            ("", "", "", "밖에 나간 것은 [현명하지] 않았다."),
+            ("", "", "", "")]
     blocks = data.parse_unit(rows, "Unit 15")
     assert len(blocks) == 1
     b = blocks[0]
@@ -266,6 +266,62 @@ def test_vocaunit_parses_manuscript_by_structure():
     assert b["deriv"] == ["sensibility [명] 감수성"]
     assert b["pairs"] == [["It wasn't [sensible] to go out.",
                            "밖에 나간 것은 [현명하지] 않았다."]]
+
+
+def test_vocaunit_keeps_derivative_without_pos():
+    """품사 대괄호는 파생어를 **자르는 경계**일 뿐 조건이 아니다.
+    (`legally 법률적으로` 가 조용히 사라졌던 자리 — 마커 행만 구조로 거른다.)"""
+    from core.render_vivlio.series.vocaunit import data
+    rows = [("", "DAY17", "회독", ""),
+            ("", "17", "legal", "[형] 법적인"),
+            ("", "", "[ˈligəl]", ""),
+            ("", "", "legally 법률적으로", "He needed [legal] advice."),
+            ("", "", "", "")]
+    b = data.parse_unit(rows, "Unit 17")[0]
+    assert b["deriv"] == ["legally 법률적으로"]
+    assert b["pairs"] == [["He needed [legal] advice.", ""]]
+
+
+def test_vocaunit_reads_flat_manuscript_by_column_role():
+    """표형 원고는 열 **이름**이 아니라 값의 성질로 역할을 가른다."""
+    from core.render_vivlio.series.vocaunit import data
+    rows = [("No", "word", "단원", "meaning", "예문"),
+            ("1", "lease", "Unit 01 - Analysis", "임대 계약",
+             "With our lease coming to an end."),
+            ("2", "location", "Unit 01 - Analysis", "장소, 위치",
+             "We wanted a location with more space."),
+            ("3", "community", "Unit 01 - Analysis", "지역 사회",
+             "We wanted a location with more space."),
+            ("4", "valued", "Unit 01 - 1번", "소중한", "Dear valued players,")]
+    assert data.is_flat(rows)
+    units = data.parse_flat(rows, "전체", log=lambda *_: None)
+    assert len(units) == 1 and units[0]["head"] == "Unit 01"
+    g = units[0]["groups"]
+    assert [x["label"] for x in g] == ["Analysis", "1번"]
+    # 같은 예문이 이어지는 낱말은 **한 묶음** — 예문을 되풀이하지 않는다
+    assert [[w["word"] for w in r["words"]] for r in g[0]["runs"]] == \
+        [["lease"], ["location", "community"]]
+    assert len(units[0]["words"]) == 4
+
+
+def test_vocaunit_part_palettes_keep_tone_and_rotate_hue():
+    """대단원 색은 **색상만** 돈다 — 밝기와 최대채도 대비는 그대로다."""
+    from core.render_vivlio import color
+    base = "#d06397"
+    L0, C0, H0 = color.hex2oklch(base)
+    for hue in (318, 288, 258):
+        L, C, H = color.hex2oklch(color.rotate(base, hue))
+        assert abs(L - L0) < 0.01
+        assert abs(C / color.max_c(L, H) - C0 / color.max_c(L0, H0)) < 0.02
+        assert abs(((H - hue + 180) % 360) - 180) < 1.0
+
+
+def test_vocaunit_highlights_run_words_longest_first():
+    """묶음 예문 강조 — 겹치면 긴 쪽을 남긴다(`ticket office` vs `office`)."""
+    from core.render_vivlio.series.vocaunit import render
+    got = render.highlight("The station had ticket offices with staff.",
+                           ["ticket office", "station"])
+    assert "<em>station</em>" in got and "<em>ticket offices</em>" in got
 
 
 def test_vocaunit_splits_run_on_derivatives():
@@ -319,7 +375,7 @@ def test_vocaunit_second_pass_names_pages_and_lowers_open_margin(unit_cfg,
     """②(모눈 헤더 면)는 배경뿐 아니라 상단 여백도 내려간다 — 이름과 함께 지정."""
     from core.render_vivlio.series.vocaunit import VocaunitSeries
     out = tmp_path / "pages.css"
-    VocaunitSeries._write_pages_css(unit_cfg, [2, 8], 20, str(out))
+    VocaunitSeries._write_pages_css(unit_cfg, [2, 8], [""] * 20, str(out))
     css = out.read_text(encoding="utf-8")
     assert "@page p-body:nth(2)" in css and "@page p-body:nth(3)" in css
     assert "margin-top: 28.09mm" in css
