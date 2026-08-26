@@ -3964,6 +3964,12 @@ def _drop_empty_brackets(flows):
     return n
 
 
+# W75: 지문 뒤에 한 줄 더 붙는 '꼬리 지시문' — ※ 로 시작하는 선택 안내
+# ("※ ①~⑤ 중 … 고르시오."). 자기 본문이 없어 문제 시작으로 세면 킵이
+# 그 줄만 남긴 페이지를 만든다.
+_RE_S3_TAIL_DIRECTIVE = re.compile(r"^[※*]\s*\S")
+
+
 def question_keep_op(plan, steps=("step3",)):
     """W23 r13 (F4) — 문제 단위 펼침면 킵 op 계산 (실행기/게이트 공용 계약).
 
@@ -4004,8 +4010,9 @@ def question_keep_op(plan, steps=("step3",)):
             if _q.get("s") == _intro_style:
                 continue        # 세트 안내문은 원래 자기 본문이 없다 —
                                 # 뒤따르는 발문과 한 덩어리로 밀려야 한다
-            if len((_q.get("t") or "").strip()) > 60:
-                continue        # 긴 줄은 지시문이 아니라 (오분류된) 지문
+            _qt = (_q.get("t") or "").strip()
+            if len(_qt) > 60 or not _RE_S3_TAIL_DIRECTIVE.match(_qt):
+                continue        # 지문 뒤 꼬리 지시문(※ …)만 대상
             _body = 0
             for _j in range(_i + 1, len(_flat)):
                 if _flat[_j].get("s") in q_styles:
