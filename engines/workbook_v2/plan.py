@@ -2561,6 +2561,9 @@ def build_step2_b1(step_data):
 # 유닛 분할(프레임브레이크) 생략, 대신 bracket 앞 빈 줄 2개만 같은 유닛에
 # 유지 (v1 7단계는 유형 공통, 9단계 브레이크만 EBS 생략).
 
+_RE_C2_PAGEMARK = re.compile(r"\bp\.?\s*\d", re.I)
+
+
 def _c2_is_bracket(text):
     # v1 step9 판정: '['와 ']' 포함 + '\s*[' 시작
     return ("[" in text and "]" in text
@@ -2590,9 +2593,23 @@ def build_step2_c2(step_data, workbook_type="모의고사"):
     _c2_paras = step_data.get("paragraphs", []) or []
     _no_bracket = not any(_c2_is_bracket(q.get("text") or "")
                           for q in _c2_paras)
+
+    def _c2_strong_header(i, text):
+        """이 헤더 검출을 '강한 것'으로 볼지 (W75).
+
+        seq(시퀀스 단조성)만으로 잡힌 약한 검출은 원칙적으로 제외한다 —
+        모의고사 C2의 "20번" 문항 라벨은 v1이 인쇄하는 내용이기 때문
+        (코퍼스 r9c20mock2503 실증). 다만 **페이지 마커(pN)** 를 가진 줄은
+        그 스텝 헤더 계열과 같은 형태다: 수특라이트 13강처럼 첫 지문만
+        표기가 다르면(N. pN-Gateway) seq 로만 잡히는데, 여기서 빼면 그
+        지문이 라벨 없이 앞 유닛에 붙는다 (사용자 지적 "영작배열
+        게이트웨이도 지문번호 없이 그냥 조판됐어")."""
+        if det.via(i) != "seq":
+            return True
+        return bool(_RE_C2_PAGEMARK.search(text or ""))
     for i, p in enumerate(_c2_paras):
         text = p.get("text") or ""
-        if _no_bracket and det.is_header(i) and det.via(i) != "seq":
+        if _no_bracket and det.is_header(i) and _c2_strong_header(i, text):
             lab = re.sub(r"^\s*\[|\]\s*$", "", _header_label(text) or "")
             lab = lab.strip()
             # W74: 강 접두("13강 지문 1")는 문서 전체 공통값이라 지문번호가
@@ -2618,7 +2635,7 @@ def build_step2_c2(step_data, workbook_type="모의고사"):
         # 실증: r9c20mock2503/r10c22mock2503g1). C2는 유닛을 bracket이
         # 담당하므로 제거는 강한 검출(legacy/anchor/shape)로만.
         if (det.is_header(i) and not _c2_is_bracket(text)
-                and det.via(i) != "seq"):
+                and _c2_strong_header(i, text)):
             continue
         if det.is_absorbed(i) and not _c2_is_bracket(text):
             continue    # W50: 헤더 직전 섹션 타이틀 줄 (헤더 블록 일부)
