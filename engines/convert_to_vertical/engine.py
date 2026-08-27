@@ -636,13 +636,23 @@ class ConvertToVerticalEngine(BaseEngine):
         # 공백을 지운 스토리 전문에서 찾아 실제 유실만 남긴다.
         split_only = set()
         if missing:
-            squashed = []
-            for st in out_dump.get("stories", []):
-                joined = "".join(p.get("t") or "" for p in st.get("paragraphs", []))
-                squashed.append(re.sub(r"\s+", "", unicodedata.normalize("NFC", joined)))
+            # 스토리별이 아니라 **페이지 순 전문**으로 잇는다 — 강제 분리는
+            # 한 단락을 서로 다른 스토리로 가르기도 해서, 스토리 단위로는
+            # 갈린 조각을 다시 붙일 수 없다.
+            def _pnum(x):
+                digits = re.sub(r"\D", "", str(x))
+                return int(digits) if digits else 10 ** 6
+
+            ordered = sorted(
+                out_dump.get("stories", []),
+                key=lambda st: min([_pnum(x) for x in (st.get("pg") or [])]
+                                   or [10 ** 6]))
+            blob = re.sub(r"\s+", "", unicodedata.normalize(
+                "NFC", "".join(p.get("t") or ""
+                               for st in ordered
+                               for p in st.get("paragraphs", []))))
             for t in missing:
-                key = re.sub(r"\s+", "", t)
-                if any(key in blob for blob in squashed):
+                if re.sub(r"\s+", "", t) in blob:
                     split_only.add(t)
             missing = missing - split_only
         if missing:
