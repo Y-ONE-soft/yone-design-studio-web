@@ -372,7 +372,6 @@ function insertImageAt(doc, story, para, img) {
         }
     } catch (e) {}
     try { frame.textWrapPreferences.textWrapMode = TextWrapModes.NONE; } catch (e) {}
-    try { frame.strokeWeight = 0; } catch (e) {}
     // ① 먼저 크기 — 앵커 종류를 바꾸면 개체 참조가 무효가 될 수 있어
     //    (1차 검증 실증: "이 요청에 대한 개체가 잘못되었습니다") 기하는
     //    인라인 상태에서 끝낸다.
@@ -416,6 +415,10 @@ function insertImageAt(doc, story, para, img) {
             wlog("[경고] 원고 그림 줄위 앵커 실패(인라인 유지): " + e);
         }
     }
+    // 테두리 제거 — 템플릿 기본 프레임 서식이 얇은 선을 남긴다 (실측:
+    // 완제품 PDF 에 0.004pt 선 4개). 크기 조정 뒤에 확정한다.
+    try { frame.strokeWeight = "0pt"; } catch (e) {}
+    try { frame.strokeColor = doc.swatches.itemByName("None"); } catch (e) {}
     return 1;
 }
 
