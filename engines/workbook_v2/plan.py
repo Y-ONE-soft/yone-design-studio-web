@@ -1226,10 +1226,18 @@ def _s3_answer_tables(unit, st_q, warnings):
                 % (_S3_ANSTABLE_ROWS_DEFAULT, qt[:40]))
         headers = [(unit[i].get("t") or "").strip(),
                    (unit[i + 1].get("t") or "").strip()]
+        # 헤더 셀("틀린 부분"/"수정")은 **지문 스타일을 쓰지 않는다**
+        # (사용자 지시 2026-08-27). 지문 스타일에는 한글 런을 통째로
+        # 밑줄 치는 GREP([가-힣]… → 문자스타일 '지문 밑줄')이 걸려 있어
+        # 한글 헤더에 원고에 없는 밑줄이 생긴다. 크기/정렬이 같은
+        # '밑줄제거' 변형으로 — 표 모양(8pt·가운데)은 그대로다.
+        hdr_style = (_s3_p_no_underline_style() or unit[i].get("s")
+                     or "$BASIC")
         unit[i:i + 2] = [{
             "t": "", "s": unit[i].get("s") or "$BASIC", "runs": [],
             "table": {"cols": headers, "rows": rows,
-                      "header_style": unit[i].get("s") or "$BASIC"},
+                      "header_style": hdr_style,
+                      "header_style_fb": unit[i].get("s") or "$BASIC"},
         }]
         made += 1
         i += 1

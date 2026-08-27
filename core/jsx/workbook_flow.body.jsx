@@ -501,7 +501,17 @@ function insertAnswerTable(doc, para, spec, styleOf) {
         return false;
     }
     var sw = answerTableSwatch(doc);
+    // 헤더 셀 스타일 — 플랜은 '밑줄제거' 변형을 준다(한글 헤더에 지문
+    // 스타일의 GREP 밑줄이 생기는 것 방지). 내지에 그 변형이 없으면
+    // 원래 스타일로 폴백한다.
     var hdrStyle = spec.header_style ? styleOf(spec.header_style) : null;
+    if (!hdrStyle && spec.header_style_fb) {
+        hdrStyle = styleOf(spec.header_style_fb);
+        if (hdrStyle) {
+            wlog("[경고] 답표 헤더 '밑줄제거' 스타일 없음 → "
+                 + spec.header_style_fb + " 폴백 (한글 밑줄 가능)");
+        }
+    }
     try {
         var allCells = tbl.cells.everyItem();
         allCells.topEdgeStrokeWeight = TBL_STROKE;
