@@ -700,7 +700,17 @@ class ConvertToVerticalEngine(BaseEngine):
         deleted = stats.get("sep_pages_deleted")
         expected = expected_page_count(src_pages, stats)
         if expected is not None:
-            expected += pad_pages
+            # S2 분할이 더한 페이지 + S3 파리티 패딩. 원본(source_local)은
+            # 분할 이전 문서라 stats 만으로는 이 둘을 알 수 없다.
+            try:
+                stage = json.load(open(os.path.join(job_dir, "cv_stage.json"),
+                                       encoding="utf-8"))
+                split_added = len(stage.get("exam_targets") or []) + sum(
+                    1 for t in (stage.get("arrange_targets") or [])
+                    if not t.get("break_only"))
+            except (OSError, ValueError):
+                split_added = 0
+            expected += pad_pages + split_added
         log(f"[검수] 페이지 {src_pages} → {out_pages} "
             f"(구분 삭제 {deleted if deleted is not None else '?'}, "
             f"arrange +{stats.get('arrange_pages_added', '?')}"
