@@ -146,11 +146,14 @@ def arrange_boundaries(frames, canon):
     """영작 배열 구간의 지문 첫 등장 위치 (canon 에 없는 코드는 무시).
 
     같은 코드가 뒤에 또 나오는 경우(예문 안의 대괄호)는 첫 등장만 경계로 본다.
+    `body_sees` 는 body(STEP4.4) 의 마커 스캔이 이 지문을 잡는지 여부다.
     """
+    text, spans = story_text(frames)
+    seen_ok = body_visible_codes(text, canon)
     out, seen = [], set()
     for f in frames:
-        text = f.get("text") or ""
-        for m in _RE_BRACKET_CODE.finditer(text):
+        t = f.get("text") or ""
+        for m in _RE_BRACKET_CODE.finditer(t):
             c = resolve_to_canon(m.group(1), canon)
             if not c or c in seen:
                 continue
@@ -160,54 +163,64 @@ def arrange_boundaries(frames, canon):
                 "page": f["pidx"] + 1,
                 "offset": m.start(),
                 "at_head": m.start() <= HEAD_SLACK,
+                "body_sees": c in seen_ok,
                 "fid": f["fid"],
                 "sid": f["sid"],
             })
     return out
 
 
-def arrange_split_targets(boundaries, frames=None):
-    """스레드의 **첫 지문을 뺀 전원**이 분할 대상이다.
+def story_text(frames):
+    """프레임 텍스트를 문서 순서대로 이어 붙여 스토리 텍스트를 복원한다."""
+    parts, spans, pos = [], [], 0
+    for f in frames:
+        t = f.get("text") or ""
+        spans.append((f["fid"], pos, pos + len(t)))
+        parts.append(t)
+        pos += len(t)
+    return "".join(parts), spans
 
-    프레임 머리에서 시작하는 지문(at_head)을 빼면 안 된다 — 스레드에서는 앞
-    지문을 밀어내는 순간 텍스트가 재흐름해서, 끊을 지시가 없는 그 지문이 앞
-    페이지로 딸려 들어간다 (26년 6월 실측: [24]+[29], [38]+[39] 가 한 페이지로
-    합쳐지고 body 의 arrange 재배분이 16섹션으로 줄었다).
 
-    at_head 지문은 **앞 프레임의 끝**에 브레이크를 넣는다. 자기 프레임의
-    오프셋 0 에 넣으면 그 프레임이 통째로 비고 전체가 한 칸씩 밀려 프레임이
-    모자란다. 페이지는 추가하지 않으므로(break_only) 프레임 총수는
-    "원본 프레임 + 프레임중간 시작 지문 수" 그대로다.
-    """
-    prev_of = {}
-    if frames:
-        by_story = {}
-        for f in frames:
-            by_story.setdefault(f["sid"], []).append(f)
-        for fs in by_story.values():
-            fs.sort(key=lambda f: (f["pidx"], f["gb"][1], f["gb"][0]))
-            for a, b in zip(fs, fs[1:]):
-                prev_of[b["fid"]] = a
+# body(convert_vertical.body.jsx STEP4.4) 의 마커 스캔과 **같은 규칙**:
+# 단락(\r 또는 \n 구분) 머리 40자 안에서만 코드를 인정한다. 이 미러링이
+# 어긋나면 "우리는 보이는데 body 는 못 보는" 지문이 침묵으로 사라진다.
+_RE_BODY_CODE6 = re.compile(r"^\s*\{(\d{4})(\d{2}(?:~\d+)?)\}")
+_RE_BODY_SHORT = re.compile(r"^\s*[\[{]\s*(\d{1,3}(?:~\d+)?)\s*[\]}]")
 
-    out = []
-    for i, b in enumerate(boundaries):
-        if i == 0:
-            continue                      # 스레드 첫 지문 — 끊을 앞이 없다
-        if not b["at_head"]:
-            out.append({"code": b["code"], "fid": b["fid"],
-                        "offset": b["offset"], "page": b["page"]})
+
+def body_visible_codes(text, canon):
+    """body 의 단락 머리 스캔으로 잡히는 canon 코드 집합."""
+    got = set()
+    for para in re.split(r"[\r\n]", text or ""):
+        head = para[:40]
+        m = _RE_BODY_CODE6.match(head)
+        raw = m.group(2) if m else None
+        if raw is None:
+            m = _RE_BODY_SHORT.match(head)
+            raw = m.group(1) if m else None
+        if raw is None:
             continue
-        prev = prev_of.get(b["fid"])
-        if prev is None:
-            # 앞 프레임을 못 찾으면 조용히 넘기지 않는다 — 이 지문이 앞
-            # 페이지에 합쳐지는 바로 그 사고가 난다.
-            raise ValueError("영작배열 지문 %s: 앞 프레임을 찾지 못해 분할 "
-                             "지시를 만들 수 없음 (p%d fid %s)"
-                             % (b["code"], b["page"], b["fid"]))
-        out.append({"code": b["code"], "fid": prev["fid"],
-                    "offset": prev["chars"], "page": prev["pidx"] + 1,
-                    "break_only": True})
-    return out
+        c = resolve_to_canon(raw, canon)
+        if c:
+            got.add(c)
+    return got
+
+
+def arrange_split_targets(boundaries, frames=None):
+    """body 가 못 보는 지문만 분할한다.
+
+    body 는 영작 배열 스레드를 **텍스트 마커 기준으로 통째로 재분해**하므로
+    (STEP4.4: 섹션마다 새 페이지+프레임에 범위 복제, 원본 페이지 삭제) 페이지를
+    미리 쪼갤 필요가 없다. 필요한 것은 단 하나 — 코드가 **단락 머리**에 오게
+    하는 것이다. 26년 6월 실측: 18지문 중 [30] 만 앞에 인라인 개체 문자(￼)가
+    붙어 정규식에서 빠졌고, 그래서 arrange 섹션이 17개로 줄었다.
+
+    페이지를 과하게 쪼개면 프레임 브레이크가 꽉 찬 프레임을 밀어내 오버셋이
+    난다 (17건 분할 실측: 오버셋 1건으로 분할 자체가 중단).
+    """
+    return [{"code": b["code"], "fid": b["fid"],
+             "offset": b["offset"], "page": b["page"]}
+            for b in boundaries if not b.get("body_sees")]
 
 
 def arrange_gate(boundaries, canon):
