@@ -3105,7 +3105,10 @@ try {
             var gim = flat[gi2].image;
             if (!gim || gi2 >= paras.length) { continue; }
             imgWant++;
-            imgDone += insertImageAt(doc, story, paras[gi2], gim);
+            // 캐시(getElements)가 아니라 **fresh 재조회** — 앞선 아이콘
+            // 삽입이 스토리 문자 오프셋을 밀면 캐시 단락 참조가 한 칸씩
+            // 어긋난다 (아래 답표 패스 주석의 실증과 같은 함정).
+            imgDone += insertImageAt(doc, story, story.paragraphs[gi2], gim);
         }
         if (imgWant > 0) {
             wlog(flow.step + " 원고 그림 배치: " + imgDone + "/" + imgWant + "개"
@@ -3125,14 +3128,30 @@ try {
         // unitStart(후처리 op가 쓰는 유닛 첫 단락 인덱스)를 보정한다.
         var tblShift = [];      // [flatIndex, delta]
         var tblMade = 0;
+        var tblOff = 0;         // 엉뚱한 단락에 들어갈 뻔한 건수
         for (var ti = flat.length - 1; ti >= 0; ti--) {
             var tspec = flat[ti].table;
             if (!tspec || ti >= paras.length) { continue; }
+            // **fresh 재조회** 필수 (2026-08-27 사용자 지적 "표 붙여넣기
+            // 방식이 잘못된듯"): paras 는 story.contents 대입 직후의
+            // getElements() 캐시인데, 그 뒤 아이콘/그림 앵커가 스토리
+            // 앞쪽에 문자를 끼우면 캐시 단락의 문자 오프셋이 밀린다.
+            // 그 상태로 insertionPoints[0] 에 표를 넣으면 표가 **앞 지문
+            // 단락 안**(마지막 마침표 앞)에 박혀 그 줄이 양끝정렬로
+            // 늘어나고 마침표만 표 뒤로 떨어진다. 실측 재현/교정 완료.
+            var pFresh = story.paragraphs[ti];
+            if (String(pFresh.contents).replace(/[\s\r\n\uFFFC]/g, "") !== "") {
+                tblOff++;       // 표 단락은 플랜상 항상 빈 단락이다
+            }
             var nBefore = story.paragraphs.length;
-            if (insertAnswerTable(doc, paras[ti], tspec, styleOf)) {
+            if (insertAnswerTable(doc, pFresh, tspec, styleOf)) {
                 tblMade++;
                 tblShift.push([ti, story.paragraphs.length - nBefore]);
             }
+        }
+        if (tblOff > 0) {
+            wlog("[경고] " + flow.step + " 답표 대상 단락이 비어있지 않음 "
+                 + tblOff + "건 — 단락 인덱스 정합 확인 필요");
         }
         if (tblMade > 0) {
             wlog(flow.step + " 답표 삽입: " + tblMade + "개");
