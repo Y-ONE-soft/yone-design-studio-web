@@ -31,16 +31,27 @@ def exam_frames(frames_json, first_page, last_page):
 
 
 def find_boundaries(frames):
-    """실전 구간의 지문 경계. [{code, page, offset, at_head, fid}] (문서 순)."""
+    """실전 구간의 지문 경계. [{code, page, offset, at_head, fid}] (문서 순).
+
+    at_head 는 **페이지 머리**를 뜻한다 — 프레임 머리가 아니다. 실전은 2단
+    조판이라 페이지마다 프레임이 여럿이고, 오른쪽 단 머리에서 시작하는 지문을
+    "분할 불필요"로 보면 그 페이지가 통째로 다음 지문 블록에 들어가면서 왼쪽
+    단(앞 지문의 꼬리)까지 딸려간다. 26년 6월 실측: 지문 31↔32·32↔33·36↔37 이
+    한 페이지에 좌우로 섞였고, 검수가 '섹션 관통 스레드 3개'로 잡았다.
+    """
+    first_fid = {}
+    for f in frames:                      # frames 는 (pidx, x, y) 정렬
+        first_fid.setdefault(f["pidx"], f["fid"])
     out = []
     for f in frames:
         text = f.get("text") or ""
+        is_first = first_fid.get(f["pidx"]) == f["fid"]
         for m in _RE_EXAM_CODE.finditer(text):
             out.append({
                 "code": normalize_code(m.group(2)),
                 "page": f["pidx"] + 1,
                 "offset": m.start(),
-                "at_head": m.start() <= HEAD_SLACK,
+                "at_head": is_first and m.start() <= HEAD_SLACK,
                 "fid": f["fid"],
                 "sid": f["sid"],
             })
