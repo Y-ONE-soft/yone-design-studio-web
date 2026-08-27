@@ -468,6 +468,12 @@ class ConvertToVerticalEngine(BaseEngine):
             f"{len(tail_blocks)}개, 분할 대상 실전 {len(exam_targets)}건 · "
             f"영작배열 {len(arr_targets)}건")
 
+        # JSX 는 코드 문자열로 위치를 다시 찾는다 — 어느 구간에서 찾을지
+        # 범위를 함께 준다 (같은 표기가 다른 섹션에도 있다).
+        for t in exam_targets:
+            t["page_min"], t["page_max"] = arr_last + 1, 10 ** 6
+        for t in arr_targets:
+            t["page_min"], t["page_max"] = arr_first, arr_last
         targets = exam_targets + arr_targets
         inventory = result["inventory"]
         if targets:

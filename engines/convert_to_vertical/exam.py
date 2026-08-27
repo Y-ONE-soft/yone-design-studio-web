@@ -49,6 +49,7 @@ def find_boundaries(frames):
         for m in _RE_EXAM_CODE.finditer(text):
             out.append({
                 "code": normalize_code(m.group(2)),
+                "find": m.group(0),          # 원문 마커 — JSX 가 이걸로 찾는다
                 "page": f["pidx"] + 1,
                 "offset": m.start(),
                 "at_head": is_first and m.start() <= HEAD_SLACK,
@@ -102,7 +103,8 @@ def blocks_from_boundaries(boundaries, last_page):
             end, shared = nxt["page"] - 1, False
         else:
             end, shared = nxt["page"], True     # 다음 지문과 같은 페이지를 공유
-        blocks.append({"code": b["code"], "start": b["page"], "end": end,
+        blocks.append({"code": b["code"], "find": b.get("find"),
+                       "start": b["page"], "end": end,
                        "pages": list(range(b["page"], end + 1)),
                        "needs_split": not b["at_head"],
                        "split_offset": None if b["at_head"] else b["offset"],
@@ -113,7 +115,7 @@ def blocks_from_boundaries(boundaries, last_page):
 
 def split_targets(blocks):
     """JSX 에 넘길 분할 지시 — 프레임 중간에서 시작하는 지문만."""
-    return [{"code": b["code"], "fid": b["split_fid"],
+    return [{"code": b["code"], "fid": b["split_fid"], "find": b.get("find"),
              "offset": b["split_offset"], "page": b["start"]}
             for b in blocks if b["needs_split"]]
 
@@ -171,6 +173,7 @@ def arrange_boundaries(frames, canon):
             seen.add(c)
             out.append({
                 "code": c,
+                "find": m.group(0),
                 "page": f["pidx"] + 1,
                 "offset": m.start(),
                 "at_head": m.start() <= HEAD_SLACK,
@@ -229,7 +232,7 @@ def arrange_split_targets(boundaries, frames=None):
     페이지를 과하게 쪼개면 프레임 브레이크가 꽉 찬 프레임을 밀어내 오버셋이
     난다 (17건 분할 실측: 오버셋 1건으로 분할 자체가 중단).
     """
-    return [{"code": b["code"], "fid": b["fid"],
+    return [{"code": b["code"], "fid": b["fid"], "find": b.get("find"),
              "offset": b["offset"], "page": b["page"]}
             for b in boundaries if not b.get("body_sees")]
 

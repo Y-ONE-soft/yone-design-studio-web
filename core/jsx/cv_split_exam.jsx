@@ -44,112 +44,130 @@ try {
     d.viewPreferences.rulerOrigin = RulerOrigin.PAGE_ORIGIN;
     L("페이지 " + d.pages.length + "개, 대상 " + cfg.targets.length + "건");
 
-    // 뒤 → 앞. 한 프레임에 마커가 여럿인 구간(영작 배열)이 있으므로
-    // 페이지가 같으면 오프셋 큰 것부터 — 그래야 앞 마커의 오프셋이 안 밀린다.
-    var tg = cfg.targets.slice(0);
-    tg.sort(function (a, b) {
-        if (b.page !== a.page) { return b.page - a.page; }
-        return b.offset - a.offset;
-    });
-
-    for (var t = 0; t < tg.length; t++) {
-        var T = tg[t];
-        var pi = T.page - 1;
-        var pg = d.pages[pi];
-        if (pg.name !== String(T.page)) {
-            throw "페이지 불일치: 기대 " + T.page + " 실제 " + pg.name;
+    // 좌표(page/fid/offset)가 아니라 **지문 코드 문자열로 매번 다시 찾는다.**
+    // 한 건을 분할하면 그 뒤 텍스트가 프레임을 따라 밀리므로, 덤프 한 번으로
+    // 잡은 좌표를 여러 건에 쓰면 뒤 대상이 어긋난다 (2026-08-27 실측:
+    // [31] 단건은 새 페이지 왼쪽 단에서 시작 — 정상. [30]+[31] 동시에는
+    // [31]이 오른쪽 단으로 밀리고 왼쪽 단이 빈칸).
+    //
+    // 목표는 하나다: **지문이 페이지 첫 프레임 머리에서 시작할 것.**
+    // 브레이크는 한 번에 한 칸만 민다(연속 대입은 두 번째부터 no-op — 같은
+    // 실측에서 breaks=2 가 1칸만 밀었다). 그래서 목표에 닿을 때까지 한 칸씩
+    // 밀며 확인한다.
+    function findMark(needle, lo, hi) {
+        // lo/hi = 검색을 한정할 페이지 범위(1-based, 문서 순). 같은 코드
+        // 표기가 다른 섹션에도 있어서(어휘·본문에도 [30]) 범위 없이 찾으면
+        // 엉뚱한 곳을 자른다.
+        app.findTextPreferences = NothingEnum.NOTHING;
+        app.changeTextPreferences = NothingEnum.NOTHING;
+        app.findChangeTextOptions.caseSensitive = false;
+        app.findChangeTextOptions.wholeWord = false;
+        app.findTextPreferences.findWhat = needle;
+        var res = d.findText();
+        app.findTextPreferences = NothingEnum.NOTHING;
+        if (!res || !res.length) { return null; }
+        if (!lo && !hi) { return res[0]; }
+        for (var i = 0; i < res.length; i++) {
+            var fr = frameOf(res[i]);
+            var off = -1;
+            try { off = fr.parentPage ? (fr.parentPage.documentOffset + 1) : -1; }
+            catch (e) { off = -1; }
+            if (off < 0) { continue; }
+            if ((!lo || off >= lo) && (!hi || off <= hi)) { return res[i]; }
         }
-        var frs = bodyFrames(pg);
-        var idx = -1;
-        for (var i = 0; i < frs.length; i++) {
-            if (String(frs[i].id) === String(T.fid)) { idx = i; }
-        }
-        if (idx < 0) { throw "대상 프레임 미발견 (p" + T.page + " fid " + T.fid + ")"; }
-        var breaks = frs.length - idx;          // 남은 프레임 수 + 1
-        if (typeof T.breaks === "number") { breaks = T.breaks; }
-        var breakOnly = (T.break_only === true);
-        var lastFrame = frs[frs.length - 1];
-        var geo = [];
-        for (var g = 0; g < frs.length; g++) { geo.push(frs[g].geometricBounds.slice(0)); }
-        var props = [];
-        for (var g2 = 0; g2 < frs.length; g2++) {
-            props.push({ tfp: frs[g2].textFramePreferences.properties,
-                         os: frs[g2].appliedObjectStyle,
-                         lyr: frs[g2].itemLayer });
-        }
-        var master = pg.appliedMaster;
-        var beforeChars = 0;
-        for (var c0 = 0; c0 < frs.length; c0++) { beforeChars += nchars(frs[c0]); }
-        L("[" + T.code + "] p" + T.page + " 단 " + (idx + 1) + "/" + frs.length +
-          " → 프레임브레이크 " + breaks + "회, 오프셋 " + T.offset +
-          (breakOnly ? " (break_only)" : ""));
-
-        // 1) 새 페이지 + 프레임 (페이지 add 후 참조 재해석 필수)
-        //    break_only = 프레임 머리에서 시작하는 지문. 프레임은 이미 충분하고
-        //    앞 프레임 끝에서 끊기만 하면 된다 — 페이지를 더하면 빈 페이지가
-        //    남고 이후 재배치가 한 칸씩 밀린다.
-        if (!breakOnly) {
-            var np = d.pages.add(LocationOptions.AFTER, pg);
-            if (master) { np.appliedMaster = master; }
-            var pgR = d.pages[pi];                 // 재해석
-            var frsR = bodyFrames(pgR);
-            var tail = frsR[frsR.length - 1];      // 공유 페이지 마지막 프레임
-            var newFrames = [];
-            for (var k = 0; k < geo.length; k++) {
-                var nf = np.textFrames.add(props[k].lyr);
-                nf.geometricBounds = geo[k];
-                try { nf.textFramePreferences.properties = props[k].tfp; } catch (eP) {}
-                try { nf.appliedObjectStyle = props[k].os; } catch (eO) {}
-                newFrames.push(nf);
-            }
-            // 새 프레임들을 서로 잇고, 공유 페이지 마지막 프레임 뒤에 끼운다
-            for (var n2 = 1; n2 < newFrames.length; n2++) {
-                newFrames[n2].previousTextFrame = newFrames[n2 - 1];
-            }
-            newFrames[0].previousTextFrame = tail;
-            L("   새 페이지 p" + np.name + " 프레임 " + newFrames.length + "개 스레드 삽입");
-        } else {
-            L("   (break_only) 페이지 추가 없이 앞 프레임 끝에서 분리");
-        }
-
-        // 2) 분할 오프셋에 프레임 브레이크 (역순 삽입 — 오프셋 불변)
-        var frs2 = bodyFrames(d.pages[pi]);
-        var target = null;
-        for (var i2 = 0; i2 < frs2.length; i2++) {
-            if (String(frs2[i2].id) === String(T.fid)) { target = frs2[i2]; }
-        }
-        if (!target) { throw "브레이크 대상 프레임 소실 (fid " + T.fid + ")"; }
-        var nc = nchars(target);
-        var off = T.offset;
-        if (off > nc) { off = nc; }
-        var ip;
-        if (off >= nc) {
-            // 프레임 끝 — characters[nc] 는 없으므로 마지막 삽입점을 쓴다
-            ip = target.insertionPoints[-1];
-        } else {
-            ip = target.characters[off].insertionPoints[0];
-        }
-        for (var b = 0; b < breaks; b++) {
-            ip.contents = SpecialCharacters.FRAME_BREAK;
-        }
-        L("   프레임 브레이크 " + breaks + "회 삽입 완료");
+        return null;
     }
 
-    // 결과 실측 로그 — 분할 지점 주변 프레임이 실제로 어떻게 갈렸는지.
-    // (덤프 없이 확인하려고 넣는다. 분할은 2분, 덤프는 7분이다.)
-    if (cfg.probe_pages) {
-        for (var q = 0; q < cfg.probe_pages.length; q++) {
-            var qp = cfg.probe_pages[q];
-            if (qp < 1 || qp > d.pages.length) { continue; }
-            var qfs = bodyFrames(d.pages[qp - 1]);
-            for (var qi = 0; qi < qfs.length; qi++) {
-                var qt = "";
-                try { qt = qfs[qi].characters.length ? qfs[qi].texts[0].contents.substr(0, 40) : "(빈 프레임)"; }
-                catch (eQ) { qt = "(읽기 실패)"; }
-                L("   PROBE p" + qp + " 단" + (qi + 1) + "/" + qfs.length +
-                  " x=" + Math.round(qfs[qi].geometricBounds[1]) +
-                  " chars=" + nchars(qfs[qi]) + " | " + qt.replace(/[\r\n]/g, " "));
-            }
+    function frameOf(t) {
+        try {
+            var cs = t.parentTextFrames;
+            return (cs && cs.length) ? cs[0] : null;
+        } catch (e) { return null; }
+    }
+
+    function headState(t) {
+        // 반환: {pg, idx, n, off} — 지문이 어느 페이지 몇 번째 단의 몇 자째인지
+        var fr = frameOf(t);
+        if (!fr) { return null; }
+        var pg = null;
+        try { pg = fr.parentPage; } catch (e) {}
+        if (!pg) { return null; }
+        var frs = bodyFrames(pg), idx = -1;
+        for (var i = 0; i < frs.length; i++) {
+            if (String(frs[i].id) === String(fr.id)) { idx = i; }
+        }
+        var off = 0;
+        try { off = t.insertionPoints[0].index - fr.characters[0].index; } catch (e) { off = 0; }
+        return { pg: pg, idx: idx, n: frs.length, off: off, frame: fr };
+    }
+
+    var HEAD_SLACK = 5;
+    var MAX_NUDGE = 4;
+
+    for (var t = 0; t < cfg.targets.length; t++) {
+        var T = cfg.targets[t];
+        var needle = T.find;
+        if (!needle) {
+            L("[" + T.code + "] 검색 문자열(find) 없음 — 건너뜀");
+            continue;
+        }
+        var hit = findMark(needle, T.page_min, T.page_max);
+        if (!hit) { throw "대상 미발견: " + needle; }
+        var st0 = headState(hit);
+        if (!st0) { throw "대상 프레임 해석 실패: " + needle; }
+        L("[" + T.code + "] 시작 위치 p" + st0.pg.name + " 단 " + (st0.idx + 1) +
+          "/" + st0.n + " 오프셋 " + st0.off);
+
+        if (st0.idx === 0 && st0.off <= HEAD_SLACK) {
+            L("   이미 페이지 머리 — 분할 불필요");
+            continue;
+        }
+
+        // 밀어낼 자리를 먼저 만든다 (프레임이 모자라면 오버셋 난다)
+        var pgRef = st0.pg;
+        var geo = [], props = [], master = pgRef.appliedMaster;
+        var refFrames = bodyFrames(pgRef);
+        for (var g = 0; g < refFrames.length; g++) {
+            geo.push(refFrames[g].geometricBounds.slice(0));
+            props.push({ tfp: refFrames[g].textFramePreferences.properties,
+                         os: refFrames[g].appliedObjectStyle,
+                         lyr: refFrames[g].itemLayer });
+        }
+        var np = d.pages.add(LocationOptions.AFTER, pgRef);
+        if (master) { np.appliedMaster = master; }
+        var tailFrames = bodyFrames(d.pages[pgRef.documentOffset]);
+        var tail = tailFrames[tailFrames.length - 1];
+        var newFrames = [];
+        for (var k = 0; k < geo.length; k++) {
+            var nf = np.textFrames.add(props[k].lyr);
+            nf.geometricBounds = geo[k];
+            try { nf.textFramePreferences.properties = props[k].tfp; } catch (eP) {}
+            try { nf.appliedObjectStyle = props[k].os; } catch (eO) {}
+            newFrames.push(nf);
+        }
+        for (var n2 = 1; n2 < newFrames.length; n2++) {
+            newFrames[n2].previousTextFrame = newFrames[n2 - 1];
+        }
+        newFrames[0].previousTextFrame = tail;
+        L("   새 페이지 p" + np.name + " 프레임 " + newFrames.length + "개 삽입");
+
+        // 한 칸씩 밀며 페이지 머리에 닿을 때까지
+        var nudges = 0;
+        while (nudges < MAX_NUDGE) {
+            var cur = findMark(needle, T.page_min, T.page_max);
+            if (!cur) { throw "밀기 도중 대상 소실: " + needle; }
+            var st = headState(cur);
+            if (!st) { throw "밀기 도중 프레임 해석 실패: " + needle; }
+            if (st.idx === 0 && st.off <= HEAD_SLACK) { break; }
+            cur.insertionPoints[0].contents = SpecialCharacters.FRAME_BREAK;
+            nudges++;
+        }
+        var fin = headState(findMark(needle, T.page_min, T.page_max));
+        L("   브레이크 " + nudges + "회 → p" + (fin ? fin.pg.name : "?") +
+          " 단 " + (fin ? (fin.idx + 1) : "?") + " 오프셋 " + (fin ? fin.off : "?"));
+        if (!fin || fin.idx !== 0 || fin.off > HEAD_SLACK) {
+            throw "[" + T.code + "] 페이지 머리로 보내지 못함 (브레이크 " +
+                  nudges + "회 후에도)";
         }
     }
 
