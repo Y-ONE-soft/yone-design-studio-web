@@ -319,6 +319,10 @@ class ConvertToVerticalEngine(BaseEngine):
             "master_indd": master_local,
             "step123_ai": os.path.expanduser(cfg.get("step123_ai") or ""),
             "image_base": os.path.expanduser(cfg.get("image_base") or ""),
+            # STEP4.5 페이지 경계 강제 분리 — 관통 스레드 0 의 조건.
+            # 범위 기준을 누적(cum)에서 스토리 절대 인덱스로 고친 뒤 켠다
+            # (누적 기준일 때는 대형 실전 스토리에서 22라인이 유실됐다).
+            "cross_page_cut": cfg.get("cross_page_cut", True),
             "front_pages": cfg.get("front_pages", 3),
             "sep_scan_start": cfg.get("sep_scan_start", 100),
             "margin_outside": cfg.get("margin_outside", 20),

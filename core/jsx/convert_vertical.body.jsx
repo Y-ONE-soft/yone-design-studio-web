@@ -841,6 +841,7 @@ try {
             for (var ci2 = 0; ci2 < conts.length; ci2++) {
                 var c = conts[ci2];
                 var cap = { frame: c, fid: null, pg: null, gb: null, len: 0,
+                            sIdx: null,
                             os: null, tfp: null, lyr: null, endsPara: true,
                             zombie: false };
                 var tx = null;
@@ -853,6 +854,12 @@ try {
                 try { cap.fid = c.id; } catch (e) {}
                 if (cap.zombie) { caps.push(cap); continue; }
                 cap.len = tx.length;
+                // 스토리 내 절대 시작 인덱스 — 범위 복제의 기준.
+                // len 누적(cum)으로 오프셋을 만들면 대형 스레드에서 오차가
+                // 쌓인다(2026-08-27 실측: 92프레임 실전 스토리에서 그룹이
+                // 390개로 늘자 22라인이 경고 없이 유실). Text.index 는
+                // 스토리 기준이라 누적이 필요 없다.
+                try { cap.sIdx = c.texts[0].index; } catch (e) { cap.sIdx = null; }
                 cap.endsPara = (cap.len === 0) ||
                                (tx.charAt(cap.len - 1) === "\r");
                 try { cap.pg = c.parentPage; } catch (e) {}
@@ -950,10 +957,16 @@ try {
                     prevNf = nf;
                 }
                 if (!okAll) { break; }
-                var start = cum[grp[0]];
-                var end = (g === groups.length - 1)
-                    ? (storyLen - 1)
-                    : (cum[grp[grp.length - 1]] + caps[grp[grp.length - 1]].len - 1);
+                var _g0 = caps[grp[0]], _gN = caps[grp[grp.length - 1]];
+                var start = (_g0.sIdx !== null) ? _g0.sIdx : cum[grp[0]];
+                var end;
+                if (g === groups.length - 1) {
+                    end = storyLen - 1;          // 마지막 그룹이 오버셋 잔여 흡수
+                } else if (_gN.sIdx !== null) {
+                    end = _gN.sIdx + _gN.len - 1;
+                } else {
+                    end = cum[grp[grp.length - 1]] + _gN.len - 1;
+                }
                 if (firstNf !== null && end >= start) {
                     try {
                         st.texts[0].characters.itemByRange(start, end)
