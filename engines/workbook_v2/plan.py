@@ -1233,12 +1233,20 @@ def _s3_answer_tables(unit, st_q, warnings):
         # '밑줄제거' 변형으로 — 표 모양(8pt·가운데)은 그대로다.
         hdr_style = (_s3_p_no_underline_style() or unit[i].get("s")
                      or "$BASIC")
-        unit[i:i + 2] = [{
-            "t": "", "s": unit[i].get("s") or "$BASIC", "runs": [],
+        host_style = unit[i].get("s") or "$BASIC"
+        # 지문 바로 밑에 표가 붙어 답답하다(사용자 지시 2026-08-27) —
+        # 표 앞에 빈 단락 한 개(엔터 한 칸)를 둔다. 앞이 이미 빈 줄이면
+        # 넣지 않는다(두 줄이 되지 않게).
+        _prev_blank = (i > 0 and not (unit[i - 1].get("t") or "").strip())
+        _rows = [] if _prev_blank else [
+            {"t": "", "s": host_style, "runs": []}]
+        _rows.append({
+            "t": "", "s": host_style, "runs": [],
             "table": {"cols": headers, "rows": rows,
                       "header_style": hdr_style,
-                      "header_style_fb": unit[i].get("s") or "$BASIC"},
-        }]
+                      "header_style_fb": host_style},
+        })
+        unit[i:i + 2] = _rows
         made += 1
         i += 1
     return made
