@@ -166,3 +166,25 @@ def test_사이클_시작순서가_canon과_어긋나면_실패(tmp_path):
         assert False, "순서 붕괴를 통과시켰다"
     except ValueError as e:
         assert "순서" in str(e)
+
+
+def test_스레드_두_프레임이면_뒤_프레임_첫지문도_분할대상(tmp_path):
+    """프레임 머리 지문(at_head)은 앞 프레임 끝에서 끊어야 한다 — 안 그러면
+    앞 지문을 밀어낼 때 재흐름으로 같은 페이지에 합쳐진다 (26년 6월 29·39)."""
+    frames, fid, pi = [], 7000, 0
+    frames.append(_f(pi, "C-마스터", "[20] 첫 지문.\r[21] 둘째 지문.", fid, sid=1))
+    pi += 1
+    frames.append(_f(pi, "C-마스터", "[22] 셋째 지문.\r[23] 넷째 지문.",
+                     fid + 1, sid=1))
+    fj = _write(tmp_path, "arr.json", frames, 2)
+    afs, _ = exam_mod.arrange_frames(fj, 1, 2)
+    bounds = exam_mod.arrange_boundaries(afs, ["20", "21", "22", "23"])
+    tg = exam_mod.arrange_split_targets(bounds, afs)
+    assert [t["code"] for t in tg] == ["21", "22", "23"]   # 첫 지문만 제외
+    by = {t["code"]: t for t in tg}
+    assert not by["21"].get("break_only")
+    # [22] 는 뒤 프레임 머리 → 앞 프레임(fid 7000) 끝에서 끊는다
+    assert by["22"]["break_only"] is True
+    assert by["22"]["fid"] == "7000"
+    assert by["22"]["offset"] == frames[0]["chars"]
+    assert by["22"]["page"] == 1

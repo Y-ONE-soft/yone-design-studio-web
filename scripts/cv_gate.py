@@ -81,7 +81,7 @@ def main():
     afs, _pc = exam_mod.arrange_frames(frames_json, arr_first, arr_last)
     abounds = exam_mod.arrange_boundaries(afs, canon)
     fails += exam_mod.arrange_gate(abounds, canon)
-    arr_targets = exam_mod.arrange_split_targets(abounds)
+    arr_targets = exam_mod.arrange_split_targets(abounds, afs)
     log(f"\n[S2] 영작 배열 — 검출 {len(abounds)}지문, 분할 대상 {len(arr_targets)}건")
 
     log(f"\n분할 합계 {len(exam_targets) + len(arr_targets)}건 "

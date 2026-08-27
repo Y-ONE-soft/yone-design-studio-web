@@ -434,7 +434,7 @@ class ConvertToVerticalEngine(BaseEngine):
         afs, _pc = exam_mod.arrange_frames(frames_json, arr_first, arr_last)
         abounds = exam_mod.arrange_boundaries(afs, canon)
         fails += exam_mod.arrange_gate(abounds, canon)
-        arr_targets = exam_mod.arrange_split_targets(abounds)
+        arr_targets = exam_mod.arrange_split_targets(abounds, afs)
 
         if fails:
             raise RuntimeError("S1/S2 게이트 실패 — 조판 미착수:\n  - "

@@ -166,11 +166,48 @@ def arrange_boundaries(frames, canon):
     return out
 
 
-def arrange_split_targets(boundaries):
-    """프레임 머리가 아닌 곳에서 시작하는 지문만 분할 대상."""
-    return [{"code": b["code"], "fid": b["fid"],
-             "offset": b["offset"], "page": b["page"]}
-            for b in boundaries if not b["at_head"]]
+def arrange_split_targets(boundaries, frames=None):
+    """스레드의 **첫 지문을 뺀 전원**이 분할 대상이다.
+
+    프레임 머리에서 시작하는 지문(at_head)을 빼면 안 된다 — 스레드에서는 앞
+    지문을 밀어내는 순간 텍스트가 재흐름해서, 끊을 지시가 없는 그 지문이 앞
+    페이지로 딸려 들어간다 (26년 6월 실측: [24]+[29], [38]+[39] 가 한 페이지로
+    합쳐지고 body 의 arrange 재배분이 16섹션으로 줄었다).
+
+    at_head 지문은 **앞 프레임의 끝**에 브레이크를 넣는다. 자기 프레임의
+    오프셋 0 에 넣으면 그 프레임이 통째로 비고 전체가 한 칸씩 밀려 프레임이
+    모자란다. 페이지는 추가하지 않으므로(break_only) 프레임 총수는
+    "원본 프레임 + 프레임중간 시작 지문 수" 그대로다.
+    """
+    prev_of = {}
+    if frames:
+        by_story = {}
+        for f in frames:
+            by_story.setdefault(f["sid"], []).append(f)
+        for fs in by_story.values():
+            fs.sort(key=lambda f: (f["pidx"], f["gb"][1], f["gb"][0]))
+            for a, b in zip(fs, fs[1:]):
+                prev_of[b["fid"]] = a
+
+    out = []
+    for i, b in enumerate(boundaries):
+        if i == 0:
+            continue                      # 스레드 첫 지문 — 끊을 앞이 없다
+        if not b["at_head"]:
+            out.append({"code": b["code"], "fid": b["fid"],
+                        "offset": b["offset"], "page": b["page"]})
+            continue
+        prev = prev_of.get(b["fid"])
+        if prev is None:
+            # 앞 프레임을 못 찾으면 조용히 넘기지 않는다 — 이 지문이 앞
+            # 페이지에 합쳐지는 바로 그 사고가 난다.
+            raise ValueError("영작배열 지문 %s: 앞 프레임을 찾지 못해 분할 "
+                             "지시를 만들 수 없음 (p%d fid %s)"
+                             % (b["code"], b["page"], b["fid"]))
+        out.append({"code": b["code"], "fid": prev["fid"],
+                    "offset": prev["chars"], "page": prev["pidx"] + 1,
+                    "break_only": True})
+    return out
 
 
 def arrange_gate(boundaries, canon):

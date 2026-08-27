@@ -66,6 +66,7 @@ try {
         }
         if (idx < 0) { throw "대상 프레임 미발견 (p" + T.page + " fid " + T.fid + ")"; }
         var breaks = frs.length - idx;          // 남은 프레임 수 + 1
+        var breakOnly = (T.break_only === true);
         var lastFrame = frs[frs.length - 1];
         var geo = [];
         for (var g = 0; g < frs.length; g++) { geo.push(frs[g].geometricBounds.slice(0)); }
@@ -79,28 +80,36 @@ try {
         var beforeChars = 0;
         for (var c0 = 0; c0 < frs.length; c0++) { beforeChars += nchars(frs[c0]); }
         L("[" + T.code + "] p" + T.page + " 단 " + (idx + 1) + "/" + frs.length +
-          " → 프레임브레이크 " + breaks + "회, 오프셋 " + T.offset);
+          " → 프레임브레이크 " + breaks + "회, 오프셋 " + T.offset +
+          (breakOnly ? " (break_only)" : ""));
 
         // 1) 새 페이지 + 프레임 (페이지 add 후 참조 재해석 필수)
-        var np = d.pages.add(LocationOptions.AFTER, pg);
-        if (master) { np.appliedMaster = master; }
-        var pgR = d.pages[pi];                 // 재해석
-        var frsR = bodyFrames(pgR);
-        var tail = frsR[frsR.length - 1];      // 공유 페이지 마지막 프레임
-        var newFrames = [];
-        for (var k = 0; k < geo.length; k++) {
-            var nf = np.textFrames.add(props[k].lyr);
-            nf.geometricBounds = geo[k];
-            try { nf.textFramePreferences.properties = props[k].tfp; } catch (eP) {}
-            try { nf.appliedObjectStyle = props[k].os; } catch (eO) {}
-            newFrames.push(nf);
+        //    break_only = 프레임 머리에서 시작하는 지문. 프레임은 이미 충분하고
+        //    앞 프레임 끝에서 끊기만 하면 된다 — 페이지를 더하면 빈 페이지가
+        //    남고 이후 재배치가 한 칸씩 밀린다.
+        if (!breakOnly) {
+            var np = d.pages.add(LocationOptions.AFTER, pg);
+            if (master) { np.appliedMaster = master; }
+            var pgR = d.pages[pi];                 // 재해석
+            var frsR = bodyFrames(pgR);
+            var tail = frsR[frsR.length - 1];      // 공유 페이지 마지막 프레임
+            var newFrames = [];
+            for (var k = 0; k < geo.length; k++) {
+                var nf = np.textFrames.add(props[k].lyr);
+                nf.geometricBounds = geo[k];
+                try { nf.textFramePreferences.properties = props[k].tfp; } catch (eP) {}
+                try { nf.appliedObjectStyle = props[k].os; } catch (eO) {}
+                newFrames.push(nf);
+            }
+            // 새 프레임들을 서로 잇고, 공유 페이지 마지막 프레임 뒤에 끼운다
+            for (var n2 = 1; n2 < newFrames.length; n2++) {
+                newFrames[n2].previousTextFrame = newFrames[n2 - 1];
+            }
+            newFrames[0].previousTextFrame = tail;
+            L("   새 페이지 p" + np.name + " 프레임 " + newFrames.length + "개 스레드 삽입");
+        } else {
+            L("   (break_only) 페이지 추가 없이 앞 프레임 끝에서 분리");
         }
-        // 새 프레임들을 서로 잇고, 공유 페이지 마지막 프레임 뒤에 끼운다
-        for (var n2 = 1; n2 < newFrames.length; n2++) {
-            newFrames[n2].previousTextFrame = newFrames[n2 - 1];
-        }
-        newFrames[0].previousTextFrame = tail;
-        L("   새 페이지 p" + np.name + " 프레임 " + newFrames.length + "개 스레드 삽입");
 
         // 2) 분할 오프셋에 프레임 브레이크 (역순 삽입 — 오프셋 불변)
         var frs2 = bodyFrames(d.pages[pi]);
@@ -109,7 +118,16 @@ try {
             if (String(frs2[i2].id) === String(T.fid)) { target = frs2[i2]; }
         }
         if (!target) { throw "브레이크 대상 프레임 소실 (fid " + T.fid + ")"; }
-        var ip = target.characters[T.offset].insertionPoints[0];
+        var nc = nchars(target);
+        var off = T.offset;
+        if (off > nc) { off = nc; }
+        var ip;
+        if (off >= nc) {
+            // 프레임 끝 — characters[nc] 는 없으므로 마지막 삽입점을 쓴다
+            ip = target.insertionPoints[-1];
+        } else {
+            ip = target.characters[off].insertionPoints[0];
+        }
         for (var b = 0; b < breaks; b++) {
             ip.contents = SpecialCharacters.FRAME_BREAK;
         }
