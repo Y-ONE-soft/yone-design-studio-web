@@ -419,6 +419,15 @@ function insertImageAt(doc, story, para, img) {
     // 완제품 PDF 에 0.004pt 선 4개). 크기 조정 뒤에 확정한다.
     try { frame.strokeWeight = "0pt"; } catch (e) {}
     try { frame.strokeColor = doc.swatches.itemByName("None"); } catch (e) {}
+    // 문서에 **포함(embed)** — 링크 원본은 잡 폴더에 있고 잡은 나중에
+    // jobs_archive 로 옮겨진다(scripts/archive_jobs.py). 링크로 두면 그때
+    // 도표가 '누락된 링크'가 된다. 실패해도 링크 상태로 진행 (침묵 금지).
+    try {
+        var gfx = frame.graphics[0];
+        if (gfx && gfx.itemLink && gfx.itemLink.isValid) { gfx.itemLink.unlink(); }
+    } catch (e) {
+        wlog("[경고] 원고 그림 문서포함(embed) 실패 — 링크 유지: " + e);
+    }
     return 1;
 }
 
