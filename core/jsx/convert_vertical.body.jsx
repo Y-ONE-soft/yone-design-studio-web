@@ -792,6 +792,9 @@ try {
 
     var _splitCount = 0;
     var _crossPageCuts = 0;     // 페이지 경계에서 강제로 끊은 곳 (관통 방지)
+    var CROSS_PAGE_CUT = false; // 기본 꺼짐 — 아래 주석 참조 (내용 누락 실측)
+    try { if (cfg && cfg.cross_page_cut === true) { CROSS_PAGE_CUT = true; } }
+    catch (eCfg) {}
     var _splitGroups = 0;
     var _splitRemain = 0;
     (function () {
@@ -876,7 +879,12 @@ try {
             var cur = [0];
             for (var gi = 1; gi < caps.length; gi++) {
                 var cutHere = (caps[gi - 1].endsPara || caps[gi - 1].zombie);
-                if (!cutHere) {
+                // 2026-08-27 실기: 이 규칙을 켜면 관통은 0이 되지만 **내용
+                // 22라인이 누락**됐다. 걸친 단락을 프레임 경계에서 자를 때
+                // cap.len(표시 문자 수) 기반 범위가 실제 텍스트와 어긋나는
+                // 것으로 보인다(원인 미규명). 내용 누락은 관통보다 위험하므로
+                // 기본 꺼짐. 원인을 잡은 뒤 cfg.cross_page_cut=true 로 켠다.
+                if (!cutHere && CROSS_PAGE_CUT) {
                     try {
                         var pgA = caps[gi - 1].pg, pgB = caps[gi].pg;
                         if (pgA && pgB && String(pgA.id) !== String(pgB.id)) {
