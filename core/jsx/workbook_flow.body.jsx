@@ -129,37 +129,27 @@ function basicParaOf(doc) {
 }
 
 // ── 단위 변환 ──────────────────────────────────────────────────────────────
-// InDesign DOM에 숫자를 그냥 대입하면 **문서의 현재 측정 단위**로 해석된다.
-// 문서가 mm면 0.5 는 0.5pt 가 아니라 0.5mm(=1.417pt)다 — 실제로 답표 4변이
-// 전부 1.417pt 로 들어간 원인 (사용자 지적 2026-08-27).
-function _docUnit(doc, which) {
-    try {
-        return (which === "stroke")
-            ? doc.viewPreferences.strokeMeasurementUnits
-            : doc.viewPreferences.horizontalMeasurementUnits;
-    } catch (e) { return null; }
+// InDesign DOM에 **숫자**를 대입하면 app.scriptPreferences.measurementUnit
+// (기본 AUTO = 문서 단위) 로 해석된다. 이 내지들은 mm 문서라 0.5 는 0.5pt가
+// 아니라 0.5mm(=1.417pt)로 들어간다 — 답표 4변이 전부 1.417pt로 조판된 원인
+// (사용자 지적 2026-08-27. 실측: 완제품 PDF 선 폭 1.417 × 93개).
+//   · 선 두께처럼 '단위를 못 박아야 하는 값'은 "0.5pt" 문자열로 준다
+//     (실측 검증: 숫자 0.5 → 0.5mm, 문자열 "0.5pt" → 0.5pt).
+//   · 기하 계산(그림 크기)은 계산 구간에서만 measurementUnit 을 MM 으로
+//     고정하고 원복한다 (viewPreferences 는 건드리지 않는다 — 사용자 문서
+//     설정 무변경).
+function withMM(fn) {
+    var old = null, set = false;
+    try { old = app.scriptPreferences.measurementUnit;
+          app.scriptPreferences.measurementUnit = MeasurementUnits.MILLIMETERS;
+          set = true; } catch (e) {}
+    try { return fn(); }
+    finally {
+        if (set) {
+            try { app.scriptPreferences.measurementUnit = old; } catch (e) {}
+        }
+    }
 }
-function _mmPerUnit(u) {
-    if (u === MeasurementUnits.MILLIMETERS) { return 1; }
-    if (u === MeasurementUnits.CENTIMETERS) { return 10; }
-    if (u === MeasurementUnits.INCHES || u === MeasurementUnits.INCHES_DECIMAL) { return 25.4; }
-    if (u === MeasurementUnits.PICAS) { return 25.4 / 6; }
-    if (u === MeasurementUnits.CICEROS) { return 4.5117; }
-    if (u === MeasurementUnits.AGATES) { return 25.4 / 14; }
-    if (u === MeasurementUnits.PIXELS) { return 25.4 / 72; }
-    return 25.4 / 72;              // POINTS(기본)
-}
-// mm → 문서 가로 단위 값
-function mmToDoc(doc, mm) {
-    return mm / _mmPerUnit(_docUnit(doc, "horizontal"));
-}
-// pt → 문서 선 두께 단위 값 (0.5pt 를 mm 문서에서도 0.5pt 로 넣기 위함)
-function ptToStroke(doc, pt) {
-    var u = _docUnit(doc, "stroke");
-    if (u === null || u === MeasurementUnits.POINTS) { return pt; }
-    return (pt * 25.4 / 72) / _mmPerUnit(u);
-}
-
 
 // ── 아이콘 op (W3) ──────────────────────────────────────────────────────────
 var _iconDup = {};    // label -> {src, state} 또는 {missing: true}
@@ -386,24 +376,23 @@ function insertImageAt(doc, story, para, img) {
     try { frame.strokeWeight = 0; } catch (e) {}
     try {
         frame.fit(FitOptions.FRAME_TO_CONTENT);
-        var gb = frame.geometricBounds;
-        var w0 = gb[3] - gb[1], h0 = gb[2] - gb[0];
-        if (w0 > 0 && h0 > 0) {
+        withMM(function () {                 // 기하는 전부 mm로 고정해 계산
+            var gb = frame.geometricBounds;
+            var w0 = gb[3] - gb[1], h0 = gb[2] - gb[0];
+            if (!(w0 > 0 && h0 > 0)) { return; }
             var box = _frameColumnBox(para);
             var maxW = (box && box.w > 0) ? box.w : w0;
-            if (img.w_mm && img.w_mm > 0) {
-                var want = mmToDoc(doc, img.w_mm);
-                if (want > 0 && want < maxW) { maxW = want; }
-            }
+            // 원고 표시 폭이 단 폭보다 작으면 원고 크기를 존중
+            if (img.w_mm && img.w_mm > 0 && img.w_mm < maxW) { maxW = img.w_mm; }
             var sc = maxW / w0;
-            // 높이 상한 — 한 프레임(단)의 80%를 넘지 않게 (넘치면 문항이
-            // 통째로 다음 프레임으로 밀려 빈 페이지가 생긴다)
+            // 높이 상한 — 한 단의 80%를 넘지 않게 (넘치면 문항이 통째로
+            // 다음 프레임으로 밀려 빈 페이지가 생긴다)
             if (box && box.h > 0 && h0 * sc > box.h * 0.8) {
                 sc = (box.h * 0.8) / h0;
             }
             frame.absoluteHorizontalScale = sc * 100;
             frame.absoluteVerticalScale = sc * 100;
-        }
+        });
     } catch (e) {
         wlog("[경고] 원고 그림 크기 조정 실패: " + e);
     }
@@ -420,7 +409,7 @@ function insertImageAt(doc, story, para, img) {
 // 행 수는 발문의 "(틀린 부분 N개)" — 플랜이 계산해 spec.rows로 준다.
 var TBL_HDR_SWATCH = "C=44 M=0 Y=0 K=14";
 var TBL_HDR_TINT = 50;
-var TBL_STROKE = 0.5;
+var TBL_STROKE = "0.5pt";      // 문자열 = 단위 명시 (숫자면 mm로 해석됨)
 var TBL_INSET = 1;
 // (행 높이는 지정하지 않는다 — 완성본 실측값 헤더 4.822 / 답 6.233mm는
 //  autoGrow 결과값이다. 아래 insertAnswerTable 주석 참조)
@@ -483,13 +472,10 @@ function insertAnswerTable(doc, para, spec, styleOf) {
     var hdrStyle = spec.header_style ? styleOf(spec.header_style) : null;
     try {
         var allCells = tbl.cells.everyItem();
-        // 0.5**pt** — 숫자 그대로 넣으면 문서 단위(mm)로 해석돼 1.417pt 가
-        // 된다 (사용자 지적 2026-08-27: "표 획이 전부 1.417pt로 들어갔어").
-        var tblStroke = ptToStroke(doc, TBL_STROKE);
-        allCells.topEdgeStrokeWeight = tblStroke;
-        allCells.bottomEdgeStrokeWeight = tblStroke;
-        allCells.leftEdgeStrokeWeight = tblStroke;
-        allCells.rightEdgeStrokeWeight = tblStroke;
+        allCells.topEdgeStrokeWeight = TBL_STROKE;
+        allCells.bottomEdgeStrokeWeight = TBL_STROKE;
+        allCells.leftEdgeStrokeWeight = TBL_STROKE;
+        allCells.rightEdgeStrokeWeight = TBL_STROKE;
         allCells.topInset = TBL_INSET;
         allCells.bottomInset = TBL_INSET;
         allCells.leftInset = TBL_INSET;
