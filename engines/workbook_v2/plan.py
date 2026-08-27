@@ -2871,6 +2871,21 @@ _RE_C1_HEADER = re.compile(r"^\s*\{[^}]+\}")
 # 엔진이 넣는 발문은 "Q."로 시작하지 않는다 — 그래서 이 둘만 안전하게 걷힌다.
 _RE_C1_MANU_PROMPT = re.compile(r"^\s*Q\s*[.:]\s*\S")
 _RE_C1_LESSON_TITLE = re.compile(r"^\s*\d{1,2}\s*[강과]\s*[.,]\s*\S")
+# W78 (2026-08-27 비상(황) 3과 실증 — 사용자 지적 "하단 문제가 MR1만 들어감"):
+# "Q."는 원고 발문만의 표기가 아니다. 교과서 지문 자체가 Q&A 표제를 쓰면
+# ("Q. What happens in our brain when we read?") 그 줄이 하단 슬롯의
+# 주어진 문장이자 지문 본문인데, 리터럴 `^Q[.:]`가 이를 발문으로 보고
+# 6줄을 걷어내 10지문 중 6지문의 하단 문제가 통째로 사라졌다.
+# 구조로 가른다 — **지시문은 한국어다**. 발문은 학생에게 주는 한국어 명령이고
+# (엔진이 넣는 발문도, 원고가 적어 둔 중복 발문도 전부 한글), "Q." 뒤가
+# 영어로만 이어지는 줄은 지문 내용이다.
+_RE_C1_HANGUL = re.compile(r"[가-힣]")
+
+
+def _c1_is_manu_prompt(text):
+    """원고 발문 표기("Q. …") 여부 — 한국어 지시문일 때만 참."""
+    t = text or ""
+    return bool(_RE_C1_MANU_PROMPT.match(t) and _RE_C1_HANGUL.search(t))
 _RE_C1_CHOICE = re.compile(r"^\s*\([A-Z]\)")
 _RE_C1_ABC = re.compile(r"^\s*\(([ABC])\)")
 _RE_C1_EMPTY_BRACKET = re.compile(
@@ -3397,7 +3412,7 @@ def build_step1_c1(step_data, workbook_type="모의고사", exclude_btm=False,
     _c1_kinds = {}
     for it in items:
         k = _mn.classify(it["t"])
-        if k or _RE_C1_MANU_PROMPT.match(it["t"]) \
+        if k or _c1_is_manu_prompt(it["t"]) \
                 or _RE_C1_LESSON_TITLE.match(it["t"]):
             _c1_kinds[id(it)] = k or "prompt"
     _c1_drop = [it for it in items if id(it) in _c1_kinds]
