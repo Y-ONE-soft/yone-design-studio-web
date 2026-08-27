@@ -371,7 +371,18 @@ function insertImageAt(doc, story, para, img) {
             frame = frame.parent;
         }
     } catch (e) {}
-    try { frame.anchoredObjectSettings.anchoredPosition = AnchorPosition.INLINE_POSITION; } catch (e) {}
+    // '줄 위(Above Line)' 앵커 — 인라인으로 두면 고정 행간 단락에서 그림이
+    // 윗줄을 덮는다 (1차 검증 조판 실증: 도표가 발문 "01 …" 을 가림).
+    // 줄 위 앵커는 그림이 제 줄을 차지하고 앞뒤 텍스트를 밀어낸다.
+    try {
+        var aos = frame.anchoredObjectSettings;
+        aos.anchoredPosition = AnchorPosition.ABOVE_LINE;
+        try { aos.horizontalAlignment = HorizontalAlignment.CENTER_ALIGN; } catch (e) {}
+        try { aos.spaceAbove = "1mm"; } catch (e) {}
+        try { aos.spaceBelow = "1mm"; } catch (e) {}
+    } catch (e) {
+        try { frame.anchoredObjectSettings.anchoredPosition = AnchorPosition.INLINE_POSITION; } catch (e2) {}
+    }
     try { frame.textWrapPreferences.textWrapMode = TextWrapModes.NONE; } catch (e) {}
     try { frame.strokeWeight = 0; } catch (e) {}
     try {
