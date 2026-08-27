@@ -128,6 +128,39 @@ function basicParaOf(doc) {
     return doc.paragraphStyles[0];
 }
 
+// ── 단위 변환 ──────────────────────────────────────────────────────────────
+// InDesign DOM에 숫자를 그냥 대입하면 **문서의 현재 측정 단위**로 해석된다.
+// 문서가 mm면 0.5 는 0.5pt 가 아니라 0.5mm(=1.417pt)다 — 실제로 답표 4변이
+// 전부 1.417pt 로 들어간 원인 (사용자 지적 2026-08-27).
+function _docUnit(doc, which) {
+    try {
+        return (which === "stroke")
+            ? doc.viewPreferences.strokeMeasurementUnits
+            : doc.viewPreferences.horizontalMeasurementUnits;
+    } catch (e) { return null; }
+}
+function _mmPerUnit(u) {
+    if (u === MeasurementUnits.MILLIMETERS) { return 1; }
+    if (u === MeasurementUnits.CENTIMETERS) { return 10; }
+    if (u === MeasurementUnits.INCHES || u === MeasurementUnits.INCHES_DECIMAL) { return 25.4; }
+    if (u === MeasurementUnits.PICAS) { return 25.4 / 6; }
+    if (u === MeasurementUnits.CICEROS) { return 4.5117; }
+    if (u === MeasurementUnits.AGATES) { return 25.4 / 14; }
+    if (u === MeasurementUnits.PIXELS) { return 25.4 / 72; }
+    return 25.4 / 72;              // POINTS(기본)
+}
+// mm → 문서 가로 단위 값
+function mmToDoc(doc, mm) {
+    return mm / _mmPerUnit(_docUnit(doc, "horizontal"));
+}
+// pt → 문서 선 두께 단위 값 (0.5pt 를 mm 문서에서도 0.5pt 로 넣기 위함)
+function ptToStroke(doc, pt) {
+    var u = _docUnit(doc, "stroke");
+    if (u === null || u === MeasurementUnits.POINTS) { return pt; }
+    return (pt * 25.4 / 72) / _mmPerUnit(u);
+}
+
+
 // ── 아이콘 op (W3) ──────────────────────────────────────────────────────────
 var _iconDup = {};    // label -> {src, state} 또는 {missing: true}
 var _iconLink = {};   // label -> {path, width} 또는 {missing: true}
@@ -450,10 +483,13 @@ function insertAnswerTable(doc, para, spec, styleOf) {
     var hdrStyle = spec.header_style ? styleOf(spec.header_style) : null;
     try {
         var allCells = tbl.cells.everyItem();
-        allCells.topEdgeStrokeWeight = TBL_STROKE;
-        allCells.bottomEdgeStrokeWeight = TBL_STROKE;
-        allCells.leftEdgeStrokeWeight = TBL_STROKE;
-        allCells.rightEdgeStrokeWeight = TBL_STROKE;
+        // 0.5**pt** — 숫자 그대로 넣으면 문서 단위(mm)로 해석돼 1.417pt 가
+        // 된다 (사용자 지적 2026-08-27: "표 획이 전부 1.417pt로 들어갔어").
+        var tblStroke = ptToStroke(doc, TBL_STROKE);
+        allCells.topEdgeStrokeWeight = tblStroke;
+        allCells.bottomEdgeStrokeWeight = tblStroke;
+        allCells.leftEdgeStrokeWeight = tblStroke;
+        allCells.rightEdgeStrokeWeight = tblStroke;
         allCells.topInset = TBL_INSET;
         allCells.bottomInset = TBL_INSET;
         allCells.leftInset = TBL_INSET;
@@ -3041,6 +3077,22 @@ try {
                      + (iconWant[lbw] - gotN) + "/" + iconWant[lbw]
                      + "개 (" + lbw + ")");
             }
+        }
+
+        // ── W77 원고 그림 패스 — 아이콘과 같은 성질(앵커 삽입은 단락
+        // 인덱스 불변)이라 답표 패스 **앞**에 둔다(답표는 단락 수를 바꾼다).
+        var imgWant = 0, imgDone = 0;
+        _imgPlaceFail = 0;
+        for (var gi2 = flat.length - 1; gi2 >= 0; gi2--) {
+            var gim = flat[gi2].image;
+            if (!gim || gi2 >= paras.length) { continue; }
+            imgWant++;
+            imgDone += insertImageAt(doc, story, paras[gi2], gim);
+        }
+        if (imgWant > 0) {
+            wlog(flow.step + " 원고 그림 배치: " + imgDone + "/" + imgWant + "개"
+                 + (_imgPlaceFail > 0
+                    ? " / [경고] 실패 " + _imgPlaceFail + "개" : ""));
         }
 
         // ── W66 답표 패스 — 아이콘 이후(아이콘은 단락 인덱스 불변), 역순.

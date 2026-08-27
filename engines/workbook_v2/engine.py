@@ -193,8 +193,18 @@ class WorkbookV2Engine(BaseEngine):
         cfg = _load_v1_config()
 
         log(f"[v2 파서] 시작 (v1 파서 재사용): 고{grade} {year}년 {month}월")
+        # W77 (사용자 지시 2026-08-27): 원고 본문 그림(도표/그래프) 추출.
+        # **잡 폴더 안**으로만 뽑는다 — 원고 폴더는 구글 드라이브일 수 있고
+        # 드라이브 파일에는 절대 쓰지 않는다.
+        image_dir = os.path.join(job_dir, "assets")
         data = parse_manuscript_folder(manuscript_dir, cfg, grade, year,
-                                       month, log)
+                                       month, log, image_dir=image_dir)
+        _n_img = sum(1 for _it in ((data.get("steps") or {})
+                                   .get("step3") or {}).get("normal", []) or []
+                     for _p in _it.get("paragraphs", []) or []
+                     if _p.get("image"))
+        if _n_img:
+            log(f"[v2 파서] 원고 그림 {_n_img}개 추출 → {image_dir}")
 
         # 배치 A (W33): Step3 '입력 파일 전수 ↔ 라우팅 결과' 쌍방 대조 —
         # 어느 문항에도 실리지 않은 원고가 남으면 [오류] 조판 중단 (침묵 금지)
