@@ -70,11 +70,16 @@ try {
     for (var r0 = 0; r0 < stale.length; r0++) {
         var dmR = d.masterSpreads.itemByName(stale[r0]);
         if (!dmR.isValid) { continue; }
+        // InDesign 마스터 접두어는 **4자 제한**이다 ("_oldA" 5자는 거부됨 —
+        // 2026-08-28 실측). 한 글자만 덧붙인다.
         try {
-            dmR.namePrefix = "_old" + dmR.namePrefix;
+            dmR.namePrefix = "o" + dmR.namePrefix;
             retired.push(dmR);
             L("   낡은 마스터 비켜둠: " + dmR.name);
-        } catch (eR) { L("[경고] 이름 변경 실패: " + stale[r0] + " — " + eR); }
+        } catch (eR) {
+            throw "낡은 마스터 이름 변경 실패(" + stale[r0] + "): " + eR +
+                  " — 교체를 진행하면 전체버전 마스터가 그대로 남는다";
+        }
     }
     var bring = missing.concat(stale);
     for (var m2 = 0; m2 < bring.length; m2++) {
@@ -88,7 +93,10 @@ try {
         try {
             if (nm.namePrefix !== wantPrefix) { nm.namePrefix = wantPrefix; }
             if (nm.baseName !== wantBase) { nm.baseName = wantBase; }
-        } catch (eP) { L("[경고] 복제본 이름 설정 실패: " + bring[m2] + " — " + eP); }
+        } catch (eP) {
+            throw "복제본 이름 설정 실패(" + bring[m2] + " → " + nm.name + "): " +
+                  eP + " — 이대로 두면 엉뚱한 이름의 마스터만 늘어난다";
+        }
         L("   마스터 가져옴: " + bring[m2] + " → " + nm.name);
     }
     srcDoc.close(SaveOptions.NO);
