@@ -138,6 +138,31 @@ def expected_page_count(src_pages, stats):
     return src_pages - deleted - arr_del + arr_add
 
 
+def residual_threads(dump, max_gap=4):
+    """관통 스레드의 위치 — [(페이지들, 첫 단락 40자)]. 경고에 찍어 작업자가
+    바로 찾아가게 한다 ("잔존 N개"만으로는 288페이지에서 못 찾는다)."""
+    out = []
+    for st in dump.get("stories", []):
+        pgs = st.get("pg") or []
+        if len(pgs) < 2:
+            continue
+        nums = []
+        for p in pgs:
+            digits = re.sub(r"\D", "", str(p))
+            if digits:
+                nums.append(int(digits))
+        nums.sort()
+        if not nums or not any(b - a > max_gap for a, b in zip(nums, nums[1:])):
+            continue
+        head = ""
+        for para in (st.get("paragraphs") or []):
+            head = _norm_line(para.get("t"))[:40]
+            if head:
+                break
+        out.append((nums, head))
+    return out
+
+
 def residual_thread_count(dump, max_gap=4):
     """섹션 관통 스레드 수 — 페이지 간격이 max_gap 초과인 다중 페이지 스토리.
 
@@ -620,13 +645,19 @@ class ConvertToVerticalEngine(BaseEngine):
         # (a3) 섹션 관통 스레드 잔존 게이트 (W27 실기 결함 실증 — STEP4.5가
         #      분리하지 못한 스레드는 사이클을 관통해 페이지 간격이 크게 남음.
         #      수동 실물의 정상 잔존 스레드는 문제 내 연속 3~4p — 간격 1 이내)
-        residual_threads = residual_thread_count(out_dump)
-        if residual_threads:
+        residual = residual_threads(out_dump)
+        if residual:
             ok = False
+            where = "; ".join(
+                "p%s ← \"%s\"" % ("·".join(str(x) for x in nums[:4]), head)
+                for nums, head in residual[:3])
             warnings.append(
-                f"❌ 섹션 관통 스레드 잔존 {residual_threads}개 — "
-                "STEP4.5 분리 실패 (재배치 후 텍스트 흐름 붕괴 위험)")
-        log(f"[검수] 관통 스레드 잔존: {residual_threads}개")
+                f"❌ 섹션 관통 스레드 잔존 {len(residual)}개 — 한 스토리가 두 "
+                f"사이클에 걸쳐 있다(앞 지문 꼬리가 뒤 지문 페이지에 인쇄됨). "
+                f"수동 확인: {where}")
+        log(f"[검수] 관통 스레드 잔존: {len(residual)}개"
+            + (" — " + ", ".join("p" + "·".join(str(x) for x in n[:3])
+                                 for n, _h in residual) if residual else ""))
 
         # (b) 사이클 구조 — 출력의 지문 코드가 연속 블록으로 그룹화됐는지
         seq = page_code_sequence(out_dump)
