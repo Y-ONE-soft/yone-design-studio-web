@@ -3112,6 +3112,13 @@ try {
                  + (_imgPlaceFail > 0
                     ? " / [경고] 실패 " + _imgPlaceFail + "개" : ""));
         }
+        // 단락 수 정합 — flat 인덱스로 뒤 패스(답표)가 단락을 찾으므로
+        // 여기서 어긋나면 표가 엉뚱한 단락(지문)에 들어간다 (침묵 금지)
+        var nParaNow = story.paragraphs.length;
+        if (nParaNow !== flat.length) {
+            wlog("[경고] " + flow.step + " 단락 수 불일치: 플랜 " + flat.length
+                 + " vs 스토리 " + nParaNow + " — 답표/후처리 인덱스 어긋남");
+        }
 
         // ── W66 답표 패스 — 아이콘 이후(아이콘은 단락 인덱스 불변), 역순.
         // 표 삽입은 단락 수를 바꾸므로 뒤 단락부터 넣고, 늘어난 만큼
