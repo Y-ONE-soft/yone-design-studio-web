@@ -137,9 +137,18 @@ def compare(verti, horiz, log=None, stall_limit=900, unprinted_out=None,
     print("[대조] 가로 덤프…", flush=True)
     h = _dump(horiz, "h", log, stall_limit=stall_limit)
 
-    # 가로 문단 집합 — 라벨 차이를 흡수하려고 "번호 뗀 형태"도 함께 넣는다
+    # 가로 문단 집합 — **지면에 나오는 것만** 넣는다.
+    # 종전엔 오버셋 문단까지 넣어서, 가로에서 프레임에 안 들어가 인쇄되지
+    # 않는 내용을 "있다"고 판정했다(2026-08-25 실측: 13강 17~32권에서 세로
+    # 인쇄문단 2885개 중 546개가 가로 오버셋이었는데 대조는 손실 0 통과).
+    # 이 대조의 질문은 "가로 파일에 존재하는가"가 아니라 "가로 지면에
+    # 나오는가"다. 라벨 차이를 흡수하는 완화형은 종전 그대로.
+    h_printed = [(pg, t) for pg, t in h if pg not in _UNPRINTED]
+    n_ovf_h = len(h) - len(h_printed)
+    if n_ovf_h:
+        log("가로에서 인쇄되지 않는 문단 %d개 — 대조 집합에서 제외" % n_ovf_h)
     hset = set()
-    for _, t in h:
+    for _, t in h_printed:
         n = _norm(t)
         if not n:
             continue
