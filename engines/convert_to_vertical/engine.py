@@ -630,13 +630,33 @@ class ConvertToVerticalEngine(BaseEngine):
             if st.get("overflow"):
                 out_overflow += 1
         missing = must_keep - got
+        # 2차 판정 — 단락이 프레임 경계에서 갈린 경우는 누락이 아니다.
+        # STEP4.5 의 페이지 경계 강제 분리는 한 단락을 두 조각으로 나눌 수
+        # 있고(내용·지면은 그대로), 단락 단위 비교만으로는 그게 유실로 보인다.
+        # 공백을 지운 스토리 전문에서 찾아 실제 유실만 남긴다.
+        split_only = set()
+        if missing:
+            squashed = []
+            for st in out_dump.get("stories", []):
+                joined = "".join(p.get("t") or "" for p in st.get("paragraphs", []))
+                squashed.append(re.sub(r"\s+", "", unicodedata.normalize("NFC", joined)))
+            for t in missing:
+                key = re.sub(r"\s+", "", t)
+                if any(key in blob for blob in squashed):
+                    split_only.add(t)
+            missing = missing - split_only
         if missing:
             ok = False
             warnings.append(
                 f"❌ 내용 누락 {len(missing)}라인 (원본 대비): "
                 + " | ".join(sorted(missing)[:3]))
+        if split_only:
+            warnings.append(
+                f"⚠️ 단락 분할 {len(split_only)}라인 — 프레임 경계에서 갈렸으나 "
+                "내용은 보존됨 (지면 동일)")
         log(f"[검수] 내용 보존: 원본 {len(must_keep)}라인 중 "
-            f"누락 {len(missing)}")
+            f"누락 {len(missing)}"
+            + (f", 단락분할 {len(split_only)}" if split_only else ""))
 
         # (a2) 중복 배치 게이트 (W27 실기 결함 실증 — 분리 부분 실패로
         #      원본 스레드 + 복제 프레임이 겹쳐 같은 라인이 2회 인쇄될 위험)
