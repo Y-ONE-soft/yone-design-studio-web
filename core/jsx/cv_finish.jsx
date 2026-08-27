@@ -62,32 +62,40 @@ try {
     L("마스터 — 부족 " + (missing.length ? missing.join(",") : "없음") +
       " / 교체 " + (stale.length ? stale.join(",") : "없음"));
 
-    // 교체 대상은 먼저 이름을 비켜 준다(복제본이 원래 이름을 갖도록)
+    // 교체 대상은 먼저 이름을 비켜 준다(복제본이 원래 이름을 갖도록).
+    // MasterSpread.name 은 **읽기 전용**이다 — namePrefix/baseName 으로 바꾼다
+    // (2026-08-27 실측: name 대입은 "'name'은(는) 읽기 전용 속성입니다" 로 실패,
+    // 그 결과 낡은 전체버전 마스터가 그대로 적용됐다).
     var retired = [];
     for (var r0 = 0; r0 < stale.length; r0++) {
         var dmR = d.masterSpreads.itemByName(stale[r0]);
         if (!dmR.isValid) { continue; }
         try {
-            dmR.name = "_old_" + stale[r0];
+            dmR.namePrefix = "_old" + dmR.namePrefix;
             retired.push(dmR);
+            L("   낡은 마스터 비켜둠: " + dmR.name);
         } catch (eR) { L("[경고] 이름 변경 실패: " + stale[r0] + " — " + eR); }
     }
     var bring = missing.concat(stale);
     for (var m2 = 0; m2 < bring.length; m2++) {
         var sm = srcDoc.masterSpreads.itemByName(bring[m2]);
         if (!sm.isValid) { L("[경고] 템플릿에 없음: " + bring[m2]); continue; }
-        sm.duplicate(LocationOptions.AT_END, d);
-        L("   마스터 가져옴: " + bring[m2]);
+        var wantPrefix = sm.namePrefix, wantBase = sm.baseName;
+        var nm = null;
+        try { nm = sm.duplicate(LocationOptions.AT_END, d); }
+        catch (eD) { L("[경고] 마스터 복제 실패: " + bring[m2] + " — " + eD); continue; }
+        // 복제본은 prefix 가 자동 배정될 수 있다 — 원본과 같게 맞춘다
+        try {
+            if (nm.namePrefix !== wantPrefix) { nm.namePrefix = wantPrefix; }
+            if (nm.baseName !== wantBase) { nm.baseName = wantBase; }
+        } catch (eP) { L("[경고] 복제본 이름 설정 실패: " + bring[m2] + " — " + eP); }
+        L("   마스터 가져옴: " + bring[m2] + " → " + nm.name);
     }
     srcDoc.close(SaveOptions.NO);
     srcDoc = null;
-    // 복제 시 이름이 밀렸으면(" 2" 등) 바로잡는다
     for (var f0 = 0; f0 < bring.length; f0++) {
-        if (d.masterSpreads.itemByName(bring[f0]).isValid) { continue; }
-        var alt = d.masterSpreads.itemByName(bring[f0] + " 2");
-        if (alt.isValid) {
-            try { alt.name = bring[f0]; L("   이름 정정: " + bring[f0]); }
-            catch (eN) { L("[경고] 이름 정정 실패: " + bring[f0]); }
+        if (!d.masterSpreads.itemByName(bring[f0]).isValid) {
+            throw "마스터 확보 실패: " + bring[f0] + " — 이름이 맞지 않는다";
         }
     }
 
