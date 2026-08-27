@@ -13,8 +13,15 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 def main():
-    src, page, fid, offset = sys.argv[1], int(sys.argv[2]), sys.argv[3], int(sys.argv[4])
-    breaks = int(sys.argv[5]) if len(sys.argv) > 5 else None
+    """인자: <indd> <targets_json> [probe_pages_csv]
+
+    targets_json 은 [{"code","page","fid","offset"[,"breaks"]}, ...] 그대로.
+    """
+    src = sys.argv[1]
+    targets = json.loads(sys.argv[2])
+    probe = ([int(x) for x in sys.argv[3].split(",")] if len(sys.argv) > 3
+             else sorted({p for t in targets
+                          for p in (t["page"]-1, t["page"], t["page"]+1, t["page"]+2)}))
     from core.indesign.jsxbuild import build_jsx
     from core.indesign.runner import run_jsx
 
@@ -23,10 +30,7 @@ def main():
     doc = os.path.join(work, "probe.indd")
     shutil.copy2(os.path.abspath(os.path.expanduser(src)), doc)
 
-    t = {"code": "probe", "fid": fid, "offset": offset, "page": page}
-    if breaks is not None:
-        t["breaks"] = breaks
-    cfg = {"targets": [t], "probe_pages": [page - 1, page, page + 1, page + 2]}
+    cfg = {"targets": targets, "probe_pages": probe}
     cfg_path = os.path.join(work, "cfg.json")
     with open(cfg_path, "w", encoding="utf-8") as f:
         json.dump(cfg, f, ensure_ascii=False)
