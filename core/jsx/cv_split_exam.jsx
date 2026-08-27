@@ -54,6 +54,36 @@ try {
     // 브레이크는 한 번에 한 칸만 민다(연속 대입은 두 번째부터 no-op — 같은
     // 실측에서 breaks=2 가 1칸만 밀었다). 그래서 목표에 닿을 때까지 한 칸씩
     // 밀며 확인한다.
+    // 스토리 캐시 — 문서 전체 findText 는 288p 에서 수십 초가 걸린다(실측:
+    // 8건 × 6회 검색이 15분 타임아웃을 넘겼다). 대상들은 실전/영작 각각 한
+    // 스토리에 모여 있으므로, 한 번 찾은 스토리를 재사용해 그 안에서만 찾는다.
+    var _storyCache = {};
+
+    function findInStory(st, needle) {
+        if (!st || !st.isValid) { return null; }
+        app.findTextPreferences = NothingEnum.NOTHING;
+        app.changeTextPreferences = NothingEnum.NOTHING;
+        app.findChangeTextOptions.caseSensitive = false;
+        app.findChangeTextOptions.wholeWord = false;
+        app.findTextPreferences.findWhat = needle;
+        var res = null;
+        try { res = st.findText(); } catch (e) { res = null; }
+        app.findTextPreferences = NothingEnum.NOTHING;
+        return (res && res.length) ? res[0] : null;
+    }
+
+    function storyOf(t) {
+        try { return t.parentStory; } catch (e) { return null; }
+    }
+
+    function findCached(key, needle, lo, hi) {
+        var hit = findInStory(_storyCache[key], needle);
+        if (hit) { return hit; }
+        hit = findMark(needle, lo, hi);
+        if (hit) { _storyCache[key] = storyOf(hit); }
+        return hit;
+    }
+
     function findMark(needle, lo, hi) {
         // lo/hi = 검색을 한정할 페이지 범위(1-based, 문서 순). 같은 코드
         // 표기가 다른 섹션에도 있어서(어휘·본문에도 [30]) 범위 없이 찾으면
@@ -111,10 +141,12 @@ try {
             L("[" + T.code + "] 검색 문자열(find) 없음 — 건너뜀");
             continue;
         }
-        var hit = findMark(needle, T.page_min, T.page_max);
+        var ckey = String(T.page_min) + "_" + String(T.page_max);
+        var hit = findCached(ckey, needle, T.page_min, T.page_max);
         if (!hit) { throw "대상 미발견: " + needle; }
         var st0 = headState(hit);
         if (!st0) { throw "대상 프레임 해석 실패: " + needle; }
+        L("   (" + (t + 1) + "/" + cfg.targets.length + " 검색 완료)");
         L("[" + T.code + "] 시작 위치 p" + st0.pg.name + " 단 " + (st0.idx + 1) +
           "/" + st0.n + " 오프셋 " + st0.off);
 
@@ -154,7 +186,7 @@ try {
         // 한 칸씩 밀며 페이지 머리에 닿을 때까지
         var nudges = 0;
         while (nudges < MAX_NUDGE) {
-            var cur = findMark(needle, T.page_min, T.page_max);
+            var cur = findCached(ckey, needle, T.page_min, T.page_max);
             if (!cur) { throw "밀기 도중 대상 소실: " + needle; }
             var st = headState(cur);
             if (!st) { throw "밀기 도중 프레임 해석 실패: " + needle; }
@@ -162,7 +194,7 @@ try {
             cur.insertionPoints[0].contents = SpecialCharacters.FRAME_BREAK;
             nudges++;
         }
-        var fin = headState(findMark(needle, T.page_min, T.page_max));
+        var fin = headState(findCached(ckey, needle, T.page_min, T.page_max));
         L("   브레이크 " + nudges + "회 → p" + (fin ? fin.pg.name : "?") +
           " 단 " + (fin ? (fin.idx + 1) : "?") + " 오프셋 " + (fin ? fin.off : "?"));
         if (!fin || fin.idx !== 0 || fin.off > HEAD_SLACK) {
