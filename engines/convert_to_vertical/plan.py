@@ -129,6 +129,12 @@ def _slot_masters(inventory, code):
     for name, _slot_no, master in SLOTS:
         got = (inventory.get(code) or {}).get(name) or {}
         n = len(got.get("pages") or [])
+        if name == "어휘":
+            # 원본 어휘는 두 스토리(전반/후반)로 나뉘어 지문마다 2페이지에
+            # 걸친다. body STEP2 가 그 9쌍을 1페이지로 결합하므로 산출물에서는
+            # 지문당 1p 다. 2p 로 세면 마스터 열이 한 칸 길어져 실전 첫 페이지에
+            # 슬롯 마스터가 덮인다 (26년 6월 실측: 실전 문항에 '빈칸 어법' 헤더).
+            n = 1 if n else 0
         if not n and got.get("kind") == "thread":
             # 스레드 슬롯(영작 배열)은 인벤토리에 페이지가 없다. body STEP4.4 가
             # 섹션마다 페이지 1개를 만들어 재배분하므로 지문당 1p 다.
@@ -137,8 +143,16 @@ def _slot_masters(inventory, code):
     return out
 
 
+_RE_EXAM_MARK = __import__("re").compile(r"\{\d{6}")
+
+
 def cycle_spans(out_frames_json, canon):
-    """산출물에서 지문별 사이클 구간 [(code, start, end)] — 문서 순."""
+    """산출물에서 지문별 사이클 구간 [(code, start, end, exam_start)] — 문서 순.
+
+    exam_start = 그 사이클에서 실전(O)이 시작하는 페이지. 실전 지문 코드는
+    6자리 `{YYMMQQ}` 라 슬롯 구간과 구분된다. 슬롯 길이를 인벤토리로만
+    믿지 않고 산출물에서 실측해 대조하기 위한 것이다.
+    """
     from .inventory import load_frames, code_of
 
     frames, page_count = load_frames(out_frames_json)
@@ -192,6 +206,14 @@ def cycle_spans(out_frames_json, canon):
         m = master_of.get(pg, "")
         return ("간지" in m) or not m
 
+    exam_start = {}
+    for pg in sorted(by_page):
+        fs = sorted(by_page[pg], key=lambda f: (f["gb"][0], f["gb"][1]))
+        for f in fs:
+            if _RE_EXAM_MARK.search(f.get("head") or ""):
+                exam_start[pg] = True
+                break
+
     spans = []
     for i, (c, s) in enumerate(starts):
         if i + 1 < len(starts):
@@ -203,7 +225,12 @@ def cycle_spans(out_frames_json, canon):
             e = (tail_start - 1) if tail_start else page_count
             while e > s and _structural(e):
                 e -= 1
-        spans.append((c, s, e))
+        es = None
+        for pg in range(s, e + 1):
+            if exam_start.get(pg):
+                es = pg
+                break
+        spans.append((c, s, e, es))
     return spans, page_count
 
 
@@ -211,7 +238,7 @@ def build_finish_cycles(out_frames_json, inventory, canon):
     """cv_finish.jsx 용 cycles + 게이트 실패 사유."""
     spans, page_count = cycle_spans(out_frames_json, canon)
     cycles, fails = [], []
-    for code, start, end in spans:
+    for code, start, end, exam_start in spans:
         length = end - start + 1
         masters = _slot_masters(inventory, code)
         if not masters:
@@ -219,6 +246,15 @@ def build_finish_cycles(out_frames_json, inventory, canon):
         elif length < len(masters) + 1:
             fails.append("지문 %s: 사이클 %dp < 슬롯 %dp + 실전 1p"
                          % (code, length, len(masters)))
+        if exam_start is not None:
+            measured = exam_start - start
+            if measured != len(masters):
+                # 한 칸만 어긋나도 사이클 전체의 마스터가 밀린다. 침묵으로
+                # 넘기지 않는다 — 실전 페이지에 슬롯 헤더가 찍히는 사고가 난다.
+                fails.append(
+                    "지문 %s: 슬롯 구간 실측 %dp != 인벤토리 %dp "
+                    "(사이클 p%d~%d, 실전 시작 p%d)"
+                    % (code, measured, len(masters), start, end, exam_start))
         cycles.append({"code": code, "start": start, "end": end,
                        "slot_masters": masters, "length": length,
                        "pad": bool(length % 2)})

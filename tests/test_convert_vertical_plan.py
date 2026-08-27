@@ -212,3 +212,25 @@ def test_스레드_슬롯은_지문당_1페이지로_친다(tmp_path):
     cycles, fails = plan_mod.build_finish_cycles(fj, inv, CODES)
     assert fails == []
     assert cycles["cycles"][0]["slot_masters"].count("E-마스터") == 2
+
+
+def test_어휘_2페이지는_1p로_센다(tmp_path):
+    """원본 어휘는 전·후반 두 스토리에 걸쳐 2p — body STEP2 가 1p 로 결합한다."""
+    frames, pc = _out_frames()
+    fj = _write(tmp_path, "out.json", frames, pc)
+    inv = _inventory()
+    for c in CODES:
+        inv[c]["어휘"] = {"kind": "frames", "pages": [8, 17], "frames": 2}
+    cycles, fails = plan_mod.build_finish_cycles(fj, inv, CODES)
+    assert fails == []
+    assert len(cycles["cycles"][0]["slot_masters"]) == 10
+
+
+def test_슬롯길이가_실측과_어긋나면_게이트가_잡는다(tmp_path):
+    """한 칸만 밀려도 실전 페이지에 슬롯 마스터가 덮인다 — 침묵 금지."""
+    frames, pc = _out_frames()
+    fj = _write(tmp_path, "out.json", frames, pc)
+    inv = _inventory()
+    inv["20"]["문장배열"] = {"kind": "frames", "pages": [84, 85], "frames": 2}
+    cycles, fails = plan_mod.build_finish_cycles(fj, inv, CODES)
+    assert any("슬롯 구간 실측" in f for f in fails), fails
