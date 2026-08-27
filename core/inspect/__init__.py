@@ -296,3 +296,41 @@ def inspect_generic(job_dir, log, timeout=600):
         "indd_count": len(indd_paths),
         "content_words": len(want),
     }
+
+
+def dump_frames(indd_path, out_json, log, timeout=1800):
+    """완성/중간 .indd를 프레임 단위로 덤프 (core/jsx/dump_frames.jsx).
+
+    dump_indd(스토리 단위)로는 "이 프레임이 몇 번째 지문인가"를 알 수 없어
+    세로 변환의 S1/S2 인벤토리가 성립하지 않는다. 경로 절대화 규칙은
+    dump_indd 와 동일 (상대경로 → 러너 오판 실사고, 2026-07-05).
+    """
+    from core.indesign.runner import run_jsx
+    jsx_template = os.path.join(os.path.dirname(_DIR), "jsx", "dump_frames.jsx")
+    indd_path = os.path.abspath(indd_path)
+    out_json = os.path.abspath(out_json)
+    dump_log = out_json + ".log"
+    for p in (out_json, dump_log):
+        try:
+            os.remove(p)
+        except OSError:
+            pass
+    with open(jsx_template, encoding="utf-8") as f:
+        src = f.read()
+    src = (src.replace("__INDD_PATH__", indd_path.replace("\\", "\\\\").replace('"', '\\"'))
+              .replace("__OUT_PATH__", out_json)
+              .replace("__LOG_PATH__", dump_log))
+    fd, jsx_path = tempfile.mkstemp(suffix=".jsx", prefix="dump_frames_")
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        f.write(src)
+    try:
+        run_jsx(jsx_path, log, poll_log_path=dump_log, timeout=timeout,
+                completion_marker="덤프 완료")
+    finally:
+        try:
+            os.remove(jsx_path)
+        except OSError:
+            pass
+    if not os.path.isfile(out_json):
+        raise RuntimeError(f"프레임 덤프 파일이 생성되지 않음: {out_json}")
+    return out_json

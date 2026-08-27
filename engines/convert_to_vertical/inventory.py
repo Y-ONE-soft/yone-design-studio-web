@@ -302,3 +302,68 @@ def gate(result, canon):
         if lack:
             fails.append("지문 %s: 슬롯 %s 없음" % (c, lack))
     return fails
+
+
+# ── canon 유도 (S1 선행) ────────────────────────────────────────────────────
+# body JSX 는 sep 위치에서 NUM_PROBLEMS 를, 어법 섹션 코드에서 canon 을 구한다
+# (convert_vertical.body.jsx STEP1/STEP4). 분할(Phase 1)은 body 실행 **전**이라
+# 같은 값을 파이썬에서 먼저 구해야 한다. 유도 근거를 body 와 맞춘다:
+#   N = A-마스터 구간 / 6      (body: (sep1-front)/6 와 동치 — A구간이 6N)
+#   canon = 어법 섹션 페이지 순 코드 (body: grammar_k 우선, ox_k 폴백)
+
+def _master_span(runs, prefix):
+    hits = [(a, b) for name, a, b, _n in runs if name.startswith(prefix)]
+    if not hits:
+        return []
+    return list(range(min(h[0] for h in hits), max(h[1] for h in hits) + 1))
+
+
+def detect_n_problems(frames_json):
+    """지문 수 N — A-마스터 구간(6N: 어휘+본문+정리+종합+배열+빈칸어휘)에서 유도."""
+    runs = master_runs(frames_json)
+    a_pages = _master_span(runs, "A-")
+    if not a_pages or len(a_pages) % 6:
+        raise ValueError("A-마스터 구간 %dp — 6의 배수가 아님 "
+                         "(표준 전체(C) 구조 아님)" % len(a_pages))
+    return len(a_pages) // 6
+
+
+def page_first_codes(frames, first, last):
+    """페이지 순서대로 [(페이지, 코드)] — 페이지마다 위에서 첫 코드."""
+    out = []
+    for pg in range(first, last + 1):
+        fs = [f for f in frames if f["pidx"] + 1 == pg]
+        fs.sort(key=lambda f: (f["gb"][0], f["gb"][1]))
+        for f in fs:
+            c = code_of(f["head"])
+            if c:
+                out.append((pg, c))
+                break
+    return out
+
+
+def detect_canon(frames_json, n_problems=None, sections=None):
+    """canon 지문 코드 순서. 어법 → 어법OX → 본문 순으로 시도한다.
+
+    body 와 같은 우선순위. 섹션 하나가 코드 프레임을 통째로 안 갖는 회차가
+    있어(어법 O/X 는 코드가 별도 숫자 프레임) 폴백을 둔다.
+    """
+    frames, _pc = load_frames(frames_json)
+    if n_problems is None:
+        n_problems = detect_n_problems(frames_json)
+    if sections is None:
+        sections = detect_sections(frames_json, n_problems)
+    tried = []
+    for name in ("어법", "어법OX", "본문", "내용정리"):
+        rng = sections.get(name)
+        if not rng:
+            continue
+        codes = []
+        for _pg, c in page_first_codes(frames, rng[0], rng[1]):
+            if c not in codes:
+                codes.append(c)
+        tried.append("%s=%d" % (name, len(codes)))
+        if len(codes) == n_problems:
+            return codes
+    raise ValueError("canon 유도 실패 (지문 %d개 기대, 섹션별 검출 %s)"
+                     % (n_problems, ", ".join(tried)))
