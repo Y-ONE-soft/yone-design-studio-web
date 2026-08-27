@@ -223,13 +223,29 @@ def _hwpx_extract_paragraphs(hwpx_path, extract_underline=False, exclude_footnot
         section_xml = re.sub(r'<hp:endNote\b.*?</hp:endNote>', '', section_xml, flags=re.DOTALL)
         section_xml = re.sub(r'<hp:footNote\b.*?</hp:footNote>', '', section_xml, flags=re.DOTALL)
 
+        # 그림 수집 제외 구간 — 머리말/꼬리말 (교재 로고·워터마크가 산다).
+        # hwp 경로가 '앵커 단락 level 1' 로 거르는 것과 같은 뜻이다.
+        _hf_spans = []
+        if image_dir:
+            for _hf in re.finditer(r'<hp:(header|footer)\b.*?</hp:\1>',
+                                   section_xml, re.DOTALL):
+                _hf_spans.append((_hf.start(), _hf.end()))
+
+        def _in_head_foot(pos):
+            for a, b in _hf_spans:
+                if a <= pos < b:
+                    return True
+            return False
+
         prev_end = 0
         for m in re.finditer(r'<hp:p\b([^>]*)>(.*?)</hp:p>', section_xml, re.DOTALL):
             _recover_post_table_text(section_xml[prev_end:m.start()])
             _emit(_hwpx_extract_segments(m.group(2), ul_ids))
             if image_dir:
                 for _im in _hwpx_chunk_images(hwpx_path, m.group(2), image_dir,
-                                              _img_stem, _img_cache):
+                                              _img_stem, _img_cache,
+                                              base=m.start(2),
+                                              skip=_in_head_foot):
                     paragraphs.append({"text": "", "runs": [], "image": _im})
             prev_end = m.end()
         # 마지막 매치 이후 trailing 표-고아 텍스트도 복구
@@ -632,13 +648,13 @@ def _write_picture(data, ext, out_dir, stem, key):
             px = im.size
             if im.mode not in ('RGB', 'RGBA', 'L'):
                 im = im.convert('RGB')
-            out = os.path.join(out_dir, '%s_img%s.png' % (stem, key))
+            out = os.path.join(out_dir, '%s_%s.png' % (stem, key))
             im.save(out, 'PNG', optimize=True)
             return out, px[0], px[1]
         except Exception as e:                                 # noqa: BLE001
             _LOG.warning("[추출] 그림 PNG 변환 실패(%s) — 원본 확장자로 저장: %s",
                          key, e)
-    out = os.path.join(out_dir, '%s_img%s.%s' % (stem, key, ext))
+    out = os.path.join(out_dir, '%s_%s.%s' % (stem, key, ext))
     with open(out, 'wb') as f:
         f.write(data)
     try:
@@ -654,7 +670,7 @@ def _hwp_export_picture(hwp_path, storage_name, out_dir, stem, bid):
     """hwp BinData 그림 1개를 out_dir에 파일로 쓰고 (경로, 폭px, 높이px) 반환."""
     data = _hwp_read_bindata(hwp_path, storage_name)
     ext = os.path.splitext(storage_name)[1]
-    return _write_picture(data, ext, out_dir, stem, bid)
+    return _write_picture(data, ext, out_dir, stem, 'img%d' % bid)
 
 
 # ── hwpx 그림 추출 (hwp와 같은 계약) ───────────────────────────────────────
@@ -691,10 +707,17 @@ def _hwpx_bindata_bytes(hwpx_path, bin_id):
     return data, ext
 
 
-def _hwpx_chunk_images(hwpx_path, chunk, image_dir, stem, cache):
-    """<hp:p> 조각 안의 그림을 파일로 뽑아 image dict 목록으로 반환."""
+def _hwpx_chunk_images(hwpx_path, chunk, image_dir, stem, cache,
+                       base=0, skip=None):
+    """<hp:p> 조각 안의 그림을 파일로 뽑아 image dict 목록으로 반환.
+
+    base/skip: 그림의 **절대 위치**로 제외 구간(머리말/꼬리말)을 판정한다.
+    <hp:p> 비탐욕 매치는 머리말 안의 중첩 </hp:p>에서 끊겨 바깥 단락의
+    시작 위치가 머리말 밖에 있으므로, 단락 위치로 거르면 안 된다."""
     out = []
     for m in _RE_HWPX_PIC.finditer(chunk or ''):
+        if skip is not None and skip(base + m.start()):
+            continue
         body = m.group(1)
         mid = _RE_HWPX_PIC_ID.search(body)
         if not mid:
