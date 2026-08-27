@@ -371,20 +371,12 @@ function insertImageAt(doc, story, para, img) {
             frame = frame.parent;
         }
     } catch (e) {}
-    // '줄 위(Above Line)' 앵커 — 인라인으로 두면 고정 행간 단락에서 그림이
-    // 윗줄을 덮는다 (1차 검증 조판 실증: 도표가 발문 "01 …" 을 가림).
-    // 줄 위 앵커는 그림이 제 줄을 차지하고 앞뒤 텍스트를 밀어낸다.
-    try {
-        var aos = frame.anchoredObjectSettings;
-        aos.anchoredPosition = AnchorPosition.ABOVE_LINE;
-        try { aos.horizontalAlignment = HorizontalAlignment.CENTER_ALIGN; } catch (e) {}
-        try { aos.spaceAbove = "1mm"; } catch (e) {}
-        try { aos.spaceBelow = "1mm"; } catch (e) {}
-    } catch (e) {
-        try { frame.anchoredObjectSettings.anchoredPosition = AnchorPosition.INLINE_POSITION; } catch (e2) {}
-    }
     try { frame.textWrapPreferences.textWrapMode = TextWrapModes.NONE; } catch (e) {}
     try { frame.strokeWeight = 0; } catch (e) {}
+    // ① 먼저 크기 — 앵커 종류를 바꾸면 개체 참조가 무효가 될 수 있어
+    //    (1차 검증 실증: "이 요청에 대한 개체가 잘못되었습니다") 기하는
+    //    인라인 상태에서 끝낸다.
+    var okFit = true;
     try {
         frame.fit(FitOptions.FRAME_TO_CONTENT);
         withMM(function () {                 // 기하는 전부 mm로 고정해 계산
@@ -405,7 +397,24 @@ function insertImageAt(doc, story, para, img) {
             frame.absoluteVerticalScale = sc * 100;
         });
     } catch (e) {
+        okFit = false;
         wlog("[경고] 원고 그림 크기 조정 실패: " + e);
+    }
+    // ② 그 다음 '줄 위(Above Line)' 앵커 — 인라인으로 두면 고정 행간
+    //    단락에서 그림이 윗줄을 덮는다 (1차 검증 조판 실증: 도표가 발문
+    //    "01 …" 을 가렸다). 줄 위 앵커는 그림이 제 줄을 차지한다.
+    //    크기 조정이 실패했으면 인라인 그대로 둔다 (원본 크기 그림이
+    //    줄 위로 가면 스토리가 통째로 넘친다).
+    if (okFit) {
+        try {
+            var aos = frame.anchoredObjectSettings;
+            aos.anchoredPosition = AnchorPosition.ABOVE_LINE;
+            try { aos.horizontalAlignment = HorizontalAlignment.CENTER_ALIGN; } catch (e) {}
+            try { aos.spaceAbove = "1mm"; } catch (e) {}
+            try { aos.spaceBelow = "1mm"; } catch (e) {}
+        } catch (e) {
+            wlog("[경고] 원고 그림 줄위 앵커 실패(인라인 유지): " + e);
+        }
     }
     return 1;
 }
