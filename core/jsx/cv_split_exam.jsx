@@ -66,6 +66,7 @@ try {
         }
         if (idx < 0) { throw "대상 프레임 미발견 (p" + T.page + " fid " + T.fid + ")"; }
         var breaks = frs.length - idx;          // 남은 프레임 수 + 1
+        if (typeof T.breaks === "number") { breaks = T.breaks; }
         var breakOnly = (T.break_only === true);
         var lastFrame = frs[frs.length - 1];
         var geo = [];
@@ -132,6 +133,24 @@ try {
             ip.contents = SpecialCharacters.FRAME_BREAK;
         }
         L("   프레임 브레이크 " + breaks + "회 삽입 완료");
+    }
+
+    // 결과 실측 로그 — 분할 지점 주변 프레임이 실제로 어떻게 갈렸는지.
+    // (덤프 없이 확인하려고 넣는다. 분할은 2분, 덤프는 7분이다.)
+    if (cfg.probe_pages) {
+        for (var q = 0; q < cfg.probe_pages.length; q++) {
+            var qp = cfg.probe_pages[q];
+            if (qp < 1 || qp > d.pages.length) { continue; }
+            var qfs = bodyFrames(d.pages[qp - 1]);
+            for (var qi = 0; qi < qfs.length; qi++) {
+                var qt = "";
+                try { qt = qfs[qi].characters.length ? qfs[qi].texts[0].contents.substr(0, 40) : "(빈 프레임)"; }
+                catch (eQ) { qt = "(읽기 실패)"; }
+                L("   PROBE p" + qp + " 단" + (qi + 1) + "/" + qfs.length +
+                  " x=" + Math.round(qfs[qi].geometricBounds[1]) +
+                  " chars=" + nchars(qfs[qi]) + " | " + qt.replace(/[\r\n]/g, " "));
+            }
+        }
     }
 
     var ovf = 0;
