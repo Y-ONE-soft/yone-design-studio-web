@@ -137,6 +137,12 @@ _RE_S3_LBL_DIGIT = re.compile(r"\d")
 # K5 — 계열 골격: 숫자→'#', 홀로 선 대문자→'@' (Type A / Type B 계열)
 _RE_S3_LBL_SKEL_NUM = re.compile(r"\d+")
 _RE_S3_LBL_SKEL_ALPHA = re.compile(r"(?<![A-Za-z])[A-Z](?![A-Za-z])")
+# W77 (사용자 지적 2026-08-27 — 올림포스 영어독해 6강): "[ Type A ]" 가
+# 인쇄됐다. K5는 '서수가 없으면 인덱스가 아니다'인데 서수를 **숫자로만**
+# 봤다. 인덱스는 숫자로도, 홀로 선 알파벳(A/B/C…)으로도 번호를 매긴다 —
+# 같은 원고 안에 계열 변주(Type A/Type B)가 없어도 서수는 서수다.
+# 홀로 선 대문자가 없는 라벨("[Book Now]" "[Gateway]")은 그대로 보존된다.
+_RE_S3_LBL_ORDINAL = re.compile(r"\d|(?<![A-Za-z])[A-Z](?![A-Za-z])")
 
 
 def _s3_label_skeleton(inner):
@@ -180,7 +186,7 @@ def _s3_is_index_label(tclean, prev_text, next_text, R, series=()):
     inner = m.group(1).strip()
     if not inner:
         return False
-    if not (_RE_S3_LBL_DIGIT.search(inner)          # K5 서수 없는 라벨
+    if not (_RE_S3_LBL_ORDINAL.search(inner)        # K5 서수 없는 라벨
             or _s3_label_skeleton(inner) in series):
         return False
     if _RE_S3_LBL_SENTENCE.search(inner):          # K4 문장
@@ -788,6 +794,15 @@ def build_step3(step_data):
                         "runs": [{"t": tclean + " ", "ul": False},
                                  {"t": _blank, "ul": True}]})
                     continue
+                if p.get("image"):
+                    # W77: 원고 그림(도표/그래프) — 본문 흐름의 제자리에
+                    # 표시만 남긴다. 슬롯 배정 패스는 그림을 모르므로
+                    # 아래에서 이웃 행으로 옮겨 붙인다(_s3_attach_images).
+                    pre.append({"text": "", "tclean": "", "kind": "IMG",
+                                "eff": "_IMG", "arrow_bg": False,
+                                "q_code": None, "runs": [],
+                                "image": p["image"]})
+                    continue
                 if kind in ("GH", "A", "BLANK"):
                     continue          # 제거 대상 (style_map에서 null)
                 if _s3_arrow_para(text):
@@ -872,6 +887,7 @@ def build_step3(step_data):
             # ── 2패스: 유형 주도 슬롯 배정 (W39) ────────────────────────
             # W76: 발문 앞 유형 태그 제거 + 꼬리 지시문(※) 제거 — 슬롯
             # 배정 앞에서 (발문 본문이 정리돼야 유형 판정이 정확하다)
+            _s3_attach_images(pre, warnings)
             _n_tag = _s3_strip_qtype_tags(pre)
             if _n_tag:
                 warnings.append("step3: 발문 유형 태그 %d개 제거 "
@@ -893,8 +909,13 @@ def build_step3(step_data):
             unit = []
             eff_seq = []
             for row in pre:
+                # 그림은 행이 스타일 없음으로 탈락해도 살린다 (침묵 유실 금지)
+                for _im in row.get("img_before") or ():
+                    unit.append(_s3_image_para(_im))
                 style = _style("STEP3", row["eff"])
                 if style is None:
+                    for _im in row.get("img_after") or ():
+                        unit.append(_s3_image_para(_im))
                     continue
                 if row["arrow_bg"]:
                     style = _style("STEP3", "P-CONTEXT")
@@ -916,6 +937,8 @@ def build_step3(step_data):
                 para = {"t": text, "s": style, "runs": runs}
                 para.update(_ansline_fields(row["eff"], row["arrow_bg"]))
                 unit.append(para)
+                for _im in row.get("img_after") or ():
+                    unit.append(_s3_image_para(_im))
             if unit:
                 _s3_underline_quotes(unit, st_q, _style("STEP3", "P"),
                                      _style("STEP3", "P-CONTEXT"),
@@ -972,6 +995,39 @@ def build_step3(step_data):
                 units.append(unit)
                 warnings.extend(BG.validate_sequence(eff_seq))
     return {"units": units, "warnings": warnings}
+
+
+# ── W77: 원고 그림(도표/그래프) 단락 ───────────────────────────────────────
+# 사용자 지시 2026-08-27 — "원고에 있는 도표 이미지도 조판이 됐으면 좋겠어."
+# 그림은 발문/지문/선지 어느 슬롯도 아니라 슬롯 배정 패스(_s3_assign_slots
+# 등)를 통과시키지 않는다. 1패스 직후 이웃 행으로 옮겨 붙이고(아래),
+# 3패스에서 제자리에 그림 단락으로 되돌린다.
+def _s3_attach_images(pre, warnings):
+    """pre의 _IMG 행을 뒤 행의 img_before(마지막이면 앞 행의 img_after)로 이동."""
+    imgs = [i for i, r in enumerate(pre) if r.get("eff") == "_IMG"]
+    if not imgs:
+        return
+    for i in reversed(imgs):
+        img = pre[i].get("image")
+        nxt = next((j for j in range(i + 1, len(pre))
+                    if pre[j].get("eff") != "_IMG"), None)
+        if nxt is not None:
+            pre[nxt].setdefault("img_before", []).insert(0, img)
+        else:
+            prv = next((j for j in range(i - 1, -1, -1)
+                        if pre[j].get("eff") != "_IMG"), None)
+            if prv is None:
+                warnings.append("step3: 원고 그림 1개를 붙일 단락이 없어 누락")
+                continue
+            pre[prv].setdefault("img_after", []).append(img)
+    for i in reversed(imgs):
+        pre.pop(i)
+
+
+def _s3_image_para(img):
+    """그림 1개 → 플랜 단락. 실행기(JSX)가 image 키를 보고 인라인 앵커로 배치."""
+    return {"t": "", "s": _style("STEP3", "P"), "runs": [],
+            "align": "center", "image": dict(img)}
 
 
 # ── W66 (사용자 지적 2026-08-14 ②③): 답 영역 실물화 ─────────────────────

@@ -289,6 +289,95 @@ function insertIconAt(doc, story, para, ic) {
     return 1;
 }
 
+// ── W77 op: 원고 그림(도표/그래프) 배치 ────────────────────────────────────
+// 사용자 지시 2026-08-27 — "원고에 있는 도표 이미지도 조판이 됐으면 좋겠어."
+// 플랜이 준 image({path, w_mm, h_mm}) 를 그 단락에 **인라인 앵커**로 넣는다
+// (아이콘 op와 같은 place 경로). 폭은 단 폭을 넘지 않게, 높이는 프레임을
+// 넘지 않게 비율 유지로 줄인다. 원고 표시 크기(w_mm)가 단 폭보다 작으면
+// 원고 크기를 존중한다 (작은 삽화가 통단으로 부풀지 않게).
+var _imgPlaceFail = 0;
+
+// 단락이 놓인 프레임의 '단 1개' 폭/높이 (mm — 문서 단위). insertAnswerTable
+// 과 같은 계산이지만 표 코드는 건드리지 않는다(동작 보존).
+function _frameColumnBox(para) {
+    try {
+        var tf = para.parentTextFrames[0];
+        var gb = tf.geometricBounds;
+        var inset = [0, 0, 0, 0];
+        try {
+            var ins = tf.textFramePreferences.insetSpacing;
+            inset = (ins instanceof Array) ? ins : [ins, ins, ins, ins];
+        } catch (eI) {}
+        var w = (gb[3] - inset[3]) - (gb[1] + inset[1]);
+        var h = (gb[2] - inset[2]) - (gb[0] + inset[0]);
+        var ncol = tf.textFramePreferences.textColumnCount;
+        if (ncol > 1) {
+            var gut = tf.textFramePreferences.textColumnGutter;
+            w = (w - gut * (ncol - 1)) / ncol;
+        }
+        return { w: w, h: h };
+    } catch (e) { return null; }
+}
+
+function insertImageAt(doc, story, para, img) {
+    var f = null;
+    try { f = File(img.path); } catch (e) { f = null; }
+    if (!f || !f.exists) {
+        _imgPlaceFail++;
+        wlog("[경고] 원고 그림 파일 없음: " + img.path);
+        return 0;
+    }
+    // 그림 단락은 지문 스타일을 쓰되 들여쓰기 0 + 가운데 정렬 (그림 전용
+    // 스타일을 문서에 새로 만들지 않는다 — 스타일 자동 생성 금지 규칙)
+    try { para.firstLineIndent = 0; } catch (e) {}
+    try { para.leftIndent = 0; } catch (e) {}
+    try { para.justification = Justification.CENTER_ALIGN; } catch (e) {}
+    var placed = null;
+    try {
+        placed = story.insertionPoints[para.insertionPoints[0].index].place(f)[0];
+    } catch (e) {
+        _imgPlaceFail++;
+        wlog("[경고] 원고 그림 place 실패(" + img.path + "): " + e);
+        return 0;
+    }
+    // place 는 그래픽(Image)을 돌려줄 수도, 담는 프레임을 돌려줄 수도 있다
+    var frame = placed;
+    try {
+        var cn = String(frame.constructor.name);
+        if (cn === "Image" || cn === "PDF" || cn === "EPS" || cn === "Graphic") {
+            frame = frame.parent;
+        }
+    } catch (e) {}
+    try { frame.anchoredObjectSettings.anchoredPosition = AnchorPosition.INLINE_POSITION; } catch (e) {}
+    try { frame.textWrapPreferences.textWrapMode = TextWrapModes.NONE; } catch (e) {}
+    try { frame.strokeWeight = 0; } catch (e) {}
+    try {
+        frame.fit(FitOptions.FRAME_TO_CONTENT);
+        var gb = frame.geometricBounds;
+        var w0 = gb[3] - gb[1], h0 = gb[2] - gb[0];
+        if (w0 > 0 && h0 > 0) {
+            var box = _frameColumnBox(para);
+            var maxW = (box && box.w > 0) ? box.w : w0;
+            if (img.w_mm && img.w_mm > 0) {
+                var want = mmToDoc(doc, img.w_mm);
+                if (want > 0 && want < maxW) { maxW = want; }
+            }
+            var sc = maxW / w0;
+            // 높이 상한 — 한 프레임(단)의 80%를 넘지 않게 (넘치면 문항이
+            // 통째로 다음 프레임으로 밀려 빈 페이지가 생긴다)
+            if (box && box.h > 0 && h0 * sc > box.h * 0.8) {
+                sc = (box.h * 0.8) / h0;
+            }
+            frame.absoluteHorizontalScale = sc * 100;
+            frame.absoluteVerticalScale = sc * 100;
+        }
+    } catch (e) {
+        wlog("[경고] 원고 그림 크기 조정 실패: " + e);
+    }
+    return 1;
+}
+
+
 // ── W66 op: 답표 삽입 (plan 단락의 table 스펙 — 사용자 지적 ②) ────────────
 // 원고의 "틀린 부분 / 수정" 두 줄은 hwp 2열 표가 평탄화된 것이라 그대로
 // 인쇄하면 평문 두 줄이 된다. 완제품(사용자 수작업 실측 — 페이스트보드

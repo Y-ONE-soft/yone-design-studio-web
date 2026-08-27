@@ -896,6 +896,12 @@ def _strip_step3_leading_junk(paras):
     while i < n:
         p = paras[i]
         text = p['text'].strip()
+        if p.get('image'):
+            # 선두 표제 블록의 그림 = 교재 로고/표지 (첫 실질 라인 앞에만
+            # 있다). 본문 도표는 발문/지문 사이라 이 루프가 닿기 전에
+            # break 된다 — 문서 중간 무접촉 원칙 그대로.
+            i += 1
+            continue
         if not text:
             out.append(p)          # 빈 단락 보존
             i += 1
@@ -1052,10 +1058,18 @@ _RE_STEP3_PROMPT_BOUNDARY = re.compile(
     r'|[가-힣].*(?:것은|곳은|고르시오|고르십시오|쓰시오|완성하시오|고치시오|'
     r'문장은|배열하)\s*[\?\.]?\s*(?:[-–—]\s*\d+\s*차\s*)?$'
 )
-# 변형문제 출처 마커 단독 단락 ("[202506H2_25도표_변형]") — 선지 prepend
-# 경계. 발문 직후에 마커가 오는 문제모음(발문→마커→지문 순)에서 마커가
-# 선지 1번으로 오인돼 원고에 없는 ①이 붙는 것을 막는다 (W15 c04 실증).
-_RE_STEP3_SRC_MARKER = re.compile(r'^\[[^\[\]]{2,}변형\]$')
+# 단독 대괄호 라벨 줄 — 선지 prepend 경계. 발문 직후에 라벨이 오는
+# 문제모음(발문→라벨→지문 순)에서 라벨이 선지 1번으로 오인돼 원고에 없는
+# ①이 붙는 것을 막는다 (W15 c04 실증).
+#
+# W77 (사용자 지적 2026-08-27 — 올림포스 영어독해 6강 부교재):
+#   구 규칙은 "…변형]" 으로 **끝나는 표기만** 인정하는 화이트리스트였다.
+#   같은 자리에 출처를 "[Unit 06 - Analysis]" 로 적는 원고가 오자 그대로
+#   뚫려 "①[Unit 06 - Analysis]" 가 선지 스타일로 인쇄됐다.
+#   구조로 판정한다 — **줄 전체가 대괄호 하나인 단락은 선지가 아니다**
+#   (선지는 내용이지 라벨이 아니다). 어떤 새 라벨 표기가 와도 여기서 막힌다.
+#   (이 자리를 통과한 라벨은 플랜의 W66 인덱스 라벨 규칙이 제거한다.)
+_RE_STEP3_SRC_MARKER = re.compile(r'^\[[^\[\]]{2,}\]$')
 
 
 def _add_step3_choice_numbers(paras):
@@ -1840,7 +1854,7 @@ def _strip_step3_tail_answers(paras):
 
 
 def _absorb_step3_ym(step3_dir, used_files, normal_items, log=None,
-                     extract_underline=True, short_items=None):
+                     extract_underline=True, short_items=None, image_dir=None):
     """회차 표기가 **파일 안 헤더**나 **파일명**에 있는 Step3 원고를 흡수한다.
 
     두 방언을 처리한다 — 어느 쪽도 폴더 연·월로는 코드를 만들 수 없다:
@@ -1896,7 +1910,7 @@ def _absorb_step3_ym(step3_dir, used_files, normal_items, log=None,
             else:
                 paras = _hwp_extract_paragraphs(
                     fpath, extract_underline, exclude_footnotes=True,
-                    strip_inline_answers=True)
+                    strip_inline_answers=True, image_dir=image_dir)
         except Exception:
             continue
         if not paras:
@@ -1948,7 +1962,8 @@ def _absorb_step3_ym(step3_dir, used_files, normal_items, log=None,
         it.pop("_ym_absorb", None)
 
 
-def _absorb_step3_multi(step3_dir, used_files, normal_items, log=None):
+def _absorb_step3_multi(step3_dir, used_files, normal_items, log=None,
+                        image_dir=None):
     """한 파일에 지문 여러 개가 든 Step3 원고를 헤더로 잘라 항목화."""
     import unicodedata
     used = {unicodedata.normalize("NFC", p) for p in (used_files or {}).values()}
@@ -1966,7 +1981,8 @@ def _absorb_step3_multi(step3_dir, used_files, normal_items, log=None):
             if ext == ".docx":
                 paras = _docx_extract_paragraphs(fpath, True)
             elif ext in (".hwp", ".hwpx"):
-                paras = _hwp_extract_paragraphs(fpath, True)
+                paras = _hwp_extract_paragraphs(fpath, True,
+                                                image_dir=image_dir)
             else:
                 continue
         except Exception:
@@ -1998,7 +2014,7 @@ def _absorb_step3_multi(step3_dir, used_files, normal_items, log=None):
 
 def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
                         short_questions, combined_questions, extract_underline=True,
-                        step3_exclude_footnotes=True, log=None):
+                        step3_exclude_footnotes=True, log=None, image_dir=None):
     """
     Step3 폴더 → 지문별 단락 목록.
     파일명: "고1 25년 9월 20번.hwp" 형태.
@@ -2064,7 +2080,8 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
         else:
             paras = _hwp_extract_paragraphs(fpath, extract_underline,
                                             exclude_footnotes=step3_exclude_footnotes,
-                                            strip_inline_answers=True)
+                                            strip_inline_answers=True,
+                                            image_dir=image_dir)
         # 보존 가드 스냅샷 — 책 헤더(변형문제/수능특강)는 의도적 제거이므로
         # 스냅샷에서도 제외해 허위 "내용 손실" 경고를 막는다(헤더 외 손실은 그대로 감지).
         paras = _strip_step3_item_numbers(paras)        # W75
@@ -2123,13 +2140,14 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
     # 여러 지문이 들어 있다. 실측 2026-08-07: '11강 없는 지문 변형문제.docx'
     # 안에 "11강 20번 – 고1 16년 11월 31번" 헤더로 지문 2개가 이어져 있어
     # 파일명 규칙(고1 25년 9월 20번.hwp) 기반 탐색으로는 0개가 나온다.
-    _absorb_step3_multi(step3_dir, files, normal_items, log)
+    _absorb_step3_multi(step3_dir, files, normal_items, log,
+                        image_dir=image_dir)
 
     # 회차 표기가 파일 안 헤더/파일명에만 있는 원고 (폴더 연·월로는 코드를
     # 못 만드는 경우) — 보충 폴더와 회차 통합 원고.
     _absorb_step3_ym(step3_dir, files, normal_items, log,
                      extract_underline=extract_underline,
-                     short_items=short_items)
+                     short_items=short_items, image_dir=image_dir)
 
     # 마더텅 Step3: 파일명에 "N강 M번 YYMMQQ" 형태 (한영고1 마더텅 예전 기출)
     # — 정규 모의고사 normal/short 매칭에 안 잡혔지만 파일은 있을 때
@@ -2208,7 +2226,8 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
             else:
                 paras = _hwp_extract_paragraphs(fpath, extract_underline,
                                                 exclude_footnotes=step3_exclude_footnotes,
-                                                strip_inline_answers=True)
+                                                strip_inline_answers=True,
+                                                image_dir=image_dir)
             # 선두/꼬리 표제·워터마크 제거 (W17 c16/c11 — 스냅샷 전에)
             paras = _strip_step3_leading_junk(paras)
             paras = _strip_step3_trailing_junk(paras)
@@ -2914,7 +2933,8 @@ def _find_manuscript_file(manuscript_dir, expected_filename, used_files=None):
 
 # ── 공개 API ────────────────────────────────────────────────────────────────
 
-def parse_manuscript_folder(manuscript_dir, config, grade, year, month, log=None):
+def parse_manuscript_folder(manuscript_dir, config, grade, year, month, log=None,
+                            image_dir=None):
     """
     원고 폴더 → content.json dict.
 
@@ -2925,6 +2945,11 @@ def parse_manuscript_folder(manuscript_dir, config, grade, year, month, log=None
         year: 25 (2자리) 또는 2025 (4자리)
         month: 10 등
         log: callable(str) 로그 콜백
+        image_dir: 원고 그림(도표/그래프) 추출 폴더. 지정하면 Step3 원고의
+            본문 그림을 이 폴더로 뽑아 단락 자리에 그대로 끼운다
+            (사용자 지시 2026-08-27). None이면 그림 처리 없음 — 기존 동작.
+            **반드시 잡 폴더 등 쓰기 가능한 로컬 경로**를 줄 것 (원고
+            폴더가 구글 드라이브일 수 있다).
     Returns:
         dict (content.json 구조)
     """
@@ -3116,7 +3141,7 @@ def parse_manuscript_folder(manuscript_dir, config, grade, year, month, log=None
             mockexam.get('short_questions', []),
             mockexam.get('combined_questions', {}),
             step3_exclude_footnotes=config.get('step3_exclude_footnotes', True),
-            log=log,
+            log=log, image_dir=image_dir,
         )
         result["steps"]["step3"] = {
             "normal": step3_data["normal"],
