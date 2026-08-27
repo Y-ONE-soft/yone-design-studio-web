@@ -72,9 +72,13 @@ try {
         if (!dmR.isValid) { continue; }
         // InDesign 마스터 접두어는 **4자 제한**이다 ("_oldA" 5자는 거부됨 —
         // 2026-08-28 실측). 한 글자만 덧붙인다.
+        // itemByName 이 준 것은 **이름 기반 지정자**다. 이름을 바꾸면 그 참조가
+        // 나중에 같은 이름으로 들어온 새 마스터를 가리킨다 — 그대로 remove 하면
+        // 방금 가져온 템플릿 마스터를 지운다(2026-08-28 실측: A0 C0).
+        // 그래서 참조가 아니라 **바뀐 이름 문자열**을 기억한다.
         try {
             dmR.namePrefix = "o" + dmR.namePrefix;
-            retired.push(dmR);
+            retired.push(dmR.name);
             L("   낡은 마스터 비켜둠: " + dmR.name);
         } catch (eR) {
             throw "낡은 마스터 이름 변경 실패(" + stale[r0] + "): " + eR +
@@ -144,7 +148,9 @@ try {
         var mName = "";
         try { mName = d.pages[pu].appliedMaster ? d.pages[pu].appliedMaster.name : ""; }
         catch (ePU) {}
-        if (mName.indexOf("_old_") === 0) { stillUsing.push(d.pages[pu].name); }
+        for (var rn = 0; rn < retired.length; rn++) {
+            if (mName === retired[rn]) { stillUsing.push(d.pages[pu].name); break; }
+        }
     }
     if (stillUsing.length) {
         throw "낡은 전체버전 마스터를 아직 쓰는 페이지 " + stillUsing.length +
@@ -154,8 +160,9 @@ try {
     var removed = 0;
     for (var rm = 0; rm < retired.length; rm++) {
         try {
-            if (retired[rm].isValid) { retired[rm].remove(); removed++; }
-        } catch (eRM) { L("[경고] 낡은 마스터 제거 실패: " + eRM); }
+            var msOld = d.masterSpreads.itemByName(retired[rm]);
+            if (msOld.isValid) { msOld.remove(); removed++; L("   제거: " + retired[rm]); }
+        } catch (eRM) { L("[경고] 낡은 마스터 제거 실패: " + retired[rm] + " — " + eRM); }
     }
     if (removed) { L("   낡은 전체버전 마스터 " + removed + "개 제거"); }
 
