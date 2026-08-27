@@ -319,10 +319,14 @@ class ConvertToVerticalEngine(BaseEngine):
             "master_indd": master_local,
             "step123_ai": os.path.expanduser(cfg.get("step123_ai") or ""),
             "image_base": os.path.expanduser(cfg.get("image_base") or ""),
-            # STEP4.5 페이지 경계 강제 분리 — 관통 스레드 0 의 조건.
-            # 범위 기준을 누적(cum)에서 스토리 절대 인덱스로 고친 뒤 켠다
-            # (누적 기준일 때는 대형 실전 스토리에서 22라인이 유실됐다).
-            "cross_page_cut": cfg.get("cross_page_cut", True),
+            # STEP4.5 페이지 경계 강제 분리 — **기본 꺼짐**.
+            # 켜면 관통은 0이 되지만 갈린 조각이 제자리에 남아 지문 문장이
+            # 다른 지문 페이지에 인쇄된다(7차 실측: 검수가 '누락 3라인'으로
+            # 검출). 경고만 없애고 지면은 나빠지므로 켜지 말 것. 제대로 풀려면
+            # 조각을 앞 지문 사이클로 **옮겨야** 하고, 그러려면 body 의 슬롯
+            # 라벨링(섹션시작 + s*N + k 산술)을 코드 기반으로 바꿔 슬롯 2p 를
+            # 허용해야 한다.
+            "cross_page_cut": cfg.get("cross_page_cut", False),
             "front_pages": cfg.get("front_pages", 3),
             "sep_scan_start": cfg.get("sep_scan_start", 100),
             "margin_outside": cfg.get("margin_outside", 20),
