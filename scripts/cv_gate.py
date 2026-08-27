@@ -84,8 +84,12 @@ def main():
     arr_targets = exam_mod.arrange_split_targets(abounds, afs)
     log(f"\n[S2] 영작 배열 — 검출 {len(abounds)}지문, 분할 대상 {len(arr_targets)}건")
 
+    add = len(exam_targets) + sum(1 for t in arr_targets
+                                  if not t.get("break_only"))
+    bo = len(arr_targets) - (len(arr_targets) - sum(
+        1 for t in arr_targets if t.get("break_only")))
     log(f"\n분할 합계 {len(exam_targets) + len(arr_targets)}건 "
-        f"→ 분할 후 예상 {page_count + len(exam_targets) + len(arr_targets)}p")
+        f"(페이지 추가 {add} + 끊기만 {bo}) → 분할 후 예상 {page_count + add}p")
     with open(os.path.join(work, "cv_gate.json"), "w", encoding="utf-8") as f:
         json.dump({"canon": canon, "n": n,
                    "sections": {k: list(v) for k, v in sections.items()},
