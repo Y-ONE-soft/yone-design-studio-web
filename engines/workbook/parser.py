@@ -889,32 +889,69 @@ except Exception:                                            # noqa: BLE001
 # (실증: 스텝3 실전문제.hwp 의 ★★★ 20개는 전부 '선지 → 그림 → 한글 발문'
 #  자리, 도표 그림은 전부 '라벨/발문 → 그림 → 영어 지문' 자리였다.)
 _RE_S3_IMG_ENGWORD = re.compile(r'[A-Za-z]{2,}')
+_S3_IMG_QKINDS = ("Q", "Q-INTRO")
 
 
 def _s3_img_is_prose(text):
     return len(_RE_S3_IMG_ENGWORD.findall(text or '')) >= 6
 
 
+def _s3_img_kinds(paras):
+    """이웃 단락 종류(kind) — 구조 판정기(core.structure)와 같은 눈을 쓴다."""
+    try:
+        from core.structure import classify_paragraphs
+        return [r["kind"] for r in classify_paragraphs(paras)]
+    except Exception:                                          # noqa: BLE001
+        return [""] * len(paras)       # fail-open: 아래 산문 판정만으로 진행
+
+
 def _strip_step3_decorative_images(paras, label='', log=None):
-    """지문에 붙지 않은 그림(장식) 제거. 남긴/버린 수를 로그로 남긴다."""
-    if not any(isinstance(p, dict) and p.get('image') for p in paras):
+    """지문에 딸리지 않은 그림(장식) 제거. 남긴/버린 수를 로그로 남긴다."""
+    idx = [i for i, p in enumerate(paras)
+           if isinstance(p, dict) and p.get('image')]
+    if not idx:
         return paras
-    out, dropped, kept = [], 0, 0
+    kinds = _s3_img_kinds(paras)
     n = len(paras)
+
+    def _real(rng):
+        for k in rng:
+            if (paras[k].get('text') or '').strip():
+                return k
+        return None
+
+    stat = {}          # 그림 파일 경로 -> [총 개수, 발문 앞 개수, 지문 인접 개수]
+    per = {}
+    for i in idx:
+        a = _real(range(i - 1, -1, -1))
+        b = _real(range(i + 1, n))
+        ka = kinds[a] if (a is not None and a < len(kinds)) else ""
+        kb = kinds[b] if (b is not None and b < len(kinds)) else ""
+        ta = (paras[a].get('text') or '') if a is not None else ''
+        tb = (paras[b].get('text') or '') if b is not None else ''
+        q_before = kb in _S3_IMG_QKINDS
+        near_passage = (ka == "P" or kb == "P"
+                        or _s3_img_is_prose(ta) or _s3_img_is_prose(tb))
+        key = paras[i]['image'].get('path') or str(i)
+        st = stat.setdefault(key, [0, 0, 0])
+        st[0] += 1
+        st[1] += 1 if q_before else 0
+        st[2] += 1 if near_passage else 0
+        per[i] = (key, near_passage)
+
+    # 같은 그림이 여러 번 나오면 **그림 단위**로 판정한다: 대다수가 발문
+    # 바로 앞자리면(난이도 ★★★처럼 문항마다 찍히는 표식) 전부 장식이다.
+    # 지문에 한 번도 안 붙는 그림(표지/로고)도 장식.
+    deco = set()
+    for key, (tot, q, near) in stat.items():
+        if near == 0 or q * 2 > tot:
+            deco.add(key)
+
+    out, dropped, kept = [], 0, 0
     for i, p in enumerate(paras):
-        if isinstance(p, dict) and p.get('image'):
-            prev = nxt = ''
-            for k in range(i - 1, -1, -1):
-                t = (paras[k].get('text') or '').strip()
-                if t:
-                    prev = t
-                    break
-            for k in range(i + 1, n):
-                t = (paras[k].get('text') or '').strip()
-                if t:
-                    nxt = t
-                    break
-            if not (_s3_img_is_prose(prev) or _s3_img_is_prose(nxt)):
+        if i in per:
+            key, near_passage = per[i]
+            if key in deco or not near_passage:
                 dropped += 1
                 continue
             kept += 1
