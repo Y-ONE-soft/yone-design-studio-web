@@ -140,10 +140,14 @@ def _hwpx_extract_segments(body, ul_ids):
     return segments
 
 
-def _hwpx_extract_paragraphs(hwpx_path, extract_underline=False, exclude_footnotes=False):
+def _hwpx_extract_paragraphs(hwpx_path, extract_underline=False, exclude_footnotes=False,
+                             image_dir=None):
     """
     hwpx → [{"text": str, "runs": [{"t": str, "ul": bool}]}]
     exclude_footnotes: 시그니처 호환용 (hwpx는 항상 endNote/footnote XML 태그 제거).
+    image_dir: 지정하면 본문 그림(<hp:pic>)을 이 폴더로 뽑아 원위치에
+        {"text": "", "runs": [], "image": {...}} 단락으로 끼운다 (W77).
+        None(기본)이면 그림 처리를 하지 않는다 — 기존 호출부 무영향.
     """
     with zipfile.ZipFile(hwpx_path, 'r') as zf:
         names = zf.namelist()
@@ -164,6 +168,10 @@ def _hwpx_extract_paragraphs(hwpx_path, extract_underline=False, exclude_footnot
         header_xml = zf.read(header_name).decode('utf-8') if header_name else ''
 
     ul_ids = _parse_underline_ids(header_xml) if (extract_underline and header_xml) else set()
+
+    _img_cache = {}          # binaryItemIDRef -> image dict 또는 None
+    _img_stem = re.sub(r'[^0-9A-Za-z가-힣]+', '_',
+                       os.path.splitext(os.path.basename(hwpx_path))[0])[:60]
 
     paragraphs = []
 
@@ -219,6 +227,10 @@ def _hwpx_extract_paragraphs(hwpx_path, extract_underline=False, exclude_footnot
         for m in re.finditer(r'<hp:p\b([^>]*)>(.*?)</hp:p>', section_xml, re.DOTALL):
             _recover_post_table_text(section_xml[prev_end:m.start()])
             _emit(_hwpx_extract_segments(m.group(2), ul_ids))
+            if image_dir:
+                for _im in _hwpx_chunk_images(hwpx_path, m.group(2), image_dir,
+                                              _img_stem, _img_cache):
+                    paragraphs.append({"text": "", "runs": [], "image": _im})
             prev_end = m.end()
         # 마지막 매치 이후 trailing 표-고아 텍스트도 복구
         _recover_post_table_text(section_xml[prev_end:])
@@ -605,15 +617,13 @@ def _hwp_read_bindata(hwp_path, storage_name):
     return raw
 
 
-def _hwp_export_picture(hwp_path, storage_name, out_dir, stem, bid):
-    """BinData 그림 1개를 out_dir에 파일로 쓰고 (경로, 폭px, 높이px) 반환.
+def _write_picture(data, ext, out_dir, stem, key):
+    """그림 바이트를 out_dir에 파일로 쓰고 (경로, 폭px, 높이px) 반환.
 
     BMP/TIFF 등 인디자인 링크로 무거운 포맷은 PNG로 변환한다 (원고 도표는
-    3.6MB BMP 로 들어오기도 한다 — 링크 파일이 그대로 납품 폴더에 남는다).
+    3.6MB BMP로 들어오기도 한다 — 링크 파일이 그대로 납품 폴더에 남는다).
     변환 실패 시 원본 확장자 그대로 저장 (침묵 유실 금지)."""
-    data = _hwp_read_bindata(hwp_path, storage_name)
-    ext = os.path.splitext(storage_name)[1].lower().lstrip('.')
-    px = (0, 0)
+    ext = (ext or 'bin').lower().lstrip('.')
     if ext in ('bmp', 'tif', 'tiff', 'wmf', 'emf', 'gif'):
         try:
             import io
@@ -622,13 +632,13 @@ def _hwp_export_picture(hwp_path, storage_name, out_dir, stem, bid):
             px = im.size
             if im.mode not in ('RGB', 'RGBA', 'L'):
                 im = im.convert('RGB')
-            out = os.path.join(out_dir, '%s_img%d.png' % (stem, bid))
+            out = os.path.join(out_dir, '%s_img%s.png' % (stem, key))
             im.save(out, 'PNG', optimize=True)
             return out, px[0], px[1]
         except Exception as e:                                 # noqa: BLE001
             _LOG.warning("[추출] 그림 PNG 변환 실패(%s) — 원본 확장자로 저장: %s",
-                         storage_name, e)
-    out = os.path.join(out_dir, '%s_img%d.%s' % (stem, bid, ext or 'bin'))
+                         key, e)
+    out = os.path.join(out_dir, '%s_img%s.%s' % (stem, key, ext))
     with open(out, 'wb') as f:
         f.write(data)
     try:
@@ -639,6 +649,83 @@ def _hwp_export_picture(hwp_path, storage_name, out_dir, stem, bid):
         px = (0, 0)
     return out, px[0], px[1]
 
+
+def _hwp_export_picture(hwp_path, storage_name, out_dir, stem, bid):
+    """hwp BinData 그림 1개를 out_dir에 파일로 쓰고 (경로, 폭px, 높이px) 반환."""
+    data = _hwp_read_bindata(hwp_path, storage_name)
+    ext = os.path.splitext(storage_name)[1]
+    return _write_picture(data, ext, out_dir, stem, bid)
+
+
+# ── hwpx 그림 추출 (hwp와 같은 계약) ───────────────────────────────────────
+# hwpx는 그림을 <hp:pic> 로 적고 실제 파일은 ZIP 의 BinData/<id>.<ext> 다.
+# 표시 크기는 <hp:sz width height> (없으면 <hp:curSz>) — 단위는 HWPUNIT.
+_RE_HWPX_PIC = re.compile(r'<hp:pic\b(.*?)</hp:pic>', re.DOTALL)
+_RE_HWPX_PIC_ID = re.compile(r'binaryItemIDRef="([^"]+)"')
+_RE_HWPX_PIC_SZ = re.compile(
+    r'<hp:(?:sz|curSz)\s+width="(\d+)"[^>]*?height="(\d+)"')
+
+
+def _hwpx_bindata_bytes(hwpx_path, bin_id):
+    """BinData/<bin_id>.<ext> 를 찾아 (bytes, ext) 반환 — 없으면 (None, None)."""
+    with zipfile.ZipFile(hwpx_path, 'r') as zf:
+        target = None
+        for n in zf.namelist():
+            if not n.lower().startswith('bindata/'):
+                continue
+            stem = os.path.splitext(os.path.basename(n))[0]
+            if stem == bin_id:
+                target = n
+                break
+        if target is None:
+            return None, None
+        data = zf.read(target)
+    ext = os.path.splitext(target)[1].lower().lstrip('.')
+    # 일부 hwpx 는 BinData 를 raw deflate 로 한 번 더 압축해 담는다
+    if not data[:4] in (b'\x89PNG', b'BM\x00\x00') and data[:2] not in (
+            b'\xff\xd8', b'BM', b'GI', b'II', b'MM'):
+        try:
+            data = zlib.decompress(data, -15)
+        except zlib.error:
+            pass
+    return data, ext
+
+
+def _hwpx_chunk_images(hwpx_path, chunk, image_dir, stem, cache):
+    """<hp:p> 조각 안의 그림을 파일로 뽑아 image dict 목록으로 반환."""
+    out = []
+    for m in _RE_HWPX_PIC.finditer(chunk or ''):
+        body = m.group(1)
+        mid = _RE_HWPX_PIC_ID.search(body)
+        if not mid:
+            continue
+        bid = mid.group(1)
+        w_mm = h_mm = 0.0
+        msz = _RE_HWPX_PIC_SZ.search(body)
+        if msz:
+            w_mm = int(msz.group(1)) * _HWPUNIT_MM
+            h_mm = int(msz.group(2)) * _HWPUNIT_MM
+        if bid not in cache:
+            cache[bid] = None
+            try:
+                data, ext = _hwpx_bindata_bytes(hwpx_path, bid)
+                if data:
+                    os.makedirs(image_dir, exist_ok=True)
+                    cache[bid] = _write_picture(data, ext, image_dir, stem, bid)
+                else:
+                    _LOG.warning("[추출] hwpx 그림 BinData 없음(%s, %s)",
+                                 bid, os.path.basename(hwpx_path))
+            except Exception as e:                             # noqa: BLE001
+                _LOG.warning("[추출] hwpx 그림 추출 실패(%s, %s): %s",
+                             bid, os.path.basename(hwpx_path), e)
+        info = cache[bid]
+        if not info:
+            continue
+        path, wpx, hpx = info
+        out.append({"path": path, "bindata_id": bid,
+                    "w_mm": round(w_mm, 2), "h_mm": round(h_mm, 2),
+                    "w_px": wpx, "h_px": hpx})
+    return out
 
 def _hwp_collect_pictures(hwp_path, all_models, image_dir):
     """레코드 목록에서 그림을 모아 {앵커 레코드 index: [image dict]} 반환.
@@ -724,7 +811,8 @@ def _hwp_extract_paragraphs(hwp_path, extract_underline=False, exclude_footnotes
     """
     if _hwp_is_hwpx(hwp_path):
         return _normalize_circled_numbers(
-            _hwpx_extract_paragraphs(hwp_path, extract_underline, exclude_footnotes)
+            _hwpx_extract_paragraphs(hwp_path, extract_underline,
+                                     exclude_footnotes, image_dir=image_dir)
         )
 
     try:
