@@ -134,20 +134,25 @@ def detect_sections(frames_json, n_problems):
         return list(range(min(h[0] for h in hits), max(h[1] for h in hits) + 1))
 
     a_pages, c_pages = span("A-"), span("C-")
-    if len(a_pages) < 6 * n_problems or len(c_pages) < 4 * n_problems:
+    if len(a_pages) < 6 * n_problems or len(c_pages) < 3 * n_problems + 1:
         raise ValueError("섹션 페이지 부족: A=%d(필요 %d) C=%d(필요 %d)"
                          % (len(a_pages), 6 * n_problems,
-                            len(c_pages), 4 * n_problems))
+                            len(c_pages), 3 * n_problems + 1))
     out, i = {}, 0
     for name in ("어휘", "본문", "내용정리", "내용종합", "문장배열", "빈칸어휘"):
         chunk = a_pages[i:i + n_problems]
         out[name] = (chunk[0], chunk[-1])
         i += n_problems
     j = 0
-    for name in ("어법", "어법OX", "빈칸어법", "영작배열"):
+    for name in ("어법", "어법OX", "빈칸어법"):
         chunk = c_pages[j:j + n_problems]
         out[name] = (chunk[0], chunk[-1])
         j += n_problems
+    # 영작 배열은 C구간의 **나머지 전부**. 지문당 1p 를 가정하면 안 된다 —
+    # 분할 전 원본은 스레드라 N지문이 6p 에 들어 있고(26년 6월: C구간 60p),
+    # 분할 후에야 N페이지가 된다(72p). 고정 N 으로 자르면 분할 전 문서에서
+    # 섹션 탐지가 통째로 실패한다.
+    out["영작배열"] = (c_pages[j], c_pages[-1])
     return out
 
 

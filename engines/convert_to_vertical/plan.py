@@ -113,3 +113,102 @@ def coverage(plan, src_page_count):
     unused = [p for p in range(1, src_page_count + 1) if p not in used]
     return {"used": len(used), "unused": unused,
             "total_out": len(plan["order"])}
+
+
+# ── 후처리(cv_finish.jsx) 사이클 ────────────────────────────────────────────
+# build_cycles/build_order 는 "원본 페이지를 어디로 보낼까"의 플랜이다. 반면
+# cv_finish.jsx 는 **재배치가 끝난 산출물**의 페이지 번호로 지시를 받는다:
+#   {code, start, end, slot_masters:[마스터×슬롯페이지수], pad:bool}
+# 그래서 산출물 프레임 덤프에서 사이클 경계를 다시 읽어 만든다. 원본 플랜으로
+# 예측하지 않는 이유: body 의 재배치 결과와 어긋나면 마스터가 통째로 한 칸씩
+# 밀려 적용되기 때문이다 (침묵 사고). 산출물이 유일한 진실이다.
+
+def _slot_masters(inventory, code):
+    """지문 하나의 슬롯 마스터 열 — 슬롯이 2p면 같은 마스터 2회 (SPEC 2장)."""
+    out = []
+    for name, _slot_no, master in SLOTS:
+        got = (inventory.get(code) or {}).get(name) or {}
+        n = len(got.get("pages") or [])
+        out.extend(["%s-마스터" % master] * n)
+    return out
+
+
+def cycle_spans(out_frames_json, canon):
+    """산출물에서 지문별 사이클 구간 [(code, start, end)] — 문서 순."""
+    from .inventory import load_frames, code_of
+
+    frames, page_count = load_frames(out_frames_json)
+    canon_n = [normalize_code(c) for c in canon]
+
+    first_page = {}
+    tail_start = None
+    by_page = {}
+    for f in frames:
+        by_page.setdefault(f["pidx"] + 1, []).append(f)
+    for pg in sorted(by_page):
+        fs = sorted(by_page[pg], key=lambda f: (f["gb"][0], f["gb"][1]))
+        for f in fs:
+            raw = code_of(f["head"])
+            if not raw:
+                continue
+            c = resolve_to_canon(raw, canon_n)
+            if c and c not in first_page:
+                first_page[c] = pg
+            break
+
+    missing = [c for c in canon_n if c not in first_page]
+    if missing:
+        raise ValueError("산출물에서 지문 %s 의 사이클 시작을 찾지 못함" % missing)
+
+    starts = [(c, first_page[c]) for c in canon_n]
+    if [p for _c, p in starts] != sorted(p for _c, p in starts):
+        raise ValueError("사이클 시작 순서가 canon 과 다름 — 재배치 불완전: %s"
+                         % [(c, p) for c, p in starts])
+
+    # 마지막 사이클의 끝 = 짤지문/뒤부속 시작 직전. canon 밖 코드가 처음
+    # 나오는 페이지를 경계로 본다 (없으면 문서 끝).
+    last_start = starts[-1][1]
+    for pg in sorted(by_page):
+        if pg <= last_start:
+            continue
+        fs = sorted(by_page[pg], key=lambda f: (f["gb"][0], f["gb"][1]))
+        for f in fs:
+            raw = code_of(f["head"])
+            if raw and not resolve_to_canon(raw, canon_n):
+                tail_start = pg
+                break
+            if raw:
+                break
+        if tail_start:
+            break
+
+    spans = []
+    for i, (c, s) in enumerate(starts):
+        if i + 1 < len(starts):
+            e = starts[i + 1][1] - 1
+        else:
+            e = (tail_start - 1) if tail_start else page_count
+        spans.append((c, s, e))
+    return spans, page_count
+
+
+def build_finish_cycles(out_frames_json, inventory, canon):
+    """cv_finish.jsx 용 cycles + 게이트 실패 사유."""
+    spans, page_count = cycle_spans(out_frames_json, canon)
+    cycles, fails = [], []
+    for code, start, end in spans:
+        length = end - start + 1
+        masters = _slot_masters(inventory, code)
+        if not masters:
+            fails.append("지문 %s: 슬롯 인벤토리 비어 있음" % code)
+        elif length < len(masters) + 1:
+            fails.append("지문 %s: 사이클 %dp < 슬롯 %dp + 실전 1p"
+                         % (code, length, len(masters)))
+        cycles.append({"code": code, "start": start, "end": end,
+                       "slot_masters": masters, "length": length,
+                       "pad": bool(length % 2)})
+    for a, b in zip(cycles, cycles[1:]):
+        if a["end"] + 1 != b["start"]:
+            fails.append("사이클 불연속: %s 끝 %d → %s 시작 %d"
+                         % (a["code"], a["end"], b["code"], b["start"]))
+    return {"cycles": cycles, "page_count": page_count}, fails

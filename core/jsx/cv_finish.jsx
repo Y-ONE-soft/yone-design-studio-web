@@ -89,6 +89,19 @@ try {
 
     d.save(new File(DOC_PATH));
     L("저장 완료");
+
+    // PDF 는 반드시 여기서 — body 가 뽑은 PDF 는 마스터/패딩 이전 상태다.
+    if (cfg.out_pdf) {
+        try {
+            var pf = new File(cfg.out_pdf);
+            var preset = app.pdfExportPresets.itemByName("[고품질 인쇄]");
+            if (!preset.isValid) { preset = app.pdfExportPresets.itemByName("[High Quality Print]"); }
+            if (preset.isValid) { d.exportFile(ExportFormat.PDF_TYPE, pf, false, preset); }
+            else { d.exportFile(ExportFormat.PDF_TYPE, pf, false); }
+            L("PDF 내보내기 완료: " + cfg.out_pdf);
+        } catch (ePdf) { L("[경고] PDF 내보내기 실패: " + ePdf); }
+    }
+
     d.close(SaveOptions.NO);
     d = null;
     L("후처리 완료");

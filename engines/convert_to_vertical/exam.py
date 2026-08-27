@@ -128,3 +128,60 @@ def gate(exam, tail, canon):
         if not exam.get(c):
             fails.append("지문 %s: 실전 블록 없음" % c)
     return fails
+
+
+# ── 영작 배열 스레드 분할 (SPEC 5.1 두 번째 split) ─────────────────────────
+# 영작 배열은 N지문이 6프레임에 스레드로 담겨 있어, 지문 하나가 자기 페이지에서
+# 시작하지 않는다. body 의 STEP4.4 는 페이지 단위로 코드를 찾으므로 프레임
+# 중간에서 시작하는 지문을 놓친다 (26년 6월: arrange 섹션 17/18 — 지문 30 소실).
+# 실전과 같은 방식으로 텍스트 내부 마커에서 미리 끊어 준다.
+_RE_BRACKET_CODE = re.compile(r"[\[\{]\s*(\d{1,2}(?:\s*[-~]\s*\d+)?)\s*[\]\}]")
+
+
+def arrange_frames(frames_json, first_page, last_page):
+    return exam_frames(frames_json, first_page, last_page)
+
+
+def arrange_boundaries(frames, canon):
+    """영작 배열 구간의 지문 첫 등장 위치 (canon 에 없는 코드는 무시).
+
+    같은 코드가 뒤에 또 나오는 경우(예문 안의 대괄호)는 첫 등장만 경계로 본다.
+    """
+    out, seen = [], set()
+    for f in frames:
+        text = f.get("text") or ""
+        for m in _RE_BRACKET_CODE.finditer(text):
+            c = resolve_to_canon(m.group(1), canon)
+            if not c or c in seen:
+                continue
+            seen.add(c)
+            out.append({
+                "code": c,
+                "page": f["pidx"] + 1,
+                "offset": m.start(),
+                "at_head": m.start() <= HEAD_SLACK,
+                "fid": f["fid"],
+                "sid": f["sid"],
+            })
+    return out
+
+
+def arrange_split_targets(boundaries):
+    """프레임 머리가 아닌 곳에서 시작하는 지문만 분할 대상."""
+    return [{"code": b["code"], "fid": b["fid"],
+             "offset": b["offset"], "page": b["page"]}
+            for b in boundaries if not b["at_head"]]
+
+
+def arrange_gate(boundaries, canon):
+    """영작 배열 게이트 — canon 전원 검출 + 순서 일치."""
+    fails = []
+    got = [b["code"] for b in boundaries]
+    canon_n = [normalize_code(c) for c in canon]
+    miss = [c for c in canon_n if c not in got]
+    if miss:
+        fails.append("영작배열: 지문 %s 미검출" % miss)
+    ordered = [c for c in got if c in canon_n]
+    if ordered and ordered != [c for c in canon_n if c in ordered]:
+        fails.append("영작배열: 지문 순서가 canon 과 다름 (%s)" % ordered[:6])
+    return fails
