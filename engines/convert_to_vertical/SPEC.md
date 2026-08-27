@@ -221,6 +221,38 @@ STEP4.4 섹션 계산)을 원본 쪽 전처리로 우회해, 다른 회차 변�
 > 짤지문` 이다 (원본 `고2_26년_6월_전체.indd` p259). 6월 교재이므로 원고
 > 수정이 필요하다.
 
+## 5.2 웹 배선 (2026-08-27)
+
+5.1 의 성공 경로는 **로컬에서 손으로 3단을 이어 붙인 것**이었고, 웹 엔진에는
+흡수되지 않은 채 8/17 에 끊겼다. `engine.py` 는 8/7 판 그대로 `convert_vertical.
+body.jsx` 하나만 돌렸으므로, 웹 버튼으로는 4장의 결함(지문 30·33 실전 0페이지,
+마스터 B/D/E 부재)이 그대로 재현됐다. 실측 증거는 job `2c17e765`(8/26) 로그의
+`O/M 미배치 그룹 3개 — 원위치 유지`.
+
+이번에 `ConvertToVerticalEngine.run_indesign` 을 3단으로 배선했다.
+
+| 단계 | 코드 | InDesign |
+|---|---|---|
+| S1 프레임/스토리 덤프 | `core.inspect.dump_frames` (신규) + `dump_indd` | 2회 |
+| S1 구조 유도 | `inventory.detect_n_problems / detect_sections / detect_canon` (신규) | — |
+| S1/S2 게이트 | `inventory.gate` + `exam.gate` + `exam.arrange_gate` (신규) | — |
+| S2 분할 | `cv_split_exam.jsx` — 실전 + 영작 배열 타깃을 한 번에 | 1회 |
+| S1' 재덤프 | 분할 후 슬롯 페이지 확정 (`threaded=set()`) | 1회 |
+| 본 조판 | `convert_vertical.body.jsx` (무수정) | 1회 |
+| S3 후처리 | `plan.build_finish_cycles` (신규) → `cv_finish.jsx` | 2회 |
+
+- **게이트 실패 = 조판 미착수.** `RuntimeError` 로 job 이 죽고 문서를 열지 않는다.
+- **PDF 는 후처리에서만** 뽑는다. body 가 뽑으면 마스터·패딩 이전 상태가 나온다
+  (그래서 body cfg 의 `out_pdf` 를 비웠다).
+- **분할 타깃은 한 번에 넘긴다.** JSX 가 (페이지 desc, 오프셋 desc) 로 정렬해
+  뒤에서 앞으로 처리하므로, 앞쪽(영작 배열)의 오프셋이 뒤쪽(실전) 분할에
+  밀리지 않는다. 5.1 이 스크립트를 2회 돌린 것과 결과가 같다.
+- `detect_sections` 는 영작 배열을 **C구간의 나머지 전부**로 잡는다. 고정 N 으로
+  자르면 분할 **전** 문서(26년 6월: C구간 60p, 영작 6p)에서 섹션 탐지가 통째로
+  실패한다 — 이 함수는 그때까지 분할 후 문서로만 검증돼 있었다.
+- 조판 착수 전 드라이런: `scripts/cv_gate.py <전체(C).indd>` (덤프만, 문서 무수정).
+- 오프라인 회귀: `tests/test_convert_vertical_plan.py` (합성 덤프 6케이스).
+
 ## 6. 알려진 함정 (이번 구현에서 실측)
 
 - `PDF`, `prompt` 는 ExtendScript 내장 읽기전용 전역 — 변수명으로 쓰면 대입 실패로

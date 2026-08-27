@@ -375,7 +375,11 @@ class ConvertToVerticalEngine(BaseEngine):
         jsx_path = build_jsx(
             body_path,
             {"__DOC_PATH__": os.path.abspath(doc_path),
-             "__CFG_PATH__": cfg_path},
+             "__CFG_PATH__": cfg_path,
+             # cv_*.jsx 는 자체 LOG_PATH 전역을 쓴다 — 치환을 빠뜨리면 로그가
+             # 리터럴 "__LOG_PATH__" 파일로 가고 러너가 '시작 안 됨'으로
+             # 오판해 InDesign 을 강제종료한다 (2026-07-05 실사고와 동형).
+             "__LOG_PATH__": jsx_log},
             log_path=jsx_log,
             out_path=os.path.join(job_dir, log_name + ".jsx"))
         run_jsx(jsx_path, log, poll_log_path=jsx_log, timeout=timeout,
