@@ -40,8 +40,10 @@ from core.indesign.jsxbuild import build_jsx
 from core.paths import resolve_config
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
-_BODY = os.path.join(os.path.dirname(os.path.dirname(_DIR)),
-                     "core", "jsx", "convert_vertical.body.jsx")
+_JSX_DIR = os.path.join(os.path.dirname(os.path.dirname(_DIR)), "core", "jsx")
+_BODY = os.path.join(_JSX_DIR, "convert_vertical.body.jsx")
+_SPLIT_JSX = os.path.join(_JSX_DIR, "cv_split_exam.jsx")
+_FINISH_JSX = os.path.join(_JSX_DIR, "cv_finish.jsx")
 
 _PATH_KEYS = ["output_base", "master_indd", "step123_ai", "image_base"]
 
@@ -286,7 +288,9 @@ class ConvertToVerticalEngine(BaseEngine):
         jsx_cfg = {
             "doc_path": out_indd,
             "out_indd": out_indd,
-            "out_pdf": pdf_path,
+            # body 는 PDF 를 뽑지 않는다 — 그 뒤 cv_finish 가 마스터를 얹고
+            # 파리티 패딩을 넣으므로 여기서 뽑으면 최종본이 아니다.
+            "out_pdf": "",
             "master_indd": master_local,
             "step123_ai": os.path.expanduser(cfg.get("step123_ai") or ""),
             "image_base": os.path.expanduser(cfg.get("image_base") or ""),
@@ -312,9 +316,12 @@ class ConvertToVerticalEngine(BaseEngine):
                     "export_pdf": export_pdf,
                     "source_local": content["source_local"],
                     "jsx_path": jsx_path, "log_path": jsx_log,
-                    "log_paths": [jsx_log],
+                    "log_paths": [jsx_log,
+                                  os.path.abspath(os.path.join(job_dir, "cv_split_로그.txt")),
+                                  os.path.abspath(os.path.join(job_dir, "cv_finish_로그.txt"))],
                     "result_json": result_json,
                     "json_path": json_path,
+                    "master_local": master_local,
                     "output_dir": out_dir}
         with open(os.path.join(job_dir, ".settings.json"), "w",
                   encoding="utf-8") as f:
@@ -324,6 +331,13 @@ class ConvertToVerticalEngine(BaseEngine):
     # ── 3단계: run_indesign ─────────────────────────────────────────────────
 
     def run_indesign(self, job_dir, log, cancel_check=None):
+        """S1/S2 게이트 + 분할 → body 재배치 → 마스터/패딩 후처리.
+
+        body(convert_vertical.body.jsx) 단독으로는 정본이 나오지 않는다
+        (SPEC 4장 실측: 지문 30·33 실전 0페이지, 마스터 B/D/E 부재, 사이클
+        9~29p). 앞뒤로 두 단계를 붙여야 정본 규격이 된다 — 2026-08-17 실기
+        실증 경로를 그대로 코드화한 것이다.
+        """
         from core.indesign.runner import run_jsx
         settings = json.load(open(os.path.join(job_dir, ".settings.json"),
                                   encoding="utf-8"))
@@ -332,12 +346,163 @@ class ConvertToVerticalEngine(BaseEngine):
             os.remove(settings["log_path"])
         except OSError:
             pass
+
+        stage = self._pre_split(job_dir, settings, log, cancel_check)
+
         run_jsx(settings["jsx_path"], log,
                 poll_log_path=settings["log_path"],
                 timeout=self.jsx_timeout,
                 cancel_check=cancel_check,
                 completion_marker="세로 변환 완료",
                 stall_limit=1800)
+
+        self._post_finish(job_dir, settings, stage, log, cancel_check)
+
+    # ── 3a. S1/S2 — 인벤토리 게이트 + 스레드 분할 ───────────────────────────
+
+    def _run_aux_jsx(self, body_path, doc_path, cfg, job_dir, log,
+                     log_name, marker, cancel_check=None, timeout=3600):
+        """보조 JSX(cv_split_exam / cv_finish) 실행 — cfg 를 JSON 으로 넘긴다."""
+        from core.indesign.runner import run_jsx
+        cfg_path = os.path.abspath(os.path.join(job_dir, log_name + "_cfg.json"))
+        with open(cfg_path, "w", encoding="utf-8") as f:
+            json.dump(cfg, f, ensure_ascii=False, indent=1)
+        jsx_log = os.path.abspath(os.path.join(job_dir, log_name + "_로그.txt"))
+        try:
+            os.remove(jsx_log)
+        except OSError:
+            pass
+        jsx_path = build_jsx(
+            body_path,
+            {"__DOC_PATH__": os.path.abspath(doc_path),
+             "__CFG_PATH__": cfg_path},
+            log_path=jsx_log,
+            out_path=os.path.join(job_dir, log_name + ".jsx"))
+        run_jsx(jsx_path, log, poll_log_path=jsx_log, timeout=timeout,
+                cancel_check=cancel_check, completion_marker=marker,
+                stall_limit=1800)
+        content = ""
+        try:
+            content = open(jsx_log, encoding="utf-8").read()
+        except OSError:
+            pass
+        if marker not in content:
+            errs = [ln for ln in content.splitlines() if "[오류]" in ln]
+            raise RuntimeError("%s 실패: %s" % (log_name,
+                                               errs[0] if errs else "완료 마커 없음"))
+        return content
+
+    def _pre_split(self, job_dir, settings, log, cancel_check=None):
+        """SPEC 5장 S1/S2 — 게이트가 실패하면 조판에 들어가지 않는다."""
+        from core.inspect import dump_frames, dump_indd
+        from . import exam as exam_mod
+        from . import inventory as inv_mod
+
+        out_indd = settings["indd_path"]
+        frames_json = os.path.join(job_dir, "src_frames.json")
+        stories_json = os.path.join(job_dir, "src_stories.json")
+
+        log("[S1] 프레임 덤프 (대형 문서 — 수 분)")
+        dump_frames(out_indd, frames_json, log)
+        log("[S1] 스토리 덤프")
+        dump_indd(out_indd, stories_json, log, timeout=1800)
+
+        n = inv_mod.detect_n_problems(frames_json)
+        sections = inv_mod.detect_sections(frames_json, n)
+        canon = inv_mod.detect_canon(frames_json, n, sections)
+        log(f"[S1] 지문 {n}개 — canon {canon}")
+
+        result = inv_mod.build_inventory(frames_json, stories_json,
+                                         sections, canon)
+        fails = list(inv_mod.gate(result, canon))
+
+        # S2 — 실전 구간 (영작 배열 다음 ~ 문서 끝)
+        arr_first, arr_last = sections["영작배열"]
+        efs, page_count = exam_mod.exam_frames(frames_json, arr_last + 1, 10 ** 6)
+        bounds = exam_mod.find_boundaries(efs)
+        blocks = exam_mod.blocks_from_boundaries(bounds, page_count)
+        info = exam_mod.page_info(frames_json)
+        exam_blocks, tail_blocks = exam_mod.partition(blocks, canon, info)
+        fails += exam_mod.gate(exam_blocks, tail_blocks, canon)
+        exam_targets = exam_mod.split_targets(blocks)
+
+        # S2 — 영작 배열 스레드
+        afs, _pc = exam_mod.arrange_frames(frames_json, arr_first, arr_last)
+        abounds = exam_mod.arrange_boundaries(afs, canon)
+        fails += exam_mod.arrange_gate(abounds, canon)
+        arr_targets = exam_mod.arrange_split_targets(abounds)
+
+        if fails:
+            raise RuntimeError("S1/S2 게이트 실패 — 조판 미착수:\n  - "
+                               + "\n  - ".join(fails))
+        log(f"[S2] 게이트 통과 — 실전 {len(exam_blocks)}지문 · 짤지문 "
+            f"{len(tail_blocks)}개, 분할 대상 실전 {len(exam_targets)}건 · "
+            f"영작배열 {len(arr_targets)}건")
+
+        targets = exam_targets + arr_targets
+        inventory = result["inventory"]
+        if targets:
+            self._run_aux_jsx(
+                _SPLIT_JSX, out_indd, {"targets": targets}, job_dir, log,
+                "cv_split", "분할 완료", cancel_check)
+            # 분할 후 재덤프 — 영작 배열이 스레드에서 페이지 단위로 바뀌면서
+            # 슬롯 페이지가 이때 확정된다 (후처리 마스터 열의 근거).
+            frames2 = os.path.join(job_dir, "split_frames.json")
+            log("[S1'] 분할 후 프레임 재덤프")
+            dump_frames(out_indd, frames2, log)
+            n2 = inv_mod.detect_n_problems(frames2)
+            sections2 = inv_mod.detect_sections(frames2, n2)
+            result2 = inv_mod.build_inventory(frames2, stories_json, sections2,
+                                              canon, threaded=set())
+            fails2 = inv_mod.gate(result2, canon)
+            if fails2:
+                raise RuntimeError("분할 후 S1 게이트 실패:\n  - "
+                                   + "\n  - ".join(fails2))
+            inventory = result2["inventory"]
+            log("[S1'] 분할 후 슬롯 인벤토리 확정")
+
+        stage = {"canon": canon, "n_problems": n,
+                 "sections": {k: list(v) for k, v in sections.items()},
+                 "inventory": inventory,
+                 "exam_targets": exam_targets,
+                 "arrange_targets": arr_targets,
+                 "tail_blocks": tail_blocks}
+        with open(os.path.join(job_dir, "cv_stage.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump(stage, f, ensure_ascii=False, indent=1)
+        return stage
+
+    # ── 3c. 후처리 — 슬롯 마스터 + 파리티 패딩 + PDF ────────────────────────
+
+    def _post_finish(self, job_dir, settings, stage, log, cancel_check=None):
+        from core.inspect import dump_frames
+        from . import plan as plan_mod
+
+        out_indd = settings["indd_path"]
+        out_frames = os.path.join(job_dir, "out_frames.json")
+        log("[S3] 산출물 프레임 덤프")
+        dump_frames(out_indd, out_frames, log)
+
+        cycles, fails = plan_mod.build_finish_cycles(
+            out_frames, stage["inventory"], stage["canon"])
+        if fails:
+            raise RuntimeError("후처리 플랜 게이트 실패:\n  - " + "\n  - ".join(fails))
+        lens = [c["length"] for c in cycles["cycles"]]
+        log(f"[S3] 사이클 {len(lens)}개 — 길이 {min(lens)}~{max(lens)}p, "
+            f"패딩 {sum(1 for c in cycles['cycles'] if c['pad'])}개")
+
+        cfg = {"master_src": settings.get("master_local") or "",
+               "out_pdf": settings.get("pdf_path") or "",
+               "cycles": cycles["cycles"]}
+        content = self._run_aux_jsx(
+            _FINISH_JSX, out_indd, cfg, job_dir, log,
+            "cv_finish", "후처리 완료", cancel_check)
+        for ln in content.splitlines():
+            if "마스터 적용" in ln or "[경고]" in ln:
+                log("[S3] " + ln.strip())
+        with open(os.path.join(job_dir, "cv_finish_plan.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump(cycles, f, ensure_ascii=False, indent=1)
 
     # ── 4단계: verify ───────────────────────────────────────────────────────
 
@@ -485,11 +650,49 @@ class ConvertToVerticalEngine(BaseEngine):
         elif out_overflow:
             warnings.append(f"⚠️ 오버플로우 스토리 {out_overflow}개 (원본에도 존재)")
 
-        # (d) 페이지 정리 리포트 (구분 삭제 + STEP4.4 arrange 재배분 반영)
+        # (b2) 후처리 게이트 — 슬롯 마스터 + 파리티 (SPEC 5장 S7)
+        pad_pages = 0
+        try:
+            fin = json.load(open(os.path.join(job_dir, "cv_finish_plan.json"),
+                                 encoding="utf-8"))
+        except (OSError, ValueError):
+            fin = None
+            ok = False
+            warnings.append("❌ 후처리 플랜 없음 — cv_finish 미실행 의심")
+        if fin:
+            cyc = fin.get("cycles") or []
+            pad_pages = sum(1 for c in cyc if c.get("pad"))
+            odd = [c["code"] for c in cyc
+                   if (c["length"] + (1 if c.get("pad") else 0)) % 2]
+            if odd:
+                ok = False
+                warnings.append(f"❌ 사이클 길이 홀수: 지문 {odd[:5]} "
+                                "(좌우 파리티 붕괴)")
+            log(f"[검수] 사이클 {len(cyc)}개 — 파리티 패딩 {pad_pages}p")
+
+            # 마스터 분포 — 정본은 A~E 가 각 2N (슬롯 2개씩). 하나라도 0이면
+            # 후처리가 통째로 헛돈 것이다 (W27 결함: B/D/E 부재).
+            mcount = {}
+            for pg in (out_dump.get("pages") or []):
+                m = (pg.get("m") or "").strip()
+                if m:
+                    mcount[m[:1]] = mcount.get(m[:1], 0) + 1
+            lack = [k for k in "ABCDE" if mcount.get(k, 0) < (num_problems or 1)]
+            if lack:
+                ok = False
+                warnings.append(
+                    f"❌ 슬롯 마스터 부족: {lack} (지문당 1p 미만 — 분포 "
+                    f"{ {k: mcount.get(k, 0) for k in 'ABCDEOM'} })")
+            log("[검수] 마스터 분포: "
+                + " ".join(f"{k}{mcount.get(k, 0)}" for k in "ABCDEOM"))
+
+        # (d) 페이지 정리 리포트 (구분 삭제 + STEP4.4 arrange 재배분 + 패딩)
         src_pages = src_dump.get("page_count") or 0
         out_pages = out_dump.get("page_count") or 0
         deleted = stats.get("sep_pages_deleted")
         expected = expected_page_count(src_pages, stats)
+        if expected is not None:
+            expected += pad_pages
         log(f"[검수] 페이지 {src_pages} → {out_pages} "
             f"(구분 삭제 {deleted if deleted is not None else '?'}, "
             f"arrange +{stats.get('arrange_pages_added', '?')}"
