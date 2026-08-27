@@ -91,7 +91,9 @@ def test_실전_분할_대상은_프레임_중간_시작_지문뿐(tmp_path):
     assert exam_mod.gate(exam_blocks, tail, CODES) == []
 
 
-def test_영작배열_스레드_분할(tmp_path):
+def test_영작배열은_body가_못보는_지문만_분할(tmp_path):
+    """body(STEP4.4)는 단락 머리 40자에서만 코드를 인정한다. 그 판정을 그대로
+    미러링해, 안 보이는 지문만 끊는다 — 과한 분할은 오버셋을 부른다."""
     frames, pc = _src_frames()
     fj = _write(tmp_path, "src.json", frames, pc)
     sec = inv_mod.detect_sections(fj, N)
@@ -99,8 +101,27 @@ def test_영작배열_스레드_분할(tmp_path):
     bounds = exam_mod.arrange_boundaries(afs, CODES)
     assert [b["code"] for b in bounds] == CODES
     assert exam_mod.arrange_gate(bounds, CODES) == []
-    targets = exam_mod.arrange_split_targets(bounds)
-    assert [t["code"] for t in targets] == ["21"]     # 프레임 중간 시작만
+    # 둘 다 단락 머리(\r 뒤)라 body 가 본다 → 분할 없음
+    assert exam_mod.arrange_split_targets(bounds, afs) == []
+
+
+def test_인라인개체가_앞에_붙은_지문은_분할대상(tmp_path):
+    """26년 6월 [30] 실측 형태 — 코드 앞에 ￼(U+FFFC)가 있어 정규식에서 빠진다."""
+    frames, pc = _src_frames()
+    for f in frames:
+        if f["pidx"] == 23:
+            f["text"] = "[20] 영작 첫 지문.\r\ufffc[21] 영작 둘째 지문."
+            f["head"] = f["text"][:160]
+            f["chars"] = len(f["text"])
+    fj = _write(tmp_path, "src.json", frames, pc)
+    sec = inv_mod.detect_sections(fj, N)
+    afs, _ = exam_mod.arrange_frames(fj, *sec["영작배열"])
+    bounds = exam_mod.arrange_boundaries(afs, CODES)
+    by = {b["code"]: b for b in bounds}
+    assert by["20"]["body_sees"] is True
+    assert by["21"]["body_sees"] is False
+    tg = exam_mod.arrange_split_targets(bounds, afs)
+    assert [t["code"] for t in tg] == ["21"]
 
 
 def test_영작배열_지문_누락은_게이트에서_잡힌다(tmp_path):
@@ -168,23 +189,26 @@ def test_사이클_시작순서가_canon과_어긋나면_실패(tmp_path):
         assert "순서" in str(e)
 
 
-def test_스레드_두_프레임이면_뒤_프레임_첫지문도_분할대상(tmp_path):
-    """프레임 머리 지문(at_head)은 앞 프레임 끝에서 끊어야 한다 — 안 그러면
-    앞 지문을 밀어낼 때 재흐름으로 같은 페이지에 합쳐진다 (26년 6월 29·39)."""
-    frames, fid, pi = [], 7000, 0
-    frames.append(_f(pi, "C-마스터", "[20] 첫 지문.\r[21] 둘째 지문.", fid, sid=1))
-    pi += 1
-    frames.append(_f(pi, "C-마스터", "[22] 셋째 지문.\r[23] 넷째 지문.",
-                     fid + 1, sid=1))
+def test_두_프레임_스레드라도_단락머리면_분할하지_않는다(tmp_path):
+    """프레임 경계는 분할 근거가 아니다 — body 는 페이지가 아니라 텍스트를 본다."""
+    frames = []
+    frames.append(_f(0, "C-마스터", "[20] 첫 지문.\r[21] 둘째 지문.", 7000, sid=1))
+    frames.append(_f(1, "C-마스터", "\r[22] 셋째 지문.\r[23] 넷째 지문.",
+                     7001, sid=1))
     fj = _write(tmp_path, "arr.json", frames, 2)
     afs, _ = exam_mod.arrange_frames(fj, 1, 2)
     bounds = exam_mod.arrange_boundaries(afs, ["20", "21", "22", "23"])
-    tg = exam_mod.arrange_split_targets(bounds, afs)
-    assert [t["code"] for t in tg] == ["21", "22", "23"]   # 첫 지문만 제외
-    by = {t["code"]: t for t in tg}
-    assert not by["21"].get("break_only")
-    # [22] 는 뒤 프레임 머리 → 앞 프레임(fid 7000) 끝에서 끊는다
-    assert by["22"]["break_only"] is True
-    assert by["22"]["fid"] == "7000"
-    assert by["22"]["offset"] == frames[0]["chars"]
-    assert by["22"]["page"] == 1
+    assert [b["code"] for b in bounds] == ["20", "21", "22", "23"]
+    assert exam_mod.arrange_split_targets(bounds, afs) == []
+
+
+def test_스레드_슬롯은_지문당_1페이지로_친다(tmp_path):
+    """영작 배열은 분할 후에도 스레드 — 인벤토리에 페이지가 없다."""
+    frames, pc = _out_frames()
+    fj = _write(tmp_path, "out.json", frames, pc)
+    inv = _inventory()
+    for c in CODES:
+        inv[c]["영작배열"] = {"kind": "thread", "para": 3, "raw": c}
+    cycles, fails = plan_mod.build_finish_cycles(fj, inv, CODES)
+    assert fails == []
+    assert cycles["cycles"][0]["slot_masters"].count("E-마스터") == 2

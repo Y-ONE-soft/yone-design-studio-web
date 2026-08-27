@@ -129,6 +129,10 @@ def _slot_masters(inventory, code):
     for name, _slot_no, master in SLOTS:
         got = (inventory.get(code) or {}).get(name) or {}
         n = len(got.get("pages") or [])
+        if not n and got.get("kind") == "thread":
+            # 스레드 슬롯(영작 배열)은 인벤토리에 페이지가 없다. body STEP4.4 가
+            # 섹션마다 페이지 1개를 만들어 재배분하므로 지문당 1p 다.
+            n = 1
         out.extend(["%s-마스터" % master] * n)
     return out
 

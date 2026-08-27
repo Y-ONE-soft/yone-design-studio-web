@@ -456,8 +456,12 @@ class ConvertToVerticalEngine(BaseEngine):
             dump_frames(out_indd, frames2, log)
             n2 = inv_mod.detect_n_problems(frames2)
             sections2 = inv_mod.detect_sections(frames2, n2)
+            # 영작 배열은 분할 후에도 스레드다 — 페이지를 쪼개지 않고 코드를
+            # 단락 머리로 만들기만 하기 때문이다. 지문당 1페이지가 되는 것은
+            # body STEP4.4 재배분 이후이므로 여기서 프레임 단위로 요구하면
+            # 있지도 않은 결손을 게이트가 잡는다.
             result2 = inv_mod.build_inventory(frames2, stories_json, sections2,
-                                              canon, threaded=set())
+                                              canon)
             fails2 = inv_mod.gate(result2, canon)
             if fails2:
                 raise RuntimeError("분할 후 S1 게이트 실패:\n  - "
