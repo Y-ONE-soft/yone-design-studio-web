@@ -22,6 +22,7 @@ import re
 import struct
 import unicodedata
 import zipfile
+import zlib
 
 _LOG = logging.getLogger(__name__)
 
@@ -547,8 +548,169 @@ def _normalize_circled_numbers(paras):
 _RE_SRC_BAR = re.compile(r'┃[^┃]*?월\s*\d+(?:\s*~\s*\d+)?\s*번[^┃]*?┃')
 
 
+# ── hwp 그림(도표/그래프) 추출 ─────────────────────────────────────────────
+# 사용자 지적 2026-08-27 (부교재 워크북 v2 / 올림포스 영어독해 6강):
+# "원고에 있는 도표 이미지도 조판이 됐으면 좋겠어."
+# HWP5는 그림을 본문 단락의 GSO 컨트롤(제어문자 11)로 걸고, 실제 비트맵은
+# OLE 저장소 BinData/BIN####.ext 스트림에 (FileHeader flags&1 이면 raw
+# deflate 로 압축돼) 들어 있다. 텍스트만 뽑는 기존 경로는 GSO 제어문자를
+# 16바이트 건너뛰고, 그림만 있는 단락은 text=="" 라 통째로 버려졌다.
+#
+# 여기서는 **레코드 순서 그대로** 그림을 단락에 붙인다 (앵커 단락 = 그림
+# 직전의 PARA_TEXT). 머리말/꼬리말/각주에 걸린 로고·워터마크는 앵커 단락의
+# level 이 1 이 아니므로 자연히 빠진다 (본문 단락만 level 1).
+_HWPUNIT_MM = 25.4 / 7200.0
+_HWP_PIC_TAG = 'HWPTAG_SHAPE_COMPONENT_PICTURE'
+
+
+def _hwp_bindata_storage_names(hwp):
+    """DocInfo BIN_DATA → {storage_id: 'BIN0001.bmp'} (id는 그림이 참조하는 값)."""
+    names = {}
+    try:
+        models = list(hwp.docinfo.models())
+    except Exception as e:                                     # noqa: BLE001
+        _LOG.warning("[추출] BinData 목록 파싱 실패 — 그림 추출 생략: %s", e)
+        return names
+    for m in models:
+        if m.get('tagname') != 'HWPTAG_BIN_DATA':
+            continue
+        bd = (m.get('content') or {}).get('bindata') or {}
+        sid, ext = bd.get('storage_id'), bd.get('ext')
+        if sid is None or not ext:
+            continue           # 링크형(외부 파일 참조) BinData — 내장 그림 아님
+        names[int(sid)] = 'BIN%04X.%s' % (int(sid), ext)
+    return names
+
+
+def _hwp_read_bindata(hwp_path, storage_name):
+    """BinData 스트림 1개를 읽어 (필요하면 inflate 해) 원본 바이트로 반환."""
+    import olefile
+    ole = olefile.OleFileIO(hwp_path)
+    try:
+        try:
+            flags = struct.unpack_from('<I', ole.openstream('FileHeader').read(), 36)[0]
+        except Exception:                                      # noqa: BLE001
+            flags = 1
+        raw = ole.openstream('BinData/' + storage_name).read()
+    finally:
+        try:
+            ole.close()
+        except Exception:                                      # noqa: BLE001
+            pass
+    if flags & 1:
+        try:
+            return zlib.decompress(raw, -15)
+        except zlib.error:
+            return raw          # 비압축으로 저장된 스트림 (혼재 가능)
+    return raw
+
+
+def _hwp_export_picture(hwp_path, storage_name, out_dir, stem, bid):
+    """BinData 그림 1개를 out_dir에 파일로 쓰고 (경로, 폭px, 높이px) 반환.
+
+    BMP/TIFF 등 인디자인 링크로 무거운 포맷은 PNG로 변환한다 (원고 도표는
+    3.6MB BMP 로 들어오기도 한다 — 링크 파일이 그대로 납품 폴더에 남는다).
+    변환 실패 시 원본 확장자 그대로 저장 (침묵 유실 금지)."""
+    data = _hwp_read_bindata(hwp_path, storage_name)
+    ext = os.path.splitext(storage_name)[1].lower().lstrip('.')
+    px = (0, 0)
+    if ext in ('bmp', 'tif', 'tiff', 'wmf', 'emf', 'gif'):
+        try:
+            import io
+            from PIL import Image
+            im = Image.open(io.BytesIO(data))
+            px = im.size
+            if im.mode not in ('RGB', 'RGBA', 'L'):
+                im = im.convert('RGB')
+            out = os.path.join(out_dir, '%s_img%d.png' % (stem, bid))
+            im.save(out, 'PNG', optimize=True)
+            return out, px[0], px[1]
+        except Exception as e:                                 # noqa: BLE001
+            _LOG.warning("[추출] 그림 PNG 변환 실패(%s) — 원본 확장자로 저장: %s",
+                         storage_name, e)
+    out = os.path.join(out_dir, '%s_img%d.%s' % (stem, bid, ext or 'bin'))
+    with open(out, 'wb') as f:
+        f.write(data)
+    try:
+        import io
+        from PIL import Image
+        px = Image.open(io.BytesIO(data)).size
+    except Exception:                                          # noqa: BLE001
+        px = (0, 0)
+    return out, px[0], px[1]
+
+
+def _hwp_collect_pictures(hwp_path, all_models, image_dir):
+    """레코드 목록에서 그림을 모아 {앵커 레코드 index: [image dict]} 반환.
+
+    image dict = {"path", "w_mm", "h_mm", "bindata_id"} — w/h 는 원고에
+    **표시된** 크기(mm). 조판은 이 값을 단 폭 상한과 함께 쓴다."""
+    found = []          # (anchor_rec_index, bindata_id, w_mm, h_mm)
+    last_para = None
+    for ri, rec in enumerate(all_models):
+        if rec.get('tagid') == 67:                 # PARA_TEXT
+            last_para = ri
+            continue
+        if rec.get('tagname') != _HWP_PIC_TAG or last_para is None:
+            continue
+        if all_models[last_para].get('level', 1) != 1:
+            continue                                # 머리말/꼬리말/각주 그림
+        content = rec.get('content') or {}
+        bid = ((content.get('picture') or {}).get('bindata_id'))
+        if bid is None:
+            continue
+        # 표시 크기 — 직전 SHAPE_COMPONENT 의 width/height (HWPUNIT)
+        w_mm = h_mm = 0.0
+        for rj in range(ri - 1, max(-1, ri - 4), -1):
+            if all_models[rj].get('tagname') == 'HWPTAG_SHAPE_COMPONENT':
+                sc = all_models[rj].get('content') or {}
+                w_mm = float(sc.get('width') or 0) * _HWPUNIT_MM
+                h_mm = float(sc.get('height') or 0) * _HWPUNIT_MM
+                break
+        found.append((last_para, int(bid), w_mm, h_mm))
+    if not found:
+        return {}
+
+    try:
+        from hwp5.xmlmodel import Hwp5File
+        names = _hwp_bindata_storage_names(Hwp5File(hwp_path))
+    except Exception as e:                                     # noqa: BLE001
+        _LOG.warning("[추출] 그림 저장소 이름 확인 실패 — 그림 생략: %s", e)
+        return {}
+
+    os.makedirs(image_dir, exist_ok=True)
+    stem = re.sub(r'[^0-9A-Za-z가-힣]+', '_',
+                  os.path.splitext(os.path.basename(hwp_path))[0])[:60]
+    cache, out = {}, {}
+    for anchor, bid, w_mm, h_mm in found:
+        if bid not in cache:
+            sname = names.get(bid)
+            if not sname:
+                _LOG.warning("[추출] 그림 BinData 없음(id=%s, %s) — 누락",
+                             bid, os.path.basename(hwp_path))
+                cache[bid] = None
+            else:
+                try:
+                    cache[bid] = _hwp_export_picture(
+                        hwp_path, sname, image_dir, stem, bid)
+                except Exception as e:                         # noqa: BLE001
+                    _LOG.warning("[추출] 그림 추출 실패(%s, %s) — 누락: %s",
+                                 sname, os.path.basename(hwp_path), e)
+                    cache[bid] = None
+        info = cache[bid]
+        if not info:
+            continue
+        path, wpx, hpx = info
+        out.setdefault(anchor, []).append({
+            "path": path, "bindata_id": bid,
+            "w_mm": round(w_mm, 2), "h_mm": round(h_mm, 2),
+            "w_px": wpx, "h_px": hpx,
+        })
+    return out
+
+
 def _hwp_extract_paragraphs(hwp_path, extract_underline=False, exclude_footnotes=False,
-                            strip_inline_answers=False):
+                            strip_inline_answers=False, image_dir=None):
     """
     hwp 파일 파싱. hwpx(ZIP)이면 hwpx 파서 사용, 아니면 pyhwp + struct 디코딩.
     밑줄 추출: CHAR_SHAPE + PARA_CHAR_SHAPE 레코드 활용.
@@ -556,6 +718,9 @@ def _hwp_extract_paragraphs(hwp_path, extract_underline=False, exclude_footnotes
     strip_inline_answers: True면 발문 직후 인라인 정답 표(level>=2, 빨간
         마킹/[해설] 증거 2개+ 문서에 한정)를 제거 (W51 — Step3 전용.
         hwpx 경로는 해당 형식 실측 전이라 미적용).
+    image_dir: 지정하면 본문 그림(도표/그래프)을 이 폴더로 뽑아
+        {"text": "", "runs": [], "image": {...}} 단락으로 원위치에 끼운다.
+        None(기본)이면 그림 처리를 아예 하지 않는다 — 기존 호출부 무영향.
     """
     if _hwp_is_hwpx(hwp_path):
         return _normalize_circled_numbers(
@@ -587,8 +752,28 @@ def _hwp_extract_paragraphs(hwp_path, extract_underline=False, exclude_footnotes
                      e, os.path.basename(hwp_path))
         n_sections = 1
     all_recs = []
+    # image_dir 이 있을 때만 파싱된 모델(그림 정보 포함)을 읽는다. models()는
+    # records()와 1:1 동순서이고 record 키(tagid/level/payload)를 그대로 갖는다
+    # — 아래 본 루프는 두 경우 모두 같은 코드로 돈다.
+    _want_images = bool(image_dir)
     for _si in range(n_sections):
-        all_recs.extend(list(hwp.bodytext.section(_si).records()))
+        _sec = hwp.bodytext.section(_si)
+        if _want_images:
+            try:
+                all_recs.extend(list(_sec.models()))
+                continue
+            except Exception as e:                             # noqa: BLE001
+                _LOG.warning("[추출] 모델 파싱 실패(%s) — 그림 추출 생략: %s",
+                             os.path.basename(hwp_path), e)
+                _want_images = False
+        all_recs.extend(list(_sec.records()))
+    pics_by_rec = {}
+    if _want_images:
+        try:
+            pics_by_rec = _hwp_collect_pictures(hwp_path, all_recs, image_dir)
+        except Exception as e:                                 # noqa: BLE001
+            _LOG.warning("[추출] 그림 수집 실패(%s) — 그림 없이 진행: %s",
+                         os.path.basename(hwp_path), e)
 
     # ── 모의고사 워크북 신형식 감지 ──────────────────────────────────────
     # 한 지문을 여러 유형(어법/어휘/빈칸/순서/영작…)으로 변형하는 형식으로,
@@ -733,6 +918,12 @@ def _hwp_extract_paragraphs(hwp_path, extract_underline=False, exclude_footnotes
             if strip_inline_answers:
                 has_red = any(red_map.get(sid) for _pos, sid in cs_pairs)
                 metas.append({"lv": rec_level, "red": has_red})
+        # 이 단락에 걸린 그림 — 원고 순서 그대로 별도 단락으로 끼운다
+        # (그림만 있는 단락은 txt=="" 라 위에서 버려진다).
+        for _img in pics_by_rec.get(i, ()):
+            paragraphs.append({"text": "", "runs": [], "image": _img})
+            if strip_inline_answers:
+                metas.append({"lv": rec_level, "red": False})
         i += 1
 
     if strip_inline_answers:
