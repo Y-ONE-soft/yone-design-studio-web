@@ -791,6 +791,7 @@ try {
     result.arrange_pages_deleted = _arrDeleted;
 
     var _splitCount = 0;
+    var _crossPageCuts = 0;     // 페이지 경계에서 강제로 끊은 곳 (관통 방지)
     var _splitGroups = 0;
     var _splitRemain = 0;
     (function () {
@@ -865,11 +866,26 @@ try {
                 return "skip";
             }
 
-            // 단락 경계 그룹화 — 이전 프레임이 단락 중간에서 끝나면 같은 그룹
+            // 단락 경계 그룹화 — 이전 프레임이 단락 중간에서 끝나면 같은 그룹.
+            // 단, **페이지가 다르면 걸쳤어도 끊는다.** 안 끊으면 그 그룹이 한
+            // 스토리로 남고, STEP5 가 두 프레임을 서로 다른 사이클로 보내면
+            // 스토리가 사이클을 관통한다(2026-08-27 실측: 관통 1~4건이 전부
+            // 이 형태였다). 범위 복제는 프레임별 표시량(cap.len)대로 하므로
+            // 끊어도 지면에 보이는 내용은 그대로다.
             var groups = [];
             var cur = [0];
             for (var gi = 1; gi < caps.length; gi++) {
-                if (caps[gi - 1].endsPara || caps[gi - 1].zombie) {
+                var cutHere = (caps[gi - 1].endsPara || caps[gi - 1].zombie);
+                if (!cutHere) {
+                    try {
+                        var pgA = caps[gi - 1].pg, pgB = caps[gi].pg;
+                        if (pgA && pgB && String(pgA.id) !== String(pgB.id)) {
+                            cutHere = true;
+                            _crossPageCuts++;
+                        }
+                    } catch (eCP) {}
+                }
+                if (cutHere) {
                     groups.push(cur); cur = [];
                 }
                 cur.push(gi);
@@ -1078,8 +1094,13 @@ try {
         var _re = app.documents.itemByName(__docName);
         if (_re.isValid) { doc = _re; }
     } catch (e) {}
+    if (_crossPageCuts) {
+        wlog("STEP4.5: 페이지 경계 강제 분리 " + _crossPageCuts +
+             "곳 (단락이 걸쳤지만 다른 페이지 — 사이클 관통 방지)");
+    }
     wlog("STEP4.5: 스레드 스토리 " + _splitCount + "개 분리 완료 (독립 그룹 " +
          _splitGroups + "개, 잔존 0)");
+    result.cross_page_cuts = _crossPageCuts;
     result.split_stories = _splitCount;
     result.split_groups = _splitGroups;
 
