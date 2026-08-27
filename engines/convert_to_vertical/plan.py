@@ -143,8 +143,10 @@ def cycle_spans(out_frames_json, canon):
     first_page = {}
     tail_start = None
     by_page = {}
+    master_of = {}
     for f in frames:
         by_page.setdefault(f["pidx"] + 1, []).append(f)
+        master_of.setdefault(f["pidx"] + 1, f.get("master") or "")
     for pg in sorted(by_page):
         fs = sorted(by_page[pg], key=lambda f: (f["gb"][0], f["gb"][1]))
         for f in fs:
@@ -182,12 +184,21 @@ def cycle_spans(out_frames_json, canon):
         if tail_start:
             break
 
+    def _structural(pg):
+        m = master_of.get(pg, "")
+        return ("간지" in m) or not m
+
     spans = []
     for i, (c, s) in enumerate(starts):
         if i + 1 < len(starts):
             e = starts[i + 1][1] - 1
         else:
+            # 마지막 사이클 끝에서 간지/무마스터 페이지를 걷어낸다. 안 그러면
+            # 짤지문 앞 간지가 마지막 사이클에 붙어 길이 파리티가 어긋나고,
+            # 슬롯 마스터가 간지 위에 덮여 쓰인다.
             e = (tail_start - 1) if tail_start else page_count
+            while e > s and _structural(e):
+                e -= 1
         spans.append((c, s, e))
     return spans, page_count
 
