@@ -881,6 +881,50 @@ except Exception:                                            # noqa: BLE001
         r'^\s*(?:정답\s*및\s*해설|빠른\s*정답\s*찾기|정답지|정답)\s*$')
 
 
+# ── W77: 원고 그림 중 '지문에 딸린 그림'만 남긴다 ──────────────────────────
+# 원고에는 도표/실용문 삽화(=조판해야 할 내용)와 편집용 장식(난이도 ★★★,
+# 교재 로고/표지)이 섞여 있다. 형식(크기·파일명)이 아니라 **구조**로 가른다:
+#   내용 그림은 언제나 지문 옆에 있다 — 바로 앞이나 뒤의 실질 단락이
+#   영어 산문(=지문)이다. 장식은 선지와 발문 사이, 표제 블록 안에 있다.
+# (실증: 스텝3 실전문제.hwp 의 ★★★ 20개는 전부 '선지 → 그림 → 한글 발문'
+#  자리, 도표 그림은 전부 '라벨/발문 → 그림 → 영어 지문' 자리였다.)
+_RE_S3_IMG_ENGWORD = re.compile(r'[A-Za-z]{2,}')
+
+
+def _s3_img_is_prose(text):
+    return len(_RE_S3_IMG_ENGWORD.findall(text or '')) >= 6
+
+
+def _strip_step3_decorative_images(paras, label='', log=None):
+    """지문에 붙지 않은 그림(장식) 제거. 남긴/버린 수를 로그로 남긴다."""
+    if not any(isinstance(p, dict) and p.get('image') for p in paras):
+        return paras
+    out, dropped, kept = [], 0, 0
+    n = len(paras)
+    for i, p in enumerate(paras):
+        if isinstance(p, dict) and p.get('image'):
+            prev = nxt = ''
+            for k in range(i - 1, -1, -1):
+                t = (paras[k].get('text') or '').strip()
+                if t:
+                    prev = t
+                    break
+            for k in range(i + 1, n):
+                t = (paras[k].get('text') or '').strip()
+                if t:
+                    nxt = t
+                    break
+            if not (_s3_img_is_prose(prev) or _s3_img_is_prose(nxt)):
+                dropped += 1
+                continue
+            kept += 1
+        out.append(p)
+    if callable(log) and (kept or dropped):
+        log("[파서] step3 원고 그림 %s: 지문 그림 %d개 배치 / 장식 %d개 제외"
+            % (label, kept, dropped))
+    return out
+
+
 def _strip_step3_leading_junk(paras):
     """Step3 문제모음 선두의 표제/워터마크 블록 제거 (W17 c16).
 
@@ -2082,6 +2126,7 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
                                             exclude_footnotes=step3_exclude_footnotes,
                                             strip_inline_answers=True,
                                             image_dir=image_dir)
+        paras = _strip_step3_decorative_images(paras, str(file_key), log)  # W77
         # 보존 가드 스냅샷 — 책 헤더(변형문제/수능특강)는 의도적 제거이므로
         # 스냅샷에서도 제외해 허위 "내용 손실" 경고를 막는다(헤더 외 손실은 그대로 감지).
         paras = _strip_step3_item_numbers(paras)        # W75
@@ -2228,6 +2273,8 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
                                                 exclude_footnotes=step3_exclude_footnotes,
                                                 strip_inline_answers=True,
                                                 image_dir=image_dir)
+            # W77: 지문에 딸리지 않은 그림(장식) 제외
+            paras = _strip_step3_decorative_images(paras, _nfc(fname_raw), log)
             # 선두/꼬리 표제·워터마크 제거 (W17 c16/c11 — 스냅샷 전에)
             paras = _strip_step3_leading_junk(paras)
             paras = _strip_step3_trailing_junk(paras)
