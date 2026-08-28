@@ -48,12 +48,19 @@ def _augment_step1_c1_passage(paras):
         # 이미 (A)/(B)/... 시작 라인이면 보기/본문 라벨, 도입부 아님
         if re.match(r'^\([A-Z]\)', text):
             continue
-        # 다음 비빈 paragraph가 "(A)"로 시작하는지 확인
+        # 다음 비빈 paragraph가 하단 본문인지 확인.
+        #   (1) "(A)" 로 시작   → 순서배열형 하단
+        #   (2) "(①)" 류 삽입 표시를 포함 → **순서삽입형** 하단
+        # 종전에는 (1)만 봤다. 그래서 하단이 순서삽입 문제인 지문은 도입부가
+        # 인식되지 않아 **하단 칸이 통째로 비었다**
+        # (2026-08-25 실측: 170936·210937 — 원고에는 "주어진 문장 + 지문 안
+        #  ①~⑤ 삽입 위치" 가 정상적으로 있는데 조판이 못 읽었다.
+        #  같은 원고의 160636·190937·210936 은 (A)(B)(C) 형이라 정상이었다).
         for j in range(i + 1, len(out)):
             next_text = (out[j].get("text", "") if isinstance(out[j], dict) else str(out[j])).strip()
             if not next_text:
                 continue
-            if re.match(r'^\(A\)', next_text):
+            if re.match(r'^\(A\)', next_text) or re.search(r'\([①②③④⑤]\)', next_text):
                 # 도입부 확정. trailing 3+ space 추가 (선행 공백은 가로 코드 line 1283에서 자동 제거됨)
                 new_p = dict(p)
                 new_p["text"] = p.get("text", "") + "   "
