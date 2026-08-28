@@ -26,14 +26,26 @@ import json
 import os
 
 
-def _is_studio(root):
-    """스튜디오 루트인가 — 조판/교재 와 디자인 이 **둘 다** 있어야 한다.
+# 스튜디오 루트에 있어야 하는 것들. **몇 개나 맞는지로 고른다.**
+_MARKS = ("조판/교재", "디자인", "검수", "자료", "원고 합치기", "통합웹사이트")
 
-    이 기계에는 `~/dev/조판` 같은 부분 사본이 남아 있어서, `조판/교재` 만 보고
-    고르면 간지·표지(디자인/)를 못 찾는다.
+
+def _studio_score(root):
+    return sum(os.path.isdir(os.path.join(root, *m.split("/")))
+               for m in _MARKS)
+
+
+def _is_studio(root):
+    """스튜디오 루트인가 — **표식을 몇 개나 갖췄는지**로 본다.
+
+    ⚠ 예전에는 `조판/교재` + `디자인` 둘만 봤다. 그런데 이 기계에는
+      `~/dev/조판` 부분 사본이 있고, 조판 후처리가 `~/dev/디자인/목업/IN/` 에
+      결과를 떨구면 그 순간 `~/dev` 가 조건을 만족해 **진짜 스튜디오를 가린다**
+      (실제로 그렇게 됐고, 책 목록이 통째로 빈 목록이 됐다). 두 개로는 못 가른다
+      — 진짜 스튜디오는 표식을 대여섯 개 갖고 있고 가짜는 한둘뿐이다.
     """
     return (os.path.isdir(os.path.join(root, "조판", "교재"))
-            and os.path.isdir(os.path.join(root, "디자인")))
+            and _studio_score(root) >= 3)
 
 
 def _studio_root():
@@ -48,9 +60,16 @@ def _studio_root():
         pass
     cands += [os.path.expanduser("~/Documents/작업/Y.ONE STUDIO"),
               os.path.expanduser("~/dev")]
+    # 표식을 가장 많이 갖춘 곳. 같으면 앞에 적힌 순서를 따른다.
+    best, best_score = None, 0
     for c in cands:
-        if _is_studio(c):
-            return c
+        if not _is_studio(c):
+            continue
+        sc = _studio_score(c)
+        if sc > best_score:
+            best, best_score = c, sc
+    if best:
+        return best
     for c in cands:                     # 완전 일치가 없으면 조판/교재 라도
         if os.path.isdir(os.path.join(c, "조판", "교재")):
             return c

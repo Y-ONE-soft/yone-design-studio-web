@@ -183,7 +183,6 @@ class VivlioBookEngine(BaseEngine):
             raise ValueError("원고를 하나도 올리지 않았다")
 
         # 이름을 딱 집는 계열은 config 를 올린 파일 이름으로 갱신
-        meta = {"book.id": folder, "output.stem": None}
         for k, v in (("book.title", self._meta(job_dir, "new_title")),
                      ("book.school", self._meta(job_dir, "new_school")),
                      ("book.period", folder)):

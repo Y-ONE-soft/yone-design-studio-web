@@ -187,6 +187,17 @@
     ]
   },
   {
+    "section": "조판",
+    "category": "코드 조판 (비블리오)",
+    "items": [
+      {
+        "name": "비블리오 조판",
+        "prefix": "비블리오",
+        "engine_id": "vivlio_book"
+      }
+    ]
+  },
+  {
     "section": "표지",
     "category": "표지 제작",
     "items": [
