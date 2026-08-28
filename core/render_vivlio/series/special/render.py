@@ -52,6 +52,8 @@ RE_GAP2 = re.compile(r" {2,}")
 RE_HAN = re.compile(r"[가-힣]")
 VOL_ORDER = ("vocab", "grammar", "reading")
 HALF = 5              # 어법 연습문제 10문항을 나누는 자리
+VOL_EN = {"vocab": "VOCABULARY", "grammar": "SYNTAX & GRAMMAR",
+          "reading": "READING"}
 
 # 간지·목차 면이 이미 쓴 블록 — 흐름에서 다시 그리면 두 번 나온다
 FRONT = {"vol_desc", "toc_title", "toc_1", "toc_2"}
@@ -182,8 +184,8 @@ def grid_svg(w=174.0, h=118.0, step=5.0):
 
 
 def gridbox(label):
-    return (f'<div class="gridbox"><div class="gl">{esc(label or "필기 노트")}'
-            f'</div>{grid_svg()}</div>')
+    return (f'<div class="gridbox"><div class="gl"><i>'
+            f'{esc(label or "필기 노트")}</i></div>{grid_svg()}</div>')
 
 
 # ── 머리 띠 ─────────────────────────────────────────────────────────────
@@ -358,7 +360,8 @@ def render_grammar(vol, out):
             if i + 1 < n and blocks[i + 1]["t"] == "part_title":
                 title = plain(blocks[i + 1]["r"])
                 i += 1
-            out.append(part_page(plain(b["r"]), title))
+            out.append(part_page(plain(b["r"]), title,
+                                 part_items(blocks, i, ("part_no",))))
         elif t == "lesson":
             cp = {"body": [runhead(vol["part"], vol["name"], plain(b["r"])),
                            f'<h3 class="lesson">{inl(b["r"])}</h3>'],
@@ -512,10 +515,29 @@ def kv_inline(rich, en=False):
     return inl(rich)
 
 
-def part_page(no, title):
+def part_page(no, title, items=()):
+    """부 안쪽 PART 오프너 — 위 3분의 1은 색면, 아래는 그 파트의 차례."""
+    rows = "".join(
+        f'<div class="p-it"><span class="pn">{i:02d}</span>'
+        f'<span class="pt">{esc(t)}</span></div>'
+        for i, t in enumerate(items, 1))
+    lst = f'<div class="p-list">{rows}</div>' if rows else ""
     return (f'<section class="partpage">'
+            f'<div class="slab"></div><div class="orb"></div>'
             f'<div class="p-no">{esc(no)}</div>'
-            f'<div class="p-ttl">{esc(title)}</div></section>')
+            f'<div class="p-ttl">{esc(title)}</div>'
+            f'<div class="p-rule"></div>{lst}</section>')
+
+
+def part_items(blocks, i, stop, key="lesson"):
+    """이 PART 다음에 오는 강 제목들 — 다음 PART 를 만나면 멈춘다."""
+    out = []
+    for b in blocks[i + 1:]:
+        if b["t"] in stop:
+            break
+        if b["t"] == key:
+            out.append(plain(b["r"]))
+    return out
 
 
 # ───────────────────────────────────────────────────────────────── 독해부
@@ -560,7 +582,8 @@ def render_reading(vol, out):
             if i + 1 < n and blocks[i + 1]["t"] == "rpart_title":
                 title = plain(blocks[i + 1]["r"])
                 i += 1
-            out.append(part_page(plain(b["r"]), title))
+            out.append(part_page(plain(b["r"]), title,
+                                 part_items(blocks, i, ("rpart_no",), "week")))
         elif t == "week":
             week = pending_week = plain(b["r"])
         elif t == "lesson":
@@ -582,10 +605,11 @@ def render_reading(vol, out):
             if cp is not None:
                 cp["grid"] = plain(b["r"]).strip().lstrip("❖ ").strip()
             else:
-                k.head(f'<div class="nh">{esc(plain(b["r"]).strip())}</div>')
+                k.head(f'<div class="nh"><i>'
+                       f'{esc(plain(b["r"]).strip())}</i></div>')
         elif t == "note_head":
             txt = plain(b["r"]).strip().lstrip("❖ ").strip()
-            k.head(f'<div class="nh">{esc(txt)}</div>')
+            k.head(f'<div class="nh"><i>{esc(txt)}</i></div>')
         elif t == "notebox":
             if cp is None:
                 k.body(rules(9, "wbox"))
@@ -611,8 +635,8 @@ def render_reading(vol, out):
         elif t == "bg_item":
             k.body(f'<div class="bgi">{inl(strip_mark(b["r"], "·"))}</div>')
         elif t == "trans_head":
-            k.head(f'<div class="th">'
-                   f'{esc(plain(b["r"]).strip().lstrip("❖ ").strip())}</div>')
+            k.head(f'<div class="th"><i>'
+                   f'{esc(plain(b["r"]).strip().lstrip("❖ ").strip())}</i></div>')
         elif t == "trans":
             k.body(f'<div class="trans">{inl(b["r"])}</div>')
         elif t == "ans_line":
@@ -697,17 +721,29 @@ def cover_page(cfg, cover):
         '</section>')
 
 
-def divider_page(vol, no):
+def divider_page(cfg, vol, no):
+    """부 간지 — **2면 한 세트**. 왼쪽은 제목, 오른쪽은 번호와 설명.
+
+    두 면을 가로지르는 큰 원 하나가 책등에서 이어진다. 같은 그림을 뒤집어 쓴 것이
+    아니라 **한 도형이 펼침을 건너간다** — 좌우 대칭은 금물이다.
+    """
     lines = [b for b in vol["blocks"] if b["t"] == "vol_desc"]
     desc = "".join(f'<div class="d-desc">{inl(b["r"])}</div>' for b in lines)
-    return (f'<section class="divider">'
-            f'  <div class="d-in">'
-            f'    <div class="d-no">PART {no:02d}</div>'
-            f'    <h1 class="d-ttl">{esc(vol["name"])}</h1></div>'
-            f'  <div class="d-edge"></div>'
-            f'  <div class="d-band">{desc}</div>'
-            f'  <div class="d-ghost">{no:02d}</div>'
-            f'</section>')
+    en = VOL_EN.get(vol["id"], "")
+    bk = cfg.book
+    foot = "  ·  ".join(x for x in (bk.get("brand"), bk.get("school"),
+                                    bk.get("teacher")) if x)
+    return (
+        f'<section class="dvL v-{vol["id"]}"><div class="orb"></div>'
+        f'  <div class="in"><div class="d-no">PART {no:02d}</div>'
+        f'    <h1 class="d-ttl">{esc(vol["name"])}</h1>'
+        f'    <div class="d-en">{esc(en)}</div>'
+        f'    <div class="d-rule"></div></div>'
+        f'  <div class="foot">{esc(foot)}</div></section>'
+        f'<section class="dvR v-{vol["id"]}"><div class="orb"></div>'
+        f'  <div class="num">{no:02d}</div>'
+        f'  <div class="desc">{desc}</div>'
+        f'  <div class="brand">{esc(bk.get("brand", ""))}</div></section>')
 
 
 def toc_page(vol):
@@ -742,8 +778,9 @@ def write(cfg, d, build_dir, log=print, memos=1):
     parts = [cover_page(cfg, d["cover"])]
     for k, vol in enumerate(d["volumes"], 1):
         vid = vol["id"]
+        vol["part"] = f"PART {k:02d}"
         parts.append(f'<div class="vol v-{vid}">')
-        parts.append(divider_page(vol, k))
+        parts.append(divider_page(cfg, vol, k))
         parts.append(toc_page(vol))
         body = []
         RENDERERS.get(vid, render_reading)(vol, body)

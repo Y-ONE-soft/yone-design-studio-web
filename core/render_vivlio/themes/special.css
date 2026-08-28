@@ -100,8 +100,8 @@
         position: relative; overflow: hidden; }
 
 /* 왼쪽 면 — 안쪽(책등 쪽)으로 흐르는 큰 원 + 알약 */
-.bandL .orb { position: absolute; left: 96mm; top: -30mm;
-              width: 62mm; height: 62mm; border-radius: 50%;
+.bandL .orb { position: absolute; left: 158mm; top: -34mm;
+              width: 74mm; height: 74mm; border-radius: 50%;
               background: var(--c-line); }
 .bandL .pill { position: absolute; left: 19mm; top: 4.4mm;
                padding: 1.7mm 4mm; background: var(--c-deep); color: #fff;
@@ -121,11 +121,11 @@
                width: 6.4mm; height: 6.6mm; background-color: #fff;
                -webkit-mask: url(assets/crest.png) no-repeat center/contain;
                mask: url(assets/crest.png) no-repeat center/contain; }
-.bandR .sec  { position: absolute; right: 42mm; top: 6.0mm;
+.bandR .sec  { position: absolute; right: 45mm; top: 6.0mm;
                font: 700 8pt/1 Noto; color: var(--c-deep);
                letter-spacing: .01em; white-space: nowrap; }
-.bandR .tick { position: absolute; right: 36mm; top: 5.2mm;
-               width: 1.4mm; height: 4.4mm; background: var(--c-sub); }
+.bandR .tick { position: absolute; right: 39.5mm; top: 5.0mm;
+               width: 1.2mm; height: 5mm; background: var(--c-sub); }
 
 .rh-off .band { background: none; }
 .rh-off .band * { display: none; }
@@ -232,8 +232,15 @@ u { text-decoration: none; }
          letter-spacing: .4em; color: #fff; opacity: .8; }
 .p-ttl { position: absolute; left: 0; top: 46mm; font: 700 30pt/1.2 Disp;
          color: #fff; letter-spacing: -.045em; }
-.p-rule { position: absolute; left: 0; top: 86mm; width: 24mm; height: 1.2mm;
+.p-rule { position: absolute; left: 0; top: 88mm; width: 24mm; height: 1.2mm;
           background: var(--c-sub); }
+.p-list { position: absolute; left: 0; right: 0; top: 104mm; }
+.p-it { display: table; table-layout: fixed; width: 100%;
+        padding: 4mm 0; border-bottom: .5pt solid var(--hair); }
+.p-it span { display: table-cell; vertical-align: baseline; }
+.p-it .pn { width: 16mm; font: 700 11pt/1.2 Disp; color: var(--c-line); }
+.p-it .pt { font: 500 10.4pt/1.35 Noto; color: var(--c-deep);
+            letter-spacing: -.01em; }
 
 /* ================================================================= 어휘부 */
 .week-open { break-before: page; }
