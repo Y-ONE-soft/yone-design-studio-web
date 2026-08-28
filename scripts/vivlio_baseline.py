@@ -26,6 +26,17 @@ import hashlib
 import json
 import os
 import sys
+import unicodedata
+
+
+def nfc(s):
+    """한글 파일명은 macOS 파일시스템이 NFD 로 준다 — 쉘 인자·JSON 키는 NFC 다.
+
+    정규화하지 않으면 '눈에 똑같은 이름'이 안 맞아 **기준선에 없다**고 나온다
+    (실제로 여기서 데였다). 저장·조회 양쪽에서 NFC 로 맞춘다.
+    """
+    return unicodedata.normalize("NFC", s)
+
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_DIR = os.path.join(REPO, "tests", "baseline", "vivlio")
@@ -97,15 +108,19 @@ def fingerprint_pdf(path, dpi=DPI):
             "pages": len(pages), "page": pages}
 
 
-def fingerprint_book(key, root, dpi=DPI, log=print):
-    """책 폴더 최상위의 모든 *.pdf. build/ 안의 중간 산출은 보지 않는다."""
+def fingerprint_book(key, root, dpi=DPI, log=print, override_dir=None):
+    """책 폴더 최상위의 모든 *.pdf. build/ 안의 중간 산출은 보지 않는다.
+
+    `override_dir` 를 주면 그 폴더를 대신 본다 — **교재 폴더 사본에서 빌드해
+    납품본을 건드리지 않고 대조**하기 위한 것이다(재현성 확인의 기본 절차).
+    """
     import fitz
-    d = book_dir(key, root)
+    d = override_dir or book_dir(key, root)
     if not os.path.isdir(d):
         raise SystemExit("교재 폴더 없음: %s" % d)
     pdfs = {}
     for p in sorted(glob.glob(os.path.join(d, "*.pdf"))):
-        name = os.path.basename(p)
+        name = nfc(os.path.basename(p))
         try:
             pdfs[name] = fingerprint_pdf(p, dpi)
             log("      %-52s %4d면" % (name[:52], pdfs[name]["pages"]))
@@ -129,7 +144,10 @@ def load(key):
     if not os.path.exists(p):
         return None
     with open(p, encoding="utf-8") as f:
-        return json.load(f)
+        d = json.load(f)
+    # 옛 기준선은 NFD 키로 저장돼 있을 수 있다 — 읽을 때 맞춰 준다
+    d["pdfs"] = {nfc(k): v for k, v in (d.get("pdfs") or {}).items()}
+    return d
 
 
 def save(key, data):
@@ -139,14 +157,21 @@ def save(key, data):
 
 
 def diff_book(old, new, verbose=False):
-    """기준선 ↔ 현재. 사람이 읽을 줄 목록을 돌려준다(빈 목록 = 불변)."""
-    out = []
+    """기준선 ↔ 현재 → `(줄 목록, 결함 수)`.
+
+    ⚠ **바이트만 다른 것은 결함이 아니다.** PDF 에는 생성 시각·ID 가 들어가므로
+    같은 입력으로 다시 조판해도 파일 해시는 매번 달라진다. 우리가 지켜야 하는
+    것은 **지면**(면수·판형·글자·픽셀)이다. 이걸 결함으로 세면 모든 대조가
+    실패로 나와 게이트가 무의미해진다.
+    """
+    out, bad = [], 0
     if old.get("mupdf") != new.get("mupdf"):
         out.append("  ⚠ MuPDF 판본 다름 %s → %s — 픽셀 해시는 신뢰 불가, tx 만 볼 것"
                    % (old.get("mupdf"), new.get("mupdf")))
     o, n = old.get("pdfs", {}), new.get("pdfs", {})
     for name in sorted(set(o) - set(n)):
         out.append("  ✗ 사라짐  %s" % name)
+        bad += 1
     for name in sorted(set(n) - set(o)):
         out.append("  + 새 파일 %s (%d면)" % (name, n[name].get("pages", 0)))
     for name in sorted(set(o) & set(n)):
@@ -155,11 +180,13 @@ def diff_book(old, new, verbose=False):
             if a.get("error") != b.get("error"):
                 out.append("  ✗ %s 읽기 오류 변화: %s → %s"
                            % (name, a.get("error"), b.get("error")))
+                bad += 1
             continue
         if a["sha256"] == b["sha256"]:
             continue                                # 파일 자체가 동일 — 볼 것 없음
         if a["pages"] != b["pages"]:
             out.append("  ✗ %s 면수 %d → %d" % (name, a["pages"], b["pages"]))
+            bad += 1
         px = [p["i"] for p, q in zip(a["page"], b["page"]) if p["px"] != q["px"]]
         tx = [p["i"] for p, q in zip(a["page"], b["page"]) if p["tx"] != q["tx"]]
         sz = [p["i"] for p, q in zip(a["page"], b["page"])
@@ -175,12 +202,11 @@ def diff_book(old, new, verbose=False):
         if tx:
             out.append("  ✗ %s **글자** 다른 면 %d개: %s" % (name, len(tx), brief(tx)))
         if px:
-            lvl = "✗" if tx or sz else "△"
-            out.append("  %s %s 픽셀 다른 면 %d개: %s"
-                       % (lvl, name, len(px), brief(px)))
+            out.append("  ✗ %s 픽셀 다른 면 %d개: %s" % (name, len(px), brief(px)))
+        bad += 1
         if verbose and px:
             out.append("     (픽셀만 다르고 글자가 같으면 색·위치·굵기 변화다)")
-    return out
+    return out, bad
 
 
 # ── CLI ─────────────────────────────────────────────────────────
@@ -189,8 +215,14 @@ def main():
     ap.add_argument("cmd", choices=["list", "capture", "compare"])
     ap.add_argument("--books", help="쉼표로 구분한 교재 키 (기본: 전부)")
     ap.add_argument("--dpi", type=int, default=DPI)
+    ap.add_argument("--dir", help="compare 전용 — 교재 폴더 대신 이 폴더의 PDF 를 본다"
+                                  " (사본에서 빌드해 납품본을 안 건드리고 대조할 때)")
+    ap.add_argument("--only", help="compare 전용 — 이 이름의 PDF 만 (사본에 일부만"
+                                   " 있을 때 '사라짐'을 오탐하지 않게)")
     ap.add_argument("-v", "--verbose", action="store_true")
     a = ap.parse_args()
+    if a.dir and len(a.books.split(",") if a.books else BOOKS) != 1:
+        raise SystemExit("--dir 는 --books 로 교재 하나를 지정해야 한다")
 
     keys = [k.strip() for k in a.books.split(",")] if a.books else list(BOOKS)
     for k in keys:
@@ -228,15 +260,26 @@ def main():
             print("● %s — 기준선 없음 (capture 먼저)" % k)
             bad += 1
             continue
-        new = fingerprint_book(k, root, old.get("dpi", a.dpi), log=lambda *_: None)
-        lines = diff_book(old, new, a.verbose)
-        if lines:
+        new = fingerprint_book(k, root, old.get("dpi", a.dpi),
+                               log=lambda *_: None, override_dir=a.dir)
+        if a.only:
+            keep = set(nfc(x.strip()) for x in a.only.split(","))
+            old = dict(old, pdfs={n: v for n, v in old["pdfs"].items() if n in keep})
+            new = dict(new, pdfs={n: v for n, v in new["pdfs"].items() if n in keep})
+            if not old["pdfs"]:
+                print("● %s — 기준선에 %s 가 없다" % (k, a.only))
+                bad += 1
+                continue
+        lines, prob = diff_book(old, new, a.verbose)
+        if prob:
             bad += 1
             print("● %s — %s" % (k, BOOKS[k][0]))
-            for ln in lines:
-                print(ln)
+        elif lines:
+            print("● %s — 지면 불변 ✓ (아래는 참고)" % k)
         else:
             print("● %s — 불변 ✓" % k)
+        for ln in lines:
+            print(ln)
     print("\n%s" % ("전부 불변 ✓" if not bad else "차이 있는 교재 %d개 ✗" % bad))
     sys.exit(1 if bad else 0)
 

@@ -29,6 +29,12 @@ class BlackbookSeries(Series):
     display = "프리미엄북 블랙북 (교과 단원)"
     theme = "blackbook"
 
+    # 미리보기는 이미 재 둔 `heights.json` 을 쓴다 — 높이 측정은 PDF 를 두 번 더
+    # 굽는 무거운 패스라 값 하나 바꿔 보는 자리에 낄 것이 아니다.
+    # ⚠ 원고가 바뀌어 문항 높이가 달라졌으면 미리보기의 2문항 배치가 실제 조판과
+    #   다를 수 있다 — 그때는 `bin/viv <책> build` 를 한 번 돌려 heights 를 갱신한다.
+    render_opts = {"nomeasure": True}
+
     # ── ① 원고 → data.json ──
     def gen_data(self, cfg, log):
         return data_mod.build(cfg, log)

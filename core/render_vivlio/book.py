@@ -3,6 +3,8 @@
 교재 폴더에서:
     python3 -m core.render_vivlio.book <책폴더> data      원고 → data.json
     python3 -m core.render_vivlio.book <책폴더> theme     팔레트 → 테마 재생성
+    python3 -m core.render_vivlio.book <책폴더> render    조판 직전까지(HTML) — 빠름
+    python3 -m core.render_vivlio.book <책폴더> watch     라이브 미리보기(브라우저)
     python3 -m core.render_vivlio.book <책폴더> build     조판 → PDF (+마감)
     python3 -m core.render_vivlio.book <책폴더> verify    검수 게이트
     python3 -m core.render_vivlio.book <책폴더> print     인쇄 원고(CMYK) 만들기
@@ -37,6 +39,14 @@ def gen_theme(cfg, log=print):
 
 def build(cfg, log=print, **opts):
     return _series(cfg).build(cfg, log, **opts)
+
+
+def render(cfg, log=print, **opts):
+    """조판 직전까지 — build/ 를 채우고 HTML 경로를 준다(미리보기용).
+
+    PDF 를 만들지 않으므로 빠르다. `watch` 가 파일이 바뀔 때마다 이걸 부른다.
+    """
+    return _series(cfg).render_only(cfg, log, **opts)
 
 
 def print_pdf(cfg, log=print, **opts):
@@ -94,6 +104,15 @@ def verify(cfg, log=print, pdf=None, **opts):
     gate.check_blanks(texts, report, ignore_chars=vcfg.get("blank_ignore", ""))
     _check_print_fresh(cfg, pdf, report)
     s.verify(cfg, log, report)
+
+    # 디자인 게이트 — 기본은 경고(납품 중인 책의 지면을 바꾸지 않기 위해).
+    # `verify.design.off: true` 로 아예 끌 수 있고, `strict: true` 면 결함이 된다.
+    if not (vcfg.get("design") or {}).get("off"):
+        from core.render_vivlio import design_gate
+        try:
+            design_gate.run(cfg, pdf, report, log=log, skip_pages=skip)
+        except Exception as e:      # 디자인 게이트가 본 게이트를 막지 않게
+            report.note(f"[디자인] 검사 실패(건너뜀): {e}")
     return report
 
 
@@ -180,12 +199,25 @@ def main(argv=None):
         # ⚠ 인쇄본을 빼면 조판본만 갱신돼 **인쇄 원고가 조용히 뒤처진다**
         #    (실제로 겪음). `print` 절이 있는 책은 all 에 포함한다.
         steps = ["data", "build"] + (["print"] if cfg.get("print") else []) + ["verify"]
+    if "watch" in steps:
+        # 미리보기는 다른 단계와 섞지 않는다 — 끝나지 않는 명령이다.
+        from core.render_vivlio import watch as watch_mod
+        port = int(opts.pop("port", 13000) or 13000)
+        host = str(opts.pop("host", "127.0.0.1") or "127.0.0.1")
+        if opts.pop("data", False):
+            gen_data(cfg, log)
+        return watch_mod.run(cfg, book, log, port=port, host=host, **opts)
+
     rc = 0
     for st in steps:
         if st == "data":
             gen_data(cfg, log)
         elif st == "theme":
             gen_theme(cfg, log)
+        elif st == "render":
+            html = render(cfg, log, **opts)
+            # watch 가 자식 프로세스의 출력에서 이 줄을 읽는다
+            log(f"RENDER_HTML={html}")
         elif st == "build":
             build(cfg, log, **opts)
         elif st == "print":

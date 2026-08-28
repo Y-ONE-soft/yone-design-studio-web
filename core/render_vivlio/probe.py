@@ -90,6 +90,26 @@ def spans_mm(page):
     return out
 
 
+def spans_style(page):
+    """[{text, size, color(#rrggbb), bbox mm}] — 색까지. 디자인 게이트용.
+
+    `spans_mm` 은 색을 안 준다(기존 호출부를 건드리지 않으려고 따로 둔다).
+    ⚠ 서체 **이름**은 여기서도 믿지 말 것 — Vivliostyle 출력은 `Type3 (n 0 R)` 다.
+    """
+    out = []
+    for b in page.get_text("dict")["blocks"]:
+        if b["type"] != 0:
+            continue
+        for ln in b["lines"]:
+            for sp in ln["spans"]:
+                c = int(sp.get("color", 0)) & 0xFFFFFF
+                out.append({"text": sp["text"], "size": sp["size"],
+                            "color": "#%06x" % c,
+                            "rgb": ((c >> 16) & 255, (c >> 8) & 255, c & 255),
+                            "bbox": tuple(v / PT for v in sp["bbox"])})
+    return out
+
+
 def lines_mm(page):
     """[(text, (x0,y0,x1,y1) mm)] — 줄 단위(스팬 합침)."""
     out = []

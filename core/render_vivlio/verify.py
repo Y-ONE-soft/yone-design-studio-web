@@ -18,6 +18,7 @@ class Report(object):
     def __init__(self, title=""):
         self.title = title
         self.fails = []
+        self.warns = []
         self.notes = []
 
     def fail(self, msg):
@@ -28,12 +29,26 @@ class Report(object):
         self.notes.append(msg)
         return self
 
+    def warn(self, msg):
+        """게이트를 떨어뜨리지는 않지만 사람이 봐야 하는 것."""
+        self.warns.append(msg)
+        return self
+
+    def design(self, msg, s):
+        """디자인 게이트 판정 — `strict` 면 결함, 아니면 경고.
+
+        기존 납품 교재는 고치지 않는다(납품 중이라 지면이 바뀌면 안 된다) →
+        기본이 경고다. 신규 조판은 `verify.design.strict: true` 로 켤 것.
+        """
+        return self.fail(msg) if (s or {}).get("strict") else self.warn(msg)
+
     @property
     def ok(self):
         return not self.fails
 
     def merge(self, other):
         self.fails += other.fails
+        self.warns += getattr(other, "warns", [])
         self.notes += other.notes
         return self
 
@@ -43,6 +58,10 @@ class Report(object):
             log(f"■ {self.title}")
         for n in self.notes:
             log(f"  {n}")
+        if self.warns:
+            log("■ 경고 (게이트는 통과 — 사람이 판단할 것)")
+            for w in self.warns:
+                log(f"  ! {w}")
         if self.fails:
             log("■ 결함")
             for f in self.fails:
