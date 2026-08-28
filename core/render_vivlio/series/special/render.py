@@ -615,8 +615,10 @@ def render_reading(vol, out):
             k.body(h)
 
     def rh():
-        return runhead("WEEK", wk_no or "—", VOL_EN["reading"],
-                       wk_ttl, ex_kind or les_ttl, BOOK[0])
+        # 번호가 없는 주(정답 목록)는 숫자 칸 대신 라벨만 둔다
+        return runhead("WEEK" if wk_no else "ANSWERS", wk_no,
+                       VOL_EN["reading"], wk_ttl,
+                       ex_kind or les_ttl, BOOK[0])
 
     while i < n:
         b = blocks[i]
@@ -633,7 +635,8 @@ def render_reading(vol, out):
                 col_open = False
         if pending_week and t not in ("week", "lesson", "rpart_no"):
             out.append(f'<section class="week-open">{rh()}'
-                       + title_block("big", wk_no, "WEEK", wk_ttl)
+                       + title_block("big", wk_no,
+                                     "WEEK" if wk_no else "ANSWERS", wk_ttl)
                        + '</section>')
             pending_week = ""
 
@@ -645,8 +648,11 @@ def render_reading(vol, out):
             out.append(part_page(plain(b["r"]), title,
                                  part_items(blocks, i, ("rpart_no",), "week")))
         elif t == "week":
-            wk_no, wk_ttl = numtitle(plain(b["r"]).replace("Week", "").strip())
-            les_no = les_ttl = ""
+            txt = plain(b["r"])
+            wk_no, wk_ttl = numtitle(txt.replace("Week", "").strip())
+            if not wk_no:
+                wk_ttl = txt
+            les_no = les_ttl = ex_kind = ""
             pending_week = wk_ttl
         elif t == "lesson":
             les_no, les_ttl = numtitle(plain(b["r"]))
