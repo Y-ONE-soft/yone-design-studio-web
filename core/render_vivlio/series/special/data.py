@@ -239,6 +239,31 @@ def parse(path, log=print):
     return blocks, bad, seen_styles
 
 
+# ── 원고의 끊긴 지문 잇기 ───────────────────────────────────────────────
+def _join_passages(blocks, log):
+    """지문 단락이 **소문자로 시작하면** 앞 단락이 끊긴 것이다.
+
+    원고에 실수로 들어간 문단 나눔은 조판에서 지문 상자가 문장 한가운데서
+    둘로 쪼개져 인쇄된다(1차 산출물 p.111 의 (B) — '…placed from one' 과
+    'to two miles apart along the roads.'). 영어 지문은 대문자나 (A)·번호로
+    시작하므로, 소문자로 여는 지문 단락은 형식과 무관하게 **이어짐**이다.
+    """
+    out = []
+    for b in blocks:
+        # 표에서 온 블록(낱말 카드 등)은 rich 조각이 없다
+        if b["t"] != "passage" or "r" not in b:
+            out.append(b)
+            continue
+        t = plain(b["r"]).lstrip()
+        if (out and out[-1]["t"] == "passage" and "r" in out[-1]
+                and t[:1].islower()):
+            out[-1] = dict(out[-1], r=out[-1]["r"] + [{"t": " "}] + b["r"])
+            log(f"  지문 이어붙임: …{plain(out[-1]['r'])[-60:]!r}")
+            continue
+        out.append(b)
+    return out
+
+
 # ── 부(部) 나누기 ───────────────────────────────────────────────────────
 #    `vol_title`(간지 대제목)이 부의 시작이다. 앞머리(합본 표지)는 부 밖.
 VOL_ID = {"어휘": "vocab", "구문 · 어법": "grammar", "독해": "reading"}
@@ -304,6 +329,7 @@ def _gate(data, bad, log):
 def build(cfg, log=print):
     src = cfg.manuscript("body")
     blocks, bad, styles = parse(src, log)
+    blocks = _join_passages(blocks, log)
     cover, vols = _split(blocks)
     data = {"book": cfg.book, "cover": cover, "volumes": vols}
     log(f"■ 원고 {os.path.basename(src)} · 블록 {len(blocks):,}개 · "

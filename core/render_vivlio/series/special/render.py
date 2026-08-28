@@ -680,7 +680,7 @@ def render_reading(vol, out):
             k.head(f'<div class="wl solo">{esc(txt)}</div>')
         elif t == "notebox":
             if cp is None:
-                k.body(rules(5, "wbox"))
+                k.body(rules(4, "wbox"))
         elif t == "ex_tag":
             c = [x for x in cols(plain(b["r"])) if x != "·"]
             ex_kind = c[1] if len(c) > 1 else ""
