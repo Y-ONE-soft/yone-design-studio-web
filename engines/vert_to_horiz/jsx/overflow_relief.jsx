@@ -22,8 +22,8 @@
         _b.push(String(s));
         logFile.open("w"); logFile.write(_b.join("\n") + "\n"); logFile.close();
     }
-    var MAX_PER_FRAME = 6;      // 한 프레임이 만들 수 있는 최대 후속 페이지
-    var MAX_TOTAL = 60;         // 문서 전체 추가 페이지 상한 (폭주 방지)
+    var MAX_PER_FRAME = 12;      // 한 프레임이 만들 수 있는 최대 후속 페이지
+    var MAX_TOTAL = 120;         // 문서 전체 추가 페이지 상한 (폭주 방지)
     W("오버셋 해소 시작");
     var doc = null, ours = false;
     try {
