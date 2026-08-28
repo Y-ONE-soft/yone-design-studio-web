@@ -160,11 +160,56 @@ _PATH_KEYS = {"pdf", "art_pdf", "dir", "src", "path", "assets"}
 REQUIRED = ("series",)
 
 
-def load(path):
-    """config.json 경로(또는 그 폴더) → BookConfig."""
+def resolve_book(path):
+    """책을 가리키는 말 → config.json 절대경로.
+
+    받아 주는 것(앞에서부터):
+      ① 실제 경로 (절대·상대)
+      ② **스튜디오 루트 기준 상대경로** — `--list` 가 찍어 주는 그 형태.
+         목록에 보이는 것을 그대로 붙여 넣을 수 없으면 목록이 무슨 소용인가.
+      ③ **책 이름 일부** — `광문보카`, `블랙북` 처럼. 하나로 좁혀지면 그 책.
+
+    ③ 은 여러 권에 걸리면 후보를 보여 주고 멈춘다(엉뚱한 책을 조판하는 것보다 낫다).
+    """
+    raw = path
     p = os.path.abspath(os.path.expanduser(path))
-    if os.path.isdir(p):
-        p = os.path.join(p, "config.json")
+    if os.path.isdir(p) and os.path.exists(os.path.join(p, "config.json")):
+        return os.path.join(p, "config.json")
+    if os.path.exists(p) and not os.path.isdir(p):
+        return p
+    # ② 스튜디오 루트 기준
+    q = os.path.join(_studio_root(), path)
+    if os.path.exists(os.path.join(q, "config.json")):
+        return os.path.join(q, "config.json")
+    # ③ 이름 일부
+    import unicodedata
+    def nfc(x):
+        return unicodedata.normalize("NFC", x)
+    needle = nfc(raw).lower()
+    from core.render_vivlio import book as _book
+    hits = []
+    for cfg in _book.discover():
+        hay = nfc(cfg.root + " " + (cfg.book.get("title") or "")
+                  + " " + (cfg.book.get("id") or "")).lower()
+        if needle in hay:
+            hits.append(cfg)
+    if len(hits) == 1:
+        return os.path.join(hits[0].root, "config.json")
+    if len(hits) > 1:
+        names = "\n".join(
+            "    %s — %s" % (c.book.get("title", "?"),
+                             c.root.replace(_studio_root() + os.sep, ""))
+            for c in hits)
+        raise FileNotFoundError(
+            "'%s' 로는 책이 좁혀지지 않는다 (%d권):\n%s" % (raw, len(hits), names))
+    raise FileNotFoundError(
+        "책을 못 찾았다: %s\n  → `bin/viv --list` 로 이름을 볼 것 "
+        "(이름 일부만 적어도 된다: 광문보카)" % raw)
+
+
+def load(path):
+    """config.json 경로·스튜디오 상대경로·책 이름 일부 → BookConfig."""
+    p = resolve_book(path)
     if not os.path.exists(p):
         raise FileNotFoundError(f"책 설정 없음: {p}")
     with open(p, encoding="utf-8") as f:

@@ -184,8 +184,21 @@ def add_no_cache(response):
         response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
         response.headers["Pragma"] = "no-cache"
     response.headers["X-Served-By"] = "flask-live"
+    # 내지 작업대의 미리보기는 **우리 화면이 우리 뷰어를 iframe 으로** 문다
+    # (`/book-studio` → `/book-studio/viewer/…` → `/book-studio/doc/…`).
+    # 기본값 `frame-ancestors 'none'` 이면 자기 자신도 못 물어 미리보기가 빈
+    # 상자로 나온다 — 실제로 여기서 걸렸다. **같은 출처만** 열어 준다.
+    _self_frame = request.path.startswith("/book-studio/viewer") or \
+        request.path.startswith("/book-studio/doc")
+    # ⚠ Vivliostyle 뷰어 번들은 CSS 를 계산할 때 문자열을 함수로 만든다(eval).
+    #   기본 CSP 로는 그 자리에서 EvalError 가 나고 **지면이 영원히 안 그려진다**
+    #   (증상은 '빈 상자'뿐이라 원인을 알기 어렵다 — 콘솔을 봐야 나온다).
+    #   그래서 `'unsafe-eval'` 은 **뷰어 번들 경로에만** 준다. 이 번들은 우리가
+    #   node_modules 에 고정해 둔 정적 파일이고 사용자 입력이 들어가지 않는다.
+    #   앱의 다른 화면은 그대로 eval 금지다.
+    _viewer = request.path.startswith("/book-studio/viewer")
     # ── 보안 헤더 ──
-    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN" if _self_frame else "DENY"
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Referrer-Policy"] = "no-referrer"
@@ -205,14 +218,15 @@ def add_no_cache(response):
     _is_local = _host in ("localhost", "127.0.0.1", "::1")
     _csp = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline'; "
+        + ("script-src 'self' 'unsafe-inline' 'unsafe-eval'; " if _viewer
+           else "script-src 'self' 'unsafe-inline'; ") +
         "style-src 'self' 'unsafe-inline'; "
         "img-src 'self' data: blob:; "
         "font-src 'self' data:; "
         "connect-src 'self'; "
         "media-src 'self' blob:; "
         "object-src 'none'; "
-        "frame-ancestors 'none'; "
+        + ("frame-ancestors 'self'; " if _self_frame else "frame-ancestors 'none'; ") +
         "form-action 'self'; "
         "base-uri 'self'"
     )

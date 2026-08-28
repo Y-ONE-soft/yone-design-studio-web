@@ -23,7 +23,7 @@ import shutil
 import unicodedata
 
 from core.render_vivlio import bleed as bleed_mod
-from core.render_vivlio import cli, paged, probe, stage
+from core.render_vivlio import cli, knobs, paged, probe, stage
 from core.render_vivlio.series.base import Series
 from core.render_vivlio.series.vocaunit import assets as assets_mod
 from core.render_vivlio.series.vocaunit import data as data_mod
@@ -61,6 +61,8 @@ class VocaunitSeries(Series):
         theme_mod.write(cfg, os.path.join(build_dir, "theme.css"), log)
 
         pages_css = stage.write_css(build_dir, "pages.css")
+        knobs.write(cfg, VocaunitSeries(), build_dir)
+        stage.stage_overrides(cfg, build_dir)
         html_path = render_mod.write(cfg, d, build_dir, sample=sample, log=log)
         secs = cli.run_build(html_path, out, log=log)
 
@@ -128,6 +130,43 @@ class VocaunitSeries(Series):
                 blank = not (texts[p - 1] or "").strip()
                 rules.nth(p, f"background: {memo if blank else bands};")
         return rules.write(path)
+
+    # ── 손잡이 ──
+    # 이 계열은 `theme.py` 가 config 팔레트를 읽어 테마를 **생성**한다 → CSS 로
+    # 따로 내보낼 것이 없고(css=None) 선언만 붙인다.
+    # ⚠ 팔레트는 **config 가 원본**이라 되돌리기(키 삭제)를 막는다 — 지우면
+    #   theme.py 의 임시 폴백으로 떨어져 디자인이 달라진다.
+    def knobs(self, cfg):
+        K = knobs.Knob
+        from core.render_vivlio.series.vocaunit.theme import DEFAULT_METRICS as D
+        col = lambda key, label, affects, g="색": K(          # noqa: E731
+            "palette." + key, "color", label, affects=affects, group=g,
+            resettable=False)
+        mm = lambda key, label, lo, hi, affects, g="치수": K(  # noqa: E731
+            "metrics." + key, "mm", label, default=D[key], min=lo, max=hi,
+            step=0.1, unit="mm", affects=affects, group=g)
+        return [
+            col("accent", "강조색", "표제어 강조 · 뜻 · Unit 번호"),
+            col("hl", "예문 강조", "예문 안 표제어"),
+            col("pron", "발음기호", "발음기호 회색"),
+            col("rule", "항목 괘선", "항목 사이 가로선"),
+            col("band", "위·아래 띠", "판면 위아래 색 띠"),
+            col("grid", "모눈", "Unit 시작면 모눈 헤더"),
+            col("tab", "둥근 탭", "Unit 이름표"),
+            col("circle", "간지 원", "대단원 간지 큰 원"),
+            col("unitnum", "Unit 번호", "헤더 Unit 번호"),
+            col("crest", "크레스트", "머리 로고"),
+            col("cover_bg", "간지 바탕", "대단원 간지 지면색"),
+            col("chk", "회독 칸", "표제어 옆 회독 네모", "고급"),
+            col("ink", "본문 먹", "본문 글자", "고급"),
+            mm("band_h", "위·아래 띠 높이", 0, 12, "판면 위아래 띠"),
+            mm("grid_h", "모눈 헤더 높이", 8, 40, "Unit 시작면 헤더"),
+            mm("margin_top", "본문 상단 여백", 10, 40, "③④ 면 본문 시작"),
+            mm("margin_bottom", "본문 하단 여백", 8, 30, "본문 아래"),
+            mm("mgn_out", "바깥 여백", 8, 30, "책배 쪽", "고급"),
+            mm("mgn_in", "안쪽 여백", 8, 30, "책등 쪽", "고급"),
+            mm("col_w", "표제어 열 폭", 25, 70, "왼쪽 열", "고급"),
+        ]
 
     # ── ④ 계열 검수 ──
     def verify(self, cfg, log, report):

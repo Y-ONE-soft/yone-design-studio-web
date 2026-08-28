@@ -40,10 +40,42 @@ bin/viv "<책폴더>" data                 # 원고 → data.json (+ 인식 게�
 bin/viv "<책폴더>" build                # 조판 → PDF → 마감(간지·TrimBox)
 bin/viv "<책폴더>" verify               # 검수 게이트
 bin/viv "<책폴더>" all                  # data → build → verify
+
+bin/viv "<책폴더>" watch                # ★ 라이브 미리보기 — 고치면 바로 보인다
+bin/viv "<책폴더>" render               # 조판 직전까지(HTML만). watch 가 쓰는 것
 ```
 
 계열 옵션은 그대로 흘러간다: `--sample`(견본), `--nomemo`(단어장, 메모면 없는 판),
 `--nomeasure`(블랙북, 높이 재측정 생략).
+
+### 라이브 미리보기 — `watch`
+
+값 하나를 바꿔 보려고 전권 조판(20~50초)을 돌리고 PDF 뷰어를 다시 열던 왕복을
+없앤다. **재렌더는 0.4초**고, 브라우저가 스스로 새로 그린다.
+
+```bash
+bin/viv "<책폴더>" watch                # 주소를 찍어 준다. 브라우저로 열어 두고 작업
+bin/viv "<책폴더>" watch --port=13100   # 포트가 겹칠 때
+bin/viv "<책폴더>" watch --data         # 원고부터 다시 뽑고 시작
+```
+
+- **완전히 오프라인**이다. `@vivliostyle/cli` 와 뷰어가 `node_modules` 에 이미 있다.
+- `--no-open-viewer` 라 Playwright 브라우저를 띄우지 않는다 — 쓰던 브라우저로 연다.
+- 지켜보는 것: 책 `config.json`·`data.json`·`overrides.css`, 계열
+  `series/<계열>/*.py`, `themes/<계열>.css`·`_base.css`, 공용 백엔드 `*.py`.
+- ⚠ **편집 지점은 `build/` 가 아니다.** `build/theme.css`·`index.html` 은 렌더마다
+  덮어써지는 사본이라 거기 고친 것은 다음 렌더에 사라진다.
+- ⚠ 렌더는 **자식 프로세스**로 돈다(`bin/viv <책> render`). 계열 `.py` 를 고쳐도
+  늘 새 코드로 돌게 하기 위해서다(`importlib.reload` 는 조용히 어긋난다).
+- ⚠ 주소를 직접 조립하지 말 것 — 뷰어는 `/__vivliostyle-viewer/index.html`, 문서는
+  `/vivliostyle/…` 이고 해시에 `src=` 가 붙는다. CLI 가 찍는 줄을 읽는다.
+  그리고 **preview 의 stdout 을 안 비우면 파이프가 차서 서버가 멎는다**(데몬 스레드).
+
+**"조판을 건너뛴다"는 최종 조판에만 걸린다.** 블랙북은 본 조판 전에 높이 측정용
+PDF 를 두 번 굽는데, 거기서 멈추면 **측정용 HTML 을 미리보기로 삼는 사고**가 난다
+→ `cli.run_build(..., final=False)` 로 내부 패스를 표시하고, 블랙북은
+`render_opts = {"nomeasure": True}` 로 측정 자체를 건너뛴다(이미 잰 `heights.json`
+을 쓴다. 원고가 바뀌었으면 `build` 를 한 번 돌려 갱신할 것).
 
 CLI 는 이제 **리포 소유**다(`core/render_vivlio/package.json`). 예전 파일럿 설치
 (`pilot/vivliostyle/node_modules`)는 폴백으로만 남는다.

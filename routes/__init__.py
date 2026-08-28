@@ -7,6 +7,7 @@
 - tools:   워크북 가공 (페이지+API) + 목업 (페이지+API)
 - cover2026: 2026 표지 세네카 재생성 (업로드 없음 · 생성기 직접 호출)
 - cover_studio: 표지 작업대 — 값을 만지는 동안 미리보기가 바뀐다
+- book_studio: 내지 작업대 — 손잡이를 만지면 지면이 바뀐다 (Vivliostyle)
 - admin:   서버 진단 (/diagnose, /api/health, /api/diagnose, InDesign 시작, /debug) + 원격 채팅 (/chat*)
 """
 from routes.auth import bp as auth_bp
@@ -17,6 +18,8 @@ from routes.tools import bp as tools_bp
 from routes.admin import bp as admin_bp
 from routes.cover2026 import bp as cover2026_bp
 from routes.cover_studio import bp as cover_studio_bp
+from routes.book_studio import bp as book_studio_bp
 
 ALL_BLUEPRINTS = [auth_bp, pages_bp, typeset_bp, folders_bp, tools_bp, admin_bp,
-                  cover2026_bp, cover_studio_bp]
+                  cover2026_bp, cover_studio_bp,
+                  book_studio_bp]

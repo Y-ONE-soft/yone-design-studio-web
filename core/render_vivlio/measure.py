@@ -44,8 +44,12 @@ def heights_from_pdf(pdf, keys, top, bottom, pad=0.0, skip_blank=True):
 
 def measure(html_path, out_pdf, keys, top, bottom, pad=0.0, log=None,
             timeout=900):
-    """측정용 HTML 조판 → 항목별 높이 dict."""
-    cli.run_build(html_path, out_pdf, log=log, timeout=timeout)
+    """측정용 HTML 조판 → 항목별 높이 dict.
+
+    `final=False` — 이건 산출물이 아니라 계측용 내부 조판이다(미리보기가
+    조판을 건너뛸 때 여기서 멈추면 안 된다).
+    """
+    cli.run_build(html_path, out_pdf, log=log, timeout=timeout, final=False)
     return heights_from_pdf(out_pdf, keys, top, bottom, pad)
 
 
