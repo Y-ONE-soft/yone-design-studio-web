@@ -257,7 +257,12 @@ def _join_passages(blocks, log):
         t = plain(b["r"]).lstrip()
         if (out and out[-1]["t"] == "passage" and "r" in out[-1]
                 and t[:1].islower()):
-            out[-1] = dict(out[-1], r=out[-1]["r"] + [{"t": " "}] + b["r"])
+            # 조각은 문자열일 수도 dict 일 수도 있다
+            pre = list(out[-1]["r"])
+            last = pre[-1]
+            pre[-1] = (last.rstrip() if isinstance(last, str)
+                       else dict(last, t=last.get("t", "").rstrip()))
+            out[-1] = dict(out[-1], r=pre + [" "] + list(b["r"]))
             log(f"  지문 이어붙임: …{plain(out[-1]['r'])[-60:]!r}")
             continue
         out.append(b)
