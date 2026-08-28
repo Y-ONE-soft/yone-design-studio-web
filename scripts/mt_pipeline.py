@@ -443,8 +443,13 @@ def stage_v2h(st, log, run_dir):
             "exam_period": st["exam_period"],
         })
         eng = VertToHorizEngine()
+        # 마더텅 워크북은 **항상** 마더텅 지문번호로 라벨한다 (사용자 확정).
+        # do_label 은 엔진 기본이 OFF 라, 안 넘기면 원 모의고사 문항번호
+        # (36/37)가 그대로 남는다 — 원고 기반 경로(workbook_select)는 마더텅
+        # 번호로 교체하므로 두 경로가 어긋난다.
         jp = eng.parse({"verti_indd": vol["sero_indd"],
                         "gang_code": str(st["gang"]),
+                        "do_label": "on",
                         "result_name": vol["horiz_name"]}, jd, log)
         eng.prepare_jsx(jp, jd, log)
         # run_indesign 이 본 변환 + 후처리 3종(정리·재스레드·지문번호)을 순서대로
