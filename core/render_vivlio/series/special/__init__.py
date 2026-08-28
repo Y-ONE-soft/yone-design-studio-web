@@ -18,6 +18,41 @@ from core.render_vivlio.series.special import data as data_mod
 from core.render_vivlio.series.special import render as render_mod
 
 
+def _grid_clearance(pdf, report, log, floor=3.0):
+    """필기 모눈과 본문이 겹치지 않는지 — **눈으로만 잡히던 결함**을 게이트로.
+
+    모눈은 판면 아래에 못박아 두는 요소라, 위 내용이 길어지면 조판은 아무 소리
+    없이 성공하면서 본문 위로 모눈이 겹쳐 인쇄된다(1차 산출물 p.118). 넘침
+    검사도 대조 게이트도 이걸 못 잡는다 — 글자는 다 들어가 있기 때문이다.
+    모눈 선 색으로 모눈을 찾아 그 위 본문 바닥과의 거리를 잰다.
+    """
+    import fitz
+    GRID = (0.902, 0.878, 0.824)          # 모눈 선 #e6e0d2
+    d = fitz.open(pdf)
+    worst, n = None, 0
+    for i, pg in enumerate(d):
+        lines = [dr for dr in pg.get_drawings()
+                 if dr.get("color")
+                 and all(abs(c - v) < .02 for c, v in zip(dr["color"], GRID))]
+        if len(lines) < 20:               # 모눈은 선 다발이다
+            continue
+        n += 1
+        top = min(dr["rect"].y0 for dr in lines) * 25.4 / 72
+        bots = [b[3] * 25.4 / 72 for b in pg.get_text("blocks")
+                if "필기 노트" not in b[4]
+                and 40 < b[1] * 25.4 / 72 and b[3] * 25.4 / 72 < top + 8]
+        gap = top - (max(bots) if bots else 0)
+        if worst is None or gap < worst[1]:
+            worst = (i + 1, gap)
+        if gap < floor:
+            report.fail(f"[G-모눈] p.{i + 1} 필기 노트가 본문과 "
+                        f"{'겹친다' if gap < 0 else '너무 가깝다'} "
+                        f"(여유 {gap:+.1f}mm · 최소 {floor}mm)")
+    d.close()
+    if worst:
+        log(f"  모눈 {n}면 · 최소 여유 {worst[1]:+.1f}mm (p.{worst[0]})")
+
+
 class SpecialSeries(Series):
 
     name = "special"
@@ -108,5 +143,6 @@ class SpecialSeries(Series):
 
         seq = render_mod.verify_sequence(d)
         gate.check_sequence(texts, seq, report)
+        _grid_clearance(pdf, report, log)
         report.note(f"대조 항목 {len(seq):,}건")
         return report
