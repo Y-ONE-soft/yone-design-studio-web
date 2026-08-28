@@ -47,9 +47,40 @@
             W("===== 지문번호 교정 완료 =====");
             return;
         }
-        var want = [];
+        // 지문번호는 **마더텅 강이면 마더텅 지문번호**, 아니면 원 문항번호.
+        // 사용자 확정(2026-08-25): "마더텅 작업은 어떤 걸로 진행하든 마더텅
+        // 지문 번호로 교체해야 한다". settings.sources_list 는 그 강의 코드가
+        // **마더텅 번호 순서**로 들어 있으므로 인덱스+1 이 지문번호다.
+        // sources_list 가 없으면(일반 모의고사 결합) 종전대로 문항번호를 쓴다.
+        var src = settings.sources_list || [];
+        function mtNo(code) {
+            for (var q = 0; q < src.length; q++) {
+                if (String(src[q]) === String(code)) { return q + 1; }
+            }
+            return -1;
+        }
+        // 마더텅 강 job 이면 **그 강에 속하지 않는 코드는 제외**한다.
+        // 세로중간본에 다른 회차 마커가 섞여 있으면 지문이 하나 더 잡혀
+        // 번호가 통째로 한 칸씩 밀린다(실측 2026-08-25: 17개로 잡혀
+        // "01,02,03,38,04,…" 로 어긋남 + "번호프레임 16개 ≠ 지문 17개" 경고).
+        // 제외한 코드는 조용히 버리지 않고 로그에 남긴다 — 세로중간본에
+        // 남의 지문이 섞였다는 신호일 수 있다.
+        var want = [], usedMT = 0, dropped = [];
         for (var i = 0; i < order.length; i++) {
-            want.push(String(parseInt(order[i].substring(4), 10)));
+            var n = mtNo(order[i]);
+            if (n > 0) {
+                usedMT++;
+                want.push(n < 10 ? "0" + n : String(n));
+            } else if (src.length) {
+                dropped.push(order[i]);          // 이 강의 코드가 아니다
+            } else {
+                want.push(String(parseInt(order[i].substring(4), 10)));
+            }
+        }
+        W("번호 체계: " + (usedMT ? "마더텅 지문번호 " + usedMT + "개" : "원 문항번호"));
+        if (dropped.length) {
+            W("[경고] 이 강에 없는 코드 " + dropped.length + "개 제외: " +
+              dropped.join(",") + " — 세로중간본에 다른 회차가 섞였는지 확인할 것");
         }
         W("지문 " + want.length + "개: " + want.join(","));
 
