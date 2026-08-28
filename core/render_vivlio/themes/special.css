@@ -173,12 +173,21 @@ b { font-weight: 700; }
  *   사라졌다.** 원고는 기입 칸(`기입선`·`POINT` 250곳)도 밑줄 공백으로 그려
  *   오는데, 그 줄은 엔진이 직접 괘선으로 그리므로 `<u>` 로 오지 않는다 —
  *   즉 끌 이유가 애초에 없었다. 끄지 말 것. */
-u { text-decoration: underline; text-decoration-thickness: .5pt;
+u { text-decoration: underline; text-decoration-thickness: var(--rule-u);
     text-underline-offset: .18em; text-decoration-skip-ink: none; }
 
 .r-num { color: var(--c-deep); font-weight: 700; }
 .r-src { font: 400 7.2pt/1 Noto; color: var(--n-4); white-space: nowrap; }
 .r-pos { color: var(--c-subd); font-weight: 700; }
+
+/* ── 밑줄 두께 ──────────────────────────────────────────────────────────
+ * 글자 밑줄(어법 고칠 자리·빈칸)과 학생이 그 위에 쓰는 기입 괘선의 두께다.
+ * ⚠ 렌더러는 선 두께를 **1/8px 격자로 내림 스냅**한다 — `.5pt`(=0.667px)로
+ *   적으면 0.625px, 즉 **0.47pt 로 나간다**(실측). 0.5pt 이상으로 앉는 첫 값이
+ *   `.6pt`(→0.75px→0.56pt)다. 격자가 0.47 / 0.56 이라 **0.50pt 정확히는
+ *   안 나온다.** 얇다는 말이 나왔던 값이 0.47 이니 `.5pt` 로 되돌리지 말 것.
+ *   (구분선·상자 테두리는 밑줄이 아니므로 여기 해당하지 않는다.) */
+:root { --rule-u: .6pt; }
 
 /* ── 라벨 A · 대분류 — 글자만. 상자 없음 ── */
 .tk, .h1, .wl.solo, .toc-k, .d-no, .d-en, .p-no {
@@ -206,7 +215,7 @@ u { text-decoration: underline; text-decoration-thickness: .5pt;
       margin-top: 3mm; }
 .wr > span, .wr .wc { display: table-cell; vertical-align: bottom; }
 .wr .wl { width: 20mm; padding-bottom: 1.2mm; }
-.wr .wline { border-bottom: .5pt solid var(--n-3); height: 8mm; }
+.wr .wline { border-bottom: var(--rule-u) solid var(--n-3); height: 8mm; }
 .wr.multi .wc { padding-right: 8mm; }
 .wr.multi .wc:last-child { padding-right: 0; }
 .wr.multi .wl { display: inline-block; width: auto; margin-right: 2.6mm; }
@@ -355,7 +364,7 @@ u { text-decoration: underline; text-decoration-thickness: .5pt;
 .w-key .wl { display: table-cell; width: 18mm; vertical-align: bottom;
              padding-bottom: 1mm; font-size: 6.4pt; }
 .w-key .wline { display: table-cell; vertical-align: bottom; height: 5.2mm;
-                border-bottom: .4pt solid var(--n-3); }
+                border-bottom: var(--rule-u) solid var(--n-3); }
 
 .apx { display: table; table-layout: fixed; width: 100%;
        padding: 2mm 0; border-bottom: .5pt solid var(--n-3);
@@ -485,7 +494,8 @@ u { text-decoration: underline; text-decoration-thickness: .5pt;
 
 /* 괘선 상자 */
 .wbox { margin: var(--s1) 0 var(--s2); break-inside: avoid; }
-.wbox i { display: block; height: 6.6mm; border-bottom: .5pt solid var(--n-3); }
+.wbox i { display: block; height: 6.6mm;
+           border-bottom: var(--rule-u) solid var(--n-3); }
 
 /* 뒤 간지 — 책을 닫는 면. MEMO 대신 여기서 끝난다.
  * `break-before: left` 라 **마지막 면이 언제나 짝수**가 된다. */
