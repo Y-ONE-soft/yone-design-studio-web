@@ -217,11 +217,13 @@ u { text-decoration: none; }
 .subhead::before { content: ""; display: inline-block; width: 2.6mm;
            height: 2.6mm; margin-right: 2mm; background: var(--c-main);
            vertical-align: -.1mm; }
-.bul { position: relative; padding-left: 4.4mm; margin-bottom: .8mm;
+/* ⚠ 머리 기호를 `position:absolute` 로 얹으면 그 단락이 **뒤 레이어로 밀려**
+ *    PDF 글자 추출 순서가 읽는 순서와 어긋난다(원고↔PDF 순서 대조가 통째로
+ *    무너진다 — 실제로 1,186건이 '순서 어긋남'으로 잡혔다). 들여쓰기로 그린다. */
+.bul { padding-left: 4.4mm; text-indent: -4.4mm; margin-bottom: .8mm;
        font: 400 9.2pt/1.6 Noto; }
-.bul::before { content: ""; position: absolute; left: 1.2mm; top: 1.9mm;
-       width: 1.2mm; height: 1.2mm; border-radius: 50%;
-       background: var(--c-main); }
+.bul::before { content: "•"; display: inline-block; width: 4.4mm;
+       text-indent: 0; color: var(--c-main); font-size: 7pt; }
 .concept { padding: 3.2mm 3.6mm; background: var(--c-pale);
            border-radius: 1mm; font: 400 9.1pt/1.68 Noto;
            break-inside: avoid; }

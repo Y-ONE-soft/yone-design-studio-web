@@ -422,7 +422,7 @@ def render_reading(vol, out):
         elif t == "bg_item":
             out.append(f'<div class="bgi">{inl(strip_mark(b["r"], "·"))}</div>')
         elif t == "trans_head":
-            out.append('<div class="th">해석</div>')
+            out.append(f'<div class="th">{esc(plain(b["r"]).strip().lstrip("❖ ").strip())}</div>')
         elif t == "trans":
             out.append(f'<div class="trans">{inl(b["r"])}</div>')
         elif t == "ans_line":
@@ -573,31 +573,48 @@ def palette_css(pal):
 
 
 # ──────────────────────────────────────────────────────────── 검수 대조
-def verify_sequence(d):
-    """조판 순서대로 (설명, 원문) — PDF 전문에서 그대로 찾는다.
+#
+# 원고 → PDF **직접 대조**다. "단락을 100% 소비했다"는 게이트는 파서 사고를
+# 그냥 통과시킨 적이 있다(소비했다는 것과 옳게 들어갔다는 것은 다르다). 그래서
+# 세는 것은 블록 수가 아니라 **본문 글자**다.
+#
+# 조판은 라벨·머리기호·구분자를 떼어 칩·배지로 옮긴다(`문제 |`, `■`, `→`, `·`).
+# 그래서 원문 전체를 그대로 찾으면 멀쩡한 줄도 '누락'으로 잡힌다 → 구분자로
+# 잘라 **가장 긴 조각**을 대조 문자열로 쓴다. 조각 안에는 조판이 손대는 문자가
+# 하나도 없으므로, 이 조각이 없으면 그것은 진짜 유실이다.
+RE_SEPS = re.compile(r"[|→·•●❖＜＞\[\]\t]| {2,}")
 
-    표식이 아니라 **내용**을 센다. 낱말·문항·지문 본문이 그 순서로 다 있어야 한다.
-    """
+
+def probe_text(text, floor=10):
+    frags = [f.strip() for f in RE_SEPS.split(text or "")]
+    best = max(frags, key=len) if frags else ""
+    return best[:70] if len(best) >= floor else ""
+
+
+def verify_sequence(d):
+    """조판 순서대로 (설명, 원문 조각). 위치가 앞으로 가면 순서 어긋남이다."""
     seq = []
     for vol in d["volumes"]:
         vid = vol["id"]
         for b in vol["blocks"]:
             t = b["t"]
+            if t == "notebox":
+                continue
             if t == "word":
                 seq.append((f"{vid}/{b['no']} {b['head']}", b["head"]))
+                for s in b["senses"]:
+                    frag = probe_text(plain(s), 3)
+                    if frag:
+                        seq.append((f"{vid}/{b['head']} 뜻", frag))
                 for e in b["ex"]:
                     txt = "".join(plain(s) for s in e
                                   if not (isinstance(s, dict)
                                           and s.get("k") == "src"))
-                    seq.append((f"{vid}/{b['head']} 예문", txt.strip("❶❷ ")[:60]))
-            elif t in ("q", "ans_en", "passage", "trans", "choice", "concept"):
-                txt = plain(b["r"])
-                if t == "q":
-                    txt = re.sub(r"^\s*\d+\s+", "", txt)
-                # 조판이 라벨(`문제 |`·`어법 개념 |`)을 칩으로 떼어 냈으므로
-                # 대조 문자열에서도 뗀다 — 안 그러면 전부 '누락'으로 잡힌다.
-                if "|" in txt[:14]:
-                    txt = txt.partition("|")[2]
-                if len(txt.strip()) >= 12:
-                    seq.append((f"{vid}/{t}", txt.strip()[:60]))
+                    frag = probe_text(txt.strip("❶❷ "))
+                    if frag:
+                        seq.append((f"{vid}/{b['head']} 예문", frag))
+                continue
+            frag = probe_text(plain(b.get("r")))
+            if frag:
+                seq.append((f"{vid}/{t}", frag))
     return seq
