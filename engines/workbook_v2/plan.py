@@ -713,7 +713,12 @@ def _s3_answer_cell_idx(seq):
         head = (x > 0 and _is_anslabel_head(
             (seq[meaning[x - 1]].get("text") or "").strip()))
         if head or (y - x) >= 2:
-            out.update(meaning[x:y])
+            # 원고가 이미 밑줄 친 기입 칸을 갖고 있으면 그대로 둔다 —
+            # 원고 길이가 관행이고, 우리 칸 수로 덮으면 기존 산출물이
+            # 짧아진다 (b56bbc2f 등 4잡 A/B 실측: 46칸 → 35칸).
+            out.update(i for i in meaning[x:y]
+                       if not any(r.get("ul")
+                                  for r in (seq[i].get("runs") or [])))
         x = y
     for i in range(n - 1):
         t = (seq[i].get("text") or "")
