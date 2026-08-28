@@ -18,7 +18,7 @@ from core.render_vivlio.series.special import data as data_mod
 from core.render_vivlio.series.special import render as render_mod
 
 
-def _grid_clearance(pdf, report, log, floor=3.0):
+def _grid_clearance(pdf, report, log, floor=4.0):
     """필기 모눈과 본문이 겹치지 않는지 — **눈으로만 잡히던 결함**을 게이트로.
 
     모눈은 판면 아래에 못박아 두는 요소라, 위 내용이 길어지면 조판은 아무 소리
@@ -28,6 +28,10 @@ def _grid_clearance(pdf, report, log, floor=3.0):
     """
     import fitz
     GRID = (0.902, 0.878, 0.824)          # 모눈 선 #e6e0d2
+    # ⚠ 라벨을 글자 그대로 걸러내지 말 것 — 구문·어법은 '필기노트', 독해는
+    #    '필기 노트' 라 띄어쓰기가 다르다. 하나만 걸렀다가 라벨을 본문으로
+    #    세어 10면을 거짓 결함으로 올렸다. 공백을 지우고 비교한다.
+    label = lambda t: t.replace(" ", "").strip() in ("필기노트",)
     d = fitz.open(pdf)
     worst, n = None, 0
     for i, pg in enumerate(d):
@@ -38,9 +42,12 @@ def _grid_clearance(pdf, report, log, floor=3.0):
             continue
         n += 1
         top = min(dr["rect"].y0 for dr in lines) * 25.4 / 72
+        # ⚠ 측정창을 모눈 기준(top+n)으로 자르면 **겹쳐 내려간 글자를 스스로
+        #    못 본다** — 처음 이렇게 짰다가 p.118 을 -1.5mm 로 과소 보고했다.
+        #    자르는 기준은 모눈이 아니라 판면(머리 띠 아래 ~ 꼬리말 위)이다.
         bots = [b[3] * 25.4 / 72 for b in pg.get_text("blocks")
-                if "필기 노트" not in b[4]
-                and 40 < b[1] * 25.4 / 72 and b[3] * 25.4 / 72 < top + 8]
+                if not label(b[4])
+                and 40 < b[1] * 25.4 / 72 < 284 and b[3] * 25.4 / 72 < 284]
         gap = top - (max(bots) if bots else 0)
         if worst is None or gap < worst[1]:
             worst = (i + 1, gap)

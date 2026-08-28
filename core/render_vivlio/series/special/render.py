@@ -412,7 +412,7 @@ def render_grammar(vol, out):
             les_no, les_ttl = numtitle(plain(b["r"]))
             cp = {"body": [rh(),
                            title_block("big", les_no, "LESSON", les_ttl)],
-                  "grid": "필기 노트", "gh": 108.0}
+                  "grid": "필기노트", "gh": 108.0}   # ← G-모눈 게이트가 지키는 값
         elif t == "lesson_sub":
             put(keyline(plain(b["r"])))
         elif t == "subhead":
@@ -660,7 +660,7 @@ def render_reading(vol, out):
             cp = {"body": [rh(),
                            title_block("big", les_no, "LESSON", les_ttl,
                                        esc(f"WEEK {wk_no}  ·  {wk_ttl}"))],
-                  "grid": "필기 노트", "gh": 67.0}   # ← G-모눈 게이트가 지키는 값
+                  "grid": "필기 노트", "gh": 60.0}   # ← G-모눈 게이트가 지키는 값
         elif t == "concept_head":
             put(f'<div class="blk-h lead">'
                 f'{esc(plain(b["r"]).strip("＜＞ "))}</div>')
