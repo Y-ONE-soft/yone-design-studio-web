@@ -132,6 +132,8 @@ class VertToHorizEngine(BaseEngine):
          "===== 정리 완료 =====", "[정리]"),
         ("rethread_step3.jsx", "rethread_로그.txt",
          "===== 재스레드 완료 =====", "[재스레드]"),
+        ("cleanup_empty.jsx", "cleanup_로그.txt",
+         "===== 빈 프레임 정리 완료 =====", "[빈칸정리]"),
         ("overflow_fit.jsx", "overflowfit_로그.txt",
          "===== 오버셋 맞춤 완료 =====", "[오버셋맞춤]"),
         ("fix_passage_numbers.jsx", "passagenum_로그.txt",
