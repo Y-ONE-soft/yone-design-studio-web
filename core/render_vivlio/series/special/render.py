@@ -202,14 +202,17 @@ def runhead(unit_top, unit_no, label, main, sub, book, off=False):
     chip = (f'<span class="chip{"" if unit_no else " solo"}">'
             f'<i class="c1">{esc(unit_top)}</i>'
             + (f'<i class="c2">{esc(unit_no)}</i>' if unit_no else '')
-            + '<i class="cut"></i></span>')
+            + '</span>')
     txt = (f'<span class="ht"><i class="l1">{esc(label)}</i>'
            f'<i class="l2">{esc(main)}'
            + (f'<b>{esc(sub)}</b>' if sub else '') + '</i></span>')
-    return (f'<div class="rhL{o}"><div class="hd hdL">{chip}{txt}</div></div>'
-            f'<div class="rhR{o}"><div class="hd hdR"><span class="orb"></span>'
-            f'<span class="crest"></span>'
-            f'<span class="bk">{esc(book)}</span></div></div>')
+    return (f'<div class="rhL{o}"><div class="hd hdL">'
+            f'<span class="sld"></span><span class="blk"></span>'
+            f'{chip}{txt}</div></div>'
+            f'<div class="rhR{o}"><div class="hd hdR">'
+            f'<span class="sld"></span><span class="blk"></span>'
+            f'<span class="bk">{esc(book)}</span>'
+            f'<span class="crest"></span></div></div>')
 
 
 # ── 제목(번호를 떼어 세운다) ────────────────────────────────────────────
@@ -805,6 +808,22 @@ def divider_page(cfg, vol, no):
         + toc_body(vol) + '</section>')
 
 
+def end_page(cfg, d):
+    """뒤 간지 — 책을 닫는 면. `break-before: left` 라 마지막 면이 짝수가 된다."""
+    bk = cfg.book
+    foot = "  ·  ".join(x for x in (bk.get("school"), bk.get("teacher")) if x)
+    return (f'<section class="endpage v-{d["volumes"][-1]["id"]}">'
+            '<div class="rhL rh-off"></div><div class="rhR rh-off"></div>'
+            '<div class="orb"></div>'
+            f'<div class="e-in"><div class="e-brand">'
+            f'{esc(bk.get("brand", ""))}</div>'
+            f'<div class="e-ttl">{esc(bk.get("title", ""))}</div>'
+            '<div class="e-rule"></div>'
+            f'<div class="e-sub">{esc(bk.get("subject", ""))}</div></div>'
+            f'<div class="e-foot">{esc(foot)}</div>'
+            '<div class="e-logo"></div></section>')
+
+
 def toc_body(vol):
     rows = []
     for b in vol["blocks"]:
@@ -845,12 +864,7 @@ def write(cfg, d, build_dir, log=print, memos=1, fills=()):
         RENDERERS.get(vid, render_reading)(vol, body)
         parts.append('<div class="flow">' + "".join(body) + "</div>")
         parts.append("</div>")
-    for _ in range(max(1, memos)):
-        parts.append(f'<section class="memopage v-{d["volumes"][-1]["id"]}">'
-                     '<div class="rhL rh-off"></div>'
-                     '<div class="rhR rh-off"></div>'
-                     '<div class="wl solo">MEMO</div>'
-                     f'{grid_svg(174, 232)}</section>')
+    parts.append(end_page(cfg, d))
 
     fill_css = "".join(
         f"@page :nth({n}) {{ background: {c}; }}\n" for n, c in fills)

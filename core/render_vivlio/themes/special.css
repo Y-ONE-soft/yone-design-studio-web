@@ -70,7 +70,7 @@
 /* --------------------------------------------------------------- 판형 */
 @page {
   size: 216mm 303mm;
-  margin: 27mm 19mm 23mm 23mm;
+  margin: 31mm 19mm 23mm 23mm;
   @bottom-left-corner { content: none; }
   @bottom-right-corner { content: none; }
 }
@@ -95,50 +95,54 @@
 }
 
 /* ------------------------------------------------------------- 머리 띠
- * 두 면이 한 세트로 보이되 **지는 것이 다르다** — 왼쪽은 도형(각진 색면) +
- * 단원 표기, 오른쪽은 도형(원) + 크레스트 + 책 이름. 옅은 띠는 두 면에 똑같이
- * 깔려 펼침을 가로지른다. ⚠ 왼쪽 그래픽을 반전해 오른쪽에 쓰지 않는다.
+ * 두 면이 한 세트로 보이되 **지는 것이 다르다.**
+ *   왼쪽(짝수) — 바깥 끝의 큰 각진 색면(WEEK/PART + 번호) + 단원 표기
+ *   오른쪽(홀수) — 바깥 끝의 각진 색면 안에 크레스트 + 책 이름
+ * 도형 언어는 **사선 하나로 통일**한다(원과 사선을 섞지 않는다). 색면과 옅은 띠
+ * 사이의 사선 조각은 **보조색**이 채워 두 색이 맞물리게 한다.
  */
 .rhL { position: running(rhL); }
 .rhR { position: running(rhR); }
-.hd { position: relative; height: 15mm; background: var(--c-pale);
+.hd { position: relative; height: 19mm; background: var(--c-pale);
       overflow: hidden; }
 .hdL { width: 216mm; margin-left: -19mm; }
 .hdR { width: 216mm; margin-left: -23mm; }
+.hd .blk, .hd .sld { position: absolute; top: 0; height: 19mm; }
 
-/* 왼쪽 면 — 각진 색면 + 단원 표기 */
-.hdL .chip { position: absolute; left: 0; top: 0; height: 15mm; width: 42mm;
-             background: var(--c-main); padding: 0 0 0 19mm;
-             box-sizing: border-box; }
-.hdL .chip .cut { position: absolute; right: -7mm; top: 0;
-             border-style: solid; border-width: 15mm 0 0 7mm;
-             border-color: var(--c-main) transparent transparent transparent; }
-.hdL .chip.solo .c1 { margin-top: 6mm; font-size: 8pt; letter-spacing: .18em; }
-.hdL .chip .c1 { display: block; margin-top: 3.4mm; font-style: normal;
+/* 왼쪽 면 */
+.hdL .blk { left: 0; width: 49mm; background: var(--c-main);
+            clip-path: polygon(0 0, 100% 0, 85.7% 100%, 0 100%); }
+.hdL .sld { left: 42mm; width: 14mm; background: var(--c-sub);
+            clip-path: polygon(50% 0, 100% 0, 50% 100%, 0 100%); }
+.hdL .chip { position: absolute; left: 19mm; top: 0; }
+.hdL .chip.solo .c1 { margin-top: 7.4mm; font-size: 8pt; }
+.hdL .chip .c1 { display: block; margin-top: 4.6mm; font-style: normal;
              font: 700 5.8pt/1 Disp; letter-spacing: .24em; color: #fff;
              opacity: .9; }
-.hdL .chip .c2 { display: block; margin-top: .8mm; font-style: normal;
-             font: 700 14pt/1 Disp; letter-spacing: -.02em; color: #fff; }
-.hdL .ht { position: absolute; left: 54mm; top: 0; }
-.hdL .l1 { display: block; margin-top: 3.6mm; font-style: normal;
+.hdL .chip .c2 { display: block; margin-top: .9mm; font-style: normal;
+             font: 700 15pt/1 Disp; letter-spacing: -.02em; color: #fff; }
+.hdL .ht { position: absolute; left: 62mm; top: 0; }
+.hdL .l1 { display: block; margin-top: 5mm; font-style: normal;
            font: 700 6.4pt/1 Disp; letter-spacing: .18em; color: var(--c-main); }
-.hdL .l2 { display: block; margin-top: 2.2mm; font-style: normal;
+.hdL .l2 { display: block; margin-top: 2.4mm; font-style: normal;
            font: 700 10.4pt/1 Noto; color: var(--ink); letter-spacing: -.02em;
            white-space: nowrap; }
 .hdL .l2 b { font: 400 8.6pt/1 Noto; color: var(--n-5); }
 .hdL .l2 b::before { content: ""; display: inline-block; width: .35mm;
            height: 3.2mm; margin: 0 3.4mm -.4mm; background: var(--n-3); }
 
-/* 오른쪽 면 — 원 + 크레스트 + 책 이름 */
-.hdR .orb { position: absolute; right: -24mm; top: -30mm; width: 58mm;
-            height: 58mm; border-radius: 50%; background: var(--c-line); }
-.hdR .crest { position: absolute; right: 19mm; top: 4mm; width: 6.6mm;
-            height: 6.8mm; background-color: var(--c-deep);
-            -webkit-mask: url(assets/crest.png) no-repeat center/contain;
-            mask: url(assets/crest.png) no-repeat center/contain; }
-.hdR .bk { position: absolute; right: 28mm; top: 5.6mm;
-           font: 500 8.4pt/1 Noto; color: var(--c-deep);
-           letter-spacing: .01em; white-space: nowrap; }
+/* 오른쪽 면 — 같은 사선, 다른 내용 */
+.hdR .blk { right: 0; width: 62mm; background: var(--c-main);
+            clip-path: polygon(11.3% 0, 100% 0, 100% 100%, 0 100%); }
+.hdR .sld { right: 62mm; width: 14mm; background: var(--c-sub);
+            clip-path: polygon(50% 0, 100% 0, 50% 100%, 0 100%); }
+.hdR .bk { position: absolute; right: 30mm; top: 6.6mm;
+           font: 500 8.6pt/1 Noto; color: #fff; letter-spacing: .01em;
+           white-space: nowrap; }
+.hdR .crest { position: absolute; right: 19mm; top: 5.6mm; width: 7mm;
+           height: 7.2mm; background-color: #fff;
+           -webkit-mask: url(assets/crest.png) no-repeat center/contain;
+           mask: url(assets/crest.png) no-repeat center/contain; }
 
 .rh-off .hd { background: none; }
 .rh-off .hd * { display: none; }
@@ -216,8 +220,8 @@ u { text-decoration: none; }
 .dvL, .dvR { position: relative; box-sizing: border-box;
              width: 216mm; height: 303mm; overflow: hidden;
              background: var(--c-main); page: plain; }
-.dvL { break-before: left;  margin: -27mm -23mm -23mm -19mm; }
-.dvR { break-before: right; margin: -27mm -19mm -23mm -23mm; }
+.dvL { break-before: left;  margin: -31mm -23mm -23mm -19mm; }
+.dvR { break-before: right; margin: -31mm -19mm -23mm -23mm; }
 .dvL .orb { position: absolute; right: -74mm; top: 96mm;
             width: 148mm; height: 148mm; border-radius: 50%;
             background: #fff; opacity: .1; }
@@ -259,9 +263,9 @@ u { text-decoration: none; }
 .t-2 { padding: 1.6mm 0 1.6mm 26mm; font: 400 9pt/1.4 Noto; color: var(--n-5); }
 
 /* ============================================================== PART 오프너 */
-.partpage { break-before: page; height: 250mm; position: relative; }
-.partpage .slab { position: absolute; left: -23mm; right: -19mm; top: -27mm;
-            height: 100mm; background: var(--c-deep); }
+.partpage { break-before: page; height: 246mm; position: relative; }
+.partpage .slab { position: absolute; left: -23mm; right: -19mm; top: -31mm;
+            height: 104mm; background: var(--c-deep); }
 .p-no  { position: absolute; left: 0; top: 32mm; font-size: 10pt;
          line-height: 1; color: #fff; opacity: .8; }
 .p-ttl { position: absolute; left: 0; top: 44mm; font: 700 30pt/1.2 Disp;
@@ -461,8 +465,30 @@ u { text-decoration: none; }
 .wbox { margin: var(--s1) 0 var(--s2); break-inside: avoid; }
 .wbox i { display: block; height: 6.6mm; border-bottom: .5pt solid var(--n-3); }
 
-/* MEMO */
-.memopage { break-before: page; }
+/* 뒤 간지 — 책을 닫는 면. MEMO 대신 여기서 끝난다.
+ * `break-before: left` 라 **마지막 면이 언제나 짝수**가 된다. */
+.endpage { page: plain; break-before: left; position: relative;
+           box-sizing: border-box; width: 216mm; height: 303mm;
+           margin: -31mm -23mm -23mm -19mm; overflow: hidden;
+           background: var(--c-deep); }
+.endpage .orb { position: absolute; left: -60mm; bottom: -70mm;
+           width: 190mm; height: 190mm; border-radius: 50%;
+           background: #fff; opacity: .06; }
+.endpage .e-in { position: absolute; left: 30mm; top: 108mm; }
+.e-brand { font: 700 10pt/1 Disp; letter-spacing: .34em; color: #fff;
+           opacity: .72; }
+.e-ttl { margin-top: 7mm; font: 700 30pt/1.2 Disp; color: #fff;
+         letter-spacing: -.05em; }
+.e-rule { margin: 7mm 0; width: 28mm; height: 1mm; background: #fff;
+          opacity: .45; }
+.e-sub { font: 400 10.4pt/1.7 Noto; color: #fff; opacity: .82; }
+.endpage .e-foot { position: absolute; left: 30mm; bottom: 30mm;
+           font: 500 8pt/1 Noto; color: #fff; opacity: .6;
+           letter-spacing: .08em; }
+.endpage .e-logo { position: absolute; right: 30mm; bottom: 29mm;
+           width: 34mm; height: 8.5mm; background-color: #fff; opacity: .8;
+           -webkit-mask: url(assets/books.png) no-repeat center/contain;
+           mask: url(assets/books.png) no-repeat center/contain; }
 
 /* 머리+첫 덩어리 묶음 */
 .keep { break-inside: avoid; }
