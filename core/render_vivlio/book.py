@@ -6,6 +6,8 @@
     python3 -m core.render_vivlio.book <책폴더> knobs     ★ 만질 수 있는 값 목록
         … knobs --set="palette.gold=#c0392b"             값 바꾸기(config.json 에 쓴다)
         … knobs --reset="palette.gold"                   기본값으로 되돌리기
+    python3 -m core.render_vivlio.book <책폴더> variants  시안 여러 벌을 한 장에
+        … variants --knob=palette.gold --values="#a,#b,#c" [--pages=4]
     python3 -m core.render_vivlio.book <책폴더> render    조판 직전까지(HTML) — 빠름
     python3 -m core.render_vivlio.book <책폴더> watch     라이브 미리보기(브라우저)
     python3 -m core.render_vivlio.book <책폴더> build     조판 → PDF (+마감)
@@ -82,8 +84,11 @@ def show_knobs(cfg, log=print, as_json=False, **_):
 def set_knobs(cfg, log=print, assignments=(), reset=(), backup=True):
     """손잡이 값을 config.json 에 쓴다. `reset` 은 기본값으로 되돌린다(키 삭제).
 
-    ⚠ config.json 은 손으로 예쁘게 들여쓴 파일이다. 여기서 다시 쓰면 **빈 줄
-      묶음이 사라진다**(내용·`_note` 는 그대로). 그래서 쓰기 전에 `.bak` 을 남긴다.
+    ⚠ config.json 은 손으로 예쁘게 들여쓴 파일이다(빈 줄 묶음, 한 줄로 쓴 객체,
+      주석 구실을 하는 `_note`). 통째로 다시 쓰면 값은 맞지만 **그 서식이 전부
+      사라진다** — 색 하나 바꿀 때마다 파일이 뒤집히면 안 되므로 **바뀐 자리만**
+      갈아 끼운다(`knobs.patch_text`). 그렇게 못 하는 모양이면 통째 쓰기로
+      물러서되 그 사실을 알린다. 어느 쪽이든 쓰기 전에 `.bak` 을 남긴다.
     """
     import json as _json
     import shutil
@@ -114,13 +119,22 @@ def set_knobs(cfg, log=print, assignments=(), reset=(), backup=True):
         changes[key] = None
     if not changes:
         return {}
-    data = kn.apply(cfg.data, changes)
     path = cfg.path("config.json")
+    with open(path, encoding="utf-8") as f:
+        raw = f.read()
+    try:
+        out = kn.patch_text(raw, changes)
+        how = ""
+    except Exception as e:                  # 모양이 특이하면 통째로 쓴다
+        out = _json.dumps(kn.apply(cfg.data, changes),
+                          ensure_ascii=False, indent=2) + "\n"
+        how = f"  [알림] 부분 수정 실패({e}) — 통째로 다시 썼다(서식이 바뀐다)"
     if backup:
         shutil.copy2(path, path + ".bak")
     with open(path, "w", encoding="utf-8") as f:
-        _json.dump(data, f, ensure_ascii=False, indent=2)
-        f.write("\n")
+        f.write(out)
+    if how:
+        log(how)
     for key, v in changes.items():
         log(f"  {key} → {'기본값으로 되돌림' if v is None else v}")
     log(f"  {os.path.basename(path)} 갱신 (이전 판은 config.json.bak)")
@@ -328,6 +342,17 @@ def main(argv=None):
             html = render(cfg, log, **opts)
             # watch 가 자식 프로세스의 출력에서 이 줄을 읽는다
             log(f"RENDER_HTML={html}")
+        elif st == "variants":
+            from core.render_vivlio import variants as var_mod
+            kkey = opts.get("knob")
+            vals = [x.strip() for x in str(opts.get("values", "")).split(",")
+                    if x.strip()]
+            if not kkey or len(vals) < 2:
+                log("[오류] --knob=<손잡이> --values=\"값1,값2,…\" 가 필요하다")
+                rc = 2
+            else:
+                var_mod.run(cfg, _series(cfg), kkey, vals, log,
+                            pages=int(opts.get("pages", 4)))
         elif st == "knobs":
             sets = [x for x in str(opts.get("set", "")).split(",") if x.strip()]
             resets = [x for x in str(opts.get("reset", "")).split(",") if x.strip()]

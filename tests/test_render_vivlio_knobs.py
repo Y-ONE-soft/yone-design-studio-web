@@ -127,3 +127,93 @@ def test_apply_none_resets():
     assert not kn.has(out, "palette.gold")
     assert kn.get(out, "palette.band") == "#222"
     assert kn.get(d, "palette.gold") == "#000", "원본을 건드리면 안 된다"
+
+
+# ── config.json 서식 보존 ────────────────────────────────────────
+RAW = '''{
+  "series": "blackbook",
+
+  "book": { "id": "블랙북01", "title": "블랙북 01" },
+
+  "page": { "width": 210, "height": 297, "bleed": 3 },
+
+  "metrics": {
+    "slot": 122.5,
+    "qgap": 4.0
+  }
+}
+'''
+
+
+def _same_but(a, b, *keys):
+    """두 문서가 `keys` 말고는 같은가 (값 기준)."""
+    import json as J
+    da, db = J.loads(a), J.loads(b)
+    for k in keys:
+        kn.unset(da, k)
+        kn.unset(db, k)
+    return da == db
+
+
+def test_patch_keeps_formatting():
+    out = kn.patch_text(RAW, {"metrics.slot": 100.0})
+    assert '"page": { "width": 210, "height": 297, "bleed": 3 },' in out, \
+        "한 줄로 쓴 객체가 풀어헤쳐졌다"
+    assert '\n\n  "book"' in out, "빈 줄 묶음이 사라졌다"
+    assert '"slot": 100.0' in out
+    assert _same_but(RAW, out, "metrics.slot")
+
+
+def test_patch_adds_key_into_existing_parent():
+    out = kn.patch_text(RAW, {"metrics.agap": 2.5})
+    assert '"agap": 2.5' in out
+    assert '\n\n  "page"' in out
+    import json as J
+    assert J.loads(out)["metrics"]["agap"] == 2.5
+
+
+def test_patch_deletes_key_and_comma():
+    out = kn.patch_text(RAW, {"metrics.slot": None})
+    import json as J
+    assert "slot" not in J.loads(out)["metrics"]
+    assert J.loads(out)["metrics"]["qgap"] == 4.0
+    assert '"page": { "width": 210' in out
+
+
+def test_patch_deletes_last_member():
+    out = kn.patch_text(RAW, {"metrics.qgap": None})
+    import json as J
+    assert J.loads(out)["metrics"] == {"slot": 122.5}
+
+
+def test_patch_new_parent_raises():
+    import pytest as P
+    with P.raises(KeyError):
+        kn.patch_text(RAW, {"palette.gold": "#fff"})
+
+
+def test_patch_real_configs_roundtrip():
+    """실제 책 config 를 값 하나 바꿨다 되돌리면 **원문과 한 글자도 안 달라야** 한다."""
+    import glob
+    import json as J
+    from core.render_vivlio.config import _studio_root
+    root = os.path.join(_studio_root(), "조판", "교재")
+    files = glob.glob(os.path.join(root, "*", "*", "*", "config.json"))
+    if not files:
+        import pytest as P
+        P.skip("교재 트리 없음")
+    seen = []
+    for f in files:
+        raw = open(f, encoding="utf-8").read()
+        d = J.loads(raw)
+        nums = sorted(k for k, v in (d.get("metrics") or {}).items()
+                      if isinstance(v, (int, float)))
+        if not nums:                      # 치수를 계열 기본값에 맡긴 책은 건너뛴다
+            continue
+        key = "metrics." + nums[0]
+        old = kn.get(d, key)
+        seen.append(os.path.basename(os.path.dirname(f)))
+        once = kn.patch_text(raw, {key: old + 1})
+        back = kn.patch_text(once, {key: old})
+        assert back == raw, f"{os.path.basename(os.path.dirname(f))}: 왕복이 원문과 다르다"
+    assert seen, "대조한 책이 하나도 없다 — 검사가 헛돌고 있다"

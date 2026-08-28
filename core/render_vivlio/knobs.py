@@ -39,6 +39,7 @@
 이력이 곧 손잡이 후보다.
 """
 import copy
+import json
 
 # 손잡이 묶음 — 편집기가 이 차례로 접어 보여 준다
 # 편집기가 이 차례로 접어 보여 준다. "섹션"은 파트·섹션마다 되풀이되는
@@ -201,3 +202,166 @@ def apply(cfg_data, changes):
         else:
             put(data, key, value)
     return data
+
+
+# ── config.json 을 **서식을 지키며** 고치기 ─────────────────────────
+# 통째로 다시 쓰면(`json.dump`) 값은 맞지만 **손으로 맞춘 서식이 사라진다** —
+# 빈 줄 묶음, `"page": { "width": 210, … }` 처럼 한 줄로 쓴 것, 주석 구실을 하는
+# `_note` 의 자리. 작업대에서 색 하나 바꿀 때마다 파일 전체가 뒤집히면 안 되므로
+# **바뀐 값의 자리만** 갈아 끼운다. (실제로 한 번 뒤집어 놓고 되돌렸다.)
+
+_WS = " \t\r\n"
+
+
+class _Scan(object):
+    """원문 위치를 들고 다니는 최소 JSON 훑개. 값 스팬을 경로별로 모은다."""
+
+    def __init__(self, raw):
+        self.s = raw
+        self.i = 0
+        self.spans = {}          # 점경로 → (키 시작, 값 시작, 값 끝)
+
+    def ws(self):
+        while self.i < len(self.s) and self.s[self.i] in _WS:
+            self.i += 1
+
+    def string(self):
+        assert self.s[self.i] == '"'
+        j = self.i + 1
+        while True:
+            c = self.s[j]
+            if c == "\\":
+                j += 2
+                continue
+            if c == '"':
+                break
+            j += 1
+        out = json.loads(self.s[self.i:j + 1])
+        self.i = j + 1
+        return out
+
+    def value(self, path):
+        self.ws()
+        c = self.s[self.i]
+        if c == "{":
+            return self.obj(path)
+        if c == "[":
+            return self.arr(path)
+        if c == '"':
+            self.string()
+            return
+        j = self.i
+        while j < len(self.s) and self.s[j] not in ",}]" + _WS:
+            j += 1
+        self.i = j
+
+    def obj(self, path):
+        start = self.i
+        self.i += 1                      # {
+        while True:
+            self.ws()
+            if self.s[self.i] == "}":
+                self.i += 1
+                self.spans[path + ".{}"] = (start, start, self.i)
+                return
+            kstart = self.i
+            key = self.string()
+            self.ws()
+            assert self.s[self.i] == ":"
+            self.i += 1
+            self.ws()
+            vstart = self.i
+            sub = (path + "." + key) if path else key
+            self.value(sub)
+            self.spans[sub] = (kstart, vstart, self.i)
+            self.ws()
+            if self.s[self.i] == ",":
+                self.i += 1
+
+    def arr(self, path):
+        self.i += 1                      # [
+        n = 0
+        while True:
+            self.ws()
+            if self.s[self.i] == "]":
+                self.i += 1
+                return
+            self.value("%s[%d]" % (path, n))
+            n += 1
+            self.ws()
+            if self.s[self.i] == ",":
+                self.i += 1
+
+
+def spans(raw):
+    sc = _Scan(raw)
+    sc.value("")
+    return sc.spans
+
+
+def _indent_of(raw, pos):
+    """pos 가 있는 줄의 들여쓰기 문자열."""
+    ls = raw.rfind("\n", 0, pos) + 1
+    j = ls
+    while j < len(raw) and raw[j] in " \t":
+        j += 1
+    return raw[ls:j]
+
+
+def patch_text(raw, changes):
+    """원문 JSON 문자열에 `{키: 값}` 을 반영. None 이면 그 키를 지운다.
+
+    바뀌는 곳만 손대므로 나머지 줄·빈 줄·한 줄짜리 객체가 그대로 남는다.
+    되돌려 읽을 수 없는 모양이면(원문이 JSON 이 아니면) 예외를 낸다 —
+    부르는 쪽이 통째 쓰기로 물러설 수 있게.
+    """
+    sp = spans(raw)
+    # 뒤에서부터 고쳐야 앞쪽 위치가 안 밀린다
+    todo = []
+    for key, val in (changes or {}).items():
+        if key in sp:
+            todo.append((sp[key][0], "del" if val is None else "set", key, val))
+        elif val is not None:
+            parent = key.rsplit(".", 1)[0] if "." in key else ""
+            pkey = (parent + ".{}") if parent else "{}"
+            if pkey not in sp:                    # 부모 객체가 아예 없다
+                raise KeyError("부모가 없다: " + parent)
+            todo.append((sp[pkey][2], "add", key, val))
+    out = raw
+    for pos, kind, key, val in sorted(todo, key=lambda t: -t[0]):
+        if kind == "set":
+            _, vs, ve = sp[key]
+            out = out[:vs] + json.dumps(val, ensure_ascii=False) + out[ve:]
+        elif kind == "del":
+            ks, _, ve = sp[key]
+            j = ve
+            while j < len(out) and out[j] in _WS:
+                j += 1
+            if j < len(out) and out[j] == ",":    # 뒤 쉼표까지 지운다
+                ve = j + 1
+            else:                                  # 마지막 멤버면 앞 쉼표를 지운다
+                k = ks - 1
+                while k >= 0 and out[k] in _WS:
+                    k -= 1
+                if k >= 0 and out[k] == ",":
+                    ks = k
+            # 줄 전체가 비면 그 줄도 지운다
+            ls = out.rfind("\n", 0, ks) + 1
+            le = ve
+            while le < len(out) and out[le] in " \t":
+                le += 1
+            if out[ls:ks].strip() == "" and le < len(out) and out[le] == "\n":
+                ks, ve = ls, le + 1
+            out = out[:ks] + out[ve:]
+        else:                                      # add — 부모 `}` 앞에 끼운다
+            _, _, pe = sp[(key.rsplit(".", 1)[0] + ".{}") if "." in key else "{}"]
+            brace = pe - 1                         # `}` 자리
+            body = out[:brace].rstrip()
+            ind = _indent_of(out, brace) + "  "
+            sep = "" if body.endswith("{") else ","
+            line = "%s\n%s%s: %s\n%s" % (
+                sep, ind, json.dumps(key.rsplit(".", 1)[-1], ensure_ascii=False),
+                json.dumps(val, ensure_ascii=False), _indent_of(out, brace))
+            out = body + line + out[brace:]
+    json.loads(out)                                # 깨졌으면 여기서 걸린다
+    return out

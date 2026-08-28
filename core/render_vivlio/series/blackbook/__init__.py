@@ -44,10 +44,38 @@ class BlackbookSeries(Series):
         return assets_mod.build(cfg, log)
 
     # ── ③ 조판 ──
+    # 견본에 담는 양 — 디자인을 보는 데 필요한 만큼만.
+    SAMPLE_VOCAB, SAMPLE_ITEMS = 2, 8
+
+    @classmethod
+    def _sample(cls, d):
+        """전권 → 견본 데이터(첫 과의 앞부분만).
+
+        ⚠ 예전에는 `--sample` 이 **산출 파일 이름만** `_견본` 으로 바꾸고 내용은
+          전권 그대로였다. 그래서 작업대 미리보기가 116면을 브라우저 안에서
+          조판하려다 화면이 멎었다. 견본은 실제로 줄여야 견본이다.
+        """
+        L = (d.get("lessons") or [])[:1]
+        if not L:
+            return d
+        one = dict(L[0])
+        one["vocab"] = (one.get("vocab") or [])[:cls.SAMPLE_VOCAB]
+        one["problems"] = (one.get("problems") or [])[:cls.SAMPLE_ITEMS]
+        nos = {it["no"] for it in one["problems"]}
+        # 해설은 문항과 1:1 이라 남긴 문항 것만 (번호가 어긋나면 검수가 깨진다)
+        one["answers"] = [a for a in (one.get("answers") or []) if a["no"] in nos]
+        out = dict(d)
+        out["lessons"] = [one]
+        return out
+
     def build(self, cfg, log, sample=False, nomeasure=False, **_):
         build_dir = cfg.build_dir
         os.makedirs(build_dir, exist_ok=True)
         d = data_mod.load(cfg)
+        if sample:
+            d = self._sample(d)
+            log(f"[견본] 1과 · 어휘 {len(d['lessons'][0]['vocab'])} · "
+                f"문항 {len(d['lessons'][0]['problems'])}")
         m = render_mod.metrics_of(cfg)
         top, bottom = m["body_top"], m["body_bottom"]
 

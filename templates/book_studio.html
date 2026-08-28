@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+{% block title %}내지 작업대{% endblock %}
+
+{% block content %}
+{#
+  내지 작업대 — 값을 만지면 지면이 바뀐다.
+
+  조절판은 **손으로 짜지 않는다.** 계열이 선언한 손잡이(`/api/book-studio/knobs`)
+  로 저절로 그려진다. 계열에 손잡이를 더하면 여기 저절로 나타난다 — 그게 이
+  화면이 계열마다 새로 만들 필요가 없는 이유다.
+#}
+<style>
+  .bs-wrap { display: grid; grid-template-columns: 380px 1fr; gap: 18px;
+             align-items: start; }
+  @media (max-width: 1000px) { .bs-wrap { grid-template-columns: 1fr; } }
+  .bs-panel { background: var(--glass-bg); border: 1px solid var(--glass-border);
+              border-radius: 16px; padding: 16px 18px;
+              backdrop-filter: var(--glass-blur); }
+  .bs-panel + .bs-panel { margin-top: 14px; }
+  .bs-head { display: flex; align-items: baseline; justify-content: space-between;
+             gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  .bs-title { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+  .bs-sub { color: var(--muted); font-size: 13px; }
+  .bs-pick { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .bs-chip { border: 1px solid var(--border); background: var(--surface);
+             border-radius: 999px; padding: 6px 13px; font-size: 12.5px;
+             cursor: pointer; color: var(--text); }
+  .bs-chip.on { border-color: var(--accent); color: var(--accent); }
+  .bs-group { border-top: 1px solid var(--border); padding-top: 12px;
+              margin-top: 12px; }
+  .bs-group:first-of-type { border-top: 0; padding-top: 0; margin-top: 0; }
+  .bs-gname { font-size: 11px; letter-spacing: .12em; color: var(--muted);
+              text-transform: uppercase; margin-bottom: 10px; }
+  .bs-row { margin-bottom: 11px; }
+  .bs-label { display: flex; justify-content: space-between; align-items: baseline;
+              font-size: 13px; margin-bottom: 4px; gap: 8px; }
+  .bs-val { font-family: var(--mono); font-size: 11.5px; color: var(--accent); }
+  .bs-hint { font-size: 11px; color: var(--muted); line-height: 1.45;
+             margin-top: 2px; }
+  .bs-color { display: flex; gap: 8px; align-items: center; }
+  .bs-color input[type=color] { width: 42px; height: 30px; padding: 0; border: 0;
+      border-radius: 7px; background: none; cursor: pointer; }
+  .bs-text { width: 100%; background: rgba(0,0,0,.28); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); padding: 7px 9px; font-size: 12.5px;
+      font-family: var(--mono); }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  .bs-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+            background: var(--accent); margin-left: 6px; vertical-align: middle; }
+  .bs-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .bs-btn { border: 1px solid var(--border); background: var(--surface);
+            border-radius: 9px; padding: 8px 14px; font-size: 13px; cursor: pointer;
+            color: var(--text); }
+  .bs-btn.primary { border-color: var(--accent); color: var(--accent); }
+  .bs-btn[disabled] { opacity: .45; cursor: default; }
+  .bs-status { font-size: 12px; color: var(--muted); margin-top: 10px;
+               white-space: pre-wrap; line-height: 1.5; }
+  .bs-frame { width: 100%; height: calc(100vh - 190px); min-height: 520px;
+              border: 1px solid var(--border); border-radius: 14px;
+              background: #6b6b6b; }
+  .bs-css { width: 100%; height: 190px; background: rgba(0,0,0,.3);
+            border: 1px solid var(--border); border-radius: 10px; color: var(--text);
+            font-family: var(--mono); font-size: 12px; padding: 9px; }
+  .bs-warn { font-size: 11.5px; color: var(--muted); line-height: 1.5;
+             border-left: 2px solid var(--border); padding-left: 9px; margin-top: 10px; }
+</style>
+
+<div class="bs-head">
+  <div>
+    <div class="bs-title">내지 작업대</div>
+    <div class="bs-sub">값을 만지면 지면이 바뀐다 · Vivliostyle 코드 조판</div>
+  </div>
+</div>
+
+<div class="bs-pick" id="bs-books">
+  {% for b in books %}
+    <button class="bs-chip{% if b.key == book_key %} on{% endif %}"
+            data-b="{{ b.key }}" data-bid="{{ b.bid }}">{{ b.title }}
+      <span style="opacity:.6"> · {{ b.series }}</span></button>
+  {% endfor %}
+</div>
+
+<div class="bs-wrap">
+  <div>
+    <div class="bs-panel">
+      <div id="bs-knobs">불러오는 중…</div>
+      <div class="bs-actions">
+        <button class="bs-btn primary" id="bs-apply" disabled>저장하고 다시 그리기</button>
+        <button class="bs-btn" id="bs-reload">되돌리기</button>
+        <label class="bs-btn" style="display:flex;gap:6px;align-items:center">
+          <input type="checkbox" id="bs-full"> 전권으로 보기
+        </label>
+      </div>
+      <div class="bs-status" id="bs-status"></div>
+      <div class="bs-warn">
+        미리보기는 <b>견본</b>이다(전권은 브라우저가 버겁다). 그리고
+        <b>면수는 최종 조판과 다를 수 있다</b> — 뷰어는 그리는 대로 세고,
+        면 나눔을 정하는 <code>pages.css</code> 는 지난 빌드 것이다.
+        면수·면 나눔이 걸린 판단은 <code>build</code> 로 PDF 를 만들어 볼 것.
+      </div>
+    </div>
+
+    <div class="bs-panel">
+      <div class="bs-gname">손잡이 밖 — overrides.css</div>
+      <div class="bs-hint" style="margin-bottom:8px">
+        손잡이에 없는 것을 이번만 바꿀 때. 계열 CSS 를 건드리지 않고 이 책에만 얹힌다
+        (맨 마지막이라 무엇이든 이긴다). 자주 쓰게 되면 손잡이로 올리는 게 맞다.
+      </div>
+      <textarea class="bs-css" id="bs-ovr" spellcheck="false"
+                placeholder="/* 예: .q .head .no { letter-spacing: .02em } */"></textarea>
+      <div class="bs-actions">
+        <button class="bs-btn" id="bs-ovr-save">저장하고 다시 그리기</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="bs-panel" style="padding:12px">
+    <iframe class="bs-frame" id="bs-view" title="미리보기"></iframe>
+  </div>
+</div>
+
+<script>
+(function () {
+  var key = {{ book_key|tojson }};
+  var bid = null, spec = [], changed = {};
+  var $ = function (id) { return document.getElementById(id); };
+
+  function status(msg) { $('bs-status').textContent = msg || ''; }
+
+  function viewUrl() {
+    // ⚠ `src=` 값을 encodeURIComponent 하면 안 된다 — 뷰어가 그걸 **상대 경로**로
+    //    보고 `/book-studio/viewer/%2Fbook-studio%2F…` 를 찾다가 404 가 난다
+    //    (여기서 실제로 걸렸다). 절대 URL 을 그대로 준다.
+    //    캐시를 깨야 다시 그린 결과가 보이므로 문서 URL 에 시각을 붙인다.
+    var t = Date.now();
+    return '/book-studio/viewer/index.html?_=' + t
+         + '#src=' + location.origin + '/book-studio/doc/' + bid + '/index.html?_=' + t
+         + '&bookMode=true&renderAllPages=false';
+  }
+  function showView() { $('bs-view').src = viewUrl(); }
+
+  function row(k) {
+    var wrap = document.createElement('div');
+    wrap.className = 'bs-row';
+    var lab = document.createElement('div');
+    lab.className = 'bs-label';
+    lab.innerHTML = '<span>' + k.label
+      + (k.overridden ? '<span class="bs-dot" title="config 가 기본값을 덮어썼다"></span>' : '')
+      + '</span><span class="bs-val" data-v="' + k.key + '"></span>';
+    wrap.appendChild(lab);
+
+    var input;
+    if (k.kind === 'color') {
+      var box = document.createElement('div');
+      box.className = 'bs-color';
+      input = document.createElement('input');
+      input.type = 'color'; input.value = k.value || k.default || '#000000';
+      var txt = document.createElement('input');
+      txt.type = 'text'; txt.className = 'bs-text';
+      txt.value = k.value || k.default || '';
+      box.appendChild(input); box.appendChild(txt);
+      wrap.appendChild(box);
+      var sync = function (v) {
+        changed[k.key] = v; txt.value = v;
+        try { input.value = v; } catch (e) {}
+        lab.querySelector('[data-v]').textContent = v;
+        $('bs-apply').disabled = false;
+      };
+      input.addEventListener('input', function () { sync(input.value); });
+      txt.addEventListener('change', function () { sync(txt.value.trim()); });
+    } else if (k.kind === 'mm' || k.kind === 'pt' || k.kind === 'number') {
+      input = document.createElement('input');
+      input.type = 'range';
+      input.min = (k.min !== undefined ? k.min : 0);
+      input.max = (k.max !== undefined ? k.max : 100);
+      input.step = k.step || 0.1;
+      input.value = (k.value !== null && k.value !== undefined) ? k.value : k.default;
+      wrap.appendChild(input);
+      input.addEventListener('input', function () {
+        changed[k.key] = parseFloat(input.value);
+        lab.querySelector('[data-v]').textContent = input.value + (k.unit || '');
+        $('bs-apply').disabled = false;
+      });
+    } else {
+      input = document.createElement('input');
+      input.type = 'text'; input.className = 'bs-text';
+      input.value = (k.value === null || k.value === undefined) ? '' : k.value;
+      wrap.appendChild(input);
+      input.addEventListener('change', function () {
+        changed[k.key] = input.value.trim();
+        lab.querySelector('[data-v]').textContent = input.value;
+        $('bs-apply').disabled = false;
+      });
+    }
+    var v = (k.value === null || k.value === undefined) ? (k.default || '') : k.value;
+    lab.querySelector('[data-v]').textContent = v + (k.unit || '');
+    if (k.affects) {
+      var h = document.createElement('div');
+      h.className = 'bs-hint'; h.textContent = k.affects;
+      wrap.appendChild(h);
+    }
+    return wrap;
+  }
+
+  function draw() {
+    var host = $('bs-knobs'); host.innerHTML = '';
+    if (!spec.length) {
+      host.innerHTML = '<div class="bs-hint">이 계열은 아직 손잡이를 선언하지 않았다.'
+        + ' 계열의 <code>knobs()</code> 를 채우면 여기 저절로 나타난다.</div>';
+      return;
+    }
+    var groups = [];
+    spec.forEach(function (k) {
+      if (groups.indexOf(k.group) < 0) groups.push(k.group);
+    });
+    groups.forEach(function (g) {
+      var sec = document.createElement('div');
+      sec.className = 'bs-group';
+      var nm = document.createElement('div');
+      nm.className = 'bs-gname'; nm.textContent = g;
+      sec.appendChild(nm);
+      spec.filter(function (k) { return k.group === g; })
+          .forEach(function (k) { sec.appendChild(row(k)); });
+      host.appendChild(sec);
+    });
+  }
+
+  function load() {
+    changed = {}; $('bs-apply').disabled = true;
+    status('손잡이를 읽는 중…');
+    fetch('/api/book-studio/knobs?b=' + encodeURIComponent(key))
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.error) { status('✗ ' + d.error); return; }
+        bid = d.book.bid; spec = d.knobs || [];
+        draw(); status('손잡이 ' + spec.length + '개 · 지면을 그리는 중…');
+        // 책 폴더의 build/ 는 마지막 조판 때 것이라 지금 config 와 어긋날 수
+        // 있다(손잡이를 바꿔 두고 조판을 안 돌렸을 때). 열 때 한 번 다시 그려
+        // **화면이 곧 지금 값**이 되게 한다 — 0.4초면 된다.
+        rerender('').then(function (ok) {
+          if (ok) status('손잡이 ' + spec.length + '개');
+        });
+      })
+      .catch(function (e) { status('✗ ' + e); });
+    fetch('/api/book-studio/overrides?b=' + encodeURIComponent(key))
+      .then(function (r) { return r.json(); })
+      .then(function (d) { $('bs-ovr').value = d.css || ''; });
+  }
+
+  function rerender(msg) {
+    status(msg + ' 다시 그리는 중…');
+    return fetch('/api/book-studio/render', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ b: key, full: $('bs-full').checked })
+    }).then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.error) { status('✗ ' + d.error); return false; }
+        showView(); return true;
+      });
+  }
+
+  $('bs-apply').addEventListener('click', function () {
+    if (!Object.keys(changed).length) return;
+    $('bs-apply').disabled = true;
+    status('저장하는 중…');
+    fetch('/api/book-studio/save', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ b: key, changes: changed })
+    }).then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.error) { status('✗ ' + d.error); $('bs-apply').disabled = false; return; }
+        var n = Object.keys(changed).length;
+        changed = {};
+        return rerender('값 ' + n + '개 저장.').then(function (ok) {
+          if (ok) { status('✓ ' + n + '개 반영됨 (config.json · 이전 판은 .bak)'); load(); }
+        });
+      });
+  });
+
+  $('bs-reload').addEventListener('click', load);
+  $('bs-full').addEventListener('change', function () {
+    // 전권은 브라우저가 느리다 — 디자인은 견본으로 보고, 면수 판단은 PDF 로.
+    rerender($('bs-full').checked ? '전권으로' : '견본으로');
+  });
+
+  $('bs-ovr-save').addEventListener('click', function () {
+    status('overrides.css 저장 중…');
+    fetch('/api/book-studio/overrides', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ b: key, css: $('bs-ovr').value })
+    }).then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.error) { status('✗ ' + d.error); return; }
+        rerender('overrides.css ' + d.bytes + 'B 저장.').then(function (ok) {
+          if (ok) status('✓ overrides.css 반영됨');
+        });
+      });
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll('#bs-books .bs-chip'),
+    function (el) {
+      el.addEventListener('click', function () {
+        Array.prototype.forEach.call(document.querySelectorAll('#bs-books .bs-chip'),
+          function (o) { o.classList.remove('on'); });
+        el.classList.add('on');
+        key = el.dataset.b; bid = el.dataset.bid;
+        history.replaceState(null, '', '/book-studio?b=' + encodeURIComponent(key));
+        load();
+      });
+    });
+
+  if (key) load();
+})();
+</script>
+{% endblock %}
