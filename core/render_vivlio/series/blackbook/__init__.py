@@ -13,7 +13,7 @@ import os
 import re
 
 from core.render_vivlio import bleed as bleed_mod
-from core.render_vivlio import cli, measure, probe, stage
+from core.render_vivlio import cli, knobs, measure, probe, stage
 from core.render_vivlio import verify as gate
 from core.render_vivlio.series.base import Series
 from core.render_vivlio.series.blackbook import assets as assets_mod
@@ -99,6 +99,47 @@ class BlackbookSeries(Series):
         stage.stage_assets(build_dir,
                            cfg.resolve((cfg.section("assets") or {}).get(
                                "dir", "assets")))
+        knobs.write(cfg, BlackbookSeries(), build_dir)
+        stage.stage_overrides(cfg, build_dir)
+
+    # ── 손잡이 ──
+    # 이 계열은 테마가 **고정 CSS**(`themes/blackbook.css`)라 색이 파일에 박혀
+    # 있었다. 그 `:root` 변수들을 그대로 손잡이로 연다 — 기본값은 CSS 에 있는 값
+    # 그대로고, config 에 값이 없으면 `knobs.css` 가 비어 지면이 안 바뀐다.
+    def knobs(self, cfg):
+        K = knobs.Knob
+        c = lambda key, css, label, default, affects: K(       # noqa: E731
+            "palette." + key, "color", label, css=css, default=default,
+            affects=affects, group="색")
+        mm = lambda key, label, default, lo, hi, affects: K(   # noqa: E731
+            "metrics." + key, "mm", label, default=default, min=lo, max=hi,
+            step=0.5, unit="mm", affects=affects, group="치수")
+        return [
+            c("gold", "--gold", "강조색", "#908400", "문항 번호 · Date · Unit"),
+            c("band", "--band", "머리 띠(문제)", "#939598", "Exercise 머리 띠"),
+            c("band_ans", "--band-ans", "머리 띠(해설)", "#c2d0dd", "해설 머리 띠"),
+            c("chip_b", "--chip-b", "본문 라벨", "#7cadc3", "본문 라벨 칩"),
+            c("chip_v", "--chip-v", "어휘 라벨", "#cbc4b1", "연관 어휘 라벨 칩"),
+            c("sep", "--sep", "구분자·해설 라벨", "#5ea1d7", "구분자 · 해설 라벨"),
+            c("syn", "--syn", "동의어", "#4978bc", "어휘 동의어"),
+            c("ant", "--ant", "반의어", "#dd6d55", "어휘 반의어"),
+            c("cream", "--cream", "요약문 바탕", "#fef5ee", "요약문 상자 바탕"),
+            c("crit", "--crit", "채점 기준 바탕", "#d9e7f6", "채점 기준 상자"),
+            c("dlg", "--dlg", "대화문 바탕", "#f1f4f8", "대화문 바탕"),
+            c("box", "--box", "지문 상자 선", "#808285", "지문 상자 테두리"),
+            c("pgnum", "--pgnum", "쪽번호", "#074481", "쪽번호"),
+            K("palette.ink", "color", "본문 먹", css="--ink", default="#231f20",
+              affects="본문 글자", group="고급"),
+            K("palette.gray", "color", "해설 먹", css="--gray", default="#404041",
+              affects="탭 · 해설 본문", group="고급"),
+            # 치수는 이미 config `metrics` 로 열려 있다 — 선언만 붙인다.
+            mm("slot", "한 면 2문항 위 칸 높이", 122.5, 60, 200,
+               "문항 두 개를 한 면에 앉힐 때 위 칸"),
+            mm("qgap", "문항 사이 간격", 4.0, 0, 20, "문항과 문항 사이"),
+            mm("agap", "해설 항목 간격", 2.5, 0, 20, "해설 항목 사이"),
+            K("metrics.col_w", "mm", "해설 단 폭", default=82.27, min=50,
+              max=120, step=0.5, unit="mm", affects="해설 2단", group="고급"),
+        ]
 
     # ── ④ 계열 검수 ──
     def verify(self, cfg, log, report):

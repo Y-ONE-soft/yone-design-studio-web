@@ -16,6 +16,7 @@ import html
 import os
 import re
 
+from core.render_vivlio import stage
 from core.render_vivlio.series.vocaunit import theme
 
 _RE_POS = re.compile(r"\[([명동형부전접대감조])\]")
@@ -412,7 +413,8 @@ class Renderer(object):
         return ('<!doctype html><html lang="ko"><head><meta charset="utf-8">'
                 f"<title>{esc(self.title)}</title>"
                 '<link rel="stylesheet" href="theme.css">'
-                '<link rel="stylesheet" href="pages.css"></head><body>'
+                '<link rel="stylesheet" href="pages.css">'
+                + stage.BOOK_CSS_LINKS + '</head><body>'
                 + "".join(body) + "</body></html>")
 
     def group(self, g):

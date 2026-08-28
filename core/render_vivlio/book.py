@@ -3,6 +3,9 @@
 교재 폴더에서:
     python3 -m core.render_vivlio.book <책폴더> data      원고 → data.json
     python3 -m core.render_vivlio.book <책폴더> theme     팔레트 → 테마 재생성
+    python3 -m core.render_vivlio.book <책폴더> knobs     ★ 만질 수 있는 값 목록
+        … knobs --set="palette.gold=#c0392b"             값 바꾸기(config.json 에 쓴다)
+        … knobs --reset="palette.gold"                   기본값으로 되돌리기
     python3 -m core.render_vivlio.book <책폴더> render    조판 직전까지(HTML) — 빠름
     python3 -m core.render_vivlio.book <책폴더> watch     라이브 미리보기(브라우저)
     python3 -m core.render_vivlio.book <책폴더> build     조판 → PDF (+마감)
@@ -39,6 +42,90 @@ def gen_theme(cfg, log=print):
 
 def build(cfg, log=print, **opts):
     return _series(cfg).build(cfg, log, **opts)
+
+
+def show_knobs(cfg, log=print, as_json=False, **_):
+    """이 책에서 **무엇을 만질 수 있는지** 보여 준다.
+
+    선언이 없으면 "아직 안 뚫린 계열"이라고 분명히 말한다 — 조용히 빈 목록을
+    내면 '손잡이가 없다'와 '선언을 안 했다'를 구분할 수 없다.
+    """
+    from core.render_vivlio import knobs as kn
+    items = kn.describe(cfg, _series(cfg))
+    if as_json:
+        import json as _json
+        log(_json.dumps(items, ensure_ascii=False, indent=1))
+        return items
+    if not items:
+        log(f"  계열 {cfg.series} 는 아직 손잡이를 선언하지 않았다 "
+            f"(series 의 knobs() 를 채울 것)")
+        return items
+    log(f"  손잡이 {len(items)}개 — 값을 바꾸려면:")
+    log(f"    bin/viv \"<책폴더>\" knobs --set=\"{items[0]['key']}=<값>\"")
+    for g in kn.GROUPS:
+        rows = [d for d in items if d["group"] == g]
+        if not rows:
+            continue
+        log(f"\n  [{g}]")
+        for d in rows:
+            mark = "●" if d["overridden"] else " "
+            val = d["value"]
+            unit = d.get("unit", "")
+            log("   %s %-22s %-14s %-10s %s"
+                % (mark, d["key"], d["label"],
+                   f"{val}{unit}" if val is not None else "-",
+                   d["affects"]))
+    log("\n  ● = config.json 이 기본값을 덮어쓴 것")
+    return items
+
+
+def set_knobs(cfg, log=print, assignments=(), reset=(), backup=True):
+    """손잡이 값을 config.json 에 쓴다. `reset` 은 기본값으로 되돌린다(키 삭제).
+
+    ⚠ config.json 은 손으로 예쁘게 들여쓴 파일이다. 여기서 다시 쓰면 **빈 줄
+      묶음이 사라진다**(내용·`_note` 는 그대로). 그래서 쓰기 전에 `.bak` 을 남긴다.
+    """
+    import json as _json
+    import shutil
+    from core.render_vivlio import knobs as kn
+    known = {k.key: k for k in kn.of(cfg, _series(cfg))}
+    changes = {}
+    for a in assignments:
+        key, _, raw = a.partition("=")
+        key = key.strip()
+        if key not in known:
+            raise SystemExit(f"모르는 손잡이: {key}\n  → `knobs` 로 목록을 볼 것")
+        k = known[key]
+        v = raw.strip()
+        if k.kind in ("mm", "pt", "number"):
+            v = float(v) if "." in v else int(v)
+        elif k.kind == "bool":
+            v = v.lower() in ("1", "true", "yes", "on", "참")
+        changes[key] = v
+    for key in reset:
+        key = key.strip()
+        if key not in known:
+            raise SystemExit(f"모르는 손잡이: {key}")
+        if not known[key].resettable:
+            raise SystemExit(
+                f"{key} 는 되돌릴 수 없다 — 이 계열은 **config 가 원본**이라\n"
+                f"  지우면 계열 코드의 임시 폴백으로 떨어져 디자인이 달라진다.\n"
+                f"  원하는 값을 직접 넣을 것(`--set=\"{key}=<값>\"`).")
+        changes[key] = None
+    if not changes:
+        return {}
+    data = kn.apply(cfg.data, changes)
+    path = cfg.path("config.json")
+    if backup:
+        shutil.copy2(path, path + ".bak")
+    with open(path, "w", encoding="utf-8") as f:
+        _json.dump(data, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+    for key, v in changes.items():
+        log(f"  {key} → {'기본값으로 되돌림' if v is None else v}")
+    log(f"  {os.path.basename(path)} 갱신 (이전 판은 config.json.bak)")
+    log("  → 지면에 반영하려면 `build` (또는 `watch` 를 띄워 두면 바로 보인다)")
+    return changes
 
 
 def render(cfg, log=print, **opts):
@@ -159,7 +246,30 @@ def discover(root=None, max_depth=6):
     return sorted(out, key=lambda c: (c.series, c.root))
 
 
-def print_books(log=print, root=None):
+def books_json(root=None):
+    """책 목록을 기계가 읽을 형태로. 웹 작업대가 subprocess 로 부른다.
+
+    `key` 는 **스튜디오 루트 기준 상대경로**다 — 웹이 절대경로를 주고받으면
+    경로 넘나들기를 막을 방법이 없다. 키로 받아 서버가 다시 붙인다.
+    """
+    out = []
+    for c in discover(root):
+        rel = c.root.replace(bookconfig._studio_root() + os.sep, "")
+        out.append({"key": rel, "series": c.series,
+                    "title": c.book.get("title") or c.series,
+                    "id": c.book.get("id") or "",
+                    "school": c.book.get("school") or "",
+                    "period": c.book.get("period") or "",
+                    "page": {"width": c.page["width"], "height": c.page["height"],
+                             "bleed": c.page["bleed"]}})
+    return out
+
+
+def print_books(log=print, root=None, as_json=False):
+    if as_json:
+        import json as _json
+        log(_json.dumps(books_json(root), ensure_ascii=False, indent=1))
+        return []
     books = discover(root)
     log(f"■ Vivliostyle 책 {len(books)}권 "
         f"(계열: {', '.join(series_registry.names())})")
@@ -186,7 +296,7 @@ def main(argv=None):
         print(__doc__)
         return 2
     if argv[0] in ("--list", "-l", "list"):
-        print_books()
+        print_books(as_json="--json" in argv)
         return 0
     book = argv[0]
     steps = [a for a in argv[1:] if not a.startswith("--")] or ["build"]
@@ -218,6 +328,13 @@ def main(argv=None):
             html = render(cfg, log, **opts)
             # watch 가 자식 프로세스의 출력에서 이 줄을 읽는다
             log(f"RENDER_HTML={html}")
+        elif st == "knobs":
+            sets = [x for x in str(opts.get("set", "")).split(",") if x.strip()]
+            resets = [x for x in str(opts.get("reset", "")).split(",") if x.strip()]
+            if sets or resets:
+                set_knobs(cfg, log, sets, resets)
+                cfg = load(book)                    # 바꾼 값으로 다시 읽어 보여 준다
+            show_knobs(cfg, log, as_json=bool(opts.get("json")))
         elif st == "build":
             build(cfg, log, **opts)
         elif st == "print":

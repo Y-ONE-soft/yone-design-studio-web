@@ -18,7 +18,7 @@ import os
 import re
 
 from core.render_vivlio import bleed as bleed_mod
-from core.render_vivlio import cli, paged, probe, stage
+from core.render_vivlio import cli, knobs, paged, probe, stage
 from core.render_vivlio.series.base import Series
 from core.render_vivlio.series.vocabook import data as data_mod
 from core.render_vivlio.series.vocabook import render as render_mod
@@ -60,6 +60,8 @@ class VocabookSeries(Series):
 
         # 1패스 — pages.css 는 빈 파일
         pages_css = stage.write_css(build_dir, "pages.css")
+        knobs.write(cfg, VocabookSeries(), build_dir)
+        stage.stage_overrides(cfg, build_dir)
         html_path = render_mod.write(cfg, d, build_dir, nomemo=nomemo,
                                      sample=sample, log=log)
         t1 = cli.run_build(html_path, out, log=log)
@@ -115,6 +117,53 @@ class VocabookSeries(Series):
         return rules.write(path)
 
     # ── ④ 계열 검수 ──
+    # ── 손잡이 ──
+    # `theme.py` 가 config 팔레트로 테마를 생성하는 계열 → css=None.
+    # 색은 **공통색**(common)과 **섹션색**(sections)으로 나뉘는데, 섹션은 책마다
+    # 개수·이름이 달라 **config 에서 읽어 손잡이를 만든다**(고정 목록을 두면
+    # 책이 섹션을 늘릴 때마다 코드를 고쳐야 한다).
+    # ⚠ 팔레트는 config 가 원본이라 되돌리기는 막는다.
+    def knobs(self, cfg):
+        K = knobs.Knob
+        from core.render_vivlio.series.vocabook.theme import DEFAULT_METRICS as D
+        col = lambda key, label, affects, g="색": K(          # noqa: E731
+            "palette.common." + key, "color", label, affects=affects,
+            group=g, resettable=False)
+        mm = lambda key, label, lo, hi, affects, g="치수": K(  # noqa: E731
+            "metrics." + key, "mm", label, default=D[key], min=lo, max=hi,
+            step=0.1, unit="mm", affects=affects, group=g)
+        out = [
+            col("hl", "강조색", "표제어 강조 · 포인트"),
+            col("band", "머리 띠 바탕", "면 머리 띠"),
+            col("rule", "항목 괘선", "항목 사이 가로선"),
+            col("label", "라벨 글자", "왼쪽 라벨 열"),
+            col("ans", "정답 바탕", "정답란 바탕"),
+            col("line", "정답 괘선", "정답란 선"),
+            col("blank", "빈칸 표시", "빈칸 밑줄·표시"),
+            col("gray", "보조 먹", "부가 설명", "고급"),
+            col("ink", "본문 먹", "본문 글자", "고급"),
+        ]
+        # 섹션 색(파트마다 주색·연한색·보조색) — 있는 만큼만 연다
+        for sec, pal in sorted((cfg.section("palette") or {})
+                               .get("sections", {}).items()):
+            name = (pal or {}).get("label") or sec
+            for sub, ko in (("main", "주색"), ("pale", "연한색"),
+                            ("sub", "보조색")):
+                if sub in (pal or {}):
+                    out.append(K(f"palette.sections.{sec}.{sub}", "color",
+                                 f"{name} {ko}", affects=f"{name} 섹션",
+                                 group="섹션", resettable=False))
+        out += [
+            mm("band_h", "시작면 밴드 높이", 6, 30, "Day 시작면 머리 밴드"),
+            mm("strip_h", "이후 면 띠 높이", 2, 14, "③④ 면 띠"),
+            mm("margin_top", "본문 상단 여백", 10, 40, "본문 시작"),
+            mm("margin_bottom", "본문 하단 여백", 6, 30, "본문 아래"),
+            mm("mgn_x", "좌우 여백", 10, 40, "판면 좌우"),
+            mm("lab_w", "라벨 열 폭", 12, 45, "왼쪽 라벨 열", "고급"),
+            mm("tint_w", "밴드 보조색 길이", 10, 90, "시작면 밴드", "고급"),
+        ]
+        return out
+
     def verify(self, cfg, log, report):
         pdf = cfg.out_pdf(cfg.section("verify").get("suffix", ""))
         texts = probe.page_texts(pdf)

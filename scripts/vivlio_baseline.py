@@ -219,6 +219,10 @@ def main():
                                   " (사본에서 빌드해 납품본을 안 건드리고 대조할 때)")
     ap.add_argument("--only", help="compare 전용 — 이 이름의 PDF 만 (사본에 일부만"
                                    " 있을 때 '사라짐'을 오탐하지 않게)")
+    ap.add_argument("--newer-than", type=float, metavar="분",
+                    help="compare 전용 — 이 분(minute) 안에 다시 만들어진 PDF 만"
+                         " 인정한다. **빌드가 죽었는데 옛 PDF 가 남아 통과하는**"
+                         " 거짓 합격을 막는다(실제로 겪었다).")
     ap.add_argument("-v", "--verbose", action="store_true")
     a = ap.parse_args()
     if a.dir and len(a.books.split(",") if a.books else BOOKS) != 1:
@@ -260,6 +264,21 @@ def main():
             print("● %s — 기준선 없음 (capture 먼저)" % k)
             bad += 1
             continue
+        if a.newer_than:
+            import time
+            d = a.dir or book_dir(k, root)
+            stale = [nfc(os.path.basename(p))
+                     for p in glob.glob(os.path.join(d, "*.pdf"))
+                     if (not a.only
+                         or nfc(os.path.basename(p)) in
+                         set(nfc(x.strip()) for x in a.only.split(",")))
+                     and time.time() - os.path.getmtime(p) > a.newer_than * 60]
+            if stale:
+                print("● %s — ✗ 다시 만들어지지 않은 PDF: %s "
+                      "(빌드가 실패했는데 옛 파일로 통과하는 것을 막는다)"
+                      % (k, ", ".join(stale)))
+                bad += 1
+                continue
         new = fingerprint_book(k, root, old.get("dpi", a.dpi),
                                log=lambda *_: None, override_dir=a.dir)
         if a.only:

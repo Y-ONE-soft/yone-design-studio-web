@@ -18,6 +18,8 @@ import html
 import os
 import re
 
+from core.render_vivlio import stage
+
 _RE_BRACKET = re.compile(r"\[([^\[\]]+)\]")
 _RE_SENSE = re.compile(r"(?<![0-9A-Za-z])(\d+)\.(?=\s)")
 _RE_BLANK = re.compile(r"([A-Za-z])(_{3,})")
@@ -521,7 +523,8 @@ class Renderer(object):
                 '<link rel="stylesheet" href="theme.css">'
                 + ('<style>.day-open{break-before:page}</style>'
                    if self.nomemo else '')
-                + '<link rel="stylesheet" href="pages.css"></head><body>'
+                + '<link rel="stylesheet" href="pages.css">'
+                + stage.BOOK_CSS_LINKS + '</head><body>'
                 + "".join(body) + "</body></html>")
 
 

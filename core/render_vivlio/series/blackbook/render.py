@@ -24,6 +24,8 @@
 """
 import html, json, os, re
 
+from core.render_vivlio import stage
+
 # 판면 기본값(mm) — 인디자인 완성본 실측. 책이 필요하면 config.metrics 로 덮는다.
 DEFAULT_METRICS = {
     "content_h": 245.0,   # 판면 높이
@@ -304,7 +306,9 @@ def document(cfg, data, heights=None, aheights=None, mode=None):
 
     o = ['<!doctype html><html lang="ko"><head><meta charset="utf-8">',
          f'<title>{html.escape(cfg.book.get("title", ""))}</title>',
-         '<link rel="stylesheet" href="theme.css">']
+         '<link rel="stylesheet" href="theme.css">',
+         # 손잡이 + 탈출구. config 에 값이 없으면 **빈 파일**이라 아무것도 안 바뀐다.
+         stage.BOOK_CSS_LINKS]
     if mode == "measure":
         o.append('<style>.q{min-height:0!important;break-before:page}</style>')
     if mode == "measure-ans":

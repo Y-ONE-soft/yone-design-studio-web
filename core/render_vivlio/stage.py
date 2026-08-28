@@ -88,6 +88,40 @@ def stage_assets(build_dir, src_dir):
     return dst
 
 
+# 책이 얹는 CSS 두 장 — **차례가 곧 우선순위**다.
+#   theme.css      계열 스타일시트(또는 계열이 생성한 것)
+#   knobs.css      config 가 정한 손잡이 값 (`:root` 덮어쓰기)
+#   overrides.css  손잡이 밖 임시 덮어쓰기 — **맨 마지막**이라 무엇이든 이긴다
+BOOK_CSS_LINKS = ('<link rel="stylesheet" href="knobs.css">'
+                  '<link rel="stylesheet" href="overrides.css">')
+
+
+def stage_overrides(cfg, build_dir, name="overrides.css"):
+    """책 폴더의 `overrides.css` → `build/`. 없으면 **빈 파일**.
+
+    ## 왜 있는가 — 손잡이 밖으로 나가는 탈출구
+
+    손잡이를 아무리 잘 뚫어도 "이번 한 번만 여기를 이렇게" 하고 싶은 자리는
+    반드시 생긴다. 그때 계열 CSS 를 고치면 **다른 책까지 바뀌고**, `build/` 안을
+    고치면 다음 렌더에 사라진다 — 결국 클로드를 부르게 된다. 그 자리를 책 폴더
+    안의 파일 하나로 열어 둔다.
+
+    - 계열 코드를 건드리지 않으므로 다른 책에 영향이 없다.
+    - `build/` 가 아니라 **책 폴더**에 있으므로 재빌드해도 살아남는다.
+    - `watch` 가 지켜보고 있어 저장하면 바로 보인다.
+    - 자주 쓰는 것이 보이면 그때 **손잡이로 승격**한다(그게 이 파일의 쓸모다).
+
+    ⚠ 여기 쌓인 것은 계열이 모르는 규칙이라 계열이 바뀌면 어긋날 수 있다.
+      임시 처방이지 살림집이 아니다.
+    """
+    src = cfg.path(name)
+    if os.path.exists(src):
+        os.makedirs(build_dir, exist_ok=True)
+        shutil.copy2(src, os.path.join(build_dir, name))
+        return os.path.join(build_dir, name)
+    return write_css(build_dir, name)
+
+
 def write_css(build_dir, name, text=""):
     """생성 CSS(2패스 오버라이드 등) 기록. 1패스에선 빈 파일."""
     os.makedirs(build_dir, exist_ok=True)
