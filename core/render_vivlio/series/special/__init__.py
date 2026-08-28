@@ -40,6 +40,7 @@ class SpecialSeries(Series):
         # 맞지만 앞에 백면이 생긴다 → **MEMO 장수를 1↔2 로 골라** 백면 없이
         # 짝수로 맞춘다(면수가 홀수일 때만 한 번 더 조판한다).
         secs = pages = 0
+        memos = 1
         for memos in (1, 2):
             html_path = render_mod.write(cfg, d, build_dir, log=log,
                                          memos=memos)
@@ -48,6 +49,22 @@ class SpecialSeries(Series):
             if pages % 2 == 0:
                 break
             log(f"  면수 {pages} (홀수) — MEMO 를 한 장 더해 다시 조판한다")
+
+        # 간지 펼침(2면 세트)은 왼쪽 면에서 열어야 해서 앞에 백면이 생길 수 있다.
+        # 그 면을 **뒤따르는 부의 옅은 색면**으로 채워 의도된 면으로 만든다.
+        blanks = probe.blank_pages(probe.page_texts(out))
+        if blanks:
+            pal = cfg.section("palette") or {}
+            order = [v["id"] for v in d["volumes"]]
+            fills = []
+            for n in blanks:
+                nxt = self._vol_after(out, n, order)
+                fills.append((n, (pal.get(nxt) or {}).get("pale", "#faf6ec")))
+            log(f"  백면 {blanks} — 색면으로 채워 다시 조판한다")
+            html_path = render_mod.write(cfg, d, build_dir, log=log,
+                                         memos=memos, fills=fills)
+            secs = cli.run_build(html_path, out, log=log, extra=["-f", "pdf"])
+            pages = probe.page_count(out)
         log(f"OK  {secs:.1f}s · {pages}p → {out}")
 
         res = {"pdf": out, "pages": pages, "seconds": round(secs, 1)}
@@ -55,6 +72,17 @@ class SpecialSeries(Series):
         if spec and not sample:
             res["final"] = bleed_mod.finish(out, spec, log)
         return res
+
+    @staticmethod
+    def _vol_after(pdf, pageno, order):
+        """그 백면 **다음**에 오는 부 — 색을 그 부에서 가져온다."""
+        texts = probe.page_texts(pdf)
+        names = {"어휘": "vocab", "구문 · 어법": "grammar", "독해": "reading"}
+        for t in texts[pageno:]:
+            for k, v in names.items():
+                if k in t and "PART" in t:
+                    return v
+        return order[-1]
 
     @staticmethod
     def _stage(cfg, build_dir, log):

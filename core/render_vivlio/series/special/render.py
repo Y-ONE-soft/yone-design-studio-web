@@ -774,7 +774,7 @@ RENDERERS = {"vocab": render_vocab, "grammar": render_grammar,
              "reading": render_reading}
 
 
-def write(cfg, d, build_dir, log=print, memos=1):
+def write(cfg, d, build_dir, log=print, memos=1, fills=()):
     m = metrics_of(cfg)
     pal = cfg.section("palette") or {}
     parts = [cover_page(cfg, d["cover"])]
@@ -796,9 +796,13 @@ def write(cfg, d, build_dir, log=print, memos=1):
                      f'<h2 class="memo-h">MEMO</h2>{grid_svg(174, 210)}'
                      '</section>')
 
+    # 파리티 때문에 생긴 백면은 **의도된 색면**으로 채운다. `@page :nth()` 의
+    # 배경색은 도형 칠이라(이미지가 아니라) 인쇄에서 안전하다.
+    fill_css = "".join(
+        f"@page :nth({n}) {{ background: {c}; }}\n" for n, c in fills)
     css_vars = ":root{\n" + "".join(
         f"  --mgn-{k.split('_')[1]}: {v}mm;\n" for k, v in m.items()
-        if k.startswith("margin_")) + "}\n" + palette_css(pal)
+        if k.startswith("margin_")) + "}\n" + palette_css(pal) + fill_css
 
     doc = (
         '<!doctype html><html lang="ko"><head><meta charset="utf-8">'
