@@ -199,8 +199,10 @@ def gridbox(label, h=104.0):
 # ⚠ 왼쪽 면 그래픽을 반전해 오른쪽에 쓰지 않는다.
 def runhead(unit_top, unit_no, label, main, sub, book, off=False):
     o = " rh-off" if off else ""
-    chip = (f'<span class="chip"><i class="c1">{esc(unit_top)}</i>'
-            f'<i class="c2">{esc(unit_no)}</i><i class="cut"></i></span>')
+    chip = (f'<span class="chip{"" if unit_no else " solo"}">'
+            f'<i class="c1">{esc(unit_top)}</i>'
+            + (f'<i class="c2">{esc(unit_no)}</i>' if unit_no else '')
+            + '<i class="cut"></i></span>')
     txt = (f'<span class="ht"><i class="l1">{esc(label)}</i>'
            f'<i class="l2">{esc(main)}'
            + (f'<b>{esc(sub)}</b>' if sub else '') + '</i></span>')
@@ -254,7 +256,8 @@ def render_vocab(vol, out):
             if not wk_no:                      # 부록 — 번호가 없는 주
                 ttl, sub, lab = wname or txt, "", "APPENDIX"
             out.append('<section class="week-open">'
-                       + runhead("WEEK", wk_no or "—", "VOCABULARY",
+                       + runhead("WEEK" if wk_no else "부록", wk_no,
+                                 "VOCABULARY",
                                  root or (wname or txt), gloss, BOOK[0])
                        + title_block("big", wk_no, lab, ttl, esc(sub))
                        + '</section>')

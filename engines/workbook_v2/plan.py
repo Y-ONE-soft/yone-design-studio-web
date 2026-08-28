@@ -925,6 +925,11 @@ def build_step3(step_data):
                 # W76 ②: "[주어진 문장] …" 라벨은 마커지 내용이 아니다 —
                 # 벗겨야 배경(주어진 문장 박스) 형태 판정이 걸린다.
                 _mgl = BG.GIVEN_LABEL_PREFIX.match(text)
+                if _mgl and not text[_mgl.end():].strip():
+                    continue    # 2026-08-28 사용자 지적: 라벨이 **단독 줄**로
+                                # 오는 원고 — 벗길 내용이 없으니 줄째 뺀다
+                                # (W76 ②는 '라벨+내용' 한 줄만 처리해
+                                #  단독 줄은 지문 스타일로 인쇄됐다)
                 if _mgl and text[_mgl.end():].strip():
                     text, p_runs = _cut_span(text, p.get("runs") or [],
                                              0, _mgl.end())
@@ -4265,6 +4270,23 @@ def _drop_empty_brackets(flows):
 _RE_S3_TAIL_DIRECTIVE = re.compile(r"^[※*]\s*\S")
 
 
+# 킵 블록 판정 보조 — 발문 뒤 '자기 지문'(긴 영어 산문 지문 단락) 유무.
+_S3_OWN_PASSAGE_MIN_LEN = 80
+
+
+def _s3_block_has_passage(flat, i, q_styles):
+    """발문 flat[i] 뒤 다음 발문 전까지 자기 지문이 있는가."""
+    for j in range(i + 1, len(flat)):
+        q = flat[j]
+        if q.get("s") in q_styles:
+            return False
+        if "지문" not in (q.get("s") or ""):
+            continue
+        if len((q.get("t") or "").strip()) >= _S3_OWN_PASSAGE_MIN_LEN:
+            return True
+    return False
+
+
 def question_keep_op(plan, steps=("step3",)):
     """W23 r13 (F4) — 문제 단위 펼침면 킵 op 계산 (실행기/게이트 공용 계약).
 
@@ -4333,7 +4355,16 @@ def question_keep_op(plan, steps=("step3",)):
                     # stem_starts 별도 전달.
                     stem_starts.append(idx)
                     t = (p.get("t") or "").lstrip()
-                    if not re.match(r"^윗\s*글|^위\s*글", t):
+                    # 2026-08-28 사용자 지적("64번 다음에 공간이 널널한데
+                    # 65번이 왜 다음 페이지로"): W52의 '윗글 발문 = 세트
+                    # 멤버' 규칙은 **지문을 한 번만 싣는 원고**의 관행이다.
+                    # 문항마다 지문을 재인쇄하는 원고에서는 '윗글' 발문도
+                    # 자기 지문을 갖는 독립 문항이라, 앞 문항과 한 덩어리로
+                    # 묶이면 킵 블록이 두 문항 크기가 되어 들어갈 자리가
+                    # 있는데도 통째로 다음 페이지로 밀린다(65+66 실측).
+                    # 표기가 아니라 **자기 지문 유무**로 가른다.
+                    if not re.match(r"^윗\s*글|^위\s*글", t) \
+                            or _s3_block_has_passage(_flat, idx, q_styles):
                         starts.append(idx)
                 idx += 1
         if starts:

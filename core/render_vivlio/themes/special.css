@@ -113,6 +113,7 @@
 .hdL .chip .cut { position: absolute; right: -7mm; top: 0;
              border-style: solid; border-width: 15mm 0 0 7mm;
              border-color: var(--c-main) transparent transparent transparent; }
+.hdL .chip.solo .c1 { margin-top: 6mm; font-size: 8pt; letter-spacing: .18em; }
 .hdL .chip .c1 { display: block; margin-top: 3.4mm; font-style: normal;
              font: 700 5.8pt/1 Disp; letter-spacing: .24em; color: #fff;
              opacity: .9; }
