@@ -162,16 +162,13 @@ def _strip_step3_answers_aggressive(paras):
     """
     if not paras:
         return paras
-    # 정답 헤더 찾기
-    cut_idx = None
-    for i, p in enumerate(paras):
-        text = (p.get("text", "") if isinstance(p, dict) else str(p)).strip()
-        for pat in _ANSWER_HEADER_PATTERNS:
-            if pat.match(text):
-                cut_idx = i
-                break
-        if cut_idx is not None:
-            break
+    # 정답 헤더 찾기 — W80: 뒤에 문항 시퀀스가 이어지면 섹션 시작이 아니다
+    # (가로 파서 _s3_answer_cut_idx 와 같은 눈. 인라인 <해설> 한 줄에
+    #  원고 뒤쪽 문항이 통째로 잘리던 것 — 수특라이트영독 10강 실증).
+    from engines.workbook.parser import _s3_answer_cut_idx
+    cut_idx = _s3_answer_cut_idx(
+        paras,
+        lambda t: any(pat.match(t) for pat in _ANSWER_HEADER_PATTERNS))
     if cut_idx is not None:
         return paras[:cut_idx]
     # 정답 헤더가 없으면 끝쪽에서 "N번 - ..." 연속 라인 제거

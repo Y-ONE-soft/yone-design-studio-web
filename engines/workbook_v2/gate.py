@@ -239,6 +239,10 @@
                   fail-open: 템플릿에 S_답란이 없으면 선지 폴백 + 들여쓰기
                   0 로컬 오버라이드 브릿지 → warning. 있는데 미적용이면
                   critical.
+  G52 [문항유실] 원고 step3 문항 번호 최대값보다 조판 문항이 적음 —
+                  critical. 파서 절단(정답부 헤더 오인)으로 원고 뒤쪽 문항이
+                  통째로 잘리는 침묵 유실을 잡는다. 기존 G9는 '미사용 파일'만
+                  보고 파일 **안에서** 잘린 문항은 보지 않았다.
   G50 [유형표기] 원고 문항 유형 표기("내용 파악"/"서술형 영작"/"빈칸")가
                   본문에 인쇄됨 — critical(2건 이상). 형태+위치+반복 3층
                   판정(플랜 _s3_type_label_idx 와 같은 눈).
@@ -274,6 +278,9 @@ from engines.workbook_v2.plan import (GLYPH_PRINT_TABLE, PUA_PRINT_TABLE,
                                       SUBSCRIPT_PRINT_TABLE,
                                       is_header_line, is_a1_header,
                                       passage_labels, _norm_header)
+
+# G52 — 문항 번호 줄 ("12. 다음 글의 …")
+_RE_G52_QNUM = re.compile(r"^\s*(\d{1,3})\s*[.)]\s")
 
 # G50 — 역할이 확정된 스타일(유형 표기일 수 없다) / 원고 관행 최소 비율
 _G50_ROLE_STYLES = ("정답", "답란", "보기", "선지", "영단어", "조건")
@@ -814,6 +821,62 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
             critical.append(
                 f"[원고잔재] {_label.get(kind, kind)} {len(hits)}줄이 출력에 "
                 f"그대로 인쇄됨: " + " | ".join(sorted(set(hits))[:3]))
+
+    # ── G52 [문항유실] 원고 문항 번호 대비 조판 문항이 모자람 ──────────────
+    # 2026-08-28 사용자 지적(수특라이트영독 10강): "스텝3 문제가 71번까지밖에
+    # 안 들어갔는데" — 원고 80문항 중 72~80이 파서 절단에 침묵으로 잘렸다
+    # (문항 71 안의 인라인 `<해설>` 한 줄이 정답부 섹션 헤더로 매치).
+    # 기존 게이트는 '미사용 **파일**'만 봤지 파일 **안에서** 잘린 문항은
+    # 보지 않았다. 원고를 다시 읽어 문항 번호 최대값을 content 와 대조한다.
+    if uploads_dir and os.path.isdir(uploads_dir):
+        try:
+            from engines.workbook_v2 import routing as _rt
+            from core.extract import docx_extract_paragraphs, \
+                hwpx_extract_paragraphs, hwp_extract_paragraphs, is_hwpx
+            c_nums = set()
+            s3c = (content.get("steps") or {}).get("step3") or {}
+            for grp in ("normal", "short"):
+                for itm in (s3c.get(grp) or []):
+                    for para in (itm.get("paragraphs") or []):
+                        m = _RE_G52_QNUM.match((para.get("text") or "").strip())
+                        if m:
+                            c_nums.add(int(m.group(1)))
+            src_max = 0
+            src_name = ""
+            for fn in sorted(os.listdir(uploads_dir)):
+                nfc = unicodedata.normalize("NFC", fn)
+                if not _rt.route_step3(nfc.split("manuscripts_")[-1]):
+                    continue
+                if _rt._is_intended_exclusion(nfc.split("manuscripts_")[-1]):
+                    continue
+                fp = os.path.join(uploads_dir, fn)
+                low = nfc.lower()
+                try:
+                    if low.endswith(".docx"):
+                        raw = docx_extract_paragraphs(fp)
+                    elif low.endswith(".hwpx") or is_hwpx(fp):
+                        raw = hwpx_extract_paragraphs(fp)
+                    elif low.endswith(".hwp"):
+                        raw = hwp_extract_paragraphs(fp)
+                    else:
+                        continue
+                except Exception:                            # noqa: BLE001
+                    continue
+                ns = [int(_RE_G52_QNUM.match(t).group(1))
+                      for t in ((p.get("text") or "").strip() for p in raw)
+                      if _RE_G52_QNUM.match(t)]
+                if ns and max(ns) > src_max:
+                    src_max, src_name = max(ns), nfc
+            got = max(c_nums) if c_nums else 0
+            stats["step3_qnum_source_max"] = src_max
+            stats["step3_qnum_content_max"] = got
+            if src_max and got and src_max - got >= 1:
+                critical.append(
+                    f"[문항유실] 원고 문항 번호는 {src_max}번까지인데 조판에는 "
+                    f"{got}번까지만 들어감 ({src_max - got}문항 유실) — "
+                    f"{src_name[:40]}")
+        except Exception as e:                               # noqa: BLE001
+            warnings.append(f"⚠️ 문항 유실 검사 실행 실패: {e}")
 
     # ── G50 [유형표기] 원고 문항 유형 표기가 출력에 인쇄됨 ────────────────
     # 2026-08-28 사용자 지적(수특라이트영독 10강): "스텝3에 내용 파악, 서술형

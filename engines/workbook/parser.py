@@ -881,6 +881,47 @@ except Exception:                                            # noqa: BLE001
         r'^\s*(?:정답\s*및\s*해설|빠른\s*정답\s*찾기|정답지|정답)\s*$')
 
 
+# ── W80: 정답부 절단은 '뒤에 문항이 더 없을 때'만 ──────────────────────────
+# 2026-08-28 사용자 지적(수특라이트영독 10강): "스텝3 문제가 71번까지밖에
+# 안 들어갔는데" — 원고는 80문항인데 71번까지만 조판됐다. 원인은 문항 71의
+# 영작 배열에 딸린 인라인 `<해설>` 한 줄이 정답부 섹션 헤더로 매치돼, 거기서
+# **문서 끝까지 115줄(문항 72~80)** 이 통째로 잘린 것. 절단은 원고의 11%를
+# 침묵으로 버리는 동작인데 '헤더 한 줄'만 보고 실행됐다.
+#
+# 정답부는 정의상 **문항이 끝난 뒤**에 온다. 헤더 뒤에 문항 번호 시퀀스가
+# 이어지면(직전까지의 최대 번호 + 1이 뒤에 나타나면) 그 헤더는 섹션 시작이
+# 아니라 문항 안의 인라인 표기다. 정답표의 "1. ①  2. ②"는 번호가 1부터
+# 다시 시작하므로 이 검사에 걸리지 않는다.
+_RE_S3_QNUM_LINE = re.compile(r'^\s*(\d{1,3})\s*[.)]\s')
+
+
+def _s3_qnums(paras, lo=None, hi=None):
+    out = []
+    for p in paras[lo:hi]:
+        t = (p.get("text", "") if isinstance(p, dict) else str(p)).strip()
+        m = _RE_S3_QNUM_LINE.match(t)
+        if m:
+            out.append(int(m.group(1)))
+    return out
+
+
+def _s3_answer_cut_idx(paras, is_header):
+    """정답부 절단 위치 — 뒤에 문항이 이어지는 헤더는 건너뛴다 (W80).
+
+    is_header(text) -> bool. 없으면 None (절단 안 함)."""
+    for i, p in enumerate(paras):
+        t = (p.get("text", "") if isinstance(p, dict) else str(p)).strip()
+        if not is_header(t):
+            continue
+        before = _s3_qnums(paras, None, i)
+        if before:
+            nxt = max(before) + 1
+            if nxt in _s3_qnums(paras, i + 1, None):
+                continue      # 문항이 더 있다 — 섹션 시작이 아니다
+        return i
+    return None
+
+
 # ── W77: 원고 그림 중 '지문에 딸린 그림'만 남긴다 ──────────────────────────
 # 원고에는 도표/실용문 삽화(=조판해야 할 내용)와 편집용 장식(난이도 ★★★,
 # 교재 로고/표지)이 섞여 있다. 형식(크기·파일명)이 아니라 **구조**로 가른다:
@@ -1074,12 +1115,10 @@ def _strip_step3_answers(paras):
     # 있어 매치되지 않음 (골든 전수 sweep: c04 2건 외 매치 없음 확인).
     # 배치 B (W33): 리터럴 튜플 → rules.A_SECTION_HEADER 공유 (모듈 상단
     # _RE_S3_SECTION_HEADER 주석 참조 — 판정기와 같은 눈, 실증 #3 해소).
-    cut_idx = None
-    for i, p in enumerate(paras):
-        text = p['text'].strip()
-        if _RE_S3_SECTION_HEADER.match(text) or _RE_S3_ANSWER_TITLE.match(text):
-            cut_idx = i
-            break
+    cut_idx = _s3_answer_cut_idx(
+        paras,
+        lambda t: bool(_RE_S3_SECTION_HEADER.match(t)
+                       or _RE_S3_ANSWER_TITLE.match(t)))
     if cut_idx is not None:
         paras = paras[:cut_idx]
 
@@ -1748,12 +1787,9 @@ def _strip_step3_answers_section(paras):
     """[정답] 류 헤더 이후 모든 paragraphs 제거."""
     if not paras:
         return paras
-    cut_idx = None
-    for i, p in enumerate(paras):
-        t = (p.get("text", "") if isinstance(p, dict) else str(p)).strip()
-        if any(pat.match(t) for pat in _STEP3_ANS_SECTION_PATTERNS):
-            cut_idx = i
-            break
+    cut_idx = _s3_answer_cut_idx(
+        paras,
+        lambda t: any(pat.match(t) for pat in _STEP3_ANS_SECTION_PATTERNS))
     if cut_idx is not None:
         return paras[:cut_idx]
     return paras
