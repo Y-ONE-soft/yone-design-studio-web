@@ -4270,21 +4270,39 @@ def _drop_empty_brackets(flows):
 _RE_S3_TAIL_DIRECTIVE = re.compile(r"^[※*]\s*\S")
 
 
-# 킵 블록 판정 보조 — 발문 뒤 '자기 지문'(긴 영어 산문 지문 단락) 유무.
-_S3_OWN_PASSAGE_MIN_LEN = 80
+# 킵 블록 판정 보조 — 발문 블록이 '자기 지문 전문'을 다시 싣는가.
+# 세트 멤버(윗글 발문)는 지문이 없거나 영작 대상 **발췌 한 문장**만 갖고,
+# 지문을 재인쇄하는 독립 문항은 지문 전문을 갖는다. 절대 글자 수는 원고마다
+# 다르므로 **그 문서의 전형 지문량(비-윗글 발문 블록의 중앙값)** 과 견준다.
+_S3_OWN_PASSAGE_RATIO = 0.5
 
 
-def _s3_block_has_passage(flat, i, q_styles):
-    """발문 flat[i] 뒤 다음 발문 전까지 자기 지문이 있는가."""
+def _s3_block_passage_len(flat, i, q_styles):
+    """발문 flat[i] 뒤 다음 발문 전까지의 지문 총 길이."""
+    tot = 0
     for j in range(i + 1, len(flat)):
         q = flat[j]
         if q.get("s") in q_styles:
-            return False
-        if "지문" not in (q.get("s") or ""):
+            break
+        if "지문" in (q.get("s") or ""):
+            tot += len((q.get("t") or "").strip())
+    return tot
+
+
+def _s3_own_passage_floor(flat, q_styles):
+    """'자기 지문을 싣는다'고 볼 최소 지문량 — 문서 전형값의 절반."""
+    import statistics
+    base = []
+    for i, q in enumerate(flat):
+        if q.get("s") not in q_styles:
             continue
-        if len((q.get("t") or "").strip()) >= _S3_OWN_PASSAGE_MIN_LEN:
-            return True
-    return False
+        t = (q.get("t") or "").lstrip()
+        if re.match(r"^윗\s*글|^위\s*글", t):
+            continue
+        base.append(_s3_block_passage_len(flat, i, q_styles))
+    if not base:
+        return None
+    return statistics.median(base) * _S3_OWN_PASSAGE_RATIO
 
 
 def question_keep_op(plan, steps=("step3",)):
@@ -4341,6 +4359,7 @@ def question_keep_op(plan, steps=("step3",)):
                     break
             if not _body:
                 _tail_only.add(_i)
+        _own_floor = _s3_own_passage_floor(_flat, q_styles)
         idx = 0
         for u in fl.get("units", []):
             for p in unit_paras(u):
@@ -4363,8 +4382,10 @@ def question_keep_op(plan, steps=("step3",)):
                     # 묶이면 킵 블록이 두 문항 크기가 되어 들어갈 자리가
                     # 있는데도 통째로 다음 페이지로 밀린다(65+66 실측).
                     # 표기가 아니라 **자기 지문 유무**로 가른다.
-                    if not re.match(r"^윗\s*글|^위\s*글", t) \
-                            or _s3_block_has_passage(_flat, idx, q_styles):
+                    if not re.match(r"^윗\s*글|^위\s*글", t) or (
+                            _own_floor is not None
+                            and _s3_block_passage_len(_flat, idx, q_styles)
+                            >= _own_floor):
                         starts.append(idx)
                 idx += 1
         if starts:
