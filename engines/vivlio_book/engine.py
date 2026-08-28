@@ -168,7 +168,12 @@ class VivlioBookEngine(BaseEngine):
             src = uploaded.get(f"m{i}")
             if not src or not os.path.exists(str(src)):
                 continue
+            # 업로드 저장기가 `m1_` 처럼 슬롯 키를 앞에 붙인다 — 원고 폴더에
+            # 그대로 남으면 지저분하고, config 에도 그 이름이 박힌다. 떼어 낸다.
             name = os.path.basename(str(src))
+            pre = f"m{i}_"
+            if name.startswith(pre):
+                name = name[len(pre):]
             shutil.copy2(src, os.path.join(out_dir, "원고", name))
             n += 1
             log(f"  원고 {i}: {name}")
