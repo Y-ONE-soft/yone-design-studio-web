@@ -119,23 +119,22 @@ u { text-decoration: none; }
 .c-who   { margin-top: 40mm; font: 700 10pt/1 Noto; color: var(--ink);
            letter-spacing: .04em; }
 
-/* 부 간지 — 색면 하나 + 큰 제목 */
-.divider { position: relative; height: 255mm;
-           margin: -25mm -19mm -23mm -23mm; padding: 0; }
-.divider::before {
-  content: ""; position: absolute; inset: 0;
-  background: var(--c-pale); }
-.divider::after {
-  content: ""; position: absolute; left: 0; right: 0; top: 118mm;
-  height: 26mm; background: var(--c-main); }
-.d-no  { position: absolute; left: 26mm; top: 74mm;
-         font: 700 13pt/1 Minion; letter-spacing: .3em; color: var(--c-main); }
-.d-ttl { position: absolute; left: 26mm; top: 84mm;
-         font: 700 46pt/1.1 Noto; color: var(--c-deep); letter-spacing: -.03em; }
-.d-desc { position: absolute; left: 26mm; font: 400 11.5pt/1.6 Noto;
-          color: #fff; }
-.d-desc:nth-of-type(1) { top: 124mm; }
-.d-desc:nth-of-type(2) { top: 132mm; }
+/* 부 간지 — 재단선까지 나가는 색면. 요소를 옮기지 않고 **여백만큼 키운다**
+ * (도련 3mm 이 이미 페이지 크기에 들어 있으므로 음수 여백은 페이지 마진 그대로). */
+.divider { position: relative; box-sizing: border-box;
+           width: 216mm; height: 303mm;
+           margin: -25mm -19mm -23mm -23mm; padding: 0;
+           background: var(--c-pale); overflow: hidden; }
+.d-ghost { position: absolute; right: 12mm; bottom: -18mm;
+           font: 700 190pt/1 Minion; color: #fff; opacity: .5; }
+.d-in    { position: absolute; left: 29mm; top: 86mm; }
+.d-no    { font: 700 12pt/1 Minion; letter-spacing: .34em;
+           color: var(--c-main); }
+.d-ttl   { margin-top: 5mm; font: 700 48pt/1.1 Noto; color: var(--c-deep);
+           letter-spacing: -.035em; }
+.d-band  { position: absolute; left: 0; right: 0; top: 152mm;
+           padding: 7mm 0 7mm 29mm; background: var(--c-main); }
+.d-desc  { font: 400 11.5pt/1.7 Noto; color: #fff; letter-spacing: .01em; }
 
 /* 목차 */
 .tocpage { padding-top: 8mm; }
@@ -148,6 +147,7 @@ u { text-decoration: none; }
 .t-1 .t0 { width: 34mm; flex: none; font-weight: 700; color: var(--c-deep); }
 .t-1 .t1 { width: 42mm; flex: none; font-family: Minion; }
 .t-1 .t2 { flex: 1; color: var(--gray); }
+.t-1.solo .t0 { width: auto; flex: 1; }
 .t-2 { padding: 1.6mm 0 1.6mm 38mm; font: 400 9.2pt/1.4 Noto;
        color: var(--gray); }
 

@@ -41,6 +41,9 @@ RE_GAP2 = re.compile(r" {2,}")
 RE_HAN = re.compile(r"[가-힣]")
 VOL_ORDER = ("vocab", "grammar", "reading")
 
+# 간지·목차 면이 이미 쓴 블록 — 흐름에서 다시 그리면 두 번 나온다
+FRONT = {"vol_desc", "toc_title", "toc_1", "toc_2"}
+
 
 def metrics_of(cfg):
     m = dict(DEFAULT_METRICS)
@@ -159,6 +162,9 @@ def render_vocab(vol, out):
     while i < n:
         b = blocks[i]
         t = b["t"]
+        if t in FRONT:
+            i += 1
+            continue
         if t == "week":
             week = plain(b["r"])
             out.append(f'<section class="week-open">{runhead(vol["name"], week)}'
@@ -211,6 +217,9 @@ def render_grammar(vol, out):
     while i < n:
         b = blocks[i]
         t = b["t"]
+        if t in FRONT:
+            i += 1
+            continue
         if t == "part_no":
             title = ""
             if i + 1 < n and blocks[i + 1]["t"] == "part_title":
@@ -353,6 +362,9 @@ def render_reading(vol, out):
     while i < n:
         b = blocks[i]
         t = b["t"]
+        if t in FRONT:
+            i += 1
+            continue
         if t == "rpart_no":
             title = ""
             if i + 1 < n and blocks[i + 1]["t"] == "rpart_title":
@@ -472,11 +484,15 @@ def cover_page(cfg, cover):
 
 
 def divider_page(vol, no):
-    desc = "".join(f'<div class="d-desc">{inl(b["r"])}</div>'
-                   for b in vol["blocks"] if b["t"] == "vol_desc")
+    lines = [b for b in vol["blocks"] if b["t"] == "vol_desc"]
+    desc = "".join(f'<div class="d-desc">{inl(b["r"])}</div>' for b in lines)
     return (f'<section class="divider">'
-            f'<div class="d-no">{no:02d}</div>'
-            f'<h1 class="d-ttl">{esc(vol["name"])}</h1>{desc}</section>')
+            f'  <div class="d-in">'
+            f'    <div class="d-no">PART {no:02d}</div>'
+            f'    <h1 class="d-ttl">{esc(vol["name"])}</h1></div>'
+            f'  <div class="d-band">{desc}</div>'
+            f'  <div class="d-ghost">{no:02d}</div>'
+            f'</section>')
 
 
 def toc_page(vol):
@@ -489,7 +505,8 @@ def toc_page(vol):
             k = esc(c[0]) if c else ""
             rest = "".join(f'<span class="t{i}">{esc(v)}</span>'
                            for i, v in enumerate(c[1:], 1))
-            rows.append(f'<div class="t-1"><span class="t0">{k}</span>{rest}</div>')
+            cls = "t-1" if rest else "t-1 solo"
+            rows.append(f'<div class="{cls}"><span class="t0">{k}</span>{rest}</div>')
         elif b["t"] == "toc_2":
             rows.append(f'<div class="t-2">{inl(b["r"])}</div>')
     return ('<section class="tocpage">'
