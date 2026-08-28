@@ -203,6 +203,7 @@ def render_vocab(vol, out):
     """어휘부 — Week 마다 새 면, 분류 띠 아래 낱말 카드가 흐른다."""
     blocks = vol["blocks"]
     i, n = 0, len(blocks)
+    k = Keeper(out)
     while i < n:
         b = blocks[i]
         t = b["t"]
@@ -210,24 +211,27 @@ def render_vocab(vol, out):
             i += 1
             continue
         if t == "week":
+            k.flush()
             week = plain(b["r"])
             out.append(f'<section class="week-open">{runhead(vol["name"], week)}'
                        f'<h2 class="week">{inl(b["r"])}</h2></section>')
         elif t == "group":
             c = cols(plain(b["r"]), 3)
             head = esc(c[0].lstrip("■ ").strip()) if c else ""
-            rest = "".join(f'<span class="g{k}">{esc(v)}</span>'
-                           for k, v in enumerate(c[1:], 1))
+            rest = "".join(f'<span class="g{j}">{esc(v)}</span>'
+                           for j, v in enumerate(c[1:], 1))
             cls = "vgroup" if rest else "vgroup solo"
-            out.append(f'<div class="{cls}"><span class="g0">{head}</span>'
-                       f'{rest}</div>')
+            # 분류 띠만 면 아래에 혼자 남지 않게 첫 낱말과 묶는다
+            k.head(f'<div class="{cls}"><span class="g0">{head}</span>'
+                   f'{rest}</div>')
         elif t == "word":
-            out.append(word_card(b))
+            k.body(word_card(b))
         elif t == "appendix":
-            out.append(appendix_row(b))
+            k.body(appendix_row(b))
         else:
-            out.append(generic(b))
+            k.body(generic(b))
         i += 1
+    k.flush()
 
 
 def word_card(b):
