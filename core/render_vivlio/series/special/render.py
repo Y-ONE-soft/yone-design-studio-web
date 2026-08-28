@@ -584,6 +584,11 @@ def write(cfg, d, build_dir, log=print):
         RENDERERS.get(vid, render_reading)(vol, body)
         parts.append('<div class="flow">' + "".join(body) + "</div>")
         parts.append("</div>")
+    # 제본은 **짝수 면**으로 끝나야 한다 — 마지막 면이 홀수면 MEMO 한 면을 더한다.
+    parts.append(f'<section class="memopage v-{d["volumes"][-1]["id"]}">'
+                 '<div class="rh off"><span>MEMO</span></div>'
+                 f'<h2 class="memo-h">MEMO</h2>{rules(22, "wbox memo")}'
+                 '</section>')
 
     css_vars = ":root{\n" + "".join(
         f"  --mgn-{k.split('_')[1]}: {v}mm;\n" for k, v in m.items()

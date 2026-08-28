@@ -352,7 +352,23 @@ u { text-decoration: none; }
                    color: var(--lgray); }
 .aline.bg .l-body { color: var(--ink); }
 
+/* MEMO — 제본 파리티를 맞추는 마지막 면 */
+.memopage { break-before: page; }
+.memo-h { font: 700 13pt/1 Minion; letter-spacing: .26em;
+          color: var(--c-main); padding-bottom: 3mm;
+          border-bottom: 1pt solid var(--c-line); }
+.wbox.memo { margin-top: 6mm; }
+.wbox.memo i { height: 9.6mm; }
+
 /* 머리+첫 덩어리 묶음 — 머리만 면 아래에 혼자 남는 것을 막는다 */
+/* MEMO — 제본 파리티를 맞추는 마지막 면 */
+.memopage { break-before: page; }
+.memo-h { font: 700 13pt/1 Minion; letter-spacing: .26em;
+          color: var(--c-main); padding-bottom: 3mm;
+          border-bottom: 1pt solid var(--c-line); }
+.wbox.memo { margin-top: 6mm; }
+.wbox.memo i { height: 9.6mm; }
+
 /* 머리+첫 덩어리 묶음 — 머리만 면 아래에 혼자 남는 것을 막는다 */
 .keep { break-inside: avoid; }
 .nh.big { margin-top: 5mm; }
