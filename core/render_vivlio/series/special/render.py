@@ -591,6 +591,7 @@ def render_reading(vol, out):
     ex_kind = ""
     pending_week = ""
     bg = None
+    col_open = False      # 정답 목록은 2단으로 흐른다
 
     def flush_bg():
         nonlocal bg
@@ -627,6 +628,9 @@ def render_reading(vol, out):
             flush_bg()
             close_cpage()
             k.flush()
+            if col_open:
+                out.append("</div>")
+                col_open = False
         if pending_week and t not in ("week", "lesson", "rpart_no"):
             out.append(f'<section class="week-open">{rh()}'
                        + title_block("big", wk_no, "WEEK", wk_ttl)
@@ -710,6 +714,10 @@ def render_reading(vol, out):
         elif t == "trans":
             out.append(f'<div class="trans">{inl(b["r"])}</div>')
         elif t == "ans_line":
+            if not col_open:
+                k.flush()
+                out.append('<div class="anscol lines">')
+                col_open = True
             k.body(ans_line(b["r"]))
         else:
             put(generic(b))
@@ -717,6 +725,8 @@ def render_reading(vol, out):
     flush_bg()
     close_cpage()
     k.flush()
+    if col_open:
+        out.append("</div>")
 
 
 def choice_line(rich):

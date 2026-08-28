@@ -17,9 +17,13 @@
  *    모두 이 두 열에 맞는다. 본문 시작 X 는 어느 면에서나 같다.
  *
  * ── 색(3단계) ──  한 면에 강한 색이 나오는 자리는 2~3곳까지.
- *      Primary   `--c-main`/`--c-deep`  부(部)마다 갈린다. 머리 면·번호·제목
- *      Secondary `--c-sub` 딥 틸        어법 계열과 배경지식 노트에만
- *      Neutral   `--n-*`               나머지 전부(바탕·괘선·보조 글자)
+ *      주색   `--c-main`/`--c-deep`  **부마다 다르다.** 머리 면·번호·제목
+ *      보조색 `--c-sub`/`--c-subpl`  **부마다 다르다.** 주색과 톤은 맞되
+ *                                    **색상이 다른 짝**(머스터드↔플럼,
+ *                                    테라코타↔뮤트 블루, 올리브↔뮤트 로즈).
+ *                                    머리 띠 바탕·어법 계열·배경지식 노트
+ *      공통색 `--n-*`  아이보리·베이지·크림·그레이. **부와 무관하게 전권 공통**,
+ *                     어떤 주색과도 어울린다. 바탕·괘선·보조 글자
  *
  * ── 라벨 셋뿐 ──
  *      A 대분류  `.tk`/`.h1`/`.wl.solo`  글자만. 작고 자간 넓게, 상자 없음
@@ -60,7 +64,7 @@
   --n-4:  #a49c8d;               /* 보조 글자 */
   --n-5:  #6b6459;               /* 본문 보조 */
   --c-sub:    #1c6b74;
-  --c-sub-pl: #eaf2f2;
+  --c-subpl: #eaf2f2;
   --c-main: #c08618;
   --c-deep: #7d5409;
   --c-pale: #fdf3df;
@@ -108,14 +112,14 @@
             background: var(--c-main);
             clip-path: polygon(0 0, 100% 0, 87.5% 100%, 0 100%); }
 .hdL .chip { position: absolute; left: 19mm; top: 0; }
-.hdL .chip.solo .c1 { margin-top: 7.4mm; font-size: 8pt; }
-.hdL .chip .c1 { display: block; margin-top: 4.6mm; font-style: normal;
+.hdL .chip.solo .c1 { margin-top: 9.2mm; font-size: 8pt; }
+.hdL .chip .c1 { display: block; margin-top: 6.4mm; font-style: normal;
              font: 700 5.8pt/1 Disp; letter-spacing: .24em; color: #fff;
              opacity: .92; }
 .hdL .chip .c2 { display: block; margin-top: .9mm; font-style: normal;
              font: 700 15pt/1 Disp; letter-spacing: -.02em; color: #fff; }
 .hdL .ht { position: absolute; left: 68mm; top: 0; }
-.hdL .l1 { display: block; margin-top: 5mm; font-style: normal;
+.hdL .l1 { display: block; margin-top: 6.8mm; font-style: normal;
            font: 700 6.4pt/1 Disp; letter-spacing: .18em; color: #fff;
            opacity: .62; }
 .hdL .l2 { display: block; margin-top: 2.4mm; font-style: normal;
@@ -127,10 +131,10 @@
            opacity: .4; }
 
 /* 오른쪽 면 — 책 이름 + 로고만 */
-.hdR .bk { position: absolute; right: 30mm; top: 6.6mm;
+.hdR .bk { position: absolute; right: 30mm; top: 11.2mm;
            font: 500 8.8pt/1 Noto; color: #fff; letter-spacing: .01em;
            white-space: nowrap; }
-.hdR .crest { position: absolute; right: 19mm; top: 5.4mm; width: 7.4mm;
+.hdR .crest { position: absolute; right: 19mm; top: 9.6mm; width: 7.4mm;
            height: 7.6mm; background-color: #fff;
            -webkit-mask: url(assets/crest.png) no-repeat center/contain;
            mask: url(assets/crest.png) no-repeat center/contain; }
@@ -441,7 +445,7 @@ u { text-decoration: none; }
           break-inside: avoid; }
 .bgh { padding: 2.4mm 4mm; background: var(--c-sub); color: #fff;
        font: 700 8.4pt/1.3 Noto; letter-spacing: .02em; }
-.bgb { padding: 3mm 4mm 3.4mm; background: var(--c-sub-pl); }
+.bgb { padding: 3mm 4mm 3.4mm; background: var(--c-subpl); }
 .bgi { margin-bottom: .9mm; padding-left: 4.4mm; text-indent: -4.4mm;
        font: 400 8.4pt/1.5 Noto; color: #2f3b3c; }
 .bgi::before { content: ""; display: inline-block; text-indent: 0;
@@ -454,6 +458,12 @@ u { text-decoration: none; }
 .trans { font: 300 7.6pt/1.5 Noto; color: #7a736a; text-align: justify; }
 
 /* 정답 · 배경지식 노트 정답 */
+/* 정답 목록도 2단 — 한 단에 흘리면 면이 세로로 길어지고 찾기 어렵다 */
+.anscol.lines { column-count: 2; column-gap: 8mm;
+                column-rule: .4pt solid var(--n-3); }
+.anscol.lines .l-no { width: 9mm; }
+.anscol.lines .aline { font-size: 8.2pt; }
+.anscol.lines .aline.bg .l-src { width: 34mm; font-size: 7.2pt; }
 .aline { display: table; table-layout: fixed; width: 100%;
          padding: 2mm 0; border-bottom: .5pt solid var(--n-3);
          font: 400 9pt/1.4 Noto; break-inside: avoid; }
