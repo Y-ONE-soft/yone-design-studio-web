@@ -41,28 +41,35 @@
         var ours = false;
         if (!doc) { doc = app.open(new File(target), false); ours = true; }
 
-        // "고N 모의고사" 형태를 찾아 교체한다. 학년 숫자는 고정하지 않는다 —
-        // 템플릿이 바뀌어도 잡히도록.
-        app.findTextPreferences = NothingEnum.NOTHING;
-        app.changeTextPreferences = NothingEnum.NOTHING;
-        app.findGrepPreferences = NothingEnum.NOTHING;
-        app.changeGrepPreferences = NothingEnum.NOTHING;
-        app.findGrepPreferences.findWhat = "고\\d+\\s*모의고사";
-        var found = doc.findGrep();
-        W("찾음 " + found.length + "곳 → \"" + label + "\"");
-        for (var i = 0; i < found.length; i++) {
-            try {
-                var pg = "?";
-                try { pg = found[i].parentTextFrames[0].parentPage.name; } catch (e2) {}
-                W("  p" + pg + " : \"" + found[i].contents + "\"");
-            } catch (e3) {}
+        // ⚠ 문서 전체 findGrep 으로 "고N 모의고사" 를 바꾸면 **본문 발문까지**
+        //    바뀐다. 실측(2026-08-25): 실전 문항 발문
+        //    "[2017 9월 고1 모의고사 36번]" 이 "[2017 9월 마더텅 13강, … 36번]"
+        //    으로 훼손됐다. 간지는 프레임 내용이 그 문구 **뿐**이므로,
+        //    프레임 단위로 완전 일치할 때만 바꾼다.
+        var RE_ONLY = /^\s*고\s*\d+\s*모의고사\s*$/;
+        var changed = 0, scanned = 0;
+        for (var p2 = 0; p2 < doc.pages.length; p2++) {
+            var pg2 = doc.pages[p2], sp2 = pg2.parent;
+            for (var i = 0; i < sp2.textFrames.length; i++) {
+                var tf = sp2.textFrames[i];
+                if (!tf.parentPage || tf.parentPage.id !== pg2.id) continue;
+                var c = "";
+                try { c = String(tf.contents); } catch (e2) { continue; }
+                scanned++;
+                if (!RE_ONLY.test(c)) continue;
+                try {
+                    // contents 대입은 서식을 유지한다(문단·문자 스타일 보존).
+                    tf.contents = label;
+                    changed++;
+                    W("  p" + pg2.name + " : \"" + c.replace(/[\r\n]/g, " ") +
+                      "\" → \"" + label + "\"");
+                } catch (e3) {
+                    W("  [실패] p" + pg2.name + " : " + (e3.message || e3));
+                }
+            }
         }
-        app.changeGrepPreferences.changeTo = label;
-        var changed = doc.changeGrep();
-        app.findGrepPreferences = NothingEnum.NOTHING;
-        app.changeGrepPreferences = NothingEnum.NOTHING;
-        W("교체 " + changed.length + "곳");
-        if (changed.length > 0) { doc.save(); W("저장 완료"); }
+        W("프레임 " + scanned + "개 검사 / 교체 " + changed + "곳");
+        if (changed > 0) { doc.save(); W("저장 완료"); }
         if (ours) doc.close(SaveOptions.NO);
         W("===== 간지 라벨 완료 =====");
     } catch (eM) {
