@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+{% block title %}{{ engine.display_name }}{% endblock %}
+
+{% block content %}
+{#
+  비블리오 조판 — 원고를 올리면 PDF.
+
+  다른 교재 카드와 같은 흐름(고르고 → 올리고 → 돌린다)이되, 원고 칸이
+  **고른 책에 따라 달라진다**. 책마다 원고 구성이 다르기 때문이다
+  (단어장은 단어표+워크북+정답, 특강은 합본 하나, 블랙북은 폴더 훑기).
+  제출은 공용 `typeset.js` 가 맡는다 — 진행 로그·취소·결과가 다른 카드와 같다.
+#}
+<div class="page-header">
+  <a href="/" class="back-link">교재 선택</a>
+  <h1>{{ engine.display_name }}</h1>
+</div>
+
+<style>
+  .vb-sec { background: var(--glass-bg); border: 1px solid var(--glass-border);
+            border-radius: 16px; padding: 18px 20px; margin-bottom: 16px; }
+  .vb-lab { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .vb-hint { font-size: 12px; color: var(--muted); line-height: 1.55;
+             margin-bottom: 12px; }
+  .vb-books { display: flex; gap: 8px; flex-wrap: wrap; }
+  .vb-book { border: 1px solid var(--border); background: var(--surface);
+             border-radius: 12px; padding: 10px 14px; cursor: pointer;
+             color: var(--text); text-align: left; min-width: 190px; }
+  .vb-book.on { border-color: var(--accent); color: var(--accent); }
+  .vb-book b { display: block; font-size: 13.5px; margin-bottom: 2px; }
+  .vb-book span { font-size: 11.5px; opacity: .65; }
+  .vb-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+             gap: 12px; }
+  .vb-in { width: 100%; background: rgba(0,0,0,.28); border: 1px solid var(--border);
+           border-radius: 9px; color: var(--text); padding: 9px 11px; font-size: 13.5px; }
+  .vb-slot { border: 1px dashed var(--border); border-radius: 12px;
+             padding: 12px 14px; margin-bottom: 10px; }
+  .vb-slot .vb-lab { margin-bottom: 2px; }
+  .vb-slot .cur { font-size: 11.5px; color: var(--muted); margin-bottom: 8px; }
+  .vb-path { font-family: var(--mono); font-size: 12px; color: var(--accent);
+             word-break: break-all; }
+  .vb-warn { font-size: 12px; color: var(--muted); line-height: 1.6;
+             border-left: 2px solid var(--border); padding-left: 10px; }
+</style>
+
+<form id="typeset-form" class="upload-form" enctype="multipart/form-data">
+
+  <!-- ① 어느 책처럼 만들 것인가 -->
+  <div class="vb-sec">
+    <div class="vb-lab">기준 책 <span class="required">*</span></div>
+    <div class="vb-hint">
+      디자인·판형·검수 설정을 물려받을 책입니다. <b>기준 책 자체는 바뀌지 않습니다</b> —
+      언제나 새 폴더를 만들어 거기 조판합니다.
+    </div>
+    <div class="vb-books" id="vb-books">
+      {% for b in books %}
+      <button type="button" class="vb-book" data-key="{{ b.key }}"
+              data-title="{{ b.title }}" data-school="{{ b.school }}">
+        <b>{{ b.title }}</b>
+        <span>{{ b.school }} · {{ b.period }} · {{ b.series }}</span>
+      </button>
+      {% endfor %}
+    </div>
+    <input type="hidden" name="base_book" id="vb-base">
+  </div>
+
+  <!-- ② 새 책 정보 -->
+  <div class="vb-sec">
+    <div class="vb-lab">새로 만들 책</div>
+    <div class="vb-hint">시기만 적으면 같은 교재의 다음 판으로 만듭니다.
+      교재 이름을 적으면 새 교재로 갈라집니다.</div>
+    <div class="vb-grid">
+      <div>
+        <div class="vb-lab">시기 <span class="required">*</span></div>
+        <input class="vb-in" type="text" name="new_folder" id="vb-folder"
+               placeholder="27-1-중간">
+      </div>
+      <div>
+        <div class="vb-lab">교재 이름 (선택)</div>
+        <input class="vb-in" type="text" name="new_name" id="vb-name"
+               placeholder="비우면 기준 책과 같은 교재">
+      </div>
+      <div>
+        <div class="vb-lab">책 표시 이름 (선택)</div>
+        <input class="vb-in" type="text" name="new_title" id="vb-title"
+               placeholder="예: 광문보카">
+      </div>
+      <div>
+        <div class="vb-lab">학교 (선택)</div>
+        <input class="vb-in" type="text" name="new_school" id="vb-school"
+               placeholder="예: 광문고1">
+      </div>
+    </div>
+    <div style="margin-top:12px">
+      <div class="vb-lab">만들어질 곳</div>
+      <div class="vb-path" id="vb-preview">기준 책을 고르세요</div>
+    </div>
+  </div>
+
+  <!-- ③ 원고 — 고른 책에 따라 칸이 달라진다 -->
+  <div class="vb-sec">
+    <div class="vb-lab">원고 <span class="required">*</span></div>
+    <div class="vb-hint" id="vb-slot-hint">기준 책을 고르면 필요한 원고 칸이 나옵니다.</div>
+    <div id="vb-slots"></div>
+    <input type="hidden" name="slotmap" id="vb-slotmap">
+  </div>
+
+  <button type="submit" class="run-btn" id="run-btn">조판 시작</button>
+</form>
+
+<div id="progress-area" class="progress-area hidden">
+  <div class="progress-head">
+    <span>진행 상황</span>
+    <button type="button" id="cancel-btn" class="cancel-btn hidden" onclick="cancelJob()">취소</button>
+  </div>
+  <div class="steps">
+    <span class="step" id="step-parse">① 원고 인식</span>
+    <span class="step-arrow">→</span>
+    <span class="step" id="step-typeset">② 조판</span>
+    <span class="step-arrow">→</span>
+    <span class="step" id="step-verify">③ 검수</span>
+  </div>
+  <pre id="log-area" class="log-area"></pre>
+</div>
+
+<div id="result-area" class="result-area hidden"></div>
+
+<div class="vb-sec">
+  <div class="vb-warn">
+    <b>기준 책은 건드리지 않습니다.</b> 이미 납품한 책이 조용히 바뀌는 것이 가장
+    위험한 일이라, 언제나 새 폴더를 만들어 거기에만 씁니다.<br>
+    이미 있는 폴더 이름을 적으면 <b>덮어쓰지 않고 멈춥니다</b>.<br>
+    조판이 끝난 뒤 색·여백을 다듬으려면 상단 <a href="/book-studio">작업대</a>에서
+    그 책을 고르면 됩니다.
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  var MAXSLOTS = {{ max_slots }};
+
+  function esc(s) { return (s || '').replace(/[<>&"]/g, function (c) {
+    return ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'})[c]; }); }
+
+  function preview() {
+    var btn = document.querySelector('#vb-books .vb-book.on');
+    var out = document.getElementById('vb-preview');
+    if (!btn) { out.textContent = '기준 책을 고르세요'; return; }
+    var key = btn.dataset.key;                       // 조판/교재/단어장/광문보카/26-2-중간
+    var parts = key.split('/');
+    var folder = document.getElementById('vb-folder').value.trim() || '<시기>';
+    var name = document.getElementById('vb-name').value.trim();
+    if (name) { parts[parts.length - 2] = name; }
+    parts[parts.length - 1] = folder;
+    out.textContent = parts.join('/');
+  }
+
+  function loadSlots(key, title) {
+    var host = document.getElementById('vb-slots');
+    var hint = document.getElementById('vb-slot-hint');
+    host.innerHTML = '';
+    hint.textContent = '원고 칸을 읽는 중…';
+    fetch('/api/vivlio-book/slots?b=' + encodeURIComponent(key))
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.error) { hint.textContent = '✗ ' + d.error; return; }
+        var slots = d.slots || [];
+        var map = [];
+        if (!slots.length) {
+          // 폴더를 훑는 계열 — 이름을 맞출 필요가 없으니 칸 하나에 여러 개
+          hint.innerHTML = '이 교재는 <b>원고 폴더를 통째로</b> 봅니다. '
+            + '필요한 파일을 모두 올리세요(이름은 그대로 두면 됩니다).';
+          var box = document.createElement('div');
+          box.className = 'vb-slot';
+          box.innerHTML = '<div class="vb-lab">원고 파일들</div>'
+            + '<div class="cur">여러 개 고를 수 있습니다</div>';
+          for (var i = 1; i <= MAXSLOTS; i++) {
+            var inp = document.createElement('input');
+            inp.type = 'file'; inp.name = 'm' + i;
+            inp.style.cssText = 'display:block;margin-bottom:6px;font-size:12.5px';
+            box.appendChild(inp);
+          }
+          host.appendChild(box);
+        } else {
+          hint.innerHTML = '이 교재는 원고를 <b>역할별로</b> 씁니다. '
+            + '칸마다 해당 원고를 올리세요 — <b>파일 이름은 달라도 됩니다</b>'
+            + '(올린 이름으로 설정을 맞춰 줍니다).';
+          slots.forEach(function (s, i) {
+            map.push(s.key);
+            var box = document.createElement('div');
+            box.className = 'vb-slot';
+            box.innerHTML = '<div class="vb-lab">' + esc(s.key)
+              + ' <span class="required">*</span></div>'
+              + '<div class="cur">지금 ' + esc(title) + ' 은: '
+              + esc(s.current) + '</div>';
+            var inp = document.createElement('input');
+            inp.type = 'file'; inp.name = 'm' + (i + 1);
+            inp.style.cssText = 'font-size:12.5px';
+            box.appendChild(inp);
+            host.appendChild(box);
+          });
+        }
+        document.getElementById('vb-slotmap').value = map.join(',');
+      })
+      .catch(function (e) { hint.textContent = '✗ ' + e; });
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('#vb-books .vb-book'),
+    function (el) {
+      el.addEventListener('click', function () {
+        Array.prototype.forEach.call(document.querySelectorAll('#vb-books .vb-book'),
+          function (o) { o.classList.remove('on'); });
+        el.classList.add('on');
+        document.getElementById('vb-base').value = el.dataset.key;
+        if (!document.getElementById('vb-title').value)
+          document.getElementById('vb-title').value = el.dataset.title;
+        if (!document.getElementById('vb-school').value)
+          document.getElementById('vb-school').value = el.dataset.school;
+        loadSlots(el.dataset.key, el.dataset.title);
+        preview();
+      });
+    });
+  ['vb-folder', 'vb-name'].forEach(function (id) {
+    document.getElementById(id).addEventListener('input', preview);
+  });
+</script>
+<script src="{{ url_for('static', filename='js/typeset.js') }}"
+        data-material="{{ engine.material_id }}"></script>
+{% endblock %}

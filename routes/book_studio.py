@@ -230,6 +230,22 @@ def api_text():
     return jsonify({"ok": True, "entries": len(table)})
 
 
+@bp.route("/api/vivlio-book/slots")
+def api_vivlio_slots():
+    """기준 책이 요구하는 원고 슬롯 — 조판 카드가 칸을 그릴 때 쓴다.
+
+    빈 목록이면 '원고 폴더를 통째로 훑는 계열'(블랙북)이라는 뜻이다.
+    """
+    d, meta = _book_dir(request.args.get("b"))
+    if not d:
+        return jsonify({"error": "모르는 책"}), 404
+    try:
+        from engines.vivlio_book.engine import book_slots
+        return jsonify({"book": meta, "slots": book_slots(meta["key"])})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @bp.route("/api/book-studio/refs")
 def api_refs():
     """`build/refs.json` — 화면의 `vrefN` 클래스 ↔ 원본 자리표."""

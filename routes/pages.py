@@ -125,9 +125,17 @@ def typeset_page(material_id):
     except Exception:
         slim_cfg = None
 
+    # 비블리오 조판: 기준 책 목록을 교재 트리에서 찾아 넘긴다
+    # (표를 따로 관리하면 실제 폴더와 어긋나는 순간 쓸모없어진다).
+    viv_books = []
+    if material_id == "vivlio_book":
+        from engines.vivlio_book.engine import books as _viv_books
+        viv_books = _viv_books()
+
     return render_template(tmpl, engine=engine, schools=schools,
                            active_nav=nav, exam_periods=exam_periods,
-                           current_period=current_period, slim_cfg=slim_cfg)
+                           current_period=current_period, slim_cfg=slim_cfg,
+                           books=viv_books, max_slots=8)
 
 
 # ── 외부 공개 소개 페이지 — Cloudflare Pages로 이전 (2026-08-13) ─────────
