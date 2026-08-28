@@ -210,9 +210,9 @@ def runhead(unit_top, unit_no, label, main, sub, book, off=False):
     unit = "  ·  ".join(x for x in (f"{unit_top} {unit_no}".strip(), main) if x)
     return (f'<div class="rhL{o}"><div class="hd hdL">'
             f'<span class="blk"></span>{chip}{txt}</div></div>'
-            f'<div class="rhR{o}"><div class="hd hdR">'
+            f'<div class="rhR{o}"><div class="hd hdR"><span class="bkw">'
             f'<span class="bk">{esc(book)}</span>'
-            f'<span class="crest"></span></div></div>'
+            f'<i class="crest"></i></span></div></div>'
             f'<div class="pfL{o}"><div class="ft ftL">'
             f'<span class="pn"></span>{esc(book)}</div></div>'
             f'<div class="pfR{o}"><div class="ft ftR">'
