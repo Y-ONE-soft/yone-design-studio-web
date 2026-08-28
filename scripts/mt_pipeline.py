@@ -447,9 +447,15 @@ def stage_v2h(st, log, run_dir):
         # do_label 은 엔진 기본이 OFF 라, 안 넘기면 원 모의고사 문항번호
         # (36/37)가 그대로 남는다 — 원고 기반 경로(workbook_select)는 마더텅
         # 번호로 교체하므로 두 경로가 어긋난다.
+        # 간지 라벨 — 템플릿에 박힌 "고N 모의고사" 를 이 권의 실제 범위로.
+        nos = dict((c["code"], c["no"]) for c in st["codes"])
+        rng = [nos.get(c) for c in vol["codes"] if nos.get(c)]
+        cover = ("마더텅 %s강, %s~%s번" % (st["gang"], rng[0], rng[-1])
+                 if rng else "마더텅 %s강" % st["gang"])
         jp = eng.parse({"verti_indd": vol["sero_indd"],
                         "gang_code": str(st["gang"]),
                         "do_label": "on",
+                        "cover_label": cover,
                         "result_name": vol["horiz_name"]}, jd, log)
         eng.prepare_jsx(jp, jd, log)
         # run_indesign 이 본 변환 + 후처리 3종(정리·재스레드·지문번호)을 순서대로

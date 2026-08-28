@@ -120,13 +120,24 @@ class VertToHorizEngine(BaseEngine):
     #      (실측: 번호 138개 중 9개 중복 → 재스레드 후 세로 원본과 동일한 129개)
     #   3) 지문번호 프레임 교정 — 본문만 옮기면 템플릿 잔재 번호가 인쇄된다
     # 순서 중요: 페이지를 지운 **뒤에** 번호를 매겨야 순서가 맞는다.
+    #   4) 오버셋 해소 — 가로 프레임이 세로 내용을 다 못 담으면 꼬리가
+    #      지면 밖으로 숨는다. 문자수 검수도 내용 대조도 통과하는데 인쇄만
+    #      안 된다(2026-08-25 실측: 주제 문항 선지 ①~⑤ 소실, 한 페이지에
+    #      321줄 중 38줄만 표시). 넘친 만큼 페이지를 이어 붙인다.
+    #      지문번호 **앞**에 둔다 — 페이지가 늘어난 뒤 번호를 매겨야 맞다.
+    #   5) 간지 라벨 — 템플릿에 박힌 "고N 모의고사" 를 그 권의 실제 범위로.
+    #      settings.cover_label 이 있을 때만 동작한다.
     _POST = [
         ("trim_unused.jsx", "trim_로그.txt",
          "===== 정리 완료 =====", "[정리]"),
         ("rethread_step3.jsx", "rethread_로그.txt",
          "===== 재스레드 완료 =====", "[재스레드]"),
+        ("overflow_relief.jsx", "overflow_로그.txt",
+         "===== 오버셋 해소 완료 =====", "[오버셋]"),
         ("fix_passage_numbers.jsx", "passagenum_로그.txt",
          "===== 지문번호 교정 완료 =====", "[지문번호]"),
+        ("fix_cover_label.jsx", "coverlabel_로그.txt",
+         "===== 간지 라벨 완료 =====", "[간지]"),
     ]
 
     def run_indesign(self, job_dir, log, cancel_check=None, stall_limit=None,
@@ -306,6 +317,12 @@ class VertToHorizEngine(BaseEngine):
         do_label = do_label_raw in ("on", "true", "1", "yes")
         log(f"[라벨링] {'ON' if do_label else 'OFF'}")
 
+        # 간지 라벨 — 템플릿에 박힌 "고N 모의고사" 를 대신할 문구.
+        # 안 주면 간지 후처리가 스스로 건너뛴다(기존 동작 보존).
+        cover_label = (uploaded_files.get("cover_label") or "").strip()
+        if cover_label:
+            log(f"[간지] 라벨: {cover_label}")
+
         # metadata.json
         meta = {
             "horiz_path": horiz_local,
@@ -315,6 +332,7 @@ class VertToHorizEngine(BaseEngine):
             "gang_code": gang_code,
             "sources_list": sources_list,
             "do_label": do_label,
+            "cover_label": cover_label,
         }
         meta_path = os.path.join(job_dir, "metadata.json")
         with open(meta_path, "w", encoding="utf-8") as f:
@@ -356,6 +374,7 @@ class VertToHorizEngine(BaseEngine):
             "gang_code": meta["gang_code"],
             "sources_list": meta["sources_list"],
             "do_label": meta.get("do_label", False),
+            "cover_label": meta.get("cover_label", ""),
             "log_path": os.path.join(output_dir, self.log_filename),
             "log_paths": [os.path.join(job_dir, self.log_filename)],
         }
