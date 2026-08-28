@@ -51,6 +51,7 @@ DEFAULT_METRICS = {
 RE_GAP2 = re.compile(r" {2,}")
 RE_HAN = re.compile(r"[가-힣]")
 VOL_ORDER = ("vocab", "grammar", "reading")
+HALF = 5              # 어법 연습문제 10문항을 나누는 자리
 
 # 간지·목차 면이 이미 쓴 블록 — 흐름에서 다시 그리면 두 번 나온다
 FRONT = {"vol_desc", "toc_title", "toc_1", "toc_2"}
@@ -162,7 +163,7 @@ def rules(n, cls="wbox"):
     return f'<div class="{cls}">' + '<i></i>' * n + '</div>'
 
 
-def grid_svg(w=174.0, h=96.0, step=5.0):
+def grid_svg(w=174.0, h=118.0, step=5.0):
     """필기용 모눈 — 래스터가 아니라 벡터 선으로."""
     L = []
     x = 0.0
@@ -289,6 +290,7 @@ def render_grammar(vol, out):
     cp = None            # 개념 면 버퍼 {"body": [...], "grid": 라벨}
     drill_gram = False    # 지금 열려 있는 연습이 어법 쪽인가
     col_open = False
+    qn = 0                # 지금 연습 안에서 몇 번째 문항인가
 
     def close_cpage():
         nonlocal cp
@@ -358,6 +360,7 @@ def render_grammar(vol, out):
         elif t == "drill":
             title = plain(b["r"])
             drill_gram = "어법" in title
+            qn = 0
             g = " gram" if drill_gram else ""
             note = ""
             if i + 1 < n and blocks[i + 1]["t"] == "drill_note":
@@ -377,6 +380,12 @@ def render_grammar(vol, out):
                             else write_row(blocks[j]["r"]))
                 j += 1
             g = " gram" if drill_gram else ""
+            qn += 1
+            # 어법 연습은 한 강에 10문항이라 한 면에 안 들어간다. 흐름에 맡기면
+            # 7+3 처럼 뒷면이 휑해진다 → **5+5 로 나눈다**.
+            if drill_gram and qn == HALF + 1:
+                k.flush()
+                out.append('<div class="pbr"></div>')
             k.body(f'<div class="qitem{g}">{q_line(b["r"])}'
                    + "".join(rows) + "</div>")
             i = j - 1

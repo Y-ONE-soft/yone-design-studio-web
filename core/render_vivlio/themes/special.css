@@ -242,7 +242,7 @@ u { text-decoration: none; }
  * 면마다 리듬이 달라진다.
  */
 .cpage { break-before: page; position: relative; height: 252mm; }
-.gridbox { position: absolute; left: 0; right: 0; top: 150mm; }
+.gridbox { position: absolute; left: 0; right: 0; top: 128mm; }
 .gridbox .gl { font: 700 8pt/1 Noto; color: var(--tone-gy);
                letter-spacing: .1em; margin-bottom: 2.4mm; }
 .gridbox .gl::before { content: ""; display: inline-block; width: 2.4mm;
@@ -296,7 +296,9 @@ u { text-decoration: none; }
               font: 400 8.6pt/1.5 Noto; color: #55504a; }
 .drill.gram .drill-note { border-left-color: var(--c-sub); }
 
-.qitem { break-inside: avoid; margin-bottom: 4.4mm; }
+.qitem { break-inside: avoid; margin-bottom: 3mm; }
+.qitem.gram { margin-bottom: 6mm; }
+.pbr { break-before: page; height: 0; }
 .q { display: table; table-layout: fixed; width: 100%; }
 .q span { display: table-cell; vertical-align: top; }
 .q-no { width: 8mm; }
@@ -308,7 +310,7 @@ u { text-decoration: none; }
 .q-t b { font-weight: 700; color: var(--c-sub);
          background: var(--c-sub-pl); padding: 0 .8mm; border-radius: .6mm; }
 
-.frow.pt { margin: 1.8mm 0 0 8mm; padding: 1.6mm 3mm;
+.frow.pt { margin: 1.6mm 0 0 8mm; padding: 1.4mm 3mm;
            background: var(--tone-be); border-radius: 1mm;
            display: table; table-layout: fixed; width: calc(100% - 8mm);
            box-sizing: border-box; }
@@ -321,7 +323,7 @@ u { text-decoration: none; }
 .frow.pt .fline { display: inline-block; width: 40mm; height: 3.4mm;
                   border-bottom: .4pt solid var(--tone-gy2); }
 
-.frow.wr { margin: 2mm 0 0 8mm; display: table; table-layout: fixed;
+.frow.wr { margin: 1.8mm 0 0 8mm; display: table; table-layout: fixed;
            width: calc(100% - 8mm); box-sizing: border-box; }
 .frow.wr span { display: table-cell; }
 .frow.wr .fl { width: 19mm; vertical-align: bottom;
@@ -330,8 +332,11 @@ u { text-decoration: none; }
                  padding: 1.2mm 0; background: var(--c-deep);
                  border-radius: .8mm; }
 .gram .frow.wr .fl i { background: var(--c-sub); }
-.frow.wr .fline { vertical-align: bottom; height: 8.6mm; padding-left: 3mm;
-                  border-bottom: .6pt solid var(--c-line); }
+.frow.wr .fline { vertical-align: bottom; height: 7.8mm; padding-left: 3mm;
+                  border-bottom: .6pt solid #cbc4b4; }
+/* 어법 연습은 고칠 곳을 적는 자리라 더 넓게 — 문항 수도 10개로 많다 */
+.gram .frow.wr .fline { height: 13mm; }
+.gram .frow.wr { margin-top: 2.8mm; }
 
 /* ==================================================== 정답 및 해설 (2단) */
 .ans-part { break-before: page; margin-bottom: 3mm;
