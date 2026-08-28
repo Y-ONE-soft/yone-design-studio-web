@@ -106,7 +106,54 @@ def plain(x):
     return ''.join(plain(i) for i in x)
 
 
-def paras_html(paras, blank=False, cls=''):
+# ── 클릭 편집용 자리표 ────────────────────────────────────────────
+# 지면의 글 한 조각이 **data 안 어디서 왔는지**를 HTML 에 적어 둔다. 작업대에서
+# 그 글을 클릭하면 이 값으로 원본을 찾아 고친다(고친 것은 errata.json 에 쌓인다).
+# 렌더 함수마다 첨자를 들고 다니게 하면 서명이 지저분해지므로, 렌더 직전에
+# **한 번 훑어** 객체 → 경로 표를 만들어 둔다(같은 렌더 안에서만 쓴다).
+_REFS = {}
+_REF_SEQ = {}          # 경로 → 번호. HTML 에는 번호만 싣는다
+
+
+def index_refs(data):
+    _REFS.clear()
+    _REF_SEQ.clear()
+    for i, L in enumerate(data.get('lessons') or []):
+        for kind in ('vocab', 'problems', 'answers'):
+            for j, obj in enumerate(L.get(kind) or []):
+                if isinstance(obj, dict):
+                    _REFS[id(obj)] = f'lessons.{i}.{kind}.{j}'
+    return _REFS
+
+
+def ref_of(obj, sub=''):
+    r = _REFS.get(id(obj))
+    if not r:
+        return ''
+    return f'{r}.{sub}' if sub else r
+
+
+def _mark(ref, base=''):
+    """`class="… vrefN"` + `data-ref` 를 만든다.
+
+    ⚠ **Vivliostyle 은 조판 결과 DOM 에 임의 속성을 옮기지 않는다.** `data-ref`
+      만 심으면 화면에서 클릭해도 아무것도 못 찾는다(실제로 그랬다). 반면
+      **class 는 그대로 남는다**(CSS 가 거기 걸려 있으니 당연하다) → 자리표를
+      클래스 토큰으로 싣고, 번호↔경로 표는 `build/refs.json` 으로 따로 낸다.
+      `data-ref` 는 원본 HTML 을 사람이 읽을 때를 위해 같이 남긴다.
+    """
+    if not ref:
+        return f' class="{base}"' if base else ''
+    n = _REF_SEQ.setdefault(ref, len(_REF_SEQ) + 1)
+    cls = (base + ' ' if base else '') + f'vref{n}'
+    return f' class="{cls}" data-ref="{ref}"'
+
+
+def ref_table():
+    return {str(n): r for r, n in _REF_SEQ.items()}
+
+
+def paras_html(paras, blank=False, cls='', ref=''):
     """단락 목록 → HTML. 연속된 대화문 줄은 배경 블록으로 묶는다."""
     out, dlg = [], []
     # 화자 줄이 둘 이상인 덩어리만 대화문으로 본다(제목 'De Ceuvel: …' 오인 방지).
@@ -119,13 +166,17 @@ def paras_html(paras, blank=False, cls=''):
             out.append('<div class="dlg">' + ''.join(dlg) + '</div>')
         dlg.clear()
 
-    for p in paras:
+    for i, p in enumerate(paras):
         body = inl(p, blank)
+        r = f'{ref}.{i}' if ref else ''
         if is_dlg and RE_DLG.match(plain(p).strip()):
-            dlg.append(f'<p>{body}</p>')
+            # ⚠ 대화문 줄에는 **원래 클래스가 없다.** 자리표를 붙이면서 `cls` 를
+            #   같이 얹었더니 `<보기>` 상자 안 대화문이 `.t` 를 물어 줄바꿈이
+            #   달라졌다(26·61면). 자리표만 붙이고 클래스는 원래대로 둔다.
+            dlg.append(f'<p{_mark(r)}>{body}</p>')
         else:
             flush()
-            out.append(f'<p{cls}>{body}</p>')
+            out.append(f'<p{_mark(r, cls)}>{body}</p>')
     flush()
     return ''.join(out)
 
@@ -189,25 +240,33 @@ def render_vocab(unit):
 
 
 def render_question(item, style=''):
+    q = ref_of(item)
     o = [f'<div class="q"{style}>']
-    o.append(f'<p class="head"><span class="no">{item["no"]:02d}</span>'
+    o.append(f'<p{_mark(q and q + ".stem", "head")}>'
+             f'<span class="no">{item["no"]:02d}</span>'
              f'{inl(item["stem"])}</p>')
-    for b in item['blocks']:
+    for bi, b in enumerate(item['blocks']):
         t = b['t']
+        br = f'{q}.blocks.{bi}' if q else ''
         if t == 'passage':
-            o.append('<div class="pbox">' + paras_html(b['paras'], blank=True)
+            o.append('<div class="pbox">'
+                     + paras_html(b['paras'], blank=True,
+                                  ref=br and br + '.paras')
                      + '</div>')
         elif t == 'arrow':
             o.append('<div class="arrow">↓</div>')
         elif t == 'summary':
             o.append('<div class="summary">'
-                     + paras_html(b['paras'], blank=True) + '</div>')
+                     + paras_html(b['paras'], blank=True,
+                                  ref=br and br + '.paras') + '</div>')
         elif t == 'bogi':
             o.append('<div class="bogi"><p class="t">&lt; 보 기 &gt;</p>'
-                     + paras_html(b['items'], blank=True, cls=' class="t"')
+                     + paras_html(b['items'], blank=True, cls='t',
+                                  ref=br and br + '.items')
                      + '</div>')
         elif t == 'choice':
-            o.append(f'<p class="ch"><span class="m">{b["mark"]}</span> '
+            o.append(f'<p{_mark(br and br + ".body", "ch")}>'
+                     f'<span class="m">{b["mark"]}</span> '
                      f'{inl(b["body"], blank=True)}</p>')
         elif t == 'ansline':
             o.append('<div class="ansline">')
@@ -371,11 +430,15 @@ def document(cfg, data, heights=None, aheights=None, mode=None):
 
 def write(cfg, data, build_dir, heights=None, aheights=None, mode=None,
           log=None):
+    index_refs(data)          # 클릭 편집용 자리표 — 렌더 직전에 한 번
     text = document(cfg, data, heights, aheights, mode)
     os.makedirs(build_dir, exist_ok=True)
     out = os.path.join(build_dir, MODE_FILE[mode])
     with open(out, 'w', encoding='utf-8') as f:
         f.write(text)
+    # 번호 ↔ 경로 표. 작업대가 화면에서 클릭한 것을 원본으로 되짚는 데 쓴다.
+    with open(os.path.join(build_dir, 'refs.json'), 'w', encoding='utf-8') as f:
+        json.dump(ref_table(), f, ensure_ascii=False)
     if log:
         log(f'[렌더] {os.path.basename(out)} {len(text):,} bytes'
             + ('  [측정용]' if mode else

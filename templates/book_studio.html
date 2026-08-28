@@ -92,10 +92,27 @@
       </div>
       <div class="bs-status" id="bs-status"></div>
       <div class="bs-warn">
-        미리보기는 <b>견본</b>이다(전권은 브라우저가 버겁다). 그리고
+        지면의 글을 <b>클릭하면 고칠 수 있다</b>(고친 것은 <code>errata.json</code> 에
+        쌓여 원고를 다시 뽑아도 남는다). 미리보기는 <b>견본</b>이다(전권은 브라우저가 버겁다). 그리고
         <b>면수는 최종 조판과 다를 수 있다</b> — 뷰어는 그리는 대로 세고,
         면 나눔을 정하는 <code>pages.css</code> 는 지난 빌드 것이다.
         면수·면 나눔이 걸린 판단은 <code>build</code> 로 PDF 를 만들어 볼 것.
+      </div>
+    </div>
+
+    <div class="bs-panel" id="bs-editbox" style="display:none">
+      <div class="bs-gname">글 고치기</div>
+      <div class="bs-hint" id="bs-editref" style="margin-bottom:6px"></div>
+      <textarea class="bs-css" id="bs-edittext" spellcheck="false"
+                style="height:120px;font-family:var(--font);font-size:13px"></textarea>
+      <div class="bs-hint" style="margin-top:6px">
+        <b>**굵게**</b> · <b>__밑줄__</b> · <b>//기울임//</b> —
+        원고의 서식을 지키려면 이 표시를 그대로 두세요.
+      </div>
+      <div class="bs-actions">
+        <button class="bs-btn primary" id="bs-edit-save">고치고 다시 그리기</button>
+        <button class="bs-btn" id="bs-edit-revert">원고대로</button>
+        <button class="bs-btn" id="bs-edit-close">닫기</button>
       </div>
     </div>
 
@@ -121,7 +138,7 @@
 <script>
 (function () {
   var key = {{ book_key|tojson }};
-  var bid = null, spec = [], changed = {};
+  var bid = null, spec = [], changed = {}, refs = {}, curRef = null;
   var $ = function (id) { return document.getElementById(id); };
 
   function status(msg) { $('bs-status').textContent = msg || ''; }
@@ -136,7 +153,70 @@
          + '#src=' + location.origin + '/book-studio/doc/' + bid + '/index.html?_=' + t
          + '&bookMode=true&renderAllPages=false';
   }
-  function showView() { $('bs-view').src = viewUrl(); }
+  function showView() {
+    $('bs-view').src = viewUrl();
+    // 조판이 끝나면 지면에 클릭 손잡이를 붙인다(뷰어는 천천히 그린다).
+    var tries = 0;
+    var t = setInterval(function () {
+      if (++tries > 60) { clearInterval(t); return; }
+      if (hookClicks()) clearInterval(t);
+    }, 1000);
+  }
+
+  // ⚠ Vivliostyle 은 조판 결과 DOM 에 **임의 속성을 옮기지 않는다**(data-ref 가
+  //   사라진다). 반면 **class 는 남는다** → 렌더러가 `vrefN` 클래스를 싣고
+  //   번호↔경로 표(`build/refs.json`)를 따로 낸다. 여기서 그 둘을 잇는다.
+  function hookClicks() {
+    var f = $('bs-view');
+    var d = f && f.contentDocument;
+    var vp = d && d.getElementById('vivliostyle-viewer-viewport');
+    // ⚠ 첫 면이 간지면 자리표가 하나도 없다 — "자리표가 보일 때까지" 기다리면
+    //   영영 안 걸린다. **뷰포트가 생기면** 건다(클릭은 문서에 잡으므로 나중에
+    //   그려지는 면에도 그대로 먹는다).
+    if (!vp) return false;
+    if (d.__bsHooked) return true;
+    d.__bsHooked = true;
+    d.addEventListener('click', function (ev) {
+      var el = ev.target;
+      while (el && el !== d.body) {
+        var m = (typeof el.className === 'string')
+          ? el.className.match(/(?:^|\s)vref(\d+)(?:\s|$)/) : null;
+        if (m && refs[m[1]]) { openEditor(refs[m[1]]); ev.preventDefault(); return; }
+        el = el.parentNode;
+      }
+    }, true);
+    return true;
+  }
+
+  function openEditor(ref) {
+    curRef = ref;
+    $('bs-editbox').style.display = '';
+    $('bs-editref').textContent = ref + ' — 불러오는 중…';
+    fetch('/api/book-studio/text?b=' + encodeURIComponent(key)
+          + '&ref=' + encodeURIComponent(ref))
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.error) { $('bs-editref').textContent = '✗ ' + d.error; return; }
+        $('bs-edittext').value = d.text;
+        $('bs-editref').textContent = ref + (d.edited ? '  · 이미 고친 자리' : '');
+        $('bs-edittext').focus();
+      });
+  }
+
+  function sendEdit(payload) {
+    payload.b = key; payload.ref = curRef;
+    status('글을 고치는 중…');
+    return fetch('/api/book-studio/text', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.error) { status('✗ ' + d.error); return; }
+        return rerender('정오표 ' + d.entries + '건.').then(function (ok) {
+          if (ok) status('✓ 고쳤다 (errata.json ' + d.entries + '건)');
+        });
+      });
+  }
 
   function row(k) {
     var wrap = document.createElement('div');
@@ -244,6 +324,9 @@
     fetch('/api/book-studio/overrides?b=' + encodeURIComponent(key))
       .then(function (r) { return r.json(); })
       .then(function (d) { $('bs-ovr').value = d.css || ''; });
+    fetch('/api/book-studio/refs?b=' + encodeURIComponent(key))
+      .then(function (r) { return r.json(); })
+      .then(function (d) { refs = d || {}; });
   }
 
   function rerender(msg) {
@@ -274,6 +357,16 @@
           if (ok) { status('✓ ' + n + '개 반영됨 (config.json · 이전 판은 .bak)'); load(); }
         });
       });
+  });
+
+  $('bs-edit-save').addEventListener('click', function () {
+    sendEdit({ text: $('bs-edittext').value });
+  });
+  $('bs-edit-revert').addEventListener('click', function () {
+    sendEdit({ revert: true, text: '' });
+  });
+  $('bs-edit-close').addEventListener('click', function () {
+    $('bs-editbox').style.display = 'none'; curRef = null;
   });
 
   $('bs-reload').addEventListener('click', load);

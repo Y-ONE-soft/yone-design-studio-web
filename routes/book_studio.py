@@ -180,6 +180,69 @@ def api_render():
     return jsonify({"ok": True, "log": r.stdout[-1500:]})
 
 
+@bp.route("/api/book-studio/text", methods=["GET", "POST"])
+def api_text():
+    """지면에서 클릭한 글 한 조각을 읽고 고친다.
+
+    고친 것은 `data.json` 이 아니라 **`errata.json`** 에 쌓인다 — data.json 은
+    원고에서 만들어지므로 거기 직접 쓰면 `data` 를 한 번 돌리는 순간 말없이
+    되돌아간다. 정오표는 읽는 자리에서 얹히므로 조판도 검수도 같은 글을 본다.
+    """
+    from core.render_vivlio import book as bookmod
+    from core.render_vivlio import errata as er
+    from core.render_vivlio import richtext as rt
+    get = request.method == "GET"
+    p = {} if get else (request.get_json(silent=True) or {})
+    d, meta = _book_dir(request.args.get("b") if get else p.get("b"))
+    if not d:
+        return jsonify({"error": "모르는 책"}), 404
+    ref = (request.args.get("ref") if get else p.get("ref")) or ""
+    if not ref or any(c in ref for c in "/\\ \n"):
+        return jsonify({"error": "이상한 자리표"}), 400
+    cfg = bookmod.load(d)
+    import json as _json
+    with open(cfg.path("data.json"), encoding="utf-8") as f:
+        raw = _json.load(f)
+    table = er.read(cfg)
+    cur = er.apply(_json.loads(_json.dumps(raw)), table)
+    if not er.exists(cur, ref):
+        return jsonify({"error": f"원본에 없는 자리: {ref}"}), 404
+    if get:
+        return jsonify({"ref": ref,
+                        "text": rt.to_text(er.get(cur, ref)),
+                        "origin": rt.to_text(er.get(raw, ref)),
+                        "edited": ref in table})
+    text = p.get("text")
+    if text is None:
+        return jsonify({"error": "글이 없다"}), 400
+    if len(text) > 20000:
+        return jsonify({"error": "너무 길다"}), 400
+    like = er.get(raw, ref)
+    if p.get("revert"):
+        table.pop(ref, None)
+    else:
+        val = rt.from_text(text, like=like)
+        if rt.plain(val) == rt.plain(like) and val == like:
+            table.pop(ref, None)                          # 원고와 같아지면 지운다
+        else:
+            table[ref] = val
+    er.write(cfg, table)
+    return jsonify({"ok": True, "entries": len(table)})
+
+
+@bp.route("/api/book-studio/refs")
+def api_refs():
+    """`build/refs.json` — 화면의 `vrefN` 클래스 ↔ 원본 자리표."""
+    d, meta = _book_dir(request.args.get("b"))
+    if not d:
+        return jsonify({"error": "모르는 책"}), 404
+    p = os.path.join(d, "build", "refs.json")
+    if not os.path.exists(p):
+        return jsonify({})
+    with open(p, encoding="utf-8") as f:
+        return Response(f.read(), mimetype="application/json")
+
+
 @bp.route("/api/book-studio/overrides", methods=["GET", "POST"])
 def api_overrides():
     """손잡이 밖 탈출구 — 책 폴더의 `overrides.css` 를 읽고 쓴다."""

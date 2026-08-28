@@ -346,6 +346,7 @@ def build(cfg, log=print):
     return out
 
 
-def load(cfg):
-    with open(cfg.path("data.json"), encoding="utf-8") as f:
-        return json.load(f)
+def load(cfg, log=None):
+    """data.json + 정오표(errata.json) — 읽는 자리에서 얹는다."""
+    from core.render_vivlio import errata
+    return errata.load_data(cfg, log)

@@ -430,6 +430,7 @@ def gate(d, o, log):
         raise SystemExit(f"[인식 게이트] 원고 인식 결함 {len(bad)}건 — 조판 중단")
 
 
-def load(cfg):
-    with open(os.path.join(cfg.root, "data.json"), encoding="utf-8") as f:
-        return json.load(f)
+def load(cfg, log=None):
+    """data.json + 정오표(errata.json) — 읽는 자리에서 얹는다."""
+    from core.render_vivlio import errata
+    return errata.load_data(cfg, log)

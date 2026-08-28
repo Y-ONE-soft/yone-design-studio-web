@@ -79,8 +79,13 @@ class BlackbookSeries(Series):
         m = render_mod.metrics_of(cfg)
         top, bottom = m["body_top"], m["body_bottom"]
 
-        hp = cfg.path("heights.json")
-        ap = cfg.path("heights_ans.json")
+        # ⚠ 견본은 **높이 표를 따로 쓴다.** 견본은 문항이 8개뿐이라 그 측정값을
+        #   `heights.json` 에 덮으면 전권 조판이 8개짜리 표를 보게 되고,
+        #   `--nomeasure`(미리보기 포함)가 엉뚱한 배치를 만든다. 실제로 시안을
+        #   뽑고 나서 전권 렌더가 "문항 높이 8" 로 돌았다.
+        sfx = "_견본" if sample else ""
+        hp = cfg.path(f"heights{sfx}.json")
+        ap = cfg.path(f"heights_ans{sfx}.json")
         if not nomeasure:
             # 문항 — 한 면 1문항으로 조판해 바닥 잉크까지의 높이를 잰다
             nos = [it["no"] for L in d["lessons"] for it in L["problems"]]
