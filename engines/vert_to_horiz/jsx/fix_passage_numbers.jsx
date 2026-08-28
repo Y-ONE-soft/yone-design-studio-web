@@ -34,10 +34,15 @@
             for (var j = 0; j < pg.textFrames.length; j++) {
                 var c = "";
                 try { c = String(pg.textFrames[j].contents); } catch (e2) { continue; }
-                var m = c.match(/\{(\d{6})\}/g);
+                // 마커는 보통 "{YYMMQQ}" 지만 회차에 따라 **중괄호 없이**
+                // 6자리만 있는 경우가 있다(실측 2026-08-25: 25년 9월분
+                // 250936·250937 은 중괄호가 없어 14개만 인식 → 번호 FAIL).
+                // 6자리를 모두 긁되, 아래 mtNo() 에서 **그 강 코드와 일치하는
+                // 것만** 채택하므로 본문의 다른 숫자는 걸러진다.
+                var m = c.match(/\d{6}/g);
                 if (!m) { continue; }
                 for (var k = 0; k < m.length; k++) {
-                    var code = m[k].replace(/[{}]/g, "");
+                    var code = m[k];
                     if (!seen[code]) { seen[code] = 1; order.push(code); }
                 }
             }
