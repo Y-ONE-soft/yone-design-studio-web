@@ -398,7 +398,7 @@ def render_grammar(vol, out):
             les_no, les_ttl = numtitle(plain(b["r"]))
             cp = {"body": [rh(),
                            title_block("big", les_no, "LESSON", les_ttl)],
-                  "grid": "필기 노트", "gh": 84.0}
+                  "grid": "필기 노트", "gh": 108.0}
         elif t == "lesson_sub":
             put(keyline(plain(b["r"])))
         elif t == "subhead":
@@ -633,7 +633,7 @@ def render_reading(vol, out):
             cp = {"body": [rh(),
                            title_block("big", les_no, "LESSON", les_ttl,
                                        esc(f"WEEK {wk_no}  ·  {wk_ttl}"))],
-                  "grid": "필기 노트", "gh": 78.0}
+                  "grid": "필기 노트", "gh": 74.0}
         elif t == "concept_head":
             put(f'<div class="blk-h lead">'
                 f'{esc(plain(b["r"]).strip("＜＞ "))}</div>')
@@ -653,7 +653,7 @@ def render_reading(vol, out):
             k.head(f'<div class="wl solo">{esc(txt)}</div>')
         elif t == "notebox":
             if cp is None:
-                k.body(rules(7, "wbox"))
+                k.body(rules(5, "wbox"))
         elif t == "ex_tag":
             c = [x for x in cols(plain(b["r"])) if x != "·"]
             ex_kind = c[1] if len(c) > 1 else ""
