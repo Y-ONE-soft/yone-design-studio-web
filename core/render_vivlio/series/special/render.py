@@ -684,11 +684,14 @@ def render_reading(vol, out):
             else:
                 k.body(f'<div class="bgi">{inl(strip_mark(b["r"], "·"))}</div>')
         elif t == "trans_head":
+            # 해석은 위계가 가장 낮다 — 묶어 두면 면을 통째로 넘겨 빈 면을 만든다.
+            # 남은 자리에서 시작해 흐르게 둔다.
             flush_bg()
-            k.head(f'<div class="th">'
-                   f'{esc(plain(b["r"]).strip().lstrip("❖ ").strip())}</div>')
+            k.flush()
+            out.append(f'<div class="th">'
+                       f'{esc(plain(b["r"]).strip().lstrip("❖ ").strip())}</div>')
         elif t == "trans":
-            k.body(f'<div class="trans">{inl(b["r"])}</div>')
+            out.append(f'<div class="trans">{inl(b["r"])}</div>')
         elif t == "ans_line":
             k.body(ans_line(b["r"]))
         else:
