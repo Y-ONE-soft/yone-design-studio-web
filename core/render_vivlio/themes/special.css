@@ -75,77 +75,82 @@
   @bottom-right-corner { content: none; }
 }
 @page :left  { margin-left: 19mm; margin-right: 23mm;
-  @top-left { content: element(rhL); width: 174mm; vertical-align: top; }
-  @bottom-left-corner {
-    content: counter(page); text-align: left; padding-left: 19mm;
-    vertical-align: top; padding-top: 9mm;
-    font: 700 9pt/1 Disp; color: var(--c-main); }
+  @top-left    { content: element(rhL); width: 174mm; vertical-align: top; }
+  @bottom-left { content: element(pfL); width: 174mm; vertical-align: top; }
 }
 @page :right { margin-left: 23mm; margin-right: 19mm;
-  @top-left { content: element(rhR); width: 174mm; vertical-align: top; }
-  @bottom-right-corner {
-    content: counter(page); text-align: right; padding-right: 19mm;
-    vertical-align: top; padding-top: 9mm;
-    font: 700 9pt/1 Disp; color: var(--c-main); }
+  @top-left    { content: element(rhR); width: 174mm; vertical-align: top; }
+  @bottom-left { content: element(pfR); width: 174mm; vertical-align: top; }
 }
 @page plain {
   @top-left { content: none; }
-  @bottom-left-corner { content: none; }
-  @bottom-right-corner { content: none; }
+  @bottom-left { content: none; }
 }
 
 /* ------------------------------------------------------------- 머리 띠
- * 두 면이 한 세트로 보이되 **지는 것이 다르다.**
- *   왼쪽(짝수) — 바깥 끝의 큰 각진 색면(WEEK/PART + 번호) + 단원 표기
- *   오른쪽(홀수) — 바깥 끝의 각진 색면 안에 크레스트 + 책 이름
- * 도형 언어는 **사선 하나로 통일**한다(원과 사선을 섞지 않는다). 색면과 옅은 띠
- * 사이의 사선 조각은 **보조색**이 채워 두 색이 맞물리게 한다.
+ * 띠 바탕은 **보조색**(딥 틸)이다 — 공통색(아이보리)으로 두면 헤더가 본문에
+ * 묻힌다. 그 위에서 두 면이 지는 것이 다르다:
+ *
+ *   왼쪽(짝수) — 바깥 끝의 **각진 주색 면**(WEEK/PART + 번호) + 단원 표기
+ *   오른쪽(홀수) — 도형 없이 **책 이름 + 로고**만
+ *
+ * ⚠ 왼쪽 그래픽을 반전해 오른쪽에 쓰지 않는다.
  */
 .rhL { position: running(rhL); }
 .rhR { position: running(rhR); }
-.hd { position: relative; height: 19mm; background: var(--c-pale);
+.hd { position: relative; height: 19mm; background: var(--c-sub);
       overflow: hidden; }
 .hdL { width: 216mm; margin-left: -19mm; }
 .hdR { width: 216mm; margin-left: -23mm; }
-.hd .blk, .hd .sld { position: absolute; top: 0; height: 19mm; }
 
-/* 왼쪽 면 */
-.hdL .blk { left: 0; width: 49mm; background: var(--c-main);
-            clip-path: polygon(0 0, 100% 0, 85.7% 100%, 0 100%); }
-.hdL .sld { left: 42mm; width: 14mm; background: var(--c-sub);
-            clip-path: polygon(50% 0, 100% 0, 50% 100%, 0 100%); }
+/* 왼쪽 면 — 각진 주색 면 + 단원 표기 */
+.hdL .blk { position: absolute; left: 0; top: 0; width: 56mm; height: 19mm;
+            background: var(--c-main);
+            clip-path: polygon(0 0, 100% 0, 87.5% 100%, 0 100%); }
 .hdL .chip { position: absolute; left: 19mm; top: 0; }
 .hdL .chip.solo .c1 { margin-top: 7.4mm; font-size: 8pt; }
 .hdL .chip .c1 { display: block; margin-top: 4.6mm; font-style: normal;
              font: 700 5.8pt/1 Disp; letter-spacing: .24em; color: #fff;
-             opacity: .9; }
+             opacity: .92; }
 .hdL .chip .c2 { display: block; margin-top: .9mm; font-style: normal;
              font: 700 15pt/1 Disp; letter-spacing: -.02em; color: #fff; }
-.hdL .ht { position: absolute; left: 62mm; top: 0; }
+.hdL .ht { position: absolute; left: 68mm; top: 0; }
 .hdL .l1 { display: block; margin-top: 5mm; font-style: normal;
-           font: 700 6.4pt/1 Disp; letter-spacing: .18em; color: var(--c-main); }
+           font: 700 6.4pt/1 Disp; letter-spacing: .18em; color: #fff;
+           opacity: .62; }
 .hdL .l2 { display: block; margin-top: 2.4mm; font-style: normal;
-           font: 700 10.4pt/1 Noto; color: var(--ink); letter-spacing: -.02em;
+           font: 700 10.4pt/1 Noto; color: #fff; letter-spacing: -.02em;
            white-space: nowrap; }
-.hdL .l2 b { font: 400 8.6pt/1 Noto; color: var(--n-5); }
+.hdL .l2 b { font: 400 8.6pt/1 Noto; color: #fff; opacity: .68; }
 .hdL .l2 b::before { content: ""; display: inline-block; width: .35mm;
-           height: 3.2mm; margin: 0 3.4mm -.4mm; background: var(--n-3); }
+           height: 3.2mm; margin: 0 3.4mm -.4mm; background: #fff;
+           opacity: .4; }
 
-/* 오른쪽 면 — 같은 사선, 다른 내용 */
-.hdR .blk { right: 0; width: 62mm; background: var(--c-main);
-            clip-path: polygon(11.3% 0, 100% 0, 100% 100%, 0 100%); }
-.hdR .sld { right: 62mm; width: 14mm; background: var(--c-sub);
-            clip-path: polygon(50% 0, 100% 0, 50% 100%, 0 100%); }
+/* 오른쪽 면 — 책 이름 + 로고만 */
 .hdR .bk { position: absolute; right: 30mm; top: 6.6mm;
-           font: 500 8.6pt/1 Noto; color: #fff; letter-spacing: .01em;
+           font: 500 8.8pt/1 Noto; color: #fff; letter-spacing: .01em;
            white-space: nowrap; }
-.hdR .crest { position: absolute; right: 19mm; top: 5.6mm; width: 7mm;
-           height: 7.2mm; background-color: #fff;
+.hdR .crest { position: absolute; right: 19mm; top: 5.4mm; width: 7.4mm;
+           height: 7.6mm; background-color: #fff;
            -webkit-mask: url(assets/crest.png) no-repeat center/contain;
            mask: url(assets/crest.png) no-repeat center/contain; }
 
 .rh-off .hd { background: none; }
 .rh-off .hd * { display: none; }
+
+/* ------------------------------------------------------------- 꼬리말
+ * 쪽번호 옆에 왼쪽 면은 **교재명**, 오른쪽 면은 **단원명**을 같이 둔다.
+ */
+.pfL { position: running(pfL); }
+.pfR { position: running(pfR); }
+.ft { width: 174mm; font: 500 7.6pt/1 Noto; color: var(--n-4);
+      letter-spacing: .02em; padding-top: 8mm; }
+.ftR { text-align: right; }
+.ft .pn { font: 700 9pt/1 Disp; color: var(--c-main); }
+.ftL .pn { margin-right: 4mm; }
+.ftR .pn { margin-left: 4mm; }
+.ft .pn::before { content: counter(page); }
+.rh-off .ft * { color: transparent; }
 
 /* -------------------------------------------------------------- 본문 */
 html, body { margin: 0; padding: 0; }

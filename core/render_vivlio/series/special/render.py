@@ -206,13 +206,17 @@ def runhead(unit_top, unit_no, label, main, sub, book, off=False):
     txt = (f'<span class="ht"><i class="l1">{esc(label)}</i>'
            f'<i class="l2">{esc(main)}'
            + (f'<b>{esc(sub)}</b>' if sub else '') + '</i></span>')
+    # 꼬리말 — 왼쪽 면은 교재명, 오른쪽 면은 단원명
+    unit = "  ·  ".join(x for x in (f"{unit_top} {unit_no}".strip(), main) if x)
     return (f'<div class="rhL{o}"><div class="hd hdL">'
-            f'<span class="sld"></span><span class="blk"></span>'
-            f'{chip}{txt}</div></div>'
+            f'<span class="blk"></span>{chip}{txt}</div></div>'
             f'<div class="rhR{o}"><div class="hd hdR">'
-            f'<span class="sld"></span><span class="blk"></span>'
             f'<span class="bk">{esc(book)}</span>'
-            f'<span class="crest"></span></div></div>')
+            f'<span class="crest"></span></div></div>'
+            f'<div class="pfL{o}"><div class="ft ftL">'
+            f'<span class="pn"></span>{esc(book)}</div></div>'
+            f'<div class="pfR{o}"><div class="ft ftR">'
+            f'{esc(unit)}<span class="pn"></span></div></div>')
 
 
 # ── 제목(번호를 떼어 세운다) ────────────────────────────────────────────
@@ -815,6 +819,7 @@ def end_page(cfg, d):
     # ⚠ 러닝 요소(`position: running()`)를 이 섹션 **안에** 두면 섹션이 통째로
     #   비어 나온다(실측). 형제로 앞에 둔다.
     return ('<div class="rhL rh-off"></div><div class="rhR rh-off"></div>'
+            '<div class="pfL rh-off"></div><div class="pfR rh-off"></div>'
             f'<section class="endpage v-{d["volumes"][-1]["id"]}">'
             '<div class="bg"></div><div class="orb"></div>'
             f'<div class="e-in"><div class="e-brand">'
