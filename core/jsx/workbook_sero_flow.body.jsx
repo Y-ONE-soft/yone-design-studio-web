@@ -777,6 +777,12 @@ try {
     wlog("오버플로우: " + ovf + "개");
 
     doc.save(File(OUT_INDD));
+    // PDF 페이지 범위는 **앱 전역 설정**이라 이전 수동 export의 범위가
+    // 그대로 남는다 (2026-08-28 실측: 92쪽 문서가 3쪽짜리 PDF로 나왔다 —
+    // INDD 는 정상, PDF 만 잘림). export 직전에 전체 페이지로 못 박는다
+    // (convert_vertical / passage_remove 는 이미 이렇게 한다).
+    try { app.pdfExportPreferences.pageRange = PageRange.ALL_PAGES; }
+    catch (ePR) {}
     doc.exportFile(ExportFormat.PDF_TYPE, File(OUT_PDF));
     wlog("PDF: 성공 -> " + OUT_PDF);
     doc.close(SaveOptions.NO);
