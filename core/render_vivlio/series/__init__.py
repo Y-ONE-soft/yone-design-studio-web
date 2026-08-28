@@ -34,6 +34,11 @@ def _vocaunit():
     return VocaunitSeries()
 
 
+def _special():
+    from core.render_vivlio.series.special import SpecialSeries
+    return SpecialSeries()
+
+
 def _blackbook():
     from core.render_vivlio.series.blackbook import BlackbookSeries
     return BlackbookSeries()
@@ -42,3 +47,4 @@ def _blackbook():
 register("vocabook", _vocabook)
 register("vocaunit", _vocaunit)
 register("blackbook", _blackbook)
+register("special", _special)
