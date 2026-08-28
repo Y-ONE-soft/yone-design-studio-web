@@ -234,7 +234,9 @@ def render_vocab(vol, out):
             k.flush()
             txt = plain(b["r"])
             wk_no, wname = numtitle(txt.replace("Week", "").strip()
-                                    if txt.startswith("Week") else txt)
+                                    if txt.startswith("Week") else "")
+            if not wk_no:
+                wname = txt.lstrip("부록 —").strip() or txt
             # 그 주의 어근 정보 — 다음 분류 띠에서 가져온다
             wk_root = ""
             for nb in blocks[i + 1:i + 3]:
@@ -242,11 +244,16 @@ def render_vocab(vol, out):
                     c = cols(plain(nb["r"]), 3)
                     wk_root = "  ·  ".join(c[1:]) if len(c) > 1 else ""
                     break
-            head = (f'WEEK {wk_no}' if wk_no else txt)
+            c = cols(wk_root, 2)
+            ttl = c[0] if c else (wname or txt)
+            sub = c[1] if len(c) > 1 else ""
+            if not wk_no:                      # 부록 — 번호가 없는 주
+                ttl, sub, lab = wname or txt, "", "APPENDIX"
+            else:
+                lab = "WEEK"
             out.append(f'<section class="week-open">'
                        f'{runhead("WEEK", wk_no or "", "VOCABULARY", wk_root)}'
-                       + title_block("big", wk_no, "WEEK",
-                                     wname or txt, esc(wk_root))
+                       + title_block("big", wk_no, lab, ttl, esc(sub))
                        + '</section>')
         elif t == "group":
             c = cols(plain(b["r"]), 3)

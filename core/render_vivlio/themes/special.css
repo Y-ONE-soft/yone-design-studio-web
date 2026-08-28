@@ -70,7 +70,7 @@
 /* --------------------------------------------------------------- 판형 */
 @page {
   size: 216mm 303mm;
-  margin: 29mm 19mm 23mm 23mm;
+  margin: 27mm 19mm 23mm 23mm;
   @bottom-left-corner { content: none; }
   @bottom-right-corner { content: none; }
 }
@@ -100,25 +100,27 @@
  */
 .rhL { position: running(rhL); }
 .rhR { position: running(rhR); }
-.nav { height: 29mm; }
+.nav { height: 27mm; }
 .navL { margin-left: -19mm; padding-left: 19mm; }
 .navR { margin-left: -23mm; padding-left: 23mm; padding-right: 19mm;
         text-align: right; }
 .nav .slab { display: inline-block; vertical-align: top;
-             margin: 0 6mm 0 -19mm; padding: 4.4mm 5mm 4.4mm 19mm;
+             margin: 0 6mm 0 -19mm; padding: 4mm 5mm 4mm 19mm;
              background: var(--c-main); color: #fff; min-width: 24mm; }
-.nav .slab .s1 { display: block; font: 700 6.2pt/1 Disp;
-                 letter-spacing: .22em; opacity: .85; font-style: normal; }
+.nav .slab .s1 { display: block; font: 700 6.4pt/1 Disp;
+                 letter-spacing: .18em; opacity: .85; font-style: normal; }
 .nav .slab .s2 { display: block; margin-top: 1.6mm; font-style: normal;
                  font: 700 12pt/1 Disp; letter-spacing: -.01em; }
-.nav .hx { display: inline-block; vertical-align: top; padding-top: 5.2mm; }
+.nav .hx { display: inline-block; vertical-align: top; padding-top: 4.6mm; }
 .nav .h1 { display: block; font: 700 6.4pt/1 Disp; letter-spacing: .2em;
            color: var(--c-main); font-style: normal; }
 .nav .h2 { display: block; margin-top: 2mm; font-style: normal;
            font: 500 9.6pt/1.2 Noto; color: var(--ink);
            letter-spacing: -.015em; }
-.navR .crest { display: inline-block; vertical-align: top; width: 7.4mm;
-               height: 7.6mm; margin: 5mm 0 0 6mm;
+.navR .h1 { color: var(--n-4); }
+.navR .h2 { font: 700 11pt/1.2 Noto; color: var(--c-deep); }
+.navR .crest { display: inline-block; vertical-align: top; width: 8.4mm;
+               height: 8.6mm; margin: 4.4mm 0 0 7mm;
                background-color: var(--c-main);
                -webkit-mask: url(assets/crest.png) no-repeat center/contain;
                mask: url(assets/crest.png) no-repeat center/contain; }
@@ -144,7 +146,7 @@ u { text-decoration: none; }
 
 /* ── 라벨 A · 대분류 — 글자만. 상자 없음 ── */
 .tk, .h1, .wl.solo, .toc-k, .d-no, .d-en, .p-no {
-  font-family: Disp; font-weight: 700; letter-spacing: .2em;
+  font-family: Disp; font-weight: 700; letter-spacing: .16em;
 }
 
 /* ── 라벨 B · 학습 포인트 — 좌측 색 막대 + 굵은 글자 ── */
@@ -165,7 +167,7 @@ u { text-decoration: none; }
 .wl.solo { display: block; margin: var(--s3) 0 var(--s1);
            font-size: 7.2pt; color: var(--n-4); break-after: avoid; }
 .wr { display: table; table-layout: fixed; width: 100%;
-      margin-top: var(--s2); }
+      margin-top: 3mm; }
 .wr > span, .wr .wc { display: table-cell; vertical-align: bottom; }
 .wr .wl { width: 20mm; padding-bottom: 1.2mm; }
 .wr .wline { border-bottom: .5pt solid var(--n-3); height: 8mm; }
@@ -173,8 +175,8 @@ u { text-decoration: none; }
 .wr.multi .wc:last-child { padding-right: 0; }
 .wr.multi .wl { display: inline-block; width: auto; margin-right: 2.6mm; }
 .wr.multi .wline { display: inline-block; width: 44mm; height: 4.4mm; }
-.wr.long .wline { height: 9mm; }
-.gram .wr.long .wline { height: 12mm; }
+.wr.long .wline { height: 8mm; }
+.gram .wr.long .wline { height: 11mm; }
 
 /* ============================================================ 표지·간지 */
 .coverpage, .divider, .tocpage, .partpage, .memopage { page: plain; }
@@ -198,8 +200,8 @@ u { text-decoration: none; }
 .dvL, .dvR { position: relative; box-sizing: border-box;
              width: 216mm; height: 303mm; overflow: hidden;
              background: var(--c-main); page: plain; }
-.dvL { break-before: left;  margin: -29mm -23mm -23mm -19mm; }
-.dvR { break-before: right; margin: -29mm -19mm -23mm -23mm; }
+.dvL { break-before: left;  margin: -27mm -23mm -23mm -19mm; }
+.dvR { break-before: right; margin: -27mm -19mm -23mm -23mm; }
 .dvL .orb { position: absolute; right: -74mm; top: 96mm;
             width: 148mm; height: 148mm; border-radius: 50%;
             background: #fff; opacity: .1; }
@@ -234,17 +236,17 @@ u { text-decoration: none; }
        padding: 4mm 0 3.4mm; border-bottom: .5pt solid var(--n-3);
        font: 500 10.4pt/1.4 Noto; }
 .t-1 span { display: table-cell; vertical-align: baseline; padding-right: 5mm; }
-.t-1 .t0 { width: var(--g); font: 700 10.4pt/1.4 Disp; color: var(--c-main);
+.t-1 .t0 { width: 26mm; font: 700 10.4pt/1.4 Disp; color: var(--c-main);
            padding-right: 6mm; }
 .t-1 .t1 { width: 44mm; font-family: Minion; font-weight: 600; }
 .t-1 .t2 { color: var(--n-5); font-weight: 400; }
 .t-1.solo .t0 { width: auto; color: var(--ink); }
-.t-2 { padding: 2mm 0 2mm calc(var(--g) + 6mm); font: 400 9.4pt/1.4 Noto;
+.t-2 { padding: 2mm 0 2mm 26mm; font: 400 9.4pt/1.4 Noto;
        color: var(--n-5); }
 
 /* ============================================================== PART 오프너 */
 .partpage { break-before: page; height: 250mm; position: relative; }
-.partpage .slab { position: absolute; left: -23mm; right: -19mm; top: -29mm;
+.partpage .slab { position: absolute; left: -23mm; right: -19mm; top: -27mm;
             height: 100mm; background: var(--c-deep); }
 .p-no  { position: absolute; left: 0; top: 32mm; font-size: 10pt;
          line-height: 1; color: #fff; opacity: .8; }
@@ -260,7 +262,7 @@ u { text-decoration: none; }
 
 /* ================================================== 제목 — 번호를 떼어 세운다 */
 .ttl { display: table; table-layout: fixed; width: 100%;
-       margin-bottom: var(--s4); }
+       margin-bottom: 11mm; }
 .ttl > span, .ttl > div { display: table-cell; vertical-align: top; }
 .ttl .tn { width: var(--g); font: 700 25pt/.9 Disp; color: var(--c-main);
            letter-spacing: -.03em; }
@@ -288,7 +290,7 @@ u { text-decoration: none; }
 
 /* 분류 구분 — 면 구조를 나누는 역할. 띠가 아니라 **구분선 + 라벨** */
 .vgroup { display: table; table-layout: fixed; width: 100%;
-          margin: var(--s4) 0 var(--s2);
+          margin: 10mm 0 var(--s1);
           border-top: 1.2pt solid var(--c-main);
           padding-top: 2.4mm; break-after: avoid; }
 .vgroup span { display: table-cell; vertical-align: baseline; }
@@ -298,27 +300,27 @@ u { text-decoration: none; }
 .vgroup + .wcard { border-top: none; }
 
 .wcard { display: table; table-layout: fixed; width: 100%;
-         break-inside: avoid; padding: 4mm 0 4.4mm;
+         break-inside: avoid; padding: 2.6mm 0 3mm;
          border-bottom: .5pt solid var(--n-3); }
 .w-l { display: table-cell; width: 50mm; vertical-align: top;
        padding-right: 6mm; }
 .w-r { display: table-cell; vertical-align: top; }
-.w-head  { font: 700 14.5pt/1.1 Minion; color: var(--ink);
+.w-head  { font: 700 13.6pt/1.1 Minion; color: var(--ink);
            letter-spacing: -.01em; }
 .w-no    { font: 400 6.8pt/1 Disp; letter-spacing: .1em; color: var(--n-4);
            vertical-align: 1.6mm; margin-left: 1.6mm; }
-.w-sense { margin-top: 1.8mm; font: 500 9.6pt/1.42 Noto; color: var(--ink); }
-.w-build { margin-top: 2mm; font: 400 7.6pt/1.45 Noto; color: var(--n-4); }
-.w-ex    { margin-bottom: 1.6mm; font: 400 9pt/1.5 Minion, Noto;
+.w-sense { margin-top: 1.1mm; font: 500 9.4pt/1.4 Noto; color: var(--ink); }
+.w-build { margin-top: 1.4mm; font: 400 7.4pt/1.4 Noto; color: var(--n-4); }
+.w-ex    { margin-bottom: 1.1mm; font: 400 8.9pt/1.46 Minion, Noto;
            color: #37322b; padding-left: 5mm; text-indent: -5mm; }
 .w-ex .exn { display: inline-block; text-indent: 0; width: 3.2mm;
              margin-right: 1.8mm; color: var(--n-4); text-align: right;
              font: 700 6.4pt/1 Disp; vertical-align: .4mm; }
 .w-key { display: table; table-layout: fixed; width: 100%;
-         margin-top: 2.4mm; }
+         margin-top: 1.4mm; }
 .w-key .wl { display: table-cell; width: 18mm; vertical-align: bottom;
              padding-bottom: 1mm; font-size: 6.4pt; }
-.w-key .wline { display: table-cell; vertical-align: bottom; height: 6.4mm;
+.w-key .wline { display: table-cell; vertical-align: bottom; height: 5.2mm;
                 border-bottom: .4pt solid var(--n-3); }
 
 .apx { display: table; table-layout: fixed; width: 100%;
@@ -347,10 +349,10 @@ u { text-decoration: none; }
 
 .drill-h { font: 700 15pt/1.2 Disp; color: var(--ink); letter-spacing: -.045em; }
 .drillpage.gram .drill-h { color: var(--c-sub); }
-.drill { margin-bottom: var(--s4); }
+.drill { margin-bottom: 11mm; }
 .drill-note { margin-top: 3mm; font: 400 9pt/1.55 Noto; color: var(--n-5); }
 
-.qitem { break-inside: avoid; margin-bottom: var(--s3); }
+.qitem { break-inside: avoid; margin-bottom: 6.4mm; }
 .q { display: table; table-layout: fixed; width: 100%; }
 .q span { display: table-cell; vertical-align: top; }
 .q-no { width: var(--g); font: 700 13pt/1.15 Disp; color: var(--c-main);
