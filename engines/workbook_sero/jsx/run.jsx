@@ -3101,18 +3101,54 @@
             }
         }
 
-        // P+4: 문장 배열 (C) — 메인 frame ← step1_c1
+        // P+4: 문장 배열 (C) — **상단/하단 2프레임에 나눠 넣는다**
+        //
+        // 종전엔 "높이가 가장 큰 frame 하나"에 전부 넣었다. 세로 문장배열
+        // 페이지는 상단(y32~153)/하단(y153~277) 2프레임인데 하단이 3pt 더 커서
+        // **하단이 선택되고**, 우리 지문이 하단으로 밀리며 상단엔 템플릿 잔재가
+        // 남았다(2026-08-25 실측: 상단 {20}/{21}/{22} 잔재 + 하단 넘침).
+        // 두 프레임은 스레드가 아니라 각각 독립 스토리(containers=1)라 한쪽에만
+        // 넣으면 나머지는 채워지지 않는다.
+        //
+        // 규칙(사용자 확정): 상단 = 순서배열 / 하단 = 순서삽입.
+        // 파서가 하단 시작 문단에 3칸 이상 공백을 붙여 두므로(가로 JSX 의 BTM
+        // 판정 근거) 그 지점을 경계로 갈라 각 프레임에 넣는다.
+        // 2프레임이 아닌 페이지는 종전 동작 그대로.
         var p4 = pg(4);
         if (p4 && !excludeSet["step1_c1"]) {
-            var b4 = seroBodyFrames(p4);
-            var mainFr4 = null, bestH4 = 0;
-            for (var i4 = 0; i4 < b4.length; i4++) {
-                if (b4[i4].h > bestH4) { bestH4 = b4[i4].h; mainFr4 = b4[i4].fr; }
-            }
-            if (mainFr4 && cyc.steps && cyc.steps.step1_c1 && cyc.steps.step1_c1.length > 0) {
-                try { seroRunStep(mainFr4.parentStory, processStep1C1, cyc.steps.step1_c1, qstr, code, "step1_c1"); } catch(eF){ addLog("Q"+qn+" P+4 오류: "+eF.message); }
+            var b4 = seroBodyFrames(p4);              // y 오름차순 (상단 → 하단)
+            var c1arr = (cyc.steps && cyc.steps.step1_c1) ? cyc.steps.step1_c1 : [];
+            if (b4.length >= 2 && c1arr.length > 0) {
+                var topFr4 = b4[0].fr, botFr4 = b4[1].fr;
+                var splitAt = -1;
+                for (var sa = 0; sa < c1arr.length; sa++) {
+                    var st4 = "";
+                    try { st4 = String(c1arr[sa].text || ""); } catch (eT) { st4 = ""; }
+                    if (/\s{3,}$/.test(st4)) { splitAt = sa; break; }
+                }
+                var topArr = (splitAt < 0) ? c1arr : c1arr.slice(0, splitAt);
+                var botArr = (splitAt < 0) ? [] : c1arr.slice(splitAt);
+                addLog("Q" + qn + " P+4 문장배열: 상단 " + topArr.length +
+                       "문단 / 하단 " + botArr.length + "문단" +
+                       (splitAt < 0 ? " (하단 경계 없음)" : ""));
+                if (topArr.length > 0) {
+                    try { seroRunStep(topFr4.parentStory, processStep1C1, topArr, qstr, code, "step1_c1"); }
+                    catch (eT4) { addLog("Q" + qn + " P+4 상단 오류: " + eT4.message); }
+                } else { seroClearFrame(topFr4); }
+                if (botArr.length > 0) {
+                    try { seroRunStep(botFr4.parentStory, processStep1C1, botArr, qstr, code, "step1_c1"); }
+                    catch (eB4) { addLog("Q" + qn + " P+4 하단 오류: " + eB4.message); }
+                } else { seroClearFrame(botFr4); }
             } else {
-                seroClearFrame(mainFr4);
+                var mainFr4 = null, bestH4 = 0;
+                for (var i4 = 0; i4 < b4.length; i4++) {
+                    if (b4[i4].h > bestH4) { bestH4 = b4[i4].h; mainFr4 = b4[i4].fr; }
+                }
+                if (mainFr4 && c1arr.length > 0) {
+                    try { seroRunStep(mainFr4.parentStory, processStep1C1, c1arr, qstr, code, "step1_c1"); } catch(eF){ addLog("Q"+qn+" P+4 오류: "+eF.message); }
+                } else {
+                    seroClearFrame(mainFr4);
+                }
             }
         }
 
