@@ -697,19 +697,24 @@ def _s3_answer_cell_idx(seq):
     """라벨 셀(= 답란으로 실물화할 단락) 인덱스 집합."""
     out = set()
     n = len(seq)
-    # ① 기입 칸이 접힌 콜론형 ("(    ) :") — 앞에 답표 열 머리 또는 같은
-    #    형태의 형제 행이 있어야 한다 (문장 중간의 콜론 줄 오탐 차단).
-    prev_ok = False
-    for i in range(n):
-        tc = (seq[i].get("text") or "").strip()
-        if not tc:
+    # ① 기입 칸이 접힌 콜론형 ("(    ) :") — 답표 열 머리 뒤에 오거나
+    #    형제 행이 2줄 이상 이어질 때만 (문장 중간의 콜론 줄 오탐 차단).
+    meaning = [i for i in range(n) if (seq[i].get("text") or "").strip()]
+    x = 0
+    while x < len(meaning):
+        if not _RE_S3_CELL_COLON.match(
+                (seq[meaning[x]].get("text") or "").strip()):
+            x += 1
             continue
-        if _RE_S3_CELL_COLON.match(tc):
-            if prev_ok:
-                out.add(i)
-                continue
-        prev_ok = bool(_RE_S3_CELL_COLON.match(tc)
-                       or _is_anslabel_head(tc))
+        y = x
+        while y < len(meaning) and _RE_S3_CELL_COLON.match(
+                (seq[meaning[y]].get("text") or "").strip()):
+            y += 1
+        head = (x > 0 and _is_anslabel_head(
+            (seq[meaning[x - 1]].get("text") or "").strip()))
+        if head or (y - x) >= 2:
+            out.update(meaning[x:y])
+        x = y
     for i in range(n - 1):
         t = (seq[i].get("text") or "")
         tc = t.strip()
@@ -1266,10 +1271,14 @@ def _s3_answer_tables(unit, st_q, warnings):
         j = i + 2
         while j < len(unit) and not (unit[j].get("t") or "").strip():
             j += 1          # 뒤따르는 빈 줄은 답 여백 — 블록 끝으로 본다
-        # 블록 끝 조건: 다음 내용이 없거나 새 발문/새 지문 (= 답 영역 종료)
+        # 블록 끝 조건: 다음 내용이 없거나 새 발문/새 지문 (= 답 영역 종료).
+        # 2026-08-28 실증(수특라이트영독 10강, 4문항 전부): 원고가 어휘 각주
+        # ("* shareholder value 주주 가치")를 답표 헤더 **뒤**에 놓아 다음
+        # 내용이 '영단어' 스타일이었고, 지문 계열인데도 이 조건에서 걸려
+        # 표가 하나도 생성되지 않았다. 지문 계열 판정을 _is_passage 로 통일
+        # (지문/배경/영단어 — 위 '답표는 지문 뒤' 판정과 같은 눈).
         nxt = unit[j] if j < len(unit) else None
-        if nxt is not None and nxt.get("s") not in (st_q,) \
-                and "실전 문제 지문" not in (nxt.get("s") or ""):
+        if nxt is not None and nxt.get("s") != st_q and not _is_passage(nxt):
             i += 1
             continue
         # 직전 발문 찾기 (서술형 + 행 수)
@@ -1311,6 +1320,13 @@ def _s3_answer_tables(unit, st_q, warnings):
         # 지문 바로 밑에 표가 붙어 답답하다(사용자 지시 2026-08-27) —
         # 표 앞에 빈 단락 한 개(엔터 한 칸)를 둔다. 앞이 이미 빈 줄이면
         # 넣지 않는다(두 줄이 되지 않게).
+        # 각주가 헤더 뒤에 밀려 있으면 지문 바로 뒤로 되돌린다 — 그대로 두면
+        # 표 아래에 각주가 떠서 다른 문항(지문 → 각주 → 선지)과 어긋난다.
+        _wsty = _style("STEP3", "Word")
+        while (i + 2 < len(unit) and _wsty
+               and unit[i + 2].get("s") == _wsty):
+            unit.insert(i, unit.pop(i + 2))
+            i += 1
         _prev_blank = (i > 0 and not (unit[i - 1].get("t") or "").strip())
         _rows = [] if _prev_blank else [
             {"t": "", "s": host_style, "runs": []}]
