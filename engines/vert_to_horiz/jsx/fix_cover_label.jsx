@@ -51,21 +51,30 @@
 
         // 간지 문구는 **마스터 페이지**에 있다(실측: 마스터 "간지").
         // 일반 페이지만 훑으면 0건이 된다. 마스터와 본문 페이지를 모두 본다.
+        // 프레임 전체가 그 문구인 경우는 드물다 — 간지 프레임에는 다른
+        // 문단도 함께 들어 있다(실측: 프레임 단위 검사 0건). **문단 단위**로
+        // 완전 일치를 본다. 본문 발문은 긴 문장 안에 "고1 모의고사" 가
+        // 포함될 뿐이라 문단 전체가 일치하지 않으므로 걸리지 않는다.
         function sweep(frames, where) {
             for (var i = 0; i < frames.length; i++) {
                 var tf = frames[i];
-                var c = "";
-                try { c = String(tf.contents); } catch (e2) { continue; }
-                scanned++;
-                if (!RE_ONLY.test(c)) continue;
-                try {
-                    // contents 대입은 서식을 유지한다(문단·문자 스타일 보존).
-                    tf.contents = label;
-                    changed++;
-                    W("  " + where + " : \"" + c.replace(/[\r\n]/g, " ") +
-                      "\" → \"" + label + "\"");
-                } catch (e3) {
-                    W("  [실패] " + where + " : " + (e3.message || e3));
+                var ps;
+                try { ps = tf.paragraphs; } catch (e1) { continue; }
+                for (var j = 0; j < ps.length; j++) {
+                    var c = "";
+                    try { c = String(ps[j].contents); } catch (e2) { continue; }
+                    scanned++;
+                    if (!RE_ONLY.test(c)) continue;
+                    try {
+                        // 문단 끝 개행은 보존한다 — 통째로 대입하면 문단이 합쳐진다.
+                        var tail = /[\r\n]$/.test(c) ? c.substring(c.length - 1) : "";
+                        ps[j].contents = label + tail;
+                        changed++;
+                        W("  " + where + " : \"" + c.replace(/[\r\n]/g, " ") +
+                          "\" → \"" + label + "\"");
+                    } catch (e3) {
+                        W("  [실패] " + where + " : " + (e3.message || e3));
+                    }
                 }
             }
         }
