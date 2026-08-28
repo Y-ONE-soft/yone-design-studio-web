@@ -239,6 +239,11 @@
                   fail-open: 템플릿에 S_답란이 없으면 선지 폴백 + 들여쓰기
                   0 로컬 오버라이드 브릿지 → warning. 있는데 미적용이면
                   critical.
+  G50 [유형표기] 원고 문항 유형 표기("내용 파악"/"서술형 영작"/"빈칸")가
+                  본문에 인쇄됨 — critical(2건 이상). 형태+위치+반복 3층
+                  판정(플랜 _s3_type_label_idx 와 같은 눈).
+  G51 [답란미실물] 원고 답표의 기입 줄("(    ) :")이 밑줄 칸 없이 인쇄됨
+                  — critical. 기입 칸이 빈 칸으로 접혀 온 원고 형태.
   G48 [선지헤더] 다열 선지 열 머리("ⓐ  ⓑ  ⓒ" 위에 선지 ①~⑤가 오는 줄)가
                   선지 스타일이 아님 — critical. 표기(ⓐ/㉠/(A)/(a)) 불문
                   구조 판정(core.structure.rules.choice_header_marks). 지문
@@ -269,6 +274,11 @@ from engines.workbook_v2.plan import (GLYPH_PRINT_TABLE, PUA_PRINT_TABLE,
                                       SUBSCRIPT_PRINT_TABLE,
                                       is_header_line, is_a1_header,
                                       passage_labels, _norm_header)
+
+# G51 — 기입 칸이 접힌 콜론형 답란 줄이 '실물화 없이' 남은 형태 (뒤에
+# 밑줄 칸이 붙었으면 줄 끝이 공백런이라 이 패턴에 걸리지 않는다)
+_RE_G51_CELL_COLON = re.compile(
+    r"^\s*(?:[(（]\s*[)）]|[①-⑮ⓐ-ⓩⒶ-Ⓩ㉠-㉭]|\d{1,2}\s*[.)]?)?\s*[:：]\s{0,4}$")
 
 # G49 — '보기' 라벨만 있는 단락 (내용 없는 상자 판정용)
 _RE_BOX_LABEL_ONLY = re.compile(r'^[<\[]?\s*보\s*기\s*[A-Z0-9]?\s*[>\]]?$')
@@ -800,6 +810,54 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
             critical.append(
                 f"[원고잔재] {_label.get(kind, kind)} {len(hits)}줄이 출력에 "
                 f"그대로 인쇄됨: " + " | ".join(sorted(set(hits))[:3]))
+
+    # ── G50 [유형표기] 원고 문항 유형 표기가 출력에 인쇄됨 ────────────────
+    # 2026-08-28 사용자 지적(수특라이트영독 10강): "스텝3에 내용 파악, 서술형
+    # 영작, 빈칸 이런 문제 유형들이 본문에 들어가 있다." 플랜
+    # (_s3_type_label_idx)이 제거하므로 출력 잔존 = 미적용.
+    # 판정은 플랜과 같은 세 층 — 형태(R.is_type_label_form) + 위치(다음이
+    # 발문 스타일) + 원고 관행(2건 이상 반복). 답표 열 머리 쌍의 둘째 줄
+    # ('틀린 부분'/'수정')은 형제 방어로 제외한다(플랜과 같은 규칙).
+    from core.structure import rules as _R50
+    type_leaks = []
+    for story in dump.get("stories", []):
+        paras = [q for q in story.get("paragraphs", [])
+                 if _clean(q.get("t", ""))]
+        for i, para in enumerate(paras):
+            tt = _clean(para.get("t", ""))
+            if not _R50.is_type_label_form(tt):
+                continue
+            if i + 1 >= len(paras):
+                continue
+            if not any(k in (paras[i + 1].get("s") or "")
+                       for k in _Q_STYLE_KEYS):
+                continue
+            if i > 0 and _R50.is_type_label_form(
+                    _clean(paras[i - 1].get("t", ""))):
+                continue
+            type_leaks.append(tt[:20])
+    stats["step3_type_label_leaks"] = len(type_leaks)
+    if len(type_leaks) >= 2:
+        critical.append(f"[유형표기] 원고 문항 유형 표기 {len(type_leaks)}줄이 "
+                        f"본문에 인쇄됨: "
+                        + " | ".join(sorted(set(type_leaks))[:6]))
+
+    # ── G51 [답란미실물] 기입 줄이 밑줄 칸 없이 인쇄됨 ────────────────────
+    # 2026-08-28 사용자 지적: "(    ) : 이거 밑줄 있는 걸로 변경되어야 하는데
+    # 변경 안 됐고". 원고 답표의 기입 칸이 빈 칸으로 접혀 라벨 줄만 남은 형태
+    # — 플랜(_s3_answer_cell_idx)이 밑줄 칸을 붙인다. 밑줄 없이 남아 있으면
+    # 미적용 (덤프에 밑줄 정보가 없으면 '뒤에 칸이 없다'로 본다).
+    ans_flat = []
+    for story in dump.get("stories", []):
+        for para in story.get("paragraphs", []):
+            t = para.get("t", "") or ""
+            if not _RE_G51_CELL_COLON.match(t):
+                continue
+            ans_flat.append(t.strip()[:20])
+    stats["answer_cell_flat"] = len(ans_flat)
+    if ans_flat:
+        critical.append(f"[답란미실물] 기입 줄 {len(ans_flat)}개가 밑줄 칸 "
+                        f"없이 인쇄됨 (원고 답표 실물화 미적용)")
 
     # ── G48 [선지헤더] 다열 선지 열 머리가 지문 스타일 / 없던 밑줄 ───────
     # 2026-08-25 사용자 지적: "선지 헤더로 들어가는 abc 뒤에 자꾸 밑줄이

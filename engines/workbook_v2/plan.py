@@ -205,11 +205,19 @@ def _s3_type_label_idx(seq, R):
     for x, i in enumerate(meaning):
         if (seq[i].get("kind") or "") in ("Q", "Q-INTRO"):
             qn += 1
+        if (seq[i].get("kind") or "") in ("Box", "Cond", "Sum", "A", "GH",
+                                          "C", "AnsL", "SRC"):
+            continue        # 구조 역할이 확정된 줄(보기 마커 등)은 표기가 아니다
         if not R.is_type_label_form(seq[i].get("text") or ""):
             continue
         if x + 1 >= len(meaning):
             continue
         if (seq[meaning[x + 1]].get("kind") or "") not in ("Q", "Q-INTRO"):
+            continue
+        # 답표 열 머리 쌍("틀린 부분"/"수정")의 둘째 줄 방어 — 유형 표기는
+        # 형제 없이 홀로 온다 (코퍼스 실측: '수정' 16건이 이 형태).
+        if x > 0 and R.is_type_label_form(
+                seq[meaning[x - 1]].get("text") or ""):
             continue
         cand.add(i)
     if len(cand) < 2 or len(cand) < _S3_TYPE_LABEL_MIN_RATIO * qn:
