@@ -238,19 +238,17 @@ def render_vocab(vol, out):
             if not wk_no:
                 wname = txt.lstrip("부록 —").strip() or txt
             # 그 주의 어근 정보 — 다음 분류 띠에서 가져온다
-            wk_root = ""
+            root, gloss = "", ""
             for nb in blocks[i + 1:i + 3]:
                 if nb["t"] == "group":
                     c = cols(plain(nb["r"]), 3)
-                    wk_root = "  ·  ".join(c[1:]) if len(c) > 1 else ""
+                    root = c[1] if len(c) > 1 else ""
+                    gloss = c[2] if len(c) > 2 else ""
                     break
-            c = cols(wk_root, 2)
-            ttl = c[0] if c else (wname or txt)
-            sub = c[1] if len(c) > 1 else ""
+            wk_root = "  ·  ".join(x for x in (root, gloss) if x)
+            ttl, sub, lab = root or (wname or txt), gloss, "WEEK"
             if not wk_no:                      # 부록 — 번호가 없는 주
                 ttl, sub, lab = wname or txt, "", "APPENDIX"
-            else:
-                lab = "WEEK"
             out.append(f'<section class="week-open">'
                        f'{runhead("WEEK", wk_no or "", "VOCABULARY", wk_root)}'
                        + title_block("big", wk_no, lab, ttl, esc(sub))
@@ -453,8 +451,11 @@ def render_grammar(vol, out):
             txt = plain(b["r"])
             if txt.startswith("PART"):
                 close_col()
+                c = cols(txt, 2)
                 out.append('<section class="anspage">'
-                           + runhead("정답 및 해설", "", VOL_EN["grammar"], txt)
+                           + runhead("ANSWERS", "정답 및 해설",
+                                     c[0] if c else "", 
+                                     c[1] if len(c) > 1 else txt)
                            + title_block("ans", "", "ANSWERS", txt)
                            + '</section><div class="anscol">')
                 col_open = True
