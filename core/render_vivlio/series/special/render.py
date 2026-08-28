@@ -146,7 +146,9 @@ def point_row(rich):
     if labs and labs[0].upper().startswith("POINT"):
         tag = labs[0][:5]
         labs = [labs[0][5:].strip()] + labs[1:]
-    cells = "".join(f'<span class="fcell"><span class="fl">{esc(t)}</span>'
+    # 원고의 `□` 는 워드 체크박스 글리프다 — 떼고 도형으로 그린다
+    cells = "".join(f'<span class="fcell"><span class="fl"><i class="cbx">'
+                    f'</i>{esc(t.lstrip("□ ").strip())}</span>'
                     f'<span class="fline"></span></span>' for t in labs if t)
     return (f'<div class="frow pt"><span class="ptag">{esc(tag or "POINT")}'
             f'</span>{cells}</div>')
@@ -856,7 +858,7 @@ def verify_sequence(d):
                     txt = "".join(plain(s) for s in e
                                   if not (isinstance(s, dict)
                                           and s.get("k") == "src"))
-                    frag = probe_text(txt.strip("❶❷ "))
+                    frag = probe_text(RE_EXNUM.sub("", txt))
                     if frag:
                         seq.append((f"{vid}/{b['head']} 예문", frag))
                 continue

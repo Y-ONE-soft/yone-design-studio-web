@@ -217,9 +217,9 @@ u { text-decoration: none; }
 .t-1 .t2 { color: #55504a; }
 .t-1.solo .t0 { width: auto; }
 .t-2 { padding: 1.7mm 0 1.7mm 38mm; font: 400 9.2pt/1.4 Noto; color: #55504a; }
-.t-2 { position: relative; }
-.t-2::before { content: ""; position: absolute; left: 33mm; top: 3.1mm;
-       width: 3mm; height: .4mm; background: var(--c-line); }
+.t-2::before { content: ""; display: inline-block; text-indent: 0;
+       width: 3mm; height: .4mm; margin: 0 2mm .9mm -5mm;
+       background: var(--c-line); vertical-align: middle; }
 
 /* ============================================================== PART 표지 */
 .partpage { break-before: page; height: 255mm; position: relative; }
@@ -238,7 +238,7 @@ u { text-decoration: none; }
 .p-it { display: table; table-layout: fixed; width: 100%;
         padding: 4mm 0; border-bottom: .5pt solid var(--hair); }
 .p-it span { display: table-cell; vertical-align: baseline; }
-.p-it .pn { width: 16mm; font: 700 11pt/1.2 Disp; color: var(--c-line); }
+.p-it .pn { width: 16mm; font: 700 11pt/1.2 Disp; color: var(--c-main); }
 .p-it .pt { font: 500 10.4pt/1.35 Noto; color: var(--c-deep);
             letter-spacing: -.01em; }
 
@@ -273,12 +273,13 @@ u { text-decoration: none; }
 .w-build { margin-top: 1mm; font: 400 7.6pt/1.42 Noto; color: var(--c-sub); }
 .w-sense { margin-top: .6mm; font: 500 9.4pt/1.42 Noto; color: var(--ink); }
 .w-ex    { margin-bottom: 1.3mm; font: 400 8.9pt/1.46 Minion, Noto;
-           color: #3a362f; padding-left: 5mm; position: relative; }
+           color: #3a362f; padding-left: 5mm; text-indent: -5mm; }
 /* ❶❷ 글리프 대신 번호 배지 */
-.w-ex .exn { position: absolute; left: 0; top: .7mm; width: 3.2mm;
-             height: 3.2mm; border-radius: .6mm; background: var(--c-line);
-             color: var(--c-deep); text-align: center;
-             font: 700 5.6pt/3.2mm Disp; }
+.w-ex .exn { display: inline-block; text-indent: 0; width: 3.2mm;
+             height: 3.2mm; margin-right: 1.8mm; border-radius: .6mm;
+             background: var(--c-line); color: var(--c-deep);
+             text-align: center; font: 700 5.6pt/3.2mm Disp;
+             vertical-align: .2mm; }
 /* KEY POINT — 원고에는 `❖ KEY POINT` 라는 글자와 빈 줄뿐이다. 그대로 두면
  * 원고를 인쇄한 것과 같다 → **라벨 탭이 붙은 기입 판**으로 짠다. */
 .w-key { display: table; table-layout: fixed; width: 100%; margin-top: 2mm;
@@ -325,17 +326,21 @@ u { text-decoration: none; }
 /* ① 필기 POINT = 이 강에서 잡을 것(체크리스트) */
 /* ⚠ 머리 기호에 **글리프를 쓰지 않는다**(✓ ● ■ ·). 워드 문서의 흔적이다.
  *   자리는 도형·색면·번호가 대신한다. */
-.h-point { margin: 6mm 0 2.4mm; padding-left: 4mm; position: relative;
+/* ⚠ 본문 흐름 요소에 `position: relative/absolute` 를 주면 그 단락이 **뒤
+ *   레이어로 밀려** PDF 글자 추출 순서가 읽는 순서와 어긋난다(원고↔PDF 순서
+ *   대조가 1,939건 실패). 표식은 **매달린 들여쓰기 + inline-block 도형**으로만. */
+.h-point { margin: 6mm 0 2.4mm; padding-left: 4mm; text-indent: -4mm;
            font: 700 10.2pt/1.3 Noto; color: var(--c-sub);
            break-after: avoid; }
-.h-point::before { content: ""; position: absolute; left: 0; top: .4mm;
-           width: 1.6mm; height: 3.6mm; background: var(--c-sub);
-           border-radius: .8mm; }
-.bul { padding-left: 6mm; margin-bottom: 1.2mm; position: relative;
+.h-point::before { content: ""; display: inline-block; text-indent: 0;
+           width: 1.6mm; height: 3.4mm; margin-right: 2.4mm;
+           background: var(--c-sub); border-radius: .8mm;
+           vertical-align: -.4mm; }
+.bul { padding-left: 6mm; text-indent: -6mm; margin-bottom: 1.2mm;
        font: 400 9.2pt/1.6 Noto; }
-.bul::before { content: ""; position: absolute; left: 0; top: 1.7mm;
-       width: 2.6mm; height: 2.6mm; border-radius: .5mm;
-       border: .45mm solid var(--c-sub); }
+.bul::before { content: ""; display: inline-block; text-indent: 0;
+       width: 2.6mm; height: 2.6mm; margin-right: 3.4mm; border-radius: .5mm;
+       border: .45mm solid var(--c-sub); vertical-align: -.2mm; }
 
 /* ② 어법 개념 = 정의 문단 — 아이보리 상자 + 주색 탭 */
 .h-concept { margin: 6mm 0 0; display: inline-block;
@@ -348,10 +353,11 @@ u { text-decoration: none; }
 
 .subhead { margin: 5.4mm 0 1.8mm; font: 700 10.2pt/1.3 Noto;
            color: var(--c-deep); break-after: avoid; }
-.subhead { padding-left: 4mm; position: relative; }
-.subhead::before { content: ""; position: absolute; left: 0; top: .5mm;
-           width: 1.6mm; height: 3.4mm; background: var(--c-main);
-           border-radius: .8mm; }
+.subhead { padding-left: 4mm; text-indent: -4mm; }
+.subhead::before { content: ""; display: inline-block; text-indent: 0;
+           width: 1.6mm; height: 3.4mm; margin-right: 2.4mm;
+           background: var(--c-main); border-radius: .8mm;
+           vertical-align: -.4mm; }
 
 /* ============================================================== 연습문제 */
 .drillpage { break-before: page; }
@@ -389,6 +395,10 @@ u { text-decoration: none; }
 .frow.pt .fcell { padding-right: 4mm; }
 .frow.pt .fl { font: 700 7.6pt/1.5 Noto; color: var(--c-deep);
                white-space: nowrap; margin-right: 2mm; }
+/* 원고의 `□` 글리프 대신 그린 체크칸 */
+.frow.pt .cbx { display: inline-block; width: 2.4mm; height: 2.4mm;
+               margin-right: 1.6mm; border: .35mm solid var(--c-sub);
+               border-radius: .4mm; vertical-align: -.2mm; }
 .frow.pt .fline { display: inline-block; width: 40mm; height: 3.4mm;
                   border-bottom: .4pt solid var(--tone-gy2); }
 
@@ -440,16 +450,17 @@ u { text-decoration: none; }
 .ch  { margin: 5mm 0 2mm; display: inline-block; padding: 1.3mm 3.6mm;
        background: var(--c-sub); color: #fff; border-radius: 3mm;
        font: 700 8.4pt/1.3 Noto; letter-spacing: .04em; break-after: avoid; }
-.bh  { margin: 4mm 0 1.6mm; padding-left: 4mm; position: relative;
+.bh  { margin: 4mm 0 1.6mm; padding-left: 4mm; text-indent: -4mm;
        font: 700 9.8pt/1.35 Noto; color: var(--c-deep); break-after: avoid; }
-.bh::before { content: ""; position: absolute; left: 0; top: .4mm;
-       width: 1.6mm; height: 3.4mm; background: var(--c-main);
-       border-radius: .8mm; }
-.bbul { padding-left: 4.4mm; margin-bottom: .9mm; position: relative;
+.bh::before { content: ""; display: inline-block; text-indent: 0;
+       width: 1.6mm; height: 3.2mm; margin-right: 2.4mm;
+       background: var(--c-main); border-radius: .8mm;
+       vertical-align: -.3mm; }
+.bbul { padding-left: 4.4mm; text-indent: -4.4mm; margin-bottom: .9mm;
         font: 400 9.1pt/1.58 Noto; }
-.bbul::before { content: ""; position: absolute; left: .4mm; top: 1.9mm;
-        width: 1.8mm; height: 1.8mm; border-radius: 50%;
-        background: var(--c-line); }
+.bbul::before { content: ""; display: inline-block; text-indent: 0;
+        width: 1.8mm; height: 1.8mm; margin-right: 2.6mm; border-radius: 50%;
+        background: var(--c-line); vertical-align: .3mm; }
 .nh  { margin: 4.6mm 0 0; break-after: avoid; }
 .nh i { display: inline-block; font-style: normal; padding: 1.1mm 3.2mm;
        background: var(--c-sub); color: #fff; border-radius: .8mm;
@@ -483,10 +494,11 @@ u { text-decoration: none; }
 .bgh { margin: 4.4mm 0 1.6mm; padding: 1.4mm 3mm; display: inline-block;
        background: var(--c-pale); border-radius: .8mm;
        font: 700 8.4pt/1.4 Noto; color: var(--c-deep); break-after: avoid; }
-.bgi { padding-left: 4mm; margin-bottom: .7mm; position: relative;
+.bgi { padding-left: 4mm; text-indent: -4mm; margin-bottom: .7mm;
        font: 400 8.4pt/1.5 Noto; color: #3f3a33; }
-.bgi::before { content: ""; position: absolute; left: .4mm; top: 1.7mm;
-       width: 1.6mm; height: 1.6mm; background: var(--c-line); }
+.bgi::before { content: ""; display: inline-block; text-indent: 0;
+       width: 1.6mm; height: 1.6mm; margin-right: 2.4mm;
+       background: var(--c-line); vertical-align: .3mm; }
 
 .th { margin: 4.6mm 0 1.6mm; break-after: avoid;
       padding-bottom: 1.6mm; border-bottom: .4pt solid var(--hair); }
