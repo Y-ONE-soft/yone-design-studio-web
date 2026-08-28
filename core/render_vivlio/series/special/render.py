@@ -816,7 +816,7 @@ def end_page(cfg, d):
     #   비어 나온다(실측). 형제로 앞에 둔다.
     return ('<div class="rhL rh-off"></div><div class="rhR rh-off"></div>'
             f'<section class="endpage v-{d["volumes"][-1]["id"]}">'
-            '<div class="orb"></div>'
+            '<div class="bg"></div><div class="orb"></div>'
             f'<div class="e-in"><div class="e-brand">'
             f'{esc(bk.get("brand", ""))}</div>'
             f'<div class="e-ttl">{esc(bk.get("title", ""))}</div>'

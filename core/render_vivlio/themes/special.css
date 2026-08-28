@@ -467,14 +467,16 @@ u { text-decoration: none; }
 
 /* 뒤 간지 — 책을 닫는 면. MEMO 대신 여기서 끝난다.
  * `break-before: left` 라 **마지막 면이 언제나 짝수**가 된다. */
-.endpage { page: plain; break-before: left; position: relative;
-           box-sizing: border-box; width: 216mm; height: 303mm;
-           margin: -31mm -23mm -23mm -19mm; overflow: hidden;
-           background: var(--c-deep); }
-.endpage .orb { position: absolute; left: -60mm; bottom: -70mm;
-           width: 190mm; height: 190mm; border-radius: 50%;
+/* ⚠ 음수 여백으로 판면을 넘기는 방식은 **본문 맨 끝 요소에서는 통째로 비어
+ *   나온다**(실측: 두 면이 빈 채로 나왔다). 마지막 면은 판면 높이만 차지하고
+ *   도련까지 나가는 색면은 **절대 배치 레이어**가 그린다(PART 오프너와 같은 방식). */
+.endpage { page: plain; break-before: left; position: relative; height: 246mm; }
+.endpage .bg { position: absolute; left: -19mm; right: -23mm; top: -31mm;
+           bottom: -26mm; background: var(--c-deep); }
+.endpage .orb { position: absolute; left: -34mm; bottom: -46mm;
+           width: 170mm; height: 170mm; border-radius: 50%;
            background: #fff; opacity: .06; }
-.endpage .e-in { position: absolute; left: 30mm; top: 108mm; }
+.endpage .e-in { position: absolute; left: 7mm; top: 78mm; }
 .e-brand { font: 700 10pt/1 Disp; letter-spacing: .34em; color: #fff;
            opacity: .72; }
 .e-ttl { margin-top: 7mm; font: 700 30pt/1.2 Disp; color: #fff;
@@ -482,10 +484,10 @@ u { text-decoration: none; }
 .e-rule { margin: 7mm 0; width: 28mm; height: 1mm; background: #fff;
           opacity: .45; }
 .e-sub { font: 400 10.4pt/1.7 Noto; color: #fff; opacity: .82; }
-.endpage .e-foot { position: absolute; left: 30mm; bottom: 30mm;
+.endpage .e-foot { position: absolute; left: 7mm; bottom: 7mm;
            font: 500 8pt/1 Noto; color: #fff; opacity: .6;
            letter-spacing: .08em; }
-.endpage .e-logo { position: absolute; right: 30mm; bottom: 29mm;
+.endpage .e-logo { position: absolute; right: 7mm; bottom: 6mm;
            width: 34mm; height: 8.5mm; background-color: #fff; opacity: .8;
            -webkit-mask: url(assets/books.png) no-repeat center/contain;
            mask: url(assets/books.png) no-repeat center/contain; }
