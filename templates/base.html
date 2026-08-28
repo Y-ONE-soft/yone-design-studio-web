@@ -46,6 +46,7 @@
     <a href="/" class="logo">Y.ONE <span>DESIGN</span></a>
     <nav class="top-nav">
       <a href="/" class="nav-link{% if active_nav == '조판' %} nav-active{% endif %}">조판</a>
+      <a href="/book-studio" class="nav-link{% if active_nav == '작업대' %} nav-active{% endif %}">작업대</a>
       <a href="/cover" class="nav-link nav-link--cover{% if active_nav == '표지' %} nav-active{% endif %}">표지</a>
       <a href="/processing" class="nav-link nav-link--processing{% if active_nav == '가공' %} nav-active{% endif %}">가공</a>
       {% if session.get('role') != 'assistant' %}

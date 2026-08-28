@@ -110,7 +110,7 @@ def studio():
     bs = _books()
     key = request.args.get("b") or (bs[0]["key"] if bs else "")
     return render_template("book_studio.html", books=bs, book_key=key,
-                           active_nav="조판")
+                           active_nav="작업대")
 
 
 # ── API ─────────────────────────────────────────────────────────
