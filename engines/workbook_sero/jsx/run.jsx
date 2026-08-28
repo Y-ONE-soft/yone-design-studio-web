@@ -3119,26 +3119,28 @@
             var b4 = seroBodyFrames(p4);              // y 오름차순 (상단 → 하단)
             var c1arr = (cyc.steps && cyc.steps.step1_c1) ? cyc.steps.step1_c1 : [];
             if (b4.length >= 2 && c1arr.length > 0) {
+                // processStep1C1 은 **한 스토리**에 상단(순서배열)+하단(발문·주어진
+                // 문장·지문)을 함께 넣고 startParagraph = NEXT_FRAME 으로 하단을
+                // 다음 프레임으로 보내는 구조다(가로 워크북과 동일).
+                // 그런데 세로 템플릿의 두 프레임은 **스레드가 아니다**
+                // (실측: story 720890 / 720816, next=no). 그래서 그 메커니즘이
+                // 죽어 있었고, 어느 프레임에 넣든 한쪽만 채워졌다.
+                //   - 종전(가장 큰 frame): 하단만 채워지고 상단엔 템플릿 잔재
+                //   - 내용을 갈라 각각 넣기: 하단이 발문을 잃고 넘침
+                // 조판 직전에 상단→하단을 이어 붙여 가로와 같은 구조로 만든다.
                 var topFr4 = b4[0].fr, botFr4 = b4[1].fr;
-                var splitAt = -1;
-                for (var sa = 0; sa < c1arr.length; sa++) {
-                    var st4 = "";
-                    try { st4 = String(c1arr[sa].text || ""); } catch (eT) { st4 = ""; }
-                    if (/\s{3,}$/.test(st4)) { splitAt = sa; break; }
-                }
-                var topArr = (splitAt < 0) ? c1arr : c1arr.slice(0, splitAt);
-                var botArr = (splitAt < 0) ? [] : c1arr.slice(splitAt);
-                addLog("Q" + qn + " P+4 문장배열: 상단 " + topArr.length +
-                       "문단 / 하단 " + botArr.length + "문단" +
-                       (splitAt < 0 ? " (하단 경계 없음)" : ""));
-                if (topArr.length > 0) {
-                    try { seroRunStep(topFr4.parentStory, processStep1C1, topArr, qstr, code, "step1_c1"); }
-                    catch (eT4) { addLog("Q" + qn + " P+4 상단 오류: " + eT4.message); }
-                } else { seroClearFrame(topFr4); }
-                if (botArr.length > 0) {
-                    try { seroRunStep(botFr4.parentStory, processStep1C1, botArr, qstr, code, "step1_c1"); }
-                    catch (eB4) { addLog("Q" + qn + " P+4 하단 오류: " + eB4.message); }
-                } else { seroClearFrame(botFr4); }
+                var threaded4 = false;
+                try {
+                    if (!topFr4.nextTextFrame) {
+                        botFr4.contents = "";           // 템플릿 발문은 함수가 다시 넣는다
+                        topFr4.nextTextFrame = botFr4;
+                        threaded4 = true;
+                    }
+                } catch (eTh) { addLog("Q" + qn + " P+4 스레드 연결 실패: " + eTh.message); }
+                addLog("Q" + qn + " P+4 문장배열: " + c1arr.length + "문단 → 상단 프레임" +
+                       (threaded4 ? " (상·하단 스레드 연결)" : " (스레드 기존 유지)"));
+                try { seroRunStep(topFr4.parentStory, processStep1C1, c1arr, qstr, code, "step1_c1"); }
+                catch (eT4) { addLog("Q" + qn + " P+4 오류: " + eT4.message); }
             } else {
                 var mainFr4 = null, bestH4 = 0;
                 for (var i4 = 0; i4 < b4.length; i4++) {
