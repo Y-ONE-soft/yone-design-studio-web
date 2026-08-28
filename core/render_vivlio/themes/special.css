@@ -1,0 +1,337 @@
+/* 특강 합본(special) 스타일시트 — 방학·특강용 A4 합본 교재.
+ *
+ * A4(210×297) + 도련 3mm = 216×303mm. 판면은 재단선 기준 위 22 / 아래 20 /
+ * 안 20 / 밖 16 → 폭 174mm. 도련은 **바깥으로만 더한다**(본문 위치 불변).
+ *
+ * 색 체계: 부(部)마다 강조색 하나(`--c-main`)와 그 옅은 판(`--c-pale`·`--c-line`)
+ * 만 쓴다. 세 부는 가을색 한 계열 안에서 갈린다 — 어휘=황금, 구문·어법=단풍,
+ * 독해=이끼. 색은 책 config 의 `palette` 에서 오고 여기서는 이름만 쓴다.
+ *
+ * 함정(여기서 실제로 겪은 것):
+ *  · 괘선(학생이 쓰는 줄)을 `repeating-linear-gradient` 로 깔면 72dpi 래스터로
+ *    나가 인쇄에서 사라진다 → 괘선은 **실제 요소**(`.wbox i`)로 그린다.
+ *  · 러닝 요소에 `position: relative` 를 주면 running() 이 덮여 본문에 그려진다.
+ *  · `@top-right` 는 폭이 좁아 잘린다 → 판면 폭짜리 요소를 `@top-left` 에 넣고
+ *    안에서 좌우로 나눈다.
+ */
+
+/* ------------------------------------------------------------------ 서체 */
+@font-face { font-family: Minion; src: url(fonts/MinionPro-Regular.otf); }
+@font-face { font-family: Minion; font-weight: 600; src: url(fonts/MinionPro-Semibold.otf); }
+@font-face { font-family: Minion; font-weight: 700; src: url(fonts/MinionPro-Bold.otf); }
+@font-face { font-family: Minion; font-style: italic; src: url(fonts/MinionPro-It.otf); }
+@font-face { font-family: Noto; font-weight: 300; src: url(fonts/NotoSansCJKkr-DemiLight.otf); }
+@font-face { font-family: Noto; font-weight: 400; src: url(fonts/NotoSansCJKkr-Regular.otf); }
+@font-face { font-family: Noto; font-weight: 500; src: url(fonts/NotoSansCJKkr-Medium.otf); }
+@font-face { font-family: Noto; font-weight: 700; src: url(fonts/NotoSansCJKkr-Bold.otf); }
+@font-face { font-family: Elice; src: url(fonts/EliceDigitalBaeumOTF_Regular.otf); }
+@font-face { font-family: Elice; font-weight: 700; src: url(fonts/EliceDigitalBaeumOTF_Bold.otf); }
+
+/* ------------------------------------------------------------------- 색 */
+:root {
+  --ink:    #231f20;
+  --gray:   #57575a;
+  --lgray:  #8d8d90;
+  --hair:   #dcdad4;
+  /* 부 색이 없을 때의 기본(가을 황금) */
+  --c-main: #b07a16;
+  --c-deep: #7a5207;
+  --c-pale: #faf1dd;
+  --c-line: #e4cd93;
+}
+
+/* ----------------------------------------------------------------- 판형 */
+@page {
+  size: 216mm 303mm;
+  margin: 25mm 19mm 23mm 23mm;          /* 도련 3mm 포함 */
+
+  @top-left { content: element(rh); width: 174mm; vertical-align: bottom; }
+  @bottom-left-corner { content: none; }
+  @bottom-right-corner { content: none; }
+}
+@page :left  { margin-left: 19mm; margin-right: 23mm;
+  @bottom-left-corner {
+    content: counter(page); text-align: left; padding-left: 19mm;
+    vertical-align: top; padding-top: 10mm;
+    font: 700 8pt/1 Minion; color: var(--c-main); }
+}
+@page :right { margin-left: 23mm; margin-right: 19mm;
+  @bottom-right-corner {
+    content: counter(page); text-align: right; padding-right: 19mm;
+    vertical-align: top; padding-top: 10mm;
+    font: 700 8pt/1 Minion; color: var(--c-main); }
+}
+/* 표지·간지·목차 — 쪽번호와 머리말이 없는 면 */
+@page plain {
+  @top-left { content: none; }
+  @bottom-left-corner { content: none; }
+  @bottom-right-corner { content: none; }
+}
+
+/* --------------------------------------------------------------- 러닝 */
+.rh { position: running(rh); width: 174mm;
+      border-bottom: .5pt solid var(--c-line);
+      padding-bottom: 1.6mm; margin-bottom: 0;
+      font: 400 7.6pt/1 Noto; color: var(--lgray);
+      letter-spacing: .01em; }
+.rh-l { color: var(--c-main); font-weight: 700; letter-spacing: .06em; }
+.rh-r { float: right; }
+.rh.off { border: none; }
+.rh.off * { color: transparent; }
+
+/* ---------------------------------------------------------------- 본문 */
+html, body { margin: 0; padding: 0; }
+p, h1, h2, h3, h4, ul, table { margin: 0; padding: 0; }
+ul { list-style: none; }
+body {
+  font: 400 9.2pt/1.62 Minion, Noto, serif;
+  color: var(--ink);
+  line-break: strict; hyphens: none; word-break: keep-all;
+  overflow-wrap: break-word;
+  orphans: 2; widows: 2;
+}
+b { font-weight: 700; }
+u { text-decoration: none; }
+
+/* 원고가 색으로 표시한 것 */
+.r-num { color: var(--c-deep); font-weight: 700; }
+.r-src { font: 400 7.2pt/1 Noto; color: var(--lgray); white-space: nowrap; }
+.r-pos { color: var(--c-main); font-weight: 700; }
+
+/* ============================================================ 표지·간지 */
+.coverpage, .divider, .tocpage { page: plain; break-before: right; }
+.coverpage { break-before: auto; }
+
+.coverpage { padding-top: 46mm; }
+.c-brand { font: 700 9pt/1 Minion; letter-spacing: .34em;
+           color: var(--c-main); }
+.c-sub   { margin-top: 26mm; font: 400 13pt/1.5 Noto; color: var(--gray); }
+.c-ttl   { margin-top: 3mm; font: 700 32pt/1.28 Noto; color: var(--ink);
+           letter-spacing: -.02em; }
+.c-spec  { margin-top: 22mm; border-top: 1.6pt solid var(--ink);
+           border-bottom: .5pt solid var(--hair); width: 130mm;
+           border-collapse: collapse; }
+.c-spec th, .c-spec td { padding: 3.1mm 0; text-align: left;
+           border-bottom: .5pt solid var(--hair);
+           font: 400 9.4pt/1.4 Noto; color: var(--gray); vertical-align: top; }
+.c-spec th { width: 26mm; font-weight: 700; color: var(--c-main); }
+.c-tail  { margin-top: 6mm; font: 400 9pt/1.6 Noto; color: var(--lgray); }
+.c-who   { margin-top: 40mm; font: 700 10pt/1 Noto; color: var(--ink);
+           letter-spacing: .04em; }
+
+/* 부 간지 — 색면 하나 + 큰 제목 */
+.divider { position: relative; height: 255mm;
+           margin: -25mm -19mm -23mm -23mm; padding: 0; }
+.divider::before {
+  content: ""; position: absolute; inset: 0;
+  background: var(--c-pale); }
+.divider::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 118mm;
+  height: 26mm; background: var(--c-main); }
+.d-no  { position: absolute; left: 26mm; top: 74mm;
+         font: 700 13pt/1 Minion; letter-spacing: .3em; color: var(--c-main); }
+.d-ttl { position: absolute; left: 26mm; top: 84mm;
+         font: 700 46pt/1.1 Noto; color: var(--c-deep); letter-spacing: -.03em; }
+.d-desc { position: absolute; left: 26mm; font: 400 11.5pt/1.6 Noto;
+          color: #fff; }
+.d-desc:nth-of-type(1) { top: 124mm; }
+.d-desc:nth-of-type(2) { top: 132mm; }
+
+/* 목차 */
+.tocpage { padding-top: 8mm; }
+.toc-h   { font: 700 22pt/1 Minion; letter-spacing: .22em; color: var(--c-main); }
+.toc-sub { margin: 2mm 0 10mm; font: 400 10pt/1 Noto; color: var(--lgray);
+           padding-bottom: 5mm; border-bottom: 1.4pt solid var(--c-main); }
+.t-1 { display: flex; gap: 4mm; align-items: baseline;
+       padding: 3.2mm 0 3.2mm; border-bottom: .5pt solid var(--hair);
+       font: 500 10pt/1.4 Noto; }
+.t-1 .t0 { width: 34mm; flex: none; font-weight: 700; color: var(--c-deep); }
+.t-1 .t1 { width: 42mm; flex: none; font-family: Minion; }
+.t-1 .t2 { flex: 1; color: var(--gray); }
+.t-2 { padding: 1.6mm 0 1.6mm 38mm; font: 400 9.2pt/1.4 Noto;
+       color: var(--gray); }
+
+/* ============================================================== PART 표지 */
+.partpage { break-before: right; page: plain;
+            height: 255mm; position: relative; }
+.partpage::before { content: ""; position: absolute;
+            left: -23mm; right: -19mm; top: 92mm; height: .9mm;
+            background: var(--c-main); }
+.p-no  { position: absolute; top: 58mm; font: 700 30pt/1 Minion;
+         letter-spacing: .12em; color: var(--c-main); }
+.p-ttl { position: absolute; top: 100mm; font: 700 30pt/1.25 Noto;
+         color: var(--ink); letter-spacing: -.02em; }
+
+/* ================================================================= 어휘부 */
+.week-open  { break-before: page; }
+.week { font: 700 17pt/1.2 Noto; color: var(--c-deep);
+        padding-bottom: 3mm; margin-bottom: 1mm; }
+
+.vgroup { display: flex; gap: 4mm; align-items: baseline;
+          margin: 4.5mm 0 2.2mm; padding: 1.8mm 3mm;
+          background: var(--c-pale); border-left: 1.4mm solid var(--c-main);
+          break-after: avoid; }
+.vgroup .g0 { font: 700 9.6pt/1.3 Noto; color: var(--c-deep); }
+.vgroup .g1 { font: 700 10pt/1.3 Minion; color: var(--ink); }
+.vgroup .g2 { font: 400 9pt/1.3 Noto; color: var(--gray); }
+
+.wcard { display: flex; gap: 5mm; break-inside: avoid;
+         padding: 2.6mm 0 2.8mm; border-bottom: .5pt solid var(--hair); }
+.w-l { width: 47mm; flex: none; }
+.w-r { flex: 1; }
+.w-no    { font: 700 6.6pt/1 Minion; letter-spacing: .12em; color: var(--lgray); }
+.w-head  { margin-top: .8mm; font: 700 13.5pt/1.15 Minion; color: var(--ink); }
+.w-build { margin-top: 1mm; font: 400 7.6pt/1.42 Noto; color: var(--c-deep); }
+.w-sense { margin-top: .6mm; font: 400 9pt/1.42 Noto; color: var(--ink); }
+.w-ex    { margin-bottom: 1.1mm; font: 400 8.9pt/1.46 Minion, Noto;
+           color: #333; text-indent: -3.6mm; padding-left: 3.6mm; }
+.w-note  { margin-top: 1.4mm; font: 700 7.4pt/1 Noto; color: var(--c-main);
+           letter-spacing: .04em; }
+
+/* 부록 */
+.apx { display: flex; gap: 4mm; align-items: baseline;
+       padding: 1.7mm 0; border-bottom: .5pt solid var(--hair);
+       break-inside: avoid; }
+.apx .a-k { width: 32mm; flex: none; font: 700 9.4pt/1.4 Minion;
+            color: var(--c-deep); }
+.apx .a-g { width: 52mm; flex: none; font: 400 8.8pt/1.4 Noto; color: var(--gray); }
+.apx .a-e { flex: 1; font: 400 9.2pt/1.4 Minion; color: var(--ink); }
+
+/* ============================================================ 구문·어법부 */
+.lesson-open { break-before: page; }
+.lesson { font: 700 15pt/1.3 Noto; color: var(--c-deep);
+          padding-bottom: 2.4mm; border-bottom: 1.2pt solid var(--c-main); }
+.lsub { margin: 2.6mm 0 0; font: 400 9pt/1.55 Noto; color: var(--gray); }
+.chip { display: inline-block; margin-right: 2.4mm; padding: .5mm 1.8mm;
+        background: var(--c-main); color: #fff; border-radius: .8mm;
+        font: 700 7.4pt/1.5 Noto; letter-spacing: .02em;
+        vertical-align: .3mm; white-space: nowrap; }
+
+.subhead { margin: 5.4mm 0 1.8mm; font: 700 10.4pt/1.3 Noto;
+           color: var(--c-deep); break-after: avoid; }
+.subhead::before { content: ""; display: inline-block; width: 2.6mm;
+           height: 2.6mm; margin-right: 2mm; background: var(--c-main);
+           vertical-align: -.1mm; }
+.bul { position: relative; padding-left: 4.4mm; margin-bottom: .8mm;
+       font: 400 9.2pt/1.6 Noto; }
+.bul::before { content: ""; position: absolute; left: 1.2mm; top: 1.9mm;
+       width: 1.2mm; height: 1.2mm; border-radius: 50%;
+       background: var(--c-main); }
+.concept { padding: 3.2mm 3.6mm; background: var(--c-pale);
+           border-radius: 1mm; font: 400 9.1pt/1.68 Noto;
+           break-inside: avoid; }
+
+/* 필기 상자 — 괘선은 실제 요소다(그라디언트로 깔면 인쇄에서 사라진다) */
+.wbox { margin: 2.2mm 0 1mm; break-inside: avoid; }
+.wbox i { display: block; height: 7.4mm; border-bottom: .5pt solid var(--hair); }
+.wbox.big i { height: 8.4mm; }
+.wbox.tight { margin: .8mm 0 0; }
+.wbox.tight i { height: 5.4mm; border-bottom-color: #e8e6e0; }
+
+/* 연습문제 */
+.drill { margin: 6.5mm 0 2.4mm; break-after: avoid; }
+.drill h4 { display: inline-block; padding: 1.2mm 3.2mm;
+            background: var(--c-deep); color: #fff;
+            font: 700 9.6pt/1.4 Noto; border-radius: .8mm; }
+.drill-note { margin-top: 2mm; font: 400 8.6pt/1.5 Noto; color: var(--gray); }
+
+.qitem { break-inside: avoid; margin-bottom: 3.4mm; }
+.q { display: flex; gap: 2.4mm; align-items: baseline; }
+.q-no { width: 6mm; flex: none; text-align: right;
+        font: 700 9.6pt/1.55 Minion; color: var(--c-main); }
+.q-t  { flex: 1; font: 400 9.6pt/1.58 Minion, Noto; }
+.q-t b { font-weight: 700; color: var(--c-deep); }
+
+.frow { display: flex; gap: 3mm; margin: 1.4mm 0 0 8.4mm;
+        align-items: baseline; }
+.frow .fl { flex: none; font: 400 8.2pt/1.5 Noto; color: var(--gray);
+            white-space: nowrap; }
+.frow .fline { flex: 1; border-bottom: .5pt solid var(--hair);
+               height: 6.2mm; }
+.frow.pt .fline { height: 4.6mm; }
+.frow.multi { gap: 5mm; }
+.frow.multi .fcell { flex: 1; display: flex; gap: 2mm; align-items: baseline; }
+.frow.multi .fcell .fline { flex: 1; }
+
+/* 정답 및 해설 */
+.ans-part { break-before: page; margin-bottom: 2mm;
+            font: 700 15pt/1.3 Noto; color: #fff; background: var(--c-deep);
+            padding: 2.4mm 4mm; border-radius: 1mm; }
+.ans-lesson { margin: 6mm 0 2mm; font: 700 11.4pt/1.35 Noto;
+              color: var(--c-deep); padding-bottom: 1.6mm;
+              border-bottom: .8pt solid var(--c-line); break-after: avoid; }
+.ans-kind { margin: 4mm 0 1.6mm; font: 700 9pt/1.3 Noto; color: #fff;
+            background: var(--c-main); display: inline-block;
+            padding: .8mm 2.6mm; border-radius: .8mm; break-after: avoid; }
+.aitem { break-inside: avoid; margin-bottom: 2.6mm; }
+.a-q { display: flex; gap: 2.4mm; align-items: baseline; }
+.a-no { width: 5.4mm; flex: none; text-align: right;
+        font: 700 9pt/1.5 Minion; color: var(--c-main); }
+.a-t  { flex: 1; font: 400 8.6pt/1.5 Noto; }
+.ans-en { margin: .6mm 0 .8mm 7.8mm; font: 400 9pt/1.52 Minion, Noto;
+          color: var(--ink); }
+.ans-en .en { font-family: Minion, Noto; }
+.a-item { display: flex; gap: 2.6mm; margin: 0 0 .5mm 7.8mm;
+          align-items: baseline; }
+.a-lab  { width: 13mm; flex: none; font: 700 7.8pt/1.55 Noto;
+          color: var(--c-main); }
+.a-body { flex: 1; font: 400 8.5pt/1.55 Noto; color: #333; }
+
+/* ================================================================= 독해부 */
+.ch  { margin: 4.4mm 0 2mm; font: 700 10pt/1 Noto; color: var(--c-main);
+       letter-spacing: .06em; break-after: avoid; }
+.bh  { margin: 3.4mm 0 1.4mm; font: 700 9.8pt/1.35 Noto; color: var(--c-deep);
+       break-after: avoid; }
+.bh::before { content: "●"; margin-right: 1.6mm; font-size: 6.4pt;
+       color: var(--c-main); vertical-align: .5mm; }
+.bbul { padding-left: 4.6mm; text-indent: -4.6mm; margin-bottom: .7mm;
+        font: 400 9.1pt/1.58 Noto; }
+.bbul::before { content: "·"; display: inline-block; width: 4.6mm;
+        text-indent: 0; color: var(--c-main); font-weight: 700; }
+.nh  { margin: 4mm 0 0; font: 700 9pt/1.4 Noto; color: var(--c-main);
+       break-after: avoid; }
+.nh::before { content: "❖ "; }
+
+.extag { break-before: page; display: flex; gap: 3mm; align-items: baseline;
+         padding-bottom: 1.8mm; border-bottom: 1.2pt solid var(--c-main); }
+.x-no { font: 700 12pt/1.2 Noto; color: var(--c-deep); }
+.x-m  { flex: 1; font: 400 9pt/1.3 Noto; color: var(--gray); }
+.x-l  { font: 700 7.6pt/1 Noto; color: #fff; background: var(--c-main);
+        padding: 1mm 2.2mm; border-radius: .8mm; white-space: nowrap; }
+.stem { margin: 3.4mm 0 2.4mm; font: 700 10pt/1.5 Noto; break-after: avoid; }
+.psg  { margin-bottom: 1.6mm; padding: 3.4mm 4mm; background: var(--c-pale);
+        border-radius: 1mm; text-align: justify;
+        font: 400 9.6pt/1.66 Minion, Noto; }
+.psg + .psg { margin-top: -1mm; }
+.fnote { margin: 1mm 0 2mm; font: 400 7.8pt/1.4 Noto; color: var(--gray); }
+.choices { margin: 1.6mm 0 0; break-inside: avoid; }
+.choices li { margin-bottom: .8mm; padding-left: 4.6mm; text-indent: -4.6mm;
+              font: 400 9.4pt/1.5 Minion, Noto; }
+
+.bgh { margin: 4mm 0 1.4mm; padding: 1.2mm 2.6mm; display: inline-block;
+       background: var(--c-pale); border-left: 1mm solid var(--c-main);
+       font: 700 8.4pt/1.4 Noto; color: var(--c-deep); break-after: avoid; }
+.bgi { padding-left: 4.4mm; text-indent: -4.4mm; margin-bottom: .5mm;
+       font: 400 8.4pt/1.5 Noto; color: #3a3a38; }
+.bgi::before { content: "·"; display: inline-block; width: 4.4mm;
+       text-indent: 0; color: var(--c-main); }
+
+.th { margin: 4mm 0 1.2mm; font: 700 7.8pt/1 Noto; color: var(--lgray);
+      letter-spacing: .1em; break-after: avoid; }
+.th::before { content: "❖ "; }
+.trans { font: 300 8.1pt/1.5 Noto; color: #5c5d5f; text-align: justify; }
+
+/* 정답 · 배경지식 노트 정답 */
+.aline { display: flex; gap: 3mm; align-items: baseline;
+         padding: 1.5mm 0; border-bottom: .5pt solid var(--hair);
+         font: 400 8.8pt/1.4 Noto; break-inside: avoid; }
+.l-no  { width: 8mm; flex: none; text-align: right; font-weight: 700;
+         color: var(--c-main); font-family: Minion; }
+.l-body { flex: 1; color: var(--gray); }
+.l-ans  { font: 700 10pt/1 Noto; color: var(--c-deep); }
+.aline.bg .l-src { width: 42mm; flex: none; font: 400 7.8pt/1.4 Noto;
+                   color: var(--lgray); }
+.aline.bg .l-body { color: var(--ink); }
+
+/* 흐름 컨테이너 */
+.flow { }
