@@ -68,6 +68,46 @@ def _grid_clearance(pdf, report, log, floor=4.0):
         log(f"  모눈 {n}면 · 최소 여유 {worst[1]:+.1f}mm (p.{worst[0]})")
 
 
+def _rich_kept(cfg, data, report, log):
+    """원고의 **밑줄이 조판까지 살아남았는지** — 글자만 세는 게이트의 사각지대.
+
+    어법 문제는 '밑줄 친 부분을 고치라'는 문제라 밑줄이 곧 문제다. 그런데
+    `라벨 | 본문` 을 나누던 코드가 본문을 민글자로 내보내는 바람에 해설 쪽
+    밑줄 19곳이 빠진 채 인쇄됐다 — 글자는 하나도 안 틀렸으니 전수 대조
+    1,978건이 그대로 통과했다. 서식은 서식으로 세야 한다.
+    """
+    import collections
+    import os
+    import re
+    html = os.path.join(cfg.build_dir, "index.html")
+    if not os.path.exists(html):
+        return
+    def segs(o):
+        if isinstance(o, dict):
+            if o.get("u") and o.get("t", "").strip():
+                yield o["t"].strip()
+            for v in o.values():
+                yield from segs(v)
+        elif isinstance(o, list):
+            for v in o:
+                yield from segs(v)
+    want = collections.Counter(segs(data))
+    if not want:
+        return
+    with open(html, encoding="utf-8") as fh:
+        src = fh.read()
+    got = collections.Counter(
+        x.strip() for x in re.findall(r"<u>(.*?)</u>", src, re.S))
+    lost = [(t, n, got.get(t, 0)) for t, n in want.items() if got.get(t, 0) < n]
+    for t, n, g in sorted(lost)[:12]:
+        report.fail(f"[G-밑줄] 원고 밑줄이 조판에서 빠졌다: {t!r} "
+                    f"(원고 {n}회 → 조판 {g}회)")
+    if len(lost) > 12:
+        report.fail(f"[G-밑줄] … 그 밖에 {len(lost) - 12}곳")
+    log(f"  밑줄 {sum(want.values())}곳 유지"
+        + ("" if not lost else f" · **{len(lost)}곳 유실**"))
+
+
 class SpecialSeries(Series):
 
     name = "special"
@@ -159,5 +199,6 @@ class SpecialSeries(Series):
         seq = render_mod.verify_sequence(d)
         gate.check_sequence(texts, seq, report)
         _grid_clearance(pdf, report, log)
+        _rich_kept(cfg, d, report, log)
         report.note(f"대조 항목 {len(seq):,}건")
         return report
