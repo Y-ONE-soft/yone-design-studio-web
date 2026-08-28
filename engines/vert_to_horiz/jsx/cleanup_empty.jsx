@@ -82,10 +82,48 @@
                 }
             }
         }
+        // 페이지 전체가 백지인 경우 — 본문 프레임이 모두 비었고 다른 개체도
+        // 없으면 그 페이지는 인쇄물에 있으면 안 된다. trim_unused 가 지우지
+        // 못하고 남긴 것이다(실측 2026-08-25: p171·p182·p211·p223 백지).
+        var blankPages = [];
+        for (var bp = doc.pages.length - 1; bp >= 0; bp--) {
+            var bpg = doc.pages[bp], bsp = bpg.parent;
+            var hasContent = false, ownCount = 0;
+            for (var bi = 0; bi < bsp.textFrames.length && !hasContent; bi++) {
+                var btf = bsp.textFrames[bi];
+                if (!btf.parentPage || btf.parentPage.id !== bpg.id) continue;
+                ownCount++;
+                if (!isEmpty(btf)) hasContent = true;
+            }
+            if (hasContent || ownCount === 0) continue;
+            // 텍스트 외 개체(이미지·도형)가 있으면 백지가 아니다
+            var others = 0;
+            try {
+                for (var bo = 0; bo < bsp.pageItems.length; bo++) {
+                    var it = bsp.pageItems[bo];
+                    if (!it.parentPage || it.parentPage.id !== bpg.id) continue;
+                    if (it.constructor.name !== "TextFrame") others++;
+                }
+            } catch (eB) {}
+            if (others > 0) continue;
+            blankPages.push(bpg);
+        }
+        var blankRemoved = 0;
+        for (var bk = 0; bk < blankPages.length; bk++) {
+            try {
+                var nm = blankPages[bk].name;
+                blankPages[bk].remove();
+                blankRemoved++;
+                W("  백지 페이지 제거: p" + nm);
+            } catch (eB2) {
+                W("  [실패] 백지 페이지 제거: " + (eB2.message || eB2));
+            }
+        }
         W("제거 " + removed + "개 / 겹치지 않아 남긴 빈 프레임 " + keptEmpty + "개");
+        W("백지 페이지 제거 " + blankRemoved + "개");
         W("[계약] 페이지 " + pagesBefore + " → " + doc.pages.length +
-          (pagesBefore === doc.pages.length ? " (불변 OK)" : " ⚠변동!"));
-        if (removed > 0) { doc.save(); W("저장 완료"); }
+          " (백지 " + blankRemoved + "장 제거분만 줄어야 정상)");
+        if (removed > 0 || blankRemoved > 0) { doc.save(); W("저장 완료"); }
         if (ours) doc.close(SaveOptions.NO);
         W("===== 빈 프레임 정리 완료 =====");
     } catch (eM) {
