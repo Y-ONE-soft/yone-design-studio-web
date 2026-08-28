@@ -174,6 +174,49 @@ def _s3_is_prose(text):
     return len(_RE_S3_LBL_ENGWORD.findall(text or "")) >= 6
 
 
+# 유형 표기가 '원고 관행'이라고 볼 최소 비율 (유형 표기 수 / 발문 수)
+_S3_TYPE_LABEL_MIN_RATIO = 0.3
+
+
+def _s3_type_label_idx(seq, R):
+    """원고 문항 유형 표기 줄의 인덱스 집합 (출력 제거 대상).
+
+    2026-08-28 사용자 지적(수특라이트영독 10강): "스텝3에 내용 파악, 서술형
+    영작, 빈칸 이런 문제 유형들이 본문에 들어가 있다. 문제유형, 출처 같은 건
+    전부 빠져야 돼." 원고는 문항마다 앞에 편집용 유형 표기를 다는데
+    (`내용 파악` → `12. 다음 글의 내용과 …`) kind UNKNOWN 으로 떨어져 지문
+    스타일로 인쇄됐고, <조건> 블록 뒤에 오면 조건으로까지 흡수됐다(`어법`).
+    W76 의 `_s3_strip_qtype_tags` 는 **발문 줄 안에 붙은** 태그
+    ("11번 어법  다음 글의 …") 전용이라 이 '독립 줄' 형태는 못 잡는다.
+
+    세 층으로 판정한다 — 유형명 목록(화이트리스트)은 쓰지 않는다. '서술형
+    어휘 완성'·'서술형 어법 수정'처럼 조합이 열려 있어 표기가 바뀔 때마다
+    다시 새기 때문:
+      ① 형태 — 문장부호·영문·숫자 없는 짧은 한글 명사구 (R.is_type_label_form)
+      ② 위치 — 바로 다음 유의 단락이 발문
+      ③ 원고 관행 — 그런 줄이 반복되고 발문 수 대비 충분히 많다
+    ③ 덕분에 관행이 없는 원고에 우연히 낀 짧은 한글 한 줄은 지워지지 않는다.
+    """
+    meaning = [i for i, p in enumerate(seq)
+               if (p.get("text") or "").strip()
+               and (p.get("kind") or "") != "BLANK"]
+    cand = set()
+    qn = 0
+    for x, i in enumerate(meaning):
+        if (seq[i].get("kind") or "") in ("Q", "Q-INTRO"):
+            qn += 1
+        if not R.is_type_label_form(seq[i].get("text") or ""):
+            continue
+        if x + 1 >= len(meaning):
+            continue
+        if (seq[meaning[x + 1]].get("kind") or "") not in ("Q", "Q-INTRO"):
+            continue
+        cand.add(i)
+    if len(cand) < 2 or len(cand) < _S3_TYPE_LABEL_MIN_RATIO * qn:
+        return set()        # 원고 관행이 아님 — 건드리지 않는다
+    return cand
+
+
 def _s3_is_index_label(tclean, prev_text, next_text, R, series=()):
     """단독 대괄호 라벨이 '원고 편집용 인덱스'인가 (제거 대상).
 
@@ -626,6 +669,16 @@ def _s3_split_merged_questions(paragraphs, warnings):
 # 선지 헤더("ⓐ  ⓑ  ⓒ" 한 줄 + 다음 줄이 선지)는 뒤에 기입 셀이 없으므로
 # 이 판정에 걸리지 않는다 — W72 결함의 재발 경로를 원천 차단한다.
 _RE_S3_CELL_FILL = re.compile(r"^[\s\u00a0\u3000]+$")
+# 기입 셀이 **빈 칸으로 접혀** 라벨 줄에 붙어 나온 형태 (2026-08-28 실증,
+# 수특라이트영독 10강): 원고 hwp 2열 표 `번호 | 수정안` 의 답 행이
+#   번호                     수정안     ← 열 머리
+#   (    ) :                            ← 기입 줄 (뒤 칸이 비어 통째로 접힘)
+# 로 추출된다. W75 는 '라벨 셀 + 공백만 있는 다음 단락' 쌍을 보는데 여기는
+# 그 다음 단락이 아예 없어(빈 칸이 사라져) 답란 실물화가 안 걸렸다.
+# 라벨이 콜론으로 끝나고 뒤에 쓸 내용이 없으면 그 줄 자체가 기입 줄이다.
+_RE_S3_CELL_COLON = re.compile(
+    r"^\s*(?:[(（]\s*[)）]|[①-⑮ⓐ-ⓩⒶ-Ⓩ㉠-㉭]|\d{1,2}\s*[.)]?)?"
+    r"\s*[:：]\s*$")
 
 
 def _s3_is_kor_hdr_cell(t):
@@ -644,6 +697,19 @@ def _s3_answer_cell_idx(seq):
     """라벨 셀(= 답란으로 실물화할 단락) 인덱스 집합."""
     out = set()
     n = len(seq)
+    # ① 기입 칸이 접힌 콜론형 ("(    ) :") — 앞에 답표 열 머리 또는 같은
+    #    형태의 형제 행이 있어야 한다 (문장 중간의 콜론 줄 오탐 차단).
+    prev_ok = False
+    for i in range(n):
+        tc = (seq[i].get("text") or "").strip()
+        if not tc:
+            continue
+        if _RE_S3_CELL_COLON.match(tc):
+            if prev_ok:
+                out.add(i)
+                continue
+        prev_ok = bool(_RE_S3_CELL_COLON.match(tc)
+                       or _is_anslabel_head(tc))
     for i in range(n - 1):
         t = (seq[i].get("text") or "")
         tc = t.strip()
@@ -780,7 +846,15 @@ def build_step3(step_data):
             seq = _s3_split_merged_questions(
                 item.get("paragraphs", []), warnings)
             ans_cells = _s3_answer_cell_idx(seq)      # W75
+            # 원고 문항 유형 표기("내용 파악"/"서술형 영작"/"빈칸") 제거 —
+            # 블록 오버레이 전에 빼야 <조건> 뒤 표기가 조건으로 흡수되지 않는다
+            _type_idx = _s3_type_label_idx(seq, R)
+            if _type_idx:
+                warnings.append("step3: 원고 문항 유형 표기 %d줄 제거"
+                                % len(_type_idx))
             for _pi, p in enumerate(seq):
+                if _pi in _type_idx:
+                    continue
                 text = p.get("text", "")
                 kind = p.get("kind") or "UNKNOWN"
                 tclean = text.strip()

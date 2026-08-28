@@ -176,6 +176,33 @@ def choice_columns(text):
         return 0
     return len([c for c in _COL_SPLIT.split(stripped) if c.strip()])
 
+# ── 원고 문항 유형 표기 (출력 제거 대상) ─────────────────────────────────────
+# 2026-08-28 사용자 지적(수특라이트영독 10강): "스텝3에 내용 파악, 서술형 영작,
+# 빈칸 이런 문제 유형들이 본문에 들어가 있다. 문제유형, 출처 같은 건 전부 빠져야."
+#   내용 파악                       ← 원고 편집용 유형 표기 (완제품엔 없다)
+#   12. 다음 글의 내용과 일치하지 않는 것은?   ← 발문
+# 유형명 목록을 화이트리스트로 두면 원고가 표기를 바꿀 때마다 다시 샌다
+# ('서술형 어휘 완성'·'서술형 어법 수정'처럼 조합이 열려 있다). 형태로 잡는다:
+# 문장부호·영문·숫자·원문자·괄호·불릿이 없는 짧은 한글 명사구 = 유형 표기 형태.
+# **위치(바로 뒤가 발문)와 원고 관행(문서 전체에서 반복)** 은 호출자가 본다.
+TYPE_LABEL_MAX_LEN = 20
+_TYPE_LABEL_BAD = re.compile(
+    r'[A-Za-z0-9①-⑮ⓐ-ⓩⒶ-Ⓩ㉠-㉭_<>\[\]〈〉《》()（）.,?!:;～~/\\·•⦁◦∙ㆍ→▶►*]')
+_TYPE_LABEL_ENDING = re.compile(r'(시오|세요|하기|할\s*것|것|다)\s*$')
+
+
+def is_type_label_form(text):
+    """원고 문항 유형 표기 형태인가 — 문장부호·영문·숫자 없는 짧은 한글 명사구."""
+    t = (text or "").strip()
+    if not t or len(t) > TYPE_LABEL_MAX_LEN:
+        return False
+    if not HANGUL.search(t):
+        return False
+    if _TYPE_LABEL_BAD.search(t):
+        return False
+    return not _TYPE_LABEL_ENDING.search(t)
+
+
 # ── P: 영어 본문 ─────────────────────────────────────────────────────────────
 P_MIN_LEN = 80
 P_ENGLISH_START = re.compile(r'^[A-Za-z"\'“‘(\[]')
