@@ -836,6 +836,63 @@
                     info("  지문" + lesson.num + " : 실전 없음 - 스킵");
                     continue;
                 }
+
+                // ── 범위째 복제 (2026-08-25) ────────────────────────────
+                // 실전 페이지를 **한 장씩** 복제하면 스레드 스토리의 일부만
+                // 떼어 오게 되고, 그때 **프레임 경계에 걸친 문단이 잘린다**.
+                // 실측(세로 p14~16, 6프레임 13200자 스토리):
+                //     한 장씩 → 76문단 중 2개 유실 (영작 (B) 문항 통째)
+                //     범위째 → 유실 0
+                // 세로 페이지와 가로 슬롯이 **둘 다 연속**일 때만 이 경로를
+                // 쓰고, 아니면 종전 한 장씩 복제로 간다(기존 동작 보존).
+                // 페이지 객체 참조로 지운다 — 인덱스는 삽입으로 밀리지만
+                // 객체 참조는 유효하다.
+                var canRange = srcPages.length > 1 &&
+                               (slotIdx + srcPages.length) <= region.pages.length;
+                if (canRange) {
+                    for (var cv = 1; cv < srcPages.length; cv++) {
+                        if (srcPages[cv] !== srcPages[cv - 1] + 1) { canRange = false; break; }
+                    }
+                }
+                if (canRange) {
+                    for (var ch = 1; ch < srcPages.length; ch++) {
+                        if (region.pages[slotIdx + ch] !== region.pages[slotIdx + ch - 1] + 1) {
+                            canRange = false; break;
+                        }
+                    }
+                }
+                if (canRange) {
+                    var firstHorizP = region.pages[slotIdx];
+                    var slotPages = [];
+                    for (var q = 0; q < srcPages.length; q++) {
+                        slotPages.push(horiz.pages[region.pages[slotIdx + q] - 1]);
+                    }
+                    var rangeOK = true;
+                    try {
+                        verti.pages.itemByRange(
+                            verti.pages[srcPages[0] - 1],
+                            verti.pages[srcPages[srcPages.length - 1] - 1]
+                        ).duplicate(LocationOptions.AFTER, slotPages[0]);
+                    } catch (eRange) {
+                        rangeOK = false;
+                        info("  지문" + lesson.num + " : 범위 복제 실패(" +
+                             (eRange.message || eRange) + ") — 한 장씩으로 폴백");
+                    }
+                    if (rangeOK) {
+                        for (var q2 = slotPages.length - 1; q2 >= 0; q2--) {
+                            try { slotPages[q2].remove(); } catch (eRm) {}
+                        }
+                        for (var q3 = 0; q3 < srcPages.length; q3++) {
+                            var hp2 = firstHorizP + q3;
+                            region.pageLessonMap[hp2] = lesson.num;
+                            info("  p" + hp2 + " : 지문" + lesson.num + " 세로 p" +
+                                 srcPages[q3] + " (실전) → OK 범위 복제");
+                        }
+                        slotIdx += srcPages.length;
+                        continue;
+                    }
+                }
+
                 for (var s = 0; s < srcPages.length; s++) {
                     var horizP;
                     if (slotIdx < region.pages.length) {

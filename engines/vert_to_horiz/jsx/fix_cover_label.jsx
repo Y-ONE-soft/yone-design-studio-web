@@ -48,11 +48,12 @@
         //    프레임 단위로 완전 일치할 때만 바꾼다.
         var RE_ONLY = /^\s*고\s*\d+\s*모의고사\s*$/;
         var changed = 0, scanned = 0;
-        for (var p2 = 0; p2 < doc.pages.length; p2++) {
-            var pg2 = doc.pages[p2], sp2 = pg2.parent;
-            for (var i = 0; i < sp2.textFrames.length; i++) {
-                var tf = sp2.textFrames[i];
-                if (!tf.parentPage || tf.parentPage.id !== pg2.id) continue;
+
+        // 간지 문구는 **마스터 페이지**에 있다(실측: 마스터 "간지").
+        // 일반 페이지만 훑으면 0건이 된다. 마스터와 본문 페이지를 모두 본다.
+        function sweep(frames, where) {
+            for (var i = 0; i < frames.length; i++) {
+                var tf = frames[i];
                 var c = "";
                 try { c = String(tf.contents); } catch (e2) { continue; }
                 scanned++;
@@ -61,12 +62,24 @@
                     // contents 대입은 서식을 유지한다(문단·문자 스타일 보존).
                     tf.contents = label;
                     changed++;
-                    W("  p" + pg2.name + " : \"" + c.replace(/[\r\n]/g, " ") +
+                    W("  " + where + " : \"" + c.replace(/[\r\n]/g, " ") +
                       "\" → \"" + label + "\"");
                 } catch (e3) {
-                    W("  [실패] p" + pg2.name + " : " + (e3.message || e3));
+                    W("  [실패] " + where + " : " + (e3.message || e3));
                 }
             }
+        }
+        for (var m = 0; m < doc.masterSpreads.length; m++) {
+            var ms = doc.masterSpreads[m];
+            sweep(ms.textFrames, "마스터[" + ms.name + "]");
+        }
+        for (var p2 = 0; p2 < doc.pages.length; p2++) {
+            var pg2 = doc.pages[p2], sp2 = pg2.parent, own = [];
+            for (var k = 0; k < sp2.textFrames.length; k++) {
+                var t2 = sp2.textFrames[k];
+                if (t2.parentPage && t2.parentPage.id === pg2.id) own.push(t2);
+            }
+            sweep(own, "p" + pg2.name);
         }
         W("프레임 " + scanned + "개 검사 / 교체 " + changed + "곳");
         if (changed > 0) { doc.save(); W("저장 완료"); }
