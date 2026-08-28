@@ -1,61 +1,49 @@
 """특강 합본(special) 렌더러 — data.json → build/index.html.
 
-## 왜 흐름 조판인가
+## 무엇을 우선하는가
 
-항목 높이가 제각각이라(낱말 카드 1~4줄, 예제 지문 6~14줄, 해설 2~8줄) 슬롯에
-앉히면 면이 비어 보인다. **덩어리는 쪼개지 않는다**만 걸고 흐르게 두되, 흐름이
-깨지면 안 되는 곳에만 면을 고정한다:
+"덜 꾸몄는데 더 출판물처럼." 요소를 늘리지 않고 **위계**로 읽히게 한다.
 
-  · 부(部) 간지 — 오른쪽(홀수) 면 · 목차 · PART 표지 — 새 면
-  · 어휘 Week · 독해 예제 — 새 면
-  · **강 개념 면 / 구문 연습문제 / 어법 연습문제 — 각각 한 면씩** 따로 연다
-    (개념을 읽다 말고 문제로 넘어가지 않게. 사용자 지시)
+  1. 머리(내비게이션)는 두 단계 — 상위(PART/WEEK)는 작게, 현재 위치는 한 단 크게
+  2. 제목은 번호를 떼어 따로 세우고, 밑줄에 기대지 않는다
+  3. 라벨 체계는 셋뿐 — A 대분류 / B 학습 포인트 / C 작성 영역
+  4. 중요도 차이를 **크기**로 벌린다(색으로 다 해결하지 않는다)
+  5. 부(部)마다 머리의 **내용 구성**이 다르다(색만 바꾸지 않는다)
+  6. 번호 거터 하나로 모든 시작선을 맞춘다
 
-## 강 개념 면 = 위 절반 개념 + 아래 절반 필기 모눈
+## 흐름 조판
 
-필기 모눈은 **면 아래 같은 자리**에 고정한다(`.gridbox`, top 150mm). 앞 내용
-길이에 따라 오르내리면 면마다 리듬이 달라진다. 그래서 개념 면은 버퍼에 모았다가
-한 번에 `<section class="cpage">` 로 낸다.
+항목 높이가 제각각이라 슬롯에 앉히면 면이 빈다. "덩어리는 쪼개지 않는다"만 걸고
+흐르게 두되, 흐름이 깨지면 안 되는 곳에만 면을 고정한다 — 부 간지(2면 세트) ·
+목차 · PART 오프너 · 어휘 Week · 강 개념 면 · 구문/어법 연습 · 독해 예제.
 
-## 세 블록은 성격이 다르다
+## 두 가지 함정(둘 다 실측으로 겪었다)
 
-`필기 POINT`(체크리스트) · `어법 개념`(정의 문단) · `필기노트`(쓰는 자리)는
-생김새가 서로 달라야 한다. 어느 것인지는 **뒤따르는 내용**으로 가른다 —
-불릿이 오면 POINT, 문단이 오면 개념, 빈 표가 오면 필기노트. 라벨 글자에 기대면
-원고가 조금만 달라져도 깨진다.
-
-## 원고의 '공백 정렬'을 표로 되돌린다
-
-원고는 목차·부록·정답을 공백 여러 칸으로 줄맞춤해 두었다 → 2칸 이상 공백을 열
-경계로 본다. 부록만은 줄맞춤이 들쭉날쭉해 **한글이 끝나는 곳**을 뜻/예시 경계로.
-
-## 기입선
-
-원고의 밑줄 친 탭이 학생이 쓰는 자리다. POINT(점검 항목)와 해석하기(서술)는
-성격이 달라 모양도 다르게 낸다 — 앞은 베이지 띠 안의 짧은 줄, 뒤는 라벨 칩 +
-손글씨용 넓은 줄.
+  · `break-inside: avoid` 를 **flex 컨테이너에 직접** 걸면 덩어리가 조용히
+    사라진다 → 두 단짜리는 `display: table`.
+  · 본문 흐름 요소에 `position: relative/absolute` 를 주면 그 단락이 뒤 레이어로
+    밀려 **PDF 글자 추출 순서가 읽는 순서와 어긋난다** → 표식은 매달린 들여쓰기 +
+    inline-block 도형으로만.
 """
 import html
 import json
 import os
 import re
 
-# 판면(mm) — 재단선 기준. 도련은 백엔드가 페이지 크기로 더한다.
 DEFAULT_METRICS = {
-    "margin_top": 22.0,
-    "margin_bottom": 20.0,
-    "margin_inner": 20.0,
-    "margin_outer": 16.0,
+    "margin_top": 22.0, "margin_bottom": 20.0,
+    "margin_inner": 20.0, "margin_outer": 16.0,
 }
 
 RE_GAP2 = re.compile(r" {2,}")
 RE_HAN = re.compile(r"[가-힣]")
+RE_LEADNUM = re.compile(r"^\s*(\d+)\s*(?:강|주)?\s*[.·]?\s*")
+RE_EXNUM = re.compile(r"^\s*([❶-❿①-⑳])\s*")
+RE_CIRC = re.compile(r"^\s*([①-⑳])\s*")
 VOL_ORDER = ("vocab", "grammar", "reading")
-HALF = 5              # 어법 연습문제 10문항을 나누는 자리
 VOL_EN = {"vocab": "VOCABULARY", "grammar": "SYNTAX & GRAMMAR",
           "reading": "READING"}
-
-# 간지·목차 면이 이미 쓴 블록 — 흐름에서 다시 그리면 두 번 나온다
+HALF = 5              # 어법 연습문제 10문항을 나누는 자리
 FRONT = {"vol_desc", "toc_title", "toc_1", "toc_2"}
 
 
@@ -70,8 +58,7 @@ ROLE_CLASS = {"num": "r-num", "src": "r-src", "pos": "r-pos"}
 
 
 def esc(s):
-    """연속 공백은 의미(간격)다 — 살린다."""
-    t = html.escape(s)
+    t = html.escape(s or "")
     return RE_GAP2.sub(lambda m: "&nbsp;" * (len(m.group(0)) - 1) + " ", t)
 
 
@@ -104,15 +91,14 @@ def plain(x):
 
 
 def cols(text, limit=0):
-    """2칸 이상 공백 = 열 경계."""
-    parts = [p.strip() for p in RE_GAP2.split(text.strip()) if p.strip()]
+    parts = [p.strip() for p in RE_GAP2.split((text or "").strip()) if p.strip()]
     if limit and len(parts) > limit:
         parts = parts[:limit - 1] + ["  ".join(parts[limit - 1:])]
     return parts
 
 
 def split_gloss(text):
-    """뜻(한글·괄호) / 예시(영문)의 경계 — 공백 수가 아니라 **글자 종류**로."""
+    """뜻(한글·괄호) / 예시(영문)의 경계 — 공백 수가 아니라 글자 종류로."""
     last = -1
     for i, ch in enumerate(text):
         if RE_HAN.match(ch) or ch == ")":
@@ -122,9 +108,16 @@ def split_gloss(text):
     return text[:last + 1].strip(), text[last + 1:].strip()
 
 
+def numtitle(txt):
+    """`1강.  목적격 …` → ("01", "목적격 …"). 번호를 떼어 따로 세우기 위해."""
+    m = RE_LEADNUM.match(txt or "")
+    if not m:
+        return "", (txt or "").strip()
+    return f"{int(m.group(1)):02d}", txt[m.end():].strip()
+
+
 # ── 기입선 ──────────────────────────────────────────────────────────────
 def fields(rich):
-    """rich → 라벨 목록. 원고의 밑줄 탭이 기입선이다."""
     out, buf = [], ""
     for seg in rich:
         t = plain(seg)
@@ -139,35 +132,38 @@ def fields(rich):
     return out
 
 
+def wr_row(labels, cls=""):
+    """작성 영역(라벨 C) — 색 캡슐 없이 **작은 라벨 + 실제 줄**.
+
+    라벨이 둘이면 한 줄에 나란히, 하나면 폭 전체를 쓴다.
+    """
+    labels = [t.lstrip("□ ").strip() for t in labels if t and t.strip()]
+    if not labels:
+        return ""
+    if len(labels) == 1:
+        return (f'<div class="wr {cls}"><span class="wl">{esc(labels[0])}</span>'
+                f'<span class="wline"></span></div>')
+    cells = "".join(f'<span class="wc"><span class="wl">{esc(t)}</span>'
+                    f'<span class="wline"></span></span>' for t in labels)
+    return f'<div class="wr multi {cls}">{cells}</div>'
+
+
 def point_row(rich):
-    """`POINT  □ 핵심 구조 ⎵  □ 본동사 ⎵` — 점검 항목 띠."""
     labs = fields(rich)
-    tag = ""
     if labs and labs[0].upper().startswith("POINT"):
-        tag = labs[0][:5]
         labs = [labs[0][5:].strip()] + labs[1:]
-    # 원고의 `□` 는 워드 체크박스 글리프다 — 떼고 도형으로 그린다
-    cells = "".join(f'<span class="fcell"><span class="fl"><i class="cbx">'
-                    f'</i>{esc(t.lstrip("□ ").strip())}</span>'
-                    f'<span class="fline"></span></span>' for t in labs if t)
-    return (f'<div class="frow pt"><span class="ptag">{esc(tag or "POINT")}'
-            f'</span>{cells}</div>')
+    return wr_row(labs, "pt")
 
 
 def write_row(rich):
-    """`해석하기 ⎵` — 손글씨 한 줄."""
-    labs = [t for t in fields(rich) if t]
-    lab = labs[0] if labs else ""
-    return (f'<div class="frow wr"><span class="fl"><i>{esc(lab)}</i></span>'
-            f'<span class="fline"></span></div>')
+    return wr_row(fields(rich), "long")
 
 
 def rules(n, cls="wbox"):
-    """괘선 상자 — 괘선은 실제 요소로 그린다."""
     return f'<div class="{cls}">' + '<i></i>' * n + '</div>'
 
 
-def grid_svg(w=174.0, h=118.0, step=5.0):
+def grid_svg(w=174.0, h=104.0, step=5.0):
     """필기용 모눈 — 래스터가 아니라 벡터 선으로."""
     L = []
     x = 0.0
@@ -179,40 +175,55 @@ def grid_svg(w=174.0, h=118.0, step=5.0):
         L.append(f'<line x1="0" y1="{y:.1f}" x2="{w:.1f}" y2="{y:.1f}"/>')
         y += step
     return (f'<svg viewBox="0 0 {w} {h}" width="{w}mm" height="{h}mm">'
-            f'<rect x="0" y="0" width="{w}" height="{h}" fill="#fdfbf6"/>'
-            f'<g stroke="#e2dccd" stroke-width=".18">{"".join(L)}</g>'
+            f'<rect x="0" y="0" width="{w}" height="{h}" fill="#fcfaf5"/>'
+            f'<g stroke="#e6e0d2" stroke-width=".16">{"".join(L)}</g>'
             f'<rect x="0" y="0" width="{w}" height="{h}" fill="none" '
-            f'stroke="#cfc7b4" stroke-width=".4"/></svg>')
+            f'stroke="#d5cdba" stroke-width=".35"/></svg>')
 
 
-def gridbox(label):
-    return (f'<div class="gridbox"><div class="gl"><i>'
-            f'{esc(label or "필기 노트")}</i></div>{grid_svg()}</div>')
+def gridbox(label, h=104.0):
+    return (f'<div class="gridbox"><div class="wl solo">{esc(label)}</div>'
+            f'{grid_svg(174.0, h)}</div>')
 
 
-# ── 머리 띠 ─────────────────────────────────────────────────────────────
+# ── 머리(내비게이션) ────────────────────────────────────────────────────
 #
-# ⚠ 왼쪽 면 그래픽을 **반전해** 오른쪽 면에 쓰지 않는다. 두 면은 무엇을 넣는지가
-#   다르다 — 왼쪽은 큰 원 + 알약(PART·부), 오른쪽은 깃발 + 크레스트.
-def runhead(part, vol, sec, off=False):
+# 두 단계만 쓴다. 왼쪽 면은 **주색 면**이 상위 정보를 지고, 오른쪽 면은 크레스트가
+# 그 자리를 대신한다 — 같은 그림을 뒤집은 것이 아니라 구성이 다르다.
+# 부마다 면에 무엇이 들어가는지가 다르다(어휘=WEEK 숫자, 구문어법=PART·주제,
+# 독해=WEEK·유형).
+def runhead(blk_top, blk_main, brow, title, off=False):
     o = " rh-off" if off else ""
-    left = (f'<div class="band bandL"><div class="orb"></div>'
-            f'<span class="pill">{esc(part)}&nbsp;&nbsp;{esc(vol)}</span>'
-            f'<span class="sec">{esc(sec)}</span></div>')
-    right = (f'<div class="band bandR"><div class="flag"></div>'
-             f'<span class="sec">{esc(sec)}</span>'
-             f'<span class="tick"></span>'
-             f'<span class="crest"></span></div>')
-    return (f'<div class="rhL{o}">{left}</div>'
-            f'<div class="rhR{o}">{right}</div>')
+    slab = (f'<span class="slab"><i class="s1">{esc(blk_top)}</i>'
+            f'<i class="s2">{esc(blk_main)}</i></span>')
+    txt = (f'<span class="hx"><i class="h1">{esc(brow)}</i>'
+           f'<i class="h2">{esc(title)}</i></span>')
+    txtR = (f'<span class="hx"><i class="h1">{esc(blk_top)}'
+            f'{"&nbsp;&nbsp;·&nbsp;&nbsp;" + esc(blk_main) if blk_main else ""}'
+            f'</i><i class="h2">{esc(title)}</i></span>')
+    return (f'<div class="rhL{o}"><div class="nav navL">{slab}{txt}</div></div>'
+            f'<div class="rhR{o}"><div class="nav navR">{txtR}'
+            f'<span class="crest"></span></div></div>')
 
 
-# ══════════════════════════════════════════════════════════ 부별 렌더러
+# ── 제목(번호를 떼어 세운다) ────────────────────────────────────────────
+def title_block(kind, num, label, text, sub=""):
+    """`01 / LESSON / 제목` — 번호는 그래픽, 라벨은 A 계열, 제목이 중심."""
+    n = f'<span class="tn">{esc(num)}</span>' if num else ""
+    lb = f'<i class="tk">{esc(label)}</i>' if label else ""
+    sb = f'<div class="tsub">{sub}</div>' if sub else ""
+    return (f'<div class="ttl {kind}">{n}'
+            f'<div class="tt">{lb}<h2 class="th2">{esc(text)}</h2>{sb}</div>'
+            f'</div>')
+
+
+# ══════════════════════════════════════════════════════════ 어휘부
 def render_vocab(vol, out):
-    """어휘부 — Week 마다 새 면, 분류 띠 아래 낱말 카드가 흐른다."""
+    """어휘 — WEEK 숫자가 가장 중요한 정보다(머리 면이 그것을 진다)."""
     blocks = vol["blocks"]
     i, n = 0, len(blocks)
     k = Keeper(out)
+    wk_no, wk_root = "", ""
     while i < n:
         b = blocks[i]
         t = b["t"]
@@ -221,17 +232,28 @@ def render_vocab(vol, out):
             continue
         if t == "week":
             k.flush()
-            week = plain(b["r"])
-            out.append(f'<section class="week-open">{runhead(vol["part"], vol["name"], week)}'
-                       f'<h2 class="week">{inl(b["r"])}</h2></section>')
+            txt = plain(b["r"])
+            wk_no, wname = numtitle(txt.replace("Week", "").strip()
+                                    if txt.startswith("Week") else txt)
+            # 그 주의 어근 정보 — 다음 분류 띠에서 가져온다
+            wk_root = ""
+            for nb in blocks[i + 1:i + 3]:
+                if nb["t"] == "group":
+                    c = cols(plain(nb["r"]), 3)
+                    wk_root = "  ·  ".join(c[1:]) if len(c) > 1 else ""
+                    break
+            head = (f'WEEK {wk_no}' if wk_no else txt)
+            out.append(f'<section class="week-open">'
+                       f'{runhead("WEEK", wk_no or "", "VOCABULARY", wk_root)}'
+                       + title_block("big", wk_no, "WEEK",
+                                     wname or txt, esc(wk_root))
+                       + '</section>')
         elif t == "group":
             c = cols(plain(b["r"]), 3)
-            head = esc(c[0].lstrip("■ ").strip()) if c else ""
+            head = c[0].lstrip("■ ").strip() if c else ""
             rest = "".join(f'<span class="g{j}">{esc(v)}</span>'
                            for j, v in enumerate(c[1:], 1))
-            cls = "vgroup" if rest else "vgroup solo"
-            # 분류 띠만 면 아래에 혼자 남지 않게 첫 낱말과 묶는다
-            k.head(f'<div class="{cls}"><span class="g0">{head}</span>'
+            k.head(f'<div class="vgroup"><span class="g0">{esc(head)}</span>'
                    f'{rest}</div>')
         elif t == "word":
             k.body(word_card(b))
@@ -243,15 +265,11 @@ def render_vocab(vol, out):
     k.flush()
 
 
-RE_EXNUM = re.compile(r"^\s*([\u2776-\u277f\u2460-\u2473])\s*")
-
-
 def word_card(b):
-    """낱말 카드.
+    """낱말 카드 — 시선은 **표제어 → 뜻/어원 → 예문 → KEY POINT** 순이다.
 
-    원고의 `❶❷` 와 `❖ KEY POINT` 는 **글자로 두지 않는다** — 앞은 번호 배지로,
-    뒤는 라벨 탭이 붙은 기입 판으로 바꾼다. 원고 표기를 그대로 인쇄하면
-    조판한 값이 없다.
+    원고의 `❶❷`·`❖ KEY POINT` 는 글자로 두지 않는다. KEY POINT 는 표제어보다
+    먼저 보이면 안 되므로 색을 빼고 **조용한 기입 줄**로 둔다.
     """
     senses = "".join(f'<div class="w-sense">{inl(s)}</div>' for s in b["senses"])
     ex = []
@@ -263,13 +281,13 @@ def word_card(b):
             seq[0] = t if isinstance(seq[0], str) else dict(seq[0], t=t)
         ex.append(f'<div class="w-ex"><span class="exn">{k}</span>'
                   f'{inl(seq)}</div>')
-    key = ('<div class="w-key"><span class="kl">KEY<br>POINT</span>'
-           '<span class="kf"><i></i><i></i></span></div>')
+    key = ('<div class="w-key"><span class="wl">KEY POINT</span>'
+           '<span class="wline"></span></div>')
     return (
         '<div class="wcard">'
-        f'  <div class="w-l"><div class="w-no">{esc(b["no"])}</div>'
-        f'    <div class="w-head">{esc(b["head"])}</div>'
-        f'    <div class="w-build">{esc(b["build"])}</div>{senses}</div>'
+        f'  <div class="w-l"><div class="w-head">{esc(b["head"])}'
+        f'    <span class="w-no">{esc(b["no"].replace("no. ", ""))}</span></div>'
+        f'    {senses}<div class="w-build">{esc(b["build"])}</div></div>'
         f'  <div class="w-r">{"".join(ex)}{key}</div>'
         '</div>')
 
@@ -286,11 +304,7 @@ def appendix_row(b):
 
 # ── 머리+첫 덩어리 묶음 ─────────────────────────────────────────────────
 class Keeper(object):
-    """머리를 **뒤따르는 첫 덩어리와 함께** 묶는다.
-
-    `break-after: avoid` 만으로는 부족했다 — '구문' 구분 칩이 면 맨 아래에 혼자
-    남고 첫 항목이 다음 면으로 넘어갔다.
-    """
+    """머리를 뒤따르는 첫 덩어리와 함께 묶는다(`break-after: avoid` 로는 부족)."""
 
     def __init__(self, out):
         self.out = out
@@ -314,22 +328,25 @@ class Keeper(object):
             self.pend = []
 
 
-# ─────────────────────────────────────────────────────────── 구문·어법부
+# ══════════════════════════════════════════════════════════ 구문·어법부
 def render_grammar(vol, out):
+    """구문·어법 — PART → 강 → 세부 주제. 머리 면이 PART·주제를 진다."""
     blocks = vol["blocks"]
     i, n = 0, len(blocks)
     k = Keeper(out)
-    cp = None            # 개념 면 버퍼 {"body": [...], "grid": 라벨}
-    drill_gram = False    # 지금 열려 있는 연습이 어법 쪽인가
+    cp = None
+    drill_gram = False
     col_open = False
-    qn = 0                # 지금 연습 안에서 몇 번째 문항인가
+    qn = 0
+    part_no, part_ttl = "", ""
+    les_no, les_ttl = "", ""
 
     def close_cpage():
         nonlocal cp
         if cp is None:
             return
         out.append('<section class="cpage">' + "".join(cp["body"])
-                   + gridbox(cp["grid"]) + "</section>")
+                   + gridbox(cp["grid"], cp.get("gh", 84.0)) + "</section>")
         cp = None
 
     def close_col():
@@ -340,11 +357,15 @@ def render_grammar(vol, out):
             col_open = False
 
     def put(h):
-        """개념 면이 열려 있으면 그리로, 아니면 흐름으로."""
         if cp is not None:
             cp["body"].append(h)
         else:
             k.body(h)
+
+    def rh():
+        return runhead(part_no or "PART", part_ttl or vol["name"],
+                       f"LESSON {les_no}" if les_no else VOL_EN["grammar"],
+                       les_ttl or part_ttl)
 
     while i < n:
         b = blocks[i]
@@ -362,27 +383,29 @@ def render_grammar(vol, out):
             if i + 1 < n and blocks[i + 1]["t"] == "part_title":
                 title = plain(blocks[i + 1]["r"])
                 i += 1
+            part_no, part_ttl = plain(b["r"]), title
+            les_no = les_ttl = ""
             out.append(part_page(plain(b["r"]), title,
                                  part_items(blocks, i, ("part_no",))))
         elif t == "lesson":
-            cp = {"body": [runhead(vol["part"], vol["name"], plain(b["r"])),
-                           f'<h3 class="lesson">{inl(b["r"])}</h3>'],
-                  "grid": "필기 노트"}
+            les_no, les_ttl = numtitle(plain(b["r"]))
+            cp = {"body": [rh(),
+                           title_block("big", les_no, "LESSON", les_ttl)],
+                  "grid": "필기 노트", "gh": 84.0}
         elif t == "lesson_sub":
-            put(kv_line(plain(b["r"]), "lsub"))
+            put(keyline(plain(b["r"])))
         elif t == "subhead":
-            # 어느 블록인지는 **뒤따르는 내용**이 정한다
             nxt = blocks[i + 1]["t"] if i + 1 < n else ""
             if nxt == "notebox":
                 if cp is not None:
                     cp["grid"] = plain(b["r"])
-                i += 1                        # 빈 표는 모눈이 대신한다
+                i += 1
             elif nxt == "concept":
-                put(f'<div class="h-concept">{inl(b["r"])}</div>')
+                put(f'<div class="blk-h">{esc(plain(b["r"]))}</div>')
             elif nxt == "bullet":
-                put(f'<h4 class="h-point">{inl(b["r"])}</h4>')
+                put(f'<div class="blk-h">{esc(plain(b["r"]))}</div>')
             else:
-                put(f'<h4 class="subhead">{inl(b["r"])}</h4>')
+                put(f'<div class="blk-h">{esc(plain(b["r"]))}</div>')
         elif t == "bullet":
             put(f'<div class="bul">{inl(strip_mark(b["r"], "•"))}</div>')
         elif t == "concept":
@@ -399,11 +422,10 @@ def render_grammar(vol, out):
             if i + 1 < n and blocks[i + 1]["t"] == "drill_note":
                 note = f'<div class="drill-note">{inl(blocks[i + 1]["r"])}</div>'
                 i += 1
-            out.append(f'<div class="drillpage{g}">'
-                       f'<div class="drill{g}"><h4>{inl(b["r"])}</h4>'
-                       f'{note}</div>')
-            out.append("</div>")            # 연습 머리만 새 면을 연다
-            k.head(f'<div class="qhead{g}"></div>')
+            out.append(f'<section class="drillpage{g}">{rh()}'
+                       f'<div class="drill">'
+                       f'<h3 class="drill-h">{esc(title)}</h3>{note}</div>'
+                       f'</section>')
         elif t == "q":
             j = i + 1
             rows = []
@@ -414,30 +436,27 @@ def render_grammar(vol, out):
                 j += 1
             g = " gram" if drill_gram else ""
             qn += 1
-            # 어법 연습은 한 강에 10문항이라 한 면에 안 들어간다. 흐름에 맡기면
-            # 7+3 처럼 뒷면이 휑해진다 → **5+5 로 나눈다**.
             if drill_gram and qn == HALF + 1:
                 k.flush()
                 out.append('<div class="pbr"></div>')
             k.body(f'<div class="qitem{g}">{q_line(b["r"])}'
-                   + "".join(rows) + "</div>")
+                   f'<div class="qbody">' + "".join(rows) + "</div></div>")
             i = j - 1
         elif t == "ans_head":
             txt = plain(b["r"])
             if txt.startswith("PART"):
                 close_col()
-                out.append(f'<section class="anspage">'
-                           f'{runhead(vol["part"], vol["name"], "정답 및 해설")}'
-                           f'<h3 class="ans-part">{inl(b["r"])}</h3></section>')
-                out.append('<div class="anscol">')
+                out.append('<section class="anspage">'
+                           + runhead("정답 및 해설", "", VOL_EN["grammar"], txt)
+                           + title_block("ans", "", "ANSWERS", txt)
+                           + '</section><div class="anscol">')
                 col_open = True
                 k = Keeper(out)
             else:
-                k.head(f'<h3 class="ans-lesson">{inl(b["r"])}</h3>')
+                k.head(f'<h3 class="ans-lesson">{esc(txt)}</h3>')
         elif t == "ans_kind":
             g = " gram" if "어법" in plain(b["r"]) else ""
-            drill_gram = bool(g)
-            k.head(f'<div class="ans-kind{g}">{inl(b["r"])}</div>')
+            k.head(f'<div class="ans-kind{g}">{esc(plain(b["r"]))}</div>')
         elif t == "ans_q":
             j = i + 1
             body = []
@@ -461,7 +480,6 @@ def render_grammar(vol, out):
 
 
 def strip_mark(rich, mark):
-    """머리 기호는 CSS 가 그린다 — 원고의 기호는 뗀다."""
     out = list(rich)
     if out:
         first = out[0]
@@ -472,13 +490,21 @@ def strip_mark(rich, mark):
     return out
 
 
+def keyline(txt):
+    """`핵심 구조   …` — 강의 요약. 개념 면에서 **가장 먼저 읽히는 줄**."""
+    c = cols(txt, 2)
+    if len(c) == 2:
+        return (f'<div class="keyline"><i>{esc(c[0])}</i>'
+                f'<span>{esc(c[1])}</span></div>')
+    return f'<div class="keyline"><span>{esc(txt)}</span></div>'
+
+
 def q_line(rich):
-    """문항 — 앞머리 번호를 원형 배지로."""
     num, rest = "", list(rich)
     if rest and isinstance(rest[0], dict) and rest[0].get("k") == "num":
         num = plain(rest[0]).strip()
         rest = rest[1:]
-    return (f'<div class="q"><span class="q-no"><i>{esc(num)}</i></span>'
+    return (f'<div class="q"><span class="q-no">{esc(num)}</span>'
             f'<span class="q-t">{inl(rest)}</span></div>')
 
 
@@ -495,44 +521,31 @@ def ans_item(rich):
     txt = plain(rich)
     if "|" in txt:
         lab, _, body = txt.partition("|")
-        return (f'<div class="a-item"><span class="a-lab">{esc(lab.strip())}</span>'
-                f'<span class="a-body">{esc(body.strip())}</span></div>')
+        return (f'<div class="a-item"><span class="a-lab">{esc(lab.strip())}'
+                f'</span><span class="a-body">{esc(body.strip())}</span></div>')
     return f'<div class="a-item"><span class="a-body">{inl(rich)}</span></div>'
-
-
-def kv_line(txt, cls):
-    c = cols(txt, 2)
-    if len(c) == 2:
-        return (f'<div class="{cls}"><span class="chip">{esc(c[0])}</span>'
-                f'<span>{esc(c[1])}</span></div>')
-    return f'<div class="{cls}"><span>{esc(txt)}</span></div>'
 
 
 def kv_inline(rich, en=False):
     txt = plain(rich) if not isinstance(rich, str) else rich
     if "|" in txt[:14]:
         lab, _, body = txt.partition("|")
-        return (f'<span class="chip">{esc(lab.strip())}</span>'
-                f'<span>{esc(body.strip())}</span>')
+        return (f'<i class="ilab">{esc(lab.strip())}</i>{esc(body.strip())}')
     return inl(rich)
 
 
 def part_page(no, title, items=()):
-    """부 안쪽 PART 오프너 — 위 3분의 1은 색면, 아래는 그 파트의 차례."""
     rows = "".join(
         f'<div class="p-it"><span class="pn">{i:02d}</span>'
         f'<span class="pt">{esc(t)}</span></div>'
         for i, t in enumerate(items, 1))
     lst = f'<div class="p-list">{rows}</div>' if rows else ""
-    return (f'<section class="partpage">'
-            f'<div class="slab"></div><div class="orb"></div>'
+    return (f'<section class="partpage"><div class="slab"></div>'
             f'<div class="p-no">{esc(no)}</div>'
-            f'<div class="p-ttl">{esc(title)}</div>'
-            f'<div class="p-rule"></div>{lst}</section>')
+            f'<div class="p-ttl">{esc(title)}</div>{lst}</section>')
 
 
 def part_items(blocks, i, stop, key="lesson"):
-    """이 PART 다음에 오는 강 제목들 — 다음 PART 를 만나면 멈춘다."""
     out = []
     for b in blocks[i + 1:]:
         if b["t"] in stop:
@@ -542,20 +555,32 @@ def part_items(blocks, i, stop, key="lesson"):
     return out
 
 
-# ───────────────────────────────────────────────────────────────── 독해부
+# ══════════════════════════════════════════════════════════ 독해부
 def render_reading(vol, out):
+    """독해 — WEEK 와 문제 유형이 축이다. 지문이 가장 무겁고 해석이 가장 가볍다."""
     blocks = vol["blocks"]
     i, n = 0, len(blocks)
-    week = pending_week = ""
     k = Keeper(out)
     cp = None
+    wk_no, wk_ttl = "", ""
+    les_no, les_ttl = "", ""
+    ex_kind = ""
+    pending_week = ""
+    bg = None
+
+    def flush_bg():
+        nonlocal bg
+        if bg:
+            k.body(f'<div class="bgcard"><div class="bgh">{bg[0]}</div>'
+                   f'<div class="bgb">{"".join(bg[1])}</div></div>')
+            bg = None
 
     def close_cpage():
         nonlocal cp
         if cp is None:
             return
         out.append('<section class="cpage">' + "".join(cp["body"])
-                   + gridbox(cp["grid"]) + "</section>")
+                   + gridbox(cp["grid"], cp.get("gh", 84.0)) + "</section>")
         cp = None
 
     def put(h):
@@ -564,6 +589,10 @@ def render_reading(vol, out):
         else:
             k.body(h)
 
+    def rh():
+        return runhead(f"WEEK {wk_no}" if wk_no else "WEEK", wk_ttl,
+                       ex_kind or VOL_EN["reading"], les_ttl or wk_ttl)
+
     while i < n:
         b = blocks[i]
         t = b["t"]
@@ -571,12 +600,13 @@ def render_reading(vol, out):
             i += 1
             continue
         if t in ("week", "lesson", "rpart_no", "ex_tag"):
+            flush_bg()
             close_cpage()
             k.flush()
         if pending_week and t not in ("week", "lesson", "rpart_no"):
-            out.append(f'<section class="week-open">'
-                       f'{runhead(vol["part"], vol["name"], pending_week)}'
-                       f'<h2 class="week">{esc(pending_week)}</h2></section>')
+            out.append(f'<section class="week-open">{rh()}'
+                       + title_block("big", wk_no, "WEEK", wk_ttl)
+                       + '</section>')
             pending_week = ""
 
         if t == "rpart_no":
@@ -587,36 +617,41 @@ def render_reading(vol, out):
             out.append(part_page(plain(b["r"]), title,
                                  part_items(blocks, i, ("rpart_no",), "week")))
         elif t == "week":
-            week = pending_week = plain(b["r"])
+            wk_no, wk_ttl = numtitle(plain(b["r"]).replace("Week", "").strip())
+            les_no = les_ttl = ""
+            pending_week = wk_ttl
         elif t == "lesson":
-            brow = (f'<div class="weekbrow">{esc(pending_week)}</div>'
-                    if pending_week else "")
-            rh = runhead(vol["part"], vol["name"],
-                         (week + "  ·  " if week else "") + plain(b["r"]))
-            cp = {"body": [rh, brow,
-                           f'<h3 class="lesson">{inl(b["r"])}</h3>'],
-                  "grid": "필기 노트"}
+            les_no, les_ttl = numtitle(plain(b["r"]))
             pending_week = ""
+            cp = {"body": [rh(),
+                           title_block("big", les_no, "LESSON", les_ttl,
+                                       esc(f"WEEK {wk_no}  ·  {wk_ttl}"))],
+                  "grid": "필기 노트", "gh": 78.0}
         elif t == "concept_head":
-            put(f'<div class="ch">{esc(plain(b["r"]).strip("＜＞ "))}</div>')
+            put(f'<div class="blk-h lead">'
+                f'{esc(plain(b["r"]).strip("＜＞ "))}</div>')
         elif t == "block_head":
-            put(f'<h4 class="bh">{inl(strip_mark(b["r"], "●"))}</h4>')
+            put(f'<div class="blk-h">{esc(plain(strip_mark(b["r"], "●")))}'
+                f'</div>')
         elif t == "block_bullet":
             put(f'<div class="bbul">{inl(strip_mark(b["r"], "·"))}</div>')
         elif t == "wnote_head":
             if cp is not None:
                 cp["grid"] = plain(b["r"]).strip().lstrip("❖ ").strip()
             else:
-                k.head(f'<div class="nh"><i>'
-                       f'{esc(plain(b["r"]).strip())}</i></div>')
+                k.head(f'<div class="wl solo">'
+                       f'{esc(plain(b["r"]).strip().lstrip("❖ ").strip())}</div>')
         elif t == "note_head":
             txt = plain(b["r"]).strip().lstrip("❖ ").strip()
-            k.head(f'<div class="nh"><i>{esc(txt)}</i></div>')
+            k.head(f'<div class="wl solo">{esc(txt)}</div>')
         elif t == "notebox":
             if cp is None:
-                k.body(rules(9, "wbox"))
+                k.body(rules(7, "wbox"))
         elif t == "ex_tag":
-            out.append(ex_tag(b["r"]))
+            c = [x for x in cols(plain(b["r"])) if x != "·"]
+            ex_kind = c[1] if len(c) > 1 else ""
+            out.append(f'<section class="expage">{rh()}{ex_tag(b["r"])}'
+                       f'</section>')
         elif t == "stem":
             k.body(f'<div class="stem">{inl(b["r"])}</div>')
         elif t == "passage":
@@ -632,13 +667,19 @@ def render_reading(vol, out):
             k.body('<ul class="choices">' + "".join(items) + "</ul>")
             i = j - 1
         elif t == "bg_head":
-            txt = plain(b["r"]).strip().lstrip("❖ ").strip()
-            k.head(f'<div class="bgh">{esc(txt)}</div>')
+            # 배경지식 노트는 이 교재의 특징 콘텐츠다 → **독립 카드**로 묶는다
+            flush_bg()
+            bg = [esc(plain(b["r"]).strip().lstrip("❖ ").strip()), []]
         elif t == "bg_item":
-            k.body(f'<div class="bgi">{inl(strip_mark(b["r"], "·"))}</div>')
+            if bg:
+                bg[1].append(f'<div class="bgi">'
+                             f'{inl(strip_mark(b["r"], "·"))}</div>')
+            else:
+                k.body(f'<div class="bgi">{inl(strip_mark(b["r"], "·"))}</div>')
         elif t == "trans_head":
-            k.head(f'<div class="th"><i>'
-                   f'{esc(plain(b["r"]).strip().lstrip("❖ ").strip())}</i></div>')
+            flush_bg()
+            k.head(f'<div class="th">'
+                   f'{esc(plain(b["r"]).strip().lstrip("❖ ").strip())}</div>')
         elif t == "trans":
             k.body(f'<div class="trans">{inl(b["r"])}</div>')
         elif t == "ans_line":
@@ -646,15 +687,12 @@ def render_reading(vol, out):
         else:
             put(generic(b))
         i += 1
+    flush_bg()
     close_cpage()
     k.flush()
 
 
-RE_CIRC = re.compile(r"^\s*([\u2460-\u2473])\s*")
-
-
 def choice_line(rich):
-    """선지 — 앞머리 동그라미 숫자만 보조색으로."""
     h = inl(rich)
     m = RE_CIRC.match(plain(rich))
     if m:
@@ -667,14 +705,15 @@ def ex_tag(rich):
     no = c[0] if c else ""
     lvl = c[-1] if len(c) > 1 and c[-1].startswith("[") else ""
     mid = "  ·  ".join(c[1:-1] if lvl else c[1:])
-    return (f'<div class="extag"><span class="x-no"><i>{esc(no)}</i></span>'
-            f'<span class="x-m">{esc(mid)}</span>'
-            f'<span class="x-l"><i>{esc(lvl.strip("[] "))}</i></span></div>')
+    n2, _ = numtitle(no.replace("예제", "").strip())
+    return (f'<div class="extag"><span class="x-no">{esc(n2 or no)}</span>'
+            f'<span class="x-m"><i>EXAMPLE</i>{esc(mid)}</span>'
+            f'<span class="x-l">{esc(lvl.strip("[] "))}</span></div>')
 
 
 def ans_line(rich):
     txt = plain(rich).strip()
-    if txt.startswith("·"):                       # 배경지식 노트 정답
+    if txt.startswith("·"):
         body = txt.lstrip("· ").strip()
         src, _, rest = body.partition("]")
         return (f'<div class="aline bg"><span class="l-src">'
@@ -724,14 +763,9 @@ def cover_page(cfg, cover):
 
 
 def divider_page(cfg, vol, no):
-    """부 간지 — **2면 한 세트**. 왼쪽은 제목, 오른쪽은 번호와 설명.
-
-    두 면을 가로지르는 큰 원 하나가 책등에서 이어진다. 같은 그림을 뒤집어 쓴 것이
-    아니라 **한 도형이 펼침을 건너간다** — 좌우 대칭은 금물이다.
-    """
+    """부 간지 — 2면 한 세트. 큰 원 하나가 책등을 건너간다."""
     lines = [b for b in vol["blocks"] if b["t"] == "vol_desc"]
     desc = "".join(f'<div class="d-desc">{inl(b["r"])}</div>' for b in lines)
-    en = VOL_EN.get(vol["id"], "")
     bk = cfg.book
     foot = "  ·  ".join(x for x in (bk.get("brand"), bk.get("school"),
                                     bk.get("teacher")) if x)
@@ -739,7 +773,7 @@ def divider_page(cfg, vol, no):
         f'<section class="dvL v-{vol["id"]}"><div class="orb"></div>'
         f'  <div class="in"><div class="d-no">PART {no:02d}</div>'
         f'    <h1 class="d-ttl">{esc(vol["name"])}</h1>'
-        f'    <div class="d-en">{esc(en)}</div>'
+        f'    <div class="d-en">{esc(VOL_EN.get(vol["id"], ""))}</div>'
         f'    <div class="d-rule"></div></div>'
         f'  <div class="foot">{esc(foot)}</div></section>'
         f'<section class="dvR v-{vol["id"]}"><div class="orb"></div>'
@@ -764,8 +798,8 @@ def toc_page(vol):
         elif b["t"] == "toc_2":
             rows.append(f'<div class="t-2">{inl(b["r"])}</div>')
     return ('<section class="tocpage">'
-            f'<h2 class="toc-h">CONTENTS</h2>'
-            f'<div class="toc-sub">{esc(vol["name"])}</div>'
+            f'<div class="toc-k">CONTENTS</div>'
+            f'<h2 class="toc-h">{esc(vol["name"])}</h2>'
             + "".join(rows) + "</section>")
 
 
@@ -788,28 +822,24 @@ def write(cfg, d, build_dir, log=print, memos=1, fills=()):
         RENDERERS.get(vid, render_reading)(vol, body)
         parts.append('<div class="flow">' + "".join(body) + "</div>")
         parts.append("</div>")
-    # 제본은 **짝수 면**으로 끝나야 한다. MEMO 장수는 빌드가 정한다(1↔2).
     for _ in range(max(1, memos)):
         parts.append(f'<section class="memopage v-{d["volumes"][-1]["id"]}">'
                      '<div class="rhL rh-off"></div>'
                      '<div class="rhR rh-off"></div>'
-                     f'<h2 class="memo-h">MEMO</h2>{grid_svg(174, 210)}'
-                     '</section>')
+                     '<div class="wl solo">MEMO</div>'
+                     f'{grid_svg(174, 232)}</section>')
 
-    # 파리티 때문에 생긴 백면은 **의도된 색면**으로 채운다. `@page :nth()` 의
-    # 배경색은 도형 칠이라(이미지가 아니라) 인쇄에서 안전하다.
     fill_css = "".join(
         f"@page :nth({n}) {{ background: {c}; }}\n" for n, c in fills)
     css_vars = ":root{\n" + "".join(
         f"  --mgn-{k.split('_')[1]}: {v}mm;\n" for k, v in m.items()
         if k.startswith("margin_")) + "}\n" + palette_css(pal) + fill_css
 
-    doc = (
-        '<!doctype html><html lang="ko"><head><meta charset="utf-8">'
-        f'<title>{html.escape(cfg.book.get("title", ""))}</title>'
-        '<link rel="stylesheet" href="theme.css">'
-        f'<style>{css_vars}</style></head><body>'
-        + "".join(parts) + "</body></html>")
+    doc = ('<!doctype html><html lang="ko"><head><meta charset="utf-8">'
+           f'<title>{html.escape(cfg.book.get("title", ""))}</title>'
+           '<link rel="stylesheet" href="theme.css">'
+           f'<style>{css_vars}</style></head><body>'
+           + "".join(parts) + "</body></html>")
     path = os.path.join(build_dir, "index.html")
     with open(path, "w", encoding="utf-8") as f:
         f.write(doc)
@@ -829,11 +859,6 @@ def palette_css(pal):
 
 
 # ──────────────────────────────────────────────────────────── 검수 대조
-#
-# 원고 → PDF **직접 대조**다. "단락을 100% 소비했다"는 게이트는 파서 사고를 그냥
-# 통과시킨 적이 있다. 그래서 세는 것은 블록 수가 아니라 **본문 글자**다.
-# 조판이 라벨·머리기호·구분자를 떼어 칩·배지로 옮기므로, 구분자로 잘라 **가장
-# 긴 조각**을 대조 문자열로 쓴다. 그 조각이 없으면 그것은 진짜 유실이다.
 RE_SEPS = re.compile(r"[|→·•●❖＜＞\[\]\t]| {2,}")
 
 
@@ -844,7 +869,7 @@ def probe_text(text, floor=10):
 
 
 def verify_sequence(d):
-    """조판 순서대로 (설명, 원문 조각). 위치가 앞으로 가면 순서 어긋남이다."""
+    """조판 순서대로 (설명, 원문 조각). 표식이 아니라 **본문 글자**를 센다."""
     seq = []
     for vol in d["volumes"]:
         vid = vol["id"]
