@@ -45,6 +45,7 @@ VOL_EN = {"vocab": "VOCABULARY", "grammar": "SYNTAX & GRAMMAR",
           "reading": "READING"}
 HALF = 5              # 어법 연습문제 10문항을 나누는 자리
 FRONT = {"vol_desc", "toc_title", "toc_1", "toc_2"}
+BOOK = [""]           # 머리 오른쪽 면에 들어가는 책 이름(write() 가 채운다)
 
 
 def metrics_of(cfg):
@@ -186,24 +187,27 @@ def gridbox(label, h=104.0):
             f'{grid_svg(174.0, h)}</div>')
 
 
-# ── 머리(내비게이션) ────────────────────────────────────────────────────
+# ── 머리 띠 ────────────────────────────────────────────────────────────
 #
-# 두 단계만 쓴다. 왼쪽 면은 **주색 면**이 상위 정보를 지고, 오른쪽 면은 크레스트가
-# 그 자리를 대신한다 — 같은 그림을 뒤집은 것이 아니라 구성이 다르다.
-# 부마다 면에 무엇이 들어가는지가 다르다(어휘=WEEK 숫자, 구문어법=PART·주제,
-# 독해=WEEK·유형).
-def runhead(blk_top, blk_main, brow, title, off=False):
+# 헤더는 **내비게이션 텍스트를 늘어놓는 자리가 아니다.** 두 면이 한 세트로 보이되
+# 왼쪽 면과 오른쪽 면이 지는 것이 다르다(중2 같이새김 내지와 같은 구성):
+#
+#   왼쪽(짝수) — 왼쪽 상단에 **도형(각진 색면)** + 그 단원 표기
+#   오른쪽(홀수) — 오른쪽 상단에 **도형(원)** + 크레스트 + **책 이름**
+#
+# 옅은 띠는 두 면에 똑같이 깔려 펼침을 가로지른다 → 세트로 읽힌다.
+# ⚠ 왼쪽 면 그래픽을 반전해 오른쪽에 쓰지 않는다.
+def runhead(unit_top, unit_no, label, main, sub, book, off=False):
     o = " rh-off" if off else ""
-    slab = (f'<span class="slab"><i class="s1">{esc(blk_top)}</i>'
-            f'<i class="s2">{esc(blk_main)}</i></span>')
-    txt = (f'<span class="hx"><i class="h1">{esc(brow)}</i>'
-           f'<i class="h2">{esc(title)}</i></span>')
-    txtR = (f'<span class="hx"><i class="h1">{esc(blk_top)}'
-            f'{"&nbsp;&nbsp;·&nbsp;&nbsp;" + esc(blk_main) if blk_main else ""}'
-            f'</i><i class="h2">{esc(title)}</i></span>')
-    return (f'<div class="rhL{o}"><div class="nav navL">{slab}{txt}</div></div>'
-            f'<div class="rhR{o}"><div class="nav navR">{txtR}'
-            f'<span class="crest"></span></div></div>')
+    chip = (f'<span class="chip"><i class="c1">{esc(unit_top)}</i>'
+            f'<i class="c2">{esc(unit_no)}</i><i class="cut"></i></span>')
+    txt = (f'<span class="ht"><i class="l1">{esc(label)}</i>'
+           f'<i class="l2">{esc(main)}'
+           + (f'<b>{esc(sub)}</b>' if sub else '') + '</i></span>')
+    return (f'<div class="rhL{o}"><div class="hd hdL">{chip}{txt}</div></div>'
+            f'<div class="rhR{o}"><div class="hd hdR"><span class="orb"></span>'
+            f'<span class="crest"></span>'
+            f'<span class="bk">{esc(book)}</span></div></div>')
 
 
 # ── 제목(번호를 떼어 세운다) ────────────────────────────────────────────
@@ -249,8 +253,9 @@ def render_vocab(vol, out):
             ttl, sub, lab = root or (wname or txt), gloss, "WEEK"
             if not wk_no:                      # 부록 — 번호가 없는 주
                 ttl, sub, lab = wname or txt, "", "APPENDIX"
-            out.append(f'<section class="week-open">'
-                       f'{runhead("WEEK", wk_no or "", "VOCABULARY", wk_root)}'
+            out.append('<section class="week-open">'
+                       + runhead("WEEK", wk_no or "—", "VOCABULARY",
+                                 root or (wname or txt), gloss, BOOK[0])
                        + title_block("big", wk_no, lab, ttl, esc(sub))
                        + '</section>')
         elif t == "group":
@@ -368,9 +373,10 @@ def render_grammar(vol, out):
             k.body(h)
 
     def rh():
-        return runhead(part_no or "PART", part_ttl or vol["name"],
-                       f"LESSON {les_no}" if les_no else VOL_EN["grammar"],
-                       les_ttl or part_ttl)
+        pno = part_no.replace("PART", "").strip() or "—"
+        return runhead("PART", pno, f'{vol["name"]}   {VOL_EN["grammar"]}',
+                       f"{int(les_no)}강" if les_no else part_ttl,
+                       les_ttl if les_no else "", BOOK[0])
 
     while i < n:
         b = blocks[i]
@@ -453,9 +459,9 @@ def render_grammar(vol, out):
                 close_col()
                 c = cols(txt, 2)
                 out.append('<section class="anspage">'
-                           + runhead("ANSWERS", "정답 및 해설",
-                                     c[0] if c else "", 
-                                     c[1] if len(c) > 1 else txt)
+                           + runhead("정답", "해설", VOL_EN["grammar"],
+                                     c[0] if c else "",
+                                     c[1] if len(c) > 1 else "", BOOK[0])
                            + title_block("ans", "", "ANSWERS", txt)
                            + '</section><div class="anscol">')
                 col_open = True
@@ -598,8 +604,8 @@ def render_reading(vol, out):
             k.body(h)
 
     def rh():
-        return runhead(f"WEEK {wk_no}" if wk_no else "WEEK", wk_ttl,
-                       ex_kind or VOL_EN["reading"], les_ttl or wk_ttl)
+        return runhead("WEEK", wk_no or "—", VOL_EN["reading"],
+                       wk_ttl, ex_kind or les_ttl, BOOK[0])
 
     while i < n:
         b = blocks[i]
@@ -774,7 +780,11 @@ def cover_page(cfg, cover):
 
 
 def divider_page(cfg, vol, no):
-    """부 간지 — 2면 한 세트. 큰 원 하나가 책등을 건너간다."""
+    """부 간지 — **2면 한 세트**. 왼쪽은 제목 색면, 오른쪽은 그 부의 차례.
+
+    차례를 따로 한 면에 두지 않는다 — 간지를 펼치면 무엇을 배우는지가 바로 보여야
+    한다. 두 면은 책등에서 이어지는 원 하나로 묶인다.
+    """
     lines = [b for b in vol["blocks"] if b["t"] == "vol_desc"]
     desc = "".join(f'<div class="d-desc">{inl(b["r"])}</div>' for b in lines)
     bk = cfg.book
@@ -785,15 +795,14 @@ def divider_page(cfg, vol, no):
         f'  <div class="in"><div class="d-no">PART {no:02d}</div>'
         f'    <h1 class="d-ttl">{esc(vol["name"])}</h1>'
         f'    <div class="d-en">{esc(VOL_EN.get(vol["id"], ""))}</div>'
-        f'    <div class="d-rule"></div></div>'
+        f'    <div class="d-rule"></div>{desc}</div>'
         f'  <div class="foot">{esc(foot)}</div></section>'
         f'<section class="dvR v-{vol["id"]}"><div class="orb"></div>'
         f'  <div class="num">{no:02d}</div>'
-        f'  <div class="desc">{desc}</div>'
-        f'  <div class="brand">{esc(bk.get("brand", ""))}</div></section>')
+        + toc_body(vol) + '</section>')
 
 
-def toc_page(vol):
+def toc_body(vol):
     rows = []
     for b in vol["blocks"]:
         if b["t"] == "toc_title":
@@ -808,10 +817,9 @@ def toc_page(vol):
                         f'{rest}</div>')
         elif b["t"] == "toc_2":
             rows.append(f'<div class="t-2">{inl(b["r"])}</div>')
-    return ('<section class="tocpage">'
-            f'<div class="toc-k">CONTENTS</div>'
-            f'<h2 class="toc-h">{esc(vol["name"])}</h2>'
-            + "".join(rows) + "</section>")
+    return ('<div class="toc">'
+            '<div class="toc-k">CONTENTS</div>'
+            + "".join(rows) + "</div>")
 
 
 # ──────────────────────────────────────────────────────────────── 조립
@@ -820,6 +828,8 @@ RENDERERS = {"vocab": render_vocab, "grammar": render_grammar,
 
 
 def write(cfg, d, build_dir, log=print, memos=1, fills=()):
+    BOOK[0] = (cfg.book.get("running")
+               or f'{cfg.book.get("school", "")} {cfg.book.get("title", "")}')
     m = metrics_of(cfg)
     pal = cfg.section("palette") or {}
     parts = [cover_page(cfg, d["cover"])]
@@ -828,7 +838,6 @@ def write(cfg, d, build_dir, log=print, memos=1, fills=()):
         vol["part"] = f"PART {k:02d}"
         parts.append(f'<div class="vol v-{vid}">')
         parts.append(divider_page(cfg, vol, k))
-        parts.append(toc_page(vol))
         body = []
         RENDERERS.get(vid, render_reading)(vol, body)
         parts.append('<div class="flow">' + "".join(body) + "</div>")
