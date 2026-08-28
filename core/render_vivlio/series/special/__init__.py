@@ -33,12 +33,21 @@ class SpecialSeries(Series):
         build_dir = cfg.build_dir
         os.makedirs(build_dir, exist_ok=True)
         d = data_mod.load(cfg)
-        html_path = render_mod.write(cfg, d, build_dir, log=log)
         self._stage(cfg, build_dir, log)
-
         out = cfg.out_pdf("_견본" if sample else "")
-        secs = cli.run_build(html_path, out, log=log, extra=["-f", "pdf"])
-        pages = probe.page_count(out)
+
+        # 제본은 짝수 면으로 끝나야 한다. `break-before: left` 로 밀면 파리티는
+        # 맞지만 앞에 백면이 생긴다 → **MEMO 장수를 1↔2 로 골라** 백면 없이
+        # 짝수로 맞춘다(면수가 홀수일 때만 한 번 더 조판한다).
+        secs = pages = 0
+        for memos in (1, 2):
+            html_path = render_mod.write(cfg, d, build_dir, log=log,
+                                         memos=memos)
+            secs = cli.run_build(html_path, out, log=log, extra=["-f", "pdf"])
+            pages = probe.page_count(out)
+            if pages % 2 == 0:
+                break
+            log(f"  면수 {pages} (홀수) — MEMO 를 한 장 더해 다시 조판한다")
         log(f"OK  {secs:.1f}s · {pages}p → {out}")
 
         res = {"pdf": out, "pages": pages, "seconds": round(secs, 1)}

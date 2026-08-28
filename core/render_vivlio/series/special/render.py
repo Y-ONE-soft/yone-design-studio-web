@@ -218,7 +218,8 @@ def render_vocab(vol, out):
             head = esc(c[0].lstrip("■ ").strip()) if c else ""
             rest = "".join(f'<span class="g{k}">{esc(v)}</span>'
                            for k, v in enumerate(c[1:], 1))
-            out.append(f'<div class="vgroup"><span class="g0">{head}</span>'
+            cls = "vgroup" if rest else "vgroup solo"
+            out.append(f'<div class="{cls}"><span class="g0">{head}</span>'
                        f'{rest}</div>')
         elif t == "word":
             out.append(word_card(b))
@@ -560,7 +561,7 @@ def render_reading(vol, out):
             k.head(f'<div class="nh">{esc(txt)}</div>')
         elif t == "notebox":
             if cp is None:
-                k.body(rules(6, "wbox"))
+                k.body(rules(9, "wbox"))
         elif t == "ex_tag":
             out.append(ex_tag(b["r"]))
         elif t == "stem":
@@ -573,7 +574,7 @@ def render_reading(vol, out):
             j = i
             items = []
             while j < n and blocks[j]["t"] == "choice":
-                items.append(f'<li>{inl(blocks[j]["r"])}</li>')
+                items.append(f'<li>{choice_line(blocks[j]["r"])}</li>')
                 j += 1
             k.body('<ul class="choices">' + "".join(items) + "</ul>")
             i = j - 1
@@ -594,6 +595,18 @@ def render_reading(vol, out):
         i += 1
     close_cpage()
     k.flush()
+
+
+RE_CIRC = re.compile(r"^\s*([\u2460-\u2473])\s*")
+
+
+def choice_line(rich):
+    """선지 — 앞머리 동그라미 숫자만 보조색으로."""
+    h = inl(rich)
+    m = RE_CIRC.match(plain(rich))
+    if m:
+        h = h.replace(m.group(1), f'<span class="cn">{m.group(1)}</span>', 1)
+    return h
 
 
 def ex_tag(rich):
@@ -696,7 +709,7 @@ RENDERERS = {"vocab": render_vocab, "grammar": render_grammar,
              "reading": render_reading}
 
 
-def write(cfg, d, build_dir, log=print):
+def write(cfg, d, build_dir, log=print, memos=1):
     m = metrics_of(cfg)
     pal = cfg.section("palette") or {}
     parts = [cover_page(cfg, d["cover"])]
@@ -709,11 +722,13 @@ def write(cfg, d, build_dir, log=print):
         RENDERERS.get(vid, render_reading)(vol, body)
         parts.append('<div class="flow">' + "".join(body) + "</div>")
         parts.append("</div>")
-    # 제본은 **짝수 면**으로 끝나야 한다 — 마지막이 홀수면 MEMO 한 면을 더한다.
-    parts.append(f'<section class="memopage v-{d["volumes"][-1]["id"]}">'
-                 '<div class="rhL rh-off"></div><div class="rhR rh-off"></div>'
-                 f'<h2 class="memo-h">MEMO</h2>{grid_svg(174, 210)}'
-                 '</section>')
+    # 제본은 **짝수 면**으로 끝나야 한다. MEMO 장수는 빌드가 정한다(1↔2).
+    for _ in range(max(1, memos)):
+        parts.append(f'<section class="memopage v-{d["volumes"][-1]["id"]}">'
+                     '<div class="rhL rh-off"></div>'
+                     '<div class="rhR rh-off"></div>'
+                     f'<h2 class="memo-h">MEMO</h2>{grid_svg(174, 210)}'
+                     '</section>')
 
     css_vars = ":root{\n" + "".join(
         f"  --mgn-{k.split('_')[1]}: {v}mm;\n" for k, v in m.items()
