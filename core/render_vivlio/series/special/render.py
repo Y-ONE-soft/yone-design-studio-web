@@ -358,13 +358,18 @@ def part_page(vol, no, title):
 def render_reading(vol, out):
     blocks = vol["blocks"]
     i, n = 0, len(blocks)
-    week = ""
+    week = pending_week = ""
     while i < n:
         b = blocks[i]
         t = b["t"]
         if t in FRONT:
             i += 1
             continue
+        if pending_week and t not in ("week", "lesson", "rpart_no"):
+            out.append(f'<section class="week-open">'
+                       f'{runhead(vol["name"], pending_week)}'
+                       f'<h2 class="week">{esc(pending_week)}</h2></section>')
+            pending_week = ""
         if t == "rpart_no":
             title = ""
             if i + 1 < n and blocks[i + 1]["t"] == "rpart_title":
@@ -372,13 +377,18 @@ def render_reading(vol, out):
                 i += 1
             out.append(part_page(vol, plain(b["r"]), title))
         elif t == "week":
+            # Week 제목만 한 면을 차지하면 8면이 비어 버린다 → 뒤따르는 강의
+            # 면 머리에 눈썹으로 얹고, 강이 없는 주(스키마 독해)만 단독으로 연다.
             week = plain(b["r"])
-            out.append(f'<section class="week-open">{runhead(vol["name"], week)}'
-                       f'<h2 class="week">{inl(b["r"])}</h2></section>')
+            pending_week = week
         elif t == "lesson":
-            out.append(f'<section class="lesson-open">'
-                       f'{runhead(vol["name"], week + "  ·  " + plain(b["r"]))}'
+            brow = (f'<div class="weekbrow">{esc(pending_week)}</div>'
+                    if pending_week else "")
+            rh = runhead(vol["name"],
+                         (week + "  ·  " if week else "") + plain(b["r"]))
+            out.append(f'<section class="lesson-open">{rh}{brow}'
                        f'<h3 class="lesson">{inl(b["r"])}</h3></section>')
+            pending_week = ""
         elif t == "concept_head":
             out.append(f'<div class="ch">{esc(plain(b["r"]).strip("＜＞ "))}</div>')
         elif t == "block_head":
@@ -584,6 +594,10 @@ def verify_sequence(d):
                 txt = plain(b["r"])
                 if t == "q":
                     txt = re.sub(r"^\s*\d+\s+", "", txt)
+                # 조판이 라벨(`문제 |`·`어법 개념 |`)을 칩으로 떼어 냈으므로
+                # 대조 문자열에서도 뗀다 — 안 그러면 전부 '누락'으로 잡힌다.
+                if "|" in txt[:14]:
+                    txt = txt.partition("|")[2]
                 if len(txt.strip()) >= 12:
                     seq.append((f"{vid}/{t}", txt.strip()[:60]))
     return seq

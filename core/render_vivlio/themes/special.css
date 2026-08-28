@@ -99,8 +99,9 @@ u { text-decoration: none; }
 .r-pos { color: var(--c-main); font-weight: 700; }
 
 /* ============================================================ 표지·간지 */
-.coverpage, .divider, .tocpage { page: plain; break-before: right; }
-.coverpage { break-before: auto; }
+.coverpage, .divider, .tocpage { page: plain; }
+.divider  { break-before: right; }
+.tocpage  { break-before: page; }
 
 .coverpage { padding-top: 46mm; }
 .c-brand { font: 700 9pt/1 Minion; letter-spacing: .34em;
@@ -125,8 +126,10 @@ u { text-decoration: none; }
            width: 216mm; height: 303mm;
            margin: -25mm -19mm -23mm -23mm; padding: 0;
            background: var(--c-pale); overflow: hidden; }
-.d-ghost { position: absolute; right: 12mm; bottom: -18mm;
-           font: 700 190pt/1 Minion; color: #fff; opacity: .5; }
+/* ⚠ overflow:hidden 은 그림만 자른다 — 글자는 PDF 에 그대로 남아 판면 검수에
+ *    잡힌다(재단선 밖 319mm 에서 실측). 장식 숫자는 면 **안에** 앉힌다. */
+.d-ghost { position: absolute; right: 23mm; bottom: 28mm;
+           font: 700 150pt/.78 Minion; color: #fff; opacity: .55; }
 .d-in    { position: absolute; left: 29mm; top: 86mm; }
 .d-no    { font: 700 12pt/1 Minion; letter-spacing: .34em;
            color: var(--c-main); }
@@ -152,7 +155,7 @@ u { text-decoration: none; }
        color: var(--gray); }
 
 /* ============================================================== PART 표지 */
-.partpage { break-before: right; page: plain;
+.partpage { break-before: page; page: plain;
             height: 255mm; position: relative; }
 .partpage::before { content: ""; position: absolute;
             left: -23mm; right: -19mm; top: 92mm; height: .9mm;
@@ -165,7 +168,9 @@ u { text-decoration: none; }
 /* ================================================================= 어휘부 */
 .week-open  { break-before: page; }
 .week { font: 700 17pt/1.2 Noto; color: var(--c-deep);
-        padding-bottom: 3mm; margin-bottom: 1mm; }
+        padding-bottom: 2.6mm; border-bottom: 1.2pt solid var(--c-main); }
+.weekbrow { font: 700 8.4pt/1 Noto; color: var(--c-main);
+        letter-spacing: .06em; margin-bottom: 2.4mm; }
 
 .vgroup { display: flex; gap: 4mm; align-items: baseline;
           margin: 4.5mm 0 2.2mm; padding: 1.8mm 3mm;
@@ -182,7 +187,7 @@ u { text-decoration: none; }
 .w-no    { font: 700 6.6pt/1 Minion; letter-spacing: .12em; color: var(--lgray); }
 .w-head  { margin-top: .8mm; font: 700 13.5pt/1.15 Minion; color: var(--ink); }
 .w-build { margin-top: 1mm; font: 400 7.6pt/1.42 Noto; color: var(--c-deep); }
-.w-sense { margin-top: .6mm; font: 400 9pt/1.42 Noto; color: var(--ink); }
+.w-sense { margin-top: .6mm; font: 500 9.4pt/1.42 Noto; color: var(--ink); }
 .w-ex    { margin-bottom: 1.1mm; font: 400 8.9pt/1.46 Minion, Noto;
            color: #333; text-indent: -3.6mm; padding-left: 3.6mm; }
 .w-note  { margin-top: 1.4mm; font: 700 7.4pt/1 Noto; color: var(--c-main);
@@ -225,8 +230,8 @@ u { text-decoration: none; }
 .wbox { margin: 2.2mm 0 1mm; break-inside: avoid; }
 .wbox i { display: block; height: 7.4mm; border-bottom: .5pt solid var(--hair); }
 .wbox.big i { height: 8.4mm; }
-.wbox.tight { margin: .8mm 0 0; }
-.wbox.tight i { height: 5.4mm; border-bottom-color: #e8e6e0; }
+.wbox.tight { margin: .6mm 0 0; }
+.wbox.tight i { height: 5.2mm; border-bottom: .5pt dotted #cfcbc2; }
 
 /* 연습문제 */
 .drill { margin: 6.5mm 0 2.4mm; break-after: avoid; }
@@ -284,9 +289,9 @@ u { text-decoration: none; }
        break-after: avoid; }
 .bh::before { content: "●"; margin-right: 1.6mm; font-size: 6.4pt;
        color: var(--c-main); vertical-align: .5mm; }
-.bbul { padding-left: 4.6mm; text-indent: -4.6mm; margin-bottom: .7mm;
+.bbul { padding-left: 3.6mm; text-indent: -3.6mm; margin-bottom: .7mm;
         font: 400 9.1pt/1.58 Noto; }
-.bbul::before { content: "·"; display: inline-block; width: 4.6mm;
+.bbul::before { content: "·"; display: inline-block; width: 3.6mm;
         text-indent: 0; color: var(--c-main); font-weight: 700; }
 .nh  { margin: 4mm 0 0; font: 700 9pt/1.4 Noto; color: var(--c-main);
        break-after: avoid; }
@@ -311,9 +316,9 @@ u { text-decoration: none; }
 .bgh { margin: 4mm 0 1.4mm; padding: 1.2mm 2.6mm; display: inline-block;
        background: var(--c-pale); border-left: 1mm solid var(--c-main);
        font: 700 8.4pt/1.4 Noto; color: var(--c-deep); break-after: avoid; }
-.bgi { padding-left: 4.4mm; text-indent: -4.4mm; margin-bottom: .5mm;
+.bgi { padding-left: 3.6mm; text-indent: -3.6mm; margin-bottom: .5mm;
        font: 400 8.4pt/1.5 Noto; color: #3a3a38; }
-.bgi::before { content: "·"; display: inline-block; width: 4.4mm;
+.bgi::before { content: "·"; display: inline-block; width: 3.6mm;
        text-indent: 0; color: var(--c-main); }
 
 .th { margin: 4mm 0 1.2mm; font: 700 7.8pt/1 Noto; color: var(--lgray);
