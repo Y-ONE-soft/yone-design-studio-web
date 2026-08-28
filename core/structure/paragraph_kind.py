@@ -100,6 +100,22 @@ def _is_english_passage(text, min_len=R.P_MIN_LEN):
     return len(text) >= R.P_SHORT_MIN_LEN and bool(R.P_SENTENCE_END.search(text))
 
 
+# 영작 문항의 지문은 영어 산문 안에 '(B) 우리말…' 구간을 품는다. 그 한글
+# 구절의 낱말이 발문 분류기에 매칭돼("…부정적인 **태도**를…" → 어조/태도)
+# 지문 전체가 발문(Q)으로 튀면, 문항 번호가 하나 더 붙고 지문이 발문
+# 스타일로 인쇄된다 (2026-08-28 실증: 80문항 원고가 82번까지 번호가 붙음).
+# 발문은 한국어 지시문이다 — 영어로 시작하는 긴 산문에 한글이 조금 섞인
+# 것은 지문이다 (W78 "지시문은 한국어다"의 역방향 가드).
+_Q_KOR_MIN_RATIO = 0.3
+
+
+def _is_english_prose(text):
+    t = (text or "").strip()
+    if len(t) < R.P_MIN_LEN or not R.P_ENGLISH_START.match(t):
+        return False
+    return _korean_ratio(t) < _Q_KOR_MIN_RATIO
+
+
 def _base_kind(text):
     """컨텍스트 없이 단락 하나의 1차 종류. (idx 무관 부분)"""
     if not text:
@@ -139,9 +155,10 @@ def _base_kind(text):
         return bk, None
     if R.BOX_INLINE.match(bt):
         return "Box", None
-    qk, code = _classify_question(text)
-    if qk:
-        return qk, code
+    if not _is_english_prose(text):
+        qk, code = _classify_question(text)
+        if qk:
+            return qk, code
     if R.C_START.match(text) or R.C_AB_HEADER.match(text):
         return "C", None
     if _is_english_passage(text):
