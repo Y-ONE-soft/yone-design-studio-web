@@ -174,6 +174,8 @@ def _s3_is_prose(text):
     return len(_RE_S3_LBL_ENGWORD.findall(text or "")) >= 6
 
 
+from core.structure.block_grammar import SUM_MARKER as _BG_SUM_MARKER
+
 # 유형 표기가 '원고 관행'이라고 볼 최소 비율 (유형 표기 수 / 발문 수)
 _S3_TYPE_LABEL_MIN_RATIO = 0.3
 
@@ -205,9 +207,16 @@ def _s3_type_label_idx(seq, R):
     for x, i in enumerate(meaning):
         if (seq[i].get("kind") or "") in ("Q", "Q-INTRO"):
             qn += 1
-        if (seq[i].get("kind") or "") in ("Box", "Cond", "Sum", "A", "GH",
-                                          "C", "AnsL", "SRC"):
-            continue        # 구조 역할이 확정된 줄(보기 마커 등)은 표기가 아니다
+        # 구조 역할이 **형태로 확정된** 줄만 제외한다. Box/Cond/Sum 은 마커
+        # 전파로 붙는 kind 라 여기서 쓰면 안 된다 — <조건> 블록 뒤에 온
+        # 유형 표기가 Cond 로 물들어 있어(실측 6개 중 2개) 그대로 인쇄됐다.
+        if (seq[i].get("kind") or "") in ("A", "GH", "C", "AnsL", "SRC"):
+            continue
+        _bt = R.norm_brackets((seq[i].get("text") or "").strip())
+        if (R.BOX_MARKERS["Box"].match(_bt)
+                or R.BOX_MARKERS["Cond"].match(_bt)
+                or _BG_SUM_MARKER.match(_bt)):
+            continue        # 블록 마커(보기/조건/요약문)는 표기가 아니다
         if not R.is_type_label_form(seq[i].get("text") or ""):
             continue
         if x + 1 >= len(meaning):

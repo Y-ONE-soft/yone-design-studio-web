@@ -275,6 +275,10 @@ from engines.workbook_v2.plan import (GLYPH_PRINT_TABLE, PUA_PRINT_TABLE,
                                       is_header_line, is_a1_header,
                                       passage_labels, _norm_header)
 
+# G50 — 역할이 확정된 스타일(유형 표기일 수 없다) / 원고 관행 최소 비율
+_G50_ROLE_STYLES = ("정답", "답란", "보기", "선지", "영단어", "조건")
+_G50_MIN_RATIO = 0.3
+
 # G51 — 기입 칸이 접힌 콜론형 답란 줄이 '실물화 없이' 남은 형태 (뒤에
 # 밑줄 칸이 붙었으면 줄 끝이 공백런이라 이 패턴에 걸리지 않는다)
 _RE_G51_CELL_COLON = re.compile(
@@ -820,13 +824,20 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
     # ('틀린 부분'/'수정')은 형제 방어로 제외한다(플랜과 같은 규칙).
     from core.structure import rules as _R50
     type_leaks = []
+    q_paras = 0
     for story in dump.get("stories", []):
         paras = [q for q in story.get("paragraphs", [])
                  if _clean(q.get("t", ""))]
         for i, para in enumerate(paras):
+            sty = para.get("s") or ""
+            if any(k in sty for k in _Q_STYLE_KEYS):
+                q_paras += 1
             tt = _clean(para.get("t", ""))
             if not _R50.is_type_label_form(tt):
                 continue
+            if any(k in sty for k in _G50_ROLE_STYLES):
+                continue        # 역할이 확정된 스타일(정답/답란/보기/선지/
+                                # 영단어)로 인쇄된 줄은 유형 표기가 아니다
             if i + 1 >= len(paras):
                 continue
             if not any(k in (paras[i + 1].get("s") or "")
@@ -837,7 +848,11 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                 continue
             type_leaks.append(tt[:20])
     stats["step3_type_label_leaks"] = len(type_leaks)
-    if len(type_leaks) >= 2:
+    # 플랜(_s3_type_label_idx)과 같은 눈 — 표기가 2종 이상이고 발문 수 대비
+    # 원고 관행이라 할 만큼 많을 때만. 조건 항목("답")·정답 라벨이 우연히
+    # 발문 앞에 온 경우(코퍼스 10잡 실측)를 오검출하지 않게 한다.
+    if (len(set(type_leaks)) >= 2
+            and len(type_leaks) >= _G50_MIN_RATIO * q_paras):
         critical.append(f"[유형표기] 원고 문항 유형 표기 {len(type_leaks)}줄이 "
                         f"본문에 인쇄됨: "
                         + " | ".join(sorted(set(type_leaks))[:6]))
