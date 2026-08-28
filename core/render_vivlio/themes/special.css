@@ -13,6 +13,12 @@
  *  · 러닝 요소에 `position: relative` 를 주면 running() 이 덮여 본문에 그려진다.
  *  · `@top-right` 는 폭이 좁아 잘린다 → 판면 폭짜리 요소를 `@top-left` 에 넣고
  *    안에서 좌우로 나눈다.
+ *  · ⚠ **`break-inside: avoid` 를 flex 컨테이너에 직접 걸면 그 덩어리가 조용히
+ *    사라진다.** 뒤에 강제 나눔(`break-before: page`)이 있고 남은 자리에 안 들어갈
+ *    때 다음 면으로 밀리는 대신 **없어진다** — 어휘 Week 4 no.10 카드가 통째로
+ *    빠졌고 최소 재현까지 확인했다. 두 단짜리 덩어리는 `display: table` 로 짠다
+ *    (블록 안에 든 flex 는 괜찮다). 원고↔PDF 전수 대조 게이트가 아니었으면
+ *    육안으로는 못 잡았을 종류의 유실이다.
  */
 
 /* ------------------------------------------------------------------ 서체 */
@@ -180,10 +186,12 @@ u { text-decoration: none; }
 .vgroup .g1 { font: 700 10pt/1.3 Minion; color: var(--ink); }
 .vgroup .g2 { font: 400 9pt/1.3 Noto; color: var(--gray); }
 
-.wcard { display: flex; gap: 5mm; break-inside: avoid;
+.wcard { display: table; table-layout: fixed; width: 100%;
+         break-inside: avoid;
          padding: 2.6mm 0 2.8mm; border-bottom: .5pt solid var(--hair); }
-.w-l { width: 47mm; flex: none; }
-.w-r { flex: 1; }
+.w-l { display: table-cell; width: 47mm; vertical-align: top;
+       padding-right: 5mm; }
+.w-r { display: table-cell; vertical-align: top; }
 .w-no    { font: 700 6.6pt/1 Minion; letter-spacing: .12em; color: var(--lgray); }
 .w-head  { margin-top: .8mm; font: 700 13.5pt/1.15 Minion; color: var(--ink); }
 .w-build { margin-top: 1mm; font: 400 7.6pt/1.42 Noto; color: var(--c-deep); }
@@ -194,13 +202,13 @@ u { text-decoration: none; }
            letter-spacing: .04em; }
 
 /* 부록 */
-.apx { display: flex; gap: 4mm; align-items: baseline;
+.apx { display: table; table-layout: fixed; width: 100%;
        padding: 1.7mm 0; border-bottom: .5pt solid var(--hair);
        break-inside: avoid; }
-.apx .a-k { width: 32mm; flex: none; font: 700 9.4pt/1.4 Minion;
-            color: var(--c-deep); }
-.apx .a-g { width: 52mm; flex: none; font: 400 8.8pt/1.4 Noto; color: var(--gray); }
-.apx .a-e { flex: 1; font: 400 9.2pt/1.4 Minion; color: var(--ink); }
+.apx span { display: table-cell; vertical-align: baseline; padding-right: 4mm; }
+.apx .a-k { width: 32mm; font: 700 9.4pt/1.4 Minion; color: var(--c-deep); }
+.apx .a-g { width: 52mm; font: 400 8.8pt/1.4 Noto; color: var(--gray); }
+.apx .a-e { font: 400 9.2pt/1.4 Minion; color: var(--ink); }
 
 /* ============================================================ 구문·어법부 */
 .lesson-open { break-before: page; }
@@ -330,19 +338,24 @@ u { text-decoration: none; }
 .trans { font: 300 8.1pt/1.5 Noto; color: #5c5d5f; text-align: justify; }
 
 /* 정답 · 배경지식 노트 정답 */
-.aline { display: flex; gap: 3mm; align-items: baseline;
+.aline { display: table; table-layout: fixed; width: 100%;
          padding: 1.5mm 0; border-bottom: .5pt solid var(--hair);
          font: 400 8.8pt/1.4 Noto; break-inside: avoid; }
-.l-no  { width: 8mm; flex: none; text-align: right; font-weight: 700;
+.aline span { display: table-cell; vertical-align: baseline;
+              padding-right: 3mm; }
+.l-no  { width: 8mm; text-align: right; font-weight: 700;
          color: var(--c-main); font-family: Minion; }
-.l-body { flex: 1; color: var(--gray); }
-.l-ans  { font: 700 10pt/1 Noto; color: var(--c-deep); }
-.aline.bg .l-src { width: 42mm; flex: none; font: 400 7.8pt/1.4 Noto;
+.l-body { color: var(--gray); }
+.l-ans  { width: 12mm; font: 700 10pt/1 Noto; color: var(--c-deep);
+          padding-right: 0 !important; }
+.aline.bg .l-src { width: 42mm; font: 400 7.8pt/1.4 Noto;
                    color: var(--lgray); }
 .aline.bg .l-body { color: var(--ink); }
 
 /* 머리+첫 덩어리 묶음 — 머리만 면 아래에 혼자 남는 것을 막는다 */
+/* 머리+첫 덩어리 묶음 — 머리만 면 아래에 혼자 남는 것을 막는다 */
 .keep { break-inside: avoid; }
+.nh.big { margin-top: 5mm; }
 
 /* 개념 면의 필기 노트는 면을 채운다 — 학생이 쓰는 자리다 */
 .nh.big { margin-top: 5mm; }

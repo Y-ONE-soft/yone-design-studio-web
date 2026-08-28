@@ -194,7 +194,7 @@ def word_card(b):
         f'  <div class="w-l"><div class="w-no">{esc(b["no"])}</div>'
         f'    <div class="w-head">{esc(b["head"])}</div>'
         f'    <div class="w-build">{esc(b["build"])}</div>{senses}</div>'
-        f'  <div class="w-r">{ex}{note}{rules(3, "wbox tight")}</div>'
+        f'  <div class="w-r">{ex}{note}{rules(2, "wbox tight")}</div>'
         '</div>')
 
 
