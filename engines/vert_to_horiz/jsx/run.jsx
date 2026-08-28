@@ -836,6 +836,111 @@
                     info("  지문" + lesson.num + " : 실전 없음 - 스킵");
                     continue;
                 }
+                // ── 걸친 문단이 있는 지문만 범위 복제 (2026-08-25) ──────
+                // 페이지를 한 장씩 복제하면 **문단이 페이지 경계를 넘는 지점**
+                // 에서만 잘린다. 그 지점이 있는 지문만 범위째 복제해 스토리를
+                // 온전히 가져온다.
+                // ⚠ 범위 복제를 **전 지문에** 쓰면 담을 프레임이 부족해 오버셋이
+                //   대량 발생한다(실측 954개 미인쇄, 소요 8분→60분). 그래서
+                //   걸친 문단이 실제로 있는 지문에만 쓴다 — 부작용을 그 지문에
+                //   가둔다. 실측(13강 2권차): 16지문 중 3지문만 해당.
+                // 판정은 **스토리의 연결 프레임만** 훑는다. 문단마다
+                // parentTextFrames 를 조회하면 수천 번이 되어 스크립트가
+                // 시작조차 못 한다(실측: 120초 타임아웃). 여기서는 프레임
+                // 경계에서 "앞 프레임의 마지막 문단 == 뒤 프레임의 첫 문단"
+                // 인지만 본다 — 같으면 그 문단이 페이지를 넘어 걸친 것이다.
+                var needRange = false;
+                try {
+                    var pset = {};
+                    for (var ci = 0; ci < srcPages.length; ci++) {
+                        pset[String(srcPages[ci])] = 1;
+                    }
+                    var seenSt = {};
+                    for (var ci2 = 0; ci2 < srcPages.length && !needRange; ci2++) {
+                        var cpg = verti.pages[srcPages[ci2] - 1];
+                        if (!cpg) continue;
+                        var csp = cpg.parent;
+                        for (var cj = 0; cj < csp.textFrames.length && !needRange; cj++) {
+                            var ctf = csp.textFrames[cj];
+                            if (!ctf.parentPage || ctf.parentPage.id !== cpg.id) continue;
+                            var cst;
+                            try { cst = ctf.parentStory; } catch (eS0) { continue; }
+                            if (!cst || seenSt[cst.id]) continue;
+                            seenSt[cst.id] = 1;
+                            var conts;
+                            try { conts = cst.textContainers; } catch (eS1) { continue; }
+                            for (var cc = 0; cc + 1 < conts.length; cc++) {
+                                var fa = conts[cc], fb = conts[cc + 1];
+                                var pa2 = null, pb2 = null;
+                                try { pa2 = fa.parentPage; pb2 = fb.parentPage; } catch (eS2) {}
+                                if (!pa2 || !pb2 || pa2.id === pb2.id) continue;
+                                // 두 페이지 중 하나라도 이 지문 범위 안이어야 의미가 있다
+                                if (!pset[String(pa2.name)] && !pset[String(pb2.name)]) continue;
+                                var lastA = "", firstB = "";
+                                try {
+                                    var pas = fa.paragraphs;
+                                    if (pas.length) lastA = String(pas[pas.length - 1].contents);
+                                    var pbs = fb.paragraphs;
+                                    if (pbs.length) firstB = String(pbs[0].contents);
+                                } catch (eS3) { continue; }
+                                if (lastA && lastA === firstB &&
+                                    lastA.replace(/\s/g, "").length >= 12) {
+                                    needRange = true;
+                                    info("  지문" + lesson.num + " : 페이지 경계에 걸친 문단 발견 (p" +
+                                         pa2.name + "→p" + pb2.name + ")");
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                } catch (eC) { needRange = false; }
+
+                var canRange = needRange && srcPages.length > 1 &&
+                               (slotIdx + srcPages.length) <= region.pages.length;
+                if (canRange) {
+                    for (var cv = 1; cv < srcPages.length; cv++) {
+                        if (srcPages[cv] !== srcPages[cv - 1] + 1) { canRange = false; break; }
+                    }
+                }
+                if (canRange) {
+                    for (var ch = 1; ch < srcPages.length; ch++) {
+                        if (region.pages[slotIdx + ch] !== region.pages[slotIdx + ch - 1] + 1) {
+                            canRange = false; break;
+                        }
+                    }
+                }
+                if (canRange) {
+                    var firstHorizP = region.pages[slotIdx];
+                    var slotPages = [];
+                    for (var q = 0; q < srcPages.length; q++) {
+                        slotPages.push(horiz.pages[region.pages[slotIdx + q] - 1]);
+                    }
+                    var rangeOK = true;
+                    try {
+                        verti.pages.itemByRange(
+                            verti.pages[srcPages[0] - 1],
+                            verti.pages[srcPages[srcPages.length - 1] - 1]
+                        ).duplicate(LocationOptions.AFTER, slotPages[0]);
+                    } catch (eRange) {
+                        rangeOK = false;
+                        info("  지문" + lesson.num + " : 범위 복제 실패(" +
+                             (eRange.message || eRange) + ") — 한 장씩으로 폴백");
+                    }
+                    if (rangeOK) {
+                        for (var q2 = slotPages.length - 1; q2 >= 0; q2--) {
+                            try { slotPages[q2].remove(); } catch (eRm) {}
+                        }
+                        for (var q3 = 0; q3 < srcPages.length; q3++) {
+                            var hp2 = firstHorizP + q3;
+                            region.pageLessonMap[hp2] = lesson.num;
+                            info("  p" + hp2 + " : 지문" + lesson.num + " 세로 p" +
+                                 srcPages[q3] + " (실전) → OK 범위 복제 [걸친 문단 있음]");
+                        }
+                        slotIdx += srcPages.length;
+                        continue;
+                    }
+                }
+
                 for (var s = 0; s < srcPages.length; s++) {
                     var horizP;
                     if (slotIdx < region.pages.length) {
