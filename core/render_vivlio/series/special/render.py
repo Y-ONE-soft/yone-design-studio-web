@@ -187,15 +187,20 @@ def gridbox(label):
 
 
 # ── 머리 띠 ─────────────────────────────────────────────────────────────
-def runhead(vol, sec, off=False):
-    """머리 띠 — 왼쪽 면과 오른쪽 면은 여백이 달라 요소를 둘로 낸다."""
+#
+# ⚠ 왼쪽 면 그래픽을 **반전해** 오른쪽 면에 쓰지 않는다. 두 면은 무엇을 넣는지가
+#   다르다 — 왼쪽은 큰 원 + 알약(PART·부), 오른쪽은 깃발 + 크레스트.
+def runhead(part, vol, sec, off=False):
     o = " rh-off" if off else ""
-    body = (f'<div class="band"><div class="in">{esc(vol)}'
-            f'<i class="bar"></i>'
-            f'<span class="sec">{esc(sec)}</span></div>'
-            f'<div class="crest"></div></div><div class="rule2"></div>')
-    return (f'<div class="rhL{o}">{body}</div>'
-            f'<div class="rhR{o}">{body}</div>')
+    left = (f'<div class="band bandL"><div class="orb"></div>'
+            f'<span class="pill">{esc(part)}&nbsp;&nbsp;{esc(vol)}</span>'
+            f'<span class="sec">{esc(sec)}</span></div>')
+    right = (f'<div class="band bandR"><div class="flag"></div>'
+             f'<span class="sec">{esc(sec)}</span>'
+             f'<span class="tick"></span>'
+             f'<span class="crest"></span></div>')
+    return (f'<div class="rhL{o}">{left}</div>'
+            f'<div class="rhR{o}">{right}</div>')
 
 
 # ══════════════════════════════════════════════════════════ 부별 렌더러
@@ -213,7 +218,7 @@ def render_vocab(vol, out):
         if t == "week":
             k.flush()
             week = plain(b["r"])
-            out.append(f'<section class="week-open">{runhead(vol["name"], week)}'
+            out.append(f'<section class="week-open">{runhead(vol["part"], vol["name"], week)}'
                        f'<h2 class="week">{inl(b["r"])}</h2></section>')
         elif t == "group":
             c = cols(plain(b["r"]), 3)
@@ -234,16 +239,34 @@ def render_vocab(vol, out):
     k.flush()
 
 
+RE_EXNUM = re.compile(r"^\s*([\u2776-\u277f\u2460-\u2473])\s*")
+
+
 def word_card(b):
+    """낱말 카드.
+
+    원고의 `❶❷` 와 `❖ KEY POINT` 는 **글자로 두지 않는다** — 앞은 번호 배지로,
+    뒤는 라벨 탭이 붙은 기입 판으로 바꾼다. 원고 표기를 그대로 인쇄하면
+    조판한 값이 없다.
+    """
     senses = "".join(f'<div class="w-sense">{inl(s)}</div>' for s in b["senses"])
-    ex = "".join(f'<div class="w-ex">{inl(e)}</div>' for e in b["ex"])
-    note = f'<div class="w-note">{esc(b["note"])}</div>' if b.get("note") else ""
+    ex = []
+    for k, e in enumerate(b["ex"], 1):
+        seq = list(e)
+        m = RE_EXNUM.match(plain(seq[0]) if seq else "")
+        if m:
+            t = plain(seq[0])[m.end():]
+            seq[0] = t if isinstance(seq[0], str) else dict(seq[0], t=t)
+        ex.append(f'<div class="w-ex"><span class="exn">{k}</span>'
+                  f'{inl(seq)}</div>')
+    key = ('<div class="w-key"><span class="kl">KEY<br>POINT</span>'
+           '<span class="kf"><i></i><i></i></span></div>')
     return (
         '<div class="wcard">'
         f'  <div class="w-l"><div class="w-no">{esc(b["no"])}</div>'
         f'    <div class="w-head">{esc(b["head"])}</div>'
         f'    <div class="w-build">{esc(b["build"])}</div>{senses}</div>'
-        f'  <div class="w-r">{ex}{note}{rules(2, "wbox tight")}</div>'
+        f'  <div class="w-r">{"".join(ex)}{key}</div>'
         '</div>')
 
 
@@ -337,7 +360,7 @@ def render_grammar(vol, out):
                 i += 1
             out.append(part_page(plain(b["r"]), title))
         elif t == "lesson":
-            cp = {"body": [runhead(vol["name"], plain(b["r"])),
+            cp = {"body": [runhead(vol["part"], vol["name"], plain(b["r"])),
                            f'<h3 class="lesson">{inl(b["r"])}</h3>'],
                   "grid": "필기 노트"}
         elif t == "lesson_sub":
@@ -399,7 +422,7 @@ def render_grammar(vol, out):
             if txt.startswith("PART"):
                 close_col()
                 out.append(f'<section class="anspage">'
-                           f'{runhead(vol["name"], "정답 및 해설")}'
+                           f'{runhead(vol["part"], vol["name"], "정답 및 해설")}'
                            f'<h3 class="ans-part">{inl(b["r"])}</h3></section>')
                 out.append('<div class="anscol">')
                 col_open = True
@@ -528,7 +551,7 @@ def render_reading(vol, out):
             k.flush()
         if pending_week and t not in ("week", "lesson", "rpart_no"):
             out.append(f'<section class="week-open">'
-                       f'{runhead(vol["name"], pending_week)}'
+                       f'{runhead(vol["part"], vol["name"], pending_week)}'
                        f'<h2 class="week">{esc(pending_week)}</h2></section>')
             pending_week = ""
 
@@ -543,7 +566,7 @@ def render_reading(vol, out):
         elif t == "lesson":
             brow = (f'<div class="weekbrow">{esc(pending_week)}</div>'
                     if pending_week else "")
-            rh = runhead(vol["name"],
+            rh = runhead(vol["part"], vol["name"],
                          (week + "  ·  " if week else "") + plain(b["r"]))
             cp = {"body": [rh, brow,
                            f'<h3 class="lesson">{inl(b["r"])}</h3>'],

@@ -86,35 +86,49 @@
 }
 
 /* --------------------------------------------------- 머리 띠(헤더 그래픽)
- * 판면 폭짜리 요소를 @top-left 에 넣고 **음수 여백으로 재단선 밖까지** 늘린다.
- * 왼쪽 면과 오른쪽 면은 여백이 달라 요소를 둘로 나눠 둔다(rhL / rhR).
+ * ⚠ **왼쪽 면 그래픽을 반전해 오른쪽 면에 쓰지 않는다.** 펼침으로 놓으면 대칭이
+ *   그대로 드러나 기계적으로 보인다. 두 면은 **무엇을 넣는지**가 다르다:
+ *     왼쪽(짝수) — 옅은 색면 + 안쪽으로 흐르는 큰 원 + 주색 알약(PART·부) + 단원
+ *     오른쪽(홀수) — 옅은 색면 + 단원 + 바깥에서 들어오는 주색 깃발 + 크레스트
+ * 판면 폭짜리 요소를 @top-left 에 넣고 음수 여백으로 재단선 밖까지 늘린다.
  */
 .rhL { position: running(rhL); }
 .rhR { position: running(rhR); }
-.rhL .band, .rhL .rule2 { margin-left: -19mm; }
-.rhR .band, .rhR .rule2 { margin-left: -23mm; }
-.band {
-  width: 216mm; height: 12.4mm; background: var(--c-main);
-  position: relative; overflow: hidden;
-}
-.band .in {
-  position: absolute; left: 23mm; right: 23mm; top: 3.9mm;
-  font: 700 8.6pt/1 Noto; color: #fff; letter-spacing: .1em;
-  white-space: nowrap;
-}
-.band .sec { float: right; font-weight: 400; letter-spacing: .01em;
-             color: rgba(255,255,255,.85); }
-.band .crest {
-  position: absolute; right: 7mm; top: 3.1mm; width: 6.2mm; height: 6.4mm;
-  background-color: rgba(255,255,255,.92);
-  -webkit-mask: url(assets/crest.png) no-repeat center/contain;
-  mask: url(assets/crest.png) no-repeat center/contain;
-}
-.rhL .band .crest { right: auto; left: 7mm; }
-.rule2 { width: 216mm; height: 1.1mm; background: var(--c-sub); }
-.rh-off .band, .rh-off .rule2 { background: none; }
-.rh-off * { color: transparent !important; }
-.rh-off .crest { display: none; }
+.rhL .band { margin-left: -19mm; }
+.rhR .band { margin-left: -23mm; }
+.band { width: 216mm; height: 16mm; background: var(--c-pale);
+        position: relative; overflow: hidden; }
+
+/* 왼쪽 면 — 안쪽(책등 쪽)으로 흐르는 큰 원 + 알약 */
+.bandL .orb { position: absolute; left: 96mm; top: -30mm;
+              width: 62mm; height: 62mm; border-radius: 50%;
+              background: var(--c-line); }
+.bandL .pill { position: absolute; left: 19mm; top: 4.4mm;
+               padding: 1.7mm 4mm; background: var(--c-deep); color: #fff;
+               border-radius: 4mm; font: 700 7.4pt/1 Noto;
+               letter-spacing: .06em; white-space: nowrap; }
+.bandL .sec  { position: absolute; left: 62mm; top: 6.0mm;
+               font: 500 8pt/1 Noto; color: var(--c-deep);
+               letter-spacing: .01em; white-space: nowrap; }
+
+/* 오른쪽 면 — 바깥에서 들어오는 깃발 + 크레스트 */
+.bandR .flag { position: absolute; right: 0; top: 0; width: 34mm;
+               height: 16mm; background: var(--c-main); }
+.bandR .flag::after { content: ""; position: absolute; left: -5.6mm; top: 0;
+               border-style: solid; border-width: 0 5.6mm 16mm 0;
+               border-color: transparent var(--c-main) transparent transparent; }
+.bandR .crest { position: absolute; right: 19mm; top: 4.6mm;
+               width: 6.4mm; height: 6.6mm; background-color: #fff;
+               -webkit-mask: url(assets/crest.png) no-repeat center/contain;
+               mask: url(assets/crest.png) no-repeat center/contain; }
+.bandR .sec  { position: absolute; right: 42mm; top: 6.0mm;
+               font: 700 8pt/1 Noto; color: var(--c-deep);
+               letter-spacing: .01em; white-space: nowrap; }
+.bandR .tick { position: absolute; right: 36mm; top: 5.2mm;
+               width: 1.4mm; height: 4.4mm; background: var(--c-sub); }
+
+.rh-off .band { background: none; }
+.rh-off .band * { display: none; }
 
 /* ---------------------------------------------------------------- 본문 */
 html, body { margin: 0; padding: 0; }
@@ -155,21 +169,40 @@ u { text-decoration: none; }
            background: var(--tone-be); border-radius: 1mm;
            font: 700 10pt/1 Noto; color: var(--c-deep); letter-spacing: .04em; }
 
-.divider { position: relative; box-sizing: border-box;
-           width: 216mm; height: 303mm;
-           margin: -25mm -19mm -23mm -23mm; padding: 0;
-           background: var(--tone-iv); overflow: hidden; }
-.d-ghost { position: absolute; right: 20mm; bottom: 31mm;
-           font: 700 150pt/.78 Disp; color: var(--c-pale); }
-.d-in    { position: absolute; left: 29mm; top: 84mm; }
-.d-no    { font: 700 11pt/1 Disp; letter-spacing: .3em; color: var(--c-sub); }
-.d-ttl   { margin-top: 5mm; font: 700 44pt/1.1 Disp; color: var(--c-deep);
-           letter-spacing: -.05em; }
-.d-edge  { position: absolute; left: 0; right: 0; top: 150.4mm; height: 1.6mm;
-           background: var(--c-sub); }
-.d-band  { position: absolute; left: 0; right: 0; top: 152mm;
-           padding: 7mm 0 7mm 29mm; background: var(--c-main); }
-.d-desc  { font: 400 11.5pt/1.7 Noto; color: #fff; letter-spacing: .01em; }
+/* 부 간지는 **2면 한 세트**다(왼쪽=제목 / 오른쪽=번호·설명).
+ * 두 면을 가로지르는 큰 원 하나가 책등에서 이어진다 — 같은 그림을 뒤집어 쓴 것이
+ * 아니라 **한 도형이 펼침을 건너간다**. */
+.dvL, .dvR { position: relative; box-sizing: border-box;
+             width: 216mm; height: 303mm; overflow: hidden;
+             background: var(--c-main); page: plain; }
+.dvL { break-before: left;  margin: -25mm -23mm -23mm -19mm; }
+.dvR { break-before: right; margin: -25mm -19mm -23mm -23mm; }
+/* 책등을 건너가는 원 — 왼쪽 면에서는 오른쪽 끝, 오른쪽 면에서는 왼쪽 끝 */
+.dvL .orb { position: absolute; right: -74mm; top: 96mm;
+            width: 148mm; height: 148mm; border-radius: 50%;
+            background: var(--c-pale); opacity: .28; }
+.dvR .orb { position: absolute; left: -74mm; top: 96mm;
+            width: 148mm; height: 148mm; border-radius: 50%;
+            background: var(--c-pale); opacity: .28; }
+.dvL .in { position: absolute; left: 26mm; top: 118mm; }
+.d-no  { font: 700 10pt/1 Disp; letter-spacing: .42em; color: #fff;
+         opacity: .78; }
+.d-ttl { margin-top: 6mm; font: 700 40pt/1.12 Disp; color: #fff;
+         letter-spacing: -.05em; }
+.d-en  { margin-top: 6mm; font: 700 9pt/1 Disp; letter-spacing: .3em;
+         color: #fff; opacity: .72; }
+.d-rule { margin-top: 5mm; width: 26mm; height: 1.2mm; background: #fff;
+          opacity: .55; }
+.dvL .foot { position: absolute; left: 26mm; bottom: 26mm;
+             font: 500 7.6pt/1 Noto; color: #fff; opacity: .62;
+             letter-spacing: .1em; }
+.dvR .num { position: absolute; right: 30mm; top: 84mm;
+            font: 700 138pt/.8 Disp; color: #fff; opacity: .2; }
+.dvR .desc { position: absolute; left: 30mm; bottom: 74mm; }
+.d-desc { font: 400 11pt/1.85 Noto; color: #fff; opacity: .92; }
+.dvR .brand { position: absolute; right: 30mm; bottom: 26mm;
+              font: 700 7.6pt/1 Disp; letter-spacing: .3em; color: #fff;
+              opacity: .62; }
 
 .tocpage { padding-top: 6mm; }
 .toc-h   { font: 700 20pt/1 Disp; letter-spacing: .2em; color: var(--c-deep); }
@@ -184,19 +217,23 @@ u { text-decoration: none; }
 .t-1 .t2 { color: #55504a; }
 .t-1.solo .t0 { width: auto; }
 .t-2 { padding: 1.7mm 0 1.7mm 38mm; font: 400 9.2pt/1.4 Noto; color: #55504a; }
-.t-2::before { content: ""; display: inline-block; width: 1.6mm; height: 1.6mm;
-       margin: 0 2.4mm .4mm -4mm; background: var(--c-line);
-       vertical-align: middle; }
+.t-2 { position: relative; }
+.t-2::before { content: ""; position: absolute; left: 33mm; top: 3.1mm;
+       width: 3mm; height: .4mm; background: var(--c-line); }
 
 /* ============================================================== PART 표지 */
 .partpage { break-before: page; height: 255mm; position: relative; }
-.partpage::before { content: ""; position: absolute;
-            left: -23mm; right: -19mm; top: 84mm; height: 20mm;
-            background: var(--c-pale); }
-.p-no  { position: absolute; top: 56mm; font: 700 26pt/1 Disp;
-         letter-spacing: .1em; color: var(--c-sub); }
-.p-ttl { position: absolute; top: 88mm; font: 700 28pt/1.25 Disp;
-         color: var(--c-deep); letter-spacing: -.04em; }
+.partpage .slab { position: absolute; left: -23mm; right: -19mm; top: -25mm;
+            height: 104mm; background: var(--c-deep); }
+.partpage .orb { position: absolute; right: -19mm; top: -25mm;
+            width: 104mm; height: 104mm; border-radius: 0 0 0 104mm;
+            background: rgba(255, 255, 255, .07); }
+.p-no  { position: absolute; left: 0; top: 34mm; font: 700 11pt/1 Disp;
+         letter-spacing: .4em; color: #fff; opacity: .8; }
+.p-ttl { position: absolute; left: 0; top: 46mm; font: 700 30pt/1.2 Disp;
+         color: #fff; letter-spacing: -.045em; }
+.p-rule { position: absolute; left: 0; top: 86mm; width: 24mm; height: 1.2mm;
+          background: var(--c-sub); }
 
 /* ================================================================= 어휘부 */
 .week-open { break-before: page; }
@@ -228,10 +265,26 @@ u { text-decoration: none; }
 .w-head  { margin-top: .8mm; font: 700 13.5pt/1.15 Minion; color: var(--c-deep); }
 .w-build { margin-top: 1mm; font: 400 7.6pt/1.42 Noto; color: var(--c-sub); }
 .w-sense { margin-top: .6mm; font: 500 9.4pt/1.42 Noto; color: var(--ink); }
-.w-ex    { margin-bottom: 1.1mm; font: 400 8.9pt/1.46 Minion, Noto;
-           color: #3a362f; text-indent: -3.6mm; padding-left: 3.6mm; }
-.w-note  { margin-top: 1.4mm; font: 700 7.2pt/1 Noto; color: var(--c-sub);
-           letter-spacing: .04em; }
+.w-ex    { margin-bottom: 1.3mm; font: 400 8.9pt/1.46 Minion, Noto;
+           color: #3a362f; padding-left: 5mm; position: relative; }
+/* ❶❷ 글리프 대신 번호 배지 */
+.w-ex .exn { position: absolute; left: 0; top: .7mm; width: 3.2mm;
+             height: 3.2mm; border-radius: .6mm; background: var(--c-line);
+             color: var(--c-deep); text-align: center;
+             font: 700 5.6pt/3.2mm Disp; }
+/* KEY POINT — 원고에는 `❖ KEY POINT` 라는 글자와 빈 줄뿐이다. 그대로 두면
+ * 원고를 인쇄한 것과 같다 → **라벨 탭이 붙은 기입 판**으로 짠다. */
+.w-key { display: table; table-layout: fixed; width: 100%; margin-top: 2mm;
+         background: var(--tone-iv); border-radius: 1mm;
+         border: .4pt solid var(--hair); overflow: hidden; }
+.w-key .kl { display: table-cell; width: 17mm; vertical-align: middle;
+             background: var(--c-sub); color: #fff; text-align: center;
+             font: 700 6.4pt/1.25 Disp; letter-spacing: .08em;
+             padding: 0 1mm; }
+.w-key .kf { display: table-cell; vertical-align: top; padding: 1.4mm 3mm; }
+.w-key .kf i { display: block; height: 4.6mm;
+               border-bottom: .4pt solid var(--hair); }
+.w-key .kf i:last-child { border-bottom: none; }
 
 .apx { display: table; table-layout: fixed; width: 100%;
        padding: 1.7mm 0; border-bottom: .5pt solid var(--hair);
@@ -247,11 +300,11 @@ u { text-decoration: none; }
  */
 .cpage { break-before: page; position: relative; height: 252mm; }
 .gridbox { position: absolute; left: 0; right: 0; top: 128mm; }
-.gridbox .gl { font: 700 8pt/1 Noto; color: var(--tone-gy);
-               letter-spacing: .1em; margin-bottom: 2.4mm; }
-.gridbox .gl::before { content: ""; display: inline-block; width: 2.4mm;
-               height: 2.4mm; margin-right: 2mm; border-radius: .4mm;
-               background: var(--tone-gy2); vertical-align: -.1mm; }
+.gridbox .gl { margin-bottom: 2.6mm; }
+.gridbox .gl i { display: inline-block; font-style: normal;
+               padding: 1.1mm 3.2mm; background: var(--c-deep); color: #fff;
+               border-radius: .8mm; font: 700 7.6pt/1 Noto;
+               letter-spacing: .06em; }
 .gridbox svg { display: block; width: 100%; }
 
 .lesson { font: 700 15pt/1.3 Disp; color: var(--c-deep); letter-spacing: -.04em;
@@ -263,15 +316,19 @@ u { text-decoration: none; }
         vertical-align: .3mm; white-space: nowrap; }
 
 /* ① 필기 POINT = 이 강에서 잡을 것(체크리스트) */
-.h-point { margin: 6mm 0 2mm; font: 700 10.2pt/1.3 Noto; color: var(--c-sub);
+/* ⚠ 머리 기호에 **글리프를 쓰지 않는다**(✓ ● ■ ·). 워드 문서의 흔적이다.
+ *   자리는 도형·색면·번호가 대신한다. */
+.h-point { margin: 6mm 0 2.4mm; padding-left: 4mm; position: relative;
+           font: 700 10.2pt/1.3 Noto; color: var(--c-sub);
            break-after: avoid; }
-.h-point::before { content: ""; display: inline-block; width: 3.4mm;
-           height: 3.4mm; margin-right: 2.2mm; border-radius: 50%;
-           border: .9mm solid var(--c-sub); vertical-align: -.3mm; }
-.bul { padding-left: 6.4mm; text-indent: -6.4mm; margin-bottom: 1mm;
+.h-point::before { content: ""; position: absolute; left: 0; top: .4mm;
+           width: 1.6mm; height: 3.6mm; background: var(--c-sub);
+           border-radius: .8mm; }
+.bul { padding-left: 6mm; margin-bottom: 1.2mm; position: relative;
        font: 400 9.2pt/1.6 Noto; }
-.bul::before { content: "✓"; display: inline-block; width: 6.4mm;
-       text-indent: 0; color: var(--c-sub); font-size: 8pt; font-weight: 700; }
+.bul::before { content: ""; position: absolute; left: 0; top: 1.7mm;
+       width: 2.6mm; height: 2.6mm; border-radius: .5mm;
+       border: .45mm solid var(--c-sub); }
 
 /* ② 어법 개념 = 정의 문단 — 아이보리 상자 + 주색 탭 */
 .h-concept { margin: 6mm 0 0; display: inline-block;
@@ -284,9 +341,10 @@ u { text-decoration: none; }
 
 .subhead { margin: 5.4mm 0 1.8mm; font: 700 10.2pt/1.3 Noto;
            color: var(--c-deep); break-after: avoid; }
-.subhead::before { content: ""; display: inline-block; width: 2.6mm;
-           height: 2.6mm; margin-right: 2mm; background: var(--c-main);
-           border-radius: .4mm; vertical-align: -.1mm; }
+.subhead { padding-left: 4mm; position: relative; }
+.subhead::before { content: ""; position: absolute; left: 0; top: .5mm;
+           width: 1.6mm; height: 3.4mm; background: var(--c-main);
+           border-radius: .8mm; }
 
 /* ============================================================== 연습문제 */
 .drillpage { break-before: page; }
@@ -375,20 +433,20 @@ u { text-decoration: none; }
 .ch  { margin: 5mm 0 2mm; display: inline-block; padding: 1.3mm 3.6mm;
        background: var(--c-sub); color: #fff; border-radius: 3mm;
        font: 700 8.4pt/1.3 Noto; letter-spacing: .04em; break-after: avoid; }
-.bh  { margin: 3.6mm 0 1.4mm; font: 700 9.8pt/1.35 Noto; color: var(--c-deep);
-       break-after: avoid; }
-.bh::before { content: ""; display: inline-block; width: 2.2mm; height: 2.2mm;
-       margin-right: 2mm; border-radius: 50%; background: var(--c-main);
-       vertical-align: .2mm; }
-.bbul { padding-left: 3.6mm; text-indent: -3.6mm; margin-bottom: .8mm;
+.bh  { margin: 4mm 0 1.6mm; padding-left: 4mm; position: relative;
+       font: 700 9.8pt/1.35 Noto; color: var(--c-deep); break-after: avoid; }
+.bh::before { content: ""; position: absolute; left: 0; top: .4mm;
+       width: 1.6mm; height: 3.4mm; background: var(--c-main);
+       border-radius: .8mm; }
+.bbul { padding-left: 4.4mm; margin-bottom: .9mm; position: relative;
         font: 400 9.1pt/1.58 Noto; }
-.bbul::before { content: "·"; display: inline-block; width: 3.6mm;
-        text-indent: 0; color: var(--c-main); font-weight: 700; }
-.nh  { margin: 4.4mm 0 0; font: 700 8.8pt/1.4 Noto; color: var(--c-sub);
-       break-after: avoid; }
-.nh::before { content: ""; display: inline-block; width: 2.4mm; height: 2.4mm;
-       margin-right: 2mm; background: var(--c-sub); border-radius: .4mm;
-       vertical-align: -.1mm; }
+.bbul::before { content: ""; position: absolute; left: .4mm; top: 1.9mm;
+        width: 1.8mm; height: 1.8mm; border-radius: 50%;
+        background: var(--c-line); }
+.nh  { margin: 4.6mm 0 0; break-after: avoid; }
+.nh i { display: inline-block; font-style: normal; padding: 1.1mm 3.2mm;
+       background: var(--c-sub); color: #fff; border-radius: .8mm;
+       font: 700 7.6pt/1 Noto; letter-spacing: .06em; }
 
 .extag { break-before: page; display: table; table-layout: fixed; width: 100%;
          margin-bottom: 3.2mm; }
@@ -418,14 +476,16 @@ u { text-decoration: none; }
 .bgh { margin: 4.4mm 0 1.6mm; padding: 1.4mm 3mm; display: inline-block;
        background: var(--c-pale); border-radius: .8mm;
        font: 700 8.4pt/1.4 Noto; color: var(--c-deep); break-after: avoid; }
-.bgi { padding-left: 3.6mm; text-indent: -3.6mm; margin-bottom: .6mm;
+.bgi { padding-left: 4mm; margin-bottom: .7mm; position: relative;
        font: 400 8.4pt/1.5 Noto; color: #3f3a33; }
-.bgi::before { content: "·"; display: inline-block; width: 3.6mm;
-       text-indent: 0; color: var(--c-main); }
+.bgi::before { content: ""; position: absolute; left: .4mm; top: 1.7mm;
+       width: 1.6mm; height: 1.6mm; background: var(--c-line); }
 
-.th { margin: 4.4mm 0 1.4mm; font: 700 7.8pt/1 Noto; color: var(--tone-gy);
-      letter-spacing: .08em; break-after: avoid;
-      padding-bottom: 1.4mm; border-bottom: .4pt dotted var(--tone-gy2); }
+.th { margin: 4.6mm 0 1.6mm; break-after: avoid;
+      padding-bottom: 1.6mm; border-bottom: .4pt solid var(--hair); }
+.th i { display: inline-block; font-style: normal; padding: .9mm 2.6mm;
+      background: var(--tone-be); border-radius: .6mm;
+      font: 700 7.2pt/1 Noto; color: var(--tone-gy); letter-spacing: .1em; }
 .trans { font: 300 8.1pt/1.5 Noto; color: #635d54; text-align: justify; }
 
 .aline { display: table; table-layout: fixed; width: 100%;
