@@ -391,3 +391,42 @@ bin/viv "<책폴더>" variants --knob=palette.gold \
 지금 자리표는 **blackbook 의 발문·지문·선지·보기**에 있다. 어휘·해설과 다른
 계열(vocabook·vocaunit)은 같은 방식으로 넓히면 된다 — `index_refs()` 로 객체→경로
 표를 만들고 `_mark()` 로 클래스를 얹는 것이 전부다(계열당 반나절).
+
+---
+
+## 마무리 상태 (2026-08-29 새벽)
+
+**회귀 — 손댄 다섯 권 전부 지면 불변 ✓**
+
+```
+blackbook · sangil · gwangmun · cheonjae · donga  → 전부 불변 ✓
+```
+
+⚠ `special`(특강)·`bisang`(비상황) 두 권은 기준선과 다르다 — **다른 세션이 그 시간에
+그 책들을 다시 조판했기 때문**이다(02:00~02:06, 새 파일 `…(수정3).pdf`·`…(수정).pdf`).
+이 작업에서는 손대지 않았다. 그 두 권의 기준선은 **그쪽 작업이 끝난 뒤 다시 떠야**
+한다:
+
+```bash
+python3 scripts/vivlio_baseline.py capture --books special,bisang
+```
+
+**테스트 73건** (`test_render_vivlio_engine` 42 · `_knobs` 18 · `_edit` 13).
+
+**백업** — `조판/_backup_vivlio_20260829/` 10권 통째(732MB, 340파일 대조 완료).
+
+### 다음에 이어갈 것
+
+1. **자리표를 넓힌다** — 지금 blackbook 의 발문·지문·선지·보기만. 어휘·해설과
+   `vocabook`·`vocaunit` 은 `index_refs()` + `_mark()` 두 줄이면 된다(계열당 반나절).
+2. **`special` 계열 손잡이** — 다른 세션 작업이 끝나면. 치수 손잡이가 0개다.
+3. **중등부 automation 흡수** — 코드가 3계층 밖에 있어 작업대가 못 본다.
+   `fingerprint.json` 픽셀 해시가 있으니 회귀는 잴 수 있다.
+4. **디자인 게이트 strict 를 신규 조판에 켠다** — 기존 3권 위반 목록은 위에.
+5. `/book-studio` 를 main 에 병합(지금은 `vivlio-studio` 브랜치).
+
+### 병합할 때 볼 것
+
+`routes/auth.py` 의 CSP 두 줄(`frame-ancestors`·`unsafe-eval`)은 **작업대 미리보기
+경로에만** 걸리게 좁혀 놓았다. 다른 화면은 그대로다 — 병합 검토 때 이 범위를 꼭
+같이 볼 것.
