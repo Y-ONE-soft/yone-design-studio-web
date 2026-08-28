@@ -141,7 +141,7 @@ class VertToHorizEngine(BaseEngine):
     ]
 
     def run_indesign(self, job_dir, log, cancel_check=None, stall_limit=None,
-                     skip_post=()):
+                     skip_post=(), timeout=None):
         from core.indesign import runner as indesign
         import os as _os
 
@@ -159,7 +159,7 @@ class VertToHorizEngine(BaseEngine):
         # (실측 6분 7초). 기본 300초면 정상 작업을 스톨로 오판한다.
         # 인자를 안 주면 종전 기본값 — Flask 경로는 무변경.
         indesign.run_jsx(jsx_path, log, poll_log_path=log_file,
-                         timeout=self.jsx_timeout,
+                         timeout=(timeout or self.jsx_timeout),
                          completion_marker=self.completion_marker,
                          cancel_check=cancel_check, stall_limit=stall_limit)
 
@@ -182,8 +182,10 @@ class VertToHorizEngine(BaseEngine):
             except OSError:
                 pass
             log("%s 시작" % tag)
-            indesign.run_jsx(dst, log, poll_log_path=poll, timeout=1800,
-                             completion_marker=marker, stall_limit=900,
+            indesign.run_jsx(dst, log, poll_log_path=poll,
+                             timeout=(timeout or 1800),
+                             completion_marker=marker,
+                             stall_limit=(stall_limit or 900),
                              cancel_check=cancel_check)
 
     @property

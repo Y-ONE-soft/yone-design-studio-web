@@ -459,7 +459,7 @@ def stage_v2h(st, log, run_dir):
                         "result_name": vol["horiz_name"]}, jd, log)
         eng.prepare_jsx(jp, jd, log)
         # run_indesign 이 본 변환 + 후처리 3종(정리·재스레드·지문번호)을 순서대로
-        eng.run_indesign(jd, log, stall_limit=_STALL)
+        eng.run_indesign(jd, log, stall_limit=_STALL, timeout=_TIMEOUT)
         try:
             eng.verify(jd, log)
         except Exception as e:                               # noqa: BLE001
@@ -471,6 +471,15 @@ def stage_v2h(st, log, run_dir):
         vol["v2h_job"] = jd
         vol["horiz_indd"] = out
         log("[가로변환] 완료: %s" % out)
+        # 이 권에서 연 문서를 닫는다. 열린 문서가 쌓이면 다음 작업이 급격히
+        # 느려지고(3.5분 → 13.5분 실측) 끝내 AppleScript 가 먹통이 된다.
+        # JSX 가 이미 저장하고 끝냈으므로 저장 없이 닫아도 잃을 게 없다.
+        try:
+            meta = json.load(open(jp, encoding="utf-8"))
+            _close_if_open([out, meta.get("horiz_path"), meta.get("verti_path")],
+                           log)
+        except Exception as e:                               # noqa: BLE001
+            log("[정리] 문서 닫기 건너뜀: %s" % e)
         _save(st, run_dir)
     return st
 
