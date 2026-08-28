@@ -812,8 +812,10 @@ def end_page(cfg, d):
     """뒤 간지 — 책을 닫는 면. `break-before: left` 라 마지막 면이 짝수가 된다."""
     bk = cfg.book
     foot = "  ·  ".join(x for x in (bk.get("school"), bk.get("teacher")) if x)
-    return (f'<section class="endpage v-{d["volumes"][-1]["id"]}">'
-            '<div class="rhL rh-off"></div><div class="rhR rh-off"></div>'
+    # ⚠ 러닝 요소(`position: running()`)를 이 섹션 **안에** 두면 섹션이 통째로
+    #   비어 나온다(실측). 형제로 앞에 둔다.
+    return ('<div class="rhL rh-off"></div><div class="rhR rh-off"></div>'
+            f'<section class="endpage v-{d["volumes"][-1]["id"]}">'
             '<div class="orb"></div>'
             f'<div class="e-in"><div class="e-brand">'
             f'{esc(bk.get("brand", ""))}</div>'
