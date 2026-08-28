@@ -45,9 +45,17 @@ def _grid_clearance(pdf, report, log, floor=4.0):
         # ⚠ 측정창을 모눈 기준(top+n)으로 자르면 **겹쳐 내려간 글자를 스스로
         #    못 본다** — 처음 이렇게 짰다가 p.118 을 -1.5mm 로 과소 보고했다.
         #    자르는 기준은 모눈이 아니라 판면(머리 띠 아래 ~ 꼬리말 위)이다.
-        bots = [b[3] * 25.4 / 72 for b in pg.get_text("blocks")
-                if not label(b[4])
-                and 40 < b[1] * 25.4 / 72 < 284 and b[3] * 25.4 / 72 < 284]
+        # ⚠ 그리고 **덩어리(block)가 아니라 줄(line)** 로 재야 한다 — 라벨이
+        #    바로 아래 붙어 있으면 본문 줄과 한 덩어리로 묶여, 라벨을 걸러도
+        #    덩어리 바닥에는 라벨이 남는다(p.118 을 1.7mm 로 과소 보고했다).
+        bots = []
+        for blk in pg.get_text("dict")["blocks"]:
+            for li in blk.get("lines", ()):
+                t = "".join(sp["text"] for sp in li["spans"])
+                y0, y1 = li["bbox"][1] * 25.4 / 72, li["bbox"][3] * 25.4 / 72
+                if label(t) or not (40 < y0 < 284) or y1 > 284:
+                    continue
+                bots.append(y1)
         gap = top - (max(bots) if bots else 0)
         if worst is None or gap < worst[1]:
             worst = (i + 1, gap)
