@@ -1,5 +1,13 @@
 """책 1권 빌드 오케스트레이터 — `config.json` 하나로 원고→PDF.
 
+**책은 이름 일부로 가리켜도 된다** — `bin/viv 광문보카 watch` 처럼. 절대경로도,
+`--list` 가 찍어 주는 스튜디오 기준 상대경로도 그대로 받는다(목록에 보이는 것을
+붙여 넣을 수 없으면 목록이 무슨 소용인가). 이름이 여러 권에 걸리면 후보를 보여 준다.
+
+    bin/viv --list                          교재 트리의 책 목록
+    bin/viv 광문보카 knobs                   ★ 만질 수 있는 값
+    bin/viv 광문보카 watch                   라이브 미리보기(브라우저)
+
 교재 폴더에서:
     python3 -m core.render_vivlio.book <책폴더> data      원고 → data.json
     python3 -m core.render_vivlio.book <책폴더> theme     팔레트 → 테마 재생성
@@ -46,7 +54,7 @@ def build(cfg, log=print, **opts):
     return _series(cfg).build(cfg, log, **opts)
 
 
-def show_knobs(cfg, log=print, as_json=False, **_):
+def show_knobs(cfg, log=print, as_json=False, book=None, **_):
     """이 책에서 **무엇을 만질 수 있는지** 보여 준다.
 
     선언이 없으면 "아직 안 뚫린 계열"이라고 분명히 말한다 — 조용히 빈 목록을
@@ -62,8 +70,9 @@ def show_knobs(cfg, log=print, as_json=False, **_):
         log(f"  계열 {cfg.series} 는 아직 손잡이를 선언하지 않았다 "
             f"(series 의 knobs() 를 채울 것)")
         return items
+    who = book or cfg.book.get("title") or cfg.series
     log(f"  손잡이 {len(items)}개 — 값을 바꾸려면:")
-    log(f"    bin/viv \"<책폴더>\" knobs --set=\"{items[0]['key']}=<값>\"")
+    log(f"    bin/viv {who} knobs --set=\"{items[0]['key']}=<값>\"")
     for g in kn.GROUPS:
         rows = [d for d in items if d["group"] == g]
         if not rows:
@@ -315,7 +324,12 @@ def main(argv=None):
     book = argv[0]
     steps = [a for a in argv[1:] if not a.startswith("--")] or ["build"]
     opts = _parse_opts(argv[1:])
-    cfg = load(book)
+    try:
+        cfg = load(book)
+    except FileNotFoundError as e:
+        # 역추적은 여기서 아무것도 알려 주지 않는다 — 쓸 말만 남긴다
+        print(f"[오류] {e}")
+        return 2
     log = print
     log(f"■ {cfg.book.get('title', '')} · 계열 {cfg.series} · {cfg.root}")
 
@@ -359,7 +373,7 @@ def main(argv=None):
             if sets or resets:
                 set_knobs(cfg, log, sets, resets)
                 cfg = load(book)                    # 바꾼 값으로 다시 읽어 보여 준다
-            show_knobs(cfg, log, as_json=bool(opts.get("json")))
+            show_knobs(cfg, log, as_json=bool(opts.get("json")), book=book)
         elif st == "build":
             build(cfg, log, **opts)
         elif st == "print":

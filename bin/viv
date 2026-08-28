@@ -11,4 +11,6 @@
 set -e
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO"
-exec python3 -m core.render_vivlio.book "$@"
+# `-u` = 버퍼링 끄기. 이게 없으면 **오래 도는 명령이 아무 말도 안 한다** —
+# `watch` 는 미리보기 주소를 찍어 주는데 그게 버퍼에 갇혀 빈 화면만 보인다.
+exec python3 -u -m core.render_vivlio.book "$@"
