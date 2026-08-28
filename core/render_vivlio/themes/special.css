@@ -233,6 +233,7 @@ u { text-decoration: none; }
 .wbox i { display: block; height: 7.4mm; border-bottom: .5pt solid var(--hair); }
 .wbox.big i { height: 8.4mm; }
 .wbox.tight { margin: .6mm 0 0; }
+
 .wbox.tight i { height: 5.2mm; border-bottom: .5pt dotted #cfcbc2; }
 
 /* 연습문제 */
@@ -340,5 +341,8 @@ u { text-decoration: none; }
                    color: var(--lgray); }
 .aline.bg .l-body { color: var(--ink); }
 
-/* 흐름 컨테이너 */
-.flow { }
+/* 머리+첫 덩어리 묶음 — 머리만 면 아래에 혼자 남는 것을 막는다 */
+.keep { break-inside: avoid; }
+
+/* 개념 면의 필기 노트는 면을 채운다 — 학생이 쓰는 자리다 */
+.nh.big { margin-top: 5mm; }

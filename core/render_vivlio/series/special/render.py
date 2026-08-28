@@ -194,7 +194,7 @@ def word_card(b):
         f'  <div class="w-l"><div class="w-no">{esc(b["no"])}</div>'
         f'    <div class="w-head">{esc(b["head"])}</div>'
         f'    <div class="w-build">{esc(b["build"])}</div>{senses}</div>'
-        f'  <div class="w-r">{ex}{note}{rules(2, "wbox tight")}</div>'
+        f'  <div class="w-r">{ex}{note}{rules(3, "wbox tight")}</div>'
         '</div>')
 
 
@@ -209,23 +209,54 @@ def appendix_row(b):
 
 
 # ─────────────────────────────────────────────────────────── 구문·어법부
+class Keeper(object):
+    """머리(소제목·연습제목·해설 구분)를 **뒤따르는 첫 덩어리와 함께** 묶는다.
+
+    `break-after: avoid` 만으로는 부족했다 — 실측에서 '구문' 구분 칩이 면 맨
+    아래에 혼자 남고 첫 항목이 다음 면으로 넘어갔다. 머리와 첫 항목을 한 상자에
+    넣어 `break-inside: avoid` 로 묶는 편이 확실하다.
+    """
+
+    def __init__(self, out):
+        self.out = out
+        self.pend = []
+
+    def head(self, html_):
+        self.flush()
+        self.pend.append(html_)
+
+    def body(self, html_):
+        if self.pend:
+            self.out.append('<div class="keep">' + "".join(self.pend)
+                            + html_ + "</div>")
+            self.pend = []
+        else:
+            self.out.append(html_)
+
+    def flush(self):
+        if self.pend:
+            self.out.append("".join(self.pend))
+            self.pend = []
+
+
 def render_grammar(vol, out):
     blocks = vol["blocks"]
     i, n = 0, len(blocks)
     lesson = ""
-    in_ans = False
+    k = Keeper(out)
     while i < n:
         b = blocks[i]
         t = b["t"]
         if t in FRONT:
             i += 1
             continue
+        if t in ("part_no", "lesson", "ans_head"):
+            k.flush()
         if t == "part_no":
             title = ""
             if i + 1 < n and blocks[i + 1]["t"] == "part_title":
                 title = plain(blocks[i + 1]["r"])
                 i += 1
-            in_ans = not title            # '정답 및 해설' 은 제목이 따로 없다
             lesson = plain(b["r"])
             out.append(part_page(vol, plain(b["r"]), title))
         elif t == "lesson":
@@ -236,19 +267,19 @@ def render_grammar(vol, out):
         elif t == "lesson_sub":
             out.append(kv_line(plain(b["r"]), "lsub"))
         elif t == "subhead":
-            out.append(f'<h4 class="subhead">{inl(b["r"])}</h4>')
+            k.head(f'<h4 class="subhead">{inl(b["r"])}</h4>')
         elif t == "bullet":
-            out.append(f'<div class="bul">{inl(strip_mark(b["r"], "•"))}</div>')
+            k.body(f'<div class="bul">{inl(strip_mark(b["r"], "•"))}</div>')
         elif t == "concept":
-            out.append(f'<div class="concept">{kv_inline(plain(b["r"]))}</div>')
+            k.body(f'<div class="concept">{kv_inline(plain(b["r"]))}</div>')
         elif t == "notebox":
-            out.append(rules(9, "wbox big"))
+            k.body(rules(9, "wbox big"))
         elif t == "drill":
             note = ""
             if i + 1 < n and blocks[i + 1]["t"] == "drill_note":
                 note = f'<div class="drill-note">{inl(blocks[i + 1]["r"])}</div>'
                 i += 1
-            out.append(f'<div class="drill"><h4>{inl(b["r"])}</h4>{note}</div>')
+            k.head(f'<div class="drill"><h4>{inl(b["r"])}</h4>{note}</div>')
         elif t == "q":
             j = i + 1
             rows = []
@@ -257,8 +288,8 @@ def render_grammar(vol, out):
                                       "frow pt" if blocks[j]["t"] == "q_point"
                                       else "frow"))
                 j += 1
-            out.append(f'<div class="qitem">{q_line(b["r"])}'
-                       + "".join(rows) + "</div>")
+            k.body(f'<div class="qitem">{q_line(b["r"])}'
+                   + "".join(rows) + "</div>")
             i = j - 1
         elif t == "ans_head":
             txt = plain(b["r"])
@@ -268,7 +299,7 @@ def render_grammar(vol, out):
             out.append(f'<h3 class="{cls}">{runhead(vol["name"], "정답 및 해설")}'
                        f'{inl(b["r"])}</h3>')
         elif t == "ans_kind":
-            out.append(f'<div class="ans-kind">{inl(b["r"])}</div>')
+            k.head(f'<div class="ans-kind">{inl(b["r"])}</div>')
         elif t == "ans_q":
             j = i + 1
             body = []
@@ -280,12 +311,13 @@ def render_grammar(vol, out):
                 else:
                     body.append(ans_item(bb["r"]))
                 j += 1
-            out.append(f'<div class="aitem">{ans_q_line(b["r"])}'
-                       + "".join(body) + "</div>")
+            k.body(f'<div class="aitem">{ans_q_line(b["r"])}'
+                   + "".join(body) + "</div>")
             i = j - 1
         else:
-            out.append(generic(b))
+            k.body(generic(b))
         i += 1
+    k.flush()
 
 
 def strip_mark(rich, mark):
@@ -359,12 +391,16 @@ def render_reading(vol, out):
     blocks = vol["blocks"]
     i, n = 0, len(blocks)
     week = pending_week = ""
+    note_lines = 6
+    k = Keeper(out)
     while i < n:
         b = blocks[i]
         t = b["t"]
         if t in FRONT:
             i += 1
             continue
+        if t in ("week", "lesson", "rpart_no", "ex_tag"):
+            k.flush()
         if pending_week and t not in ("week", "lesson", "rpart_no"):
             out.append(f'<section class="week-open">'
                        f'{runhead(vol["name"], pending_week)}'
@@ -390,46 +426,51 @@ def render_reading(vol, out):
                        f'<h3 class="lesson">{inl(b["r"])}</h3></section>')
             pending_week = ""
         elif t == "concept_head":
-            out.append(f'<div class="ch">{esc(plain(b["r"]).strip("＜＞ "))}</div>')
+            k.head(f'<div class="ch">{esc(plain(b["r"]).strip("＜＞ "))}</div>')
         elif t == "block_head":
-            out.append(f'<h4 class="bh">{inl(strip_mark(b["r"], "●"))}</h4>')
+            k.head(f'<h4 class="bh">{inl(strip_mark(b["r"], "●"))}</h4>')
         elif t == "block_bullet":
-            out.append(f'<div class="bbul">{inl(strip_mark(b["r"], "·"))}</div>')
-        elif t == "note_head":
-            txt = plain(b["r"]).strip()
-            out.append(f'<div class="nh">{esc(txt.lstrip("❖ ").strip())}</div>')
+            k.body(f'<div class="bbul">{inl(strip_mark(b["r"], "·"))}</div>')
+        elif t in ("note_head", "wnote_head"):
+            txt = plain(b["r"]).strip().lstrip("❖ ").strip()
+            big = " big" if t == "wnote_head" else ""
+            k.head(f'<div class="nh{big}">{esc(txt)}</div>')
+            note_lines = 11 if t == "wnote_head" else 6
         elif t == "notebox":
-            out.append(rules(6, "wbox"))
+            k.body(rules(note_lines, "wbox"))
+            note_lines = 6
         elif t == "ex_tag":
             out.append(ex_tag(b["r"]))
         elif t == "stem":
-            out.append(f'<div class="stem">{inl(b["r"])}</div>')
+            k.body(f'<div class="stem">{inl(b["r"])}</div>')
         elif t == "passage":
-            out.append(f'<div class="psg">{inl(b["r"])}</div>')
+            k.body(f'<div class="psg">{inl(b["r"])}</div>')
         elif t == "footnote":
-            out.append(f'<div class="fnote">{inl(b["r"])}</div>')
+            k.body(f'<div class="fnote">{inl(b["r"])}</div>')
         elif t == "choice":
             j = i
             items = []
             while j < n and blocks[j]["t"] == "choice":
                 items.append(f'<li>{inl(blocks[j]["r"])}</li>')
                 j += 1
-            out.append('<ul class="choices">' + "".join(items) + "</ul>")
+            k.body('<ul class="choices">' + "".join(items) + "</ul>")
             i = j - 1
         elif t == "bg_head":
             txt = plain(b["r"]).strip().lstrip("❖ ").strip()
-            out.append(f'<div class="bgh">{esc(txt)}</div>')
+            k.head(f'<div class="bgh">{esc(txt)}</div>')
         elif t == "bg_item":
-            out.append(f'<div class="bgi">{inl(strip_mark(b["r"], "·"))}</div>')
+            k.body(f'<div class="bgi">{inl(strip_mark(b["r"], "·"))}</div>')
         elif t == "trans_head":
-            out.append(f'<div class="th">{esc(plain(b["r"]).strip().lstrip("❖ ").strip())}</div>')
+            k.head(f'<div class="th">'
+                   f'{esc(plain(b["r"]).strip().lstrip("❖ ").strip())}</div>')
         elif t == "trans":
-            out.append(f'<div class="trans">{inl(b["r"])}</div>')
+            k.body(f'<div class="trans">{inl(b["r"])}</div>')
         elif t == "ans_line":
-            out.append(ans_line(b["r"]))
+            k.body(ans_line(b["r"]))
         else:
-            out.append(generic(b))
+            k.body(generic(b))
         i += 1
+    k.flush()
 
 
 def ex_tag(rich):

@@ -77,7 +77,7 @@ SIMPLE = {
     "개념헤더": "concept_head",
     "블록제목": "block_head",
     "블록불릿": "block_bullet",
-    "필기헤더": "note_head",
+    "필기헤더": "wnote_head",
     "예제헤더": "ex_head",
     "예제태그": "ex_tag",
     "발문": "stem",
