@@ -550,12 +550,46 @@ def ans_item(rich):
     return f'<div class="a-item"><span class="a-body">{inl(rich)}</span></div>'
 
 
+def _lstrip_seg(seg):
+    if isinstance(seg, str):
+        return seg.lstrip()
+    return dict(seg, t=seg.get("t", "").lstrip())
+
+
 def kv_inline(rich, en=False):
-    txt = plain(rich) if not isinstance(rich, str) else rich
-    if "|" in txt[:14]:
-        lab, _, body = txt.partition("|")
-        return (f'<i class="ilab">{esc(lab.strip())}</i>{esc(body.strip())}')
-    return inl(rich)
+    """`라벨 | 본문` 을 칩 + 본문으로 나눈다.
+
+    ⚠ 본문을 `esc(plain(...))` 로 내보내면 **밑줄·굵게가 통째로 사라진다.**
+    원고가 어법 문제의 고칠 자리에 밑줄을 넣어 줬는데 문제 쪽에만 나오고
+    해설 쪽에서는 밑줄이 빠져 있었다(원고 60곳 중 19곳). 글자만 맞으면
+    통과하는 대조 게이트로는 절대 안 잡히는 부류다.
+    조각 목록을 '|' 에서 갈라 **뒤쪽은 그대로 `inl()` 로 넘긴다.**
+    """
+    txt = plain(rich)
+    if "|" not in txt[:14]:
+        return inl(rich)
+    if isinstance(rich, str):
+        lab, _, body = rich.partition("|")
+        return f'<i class="ilab">{esc(lab.strip())}</i>{esc(body.strip())}'
+    lab, rest, cut = "", [], False
+    for seg in rich:
+        if cut:
+            rest.append(seg)
+            continue
+        t = plain(seg)
+        if "|" in t:
+            a, _, b = t.partition("|")
+            lab += a
+            cut = True
+            if b:
+                rest.append(b if isinstance(seg, str) else dict(seg, t=b))
+        else:
+            lab += t
+    while rest and not plain(rest[0]).strip():
+        rest.pop(0)
+    if rest:
+        rest[0] = _lstrip_seg(rest[0])
+    return f'<i class="ilab">{esc(lab.strip())}</i>{inl(rest)}'
 
 
 def part_page(no, title, items=()):
