@@ -167,7 +167,14 @@ body {
   overflow-wrap: break-word; orphans: 2; widows: 2;
 }
 b { font-weight: 700; }
-u { text-decoration: none; }
+/* 밑줄은 **뜻이 있는 곳에만** 남는다 — 어법 문제의 '고칠 자리'(60곳)와
+ * 빈칸 추론의 빈칸(11곳) 둘뿐이다.
+ * ⚠ 여기서 `text-decoration: none` 으로 한 번에 껐다가 **그 둘이 통째로
+ *   사라졌다.** 원고는 기입 칸(`기입선`·`POINT` 250곳)도 밑줄 공백으로 그려
+ *   오는데, 그 줄은 엔진이 직접 괘선으로 그리므로 `<u>` 로 오지 않는다 —
+ *   즉 끌 이유가 애초에 없었다. 끄지 말 것. */
+u { text-decoration: underline; text-decoration-thickness: .5pt;
+    text-underline-offset: .18em; text-decoration-skip-ink: none; }
 
 .r-num { color: var(--c-deep); font-weight: 700; }
 .r-src { font: 400 7.2pt/1 Noto; color: var(--n-4); white-space: nowrap; }
