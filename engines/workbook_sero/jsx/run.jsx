@@ -3065,24 +3065,48 @@
             }
         }
 
-        // P+2: 본문 정리 (B) — 메인 frame ← step1_b1 (위쪽 발문 frame은 그대로 유지)
+        // P+2: 본문 정리 (B) — 상단 프레임 ← step1_b1, 하단으로 이어 붙인다.
+        //
+        // 규칙(사용자 확정): 상단 = 본문·주제·제목 정리 / 하단 = 주제·제목 문제.
+        //
+        // processStep1B1 은 **한 스토리**에 정리와 하단 문제를 함께 넣고,
+        // 원고의 프레임브레이크(~R)로 하단을 다음 프레임에 보내는 구조다
+        // (가로 워크북과 동일). 그런데 세로 템플릿의 두 프레임은 스레드가
+        // 아니라 각각 독립 스토리라 그 장치가 죽어 있었다. 결과:
+        // 정리와 하단 문제가 **하단 프레임 하나에** 다 들어가 넘쳤다.
+        //   실측 (2026-08-29, 13강 신규 세로본 5건):
+        //     2314자 중 1138자만 인쇄 — "다음 글의 주제로 가장 적절한 것은?"
+        //     발문·지문·선지 5개가 통째로 미인쇄. 세로·가로 양쪽에서 안 보이니
+        //     문단 대조도 통과한다 (양쪽에서 제외되므로).
+        // P+4 문장배열과 같은 처방 — 조판 직전에 상단→하단을 이어 붙인다.
         var p2 = pg(2);
         if (p2 && !excludeSet["step1_b1"]) {
-            var b2 = seroBodyFrames(p2);
-            // 본문 정리는 아래 frame (y가 작은 = 페이지 위에서 두 번째 큰 frame)
-            // 분석에서 f1(y=155)=발문, f2(y=32)=본문. y 오름차순이므로 b2[0]=발문, b2[1]=본문
-            // 그러나 우리는 본문에 발문도 포함되어 와야 함. 또는 본문 frame만.
-            // 가로 워크북 step1_b1은 한 paragraphs[]에 발문/본문/정리 다 들어있고
-            // 가로의 큰 스토리에 한꺼번에 채움. 세로 페이지에는 본문 frame이 메인.
-            // 가장 큰 frame을 메인으로 사용.
-            var mainFr2 = null, bestH2 = 0;
-            for (var i2 = 0; i2 < b2.length; i2++) {
-                if (b2[i2].h > bestH2) { bestH2 = b2[i2].h; mainFr2 = b2[i2].fr; }
-            }
-            if (mainFr2 && cyc.steps && cyc.steps.step1_b1 && cyc.steps.step1_b1.length > 0) {
-                try { seroRunStep(mainFr2.parentStory, processStep1B1, cyc.steps.step1_b1, qstr, code, "step1_b1"); } catch(eD){ addLog("Q"+qn+" P+2 오류: "+eD.message); }
+            var b2 = seroBodyFrames(p2);              // y 오름차순 (상단 → 하단)
+            var b1arr = (cyc.steps && cyc.steps.step1_b1) ? cyc.steps.step1_b1 : [];
+            if (b2.length >= 2 && b1arr.length > 0) {
+                var topFr2 = b2[0].fr, botFr2 = b2[1].fr;
+                var threaded2 = false;
+                try {
+                    if (!topFr2.nextTextFrame) {
+                        botFr2.contents = "";           // 템플릿 잔재 제거 — 함수가 다시 채운다
+                        topFr2.nextTextFrame = botFr2;
+                        threaded2 = true;
+                    }
+                } catch (eTh2) { addLog("Q" + qn + " P+2 스레드 연결 실패: " + eTh2.message); }
+                addLog("Q" + qn + " P+2 본문정리: " + b1arr.length + "문단 → 상단 프레임" +
+                       (threaded2 ? " (상·하단 스레드 연결)" : " (스레드 기존 유지)"));
+                try { seroRunStep(topFr2.parentStory, processStep1B1, b1arr, qstr, code, "step1_b1"); }
+                catch (eT2) { addLog("Q" + qn + " P+2 오류: " + eT2.message); }
             } else {
-                seroClearFrame(mainFr2);
+                var mainFr2 = null, bestH2 = 0;
+                for (var i2 = 0; i2 < b2.length; i2++) {
+                    if (b2[i2].h > bestH2) { bestH2 = b2[i2].h; mainFr2 = b2[i2].fr; }
+                }
+                if (mainFr2 && b1arr.length > 0) {
+                    try { seroRunStep(mainFr2.parentStory, processStep1B1, b1arr, qstr, code, "step1_b1"); } catch(eD){ addLog("Q"+qn+" P+2 오류: "+eD.message); }
+                } else {
+                    seroClearFrame(mainFr2);
+                }
             }
         }
 
