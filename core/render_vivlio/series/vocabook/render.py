@@ -18,6 +18,7 @@ import html
 import os
 import re
 
+from core.render_vivlio import refs as _refs
 from core.render_vivlio import stage
 
 _RE_BRACKET = re.compile(r"\[([^\[\]]+)\]")
@@ -167,19 +168,26 @@ class Renderer(object):
                    f'<span class="w-rule"></span>{tag}</div>')
         else:
             top = ""
+        br = _refs.of(b)
         o = [f'<article class="w">{top}'
              f'<div class="w-lead">'
-             f'<div class="w-word{_wcls(b["word"])}">{esc(b["word"])}</div>'
-             f'<div class="w-mean">{meaning(b["meaning"])}</div></div>']
-        for row in b["rows"]:
+             f'<div{_refs.mark(br and br + ".word", "w-word" + _wcls(b["word"]))}>'
+             f'{esc(b["word"])}</div>'
+             f'<div{_refs.mark(br and br + ".meaning", "w-mean")}>'
+             f'{meaning(b["meaning"])}</div></div>']
+        for ri, row in enumerate(b["rows"]):
             lab = row["label"]
             if lab == "예문":
                 cls, val = "r-ex", []
                 for i in range(0, len(row["lines"]), 2):
                     en = row["lines"][i]
                     kr = row["lines"][i + 1] if i + 1 < len(row["lines"]) else ""
-                    val.append(f'<div class="pair"><p class="en">{ex_en(en)}</p>'
-                               + (f'<p class="kr">{ex_kr(kr)}</p>' if kr else "")
+                    lr = f'{br}.rows.{ri}.lines' if br else ''
+                    val.append('<div class="pair">'
+                               f'<p{_refs.mark(lr and f"{lr}.{i}", "en")}>'
+                               f'{ex_en(en)}</p>'
+                               + (f'<p{_refs.mark(lr and f"{lr}.{i + 1}", "kr")}>'
+                                  f'{ex_kr(kr)}</p>' if kr else "")
                                + "</div>")
                 body = "".join(val)
             elif lab == "유반의어":
@@ -189,7 +197,10 @@ class Renderer(object):
                 if not with_def:
                     continue
                 cls = "r-def"
-                body = "".join(f"<p>{esc_gap(x)}</p>" for x in row["lines"])
+                lr = f'{br}.rows.{ri}.lines' if br else ''
+                body = "".join(
+                    f'<p{_refs.mark(lr and f"{lr}.{li}")}>{esc_gap(x)}</p>'
+                    for li, x in enumerate(row["lines"]))
             o.append(f'<div class="w-row {cls}"><div class="lab">{esc(lab)}</div>'
                      f'<div class="val">{body}</div></div>')
         o.append("</article>")
@@ -529,12 +540,14 @@ class Renderer(object):
 
 
 def write(cfg, data, build_dir, mirror=(), nomemo=False, sample=False, log=None):
+    _refs.index_lists(data, ("head", "deriv"))   # 클릭 편집용 자리표
     r = Renderer(cfg, mirror=mirror, nomemo=nomemo, sample=sample)
     text = r.document(data)
     os.makedirs(build_dir, exist_ok=True)
     out = os.path.join(build_dir, "index.html")
     with open(out, "w", encoding="utf-8") as f:
         f.write(text)
+    _refs.dump(build_dir)
     if log:
         log(f"[렌더] {'견본' if sample else '전권'} "
             f"{len(text) // 1024}KB → {os.path.basename(out)}")

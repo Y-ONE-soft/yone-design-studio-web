@@ -106,51 +106,26 @@ def plain(x):
     return ''.join(plain(i) for i in x)
 
 
-# ── 클릭 편집용 자리표 ────────────────────────────────────────────
-# 지면의 글 한 조각이 **data 안 어디서 왔는지**를 HTML 에 적어 둔다. 작업대에서
-# 그 글을 클릭하면 이 값으로 원본을 찾아 고친다(고친 것은 errata.json 에 쌓인다).
-# 렌더 함수마다 첨자를 들고 다니게 하면 서명이 지저분해지므로, 렌더 직전에
-# **한 번 훑어** 객체 → 경로 표를 만들어 둔다(같은 렌더 안에서만 쓴다).
-_REFS = {}
-_REF_SEQ = {}          # 경로 → 번호. HTML 에는 번호만 싣는다
+# ── 클릭 편집용 자리표 — 공용 구현을 쓴다(core/render_vivlio/refs.py)
+from core.render_vivlio import refs as _refs
+
+REF_SPEC = ("lessons", ("vocab", "problems", "answers"))
 
 
 def index_refs(data):
-    _REFS.clear()
-    _REF_SEQ.clear()
-    for i, L in enumerate(data.get('lessons') or []):
-        for kind in ('vocab', 'problems', 'answers'):
-            for j, obj in enumerate(L.get(kind) or []):
-                if isinstance(obj, dict):
-                    _REFS[id(obj)] = f'lessons.{i}.{kind}.{j}'
-    return _REFS
+    return _refs.index(data, REF_SPEC)
 
 
 def ref_of(obj, sub=''):
-    r = _REFS.get(id(obj))
-    if not r:
-        return ''
-    return f'{r}.{sub}' if sub else r
+    return _refs.of(obj, sub)
 
 
 def _mark(ref, base=''):
-    """`class="… vrefN"` + `data-ref` 를 만든다.
-
-    ⚠ **Vivliostyle 은 조판 결과 DOM 에 임의 속성을 옮기지 않는다.** `data-ref`
-      만 심으면 화면에서 클릭해도 아무것도 못 찾는다(실제로 그랬다). 반면
-      **class 는 그대로 남는다**(CSS 가 거기 걸려 있으니 당연하다) → 자리표를
-      클래스 토큰으로 싣고, 번호↔경로 표는 `build/refs.json` 으로 따로 낸다.
-      `data-ref` 는 원본 HTML 을 사람이 읽을 때를 위해 같이 남긴다.
-    """
-    if not ref:
-        return f' class="{base}"' if base else ''
-    n = _REF_SEQ.setdefault(ref, len(_REF_SEQ) + 1)
-    cls = (base + ' ' if base else '') + f'vref{n}'
-    return f' class="{cls}" data-ref="{ref}"'
+    return _refs.mark(ref, base)
 
 
 def ref_table():
-    return {str(n): r for r, n in _REF_SEQ.items()}
+    return _refs.table()
 
 
 def paras_html(paras, blank=False, cls='', ref=''):
@@ -442,9 +417,7 @@ def write(cfg, data, build_dir, heights=None, aheights=None, mode=None,
     out = os.path.join(build_dir, MODE_FILE[mode])
     with open(out, 'w', encoding='utf-8') as f:
         f.write(text)
-    # 번호 ↔ 경로 표. 작업대가 화면에서 클릭한 것을 원본으로 되짚는 데 쓴다.
-    with open(os.path.join(build_dir, 'refs.json'), 'w', encoding='utf-8') as f:
-        json.dump(ref_table(), f, ensure_ascii=False)
+    _refs.dump(build_dir)   # 번호 ↔ 경로 표
     if log:
         log(f'[렌더] {os.path.basename(out)} {len(text):,} bytes'
             + ('  [측정용]' if mode else

@@ -16,6 +16,7 @@ import html
 import os
 import re
 
+from core.render_vivlio import refs as _refs
 from core.render_vivlio import stage
 from core.render_vivlio.series.vocaunit import theme
 
@@ -285,21 +286,26 @@ class Renderer(object):
     def word(self, w):
         chk = '<span class="chk"><i></i><i></i><i></i></span>'
         der = "".join(f"<p>{deriv(x, self.notes)}</p>" for x in w["deriv"])
+        wr = _refs.of(w)
         pairs = []
-        for en, kr in w["pairs"]:
+        for pi, (en, kr) in enumerate(w["pairs"]):
             pairs.append('<div class="pair">'
-                         f'<p class="en">{example(en)}</p>'
-                         + (f'<p class="kr">{example(kr)}</p>' if kr else "")
+                         f'<p{_refs.mark(wr and f"{wr}.pairs.{pi}.0", "en")}>'
+                         f'{example(en)}</p>'
+                         + (f'<p{_refs.mark(wr and f"{wr}.pairs.{pi}.1", "kr")}>'
+                            f'{example(kr)}</p>' if kr else "")
                          + "</div>")
         return (
             '<article class="w"><div class="w-l">'
             f'<div class="w-top"><span class="w-no">{w["no"]:0{self.pad}d}</span>'
             f'{chk}</div>'
-            f'<div class="w-word{_wcls(w["word"])}">{esc(w["word"])}</div>'
+            f'<div{_refs.mark(wr and wr + ".word", "w-word" + _wcls(w["word"]))}>'
+            f'{esc(w["word"])}</div>'
             f'<div class="w-pron">{esc(w["pron"])}</div>'
             + (f'<div class="w-deriv">{der}</div>' if der else "")
             + '</div><div class="w-r">'
-            f'<div class="w-def">{meaning(w["meaning"], self.notes)}</div>'
+            f'<div{_refs.mark(wr and wr + ".meaning", "w-def")}>'
+            f'{meaning(w["meaning"], self.notes)}</div>'
             f'<div class="w-ex">{"".join(pairs)}</div>'
             "</div></article>")
 
@@ -313,12 +319,15 @@ class Renderer(object):
         chk = '<span class="chk"><i></i><i></i><i></i></span>'
         pt = self.tw.fit(w["word"], self.word_mm, 10)
         st = f' style="font-size:{pt}pt"' if pt < 10 else ""
+        wr = _refs.of(w)
         return (
             '<article class="w flat"><div class="w-l">'
             f'<span class="w-no">{w["no"]:0{self.pad}d}</span>{chk}'
-            f'<span class="w-word"{st}>{esc(w["word"])}</span>'
+            f'<span{_refs.mark(wr and wr + ".word", "w-word")}{st}>'
+            f'{esc(w["word"])}</span>'
             '</div><div class="w-r">'
-            f'<div class="w-def">{meaning(w["meaning"], self.notes)}</div>'
+            f'<div{_refs.mark(wr and wr + ".meaning", "w-def")}>'
+            f'{meaning(w["meaning"], self.notes)}</div>'
             "</div></article>")
 
     def group_head(self, label):
@@ -439,12 +448,14 @@ class Renderer(object):
 
 
 def write(cfg, data, build_dir, mirror=(), sample=False, log=None):
+    _refs.index(data, ("units", ("words",)))   # 클릭 편집용 자리표
     r = Renderer(cfg, mirror=mirror, sample=sample)
     text = r.document(data)
     os.makedirs(build_dir, exist_ok=True)
     out = os.path.join(build_dir, "index.html")
     with open(out, "w", encoding="utf-8") as f:
         f.write(text)
+    _refs.dump(build_dir)
     if log:
         log(f"[렌더] {'견본' if sample else '전권'} {len(text) // 1024}KB "
             f"→ {os.path.basename(out)}")
