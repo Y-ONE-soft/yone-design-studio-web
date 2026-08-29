@@ -10,8 +10,10 @@
   화면이 계열마다 새로 만들 필요가 없는 이유다.
 #}
 <style>
-  .bs-wrap { display: grid; grid-template-columns: 380px 1fr; gap: 18px;
+  .bs-wrap { display: grid; grid-template-columns: 300px 1fr; gap: 16px;
              align-items: start; }
+  .bs-wrap.folded { grid-template-columns: 0 1fr; }
+  .bs-wrap.folded > .bs-side { display: none; }
   @media (max-width: 1000px) { .bs-wrap { grid-template-columns: 1fr; } }
   .bs-panel { background: var(--glass-bg); border: 1px solid var(--glass-border);
               border-radius: 16px; padding: 16px 18px;
@@ -54,7 +56,7 @@
   .bs-btn[disabled] { opacity: .45; cursor: default; }
   .bs-status { font-size: 12px; color: var(--muted); margin-top: 10px;
                white-space: pre-wrap; line-height: 1.5; }
-  .bs-frame { width: 100%; height: calc(100vh - 190px); min-height: 520px;
+  .bs-frame { width: 100%; height: calc(100vh - 150px); min-height: 700px;
               border: 1px solid var(--border); border-radius: 14px;
               background: #6b6b6b; }
   .bs-css { width: 100%; height: 190px; background: rgba(0,0,0,.3);
@@ -67,7 +69,8 @@
 <div class="bs-head">
   <div>
     <div class="bs-title">내지 작업대</div>
-    <div class="bs-sub">값을 만지면 지면이 바뀐다 · Vivliostyle 코드 조판</div>
+    <div class="bs-sub">이미 조판된 책의 <b>색·여백을 바꾸고, 지면의 글을 고치는</b> 곳입니다.
+      새 원고로 조판하려면 <a href="/typeset/vivlio_book">비블리오 조판</a>으로 가세요.</div>
   </div>
 </div>
 
@@ -79,16 +82,17 @@
   {% endfor %}
 </div>
 
-<div class="bs-wrap">
-  <div>
+<div class="bs-wrap" id="bs-wrap">
+  <div class="bs-side">
     <div class="bs-panel">
       <div id="bs-knobs">불러오는 중…</div>
       <div class="bs-actions">
-        <button class="bs-btn primary" id="bs-apply" disabled>저장하고 다시 그리기</button>
+        <button class="bs-btn primary" id="bs-apply" disabled>바꾼 값 저장</button>
         <button class="bs-btn" id="bs-reload">되돌리기</button>
         <label class="bs-btn" style="display:flex;gap:6px;align-items:center">
           <input type="checkbox" id="bs-full"> 전권으로 보기
         </label>
+        <button class="bs-btn" type="button" id="bs-fold">조절판 접기</button>
       </div>
       <div class="bs-status" id="bs-status"></div>
       <div class="bs-warn">
@@ -117,10 +121,10 @@
     </div>
 
     <div class="bs-panel">
-      <div class="bs-gname">손잡이 밖 — overrides.css</div>
+      <div class="bs-gname">직접 손보기 (CSS)</div>
       <div class="bs-hint" style="margin-bottom:8px">
-        손잡이에 없는 것을 이번만 바꿀 때. 계열 CSS 를 건드리지 않고 이 책에만 얹힌다
-        (맨 마지막이라 무엇이든 이긴다). 자주 쓰게 되면 손잡이로 올리는 게 맞다.
+        위 목록에 없는 것을 이 책에서만 바꿀 때. 다른 책에는 영향이 없고,
+        다시 조판해도 남습니다. CSS 를 모르면 안 쓰셔도 됩니다.
       </div>
       <textarea class="bs-css" id="bs-ovr" spellcheck="false"
                 placeholder="/* 예: .q .head .no { letter-spacing: .02em } */"></textarea>
@@ -224,7 +228,7 @@
     var lab = document.createElement('div');
     lab.className = 'bs-label';
     lab.innerHTML = '<span>' + k.label
-      + (k.overridden ? '<span class="bs-dot" title="config 가 기본값을 덮어썼다"></span>' : '')
+      + (k.overridden ? '<span class="bs-dot" title="이 책에서 바꾼 값"></span>' : '')
       + '</span><span class="bs-val" data-v="' + k.key + '"></span>';
     wrap.appendChild(lab);
 
@@ -248,13 +252,20 @@
       input.addEventListener('input', function () { sync(input.value); });
       txt.addEventListener('change', function () { sync(txt.value.trim()); });
     } else if (k.kind === 'mm' || k.kind === 'pt' || k.kind === 'number') {
+      // 치수는 **숫자로 적는다**. 122.5mm 를 슬라이더로 맞출 수는 없다.
+      var row = document.createElement('div');
+      row.className = 'bs-color';
       input = document.createElement('input');
-      input.type = 'range';
-      input.min = (k.min !== undefined ? k.min : 0);
-      input.max = (k.max !== undefined ? k.max : 100);
+      input.type = 'number'; input.className = 'bs-text';
       input.step = k.step || 0.1;
+      if (k.min !== undefined) input.min = k.min;
+      if (k.max !== undefined) input.max = k.max;
       input.value = (k.value !== null && k.value !== undefined) ? k.value : k.default;
-      wrap.appendChild(input);
+      var unit = document.createElement('span');
+      unit.style.cssText = 'font-size:12px;color:var(--muted);min-width:22px';
+      unit.textContent = k.unit || '';
+      row.appendChild(input); row.appendChild(unit);
+      wrap.appendChild(row);
       input.addEventListener('input', function () {
         changed[k.key] = parseFloat(input.value);
         lab.querySelector('[data-v]').textContent = input.value + (k.unit || '');
@@ -284,8 +295,7 @@
   function draw() {
     var host = $('bs-knobs'); host.innerHTML = '';
     if (!spec.length) {
-      host.innerHTML = '<div class="bs-hint">이 계열은 아직 손잡이를 선언하지 않았다.'
-        + ' 계열의 <code>knobs()</code> 를 채우면 여기 저절로 나타난다.</div>';
+      host.innerHTML = '<div class="bs-hint">이 교재는 아직 바꿀 수 있는 값이 정해져 있지 않습니다.</div>';
       return;
     }
     var groups = [];
@@ -306,18 +316,18 @@
 
   function load() {
     changed = {}; $('bs-apply').disabled = true;
-    status('손잡이를 읽는 중…');
+    status('설정을 읽는 중…');
     fetch('/api/book-studio/knobs?b=' + encodeURIComponent(key))
       .then(function (r) { return r.json(); })
       .then(function (d) {
         if (d.error) { status('✗ ' + d.error); return; }
         bid = d.book.bid; spec = d.knobs || [];
-        draw(); status('손잡이 ' + spec.length + '개 · 지면을 그리는 중…');
+        draw(); status('바꿀 수 있는 값 ' + spec.length + '개 · 지면을 그리는 중…');
         // 책 폴더의 build/ 는 마지막 조판 때 것이라 지금 config 와 어긋날 수
         // 있다(손잡이를 바꿔 두고 조판을 안 돌렸을 때). 열 때 한 번 다시 그려
         // **화면이 곧 지금 값**이 되게 한다 — 0.4초면 된다.
         rerender('').then(function (ok) {
-          if (ok) status('손잡이 ' + spec.length + '개');
+          if (ok) status('바꿀 수 있는 값 ' + spec.length + '개');
         });
       })
       .catch(function (e) { status('✗ ' + e); });
@@ -367,6 +377,12 @@
   });
   $('bs-edit-close').addEventListener('click', function () {
     $('bs-editbox').style.display = 'none'; curRef = null;
+  });
+
+  $('bs-fold').addEventListener('click', function () {
+    var w = $('bs-wrap');
+    w.classList.toggle('folded');
+    $('bs-fold').textContent = w.classList.contains('folded') ? '조절판 펴기' : '조절판 접기';
   });
 
   $('bs-reload').addEventListener('click', load);
