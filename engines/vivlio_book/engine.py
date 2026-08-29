@@ -161,6 +161,18 @@ class VivlioBookEngine(BaseEngine):
         # 설정은 기준 책에서 물려받는다 (원고·산출물은 안 가져온다)
         raw = open(os.path.join(base_dir, "config.json"), encoding="utf-8").read()
 
+        # 작업대에서 손본 것 중 **디자인에 속하는 것**은 같이 물려받는다.
+        #   config.json    색·여백 값        → 위에서 통째로 (물려받는다)
+        #   overrides.css  손잡이 밖 손질     → 여기서 (물려받는다)
+        #   errata.json    글자 정오표        → **물려받지 않는다**
+        # 정오표는 `lessons.0.problems.3.stem` 처럼 **그 원고의 자리**를 가리킨다.
+        # 원고가 바뀌면 같은 자리에 다른 글이 오므로, 물려받으면 엉뚱한 곳을
+        # 조용히 고친 책이 된다. 디자인은 따라가고 오타 수정은 안 따라가는 것이 맞다.
+        ov = os.path.join(base_dir, "overrides.css")
+        if os.path.exists(ov) and os.path.getsize(ov) > 0:
+            shutil.copy2(ov, os.path.join(out_dir, "overrides.css"))
+            log(f"  직접 손본 CSS 도 물려받았다 ({os.path.getsize(ov)}B)")
+
         # 원고 넣기 — 올린 이름 그대로 (이름을 맞추라고 하지 않는다)
         smap = [s for s in self._meta(job_dir, "slotmap").split(",") if s.strip()]
         changes, n = {}, 0
