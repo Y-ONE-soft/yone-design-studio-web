@@ -138,6 +138,52 @@
         }
         W("교정 " + fixed + "곳 / 섹션 " + secN + "개");
 
+        // 2-b) 지문 앞 {코드} 마커 문단도 마더텅 번호로 바꾼다.
+        //
+        // 이 마커는 원래 지문 순서를 읽는 용도로만 쓰고 그대로 두었는데,
+        // **학생용 지면에 원본 회차 코드가 그대로 인쇄된다**
+        // (2026-08-29 실측: 13강 권1 16개 / 권2 14개. p168 STEP3 실전 지문 앞에
+        //  "231137" 이 12pt 색 글자로 찍혔다. 같은 책의 C2 영작배열은 23·24 로
+        //  정상이라 STEP3 만 노출됐다).
+        // 사용자 확정: "마더텅 조판은 무조건 전부 마더텅 번호로 바꿔".
+        //
+        // ⚠ 문단 **전체**가 마커일 때만 건드린다. 본문 속 6자리 숫자를 잘못
+        //   바꾸지 않기 위해서다. 중괄호가 없거나({250936}) 겹친({{220937})
+        //   경우가 실제로 있어 둘 다 받는다.
+        var mk = 0, mkSkip = [];
+        for (var ms = 0; ms < d.stories.length; ms++) {
+            var mst = d.stories[ms], mtxt = "";
+            try { mtxt = String(mst.contents); } catch (eS1) { continue; }
+            if (!/\d{6}/.test(mtxt)) { continue; }
+            for (var mp = 0; mp < mst.paragraphs.length; mp++) {
+                var mc = "";
+                try { mc = String(mst.paragraphs[mp].contents); } catch (eS2) { continue; }
+                var bare = mc.replace(/[\r\n\s{}\u00A0]/g, "");
+                if (!/^\d{6}$/.test(bare)) { continue; }      // 문단 전체가 마커일 때만
+                var mn = mtNo(bare);
+                if (mn <= 0) { mkSkip.push(bare); continue; }  // 이 강의 코드가 아니다
+                var label = (mn < 10 ? "0" + mn : String(mn));
+                try {
+                    var mch = mst.paragraphs[mp].characters[0];
+                    var mcs = mch.appliedCharacterStyle, mfn = mch.appliedFont;
+                    var msz = mch.pointSize, mfc = mch.fillColor;
+                    // 문단 기호(\r)는 남기고 글자만 교체 — 문단이 합쳐지지 않게.
+                    var keepR = (mc.charAt(mc.length - 1) === "\r");
+                    mst.paragraphs[mp].contents = label + (keepR ? "\r" : "");
+                    var mall = mst.paragraphs[mp].texts[0];
+                    mall.appliedCharacterStyle = mcs;
+                    mall.appliedFont = mfn;
+                    mall.pointSize = msz;
+                    mall.fillColor = mfc;
+                    mk++;
+                } catch (eS3) { W("  [마커 실패] " + bare + " — " + eS3); }
+            }
+        }
+        W("지문 마커 교체 " + mk + "곳"
+          + (mkSkip.length ? " / 이 강 코드가 아니라 건너뜀 " + mkSkip.length
+             + "개: " + mkSkip.join(",") : ""));
+        fixed += mk;
+
         // 3) 자체 검증 — 다시 읽어 기대와 대조
         var allOk = true;
         for (var s2 = 0; s2 < secs.length; s2++) {
@@ -151,6 +197,20 @@
             if (!okS) { allOk = false; W("[검증] " + secs[s2].name + " FAIL — [" + got.join(",") + "]"); }
             else { W("[검증] " + secs[s2].name + " PASS"); }
         }
+        // 마커가 하나라도 남으면 실패로 알린다 (학생용 지면에 코드 노출)
+        var leftover = 0;
+        for (var ls = 0; ls < d.stories.length; ls++) {
+            var lst = d.stories[ls], ltxt = "";
+            try { ltxt = String(lst.contents); } catch (eL1) { continue; }
+            if (!/\d{6}/.test(ltxt)) { continue; }
+            for (var lp = 0; lp < lst.paragraphs.length; lp++) {
+                var lc = "";
+                try { lc = String(lst.paragraphs[lp].contents); } catch (eL2) { continue; }
+                if (/^[\s{}\u00A0]*\d{6}[\s{}\u00A0]*$/.test(lc.replace(/[\r\n]/g, ""))) { leftover++; }
+            }
+        }
+        if (leftover) { allOk = false; W("[검증] 코드 마커 " + leftover + "개 잔존 FAIL"); }
+        else { W("[검증] 코드 마커 잔존 없음 PASS"); }
         W(allOk ? "[검증] 전체 PASS" : "[검증] 전체 FAIL");
         if (fixed > 0) { d.save(); W("저장 완료"); }
         W("===== 지문번호 교정 완료 =====");
