@@ -16,6 +16,8 @@
 // ⚠ 글자수·프레임수·페이지수가 그대로이고 오버셋이 늘지 않을 때만 저장한다.
 #target indesign
 (function () {
+    // run_jsx 가 이 변수로 실행 경로를 잡는다 — 이름을 바꾸면 실행이 안 된다.
+    var settingsPath = "__LOG__";
     var LOG = "__LOG__", SRC = "__SRC__";
     var logFile = new File(LOG);
     logFile.encoding = "UTF-8"; logFile.lineFeed = "Unix";
