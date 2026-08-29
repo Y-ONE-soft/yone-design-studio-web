@@ -214,25 +214,30 @@ def hdr_ans(no, title):
 
 
 def render_vocab(unit):
+    u = ref_of(unit)
     o = ['<div class="vunit">']
     o.append(f'<div><span class="chip">{html.escape(unit["label"])}</span></div>')
     o.append('<div class="rule"></div>')
     o.append('<div class="pbox">')
     if unit['title']:
-        o.append(f'<p>{inl(unit["title"])}</p>')
-    o.append(paras_html(unit['paras']))
+        o.append(f'<p{_mark(u and u + ".title")}>{inl(unit["title"])}</p>')
+    o.append(paras_html(unit['paras'], ref=u and u + '.paras'))
     o.append('</div>')
     o.append('<div class="chipline" style="margin-top:5.4mm">'
              '<span class="chip chip-v">연관 어휘</span></div>')
     o.append('<div class="rule rule-v"></div>')
     o.append('<div class="vwords">')
-    for w in unit['words']:
+    for wi, w in enumerate(unit['words']):
+        wr = f'{u}.words.{wi}' if u else ''
         o.append('<div class="vw">')
-        o.append(f'<p class="wh"><b>{html.escape(w["word"])}</b>'
+        # 표제어와 뜻은 한 줄에 붙어 있다 — 자리표는 **뜻**에 건다(고칠 것은 뜻이다)
+        o.append(f'<p{_mark(wr and wr + ".mean", "wh")}>'
+                 f'<b>{html.escape(w["word"])}</b>'
                  f'<span class="gap"></span> {html.escape(w["mean"])}</p>')
-        for r in w['rel']:
+        for ri, r in enumerate(w['rel']):
             cls = 'rel ant' if r['kind'] == '반의어' else 'rel'
-            o.append(f'<p class="{cls}"><span class="lab">{r["kind"]}:</span>'
+            o.append(f'<p{_mark(wr and f"{wr}.rel.{ri}.body", cls)}>'
+                     f'<span class="lab">{r["kind"]}:</span>'
                      f'<span class="gap"></span> {inl(r["body"])}</p>')
         o.append('</div>')
     o.append('</div></div>')
@@ -284,17 +289,18 @@ def render_question(item, style=''):
 
 
 def render_answer(a, brk=False):
+    ar = ref_of(a)
     o = [f'<div class="a{" brk" if brk else ""}">']
-    o.append(f'<p><span class="no">{a["no"]}.</span>'
+    o.append(f'<p{_mark(ar and ar + ".answer")}><span class="no">{a["no"]}.</span>'
              f'<span class="ans"> {inl(a["answer"])}</span></p>')
     for k, e in enumerate(a['trans']):
         lab = '<span class="lab tr">해석 |</span> ' if k == 0 else ''
         cls = 'expl tr lead' if k == 0 else 'expl tr'
-        o.append(f'<p class="{cls}">{lab}{inl(e)}</p>')
+        o.append(f'<p{_mark(ar and f"{ar}.trans.{k}", cls)}>{lab}{inl(e)}</p>')
     for k, e in enumerate(a['expl']):
         lab = '<span class="lab">해설 |</span> ' if k == 0 else ''
         cls = 'expl lead' if k == 0 else 'expl'
-        o.append(f'<p class="{cls}">{lab}{inl(e)}</p>')
+        o.append(f'<p{_mark(ar and f"{ar}.expl.{k}", cls)}>{lab}{inl(e)}</p>')
     o.append(f'<span class="mk">§A{a["no"]}§</span></div>')
     return ''.join(o)
 
