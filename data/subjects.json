@@ -194,6 +194,11 @@
         "name": "비블리오 조판",
         "prefix": "비블리오",
         "engine_id": "vivlio_book"
+      },
+      {
+        "name": "중등 내신 정규 교재",
+        "prefix": "중등",
+        "engine_id": "middle_book"
       }
     ]
   },

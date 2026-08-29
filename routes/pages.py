@@ -131,11 +131,16 @@ def typeset_page(material_id):
     if material_id == "vivlio_book":
         from engines.vivlio_book.engine import books as _viv_books
         viv_books = _viv_books()
+    middle_books = []
+    if material_id == "middle_book":
+        from engines.middle_book.engine import catalog as _mb_catalog
+        middle_books = _mb_catalog()
 
     return render_template(tmpl, engine=engine, schools=schools,
                            active_nav=nav, exam_periods=exam_periods,
                            current_period=current_period, slim_cfg=slim_cfg,
-                           books=viv_books, max_slots=8)
+                           books=viv_books, max_slots=8,
+                           middle_books=middle_books)
 
 
 # ── 외부 공개 소개 페이지 — Cloudflare Pages로 이전 (2026-08-13) ─────────

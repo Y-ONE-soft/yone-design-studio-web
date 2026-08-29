@@ -39,6 +39,7 @@ from engines.passage_remove.engine import PassageRemoveEngine
 from engines.convert_to_vertical.engine import ConvertToVerticalEngine
 from engines.workbook_select.engine import WorkbookSelectEngine
 from engines.vivlio_book.engine import VivlioBookEngine
+from engines.middle_book.engine import MiddleBookEngine
 
 # ── 새 교재 추가 시 여기에 한 줄만 추가 ──────────────────────────────────
 _ENGINE_LIST = [
@@ -82,6 +83,7 @@ _ENGINE_LIST = [
     ConvertToVerticalEngine(),
     WorkbookSelectEngine(),
     VivlioBookEngine(),
+    MiddleBookEngine(),
 ]
 # ────────────────────────────────────────────────────────────────────────
 
