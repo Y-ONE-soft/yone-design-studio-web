@@ -390,6 +390,41 @@ def _close_if_open(paths, log):
             log("[정리] 닫기 실패(계속): %s — %s" % (n, e))
 
 
+def _fix_thread_order(indd, vol, log, run_dir):
+    """세로중간본의 스레드 순서를 지면 읽기 순서에 맞춘다.
+
+    기출 정본 중에 스토리 연결 순서가 지면 순서와 다른 것이 있다. 세로에서
+    이미 지문이 문장 중간에 끊겨 보이고, 가로 변환의 재스레드가 여기에
+    엉뚱한 문단을 이어붙여 손실로 잡힌다 (2026-08-29 실측: 23년 11월 37번).
+    글자수·프레임수·페이지수가 유지되고 오버셋이 늘지 않을 때만 저장한다.
+    """
+    src = os.path.join(_ROOT, "engines", "mockexam_sero_merge", "jsx",
+                       "fix_thread_order.jsx")
+    jlog = os.path.join(run_dir, "threadorder_%d.log" % vol["idx"])
+    dst = os.path.join(run_dir, "threadorder_%d.jsx" % vol["idx"])
+    code = (open(src, encoding="utf-8").read()
+            .replace("__LOG__", jlog)
+            .replace("__SRC__", indd))
+    with open(dst, "w", encoding="utf-8") as f:
+        f.write(code)
+    try:
+        os.remove(jlog)
+    except OSError:
+        pass
+    run_jsx(dst, log, poll_log_path=jlog, timeout=_TIMEOUT,
+            completion_marker="===== 스레드 순서 점검 완료 =====",
+            stall_limit=_STALL)
+    fixed = 0
+    if os.path.exists(jlog):
+        for line in open(jlog, encoding="utf-8", errors="ignore"):
+            line = line.rstrip()
+            if line:
+                log("   " + line)
+            if line.startswith("저장 완료"):
+                fixed = int(re.search(r"(\d+)개 교정", line).group(1))
+    return fixed
+
+
 def stage_sero_merge(st, log, run_dir):
     st.setdefault("volumes", _volumes(st))
     override = st.get("sero_new", {}).get("by_code", {})
@@ -426,6 +461,9 @@ def stage_sero_merge(st, log, run_dir):
         vol["sero_job"] = jd
         vol["sero_indd"] = out
         log("[세로결합] 완료: %s" % out)
+        # 정본에서 딸려온 스레드 순서 어긋남은 여기서 잡는다. 가로 변환까지
+        # 넘어가면 문단이 엉겨 손실로 잡힌다 (_fix_thread_order 주석 참조).
+        vol["thread_fix"] = _fix_thread_order(out, vol, log, run_dir)
         _save(st, run_dir)
     return st
 
