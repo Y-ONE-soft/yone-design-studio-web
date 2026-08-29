@@ -334,9 +334,8 @@
     fetch('/api/book-studio/overrides?b=' + encodeURIComponent(key))
       .then(function (r) { return r.json(); })
       .then(function (d) { $('bs-ovr').value = d.css || ''; });
-    fetch('/api/book-studio/refs?b=' + encodeURIComponent(key))
-      .then(function (r) { return r.json(); })
-      .then(function (d) { refs = d || {}; });
+    // 자리표(vrefN ↔ 원본 경로)는 **렌더가 끝난 뒤** 읽는다 — 번호는 렌더할
+    // 때마다 새로 매겨지므로, 미리 읽으면 지난 렌더의 표로 엉뚱한 자리를 고친다.
   }
 
   function rerender(msg) {
@@ -347,7 +346,11 @@
     }).then(function (r) { return r.json(); })
       .then(function (d) {
         if (d.error) { status('✗ ' + d.error); return false; }
-        showView(); return true;
+        // 자리표(vrefN ↔ 원본 경로)는 **렌더가 끝난 뒤** 읽는다 — 번호는 렌더할
+        // 때마다 새로 매겨지므로, 미리 읽으면 지난 표로 엉뚱한 자리를 고친다.
+        return fetch('/api/book-studio/refs?b=' + encodeURIComponent(key))
+          .then(function (r2) { return r2.json(); })
+          .then(function (t) { refs = t || {}; showView(); return true; });
       });
   }
 
