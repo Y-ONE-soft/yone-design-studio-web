@@ -1328,6 +1328,174 @@ def _add_step3_choice_numbers(paras):
 _RE_STEP3_ITEM_NUM = re.compile(r'^\s*(\d{1,3})\s*$')
 
 
+# ── W83: 원고 워크시트 잔재 + 줄바꿈 쪼개짐 정규화 ─────────────────────────
+# 부교재 Step3 원고(수능만만 09강 실증)는 편집용 워크시트라 완제품이 자기
+# 스타일로 다시 만드는 부속물이 섞여 있고, PDF/HWP 변환 흔적으로 한 문단이
+# 줄 단위로 쪼개져 있다. 형식(문구 화이트리스트)이 아니라 구조로 가른다.
+_RE_S3_SENT_END = re.compile(r'[.!?:;”"’\')\]】」』]\s*$')
+# 새 구조 단위의 머리 — 여기서 시작하는 줄은 앞 줄의 이어짐이 아니다
+_RE_S3_UNIT_HEAD = re.compile(
+    r'^\s*(?:\d{1,3}\s*[.)]'          # 문항 번호
+    r'|[①-⑳⓪ⓐ-ⓩⒶ-Ⓩ㉠-㉭]'          # 선지/보기 마커
+    r'|\(\s*[A-Ea-e]\s*\)'            # (A)(B)(C) 라벨
+    r'|[※◆▶●■□▷▸☞]|<|\[|【)')
+_RE_S3_RIGHTS_NOTICE = re.compile(
+    r'(?:저작권|무단\s*(?:배포|전재|복제|전송|도용)|재판매)')
+# 발문 각주 참조 — 문항 번호와 같은 수가 발문 끝에 '155)' 로 남는다
+_RE_S3_ITEM_HEAD = re.compile(r'^\s*(\d{1,3})\s*\.\s')
+_RE_S3_QINTRO = re.compile(r'다음\s*글을\s*읽고\s*물음에')
+_RE_S3_ANY_MARKER = re.compile(r'[①-⑳⓪ⓐ-ⓩⒶ-Ⓩ㉠-㉭]')
+
+
+def _s3_text(p):
+    return (p.get('text', '') if isinstance(p, dict) else str(p)).strip()
+
+
+def _s3_set_text(p, text):
+    """단락 텍스트 교체 — runs(밑줄 정보)도 같은 규칙으로 맞춘다."""
+    if not isinstance(p, dict):
+        return text
+    p['text'] = text
+    return p
+
+
+def _strip_step3_worksheet_noise(paras, log=None):
+    """원고 워크시트 잔재 제거 — 권리 고지·유형 섹션 라벨·책 표제 첫 줄.
+
+    구조 판정 (문구 화이트리스트 금지 — W47/W78 관행):
+      · 권리 고지 : 저작권/무단 배포 문구가 든 줄은 어느 위치에서도 본문이
+                    아니다 (원고 페이지마다 반복되는 워터마크 줄).
+      · 유형 라벨 : 짧고 종결부호 없는 한 줄인데 **바로 다음 실질 줄이 문항
+                    번호 발문 또는 '다음 글을 읽고 물음에…' 도입문**이면
+                    문제 묶음의 유형 표기다 ('문법', '빈칸 추론', '서술형').
+      · 책 표제   : 문서 **첫** 실질 줄이 종결부호도 물음표도 없는 표제면
+                    교재 헤더 ('High School … 150제 PART 01 09 관계사 Made by').
+    """
+    n = len(paras)
+
+    def _next_real(i):
+        j = i + 1
+        while j < n and not _s3_text(paras[j]):
+            j += 1
+        return _s3_text(paras[j]) if j < n else ""
+
+    first_real = next((i for i in range(n) if _s3_text(paras[i])), None)
+    drop = set()
+    prev_kept = None                          # 직전에 남긴 실질 줄
+    for i in range(n):
+        t = _s3_text(paras[i])
+        if not t:
+            continue
+        if _RE_S3_RIGHTS_NOTICE.search(t) and not _RE_S3_ITEM_HEAD.match(t):
+            drop.add(i)
+            continue
+        if _RE_S3_SENT_END.search(t) or _RE_S3_UNIT_HEAD.match(t):
+            prev_kept = t
+            continue
+        nxt = _next_real(i)
+        anchored = bool(_RE_S3_ITEM_HEAD.match(nxt)
+                        or _RE_S3_QINTRO.search(nxt))
+        # 라벨은 앞 문단의 이어짐이 아니다 — 직전에 남은 줄이 끝맺어야 하고
+        # (안 그러면 쪼개진 지문 꼬리를 라벨로 오인), 선지 마커도 없다
+        standalone = (prev_kept is None
+                      or bool(_RE_S3_SENT_END.search(prev_kept)))
+        markerless = not _RE_S3_ANY_MARKER.search(t)
+        if len(t) <= 30 and anchored and standalone and markerless:
+            drop.add(i)                       # 유형 섹션 라벨
+        elif i == first_real and len(t) <= 80 and "?" not in t:
+            drop.add(i)                       # 책 표제 첫 줄
+        else:
+            prev_kept = t
+    if drop and callable(log):
+        log(f"[파서] step3 원고 잔재 제거: {len(drop)}줄 "
+            f"(권리 고지/유형 라벨/책 표제)")
+    return [p for k, p in enumerate(paras) if k not in drop]
+
+
+def _join_step3_split_paragraphs(paras, log=None):
+    """줄 단위로 쪼개진 한 문단을 되붙인다.
+
+    원고가 PDF/HWP 변환본이면 한 문단이 시각 줄마다 별개 단락으로 끊겨 있다.
+    끊긴 자리는 구조로 알아본다 — 앞줄이 **종결부호 없이** 끝나고, 뒷줄이
+    새 구조 단위(문항 번호/선지 마커/괄호 라벨)로 시작하지 않으며, 둘 사이에
+    빈 단락(문단 경계)이 없으면 한 문단이다.
+
+    이걸 안 붙이면 ①발문이 두 조각 나 조판 번호가 두 번 붙고(‘103 …필요시
+    변 / 104 형하여 적으시오’), ②지문이 중간에서 끊겨 보이며, ③앞 조각이
+    발문으로 안 잡혀 문항 수가 원고보다 모자란다 (수능만만 09강 실증:
+    157문항 → 번호 153개, 그중 11개가 뒷조각).
+    """
+    out = []
+    joined = 0
+    last_idx = None
+    for i, p in enumerate(paras):
+        t = _s3_text(p)
+        if not t:
+            out.append(p)
+            last_idx = None                   # 빈 단락 = 문단 경계
+            continue
+        if out and last_idx is not None:
+            prev = out[-1]
+            pt = _s3_text(prev)
+            if (pt and not _RE_S3_SENT_END.search(pt)
+                    and not _RE_S3_UNIT_HEAD.match(t)):
+                merged = pt + " " + t
+                _s3_set_text(prev, merged)
+                if isinstance(prev, dict) and isinstance(p, dict):
+                    pr, cr = prev.get('runs'), p.get('runs')
+                    if isinstance(pr, list) and isinstance(cr, list):
+                        prev['runs'] = pr + [{"t": " ", "ul": False}] + cr
+                joined += 1
+                continue
+        out.append(p)
+        last_idx = i
+    if joined and callable(log):
+        log(f"[파서] step3 쪼개진 단락 되붙임: {joined}건")
+    return out
+
+
+def _strip_step3_footnote_refs(paras, log=None):
+    """발문 끝의 각주 참조 번호 제거 ('…적절한 것은?155)').
+
+    문항 번호로 시작하는 줄에서, **줄 머리 번호와 같은 수**가 끝에 'N)' 로
+    붙어 있을 때만 벗긴다 (꼬리 태그 '[045]'는 그대로 둔다) — 같은 수라는
+    조건이 본문 괄호 번호와 각주 참조를 갈라준다.
+    """
+    hit = 0
+    for p in paras:
+        t = _s3_text(p)
+        m = _RE_S3_ITEM_HEAD.match(t)
+        if not m:
+            continue
+        num = m.group(1)
+        new = re.sub(r'(?<=[.?!])\s*' + num + r'\)(?=\s*(?:\[[^\]]*\])?\s*$)',
+                     '', t)
+        if new != t:
+            _s3_set_text(p, new)
+            if isinstance(p, dict) and isinstance(p.get('runs'), list):
+                tail = num + ')'
+                for r in reversed(p['runs']):
+                    if isinstance(r.get('t'), str) and tail in r['t']:
+                        r['t'] = r['t'].replace(tail, '', 1)
+                        break
+            hit += 1
+    if hit and callable(log):
+        log(f"[파서] step3 발문 각주 번호 제거: {hit}건")
+    return paras
+
+
+def _normalize_step3_manuscript(paras, log=None):
+    """Step3 원고 정규화 — 잔재 제거 → 쪼개짐 되붙임 → 각주 번호 제거.
+
+    순서가 중요하다: 잔재를 먼저 걷어내야 유형 라벨이 뒤 발문에 들러붙지
+    않고, 되붙인 뒤라야 발문의 머리 번호와 꼬리 각주 번호가 한 줄에서 만난다.
+    """
+    paras = _strip_step3_worksheet_noise(paras, log)
+    paras = _join_step3_split_paragraphs(paras, log)
+    paras = _strip_step3_footnote_refs(paras, log)
+    return paras
+
+
 def _strip_step3_item_numbers(paras):
     def _txt(p):
         return (p.get('text', '') if isinstance(p, dict) else str(p)).strip()
@@ -2200,6 +2368,7 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
                                             strip_inline_answers=True,
                                             image_dir=image_dir)
         paras = _strip_step3_decorative_images(paras, str(file_key), log)  # W77
+        paras = _normalize_step3_manuscript(paras, log)                   # W83
         # 보존 가드 스냅샷 — 책 헤더(변형문제/수능특강)는 의도적 제거이므로
         # 스냅샷에서도 제외해 허위 "내용 손실" 경고를 막는다(헤더 외 손실은 그대로 감지).
         paras = _strip_step3_item_numbers(paras)        # W75
@@ -2351,6 +2520,8 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
             # 선두/꼬리 표제·워터마크 제거 (W17 c16/c11 — 스냅샷 전에)
             paras = _strip_step3_leading_junk(paras)
             paras = _strip_step3_trailing_junk(paras)
+            # W83: 원고 워크시트 잔재 + 줄 단위 쪼개짐 + 발문 각주 번호
+            paras = _normalize_step3_manuscript(paras, log)
             # W75: 원고 문항 번호 줄 제거 — 스냅샷 **앞**에서 (조판이
             # 번호를 매기므로 의도된 제거. 책 헤더 제거와 같은 취급)
             paras = _strip_step3_item_numbers(paras)
