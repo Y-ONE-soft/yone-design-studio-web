@@ -1498,10 +1498,16 @@ def _normalize_step3_manuscript(paras, log=None):
     순서가 중요하다: 잔재를 먼저 걷어내야 유형 라벨이 뒤 발문에 들러붙지
     않고, 되붙인 뒤라야 발문의 머리 번호와 꼬리 각주 번호가 한 줄에서 만난다.
     """
-    paras = _strip_step3_rights_and_title(paras, log)
-    paras = _join_step3_split_paragraphs(paras, log)
-    paras = _strip_step3_type_labels(paras, log)
-    paras = _strip_step3_footnote_refs(paras, log)
+    import os as _os
+    _on = _os.environ.get("W83_PASSES", "rtjlf")
+    if "r" in _on:
+        paras = _strip_step3_rights_and_title(paras, log)
+    if "j" in _on:
+        paras = _join_step3_split_paragraphs(paras, log)
+    if "l" in _on:
+        paras = _strip_step3_type_labels(paras, log)
+    if "f" in _on:
+        paras = _strip_step3_footnote_refs(paras, log)
     return paras
 
 
