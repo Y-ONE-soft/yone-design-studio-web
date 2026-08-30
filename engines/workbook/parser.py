@@ -1351,6 +1351,13 @@ _RE_S3_ANY_MARKER = re.compile(r'[①-⑳⓪ⓐ-ⓩⒶ-Ⓩ㉠-㉭]')
 # 문장 한가운데서 끊긴 줄 — 낱말/숫자/쉼표로 끝난다. 밑줄·화살표·마커로
 # 끝나는 줄(기입란·표 셀)은 '끊김'이 아니라 그 자체로 완결된 줄이다.
 _RE_S3_MID_SENTENCE = re.compile(r'[A-Za-z0-9가-힣,，]\s*$')
+# 끊긴 자리의 양쪽 — 앞줄이 영문/한글 어느 쪽으로 끝났는지와 뒷줄이 같은 말로
+# 이어지는지를 함께 본다. 선지 마지막 항목처럼 낱말로 끝나는 줄 다음에 **새
+# 문장**(대문자/한글 새 문장)이 오는 경우를 이어붙이지 않기 위한 조건이다.
+_RE_S3_PREV_EN = re.compile(r'[A-Za-z0-9,，]\s*$')
+_RE_S3_PREV_KO = re.compile(r'[가-힣,，]\s*$')
+_RE_S3_CONT_EN = re.compile(r'^[\'"“”‘’(\[]*[a-z]')
+_RE_S3_CONT_KO = re.compile(r'^[\'"“”‘’(\[]*[가-힣]')
 # 이어붙이면 안 되는 줄 — 정답/해설 섹션 표제와 책 헤더. 이 줄들은 뒤 단계가
 # 앵커로 삼아 통째로 잘라내므로, 붙어 버리면 정답이 그대로 인쇄된다.
 _RE_S3_NO_JOIN = re.compile(
@@ -1461,7 +1468,11 @@ def _join_step3_split_paragraphs(paras, log=None):
         if out and last_idx is not None:
             prev = out[-1]
             pt = _s3_text(prev)
-            if (pt and _RE_S3_MID_SENTENCE.search(pt)
+            cont = ((_RE_S3_PREV_EN.search(pt or "")
+                     and _RE_S3_CONT_EN.match(t))
+                    or (_RE_S3_PREV_KO.search(pt or "")
+                        and _RE_S3_CONT_KO.match(t)))
+            if (pt and cont
                     and not _RE_S3_UNIT_HEAD.match(t)
                     and not _RE_S3_NO_JOIN.search(pt)
                     and not _RE_S3_NO_JOIN.search(t)):
