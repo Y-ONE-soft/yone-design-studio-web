@@ -259,6 +259,65 @@ def sero_new_plan(st, log):
     return plan
 
 
+def _warn_glued_words(jd, log):
+    """원고에서 공백이 빠져 붙어버린 단어를 경고한다 (조판은 막지 않는다).
+
+    2026-08-29 실측: `Step1 B1 본문정리.hwpx` 에 `motorcycleaccidents`,
+    `socioeconomiclevel`, `relationship.The` 가 있었다. 같은 지문이 20번 넘게
+    반복되는 교재라 원고 한 곳의 오타가 지면 곳곳에 퍼진다. 조판 결과만 봐서는
+    늦으니 파싱 직후에 알린다.
+
+    붙은 단어 판정에 사전을 쓰지 않는다 — **원고 자체를 사전으로** 삼아,
+    긴 단어를 쪼개 양쪽이 모두 원고에 따로 등장하면 붙은 것으로 본다.
+    (`oversimplification` 처럼 정상인 긴 단어는 그런 분해가 없어 걸러진다.)
+    """
+    path = os.path.join(jd, "content.json")
+    if not os.path.exists(path):
+        return
+    try:
+        data = json.load(open(path, encoding="utf-8"))
+    except (ValueError, OSError):
+        return
+
+    texts = []
+
+    def walk(o):
+        if isinstance(o, dict):
+            for v in o.values():
+                walk(v)
+        elif isinstance(o, list):
+            for v in o:
+                walk(v)
+        elif isinstance(o, str) and o:
+            texts.append(o)
+
+    walk(data)
+    blob = "\n".join(texts)
+    vocab = set(w.lower() for w in re.findall(r"[A-Za-z]{3,}", blob))
+
+    # 1) 마침표 뒤 공백 없이 대문자 — "relationship.The"
+    dot = {}
+    for m in re.findall(r"[A-Za-z]+\.[A-Z][a-z]{2,}", blob):
+        dot[m] = dot.get(m, 0) + 1
+
+    # 2) 붙어버린 긴 영단어 — 원고를 사전 삼아 분해되는 것만
+    glued = {}
+    for w in set(re.findall(r"[A-Za-z]{14,}", blob)):
+        lw = w.lower()
+        for i in range(4, len(lw) - 3):
+            if lw[:i] in vocab and lw[i:] in vocab:
+                glued[w] = blob.count(w)
+                break
+
+    if not dot and not glued:
+        return
+    log("[원고경고] 공백이 빠져 붙은 표현이 있습니다 — 원고 수정이 근본 해결입니다")
+    for k in sorted(dot, key=lambda x: -dot[x])[:12]:
+        log("           · %s (%d회)" % (k, dot[k]))
+    for k in sorted(glued, key=lambda x: -glued[x])[:12]:
+        log("           · %s (%d회)" % (k, glued[k]))
+
+
 def stage_sero_new(st, log, run_dir):
     st.setdefault("sero_new", {"jobs": [], "by_code": {}})
     plan = sero_new_plan(st, log)
@@ -290,6 +349,8 @@ def stage_sero_new(st, log, run_dir):
         })
         eng = WorkbookSeroEngine()
         jp = eng.parse({"manuscripts": files}, jd, log)
+        # 원고 오타는 조판 결과만 봐서는 늦다 (_warn_glued_words 주석 참조).
+        _warn_glued_words(jd, log)
         jsx = eng.prepare_jsx(jp, jd, log)
         stt = json.load(open(os.path.join(jd, ".settings.json"), encoding="utf-8"))
         run_jsx(jsx, log, poll_log_path=os.path.join(jd, "조판_로그.txt"),
