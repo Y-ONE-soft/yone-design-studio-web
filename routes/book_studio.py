@@ -113,6 +113,15 @@ def studio():
                            active_nav="작업대")
 
 
+@bp.route("/book-studio/_spike")
+def spike():
+    """CoreViewer 스파이크 — 임시. 새 껍데기가 서면 지운다."""
+    bs = _books()
+    b = bs[0] if bs else None
+    doc = "/book-studio/doc/%s/index.html" % b["bid"] if b else ""
+    return render_template("_spike_core.html", doc=doc)
+
+
 # ── API ─────────────────────────────────────────────────────────
 @bp.route("/api/book-studio/knobs")
 def api_knobs():
@@ -332,8 +341,8 @@ def api_overrides():
 
 
 # ── 미리보기용 정적 파일 ─────────────────────────────────────────
-CORE = os.path.join(REPO, "core", "render_vivlio", "node_modules",
-                    "@vivliostyle", "core", "lib")
+# 브라우저용으로 한 번 묶어 둔 조판 엔진 (`webcore/` — `npm` 없이도 이 파일만 있으면 된다)
+CORE = os.path.join(REPO, "core", "render_vivlio", "webcore", "dist")
 
 
 @bp.route("/book-studio/core/<path:sub>")

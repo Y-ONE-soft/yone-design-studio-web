@@ -9,11 +9,11 @@
   <button id="z-">축소</button><button id="z+">확대</button>
   <button id="sp">펼침</button><button id="tint">색 바꿔보기</button></div>
 <div id="canvas"></div>
-<script src="/book-studio/core/vivliostyle.js"></script>
+<script src="/book-studio/core/vivlio-core.js"></script>
 <script>
 var st = document.getElementById('st');
 try {
-  var V = window.Vivliostyle || window.vivliostyle;
+  var V = window.VivlioCore;
   st.textContent = 'core 로드됨: ' + Object.keys(V || {}).slice(0, 6).join(',');
   var viewer = new V.CoreViewer(
     { viewportElement: document.getElementById('canvas'),
