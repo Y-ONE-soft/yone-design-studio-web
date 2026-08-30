@@ -206,6 +206,18 @@ class WorkbookV2Engine(BaseEngine):
         if _n_img:
             log(f"[v2 파서] 원고 그림 {_n_img}개 추출 → {image_dir}")
 
+        # W82: 스텝1/2 어디에도 안 실린 루트 원고를 구조로 재판정 → Step3 구제.
+        # 부교재 Step3 원고는 책 제목으로 이름이 붙어(‘수능만만 기본문법 PART1
+        # 09 관계사.docx’ — job 4b8b05f8) 파일명 라우터가 못 잡고, 스텝1/2
+        # 매칭에도 안 걸려 Step3가 통째로 0유닛이 됐다. 파싱 **결과**를 기준
+        # 으로 미소비 파일을 가려 '문항 모음' 구조면 Step3로 옮기고 재파싱한다.
+        rescued = _routing.rescue_unrouted_step3(manuscript_dir, data, log)
+        if rescued:
+            data = parse_manuscript_folder(manuscript_dir, cfg, grade, year,
+                                           month, log, image_dir=image_dir)
+            log(f"[v2 파서] Step3 구제 후 재파싱: {len(rescued)}개 "
+                f"({', '.join(rescued)})")
+
         # 배치 A (W33): Step3 '입력 파일 전수 ↔ 라우팅 결과' 쌍방 대조 —
         # 어느 문항에도 실리지 않은 원고가 남으면 [오류] 조판 중단 (침묵 금지)
         mock = cfg.get("mockexam") or {}

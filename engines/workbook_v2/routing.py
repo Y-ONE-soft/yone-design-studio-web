@@ -23,6 +23,7 @@ v1(engines/workbook, engines/workbook_sero 등) 무수정 — 전부 v2 래퍼/�
 import json
 import os
 import re
+import shutil
 import unicodedata
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
@@ -172,6 +173,132 @@ def stage_step3_name(step3_dir, fname_nfc, log):
         return fname_nfc
     log(f"[라우팅] Step3 규격명 스테이징: {fname_nfc} → {canon}")
     return canon
+
+
+# ── 구조 판정: 파일명이 아니라 원고 '모양'으로 Step3를 알아본다 (W82) ────────
+# 부교재 Step3 원고는 책 제목으로 이름이 붙는다 ('수능만만 기본문법 PART1 09
+# 관계사.docx' — 실증 job 4b8b05f8). 스텝3 토큰도 'N번'도 '변형문제'도 없어
+# route_step3가 False → 루트에 남고 → v1 파서의 스텝1/2 파일명 매칭에도 안
+# 걸려 **Step3 전체가 0유닛으로 침묵 소실**했다. 파일명 화이트리스트를 하나 더
+# 늘리는 대신, '문항 모음'이라는 구조(번호 붙은 한국어 발문 + ①선지 줄)로
+# 판정한다.
+_RE_PROMPT_LINE = re.compile(r"^\s*\d{1,3}\s*[.)]")
+_RE_HANGUL = re.compile(r"[가-힣]")
+_RE_CHOICE_HEAD = re.compile(r"^\s*①")
+
+# 실측 임계 (jobs 코퍼스 전수: Step3 원고 471개 + 루트 업로드 1864개).
+# 발문 5개 & ①선지 5줄 동시 충족은 스텝1/2 원고에서 한 건도 나오지 않는다
+# ('Step1 A2 본문OX'가 발문 15개까지 가지만 ①선지는 3줄, 'Step1 B2 내용종합'은
+#  ①선지 53줄이지만 발문 0개 — 두 조건의 교집합이 갈라준다).
+STEP3_MIN_PROMPTS = 5
+STEP3_MIN_CHOICES = 5
+
+
+def step3_pool_shape(texts):
+    """원고 단락 텍스트 목록 → (번호 발문 줄 수, ①로 시작하는 선지 줄 수)."""
+    prompts = 0
+    choices = 0
+    for t in texts:
+        t = _nfc(t).strip()
+        if not t:
+            continue
+        if _RE_PROMPT_LINE.match(t) and _RE_HANGUL.search(t) and "?" in t:
+            prompts += 1
+        if _RE_CHOICE_HEAD.match(t):
+            choices += 1
+    return prompts, choices
+
+
+def looks_like_step3_pool(texts):
+    """실전/변형문제 '문항 모음'인가 — 파일명 무관 구조 판정."""
+    prompts, choices = step3_pool_shape(texts)
+    ok = prompts >= STEP3_MIN_PROMPTS and choices >= STEP3_MIN_CHOICES
+    return ok, prompts, choices
+
+
+def _manuscript_texts(path):
+    """원고 파일 → 단락 텍스트 목록 (실패하면 None)."""
+    try:
+        from engines.workbook.parser import (_docx_extract_paragraphs,
+                                             _hwp_extract_paragraphs)
+        if path.lower().endswith(".docx"):
+            paras = _docx_extract_paragraphs(path, False)
+        else:
+            paras = _hwp_extract_paragraphs(path, False)
+    except Exception:                                          # noqa: BLE001
+        return None
+    out = []
+    for para in paras or []:
+        t = para.get("text", "") if isinstance(para, dict) else str(para)
+        t = _nfc(t).strip()
+        if t:
+            out.append(t)
+    return out
+
+
+def _family_stem(fname_nfc):
+    """답지/괄호 주석을 벗긴 파일 계열 키 ('… 빈칸어휘 해설지' ≡ '… 빈칸어휘')."""
+    base = os.path.splitext(_nfc(fname_nfc))[0]
+    base = re.sub(r"\([^)]*\)", " ", base)
+    base = RE_ANSWER_TOKEN.sub(" ", base)
+    return _RE_SEP.sub("", base.lower())
+
+
+def rescue_unrouted_step3(manuscript_dir, data, log):
+    """스텝1/2 어디에도 안 실린 루트 원고를 구조로 재판정 → Step3 구제.
+
+    파싱 **결과**(content.json의 스텝별 filename)를 기준으로 미소비 파일을
+    가려내므로, '어느 스텝이 이 파일을 가져갈까'를 예측하지 않는다.
+    미소비 파일은 전부 로그로 보고한다 (침묵 금지). 구제한 파일 이름 목록을
+    돌려주며, 비어 있지 않으면 호출부가 재파싱한다.
+    """
+    rescued = []
+    if not manuscript_dir or not os.path.isdir(manuscript_dir):
+        return rescued
+    consumed = set()
+    for step in ((data or {}).get("steps") or {}).values():
+        if isinstance(step, dict) and step.get("filename"):
+            consumed.add(_nfc(os.path.basename(step["filename"])))
+    families = {_family_stem(f) for f in consumed}
+
+    step3_dir = os.path.join(manuscript_dir, "Step3")
+    for fname_raw in sorted(os.listdir(manuscript_dir)):
+        fname = _nfc(fname_raw)
+        if fname.startswith(".") or fname in consumed:
+            continue
+        if os.path.splitext(fname)[1].lower() not in MS_EXTS:
+            continue
+        src = os.path.join(manuscript_dir, fname_raw)
+        if not os.path.isfile(src):
+            continue
+        if RE_ANSWER_TOKEN.search(fname):
+            continue                       # 답지류 예비본 — 의도된 미사용
+        if _family_stem(fname) in families:
+            log(f"[라우팅] 미사용 원고(같은 계열의 다른 본이 실림): {fname}")
+            continue
+        texts = _manuscript_texts(src)
+        if texts is None:
+            log(f"[라우팅] ⚠️ 미소비 원고 — 열지 못했습니다: {fname}")
+            continue
+        ok, prompts, choices = looks_like_step3_pool(texts)
+        if not ok:
+            log(f"[라우팅] ⚠️ 미소비 원고 (어느 스텝에도 실리지 않음): "
+                f"{fname} — Step3 문항 모음 구조 아님 "
+                f"(발문 {prompts} / 선지 {choices})")
+            continue
+        os.makedirs(step3_dir, exist_ok=True)
+        dest_name = stage_step3_name(step3_dir, fname, log)
+        dest = os.path.join(step3_dir, dest_name)
+        if os.path.exists(dest):
+            log(f"[라우팅] ⚠️ Step3 구제 대상이 이미 있습니다 — 건너뜀: "
+                f"{fname}")
+            continue
+        shutil.copy2(src, dest)
+        rescued.append(dest_name)
+        log(f"[라우팅] Step3 구조 구제: '{fname}' → Step3/{dest_name} "
+            f"(번호 발문 {prompts}개 / ①선지 {choices}줄 — 파일명에 스텝3 "
+            f"토큰이 없어 루트에 남아 있던 원고)")
+    return rescued
 
 
 def _is_intended_exclusion(fname_nfc):

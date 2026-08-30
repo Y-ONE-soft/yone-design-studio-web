@@ -19,11 +19,16 @@
 남을 수 있다. 프로세스를 새로 띄우면 그 오염이 원천적으로 없다. 게다가 Flask 가
 뜬 파이썬과 조판 파이썬이 다를 수 있다(표지 화면이 이미 그렇다).
 
-## 미리보기는 **뷰어가 직접 조판**한다
+## 화면이 우리 것이다 — 뷰어 앱을 벗었다
 
-PDF 를 굽지 않는다(20~50초). `build/index.html` 을 Vivliostyle 뷰어에 물리면
-브라우저가 그 자리에서 조판한다 — 다시 그리는 데 **0.4초**다.
-뷰어 번들은 `core/render_vivlio/node_modules/@vivliostyle/viewer/lib` 에 이미 있다.
+예전에는 Vivliostyle **뷰어 앱**을 iframe 으로 물었다. 그러면 그 앱 툴바가 화면
+위쪽을 차지하는데 우리가 못 바꾼다. 이제 `@vivliostyle/core` 의 CoreViewer 를
+**우리 div**(`#ide-stage`)에 물린다(`core/render_vivlio/webcore/`). 그래서 도구줄·
+툴·팔레트가 전부 우리 것이고, 지면이 **같은 문서 안**에 있어 클릭·편집이 iframe 을
+넘나들지 않는다. 색은 `userStyleSheet` 로 **서버 없이** 미리 볼 수 있다.
+
+PDF 는 굽지 않는다(20~50초). 서버는 `build/index.html` 만 만들고(0.4초) 조판은
+브라우저가 한다.
 
 ⚠ **미리보기 면수는 최종 조판과 다를 수 있다.** 뷰어는 렌더하는 대로 세고,
   2패스가 만드는 `pages.css` 는 지난 빌드 것이다. 면수·면 나눔이 걸린 판단은
@@ -111,15 +116,6 @@ def studio():
     key = request.args.get("b") or (bs[0]["key"] if bs else "")
     return render_template("book_studio.html", books=bs, book_key=key,
                            active_nav="작업대")
-
-
-@bp.route("/book-studio/_spike")
-def spike():
-    """CoreViewer 스파이크 — 임시. 새 껍데기가 서면 지운다."""
-    bs = _books()
-    b = bs[0] if bs else None
-    doc = "/book-studio/doc/%s/index.html" % b["bid"] if b else ""
-    return render_template("_spike_core.html", doc=doc)
 
 
 # ── API ─────────────────────────────────────────────────────────
