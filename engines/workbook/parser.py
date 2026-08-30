@@ -1483,6 +1483,7 @@ def _join_step3_split_paragraphs(paras, log=None):
                      and _RE_S3_CONT_EN.match(t))
                     or (_RE_S3_ITEM_HEAD.match(pt or "")
                         and not _RE_S3_PROMPT_END.search(pt or "")
+                        and _RE_S3_PROMPT_END.search(t)
                         and _RE_S3_PREV_KO.search(pt or "")
                         and _RE_S3_CONT_KO.match(t)))
             if (pt and cont
@@ -1541,9 +1542,21 @@ def _normalize_step3_manuscript(paras, log=None):
     않고, 되붙인 뒤라야 발문의 머리 번호와 꼬리 각주 번호가 한 줄에서 만난다.
     """
     import os as _os
-    _on = _os.environ.get("W83_PASSES", "rtjlf")
+    _on = _os.environ.get("W83_PASSES", "rjlf")
     if "r" in _on:
         paras = _strip_step3_rights_and_title(paras, log)
+    return paras
+
+
+def _normalize_step3_lines(paras, log=None):
+    """Step3 원고 2단계 — 쪼개짐 되붙임 → 유형 라벨 제거 → 각주 번호 제거.
+
+    선지 자동번호(_add_step3_choice_numbers) **뒤**에 부른다. 그 전에는
+    hwp 표형 5지선다가 마커 없는 맨 문장 다섯 줄이라, 줄 이어붙임이 선지를
+    줄줄이 하나로 붙여 버린다 (코퍼스 실측 39개 잡).
+    """
+    import os as _os
+    _on = _os.environ.get("W83_PASSES", "rjlf")
     if "j" in _on:
         paras = _join_step3_split_paragraphs(paras, log)
     if "l" in _on:
@@ -2443,6 +2456,7 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
         paras = _strip_step3_type_tags(paras)
         # 5지선다 자동번호(①②③④⑤) 텍스트화 — hwp AutoNumbering 누락 보완
         paras = _add_step3_choice_numbers(paras)
+        paras = _normalize_step3_lines(paras, log)                        # W83
         # 책 헤더("2027년 수능특강 ...") + [Gateway] 묶음 마커 제거
         # ※ _add_step3_choice_numbers의 passage_above 판정이 [Gateway]를 참조하므로
         #   반드시 그 호출 *후*에 실행해야 함
@@ -2588,6 +2602,7 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
             paras = _strip_step3_answers(paras)
             paras = _strip_step3_type_tags(paras)
             paras = _add_step3_choice_numbers(paras)
+            paras = _normalize_step3_lines(paras, log)                    # W83
             paras = _strip_step3_book_markers(paras)
             paras = _fix_step3_order_label_position(paras)
             paras = _merge_step3_ab_pairs(paras)
