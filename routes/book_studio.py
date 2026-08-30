@@ -332,6 +332,25 @@ def api_overrides():
 
 
 # ── 미리보기용 정적 파일 ─────────────────────────────────────────
+CORE = os.path.join(REPO, "core", "render_vivlio", "node_modules",
+                    "@vivliostyle", "core", "lib")
+
+
+@bp.route("/book-studio/core/<path:sub>")
+def core_js(sub):
+    """`@vivliostyle/core` — **뷰어 앱 없이** 우리 캔버스에 직접 조판하는 엔진.
+
+    지금까지는 Vivliostyle **뷰어 앱**을 iframe 으로 물고 있었다. 그러면 그 앱의
+    툴바(목차·검색·글자 크기·인쇄…)가 화면 위쪽을 차지하고, 우리가 그걸 못 바꾼다.
+    조판 프로그램을 만들려면 **화면은 우리 것**이어야 한다.
+
+    CoreViewer 는 `viewportElement` 로 **우리 div** 를 받아 거기에 지면을 그린다.
+    게다가 `documentObject`(파싱한 DOM 을 그대로) 와 `userStyleSheet`(CSS 문자열)를
+    받으므로, 색·여백을 바꿀 때 **서버를 거치지 않고** 그 자리에서 다시 앉힐 수 있다.
+    """
+    return send_from_directory(CORE, sub)
+
+
 @bp.route("/book-studio/viewer/")
 @bp.route("/book-studio/viewer/<path:sub>")
 def viewer(sub="index.html"):

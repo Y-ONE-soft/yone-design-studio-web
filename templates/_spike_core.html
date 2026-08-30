@@ -1,0 +1,37 @@
+{# CoreViewer 스파이크 — 뷰어 앱 없이 우리 div 에 조판되는지만 확인한다. #}
+<!doctype html><meta charset="utf-8"><title>core spike</title>
+<style>
+  html,body{margin:0;background:#2b2f3a;color:#eee;font:13px -apple-system,sans-serif}
+  #bar{padding:8px 12px;background:#1c2030}
+  #canvas{position:absolute;top:36px;left:0;right:0;bottom:0;overflow:auto;background:#6b6b6b}
+</style>
+<div id="bar">우리 툴바 — <span id="st">부르는 중…</span>
+  <button id="z-">축소</button><button id="z+">확대</button>
+  <button id="sp">펼침</button><button id="tint">색 바꿔보기</button></div>
+<div id="canvas"></div>
+<script src="/book-studio/core/vivliostyle.js"></script>
+<script>
+var st = document.getElementById('st');
+try {
+  var V = window.Vivliostyle || window.vivliostyle;
+  st.textContent = 'core 로드됨: ' + Object.keys(V || {}).slice(0, 6).join(',');
+  var viewer = new V.CoreViewer(
+    { viewportElement: document.getElementById('canvas'),
+      userAgentRootURL: '/book-studio/viewer/resources/' },
+    { renderAllPages: false, pageViewMode: 'singlePage', fitToScreen: true });
+  viewer.addListener('loaded', function () { st.textContent = '조판 완료 ✓'; });
+  viewer.addListener('error', function (p) {
+    st.textContent = '오류: ' + JSON.stringify(p && p.content).slice(0, 200);
+  });
+  viewer.loadDocument({ url: '{{ doc }}' });
+  document.getElementById('z-').onclick = function () { viewer.setOptions({ zoom: .5 }); };
+  document.getElementById('z+').onclick = function () { viewer.setOptions({ zoom: 1.2 }); };
+  document.getElementById('sp').onclick = function () { viewer.setOptions({ pageViewMode: 'spread' }); };
+  // 서버를 거치지 않고 그 자리에서 색을 바꿀 수 있는가 (userStyleSheet)
+  document.getElementById('tint').onclick = function () {
+    viewer.loadDocument({ url: '{{ doc }}' },
+      { userStyleSheet: [{ text: ':root{--gold:#1e88e5 !important}' }] });
+    st.textContent = '색만 바꿔 다시 앉힘';
+  };
+} catch (e) { st.textContent = '실패: ' + e; }
+</script>
