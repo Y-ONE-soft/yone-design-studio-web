@@ -1338,13 +1338,24 @@ _RE_S3_UNIT_HEAD = re.compile(
     r'^\s*(?:\d{1,3}\s*[.)]'          # 문항 번호
     r'|[①-⑳⓪ⓐ-ⓩⒶ-Ⓩ㉠-㉭]'          # 선지/보기 마커
     r'|\(\s*[A-Ea-e]\s*\)'            # (A)(B)(C) 라벨
-    r'|[※◆▶●■□▷▸☞]|<|\[|【)')
+    r'|[※◆▶●■□▷▸☞]|<|\[|【'
+    r'|[•·‧∙◦▪▫‣⁃\uf000-\uf0ff]'      # 조건 상자 글머리표(윙딩 포함)
+    r'|[*＊→⇒]'                        # 어휘 주석·화살표 줄
+    r'|다음\s*글을\s*읽고\s*물음에)')    # 묶음 도입문
 _RE_S3_RIGHTS_NOTICE = re.compile(
     r'(?:저작권|무단\s*(?:배포|전재|복제|전송|도용)|재판매)')
 # 발문 각주 참조 — 문항 번호와 같은 수가 발문 끝에 '155)' 로 남는다
 _RE_S3_ITEM_HEAD = re.compile(r'^\s*(\d{1,3})\s*\.\s')
 _RE_S3_QINTRO = re.compile(r'다음\s*글을\s*읽고\s*물음에')
 _RE_S3_ANY_MARKER = re.compile(r'[①-⑳⓪ⓐ-ⓩⒶ-Ⓩ㉠-㉭]')
+# 문장 한가운데서 끊긴 줄 — 낱말/숫자/쉼표로 끝난다. 밑줄·화살표·마커로
+# 끝나는 줄(기입란·표 셀)은 '끊김'이 아니라 그 자체로 완결된 줄이다.
+_RE_S3_MID_SENTENCE = re.compile(r'[A-Za-z0-9가-힣,，]\s*$')
+# 이어붙이면 안 되는 줄 — 정답/해설 섹션 표제와 책 헤더. 이 줄들은 뒤 단계가
+# 앵커로 삼아 통째로 잘라내므로, 붙어 버리면 정답이 그대로 인쇄된다.
+_RE_S3_NO_JOIN = re.compile(
+    r'정답\s*(?:및|과)?\s*해설|빠른\s*정답|정답지|해설지|^\s*정답\s*$'
+    r'|변형\s*문제|수능특강|전국연합|학력평가|기출문제집')
 
 
 def _s3_text(p):
@@ -1412,6 +1423,11 @@ def _strip_step3_type_labels(paras, log=None):
             continue
         if _RE_S3_ANY_MARKER.search(t):
             continue
+        # 라벨은 유형을 가리키는 이름씨 마디다 — 쉼표/마침표가 있으면 문장의
+        # 조각이고('Best regards, John Smith'), 숫자/밑줄이 있으면 원고
+        # 페이지 머리글이다('공통영어2_미래김 1과_01~02')
+        if re.search(r'[,，.。0-9_~／/]', t):
+            continue
         nxt = _next_real(i)
         if _RE_S3_ITEM_HEAD.match(nxt) or _RE_S3_QINTRO.search(nxt):
             drop.add(i)
@@ -1445,8 +1461,10 @@ def _join_step3_split_paragraphs(paras, log=None):
         if out and last_idx is not None:
             prev = out[-1]
             pt = _s3_text(prev)
-            if (pt and not _RE_S3_SENT_END.search(pt)
-                    and not _RE_S3_UNIT_HEAD.match(t)):
+            if (pt and _RE_S3_MID_SENTENCE.search(pt)
+                    and not _RE_S3_UNIT_HEAD.match(t)
+                    and not _RE_S3_NO_JOIN.search(pt)
+                    and not _RE_S3_NO_JOIN.search(t)):
                 merged = pt + " " + t
                 _s3_set_text(prev, merged)
                 if isinstance(prev, dict) and isinstance(p, dict):
