@@ -1359,17 +1359,41 @@ def _s3_set_text(p, text):
     return p
 
 
-def _strip_step3_worksheet_noise(paras, log=None):
-    """원고 워크시트 잔재 제거 — 권리 고지·유형 섹션 라벨·책 표제 첫 줄.
+def _strip_step3_rights_and_title(paras, log=None):
+    """원고 워크시트 잔재 1단계 — 권리 고지 줄 + 문서 첫 표제 줄.
 
-    구조 판정 (문구 화이트리스트 금지 — W47/W78 관행):
-      · 권리 고지 : 저작권/무단 배포 문구가 든 줄은 어느 위치에서도 본문이
-                    아니다 (원고 페이지마다 반복되는 워터마크 줄).
-      · 유형 라벨 : 짧고 종결부호 없는 한 줄인데 **바로 다음 실질 줄이 문항
-                    번호 발문 또는 '다음 글을 읽고 물음에…' 도입문**이면
-                    문제 묶음의 유형 표기다 ('문법', '빈칸 추론', '서술형').
-      · 책 표제   : 문서 **첫** 실질 줄이 종결부호도 물음표도 없는 표제면
-                    교재 헤더 ('High School … 150제 PART 01 09 관계사 Made by').
+    권리 고지(저작권/무단 배포)는 원고 페이지마다 반복되는 워터마크라 어느
+    위치에 있든 본문이 아니다. 문서 **첫** 실질 줄이 종결부호도 물음표도
+    없는 표제면 교재 헤더다 ('High School … 150제 PART 01 09 관계사 Made by').
+    """
+    drop = set()
+    first_real = next((i for i in range(len(paras)) if _s3_text(paras[i])),
+                      None)
+    for i, p in enumerate(paras):
+        t = _s3_text(p)
+        if not t:
+            continue
+        if _RE_S3_RIGHTS_NOTICE.search(t) and not _RE_S3_ITEM_HEAD.match(t):
+            drop.add(i)
+        elif (i == first_real and len(t) <= 80 and "?" not in t
+              and not _RE_S3_SENT_END.search(t)
+              and not _RE_S3_UNIT_HEAD.match(t)):
+            drop.add(i)
+    if drop and callable(log):
+        log(f"[파서] step3 권리 고지/책 표제 제거: {len(drop)}줄")
+    return [p for k, p in enumerate(paras) if k not in drop]
+
+
+def _strip_step3_type_labels(paras, log=None):
+    """원고 워크시트 잔재 2단계 — 문제 묶음의 유형 섹션 라벨.
+
+    짧고 종결부호 없는 한 줄인데 **바로 다음 실질 줄이 문항 번호 발문이거나
+    '다음 글을 읽고 물음에…' 도입문**이면 유형 표기다 ('문법', '빈칸 추론',
+    '주어진 문장 넣기', '서술형'). 완제품은 같은 자리를 자기 섹션 디자인으로
+    채우므로 인쇄되면 안 된다.
+
+    반드시 _join_step3_split_paragraphs **뒤**에 부른다 — 쪼개진 지문 꼬리
+    ('“descending dragon.” ⑤')가 붙기 전에는 짧은 독립 줄과 구분되지 않는다.
     """
     n = len(paras)
 
@@ -1379,36 +1403,20 @@ def _strip_step3_worksheet_noise(paras, log=None):
             j += 1
         return _s3_text(paras[j]) if j < n else ""
 
-    first_real = next((i for i in range(n) if _s3_text(paras[i])), None)
     drop = set()
-    prev_kept = None                          # 직전에 남긴 실질 줄
     for i in range(n):
         t = _s3_text(paras[i])
-        if not t:
-            continue
-        if _RE_S3_RIGHTS_NOTICE.search(t) and not _RE_S3_ITEM_HEAD.match(t):
-            drop.add(i)
+        if not t or len(t) > 30:
             continue
         if _RE_S3_SENT_END.search(t) or _RE_S3_UNIT_HEAD.match(t):
-            prev_kept = t
+            continue
+        if _RE_S3_ANY_MARKER.search(t):
             continue
         nxt = _next_real(i)
-        anchored = bool(_RE_S3_ITEM_HEAD.match(nxt)
-                        or _RE_S3_QINTRO.search(nxt))
-        # 라벨은 앞 문단의 이어짐이 아니다 — 직전에 남은 줄이 끝맺어야 하고
-        # (안 그러면 쪼개진 지문 꼬리를 라벨로 오인), 선지 마커도 없다
-        standalone = (prev_kept is None
-                      or bool(_RE_S3_SENT_END.search(prev_kept)))
-        markerless = not _RE_S3_ANY_MARKER.search(t)
-        if len(t) <= 30 and anchored and standalone and markerless:
-            drop.add(i)                       # 유형 섹션 라벨
-        elif i == first_real and len(t) <= 80 and "?" not in t:
-            drop.add(i)                       # 책 표제 첫 줄
-        else:
-            prev_kept = t
+        if _RE_S3_ITEM_HEAD.match(nxt) or _RE_S3_QINTRO.search(nxt):
+            drop.add(i)
     if drop and callable(log):
-        log(f"[파서] step3 원고 잔재 제거: {len(drop)}줄 "
-            f"(권리 고지/유형 라벨/책 표제)")
+        log(f"[파서] step3 유형 섹션 라벨 제거: {len(drop)}줄")
     return [p for k, p in enumerate(paras) if k not in drop]
 
 
@@ -1490,8 +1498,9 @@ def _normalize_step3_manuscript(paras, log=None):
     순서가 중요하다: 잔재를 먼저 걷어내야 유형 라벨이 뒤 발문에 들러붙지
     않고, 되붙인 뒤라야 발문의 머리 번호와 꼬리 각주 번호가 한 줄에서 만난다.
     """
-    paras = _strip_step3_worksheet_noise(paras, log)
+    paras = _strip_step3_rights_and_title(paras, log)
     paras = _join_step3_split_paragraphs(paras, log)
+    paras = _strip_step3_type_labels(paras, log)
     paras = _strip_step3_footnote_refs(paras, log)
     return paras
 
