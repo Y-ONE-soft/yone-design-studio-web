@@ -4401,6 +4401,11 @@ def question_keep_op(plan, steps=("step3",)):
             "stem_keep": {"min_lines": 2}}
 
 
+# 다열 선지 판정용 (W83) — 원 숫자 마커, 그리고 '줄 머리가 아닌' 마커 앞 공백
+_RE_CHOICE_MARK = re.compile(r"[①-⑳]")
+_RE_CHOICE_SPLIT = re.compile(r"(?<=\S)[ \u00a0]+(?=[①-⑳])")
+
+
 def normalize_choice_tabs(plan, steps=("step3",)):
     """W40 결함 1b — 다열 선지 행의 탭 구분자 정규화 (탭스톱 적용 전 필수).
 
@@ -4421,7 +4426,28 @@ def normalize_choice_tabs(plan, steps=("step3",)):
         for u in fl.get("units", []):
             for p in unit_paras(u):
                 t = p.get("t") or ""
-                if "선지" not in (p.get("s") or "") or "\t" not in t:
+                if "선지" not in (p.get("s") or ""):
+                    continue
+                if "\t" not in t:
+                    # W83 — 한 줄에 선지 여러 개인데 구분이 공백뿐인 원고
+                    # ('① (A)-(C)-(B) ② (B)-(A)-(C)'). 탭이 없으면 아래
+                    # choice_tabs_op 이 열 정렬 계약을 아예 안 만들어 번호가
+                    # 행마다 제멋대로 붙는다 — 둘째 선지부터 탭으로 가른다.
+                    if len(_RE_CHOICE_MARK.findall(t)) < 2:
+                        continue
+                    new_t = _RE_CHOICE_SPLIT.sub("\t", t)
+                    if new_t == t:
+                        continue
+                    runs = p.get("runs") or []
+                    new_runs = [dict(r, t=_RE_CHOICE_SPLIT.sub(
+                        "\t", r.get("t") or "")) for r in runs]
+                    if runs and "".join(r.get("t") or ""
+                                        for r in new_runs) != new_t:
+                        continue      # 마커가 run 경계에 걸침 — 원본 유지
+                    p["t"] = new_t
+                    if runs:
+                        p["runs"] = new_runs
+                    n += 1
                     continue
                 new_t = re.sub(r"\t[\t ]+", "\t", t)
                 if new_t == t:
