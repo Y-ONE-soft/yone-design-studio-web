@@ -93,6 +93,9 @@
           <input type="checkbox" id="bs-full"> 전권으로 보기
         </label>
         <button class="bs-btn" type="button" id="bs-fold">조절판 접기</button>
+        <button class="bs-btn" type="button" id="bs-undo" title="되돌리기 ⌘Z" disabled>↶ 되돌리기</button>
+        <button class="bs-btn" type="button" id="bs-redo" title="다시 실행 ⇧⌘Z" disabled>↷ 다시</button>
+        <span class="bs-hint" id="bs-hist" style="align-self:center"></span>
       </div>
       <div class="bs-status" id="bs-status"></div>
       <div class="bs-warn">
@@ -354,6 +357,7 @@
     }).then(function (r) { return r.json(); })
       .then(function (res) {
         if (res.error) { status('✗ ' + res.error); return; }
+        setHist(res.history);
         return rerender('').then(function (ok) {
           if (ok) status((revert ? '✓ 원고대로 되돌렸습니다' : '✓ 고쳤습니다')
                          + ' (고친 곳 ' + res.entries + '군데)');
@@ -470,6 +474,7 @@
         });
       })
       .catch(function (e) { status('✗ ' + e); });
+    history(null);
     fetch('/api/book-studio/overrides?b=' + encodeURIComponent(key))
       .then(function (r) { return r.json(); })
       .then(function (d) { $('bs-ovr').value = d.css || ''; });
@@ -509,6 +514,48 @@
           if (ok) { status('✓ ' + n + '개 반영됨 (config.json · 이전 판은 .bak)'); load(); }
         });
       });
+  });
+
+  function setHist(h) {
+    if (!h) return;
+    $('bs-undo').disabled = !(h.head > 0);
+    $('bs-redo').disabled = !(h.total > h.head);
+    $('bs-hist').textContent = h.total ? ('고친 곳 ' + h.head + '/' + h.total) : '';
+  }
+
+  function history(action) {
+    var body = { b: key };
+    if (action) body.action = action;
+    return fetch('/api/book-studio/history'
+                 + (action ? '' : '?b=' + encodeURIComponent(key)), {
+      method: action ? 'POST' : 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      body: action ? JSON.stringify(body) : undefined
+    }).then(function (r) { return r.json(); })
+      .then(function (h) {
+        if (h.error) { status('✗ ' + h.error); return null; }
+        setHist(h);
+        return h;
+      });
+  }
+
+  $('bs-undo').addEventListener('click', function () {
+    history('undo').then(function (h) {
+      if (h) rerender('').then(function (ok) { if (ok) status('↶ 되돌렸습니다'); });
+    });
+  });
+  $('bs-redo').addEventListener('click', function () {
+    history('redo').then(function (h) {
+      if (h) rerender('').then(function (ok) { if (ok) status('↷ 다시 실행했습니다'); });
+    });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (!(e.metaKey || e.ctrlKey) || (e.key || '').toLowerCase() !== 'z') return;
+    // 지면에서 글을 고치는 중이면 그쪽 되돌리기가 먼저다
+    var d = $('bs-view').contentDocument;
+    if (d && d.querySelector('.bs-editing')) return;
+    e.preventDefault();
+    (e.shiftKey ? $('bs-redo') : $('bs-undo')).click();
   });
 
   $('bs-fold').addEventListener('click', function () {

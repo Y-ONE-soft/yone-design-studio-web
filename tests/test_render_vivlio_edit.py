@@ -88,3 +88,99 @@ def test_apply_reports_missing(capsys):
 def test_exists():
     assert er.exists(DATA, "lessons.0.problems.0.stem")
     assert not er.exists(DATA, "lessons.0.problems.0.없는것")
+
+
+# ── 편집 이력 (edits.py) ─────────────────────────────────────────
+class _Cfg(object):
+    def __init__(self, d):
+        self.d = d
+
+    def path(self, n):
+        import os
+        return os.path.join(self.d, n)
+
+
+@pytest.fixture
+def book(tmp_path):
+    import json as J
+    data = {"lessons": [{"problems": [
+        {"no": 1, "stem": "원래 발문",
+         "blocks": [{"paras": ["가나다 라마바", "사아자"]}]}]}]}
+    (tmp_path / "data.json").write_text(J.dumps(data, ensure_ascii=False),
+                                        encoding="utf-8")
+    return _Cfg(str(tmp_path))
+
+
+P = "lessons.0.problems.0.blocks.0.paras"
+
+
+def _paras(cfg):
+    from core.render_vivlio import edits as ed
+    return ed.load_data(cfg)["lessons"][0]["problems"][0]["blocks"][0]["paras"]
+
+
+def test_set_and_undo_restores_original(book):
+    """되돌리면 **원고 그대로**로 돌아와야 한다 — 이게 없으면 아무도 못 쓴다."""
+    from core.render_vivlio import edits as ed
+    ed.push(book, {"op": "set", "ref": P + ".0", "v": "고친 것"})
+    assert _paras(book)[0] == "고친 것"
+    ed.undo(book)
+    assert _paras(book)[0] == "가나다 라마바"
+
+
+def test_redo(book):
+    from core.render_vivlio import edits as ed
+    ed.push(book, {"op": "set", "ref": P + ".0", "v": "고친 것"})
+    ed.undo(book)
+    ed.redo(book)
+    assert _paras(book)[0] == "고친 것"
+
+
+def test_new_edit_after_undo_truncates(book):
+    """되돌린 뒤 새로 고치면 앞으로 갈 것은 잘린다(편집기 관례)."""
+    from core.render_vivlio import edits as ed
+    ed.push(book, {"op": "set", "ref": P + ".0", "v": "첫째"})
+    ed.push(book, {"op": "set", "ref": P + ".0", "v": "둘째"})
+    ed.undo(book)
+    st = ed.push(book, {"op": "set", "ref": P + ".0", "v": "셋째"})
+    assert st["head"] == len(st["ops"]) == 2
+    assert _paras(book)[0] == "셋째"
+    ed.undo(book)
+    assert _paras(book)[0] == "첫째"
+
+
+def test_structure_ops(book):
+    """문단 나누기·합치기·넣기·지우기 — 값 표로는 담을 수 없던 것들."""
+    from core.render_vivlio import edits as ed
+    ed.push(book, {"op": "split", "ref": P + ".0", "at": 3})
+    assert _paras(book) == ["가나다", "라마바", "사아자"]
+    ed.push(book, {"op": "merge", "ref": P + ".0"})
+    assert _paras(book) == ["가나다 라마바", "사아자"]
+    ed.push(book, {"op": "insert", "ref": P + ".1", "v": "끼운 단락"})
+    assert _paras(book) == ["가나다 라마바", "끼운 단락", "사아자"]
+    ed.push(book, {"op": "delete", "ref": P + ".1"})
+    assert _paras(book) == ["가나다 라마바", "사아자"]
+    for _ in range(4):
+        ed.undo(book)
+    assert _paras(book) == ["가나다 라마바", "사아자"]
+
+
+def test_missing_ref_warns_not_silent(book):
+    """원고가 바뀌어 자리가 사라지면 **조용히 넘기지 않는다**."""
+    from core.render_vivlio import edits as ed
+    ed.push(book, {"op": "set", "ref": P + ".9", "v": "x"})
+    lines = []
+    ed.load_data(book, log=lines.append)
+    assert any("자리를 못 찾" in x for x in lines)
+
+
+def test_migrates_old_errata(book):
+    """예전 값 표(errata.json)는 처음 읽을 때 연산으로 옮겨진다."""
+    import json as J
+    import os
+    from core.render_vivlio import edits as ed
+    with open(os.path.join(book.d, "errata.json"), "w", encoding="utf-8") as f:
+        J.dump({"_note": "x", P + ".0": "옛 정오표"}, f, ensure_ascii=False)
+    assert _paras(book)[0] == "옛 정오표"
+    st = ed.read(book)
+    assert st["head"] == 1 and st["ops"][0]["op"] == "set"
