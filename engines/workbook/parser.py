@@ -1351,6 +1351,29 @@ _RE_S3_ITEM_HEAD = re.compile(r'^\s*(\d{1,3})\s*\.\s')
 _RE_S3_QINTRO = re.compile(r'다음\s*글을\s*읽고\s*물음에')
 _RE_S3_ANY_MARKER = re.compile(r'[①-⑳⓪ⓐ-ⓩⒶ-Ⓩ㉠-㉭]')
 _RE_S3_HANGUL_ANY = re.compile(r'[가-힣]')
+# 한글 줄이 끊긴 자리는 낱말 사이일 수도, 낱말 **한가운데**일 수도 있다
+# (원고에 공백 흔적이 남지 않아 텍스트만으로는 알 수 없다). 뒷줄이 조사로
+# 시작하거나('것'+'은?'), 앞줄이 낱말이 아닌 한 음절로 끝나면('변'+'형하여')
+# 붙여 쓰고, 그밖에는 띄어 쓴다('위'+'글에서').
+# 문장삽입 발문 — 바로 다음 단락이 '주어진 문장' 상자다
+_RE_S3_INSERT_PROMPT = re.compile(r'주어진\s*문장이\s*들어가기')
+_RE_S3_JOSA_HEAD = re.compile(r'^[은는이가을를의에로와과도만][\s?.,]|^[은는이가을를의에로와과도만]$')
+_S3_ONE_SYLLABLE_WORDS = set(
+    "위 글 것 수 말 등 및 안 밖 앞 뒤 옆 내 각 두 세 네 그 이 저 나 너 때 곳 "
+    "점 줄 중 후 전 년 월 일 시 분 초 개 명 장 쪽 면 문 답 반 별 술 물 불".split())
+
+
+def _s3_join_glue(prev_text, cur_text):
+    """두 조각을 이을 때 사이에 넣을 것 — 공백 또는 없음."""
+    if not (_RE_S3_HANGUL_ANY.match(prev_text[-1:])
+            and _RE_S3_HANGUL_ANY.match(cur_text[:1])):
+        return " "
+    if _RE_S3_JOSA_HEAD.match(cur_text):
+        return ""
+    last = prev_text.split()[-1] if prev_text.split() else ""
+    if len(last) == 1 and last not in _S3_ONE_SYLLABLE_WORDS:
+        return ""
+    return " "
 # 문장 한가운데서 끊긴 줄 — 낱말/숫자/쉼표로 끝난다. 밑줄·화살표·마커로
 # 끝나는 줄(기입란·표 셀)은 '끊김'이 아니라 그 자체로 완결된 줄이다.
 _RE_S3_MID_SENTENCE = re.compile(r'[A-Za-z0-9가-힣,，]\s*$')
@@ -1445,8 +1468,10 @@ def _strip_step3_type_labels(paras, log=None):
     maybe = set()
     for i in range(n):
         t = _s3_text(paras[i])
-        if not t or len(t) > 30:
+        if not t or len(t) > 40:
             continue
+        if len(t) > 30 and _RE_S3_HANGUL_ANY.search(t):
+            continue                      # 한글 라벨은 30자까지
         if _RE_S3_SENT_END.search(t) or _RE_S3_UNIT_HEAD.match(t):
             continue
         if _RE_S3_ANY_MARKER.search(t) or _RE_S3_NO_JOIN.search(t):
@@ -1493,20 +1518,29 @@ def _join_step3_split_paragraphs(paras, log=None):
     out = []
     joined = 0
     last_idx = None
+    prompt_seen = False        # 직전에 남긴 줄이 문장삽입 발문인가
+    given_box = False          # 지금 잇고 있는 줄이 '주어진 문장' 상자인가
     for i, p in enumerate(paras):
         t = _s3_text(p)
         if not t:
             out.append(p)
             last_idx = None                   # 빈 단락 = 문단 경계
+            prompt_seen = False
+            given_box = False
             continue
         if out and last_idx is not None:
             prev = out[-1]
             pt = _s3_text(prev)
+            # 문장삽입의 '주어진 문장' 상자는 한두 줄짜리 짧은 문장이라
+            # 줄바꿈 하한(_S3_WRAP_MIN_LEN)에 걸린다 — 발문이 앵커라 안전하게
+            # 예외로 둔다 ('However, the Jade Emperor sent Mother Dragon' +
+            # 'and her children to protect them.')
+            floor = 0 if given_box else _S3_WRAP_MIN_LEN
             # 영어(지문·선지)는 '소문자로 이어짐'이 곧 한 문장이라는 증거다.
             # 한국어는 그런 증거가 없어(조건 줄·어휘 주석도 한글로 끝난다)
             # **문항 번호로 시작한 발문이 아직 안 끝난 경우**로만 좁힌다 —
             # '90. …가장 적절한 것' + '은?90)' 같은 발문 중간 끊김.
-            cont = ((len(pt or "") >= _S3_WRAP_MIN_LEN
+            cont = ((len(pt or "") >= floor
                      and _RE_S3_PREV_EN.search(pt or "")
                      and _RE_S3_CONT_EN.match(t))
                     or (_RE_S3_ITEM_HEAD.match(pt or "")
@@ -1519,16 +1553,20 @@ def _join_step3_split_paragraphs(paras, log=None):
                     and not _RE_S3_UNIT_HEAD.match(t)
                     and not _RE_S3_NO_JOIN.search(pt)
                     and not _RE_S3_NO_JOIN.search(t)):
-                merged = pt + " " + t
+                glue = _s3_join_glue(pt, t)
+                merged = pt + glue + t
                 _s3_set_text(prev, merged)
                 if isinstance(prev, dict) and isinstance(p, dict):
                     pr, cr = prev.get('runs'), p.get('runs')
                     if isinstance(pr, list) and isinstance(cr, list):
-                        prev['runs'] = pr + [{"t": " ", "ul": False}] + cr
+                        mid = [{"t": glue, "ul": False}] if glue else []
+                        prev['runs'] = pr + mid + cr
                 joined += 1
                 continue
         out.append(p)
         last_idx = i
+        given_box = prompt_seen
+        prompt_seen = bool(_RE_S3_INSERT_PROMPT.search(t))
     if joined and callable(log):
         log(f"[파서] step3 쪼개진 단락 되붙임: {joined}건")
     return out
