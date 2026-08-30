@@ -210,6 +210,8 @@
         'color:#eee;border-radius:7px;padding:4px 9px;font-size:12px;' +
         'cursor:pointer}' +
       '.bs-edit-bar button.p{border-color:#6c8cff;color:#a9bcff}' +
+      '.bs-edit-bar button.f{min-width:26px;font-weight:700}' +
+      '.bs-edit-bar .sep{width:1px;height:18px;background:#4a5170;margin:0 2px}' +
       '.bs-edit-bar i{font-style:normal;opacity:.6;margin-right:2px}';
     d.head.appendChild(st);
   }
@@ -255,10 +257,13 @@
     bar.id = 'bs-edit-bar'; bar.className = 'bs-edit-bar';
     bar.innerHTML =
       '<i>' + (info.edited ? '고친 자리' : '원본') + '</i>'
+      + '<button class="f" data-f="b" title="굵게 ⌘B"><b>B</b></button>'
+      + '<button class="f" data-f="u" title="밑줄 ⌘U"><u>U</u></button>'
+      + '<button class="f" data-f="i" title="기울임 ⌘I"><i style="font-style:italic;opacity:1">I</i></button>'
+      + '<span class="sep"></span>'
       + '<button class="p" data-a="save">저장 ⌘↵</button>'
       + '<button data-a="revert">원고대로</button>'
-      + '<button data-a="cancel">취소 Esc</button>'
-      + '<i style="margin-left:4px">**굵게** __밑줄__ //기울임//</i>';
+      + '<button data-a="cancel">취소 Esc</button>';
     d.body.appendChild(bar);
     var r = el.getBoundingClientRect();
     var top = r.top + (d.documentElement.scrollTop || d.body.scrollTop || 0);
@@ -267,18 +272,73 @@
     bar.style.left = Math.max(2, left) + 'px';
     bar.addEventListener('mousedown', function (e) { e.preventDefault(); });
     bar.addEventListener('click', function (e) {
-      var a = e.target && e.target.dataset && e.target.dataset.a;
-      if (!a) return;
+      var t = e.target;
+      while (t && t !== bar && !(t.dataset && (t.dataset.a || t.dataset.f)))
+        t = t.parentNode;
+      if (!t || t === bar) return;
+      if (t.dataset.f) { wrapSel(d, t.dataset.f); return; }
+      var a = t.dataset.a;
       if (a === 'cancel') { closeInline(true); status(''); }
       else if (a === 'revert') commitInline(true);
       else commitInline(false);
     });
     el.addEventListener('keydown', function (e) {
+      var mod = e.metaKey || e.ctrlKey;
       if (e.key === 'Escape') { e.preventDefault(); closeInline(true); status(''); }
-      else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault(); commitInline(false);
+      else if (e.key === 'Enter' && mod) { e.preventDefault(); commitInline(false); }
+      else if (mod && 'bui'.indexOf((e.key || '').toLowerCase()) >= 0) {
+        e.preventDefault(); wrapSel(d, e.key.toLowerCase());
       }
     });
+  }
+
+  // 서식 — 고른 글을 표시로 감싼다. 이미 감싸져 있으면 벗긴다.
+  // 원본이 `**굵게**` 같은 표시로 오가므로 표시를 씌우는 것이 곧 서식이다.
+  var MARK = { b: '**', u: '__', i: '//' };
+
+  function wrapSel(d, kind) {
+    var el = d.querySelector('.bs-editing');
+    if (!el) return;
+    var m = MARK[kind]; if (!m) return;
+    var sel = d.getSelection();
+    if (!sel || !sel.rangeCount) return;
+    var r = sel.getRangeAt(0);
+    if (!el.contains(r.commonAncestorContainer)) return;
+    var text = el.textContent;
+    var pre = r.startOffset, post = r.endOffset;
+    // contenteditable=plaintext-only 라 텍스트 노드가 하나뿐이다 — 그 전제로 센다
+    if (r.startContainer !== r.endContainer) {
+      pre = 0; post = text.length;
+    }
+    if (pre === post) { status('감쌀 글을 먼저 고르세요'); return; }
+    var mid = text.slice(pre, post);
+    var before = text.slice(0, pre), after = text.slice(post);
+    if (before.slice(-m.length) === m && after.slice(0, m.length) === m) {
+      // 이미 감싸져 있으면 벗긴다
+      before = before.slice(0, -m.length); after = after.slice(m.length);
+      el.textContent = before + mid + after;
+      setSel(d, el, before.length, before.length + mid.length);
+    } else if (mid.slice(0, m.length) === m
+               && mid.slice(-m.length) === m && mid.length > 2 * m.length) {
+      mid = mid.slice(m.length, -m.length);
+      el.textContent = before + mid + after;
+      setSel(d, el, before.length, before.length + mid.length);
+    } else {
+      el.textContent = before + m + mid + m + after;
+      setSel(d, el, before.length + m.length,
+             before.length + m.length + mid.length);
+    }
+  }
+
+  function setSel(d, el, a, b) {
+    try {
+      var node = el.firstChild || el;
+      var r = d.createRange();
+      r.setStart(node, Math.min(a, (node.textContent || '').length));
+      r.setEnd(node, Math.min(b, (node.textContent || '').length));
+      var s2 = d.getSelection(); s2.removeAllRanges(); s2.addRange(r);
+      el.focus();
+    } catch (e) {}
   }
 
   function commitInline(revert) {

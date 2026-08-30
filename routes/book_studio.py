@@ -184,12 +184,12 @@ def api_render():
 def api_text():
     """지면에서 클릭한 글 한 조각을 읽고 고친다.
 
-    고친 것은 `data.json` 이 아니라 **`errata.json`** 에 쌓인다 — data.json 은
-    원고에서 만들어지므로 거기 직접 쓰면 `data` 를 한 번 돌리는 순간 말없이
-    되돌아간다. 정오표는 읽는 자리에서 얹히므로 조판도 검수도 같은 글을 본다.
+    고친 것은 `data.json` 이 아니라 **편집 이력**(`edits.json`)에 연산으로 쌓인다 —
+    data.json 은 원고에서 만들어지므로 거기 직접 쓰면 `data` 를 한 번 돌리는 순간
+    말없이 되돌아간다. 이력은 읽는 자리에서 얹히므로 조판도 검수도 같은 글을 본다.
     """
     from core.render_vivlio import book as bookmod
-    from core.render_vivlio import errata as er
+    from core.render_vivlio import edits as ed
     from core.render_vivlio import richtext as rt
     get = request.method == "GET"
     p = {} if get else (request.get_json(silent=True) or {})
@@ -200,34 +200,83 @@ def api_text():
     if not ref or any(c in ref for c in "/\\ \n"):
         return jsonify({"error": "이상한 자리표"}), 400
     cfg = bookmod.load(d)
-    import json as _json
-    with open(cfg.path("data.json"), encoding="utf-8") as f:
-        raw = _json.load(f)
-    table = er.read(cfg)
-    cur = er.apply(_json.loads(_json.dumps(raw)), table)
-    if not er.exists(cur, ref):
+    cur, raw = ed.preview(cfg)
+    if not ed.exists(cur, ref):
         return jsonify({"error": f"원본에 없는 자리: {ref}"}), 404
+    st = ed.read(cfg)
     if get:
+        touched = any(o.get("ref") == ref for o in st["ops"][:st["head"]])
         return jsonify({"ref": ref,
-                        "text": rt.to_text(er.get(cur, ref)),
-                        "origin": rt.to_text(er.get(raw, ref)),
-                        "edited": ref in table})
+                        "text": rt.to_text(ed.get(cur, ref)),
+                        "origin": rt.to_text(ed.get(raw, ref)),
+                        "edited": touched,
+                        "history": {"head": st["head"], "total": len(st["ops"])}})
     text = p.get("text")
     if text is None:
         return jsonify({"error": "글이 없다"}), 400
     if len(text) > 20000:
         return jsonify({"error": "너무 길다"}), 400
-    like = er.get(raw, ref)
     if p.get("revert"):
-        table.pop(ref, None)
+        # 원고대로 = 원고의 그 값으로 되돌리는 **연산**을 쌓는다.
+        # 지우개가 아니라 또 하나의 편집이라, 이것도 되돌릴 수 있다.
+        st = ed.push(cfg, {"op": "set", "ref": ref, "v": ed.get(raw, ref),
+                           "note": "원고대로"})
     else:
-        val = rt.from_text(text, like=like)
-        if rt.plain(val) == rt.plain(like) and val == like:
-            table.pop(ref, None)                          # 원고와 같아지면 지운다
+        st = ed.push(cfg, {"op": "set", "ref": ref,
+                           "v": rt.from_text(text, like=ed.get(raw, ref))})
+    return jsonify({"ok": True, "entries": st["head"],
+                    "history": {"head": st["head"], "total": len(st["ops"])}})
+
+
+@bp.route("/api/book-studio/op", methods=["POST"])
+def api_op():
+    """구조 편집 — 문단 나누기·합치기·넣기·지우기. 글자 편집과 같은 이력에 쌓인다."""
+    from core.render_vivlio import book as bookmod
+    from core.render_vivlio import edits as ed
+    p = request.get_json(silent=True) or {}
+    d, meta = _book_dir(p.get("b"))
+    if not d:
+        return jsonify({"error": "모르는 책"}), 404
+    op = p.get("op")
+    if op not in ed.OPS:
+        return jsonify({"error": f"모르는 연산: {op}"}), 400
+    ref = p.get("ref") or ""
+    if not ref or any(c in ref for c in "/\\ \n"):
+        return jsonify({"error": "이상한 자리표"}), 400
+    cfg = bookmod.load(d)
+    st = ed.push(cfg, {k: v for k, v in p.items()
+                       if k in ("op", "ref", "v", "at", "note")})
+    return jsonify({"ok": True,
+                    "history": {"head": st["head"], "total": len(st["ops"])}})
+
+
+@bp.route("/api/book-studio/history", methods=["GET", "POST"])
+def api_history():
+    """편집 이력 보기 / 되돌리기 · 다시 실행."""
+    from core.render_vivlio import book as bookmod
+    from core.render_vivlio import edits as ed
+    get = request.method == "GET"
+    p = {} if get else (request.get_json(silent=True) or {})
+    d, meta = _book_dir(request.args.get("b") if get else p.get("b"))
+    if not d:
+        return jsonify({"error": "모르는 책"}), 404
+    cfg = bookmod.load(d)
+    if not get:
+        act = p.get("action")
+        n = max(1, min(int(p.get("n") or 1), 200))
+        if act == "undo":
+            ed.undo(cfg, n)
+        elif act == "redo":
+            ed.redo(cfg, n)
         else:
-            table[ref] = val
-    er.write(cfg, table)
-    return jsonify({"ok": True, "entries": len(table)})
+            return jsonify({"error": f"모르는 동작: {act}"}), 400
+    st = ed.read(cfg)
+    rows = [{"i": i, "op": o.get("op"), "ref": o.get("ref"),
+             "at": o.get("at", ""), "note": o.get("note", ""),
+             "applied": i < st["head"]}
+            for i, o in enumerate(st["ops"])]
+    return jsonify({"head": st["head"], "total": len(st["ops"]),
+                    "ops": rows[-60:]})
 
 
 @bp.route("/api/vivlio-book/slots")

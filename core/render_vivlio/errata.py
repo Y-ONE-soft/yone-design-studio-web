@@ -121,10 +121,12 @@ def apply(data, table, log=None):
 
 
 def load_data(cfg, log=None):
-    """`data.json` + 정오표. 모든 계열의 `data.load()` 가 이걸 쓴다."""
-    with open(cfg.path("data.json"), encoding="utf-8") as f:
-        data = json.load(f)
-    table = read(cfg)
-    if table:
-        apply(data, table, log)
-    return data
+    """`data.json` + 편집 이력.
+
+    ⚠ 이제 편집은 **연산 목록**(`edits.py`)이 들고 있다 — 값 표로는 문단
+      나누기·삭제를 담을 수 없고 무엇보다 **되돌릴 수가 없다**. 여기는 예전
+      호출부(계열 `data.load`)를 그대로 두기 위한 문이고, 실제 일은 edits 가 한다.
+      예전 `errata.json` 은 처음 읽을 때 연산으로 옮겨진다.
+    """
+    from core.render_vivlio import edits
+    return edits.load_data(cfg, log)
