@@ -157,6 +157,7 @@ class WorkbookV2Engine(BaseEngine):
     def parse(self, uploaded_files, job_dir, log):
         from engines.workbook.parser import parse_manuscript_folder
 
+        staged_root = None
         # 업로드 파일 분류 — v1 WorkbookEngine.parse와 동일 (Step3 판정 포함)
         manuscripts = uploaded_files.get("manuscripts")
         if isinstance(manuscripts, list):
@@ -164,6 +165,7 @@ class WorkbookV2Engine(BaseEngine):
             os.makedirs(manuscript_dir, exist_ok=True)
             step3_dir = os.path.join(manuscript_dir, "Step3")
             os.makedirs(step3_dir, exist_ok=True)
+            staged_root = set()
             for fpath in manuscripts:
                 fname = os.path.basename(fpath)
                 if fname.startswith("manuscripts_"):
@@ -177,6 +179,7 @@ class WorkbookV2Engine(BaseEngine):
                     dest = os.path.join(step3_dir, fname_nfc)
                 else:
                     dest = os.path.join(manuscript_dir, fname_nfc)
+                    staged_root.add(fname_nfc)
                 if fpath != dest:
                     safe_copy(fpath, dest)
         elif isinstance(manuscripts, str) and os.path.isdir(manuscripts):
@@ -211,7 +214,8 @@ class WorkbookV2Engine(BaseEngine):
         # 09 관계사.docx’ — job 4b8b05f8) 파일명 라우터가 못 잡고, 스텝1/2
         # 매칭에도 안 걸려 Step3가 통째로 0유닛이 됐다. 파싱 **결과**를 기준
         # 으로 미소비 파일을 가려 '문항 모음' 구조면 Step3로 옮기고 재파싱한다.
-        rescued = _routing.rescue_unrouted_step3(manuscript_dir, data, log)
+        rescued = _routing.rescue_unrouted_step3(
+            manuscript_dir, data, log, candidates=staged_root)
         if rescued:
             data = parse_manuscript_folder(manuscript_dir, cfg, grade, year,
                                            month, log, image_dir=image_dir)

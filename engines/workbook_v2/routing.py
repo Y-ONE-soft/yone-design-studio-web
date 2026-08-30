@@ -236,21 +236,31 @@ def _manuscript_texts(path):
     return out
 
 
+# 답지 계열 꼬리까지 함께 벗긴다 ('해설지'에서 '해설'만 빼면 '지'가 남아
+# 같은 계열로 안 묶인다 — 'Step1 C2 빈칸어휘 해설지' ≡ 'Step1 C2 빈칸어휘')
+_RE_ANSWER_FAMILY = re.compile(
+    "(?:" + "|".join(_RULES["answer_tokens"]) + r")\s*(?:지|본|파일)?")
+
+
 def _family_stem(fname_nfc):
     """답지/괄호 주석을 벗긴 파일 계열 키 ('… 빈칸어휘 해설지' ≡ '… 빈칸어휘')."""
     base = os.path.splitext(_nfc(fname_nfc))[0]
     base = re.sub(r"\([^)]*\)", " ", base)
-    base = RE_ANSWER_TOKEN.sub(" ", base)
+    base = _RE_ANSWER_FAMILY.sub(" ", base)
     return _RE_SEP.sub("", base.lower())
 
 
-def rescue_unrouted_step3(manuscript_dir, data, log):
+def rescue_unrouted_step3(manuscript_dir, data, log, candidates=None):
     """스텝1/2 어디에도 안 실린 루트 원고를 구조로 재판정 → Step3 구제.
 
     파싱 **결과**(content.json의 스텝별 filename)를 기준으로 미소비 파일을
     가려내므로, '어느 스텝이 이 파일을 가져갈까'를 예측하지 않는다.
     미소비 파일은 전부 로그로 보고한다 (침묵 금지). 구제한 파일 이름 목록을
     돌려주며, 비어 있지 않으면 호출부가 재파싱한다.
+
+    candidates: 살펴볼 루트 파일명 집합. 업로드 경로에서는 엔진이 스테이징한
+        사본 이름만 준다 — 업로드 원본('manuscripts_…')이 같은 폴더에 남아
+        있어 사본과 짝으로 중복 구제되는 것을 막는다. None이면 루트 전체.
     """
     rescued = []
     if not manuscript_dir or not os.path.isdir(manuscript_dir):
@@ -265,6 +275,8 @@ def rescue_unrouted_step3(manuscript_dir, data, log):
     for fname_raw in sorted(os.listdir(manuscript_dir)):
         fname = _nfc(fname_raw)
         if fname.startswith(".") or fname in consumed:
+            continue
+        if candidates is not None and fname not in candidates:
             continue
         if os.path.splitext(fname)[1].lower() not in MS_EXTS:
             continue
