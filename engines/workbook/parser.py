@@ -1565,16 +1565,8 @@ def _strip_step3_footnote_refs(paras, log=None):
 
 
 def _normalize_step3_manuscript(paras, log=None):
-    """Step3 원고 정규화 — 잔재 제거 → 쪼개짐 되붙임 → 각주 번호 제거.
-
-    순서가 중요하다: 잔재를 먼저 걷어내야 유형 라벨이 뒤 발문에 들러붙지
-    않고, 되붙인 뒤라야 발문의 머리 번호와 꼬리 각주 번호가 한 줄에서 만난다.
-    """
-    import os as _os
-    _on = _os.environ.get("W83_PASSES", "rjlf")
-    if "r" in _on:
-        paras = _strip_step3_rights_and_title(paras, log)
-    return paras
+    """Step3 원고 정규화 1단계 — 권리 고지/책 표제 (보존 스냅샷 전에)."""
+    return _strip_step3_rights_and_title(paras, log)
 
 
 def _normalize_step3_lines(paras, log=None):
@@ -1584,14 +1576,9 @@ def _normalize_step3_lines(paras, log=None):
     hwp 표형 5지선다가 마커 없는 맨 문장 다섯 줄이라, 줄 이어붙임이 선지를
     줄줄이 하나로 붙여 버린다 (코퍼스 실측 39개 잡).
     """
-    import os as _os
-    _on = _os.environ.get("W83_PASSES", "rjlf")
-    if "j" in _on:
-        paras = _join_step3_split_paragraphs(paras, log)
-    if "l" in _on:
-        paras = _strip_step3_type_labels(paras, log)
-    if "f" in _on:
-        paras = _strip_step3_footnote_refs(paras, log)
+    paras = _join_step3_split_paragraphs(paras, log)
+    paras = _strip_step3_type_labels(paras, log)
+    paras = _strip_step3_footnote_refs(paras, log)
     return paras
 
 

@@ -4406,6 +4406,30 @@ _RE_CHOICE_MARK = re.compile(r"[①-⑳]")
 _RE_CHOICE_SPLIT = re.compile(r"(?<=\S)[ \u00a0]+(?=[①-⑳])")
 
 
+def _multi_choice_grid_rows(rows):
+    """여러 줄에 걸친 다열 선지 '격자'의 행 인덱스 (W83).
+
+    한 줄에 선지가 둘 이상 있고 그런 줄이 **연달아 둘 이상**일 때만 격자다
+    (`① (A)-(C)-(B) ② (B)-(A)-(C)` / `③ … ④ …` / `⑤ …`). 열이 행마다
+    맞아야 하므로 탭스톱이 필요하다. 다섯 개가 한 줄에 다 들어간 선지
+    (`① (A) ② (B) ③ (C) ④ (D) ⑤ (E)`)는 맞출 상대가 없어 대상이 아니다 —
+    기존 완성본의 공백 정렬을 그대로 둔다.
+    """
+    out = set()
+    run = []
+    for i, p in enumerate(rows + [None]):
+        multi = (p is not None and "선지" in (p.get("s") or "")
+                 and "\t" not in (p.get("t") or "")
+                 and len(_RE_CHOICE_MARK.findall(p.get("t") or "")) >= 2)
+        if multi:
+            run.append(i)
+            continue
+        if len(run) >= 2:
+            out |= set(run)
+        run = []
+    return out
+
+
 def normalize_choice_tabs(plan, steps=("step3",)):
     """W40 결함 1b — 다열 선지 행의 탭 구분자 정규화 (탭스톱 적용 전 필수).
 
@@ -4424,17 +4448,19 @@ def normalize_choice_tabs(plan, steps=("step3",)):
         if fl.get("step") not in steps:
             continue
         for u in fl.get("units", []):
-            for p in unit_paras(u):
+            rows = list(unit_paras(u))
+            grid = _multi_choice_grid_rows(rows)
+            for _i, p in enumerate(rows):
                 t = p.get("t") or ""
                 if "선지" not in (p.get("s") or ""):
                     continue
                 if "\t" not in t:
+                    if _i not in grid:
+                        continue
                     # W83 — 한 줄에 선지 여러 개인데 구분이 공백뿐인 원고
                     # ('① (A)-(C)-(B) ② (B)-(A)-(C)'). 탭이 없으면 아래
                     # choice_tabs_op 이 열 정렬 계약을 아예 안 만들어 번호가
                     # 행마다 제멋대로 붙는다 — 둘째 선지부터 탭으로 가른다.
-                    if len(_RE_CHOICE_MARK.findall(t)) < 2:
-                        continue
                     new_t = _RE_CHOICE_SPLIT.sub("\t", t)
                     if new_t == t:
                         continue
