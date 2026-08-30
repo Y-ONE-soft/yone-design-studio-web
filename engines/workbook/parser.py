@@ -1370,6 +1370,9 @@ def _s3_join_glue(prev_text, cur_text):
         return " "
     if _RE_S3_JOSA_HEAD.match(cur_text):
         return ""
+    # 두 글자 이하 꼬리는 낱말 한가운데서 끊긴 것이다 ('적으시'+'오.')
+    if len(re.sub(r'\d+\)\s*(?:\[[^\]]*\])?\s*$', '', cur_text).strip()) <= 2:
+        return ""
     last = prev_text.split()[-1] if prev_text.split() else ""
     if len(last) == 1 and last not in _S3_ONE_SYLLABLE_WORDS:
         return ""
@@ -1535,7 +1538,16 @@ def _join_step3_split_paragraphs(paras, log=None):
             # 줄바꿈 하한(_S3_WRAP_MIN_LEN)에 걸린다 — 발문이 앵커라 안전하게
             # 예외로 둔다 ('However, the Jade Emperor sent Mother Dragon' +
             # 'and her children to protect them.')
-            floor = 0 if given_box else _S3_WRAP_MIN_LEN
+            # 발문(문항 번호로 시작하고 아직 안 끝난 줄)도 앵커가 확실하다 —
+            # 길이 하한 없이 잇는다 ('125. 위 글에서 … living and' 59자)
+            open_prompt = bool(_RE_S3_ITEM_HEAD.match(pt or "")
+                               and not _RE_S3_PROMPT_END.search(pt or ""))
+            floor = 0 if (given_box or open_prompt) else _S3_WRAP_MIN_LEN
+            # 뒷조각이 앞줄의 **문항 번호와 같은 각주 번호**로 끝나면 그 줄이
+            # 발문의 나머지라는 결정적 증거다 ('118. …적으시' + '오.118)')
+            _hd = _RE_S3_ITEM_HEAD.match(pt or "")
+            tail_ref = bool(_hd and re.search(
+                r'(?<![0-9])' + _hd.group(1) + r'\)\s*(?:\[[^\]]*\])?\s*$', t))
             # 영어(지문·선지)는 '소문자로 이어짐'이 곧 한 문장이라는 증거다.
             # 한국어는 그런 증거가 없어(조건 줄·어휘 주석도 한글로 끝난다)
             # **문항 번호로 시작한 발문이 아직 안 끝난 경우**로만 좁힌다 —
@@ -1545,7 +1557,7 @@ def _join_step3_split_paragraphs(paras, log=None):
                      and _RE_S3_CONT_EN.match(t))
                     or (_RE_S3_ITEM_HEAD.match(pt or "")
                         and not _RE_S3_PROMPT_END.search(pt or "")
-                        and _RE_S3_PROMPT_END.search(t)
+                        and (_RE_S3_PROMPT_END.search(t) or tail_ref)
                         and not _RE_S3_Q_OPENER.match(t)
                         and _RE_S3_PREV_KO.search(pt or "")
                         and _RE_S3_CONT_KO.match(t)))
