@@ -1340,6 +1340,8 @@ _RE_S3_UNIT_HEAD = re.compile(
     r'|\(\s*[A-Ea-e]\s*\)'            # (A)(B)(C) 라벨
     r'|[※◆▶●■□▷▸☞]|<|\[|【'
     r'|[•·‧∙◦▪▫‣⁃\uf000-\uf0ff]'      # 조건 상자 글머리표(윙딩 포함)
+    r'|[-–—]\s'                        # 대시 글머리 조건 항목
+    r'|[━─═＝]{2,}'                     # 구분선 표제 ('━━ [ 정답 ] ━━')
     r'|[*＊→⇒]'                        # 어휘 주석·화살표 줄
     r'|다음\s*글을\s*읽고\s*물음에)')    # 묶음 도입문
 _RE_S3_RIGHTS_NOTICE = re.compile(
@@ -1348,6 +1350,7 @@ _RE_S3_RIGHTS_NOTICE = re.compile(
 _RE_S3_ITEM_HEAD = re.compile(r'^\s*(\d{1,3})\s*\.\s')
 _RE_S3_QINTRO = re.compile(r'다음\s*글을\s*읽고\s*물음에')
 _RE_S3_ANY_MARKER = re.compile(r'[①-⑳⓪ⓐ-ⓩⒶ-Ⓩ㉠-㉭]')
+_RE_S3_HANGUL_ANY = re.compile(r'[가-힣]')
 # 문장 한가운데서 끊긴 줄 — 낱말/숫자/쉼표로 끝난다. 밑줄·화살표·마커로
 # 끝나는 줄(기입란·표 셀)은 '끊김'이 아니라 그 자체로 완결된 줄이다.
 _RE_S3_MID_SENTENCE = re.compile(r'[A-Za-z0-9가-힣,，]\s*$')
@@ -1360,6 +1363,11 @@ _RE_S3_PROMPT_END = re.compile(r'[?？]|(?:시오|세요|십시오)\s*[.]?\s*\d*
 # <보기> 낱말 묶음)은 짧은 조각이라 여기서 걸러진다 (코퍼스 실측: 이 하한이
 # 없으면 hwp 표 원고 39개 잡의 낱말 조각이 줄줄이 붙는다).
 _S3_WRAP_MIN_LEN = 60
+# 발문 머리 신호 (core.structure.rules.Q_START_HINT 의 한글 부분) — 이 말로
+# 시작하는 줄은 그 자체로 온전한 발문이라 앞줄의 이어짐이 아니다
+# ('3. 단어 수: 15단어' + '위 글의 밑줄 친 …것은?' 을 붙이던 오작동 차단)
+_RE_S3_Q_OPENER = re.compile(
+    r'^(?:서술형|다음|위\s*글|윗\s*글|윗글|아래\s*글|글의|밑줄|주어진|각\s*괄호)')
 _RE_S3_PREV_EN = re.compile(r'[A-Za-z0-9,，]\s*$')
 _RE_S3_PREV_KO = re.compile(r'[가-힣,，]\s*$')
 _RE_S3_CONT_EN = re.compile(r'^[\'"“”‘’(\[]*[a-z]')
@@ -1427,14 +1435,28 @@ def _strip_step3_type_labels(paras, log=None):
             j += 1
         return _s3_text(paras[j]) if j < n else ""
 
+    def _prev_real(i):
+        j = i - 1
+        while j >= 0 and not _s3_text(paras[j]):
+            j -= 1
+        return _s3_text(paras[j]) if j >= 0 else ""
+
     drop = set()
+    maybe = set()
     for i in range(n):
         t = _s3_text(paras[i])
         if not t or len(t) > 30:
             continue
         if _RE_S3_SENT_END.search(t) or _RE_S3_UNIT_HEAD.match(t):
             continue
-        if _RE_S3_ANY_MARKER.search(t):
+        if _RE_S3_ANY_MARKER.search(t) or _RE_S3_NO_JOIN.search(t):
+            continue
+        # 유형 라벨은 **앞 문항이 끝난 자리**에 선다 — 앞줄이 선지이거나
+        # 문장으로 끝나야 한다. 조건 항목('필요시 어형 변화 가능')은 앞줄이
+        # 또 다른 조건 항목이라 여기서 걸러진다 (앞 문항에 딸린 줄이다).
+        prv = _prev_real(i)
+        if prv and not (_RE_S3_SENT_END.search(prv)
+                        or _RE_S3_ANY_MARKER.match(prv)):
             continue
         # 라벨은 유형을 가리키는 이름씨 마디다 — 쉼표/마침표가 있으면 문장의
         # 조각이고('Best regards, John Smith'), 숫자/밑줄이 있으면 원고
@@ -1442,8 +1464,14 @@ def _strip_step3_type_labels(paras, log=None):
         if re.search(r'[,，.。0-9_~／/]', t):
             continue
         nxt = _next_real(i)
-        if _RE_S3_ITEM_HEAD.match(nxt) or _RE_S3_QINTRO.search(nxt):
-            drop.add(i)
+        if not (_RE_S3_ITEM_HEAD.match(nxt) or _RE_S3_QINTRO.search(nxt)):
+            continue
+        (drop if _RE_S3_HANGUL_ANY.search(t) else maybe).add(i)
+    # 영문만인 줄은 한글 유형 라벨이 이미 둘 이상 확인된 문서에서만 라벨로
+    # 본다 ('Implication & Content Understanding'). 관행이 없는 문서의 영문
+    # 짧은 줄은 지문 조각일 수 있다 ('Transformation').
+    if len(drop) >= 2:
+        drop |= maybe
     if drop and callable(log):
         log(f"[파서] step3 유형 섹션 라벨 제거: {len(drop)}줄")
     return [p for k, p in enumerate(paras) if k not in drop]
@@ -1484,6 +1512,7 @@ def _join_step3_split_paragraphs(paras, log=None):
                     or (_RE_S3_ITEM_HEAD.match(pt or "")
                         and not _RE_S3_PROMPT_END.search(pt or "")
                         and _RE_S3_PROMPT_END.search(t)
+                        and not _RE_S3_Q_OPENER.match(t)
                         and _RE_S3_PREV_KO.search(pt or "")
                         and _RE_S3_CONT_KO.match(t)))
             if (pt and cont
