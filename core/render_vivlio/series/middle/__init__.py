@@ -80,6 +80,10 @@ class MiddleSeries(Series):
                 "raw": os.path.join(w, f"raw{vol}.json"),
                 "build": os.path.join(w, f"build{vol}")}
 
+    def build_dir(self, cfg):
+        key, vol = self._pick(cfg)
+        return self._paths(key, vol)["build"]
+
     # ── ① 원고 → data ──
     def gen_data(self, cfg, log):
         key, vol = self._pick(cfg)

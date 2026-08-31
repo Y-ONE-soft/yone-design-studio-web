@@ -95,6 +95,19 @@ def _books():
     return bs
 
 
+def _build_dir(book_dir):
+    """그 책의 조판 결과 폴더. 계열이 안다 — 중등부는 책 폴더 밖에 쓴다.
+
+    ⚠ 여기를 `<책폴더>/build` 로 못 박아 두면 중등부는 **404 만 난다**
+      (지면이 안 나오는데 로그는 조용해서 원인을 찾기 어렵다).
+    """
+    from core.render_vivlio import book as bookmod
+    try:
+        return bookmod.build_dir(bookmod.load(book_dir))
+    except Exception:
+        return os.path.join(book_dir, "build")
+
+
 def _book_dir(key):
     """**키(스튜디오 루트 기준 상대경로) → 절대경로.** 목록에 있는 것만 연다.
 
@@ -546,7 +559,7 @@ def api_refs():
     d, meta = _book_dir(request.args.get("b"))
     if not d:
         return jsonify({"error": "모르는 책"}), 404
-    p = os.path.join(d, "build", "refs.json")
+    p = os.path.join(_build_dir(d), "refs.json")
     if not os.path.exists(p):
         return jsonify({})
     with open(p, encoding="utf-8") as f:
@@ -615,4 +628,4 @@ def doc(bid, sub):
     d, meta = _book_dir(bid)
     if not d:
         return abort(404)
-    return send_from_directory(os.path.join(d, "build"), sub)
+    return send_from_directory(_build_dir(d), sub)

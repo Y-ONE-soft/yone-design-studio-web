@@ -37,6 +37,15 @@ class Series(object):
     # "지면을 보는 데는 필요 없고 느리기만 한" 것을 끄는 자리다.
     render_opts = {}
 
+    # ── 조판 결과가 놓이는 폴더 ──
+    def build_dir(self, cfg):
+        """`build/index.html` 이 놓이는 곳. 대개 책 폴더 안이다.
+
+        중등부처럼 조판 코드가 3계층 밖에 있는 계열은 다른 데 쓴다. 작업대가
+        지면을 내줄 때 이 값을 쓰므로, 틀리면 **404 만 나고 원인이 안 보인다**.
+        """
+        return cfg.build_dir
+
     # ── 미리보기용: HTML 까지만 ──
     def render_only(self, cfg, log, **opts):
         """`build()` 를 조판 직전까지만 돌려 build/ 를 채우고 HTML 경로를 준다.

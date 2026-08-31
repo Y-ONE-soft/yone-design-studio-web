@@ -151,6 +151,11 @@ def set_knobs(cfg, log=print, assignments=(), reset=(), backup=True):
     return changes
 
 
+def build_dir(cfg):
+    """이 책의 조판 결과 폴더 — 계열에게 묻는다(중등부는 3계층 밖에 쓴다)."""
+    return _series(cfg).build_dir(cfg)
+
+
 def render(cfg, log=print, **opts):
     """조판 직전까지 — build/ 를 채우고 HTML 경로를 준다(미리보기용).
 
