@@ -342,7 +342,7 @@
       hookStage();
       drawPageNo();
       msg('');
-      skipBlank();
+      jumpToContent();
     });
     viewer.addListener('nav', function (p) {
       if (p && p.epageCount) { pageCount = p.epageCount; }
@@ -387,49 +387,22 @@
    *  바뀐다). 그대로 두면 작업대를 열자마자 **흰 면**이 나와서 고장 난 것처럼
    *  보인다 — 실제로 그렇게 보였다.
    */
-  // 표식뿐인 면 — 간지 자리(`§DIV1§`)·메모 면·쪽번호만 있는 면.
-  // ⚠ 이름을 `MARK` 로 지었다가 굵게/밑줄 표시 상수와 부딪혀
-  //   서식 버튼이 조용히 죽었다.
-  var BLANKISH = /^\s*(?:§[^§]*§|MEMO|\d+)?\s*$/;
-  /** 지금 면. **맨 뒤 칸**이 지금 면이다.
-   *
-   *  ⚠ 함정이 셋 겹쳐 있다.
-   *  ① 지나온 면이 DOM 에 `display:none` 으로 쌓인다 — 앞에서 집으면 언제나
-   *     1면(`§DIV1§`)을 본다(쪽 번호에서 이미 겪었다).
-   *  ② 넘긴 **직후에는 새 면이 아직 안 그려져** 폭이 0이다.
-   *  ③ 그때 **옛 면이 아직 보인다** — "보이는 것 중 맨 뒤" 로 골라도 옛 면을
-   *     집는다. 그래서 1면을 아홉 번 다시 보고 아홉 번 넘겼다.
-   *  맨 뒤 칸이 다 그려졌을 때만 인정하고, 아니면 **기다린다**.
-   */
-  function curPageEl() {
-    var ps = $('ide-stage').querySelectorAll('[data-vivliostyle-page-container]');
-    var last = ps[ps.length - 1];
-    if (!last) return null;
-    if (getComputedStyle(last).display === 'none') return null;
-    return last.getBoundingClientRect().width > 0 ? last : null;
-  }
-
-  /** 첫 면이 **빈 간지**면 내용이 있는 면까지 넘긴다.
+  /** 열자마자 **내용이 있는 자리**부터 보여 준다.
    *
    *  블랙북 1면은 `§DIV1§` 표식 하나뿐인 간지 자리다(마감 때 진짜 간지 PDF 로
    *  바뀐다). 그대로 두면 작업대를 열자마자 **흰 면**이 나와 고장 난 것처럼
    *  보인다 — 실제로 그렇게 보였다.
+   *
+   *  ⚠ 처음엔 "빈 면이면 한 장 넘기기" 를 되풀이했는데, 그게 조판 속도에
+   *    휘둘렸다. 넘긴 직후에는 새 면이 아직 안 그려져 있고 **옛 면이 아직
+   *    보여서**, 1면을 아홉 번 다시 보고 아홉 번 넘겼다(그러고도 엉뚱한 데
+   *    섰다). 세지 말고 **자리표 1번**으로 한 번에 뛴다 — 자리표가 붙은 곳은
+   *    정의상 원고에서 온 내용이라, 판단할 것이 없다.
    */
-  function skipBlank(n, tries) {
-    n = n || 0; tries = tries || 0;
-    var el = curPageEl();
-    if (el === null) {                 // 아직 그리는 중 — 넘기지 말고 기다린다
-      if (tries < 40) setTimeout(function () { skipBlank(n, tries + 1); }, 100);
-      return;
-    }
-    var t = (el.innerText || '').replace(/\s+/g, ' ').trim();
-    if (n >= 8 || !BLANKISH.test(t)) {
-      if (n) msg('빈 간지 ' + n + '면을 지나 내용부터 폅니다');
-      drawPageNo();
-      return;
-    }
-    viewer.navigateToPage(V.Navigation.NEXT);
-    setTimeout(function () { skipBlank(n + 1, 0); }, 100);
+  function jumpToContent() {
+    if (!refs || !refs['1'] || !viewer) return;
+    try { viewer.navigateToInternalUrl('#vref1'); } catch (e) { return; }
+    setTimeout(drawPageNo, 250);
   }
 
   // ── 지면 클릭 ───────────────────────────────────────────
