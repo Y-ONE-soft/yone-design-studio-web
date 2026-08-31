@@ -231,12 +231,14 @@ def test_scan_keeps_rich_run_as_one_place():
     assert [h["ref"] for h in hits] == ["lessons.0.problems.0.stem"]
 
 
-# ── 화면이 지면을 오염시키지 않는가 ────────────────────────────
-# 지면이 이제 **우리 문서 안**에 있어서 앱 CSS 가 그대로 조판에 얹힌다.
-# 실제로 `main.css` 첫 줄의 전역 리셋(`*{box-sizing:border-box}`)이
-# Vivliostyle 의 판면 래퍼까지 먹어 **여백이 두 번 깎였다** — 본문 단이
-# 167mm → 118mm 로 좁아져 줄바꿈도 면 나눔도 실제 조판과 달라졌고,
-# 그걸 "미리보기" 라고 보여 주고 있었다.
+# ── 지면은 딴 문서에 격리되어 있는가 ───────────────────────────
+# 지면을 작업대와 **같은 문서**에 그렸더니 앱 CSS 가 조판에 얹혔다.
+# `main.css` 첫 줄의 전역 리셋(`*{box-sizing:border-box}`)이 Vivliostyle 의
+# 판면 래퍼까지 먹어 **여백이 두 번 깎였고**, 본문 단이 167mm 여야 하는데
+# 118mm 로 좁아져 줄바꿈도 면 나눔도 달라졌다 — 그걸 미리보기라고 보여 줬다.
+#
+# 보상용 CSS 로 막을 수도 있었지만, 그러면 앱 스타일시트에 규칙 하나 더할
+# 때마다 같은 사고가 난다. 그래서 **문서를 갈랐다**(`/book-studio/frame`).
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STUDIO_HTML = os.path.join(_ROOT, "templates", "book_studio.html")
 
@@ -245,28 +247,59 @@ def _studio_src():
     return io.open(STUDIO_HTML, encoding="utf-8").read()
 
 
-def test_stage_undoes_global_box_sizing():
+def _routes_src():
+    return io.open(os.path.join(_ROOT, "routes", "book_studio.py"),
+                   encoding="utf-8").read()
+
+
+def test_page_lives_in_its_own_document():
     src = _studio_src()
-    assert "#ide-stage, #ide-stage *" in src
-    assert "box-sizing: content-box" in src
+    assert 'id="ide-frame"' in src and 'src="/book-studio/frame"' in src, \
+        "지면이 작업대와 같은 문서로 돌아왔다 — 앱 CSS 가 조판에 얹힌다"
 
 
-def test_no_universal_rule_reaches_the_stage():
-    """`.ide *` 처럼 지면까지 닿는 전칭 선택자를 두지 않는다."""
-    assert ".ide * {" not in _studio_src(), "지면까지 먹는 전칭 규칙이 돌아왔다"
-
-
-def test_stage_cuts_inherited_typography():
-    """앱 서체·글자색이 지면에 흘러 들어가면 조용히 다른 판이 나온다."""
+def test_engine_is_loaded_only_inside_the_frame():
+    """화면 문서에도 엔진을 실으면 그쪽 기준으로 계산돼 판이 달라진다."""
     src = _studio_src()
-    block = src[src.index("#ide-stage {"):][:400]
-    for prop in ("font:", "color:", "line-height:", "letter-spacing:"):
-        assert prop in block, f"#ide-stage 가 {prop} 를 안 끊는다"
+    assert 'src="/book-studio/core/vivlio-core.js"' not in src
+    assert "fwin() && fwin().VivlioCore" in src or "fwin().VivlioCore" in src
 
 
-def test_app_footer_hidden_in_studio():
-    """앱 푸터(© … All rights reserved)가 지면 위로 비쳤다."""
-    assert "body.ide-on .site-footer" in _studio_src()
+def test_frame_document_has_no_universal_rule():
+    """지면 문서 안에서도 전칭 선택자는 금물이다 — 같은 사고가 난다."""
+    import re as _re
+    src = _routes_src()
+    i = src.index("FRAME_HTML")
+    css = src[i:src.index("</style>", i)]
+    css = _re.sub(r"/\*.*?\*/", "", css, flags=_re.S)     # 주석은 뺀다
+    for line in css.splitlines():
+        sel = line.split("{")[0].strip()
+        if not sel or "{" not in line:
+            continue
+        assert not _re.search(r"(^|[\s,>])\*", sel), f"전칭 규칙: {line.strip()}"
+
+
+def test_frame_route_exists():
+    assert '@bp.route("/book-studio/frame")' in _routes_src()
+
+
+def test_frame_may_be_framed_and_may_eval():
+    """CSP — 지면 문서는 우리가 물고(frame-ancestors), 엔진이 eval 을 쓴다."""
+    auth = io.open(os.path.join(_ROOT, "routes", "auth.py"),
+                   encoding="utf-8").read()
+    assert '"/book-studio/frame"' in auth
+
+
+def test_selection_uses_the_frame_document():
+    """화면 문서의 `getSelection()` 은 지면 안 글을 모른다 — 서식이 안 먹는다."""
+    src = _studio_src()
+    assert "fwin().getSelection()" in src
+    assert "document.createRange()" not in src, "화면 문서의 Range 를 쓰고 있다"
+
+
+def test_keys_reach_the_frame():
+    """글을 고치는 동안 커서는 지면 문서 안이다 — ⌘↵·⌘B·Esc 가 거기서 난다."""
+    assert "fdoc().addEventListener('keydown'" in _studio_src()
 
 
 def test_main_css_still_has_the_global_reset():
@@ -276,8 +309,7 @@ def test_main_css_still_has_the_global_reset():
     """
     css = io.open(os.path.join(_ROOT, "static", "css", "main.css"),
                   encoding="utf-8").read()
-    head = "\n".join(css.splitlines()[:4])
-    assert "box-sizing: border-box" in head
+    assert "box-sizing: border-box" in "\n".join(css.splitlines()[:4])
 
 
 # ── 중등부 다리 ────────────────────────────────────────────────
