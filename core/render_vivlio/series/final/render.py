@@ -35,6 +35,9 @@ DEFAULT_METRICS = {
 }
 
 RE_ITEM = re.compile(r"^\((?P<m>[A-Z])\)\s*")
+# 측정용 면 높이 — 아주 길게 잡아 **한 지문이 절대 쪼개지지 않게** 한다.
+# (쪼개지면 면 수 ≠ 지문 수가 되어 측정이 통째로 실패한다.)
+MEASURE_PAGE_H = 1200.0
 NBSP = " "
 
 
@@ -236,12 +239,19 @@ def document(cfg, data, vol, fits=None, mode=None):
          stage.BOOK_CSS_LINKS]
     if mode == "measure":
         m = metrics_of(cfg)
-        o.append('<style>.grid{column-count:1;width:%.2fmm;height:auto}'
+        # ⚠ 잉크 바닥은 **상자 바닥이 아니다.** 행간이 넓은 섹션(어휘 7.06mm,
+        #   어법 9.52mm)에서는 마지막 줄의 여유만큼 5~7mm 를 적게 잰다 —
+        #   그만큼 '들어간다'고 잘못 판정해 요약이 다음 면으로 밀렸다.
+        #   블록 끝에 높이 0 인 표식을 찍어 **상자 바닥**을 재게 한다.
+        o.append('<style>@page{size:216mm %.2fmm}'
+                 '.grid{column-count:1;width:%.2fmm;height:auto}'
                  '.sec-vocab .grid{width:170mm}'
                  '.blk{height:auto!important;break-before:page;'
                  'overflow:visible!important}'
+                 '.blk::after{content:"\\25AA";display:block;'
+                 'font-size:2pt;line-height:0;color:#000}'
                  '.sechdr{display:none}</style>'
-                 % ((170.0 - 4.0) / 2))
+                 % (MEASURE_PAGE_H, (170.0 - 4.0) / 2))
     o.append('</head><body>')
     o.append(feet(ch))
     if mode != "measure":

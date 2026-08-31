@@ -186,10 +186,19 @@ def test_patch_deletes_last_member():
     assert J.loads(out)["metrics"] == {"slot": 122.5}
 
 
-def test_patch_new_parent_raises():
-    import pytest as P
-    with P.raises(KeyError):
-        kn.patch_text(RAW, {"palette.gold": "#fff"})
+def test_patch_creates_a_missing_parent():
+    """없는 절은 **만들어 넣는다.**
+
+    예전에는 여기서 예외를 냈고, 부르는 쪽이 config 를 통째로 다시 써
+    손으로 맞춘 모양(빈 줄·한 줄짜리 객체)을 다 잃었다. 이 시험은 그때
+    "못 만든다" 는 한계를 못박고 있었는데, 그건 지켜야 할 것이 아니었다.
+    """
+    import json as J
+    out = kn.patch_text(RAW, {"palette.gold": "#fff"})
+    assert J.loads(out)["palette"]["gold"] == "#fff"
+    # 지우면 **원문 그대로**로 돌아온다(빈 껍데기를 남기지 않는다)
+    back = kn.patch_text(out, {"palette.gold": None})
+    assert J.loads(back).get("palette") in (None, {})
 
 
 def test_patch_real_configs_roundtrip():

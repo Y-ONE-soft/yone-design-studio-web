@@ -560,6 +560,52 @@ def test_view_guides_do_not_touch_layout():
     assert "pointer-events: none" in block
 
 
+# ── 되돌리기는 하나여야 한다 ──────────────────────────────────
+# 글은 편집 이력, 디자인은 `.bak` 으로 갈라져 있었다. 그러면 방금 한 일을
+# 되돌리려고 **어느 단추를 눌러야 하는지** 사람이 알아야 한다. 인디자인은
+# 무엇을 했든 ⌘Z 하나다.
+def test_design_ops_share_the_history():
+    from core.render_vivlio import edits
+    assert set(edits.DESIGN_OPS) == {"style", "knob", "css"}
+    assert set(edits.TEXT_OPS) <= set(edits.OPS)
+
+
+def test_design_ops_are_not_applied_to_data():
+    """디자인 연산은 이미 파일에 들어가 있다 — data 에 또 얹으면 두 번 먹는다."""
+    from core.render_vivlio import edits
+    data = {"a": ["x"]}
+    edits.apply_all(data, {"head": 1, "ops": [
+        {"op": "style", "sel": ".c", "v": {"color": "red"}}]})
+    assert data == {"a": ["x"]}
+
+
+def test_patch_text_can_add_a_top_level_key():
+    """최상위에 새 절을 못 만들면 config 를 통째로 다시 써 모양을 잃는다."""
+    raw = '{\n  "a": 1,\n\n  "b": { "x": 2 }\n}\n'
+    out = kn.patch_text(raw, {"styles": {".c": {"color": "red"}}})
+    assert json.loads(out)["styles"] == {".c": {"color": "red"}}
+    assert '"b": { "x": 2 }' in out, "손으로 맞춘 모양이 그대로여야 한다"
+    assert kn.patch_text(out, {"styles": None}) == raw, "지우면 원문으로"
+
+
+def test_root_span_is_recorded():
+    """루트가 `".{}"` 로 기록돼 최상위 추가 자리를 못 찾던 버그."""
+    assert "{}" in kn.spans('{"a": 1}')
+
+
+def test_undo_drops_empty_parent_sections():
+    """`palette` 절이 없던 책에서 색을 바꿨다 되돌리면 `{}` 가 남았다."""
+    src = io.open(os.path.join(_ROOT, "core", "render_vivlio",
+                               "design_ops.py"), encoding="utf-8").read()
+    assert "_drop_empty_parents" in src
+
+
+def test_history_is_readable():
+    """이력은 사람이 읽는 자리다 — `set`·`style` 은 우리 용어다."""
+    src = _routes_src()
+    assert '"글 고침"' in src and '"label"' in src
+
+
 # ── 클로드 칸 ─────────────────────────────────────────────────
 # 모델에게 리포를 통째로 열어 주면 안 된다 — 계열 코드를 고치면 그 계열 책이
 # 전부 흔들리고, 원고를 고치면 납품본과 글이 달라진다. 손댈 수 있는 곳은

@@ -103,8 +103,8 @@ class FinalSeries(Series):
                                   log=log)
         self._stage(cfg, build_dir, log)
         h = measure.measure(html_m, os.path.join(build_dir, "measure.pdf"),
-                            keys, m["body_top"], m["body_top"] + m["body_h"],
-                            pad=0.0, log=log)
+                            keys, m["body_top"],
+                            render_mod.MEASURE_PAGE_H - 20.0, pad=0.0, log=log)
         measure.save(h, cfg.path(f"heights{vol}.json"), log, "지문 높이")
         return h
 

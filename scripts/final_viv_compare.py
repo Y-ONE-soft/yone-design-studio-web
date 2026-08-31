@@ -25,8 +25,11 @@ def page_headers(doc, size=12.0, tol=0.4):
                 continue
             s = b["lines"][0]["spans"][0]
             if abs(s["size"] - size) < tol:
+                # ⚠ 첫 스팬만 읽으면 안 된다 — 한글·숫자가 서체 대체로 갈려
+                #   '교과서4과 본문1' 이 '교과' 로 잘린다(거짓 불일치).
+                txt = "".join(x["text"] for x in b["lines"][0]["spans"])
                 hs.append((round(b["bbox"][0] * MM, 1),
-                           round(b["bbox"][1] * MM, 1), s["text"].strip()))
+                           round(b["bbox"][1] * MM, 1), txt.strip()))
         out.append([h[2] for h in sorted(hs, key=lambda t: (t[0], t[1]))])
     return out
 
