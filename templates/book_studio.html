@@ -45,6 +45,15 @@
   #ide-stage, #ide-stage *, #ide-stage *::before, #ide-stage *::after {
     box-sizing: content-box;
   }
+  /* 물려받는 것도 끊는다. 앱 서체·글자색·행간이 지면에 흘러 들어가면,
+     Vivliostyle 이 값을 안 박은 자리에서 조용히 다른 판이 나온다.
+     지면은 교재 CSS 가 정한 대로여야 한다. */
+  #ide-stage {
+    font: initial; color: initial; line-height: normal;
+    letter-spacing: normal; word-spacing: normal;
+    text-align: start; text-indent: 0; text-transform: none;
+    white-space: normal; direction: ltr;
+  }
 
   /* ── 위: 도구줄 ─────────────────────────────────────────── */
   .ide-top { display: flex; align-items: center; gap: 4px; flex-wrap: wrap;

@@ -153,12 +153,12 @@ u { text-decoration: underline; text-decoration-thickness: 0.475pt;
 .dayhdr { position: relative; height: 0; }
 .dayhdr > * { position: absolute; }
 .dayhdr .panel {
-  left: -9.75mm; top: -22.09mm; width: 186.5mm; height: 14.12mm;
+  left: -9.75mm; top: -22.24mm; width: 186.5mm; height: 14.12mm;
   background: #fff; border: 0.5pt solid var(--teal); border-radius: 1mm;
   box-shadow: 0 0.67mm 0 0 var(--pansh);
 }
 .dayhdr .tab {
-  left: -4.25mm; top: -22.61mm; width: 34.1mm; height: 14.1mm;
+  left: -4.25mm; top: -22.46mm; width: 34.1mm; height: 14.1mm;
   background: var(--teal); border-radius: 1mm 7.05mm 7.05mm 1mm;
   box-shadow: 0.4mm 0.42mm 0 0 var(--navy);
   text-align: left; padding-left: 4.1mm; white-space: nowrap;
@@ -176,7 +176,7 @@ u { text-decoration: underline; text-decoration-thickness: 0.475pt;
 .anshdr { position: relative; height: 0; }
 .anshdr .tab {
   position: absolute; left: -0.13mm; top: -25.37mm;
-  width: 60.34mm; height: 21.92mm;
+  width: 60.34mm; height: 21.11mm;
   background: var(--teal); border-radius: 0 0 4mm 4mm;
   text-align: center; white-space: nowrap;
 }
