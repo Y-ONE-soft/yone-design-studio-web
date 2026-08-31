@@ -182,8 +182,11 @@ def right_page(p, M, folio, category=""):
     for line in p.get("flownote") or []:
         cls = ' class="arrow"' if line.lstrip().startswith(_ARROW) else ""
         rows.append("<p%s>%s</p>" % (cls, ESC(line)))
-    parts.append('<div class="flow" style="%s">%s</div>'
-                 % (_box(fl[0], fl[1], fl[2], fl[3]), "".join(rows)))
+    fsc = p.get("flow_scale", 1.0)
+    fst = "" if fsc == 1.0 else ";font-size:%gpt;line-height:%gmm" % (
+        M["flow_size"] * fsc, M["flow_lead"] * fsc)
+    parts.append('<div class="flow" style="%s%s">%s</div>'
+                 % (_box(fl[0], fl[1], fl[2], fl[3]), fst, "".join(rows)))
     # 주제 / 요약문
     parts.append('<div class="topicband" style="%s"></div>'
                  % _box(tb[0], tb[1], tb[2], tb[3]))
@@ -196,10 +199,13 @@ def right_page(p, M, folio, category=""):
         tt.append("<p>%s</p>" % ESC(p["topic"]))
     if p.get("summary"):
         tt.append("<p>%s</p>" % ESC(p["summary"]))
-    parts.append('<div class="topictext" style="%s">%s</div>'
+    tsc = p.get("topic_scale", 1.0)
+    tst = "" if tsc == 1.0 else ";font-size:%gpt;line-height:%gmm" % (
+        M["topic_size"] * tsc, M["topic_lead"] * tsc)
+    parts.append('<div class="topictext" style="%s%s">%s</div>'
                  % (_box(M["topic_text_x"], tb[1] + 1.0,
                          tb[0] + tb[2] - M["topic_text_x"] - 2.0),
-                    "".join(tt)))
+                    tst, "".join(tt)))
     # 동반의어
     parts.append('<div class="synpanel" style="%s"></div>'
                  % _box(sp[0], sp[1], sp[2], sp[3]))

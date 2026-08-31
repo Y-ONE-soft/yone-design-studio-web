@@ -312,6 +312,7 @@ class PocketbookSeries(Series):
         if measure_pass:
             self._fit(rows, M, build_dir, log)
             self._fit_memtest(rows, M, build_dir, log)
+            self._fit_right(rows, M, build_dir, log)
 
         html = os.path.join(build_dir, "index.html")
         with open(html, "w", encoding="utf-8") as f:
@@ -438,6 +439,64 @@ class PocketbookSeries(Series):
         n_sc = sum(1 for r in rows if r.get("scale"))
         log("■ 지문 실측 %d개 · 행간 조정 %d · 글자 축소 %d"
             % (len(rows), n_lead, n_sc))
+
+    def _fit_right(self, rows, M, build_dir, log):
+        """오른쪽 면 — 플로우노트와 주제/요약이 상자를 넘지 않게 줄인다.
+
+        둘 다 상자가 작고(41mm · 23mm) 원고 길이가 들쭉날쭉해서 자주 넘친다.
+        지문과 달리 **줄 수가 적어** 행간만 줄이면 티가 나므로 글자와 함께 줄인다.
+        """
+        pas = [r for r in rows if r.get("kind") != "memtest"]
+        if not pas:
+            return
+        fl, tb = M["flow"], M["topic"]
+        for kind, box_h, mk in (("flow", fl[3], self._flow_probe),
+                                ("topic", tb[3], self._topic_probe)):
+            pages = [mk(r, M) for r in pas]
+            path = os.path.join(build_dir, "_measure_%s.html" % kind)
+            with open(path, "w", encoding="utf-8") as f:
+                f.write('<!doctype html><html><head><meta charset="utf-8">'
+                        '<link rel="stylesheet" href="pocket.css">'
+                        '<style>@page{size:%gmm 700mm}.pg{height:700mm}</style>'
+                        '</head><body>%s</body></html>'
+                        % (M["page_w"] + 2 * M["bleed"], "".join(pages)))
+            h = measure.measure(path,
+                                os.path.join(build_dir, "_measure_%s.pdf" % kind),
+                                [str(i) for i in range(len(pas))], 10.0, 690.0,
+                                log=log)
+            n = 0
+            for i, r in enumerate(pas):
+                got = h.get(str(i), 0.0)
+                if got > box_h - 1.0:
+                    r[kind + "_scale"] = max(0.72,
+                                             round((box_h - 1.0) / got, 3))
+                    n += 1
+            log("■ %s 조정 %d/%d" % ("플로우노트" if kind == "flow" else "주제/요약",
+                                     n, len(pas)))
+
+    @staticmethod
+    def _flow_probe(r, M):
+        rows = []
+        for line in r.get("flownote") or []:
+            cls = ' class="arrow"' if line.lstrip().startswith(("→", "⇒", "▶")) else ""
+            rows.append("<p%s>%s</p>" % (cls, prender.ESC(line)))
+        return ('<section class="pg"><div class="trim">'
+                '<div class="flow" style="left:%gmm;top:10mm;width:%gmm;'
+                'background:none">%s</div></div></section>'
+                % (M["flow"][0], M["flow"][2], "".join(rows)))
+
+    @staticmethod
+    def _topic_probe(r, M):
+        tt = ""
+        if r.get("topic"):
+            tt += "<p>%s</p>" % prender.ESC(r["topic"])
+        if r.get("summary"):
+            tt += "<p>%s</p>" % prender.ESC(r["summary"])
+        return ('<section class="pg"><div class="trim">'
+                '<div class="topictext" style="left:%gmm;top:10mm;width:%gmm">'
+                '%s</div></div></section>'
+                % (M["topic_text_x"],
+                   M["topic"][0] + M["topic"][2] - M["topic_text_x"] - 2.0, tt))
 
     def _fit_memtest(self, rows, M, build_dir, log):
         """암기 TEST 는 지문 여러 개를 한 면에 담아 자주 넘친다 — 행간부터 줄인다."""
