@@ -239,17 +239,37 @@
     <div class="ide-right" id="ide-right">
       <details class="ide-pal" open><summary>선택한 것</summary>
         <div class="ide-in" id="pal-sel">
-          <div class="ide-hint">지면에서 무언가를 클릭하면 여기 나옵니다.</div>
+          <div class="ide-hint">지면에서 무언가를 클릭하면 여기 나옵니다.<br>
+            한 번 누르면 <b>덩어리</b>, 두 번 누르면 <b>그 안</b>,
+            빈 곳을 누르면 <b>선택이 풀립니다</b>.</div>
         </div>
       </details>
-      <details class="ide-pal" open><summary>단락 스타일</summary>
+
+      <!-- 아래 세 패널은 **어느 교재를 열어도 똑같다.** 인디자인의 문자·단락
+           패널이 문서를 가리지 않는 것과 같다 — 값만 문서에서 온다. -->
+      <details class="ide-pal" open><summary>문자</summary>
+        <div class="ide-in" id="pal-char"></div>
+      </details>
+      <details class="ide-pal" open><summary>단락</summary>
+        <div class="ide-in" id="pal-para"></div>
+      </details>
+      <details class="ide-pal"><summary>단락 스타일</summary>
         <div class="ide-in" id="pal-style">
-          <div class="ide-hint">지면에서 무언가를 클릭하면 그 자리에 걸린
-            스타일이 나옵니다. 여기서 고치면 <b>같은 스타일이 걸린 곳이 전부</b>
-            바뀝니다. '이 자리에만' 을 켜면 그 한 자리에만 걸리는데, 그건
-            <b>원고가 바뀌면 딴 곳을 잡을 수 있습니다</b>(쪽 나눔·그림도 같습니다).</div>
+          <div class="ide-hint">이 책에 있는 스타일 목록입니다. 고르면 위
+            문자·단락 패널이 <b>그 스타일 전체</b>를 고칩니다.</div>
         </div>
       </details>
+
+      <details class="ide-pal"><summary>페이지</summary>
+        <div class="ide-in">
+          <div class="ide-f" style="margin-bottom:6px">
+            <button class="ide-b" id="pg-single">낱쪽</button>
+            <button class="ide-b" id="pg-spread">펼침(2P)</button>
+          </div>
+          <div class="ide-hist" id="pal-pages"></div>
+        </div>
+      </details>
+
       <details class="ide-pal" id="pal-img-box"><summary>그림</summary>
         <div class="ide-in">
           <div class="ide-hint" style="margin-bottom:8px">
@@ -284,10 +304,14 @@
           <div class="ide-hist" id="find-out"></div>
         </div>
       </details>
-      <details class="ide-pal" open><summary>색</summary>
+      <details class="ide-pal"><summary>색상 견본</summary>
+        <div class="ide-hint" style="padding:0 12px 6px">이 책이 쓰는 색입니다
+          (인디자인의 색상 견본과 같습니다 — 패널은 늘 여기, 색은 책마다 다릅니다).</div>
         <div class="ide-in" id="pal-color"></div>
       </details>
-      <details class="ide-pal"><summary>치수</summary>
+      <details class="ide-pal"><summary>문서 설정</summary>
+        <div class="ide-hint" style="padding:0 12px 6px">판면·간격처럼 책 전체에
+          걸리는 값입니다.</div>
         <div class="ide-in" id="pal-size"></div>
       </details>
       <details class="ide-pal"><summary>편집 이력</summary>
