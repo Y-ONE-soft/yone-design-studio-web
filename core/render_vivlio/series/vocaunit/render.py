@@ -255,9 +255,13 @@ class Renderer(object):
         k = (" off" if off else "") + (f" p{part}" if part else "")
         st = (f' style="font-size:{fit_pt(tab, self.tab_mm, 12)}pt"'
               if tab else "")
-        return (f'<div class="hdr-l{k}"><i{st}>{esc(tab)}</i></div>'
-                f'<div class="hdr-r{k}"><b>{esc(self.brand)}</b></div>'
-                f'<div class="foot-l{k}"></div><div class="foot-r{k}"></div>')
+        # 머리·꼬리도 지면의 일부라 고를 수 있어야 한다. 브랜드는 책 설정에서,
+        # 나머지는 조판이 만든 것이다.
+        return (f'<div{_refs.mark("#머리 탭", "hdr-l" + k)}><i{st}>{esc(tab)}</i></div>'
+                f'<div{_refs.mark("book.brand", "hdr-r" + k)}>'
+                f'<b>{esc(self.brand)}</b></div>'
+                f'<div{_refs.mark("#꼬리(왼쪽)", "foot-l" + k)}></div>'
+                f'<div{_refs.mark("#꼬리(오른쪽)", "foot-r" + k)}></div>')
 
     def _mir(self):
         self._op += 1
@@ -276,11 +280,16 @@ class Renderer(object):
         slot = float(self.o.get("head_slot_mm", 12.2))
         st = f' style="font-size:{fit_pt(ttl, slot, 14)}pt"' if ttl else ""
         sp = f' style="font-size:{fit_pt(top, slot, 7.5)}pt"' if top else ""
-        return (f'<div class="unit-head{self._mir()}">'
+        # 이 셋은 **원고에서 온 글**이라 그 자리에서 고칠 수 있다.
+        ur = _refs.of(unit)
+        return (f'<div{_refs.mark("#단원 머리", "unit-head" + self._mir())}>'
                 '<u class="mk">DAYOPEN</u>'
-                + (f'<span class="top"{sp}>{esc(top)}</span>' if top else "")
-                + (f'<span class="ttl"{st}>{esc(ttl)}</span>' if ttl else "")
-                + f'<span class="num">{esc(num)}</span></div>')
+                + (f'<span{_refs.mark(ur and ur + ".head_top", "top")}{sp}>'
+                   f'{esc(top)}</span>' if top else "")
+                + (f'<span{_refs.mark(ur and ur + ".head_ttl", "ttl")}{st}>'
+                   f'{esc(ttl)}</span>' if ttl else "")
+                + f'<span{_refs.mark(ur and ur + ".head_num", "num")}>'
+                  f'{esc(num)}</span></div>')
 
     # ── 표제어 항목 ─────────────────────────────────────────────────────
     def word(self, w):
@@ -451,7 +460,8 @@ class Renderer(object):
 
 
 def write(cfg, data, build_dir, mirror=(), sample=False, log=None):
-    _refs.index(data, ("units", ("words",)))   # 클릭 편집용 자리표
+    # 클릭 편집용 자리표 — **단원 자체**도 넣는다(머리 글이 거기서 온다)
+    _refs.index_paths(data, [("units",), ("units", "words")])
     r = Renderer(cfg, mirror=mirror, sample=sample)
     text = r.document(data)
     os.makedirs(build_dir, exist_ok=True)

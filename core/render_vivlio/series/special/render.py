@@ -240,10 +240,12 @@ def runhead(unit_top, unit_no, label, main, sub, book, off=False):
            + (f'<b>{esc(sub)}</b>' if sub else '') + '</i></span>')
     # 꼬리말 — 왼쪽 면은 교재명, 오른쪽 면은 단원명
     unit = "  ·  ".join(x for x in (f"{unit_top} {unit_no}".strip(), main) if x)
-    return (f'<div class="rhL{o}"><div class="hd hdL">'
+    # 머리·꼬리도 지면의 일부라 고를 수 있어야 한다. 책 이름은 설정에서 온다.
+    return (f'<div{_refs.mark("#머리말(왼쪽)", "rhL" + o)}><div class="hd hdL">'
             f'<span class="blk"></span>{chip}{txt}</div></div>'
-            f'<div class="rhR{o}"><div class="hd hdR"><span class="bkw">'
-            f'<span class="bk">{esc(book)}</span>'
+            f'<div{_refs.mark("#머리말(오른쪽)", "rhR" + o)}>'
+            f'<div class="hd hdR"><span class="bkw">'
+            f'<span{_refs.mark("book.running", "bk")}>{esc(book)}</span>'
             f'<i class="crest"></i></span></div></div>'
             f'<div class="pfL{o}"><div class="ft ftL">'
             f'<span class="pn"></span>{esc(book)}</div></div>'
@@ -257,7 +259,7 @@ def title_block(kind, num, label, text, sub=""):
     n = f'<span class="tn">{esc(num)}</span>' if num else ""
     lb = f'<i class="tk">{esc(label)}</i>' if label else ""
     sb = f'<div class="tsub">{sub}</div>' if sub else ""
-    return (f'<div class="ttl {kind}">{n}'
+    return (f'<div{_refs.mark("#큰 제목", "ttl " + kind)}>{n}'
             f'<div class="tt">{lb}<h2 class="th2">{esc(text)}</h2>{sb}</div>'
             f'</div>')
 

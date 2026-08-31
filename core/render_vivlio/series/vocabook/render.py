@@ -134,14 +134,19 @@ class Renderer(object):
         off=True 는 간지처럼 Day 표식이 없는 면 — 직전 Day 값이 남지 않도록
         **빈 값을 명시적으로 흘려보내는 것**이 요점이다.
         """
+        # 머리·꼬리도 지면의 일부라 **고를 수 있어야 한다.** 자리표 머리글자가
+        # 곧 출처다 — 브랜드·책 제목은 책 설정에서 오고, 나머지는 조판물이다.
         k = " off" if off else ""
         fk = " off" if foot_off else ""
-        return (f'<div class="tab-l{k}"><i>{esc(num)}</i></div>'
-                f'<div class="hdr-big">{esc(self.brand)}</div>'
-                f'<div class="idx{k}" style="--idx-step:{step}mm">{esc(tab)}</div>'
-                f'<div class="foot-l{fk}"><span class="pg"></span>'
+        return (f'<div{_refs.mark("#탭(왼쪽)", "tab-l" + k)}><i>{esc(num)}</i></div>'
+                f'<div{_refs.mark("book.brand", "hdr-big")}>{esc(self.brand)}</div>'
+                f'<div{_refs.mark("#머리 라벨", "idx" + k)}'
+                f' style="--idx-step:{step}mm">{esc(tab)}</div>'
+                f'<div{_refs.mark("#꼬리말(왼쪽)", "foot-l" + fk)}>'
+                f'<span class="pg"></span>'
                 f'<span class="sep">|</span>{esc(self.title)}</div>'
-                f'<div class="foot-r{fk}">{esc(tab)}<span class="sep">|</span>'
+                f'<div{_refs.mark("#꼬리말(오른쪽)", "foot-r" + fk)}>{esc(tab)}'
+                f'<span class="sep">|</span>'
                 f'<span class="pg"></span></div>')
 
     def day_head(self, day, label="DAY", ko=False, title="", mark=True):
@@ -151,13 +156,14 @@ class Renderer(object):
         상단 여백을 줄여 쓰므로, 다음 면에 큰 밴드가 깔리면 본문과 겹친다.
         """
         b = f'<b class="ko">{esc(str(day))}</b>' if ko else f'<b>{day}</b>'
-        return ('<div class="day-head">'
+        return (f'<div{_refs.mark("#DAY 머리", "day-head")}>'
                 + ('<u class="mk">DAYOPEN</u>' if mark else '')
                 + '<span class="band"></span>'
-                + '<span class="dia"><i>'
+                + f'<span{_refs.mark("#DAY 마름모", "dia")}><i>'
                 + (f'<s>{esc(label)}</s>' if label else '')
                 + f'{b}</i></span>'
-                + (f'<span class="dh-title">{esc(title)}</span>' if title else '')
+                + (f'<span{_refs.mark("#DAY 제목", "dh-title")}>{esc(title)}</span>'
+                   if title else '')
                 + '</div>')
 
     # ── Part 1 ──────────────────────────────────────────────────────────
