@@ -139,7 +139,7 @@ def test_hyphen_artifacts_are_reported_not_fixed():
 # ── 렌더 규칙 ─────────────────────────────────────────────────────────
 def test_blank_width_follows_answer_length():
     h = R._blank("owe")
-    assert 'width:2.052em' in h and ">o<" not in h
+    assert 'width:2.052em' in h and '<span class="bl">o<' in h
     assert R._blank("obligations").count("width:7.524em") == 1
     assert R._blank("") == ""
 
@@ -150,7 +150,8 @@ def test_item_marker_is_bold_only_for_A_style_labels():
 
 
 def test_spaces_in_manuscript_are_preserved():
-    assert "&nbsp;" in R.esc("a   b")
+    """원고의 연속 공백은 의미 있는 간격이다 — HTML 은 그냥 두면 줄인다."""
+    assert R.esc("a   b") == "a\u00a0\u00a0 b"
 
 
 def test_grammar_keeps_brackets_bold():
@@ -167,8 +168,9 @@ def test_tall_block_gets_two_slots():
 def test_expected_pages_accounts_for_two_slot_blocks():
     sec = {"kind": "arrange", "blocks": [{}] * 6}
     assert V.expected_pages(sec, {}) == [0, 0, 0, 0, 1, 1]
-    # 두 번째 지문이 한 단을 통째로 쓰면 그 뒤가 한 칸씩 밀린다
-    assert V.expected_pages(sec, {1: 2}) == [0, 0, 0, 0, 1, 1]
+    # 두 칸짜리는 **빈 단**이 필요하다 — 앞 단의 남은 칸은 비고 뒤가 밀린다
+    # (`column-fill: auto` 가 실제로 이렇게 흘린다)
+    assert V.expected_pages(sec, {1: 2}) == [0, 0, 1, 1, 1, 1]
     assert V.expected_pages({"kind": "vocab", "blocks": [{}] * 3}, {}) == [0, 1, 2]
     assert V.expected_pages({"kind": "grammar", "blocks": [{}] * 5}, {}) == \
         [0, 0, 1, 1, 2]

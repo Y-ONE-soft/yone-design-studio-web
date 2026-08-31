@@ -530,7 +530,10 @@ def _origin(path, root=IDML_ROOT):
     dirs, base = rel[:-1], os.path.splitext(rel[-1])[0]
     term = next((d for d in dirs if re.match(r"^\d{2}-\d", d)), "")
     rest = [d for d in dirs if d != term]
-    school = rest[-1] if rest else re.split(r"[_\s(]", base)[0]
+    # 학교는 **맨 앞** 폴더다. 그 아래는 갈래 폴더(`어휘` 등)라 학교가 아니다 —
+    # 뒤에서 세면 `광문1/어휘/…` 가 학교 '어휘' 가 되고, 학년을 못 얻어
+    # 지문번호 키에서 고1·고2 구분이 통째로 빠진다(실측).
+    school = rest[0] if rest else re.split(r"[_\s(]", base)[0]
     return term, school
 
 
