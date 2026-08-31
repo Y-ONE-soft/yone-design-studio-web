@@ -69,6 +69,30 @@ METRICS = {
     "memtest_lead": 20.0,
 }
 
+# ── 지면 배치 변형 — 마스터별 (완성본 실측) ────────────────
+#   A = 교과서·EBS(삽화 없음): 지문이 길고 번역이 아래 전폭 띠
+#   C = 모의고사(삽화 있음):   지문이 짧고 삽화 옆에 번역
+#   E = EBS 변형:              A 와 같되 지문이 더 길다
+LAYOUTS = {
+    "A": {"passage_h": 127.0, "rule": None,
+          "chip_y": 152.7, "chip_trn_x": 114.0, "illust": None,
+          "trans": [15.0, 155.5, 115.0]},
+    "C": {"passage_h": 118.0, "rule": 148.0,
+          "chip_y": 145.2, "chip_trn_x": 114.0, "chip_pic_x": 56.5,
+          "illust": [12.88, 149.1, 59.62, 45.9],
+          "trans": [74.0, 150.0, 56.0]},
+    "E": {"passage_h": 131.0, "rule": None,
+          "chip_y": 158.0, "chip_trn_x": 114.0, "illust": None,
+          "trans": [15.0, 161.0, 115.0]},
+}
+
+
+def layout_for(passage):
+    """지문 → 배치 이름. **삽화 유무가 가른다**(마스터를 그렇게 나눠 놨다)."""
+    if passage.get("illust"):
+        return "C"
+    return passage.get("layout") or "A"
+
 
 def _mm(v):
     return "%gmm" % v

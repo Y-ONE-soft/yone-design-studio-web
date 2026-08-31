@@ -653,6 +653,84 @@ def api_assist_undo():
     return jsonify({"ok": True, "restored": back})
 
 
+@bp.route("/api/book-studio/table", methods=["POST"])
+def api_table():
+    """표 넣기·행·열 늘리고 줄이기.
+
+    표도 **원고 자료**다 — 그래서 편집 이력에 연산으로 쌓인다(⌘Z 로 되돌아간다).
+    자리는 고른 문항의 `blocks` 목록이다.
+    """
+    from core.render_vivlio import book as bookmod
+    from core.render_vivlio import edits as ed
+    from core.render_vivlio import table as tbl
+    p = request.get_json(silent=True) or {}
+    d, meta = _book_dir(p.get("b"))
+    if not d:
+        return jsonify({"error": "모르는 책"}), 404
+    ref = (p.get("ref") or "").strip()
+    if not ref or any(c in ref for c in "/\\ \n") or ".." in ref:
+        return jsonify({"error": "이상한 자리표"}), 400
+    act = p.get("action")
+    cfg = bookmod.load(d)
+    cur, _raw = ed.preview(cfg)
+
+    if act == "insert":
+        # 고른 자리가 든 **블록 목록**을 찾아 그 뒤에 넣는다
+        parts = ref.split(".")
+        while parts and parts[-1] != "blocks":
+            if len(parts) >= 2 and parts[-2] == "blocks":
+                break
+            parts.pop()
+        if len(parts) < 2 or parts[-2] != "blocks":
+            return jsonify({"error": "표를 넣을 자리가 아닙니다 — "
+                                     "문항 안의 지문·선지를 고르고 다시 해 보세요"}), 409
+        at = int(parts[-1]) + 1
+        base = ".".join(parts[:-1])
+        cols = max(1, min(int(p.get("cols") or 2), 12))
+        rows = max(1, min(int(p.get("rows") or 2), 60))
+        st = ed.push(cfg, {"op": "insert", "ref": f"{base}.{at}",
+                           "v": tbl.new(cols, rows, bool(p.get("head", True))),
+                           "note": "표 넣기"})
+        return jsonify({"ok": True, "ref": f"{base}.{at}",
+                        "history": {"head": st["head"], "total": len(st["ops"])}})
+
+    # 행·열 늘리고 줄이기 — 표 블록 자체를 통째로 갈아 끼운다
+    block = ed.get(cur, ref)
+    if not isinstance(block, dict) or block.get("t") != "table":
+        return jsonify({"error": "표가 아닙니다"}), 409
+    b = json.loads(json.dumps(block))          # 사본
+    rows = b.setdefault("rows", [])
+    ncol = len(b.get("head") or (rows[0] if rows else [])) or 1
+    if act == "addrow":
+        rows.append(["" for _ in range(ncol)])
+    elif act == "delrow":
+        if len(rows) <= 1:
+            return jsonify({"error": "마지막 줄은 지울 수 없습니다"}), 409
+        rows.pop()
+    elif act == "addcol":
+        if b.get("head") is not None:
+            b["head"].append("")
+        for r in rows:
+            r.append("")
+    elif act == "delcol":
+        if ncol <= 1:
+            return jsonify({"error": "마지막 칸은 지울 수 없습니다"}), 409
+        if b.get("head"):
+            b["head"].pop()
+        for r in rows:
+            if r:
+                r.pop()
+    elif act == "delete":
+        st = ed.push(cfg, {"op": "delete", "ref": ref, "note": "표 지우기"})
+        return jsonify({"ok": True,
+                        "history": {"head": st["head"], "total": len(st["ops"])}})
+    else:
+        return jsonify({"error": f"모르는 동작: {act}"}), 400
+    st = ed.push(cfg, {"op": "set", "ref": ref, "v": b, "note": "표 " + act})
+    return jsonify({"ok": True,
+                    "history": {"head": st["head"], "total": len(st["ops"])}})
+
+
 @bp.route("/api/book-studio/fonts")
 def api_fonts():
     """이 책이 **쓸 수 있는 서체**.

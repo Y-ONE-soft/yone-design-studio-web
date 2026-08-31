@@ -182,6 +182,16 @@ def css_text(cfg, series):
             ":root {\n" + "\n".join(lines) + "\n}\n")
 
 
+def table_css():
+    """표 기본 모양 — 계열 테마가 덮어써도 된다.
+
+    작업대에서 넣은 표는 어느 계열에서나 같은 모양이어야 한다. 계열 테마마다
+    따로 적으면 계열이 늘 때마다 또 적어야 한다.
+    """
+    from core.render_vivlio import table as _t
+    return _t.CSS
+
+
 def styles_text(cfg):
     """`config.styles` → CSS 규칙. **단락 스타일 패널**이 여기에 쓴다.
 
@@ -215,7 +225,25 @@ def write(cfg, series, build_dir, name="knobs.css"):
     """
     from core.render_vivlio import stage
     return stage.write_css(build_dir, name,
-                           css_text(cfg, series) + styles_text(cfg))
+                           css_text(cfg, series) + styles_text(cfg)
+                           + (table_css() if _has_table(cfg) else ""))
+
+
+def _has_table(cfg):
+    """이 책에 **표가 실제로 있나.**
+
+    표 CSS 는 아무 것도 안 맞으면 무해하지만, 없는 책까지 넣으면 `knobs.css` 가
+    책마다 달라질 이유가 없는데 달라진다. 있는 책에만 넣는다.
+    """
+    import os
+    p = cfg.path("data.json")
+    if not os.path.exists(p):
+        return False
+    try:
+        with open(p, encoding="utf-8") as f:
+            return '"table"' in f.read()
+    except OSError:
+        return False
 
 
 # ── 값 바꾸기 (편집기·CLI 공용) ───────────────────────────────────

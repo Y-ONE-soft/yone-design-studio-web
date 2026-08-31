@@ -113,6 +113,7 @@ def plain(x):
 # ── 클릭 편집용 자리표 — 공용 구현을 쓴다(core/render_vivlio/refs.py)
 from core.render_vivlio import refs as _refs
 from core.render_vivlio import richtext as _rt
+from core.render_vivlio import table as _tbl
 
 REF_SPEC = ("lessons", ("vocab", "problems", "answers"))
 
@@ -264,6 +265,10 @@ def render_question(item, style=''):
             for ln in b['lines']:
                 o.append(f'<p>{inl(ln)}</p>')
             o.append('</div>')
+        elif t == 'table':
+            # 작업대가 넣은 표. 자료 모양과 HTML 은 공용(`core/table.py`)이라
+            # 계열이 늘어도 여기 한 줄이면 된다.
+            o.append(_tbl.html(b, ref=br, inl=lambda x: inl(x, blank=True)))
         elif t == 'crit':
             o.append('<div class="crit">')
             o.append(f'<p>{html.escape(b["title"])}</p>')

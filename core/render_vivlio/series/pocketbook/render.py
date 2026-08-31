@@ -80,31 +80,43 @@ def paras_html(paras, cls=""):
 
 # ── 지면 ──────────────────────────────────────────────────
 def left_page(p, M, folio):
+    """왼쪽 면. 배치는 삽화 유무가 가른다(A/C/E) — theme.LAYOUTS."""
+    L = dict(T.LAYOUTS[T.layout_for(p)])
     b = M["badge"]
-    ps = M["passage"]
+    ps = list(M["passage"])
+    ps[3] = L["passage_h"]
     ch = M["chip"]
-    il = M["illust"]
-    tr = M["trans"]
+    il = L.get("illust")
+    tr = L["trans"]
+    scale = p.get("scale", 1.0)
     parts = []
     tag = p.get("no") or p.get("label") or ""
     if tag:
         parts.append('<div class="badge" style="%s">%s</div>'
                      % (_box(b[0], b[1], b[2], b[3]), ESC(tag)))
-    parts.append('<div class="passage" style="%s;margin-top:%gpt">%s</div>'
+    sc = ""
+    if scale != 1.0:
+        sc = ";font-size:%gpt;line-height:%gpt" % (
+            M["passage_size"] * scale, M["passage_lead"] * scale)
+    parts.append('<div class="passage" style="%s;margin-top:%gpt%s">%s</div>'
                  % (_box(ps[0], ps[1], ps[2], ps[3]),
-                    M["first_baseline_fix"], runs_html(p["passage_runs"])))
-    parts.append('<div class="rule" style="%s"></div>'
-                 % _box(M["margin_l"], M["rule_y"], ps[2]))
-    if p.get("illust"):
+                    M["first_baseline_fix"], sc, runs_html(p["passage_runs"])))
+    if L.get("rule"):
+        parts.append('<div class="rule" style="%s"></div>'
+                     % _box(M["margin_l"], L["rule"], ps[2]))
+    if il and p.get("illust"):
         parts.append('<div class="chip" style="%s">PICTURE</div>'
-                     % _box(M["chip_pic_x"], M["chip_y"], ch[0], ch[1]))
+                     % _box(L["chip_pic_x"], L["chip_y"], ch[0], ch[1]))
         parts.append('<div class="illust" style="%s"><img src="%s" alt=""></div>'
                      % (_box(il[0], il[1], il[2]), ESC(p["illust"])))
     parts.append('<div class="chip" style="%s">TRANSLATION</div>'
-                 % _box(M["chip_trn_x"], M["chip_y"], ch[0], ch[1]))
+                 % _box(L["chip_trn_x"], L["chip_y"], ch[0], ch[1]))
     if p.get("translation"):
-        parts.append('<div class="translation" style="%s"><p>%s</p></div>'
-                     % (_box(tr[0], tr[1], tr[2]), ESC(p["translation"])))
+        ts = p.get("trans_scale", 1.0)
+        st = "" if ts == 1.0 else ";font-size:%gpt;line-height:%gmm" % (
+            M["trans_size"] * ts, M["trans_lead"] * ts)
+        parts.append('<div class="translation" style="%s%s"><p>%s</p></div>'
+                     % (_box(tr[0], tr[1], tr[2]), st, ESC(p["translation"])))
     parts.append('<div class="folio" style="%s"><b>%s</b> POCKET BOOK</div>'
                  % (_box(12.9, M["folio_y"]), folio))
     return '<section class="pg"><div class="trim">%s</div></section>' % "".join(parts)
