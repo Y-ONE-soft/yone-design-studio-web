@@ -317,6 +317,9 @@
             <button class="ide-b" id="find-all">모두 바꾸기</button>
             <label class="ide-hint" style="display:flex;gap:4px;align-items:center">
               <input type="checkbox" id="find-case"> 대소문자</label>
+            <label class="ide-hint" style="display:flex;gap:4px;align-items:center"
+                   title="인디자인의 GREP 과 같습니다. 예) ^\d+\. · (가|나)다">
+              <input type="checkbox" id="find-regex"> 정규식</label>
           </div>
           <div class="ide-hist" id="find-out"></div>
         </div>
@@ -1169,7 +1172,8 @@
   function find(replaceAll) {
     var q = $('find-q').value;
     if (!q) { msg('찾을 말을 적으세요'); return; }
-    var body = { b: key, q: q, case: $('find-case').checked };
+    var body = { b: key, q: q, case: $('find-case').checked,
+                 regex: $('find-regex').checked };
     if (replaceAll) body.replace = $('find-r').value;
     api('/api/book-studio/find', body).then(function (d) {
       if (d.error) { msg('✗ ' + d.error); return; }
@@ -1605,15 +1609,29 @@
     var t = e.target; while (t && !t.dataset.op && t !== this) t = t.parentNode;
     if (t && t.dataset && t.dataset.op) paraOp(t.dataset.op);
   });
-  $('ide-zo').addEventListener('click', function () {
-    zoom = Math.max(.2, zoom - .15); viewer && viewer.setOptions({ zoom: zoom, fitToScreen: false });
-  });
-  $('ide-zi').addEventListener('click', function () {
-    zoom = Math.min(4, zoom + .15); viewer && viewer.setOptions({ zoom: zoom, fitToScreen: false });
-  });
-  $('ide-fit').addEventListener('click', function () {
-    zoom = 1; viewer && viewer.setOptions({ fitToScreen: true });
-  });
+  /** 배율. 인디자인처럼 **몇 %인지** 늘 보인다 — 보고 있는 크기를 알아야
+   *  "이 정도면 되겠다" 를 판단할 수 있다. */
+  function setZoom(z) {
+    zoom = Math.max(.1, Math.min(8, z));
+    if (viewer) viewer.setOptions({ zoom: zoom, fitToScreen: false });
+    $('ide-fit').textContent = Math.round(zoom * 100) + '%';
+    msg(Math.round(zoom * 100) + '%');
+  }
+  function fitScreen() {
+    zoom = 1;
+    if (viewer) viewer.setOptions({ fitToScreen: true });
+    $('ide-fit').textContent = '맞춤';
+    msg('화면에 맞춤');
+  }
+  $('ide-zo').addEventListener('click', function () { setZoom(zoom / 1.15); });
+  $('ide-zi').addEventListener('click', function () { setZoom(zoom * 1.15); });
+  $('ide-fit').addEventListener('click', fitScreen);
+  // 인디자인처럼 ⌥휠(또는 ⌘휠)로 확대·축소
+  $('ide-canvas') && $('ide-canvas').addEventListener('wheel', function (e) {
+    if (!(e.altKey || e.metaKey || e.ctrlKey)) return;
+    e.preventDefault();
+    setZoom(zoom * (e.deltaY < 0 ? 1.1 : 1 / 1.1));
+  }, { passive: false });
   function setSpread(on) {
     spread = on;
     $('ide-spread').textContent = spread ? '낱쪽' : '펼침';
@@ -1885,32 +1903,61 @@
     if (name === 'sel') closeEdit(true);
   }
 
+  // ── 단축키 (인디자인 관례를 그대로) ─────────────────────
+  //
+  //   ⌘Z / ⇧⌘Z   되돌리기 / 다시 실행 — **글도 디자인도 한 이력**이다
+  //   ⌘F          찾기          ⌘S  저장(=다시 조판)
+  //   ⌘B ⌘U ⌘I   굵게·밑줄·기울임 (고른 글자에)
+  //   ⌘+ ⌘- ⌘0  확대·축소·화면에 맞춤     ⌘1 100%
+  //   ⌘↵          고친 글 저장   Esc  취소
+  //   ←/→ 또는 PgUp/PgDn        앞/뒤 면
+  //   V T P       선택·글자·문단 도구 (편집 중이 아닐 때)
+  //   ⌘;          안내선 보기 켜고 끄기
   function onKey(e) {
     var mod = e.metaKey || e.ctrlKey;
+    var k = (e.key || '').toLowerCase();
+
     // 찾아가는 중이면 Esc 가 **그것부터** 멈춘다(편집 중이든 아니든)
     if (e.key === 'Escape' && seekBusy) {
       e.preventDefault(); stopSeek(); msg('멈췄습니다'); return;
     }
+    // 되돌리기는 **어디서든** 먹어야 한다(편집 중이라도)
+    if (mod && k === 'z') {
+      e.preventDefault(); (e.shiftKey ? $('ide-redo') : $('ide-undo')).click(); return;
+    }
     if (editEl) {
       if (e.key === 'Escape') { e.preventDefault(); closeEdit(true); msg(''); return; }
       if (mod && e.key === 'Enter') { e.preventDefault(); commit(); return; }
-      if (mod && 'bui'.indexOf((e.key || '').toLowerCase()) >= 0) {
-        e.preventDefault(); fmt(e.key.toLowerCase()); return; }
-      return;                                   // 편집 중엔 단축키를 가로채지 않는다
+      if (mod && 'bui'.indexOf(k) >= 0) { e.preventDefault(); fmt(k); return; }
+      return;                                   // 편집 중엔 나머지를 안 가로챈다
     }
-    if (mod && (e.key || '').toLowerCase() === 'f') {
-      e.preventDefault(); $('ide-find-t').click(); return;
+    if (mod) {
+      if (k === 'f') { e.preventDefault(); $('ide-find-t').click(); return; }
+      if (k === 's') { e.preventDefault(); rebuild(''); return; }
+      if (k === '0') { e.preventDefault(); $('ide-fit').click(); return; }
+      if (k === '1') { e.preventDefault(); setZoom(1); return; }
+      if (k === '=' || k === '+') { e.preventDefault(); $('ide-zi').click(); return; }
+      if (k === '-') { e.preventDefault(); $('ide-zo').click(); return; }
+      if (k === ';') {
+        e.preventDefault();
+        var b1 = document.querySelector('#ide-view button[data-view="margin"]');
+        if (b1) b1.click();
+        return;
+      }
+      return;
     }
-    if (mod && (e.key || '').toLowerCase() === 'z') {
-      e.preventDefault(); (e.shiftKey ? $('ide-redo') : $('ide-undo')).click(); return;
+    if (e.altKey) return;
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+      e.preventDefault(); $('ide-next').click(); return;
     }
-    if (!mod && !e.altKey) {
-      var k = (e.key || '').toLowerCase();
-      if (k === 'v') setTool('sel');
-      else if (k === 't') setTool('text');
-      else if (k === 'p') setTool('para');
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      e.preventDefault(); $('ide-prev').click(); return;
     }
+    if (k === 'v') setTool('sel');
+    else if (k === 't') setTool('text');
+    else if (k === 'p') setTool('para');
   }
+
   // ⚠ 글을 고치는 동안 커서는 **지면 문서 안**에 있다. 화면 문서에만 걸면
   //   ⌘↵(저장)·⌘B(굵게)·Esc 가 전부 안 먹는다.
   document.addEventListener('keydown', onKey);

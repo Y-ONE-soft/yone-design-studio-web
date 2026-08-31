@@ -799,10 +799,18 @@ def api_find():
     q = p.get("q") or ""
     if not q:
         return jsonify({"error": "찾을 말이 없다"}), 400
+    # 정규식(인디자인의 GREP). 틀린 식은 **무엇이 틀렸는지** 말해 준다 —
+    # 조용히 0건이 나오면 글이 없는 건지 식이 틀린 건지 알 수 없다.
+    rx = None
+    if p.get("regex"):
+        try:
+            rx = re.compile(q, 0 if p.get("case") else re.I)
+        except re.error as e:
+            return jsonify({"error": f"정규식이 틀렸습니다: {e}"}), 400
     cfg = bookmod.load(d)
     cur, _raw = ed.preview(cfg)
     # 자리표를 심는 것과 **같은 자리들**만 찾는다 — 찾은 것을 고칠 수 있어야 하니까
-    hits = _scan(cur, q, bool(p.get("case")))
+    hits = _scan(cur, q, bool(p.get("case")), rx=rx)
     rep = p.get("replace")
     if rep is None:
         return jsonify({"hits": hits[:300], "total": len(hits)})
@@ -815,7 +823,13 @@ def api_find():
             continue
         old = ed.get(cur, h["ref"])
         txt = rt.to_text(old)
-        new = txt.replace(q, rep) if p.get("case") else _ireplace(txt, q, rep)
+        if rx is not None:
+            try:
+                new = rx.sub(rep, txt)
+            except re.error as e:
+                return jsonify({"error": f"바꿀 말이 틀렸습니다: {e}"}), 400
+        else:
+            new = txt.replace(q, rep) if p.get("case") else _ireplace(txt, q, rep)
         if new == txt:
             continue
         ed.push(cfg, {"op": "set", "ref": h["ref"],
@@ -848,7 +862,7 @@ def _is_rich_seg(x):
             and set(x) <= _RICH_KEYS)
 
 
-def _scan(data, q, case=False, path="", out=None, depth=0):
+def _scan(data, q, case=False, path="", out=None, depth=0, rx=None):
     """글자가 들어 있는 자리를 훑는다. 자리표와 같은 점 경로를 돌려준다."""
     from core.render_vivlio import richtext as rt
     if out is None:
@@ -856,6 +870,8 @@ def _scan(data, q, case=False, path="", out=None, depth=0):
     if depth > 12 or len(out) > 2000:
         return out
     def hit(text):
+        if rx is not None:
+            return bool(rx.search(text))
         return (q in text) if case else (q.lower() in text.lower())
     if isinstance(data, str):
         if hit(data):
@@ -865,7 +881,7 @@ def _scan(data, q, case=False, path="", out=None, depth=0):
         if _is_rich_seg(data):                               # 서식 조각
             return out
         for k, v in data.items():
-            _scan(v, q, case, f"{path}.{k}" if path else k, out, depth + 1)
+            _scan(v, q, case, f"{path}.{k}" if path else k, out, depth + 1, rx)
         return out
     if isinstance(data, list):
         # 서식 조각 목록이면 **그 목록 전체**가 한 자리다
@@ -876,7 +892,7 @@ def _scan(data, q, case=False, path="", out=None, depth=0):
                 out.append({"ref": path, "text": t[:120]})
             return out
         for i, v in enumerate(data):
-            _scan(v, q, case, f"{path}.{i}", out, depth + 1)
+            _scan(v, q, case, f"{path}.{i}", out, depth + 1, rx)
     return out
 
 

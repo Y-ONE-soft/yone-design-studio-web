@@ -89,8 +89,8 @@ HEAD = ("[포켓북 원고 양식]  표 하나 = 지문 하나. "
         "지금 쓰던 플로우노트 원고 그대로이고, 맨 아래 '동반의어' 행 하나만 새로 씁니다.")
 
 
-def _texts(cell):
-    return [p for p in cell.iter(P + "p")]
+def _para_text(p):
+    return "".join(t.text or "" for t in p.iter(P + "t"))
 
 
 def _set_lines(cell, lines):
@@ -107,6 +107,12 @@ def _set_lines(cell, lines):
     for i, line in enumerate(lines):
         p = tmpl if i == 0 else _clone(tmpl)
         t = p.find(".//" + P + "t")
+        if t is None:                       # 빈 셀은 run 만 있고 t 가 없다
+            run = p.find(P + "run")
+            if run is None:
+                run = ET.SubElement(p, P + "run")
+                run.set("charPrIDRef", "3")
+            t = ET.SubElement(run, P + "t")
         t.text = line
         if i:
             sub.append(p)
@@ -134,19 +140,25 @@ def build(out_path):
         ET.register_namespace(pfx, uri)
     root = ET.fromstring(sec)
 
-    # 표를 품은 문단만 남긴다
+    # ⚠ 표는 **한 run 안에 형제로 여러 개** 들어 있다(원본은 문단 2개에 표 19개).
+    #   문단이나 run 을 통째로 지우면 표가 딸려 오거나 남는다 → tbl 을 하나씩 뗀다.
     body = root
-    para_of_tbl = []
-    for p in body.findall(P + "p"):
-        if p.find(".//" + P + "tbl") is not None:
-            para_of_tbl.append(p)
-    keep = para_of_tbl[:len(SAMPLES)]
-    for p in list(body.findall(P + "p")):
-        if p not in keep:
-            body.remove(p)
+    parent = {}
+    for anc in body.iter():
+        for ch in list(anc):
+            parent[id(ch)] = anc
+    kept_tbls = []
+    for t in list(body.iter(P + "tbl")):
+        if len(kept_tbls) < len(SAMPLES):
+            kept_tbls.append(t)
+        else:
+            parent[id(t)].remove(t)
+    # 표가 빠져 알맹이가 없어진 문단은 지운다
+    for para in list(body.findall(P + "p")):
+        if not list(para.iter(P + "tbl")) and not _para_text(para).strip():
+            body.remove(para)
 
-    for para, spec in zip(keep, SAMPLES):
-        tbl = para.find(".//" + P + "tbl")
+    for tbl, spec in zip(kept_tbls, SAMPLES):
         rows = tbl.findall(P + "tr")
         title_cells = rows[0].findall(P + "tc")
         _set_lines(title_cells[0], [spec["title"]])
