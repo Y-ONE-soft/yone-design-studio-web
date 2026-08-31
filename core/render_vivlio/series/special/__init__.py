@@ -203,6 +203,50 @@ class SpecialSeries(Series):
         knobs.write(cfg, SpecialSeries(), build_dir)
         stage.stage_overrides(cfg, build_dir)
 
+    # ── 손잡이 ──
+    # 이 계열은 손잡이가 **하나도 없었다** — 작업대를 열어도 만질 것이 없었다.
+    # 색은 `palette.<부>.<역할>` 로 부마다 따로 있고(`palette_css()` 가
+    # `.v-vocab{--c-main:…}` 로 내보낸다) 판면은 `metrics` 다.
+    #
+    # ⚠ `css=` 를 주지 않는다. 손잡이의 `css` 는 `:root` 로 나가는데 이 계열의
+    #   색은 **부마다 범위가 다르므로** `:root` 에 부으면 세 부가 한 색이 된다.
+    #   대신 config 를 고치고 다시 조판한다(작업대가 저장하면 바로 돈다).
+    #
+    # ⚠ `resettable` 을 열지 않는다. 이 계열은 **config 가 곧 원본**이라
+    #   지우면 돌아갈 기본값이 없다(vocabook·vocaunit 과 같은 이유).
+    PARTS = (("vocab", "어휘"), ("grammar", "구문 · 어법"), ("reading", "독해"))
+    ROLES = (("main", "주색", "머리 띠 · 제목 · 강조"),
+             ("deep", "짙은 주색", "글자 · 선"),
+             ("pale", "옅은 바탕", "상자 바탕"),
+             ("line", "괘선", "테두리 · 밑줄"),
+             ("sub", "보조색(밝은 판)", "머리 띠 바탕처럼 넓은 면"),
+             ("subd", "보조색(짙은 판)", "글자 · 선 강조"),
+             ("subpl", "보조색 바탕", "보조 상자 바탕"))
+
+    def knobs(self, cfg):
+        K = knobs.Knob
+        pal = cfg.section("palette") or {}
+        out = []
+        for pid, pname in self.PARTS:
+            have = pal.get(pid) or {}
+            for role, rlabel, affects in self.ROLES:
+                if role not in have:
+                    continue          # 그 부가 안 쓰는 역할은 만들지 않는다
+                out.append(K(f"palette.{pid}.{role}", "color",
+                             f"{pname} · {rlabel}", affects=affects,
+                             group=pname, resettable=False))
+        mm = lambda key, label, lo, hi, affects: K(            # noqa: E731
+            "metrics." + key, "mm", label,
+            default=render_mod.DEFAULT_METRICS.get(key),
+            min=lo, max=hi, step=0.5, unit="mm", affects=affects, group="판면")
+        out += [
+            mm("margin_top", "위 여백", 10, 40, "판면 위"),
+            mm("margin_bottom", "아래 여백", 10, 40, "판면 아래 · 쪽번호"),
+            mm("margin_inner", "안쪽 여백", 10, 40, "제본 쪽"),
+            mm("margin_outer", "바깥쪽 여백", 8, 40, "책배 쪽"),
+        ]
+        return out
+
     # ── ④ 계열 검수 ──
     def verify(self, cfg, log, report):
         """원고 → PDF 전수 대조. 게이트가 세는 것은 '내용'이지 표식이 아니다.
