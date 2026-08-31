@@ -1,0 +1,232 @@
+/* 파이널 직전보충 계열(final) — 시험 직전 보충 교재(A4).
+ *
+ * A4(210×297) + 도련 3mm = 216×303mm. 수치는 인디자인 완성본 실측 이식
+ * (원본: 광문2 26-1-기말 `광문2_파이널(Vol1/Vol2)_내지.pdf`,
+ *  베이스라인 `tests/fixtures/final_viv_baseline.json`).
+ *
+ * 지면 규칙
+ *  · 판면 = 두 단(83mm) × 4mm 사이. 좌우 미러링(안쪽 22 / 바깥 18).
+ *  · ①문장배열 ②문장삽입 = **사분면 고정**(한 칸 126mm · 한 면 4지문).
+ *  · ③중요어휘 = 한 면 한 지문, 왼(빈칸)·오(정답) 두 단. 오른쪽 단만 회색 판.
+ *  · ④어법수정 ⑤서술형영작 = 한 단 한 지문(한 면 2지문). 행간이 넓다(쓰기용).
+ *  · 러닝 요소가 좌우로 다르다 — 짝수(왼쪽) 면은 **섹션 띠**, 홀수(오른쪽) 면은
+ *    **장 탭 + 워드마크**. 섹션 첫 면은 홀수라도 띠가 붙는다(흐름 안 `.sechdr`).
+ *
+ * 함정
+ *  · `@page` 배경은 층마다 position/size 를 명시할 것.
+ *  · 얇은 괘선은 **선 두께만 한 상자**(단색 그라디언트)로. 색 정지점은 사라진다.
+ *  · 마진 박스에 `position: relative` 를 주면 `running()` 이 덮인다.
+ *  · 전권 무채색이라 팔레트·2패스 면 지정이 없다.
+ */
+
+/* ------------------------------------------------------------------ 서체 */
+@font-face { font-family: Noto; font-weight: 400; src: url(fonts/NotoSansCJKkr-Regular.otf); }
+@font-face { font-family: Noto; font-weight: 500; src: url(fonts/NotoSansCJKkr-Medium.otf); }
+@font-face { font-family: Noto; font-weight: 700; src: url(fonts/NotoSansCJKkr-Bold.otf); }
+@font-face { font-family: Neolli; font-weight: 300; src: url(fonts/EliceDXNeolliOTF-Light.otf); }
+@font-face { font-family: Neolli; font-weight: 500; src: url(fonts/EliceDXNeolliOTF-Medium.otf); }
+@font-face { font-family: Neolli; font-weight: 700; src: url(fonts/EliceDXNeolliOTF-Bold.otf); }
+@font-face { font-family: Jalnan; src: url(fonts/JalnanOTF.otf); }
+
+/* ------------------------------------------------------------------ 색 */
+:root {
+  --ink:    #231f20;   /* 본문 먹 (인쇄 K100) */
+  --given:  #e6e7e8;   /* 주어진 문장 상자 */
+  --choice: #e2e3e4;   /* 영작 보기 상자 */
+  --panel:  #f2f2f3;   /* 중요어휘 정답 판 */
+  --mark:   #a7a9ac;   /* 답란 화살표 배지 */
+  --rule:   #6d6e71;   /* 답란 괘선 */
+
+  --slot:   126mm;     /* 사분면 한 칸 */
+  --colw:   83mm;
+  --colgap: 4mm;
+  --bodyh:  253mm;     /* 판면 높이 — 칸 두 개 + 1mm 여유(반올림) */
+}
+
+/* ------------------------------------------------------------------ 판형 */
+@page {
+  size: 216mm 303mm;
+  margin: 29.57mm 21mm 20.43mm 25mm;
+  /* 머리 괘선 — 전 면 공통. 도련까지 그어진다. */
+  background: linear-gradient(var(--ink), var(--ink)) no-repeat 0 23.00mm / 216mm 0.265mm;
+  @top-left-corner { content: none; }
+  @top-right-corner { content: none; }
+  @bottom-left-corner { content: none; }
+  @bottom-right-corner { content: none; }
+}
+
+/* 짝수(왼쪽) 면 — 섹션 띠 */
+@page :left {
+  margin-left: 21mm; margin-right: 25mm;
+  background:
+    linear-gradient(var(--ink), var(--ink)) no-repeat 13.90mm 0 / 12.75mm 23.26mm,
+    linear-gradient(var(--ink), var(--ink)) no-repeat 0 23.00mm / 216mm 0.265mm;
+  @top-left { content: element(bandrun); width: 190mm; vertical-align: top; }
+  @bottom-left { content: element(footL); width: 190mm; vertical-align: top; }
+}
+
+/* 홀수(오른쪽) 면 — 장 탭 + 워드마크 */
+@page :right {
+  margin-left: 25mm; margin-right: 21mm;
+  background:
+    linear-gradient(var(--ink), var(--ink)) no-repeat 155.00mm 0 / 43.40mm 13.00mm,
+    linear-gradient(var(--ink), var(--ink)) no-repeat 0 23.00mm / 216mm 0.265mm;
+  @top-right { content: element(headR); width: 190mm; vertical-align: top; }
+  @bottom-right { content: element(footR); width: 190mm; vertical-align: top; }
+}
+
+/* 중요어휘 면 — 판면이 3mm 내려간다(완성본 실측) */
+@page vocab { margin-top: 32.57mm; margin-bottom: 17.43mm; }
+
+/* 간지·크레딧 자리 — 마감 때 완성본 아트워크 면으로 바뀐다 */
+@page art {
+  background: none;
+  @top-left { content: none; } @top-right { content: none; }
+  @bottom-left { content: none; } @bottom-right { content: none; }
+}
+@page :blank {
+  background: none;
+  @top-left { content: none; } @top-right { content: none; }
+  @bottom-left { content: none; } @bottom-right { content: none; }
+}
+
+/* ------------------------------------------------------------------ 기본 */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { font: 8.5pt/4.235mm Noto, sans-serif; color: var(--ink); }
+body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
+
+.art { page: art; break-after: page; height: 240mm; }
+.art span { color: #fff; font-size: 1pt; }
+
+.sec { break-before: page; }
+.sec-arrange { page: arrange; }
+.sec-insert  { page: insert; }
+.sec-vocab   { page: vocab; }
+.sec-grammar { page: grammar; }
+.sec-writing { page: writing; }
+.secmark { height: 0; font-size: 0; line-height: 0; string-set: sec content(); }
+
+/* --------------------------------------------------------- 러닝: 섹션 띠 */
+/* 짝수 면 배경이 검은 사각형을 그리고, 여기서는 글자만 얹는다. */
+.bandrun { position: running(bandrun); }
+.bandrun, .sechdr .band {
+  height: 29.57mm; white-space: nowrap; margin-left: -7.10mm;
+}
+.band .n {
+  display: inline-block; width: 12.75mm; text-align: center;
+  font: 700 27.86pt/23.26mm Neolli; color: #fff;
+}
+.band .t {
+  font: 500 17.91pt/23.26mm Neolli; color: var(--ink);
+  padding-left: 6.34mm; vertical-align: 3.15mm;
+}
+
+/* 섹션 첫 면 — 홀수라도 띠가 붙는다. 흐름 맨 앞에 높이 0 으로 심는다. */
+.sechdr { position: relative; height: 0; }
+.sechdr .band {
+  position: absolute; left: -4.00mm; top: -29.57mm; width: 190mm;
+  margin-left: 0;
+}
+.sechdr .sq {                     /* 홀수 면에는 배경 사각형이 없다 */
+  position: absolute; left: -11.10mm; top: -29.57mm;
+  width: 12.75mm; height: 23.26mm; background: var(--ink);
+}
+
+/* ------------------------------------------------ 러닝: 장 탭 + 워드마크 */
+.headR { position: running(headR); height: 29.57mm; }
+.headR .tab {
+  display: block; width: 43.40mm; margin-left: auto; margin-right: -3.40mm;
+  text-align: center; font: 500 7.96pt/13.00mm Neolli; color: #fff;
+}
+.headR .wm {
+  display: block; text-align: right; padding-right: 1.94mm;
+  font: 500 7.96pt/7.00mm Neolli; color: var(--ink); letter-spacing: 0.35em;
+}
+
+/* ------------------------------------------------------------- 러닝: 꼬리 */
+.footL { position: running(footL); }
+.footR { position: running(footR); }
+.footL, .footR { font: 700 6pt/1 Neolli; color: var(--ink);
+                 white-space: pre; padding-top: 8.19mm; }
+.footL { text-align: left;  margin-left: -8.00mm; }
+.footR { text-align: right; margin-right: -8.00mm; }
+.footL .pg::before, .footR .pg::before { content: counter(page); }
+.footL .pg::after { content: "   "; }
+.footR .lb { font-weight: 500; }
+.footR .lb::before { content: " " string(sec) " "; }
+.footR .pg::before { content: counter(page); }
+
+/* --------------------------------------------------------------- 지면 격자 */
+.grid { column-count: 2; column-gap: var(--colgap); column-fill: auto;
+        height: var(--bodyh); }
+.blk { height: var(--slot); break-inside: avoid; overflow: hidden; }
+.sec-grammar .blk, .sec-writing .blk { height: var(--bodyh); }
+
+.blk > h3 {
+  font: 700 12pt/5.23mm Neolli; color: var(--ink);
+  margin-bottom: 2.37mm;                 /* 헤더 기준선 33.39 → 첫 줄 40.99 */
+}
+
+/* --------------------------------------------------------- ① 문장 배열 */
+.given {
+  background: var(--given); padding: 2.14mm 4.00mm 2.60mm;
+  margin-bottom: 3.88mm; text-align: justify;
+}
+.it { text-align: justify; margin-top: 1.00mm; }
+.it:first-of-type { margin-top: 0; }
+.it .m { font-weight: 700; }
+
+.ansline { margin-top: 3.02mm; white-space: nowrap; }
+.ansline .ar {
+  display: inline-block; width: 3.11mm; height: 3.53mm;
+  background: var(--mark); color: #fff; text-align: center;
+  font: 8.95pt/3.53mm Jalnan; vertical-align: -0.55mm;
+}
+.ansline .ln {
+  display: inline-block; width: 62mm; margin-left: 0.85mm;
+  border-bottom: 0.5pt solid var(--rule); vertical-align: -1.05mm;
+}
+
+/* ----------------------------------------------------- ② 문장 삽입/순서 */
+.prompt { margin-bottom: 2.10mm; }
+.sec-insert .given { margin-bottom: 2.60mm; }
+.sec-insert .it { margin-top: 0; text-align: justify; }
+
+/* ------------------------------------------------------- ③ 중요 어휘 */
+/* 왼(빈칸)·오(정답)이 **한 행**이라 짝이 어긋날 수 없다. */
+.vpair { display: table; width: 100%; table-layout: fixed;
+         border-spacing: var(--colgap) 0; margin-left: calc(-1 * var(--colgap) / 2);
+         margin-right: calc(-1 * var(--colgap) / 2); }
+.vpair > div { display: table-cell; width: var(--colw); vertical-align: top; }
+.vpair .r { background: var(--panel); }
+.vpair .l { padding-right: 0; }
+.vcell { padding: 0; }
+.vpair .r .vcell { padding: 2.43mm 4.00mm 4.00mm; }
+.vpair .l .vcell { padding: 2.43mm 0 4.00mm; }
+.vp { text-align: justify; line-height: 7.06mm; }
+.vsum { margin-top: 5.60mm; }
+.vsum .hd { font: 700 8.5pt/7.06mm Noto; letter-spacing: 0.1em; }
+.blk-vocab { height: auto; }
+
+/* 빈칸 — 첫 글자만 굵게 보이고 나머지 길이만큼 밑줄 */
+.blk .bl { font-weight: 700; }
+.blk .bl .u {
+  display: inline-block; border-bottom: 0.5pt solid var(--ink);
+  font-weight: 400;
+}
+.ansv { font-weight: 700; }
+
+/* ------------------------------------------------------- ④ 어법 수정 */
+.sec-grammar .body { text-align: justify; line-height: 9.52mm; }
+.sec-grammar .g { font-weight: 700; }
+
+/* ----------------------------------------------------- ⑤ 서술형 영작 */
+.wpair { margin-bottom: 17.85mm; }
+.wpair:last-child { margin-bottom: 0; }
+.wkor { font: 400 8pt/4.235mm Noto; text-align: justify; }
+.wcho {
+  background: var(--choice); margin-top: 1.60mm;
+  padding: 1.60mm 2.20mm 1.80mm 3.20mm; margin-left: 1.00mm;
+  margin-right: -1.00mm;
+  font: 500 8pt/4.235mm Noto; text-align: justify;
+}

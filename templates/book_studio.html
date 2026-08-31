@@ -193,6 +193,16 @@
     </div>
     <div class="ide-sep"></div>
 
+    <div class="ide-grp" id="ide-view">
+      <button class="ide-b" data-view="margin"
+              title="판면 경계를 점선으로 (인쇄에는 안 나갑니다)">판면</button>
+      <button class="ide-b" data-view="bleed"
+              title="재단선(도련 3mm)을 점선으로">재단선</button>
+      <button class="ide-b" data-view="base"
+              title="기준선 격자 — 줄이 서로 맞는지 보는 데 씁니다">기준선</button>
+    </div>
+    <div class="ide-sep"></div>
+
     <div class="ide-grp">
       <button class="ide-b ic" id="ide-prev" title="이전 쪽">◀</button>
       <span class="ide-page" id="ide-pageno">– / –</span>
@@ -252,6 +262,13 @@
       </details>
       <details class="ide-pal" open><summary>단락</summary>
         <div class="ide-in" id="pal-para"></div>
+      </details>
+      <details class="ide-pal"><summary>문자 스타일</summary>
+        <div class="ide-in" id="pal-cstyle">
+          <div class="ide-hint">고른 <b>글자</b>에 이름 붙인 서식을 겁니다.
+            이름 하나를 고치면 그 이름이 걸린 글자가 <b>전부</b> 바뀝니다
+            (인디자인의 문자 스타일과 같습니다).</div>
+        </div>
       </details>
       <details class="ide-pal"><summary>단락 스타일</summary>
         <div class="ide-in" id="pal-style">
@@ -463,6 +480,7 @@
       ready = true;
       $('ide-empty').style.display = 'none';
       hookStage();
+      applyViews();          // 지면이 새로 왔으니 보기 보조를 다시 건다
       drawPageNo();
       msg('');
       jumpToContent();
@@ -829,6 +847,7 @@
     drawOne('pal-char', CHAR_PROPS);
     drawOne('pal-para', PARA_PROPS);
     drawStyleList();
+    drawCharStyles();
   }
 
   function drawOne(hostId, props) {
@@ -973,6 +992,94 @@
           if (ok) msg('✓ 반영했습니다');
         });
       });
+  }
+
+  // ── 문자 스타일 ─────────────────────────────────────────
+  // 세그먼트에 `cs` 이름을 싣고, 그 이름의 규칙은 `config.styles` 의
+  // `.cs-<이름>` 에 둔다. 그래서 이름 하나를 고치면 걸린 글자가 전부 바뀐다.
+  function charStyles() {
+    var out = [];
+    for (var sel in styles) {
+      var m = sel.match(/^\.cs-(.+)$/);
+      if (m) out.push(m[1]);
+    }
+    return out.sort();
+  }
+
+  function drawCharStyles() {
+    var host = $('pal-cstyle'); if (!host) return;
+    host.innerHTML = '';
+    var hint = document.createElement('div');
+    hint.className = 'ide-hint'; hint.style.marginBottom = '6px';
+    hint.innerHTML = '고른 <b>글자</b>에 이름 붙인 서식을 겁니다. '
+      + '이름을 고치면 그 이름이 걸린 글자가 <b>전부</b> 바뀝니다.';
+    host.appendChild(hint);
+
+    var list = charStyles();
+    list.forEach(function (nm) {
+      var row = document.createElement('div'); row.className = 'ide-f';
+      row.style.marginBottom = '4px';
+      var b1 = document.createElement('button');
+      b1.className = 'ide-b'; b1.style.flex = '1';
+      b1.textContent = nm;
+      b1.title = '고른 글자에 이 문자 스타일을 겁니다';
+      b1.onclick = function () { applyCharStyle(nm); };
+      var b2 = document.createElement('button');
+      b2.className = 'ide-b'; b2.textContent = '고치기';
+      b2.title = '이 이름이 걸린 글자를 전부 고칩니다';
+      b2.onclick = function () {
+        styleTarget = '.cs-' + nm;
+        drawOne('pal-char', CHAR_PROPS); drawOne('pal-para', PARA_PROPS);
+        msg('문자 스타일 「' + nm + '」 을 고칩니다 — 위 문자 패널에서');
+      };
+      row.appendChild(b1); row.appendChild(b2);
+      host.appendChild(row);
+    });
+    if (!list.length) {
+      var e = document.createElement('div');
+      e.className = 'ide-hint'; e.textContent = '아직 만든 문자 스타일이 없습니다.';
+      host.appendChild(e);
+    }
+    var mk = document.createElement('button');
+    mk.className = 'ide-b'; mk.style.marginTop = '6px';
+    mk.textContent = '＋ 고른 글자로 새 문자 스타일';
+    mk.onclick = newCharStyle;
+    host.appendChild(mk);
+  }
+
+  function applyCharStyle(nm) {
+    if (!hasCharSel()) { msg('먼저 글자를 드래그해 고르세요'); return; }
+    var d = fdoc(), w = fwin(), r = w.getSelection().getRangeAt(0);
+    var span = d.createElement('span');
+    span.className = 'cs-' + nm;
+    try { span.appendChild(r.extractContents()); r.insertNode(span); }
+    catch (e) { msg('✗ 여기에는 못 겁니다 (걸친 범위)'); return; }
+    msg('「' + nm + '」 을 걸었습니다 — ⌘↵ 로 저장');
+  }
+
+  function newCharStyle() {
+    if (!hasCharSel()) { msg('먼저 글자를 드래그해 고르세요'); return; }
+    var nm = prompt('새 문자 스타일 이름 (예: 강조)', '');
+    if (!nm) return;
+    nm = nm.trim().replace(/[^\w가-힣-]/g, '');
+    if (!nm) { msg('이름에 쓸 수 없는 글자입니다'); return; }
+    // 지금 고른 글자의 모양을 그대로 새 이름에 담는다
+    var w = fwin(), r = w.getSelection().getRangeAt(0);
+    var el = r.commonAncestorContainer;
+    if (el.nodeType === 3) el = el.parentElement;
+    var cs = w.getComputedStyle(el);
+    var props = {
+      'font-size': human(cs['font-size'], 'pt'),
+      'font-weight': cs['font-weight'],
+      'color': human(cs['color'])
+    };
+    api('/api/book-studio/styles',
+        { b: key, selector: '.cs-' + nm, props: props }).then(function (d2) {
+      if (d2.error) { msg('✗ ' + d2.error); return; }
+      styles = d2.styles || {};
+      applyCharStyle(nm);
+      drawCharStyles();
+    });
   }
 
   // ── 단락 스타일 목록 ────────────────────────────────────
@@ -1262,20 +1369,52 @@
   // ── 페이지 패널 ─────────────────────────────────────────
   // 인디자인의 페이지 패널 자리. 썸네일은 전권을 다 그려야 해서 아직 안 만든다
   // (그건 몇 분이 든다) — 대신 **면을 눌러 바로 간다.**
+  // 페이지 패널 — **실제 지면 그림**을 보여 준다(인디자인과 같다).
+  // 그림은 마지막에 구운 PDF 에서 뽑는다. 지면을 다시 그려 만들려면 전권 조판이
+  // 필요해 몇 분이 들지만, PDF 에서는 면당 수 ms 다.
+  var thumbInfo = null;
+  function loadThumbs() {
+    return api('/api/book-studio/thumbs?b=' + encodeURIComponent(key))
+      .then(function (d) { thumbInfo = d && d.error ? null : d; drawPages(); });
+  }
+
   function drawPages() {
     var host = $('pal-pages');
     if (!host) return;
     var n = pageCount || 0;
-    if (!n) { host.innerHTML = '<div class="ide-hint">아직 조판 중입니다.</div>'; return; }
-    var h = [];
-    for (var i = 1; i <= n; i++) {
-      h.push('<a href="#" data-pg="' + i + '" style="display:inline-block;'
-        + 'min-width:26px;text-align:center;padding:2px 4px;margin:1px;'
-        + 'border-radius:5px;color:' + (i === curPage ? '#fff' : '#8faaff')
-        + ';background:' + (i === curPage ? '#3d55a8' : 'transparent') + '">'
-        + i + '</a>');
+    if (!n && !(thumbInfo && thumbInfo.pages)) {
+      host.innerHTML = '<div class="ide-hint">아직 조판 중입니다.</div>'; return;
     }
+    var withThumb = !!(thumbInfo && thumbInfo.pages);
+    var total = withThumb ? thumbInfo.pages : n;
+    var h = [];
+    if (withThumb) {
+      h.push('<div class="ide-hint" style="margin-bottom:6px">'
+        + '마지막 조판본 기준입니다 — 방금 고친 것은 <b>다시 조판</b> 해야 '
+        + '그림에 나옵니다.</div>');
+    }
+    h.push('<div style="display:flex;flex-wrap:wrap;gap:4px">');
+    for (var i = 1; i <= total; i++) {
+      var on = (i === curPage);
+      h.push('<a href="#" data-pg="' + i + '" title="' + i + '면" '
+        + 'style="display:block;width:' + (withThumb ? '46' : '30') + 'px;'
+        + 'text-align:center;text-decoration:none;font-size:9.5px;'
+        + 'color:' + (on ? '#fff' : '#8f97b5') + '">');
+      if (withThumb) {
+        h.push('<img src="/book-studio/thumb/' + (thumbInfo.bid || bid) + '/'
+          + i + '.png?v=' + (thumbInfo.at || 0) + '" loading="lazy" '
+          + 'style="width:46px;display:block;background:#fff;'
+          + 'border:' + (on ? '2px solid #6c8cff' : '1px solid #333a52') + ';'
+          + 'border-radius:2px">');
+      }
+      h.push('<span style="display:block;padding:1px 0;border-radius:4px;'
+        + 'background:' + (on ? '#3d55a8' : 'transparent') + '">' + i + '</span>');
+      h.push('</a>');
+    }
+    h.push('</div>');
     host.innerHTML = h.join('');
+    var cur = host.querySelector('a[data-pg="' + curPage + '"]');
+    if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'nearest' });
   }
 
   /** 그 면으로 간다. 뷰어에는 '몇 면으로' 가 없어 **차이만큼 넘긴다.** */
@@ -1441,6 +1580,7 @@
         styles = d.styles || {}; styleNames = d.names || {};
       });
     loadImages();
+    loadThumbs();
     loadHist(null);
   }
 
@@ -1591,6 +1731,26 @@
       aiSay('<div>되돌렸습니다 — ' + (d.restored || []).join(' · ') + '</div>');
       loadBook(false);
     });
+  });
+
+  // ── 보기 보조 (인디자인의 안내선·재단선 보기) ────────────
+  // 지면 위에 덧그리기만 한다 — 조판에도 인쇄에도 영향이 없다.
+  var views = {};
+  function applyViews() {
+    var st = stageEl(); if (!st) return;
+    ['margin', 'bleed', 'base'].forEach(function (k) {
+      st.classList.toggle('show-' + k, !!views[k]);
+    });
+  }
+  $('ide-view').addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('button[data-view]');
+    if (!b) return;
+    var k = b.dataset.view;
+    views[k] = !views[k];
+    b.classList.toggle('on', views[k]);
+    applyViews();
+    msg(views[k] ? b.textContent + ' 보기 켬 (인쇄에는 안 나갑니다)'
+                 : b.textContent + ' 보기 끔');
   });
 
   $('pal-pages').addEventListener('click', function (e) {

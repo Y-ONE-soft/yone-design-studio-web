@@ -1,0 +1,295 @@
+{
+  "_기준례": "이 파일은 다른 학교 프로파일의 본보기다. 필드 의미는 _schema.json, 정본 지정은 _reference_manifest.json.",
+  "key": "배재1",
+  "school": "배재고등학교",
+  "school_short": "배재",
+  "grade": "고1",
+  "subject_title": "1학년 공통영어1",
+  "subject_code": "13",
+
+  "reference": {
+    "exam": "26-1-기말",
+    "pdf": "기출정본/배재1/26-1-기말.pdf",
+    "source": "학교기출DB/배재고 기출모음/1학년/26-1-기말.pdf",
+    "kind": "text",
+    "sheet_mm": [209.9, 296.7],
+    "scale_to_b4": 1.2244,
+    "pages": 7,
+    "measured": "2026-09-01",
+    "보조정본": {
+      "26-1-중간": {
+        "pdf": "기출정본/배재1/26-1-중간.pdf",
+        "사유": "직전 회차(26-1-기말)는 30문항 전부 선택형이라 서답형 관련 규칙(라벨·묶음 혼합표기·서답형 배점 꼬리말·답란)이 전혀 안 나온다. 그 항목만 26-1-중간에서 가져왔고, 해당 필드에 src=26-1-중간 을 붙였다."
+      },
+      "25-2-기말": {"pdf": "기출정본/배재1/25-2-기말.pdf", "사유": "회차별 변동 관측용(마무리·배점괄호가 다름)"}
+    }
+  },
+
+  "page": {
+    "size_mm": [257, 364],
+    "_note": "제품 상수 B4. 아래 mm 값은 전부 **B4 환산치**이고, 괄호 안이 정본(A4) 실측치다.",
+    "text_left_mm": 20.0,
+    "text_right_mm": 236.2,
+    "rule_top_mm": 24.7,
+    "rule_bottom_mm": 344.3,
+    "columns": 2,
+    "column_origin_mm": [20.0, 131.4],
+    "column_width_mm": 105.9,
+    "column_gap_mm": 5.5,
+    "column_rule": {"on": true, "width_pt": 0.24, "x_mm": 128.3,
+                    "y_from_mm": 25.0, "y_to_mm": 335.8},
+    "page_border": {"on": false},
+    "hrule": {"on": true, "width_pt": 0.24,
+              "_note": "본문 위(y 24.7)·아래(y 344.3)에 가로 괘선 한 줄씩. 쪽 전체를 감싸는 테두리는 없다."},
+    "실측_정본mm": {"text_left": 16.3, "text_right": 192.9, "rule_top": 20.2,
+                    "rule_bottom": 281.2, "column_origin": [16.3, 107.3],
+                    "column_rule_x": 104.8}
+  },
+
+  "running": {
+    "copyright": {
+      "text": "본 시험 문제의 저작권은 배재고등학교에 있습니다. 무단으로 전송/복제/배포하면 저작권법에 의해 처벌 받을 수 있습니다.",
+      "pos": "bottom",
+      "align": "left",
+      "x_mm": 25.0,
+      "y_mm": 349.1,
+      "font": "Dotum",
+      "size_pt": 8.95,
+      "실측_정본": {"x": 20.4, "y": 285.1, "size_pt": 7.31},
+      "repeat": "every"
+    },
+    "page_number": {
+      "template": "{p}/{n}",
+      "pos": "bottom_center",
+      "y_mm": 344.3,
+      "font": "Dotum",
+      "size_pt": 10.42,
+      "실측_정본": {"x": 104.5, "y": 281.2, "size_pt": 8.51}
+    },
+    "confirm_box": {
+      "on": true,
+      "_note": "우상단 '확인'(감독 확인) 2행 표. 1쪽과 2쪽 이후의 위치·크기가 다르다 — 실물 그대로.",
+      "label": "확인",
+      "font": "Dotum",
+      "size_pt": 8.52,
+      "first_page_rect_mm": [207.3, 17.5, 231.7, 32.6],
+      "other_page_rect_mm": [213.9, 10.4, 236.4, 22.7],
+      "inner_rule_offset_mm": 4.2,
+      "실측_정본": {"p1": [169.3, 14.3, 189.3, 26.6], "p2+": [174.7, 8.5, 193.1, 18.5],
+                    "inner_rule_y": {"p1": 17.7, "p2+": 12.0}}
+    },
+    "header": {
+      "kind": "first_page_only",
+      "_note": "머리표는 1쪽에만. 표가 아니라 낱개 요소 + 이중 가로선.",
+      "elements": [
+        {"role": "exam_title", "text": "2026학년도 1학기 기말고사", "font": "H2gtrE",
+         "size_pt": 16.0, "align": "center", "실측_정본": {"x": 52.3, "y": 22.3, "size_pt": 13.07}},
+        {"role": "code_label", "text": "과목 코드", "font": "H2gtrM", "size_pt": 14.39,
+         "underline": true, "실측_정본": {"x": 17.3, "y": 31.7, "size_pt": 11.75,
+                                          "underline": [16.6, 37.1, 35.3]}},
+        {"role": "subject", "text": "1학년 공통영어1", "font": "H2gtrE", "size_pt": 31.11,
+         "align": "center", "실측_정본": {"x": 66.6, "y": 32.8, "size_pt": 25.41}},
+        {"role": "exam_date", "text": "2026.07.02.", "font": "H2gtrM", "size_pt": 9.68,
+         "align": "right", "실측_정본": {"x": 170.0, "y": 40.7, "size_pt": 7.91}}
+      ],
+      "double_rule": {"thin_y_mm": 57.8, "thick_y_mm": 60.2, "thick_pt": 0.96, "thin_pt": 0.24,
+                      "실측_정본": {"thin_y": 47.2, "thick_y": 49.2}}
+    },
+    "notice_head": {
+      "lines": ["■반드시문제지총면수와인쇄상태를확인하시오.", "■OMR에과목코드를기입하시오."],
+      "_note": "실물은 어절 사이 공백이 없다(장평 압축 조판의 흔적). 그대로 재현한다.",
+      "font": "T3(글꼴 임베드명 — 실체는 돋움 계열)", "size_pt": 10.1,
+      "x_mm": 20.0, "y_mm": [62.7, 68.1],
+      "실측_정본": {"size_pt": 8.25, "y": [51.2, 55.6]}
+    },
+    "continue_marker": {"on": false, "_note": "다음 쪽 계속 표시 없음"},
+    "footer_sentence": {"on": false}
+  },
+
+  "numbering": {
+    "question": {
+      "template": "{n}.",
+      "source": "auto",
+      "marker_font": "Haansoft Batang",
+      "marker_size_pt": 12.92,
+      "_note": "번호 숫자만 본문보다 크다(정본 10.55pt vs 발문 8.15pt). 마침표와 발문은 작은 크기.",
+      "실측_정본": {"숫자": 10.55, "마침표": 8.39, "발문": 8.15}
+    },
+    "essay": {
+      "src": "26-1-중간",
+      "template": "[서답형 {n}]",
+      "counter": "separate",
+      "label_word": "서답형",
+      "pos": "inline",
+      "_note": "발문 맨 앞에 `[서답형 1] ` 로 붙고 곧바로 발문이 이어진다. 줄 맨 앞에 반각 공백 하나가 앞선다.",
+      "예": "[서답형 1] <보기>에 주어진 의미를 가지고 있는 단어를 윗글에서 찾아 쓰시오. 〔5점, 부분점수 없음〕"
+    },
+    "group": {
+      "template": "【 {a} – {b} 】",
+      "mixed_template": "【 {n}, 서답형 {m} 】",
+      "range_sep": "–",
+      "range_sep_codepoint": "U+2013",
+      "pad": "괄호 안쪽 좌우 각 한 칸",
+      "intro": "다음 글을 읽고 물음에 답하시오.",
+      "intro_on_same_line": true,
+      "font": "Haansoft Batang", "size_pt_b4": 10.42, "marker_size_pt_b4": 9.99,
+      "member_line": "{n}. 〔{점수}점〕",
+      "_note": "묶음 안 개별 문항은 발문을 되풀이하지 않고 번호+배점만 갖는 경우가 있다(예: '28. 〔3.6점〕'). 묶음 머리에 발문 전체가 올 수도 있다(예: '【 28 – 29 】 다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은?').",
+      "혼합예_src": "26-1-중간",
+      "혼합예": ["【 6, 서답형 1 】", "【 7-8 】", "【 10, 서답형 2 】", "【 25, 서답형 3 】"],
+      "_주의": "26-1-중간은 범위 구분자가 하이픈 '-'(공백 없음, 【 7-8 】)이고 26-1-기말은 en dash '–'(공백 있음, 【 8 – 9 】)다. 직전 회차 기준이므로 **en dash + 공백**을 쓴다."
+    }
+  },
+
+  "score": {
+    "bracket": "〔〕",
+    "bracket_codepoints": ["U+3014", "U+3015"],
+    "attach": "stem_end",
+    "space_before": "",
+    "decimals": 1,
+    "integer_form": "3점",
+    "essay_suffix": ["부분점수 없음"],
+    "essay_예": "〔5점, 부분점수 없음〕",
+    "header_total": {"on": false},
+    "_주의": "정본 30개 표기 중 〔〕 17개 / [〕 10개(여는 대괄호+닫는 거북등 — 학교 오타) / [] 3개. 학교 자체 표기가 흔들리므로 **전부 〔〕로 통일**한다. 25-2-기말은 반대로 [] 가 표준이었다.",
+    "관측": {"26-1-기말": "〔〕(오타 혼용)", "26-1-중간": "〔〕", "25-2-기말": "[]"}
+  },
+
+  "given": {
+    "marker": "<보기>",
+    "render": "plain_line",
+    "align": "center",
+    "border": {"on": false},
+    "body_layout": "lines",
+    "_note": "테두리 상자가 아니다. `<보기>`만 단독 줄에 가운데 정렬로 놓고, 내용은 그 아래에 지문과 같은 크기로 이어 쓴다. 정본 전 쪽에 사각형 그리기가 0개다.",
+    "실측_정본": {"x": 146.2, "단원점": 107.3, "들여쓰기": 38.9, "size_pt": 8.27},
+    "복수보기": {"src": "26-1-중간", "형식": ["<보기1>", "<보기2>"],
+                 "_note": "한 문항에 보기가 둘이면 <보기1>/<보기2> 로 번호를 단다."}
+  },
+  "cond": {
+    "marker": "[정답 작성 안내]",
+    "render": "plain_line",
+    "align": "left",
+    "border": {"on": false},
+    "item_marker": "(1)",
+    "_note": "배재는 <조건> 표기를 쓰지 않는다. 원고·기출 모두 `[정답 작성 안내]` 뒤에 `(1) …` `(2) …` 를 줄 단위로 적는다.",
+    "src": "원고 + 26-1-중간"
+  },
+  "summary": {
+    "marker": "없음",
+    "arrow": {"glyph": "⇓", "codepoint": "U+21D3", "src": "26-1-중간",
+              "align": "center",
+              "_note": "26-1-중간 요약문 화살표는 ⇓(U+21D3) 3회. 26-1-기말에는 요약 화살표가 안 나온다(요약 문항이 묶음 머리 발문형이라 화살표 없이 문단만 놓임). 화살표가 필요한 유형에서는 ⇓ 를 쓴다."},
+    "render": "plain",
+    "_note": "요약문에 `<요약문>` 라벨이나 테두리를 두르지 않는다. 발문 → 지문 → (화살표) → 요약 문단 → (A)(B) 선지표 순."
+  },
+  "given_sentence": {
+    "render": "plain",
+    "bold": false,
+    "border": {"on": false},
+    "_note": "문장삽입의 주어진 문장도 상자 없이 문단으로 놓는다. 지문 안 삽입 자리 표시는 `( ① )` 형태."
+  },
+
+  "choices": {
+    "layout": "one_per_line",
+    "marker": "①",
+    "font": "Haansoft Batang",
+    "size_pt_b4": 10.13,
+    "leading_pt_b4": 15.67,
+    "hang_mm": 0,
+    "_hang_note": "선지 되풀이 줄이 마커 아래로 들어가지 않는다(내어쓰기 0). 이어지는 줄도 단 왼쪽에 붙는다.",
+    "ab_pair": {
+      "layout": "column_table",
+      "separator": "-----",
+      "separator_len": 5,
+      "header_row": true,
+      "header_labels": ["(A)", "(B)", "(C)"],
+      "_note": "(A)(B)(C) 짝맞추기 선지는 열 표로 앉힌다. 머리행에 (A) (B) (C), 각 행은 `① 값 ----- 값 ----- 값`. 구분자는 하이픈 다섯 개.",
+      "실측예": ["① wipe out ----- minor ----- fail", "② preserve ----- significant ----- succeed"]
+    },
+    "order_layout": "one_per_line",
+    "insert_marker": "( ① )"
+  },
+
+  "typography": {
+    "approx": false,
+    "_단위": "size/leading 은 pt(B4 환산), indent 는 mm(B4 환산). 괄호 실측은 정본(A4).",
+    "roles": {
+      "stem": {"font": "Haansoft Batang", "size_pt": 9.98, "bold": false,
+               "indent_mm": 0, "hang_mm": 0, "align": "justify",
+               "space_before_pt": 31.2, "leading_pt": 15.67,
+               "실측_정본": {"size_pt": 8.15, "space_before": 25.5}},
+      "passage": {"font": "Haansoft Batang", "size_pt": 10.13, "leading_pt": 15.67,
+                  "first_line_indent_mm": 2.2, "align": "justify",
+                  "실측_정본": {"size_pt": 8.27, "leading": 12.8, "indent": 1.8}},
+      "choice": {"font": "Haansoft Batang", "size_pt": 10.13, "leading_pt": 15.67,
+                 "indent_mm": 0, "hang_mm": 0},
+      "given": {"font": "Haansoft Batang", "size_pt": 10.13, "align": "center"},
+      "essay_label": {"src": "26-1-중간", "font": "Haansoft Batang", "size_pt": 10.42,
+                      "bold": false, "indent_mm": 1.2},
+      "qnum": {"font": "Haansoft Batang", "size_pt": 12.92}
+    },
+    "by_qtype": {
+      "_확인필요": "유형별 들여쓰기 차이는 정본에서 유의미한 편차가 관측되지 않았다(지문 첫 줄 들여쓰기 1.8mm 로 균일, 선지 내어쓰기 0). 안내문·도표 문항(6번 K-Pop 안내문)만 별도 상자 없이 왼쪽 정렬 블록으로 놓인다."
+    }
+  },
+
+  "ending": {
+    "text": "- 끝 -",
+    "align": "center",
+    "bold": false,
+    "font": "Haansoft Batang",
+    "size_pt_b4": 10.13,
+    "_note": "마지막 문항 뒤 같은 단 안에 가운데 정렬. 정본은 앞 공백으로 밀어 놓았다(x 107.3→156.9, 단 가운데).",
+    "variants_seen": {
+      "26-1-기말": "- 끝 -",
+      "26-1-중간": "- 수고하셨습니다.-",
+      "25-2-기말": "- 수고하셨습니다. -"
+    },
+    "_주의": "회차마다 바뀐다. 직전 회차 기준이므로 지금은 `- 끝 -`."
+  },
+  "score_table": {"on": false},
+
+  "manuscript": {
+    "files": ["배재1 동형 1회 원고.hwpx", "배재1 동형 2회 원고.hwpx"],
+    "meta_header": ["배재고1 동형 {N}회", "선택형: {N}문항", "서술형: {N}문항"],
+    "numbers_given": false,
+    "essay_marked": false,
+    "groups_marked": false,
+    "group_intro_line": "다음 글을 읽고 물음에 답하시오.",
+    "choice_markers": ["①", "ⓐ", "(A)"],
+    "normalize": ["라틴 악센트 ASCII 화(Á→A) — 지문 서체에 글리프가 없어 □ 로 빠진다",
+                  "한 줄에 붙어 있는 ④⑤ 분리"],
+    "source_tag": {"on": false},
+    "boxes": ["<보기>", "<요약문>", "[정답 작성 안내]"],
+    "answer_field": ["답: ______________________", "(A) ___________________, (B) ___________________",
+                     "(1) (       )번", "(2) (틀린 부분:        )", "→ (고친 부분:        )"],
+    "notes": [
+      "원고는 문항 번호를 전혀 주지 않는다 — 번호·묶음 머리·서답형 라벨은 전부 조판이 만들어 넣어야 한다.",
+      "원고의 `<요약문>` 은 기출에는 라벨로 인쇄되지 않는다(라벨 없이 문단만). 조판에서 라벨을 지운다.",
+      "원고 화살표는 ↓(U+2193) 인데 기출은 ⇓(U+21D3) 다 — 치환 필요."
+    ]
+  },
+
+  "variants": {
+    "_doc": "회차별 관측값. 정본 회차를 바꾸면 여기서 골라 덮어쓴다.",
+    "26-1-기말": {"score.bracket": "〔〕", "ending.text": "- 끝 -",
+                  "numbering.group.range_sep": "–", "서답형": "없음(전 30문항 선택형)"},
+    "26-1-중간": {"score.bracket": "〔〕", "ending.text": "- 수고하셨습니다.-",
+                  "numbering.group.range_sep": "-", "summary.arrow": "⇓",
+                  "서답형": "4문항 [서답형 N]"},
+    "25-2-기말": {"score.bracket": "[]", "ending.text": "- 수고하셨습니다. -",
+                  "서술형라벨": "[서술형N] / 〔서술형4〕 혼용", "group.mixed": "【 10, 서술형1 】"}
+  },
+
+  "gaps": [
+    "묶음 안 개별 문항이 '번호+배점만'인지 '번호+발문+배점'인지는 문항 유형에 따라 갈린다 — 유형별 규칙을 더 모을 것.",
+    "서답형 답란(밑줄 길이·들여쓰기)의 mm 실측은 26-1-중간 기준이라 직전 회차 확인이 필요하다."
+  ],
+  "diff_vs_current": [
+    "현행 동형 산출물은 화살표 ↓(U+2193) — 정본은 ⇓(U+21D3).",
+    "현행 (A)(B) 짝 선지는 탭 정렬 — 정본은 `-----` 다섯 하이픈 구분자.",
+    "현행 배점 괄호가 [] 인 회차가 있었다 — 직전 회차 기준 〔〕 로 통일해야 한다.",
+    "현행 마무리가 '- 수고하셨습니다.-' 인 산출물이 있다 — 직전 회차 기준 '- 끝 -'."
+  ]
+}

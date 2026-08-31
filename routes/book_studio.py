@@ -647,6 +647,82 @@ def api_assist_undo():
     return jsonify({"ok": True, "restored": back})
 
 
+@bp.route("/api/book-studio/thumbs")
+def api_thumbs():
+    """페이지 패널이 쓸 **실제 지면 그림** 목록.
+
+    ## 왜 PDF 에서 뽑는가
+
+    지면을 다시 그려 썸네일을 만들려면 전권을 조판해야 해서 몇 분이 든다.
+    그런데 **마지막에 구운 PDF 가 이미 그 그림**이다 — 인디자인 페이지 패널도
+    결국 조판된 면을 보여 준다. 그래서 PDF 에서 뽑는다(면당 수 ms).
+
+    ⚠ 그래서 **마지막 조판본 기준**이다. 방금 고친 것은 다시 조판해야 그림에
+      나온다. 화면에 그 사실을 적는다(안 적으면 옛 그림을 지금 것으로 오해한다).
+    """
+    import glob
+    from core.render_vivlio import book as bookmod
+    d, meta = _book_dir(request.args.get("b"))
+    if not d:
+        return jsonify({"error": "모르는 책"}), 404
+    cfg = bookmod.load(d)
+    pdf = _last_pdf(cfg, d)
+    if not pdf:
+        return jsonify({"pages": 0, "note": "아직 조판한 PDF 가 없습니다"})
+    try:
+        import fitz
+        doc = fitz.open(pdf)
+        n = doc.page_count
+        doc.close()
+    except Exception as e:
+        return jsonify({"error": f"PDF 를 못 열었습니다: {e}"}), 500
+    return jsonify({"pages": n, "pdf": os.path.basename(pdf),
+                    "at": int(os.path.getmtime(pdf)),
+                    "bid": meta["bid"]})
+
+
+def _last_pdf(cfg, d):
+    """이 책이 마지막으로 구운 내지 PDF. 없으면 폴더에서 가장 새 것."""
+    import glob
+    try:
+        p = cfg.out_pdf("")
+        if os.path.exists(p):
+            return p
+    except Exception:
+        pass
+    cands = [x for x in glob.glob(os.path.join(d, "*.pdf"))
+             if "인쇄용" not in x and "CMYK" not in x]
+    return max(cands, key=os.path.getmtime) if cands else None
+
+
+@bp.route("/book-studio/thumb/<bid>/<int:n>.png")
+def thumb(bid, n):
+    """면 하나의 썸네일. 만든 것은 `build/thumbs/` 에 둔다(다시 안 그린다)."""
+    from core.render_vivlio import book as bookmod
+    d, meta = _book_dir(bid)
+    if not d:
+        return abort(404)
+    cfg = bookmod.load(d)
+    pdf = _last_pdf(cfg, d)
+    if not pdf or n < 1:
+        return abort(404)
+    tdir = os.path.join(_build_dir(d), "thumbs")
+    os.makedirs(tdir, exist_ok=True)
+    stamp = int(os.path.getmtime(pdf))
+    out = os.path.join(tdir, f"{stamp}_{n}.png")
+    if not os.path.exists(out):
+        try:
+            import fitz
+            doc = fitz.open(pdf)
+            if n > doc.page_count:
+                return abort(404)
+            doc[n - 1].get_pixmap(dpi=24).save(out)
+            doc.close()
+        except Exception:
+            return abort(500)
+    return send_from_directory(tdir, os.path.basename(out))
+
+
 @bp.route("/api/book-studio/cmyk", methods=["POST"])
 def api_cmyk():
     """화면 색(16진) → **인쇄 CMYK**.
@@ -919,6 +995,23 @@ body.tool-text [class*="vref"]:hover, body.tool-para [class*="vref"]:hover {
 /* 고치는 중 — **겉모습은 그대로 두고** 여기라는 것만 알린다.
    예전에는 바탕을 노랗게 칠하고 글꼴을 고정폭으로 바꿨는데, 그러면 누를 때마다
    글이 딴것처럼 보여서 조판을 보는 눈이 흐트러진다. 인디자인은 커서만 깜빡인다. */
+/* ── 보기 보조 (인디자인의 안내선·재단선 보기) ────────────────────
+   ⚠ 이건 **보기 위한 것**이라 조판에 영향을 주면 안 된다. 그래서 지면 위에
+     덧그리기만 하고(`pointer-events:none`), 인쇄에는 안 나간다. */
+#viv.show-margin [data-vivliostyle-page-container]::after,
+#viv.show-bleed [data-vivliostyle-page-container]::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 9;
+}
+#viv.show-bleed [data-vivliostyle-page-container]::after {
+  outline: 1px dashed rgba(255,0,0,.55); outline-offset: -3mm;
+}
+#viv.show-margin [data-vivliostyle-page-container] > div > div:first-child {
+  outline: 1px dashed rgba(0,140,255,.5);
+}
+#viv.show-base [data-vivliostyle-page-container] {
+  background-image: repeating-linear-gradient(
+    to bottom, rgba(0,160,255,.16) 0 1px, transparent 1px var(--base, 4.585mm));
+}
 .ide-editing {
   outline: 1px solid rgba(108,140,255,.85); outline-offset: 1px;
   caret-color: #2b62ff;
