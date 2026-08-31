@@ -702,21 +702,19 @@ class PocketbookSeries(Series):
                 if got <= avail:
                     continue
                 # ① 아직 행간 여유가 있으면 두 실측점으로 필요한 행간을 푼다.
+                #    보간이 안 되면(기울기가 이상하면) 한 눈금만 내린다 —
+                #    행간이 남았는데 글자부터 줄이면 줄바꿈이 통째로 바뀐다.
                 target = avail - 0.2          # 반올림·비선형 여유
-                new_lead = None
-                pts = [p for p in r["_pts"] if abs(p[0] - lead) > 1e-6]
-                if lead > MIN_LEAD + 1e-6 and pts:
-                    L0, H0 = pts[-1]
-                    k_slope = (got - H0) / (lead - L0)
-                    if k_slope > 1e-6:
-                        new_lead = lead + (target - got) / k_slope
                 if lead > MIN_LEAD + 1e-6:
-                    # 보간이 안 되면(기울기가 이상하면) 한 눈금만 내린다 —
-                    # 행간이 남았는데 글자부터 줄이면 줄바꿈이 통째로 바뀐다.
-                    step = (int(new_lead * 4) / 4.0 if new_lead is not None
-                            else lead - 0.25)
-                    new_lead = max(MIN_LEAD, min(step, lead - 0.25))
-                    r["lead"] = new_lead
+                    step = lead - 0.25
+                    pts = [p for p in r["_pts"] if abs(p[0] - lead) > 1e-6]
+                    if pts:
+                        L0, H0 = pts[-1]
+                        k_slope = (got - H0) / (lead - L0)
+                        if k_slope > 1e-6:
+                            solved = lead + (target - got) / k_slope
+                            step = int(solved * 4) / 4.0    # 0.25pt 단위로 내림
+                    r["lead"] = max(MIN_LEAD, min(step, lead - 0.25))
                     still.append(i)
                     continue
                 # ② 행간이 하한이면 글자를 줄인다. 높이는 대략 배율의 제곱에

@@ -226,6 +226,14 @@ def write_report(st, total, path=REPORT):
                 L.append(r["trace"].strip())
                 L.append("```")
             L.append("")
+    if skip:
+        # 건너뛴 것은 엔진 결함이 아니다 — 원본이 비어 있다(`[작업전]` 등).
+        L.append("")
+        L.append("## 건너뛴 것 (원본 문제)")
+        L.append("")
+        for r in skip:
+            L.append("- **%s** — %s" % (_label(r),
+                                        "; ".join(r.get("fails") or [])))
     warned = [r for r in rows if r.get("warns")]
     if warned:
         L.append("")
