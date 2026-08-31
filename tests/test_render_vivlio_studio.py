@@ -231,6 +231,57 @@ def test_scan_keeps_rich_run_as_one_place():
     assert [h["ref"] for h in hits] == ["lessons.0.problems.0.stem"]
 
 
+# ── 중등부 다리 ────────────────────────────────────────────────
+def test_middle_series_registered():
+    from core.render_vivlio import series as reg
+    assert "middle" in reg.names()
+
+
+def test_middle_build_dir_is_outside_book_folder():
+    """중등부는 `automation/work/<교재>/build<권>` 에 조판한다.
+
+    작업대가 `<책폴더>/build` 로 못 박아 두면 이 계열은 **404 만 난다** —
+    지면이 안 나오는데 로그는 조용해 원인을 찾기 어렵다.
+    """
+    from core.render_vivlio.series.middle import MiddleSeries
+
+    class C:
+        build_dir = "/책/build"
+        def section(self, n):
+            return {"book": "cheonjae", "vol": 2} if n == "middle" else None
+    got = MiddleSeries().build_dir(C())
+    assert got.endswith(os.path.join("work", "cheonjae", "build2"))
+    assert "automation" in got
+
+
+def test_middle_needs_book_key():
+    from core.render_vivlio.series.middle import MiddleSeries
+
+    class C:
+        def section(self, n):
+            return {}
+    with pytest.raises(ValueError):
+        MiddleSeries().build_dir(C())
+
+
+def test_middle_passes_repo_on_pythonpath():
+    """automation 은 리포 밖이라 길을 안 주면 자리표 import 가 조용히 실패한다.
+
+    실패해도 조판은 되므로 **지면은 나오는데 클릭만 안 먹는다** — 실제로 그
+    상태로 한참 갔다.
+    """
+    src = io.open(os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "core", "render_vivlio", "series", "middle", "__init__.py"),
+        encoding="utf-8").read()
+    assert 'env["PYTHONPATH"]' in src
+
+
+def test_base_series_has_build_dir_hook():
+    from core.render_vivlio.series.base import Series
+    assert hasattr(Series, "build_dir")
+
+
 # ── 없는 절을 만들어 넣기 ──────────────────────────────────────
 RAW = """{
   "series": "special",
