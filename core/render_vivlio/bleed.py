@@ -50,14 +50,39 @@ def _open_art(path):
     return _fitz().open(p) if os.path.exists(p) else None
 
 
-def replace_page(doc, art, art_page, at):
+def body_rect(doc):
+    """조판 면의 판형(가장 많은 면 크기). 아트워크가 이것과 다르면 맞춰 넣는다."""
+    from collections import Counter
+    c = Counter((round(p.rect.width, 2), round(p.rect.height, 2)) for p in doc)
+    if not c:
+        return None
+    w, h = c.most_common(1)[0][0]
+    return _fitz().Rect(0, 0, w, h)
+
+
+def insert_page(doc, art, art_page, at, rect=None):
+    """아트워크 한 장을 `at`(0-based) 자리에 끼운다.
+
+    ⚠ **완성본이 도련 없이 뽑혀 있는 경우가 흔하다**(A4 210×297 vs 판형 216×303).
+      그대로 끼우면 그 면만 작아지고, 뒤에 찍는 TrimBox 가 재단선을 3mm 안쪽으로
+      잡아 **간지 가장자리가 잘린다.** 크기가 다르면 판형 한가운데 놓는다.
+    """
+    r = art[art_page].rect
+    if rect is None or (abs(r.width - rect.width) < 0.1
+                        and abs(r.height - rect.height) < 0.1):
+        doc.insert_pdf(art, from_page=art_page, to_page=art_page, start_at=at)
+        return
+    pg = doc.new_page(pno=at, width=rect.width, height=rect.height)
+    x = (rect.width - r.width) / 2.0
+    y = (rect.height - r.height) / 2.0
+    pg.show_pdf_page(_fitz().Rect(x, y, x + r.width, y + r.height),
+                     art, art_page)
+
+
+def replace_page(doc, art, art_page, at, rect=None):
     """`at`(0-based) 자리를 아트워크 한 장으로 교체."""
-    doc.insert_pdf(art, from_page=art_page, to_page=art_page, start_at=at)
+    insert_page(doc, art, art_page, at, rect)
     doc.delete_page(at + 1)
-
-
-def insert_page(doc, art, art_page, at):
-    doc.insert_pdf(art, from_page=art_page, to_page=art_page, start_at=at)
 
 
 def marker_pages(doc, marker):
@@ -77,11 +102,11 @@ def blank_page_indices(doc, ignore_chars=""):
     return out
 
 
-def fill_blanks(doc, art, art_page, ignore_chars=""):
+def fill_blanks(doc, art, art_page, ignore_chars="", rect=None):
     """파리티로 생긴 빈 면을 MEMO 면 아트워크로 채운다(뒤에서부터)."""
     idx = blank_page_indices(doc, ignore_chars)
     for i in reversed(idx):
-        replace_page(doc, art, art_page, i)
+        replace_page(doc, art, art_page, i, rect)
     return [i + 1 for i in idx]
 
 
@@ -111,6 +136,7 @@ def finish(pdf, spec, log=None, out=None):
     """
     log = log or print
     doc = _fitz().open(pdf)
+    body = body_rect(doc)          # 아트워크를 맞춰 넣을 판형
     default_art = _open_art(spec.get("art_pdf"))
     opened = [default_art] if default_art else []
     marks = {}
@@ -140,9 +166,9 @@ def finish(pdf, spec, log=None, out=None):
             log(f"[경고] 간지 원본 없음 — 건너뜀: {it}")
             continue
         if it.get("mode", "replace") == "insert":
-            insert_page(doc, art, it.get("page", 0), at)
+            insert_page(doc, art, it.get("page", 0), at, body)
         else:
-            replace_page(doc, art, it.get("page", 0), at)
+            replace_page(doc, art, it.get("page", 0), at, body)
         marks[it.get("marker") or f"@{at + 1}"] = at + 1
 
     # ② 빈 면 → MEMO
@@ -151,7 +177,7 @@ def finish(pdf, spec, log=None, out=None):
         art = art_of(bf)
         if art is not None:
             marks["MEMO"] = fill_blanks(doc, art, bf.get("page", 0),
-                                        bf.get("ignore", ""))
+                                        bf.get("ignore", ""), body)
 
     # ③ 마지막 면은 언제나 왼쪽(짝수) — 뒤 간지를 붙였을 때 기준
     eol = spec.get("end_on_left")
@@ -159,7 +185,7 @@ def finish(pdf, spec, log=None, out=None):
         art = art_of(eol)
         if (doc.page_count + 1) % 2:
             if art is not None:
-                insert_page(doc, art, eol.get("page", 0), doc.page_count)
+                insert_page(doc, art, eol.get("page", 0), doc.page_count, body)
             else:
                 # 아트워크가 없는 책(간지를 안 쓰는 계열)은 **빈 면**으로 맞춘다.
                 # 예전에는 조용히 아무것도 안 해서 홀수로 끝나는 판이 나갔다.
@@ -173,7 +199,7 @@ def finish(pdf, spec, log=None, out=None):
         if art is None:
             log(f"[경고] 뒤 간지 원본 없음 — 건너뜀: {ap}")
             continue
-        insert_page(doc, art, ap.get("page", 0), doc.page_count)
+        insert_page(doc, art, ap.get("page", 0), doc.page_count, body)
         if ap.get("redact"):
             redact(doc[-1], ap["redact"])
         marks["back"] = doc.page_count

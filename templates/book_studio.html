@@ -1145,12 +1145,18 @@
     tool = name;
     document.body.className = document.body.className
       .replace(/\btool-\w+\b/g, '').trim() + ' tool-' + name;
+    // 커서·hover 표시는 **지면 문서 안**에 있으므로 거기에도 알린다
+    var fb = fdoc() && fdoc().body;
+    if (fb) {
+      fb.className = fb.className.replace(/\btool-\w+\b/g, '').trim()
+        + ' tool-' + name;
+    }
     Array.prototype.forEach.call(document.querySelectorAll('.ide-tool'),
       function (b) { b.classList.toggle('on', b.dataset.tool === name); });
     if (name === 'sel') closeEdit(true);
   }
 
-  document.addEventListener('keydown', function (e) {
+  function onKey(e) {
     var mod = e.metaKey || e.ctrlKey;
     // 찾아가는 중이면 Esc 가 **그것부터** 멈춘다(편집 중이든 아니든)
     if (e.key === 'Escape' && seekBusy) {
@@ -1175,12 +1181,17 @@
       else if (k === 't') setTool('text');
       else if (k === 'p') setTool('para');
     }
-  });
+  }
+  // ⚠ 글을 고치는 동안 커서는 **지면 문서 안**에 있다. 화면 문서에만 걸면
+  //   ⌘↵(저장)·⌘B(굵게)·Esc 가 전부 안 먹는다.
+  document.addEventListener('keydown', onKey);
 
   setTool('sel');
   // 지면 문서가 다 열린 뒤에 시작한다 — 조판 엔진이 그 안에 있다.
   msg('지면을 여는 중…');
   whenFrame(function () {
+    fdoc().addEventListener('keydown', onKey);
+    setTool(tool);                     // 커서 표시를 지면 문서에도
     if (key) loadBook(false); else msg('교재가 없습니다');
   });
 })();

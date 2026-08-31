@@ -126,12 +126,15 @@ class WhitebookSeries(Series):
           발문이 겹치는 순간 위치가 뒤로 튀어 **순서 어긋남 3,692건** 같은 거짓
           경보가 쏟아진다. 그래서 면 범위를 Day 로 좁혀 대조한다.
         """
-        pdf = cfg.out_pdf((cfg.section("verify") or {}).get("suffix", ""))
+        vcfg = cfg.section("verify") or {}
+        pdf = cfg.out_pdf(vcfg.get("suffix", ""))
         d = data_mod.load(cfg)
         texts = probe.page_texts(pdf)
         m = render_mod.metrics_of(cfg)
 
-        qpages, apages = self._day_pages(d, texts)
+        # 뒤에 붙인 아트워크(간지)는 우리가 조판한 면이 아니다 — 정답 구간에서 뺀다.
+        end = len(texts) - (vcfg.get("skip_last") or 0)
+        qpages, apages = self._day_pages(d, texts, end)
         self._check_day_pages(d, qpages, report)
         self._check_content(d, texts, qpages, apages, report)
         self._check_blanks(d, texts, qpages, report)
@@ -140,7 +143,7 @@ class WhitebookSeries(Series):
 
     # ── Day 별 면 범위 ──
     @staticmethod
-    def _day_pages(d, texts):
+    def _day_pages(d, texts, end=None):
         """{day: [면번호…]} 두 벌 — 문제 / 정답. 머리 라벨로 구간을 가른다."""
         qs, ans = {}, {}
         for i, t in enumerate(texts):
@@ -161,8 +164,9 @@ class WhitebookSeries(Series):
                 nxt = starts[ks[j + 1]] if j + 1 < len(ks) else end
                 out[k] = list(range(starts[k] + 1, nxt + 1))
             return out
-        first_ans = min(ans.values()) if ans else len(texts)
-        return spans(qs, first_ans), spans(ans, len(texts))
+        end = len(texts) if end is None else end
+        first_ans = min(ans.values()) if ans else end
+        return spans(qs, first_ans), spans(ans, end)
 
     @staticmethod
     def _check_day_pages(d, qpages, report):
