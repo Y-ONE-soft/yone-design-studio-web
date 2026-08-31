@@ -40,6 +40,13 @@ def _spans(page, lo, hi):
                     yield sp
 
 
+def _grade_of(school):
+    """학교 이름 끝 숫자가 학년이다(`상일2` → 고2). 삽화 폴더가 학년별이라 필요하다."""
+    import re as _re
+    m = _re.search(r"([123])\s*$", school or "")
+    return "고%s" % m.group(1) if m else ""
+
+
 def _text(runs):
     return "".join(r["t"] for r in runs)
 
@@ -325,9 +332,11 @@ class PocketbookSeries(Series):
             raw = json.load(f)["passages"]
 
         opt = cfg.section("options") or {}
-        rows = pdata.prepare(raw, build_dir,
-                             illust_dirs=cfg.resolve(opt.get("illust_dirs") or []),
-                             category=opt.get("category", ""))
+        rows = pdata.prepare(
+            raw, build_dir,
+            illust_dirs=cfg.resolve(opt.get("illust_dirs") or []),
+            category=opt.get("category", ""),
+            grade=opt.get("grade") or _grade_of(opt.get("school", "")))
         M = dict(ptheme.METRICS)
         M.update(cfg.section("metrics") or {})
 

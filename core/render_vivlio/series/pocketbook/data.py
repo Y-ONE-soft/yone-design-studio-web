@@ -98,7 +98,51 @@ def _resolve_link(uri, search_dirs):
     return None
 
 
-def prepare(items, build_dir, illust_dirs=(), category=""):
+_PNO6 = re.compile(r"^(\d{2})(\d{2})(\d{2})")
+
+
+def find_illust(pno, grade, bases):
+    """지문번호(YYMMNN) → 삽화 파일.
+
+    분석본에는 삽화가 없다(포켓북에만 있는 요소다). 그래서 **번호로 찾아야** 한다.
+    폴더는 `<학년>/<YY년 M월…>/<번호>.jpg` 인데 회차 폴더 이름에 `(수정완)`·`(X)`
+    같은 꼬리가 붙어 있어 정확히 일치하지 않는다 — 앞부분만 본다.
+    묶음 지문(`41-42`)은 파일명도 묶음으로 되어 있다.
+    """
+    m = _PNO6.match(str(pno or ""))
+    if not m or not grade:
+        return None
+    yy, mm, nn = m.group(1), int(m.group(2)), m.group(3)
+    want = "%s년 %d월" % (yy, mm)
+    nums = [nn.lstrip("0") or "0", nn]
+    for base in bases or ():
+        gdir = os.path.join(base, grade)
+        if not os.path.isdir(gdir):
+            continue
+        for d in sorted(os.listdir(gdir)):
+            if not unicodedata.normalize("NFC", d).startswith(want):
+                continue
+            full = os.path.join(gdir, d)
+            if not os.path.isdir(full):
+                continue
+            files = {unicodedata.normalize("NFC", f): f
+                     for f in os.listdir(full)}
+            for n in nums:
+                for ext in (".jpg", ".jpeg", ".png", ".JPG", ".PNG"):
+                    if n + ext in files:
+                        return os.path.join(full, files[n + ext])
+            # 묶음 지문 — `41-42.jpg` 처럼 번호가 범위로 들어 있는 파일
+            for nfc, real in files.items():
+                stem = os.path.splitext(nfc)[0]
+                if "-" in stem or "~" in stem:
+                    parts = re.split(r"[-~]", stem)
+                    if any(p.strip() == (nn.lstrip("0") or "0")
+                           for p in parts):
+                        return os.path.join(full, real)
+    return None
+
+
+def prepare(items, build_dir, illust_dirs=(), category="", grade=""):
     """수확 결과 → 지면 항목. 그림은 build 로 복사한다.
 
     입력은 **지면 순서 목록**이다(지문과 암기테스트가 섞여 있다). 암기테스트를
@@ -117,17 +161,25 @@ def prepare(items, build_dir, illust_dirs=(), category=""):
                         "category": p.get("category") or category})
             continue
         illust = None
+        # ① 완성본에서 수확한 지문은 링크가 있다.
+        # ② 분석본에서 온 새 지문은 링크가 없다 → 지문번호로 찾는다.
+        src = None
         for uri in p.get("links") or ():
-            src = _resolve_link(uri, illust_dirs)
-            if src and os.path.splitext(src)[1].lower() in (
+            cand = _resolve_link(uri, illust_dirs)
+            if cand and os.path.splitext(cand)[1].lower() in (
                     ".jpg", ".jpeg", ".png"):
-                dst = os.path.join(assets, "p%03d%s" % (i, os.path.splitext(src)[1]))
-                try:
-                    shutil.copyfile(src, dst)
-                    illust = "img/" + os.path.basename(dst)
-                except OSError:
-                    illust = None
+                src = cand
                 break
+        if src is None:
+            src = find_illust(p.get("pno") or p.get("key"),
+                              p.get("grade") or grade, illust_dirs)
+        if src:
+            dst = os.path.join(assets, "p%03d%s" % (i, os.path.splitext(src)[1]))
+            try:
+                shutil.copyfile(src, dst)
+                illust = "img/" + os.path.basename(dst)
+            except OSError:
+                illust = None
         mt = p.get("memtest") or {}
         out.append({
             "kind": "passage",
