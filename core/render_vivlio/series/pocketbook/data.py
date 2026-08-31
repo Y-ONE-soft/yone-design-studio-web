@@ -49,12 +49,21 @@ def _resolve_link(uri, search_dirs):
     return None
 
 
-def prepare(passages, build_dir, illust_dirs=(), category=""):
-    """수확 결과 → 지면 데이터. 그림은 build 로 복사한다."""
+def prepare(items, build_dir, illust_dirs=(), category=""):
+    """수확 결과 → 지면 항목. 그림은 build 로 복사한다.
+
+    입력은 **지면 순서 목록**이다(지문과 암기테스트가 섞여 있다). 암기테스트를
+    직전 지문에 매달면 교과서처럼 여러 지문을 묶는 책에서 어긋난다.
+    """
     assets = os.path.join(build_dir, "img")
     os.makedirs(assets, exist_ok=True)
     out = []
-    for i, p in enumerate(passages):
+    for i, p in enumerate(items):
+        if p.get("kind") == "memtest":
+            out.append({"kind": "memtest", "answer": bool(p.get("answer")),
+                        "runs": _flatten(p.get("body")),
+                        "category": p.get("category") or category})
+            continue
         illust = None
         for uri in p.get("links") or ():
             src = _resolve_link(uri, illust_dirs)
@@ -69,6 +78,7 @@ def prepare(passages, build_dir, illust_dirs=(), category=""):
                 break
         mt = p.get("memtest") or {}
         out.append({
+            "kind": "passage",
             "key": p.get("key") or p.get("pno") or p.get("label") or "",
             "no": p.get("pno") or "",
             "label": p.get("label") or "",

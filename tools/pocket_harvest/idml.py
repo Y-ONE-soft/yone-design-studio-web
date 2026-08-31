@@ -408,6 +408,76 @@ def read_book(path):
     return out
 
 
+def read_sequence(path):
+    """지면 **순서 그대로**의 항목 목록. 지문과 암기테스트가 섞여 나온다.
+
+    ⚠ 암기테스트 한 벌이 지문 여러 개를 한꺼번에 담는 책이 있다(교과서는 4지문을
+      묶는다). 그래서 암기테스트를 **직전 지문에 매달면 안 된다** — 매달았더니
+      네 지문 분량이 한 지문 밑에 붙었다. 순서 목록으로 두고 렌더러가 순서대로
+      찍게 한다.
+    """
+    doc = Idml(path)
+    items = []
+    for sp in doc.spreads():
+        masters = {p["master"][:1] for p in sp["pages"] if p["master"]}
+        seen, by_role, shorts = set(), {}, []
+        for fr in sp["frames"]:
+            sid = fr["story"]
+            if sid in seen:
+                continue
+            seen.add(sid)
+            paras = doc.paragraphs(sid)
+            if not paras:
+                continue
+            role = _para_role(paras)
+            txt = "\n".join(plain(p["runs"]) for p in paras)
+            short = len(txt.strip()) < 30
+            if short:
+                shorts.append(txt.strip())
+                if role in (None, "passage", "memtest"):
+                    continue
+            if role == "passage":
+                role = "translation" if han_ratio(txt) > 0.35 else "passage"
+            if role:
+                by_role.setdefault(role, []).append(paras)
+
+        if masters & set("BDFL"):
+            # 한 스프레드에 문제(왼쪽)와 정답(오른쪽)이 **같이** 있다.
+            # 하나만 집으면 정답면이 통째로 사라진다.
+            if "memtest_q" in by_role:
+                items.append({"kind": "memtest", "answer": False,
+                              "body": by_role["memtest_q"][0]})
+            if "memtest" in by_role:
+                items.append({"kind": "memtest", "answer": True,
+                              "body": by_role["memtest"][0]})
+            continue
+        if "passage" not in by_role:
+            continue
+        topic, summary = split_topic(by_role.get("topic", [None])[0])
+        pno, label = "", ""
+        for t in shorts:
+            if not t:
+                continue
+            m = _PNO.match(t)
+            if m and not pno:
+                pno = m.group(1).replace(" ", "")
+            elif not label and len(t) <= 24 and _looks_label(t):
+                label = t
+        items.append({
+            "kind": "passage", "pno": pno, "label": label,
+            "pages": [p["name"] for p in sp["pages"]],
+            "masters": sorted(masters),
+            "passage": by_role["passage"][0],
+            "translation": by_role.get("translation", [None])[0],
+            "flownote": [plain(l).strip()
+                         for l in lines_of(by_role.get("flownote", [None])[0])],
+            "topic": topic, "summary": summary,
+            "synonyms": parse_synonym_cards(by_role.get("synonyms", [None])[0]),
+            "links": sp["links"],
+        })
+    return items
+
+
 if __name__ == "__main__":
     import json
     import sys

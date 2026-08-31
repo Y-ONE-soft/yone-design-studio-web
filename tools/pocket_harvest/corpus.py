@@ -147,12 +147,22 @@ def norm_label(s):
     return re.sub(r"[/:\\]+", "-", s)
 
 
-def label_key(school, unit, label):
-    """라벨 지문 키. **학교 스코프**다.
+def term_scope(term):
+    """`25-2-기말` → `25-2`. **교과서는 학년도·학기가 정한다.**
 
-    `4과 01` 은 학교마다 다른 교과서다 — 전역 키로 쓰면 다른 지문이 겹친다.
-    학교를 넘는 같은 지문(올림포스 등)은 키가 아니라 **원문 지문이 같다는 사실**로
-    합친다(§4 텍스트 동일 병합). 잘못 합치는 것보다 못 합치는 쪽이 싸다.
+    중간·기말은 같은 교과서를 쓰므로 한 스코프로 묶는다.
+    """
+    parts = [x for x in nfc(term or "").split("-") if x]
+    return "-".join(parts[:2])
+
+
+def label_key(school, term, unit, label):
+    """라벨 지문 키. **학교 + 학년도·학기 스코프**다.
+
+    `4과 01` 은 학교마다, 그리고 **학기마다** 다른 교과서다
+    (강동1 25-2 공통영어2 4과 ≠ 26-1 공통영어1 4과 — 실측에서 4건이 겹쳤다).
+    학교·학기를 넘는 같은 지문(올림포스 등)은 키가 아니라 **원문 지문이 같다는
+    사실**로 합친다(§4 텍스트 동일 병합). 잘못 합치는 것보다 못 합치는 쪽이 싸다.
     """
     lab = norm_label(label)
     if not lab:
@@ -165,7 +175,8 @@ def label_key(school, unit, label):
         have = set(lab.split("-"))
         rest = [t for t in u.split("-") if t and t not in have]
         pre = "-".join(rest)
-    return "%s:%s" % (school, "-".join(x for x in (pre, lab) if x))
+    scope = ":".join(x for x in (school, term_scope(term)) if x)
+    return "%s:%s" % (scope, "-".join(x for x in (pre, lab) if x))
 
 
 def key_filename(key):
@@ -509,11 +520,17 @@ def scan_idml(root=IDML_ROOT, only=None):
 
 
 def _origin(path, root=IDML_ROOT):
-    """경로 → (시기, 학교). `_idml/pocketbook/25-2-기말/명일2/….idml`"""
+    """경로 → (시기, 학교).
+
+    GDrive 폴더가 늘 `<시기>/<학교>/파일` 인 것은 아니다 — 학교 폴더 없이
+    `25-2-중간/배재1_포켓북_내지.idml` 로 놓인 것도 있다(실측). 그래서 자리로
+    세지 않고 **시기처럼 생긴 폴더**를 골라내고 나머지에서 학교를 얻는다.
+    """
     rel = nfc(os.path.relpath(path, root)).split(os.sep)
-    term = rel[0] if len(rel) >= 3 else ""
-    school = rel[1] if len(rel) >= 3 else nfc(
-        os.path.splitext(os.path.basename(path))[0]).split("_")[0]
+    dirs, base = rel[:-1], os.path.splitext(rel[-1])[0]
+    term = next((d for d in dirs if re.match(r"^\d{2}-\d", d)), "")
+    rest = [d for d in dirs if d != term]
+    school = rest[-1] if rest else re.split(r"[_\s(]", base)[0]
     return term, school
 
 
@@ -550,7 +567,7 @@ def build(limit=None, only=None, root=IDML_ROOT, out_dir=OUT):
                       "passages": len(units)})
 
         for u in units:
-            key, nums, aliases, kind = _key_of(u, school)
+            key, nums, aliases, kind = _key_of(u, school, term)
             src = {"file": name, "book": school, "term": term,
                    "pages": u["pages"], "harvested": stamp, "from": "idml"}
             if not key:
@@ -606,7 +623,7 @@ def build(limit=None, only=None, root=IDML_ROOT, out_dir=OUT):
     return entries, books, skipped, unkeyed, conflicts
 
 
-def _key_of(u, school):
+def _key_of(u, school, term=""):
     """지문 단위 → (키, 번호들, 별칭들, 갈래)."""
     key, nums, aliases = expand_pno(u["raw_label"])
     if key:
@@ -616,7 +633,7 @@ def _key_of(u, school):
             aliases = ["%s-%s" % (g, a) for a in aliases]
         return key, nums, aliases, "mock"
     if u["raw_label"]:
-        k = label_key(school, u["unit"], u["raw_label"])
+        k = label_key(school, term, u["unit"], u["raw_label"])
         return k, [], [k] if k else [], "label"
     return None, [], [], ""
 

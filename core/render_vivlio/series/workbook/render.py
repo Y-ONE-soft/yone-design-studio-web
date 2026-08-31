@@ -169,8 +169,8 @@ def blocks_html(blocks, step, ctx=None):
                     body.append(_p_arr(blocks[i]) if role == "arr_line"
                                 else f"<p>{runs_html(blocks[i])}</p>")
                 i += 1
-            if role == "box_body" and step == 1 and ctx == "cream":
-                cls += " cream"
+            if role == "box_body" and ctx in ("step1_b1",):
+                cls += " cream"      # B1 본문 정리만 크림 박스 (실측)
             out.append(f'<div class="{cls}">{"".join(body)}</div>')
             continue
 
@@ -372,7 +372,8 @@ def tabs(step):
 
 def zone(body, pos="top", cls=""):
     top = {"top": "var(--z-top)", "bottom": "var(--z-btm)"}[pos]
-    return f'<div class="zone {cls}" style="top:{top}">{body}</div>'
+    return (f'<div class="zone z-{pos} {cls}" style="top:{top}">{body}'
+            f'<span class="zend"></span></div>')
 
 
 def page_block(zones, cls=""):
@@ -417,7 +418,7 @@ def fixed_section(st, idx):
             for j, g in enumerate(groups[k:k + 2]):
                 lbl = (f'<span class="pnum">{esc(g["label"])}</span>'
                        if g.get("label") else "")
-                body = "".join(blocks_html(u, n) for u in g["units"])
+                body = "".join(blocks_html(u, n, st["key"]) for u in g["units"])
                 zs.append(zone(lbl + body, "top" if j == 0 else "bottom", "z-a1"))
             pages.append(page_block(zs))
     elif lay == "pair":
@@ -425,13 +426,14 @@ def fixed_section(st, idx):
             us = g["units"]
             lbl = (f'<span class="pnum">{esc(g["label"])}</span>'
                    if g.get("label") else "")
-            zs = [zone(lbl + blocks_html(us[0], n), "top")]
+            zs = [zone(lbl + blocks_html(us[0], n, st["key"]), "top")]
             if len(us) > 1:
-                zs.append(zone("".join(blocks_html(u, n) for u in us[1:]), "bottom"))
+                zs.append(zone("".join(blocks_html(u, n, st["key"]) for u in us[1:]),
+                               "bottom"))
             pages.append(page_block(zs))
     else:                                            # sheet
         for g in groups:
-            body = "".join(blocks_html(u, n) for u in g["units"])
+            body = "".join(blocks_html(u, n, st["key"]) for u in g["units"])
             lbl = ("" if side_label or not g.get("label")
                    else f'<span class="pnum">{esc(g["label"])}</span>')
             zs = []
@@ -440,7 +442,7 @@ def fixed_section(st, idx):
                           f'{esc(g["label"])}</span></div>')
             zs.append(zone(lbl + body, "top"))
             if g.get("attach"):
-                zs.append(zone("".join(blocks_html(u, n) for u in g["attach"]),
+                zs.append(zone("".join(blocks_html(u, n, st["key"]) for u in g["attach"]),
                                "bottom"))
             pages.append(page_block(zs))
 
@@ -458,7 +460,7 @@ def flow_sec(st, idx):
         if g.get("label"):
             body.append(f'<p class="pnum flowlbl">{esc(g["label"])}</p>')
         for blocks in g["units"]:
-            body.append(s3_blocks(blocks) if two else blocks_html(blocks, n))
+            body.append(s3_blocks(blocks) if two else blocks_html(blocks, n, st["key"]))
     run = running_head(n, st["logo"], st["title"], st["tag"])
     cls = "twocol" if two else "onecol"
     return (f'<section class="sec flow {cls} s{n}" id="sec{idx}">'

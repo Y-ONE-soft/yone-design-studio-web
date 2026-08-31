@@ -383,15 +383,22 @@ def read_book(path):
     notes = []
     # 머리말이 간지에 통째로 쌓인 책 — 개수가 딱 맞을 때만 순서대로 얹는다
     if units and not any(u["head_ch"] or u["head_num"] for u in units):
-        pile = _header_pile(doc)
-        if len(pile) == len(units):
-            for u, h in zip(units, pile):
-                u["head_ch"] = h
-            notes.append("머리말이 간지 면에 쌓여 있어 순서대로 얹음(%d개)"
-                         % len(pile))
+        nums, chs = _header_pile(doc)
+        n = len(units)
+        got = []
+        # 더미 맨 앞에는 템플릿에서 딸려온 남의 머리말이 한 벌 섞여 있다
+        # (`능률(오) 1과 / A Journey into Yourself`) → **뒤에서부터** n 개.
+        for slot, pile in (("head_num", nums), ("head_ch", chs)):
+            if len(pile) >= n:
+                for u, h in zip(units, pile[-n:]):
+                    u[slot] = h
+                got.append(slot)
+        if got:
+            notes.append("머리말이 간지 면에 쌓여 있어 뒤에서 %d개를 순서대로 "
+                         "얹음(%s)" % (n, ",".join(got)))
         else:
-            notes.append("머리말 없음 — 간지 더미 %d개 ≠ 지문 %d개라 얹지 않음"
-                         % (len(pile), len(units)))
+            notes.append("머리말 없음 — 간지 더미(숫자%d·챕터%d)가 지문 %d개보다 "
+                         "적어 얹지 않음" % (len(nums), len(chs), n))
 
     chs = [u["head_ch"] for u in units]
     nums = [u["head_num"] for u in units]
@@ -402,8 +409,12 @@ def read_book(path):
 
 
 def _header_pile(doc):
-    """간지(첫) 스프레드에 쌓인 `마스터페이지:챕터` 프레임을 문서 순서대로."""
-    pile = []
+    """간지(첫) 스프레드에 쌓인 머리말 프레임을 문서 순서대로 → (숫자칸, 챕터칸).
+
+    두 칸을 **따로** 모은다. 프레임 순서가 칸끼리 섞여 있어서 짝을 인접으로
+    맞추면 틀린다(한영1 실측). 칸마다 개수만 보고 뒤에서부터 얹는다.
+    """
+    nums, chs = [], []
     for sp in _spreads_ex(doc):
         seen = set()
         for fr in sp["frames"]:
@@ -412,10 +423,15 @@ def _header_pile(doc):
             seen.add(fr["story"])
             for p in doc.paragraphs(fr["story"]):
                 for r in p["runs"]:
-                    if role_of(r["style"]) == "head_ch" and r["t"].strip():
-                        pile.append(_sq(r["t"]))
+                    if not r["t"].strip():
+                        continue
+                    role = role_of(r["style"])
+                    if role == "head_num":
+                        nums.append(_sq(r["t"]))
+                    elif role == "head_ch":
+                        chs.append(_sq(r["t"]))
         break
-    return pile
+    return nums, chs
 
 
 def _label_of(u, chs, nums):
@@ -548,9 +564,11 @@ def _build(u, base, chs, nums, notes):
         "grammar": grammar,      # GRAMMAR POINT(어법 설명)
         "exam": exam,            # 핵심기출문제
         "sentences": sentences,  # 문장↔해석 정렬(교차형 원고에서만 채워진다)
+        # 분석본에는 걸린 그림이 하나도 없다(36권 실측). 삽화는 GDrive
+        # `포켓북 삽화정리/` 에서 지문 키로 붙인다 — 그래서 빈 채로 둔다.
         "links": [],
         "source": {"from": "idml-analysis", "file": base,
-                   "spread": u["spread"]},
+                   "spread": u["spread"], "notes": list(notes)},
     }
     return d
 
@@ -571,6 +589,7 @@ def summarize(passages):
         "no_pno": [p["label"] for p in passages if not p["pno"]],
         "voca": sum(len(p["voca"]) for p in passages),
         "short": [p["label"] for p in passages if n(p, "passage") < 200],
+        "notes": (passages[0]["source"]["notes"] if passages else []),
     }
 
 
@@ -580,6 +599,8 @@ if __name__ == "__main__":
     ps = read_book(os.path.expanduser(sys.argv[1]))
     s = summarize(ps)
     print("지문 %d개 · 루비 %d개 · VOCA %d개" % (s["n"], s["ruby"], s["voca"]))
+    for m in s["notes"]:
+        print("  · %s" % m)
     for k in ("no_translation", "no_topic", "no_summary", "no_label", "short"):
         if s[k]:
             print("  ⚠ %s: %s" % (k, s[k][:6]))

@@ -133,6 +133,7 @@ class PocketbookSeries(Series):
 
         if measure_pass:
             self._fit(rows, M, build_dir, log)
+            self._fit_memtest(rows, M, build_dir, log)
 
         html = os.path.join(build_dir, "index.html")
         with open(html, "w", encoding="utf-8") as f:
@@ -208,6 +209,9 @@ class PocketbookSeries(Series):
         """
         top = M["passage"][1]
         lead0 = M["passage_lead"]
+        # ⚠ 측정 조판에는 지문면만 넣는다. 전체 목록으로 인덱스를 매기면
+        #   암기테스트 면 때문에 **높이가 엉뚱한 지문에 붙는다**.
+        rows = [r for r in rows if r.get("kind") != "memtest"]
         keys = [str(i) for i in range(len(rows))]
 
         html = self._probe_html(rows, M, build_dir, "_measure.html")
@@ -253,6 +257,45 @@ class PocketbookSeries(Series):
         log("■ 지문 실측 %d개 · 행간 조정 %d · 글자 축소 %d"
             % (len(rows), n_lead, n_sc))
 
+    def _fit_memtest(self, rows, M, build_dir, log):
+        """암기 TEST 는 지문 여러 개를 한 면에 담아 자주 넘친다 — 행간부터 줄인다."""
+        mts = [r for r in rows if r.get("kind") == "memtest"]
+        if not mts:
+            return
+        box_h = M["memtest"][3] - 6.0
+        lead0 = M["memtest_lead"]
+        pages = []
+        for r in mts:
+            pages.append(
+                '<section class="pg"><div class="trim">'
+                '<div class="memtest" style="left:%gmm;top:%gmm;width:%gmm">'
+                '%s</div></div></section>'
+                % (M["memtest"][0] + 3.0, M["memtest"][1] + 3.0,
+                   M["memtest"][2] - 6.0, prender.runs_html(r["runs"])))
+        path = os.path.join(build_dir, "_measure_mt.html")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write('<!doctype html><html><head><meta charset="utf-8">'
+                    '<link rel="stylesheet" href="pocket.css">'
+                    '<style>@page{size:%gmm 1400mm}.pg{height:1400mm}</style>'
+                    '</head><body>%s</body></html>'
+                    % (M["page_w"] + 2 * M["bleed"], "".join(pages)))
+        h = measure.measure(path, os.path.join(build_dir, "_measure_mt.pdf"),
+                            [str(i) for i in range(len(mts))],
+                            M["memtest"][1] + 3.0, 1390.0, log=log)
+        PT = 25.4 / 72.0
+        n = 0
+        for i, r in enumerate(mts):
+            got = h.get(str(i), 0.0)
+            if got <= box_h:
+                continue
+            lines = max(1, int(round(got / (lead0 * PT))))
+            lead = max(11.0, (int(box_h / lines / PT * 2)) / 2.0)
+            r["mt_lead"] = lead
+            if lead <= 11.0 + 1e-6:
+                r["mt_scale"] = max(0.8, round(box_h / (got * lead / lead0), 3))
+            n += 1
+        log("■ 암기테스트 %d면 · 조정 %d" % (len(mts), n))
+
     # ── ④ 검수 ──
     def verify(self, cfg, log, report):
         """포켓북 게이트.
@@ -277,7 +320,7 @@ class PocketbookSeries(Series):
 
         with probe.open_pdf(pdf) as doc:
             n_pages = len(doc)
-            per = [2 + (2 if r.get("memtest") else 0) for r in rows]
+            per = [1 if r.get("kind") == "memtest" else 2 for r in rows]
             want = start + sum(per)
             if n_pages != want:
                 report.fail("G-P1 면 수 %d ≠ 예상 %d (지문 %d개)"
@@ -288,6 +331,9 @@ class PocketbookSeries(Series):
             for r, step in zip(rows, per):
                 if idx >= n_pages:
                     break
+                if r.get("kind") == "memtest":
+                    idx += step
+                    continue
                 page = doc[idx]
                 want_ruby = sum(1 for x in r["passage_runs"] if x.get("ruby"))
                 got_ruby = _count_size(page, M["anno_size"])
@@ -312,11 +358,12 @@ class PocketbookSeries(Series):
                                 "%s +%.1fmm" % x for x in over[:5])))
 
         # G-P2 0개 항목 — 막지 않고 목록으로
-        no_syn = [r.get("key") or r.get("label") or "?" for r in rows
+        pas = [r for r in rows if r.get("kind") != "memtest"]
+        no_syn = [r.get("key") or r.get("label") or "?" for r in pas
                   if not r.get("synonyms")]
-        no_flow = [r.get("key") or r.get("label") or "?" for r in rows
+        no_flow = [r.get("key") or r.get("label") or "?" for r in pas
                    if not r.get("flownote")]
-        no_ill = [r.get("key") or r.get("label") or "?" for r in rows
+        no_ill = [r.get("key") or r.get("label") or "?" for r in pas
                   if not r.get("illust")]
         if no_syn:
             report.warn("G-P2 동반의어 0개 %d지문 — %s"
@@ -327,7 +374,8 @@ class PocketbookSeries(Series):
         if no_ill:
             report.note("G-P5 삽화 없음 %d지문(모의고사만 필요)" % len(no_ill))
         self._write_empty_report(cfg, no_syn, no_flow)
-        report.note("지문 %d개 · 면 %d" % (len(rows), n_pages))
+        report.note("지문 %d개 · 암기테스트 %d면 · 총 %d면"
+                    % (len(pas), len(rows) - len(pas), n_pages))
         return report
 
     @staticmethod

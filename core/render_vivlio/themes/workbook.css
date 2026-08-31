@@ -114,7 +114,8 @@ body {
   width: var(--content-w);
   height: 260mm;                       /* 303 - 26.5 - 16.5 */
   break-after: page;
-  overflow: hidden;
+  overflow: visible;                   /* ⚠ hidden 으로 두면 넘친 내용이
+                                          조용히 사라진다 — 게이트가 잡게 둔다 */
 }
 .sec:last-child .pg:last-child { break-after: auto; }
 
@@ -126,6 +127,11 @@ body {
 /* 지면 안 좌표 — 판면(마진 박스 안쪽) 기준 */
 :root { --z-top: 1mm; --z-btm: 130mm; }
 .zone { position: absolute; left: 0; width: var(--content-w); }
+
+/* 칸 끝 표식 — 흰 종이에 흰색 0.4mm 사각(인쇄에 안 보인다). 넘침 게이트가
+ * 이 표식의 y 를 재서 "칸을 넘었는가"를 판정한다. 눈으로 못 잡는 사고라
+ * 표식으로 재는 편이 낫다. */
+.zend { display: block; width: 0.4mm; height: 0.4mm; background: #fffffe; }
 
 /* 간지 — 도련까지 색이 차야 하므로 여백 0 짜리 페이지를 따로 쓴다 */
 @page divider {

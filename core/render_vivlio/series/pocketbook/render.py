@@ -43,11 +43,15 @@ def _box(x, y, w=None, h=None):
 
 
 # ── 지문 본문 ─────────────────────────────────────────────
+_MARK_CLS = {"blue": "blue", "red": "red", "wave": "wave",
+             "num": "n", "blank": "blank"}
+
+
 def _run_html(r):
     cls = []
     m = r.get("mark")
-    if m in ("blue", "red", "wave"):
-        cls.append(m)
+    if m in _MARK_CLS:
+        cls.append(_MARK_CLS[m])
     inner = ESC(r["t"])
     if r.get("ruby"):
         slot = r.get("slot") or "dn"
@@ -227,16 +231,23 @@ def right_page(p, M, folio, category=""):
 
 def memtest_page(p, M, folio, answer, category=""):
     mt = M["memtest"]
-    runs = (p.get("memtest") or {}).get("a" if answer else "q")
+    runs = p.get("runs") if p.get("kind") == "memtest" else (
+        (p.get("memtest") or {}).get("a" if answer else "q"))
     if not runs:
         return ""
+    fit = ""
+    if p.get("mt_lead"):
+        fit = ";line-height:%gpt" % p["mt_lead"]
+    if p.get("mt_scale"):
+        fit += ";font-size:%gpt" % (M["memtest_size"] * p["mt_scale"])
     label = "암기 TEST 정답" if answer else "암기 TEST"
     parts = ['<div class="mtchip" style="%s">📝 %s</div>'
              % (_box(mt[0], 12.4, 30.0, 6.0), label),
              '<div class="mtbox" style="%s"></div>'
              % _box(mt[0], mt[1], mt[2], mt[3]),
-             '<div class="memtest" style="%s">%s</div>'
-             % (_box(mt[0] + 3.0, mt[1] + 3.0, mt[2] - 6.0), runs_html(runs))]
+             '<div class="memtest" style="%s%s">%s</div>'
+             % (_box(mt[0] + 3.0, mt[1] + 3.0, mt[2] - 6.0), fit,
+                runs_html(runs))]
     foot = "<b>%s</b> POCKET BOOK" % folio
     if answer:
         foot = ('<span style="color:var(--ink)">%s</span> <b>%s</b>'
@@ -262,15 +273,13 @@ def build_html(data, css_name="pocket.css"):
         folio += 1
     for p in data["passages"]:
         cat = p.get("category", "")
+        if p.get("kind") == "memtest":
+            pg = memtest_page(p, M, folio, p.get("answer"), cat)
+            if pg:
+                pages.append(pg); folio += 1
+            continue
         pages.append(left_page(p, M, folio)); folio += 1
         pages.append(right_page(p, M, folio, cat)); folio += 1
-        if p.get("memtest"):
-            q = memtest_page(p, M, folio, False, cat)
-            if q:
-                pages.append(q); folio += 1
-            a = memtest_page(p, M, folio, True, cat)
-            if a:
-                pages.append(a); folio += 1
     return ('<!doctype html><html lang="ko"><head><meta charset="utf-8">'
             '<title>%s</title><link rel="stylesheet" href="%s"></head><body>'
             '%s</body></html>'

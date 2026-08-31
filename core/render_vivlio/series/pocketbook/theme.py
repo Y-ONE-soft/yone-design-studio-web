@@ -262,8 +262,9 @@ html,body{margin:0;padding:0;background:#fff}
 .memtest{position:absolute;font-size:__mt_size__pt;line-height:__mt_lead__pt;
   text-align:justify;letter-spacing:__track__em}
 .memtest .n{font-size:5.5pt;vertical-align:super;color:var(--anno)}
-.memtest .ans{color:#E8963C}
+.memtest .red{color:#E8963C}          /* 정답 — 원본 실측 주황 */
 .memtest .blank{display:inline-block;min-width:__blank__mm}
+.n{font-size:5.5pt;vertical-align:super;color:var(--anno)}
 .mtbox{position:absolute;border:.4pt solid #E4E0D6;background:#FCFBF7;
   border-radius:1mm}
 """
