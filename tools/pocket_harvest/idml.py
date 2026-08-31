@@ -256,6 +256,19 @@ def split_topic(paras):
 
 
 # ── 스프레드 → 지문 ────────────────────────────────────────
+def _looks_label(t):
+    """지문 라벨인가. `TRANSLATION`·`PICTURE` 같은 **마스터 글자**를 걸러 낸다.
+
+    라벨에는 한글이나 숫자가 있다(`3과 04`·`250923`·`올포 11강`). 대문자 영어만
+    있는 것은 지면 장식이다 — 이걸 안 거르면 지문 라벨이 TRANSLATION 이 된다.
+    """
+    if not t:
+        return False
+    if re.fullmatch(r"[A-Z][A-Z \-]*", t):
+        return False
+    return bool(re.search(r"[가-힣0-9]", t))
+
+
 def _para_role(paras):
     for p in paras:
         r = ROLE_BY_PARA.get(p["style"])
@@ -320,7 +333,7 @@ def read_book(path):
             m = _PNO.match(t)
             if m and not pno:
                 pno = m.group(1).replace(" ", "")
-            elif not label and len(t) <= 24:
+            elif not label and len(t) <= 24 and _looks_label(t):
                 label = t
         pending = {
             "pno": pno,

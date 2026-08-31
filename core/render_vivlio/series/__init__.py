@@ -54,6 +54,11 @@ def _final():
     return FinalSeries()
 
 
+def _pocketbook():
+    from core.render_vivlio.series.pocketbook import PocketbookSeries
+    return PocketbookSeries()
+
+
 def _middle():
     from core.render_vivlio.series.middle import MiddleSeries
     return MiddleSeries()
@@ -65,4 +70,5 @@ register("blackbook", _blackbook)
 register("special", _special)
 register("middle", _middle)
 register("whitebook", _whitebook)
+register("pocketbook", _pocketbook)
 register("final", _final)

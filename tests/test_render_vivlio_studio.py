@@ -705,6 +705,63 @@ def test_layers_redraw_on_page_change():
     assert "drawLayers()" in src[i:i + 700]
 
 
+# ── 표 ────────────────────────────────────────────────────────
+# 표는 어느 계열에나 필요하고 모양도 같다 — 그래서 자료 모양과 HTML 을
+# `core/table.py` 한 곳에 둔다. 계열은 한 줄로 꽂는다.
+def test_table_html_marks_every_cell():
+    """칸마다 자리표가 있어야 **그 칸만** 고칠 수 있다."""
+    from core.render_vivlio import refs, table
+    refs.clear()
+    b = {"t": "table", "head": ["ㄱ", "ㄴ"], "rows": [["가", "나"]]}
+    h = table.html(b, ref="lessons.0.problems.0.blocks.3")
+    assert 'data-ref="lessons.0.problems.0.blocks.3.head.0"' in h
+    assert 'data-ref="lessons.0.problems.0.blocks.3.rows.0.1"' in h
+
+
+def test_table_repeats_the_header_across_pages():
+    """표가 길면 면을 넘는다 — 머리줄이 다음 면에도 나와야 읽을 수 있다."""
+    from core.render_vivlio import table
+    assert "table-header-group" in table.CSS
+
+
+def test_table_cells_are_rich():
+    """칸에도 굵게·글자 서식이 들어가야 한다."""
+    from core.render_vivlio import table
+    h = table.html({"t": "table", "rows": [[{"t": "굵게", "b": True}]]})
+    assert "<b>굵게</b>" in h
+
+
+def test_table_plain_for_verification():
+    """표도 글이다 — 검수 전수 대조에 들어가야 한다."""
+    from core.render_vivlio import table
+    assert table.plain({"head": ["ㄱ"], "rows": [["가", "나"]]}) == "ㄱ 가 나"
+
+
+def test_series_renders_table_blocks():
+    src = io.open(os.path.join(_ROOT, "core", "render_vivlio", "series",
+                               "blackbook", "render.py"), encoding="utf-8").read()
+    assert "t == 'table'" in src and "_tbl.html(" in src
+
+
+def test_table_css_sees_edits_not_just_data():
+    """작업대에서 넣은 표는 `edits.json` 에 있다.
+
+    `data.json` 만 보면 못 찾아, 표가 **괘선 없이 글자만** 늘어선 채로 나간다
+    (실제로 그랬다).
+    """
+    src = io.open(os.path.join(_ROOT, "core", "render_vivlio", "knobs.py"),
+                  encoding="utf-8").read()
+    i = src.index("def _has_table")
+    assert "edits.json" in src[i:i + 900]
+
+
+def test_table_ops_go_through_history():
+    """표도 원고 자료다 — ⌘Z 로 되돌아가야 한다."""
+    src = _routes_src()
+    i = src.index("def api_table")
+    assert "ed.push" in src[i:i + 3000]
+
+
 # ── 클로드 칸 ─────────────────────────────────────────────────
 # 모델에게 리포를 통째로 열어 주면 안 된다 — 계열 코드를 고치면 그 계열 책이
 # 전부 흔들리고, 원고를 고치면 납품본과 글이 달라진다. 손댈 수 있는 곳은

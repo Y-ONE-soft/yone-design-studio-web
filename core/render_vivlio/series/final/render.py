@@ -57,18 +57,25 @@ def esc(s):
                   lambda m: NBSP * (len(m.group(0)) - 1) + " ", s)
 
 
-def _blank(word):
-    """빈칸 = 첫 글자(굵게) + 남은 길이만큼 밑줄.
+# 빈칸 밑줄 폭 = 정답 글자 수 × 이 값(em). 완성본 227개 실측에서
+# 글자수별 **최솟값**(= 양끝정렬이 안 늘린 줄)이 2.05mm/글자로 일정했다
+# → 8.5pt 기준 0.684em. 활자를 줄여도 따라가도록 em 으로 준다.
+BLANK_EM = 0.684
 
-    완성본 실측: 밑줄 폭 = **낱말 글자 수**만큼의 고정폭 공백. 열두 자리 표본
-    전부 같은 비율이었다(줄마다 다른 것은 양끝정렬이 늘린 몫이다).
+
+def _blank(word):
+    """빈칸 = 첫 글자(굵게) + 남은 낱말 길이만큼의 밑줄.
+
+    ⚠ 밑줄을 고정폭 공백(NBSP) 으로 채우면 안 된다 — Noto 의 공백은 0.224em
+      이라 완성본의 3분의 1 밖에 안 된다(실제로 밑줄이 토막처럼 보였다).
     """
     w = (word or "").strip()
     if not w:
         return ""
     head = html.escape(w[0])
     return (f'<span class="bl">{head}'
-            f'<span class="u">{NBSP * len(w)}</span></span>')
+            f'<span class="u" style="width:{len(w) * BLANK_EM:.3f}em">'
+            f'</span></span>')
 
 
 def inl_cloze(segs):

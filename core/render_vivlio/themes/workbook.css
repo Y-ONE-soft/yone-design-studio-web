@@ -1,0 +1,501 @@
+/* STEP BY STEP 워크북 — 내지 테마
+ *
+ * 기준: 최신 완성본 실측 (2026-08-31 산출)
+ *   조판/교재/워크북/워크북수능만만10강_내지_v2_4.pdf   (80p, 13스텝 전 구간)
+ *   조판/교재/워크북/성덕1_워크북EBS연계지문1_내지_v2_2.pdf (교차 확인)
+ *   조판/교재/워크북/고1_23년_11월_전체_v2.pdf            (본가 확인)
+ * 세 교재가 같은 헤더 체계를 쓴다 — 계열 하나로 덮인다.
+ *
+ * ⚠ 이 디자인은 2026-07 파일럿(pilot/vivliostyle/workbook/workbook_theme.css)의
+ *   기준과 **다르다**. 그때는 색 밴드 + 리본(화살촉) + 플로럴 래스터였고, 지금은
+ *   크림 패널 + 좌측 세로바 + 진행 표시 + 우측 사이드 탭이다. 옛 CSS 를 참고할
+ *   때 이 점을 먼저 볼 것.
+ *
+ * 값은 전부 토큰이다 — 디자인이 또 바뀌면 :root 와 config.palette 만 고친다.
+ */
+
+/*@PRELUDE@*/
+
+:root {
+  /* ── 판면 ── */
+  --page-w: 216mm; --page-h: 303mm;      /* 재단 210×297 + 도련 3mm */
+  --bleed: 3mm;
+  --m-out: 23mm;                          /* 짝수(왼)쪽 안쪽 여백 */
+  --m-in: 26mm;                           /* 홀수(오른)쪽 안쪽 여백 */
+  --content-w: 168mm;
+  --hdr-h: 26.5mm;                        /* 크림 패널 아래 경계선 */
+  --body-top: 27.5mm;                     /* 본문이 시작하는 자리 */
+  --zone-top: 30.6mm;                     /* 상단 프레임 */
+  --zone-btm: 156.5mm;                    /* 하단 프레임 (고정) */
+  --folio-y: 286.62mm;
+
+  /* ── 색 (실측) ── */
+  --ink: #231f20;
+  --paper: #ffffff;
+  --hdr-bg: #f9f7ed;                      /* 헤더 크림 패널 */
+  --rule: #b4aa9a;                        /* 헤더 경계선·태그·비활성 */
+  --brand-bar: #bdafa2;                   /* 홀수쪽 STEP BY STEP 바 */
+  --folio-no: #3b4247;
+  --pnum: #af9d81;                        /* 지문 번호 (Yeongdo) */
+  --kr-gray: #58595b;                     /* 한글 해석 */
+
+  --s1: #77a1c4; --s1-pale: #e6eef5; --s1-tab: #dce8f2;
+  --s2: #cba56f; --s2-pale: #f9efda; --s2-tab: #f9efda;
+  --s3: #bc736c; --s3-pale: #f8e1da; --s3-tab: #f8e1da;
+
+  --num-blue: #92b0d3;                    /* OX·빈칸 문항 번호 */
+  --num-violet: #8d7cba;                  /* 내용 종합 문항 번호 */
+  --sel: #00559f;                         /* 선택지 파랑 */
+  --blank: #c64a86;                       /* 빈칸 첫 글자 */
+  --box-body: #f9f9f2;                    /* 본문 박스(크림) */
+  --box-sky: #e5f2f8;                     /* 본문 박스(하늘) */
+  --box-q: #f1f5fa; --line-q: #92b0d3;    /* 하단 문제 지문 박스 */
+  --box-given: #faf4f6;                   /* 주어진 문장 */
+  --line-orange: #e5aa7e;                 /* 어법 하단 박스 */
+  --box-write: #e4dfed;                   /* 영작 보기 박스 */
+  --badge-topic: #f8aa98;                 /* {주제} 배지 */
+  --badge-title: #5ea7a5;                 /* {제목} 배지 */
+  --box-s3: #f9fbf2;                      /* 실전 요약 배경 */
+  --cond-fill: #dbecf2; --cond-line: #6ab3c7;
+
+  /* ── 자간 보정 ── CSS 에 장평이 없다. 실물은 자간·장평으로 더 좁게 앉는다. */
+  --track: -0.025em;
+}
+
+/*@GENERATED@*/
+
+/* ─────────────────────────────────────────────── 기본 */
+html, body { margin: 0; padding: 0; }
+p { margin: 0; }          /* 기본 p 마진이 붕괴/비붕괴를 오가며 ±3mm 를 만든다 */
+body {
+  font-family: "Noto Sans CJK KR", sans-serif;
+  color: var(--ink);
+  letter-spacing: var(--track);
+  line-break: strict;
+  hyphens: none;
+  orphans: 1; widows: 1;
+  background: var(--paper);
+}
+
+@page { size: 216mm 303mm; margin: 0; }
+
+.sheet {
+  position: relative;
+  width: var(--page-w); height: var(--page-h);
+  overflow: hidden;
+  break-after: page;
+  background: var(--paper);
+}
+.sheet:last-child { break-after: auto; }
+
+/* 스텝 색 — 시트/섹션에 s1·s2·s3 로 붙는다 */
+.s1 { --step: var(--s1); --step-pale: var(--s1-pale); }
+.s2 { --step: var(--s2); --step-pale: var(--s2-pale); }
+.s3 { --step: var(--s3); --step-pale: var(--s3-pale); }
+
+/* ─────────────────────────────────────────────── 헤더 (짝수=왼쪽) */
+.hdr {
+  position: absolute; left: 0; top: 0;
+  width: var(--page-w); height: var(--hdr-h);
+  background: var(--hdr-bg);
+  border-bottom: 0.6pt solid var(--rule);
+  letter-spacing: normal;
+}
+.hdr .bar {                                   /* 좌측 세로 바 */
+  position: absolute; left: 14.2mm; top: 0; width: 2.2mm; height: 26.6mm;
+  background: var(--step);
+}
+.hdr .kicker {
+  position: absolute; left: 23mm; top: 6.83mm;
+  font-size: 8pt; line-height: 1; color: var(--step);
+  font-weight: 400; letter-spacing: 0.02em;
+}
+.hdr .kicker b { font-weight: 700; }
+.hdr .tag {
+  position: absolute; left: 35.35mm; top: 6.84mm;
+  font-size: 8pt; line-height: 1; font-weight: 700; color: var(--rule);
+  letter-spacing: 0.02em;
+}
+.hdr .logo {
+  position: absolute; left: 23mm; top: 15.18mm;
+  font-family: "TTMamablock", "Gmarket Sans", sans-serif;
+  font-size: 25pt; line-height: 1; color: var(--step);
+}
+.hdr .title {
+  position: absolute; left: 23mm; top: 16.7mm;
+  padding-left: var(--title-dx, 11mm);
+  font-family: "Gmarket Sans", sans-serif; font-weight: 500;
+  font-size: 13pt; line-height: 1; color: var(--ink);
+  letter-spacing: -0.02em;
+}
+/* 진행 표시 ①—②—③ */
+.hdr .steps { position: absolute; left: 58.5mm; top: 16.06mm; }
+.hdr .steps i {
+  position: absolute; top: 0; width: 5.4mm; height: 5.4mm;
+  border-radius: 50%; box-sizing: border-box;
+  border: 0.8pt solid var(--rule);
+  font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 6pt;
+  line-height: 5.2mm; text-align: center; color: var(--rule);
+  font-style: normal;
+}
+.hdr .steps i:nth-child(1) { left: 0; }
+.hdr .steps i:nth-child(2) { left: 11mm; }
+.hdr .steps i:nth-child(3) { left: 22mm; }
+.hdr .steps i.on { background: var(--step); border-color: var(--step); color: #fff; }
+.hdr .steps u {                                /* 잇는 선 */
+  position: absolute; top: 2.7mm; height: 0;
+  border-top: 0.6pt solid var(--rule); text-decoration: none;
+}
+.hdr .steps u:nth-of-type(1) { left: 6.1mm; width: 4.2mm; }
+.hdr .steps u:nth-of-type(2) { left: 17.1mm; width: 4.2mm; }
+
+/* ─────────────────────────────────────────────── 헤더 (홀수=오른쪽) */
+.hdr-r {
+  position: absolute; left: 0; top: 0;
+  width: var(--page-w); height: var(--hdr-h);
+  background: var(--hdr-bg);
+  border-bottom: 0.6pt solid var(--rule);
+  letter-spacing: normal;
+}
+.hdr-r .biglogo {
+  position: absolute; right: 21mm; top: 4.4mm;
+  font-family: "Montserrat", sans-serif; font-weight: 500; font-size: 36pt;
+  line-height: 1; color: var(--step); opacity: 0.75;
+}
+.hdr-r .brand {
+  position: absolute; left: 179.6mm; top: 21.6mm;
+  width: 36.5mm; height: 4.79mm;
+  background: var(--brand-bar);
+  clip-path: polygon(3.2mm 0, 100% 0, 100% 100%, 0 100%);
+  font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 6pt;
+  line-height: 4.79mm; color: #fff; text-align: center;
+  letter-spacing: 0.06em; padding-left: 2mm; box-sizing: border-box;
+}
+/* 오른쪽 사이드 탭 */
+.tabs { position: absolute; right: 0; top: 0; width: 11.5mm; height: var(--page-h); }
+.tabs b {
+  position: absolute; right: 0; width: 11.5mm; height: 26mm;
+  font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 6.5pt;
+  letter-spacing: 0.08em;
+  writing-mode: vertical-rl; text-orientation: mixed;
+  display: flex; align-items: center; justify-content: center;
+}
+.tabs b:nth-child(1) { top: 63mm; }
+.tabs b:nth-child(2) { top: 93mm; }
+.tabs b:nth-child(3) { top: 123mm; }
+.tabs b.t1 { background: var(--s1-tab); color: var(--s1); }
+.tabs b.t2 { background: var(--s2-tab); color: var(--s2); }
+.tabs b.t3 { background: var(--s3-tab); color: var(--s3); }
+.tabs b.on.t1 { background: var(--s1); color: #fff; }
+.tabs b.on.t2 { background: var(--s2); color: #fff; }
+.tabs b.on.t3 { background: var(--s3); color: #fff; }
+
+/* ─────────────────────────────────────────────── 푸터 */
+.folio {
+  position: absolute; top: var(--folio-y);
+  font-family: "Elice DX Neolli", sans-serif; font-weight: 700; font-size: 6pt;
+  line-height: 1; letter-spacing: normal; color: var(--ink);
+}
+.folio .no { color: var(--folio-no); }
+.folio.l { left: 18.23mm; }
+.folio.l .bk { margin-left: 1.9mm; }
+.folio.r { right: 18.0mm; text-align: right; }
+.folio.r .bk { margin-right: 1.9mm; }
+
+/* ─────────────────────────────────────────────── 본문 공통 */
+.zone { position: absolute; width: var(--content-w); }
+.sheet.left .zone, .sheet.left .pn-side { left: var(--m-out); }
+.sheet.right .zone, .sheet.right .pn-side { left: var(--m-in); }
+
+.pnum {
+  font-family: "Yeongdo", serif; font-size: 12pt; line-height: 1;
+  color: var(--pnum); letter-spacing: 0.04em; display: block;
+}
+.en { font-size: 8.5pt; line-height: 7.76mm; text-align: justify; }
+u { text-underline-offset: 0.14em; text-decoration-thickness: 0.05em; }
+
+/* 선택 괄호 [ ⓐ x / ⓑ y ] */
+.sel { font-weight: 700; color: var(--sel); }
+
+/* 빈칸 — 첫 글자 + 길이 비례 밑줄 */
+.bl { white-space: nowrap; }
+.bl b { font-weight: 700; color: var(--blank); }
+.bl i {
+  display: inline-block; font-style: normal;
+  border-bottom: 0.5pt solid var(--ink);
+  height: 0.95em; vertical-align: baseline;
+}
+
+/* 아이콘 (전부 SVG — 래스터 자산 없음) */
+svg.ico { vertical-align: middle; }
+svg.tf { width: 21.08mm; height: 4.76mm; vertical-align: -1.3mm; margin-left: 1.8mm; }
+svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
+.ansline { display: block; margin-top: 5.4mm; }
+.ansline svg { display: block; width: 94.91mm; height: 4.1mm; }
+.ansline.wide svg { width: 167.13mm; height: 11.34mm; }
+
+/* ─────────────────────────────────────────────── STEP1 A1 어휘 선택 */
+.z-a1 { }
+.z-a1 .pnum { margin-bottom: 2.4mm; }
+
+/* ─────────────────────────────────────────────── STEP1 A2 본문 O/X */
+.box-body {
+  background: var(--box-sky);
+  padding: 2.1mm 3mm 2.2mm;
+  margin-top: 1.4mm;
+}
+.box-body.cream { background: var(--box-body); }
+.box-body p { font-size: 8.5pt; line-height: 4.59mm; text-align: justify; }
+.ox {
+  position: relative; margin-top: 7.6mm; padding-left: 5.1mm;
+  font-size: 9.5pt; line-height: 4.2mm;
+}
+.ox .n {
+  position: absolute; left: 1mm; top: 0.2mm;
+  font-family: "LotteMartDream", "Montserrat", sans-serif;
+  font-size: 9pt; color: var(--num-blue); letter-spacing: normal;
+}
+
+/* ─────────────────────────────────────────────── STEP1 B1 본문 정리 */
+.sum { margin-top: 4.4mm; position: relative; padding-left: 8.3mm; }
+.sum .badge {
+  position: absolute; left: 0; top: 0.3mm;
+  width: 7.4mm; height: 3.4mm; border-radius: 1.7mm;
+  font-family: "Elice Baeum", sans-serif; font-weight: 700; font-size: 8pt;
+  line-height: 3.4mm; text-align: center; color: #fff; letter-spacing: normal;
+}
+.sum.topic .badge { background: var(--badge-topic); }
+.sum.title .badge { background: var(--badge-title); }
+.sum p { font-size: 9pt; font-weight: 700; line-height: 4.94mm; text-align: justify; }
+
+/* 하단 문제 (발문 + 지문 박스 + 선지) */
+.q-head {
+  position: relative; padding-left: 4mm;
+  font-family: "Elice Baeum", sans-serif; font-size: 9pt; line-height: 4.1mm;
+}
+.box-q {
+  background: var(--box-q); border: 0.5pt solid var(--line-q);
+  margin: 3.7mm 3mm 0; padding: 1.9mm 3mm 2.2mm;
+}
+.box-q p { font-size: 8.5pt; line-height: 4.59mm; text-align: justify; }
+.choices { margin: 4.4mm 0 0 10mm; }
+.choices p { font-size: 8.5pt; line-height: 5.29mm; text-align: justify;
+             padding-left: 3.6mm; text-indent: -3.6mm; }
+
+/* ─────────────────────────────────────────────── STEP1 B2 내용 종합 */
+.b2q { position: relative; margin-top: 6.5mm; padding-left: 9mm; }
+.b2q .n {
+  position: absolute; left: 0; top: 0;
+  font-family: "Elice DX Neolli", sans-serif; font-weight: 700; font-size: 10pt;
+  color: var(--num-violet); letter-spacing: normal;
+}
+.b2q .qt {
+  font-family: "Elice DX Neolli", sans-serif; font-weight: 500; font-size: 7.5pt;
+  line-height: 4.3mm;
+}
+.b2q .choices { margin: 1.4mm 0 0 5mm; }
+.b2q .choices p { font-size: 8pt; line-height: 4.7mm; }
+
+/* ─────────────────────────────────────────────── STEP1 C1 문장 배열 */
+.box-arr {
+  background: var(--box-body);
+  margin: 1.5mm 0 0; padding: 2.6mm 4mm 3mm 5mm;
+}
+.box-arr p {
+  font-size: 8.5pt; line-height: 4.4mm; text-align: justify;
+  padding-left: 4.1mm; text-indent: -4.1mm; margin-top: 2.15mm;
+}
+.box-arr p:first-child { margin-top: 0; }
+.albl { font-weight: 700; color: var(--sel); }
+.box-given {
+  background: var(--box-given);
+  margin-top: 3.4mm; padding: 1.6mm 3mm 1.9mm;
+}
+.box-given p { font-size: 8.5pt; line-height: 4.59mm; text-align: justify; }
+.box-lined {
+  border: 0.5pt solid var(--line-q);
+  margin-top: 0.7mm; padding: 1.9mm 3mm 2.4mm;
+}
+.box-lined p { font-size: 8.5pt; line-height: 4.59mm; text-align: justify;
+               margin-top: 3.1mm; }
+.box-lined p:first-child { margin-top: 0; }
+
+/* ─────────────────────────────────────────────── 빈칸 (C2 어휘 / STEP2 C1 어법) */
+.pn-side {                     /* 지문 번호가 판면 왼쪽 바깥에 세로로 */
+  position: absolute; top: 29.5mm; left: 12.6mm !important; width: 9mm;
+}
+.pn-side .pnum { line-height: 5.3mm; }
+.blk {
+  position: relative; padding-left: 5.5mm; text-indent: 0;
+  font-size: 7.96pt; line-height: 7.0mm; text-align: justify;
+  margin-top: 3.6mm;
+}
+.blk:first-child { margin-top: 0; }
+.blk .n {
+  position: absolute; left: 0; top: 0.35mm;
+  font-family: "LotteMartDream", "Montserrat", sans-serif;
+  font-size: 8.95pt; color: var(--num-blue); letter-spacing: normal;
+}
+.blk-kr {
+  padding-left: 5.5mm; margin-top: 1.9mm;
+  font-size: 8pt; font-weight: 500; line-height: 4.24mm; color: var(--kr-gray);
+  text-align: justify;
+}
+
+/* ─────────────────────────────────────────────── STEP2 A1 어법 선택 */
+.gsel p { font-size: 8.5pt; line-height: 5.6mm; text-align: justify;
+          padding-left: 4mm; text-indent: -4mm; }
+.box-orange {
+  border: 0.5pt solid var(--line-orange);
+  margin: 3.3mm 0 0; padding: 1.4mm 3mm 3.1mm;
+}
+.box-orange p { font-size: 8.5pt; line-height: 7.06mm; text-align: justify; }
+
+/* ─────────────────────────────────────────────── STEP2 B1 어법 O/X */
+.gox {
+  position: relative; margin-top: 6.2mm;
+  font-size: 8.5pt; line-height: 4.9mm; text-align: justify;
+}
+
+/* ─────────────────────────────────────────────── STEP2 C2 영작 배열 (흘림) */
+.wr { position: relative; padding-left: 8mm; padding-top: 6.4mm; }
+.wr:first-child { padding-top: 0; }
+.wr .n {
+  position: absolute; left: 0.6mm; top: 6.6mm;
+  font-family: "LotteMartDream", "Montserrat", sans-serif;
+  font-size: 8.5pt; color: var(--num-blue); letter-spacing: normal;
+}
+.wr:first-child .n { top: 0.2mm; }
+.wr .kr { font-size: 8.5pt; line-height: 4.3mm; text-align: justify; }
+.box-write {
+  background: var(--box-write);
+  margin: 2.2mm 0 0 -3mm; padding: 2.3mm 4mm;
+}
+.box-write p { font-size: 8.5pt; font-weight: 500; line-height: 4.35mm;
+               text-align: justify; }
+
+/* ─────────────────────────────────────────────── STEP3 실전 (2단 흘림) */
+@page s3 {
+  size: 216mm 303mm;
+  margin: 30mm 25mm 19mm 23mm;
+}
+@page s3:left {
+  @top-left-corner { content: element(hdrL); }
+  @bottom-left-corner { content: element(folL); }
+}
+@page s3:right {
+  margin: 30mm 23mm 19mm 26mm;
+  @top-left-corner { content: element(hdrR); }
+  @bottom-right-corner { content: element(folR); }
+}
+section.s3flow { page: s3; }
+
+.run-hdr { position: running(hdrL); }
+.run-hdr-r { position: running(hdrR); }
+.run-fol { position: running(folL); }
+.run-fol-r { position: running(folR); }
+.run-hdr, .run-hdr-r { width: var(--page-w); height: var(--hdr-h); }
+.run-fol .no::before, .run-fol-r .no::before { content: counter(page); }
+
+.s3flow {
+  column-count: 2; column-gap: 5mm; column-fill: auto;
+}
+.s3flow p { margin: 0; }
+.s3-intro {
+  font-family: "Elice Baeum", sans-serif; font-size: 8pt; line-height: 4.6mm;
+  padding-top: 5mm; break-after: avoid;
+}
+.q3 {
+  padding-left: 9mm; text-indent: -9mm;
+  font-size: 8pt; line-height: 4.94mm; text-align: justify;
+  padding-top: 5.6mm;            /* 컬럼 흐름에서 margin-top 이 소실된다(실측) */
+  break-after: avoid;
+}
+.s3flow .q3:first-child { padding-top: 0; }
+.q3 .qn {
+  display: inline-block; width: 9mm; text-indent: 0;
+  font-family: "Elice DX Neolli", sans-serif; font-weight: 700; font-size: 12pt;
+  color: var(--s3); letter-spacing: 0.02em; line-height: 0; vertical-align: -0.55mm;
+}
+.p3 { font-size: 8pt; line-height: 4.94mm; text-align: justify; padding-top: 1.4mm; }
+.ch3 { font-size: 8pt; line-height: 5.23mm; text-align: justify;
+       padding-left: 3.4mm; text-indent: -3.4mm; }
+.ch3.first { padding-top: 1.4mm; }
+.wrap3 { padding-top: 2.2mm; }
+.bg3 { background: var(--box-s3); padding: 1.1mm 3mm; }
+.bg3 p { font-size: 8pt; line-height: 4.94mm; text-align: justify; }
+.cond3 { background: var(--cond-fill); border: 0.5pt solid var(--cond-line);
+         padding: 2mm 3mm; }
+.cond3 p { font-size: 8pt; line-height: 4.2mm; text-align: justify; }
+.bogi3 { border: 0.5pt solid var(--cond-line); padding: 2mm 3mm; }
+.bogi3 p { font-size: 8pt; line-height: 4.94mm; text-align: justify; }
+.ans3 { font-size: 8pt; line-height: 4.94mm; padding-top: 1.4mm; }
+
+/* ─────────────────────────────────────────────── 간지 */
+.divider { background: var(--step); }
+.divider .cap {                  /* 위쪽 크림 띠는 간지에도 남는다 */
+  position: absolute; left: 0; top: 0; width: var(--page-w); height: 7mm;
+  background: var(--hdr-bg); border-bottom: 0.6pt solid var(--rule);
+}
+.divider .vbar {
+  position: absolute; left: 25mm; top: 7mm; width: 2.6mm; height: 18mm;
+  background: var(--hdr-bg);
+}
+.divider .kick {
+  position: absolute; left: 25mm; top: 33mm;
+  font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 9pt;
+  color: #fff; letter-spacing: 0.55em;
+}
+.divider .big {
+  position: absolute; left: 24mm; top: 42mm;
+  font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 62pt;
+  line-height: 1; color: #fff; letter-spacing: -0.01em;
+}
+.divider .flow {
+  position: absolute; left: 25mm; top: 218mm; width: 120mm; height: 12mm;
+}
+.divider .flow i {
+  position: absolute; top: 0; width: 8.4mm; height: 8.4mm; border-radius: 50%;
+  border: 0.8pt solid #fff; box-sizing: border-box;
+  font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 7pt;
+  line-height: 8.1mm; text-align: center; color: #fff; font-style: normal;
+}
+.divider .flow i.on { background: #fff; color: var(--step); }
+.divider .flow i:nth-of-type(1) { left: 0; }
+.divider .flow i:nth-of-type(2) { left: 42mm; }
+.divider .flow i:nth-of-type(3) { left: 84mm; }
+.divider .flow u {
+  position: absolute; top: 4.2mm; height: 0; border-top: 0.5pt solid #fff;
+  text-decoration: none;
+}
+.divider .flow u:nth-of-type(1) { left: 9.4mm; width: 31.6mm; }
+.divider .flow u:nth-of-type(2) { left: 51.4mm; width: 31.6mm; }
+.divider .flow s {
+  position: absolute; top: 9.6mm; text-decoration: none;
+  font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 5.5pt;
+  color: #fff; letter-spacing: 0.1em;
+}
+.divider .flow s:nth-of-type(1) { left: 0; }
+.divider .flow s:nth-of-type(2) { left: 42mm; }
+.divider .flow s:nth-of-type(3) { left: 84mm; }
+.divider .mark {
+  position: absolute; left: 25mm; top: 262mm;
+  font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 17pt;
+  color: #fff; letter-spacing: 0.42em;
+}
+/* 간지 뒷면 */
+.divider.back .l1 {
+  position: absolute; right: 45mm; top: 74mm; text-align: right;
+  font-family: "Gmarket Sans", sans-serif; font-weight: 500; font-size: 36pt;
+  line-height: 1; color: #fff;
+}
+.divider.back .l2 {
+  position: absolute; right: 45mm; top: 96mm; text-align: right;
+  font-family: "Gmarket Sans", sans-serif; font-weight: 700; font-size: 60pt;
+  line-height: 1; color: #fff;
+}
+.divider.back .ghost {
+  position: absolute; right: 20mm; top: 194mm;
+  font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 128pt;
+  line-height: 1; color: #fff; opacity: 0.18;
+}

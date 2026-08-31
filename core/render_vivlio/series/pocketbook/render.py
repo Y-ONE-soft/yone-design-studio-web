@@ -95,9 +95,9 @@ def left_page(p, M, folio):
         parts.append('<div class="badge" style="%s">%s</div>'
                      % (_box(b[0], b[1], b[2], b[3]), ESC(tag)))
     sc = ""
-    if scale != 1.0:
+    if scale != 1.0 or p.get("lead"):
         sc = ";font-size:%gpt;line-height:%gpt" % (
-            M["passage_size"] * scale, M["passage_lead"] * scale)
+            M["passage_size"] * scale, p.get("lead") or M["passage_lead"])
     parts.append('<div class="passage" style="%s;margin-top:%gpt%s">%s</div>'
                  % (_box(ps[0], ps[1], ps[2], ps[3]),
                     M["first_baseline_fix"], sc, runs_html(p["passage_runs"])))

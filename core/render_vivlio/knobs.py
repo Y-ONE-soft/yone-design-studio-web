@@ -234,16 +234,23 @@ def _has_table(cfg):
 
     표 CSS 는 아무 것도 안 맞으면 무해하지만, 없는 책까지 넣으면 `knobs.css` 가
     책마다 달라질 이유가 없는데 달라진다. 있는 책에만 넣는다.
+
+    ⚠ **원고와 편집 이력을 둘 다** 본다. 작업대에서 넣은 표는 `edits.json` 에
+      있어서 `data.json` 만 보면 못 찾는다 — 그러면 표가 괘선 없이 글자만
+      늘어선 채로 나간다(실제로 그랬다).
     """
     import os
-    p = cfg.path("data.json")
-    if not os.path.exists(p):
-        return False
-    try:
-        with open(p, encoding="utf-8") as f:
-            return '"table"' in f.read()
-    except OSError:
-        return False
+    for name in ("data.json", "edits.json"):
+        p = cfg.path(name)
+        if not os.path.exists(p):
+            continue
+        try:
+            with open(p, encoding="utf-8") as f:
+                if '"table"' in f.read():
+                    return True
+        except OSError:
+            pass
+    return False
 
 
 # ── 값 바꾸기 (편집기·CLI 공용) ───────────────────────────────────

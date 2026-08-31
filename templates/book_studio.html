@@ -298,6 +298,12 @@
         </div>
       </details>
 
+      <details class="ide-pal"><summary>표</summary>
+        <div class="ide-in" id="pal-table">
+          <div class="ide-hint">문항 안의 지문·선지를 고른 뒤 표를 넣으면
+            <b>그 바로 뒤에</b> 들어갑니다. 칸은 그 자리에서 고칩니다.</div>
+        </div>
+      </details>
       <details class="ide-pal" id="pal-img-box"><summary>그림</summary>
         <div class="ide-in">
           <div class="ide-hint" style="margin-bottom:8px">
@@ -886,6 +892,7 @@
     drawStyleList();
     drawCharStyles();
     drawParaOpts();
+    drawTable();
   }
 
   function drawOne(hostId, props) {
@@ -1030,6 +1037,70 @@
           if (ok) msg('✓ 반영했습니다');
         });
       });
+  }
+
+  // ── 표 ──────────────────────────────────────────────────
+  // 표도 **원고 자료**라 편집 이력에 쌓인다(⌘Z 로 되돌아간다).
+  // 칸 하나하나에 자리표가 있어 그 칸만 고칠 수 있다.
+  function tableRefOf(ref) {
+    // 지금 고른 자리가 표 안이면 그 표의 자리표를 준다
+    var m = (ref || '').match(/^(.*\.blocks\.\d+)(?:\.(?:head|rows)\..*)?$/);
+    if (!m) return '';
+    return /\.(head|rows)\./.test(ref || '') ? m[1] : '';
+  }
+
+  function drawTable() {
+    var host = $('pal-table'); if (!host) return;
+    host.innerHTML = '';
+    var inTable = tableRefOf(curRef);
+    var hint = document.createElement('div');
+    hint.className = 'ide-hint'; hint.style.marginBottom = '6px';
+    hint.innerHTML = inTable
+      ? '표 안입니다 — 칸을 두 번 누르면 그 칸을 고칩니다.'
+      : '문항 안의 <b>지문·선지</b>를 고른 뒤 넣으면 그 바로 뒤에 들어갑니다.';
+    host.appendChild(hint);
+
+    if (!inTable) {
+      var row = document.createElement('div'); row.className = 'ide-f';
+      var cs = document.createElement('input');
+      cs.type = 'number'; cs.className = 'ide-t'; cs.value = 2; cs.min = 1; cs.max = 12;
+      cs.title = '칸(열) 수';
+      var rs = document.createElement('input');
+      rs.type = 'number'; rs.className = 'ide-t'; rs.value = 2; rs.min = 1; rs.max = 60;
+      rs.title = '줄(행) 수';
+      var mk = document.createElement('button');
+      mk.className = 'ide-b'; mk.textContent = '표 넣기';
+      mk.onclick = function () {
+        if (!curRef) { msg('먼저 지면에서 자리를 고르세요'); return; }
+        tblApi({ action: 'insert', ref: curRef,
+                 cols: +cs.value, rows: +rs.value });
+      };
+      row.appendChild(cs); row.appendChild(rs); row.appendChild(mk);
+      host.appendChild(row);
+      return;
+    }
+    [['addrow', '줄 늘리기'], ['delrow', '줄 줄이기'],
+     ['addcol', '칸 늘리기'], ['delcol', '칸 줄이기'],
+     ['delete', '표 지우기']].forEach(function (a) {
+      var b = document.createElement('button');
+      b.className = 'ide-b'; b.style.margin = '2px 3px 0 0';
+      b.textContent = a[1];
+      b.onclick = function () {
+        if (a[0] === 'delete' && !confirm('이 표를 지웁니다. 되돌리기로 살릴 수 있습니다.')) return;
+        tblApi({ action: a[0], ref: inTable });
+      };
+      host.appendChild(b);
+    });
+  }
+
+  function tblApi(body) {
+    body.b = key;
+    msg('표를 고치는 중…');
+    api('/api/book-studio/table', body).then(function (d) {
+      if (d.error) { msg('✗ ' + d.error); return; }
+      setHist(d.history);
+      rebuild('').then(function (ok) { if (ok) { msg('✓ 표'); drawTable(); } });
+    });
   }
 
   // ── 레이어 ──────────────────────────────────────────────

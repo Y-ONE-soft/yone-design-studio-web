@@ -194,15 +194,15 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
  * 영작 5.44 / 어휘 5.60mm). */
 .blk > h3 {
   font: 700 12pt/1 Neolli; color: var(--ink);
-  padding-top: 0.50mm; margin-bottom: 3.31mm;
+  padding-top: 0.65mm; margin-bottom: 3.16mm;
 }
-.sec-grammar .blk > h3 { margin-bottom: 1.84mm; }
-.sec-writing .blk > h3 { margin-bottom: 1.35mm; }
-.blk-vocab > h3 { padding-top: 3.07mm; margin-bottom: 0; }
+.sec-grammar .blk > h3 { margin-bottom: 1.73mm; }
+.sec-writing .blk > h3 { margin-bottom: 1.22mm; }
+.blk-vocab > h3 { padding-top: 3.21mm; margin-bottom: -0.25mm; }
 
 /* --------------------------------------------------------- ① 문장 배열 */
 .given {
-  background: var(--given); padding: 2.14mm 4.00mm 2.60mm;
+  background: var(--given); padding: 2.29mm 4.00mm 2.60mm;
   margin-bottom: 3.88mm; text-align: justify;
 }
 .it { text-align: justify; margin-top: 1.00mm; }
@@ -221,8 +221,9 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 }
 
 /* ----------------------------------------------------- ② 문장 삽입/순서 */
-.prompt { margin-bottom: 2.10mm; }
-.sec-insert .given { margin-bottom: 2.60mm; }
+.prompt { margin-bottom: 1.79mm; }
+/* 삽입 섹션의 주어진 문장 상자는 배열보다 안쪽 여백이 1mm 좁다(완성본 실측) */
+.sec-insert .given { margin-bottom: 2.60mm; padding-left: 3.00mm; }
 .sec-insert .it { margin-top: 0; text-align: justify; }
 
 /* ------------------------------------------------------- ③ 중요 어휘 */
@@ -258,12 +259,13 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 .sec-grammar .g { font-weight: 700; }
 
 /* ----------------------------------------------------- ⑤ 서술형 영작 */
-.wpair { margin-bottom: 17.85mm; }
+.wpair { margin-bottom: 21.35mm; }
 .wpair:last-child { margin-bottom: 0; }
-.wkor { font: 400 8pt/1.4123 Noto; text-align: justify; }
+/* 영작 한글은 본문과 **같은 행간**(4.235mm)이다 — 8pt 라고 줄지 않는다 */
+.wkor { font: 400 8pt/1.5 Noto; text-align: justify; }
 /* 보기 상자는 단보다 **좌우 1mm 씩 넓다**(완성본 실측 24.0→109.0 = 85mm). */
 .wcho {
-  background: var(--choice); margin: 1.60mm -1.00mm 0;
+  background: var(--choice); margin: 2.04mm -1.00mm 0;
   padding: 1.55mm 1.32mm 1.75mm 2.00mm;
   font: 500 8pt/1.4123 Noto; text-align: justify;
 }
