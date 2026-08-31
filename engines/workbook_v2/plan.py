@@ -4211,12 +4211,22 @@ def passage_labels_by_step(steps, frame_steps):
     for key in frame_steps:
         seq = _step_header_labels(steps.get(key))
         off = len(seq) - len(common)
-        if not seq or not common or off < 0:
+        # 공용 라벨보다 지문이 **많은** 스텝만 다룬다. 개수가 같으면 공용
+        # 라벨이 이미 맞는 것이고, 거기서 헤더로 다시 라벨을 만들면 표기만
+        # 흔들린다 (코퍼스: 비상 Extended Reading·본문N 계열 30여 잡).
+        if not seq or not common or off <= 0:
             continue
         # 앞머리(공용 라벨보다 많은 지문)는 자기 헤더 문구 그대로 —
         # 이 교재에서는 '본문'이다. 뒤쪽은 공용 라벨과 같은 지문이므로
         # 번호로 맞추되, 번호 체계가 다르면('실전01' vs 'N049') 순서로 맞춘다.
         head = [canon.get(_label_key(t), t) for t in seq[:off]]
+        # 앞머리가 공용 라벨에 이미 있는 지문이면 헤더 추출이 어긋난 것이다
+        # (같은 지문을 두 번 센 것) — 그런 문서는 건드리지 않는다. 코퍼스
+        # 실측: 이 가드가 없으면 비상 Main Reading·본문N 계열 30여 잡의
+        # 라벨이 통째로 밀린다.
+        common_keys = {_label_key(x) for x in common}
+        if any(h in common or _label_key(h) in common_keys for h in head):
+            continue
         if all(_label_key(t) in canon for t in seq[off:]):
             labels = head + [canon[_label_key(t)] for t in seq[off:]]
         else:
