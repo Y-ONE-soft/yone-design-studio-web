@@ -549,13 +549,20 @@ def split_memtest(items, stories):
     hay = "".join(letters)
 
     passages = [x for x in items if x["kind"] == "passage"]
-    bounds = []
+    bounds, lens, cursor = [], [], 0
     for p in passages:
-        sig = _sig([r for pa in p["passage"] for r in pa["runs"]])
-        at = hay.find(sig) if sig else -1
+        body = [r for pa in p["passage"] for r in pa["runs"]]
+        sig = _sig(body)
+        # ⚠ **앞에서부터 차례로** 찾는다. 아무 데서나 찾으면 짧은 머리글이
+        #   엉뚱한 지문에 걸려 남의 글을 싣는다(완성본 41지문이 그렇게 틀렸다).
+        at = hay.find(sig, cursor) if sig else -1
+        if at < 0 and sig:
+            at = hay.find(sig)          # 순서가 어긋난 책을 위한 폴백
         bounds.append(pos[at] if at >= 0 else None)
+        if at >= 0:
+            cursor = at + len(sig)
+        lens.append(len("".join(r["t"] for r in body)))
     # 못 찾은 지문은 앞뒤 경계로 채운다(순서는 지면 순서와 같다)
-    out, cur = [], 0
     for i, p in enumerate(passages):
         start = bounds[i]
         if start is None:
@@ -565,7 +572,14 @@ def split_memtest(items, stories):
             if bounds[j] is not None:
                 nxt = bounds[j]
                 break
-        p["memtest_range"] = (start, nxt if nxt is not None else len(flat))
+        end = nxt if nxt is not None else len(flat)
+        # ⚠ 못 찾은 지문이 사이에 끼면 그 몫까지 앞 지문에 딸려 온다
+        #   (완성본 41지문이 여러 지문을 한 덩이로 들고 있었다). 제 분량의
+        #   1.6배(번호·대괄호가 붙어 늘어나는 몫)를 넘으면 거기서 끊는다.
+        cap = start + int(lens[i] * 1.6) + 60
+        if end > cap:
+            end = min(end, cap)
+        p["memtest_range"] = (start, end)
     # 문자 범위 → 런 조각
     acc, idx = [], 0
     spans = []
