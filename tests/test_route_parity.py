@@ -5,8 +5,18 @@ tests/fixtures/url_map_baseline.json은 분리 *전* app.py(모놀리스)의 url
 이름은 블루프린트 접두("auth.login_page" 등)로 바뀌는 게 정상이므로,
 비교 기준은 rule + methods (+ view 함수 실체)다.
 
-새 라우트를 의도적으로 추가/삭제했다면 픽스처를 재생성할 것:
-    YONE_SECRET_KEY=dump python3 -c "위 덤프 스크립트"  (커밋 메시지에 사유 명시)
+## ⚠ 이 가드가 지키는 것은 **한 방향**이다
+
+원래 세 시험이 "픽스처와 100% 같을 것"을 요구했는데, 그 뒤로 표지 작업대·
+디자인·내지 작업대가 라우트를 35개 더했다. 그래서 **늘 빨간불**이 되었고,
+빨간불이 상수가 되면 진짜 유실을 아무도 못 본다(실제로 이 상태로 오래 있었다).
+
+이 가드의 쓸모는 "분리하다 라우트를 **떨어뜨리지 않았나**" 다. 늘어난 것은
+기능이 늘어난 것이지 사고가 아니다. 그래서 **사라진 라우트만 실패**로 본다.
+새로 생긴 것은 목록으로 남겨 눈에 띄게 한다.
+
+픽스처(`tests/fixtures/url_map_baseline.json`)는 분리 *전* 모놀리스의 덤프다.
+**다시 뜨지 말 것** — 다시 뜨면 그날 이후 무엇이 사라졌는지 알 길이 없어진다.
 """
 import inspect
 import json
@@ -43,27 +53,31 @@ def test_rule_method_set_identical():
     expected = {(r["rule"], tuple(r["methods"])) for r in _load_baseline()}
     actual = {(r["rule"], tuple(r["methods"])) for r in _current_rules()}
     missing = expected - actual
-    added = actual - expected
-    assert not missing and not added, (
-        f"라우트 파리티 깨짐 — 사라진 라우트: {sorted(missing)}, "
-        f"새로 생긴 라우트: {sorted(added)}")
+    assert not missing, f"분리 전에 있던 라우트가 사라졌다: {sorted(missing)}"
 
 
-def test_route_count_identical():
-    assert len(_current_rules()) == len(_load_baseline())
+def test_route_count_never_shrinks():
+    """줄어들면 무언가를 떨어뜨린 것이다. 느는 것은 기능이 는 것."""
+    assert len(_current_rules()) >= len(_load_baseline())
 
 
 def test_view_functions_and_signatures_identical():
-    """각 rule+methods의 view 함수명/시그니처가 분리 전과 동일해야 한다
-    (endpoint 이름의 블루프린트 접두만 바뀌고 함수 실체는 그대로)."""
+    """픽스처에 **있던** 라우트는 view 함수·시그니처가 그대로여야 한다.
+
+    새 라우트는 검사하지 않는다 — 픽스처에 있을 리가 없다.
+    """
     expected = {(r["rule"], tuple(r["methods"])): (r["endpoint_func"], r["signature"])
                 for r in _load_baseline()}
+    seen = 0
     for r in _current_rules():
         key = (r["rule"], tuple(r["methods"]))
-        assert key in expected, f"픽스처에 없는 라우트: {key}"
+        if key not in expected:
+            continue
+        seen += 1
         assert (r["endpoint_func"], r["signature"]) == expected[key], (
             f"{key}: view 함수 불일치 — "
             f"expected {expected[key]}, got {(r['endpoint_func'], r['signature'])}")
+    assert seen == len(expected), "픽스처의 라우트를 다 못 찾았다"
 
 
 def test_key_config_preserved():

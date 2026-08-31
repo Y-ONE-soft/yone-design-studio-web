@@ -350,8 +350,25 @@ def patch_text(raw, changes):
         elif val is not None:
             parent = key.rsplit(".", 1)[0] if "." in key else ""
             pkey = (parent + ".{}") if parent else "{}"
-            if pkey not in sp:                    # 부모 객체가 아예 없다
-                raise KeyError("부모가 없다: " + parent)
+            if pkey not in sp:
+                # 부모 객체가 아예 없다 — **있는 데까지 올라가 통째로 만든다.**
+                # 예전엔 여기서 포기했고, 부르는 쪽은 config 를 통째로 다시 써
+                # 손으로 맞춘 모양을 다 잃었다(`verify.design.strict` 를 켜려다
+                # 그럴 뻔했다). 없는 것은 우리가 만들면 된다.
+                have, rest = parent, []
+                while have and (have + ".{}") not in sp:
+                    have, _, last = have.rpartition(".")
+                    rest.insert(0, last)
+                anchor = ((have + ".{}") if have else "{}")
+                if anchor not in sp:
+                    raise KeyError("부모가 없다: " + parent)
+                leaf = key.rsplit(".", 1)[1] if "." in key else key
+                nested = {leaf: val}
+                for name in reversed(rest[1:]):
+                    nested = {name: nested}
+                todo.append((sp[anchor][2], "add",
+                             (have + "." if have else "") + rest[0], nested))
+                continue
             todo.append((sp[pkey][2], "add", key, val))
     out = raw
     for pos, kind, key, val in sorted(todo, key=lambda t: -t[0]):

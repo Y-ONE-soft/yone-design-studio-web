@@ -126,6 +126,120 @@ def test_every_series_links_book_css(name):
     assert "BOOK_CSS_LINKS" in src, f"{name}: 책 CSS 를 안 문다"
 
 
+# ── 자리표 ─────────────────────────────────────────────────────
+# 자리표가 없는 자리는 작업대에서 클릭해도 **조용히** 아무 일이 안 일어난다.
+# 그게 가장 나쁜 실패라, 계열마다 자리표가 실제로 나오는지 못박는다.
+from core.render_vivlio import refs
+
+
+def test_index_paths_walks_nested_lists():
+    d = {"workbook": [{"sections": [{"items": [{"t": "가"}, {"t": "나"}]}]}]}
+    refs.index_paths(d, [("workbook", "sections", "items")])
+    sec = d["workbook"][0]["sections"][0]
+    assert refs.of(sec) == "workbook.0.sections.0"
+    assert refs.of(sec["items"][1], "t") == "workbook.0.sections.0.items.1.t"
+
+
+def test_index_paths_ignores_missing_branch():
+    """원고에 그 절이 없는 책도 있다. 없으면 없는 대로 지나가야 한다."""
+    refs.index_paths({"head": [{"w": 1}]},
+                     [("head",), ("workbook", "sections", "items")])
+    assert len(refs.table()) == 0        # of() 를 안 부르면 번호도 안 매긴다
+
+
+def test_stamp_merges_into_existing_class():
+    """class 를 두 번 쓰면 브라우저가 앞의 것만 읽어 vrefN 을 버린다."""
+    refs.clear()
+    out = refs.stamp('<div class="x-passage">글</div>', "volumes.0.blocks.5.r")
+    assert out.count("class=") == 1
+    assert 'class="x-passage vref1"' in out
+    assert 'data-ref="volumes.0.blocks.5.r"' in out
+    assert 'id="vref1"' in out
+
+
+def test_stamp_adds_class_when_none():
+    refs.clear()
+    out = refs.stamp("<p>글</p>", "a.0")
+    assert out.startswith('<p class="vref1"')
+
+
+def test_stamp_leaves_non_tag_alone():
+    refs.clear()
+    assert refs.stamp("글자만", "a.0") == "글자만"
+    assert refs.stamp("", "a.0") == ""
+    assert refs.stamp("<p>x</p>", "") == "<p>x</p>"
+
+
+def test_stamp_is_idempotent():
+    """한 블록이 조각을 여럿 내면 id 가 겹친다 — 이미 찍힌 것은 건드리지 않는다."""
+    refs.clear()
+    once = refs.stamp('<div class="a">x</div>', "a.0")
+    assert refs.stamp(once, "a.1") == once
+
+
+def test_stamp_keeps_self_closing():
+    refs.clear()
+    assert refs.stamp("<hr/>", "a.0").endswith("/>")
+
+
+@pytest.mark.parametrize("name,needle", [
+    ("blackbook", "_refs.index("),
+    ("vocabook", "_refs.index_paths("),
+    ("vocaunit", "_refs.index("),
+    ("special", "_refs.dump("),
+])
+def test_every_series_makes_refs(name, needle):
+    p = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                     "core", "render_vivlio", "series", name, "render.py")
+    src = io.open(p, encoding="utf-8").read()
+    assert needle in src, f"{name}: 자리표를 안 만든다"
+    assert "_refs.dump(" in src, f"{name}: 번호↔경로 표를 안 낸다"
+
+
+# ── 없는 절을 만들어 넣기 ──────────────────────────────────────
+RAW = """{
+  "series": "special",
+  "book": { "title": "가", "school": "나" },
+  "verify": {
+    "suffix": ""
+  }
+}
+"""
+
+
+def test_patch_text_creates_missing_parent():
+    """`verify.design.strict` 는 대개 config 에 **절이 통째로 없다**.
+
+    예전엔 여기서 포기했고, 부르는 쪽이 config 를 통째로 다시 써 손으로 맞춘
+    모양(빈 줄·한 줄짜리 객체·주석 같은 `_note`)을 다 잃었다.
+    """
+    out = kn.patch_text(RAW, {"verify.design.strict": True})
+    d = json.loads(out)
+    assert d["verify"]["design"]["strict"] is True
+    assert d["verify"]["suffix"] == ""          # 원래 있던 것은 그대로
+    assert d["book"] == {"title": "가", "school": "나"}
+
+
+def test_patch_text_keeps_shape():
+    """바뀐 곳 말고는 글자 하나 안 건드려야 한다."""
+    out = kn.patch_text(RAW, {"verify.design.strict": True})
+    assert '"book": { "title": "가", "school": "나" },' in out
+    assert kn.patch_text(RAW, {}) == RAW
+
+
+def test_patch_text_two_levels_deep():
+    out = kn.patch_text(RAW, {"verify.design.chroma.max": 3})
+    assert json.loads(out)["verify"]["design"]["chroma"]["max"] == 3
+
+
+def test_new_book_starts_strict():
+    """신규 조판은 디자인 게이트를 켜고 시작한다 — 기존 책은 경고만."""
+    src = io.open(os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "engines", "vivlio_book", "engine.py"), encoding="utf-8").read()
+    assert 'changes["verify.design.strict"] = True' in src
+
+
 # ── 작업대 API 방어선 ───────────────────────────────────────────
 @pytest.fixture()
 def client():

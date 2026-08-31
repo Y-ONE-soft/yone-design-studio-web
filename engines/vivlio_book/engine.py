@@ -202,6 +202,13 @@ class VivlioBookEngine(BaseEngine):
                 changes[k] = v
         stem = self._meta(job_dir, "new_title") or folder
         changes["output.stem"] = f"{stem}_내지"
+
+        # 디자인 게이트를 **켜고 시작한다.** 기존 책은 경고만인데, 그건 이미
+        # 납품 중이라 지금 와서 결함으로 올리면 조판이 막히기 때문이다(위반
+        # 목록은 계획서에 있다). 새 책에는 그런 사정이 없으니 처음부터 엄격하게
+        # 가는 편이 낫다 — 작은 글자·낮은 대비를 나중에 발견하면 이미 늦다.
+        # 그래도 막히면 그 책 config 의 `verify.design.strict` 를 끄면 된다.
+        changes["verify.design.strict"] = True
         try:
             raw = kn.patch_text(raw, changes)
         except Exception as e:                     # 모양이 특이하면 통째로
