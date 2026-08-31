@@ -467,6 +467,124 @@ def api_images():
     return jsonify({"ok": True, "name": name, "images": listing()})
 
 
+def _knob_spec(d):
+    """계열이 선언한 손잡이 + 지금 값. 모델에게 줄 목록이자 검사표다."""
+    r = _run([d, "knobs", "--json"], timeout=60)
+    if r.returncode != 0:
+        return []
+    body = r.stdout[r.stdout.find("["):] if "[" in r.stdout else "[]"
+    try:
+        return json.loads(body)
+    except ValueError:
+        return []
+
+
+@bp.route("/api/book-studio/assist", methods=["GET", "POST"])
+def api_assist():
+    """한국어로 시키면 클로드가 **디자인 값**을 고친다.
+
+    고칠 수 있는 곳은 셋뿐이고(손잡이 · styles · overrides.css) 셋 다 **그 책
+    폴더 안 파일**이라 다른 책은 어떤 경우에도 안 바뀐다. 계열 코드도 원고도
+    이 길로는 못 건드린다 — 그게 이 기능을 붙일 수 있는 유일한 조건이다.
+    자세한 것은 `core/render_vivlio/assist.py` 머리말.
+    """
+    import shutil
+    from core.render_vivlio import assist
+    from core.render_vivlio import book as bookmod
+    from core.render_vivlio import knobs as kn
+
+    if request.method == "GET":       # 화면이 "쓸 수 있는가" 를 먼저 묻는다
+        return jsonify({"ready": assist.have_key(), "model": assist.MODEL})
+
+    p = request.get_json(silent=True) or {}
+    prompt = (p.get("prompt") or "").strip()
+    if not prompt:
+        return jsonify({"error": "무엇을 고칠지 적어 주세요"}), 400
+    if len(prompt) > 2000:
+        return jsonify({"error": "너무 깁니다"}), 400
+    d, meta = _book_dir(p.get("b"))
+    if not d:
+        return jsonify({"error": "모르는 책"}), 404
+
+    cfg = bookmod.load(d)
+    spec = _knob_spec(d)
+    ctx = assist.context(cfg, spec,
+                         page_classes=p.get("classes") or (),
+                         picked=str(p.get("picked") or "")[:200])
+    try:
+        raw = assist.ask(prompt, ctx)
+    except assist.Refused as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:                       # 통신·인증 실패
+        return jsonify({"error": f"클로드를 못 불렀습니다: {e}"}), 502
+
+    got = assist.vet(raw, spec)
+    if not (got["knobs"] or got["styles"] or got["overrides_css"] is not None):
+        return jsonify({"ok": True, "changed": 0, "note": got["note"],
+                        "refused": got["refused"]})
+
+    # ── 고치기 전에 되돌릴 자리를 만든다 ──
+    cpath = cfg.path("config.json")
+    opath = cfg.path("overrides.css")
+    changes = dict(got["knobs"])
+    if got["styles"]:
+        merged = dict(cfg.section("styles") or {})
+        for sel, props in got["styles"].items():
+            cur = dict(merged.get(sel) or {})
+            for k2, v2 in props.items():
+                if v2 == "":
+                    cur.pop(k2, None)
+                else:
+                    cur[k2] = v2
+            if cur:
+                merged[sel] = cur
+            else:
+                merged.pop(sel, None)
+        changes["styles"] = merged
+    if changes:
+        rawtxt = open(cpath, encoding="utf-8").read()
+        try:
+            out = kn.patch_text(rawtxt, changes)
+        except Exception:
+            out = json.dumps(kn.apply(cfg.data, changes),
+                             ensure_ascii=False, indent=2) + "\n"
+        shutil.copy2(cpath, cpath + ".bak")
+        with open(cpath, "w", encoding="utf-8") as f:
+            f.write(out)
+    if got["overrides_css"] is not None:
+        if os.path.exists(opath):
+            shutil.copy2(opath, opath + ".bak")
+        with open(opath, "w", encoding="utf-8") as f:
+            f.write(got["overrides_css"])
+
+    return jsonify({"ok": True, "note": got["note"], "refused": got["refused"],
+                    "knobs": got["knobs"], "styles": got["styles"],
+                    "css_changed": got["overrides_css"] is not None,
+                    "changed": len(got["knobs"]) + len(got["styles"])
+                               + (1 if got["overrides_css"] is not None else 0)})
+
+
+@bp.route("/api/book-studio/assist-undo", methods=["POST"])
+def api_assist_undo():
+    """직전 한 번을 되돌린다 — `.bak` 을 도로 씌운다."""
+    import shutil
+    from core.render_vivlio import book as bookmod
+    p = request.get_json(silent=True) or {}
+    d, meta = _book_dir(p.get("b"))
+    if not d:
+        return jsonify({"error": "모르는 책"}), 404
+    cfg = bookmod.load(d)
+    back = []
+    for name in ("config.json", "overrides.css"):
+        f = cfg.path(name)
+        if os.path.exists(f + ".bak"):
+            shutil.copy2(f + ".bak", f)
+            back.append(name)
+    if not back:
+        return jsonify({"error": "되돌릴 것이 없습니다"}), 404
+    return jsonify({"ok": True, "restored": back})
+
+
 @bp.route("/api/book-studio/cmyk", methods=["POST"])
 def api_cmyk():
     """화면 색(16진) → **인쇄 CMYK**.

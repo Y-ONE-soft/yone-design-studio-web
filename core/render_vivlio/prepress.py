@@ -133,6 +133,68 @@ def neutralize(doc, gray_map=None, tol=2, log=None, cmyk_map=None):
     return n
 
 
+def neutralize_patterns(doc, gray_map=None, tol=2, log=None, cmyk_map=None):
+    """**그러데이션 배경**(머리 띠·괘선)의 색도 표대로 바꾼다.
+
+    CSS `background: linear-gradient(색, 같은 색)` 은 PDF 에서 `rg` 가 아니라
+    **축 셰이딩 패턴**(PatternType 2)이 된다. `neutralize()` 의 `rg` 정규식에
+    안 걸려서 머리 띠만 ICC 변환을 타 **다른 색으로 나간다** — 완성본과 나란히
+    놓으면 띠 색만 어긋난다.
+
+    양 끝 색이 같은(= 단색인) 셰이딩만 손댄다. 진짜 그러데이션은 건드리지 않는다.
+    """
+    fitz = __import__("fitz")
+    table = {k.lower(): v for k, v in (gray_map or DEFAULT_GRAY_MAP).items()}
+    want = [(tuple(int(k[i:i + 2], 16) for i in (1, 3, 5)), v)
+            for k, v in table.items()]
+    spot = [(tuple(int(k.lower()[i:i + 2], 16) for i in (1, 3, 5)), v)
+            for k, v in (cmyk_map or DEFAULT_CMYK_MAP).items()]
+    n = 0
+    for xref in range(1, doc.xref_length()):
+        try:
+            obj = doc.xref_object(xref, compressed=True)
+        except Exception:
+            continue
+        if "/PatternType 2" not in obj and "/ShadingType" not in obj:
+            continue
+        base = "Shading/" if "/PatternType 2" in obj else ""
+        cs = doc.xref_get_key(xref, base + "ColorSpace")
+        if not cs or cs[1] != "/DeviceRGB":
+            continue
+        c0 = doc.xref_get_key(xref, base + "Function/C0")
+        c1 = doc.xref_get_key(xref, base + "Function/C1")
+        if not c0 or not c1 or c0[1] != c1[1]:
+            continue            # 진짜 그러데이션 — 손대지 않는다
+        try:
+            rgb = [float(x) for x in c0[1].strip("[] ").split()]
+        except ValueError:
+            continue
+        if len(rgb) != 3:
+            continue
+        c = [round(v * 255) for v in rgb]
+        new_cs = new_val = None
+        for ref, k in want:
+            if all(abs(c[i] - ref[i]) <= tol for i in range(3)):
+                new_cs, new_val = "/DeviceGray", "[ %.6g ]" % (1.0 - k)
+                break
+        if new_cs is None:
+            for ref, v in spot:
+                if all(abs(c[i] - ref[i]) <= tol for i in range(3)):
+                    new_cs = "/DeviceCMYK"
+                    new_val = "[ %s ]" % " ".join(
+                        "%.6g" % (x / 100.0) for x in v)
+                    break
+        if new_cs is None:
+            continue
+        doc.xref_set_key(xref, base + "ColorSpace", new_cs)
+        doc.xref_set_key(xref, base + "Function/C0", new_val)
+        doc.xref_set_key(xref, base + "Function/C1", new_val)
+        n += 1
+    if log and n:
+        log(f"[인쇄] 단색 그러데이션(머리 띠·괘선) {n}개 색 고정")
+    return n
+
+
 _RE_GS = re.compile(rb"/([A-Za-z0-9]+)\s+gs")
 
 
@@ -230,6 +292,7 @@ def make(src, dst, bleed=3.0, profile=None, gray_map=None, log=None,
     tmp_gray = dst + ".gray.pdf"
     doc = fitz.open(src)
     n = neutralize(doc, gray_map, log=log, cmyk_map=cmyk_map)
+    n += neutralize_patterns(doc, gray_map, log=log, cmyk_map=cmyk_map)
     doc.save(tmp_gray, garbage=3, deflate=True)
     doc.close()
 

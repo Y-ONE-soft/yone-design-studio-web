@@ -293,16 +293,29 @@
       <details class="ide-pal"><summary>편집 이력</summary>
         <div class="ide-in"><div class="ide-hist" id="pal-hist"></div></div>
       </details>
-      <details class="ide-pal"><summary>직접 손보기 (CSS)</summary>
+      <details class="ide-pal" id="pal-ai-box" open><summary>클로드에게 시키기</summary>
+        <div class="ide-in">
+          <div class="ide-hint" style="margin-bottom:6px" id="ai-hint">
+            하고 싶은 말을 그대로 적으세요 — <b>“머리 띠를 좀 더 진하게”</b>,
+            <b>“지문 상자 선을 얇게”</b>.<br>
+            고치는 것은 <b>이 책의 색·치수·스타일뿐</b>입니다. 원고도 다른 책도
+            건드리지 않습니다. 마음에 안 들면 되돌리면 됩니다.</div>
+          <textarea class="ide-css" id="ai-q" spellcheck="false"
+                    style="height:76px" placeholder="예) 어휘 라벨 칩을 조금 더 연하게"></textarea>
+          <div class="ide-f" style="margin-top:6px">
+            <button class="ide-b" id="ai-go">시키기</button>
+            <button class="ide-b" id="ai-undo" title="직전 한 번을 되돌립니다">되돌리기</button>
+          </div>
+          <div class="ide-hist" id="ai-out" style="margin-top:8px"></div>
+        </div>
+      </details>
+      <details class="ide-pal"><summary>직접 손보기 (CSS · 고급)</summary>
         <div class="ide-in">
           <div class="ide-hint" style="margin-bottom:6px">
-            <b>여기 적은 CSS 가 이 책의 조판에 그대로 얹힙니다.</b>
-            오른쪽 팔레트에 없는 것을 손볼 때 씁니다 —
-            예) <code>.pbox { border-width: 0.5pt }</code>.<br>
-            이 책 폴더의 <code>overrides.css</code> 에 저장되고
-            <b>다른 책은 안 바뀝니다</b>. 비워 두면 아무 일도 안 합니다.<br>
-            ⚠ 계열이 바뀌면 어긋날 수 있는 임시 처방입니다. 자주 쓰는 것이
-            보이면 팔레트 손잡이로 올리세요.</div>
+            CSS 를 아는 사람용입니다. 보통은 위 <b>클로드에게 시키기</b>를
+            쓰세요.<br>
+            여기 적은 것은 이 책 폴더의 <code>overrides.css</code> 에 저장되고
+            <b>다른 책은 안 바뀝니다</b>.</div>
           <textarea class="ide-css" id="pal-css" spellcheck="false"></textarea>
           <button class="ide-b" id="pal-css-save" style="margin-top:6px">저장하고 다시 조판</button>
         </div>
@@ -1152,6 +1165,71 @@
     var a = e.target.closest && e.target.closest('a[data-img]');
     if (!a) return; e.preventDefault(); placeImage(a.dataset.img);
   });
+  // ── 클로드에게 시키기 ───────────────────────────────────
+  // 고치는 곳은 서버가 셋으로 못 박는다(손잡이 · styles · overrides.css).
+  // 셋 다 이 책 폴더 안이라 다른 책은 어떤 경우에도 안 바뀐다.
+  api('/api/book-studio/assist').then(function (d) {
+    if (d && d.ready === false) {
+      $('ai-hint').innerHTML =
+        '클로드 키가 없어 아직 못 씁니다. 터미널에서 '
+        + '<code>export ANTHROPIC_API_KEY=…</code> 를 넣고 통합웹을 다시 띄우세요.';
+      $('ai-go').disabled = true;
+    }
+  });
+
+  /** 지금 지면에 실제로 있는 스타일 이름들 — 모델이 없는 것을 지어내지 않게. */
+  function pageClasses() {
+    var out = {}, st = stageEl();
+    if (!st) return [];
+    st.querySelectorAll('*').forEach(function (e) {
+      var c = (typeof e.className === 'string') ? e.className : '';
+      c.split(/\s+/).forEach(function (x) {
+        if (x && !/^vref\d+$/.test(x)) out[x] = 1; });
+    });
+    return Object.keys(out);
+  }
+
+  function aiSay(html) { $('ai-out').innerHTML = html; }
+
+  $('ai-go').addEventListener('click', function () {
+    var q = $('ai-q').value.trim();
+    if (!q) { msg('무엇을 고칠지 적어 주세요'); return; }
+    $('ai-go').disabled = true;
+    aiSay('<div class="ide-hint">클로드가 보는 중…</div>');
+    msg('클로드가 보는 중…');
+    api('/api/book-studio/assist',
+        { b: key, prompt: q, classes: pageClasses(), picked: curRef || '' })
+      .then(function (d) {
+        $('ai-go').disabled = false;
+        if (d.error) { aiSay('<div>✗ ' + d.error + '</div>'); msg('✗ ' + d.error); return; }
+        var h = '<div>' + (d.note || '') + '</div>';
+        var bits = [];
+        for (var k2 in (d.knobs || {})) bits.push(k2 + ' → ' + d.knobs[k2]);
+        for (var s2 in (d.styles || {})) bits.push(s2);
+        if (d.css_changed) bits.push('overrides.css');
+        if (bits.length) {
+          h += '<div class="ide-hint" style="margin-top:4px">고친 곳: '
+             + bits.join(' · ') + '</div>';
+        }
+        if ((d.refused || []).length) {
+          h += '<div class="ide-hint" style="margin-top:4px;color:#e0a06a">'
+             + '거른 것: ' + d.refused.join(' · ') + '</div>';
+        }
+        aiSay(h);
+        if (!d.changed) { msg('고친 것이 없습니다'); return; }
+        loadBook(false);            // 손잡이 값이 바뀌었으니 팔레트부터 다시
+      });
+  });
+
+  $('ai-undo').addEventListener('click', function () {
+    if (!confirm('직전 한 번을 되돌립니다.')) return;
+    api('/api/book-studio/assist-undo', { b: key }).then(function (d) {
+      if (d.error) { msg('✗ ' + d.error); return; }
+      aiSay('<div>되돌렸습니다 — ' + (d.restored || []).join(' · ') + '</div>');
+      loadBook(false);
+    });
+  });
+
   $('find-go').addEventListener('click', function () { find(false); });
   $('find-all').addEventListener('click', function () {
     if (!confirm('전권에서 모두 바꿉니다. 되돌리기로 살릴 수 있습니다.')) return;
@@ -1174,6 +1252,71 @@
       if (ok) gotoRef(refNum(ref), kindName(ref));
     });
   });
+  // ── 클로드에게 시키기 ───────────────────────────────────
+  // 고치는 곳은 서버가 셋으로 못 박는다(손잡이 · styles · overrides.css).
+  // 셋 다 이 책 폴더 안이라 다른 책은 어떤 경우에도 안 바뀐다.
+  api('/api/book-studio/assist').then(function (d) {
+    if (d && d.ready === false) {
+      $('ai-hint').innerHTML =
+        '클로드 키가 없어 아직 못 씁니다. 터미널에서 '
+        + '<code>export ANTHROPIC_API_KEY=…</code> 를 넣고 통합웹을 다시 띄우세요.';
+      $('ai-go').disabled = true;
+    }
+  });
+
+  /** 지금 지면에 실제로 있는 스타일 이름들 — 모델이 없는 것을 지어내지 않게. */
+  function pageClasses() {
+    var out = {}, st = stageEl();
+    if (!st) return [];
+    st.querySelectorAll('*').forEach(function (e) {
+      var c = (typeof e.className === 'string') ? e.className : '';
+      c.split(/\s+/).forEach(function (x) {
+        if (x && !/^vref\d+$/.test(x)) out[x] = 1; });
+    });
+    return Object.keys(out);
+  }
+
+  function aiSay(html) { $('ai-out').innerHTML = html; }
+
+  $('ai-go').addEventListener('click', function () {
+    var q = $('ai-q').value.trim();
+    if (!q) { msg('무엇을 고칠지 적어 주세요'); return; }
+    $('ai-go').disabled = true;
+    aiSay('<div class="ide-hint">클로드가 보는 중…</div>');
+    msg('클로드가 보는 중…');
+    api('/api/book-studio/assist',
+        { b: key, prompt: q, classes: pageClasses(), picked: curRef || '' })
+      .then(function (d) {
+        $('ai-go').disabled = false;
+        if (d.error) { aiSay('<div>✗ ' + d.error + '</div>'); msg('✗ ' + d.error); return; }
+        var h = '<div>' + (d.note || '') + '</div>';
+        var bits = [];
+        for (var k2 in (d.knobs || {})) bits.push(k2 + ' → ' + d.knobs[k2]);
+        for (var s2 in (d.styles || {})) bits.push(s2);
+        if (d.css_changed) bits.push('overrides.css');
+        if (bits.length) {
+          h += '<div class="ide-hint" style="margin-top:4px">고친 곳: '
+             + bits.join(' · ') + '</div>';
+        }
+        if ((d.refused || []).length) {
+          h += '<div class="ide-hint" style="margin-top:4px;color:#e0a06a">'
+             + '거른 것: ' + d.refused.join(' · ') + '</div>';
+        }
+        aiSay(h);
+        if (!d.changed) { msg('고친 것이 없습니다'); return; }
+        loadBook(false);            // 손잡이 값이 바뀌었으니 팔레트부터 다시
+      });
+  });
+
+  $('ai-undo').addEventListener('click', function () {
+    if (!confirm('직전 한 번을 되돌립니다.')) return;
+    api('/api/book-studio/assist-undo', { b: key }).then(function (d) {
+      if (d.error) { msg('✗ ' + d.error); return; }
+      aiSay('<div>되돌렸습니다 — ' + (d.restored || []).join(' · ') + '</div>');
+      loadBook(false);
+    });
+  });
+
   $('find-go').addEventListener('click', function () { find(false); });
   $('find-all').addEventListener('click', function () {
     if (!confirm('전권에서 모두 바꿉니다. 되돌리기로 살릴 수 있습니다.')) return;
