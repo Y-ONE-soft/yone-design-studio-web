@@ -30,7 +30,7 @@ html,body{margin:0;padding:0}
 
 .passage{position:absolute;left:15mm;top:calc(24mm - 7.7pt);width:115mm;height:118mm;
   font-size:9pt;line-height:var(--lead);text-align:justify;
-  text-justify:inter-word;word-spacing:0}
+  text-justify:inter-word;letter-spacing:-0.022em}   /* 실측 보정: 이 값에서 원본과 행바꿈이 일치한다 */
 .passage .w{position:relative;display:inline-block;line-height:var(--lead)}
 .passage .blue,.passage .w.blue{color:var(--blue)}
 .passage .red,.passage .w.red{color:var(--red)}

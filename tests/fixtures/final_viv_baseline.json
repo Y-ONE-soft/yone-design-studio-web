@@ -1,0 +1,1792 @@
+{
+ "source": "InDesign 완성본 실측",
+ "vols": [
+  {
+   "file": "광문2_파이널(Vol1)_내지.pdf",
+   "vol": "Vol1",
+   "pages": 40,
+   "page_mm": [
+    216.0,
+    303.0
+   ],
+   "sections": {
+    "간지": {
+     "page_count": 1,
+     "page_range": [
+      1,
+      1
+     ],
+     "parity": {
+      "odd": {
+       "sample_page": 1,
+       "text_extent_mm": [
+        44.53,
+        106.75,
+        189.13,
+        228.28
+       ],
+       "slot_headers": [
+        {
+         "x_mm": 57.63,
+         "y_mm": 140.4,
+         "text": "문장    -     요약    -     "
+        }
+       ],
+       "col_x_mm": [
+        57.63
+       ],
+       "row_y_mm": [
+        140.4
+       ],
+       "fills": [
+        {
+         "fill": "#FFFFFF",
+         "rect_mm": [
+          0.0,
+          0.0,
+          216.0,
+          303.0
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          35.9,
+          106.33,
+          52.38,
+          133.52
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          112.45,
+          104.87,
+          132.04,
+          133.49
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          133.8,
+          199.5,
+          177.2,
+          205.97
+         ]
+        }
+       ],
+       "block_pitch_mm": [
+        [
+         4.23,
+         1
+        ]
+       ],
+       "col_pitch_mm": [],
+       "type": [
+        {
+         "size_pt": 12.0,
+         "font": "GmarketSansBold",
+         "chars": 39
+        },
+        {
+         "size_pt": 8.46,
+         "font": "NotoSansCJKkr-Black",
+         "chars": 22
+        },
+        {
+         "size_pt": 7.96,
+         "font": "EliceDXNeolliOTF-Md",
+         "chars": 21
+        },
+        {
+         "size_pt": 8.46,
+         "font": "NotoSansCJKkr-Medium",
+         "chars": 18
+        },
+        {
+         "size_pt": 72.0,
+         "font": "HelvNueOutline",
+         "chars": 12
+        }
+       ]
+      }
+     }
+    },
+    "문장배열": {
+     "page_count": 13,
+     "page_range": [
+      2,
+      14
+     ],
+     "parity": {
+      "even": {
+       "sample_page": 2,
+       "text_extent_mm": [
+        13.0,
+        7.72,
+        191.74,
+        291.25
+       ],
+       "slot_headers": [
+        {
+         "x_mm": 20.97,
+         "y_mm": 29.57,
+         "text": "교과서4과 본문1"
+        },
+        {
+         "x_mm": 107.97,
+         "y_mm": 29.57,
+         "text": "교과서4과 본문3"
+        },
+        {
+         "x_mm": 20.97,
+         "y_mm": 155.57,
+         "text": "교과서4과 본문2"
+        },
+        {
+         "x_mm": 107.97,
+         "y_mm": 155.57,
+         "text": "교과서4과 본문4"
+        }
+       ],
+       "col_x_mm": [
+        20.97,
+        107.97
+       ],
+       "row_y_mm": [
+        29.57,
+        155.57
+       ],
+       "fills": [
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          13.9,
+          0.0,
+          26.65,
+          23.26
+         ]
+        }
+       ],
+       "block_pitch_mm": [
+        [
+         4.23,
+         32
+        ],
+        [
+         2.23,
+         1
+        ]
+       ],
+       "col_pitch_mm": [
+        [
+         5.23,
+         16
+        ],
+        [
+         4.23,
+         15
+        ],
+        [
+         5.23,
+         16
+        ],
+        [
+         4.23,
+         15
+        ]
+       ],
+       "type": [
+        {
+         "size_pt": 8.5,
+         "font": "NotoSansCJKkr-Bold",
+         "chars": 1823
+        },
+        {
+         "size_pt": 8.5,
+         "font": "NotoSansCJKkr-Regular",
+         "chars": 1182
+        },
+        {
+         "size_pt": 12.0,
+         "font": "EliceDXNeolliOTF-Bd",
+         "chars": 36
+        },
+        {
+         "size_pt": 6.0,
+         "font": "EliceDXNeolliOTF-Bd",
+         "chars": 13
+        },
+        {
+         "size_pt": 8.95,
+         "font": "JalnanOTF",
+         "chars": 8
+        },
+        {
+         "size_pt": 17.91,
+         "font": "EliceDXNeolliOTF-Md",
+         "chars": 5
+        },
+        {
+         "size_pt": 27.86,
+         "font": "EliceDXNeolliOTF-Bd",
+         "chars": 1
+        }
+       ]
+      },
+      "odd": {
+       "sample_page": 3,
+       "text_extent_mm": [
+        24.97,
+        6.29,
+        203.0,
+        293.43
+       ],
+       "slot_headers": [
+        {
+         "x_mm": 24.97,
+         "y_mm": 29.57,
+         "text": "교과서4과 본문5"
+        },
+        {
+         "x_mm": 111.97,
+         "y_mm": 29.57,
+         "text": "교과서4과 RM"
+        },
+        {
+         "x_mm": 24.97,
+         "y_mm": 155.57,
+         "text": "교과서4과 본문6"
+        },
+        {
+         "x_mm": 111.93,
+         "y_mm": 155.57,
+         "text": "리딩파워 12강 Ex01"
+        }
+       ],
+       "col_x_mm": [
+        24.97,
+        111.93,
+        111.97
+       ],
+       "row_y_mm": [
+        29.57,
+        155.57
+       ],
+       "fills": [
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          155.0,
+          0.0,
+          198.4,
+          13.0
+         ]
+        },
+        {
+         "fill": "#E6E7E8",
+         "rect_mm": [
+          112.0,
+          163.35,
+          195.0,
+          180.82
+         ]
+        }
+       ],
+       "block_pitch_mm": [
+        [
+         4.23,
+         47
+        ]
+       ],
+       "col_pitch_mm": [
+        [
+         4.23,
+         24
+        ],
+        [
+         5.23,
+         17
+        ],
+        [
+         4.23,
+         24
+        ],
+        [
+         5.23,
+         17
+        ]
+       ],
+       "type": [
+        {
+         "size_pt": 8.5,
+         "font": "NotoSansCJKkr-Bold",
+         "chars": 2083
+        },
+        {
+         "size_pt": 8.5,
+         "font": "NotoSansCJKkr-Regular",
+         "chars": 2051
+        },
+        {
+         "size_pt": 12.0,
+         "font": "EliceDXNeolliOTF-Bd",
+         "chars": 39
+        },
+        {
+         "size_pt": 7.96,
+         "font": "EliceDXNeolliOTF-Md",
+         "chars": 31
+        },
+        {
+         "size_pt": 6.0,
+         "font": "EliceDXNeolliOTF-Bd",
+         "chars": 18
+        },
+        {
+         "size_pt": 8.95,
+         "font": "JalnanOTF",
+         "chars": 6
+        }
+       ]
+      }
+     }
+    },
+    "문장삽입/순서배열": {
+     "page_count": 6,
+     "page_range": [
+      15,
+      20
+     ],
+     "parity": {
+      "odd": {
+       "sample_page": 15,
+       "text_extent_mm": [
+        21.65,
+        7.72,
+        203.0,
+        295.02
+       ],
+       "slot_headers": [
+        {
+         "x_mm": 24.97,
+         "y_mm": 29.57,
+         "text": "교과서4과 본문5"
+        },
+        {
+         "x_mm": 111.97,
+         "y_mm": 29.57,
+         "text": "교과서4과 RM"
+        },
+        {
+         "x_mm": 24.97,
+         "y_mm": 155.57,
+         "text": "교과서4과 본문6"
+        },
+        {
+         "x_mm": 111.97,
+         "y_mm": 155.57,
+         "text": "250320"
+        }
+       ],
+       "col_x_mm": [
+        24.97,
+        111.97
+       ],
+       "row_y_mm": [
+        29.57,
+        155.57
+       ],
+       "fills": [
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          18.0,
+          0.0,
+          30.75,
+          23.26
+         ]
+        },
+        {
+         "fill": "#E6E7E8",
+         "rect_mm": [
+          25.0,
+          43.64,
+          108.0,
+          52.64
+         ]
+        },
+        {
+         "fill": "#E6E7E8",
+         "rect_mm": [
+          112.0,
+          43.64,
+          195.0,
+          52.64
+         ]
+        },
+        {
+         "fill": "#E6E7E8",
+         "rect_mm": [
+          25.0,
+          169.64,
+          108.0,
+          192.4
+         ]
+        },
+        {
+         "fill": "#E6E7E8",
+         "rect_mm": [
+          112.0,
+          169.64,
+          195.0,
+          187.81
+         ]
+        }
+       ],
+       "block_pitch_mm": [
+        [
+         2.23,
+         1
+        ]
+       ],
+       "col_pitch_mm": [
+        [
+         5.29,
+         30
+        ],
+        [
+         4.59,
+         3
+        ],
+        [
+         8.29,
+         2
+        ],
+        [
+         7.59,
+         2
+        ],
+        [
+         5.29,
+         30
+        ],
+        [
+         4.59,
+         3
+        ],
+        [
+         8.29,
+         2
+        ],
+        [
+         7.59,
+         2
+        ]
+       ],
+       "type": [
+        {
+         "size_pt": 8.5,
+         "font": "NotoSansCJKkr-Regular",
+         "chars": 3691
+        },
+        {
+         "size_pt": 8.5,
+         "font": "NotoSansCJKkr-Bold",
+         "chars": 572
+        },
+        {
+         "size_pt": 12.0,
+         "font": "EliceDXNeolliOTF-Bd",
+         "chars": 32
+        },
+        {
+         "size_pt": 6.0,
+         "font": "EliceDXNeolliOTF-Bd",
+         "chars": 27
+        },
+        {
+         "size_pt": 17.91,
+         "font": "EliceDXNeolliOTF-Md",
+         "chars": 13
+        },
+        {
+         "size_pt": 27.86,
+         "font": "EliceDXNeolliOTF-Bd",
+         "chars": 1
+        }
+       ]
+      },
+      "even": {
+       "sample_page": 16,
+       "text_extent_mm": [
+        13.0,
+        7.72,
+        190.75,
+        291.25
+       ],
+       "slot_headers": [
+        {
+         "x_mm": 20.97,
+         "y_mm": 29.57,
+         "text": "250321"
+        },
+        {
+         "x_mm": 107.97,
+         "y_mm": 29.57,
+         "text": "250323"
+        },
+        {
+         "x_mm": 20.97,
+         "y_mm": 155.57,
+         "text": "250322"
+        },
+        {
+         "x_mm": 107.97,
+         "y_mm": 155.57,
+         "text": "250324"
+        }
+       ],
+       "col_x_mm": [
+        20.97,
+        107.97
+       ],
+       "row_y_mm": [
+        29.57,
+        155.57
+       ],
+       "fills": [
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          13.9,
+          0.0,
+          26.65,
+          23.26
+         ]
+        },
+        {
+         "fill": "#E6E7E8",
+         "rect_mm": [
+          21.0,
+          43.64,
+          104.0,
+          61.81
+         ]
+        },
+        {
+         "fill": "#E6E7E8",
+         "rect_mm": [
+          21.0,
+          169.64,
+          104.0,
+          192.4
+         ]
+        },
+        {
+         "fill": "#E6E7E8",
+         "rect_mm": [
+          108.0,
+          43.64,
+          191.0,
+          61.81
+         ]
+        },
+        {
+         "fill": "#E6E7E8",
+         "rect_mm": [
+          108.0,
+          169.64,
+          191.0,
+          201.57
+         ]
+        }
+       ],
+       "block_pitch_mm": [
+        [
+         2.23,
+         1
+        ]
+       ],
+       "col_pitch_mm": [
+        [
+         5.29,
+         27
+        ],
+        [
+         4.59,
+         5
+        ],
+        [
+         8.29,
+         2
+        ],
+        [
+         7.59,
+         2
+        ],
+        [
+         5.29,
+         27
+        ],
+        [
+         4.59,
+         5
+        ],
+        [
+         8.29,
+         2
+        ],
+        [
+         7.59,
+         2
+        ]
+       ],
+       "type": [
+        {
+         "size_pt": 8.5,
+         "font": "NotoSansCJKkr-Regular",
+         "chars": 3497
+        },
+        {
+         "size_pt": 8.5,
+         "font": "NotoSansCJKkr-Bold",
+         "chars": 362
+        },
+        {
+         "size_pt": 12.0,
+         "font": "EliceDXNeolliOTF-Bd",
+         "chars": 24
+        },
+        {
+         "size_pt": 6.0,
+         "font": "EliceDXNeolliOTF-Bd",
+         "chars": 14
+        },
+        {
+         "size_pt": 17.91,
+         "font": "EliceDXNeolliOTF-Md",
+         "chars": 13
+        },
+        {
+         "size_pt": 27.86,
+         "font": "EliceDXNeolliOTF-Bd",
+         "chars": 1
+        }
+       ]
+      }
+     }
+    },
+    "중요어휘/요약문": {
+     "page_count": 19,
+     "page_range": [
+      21,
+      39
+     ],
+     "parity": {
+      "odd": {
+       "sample_page": 21,
+       "text_extent_mm": [
+        20.91,
+        7.72,
+        203.0,
+        291.25
+       ],
+       "slot_headers": [
+        {
+         "x_mm": 25.0,
+         "y_mm": 32.57,
+         "text": "250320"
+        }
+       ],
+       "col_x_mm": [
+        25.0
+       ],
+       "row_y_mm": [
+        32.57
+       ],
+       "fills": [
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          18.0,
+          0.0,
+          30.75,
+          23.26
+         ]
+        },
+        {
+         "fill": "#F2F2F3",
+         "rect_mm": [
+          112.0,
+          30.0,
+          195.0,
+          226.0
+         ]
+        }
+       ],
+       "block_pitch_mm": [
+        [
+         2.23,
+         1
+        ]
+       ],
+       "col_pitch_mm": [
+        [
+         7.06,
+         18
+        ],
+        [
+         7.06,
+         18
+        ]
+       ],
+       "type": [
+        {
+         "size_pt": 8.46,
+         "font": "NotoSansCJKkr-Regular",
+         "chars": 1918
+        },
+        {
+         "size_pt": 8.46,
+         "font": "NotoSansCJKkr-Bold",
+         "chars": 49
+        },
+        {
+         "size_pt": 6.0,
+         "font": "EliceDXNeolliOTF-Bd",
+         "chars": 25
+        },
+        {
+         "size_pt": 7.96,
+         "font": "EliceDXNeolliOTF-Md",
+         "chars": 24
+        },
+        {
+         "size_pt": 17.91,
+         "font": "EliceDXNeolliOTF-Md",
+         "chars": 11
+        },
+        {
+         "size_pt": 11.94,
+         "font": "EliceDXNeolliOTF-Bd",
+         "chars": 6
+        },
+        {
+         "size_pt": 27.86,
+         "font": "EliceDXNeolliOTF-Bd",
+         "chars": 1
+        }
+       ]
+      },
+      "even": {
+       "sample_page": 22,
+       "text_extent_mm": [
+        13.0,
+        7.72,
+        189.83,
+        291.25
+       ],
+       "slot_headers": [
+        {
+         "x_mm": 21.0,
+         "y_mm": 32.57,
+         "text": "250321"
+        }
+       ],
+       "col_x_mm": [
+        21.0
+       ],
+       "row_y_mm": [
+        32.57
+       ],
+       "fills": [
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          13.9,
+          0.0,
+          26.65,
+          23.26
+         ]
+        },
+        {
+         "fill": "#F2F2F3",
+         "rect_mm": [
+          108.0,
+          30.0,
+          191.0,
+          282.0
+         ]
+        }
+       ],
+       "block_pitch_mm": [
+        [
+         2.23,
+         1
+        ]
+       ],
+       "col_pitch_mm": [
+        [
+         7.06,
+         24
+        ],
+        [
+         7.06,
+         24
+        ]
+       ],
+       "type": [
+        {
+         "size_pt": 8.46,
+         "font": "NotoSansCJKkr-Regular",
+         "chars": 2701
+        },
+        {
+         "size_pt": 7.96,
+         "font": "EliceDXNeolliOTF-Md",
+         "chars": 24
+        },
+        {
+         "size_pt": 6.0,
+         "font": "EliceDXNeolliOTF-Bd",
+         "chars": 15
+        },
+        {
+         "size_pt": 17.91,
+         "font": "EliceDXNeolliOTF-Md",
+         "chars": 11
+        },
+        {
+         "size_pt": 11.94,
+         "font": "EliceDXNeolliOTF-Bd",
+         "chars": 6
+        },
+        {
+         "size_pt": 8.46,
+         "font": "NotoSansCJKkr-Bold",
+         "chars": 4
+        },
+        {
+         "size_pt": 27.86,
+         "font": "EliceDXNeolliOTF-Bd",
+         "chars": 1
+        }
+       ]
+      }
+     }
+    },
+    "크레딧": {
+     "page_count": 1,
+     "page_range": [
+      40,
+      40
+     ],
+     "parity": {
+      "even": {
+       "sample_page": 40,
+       "text_extent_mm": [
+        21.62,
+        115.98,
+        72.73,
+        281.95
+       ],
+       "slot_headers": [],
+       "col_x_mm": [],
+       "row_y_mm": [],
+       "fills": [
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          0.0,
+          0.0,
+          216.0,
+          303.0
+         ]
+        },
+        {
+         "fill": "#FFFFFF",
+         "rect_mm": [
+          0.0,
+          0.0,
+          216.0,
+          303.0
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          21.67,
+          270.35,
+          26.74,
+          275.55
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          33.04,
+          274.84,
+          36.64,
+          276.52
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          28.4,
+          270.04,
+          32.76,
+          275.19
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          37.08,
+          271.81,
+          40.12,
+          274.93
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          40.32,
+          271.9,
+          43.36,
+          274.71
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          36.96,
+          39.17,
+          40.27,
+          53.08
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          42.57,
+          39.17,
+          54.47,
+          53.08
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          55.31,
+          39.17,
+          69.12,
+          53.08
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          69.92,
+          39.17,
+          79.85,
+          53.08
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          38.62,
+          66.87,
+          50.31,
+          80.78
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          51.45,
+          66.87,
+          62.6,
+          80.78
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          63.88,
+          66.87,
+          75.2,
+          80.78
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          21.65,
+          32.29,
+          34.29,
+          53.15
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          21.65,
+          59.23,
+          36.68,
+          81.17
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          75.45,
+          78.23,
+          79.2,
+          81.96
+         ]
+        },
+        {
+         "fill": null,
+         "rect_mm": [
+          0.0,
+          0.0,
+          216.0,
+          303.0
+         ]
+        }
+       ],
+       "block_pitch_mm": [],
+       "col_pitch_mm": [],
+       "type": [
+        {
+         "size_pt": 9.0,
+         "font": "EliceDXNeolliOTF-Md",
+         "chars": 52
+        },
+        {
+         "size_pt": 11.0,
+         "font": "EliceDXNeolliOTF-Md",
+         "chars": 36
+        },
+        {
+         "size_pt": 7.0,
+         "font": "EliceDXNeolliOTF-Lt",
+         "chars": 29
+        },
+        {
+         "size_pt": 6.0,
+         "font": "EliceDXNeolliOTF-Lt",
+         "chars": 12
+        }
+       ]
+      }
+     }
+    }
+   }
+  },
+  {
+   "file": "광문2_파이널(Vol2)_내지.pdf",
+   "vol": "Vol2",
+   "pages": 62,
+   "page_mm": [
+    216.0,
+    303.0
+   ],
+   "sections": {
+    "간지": {
+     "page_count": 1,
+     "page_range": [
+      1,
+      1
+     ],
+     "parity": {
+      "odd": {
+       "sample_page": 1,
+       "text_extent_mm": [
+        44.53,
+        106.75,
+        189.13,
+        222.63
+       ],
+       "slot_headers": [
+        {
+         "x_mm": 57.63,
+         "y_mm": 140.4,
+         "text": "문장    -     요약    -     "
+        }
+       ],
+       "col_x_mm": [
+        57.63
+       ],
+       "row_y_mm": [
+        140.4
+       ],
+       "fills": [
+        {
+         "fill": "#FFFFFF",
+         "rect_mm": [
+          0.0,
+          0.0,
+          216.0,
+          303.0
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          35.9,
+          106.33,
+          52.38,
+          133.52
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          112.45,
+          104.87,
+          132.04,
+          133.49
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          133.8,
+          199.5,
+          177.2,
+          205.97
+         ]
+        }
+       ],
+       "block_pitch_mm": [],
+       "col_pitch_mm": [],
+       "type": [
+        {
+         "size_pt": 12.0,
+         "font": "GmarketSansBold",
+         "chars": 39
+        },
+        {
+         "size_pt": 7.96,
+         "font": "EliceDXNeolliOTF-Md",
+         "chars": 23
+        },
+        {
+         "size_pt": 8.46,
+         "font": "NotoSansCJKkr-Black",
+         "chars": 18
+        },
+        {
+         "size_pt": 72.0,
+         "font": "HelvNueOutline",
+         "chars": 12
+        }
+       ]
+      }
+     }
+    },
+    "어법수정": {
+     "page_count": 28,
+     "page_range": [
+      2,
+      29
+     ],
+     "parity": {
+      "even": {
+       "sample_page": 2,
+       "text_extent_mm": [
+        13.0,
+        7.72,
+        191.74,
+        291.25
+       ],
+       "slot_headers": [
+        {
+         "x_mm": 20.99,
+         "y_mm": 29.57,
+         "text": "교과서4과 본문1"
+        },
+        {
+         "x_mm": 107.99,
+         "y_mm": 29.57,
+         "text": "교과서4과 본문2"
+        }
+       ],
+       "col_x_mm": [
+        20.99,
+        107.99
+       ],
+       "row_y_mm": [
+        29.57
+       ],
+       "fills": [
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          13.9,
+          0.0,
+          26.65,
+          23.26
+         ]
+        }
+       ],
+       "block_pitch_mm": [
+        [
+         2.23,
+         1
+        ]
+       ],
+       "col_pitch_mm": [
+        [
+         9.52,
+         11
+        ],
+        [
+         9.52,
+         11
+        ]
+       ],
+       "type": [
+        {
+         "size_pt": 8.46,
+         "font": "NotoSansCJKkr-Regular",
+         "chars": 1544
+        },
+        {
+         "size_pt": 11.94,
+         "font": "EliceDXNeolliOTF-Bd",
+         "chars": 18
+        },
+        {
+         "size_pt": 6.0,
+         "font": "EliceDXNeolliOTF-Bd",
+         "chars": 12
+        },
+        {
+         "size_pt": 17.91,
+         "font": "EliceDXNeolliOTF-Bd",
+         "chars": 5
+        },
+        {
+         "size_pt": 27.86,
+         "font": "EliceDXNeolliOTF-Bd",
+         "chars": 1
+        }
+       ]
+      },
+      "odd": {
+       "sample_page": 3,
+       "text_extent_mm": [
+        24.97,
+        6.29,
+        203.0,
+        291.25
+       ],
+       "slot_headers": [
+        {
+         "x_mm": 24.99,
+         "y_mm": 29.57,
+         "text": "교과서4과 본문3"
+        },
+        {
+         "x_mm": 111.99,
+         "y_mm": 29.57,
+         "text": "교과서4과 본문4"
+        }
+       ],
+       "col_x_mm": [
+        24.99,
+        111.99
+       ],
+       "row_y_mm": [
+        29.57
+       ],
+       "fills": [
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          155.0,
+          0.0,
+          198.4,
+          13.0
+         ]
+        }
+       ],
+       "block_pitch_mm": [],
+       "col_pitch_mm": [
+        [
+         9.52,
+         11
+        ],
+        [
+         9.52,
+         11
+        ]
+       ],
+       "type": [
+        {
+         "size_pt": 8.46,
+         "font": "NotoSansCJKkr-Regular",
+         "chars": 1386
+        },
+        {
+         "size_pt": 8.46,
+         "font": "NotoSansCJKkr-Bold",
+         "chars": 85
+        },
+        {
+         "size_pt": 7.96,
+         "font": "EliceDXNeolliOTF-Md",
+         "chars": 34
+        },
+        {
+         "size_pt": 11.94,
+         "font": "EliceDXNeolliOTF-Bd",
+         "chars": 18
+        },
+        {
+         "size_pt": 6.0,
+         "font": "EliceDXNeolliOTF-Bd",
+         "chars": 18
+        }
+       ]
+      }
+     }
+    },
+    "서술형영작": {
+     "page_count": 32,
+     "page_range": [
+      30,
+      61
+     ],
+     "parity": {
+      "even": {
+       "sample_page": 30,
+       "text_extent_mm": [
+        13.0,
+        7.72,
+        191.68,
+        291.25
+       ],
+       "slot_headers": [
+        {
+         "x_mm": 20.99,
+         "y_mm": 29.57,
+         "text": "교과서4과 본문1"
+        },
+        {
+         "x_mm": 107.99,
+         "y_mm": 29.57,
+         "text": "교과서4과 본문2"
+        }
+       ],
+       "col_x_mm": [
+        20.99,
+        107.99
+       ],
+       "row_y_mm": [
+        29.57
+       ],
+       "fills": [
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          13.9,
+          0.0,
+          26.65,
+          23.26
+         ]
+        },
+        {
+         "fill": "#E2E3E4",
+         "rect_mm": [
+          20.0,
+          45.82,
+          105.0,
+          56.87
+         ]
+        },
+        {
+         "fill": "#E2E3E4",
+         "rect_mm": [
+          107.0,
+          45.82,
+          192.0,
+          61.11
+         ]
+        }
+       ],
+       "block_pitch_mm": [
+        [
+         4.23,
+         5
+        ],
+        [
+         2.23,
+         1
+        ]
+       ],
+       "col_pitch_mm": [],
+       "type": [
+        {
+         "size_pt": 8.0,
+         "font": "NotoSansCJKkr-Medium",
+         "chars": 287
+        },
+        {
+         "size_pt": 8.0,
+         "font": "NotoSansCJKkr-Regular",
+         "chars": 123
+        },
+        {
+         "size_pt": 3.0,
+         "font": "NotoSansCJKkr-Regular",
+         "chars": 100
+        },
+        {
+         "size_pt": 12.0,
+         "font": "EliceDXNeolliOTF-Bd",
+         "chars": 18
+        },
+        {
+         "size_pt": 6.0,
+         "font": "EliceDXNeolliOTF-Bd",
+         "chars": 14
+        },
+        {
+         "size_pt": 17.91,
+         "font": "EliceDXNeolliOTF-Bd",
+         "chars": 6
+        },
+        {
+         "size_pt": 27.86,
+         "font": "EliceDXNeolliOTF-Bd",
+         "chars": 1
+        }
+       ]
+      },
+      "odd": {
+       "sample_page": 31,
+       "text_extent_mm": [
+        24.99,
+        6.29,
+        203.0,
+        291.25
+       ],
+       "slot_headers": [
+        {
+         "x_mm": 24.99,
+         "y_mm": 29.57,
+         "text": "교과서4과 본문3"
+        },
+        {
+         "x_mm": 111.99,
+         "y_mm": 29.57,
+         "text": "교과서4과 본문4"
+        }
+       ],
+       "col_x_mm": [
+        24.99,
+        111.99
+       ],
+       "row_y_mm": [
+        29.57
+       ],
+       "fills": [
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          155.0,
+          0.0,
+          198.4,
+          13.0
+         ]
+        },
+        {
+         "fill": "#E2E3E4",
+         "rect_mm": [
+          24.0,
+          45.82,
+          109.0,
+          65.34
+         ]
+        },
+        {
+         "fill": "#E2E3E4",
+         "rect_mm": [
+          24.0,
+          99.51,
+          109.0,
+          123.26
+         ]
+        },
+        {
+         "fill": "#E2E3E4",
+         "rect_mm": [
+          111.0,
+          45.82,
+          196.0,
+          61.11
+         ]
+        }
+       ],
+       "block_pitch_mm": [
+        [
+         4.23,
+         13
+        ]
+       ],
+       "col_pitch_mm": [],
+       "type": [
+        {
+         "size_pt": 8.0,
+         "font": "NotoSansCJKkr-Medium",
+         "chars": 665
+        },
+        {
+         "size_pt": 8.0,
+         "font": "NotoSansCJKkr-Regular",
+         "chars": 259
+        },
+        {
+         "size_pt": 3.0,
+         "font": "NotoSansCJKkr-Regular",
+         "chars": 150
+        },
+        {
+         "size_pt": 7.96,
+         "font": "EliceDXNeolliOTF-Md",
+         "chars": 34
+        },
+        {
+         "size_pt": 6.0,
+         "font": "EliceDXNeolliOTF-Bd",
+         "chars": 20
+        },
+        {
+         "size_pt": 12.0,
+         "font": "EliceDXNeolliOTF-Bd",
+         "chars": 18
+        }
+       ]
+      }
+     }
+    },
+    "크레딧": {
+     "page_count": 1,
+     "page_range": [
+      62,
+      62
+     ],
+     "parity": {
+      "even": {
+       "sample_page": 62,
+       "text_extent_mm": [
+        21.62,
+        115.98,
+        72.73,
+        281.95
+       ],
+       "slot_headers": [],
+       "col_x_mm": [],
+       "row_y_mm": [],
+       "fills": [
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          0.0,
+          0.0,
+          216.0,
+          303.0
+         ]
+        },
+        {
+         "fill": "#FFFFFF",
+         "rect_mm": [
+          0.0,
+          0.0,
+          216.0,
+          303.0
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          21.67,
+          270.35,
+          26.74,
+          275.55
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          33.04,
+          274.84,
+          36.64,
+          276.52
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          28.4,
+          270.04,
+          32.76,
+          275.19
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          37.08,
+          271.81,
+          40.12,
+          274.93
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          40.32,
+          271.9,
+          43.36,
+          274.71
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          36.96,
+          39.17,
+          40.27,
+          53.08
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          42.57,
+          39.17,
+          54.47,
+          53.08
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          55.31,
+          39.17,
+          69.12,
+          53.08
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          69.92,
+          39.17,
+          79.85,
+          53.08
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          38.62,
+          66.87,
+          50.31,
+          80.78
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          51.45,
+          66.87,
+          62.6,
+          80.78
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          63.88,
+          66.87,
+          75.2,
+          80.78
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          21.65,
+          32.29,
+          34.29,
+          53.15
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          21.65,
+          59.23,
+          36.68,
+          81.17
+         ]
+        },
+        {
+         "fill": "#231F20",
+         "rect_mm": [
+          75.45,
+          78.23,
+          79.2,
+          81.96
+         ]
+        },
+        {
+         "fill": null,
+         "rect_mm": [
+          0.0,
+          0.0,
+          216.0,
+          303.0
+         ]
+        }
+       ],
+       "block_pitch_mm": [],
+       "col_pitch_mm": [],
+       "type": [
+        {
+         "size_pt": 9.0,
+         "font": "EliceDXNeolliOTF-Md",
+         "chars": 52
+        },
+        {
+         "size_pt": 11.0,
+         "font": "EliceDXNeolliOTF-Md",
+         "chars": 36
+        },
+        {
+         "size_pt": 7.0,
+         "font": "EliceDXNeolliOTF-Lt",
+         "chars": 29
+        },
+        {
+         "size_pt": 6.0,
+         "font": "EliceDXNeolliOTF-Lt",
+         "chars": 12
+        }
+       ]
+      }
+     }
+    }
+   }
+  }
+ ]
+}
