@@ -19,6 +19,7 @@ import shutil
 from core.render_vivlio import bleed, cli, measure, stage
 from core.render_vivlio.series.base import Series
 from core.render_vivlio.series.pocketbook import data as pdata
+from core.render_vivlio.series.pocketbook import memtest as pmemtest
 from core.render_vivlio.series.pocketbook import render as prender
 from core.render_vivlio.series.pocketbook import theme as ptheme
 
@@ -126,6 +127,7 @@ class PocketbookSeries(Series):
                 "수록할 지문이 없다 — options 에 passages·school/term·analysis "
                 "중 하나는 있어야 한다")
         self._apply_manuscript(cfg, opt, rows, log)
+        rows = self._apply_memtest(cfg, opt, rows, log)
         out = os.path.join(cfg.build_dir, "data.json")
         os.makedirs(cfg.build_dir, exist_ok=True)
         with open(out, "w", encoding="utf-8") as fh:
