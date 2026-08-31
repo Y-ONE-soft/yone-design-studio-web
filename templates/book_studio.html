@@ -20,9 +20,15 @@
 #}
 <style>
   /* 화면을 꽉 채운다 — 조판 프로그램이지 문서가 아니다 */
-  .ide { position: fixed; left: 0; right: 0; bottom: 0; top: 96px;
+  /* 머리띠 높이는 **재서 넣는다**(`--ide-top`). 예전에는 96px 로 못 박아
+     두었는데 실제 머리띠는 73px 이라 23px 짜리 죽은 틈이 생기고, 그만큼
+     문서가 길어져 **화면이 12px 스크롤**됐다. 스크롤되는 조판 프로그램은
+     쓸 수가 없다(고정 껍데기는 그대로, 뒤에 깔린 면만 움직인다). */
+  .ide { position: fixed; left: 0; right: 0; bottom: 0;
+         top: var(--ide-top, 96px);
          display: flex; flex-direction: column; background: #14161f; }
-  @media (max-width: 900px) { .ide { top: 150px; } }
+  /* 작업대가 떠 있는 동안은 문서가 스크롤되지 않는다 */
+  body.ide-on { overflow: hidden; }
   .ide * { box-sizing: border-box; }
 
   /* ── 위: 도구줄 ─────────────────────────────────────────── */
@@ -276,6 +282,17 @@
   var tool = 'sel', scope = 'sample', spread = false, zoom = 1, pageCount = 0;
   var curEl = null, styles = {}, curPage = 1, ready = false;
 
+  /** 머리띠 높이를 재서 껍데기를 그 아래에 붙인다.
+   *  못 박아 두면 머리띠가 줄바꿈될 때(좁은 창) 도구줄이 그 밑에 깔린다. */
+  function fitShell() {
+    var h = document.querySelector('header');
+    var top = h ? Math.round(h.getBoundingClientRect().bottom) : 96;
+    document.documentElement.style.setProperty('--ide-top', top + 'px');
+  }
+  document.body.classList.add('ide-on');
+  fitShell();
+  addEventListener('resize', fitShell);
+
   /** ⚠ 조판이 끝나기 전에 면을 넘기면 뷰어가 터진다
    *  (`Cannot read properties of null (reading 'spineIndex')`) — 그러면 그
    *  뒤로는 아무것도 안 그려진다. 다 뜰 때까지 막는다. */
@@ -325,6 +342,7 @@
       hookStage();
       drawPageNo();
       msg('');
+      skipBlank();
     });
     viewer.addListener('nav', function (p) {
       if (p && p.epageCount) { pageCount = p.epageCount; }
@@ -361,6 +379,34 @@
     var opts = {};
     if (extraCss) opts.userStyleSheet = [{ text: extraCss }];
     viewer.loadDocument({ url: docUrl() }, opts);
+  }
+
+  /** 첫 면이 **빈 간지**면 내용이 있는 면까지 넘긴다.
+   *
+   *  블랙북 1면은 `§DIV1§` 표식 하나뿐인 간지 자리다(마감 때 진짜 간지 PDF 로
+   *  바뀐다). 그대로 두면 작업대를 열자마자 **흰 면**이 나와서 고장 난 것처럼
+   *  보인다 — 실제로 그렇게 보였다.
+   */
+  // 표식뿐인 면 — 간지 자리(`§DIV1§`)·메모 면·쪽번호만 있는 면.
+  // ⚠ 이름을 `MARK` 로 지었다가 굵게/밑줄 표시 상수와 부딪혀
+  //   서식 버튼이 조용히 죽었다.
+  var BLANKISH = /^\s*(?:§[^§]*§|MEMO|\d+)?\s*$/;
+  function pageEmpty() {
+    var st = $('ide-stage');
+    var p = st.querySelector('[data-vivliostyle-page-container]');
+    if (!p) return false;
+    var t = (p.innerText || '').replace(/\s+/g, ' ').trim();
+    return BLANKISH.test(t);
+  }
+  function skipBlank(n) {
+    n = n || 0;
+    if (n > 8 || !pageEmpty()) {
+      if (n) msg('빈 간지 ' + n + '면을 지나 내용부터 폅니다');
+      drawPageNo();
+      return;
+    }
+    viewer.navigateToPage(V.Navigation.NEXT);
+    setTimeout(function () { skipBlank(n + 1); }, 220);
   }
 
   // ── 지면 클릭 ───────────────────────────────────────────
