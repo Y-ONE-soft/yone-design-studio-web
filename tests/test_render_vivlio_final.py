@@ -183,13 +183,17 @@ def test_tall_block_gets_two_slots():
 # ── 사분면 계약 ────────────────────────────────────────────────────────
 def test_expected_pages_accounts_for_two_slot_blocks():
     sec = {"kind": "arrange", "blocks": [{}] * 6}
-    assert V.expected_pages(sec, {}) == [0, 0, 0, 0, 1, 1]
+    assert V.expected_pages(sec, {}) == [(0, 0)] * 4 + [(1, 1)] * 2
     # 두 칸짜리는 **빈 단**이 필요하다 — 앞 단의 남은 칸은 비고 뒤가 밀린다
     # (`column-fill: auto` 가 실제로 이렇게 흘린다)
-    assert V.expected_pages(sec, {1: 2}) == [0, 0, 1, 1, 1, 1]
-    assert V.expected_pages({"kind": "vocab", "blocks": [{}] * 3}, {}) == [0, 1, 2]
+    assert V.expected_pages(sec, {1: 2}) == [(0, 0), (0, 0)] + [(1, 1)] * 4
+    assert V.expected_pages({"kind": "vocab", "blocks": [{}] * 3}, {}) == \
+        [(0, 0), (1, 1), (2, 2)]
     assert V.expected_pages({"kind": "grammar", "blocks": [{}] * 5}, {}) == \
-        [0, 0, 1, 1, 2]
+        [(0, 0), (0, 0), (1, 1), (1, 1), (2, 2)]
+    # 흘린 지문은 면에 걸친다 — 걸치는 면 전부가 '제자리'다
+    assert V.expected_pages({"kind": "grammar", "blocks": [{}] * 3},
+                            {1: 3}) == [(0, 0), (0, 1), (2, 2)]
 
 
 # ── 판면(테마) 계약 ───────────────────────────────────────────────────

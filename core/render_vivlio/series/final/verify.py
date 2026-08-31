@@ -23,6 +23,7 @@ PER_PAGE = {"arrange": 4, "insert": 4, "vocab": 1, "grammar": 2, "writing": 2}
 GRID = {"arrange": (2, 2), "insert": (2, 2), "vocab": (1, 1),
         "grammar": (2, 1), "writing": (2, 1)}
 RE_WS = re.compile(r"\s+")
+MM = 25.4 / 72
 
 
 def expected_pages(sec, spans):
@@ -40,13 +41,37 @@ def expected_pages(sec, spans):
         s = max(1, int(spans.get(i, 1)))
         if s > 1 and pos % nslot:          # 여러 칸짜리는 단 머리에서 시작
             pos += nslot - (pos % nslot)
-        out.append(pos // per)
+        # 여러 칸을 먹는 지문은 **면에 걸칠 수 있다** → 걸치는 면 전부
+        out.append((pos // per, (pos + s - 1) // per))
         pos += s
     return out
 
 
 def _n(s):
     return RE_WS.sub("", probe.norm(s or ""))
+
+
+def page_text_colwise(page):
+    """면 글자를 **조판 흐름 순서**(왼 단 위→아래, 다음 오른 단)로 잇는다.
+
+    ⚠ PDF 추출 순서는 좌표 순이라 두 단 지면에서 단이 뒤섞인다. 그대로 이으면
+      단 경계·면 경계에 걸친 문장이 '누락'으로 잡힌다(어법 19강 07~08 실증).
+    """
+    blocks = []
+    for b in page.get_text("dict")["blocks"]:
+        if b["type"] != 0:
+            continue
+        x0, y0 = b["bbox"][0] * MM, b["bbox"][1] * MM
+        col = 0 if x0 < 60 else 1
+        blocks.append((col, y0, "".join(
+            x["text"] for l in b["lines"] for x in l["spans"])))
+    blocks.sort(key=lambda t: (t[0], t[1]))
+    return "".join(t for _c, _y, t in blocks)
+
+
+def page_texts_colwise(pdf):
+    with probe.open_pdf(pdf) as doc:
+        return [page_text_colwise(p) for p in doc]
 
 
 def _section_pages(data, vol, texts, report, skip=()):
@@ -109,7 +134,8 @@ def _check_placement(data, vol, texts, spans, report, spanmap):
         whole = "".join(blobs)
         want_of = expected_pages(sec, spanmap.get(sec["kind"], {}))
         for i, b in enumerate(sec["blocks"]):
-            want = want_of[i]
+            lo, hi = want_of[i]
+            span_blob = "".join(blobs[lo:hi + 1]) if lo < len(blobs) else ""
             for t in _block_text(sec["kind"], b):
                 q = _n(t)
                 if len(q) < 12:
@@ -117,9 +143,9 @@ def _check_placement(data, vol, texts, spans, report, spanmap):
                 n += 1
                 if q not in whole:
                     miss.append(f"{sec['title']} {b['header']}")
-                elif want < len(blobs) and q not in blobs[want]:
+                elif lo < len(blobs) and q not in span_blob:
                     wrong.append(f"{sec['title']} {b['header']}"
-                                 f"(기대 {want + 1}번째 면)")
+                                 f"(기대 {lo + 1}번째 면)")
     report.note(f"문장 대조 {n:,}건 (섹션·면 단위)")
     if miss:
         report.fail(f"누락 {len(miss)}건: {sorted(set(miss))[:8]}")
@@ -134,7 +160,7 @@ def _check_pagecount(data, vol, spans, report, spanmap):
     bad = []
     for sec in v["sections"]:
         pages = spans.get(sec["kind"]) or []
-        want = (expected_pages(sec, spanmap.get(sec["kind"], {}))[-1] + 1
+        want = (expected_pages(sec, spanmap.get(sec["kind"], {}))[-1][1] + 1
                 if sec["blocks"] else 0)
         if len(pages) != want:
             bad.append((sec["title"], want, len(pages)))
@@ -253,7 +279,7 @@ def run(series, cfg, log, report):
     pdf = cfg.out_pdf(vcfg.get("suffix") or series._suffix(cfg))
     if not os.path.exists(pdf):
         return report.fail(f"PDF 없음: {pdf}")
-    texts = probe.page_texts(pdf)
+    texts = page_texts_colwise(pdf)
     skip = set(vcfg.get("skip_pages") or ())
     skip |= {len(texts) - k for k in range(vcfg.get("skip_last") or 0)}
     spanmap = _spanmap(cfg, vol, data)

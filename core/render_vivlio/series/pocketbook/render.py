@@ -128,7 +128,7 @@ def left_page(p, M, folio):
         parts.append('<div class="chip" style="%s">PICTURE</div>'
                      % _box(L["chip_pic_x"], L["chip_y"], ch[0], ch[1]))
         parts.append('<div class="illust" style="%s"><img src="%s" alt=""></div>'
-                     % (_box(il[0], il[1], il[2]), ESC(p["illust"])))
+                     % (_box(il[0], il[1], il[2], il[3]), ESC(p["illust"])))
     parts.append('<div class="chip" style="%s">TRANSLATION</div>'
                  % _box(L["chip_trn_x"], L["chip_y"], ch[0], ch[1]))
     if p.get("translation"):

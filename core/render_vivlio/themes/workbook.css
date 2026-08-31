@@ -294,19 +294,12 @@ section.flow.onecol { break-before: auto; }
   font-family: "Yeongdo", serif; font-size: 12pt; line-height: 1;
   color: var(--pnum); letter-spacing: 0.04em; display: block;
 }
-.zone > .pnum, .grp > .pnum {
-  position: absolute; left: 0; top: var(--pnum-top, -8.3mm);
-}
-.zone { padding-top: var(--body-pad, 12mm); box-sizing: border-box; }
-.grp  { --pnum-top: -7.3mm; padding-top: var(--body-pad, 13mm); }
-
-/* 스텝별 실측 — 지문번호 글리프 top(mm) / 본문 시작(mm), 판면 기준
- *   본문 O/X 27.54 / 39.51 · 본문 정리 27.54 / 39.51 · 내용 종합 25.04 / 37.01
- *   문장 배열 30.04 / 39.29 · 어법 선택 29.0 / 40.0 · 어법 O/X 28.8 / 40.0 */
-.k-step1_b2 .grp { --pnum-top: -9.8mm; --body-pad: 10.5mm; }
-.k-step1_c1 .zone.z-top { --pnum-top: -5.8mm; --body-pad: 11.8mm; }
-.k-step2_a1 .grp { --pnum-top: -5.8mm; --body-pad: 13.5mm; }
-.k-step2_b1 .grp { --pnum-top: -6.0mm; --body-pad: 13.5mm; }
+/* 흐름은 건드리지 않고 **글리프만** 띄운다(relative) — 본문 시작 위치는 이미
+ * 실물과 1mm 안쪽으로 맞아 있었고, 어긋난 것은 라벨 글리프뿐이었다. */
+.zone > .pnum, .grp > .pnum { position: relative; top: var(--pnum-lift, -8.3mm); }
+.k-step1_b2 .grp > .pnum { --pnum-lift: -10.8mm; }   /* 내용 종합 라벨 25.04 */
+.k-step1_c1 .zone > .pnum { --pnum-lift: -5.8mm; }   /* 문장 배열 라벨 30.04 */
+.k-step2_a1 .grp > .pnum { --pnum-lift: -6.8mm; }    /* 어법 선택 라벨 29.0 */
 .en { font-size: 8.5pt; line-height: 7.76mm; text-align: justify; }
 u { text-underline-offset: 0.14em; text-decoration-thickness: 0.05em; }
 

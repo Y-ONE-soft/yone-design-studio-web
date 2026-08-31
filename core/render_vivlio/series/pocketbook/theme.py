@@ -208,8 +208,11 @@ html,body{margin:0;padding:0;background:#fff}
 .chip{position:absolute;background:var(--chip);color:var(--band);
   font-family:PBHand;font-size:6pt;display:flex;align-items:center;
   justify-content:center}
-.illust{position:absolute;margin:0}
-.illust img{width:100%;display:block}
+/* 삽화는 **틀에 맞춰 넣는다**. 폭만 주면 세로가 제멋대로 늘어 폴리오를 덮는다
+   (원본 틀은 59.62×45.9mm 고정이고 캡션은 그림 안에 들어 있다). */
+.illust{position:absolute;margin:0;overflow:hidden}
+.illust img{width:100%;height:100%;object-fit:contain;object-position:top center;
+  display:block}
 .translation{position:absolute;font-size:__trans_size__pt;
   line-height:__trans_lead__mm;color:var(--trans);text-align:justify}
 .translation p{margin:0}
