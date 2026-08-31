@@ -373,7 +373,12 @@ def read_book(path):
             if role:
                 by_role.setdefault(role, []).append(paras)
 
-        if masters & set("BDFL"):
+        # ⚠ 마스터 글자는 **책마다 다른 이름**이다 — 지문면을 B 마스터에 얹은
+        #   책이 있다. 글자만 보고 암기테스트 면으로 넘기면 지문이 조용히
+        #   사라진다(광문2 36→79, 한영2 14→54). 그 면에 **지문이 있으면 지문면**이다.
+        #   `read_sequence` 와 같은 판정을 쓴다 — 코퍼스는 이 함수로 만들어지므로
+        #   여기만 안 고치면 코퍼스에서 지문이 계속 빠진다.
+        if (masters & set("BDFL")) and "passage" not in by_role:
             if pending is not None:
                 mt = pending.setdefault("memtest", {})
                 if "memtest_q" in by_role:
