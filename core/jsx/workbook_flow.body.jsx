@@ -3230,12 +3230,6 @@ try {
     relockIcons();   // v1 relockItem — 아이콘 원본/레이어 잠금 복원
 
     // opt-in 후처리 op (plan 키가 있을 때만 — 기존 플랜은 무변경)
-    if (plan.passage_numbers) {
-        app.doScript(function () {
-            updatePassageNumbers(doc, flowStories, plan.passage_numbers);
-        }, ScriptLanguage.JAVASCRIPT, undefined,
-           UndoModes.ENTIRE_SCRIPT, "wb_v2 passage_numbers");
-    }
     if (plan.unit_fit) {
         // W66 ④ — 유닛 꼬리 몇 줄이 다음 칸으로 새는 것을 자간/행간으로 흡수.
         // W67: 반드시 page_cleanup **이전**. 수용에 성공하면 유닛이 한 칸씩
@@ -3247,6 +3241,17 @@ try {
                                  ? plan.unit_fit : {});
         }, ScriptLanguage.JAVASCRIPT, undefined,
            UndoModes.ENTIRE_SCRIPT, "wb_v2 unit_fit");
+    }
+    // W84: 지문번호 프레임 갱신은 **unit_fit 뒤**에 — 앞에서 돌리면
+    // '넘침 1줄'로 다음 페이지까지 걸쳐 있던 유닛이 그때의 시작 페이지로
+    // 잡히고, 뒤이어 unit_fit이 그 유닛을 한 페이지에 수용하면서 유닛이
+    // 통째로 한 칸씩 당겨져 **번호가 한 페이지씩 밀린다** (수능만만 09강
+    // 실증: 어법 O/X 6지문이 본문·본문·본문·045·046·047로 인쇄).
+    if (plan.passage_numbers) {
+        app.doScript(function () {
+            updatePassageNumbers(doc, flowStories, plan.passage_numbers);
+        }, ScriptLanguage.JAVASCRIPT, undefined,
+           UndoModes.ENTIRE_SCRIPT, "wb_v2 passage_numbers");
     }
     if (plan.page_cleanup) {
         app.doScript(function () {
