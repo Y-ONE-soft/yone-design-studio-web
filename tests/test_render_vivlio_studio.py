@@ -312,6 +312,74 @@ def test_main_css_still_has_the_global_reset():
     assert "box-sizing: border-box" in "\n".join(css.splitlines()[:4])
 
 
+# ── 알아볼 수 있는가 · 고를 수 있는가 ─────────────────────────
+def test_click_does_not_steal_selection():
+    """고치는 글 안을 눌렀을 때 다시 고르면 커서가 글 끝으로 튄다.
+
+    그 바람에 드래그도 더블클릭도 소용없이 "문장은 안 잡히고 단락만 잡히는"
+    상태가 됐다. 글을 고르는 것은 브라우저가 알아서 한다.
+    """
+    assert "editEl.contains(ev.target)" in _studio_src()
+
+
+@pytest.mark.parametrize("name", ("blackbook", "vocabook", "vocaunit",
+                                  "special", "middle"))
+def test_series_names_its_styles(name):
+    """`.pbox` 같은 CSS 이름만 보이면 무엇을 고르는지 알 수 없다."""
+    from core.render_vivlio import series as _sreg
+    names = _sreg.get(name).style_names
+    assert isinstance(names, dict) and len(names) >= 10, f"{name}: 이름표가 없다"
+    for k, v in names.items():
+        assert not k.startswith("."), f"{name}: 점 없이 적을 것 ({k})"
+        assert v.strip(), f"{name}: 빈 이름 ({k})"
+
+
+def test_ref_source_namespaces():
+    """자리표 머리글자가 곧 출처다 — 원고 · 책 설정 · 조판물."""
+    from core.render_vivlio import refs
+    assert refs.source_of("lessons.0.problems.3.stem") == "data"
+    assert refs.source_of("book.subject") == "config"
+    assert refs.source_of("#머리띠") == "fixed"
+    assert refs.source_of("") == ""
+
+
+def test_header_is_selectable():
+    """머리 띠·탭·제목·기입칸이 다 잡혀야 한다 — 예전엔 하나도 안 잡혔다."""
+    src = io.open(os.path.join(_ROOT, "core", "render_vivlio", "series",
+                               "blackbook", "render.py"), encoding="utf-8").read()
+    for needle in ('_mark("#머리띠"', '_mark("book.subject"', '_mark("#기입칸"'):
+        assert needle in src, f"머리 띠에 자리표가 없다: {needle}"
+
+
+def test_fixed_ref_refuses_text_edit_with_a_reason():
+    """조판이 만든 자리는 글이 없다. 그냥 실패하면 왜 안 되는지 알 수 없다."""
+    src = _routes_src()
+    assert 'src == "fixed"' in src and "단락 스타일" in src
+
+
+def test_config_ref_edits_the_config():
+    """머리 띠 제목은 원고가 아니라 책 설정이다 — 이력에 쌓으면 아무 일도 없다."""
+    src = _routes_src()
+    assert "_text_from_config" in src and 'src == "config"' in src
+
+
+def test_cmyk_uses_the_press_profile():
+    """눈대중 공식으로 낸 숫자는 인쇄물과 다르다 — 없느니만 못하다."""
+    src = _routes_src()
+    assert "prepress.find_profile()" in src
+    assert "DEFAULT_GRAY_MAP" in src, "먹으로 빠지는 색을 CMYK 로 적으면 거짓말이다"
+
+
+def test_cmyk_api_matches_prepress(client):
+    """실제로 변환되는지 — 본문 먹은 K 단색이어야 한다."""
+    r = client.post("/api/book-studio/cmyk", json={"colors": ["#231f20"]})
+    assert r.status_code == 200
+    d = r.get_json()["cmyk"].get("#231f20")
+    if d is None:
+        pytest.skip("이 기계에 인쇄 프로파일이 없다")
+    assert d.get("gray") is True and d["k"] == 100
+
+
 # ── 중등부 다리 ────────────────────────────────────────────────
 def test_middle_series_registered():
     from core.render_vivlio import series as reg

@@ -313,6 +313,29 @@
   var tool = 'sel', scope = 'sample', spread = false, zoom = 1, pageCount = 0;
   var curEl = null, styles = {}, styleNames = {}, curPage = 1, ready = false;
 
+  // ── 인쇄 색(CMYK) ───────────────────────────────────────
+  // 내지는 종이에 찍힌다. 화면의 `#908400` 이 인쇄에서 몇 %인지 모르면
+  // 색을 정할 수가 없다. 마감이 쓰는 그 ICC 로 서버가 바꿔 준다.
+  var cmyk = {}, cmykProfile = '';
+  function askCmyk(list, done) {
+    var need = list.filter(function (c) {
+      return /^#[0-9a-fA-F]{6}$/.test(c || '') && !(c in cmyk); });
+    if (!need.length) { done && done(); return; }
+    api('/api/book-studio/cmyk', { colors: need }).then(function (d) {
+      if (d.error) { done && done(); return; }
+      cmykProfile = d.profile || '';
+      for (var k in (d.cmyk || {})) cmyk[k] = d.cmyk[k];
+      done && done();
+    });
+  }
+  /** 사람이 읽는 인쇄 색. 먹으로 빠지는 색은 **K 단색**이라 그렇게 적는다. */
+  function cmykText(hex) {
+    var v = cmyk[hex];
+    if (!v) return '';
+    if (v.gray) return 'K' + v.k + ' (먹 단색)';
+    return 'C' + v.c + ' M' + v.m + ' Y' + v.y + ' K' + v.k;
+  }
+
   /** 머리띠 높이를 재서 껍데기를 그 아래에 붙인다.
    *  못 박아 두면 머리띠가 줄바꿈될 때(좁은 창) 도구줄이 그 밑에 깔린다. */
   function fitShell() {
@@ -939,12 +962,22 @@
       var t = document.createElement('input'); t.type = 'text';
       t.className = 'ide-t'; t.value = v || '';
       box.appendChild(input); box.appendChild(t);
+      var cm = document.createElement('div');
+      cm.className = 'ide-hint'; cm.style.fontFamily = 'var(--mono)';
+      var showCmyk = function (nv) {
+        askCmyk([nv], function () {
+          cm.textContent = cmykText(nv) || '';
+          cm.title = cmykProfile ? '인쇄 프로파일: ' + cmykProfile : '';
+        });
+      };
       var sync = function (nv) {
         changed[k.key] = nv; t.value = nv;
         try { input.value = nv; } catch (e) {}
         lab.querySelector('[data-v]').textContent = nv;
+        showCmyk(nv);
         livePreview();
       };
+      showCmyk(v);
       input.addEventListener('change', function () { sync(input.value); });
       t.addEventListener('change', function () { sync(t.value.trim()); });
     } else {
@@ -964,6 +997,7 @@
       });
     }
     w.appendChild(box);
+    if (k.kind === 'color') w.appendChild(cm);
     if (k.affects) {
       var h = document.createElement('div'); h.className = 'ide-hint';
       h.textContent = k.affects; w.appendChild(h);
