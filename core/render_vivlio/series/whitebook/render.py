@@ -152,6 +152,11 @@ def _bullet(body_html, src):
                   '<span class="bu">•</span> ', body_html, count=1)
 
 
+def _starts_kr(rich):
+    p = plain(rich).lstrip()
+    return bool(p) and "\uac00" <= p[0] <= "\ud7a3"
+
+
 def render_question(item):
     q = ref_of(item)
     o = ['<div class="q">']
@@ -174,11 +179,14 @@ def render_question(item):
                 o.append(f'<p{_mark(br and f"{br}.paras.{k}")}>{inl(x)}</p>')
             o.append('</div>')
         elif t == "choice":
-            o.append(f'<p{_mark(br and br + ".body", "ch")}>'
-                     f'<span class="m">{b["mark"]}</span> {inl(b["body"])}</p>')
+            # ⚠ 표지 뒤 공백은 **글자로 넣지 않는다.** 로마자 선지와 한글 선지는
+            #   인디자인에서 들여쓰기가 다르다(4.25mm vs 3.84mm) → 여백으로 준다.
+            cls = "ch kr1" if _starts_kr(b["body"]) else "ch"
+            o.append(f'<p{_mark(br and br + ".body", cls)}>'
+                     f'<span class="m">{b["mark"]}</span>{inl(b["body"])}</p>')
         elif t == "trans":
             o.append(f'<p{_mark(br and br + ".body", "tr")}>'
-                     f'<span class="ar">→</span> {inl(b["body"])}</p>')
+                     f'<span class="ar">→</span>{inl(b["body"])}</p>')
     o.append('</div>')
     return "".join(o)
 

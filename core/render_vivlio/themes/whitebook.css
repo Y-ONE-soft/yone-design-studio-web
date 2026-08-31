@@ -118,7 +118,9 @@ u { text-decoration: underline; text-decoration-thickness: 0.475pt;
 /* 한글은 로마자보다 한 호 작다(인디자인 합성 서체) */
 .q .ch .kr, .q .tr .kr, .q .bi .kr, .q .pbox .kr {
   font-family: Noto; font-size: 8.77pt; font-weight: 400;
-  letter-spacing: -0.0432em;
+  /* 완성본은 **장평 95%** 다. CSS 에 장평이 없으니 자간으로 흉내 내는데,
+     글자 폭이 제각각이면 그것만으로는 안 맞는다 → 공백은 낱말 간격으로 따로. */
+  letter-spacing: -0.0462em; word-spacing: -0.0200em;
 }
 /* 빈칸 표기(`__________` · `[       ]`)는 본문 서체가 아니다 */
 /* ⚠ 크기가 다른 인라인은 **줄 상자를 키운다**(지문 셋째 줄만 0.57mm 벌어졌다)
@@ -183,8 +185,8 @@ u { text-decoration: underline; text-decoration-thickness: 0.475pt;
   right: 1.38mm; bottom: 0.89mm;
   border: 0.5pt solid #fff; border-top: 0; border-radius: 0 0 3.25mm 3.25mm;
 }
-.anshdr .tab .l { font: 300 16pt/27.55mm Neolli; color: #fff; }
-.anshdr .tab .d { font: 700 16pt/27.55mm Neolli; color: #fff; }
+.anshdr .tab .l { font: 300 16pt/26.49mm Neolli; color: #fff; }
+.anshdr .tab .d { font: 700 16pt/26.49mm Neolli; color: #fff; }
 
 /* ------------------------------------------------------------- 문제 */
 .qgrid { column-count: 2; column-gap: 3.65mm; column-fill: auto; }
@@ -206,14 +208,15 @@ u { text-decoration: underline; text-decoration-thickness: 0.475pt;
   letter-spacing: -0.0194em;
 }
 .q .ch .m { font: 9.26pt/4.94mm Noto; letter-spacing: 0;
-            padding-right: 0.46mm; position: relative; top: 0.37mm; }
+            padding-right: 0.45mm; position: relative; top: 0.37mm; }
+.q .ch.kr1 .m { padding-right: 0.57mm; }
 .q .tr {
   margin-top: 0.07mm; padding-left: 4.5mm; text-indent: -4.5mm;
   text-align: justify; font: 9.21pt/4.94mm Minion, Noto;
   letter-spacing: -0.0194em;
 }
 .q .tr .ar { font: 8.77pt/4.94mm Noto; letter-spacing: 0;
-             padding-right: 0.82mm; }
+             padding-right: 0.81mm; }
 .q .head + .ch, .q .head + .tr { margin-top: 5.29mm; }
 /* 영작(한글 선지 → 영문) 다음 선지는 조금 더 벌어진다 */
 .q .tr + .ch { margin-top: 0.69mm; }
