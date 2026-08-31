@@ -4155,6 +4155,77 @@ def passage_labels(steps):
     return []
 
 
+def _label_key(text):
+    """라벨 대조 키 — 번호가 있으면 번호(0패딩 제거), 없으면 글자 그대로.
+
+    같은 지문을 스텝마다 다르게 적는다: 'N045' / '[실전예제 045]' / '045'.
+    번호가 그 지문의 정체이므로 번호를 키로 삼아 표기를 하나로 모은다.
+    """
+    t = re.sub(r"\s+", " ", (text or "")).strip()
+    m = re.search(r"(\d{1,4})\s*(?:~\s*\d{1,4})?\s*$", t)
+    if m:
+        return str(int(m.group(1)))
+    return t
+
+
+def _step_header_labels(data):
+    """한 스텝의 지문 헤더 → 라벨 순열 (헤더에서 순번·페이지 마커를 벗김)."""
+    texts = [(p.get("text") or "") for p in (data or {}).get("paragraphs")
+             or []]
+    if not texts:
+        return []
+    try:
+        det = detect_headers(texts, legacy=is_header_line)
+    except Exception:                                          # noqa: BLE001
+        return []
+    out = []
+    for i in sorted(det.header_idx):
+        t = _norm_header(texts[i])
+        t = re.sub(r"^\s*\d{1,3}\s*[.)]\s*", "", t)
+        t = re.sub(r"^p\.?\s*\d+\s*[-–—.]?\s*", "", t, flags=re.I)
+        t = re.sub(r"^no\.?\s*", "", t, flags=re.I)
+        t = re.sub(r"(?:\s*\([^()]*\))+\s*$", "", t)
+        t = re.sub(r"\s+", " ", t).strip(" -–—")
+        if t:
+            out.append(t)
+    return out
+
+
+def passage_labels_by_step(steps, frame_steps):
+    """번호 프레임 스텝별 라벨 (W84).
+
+    스텝마다 지문 구성이 다를 수 있다 — 수능만만 실증: 스텝1은 실전예제
+    4지문뿐인데 스텝2(어법 O/X·빈칸 어법)는 **본문 2 + 실전예제 4** 라
+    한 벌의 공용 라벨을 그대로 쓰면 본문 자리에 '실전예제 045'가 박힌다
+    (사용자 지적 2026-08-31). 각 스텝의 **자기 헤더**로 순열을 만들고,
+    표기는 공용 라벨(원고 대괄호 라벨 등)의 문구로 통일한다.
+
+    스텝 헤더가 없거나 공용 라벨과 순열이 같으면 그 스텝은 넣지 않는다 —
+    기존 교재(모든 스텝의 지문이 같은 원고)는 동작이 그대로다.
+    """
+    common = passage_labels(steps)
+    canon = {}
+    for lab in common:
+        canon.setdefault(_label_key(lab), lab)
+    out = {}
+    for key in frame_steps:
+        seq = _step_header_labels(steps.get(key))
+        off = len(seq) - len(common)
+        if not seq or not common or off < 0:
+            continue
+        # 앞머리(공용 라벨보다 많은 지문)는 자기 헤더 문구 그대로 —
+        # 이 교재에서는 '본문'이다. 뒤쪽은 공용 라벨과 같은 지문이므로
+        # 번호로 맞추되, 번호 체계가 다르면('실전01' vs 'N049') 순서로 맞춘다.
+        head = [canon.get(_label_key(t), t) for t in seq[:off]]
+        if all(_label_key(t) in canon for t in seq[off:]):
+            labels = head + [canon[_label_key(t)] for t in seq[off:]]
+        else:
+            labels = head + list(common)
+        if labels and labels != common:
+            out[key] = labels
+    return out
+
+
 def ensure_step3_kinds(step3_data, log=None):
     """구버전 content.json(step3 단락에 kind 미주석) 재사용 대비 —
     kind가 하나도 없으면 v1 파서의 주석기를 그대로 호출해 in-place 보강.

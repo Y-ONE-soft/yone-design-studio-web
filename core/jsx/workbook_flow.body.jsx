@@ -744,10 +744,19 @@ function labelWithBreaks(lab) {
 }
 
 function updatePassageNumbers(doc, flowStories, op) {
-    var labels = op.labels || [];
+    var defaultLabels = op.labels || [];
+    var labels = defaultLabels;
     var steps = op.steps || [];
     var clearSteps = op.clear_steps || [];
-    if ((labels.length === 0 || steps.length === 0)
+    var hasByStep = false;
+    if (op.labels_by_step) {
+        for (var bk in op.labels_by_step) {
+            if (op.labels_by_step[bk] && op.labels_by_step[bk].length > 0) {
+                hasByStep = true; break;
+            }
+        }
+    }
+    if (((labels.length === 0 && !hasByStep) || steps.length === 0)
             && clearSteps.length === 0) { return; }
     // W14 D3: clear_steps — 라벨 개념이 없는 스텝(교과서 step3 서술형 등)의
     // 콘텐츠 페이지에 남은 순수 숫자 단일 프레임(모의고사 문항번호 잔재)을
@@ -771,11 +780,21 @@ function updatePassageNumbers(doc, flowStories, op) {
         }
     }
     if (cleared > 0) { wlog("지문번호 잔재 프레임 삭제: " + cleared + "개"); }
-    if (labels.length === 0 || steps.length === 0) { return; }
+    if ((labels.length === 0 && !hasByStep) || steps.length === 0) { return; }
     var total = 0;
     for (var si = 0; si < steps.length; si++) {
         var rec = flowStories[steps[si]];
         if (!rec) { continue; }
+        // W84: 스텝마다 지문 구성이 다를 수 있다 (수능만만 실증 — 스텝1은
+        // 실전예제 4지문, 스텝2는 본문 2 + 실전예제 4). 한 벌의 labels를
+        // 모든 스텝에 쓰면 본문 자리에 실전예제 번호가 박힌다. 스텝별
+        // 라벨이 오면 그것을 쓰고, 없으면 종전 공용 labels.
+        var labels = defaultLabels;
+        if (op.labels_by_step && op.labels_by_step[steps[si]]
+                && op.labels_by_step[steps[si]].length > 0) {
+            labels = op.labels_by_step[steps[si]];
+        }
+        if (labels.length === 0) { continue; }
         // 페이지 → 라벨 매핑.
         // 기본: '유닛 k 시작 페이지 ~ 유닛 k+1 시작 전' 구간 페이지 전부에
         // labels[k] (W13 c13 실증 — 지문이 페이지를 넘치면 '스토리 k번째

@@ -223,7 +223,8 @@ class WorkbookSuppV2Engine(WorkbookV2Engine):
         divider: 간지 문구 — W22 r12 스펙 (_divider_deco 참조. v1 상속의
             '고N 모의고사/YY년 M월'(W19 D4)은 r12 피드백 3으로 폐기).
         """
-        from engines.workbook_v2.plan import passage_labels
+        from engines.workbook_v2.plan import (passage_labels,
+                                              passage_labels_by_step)
         # 세종 내지의 간지('세종고 …')는 간지-마스터 페이지라 updateDivider
         # 매칭 조건(마스터 [None]) 밖 — 무접촉 (c19 실측 pg=['간지']).
         # W21 r11 (실사용 0e3108fd 결함 전체-1/전체-2): 기본 내지([원본]
@@ -259,6 +260,14 @@ class WorkbookSuppV2Engine(WorkbookV2Engine):
         if labels:
             deco["passage_numbers"] = {"labels": labels,
                                        "steps": list(_NUMBER_FRAME_STEPS)}
+            # W84 (사용자 지적 2026-08-31 "본문으로 들어가야 되는 게 실전예제
+            # 045 뒤에 걸로 들어가있어"): 스텝마다 지문 구성이 다르면 공용
+            # 라벨 한 벌로는 어긋난다 — 수능만만은 스텝1이 실전예제 4지문,
+            # 스텝2(어법 O/X·빈칸 어법)가 본문 2 + 실전예제 4다.
+            by_step = passage_labels_by_step(content.get("steps", {}) or {},
+                                             _NUMBER_FRAME_STEPS)
+            if by_step:
+                deco["passage_numbers"]["labels_by_step"] = by_step
         return deco
 
     # ── 훅 오버라이드 (v1 WorkbookSuppEngine.prepare_jsx의 차이 2가지) ──────
