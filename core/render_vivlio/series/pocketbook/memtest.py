@@ -415,8 +415,8 @@ def read(paths, log=None, cache=None):
     if cache:
         got = _cache_load(cache, stamp)
         if got is not None:
-            log("  [리테] 원고 %d개 그대로 — 지난번에 읽어 둔 지문 %d개를 쓴다"
-                % (len(files), len(got)))
+            log("  [리테] 원고 폴더(파일 %d개) 그대로 — 지난번에 읽어 둔 "
+                "지문 %d개를 쓴다" % (len(files), len(got)))
             return got
     docs, pdfs, other = [], [], []
     for f in files:
