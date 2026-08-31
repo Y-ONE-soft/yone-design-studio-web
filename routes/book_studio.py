@@ -239,15 +239,15 @@ def api_op():
     from core.render_vivlio import book as bookmod
     from core.render_vivlio import edits as ed
     p = request.get_json(silent=True) or {}
-    d, meta = _book_dir(p.get("b"))
-    if not d:
-        return jsonify({"error": "모르는 책"}), 404
     op = p.get("op")
     if op not in ed.OPS:
         return jsonify({"error": f"모르는 연산: {op}"}), 400
     ref = p.get("ref") or ""
-    if not ref or any(c in ref for c in "/\\ \n"):
+    if not ref or any(c in ref for c in "/\\ \n") or ".." in ref:
         return jsonify({"error": "이상한 자리표"}), 400
+    d, meta = _book_dir(p.get("b"))
+    if not d:
+        return jsonify({"error": "모르는 책"}), 404
     cfg = bookmod.load(d)
     st = ed.push(cfg, {k: v for k, v in p.items()
                        if k in ("op", "ref", "v", "at", "note")})
@@ -269,21 +269,24 @@ def api_styles():
     import shutil
     get = request.method == "GET"
     p = {} if get else (request.get_json(silent=True) or {})
+    if not get:
+        # ⚠ 검사를 책 조회보다 **먼저** 한다. 뒤에 두면 '모르는 책' 404 가 먼저
+        #   나서 검사가 도는지 아닌지를 시험으로 알 수 없다(실제로 그랬다).
+        sel = (p.get("selector") or "").strip()
+        if not sel or len(sel) > 200 or "{" in sel or "}" in sel:
+            return jsonify({"error": "이상한 선택자"}), 400
+        props = p.get("props")
+        if not isinstance(props, dict):
+            return jsonify({"error": "규칙이 없다"}), 400
+        for k, v in props.items():
+            if any(c in str(k) + str(v) for c in "{};<>"):
+                return jsonify({"error": f"이상한 값: {k}: {v}"}), 400
     d, meta = _book_dir(request.args.get("b") if get else p.get("b"))
     if not d:
         return jsonify({"error": "모르는 책"}), 404
     cfg = bookmod.load(d)
     if get:
         return jsonify({"styles": cfg.section("styles") or {}})
-    sel = (p.get("selector") or "").strip()
-    if not sel or len(sel) > 200 or "{" in sel or "}" in sel:
-        return jsonify({"error": "이상한 선택자"}), 400
-    props = p.get("props")
-    if not isinstance(props, dict):
-        return jsonify({"error": "규칙이 없다"}), 400
-    for k, v in props.items():
-        if any(c in str(k) + str(v) for c in "{};<>"):
-            return jsonify({"error": f"이상한 값: {k}: {v}"}), 400
     styles = dict(cfg.section("styles") or {})
     cur = dict(styles.get(sel) or {})
     for k, v in props.items():
@@ -332,6 +335,13 @@ def api_images():
     import shutil
     from core.render_vivlio import book as bookmod
     get = request.method == "GET"
+    if not get:
+        f0 = request.files.get("file")
+        if not f0 or not f0.filename:
+            return jsonify({"error": "파일이 없다"}), 400
+        if not f0.filename.lower().endswith(IMG_OK):
+            return jsonify(
+                {"error": "그림 파일이 아니다 (%s)" % ", ".join(IMG_OK)}), 400
     key = request.args.get("b") if get else request.form.get("b")
     d, meta = _book_dir(key)
     if not d:
