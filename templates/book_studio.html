@@ -1110,7 +1110,23 @@
     msg('원본을 불러오는 중…');
     api('/api/book-studio/text?b=' + encodeURIComponent(key)
         + '&ref=' + encodeURIComponent(ref)).then(function (info) {
-      if (info.error) { msg('✗ ' + info.error); return; }
+      if (info.error) {
+        msg('✗ ' + info.error);
+        // 덩어리를 눌렀으면 **안쪽으로 한 단계** 데려다준다 — 두 번 누르라고
+        // 말만 하는 것보다 그냥 해 주는 편이 낫다.
+        if (info.kind === 'container') {
+          var st2 = stageEl(), inner = null;
+          if (st2 && el) {
+            var kids = el.querySelectorAll('[class*="vref"]');
+            for (var i = 0; i < kids.length; i++) {
+              var m2 = kids[i].className.match(/(?:^|\s)vref(\d+)(?:\s|$)/);
+              if (m2 && refs[m2[1]]) { inner = { el: kids[i], ref: refs[m2[1]] }; break; }
+            }
+          }
+          if (inner) { pick(inner.el, inner.ref); }
+        }
+        return;
+      }
       editEl = el; editHtml = el.innerHTML;
       // ⚠ **보이는 그대로** 고친다. 예전에는 `**굵게**` 같은 표시가 든 민글로
       //   갈아 끼웠는데, 그러면 누를 때마다 글이 딴것처럼 보이고 **글자 단위

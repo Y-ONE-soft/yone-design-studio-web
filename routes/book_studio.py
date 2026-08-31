@@ -249,6 +249,18 @@ def api_text():
     cur, raw = ed.preview(cfg)
     if not ed.exists(cur, ref):
         return jsonify({"error": f"원본에 없는 자리: {ref}"}), 404
+    # ⚠ 덩어리 자리표(지문 상자·문항 전체)에는 **글이 없다** — 그건 상자지
+    #   글이 아니다. 그냥 열면 빈 편집기가 떠서 무엇이 잘못됐는지 알 수 없다.
+    val = ed.get(cur, ref)
+    if isinstance(val, dict) and "t" not in val:
+        return jsonify({"error": "덩어리라 글이 없습니다 — 두 번 눌러 안쪽 "
+                                 "한 줄을 고르거나, 모양은 오른쪽 패널에서 바꾸세요",
+                        "kind": "container"}), 409
+    if isinstance(val, list) and any(isinstance(x, (dict, list))
+                                     and not (isinstance(x, dict) and "t" in x)
+                                     for x in val):
+        return jsonify({"error": "여러 줄이 든 자리입니다 — 두 번 눌러 "
+                                 "한 줄만 고르세요", "kind": "container"}), 409
     st = ed.read(cfg)
     if get:
         touched = any(o.get("ref") == ref for o in st["ops"][:st["head"]])

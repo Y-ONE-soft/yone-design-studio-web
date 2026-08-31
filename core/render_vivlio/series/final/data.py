@@ -27,6 +27,18 @@ RE_MARK = re.compile(r"(\d*)\[([^\[\]]*)\]")
 # 인디자인에서 되읽은 지문에 남은 **하이픈 넣기 잔재**("lim-ited", "bet-ter").
 # 원고에는 없다 — 조판된 지면을 역수확했기 때문에 생긴다. 지우지는 않고 센다.
 RE_HYPH = re.compile(r"\b([A-Za-z]{2,})-([a-z]{2,})\b")
+# 모의 41~42 복합문항 — 중요어휘 시트는 `250341` 로만 적어 오는 일이 있다.
+# 문장배열·어법은 `250341~42` 라 그대로 두면 같은 지문이 두 라벨로 갈린다
+# (지금은 조판 직전 JSX 준비 단계가 고쳐 준다 — 그 규칙을 데이터로 올린다).
+RE_LONG42 = re.compile(r"^(\d{4})(?:41|42)$")
+# 항목 머리표 — `(A)` `(B)` … 지면에서 굵게 찍힌다.
+RE_ITEM = re.compile(r"^\(([A-Z])\)\s*")
+
+
+def norm_header(h):
+    h = (h or "").strip()
+    m = RE_LONG42.match(h)
+    return f"{m.group(1)}41~42" if m else h
 
 SEC_TITLES = {
     "arrange": "문장 배열",
@@ -79,26 +91,23 @@ def _arrange(blocks):
     return out
 
 
-def _insert(blocks):
-    """하단 문제 = 발문 + (주어진 문장 상자) + 항목들.
+def _insert(blocks, warn=lambda m: None):
+    """하단 문제 = 발문 + 주어진 문장(상자) + 항목들.
 
-    스타일 이름이 역할이다: `문장 배열 하단` = 상자에 들어가는 주어진 문장,
-    `문장 배열 하단 문제` = 발문과 항목. 첫 줄은 늘 발문이다(완성본 실측).
+    ⚠ 상자를 **스타일 이름으로 가르면 안 된다.** 인디자인에서 되읽은 21블록 중
+      상자 줄이 `문장 배열 하단` 스타일인 것은 18개뿐이고, 교과서 지문 셋은
+      항목과 같은 스타일이다(완성본은 셋 다 상자로 찍혀 있다). 자리가 규칙이다 —
+      **첫 줄 = 발문, 둘째 줄 = 주어진 문장, 나머지 = 항목.**
     """
     out = []
     for b in blocks:
-        ps = b.get("paras") or []
-        prompt, given, items = "", "", []
-        for k, p in enumerate(ps):
-            t = (p.get("text") or "").strip()
-            if not t:
-                continue
-            if p.get("style") == "문장 배열 하단":
-                given = (given + " " + t).strip() if given else t
-            elif not prompt and k == 0:
-                prompt = t
-            else:
-                items.append(t)
+        ps = [p for p in (b.get("paras") or []) if (p.get("text") or "").strip()]
+        txt = [(p.get("text") or "").strip() for p in ps]
+        prompt = txt[0] if txt else ""
+        given = txt[1] if len(txt) > 1 else ""
+        items = txt[2:]
+        if given and RE_ITEM.match(given):
+            warn(f"문장삽입 {b['header']}: 주어진 문장 자리에 항목이 왔다")
         out.append({"header": b["header"], "prompt": prompt,
                     "given": given, "items": items})
     return out
@@ -130,7 +139,7 @@ def _vocab(text, warn):
                 continue
             out[-1]["summary"] = [segs(l) for l in body]
         else:
-            out.append({"header": g[0].strip(),
+            out.append({"header": norm_header(g[0]),
                         "passage": [segs(l) for l in g[1:] if l.strip()],
                         "summary": []})
     for b in out:
@@ -187,7 +196,7 @@ def from_content(content, warn=lambda m: None):
     v1, v2 = content.get("vol1") or {}, content.get("vol2") or {}
     made = {
         "arrange": _arrange(v1.get("문장배열") or []),
-        "insert": _insert(v1.get("문장삽입") or []),
+        "insert": _insert(v1.get("문장삽입") or [], warn),
         "vocab": _vocab(v1.get("중요어휘_왼") or "", warn),
         "grammar": _grammar(v2.get("어법수정") or [],
                             v2.get("어법_헤더") or [], warn),
