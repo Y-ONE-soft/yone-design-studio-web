@@ -460,24 +460,66 @@ class PocketbookSeries(Series):
         # ⚠ 쪽 번호를 **글자로** 정렬하면 `"10-11" < "12-13" < "2-3" < "26-27"` 이
         #   되어 지문 차례가 통째로 뒤섞인다(교과서와 모의고사가 섞여 나온다).
         #   숫자로 정렬한다. 쪽을 모르면 맨 뒤로.
-        def _page_key(r):
-            w = (r.get("where") or [{}])[0].get("pages", "")
-            m = re.match(r"\s*(\d+)", str(w))
-            return (0, int(m.group(1))) if m else (1, 0)
-
-        rows.sort(key=_page_key)
         school = opt.get("school")
         term = opt.get("term")
         units = set(opt.get("units") or [])
+
+        # ⚠ 같은 지문이 여러 학교에 나오면 코퍼스는 **하나로 병합**한다(원문 동일
+        #   병합 402건). 그런데 `school`·`term` 은 **먼저 만난 책 것만** 남는다 —
+        #   그것만 보면 뒤에 나온 학교에서 지문이 통째로 빠진다(세종1 47→31).
+        #   지문이 실렸던 **모든 책 경로**(`books`/`where`)로도 본다.
+        def places(r):
+            out = set()
+            if r.get("school"):
+                out.add((r.get("term") or "", r["school"]))
+            for w in (r.get("where") or []):
+                f = w.get("file") or ""
+                parts = f.split("/")
+                if len(parts) >= 2:
+                    out.add((parts[0], parts[1]))
+            for f in (r.get("books") or []):
+                parts = f.split("/")
+                if len(parts) >= 2:
+                    out.add((parts[0], parts[1]))
+            return out
+
+        def page_of(r):
+            """이 책에서의 쪽 번호. 병합본은 학교마다 쪽이 다르다."""
+            best = None
+            for w in (r.get("where") or []):
+                f = w.get("file") or ""
+                parts = f.split("/")
+                hit = (len(parts) >= 2
+                       and (not school or parts[1] == school)
+                       and (not term or parts[0] == term))
+                m = re.match(r"\s*(\d+)", str(w.get("pages", "")))
+                if not m:
+                    continue
+                v = int(m.group(1))
+                if hit:
+                    return v
+                if best is None:
+                    best = v
+            return best if best is not None else 10 ** 6
+
         out = []
         for r in rows:
-            if school and r.get("school") != school:
-                continue
-            if term and r.get("term") != term:
-                continue
+            if school or term:
+                ok = False
+                for t, sc in places(r):
+                    if school and sc != school:
+                        continue
+                    if term and t != term:
+                        continue
+                    ok = True
+                    break
+                if not ok:
+                    continue
             if units and r.get("unit") not in units:
                 continue
-            out.append(r.get("file") or (r["key"] + ".json"))
+            out.append(r)
+        out.sort(key=page_of)
+        out = [r.get("file") or (r["key"] + ".json") for r in out]
         if not out:
             raise ValueError(
                 "고른 지문이 없다 (school=%s term=%s units=%s)"
