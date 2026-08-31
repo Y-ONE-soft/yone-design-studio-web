@@ -41,6 +41,37 @@ def _spans(page, lo, hi):
                     yield sp
 
 
+_RE_VER = re.compile(r"(분석본\s*\d+)")
+
+
+def _dedup_versions(files, log=None):
+    """같은 분석본의 판본이 여럿이면 **가장 최근 것 하나만** 쓴다.
+
+    폴더에 `…분석본01(26년6월)_내지.indd` 와 `…분석본01(26년6월)_내지 제목수정.indd`
+    가 같이 있다(실제로 있다). 둘 다 읽으면 지문이 **두 배로** 실린다 —
+    조판은 성공하고 쪽수만 늘어서 눈으로 잡기 전까지 모른다.
+    """
+    import unicodedata
+    groups = {}
+    for f in files:
+        base = unicodedata.normalize("NFC", os.path.basename(f))
+        m = _RE_VER.search(base)
+        school = os.path.basename(os.path.dirname(f))
+        key = (school, m.group(1).replace(" ", "") if m else base)
+        groups.setdefault(key, []).append(f)
+    out, dropped = [], []
+    for key, fs in sorted(groups.items()):
+        fs.sort(key=lambda x: (os.path.getmtime(x), len(x)))
+        out.append(fs[-1])
+        dropped += fs[:-1]
+    if dropped and log:
+        log("  [판본 중복] %d개 제외 — %s"
+            % (len(dropped),
+               ", ".join(unicodedata.normalize("NFC", os.path.basename(d))
+                         for d in dropped[:4])))
+    return sorted(out)
+
+
 _RE_YM = re.compile(r"(\d{2})\s*년\s*(\d{1,2})\s*월")
 _RE_NO = re.compile(r"(\d{1,2})\s*[-~]?\s*(\d{1,2})?\s*번")
 _RE_GR = re.compile(r"고\s*([123])")
@@ -207,6 +238,7 @@ class PocketbookSeries(Series):
                 files.append(sfile)
         if not files:
             return []
+        files = _dedup_versions(files, log)
         self._tools()
         import analysis
         out = []
@@ -524,12 +556,15 @@ class PocketbookSeries(Series):
                     k_slope = (got - H0) / (lead - L0)
                     if k_slope > 1e-6:
                         new_lead = lead + (target - got) / k_slope
-                if new_lead is not None:
-                    new_lead = max(MIN_LEAD, int(new_lead * 4) / 4.0)  # 0.25pt
-                    if new_lead < lead - 1e-6:
-                        r["lead"] = new_lead
-                        still.append(i)
-                        continue
+                if lead > MIN_LEAD + 1e-6:
+                    # 보간이 안 되면(기울기가 이상하면) 한 눈금만 내린다 —
+                    # 행간이 남았는데 글자부터 줄이면 줄바꿈이 통째로 바뀐다.
+                    step = (int(new_lead * 4) / 4.0 if new_lead is not None
+                            else lead - 0.25)
+                    new_lead = max(MIN_LEAD, min(step, lead - 0.25))
+                    r["lead"] = new_lead
+                    still.append(i)
+                    continue
                 # ② 행간이 하한이면 글자를 줄인다. 높이는 대략 배율의 제곱에
                 #    비례한다(줄 길이·줄 수가 함께 준다).
                 sc = r.get("scale", 1.0)
