@@ -21,7 +21,7 @@
   --page-w: 216mm; --page-h: 303mm;      /* 재단 210×297 + 도련 3mm */
   --bleed: 3mm;
   --m-out: 23mm;                          /* 짝수(왼)쪽 안쪽 여백 */
-  --m-in: 26mm;                           /* 홀수(오른)쪽 안쪽 여백 */
+  --m-in: 25mm;                           /* 홀수(오른)쪽 안쪽 여백 (실측: 라벨 x=25.0) */
   --content-w: 168mm;
   --hdr-h: 26.5mm;                        /* 크림 패널 아래 경계선 */
   --body-top: 27.5mm;                     /* 본문이 시작하는 자리 */
@@ -96,7 +96,7 @@ body {
   @bottom-left { content: element(folL); vertical-align: top; }
 }
 @page :right {
-  margin-left: 26mm; margin-right: 22mm;
+  margin-left: 25mm; margin-right: 23mm;
   @top-left { content: element(hdrR); vertical-align: top; }
   @bottom-right { content: element(folR); vertical-align: top; }
 }
@@ -116,6 +116,8 @@ body {
   position: relative;
   width: var(--content-w);
   height: 260mm;                       /* 303 - 26.5 - 16.5 */
+  break-before: page;                  /* ⚠ 없으면 앞 섹션이 끝난 면 한복판에서
+                                          시작해 한 지문이 통째로 사라진다 */
   break-after: page;
   overflow: visible;                   /* ⚠ hidden 으로 두면 넘친 내용이
                                           조용히 사라진다 — 게이트가 잡게 둔다 */
@@ -164,7 +166,7 @@ section.blank { page: divider; }
 
 /* 흘림 섹션 */
 @page flow { margin: 30mm 25mm 16.5mm 23mm; }
-@page flow:right { margin-left: 26mm; margin-right: 22mm; }
+@page flow:right { margin-left: 25mm; margin-right: 23mm; }
 section.flow { page: flow; break-before: verso; }
 section.flow.onecol { break-before: auto; }
 .flowbody { }
@@ -228,7 +230,7 @@ section.flow.onecol { break-before: auto; }
 
 /* ─────────────────────────────────────────────── 헤더 (홀수=오른쪽) */
 .hdr-r {
-  position: absolute; left: -26mm; top: 0;      /* 오른쪽 면 여백만큼 되돌려 전폭 */
+  position: absolute; left: -25mm; top: 0;      /* 오른쪽 면 여백만큼 되돌려 전폭 */
   width: var(--page-w); height: var(--hdr-h);
   background: var(--hdr-bg);
   border-bottom: 0.6pt solid var(--rule);
@@ -250,7 +252,7 @@ section.flow.onecol { break-before: auto; }
 }
 /* 오른쪽 사이드 탭 */
 .tabs { position: absolute; left: 204.5mm; top: 0; width: 11.5mm; height: var(--page-h); }
-.r-hdrR .tabs { left: 178.5mm; }   /* 마진 박스(왼쪽 26mm) 기준으로 되돌림 */
+.r-hdrR .tabs { left: 179.5mm; }   /* 마진 박스(왼쪽 25mm) 기준으로 되돌림 */
 .tabs b {
   position: absolute; right: 0; width: 11.5mm; height: 26mm;
   font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 6.5pt;
@@ -277,7 +279,7 @@ section.flow.onecol { break-before: auto; }
 .folio .no { color: var(--folio-no); }
 .folio.l { left: -4.77mm; }   /* 판면 왼쪽 바깥 */
 .folio.l .bk { margin-left: 1.9mm; }
-.folio.r { right: -4.2mm; text-align: right; }
+.folio.r { right: -5mm; text-align: right; }
 .folio.r .bk { margin-right: 1.9mm; }
 
 /* ─────────────────────────────────────────────── 본문 공통 */

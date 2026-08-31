@@ -78,14 +78,14 @@ def check(cfg, log, report):
         report.note(f"빈 면 {len(blanks)}개 (모두 예상 범위)")
 
     # ── ④ 자리(상/하): pair 스텝의 하단 발문이 아래쪽에 있는가 ──
-    _check_zones(pdf, d, report)
+    _check_zones(pdf, d, report, cfg.build_dir)
 
     # ── ⑤ 면 수 ──
     report.note(f"면 수 {probe.page_count(pdf)}p")
     return report
 
 
-def _check_zones(pdf, d, report):
+def _check_zones(pdf, d, report, cfg_build_dir=None):
     """넘침 — 칸 끝 표식(.zend, 흰 0.4mm 사각)의 y 를 잰다.
 
     눈으로는 안 보이는 사고다: 내용이 판면 아래로 흘러나가면 조판은 성공했다고
@@ -107,7 +107,18 @@ def _check_zones(pdf, d, report):
             if rect[3] > 286.5:
                 over.append((i + 1, round(rect[3], 1)))
     doc.close()
+    # 표식이 **사라진** 것도 넘침이다 — 판면 밖으로 나가면 PDF 에 안 그려진다.
+    want = 0
+    try:
+        import os
+        with open(os.path.join(cfg_build_dir, "index.html"), encoding="utf-8") as f:
+            want = f.read().count('class="zend"')
+    except Exception:
+        pass
     if over:
         report.fail(f"[넘침] 칸을 넘긴 면 {len(over)}개 — {over[:8]}")
+    elif want and marks < want:
+        report.fail(f"[넘침] 칸 끝 표식이 사라졌다 — 만든 것 {want} / 찍힌 것 {marks} "
+                    f"(판면 밖으로 흘러 내용이 잘렸다는 뜻)")
     else:
-        report.note(f"넘침 없음 (칸 끝 표식 {marks}개 확인)")
+        report.note(f"넘침 없음 (칸 끝 표식 {marks}/{want or marks}개 확인)")

@@ -35,6 +35,14 @@ RE_LONG42 = re.compile(r"^(\d{4})(?:41|42)$")
 RE_ITEM = re.compile(r"^\(([A-Z])\)\s*")
 
 
+# 요약 표제 — 원고/시트가 `>>   내용요약` · `>>내용요약` · `|  내용요약  |` 등
+# 네 가지 모양으로 준다(실측: 명일1 한 권 안에서만 세 가지). 글자 그대로
+# 찾으면 하나만 걸리고 나머지는 **헤더로 오인**돼 지문이 하나 늘어난다.
+def is_summary_mark(line):
+    t = (line or "").strip()
+    return "내용요약" in t and len(t) <= 24
+
+
 def norm_header(h):
     h = (h or "").strip()
     m = RE_LONG42.match(h)
@@ -132,7 +140,7 @@ def _vocab(text, warn):
 
     out = []
     for g in groups:
-        if g[0].lstrip().startswith(">>"):
+        if is_summary_mark(g[0]):
             body = [l for l in g[1:] if l.strip()]
             if not out:
                 warn("중요어휘: 헤더 없는 요약 묶음")
@@ -242,21 +250,30 @@ def gate(data, content, log):
         if got != n:
             bad.append(f"{SEC_TITLES[k]} 블록 {got} ≠ 원본 {n}")
     # 중요어휘는 원본이 문자열이라 개수를 셀 수 없다 → 지문·요약 짝만 본다
+    # 요약(`>>내용요약`)은 **고1·고2 만** 있다 — 고3(EBS)은 워크북 빈칸어휘라
+    # 요약이 아예 없다(실측: 명일3·광문3 19/53지문 전부 없음). 그래서 "없다"는
+    # 결함이 아니고, **일부만 있는 것**이 결함이다(그건 소스가 샌 것이다).
     vb = secs["vocab"]["blocks"]
     nosum = [b["header"] for b in vb if not b["summary"]]
-    if nosum:
-        bad.append(f"중요어휘 요약 없는 지문 {len(nosum)}개: {nosum[:5]}")
+    if nosum and len(nosum) != len(vb):
+        bad.append(f"중요어휘 요약이 일부에만 있다 — 없는 지문 {len(nosum)}"
+                   f"/{len(vb)}: {nosum[:5]}")
     # 문장배열·중요어휘 헤더 집합 대조 (다르면 어느 한쪽이 샜다)
+    # 중요어휘에만 있는 헤더는 **결함이 아닐 수 있다** — 구글시트에는 있는데
+    # 워크북에 그 유형이 없는 경우가 실재한다(상일1 올포 12강 본문3 등).
+    # 다만 조용히 넘기지는 않는다.
     ha = {b["header"] for b in secs["arrange"]["blocks"]}
     hv = {b["header"] for b in vb}
     if hv - ha:
-        bad.append(f"중요어휘에만 있는 헤더: {sorted(hv - ha)[:5]}")
+        log(f"  [알림] 중요어휘에만 있는 지문 {len(hv - ha)}개: "
+            f"{sorted(hv - ha)[:5]}")
     if bad:
         for m in bad:
             log(f"  [게이트] {m}")
         raise SystemExit("원고 인식 게이트 실패 — 조판을 멈춘다")
     log(f"  [게이트] 통과 — 배열 {len(secs['arrange']['blocks'])} · "
-        f"삽입 {len(secs['insert']['blocks'])} · 어휘 {len(vb)} · "
+        f"삽입 {len(secs['insert']['blocks'])} · 어휘 {len(vb)}"
+        f"{'(요약 없음)' if nosum else ''} · "
         f"어법 {len(secs['grammar']['blocks'])} · "
         f"영작 {len(secs['writing']['blocks'])}")
 
