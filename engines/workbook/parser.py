@@ -1417,28 +1417,60 @@ def _s3_set_text(p, text):
     return p
 
 
+def _is_step3_head_junk(text):
+    """문서 머리의 워크시트 부속물인가 — 표제/머리글 막대/기입란.
+
+    완제품이 같은 자리를 자기 디자인으로 채우는 것들이다 (W47 구조 판정
+    재사용). 원고마다 문구가 다르므로 형태만 본다:
+      · 머리글 막대 — 파이프로 필드를 나눈 메타 정보
+        ('외부지문 1~5번 | 객관식 50문항 | 학생용')
+      · 기입란     — 라벨 + 밑줄만 ('학교  ______________')
+      · 표제       — 종결부호도 물음표도 없는 짧은 제목 줄
+    """
+    t = (text or "").strip()
+    if not t:
+        return False
+    try:
+        from core.structure import manuscript_noise as _MN
+        if _MN.is_running_head(t) or _MN.is_answer_blank(t):
+            return True
+    except Exception:                                          # noqa: BLE001
+        pass
+    return (len(t) <= 80 and "?" not in t
+            and not _RE_S3_SENT_END.search(t)
+            and not _RE_S3_UNIT_HEAD.match(t))
+
+
 def _strip_step3_rights_and_title(paras, log=None):
-    """원고 워크시트 잔재 1단계 — 권리 고지 줄 + 문서 첫 표제 줄.
+    """원고 워크시트 잔재 1단계 — 권리 고지 + 문서 **머리 블록**.
 
     권리 고지(저작권/무단 배포)는 원고 페이지마다 반복되는 워터마크라 어느
-    위치에 있든 본문이 아니다. 문서 **첫** 실질 줄이 종결부호도 물음표도
-    없는 표제면 교재 헤더다 ('High School … 150제 PART 01 09 관계사 Made by').
+    위치에 있든 본문이 아니다.
+
+    문서 머리에는 표제·머리글 막대·기입란이 한 덩어리로 붙어 있다 (사용자
+    지적 2026-08-31, 성덕고2 EBS 연계): 첫 줄 하나만 벗기면 나머지가 그대로
+    실전문제 첫 지면에 인쇄된다. 첫 **실질 콘텐츠 줄**(발문/지문/마커)을
+    만날 때까지 이어서 걷어낸다 — 문서 중간은 건드리지 않는다.
     """
     drop = set()
-    first_real = next((i for i in range(len(paras)) if _s3_text(paras[i])),
-                      None)
-    for i, p in enumerate(paras):
-        t = _s3_text(p)
+    n = len(paras)
+    i = 0
+    while i < n:                       # 머리 블록 (첫 콘텐츠 줄에서 중단)
+        t = _s3_text(paras[i])
         if not t:
+            i += 1
             continue
-        if _RE_S3_RIGHTS_NOTICE.search(t) and not _RE_S3_ITEM_HEAD.match(t):
-            drop.add(i)
-        elif (i == first_real and len(t) <= 80 and "?" not in t
-              and not _RE_S3_SENT_END.search(t)
-              and not _RE_S3_UNIT_HEAD.match(t)):
-            drop.add(i)
+        if not _is_step3_head_junk(t):
+            break
+        drop.add(i)
+        i += 1
+    for k in range(i, n):              # 문서 전체 — 권리 고지만
+        t = _s3_text(paras[k])
+        if t and _RE_S3_RIGHTS_NOTICE.search(t) \
+                and not _RE_S3_ITEM_HEAD.match(t):
+            drop.add(k)
     if drop and callable(log):
-        log(f"[파서] step3 권리 고지/책 표제 제거: {len(drop)}줄")
+        log(f"[파서] step3 머리 잔재/권리 고지 제거: {len(drop)}줄")
     return [p for k, p in enumerate(paras) if k not in drop]
 
 
