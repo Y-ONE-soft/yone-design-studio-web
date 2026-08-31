@@ -538,6 +538,20 @@
     });
   }
 
+  /** 자리표 번호 찾기 — 없으면 **한 단계씩 위로** 올라간다.
+   *  찾기는 글이 든 가장 깊은 자리(`…blocks.7.r.0`)를 주는데, 지면에 찍힌
+   *  자리표는 그보다 위(`…blocks.7.r`)일 수 있다. 딱 맞을 때만 옮기면
+   *  "그 자리가 없습니다" 만 나온다 — 실제로는 지면에 있는데도. */
+  function refNum(ref) {
+    while (ref) {
+      for (var k in refs) if (refs[k] === ref) return k;
+      var i = ref.lastIndexOf('.');
+      if (i < 0) return null;
+      ref = ref.slice(0, i);
+    }
+    return null;
+  }
+
   // ── 찾기 · 바꾸기 ───────────────────────────────────────
   // 지면이 아니라 **원고**에서 찾는다 — 지면은 지금 그려진 면만 있다.
   function find(replaceAll) {
@@ -932,18 +946,15 @@
     if (!a) return;
     e.preventDefault();
     var ref = a.dataset.ref;
-    // 자리표 번호를 찾아 그 자리로 지면을 옮긴다
-    var n = null;
-    for (var k in refs) if (refs[k] === ref) { n = k; break; }
+    var n = refNum(ref);
     if (n && viewer) { viewer.navigateToInternalUrl('#vref' + n); msg('그 자리로 옮겼습니다'); return; }
     if (scope === 'full') { msg('그 자리를 지면에서 못 찾았습니다'); return; }
     if (!confirm('견본에는 그 자리가 없습니다. 전권을 펴서 찾을까요? (오래 걸립니다)')) return;
     setScope('full');
     rebuild('').then(function (ok) {
       if (!ok) return;
-      for (var k2 in refs) if (refs[k2] === ref) {
-        viewer.navigateToInternalUrl('#vref' + k2); msg('그 자리로 옮겼습니다'); return;
-      }
+      var n2 = refNum(ref);
+      if (n2) { viewer.navigateToInternalUrl('#vref' + n2); msg('그 자리로 옮겼습니다'); return; }
       msg('전권에도 그 자리가 없습니다');
     });
   });

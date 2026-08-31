@@ -196,6 +196,41 @@ def test_every_series_makes_refs(name, needle):
     assert "_refs.dump(" in src, f"{name}: 번호↔경로 표를 안 낸다"
 
 
+def test_rich_segment_vs_block():
+    """`t` 는 서식 조각의 '글자'이기도 하고 특강 블록의 '종류'이기도 하다.
+
+    `t` 하나로 가르면 특강의 모든 블록이 서식 조각으로 보여 찾기가 그 계열에서
+    **한 건도 못 찾는다** — 오류가 아니라 0건이라 더 안 보인다.
+    """
+    from routes.book_studio import _is_rich_seg
+    assert _is_rich_seg({"t": "밑줄", "u": True})
+    assert _is_rich_seg({"t": "글"})
+    assert _is_rich_seg({"t": " [출처]", "k": "src"})
+    assert not _is_rich_seg({"t": "passage", "r": ["글"]})
+    assert not _is_rich_seg({"t": "word", "head": "specific"})
+    assert not _is_rich_seg("글자")
+
+
+def test_scan_finds_inside_special_blocks():
+    from routes.book_studio import _scan
+    d = {"volumes": [{"blocks": [
+        {"t": "passage", "r": ["진화적 관점에서"]},
+        {"t": "word", "head": "관점", "senses": [["① 관점, 시각"]]},
+    ]}]}
+    refs = {h["ref"] for h in _scan(d, "관점")}
+    assert "volumes.0.blocks.0.r.0" in refs
+    assert any(r.startswith("volumes.0.blocks.1") for r in refs)
+
+
+def test_scan_keeps_rich_run_as_one_place():
+    """서식이 섞인 줄은 조각마다가 아니라 **줄 하나**가 한 자리다."""
+    from routes.book_studio import _scan
+    d = {"lessons": [{"problems": [
+        {"stem": ["다음 ", {"t": "밑줄 친", "u": True}, " 부분"]}]}]}
+    hits = _scan(d, "밑줄")
+    assert [h["ref"] for h in hits] == ["lessons.0.problems.0.stem"]
+
+
 # ── 없는 절을 만들어 넣기 ──────────────────────────────────────
 RAW = """{
   "series": "special",

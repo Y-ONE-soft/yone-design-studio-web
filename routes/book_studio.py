@@ -446,6 +446,23 @@ def _ireplace(s, a, b):
     return _re.sub(_re.escape(a), lambda m: b, s, flags=_re.I)
 
 
+# 서식 조각이 갖는 열쇠 — 글자와 굵기·밑줄·기울임, 그리고 역할(`k`).
+_RICH_KEYS = {"t", "b", "u", "i", "k"}
+
+
+def _is_rich_seg(x):
+    """`{"t": "글", "u": true}` 인가.
+
+    ⚠ `t` 하나로 가르면 안 된다. **특강은 `t` 를 '블록 종류'로 쓴다**
+      (`{"t": "passage", "r": […]}`). 그래서 예전 판정은 특강의 모든 블록을
+      서식 조각으로 보고 건너뛰었고, 찾기가 그 계열에서 **한 건도 못 찾았다**
+      (오류가 아니라 0건이라 더 안 보였다). 다른 열쇠가 붙어 있으면 조각이
+      아니라 자료다.
+    """
+    return (isinstance(x, dict) and isinstance(x.get("t"), str)
+            and set(x) <= _RICH_KEYS)
+
+
 def _scan(data, q, case=False, path="", out=None, depth=0):
     """글자가 들어 있는 자리를 훑는다. 자리표와 같은 점 경로를 돌려준다."""
     from core.render_vivlio import richtext as rt
@@ -460,7 +477,7 @@ def _scan(data, q, case=False, path="", out=None, depth=0):
             out.append({"ref": path, "text": data[:120]})
         return out
     if isinstance(data, dict):
-        if "t" in data and isinstance(data.get("t"), str):   # 서식 조각
+        if _is_rich_seg(data):                               # 서식 조각
             return out
         for k, v in data.items():
             _scan(v, q, case, f"{path}.{k}" if path else k, out, depth + 1)
@@ -468,7 +485,7 @@ def _scan(data, q, case=False, path="", out=None, depth=0):
     if isinstance(data, list):
         # 서식 조각 목록이면 **그 목록 전체**가 한 자리다
         if data and all(isinstance(x, (str, dict)) for x in data) \
-                and any(isinstance(x, dict) and "t" in x for x in data):
+                and any(_is_rich_seg(x) for x in data):
             t = rt.plain(data)
             if hit(t):
                 out.append({"ref": path, "text": t[:120]})

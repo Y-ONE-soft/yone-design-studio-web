@@ -41,8 +41,15 @@ from core.render_vivlio import stage
 _CUR = {"ref": "", "done": True}
 
 
-def _blk(vi, bi):
-    _CUR["ref"] = "volumes.%d.blocks.%d.r" % (vi, bi)
+def _blk(vi, bi, b=None):
+    """이 블록의 자리표를 정한다.
+
+    ⚠ 모든 블록에 `r`(글) 이 있는 건 아니다 — `word` 블록은 `head`·`senses`·`ex`
+      로 쪼개져 있다. 그런데도 `.r` 을 붙였더니 그 80개 블록은 **없는 자리**를
+      가리켜, 작업대에서 클릭하면 "원본에 없는 자리" 만 떴다. 있는 것만 붙인다.
+    """
+    base = "volumes.%d.blocks.%d" % (vi, bi)
+    _CUR["ref"] = base + ".r" if (b is None or "r" in b) else base
     _CUR["done"] = False
 
 
@@ -264,7 +271,7 @@ def render_vocab(vol, out, vi=0):
     wk_no, wk_root = "", ""
     while i < n:
         b = blocks[i]
-        _blk(vi, i)
+        _blk(vi, i, b)
         t = b["t"]
         if t in FRONT:
             i += 1
@@ -417,7 +424,7 @@ def render_grammar(vol, out, vi=0):
 
     while i < n:
         b = blocks[i]
-        _blk(vi, i)
+        _blk(vi, i, b)
         t = b["t"]
         if t in FRONT:
             i += 1
@@ -685,7 +692,7 @@ def render_reading(vol, out, vi=0):
 
     while i < n:
         b = blocks[i]
-        _blk(vi, i)
+        _blk(vi, i, b)
         t = b["t"]
         if t in FRONT:
             i += 1
