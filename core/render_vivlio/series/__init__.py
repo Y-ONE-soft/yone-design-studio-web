@@ -44,7 +44,13 @@ def _blackbook():
     return BlackbookSeries()
 
 
+def _middle():
+    from core.render_vivlio.series.middle import MiddleSeries
+    return MiddleSeries()
+
+
 register("vocabook", _vocabook)
 register("vocaunit", _vocaunit)
 register("blackbook", _blackbook)
 register("special", _special)
+register("middle", _middle)
