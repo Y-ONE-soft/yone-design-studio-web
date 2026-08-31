@@ -190,8 +190,13 @@ def write_report(st, total, path=REPORT):
     L.append("완성 포켓북을 새 엔진으로 다시 조판해 **내용이 새는지** 본다. "
              "원고는 IDML 원본 그대로다(코퍼스를 거치지 않는다).")
     L.append("")
-    L.append("- 대상 %d권(시작 시점 목록) · 돌린 것 %d권"
+    # ⚠ IDML 내보내기가 **돌아가는 중**이라 대상 수가 실행 중에도 는다.
+    #   그래서 "지금 몇 권 있나"와 "이번에 몇 권 돌렸나"를 따로 적는다.
+    L.append("- 지금 내보내진 완성 포켓북 %d권 · 이 표에 담긴 것 %d권"
              % (total, len(rows)))
+    if total > len(rows):
+        L.append("  (나머지 %d권은 검증 시작 뒤에 내보내진 것 — "
+                 "`regress.py` 를 다시 돌리면 이어서 한다)" % (total - len(rows)))
     L.append("- 통과 %d · 실패 %d · 건너뜀 %d"
              % (len(ok), len(bad), len(skip)))
     L.append("- 생성 %s" % time.strftime("%Y-%m-%d %H:%M"))
