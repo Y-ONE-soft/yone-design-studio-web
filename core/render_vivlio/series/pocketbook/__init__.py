@@ -75,6 +75,8 @@ def _dedup_versions(files, log=None):
 _RE_YM = re.compile(r"(\d{2})\s*년\s*(\d{1,2})\s*월")
 _RE_NO = re.compile(r"(\d{1,2})\s*[-~]?\s*(\d{1,2})?\s*번")
 _RE_GR = re.compile(r"고\s*([123])")
+_RE_UNIT = re.compile(r"(\d{1,2})\s*과")
+_RE_BODY = re.compile(r"본문\s*(\d{1,2})")
 
 
 def _derive_pno(p):
@@ -98,6 +100,19 @@ def _derive_pno(p):
     g = _RE_GR.search(ch)
     if g:
         p["grade"] = "고%s" % g.group(1)
+
+    # 교과서 지문의 배지는 완성본이 `4과 01` 로 찍는다. 분석본은 회차를 머리에,
+    # 순번을 지문에 나눠 적으므로(`chapter='1과'` + `label='본문1'`) 합친다.
+    # 안 합치면 배지가 `본문1` 로 나가 지금까지 나간 책과 달라 보인다.
+    m2 = _RE_UNIT.search(ch)
+    n2 = _RE_BODY.search(lb)
+    if m2 and n2 and not p.get("pno"):
+        p["label"] = "%s과 %02d" % (m2.group(1), int(n2.group(1)))
+        p.setdefault("unit", "교과서 %s과" % m2.group(1))
+    elif p.get("pno"):
+        p.setdefault("unit", "모의고사")
+    elif m2:
+        p.setdefault("unit", "교과서 %s과" % m2.group(1))
     return p
 
 
@@ -131,6 +146,11 @@ def _count_size(page, size, tol=0.4):
       아무것도 못 찾고 조용히 통과한다.
     """
     return sum(1 for _ in _spans(page, size - tol, size + tol))
+
+
+def _inks(page):
+    """그 면에 쓰인 글자색 모음. 암기 TEST 두 면을 가르는 데 쓴다."""
+    return frozenset(sp["color"] for sp in _spans(page, 0, 999))
 
 
 def _lowest(page, size, tol=0.6):
@@ -724,10 +744,13 @@ class PocketbookSeries(Series):
 
             # G-P3 주석 보존 · G-P6 넘침
             idx, lost, over, wrong = start, [], [], []
+            mt_ink = []             # (키, 정답면인가, 그 면에 쓰인 글자색들)
             for r, step in zip(rows, per):
                 if idx >= n_pages:
                     break
                 if r.get("kind") == "memtest":
+                    mt_ink.append((r.get("key"), bool(r.get("answer")),
+                                   _inks(doc[idx])))
                     idx += step
                     continue
                 page = doc[idx]
@@ -771,6 +794,19 @@ class PocketbookSeries(Series):
                 report.fail("G-P6 지문 넘침 %d지문 — %s"
                             % (len(over), ", ".join(
                                 "%s +%.1fmm" % x for x in over[:5])))
+
+            # G-P8 — 암기 TEST 문제면과 정답면이 **정말 다른가**.
+            #   글자는 두 면이 똑같다(문제면은 정답을 투명하게 두어 자리를 남긴다).
+            #   그래서 글자로는 못 잡는다 — **쓰인 색**으로 본다. 예전에 두 면 다
+            #   정답이 보이는 사고가 있었고, 그때 이 게이트가 없었다.
+            twins = []
+            for i in range(len(mt_ink) - 1):
+                (k0, a0, c0), (k1, a1, c1) = mt_ink[i], mt_ink[i + 1]
+                if k0 == k1 and a0 != a1 and c0 == c1:
+                    twins.append(k0 or "?")
+            if twins:
+                report.fail("G-P8 암기 TEST 문제면과 정답면이 같다 %d지문 — %s"
+                            % (len(twins), ", ".join(twins[:5])))
 
         # G-P2 0개 항목 — 막지 않고 목록으로
         pas = [r for r in rows if r.get("kind") != "memtest"]
