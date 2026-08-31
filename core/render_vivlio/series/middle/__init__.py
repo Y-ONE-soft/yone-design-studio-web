@@ -45,12 +45,26 @@ def _auto_dir():
                         "내신 정규 교재", "automation")
 
 
+def _repo():
+    """이 리포의 뿌리 — automation 이 `core.render_vivlio` 를 찾을 수 있게."""
+    here = os.path.dirname(os.path.abspath(__file__))
+    return os.path.dirname(os.path.dirname(os.path.dirname(
+        os.path.dirname(here))))
+
+
 def _run(script, bookkey, vol, log, extra=()):
     a = _auto_dir()
     cmd = [sys.executable, "-u", os.path.join(a, script),
            "--book", bookkey, "--vol", str(vol)] + list(extra)
+    # ⚠ automation 은 이 리포 밖에 있어서, 그냥 부르면 `core.render_vivlio` 를
+    #   못 찾는다. 그 안의 자리표 심기는 import 실패를 **조용히 넘기도록**
+    #   되어 있어(automation 단독 실행을 살리려고) 아무 티도 안 난다 —
+    #   지면은 나오는데 클릭만 안 먹는다. 그래서 길을 넣어 준다.
+    env = dict(os.environ)
+    pp = env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = _repo() + (os.pathsep + pp if pp else "")
     p = subprocess.Popen(cmd, cwd=a, stdout=subprocess.PIPE,
-                         stderr=subprocess.STDOUT, text=True)
+                         stderr=subprocess.STDOUT, text=True, env=env)
     for line in p.stdout:
         log("  " + line.rstrip())
     if p.wait() != 0:
