@@ -386,6 +386,7 @@
   var editPlain = false, msgExtra = '';
   var tool = 'sel', scope = 'sample', spread = false, zoom = 1, pageCount = 0;
   var curEl = null, styles = {}, styleNames = {}, curPage = 1, ready = false;
+  var bookFonts = [];      // 이 책이 **임베드한** 서체 (PDF 에 실제로 들어간다)
 
   // ── 인쇄 색(CMYK) ───────────────────────────────────────
   // 내지는 종이에 찍힌다. 화면의 `#908400` 이 인쇄에서 몇 %인지 모르면
@@ -711,7 +712,7 @@
   //   아무 일도 안 한다 — 실제로 그래서 "전혀 안 변한다" 는 말을 들었다.
   //   그래서 숫자와 단위를 **따로** 받고, 우리가 붙여 쓴다.
   var CHAR_PROPS = [
-    { k: 'font-family', l: '글꼴', kind: 'text' },
+    { k: 'font-family', l: '글꼴', kind: 'font' },
     { k: 'font-size', l: '크기', kind: 'num', units: ['pt', 'mm', 'px', 'em'], u: 'pt' },
     { k: 'line-height', l: '행간', kind: 'num', units: ['', 'pt', 'mm', 'em'], u: '' },
     { k: 'letter-spacing', l: '자간', kind: 'num', units: ['em', 'pt', 'mm'], u: 'em', step: 0.005 },
@@ -821,6 +822,24 @@
       t.addEventListener('input', onChange);
       f.appendChild(t); f.appendChild(c);
       read = function () { return t.value.trim(); };
+    } else if (pr.kind === 'font') {
+      // ⚠ 아무 서체나 적게 두면 **PDF 에 안 들어가는 서체**를 고르게 된다
+      //   (화면에서는 되는데 인쇄물이 딴 글씨가 된다). 이 책이 **임베드한**
+      //   서체만 고르게 한다.
+      var fs = document.createElement('select');
+      fs.className = 'ide-sel'; fs.style.width = '100%';
+      var o0 = document.createElement('option');
+      o0.value = ''; o0.textContent = '(그대로)';
+      fs.appendChild(o0);
+      (bookFonts || []).forEach(function (nm) {
+        var o = document.createElement('option');
+        o.value = nm; o.textContent = nm;
+        fs.appendChild(o);
+      });
+      fs.value = mine || '';
+      fs.addEventListener('change', onChange);
+      f.appendChild(fs);
+      read = function () { return fs.value; };
     } else {
       var tf = document.createElement('input');
       tf.className = 'ide-t'; tf.value = mine || ''; tf.placeholder = computed || '';
@@ -1698,6 +1717,12 @@
       });
     loadImages();
     loadThumbs();
+    api('/api/book-studio/fonts?b=' + encodeURIComponent(key)).then(function (d) {
+      bookFonts = (d && d.used ? d.used : []).map(function (x) { return x.name; });
+      if (d && (d.missing || []).length) {
+        msg('⚠ 이 기계에 없는 서체 ' + d.missing.length + '개 — 조판이 다를 수 있습니다');
+      }
+    });
     loadHist(null);
   }
 

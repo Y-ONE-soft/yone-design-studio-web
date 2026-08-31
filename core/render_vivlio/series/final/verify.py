@@ -19,6 +19,36 @@ from core.render_vivlio.series.final import data as data_mod
 from core.render_vivlio.series.final import render as render_mod
 
 PER_PAGE = {"arrange": 4, "insert": 4, "vocab": 1, "grammar": 2, "writing": 2}
+# 한 면의 칸 배치 — (단 수, 단마다 칸 수). 사분면은 2단×2칸.
+GRID = {"arrange": (2, 2), "insert": (2, 2), "vocab": (1, 1),
+        "grammar": (2, 1), "writing": (2, 1)}
+
+
+def expected_pages(sec, spans):
+    """지문마다 **몇 번째 면**에 놓이는가 — 칸 배치를 그대로 흉내 낸다.
+
+    두 칸을 쓰는 지문(`span=2`)은 한 단을 통째로 먹으므로, 단순한 i//4 로는
+    그 뒤가 전부 어긋난 것처럼 보인다(실제로 389건 거짓 경보가 났다).
+    """
+    ncol, nslot = GRID[sec["kind"]]
+    out, page, col, used = [], 0, 0, 0
+    for i, _b in enumerate(sec["blocks"]):
+        span = spans.get(i, 1)
+        if span > 1 and used:            # 두 칸짜리는 빈 단이 필요하다
+            col += 1
+            used = 0
+        if col >= ncol:
+            page += 1
+            col, used = 0, 0
+        out.append(page)
+        used += span
+        if used >= nslot:
+            col += 1
+            used = 0
+            if col >= ncol:
+                page += 1
+                col = 0
+    return out
 RE_WS = re.compile(r"\s+")
 
 
@@ -26,11 +56,17 @@ def _n(s):
     return RE_WS.sub("", probe.norm(s or ""))
 
 
-def _section_pages(data, vol, texts, report):
-    """섹션마다 [면번호…] — 꼬리말의 섹션 이름으로 구간을 가른다."""
+def _section_pages(data, vol, texts, report, skip=()):
+    """섹션마다 [면번호…] — 꼬리말의 섹션 이름으로 구간을 가른다.
+
+    ⚠ 간지·크레딧 면은 섹션 이름이 없어 **앞 섹션에 딸려 붙는다**(중요어휘가
+      18면인데 19면으로 잡혔다) → 건너뛸 면을 받아 뺀다.
+    """
     v = data["vols"][str(vol)]
     spans, cur = {}, None
     for i, t in enumerate(texts):
+        if (i + 1) in skip:
+            continue
         nt = _n(t)
         for sec in v["sections"]:
             if _n(sec["title"]) in nt:
@@ -57,7 +93,7 @@ def _block_text(kind, b):
            [p["choices"] for p in b["pairs"]]
 
 
-def _check_placement(data, vol, texts, spans, report):
+def _check_placement(data, vol, texts, spans, report, spanmap):
     """모든 문장이 **제 섹션, 제 면**에 있는가."""
     v = data["vols"][str(vol)]
     miss, wrong, n = [], [], 0
@@ -67,9 +103,9 @@ def _check_placement(data, vol, texts, spans, report):
             continue
         blobs = [_n(texts[p - 1]) for p in pages]
         whole = "".join(blobs)
-        per = PER_PAGE[sec["kind"]]
+        want_of = expected_pages(sec, spanmap.get(sec["kind"], {}))
         for i, b in enumerate(sec["blocks"]):
-            want = i // per
+            want = want_of[i]
             for t in _block_text(sec["kind"], b):
                 q = _n(t)
                 if len(q) < 12:
@@ -88,14 +124,14 @@ def _check_placement(data, vol, texts, spans, report):
     return miss, wrong
 
 
-def _check_pagecount(data, vol, spans, report):
-    """사분면 계약 — 지문 수로 면 수가 정해진다."""
+def _check_pagecount(data, vol, spans, report, spanmap):
+    """고정 칸 계약 — 지문 수(와 두 칸짜리)로 면 수가 정해진다."""
     v = data["vols"][str(vol)]
     bad = []
     for sec in v["sections"]:
         pages = spans.get(sec["kind"]) or []
-        per = PER_PAGE[sec["kind"]]
-        want = -(-len(sec["blocks"]) // per)
+        want = (expected_pages(sec, spanmap.get(sec["kind"], {}))[-1] + 1
+                if sec["blocks"] else 0)
         if len(pages) != want:
             bad.append((sec["title"], want, len(pages)))
     if bad:
@@ -154,15 +190,19 @@ def _check_fit(cfg, vol, report):
     with open(p, encoding="utf-8") as f:
         rows = json.load(f)
     shrunk = [r for r in rows if r.get("pt")]
-    hard = [r for r in rows if not r.get("pt")]
+    wide = [r for r in rows if r.get("span", 1) > 1]
+    hard = [r for r in rows if not r.get("fits", True)]
     if hard:
-        report.fail(f"칸을 넘는데 축소 못 한 지문 {len(hard)}건: "
+        report.fail(f"칸을 넘는데 담지 못한 지문 {len(hard)}건: "
                     f"{[(r['header'], r['natural_mm']) for r in hard][:5]}")
     if shrunk:
         report.note(f"활자 축소 {len(shrunk)}건 — "
                     + ", ".join(f"{r['header']} {r['pt']}pt"
                                 for r in shrunk[:6]))
-    else:
+    if wide:
+        report.note(f"두 칸 배치 {len(wide)}건 — "
+                    + ", ".join(r["header"] for r in wide[:6]))
+    if not shrunk and not wide:
         report.note("활자 축소 없음")
     return hard
 
@@ -175,6 +215,21 @@ def _check_hyphen(data, report):
                     f"{sorted(hy)[:8]}")
 
 
+def _spanmap(cfg, vol, data):
+    """섹션별 {지문 index: span}. fit 리포트를 지문 순번으로 되돌린다."""
+    out = {}
+    p = cfg.path(f"fit{vol}.json")
+    if not os.path.exists(p):
+        return out
+    with open(p, encoding="utf-8") as f:
+        for r in json.load(f):
+            kind = r["key"].split("-")[1]
+            i = int(r["key"].rsplit("-", 1)[1])
+            if r.get("span", 1) > 1:
+                out.setdefault(kind, {})[i] = r["span"]
+    return out
+
+
 def run(series, cfg, log, report):
     vol = series.vol_of(cfg)
     data = data_mod.load(cfg)
@@ -183,9 +238,12 @@ def run(series, cfg, log, report):
     if not os.path.exists(pdf):
         return report.fail(f"PDF 없음: {pdf}")
     texts = probe.page_texts(pdf)
-    spans = _section_pages(data, vol, texts, report)
-    _check_pagecount(data, vol, spans, report)
-    _check_placement(data, vol, texts, spans, report)
+    skip = set(vcfg.get("skip_pages") or ())
+    skip |= {len(texts) - k for k in range(vcfg.get("skip_last") or 0)}
+    spanmap = _spanmap(cfg, vol, data)
+    spans = _section_pages(data, vol, texts, report, skip)
+    _check_pagecount(data, vol, spans, report, spanmap)
+    _check_placement(data, vol, texts, spans, report, spanmap)
     _check_vocab_pair(data, vol, report)
     _check_blanks(data, vol, texts, spans, report)
     _check_fit(cfg, vol, report)

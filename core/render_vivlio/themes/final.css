@@ -219,16 +219,16 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 .sec-insert .it { margin-top: 0; text-align: justify; }
 
 /* ------------------------------------------------------- ③ 중요 어휘 */
-/* 왼(빈칸)·오(정답)이 **한 행**이라 짝이 어긋날 수 없다. */
-.vpair { display: table; width: 100%; table-layout: fixed;
-         border-spacing: var(--colgap) 0; margin-left: calc(-1 * var(--colgap) / 2);
-         margin-right: calc(-1 * var(--colgap) / 2); }
-.vpair > div { display: table-cell; width: var(--colw); vertical-align: top; }
-/* 회색 판은 면 배경이 그린다(위 `@page vocab`) — 셀에는 칠하지 않는다. */
-.vpair .l { padding-right: 0; }
-.vcell { padding: 0; }
-.vpair .r .vcell { padding: 2.43mm 4.00mm 4.00mm; }
-.vpair .l .vcell { padding: 2.43mm 0 4.00mm; }
+/* 왼(빈칸)·오(정답)이 **한 행**이라 짝이 어긋날 수 없다.
+ * ⚠ 음수 마진 + `border-spacing` 으로 단을 만들면 표 폭이 컨테이너를 넘어
+ *   재는 곳과 조판하는 곳의 단 폭이 달라진다(측정본 81.8mm vs 실조판 75.1mm →
+ *   측정이 두 줄 적게 나와 요약이 다음 면으로 밀렸다). **폭을 직접 못 박는다.** */
+.vpair { display: table; width: 170mm; table-layout: fixed; border-spacing: 0; }
+.vpair > div { display: table-cell; vertical-align: top; }
+.vpair .l { width: 87mm; }          /* 글 83mm + 단 사이 4mm */
+.vpair .r { width: 83mm; }          /* 회색 판과 같은 폭(면 배경이 칠한다) */
+.vpair .l .vcell { padding: 2.43mm 4.00mm 4.00mm 0; }
+.vpair .r .vcell { padding: 2.43mm 1.99mm 4.00mm 1.99mm; }
 .vp { text-align: justify; line-height: 2.3656; }
 .vsum { margin-top: 5.60mm; }
 .vsum .hd { font: 700 8.5pt/2.3656 Noto; letter-spacing: 0.1em; }
@@ -238,9 +238,11 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 
 /* 빈칸 — 첫 글자만 굵게 보이고 나머지 길이만큼 밑줄 */
 .blk .bl { font-weight: 700; }
+/* ⚠ 인라인 블록은 **줄 상자를 키운다.** 밑줄 칸 때문에 왼쪽 단만 행간이
+ *   7.06 → 7.17mm 로 벌어졌다(완성본은 좌우가 같다) → 줄간을 끊는다. */
 .blk .bl .u {
   display: inline-block; border-bottom: 0.5pt solid var(--ink);
-  font-weight: 400;
+  font-weight: 400; line-height: 0;
 }
 .ansv { font-weight: 700; }
 

@@ -41,7 +41,9 @@ def page_headers(doc, known=None, size=12.0, tol=0.4):
     return out
 
 
-def lines_of(doc):
+def lines_of(doc, top=25.0, bottom=284.0):
+    """면마다 **본문 글줄**만. 러닝 요소(띠·탭·워드마크·꼬리말)는 뺀다 —
+    안 빼면 'F I N A L' 낱글자가 차이 목록을 가득 채운다."""
     out = []
     for p in doc:
         ls = []
@@ -49,10 +51,12 @@ def lines_of(doc):
             if b["type"] != 0:
                 continue
             for l in b["lines"]:
+                y = l["bbox"][1] * MM
+                if y < top or y > bottom:
+                    continue
                 t = "".join(s["text"] for s in l["spans"]).strip()
                 if t:
-                    ls.append((round(l["bbox"][0] * MM, 2),
-                               round(l["bbox"][1] * MM, 2),
+                    ls.append((round(l["bbox"][0] * MM, 2), round(y, 2),
                                round(l["bbox"][2] * MM, 2), t))
         out.append(ls)
     return out

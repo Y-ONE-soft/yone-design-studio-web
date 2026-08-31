@@ -653,6 +653,44 @@ def api_assist_undo():
     return jsonify({"ok": True, "restored": back})
 
 
+@bp.route("/api/book-studio/fonts")
+def api_fonts():
+    """이 책이 **쓸 수 있는 서체**.
+
+    ## 왜 브라우저의 로컬 폰트 목록을 쓰지 않는가
+
+    브라우저에도 설치 서체를 훑는 길(`queryLocalFonts`)이 있지만, 크로미움
+    데스크톱에서만 되고 **인쇄에는 맞지 않는다.** PDF 에 들어가는 것은 이 책이
+    **임베드한 서체**뿐이다 — 화면에만 있는 서체를 고르면 조판은 되는데 PDF 는
+    딴 글씨가 된다. 그래서 서버가
+      ① 이 책이 이미 싣는 서체와
+      ② 이 기계에 있어 **더 실을 수 있는** 서체를
+    갈라서 준다.
+    """
+    from core.render_vivlio import book as bookmod
+    from core.render_vivlio import stage as stg
+    d, meta = _book_dir(request.args.get("b"))
+    if not d:
+        return jsonify({"error": "모르는 책"}), 404
+    cfg = bookmod.load(d)
+    used, missing = [], []
+    for f in (cfg.get("fonts") or []):
+        name = f.get("name") or os.path.splitext(f.get("file", ""))[0]
+        path = stg.find_font(f.get("file", ""))
+        (used if path else missing).append(
+            {"name": name, "file": f.get("file"), "ok": bool(path)})
+    have = set()
+    for dd in stg.FONT_DIRS:
+        if not os.path.isdir(dd):
+            continue
+        for n in sorted(os.listdir(dd)):
+            if n.lower().endswith((".otf", ".ttf", ".ttc")) and not n.startswith("."):
+                have.add(n)
+    return jsonify({"used": used, "missing": missing,
+                    "available": sorted(have)[:600],
+                    "dirs": list(stg.FONT_DIRS)})
+
+
 @bp.route("/api/book-studio/thumbs")
 def api_thumbs():
     """페이지 패널이 쓸 **실제 지면 그림** 목록.

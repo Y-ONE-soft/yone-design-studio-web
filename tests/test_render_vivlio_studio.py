@@ -644,6 +644,33 @@ def test_zoom_shows_percent():
     assert "wheel" in src, "⌥휠 확대·축소"
 
 
+# ── 단락 옵션 (인디자인의 단락 옵션) ──────────────────────────
+# 조판 엔진이 이걸 다 해 내는지 **실측**으로 확인했다 — 표 · 자동 번호 ·
+# 글머리표 · 단락 경계선 · 드롭캡 · 세로쓰기 · 각주 · 여러 단.
+# 실제 책에 걸어 PDF 에 경계선과 드롭캡이 찍히는 것도 확인했다.
+def test_para_options_exist():
+    src = _studio_src()
+    assert "var PARA_OPTS" in src
+    block = src.split("var PARA_OPTS")[1][:2600]
+    for need in ("자동 번호", "글머리표", "단락 경계선", "드롭캡",
+                 "2단으로", "세로쓰기"):
+        assert need in block, f"단락 옵션에 {need} 없음"
+
+
+def test_para_options_use_pseudo_elements():
+    """번호·글머리표·드롭캡은 가상 요소가 있어야 한다."""
+    src = _studio_src()
+    assert "'::before'" in src and "'::first-letter'" in src
+
+
+def test_styles_api_accepts_pseudo_and_content(client):
+    """`content: counter(...)` 같은 값이 검사에 걸리면 안 된다."""
+    r = client.post("/api/book-studio/styles",
+                    json={"b": "없는책", "selector": ".t::before",
+                          "props": {"content": 'counter(p-n) ". "'}})
+    assert r.status_code == 404, "검사는 통과하고 책에서만 걸려야 한다"
+
+
 # ── 클로드 칸 ─────────────────────────────────────────────────
 # 모델에게 리포를 통째로 열어 주면 안 된다 — 계열 코드를 고치면 그 계열 책이
 # 전부 흔들리고, 원고를 고치면 납품본과 글이 달라진다. 손댈 수 있는 곳은

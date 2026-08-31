@@ -138,9 +138,20 @@ class Idml(object):
                         t = node.text or ""
                         if not t:
                             continue
-                        cur["runs"].append({
-                            "t": t, "style": cstyle, "mark": mark, "hl": hl,
-                            "ruby": ruby, "slot": slot if ruby else None})
+                        # U+2028 = 문단 안 강제 줄바꿈. 플로우노트·동반의어는
+                        # 이걸로 줄을 나눈다 — 지워 버리면 카드가 한 덩이가 된다.
+                        parts = t.split("\u2028")
+                        for i, piece in enumerate(parts):
+                            if i:
+                                cur["runs"].append({"t": "", "br": True,
+                                                    "style": cstyle,
+                                                    "mark": mark, "hl": hl,
+                                                    "ruby": None, "slot": None})
+                            if piece:
+                                cur["runs"].append({
+                                    "t": piece, "style": cstyle, "mark": mark,
+                                    "hl": hl, "ruby": ruby,
+                                    "slot": slot if ruby else None})
                     elif node.tag == "Br":
                         paras.append(cur)
                         cur = {"style": pstyle, "runs": []}
@@ -175,10 +186,76 @@ class Idml(object):
             yield {"file": f, "pages": pages, "frames": frames, "links": links}
 
 
-# ── 스프레드 → 지문 ────────────────────────────────────────
+# ── 정규화 도우미 ──────────────────────────────────────────
 _PNO = re.compile(r"^\s*([0-9]{4,8}(?:\s*[~\-]\s*[0-9]{1,8})?)\s*$")
+_HAN = re.compile(r"[가-힣]")
 
 
+def han_ratio(text):
+    t = re.sub(r"\s", "", text or "")
+    if not t:
+        return 0.0
+    return len(_HAN.findall(t)) / float(len(t))
+
+
+def lines_of(paras):
+    """문단 목록 → 줄 목록(U+2028 로 나뉜 것까지). 줄 = run 목록."""
+    out = []
+    for p in paras or ():
+        cur = []
+        for r in p["runs"]:
+            if r.get("br"):
+                out.append(cur)
+                cur = []
+            else:
+                cur.append(r)
+        out.append(cur)
+    return [l for l in out if any(r["t"].strip() for r in l)]
+
+
+def plain(runs):
+    return "".join(r["t"] for r in runs)
+
+
+def parse_synonym_cards(paras):
+    """동반의어 스토리 → 카드 목록.
+
+    카드 경계는 **표제어 스타일**(`동반의어_영단어`)이 정한다. 그게 없는 책은
+    `=`·`↔` 로 시작하지 않는 줄을 새 카드의 머리로 본다.
+    """
+    from manuscript import parse_syn_line
+    cards, buf = [], []
+
+    def flush():
+        if buf:
+            c = parse_syn_line(" ".join(buf))
+            if c:
+                cards.append(c)
+        del buf[:]
+
+    for line in lines_of(paras):
+        txt = plain(line).strip()
+        if not txt:
+            continue
+        head = any(r.get("mark") == "syn_word" for r in line)
+        if not head:
+            head = not txt.startswith(("=", "↔", "cf", "cf."))
+        if head:
+            flush()
+        buf.append(txt)
+    flush()
+    return cards
+
+
+def split_topic(paras):
+    ls = [plain(l).strip() for l in lines_of(paras)]
+    ls = [l for l in ls if l]
+    topic = ls[0] if ls else ""
+    summary = " ".join(ls[1:]) if len(ls) > 1 else ""
+    return topic, summary
+
+
+# ── 스프레드 → 지문 ────────────────────────────────────────
 def _para_role(paras):
     for p in paras:
         r = ROLE_BY_PARA.get(p["style"])
@@ -188,48 +265,79 @@ def _para_role(paras):
 
 
 def read_book(path):
-    """완성 포켓북 IDML → [지문]. 지면 순서를 그대로 따른다."""
+    """완성 포켓북 IDML → [지문]. 지면 순서를 그대로 따른다.
+
+    ⚠ 영어 지문과 한글 해석이 **둘 다 문단 스타일 `본문`** 인 책이 있다(강동1 실측).
+      스타일로는 못 가른다 → **한글 비율**로 가른다(옛 JSX 도 그렇게 했다).
+    ⚠ 프레임이 여럿이어도 스토리는 하나다(동반의어 9칸이 한 스토리로 엮여 있다).
+      **스토리 id 로 중복을 없애지 않으면 카드가 아홉 배로 나온다.**
+    """
     doc = Idml(path)
     out, pending = [], None
     for sp in doc.spreads():
         masters = {p["master"][:1] for p in sp["pages"] if p["master"]}
-        by_role = {}
+        seen, by_role, shorts = set(), {}, []
         for fr in sp["frames"]:
-            paras = doc.paragraphs(fr["story"])
+            sid = fr["story"]
+            if sid in seen:
+                continue
+            seen.add(sid)
+            paras = doc.paragraphs(sid)
             if not paras:
                 continue
             role = _para_role(paras)
+            txt = "\n".join(plain(p["runs"]) for p in paras)
+            if role in ("passage", None) and len(txt.strip()) < 30:
+                shorts.append(txt.strip())
+                if role is None:
+                    continue
+            if role == "passage":
+                role = "translation" if han_ratio(txt) > 0.35 else "passage"
+            if role == "memtest" and len(txt.strip()) < 30:
+                shorts.append(txt.strip())
+                continue
             if role:
                 by_role.setdefault(role, []).append(paras)
-        is_memtest = bool(masters & set("BDFL"))
-        if is_memtest:
+
+        if masters & set("BDFL"):
             if pending is not None:
+                mt = pending.setdefault("memtest", {})
                 if "memtest_q" in by_role:
-                    pending.setdefault("memtest", {})["q"] = by_role["memtest_q"][0]
-                elif "memtest" in by_role:
-                    pending.setdefault("memtest", {})["a"] = by_role["memtest"][0]
+                    mt["q"] = by_role["memtest_q"][0]
+                if "memtest" in by_role:
+                    mt.setdefault("a", by_role["memtest"][0])
             continue
         if "passage" not in by_role:
             continue
         if pending:
             out.append(pending)
+
+        topic, summary = split_topic(by_role.get("topic", [None])[0])
+        pno, label = "", ""
+        for t in shorts:
+            if not t:
+                continue
+            m = _PNO.match(t)
+            if m and not pno:
+                pno = m.group(1).replace(" ", "")
+            elif not label and len(t) <= 24:
+                label = t
         pending = {
+            "pno": pno,
+            "label": label,
+            "pages": [p["name"] for p in sp["pages"]],
+            "masters": sorted(masters),
             "passage": by_role["passage"][0],
             "translation": by_role.get("translation", [None])[0],
-            "flownote": by_role.get("flownote", [None])[0],
-            "topic": by_role.get("topic", [None])[0],
-            "synonyms": by_role.get("synonyms", [None])[0],
+            "flownote": [plain(l).strip()
+                         for l in lines_of(by_role.get("flownote", [None])[0])],
+            "topic": topic,
+            "summary": summary,
+            "synonyms": parse_synonym_cards(by_role.get("synonyms", [None])[0]),
             "links": sp["links"],
-            "masters": sorted(masters),
-            "pages": [p["name"] for p in sp["pages"]],
         }
-        # 지문번호 — 짧은 숫자만 있는 프레임
-        for fr in sp["frames"]:
-            t = doc.text_of(fr["story"]).strip()
-            m = _PNO.match(t)
-            if m:
-                pending["pno"] = m.group(1).replace(" ", "")
-                break
+        if len(by_role.get("passage", [])) > 1:
+            pending["pair"] = True
     if pending:
         out.append(pending)
     return out
@@ -240,13 +348,16 @@ if __name__ == "__main__":
     import sys
     ps = read_book(os.path.expanduser(sys.argv[1]))
     print("지문 %d개" % len(ps))
+    empty_syn = [p for p in ps if not p["synonyms"]]
+    empty_flow = [p for p in ps if not p["flownote"]]
+    print("동반의어 0개 %d · 플로우 0개 %d" % (len(empty_syn), len(empty_flow)))
     for p in ps[:2]:
         print("─" * 60)
-        print("pno", p.get("pno"), "masters", p["masters"], "pages", p["pages"])
-        print("본문 문단", len(p["passage"]),
-              "| 루비", sum(1 for pp in p["passage"] for r in pp["runs"] if r["ruby"]))
-        print("번역", bool(p["translation"]), "플로우", bool(p["flownote"]),
-              "주제", bool(p["topic"]), "동반의어", bool(p["synonyms"]))
-        if p["synonyms"]:
-            print("동반의어 문단", len(p["synonyms"]),
-                  [("".join(r["t"] for r in q["runs"]))[:28] for q in p["synonyms"][:4]])
+        print("pno", repr(p["pno"]), "label", repr(p["label"]),
+              "masters", p["masters"], "pages", p["pages"])
+        print("루비", sum(1 for pp in p["passage"] for r in pp["runs"] if r["ruby"]),
+              "| 번역", len(plain(p["translation"][0]["runs"])) if p["translation"] else 0,
+              "| 플로우", len(p["flownote"]), "| 동반의어", len(p["synonyms"]))
+        print("주제", p["topic"][:40], "| 요약", p["summary"][:40])
+        for c in p["synonyms"][:3]:
+            print("   ", c)

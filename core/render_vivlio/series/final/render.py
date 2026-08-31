@@ -259,7 +259,6 @@ def document(cfg, data, vol, fits=None, mode=None):
         #   블록 끝에 높이 0 인 표식을 찍어 **상자 바닥**을 재게 한다.
         o.append('<style>@page{size:216mm %.2fmm}'
                  '.grid{column-count:1;width:%.2fmm;height:auto}'
-                 '.sec-vocab .grid{width:170mm}'
                  '.blk{height:auto!important;break-before:page;'
                  'overflow:visible!important}'
                  '.blk::after{content:"\\25AA";display:block;'
