@@ -671,6 +671,40 @@ def test_styles_api_accepts_pseudo_and_content(client):
     assert r.status_code == 404, "검사는 통과하고 책에서만 걸려야 한다"
 
 
+# ── 서체 · 레이어 ─────────────────────────────────────────────
+def test_font_picker_only_offers_embedded_fonts():
+    """PDF 에 들어가는 것은 이 책이 **임베드한** 서체뿐이다.
+
+    아무 서체나 적게 두면 화면에서는 되는데 인쇄물이 딴 글씨가 된다.
+    브라우저의 `queryLocalFonts` 를 쓰지 않는 이유이기도 하다(크로미움 전용인
+    데다, 설치돼 있다고 PDF 에 들어가는 것이 아니다).
+    """
+    src = _studio_src()
+    assert "kind: 'font'" in src and "bookFonts" in src
+    assert "queryLocalFonts" not in src
+
+
+def test_fonts_api_splits_used_and_available():
+    src = _routes_src()
+    assert '"used"' in src and '"available"' in src and '"missing"' in src
+
+
+def test_layers_are_view_only():
+    """레이어는 **보기**다 — 끈 채로 PDF 를 구우면 그건 다른 책이다."""
+    src = _studio_src()
+    assert "var LAYER_DEFS" in src and "function applyLayers()" in src
+    i = src.index("function applyLayers()")
+    assert "visibility" in src[i:i + 900]
+    assert "조판은 안 바뀝니다" in src or "조판을 바꾸지 않는다" in src
+
+
+def test_layers_redraw_on_page_change():
+    """면마다 든 갈래가 다르다 — 한 번만 보면 그때 있던 것만 잡힌다."""
+    src = _studio_src()
+    i = src.index("function drawPageNo()")
+    assert "drawLayers()" in src[i:i + 700]
+
+
 # ── 클로드 칸 ─────────────────────────────────────────────────
 # 모델에게 리포를 통째로 열어 주면 안 된다 — 계열 코드를 고치면 그 계열 책이
 # 전부 흔들리고, 원고를 고치면 납품본과 글이 달라진다. 손댈 수 있는 곳은

@@ -88,7 +88,10 @@ def _block_text(kind, b):
         return [data_mod.plain(p) for p in b["passage"]] + \
                [data_mod.plain(p) for p in b.get("summary") or []]
     if kind == "grammar":
-        return [data_mod.plain(b["body"])]
+        # ⚠ `[낱말]` 은 지면에 **대괄호째** 찍힌다. 괄호를 뺀 문자열로 찾으면
+        #   55개 지문이 통째로 "누락"으로 잡힌다(거짓 경보).
+        return ["".join(f'[{x["a"]}]' if isinstance(x, dict) else x
+                        for x in b["body"])]
     return [p["korean"] for p in b["pairs"]] + \
            [p["choices"] for p in b["pairs"]]
 
