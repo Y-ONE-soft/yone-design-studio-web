@@ -145,6 +145,7 @@
 
     <div class="ide-grp" id="ide-para">
       <button class="ide-b" data-op="split" title="커서 자리에서 문단 나누기">문단 나누기</button>
+      <button class="ide-b" data-op="insert" title="이 문단 앞에 빈 문단 넣기">넣기</button>
       <button class="ide-b" data-op="merge" title="다음 문단과 합치기">합치기</button>
       <button class="ide-b" data-op="delete" title="이 문단 지우기">지우기</button>
     </div>
@@ -206,6 +207,22 @@
           <div class="ide-hint">지면에서 무언가를 클릭하면 그 자리에 걸린
             스타일이 나옵니다. 여기서 고치면 <b>같은 스타일이 걸린 곳이 전부</b>
             바뀝니다.</div>
+        </div>
+      </details>
+      <details class="ide-pal" id="pal-img-box"><summary>그림</summary>
+        <div class="ide-in">
+          <div class="ide-hint" style="margin-bottom:8px">
+            지면에서 자리를 고른 뒤 그림을 누르면 <b>그 문단 아래</b>에 앉습니다.
+            원고에 없던 도표를 한 자리에만 넣을 때 씁니다.</div>
+          <div class="ide-f" style="margin-bottom:8px">
+            <input type="file" id="img-file" accept="image/*"
+                   style="flex:1;font-size:11.5px;color:#98a0bd">
+          </div>
+          <div class="ide-row">
+            <div class="ide-lab"><span>너비</span></div>
+            <input class="ide-t" id="img-w" value="60mm">
+          </div>
+          <div class="ide-hist" id="img-list"></div>
         </div>
       </details>
       <details class="ide-pal" id="pal-find-box"><summary>찾기 · 바꾸기</summary>
@@ -621,12 +638,55 @@
       if (!at) { msg('나눌 자리에 커서를 두세요 (T 로 연 뒤)'); return; }
       body.at = at;
     }
+    if (op === 'insert') {
+      var t = prompt('이 문단 **앞에** 넣을 글', '');
+      if (t === null) return;
+      body.v = t;
+    }
     if (op === 'delete' && !confirm('이 문단을 지웁니다. 되돌리기로 살릴 수 있습니다.')) return;
     closeEdit(true);
     api('/api/book-studio/op', body).then(function (d) {
       if (d.error) { msg('✗ ' + d.error); return; }
       setHist(d.history);
       rebuild('').then(function (ok) { if (ok) msg('✓ ' + op); });
+    });
+  }
+
+  // ── 그림 ────────────────────────────────────────────────
+  // 계열 코드를 건드리지 않고 그림을 앉힌다 — CSS 규칙 한 줄이면 된다.
+  //   [data-ref="…"]::after { content: url("assets/그림.png") }
+  // `data-ref` 는 조판 결과 DOM 에는 안 남지만 **조판하는 동안에는 있다**.
+  // CSS 는 그때 적용되므로 이걸로 충분하다(refs.py 주석 참고).
+  function loadImages() {
+    return api('/api/book-studio/images?b=' + encodeURIComponent(key))
+      .then(function (d) { drawImages(d.images || []); return d; });
+  }
+
+  function drawImages(list) {
+    var host = $('img-list');
+    if (!list.length) {
+      host.innerHTML = '<div class="ide-hint">아직 넣은 그림이 없습니다.</div>';
+      return;
+    }
+    host.innerHTML = list.map(function (im) {
+      return '<div><a href="#" data-img="' + im.name + '" style="color:#8faaff">'
+        + im.name + '</a> <span style="opacity:.5">'
+        + Math.round(im.size / 1024) + 'KB</span></div>';
+    }).join('');
+  }
+
+  function placeImage(name) {
+    if (!curRef) { msg('먼저 지면에서 자리를 클릭하세요'); return; }
+    var w = ($('img-w').value || '60mm').trim();
+    api('/api/book-studio/styles', {
+      b: key, selector: '[data-ref="' + curRef + '"]::after',
+      props: { content: 'url("assets/' + name + '")',
+               display: 'block', width: w, height: 'auto',
+               'margin': '3mm auto' }
+    }).then(function (d) {
+      if (d.error) { msg('✗ ' + d.error); return; }
+      styles = d.styles || {};
+      rebuild('').then(function (ok) { if (ok) msg('✓ 그림을 앉혔습니다'); });
     });
   }
 
@@ -760,6 +820,7 @@
       .then(function (d) { $('pal-css').value = d.css || ''; });
     api('/api/book-studio/styles?b=' + encodeURIComponent(key))
       .then(function (d) { styles = d.styles || {}; });
+    loadImages();
     loadHist(null);
   }
 
@@ -817,6 +878,23 @@
     var box = $('pal-find-box');
     box.open = true; $('ide-right').classList.remove('hide');
     box.scrollIntoView({ block: 'nearest' }); $('find-q').focus();
+  });
+  $('img-file').addEventListener('change', function () {
+    var f = $('img-file').files[0]; if (!f) return;
+    var fd = new FormData(); fd.append('b', key); fd.append('file', f);
+    msg('그림 올리는 중…');
+    fetch('/api/book-studio/images', { method: 'POST', body: fd })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        $('img-file').value = '';
+        if (d.error) { msg('✗ ' + d.error); return; }
+        drawImages(d.images || []);
+        msg('✓ ' + d.name + ' — 자리를 고르고 이름을 누르면 앉습니다');
+      });
+  });
+  $('img-list').addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[data-img]');
+    if (!a) return; e.preventDefault(); placeImage(a.dataset.img);
   });
   $('find-go').addEventListener('click', function () { find(false); });
   $('find-all').addEventListener('click', function () {

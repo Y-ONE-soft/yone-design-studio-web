@@ -309,6 +309,71 @@ def api_styles():
     return jsonify({"ok": True, "styles": styles})
 
 
+IMG_OK = (".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp")
+IMG_MAX = 20 * 1024 * 1024
+
+
+@bp.route("/api/book-studio/images", methods=["GET", "POST"])
+def api_images():
+    """그림 — 책 폴더 `assets/` 에 넣고 목록을 준다.
+
+    ## 왜 파서가 아니라 여기서 넣는가
+
+    원고(hwpx)에 든 그림은 계열 파서가 뽑는다. 그런데 조판을 하다 보면 원고에
+    없던 그림을 **한 자리에만** 넣어야 할 때가 생긴다(도표를 다시 그렸다든가).
+    그걸 하려고 계열 코드를 고치면 그 계열 책이 전부 흔들린다. 그래서 그림은
+    파일로 넣고 **CSS 규칙 한 줄**로 그 자리에 앉힌다 —
+    `[data-ref="…"]::after{content:url("assets/그림.png")}`.
+    계열 코드가 하나도 안 바뀌므로 이미 납품한 책은 그대로다.
+
+    ⚠ `assets/` 는 `build/` 로 통째 복사된다(`stage.stage_book_assets`).
+      그래서 지운 그림은 다음 조판에서 사라진다 — 규칙도 같이 지울 것.
+    """
+    import shutil
+    from core.render_vivlio import book as bookmod
+    get = request.method == "GET"
+    key = request.args.get("b") if get else request.form.get("b")
+    d, meta = _book_dir(key)
+    if not d:
+        return jsonify({"error": "모르는 책"}), 404
+    cfg = bookmod.load(d)
+    adir = cfg.resolve((cfg.section("assets") or {}).get("dir", "assets"))
+
+    def listing():
+        if not os.path.isdir(adir):
+            return []
+        out = []
+        for n in sorted(os.listdir(adir)):
+            if n.lower().endswith(IMG_OK) and not n.startswith("."):
+                out.append({"name": n,
+                            "size": os.path.getsize(os.path.join(adir, n))})
+        return out
+
+    if get:
+        return jsonify({"images": listing(), "dir": adir})
+
+    f = request.files.get("file")
+    if not f or not f.filename:
+        return jsonify({"error": "파일이 없다"}), 400
+    name = os.path.basename(f.filename).replace("\\", "")
+    if not name.lower().endswith(IMG_OK):
+        return jsonify({"error": "그림 파일이 아니다 (%s)" % ", ".join(IMG_OK)}), 400
+    os.makedirs(adir, exist_ok=True)
+    dst = os.path.join(adir, name)
+    if os.path.exists(dst):                       # 덮어쓰지 않는다 — 다른 자리가 쓸 수 있다
+        stem, ext = os.path.splitext(name)
+        i = 2
+        while os.path.exists(dst):
+            name = "%s_%d%s" % (stem, i, ext)
+            dst = os.path.join(adir, name)
+            i += 1
+    f.save(dst)
+    if os.path.getsize(dst) > IMG_MAX:
+        os.remove(dst)
+        return jsonify({"error": "그림이 너무 크다 (20MB 넘음)"}), 400
+    return jsonify({"ok": True, "name": name, "images": listing()})
+
+
 @bp.route("/api/book-studio/find", methods=["POST"])
 def api_find():
     """전권 검색 · 바꾸기 — **지면이 아니라 원고에서** 찾는다.
