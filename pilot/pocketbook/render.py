@@ -75,7 +75,7 @@ def build_html(data, meta):
 <title>포켓북 파일럿</title>
 <link rel="stylesheet" href="pocket.css">
 </head><body>
-<section class="pg left">
+<section class="pg left"><div class="trim">
   <div class="badge">%s</div>
   <div class="passage">%s</div>
   <div class="rule"></div>
@@ -84,7 +84,7 @@ def build_html(data, meta):
   <figure class="illust"><img src="%s" alt=""><figcaption>%s</figcaption></figure>
   <div class="translation">%s</div>
   <div class="folio"><b>%s</b> POCKET BOOK</div>
-</section>
+</div></section>
 </body></html>
 """ % (esc(meta["passage_no"]), body, meta["illust"], esc(meta["caption"]),
        trans, esc(meta["folio"]))
@@ -107,14 +107,20 @@ CSS = r"""
   --up-dy:4.3pt;       /* 주석 위치 — 원본 baseline −9.4pt 가 되도록 보정 */
   --dn-dy:6.8pt;       /* 원본 baseline +8.6pt */
 }
-@page{size:148mm 210mm;margin:0}
+/* 도련 사방 3mm — 최종 출력물이 고품질 인쇄다.
+   판면 좌표는 전부 재단선(trim) 기준으로 쓰고, 3mm 밀어 놓은 .trim 안에 담는다.
+   그래야 실측 상수를 도련 유무와 무관하게 그대로 쓸 수 있다.
+   TrimBox 는 조판 뒤 bleed.stamp_trimbox 가 박는다(다른 계열과 동일). */
+@page{size:154mm 216mm;margin:0}
 html,body{margin:0;padding:0}
-.pg{position:relative;width:148mm;height:210mm;overflow:hidden;
+.pg{position:relative;width:154mm;height:216mm;overflow:hidden;
     font-family:PBBody,sans-serif;color:var(--ink);break-after:page}
-.pg::before,.pg::after{content:"";position:absolute;left:0;width:148mm;
+.trim{position:absolute;left:3mm;top:3mm;width:148mm;height:210mm}
+/* 띠는 재단선 밖 3mm 까지 나가야 한다 — 판면 기준으로 두면 흰 줄이 생긴다 */
+.pg::before,.pg::after{content:"";position:absolute;left:0;width:154mm;
     background:var(--band)}
-.pg::before{top:0;height:5.5mm}
-.pg::after{top:204.5mm;height:5.5mm}
+.pg::before{top:0;height:8.5mm}
+.pg::after{top:207.5mm;height:8.5mm}
 
 .badge{position:absolute;left:15mm;top:15mm;width:18mm;height:5.5mm;
   background:var(--navy);color:#fff;font-family:PBDodam;font-size:8pt;
@@ -178,6 +184,8 @@ def main(json_path, meta_path, out_pdf):
     open(html, "w", encoding="utf-8").write(build_html(data, meta))
     from core.render_vivlio import cli
     dt = cli.run_build(html, out_pdf, log=print)
+    from core.render_vivlio import bleed
+    bleed.finish(out_pdf, {"trim": {"bleed": 3.0}}, log=print)
     print("→", out_pdf, "%.1fs" % dt)
 
 

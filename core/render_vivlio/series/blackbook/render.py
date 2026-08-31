@@ -86,6 +86,10 @@ def inl(x, blank=False):
     if isinstance(x, dict):
         t = html.escape(x.get('t', ''))
         t = esc_blank(t) if blank else esc_gap(t)
+        # 작업대에서 건 **글자 단위 서식**. 없으면 빈 문자열이라 예전과 같다.
+        a = _rt.seg_attr(x)
+        if a:
+            t = f'<span{a}>{t}</span>'
         if x.get('u'):
             t = f'<u>{t}</u>'
         if x.get('b'):
@@ -108,6 +112,7 @@ def plain(x):
 
 # ── 클릭 편집용 자리표 — 공용 구현을 쓴다(core/render_vivlio/refs.py)
 from core.render_vivlio import refs as _refs
+from core.render_vivlio import richtext as _rt
 
 REF_SPEC = ("lessons", ("vocab", "problems", "answers"))
 

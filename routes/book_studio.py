@@ -254,19 +254,26 @@ def api_text():
         touched = any(o.get("ref") == ref for o in st["ops"][:st["head"]])
         return jsonify({"ref": ref,
                         "text": rt.to_text(ed.get(cur, ref)),
+                        # 편집기는 **보이는 그대로** 고친다 — 표시(`**굵게**`)가
+                        # 아니라 진짜 서식이라야 글자 단위 서식이 안 날아간다.
+                        "html": rt.to_html(ed.get(cur, ref)),
                         "origin": rt.to_text(ed.get(raw, ref)),
                         "edited": touched,
                         "history": {"head": st["head"], "total": len(st["ops"])}})
     text = p.get("text")
-    if text is None:
+    src_html = p.get("html")
+    if text is None and src_html is None:
         return jsonify({"error": "글이 없다"}), 400
-    if len(text) > 20000:
+    if len(text or src_html or "") > 40000:
         return jsonify({"error": "너무 길다"}), 400
     if p.get("revert"):
         # 원고대로 = 원고의 그 값으로 되돌리는 **연산**을 쌓는다.
         # 지우개가 아니라 또 하나의 편집이라, 이것도 되돌릴 수 있다.
         st = ed.push(cfg, {"op": "set", "ref": ref, "v": ed.get(raw, ref),
                            "note": "원고대로"})
+    elif src_html is not None:
+        st = ed.push(cfg, {"op": "set", "ref": ref,
+                           "v": rt.from_html(src_html, like=ed.get(raw, ref))})
     else:
         st = ed.push(cfg, {"op": "set", "ref": ref,
                            "v": rt.from_text(text, like=ed.get(raw, ref))})

@@ -31,6 +31,7 @@ import os
 import re
 
 from core.render_vivlio import refs as _refs
+from core.render_vivlio import richtext as _rt
 from core.render_vivlio import stage
 
 # ── 클릭 편집용 자리표 ──────────────────────────────────────────────
@@ -102,6 +103,9 @@ def inl(x):
         return esc(x)
     if isinstance(x, dict):
         t = esc(x.get("t", ""))
+        a = _rt.seg_attr(x)          # 작업대에서 건 글자 단위 서식
+        if a:
+            t = f"<span{a}>{t}</span>"
         if x.get("u"):
             t = f"<u>{t}</u>"
         if x.get("b"):

@@ -840,14 +840,53 @@
         + '아래 <b>단락 스타일</b>에서 하나 고르세요.</div>';
       return;
     }
+    if (hostId === 'pal-char') {
+      var w = document.createElement('div');
+      w.className = 'ide-hint'; w.style.marginBottom = '6px';
+      w.id = 'char-scope';
+      host.appendChild(w);
+      markCharScope();
+    }
     var saved = styles[sel] || {};
     var cs = curEl ? fwin().getComputedStyle(curEl) : null;
     var rows = [];
     props.forEach(function (pr) {
-      var r = propRow(pr, saved, cs ? human(cs[pr.k], pr.u) : '', live);
+      var r = propRow(pr, saved, cs ? human(cs[pr.k], pr.u) : '',
+                      hostId === 'pal-char' ? charOrLive(pr) : live);
       rows.push(r); host.appendChild(r);
     });
     host.__rows = rows;
+  }
+
+  /** 문자 패널의 한 줄을 만졌다.
+   *  글자를 골라 두었으면 **그 글자에만**, 아니면 덩어리 전체에 건다.
+   *  인디자인의 문자 패널이 정확히 그렇게 움직인다. */
+  function charOrLive(pr) {
+    return function () {
+      if (!hasCharSel()) { live(); return; }
+      var row = null;
+      (($('pal-char').__rows) || []).forEach(function (r) {
+        if (r.__key === pr.k) row = r;
+      });
+      if (!row) return;
+      var v = row.__read();
+      if (!v) { msg('빈 값은 고른 글자에 못 건다 — 지우려면 되돌리기를'); return; }
+      if (fmtStyle(pr.k, v)) {
+        msg('고른 글자에 ' + pr.l + ' → ' + v + ' (⌘↵ 로 저장)');
+        markCharScope();
+      }
+    };
+  }
+
+  /** 문자 패널이 지금 **어디에** 걸리는지 화면에 적는다. */
+  function markCharScope() {
+    var e = $('char-scope'); if (!e) return;
+    e.innerHTML = hasCharSel()
+      ? '고른 <b>글자</b>에 걸립니다 (⌘↵ 로 저장)'
+      : (styleTarget
+         ? '<b>' + styleTarget + '</b> 이 걸린 곳 <b>전부</b>에 걸립니다'
+         : '고른 <b>덩어리 전체</b>에 걸립니다 — 글자만 바꾸려면 '
+           + '<b>T</b> 로 열고 드래그해 고르세요');
   }
 
   /** 지금 패널에 적힌 값들. 빈 것은 '지운다'는 뜻이다. */
@@ -894,7 +933,18 @@
     return curEl ? [curEl] : [];
   }
 
+  /** 지금 **글자를 골라 둔 상태**인가(편집 중 + 드래그 범위 있음). */
+  function hasCharSel() {
+    if (!editEl) return false;
+    var w = fwin(); if (!w) return false;
+    var sel = w.getSelection();
+    return !!(sel && sel.rangeCount && !sel.isCollapsed
+              && editEl.contains(sel.getRangeAt(0).commonAncestorContainer));
+  }
+
   function live() {
+    // 인디자인처럼 — **글자를 골라 두었으면 그 글자에만** 건다.
+    if (hasCharSel()) return;          // 그건 `applyChar()` 가 맡는다
     if (!targetSel()) return;
     liveClear();
     var props = readPanels(), els = liveTargets();
@@ -1062,70 +1112,66 @@
         + '&ref=' + encodeURIComponent(ref)).then(function (info) {
       if (info.error) { msg('✗ ' + info.error); return; }
       editEl = el; editHtml = el.innerHTML;
-      // ⚠ 지면의 글에는 조판이 만든 것이 섞여 있을 수 있다(빈칸 밑줄·대화문
-      //   묶음·표식). 그걸 글자로 되돌리면 빈칸이 사라진다.
-      //   그렇다고 **늘** 원본으로 갈아 끼우면, 누를 때마다 글이 딴것처럼
-      //   보인다(`**굵게**` 같은 표시가 튀어나온다) — 실제로 그게 거슬렸다.
-      //   그래서 **보이는 글과 원본이 같을 때는 지면을 그대로 두고** 고친다.
-      var shown = (el.textContent || '').replace(/\s+/g, ' ').trim();
-      var plain = String(info.text || '').replace(/\*\*|__|\/\//g, '')
-                    .replace(/\s+/g, ' ').trim();
-      editPlain = (shown !== plain);
-      if (editPlain) {
-        el.textContent = info.text;               // 표시가 있어야 고칠 수 있다
-        msgExtra = ' (빈칸·서식이 있어 원본 표시로 봅니다)';
-      } else {
-        msgExtra = '';
-      }
+      // ⚠ **보이는 그대로** 고친다. 예전에는 `**굵게**` 같은 표시가 든 민글로
+      //   갈아 끼웠는데, 그러면 누를 때마다 글이 딴것처럼 보이고 **글자 단위
+      //   서식(크기·색)을 담을 수가 없었다**. 이제 진짜 서식이 든 HTML 을
+      //   놓고 고친다 — 굵게도, 12pt 빨강도 그 자리에서 보인다.
+      el.innerHTML = info.html;
       el.classList.add('ide-editing');
-      el.setAttribute('contenteditable', 'plaintext-only');
+      el.setAttribute('contenteditable', 'true');
       el.focus();
-      // ⚠ 커서를 글 끝으로 몰지 않는다. 브라우저가 **누른 자리**에 둔 것을
-      //   그대로 쓴다 — 끝으로 옮기면 눌렀던 데를 다시 찾아가야 한다.
-      //   (원본 표시로 갈아 끼운 때만 어쩔 수 없이 맨 앞에 둔다.)
-      try {
-        if (editPlain) {
-          var r = fdoc().createRange(); r.selectNodeContents(el); r.collapse(true);
-          var s = fwin().getSelection(); s.removeAllRanges(); s.addRange(r);
-        }
-      } catch (e) {}
       setHist(info.history);
-      msg(kindName(ref) + ' 고치는 중 — ⌘↵ 저장 · Esc 취소' + msgExtra);
+      msg(kindName(ref) + ' 고치는 중 — ⌘↵ 저장 · Esc 취소');
     });
   }
 
-  var MARK = { b: '**', u: '__', i: '//' };
-  function wrapSel(kind) {
+  /** 고른 글자에 서식을 건다.
+   *
+   *  ⚠ 예전에는 글 안에 `**굵게**` 표시를 끼워 넣었다. 그래서
+   *    ① 크기·색 같은 것은 아예 못 걸었고 ② 고치는 동안 글이 딴것처럼 보였다.
+   *    이제 브라우저의 `execCommand` 로 **진짜 태그**를 만든다 — 저장할 때
+   *    `richtext.from_html()` 이 세그먼트로 되접는다.
+   */
+  function fmt(kind) {
     if (!editEl) { msg('먼저 고칠 글을 클릭하세요'); return; }
-    var m = MARK[kind]; if (!m) return;
-    var sel = fwin().getSelection();
-    if (!sel || !sel.rangeCount) return;
-    var r = sel.getRangeAt(0);
-    if (!editEl.contains(r.commonAncestorContainer)) return;
-    var text = editEl.textContent, a = r.startOffset, b = r.endOffset;
-    if (r.startContainer !== r.endContainer) { a = 0; b = text.length; }
-    if (a === b) { msg('감쌀 글을 먼저 고르세요'); return; }
-    var pre = text.slice(0, a), mid = text.slice(a, b), post = text.slice(b);
-    if (pre.slice(-m.length) === m && post.slice(0, m.length) === m) {
-      pre = pre.slice(0, -m.length); post = post.slice(m.length);
-    } else if (mid.slice(0, m.length) === m && mid.slice(-m.length) === m
-               && mid.length > 2 * m.length) {
-      mid = mid.slice(m.length, -m.length);
-    } else { mid = m + mid + m; }
-    editEl.textContent = pre + mid + post;
+    var d = fdoc();
+    editEl.focus();
     try {
-      var node = editEl.firstChild || editEl, rr = fdoc().createRange();
-      rr.setStart(node, pre.length); rr.setEnd(node, pre.length + mid.length);
-      var s2 = fwin().getSelection(); s2.removeAllRanges(); s2.addRange(rr); editEl.focus();
-    } catch (e) {}
+      d.execCommand(kind === 'b' ? 'bold' : kind === 'u' ? 'underline' : 'italic');
+    } catch (e) { msg('✗ 서식을 못 걸었습니다'); }
+  }
+
+  /** 고른 글자에 **직접 서식**(크기·색·자간…)을 건다. */
+  function fmtStyle(prop, value) {
+    if (!editEl) { msg('먼저 고칠 글을 클릭하세요'); return null; }
+    var d = fdoc(), w = fwin();
+    var sel = w.getSelection();
+    if (!sel || !sel.rangeCount || sel.isCollapsed) {
+      msg('서식을 걸 글자를 먼저 드래그해 고르세요'); return null;
+    }
+    var r = sel.getRangeAt(0);
+    if (!editEl.contains(r.commonAncestorContainer)) {
+      msg('고치는 글 안에서 골라 주세요'); return null;
+    }
+    var span = d.createElement('span');
+    span.style.setProperty(prop, value);
+    try {
+      span.appendChild(r.extractContents());
+      r.insertNode(span);
+    } catch (e) { msg('✗ 여기에는 못 겁니다 (걸친 범위)'); return null; }
+    // 고른 상태를 그대로 둔다 — 이어서 다른 서식도 걸 수 있게
+    var nr = d.createRange(); nr.selectNodeContents(span);
+    sel.removeAllRanges(); sel.addRange(nr);
+    return span;
   }
 
   function commit() {
     if (!editEl || !curRef) { msg('고치는 중이 아닙니다'); return; }
-    var text = editEl.textContent, ref = curRef;
+    var htmlNow = editEl.innerHTML, ref = curRef;
     closeEdit(true);
     msg('고치는 중…');
-    api('/api/book-studio/text', { b: key, ref: ref, text: text }).then(function (d) {
+    api('/api/book-studio/text', { b: key, ref: ref, html: htmlNow })
+      .then(function (d) {
       if (d.error) { msg('✗ ' + d.error); return; }
       setHist(d.history);
       rebuild('').then(function (ok) { if (ok) msg('✓ 고쳤습니다'); });
@@ -1392,7 +1438,7 @@
   });
   $('ide-fmt').addEventListener('click', function (e) {
     var t = e.target; while (t && !t.dataset.f && t !== this) t = t.parentNode;
-    if (t && t.dataset && t.dataset.f) wrapSel(t.dataset.f);
+    if (t && t.dataset && t.dataset.f) fmt(t.dataset.f);
   });
   $('ide-commit').addEventListener('click', commit);
   $('ide-cancel').addEventListener('click', function () { closeEdit(true); msg(''); });
@@ -1670,7 +1716,7 @@
       if (e.key === 'Escape') { e.preventDefault(); closeEdit(true); msg(''); return; }
       if (mod && e.key === 'Enter') { e.preventDefault(); commit(); return; }
       if (mod && 'bui'.indexOf((e.key || '').toLowerCase()) >= 0) {
-        e.preventDefault(); wrapSel(e.key.toLowerCase()); return; }
+        e.preventDefault(); fmt(e.key.toLowerCase()); return; }
       return;                                   // 편집 중엔 단축키를 가로채지 않는다
     }
     if (mod && (e.key || '').toLowerCase() === 'f') {
@@ -1695,6 +1741,9 @@
   msg('지면을 여는 중…');
   whenFrame(function () {
     fdoc().addEventListener('keydown', onKey);
+    fdoc().addEventListener('selectionchange', function () {
+      if (typeof markCharScope === 'function') markCharScope();
+    });
     setTool(tool);                     // 커서 표시를 지면 문서에도
     if (key) loadBook(false); else msg('교재가 없습니다');
   });
