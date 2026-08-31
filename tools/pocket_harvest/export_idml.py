@@ -24,7 +24,12 @@ GD = os.path.expanduser(
     "콘텐츠 관리/내신대비/인디자인 파일")
 OUT = os.path.expanduser(
     "~/Documents/작업/Y.ONE STUDIO/조판/교재/포켓북/_idml")
-TMP = "/private/tmp/claude-501/_pocket_idml_tmp"
+# ⚠ 작업 사본을 `/private/tmp` 에 두면 안 된다. InDesign 을 강제 종료했다가
+#   다시 띄우면 그 경로의 문서를 **"파일이 손상되었습니다(오류 코드 4)"** 로
+#   전부 거부한다(실측: 같은 파일이 Documents 아래에서는 정상으로 열린다).
+#   권한/샌드박스 문제라 파일 자체와는 무관하다.
+TMP = os.path.expanduser(
+    "~/Documents/작업/Y.ONE STUDIO/조판/교재/포켓북/_idml/_tmp")
 
 SOURCES = {
     "pocketbook": os.path.join(GD, "포켓북"),
@@ -95,7 +100,11 @@ def restart_indesign(log=None):
             "~/Library/Caches/Adobe InDesign/Version */*/InDesign Recovery")):
         for f in glob.glob(os.path.join(d, "*")):
             try:
-                shutil.move(f, os.path.join(TMP, os.path.basename(f)))
+                # 복구 파일은 작업 폴더에 두지 않는다 — InDesign 이 문서 폴더의
+                # 사이드카를 함께 보므로 섞이면 곤란하다.
+                shutil.move(f, os.path.join(
+                    "/private/tmp/claude-501",
+                    "_indd_recovery_" + os.path.basename(f)))
             except Exception:
                 pass
     subprocess.Popen(
