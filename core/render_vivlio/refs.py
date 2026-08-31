@@ -68,6 +68,42 @@ def index_lists(data, names):
     return _PATH
 
 
+def index_paths(data, paths):
+    """겹겹이 든 목록까지 훑어 객체 → 경로 표를 만든다.
+
+    `index()`(두 겹)·`index_lists()`(한 겹)로는 못 닿는 데가 있다. 단어장의
+    워크북은 `workbook.3.sections.1.items.7` 로 세 겹이고, 특강은 부·강·문항이
+    계열마다 다르게 겹친다. 그래서 **열쇠 사슬**을 받아 그대로 따라 내려간다.
+
+        refs.index_paths(data, [
+            ("head",),                            # head.12
+            ("workbook", "sections", "items"),    # workbook.3.sections.1.items.7
+        ])
+
+    지나는 길의 **모든 dict 를 등록한다** — 위 예에서 `workbook.3` 과
+    `workbook.3.sections.1` 도 자리표를 갖는다. 그래야 문항 하나가 아니라
+    구역 전체에 쪽 나눔을 걸 수 있다.
+
+    ⚠ 목록이 아닌 dict 를 만나면 그 자리에서 멈춘다(경로를 지어내지 않는다).
+    """
+    clear()
+    def walk(node, prefix, chain):
+        if not isinstance(node, list):
+            return
+        for i, obj in enumerate(node):
+            if not isinstance(obj, dict):
+                continue
+            path = "%s.%d" % (prefix, i)
+            _PATH.setdefault(id(obj), path)
+            if chain:
+                walk(obj.get(chain[0]), "%s.%s" % (path, chain[0]), chain[1:])
+    for chain in paths:
+        if not chain:
+            continue
+        walk(data.get(chain[0]), chain[0], list(chain[1:]))
+    return _PATH
+
+
 def of(obj, sub=""):
     """그 객체의 경로(+하위 항목). 표에 없으면 빈 문자열 = 자리표 없음."""
     r = _PATH.get(id(obj))

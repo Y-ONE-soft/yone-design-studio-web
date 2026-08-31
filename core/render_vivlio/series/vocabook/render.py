@@ -260,8 +260,10 @@ class Renderer(object):
                 w = esc(it["word"])
                 if g["root"] in it["word"]:
                     w = w.replace(g["root"], f'<b>{g["root"]}</b>', 1)
-                items.append(f'<li><span class="wd">{w}</span> '
-                             f'<span class="mean">{meaning(it["meaning"])}</span></li>')
+                ir = _refs.of(it)
+                items.append(f'<li><span{_refs.mark(ir and ir + ".word", "wd")}>{w}</span> '
+                             f'<span{_refs.mark(ir and ir + ".meaning", "mean")}>'
+                             f'{meaning(it["meaning"])}</span></li>')
             o.append(f'<section class="mw"><div class="mw-root">'
                      f'<span class="mw-pill">more with</span>'
                      f'<span class="mw-word">{esc(g["root"])}</span></div>'
@@ -280,9 +282,12 @@ class Renderer(object):
                 ex = "".join(f'<p class="ex-en">{ex_en(e[0])}</p>'
                              f'<p class="ex-kr">{ex_kr(e[1])}</p>'
                              for e in it["ex"] if e[0])
+                ir = _refs.of(it)
                 items.append(f'<li class="vs-item"><p class="hd">'
-                             f'<span class="vs-word">{esc(it["word"])}</span> '
-                             f'<span class="vs-mean">{esc(it["meaning"])}</span>'
+                             f'<span{_refs.mark(ir and ir + ".word", "vs-word")}>'
+                             f'{esc(it["word"])}</span> '
+                             f'<span{_refs.mark(ir and ir + ".meaning", "vs-mean")}>'
+                             f'{esc(it["meaning"])}</span>'
                              f'</p>{ex}</li>')
             o.append(f'<section class="vs"><div class="vs-head">'
                      f'<span class="vs-pill">VOCA vs. VOCA</span>'
@@ -349,8 +354,10 @@ class Renderer(object):
             for it in items:
                 if it["kind"] != "item":
                     continue
+                ir = _refs.of(it)
                 o.append(f'<div class="q"><span class="no">{int(it["no"]):02d}</span>'
-                         f'<span class="wd">{esc(it["text"].strip())}</span>'
+                         f'<span{_refs.mark(ir and ir + ".text", "wd")}>'
+                         f'{esc(it["text"].strip())}</span>'
                          f'<span class="rule"></span></div>')
             o.append("</div>")
         elif L == "B":
@@ -360,10 +367,14 @@ class Renderer(object):
                 if it["kind"] == "item":
                     if pend:
                         o.append(pend + "</div></div>")
+                    ir = _refs.of(it)
                     pend = (f'<div class="q"><span class="no">{int(it["no"]):02d}</span>'
-                            f'<div><p class="en">{blanked(it["text"])}</p>')
+                            f'<div><p{_refs.mark(ir and ir + ".text", "en")}>'
+                            f'{blanked(it["text"])}</p>')
                 elif it["kind"] == "cont" and pend:
-                    pend += f'<p class="kr">{esc(it["text"])}</p>'
+                    ir = _refs.of(it)
+                    pend += (f'<p{_refs.mark(ir and ir + ".text", "kr")}>'
+                             f'{esc(it["text"])}</p>')
             if pend:
                 o.append(pend + "</div></div>")
             o.append("</div>")
@@ -415,8 +426,10 @@ class Renderer(object):
                     body = ((head + " " if head else "")
                             + f'<span class="nb">{tail} : '
                               f'<span class="ansbox"></span></span>')
+                    ir = _refs.of(it)
                     o.append(f'<div class="q"><span class="no">{no:02d}</span>'
-                             f'<span class="df">{body}</span></div>')
+                             f'<span{_refs.mark(ir and ir + ".text", "df")}>'
+                             f'{body}</span></div>')
             if opened_items:
                 o.append("</div>")
             o.append("</div>")
@@ -450,8 +463,10 @@ class Renderer(object):
                 for it in sec["items"]:
                     t = esc(it["text"])
                     t = re.sub(r"^([^:]{1,40}):", r"<b>\1</b>:", t)
+                    ir = _refs.of(it)
                     o.append(f'<div class="a-it"><span class="n">{it["no"]}</span>'
-                             f'<span class="t">{t}</span></div>')
+                             f'<span{_refs.mark(ir and ir + ".text", "t")}>'
+                             f'{t}</span></div>')
                 o.append("</div></div>")
             o.append("</div></div>")
         o.append("</section>")
@@ -540,7 +555,14 @@ class Renderer(object):
 
 
 def write(cfg, data, build_dir, mirror=(), nomemo=False, sample=False, log=None):
-    _refs.index_lists(data, ("head", "deriv"))   # 클릭 편집용 자리표
+    # 클릭 편집용 자리표 — **워크북·정답까지** 넓혔다. 여기 안 든 자리는
+    # 작업대에서 클릭해도 아무 일이 안 일어난다(조용히).
+    _refs.index_paths(data, [
+        ("head",), ("deriv",),
+        ("more_with", "items"), ("vs_voca", "items"),
+        ("workbook", "sections", "items"),
+        ("answers", "sections", "items"),
+    ])
     r = Renderer(cfg, mirror=mirror, nomemo=nomemo, sample=sample)
     text = r.document(data)
     os.makedirs(build_dir, exist_ok=True)
