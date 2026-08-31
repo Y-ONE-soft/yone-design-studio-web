@@ -175,8 +175,10 @@ class WhitebookSeries(Series):
         want = -(-len(d["days"][0]["problems"]) // 4) if d["days"] else 0
         starts = []
         for i, t in enumerate(texts):
+            # ⚠ `probe.norm` 은 공백을 지운다 — 라벨도 같이 지워서 맞출 것.
+            nt = probe.norm(t)
             for D in d["days"]:
-                if f"DAY {D['day']:02d}" in probe.norm(t) and "EXERCISE" in t:
+                if f"DAY{D['day']:02d}" in nt and "EXERCISE" in nt:
                     starts.append((D["label"], i + 1))
                     break
         bad = [(a, b) for (a, b), (_c, e) in zip(starts, starts[1:])

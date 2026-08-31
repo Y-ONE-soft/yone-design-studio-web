@@ -157,8 +157,14 @@ def finish(pdf, spec, log=None, out=None):
     eol = spec.get("end_on_left")
     if eol:
         art = art_of(eol)
-        if art is not None and (doc.page_count + 1) % 2:
-            insert_page(doc, art, eol.get("page", 0), doc.page_count)
+        if (doc.page_count + 1) % 2:
+            if art is not None:
+                insert_page(doc, art, eol.get("page", 0), doc.page_count)
+            else:
+                # 아트워크가 없는 책(간지를 안 쓰는 계열)은 **빈 면**으로 맞춘다.
+                # 예전에는 조용히 아무것도 안 해서 홀수로 끝나는 판이 나갔다.
+                r = doc[doc.page_count - 1].rect
+                doc.new_page(width=r.width, height=r.height)
             marks["parity"] = doc.page_count
 
     # ④ 뒤 간지
