@@ -77,15 +77,22 @@ def of(obj, sub=""):
 
 
 def mark(ref, base=""):
-    """`class="<원래 클래스> vrefN" data-ref="…"` 를 만든다.
+    """`class="<원래 클래스> vrefN" id="vrefN" data-ref="…"` 를 만든다.
 
     `ref` 가 비면 **원래 클래스만** 돌려준다(자리표 없는 자리는 그대로 둔다).
+
+    세 가지를 다는 이유가 각각 다르다:
+      class  조판 결과 DOM 에 **남는 유일한 것** → 클릭한 자리를 되짚는 데 쓴다
+      id     조판 결과에도 남아 **그 자리로 이동**할 수 있다(검색 결과 → 지면)
+      data-ref  결과에는 안 남지만 **조판할 때는 있다** → 스타일 선택자로 쓸 수 있다
+             (`[data-ref="lessons.0.problems.3"]{break-before:page}` 처럼.
+              CSS 는 조판하는 동안 적용되므로 사라진 뒤여도 상관없다)
     """
     if not ref:
         return ' class="%s"' % base if base else ""
     n = _SEQ.setdefault(ref, len(_SEQ) + 1)
     cls = (base + " " if base else "") + "vref%d" % n
-    return ' class="%s" data-ref="%s"' % (cls, ref)
+    return ' class="%s" id="vref%d" data-ref="%s"' % (cls, n, ref)
 
 
 def table():

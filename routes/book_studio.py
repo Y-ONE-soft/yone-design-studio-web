@@ -255,6 +255,142 @@ def api_op():
                     "history": {"head": st["head"], "total": len(st["ops"])}})
 
 
+@bp.route("/api/book-studio/styles", methods=["GET", "POST"])
+def api_styles():
+    """단락 스타일 — 선택자 하나에 걸린 규칙을 읽고 쓴다.
+
+    인디자인의 단락 스타일에 해당한다: **하나를 고치면 그 스타일이 걸린 곳이 전부
+    바뀐다.** 우리는 조판이 CSS 라 그게 곧 규칙 하나를 고치는 일이다.
+    `config.json` 의 `styles` 절에 쌓고 `build/knobs.css` 로 나간다.
+    """
+    from core.render_vivlio import book as bookmod
+    from core.render_vivlio import knobs as kn
+    import json as _json
+    import shutil
+    get = request.method == "GET"
+    p = {} if get else (request.get_json(silent=True) or {})
+    d, meta = _book_dir(request.args.get("b") if get else p.get("b"))
+    if not d:
+        return jsonify({"error": "모르는 책"}), 404
+    cfg = bookmod.load(d)
+    if get:
+        return jsonify({"styles": cfg.section("styles") or {}})
+    sel = (p.get("selector") or "").strip()
+    if not sel or len(sel) > 200 or "{" in sel or "}" in sel:
+        return jsonify({"error": "이상한 선택자"}), 400
+    props = p.get("props")
+    if not isinstance(props, dict):
+        return jsonify({"error": "규칙이 없다"}), 400
+    for k, v in props.items():
+        if any(c in str(k) + str(v) for c in "{};<>"):
+            return jsonify({"error": f"이상한 값: {k}: {v}"}), 400
+    styles = dict(cfg.section("styles") or {})
+    cur = dict(styles.get(sel) or {})
+    for k, v in props.items():
+        if v in ("", None):
+            cur.pop(k, None)
+        else:
+            cur[k] = v
+    if cur:
+        styles[sel] = cur
+    else:
+        styles.pop(sel, None)
+    # config.json 은 손으로 맞춘 파일이라 **바뀐 자리만** 갈아 끼운다
+    path = cfg.path("config.json")
+    raw = open(path, encoding="utf-8").read()
+    try:
+        out = kn.patch_text(raw, {"styles": styles})
+    except Exception:
+        data = kn.apply(cfg.data, {"styles": styles})
+        out = _json.dumps(data, ensure_ascii=False, indent=2) + "\n"
+    shutil.copy2(path, path + ".bak")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(out)
+    return jsonify({"ok": True, "styles": styles})
+
+
+@bp.route("/api/book-studio/find", methods=["POST"])
+def api_find():
+    """전권 검색 · 바꾸기 — **지면이 아니라 원고에서** 찾는다.
+
+    지면에서 찾으면 지금 그려진 면만 보게 된다. 원고(data + 편집 이력)를 훑으면
+    전권이 대상이고, 바꾸기는 **되돌릴 수 있는 편집 연산**으로 쌓인다.
+    """
+    from core.render_vivlio import book as bookmod
+    from core.render_vivlio import edits as ed
+    from core.render_vivlio import refs as rf
+    from core.render_vivlio import richtext as rt
+    p = request.get_json(silent=True) or {}
+    d, meta = _book_dir(p.get("b"))
+    if not d:
+        return jsonify({"error": "모르는 책"}), 404
+    q = p.get("q") or ""
+    if not q:
+        return jsonify({"error": "찾을 말이 없다"}), 400
+    cfg = bookmod.load(d)
+    cur, _raw = ed.preview(cfg)
+    # 자리표를 심는 것과 **같은 자리들**만 찾는다 — 찾은 것을 고칠 수 있어야 하니까
+    hits = _scan(cur, q, bool(p.get("case")))
+    rep = p.get("replace")
+    if rep is None:
+        return jsonify({"hits": hits[:300], "total": len(hits)})
+    if not hits:
+        return jsonify({"ok": True, "changed": 0})
+    only = set(p.get("refs") or []) or None
+    n = 0
+    for h in hits:
+        if only and h["ref"] not in only:
+            continue
+        old = ed.get(cur, h["ref"])
+        txt = rt.to_text(old)
+        new = txt.replace(q, rep) if p.get("case") else _ireplace(txt, q, rep)
+        if new == txt:
+            continue
+        ed.push(cfg, {"op": "set", "ref": h["ref"],
+                      "v": rt.from_text(new, like=old), "note": "바꾸기"})
+        n += 1
+    st = ed.read(cfg)
+    return jsonify({"ok": True, "changed": n,
+                    "history": {"head": st["head"], "total": len(st["ops"])}})
+
+
+def _ireplace(s, a, b):
+    import re as _re
+    return _re.sub(_re.escape(a), lambda m: b, s, flags=_re.I)
+
+
+def _scan(data, q, case=False, path="", out=None, depth=0):
+    """글자가 들어 있는 자리를 훑는다. 자리표와 같은 점 경로를 돌려준다."""
+    from core.render_vivlio import richtext as rt
+    if out is None:
+        out = []
+    if depth > 12 or len(out) > 2000:
+        return out
+    def hit(text):
+        return (q in text) if case else (q.lower() in text.lower())
+    if isinstance(data, str):
+        if hit(data):
+            out.append({"ref": path, "text": data[:120]})
+        return out
+    if isinstance(data, dict):
+        if "t" in data and isinstance(data.get("t"), str):   # 서식 조각
+            return out
+        for k, v in data.items():
+            _scan(v, q, case, f"{path}.{k}" if path else k, out, depth + 1)
+        return out
+    if isinstance(data, list):
+        # 서식 조각 목록이면 **그 목록 전체**가 한 자리다
+        if data and all(isinstance(x, (str, dict)) for x in data) \
+                and any(isinstance(x, dict) and "t" in x for x in data):
+            t = rt.plain(data)
+            if hit(t):
+                out.append({"ref": path, "text": t[:120]})
+            return out
+        for i, v in enumerate(data):
+            _scan(v, q, case, f"{path}.{i}", out, depth + 1)
+    return out
+
+
 @bp.route("/api/book-studio/history", methods=["GET", "POST"])
 def api_history():
     """편집 이력 보기 / 되돌리기 · 다시 실행."""

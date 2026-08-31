@@ -182,6 +182,31 @@ def css_text(cfg, series):
             ":root {\n" + "\n".join(lines) + "\n}\n")
 
 
+def styles_text(cfg):
+    """`config.styles` → CSS 규칙. **단락 스타일 패널**이 여기에 쓴다.
+
+        "styles": {
+          ".head":  { "font-size": "9pt", "letter-spacing": "-0.01em" },
+          "[data-ref=\"lessons.0.problems.3\"]": { "break-before": "page" }
+        }
+
+    선택자를 그대로 쓴다 — 조판 규칙을 손보는 자리라 갇힌 목록으로는 모자란다.
+    ⚠ 값 검사는 브라우저(CSS 파서)에 맡긴다. 이상한 값은 그 규칙만 무시된다.
+    """
+    st = cfg.section("styles") or {}
+    out = []
+    for sel, props in st.items():
+        if not isinstance(props, dict) or not props:
+            continue
+        body = "\n".join("  %s: %s;" % (k, v) for k, v in props.items() if v != "")
+        if body:
+            out.append("%s {\n%s\n}" % (sel, body))
+    if not out:
+        return ""
+    return ("\n/* 단락 스타일 — 작업대의 스타일 패널이 쓴다. 손으로 고쳐도 되지만\n"
+            "   패널에서 다시 저장하면 덮어쓴다. */\n" + "\n".join(out) + "\n")
+
+
 def write(cfg, series, build_dir, name="knobs.css"):
     """`build/knobs.css` 를 쓴다. 덮어쓸 값이 없으면 **빈 파일**.
 
@@ -189,7 +214,8 @@ def write(cfg, series, build_dir, name="knobs.css"):
     달라져서 회귀 대조가 어려워진다.
     """
     from core.render_vivlio import stage
-    return stage.write_css(build_dir, name, css_text(cfg, series))
+    return stage.write_css(build_dir, name,
+                           css_text(cfg, series) + styles_text(cfg))
 
 
 # ── 값 바꾸기 (편집기·CLI 공용) ───────────────────────────────────

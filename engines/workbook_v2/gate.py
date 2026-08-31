@@ -2500,10 +2500,15 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                     and _nx is not None
                     and _is_q_boundary_style(ps[_nx].get("s") or "")):
                 continue
+            # W83: 서술형 발문의 '본문'은 **답란**이다 (빈 단락이라 내용
+            # 검사만으로는 안 보인다). 답란을 건너뛰면 다음 문항의 본문을
+            # 제 본문으로 잡아 멀쩡한 지면을 고아로 지목한다 — 수능만만
+            # 09강 실측 18건 전부 이 형태였다.
             body = next((j for j in range(i + 1, len(ps))
-                         if _clean(ps[j].get("t", ""))
-                         and not _is_q_boundary_style(
-                             ps[j].get("s") or "")), None)
+                         if ("답란" in (ps[j].get("s") or "")
+                             or (_clean(ps[j].get("t", ""))
+                                 and not _is_q_boundary_style(
+                                     ps[j].get("s") or "")))), None)
             if body is None:
                 continue
             stem_last = offs[i] + max(0, len(ps[i].get("t", "")) - 1)

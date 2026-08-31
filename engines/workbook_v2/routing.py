@@ -305,7 +305,9 @@ def rescue_unrouted_step3(manuscript_dir, data, log, candidates=None):
             log(f"[라우팅] ⚠️ Step3 구제 대상이 이미 있습니다 — 건너뜀: "
                 f"{fname}")
             continue
-        shutil.copy2(src, dest)
+        # 사본이 아니라 **옮긴다** — 루트에 남으면 '어느 스텝에도 안 쓰인
+        # 원고'로 완제품 게이트가 지목한다 (수능만만 09강 재조판 실측)
+        shutil.move(src, dest)
         rescued.append(dest_name)
         log(f"[라우팅] Step3 구조 구제: '{fname}' → Step3/{dest_name} "
             f"(번호 발문 {prompts}개 / ①선지 {choices}줄 — 파일명에 스텝3 "

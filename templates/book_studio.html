@@ -165,6 +165,12 @@
     <div class="ide-sep"></div>
 
     <div class="ide-grp">
+      <button class="ide-b" id="ide-find-t" title="찾기·바꾸기 ⌘F">🔍 찾기</button>
+      <button class="ide-b" id="ide-brk" title="고른 자리에서 쪽 넘기기">쪽 나눔</button>
+    </div>
+    <div class="ide-sep"></div>
+
+    <div class="ide-grp">
       <button class="ide-b" id="ide-scope" title="견본만 볼지 전권을 볼지">견본</button>
       <button class="ide-b" id="ide-reload" title="다시 조판">다시 조판</button>
       <button class="ide-b" id="ide-pal-t" title="팔레트 접기">팔레트</button>
@@ -192,6 +198,30 @@
       <details class="ide-pal" open><summary>선택한 것</summary>
         <div class="ide-in" id="pal-sel">
           <div class="ide-hint">지면에서 무언가를 클릭하면 여기 나옵니다.</div>
+        </div>
+      </details>
+      <details class="ide-pal" open><summary>단락 스타일</summary>
+        <div class="ide-in" id="pal-style">
+          <div class="ide-hint">지면에서 무언가를 클릭하면 그 자리에 걸린
+            스타일이 나옵니다. 여기서 고치면 <b>같은 스타일이 걸린 곳이 전부</b>
+            바뀝니다.</div>
+        </div>
+      </details>
+      <details class="ide-pal" id="pal-find-box"><summary>찾기 · 바꾸기</summary>
+        <div class="ide-in">
+          <div class="ide-row">
+            <input class="ide-t" id="find-q" placeholder="찾을 말">
+          </div>
+          <div class="ide-row">
+            <input class="ide-t" id="find-r" placeholder="바꿀 말 (비우면 찾기만)">
+          </div>
+          <div class="ide-f" style="margin-bottom:8px">
+            <button class="ide-b" id="find-go">찾기</button>
+            <button class="ide-b" id="find-all">모두 바꾸기</button>
+            <label class="ide-hint" style="display:flex;gap:4px;align-items:center">
+              <input type="checkbox" id="find-case"> 대소문자</label>
+          </div>
+          <div class="ide-hist" id="find-out"></div>
         </div>
       </details>
       <details class="ide-pal" open><summary>색</summary>
@@ -224,6 +254,7 @@
   var V = window.VivlioCore, viewer = null;
   var spec = [], changed = {}, refs = {}, curRef = null, editEl = null, editHtml = null;
   var tool = 'sel', scope = 'sample', spread = false, zoom = 1, pageCount = 0;
+  var curEl = null, styles = {};
   var $ = function (id) { return document.getElementById(id); };
   function msg(t) { $('ide-msg').textContent = t || ''; }
   function api(u, body) {
@@ -296,13 +327,166 @@
   }
 
   function pick(el, ref) {
-    curRef = ref;
-    var kind = ref.split('.').slice(-1)[0];
+    curRef = ref; curEl = el;
     $('pal-sel').innerHTML =
       '<div class="ide-lab"><span>' + kindName(ref) + '</span></div>'
       + '<div class="ide-hint" style="font-family:var(--mono)">' + ref + '</div>';
+    drawStyle(el);
     if (tool === 'text' || tool === 'para') openEdit(el, ref);
     else msg('고른 것: ' + kindName(ref) + ' — 고치려면 왼쪽에서 T(글자)를 누르세요');
+  }
+
+  // ── 단락 스타일 ─────────────────────────────────────────
+  // 인디자인의 단락 스타일에 해당한다. 우리 조판은 CSS 라, 그 자리에 걸린
+  // **클래스 하나를 고치면 같은 스타일이 걸린 곳이 전부** 바뀐다.
+  var STYLE_PROPS = [
+    { k: 'font-size', l: '글자 크기', ph: '9pt' },
+    { k: 'line-height', l: '행간', ph: '1.5' },
+    { k: 'letter-spacing', l: '자간', ph: '-0.01em' },
+    { k: 'color', l: '글자 색', ph: '#231f20', color: true },
+    { k: 'background', l: '바탕', ph: '#f1f4f8', color: true },
+    { k: 'text-align', l: '정렬', ph: 'justify' },
+    { k: 'margin-top', l: '위 여백', ph: '2mm' },
+    { k: 'margin-bottom', l: '아래 여백', ph: '2mm' },
+    { k: 'text-indent', l: '들여쓰기', ph: '3mm' }
+  ];
+
+  function styleSelectors(el) {
+    // 이 자리에 걸린 클래스들 — 자리표(vrefN)는 뺀다(그건 우리 표식이다)
+    var out = [], seen = {};
+    var node = el;
+    for (var d = 0; node && d < 4; d++, node = node.parentElement) {
+      var c = (typeof node.className === 'string') ? node.className : '';
+      c.split(/\s+/).forEach(function (x) {
+        if (!x || /^vref\d+$/.test(x) || seen[x]) return;
+        seen[x] = 1; out.push('.' + x);
+      });
+    }
+    return out;
+  }
+
+  function drawStyle(el) {
+    var host = $('pal-style');
+    var sels = styleSelectors(el);
+    if (!sels.length) {
+      host.innerHTML = '<div class="ide-hint">이 자리에는 스타일 이름이 없습니다.</div>';
+      return;
+    }
+    host.innerHTML = '';
+    var pick = document.createElement('select');
+    pick.className = 'ide-sel'; pick.style.width = '100%';
+    sels.forEach(function (x) {
+      var o = document.createElement('option'); o.value = x; o.textContent = x;
+      pick.appendChild(o);
+    });
+    var only = document.createElement('label');
+    only.className = 'ide-hint';
+    only.style.cssText = 'display:flex;gap:5px;align-items:center;margin:6px 0';
+    only.innerHTML = '<input type="checkbox" id="style-only"> 이 자리에만 (스타일 전체가 아니라)';
+    host.appendChild(pick); host.appendChild(only);
+    var body = document.createElement('div');
+    host.appendChild(body);
+    var note = document.createElement('div');
+    note.className = 'ide-hint';
+    note.style.marginTop = '6px';
+    host.appendChild(note);
+
+    function selectorNow() {
+      return $('style-only').checked
+        ? '[data-ref="' + curRef + '"]' : pick.value;
+    }
+    function fill() {
+      var cs = getComputedStyle(el);
+      var sel = selectorNow();
+      var saved = (styles[sel] || {});
+      body.innerHTML = '';
+      STYLE_PROPS.forEach(function (pr) {
+        var row = document.createElement('div'); row.className = 'ide-row';
+        var lab = document.createElement('div'); lab.className = 'ide-lab';
+        var now = saved[pr.k];
+        lab.innerHTML = '<span>' + pr.l
+          + (now ? '<span class="ide-dot" title="이 책에서 정한 값"></span>' : '')
+          + '</span><span class="ide-val">' + (cs[pr.k] || '') .toString().slice(0, 18)
+          + '</span>';
+        var f = document.createElement('div'); f.className = 'ide-f';
+        var t = document.createElement('input');
+        t.className = 'ide-t'; t.placeholder = pr.ph; t.value = now || '';
+        t.dataset.k = pr.k;
+        f.appendChild(t);
+        if (pr.color) {
+          var c = document.createElement('input'); c.type = 'color';
+          try { c.value = now || '#000000'; } catch (e) {}
+          c.addEventListener('change', function () { t.value = c.value; });
+          f.appendChild(c);
+        }
+        row.appendChild(lab); row.appendChild(f);
+        body.appendChild(row);
+      });
+      note.textContent = $('style-only').checked
+        ? '이 한 자리에만 걸립니다.'
+        : sel + ' 이 걸린 곳이 전부 바뀝니다.';
+      var save = document.createElement('button');
+      save.className = 'ide-b'; save.textContent = '스타일 저장';
+      save.style.marginTop = '4px';
+      save.onclick = function () {
+        var props = {};
+        Array.prototype.forEach.call(body.querySelectorAll('input[data-k]'),
+          function (i) { props[i.dataset.k] = i.value.trim(); });
+        api('/api/book-studio/styles',
+            { b: key, selector: selectorNow(), props: props }).then(function (d) {
+          if (d.error) { msg('✗ ' + d.error); return; }
+          styles = d.styles || {};
+          rebuild('').then(function (ok) { if (ok) msg('✓ 스타일 저장'); });
+        });
+      };
+      body.appendChild(save);
+    }
+    pick.addEventListener('change', fill);
+    only.querySelector('input').addEventListener('change', fill);
+    fill();
+  }
+
+  /** 쪽 나눔 — 고른 자리 **앞에서** 면을 넘긴다. 스타일 한 줄이면 된다. */
+  function pageBreak() {
+    if (!curRef) { msg('먼저 지면에서 자리를 클릭하세요'); return; }
+    var sel = '[data-ref="' + curRef + '"]';
+    var on = !(styles[sel] && styles[sel]['break-before'] === 'page');
+    api('/api/book-studio/styles',
+        { b: key, selector: sel,
+          props: { 'break-before': on ? 'page' : '' } }).then(function (d) {
+      if (d.error) { msg('✗ ' + d.error); return; }
+      styles = d.styles || {};
+      rebuild('').then(function (ok) {
+        if (ok) msg(on ? '✓ 여기서 쪽을 넘깁니다' : '✓ 쪽 나눔을 뗐습니다');
+      });
+    });
+  }
+
+  // ── 찾기 · 바꾸기 ───────────────────────────────────────
+  // 지면이 아니라 **원고**에서 찾는다 — 지면은 지금 그려진 면만 있다.
+  function find(replaceAll) {
+    var q = $('find-q').value;
+    if (!q) { msg('찾을 말을 적으세요'); return; }
+    var body = { b: key, q: q, case: $('find-case').checked };
+    if (replaceAll) body.replace = $('find-r').value;
+    api('/api/book-studio/find', body).then(function (d) {
+      if (d.error) { msg('✗ ' + d.error); return; }
+      if (replaceAll) {
+        setHist(d.history);
+        $('find-out').innerHTML = '<div>' + d.changed + '곳 바꿨습니다 — ↶ 로 되돌릴 수 있습니다</div>';
+        rebuild('').then(function (ok) { if (ok) msg('✓ ' + d.changed + '곳 바꿈'); });
+        return;
+      }
+      var hits = d.hits || [];
+      $('find-out').innerHTML = hits.length
+        ? hits.map(function (h, i) {
+            return '<div><a href="#" data-ref="' + h.ref + '" style="color:#8faaff">'
+              + (i + 1) + '. ' + kindName(h.ref) + '</a> '
+              + h.text.replace(/[<>&]/g, '') .slice(0, 46) + '</div>';
+          }).join('')
+        : '<div class="ide-hint">없습니다.</div>';
+      msg(d.total + '곳 찾음');
+    });
   }
 
   function kindName(ref) {
@@ -536,6 +720,8 @@
     });
     api('/api/book-studio/overrides?b=' + encodeURIComponent(key))
       .then(function (d) { $('pal-css').value = d.css || ''; });
+    api('/api/book-studio/styles?b=' + encodeURIComponent(key))
+      .then(function (d) { styles = d.styles || {}; });
     loadHist(null);
   }
 
@@ -583,6 +769,31 @@
     rebuild('');
   });
   $('ide-reload').addEventListener('click', function () { rebuild(''); });
+  $('ide-brk').addEventListener('click', pageBreak);
+  $('ide-find-t').addEventListener('click', function () {
+    var box = $('pal-find-box');
+    box.open = true; $('ide-right').classList.remove('hide');
+    box.scrollIntoView({ block: 'nearest' }); $('find-q').focus();
+  });
+  $('find-go').addEventListener('click', function () { find(false); });
+  $('find-all').addEventListener('click', function () {
+    if (!confirm('전권에서 모두 바꿉니다. 되돌리기로 살릴 수 있습니다.')) return;
+    find(true);
+  });
+  $('find-q').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') find(false);
+  });
+  $('find-out').addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[data-ref]');
+    if (!a) return;
+    e.preventDefault();
+    var ref = a.dataset.ref;
+    // 자리표 번호를 찾아 그 자리로 지면을 옮긴다
+    var n = null;
+    for (var k in refs) if (refs[k] === ref) { n = k; break; }
+    if (n && viewer) { viewer.navigateToInternalUrl('#vref' + n); msg('그 자리로 옮겼습니다'); }
+    else msg('견본에는 그 자리가 없습니다 — 전권으로 보세요');
+  });
   $('ide-pal-t').addEventListener('click', function () {
     $('ide-right').classList.toggle('hide');
   });
@@ -615,6 +826,9 @@
       if (mod && 'bui'.indexOf((e.key || '').toLowerCase()) >= 0) {
         e.preventDefault(); wrapSel(e.key.toLowerCase()); return; }
       return;                                   // 편집 중엔 단축키를 가로채지 않는다
+    }
+    if (mod && (e.key || '').toLowerCase() === 'f') {
+      e.preventDefault(); $('ide-find-t').click(); return;
     }
     if (mod && (e.key || '').toLowerCase() === 'z') {
       e.preventDefault(); (e.shiftKey ? $('ide-redo') : $('ide-undo')).click(); return;
