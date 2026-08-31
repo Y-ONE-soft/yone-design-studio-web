@@ -126,9 +126,19 @@ def hdr_ans(label):
             f'<span class="d">{html.escape(label)}</span></div></div>')
 
 
-def foot(label):
-    """꼬리말 — 색이 셋이라 마진 박스 하나로는 안 된다 → running 요소."""
-    return (f'<div class="foot"><span class="lb">{html.escape(label)}</span>'
+def foot_left(brand):
+    """짝수(왼쪽) 면 꼬리말 — 쪽번호 + 교재명. **어느 면이든 같다** → 한 번만.
+
+    색이 셋이라 마진 박스 하나로는 안 된다 → running 요소.
+    """
+    return ('<div class="footL"><span class="pg"></span>'
+            '<span class="bar">|</span>'
+            f'<span class="lb">{html.escape(brand)}</span></div>')
+
+
+def foot_right(label):
+    """홀수(오른쪽) 면 꼬리말 — 섹션 라벨 + 쪽번호."""
+    return (f'<div class="footR"><span class="lb">{html.escape(label)}</span>'
             '<span class="bar">|</span><span class="pg"></span></div>')
 
 
@@ -199,12 +209,13 @@ def document(cfg, data, mode=None):
                  '.q{height:auto!important;break-before:page}</style>'
                  % metrics_of(cfg)["col_w"])
     o.append('</head><body>')
+    o.append(foot_left(cfg.book.get("brand", "")))
 
     for D in data["days"]:
         lab = D["label"]
         o.append('<section class="sec sec-q">')
         o.append(f'<div class="secmark">{html.escape(lab)}</div>')
-        o.append(foot(lab))
+        o.append(foot_right(lab))
         o.append(hdr_day(lab))
         o.append('<div class="qgrid">')
         for it in D["problems"]:
@@ -216,7 +227,7 @@ def document(cfg, data, mode=None):
             lab = D["label"]
             o.append('<section class="sec sec-a">')
             o.append(f'<div class="secmark">{html.escape(lab)}</div>')
-            o.append(foot(lab))
+            o.append(foot_right(lab))
             o.append(hdr_ans(lab))
             o.append('<div class="answers">')
             for a in D["answers"]:
