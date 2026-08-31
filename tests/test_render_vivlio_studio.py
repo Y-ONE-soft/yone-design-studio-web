@@ -606,6 +606,44 @@ def test_history_is_readable():
     assert '"글 고침"' in src and '"label"' in src
 
 
+# ── 인디자인 관례 ─────────────────────────────────────────────
+def test_regex_find_reports_a_bad_pattern():
+    """조용히 0건이면 글이 없는 건지 식이 틀린 건지 알 수 없다."""
+    src = _routes_src()
+    assert "정규식이 틀렸습니다" in src
+
+
+def test_regex_scan_works():
+    import re as _re
+    from routes.book_studio import _scan
+    d = {"a": ["2024년 3월", "그냥 글"]}
+    assert len(_scan(d, "", rx=_re.compile(r"\d{4}년"))) == 1
+    assert len(_scan(d, "", rx=_re.compile(r"^그냥"))) == 1
+
+
+def test_shortcuts_follow_indesign():
+    src = _studio_src()
+    for need in ("k === 'f'", "k === 's'", "k === '0'", "k === '1'",
+                 "k === ';'", "ArrowRight", "PageDown"):
+        assert need in src, f"단축키 {need} 없음"
+
+
+def test_undo_works_while_editing():
+    """⌘Z 는 **어디서든** 먹어야 한다 — 글을 고치는 중이라도."""
+    src = _studio_src()
+    i = src.index("function onKey(e)")
+    head = src[i:i + 1400]
+    assert head.index("k === 'z'") < head.index("if (editEl) {"), \
+        "되돌리기가 편집 블록 안에 갇혔다"
+
+
+def test_zoom_shows_percent():
+    """몇 %인지 보여야 '이 정도면 되겠다' 를 판단할 수 있다."""
+    src = _studio_src()
+    assert "function setZoom(" in src and "Math.round(zoom * 100)" in src
+    assert "wheel" in src, "⌥휠 확대·축소"
+
+
 # ── 클로드 칸 ─────────────────────────────────────────────────
 # 모델에게 리포를 통째로 열어 주면 안 된다 — 계열 코드를 고치면 그 계열 책이
 # 전부 흔들리고, 원고를 고치면 납품본과 글이 달라진다. 손댈 수 있는 곳은

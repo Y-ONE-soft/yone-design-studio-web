@@ -110,25 +110,53 @@ class FinalSeries(Series):
 
     # ── 축소율 ──
     def _cap(self, kind, m):
-        return {"slot": m["slot"], "col": m["body_h"],
-                "page": m["body_h"] - 1.0}[render_mod.SLOT_KIND[kind]]
+        """그 지문이 쓸 수 있는 높이(mm) — 안전 여유를 뺀 값.
+
+        ⚠ 잉크 바닥으로 잰 높이는 상자 높이보다 조금 작다. 여유를 안 두면
+          "재 보니 들어가는데 조판하면 다음 면으로 밀리는" 일이 생긴다
+          (중요어휘 250330: 잰 값 248.9, 판면 252.6 인데 요약이 밀렸다).
+        """
+        kind = render_mod.SLOT_KIND[kind]
+        if kind == "slot":
+            return m["slot"] - 0.5
+        if kind == "col":
+            return m["body_h"] - 1.0
+        return m["vocab_avail"] - m["vocab_safety"]
 
     def _fits(self, d, vol, heights, m, log):
-        """칸을 넘는 지문만 활자를 줄인다. 하한(min_pt)에 닿으면 그대로 둔다."""
+        """칸을 넘는 지문 처리 — ① 활자 축소, ② 그래도 안 되면 **두 칸**.
+
+        인디자인 경로는 ①만 하고, 그래도 넘치면 지면 밖으로 흘려 보냈다
+        (완성본 광문2 Vol1 = 오버플로우 7건, 실제로 글이 잘려 나간다).
+        여기서는 ② 로 물러서서 **글을 잃지 않는다.**
+        """
         fits = {}
         for key, sec, _b in self._keys(d, vol):
             nat = heights.get(key)
             cap = self._cap(sec["kind"], m)
-            if not nat or nat <= cap - 0.5:
+            if not nat or nat <= cap:
                 continue
-            want = m["base_pt"] * (cap - 0.5) / nat
-            step = m["step_pt"]
-            fs = max(m["min_pt"], (int(want / step)) * step)
-            if fs < m["base_pt"] - 1e-6:
-                fits[key] = round(fs, 2)
+            step, lo = m["step_pt"], m["min_pt"]
+            want = m["base_pt"] * cap / nat
+            if want >= lo:
+                fits[key] = {"pt": round(int(want / step) * step, 2)}
+                continue
+            if render_mod.SLOT_KIND[sec["kind"]] == "slot":
+                cap2 = 2 * m["slot"] - 0.5
+                if nat <= cap2:
+                    fits[key] = {"span": 2}
+                else:
+                    w2 = m["base_pt"] * cap2 / nat
+                    fits[key] = {"span": 2,
+                                 "pt": round(max(lo, int(w2 / step) * step), 2)}
+            else:
+                fits[key] = {"pt": lo}      # 하한 — 검수가 결함으로 잡는다
         if fits:
-            log(f"  [맞춤] 칸을 넘는 지문 {len(fits)}개 활자 축소 "
-                f"(최소 {min(fits.values()):.1f}pt)")
+            sh = [f["pt"] for f in fits.values() if f.get("pt")]
+            sp = sum(1 for f in fits.values() if f.get("span") == 2)
+            log(f"  [맞춤] 칸을 넘는 지문 {len(fits)}개 — 활자 축소 {len(sh)}"
+                + (f"(최소 {min(sh):.1f}pt)" if sh else "")
+                + (f" · 두 칸 {sp}" if sp else ""))
         else:
             log("  [맞춤] 넘치는 지문 없음")
         return fits
@@ -139,12 +167,28 @@ class FinalSeries(Series):
         for key, sec, b in self._keys(d, vol):
             nat = heights.get(key)
             cap = self._cap(sec["kind"], m)
-            if key in fits or (nat and nat > cap - 0.5):
+            f = fits.get(key)
+            if f or (nat and nat > cap):
                 rows.append({"key": key, "section": sec["title"],
                              "header": b["header"], "natural_mm": nat,
-                             "cap_mm": cap, "pt": fits.get(key)})
-        with open(cfg.path(f"fit{vol}.json"), "w", encoding="utf-8") as f:
-            json.dump(rows, f, ensure_ascii=False, indent=1)
+                             "cap_mm": round(cap, 1),
+                             "pt": (f or {}).get("pt"),
+                             "span": (f or {}).get("span", 1),
+                             "fits": bool(f) and (
+                                 nat <= cap * (((f.get("pt") or m["base_pt"])
+                                                / m["base_pt"]) ** -1)
+                                 if False else self._ok(nat, cap, f, m))})
+        with open(cfg.path(f"fit{vol}.json"), "w", encoding="utf-8") as fh:
+            json.dump(rows, fh, ensure_ascii=False, indent=1)
+
+    @staticmethod
+    def _ok(nat, cap, f, m):
+        """축소·두 칸을 적용하고 나면 정말 들어가는가."""
+        if not f:
+            return nat <= cap
+        cap2 = cap if f.get("span", 1) == 1 else 2 * m["slot"] - 0.5
+        pt = f.get("pt") or m["base_pt"]
+        return nat * pt / m["base_pt"] <= cap2 + 0.05
 
     # ── 배치 ──
     @staticmethod

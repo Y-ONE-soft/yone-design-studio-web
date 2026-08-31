@@ -29,6 +29,8 @@ DEFAULT_METRICS = {
     "body_top": 29.57,    # 판면 위 (배열·삽입·어법·영작)
     "body_h": 253.0,      # 판면 높이
     "vocab_top": 30.0,    # 판면 위 (중요어휘)
+    "vocab_avail": 252.57,   # 중요어휘 면이 실제로 주는 높이(303-30-20.43)
+    "vocab_safety": 4.0,     # 잉크 바닥 ↔ 상자 바닥 차이만큼의 여유
     "base_pt": 8.5,       # 본문 활자
     "min_pt": 7.0,        # 축소 하한 — 여기까지 줄여도 안 들어가면 결함
     "step_pt": 0.1,       # 축소 눈금
@@ -97,8 +99,20 @@ def _item(text):
 
 
 # ------------------------------------------------------------------ 조각
-def _fit_style(fs):
-    return "" if not fs else f' style="font-size:{fs:.2f}pt"'
+def _open_blk(fit, base="blk"):
+    cls = base + (" tall" if (fit or {}).get("span") == 2 else "")
+    st = (f' style="font-size:{fit["pt"]:.2f}pt"'
+          if fit and fit.get("pt") else "")
+    return f'<div class="{cls}"{st}>'
+
+
+def _fit_attrs(fit):
+    """축소·두 칸 지정 → HTML 속성. `fit` 은 {"pt":…, "span":2} 또는 None."""
+    if not fit:
+        return ""
+    cls = ' class="blk tall"' if fit.get("span") == 2 else ""
+    st = f' style="font-size:{fit["pt"]:.2f}pt"' if fit.get("pt") else ""
+    return cls + st
 
 
 def band(sec, flow=False):
@@ -136,8 +150,8 @@ ANSLINE = ('<p class="ansline"><span class="ar">&#xFF1E;</span>'
 
 
 # ------------------------------------------------------------------ 블록
-def blk_arrange(b, fs=None, mark=""):
-    o = [f'<div class="blk"{_fit_style(fs)}>',
+def blk_arrange(b, fit=None, mark=""):
+    o = [_open_blk(fit),
          f'<h3{mark}>{esc(b["header"])}</h3>']
     if b.get("given"):
         o.append(f'<div class="given">{esc(b["given"])}</div>')
@@ -148,8 +162,8 @@ def blk_arrange(b, fs=None, mark=""):
     return "".join(o)
 
 
-def blk_insert(b, fs=None, mark=""):
-    o = [f'<div class="blk"{_fit_style(fs)}>',
+def blk_insert(b, fit=None, mark=""):
+    o = [_open_blk(fit),
          f'<h3{mark}>{esc(b["header"])}</h3>']
     if b.get("prompt"):
         o.append(f'<p class="prompt">{esc(b["prompt"])}</p>')
@@ -161,13 +175,13 @@ def blk_insert(b, fs=None, mark=""):
     return "".join(o)
 
 
-def blk_vocab(b, fs=None, mark=""):
+def blk_vocab(b, fit=None, mark=""):
     """지문 행 + 요약 행. 두 행이라 좌우 `>>내용요약` 이 저절로 맞는다."""
     def cell(kind, paras, fn):
         body = "".join(f'<p class="vp">{fn(p)}</p>' for p in paras)
         return f'<div class="{kind}"><div class="vcell">{body}</div></div>'
 
-    o = [f'<div class="blk blk-vocab"{_fit_style(fs)}>',
+    o = [_open_blk(fit, "blk blk-vocab"),
          f'<h3{mark}>{esc(b["header"])}</h3>',
          '<div class="vpair">',
          cell("l", b["passage"], inl_cloze),
@@ -185,14 +199,14 @@ def blk_vocab(b, fs=None, mark=""):
     return "".join(o)
 
 
-def blk_grammar(b, fs=None, mark=""):
-    return (f'<div class="blk"{_fit_style(fs)}>'
-            f'<h3{mark}>{esc(b["header"])}</h3>'
-            f'<p class="body">{inl_grammar(b["body"])}</p></div>')
+def blk_grammar(b, fit=None, mark=""):
+    return (_open_blk(fit)
+            + f'<h3{mark}>{esc(b["header"])}</h3>'
+            + f'<p class="body">{inl_grammar(b["body"])}</p></div>')
 
 
-def blk_writing(b, fs=None, mark=""):
-    o = [f'<div class="blk"{_fit_style(fs)}>',
+def blk_writing(b, fit=None, mark=""):
+    o = [_open_blk(fit),
          f'<h3{mark}>{esc(b["header"])}</h3>']
     for p in b["pairs"]:
         o.append('<div class="wpair">'
