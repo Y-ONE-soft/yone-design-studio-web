@@ -50,7 +50,7 @@ METRICS = {
     # 형광펜 = 굵은 밑줄. 인디자인 UnderlineWeight 9 / Offset −3 이고, 실측하면
     # **획 중심이 기준선 3pt 위**다. CSS 는 밑줄의 **윗변**을 offset 으로 잡으므로
     # offset = −(중심 + 두께/2) = −7.5pt 가 되어야 글자 위에 얹힌다.
-    "hl_weight": 9.0, "hl_center": 3.0,
+    "hl_weight": 9.0, "hl_center": 2.75,
     "rule_y": 148.0,
     "chip": [16.0, 2.71], "chip_pic_x": 56.5, "chip_trn_x": 114.0,
     "chip_y": 145.2,

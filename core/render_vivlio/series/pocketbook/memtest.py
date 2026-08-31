@@ -444,8 +444,11 @@ def attach(rows, sources, log=None, place="auto"):
         log("■ 리뷰테스트 원고에서 읽어 낸 지문이 없다")
         return rows
     out, book_tail, hit, miss, total = [], [], 0, [], 0
+    # 번호는 계열마다 따로 센다. 묶음(run)마다 세면 지문 순서가 흔들릴 때
+    # 같은 단원이 여러 토막으로 갈려 번호가 여러 번 1로 돌아간다.
+    seq = {}
     for kind, group in _runs(rows):
-        no, sect_tail = 1, []
+        no, sect_tail = seq.get(kind, 1), []
         for row in group:
             out.append(row)
             if kind == "memtest":
@@ -464,7 +467,8 @@ def attach(rows, sources, log=None, place="auto"):
                 out += pages
             else:
                 sect_tail += pages
-        total += no - 1
+        total += no - seq.get(kind, 1)
+        seq[kind] = no
         out += sect_tail
     out += book_tail
     log("■ 암기 TEST — 지문 %d개에 붙였다(빈칸 %d개, 원고 %d지문)"
