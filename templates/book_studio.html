@@ -357,6 +357,7 @@
   //   또 실으면 그쪽 기준으로 계산돼 판이 달라진다.
   var V = null, viewer = null;
   var spec = [], changed = {}, refs = {}, curRef = null, editEl = null, editHtml = null;
+  var editPlain = false, msgExtra = '';
   var tool = 'sel', scope = 'sample', spread = false, zoom = 1, pageCount = 0;
   var curEl = null, styles = {}, styleNames = {}, curPage = 1, ready = false;
 
@@ -418,6 +419,7 @@
   function drawPageNo() {
     curPage = pageNow();
     $('ide-pageno').textContent = curPage + ' / ' + (pageCount || '–');
+    if (typeof drawPages === 'function') drawPages();
   }
   var $ = function (id) { return document.getElementById(id); };
 
@@ -596,57 +598,219 @@
   }
 
   // ── 지면 클릭 ───────────────────────────────────────────
+  /** 자리표가 붙은 조상들 — 안쪽부터 바깥쪽 순. */
+  function chain(el, st) {
+    var out = [];
+    while (el && el !== st) {
+      var m = (typeof el.className === 'string')
+        ? el.className.match(/(?:^|\s)vref(\d+)(?:\s|$)/) : null;
+      if (m && refs[m[1]]) out.push({ el: el, ref: refs[m[1]] });
+      el = el.parentNode;
+    }
+    return out;
+  }
+
   function hookStage() {
     var st = stageEl();
     if (!st || st.__hooked) return;
     st.__hooked = true;
+
+    // 인디자인과 같은 규칙:
+    //   한 번  → **덩어리**(가장 바깥 자리표). 지문 상자면 상자 전체.
+    //   두 번  → 그 안으로 한 단계. 한 단락만 고치고 싶을 때.
+    //   빈 곳  → 선택을 푼다.
     st.addEventListener('click', function (ev) {
-      // ⚠ **고치고 있는 글 안을 누른 것이면 손대지 않는다.**
-      //   예전에는 누를 때마다 다시 골라서 편집기를 새로 열었고, 그 바람에
-      //   커서가 매번 글 끝으로 튀었다 — 드래그도 더블클릭도 소용없이
-      //   "문장은 안 잡히고 단락만 잡히는" 상태가 됐다. 글을 고르는 것은
-      //   브라우저가 알아서 한다.
       if (editEl && (editEl === ev.target || editEl.contains(ev.target))) return;
-      var el = ev.target;
-      while (el && el !== st) {
-        var m = (typeof el.className === 'string')
-          ? el.className.match(/(?:^|\s)vref(\d+)(?:\s|$)/) : null;
-        if (m && refs[m[1]]) { ev.preventDefault(); pick(el, refs[m[1]]); return; }
-        el = el.parentNode;
+      var c = chain(ev.target, st);
+      if (!c.length) { deselect(); return; }        // 빈 곳
+      ev.preventDefault();
+      var hit = c[c.length - 1];                    // 가장 바깥
+      if (curEl && c.length > 1) {
+        // 이미 그 덩어리를 골라 둔 상태면 한 단계 안으로
+        for (var i = c.length - 1; i > 0; i--) {
+          if (c[i].el === curEl) { hit = c[i - 1]; break; }
+        }
       }
+      pick(hit.el, hit.ref);
+    }, true);
+
+    st.addEventListener('dblclick', function (ev) {
+      var c = chain(ev.target, st);
+      if (!c.length) return;
+      ev.preventDefault();
+      pick(c[0].el, c[0].ref);                      // 가장 안쪽으로
+      if (tool !== 'sel') openEdit(c[0].el, c[0].ref);
     }, true);
   }
 
-  function pick(el, ref) {
-    curRef = ref; curEl = el;
+  function deselect() {
+    closeEdit(true);
+    curRef = null; curEl = null; styleTarget = '';
     $('pal-sel').innerHTML =
-      '<div class="ide-lab"><span>' + kindName(ref) + '</span></div>'
-      + '<div class="ide-hint" style="font-family:var(--mono)">' + ref + '</div>';
-    drawStyle(el);
-    if (tool === 'text' || tool === 'para') openEdit(el, ref);
-    else msg('고른 것: ' + kindName(ref) + ' — 고치려면 왼쪽에서 T(글자)를 누르세요');
+      '<div class="ide-hint">지면에서 무언가를 클릭하면 여기 나옵니다.</div>';
+    drawPanels();
+    msg('');
   }
 
-  // ── 단락 스타일 ─────────────────────────────────────────
-  // 인디자인의 단락 스타일에 해당한다. 우리 조판은 CSS 라, 그 자리에 걸린
-  // **클래스 하나를 고치면 같은 스타일이 걸린 곳이 전부** 바뀐다.
-  var STYLE_PROPS = [
-    { k: 'font-size', l: '글자 크기', u: 'pt' },
-    { k: 'line-height', l: '행간', ratio: true },
-    { k: 'letter-spacing', l: '자간' },
-    { k: 'color', l: '글자 색', color: true },
-    { k: 'background-color', l: '바탕', color: true },
-    { k: 'text-align', l: '정렬' },
-    { k: 'margin-top', l: '위 여백', u: 'mm' },
-    { k: 'margin-bottom', l: '아래 여백', u: 'mm' },
-    { k: 'text-indent', l: '들여쓰기', u: 'mm' }
+  var SRC_WORD = { data: '원고', config: '책 설정', fixed: '조판이 만든 것' };
+  function srcOf(ref) {
+    if (!ref) return '';
+    if (ref.charAt(0) === '#') return 'fixed';
+    return ref.indexOf('book.') === 0 ? 'config' : 'data';
+  }
+
+  function pick(el, ref) {
+    curRef = ref; curEl = el; styleTarget = '';
+    var src = srcOf(ref);
+    $('pal-sel').innerHTML =
+      '<div class="ide-lab"><span>' + kindName(ref) + '</span>'
+      + '<span class="ide-val">' + (SRC_WORD[src] || '') + '</span></div>'
+      + '<div class="ide-hint" style="font-family:var(--mono)">' + ref + '</div>'
+      + (src === 'fixed'
+         ? '<div class="ide-hint">조판이 만든 자리라 글은 없습니다 — 모양만 바꿉니다.</div>'
+         : '');
+    drawPanels();
+    if (tool !== 'sel' && src !== 'fixed') openEdit(el, ref);
+    else msg('고른 것: ' + kindName(ref));
+  }
+
+  // ── 문자 · 단락 패널 (교재와 무관하게 **늘 같다**) ─────────
+  //
+  // 인디자인의 문자·단락 패널이 문서를 가리지 않는 것과 같다. 값만 문서에서
+  // 온다. 예전에는 계열이 선언한 손잡이를 그대로 늘어놓아 **책마다 패널이
+  // 달랐다**(어떤 책은 "헤더 간격", 어떤 책은 "보는 권") — 그건 에디터가 아니다.
+  //
+  // ⚠ **단위를 빠뜨리면 CSS 가 통째로 무시된다.** `font-size: 20` 은 조용히
+  //   아무 일도 안 한다 — 실제로 그래서 "전혀 안 변한다" 는 말을 들었다.
+  //   그래서 숫자와 단위를 **따로** 받고, 우리가 붙여 쓴다.
+  var CHAR_PROPS = [
+    { k: 'font-family', l: '글꼴', kind: 'text' },
+    { k: 'font-size', l: '크기', kind: 'num', units: ['pt', 'mm', 'px', 'em'], u: 'pt' },
+    { k: 'line-height', l: '행간', kind: 'num', units: ['', 'pt', 'mm', 'em'], u: '' },
+    { k: 'letter-spacing', l: '자간', kind: 'num', units: ['em', 'pt', 'mm'], u: 'em', step: 0.005 },
+    { k: 'font-weight', l: '굵기', kind: 'enum',
+      values: ['', '300', '400', '500', '600', '700'] },
+    { k: 'font-style', l: '기울임', kind: 'enum', values: ['', 'normal', 'italic'] },
+    { k: 'text-decoration', l: '밑줄', kind: 'enum', values: ['', 'none', 'underline'] },
+    { k: 'color', l: '글자 색', kind: 'color' },
+    { k: 'background-color', l: '바탕색', kind: 'color' }
   ];
+  var PARA_PROPS = [
+    { k: 'text-align', l: '정렬', kind: 'enum',
+      values: ['', 'left', 'center', 'right', 'justify'] },
+    { k: 'text-indent', l: '첫 줄 들여쓰기', kind: 'num', units: ['mm', 'pt', 'em'], u: 'mm' },
+    { k: 'margin-left', l: '왼쪽 여백', kind: 'num', units: ['mm', 'pt'], u: 'mm' },
+    { k: 'margin-right', l: '오른쪽 여백', kind: 'num', units: ['mm', 'pt'], u: 'mm' },
+    { k: 'margin-top', l: '단락 앞 간격', kind: 'num', units: ['mm', 'pt'], u: 'mm' },
+    { k: 'margin-bottom', l: '단락 뒤 간격', kind: 'num', units: ['mm', 'pt'], u: 'mm' },
+    { k: 'break-before', l: '쪽 나눔(앞)', kind: 'enum',
+      values: ['', 'auto', 'page', 'left', 'right'] },
+    { k: 'break-inside', l: '덩어리 유지', kind: 'enum', values: ['', 'auto', 'avoid'] }
+  ];
+
+  /** 지금 고칠 대상. 스타일 목록에서 고른 것이 있으면 그것, 없으면 클릭한 자리. */
+  var styleTarget = '';          // '.chip' 또는 '[data-ref="…"]'
+  function targetSel() {
+    if (styleTarget) return styleTarget;
+    if (!curRef) return '';
+    return '[data-ref="' + curRef + '"]';
+  }
+
+  /** 이 자리에 걸린 클래스들(자리표는 뺀다 — 그건 우리 표식이다). */
+  function classesOf(el) {
+    var out = [], seen = {}, node = el;
+    for (var d = 0; node && d < 5; d++, node = node.parentElement) {
+      var c = (typeof node.className === 'string') ? node.className : '';
+      c.split(/\s+/).forEach(function (x) {
+        if (!x || /^vref\d+$/.test(x) || seen[x]) return;
+        seen[x] = 1; out.push(x);
+      });
+    }
+    return out;
+  }
+
+  function styleName(cls) {
+    var n = styleNames[cls];
+    return n ? n + '  (.' + cls + ')' : '.' + cls;
+  }
+
+  // ── 값 한 줄 ────────────────────────────────────────────
+  function splitVal(v) {
+    var m = String(v == null ? '' : v).trim()
+      .match(/^(-?[\d.]+)\s*(pt|mm|px|em|%)?$/);
+    return m ? { n: m[1], u: m[2] || '' } : { n: '', u: '' };
+  }
+
+  function propRow(pr, saved, computed, onChange) {
+    var row = document.createElement('div'); row.className = 'ide-row';
+    var lab = document.createElement('div'); lab.className = 'ide-lab';
+    var mine = saved[pr.k];
+    lab.innerHTML = '<span>' + pr.l
+      + (mine ? '<span class="ide-dot" title="이 책에서 정한 값"></span>' : '')
+      + '</span><span class="ide-val">' + (computed || '') + '</span>';
+    var f = document.createElement('div'); f.className = 'ide-f';
+    var read = function () { return ''; };
+
+    if (pr.kind === 'num') {
+      var cur = splitVal(mine);
+      var num = document.createElement('input');
+      num.type = 'number'; num.className = 'ide-t';
+      num.step = pr.step || 0.1; num.value = cur.n;
+      num.placeholder = computed || '';
+      var us = document.createElement('select'); us.className = 'ide-sel';
+      pr.units.forEach(function (u) {
+        var o = document.createElement('option');
+        o.value = u; o.textContent = u || '(배수)';
+        us.appendChild(o);
+      });
+      us.value = cur.u || pr.u;
+      f.appendChild(num); f.appendChild(us);
+      // ⚠ 숫자만 저장하면 CSS 가 통째로 무시된다 — 단위를 **우리가** 붙인다
+      read = function () {
+        var n = num.value.trim();
+        return n === '' ? '' : n + us.value;
+      };
+      num.addEventListener('input', onChange);
+      us.addEventListener('change', onChange);
+    } else if (pr.kind === 'enum') {
+      var sel = document.createElement('select');
+      sel.className = 'ide-sel'; sel.style.width = '100%';
+      pr.values.forEach(function (v) {
+        var o = document.createElement('option');
+        o.value = v; o.textContent = v || '(그대로)';
+        sel.appendChild(o);
+      });
+      sel.value = mine || '';
+      f.appendChild(sel);
+      read = function () { return sel.value; };
+      sel.addEventListener('change', onChange);
+    } else if (pr.kind === 'color') {
+      var t = document.createElement('input');
+      t.className = 'ide-t'; t.value = mine || ''; t.placeholder = computed || '';
+      var c = document.createElement('input'); c.type = 'color';
+      try { if (/^#[0-9a-f]{6}$/i.test(mine || computed || '')) c.value = mine || computed; }
+      catch (e) {}
+      c.addEventListener('input', function () { t.value = c.value; onChange(); });
+      t.addEventListener('input', onChange);
+      f.appendChild(t); f.appendChild(c);
+      read = function () { return t.value.trim(); };
+    } else {
+      var tf = document.createElement('input');
+      tf.className = 'ide-t'; tf.value = mine || ''; tf.placeholder = computed || '';
+      tf.addEventListener('input', onChange);
+      f.appendChild(tf);
+      read = function () { return tf.value.trim(); };
+    }
+    row.appendChild(lab); row.appendChild(f);
+    row.__read = read; row.__key = pr.k;
+    return row;
+  }
 
   /** 브라우저는 무엇이든 px 로 알려준다. 인쇄에 쓰는 단위로 되돌린다. */
   function human(v, unit) {
     v = (v == null ? '' : String(v)).trim();
-    if (!v) return '';
-    if (/^rgba?\(/.test(v)) {                       // 색 → 16진
+    if (!v || v === 'normal' || v === 'auto') return v;
+    if (/^rgba?\(/.test(v)) {
       var m = v.match(/[\d.]+/g) || [];
       if (m.length >= 4 && parseFloat(m[3]) === 0) return '없음';
       return '#' + m.slice(0, 3).map(function (x) {
@@ -656,112 +820,136 @@
     if (px && unit === 'pt') return round2(px[1] * 0.75) + 'pt';
     if (px && unit === 'mm') return round2(px[1] * 25.4 / 96) + 'mm';
     if (px) return round2(px[1]) + 'px';
-    return v;
+    return v.length > 22 ? v.slice(0, 22) + '…' : v;
   }
   function round2(n) { return Math.round(n * 100) / 100; }
 
-  function styleSelectors(el) {
-    // 이 자리에 걸린 클래스들 — 자리표(vrefN)는 뺀다(그건 우리 표식이다)
-    var out = [], seen = {};
-    var node = el;
-    for (var d = 0; node && d < 4; d++, node = node.parentElement) {
-      var c = (typeof node.className === 'string') ? node.className : '';
-      c.split(/\s+/).forEach(function (x) {
-        if (!x || /^vref\d+$/.test(x) || seen[x]) return;
-        seen[x] = 1; out.push('.' + x);
-      });
+  // ── 패널 두 장을 그린다 ─────────────────────────────────
+  function drawPanels() {
+    drawOne('pal-char', CHAR_PROPS);
+    drawOne('pal-para', PARA_PROPS);
+    drawStyleList();
+  }
+
+  function drawOne(hostId, props) {
+    var host = $(hostId);
+    host.innerHTML = '';
+    var sel = targetSel();
+    if (!sel) {
+      host.innerHTML = '<div class="ide-hint">지면에서 고르거나, '
+        + '아래 <b>단락 스타일</b>에서 하나 고르세요.</div>';
+      return;
     }
+    var saved = styles[sel] || {};
+    var cs = curEl ? fwin().getComputedStyle(curEl) : null;
+    var rows = [];
+    props.forEach(function (pr) {
+      var r = propRow(pr, saved, cs ? human(cs[pr.k], pr.u) : '', live);
+      rows.push(r); host.appendChild(r);
+    });
+    host.__rows = rows;
+  }
+
+  /** 지금 패널에 적힌 값들. 빈 것은 '지운다'는 뜻이다. */
+  function readPanels() {
+    var out = {};
+    ['pal-char', 'pal-para'].forEach(function (id) {
+      (($(id).__rows) || []).forEach(function (r) { out[r.__key] = r.__read(); });
+    });
     return out;
   }
 
-  function drawStyle(el) {
-    var host = $('pal-style');
-    var sels = styleSelectors(el);
-    if (!sels.length) {
-      host.innerHTML = '<div class="ide-hint">이 자리에는 스타일 이름이 없습니다.</div>';
-      return;
+  // ── 실시간 ──────────────────────────────────────────────
+  // 값을 만지는 즉시 지면에 얹는다. ⚠ Vivliostyle 은 계산한 값을 **인라인**으로
+  // 박으므로 `!important` 가 아니면 못 이긴다. 대신 이건 **눈으로 보는 것**일
+  // 뿐이고, 줄바꿈·면 나눔은 다시 조판해야 정확하다 — 그래서 곧바로 재조판을
+  // 걸고, 그 사이 "다시 조판 중" 을 띄운다.
+  var liveTimer = null;
+  function liveStyleEl() {
+    var d = fdoc(); if (!d) return null;
+    var e = d.getElementById('ide-live');
+    if (!e) {
+      e = d.createElement('style'); e.id = 'ide-live';
+      d.head.appendChild(e);
     }
+    return e;
+  }
+  function live() {
+    var sel = targetSel(); if (!sel) return;
+    var props = readPanels(), body = [];
+    for (var k in props) {
+      if (props[k]) body.push('  ' + k + ': ' + props[k] + ' !important;');
+    }
+    var e = liveStyleEl();
+    if (e) e.textContent = body.length ? sel + ' {\n' + body.join('\n') + '\n}\n' : '';
+    msg('미리 보는 중 — 잠시 뒤 정확한 판으로 다시 조판합니다');
+    clearTimeout(liveTimer);
+    liveTimer = setTimeout(saveStyle, 900);
+  }
+
+  function saveStyle() {
+    var sel = targetSel(); if (!sel) return;
+    api('/api/book-studio/styles', { b: key, selector: sel, props: readPanels() })
+      .then(function (d) {
+        if (d.error) { msg('✗ ' + d.error); return; }
+        styles = d.styles || {};
+        rebuild('').then(function (ok) {
+          var e = liveStyleEl(); if (e) e.textContent = '';   // 진짜 판이 왔다
+          if (ok) msg('✓ 반영했습니다');
+        });
+      });
+  }
+
+  // ── 단락 스타일 목록 ────────────────────────────────────
+  function drawStyleList() {
+    var host = $('pal-style');
     host.innerHTML = '';
+    var hint = document.createElement('div');
+    hint.className = 'ide-hint';
+    hint.style.marginBottom = '6px';
+    host.appendChild(hint);
+
+    var here = curEl ? classesOf(curEl) : [];
+    var all = {};
+    here.forEach(function (c) { all[c] = 1; });
+    Object.keys(styleNames).forEach(function (c) { all[c] = 1; });
+    Object.keys(styles).forEach(function (sl) {
+      var m = sl.match(/^\.([\w-]+)$/); if (m) all[m[1]] = 1;
+    });
+
     var pick = document.createElement('select');
     pick.className = 'ide-sel'; pick.style.width = '100%';
-    sels.forEach(function (x) {
-      var o = document.createElement('option'); o.value = x;
-      // `.pbox` 만 보여 주면 무엇을 고르는지 알 수 없다 — 계열이 붙인 사람
-      // 이름을 앞에 세우고, CSS 이름은 뒤에 작게 남긴다(찾을 때 쓴다).
-      var nm = styleNames[x.replace(/^\./, '')];
-      o.textContent = nm ? nm + '  (' + x + ')' : x;
+    var o0 = document.createElement('option');
+    o0.value = ''; o0.textContent = curRef ? '이 자리에만' : '(고르세요)';
+    pick.appendChild(o0);
+    // 지금 자리에 걸린 것부터, 그다음 이 책의 나머지
+    var rest = Object.keys(all).filter(function (c) { return here.indexOf(c) < 0; });
+    here.concat(rest.sort()).forEach(function (c) {
+      var o = document.createElement('option');
+      o.value = '.' + c; o.textContent = styleName(c)
+        + (here.indexOf(c) >= 0 ? '  ●' : '');
       pick.appendChild(o);
     });
-    var only = document.createElement('label');
-    only.className = 'ide-hint';
-    only.style.cssText = 'display:flex;gap:5px;align-items:center;margin:6px 0';
-    only.innerHTML = '<input type="checkbox" id="style-only"> 이 자리에만 (스타일 전체가 아니라)';
-    host.appendChild(pick); host.appendChild(only);
-    var body = document.createElement('div');
-    host.appendChild(body);
-    var note = document.createElement('div');
-    note.className = 'ide-hint';
-    note.style.marginTop = '6px';
-    host.appendChild(note);
+    pick.value = styleTarget;
+    pick.addEventListener('change', function () {
+      styleTarget = pick.value;
+      drawOne('pal-char', CHAR_PROPS); drawOne('pal-para', PARA_PROPS);
+      hint.innerHTML = tell();
+    });
+    host.appendChild(pick);
+    hint.innerHTML = tell();
 
-    function selectorNow() {
-      return $('style-only').checked
-        ? '[data-ref="' + curRef + '"]' : pick.value;
+    function tell() {
+      if (styleTarget) {
+        return '<b>' + styleTarget + '</b> 이 걸린 곳이 <b>전부</b> 바뀝니다. '
+          + '● 는 지금 고른 자리에 걸린 것.';
+      }
+      if (curRef) {
+        return '지금 고른 <b>그 한 자리만</b> 바뀝니다. '
+          + '⚠ 원고가 바뀌면 딴 곳을 잡을 수 있습니다.';
+      }
+      return '지면에서 하나 고르거나, 위에서 스타일을 고르세요.';
     }
-    function fill() {
-      var cs = getComputedStyle(el);
-      var sel = selectorNow();
-      var saved = (styles[sel] || {});
-      body.innerHTML = '';
-      STYLE_PROPS.forEach(function (pr) {
-        var row = document.createElement('div'); row.className = 'ide-row';
-        var lab = document.createElement('div'); lab.className = 'ide-lab';
-        var now = saved[pr.k];
-        var real = human(cs[pr.k], pr.u);
-        if (pr.ratio) {                              // 17.33px → ×1.96
-          var fs = parseFloat(cs['font-size']), lh = parseFloat(cs[pr.k]);
-          if (fs > 0 && lh > 0) real = '×' + round2(lh / fs);
-        }
-        lab.innerHTML = '<span>' + pr.l
-          + (now ? '<span class="ide-dot" title="이 책에서 정한 값"></span>' : '')
-          + '</span><span class="ide-val">' + real + '</span>';
-        var f = document.createElement('div'); f.className = 'ide-f';
-        var t = document.createElement('input');
-        t.className = 'ide-t'; t.placeholder = real || '그대로'; t.value = now || '';
-        t.dataset.k = pr.k;
-        f.appendChild(t);
-        if (pr.color) {
-          var c = document.createElement('input'); c.type = 'color';
-          try { c.value = now || '#000000'; } catch (e) {}
-          try { if (/^#[0-9a-f]{6}$/i.test(real)) c.value = real; } catch (e2) {}
-          c.addEventListener('change', function () { t.value = c.value; });
-          f.appendChild(c);
-        }
-        row.appendChild(lab); row.appendChild(f);
-        body.appendChild(row);
-      });
-      note.textContent = $('style-only').checked
-        ? '이 한 자리에만 걸립니다.'
-        : sel + ' 이 걸린 곳이 전부 바뀝니다.';
-      var save = document.createElement('button');
-      save.className = 'ide-b'; save.textContent = '스타일 저장';
-      save.style.marginTop = '4px';
-      save.onclick = function () {
-        var props = {};
-        Array.prototype.forEach.call(body.querySelectorAll('input[data-k]'),
-          function (i) { props[i.dataset.k] = i.value.trim(); });
-        api('/api/book-studio/styles',
-            { b: key, selector: selectorNow(), props: props }).then(function (d) {
-          if (d.error) { msg('✗ ' + d.error); return; }
-          styles = d.styles || {};
-          rebuild('').then(function (ok) { if (ok) msg('✓ 스타일 저장'); });
-        });
-      };
-      body.appendChild(save);
-    }
-    pick.addEventListener('change', fill);
-    only.querySelector('input').addEventListener('change', fill);
-    fill();
   }
 
   /** 쪽 나눔 — 고른 자리 **앞에서** 면을 넘긴다. 스타일 한 줄이면 된다. */
@@ -849,19 +1037,35 @@
         + '&ref=' + encodeURIComponent(ref)).then(function (info) {
       if (info.error) { msg('✗ ' + info.error); return; }
       editEl = el; editHtml = el.innerHTML;
-      // ⚠ 지면의 글에는 조판이 만든 것이 섞여 있다(빈칸 밑줄·대화문 묶음·표식).
-      //   그걸 글자로 되돌리면 빈칸이 사라진다 → **원본 글**을 놓고 고친다.
-      el.textContent = info.text;
+      // ⚠ 지면의 글에는 조판이 만든 것이 섞여 있을 수 있다(빈칸 밑줄·대화문
+      //   묶음·표식). 그걸 글자로 되돌리면 빈칸이 사라진다.
+      //   그렇다고 **늘** 원본으로 갈아 끼우면, 누를 때마다 글이 딴것처럼
+      //   보인다(`**굵게**` 같은 표시가 튀어나온다) — 실제로 그게 거슬렸다.
+      //   그래서 **보이는 글과 원본이 같을 때는 지면을 그대로 두고** 고친다.
+      var shown = (el.textContent || '').replace(/\s+/g, ' ').trim();
+      var plain = String(info.text || '').replace(/\*\*|__|\/\//g, '')
+                    .replace(/\s+/g, ' ').trim();
+      editPlain = (shown !== plain);
+      if (editPlain) {
+        el.textContent = info.text;               // 표시가 있어야 고칠 수 있다
+        msgExtra = ' (빈칸·서식이 있어 원본 표시로 봅니다)';
+      } else {
+        msgExtra = '';
+      }
       el.classList.add('ide-editing');
       el.setAttribute('contenteditable', 'plaintext-only');
       el.focus();
+      // ⚠ 커서를 글 끝으로 몰지 않는다. 브라우저가 **누른 자리**에 둔 것을
+      //   그대로 쓴다 — 끝으로 옮기면 눌렀던 데를 다시 찾아가야 한다.
+      //   (원본 표시로 갈아 끼운 때만 어쩔 수 없이 맨 앞에 둔다.)
       try {
-        // ⚠ 화면 문서의 `getSelection()` 은 프레임 안 글을 모른다.
-        var r = fdoc().createRange(); r.selectNodeContents(el); r.collapse(false);
-        var s = fwin().getSelection(); s.removeAllRanges(); s.addRange(r);
+        if (editPlain) {
+          var r = fdoc().createRange(); r.selectNodeContents(el); r.collapse(true);
+          var s = fwin().getSelection(); s.removeAllRanges(); s.addRange(r);
+        }
       } catch (e) {}
       setHist(info.history);
-      msg(kindName(ref) + ' 고치는 중 — ⌘↵ 저장 · Esc 취소');
+      msg(kindName(ref) + ' 고치는 중 — ⌘↵ 저장 · Esc 취소' + msgExtra);
     });
   }
 
@@ -966,6 +1170,44 @@
       styles = d.styles || {};
       rebuild('').then(function (ok) { if (ok) msg('✓ 그림을 앉혔습니다'); });
     });
+  }
+
+  // ── 페이지 패널 ─────────────────────────────────────────
+  // 인디자인의 페이지 패널 자리. 썸네일은 전권을 다 그려야 해서 아직 안 만든다
+  // (그건 몇 분이 든다) — 대신 **면을 눌러 바로 간다.**
+  function drawPages() {
+    var host = $('pal-pages');
+    if (!host) return;
+    var n = pageCount || 0;
+    if (!n) { host.innerHTML = '<div class="ide-hint">아직 조판 중입니다.</div>'; return; }
+    var h = [];
+    for (var i = 1; i <= n; i++) {
+      h.push('<a href="#" data-pg="' + i + '" style="display:inline-block;'
+        + 'min-width:26px;text-align:center;padding:2px 4px;margin:1px;'
+        + 'border-radius:5px;color:' + (i === curPage ? '#fff' : '#8faaff')
+        + ';background:' + (i === curPage ? '#3d55a8' : 'transparent') + '">'
+        + i + '</a>');
+    }
+    host.innerHTML = h.join('');
+  }
+
+  /** 그 면으로 간다. 뷰어에는 '몇 면으로' 가 없어 **차이만큼 넘긴다.** */
+  function gotoPage(n) {
+    if (!viewer || !ready) { msg('아직 조판 중입니다'); return; }
+    var step = n - pageNow();
+    if (!step) return;
+    var dir = step > 0 ? V.Navigation.NEXT : V.Navigation.PREVIOUS;
+    var left = Math.abs(step);
+    msg(n + '면으로 가는 중…');
+    (function hop() {
+      if (!left--) { drawPageNo(); drawPages(); msg(n + '면'); return; }
+      var before = pageNow();
+      viewer.navigateToPage(dir);
+      (function wait(t) {
+        if (pageNow() !== before || t > 40) { drawPageNo(); return hop(); }
+        setTimeout(function () { wait(t + 1); }, 60);
+      })(0);
+    })();
   }
 
   // ── 이력 ────────────────────────────────────────────────
@@ -1142,10 +1384,20 @@
   $('ide-fit').addEventListener('click', function () {
     zoom = 1; viewer && viewer.setOptions({ fitToScreen: true });
   });
-  $('ide-spread').addEventListener('click', function () {
-    spread = !spread;
+  function setSpread(on) {
+    spread = on;
     $('ide-spread').textContent = spread ? '낱쪽' : '펼침';
-    viewer && viewer.setOptions({ pageViewMode: spread ? 'spread' : 'singlePage' });
+    $('pg-single').classList.toggle('on', !spread);
+    $('pg-spread').classList.toggle('on', spread);
+    if (viewer) {
+      viewer.setOptions({ pageViewMode: spread ? 'spread' : 'singlePage' });
+      setTimeout(drawPageNo, 300);
+    }
+  }
+  $('pg-single').addEventListener('click', function () { setSpread(false); });
+  $('pg-spread').addEventListener('click', function () { setSpread(true); });
+  $('ide-spread').addEventListener('click', function () {
+    setSpread(!spread);
   });
   $('ide-prev').addEventListener('click', function () {
     if (!turnable()) return;
@@ -1254,6 +1506,10 @@
     });
   });
 
+  $('pal-pages').addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[data-pg]');
+    if (!a) return; e.preventDefault(); gotoPage(+a.dataset.pg);
+  });
   $('find-go').addEventListener('click', function () { find(false); });
   $('find-all').addEventListener('click', function () {
     if (!confirm('전권에서 모두 바꿉니다. 되돌리기로 살릴 수 있습니다.')) return;

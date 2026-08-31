@@ -331,6 +331,36 @@ def api_op():
                     "history": {"head": st["head"], "total": len(st["ops"])}})
 
 
+# 길이를 재는 속성 — 여기에 **맨 숫자**를 넣으면 CSS 가 통째로 무시된다.
+_LEN_PROPS = {
+    "font-size", "letter-spacing", "word-spacing", "text-indent",
+    "margin", "margin-top", "margin-bottom", "margin-left", "margin-right",
+    "padding", "padding-top", "padding-bottom", "padding-left", "padding-right",
+    "width", "height", "min-height", "max-width", "top", "left", "right",
+    "bottom", "border-width", "border-radius", "column-gap", "gap",
+}
+_LEN_OK = re.compile(r"^-?(?:\d+\.?\d*|\.\d+)(pt|mm|cm|in|px|em|rem|%|q)$", re.I)
+
+
+def _needs_unit(prop, val):
+    """`font-size: 20` 처럼 단위 없는 값을 **미리** 잡는다.
+
+    ⚠ 이게 없어서 화면에서 20 을 넣으면 CSS 가 통째로 무시되고, 그런데도
+      "저장했습니다" 가 떴다. 조용히 아무 일도 안 하는 것이 제일 나쁘다.
+    """
+    v = (val or "").strip()
+    if not v or prop.lower() not in _LEN_PROPS:
+        return ""
+    if v in ("0", "auto", "inherit", "initial", "unset", "normal"):
+        return ""
+    if _LEN_OK.match(v):
+        return ""
+    if re.match(r"^-?[\d.]+$", v):
+        return (f"{prop}: {v} — 단위가 없습니다. "
+                f"pt·mm 을 붙여 주세요(예: {v}pt).")
+    return ""
+
+
 @bp.route("/api/book-studio/styles", methods=["GET", "POST"])
 def api_styles():
     """단락 스타일 — 선택자 하나에 걸린 규칙을 읽고 쓴다.
@@ -357,6 +387,9 @@ def api_styles():
         for k, v in props.items():
             if any(c in str(k) + str(v) for c in "{};<>"):
                 return jsonify({"error": f"이상한 값: {k}: {v}"}), 400
+            bad = _needs_unit(str(k), str(v))
+            if bad:
+                return jsonify({"error": bad}), 400
     d, meta = _book_dir(request.args.get("b") if get else p.get("b"))
     if not d:
         return jsonify({"error": "모르는 책"}), 404
@@ -864,10 +897,12 @@ body.tool-text [class*="vref"]:hover, body.tool-para [class*="vref"]:hover {
   outline: 1px dashed rgba(120,140,255,.6); outline-offset: 2px;
   background: rgba(120,140,255,.07);
 }
+/* 고치는 중 — **겉모습은 그대로 두고** 여기라는 것만 알린다.
+   예전에는 바탕을 노랗게 칠하고 글꼴을 고정폭으로 바꿨는데, 그러면 누를 때마다
+   글이 딴것처럼 보여서 조판을 보는 눈이 흐트러진다. 인디자인은 커서만 깜빡인다. */
 .ide-editing {
-  outline: 2px solid #6c8cff !important; outline-offset: 2px;
-  background: #fffbe8 !important; white-space: pre-wrap;
-  font-family: ui-monospace, Menlo, monospace !important; color: #111 !important;
+  outline: 1px solid rgba(108,140,255,.85); outline-offset: 1px;
+  caret-color: #2b62ff;
 }
 </style>
 <script src="/book-studio/core/vivlio-core.js"></script>
