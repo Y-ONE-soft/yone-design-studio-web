@@ -387,22 +387,77 @@
    *  바뀐다). 그대로 두면 작업대를 열자마자 **흰 면**이 나와서 고장 난 것처럼
    *  보인다 — 실제로 그렇게 보였다.
    */
+  /** 면 넘기기의 바닥 — 조판을 기다리고, 실제로 넘어갔는지 확인한다.
+   *
+   *  ⚠ `navigateToPage()` 는 **비동기**다. 바로 다음 줄에서 지면을 읽으면
+   *    아직 옛 면이다. 그걸 모르고 "빈 면이면 한 장 더" 를 돌렸더니 1면을
+   *    아홉 번 다시 보고 아홉 번 넘겼다(그러고도 엉뚱한 데 섰다).
+   *
+   *  ⚠ 지나온 면은 `display:none` 으로 DOM 에 쌓인다. **맨 뒤 칸**이 지금
+   *    면이고, 폭이 잡혔을 때만 다 그려진 것이다.
+   */
+  function pageEl() {
+    var ps = $('ide-stage').querySelectorAll('[data-vivliostyle-page-container]');
+    var last = ps[ps.length - 1];
+    if (!last || getComputedStyle(last).display === 'none') return null;
+    return last.getBoundingClientRect().width > 0 ? last : null;
+  }
+
+  function afterRender(cb, tries) {
+    tries = tries || 0;
+    var el = pageEl();
+    if (el || tries > 40) return cb(el);
+    setTimeout(function () { afterRender(cb, tries + 1); }, 100);
+  }
+
+  /** `test(면)` 이 참인 면까지 앞으로 넘긴다. 최대 `max` 장. */
+  function seek(test, max, done) {
+    var n = 0;
+    function step() {
+      afterRender(function (el) {
+        if (!el) return done(false);
+        if (test(el)) return done(true, n);
+        if (++n > max) return done(false, n);
+        var before = pageNow();
+        viewer.navigateToPage(V.Navigation.NEXT);
+        (function wait(t) {
+          if (pageNow() !== before || t > 40) { drawPageNo(); return step(); }
+          setTimeout(function () { wait(t + 1); }, 80);
+        })(0);
+      });
+    }
+    step();
+  }
+
+  /** 자리표 번호 → 그 자리가 있는 면으로.
+   *
+   *  ⚠ `navigateToInternalUrl('#vrefN')` 은 **안 통한다.** `id` 는 조판 결과
+   *    DOM 에 안 남기 때문이다(원본 HTML 에는 있는데도). 처음엔 남는 줄 알고
+   *    그걸로 만들었다가, 찾기 결과를 눌러도 아무 일이 안 일어났다.
+   *    **남는 것은 `class` 뿐이다** — 그래서 면을 넘기며 그 클래스를 찾는다.
+   */
+  function gotoRef(n, label) {
+    if (!n || !viewer) { msg('그 자리를 못 찾았습니다'); return; }
+    var sel = '.vref' + n;
+    if (pageEl() && pageEl().querySelector(sel)) { msg('이 면에 있습니다'); return; }
+    msg('찾아가는 중…');
+    seek(function (el) { return !!el.querySelector(sel); },
+         (pageCount || 120), function (ok) {
+      msg(ok ? (label || '그 자리') + '로 옮겼습니다'
+             : '이 뒤로는 그 자리가 없습니다 — 처음부터 다시 펴 보세요');
+    });
+  }
+
   /** 열자마자 **내용이 있는 자리**부터 보여 준다.
    *
    *  블랙북 1면은 `§DIV1§` 표식 하나뿐인 간지 자리다(마감 때 진짜 간지 PDF 로
    *  바뀐다). 그대로 두면 작업대를 열자마자 **흰 면**이 나와 고장 난 것처럼
    *  보인다 — 실제로 그렇게 보였다.
-   *
-   *  ⚠ 처음엔 "빈 면이면 한 장 넘기기" 를 되풀이했는데, 그게 조판 속도에
-   *    휘둘렸다. 넘긴 직후에는 새 면이 아직 안 그려져 있고 **옛 면이 아직
-   *    보여서**, 1면을 아홉 번 다시 보고 아홉 번 넘겼다(그러고도 엉뚱한 데
-   *    섰다). 세지 말고 **자리표 1번**으로 한 번에 뛴다 — 자리표가 붙은 곳은
-   *    정의상 원고에서 온 내용이라, 판단할 것이 없다.
    */
   function jumpToContent() {
-    if (!refs || !refs['1'] || !viewer) return;
-    try { viewer.navigateToInternalUrl('#vref1'); } catch (e) { return; }
-    setTimeout(drawPageNo, 250);
+    if (!refs || !refs['1']) return;
+    seek(function (el) { return !!el.querySelector('[class*="vref"]'); }, 8,
+         function (ok, n) { if (ok && n) msg('빈 간지를 지나 내용부터 폅니다'); });
   }
 
   // ── 지면 클릭 ───────────────────────────────────────────
@@ -989,16 +1044,21 @@
     e.preventDefault();
     var ref = a.dataset.ref;
     var n = refNum(ref);
-    if (n && viewer) { viewer.navigateToInternalUrl('#vref' + n); msg('그 자리로 옮겼습니다'); return; }
+    if (n) { gotoRef(n, kindName(ref)); return; }
     if (scope === 'full') { msg('그 자리를 지면에서 못 찾았습니다'); return; }
     if (!confirm('견본에는 그 자리가 없습니다. 전권을 펴서 찾을까요? (오래 걸립니다)')) return;
     setScope('full');
     rebuild('').then(function (ok) {
-      if (!ok) return;
-      var n2 = refNum(ref);
-      if (n2) { viewer.navigateToInternalUrl('#vref' + n2); msg('그 자리로 옮겼습니다'); return; }
-      msg('전권에도 그 자리가 없습니다');
+      if (ok) gotoRef(refNum(ref), kindName(ref));
     });
+  });
+  $('find-go').addEventListener('click', function () { find(false); });
+  $('find-all').addEventListener('click', function () {
+    if (!confirm('전권에서 모두 바꿉니다. 되돌리기로 살릴 수 있습니다.')) return;
+    find(true);
+  });
+  $('find-q').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') find(false);
   });
   $('ide-pal-t').addEventListener('click', function () {
     $('ide-right').classList.toggle('hide');
