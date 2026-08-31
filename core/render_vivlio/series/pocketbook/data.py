@@ -148,6 +148,10 @@ def prepare(items, build_dir, illust_dirs=(), category="", grade=""):
     입력은 **지면 순서 목록**이다(지문과 암기테스트가 섞여 있다). 암기테스트를
     직전 지문에 매달면 교과서처럼 여러 지문을 묶는 책에서 어긋난다.
     """
+    # 한 지면에 못 담는 지문은 먼저 나눈다 — 그대로 두면 상자 밖으로 밀려
+    # 글자가 통째로 사라진다(G-P7 이 배재2에서 3지문 잡았다).
+    from core.render_vivlio.series.pocketbook import longsplit
+    items = longsplit.split_all(items, log=None)
     assets = os.path.join(build_dir, "img")
     os.makedirs(assets, exist_ok=True)
     out = []

@@ -416,7 +416,15 @@ class PocketbookSeries(Series):
         rows = idx.get("passages") if isinstance(idx, dict) else idx
         if isinstance(rows, dict):
             rows = [dict(v, key=k) for k, v in rows.items()]
-        rows.sort(key=lambda r: (r.get("where") or [{}])[0].get("pages", ""))
+        # ⚠ 쪽 번호를 **글자로** 정렬하면 `"10-11" < "12-13" < "2-3" < "26-27"` 이
+        #   되어 지문 차례가 통째로 뒤섞인다(교과서와 모의고사가 섞여 나온다).
+        #   숫자로 정렬한다. 쪽을 모르면 맨 뒤로.
+        def _page_key(r):
+            w = (r.get("where") or [{}])[0].get("pages", "")
+            m = re.match(r"\s*(\d+)", str(w))
+            return (0, int(m.group(1))) if m else (1, 0)
+
+        rows.sort(key=_page_key)
         school = opt.get("school")
         term = opt.get("term")
         units = set(opt.get("units") or [])
