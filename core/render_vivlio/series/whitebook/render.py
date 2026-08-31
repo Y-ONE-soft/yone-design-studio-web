@@ -219,6 +219,10 @@ def document(cfg, data, mode=None):
                  % metrics_of(cfg)["col_w"])
     o.append('</head><body>')
     o.append(foot_left(cfg.book.get("brand", "")))
+    if mode != "measure":
+        # 앞 간지 자리 — 마감 때 완성본 아트워크 면으로 바뀐다(§DIV1§).
+        # ⚠ 흐름 안에 실제 한 면으로 두어야 쪽번호와 좌우(짝/홀)가 완성본과 맞는다.
+        o.append('<div class="divider"><span>§DIV1§</span></div>')
 
     for D in data["days"]:
         lab = D["label"]

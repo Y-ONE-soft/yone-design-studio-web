@@ -102,6 +102,13 @@
   background: none;
   @bottom-left { content: none; } @bottom-right { content: none; }
 }
+/* 간지 자리 — 머리 띠도 꼬리말도 없다(마감 때 아트워크 면으로 교체된다) */
+@page blank {
+  background: none;
+  @bottom-left { content: none; } @bottom-right { content: none; }
+}
+.divider { page: blank; break-after: page; height: 240mm; }
+.divider span { color: #fff; font-size: 1pt; }
 
 /* ------------------------------------------------------------------ 기본 */
 * { margin: 0; padding: 0; box-sizing: border-box; }

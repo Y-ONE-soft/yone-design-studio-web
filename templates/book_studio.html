@@ -34,6 +34,25 @@
      지면에 남의 글씨가 얹히면 그것부터 조판 사고로 보인다. */
   body.ide-on .site-footer { display: none; }
   .ide { z-index: 40; }   /* 머리띠(sticky, z-index 50) 아래 · 문서 위 */
+  /* 지면은 **딴 문서**(iframe, `/book-studio/frame`)에 그려진다.
+     그래서 여기 규칙은 지면에 닿지 않는다 — 예전엔 같은 문서라
+     `main.css` 의 `*{box-sizing:border-box}` 가 판면 래퍼까지 먹어
+     본문 단이 167mm → 118mm 로 좁아졌다(줄바꿈·면 나눔까지 달라졌다). */
+  /* 화면을 꽉 채운다 — 조판 프로그램이지 문서가 아니다 */
+  /* 머리띠 높이는 **재서 넣는다**(`--ide-top`). 예전에는 96px 로 못 박아
+     두었는데 실제 머리띠는 73px 이라 23px 짜리 죽은 틈이 생기고, 그만큼
+     문서가 길어져 **화면이 12px 스크롤**됐다. 스크롤되는 조판 프로그램은
+     쓸 수가 없다(고정 껍데기는 그대로, 뒤에 깔린 면만 움직인다). */
+  .ide { position: fixed; left: 0; right: 0; bottom: 0;
+         top: var(--ide-top, 96px);
+         display: flex; flex-direction: column; background: #14161f; }
+  /* 작업대가 떠 있는 동안은 문서가 스크롤되지 않는다 */
+  body.ide-on { overflow: hidden; }
+  /* ⚠ 앱 푸터(© 2026 Y.ONE DESIGN · All rights reserved)가 **지면 위로 비쳤다.**
+     작업대는 화면을 꽉 채우므로 그 아래 문서는 어차피 안 보이는 자리다.
+     지면에 남의 글씨가 얹히면 그것부터 조판 사고로 보인다. */
+  body.ide-on .site-footer { display: none; }
+  .ide { z-index: 40; }   /* 머리띠(sticky, z-index 50) 아래 · 문서 위 */
   /* ⚠ 조판 결과에는 **우리 CSS 를 대지 않는다.**
      예전에는 `.ide *` 로 통째 `border-box` 를 걸었는데, 지면이 이제 우리 문서
      안에 있어서 그 규칙이 **Vivliostyle 이 만든 판면 래퍼까지** 먹었다.
@@ -43,22 +62,11 @@
      우리 UI 에만 걸고, 지면은 뷰어가 정한 대로 둔다. */
   .ide-top *, .ide-left *, .ide-right * { box-sizing: border-box; }
   .ide, .ide-top, .ide-left, .ide-canvas, .ide-right { box-sizing: border-box; }
-  /* 앱 전역 리셋(`main.css` 첫 줄 `*, *::before, *::after`)도 지면까지 먹는다.
-     Vivliostyle 은 **내용 요소**에는 계산한 값을 인라인으로 박지만 자기가
-     만든 래퍼에는 안 박는다 — 그래서 래퍼만 우리 리셋에 물든다.
-     래퍼가 기대하는 `content-box` 로 되돌린다(내용 요소는 인라인이 이긴다). */
-  #ide-stage, #ide-stage *, #ide-stage *::before, #ide-stage *::after {
-    box-sizing: content-box;
-  }
-  /* 물려받는 것도 끊는다. 앱 서체·글자색·행간이 지면에 흘러 들어가면,
-     Vivliostyle 이 값을 안 박은 자리에서 조용히 다른 판이 나온다.
-     지면은 교재 CSS 가 정한 대로여야 한다. */
-  #ide-stage {
-    font: initial; color: initial; line-height: normal;
-    letter-spacing: normal; word-spacing: normal;
-    text-align: start; text-indent: 0; text-transform: none;
-    white-space: normal; direction: ltr;
-  }
+  /* ⚠ 지면은 이제 **딴 문서**(iframe `/book-studio/frame`)에 그려진다.
+     예전엔 같은 문서라 `main.css` 첫 줄의 `*{box-sizing:border-box}` 가
+     Vivliostyle 의 판면 래퍼까지 먹어 여백이 **두 번** 깎였다 —
+     본문 단이 167mm 여야 하는데 118mm 로 좁아져 줄바꿈도 면 나눔도
+     달라졌고, 그걸 미리보기라고 보여 주고 있었다. 이제 닿지 않는다. */
 
   /* ── 위: 도구줄 ─────────────────────────────────────────── */
   .ide-top { display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
@@ -98,7 +106,7 @@
   /* 가운데 지면 */
   .ide-canvas { flex: 1; min-width: 0; overflow: auto; background: #6b6b6b;
                 position: relative; }
-  .ide-stage { min-height: 100%; }
+  .ide-stage { display: block; width: 100%; height: 100%; border: 0; }
   .ide-empty { position: absolute; inset: 0; display: flex; align-items: center;
                justify-content: center; color: #e8e8e8; font-size: 13px; }
 
@@ -137,17 +145,8 @@
   .ide-hist div.off { opacity: .35; text-decoration: line-through; }
 
   /* 고칠 수 있는 자리 · 편집 중 */
-  .ide-stage [class*="vref"] { cursor: default; }
-  body.tool-text .ide-stage [class*="vref"],
-  body.tool-para .ide-stage [class*="vref"] { cursor: text; }
-  body.tool-text .ide-stage [class*="vref"]:hover,
-  body.tool-para .ide-stage [class*="vref"]:hover {
-    outline: 1px dashed rgba(120,140,255,.6); outline-offset: 2px;
-    background: rgba(120,140,255,.07); }
-  .ide-editing { outline: 2px solid #6c8cff !important; outline-offset: 2px;
-                 background: #fffbe8 !important; white-space: pre-wrap;
-                 font-family: ui-monospace, Menlo, monospace !important;
-                 color: #111 !important; }
+  /* 고칠 수 있는 자리·편집 중 표시는 **프레임 문서 안**에 있다
+     (`routes/book_studio.py` 의 `FRAME_HTML`). 여기 두면 안 닿는다. */
 </style>
 
 <div class="ide">
@@ -226,7 +225,9 @@
 
     <!-- ── 가운데: 지면 ─────────────────────────────────── -->
     <div class="ide-canvas" id="ide-canvas">
-      <div class="ide-stage" id="ide-stage"></div>
+      <!-- 지면은 **자기 문서**에 산다. 같은 출처라 아래 스크립트가
+           그 안을 그대로 만진다(클릭·편집·선택 모두 된다). -->
+      <iframe class="ide-stage" id="ide-frame" src="/book-studio/frame"></iframe>
       <div class="ide-empty" id="ide-empty">교재를 고르세요</div>
     </div>
 
@@ -302,11 +303,12 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/book-studio/core/vivlio-core.js"></script>
 <script>
 (function () {
   var key = {{ book_key|tojson }}, bid = null;
-  var V = window.VivlioCore, viewer = null;
+  // ⚠ 조판 엔진은 **프레임 문서**가 싣는다(`FRAME_HTML`). 화면 문서에
+  //   또 실으면 그쪽 기준으로 계산돼 판이 달라진다.
+  var V = null, viewer = null;
   var spec = [], changed = {}, refs = {}, curRef = null, editEl = null, editHtml = null;
   var tool = 'sel', scope = 'sample', spread = false, zoom = 1, pageCount = 0;
   var curEl = null, styles = {}, curPage = 1, ready = false;
@@ -348,6 +350,22 @@
     $('ide-pageno').textContent = curPage + ' / ' + (pageCount || '–');
   }
   var $ = function (id) { return document.getElementById(id); };
+
+  // ── 지면이 사는 딴 문서 ─────────────────────────────────
+  // 같은 출처라 벽이 없다. `fdoc()`·`fwin()` 이 그 문서·창이다.
+  function fwin() { var f = $('ide-frame'); return f && f.contentWindow; }
+  function fdoc() { var f = $('ide-frame'); return f && f.contentDocument; }
+  function stageEl() { var d = fdoc(); return d && d.getElementById('viv'); }
+  /** 프레임이 준비될 때까지 기다린다(스크립트까지 다 읽혀야 한다). */
+  function whenFrame(cb, tries) {
+    tries = tries || 0;
+    var d = fdoc(), w = fwin();
+    if (d && d.readyState === 'complete' && w && w.VivlioCore && stageEl()) {
+      return cb();
+    }
+    if (tries > 100) { msg('✗ 지면 문서를 못 열었다'); return; }
+    setTimeout(function () { whenFrame(cb, tries + 1); }, 60);
+  }
   function msg(t) { $('ide-msg').textContent = t || ''; }
   function api(u, body) {
     return fetch(u, body ? { method: 'POST',
@@ -357,13 +375,17 @@
 
   // ── 지면 ────────────────────────────────────────────────
   function ensureViewer() {
-    if (viewer || !V) return viewer;
+    if (viewer) return viewer;
+    // ⚠ 조판 엔진은 **프레임 문서의 것**을 쓴다. 화면 쪽 번들을 쓰면 지면이
+    //   화면 문서 기준으로 계산돼 다시 오염된다.
+    V = fwin() && fwin().VivlioCore;
+    if (!V) return null;
     viewer = new V.CoreViewer(
       // ⚠ `userAgentRootURL` 을 주지 않는다. 예전엔 뷰어 앱의 `resources/` 를
       //   가리켰는데 **거기 그 파일이 없다**(기본 스타일시트는 번들 안에
       //   문자열로 들어 있다). 가리키면 404 → `data:` 폴백 → CSP 차단으로
       //   두 번 실패한다. 안 주면 번들 안의 것을 바로 쓴다.
-      { viewportElement: $('ide-stage') },
+      { viewportElement: stageEl() },
       { renderAllPages: false, pageViewMode: 'singlePage', fitToScreen: true });
     viewer.addListener('loaded', function () {
       ready = true;
@@ -426,7 +448,8 @@
    *    면이고, 폭이 잡혔을 때만 다 그려진 것이다.
    */
   function pageEl() {
-    var ps = $('ide-stage').querySelectorAll('[data-vivliostyle-page-container]');
+    var st = stageEl(); if (!st) return null;
+    var ps = st.querySelectorAll('[data-vivliostyle-page-container]');
     var last = ps[ps.length - 1];
     if (!last || getComputedStyle(last).display === 'none') return null;
     return last.getBoundingClientRect().width > 0 ? last : null;
@@ -504,8 +527,8 @@
 
   // ── 지면 클릭 ───────────────────────────────────────────
   function hookStage() {
-    var st = $('ide-stage');
-    if (st.__hooked) return;
+    var st = stageEl();
+    if (!st || st.__hooked) return;
     st.__hooked = true;
     st.addEventListener('click', function (ev) {
       var el = ev.target;
@@ -753,8 +776,9 @@
       el.setAttribute('contenteditable', 'plaintext-only');
       el.focus();
       try {
-        var r = document.createRange(); r.selectNodeContents(el); r.collapse(false);
-        var s = getSelection(); s.removeAllRanges(); s.addRange(r);
+        // ⚠ 화면 문서의 `getSelection()` 은 프레임 안 글을 모른다.
+        var r = fdoc().createRange(); r.selectNodeContents(el); r.collapse(false);
+        var s = fwin().getSelection(); s.removeAllRanges(); s.addRange(r);
       } catch (e) {}
       setHist(info.history);
       msg(kindName(ref) + ' 고치는 중 — ⌘↵ 저장 · Esc 취소');
@@ -765,7 +789,7 @@
   function wrapSel(kind) {
     if (!editEl) { msg('먼저 고칠 글을 클릭하세요'); return; }
     var m = MARK[kind]; if (!m) return;
-    var sel = getSelection();
+    var sel = fwin().getSelection();
     if (!sel || !sel.rangeCount) return;
     var r = sel.getRangeAt(0);
     if (!editEl.contains(r.commonAncestorContainer)) return;
@@ -781,9 +805,9 @@
     } else { mid = m + mid + m; }
     editEl.textContent = pre + mid + post;
     try {
-      var node = editEl.firstChild || editEl, rr = document.createRange();
+      var node = editEl.firstChild || editEl, rr = fdoc().createRange();
       rr.setStart(node, pre.length); rr.setEnd(node, pre.length + mid.length);
-      var s2 = getSelection(); s2.removeAllRanges(); s2.addRange(rr); editEl.focus();
+      var s2 = fwin().getSelection(); s2.removeAllRanges(); s2.addRange(rr); editEl.focus();
     } catch (e) {}
   }
 
@@ -806,7 +830,7 @@
     if (op === 'split') {
       var at = 0;
       if (editEl) {
-        var s = getSelection();
+        var s = fwin().getSelection();
         if (s && s.rangeCount && editEl.contains(s.anchorNode)) at = s.getRangeAt(0).startOffset;
       }
       if (!at) { msg('나눌 자리에 커서를 두세요 (T 로 연 뒤)'); return; }
@@ -1154,7 +1178,11 @@
   });
 
   setTool('sel');
-  if (key) loadBook(false); else msg('교재가 없습니다');
+  // 지면 문서가 다 열린 뒤에 시작한다 — 조판 엔진이 그 안에 있다.
+  msg('지면을 여는 중…');
+  whenFrame(function () {
+    if (key) loadBook(false); else msg('교재가 없습니다');
+  });
 })();
 </script>
 {% endblock %}

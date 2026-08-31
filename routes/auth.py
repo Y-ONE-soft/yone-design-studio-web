@@ -189,14 +189,18 @@ def add_no_cache(response):
     # 기본값 `frame-ancestors 'none'` 이면 자기 자신도 못 물어 미리보기가 빈
     # 상자로 나온다 — 실제로 여기서 걸렸다. **같은 출처만** 열어 준다.
     _self_frame = request.path.startswith("/book-studio/viewer") or \
-        request.path.startswith("/book-studio/doc")
+        request.path.startswith("/book-studio/doc") or \
+        request.path.startswith("/book-studio/frame")
     # ⚠ Vivliostyle 뷰어 번들은 CSS 를 계산할 때 문자열을 함수로 만든다(eval).
     #   기본 CSP 로는 그 자리에서 EvalError 가 나고 **지면이 영원히 안 그려진다**
     #   (증상은 '빈 상자'뿐이라 원인을 알기 어렵다 — 콘솔을 봐야 나온다).
     #   그래서 `'unsafe-eval'` 은 **뷰어 번들 경로에만** 준다. 이 번들은 우리가
     #   node_modules 에 고정해 둔 정적 파일이고 사용자 입력이 들어가지 않는다.
     #   앱의 다른 화면은 그대로 eval 금지다.
-    _viewer = request.path.startswith("/book-studio/viewer")
+    # 조판 엔진 번들은 CSS 를 계산할 때 문자열을 함수로 만든다(eval). 그 번들이
+    # 도는 곳은 뷰어 앱과 **지면 문서**(`/book-studio/frame`) 둘이다.
+    _viewer = request.path.startswith("/book-studio/viewer") or \
+        request.path.startswith("/book-studio/frame")
     # ⚠ Vivliostyle 은 **기본 스타일시트를 `data:` URL 로 fetch 한다**(파일이
     #   아니라 번들 안에 문자열로 들어 있다). `connect-src 'self'` 로는 그게
     #   막히고, 콘솔에만 조용히 남는다 — 지면은 그려지지만 기본 규칙이 빠진

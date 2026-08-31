@@ -609,6 +609,52 @@ def core_js(sub):
     return send_from_directory(CORE, sub)
 
 
+# 지면이 사는 **빈 문서**. 여기 CSS 는 이것뿐이고, 앱 스타일시트는 하나도 안 문다.
+FRAME_HTML = """<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<title>지면</title>
+<style>
+/* ⚠ 여기에 **전칭 선택자를 쓰지 말 것.** 조판 결과가 이 문서 안에 그려지므로
+   `*` 규칙 하나가 판면을 바꾼다(실제로 앱 리셋 때문에 본문 단이 167mm →
+   118mm 로 좁아진 적이 있다). 아래 규칙은 전부 **우리가 심은 표식**에만 건다. */
+html, body { margin: 0; padding: 0; background: #6b6b6b; }
+#viv { min-height: 100vh; }
+
+/* 고칠 수 있는 자리 — `vrefN` 은 우리 자리표라 교재 CSS 와 안 부딪힌다 */
+[class*="vref"] { cursor: default; }
+body.tool-text [class*="vref"], body.tool-para [class*="vref"] { cursor: text; }
+body.tool-text [class*="vref"]:hover, body.tool-para [class*="vref"]:hover {
+  outline: 1px dashed rgba(120,140,255,.6); outline-offset: 2px;
+  background: rgba(120,140,255,.07);
+}
+.ide-editing {
+  outline: 2px solid #6c8cff !important; outline-offset: 2px;
+  background: #fffbe8 !important; white-space: pre-wrap;
+  font-family: ui-monospace, Menlo, monospace !important; color: #111 !important;
+}
+</style>
+<script src="/book-studio/core/vivlio-core.js"></script>
+</head><body><div id="viv"></div></body></html>
+"""
+
+
+@bp.route("/book-studio/frame")
+def frame():
+    """조판 결과가 사는 **빈 문서**.
+
+    ## 왜 따로 문서를 두는가
+
+    예전에는 작업대 화면 안 `div` 에 바로 조판했다. 그러면 **앱 CSS 가 조판에
+    얹힌다** — `main.css` 첫 줄의 `*{box-sizing:border-box}` 가 Vivliostyle 의
+    판면 래퍼까지 먹어 여백이 두 번 깎였고, 본문 단이 167mm 여야 하는데
+    118mm 로 나왔다. 폭만 좁은 게 아니라 **줄바꿈도 면 나눔도 달라졌다** —
+    디자인을 보라고 만든 화면이 다른 판을 보여 주고 있었던 것이다.
+
+    같은 출처(same-origin)라 화면 쪽에서 이 문서 안을 그대로 만질 수 있다.
+    클릭 편집도 선택 영역도 다 된다 — 잃는 것은 없고 오염만 끊긴다.
+    """
+    return Response(FRAME_HTML, mimetype="text/html; charset=utf-8")
+
+
 @bp.route("/book-studio/viewer/")
 @bp.route("/book-studio/viewer/<path:sub>")
 def viewer(sub="index.html"):
