@@ -129,14 +129,25 @@ def test_every_series_links_book_css(name):
 # ── 작업대 API 방어선 ───────────────────────────────────────────
 @pytest.fixture()
 def client():
+    """인증만 잠깐 떼고 **반드시 되돌린다**.
+
+    ⚠ Flask 의 `app` 은 모듈 전역이라 여기서 뗀 `check_auth` 가 같은 pytest
+      프로세스의 **다른 시험까지** 따라간다. 처음엔 되돌리지 않아서
+      `test_result_session_expiry` 3건과 `test_route_parity` 1건이 같이 깨졌다.
+    """
     os.environ.setdefault("YONE_SECRET_KEY", "test-only")
     import app as A
+    saved = {k: list(v) for k, v in A.app.before_request_funcs.items()}
     for key in list(A.app.before_request_funcs):
         A.app.before_request_funcs[key] = [
             f for f in A.app.before_request_funcs[key]
             if f.__name__ != "check_auth"]
     A.app.config["TESTING"] = True
-    return A.app.test_client()
+    try:
+        yield A.app.test_client()
+    finally:
+        A.app.before_request_funcs.clear()
+        A.app.before_request_funcs.update(saved)
 
 
 def test_styles_rejects_brace_injection(client):
