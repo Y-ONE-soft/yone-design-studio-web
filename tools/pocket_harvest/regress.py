@@ -306,10 +306,13 @@ def main(argv=None):
                 i, len(todo), r["status"], r["name"][:52], r["secs"],
                 (r.get("fails") or [""])[0][:70]))
 
-    # 이번 목록에 없는 옛 기록은 보고서에서 뺀다(대상이 줄었을 때 헷갈린다).
-    keep = {slug(p) for p in targets}
+    # ⚠ 보고서는 **늘 전권**이다. `--only` 로 한 권만 돌렸다고 표가 한 줄로
+    #   줄어들면 앞서 돌린 129권의 결과를 통째로 잃는다(그렇게 됐다).
+    #   빠진 것은 이제 없는 파일뿐이다.
+    all_targets = discover()
+    keep = {slug(p) for p in all_targets}
     view = {k: v for k, v in st.items() if k in keep}
-    path = write_report(view, total)
+    path = write_report(view, len(all_targets))
     ok = sum(1 for v in view.values() if v.get("status") == "PASS")
     bad = sum(1 for v in view.values() if v.get("status") in ("FAIL", "ERROR"))
     print("■ 통과 %d · 실패 %d → %s" % (ok, bad, path))
