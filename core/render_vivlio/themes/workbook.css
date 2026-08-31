@@ -520,60 +520,60 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
   position: absolute; left: 0; top: 0; width: var(--page-w); height: 7mm;
   background: var(--hdr-bg); border-bottom: 0.6pt solid var(--rule);
 }
-.divider .vbar {
-  position: absolute; left: 25mm; top: 7mm; width: 2.6mm; height: 18mm;
+.divider .vbar {   /* 실측 x 25.4 · w 4.6 · y 2.8~30.0 */
+  position: absolute; left: 25.4mm; top: 2.8mm; width: 4.6mm; height: 27.2mm;
   background: var(--hdr-bg);
 }
-.divider .kick {
-  position: absolute; left: 25mm; top: 33mm;
-  font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 9pt;
-  color: #fff; letter-spacing: 0.55em;
+.divider .kick {   /* 실측 y 34.6 · 글자 폭 17.6mm */
+  position: absolute; left: 25.4mm; top: 34.6mm;
+  font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 11pt;
+  color: #fff; letter-spacing: 0.55em; line-height: 1;
 }
-.divider .big {
-  position: absolute; left: 24mm; top: 42mm;
-  font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 62pt;
-  line-height: 1; color: #fff; letter-spacing: -0.01em;
+.divider .big {    /* 실측 글리프 45.2~75.9mm (높이 30.7mm) */
+  position: absolute; left: 24.5mm; top: 40mm;
+  font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 124pt;
+  line-height: 1; color: #fff; letter-spacing: -0.02em;
 }
-.divider .flow {
-  position: absolute; left: 25mm; top: 218mm; width: 120mm; height: 12mm;
+.divider .flow {   /* 실측 원 지름 10.6mm · 중심 32.5 / 76.6 / 120.4mm */
+  position: absolute; left: 27.2mm; top: 222.3mm; width: 120mm; height: 16mm;
 }
 .divider .flow i {
-  position: absolute; top: 0; width: 8.4mm; height: 8.4mm; border-radius: 50%;
+  position: absolute; top: 0; width: 10.6mm; height: 10.6mm; border-radius: 50%;
   border: 0.8pt solid #fff; box-sizing: border-box;
-  font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 7pt;
-  line-height: 8.1mm; text-align: center; color: #fff; font-style: normal;
+  font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 8pt;
+  line-height: 10.2mm; text-align: center; color: #fff; font-style: normal;
 }
 .divider .flow i.on { background: #fff; color: var(--step); }
 .divider .flow i:nth-of-type(1) { left: 0; }
-.divider .flow i:nth-of-type(2) { left: 42mm; }
-.divider .flow i:nth-of-type(3) { left: 84mm; }
+.divider .flow i:nth-of-type(2) { left: 44.1mm; }
+.divider .flow i:nth-of-type(3) { left: 87.9mm; }
 .divider .flow u {
-  position: absolute; top: 4.2mm; height: 0; border-top: 0.5pt solid #fff;
+  position: absolute; top: 5.3mm; height: 0; border-top: 0.5pt solid #fff;
   text-decoration: none;
 }
-.divider .flow u:nth-of-type(1) { left: 9.4mm; width: 31.6mm; }
-.divider .flow u:nth-of-type(2) { left: 51.4mm; width: 31.6mm; }
+.divider .flow u:nth-of-type(1) { left: 11.6mm; width: 31.5mm; }
+.divider .flow u:nth-of-type(2) { left: 55.5mm; width: 31.4mm; }
 .divider .flow s {
-  position: absolute; top: 9.6mm; text-decoration: none;
+  position: absolute; top: 13.4mm;   /* 실측 라벨 y 235.7mm */ text-decoration: none;
   font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 5.5pt;
   color: #fff; letter-spacing: 0.1em;
 }
 .divider .flow s:nth-of-type(1) { left: 0; }
-.divider .flow s:nth-of-type(2) { left: 42mm; }
-.divider .flow s:nth-of-type(3) { left: 84mm; }
-.divider .mark {
-  position: absolute; left: 25mm; top: 262mm;
-  font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 17pt;
-  color: #fff; letter-spacing: 0.42em;
+.divider .flow s:nth-of-type(2) { left: 44.1mm; }
+.divider .flow s:nth-of-type(3) { left: 87.9mm; }
+.divider .mark {   /* 실측 x 25.4~139mm · y 270.0mm */
+  position: absolute; left: 25.4mm; top: 270mm;
+  font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 27pt;
+  line-height: 1; color: #fff; letter-spacing: 0.42em;
 }
 /* 간지 뒷면 */
 .divider.back .l1 {
-  position: absolute; right: 45mm; top: 74mm; text-align: right;
+  position: absolute; right: 44mm; top: 79mm; text-align: right;   /* 실측 78.40 */
   font-family: "Gmarket Sans", sans-serif; font-weight: 500; font-size: 36pt;
   line-height: 1; color: #fff;
 }
 .divider.back .l2 {
-  position: absolute; right: 45mm; top: 96mm; text-align: right;
+  position: absolute; right: 44mm; top: 101mm; text-align: right;  /* 실측 100.75 */
   font-family: "Gmarket Sans", sans-serif; font-weight: 700; font-size: 60pt;
   line-height: 1; color: #fff;
 }

@@ -314,30 +314,40 @@ def read(paths, log=None):
     for f in files:
         k = _kind(f)
         (docs if k == "docx" else pdfs if k == "pdf" else other).append(f)
-    out = []
+    out, used, skipped, failed = [], [0, 0], 0, []
     for f in docs:
         try:
             got = [e for e in read_docx(f) if count_blanks(e["parts"])]
         except Exception as exc:                      # 원고 한 개가 전체를 막지 않게
-            log("  [리테] %s 읽기 실패 — %s" % (os.path.basename(f), exc))
+            failed.append("%s(%s)" % (os.path.basename(f), exc))
             continue
         if got:
             out += got
-            log("  [리테] %s — 지문 %d(해설지)" % (os.path.basename(f), len(got)))
+            used[0] += 1
+        else:
+            skipped += 1                              # 문제지·정답 목록
     for f in pdfs:
         try:
             if not is_answer_pdf(f):
-                continue                              # (앞글자)·(빈칸) 판
+                skipped += 1                          # (앞글자)·(빈칸) 판
+                continue
             got = [e for e in read_pdf(f) if count_blanks(e["parts"])]
         except Exception as exc:
-            log("  [리테] %s 읽기 실패 — %s" % (os.path.basename(f), exc))
+            failed.append("%s(%s)" % (os.path.basename(f), exc))
             continue
         if got:
             out += got
-            log("  [리테] %s — 지문 %d(정답지)" % (os.path.basename(f), len(got)))
+            used[1] += 1
+        else:
+            skipped += 1
+    log("  [리테] 원고 %d개에서 지문 %d — 해설지 %d · 정답지 %d "
+        "(정답본이 아니라 건너뜀 %d)"
+        % (used[0] + used[1], len(out), used[0], used[1], skipped))
+    if failed:
+        log("  [리테] 읽기 실패 %d개 — %s" % (len(failed), ", ".join(failed[:5])))
     if other:
-        log("  [리테] 읽을 수 없는 파일 %d개 — %s"
-            % (len(other), ", ".join(os.path.basename(x) for x in other[:5])))
+        log("  [리테] 원고가 아닌 파일 %d개는 지나쳤다 — %s"
+            % (len(other), ", ".join(os.path.basename(x) for x in other[:3])))
     seen, uniq = set(), []
     for e in out:
         sig = letters(plain(e["parts"]))

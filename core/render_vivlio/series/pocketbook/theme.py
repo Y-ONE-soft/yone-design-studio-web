@@ -122,6 +122,7 @@ def build_css(palette=None, metrics=None, highlight=None):
         "pass_size": "%g" % M["passage_size"],
         "track": "%g" % M["passage_track"],
         "hlw": "%g" % M["hl_weight"], "hlo": "%g" % M["hl_offset"],
+        "hlo2": "%g" % (M["hl_weight"] / 2.0 - M["hl_offset"] - 1.0),
         "anno_size": "%g" % M["anno_size"],
         "trans_size": "%g" % M["trans_size"],
         "trans_lead": "%g" % M["trans_lead"],
@@ -181,9 +182,11 @@ html,body{margin:0;padding:0;background:#fff}
 .pg::after{bottom:0;height:__band_bleed__}
 
 /* ── 왼쪽 면 ─────────────────────────────────── */
+/* 배지는 폭이 고정이다(18mm). padding 을 주면 상자가 그만큼 넓어져 원본과
+   어긋난다(실측 20mm) → box-sizing 으로 안쪽에서 먹게 한다. */
 .badge{position:absolute;background:var(--navy);color:#fff;font-family:PBDodam;
   font-size:8pt;display:flex;align-items:center;justify-content:center;
-  letter-spacing:.02em;padding:0 1mm;white-space:nowrap}
+  letter-spacing:.02em;padding:0 1mm;white-space:nowrap;box-sizing:border-box}
 .passage{position:absolute;font-size:__pass_size__pt;line-height:var(--lead);
   text-align:justify;letter-spacing:__track__em;hyphens:none}
 /* ⚠ .w 에 line-height 를 다시 주면 안 된다 — 낱말마다 24pt 로 되돌아가서
@@ -193,10 +196,13 @@ html,body{margin:0;padding:0;background:#fff}
 .passage .w{position:relative;display:inline-block;line-height:inherit}
 .w.blue,.blue{color:var(--blue)}
 .w.red,.red{color:var(--red)}
-.passage mark,.passage .hl{color:inherit;
-  background:linear-gradient(var(--hl),var(--hl));
-  background-size:100% __hlw__pt;background-position:0 calc(50% + __hlo__pt);
-  background-repeat:no-repeat}
+/* 형광펜 = **굵은 밑줄**. 인디자인이 그렇게 그린다(밑줄 9pt · offset −3).
+   그라디언트 배경으로 하면 뷰어가 래스터 이미지로 굽는다(실측: 100×3.2mm
+   이미지가 면마다 수십 개). 밑줄은 벡터로 남는다. */
+.passage mark,.passage .hl{color:inherit;background:none;
+  text-decoration:underline;text-decoration-color:var(--hl);
+  text-decoration-thickness:__hlw__pt;text-underline-offset:-__hlo2__pt;
+  text-decoration-skip-ink:none}
 .passage i{position:absolute;left:50%;transform:translateX(-50%);
   font-family:PBHand;font-size:__anno_size__pt;line-height:1;color:var(--anno);
   white-space:nowrap;font-style:normal}

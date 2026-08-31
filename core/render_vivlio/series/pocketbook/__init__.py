@@ -132,7 +132,7 @@ class PocketbookSeries(Series):
         os.makedirs(cfg.build_dir, exist_ok=True)
         with open(out, "w", encoding="utf-8") as fh:
             json.dump({"passages": rows}, fh, ensure_ascii=False)
-        log("■ 지문 %d개" % len(rows))
+        log("■ 지문 %d개" % sum(1 for r in rows if r.get("kind") != "memtest"))
         return out
 
     # ── 새 지문: 분석본에서 ──
@@ -246,6 +246,26 @@ class PocketbookSeries(Series):
             # 조용히 버리면 원고를 쓴 사람이 영영 모른다.
             log("  [원고 미사용] %d개 — %s"
                 % (len(orphan), ", ".join(orphan[:8])))
+
+    # ── 암기 TEST: 리뷰테스트 원고에서 ──
+    @staticmethod
+    def _apply_memtest(cfg, opt, rows, log):
+        """`options.review_tests` 의 리뷰테스트 원고 → 암기 TEST 문제·정답 면.
+
+        수확한 책은 이미 암기테스트를 갖고 있다(`kind == "memtest"` 항목).
+        그때는 원고를 다시 파지 않는다 — 완성본에 사람이 손댄 판이 있으면
+        그쪽이 정본이기 때문이다.
+        """
+        srcs = cfg.resolve(opt.get("review_tests") or [])
+        if isinstance(srcs, str):
+            srcs = [srcs]
+        if not srcs:
+            return rows
+        if any(r.get("kind") == "memtest" for r in rows):
+            log("■ 암기 TEST 는 수확본에 이미 있다 — 리뷰테스트 원고는 건너뛴다")
+            return rows
+        return pmemtest.attach(rows, srcs, log,
+                               place=opt.get("memtest_place", "after"))
 
     @staticmethod
     def _pick(corpus, opt, log):
