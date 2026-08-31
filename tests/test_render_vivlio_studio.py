@@ -264,6 +264,29 @@ def client():
         A.app.before_request_funcs.update(saved)
 
 
+def test_book_key_matches_across_nfc_nfd(client):
+    """맥 파일 이름은 NFD, 링크로 오는 글자는 NFC — 안 맞으면 **조용히 첫 책**.
+
+    팔레트(API)는 이미 정규화하고 있어서 값은 맞는데 지면만 딴 책이 열려,
+    화면만 보고는 원인을 못 찾는 종류의 어긋남이었다.
+    """
+    import re
+    import unicodedata as u
+    from routes.book_studio import _books
+    bs = _books()
+    if len(bs) < 2:
+        pytest.skip("책이 둘 이상 있어야 가른다")
+    target = bs[-1]["key"]                      # 첫 책이 아닌 것으로
+    for form in ("NFC", "NFD"):
+        h = client.get("/book-studio",
+                       query_string={"b": u.normalize(form, target)}
+                       ).get_data(as_text=True)
+        m = re.search(r'<option value="([^"]*)"[^>]*selected', h)
+        assert m, f"{form}: 고른 책이 없다"
+        assert u.normalize("NFC", m.group(1)) == u.normalize("NFC", target), \
+            f"{form}: 딴 책이 열렸다"
+
+
 def test_styles_rejects_brace_injection(client):
     """선택자에 `}` 를 넣으면 knobs.css 를 통째로 갈아엎을 수 있다."""
     r = client.post("/api/book-studio/styles",

@@ -112,8 +112,20 @@ def _book_dir(key):
 # ── 화면 ────────────────────────────────────────────────────────
 @bp.route("/book-studio")
 def studio():
+    """`?b=…` 로 책을 지정할 수 있다.
+
+    ⚠ 맥의 파일 이름은 **NFD**(ㄱ+ㅏ)라 목록의 키도 NFD 인데, 주소창이나 링크로
+      들어오는 글자는 대개 **NFC**(가) 다. 그냥 비교하면 안 맞아서 **조용히 첫
+      책이 열린다**(그래 놓고 팔레트만 맞는 책 것이 와 더 헷갈린다). 그래서
+      목록과 대조해 **목록에 있는 그 키**로 바꿔 넘긴다.
+    """
     bs = _books()
-    key = request.args.get("b") or (bs[0]["key"] if bs else "")
+    key = request.args.get("b") or ""
+    _, meta = _book_dir(key) if key else (None, None)
+    if meta:
+        key = meta["key"]
+    elif bs:
+        key = bs[0]["key"]
     return render_template("book_studio.html", books=bs, book_key=key,
                            active_nav="작업대")
 
