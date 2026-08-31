@@ -23,6 +23,7 @@
 @font-face { font-family: Noto; font-weight: 400; src: url(fonts/NotoSansCJKkr-Regular.otf); }
 @font-face { font-family: Noto; font-weight: 500; src: url(fonts/NotoSansCJKkr-Medium.otf); }
 @font-face { font-family: Noto; font-weight: 700; src: url(fonts/NotoSansCJKkr-Bold.otf); }
+@font-face { font-family: Noto; font-weight: 900; src: url(fonts/NotoSansCJKkr-Black.otf); }
 @font-face { font-family: Neolli; font-weight: 300; src: url(fonts/EliceDXNeolliOTF-Light.otf); }
 @font-face { font-family: Neolli; font-weight: 500; src: url(fonts/EliceDXNeolliOTF-Medium.otf); }
 @font-face { font-family: Neolli; font-weight: 700; src: url(fonts/EliceDXNeolliOTF-Bold.otf); }

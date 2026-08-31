@@ -144,7 +144,7 @@ def scan(kind):
     return items
 
 
-def export_one(src, dst, status_path, jsx_path, timeout=420):
+def export_one(src, dst, status_path, jsx_path, timeout=240):
     if os.path.exists(dst) and os.path.getsize(dst) > 10000:
         return "SKIP", 0
     os.makedirs(os.path.dirname(dst), exist_ok=True)
@@ -163,6 +163,20 @@ def export_one(src, dst, status_path, jsx_path, timeout=420):
         os.remove(status_path)
     with open(jsx_path, "w", encoding="utf-8") as f:
         f.write(_JSX % {"src": tmp, "dst": dst, "status": status_path})
+
+    # 두 번 죽은 파일은 다시 열지 않는다. 20MB 짜리 옛 아카이브 몇 권이
+    # InDesign 을 통째로 멎게 해서 배치가 그 자리에서 멈춘다(실측).
+    skip_path = os.path.join(TMP, "_skip.txt")
+    key = os.path.basename(src)
+    skips = set()
+    if os.path.exists(skip_path):
+        skips = set(open(skip_path, encoding="utf-8").read().splitlines())
+    if key in skips:
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
+        return "ERR", "두 번 실패해 건너뜀"
 
     err = None
     for attempt in (1, 2):
@@ -186,6 +200,8 @@ def export_one(src, dst, status_path, jsx_path, timeout=420):
     except OSError:
         pass
     if err:
+        with open(skip_path, "a", encoding="utf-8") as f:
+            f.write(key + "\n")
         return "ERR", err
     if not os.path.exists(status_path):
         return "ERR", "상태 없음"

@@ -30,8 +30,28 @@ FONTS = [
     ("Noto", "NotoSansCJKkr-Bold.otf"), ("Neolli", "EliceDXNeolliOTF-Light.otf"),
     ("Neolli", "EliceDXNeolliOTF-Medium.otf"),
     ("Neolli", "EliceDXNeolliOTF-Bold.otf"), ("Jalnan", "JalnanOTF.otf"),
+    ("Noto", "NotoSansCJKkr-Black.otf"),      # 간지 차례
 ]
 CHAPTER = {1: "Frame", 2: "Build Up"}
+README = """# {school} 파이널 직전보충 ({grade} {period})
+
+Vivliostyle(코드 조판) 판. **이 폴더에는 코드가 없다** — `config.json` 과
+`원고/content.json` 뿐이고, 조판은 리포의 계열 `final` 이 한다.
+
+```bash
+cd ~/dev/yone-design-web
+bin/viv "{rel}/Vol1" all      # 원고 → 조판 → 마감 → 인쇄원고 → 검수
+bin/viv "{rel}/Vol2" all
+bin/viv "{rel}/Vol1" watch    # 값 하나 바꿔 보며 라이브 미리보기
+```
+
+- 산출: `Vol1/{school}_파이널(Vol1)_내지.pdf` · `…_인쇄.pdf`(CMYK)
+- 원고: `원고/content.json` — 파이널 엔진(engines/final)이 만든 것. **두 권이 함께 본다.**
+- 손잡이: `bin/viv "{rel}/Vol1" knobs`
+- 한 번만 손보고 싶은 것: `Vol1/overrides.css` (없으면 만들면 된다)
+
+⚠ 학교 폴더 위쪽의 `.indd`·PDF 는 **인디자인 납품본**이다. 건드리지 않는다.
+"""
 GRAY_MAP = {"#231f20": 1.0, "#6d6e71": 0.66, "#a7a9ac": 0.4,
             "#e2e3e4": 0.13, "#e6e7e8": 0.11, "#f2f2f3": 0.06, "#ffffff": 0.0}
 
@@ -92,6 +112,9 @@ def main():
         with open(p, "w", encoding="utf-8") as f:
             json.dump(cfg, f, ensure_ascii=False, indent=2)
         print("  ", p.replace(root + os.sep, ""))
+    with open(os.path.join(base, "README.md"), "w", encoding="utf-8") as f:
+        f.write(README.format(school=school, grade=grade, period=period,
+                              rel=base.replace(root + os.sep, "")))
     print(f"■ {school} {grade} {period} — 책 두 권 준비 완료")
     print(f"   bin/viv \"{base.replace(root + os.sep, '')}/Vol1\" all")
     return 0
