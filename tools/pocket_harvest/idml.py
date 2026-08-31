@@ -454,7 +454,11 @@ def read_sequence(path):
             if role:
                 by_role.setdefault(role, []).append(paras)
 
-        if masters & set("BDFL"):
+        # ⚠ 마스터 글자는 **책마다 다른 이름**이다 — 지문면을 B 마스터에 얹은
+        #   책이 있다(고2 올포14~16강, 46스프레드 94k자가 통째로 사라졌다).
+        #   그래서 글자만 보고 암기테스트 면으로 넘기면 안 된다. 그 면에
+        #   **지문(본문)이 있으면 지문면**이다 — 내용으로 가른다.
+        if (masters & set("BDFL")) and "passage" not in by_role:
             # ⚠ 암기테스트 스토리는 **여러 면에 걸쳐 이어져 있다**(스레드).
             #   스토리 단위로 집으면 한 면에 책 전체가 들어간다(실제로 그랬다).
             #   그래서 여기서는 모아만 두고, 지문별로 자르는 것은 split_memtest 가 한다.
