@@ -110,6 +110,19 @@ def source_passage_spreads(src):
     return n
 
 
+def _src_chars(src):
+    """원본 IDML 의 총 글자 수. `[작업전]` 같은 빈 껍데기를 가리는 데 쓴다."""
+    doc = idml.Idml(src)
+    seen, n = set(), 0
+    for sp in doc.spreads():
+        for fr in sp["frames"]:
+            if fr["story"] in seen:
+                continue
+            seen.add(fr["story"])
+            n += len(doc.text_of(fr["story"]))
+    return n
+
+
 def slug(path):
     """작업 폴더 이름 — 학기 폴더까지 넣어야 같은 학교가 안 겹친다."""
     rel = os.path.relpath(nfc(path), nfc(IDML_ROOT))
@@ -159,8 +172,14 @@ def run_one(src, force=False, log=print):
         # R1 — 읽는 쪽이 지문을 흘렸는가. 계열 게이트로는 절대 안 잡힌다.
         row["n_src"] = source_passage_spreads(src)
         if not row["n_passage"]:
+            # 왜 0인지까지 적는다 — "원본이 비었다"와 "읽는 쪽이 흘렸다"는
+            # 대응이 정반대다. 원본 글자 수가 그 자리에서 가른다.
             row["status"] = "SKIP"
-            row["fails"] = ["지문 0개 — 완성 포켓북이 아니거나 수확 실패"]
+            row["fails"] = [
+                "지문 0개 · 원본 지문 스프레드 %d개 — %s"
+                % (row["n_src"],
+                   "원본이 빈 껍데기다(글자 %d자)" % _src_chars(src)
+                   if row["n_src"] == 0 else "읽는 쪽이 흘렸다 — 엔진 결함")]
             row["secs"] = round(time.time() - t0, 1)
             return row
         cfg = vconfig.load(work)
