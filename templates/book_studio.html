@@ -864,41 +864,50 @@
   // 박으므로 `!important` 가 아니면 못 이긴다. 대신 이건 **눈으로 보는 것**일
   // 뿐이고, 줄바꿈·면 나눔은 다시 조판해야 정확하다 — 그래서 곧바로 재조판을
   // 걸고, 그 사이 "다시 조판 중" 을 띄운다.
-  var liveTimer = null;
-  function liveStyleEl() {
-    var d = fdoc(); if (!d) return null;
-    var e = d.getElementById('ide-live');
-    if (!e) {
-      e = d.createElement('style'); e.id = 'ide-live';
-      d.head.appendChild(e);
-    }
-    return e;
+  var liveTimer = null, liveTouched = [];
+
+  /** 실시간 미리보기를 걷어 낸다(진짜 판이 오면). */
+  function liveClear() {
+    liveTouched.forEach(function (t) {
+      t.el.style.removeProperty(t.k);
+    });
+    liveTouched = [];
   }
-  /** 실시간 규칙이 걸 **화면용 선택자**.
+
+  /** 값을 만지는 즉시 지면에 얹는다.
    *
-   *  ⚠ 저장용 선택자(`[data-ref="…"]`)를 그대로 쓰면 **아무것도 안 잡힌다.**
-   *    `data-ref` 는 조판할 때만 있고 결과 DOM 에는 안 남기 때문이다(그래서
-   *    저장하면 잘 되는데 미리보기만 안 바뀌었다). 결과에 남는 것은 `class`
-   *    뿐이라, 그 자리에 붙은 `vrefN` 을 쓴다.
+   *  ⚠ 스타일시트로는 안 된다. `<style>` 을 프레임 head 에 넣어 봤더니
+   *    규칙이 **0개**로 들어갔다(조판 엔진이 head 를 자기 식으로 다룬다).
+   *    그리고 저장용 선택자(`[data-ref="…"]`)는 조판 결과 DOM 에 없다.
+   *    그래서 **요소에 직접** 얹는다 — Vivliostyle 이 인라인으로 박아 둔
+   *    값을 이기려면 `important` 가 필요하다.
+   *
+   *  ⚠ 이건 **눈으로 보는 것**일 뿐이다. 줄바꿈·면 나눔은 다시 조판해야
+   *    정확하다 — 그래서 곧바로 재조판을 걸고 그때 이 임시 값을 걷는다.
    */
-  function liveSel() {
-    if (styleTarget) return styleTarget;
-    if (!curEl) return '';
-    var m = (typeof curEl.className === 'string')
-      ? curEl.className.match(/(?:^|\s)(vref\d+)(?:\s|$)/) : null;
-    return m ? '.' + m[1] : '';
+  function liveTargets() {
+    var d = fdoc(); if (!d) return [];
+    if (styleTarget) {
+      try { return [].slice.call(d.querySelectorAll(styleTarget)); }
+      catch (e) { return []; }
+    }
+    return curEl ? [curEl] : [];
   }
 
   function live() {
-    var sel = liveSel(); if (!sel) return;
-    var props = readPanels(), body = [];
-    for (var k in props) {
-      if (props[k]) body.push('  ' + k + ': ' + props[k] + ' !important;');
-    }
-    var e = liveStyleEl();
-    if (e) e.textContent = body.length ? sel + ' {\n' + body.join('\n') + '\n}\n' : '';
-    msg('미리 보는 중 — 잠시 뒤 정확한 판으로 다시 조판합니다');
     if (!targetSel()) return;
+    liveClear();
+    var props = readPanels(), els = liveTargets();
+    els.forEach(function (el) {
+      for (var k in props) {
+        if (!props[k]) continue;
+        el.style.setProperty(k, props[k], 'important');
+        liveTouched.push({ el: el, k: k });
+      }
+    });
+    msg(els.length
+        ? '미리 보는 중 (' + els.length + '곳) — 잠시 뒤 정확한 판으로 다시 조판합니다'
+        : '미리 볼 자리를 못 찾았습니다');
     clearTimeout(liveTimer);
     liveTimer = setTimeout(saveStyle, 900);
   }
@@ -910,7 +919,7 @@
         if (d.error) { msg('✗ ' + d.error); return; }
         styles = d.styles || {};
         rebuild('').then(function (ok) {
-          var e = liveStyleEl(); if (e) e.textContent = '';   // 진짜 판이 왔다
+          liveTouched = [];            // 지면이 새로 왔으니 옛 참조는 버린다
           if (ok) msg('✓ 반영했습니다');
         });
       });
