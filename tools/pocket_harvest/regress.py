@@ -78,6 +78,38 @@ def discover(root=IDML_ROOT):
     return sorted(out, key=lambda p: nfc(p))
 
 
+def source_passage_spreads(src):
+    """원본 IDML 에서 **지문 스프레드 수**를 read_sequence 와 무관하게 센다.
+
+    회귀 검증이 `read_sequence` 의 셈을 그대로 믿으면, 읽는 쪽에서 지문을
+    통째로 흘렸을 때 게이트가 **다 통과한다** — 행도 면도 똑같이 줄어드니까.
+    실제로 그랬다(광문2 25-2-기말 79지문 중 43개가 조용히 빠졌는데 G-P1 통과).
+
+    그래서 여기서는 스토리 하나만 본다: **긴 영어 본문**이 있는 스프레드.
+    짤지문 스프레드는 지문이 둘이므로 이 값은 **하한**이다.
+    """
+    doc = idml.Idml(src)
+    n = 0
+    for sp in doc.spreads():
+        seen = set()
+        for fr in sp["frames"]:
+            sid = fr["story"]
+            if sid in seen:
+                continue
+            seen.add(sid)
+            paras = doc.paragraphs(sid)
+            if not paras:
+                continue
+            if idml._para_role(paras) != "passage":
+                continue
+            txt = "\n".join(idml.plain(p["runs"]) for p in paras)
+            # 한글 비율이 높으면 해석이다(지문과 같은 `본문` 스타일을 쓴다).
+            if len(txt.strip()) >= 200 and idml.han_ratio(txt) <= 0.35:
+                n += 1
+                break
+    return n
+
+
 def slug(path):
     """작업 폴더 이름 — 학기 폴더까지 넣어야 같은 학교가 안 겹친다."""
     rel = os.path.relpath(nfc(path), nfc(IDML_ROOT))
@@ -124,6 +156,8 @@ def run_one(src, force=False, log=print):
         items = _mkbook(src, work)
         row["n_passage"] = sum(1 for x in items if x.get("kind") != "memtest")
         row["n_memtest"] = sum(1 for x in items if x.get("kind") == "memtest")
+        # R1 — 읽는 쪽이 지문을 흘렸는가. 계열 게이트로는 절대 안 잡힌다.
+        row["n_src"] = source_passage_spreads(src)
         if not row["n_passage"]:
             row["status"] = "SKIP"
             row["fails"] = ["지문 0개 — 완성 포켓북이 아니거나 수확 실패"]
@@ -133,6 +167,9 @@ def run_one(src, force=False, log=print):
         rep = vverify.Report(row["name"])
         vseries.get("pocketbook").build(cfg, log)
         vseries.get("pocketbook").verify(cfg, log, rep)
+        if row["n_passage"] < row["n_src"]:
+            rep.fail("R1 원본 지문 유실 — 지면 %d개 < 원본 지문 스프레드 %d개"
+                     % (row["n_passage"], row["n_src"]))
         row["fails"] = list(rep.fails)
         row["warns"] = list(rep.warns)
         row["notes"] = list(rep.notes)
@@ -201,14 +238,15 @@ def write_report(st, total, path=REPORT):
              % (len(ok), len(bad), len(skip)))
     L.append("- 생성 %s" % time.strftime("%Y-%m-%d %H:%M"))
     L.append("")
-    L.append("| 권 | 지문 | 암기 | 면 | 결함 | 초 |")
-    L.append("|---|---:|---:|---:|---:|---:|")
+    L.append("| 권 | 지문 | 원본지문면 | 암기 | 면 | 결함 | 초 |")
+    L.append("|---|---:|---:|---:|---:|---:|---:|")
     for r in rows:
         mark = {"PASS": "✅", "FAIL": "❌", "ERROR": "💥",
                 "SKIP": "—"}.get(r.get("status"), "?")
-        L.append("| %s %s | %s | %s | %s | %d | %s |" % (
+        L.append("| %s %s | %s | %s | %s | %s | %d | %s |" % (
             mark, _label(r),
-            r.get("n_passage", "-"), r.get("n_memtest", "-"),
+            r.get("n_passage", "-"), r.get("n_src", "-"),
+            r.get("n_memtest", "-"),
             r.get("n_pages", "-"), len(r.get("fails") or []),
             r.get("secs", "-")))
     if bad:
