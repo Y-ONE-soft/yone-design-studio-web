@@ -117,12 +117,28 @@ def test_writing_slices_by_ascending_start_idx():
     assert w["두번째"] == ["다"]
 
 
-def test_gate_stops_on_missing_summary():
+def test_gate_stops_when_only_some_passages_have_a_summary():
+    """요약이 아예 없는 판(고3)은 정상이고, **일부만 없는 것**이 결함이다."""
     c = _content()
-    c["vol1"]["중요어휘_왼"] = "교과서1과 본문1\nThe [answer] is here.\n"
-    d = D.from_content(c)
+    c["vol1"]["중요어휘_왼"] = ("교과서1과 본문1\nThe [answer] is here.\n"
+                          "\n250341\nSecond [passage] text.\n"
+                          "\n>>   내용요약   \nOnly this one has a summary.\n")
     with pytest.raises(SystemExit):
-        D.gate(d, c, lambda m: None)
+        D.gate(D.from_content(c), c, lambda m: None)
+
+
+def test_gate_allows_a_book_with_no_summaries_at_all():
+    c = _content()
+    c["vol1"]["중요어휘_왼"] = ("교과서1과 본문1\nThe [answer] is here.\n"
+                          "\n250341\nSecond [passage] text.\n")
+    D.gate(D.from_content(c), c, lambda m: None)     # 예외가 없어야 한다
+
+
+def test_summary_mark_dialects():
+    """`>>   내용요약` · `>>내용요약` · `|  내용요약  |` 세 가지가 실재한다."""
+    for mark in (">>   내용요약   ", ">>내용요약", "|  내용요약  |", ">> 내용요약"):
+        assert D.is_summary_mark(mark)
+    assert not D.is_summary_mark("내용요약은 다음과 같이 길게 이어지는 본문 문장이다")
 
 
 def test_hyphen_artifacts_are_reported_not_fixed():

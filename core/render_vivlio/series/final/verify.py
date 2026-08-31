@@ -22,34 +22,27 @@ PER_PAGE = {"arrange": 4, "insert": 4, "vocab": 1, "grammar": 2, "writing": 2}
 # 한 면의 칸 배치 — (단 수, 단마다 칸 수). 사분면은 2단×2칸.
 GRID = {"arrange": (2, 2), "insert": (2, 2), "vocab": (1, 1),
         "grammar": (2, 1), "writing": (2, 1)}
+RE_WS = re.compile(r"\s+")
 
 
 def expected_pages(sec, spans):
-    """지문마다 **몇 번째 면**에 놓이는가 — 칸 배치를 그대로 흉내 낸다.
+    """지문마다 **몇 번째 면**에 놓이는가 — 칸 배치를 슬롯으로 흉내 낸다.
 
-    두 칸을 쓰는 지문(`span=2`)은 한 단을 통째로 먹으므로, 단순한 i//4 로는
-    그 뒤가 전부 어긋난 것처럼 보인다(실제로 389건 거짓 경보가 났다).
+    한 면은 `단 수 × 단마다 칸 수` 슬롯이고 **단을 세로로 먼저** 채운다
+    (`column-fill: auto`). 두 칸짜리·흘림 지문은 슬롯을 그만큼 먹고 단 머리에
+    맞춰 시작하므로, 단순한 i//4 로는 그 뒤가 전부 어긋난 것처럼 보인다
+    (실제로 389건 거짓 경보가 났다).
     """
     ncol, nslot = GRID[sec["kind"]]
-    out, page, col, used = [], 0, 0, 0
+    per = ncol * nslot
+    out, pos = [], 0
     for i, _b in enumerate(sec["blocks"]):
-        span = spans.get(i, 1)
-        if span > 1 and used:            # 두 칸짜리는 빈 단이 필요하다
-            col += 1
-            used = 0
-        if col >= ncol:
-            page += 1
-            col, used = 0, 0
-        out.append(page)
-        used += span
-        if used >= nslot:
-            col += 1
-            used = 0
-            if col >= ncol:
-                page += 1
-                col = 0
+        s = max(1, int(spans.get(i, 1)))
+        if s > 1 and pos % nslot:          # 여러 칸짜리는 단 머리에서 시작
+            pos += nslot - (pos % nslot)
+        out.append(pos // per)
+        pos += s
     return out
-RE_WS = re.compile(r"\s+")
 
 
 def _n(s):
@@ -80,8 +73,15 @@ def _section_pages(data, vol, texts, report, skip=()):
     return spans
 
 
+RE_SENT = re.compile(r"(?<=[.!?])\s+")
+
+
 def _block_text(kind, b):
-    """그 지문의 **본문 문장**(대조용). 헤더는 쓰지 않는다."""
+    """그 지문의 **본문 문장**(대조용). 헤더는 쓰지 않는다.
+
+    어법은 지문이 한 덩어리라 통째로 찾으면 **면에 걸친 지문이 '누락'** 으로
+    잡힌다(흘림 배치). 문장으로 쪼개면 걸침도 견디고 어디가 틀렸는지도 좁혀진다.
+    """
     if kind in ("arrange", "insert"):
         return ([b["given"]] if b.get("given") else []) + list(b["items"])
     if kind == "vocab":
@@ -90,8 +90,9 @@ def _block_text(kind, b):
     if kind == "grammar":
         # ⚠ `[낱말]` 은 지면에 **대괄호째** 찍힌다. 괄호를 뺀 문자열로 찾으면
         #   55개 지문이 통째로 "누락"으로 잡힌다(거짓 경보).
-        return ["".join(f'[{x["a"]}]' if isinstance(x, dict) else x
-                        for x in b["body"])]
+        whole = "".join(f'[{x["a"]}]' if isinstance(x, dict) else x
+                        for x in b["body"])
+        return [t for t in RE_SENT.split(whole) if t.strip()]
     return [p["korean"] for p in b["pairs"]] + \
            [p["choices"] for p in b["pairs"]]
 
@@ -235,8 +236,13 @@ def _spanmap(cfg, vol, data):
         for r in json.load(f):
             kind = r["key"].split("-")[1]
             i = int(r["key"].rsplit("-", 1)[1])
-            if r.get("span", 1) > 1:
-                out.setdefault(kind, {})[i] = r["span"]
+            slots = r.get("span", 1)
+            if r.get("flow"):
+                # 흘린 지문은 제 높이만큼 칸을 먹는다
+                cap = max(1.0, float(r.get("cap_mm") or 1.0))
+                slots = max(2, int(-(-float(r.get("natural_mm") or 0) // cap)))
+            if slots > 1:
+                out.setdefault(kind, {})[i] = slots
     return out
 
 

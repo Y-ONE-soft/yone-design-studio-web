@@ -78,6 +78,39 @@ try {
 """
 
 
+def restart_indesign(log=None):
+    """멎은 InDesign 을 되살린다.
+
+    ⚠ 모달 대화상자가 뜨면 `NEVER_INTERACT` 로도 안 막히는 경우가 있고(손상된
+      문서·글꼴 경고), 그러면 AppleEvent 가 통째로 무응답이 된다 — 262권 배치가
+      109번째에서 20분 넘게 멎었다. 프로세스를 죽이고 다시 띄운다.
+      **복구 폴더를 비우지 않으면 다시 켤 때 복구 대화상자가 떠서 또 멎는다.**
+    """
+    log = log or print
+    subprocess.run(["pkill", "-9", "-f", "Adobe InDesign 2026"],
+                   capture_output=True)
+    time.sleep(4)
+    import glob
+    for d in glob.glob(os.path.expanduser(
+            "~/Library/Caches/Adobe InDesign/Version */*/InDesign Recovery")):
+        for f in glob.glob(os.path.join(d, "*")):
+            try:
+                shutil.move(f, os.path.join(TMP, os.path.basename(f)))
+            except Exception:
+                pass
+    subprocess.Popen(
+        ["open", "-a",
+         "/Applications/Adobe InDesign 2026/Adobe InDesign 2026.app"],
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    for _ in range(20):
+        time.sleep(5)
+        if idrun.open_doc_count() >= 0:
+            log("  [InDesign 재시작]")
+            return True
+    log("  [InDesign 재시작 실패]")
+    return False
+
+
 def _cleanup_docs():
     """열린 문서가 남아 있으면 저장 없이 닫는다.
 
@@ -111,7 +144,7 @@ def scan(kind):
     return items
 
 
-def export_one(src, dst, status_path, jsx_path, timeout=900):
+def export_one(src, dst, status_path, jsx_path, timeout=420):
     if os.path.exists(dst) and os.path.getsize(dst) > 10000:
         return "SKIP", 0
     os.makedirs(os.path.dirname(dst), exist_ok=True)
@@ -120,22 +153,34 @@ def export_one(src, dst, status_path, jsx_path, timeout=900):
         os.remove(tmp)
     if not _copy(src, tmp):
         return "ERR", "복사 실패"
+    # GDrive 는 실체화가 덜 된 파일을 짧게 내주기도 한다 — 크기가 다르면 손상본이다.
+    try:
+        if os.path.getsize(tmp) != os.path.getsize(src):
+            return "ERR", "복사본 크기 불일치(동기화 중)"
+    except OSError:
+        return "ERR", "복사본 확인 실패"
     if os.path.exists(status_path):
         os.remove(status_path)
     with open(jsx_path, "w", encoding="utf-8") as f:
         f.write(_JSX % {"src": tmp, "dst": dst, "status": status_path})
 
     err = None
-    for _attempt in (1, 2):
+    for attempt in (1, 2):
         try:
             idrun.run_file(jsx_path, timeout=timeout)
             err = None
             break
+        except subprocess.TimeoutExpired:
+            err = "시간 초과(%ds)" % timeout
+            restart_indesign()
         except Exception as e:
             err = str(e)[:200]
             # 실패본이 열린 채 남으면 **다음 파일까지 연달아 죽는다**(실측).
             _cleanup_docs()
-    _cleanup_docs()
+            if idrun.open_doc_count() < 0:
+                restart_indesign()
+    if err is None:
+        _cleanup_docs()
     try:
         os.remove(tmp)
     except OSError:

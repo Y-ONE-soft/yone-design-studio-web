@@ -80,7 +80,13 @@ def check(cfg, log, report):
     # ── ④ 자리(상/하): pair 스텝의 하단 발문이 아래쪽에 있는가 ──
     _check_zones(pdf, d, report, cfg.build_dir)
 
-    # ── ⑤ 면 수 ──
+    # ── ⑤ 원고 퇴화: 빈칸 스텝이 '낱말 목록'이면 원고가 잘못 골렸다 ──
+    _check_degraded(d, report)
+
+    # ── ⑥ 서체 폴백: 스텝 로고가 대체 서체로 찍혔는가 ──
+    _check_fonts(cfg, report)
+
+    # ── ⑦ 면 수 ──
     report.note(f"면 수 {probe.page_count(pdf)}p")
     return report
 
@@ -122,3 +128,58 @@ def _check_zones(pdf, d, report, cfg_build_dir=None):
                     f"(판면 밖으로 흘러 내용이 잘렸다는 뜻)")
     else:
         report.note(f"넘침 없음 (칸 끝 표식 {marks}/{want or marks}개 확인)")
+
+
+_RE_WORDLIST = re.compile(r"^\s*\d+\.\s*[A-Za-z][A-Za-z'\-]*\s*$")
+
+
+def _check_degraded(d, report):
+    """빈칸 스텝인데 **문장이 없고 낱말만** 있으면 원고가 퇴화본이다.
+
+    실측(고1 22년 6월 잡 a153f1d4): `1. encourage` 만 19줄 — 정답 낱말 목록이
+    빈칸 원고 자리에 들어와 있었다. InDesign 경로도 이 원고로는 못 만든다.
+    조판 실패가 아니라 **원고를 잘못 고른 것**이므로 이름을 붙여 세운다.
+    (같은 사고: `workbook_answer_sheet_degraded_pick`)
+    """
+    for st in d["steps"]:
+        if st["key"] not in ("step1_c2", "step2_c1"):
+            continue
+        rows = [b.get("text") or "" for g in st["groups"]
+                for u in g["units"] for b in u
+                if b["role"] in ("blank_vocab", "blank_gram")]
+        if len(rows) < 5:
+            continue
+        wordish = sum(1 for t in rows if _RE_WORDLIST.match(t))
+        if wordish > len(rows) * 0.8:
+            report.fail(
+                f"[원고 퇴화] {st['key']} — {len(rows)}줄이 거의 다 '번호. 낱말' "
+                f"목록이다({wordish}줄). 빈칸 원고가 아니라 **정답 목록**을 "
+                f"집었을 가능성 — 원고를 다시 고를 것")
+
+
+def _check_fonts(cfg, report):
+    """스텝 로고 서체가 실제로 실렸는가 — 폴백은 조용히 예뻐 보인다.
+
+    TTMamablock 은 로컬에 설치돼 있지 않아 리포 동봉본을 쓴다. 그 파일이
+    빠지거나 cmap 이 없으면 Gmarket 으로 대체돼 **로고만 딴 서체**가 된다.
+    실측으로 한 번 겪은 사고라 게이트로 남긴다.
+    """
+    import os
+    fdir = os.path.join(cfg.build_dir, "fonts")
+    want = "TTMamablockB.ttf"
+    if not os.path.exists(os.path.join(fdir, want)):
+        report.fail(f"[서체] {want} 가 빌드에 없다 — 스텝 로고가 대체 서체로 찍힌다")
+        return
+    try:
+        from fontTools.ttLib import TTFont
+        f = TTFont(os.path.join(fdir, want))
+        cm = f.getBestCmap() if "cmap" in f else None
+        missing = [c for c in "ABCS12" if not cm or ord(c) not in cm
+                   or not f["glyf"][cm[ord(c)]].numberOfContours]
+        if missing:
+            report.fail(f"[서체] 로고 글자 {missing} 의 아웃라인이 없다 — "
+                        f"대체 서체로 찍힌다")
+        else:
+            report.note("스텝 로고 서체 정상 (TTMamablock 아웃라인 확인)")
+    except Exception as e:
+        report.warn(f"[서체] 확인 못 함: {e}")
