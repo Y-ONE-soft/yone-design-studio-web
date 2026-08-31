@@ -232,13 +232,17 @@ class SpecialSeries(Series):
             for role, rlabel, affects in self.ROLES:
                 if role not in have:
                     continue          # 그 부가 안 쓰는 역할은 만들지 않는다
+                # 묶음 이름은 정해진 어휘(`knobs.GROUPS`)를 쓴다. 부 이름은
+                # 라벨이 이미 지고 있으니 새 묶음을 지어내지 않는다.
                 out.append(K(f"palette.{pid}.{role}", "color",
                              f"{pname} · {rlabel}", affects=affects,
-                             group=pname, resettable=False))
+                             group="색" if role in ("main", "deep", "sub")
+                             else "고급", resettable=False))
         mm = lambda key, label, lo, hi, affects: K(            # noqa: E731
             "metrics." + key, "mm", label,
             default=render_mod.DEFAULT_METRICS.get(key),
-            min=lo, max=hi, step=0.5, unit="mm", affects=affects, group="판면")
+            min=lo, max=hi, step=0.5, unit="mm", affects=affects,
+            group="치수")
         out += [
             mm("margin_top", "위 여백", 10, 40, "판면 위"),
             mm("margin_bottom", "아래 여백", 10, 40, "판면 아래 · 쪽번호"),
