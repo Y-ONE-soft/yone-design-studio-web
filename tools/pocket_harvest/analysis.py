@@ -316,18 +316,48 @@ def _voca_of(table):
 
 
 # ── 주제 / 요약 ───────────────────────────────────────────
-def _split_topic(segments):
-    """`상단제목` 구분자로 잘린 조각들 → (주제, 요약).
+def _split_topic(items):
+    """주제/요약 조각들 → (주제, 요약, 경계이름).
 
-    조각이 하나뿐이면(구분자가 없는 책) 첫 문장을 주제로 보지 않는다 —
-    잘못 자르느니 요약을 비우고 리포트에 남기는 편이 낫다.
+    **원고 세대마다 경계가 다르다**(실측 104권).
+
+      · 25-2-기말 구세대 — 532면 중 전부 `주제/요약:상단제목` 구분자 2개.
+        주제와 요약이 **한 줄**에 붙어 있는 면이 300개라 줄바꿈으로는 못 가른다.
+      · 26-2-중간 신세대 — 532면 중 453면에 **구분자가 아예 없고**, 대신
+        주제와 요약이 **단락**으로 갈려 있다. 나머지 79면은 구분자가 남아 있다.
+
+    → 구분자가 하나라도 있으면 구분자가 경계고(줄바꿈은 무시한다),
+      하나도 없으면 줄바꿈이 경계다. 세대를 파일명이나 폴더로 묻지 않는다.
+
+    둘 다 안 되면 **통째로 주제에 넣지 않는다.** 포켓북 오른쪽 면은 주제 줄과
+    요약 줄을 따로 찍는데, 주제 줄이 비면 눈에 띄지만 두 개가 한 문단으로
+    붙어 나오면 오래 안 보인다 → 요약에 넣고 주제를 비운 뒤 note 를 남긴다.
     """
-    segs = [s for s in (_sq(x) for x in segments) if s]
+    has_sep = any(kind == "sep" for kind, _ in items)
+    segs, cur = [], []
+    for kind, line in items:
+        if kind == "sep":
+            segs.append(" ".join(cur))
+            cur = []
+            continue
+        for r in line:
+            if role_of(r["style"]) == "topic_sep":
+                segs.append(" ".join(cur))
+                cur = []
+            elif r["t"]:
+                cur.append(r["t"])
+        if not has_sep:
+            # 구분자가 없는 세대에서는 줄 하나가 곧 조각 하나다
+            segs.append(" ".join(cur))
+            cur = []
+    segs.append(" ".join(cur))
+    segs = [x for x in (_sq(x) for x in segs) if x]
+    how = "상단제목 구분자" if has_sep else "줄바꿈"
     if not segs:
-        return "", ""
+        return "", "", how
     if len(segs) == 1:
-        return segs[0], ""
-    return segs[0], _sq(" ".join(segs[1:]))
+        return "", segs[0], "못 가름(주제 비움)"
+    return segs[0], _sq(" ".join(segs[1:])), how
 
 
 # ── 지문 키 ───────────────────────────────────────────────
@@ -558,10 +588,10 @@ def _split_title(line):
 
 def _build(u, base, chs, nums, notes):
     lines = u["lines"]
-    p_runs, t_runs, topic_segs = [], [], []
+    p_runs, t_runs = [], []
     grammar, exam, sentences = [], [], []
     title_en = title_ko = ""
-    cur_seg = []
+    topic_items = []
     pend_en, prev_sid = None, None
     for kind, line, sid, tr_story in lines:
         txt = _sq("".join(r["t"] for r in line))
@@ -596,23 +626,17 @@ def _build(u, base, chs, nums, notes):
                 sentences.append({"en": pend_en, "ko": txt})
                 pend_en = None
         elif kind == "topic_sep":
-            topic_segs.append(" ".join(cur_seg))
-            cur_seg = []
+            # 구분자만 있는 줄(공백 run) — 조각 경계로만 쓴다
+            topic_items.append(("sep", line))
         elif kind == "topic":
-            # 구분자는 줄이 아니라 **줄 안의 run** 으로 온다(광문1 은 주제·요약이
-            # 한 줄에 붙어 있다) → run 을 훑으며 자른다.
-            for r in line:
-                if role_of(r["style"]) == "topic_sep":
-                    topic_segs.append(" ".join(cur_seg))
-                    cur_seg = []
-                elif r["t"]:
-                    cur_seg.append(r["t"])
+            # 구분자는 줄이 아니라 **줄 안의 run** 으로 오기도 한다(구세대는
+            # 주제·요약이 한 줄에 붙어 있다) → 자르기는 _split_topic 이 한다.
+            topic_items.append(("line", line))
         elif kind == "grammar":
             grammar.append(txt)
         elif kind == "exam":
             exam.append(txt)
-    topic_segs.append(" ".join(cur_seg))
-    topic, summary = _split_topic(topic_segs)
+    topic, summary, how = _split_topic(topic_items)
 
     label, chapter = _label_of(u, chs, nums)
     pno = passage_no(label) or passage_no(u["head_ch"]) or passage_no(
@@ -640,7 +664,8 @@ def _build(u, base, chs, nums, notes):
         # `포켓북 삽화정리/` 에서 지문 키로 붙인다 — 그래서 빈 채로 둔다.
         "links": [],
         "source": {"from": "idml-analysis", "file": base,
-                   "spread": u["spread"], "notes": list(notes)},
+                   "spread": u["spread"], "notes": list(notes),
+                   "topic_split": (how if topic_items else "")},
     }
     return d
 
@@ -662,6 +687,11 @@ def summarize(passages):
         "voca": sum(len(p["voca"]) for p in passages),
         "short": [p["label"] for p in passages if n(p, "passage") < 200],
         "notes": (passages[0]["source"]["notes"] if passages else []),
+        # 주제/요약 경계를 무엇으로 잡았나 — 세대가 섞이면 여기서 드러난다
+        "topic_split": sorted(set(p["source"]["topic_split"]
+                                  for p in passages if p["source"]["topic_split"])),
+        "topic_unsplit": [p["label"] for p in passages
+                          if p["source"]["topic_split"].startswith("못 가름")],
     }
 
 
@@ -673,7 +703,9 @@ if __name__ == "__main__":
     print("지문 %d개 · 루비 %d개 · VOCA %d개" % (s["n"], s["ruby"], s["voca"]))
     for m in s["notes"]:
         print("  · %s" % m)
-    for k in ("no_translation", "no_topic", "no_summary", "no_label", "short"):
+    print("  경계:", s["topic_split"])
+    for k in ("no_translation", "no_topic", "no_summary", "no_label",
+              "topic_unsplit", "short"):
         if s[k]:
             print("  ⚠ %s: %s" % (k, s[k][:6]))
     for p in ps[:2]:

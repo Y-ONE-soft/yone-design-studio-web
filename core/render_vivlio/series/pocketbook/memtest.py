@@ -244,10 +244,10 @@ def _pdf_lines(path):
         doc.close()
 
 
-def is_answer_pdf(path):
+def _is_answer(lines):
     """정답지인가, `(앞글자)` 판인가 — 굵은 낱말의 길이로 가른다."""
     tot = n = 0
-    for line in _pdf_lines(path):
+    for line in lines:
         for sp in line["spans"]:
             if sp["flags"] & BOLD_FLAG and sp["size"] < 12:
                 for w in sp["text"].split():
@@ -256,9 +256,19 @@ def is_answer_pdf(path):
     return n > 0 and tot / n >= ANSWER_MIN_WORD
 
 
+def is_answer_pdf(path):
+    return _is_answer(list(_pdf_lines(path)))
+
+
 def read_pdf(path):
-    """정답지 pdf → 지문 목록. **굵은 글자가 곧 정답**이다."""
+    """정답지 pdf → 지문 목록. **굵은 글자가 곧 정답**이다.
+
+    정답지가 아니면(=`(앞글자)`·`(빈칸)` 판) 빈 목록을 돌려준다 — 한 번 읽은
+    줄을 두 번 읽지 않으려고 판정도 여기서 한다.
+    """
     lines = list(_pdf_lines(path))
+    if not _is_answer(lines):
+        return []
     size = {}
     for line in lines:
         for sp in line["spans"]:
@@ -338,9 +348,6 @@ def read(paths, log=None):
             skipped += 1                              # 문제지·정답 목록
     for f in pdfs:
         try:
-            if not is_answer_pdf(f):
-                skipped += 1                          # (앞글자)·(빈칸) 판
-                continue
             got = [e for e in read_pdf(f) if count_blanks(e["parts"])]
         except Exception as exc:
             failed.append("%s(%s)" % (os.path.basename(f), exc))
@@ -389,22 +396,31 @@ def _row_text(row):
 
 
 def find(entries, text):
-    """지문 원문 → 짝이 되는 암기테스트 항목. **내용으로만** 찾는다."""
+    """지문 원문 → 짝이 되는 암기테스트 항목. **내용으로만** 찾는다.
+
+    ⚠ 닮음 비율로 고르면 안 된다. `quick_ratio` 는 글자 개수만 세므로 길이가
+      비슷한 영어 글끼리는 아무 사이나 0.8 을 넘는다 — 실제로 **엉뚱한 지문이
+      붙었다**(광문1 16강-03 에 다른 지문이 0.22 짜리로 들어왔다). 그래서 문턱은
+      **연속 60글자가 그대로 들어 있는가**로 잡는다. 60글자면 사실상 유일하다.
+    """
     need = letters(text)
     if len(need) < 60:
         return None
     head = need[:60]
-    best, score = None, 0.0
-    for e in entries:
-        hay = e["letters"]
-        if head not in hay and hay[:60] not in need:
-            continue
-        r = difflib.SequenceMatcher(None, need, hay, autojunk=False).quick_ratio()
-        if head in hay:
-            r = max(r, MATCH_MIN)          # 긴 덩이 안에 들어 있으면 잘라 쓰면 된다
-        if r > score:
-            best, score = e, r
-    return best if score >= MATCH_MIN else None
+    hits = [e for e in entries if head in e["letters"]]
+    if hits:
+        # 여러 벌이 있으면(같은 회차 원고가 두 판) 길이가 가장 가까운 것.
+        return min(hits, key=lambda e: abs(len(e["letters"]) - len(need)))
+    # 지문이 원고보다 긴 경우(두 지문을 한 면에 합친 판) — 원고 머리가 지문 안에.
+    part = [e for e in entries
+            if len(e["letters"]) >= 60 and e["letters"][:60] in need]
+    if not part:
+        return None
+    best = max(part, key=lambda e: difflib.SequenceMatcher(
+        None, need, e["letters"], autojunk=False).ratio())
+    r = difflib.SequenceMatcher(None, need, best["letters"],
+                                autojunk=False).ratio()
+    return best if r >= MATCH_MIN else None
 
 
 def _pages(row, body):

@@ -13,6 +13,7 @@
 지문이 지면보다 길면 **실측 후 축소**한다 — 추정 공식으로는 안 맞는다.
 """
 import json
+import re
 import os
 import shutil
 
@@ -38,6 +39,35 @@ def _spans(page, lo, hi):
             for sp in l["spans"]:
                 if lo <= sp["size"] <= hi:
                     yield sp
+
+
+_RE_YM = re.compile(r"(\d{2})\s*년\s*(\d{1,2})\s*월")
+_RE_NO = re.compile(r"(\d{1,2})\s*[-~]?\s*(\d{1,2})?\s*번")
+_RE_GR = re.compile(r"고\s*([123])")
+
+
+def _derive_pno(p):
+    """분석본 지문 → 지문번호 `YYMMNN`·학년.
+
+    분석본은 회차를 **책 머리(chapter)** 에 적고 지문에는 번호만 적는다
+    (`chapter='고2 26년 6월'` + `label='20번'`). 삽화는 `<학년>/<YY년 M월>/<번호>.jpg`
+    로 찾으므로 여기서 합쳐 두지 않으면 모의고사 삽화가 하나도 안 붙는다.
+    """
+    if p.get("pno"):
+        return p
+    ch = p.get("chapter") or ""
+    lb = p.get("label") or ""
+    m = _RE_YM.search(ch) or _RE_YM.search(lb)
+    n = _RE_NO.search(lb) or _RE_NO.search(ch)
+    if m and n:
+        p["pno"] = "%s%02d%02d" % (m.group(1), int(m.group(2)), int(n.group(1)))
+        if n.group(2):
+            p["pno_end"] = "%s%02d%02d" % (m.group(1), int(m.group(2)),
+                                           int(n.group(2)))
+    g = _RE_GR.search(ch)
+    if g:
+        p["grade"] = "고%s" % g.group(1)
+    return p
 
 
 def _grade_of(school):
@@ -80,6 +110,7 @@ def _lowest(page, size, tol=0.6):
 
 MIN_SCALE = 0.834       # 9pt → 7.5pt. 원본 resolveOverflow 하한과 같다
 MIN_LEAD = 14.0         # pt. 원본 하한
+SUP_SIZE = 5.5          # pt — theme.css `.n`(위첨자). 지문 배율을 안 따라간다
 
 
 class PocketbookSeries(Series):
@@ -108,8 +139,10 @@ class PocketbookSeries(Series):
         corpus = cfg.resolve(opt.get("corpus")
                              or "${STUDIO}/조판/교재/포켓북/_corpus")
         keys = list(opt.get("passages") or [])
-        if not keys and (opt.get("school") or opt.get("term")
-                         or opt.get("units")):
+        # ⚠ `school` 만으로 코퍼스를 고르면 **모든 학기**가 딸려 온다.
+        #   학교 이름은 학년(삽화 폴더)에도 쓰이므로, 코퍼스 선택은 `term` 이
+        #   있을 때만 한다. 신규 지문만 조판하는 책은 term 을 비워 두면 된다.
+        if not keys and (opt.get("term") or opt.get("units")):
             keys = self._pick(corpus, opt, log)
         rows, missing = [], []
         rows += self._from_analysis(cfg, opt, log)
@@ -179,6 +212,8 @@ class PocketbookSeries(Series):
         out = []
         for f in files:
             got = analysis.read_book(f)
+            for g in got:
+                _derive_pno(g)
             out += got
             log("■ 분석본 %s — 지문 %d" % (os.path.basename(f), len(got)))
         return out
@@ -433,6 +468,10 @@ class PocketbookSeries(Series):
                             keys, top, 890.0, log=log)
 
         PT = 25.4 / 72.0
+        # ⚠ 첫 추정은 반드시 어긋난다 — 첫 줄 높이가 행간에 안 따라오기 때문에
+        #   `높이 ∝ 행간` 이 아니다. 그래서 **줄인 뒤 다시 재고**, 남은 차이는
+        #   두 실측점을 잇는 직선으로 푼다(추정 한 번으로 끝내면 0.5mm 씩 샌다 —
+        #   광문2 250343-45 · 성덕2 210943-45 실측).
         need_2nd = []
         for i, r in enumerate(rows):
             avail = ptheme.LAYOUTS[ptheme.layout_for(r)]["passage_h"]
@@ -443,28 +482,71 @@ class PocketbookSeries(Series):
             lead = avail / lines / PT                    # 이 행간이면 딱 맞는다
             lead = max(MIN_LEAD, (int(lead * 2)) / 2.0)  # 0.5pt 단위로 내린다
             r["lead"] = lead
+            # 실측점 (행간, 높이) 두 개를 들고 다닌다 — 직선 보간에 쓴다.
+            r["_pts"] = [(lead0, got)]
             if lead <= MIN_LEAD + 1e-6:
                 # 행간을 하한까지 줄여도 모자라면 글자를 줄인다 → 줄 수가 변하니
                 # 다시 재야 한다.
-                r["scale"] = max(MIN_SCALE,
-                                 round((avail / (got * lead / lead0)) ** 0.5, 3))
-                need_2nd.append(i)
+                # ⚠ 1.0 으로 상한을 안 걸면 **글자가 커진다**(성덕2 에서 1.012 가
+                #   나왔다). 이 단계는 줄이는 단계다.
+                r["scale"] = min(1.0, max(
+                    MIN_SCALE,
+                    round((avail / (got * lead / lead0)) ** 0.5, 3)))
+            need_2nd.append(i)
 
-        if need_2nd:
+        # 조정한 지문은 **모두** 다시 잰다. 예전에는 글자까지 줄인 것만 다시
+        # 쟀는데, 행간만 줄인 지문이 조용히 0.5mm 넘쳤다.
+        for rnd in range(4):
+            if not need_2nd:
+                break
             sub = [rows[i] for i in need_2nd]
-            html2 = self._probe_html(sub, M, build_dir, "_measure2.html")
-            h2 = measure.measure(html2, os.path.join(build_dir, "_measure2.pdf"),
+            name = "_measure2" if rnd == 0 else "_measure2_%d" % (rnd + 1)
+            html2 = self._probe_html(sub, M, build_dir, name + ".html")
+            h2 = measure.measure(html2,
+                                 os.path.join(build_dir, name + ".pdf"),
                                  [str(k) for k in range(len(sub))], top, 890.0,
                                  log=log)
+            still = []
             for k, i in enumerate(need_2nd):
                 r = rows[i]
                 avail = ptheme.LAYOUTS[ptheme.layout_for(r)]["passage_h"]
                 got = h2.get(str(k), 0.0)
-                if got > avail:
-                    log("  [넘침] 지문 %s — %.1fmm > %.1fmm (글자 %d%%·행간 %gpt)"
-                        % (r.get("key") or r.get("label") or i, got, avail,
-                           r.get("scale", 1.0) * 100, r.get("lead", lead0)))
-                    r["overflow"] = round(got - avail, 1)
+                lead = r.get("lead", lead0)
+                r["_pts"].append((lead, got))
+                if got <= avail:
+                    continue
+                # ① 아직 행간 여유가 있으면 두 실측점으로 필요한 행간을 푼다.
+                target = avail - 0.2          # 반올림·비선형 여유
+                new_lead = None
+                pts = [p for p in r["_pts"] if abs(p[0] - lead) > 1e-6]
+                if lead > MIN_LEAD + 1e-6 and pts:
+                    L0, H0 = pts[-1]
+                    k_slope = (got - H0) / (lead - L0)
+                    if k_slope > 1e-6:
+                        new_lead = lead + (target - got) / k_slope
+                if new_lead is not None:
+                    new_lead = max(MIN_LEAD, int(new_lead * 4) / 4.0)  # 0.25pt
+                    if new_lead < lead - 1e-6:
+                        r["lead"] = new_lead
+                        still.append(i)
+                        continue
+                # ② 행간이 하한이면 글자를 줄인다. 높이는 대략 배율의 제곱에
+                #    비례한다(줄 길이·줄 수가 함께 준다).
+                sc = r.get("scale", 1.0)
+                new_sc = min(1.0, max(MIN_SCALE,
+                                      round(sc * (target / got) ** 0.5, 3)))
+                if new_sc < sc - 1e-6:
+                    r["scale"] = new_sc
+                    still.append(i)
+                    continue
+                # ③ 하한까지 갔는데도 넘친다 — 원본에서도 넘쳤던 지문이다.
+                log("  [넘침] 지문 %s — %.1fmm > %.1fmm (글자 %d%%·행간 %gpt)"
+                    % (r.get("key") or r.get("label") or i, got, avail,
+                       sc * 100, lead))
+                r["overflow"] = round(got - avail, 1)
+            need_2nd = still
+        for r in rows:
+            r.pop("_pts", None)
 
         n_lead = sum(1 for r in rows if r.get("lead"))
         n_sc = sum(1 for r in rows if r.get("scale"))
@@ -623,9 +705,14 @@ class PocketbookSeries(Series):
                 #   순서로 비교하면 안 된다: 루비 낱말이 inline-block 이라 PDF
                 #   추출 순서가 뒤섞이고, 인접 span 이 붙어 낱말이 엉킨다.
                 #   **글자 개수**로 보면 순서·붙임과 무관하게 유실만 잡힌다.
+                #   ⚠ 위첨자(`1.49597 x 10⁸km`)는 CSS 가 5.5pt 로 **고정**해서
+                #     지문 크기 띠에 안 걸린다 — 지면에 멀쩡히 있는 글자를
+                #     '유실'로 잡았다(강동1 250933 외 6권 실측). 위첨자 띠를
+                #     같이 센다. 좁게(±0.25) 잡아야 해석 5.9pt 가 안 섞인다.
                 sc = r.get("scale", 1.0)
-                miss = _bag(_text(r["passage_runs"])) - _page_bag(
-                    page, M["passage_size"] * sc)
+                got_bag = _page_bag(page, M["passage_size"] * sc)
+                got_bag += _page_bag(page, SUP_SIZE, tol=0.25)
+                miss = _bag(_text(r["passage_runs"])) - got_bag
                 if sum(miss.values()):
                     wrong.append((r.get("key") or r.get("label"),
                                   sum(miss.values())))
