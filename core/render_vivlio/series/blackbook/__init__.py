@@ -134,6 +134,7 @@ class BlackbookSeries(Series):
                                "dir", "assets")))
         knobs.write(cfg, BlackbookSeries(), build_dir)
         stage.stage_overrides(cfg, build_dir)
+        stage.stage_book_assets(cfg, build_dir)
 
     # ── 손잡이 ──
     # 이 계열은 테마가 **고정 CSS**(`themes/blackbook.css`)라 색이 파일에 박혀

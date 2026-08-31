@@ -63,6 +63,7 @@ class VocaunitSeries(Series):
         pages_css = stage.write_css(build_dir, "pages.css")
         knobs.write(cfg, VocaunitSeries(), build_dir)
         stage.stage_overrides(cfg, build_dir)
+        stage.stage_book_assets(cfg, build_dir)
         html_path = render_mod.write(cfg, d, build_dir, sample=sample, log=log)
         secs = cli.run_build(html_path, out, log=log)
 

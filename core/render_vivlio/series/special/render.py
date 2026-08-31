@@ -30,6 +30,8 @@ import json
 import os
 import re
 
+from core.render_vivlio import stage
+
 DEFAULT_METRICS = {
     "margin_top": 22.0, "margin_bottom": 20.0,
     "margin_inner": 20.0, "margin_outer": 16.0,
@@ -932,7 +934,8 @@ def write(cfg, d, build_dir, log=print, memos=1, fills=()):
     doc = ('<!doctype html><html lang="ko"><head><meta charset="utf-8">'
            f'<title>{html.escape(cfg.book.get("title", ""))}</title>'
            '<link rel="stylesheet" href="theme.css">'
-           f'<style>{css_vars}</style></head><body>'
+           f'<style>{css_vars}</style>' + stage.BOOK_CSS_LINKS
+           + '</head><body>'
            + "".join(parts) + "</body></html>")
     path = os.path.join(build_dir, "index.html")
     with open(path, "w", encoding="utf-8") as f:

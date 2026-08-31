@@ -88,6 +88,21 @@ def stage_assets(build_dir, src_dir):
     return dst
 
 
+def stage_book_assets(cfg, build_dir):
+    """책 폴더의 `assets/`(config 의 `assets.dir`) → `build/assets/`.
+
+    작업대에서 **그림을 앉히려면** 그 그림이 조판되는 자리에 있어야 한다.
+    예전에는 계열마다 알아서 옮겼고(블랙북·특강만 했다) 단어장 계열은 아예
+    안 옮겨서, 작업대에서 넣은 그림이 조용히 안 나왔다. 모든 계열이 같은 곳을
+    보도록 여기로 모은다. 폴더가 없으면 아무 일도 하지 않는다.
+    """
+    import os as _os
+    adir = cfg.resolve((cfg.section("assets") or {}).get("dir", "assets"))
+    if not _os.path.isdir(adir):
+        return None
+    return stage_assets(build_dir, adir)
+
+
 # 책이 얹는 CSS 두 장 — **차례가 곧 우선순위**다.
 #   theme.css      계열 스타일시트(또는 계열이 생성한 것)
 #   knobs.css      config 가 정한 손잡이 값 (`:root` 덮어쓰기)

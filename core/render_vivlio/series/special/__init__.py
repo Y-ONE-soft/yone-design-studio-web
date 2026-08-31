@@ -11,7 +11,7 @@
 import os
 
 from core.render_vivlio import bleed as bleed_mod
-from core.render_vivlio import cli, probe, stage
+from core.render_vivlio import cli, knobs, probe, stage
 from core.render_vivlio import verify as gate
 from core.render_vivlio.series.base import Series
 from core.render_vivlio.series.special import data as data_mod
@@ -196,9 +196,12 @@ class SpecialSeries(Series):
         theme = cfg.get("theme") or SpecialSeries.theme
         stage.stage_theme(build_dir, cfg.resolve(theme)
                           if str(theme).endswith(".css") else theme, log)
-        adir = cfg.resolve((cfg.section("assets") or {}).get("dir", "assets"))
-        if os.path.isdir(adir):
-            stage.stage_assets(build_dir, adir)
+        stage.stage_book_assets(cfg, build_dir)
+        # 특강만 손잡이·overrides 를 안 얹고 있었다 — 그래서 작업대에서 색을
+        # 바꿔도 이 계열 책만 아무 일도 안 일어났다. 둘 다 비면 빈 파일이라
+        # 조판 결과는 그대로다.
+        knobs.write(cfg, SpecialSeries(), build_dir)
+        stage.stage_overrides(cfg, build_dir)
 
     # ── ④ 계열 검수 ──
     def verify(self, cfg, log, report):
