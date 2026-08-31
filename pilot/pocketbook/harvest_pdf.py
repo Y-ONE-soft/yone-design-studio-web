@@ -124,31 +124,39 @@ def _words(line_chars):
     return words
 
 
-def _anno_runs(chars):
-    """주석 글자 → (baseline, x0, x1, text) 런. 같은 줄에서 간격이 크면 끊는다."""
-    lines = {}
-    for ch in chars:
-        if not (ANNO_SIZE[0] <= ch["size"] <= ANNO_SIZE[1]):
-            continue
-        lines.setdefault(ch["y"], []).append(ch)
+def _anno_spans(page):
+    """주석 런 = **PDF span 하나**.
+
+    ⚠ 글자 간격으로 끊으면 안 된다. `S` 와 `V` 처럼 서로 다른 앵커 프레임의
+      글자가 0.3pt 만 떨어져 붙어 있는 경우가 흔하다(실측). 그런데 PyMuPDF 는
+      프레임마다 span 을 따로 준다 — 그 경계를 그대로 쓴다. 한 프레임 안에서
+      색이 바뀌어 span 이 쪼개진 경우만(간격 ~0) 도로 붙인다.
+    """
     runs = []
-    for y, cs in lines.items():
-        cs.sort(key=lambda c: c["x0"])
-        cur = None
-        for ch in cs:
-            if cur and ch["x0"] - cur["x1"] > 4.0:
-                runs.append(cur)
-                cur = None
-            if cur is None:
-                cur = {"y": y, "x0": ch["x0"], "x1": ch["x1"], "t": "",
-                       "color": ch["color"]}
-            cur["t"] += ch["c"]
-            cur["x1"] = ch["x1"]
-        if cur:
-            runs.append(cur)
+    raw = page.get_text("rawdict")
+    for b in raw["blocks"]:
+        if b["type"] != 0:
+            continue
+        for l in b["lines"]:
+            for sp in l["spans"]:
+                if not (ANNO_SIZE[0] <= sp["size"] <= ANNO_SIZE[1]):
+                    continue
+                t = "".join(c["c"] for c in sp["chars"]).strip()
+                if not t:
+                    continue
+                runs.append({"y": round(sp["chars"][0]["origin"][1], 1),
+                             "x0": sp["bbox"][0], "x1": sp["bbox"][2],
+                             "t": t, "color": sp["color"]})
+    runs.sort(key=lambda r: (r["y"], r["x0"]))
+    merged = []
     for r in runs:
-        r["t"] = r["t"].strip()
-    return [r for r in runs if r["t"]]
+        if merged and merged[-1]["y"] == r["y"] \
+                and abs(r["x0"] - merged[-1]["x1"]) < 0.06:
+            merged[-1]["t"] += r["t"]
+            merged[-1]["x1"] = r["x1"]
+        else:
+            merged.append(r)
+    return merged
 
 
 def harvest_left(page):
@@ -162,7 +170,7 @@ def harvest_left(page):
                   if 24 / MM > 0 and 60 <= y <= 420
                   and all(c["font"].startswith("NotoSans") for c in cs[:3])}
 
-    annos = _anno_runs(chars)
+    annos = _anno_spans(page)
     baselines = sorted(body_lines)
 
     lines_out = []
