@@ -206,14 +206,16 @@
         <div class="ide-in" id="pal-style">
           <div class="ide-hint">지면에서 무언가를 클릭하면 그 자리에 걸린
             스타일이 나옵니다. 여기서 고치면 <b>같은 스타일이 걸린 곳이 전부</b>
-            바뀝니다.</div>
+            바뀝니다. '이 자리에만' 을 켜면 그 한 자리에만 걸리는데, 그건
+            <b>원고가 바뀌면 딴 곳을 잡을 수 있습니다</b>(쪽 나눔·그림도 같습니다).</div>
         </div>
       </details>
       <details class="ide-pal" id="pal-img-box"><summary>그림</summary>
         <div class="ide-in">
           <div class="ide-hint" style="margin-bottom:8px">
             지면에서 자리를 고른 뒤 그림을 누르면 <b>그 문단 아래</b>에 앉습니다.
-            원고에 없던 도표를 한 자리에만 넣을 때 씁니다.</div>
+            원고에 없던 도표를 한 자리에만 넣을 때 씁니다.<br>
+            ⚠ <b>그 자리</b>에 거는 것이라 원고가 바뀌면 딴 곳에 갈 수 있습니다.</div>
           <div class="ide-f" style="margin-bottom:8px">
             <input type="file" id="img-file" accept="image/*"
                    style="flex:1;font-size:11.5px;color:#98a0bd">
@@ -377,7 +379,7 @@
   // **클래스 하나를 고치면 같은 스타일이 걸린 곳이 전부** 바뀐다.
   var STYLE_PROPS = [
     { k: 'font-size', l: '글자 크기', u: 'pt' },
-    { k: 'line-height', l: '행간' },
+    { k: 'line-height', l: '행간', ratio: true },
     { k: 'letter-spacing', l: '자간' },
     { k: 'color', l: '글자 색', color: true },
     { k: 'background-color', l: '바탕', color: true },
@@ -459,6 +461,10 @@
         var lab = document.createElement('div'); lab.className = 'ide-lab';
         var now = saved[pr.k];
         var real = human(cs[pr.k], pr.u);
+        if (pr.ratio) {                              // 17.33px → ×1.96
+          var fs = parseFloat(cs['font-size']), lh = parseFloat(cs[pr.k]);
+          if (fs > 0 && lh > 0) real = '×' + round2(lh / fs);
+        }
         lab.innerHTML = '<span>' + pr.l
           + (now ? '<span class="ide-dot" title="이 책에서 정한 값"></span>' : '')
           + '</span><span class="ide-val">' + real + '</span>';
