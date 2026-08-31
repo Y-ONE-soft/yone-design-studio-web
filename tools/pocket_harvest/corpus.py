@@ -318,12 +318,16 @@ def harvest_book(path):
     for sp in doc.spreads():
         masters = {p["master"][:1] for p in sp["pages"] if p["master"]}
         recs = _spread_scan(doc, sp)
+        # ⚠ 마스터 글자는 **책마다 다른 이름**이다 — 지문면을 B 마스터에 얹은
+        #   책이 있다(광문2 36→78, 한영2 14→54). 글자만 보고 암기테스트 면으로
+        #   넘기면 지문이 조용히 사라진다. **그 면에 지문이 있으면 지문면**이다.
+        has_passage = any(r["role"] == "passage" and len(r["text"]) >= 30
+                          for r in recs)
         item = {"pages": [p["name"] for p in sp["pages"]],
                 "masters": sorted(masters), "recs": recs,
                 "links": sp["links"],
-                "is_test": bool(masters & set("BDFL")),
-                "has_passage": any(r["role"] == "passage" and
-                                   len(r["text"]) >= 30 for r in recs)}
+                "is_test": bool(masters & set("BDFL")) and not has_passage,
+                "has_passage": has_passage}
         spreads.append(item)
         if item["is_test"] or not item["has_passage"]:
             continue
