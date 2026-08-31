@@ -126,6 +126,17 @@ def _aliases(key, nums, raw):
     return sorted(x for x in al if x)
 
 
+def grade_of(school):
+    """학교 폴더 → 학년. `강동1`·`명일2` 처럼 **끝 숫자가 학년**이다.
+
+    ⚠ 이걸 빼면 조용히 틀린다. `250921`(25년 9월 21번)은 고1과 고2가 **다른 지문**인데
+      지문번호 표기에는 학년이 없다 — 실측에서 43건이 겹쳤다. run.jsx 는 한 학교
+      안에서만 조회하니 드러나지 않던 구멍이다.
+    """
+    m = re.search(r"(\d)\s*$", nfc(school or ""))
+    return "고%s" % m.group(1) if m else ""
+
+
 def norm_label(s):
     """라벨 → 키 조각. 공백·구두점만 정리한다(뜻은 건드리지 않는다)."""
     s = nfc(s or "").strip()
@@ -355,6 +366,14 @@ def harvest_book(path):
                                      or (_DIGIT.search(r["text"])
                                          and all_short[r["text"]] == 1
                                          and slot_of.get((si, ri)) != unit_slot))]
+        # ⚠ 지문 프레임이 둘이라고 지문이 둘인 것은 아니다.
+        #   배지가 둘이면(`본문1`·`본문2`) 다른 지문이고,
+        #   배지가 **하나**면(`250943-45`) 한 장문을 두 면에 나눠 앉힌 것이다.
+        #   나누면 키가 하나 없어져 조용히 버려진다(광문2 실측).
+        side_page = len(passages) > 1          # 오른쪽 면이 지문에 쓰인 서식
+        if len(passages) > 1 and len(idents) < 2:
+            passages = [_join(passages)]
+            trans = [_join(trans)] if trans else []
         pair = len(passages) > 1
         flow = _first(recs, "flownote")
         topic_p = _first(recs, "topic")
@@ -369,7 +388,8 @@ def harvest_book(path):
                 "unit": unit_label,
                 "pages": sp["pages"],
                 "masters": sp["masters"],
-                "pair": pair,
+                "pair": side_page,
+                "parts": p.get("parts", 1),
                 "passage": p["paras"],
                 "passage_text": p["text"],
                 "links": sp["links"],
@@ -391,6 +411,17 @@ def harvest_book(path):
             units.append(u)
             last = u
     return units
+
+
+def _join(recs):
+    """한 지문이 두 프레임에 나뉘어 앉은 것 → 하나로 잇는다(앞·뒤 차례 그대로)."""
+    paras = []
+    for r in recs:
+        paras += r["paras"]
+    return {"role": recs[0]["role"], "paras": paras,
+            "text": "\n".join(r["text"] for r in recs),
+            "x": recs[0]["x"], "y": recs[0]["y"], "short": False,
+            "parts": len(recs)}
 
 
 def _first(recs, role):
@@ -552,6 +583,10 @@ def _key_of(u, school):
     """지문 단위 → (키, 번호들, 별칭들, 갈래)."""
     key, nums, aliases = expand_pno(u["raw_label"])
     if key:
+        g = grade_of(school)
+        if g:
+            key = "%s-%s" % (g, key)
+            aliases = ["%s-%s" % (g, a) for a in aliases]
         return key, nums, aliases, "mock"
     if u["raw_label"]:
         k = label_key(school, u["unit"], u["raw_label"])
@@ -564,6 +599,7 @@ def _new_entry(key, kind, school, term, u, nums, aliases):
             "nums": nums, "school": school, "term": term,
             "unit": u["unit"], "label": u["raw_label"],
             "masters": u["masters"], "pair": u["pair"],
+            "parts": u.get("parts", 1),
             "passage": None, "passage_text": "",
             "translation": None, "translation_text": "",
             "flownote": [], "topic": "", "summary": "", "synonyms": [],
@@ -612,6 +648,7 @@ def _write(entries, books, skipped, unkeyed, conflicts, merged_alias,
         index[key] = {
             "kind": e["kind"], "label": e["label"], "unit": e["unit"],
             "school": e["school"], "term": e["term"], "pair": e["pair"],
+            "grade": grade_of(e["school"]), "parts": e.get("parts", 1),
             "aliases": [a for a in e["aliases"] if a != key],
             "syn": len(e["synonyms"]), "flow": len(e["flownote"]),
             "ruby": sum(1 for p in (e["passage"] or []) for r in p["runs"]

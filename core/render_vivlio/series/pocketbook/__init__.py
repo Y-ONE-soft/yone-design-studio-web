@@ -132,12 +132,13 @@ class PocketbookSeries(Series):
                 st = ";font-size:%gpt;line-height:%gpt" % (
                     M["passage_size"] * r.get("scale", 1.0),
                     r.get("lead", M["passage_lead"]))
+            lead = r.get("lead") or M["passage_lead"]
             pages.append(
                 '<section class="pg"><div class="trim">'
-                '<div class="passage" style="left:%gmm;top:%gmm;width:%gmm;'
-                'margin-top:%gpt%s">%s</div></div></section>'
-                % (M["passage"][0], M["passage"][1], M["passage"][2],
-                   M["first_baseline_fix"], st,
+                '<div class="passage" style="left:%gmm;top:%s;width:%gmm%s">'
+                '%s</div></div></section>'
+                % (M["passage"][0], prender.passage_top(M, lead),
+                   M["passage"][2], st,
                    prender.runs_html(r["passage_runs"])))
         path = os.path.join(build_dir, name)
         with open(path, "w", encoding="utf-8") as f:

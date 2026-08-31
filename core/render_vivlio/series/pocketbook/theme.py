@@ -186,7 +186,11 @@ html,body{margin:0;padding:0;background:#fff}
   letter-spacing:.02em;padding:0 1mm;white-space:nowrap}
 .passage{position:absolute;font-size:__pass_size__pt;line-height:var(--lead);
   text-align:justify;letter-spacing:__track__em;hyphens:none}
-.passage .w{position:relative;display:inline-block;line-height:var(--lead)}
+/* ⚠ .w 에 line-height 를 다시 주면 안 된다 — 낱말마다 24pt 로 되돌아가서
+   행간 축소가 통째로 무효가 된다(그렇게 만들었다가 잡았다).
+   주석 오프셋은 행간과 무관하다: 기준선은 상자 바닥에서 L/2−3.925pt 라
+   (L/2 + dy) − (L/2 − 3.925) = dy + 3.925 로 L 이 상쇄된다. */
+.passage .w{position:relative;display:inline-block;line-height:inherit}
 .w.blue,.blue{color:var(--blue)}
 .w.red,.red{color:var(--red)}
 .passage mark,.passage .hl{color:inherit;

@@ -38,15 +38,15 @@
   --rule:   #6d6e71;   /* 답란 괘선 */
 
   --slot:   126mm;     /* 사분면 한 칸 */
-  --colw:   83mm;
-  --colgap: 4mm;
+  --colw:   83.7mm;    /* 완성본 실측: 열1 21.0→104.7 */
+  --colgap: 3.3mm;
   --bodyh:  253mm;     /* 판면 높이 — 칸 두 개 + 1mm 여유(반올림) */
 }
 
 /* ------------------------------------------------------------------ 판형 */
 @page {
   size: 216mm 303mm;
-  margin: 29.57mm 21mm 20.43mm 25mm;
+  margin: 29.57mm 20.3mm 20.43mm 25mm;
   /* 머리 괘선 — 전 면 공통. 도련까지 그어진다. */
   background: linear-gradient(var(--ink), var(--ink)) no-repeat 0 23.00mm / 216mm 0.265mm;
   @top-left-corner { content: none; }
@@ -57,7 +57,7 @@
 
 /* 짝수(왼쪽) 면 — 섹션 띠 */
 @page :left {
-  margin-left: 21mm; margin-right: 25mm;
+  margin-left: 21mm; margin-right: 24.3mm;
   background:
     linear-gradient(var(--ink), var(--ink)) no-repeat 13.90mm 0 / 12.75mm 23.26mm,
     linear-gradient(var(--ink), var(--ink)) no-repeat 0 23.00mm / 216mm 0.265mm;
@@ -67,7 +67,7 @@
 
 /* 홀수(오른쪽) 면 — 장 탭 + 워드마크 */
 @page :right {
-  margin-left: 25mm; margin-right: 21mm;
+  margin-left: 25mm; margin-right: 20.3mm;
   background:
     linear-gradient(var(--ink), var(--ink)) no-repeat 155.00mm 0 / 43.40mm 13.00mm,
     linear-gradient(var(--ink), var(--ink)) no-repeat 0 23.00mm / 216mm 0.265mm;
@@ -197,13 +197,14 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
   padding-top: 0.65mm; margin-bottom: 3.16mm;
 }
 .sec-grammar .blk > h3 { margin-bottom: 1.73mm; }
-.sec-writing .blk > h3 { margin-bottom: 1.22mm; }
+.sec-writing .blk > h3 { margin-bottom: 1.09mm; }
 .blk-vocab > h3 { padding-top: 3.21mm; margin-bottom: -0.25mm; }
 
 /* --------------------------------------------------------- ① 문장 배열 */
 .given {
   background: var(--given); padding: 2.29mm 4.00mm 2.60mm;
-  margin-bottom: 3.88mm; text-align: justify;
+  margin: 0 0.70mm 3.88mm 0;   /* 상자는 단보다 0.7mm 좁다(실측 83.0mm) */
+  text-align: justify;
 }
 .it { text-align: justify; margin-top: 1.00mm; }
 .it:first-of-type { margin-top: 0; }
@@ -237,9 +238,9 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 .vpair .r { width: 83mm; }          /* 회색 판과 같은 폭(면 배경이 칠한다) */
 .vpair .l .vcell { padding: 0 4.00mm 4.00mm 0; }
 .vpair .r .vcell { padding: 0 1.99mm 4.00mm 1.99mm; }
-.vp { text-align: justify; line-height: 2.3656; }
+.vp { text-align: justify; line-height: 2.3456; }
 .vsum { margin-top: 5.60mm; }
-.vsum .hd { font: 700 8.5pt/2.3656 Noto; letter-spacing: 0.1em; }
+.vsum .hd { font: 700 8.5pt/2.3456 Noto; letter-spacing: 0.1em; }
 .sec-vocab .grid { column-count: 1; }
 .blk-vocab { height: auto; }
 .blk-vocab + .blk-vocab { break-before: page; }
@@ -259,13 +260,13 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 .sec-grammar .g { font-weight: 700; }
 
 /* ----------------------------------------------------- ⑤ 서술형 영작 */
-.wpair { margin-bottom: 21.35mm; }
+.wpair { margin-bottom: 19.98mm; }
 .wpair:last-child { margin-bottom: 0; }
 /* 영작 한글은 본문과 **같은 행간**(4.235mm)이다 — 8pt 라고 줄지 않는다 */
-.wkor { font: 400 8pt/1.5 Noto; text-align: justify; }
+.wkor { font: 400 8pt/1.504 Noto; text-align: justify; }
 /* 보기 상자는 단보다 **좌우 1mm 씩 넓다**(완성본 실측 24.0→109.0 = 85mm). */
 .wcho {
-  background: var(--choice); margin: 2.04mm -1.00mm 0;
-  padding: 1.55mm 1.32mm 1.75mm 2.00mm;
+  background: var(--choice); margin: 1.69mm -0.30mm 0 -1.00mm;
+  padding: 1.30mm 1.32mm 2.02mm 2.00mm;
   font: 500 8pt/1.4123 Noto; text-align: justify;
 }

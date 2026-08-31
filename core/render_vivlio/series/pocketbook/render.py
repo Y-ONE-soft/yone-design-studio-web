@@ -19,6 +19,20 @@ def _px(*parts):
     return ";".join(p for p in parts if p)
 
 
+def passage_top(M, lead):
+    """지문 상자의 top — **첫 기준선을 행간과 무관하게 고정**한다.
+
+    행간을 줄이면 첫 줄의 half-leading 이 줄어 글이 위로 올라간다. 그러면 지문마다
+    첫 줄 높이가 달라져 펼침면이 어긋나 보인다. (L0−L)/2 만큼 되밀어 준다.
+    ⚠ margin-top 은 절대배치 상자에서 먹지 않는다(실측) — top 에 넣어야 한다.
+    """
+    off = M["first_baseline_fix"] + (M["passage_lead"] - lead) / 2.0
+    # ⚠ `calc(24mm + -7.7pt)` 는 **잘못된 CSS** 다 — 속성이 통째로 버려지고
+    #   조용히 기본 위치로 돌아간다(그래서 첫 기준선이 8.5pt 어긋났다).
+    op = "-" if off < 0 else "+"
+    return "calc(%gmm %s %gpt)" % (M["passage"][1], op, abs(off))
+
+
 def _box(x, y, w=None, h=None):
     s = "left:%gmm;top:%gmm" % (x, y)
     if w is not None:
@@ -98,9 +112,11 @@ def left_page(p, M, folio):
     if scale != 1.0 or p.get("lead"):
         sc = ";font-size:%gpt;line-height:%gpt" % (
             M["passage_size"] * scale, p.get("lead") or M["passage_lead"])
-    parts.append('<div class="passage" style="%s;margin-top:%gpt%s">%s</div>'
-                 % (_box(ps[0], ps[1], ps[2], ps[3]),
-                    M["first_baseline_fix"], sc, runs_html(p["passage_runs"])))
+    lead = p.get("lead") or M["passage_lead"]
+    parts.append('<div class="passage" style="left:%gmm;top:%s;width:%gmm;'
+                 'height:%gmm%s">%s</div>'
+                 % (ps[0], passage_top(M, lead), ps[2], ps[3], sc,
+                    runs_html(p["passage_runs"])))
     if L.get("rule"):
         parts.append('<div class="rule" style="%s"></div>'
                      % _box(M["margin_l"], L["rule"], ps[2]))
