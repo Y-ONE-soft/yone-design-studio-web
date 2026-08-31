@@ -107,7 +107,9 @@ def _item(text):
 
 # ------------------------------------------------------------------ 조각
 def _open_blk(fit, base="blk"):
-    cls = base + (" tall" if (fit or {}).get("span") == 2 else "")
+    f = fit or {}
+    cls = base + (" tall" if f.get("span") == 2 else "") \
+                + (" flow" if f.get("flow") else "")
     st = (f' style="font-size:{fit["pt"]:.2f}pt"'
           if fit and fit.get("pt") else "")
     return f'<div class="{cls}"{st}>'

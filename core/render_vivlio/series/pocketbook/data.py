@@ -12,6 +12,19 @@ import unicodedata
 
 
 def _flatten(paras):
+    """문단 목록 → 런 흐름. 이미 런 목록이거나 글자열이면 그대로 받아 준다.
+
+    코퍼스와 수확기의 모양이 조금씩 달라서(문단 목록 / 런 목록 / 글자열) 여기서
+    한 번에 눕힌다. 안 그러면 출처가 바뀔 때마다 조판이 죽는다.
+    """
+    if isinstance(paras, str):
+        return [{"t": paras}]
+    if paras and isinstance(paras[0], dict) and "runs" not in paras[0]:
+        return list(paras)
+    return _flatten_paras(paras)
+
+
+def _flatten_paras(paras):
     """문단 목록 → 런 하나짜리 흐름. 문단 사이에는 공백을 넣는다.
 
     포켓북 지문은 한 덩이로 흐른다(분석본처럼 문장마다 끊지 않는다).

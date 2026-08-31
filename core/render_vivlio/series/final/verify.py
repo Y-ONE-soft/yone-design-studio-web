@@ -150,12 +150,19 @@ def _check_vocab_pair(data, vol, report):
     sec = next((s for s in v["sections"] if s["kind"] == "vocab"), None)
     if not sec:
         return []
-    bad = [b["header"] for b in sec["blocks"]
-           if not b["passage"] or not b.get("summary")]
-    if bad:
-        report.fail(f"중요어휘 지문/요약 결측 {len(bad)}: {bad[:6]}")
+    # 요약은 고1·고2 만 있다(고3 EBS 는 워크북 빈칸어휘라 아예 없다) →
+    # **일부만 없는 것**이 결함이다.
+    nosum = [b["header"] for b in sec["blocks"] if not b.get("summary")]
+    bad = [b["header"] for b in sec["blocks"] if not b["passage"]]
+    if nosum and len(nosum) != len(sec["blocks"]):
+        bad += nosum
+        report.fail(f"중요어휘 요약이 일부에만 있다 {len(nosum)}"
+                    f"/{len(sec['blocks'])}: {nosum[:6]}")
+    elif bad:
+        report.fail(f"중요어휘 지문 없음 {len(bad)}: {bad[:6]}")
     else:
-        report.note(f"중요어휘 {len(sec['blocks'])}지문 좌우 짝 온전")
+        report.note(f"중요어휘 {len(sec['blocks'])}지문 좌우 짝 온전"
+                    + ("(요약 없는 판)" if nosum else ""))
     return bad
 
 

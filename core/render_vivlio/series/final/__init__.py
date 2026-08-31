@@ -170,13 +170,18 @@ class FinalSeries(Series):
                     fits[key] = {"span": 2,
                                  "pt": round(max(lo, int(w2 / step) * step), 2)}
             else:
-                fits[key] = {"pt": lo}      # 하한 — 검수가 결함으로 잡는다
+                # 한 단(253mm)보다 긴 지문 — 줄여도 안 들어간다(어법 19강
+                # 07~08 = 321mm). 자르지 말고 **흘린다**: 다음 단·면으로
+                # 이어지고 글은 하나도 잃지 않는다.
+                fits[key] = {"flow": True}
         if fits:
             sh = [f["pt"] for f in fits.values() if f.get("pt")]
             sp = sum(1 for f in fits.values() if f.get("span") == 2)
+            fl = sum(1 for f in fits.values() if f.get("flow"))
             log(f"  [맞춤] 칸을 넘는 지문 {len(fits)}개 — 활자 축소 {len(sh)}"
                 + (f"(최소 {min(sh):.1f}pt)" if sh else "")
-                + (f" · 두 칸 {sp}" if sp else ""))
+                + (f" · 두 칸 {sp}" if sp else "")
+                + (f" · 흘림 {fl}" if fl else ""))
         else:
             log("  [맞춤] 넘치는 지문 없음")
         return fits
@@ -194,6 +199,7 @@ class FinalSeries(Series):
                              "cap_mm": round(cap, 1),
                              "pt": (f or {}).get("pt"),
                              "span": (f or {}).get("span", 1),
+                             "flow": bool((f or {}).get("flow")),
                              "fits": bool(f) and (
                                  nat <= cap * (((f.get("pt") or m["base_pt"])
                                                 / m["base_pt"]) ** -1)
@@ -206,6 +212,8 @@ class FinalSeries(Series):
         """축소·두 칸을 적용하고 나면 정말 들어가는가."""
         if not f:
             return nat <= cap
+        if f.get("flow"):
+            return True                     # 흘리면 언제나 담긴다
         cap2 = cap if f.get("span", 1) == 1 else 2 * m["slot"] - 0.5
         pt = f.get("pt") or m["base_pt"]
         return nat * pt / m["base_pt"] <= cap2 + 0.05

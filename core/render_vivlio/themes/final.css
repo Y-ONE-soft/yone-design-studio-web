@@ -131,22 +131,25 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 /* 간지 — 판면 밖 좌표를 그대로 쓰려고 흐름에서 뺀다(완성본 실측) */
 .art { page: art; break-after: page; height: 240mm; position: relative; }
 .art > * { position: absolute; }
-.art .rule { left: -100mm; width: 144.88mm; height: 0.353mm;
+/* 좌표는 **판면 왼쪽 위**(홀수 면 25.0, 29.57mm) 기준이다 — 완성본의 면
+ * 절대좌표에서 그만큼 뺀 값. */
+.art .rule { left: 10.56mm; width: 144.88mm; height: 0.353mm;
              background: var(--ink); }
-.art .r1 { top: -67.24mm; }
-.art .r2 { top: -8.05mm; }
-.art .wm { left: -100.56mm; top: -64.00mm; width: 155mm; height: 50mm; }
+.art .r1 { top: 67.17mm; }
+.art .r2 { top: 126.36mm; }
+.art .wm { left: 10.00mm; top: 70.43mm; width: 155mm; height: 50mm; }
 .art .chbox {
-  left: -1.76mm; top: 35.00mm; width: 43.40mm; height: 6.47mm;
+  left: 108.80mm; top: 169.93mm; width: 43.40mm; height: 6.47mm;
   background: var(--ink); color: #fff; text-align: center;
-  font: 500 7.96pt/6.47mm Neolli; letter-spacing: 0;
+  font: 500 7.96pt/7.05mm Neolli; letter-spacing: 0;
 }
-.art .toc { left: -1.76mm; top: 45.05mm; width: 60mm;
+.art .toc { left: 108.80mm; top: 179.50mm; width: 60mm;
             font: 8.46pt/4.235mm Noto; }
 .art .toc p { white-space: nowrap; }
 .art .toc .g { font-weight: 900; margin-top: 2.82mm; }
 .art .toc .g:first-child { margin-top: 0; }
-.art .toc .s { font-weight: 500; }
+/* 이어지는 줄(문장 삽입…)은 뒤에 1.42mm 를 더 둔다(완성본 실측) */
+.art .toc .s { font-weight: 500; margin-bottom: 1.42mm; }
 .art .toc .n { display: inline-block; width: 4.60mm; }
 
 .sec { break-before: page; }
@@ -231,6 +234,8 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 /* 활자를 하한까지 줄여도 한 칸에 안 들어가는 지문 — **두 칸**을 준다.
  * (인디자인 경로는 여기서 지면 밖으로 흘려 글을 잘라 냈다.) */
 .blk.tall { height: calc(var(--slot) * 2); }
+/* 한 단보다 긴 지문 — 칸을 포기하고 **흘린다**(글을 잃지 않는 쪽을 고른다) */
+.blk.flow { height: auto; break-inside: auto; }
 .sec-grammar .blk, .sec-writing .blk { height: var(--bodyh); }
 
 /* 지문 헤더 — 기준선을 완성본에 맞춘다(33.39mm). 줄상자를 1em 으로 두고

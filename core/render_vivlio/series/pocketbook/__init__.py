@@ -100,7 +100,8 @@ class PocketbookSeries(Series):
         corpus = cfg.resolve(opt.get("corpus")
                              or "${STUDIO}/조판/교재/포켓북/_corpus")
         keys = list(opt.get("passages") or [])
-        if not keys:
+        if not keys and (opt.get("school") or opt.get("term")
+                         or opt.get("units")):
             keys = self._pick(corpus, opt, log)
         rows, missing = [], []
         rows += self._from_analysis(cfg, opt, log)
@@ -121,7 +122,9 @@ class PocketbookSeries(Series):
                 "  → 분석본에서 먼저 수확하거나 키를 확인할 것"
                 % (len(missing), ", ".join(missing[:10])))
         if not rows:
-            raise ValueError("수록할 지문이 없다 — options.passages 를 확인할 것")
+            raise ValueError(
+                "수록할 지문이 없다 — options 에 passages·school/term·analysis "
+                "중 하나는 있어야 한다")
         self._apply_manuscript(cfg, opt, rows, log)
         out = os.path.join(cfg.build_dir, "data.json")
         os.makedirs(cfg.build_dir, exist_ok=True)
