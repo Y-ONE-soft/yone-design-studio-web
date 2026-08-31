@@ -197,6 +197,11 @@ def add_no_cache(response):
     #   node_modules 에 고정해 둔 정적 파일이고 사용자 입력이 들어가지 않는다.
     #   앱의 다른 화면은 그대로 eval 금지다.
     _viewer = request.path.startswith("/book-studio/viewer")
+    # ⚠ Vivliostyle 은 **기본 스타일시트를 `data:` URL 로 fetch 한다**(파일이
+    #   아니라 번들 안에 문자열로 들어 있다). `connect-src 'self'` 로는 그게
+    #   막히고, 콘솔에만 조용히 남는다 — 지면은 그려지지만 기본 규칙이 빠진
+    #   채로 그려진다. 작업대 경로에만 `data:` 를 연다.
+    _studio = request.path.startswith("/book-studio")
     # ── 보안 헤더 ──
     response.headers["X-Frame-Options"] = "SAMEORIGIN" if _self_frame else "DENY"
     response.headers["X-Content-Type-Options"] = "nosniff"
@@ -223,7 +228,8 @@ def add_no_cache(response):
         "style-src 'self' 'unsafe-inline'; "
         "img-src 'self' data: blob:; "
         "font-src 'self' data:; "
-        "connect-src 'self'; "
+        + ("connect-src 'self' data:; " if _studio
+           else "connect-src 'self'; ") +
         "media-src 'self' blob:; "
         "object-src 'none'; "
         + ("frame-ancestors 'self'; " if _self_frame else "frame-ancestors 'none'; ") +

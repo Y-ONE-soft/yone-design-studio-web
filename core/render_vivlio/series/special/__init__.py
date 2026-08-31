@@ -134,10 +134,42 @@ class SpecialSeries(Series):
         return data_mod.build(cfg, log)
 
     # ── ③ 조판 ──
+    # 견본에 담는 양 — 부마다 한 덩어리씩. 디자인을 보는 데는 그만큼이면 된다.
+    SAMPLE_BREAK = ("lesson", "week", "part_no", "rpart_no", "ans_head")
+
+    @classmethod
+    def _sample(cls, d):
+        """전권 → 견본(부마다 앞 한 덩어리).
+
+        ⚠ 예전에는 `sample` 이 **산출 파일 이름만** `_견본` 으로 바꾸고 내용은
+          전권 그대로였다(블랙북도 같은 결함이었다). 그래서 작업대 미리보기가
+          148면을 브라우저 안에서 조판하려 들어, 다 뜨기 전에 면을 넘기면
+          뷰어가 터졌다. 견본은 실제로 줄여야 견본이다.
+        """
+        out = dict(d)
+        vols = []
+        for vol in d.get("volumes") or []:
+            blocks, seen = [], 0
+            for b in vol.get("blocks") or []:
+                if b.get("t") in cls.SAMPLE_BREAK:
+                    seen += 1
+                    if seen > 1:
+                        break
+                blocks.append(b)
+            v = dict(vol)
+            v["blocks"] = blocks
+            vols.append(v)
+        out["volumes"] = vols
+        return out
+
     def build(self, cfg, log, sample=False, **_):
         build_dir = cfg.build_dir
         os.makedirs(build_dir, exist_ok=True)
         d = data_mod.load(cfg)
+        if sample:
+            d = self._sample(d)
+            log(f"  [견본] 부마다 앞 한 덩어리 — "
+                f"블록 {sum(len(v['blocks']) for v in d['volumes']):,}개")
         self._stage(cfg, build_dir, log)
         out = cfg.out_pdf("_견본" if sample else "")
 
