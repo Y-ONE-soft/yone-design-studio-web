@@ -118,7 +118,7 @@ u { text-decoration: underline; text-decoration-thickness: 0.475pt;
 /* 한글은 로마자보다 한 호 작다(인디자인 합성 서체) */
 .q .ch .kr, .q .tr .kr, .q .bi .kr, .q .pbox .kr {
   font-family: Noto; font-size: 8.77pt; font-weight: 400;
-  letter-spacing: -0.0402em;
+  letter-spacing: -0.0381em;
 }
 /* 빈칸 표기(`__________` · `[       ]`)는 본문 서체가 아니다 */
 /* ⚠ 크기가 다른 인라인은 **줄 상자를 키운다**(지문 셋째 줄만 0.57mm 벌어졌다)
