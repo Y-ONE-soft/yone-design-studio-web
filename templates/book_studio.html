@@ -311,7 +311,7 @@
   var V = null, viewer = null;
   var spec = [], changed = {}, refs = {}, curRef = null, editEl = null, editHtml = null;
   var tool = 'sel', scope = 'sample', spread = false, zoom = 1, pageCount = 0;
-  var curEl = null, styles = {}, curPage = 1, ready = false;
+  var curEl = null, styles = {}, styleNames = {}, curPage = 1, ready = false;
 
   /** 머리띠 높이를 재서 껍데기를 그 아래에 붙인다.
    *  못 박아 두면 머리띠가 줄바꿈될 때(좁은 창) 도구줄이 그 밑에 깔린다. */
@@ -531,6 +531,12 @@
     if (!st || st.__hooked) return;
     st.__hooked = true;
     st.addEventListener('click', function (ev) {
+      // ⚠ **고치고 있는 글 안을 누른 것이면 손대지 않는다.**
+      //   예전에는 누를 때마다 다시 골라서 편집기를 새로 열었고, 그 바람에
+      //   커서가 매번 글 끝으로 튀었다 — 드래그도 더블클릭도 소용없이
+      //   "문장은 안 잡히고 단락만 잡히는" 상태가 됐다. 글을 고르는 것은
+      //   브라우저가 알아서 한다.
+      if (editEl && (editEl === ev.target || editEl.contains(ev.target))) return;
       var el = ev.target;
       while (el && el !== st) {
         var m = (typeof el.className === 'string')
@@ -609,7 +615,11 @@
     var pick = document.createElement('select');
     pick.className = 'ide-sel'; pick.style.width = '100%';
     sels.forEach(function (x) {
-      var o = document.createElement('option'); o.value = x; o.textContent = x;
+      var o = document.createElement('option'); o.value = x;
+      // `.pbox` 만 보여 주면 무엇을 고르는지 알 수 없다 — 계열이 붙인 사람
+      // 이름을 앞에 세우고, CSS 이름은 뒤에 작게 남긴다(찾을 때 쓴다).
+      var nm = styleNames[x.replace(/^\./, '')];
+      o.textContent = nm ? nm + '  (' + x + ')' : x;
       pick.appendChild(o);
     });
     var only = document.createElement('label');
@@ -1017,7 +1027,9 @@
     api('/api/book-studio/overrides?b=' + encodeURIComponent(key))
       .then(function (d) { $('pal-css').value = d.css || ''; });
     api('/api/book-studio/styles?b=' + encodeURIComponent(key))
-      .then(function (d) { styles = d.styles || {}; });
+      .then(function (d) {
+        styles = d.styles || {}; styleNames = d.names || {};
+      });
     loadImages();
     loadHist(null);
   }

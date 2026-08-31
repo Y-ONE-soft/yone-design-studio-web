@@ -113,6 +113,25 @@ def of(obj, sub=""):
     return "%s.%s" % (r, sub) if sub else r
 
 
+# 자리표 이름의 **머리글자가 곧 출처**다. 작업대는 이걸 보고 어디를 고칠지 안다.
+#   `lessons.…`  원고(data.json)   → 글자 편집은 `edits.json` 에 쌓인다
+#   `book.…`     책 설정(config)   → 글자 편집은 `config.json` 을 고친다
+#   `#…`         조판이 만든 것    → 고를 수만 있다(스타일·색·쪽 나눔)
+CONFIG_PREFIX = "book."
+FIXED_PREFIX = "#"
+
+
+def source_of(ref):
+    """그 자리의 글이 **어디서 오는가**. 작업대가 사람 말로 알려 주는 데 쓴다."""
+    if not ref:
+        return ""
+    if ref.startswith(FIXED_PREFIX):
+        return "fixed"
+    if ref.startswith(CONFIG_PREFIX):
+        return "config"
+    return "data"
+
+
 def mark(ref, base=""):
     """`class="<원래 클래스> vrefN" id="vrefN" data-ref="…"` 를 만든다.
 

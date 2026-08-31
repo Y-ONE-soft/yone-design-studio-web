@@ -94,6 +94,18 @@ class MiddleSeries(Series):
                 "raw": os.path.join(w, f"raw{vol}.json"),
                 "build": os.path.join(w, f"build{vol}")}
 
+    # 작업대에 나오는 사람 이름 — 무엇을 고르는지 알아야 손을 댄다.
+    style_names = {
+        "sechd": "구역 머리", "code": "구역 번호", "tail": "구역 꼬리",
+        "ghd": "묶음 머리", "vlist": "낱말 목록", "vrow": "낱말 한 줄",
+        "no": "번호", "bd": "낱말과 뜻", "w": "낱말", "k": "뜻",
+        "nt": "덧말", "plist": "구 목록",
+        "qs": "문항 묶음", "qi": "문항 한 개", "row": "문항 줄",
+        "b": "문항 본문", "boxed": "상자 문항", "two": "2단 문항",
+        "bank": "<보기> 상자", "instr": "안내문", "keep": "붙여 두는 덩어리",
+        "qpass": "지문 묶음", "plate": "간지", "memo": "메모 면",
+    }
+
     def build_dir(self, cfg):
         key, vol = self._pick(cfg)
         return self._paths(key, vol)["build"]

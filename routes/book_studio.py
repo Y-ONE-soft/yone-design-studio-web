@@ -37,6 +37,7 @@ PDF 는 굽지 않는다(20~50초). 서버는 `build/index.html` 만 만들고(0
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 import unicodedata as u
@@ -230,6 +231,21 @@ def api_text():
     if not ref or any(c in ref for c in "/\\ \n"):
         return jsonify({"error": "이상한 자리표"}), 400
     cfg = bookmod.load(d)
+
+    # ── 글이 어디서 오는가 ──
+    # 지면의 글이 전부 원고에서 오는 것은 아니다. 머리 띠 제목은 **책 설정**
+    # (`book.subject`)이고, 탭·기입칸은 **조판이 만든 것**이라 원본이 없다.
+    # 그걸 구분 안 하고 다 원고로 보면, 클릭했을 때 "원본에 없는 자리" 만
+    # 뜨고 왜 안 되는지 알 수 없다.
+    from core.render_vivlio import refs as _refs
+    src = _refs.source_of(ref)
+    if src == "fixed":
+        return jsonify({"error": "조판이 만든 자리라 글을 고칠 수 없습니다 — "
+                                 "모양은 오른쪽 '단락 스타일'에서 바꿉니다",
+                        "kind": "fixed"}), 409
+    if src == "config":
+        return _text_from_config(cfg, ref, p, get)
+
     cur, raw = ed.preview(cfg)
     if not ed.exists(cur, ref):
         return jsonify({"error": f"원본에 없는 자리: {ref}"}), 404
@@ -256,6 +272,41 @@ def api_text():
                            "v": rt.from_text(text, like=ed.get(raw, ref))})
     return jsonify({"ok": True, "entries": st["head"],
                     "history": {"head": st["head"], "total": len(st["ops"])}})
+
+
+def _text_from_config(cfg, ref, p, get):
+    """머리 띠 제목처럼 **책 설정**에서 오는 글.
+
+    원고가 아니라 `config.json` 을 고쳐야 한다 — 편집 이력에 쌓으면 아무 일도
+    안 일어난다(그 자리가 data.json 에 없기 때문이다). 한 번 고치면 그 책의
+    모든 머리 띠가 같이 바뀐다는 것도 화면에 알려 준다.
+    """
+    import shutil
+    from core.render_vivlio import knobs as kn
+    val = kn.get(cfg.data, ref)
+    if val is None:
+        return jsonify({"error": f"설정에 없는 자리: {ref}"}), 404
+    if get:
+        return jsonify({"ref": ref, "text": str(val), "origin": str(val),
+                        "edited": False, "kind": "config",
+                        "note": "이 글은 원고가 아니라 **책 설정**에서 옵니다 — "
+                                "고치면 이 책의 같은 자리가 모두 바뀝니다."})
+    text = p.get("text")
+    if text is None:
+        return jsonify({"error": "글이 없다"}), 400
+    if len(text) > 500 or "\n" in text:
+        return jsonify({"error": "설정 값이 너무 길거나 줄이 나뉘었다"}), 400
+    path = cfg.path("config.json")
+    raw = open(path, encoding="utf-8").read()
+    try:
+        out = kn.patch_text(raw, {ref: text})
+    except Exception as e:
+        return jsonify({"error": f"설정을 못 고쳤다: {e}"}), 500
+    shutil.copy2(path, path + ".bak")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(out)
+    return jsonify({"ok": True, "kind": "config",
+                    "note": "책 설정을 고쳤습니다(되돌리려면 config.json.bak)."})
 
 
 @bp.route("/api/book-studio/op", methods=["POST"])
@@ -311,7 +362,14 @@ def api_styles():
         return jsonify({"error": "모르는 책"}), 404
     cfg = bookmod.load(d)
     if get:
-        return jsonify({"styles": cfg.section("styles") or {}})
+        # 스타일 목록에 `.pbox` 같은 CSS 이름만 나오면 무엇을 고르는지 알 수
+        # 없다. 계열이 붙여 둔 사람 이름을 같이 준다.
+        try:
+            from core.render_vivlio import series as _sreg
+            names = dict(_sreg.get(cfg.series).style_names or {})
+        except Exception:
+            names = {}
+        return jsonify({"styles": cfg.section("styles") or {}, "names": names})
     styles = dict(cfg.section("styles") or {})
     cur = dict(styles.get(sel) or {})
     for k, v in props.items():
@@ -407,6 +465,58 @@ def api_images():
         os.remove(dst)
         return jsonify({"error": "그림이 너무 크다 (20MB 넘음)"}), 400
     return jsonify({"ok": True, "name": name, "images": listing()})
+
+
+@bp.route("/api/book-studio/cmyk", methods=["POST"])
+def api_cmyk():
+    """화면 색(16진) → **인쇄 CMYK**.
+
+    내지는 종이에 찍히므로 색은 CMYK 로 읽혀야 한다. 화면의 `#908400` 이
+    인쇄에서 몇 %인지 모르면 색을 정할 수가 없다.
+
+    ⚠ 눈대중 공식을 쓰지 않는다. 실제 마감(`prepress.py`)이 쓰는 **그 ICC
+      프로파일**(Japan Color 2001 Coated 우선)로 변환한다 — 공식으로 낸 숫자는
+      인쇄물과 다르고, 다르면 없느니만 못하다.
+
+    ⚠ 먹으로 빠지는 색은 CMYK 가 아니라 **K 단색**이다. 본문 먹·품사·발음기호는
+      마감 때 DeviceGray 로 바꾼다(리치 블랙으로 4도가 겹치면 글자가 번진다).
+      그런 색은 그렇게 알려 준다.
+    """
+    from core.render_vivlio import prepress
+    p = request.get_json(silent=True) or {}
+    colors = p.get("colors")
+    if not isinstance(colors, list) or len(colors) > 200:
+        return jsonify({"error": "색 목록이 없다"}), 400
+
+    gray = {k.lower(): v for k, v in prepress.DEFAULT_GRAY_MAP.items()}
+    out, tr = {}, None
+    prof = prepress.find_profile()
+    if prof:
+        try:
+            from PIL import Image, ImageCms
+            tr = ImageCms.buildTransform(
+                ImageCms.createProfile("sRGB"), ImageCms.getOpenProfile(prof),
+                "RGB", "CMYK",
+                renderingIntent=ImageCms.Intent.RELATIVE_COLORIMETRIC)
+        except Exception:
+            tr = None
+    for hx in colors:
+        h = str(hx).strip().lower()
+        if not re.fullmatch(r"#[0-9a-f]{6}", h):
+            continue
+        if h in gray:
+            out[hx] = {"k": round(gray[h] * 100), "gray": True}
+            continue
+        if tr is None:
+            continue
+        from PIL import Image, ImageCms
+        rgb = tuple(int(h[i:i + 2], 16) for i in (1, 3, 5))
+        c, m, y, k = ImageCms.applyTransform(
+            Image.new("RGB", (1, 1), rgb), tr).getpixel((0, 0))
+        out[hx] = {"c": round(c * 100 / 255), "m": round(m * 100 / 255),
+                   "y": round(y * 100 / 255), "k": round(k * 100 / 255)}
+    return jsonify({"cmyk": out,
+                    "profile": os.path.basename(prof) if prof else None})
 
 
 @bp.route("/api/book-studio/find", methods=["POST"])

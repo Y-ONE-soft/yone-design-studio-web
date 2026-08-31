@@ -34,6 +34,21 @@ class VocabookSeries(Series):
     display = "단어장 (상일·배재·광문·한영보카)"
     theme = ""          # 계열 테마는 책 팔레트로 매 빌드 생성한다
 
+    # 작업대에 나오는 사람 이름 — 무엇을 고르는지 알아야 손을 댄다.
+    style_names = {
+        "day-open": "DAY 한 벌", "s-wb": "워크북", "s-ans": "정답",
+        "s-mw": "more with", "s-vs": "VOCA vs. VOCA",
+        "w-word": "표제어", "w-mean": "뜻", "w-block": "표제어 한 줄",
+        "en": "예문(영어)", "kr": "예문(뜻)",
+        "sec": "워크북 구역", "sec-head": "구역 머리", "sec-badge": "구역 배지",
+        "sec-prompt": "구역 발문", "q": "문항 한 개", "no": "문항 번호",
+        "wd": "낱말", "df": "빈칸 문항", "bogi": "<보기> 상자",
+        "ansbox": "답 칸", "rule": "답 줄",
+        "ans": "정답 묶음", "a-sec": "정답 구역", "a-it": "정답 한 개",
+        "mw": "어근 묶음", "mw-root": "어근", "mw-items": "어근 낱말",
+        "vs": "비교 묶음", "vs-word": "비교 낱말", "vs-mean": "비교 뜻",
+    }
+
     # ── ① 원고 → data.json ──
     def gen_data(self, cfg, log):
         return data_mod.build(cfg, log)

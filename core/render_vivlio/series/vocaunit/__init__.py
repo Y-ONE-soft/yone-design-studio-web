@@ -39,6 +39,15 @@ class VocaunitSeries(Series):
     display = "단어장 UNIT형 (광문보카)"
     theme = ""          # 계열 테마는 책 팔레트로 매 빌드 생성한다
 
+    # 작업대에 나오는 사람 이름 — 무엇을 고르는지 알아야 손을 댄다.
+    style_names = {
+        "w": "표제어 한 벌", "w-l": "왼쪽(번호·표제어)", "w-r": "오른쪽(뜻·예문)",
+        "w-no": "번호", "chk": "회독 칸", "w-word": "표제어",
+        "w-pron": "발음기호", "w-deriv": "파생어", "w-def": "뜻",
+        "w-ex": "예문 묶음", "pair": "예문 한 쌍", "en": "예문(영어)",
+        "kr": "예문(뜻)", "flat": "표형 한 줄", "g-head": "소단원 머리",
+    }
+
     # ── ① 원고 → data.json ──
     def gen_data(self, cfg, log):
         return data_mod.build(cfg, log)

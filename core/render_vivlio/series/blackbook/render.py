@@ -163,35 +163,41 @@ def sec_open(cls, mark):
             f'<div class="secmark">{html.escape(mark)}</div>')
 
 
+# ── 머리 띠 ─────────────────────────────────────────────────────────
+# 머리 띠 글은 **원고가 아니라 책 설정**(`book.subject`)에서 온다. 그래서
+# 자리표를 `book.subject` 로 준다 — 작업대가 그걸 보고 config 를 고친다.
+# 띠·탭처럼 조판이 만든 조각은 `#…` 로 준다(고를 수만 있고 글은 없다).
 def hdr_unit(no, title):
-    return ('<div class="sechdr voca">'
+    return (f'<div{_mark("#머리띠", "sechdr voca")}>'
             '<div class="mask"></div>'
-            f'<div class="tab"><span class="u">Unit</span>'
+            f'<div{_mark("#유닛탭", "tab")}><span class="u">Unit</span>'
             f'<span class="n"> {no}</span></div>'
-            f'<div class="ttl">{title}</div></div>')
+            f'<div{_mark("book.subject", "ttl")}>{title}</div></div>')
 
 
 def hdr_exer(title):
-    return ('<div class="sechdr">'
+    return (f'<div{_mark("#머리띠", "sechdr")}>'
             '<div class="panel"></div>'
-            '<div class="tab"><span class="x">Exercise</span></div>'
-            f'<div class="ttl">{title}</div>'
-            '<div class="meta">Date |      .      .         Time |'
+            f'<div{_mark("#문제탭", "tab")}><span class="x">Exercise</span></div>'
+            f'<div{_mark("book.subject", "ttl")}>{title}</div>'
+            f'<div{_mark("#기입칸", "meta")}>Date |      .      .         Time |'
             '                  점 수 |</div></div>')
 
 
 def hdr_ans(no, title):
-    return ('<div class="sechdr ans">'
+    return (f'<div{_mark("#머리띠", "sechdr ans")}>'
             '<div class="panel"></div>'
-            f'<div class="tab"><span class="u">Unit</span>'
+            f'<div{_mark("#유닛탭", "tab")}><span class="u">Unit</span>'
             f'<span class="n"> {no}</span></div>'
-            f'<div class="ttl">정답 및 해설 <b>{title}</b></div></div>')
+            f'<div{_mark("#해설제목", "ttl")}>정답 및 해설 <b>{title}</b></div></div>')
 
 
 def render_vocab(unit):
     u = ref_of(unit)
     o = ['<div class="vunit">']
-    o.append(f'<div><span class="chip">{html.escape(unit["label"])}</span></div>')
+    o.append('<div><span'
+             + _mark(u and u + '.label', 'chip')
+             + f'>{html.escape(unit["label"])}</span></div>')
     o.append('<div class="rule"></div>')
     o.append('<div class="pbox">')
     if unit['title']:

@@ -129,6 +129,17 @@ class SpecialSeries(Series):
     display = "특강 합본 (방학·특강)"
     theme = "special"
 
+    # 작업대에 나오는 사람 이름 — 무엇을 고르는지 알아야 손을 댄다.
+    style_names = {
+        "vol": "부(어휘·구문어법·독해)", "flow": "본문 흐름",
+        "cpage": "필기노트 면", "keep": "붙여 두는 덩어리",
+        "x-passage": "지문", "x-stem": "발문", "x-choice": "선지",
+        "x-q": "문항", "x-trans": "해석", "x-note": "노트",
+        "qitem": "문항 한 개", "qbody": "문항 본문", "aitem": "정답 한 개",
+        "wcard": "낱말 카드", "concept": "개념", "bogi": "<보기> 상자",
+        "runhead": "머리말", "week-open": "WEEK 머리 면",
+    }
+
     # ── ① 원고 → data.json ──
     def gen_data(self, cfg, log):
         return data_mod.build(cfg, log)

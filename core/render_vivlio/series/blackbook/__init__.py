@@ -137,6 +137,22 @@ class BlackbookSeries(Series):
         stage.stage_book_assets(cfg, build_dir)
 
     # ── 손잡이 ──
+    # 작업대에 나오는 사람 이름 — 무엇을 고르는지 알아야 손을 댈 수 있다.
+    style_names = {
+        "sec": "부(어휘·문제·해설)", "sec-voca": "어휘부", "sec-exer": "문제부",
+        "sec-ans": "해설부",
+        "sechdr": "머리 띠", "tab": "머리 띠 탭", "ttl": "머리 띠 제목",
+        "meta": "Date · Time · 점수 칸", "panel": "머리 띠 흰 패널",
+        "vunit": "연관 어휘 한 덩어리", "chip": "본문 라벨 칩",
+        "chip-v": "어휘 라벨 칩", "rule": "라벨 밑 괘선",
+        "pbox": "지문 상자", "vwords": "연관 어휘 목록", "vw": "표제어 한 줄",
+        "wh": "표제어와 뜻", "rel": "동의어 · 반의어 줄", "lab": "동의어/반의어 라벨",
+        "q": "문항 한 개", "head": "발문", "no": "문항 번호",
+        "arrow": "화살표", "dlg": "대화문 바탕", "blk": "빈칸",
+        "answers": "해설 2단", "a": "해설 한 개", "divider": "간지 자리",
+        "summary": "요약문 상자", "crit": "채점 기준 상자", "bogi": "<보기> 상자",
+    }
+
     # 이 계열은 테마가 **고정 CSS**(`themes/blackbook.css`)라 색이 파일에 박혀
     # 있었다. 그 `:root` 변수들을 그대로 손잡이로 연다 — 기본값은 CSS 에 있는 값
     # 그대로고, config 에 값이 없으면 `knobs.css` 가 비어 지면이 안 바뀐다.

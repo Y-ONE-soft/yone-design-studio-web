@@ -37,6 +37,15 @@ class Series(object):
     # "지면을 보는 데는 필요 없고 느리기만 한" 것을 끄는 자리다.
     render_opts = {}
 
+    # ── 스타일 이름표 ──
+    # 작업대의 단락 스타일 목록에 `.pbox`·`.vunit` 같은 **CSS 이름**이 그대로
+    # 나오면 무엇을 고르는 건지 알 수 없다(실제로 그랬다). 계열이 사람 말을
+    # 붙여 준다. 여기 없는 것은 CSS 이름 그대로 나온다.
+    style_names = {}
+
+    def name_of_style(self, cls):
+        return self.style_names.get(cls, "")
+
     # ── 조판 결과가 놓이는 폴더 ──
     def build_dir(self, cfg):
         """`build/index.html` 이 놓이는 곳. 대개 책 폴더 안이다.
