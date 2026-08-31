@@ -214,8 +214,13 @@ class WorkbookV2Engine(BaseEngine):
         # 09 관계사.docx’ — job 4b8b05f8) 파일명 라우터가 못 잡고, 스텝1/2
         # 매칭에도 안 걸려 Step3가 통째로 0유닛이 됐다. 파싱 **결과**를 기준
         # 으로 미소비 파일을 가려 '문항 모음' 구조면 Step3로 옮기고 재파싱한다.
-        rescued = _routing.rescue_unrouted_step3(
+        # 원고 폴더를 **직접** 가리킨 경우(staged_root is None)에는 구제하지
+        # 않는다 — 그 폴더는 구글 드라이브일 수 있고 드라이브 파일에는 절대
+        # 쓰지 않는다. 폴더 입력은 Step3 하위 폴더가 실물로 있으므로 구제할
+        # 이유도 없다 (구제는 폴더 구조를 잃는 업로드 경로의 문제다).
+        rescued = (_routing.rescue_unrouted_step3(
             manuscript_dir, data, log, candidates=staged_root)
+            if staged_root is not None else [])
         if rescued:
             data = parse_manuscript_folder(manuscript_dir, cfg, grade, year,
                                            month, log, image_dir=image_dir)
