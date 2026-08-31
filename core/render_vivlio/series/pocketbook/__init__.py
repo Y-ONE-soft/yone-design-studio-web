@@ -288,6 +288,7 @@ class PocketbookSeries(Series):
         if not files:
             return
         self._tools()
+        import unicodedata
         import manuscript
         frags = []
         for f in files:
@@ -295,33 +296,45 @@ class PocketbookSeries(Series):
             frags += got
             log("■ 원고 %s — 블록 %d" % (os.path.basename(f), len(got)))
 
-        def norm(x):
-            import re as _re
-            return _re.sub(r"[^0-9a-z가-힣]", "", (x or "").lower())
+        def canon(text):
+            """지문 키를 **구조**로 정규화한다.
 
-        def digits(x):
-            import re as _re
-            return "".join(_re.findall(r"\d", x or ""))
+            원고와 지문이 같은 것을 다르게 부른다:
+              `24-9 21번 Flow` · `25년 9월 23번` · `250923`  → 모의고사 (yy,mm,nn)
+              `1과 본문1` · `미래엔김 1과 본문1` · `1과 01`   → 교과서 (과,순번)
+            글자를 맞추려 하면 학교마다 깨진다 — 무엇을 가리키는지로 맞춘다.
+            """
+            t = unicodedata.normalize("NFC", str(text or ""))
+            m = re.search(r"(\d{2})\s*[-년]\s*(\d{1,2})\s*월?\s*"
+                          r"(\d{1,2})\s*번", t)
+            if m:
+                return "M%s%02d%02d" % (m.group(1), int(m.group(2)),
+                                        int(m.group(3)))
+            m = re.fullmatch(r"\s*(\d{6})\s*", re.sub(r"[^0-9]", "", t)[:6]
+                             if re.fullmatch(r"[0-9]{6,8}", re.sub(r"\s", "", t))
+                             else "")
+            if m:
+                return "M" + m.group(1)
+            u = re.search(r"(\d{1,2})\s*과", t)
+            n = re.search(r"본문\s*(\d{1,2})", t) or re.search(
+                r"과\s*(\d{1,2})\b", t)
+            if u and n:
+                return "T%s-%02d" % (u.group(1), int(n.group(1)))
+            return "X" + re.sub(r"[^0-9a-z가-힣]", "", t.lower())
 
-        by_key, by_num = {}, {}
+        by_key = {}
         for fr in frags:
-            k = norm(fr["key_raw"])
-            by_key[k] = fr
-            dn = digits(fr["key_raw"])
-            if dn:
-                by_num.setdefault(dn, fr)
+            by_key.setdefault(canon(fr["key_raw"]), fr)
+
         used, hit = set(), 0
         for r in rows:
-            cands = [r.get("key"), r.get("pno"), r.get("label")]
             fr = None
-            for c in cands:
-                fr = by_key.get(norm(c)) or fr
-            if fr is None:
-                for c in cands:
-                    dn = digits(c)
-                    if dn and dn in by_num:
-                        fr = by_num[dn]
-                        break
+            for c in (r.get("pno"), r.get("label"), r.get("key")):
+                if not c:
+                    continue
+                fr = by_key.get(canon(c))
+                if fr:
+                    break
             if fr is None:
                 continue
             used.add(id(fr))

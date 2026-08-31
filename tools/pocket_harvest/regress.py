@@ -168,6 +168,17 @@ def save_state(st):
 
 
 # ── ④ 보고서 ─────────────────────────────────────────────────────────────
+def _label(r):
+    """표에 적을 이름 — **학기·학교까지** 적는다.
+
+    파일 이름만 적으면 `강동1_포켓북_내지` 가 학기마다 있어 같은 줄로 보인다.
+    """
+    src = r.get("src") or ""
+    if src.startswith(nfc(IDML_ROOT)):
+        return os.path.splitext(os.path.relpath(src, nfc(IDML_ROOT)))[0]
+    return r.get("name", "?")
+
+
 def write_report(st, total, path=REPORT):
     rows = [st[k] for k in sorted(st, key=lambda k: nfc(k))]
     ok = [r for r in rows if r.get("status") == "PASS"]
@@ -191,7 +202,7 @@ def write_report(st, total, path=REPORT):
         mark = {"PASS": "✅", "FAIL": "❌", "ERROR": "💥",
                 "SKIP": "—"}.get(r.get("status"), "?")
         L.append("| %s %s | %s | %s | %s | %d | %s |" % (
-            mark, r.get("name", "?"),
+            mark, _label(r),
             r.get("n_passage", "-"), r.get("n_memtest", "-"),
             r.get("n_pages", "-"), len(r.get("fails") or []),
             r.get("secs", "-")))
@@ -200,7 +211,7 @@ def write_report(st, total, path=REPORT):
         L.append("## 새는 곳")
         L.append("")
         for r in bad:
-            L.append("### %s" % r.get("name"))
+            L.append("### %s" % _label(r))
             L.append("")
             for f in r.get("fails") or []:
                 L.append("- %s" % f)
@@ -216,7 +227,7 @@ def write_report(st, total, path=REPORT):
         L.append("## 경고 (게이트는 통과 — 원고 자체가 빈 것)")
         L.append("")
         for r in warned:
-            L.append("- **%s** — %s" % (r.get("name"),
+            L.append("- **%s** — %s" % (_label(r),
                                         "; ".join(r["warns"])[:400]))
     with open(path, "w", encoding="utf-8") as f:
         f.write("\n".join(L) + "\n")

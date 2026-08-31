@@ -89,11 +89,15 @@ _ROLE = [
     (re.compile(r"본문\s*풀이"), "grammar"),
     (re.compile(r"상단제목"), "topic_sep"),
     (re.compile(r"주제요약"), "topic"),
-    (re.compile(r"영어\s*지문|형광펜"), "passage"),
+    # `형관펜` 은 오타가 아니라 실제로 원고에 있는 스타일 이름이다(5권·51자).
+    # 안 받아 주면 형광펜 친 낱말이 지문에서 조용히 빠진다.
+    (re.compile(r"영어\s*지문|형[광관]펜"), "passage"),
     (re.compile(r"지문\s*번호"), "snum"),      # ← 분석본에서는 '문장 번호'다
     (re.compile(r"핵심기출문제|박스\s*지문"), "exam"),
-    (re.compile(r"마스터페이지:챕터_숫자"), "head_num"),
-    (re.compile(r"마스터페이지:챕터"), "head_ch"),
+    # ⚠ 접두를 붙여 잠그면 안 된다 — 문서 간 복사로 스타일이 갈아 끼워지면
+    #   `마스터페이지:MIGRATED_b5c7ef__챕터_숫자` 가 된다(배재2 실측).
+    (re.compile(r"챕터_숫자"), "head_num"),
+    (re.compile(r"챕터"), "head_ch"),
     (re.compile(r"마스터페이지:|페이지번호"), "running"),
     (re.compile(r"^간지:|A_메뉴"), "cover"),
     (re.compile(r"^어휘:"), "voca"),
