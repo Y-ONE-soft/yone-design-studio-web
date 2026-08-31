@@ -31,14 +31,30 @@ FONTS = [
     "KCCDodamdodam_OTF.otf", "JalnanOTF.otf",
 ]
 
+_SPAN_CACHE = {}
+
+
+def _all_spans(page):
+    """한 면의 글자 조각. **면마다 한 번만** 뽑는다.
+
+    ⚠ 검사마다 `get_text("dict")` 를 다시 부르면 그림이 많은 책에서 검수가
+      분 단위로 늘어진다(한영1 248면·40MB 에서 18분 넘게 걸렸다).
+    """
+    key = (id(page.parent), page.number)
+    got = _SPAN_CACHE.get(key)
+    if got is None:
+        got = [sp for b in page.get_text("dict")["blocks"] if b["type"] == 0
+               for l in b["lines"] for sp in l["spans"]]
+        if len(_SPAN_CACHE) > 400:
+            _SPAN_CACHE.clear()
+        _SPAN_CACHE[key] = got
+    return got
+
+
 def _spans(page, lo, hi):
-    for b in page.get_text("dict")["blocks"]:
-        if b["type"] != 0:
-            continue
-        for l in b["lines"]:
-            for sp in l["spans"]:
-                if lo <= sp["size"] <= hi:
-                    yield sp
+    for sp in _all_spans(page):
+        if lo <= sp["size"] <= hi:
+            yield sp
 
 
 _RE_VER = re.compile(r"(분석본\s*\d+)")
