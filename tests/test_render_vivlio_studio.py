@@ -472,6 +472,94 @@ def test_page_panel_and_spread():
     assert "function setSpread(" in src and "'spread'" in src
 
 
+# ── 글자 단위 서식 ────────────────────────────────────────────
+# 에디터라면 **고른 몇 글자만** 12pt·빨강으로 만들 수 있어야 한다.
+# 예전 방식(글 안에 `**굵게**` 표시를 끼움)으로는 굵기·밑줄·기울임 셋뿐이었고,
+# 편집기를 열 때마다 글이 딴것처럼 보였다.
+RICH_CASES = [
+    "그냥 민글",
+    ["앞 ", {"t": "밑줄", "u": True}, " 뒤"],
+    [{"t": "굵고 밑줄", "b": True, "u": True}],
+    ["a ", {"t": "b", "i": True}, " c"],
+    ["빈칸 _____ 뒤"],
+    ["앞 ", {"t": "큰 글자", "st": {"font-size": "12pt", "color": "#cc0000"}}, " 뒤"],
+    ["앞 ", {"t": "강조", "cs": "강조"}, " 뒤"],
+]
+
+
+@pytest.mark.parametrize("rich", RICH_CASES)
+def test_html_roundtrip_keeps_everything(rich):
+    from core.render_vivlio import richtext as rt
+    back = rt.from_html(rt.to_html(rich), like=rich)
+    assert rt.plain(back) == rt.plain(rich), "글자가 달라졌다"
+    assert rt.to_html(back) == rt.to_html(rich), "서식이 달라졌다"
+
+
+def test_plain_stays_plain():
+    """민글은 민글로 — 형태가 바뀌면 data.json 이 달라져 회귀가 시끄러워진다."""
+    from core.render_vivlio import richtext as rt
+    assert rt.from_html(rt.to_html("그냥 글")) == "그냥 글"
+    assert isinstance(rt.from_html("<b>굵게</b>"), dict)
+
+
+def test_blank_survives_the_editor():
+    """빈칸(`_____`)은 편집기에서 빈칸처럼 보이면서 **정확히** 되돌아와야 한다."""
+    from core.render_vivlio import richtext as rt
+    h = rt.to_html(["답: _____ 이다"])
+    assert "ed-blank" in h and 'data-raw="_____"' in h
+    assert rt.from_html(h) == "답: _____ 이다"
+
+
+def test_paste_junk_is_stripped():
+    """붙여넣기로 들어온 남의 태그는 글자만 남긴다."""
+    from core.render_vivlio import richtext as rt
+    got = rt.from_html('<div class="x"><script>bad()</script>글<b>굵게</b></div>')
+    assert rt.plain(got) == "bad()글굵게" or rt.plain(got) == "글굵게"
+    assert "script" not in str(got)
+
+
+@pytest.mark.parametrize("name", ("blackbook", "special"))
+def test_renderer_emits_char_style(name):
+    """세그먼트에 건 서식이 **조판까지** 가야 한다."""
+    mod = __import__("core.render_vivlio.series." + name + ".render",
+                     fromlist=["render"])
+    got = mod.inl(["앞 ", {"t": "크게", "st": {"font-size": "12pt"}}, " 뒤"])
+    assert "font-size:12pt" in got
+    assert mod.inl(["그냥 글"]) == "그냥 글", "민글은 예전과 똑같아야 한다"
+
+
+def test_container_ref_refuses_text_edit():
+    """덩어리 자리표에는 글이 없다 — 빈 편집기가 뜨면 원인을 알 수 없다."""
+    src = _routes_src()
+    assert '"kind": "container"' in src
+
+
+def test_char_panel_targets_the_selection():
+    src = _studio_src()
+    assert "function hasCharSel()" in src and "function fmtStyle(" in src
+    assert "function charOrLive(" in src
+
+
+def test_named_character_styles():
+    src = _studio_src()
+    assert "function applyCharStyle(" in src and "cs-" in src
+
+
+def test_page_thumbnails_come_from_the_pdf():
+    """지면을 다시 그려 만들려면 몇 분이 든다 — 마지막 PDF 에서 뽑는다."""
+    src = _routes_src()
+    assert "/book-studio/thumb/" in src and "get_pixmap" in src
+    assert "마지막 조판본" in _studio_src(), "옛 그림임을 화면에 적어야 한다"
+
+
+def test_view_guides_do_not_touch_layout():
+    """안내선·재단선은 **보기**다 — 조판에 영향을 주면 안 된다."""
+    src = _routes_src()
+    i = src.index("show-margin")
+    block = src[i - 400:i + 600]
+    assert "pointer-events: none" in block
+
+
 # ── 클로드 칸 ─────────────────────────────────────────────────
 # 모델에게 리포를 통째로 열어 주면 안 된다 — 계열 코드를 고치면 그 계열 책이
 # 전부 흔들리고, 원고를 고치면 납품본과 글이 달라진다. 손댈 수 있는 곳은

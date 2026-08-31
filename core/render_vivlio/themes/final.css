@@ -75,8 +75,21 @@
   @bottom-right { content: element(footR); width: 190mm; vertical-align: top; }
 }
 
-/* 중요어휘 면 — 판면이 3mm 내려간다(완성본 실측) */
-@page vocab { margin-top: 32.57mm; margin-bottom: 17.43mm; }
+/* 중요어휘 면 — 판면이 위로 올라가고, 오른쪽 단에 회색 판이 깔린다.
+ * 판은 **면 배경**이다 — 셀 배경으로 두면 내용이 짧은 면만 짧아진다. */
+@page vocab { margin-top: 30.00mm; margin-bottom: 20.43mm; }
+@page vocab:left {
+  background:
+    linear-gradient(var(--panel), var(--panel)) no-repeat 108.00mm 30.00mm / 83mm 252mm,
+    linear-gradient(var(--ink), var(--ink)) no-repeat 13.90mm 0 / 12.75mm 23.26mm,
+    linear-gradient(var(--ink), var(--ink)) no-repeat 0 23.00mm / 216mm 0.265mm;
+}
+@page vocab:right {
+  background:
+    linear-gradient(var(--panel), var(--panel)) no-repeat 112.00mm 30.00mm / 83mm 252mm,
+    linear-gradient(var(--ink), var(--ink)) no-repeat 155.00mm 0 / 43.40mm 13.00mm,
+    linear-gradient(var(--ink), var(--ink)) no-repeat 0 23.00mm / 216mm 0.265mm;
+}
 
 /* 간지·크레딧 자리 — 마감 때 완성본 아트워크 면으로 바뀐다 */
 @page art {
@@ -198,7 +211,7 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
          border-spacing: var(--colgap) 0; margin-left: calc(-1 * var(--colgap) / 2);
          margin-right: calc(-1 * var(--colgap) / 2); }
 .vpair > div { display: table-cell; width: var(--colw); vertical-align: top; }
-.vpair .r { background: var(--panel); }
+/* 회색 판은 면 배경이 그린다(위 `@page vocab`) — 셀에는 칠하지 않는다. */
 .vpair .l { padding-right: 0; }
 .vcell { padding: 0; }
 .vpair .r .vcell { padding: 2.43mm 4.00mm 4.00mm; }
@@ -206,7 +219,9 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 .vp { text-align: justify; line-height: 7.06mm; }
 .vsum { margin-top: 5.60mm; }
 .vsum .hd { font: 700 8.5pt/7.06mm Noto; letter-spacing: 0.1em; }
-.blk-vocab { height: auto; }
+.sec-vocab .grid { column-count: 1; height: auto; }
+.blk-vocab { height: auto; overflow: visible; }
+.blk-vocab + .blk-vocab { break-before: page; }
 
 /* 빈칸 — 첫 글자만 굵게 보이고 나머지 길이만큼 밑줄 */
 .blk .bl { font-weight: 700; }

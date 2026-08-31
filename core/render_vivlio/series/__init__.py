@@ -49,6 +49,11 @@ def _whitebook():
     return WhitebookSeries()
 
 
+def _final():
+    from core.render_vivlio.series.final import FinalSeries
+    return FinalSeries()
+
+
 def _middle():
     from core.render_vivlio.series.middle import MiddleSeries
     return MiddleSeries()
@@ -60,3 +65,4 @@ register("blackbook", _blackbook)
 register("special", _special)
 register("middle", _middle)
 register("whitebook", _whitebook)
+register("final", _final)
