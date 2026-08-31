@@ -44,10 +44,15 @@ def is_running(app=APP):
     return r.returncode == 0 and bool(r.stdout.strip())
 
 
-def open_doc_count(app=APP):
-    r = subprocess.run(
-        ["osascript", "-e", 'tell application "%s" to count of documents' % app],
-        capture_output=True, text=True, timeout=60)
+def open_doc_count(app=APP, timeout=60):
+    """열린 문서 수. **무응답이면 -1** — 예외를 던지면 호출부가 죽는다."""
+    try:
+        r = subprocess.run(
+            ["osascript", "-e",
+             'tell application "%s" to count of documents' % app],
+            capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        return -1
     try:
         return int((r.stdout or "0").strip())
     except ValueError:

@@ -38,6 +38,7 @@
   --mark:   #a7a9ac;   /* 답란 화살표 배지 */
   --rule:   #6d6e71;   /* 답란 괘선 */
 
+  --mtop:   29.57mm;   /* 판면 위 — 섹션 첫 면 장식이 이만큼 위로 올라간다 */
   --slot:   126mm;     /* 사분면 한 칸 */
   --colw:   83.7mm;    /* 완성본 실측: 열1 21.0→104.7 */
   --colgap: 3.3mm;
@@ -79,6 +80,7 @@
 /* 중요어휘 면 — 판면이 위로 올라가고, 오른쪽 단에 회색 판이 깔린다.
  * 판은 **면 배경**이다 — 셀 배경으로 두면 내용이 짧은 면만 짧아진다. */
 @page vocab { margin-top: 30.00mm; margin-bottom: 20.43mm; }
+.sec-vocab { --mtop: 30.00mm; }   /* 어휘 면은 판면이 0.43mm 내려간다 */
 @page vocab:left {
   background:
     linear-gradient(var(--panel), var(--panel)) no-repeat 108.00mm 30.00mm / 83mm 252mm,
@@ -183,18 +185,20 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
  * 높이 0 으로 심고, 탭 자리는 흰 상자로 덮는다. */
 .sechdr { position: relative; height: 0; }
 .sechdr .mask {
-  position: absolute; right: -21.00mm; top: -29.57mm;
-  width: 66mm; height: 23.00mm; background: #fff;
+  position: absolute; right: -21.00mm; top: calc(-1 * var(--mtop));
+  /* ⚠ 높이를 23.00mm 로 두면 y=23.00 의 머리 괘선을 **덮어 먹는다**
+   *   (섹션 첫 면에서만 괘선이 66mm 끊겼다) → 괘선 위에서 멈춘다. */
+  width: 66mm; height: 22.90mm; background: #fff;
 }
 /* ⚠ 러닝 띠와 **정확히 같은 자리**여야 한다. 짝수 면에서는 둘이 겹치는데,
  *   1mm 라도 어긋나면 글자가 두 번 찍힌 것처럼 보인다(실제로 그랬다).
  *   러닝 띠는 `@top-left`(= 판면 왼쪽) 에서 -7.1mm 이므로 여기도 같은 값. */
 .sechdr .band {
-  position: absolute; left: -7.10mm; top: -29.57mm; width: 190mm;
-  margin-left: 0;
+  position: absolute; left: -7.10mm; top: calc(-1 * var(--mtop));
+  width: 190mm; margin-left: 0;
 }
 .sechdr .sq {                     /* 홀수 면에는 배경 사각형이 없다 */
-  position: absolute; left: -7.10mm; top: -29.57mm;
+  position: absolute; left: -7.10mm; top: calc(-1 * var(--mtop));
   width: 12.75mm; height: 23.26mm; background: var(--ink);
 }
 

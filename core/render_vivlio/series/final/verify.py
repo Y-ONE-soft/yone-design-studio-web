@@ -250,6 +250,36 @@ def _check_fit(cfg, vol, report):
     return hard
 
 
+def _check_head_rule(pdf, report, skip=(), y=23.13, dpi=150):
+    """머리 괘선이 면을 가로질러 **끊기지 않았는가**.
+
+    섹션 첫 면에서 장 탭을 덮는 흰 상자가 괘선까지 먹어 66mm 가 사라진 적이
+    있다(도련까지 그어지는 선이라 눈에 잘 안 띈다). 배경으로 그린 선은
+    `get_drawings()` 에 안 잡히므로 **픽셀로** 본다.
+    """
+    bad = []
+    with probe.open_pdf(pdf) as doc:
+        for i, page in enumerate(doc):
+            n = i + 1
+            if n in skip:
+                continue
+            pm = page.get_pixmap(dpi=dpi)
+            row = int(y / 25.4 * dpi)
+            if row >= pm.height:
+                continue
+            dark = [x for x in range(pm.width) if pm.pixel(x, row)[0] < 128]
+            if not dark:
+                continue
+            gaps = [(a, b) for a, b in zip(dark, dark[1:]) if b - a > 3]
+            if gaps:
+                bad.append((n, round(gaps[0][0] / dpi * 25.4, 1)))
+    if bad:
+        report.fail(f"머리 괘선 끊김 {len(bad)}면(면, 끊긴 x mm): {bad[:6]}")
+    else:
+        report.note("머리 괘선 전 면 연속")
+    return bad
+
+
 def _check_hyphen(data, report):
     """되읽기 잔재(하이픈 넣기). 원고 직독으로 바꾸면 사라질 것 — 지금은 알린다."""
     hy = data.get("_hyphen_suspects") or {}
@@ -298,5 +328,6 @@ def run(series, cfg, log, report):
     _check_vocab_pair(data, vol, report)
     _check_blanks(data, vol, texts, spans, report)
     _check_fit(cfg, vol, report)
+    _check_head_rule(pdf, report, skip)
     _check_hyphen(data, report)
     return report

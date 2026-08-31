@@ -219,10 +219,18 @@ def export_one(src, dst, status_path, jsx_path, timeout=240):
     return tag, rest
 
 
-def main(kind, limit=None, log_path=None):
+def main(kind, limit=None, log_path=None, only=None):
     items = scan(kind)
+    if only:
+        import unicodedata as _u
+        needle = _u.normalize("NFC", only)
+        items = [x for x in items
+                 if needle in _u.normalize("NFC", x[0])]
     os.makedirs(TMP, exist_ok=True)
     n_open = idrun.open_doc_count()
+    if n_open < 0:                      # 무응답 — 앞 배치가 멎어 있다
+        restart_indesign()
+        n_open = idrun.open_doc_count()
     if n_open > 0:
         raise SystemExit(
             "InDesign 에 문서가 %d개 열려 있다 — 사용자의 작업물일 수 있으므로 "
@@ -260,5 +268,11 @@ def main(kind, limit=None, log_path=None):
 
 if __name__ == "__main__":
     kind = sys.argv[1] if len(sys.argv) > 1 else "pocketbook"
-    lim = int(sys.argv[2]) if len(sys.argv) > 2 else None
-    main(kind, lim)
+    only = None
+    lim = None
+    for a in sys.argv[2:]:
+        if a.startswith("--only="):
+            only = a.split("=", 1)[1]
+        else:
+            lim = int(a)
+    main(kind, lim, only=only)
