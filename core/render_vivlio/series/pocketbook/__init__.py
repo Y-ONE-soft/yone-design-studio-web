@@ -116,6 +116,35 @@ def _derive_pno(p):
     return p
 
 
+_RE_LEC = re.compile(r"(\d{1,2})\s*강")
+_RE_ONLY_NO = re.compile(r"^\s*(\d{1,2})\s*번\s*$")
+
+
+def _carry_lecture(items):
+    """`11강 1번` 다음에 오는 `2번`·`3번` 에 강 번호를 이어 붙인다.
+
+    분석본은 강을 첫 지문에만 적고 그다음은 번호만 적는다. 그대로 두면 배지가
+    `11강 1번` 다음에 `2번` 으로 나가 무엇의 2번인지 알 수 없다. 완성본은
+    `11강 02` 처럼 강을 매번 적는다.
+    """
+    lec = ""
+    for it in items:
+        lb = it.get("label") or ""
+        m = _RE_LEC.search(lb) or _RE_LEC.search(it.get("chapter") or "")
+        if m:
+            lec = m.group(1)
+        n = _RE_ONLY_NO.match(lb)
+        if n and lec:
+            it["label"] = "%s강 %02d" % (lec, int(n.group(1)))
+            it.setdefault("unit", "%s강" % lec)
+        elif m and _RE_ONLY_NO.match(_RE_LEC.sub("", lb).strip() or "x"):
+            k = re.search(r"(\d{1,2})\s*번", lb)
+            if k:
+                it["label"] = "%s강 %02d" % (lec, int(k.group(1)))
+                it.setdefault("unit", "%s강" % lec)
+    return items
+
+
 def _grade_of(school):
     """학교 이름 끝 숫자가 학년이다(`상일2` → 고2). 삽화 폴더가 학년별이라 필요하다."""
     import re as _re
@@ -266,6 +295,7 @@ class PocketbookSeries(Series):
             got = analysis.read_book(f)
             for g in got:
                 _derive_pno(g)
+            _carry_lecture(got)
             out += got
             log("■ 분석본 %s — 지문 %d" % (os.path.basename(f), len(got)))
         return out
