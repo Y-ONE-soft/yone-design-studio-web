@@ -128,7 +128,9 @@ def prepare(items, build_dir, illust_dirs=(), category=""):
             "key": p.get("key") or p.get("pno") or p.get("label") or "",
             "no": p.get("pno") or "",
             "label": p.get("label") or "",
-            "category": p.get("category") or category,
+            # 오른쪽 면 꼬리말은 단원 이름이다(`모의고사`·`교과서 4과`).
+            # 코퍼스가 `unit` 으로 들고 있으므로 config 기본값보다 먼저 본다.
+            "category": p.get("category") or p.get("unit") or category,
             "passage_runs": _flatten(p.get("passage")),
             "translation": _plain(p.get("translation")),
             "flownote": p.get("flownote") or [],

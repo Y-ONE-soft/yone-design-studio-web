@@ -468,27 +468,49 @@ def read_sequence(path):
         if "passage" not in by_role:
             continue
         topic, summary = split_topic(by_role.get("topic", [None])[0])
-        pno, label = "", ""
+        pnos, labels = [], []
         for t in shorts:
             if not t:
                 continue
             m = _PNO.match(t)
-            if m and not pno:
-                pno = m.group(1).replace(" ", "")
-            elif not label and len(t) <= 24 and _looks_label(t):
-                label = t
-        items.append({
-            "kind": "passage", "pno": pno, "label": label,
-            "pages": [p["name"] for p in sp["pages"]],
-            "masters": sorted(masters),
-            "passage": by_role["passage"][0],
-            "translation": by_role.get("translation", [None])[0],
-            "flownote": [plain(l).strip()
-                         for l in lines_of(by_role.get("flownote", [None])[0])],
-            "topic": topic, "summary": summary,
-            "synonyms": parse_synonym_cards(by_role.get("synonyms", [None])[0]),
-            "links": sp["links"],
-        })
+            if m:
+                v = m.group(1).replace(" ", "")
+                if v not in pnos:
+                    pnos.append(v)
+            elif len(t) <= 24 and _looks_label(t) and t not in labels:
+                labels.append(t)
+
+        # ⚠ 짤지문 스프레드는 지문이 **둘**이다(G/H 마스터). 첫 스토리만 집으면
+        #   둘째 지문이 조용히 사라진다. 반대로 지문 하나가 프레임 둘로 나뉜
+        #   경우도 있어서, **지문번호 배지 개수**로 가른다 — 배지가 하나면
+        #   한 지문의 앞뒤 토막이므로 이어 붙인다.
+        stories = by_role["passage"]
+        n_badge = max(len(pnos), len(labels))
+        groups = (list(stories) if len(stories) > 1 and n_badge > 1
+                  else [[p2 for st in stories for p2 in st]])
+        trs = by_role.get("translation") or []
+        for gi, grp in enumerate(groups):
+            tr = trs[gi] if gi < len(trs) else (
+                [p2 for st in trs for p2 in st] if trs and len(groups) == 1
+                else None)
+            items.append({
+                "kind": "passage",
+                "pno": pnos[gi] if gi < len(pnos) else (pnos[0] if pnos else ""),
+                "label": labels[gi] if gi < len(labels) else (
+                    labels[0] if labels else ""),
+                "pages": [p["name"] for p in sp["pages"]],
+                "masters": sorted(masters),
+                "pair": len(groups) > 1,
+                "passage": grp,
+                "translation": tr,
+                "flownote": [plain(l).strip()
+                             for l in lines_of(by_role.get("flownote",
+                                                           [None])[0])],
+                "topic": topic, "summary": summary,
+                "synonyms": parse_synonym_cards(
+                    by_role.get("synonyms", [None])[0]),
+                "links": sp["links"] if gi == 0 else [],
+            })
     if mt_story:
         runs = [r for pa in mt_story for p2 in pa for r in p2["runs"]] \
             if isinstance(mt_story[0], list) and mt_story[0] and \

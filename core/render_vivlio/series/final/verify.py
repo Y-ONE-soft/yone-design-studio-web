@@ -24,6 +24,8 @@ GRID = {"arrange": (2, 2), "insert": (2, 2), "vocab": (1, 1),
         "grammar": (2, 1), "writing": (2, 1)}
 RE_WS = re.compile(r"\s+")
 MM = 25.4 / 72
+# 판면 세로 경계 — 이 밖은 러닝 요소다(완성본 실측)
+BODY_TOP, BODY_BOTTOM = 25.0, 284.0
 
 
 def expected_pages(sec, spans):
@@ -56,12 +58,16 @@ def page_text_colwise(page):
 
     ⚠ PDF 추출 순서는 좌표 순이라 두 단 지면에서 단이 뒤섞인다. 그대로 이으면
       단 경계·면 경계에 걸친 문장이 '누락'으로 잡힌다(어법 19강 07~08 실증).
+    ⚠ 러닝 요소(띠·탭·꼬리말)도 빼야 한다 — 안 빼면 면 끝의 꼬리말이 문장
+      한가운데 끼어들어 역시 '누락'이 된다.
     """
     blocks = []
     for b in page.get_text("dict")["blocks"]:
         if b["type"] != 0:
             continue
         x0, y0 = b["bbox"][0] * MM, b["bbox"][1] * MM
+        if y0 < BODY_TOP or y0 > BODY_BOTTOM:
+            continue
         col = 0 if x0 < 60 else 1
         blocks.append((col, y0, "".join(
             x["text"] for l in b["lines"] for x in l["spans"])))
@@ -279,11 +285,14 @@ def run(series, cfg, log, report):
     pdf = cfg.out_pdf(vcfg.get("suffix") or series._suffix(cfg))
     if not os.path.exists(pdf):
         return report.fail(f"PDF 없음: {pdf}")
+    # 두 벌이 필요하다 — 섹션 구간은 **러닝 요소**(띠·꼬리말)로 가르고,
+    # 내용 대조는 **본문만** 이어 붙인다.
+    labels = probe.page_texts(pdf)
     texts = page_texts_colwise(pdf)
     skip = set(vcfg.get("skip_pages") or ())
     skip |= {len(texts) - k for k in range(vcfg.get("skip_last") or 0)}
     spanmap = _spanmap(cfg, vol, data)
-    spans = _section_pages(data, vol, texts, report, skip)
+    spans = _section_pages(data, vol, labels, report, skip)
     _check_pagecount(data, vol, spans, report, spanmap)
     _check_placement(data, vol, texts, spans, report, spanmap)
     _check_vocab_pair(data, vol, report)

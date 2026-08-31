@@ -275,7 +275,7 @@ section.flow.onecol { break-before: auto; }
 
 /* ─────────────────────────────────────────────── 푸터 */
 .folio {
-  position: absolute; top: 0.12mm;              /* 마진 박스 상단 = 286.5mm */
+  position: absolute; top: 2.29mm;              /* 실측 보정: 꼬리말 286.62mm */
   font-family: "Elice DX Neolli", sans-serif; font-weight: 700; font-size: 6pt;
   line-height: 1; letter-spacing: normal; color: var(--ink);
 }
@@ -296,10 +296,21 @@ section.flow.onecol { break-before: auto; }
 }
 /* 흐름은 건드리지 않고 **글리프만** 띄운다(relative) — 본문 시작 위치는 이미
  * 실물과 1mm 안쪽으로 맞아 있었고, 어긋난 것은 라벨 글리프뿐이었다. */
-.zone > .pnum, .grp > .pnum { position: relative; top: var(--pnum-lift, -8.3mm); }
-.k-step1_b2 .grp > .pnum { --pnum-lift: -10.8mm; }   /* 내용 종합 라벨 25.04 */
-.k-step1_c1 .zone > .pnum { --pnum-lift: -5.8mm; }   /* 문장 배열 라벨 30.04 */
-.k-step2_a1 .grp > .pnum { --pnum-lift: -6.8mm; }    /* 어법 선택 라벨 29.0 */
+.zone > .pnum, .grp > .pnum { position: relative; top: var(--pnum-lift, 0mm); }
+.k-step1_b2 .grp > .pnum { --pnum-lift: -2.1mm; }    /* 내용 종합 라벨 25.04 */
+
+
+/* 본문이 시작하는 자리 — 라벨 아래 간격. 스텝마다 실물이 다르다(실측 보정) */
+.grp > .box-body { margin-top: 5.1mm; }
+.k-step1_b2 .grp > .box-body { margin-top: 2.6mm; }
+.zone > .pnum, .grp > .pnum { margin-bottom: var(--body-gap, 0mm); }
+.k-step1_a1 .zone, .k-step1_a1_2 .zone { --body-gap: 1.3mm; }
+/* 어휘 선택은 상·하 칸 자리가 다른 스텝과 다르다 (실측: 위 27.54 / 아래 151.04) */
+.k-step1_a1 .zone.z-top, .k-step1_a1_2 .zone.z-top { top: 2.2mm !important; }
+.k-step1_a1 .zone.z-bottom, .k-step1_a1_2 .zone.z-bottom { top: 126.4mm !important; }
+.k-step1_b1 .zone { --body-gap: 5.9mm; }
+.k-step1_c1 .zone { --body-gap: 4.3mm; }
+.k-step2_a1 .grp { --body-gap: 5.9mm; }
 .en { font-size: 8.5pt; line-height: 7.76mm; text-align: justify; }
 u { text-underline-offset: 0.14em; text-decoration-thickness: 0.05em; }
 
@@ -383,7 +394,7 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
   font-family: "Elice DX Neolli", sans-serif; font-weight: 500; font-size: 7.5pt;
   line-height: 4.3mm;
 }
-.b2q .choices { margin: 1.4mm 0 0 5mm; }
+.b2q .choices { margin: 1.4mm 0 0 0.3mm; }
 .b2q .choices p { font-size: 8pt; line-height: 4.7mm; }
 
 /* ─────────────────────────────────────────────── STEP1 C1 문장 배열 */
@@ -418,7 +429,7 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 .blk {
   position: relative; padding-left: 5.5mm; text-indent: 0;
   font-size: 7.96pt; line-height: 7.0mm; text-align: justify;
-  margin-top: 3.6mm;
+  margin-top: 2.2mm;              /* 실측 항목 간격 15.29mm 에 맞춘 값 */
 }
 .blk:first-child { margin-top: 0; }
 .blk .n {
@@ -433,7 +444,7 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 }
 
 /* ─────────────────────────────────────────────── STEP2 A1 어법 선택 */
-.gsel p { font-size: 8.5pt; line-height: 5.6mm; text-align: justify;
+.gsel p { font-size: 8.5pt; line-height: 7.76mm; text-align: justify;
           padding-left: 4mm; text-indent: -4mm; }
 .box-orange {
   border: 0.5pt solid var(--line-orange);
