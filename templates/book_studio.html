@@ -207,7 +207,8 @@
     <div class="ide-sep"></div>
 
     <div class="ide-grp">
-      <button class="ide-b" id="ide-scope" title="견본만 볼지 전권을 볼지">견본</button>
+      <button class="ide-b" id="ide-scope"
+              title="견본 = 앞부분 몇 면만 조판해 빠르게 봅니다(색·여백 볼 때). 전권 = 책 전체 — 느리지만 면수·면 나눔이 실제와 같습니다.">견본</button>
       <button class="ide-b" id="ide-reload" title="다시 조판">다시 조판</button>
       <button class="ide-b" id="ide-pal-t" title="팔레트 접기">팔레트</button>
     </div>
@@ -218,9 +219,12 @@
   <div class="ide-body">
     <!-- ── 왼쪽: 툴 ─────────────────────────────────────── -->
     <div class="ide-left" id="ide-tools">
-      <button class="ide-tool on" data-tool="sel" title="선택 (V)">▣<small>선택</small></button>
-      <button class="ide-tool" data-tool="text" title="글자 (T)">T<small>글자</small></button>
-      <button class="ide-tool" data-tool="para" title="문단 (P)">¶<small>문단</small></button>
+      <button class="ide-tool on" data-tool="sel"
+              title="선택 (V) — 누르면 그 자리의 스타일·색만 봅니다. 글은 안 고쳐집니다.">▣<small>선택</small></button>
+      <button class="ide-tool" data-tool="text"
+              title="글자 (T) — 누른 자리의 글을 그 자리에서 고칩니다. 드래그해 고른 뒤 ⌘B 굵게 · ⌘U 밑줄 · ⌘↵ 저장.">T<small>글자</small></button>
+      <button class="ide-tool" data-tool="para"
+              title="문단 (P) — 글자 도구와 같지만, 위 도구줄의 문단 나누기·넣기·합치기·지우기를 함께 씁니다.">¶<small>문단</small></button>
     </div>
 
     <!-- ── 가운데: 지면 ─────────────────────────────────── -->
@@ -292,7 +296,13 @@
       <details class="ide-pal"><summary>직접 손보기 (CSS)</summary>
         <div class="ide-in">
           <div class="ide-hint" style="margin-bottom:6px">
-            팔레트에 없는 것을 이 책에서만. 다른 책엔 영향 없습니다.</div>
+            <b>여기 적은 CSS 가 이 책의 조판에 그대로 얹힙니다.</b>
+            오른쪽 팔레트에 없는 것을 손볼 때 씁니다 —
+            예) <code>.pbox { border-width: 0.5pt }</code>.<br>
+            이 책 폴더의 <code>overrides.css</code> 에 저장되고
+            <b>다른 책은 안 바뀝니다</b>. 비워 두면 아무 일도 안 합니다.<br>
+            ⚠ 계열이 바뀌면 어긋날 수 있는 임시 처방입니다. 자주 쓰는 것이
+            보이면 팔레트 손잡이로 올리세요.</div>
           <textarea class="ide-css" id="pal-css" spellcheck="false"></textarea>
           <button class="ide-b" id="pal-css-save" style="margin-top:6px">저장하고 다시 조판</button>
         </div>
