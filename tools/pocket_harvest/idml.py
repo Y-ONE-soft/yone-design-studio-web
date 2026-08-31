@@ -181,6 +181,15 @@ class Idml(object):
                                "CharacterStyle")
                 mark, hl = mark_of(cstyle)
                 color = self.color_of(cstyle, csr.get("FillColor"))
+                # ⚠ 암기테스트 본문에는 **문자 스타일이 없다** — 번호(위첨자)와
+                #   정답(색)이 전부 로컬 오버라이드다. 스타일 이름만 보면
+                #   문제면과 정답면이 똑같이 나온다(그렇게 나왔다).
+                ovr = _unq(csr.get("FillColor") or "")
+                if ovr and ovr not in ("Color/Black", "Color/None",
+                                       "Swatch/None"):
+                    mark = mark or "ovr"
+                if (csr.get("Position") or "").startswith("Superscript"):
+                    mark = "num"
                 ruby = csr.get("RubyString") if csr.get("RubyFlag") == "1" else None
                 rpos = csr.get("RubyPosition") or ""
                 # 위/아래 — 범위 오버라이드가 없으면 스타일 기본값(BelowLeft)
@@ -417,7 +426,7 @@ def read_sequence(path):
       찍게 한다.
     """
     doc = Idml(path)
-    items = []
+    items, mt_story, seen_mt, seen_story = [], [], set(), set()
     for sp in doc.spreads():
         masters = {p["master"][:1] for p in sp["pages"] if p["master"]}
         seen, by_role, shorts = set(), {}, []
@@ -426,10 +435,14 @@ def read_sequence(path):
             if sid in seen:
                 continue
             seen.add(sid)
+            if sid in seen_story and (masters & set("BDFL")):
+                continue
             paras = doc.paragraphs(sid)
             if not paras:
                 continue
             role = _para_role(paras)
+            if role in ("memtest", "memtest_q"):
+                seen_story.add(sid)
             txt = "\n".join(plain(p["runs"]) for p in paras)
             short = len(txt.strip()) < 30
             if short:
@@ -442,14 +455,15 @@ def read_sequence(path):
                 by_role.setdefault(role, []).append(paras)
 
         if masters & set("BDFL"):
-            # 한 스프레드에 문제(왼쪽)와 정답(오른쪽)이 **같이** 있다.
-            # 하나만 집으면 정답면이 통째로 사라진다.
-            if "memtest_q" in by_role:
-                items.append({"kind": "memtest", "answer": False,
-                              "body": by_role["memtest_q"][0]})
-            if "memtest" in by_role:
-                items.append({"kind": "memtest", "answer": True,
-                              "body": by_role["memtest"][0]})
+            # ⚠ 암기테스트 스토리는 **여러 면에 걸쳐 이어져 있다**(스레드).
+            #   스토리 단위로 집으면 한 면에 책 전체가 들어간다(실제로 그랬다).
+            #   그래서 여기서는 모아만 두고, 지문별로 자르는 것은 split_memtest 가 한다.
+            body = (by_role.get("memtest") or by_role.get("memtest_q") or [None])[0]
+            if body is not None:
+                key = id(body)
+                if key not in seen_mt:
+                    seen_mt.add(key)
+                    mt_story.append(body)
             continue
         if "passage" not in by_role:
             continue
@@ -475,7 +489,106 @@ def read_sequence(path):
             "synonyms": parse_synonym_cards(by_role.get("synonyms", [None])[0]),
             "links": sp["links"],
         })
+    if mt_story:
+        runs = [r for pa in mt_story for p2 in pa for r in p2["runs"]] \
+            if isinstance(mt_story[0], list) and mt_story[0] and \
+            isinstance(mt_story[0][0], dict) and "runs" in mt_story[0][0] \
+            else []
+        items = split_memtest(items, mt_story)
     return items
+
+
+_LET = re.compile(r"[A-Za-z]+")
+
+
+def _sig(runs, n=40):
+    return "".join(_LET.findall("".join(r["t"] for r in runs)))[:n].lower()
+
+
+def split_memtest(items, stories):
+    """이어진 암기테스트 스토리를 **지문별로** 자른다.
+
+    암기테스트 본문은 지문과 같은 글이고 정답 자리에 `N[낱말]` 이 끼어 있을 뿐이다.
+    그래서 지문 첫머리의 **알파벳만 남긴 지문(signature)** 으로 경계를 찾는다.
+    표기·번호가 바뀌어도 글 자체는 안 바뀌므로 형식에 기대지 않는다.
+
+    문제면은 따로 수확하지 않는다 — 정답면에서 정답 낱말만 가리면 되고,
+    그래야 문제면과 정답면이 **반드시 다르다**(둘 다 정답이 보이는 사고를 막는다).
+    """
+    runs = [r for st in stories for p in st for r in p["runs"]]
+    if not runs:
+        return items
+    flat = "".join(r["t"] for r in runs)
+    letters, pos = [], []
+    for i, ch in enumerate(flat):
+        if ch.isalpha() and ch.isascii():
+            letters.append(ch.lower())
+            pos.append(i)
+    hay = "".join(letters)
+
+    passages = [x for x in items if x["kind"] == "passage"]
+    bounds = []
+    for p in passages:
+        sig = _sig([r for pa in p["passage"] for r in pa["runs"]])
+        at = hay.find(sig) if sig else -1
+        bounds.append(pos[at] if at >= 0 else None)
+    # 못 찾은 지문은 앞뒤 경계로 채운다(순서는 지면 순서와 같다)
+    out, cur = [], 0
+    for i, p in enumerate(passages):
+        start = bounds[i]
+        if start is None:
+            continue
+        nxt = None
+        for j in range(i + 1, len(passages)):
+            if bounds[j] is not None:
+                nxt = bounds[j]
+                break
+        p["memtest_range"] = (start, nxt if nxt is not None else len(flat))
+    # 문자 범위 → 런 조각
+    acc, idx = [], 0
+    spans = []
+    for r in runs:
+        spans.append((idx, idx + len(r["t"]), r))
+        idx += len(r["t"])
+    for p in passages:
+        rng = p.get("memtest_range")
+        if not rng:
+            continue
+        a, b = rng
+        cut = []
+        for s0, s1, r in spans:
+            if s1 <= a or s0 >= b:
+                continue
+            t = r["t"][max(0, a - s0):len(r["t"]) - max(0, s1 - b)]
+            if t:
+                q = dict(r)
+                q["t"] = t
+                cut.append(q)
+        p["memtest_runs"] = cut
+        p.pop("memtest_range", None)
+
+    for p in passages:
+        if p.get("memtest_runs"):
+            items.append({"kind": "memtest", "answer": False,
+                          "key": p.get("pno") or p.get("label"),
+                          "body_runs": _mask(p["memtest_runs"])})
+            items.append({"kind": "memtest", "answer": True,
+                          "key": p.get("pno") or p.get("label"),
+                          "body_runs": p["memtest_runs"]})
+    return items
+
+
+def _mask(runs):
+    """정답 낱말을 지운 문제면. 자리는 남긴다."""
+    out = []
+    for r in runs:
+        if r.get("mark") in ("red", "ovr") or r.get("style", "").endswith("빈칸"):
+            q = dict(r)
+            q["mark"] = "blank"
+            out.append(q)
+        else:
+            out.append(r)
+    return out
 
 
 if __name__ == "__main__":

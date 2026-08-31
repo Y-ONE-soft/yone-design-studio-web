@@ -263,7 +263,9 @@ html,body{margin:0;padding:0;background:#fff}
   text-align:justify;letter-spacing:__track__em}
 .memtest .n{font-size:5.5pt;vertical-align:super;color:var(--anno)}
 .memtest .red{color:#E8963C}          /* 정답 — 원본 실측 주황 */
-.memtest .blank{display:inline-block;min-width:__blank__mm}
+/* 문제면의 빈칸 — 원본은 정답 글자에 '칠하지 않음' 스와치를 줘서 자리만 남긴다.
+   글자를 지우면 자리가 좁아져 정답면과 줄이 달라진다. 투명하게만 만든다. */
+.memtest .blank{color:transparent;letter-spacing:.06em}
 .n{font-size:5.5pt;vertical-align:super;color:var(--anno)}
 .mtbox{position:absolute;border:.4pt solid #E4E0D6;background:#FCFBF7;
   border-radius:1mm}

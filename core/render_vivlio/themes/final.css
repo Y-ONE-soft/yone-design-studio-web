@@ -91,6 +91,23 @@
     linear-gradient(var(--ink), var(--ink)) no-repeat 0 23.00mm / 216mm 0.265mm;
 }
 
+/* 섹션 **첫 면**은 홀수라도 장 탭·워드마크가 없고 섹션 띠만 있다(완성본 실측:
+ * Vol1 15·21면). 이름 있는 면의 `:nth(1)` 은 그 섹션 묶음의 첫 면을 가리킨다. */
+@page arrange:nth(1), @page insert:nth(1), @page vocab:nth(1),
+@page grammar:nth(1), @page writing:nth(1) {
+  @top-right { content: none; }
+}
+@page arrange:nth(1):right, @page insert:nth(1):right,
+@page grammar:nth(1):right, @page writing:nth(1):right {
+  background:
+    linear-gradient(var(--ink), var(--ink)) no-repeat 0 23.00mm / 216mm 0.265mm;
+}
+@page vocab:nth(1):right {
+  background:
+    linear-gradient(var(--panel), var(--panel)) no-repeat 112.00mm 30.00mm / 83mm 252mm,
+    linear-gradient(var(--ink), var(--ink)) no-repeat 0 23.00mm / 216mm 0.265mm;
+}
+
 /* 간지·크레딧 자리 — 마감 때 완성본 아트워크 면으로 바뀐다 */
 @page art {
   background: none;

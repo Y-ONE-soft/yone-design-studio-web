@@ -683,6 +683,17 @@ def _take(e, src_obj, field, prov):
 def _write(entries, books, skipped, unkeyed, conflicts, merged_alias,
            stamp, out_dir):
     os.makedirs(out_dir, exist_ok=True)
+    # 지난 빌드가 남긴 파일 — 키 이름이 바뀌면 옛 JSON 이 유령으로 남는다.
+    # **지난 인덱스에 적힌 것만** 지운다(사람이 넣어 둔 파일은 건드리지 않는다).
+    prev = set()
+    old_index = os.path.join(out_dir, "_index.json")
+    if os.path.exists(old_index):
+        try:
+            with open(old_index, encoding="utf-8") as f:
+                prev = {v.get("file") for v in
+                        json.load(f).get("passages", {}).values()}
+        except (ValueError, OSError):
+            prev = set()
     index = {}
     for key, e in sorted(entries.items()):
         out = dict(e)
@@ -709,6 +720,12 @@ def _write(entries, books, skipped, unkeyed, conflicts, merged_alias,
             "file": key_filename(key),
         }
     real = [c for c in conflicts if c.get("kind") != "판본 차이"]
+    for stale in sorted(prev - {v["file"] for v in index.values()}):
+        if stale:
+            try:
+                os.remove(os.path.join(out_dir, stale))
+            except OSError:
+                pass
     meta = {"harvested": stamp, "books": books, "passages": len(entries),
             "conflicts_real": len(real),
             "skipped": [{"file": a, "why": b} for a, b in skipped],

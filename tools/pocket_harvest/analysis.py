@@ -165,11 +165,18 @@ def _page_index(pages, x):
 
 
 # ── 스토리 → 줄, 줄 → 역할 ────────────────────────────────
-def _classify(line):
-    """줄 하나의 역할. **run 하나가 아니라 줄 전체**로 정한다(위 3번).
+def _classify(line, tr_story=True):
+    """줄 하나의 역할.
 
-    한글 해석 run 이 있으면 그 줄은 해석이다 — 해석 줄 머리의 영어 제목이
-    지문으로 새어 나가는 것을 막는 유일한 방법이다.
+    **해석 프레임**(`tr_story`)에서는 한글 해석 run 이 하나라도 있으면 그 줄
+    전체가 해석이다 — 해석 줄 머리의 영어 소제목이 지문으로 새어 나가는 것을
+    막는 유일한 방법이다(위 3번).
+
+    **지문 프레임**에서는 그럴 수 없다. 안내문 지문은 영어 본문 704자 끝에
+    해석 스타일 37자(해석 쪽 소제목)가 붙어 있어서, 같은 규칙을 쓰면 지문
+    전체가 해석으로 넘어가고 그 지문이 통째로 사라진다(성덕1 실측).
+    → 프레임의 성격은 **그 스토리에서 어느 쪽 글자가 더 많은가**로 정하고,
+      지문 프레임 안에서는 줄도 글자 수로 가른 뒤 소수 쪽을 제자리로 보낸다.
     """
     got = {}
     for r in line:
@@ -183,18 +190,65 @@ def _classify(line):
         if line and all(role_of(r["style"]) == "topic_sep" for r in line):
             return "topic_sep"
         return None
-    for pref in ("translation", "topic", "topic_sep", "grammar", "exam",
+    for pref in ("topic", "topic_sep", "grammar", "exam",
                  "head_ch", "head_num", "voca", "cover"):
         if got.get(pref):
             return pref
-    if got.get("passage"):
+    p = got.get("passage", 0) + got.get("snum", 0)
+    t = got.get("translation", 0)
+    if t and (tr_story or t > p):
+        return "translation"
+    if p:
         # 안전망 — 스타일이 영어 지문인데 내용이 한글이면 해석이다.
         if _I.han_ratio("".join(r["t"] for r in line)) > 0.35:
             return "translation"
-        return "passage"
-    if got.get("snum"):
-        return "snum"
+        return "passage" if got.get("passage") else "snum"
     return None
+
+
+def _story_is_translation(paras):
+    """스토리가 해석 프레임인가 — 한글 해석 글자가 영어 지문 글자보다 많은가."""
+    p = t = 0
+    for para in paras:
+        for r in para["runs"]:
+            if not r["t"].strip():
+                continue
+            role = role_of(r["style"])
+            if role == "translation":
+                t += len(r["t"])
+            elif role in ("passage", "snum"):
+                p += len(r["t"])
+    return t > p
+
+
+def _route(line):
+    """줄 → [(역할, runs)]. 지문 프레임 안에 섞여 든 해석 조각을 제자리로 보낸다.
+
+    공백만 있는 run 은 앞 그룹에 붙인다 — 해석 줄 사이사이에 영어 지문 스타일의
+    공백 한 칸이 끼어 있어서, 그걸 새 그룹으로 세면 한 줄이 수십 조각이 난다.
+    """
+    groups = []
+    for r in line:
+        role = role_of(r["style"])
+        role = "translation" if role == "translation" else "passage"
+        if not r["t"].strip() and groups:
+            groups[-1][1].append(r)
+            continue
+        if groups and groups[-1][0] == role:
+            groups[-1][1].append(r)
+        else:
+            groups.append([role, [r]])
+    out = []
+    for role, rs in groups:
+        if role == "passage" and _I.han_ratio(
+                "".join(x["t"] for x in rs)) > 0.35:
+            role = "translation"
+        if out and out[-1][0] == role:
+            out[-1][1].extend(rs)
+        else:
+            out.append([role, rs])
+    return [(role, rs) for role, rs in out
+            if any(x["t"].strip() for x in rs)]
 
 
 def _runs(line):
