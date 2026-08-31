@@ -214,7 +214,12 @@ def _classify(line, tr_story=True):
         if line and all(role_of(r["style"]) == "topic_sep" for r in line):
             return "topic_sep"
         return None
-    for pref in ("topic", "topic_sep", "grammar", "exam",
+    if got.get("topic_sep"):
+        # `상단제목` 은 **내용이 비었을 때만** 구분자다. 글자를 담고 있으면
+        # 그건 주제·요약 본문이다(강동2 는 주제 177자를 이 스타일로 찍었다).
+        # `got` 에는 애초에 공백 아닌 run 만 세므로 여기 온 건 전부 본문이다.
+        got["topic"] = got.get("topic", 0) + got.pop("topic_sep")
+    for pref in ("topic", "grammar", "exam",
                  "head_ch", "head_num", "voca", "cover"):
         if got.get(pref):
             return pref
@@ -236,6 +241,53 @@ def _classify(line, tr_story=True):
             return "translation"
         return "passage" if got.get("passage") else "snum"
     return None
+
+
+_CHOICE = re.compile(r"[\u2460-\u2469\u24d0-\u24d9]")   # ①~⑩ · ⓐ~ⓙ
+
+
+def _relabel(paras):
+    """무스타일 run 에 합성 스타일을 붙인다. 이름이 없으니 **스토리**로 판정한다.
+
+    ① 스타일 붙은 지문/해석 run 이 같은 스토리에 있으면 = 지문 프레임이다.
+       무스타일 조각은 그 프레임의 본문이므로 `_SYN_BODY` → 내용으로 가른다.
+       (신세대 해석 125건이 통째로 이 자리에서 새고 있었다.)
+    ② 스토리 전체가 무스타일이면 주제/요약일 수도, 기출문제일 수도 있다.
+       실측 1,447개를 갈라 보니 신호 셋이면 완전히 나뉜다.
+         · 발문은 한국어다 — 한글로 시작하면 기출문제다(606개).
+         · 선지 ①~⑤ 가 있으면 기출문제다(영어 발문 7개가 여기 걸린다).
+         · 주제 줄과 요약 줄이 있어야 하므로 **두 줄 이상**이다
+           (한 줄짜리 138개는 내용이 `1` 뿐인 번호 프레임이다).
+       셋을 통과한 140개는 길이가 191~361자로 주제/요약 프레임 그대로였고
+       400자를 넘는 것이 하나도 없었다(기출문제는 1,000자 이상).
+    """
+    runs = [r for p in paras for r in p["runs"] if r["t"].strip()]
+    if not runs:
+        return paras
+    plain_runs = [r for r in runs if role_of(r["style"]) is None]
+    if not plain_runs:
+        return paras
+    anchored = any(role_of(r["style"]) in ("passage", "translation")
+                   for r in runs)
+    if anchored:
+        syn = _SYN_BODY
+    else:
+        if len(plain_runs) != len(runs):
+            return paras          # 무스타일과 다른 역할이 섞였다 — 손대지 않는다
+        txt = _sq("".join(r["t"] for r in runs))
+        if (_I.han_ratio(txt[:40]) > 0.2 or _CHOICE.search(txt)
+                or len(_I.lines_of(paras)) < 2):
+            return paras          # 기출문제·번호 프레임 — 그대로 버린다
+        syn = _SYN_TOPIC
+    out = []
+    for para in paras:
+        rs = []
+        for r in para["runs"]:
+            if role_of(r["style"]) is None:
+                r = dict(r, style=syn)
+            rs.append(r)
+        out.append({"style": para["style"], "runs": rs})
+    return out
 
 
 def _story_is_translation(paras):
@@ -295,7 +347,9 @@ def _runs(line):
         if not r["t"]:
             continue
         mark, hl = mark_of(r["style"])
-        out.append({"t": r["t"], "style": nfc(r["style"]), "mark": mark,
+        # 합성 스타일은 우리가 붙인 것이지 원고에 있는 이름이 아니다 → 지운다
+        style = "" if r["style"] in (_SYN_BODY, _SYN_TOPIC) else nfc(r["style"])
+        out.append({"t": r["t"], "style": style, "mark": mark,
                     "hl": hl, "ruby": r["ruby"], "slot": r["slot"]})
     return out
 
@@ -357,24 +411,40 @@ def _split_topic(items):
     요약 줄을 따로 찍는데, 주제 줄이 비면 눈에 띄지만 두 개가 한 문단으로
     붙어 나오면 오래 안 보인다 → 요약에 넣고 주제를 비운 뒤 note 를 남긴다.
     """
-    has_sep = any(kind == "sep" for kind, _ in items)
+    def is_sep(r):
+        # 구분자는 **빈** `상단제목` run 이다(위 규칙과 같은 판정).
+        return role_of(r["style"]) == "topic_sep" and not r["t"].strip()
+
+    has_sep = any(kind == "sep" for kind, _ in items) or any(
+        is_sep(r) for kind, line in items for r in line if kind == "line")
+    # ⚠ run 은 붙이고 줄은 띄운다. 자간 오버라이드 때문에 낱말 한가운데서
+    #   run 이 갈린 원고가 있어서(강동2), run 사이에 공백을 넣으면
+    #   `The wo rd "hip-hop"` 처럼 낱말이 갈라진다.
     segs, cur = [], []
+
+    def flush():
+        segs.append(" ".join(cur))
+        del cur[:]
+
     for kind, line in items:
         if kind == "sep":
-            segs.append(" ".join(cur))
-            cur = []
+            flush()
             continue
+        parts = []
         for r in line:
-            if role_of(r["style"]) == "topic_sep":
-                segs.append(" ".join(cur))
-                cur = []
+            if is_sep(r):
+                if parts:
+                    cur.append("".join(parts))
+                    parts = []
+                flush()
             elif r["t"]:
-                cur.append(r["t"])
+                parts.append(r["t"])
+        if parts:
+            cur.append("".join(parts))
         if not has_sep:
             # 구분자가 없는 세대에서는 줄 하나가 곧 조각 하나다
-            segs.append(" ".join(cur))
-            cur = []
-    segs.append(" ".join(cur))
+            flush()
+    flush()
     segs = [x for x in (_sq(x) for x in segs) if x]
     how = "상단제목 구분자" if has_sep else "줄바꿈"
     if not segs:
@@ -434,7 +504,7 @@ def read_book(path):
             if sid in seen:
                 continue          # 한 스토리가 여러 프레임에 흐른다 — 한 번만
             seen.add(sid)
-            paras = doc.paragraphs(sid)
+            paras = _relabel(doc.paragraphs(sid))
             tabs = _tables_of(doc, sid)
             if not paras and not tabs:
                 continue
