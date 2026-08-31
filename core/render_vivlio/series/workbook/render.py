@@ -465,7 +465,7 @@ def fixed_section(st, idx):
 
     run = running_head(n, st["logo"], st["title"], st["tag"],
                        note=st.get("note"))
-    return (f'<section class="sec fixed s{n}" id="sec{idx}">'
+    return (f'<section class="sec fixed s{n} k-{st["key"]}" id="sec{idx}">'
             f'{run}{"".join(pages)}</section>'), len(pages)
 
 
@@ -481,7 +481,7 @@ def flow_sec(st, idx):
             body.append(s3_blocks(blocks) if two else blocks_html(blocks, n, st["key"]))
     run = running_head(n, st["logo"], st["title"], st["tag"], st.get("note"))
     cls = "twocol" if two else "onecol"
-    return (f'<section class="sec flow {cls} s{n}" id="sec{idx}">'
+    return (f'<section class="sec flow {cls} s{n} k-{st["key"]}" id="sec{idx}">'
             f'{run}<div class="flowbody">{"".join(body)}</div></section>')
 
 

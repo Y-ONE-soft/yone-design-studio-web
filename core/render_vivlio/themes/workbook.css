@@ -287,10 +287,26 @@ section.flow.onecol { break-before: auto; }
 
 /* ─────────────────────────────────────────────── 본문 공통 */
 
+/* 지문 번호 — Yeongdo 는 글자 상자가 아주 커서(12pt 인데 실측 16.2mm) 흐름에
+ * 두면 글리프가 8mm 넘게 내려앉는다. 자리를 눈으로 맞추려면 **띄워서** 앉히고
+ * 본문 시작을 padding 으로 정하는 편이 정확하다. 값은 전부 완성본 실측이다. */
 .pnum {
   font-family: "Yeongdo", serif; font-size: 12pt; line-height: 1;
   color: var(--pnum); letter-spacing: 0.04em; display: block;
 }
+.zone > .pnum, .grp > .pnum {
+  position: absolute; left: 0; top: var(--pnum-top, -8.3mm);
+}
+.zone { padding-top: var(--body-pad, 12mm); box-sizing: border-box; }
+.grp  { --pnum-top: -7.3mm; padding-top: var(--body-pad, 13mm); }
+
+/* 스텝별 실측 — 지문번호 글리프 top(mm) / 본문 시작(mm), 판면 기준
+ *   본문 O/X 27.54 / 39.51 · 본문 정리 27.54 / 39.51 · 내용 종합 25.04 / 37.01
+ *   문장 배열 30.04 / 39.29 · 어법 선택 29.0 / 40.0 · 어법 O/X 28.8 / 40.0 */
+.k-step1_b2 .grp { --pnum-top: -9.8mm; --body-pad: 10.5mm; }
+.k-step1_c1 .zone.z-top { --pnum-top: -5.8mm; --body-pad: 11.8mm; }
+.k-step2_a1 .grp { --pnum-top: -5.8mm; --body-pad: 13.5mm; }
+.k-step2_b1 .grp { --pnum-top: -6.0mm; --body-pad: 13.5mm; }
 .en { font-size: 8.5pt; line-height: 7.76mm; text-align: justify; }
 u { text-underline-offset: 0.14em; text-decoration-thickness: 0.05em; }
 
@@ -321,10 +337,11 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 /* ─────────────────────────────────────────────── STEP1 A2 본문 O/X */
 .box-body {
   background: var(--box-sky);
-  padding: 2.1mm 3mm 2.2mm;
-  margin-top: 1.4mm;
+  padding: 2.1mm 5mm 2.2mm;             /* 실측: 상자 x=23, 글 x=28 */
+  margin-top: 0;
 }
-.box-body.cream { background: var(--box-body); }
+.box-body.cream { background: var(--box-body); padding-left: 3mm;
+                  padding-right: 3mm; }   /* 본문 정리는 3mm (실측 글 x=26) */
 .box-body p { font-size: 8.5pt; line-height: 4.59mm; text-align: justify; }
 .ox {
   position: relative; margin-top: 7.6mm; padding-left: 5.1mm;

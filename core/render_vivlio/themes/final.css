@@ -236,7 +236,10 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 .blk.tall { height: calc(var(--slot) * 2); }
 /* 한 단보다 긴 지문 — 칸을 포기하고 **흘린다**(글을 잃지 않는 쪽을 고른다) */
 .blk.flow { height: auto; break-inside: auto; }
-.sec-grammar .blk, .sec-writing .blk { height: var(--bodyh); }
+/* 한 단 한 지문. ⚠ 칸 높이를 단 높이와 **똑같이** 주면 반올림 때문에 가끔
+ * "안 들어간다"고 판정돼 옆 단이 통째로 비고 면이 하나 늘어난다
+ * (상일1 어법 21면 실증) → 1mm 를 덜 준다. */
+.sec-grammar .blk, .sec-writing .blk { height: calc(var(--bodyh) - 1mm); }
 
 /* 지문 헤더 — 기준선을 완성본에 맞춘다(33.39mm). 줄상자를 1em 으로 두고
  * `padding-top` 으로 기준선을, `margin-bottom` 으로 본문 첫 줄을 맞춘다.

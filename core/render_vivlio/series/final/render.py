@@ -40,6 +40,8 @@ RE_ITEM = re.compile(r"^\((?P<m>[A-Z])\)\s*")
 # 측정용 면 높이 — 아주 길게 잡아 **한 지문이 절대 쪼개지지 않게** 한다.
 # (쪼개지면 면 수 ≠ 지문 수가 되어 측정이 통째로 실패한다.)
 MEASURE_PAGE_H = 500.0
+# 단 폭(mm) — **재는 폭과 조판하는 폭이 같아야** 높이가 맞는다(완성본 실측).
+COL_W = 83.7
 NBSP = " "
 
 
@@ -306,7 +308,7 @@ def document(cfg, data, vol, fits=None, mode=None):
                  '.blk::after{content:"\\25AA";display:block;'
                  'font-size:2pt;line-height:0;color:#000}'
                  '.sechdr{display:none}</style>'
-                 % (MEASURE_PAGE_H, (170.0 - 4.0) / 2))
+                 % (MEASURE_PAGE_H, COL_W))
     o.append('</head><body>')
     o.append(feet(ch))
     if mode != "measure":
