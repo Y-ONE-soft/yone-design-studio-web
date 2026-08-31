@@ -206,22 +206,25 @@ u { text-decoration: underline; text-decoration-thickness: 0.475pt;
   letter-spacing: -0.0194em;
 }
 .q .ch .m { font: 9.26pt/4.94mm Noto; letter-spacing: 0;
-            position: relative; top: 0.37mm; }
+            padding-right: 0.46mm; position: relative; top: 0.37mm; }
 .q .tr {
   margin-top: 0.07mm; padding-left: 4.5mm; text-indent: -4.5mm;
   text-align: justify; font: 9.21pt/4.94mm Minion, Noto;
   letter-spacing: -0.0194em;
 }
-.q .tr .ar { font: 8.77pt/4.94mm Noto; letter-spacing: 0; }
-.q .head + .ch, .q .head + .tr { margin-top: 4.32mm; }
+.q .tr .ar { font: 8.77pt/4.94mm Noto; letter-spacing: 0;
+             padding-right: 0.82mm; }
+.q .head + .ch, .q .head + .tr { margin-top: 5.29mm; }
+/* 영작(한글 선지 → 영문) 다음 선지는 조금 더 벌어진다 */
+.q .tr + .ch { margin-top: 0.69mm; }
 
 .q .bogi, .q .pbox {
   /* 상자는 단보다 0.72mm 좁다(완성본 실측). 글은 상자 안에서 76.02mm. */
   width: 81.51mm; border: 0.5pt solid var(--boxline);
 }
-.q .bogi { margin-top: 4.30mm; padding: 0.94mm 2.41mm 1.82mm 2.82mm; }
+.q .bogi { margin-top: 4.30mm; padding: 0.94mm 2.41mm 2.06mm 2.82mm; }
 .q .pbox { margin-top: 3.74mm; padding: 1.69mm 2.41mm 1.94mm 2.82mm; }
-.q .bogi .bt { font: 700 7.67pt/4.5mm Elice; margin-bottom: 1.13mm; }
+.q .bogi .bt { font: 700 7.67pt/4.5mm Elice; margin-bottom: 0.89mm; }
 .q .bogi .bi {
   font: 600 9.21pt/4.5mm Minion, Noto; text-indent: 0;
   letter-spacing: -0.0218em; line-height: 4.58mm;
@@ -229,13 +232,15 @@ u { text-decoration: underline; text-decoration-thickness: 0.475pt;
 
 /* ⚠ 머리기호를 10pt 로 두면 줄 상자가 그만큼 커진다 → 줄간은 물려받게 */
 .q .bogi .bu { font-family: Noto; font-weight: 100; font-size: 10pt;
-               line-height: 0; letter-spacing: 0; }
+               line-height: 0; letter-spacing: 0;
+               padding-right: 0.63mm;
+               position: relative; top: 0.26mm; }
 .q .pbox p {
   font: 600 9.21pt/4.59mm Minion, Noto; text-align: justify;
   letter-spacing: -0.0218em;
 }
 .q .bogi + .ch { margin-top: 4.89mm; }
-.q .pbox + .ch { margin-top: 5.45mm; }
+.q .pbox + .ch { margin-top: 5.01mm; }
 
 /* ------------------------------------------------------------- 정답 */
 .answers { column-count: 2; column-gap: 6.25mm; column-fill: auto; }
