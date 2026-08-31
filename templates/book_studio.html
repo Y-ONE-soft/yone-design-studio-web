@@ -29,6 +29,11 @@
          display: flex; flex-direction: column; background: #14161f; }
   /* 작업대가 떠 있는 동안은 문서가 스크롤되지 않는다 */
   body.ide-on { overflow: hidden; }
+  /* ⚠ 앱 푸터(© 2026 Y.ONE DESIGN · All rights reserved)가 **지면 위로 비쳤다.**
+     작업대는 화면을 꽉 채우므로 그 아래 문서는 어차피 안 보이는 자리다.
+     지면에 남의 글씨가 얹히면 그것부터 조판 사고로 보인다. */
+  body.ide-on .site-footer { display: none; }
+  .ide { z-index: 40; }   /* 머리띠(sticky, z-index 50) 아래 · 문서 위 */
   /* ⚠ 조판 결과에는 **우리 CSS 를 대지 않는다.**
      예전에는 `.ide *` 로 통째 `border-box` 를 걸었는데, 지면이 이제 우리 문서
      안에 있어서 그 규칙이 **Vivliostyle 이 만든 판면 래퍼까지** 먹었다.

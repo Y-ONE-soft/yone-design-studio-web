@@ -231,6 +231,55 @@ def test_scan_keeps_rich_run_as_one_place():
     assert [h["ref"] for h in hits] == ["lessons.0.problems.0.stem"]
 
 
+# ── 화면이 지면을 오염시키지 않는가 ────────────────────────────
+# 지면이 이제 **우리 문서 안**에 있어서 앱 CSS 가 그대로 조판에 얹힌다.
+# 실제로 `main.css` 첫 줄의 전역 리셋(`*{box-sizing:border-box}`)이
+# Vivliostyle 의 판면 래퍼까지 먹어 **여백이 두 번 깎였다** — 본문 단이
+# 167mm → 118mm 로 좁아져 줄바꿈도 면 나눔도 실제 조판과 달라졌고,
+# 그걸 "미리보기" 라고 보여 주고 있었다.
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+STUDIO_HTML = os.path.join(_ROOT, "templates", "book_studio.html")
+
+
+def _studio_src():
+    return io.open(STUDIO_HTML, encoding="utf-8").read()
+
+
+def test_stage_undoes_global_box_sizing():
+    src = _studio_src()
+    assert "#ide-stage, #ide-stage *" in src
+    assert "box-sizing: content-box" in src
+
+
+def test_no_universal_rule_reaches_the_stage():
+    """`.ide *` 처럼 지면까지 닿는 전칭 선택자를 두지 않는다."""
+    assert ".ide * {" not in _studio_src(), "지면까지 먹는 전칭 규칙이 돌아왔다"
+
+
+def test_stage_cuts_inherited_typography():
+    """앱 서체·글자색이 지면에 흘러 들어가면 조용히 다른 판이 나온다."""
+    src = _studio_src()
+    block = src[src.index("#ide-stage {"):][:400]
+    for prop in ("font:", "color:", "line-height:", "letter-spacing:"):
+        assert prop in block, f"#ide-stage 가 {prop} 를 안 끊는다"
+
+
+def test_app_footer_hidden_in_studio():
+    """앱 푸터(© … All rights reserved)가 지면 위로 비쳤다."""
+    assert "body.ide-on .site-footer" in _studio_src()
+
+
+def test_main_css_still_has_the_global_reset():
+    """이 시험들이 지키는 전제 — 전역 리셋이 실제로 있다.
+
+    리셋이 없어졌는데 시험만 남으면 무엇을 지키는지 모르게 된다.
+    """
+    css = io.open(os.path.join(_ROOT, "static", "css", "main.css"),
+                  encoding="utf-8").read()
+    head = "\n".join(css.splitlines()[:4])
+    assert "box-sizing: border-box" in head
+
+
 # ── 중등부 다리 ────────────────────────────────────────────────
 def test_middle_series_registered():
     from core.render_vivlio import series as reg
