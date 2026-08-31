@@ -85,11 +85,19 @@ def _quotes(txt):
 
     리뷰테스트 원고는 `"own"`·`don't` 처럼 곧은 따옴표를 쓰지만 포켓북 지문면은
     `“own”`·`don’t` 다(코퍼스 실측). 마주 보는 두 면이 서로 다른 활자를 쓰면 안 된다.
-    앞이 낱말이면 닫는 따옴표, 아니면 여는 따옴표다 — `]` 도 낱말 끝으로 본다
-    (`"41[own]"` 처럼 표기가 사이에 낀다).
+    **앞이 빈칸(또는 글 첫머리)일 때만 여는 따옴표**다. 앞 글자로 '낱말인가'를
+    따지면 `‘no,’"` 나 `33%"` 의 닫는 따옴표를 여는 것으로 잘못 본다(실측 2건).
     """
-    txt = re.sub(r'(?<=[\w\]\.,;:!?])"', "”", txt).replace('"', "“")
-    return re.sub(r"(?<=[\w\]\.,;:!?])'", "’", txt).replace("'", "‘")
+    out = []
+    for i, ch in enumerate(txt):
+        if ch not in "\"'":
+            out.append(ch)
+            continue
+        prev = txt[i - 1] if i else ""
+        opening = not prev or prev.isspace() or prev in "([{“‘—–-"
+        out.append(("“" if ch == '"' else "‘") if opening
+                   else ("”" if ch == '"' else "’"))
+    return "".join(out)
 
 
 def count_blanks(parts):
