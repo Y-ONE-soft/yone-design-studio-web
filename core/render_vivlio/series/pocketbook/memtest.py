@@ -35,6 +35,8 @@
 가져오면 한 권 안에서 1번이 여러 개 생긴다.
 """
 import difflib
+import hashlib
+import json
 import os
 import re
 import zipfile
@@ -330,13 +332,8 @@ def read_pdf(path):
 
 
 # ── 원고 모으기 ───────────────────────────────────────────────
-def read(paths, log=None):
-    """파일·폴더 목록 → 암기테스트 지문 목록.
-
-    같은 내용이 docx 와 pdf 로 둘 다 있으면 **docx 를 남긴다**(표기가 원고에
-    직접 적혀 있어 되만들 여지가 없다).
-    """
-    log = log or (lambda _m: None)
+def _files(paths):
+    """파일·폴더 목록 → 실제 파일 목록(순서 고정)."""
     if isinstance(paths, str):
         paths = [paths]
     files = []
@@ -348,6 +345,79 @@ def read(paths, log=None):
                           if not f.startswith(".")]
         elif os.path.exists(p):
             files.append(p)
+    return sorted(files)
+
+
+def _stamp(files):
+    """원고 폴더의 지문(指紋) — 경로·크기·수정시각.
+
+    내용 해시가 아니라 stat 만 본다. 363개를 다 열면 캐시가 무슨 소용인가
+    (여는 데 드는 시간이 파싱 시간이다). 원고는 사람이 새 파일을 떨구는 식으로
+    바뀌므로 크기·수정시각이면 충분하다.
+    """
+    rows = []
+    for f in files:
+        try:
+            st = os.stat(f)
+        except OSError:
+            continue
+        rows.append("%s|%d|%d" % (f, st.st_size, int(st.st_mtime)))
+    return hashlib.sha1("\n".join(rows).encode("utf-8")).hexdigest()
+
+
+def _cache_load(path, stamp):
+    """캐시 → 지문 목록. 원고가 그대로일 때만 돌려준다."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            got = json.load(f)
+    except (OSError, ValueError):
+        return None
+    if got.get("stamp") != stamp:
+        return None
+    out = []
+    for e in got.get("entries") or ():
+        # 표기(`숫자[낱말]`)만 저장해 두고 조각은 여기서 되만든다 — 조각을 통째로
+        # 담으면 파일이 열 배가 된다. 번호는 어차피 붙일 때 다시 매긴다.
+        parts = _split_marks(e["t"])
+        out.append({"header": e.get("h", ""), "src": e.get("s", ""),
+                    "parts": parts, "letters": letters(plain(parts))})
+    return out or None
+
+
+def _cache_save(path, stamp, entries):
+    try:
+        os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+        tmp = path + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump({"stamp": stamp,
+                       "entries": [{"h": e["header"], "s": e["src"],
+                                    "t": render(e["parts"], 1)[0]}
+                                   for e in entries]},
+                      f, ensure_ascii=False)
+        os.replace(tmp, path)
+    except OSError:
+        pass                    # 캐시는 못 써도 조판은 굴러가야 한다
+
+
+def read(paths, log=None, cache=None):
+    """파일·폴더 목록 → 암기테스트 지문 목록.
+
+    같은 내용이 docx 와 pdf 로 둘 다 있으면 **docx 를 남긴다**(표기가 원고에
+    직접 적혀 있어 되만들 여지가 없다).
+
+    `cache` 를 주면 그 파일에 결과를 담아 두고, 원고 폴더가 그대로면 다시 안
+    읽는다. `리테 모음` 전체가 363개라 한 번 훑는 데 10초가 든다 — 아침에 여러
+    학교를 연달아 돌릴 때 권당 10초씩 버릴 이유가 없다.
+    """
+    log = log or (lambda _m: None)
+    files = _files(paths)
+    stamp = _stamp(files)
+    if cache:
+        got = _cache_load(cache, stamp)
+        if got is not None:
+            log("  [리테] 원고 %d개 그대로 — 지난번에 읽어 둔 지문 %d개를 쓴다"
+                % (len(files), len(got)))
+            return got
     docs, pdfs, other = [], [], []
     for f in files:
         k = _kind(f)
@@ -391,6 +461,8 @@ def read(paths, log=None):
         seen.add(sig)
         e["letters"] = sig
         uniq.append(e)
+    if cache and uniq:
+        _cache_save(cache, stamp, uniq)
     return uniq
 
 
@@ -469,7 +541,7 @@ def _runs(rows):
     return out
 
 
-def attach(rows, sources, log=None, place="auto"):
+def attach(rows, sources, log=None, place="auto", cache=None):
     """지문 목록에 암기 TEST 면을 끼워 넣는다.
 
     자리는 완성본을 따른다(강동1·명일2·성덕1 실측, 셋이 같다).
@@ -481,9 +553,11 @@ def attach(rows, sources, log=None, place="auto"):
 
     번호는 단원마다 1부터 이어 매긴다 — 한 면이 곧 한 지문이고, 학생은 그 면
     안에서 번호를 찾는다.
+
+    `cache` 는 원고를 다시 안 읽기 위한 파일 자리다(`read` 참고).
     """
     log = log or (lambda _m: None)
-    entries = read(sources, log)
+    entries = read(sources, log, cache=cache)
     if not entries:
         log("■ 리뷰테스트 원고에서 읽어 낸 지문이 없다")
         return rows

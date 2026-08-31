@@ -402,7 +402,24 @@ class PocketbookSeries(Series):
             log("■ 암기 TEST 는 수확본에 이미 있다 — 리뷰테스트 원고는 건너뛴다")
             return rows
         return pmemtest.attach(rows, srcs, log,
-                               place=opt.get("memtest_place", "auto"))
+                               place=opt.get("memtest_place", "auto"),
+                               cache=PocketbookSeries._memtest_cache(cfg, opt))
+
+    @staticmethod
+    def _memtest_cache(cfg, opt):
+        """리뷰테스트 원고를 다시 안 읽기 위한 캐시 자리.
+
+        **책 폴더가 아니라 교재 폴더에 둔다.** 아침에 학교를 연달아 돌리는데
+        권마다 따로 캐시하면 매번 10초를 다시 낸다 — 원고는 학교와 무관하게
+        같은 폴더 하나다. `_corpus` 안에 두면 코퍼스 스캔에 섞이므로 옆에 둔다.
+        """
+        p = cfg.resolve(opt.get("memtest_cache") or "")
+        if p:
+            return p
+        corpus = cfg.resolve(opt.get("corpus")
+                             or "${STUDIO}/조판/교재/포켓북/_corpus")
+        return os.path.join(os.path.dirname(os.path.normpath(corpus)),
+                            "_cache", "memtest.json")
 
     @staticmethod
     def _pick(corpus, opt, log):
