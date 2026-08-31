@@ -30,7 +30,30 @@ import json
 import os
 import re
 
+from core.render_vivlio import refs as _refs
 from core.render_vivlio import stage
+
+# ── 클릭 편집용 자리표 ──────────────────────────────────────────────
+# 이 계열은 블록 종류가 40여 가지고 994줄에 흩어져 있어, 자리마다 손으로
+# 넣으면 반드시 빠뜨린다(빠뜨리면 그 자리는 작업대에서 **조용히** 안 먹는다).
+# 대신 조각이 지나가는 한 곳에서 찍는다 — `refs.stamp()` 가 맨 앞 태그에
+# 얹는다. 자료가 `volumes.<i>.blocks.<j>.r` 로 한결같아 이게 가능하다.
+_CUR = {"ref": "", "done": True}
+
+
+def _blk(vi, bi):
+    _CUR["ref"] = "volumes.%d.blocks.%d.r" % (vi, bi)
+    _CUR["done"] = False
+
+
+def _st(h):
+    """한 블록의 **첫 조각에만** 찍는다 — 같은 id 가 둘이면 이동이 엉킨다."""
+    if _CUR["done"] or not _CUR["ref"]:
+        return h
+    out = _refs.stamp(h, _CUR["ref"])
+    if out is not h:
+        _CUR["done"] = True
+    return out
 
 DEFAULT_METRICS = {
     "margin_top": 22.0, "margin_bottom": 20.0,
@@ -233,7 +256,7 @@ def title_block(kind, num, label, text, sub=""):
 
 
 # ══════════════════════════════════════════════════════════ 어휘부
-def render_vocab(vol, out):
+def render_vocab(vol, out, vi=0):
     """어휘 — WEEK 숫자가 가장 중요한 정보다(머리 면이 그것을 진다)."""
     blocks = vol["blocks"]
     i, n = 0, len(blocks)
@@ -241,6 +264,7 @@ def render_vocab(vol, out):
     wk_no, wk_root = "", ""
     while i < n:
         b = blocks[i]
+        _blk(vi, i)
         t = b["t"]
         if t in FRONT:
             i += 1
@@ -278,11 +302,11 @@ def render_vocab(vol, out):
             k.head(f'<div class="vgroup"><span class="g0">{esc(head)}</span>'
                    f'{rest}</div>')
         elif t == "word":
-            k.body(word_card(b))
+            k.body(_st(word_card(b)))
         elif t == "appendix":
-            k.body(appendix_row(b))
+            k.body(_st(appendix_row(b)))
         else:
-            k.body(generic(b))
+            k.body(_st(generic(b)))
         i += 1
     k.flush()
 
@@ -351,7 +375,7 @@ class Keeper(object):
 
 
 # ══════════════════════════════════════════════════════════ 구문·어법부
-def render_grammar(vol, out):
+def render_grammar(vol, out, vi=0):
     """구문·어법 — PART → 강 → 세부 주제. 머리 면이 PART·주제를 진다."""
     blocks = vol["blocks"]
     i, n = 0, len(blocks)
@@ -379,6 +403,7 @@ def render_grammar(vol, out):
             col_open = False
 
     def put(h):
+        h = _st(h)
         if cp is not None:
             cp["body"].append(h)
         else:
@@ -392,6 +417,7 @@ def render_grammar(vol, out):
 
     while i < n:
         b = blocks[i]
+        _blk(vi, i)
         t = b["t"]
         if t in FRONT:
             i += 1
@@ -462,8 +488,8 @@ def render_grammar(vol, out):
             if drill_gram and qn == HALF + 1:
                 k.flush()
                 out.append('<div class="pbr"></div>')
-            k.body(f'<div class="qitem{g}">{q_line(b["r"])}'
-                   f'<div class="qbody">' + "".join(rows) + "</div></div>")
+            k.body(_st(f'<div class="qitem{g}">{q_line(b["r"])}'
+                       f'<div class="qbody">' + "".join(rows) + "</div></div>"))
             i = j - 1
         elif t == "ans_head":
             txt = plain(b["r"])
@@ -494,8 +520,8 @@ def render_grammar(vol, out):
                 else:
                     body.append(ans_item(bb["r"]))
                 j += 1
-            k.body(f'<div class="aitem">{ans_q_line(b["r"])}'
-                   + "".join(body) + "</div>")
+            k.body(_st(f'<div class="aitem">{ans_q_line(b["r"])}'
+                       + "".join(body) + "</div>"))
             i = j - 1
         else:
             put(generic(b))
@@ -616,7 +642,7 @@ def part_items(blocks, i, stop, key="lesson"):
 
 
 # ══════════════════════════════════════════════════════════ 독해부
-def render_reading(vol, out):
+def render_reading(vol, out, vi=0):
     """독해 — WEEK 와 문제 유형이 축이다. 지문이 가장 무겁고 해석이 가장 가볍다."""
     blocks = vol["blocks"]
     i, n = 0, len(blocks)
@@ -645,6 +671,7 @@ def render_reading(vol, out):
         cp = None
 
     def put(h):
+        h = _st(h)
         if cp is not None:
             cp["body"].append(h)
         else:
@@ -658,6 +685,7 @@ def render_reading(vol, out):
 
     while i < n:
         b = blocks[i]
+        _blk(vi, i)
         t = b["t"]
         if t in FRONT:
             i += 1
@@ -913,6 +941,7 @@ def write(cfg, d, build_dir, log=print, memos=1, fills=()):
                or f'{cfg.book.get("school", "")} {cfg.book.get("title", "")}')
     m = metrics_of(cfg)
     pal = cfg.section("palette") or {}
+    _refs.clear()                      # 자리표 번호는 렌더마다 새로 매긴다
     parts = [cover_page(cfg, d["cover"])]
     for k, vol in enumerate(d["volumes"], 1):
         vid = vol["id"]
@@ -920,7 +949,7 @@ def write(cfg, d, build_dir, log=print, memos=1, fills=()):
         parts.append(f'<div class="vol v-{vid}">')
         parts.append(divider_page(cfg, vol, k))
         body = []
-        RENDERERS.get(vid, render_reading)(vol, body)
+        RENDERERS.get(vid, render_reading)(vol, body, k - 1)
         parts.append('<div class="flow">' + "".join(body) + "</div>")
         parts.append("</div>")
     parts.append(end_page(cfg, d))
@@ -937,6 +966,7 @@ def write(cfg, d, build_dir, log=print, memos=1, fills=()):
            f'<style>{css_vars}</style>' + stage.BOOK_CSS_LINKS
            + '</head><body>'
            + "".join(parts) + "</body></html>")
+    _refs.dump(build_dir)              # 작업대가 vrefN → 원본 자리를 되짚는 표
     path = os.path.join(build_dir, "index.html")
     with open(path, "w", encoding="utf-8") as f:
         f.write(doc)

@@ -285,8 +285,10 @@ class Renderer(object):
     # ── 표제어 항목 ─────────────────────────────────────────────────────
     def word(self, w):
         chk = '<span class="chk"><i></i><i></i><i></i></span>'
-        der = "".join(f"<p>{deriv(x, self.notes)}</p>" for x in w["deriv"])
         wr = _refs.of(w)
+        der = "".join(
+            f'<p{_refs.mark(wr and f"{wr}.deriv.{di}")}>{deriv(x, self.notes)}</p>'
+            for di, x in enumerate(w["deriv"]))
         pairs = []
         for pi, (en, kr) in enumerate(w["pairs"]):
             pairs.append('<div class="pair">'
@@ -301,7 +303,8 @@ class Renderer(object):
             f'{chk}</div>'
             f'<div{_refs.mark(wr and wr + ".word", "w-word" + _wcls(w["word"]))}>'
             f'{esc(w["word"])}</div>'
-            f'<div class="w-pron">{esc(w["pron"])}</div>'
+            f'<div{_refs.mark(wr and wr + ".pron", "w-pron")}>'
+            f'{esc(w["pron"])}</div>'
             + (f'<div class="w-deriv">{der}</div>' if der else "")
             + '</div><div class="w-r">'
             f'<div{_refs.mark(wr and wr + ".meaning", "w-def")}>'

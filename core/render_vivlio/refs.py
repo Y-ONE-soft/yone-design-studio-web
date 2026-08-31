@@ -29,6 +29,7 @@ Vivliostyle 은 조판 결과 DOM 에 **임의 속성을 옮기지 않는다** �
 """
 import json
 import os
+import re
 
 _PATH = {}      # id(객체) → 점 경로
 _SEQ = {}       # 점 경로 → 번호
@@ -129,6 +130,44 @@ def mark(ref, base=""):
     n = _SEQ.setdefault(ref, len(_SEQ) + 1)
     cls = (base + " " if base else "") + "vref%d" % n
     return ' class="%s" id="vref%d" data-ref="%s"' % (cls, n, ref)
+
+
+_TAG = re.compile(r"<([a-zA-Z][\w-]*)((?:\s[^<>]*?)?)(/?)>")
+
+
+def stamp(html_frag, ref):
+    """이미 만들어진 조각의 **맨 앞 태그**에 자리표를 얹는다.
+
+    계열에 따라서는 자리마다 손으로 `mark()` 를 넣기가 너무 많다(특강은 40여
+    종류의 블록이 994줄에 흩어져 있다). 그런 계열은 조각이 한 곳(`put()`)을
+    지나가므로, 거기서 한 번에 찍는 편이 낫다.
+
+    ⚠ **class 를 두 번 쓰면 안 된다.** 같은 태그에 `class` 속성이 둘이면
+      브라우저는 앞의 것만 읽고 우리 `vrefN` 을 버린다 — 화면에서 클릭이
+      조용히 안 먹는다. 그래서 있으면 **합쳐 넣는다**.
+
+    ⚠ 클래스가 없던 태그에는 `vrefN` 만 새로 붙는다. 뜻 있는 클래스를 얹으면
+      판이 달라지지만(블랙북 26·61면), `vrefN` 은 어떤 CSS 도 안 걸리므로
+      안전하다 — 블랙북 대화문 줄이 이미 그렇게 하고 있다.
+    """
+    if not ref or not html_frag:
+        return html_frag
+    m = _TAG.search(html_frag)
+    if not m or m.start() != 0:
+        return html_frag                       # 태그로 시작하지 않으면 손대지 않는다
+    n = _SEQ.setdefault(ref, len(_SEQ) + 1)
+    attrs = m.group(2) or ""
+    if "data-ref=" in attrs:
+        return html_frag                       # 이미 찍혔다
+    cm = re.search(r'\bclass="([^"]*)"', attrs)
+    if cm:
+        attrs = (attrs[:cm.start(1)] + cm.group(1) + " vref%d" % n
+                 + attrs[cm.end(1):])
+    else:
+        attrs += ' class="vref%d"' % n
+    attrs += ' id="vref%d" data-ref="%s"' % (n, ref)
+    return "<%s%s%s>%s" % (m.group(1), attrs, m.group(3),
+                           html_frag[m.end():])
 
 
 def table():
