@@ -121,7 +121,7 @@ u { text-decoration: underline; text-decoration-thickness: 0.475pt;
   letter-spacing: -0.0402em;
 }
 /* 빈칸 표기(`__________` · `[       ]`)는 본문 서체가 아니다 */
-.gapx { font-family: Noto; font-size: 8.63pt; font-weight: 400; }
+.gapx { font-family: Noto; font-size: 8.63pt; font-weight: 400; line-height: 1mm; }
 
 /* ------------------------------------------------------------- 꼬리말 */
 .footL { position: running(footL); }
@@ -194,15 +194,17 @@ u { text-decoration: underline; text-decoration-thickness: 0.475pt;
 .q .head .no {
   font: 700 11pt/5.14mm Neolli; color: var(--teal);
   display: inline-block; width: 8mm; text-indent: 0;
-  vertical-align: -0.57mm;
+  /* ⚠ `vertical-align` 으로 내리면 **줄 상자가 그만큼 커져** 발문 둘째 줄이
+     밀린다(1.0mm). 자리만 옮기는 `relative` 로 내릴 것. */
+  position: relative; top: 0.57mm;
 }
 .q .ch {
   margin-top: 0.32mm; padding-left: 4.5mm; text-indent: -4.5mm;
   text-align: justify; font: 9.21pt/4.94mm Minion, Noto;
   letter-spacing: -0.0194em;
 }
-.q .ch .m { font: 9.26pt/4.94mm Noto; vertical-align: -0.37mm;
-            letter-spacing: 0; }
+.q .ch .m { font: 9.26pt/4.94mm Noto; letter-spacing: 0;
+            position: relative; top: 0.37mm; }
 .q .tr {
   margin-top: 0.07mm; padding-left: 4.5mm; text-indent: -4.5mm;
   text-align: justify; font: 9.21pt/4.94mm Minion, Noto;
@@ -212,16 +214,20 @@ u { text-decoration: underline; text-decoration-thickness: 0.475pt;
 .q .head + .ch, .q .head + .tr { margin-top: 4.32mm; }
 
 .q .bogi, .q .pbox {
-  margin-top: 5.6mm; border: 0.5pt solid var(--boxline);
-  padding: 1.5mm 2.4mm 1.5mm 3.0mm;
+  /* 상자는 단보다 0.72mm 좁다(완성본 실측). 글은 상자 안에서 76.03mm. */
+  width: 81.33mm; margin-top: 2.78mm;
+  border: 0.5pt solid var(--boxline);
+  padding: 1.42mm 2.13mm 1.5mm 2.82mm;
 }
 .q .bogi .bt { font: 700 7.67pt/4.5mm Elice; margin-bottom: 0.9mm; }
 .q .bogi .bi {
   font: 600 9.21pt/4.5mm Minion, Noto; text-indent: 0;
-  letter-spacing: -0.0218em;
+  letter-spacing: -0.0218em; line-height: 4.58mm;
 }
 .q .bogi .bi + .bi { margin-top: 0.18mm; }
-.q .bogi .bu { font: 100 10pt/4.5mm Noto; }
+/* ⚠ 머리기호를 10pt 로 두면 줄 상자가 그만큼 커진다 → 줄간은 물려받게 */
+.q .bogi .bu { font-family: Noto; font-weight: 100; font-size: 10pt;
+               line-height: 1mm; letter-spacing: 0; }
 .q .pbox p {
   font: 600 9.21pt/4.59mm Minion, Noto; text-align: justify;
   letter-spacing: -0.0218em;
