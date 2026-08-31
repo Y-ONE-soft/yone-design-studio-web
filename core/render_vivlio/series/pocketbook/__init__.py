@@ -28,6 +28,31 @@ FONTS = [
     "KCCDodamdodam_OTF.otf", "JalnanOTF.otf",
 ]
 
+def _spans(page, lo, hi):
+    for b in page.get_text("dict")["blocks"]:
+        if b["type"] != 0:
+            continue
+        for l in b["lines"]:
+            for sp in l["spans"]:
+                if lo <= sp["size"] <= hi:
+                    yield sp
+
+
+def _count_size(page, size, tol=0.4):
+    """그 크기의 글자 **덩어리** 수. 주석은 7pt 라 본문과 안 겹친다.
+
+    ⚠ 서체 이름으로 세면 안 된다 — Vivliostyle 출력은 이름이 `Type3` 로 바뀌어
+      아무것도 못 찾고 조용히 통과한다.
+    """
+    return sum(1 for _ in _spans(page, size - tol, size + tol))
+
+
+def _lowest(page, size, tol=0.6):
+    """그 크기 글자의 가장 아래 기준선(mm). 없으면 None."""
+    ys = [sp["origin"][1] for sp in _spans(page, size - tol, size + tol)]
+    return max(ys) / (72 / 25.4) if ys else None
+
+
 MIN_SCALE = 0.834       # 9pt → 7.5pt. 원본 resolveOverflow 하한과 같다
 MIN_LEAD = 14.0         # pt. 원본 하한
 
@@ -116,6 +141,10 @@ class PocketbookSeries(Series):
                 "passages": rows, "metrics": cfg.section("metrics"),
                 "folio_start": opt.get("folio_start", 2),
                 "cover": None}))
+        # 검수가 다시 계산하지 않도록 조판에 쓴 값을 그대로 남긴다.
+        with open(os.path.join(build_dir, "_rows.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump(rows, f, ensure_ascii=False)
         out = cfg.out_pdf()
         cli.run_build(html, out, log=log)
         spec = cfg.finish_spec()
@@ -226,4 +255,91 @@ class PocketbookSeries(Series):
 
     # ── ④ 검수 ──
     def verify(self, cfg, log, report):
+        """포켓북 게이트.
+
+        사람이 손대지 않아도 되게 만드는 것은 디자인이 아니라 **게이트**다.
+        특히 G-P2 는 사용자가 직접 요구한 것 — "칸이 덜 찬 건 정상이고,
+        **한 개도 없는 것만** 목록으로 뽑아라".
+        """
+        from core.render_vivlio import probe
+        rows_path = os.path.join(cfg.build_dir, "_rows.json")
+        if not os.path.exists(rows_path):
+            return report.fail("검수할 조판 기록이 없다 — 먼저 build 할 것")
+        with open(rows_path, encoding="utf-8") as f:
+            rows = json.load(f)
+        pdf = cfg.out_pdf()
+        M = dict(ptheme.METRICS)
+        M.update(cfg.section("metrics") or {})
+        opt = cfg.section("options") or {}
+        # ⚠ `folio_start` 는 **인쇄될 쪽번호**이고, 이 PDF 의 면 수와는 다르다.
+        #   표지는 나중에 `finish.inserts` 로 붙으므로 지금 PDF 에는 없다.
+        start = 1 if opt.get("cover") else 0
+
+        with probe.open_pdf(pdf) as doc:
+            n_pages = len(doc)
+            per = [2 + (2 if r.get("memtest") else 0) for r in rows]
+            want = start + sum(per)
+            if n_pages != want:
+                report.fail("G-P1 면 수 %d ≠ 예상 %d (지문 %d개)"
+                            % (n_pages, want, len(rows)))
+
+            # G-P3 주석 보존 · G-P6 넘침
+            idx, lost, over = start, [], []
+            for r, step in zip(rows, per):
+                if idx >= n_pages:
+                    break
+                page = doc[idx]
+                want_ruby = sum(1 for x in r["passage_runs"] if x.get("ruby"))
+                got_ruby = _count_size(page, M["anno_size"])
+                if want_ruby and got_ruby < want_ruby:
+                    lost.append((r.get("key") or r.get("label"),
+                                 want_ruby, got_ruby))
+                lay = ptheme.LAYOUTS[ptheme.layout_for(r)]
+                bottom = M["passage"][1] + lay["passage_h"]
+                low = _lowest(page, M["passage_size"] * r.get("scale", 1.0))
+                if low and low > bottom + 0.5:
+                    over.append((r.get("key") or r.get("label"),
+                                 round(low - bottom, 1)))
+                idx += step
+
+            if lost:
+                report.fail("G-P3 구문분석 주석 유실 %d지문 — %s"
+                            % (len(lost), ", ".join(
+                                "%s(%d→%d)" % x for x in lost[:5])))
+            if over:
+                report.fail("G-P6 지문 넘침 %d지문 — %s"
+                            % (len(over), ", ".join(
+                                "%s +%.1fmm" % x for x in over[:5])))
+
+        # G-P2 0개 항목 — 막지 않고 목록으로
+        no_syn = [r.get("key") or r.get("label") or "?" for r in rows
+                  if not r.get("synonyms")]
+        no_flow = [r.get("key") or r.get("label") or "?" for r in rows
+                   if not r.get("flownote")]
+        no_ill = [r.get("key") or r.get("label") or "?" for r in rows
+                  if not r.get("illust")]
+        if no_syn:
+            report.warn("G-P2 동반의어 0개 %d지문 — %s"
+                        % (len(no_syn), ", ".join(no_syn[:12])))
+        if no_flow:
+            report.warn("G-P2 플로우노트 0개 %d지문 — %s"
+                        % (len(no_flow), ", ".join(no_flow[:12])))
+        if no_ill:
+            report.note("G-P5 삽화 없음 %d지문(모의고사만 필요)" % len(no_ill))
+        self._write_empty_report(cfg, no_syn, no_flow)
+        report.note("지문 %d개 · 면 %d" % (len(rows), n_pages))
         return report
+
+    @staticmethod
+    def _write_empty_report(cfg, no_syn, no_flow):
+        p = os.path.join(cfg.build_dir, "빈항목.md")
+        with open(p, "w", encoding="utf-8") as f:
+            f.write("# 채워야 할 지문\n\n")
+            f.write("칸이 덜 찬 것은 정상이다. **하나도 없는 것만** 적는다.\n\n")
+            f.write("## 동반의어 0개 (%d)\n\n" % len(no_syn))
+            for k in no_syn:
+                f.write("- %s\n" % k)
+            f.write("\n## 플로우노트 0개 (%d)\n\n" % len(no_flow))
+            for k in no_flow:
+                f.write("- %s\n" % k)
+        return p

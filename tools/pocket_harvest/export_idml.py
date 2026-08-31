@@ -120,36 +120,28 @@ def export_one(src, dst, status_path, jsx_path, timeout=900):
         os.remove(tmp)
     if not _copy(src, tmp):
         return "ERR", "복사 실패"
-    for p in (status_path,):
-        if os.path.exists(p):
-            os.remove(p)
+    if os.path.exists(status_path):
+        os.remove(status_path)
     with open(jsx_path, "w", encoding="utf-8") as f:
         f.write(_JSX % {"src": tmp, "dst": dst, "status": status_path})
+
     err = None
-    for attempt in (1, 2):
+    for _attempt in (1, 2):
         try:
             idrun.run_file(jsx_path, timeout=timeout)
             err = None
             break
         except Exception as e:
             err = str(e)[:200]
-            _cleanup_docs()          # 실패본이 열린 채 남으면 다음 파일까지 망가진다
+            # 실패본이 열린 채 남으면 **다음 파일까지 연달아 죽는다**(실측).
+            _cleanup_docs()
+    _cleanup_docs()
     try:
-        pass
-    except Exception:
+        os.remove(tmp)
+    except OSError:
         pass
     if err:
-        try:
-            os.remove(tmp)
-        except OSError:
-            pass
         return "ERR", err
-    try:
-        try:
-            os.remove(tmp)
-        except OSError:
-            pass
-    _cleanup_docs()
     if not os.path.exists(status_path):
         return "ERR", "상태 없음"
     s = open(status_path, encoding="utf-8").read().strip()

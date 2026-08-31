@@ -19,7 +19,8 @@
 1. **지문 키.** `idml.read_book()` 이 주는 `pno`·`label` 은 그대로는 못 쓴다.
    지면 장식(`TRANSLATION`·`요약문`·`PICTURE`)이 라벨 자리로 새어 들어오고,
    지문번호가 문단 스타일 `암기테스트` 로도 `본문` 으로도 조판돼 있어
-   **스타일로는 못 가른다**(명일2 실측). 그래서 좌표 슬롯으로 판정한다 → §_slots.
+   **스타일로는 못 가른다**(명일2 실측). 그래서 **한 책 안에서 같은 자리에
+   반복해 나타나는 짧은 프레임**(좌표 슬롯)으로 판정한다 → `_cluster`.
 
 2. **병합.** 같은 지문이 여러 책에 있다. 파일명으로 고르면 틀린다 —
    `광문1_포켓북_내지.idml` 은 35지문 전부 동반의어가 비었고
@@ -31,6 +32,7 @@
 """
 import argparse
 import collections
+import difflib
 import hashlib
 import json
 import os
@@ -472,6 +474,16 @@ MERGE_FIELDS = ["passage", "translation", "flownote", "topic", "summary",
 TEXT_MIRROR = {"passage": "passage_text", "translation": "translation_text"}
 
 
+def _norm_text(text):
+    return re.sub(r"[^a-z0-9]+", "", nfc(text or "").lower())
+
+
+def similarity(a, b):
+    """두 지문 원문이 얼마나 같은가. 오타 한 자 고친 판본과 아예 다른 지문을
+    가르기 위한 것이다 — 둘을 같은 '충돌'로 보고하면 262권에서는 잡음이 된다."""
+    return difflib.SequenceMatcher(None, a, b).quick_ratio()
+
+
 def fingerprint(text):
     """영어 지문 원문 지문(指紋). 서식·공백·구두점을 지운 알맹이만."""
     t = re.sub(r"[^a-z0-9]+", "", nfc(text or "").lower())
@@ -554,12 +566,17 @@ def build(limit=None, only=None, root=IDML_ROOT, out_dir=OUT):
             else:
                 e["aliases"] = sorted(set(e["aliases"]) | set(aliases))
                 if fp and e.get("fp") and fp != e["fp"]:
-                    conflicts.append({"key": key, "a": e["sources"][0]["file"],
-                                      "b": name, "pages": u["pages"]})
+                    r = similarity(e.get("_txt", ""),
+                                   _norm_text(u["passage_text"]))
+                    conflicts.append({
+                        "key": key, "a": e["sources"][0]["file"], "b": name,
+                        "pages": u["pages"], "sim": round(r, 3),
+                        "kind": "판본 차이" if r >= 0.95 else "다른 지문"})
             _merge(e, u, src)
             e["sources"].append(src)
             if fp:
                 e.setdefault("fp", fp)
+                e.setdefault("_txt", _norm_text(u["passage_text"]))
                 if key not in fp_index[fp]:
                     fp_index[fp].append(key)
 
@@ -653,6 +670,7 @@ def _write(entries, books, skipped, unkeyed, conflicts, merged_alias,
     for key, e in sorted(entries.items()):
         out = dict(e)
         out.pop("fp", None)
+        out.pop("_txt", None)
         with open(os.path.join(out_dir, key_filename(key)), "w",
                   encoding="utf-8") as f:
             json.dump(out, f, ensure_ascii=False, indent=1)
@@ -673,7 +691,9 @@ def _write(entries, books, skipped, unkeyed, conflicts, merged_alias,
                       for s in e["sources"]],
             "file": key_filename(key),
         }
+    real = [c for c in conflicts if c.get("kind") != "판본 차이"]
     meta = {"harvested": stamp, "books": books, "passages": len(entries),
+            "conflicts_real": len(real),
             "skipped": [{"file": a, "why": b} for a, b in skipped],
             "unkeyed": len(unkeyed), "conflicts": len(conflicts),
             "merged_by_text": merged_alias}
@@ -763,17 +783,26 @@ def _unkeyed_md(unkeyed, meta, out_dir):
 
 
 def _conflicts_md(conflicts, meta, out_dir):
+    real = [c for c in conflicts if c.get("kind") != "판본 차이"]
+    var = [c for c in conflicts if c.get("kind") == "판본 차이"]
     L = ["# 키 충돌 — 같은 키인데 지문 원문이 다르다", "",
-         "수확 %s · %d건" % (meta["harvested"], len(conflicts)), "",
-         "> 학교·시기가 달라도 라벨(`4과 01`)이 같으면 키가 겹칠 수 있다.",
-         "> 원문 지문(指紋)이 다르면 **다른 지문**이므로 키를 갈라야 한다.", ""]
-    if conflicts:
-        L += ["| 키 | 먼저 | 나중 | 쪽 |", "|---|---|---|---|"]
-        for c in conflicts:
-            L.append("| `%s` | %s | %s | %s |"
-                     % (c["key"], c["a"], c["b"], "-".join(c["pages"])))
-    else:
-        L.append("없음.")
+         "수확 %s · 진짜 충돌 **%d건** · 판본 차이 %d건"
+         % (meta["harvested"], len(real), len(var)), "",
+         "> **진짜 충돌** = 같은 키에 아예 다른 지문. 키를 갈라야 한다.",
+         "> **판본 차이** = 같은 지문인데 글자가 조금 다르다(오타 수정본 등).",
+         "> 코퍼스는 둘 중 더 풍부한 쪽을 남긴다 — 확인만 하면 된다.", ""]
+    for title, rows in (("진짜 충돌", real), ("판본 차이", var)):
+        L.append("## %s — %d건" % (title, len(rows)))
+        L.append("")
+        if not rows:
+            L += ["없음.", ""]
+            continue
+        L += ["| 키 | 닮음 | 먼저 | 나중 | 쪽 |", "|---|---|---|---|---|"]
+        for c in rows:
+            L.append("| `%s` | %s | %s | %s | %s |"
+                     % (c["key"], c.get("sim", "?"), c["a"], c["b"],
+                        "-".join(c["pages"])))
+        L.append("")
     _put(out_dir, "_conflicts.md", L)
 
 
@@ -792,9 +821,11 @@ def report(out_dir=OUT):
     _empty_md(idx, meta, out_dir)
     syn0 = sum(1 for v in idx.values() if v["syn"] == 0 and not v["pair"])
     flow0 = sum(1 for v in idx.values() if v["flow"] == 0 and not v["pair"])
-    print("책 %d권 · 지문 %d개 · 키못만듦 %d · 충돌 %d · 원문병합 %d"
+    print("책 %d권 · 지문 %d개 · 키못만듦 %d · 진짜충돌 %d(판본차이 %d) · 원문병합 %d"
           % (len(meta["books"]), meta["passages"], meta["unkeyed"],
-             meta["conflicts"], meta.get("merged_by_text", 0)))
+             meta.get("conflicts_real", meta["conflicts"]),
+             meta["conflicts"] - meta.get("conflicts_real", 0),
+             meta.get("merged_by_text", 0)))
     print("동반의어 0개 %d · 플로우노트 0개 %d" % (syn0, flow0))
     return 0
 
@@ -811,7 +842,7 @@ def main(argv=None):
         return report(a.out)
     entries, books, skipped, unkeyed, conflicts = build(
         a.limit, a.only, a.root, a.out)
-    print("책 %d권 · 지문 %d개 · 키못만듦 %d · 충돌 %d"
+    print("책 %d권 · 지문 %d개 · 키못만듦 %d · 충돌후보 %d"
           % (len(books), len(entries), len(unkeyed), len(conflicts)))
     for f, why in skipped:
         print("  건너뜀 %s — %s" % (f, why))

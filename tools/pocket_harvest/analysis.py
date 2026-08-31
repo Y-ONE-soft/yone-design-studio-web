@@ -442,10 +442,41 @@ def _label_of(u, chs, nums):
     return _sq(num + " " + ch), ""
 
 
+def _split_title(line):
+    """해석 첫 줄 머리의 **소제목**을 떼어 낸다 → (영어제목, 한글제목, 남은 run).
+
+    교과서 분석본은 해석 프레임 머리에 소제목을 영어·한글로 붙여 둔다.
+        [영어 지문]Rescuing Cultural Treasures [한글]문화유산 구하기 [한글]제2차 세계…
+    완성 포켓북은 이 소제목을 **지문 머리로 옮겨** 조판한다(실측). 떼어 놓아야
+    두 출처의 passage·translation 이 글자까지 맞는다(G-P7).
+
+    경계를 글자 수로 추측하지 않는다 — InDesign 이 남긴 **run 경계**가 곧 경계다.
+    """
+    i = 0
+    en = []
+    while i < len(line) and role_of(line[i]["style"]) == "passage":
+        en.append(line[i]["t"])
+        i += 1
+    if not i or not "".join(en).strip():
+        return "", "", line
+    rest = line[i:]
+    # 뒤따르는 run 이 없으면 제목이 아니라 편집 메모다(`<< 여기서 변경`).
+    # 한글 제목이 한 줄에 같이 오는 책도, 다음 줄로 넘어가는 책도 있어서
+    # **줄 길이가 아니라 run 이 남는지**로만 가른다.
+    if not rest or not rest[0]["t"].strip():
+        return "", "", line
+    # 영어 제목 다음 run 이 한글이라야 '영어 제목 + 한글 제목'이다.
+    # 안내문 지문은 영어가 이어지므로 손대지 않는다.
+    if _I.han_ratio(rest[0]["t"]) < 0.2:
+        return "", "", line
+    return _sq("".join(en)), _sq(rest[0]["t"]), rest[1:]
+
+
 def _build(u, base, chs, nums, notes):
     lines = u["lines"]
     p_runs, t_runs, topic_segs = [], [], []
     grammar, exam, sentences = [], [], []
+    title_en = title_ko = ""
     cur_seg = []
     pend_en, prev_sid = None, None
     for kind, line, sid in lines:
@@ -463,6 +494,11 @@ def _build(u, base, chs, nums, notes):
             p_runs.extend(_runs(line))
             pend_en = txt
         elif kind == "translation":
+            if not t_runs and not title_en:
+                title_en, title_ko, line = _split_title(line)
+                txt = _sq("".join(r["t"] for r in line))
+                if not line:
+                    continue
             if t_runs:
                 t_runs.append({"t": " ", "style": "", "mark": None,
                                "hl": None, "ruby": None, "slot": None})
@@ -504,6 +540,7 @@ def _build(u, base, chs, nums, notes):
         "passage": ([{"style": "본문", "runs": p_runs}] if p_runs else None),
         "translation": ([{"style": "한글", "runs": t_runs}] if t_runs else None),
         "flownote": [],          # 분석본에 없다 — 플로우노트DB 가 채운다
+        "title": {"en": title_en, "ko": title_ko},
         "topic": topic,
         "summary": summary,
         "synonyms": [],          # 분석본에 없다 — 완성본 하베스트/원고가 채운다

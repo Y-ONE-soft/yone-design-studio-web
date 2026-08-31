@@ -141,14 +141,21 @@ def head_right(chapter):
     return (f'<div class="headR">'
             f'<span class="tab">Chapter.{chapter["no"]:02d}&nbsp;&nbsp;|'
             f'&nbsp;&nbsp;{esc(chapter["en"])}</span>'
-            f'<span class="wm">FINAL STEP</span></div>')
+            f'<span class="wm">FINAL&nbsp;STEP</span></div>')
 
 
-def feet(chapter):
+def feet(chapter, title=""):
+    """꼬리말 — 홀수 면은 `CHAPTER.0N 섹션이름 쪽번호`.
+
+    ⚠ 섹션 이름을 `string-set`/`string()` 으로 끌어오려 했더니 **조용히 빈
+      문자열**이 나왔다(Vivliostyle 이 마진 박스 밖 러닝 요소의 string() 을
+      풀지 않는다). 러닝 요소를 **섹션마다 다시 선언**하면 그 면부터 새 값이
+      쓰이므로, 이름을 그냥 박아 넣는다.
+    """
     return ('<div class="footL"><span class="pg"></span>'
             '<span class="lb">FINAL STEP</span></div>'
             f'<div class="footR"><span class="ch">CHAPTER.'
-            f'{chapter["no"]:02d}</span><span class="lb"></span>'
+            f'{chapter["no"]:02d}</span><span class="lb">{esc(title)}</span>'
             '<span class="pg"></span></div>')
 
 
@@ -266,8 +273,8 @@ def document(cfg, data, vol, fits=None, mode=None):
         #   블록 끝에 높이 0 인 표식을 찍어 **상자 바닥**을 재게 한다.
         o.append('<style>@page{size:216mm %.2fmm}'
                  '.grid{column-count:1;width:%.2fmm;height:auto}'
-                 '.blk{height:auto!important;break-before:page;'
-                 'overflow:visible!important}'
+                 '.blk{height:auto!important;overflow:visible!important}'
+                 '.blk + .blk{break-before:page}'
                  '.blk::after{content:"\\25AA";display:block;'
                  'font-size:2pt;line-height:0;color:#000}'
                  '.sechdr{display:none}</style>'
@@ -283,6 +290,7 @@ def document(cfg, data, vol, fits=None, mode=None):
         kind = sec["kind"]
         o.append(f'<section class="sec sec-{kind}">')
         o.append(f'<div class="secmark">{esc(sec["title"])}</div>')
+        o.append(feet(ch, sec["title"]))
         if mode != "measure":
             o.append(band(sec))
             o.append(band(sec, flow=True))

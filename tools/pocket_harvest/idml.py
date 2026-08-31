@@ -52,6 +52,7 @@ _MARK = [
     (re.compile(r"플로우 노트 기호3?"), "flow_sym"),
     (re.compile(r"지문 번호"), "pno"),
     (re.compile(r"빈칸"), "blank"),
+    (re.compile(r"^숫자$"), "num"),
 ]
 
 HL_NAME = {"노랑": "yellow", "민트": "mint", "분홍": "pink", "하늘": "sky",
@@ -86,6 +87,8 @@ class Idml(object):
         self.spread_files = re.findall(r'<idPkg:Spread src="([^"]+)"',
                                        self._designmap)
         self.masters = self._masters()
+        self.colors = self._colors()
+        self.style_fill = self._style_fill()
         self.stories = self._story_index()
 
     # ── 자원 ──
@@ -98,6 +101,54 @@ class Idml(object):
             if ms is not None:
                 out[ms.get("Self")] = ms.get("Name") or ""
         return out
+
+    # ── 색 ──
+    #   이름표(`중요_파랑`)로 색을 추측하지 않는다. 책마다 같은 이름에 다른 값을
+    #   쓰는 일이 실제로 있었다([[analysis_highlighter_mint_swatch_drift]]).
+    #   IDML 에 값이 있으므로 **값을 읽는다**.
+    def _colors(self):
+        out = {}
+        try:
+            root = ET.fromstring(self.z.read("Resources/Graphic.xml"))
+        except KeyError:
+            return out
+        for c in root.iter("Color"):
+            self_id = c.get("Self") or ""
+            vals = (c.get("ColorValue") or "").split()
+            space = c.get("Space") or ""
+            try:
+                v = [float(x) for x in vals]
+            except ValueError:
+                continue
+            rgb = None
+            if space == "CMYK" and len(v) == 4:
+                cc, mm, yy, kk = [x / 100.0 for x in v]
+                rgb = tuple(int(round(255 * (1 - min(1.0, ch + kk))))
+                            for ch in (cc, mm, yy))
+            elif space == "RGB" and len(v) == 3:
+                rgb = tuple(int(round(x)) for x in v)
+            if rgb:
+                out[_unq(self_id)] = "#%02X%02X%02X" % rgb
+        return out
+
+    def _style_fill(self):
+        out = {}
+        try:
+            root = ET.fromstring(self.z.read("Resources/Styles.xml"))
+        except KeyError:
+            return out
+        for cs in root.iter("CharacterStyle"):
+            nm = _name(cs.get("Self"), "CharacterStyle")
+            fc = cs.get("FillColor")
+            if fc:
+                out[nm] = _unq(fc)
+        return out
+
+    def color_of(self, style_name, override=None):
+        ref = _unq(override) if override else self.style_fill.get(style_name)
+        if not ref:
+            return None
+        return self.colors.get(ref)
 
     def _story_index(self):
         out = {}
@@ -129,6 +180,7 @@ class Idml(object):
                 cstyle = _name(csr.get("AppliedCharacterStyle"),
                                "CharacterStyle")
                 mark, hl = mark_of(cstyle)
+                color = self.color_of(cstyle, csr.get("FillColor"))
                 ruby = csr.get("RubyString") if csr.get("RubyFlag") == "1" else None
                 rpos = csr.get("RubyPosition") or ""
                 # 위/아래 — 범위 오버라이드가 없으면 스타일 기본값(BelowLeft)
@@ -150,7 +202,7 @@ class Idml(object):
                             if piece:
                                 cur["runs"].append({
                                     "t": piece, "style": cstyle, "mark": mark,
-                                    "hl": hl, "ruby": ruby,
+                                    "hl": hl, "ruby": ruby, "color": color,
                                     "slot": slot if ruby else None})
                     elif node.tag == "Br":
                         paras.append(cur)

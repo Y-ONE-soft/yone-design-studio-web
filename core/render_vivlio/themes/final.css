@@ -127,6 +127,7 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 .bandrun { position: running(bandrun); }
 .bandrun, .sechdr .band {
   height: 29.57mm; white-space: nowrap; margin-left: -7.10mm;
+  padding-top: 2.54mm;
 }
 .band .n {
   display: inline-block; width: 12.75mm; text-align: center;
@@ -134,7 +135,7 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 }
 .band .t {
   font: 500 17.91pt/23.26mm Neolli; color: var(--ink);
-  padding-left: 6.34mm; vertical-align: 3.15mm;
+  padding-left: 6.34mm; vertical-align: -2.24mm;
 }
 
 /* 섹션 첫 면 — 홀수라도 띠가 붙는다. 흐름 맨 앞에 높이 0 으로 심는다. */
@@ -154,26 +155,28 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 /* ------------------------------------------------ 러닝: 장 탭 + 워드마크 */
 .headR { position: running(headR); height: 29.57mm; }
 .headR .tab {
-  display: block; width: 43.40mm; margin-left: auto; margin-right: -3.40mm;
-  text-align: center; font: 500 7.96pt/13.00mm Neolli; color: #fff;
+  display: block; width: 43.40mm; margin-left: auto;
+  text-align: center; font: 500 7.96pt/16.10mm Neolli; color: #fff;
+  letter-spacing: 0; margin-right: -2.40mm;
 }
+/* 워드마크는 자간이 아주 넓다(완성본 실측 39.54mm / 10글자) */
 .headR .wm {
-  display: block; text-align: right; padding-right: 1.94mm;
-  font: 500 7.96pt/7.00mm Neolli; color: var(--ink); letter-spacing: 0.35em;
+  display: block; text-align: right; margin-right: -3.05mm;
+  font: 500 7.96pt/3.64mm Neolli; color: var(--ink); letter-spacing: 0.860em;
 }
 
 /* ------------------------------------------------------------- 러닝: 꼬리 */
 .footL { position: running(footL); }
 .footR { position: running(footR); }
 .footL, .footR { font: 700 6pt/1 Neolli; color: var(--ink);
-                 white-space: pre; padding-top: 8.19mm; }
+                 white-space: pre; padding-top: 6.39mm; letter-spacing: 0; }
 .footL { text-align: left;  margin-left: -8.00mm; }
-.footR { text-align: right; margin-right: -8.00mm; }
+.footR { text-align: right; margin-right: -7.30mm; }
 .footL .pg::before, .footR .pg::before { content: counter(page); }
-.footL .pg::after { content: "   "; }
-.footR .lb { font-weight: 500; }
-.footR .lb::before { content: " " string(sec) " "; }
-.footR .pg::before { content: counter(page); }
+.footL .pg { padding-right: 3.23mm; }
+.footL .lb { letter-spacing: 0.0935em; }
+.footR .lb { font-weight: 500; padding-right: 2.60mm; }
+.footR .lb::before { content: " "; }
 
 /* --------------------------------------------------------------- 지면 격자 */
 /* ⚠ `.grid` 에 **height 를 주면 안 된다.** 고정 높이 상자가 되어 면으로 쪼개지지
