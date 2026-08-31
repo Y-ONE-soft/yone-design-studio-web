@@ -389,6 +389,89 @@ def test_cmyk_api_matches_prepress(client):
     assert d.get("gray") is True and d["k"] == 100
 
 
+# ── 에디터로 쓸 수 있는가 ──────────────────────────────────────
+def test_length_without_unit_is_refused():
+    """`font-size: 20` 은 CSS 가 통째로 무시된다.
+
+    그런데도 "저장했습니다" 가 떴다 — 조용히 아무 일도 안 하는 것이 제일 나쁘다.
+    """
+    from routes.book_studio import _needs_unit
+    assert _needs_unit("font-size", "20")
+    assert _needs_unit("margin-top", "3")
+    assert not _needs_unit("font-size", "20pt")
+    assert not _needs_unit("line-height", "1.5")   # 배수는 단위가 없다
+    assert not _needs_unit("font-size", "0")
+    assert not _needs_unit("color", "#fff")
+
+
+def test_styles_api_refuses_unitless(client):
+    r = client.post("/api/book-studio/styles",
+                    json={"b": "없는책", "selector": ".chip",
+                          "props": {"font-size": "20"}})
+    assert r.status_code == 400
+    assert "단위" in r.get_json()["error"]
+
+
+def test_panels_are_the_same_for_every_book():
+    """인디자인은 어떤 파일을 열어도 문자·단락 패널이 같다.
+
+    예전에는 계열이 선언한 손잡이를 그대로 늘어놓아 **책마다 패널이 달랐다**
+    (어떤 책은 "헤더 간격", 어떤 책은 "보는 권") — 그건 에디터가 아니다.
+    """
+    src = _studio_src()
+    assert "var CHAR_PROPS" in src and "var PARA_PROPS" in src
+    for need in ("font-size", "line-height", "letter-spacing", "color"):
+        assert need in src.split("var CHAR_PROPS")[1][:1500], f"문자 패널에 {need} 없음"
+    for need in ("text-align", "text-indent", "margin-top", "break-before"):
+        assert need in src.split("var PARA_PROPS")[1][:1200], f"단락 패널에 {need} 없음"
+
+
+def test_panel_builds_units_itself():
+    """숫자와 단위를 따로 받아 **우리가** 붙인다 — 사람이 빠뜨리면 안 되니까."""
+    src = _studio_src()
+    assert "n + us.value" in src
+
+
+def test_live_preview_uses_the_surviving_class():
+    """`[data-ref=…]` 는 조판 결과 DOM 에 없다 — 그걸로는 미리보기가 안 걸린다.
+
+    스타일시트도 안 통했다(엔진이 head 를 자기 식으로 다뤄 규칙이 0개로 들어갔다).
+    그래서 **요소에 직접** `important` 로 얹는다.
+    """
+    src = _studio_src()
+    assert "setProperty(k, props[k], 'important')" in src
+    assert "liveClear" in src
+
+
+def test_click_selects_block_dblclick_goes_inner():
+    src = _studio_src()
+    assert "dblclick" in src and "function deselect()" in src
+    assert "c[c.length - 1]" in src, "한 번 누르면 가장 바깥이어야 한다"
+
+
+def test_containers_are_marked():
+    """지문 상자·문항이 통째로 잡혀야 한 번에 고칠 수 있다."""
+    src = io.open(os.path.join(_ROOT, "core", "render_vivlio", "series",
+                               "blackbook", "render.py"), encoding="utf-8").read()
+    assert '_mark(u, "vunit")' in src
+    assert '"pbox")' in src and '_mark(q, "q")' in src
+
+
+def test_editing_keeps_the_page_looking_the_same():
+    """누를 때마다 바탕이 노래지고 글꼴이 바뀌면 조판을 보는 눈이 흐트러진다."""
+    src = _routes_src()
+    i = src.index(".ide-editing")
+    block = src[i:i + 300]
+    assert "background" not in block and "font-family" not in block
+    assert "caret-color" in block
+
+
+def test_page_panel_and_spread():
+    src = _studio_src()
+    assert "function drawPages()" in src and "function gotoPage(" in src
+    assert "function setSpread(" in src and "'spread'" in src
+
+
 # ── 클로드 칸 ─────────────────────────────────────────────────
 # 모델에게 리포를 통째로 열어 주면 안 된다 — 계열 코드를 고치면 그 계열 책이
 # 전부 흔들리고, 원고를 고치면 납품본과 글이 달라진다. 손댈 수 있는 곳은
