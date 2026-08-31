@@ -39,8 +39,16 @@ def _all_spans(page):
 
     ⚠ 검사마다 `get_text("dict")` 를 다시 부르면 그림이 많은 책에서 검수가
       분 단위로 늘어진다(한영1 248면·40MB 에서 18분 넘게 걸렸다).
+    ⚠⚠ 열쇠에 `id(문서)` 를 쓰면 안 된다. 앞 책의 문서가 닫히면 파이썬이 그
+      **주소를 다음 문서에 다시 준다** — 그러면 앞 책의 글자가 뒤 책 검사에
+      쓰여 멀쩡한 책이 "글자 유실 24지문"으로 떨어진다(세종1에서 그렇게 났다).
+      파일 경로로 열쇠를 잡고, 검수를 시작할 때 비운다.
     """
-    key = (id(page.parent), page.number)
+    try:
+        doc = page.parent.name or ""
+    except Exception:
+        doc = ""
+    key = (doc, page.number)
     got = _SPAN_CACHE.get(key)
     if got is None:
         got = [sp for b in page.get_text("dict")["blocks"] if b["type"] == 0
@@ -818,6 +826,7 @@ class PocketbookSeries(Series):
         opt = cfg.section("options") or {}
         start = 0        # `_body.pdf` 는 표지 전이라 첫 면이 곧 첫 지문면이다
 
+        _SPAN_CACHE.clear()          # 앞 책의 계측이 남아 있으면 안 된다
         with probe.open_pdf(pdf) as doc:
             n_pages = len(doc)
             per = [1 if r.get("kind") == "memtest" else 2 for r in rows]
