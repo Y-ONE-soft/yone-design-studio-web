@@ -554,6 +554,11 @@ def api_assist():
     if got["overrides_css"] is not None:
         if os.path.exists(opath):
             shutil.copy2(opath, opath + ".bak")
+        else:
+            # ⚠ 원래 **없던** 파일이면 `.bak` 도 없어서 되돌릴 방법이 사라진다.
+            #   "원래 없었다" 는 것도 되돌릴 상태다 — 표식을 남긴다.
+            with open(opath + ".none", "w") as f:
+                f.write("이 파일이 있으면 overrides.css 는 원래 없던 것이다\n")
         with open(opath, "w", encoding="utf-8") as f:
             f.write(got["overrides_css"])
 
@@ -577,7 +582,12 @@ def api_assist_undo():
     back = []
     for name in ("config.json", "overrides.css"):
         f = cfg.path(name)
-        if os.path.exists(f + ".bak"):
+        if os.path.exists(f + ".none"):     # 원래 없던 파일 — 도로 없앤다
+            if os.path.exists(f):
+                os.remove(f)
+            os.remove(f + ".none")
+            back.append(name + " (지움)")
+        elif os.path.exists(f + ".bak"):
             shutil.copy2(f + ".bak", f)
             back.append(name)
     if not back:

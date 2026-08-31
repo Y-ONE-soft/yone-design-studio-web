@@ -182,18 +182,27 @@ def test_stamp_keeps_self_closing():
     assert refs.stamp("<hr/>", "a.0").endswith("/>")
 
 
-@pytest.mark.parametrize("name,needle", [
-    ("blackbook", "_refs.index("),
-    ("vocabook", "_refs.index_paths("),
-    ("vocaunit", "_refs.index("),
-    ("special", "_refs.dump("),
-])
-def test_every_series_makes_refs(name, needle):
-    p = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                     "core", "render_vivlio", "series", name, "render.py")
+@pytest.mark.parametrize("name", ("blackbook", "vocabook", "vocaunit", "special"))
+def test_every_series_makes_refs(name):
+    """어떤 방법으로든 자리표 표를 만들고, 번호↔경로 표를 내야 한다.
+
+    ⚠ 만드는 **함수 이름**을 시험하지 않는다 — `index()` 에서 `index_paths()`
+      로 옮기자마자 시험이 깨졌는데, 바뀐 것은 방법이지 지켜야 할 것이 아니었다.
+    """
+    p = os.path.join(_ROOT, "core", "render_vivlio", "series", name, "render.py")
     src = io.open(p, encoding="utf-8").read()
-    assert needle in src, f"{name}: 자리표를 안 만든다"
+    assert ("_refs.index" in src or "_refs.stamp" in src), \
+        f"{name}: 자리표를 안 만든다"
     assert "_refs.dump(" in src, f"{name}: 번호↔경로 표를 안 낸다"
+
+
+@pytest.mark.parametrize("name", ("blackbook", "vocabook", "vocaunit", "special"))
+def test_every_series_marks_its_running_head(name):
+    """머리 띠·꼬리말도 지면이다 — 예전엔 어느 계열에서도 안 잡혔다."""
+    p = os.path.join(_ROOT, "core", "render_vivlio", "series", name, "render.py")
+    src = io.open(p, encoding="utf-8").read()
+    assert '_refs.mark("#' in src or '_mark("#' in src, \
+        f"{name}: 머리·꼬리에 자리표가 없다"
 
 
 def test_rich_segment_vs_block():
@@ -378,6 +387,73 @@ def test_cmyk_api_matches_prepress(client):
     if d is None:
         pytest.skip("이 기계에 인쇄 프로파일이 없다")
     assert d.get("gray") is True and d["k"] == 100
+
+
+# ── 클로드 칸 ─────────────────────────────────────────────────
+# 모델에게 리포를 통째로 열어 주면 안 된다 — 계열 코드를 고치면 그 계열 책이
+# 전부 흔들리고, 원고를 고치면 납품본과 글이 달라진다. 손댈 수 있는 곳은
+# 셋뿐이고 셋 다 **그 책 폴더 안 파일**이다.
+def test_assist_scope_is_three_places():
+    src = io.open(os.path.join(_ROOT, "core", "render_vivlio", "assist.py"),
+                  encoding="utf-8").read()
+    for k in ("knobs", "styles", "overrides_css"):
+        assert f'"{k}"' in src
+    assert "data.json" not in src.split('"""', 2)[2], "원고를 만질 길이 열렸다"
+
+
+def test_assist_vets_unknown_knob():
+    from core.render_vivlio import assist
+    got = assist.vet({"knobs": {"없는키": 1}, "note": ""},
+                     [{"key": "palette.gold", "kind": "color"}])
+    assert not got["knobs"] and got["refused"]
+
+
+def test_assist_vets_color_and_range():
+    from core.render_vivlio import assist
+    spec = [{"key": "palette.gold", "kind": "color"},
+            {"key": "metrics.qgap", "kind": "mm", "min": 0, "max": 20}]
+    got = assist.vet({"knobs": {"palette.gold": "빨강",
+                                "metrics.qgap": 999}, "note": ""}, spec)
+    assert not got["knobs"] and len(got["refused"]) == 2
+    ok = assist.vet({"knobs": {"palette.gold": "#112233",
+                               "metrics.qgap": 4}, "note": ""}, spec)
+    assert ok["knobs"] == {"palette.gold": "#112233", "metrics.qgap": 4.0}
+
+
+def test_assist_vets_selector_and_css():
+    from core.render_vivlio import assist
+    got = assist.vet({"styles": {"a}b": {"x": "y"}, ".ok": {"color": "red;x"}},
+                     "overrides_css": "@import url(http://x)", "note": ""}, [])
+    assert not got["styles"] and got["overrides_css"] is None
+    assert len(got["refused"]) >= 3
+
+
+def test_assist_refuses_screen_only_effects_in_prompt():
+    """인쇄물이라는 것을 모델에게 못박아 둔다."""
+    from core.render_vivlio import assist
+    assert "인쇄물" in assist.SYSTEM and "8pt" in assist.SYSTEM
+
+
+def test_assist_says_how_to_set_the_key():
+    """키가 없을 때 그냥 실패하면 무엇을 해야 하는지 알 수 없다."""
+    from core.render_vivlio import assist
+    if assist.have_key():
+        pytest.skip("이 기계에는 키가 있다")
+    try:
+        assist.ask("x", {})
+    except assist.Refused as e:
+        assert "ANTHROPIC_API_KEY" in str(e)
+    else:
+        pytest.fail("키가 없는데 그냥 지나갔다")
+
+
+def test_assist_undo_removes_files_it_created():
+    """원래 **없던** 파일이면 `.bak` 이 없어 되돌릴 방법이 사라진다.
+
+    '원래 없었다' 도 되돌릴 상태다 — 표식(`.none`)을 남겨 도로 없앤다.
+    """
+    src = _routes_src()
+    assert '".none"' in src and "os.remove(f)" in src
 
 
 # ── 중등부 다리 ────────────────────────────────────────────────

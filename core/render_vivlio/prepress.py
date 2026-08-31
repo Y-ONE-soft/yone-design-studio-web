@@ -195,6 +195,95 @@ def neutralize_patterns(doc, gray_map=None, tol=2, log=None, cmyk_map=None):
     return n
 
 
+def pin_flat_images(doc, cmyk_map=None, gray_map=None, tol=6, log=None):
+    """**단색 로고 이미지**의 색도 표대로 못 박는다.
+
+    완성본에서 떠 온 아트워크(상표·로고)는 "한 가지 색 + 알파" 구조다. 이걸
+    그대로 두면 ICC 변환을 타서 **같은 청록인데 로고만 다른 값**으로 나간다
+    (실측 C75M15Y20 → 화면 #17a5c0 vs 로고 #2dacc0).
+
+    색이 한 가지뿐이면 그림 자체는 **1×1 CMYK 한 점**으로 줄이고 투명도
+    (SMask)는 그대로 둔다 — 결과는 "알파 마스크로 칠한 단색"이라 완전히 같다.
+    """
+    fitz = __import__("fitz")
+    spot = {tuple(int(k.lower()[i:i + 2], 16) for i in (1, 3, 5)): v
+            for k, v in (cmyk_map or DEFAULT_CMYK_MAP).items()}
+    grays = {tuple(int(k.lower()[i:i + 2], 16) for i in (1, 3, 5)):
+             [0, 0, 0, round(v * 100)]
+             for k, v in (gray_map or DEFAULT_GRAY_MAP).items()}
+    table = dict(grays)
+    table.update(spot)
+    if not table:
+        return 0
+    seen, done = set(), 0
+    for page in doc:
+        for info in page.get_images(full=True):
+            xref, smask = info[0], info[1]
+            if xref in seen:
+                continue
+            seen.add(xref)
+            try:
+                pix = fitz.Pixmap(doc, xref)
+            except Exception:
+                continue
+            if pix.alpha:
+                pix = fitz.Pixmap(fitz.csRGB, pix)
+            if pix.n != 3 or pix.width * pix.height == 0:
+                continue
+            # ⚠ **투명한 자리의 RGB 는 쓰레기다.** 브라우저가 알파를 풀어 쓰면서
+            #   알파 0 인 화소를 0 이나 255 로 흘려 놓는다 — 그대로 최소·최대를
+            #   재면 "여러 색"으로 보여 단색 로고를 못 알아본다. 불투명한 화소만 본다.
+            alpha = None
+            if smask:
+                try:
+                    ap = fitz.Pixmap(doc, smask)
+                    if ap.n == 1 and ap.width == pix.width \
+                            and ap.height == pix.height:
+                        alpha = ap.samples
+                except Exception:
+                    alpha = None
+            b = pix.samples
+            npx = pix.width * pix.height
+            step = max(1, npx // 20000)
+            lo, hi = [255, 255, 255], [0, 0, 0]
+            hits = 0
+            for j in range(0, npx, step):
+                if alpha is not None and alpha[j] < 200:
+                    continue
+                hits += 1
+                for i in range(3):
+                    v = b[j * 3 + i]
+                    if v < lo[i]:
+                        lo[i] = v
+                    if v > hi[i]:
+                        hi[i] = v
+            if hits < 8 or any(hi[i] - lo[i] > tol for i in range(3)):
+                continue                       # 여러 색 — 손대지 않는다
+            c = [(lo[i] + hi[i]) // 2 for i in range(3)]
+            hit = next((v for ref, v in table.items()
+                        if all(abs(c[i] - ref[i]) <= tol for i in range(3))),
+                       None)
+            if hit is None:
+                continue
+            data = bytes(round(x * 255 / 100.0) for x in hit)
+            doc.update_stream(xref, data, new=True, compress=False)
+            for k, v in (("Width", "1"), ("Height", "1"),
+                         ("ColorSpace", "/DeviceCMYK"),
+                         ("BitsPerComponent", "8"),
+                         ("Filter", "null"), ("DecodeParms", "null"),
+                         ("Decode", "null")):
+                try:
+                    doc.xref_set_key(xref, k, v)
+                except Exception:
+                    pass
+            if smask:
+                doc.xref_set_key(xref, "SMask", "%d 0 R" % smask)
+            done += 1
+    if log and done:
+        log(f"[인쇄] 단색 로고 그림 {done}개 색 고정")
+    return done
+
+
 _RE_GS = re.compile(rb"/([A-Za-z0-9]+)\s+gs")
 
 
@@ -293,6 +382,7 @@ def make(src, dst, bleed=3.0, profile=None, gray_map=None, log=None,
     doc = fitz.open(src)
     n = neutralize(doc, gray_map, log=log, cmyk_map=cmyk_map)
     n += neutralize_patterns(doc, gray_map, log=log, cmyk_map=cmyk_map)
+    n += pin_flat_images(doc, cmyk_map=cmyk_map, gray_map=gray_map, log=log)
     doc.save(tmp_gray, garbage=3, deflate=True)
     doc.close()
 
