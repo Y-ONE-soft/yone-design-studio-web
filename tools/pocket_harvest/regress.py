@@ -8,11 +8,15 @@
 못 가린다), 포켓북 계열로 조판한 뒤 계열 게이트(G-P1·P3·P6·P7)를 건다.
 
 원본이 곧 정답이므로 **글자 개수 대조(G-P7)** 가 이 검증의 핵심이다.
+거기에 계열 게이트가 못 보는 자리를 하나 더 막는다 — **R1**: 원본 IDML 에서
+지문 스프레드 수를 직접 세어, 읽는 쪽이 지문을 흘렸는지 본다(계열 게이트는
+행과 면이 함께 줄면 통과한다).
 
     python3 tools/pocket_harvest/regress.py            # 전권
     python3 tools/pocket_harvest/regress.py --jobs 3   # 병렬
     python3 tools/pocket_harvest/regress.py --only 광문2  # 이름 일부
     python3 tools/pocket_harvest/regress.py --force    # 이미 돈 권도 다시
+    python3 tools/pocket_harvest/regress.py --retry --force   # 실패한 권만 다시
 
 ⚠ InDesign 은 건드리지 않는다. 다른 프로세스가 IDML 을 계속 내보내는 중이라
   **시작 시점의 목록만** 훑는다(중간에 늘어난 것은 다음 실행에서 잡는다).
