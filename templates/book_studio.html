@@ -410,17 +410,29 @@
     setTimeout(function () { afterRender(cb, tries + 1); }, 100);
   }
 
-  /** `test(면)` 이 참인 면까지 앞으로 넘긴다. 최대 `max` 장. */
-  function seek(test, max, done) {
-    var n = 0;
+  /** `test(면)` 이 참인 면까지 앞으로 넘긴다. 최대 `max` 장.
+   *
+   *  ⚠ 한 면에 1~2초가 든다(면마다 조판이 다시 돈다). 열 몇 면을 가면 30초가
+   *    넘어 **멈춘 것처럼 보인다** — 그래서 몇 면째인지 계속 알린다.
+   *    도중에 아무 곳이나 누르면 멈춘다.
+   */
+  var seeking = 0, seekBusy = false;
+  function seek(test, max, done, label) {
+    var n = 0, mine = ++seeking;
+    seekBusy = true;
+    function finish(ok, k) { seekBusy = false; done(ok, k); }
     function step() {
+      if (mine !== seeking) return;              // 새 찾기가 시작됐다
       afterRender(function (el) {
-        if (!el) return done(false);
-        if (test(el)) return done(true, n);
-        if (++n > max) return done(false, n);
+        if (mine !== seeking) return;
+        if (!el) return finish(false, n);
+        if (test(el)) return finish(true, n);
+        if (++n > max) return finish(false, n);
+        msg((label || '찾는 중') + ' — ' + curPage + '면 (멈추려면 Esc)');
         var before = pageNow();
         viewer.navigateToPage(V.Navigation.NEXT);
         (function wait(t) {
+          if (mine !== seeking) return;
           if (pageNow() !== before || t > 40) { drawPageNo(); return step(); }
           setTimeout(function () { wait(t + 1); }, 80);
         })(0);
@@ -428,6 +440,7 @@
     }
     step();
   }
+  function stopSeek() { seeking++; seekBusy = false; }
 
   /** 자리표 번호 → 그 자리가 있는 면으로.
    *
@@ -445,7 +458,7 @@
          (pageCount || 120), function (ok) {
       msg(ok ? (label || '그 자리') + '로 옮겼습니다'
              : '이 뒤로는 그 자리가 없습니다 — 처음부터 다시 펴 보세요');
-    });
+    }, (label || '그 자리') + ' 찾는 중');
   }
 
   /** 열자마자 **내용이 있는 자리**부터 보여 준다.
@@ -1086,6 +1099,10 @@
 
   document.addEventListener('keydown', function (e) {
     var mod = e.metaKey || e.ctrlKey;
+    // 찾아가는 중이면 Esc 가 **그것부터** 멈춘다(편집 중이든 아니든)
+    if (e.key === 'Escape' && seekBusy) {
+      e.preventDefault(); stopSeek(); msg('멈췄습니다'); return;
+    }
     if (editEl) {
       if (e.key === 'Escape') { e.preventDefault(); closeEdit(true); msg(''); return; }
       if (mod && e.key === 'Enter') { e.preventDefault(); commit(); return; }
