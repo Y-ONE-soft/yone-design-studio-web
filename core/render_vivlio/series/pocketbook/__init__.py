@@ -14,6 +14,7 @@
 """
 import json
 import os
+import shutil
 
 from core.render_vivlio import bleed, cli, measure, stage
 from core.render_vivlio.series.base import Series
@@ -148,6 +149,10 @@ class PocketbookSeries(Series):
             json.dump(rows, f, ensure_ascii=False)
         out = cfg.out_pdf()
         cli.run_build(html, out, log=log)
+        # 마감(표지 삽입) 전 상태를 남긴다 — 검수는 **우리가 조판한 면만** 본다.
+        # 표지를 끼우면 면 번호가 밀려 지문면 검사가 통째로 어긋난다(그렇게 됐다).
+        body_pdf = os.path.join(build_dir, "_body.pdf")
+        shutil.copyfile(out, body_pdf)
         spec = cfg.finish_spec()
         if spec:
             bleed.finish(out, spec, log=log)
@@ -310,13 +315,12 @@ class PocketbookSeries(Series):
             return report.fail("검수할 조판 기록이 없다 — 먼저 build 할 것")
         with open(rows_path, encoding="utf-8") as f:
             rows = json.load(f)
-        pdf = cfg.out_pdf()
+        body = os.path.join(cfg.build_dir, "_body.pdf")
+        pdf = body if os.path.exists(body) else cfg.out_pdf()
         M = dict(ptheme.METRICS)
         M.update(cfg.section("metrics") or {})
         opt = cfg.section("options") or {}
-        # ⚠ `folio_start` 는 **인쇄될 쪽번호**이고, 이 PDF 의 면 수와는 다르다.
-        #   표지는 나중에 `finish.inserts` 로 붙으므로 지금 PDF 에는 없다.
-        start = 1 if opt.get("cover") else 0
+        start = 0        # `_body.pdf` 는 표지 전이라 첫 면이 곧 첫 지문면이다
 
         with probe.open_pdf(pdf) as doc:
             n_pages = len(doc)
@@ -374,8 +378,19 @@ class PocketbookSeries(Series):
         if no_ill:
             report.note("G-P5 삽화 없음 %d지문(모의고사만 필요)" % len(no_ill))
         self._write_empty_report(cfg, no_syn, no_flow)
-        report.note("지문 %d개 · 암기테스트 %d면 · 총 %d면"
+        report.note("지문 %d개 · 암기테스트 %d면 · 본문 %d면"
                     % (len(pas), len(rows) - len(pas), n_pages))
+        final = cfg.out_pdf()
+        if os.path.exists(final) and final != pdf:
+            from core.render_vivlio import probe as _pb
+            n_final = _pb.page_count(final)
+            spec = cfg.finish_spec()
+            add = len(spec.get("inserts") or []) + len(spec.get("append") or [])
+            if n_final is not None and n_final < n_pages:
+                report.fail("G-P1 최종 %d면 < 본문 %d면" % (n_final, n_pages))
+            else:
+                report.note("표지·마감 포함 최종 %d면 (추가 %d)"
+                            % (n_final, (n_final or 0) - n_pages))
         return report
 
     @staticmethod

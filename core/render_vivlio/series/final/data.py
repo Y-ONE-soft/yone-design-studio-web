@@ -209,10 +209,17 @@ def from_content(content, warn=lambda m: None):
            "vols": {}}
     for vol, spec in VOL_SPEC.items():
         cno, cen = spec["chapter"]
+        # 빈 섹션은 싣지 않는다 — 고3(EBS)은 문장삽입이 아예 없다(실측:
+        # 명일3·광문3 모두 0개). 빈 섹션을 남기면 빈 면이 한 장 나간다.
+        secs = [_section(k, n, made[k]) for k, n in spec["sections"]
+                if made[k]]
+        for k, _n in spec["sections"]:
+            if not made[k]:
+                warn(f"{SEC_TITLES[k]}: 지문 0개 — 이 권에서 뺀다")
         out["vols"][str(vol)] = {
             "vol": vol,
             "chapter": {"no": cno, "en": cen},
-            "sections": [_section(k, n, made[k]) for k, n in spec["sections"]],
+            "sections": secs,
         }
     return out
 
@@ -222,6 +229,8 @@ def gate(data, content, log):
     """수량이 어긋나면 **조판하지 않고 멈춘다.**"""
     bad = []
     secs = {s["kind"]: s for v in data["vols"].values() for s in v["sections"]}
+    empty = {k: {"blocks": []} for k in SEC_TITLES if k not in secs}
+    secs.update(empty)
     want = {
         "arrange": len(content["vol1"].get("문장배열") or []),
         "insert": len(content["vol1"].get("문장삽입") or []),

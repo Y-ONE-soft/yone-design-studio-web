@@ -60,6 +60,9 @@ TRIM_TOL = 6.0
 # 사람이 손댄 필드는 재수확이 덮지 않는다(전환계획 §5 provenance).
 MANUAL_FROM = {"manual", "web", "hwpx"}
 
+# 원문이 이만큼 닮았으면 같은 지문의 판본 차이로 본다(오타 수정본 등).
+SAME_TEXT = 0.95
+
 _DIGIT = re.compile(r"\d")
 _WS = re.compile(r"\s+")
 
@@ -580,18 +583,31 @@ def build(limit=None, only=None, root=IDML_ROOT, out_dir=OUT):
                 continue
             fp = fingerprint(u["passage_text"])
             e = entries.get(key)
+            if e is not None and fp and e.get("fp") and fp != e["fp"]:
+                r = similarity(e.get("_txt", ""),
+                               _norm_text(u["passage_text"]))
+                c = {"key": key, "a": e["sources"][0]["file"], "b": name,
+                     "pages": u["pages"], "sim": round(r, 3),
+                     "kind": "판본 차이" if r >= SAME_TEXT else "다른 지문",
+                     "moved_to": ""}
+                if r < SAME_TEXT:
+                    # 아예 다른 지문이 같은 키를 달고 있다(원본 배지 오류 실측).
+                    # 그냥 합치면 **지문 하나가 사라진다** → 갈래 키를 준다.
+                    n = 2
+                    while True:
+                        alt = "%s#%d" % (key, n)
+                        cand = entries.get(alt)
+                        if cand is None or cand.get("fp") == fp:
+                            break
+                        n += 1
+                    c["moved_to"] = alt
+                    key, aliases, e = alt, [alt], entries.get(alt)
+                conflicts.append(c)
             if e is None:
                 e = entries[key] = _new_entry(key, kind, school, term, u,
                                               nums, aliases)
             else:
                 e["aliases"] = sorted(set(e["aliases"]) | set(aliases))
-                if fp and e.get("fp") and fp != e["fp"]:
-                    r = similarity(e.get("_txt", ""),
-                                   _norm_text(u["passage_text"]))
-                    conflicts.append({
-                        "key": key, "a": e["sources"][0]["file"], "b": name,
-                        "pages": u["pages"], "sim": round(r, 3),
-                        "kind": "판본 차이" if r >= 0.95 else "다른 지문"})
             _merge(e, u, src)
             e["sources"].append(src)
             if fp:
@@ -834,11 +850,13 @@ def _conflicts_md(conflicts, meta, out_dir):
         if not rows:
             L += ["없음.", ""]
             continue
-        L += ["| 키 | 닮음 | 먼저 | 나중 | 쪽 |", "|---|---|---|---|---|"]
+        L += ["| 키 | 닮음 | 먼저 | 나중 | 쪽 | 갈래 키 |",
+              "|---|---|---|---|---|---|"]
         for c in rows:
-            L.append("| `%s` | %s | %s | %s | %s |"
+            L.append("| `%s` | %s | %s | %s | %s | %s |"
                      % (c["key"], c.get("sim", "?"), c["a"], c["b"],
-                        "-".join(c["pages"])))
+                        "-".join(c["pages"]),
+                        "`%s`" % c["moved_to"] if c.get("moved_to") else "—"))
         L.append("")
     _put(out_dir, "_conflicts.md", L)
 

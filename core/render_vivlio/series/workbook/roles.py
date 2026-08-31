@@ -62,6 +62,7 @@ ROLE_WORDS = [
     ("blank_kr",    ["빈칸어휘한글", "빈칸어법한글"]),
     ("blank_vocab", ["빈칸어휘"]),
     # ── STEP2 ──
+    ("gram_bottom", ["어법선택하단"]),   # 하단 주황 상자(밑줄 친 지문)
     ("gram_sel",    ["어법선택"]),
     ("gram_ox",     ["어법ox"]),
     ("blank_gram",  ["빈칸어법"]),

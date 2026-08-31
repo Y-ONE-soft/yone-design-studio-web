@@ -45,6 +45,7 @@
 
   --num-blue: #92b0d3;                    /* OX·빈칸 문항 번호 */
   --num-violet: #8d7cba;                  /* 내용 종합 문항 번호 */
+  --num-teal: #75abab;                    /* 어법 O/X 문항 번호 */
   --sel: #00559f;                         /* 선택지 파랑 */
   --blank: #c64a86;                       /* 빈칸 첫 글자 */
   --box-body: #f9f9f2;                    /* 본문 박스(크림) */
@@ -134,6 +135,19 @@ body {
  * 이 표식의 y 를 재서 "칸을 넘었는가"를 판정한다. 눈으로 못 잡는 사고라
  * 표식으로 재는 편이 낫다. */
 .zend { display: block; width: 0.4mm; height: 0.4mm; background: #fffffe; }
+
+/* 지문 묶음 — 새 면에서 시작하고, 길면 다음 면으로 **이어진다**.
+ * (실물도 그렇다: 어법 선택 '본문' 20문장은 두 면에 걸친다 — 실측 p30-31) */
+.grp { position: relative; break-before: page; padding-top: 1mm; }
+.sec.fixed > .grp:first-of-type { break-before: auto; }
+.attach { break-inside: avoid; margin-top: 8mm; }
+
+/* 스텝 안내문 — 머리말 오른쪽 (어법 O/X 등) */
+.hdr .note {
+  position: absolute; left: 94.9mm; top: 16.99mm;
+  font-family: "Elice Baeum", sans-serif; font-size: 9pt; line-height: 1;
+  color: var(--ink); letter-spacing: normal;
+}
 
 /* 간지 — 도련까지 색이 차야 하므로 여백 0 짜리 페이지를 따로 쓴다 */
 @page divider {
@@ -414,8 +428,13 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 
 /* ─────────────────────────────────────────────── STEP2 B1 어법 O/X */
 .gox {
-  position: relative; margin-top: 6.2mm;
-  font-size: 8.5pt; line-height: 4.9mm; text-align: justify;
+  position: relative; margin-top: 6.2mm; padding-left: 7mm;
+  font-size: 9pt; line-height: 4.9mm; text-align: justify;
+}
+.gox .n {
+  position: absolute; left: 1mm; top: 0.5mm;
+  font-family: "LotteMartDream", "Montserrat", sans-serif;
+  font-size: 9pt; color: var(--num-teal); letter-spacing: normal;
 }
 
 /* ─────────────────────────────────────────────── STEP2 C2 영작 배열 (흘림) */

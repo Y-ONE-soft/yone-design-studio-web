@@ -133,6 +133,7 @@ _BOXED = {
     "arr_bottom": ("box-lined", None),
     "arr_line": ("box-arr", None),
     "write_box": ("box-write", None),
+    "gram_bottom": ("box-orange", None),
 }
 
 
@@ -189,7 +190,15 @@ def blocks_html(blocks, step, ctx=None):
 
         # ── 어법 O/X (번호가 본문에 들어 있다) ──
         if role == "gram_ox":
-            out.append(f'<div class="gox">{runs_html(b)}'
+            t = b.get("text") or ""
+            m = _RE_LEADNUM.match(t)
+            body = runs_html(b)
+            num = ""
+            if m:
+                if body.startswith(m.group(0)):
+                    body = body[len(m.group(0)):]
+                num = f'<span class="n">{int(m.group(1)):02d}.</span>'
+            out.append(f'<div class="gox">{num}{body}'
                        f'{icon_html(b.get("icon") or "TF 버튼", step)}</div>')
             i += 1
             continue
@@ -330,14 +339,14 @@ def _next_write_no(out):
 # 어긋나고, 어긋난 채로 뒤 스텝 전체가 뒤집힌다. 세지 않으면 어긋날 일도 없다.
 
 
-def running_head(step, logo, title, tag):
+def running_head(step, logo, title, tag, note=None):
     """이 스텝 구간의 머리말·꼬리말. 섹션 **선두**에 둔다.
 
     ⚠ 러닝 요소를 섹션 밖에 두면 무명 페이지가 생기고 named page 가 첫 면에
       안 붙는다(1차 파일럿 실증).
     """
     return (
-        f'<div class="run r-hdrL">{hdr_left(step, logo, title, tag)}</div>'
+        f'<div class="run r-hdrL">{hdr_left(step, logo, title, tag, note)}</div>'
         f'<div class="run r-hdrR">{hdr_right(step, logo)}</div>'
         f'<div class="run r-folL"><span class="folio l">'
         f'<span class="no"></span><span class="bk">STEP BY STEP</span></span></div>'
@@ -345,7 +354,7 @@ def running_head(step, logo, title, tag):
         f'<span class="bk">STEP 0{step}</span><span class="no"></span></span></div>')
 
 
-def hdr_left(step, logo, title, tag):
+def hdr_left(step, logo, title, tag, note=None):
     dots = "".join(f'<i class="{"on" if k == step else ""}">{k}</i>'
                    for k in (1, 2, 3))
     return (f'<div class="hdr"><div class="bar"></div>'
@@ -353,7 +362,8 @@ def hdr_left(step, logo, title, tag):
             f'<div class="tag">{esc(tag)}</div>'
             f'<div class="logo">{esc(logo)}</div>'
             f'<div class="title">{esc(title)}</div>'
-            f'<div class="steps">{dots}<u></u><u></u></div></div>')
+            f'<div class="steps">{dots}<u></u><u></u></div>'
+            f'{f"<div class=\'note\'>{esc(note)}</div>" if note else ""}</div>')
 
 
 def hdr_right(step, logo):
@@ -432,21 +442,29 @@ def fixed_section(st, idx):
                                "bottom"))
             pages.append(page_block(zs))
     else:                                            # sheet
+        # ⚠ 여기는 **흘림**이다. 절대배치 칸에 가두면 넘친 내용이 잘려 사라진다
+        #   (실물도 안 자른다 — 어법 선택 '본문' 20문장은 두 면에 걸친다: 실측
+        #   기준 p30-31·p32-33). 지문 묶음마다 새 면에서 시작하고, 길면 이어진다.
         for g in groups:
             body = "".join(blocks_html(u, n, st["key"]) for u in g["units"])
-            lbl = ("" if side_label or not g.get("label")
-                   else f'<span class="pnum">{esc(g["label"])}</span>')
-            zs = []
-            if side_label and g.get("label"):
-                zs.append(f'<div class="pn-side"><span class="pnum">'
-                          f'{esc(g["label"])}</span></div>')
-            zs.append(zone(lbl + body, "top"))
+            head = ""
+            if g.get("label"):
+                head = (f'<div class="pn-side"><span class="pnum">'
+                        f'{esc(g["label"])}</span></div>' if side_label
+                        else f'<span class="pnum">{esc(g["label"])}</span>')
+            btm = ""
             if g.get("attach"):
-                zs.append(zone("".join(blocks_html(u, n, st["key"]) for u in g["attach"]),
-                               "bottom"))
-            pages.append(page_block(zs))
+                prompt = st.get("bottom_prompt")
+                ph = (f'<div class="q-head">{svg_chk(n)}{esc(prompt)}</div>'
+                      if prompt else "")
+                btm = (f'<div class="attach">{ph}'
+                       + "".join(blocks_html(u, n, st["key"]) for u in g["attach"])
+                       + "</div>")
+            pages.append(f'<div class="grp">{head}{body}{btm}'
+                         f'<span class="zend"></span></div>')
 
-    run = running_head(n, st["logo"], st["title"], st["tag"])
+    run = running_head(n, st["logo"], st["title"], st["tag"],
+                       note=st.get("note"))
     return (f'<section class="sec fixed s{n}" id="sec{idx}">'
             f'{run}{"".join(pages)}</section>'), len(pages)
 
@@ -461,7 +479,7 @@ def flow_sec(st, idx):
             body.append(f'<p class="pnum flowlbl">{esc(g["label"])}</p>')
         for blocks in g["units"]:
             body.append(s3_blocks(blocks) if two else blocks_html(blocks, n, st["key"]))
-    run = running_head(n, st["logo"], st["title"], st["tag"])
+    run = running_head(n, st["logo"], st["title"], st["tag"], st.get("note"))
     cls = "twocol" if two else "onecol"
     return (f'<section class="sec flow {cls} s{n}" id="sec{idx}">'
             f'{run}<div class="flowbody">{"".join(body)}</div></section>')

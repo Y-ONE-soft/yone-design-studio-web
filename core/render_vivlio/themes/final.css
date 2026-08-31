@@ -155,8 +155,15 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
   padding-left: 6.34mm; vertical-align: -2.24mm;
 }
 
-/* 섹션 첫 면 — 홀수라도 띠가 붙는다. 흐름 맨 앞에 높이 0 으로 심는다. */
+/* 섹션 첫 면 — 홀수라도 띠가 붙고, **장 탭·워드마크는 없다**(완성본 실측
+ * Vol1 15·21면). 이름 있는 면의 `:nth(1)` 은 Vivliostyle 에서 이 뜻이 아니어서
+ * (절대 쪽번호를 센다 — 빨간 시험 배경으로 확인) 쓸 수 없다. 흐름 맨 앞에
+ * 높이 0 으로 심고, 탭 자리는 흰 상자로 덮는다. */
 .sechdr { position: relative; height: 0; }
+.sechdr .mask {
+  position: absolute; right: -21.00mm; top: -29.57mm;
+  width: 66mm; height: 23.00mm; background: #fff;
+}
 /* ⚠ 러닝 띠와 **정확히 같은 자리**여야 한다. 짝수 면에서는 둘이 겹치는데,
  *   1mm 라도 어긋나면 글자가 두 번 찍힌 것처럼 보인다(실제로 그랬다).
  *   러닝 띠는 `@top-left`(= 판면 왼쪽) 에서 -7.1mm 이므로 여기도 같은 값. */

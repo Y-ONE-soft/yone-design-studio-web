@@ -133,7 +133,8 @@ def band(sec, flow=False):
              f'<span class="t">{esc(sec["title"])}</span>')
     if not flow:
         return f'<div class="bandrun band">{inner}</div>'
-    return (f'<div class="sechdr"><div class="sq"></div>'
+    return (f'<div class="sechdr"><div class="mask"></div>'
+            f'<div class="sq"></div>'
             f'<div class="band">{inner}</div></div>')
 
 

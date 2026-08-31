@@ -55,18 +55,18 @@ def check(cfg, log, report):
             missing_rows.append((st["key"], lost))
     if missing_rows:
         for key, lost in missing_rows:
-            report.error(f"[내용 유실] {key} — {len(lost)}단락이 PDF 에 없다")
+            report.fail(f"[내용 유실] {key} — {len(lost)}단락이 PDF 에 없다")
             for t, gone in lost[:4]:
                 report.note(f"      · {t} … 없는 낱말 {gone}")
     else:
-        report.ok(f"내용 보존 — 검사 단락 {total}개, 유실 0")
+        report.note(f"내용 보존 — 검사 단락 {total}개, 유실 0")
 
     # ── ② 정답 누출: 발문 꼬리에 동그라미 숫자 ──
     leaks = [t for t in texts if _RE_ANSLEAK.search(_norm(t))]
     if leaks:
-        report.error(f"[정답 누출] 발문 꼬리에 정답 표시가 인쇄된 면 {len(leaks)}개")
+        report.fail(f"[정답 누출] 발문 꼬리에 정답 표시가 인쇄된 면 {len(leaks)}개")
     else:
-        report.ok("정답 누출 없음")
+        report.note("정답 누출 없음")
 
     # ── ③ 빈 면 ──
     blanks = probe.blank_pages(texts)
@@ -75,7 +75,7 @@ def check(cfg, log, report):
     if unexpected:
         report.warn(f"[빈 면] {unexpected[:10]} — 간지·마감 면이 아니면 유실 신호")
     else:
-        report.ok(f"빈 면 {len(blanks)}개 (모두 예상 범위)")
+        report.note(f"빈 면 {len(blanks)}개 (모두 예상 범위)")
 
     # ── ④ 자리(상/하): pair 스텝의 하단 발문이 아래쪽에 있는가 ──
     _check_zones(pdf, d, report)
@@ -86,21 +86,28 @@ def check(cfg, log, report):
 
 
 def _check_zones(pdf, d, report):
-    """상/하 프레임이 뒤바뀌지 않았는가 — 발문 아이콘의 y 로 본다.
+    """넘침 — 칸 끝 표식(.zend, 흰 0.4mm 사각)의 y 를 잰다.
 
-    실물 규칙: 하단 문제는 y=156.5mm 자리다. 그보다 위에 있으면 상하 반전이다.
+    눈으로는 안 보이는 사고다: 내용이 판면 아래로 흘러나가면 조판은 성공했다고
+    나오고 PDF 만 잘려 있다. 표식이 판면 바닥(286.5mm)을 넘으면 넘침이다.
     """
     doc = probe.open_pdf(pdf)
-    bad = []
+    over = []
+    marks = 0
     for i in range(doc.page_count):
-        page = doc[i]
-        ys = [s["y"] for s in probe.spans_mm(page)
-              if _norm(s.get("text")).startswith(("다음", "아래", "위 글", "윗글"))]
-        if ys and min(ys) < 100 and max(ys) < 120:
-            # 발문이 전부 윗쪽에만 — 상단 카드가 없는 면일 수 있어 경고만
-            bad.append(i + 1)
+        for rect, fill, _c, _w in probe.drawings_mm(doc[i]):
+            w, h = rect[2] - rect[0], rect[3] - rect[1]
+            if not (0.2 < w < 0.8 and 0.2 < h < 0.8):
+                continue
+            if not fill or len(fill) < 3:
+                continue
+            if not (fill[0] > 0.99 and fill[1] > 0.99 and 0.98 < fill[2] < 0.999):
+                continue
+            marks += 1
+            if rect[3] > 286.5:
+                over.append((i + 1, round(rect[3], 1)))
     doc.close()
-    if bad:
-        report.note(f"[자리] 발문이 상단에만 있는 면 {len(bad)}개 — 육안 확인 권장")
+    if over:
+        report.fail(f"[넘침] 칸을 넘긴 면 {len(over)}개 — {over[:8]}")
     else:
-        report.ok("상/하 자리 이상 없음")
+        report.note(f"넘침 없음 (칸 끝 표식 {marks}개 확인)")
