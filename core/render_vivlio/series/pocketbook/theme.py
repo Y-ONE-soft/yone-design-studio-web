@@ -197,6 +197,7 @@ html,body{margin:0;padding:0;background:#fff}
    주석 오프셋은 행간과 무관하다: 기준선은 상자 바닥에서 L/2−3.925pt 라
    (L/2 + dy) − (L/2 − 3.925) = dy + 3.925 로 L 이 상쇄된다. */
 .passage .w{position:relative;display:inline-block;line-height:inherit}
+.wc{white-space:nowrap}
 .w.blue,.blue{color:var(--blue)}
 .w.red,.red{color:var(--red)}
 /* 형광펜 = **굵은 밑줄**. 인디자인이 그렇게 그린다(밑줄 9pt · offset −3).

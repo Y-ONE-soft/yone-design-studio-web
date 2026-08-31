@@ -229,6 +229,8 @@ def main(argv=None):
     ap.add_argument("--only", default="", help="이름 일부로 좁힌다")
     ap.add_argument("--jobs", type=int, default=1)
     ap.add_argument("--force", action="store_true", help="이미 돈 권도 다시")
+    ap.add_argument("--retry", action="store_true",
+                    help="지난번 실패한 권만 다시 (엔진을 고친 뒤에 쓴다)")
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--list", action="store_true")
     a = ap.parse_args(argv)
@@ -247,9 +249,13 @@ def main(argv=None):
         return 0
 
     st = load_state()
-    todo = [p for p in targets
-            if a.force or st.get(slug(p), {}).get("status") not in
-            ("PASS", "FAIL", "SKIP")]
+    if a.retry:
+        todo = [p for p in targets
+                if st.get(slug(p), {}).get("status") in ("FAIL", "ERROR")]
+    else:
+        todo = [p for p in targets
+                if a.force or st.get(slug(p), {}).get("status") not in
+                ("PASS", "FAIL", "SKIP")]
     print("■ 대상 %d권(시작 시점 %d권) · 이번에 돌릴 것 %d권"
           % (len(targets), total, len(todo)))
 

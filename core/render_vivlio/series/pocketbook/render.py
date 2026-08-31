@@ -63,6 +63,39 @@ def _run_html(r):
     return inner
 
 
+def _cluster(runs):
+    """런 흐름 → **낱말 덩이** 목록. 공백에서만 끊는다.
+
+    ⚠ 루비가 낱말 **일부**에 걸리면(`everyon` + 루비 `e`) 그 자리가 inline-block
+      경계라 브라우저가 낱말 한가운데서 줄을 바꾼다(`everyon / e`). 인디자인은
+      그러지 않는다. 덩이째 `nowrap` 으로 묶어 막는다.
+    """
+    groups, cur = [], []
+    for r in runs:
+        if r.get("br"):
+            if cur:
+                groups.append(cur)
+                cur = []
+            groups.append([r])
+            continue
+        t = r["t"]
+        if " " not in t and "\u00a0" not in t:
+            cur.append(r)
+            continue
+        parts = t.split(" ")
+        for i, piece in enumerate(parts):
+            if i:
+                if cur:
+                    groups.append(cur)
+                    cur = []
+                groups.append(None)          # 공백 = 끊을 수 있는 자리
+            if piece:
+                cur.append(dict(r, t=piece))
+    if cur:
+        groups.append(cur)
+    return groups
+
+
 def runs_html(runs):
     """형광펜은 **연속 구간**이다 — 낱말마다 칠하면 어절 사이가 비어 줄무늬가 된다."""
     out, cur_hl, buf = [], None, []
@@ -74,16 +107,22 @@ def runs_html(runs):
         out.append('<mark class="hl-%s">%s</mark>' % (cur_hl, s) if cur_hl else s)
         del buf[:]
 
-    for r in runs:
-        if r.get("br"):
+    for grp in _cluster(runs):
+        if grp is None:                      # 공백
+            buf.append(" ")
+            continue
+        if len(grp) == 1 and grp[0].get("br"):
             flush()
             out.append("<br>")
+            cur_hl = None
             continue
-        hl = r.get("hl") if r.get("mark") == "hl" else None
+        hl = grp[0].get("hl") if grp[0].get("mark") == "hl" else None
         if hl != cur_hl:
             flush()
             cur_hl = hl
-        buf.append(_run_html(r))
+        inner = "".join(_run_html(r) for r in grp)
+        buf.append('<span class="wc">%s</span>' % inner
+                   if len(grp) > 1 else inner)
     flush()
     return "".join(out)
 

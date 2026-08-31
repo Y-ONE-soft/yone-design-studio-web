@@ -113,8 +113,19 @@ def nfc(s):
     return unicodedata.normalize("NFC", s or "")
 
 
+# 무스타일 run 에 붙이는 **합성 스타일**. 26-2-중간 세대는 내용의 상당 부분을
+# 문자 스타일 없이(`$ID/[No character style]`) 찍어서 이름으로는 못 가른다
+# (구세대 181자 → 신세대 430,234자). 스토리를 보고 미리 이름을 붙여 준다.
+_SYN_BODY = "\x00body"      # 지문/해석 프레임 안의 무스타일 → 내용으로 가른다
+_SYN_TOPIC = "\x00topic"    # 통째로 무스타일인 주제/요약 프레임
+
+
 def role_of(style_name):
     n = nfc(style_name)
+    if n == _SYN_BODY:
+        return "body"
+    if n == _SYN_TOPIC:
+        return "topic"
     for pat, role in _ROLE:
         if pat.search(n):
             return role
@@ -209,6 +220,14 @@ def _classify(line, tr_story=True):
             return pref
     p = got.get("passage", 0) + got.get("snum", 0)
     t = got.get("translation", 0)
+    if got.get("body"):
+        # 무스타일 조각은 내용으로 가른다 — 한글이면 해석, 영어면 지문
+        btxt = "".join(r["t"] for r in line
+                       if role_of(r["style"]) == "body")
+        if _I.han_ratio(btxt) > 0.35:
+            t += got["body"]
+        else:
+            p += got["body"]
     if t and (tr_story or t > p):
         return "translation"
     if p:
@@ -243,7 +262,8 @@ def _route(line):
     groups = []
     for r in line:
         role = role_of(r["style"])
-        role = "translation" if role == "translation" else "passage"
+        if role not in ("translation", "body"):
+            role = "passage"
         if not r["t"].strip() and groups:
             groups[-1][1].append(r)
             continue
@@ -253,9 +273,13 @@ def _route(line):
             groups.append([role, [r]])
     out = []
     for role, rs in groups:
-        if role == "passage" and _I.han_ratio(
+        # 무스타일 조각은 제 그룹으로 모은 뒤 내용으로 가른다. 스타일 있는
+        # 영어 지문과 한 그룹으로 합쳐 버리면 한글 비율이 묽어져 못 가른다.
+        if role in ("passage", "body") and _I.han_ratio(
                 "".join(x["t"] for x in rs)) > 0.35:
             role = "translation"
+        elif role == "body":
+            role = "passage"
         if out and out[-1][0] == role:
             out[-1][1].extend(rs)
         else:

@@ -77,10 +77,19 @@ def render(parts, start=1):
                 out.append("%d[%s]" % (n, w))
             else:
                 out.append(w)
-    txt = re.sub(r"\s+", " ", "".join(out)).strip()
-    # 본문(지문면)은 활자 따옴표를 쓴다 — 마주 보는 면과 글자가 달라 보이면 안 된다.
-    txt = re.sub(r"(?<=[A-Za-z])'(?=[A-Za-z])", "’", txt)
-    return txt, n + 1
+    return _quotes(re.sub(r"\s+", " ", "".join(out)).strip()), n + 1
+
+
+def _quotes(txt):
+    """곧은 따옴표 → 활자 따옴표.
+
+    리뷰테스트 원고는 `"own"`·`don't` 처럼 곧은 따옴표를 쓰지만 포켓북 지문면은
+    `“own”`·`don’t` 다(코퍼스 실측). 마주 보는 두 면이 서로 다른 활자를 쓰면 안 된다.
+    앞이 낱말이면 닫는 따옴표, 아니면 여는 따옴표다 — `]` 도 낱말 끝으로 본다
+    (`"41[own]"` 처럼 표기가 사이에 낀다).
+    """
+    txt = re.sub(r'(?<=[\w\]\.,;:!?])"', "”", txt).replace('"', "“")
+    return re.sub(r"(?<=[\w\]\.,;:!?])'", "’", txt).replace("'", "‘")
 
 
 def count_blanks(parts):
