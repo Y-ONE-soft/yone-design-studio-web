@@ -195,6 +195,9 @@ def prepare(items, build_dir, illust_dirs=(), category="", grade=""):
             "topic": p.get("topic") or "",
             "summary": p.get("summary") or "",
             "synonyms": p.get("synonyms") or [],
+            # 분석본 VOCA 표(중요어휘/뜻). 지면에는 안 나가지만 빈 동반의어를
+            # 채울 때 후보로 쓰라고 들고 간다.
+            "voca": p.get("voca") or [],
             "illust": illust,
             "memtest": {k: _flatten(v) for k, v in mt.items() if v} or None,
         })

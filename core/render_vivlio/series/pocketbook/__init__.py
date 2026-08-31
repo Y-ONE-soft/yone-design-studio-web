@@ -814,8 +814,11 @@ class PocketbookSeries(Series):
             #   정답이 보이는 사고가 있었고, 그때 이 게이트가 없었다.
             twins = []
             for i in range(len(mt_ink) - 1):
-                (k0, a0, c0), (k1, a1, c1) = mt_ink[i], mt_ink[i + 1]
-                if k0 == k1 and a0 != a1 and c0 == c1:
+                # ⚠ `answer` 값이 다른지로 거르면 안 된다 — 사고는 **두 면 다
+                #   정답으로 찍히는 것**이라 그때 두 값이 같아져 검사가 통째로
+                #   비껴간다(실측). 같은 지문의 이웃한 두 면이면 무조건 본다.
+                (k0, _a0, c0), (k1, _a1, c1) = mt_ink[i], mt_ink[i + 1]
+                if k0 == k1 and c0 == c1:
                     twins.append(k0 or "?")
             if twins:
                 report.fail("G-P8 암기 TEST 문제면과 정답면이 같다 %d지문 — %s"
@@ -837,7 +840,7 @@ class PocketbookSeries(Series):
                         % (len(no_flow), ", ".join(no_flow[:12])))
         if no_ill:
             report.note("G-P5 삽화 없음 %d지문(모의고사만 필요)" % len(no_ill))
-        self._write_empty_report(cfg, no_syn, no_flow)
+        self._write_empty_report(cfg, no_syn, no_flow, pas)
         report.note("지문 %d개 · 암기테스트 %d면 · 본문 %d면"
                     % (len(pas), len(rows) - len(pas), n_pages))
         final = cfg.out_pdf()
@@ -854,15 +857,34 @@ class PocketbookSeries(Series):
         return report
 
     @staticmethod
-    def _write_empty_report(cfg, no_syn, no_flow):
+    def _write_empty_report(cfg, no_syn, no_flow, rows=()):
+        """교재팀에 그대로 넘길 목록.
+
+        동반의어가 빈 지문에는 **분석본 VOCA 표의 낱말을 함께 적는다** — 채울 때
+        지문을 다시 열어 단어를 고르지 않아도 되게. 지면에는 안 나간다.
+        """
+        by_key = {}
+        for r in rows:
+            by_key[r.get("key") or r.get("label") or "?"] = r
         p = os.path.join(cfg.build_dir, "빈항목.md")
         with open(p, "w", encoding="utf-8") as f:
             f.write("# 채워야 할 지문\n\n")
-            f.write("칸이 덜 찬 것은 정상이다. **하나도 없는 것만** 적는다.\n\n")
+            f.write("칸이 덜 찬 것은 정상이다. **하나도 없는 것만** 적는다.\n")
+            f.write("원고 양식은 `조판/교재/포켓북/_원고양식/` 참고.\n\n")
             f.write("## 동반의어 0개 (%d)\n\n" % len(no_syn))
             for k in no_syn:
-                f.write("- %s\n" % k)
+                r = by_key.get(k) or {}
+                voca = r.get("voca") or []
+                if voca:
+                    ws = ", ".join(
+                        ("%s %s" % (v.get("w", ""), v.get("ko", ""))).strip()
+                        for v in voca[:12] if isinstance(v, dict))
+                    f.write("- **%s** — 분석본 어휘: %s\n" % (k, ws))
+                else:
+                    f.write("- **%s**\n" % k)
             f.write("\n## 플로우노트 0개 (%d)\n\n" % len(no_flow))
             for k in no_flow:
-                f.write("- %s\n" % k)
+                r = by_key.get(k) or {}
+                t = (r.get("topic") or "").strip()
+                f.write("- **%s**%s\n" % (k, ("  · 주제: " + t[:60]) if t else ""))
         return p
