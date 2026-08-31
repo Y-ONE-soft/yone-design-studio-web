@@ -29,7 +29,22 @@
          display: flex; flex-direction: column; background: #14161f; }
   /* 작업대가 떠 있는 동안은 문서가 스크롤되지 않는다 */
   body.ide-on { overflow: hidden; }
-  .ide * { box-sizing: border-box; }
+  /* ⚠ 조판 결과에는 **우리 CSS 를 대지 않는다.**
+     예전에는 `.ide *` 로 통째 `border-box` 를 걸었는데, 지면이 이제 우리 문서
+     안에 있어서 그 규칙이 **Vivliostyle 이 만든 판면 래퍼까지** 먹었다.
+     그 래퍼는 `width` 에 `padding`(=판면 여백)을 얹어 쓰는데 border-box 가
+     되면 여백이 **두 번** 깎인다 — 본문 단이 167mm → 118mm 로 좁아져
+     줄바꿈도 면 나눔도 실제 조판과 달라졌다(그래 놓고 미리보기라고 보여 줬다).
+     우리 UI 에만 걸고, 지면은 뷰어가 정한 대로 둔다. */
+  .ide-top *, .ide-left *, .ide-right * { box-sizing: border-box; }
+  .ide, .ide-top, .ide-left, .ide-canvas, .ide-right { box-sizing: border-box; }
+  /* 앱 전역 리셋(`main.css` 첫 줄 `*, *::before, *::after`)도 지면까지 먹는다.
+     Vivliostyle 은 **내용 요소**에는 계산한 값을 인라인으로 박지만 자기가
+     만든 래퍼에는 안 박는다 — 그래서 래퍼만 우리 리셋에 물든다.
+     래퍼가 기대하는 `content-box` 로 되돌린다(내용 요소는 인라인이 이긴다). */
+  #ide-stage, #ide-stage *, #ide-stage *::before, #ide-stage *::after {
+    box-sizing: content-box;
+  }
 
   /* ── 위: 도구줄 ─────────────────────────────────────────── */
   .ide-top { display: flex; align-items: center; gap: 4px; flex-wrap: wrap;

@@ -83,7 +83,7 @@
 }
 
 /* 정답 면 — 베이지 띠 */
-@page apg { margin-top: 21.81mm; margin-bottom: 28.19mm; }
+@page apg { margin-top: 21.81mm; margin-bottom: 23.91mm; }
 @page apg:left {
   margin-left: 23mm; margin-right: 25.25mm;
   background: linear-gradient(var(--band-a), var(--band-a))

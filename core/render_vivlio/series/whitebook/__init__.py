@@ -10,6 +10,7 @@
 `--nomeasure` 는 높이 재측정 없이 본 조판만.
 """
 import os
+import re
 
 from core.render_vivlio import bleed as bleed_mod
 from core.render_vivlio import cli, knobs, measure, probe, stage
@@ -119,32 +120,138 @@ class WhitebookSeries(Series):
 
     # ── ④ 계열 검수 ──
     def verify(self, cfg, log, report):
+        """Day 단위로 본다 — 이 교재는 **같은 발문이 400번 되풀이**된다.
+
+        ⚠ 공용 `check_sequence`/`check_gaps` 는 전권을 한 줄로 이어 놓고 찾는다.
+          발문이 겹치는 순간 위치가 뒤로 튀어 **순서 어긋남 3,692건** 같은 거짓
+          경보가 쏟아진다. 그래서 면 범위를 Day 로 좁혀 대조한다.
+        """
         pdf = cfg.out_pdf((cfg.section("verify") or {}).get("suffix", ""))
         d = data_mod.load(cfg)
         texts = probe.page_texts(pdf)
         m = render_mod.metrics_of(cfg)
 
-        seq = self._sequence(d)
-        gate.check_sequence(texts, seq, report)
-        report.note(f"대조 항목 {len(seq):,}건")
-
-        # 빈칸 유실 — 지문·보기의 밑줄 빈칸이 살아 있는가
-        items = []
-        for D in d["days"]:
-            for it in D["problems"]:
-                src = ""
-                for b in it["blocks"]:
-                    if b["t"] in ("passage", "bogi"):
-                        src += " " + _plain(b.get("paras") or b.get("items"))
-                    elif b["t"] in ("choice", "trans"):
-                        src += " " + _plain(b["body"])
-                items.append((f"{D['label']} {it['no']}", src,
-                              _plain(it["stem"])[:24]))
-        gate.check_gaps(items, texts, report)
-
+        qpages, apages = self._day_pages(d, texts)
+        self._check_day_pages(d, qpages, report)
+        self._check_content(d, texts, qpages, apages, report)
+        self._check_blanks(d, texts, qpages, report)
         self._check_slots(cfg, d, m, report)
-        self._check_day_pages(d, texts, m, report)
         return report
+
+    # ── Day 별 면 범위 ──
+    @staticmethod
+    def _day_pages(d, texts):
+        """{day: [면번호…]} 두 벌 — 문제 / 정답. 머리 라벨로 구간을 가른다."""
+        qs, ans = {}, {}
+        for i, t in enumerate(texts):
+            nt = probe.norm(t)
+            for D in d["days"]:
+                key = f"DAY{D['day']:02d}"
+                if key not in nt:
+                    continue
+                if "EXERCISE" in nt and D["day"] not in qs:
+                    qs[D["day"]] = i
+                elif "정답" in nt and D["day"] not in ans:
+                    ans[D["day"]] = i
+                break
+
+        def spans(starts, end):
+            out, ks = {}, sorted(starts, key=lambda k: starts[k])
+            for j, k in enumerate(ks):
+                nxt = starts[ks[j + 1]] if j + 1 < len(ks) else end
+                out[k] = list(range(starts[k] + 1, nxt + 1))
+            return out
+        first_ans = min(ans.values()) if ans else len(texts)
+        return spans(qs, first_ans), spans(ans, len(texts))
+
+    @staticmethod
+    def _check_day_pages(d, qpages, report):
+        """Day 하나 = 20문항 = 5면(사분면 고정). 어긋나면 계약이 깨진 것이다."""
+        want = -(-len(d["days"][0]["problems"]) // 4) if d["days"] else 0
+        bad = [(D["label"], len(qpages.get(D["day"], [])))
+               for D in d["days"] if len(qpages.get(D["day"], [])) != want]
+        if bad:
+            report.fail(f"Day 면수 이상(기대 {want}면): {bad[:6]}")
+        else:
+            report.note(f"Day {len(qpages)}개 · 각 {want}면 (사분면 고정)")
+        return bad
+
+    # ── 누락 / 자리 ──
+    @staticmethod
+    def _check_content(d, texts, qpages, apages, report):
+        """모든 글이 **제 Day, 제 면**에 있는가.
+
+        ⚠ 한 면 안의 순서는 보지 않는다 — PDF 글자 추출 순서는 조판 흐름이 아니라
+          좌표 순서(왼쪽 위 → 오른쪽 위 → …)라 사분면 배치에서는 늘 어긋나 보인다.
+          대신 **문항 N 은 그 Day 의 (N-1)//4 번째 면** 이라는 계약을 직접 본다.
+        """
+        miss, wrong, n = [], [], 0
+        for D in d["days"]:
+            pages = qpages.get(D["day"], [])
+            if not pages:
+                report.fail(f"{D['label']} 문제 면을 못 찾았다")
+                continue
+            blobs = [probe.norm(texts[p - 1]) for p in pages]
+            whole = "".join(blobs)
+            for it in D["problems"]:
+                want = (it["no"] - 1) // 4
+                for lab, t in _item_seq(it):
+                    q = probe.norm(t)
+                    if not q:
+                        continue
+                    n += 1
+                    if q not in whole:
+                        miss.append(f"{D['label']} {it['no']}번 {lab}")
+                    elif want < len(blobs) and q not in blobs[want]:
+                        wrong.append(f"{D['label']} {it['no']}번 {lab}")
+            # 정답
+            ap = apages.get(D["day"], [])
+            if not ap:
+                report.fail(f"{D['label']} 정답 면을 못 찾았다")
+                continue
+            ablob = [probe.norm(texts[p - 1]) for p in ap]
+            awhole = "".join(ablob)
+            last = 0
+            for a in D["answers"]:
+                for lab, t in _ans_seq(a):
+                    q = probe.norm(t)
+                    if not q:
+                        continue
+                    n += 1
+                    if q not in awhole:
+                        miss.append(f"{D['label']} 정답 {a['no']}번 {lab}")
+                        continue
+                    pg = next((k for k, s in enumerate(ablob) if q in s), None)
+                    if pg is not None and pg < last:
+                        wrong.append(f"{D['label']} 정답 {a['no']}번 {lab}")
+                    elif pg is not None:
+                        last = pg
+        report.note(f"대조 항목 {n:,}건 (Day·면 단위)")
+        if miss:
+            report.fail(f"누락 {len(miss)}건: {miss[:10]}")
+        if wrong:
+            report.fail(f"자리 어긋남 {len(wrong)}건: {wrong[:10]}")
+        return miss, wrong
+
+    # ── 빈칸 유실 ──
+    @staticmethod
+    def _check_blanks(d, texts, qpages, report):
+        """Day 별 빈칸 개수 — 원고와 조판이 같아야 한다."""
+        bad = []
+        for D in d["days"]:
+            pages = qpages.get(D["day"], [])
+            if not pages:
+                continue
+            src = " ".join(t for _l, t in _q_seq(D))
+            want = gate.count_gaps(src)
+            got = sum(gate.count_gaps(texts[p - 1]) for p in pages)
+            if got < want:
+                bad.append((D["label"], want, got))
+        if bad:
+            report.fail(f"빈칸 유실 {len(bad)}건(Day, 원고, PDF): {bad[:8]}")
+        else:
+            report.note("빈칸 유실 없음")
+        return bad
 
     # ── 사분면 넘침 ──
     @staticmethod
@@ -154,70 +261,47 @@ class WhitebookSeries(Series):
         if not h:
             return report.warn("문항 높이 표 없음 — `build` 로 한 번 재 둘 것")
         slot = m["slot"]
-        over = []
-        for D in d["days"]:
-            for it in D["problems"]:
-                v = h.get(f"{D['day']}-{it['no']}")
-                if v is not None and v > slot:
-                    over.append((D["label"], it["no"], v))
+        over = [(D["label"], it["no"], h[f"{D['day']}-{it['no']}"])
+                for D in d["days"] for it in D["problems"]
+                if h.get(f"{D['day']}-{it['no']}", 0) > slot]
         if over:
-            report.fail(f"사분면 넘침 {len(over)}건 (칸 {slot}mm): "
-                        f"{[(a, b, c) for a, b, c in over[:6]]}")
+            report.fail(f"사분면 넘침 {len(over)}건 (칸 {slot}mm): {over[:6]}")
         else:
-            report.note(f"사분면 여유 최대 "
-                        f"{max(h.values()):.1f}mm / {slot}mm")
+            report.note(f"사분면 여유 최대 {max(h.values()):.1f}mm / {slot}mm")
         return over
 
-    # ── Day 면수 ──
-    @staticmethod
-    def _check_day_pages(d, texts, m, report):
-        """Day 하나 = 20문항 = 5면. 어긋나면 사분면 계약이 깨진 것이다."""
-        want = -(-len(d["days"][0]["problems"]) // 4) if d["days"] else 0
-        starts = []
-        for i, t in enumerate(texts):
-            # ⚠ `probe.norm` 은 공백을 지운다 — 라벨도 같이 지워서 맞출 것.
-            nt = probe.norm(t)
-            for D in d["days"]:
-                if f"DAY{D['day']:02d}" in nt and "EXERCISE" in nt:
-                    starts.append((D["label"], i + 1))
-                    break
-        bad = [(a, b) for (a, b), (_c, e) in zip(starts, starts[1:])
-               if e - b != want]
-        if bad:
-            report.fail(f"Day 면수 이상(기대 {want}면): {bad[:6]}")
-        else:
-            report.note(f"Day 시작 면 {len(starts)}개 · 각 {want}면")
-        return bad
 
-    @staticmethod
-    def _sequence(d):
-        seq = []
-        for D in d["days"]:
-            for it in D["problems"]:
-                seq.append((f"{D['label']} {it['no']}번 발문",
-                            _plain(it["stem"])[:40]))
-                for b in it["blocks"]:
-                    if b["t"] == "passage":
-                        seq.append((f"{D['label']} {it['no']}번 지문",
-                                    _plain(b["paras"][0])[:50]))
-                    elif b["t"] == "bogi":
-                        for k, x in enumerate(b["items"]):
-                            seq.append((f"{D['label']} {it['no']}번 보기{k + 1}",
-                                        _plain(x)[:40]))
-                    elif b["t"] == "choice":
-                        seq.append((f"{D['label']} {it['no']}번 {b['mark']}",
-                                    _plain(b["body"])[:40]))
-                    elif b["t"] == "trans":
-                        seq.append((f"{D['label']} {it['no']}번 영작",
-                                    _plain(b["body"])[:40]))
-        for D in d["days"]:
-            for a in D["answers"]:
-                seq.append((f"{D['label']} 정답 {a['no']}",
-                            _plain(a["answer"])[:40]))
-                for k, x in enumerate(a["notes"]):
-                    seq.append((f"{D['label']} 정답 {a['no']} 부연{k + 1}",
-                                _plain(x)[:40]))
-        return seq
+RE_LEADMARK = re.compile(r"^\s*[∙•·]\s*")
+
+
+def _item_seq(it):
+    """문항 하나의 글 — (라벨, 글). 머리기호는 뗀다(조판이 `•` 로 바꾼다)."""
+    seq = [("발문", _plain(it["stem"]))]
+    for b in it["blocks"]:
+        if b["t"] == "passage":
+            for k, x in enumerate(b["paras"]):
+                seq.append((f"지문{k + 1}", _plain(x)))
+        elif b["t"] == "bogi":
+            for k, x in enumerate(b["items"]):
+                seq.append((f"보기{k + 1}", RE_LEADMARK.sub("", _plain(x))))
+        elif b["t"] == "choice":
+            seq.append((b["mark"], _plain(b["body"])))
+        elif b["t"] == "trans":
+            seq.append(("영작", _plain(b["body"])))
+    return seq
+
+
+def _ans_seq(a):
+    seq = [("정답", _plain(a["answer"]))]
+    for k, x in enumerate(a["notes"]):
+        seq.append((f"부연{k + 1}", RE_LEADMARK.sub("", _plain(x))))
+    return seq
+
+
+def _q_seq(D):
+    """Day 하나의 문제 글 전부(빈칸 세기용)."""
+    return [(f"{it['no']}번 {lab}", t)
+            for it in D["problems"] for lab, t in _item_seq(it)]
 
 
 def _plain(x):
