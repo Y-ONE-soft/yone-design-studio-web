@@ -43,7 +43,11 @@ import os
 
 NAME = "edits.json"
 OLD = "errata.json"          # 예전 값 표 — 처음 읽을 때 연산으로 옮긴다
-OPS = ("set", "split", "merge", "insert", "delete")
+# 글 연산 — `data` 를 읽을 때 얹는다
+TEXT_OPS = ("set", "split", "merge", "insert", "delete")
+# 디자인 연산 — **파일을 직접** 고친다(`design_ops.py`). data 에는 안 얹는다.
+DESIGN_OPS = ("style", "knob", "css")
+OPS = TEXT_OPS + DESIGN_OPS
 
 
 def path(cfg):
@@ -209,10 +213,17 @@ def write(cfg, state, log=None):
 
 
 def push(cfg, op, log=None):
-    """새 연산. **되돌린 뒤 새로 고치면 앞으로 갈 것은 잘라 낸다**(편집기 관례)."""
+    """새 연산. **되돌린 뒤 새로 고치면 앞으로 갈 것은 잘라 낸다**(편집기 관례).
+
+    디자인 연산이면 고치기 전 값을 `prev` 로 담고 **파일에 바로 얹는다.**
+    """
+    from core.render_vivlio import design_ops as dops
     st = read(cfg)
     op = dict(op)
     op.setdefault("at", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    if op.get("op") in DESIGN_OPS:
+        op.setdefault("prev", dops.current(cfg, op))
+        dops.apply(cfg, op)
     st["ops"] = st["ops"][:st["head"]] + [op]
     st["head"] = len(st["ops"])
     write(cfg, st, log)
@@ -220,23 +231,44 @@ def push(cfg, op, log=None):
 
 
 def undo(cfg, n=1, log=None):
+    """되돌리기. 디자인 연산은 **파일을 도로 쓴다**(글은 읽을 때 안 얹으면 끝)."""
+    from core.render_vivlio import design_ops as dops
     st = read(cfg)
-    st["head"] = max(0, st["head"] - n)
+    for _ in range(n):
+        if st["head"] <= 0:
+            break
+        op = st["ops"][st["head"] - 1]
+        if op.get("op") in DESIGN_OPS:
+            dops.revert(cfg, op)
+        st["head"] -= 1
     write(cfg, st, log)
     return st
 
 
 def redo(cfg, n=1, log=None):
+    from core.render_vivlio import design_ops as dops
     st = read(cfg)
-    st["head"] = min(len(st["ops"]), st["head"] + n)
+    for _ in range(n):
+        if st["head"] >= len(st["ops"]):
+            break
+        op = st["ops"][st["head"]]
+        if op.get("op") in DESIGN_OPS:
+            dops.apply(cfg, op)
+        st["head"] += 1
     write(cfg, st, log)
     return st
 
 
 def apply_all(data, state, log=None):
-    """`head` 까지 순서대로. 목록을 넣고 빼면 뒤 번호가 밀리므로 늘 처음부터."""
+    """`head` 까지 순서대로. 목록을 넣고 빼면 뒤 번호가 밀리므로 늘 처음부터.
+
+    ⚠ 디자인 연산은 **건너뛴다** — 그건 이미 `config.json`·`overrides.css` 에
+      들어가 있다. 여기서 또 얹으면 두 번 먹는다.
+    """
     ok = 0
     for op in (state.get("ops") or [])[:state.get("head", 0)]:
+        if op.get("op") in DESIGN_OPS:
+            continue
         if apply_op(data, op, log):
             ok += 1
     if log and ok:

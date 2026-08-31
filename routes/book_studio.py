@@ -422,28 +422,18 @@ def api_styles():
         except Exception:
             names = {}
         return jsonify({"styles": cfg.section("styles") or {}, "names": names})
-    styles = dict(cfg.section("styles") or {})
-    cur = dict(styles.get(sel) or {})
+    # ⚠ 파일을 직접 고치지 않는다. **같은 이력**에 연산으로 쌓아야
+    #   ⌘Z 하나로 글도 디자인도 되돌릴 수 있다(예전엔 `.bak` 으로 갈라져 있었다).
+    from core.render_vivlio import edits as _ed
+    cur = dict((cfg.section("styles") or {}).get(sel) or {})
     for k, v in props.items():
         if v in ("", None):
             cur.pop(k, None)
         else:
             cur[k] = v
-    if cur:
-        styles[sel] = cur
-    else:
-        styles.pop(sel, None)
-    # config.json 은 손으로 맞춘 파일이라 **바뀐 자리만** 갈아 끼운다
-    path = cfg.path("config.json")
-    raw = open(path, encoding="utf-8").read()
-    try:
-        out = kn.patch_text(raw, {"styles": styles})
-    except Exception:
-        data = kn.apply(cfg.data, {"styles": styles})
-        out = _json.dumps(data, ensure_ascii=False, indent=2) + "\n"
-    shutil.copy2(path, path + ".bak")
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(out)
+    _ed.push(cfg, {"op": "style", "sel": sel, "v": cur or None})
+    cfg.reload()
+    styles = cfg.section("styles") or {}
     return jsonify({"ok": True, "styles": styles})
 
 

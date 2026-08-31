@@ -237,6 +237,7 @@ def document(cfg, data, vol, fits=None, mode=None):
     if mode == "measure":
         m = metrics_of(cfg)
         o.append('<style>.grid{column-count:1;width:%.2fmm;height:auto}'
+                 '.sec-vocab .grid{width:170mm}'
                  '.blk{height:auto!important;break-before:page;'
                  'overflow:visible!important}'
                  '.sechdr{display:none}</style>'

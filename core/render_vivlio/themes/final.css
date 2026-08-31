@@ -136,12 +136,15 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 
 /* 섹션 첫 면 — 홀수라도 띠가 붙는다. 흐름 맨 앞에 높이 0 으로 심는다. */
 .sechdr { position: relative; height: 0; }
+/* ⚠ 러닝 띠와 **정확히 같은 자리**여야 한다. 짝수 면에서는 둘이 겹치는데,
+ *   1mm 라도 어긋나면 글자가 두 번 찍힌 것처럼 보인다(실제로 그랬다).
+ *   러닝 띠는 `@top-left`(= 판면 왼쪽) 에서 -7.1mm 이므로 여기도 같은 값. */
 .sechdr .band {
-  position: absolute; left: -4.00mm; top: -29.57mm; width: 190mm;
+  position: absolute; left: -7.10mm; top: -29.57mm; width: 190mm;
   margin-left: 0;
 }
 .sechdr .sq {                     /* 홀수 면에는 배경 사각형이 없다 */
-  position: absolute; left: -11.10mm; top: -29.57mm;
+  position: absolute; left: -7.10mm; top: -29.57mm;
   width: 12.75mm; height: 23.26mm; background: var(--ink);
 }
 

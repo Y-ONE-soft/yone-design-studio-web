@@ -79,6 +79,17 @@ def _studio_root():
 class BookConfig(object):
     """config.json 을 읽어 경로를 해석한 뷰. dict 처럼 `cfg["page"]["bleed"]`."""
 
+    def reload(self):
+        """`config.json` 을 다시 읽는다.
+
+        작업대가 값을 고친 **직후에** 같은 객체로 계속 일할 때 쓴다 —
+        안 그러면 방금 쓴 값을 못 보고 옛 값으로 판단한다(되돌리기가 어긋난다).
+        """
+        import json as _json
+        with open(os.path.join(self.root, "config.json"), encoding="utf-8") as f:
+            self.data = _json.load(f)
+        return self
+
     def __init__(self, data, root):
         self.data = data
         self.root = root            # config.json 이 있는 폴더 = 책 폴더
