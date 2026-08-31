@@ -22,6 +22,18 @@ CIRCLED = '①②③④⑤⑥⑦⑧⑨⑩'
 
 # ---------------------------------------------------------------- docx 읽기
 
+_OFF = ('none', '0', 'false', 'off')
+
+
+def _on(el):
+    """서식 켜짐인가 — **있다/없다로 보면 안 된다.**
+
+    한글에서 넘어온 docx 는 모든 런에 `<w:u w:val="none"/>` 를 붙여 놓는다.
+    태그 유무로 판정하면 **문서 전체가 밑줄**이 된다(화이트북에서 실제로 겪었다).
+    """
+    return el is not None and (el.get(W + 'val') or 'true').lower() not in _OFF
+
+
 def _runs(p):
     """단락 → [(text, flags)] 세그먼트. flags = {'b','u','i'} 부분집합."""
     segs = []
@@ -29,11 +41,11 @@ def _runs(p):
         rpr = r.find(W + 'rPr')
         fl = set()
         if rpr is not None:
-            if rpr.find(W + 'b') is not None:
+            if _on(rpr.find(W + 'b')):
                 fl.add('b')
-            if rpr.find(W + 'u') is not None:
+            if _on(rpr.find(W + 'u')):
                 fl.add('u')
-            if rpr.find(W + 'i') is not None:
+            if _on(rpr.find(W + 'i')):
                 fl.add('i')
         buf = []
         for n in r:

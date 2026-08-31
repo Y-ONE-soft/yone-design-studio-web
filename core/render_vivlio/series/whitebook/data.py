@@ -36,7 +36,8 @@ RE_MARK_A = re.compile(r"^\s*\[\s*정답")
 RE_BULLET = re.compile(r"^\s*[∙•·]\s*")
 RE_ARROW = re.compile(r"^\s*[→⇒]\s*")
 # 이름·머리글의 `Day 21~30` 은 교재 범위지 Day 번호가 아니다.
-RE_DAY = re.compile(r"Day\s*0*(\d+)\s*(?![~∼〜\-–])")
+# ⚠ `(?!\d)` 가 없으면 `Day 21~30` 에서 정규식이 되돌아가 "2" 를 잡는다.
+RE_DAY = re.compile(r"Day\s*0*(\d+)(?!\d)\s*(?![~∼〜\-–])")
 # 원고 앞머리의 기입란(학년 반 번 이름) — 조판에는 들어가지 않는다
 RE_NAMEROW = re.compile(r"^\s*학년.{0,20}이름")
 
@@ -197,7 +198,7 @@ def collect(cfg, log=print):
     files = sorted(f for f in os.listdir(src)
                    if f.lower().endswith(".docx") and not f.startswith("~$"))
     gate(files, f"원고 없음: {src}")
-    days, seq = {}, 0
+    days, seq = {}, {}
     for f in files:
         paras = read_paras(os.path.join(src, f))
         kind, day = _classify(paras)
@@ -206,8 +207,10 @@ def collect(cfg, log=print):
             if md:
                 day = int(md.group(1))
             else:
-                seq += 1
-                day = seq
+                # ⚠ 순서는 **갈래마다 따로** 센다 — 통째로 세면 같은 Day 의
+                #   문제·정답이 서로 다른 Day 로 갈라진다.
+                seq[kind] = seq.get(kind, 0) + 1
+                day = seq[kind]
         slot = days.setdefault(day, {})
         gate(kind not in slot,
              f"Day {day} {kind} 원고가 둘이다: {f}")

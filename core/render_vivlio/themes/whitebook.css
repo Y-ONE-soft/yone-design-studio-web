@@ -66,7 +66,7 @@
 @page qpg:left {
   margin-left: 23mm; margin-right: 25.25mm;
   background:
-    url(assets/brand.png) no-repeat 18.50mm 10.46mm / 44.13mm 5.86mm,
+    url(assets/brand.png) no-repeat 18.00mm 10.40mm / 44.60mm 6.82mm,
     linear-gradient(#fff, #fff) no-repeat 0 20.43mm / 216mm 0.353mm,
     linear-gradient(var(--band), var(--band)) no-repeat 0 0 / 216mm 23mm;
   @bottom-left { content: element(footL); width: 167.75mm;
@@ -75,7 +75,7 @@
 @page qpg:right {
   margin-left: 26mm; margin-right: 22.25mm;
   background:
-    url(assets/emblem.png) no-repeat 191.25mm 9.55mm / 15.19mm 9.40mm,
+    url(assets/emblem.png) no-repeat 190.80mm 9.10mm / 16.13mm 10.31mm,
     linear-gradient(#fff, #fff) no-repeat 0 20.43mm / 216mm 0.353mm,
     linear-gradient(var(--band), var(--band)) no-repeat 0 0 / 216mm 23mm;
   @bottom-right { content: element(footR); width: 167.75mm;
