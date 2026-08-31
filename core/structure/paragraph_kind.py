@@ -329,6 +329,21 @@ def classify_paragraphs(paras):
                 # 지문(빈칸 (A),(B) 유형)은 형태 판정(길이 상한)에서
                 # 걸러져 지문 유지 (W40 결함 4).
                 item["kind"] = "P-CONTEXT"
+            continue
+
+        # W85 (사용자 지적 2026-08-31, 성덕고2 EBS 연계 — 반복 지적):
+        # 요약문은 **지문 뒤**에 온다. 위 판정은 '발문 직후'만 봐서, 원고가
+        # 발문 → 지문 → 요약문 → 선지 순서면 요약문이 지문 스타일로 인쇄됐다.
+        # 자리(지문과 선지 사이)와 형태(한글 없는 한 문장 + 인라인 (A)/(B)
+        # 빈칸, 길이 상한)로 판정한다 — 재인쇄된 긴 지문은 형태에서 걸린다.
+        _sum_t = (item["text"] or "").strip()
+        if (prev_meaning and prev_meaning["kind"] in ("P", "P-CONTEXT")
+                and nxt and nxt["kind"] in ("C", "Ans", "AnsL")
+                and len(_sum_t) >= 30 and len(_sum_t.split()) >= 6
+                and BG.is_summary_blank_form(_sum_t)):
+            # 길이/낱말 하한 — 두 열 선지 머리("(A)   (B)")도 형태 판정을
+            # 통과한다. 요약문은 문장이다 (수능만만 9강 실측).
+            item["kind"] = "P-CONTEXT"
 
     # 본문 인라인 번호 문장 보정: P 사이에 낀 1~2개짜리 C 연쇄가 "긴 영어
     # 완결문"이면 선지가 아니라 ①~⑤ 마커가 문장 앞에 붙은 지문 단락이다
