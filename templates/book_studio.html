@@ -87,6 +87,7 @@
   .ide-f { display: flex; gap: 6px; align-items: center; }
   .ide-f input[type=color] { width: 36px; height: 26px; padding: 0; border: 0;
                              border-radius: 6px; background: none; cursor: pointer; }
+  .ide-t::placeholder { color: #5b6280; font-style: italic; }
   .ide-t { flex: 1; width: 100%; background: #12141d; border: 1px solid #333a52;
            border-radius: 7px; color: #d9def0; padding: 5px 8px; font-size: 12px;
            font-family: var(--mono); }
@@ -254,7 +255,18 @@
   var V = window.VivlioCore, viewer = null;
   var spec = [], changed = {}, refs = {}, curRef = null, editEl = null, editHtml = null;
   var tool = 'sel', scope = 'sample', spread = false, zoom = 1, pageCount = 0;
-  var curEl = null, styles = {};
+  var curEl = null, styles = {}, curPage = 1;
+
+  /** 쪽 번호. `nav` 이벤트가 넘길 때마다 오지는 않아서 지면에서도 읽는다. */
+  function drawPageNo() {
+    var st = $('ide-stage');
+    var cur = st && st.querySelector('[data-vivliostyle-page-container]:not([style*="display: none"])');
+    if (cur) {
+      var all = st.querySelectorAll('[data-vivliostyle-page-container]');
+      for (var i = 0; i < all.length; i++) if (all[i] === cur) { curPage = i + 1; break; }
+    }
+    $('ide-pageno').textContent = curPage + ' / ' + (pageCount || '–');
+  }
   var $ = function (id) { return document.getElementById(id); };
   function msg(t) { $('ide-msg').textContent = t || ''; }
   function api(u, body) {
@@ -277,12 +289,13 @@
     });
     viewer.addListener('nav', function (p) {
       if (p && p.epageCount) { pageCount = p.epageCount; }
-      var n = (p && p.epage != null) ? Math.round(p.epage) + 1 : 1;
-      $('ide-pageno').textContent = n + ' / ' + (pageCount || '–');
+      if (p && p.epage != null) curPage = Math.round(p.epage) + 1;
+      drawPageNo();
     });
     viewer.addListener('error', function (p) {
       msg('✗ ' + JSON.stringify(p && p.content).slice(0, 160));
     });
+    window.__viewer = viewer;   // 콘솔에서 상태를 보려고
     return viewer;
   }
 
@@ -340,16 +353,34 @@
   // 인디자인의 단락 스타일에 해당한다. 우리 조판은 CSS 라, 그 자리에 걸린
   // **클래스 하나를 고치면 같은 스타일이 걸린 곳이 전부** 바뀐다.
   var STYLE_PROPS = [
-    { k: 'font-size', l: '글자 크기', ph: '9pt' },
-    { k: 'line-height', l: '행간', ph: '1.5' },
-    { k: 'letter-spacing', l: '자간', ph: '-0.01em' },
-    { k: 'color', l: '글자 색', ph: '#231f20', color: true },
-    { k: 'background', l: '바탕', ph: '#f1f4f8', color: true },
-    { k: 'text-align', l: '정렬', ph: 'justify' },
-    { k: 'margin-top', l: '위 여백', ph: '2mm' },
-    { k: 'margin-bottom', l: '아래 여백', ph: '2mm' },
-    { k: 'text-indent', l: '들여쓰기', ph: '3mm' }
+    { k: 'font-size', l: '글자 크기', u: 'pt' },
+    { k: 'line-height', l: '행간' },
+    { k: 'letter-spacing', l: '자간' },
+    { k: 'color', l: '글자 색', color: true },
+    { k: 'background-color', l: '바탕', color: true },
+    { k: 'text-align', l: '정렬' },
+    { k: 'margin-top', l: '위 여백', u: 'mm' },
+    { k: 'margin-bottom', l: '아래 여백', u: 'mm' },
+    { k: 'text-indent', l: '들여쓰기', u: 'mm' }
   ];
+
+  /** 브라우저는 무엇이든 px 로 알려준다. 인쇄에 쓰는 단위로 되돌린다. */
+  function human(v, unit) {
+    v = (v == null ? '' : String(v)).trim();
+    if (!v) return '';
+    if (/^rgba?\(/.test(v)) {                       // 색 → 16진
+      var m = v.match(/[\d.]+/g) || [];
+      if (m.length >= 4 && parseFloat(m[3]) === 0) return '없음';
+      return '#' + m.slice(0, 3).map(function (x) {
+        return ('0' + (+x).toString(16)).slice(-2); }).join('');
+    }
+    var px = v.match(/^(-?[\d.]+)px$/);
+    if (px && unit === 'pt') return round2(px[1] * 0.75) + 'pt';
+    if (px && unit === 'mm') return round2(px[1] * 25.4 / 96) + 'mm';
+    if (px) return round2(px[1]) + 'px';
+    return v;
+  }
+  function round2(n) { return Math.round(n * 100) / 100; }
 
   function styleSelectors(el) {
     // 이 자리에 걸린 클래스들 — 자리표(vrefN)는 뺀다(그건 우리 표식이다)
@@ -404,18 +435,19 @@
         var row = document.createElement('div'); row.className = 'ide-row';
         var lab = document.createElement('div'); lab.className = 'ide-lab';
         var now = saved[pr.k];
+        var real = human(cs[pr.k], pr.u);
         lab.innerHTML = '<span>' + pr.l
           + (now ? '<span class="ide-dot" title="이 책에서 정한 값"></span>' : '')
-          + '</span><span class="ide-val">' + (cs[pr.k] || '') .toString().slice(0, 18)
-          + '</span>';
+          + '</span><span class="ide-val">' + real + '</span>';
         var f = document.createElement('div'); f.className = 'ide-f';
         var t = document.createElement('input');
-        t.className = 'ide-t'; t.placeholder = pr.ph; t.value = now || '';
+        t.className = 'ide-t'; t.placeholder = real || '그대로'; t.value = now || '';
         t.dataset.k = pr.k;
         f.appendChild(t);
         if (pr.color) {
           var c = document.createElement('input'); c.type = 'color';
           try { c.value = now || '#000000'; } catch (e) {}
+          try { if (/^#[0-9a-f]{6}$/i.test(real)) c.value = real; } catch (e2) {}
           c.addEventListener('change', function () { t.value = c.value; });
           f.appendChild(c);
         }
@@ -763,9 +795,12 @@
   $('ide-next').addEventListener('click', function () {
     viewer && viewer.navigateToPage(V.Navigation.NEXT);
   });
-  $('ide-scope').addEventListener('click', function () {
-    scope = scope === 'sample' ? 'full' : 'sample';
+  function setScope(v) {
+    scope = v;
     $('ide-scope').textContent = scope === 'full' ? '전권' : '견본';
+  }
+  $('ide-scope').addEventListener('click', function () {
+    setScope(scope === 'sample' ? 'full' : 'sample');
     rebuild('');
   });
   $('ide-reload').addEventListener('click', function () { rebuild(''); });
@@ -791,8 +826,17 @@
     // 자리표 번호를 찾아 그 자리로 지면을 옮긴다
     var n = null;
     for (var k in refs) if (refs[k] === ref) { n = k; break; }
-    if (n && viewer) { viewer.navigateToInternalUrl('#vref' + n); msg('그 자리로 옮겼습니다'); }
-    else msg('견본에는 그 자리가 없습니다 — 전권으로 보세요');
+    if (n && viewer) { viewer.navigateToInternalUrl('#vref' + n); msg('그 자리로 옮겼습니다'); return; }
+    if (scope === 'full') { msg('그 자리를 지면에서 못 찾았습니다'); return; }
+    if (!confirm('견본에는 그 자리가 없습니다. 전권을 펴서 찾을까요? (오래 걸립니다)')) return;
+    setScope('full');
+    rebuild('').then(function (ok) {
+      if (!ok) return;
+      for (var k2 in refs) if (refs[k2] === ref) {
+        viewer.navigateToInternalUrl('#vref' + k2); msg('그 자리로 옮겼습니다'); return;
+      }
+      msg('전권에도 그 자리가 없습니다');
+    });
   });
   $('ide-pal-t').addEventListener('click', function () {
     $('ide-right').classList.toggle('hide');
