@@ -27,7 +27,8 @@ python3 render.py passage_250923.json meta.json build/out.pdf
 | 본문 기준선 | 76.0 / 100.0 / 124.0pt | 76.0 / 100.0 / 124.0 |
 | 위 주석 | 66.6pt | 66.6 |
 | 아래 주석 | 84.6pt | 84.7 |
-| 판형 | 148×210mm | 148×210mm |
+| MediaBox | 148×210mm (도련 없음) | **154×216mm** (도련 3mm) |
+| TrimBox | = MediaBox | **148×210mm** |
 
 ## 이 파일럿이 남긴 실측 상수
 
@@ -39,6 +40,8 @@ python3 render.py passage_250923.json meta.json build/out.pdf
 --dn-dy  6.8pt     아래 주석 (원본 baseline +8.6pt)
 자간     -0.022em  이 값에서 원본과 행바꿈이 일치한다
 본문 top 24mm − 7.7pt   InDesign 첫 행 '어센트' 기준 보정
+도련     사방 3mm   판면 좌표는 재단선 기준으로 쓰고 .trim 을 3mm 민다
+               띠는 .pg 기준으로 154mm 폭 — 판면 기준이면 흰 줄이 생긴다
 색       #231F20 본문 · #224E8E 파랑 · #D2232A 빨강 · #A7A9AC 주석
 띠 #EAE6DC · 배지 #54669E · 칩 #869CD0 · 형광펜 #FDF598
 ```
