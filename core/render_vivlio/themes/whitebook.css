@@ -53,7 +53,7 @@
 /* ------------------------------------------------------------------ 판형 */
 @page {
   size: 216mm 303mm;
-  margin: 33mm 22.25mm 24mm 26mm;
+  margin: 33.09mm 22.25mm 23.91mm 26mm;
   @bottom-left-corner  { content: none; }
   @bottom-right-corner { content: none; }
   @bottom-left  { content: none; }
@@ -118,6 +118,7 @@ u { text-decoration: underline; text-decoration-thickness: 0.475pt;
 /* 한글은 로마자보다 한 호 작다(인디자인 합성 서체) */
 .q .ch .kr, .q .tr .kr, .q .bi .kr, .q .pbox .kr {
   font-family: Noto; font-size: 8.77pt; font-weight: 400;
+  letter-spacing: -0.0402em;
 }
 /* 빈칸 표기(`__________` · `[       ]`)는 본문 서체가 아니다 */
 .gapx { font-family: Noto; font-size: 8.63pt; font-weight: 400; }
@@ -126,16 +127,17 @@ u { text-decoration: underline; text-decoration-thickness: 0.475pt;
 .footL { position: running(footL); }
 .footR { position: running(footR); }
 .footL, .footR {
-  font: 6pt/1 Noto; color: var(--ink); white-space: pre; padding-top: 7.06mm;
+  font: 6pt/1 Noto; color: var(--ink); white-space: pre; padding-top: 6.80mm;
 }
 .footL { text-align: left;  margin-left: -7.11mm; }
 .footR { text-align: right; margin-right: -6.36mm; }
 .footL .bar, .footR .bar { font-size: 7pt; }
 .footL .bar { color: var(--bar-l); }
 .footR .bar { color: var(--bar-r); }
-.footL .lb::after, .footR .lb::after { content: "   "; }
-.footL .bar::before, .footR .bar::before { content: ""; }
-.footL .bar::after, .footR .bar::after { content: "  "; }
+.footR .lb::after { content: "     "; }
+.footR .bar::after { content: "    "; }
+.footL .pg::after  { content: "   "; font-size: 7pt; }
+.footL .bar::after { content: "  "; }
 .footL .pg, .footR .pg { color: var(--pgnum); }
 .footL .pg::before, .footR .pg::before { content: counter(page); }
 .footL .lb, .footL .pg, .footR .lb, .footR .pg { font-size: 6pt; }
@@ -151,17 +153,17 @@ u { text-decoration: underline; text-decoration-thickness: 0.475pt;
   box-shadow: 0 0.67mm 0 0 var(--pansh);
 }
 .dayhdr .tab {
-  left: -4.25mm; top: -22.40mm; width: 34.1mm; height: 14.1mm;
+  left: -4.25mm; top: -22.61mm; width: 34.1mm; height: 14.1mm;
   background: var(--teal); border-radius: 1mm 7.05mm 7.05mm 1mm;
   box-shadow: 0.4mm 0.42mm 0 0 var(--navy);
-  text-align: center; white-space: nowrap;
+  text-align: left; padding-left: 4.1mm; white-space: nowrap;
 }
 .dayhdr .tab .w { font: 700 12pt/14.1mm Elice; color: var(--green);
                   letter-spacing: 0.08em; }
 .dayhdr .tab .n { font: 24pt/14.1mm Ghana; color: #fff;
                   vertical-align: -1.05mm; }
 .dayhdr .ttl {
-  left: 30mm; top: -22.35mm; width: 120mm; height: 14.1mm;
+  left: 33mm; top: -21.39mm; width: 120mm; height: 14.1mm;
   font: 500 18pt/14.1mm Neolli; color: var(--ink); white-space: nowrap;
 }
 
@@ -187,6 +189,7 @@ u { text-decoration: underline; text-decoration-thickness: 0.475pt;
 
 .q .head {
   font: 9pt/5.14mm Elice, Noto; padding-left: 8mm; text-indent: -8mm;
+  letter-spacing: -0.0254em;
 }
 .q .head .no {
   font: 700 11pt/5.14mm Neolli; color: var(--teal);
@@ -194,16 +197,19 @@ u { text-decoration: underline; text-decoration-thickness: 0.475pt;
   vertical-align: -0.57mm;
 }
 .q .ch {
-  margin-top: 1.0mm; padding-left: 4.5mm; text-indent: -4.5mm;
+  margin-top: 0.32mm; padding-left: 4.5mm; text-indent: -4.5mm;
   text-align: justify; font: 9.21pt/4.94mm Minion, Noto;
+  letter-spacing: -0.0194em;
 }
-.q .ch .m { font: 9.26pt/4.94mm Noto; }
+.q .ch .m { font: 9.26pt/4.94mm Noto; vertical-align: -0.37mm;
+            letter-spacing: 0; }
 .q .tr {
-  margin-top: 0.75mm; padding-left: 4.5mm; text-indent: -4.5mm;
+  margin-top: 0.07mm; padding-left: 4.5mm; text-indent: -4.5mm;
   text-align: justify; font: 9.21pt/4.94mm Minion, Noto;
+  letter-spacing: -0.0194em;
 }
-.q .tr .ar { font: 8.77pt/4.94mm Noto; }
-.q .head + .ch, .q .head + .tr { margin-top: 6.4mm; }
+.q .tr .ar { font: 8.77pt/4.94mm Noto; letter-spacing: 0; }
+.q .head + .ch, .q .head + .tr { margin-top: 4.32mm; }
 
 .q .bogi, .q .pbox {
   margin-top: 5.6mm; border: 0.5pt solid var(--boxline);
@@ -212,11 +218,13 @@ u { text-decoration: underline; text-decoration-thickness: 0.475pt;
 .q .bogi .bt { font: 700 7.67pt/4.5mm Elice; margin-bottom: 0.9mm; }
 .q .bogi .bi {
   font: 600 9.21pt/4.5mm Minion, Noto; text-indent: 0;
+  letter-spacing: -0.0218em;
 }
 .q .bogi .bi + .bi { margin-top: 0.18mm; }
 .q .bogi .bu { font: 100 10pt/4.5mm Noto; }
 .q .pbox p {
   font: 600 9.21pt/4.59mm Minion, Noto; text-align: justify;
+  letter-spacing: -0.0218em;
 }
 .q .bogi + .ch, .q .pbox + .ch { margin-top: 5.9mm; }
 
@@ -226,6 +234,7 @@ u { text-decoration: underline; text-decoration-thickness: 0.475pt;
 .a:first-child { margin-top: 0; }
 .ahead {
   font: 500 8pt/4.41mm Noto, Minion; padding-left: 6mm; text-indent: -6mm;
+  letter-spacing: -0.0284em;
 }
 .ahead .no {
   font: 700 9pt/4.41mm Noto; color: var(--ans-no);
@@ -234,5 +243,6 @@ u { text-decoration: underline; text-decoration-thickness: 0.475pt;
 .note {
   margin-top: 1.56mm; padding-left: 10mm; text-indent: -4.5mm;
   font: 7pt/3.88mm Noto, Minion; color: var(--ans-nt);
+  letter-spacing: -0.0258em;
 }
 .note + .note { margin-top: 0; }
