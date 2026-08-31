@@ -194,12 +194,12 @@ def hdr_ans(no, title):
 
 def render_vocab(unit):
     u = ref_of(unit)
-    o = ['<div class="vunit">']
+    o = [f'<div{_mark(u, "vunit")}>']
     o.append('<div><span'
              + _mark(u and u + '.label', 'chip')
              + f'>{html.escape(unit["label"])}</span></div>')
     o.append('<div class="rule"></div>')
-    o.append('<div class="pbox">')
+    o.append(f'<div{_mark(u and u + ".paras", "pbox")}>')
     if unit['title']:
         o.append(f'<p{_mark(u and u + ".title")}>{inl(unit["title"])}</p>')
     o.append(paras_html(unit['paras'], ref=u and u + '.paras'))
@@ -227,7 +227,7 @@ def render_vocab(unit):
 
 def render_question(item, style=''):
     q = ref_of(item)
-    o = [f'<div class="q"{style}>']
+    o = [f'<div{_mark(q, "q")}{style}>']
     o.append(f'<p{_mark(q and q + ".stem", "head")}>'
              f'<span class="no">{item["no"]:02d}</span>'
              f'{inl(item["stem"])}</p>')
@@ -235,7 +235,7 @@ def render_question(item, style=''):
         t = b['t']
         br = f'{q}.blocks.{bi}' if q else ''
         if t == 'passage':
-            o.append('<div class="pbox">'
+            o.append(f'<div{_mark(br and br + ".paras", "pbox")}>'
                      + paras_html(b['paras'], blank=True,
                                   ref=br and br + '.paras')
                      + '</div>')

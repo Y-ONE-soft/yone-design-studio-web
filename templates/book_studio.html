@@ -874,8 +874,23 @@
     }
     return e;
   }
+  /** 실시간 규칙이 걸 **화면용 선택자**.
+   *
+   *  ⚠ 저장용 선택자(`[data-ref="…"]`)를 그대로 쓰면 **아무것도 안 잡힌다.**
+   *    `data-ref` 는 조판할 때만 있고 결과 DOM 에는 안 남기 때문이다(그래서
+   *    저장하면 잘 되는데 미리보기만 안 바뀌었다). 결과에 남는 것은 `class`
+   *    뿐이라, 그 자리에 붙은 `vrefN` 을 쓴다.
+   */
+  function liveSel() {
+    if (styleTarget) return styleTarget;
+    if (!curEl) return '';
+    var m = (typeof curEl.className === 'string')
+      ? curEl.className.match(/(?:^|\s)(vref\d+)(?:\s|$)/) : null;
+    return m ? '.' + m[1] : '';
+  }
+
   function live() {
-    var sel = targetSel(); if (!sel) return;
+    var sel = liveSel(); if (!sel) return;
     var props = readPanels(), body = [];
     for (var k in props) {
       if (props[k]) body.push('  ' + k + ': ' + props[k] + ' !important;');
@@ -883,6 +898,7 @@
     var e = liveStyleEl();
     if (e) e.textContent = body.length ? sel + ' {\n' + body.join('\n') + '\n}\n' : '';
     msg('미리 보는 중 — 잠시 뒤 정확한 판으로 다시 조판합니다');
+    if (!targetSel()) return;
     clearTimeout(liveTimer);
     liveTimer = setTimeout(saveStyle, 900);
   }
