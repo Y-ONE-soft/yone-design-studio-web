@@ -118,8 +118,18 @@ def cut(parts, want):
         at = hay.find(need[:30])
     if at < 0:
         return parts
-    end = min(len(hay), at + len(need))
+    # 끝은 길이로 재지 않고 **지문 끝머리를 다시 찾아** 잡는다. 완성본과 원고가
+    # 낱말 한둘 다르면(개정판) 길이로 잡은 끝이 문장 중간에서 잘린다.
+    tail = hay.rfind(need[-40:], at) if len(need) >= 40 else -1
+    end = tail + len(need[-40:]) if tail >= 0 else min(len(hay), at + len(need))
+    end = max(end, at + 1)
     a, b = idx[at], idx[end - 1] + 1
+    # 글자만으로 잡은 경계는 **문장부호를 잘라 먹는다** — 첫 따옴표와 마지막
+    # 마침표가 그렇다. 띄어쓰기를 만날 때까지 양쪽으로 넓힌다.
+    while a > 0 and not P[a - 1].isspace() and not _LETTERS.match(P[a - 1].lower()):
+        a -= 1
+    while b < len(P) and not P[b].isspace() and not _LETTERS.match(P[b].lower()):
+        b += 1
     out, pos = [], 0
     for t, blank in parts:
         s, e = pos, pos + len(t)

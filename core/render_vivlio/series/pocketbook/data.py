@@ -24,6 +24,12 @@ def _flatten(paras):
     return _flatten_paras(paras)
 
 
+# 분석본에만 있고 포켓북에는 없는 것들 — 옮길 때 버린다.
+#   `snum` = 문장 번호(① ② …). 분석본은 문장마다 번호를 달지만 포켓북 지문은
+#   한 덩이로 이어지므로 번호가 남으면 본문에 숫자가 섞여 보인다.
+_DROP_MARKS = {"snum"}
+
+
 def _flatten_paras(paras):
     """문단 목록 → 런 하나짜리 흐름. 문단 사이에는 공백을 넣는다.
 
@@ -33,7 +39,7 @@ def _flatten_paras(paras):
     for i, p in enumerate(paras or ()):
         if i:
             out.append({"t": " ", "mark": None, "hl": None, "ruby": None})
-        out.extend(p["runs"])
+        out.extend(r for r in p["runs"] if r.get("mark") not in _DROP_MARKS)
     return out
 
 
