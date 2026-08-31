@@ -265,7 +265,7 @@ class PocketbookSeries(Series):
             log("■ 암기 TEST 는 수확본에 이미 있다 — 리뷰테스트 원고는 건너뛴다")
             return rows
         return pmemtest.attach(rows, srcs, log,
-                               place=opt.get("memtest_place", "after"))
+                               place=opt.get("memtest_place", "auto"))
 
     @staticmethod
     def _pick(corpus, opt, log):
@@ -474,7 +474,15 @@ class PocketbookSeries(Series):
         fl, tb = M["flow"], M["topic"]
         for kind, box_h, mk in (("flow", fl[3], self._flow_probe),
                                 ("topic", tb[3], self._topic_probe)):
-            pages = [mk(r, M) for r in pas]
+            # ⚠ 빈 항목은 잉크가 없어 측정에서 **면이 통째로 건너뛰어진다**.
+            #   전체 목록으로 인덱스를 매기면 높이가 밀려 엉뚱한 지문에 붙는다.
+            if kind == "flow":
+                subset = [r for r in pas if r.get("flownote")]
+            else:
+                subset = [r for r in pas if r.get("topic") or r.get("summary")]
+            if not subset:
+                continue
+            pages = [mk(r, M) for r in subset]
             path = os.path.join(build_dir, "_measure_%s.html" % kind)
             with open(path, "w", encoding="utf-8") as f:
                 f.write('<!doctype html><html><head><meta charset="utf-8">'
@@ -484,17 +492,17 @@ class PocketbookSeries(Series):
                         % (M["page_w"] + 2 * M["bleed"], "".join(pages)))
             h = measure.measure(path,
                                 os.path.join(build_dir, "_measure_%s.pdf" % kind),
-                                [str(i) for i in range(len(pas))], 10.0, 690.0,
-                                log=log)
+                                [str(i) for i in range(len(subset))], 10.0,
+                                690.0, log=log)
             n = 0
-            for i, r in enumerate(pas):
+            for i, r in enumerate(subset):
                 got = h.get(str(i), 0.0)
                 if got > box_h - 1.0:
                     r[kind + "_scale"] = max(0.72,
                                              round((box_h - 1.0) / got, 3))
                     n += 1
             log("■ %s 조정 %d/%d" % ("플로우노트" if kind == "flow" else "주제/요약",
-                                     n, len(pas)))
+                                     n, len(subset)))
 
     @staticmethod
     def _flow_probe(r, M):

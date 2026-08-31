@@ -397,40 +397,78 @@ def find(entries, text):
     return best if score >= MATCH_MIN else None
 
 
-def attach(rows, sources, log=None, place="after"):
+def _pages(row, body):
+    """한 지문의 암기 TEST 두 면. **문제면과 정답면은 같은 표기를 쓴다** —
+    빈칸·주황은 `data.format_memtest()` 가 `answer` 로 갈라 만든다. 정답을 두 번
+    수확하면 둘 다 정답이 보이는 사고가 난다(예전에 그랬다)."""
+    key = row.get("key") or row.get("pno") or row.get("label") or ""
+    return [{"kind": "memtest", "answer": ans, "key": key,
+             "category": row.get("category") or "",
+             "body_runs": [{"t": body}]}
+            for ans in (False, True)]
+
+
+def _runs(rows):
+    """지문 목록 → 계열(kind)이 같은 이어진 묶음. 완성본의 '단원'이 이것이다.
+
+    코퍼스는 지문마다 `mock`(모의고사) / `label`(교과서·EBS)을 달고 있고,
+    완성 포켓북은 그 경계에서 **암기 TEST 번호를 1부터 다시** 매긴다(실측:
+    강동1 교과서 1~154 · 모의고사 1~1093).
+    """
+    out = []
+    for r in rows:
+        k = r.get("kind") or ""
+        if out and out[-1][0] == k:
+            out[-1][1].append(r)
+        else:
+            out.append((k, [r]))
+    return out
+
+
+def attach(rows, sources, log=None, place="auto"):
     """지문 목록에 암기 TEST 면을 끼워 넣는다.
 
-    `place="after"` 는 지문 다음에 문제·정답 두 면(모의고사 포켓북 관행),
-    `place="end"` 는 책 끝에 몰아 놓는다(교과서 포켓북이 그렇게 돼 있다).
-    번호는 어느 쪽이든 **책 안에서 1부터 이어서** 매긴다.
+    자리는 완성본을 따른다(강동1·명일2·성덕1 실측, 셋이 같다).
+
+        auto     모의고사는 지문 바로 뒤에 두 면, 교과서는 그 단원 끝에 몰아서
+        after    언제나 지문 바로 뒤
+        section  언제나 단원 끝
+        end      책 맨 뒤
+
+    번호는 단원마다 1부터 이어 매긴다 — 한 면이 곧 한 지문이고, 학생은 그 면
+    안에서 번호를 찾는다.
     """
     log = log or (lambda _m: None)
     entries = read(sources, log)
     if not entries:
         log("■ 리뷰테스트 원고에서 읽어 낸 지문이 없다")
         return rows
-    out, tail, no, hit, miss = [], [], 1, 0, []
-    for row in rows:
-        out.append(row)
-        if row.get("kind") == "memtest":
-            continue
-        text = _row_text(row)
-        e = find(entries, text)
-        if e is None:
-            miss.append(row.get("key") or row.get("label") or "?")
-            continue
-        parts = cut(e["parts"], text)
-        body, no = render(parts, no)
-        key = row.get("key") or row.get("pno") or row.get("label") or ""
-        pages = [{"kind": "memtest", "answer": ans, "key": key,
-                  "category": row.get("category") or "",
-                  "body_runs": [{"t": body}]}
-                 for ans in (False, True)]
-        (tail if place == "end" else out).extend(pages)
-        hit += 1
-    out += tail
+    out, book_tail, hit, miss, total = [], [], 0, [], 0
+    for kind, group in _runs(rows):
+        no, sect_tail = 1, []
+        for row in group:
+            out.append(row)
+            if kind == "memtest":
+                continue
+            text = _row_text(row)
+            e = find(entries, text)
+            if e is None:
+                miss.append(row.get("key") or row.get("label") or "?")
+                continue
+            body, no = render(cut(e["parts"], text), no)
+            pages = _pages(row, body)
+            hit += 1
+            if place == "end":
+                book_tail += pages
+            elif place == "after" or (place == "auto" and kind == "mock"):
+                out += pages
+            else:
+                sect_tail += pages
+        total += no - 1
+        out += sect_tail
+    out += book_tail
     log("■ 암기 TEST — 지문 %d개에 붙였다(빈칸 %d개, 원고 %d지문)"
-        % (hit, no - 1, len(entries)))
+        % (hit, total, len(entries)))
     if miss:
         log("  [암기TEST 없음] %d지문 — %s" % (len(miss), ", ".join(miss[:12])))
     return out
