@@ -39,7 +39,7 @@ DEFAULT_METRICS = {
 RE_ITEM = re.compile(r"^\((?P<m>[A-Z])\)\s*")
 # 측정용 면 높이 — 아주 길게 잡아 **한 지문이 절대 쪼개지지 않게** 한다.
 # (쪼개지면 면 수 ≠ 지문 수가 되어 측정이 통째로 실패한다.)
-MEASURE_PAGE_H = 1200.0
+MEASURE_PAGE_H = 500.0
 NBSP = " "
 
 

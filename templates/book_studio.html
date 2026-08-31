@@ -263,6 +263,12 @@
       <details class="ide-pal" open><summary>단락</summary>
         <div class="ide-in" id="pal-para"></div>
       </details>
+      <details class="ide-pal"><summary>단락 옵션</summary>
+        <div class="ide-in" id="pal-paraopt">
+          <div class="ide-hint">인디자인의 단락 옵션에 해당합니다 —
+            글머리표·자동 번호, 단락 경계선, 드롭캡, 여러 단.</div>
+        </div>
+      </details>
       <details class="ide-pal"><summary>문자 스타일</summary>
         <div class="ide-in" id="pal-cstyle">
           <div class="ide-hint">고른 <b>글자</b>에 이름 붙인 서식을 겁니다.
@@ -851,6 +857,7 @@
     drawOne('pal-para', PARA_PROPS);
     drawStyleList();
     drawCharStyles();
+    drawParaOpts();
   }
 
   function drawOne(hostId, props) {
@@ -995,6 +1002,109 @@
           if (ok) msg('✓ 반영했습니다');
         });
       });
+  }
+
+  // ── 단락 옵션 (글머리표·경계선·드롭캡·여러 단) ──────────
+  //
+  // 인디자인의 단락 옵션이다. CSS 로는 여러 속성을 한꺼번에 걸어야 해서
+  // (`::before` · `::first-letter` 같은 **가상 요소**까지), 값 한 줄짜리
+  // 문자·단락 패널과 달리 **묶음으로** 건다.
+  //
+  // 일곱 가지가 조판에 되는지는 실측으로 확인했다 —
+  // 표 · 자동 번호 · 글머리표 · 단락 경계선 · 드롭캡 · 세로쓰기 · 각주 · 여러 단.
+  var PARA_OPTS = [
+    { id: 'num', l: '자동 번호',
+      hint: '1. 2. 3. — 원고에 번호를 적지 않아도 조판이 매깁니다',
+      on: { base: { 'counter-increment': 'p-n', 'text-indent': '-6mm',
+                    'padding-left': '6mm', 'list-style': 'none' },
+            before: { content: 'counter(p-n) ". "', 'font-weight': '700' } },
+      off: { base: { 'counter-increment': '', 'text-indent': '',
+                     'padding-left': '', 'list-style': '' },
+             before: { content: '' } } },
+    { id: 'bullet', l: '글머리표',
+      hint: '▪ 로 시작합니다',
+      on: { base: { 'text-indent': '-4mm', 'padding-left': '4mm',
+                    'list-style': 'none' },
+            before: { content: '"▪ "' } },
+      off: { base: { 'text-indent': '', 'padding-left': '', 'list-style': '' },
+             before: { content: '' } } },
+    { id: 'rule', l: '단락 경계선',
+      hint: '단락 위아래에 괘선을 붙입니다',
+      on: { base: { 'border-top': '1.2pt solid currentColor',
+                    'border-bottom': '0.4pt solid currentColor',
+                    'padding-top': '1mm', 'padding-bottom': '1mm' } },
+      off: { base: { 'border-top': '', 'border-bottom': '',
+                     'padding-top': '', 'padding-bottom': '' } } },
+    { id: 'drop', l: '드롭캡',
+      hint: '첫 글자를 크게 내려앉힙니다',
+      on: { first: { float: 'left', 'font-size': '22pt', 'line-height': '0.8',
+                     'padding-right': '1mm' } },
+      off: { first: { float: '', 'font-size': '', 'line-height': '',
+                      'padding-right': '' } } },
+    { id: 'cols', l: '2단으로',
+      hint: '이 덩어리 안에서 글을 두 단으로 흘립니다',
+      on: { base: { 'column-count': '2', 'column-gap': '4mm' } },
+      off: { base: { 'column-count': '', 'column-gap': '' } } },
+    { id: 'vert', l: '세로쓰기',
+      hint: '글이 세로로 흐릅니다',
+      on: { base: { 'writing-mode': 'vertical-rl' } },
+      off: { base: { 'writing-mode': '' } } }
+  ];
+
+  function drawParaOpts() {
+    var host = $('pal-paraopt'); if (!host) return;
+    host.innerHTML = '';
+    var sel = targetSel();
+    if (!sel) {
+      host.innerHTML = '<div class="ide-hint">지면에서 단락을 고르세요.</div>';
+      return;
+    }
+    PARA_OPTS.forEach(function (o) {
+      var row = document.createElement('div'); row.className = 'ide-row';
+      var on = optIsOn(sel, o);
+      var b = document.createElement('button');
+      b.className = 'ide-b' + (on ? ' on' : '');
+      b.style.width = '100%'; b.textContent = (on ? '✓ ' : '') + o.l;
+      b.onclick = function () { toggleOpt(sel, o, !on); };
+      var h = document.createElement('div');
+      h.className = 'ide-hint'; h.textContent = o.hint;
+      row.appendChild(b); row.appendChild(h);
+      host.appendChild(row);
+    });
+  }
+
+  function optIsOn(sel, o) {
+    var want = o.on.base || o.on.before || o.on.first;
+    var where = o.on.base ? sel : (o.on.before ? sel + '::before'
+                                               : sel + '::first-letter');
+    var have = styles[where] || {};
+    for (var k in want) { if (have[k] !== want[k]) return false; }
+    return true;
+  }
+
+  /** 켜고 끄기 — 여러 선택자에 걸쳐 있어 차례로 저장한다. */
+  function toggleOpt(sel, o, on) {
+    var spec = on ? o.on : o.off;
+    var jobs = [];
+    if (spec.base) jobs.push([sel, spec.base]);
+    if (spec.before) jobs.push([sel + '::before', spec.before]);
+    if (spec.first) jobs.push([sel + '::first-letter', spec.first]);
+    msg((on ? '켜는' : '끄는') + ' 중…');
+    (function step(i) {
+      if (i >= jobs.length) {
+        rebuild('').then(function (ok) {
+          if (ok) { msg('✓ ' + o.l + (on ? ' 켬' : ' 끔')); drawParaOpts(); }
+        });
+        return;
+      }
+      api('/api/book-studio/styles',
+          { b: key, selector: jobs[i][0], props: jobs[i][1] })
+        .then(function (d) {
+          if (d.error) { msg('✗ ' + d.error); return; }
+          styles = d.styles || {};
+          step(i + 1);
+        });
+    })(0);
   }
 
   // ── 문자 스타일 ─────────────────────────────────────────
