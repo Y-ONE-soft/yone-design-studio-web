@@ -105,7 +105,10 @@
 
 /* ------------------------------------------------------------------ 기본 */
 * { margin: 0; padding: 0; box-sizing: border-box; }
-html { font: 8.5pt/4.235mm Noto, sans-serif; color: var(--ink); }
+/* 자간 −40/1000 em. 완성본 55줄 최소제곱 실측(잔차 중앙 0.000mm) —
+ * 인디자인 단락스타일의 트래킹이다. 장평 모델로 보면 잔차가 6배 커진다. */
+html { font: 8.5pt/1.4123 Noto, sans-serif; color: var(--ink);
+       letter-spacing: -0.04em; }
 body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 
 .art { page: art; break-after: page; height: 240mm; }
@@ -173,9 +176,13 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 .footR .pg::before { content: counter(page); }
 
 /* --------------------------------------------------------------- 지면 격자 */
-.grid { column-count: 2; column-gap: var(--colgap); column-fill: auto;
-        height: var(--bodyh); }
-.blk { height: var(--slot); break-inside: avoid; overflow: hidden; }
+/* ⚠ `.grid` 에 **height 를 주면 안 된다.** 고정 높이 상자가 되어 면으로 쪼개지지
+ *   않고 세 번째·네 번째 단이 판면 밖으로 흘러 나간다(실증: 문장삽입 21지문이
+ *   한 면에 가로로 늘어섰다). 단 높이는 `@page` 여백이 정한다. */
+.grid { column-count: 2; column-gap: var(--colgap); column-fill: auto; }
+/* 넘치는 내용을 **자르지 않는다** — 잘라 내면 유실이 조용해진다.
+ * 칸을 넘는 지문은 빌드의 축소 패스가 활자를 줄여 담고, 그래도 넘으면 검수가 잡는다. */
+.blk { height: var(--slot); break-inside: avoid; }
 .sec-grammar .blk, .sec-writing .blk { height: var(--bodyh); }
 
 .blk > h3 {
@@ -219,11 +226,11 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 .vcell { padding: 0; }
 .vpair .r .vcell { padding: 2.43mm 4.00mm 4.00mm; }
 .vpair .l .vcell { padding: 2.43mm 0 4.00mm; }
-.vp { text-align: justify; line-height: 7.06mm; }
+.vp { text-align: justify; line-height: 2.3656; }
 .vsum { margin-top: 5.60mm; }
-.vsum .hd { font: 700 8.5pt/7.06mm Noto; letter-spacing: 0.1em; }
-.sec-vocab .grid { column-count: 1; height: auto; }
-.blk-vocab { height: auto; overflow: visible; }
+.vsum .hd { font: 700 8.5pt/2.3656 Noto; letter-spacing: 0.1em; }
+.sec-vocab .grid { column-count: 1; }
+.blk-vocab { height: auto; }
 .blk-vocab + .blk-vocab { break-before: page; }
 
 /* 빈칸 — 첫 글자만 굵게 보이고 나머지 길이만큼 밑줄 */
@@ -235,16 +242,16 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 .ansv { font-weight: 700; }
 
 /* ------------------------------------------------------- ④ 어법 수정 */
-.sec-grammar .body { text-align: justify; line-height: 9.52mm; }
+.sec-grammar .body { text-align: justify; line-height: 3.1748; }
 .sec-grammar .g { font-weight: 700; }
 
 /* ----------------------------------------------------- ⑤ 서술형 영작 */
 .wpair { margin-bottom: 17.85mm; }
 .wpair:last-child { margin-bottom: 0; }
-.wkor { font: 400 8pt/4.235mm Noto; text-align: justify; }
+.wkor { font: 400 8pt/1.4123 Noto; text-align: justify; }
 .wcho {
   background: var(--choice); margin-top: 1.60mm;
   padding: 1.60mm 2.20mm 1.80mm 3.20mm; margin-left: 1.00mm;
   margin-right: -1.00mm;
-  font: 500 8pt/4.235mm Noto; text-align: justify;
+  font: 500 8pt/1.4123 Noto; text-align: justify;
 }

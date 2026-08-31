@@ -288,7 +288,12 @@ class _Scan(object):
             self.ws()
             if self.s[self.i] == "}":
                 self.i += 1
-                self.spans[path + ".{}"] = (start, start, self.i)
+                # ⚠ 루트는 `path` 가 빈 문자열이라 그냥 이으면 `".{}"` 가 된다.
+                #   그래서 **최상위에 새 키를 넣을 자리**를 못 찾아, config 를
+                #   통째로 다시 쓰다가 손으로 맞춘 모양(빈 줄·한 줄짜리 객체)을
+                #   다 잃었다.
+                self.spans[(path + ".{}") if path else "{}"] = (
+                    start, start, self.i)
                 return
             kstart = self.i
             key = self.string()

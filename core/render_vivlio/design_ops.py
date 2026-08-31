@@ -72,9 +72,13 @@ def put(cfg, op, value):
             st[op["sel"]] = value
         else:
             st.pop(op["sel"], None)
-        _write_cfg(cfg, {"styles": st})
+        # ⚠ 다 지웠으면 **절 자체를 없앤다.** 빈 `"styles": {}` 를 남기면
+        #   되돌린 뒤에도 config 가 원래와 달라, 회귀 대조가 시끄러워진다.
+        _write_cfg(cfg, {"styles": st if st else None})
     elif kind == "knob":
         _write_cfg(cfg, {op["key"]: value})
+        if value is None:
+            _drop_empty_parents(cfg, op["key"])
     elif kind == "css":
         p = cfg.path("overrides.css")
         if value is None:
@@ -88,6 +92,26 @@ def put(cfg, op, value):
         cfg.reload()
     except Exception:
         pass
+
+
+def _drop_empty_parents(cfg, key):
+    """지운 뒤 **빈 껍데기로 남은 부모 절**을 걷어낸다.
+
+    ⚠ 블랙북에는 `palette` 절이 아예 없다(색이 테마 CSS 에 있다). 그런 책에서
+      색을 한 번 바꿨다 되돌리면 `"palette": {}` 가 남아, config 가 원래와
+      달라진다 — 되돌렸는데 안 돌아온 것처럼 보인다.
+    """
+    from core.render_vivlio import knobs as kn
+    parts = key.split(".")
+    while len(parts) > 1:
+        parts.pop()
+        path = ".".join(parts)
+        cfg.reload()
+        v = kn.get(cfg.data, path)
+        if isinstance(v, dict) and not v:
+            _write_cfg(cfg, {path: None})
+        else:
+            break
 
 
 def apply(cfg, op):

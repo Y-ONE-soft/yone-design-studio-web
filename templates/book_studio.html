@@ -1449,11 +1449,14 @@
       if (h.error) { msg('✗ ' + h.error); return null; }
       setHist(h);
       $('pal-hist').innerHTML = (h.ops || []).length
-        ? h.ops.slice().reverse().map(function (o) {
+        ? ('<div class="ide-hint" style="margin-bottom:6px">글도 디자인도 '
+           + '<b>한 이력</b>입니다 — ⌘Z 하나로 되돌아갑니다.</div>'
+           + h.ops.slice().reverse().map(function (o) {
+            var what = o.design ? (o.what || '') : kindName(o.ref);
             return '<div class="' + (o.applied ? '' : 'off') + '">'
-              + (o.i + 1) + '. ' + o.op + ' · ' + kindName(o.ref)
+              + (o.i + 1) + '. <b>' + (o.label || o.op) + '</b> · ' + what
               + ' <span style="opacity:.5">' + (o.at || '').slice(5, 16) + '</span></div>';
-          }).join('')
+          }).join(''))
         : '<div class="ide-hint">아직 고친 것이 없습니다.</div>';
       return h;
     });

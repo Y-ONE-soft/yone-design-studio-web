@@ -181,15 +181,31 @@ def api_save():
             sets.append(f"{k}={v}")
     if not sets and not resets:
         return jsonify({"error": "바꿀 것이 없다"}), 400
-    args = [d, "knobs"]
-    if sets:
-        args.append("--set=" + ",".join(sets))
-    if resets:
-        args.append("--reset=" + ",".join(resets))
-    r = _run(args, timeout=60)
-    if r.returncode != 0:
-        return jsonify({"error": (r.stderr or r.stdout)[-800:]}), 500
-    return jsonify({"ok": True, "log": r.stdout[-1500:]})
+    # ⚠ 값도 **같은 이력**에 쌓는다. 예전에는 별도 CLI 가 config 를 직접 고쳐서
+    #   ⌘Z 로 못 되돌렸다 — 무엇을 되돌리려면 어느 단추를 눌러야 하는지 사람이
+    #   알아야 했다. 인디자인은 무엇을 했든 ⌘Z 하나다.
+    from core.render_vivlio import book as bookmod
+    from core.render_vivlio import edits as _ed
+    cfg = bookmod.load(d)
+    done = []
+    for k, v in (p.get("changes") or {}).items():
+        _ed.push(cfg, {"op": "knob", "key": k,
+                       "v": None if v is None else _num(v)})
+        done.append(k)
+    return jsonify({"ok": True, "changed": done,
+                    "log": "값 %d개를 이력에 쌓았습니다 — ⌘Z 로 되돌릴 수 있습니다"
+                           % len(done)})
+
+
+def _num(v):
+    """`"3.5"` 처럼 온 숫자는 숫자로 — config 에 문자열로 박히면 조판이 다르다."""
+    if isinstance(v, (int, float, bool)) or v is None:
+        return v
+    t = str(v).strip()
+    try:
+        return int(t) if t.lstrip("-").isdigit() else float(t)
+    except ValueError:
+        return t
 
 
 @bp.route("/api/book-studio/render", methods=["POST"])
@@ -885,10 +901,21 @@ def api_history():
         else:
             return jsonify({"error": f"모르는 동작: {act}"}), 400
     st = ed.read(cfg)
-    rows = [{"i": i, "op": o.get("op"), "ref": o.get("ref"),
-             "at": o.get("at", ""), "note": o.get("note", ""),
-             "applied": i < st["head"]}
-            for i, o in enumerate(st["ops"])]
+    from core.render_vivlio import design_ops as dops
+    OPNAME = {"set": "글 고침", "split": "문단 나눔", "merge": "문단 합침",
+              "insert": "문단 넣음", "delete": "문단 지움",
+              "style": "스타일", "knob": "값", "css": "직접 CSS"}
+    rows = []
+    for i, o in enumerate(st["ops"]):
+        kind = o.get("op")
+        rows.append({
+            "i": i, "op": kind, "ref": o.get("ref"),
+            # 이력은 사람이 읽는 자리다 — `set`·`style` 같은 말은 우리 용어다
+            "label": OPNAME.get(kind, kind or ""),
+            "what": (dops.label(o) if kind in ed.DESIGN_OPS else (o.get("ref") or "")),
+            "design": kind in ed.DESIGN_OPS,
+            "at": o.get("at", ""), "note": o.get("note", ""),
+            "applied": i < st["head"]})
     return jsonify({"head": st["head"], "total": len(st["ops"]),
                     "ops": rows[-60:]})
 
