@@ -128,8 +128,26 @@ html { font: 8.5pt/1.4123 Noto, sans-serif; color: var(--ink);
        letter-spacing: -0.04em; }
 body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 
-.art { page: art; break-after: page; height: 240mm; }
-.art span { color: #fff; font-size: 1pt; }
+/* 간지 — 판면 밖 좌표를 그대로 쓰려고 흐름에서 뺀다(완성본 실측) */
+.art { page: art; break-after: page; height: 240mm; position: relative; }
+.art > * { position: absolute; }
+.art .rule { left: -100mm; width: 144.88mm; height: 0.353mm;
+             background: var(--ink); }
+.art .r1 { top: -67.24mm; }
+.art .r2 { top: -8.05mm; }
+.art .wm { left: -100.56mm; top: -64.00mm; width: 155mm; height: 50mm; }
+.art .chbox {
+  left: -1.76mm; top: 35.00mm; width: 43.40mm; height: 6.47mm;
+  background: var(--ink); color: #fff; text-align: center;
+  font: 500 7.96pt/6.47mm Neolli; letter-spacing: 0;
+}
+.art .toc { left: -1.76mm; top: 45.05mm; width: 60mm;
+            font: 8.46pt/4.235mm Noto; }
+.art .toc p { white-space: nowrap; }
+.art .toc .g { font-weight: 900; margin-top: 2.82mm; }
+.art .toc .g:first-child { margin-top: 0; }
+.art .toc .s { font-weight: 500; }
+.art .toc .n { display: inline-block; width: 4.60mm; }
 
 .sec { break-before: page; }
 .sec-arrange { page: arrange; }

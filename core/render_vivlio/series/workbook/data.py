@@ -141,19 +141,70 @@ def _label_num(label):
     return int(m.group()) if m else None
 
 
+def _passage_slots(groups, canon_n):
+    """묶음 목록 → **지문 묶음의 자리 번호**. 지문이 아닌 묶음은 None.
+
+    구조로 가른다:
+      · 라벨이 있고 그 스텝 안에서 **한 번만** 나오면 지문 묶음이다.
+        (`본문` 처럼 두 번 이상 나오는 라벨은 구역 이름이지 지문이 아니다 —
+         어법 선택은 `본문·본문·N049…N052` 로 온다: 실측)
+      · 라벨이 아예 없어도 **묶음 수가 이 책의 지문 수와 같으면** 순서대로
+        지문으로 본다 (빈칸 어휘는 라벨 없이 지문 수만큼 온다: 실측)
+      · 그 밖(실전 문제처럼 통째 한 묶음)은 지문 묶음이 아니다 → 항상 남긴다
+    """
+    labs = [g.get("label") for g in groups]
+    seen = {}
+    for l in labs:
+        if l:
+            seen[l] = seen.get(l, 0) + 1
+    uniq = [i for i, l in enumerate(labs) if l and seen[l] == 1]
+    slots = [None] * len(groups)
+    if uniq:
+        for k, i in enumerate(uniq, 1):
+            slots[i] = k
+    elif canon_n and len(groups) == canon_n:
+        for i in range(len(groups)):
+            slots[i] = i + 1
+    return slots
+
+
+def canonical_passages(steps):
+    """이 책의 지문 수와 라벨 — 지문 라벨을 가장 많이 가진 스텝에서."""
+    best = []
+    for st in steps:
+        labs = [g.get("label") for g in st["groups"]]
+        seen = {}
+        for l in labs:
+            if l:
+                seen[l] = seen.get(l, 0) + 1
+        uniq = [l for l in labs if l and seen[l] == 1]
+        if len(uniq) > len(best):
+            best = uniq
+    return best
+
+
 def apply_select(steps, select, log=print):
-    """`select` 로 **만들 것만** 남긴다.
+    """`select` 로 **만들 것만** 남긴다 — 지운 게 아니라 안 만든 것이다.
 
     passages : 지문 **순번**(1부터). 예 [2,4,6]
-    labels   : 지문 **라벨**로 고르기. 예 ["20","22"] (순번과 함께 쓰면 합집합)
+    labels   : 지문 **라벨**로 고르기. 예 ["실전02","실전04"] (순번과 합집합)
     steps    : 스텝 키 목록. 예 ["step1_a1","step1_c1","step3"]
-    renumber : 남은 지문을 1..N 으로 다시 매김(라벨이 숫자일 때만)
+    renumber : 남은 지문의 라벨 숫자를 1..N 으로 다시 매김
+
+    지문이 아닌 묶음(어법 선택의 `본문`, 실전 문제 통째)은 **거르지 않는다** —
+    지문 단위가 아니기 때문이다.
     """
     select = select or {}
     want_steps = select.get("steps")
-    pas = select.get("passages")
+    pas = set(select.get("passages") or [])
     labs = set(str(x) for x in (select.get("labels") or []))
     renumber = bool(select.get("renumber"))
+    canon = canonical_passages(steps)
+    canon_n = len(canon)
+    if labs and canon:                       # 라벨 → 순번으로도 환산
+        for i, l in enumerate(canon, 1):
+            if str(l) in labs:
+                pas.add(i)
 
     out = []
     for st in steps:
@@ -161,23 +212,24 @@ def apply_select(steps, select, log=print):
             log(f"  [선택] 스텝 제외 {st['key']}")
             continue
         groups = st["groups"]
-        if pas or labs:
-            keep = []
-            for i, g in enumerate(groups, 1):
-                by_ord = pas and i in pas
-                by_lab = labs and str(g.get("label") or "") in labs
-                if by_ord or by_lab:
+        if pas:
+            slots = _passage_slots(groups, canon_n)
+            keep, dropped = [], 0
+            for g, slot in zip(groups, slots):
+                if slot is None or slot in pas:
                     keep.append(g)
-            if not keep and (pas or labs):
-                log(f"  [선택] {st['key']}: 남은 지문 0 — 스텝을 통째로 뺀다")
-                continue
+                else:
+                    dropped += 1
+            if dropped:
+                log(f"  [선택] {st['key']}: 지문 {dropped}개 제외 "
+                    f"→ {len(keep)}묶음")
             groups = keep
         if renumber:
-            for i, g in enumerate(groups, 1):
-                if g.get("label") is not None:
-                    g["label"] = _renumbered(g["label"], i)
-        st = dict(st, groups=groups)
-        out.append(st)
+            slots = _passage_slots(groups, None)
+            for g, slot in zip(groups, slots):
+                if slot is not None and g.get("label") is not None:
+                    g["label"] = _renumbered(g["label"], slot)
+        out.append(dict(st, groups=groups))
     return out
 
 

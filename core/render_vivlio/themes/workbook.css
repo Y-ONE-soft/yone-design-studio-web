@@ -116,8 +116,6 @@ body {
   position: relative;
   width: var(--content-w);
   height: 260mm;                       /* 303 - 26.5 - 16.5 */
-  break-before: page;                  /* ⚠ 없으면 앞 섹션이 끝난 면 한복판에서
-                                          시작해 한 지문이 통째로 사라진다 */
   break-after: page;
   overflow: visible;                   /* ⚠ hidden 으로 두면 넘친 내용이
                                           조용히 사라진다 — 게이트가 잡게 둔다 */
@@ -137,6 +135,11 @@ body {
  * 이 표식의 y 를 재서 "칸을 넘었는가"를 판정한다. 눈으로 못 잡는 사고라
  * 표식으로 재는 편이 낫다. */
 .zend { display: block; width: 0.4mm; height: 0.4mm; background: #fffffe; }
+
+/* 섹션은 언제나 새 면에서 — ⚠ 이게 없으면 앞 섹션이 끝난 면 한복판에서
+ * 다음 스텝이 시작해 지문 하나가 통째로 사라진다(실측). 반대로 `.pg` 마다
+ * break-before 를 걸면 섹션마다 빈 면이 하나씩 생긴다(러닝 요소가 면을 연다). */
+.sec.fixed, .sec.flow { break-before: page; }
 
 /* 지문 묶음 — 새 면에서 시작하고, 길면 다음 면으로 **이어진다**.
  * (실물도 그렇다: 어법 선택 '본문' 20문장은 두 면에 걸친다 — 실측 p30-31) */

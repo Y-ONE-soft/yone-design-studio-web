@@ -36,7 +36,7 @@ GRAY_MAP = {"#231f20": 1.0, "#6d6e71": 0.66, "#a7a9ac": 0.4,
             "#e2e3e4": 0.13, "#e6e7e8": 0.11, "#f2f2f3": 0.06, "#ffffff": 0.0}
 
 
-def make_config(school, grade, period, vol, art_pdf, art_last):
+def make_config(school, grade, period, vol):
     cfg = {
         "series": "final",
         "book": {"id": f"{school}_파이널_Vol{vol}",
@@ -57,23 +57,17 @@ def make_config(school, grade, period, vol, art_pdf, art_last):
                    "skip_pages": [1], "skip_last": 1,
                    "design": {"off": True}},
     }
-    if art_pdf:
-        cfg["finish"] = {
-            "_note": "간지(1면)·크레딧(마지막 면)은 완성본 아트워크를 그대로 끼운다",
-            "art_pdf": f"../참고/{os.path.basename(art_pdf)}",
-            "inserts": [{"marker": "§ART1§", "page": 0, "mode": "replace"}],
-            "append": [{"page": art_last}],
-            "trim": {"bleed": 3},
-        }
-    else:
-        cfg["finish"] = {"trim": {"bleed": 3}}
+    cfg["finish"] = {
+        "_note": "간지는 조판한다(차례가 권·학년마다 다르다). "
+                 "크레딧 면은 계열 자산(내지/마지막페이지.ai)을 뒤에 붙인다.",
+        "trim": {"bleed": 3},
+    }
     return cfg
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("src", help="content.json 또는 그것이 든 job 폴더")
-    ap.add_argument("--art", help="간지·크레딧을 뜰 완성본 PDF 폴더(선택)")
     ap.add_argument("--root", help="스튜디오 루트(기본: 자동 탐색)")
     a = ap.parse_args()
 
@@ -92,20 +86,8 @@ def main():
         os.makedirs(os.path.join(base, d), exist_ok=True)
     shutil.copy2(src, os.path.join(base, "원고", "content.json"))
 
-    art = {}
-    if a.art:
-        import fitz
-        for vol in (1, 2):
-            for name in os.listdir(a.art):
-                if f"(Vol{vol})" in name and name.endswith(".pdf"):
-                    p = os.path.join(a.art, name)
-                    shutil.copy2(p, os.path.join(base, "참고", name))
-                    with fitz.open(p) as d:
-                        art[vol] = (name, d.page_count - 1)
-                    break
     for vol in (1, 2):
-        name, last = art.get(vol, (None, 0))
-        cfg = make_config(school, grade, period, vol, name, last)
+        cfg = make_config(school, grade, period, vol)
         p = os.path.join(base, f"Vol{vol}", "config.json")
         with open(p, "w", encoding="utf-8") as f:
             json.dump(cfg, f, ensure_ascii=False, indent=2)

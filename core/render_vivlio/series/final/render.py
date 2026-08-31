@@ -160,6 +160,31 @@ def feet(chapter, title=""):
             '<span class="pg"></span></div>')
 
 
+def divider(chapter, sections):
+    """간지 — 완성본 실측(광문2 Vol1/Vol2 1면).
+
+    워드마크(`FINAL STEP` + 표제)는 `내지/1P.ai` 에서 뜬 그림이고, 장 상자와
+    차례는 권마다 달라서 조판한다. 고3 은 문장삽입이 없어 차례가 두 줄이 아니라
+    한 줄이 된다 — 완성본을 그대로 끼우면 이걸 못 맞춘다.
+    """
+    o = ['<div class="art"><div class="rule r1"></div>',
+         '<img class="wm" src="assets/wordmark.png" alt="">',
+         '<div class="rule r2"></div>',
+         f'<div class="chbox">Chapter.{chapter["no"]:02d}&nbsp;&nbsp;|'
+         f'&nbsp;&nbsp;{esc(chapter["en"])}</div>',
+         '<div class="toc">']
+    seen = set()
+    for sec in sections:
+        first = sec["no"] not in seen
+        seen.add(sec["no"])
+        cls = "g" if first else "s"
+        num = f'<span class="n">{sec["no"]}</span>' if first else \
+              '<span class="n"></span>'
+        o.append(f'<p class="{cls}">{num}{esc(sec["toc"])}</p>')
+    o.append('</div></div>')
+    return "".join(o)
+
+
 ANSLINE = ('<p class="ansline"><span class="ar">&#xFF1E;</span>'
            '<span class="ln"></span></p>')
 
@@ -284,8 +309,7 @@ def document(cfg, data, vol, fits=None, mode=None):
     o.append(feet(ch))
     if mode != "measure":
         o.append(head_right(ch))
-        # 앞 간지 — 마감 때 완성본 아트워크 면으로 바뀐다(§ART1§).
-        o.append('<div class="art"><span>&#167;ART1&#167;</span></div>')
+        o.append(divider(ch, v["sections"]))
 
     for sec in v["sections"]:
         kind = sec["kind"]

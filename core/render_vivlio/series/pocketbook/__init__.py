@@ -39,6 +39,22 @@ def _spans(page, lo, hi):
                     yield sp
 
 
+def _text(runs):
+    return "".join(r["t"] for r in runs)
+
+
+def _bag(s):
+    import collections
+    import re as _re
+    return collections.Counter(
+        _re.sub(r"[^0-9A-Za-z가-힣]", "", s).lower())
+
+
+def _page_bag(page, size, tol=0.6):
+    return _bag("".join(sp["text"] for sp in _spans(page, size - tol,
+                                                   size + tol)))
+
+
 def _count_size(page, size, tol=0.4):
     """그 크기의 글자 **덩어리** 수. 주석은 7pt 라 본문과 안 겹친다.
 
@@ -74,13 +90,26 @@ class PocketbookSeries(Series):
 
     # ── ① 코퍼스 → data.json ──
     def gen_data(self, cfg, log):
+        """코퍼스에서 수록 지문을 고른다.
+
+        키를 손으로 나열해도 되고(`options.passages`), 학교·학기로 골라도 된다
+        (`options.school`·`options.term`). 뒤쪽이 실제 작업에 가깝다 —
+        "상일2 26-2 중간 포켓북" 이라고 말하지 지문 키를 외우지 않는다.
+        """
         opt = cfg.section("options") or {}
-        keys = opt.get("passages") or []
         corpus = cfg.resolve(opt.get("corpus")
                              or "${STUDIO}/조판/교재/포켓북/_corpus")
+        keys = list(opt.get("passages") or [])
+        if not keys:
+            keys = self._pick(corpus, opt, log)
         rows, missing = [], []
+        rows += self._from_analysis(cfg, opt, log)
         for k in keys:
-            f = os.path.join(corpus, "%s.json" % k)
+            # 인덱스 키(`강동1:25-2:3과-04`)와 파일명(`강동1__25-2__3과-04.json`)이
+            # 다르다 — 인덱스가 알려 주는 파일명을 쓴다.
+            f = k if k.endswith(".json") else os.path.join(corpus, "%s.json" % k)
+            if not os.path.isabs(f):
+                f = os.path.join(corpus, os.path.basename(f))
             if not os.path.exists(f):
                 missing.append(k)
                 continue
@@ -93,11 +122,156 @@ class PocketbookSeries(Series):
                 % (len(missing), ", ".join(missing[:10])))
         if not rows:
             raise ValueError("수록할 지문이 없다 — options.passages 를 확인할 것")
+        self._apply_manuscript(cfg, opt, rows, log)
         out = os.path.join(cfg.build_dir, "data.json")
         os.makedirs(cfg.build_dir, exist_ok=True)
         with open(out, "w", encoding="utf-8") as fh:
             json.dump({"passages": rows}, fh, ensure_ascii=False)
         log("■ 지문 %d개" % len(rows))
+        return out
+
+    # ── 새 지문: 분석본에서 ──
+    @staticmethod
+    def _tools():
+        import sys
+        here = os.path.dirname(os.path.abspath(__file__))
+        repo = os.path.dirname(os.path.dirname(os.path.dirname(
+            os.path.dirname(here))))
+        t = os.path.join(repo, "tools", "pocket_harvest")
+        if t not in sys.path:
+            sys.path.insert(0, t)
+        return t
+
+    def _from_analysis(self, cfg, opt, log):
+        """`options.analysis` 의 분석본 IDML → 새 지문.
+
+        코퍼스에 없는 **이번 학기 신규 지문**이 들어오는 자리다. 분석본에는
+        플로우노트·동반의어가 없으므로 비어서 들어오고, 원고(hwpx)가 채운다.
+        둘 다 없으면 G-P2 가 목록으로 알려 준다.
+        """
+        srcs = cfg.resolve(opt.get("analysis") or [])
+        if isinstance(srcs, str):
+            srcs = [srcs]
+        files = []
+        for sfile in srcs:
+            if os.path.isdir(sfile):
+                for root, _d, fs in os.walk(sfile):
+                    files += [os.path.join(root, f) for f in sorted(fs)
+                              if f.lower().endswith(".idml")]
+            elif os.path.exists(sfile):
+                files.append(sfile)
+        if not files:
+            return []
+        self._tools()
+        import analysis
+        out = []
+        for f in files:
+            got = analysis.read_book(f)
+            out += got
+            log("■ 분석본 %s — 지문 %d" % (os.path.basename(f), len(got)))
+        return out
+
+    # ── 플로우노트·동반의어: 교재팀 원고에서 ──
+    def _apply_manuscript(self, cfg, opt, rows, log):
+        """`options.manuscript` 의 hwpx → 지문에 플로우·주제·동반의어를 얹는다.
+
+        원고 키(`24-9 21번 Flow`·`명일2 4과 본문2`)와 지문 키를 **느슨하게** 맞춘다
+        — 표기가 학교마다 다르므로 숫자만 남긴 형태로도 한 번 더 본다.
+        """
+        srcs = cfg.resolve(opt.get("manuscript") or [])
+        if isinstance(srcs, str):
+            srcs = [srcs]
+        files = [f for f in srcs if os.path.exists(f)
+                 and f.lower().endswith((".hwpx", ".hwp"))]
+        for d in [x for x in srcs if os.path.isdir(x)]:
+            files += [os.path.join(d, f) for f in sorted(os.listdir(d))
+                      if f.lower().endswith(".hwpx")]
+        if not files:
+            return
+        self._tools()
+        import manuscript
+        frags = []
+        for f in files:
+            got = manuscript.parse(f)
+            frags += got
+            log("■ 원고 %s — 블록 %d" % (os.path.basename(f), len(got)))
+
+        def norm(x):
+            import re as _re
+            return _re.sub(r"[^0-9a-z가-힣]", "", (x or "").lower())
+
+        def digits(x):
+            import re as _re
+            return "".join(_re.findall(r"\d", x or ""))
+
+        by_key, by_num = {}, {}
+        for fr in frags:
+            k = norm(fr["key_raw"])
+            by_key[k] = fr
+            dn = digits(fr["key_raw"])
+            if dn:
+                by_num.setdefault(dn, fr)
+        used, hit = set(), 0
+        for r in rows:
+            cands = [r.get("key"), r.get("pno"), r.get("label")]
+            fr = None
+            for c in cands:
+                fr = by_key.get(norm(c)) or fr
+            if fr is None:
+                for c in cands:
+                    dn = digits(c)
+                    if dn and dn in by_num:
+                        fr = by_num[dn]
+                        break
+            if fr is None:
+                continue
+            used.add(id(fr))
+            hit += 1
+            if fr.get("flow") and not r.get("flownote"):
+                r["flownote"] = fr["flow"]
+            if fr.get("synonyms") and not r.get("synonyms"):
+                r["synonyms"] = fr["synonyms"]
+            if fr.get("topic") and not r.get("topic"):
+                r["topic"] = fr["topic"]
+            if fr.get("summary") and not r.get("summary"):
+                r["summary"] = fr["summary"]
+        orphan = [f["key_raw"] for f in frags if id(f) not in used]
+        log("■ 원고 %d블록 중 %d개가 지문에 붙었다" % (len(frags), hit))
+        if orphan:
+            # 조용히 버리면 원고를 쓴 사람이 영영 모른다.
+            log("  [원고 미사용] %d개 — %s"
+                % (len(orphan), ", ".join(orphan[:8])))
+
+    @staticmethod
+    def _pick(corpus, opt, log):
+        """학교·학기(·단원)로 코퍼스에서 지문 키를 고른다. 순서는 인덱스 순."""
+        idx_path = os.path.join(corpus, "_index.json")
+        if not os.path.exists(idx_path):
+            raise ValueError("코퍼스 인덱스가 없다: %s\n"
+                             "  → tools/pocket_harvest/corpus.py build" % idx_path)
+        with open(idx_path, encoding="utf-8") as f:
+            idx = json.load(f)
+        rows = idx.get("passages") if isinstance(idx, dict) else idx
+        if isinstance(rows, dict):
+            rows = [dict(v, key=k) for k, v in rows.items()]
+        rows.sort(key=lambda r: (r.get("where") or [{}])[0].get("pages", ""))
+        school = opt.get("school")
+        term = opt.get("term")
+        units = set(opt.get("units") or [])
+        out = []
+        for r in rows:
+            if school and r.get("school") != school:
+                continue
+            if term and r.get("term") != term:
+                continue
+            if units and r.get("unit") not in units:
+                continue
+            out.append(r.get("file") or (r["key"] + ".json"))
+        if not out:
+            raise ValueError(
+                "고른 지문이 없다 (school=%s term=%s units=%s)"
+                % (school, term, sorted(units)))
+        log("■ 코퍼스에서 %d지문 선택" % len(out))
         return out
 
     # ── ② 테마 ──
@@ -331,7 +505,7 @@ class PocketbookSeries(Series):
                             % (n_pages, want, len(rows)))
 
             # G-P3 주석 보존 · G-P6 넘침
-            idx, lost, over = start, [], []
+            idx, lost, over, wrong = start, [], [], []
             for r, step in zip(rows, per):
                 if idx >= n_pages:
                     break
@@ -344,6 +518,16 @@ class PocketbookSeries(Series):
                 if want_ruby and got_ruby < want_ruby:
                     lost.append((r.get("key") or r.get("label"),
                                  want_ruby, got_ruby))
+                # G-P7 — 원고 글자가 지면에 다 있는가.
+                #   순서로 비교하면 안 된다: 루비 낱말이 inline-block 이라 PDF
+                #   추출 순서가 뒤섞이고, 인접 span 이 붙어 낱말이 엉킨다.
+                #   **글자 개수**로 보면 순서·붙임과 무관하게 유실만 잡힌다.
+                sc = r.get("scale", 1.0)
+                miss = _bag(_text(r["passage_runs"])) - _page_bag(
+                    page, M["passage_size"] * sc)
+                if sum(miss.values()):
+                    wrong.append((r.get("key") or r.get("label"),
+                                  sum(miss.values())))
                 lay = ptheme.LAYOUTS[ptheme.layout_for(r)]
                 bottom = M["passage"][1] + lay["passage_h"]
                 low = _lowest(page, M["passage_size"] * r.get("scale", 1.0))
@@ -352,6 +536,10 @@ class PocketbookSeries(Series):
                                  round(low - bottom, 1)))
                 idx += step
 
+            if wrong:
+                report.fail("G-P7 원문 글자 유실 %d지문 — %s"
+                            % (len(wrong), ", ".join(
+                                "%s(%d자)" % x for x in wrong[:5])))
             if lost:
                 report.fail("G-P3 구문분석 주석 유실 %d지문 — %s"
                             % (len(lost), ", ".join(

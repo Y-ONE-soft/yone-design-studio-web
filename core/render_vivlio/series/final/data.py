@@ -48,6 +48,12 @@ def norm_header(h):
     m = RE_LONG42.match(h)
     return f"{m.group(1)}41~42" if m else h
 
+# 간지 차례에 찍히는 이름 — 섹션 띠와 띄어쓰기가 다르다(완성본 실측)
+TOC_TITLES = {
+    "arrange": "문장배열", "insert": "문장 삽입 / 순서 배열",
+    "vocab": "중요어휘 / 요약문", "grammar": "어법수정",
+    "writing": "서술형 영작",
+}
 SEC_TITLES = {
     "arrange": "문장 배열",
     "insert": "문장 삽입 / 순서 배열",
@@ -196,7 +202,8 @@ def _writing(pairs, detail, warn):
 
 # ------------------------------------------------------------------ 진입
 def _section(kind, no, blocks):
-    return {"kind": kind, "no": no, "title": SEC_TITLES[kind], "blocks": blocks}
+    return {"kind": kind, "no": no, "title": SEC_TITLES[kind],
+            "toc": TOC_TITLES[kind], "blocks": blocks}
 
 
 def from_content(content, warn=lambda m: None):

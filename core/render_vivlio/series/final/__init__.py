@@ -70,10 +70,30 @@ class FinalSeries(Series):
 
         res = {"pdf": out, "pages": pages, "seconds": round(secs, 1),
                "fits": len(fits)}
-        spec = cfg.finish_spec()
+        spec = self._finish_spec(cfg)
         if spec and not sample:
             res["final"] = bleed_mod.finish(out, spec, log)
         return res
+
+    @staticmethod
+    def series_asset(name=""):
+        """`core/render_vivlio/assets/final/…` — 계열 공용 자산."""
+        here = os.path.dirname(os.path.abspath(__file__))        # …/series/final
+        root = os.path.dirname(os.path.dirname(here))            # …/render_vivlio
+        return os.path.join(root, "assets", "final", name)
+
+    def _finish_spec(self, cfg):
+        """마감 — 크레딧 면은 **계열 자산**이다(모든 학교가 같은 면을 쓴다).
+
+        책 config 에 적게 하면 학교 수만큼 같은 경로가 복사된다. 책이 직접
+        `finish.append` 를 적었으면 그것을 존중한다.
+        """
+        spec = cfg.finish_spec()
+        credits = self.series_asset("credits.pdf")
+        if not spec.get("append") and os.path.exists(credits):
+            spec["append"] = [{"pdf": credits, "page": 0}]
+        spec.setdefault("trim", {"bleed": cfg.page["bleed"] or 3})
+        return spec
 
     def _suffix(self, cfg, sample=False):
         o = cfg.section("output") or {}
@@ -205,6 +225,23 @@ class FinalSeries(Series):
         knobs.write(cfg, FinalSeries(), build_dir)
         stage.stage_overrides(cfg, build_dir)
         stage.stage_book_assets(cfg, build_dir)
+        FinalSeries._stage_series_assets(build_dir)
+
+    @staticmethod
+    def _stage_series_assets(build_dir):
+        """계열 자산(간지 워드마크)은 책 자산 **뒤에 덧붙인다**.
+
+        `stage_assets` 는 폴더를 지우고 다시 넣으므로, 순서를 바꾸면 책이
+        넣은 그림이 사라진다.
+        """
+        import shutil
+        src = FinalSeries.series_asset("")
+        if not os.path.isdir(src):
+            return
+        dst = os.path.join(build_dir, "assets")
+        os.makedirs(dst, exist_ok=True)
+        for n in os.listdir(src):
+            shutil.copy2(os.path.join(src, n), os.path.join(dst, n))
 
     # ── ④ 계열 검수 ──
     def verify(self, cfg, log, report):
