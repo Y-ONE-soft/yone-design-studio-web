@@ -83,7 +83,7 @@
 }
 
 /* 정답 면 — 베이지 띠 */
-@page apg { margin-top: 22mm; margin-bottom: 28mm; }
+@page apg { margin-top: 21.81mm; margin-bottom: 28.19mm; }
 @page apg:left {
   margin-left: 23mm; margin-right: 25.25mm;
   background: linear-gradient(var(--band-a), var(--band-a))
@@ -118,7 +118,7 @@ u { text-decoration: underline; text-decoration-thickness: 0.475pt;
 /* 한글은 로마자보다 한 호 작다(인디자인 합성 서체) */
 .q .ch .kr, .q .tr .kr, .q .bi .kr, .q .pbox .kr {
   font-family: Noto; font-size: 8.77pt; font-weight: 400;
-  letter-spacing: -0.0381em;
+  letter-spacing: -0.0432em;
 }
 /* 빈칸 표기(`__________` · `[       ]`)는 본문 서체가 아니다 */
 /* ⚠ 크기가 다른 인라인은 **줄 상자를 키운다**(지문 셋째 줄만 0.57mm 벌어졌다)
@@ -183,8 +183,8 @@ u { text-decoration: underline; text-decoration-thickness: 0.475pt;
   right: 1.38mm; bottom: 0.89mm;
   border: 0.5pt solid #fff; border-top: 0; border-radius: 0 0 3.25mm 3.25mm;
 }
-.anshdr .tab .l { font: 300 16pt/29mm Neolli; color: #fff; }
-.anshdr .tab .d { font: 700 16pt/29mm Neolli; color: #fff; }
+.anshdr .tab .l { font: 300 16pt/27.55mm Neolli; color: #fff; }
+.anshdr .tab .d { font: 700 16pt/27.55mm Neolli; color: #fff; }
 
 /* ------------------------------------------------------------- 문제 */
 .qgrid { column-count: 2; column-gap: 3.65mm; column-fill: auto; }
@@ -248,15 +248,16 @@ u { text-decoration: underline; text-decoration-thickness: 0.475pt;
 .a:first-child { margin-top: 0; }
 .ahead {
   font: 500 8pt/4.41mm Noto, Minion; padding-left: 6mm; text-indent: -6mm;
-  letter-spacing: -0.0284em;
+  letter-spacing: -0.0358em;
 }
 .ahead .no {
   font: 700 9pt/4.41mm Noto; color: var(--ans-no);
   display: inline-block; width: 6.17mm; text-indent: 0;
+  position: relative; top: 0.31mm;
 }
 .note {
-  margin-top: 1.56mm; padding-left: 10mm; text-indent: -4.5mm;
+  margin-top: 0.92mm; padding-left: 10mm; text-indent: -4.5mm;
   font: 7pt/3.88mm Noto, Minion; color: var(--ans-nt);
-  letter-spacing: -0.0258em;
+  letter-spacing: -0.0396em;
 }
 .note + .note { margin-top: 0; }

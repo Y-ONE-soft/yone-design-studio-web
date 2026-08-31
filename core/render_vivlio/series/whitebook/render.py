@@ -34,7 +34,8 @@ DEFAULT_METRICS = {
 RE_HANGUL = re.compile(r"[가-힣ㄱ-ㆎ][가-힣ㄱ-ㆎ"
                        r"0-9 ,.·~!?()\[\]'\"%:;/－-]*")
 RE_UND = re.compile(r"_{3,}")
-RE_BRACKET_GAP = re.compile(r"\[\s{2,}\]")
+# ⚠ `esc_gap` 이 먼저 돌아 공백이 `&nbsp;` 가 된다 — 둘 다 받아야 한다.
+RE_BRACKET_GAP = re.compile(r"\[(?:\s|&nbsp;)+\]")
 RE_BULLET = re.compile(r"^\s*([∙•·])\s*")
 
 
