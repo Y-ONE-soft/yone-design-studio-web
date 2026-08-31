@@ -222,11 +222,10 @@ html,body{margin:0;padding:0;background:#fff}
 .flowchip{position:absolute;background:var(--band);display:flex;
   align-items:center;justify-content:center;gap:1mm;
   font-family:PBHand;font-size:8pt;color:var(--navy)}
+/* 모눈은 원본에서 뽑은 이미지를 쓴다. CSS 그라디언트는 뷰어 반올림 때문에
+   1.44mm 격자가 뭉쳐 굵은 격자무늬로 나온다(실측). */
 .flow{position:absolute;overflow:hidden;
-  background:
-    repeating-linear-gradient(to right,var(--flow-line) 0 .1mm,transparent .1mm __grid__mm),
-    repeating-linear-gradient(to bottom,var(--flow-line) 0 .1mm,transparent .1mm __grid__mm),
-    var(--flow-bg);
+  background:url("img/flownote_grid.png") 0 0/100% 100% no-repeat,var(--flow-bg);
   font-family:PBDodam;font-size:__flow_size__pt;line-height:__flow_lead__mm;
   padding:2.5mm 3mm;box-sizing:border-box;columns:2;column-gap:3mm}
 .flow p{margin:0;break-inside:avoid}

@@ -71,6 +71,30 @@ def _copy(src, dst):
     return False
 
 
+_CLEAN_JSX = """
+try {
+  while (app.documents.length > 0) { app.documents[0].close(SaveOptions.NO); }
+} catch(e) {}
+"""
+
+
+def _cleanup_docs():
+    """열린 문서가 남아 있으면 저장 없이 닫는다.
+
+    ⚠ 사용자가 쓰던 문서를 닫지 않기 위해, 이 배치를 돌리기 **전에** 열린 문서가
+      0개인지 확인하고 시작한다(`main` 이 검사한다). 여기서 닫는 것은 우리가 연 것뿐이다.
+    """
+    try:
+        if idrun.open_doc_count() <= 0:
+            return
+        p = os.path.join(TMP, "clean.jsx")
+        with open(p, "w", encoding="utf-8") as f:
+            f.write(_CLEAN_JSX)
+        idrun.run_file(p, timeout=300)
+    except Exception:
+        pass
+
+
 def scan(kind):
     root = SOURCES[kind]
     items = []
@@ -101,15 +125,31 @@ def export_one(src, dst, status_path, jsx_path, timeout=900):
             os.remove(p)
     with open(jsx_path, "w", encoding="utf-8") as f:
         f.write(_JSX % {"src": tmp, "dst": dst, "status": status_path})
+    err = None
+    for attempt in (1, 2):
+        try:
+            idrun.run_file(jsx_path, timeout=timeout)
+            err = None
+            break
+        except Exception as e:
+            err = str(e)[:200]
+            _cleanup_docs()          # 실패본이 열린 채 남으면 다음 파일까지 망가진다
     try:
-        idrun.run_file(jsx_path, timeout=timeout)
-    except Exception as e:
-        return "ERR", str(e)[:200]
-    finally:
+        pass
+    except Exception:
+        pass
+    if err:
         try:
             os.remove(tmp)
         except OSError:
             pass
+        return "ERR", err
+    try:
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
+    _cleanup_docs()
     if not os.path.exists(status_path):
         return "ERR", "상태 없음"
     s = open(status_path, encoding="utf-8").read().strip()
@@ -120,6 +160,11 @@ def export_one(src, dst, status_path, jsx_path, timeout=900):
 def main(kind, limit=None, log_path=None):
     items = scan(kind)
     os.makedirs(TMP, exist_ok=True)
+    n_open = idrun.open_doc_count()
+    if n_open > 0:
+        raise SystemExit(
+            "InDesign 에 문서가 %d개 열려 있다 — 사용자의 작업물일 수 있으므로 "
+            "닫지 않고 중단한다." % n_open)
     status = os.path.join(TMP, "status.txt")
     jsx = os.path.join(TMP, "one.jsx")
     log_path = log_path or os.path.join(OUT, "export_%s.log" % kind)

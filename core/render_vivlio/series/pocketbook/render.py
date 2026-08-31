@@ -141,6 +141,28 @@ def left_page(p, M, folio):
 _ARROW = ("→", "⇒", "▶")
 
 
+def _card_fit(c, M):
+    """카드가 넘칠 것 같으면 미리 줄인다.
+
+    카드는 34.6×32mm 로 작고 개수가 많다(한 책에 수백 장). 지문처럼 면마다 재면
+    측정 조판이 감당이 안 된다 — 그래서 **글자 수로 줄 수를 어림**해 단계로 줄인다.
+    한 줄에 들어가는 글자 수는 7pt 에서 약 24자(실측 34.6mm − 여백 4mm).
+    """
+    per = 24.0
+    lines = 0
+    for txt in (("%s %s" % (c["w"], c.get("ko", ""))).strip(),
+                ("= " + ", ".join(c.get("syn") or [])) if c.get("syn") else "",
+                ("↔ " + ", ".join(c.get("ant") or [])) if c.get("ant") else ""):
+        if txt:
+            lines += max(1, int(len(txt) / per) + (1 if len(txt) % per else 0))
+    room = int((M["card"][3] - 2 * M["card_pad"]) / M["card_lead"])
+    if lines <= room:
+        return ""
+    sc = max(0.78, round(room / float(lines), 2))
+    return ";font-size:%gpt;line-height:%gmm" % (
+        M["card_size"] * sc, M["card_lead"] * sc)
+
+
 def right_page(p, M, folio, category=""):
     fl = M["flow"]
     fc = M["flow_chip"]
@@ -184,7 +206,7 @@ def right_page(p, M, folio, category=""):
         col, row = i % 3, i // 3
         x = cd[0] + col * M["card_gap_x"]
         y = cd[1] + row * M["card_gap_y"]
-        body = ""
+        body, fit = "", ""
         if i < len(cards):
             c = cards[i]
             body = '<p class="w1">%s %s</p>' % (ESC(c["w"]), ESC(c.get("ko", "")))
@@ -192,8 +214,9 @@ def right_page(p, M, folio, category=""):
                 body += '<p class="s1">= %s</p>' % ESC(", ".join(c["syn"]))
             if c.get("ant"):
                 body += '<p class="a1">↔ %s</p>' % ESC(", ".join(c["ant"]))
-        parts.append('<div class="card" style="%s;background:var(--card%d)">%s</div>'
-                     % (_box(x, y, cd[2], cd[3]), col + 1, body))
+            fit = _card_fit(c, M)
+        parts.append('<div class="card" style="%s;background:var(--card%d)%s">%s</div>'
+                     % (_box(x, y, cd[2], cd[3]), col + 1, fit, body))
     foot = ('<span style="color:var(--ink)">%s</span> <b>%s</b>'
             % (ESC(category), folio)) if category else "<b>%s</b>" % folio
     parts.append('<div class="folio r" style="%s">%s</div>'
@@ -230,7 +253,8 @@ def memtest_page(p, M, folio, answer, category=""):
 def build_html(data, css_name="pocket.css"):
     M = dict(T.METRICS)
     M.update(data.get("metrics") or {})
-    pages, folio = [], 1
+    pages = []
+    folio = int(data.get("folio_start", 1))
     if data.get("cover"):
         pages.append('<section class="pg"><div class="trim">'
                      '<img src="%s" style="width:100%%;height:100%%;'

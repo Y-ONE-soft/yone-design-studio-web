@@ -236,6 +236,11 @@ def _spread_scan(doc, sp):
         # (강동1 실측) → 한글 비율로 가른다.
         if role == "passage" and len(txt) >= 30:
             role = "translation" if idml.han_ratio(txt) > 0.35 else "passage"
+        # `주제/요약문` 틀은 **영어** 주제+요약이다. 그와 별도로 한글 주제 한 줄을
+        # 다른 스타일(`본문 주제`)로 앉힌 책이 있다(광문2 실측 72개).
+        # 역할 표에 없다고 버리면 완성본에만 있던 글이 통째로 사라진다.
+        if role is None and "주제" in (paras[0]["style"] or "") and txt:
+            role = "topic_ko"
         short = (txt and len(txt) <= CAND_MAXLEN
                  and len(txt.split()) <= CAND_MAXTOK)
         recs.append({"role": role, "paras": paras, "text": txt,
@@ -377,6 +382,7 @@ def harvest_book(path):
         pair = len(passages) > 1
         flow = _first(recs, "flownote")
         topic_p = _first(recs, "topic")
+        topic_ko_p = _first(recs, "topic_ko")
         syn_p = _first(recs, "synonyms")
         topic, summary = idml.split_topic(topic_p)
 
@@ -404,9 +410,13 @@ def harvest_book(path):
                 u["flownote"] = [idml.plain(l).strip()
                                  for l in idml.lines_of(flow)] if flow else []
                 u["topic"], u["summary"] = topic, summary
+                u["topic_ko"] = " ".join(
+                    idml.plain(l).strip()
+                    for l in idml.lines_of(topic_ko_p)) if topic_ko_p else ""
                 u["synonyms"] = idml.parse_synonym_cards(syn_p) if syn_p else []
             else:
                 u["flownote"], u["topic"], u["summary"] = [], "", ""
+                u["topic_ko"] = ""
                 u["synonyms"] = []
             units.append(u)
             last = u
@@ -458,7 +468,7 @@ def _score(field, v):
 
 
 MERGE_FIELDS = ["passage", "translation", "flownote", "topic", "summary",
-                "synonyms", "memtest", "links"]
+                "topic_ko", "synonyms", "memtest", "links"]
 TEXT_MIRROR = {"passage": "passage_text", "translation": "translation_text"}
 
 
@@ -602,7 +612,8 @@ def _new_entry(key, kind, school, term, u, nums, aliases):
             "parts": u.get("parts", 1),
             "passage": None, "passage_text": "",
             "translation": None, "translation_text": "",
-            "flownote": [], "topic": "", "summary": "", "synonyms": [],
+            "flownote": [], "topic": "", "summary": "", "topic_ko": "",
+            "synonyms": [],
             "memtest": {}, "links": [],
             "provenance": {}, "sources": []}
 
@@ -655,8 +666,11 @@ def _write(entries, books, skipped, unkeyed, conflicts, merged_alias,
                         if r.get("ruby")),
             "chars": len(e["passage_text"]),
             "translation": bool(e["translation_text"]),
-            "topic": bool(e["topic"]),
+            "topic": bool(e["topic"]), "topic_ko": bool(e["topic_ko"]),
             "books": sorted({s["file"] for s in e["sources"]}),
+            # 사람이 바로 찾아가려면 **어느 책 몇 쪽**인지가 있어야 한다
+            "where": [{"file": s["file"], "pages": "-".join(s["pages"])}
+                      for s in e["sources"]],
             "file": key_filename(key),
         }
     meta = {"harvested": stamp, "books": books, "passages": len(entries),
@@ -677,10 +691,15 @@ def write_reports(index, meta, unkeyed, conflicts, out_dir):
     _conflicts_md(conflicts, meta, out_dir)
 
 
-def _row(k, v):
-    return "| `%s` | %s | %s | %s | %s |" % (
-        k, v["label"] or "—", v["unit"] or "—",
-        ", ".join(v["books"])[:70] or "—", "—")
+def _where(v):
+    """`책 p.2-3` 목록. 같은 책이 두 번 나오면 한 번만."""
+    seen, out = set(), []
+    for w in v.get("where") or []:
+        s = "%s p.%s" % (w["file"], w["pages"] or "?")
+        if s not in seen:
+            seen.add(s)
+            out.append(s)
+    return "<br>".join(out) or "<br>".join(v["books"]) or "—"
 
 
 def _empty_md(index, meta, out_dir):
@@ -712,13 +731,12 @@ def _empty_md(index, meta, out_dir):
             L.append("없음.")
             L.append("")
             return
-        L.append("| 키 | 라벨 | 단원 | 쪽 | 출처 책 |")
+        L.append("| 키 | 라벨 | 단원 | 학교 | 출처 책 · 쪽 |")
         L.append("|---|---|---|---|---|")
         for k, v in sorted(d.items(), key=lambda kv: (kv[1]["school"], kv[0])):
-            pages = ""
             L.append("| `%s` | %s | %s | %s | %s |"
                      % (k, v["label"] or "—", v["unit"] or "—",
-                        pages or "—", "<br>".join(v["books"])))
+                        v["school"], _where(v)))
         L.append("")
 
     block("동반의어 0개", syn0)

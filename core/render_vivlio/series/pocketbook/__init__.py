@@ -90,6 +90,7 @@ class PocketbookSeries(Series):
         build_dir = cfg.build_dir
         os.makedirs(build_dir, exist_ok=True)
         stage.stage_fonts(build_dir, cfg.get("fonts") or FONTS, required=True)
+        self._stage_assets(build_dir)
         self.gen_theme(cfg, log)
 
         data_path = os.path.join(build_dir, "data.json")
@@ -113,6 +114,7 @@ class PocketbookSeries(Series):
             f.write(prender.build_html({
                 "title": (cfg.book or {}).get("title", "포켓북"),
                 "passages": rows, "metrics": cfg.section("metrics"),
+                "folio_start": opt.get("folio_start", 2),
                 "cover": None}))
         out = cfg.out_pdf()
         cli.run_build(html, out, log=log)
@@ -121,6 +123,22 @@ class PocketbookSeries(Series):
             bleed.finish(out, spec, log=log)
         log("■ 산출 %s" % out)
         return out
+
+    @staticmethod
+    def _stage_assets(build_dir):
+        """계열 자산(플로우노트 모눈)을 build/img 로."""
+        import shutil
+        src = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
+            os.path.abspath(__file__)))), "assets", "pocketbook")
+        dst = os.path.join(build_dir, "img")
+        os.makedirs(dst, exist_ok=True)
+        if os.path.isdir(src):
+            for f in os.listdir(src):
+                if f.startswith("."):
+                    continue
+                d = os.path.join(dst, f)
+                if not os.path.exists(d):
+                    shutil.copy2(os.path.join(src, f), d)
 
     # ── 실측 후 맞춤 ──
     def _probe_html(self, rows, M, build_dir, name):

@@ -337,7 +337,7 @@ def read_book(path):
                     b["head_num"] = _sq(b["head_num"] + " " +
                                         "".join(r["t"] for r in l))
                 elif k:
-                    b["lines"].append((k, l))
+                    b["lines"].append((k, l, sid))
         for b in bucket:
             b["spread"] = si
         # 스프레드 안에서 지문이 하나인가 둘인가 — 머리말로 가른다(위 5번)
@@ -364,7 +364,7 @@ def read_book(path):
 
     # 지문이 없는 조각(간지·빈 면)은 버린다
     units = [b for b in raw
-             if any(k == "passage" for k, _ in b["lines"])]
+             if any(k == "passage" for k, _, _s in b["lines"])]
 
     # 같은 머리말이 이어지면 한 지문이다(장문 43~45번·외부지문 연재)
     merged = []
@@ -447,9 +447,15 @@ def _build(u, base, chs, nums, notes):
     p_runs, t_runs, topic_segs = [], [], []
     grammar, exam, sentences = [], [], []
     cur_seg = []
-    pend_en = None
-    for kind, line in lines:
+    pend_en, prev_sid = None, None
+    for kind, line, sid in lines:
         txt = _sq("".join(r["t"] for r in line))
+        if sid != prev_sid:
+            # 스토리가 바뀌면 정렬을 끊는다. 지문 스토리와 해석 스토리가 따로인
+            # 책(광문1·배재1)에서 마지막 문장과 첫 해석이 짝으로 붙어 버린다.
+            pend_en, prev_sid = None, sid
+        if kind not in ("passage", "translation", "snum"):
+            pend_en = None          # 사이에 다른 것이 끼면 짝이 아니다
         if kind == "passage":
             if p_runs:
                 p_runs.append({"t": " ", "style": "", "mark": None,

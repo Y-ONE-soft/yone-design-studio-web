@@ -49,6 +49,11 @@ def _whitebook():
     return WhitebookSeries()
 
 
+def _workbook():
+    from core.render_vivlio.series.workbook import WorkbookSeries
+    return WorkbookSeries()
+
+
 def _final():
     from core.render_vivlio.series.final import FinalSeries
     return FinalSeries()
@@ -72,3 +77,4 @@ register("middle", _middle)
 register("whitebook", _whitebook)
 register("pocketbook", _pocketbook)
 register("final", _final)
+register("workbook", _workbook)

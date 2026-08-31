@@ -77,25 +77,80 @@ body {
   background: var(--paper);
 }
 
-@page { size: 216mm 303mm; margin: 0; }
-
-.sheet {
-  position: relative;
-  width: var(--page-w); height: var(--page-h);
-  overflow: hidden;
-  break-after: page;
-  background: var(--paper);
+/* ─────────────────────────────────────────────── 페이지
+ * 짝/홀 여백을 **페이지 규칙**이 정한다. 그래서 지면 안의 좌표는 파리티를
+ * 몰라도 되고, 흘림 섹션이 몇 면이 되든 어긋나지 않는다.
+ * 머리말은 마진 박스 안의 러닝 요소이고, 그 안에서 음수 좌표로 도련까지 나간다
+ * (1차 파일럿에서 검증된 방식).
+ */
+@page {
+  size: 216mm 303mm;
+  margin: 26.5mm 25mm 16.5mm 23mm;
 }
-.sheet:last-child { break-after: auto; }
+@page :left {
+  margin-left: 23mm; margin-right: 25mm;
+  @top-left { content: element(hdrL); vertical-align: top; }
+  @bottom-left { content: element(folL); vertical-align: top; }
+}
+@page :right {
+  margin-left: 26mm; margin-right: 22mm;
+  @top-left { content: element(hdrR); vertical-align: top; }
+  @bottom-right { content: element(folR); vertical-align: top; }
+}
 
-/* 스텝 색 — 시트/섹션에 s1·s2·s3 로 붙는다 */
+/* 러닝 요소 — 섹션 선두에 둔다(섹션 밖이면 무명 페이지가 생긴다) */
+.run { position: absolute; }
+.r-hdrL { position: running(hdrL); }
+.r-hdrR { position: running(hdrR); }
+.r-folL { position: running(folL); }
+.r-folR { position: running(folR); }
+.r-hdrL, .r-hdrR { width: var(--content-w); height: var(--hdr-h); }
+.r-folL, .r-folR { width: var(--content-w); height: 16mm; }
+.r-folL .no::before, .r-folR .no::before { content: counter(page); }
+
+/* 고정 시트 한 면 = 판면 높이만큼의 블록 */
+.pg {
+  position: relative;
+  width: var(--content-w);
+  height: 260mm;                       /* 303 - 26.5 - 16.5 */
+  break-after: page;
+  overflow: hidden;
+}
+.sec:last-child .pg:last-child { break-after: auto; }
+
+/* 스텝 색 */
 .s1 { --step: var(--s1); --step-pale: var(--s1-pale); }
 .s2 { --step: var(--s2); --step-pale: var(--s2-pale); }
 .s3 { --step: var(--s3); --step-pale: var(--s3-pale); }
 
+/* 지면 안 좌표 — 판면(마진 박스 안쪽) 기준 */
+:root { --z-top: 1mm; --z-btm: 130mm; }
+.zone { position: absolute; left: 0; width: var(--content-w); }
+
+/* 간지 — 도련까지 색이 차야 하므로 여백 0 짜리 페이지를 따로 쓴다 */
+@page divider {
+  margin: 0;
+  @top-left { content: none; }
+  @bottom-left { content: none; }
+  @bottom-right { content: none; }
+}
+section.div { page: divider; break-before: verso; }
+section.div .pg { width: var(--page-w); height: var(--page-h); }
+
+/* 첫 빈 면 */
+section.blank { page: divider; }
+
+/* 흘림 섹션 */
+@page flow { margin: 30mm 25mm 16.5mm 23mm; }
+@page flow:right { margin-left: 26mm; margin-right: 22mm; }
+section.flow { page: flow; break-before: verso; }
+section.flow.onecol { break-before: auto; }
+.flowbody { }
+.twocol .flowbody { column-count: 2; column-gap: 5mm; column-fill: auto; }
+
 /* ─────────────────────────────────────────────── 헤더 (짝수=왼쪽) */
 .hdr {
-  position: absolute; left: 0; top: 0;
+  position: absolute; left: -23mm; top: 0;      /* 왼쪽 면 여백만큼 되돌려 전폭 */
   width: var(--page-w); height: var(--hdr-h);
   background: var(--hdr-bg);
   border-bottom: 0.6pt solid var(--rule);
@@ -151,7 +206,7 @@ body {
 
 /* ─────────────────────────────────────────────── 헤더 (홀수=오른쪽) */
 .hdr-r {
-  position: absolute; left: 0; top: 0;
+  position: absolute; left: -26mm; top: 0;      /* 오른쪽 면 여백만큼 되돌려 전폭 */
   width: var(--page-w); height: var(--hdr-h);
   background: var(--hdr-bg);
   border-bottom: 0.6pt solid var(--rule);
@@ -172,7 +227,8 @@ body {
   letter-spacing: 0.06em; padding-left: 2mm; box-sizing: border-box;
 }
 /* 오른쪽 사이드 탭 */
-.tabs { position: absolute; right: 0; top: 0; width: 11.5mm; height: var(--page-h); }
+.tabs { position: absolute; left: 204.5mm; top: 0; width: 11.5mm; height: var(--page-h); }
+.r-hdrR .tabs { left: 178.5mm; }   /* 마진 박스(왼쪽 26mm) 기준으로 되돌림 */
 .tabs b {
   position: absolute; right: 0; width: 11.5mm; height: 26mm;
   font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 6.5pt;
@@ -192,20 +248,17 @@ body {
 
 /* ─────────────────────────────────────────────── 푸터 */
 .folio {
-  position: absolute; top: var(--folio-y);
+  position: absolute; top: 0.12mm;              /* 마진 박스 상단 = 286.5mm */
   font-family: "Elice DX Neolli", sans-serif; font-weight: 700; font-size: 6pt;
   line-height: 1; letter-spacing: normal; color: var(--ink);
 }
 .folio .no { color: var(--folio-no); }
-.folio.l { left: 18.23mm; }
+.folio.l { left: -4.77mm; }   /* 판면 왼쪽 바깥 */
 .folio.l .bk { margin-left: 1.9mm; }
-.folio.r { right: 18.0mm; text-align: right; }
+.folio.r { right: -4.2mm; text-align: right; }
 .folio.r .bk { margin-right: 1.9mm; }
 
 /* ─────────────────────────────────────────────── 본문 공통 */
-.zone { position: absolute; width: var(--content-w); }
-.sheet.left .zone, .sheet.left .pn-side { left: var(--m-out); }
-.sheet.right .zone, .sheet.right .pn-side { left: var(--m-in); }
 
 .pnum {
   font-family: "Yeongdo", serif; font-size: 12pt; line-height: 1;
@@ -322,7 +375,7 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 
 /* ─────────────────────────────────────────────── 빈칸 (C2 어휘 / STEP2 C1 어법) */
 .pn-side {                     /* 지문 번호가 판면 왼쪽 바깥에 세로로 */
-  position: absolute; top: 29.5mm; left: 12.6mm !important; width: 9mm;
+  position: absolute; top: 3mm; left: -10.4mm; width: 9mm;
 }
 .pn-side .pnum { line-height: 5.3mm; }
 .blk {
@@ -375,32 +428,9 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
                text-align: justify; }
 
 /* ─────────────────────────────────────────────── STEP3 실전 (2단 흘림) */
-@page s3 {
-  size: 216mm 303mm;
-  margin: 30mm 25mm 19mm 23mm;
-}
-@page s3:left {
-  @top-left-corner { content: element(hdrL); }
-  @bottom-left-corner { content: element(folL); }
-}
-@page s3:right {
-  margin: 30mm 23mm 19mm 26mm;
-  @top-left-corner { content: element(hdrR); }
-  @bottom-right-corner { content: element(folR); }
-}
-section.s3flow { page: s3; }
+/* 페이지 규칙은 위 '흘림 섹션'이 이미 정했다 (@page flow). 여기는 내용만. */
 
-.run-hdr { position: running(hdrL); }
-.run-hdr-r { position: running(hdrR); }
-.run-fol { position: running(folL); }
-.run-fol-r { position: running(folR); }
-.run-hdr, .run-hdr-r { width: var(--page-w); height: var(--hdr-h); }
-.run-fol .no::before, .run-fol-r .no::before { content: counter(page); }
-
-.s3flow {
-  column-count: 2; column-gap: 5mm; column-fill: auto;
-}
-.s3flow p { margin: 0; }
+.flowbody p { margin: 0; }
 .s3-intro {
   font-family: "Elice Baeum", sans-serif; font-size: 8pt; line-height: 4.6mm;
   padding-top: 5mm; break-after: avoid;
@@ -411,7 +441,7 @@ section.s3flow { page: s3; }
   padding-top: 5.6mm;            /* 컬럼 흐름에서 margin-top 이 소실된다(실측) */
   break-after: avoid;
 }
-.s3flow .q3:first-child { padding-top: 0; }
+.flowbody .q3:first-child, .flowbody > .q3:first-of-type { padding-top: 0; }
 .q3 .qn {
   display: inline-block; width: 9mm; text-indent: 0;
   font-family: "Elice DX Neolli", sans-serif; font-weight: 700; font-size: 12pt;
