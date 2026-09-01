@@ -366,6 +366,12 @@ def build_css(spec):
     css.append(".head-table .hc-count_label { writing-mode: vertical-rl; "
                "text-orientation: upright; letter-spacing: 0.05em; "
                "padding: 0.6mm 0.4mm; }")
+    # 매 쪽 반복되는 머리 — 좌·중·우 한 줄
+    css.append(".run-line { display: flex; justify-content: space-between; "
+               "align-items: baseline; width: 100%; }")
+    css.append(".run-line .rl-center { flex: 1; text-align: center; }")
+    css.append(".run-line .rl-right { text-align: right; }")
+    css.append(".run-table { width: 100%; margin: 0 0 1mm; }")
     css.append(".exam-head .eh { display: block; }")
     css.append(".exam-head .eh-center { text-align: center; }")
     css.append(".exam-head .eh-right { text-align: right; }")

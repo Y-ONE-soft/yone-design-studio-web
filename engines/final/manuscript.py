@@ -183,6 +183,16 @@ def parse_label(text):
     return {"page": page.strip(), "key": name}
 
 
+# 원고가 요약·이어짐을 나타내려고 줄머리에 두는 표시. 글이 아니라 표시라
+# 인쇄되면 안 된다(실증: 고3 Test1 23번이 `─> Animals use…` 로 나갔다).
+RE_LEAD_MARK = re.compile(r"^(\s*(?:\([A-Z]\)\s*)?)[\u2500-\u2501\u2014\u2013-]+>\s*")
+
+
+def strip_mark(s):
+    """줄머리의 `─>` 표시를 뗀다. 항목 표시 `(A)` 는 남긴다."""
+    return RE_LEAD_MARK.sub(r"\1", s or "")
+
+
 def is_block_head(text):
     """이 줄이 지문 머리인가 — `숫자.` 로 시작하고 항목 표시가 아니다."""
     m = RE_ROW.match(text)
@@ -216,7 +226,7 @@ def read_blocks(path):
             #   맨 앞의 표기 없는 줄은 '주어진 문장' 이므로 그대로 둔다.
             if cur["items"] and not RE_ITEM.match(s):
                 continue
-            cur["items"].append(s)
+            cur["items"].append(strip_mark(s))
         else:
             cur["nested"].append((d, s))
     for b in blocks:
@@ -339,7 +349,7 @@ def read_vocab(path):
                    "label": parse_label(m.group(2)), "lines": []}
             blocks.append(cur)
         elif cur is not None and not RE_PROMPT.match(s):
-            cur["lines"].append(s)
+            cur["lines"].append(strip_mark(s))
     return blocks
 
 
@@ -382,7 +392,7 @@ def read_grammar(path):
                    "label": parse_label(m.group(2)), "text": ""}
             out.append(cur)
         elif cur is not None and not cur["text"]:
-            cur["text"] = s
+            cur["text"] = strip_mark(s)
     return [b for b in out if b["text"]]
 
 

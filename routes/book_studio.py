@@ -371,10 +371,58 @@ def api_op():
     if not d:
         return jsonify({"error": "모르는 책"}), 404
     cfg = bookmod.load(d)
+    if op == "insert":
+        # ⚠ **아무 목록에나 글을 끼우면 안 된다.** 문항·단원 목록에 글자 하나를
+        #   넣으면 조판이 죽는다(실측: `lessons.0.vocab` 에 빈칸 한 글자를
+        #   넣었더니 `unit["label"]` 에서 통째로 멎었다).
+        cur, _raw = ed.preview(cfg)
+        base = ref.rsplit(".", 1)[0]
+        lst = ed.get(cur, base)
+        if not isinstance(lst, list) or not _accepts(cfg, base, lst):
+            return jsonify({"error": "여기에는 넣을 수 없습니다 — "
+                                     "지문·선지·본문 **한 줄**을 고르세요"}), 409
     st = ed.push(cfg, {k: v for k, v in p.items()
                        if k in ("op", "ref", "v", "at", "note")})
     return jsonify({"ok": True,
                     "history": _hist(st)})
+
+
+@bp.route("/api/book-studio/blankpage", methods=["POST"])
+def api_blankpage():
+    """빈 면 넣기 — 고른 자리 **앞에** 면을 하나 끼운다.
+
+    흐르는 조판에서 면은 내용이 만든다. 그래서 "면을 더한다" 는 곧 **거기서
+    면을 넘기고 빈 문단 하나를 둔다** 는 뜻이다.
+
+    ⚠ 넣을 자리는 표·상자와 **같은 규칙**으로 고른다(문항·단원 목록은 안 된다).
+      raw 연산으로 아무 데나 끼우면 조판이 죽는다.
+    """
+    from core.render_vivlio import book as bookmod
+    from core.render_vivlio import edits as ed
+    p = request.get_json(silent=True) or {}
+    d, meta = _book_dir(p.get("b"))
+    if not d:
+        return jsonify({"error": "모르는 책"}), 404
+    ref = (p.get("ref") or "").strip()
+    if not ref or any(c in ref for c in "/\\ \n") or ".." in ref:
+        return jsonify({"error": "이상한 자리표"}), 400
+    cfg = bookmod.load(d)
+    cur, _raw = ed.preview(cfg)
+    base, at = _list_slot(ref, cur, cfg)
+    if base is None:
+        return jsonify({"error": "여기에는 넣을 수 없습니다 — "
+                                 "지문·선지·본문 **한 줄**을 고르세요"}), 409
+    # 앞에 넣는다(`_list_slot` 은 '뒤' 자리를 준다)
+    at = max(0, at - 1)
+    new_ref = "%s.%d" % (base, at)
+    ed.push(cfg, {"op": "insert", "ref": new_ref, "v": "\u00a0",
+                  "note": "빈 면"})
+    st = ed.push(cfg, {"op": "style",
+                       "sel": '[data-ref="%s"]' % new_ref,
+                       "v": {"break-before": "page", "break-after": "page",
+                             "min-height": "1mm"},
+                       "note": "빈 면"})
+    return jsonify({"ok": True, "ref": new_ref, "history": _hist(st)})
 
 
 # 길이를 재는 속성 — 여기에 **맨 숫자**를 넣으면 CSS 가 통째로 무시된다.

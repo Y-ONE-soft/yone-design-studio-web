@@ -3463,17 +3463,11 @@
    */
   function addBlankPage() {
     if (!curRef) { msg('먼저 지면에서 자리를 고르세요 — 그 앞에 넣습니다'); return; }
-    var ref = curRef;
-    api('/api/book-studio/op', { b: key, op: 'insert', ref: ref, v: '\u00a0' })
+    // ⚠ 넣을 자리 판정은 **서버가** 한다 — 표·상자와 같은 규칙이다.
+    //   raw 연산으로 아무 데나 끼우면 조판이 죽는다(실제로 죽였다).
+    api('/api/book-studio/blankpage', { b: key, ref: curRef })
       .then(function (d) {
         if (d.error) { msg('✗ ' + d.error); return; }
-        return api('/api/book-studio/styles',
-                   { b: key, selector: '[data-ref="' + ref + '"]',
-                     props: { 'break-before': 'page', 'break-after': 'page',
-                              'min-height': '1mm' } });
-      }).then(function (d2) {
-        if (!d2 || d2.error) { if (d2) msg('✗ ' + d2.error); return; }
-        styles = d2.styles || styles;
         rebuild('').then(function (ok) { if (ok) msg('✓ 빈 면을 넣었습니다'); });
       });
   }

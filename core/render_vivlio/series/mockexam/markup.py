@@ -1053,9 +1053,55 @@ def _running_header(s, case):
     bits = []
     if s.copyright and s.copyright_pos == "top":
         bits.append(f'<div class="copyright">{esc(s.copyright)}</div>')
+    bits.append(repeating_head(s, case))
+    bits = [b for b in bits if b]
     if not bits:
         return '<div class="page-header"></div>'
     return '<div class="page-header">' + "".join(bits) + "</div>"
+
+
+def repeating_head(s, case=None):
+    """**매 쪽 반복되는** 머리. 정본에서 7곳 중 5곳이 매 쪽 반복인데 조판은
+    1쪽에만 찍고 있었다(한영1·한영2 표 전체, 세종1·성덕1·성덕2 한 줄).
+
+    학교마다 반복분이 어디 적혀 있는지 다르다 —
+      · 표 전체가 반복       → `running.header.repeat == "every"`
+      · 매 쪽 줄 + 1쪽 덧붙임 → `running.header.line` / `running.header.running`
+    """
+    hdr = P.dig(s.raw, "running.header") or {}
+    rep = str(hdr.get("repeat") or "")
+    # ① 매 쪽 반복되는 줄이 따로 적힌 학교(세종1 `line`, 성덕 `running`)
+    for key in ("line", "running", "other_pages"):
+        v = hdr.get(key)
+        lines = v if isinstance(v, list) else (
+            v.get("lines") if isinstance(v, dict) else None)
+        if lines is None and isinstance(v, dict):
+            # 좌·중·우를 키로 적어 둔 학교(성덕1 `other_pages`, 성덕2 `running`)
+            lines = [dict(v[side], align=side, role=v[side].get("role") or side)
+                     for side in ("left", "center", "right")
+                     if isinstance(v.get(side), dict)]
+        if isinstance(lines, list) and lines:
+            return _head_line_html(s, [x for x in lines if isinstance(x, dict)],
+                                   case, cls="run-line")
+    # ② 표 전체가 매 쪽 반복인 학교(한영1·한영2)
+    if rep.startswith("every"):
+        return header_table(s, case, cls="head-table run-table")
+    return ""
+
+
+def _head_line_html(s, els, case, cls="run-line"):
+    """줄형 머리 한 벌을 HTML 로. 좌·중·우 정렬을 그대로 살린다."""
+    out = []
+    for e in els:
+        role = e.get("role") or ""
+        text = (case or {}).get(role) or _line_text(e)
+        if not text or _RE_PAGENO.fullmatch(str(text).strip()):
+            continue
+        al = e.get("align") or "left"
+        out.append(f'<span class="rl rl-{al}">{esc(str(text))}</span>')
+    if not out:
+        return ""
+    return f'<div class="{cls}">' + "".join(out) + "</div>"
 
 
 # ── 표형 머리표 ─────────────────────────────────────────────────────────────
@@ -1242,7 +1288,10 @@ def _live_head_value(text, case, label=""):
     return text[:m.start()] + f"{m.group(1)}번 ~ {n}번 ({n}문항)" + text[m.end():]
 
 
-def header_table(s, case=None):
+_RE_PAGENO = re.compile(r"\d+\s*/\s*\(?\s*\d+\s*\)?")
+
+
+def header_table(s, case=None, cls="head-table"):
     """머리표가 **표**인 학교(16곳 중 14곳). 셀 방언을 정규화해 그린다."""
     hdr = P.dig(s.raw, "running.header") or {}
     grid = _header_cells_source(hdr)
@@ -1343,6 +1392,8 @@ def header_table(s, case=None):
         rows_html.append("<tr>" + "".join(tds) + "</tr>")
     # `column-span: all` 이 걸린 래퍼로 감싼다 — 감싸지 않으면 본문 단이
     # 머리표 위에서 시작해 글자가 겹친다.
+    if cls != "head-table":       # 러닝 머리 — 흐름 래퍼를 씌우지 않는다
+        return f'<table class="{cls}">' + "".join(rows_html) + "</table>"
     return ('<header class="exam-head"><table class="head-table">'
             + "".join(rows_html) + "</table></header>")
 
@@ -1411,6 +1462,10 @@ def exam_head(s, case=None):
     case = case or {}
     hdr = P.dig(s.raw, "running.header") or {}
     els = hdr.get("elements") or []
+    if str(hdr.get("repeat") or "").startswith("every") and not els:
+        # 표 전체가 매 쪽 반복이면 러닝이 찍는다 — 흐름에 또 넣지 않는다
+        if not (hdr.get("first_page") or hdr.get("masthead_first_page")):
+            return ""
     if not els:
         tbl = header_table(s, case)
         if tbl:
