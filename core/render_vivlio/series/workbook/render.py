@@ -612,6 +612,9 @@ def fixed_section(st, idx):
                 #   못 박으면 없는 지문에서 빈 자리가 생긴다. 자리는 흐름이 정한다.
                 body = f'<div class="topzone">{body}</div>' 
             q_idx, (mark, tight) = _beg()
+            # 장을 넘어 갈라진 지문 묶음도 문항과 같게 묶는다(측정해서 그것만)
+            if q_idx in KEEP:
+                tight += " keep"
             pages.append(f'<div class="grp{tight}">{mark}'
                          f'{example}{head}{body}{btm}'
                          f'<span class="bend"></span></div>')

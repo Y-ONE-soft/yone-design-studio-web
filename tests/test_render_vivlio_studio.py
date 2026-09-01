@@ -1766,3 +1766,31 @@ def test_pair_kerning_is_possible_after_all():
     seg = [{"t": "AV", "st": {"letter-spacing": "-0.06em"}}, "ery"]
     assert "letter-spacing:-0.06em" in rt.to_html(seg)
     assert rt.from_html(rt.to_html(seg))[0]["st"]["letter-spacing"] == "-0.06em"
+
+
+def test_word_lists_let_you_edit_the_word_itself():
+    """항목(dict)에만 자리표를 달면 "덩어리라 글이 없습니다" 에서 막힌다.
+
+    중등부는 실제로 낱말을 눌러도 못 고쳤다 — 항목 **안의 칸**(영어·뜻)에도
+    자리표가 있어야 한다.
+    """
+    from core.render_vivlio.series import middle
+    p = os.path.join(middle._auto_dir(), "render.py")
+    if not os.path.exists(p):
+        pytest.skip("automation 이 이 기계에 없다")
+    src = open(p, encoding="utf-8").read()
+    assert "def _mkf(" in src
+    assert '_mkf(it, "en"' in src and '_mkf(it, "kr"' in src
+
+
+def test_middle_escape_survives_rich_segments():
+    """중등부도 서식 조각을 받아야 한다 — 안 그러면 책 전체가 안 나온다."""
+    from core.render_vivlio.series import middle
+    p = os.path.join(middle._auto_dir(), "render.py")
+    if not os.path.exists(p):
+        pytest.skip("automation 이 이 기계에 없다")
+    src = open(p, encoding="utf-8").read()
+    assert "E = html.escape" not in src, "그대로 두면 서식 조각에서 죽는다"
+    assert "def E(s):" in src
+    i = src.index("def fit_cls")
+    assert "_rtx.plain" in src[i:i + 700], "폭을 잴 때는 글만 꺼내야 한다"

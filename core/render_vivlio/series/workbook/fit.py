@@ -27,6 +27,7 @@ SBEG_B = (0.9902, 0.9942)   # #fffffd (세트 시작)
 SEND_B = (0.9863, 0.9902)   # #fffffc (세트 끝)
 
 BODY_TOP = 28.0
+BODY_BOTTOM = 286.5
 TAIL_LIMIT = 12.0           # 넘어간 쪽이 이보다 짧으면 당긴다 (두 줄 남짓)
 
 
@@ -170,12 +171,15 @@ def leaf_breaks(pdf):
     for page, _col, y, kind in marks:
         if kind == "beg":
             idx += 1
-            op = (idx, page)
+            op = (idx, page, y)
         elif op is not None:
-            bidx, bpage = op
+            bidx, bpage, by = op
             # 꼬리가 거의 0 이면 **표식만** 넘어간 것이다 — 갈라진 게 아니다.
             # (이 걸름을 빼면 유령 결함을 쫓느라 판이 계속 흔들린다.)
-            if bpage % 2 == 1 and page > bpage and (y - BODY_TOP) > 2.0:
+            # 한 면보다 큰 덩어리는 묶어도 못 담는다 — 브라우저가 무시할 뿐이라
+            # 잡아 봐야 바퀴만 낭비한다(실측: 수능만만 #19 는 1.2면짜리다).
+            tall = (BODY_BOTTOM - by) + (y - BODY_TOP) > (BODY_BOTTOM - BODY_TOP)
+            if bpage % 2 == 1 and page > bpage and (y - BODY_TOP) > 2.0 and not tall:
                 out.append(bidx)
             op = None
     return out
