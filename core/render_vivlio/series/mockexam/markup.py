@@ -1260,16 +1260,27 @@ def _header_lines(hdr):
     흩어져 있기도 하다. 실측자가 달라 표기가 갈렸을 뿐 내용은 같은 꼴이다.
     """
     fp = hdr.get("first_page") or {}
+
+    def keep(e):
+        # 쪽번호는 러닝 요소가 찍는다. 머리표에 적힌 것은 실측 당시의 고정
+        # 문자열(`1/8`)이라 실제 쪽수와 어긋나고 두 번 찍힌다. role 이 없는
+        # 학교(성덕1 `line2_right`)가 있어 값의 꼴로도 가른다.
+        if "page_number" in str(e.get("role") or ""):
+            return False
+        t = str(e.get("text") or e.get("예") or "").strip()
+        return not re.fullmatch(r"\d+\s*/\s*\(?\s*\d+\s*\)?", t)
+
     lines = fp.get("lines")
     if isinstance(lines, list) and lines:
-        return [x for x in lines if isinstance(x, dict)]
+        return [x for x in lines if isinstance(x, dict) and keep(x)]
     out = []
     side = {"left": 0, "center": 1, "right": 2}
     for k in fp:
         v = fp[k]
         if not isinstance(v, dict):
             continue
-        if v.get("text") or v.get("예") or v.get("template"):
+        if (v.get("text") or v.get("예") or v.get("template")) and \
+                keep(v) and "page" not in k:
             out.append((k, dict(v, role=v.get("role") or k)))
     if out:
         def order(kv):
