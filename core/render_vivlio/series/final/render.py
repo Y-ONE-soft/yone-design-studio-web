@@ -151,17 +151,20 @@ def _fit_attrs(fit):
 def band(sec, flow=False):
     """섹션 띠 — 검은 사각형 + 번호 + 제목.
 
-    짝수 면은 배경(사각형)+러닝 요소(글자)로 매 면 그려지고, 섹션 첫 면은
-    홀수여도 붙으므로 흐름 맨 앞에 높이 0 으로 한 벌 더 심는다(겹쳐도 같은
-    그림이라 표가 안 난다).
+    글자는 **러닝 요소가 매 면 그린다.** 흐름에 심는 것은 섹션 첫 면이
+    홀수일 때 없는 **검은 사각형과 장 탭 가리개**뿐이다.
+
+    ⚠ 글자까지 한 벌 더 심으면 같은 글자가 두 번 찍힌다. 0.03mm 만 어긋나도
+      눈에 띈다(실측: 다섯 학교 섹션 첫 면 19곳 전부). `@page …:nth(1)` 로
+      러닝을 끄는 길은 없다 — Vivliostyle 에서 그 선택자는 **절대 쪽번호**를
+      센다(빨간 시험 배경으로 확인).
     """
-    inner = (f'<span class="n">{sec["no"]}</span>'
-             f'<span class="t">{esc(sec["title"])}</span>')
     if not flow:
+        inner = (f'<span class="n">{sec["no"]}</span>'
+                 f'<span class="t">{esc(sec["title"])}</span>')
         return f'<div class="bandrun band">{inner}</div>'
-    return (f'<div class="sechdr"><div class="mask"></div>'
-            f'<div class="sq"></div>'
-            f'<div class="band">{inner}</div></div>')
+    return ('<div class="sechdr"><div class="mask"></div>'
+            '<div class="sq"></div></div>')
 
 
 def head_right(chapter):
