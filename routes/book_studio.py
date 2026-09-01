@@ -666,6 +666,16 @@ def api_toc():
     if not ref:
         return jsonify({"error": "목차를 넣을 자리를 지면에서 고르세요"}), 400
     cfg = bookmod.load(d)
+    # ⚠ **재는 자리(문항)에는 못 넣는다.** 계열에 따라 문항을 한 면에 하나씩
+    #   조판해 높이를 재는데, 목차는 면을 넘길 만큼 커서 항목 수와 면 수가
+    #   어긋난다(실측: `항목 130 vs 측정 면 133` — 빌드가 통째로 멎었다).
+    try:
+        measured = bookmod._series(cfg).measured_keys()
+    except Exception:
+        measured = ()
+    if measured and set(ref.split(".")) & set(measured):
+        return jsonify({"error": "목차는 문항 안에 넣을 수 없습니다 — "
+                                 "문항 밖(간지·어휘부 같은 자리)을 고르세요"}), 409
     cur, _raw = ed.preview(cfg)
     base, at = _list_slot(ref, cur, cfg)
     if base is None:
@@ -1151,8 +1161,40 @@ def api_box():
             b.pop("style", None)
         st2 = ed.push(cfg, {"op": "set", "ref": ref, "v": b, "note": "상자 모양"})
         return jsonify({"ok": True, "history": _hist(st2)})
+    if act in ("group", "ungroup"):
+        # 묶기 — 인디자인의 「개체 > 그룹」이다. 한 상자를 끌면 **같이 간다**.
+        # ⚠ 화면의 여러 고르기(⇧클릭)와는 다르다. 그건 이번 한 번이고,
+        #   묶음은 원고에 남아 다음에 열어도 그대로다.
+        refs = [x for x in (p.get("refs") or [ref]) if isinstance(x, str)]
+        gid = "" if act == "ungroup" else (str(p.get("g") or "")[:40]
+                                           or _new_group(cur, refs))
+        if act == "group" and len(refs) < 2:
+            return jsonify({"error": "묶으려면 상자를 **둘 이상** 고르세요"}), 400
+        st = None
+        for r in refs:
+            blk = ed.get(cur, r)
+            if not isinstance(blk, dict) or blk.get("t") != "box":
+                return jsonify({"error": "상자가 아닌 것이 섞였습니다: %s" % r}), 409
+            nb = json.loads(json.dumps(blk))
+            if gid:
+                nb["grp"] = gid
+            else:
+                nb.pop("grp", None)
+            st = ed.push(cfg, {"op": "set", "ref": r, "v": nb,
+                               "note": "상자 묶기" if gid else "묶음 풀기"})
+        return jsonify({"ok": True, "g": gid, "n": len(refs),
+                        "history": _hist(st)})
     if act != "move":
         return jsonify({"error": f"모르는 동작: {act}"}), 400
+    # 묶인 상자는 **같이 움직인다**. 옮긴 만큼(mm 차이)을 형제들에게도 준다.
+    mates = _group_mates(cur, ref, block)
+    deltas = {}
+    for k in bx.AT_KEYS:
+        if k in (p.get("at") or {}):
+            was = bx._mm(dict(block.get("at") or {}).get(k))
+            now = bx._mm(bx._len(p["at"][k]))
+            if was is not None and now is not None:
+                deltas[k] = now - was
     b = json.loads(json.dumps(block))
     at = dict(b.get("at") or {})
     for k in bx.AT_KEYS:
@@ -1169,8 +1211,55 @@ def api_box():
         else:
             b.pop("wrap", None)
     st = ed.push(cfg, {"op": "set", "ref": ref, "v": b, "note": "상자 옮기기"})
-    return jsonify({"ok": True,
+    for r in mates:
+        blk = ed.get(cur, r)
+        if not isinstance(blk, dict) or blk.get("lock"):
+            continue                      # 잠근 짝은 그대로 둔다
+        nb = json.loads(json.dumps(blk))
+        nat = dict(nb.get("at") or {})
+        for k, dv in deltas.items():
+            was = bx._mm(nat.get(k))
+            if was is None:
+                continue                  # 그 변으로 안 붙은 상자는 안 건드린다
+            nat[k] = "%.2fmm" % (was + dv)
+        nb["at"] = nat
+        st = ed.push(cfg, {"op": "set", "ref": r, "v": nb,
+                           "note": "묶인 상자도 옮기기"})
+    return jsonify({"ok": True, "moved": 1 + len(mates),
                     "history": _hist(st)})
+
+
+def _new_group(cur, refs):
+    """새 묶음 이름 — 자리표로 짓는다(같은 것을 두 번 묶어도 같은 이름)."""
+    import hashlib
+    h = hashlib.sha1(("|".join(sorted(refs))).encode("utf-8")).hexdigest()
+    return "g" + h[:8]
+
+
+def _group_mates(cur, ref, block):
+    """이 상자와 **같은 묶음**인 다른 상자들의 자리표.
+
+    ⚠ 묶음은 원고 어디에나 흩어져 있을 수 있어 자료를 통째로 훑는다.
+      상자는 많아야 수십 개라 값싸다.
+    """
+    gid = (block or {}).get("grp")
+    if not gid:
+        return []
+    out = []
+
+    def walk(node, path):
+        if isinstance(node, dict):
+            if node.get("t") == "box" and node.get("grp") == gid and path != ref:
+                out.append(path)
+                return
+            for k, v in node.items():
+                walk(v, "%s.%s" % (path, k) if path else str(k))
+        elif isinstance(node, list):
+            for i, v in enumerate(node):
+                walk(v, "%s.%d" % (path, i) if path else str(i))
+
+    walk(cur, "")
+    return out
 
 
 @bp.route("/api/book-studio/export", methods=["POST"])

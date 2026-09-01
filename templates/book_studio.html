@@ -2019,7 +2019,20 @@
         bt.onclick = function () { alignPicks(a[1]); };
         w2.appendChild(bt);
       });
+      var gb = document.createElement('button');
+      gb.className = 'ide-b'; gb.textContent = '묶기';
+      gb.title = '인디자인의 그룹 — 하나를 끌면 같이 갑니다(다음에 열어도 그대로).';
+      gb.onclick = function () { groupPicks(true); };
+      w2.appendChild(gb);
       host.appendChild(w2);
+    }
+    // 이미 묶인 상자면 풀 수 있어야 한다
+    if (inBox && inBox.grp) {
+      var ub = document.createElement('button');
+      ub.className = 'ide-b'; ub.style.marginTop = '4px';
+      ub.textContent = '묶음 풀기 (' + inBox.grp + ')';
+      ub.onclick = function () { groupPicks(false); };
+      host.appendChild(ub);
     }
     var mar = document.createElement('div');
     mar.className = 'ide-hint'; mar.style.marginTop = '4px';
@@ -2067,6 +2080,28 @@
    *    푼다(상자마다 담고 있는 것이 다를 수 있다).
    *  ⚠ 상자마다 저장을 따로 부르면 다시 조판이 그만큼 돈다 → **한 번만** 굽는다.
    */
+  /** 묶기·풀기 — 인디자인의 「개체 > 그룹」.
+   *
+   *  ⚠ ⇧클릭으로 여러 개 고르는 것과 다르다. 그건 이번 한 번이고, 묶음은
+   *    원고에 남아 **다음에 열어도** 같이 움직인다.
+   */
+  function groupPicks(on) {
+    var refs = picks.map(function (x) { return x.ref; });
+    if (on && refs.length < 2) { msg('⇧ 누르고 두 개 이상 고르세요'); return; }
+    if (!on && !refs.length && curRef) refs = [curRef];
+    api('/api/book-studio/box',
+        { b: key, action: on ? 'group' : 'ungroup',
+          ref: refs[0], refs: refs })
+      .then(function (d) {
+        if (d.error) { msg('✗ ' + d.error); return; }
+        setHist(d.history);
+        rebuild('').then(function (ok) {
+          if (ok) msg(on ? '✓ ' + d.n + '개를 묶었습니다 — 하나를 끌면 같이 갑니다'
+                         : '✓ 묶음을 풀었습니다');
+        });
+      });
+  }
+
   function alignPicks(how) {
     if (picks.length < 2) { msg('⇧ 누르고 두 개 이상 고르세요'); return; }
     picks = picks.filter(function (x) {
