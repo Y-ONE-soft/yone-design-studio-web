@@ -1081,7 +1081,8 @@ def _header_grid(cells):
                 out.append((2, col, 1, str(cell["value"]), "value"))
             continue
         # ② row1 / row2 / row3 / row2_3 (한영1)
-        rowkeys = [k for k in cell if k.startswith("row") and k not in ("row",)]
+        rowkeys = [k for k in cell
+                   if re.fullmatch(r"row\d(?:[_-]\d)?", k)]
         if rowkeys:
             if cell.get("rows"):
                 r, sp = _cell_span(cell["rows"])
@@ -1133,6 +1134,7 @@ def header_table(s, case=None):
             taken.add((r + k, col))
     ncol = max(c for _r, c in at)
     taken = set()
+    rows_html = []
     for r in range(1, nrow + 1):
         tds = []
         for c in range(1, ncol + 1):
@@ -1154,7 +1156,10 @@ def header_table(s, case=None):
             body = esc(txt).replace("\n", "<br>")
             tds.append(f"<td{attr}{cls}>{body}</td>")
         rows_html.append("<tr>" + "".join(tds) + "</tr>")
-    return ('<table class="head-table">' + "".join(rows_html) + "</table>")
+    # `column-span: all` 이 걸린 래퍼로 감싼다 — 감싸지 않으면 본문 단이
+    # 머리표 위에서 시작해 글자가 겹친다.
+    return ('<header class="exam-head"><table class="head-table">'
+            + "".join(rows_html) + "</table></header>")
 
 
 def exam_head(s, case=None):

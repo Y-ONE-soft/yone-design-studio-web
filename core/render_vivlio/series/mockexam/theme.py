@@ -341,6 +341,26 @@ def build_css(spec):
     css.append(f".exam-head .eh-abs {{ position: absolute; "
                f"margin-left: -{round(ml, 2)}mm; margin-top: -{round(mt, 2)}mm; "
                "white-space: nowrap; }")
+    # 표형 머리표(16곳 중 14곳) — 학교마다 테두리 굵기가 다르다
+    hdr = P_dig(s.raw, "running.header") or {}
+    rules = hdr.get("rules") or {}
+    outer = rules.get("outer_pt") or 1.0
+    inner = rules.get("inner_thin_pt") or 0.3
+    rect = hdr.get("rect_mm") or []
+    hw = ""
+    if len(rect) == 4:
+        hw = f"width: {round(float(rect[2]) - float(rect[0]), 1)}mm; "
+    css.append(f".head-table {{ border-collapse: collapse; {hw}"
+               f"border: {outer}pt solid #000; margin: 0 auto 3mm; "
+               "table-layout: auto; }")
+    css.append(f".head-table td {{ border: {inner}pt solid #000; "
+               "padding: 0.6mm 1.4mm; text-align: center; "
+               "vertical-align: middle; line-height: 1.25; }")
+    # 과목명·코드값은 정본에서 눈에 띄게 크다
+    css.append(".head-table .hc-title, .head-table .hc-code_value "
+               "{ font-size: 1.9em; letter-spacing: 0.02em; }")
+    css.append(".head-table .hc-code, .head-table .hc-row2_3 "
+               "{ font-size: 1.6em; }")
     css.append(".exam-head .eh { display: block; }")
     css.append(".exam-head .eh-center { text-align: center; }")
     css.append(".exam-head .eh-right { text-align: right; }")
