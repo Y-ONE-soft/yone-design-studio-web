@@ -683,3 +683,35 @@ def from_sheet(school, exam_period, grade=0, log=lambda m: None):
     sc = parse(text, grade=grade)
     sc["school"], sc["source"] = school, "sheet"
     return sc
+
+
+# ── 지문 차례 ───────────────────────────────────────────────────────────
+RE_TAIL_NO = re.compile(r"(\d+)")
+TB_TAIL = {"RM": 90, "딥러닝": 95}
+UNIT_TAIL = {"분석": 0, "서술형": 90, "논술형": 95}
+
+
+def label_order(label):
+    """파이널 라벨 → 차례 열쇠. **모든 섹션이 같은 순서**여야 한다.
+
+    섹션마다 출처가 달라(원고·시트·폴더 순서) 그냥 두면 어휘만 차례가
+    달라진다(실측: 상일1 18강이 `분석→서술형→논술형→본문1` 로 나갔다).
+    """
+    tok, tail = label_token(label)
+    if tok is None:
+        return (9, 0, 0, label)
+    tail = (tail or "").strip()
+    if tok[0] == "lesson":
+        n = TB_TAIL.get(tail)
+        if n is None:
+            m = RE_TAIL_NO.search(tail)
+            n = int(m.group(1)) if m else 50
+        return (0, tok[1], n, label)
+    if tok[0] == "mock":
+        m = RE_TAIL_NO.search(label[4:])
+        return (3, tok[1] * 100 + tok[2], int(m.group(1)) if m else 0, label)
+    n = UNIT_TAIL.get(tail)
+    if n is None:
+        m = RE_TAIL_NO.search(tail)
+        n = 10 + (int(m.group(1)) if m else 0)
+    return ({"test": 2}.get(tok[0], 1), tok[1], n, label)

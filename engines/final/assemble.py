@@ -95,6 +95,11 @@ def grammar(scope, base, grade, log=lambda m: None):
                 continue
             headers.append(lab)
             lines += [lab, text]
+    # 섹션마다 차례가 달라지면 안 된다 — 폴더 차례가 아니라 **라벨 차례**로.
+    # (추가본문 폴더는 두 과에 걸쳐 있어 4과 딥러닝이 4과 본문보다 앞섰다.)
+    pairs = sorted(zip(headers, lines[1::2]), key=lambda x: S.label_order(x[0]))
+    headers = [h for h, _t in pairs]
+    lines = [x for h, t in pairs for x in (h, t)]
     return lines, headers
 
 
@@ -147,8 +152,9 @@ def _vocab_g3(scope, base, log=lambda m: None):
                 #   (광문3 Vol1 이 71p → 167p 로 튀었다). 영어만 이어 붙인다.
                 if not M.RE_KO.search(t):
                     cur.append(M.strip_mark(t))   # 줄머리 `─>` 는 표시다
-    return "\n\n".join(b[0] + "\n" + " ".join(b[1:])
-                        for b in out if len(b) > 1)
+    out = sorted((b for b in out if len(b) > 1),
+                 key=lambda b: S.label_order(b[0]))
+    return "\n\n".join(b[0] + "\n" + " ".join(b[1:]) for b in out)
 
 
 def vocab(school, grade, exam_period, scope=None, order=None,
