@@ -19,7 +19,7 @@ import os
 import shutil
 import sys
 
-from config import MATERIALS_ROOT
+from config import BASE_DIR, MATERIALS_ROOT
 from engines.final.engine import FinalEngine
 
 BOOK_ROOT = os.path.join(MATERIALS_ROOT, "파이널 직전보충")
@@ -157,8 +157,10 @@ class FinalVivEngine(FinalEngine):
                 return content
             log("■ 시험범위: "
                 + ", ".join(S.token_text(t) for t in sc["tokens"]))
-            root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            sys.path.insert(0, os.path.join(root, "scripts"))
+            # 빌더는 `scripts/` 에 있다(명령줄로도 쓰는 자리라 여기 둔다)
+            spath = os.path.join(BASE_DIR, "scripts")
+            if spath not in sys.path:
+                sys.path.insert(0, spath)
             from final_manuscript_build import build as mbuild
             return mbuild(content, log=log, yos=sc)
         except Exception as e:
