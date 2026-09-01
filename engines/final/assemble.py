@@ -146,7 +146,7 @@ def _vocab_g3(scope, base, log=lambda m: None):
                 #   번역까지 실으면 지문이 두 배가 되어 한 면에 안 앉는다
                 #   (광문3 Vol1 이 71p → 167p 로 튀었다). 영어만 이어 붙인다.
                 if not M.RE_KO.search(t):
-                    cur.append(t)
+                    cur.append(M.strip_mark(t))   # 줄머리 `─>` 는 표시다
     return "\n\n".join(b[0] + "\n" + " ".join(b[1:])
                         for b in out if len(b) > 1)
 

@@ -283,6 +283,12 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
  * "안 들어간다"고 판정돼 옆 단이 통째로 비고 면이 하나 늘어난다
  * (상일1 어법 21면 실증) → 1mm 를 덜 준다. */
 .sec-grammar .blk, .sec-writing .blk { height: calc(var(--bodyh) - 1mm); }
+/* ⚠ 흘리는 지문은 **높이를 풀어야** 한다. 위 규칙이 `.blk.flow` 보다 뒤에
+ *   있어 고정 높이가 이겼고, 그 결과 넘친 꼬리가 다음 지문 위에 겹쳐
+ *   찍혔다(실측: 명일3 Vol2 p3, 판독 불가). */
+.sec-grammar .blk.flow, .sec-writing .blk.flow {
+  height: auto; break-inside: auto;
+}
 
 /* 지문 헤더 — 기준선을 완성본에 맞춘다(33.39mm). 줄상자를 1em 으로 두고
  * `padding-top` 으로 기준선을, `margin-bottom` 으로 본문 첫 줄을 맞춘다.

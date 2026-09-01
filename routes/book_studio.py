@@ -982,13 +982,19 @@ def _list_slot(ref, data=None, cfg=None, kind="block"):
     while parts:
         if parts[-1].isdigit() and len(parts) >= 2:
             base = ".".join(parts[:-1])
+            at = int(parts[-1]) + 1
             if data is not None:
                 lst = _ed.get(data, base)
                 ok = isinstance(lst, list) and _accepts(cfg, base, lst, kind)
                 if not ok:
                     parts.pop()
                     continue
-            return base, int(parts[-1]) + 1
+                # ⚠ 목록보다 뒤를 가리키면 **맨 뒤에** 들어간다(넣기가 그렇게
+                #   한다). 여기서 같이 자르지 않으면 "넣었습니다" 하고 돌려준
+                #   자리표가 **빈 자리**를 가리켜, 그다음 손질이 조용히 딴 데
+                #   가서 붙는다(실측: 상자 둘을 묶으려 했더니 "상자가 아니다").
+                at = min(at, len(lst))
+            return base, at
         parts.pop()
     return None, 0
 

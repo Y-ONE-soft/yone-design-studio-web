@@ -740,7 +740,8 @@ def test_table_plain_for_verification():
 def test_series_renders_table_blocks():
     src = io.open(os.path.join(_ROOT, "core", "render_vivlio", "series",
                                "blackbook", "render.py"), encoding="utf-8").read()
-    assert "t == 'table'" in src and "_tbl.html(" in src
+    # 가르는 자리는 이제 한 곳이다(`core/blocks.py`) — 계열은 한 줄이면 된다
+    assert "_blk.is_block(" in src and "_blk.html(" in src
 
 
 def test_table_css_sees_edits_not_just_data():
@@ -853,7 +854,7 @@ def test_box_plain_for_verification():
 def test_series_renders_box_blocks():
     src = io.open(os.path.join(_ROOT, "core", "render_vivlio", "series",
                                "blackbook", "render.py"), encoding="utf-8").read()
-    assert "t == 'box'" in src and "_box.html(" in src
+    assert "_blk.is_block(" in src and "_blk.html(" in src
 
 
 def test_box_ops_go_through_history():
@@ -1004,7 +1005,7 @@ def test_paras_render_tables_and_boxes():
     src = io.open(os.path.join(_ROOT, "core", "render_vivlio", "series",
                                "blackbook", "render.py"), encoding="utf-8").read()
     i = src.index("def paras_html")
-    assert "('table', 'box')" in src[i:i + 1200]
+    assert "_blk.is_block(p)" in src[i:i + 1200]
 
 
 def test_drag_keeps_the_anchor():
@@ -2415,3 +2416,84 @@ def test_측정조판은_빈면을_끈다():
     assert "content:none" not in measure._MUTE
     for k in ("break-before:auto", "break-after:auto", "height:auto"):
         assert k in measure._MUTE
+
+
+# ── 목차 · 링크 · 묶기 ────────────────────────────────────────────────────
+def test_목차는_면번호를_적지_않는다():
+    """면 번호는 조판이 끝나야 정해진다 — 사람이 적으면 고칠 때마다 어긋난다."""
+    from core.render_vivlio import toc
+    assert "target-counter" in toc.CSS
+    assert "leader(" in toc.CSS
+    src = open(os.path.join(_ROOT, "core", "render_vivlio", "toc.py"),
+               encoding="utf-8").read()
+    assert "counter(" not in src.split("CSS =")[0], "목차 글에 번호를 적으면 안 된다"
+
+
+def test_목차는_링크로_가리킨다():
+    """`#vrefN` 으로 가리켜야 `target-counter` 가 번호를 찾는다."""
+    from core.render_vivlio import toc, refs
+    refs.clear()
+    h = toc.html(toc.new("차례", [{"ref": "lessons.0", "label": "1과"}]),
+                 ref="blocks.0")
+    assert 'href="#vref' in h
+    n = refs.num("lessons.0")
+    assert 'href="#vref%d"' % n in h, "목차가 가리키는 번호와 실제 번호가 달라졌다"
+    # 나중에 그 자리를 그릴 때 **같은 번호**를 다시 쓴다
+    assert 'vref%d"' % n in refs.mark("lessons.0", "head")
+
+
+def test_목차는_재는_자리에_못_들어간다():
+    """문항은 한 면에 하나씩 재는데, 목차는 면을 넘겨 측정이 통째로 멎는다."""
+    src = open(os.path.join(_ROOT, "routes", "book_studio.py"),
+               encoding="utf-8").read()
+    i = src.index("def api_toc")
+    body = src[i:i + 3600]
+    assert "measured_keys()" in body
+    from core.render_vivlio.series.blackbook import BlackbookSeries
+    assert "problems" in BlackbookSeries().measured_keys()
+
+
+def test_덩어리는_한_곳에서_가른다():
+    """계열마다 `t in ('table','box')` 를 적으면 한 곳을 빠뜨린다(표에서 겪었다)."""
+    from core.render_vivlio import blocks
+    assert set(blocks.KINDS) >= {"table", "box", "toc"}
+    import glob
+    for p in glob.glob(os.path.join(_ROOT, "core", "render_vivlio",
+                                    "series", "*", "render.py")):
+        s = open(p, encoding="utf-8").read()
+        assert '("table", "box")' not in s and "('table', 'box')" not in s, p
+
+
+def test_링크는_거른다():
+    """`javascript:` 를 그대로 실으면 그 HTML 을 여는 사람에게 실행된다."""
+    from core.render_vivlio import richtext as rt
+    assert rt.safe_link("https://a.kr/b") == "https://a.kr/b"
+    assert rt.safe_link("mailto:a@b.kr") == "mailto:a@b.kr"
+    assert rt.safe_link("#vref3") == "#vref3"
+    assert rt.safe_link("javascript:alert(1)") == ""
+    assert rt.safe_link("data:text/html,x") == ""
+    # 되접기 — 링크가 살아 돌아온다
+    h = rt.to_html([{"t": "교과서", "lk": "https://a.kr"}])
+    # 조각이 하나면 조각 그대로 돌려준다(목록으로 부풀리지 않는다)
+    assert rt.from_html(h) == {"t": "교과서", "lk": "https://a.kr"}
+    # 민글은 민글로
+    assert rt.from_html(rt.to_html("그냥 글")) == "그냥 글"
+
+
+def test_묶은_상자는_같이_간다():
+    """인디자인의 그룹 — 하나를 끌면 같이 간다. 잰 mm 차이만큼 형제도 옮긴다."""
+    src = open(os.path.join(_ROOT, "routes", "book_studio.py"),
+               encoding="utf-8").read()
+    i = src.index("def _group_mates")
+    assert 'get("grp")' in src[i:i + 900]
+    from core.render_vivlio import box
+    assert box._mm("1cm") == 10.0 and box._mm("72pt") == 25.4
+    assert box._mm("50%") is None, "기준을 모르는 값은 손대지 않는다"
+
+
+def test_넣을_자리는_목록_밖을_가리키지_않는다():
+    """돌려준 자리표가 빈 자리를 가리키면 그다음 손질이 딴 데 가서 붙는다."""
+    import routes.book_studio as BS
+    data = {"a": {"paras": ["가", "나"]}}
+    base, at = BS._list_slot("a.paras.9", data, None)
+    assert (base, at) == ("a.paras", 2), (base, at)

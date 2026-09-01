@@ -2026,11 +2026,12 @@
       w2.appendChild(gb);
       host.appendChild(w2);
     }
-    // 이미 묶인 상자면 풀 수 있어야 한다
-    if (inBox && inBox.grp) {
+    // 묶음 풀기 — 묶였는지는 **서버가** 안다(화면은 상자 자료를 안 들고 있다)
+    if (inBox) {
       var ub = document.createElement('button');
       ub.className = 'ide-b'; ub.style.marginTop = '4px';
-      ub.textContent = '묶음 풀기 (' + inBox.grp + ')';
+      ub.textContent = '묶음 풀기';
+      ub.title = '이 상자를 묶음에서 뺍니다.';
       ub.onclick = function () { groupPicks(false); };
       host.appendChild(ub);
     }
