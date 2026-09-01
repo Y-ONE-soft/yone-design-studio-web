@@ -48,14 +48,20 @@ def _box_kind(text):
     return None
 
 
-def _classify_question(text):
+def _classify_question(text, opts=None):
     """(kind, code) — _taxonomy 분류기 우선, 실패 시 구조 폴백.
 
     꼬리 태그([ep1]/[pr1]/[3점] 등)는 판정 전에 반복 제거 — 태그가 붙어도
     발문 인식이 깨지지 않게 (다층 방어의 '정규화' 층).
     """
+    opts = opts or {}
     while True:
         stripped = R.Q_TRAILING_TAG.sub("", text)
+        if opts.get("strip_source_tag"):
+            # 출처 태그가 발문 끝에 붙으면 종결어미가 문장 끝이 아니게 되어
+            # 발문 인식이 통째로 깨진다 (한영2 실증:
+            #   "다음 글을 읽고 알 수 없는 것은? [23년 3월 29번]" → UNKNOWN).
+            stripped = R.SOURCE_TAG_TRAIL.sub("", stripped)
         if stripped == text:
             break
         text = stripped
@@ -171,12 +177,15 @@ def _base_kind(text, opts=None):
         return bk, None
     if R.BOX_INLINE.match(bt):
         return "Box", None
+    if opts.get("strip_source_tag") and R.SOURCE_TAG_ONLY.match(text):
+        # 출처 태그만 있는 줄 — 지문도 발문도 아니다.
+        return "SRC", None
     if not _is_english_prose(text) and not R.SUBITEM_LEAD.match(text):
         # SUBITEM_LEAD: "(1) 정답은 각각 주어진 철자로 시작할 것" 같은 소문항·
         # 조건 항목은 **상위 발문이 아니다**. taxonomy 가 "주어진 철자"를 보고
         # SRV-WRD-START-LETTER 로 매칭해 발문으로 튀던 자리(배재1 실증).
         # 묶음 머리 "(1~5)" 는 범위 기호가 있어 이 패턴에 안 걸린다.
-        qk, code = _classify_question(text)
+        qk, code = _classify_question(text, opts)
         if qk:
             return qk, code
     if R.C_START.match(text) or R.C_AB_HEADER.match(text):

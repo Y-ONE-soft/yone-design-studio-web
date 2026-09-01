@@ -239,7 +239,8 @@ def build_ir(paras, meta=None, log=None):
     # "(2) (틀린 부분:      )"). 이 줄을 답란으로 잡아야 서술형 판정이 선다.
     # 공용 기본값이 아니라 이 계열에서만 켠다 — 워크북 계열은 같은 모양을
     # 지문 스타일로 인쇄하는 관행이라 켜면 그쪽 산출물이 바뀐다.
-    annotated = classify_paragraphs(paras, {"blank_fill_answer": True})
+    annotated = classify_paragraphs(paras, {"blank_fill_answer": True,
+                                            "strip_source_tag": True})
     _pre_warn = []
     annotated = _expand_range_groups(annotated, _pre_warn)
     items = []
