@@ -143,28 +143,34 @@ def build(content, log=print, keep_all=False):
     # ⚠ 다만 **내용이 이미 들어와 있으면** 데려오지 않는다. 되수확본에는 같은
     #   글이 엉뚱한 라벨로 한 번 더 들어 있는 자리가 있어서(광문2 영작
     #   `리딩파워 2강 02` 등 7건), 그대로 데려오면 중복이 된다.
-    def _covered(text, pool):
-        w = _words(text)
-        return bool(w) and len(w & pool) / len(w) > 0.6
+    def _n(t):
+        # 공백을 통째로 지운다 — 되수확본은 같은 문장을 띄어쓰기만 달리
+        # 담아 둔 자리가 있어서, 한 칸 차이로 '중복 아님'이 된다.
+        return re.sub(r"\s+", "", re.sub(r"^\s*\([A-Z]\)\s*", "", t or ""))
+
+    def _covered(lines, pool):
+        """이 글이 이미 들어와 있는가 — **문장 단위 완전 일치**로 본다.
+
+        낱말 겹침으로 보면 짧은 글이 엉뚱하게 '중복'이 된다(명일1 외부지문
+        본문1 이 그렇게 버려졌다).
+        """
+        got = [_n(x) for x in lines if len(_n(x)) > 15]
+        return bool(got) and all(g in pool for g in got)
 
     have = {b["header"] for b in arrange}
-    pool_a = set()
-    for b in arrange:
-        pool_a |= _words(" ".join([b.get("passage", "")] + b["items"]))
+    pool_a = {_n(x) for b in arrange
+              for x in [b.get("passage", "")] + b["items"]}
     for b in content["vol1"].get("문장배열") or []:
         if b["header"] in have:
             continue
-        if _covered(" ".join([b.get("passage", "")] + (b.get("items") or [])),
-                    pool_a):
+        if _covered([b.get("passage", "")] + (b.get("items") or []), pool_a):
             log(f"  [중복 — 버림] 문장배열 {b['header']}")
             continue
         arrange.append(dict(b, source=(b.get("source", "") + " [되수확]")))
         log(f"  [원고 없음 → 되수확 유지] 문장배열 {b['header']}")
 
     havew = {b["header"] for b in writing}
-    pool_w = set()
-    for b in writing:
-        pool_w |= _words(" ".join(p["korean"] for p in b["pairs"]))
+    pool_w = {_n(p["korean"]) for b in writing for p in b["pairs"]}
     old_pairs = content["vol2"].get("서술형영작") or []
     det = sorted(content["vol2"].get("영작_헤더_상세") or [],
                  key=lambda d: d["start_idx"])
@@ -175,7 +181,7 @@ def build(content, log=print, keep_all=False):
         chunk = old_pairs[d["start_idx"]:e]
         if not chunk:
             continue
-        if _covered(" ".join(p["korean"] for p in chunk), pool_w):
+        if _covered([p["korean"] for p in chunk], pool_w):
             log(f"  [중복 — 버림] 영작 {d['header']}")
             continue
         writing.append({"header": d["header"], "pairs": chunk})

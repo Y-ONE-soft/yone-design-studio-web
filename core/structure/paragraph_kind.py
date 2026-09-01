@@ -80,7 +80,11 @@ def _classify_question(text, opts=None):
         if pat.search(text):
             return "Q-INTRO", None
     # 한국어 의문형 종결 — 낱말 화이트리스트보다 앞에서 본다(계열 opt-in).
-    if opts.get("ko_interrogative") and R.Q_KO_INTERROGATIVE.search(text):
+    if opts.get("ko_interrogative") and (
+            R.Q_KO_INTERROGATIVE.search(text)
+            or R.Q_KO_INTERROGATIVE.search(text_np)):
+        # text_np = 꼬리 괄호 주석 제거본. 발문이 "…배열되는 단어는? (단, …)"
+        # 처럼 괄호 단서를 달고 끝나는 원고가 있다(한영1 실증).
         return "Q", None
     for pi, pat in enumerate(R.Q_FALLBACK_PATTERNS):
         if pat.search(text) or pat.search(text_np):

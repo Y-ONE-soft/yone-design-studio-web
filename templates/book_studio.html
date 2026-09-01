@@ -429,6 +429,7 @@
   var renderAll = false;
   var curEl = null, styles = {}, styleNames = {}, curPage = 1, ready = false;
   var bookFonts = [];      // 이 책이 **임베드한** 서체 (PDF 에 실제로 들어간다)
+  var bookPageW = 216;     // 도련 포함 판형 가로(mm) — 화면 px ↔ mm 환산에 쓴다
 
   // ── 인쇄 색(CMYK) ───────────────────────────────────────
   // 내지는 종이에 찍힌다. 화면의 `#908400` 이 인쇄에서 몇 %인지 모르면
@@ -545,6 +546,7 @@
       ready = true;
       $('ide-empty').style.display = 'none';
       hookStage();
+      hookDrag();
       applyViews();          // 지면이 새로 왔으니 보기 보조를 다시 건다
       applyLayers(); drawLayers();
       drawPageNo();
@@ -1342,6 +1344,76 @@
       boxApi({ action: 'delete', ref: inBox });
     };
     host.appendChild(go); host.appendChild(del);
+  }
+
+  // ── 끌어서 옮기기 ───────────────────────────────────────
+  //
+  // "지면 좌표계가 면마다라 못 한다" 고 적었는데, 재 보니 **면 상자에서
+  // mm 로 정확히 되돌릴 수 있다**(지문 상자 왼 23mm·폭 167mm — 실제 값과 같다).
+  // 그래서 만들었다.
+  //
+  // ⚠ 어느 변에 붙여 두었는지를 지킨다. 오른쪽·아래에 붙인 상자를 끌었다고
+  //   왼쪽·위 기준으로 바꾸면, 판형이 바뀔 때 딴 데로 간다.
+  function pageBoxOf(el) {
+    var p = el;
+    while (p && !(p.hasAttribute && p.hasAttribute('data-vivliostyle-page-container')))
+      p = p.parentElement;
+    return p;
+  }
+
+  function hookDrag() {
+    var st = stageEl();
+    if (!st || st.__drag) return;
+    st.__drag = true;
+    var cur = null;
+    st.addEventListener('mousedown', function (ev) {
+      if (tool !== 'sel') return;
+      var el = ev.target;
+      while (el && el !== st && !(el.classList && el.classList.contains('viv-box')))
+        el = el.parentElement;
+      if (!el || el === st || !el.classList.contains('abs')) return;
+      var pg = pageBoxOf(el); if (!pg) return;
+      var pr = pg.getBoundingClientRect();
+      var er = el.getBoundingClientRect();
+      cur = {
+        el: el, pg: pr, mm: pr.width / (bookPageW || 216),
+        x0: ev.clientX, y0: ev.clientY,
+        left: er.left - pr.left, top: er.top - pr.top,
+        useRight: !!el.style.right, useBottom: !!el.style.bottom,
+        w: er.width, h: er.height
+      };
+      ev.preventDefault();
+      msg('끌어서 옮기는 중 — 놓으면 저장합니다');
+    }, true);
+
+    st.addEventListener('mousemove', function (ev) {
+      if (!cur) return;
+      var dx = ev.clientX - cur.x0, dy = ev.clientY - cur.y0;
+      var L = cur.left + dx, T = cur.top + dy;
+      if (cur.useRight) {
+        cur.el.style.right = round2((cur.pg.width - L - cur.w) / cur.mm) + 'mm';
+      } else {
+        cur.el.style.left = round2(L / cur.mm) + 'mm';
+      }
+      if (cur.useBottom) {
+        cur.el.style.bottom = round2((cur.pg.height - T - cur.h) / cur.mm) + 'mm';
+      } else {
+        cur.el.style.top = round2(T / cur.mm) + 'mm';
+      }
+    }, true);
+
+    st.addEventListener('mouseup', function () {
+      if (!cur) return;
+      var el = cur.el; cur = null;
+      var m = (el.className || '').match(/(?:^|\s)vref(\d+)(?:\s|$)/);
+      var ref = m && refs[m[1]];
+      if (!ref) { msg('이 상자는 자리표가 없어 저장하지 못합니다'); return; }
+      var at = {};
+      ['top', 'left', 'right', 'bottom'].forEach(function (k) {
+        if (el.style[k]) at[k] = el.style[k];
+      });
+      boxApi({ action: 'move', ref: ref, at: at });
+    }, true);
   }
 
   function boxApi(body) {
@@ -2231,6 +2303,9 @@
     api('/api/book-studio/knobs?b=' + encodeURIComponent(key)).then(function (d) {
       if (d.error) { msg('✗ ' + d.error); return; }
       bid = d.book.bid; spec = d.knobs || [];
+      // 화면 px ↔ mm 환산에 쓸 판형(도련 포함). 책마다 다르다.
+      var pg = d.book && d.book.page;
+      if (pg && pg.width) bookPageW = pg.width + 2 * (pg.bleed || 0);
       drawPalettes();
       if (!keepView) rebuild('');
     });

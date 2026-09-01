@@ -199,9 +199,33 @@ def _expand_range_groups(annotated, warnings=None):
         while j < n and annotated[j]["kind"] not in ("Q", "Q-INTRO"):
             j += 1
         body = annotated[i + 1:j]
-        # 선지 무리(연속 C)의 시작 위치들
+        # 문항 경계 후보 — 선지 무리(연속 C)가 1순위.
         starts = [k for k, r in enumerate(body)
                   if r["kind"] == "C" and (k == 0 or body[k - 1]["kind"] != "C")]
+        if count >= 2 and len(starts) != count:
+            # 선지 단락이 아예 없는 유형이 있다(삽입·어법 밑줄형은 ①~⑤ 가
+            # 지문 안에 인라인이라 C 단락이 안 생긴다). 그때는 **지문 무리**로
+            # 센다 — 묶음 안에서도 문항마다 자기 지문을 갖는다.
+            p_starts = [k for k, r in enumerate(body)
+                        if r["kind"] in ("P", "P-CONTEXT")
+                        and (k == 0 or body[k - 1]["kind"] not in ("P", "P-CONTEXT"))]
+            # 다만 **지문 무리 수가 맞는다고 다 쪼개면 안 된다** — 공유 지문 한
+            # 덩이가 문단 여럿으로 나뉜 것과 구별이 안 된다(한영1·한영2 실증:
+            # 그냥 쪼갰더니 +2씩 과분할). 이 폴백은 '선지 단락이 없는 유형'
+            # 전용이므로, 나뉜 토막마다 **지문 안 인라인 ①~⑤ 자리표**가 있을
+            # 때만 인정한다. 삽입·어법 밑줄형은 그 자리표가 문항의 선지다.
+            if len(p_starts) == count and count >= 2:
+                segs, ok = [], True
+                for si, st in enumerate(p_starts):
+                    en = p_starts[si + 1] if si + 1 < len(p_starts) else len(body)
+                    segs.append(body[st:en])
+                for seg in segs:
+                    if not any(_RE_INLINE_CIRCLED.search(r["text"] or "")
+                               for r in seg):
+                        ok = False
+                        break
+                if ok:
+                    starts = p_starts
         if count < 2 or len(starts) != count:
             if count >= 2 and warnings is not None:
                 warnings.append(
