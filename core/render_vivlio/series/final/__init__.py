@@ -77,11 +77,17 @@ class FinalSeries(Series):
         # 찍혀 굵어진다(실측: 완성본보다 확연히 굵었다). 어느 면에서 시작할지는
         # 조판해 봐야 알므로, 한 번 짜고 **홀짝을 재서** 짝수인 섹션만 흐름
         # 글자를 빼고 다시 짠다.
-        even = self._even_start_sections(out, d, vol)
-        if even and not sample:
-            log(f"  [띠] 섹션 {sorted(even)} 은 짝수 면에서 시작 — 흐름 띠 글자를 뺀다")
+        even, odd_pages = self._section_starts(out, d, vol)
+        if (even or odd_pages) and not sample:
+            if even:
+                log(f"  [띠] 섹션 {sorted(even)} 은 짝수 면에서 시작"
+                    f" — 흐름 띠 글자를 뺀다")
+            if odd_pages:
+                log(f"  [머리] {sorted(odd_pages)} 면은 섹션 첫 면(홀수)"
+                    f" — 장 탭·워드마크를 뺀다")
             html_path = render_mod.write(cfg, d, vol, build_dir, fits=fits,
-                                         log=None, plain_band=even)
+                                         log=None, plain_band=even,
+                                         hide_headr=odd_pages)
             secs2 = cli.run_build(html_path, out, log=log, extra=["-f", "pdf"])
             secs += secs2
 
@@ -96,24 +102,30 @@ class FinalSeries(Series):
         return res
 
     @staticmethod
-    def _even_start_sections(pdf, d, vol):
-        """섹션 첫 면이 **짝수**인 섹션 이름들 — 띠가 두 번 찍히는 자리."""
+    def _section_starts(pdf, d, vol):
+        """섹션 첫 면 조사 → (짝수에서 시작한 섹션들, 홀수 시작 면 번호들).
+
+        짝수 시작 = 띠가 두 번 찍히는 자리(러닝과 흐름이 겹친다).
+        홀수 시작 = 장 탭·워드마크를 꺼야 하는 면(완성본에는 없다).
+        """
         import re
         try:
             import fitz
         except Exception:
-            return set()
+            return set(), set()
         titles = {s["title"]: s["kind"]
                   for s in d["vols"][str(vol)]["sections"]}
         # ⚠ 꼬리말(`CHAPTER.01 문장 배열`)로 찾으면 안 된다 — 섹션 첫 면에는
         #   아직 안 나오고 그 다음 면부터 나온다(실측: 띠는 p2 인데 꼬리는 p3).
         #   **띠 자체**를 찾는다 — 판면 맨 위(25mm 안)에 큰 글자로 있는 제목.
-        seen, even = set(), set()
+        seen, even, odd = set(), set(), set()
         try:
             doc = fitz.open(pdf)
         except Exception:
-            return set()
+            return set(), set()
         for i, pg in enumerate(doc):
+            if not titles:
+                break
             top = ""
             for b in pg.get_text("dict")["blocks"]:
                 for l in b.get("lines", []):
@@ -128,9 +140,11 @@ class FinalSeries(Series):
                     seen.add(t)
                     if (i + 1) % 2 == 0:
                         even.add(titles[t])
+                    else:
+                        odd.add(i + 1)
                     break
         doc.close()
-        return even
+        return even, odd
 
     @staticmethod
     def series_asset(name=""):

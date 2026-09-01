@@ -350,7 +350,8 @@ def key_of(vol, sec, i, b):
     return f"{vol}-{sec['kind']}-{i}"
 
 
-def document(cfg, data, vol, fits=None, mode=None, plain_band=()):
+def document(cfg, data, vol, fits=None, mode=None, plain_band=(),
+             hide_headr=()):
     # ⚠ 자리표는 **렌더 직전에 한 번** 만든다. 안 만들면 작업대에서 지면을
     #   눌러도 조용히 아무 일이 안 난다(예전에 이 계열이 그랬다).
     index_refs(data)
@@ -375,6 +376,15 @@ def document(cfg, data, vol, fits=None, mode=None, plain_band=()):
                  'font-size:2pt;line-height:0;color:#000}'
                  '.sechdr{display:none}</style>'
                  % (MEASURE_PAGE_H, COL_W))
+    if hide_headr:
+        # 섹션 첫 면에는 장 탭·워드마크가 없다(완성본). 마진 박스는 흐름
+        # 요소로 덮을 수 없고(위에 그려진다) `@page 이름:nth(1)` 은
+        # Vivliostyle 에서 **절대 쪽번호**를 센다 — 그 성질을 거꾸로 쓴다.
+        # 어느 면인지는 한 번 짜 봐야 아니 2 패스에서 넘겨받는다.
+        o.append('<style>'
+                 + "".join('@page :nth(%d){@top-right{content:none}}' % n
+                           for n in sorted(hide_headr))
+                 + '</style>')
     o.append('</head><body>')
     o.append(feet(ch))
     if mode != "measure":
@@ -404,8 +414,8 @@ MODE_FILE = {None: "index.html", "measure": "measure.html"}
 
 
 def write(cfg, data, vol, build_dir, fits=None, mode=None, log=None,
-          plain_band=()):
-    text = document(cfg, data, vol, fits, mode, plain_band)
+          plain_band=(), hide_headr=()):
+    text = document(cfg, data, vol, fits, mode, plain_band, hide_headr)
     os.makedirs(build_dir, exist_ok=True)
     if mode is None:
         # 작업대가 `vrefN` → 원본 자리를 되짚는 표. 측정용 판에는 안 낸다.

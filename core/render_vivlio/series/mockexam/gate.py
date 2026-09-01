@@ -307,6 +307,20 @@ def check_leak(pdf_text):
     return OK, "0건", {"누출": []}
 
 
+# ── 4-b. 정답 누출 ──────────────────────────────────────────────────────────
+# 원고에는 정답이 함께 온다. 시험지에 인쇄되면 그 시험은 못 쓴다.
+# `[정답 작성 안내]`(작성 조건)·`정답 및 해설의 저작권`(저작권)은 정상이다.
+_RE_ANS_LEAK = re.compile(r"[\[［]\s*정답\s*[\]］]|(?<![가-힣])정답\s*[:：]")
+
+
+def check_answer_leak(text):
+    hits = [text[max(0, m.start() - 6):m.start() + 40].replace("\n", " ")
+            for m in _RE_ANS_LEAK.finditer(text or "")]
+    if hits:
+        return FAIL, f"정답 누출 {len(hits)}건: {hits[0]!r}", {"leak": len(hits)}
+    return OK, "없다", {"leak": 0}
+
+
 # ── 5. 머리표 ───────────────────────────────────────────────────────────────
 
 def check_head(html):
@@ -390,7 +404,8 @@ def check_overflow(doc):
 
 
 # ── 한 부 검사 ──────────────────────────────────────────────────────────────
-CHECKS = ["배점", "발문", "문항수", "출처", "머리표", "묶음", "그림", "밑줄", "지면"]
+CHECKS = ["배점", "발문", "문항수", "출처", "정답", "머리표", "묶음",
+          "그림", "밑줄", "지면"]
 
 
 def inspect(key, rnd, path, out_dir=OUT_DIR):
@@ -423,6 +438,7 @@ def inspect(key, rnd, path, out_dir=OUT_DIR):
         c["발문"] = check_stems(plan)
         c["문항수"] = check_counts(paras, ir)
         c["출처"] = check_leak(pdf_text)
+        c["정답"] = check_answer_leak(pdf_text)
         c["머리표"] = check_head(html)
         c["묶음"] = check_groups(plan)
         c["그림"] = check_images(paras, ir, n_img)
@@ -457,6 +473,8 @@ def _short(name, mark, detail):
         return f"문항 {p[0]}+{p[1]}"
     if name == "출처":
         return f"출처 {len(g('누출') or [])}"
+    if name == "정답":
+        return f"정답누출 {g('leak')}"
     if name == "머리표":
         return "머리표 " + (OK if g("exam_head") else FAIL)
     if name == "묶음":
