@@ -660,6 +660,43 @@ def _number_items(doc):
     return plan
 
 
+def _level_group_scores(plan, unit=0.1):
+    """공통발문형 묶음의 구성원 배점을 **균등하게** 맞춘다.
+
+    정본은 `[각 2.8점씩]` 처럼 묶음 안이 늘 같은 값이다. 배분표는 묶음을
+    모르고 문항마다 다른 값을 주므로 여기서 고르게 편다. 고르게 펴면서
+    생기는 차액은 **묶음 밖 문항**에 넘겨 총점을 그대로 지킨다.
+    """
+    spare = 0.0
+    for row in plan:
+        g = row.get("group")
+        if not g or not g.get("common_stem"):
+            continue
+        hs = [m["item"].get("header") or {} for m in g["members"]]
+        vals = [h.get("score") for h in hs]
+        if any(v is None for v in vals) or len(set(vals)) == 1:
+            continue
+        n = len(vals)
+        total = sum(vals)
+        each = round(round(total / n / unit) * unit, 2)
+        for h in hs:
+            h["score"] = each
+        spare = round(spare + total - each * n, 2)
+    if abs(spare) < unit / 2:
+        return
+    # 차액은 묶음에 속하지 않은 문항 중 하나에 얹는다
+    for row in plan:
+        if row.get("no_stem"):
+            continue
+        h = row["item"].get("header") or {}
+        if h.get("score") is None:
+            continue
+        nv = round(h["score"] + spare, 2)
+        if 0.2 <= nv <= 12.0:
+            h["score"] = nv
+            return
+
+
 def _set_group(plan, i, members):
     sel = [m for m in members if not m["essay"]]
     ess = [m for m in members if m["essay"]]
@@ -708,6 +745,8 @@ def build_body(doc, spec, case=None, scores=None):
     # 묶음 머리에 배점 자리가 있는 학교만 해당한다. 자리가 없는데 구성원
     # 배점을 지우면 배점이 어디에도 안 찍힌다(강동2·강동3·한영2 실증).
     head_takes_score = "{점수}" in (spec.group_template or "")
+    if head_takes_score:
+        _level_group_scores(plan)
     for row in plan:
         g = row.get("group")
         if not g or not g.get("common_stem") or not head_takes_score:
