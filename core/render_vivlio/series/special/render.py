@@ -33,6 +33,7 @@ import re
 from core.render_vivlio import box as _box
 from core.render_vivlio import refs as _refs
 from core.render_vivlio import table as _tbl
+from core.render_vivlio import blocks as _blk
 from core.render_vivlio import richtext as _rt
 from core.render_vivlio import stage
 
@@ -858,10 +859,8 @@ def ans_line(rich):
 def generic(b, ref=""):
     """모르는 블록의 마지막 자리. 작업대가 넣은 표·상자도 여기로 온다."""
     t = b.get("t")
-    if t == "table":
-        return _tbl.html(b, ref=ref, inl=inl)
-    if t == "box":
-        return _box.html(b, ref=ref, inl=inl)
+    if _blk.is_block(b):
+        return _blk.html(b, ref=ref, inl=inl)
     return f'<div class="x-{t}">{inl(b.get("r"))}</div>'
 
 

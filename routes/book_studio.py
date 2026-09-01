@@ -611,6 +611,73 @@ def api_findstyle():
     return jsonify({"cls": cls, "total": len(hits), "hits": hits})
 
 
+@bp.route("/api/book-studio/toc", methods=["POST"])
+def api_toc():
+    """목차 — 제목을 모아 **면 번호와 함께** 세운다(인디자인의 목차).
+
+    두 걸음이다.
+      `scan` 고른 스타일이 걸린 자리를 모아 **미리보기**로 준다
+      `make` 그 목록으로 목차 덩어리를 만들어 고른 자리에 넣는다
+
+    ⚠ 면 번호는 **적지 않는다.** 조판이 끝나야 정해지므로 조판 엔진이
+      `target-counter` 로 채운다(실측 확인). 사람이 적으면 고칠 때마다 어긋난다.
+    ⚠ 넣을 자리는 표·상자와 **같은 규칙**이다 — 문항·낱말 기록 목록은 안 된다.
+    """
+    from core.render_vivlio import book as bookmod
+    from core.render_vivlio import edits as ed
+    from core.render_vivlio import toc as toc_mod
+    p = request.get_json(silent=True) or {}
+    d, meta = _book_dir(p.get("b"))
+    if not d:
+        return jsonify({"error": "모르는 책"}), 404
+    cls = (p.get("cls") or "").strip().lstrip(".")
+    if not cls or not re.match(r"^[0-9A-Za-z가-힣_-]{1,60}$", cls):
+        return jsonify({"error": "목차로 모을 스타일 이름을 고르세요"}), 400
+    html_p = os.path.join(_build_dir(d), "index.html")
+    if not os.path.exists(html_p):
+        return jsonify({"error": "먼저 다시 조판하세요"}), 409
+    with open(html_p, encoding="utf-8") as f:
+        text = f.read()
+    items, seen = [], set()
+    for m in re.finditer(r"<([a-zA-Z][\w-]*)([^<>]*)>", text):
+        attrs = m.group(2) or ""
+        cm = re.search(r'class="([^"]*)"', attrs)
+        if not cm or cls not in cm.group(1).split():
+            continue
+        rm = re.search(r'data-ref="([^"]*)"', attrs)
+        ref = rm.group(1) if rm else ""
+        if not ref or ref in seen:
+            continue
+        seen.add(ref)
+        # 제목 글은 **그 태그가 닫힐 때까지**만 — 뒤 문단이 딸려오면 안 된다
+        end = text.find("</%s>" % m.group(1), m.end())
+        raw = text[m.end():end if end > 0 else m.end() + 200]
+        label = " ".join(re.sub(r"<[^>]+>", " ", raw).split())[:80]
+        if label:
+            items.append({"ref": ref, "label": label})
+        if len(items) >= 400:
+            break
+    if p.get("action") == "scan":
+        return jsonify({"total": len(items), "items": items[:60],
+                        "more": max(0, len(items) - 60)})
+    if not items:
+        return jsonify({"error": "그 스타일이 걸린 자리가 없습니다"}), 409
+    ref = (p.get("ref") or "").strip()
+    if not ref:
+        return jsonify({"error": "목차를 넣을 자리를 지면에서 고르세요"}), 400
+    cfg = bookmod.load(d)
+    cur, _raw = ed.preview(cfg)
+    base, at = _list_slot(ref, cur, cfg)
+    if base is None:
+        return jsonify({"error": "여기에는 넣을 수 없습니다 — "
+                                 "지문·선지·본문 **한 줄**을 고르세요"}), 409
+    blk = toc_mod.new(p.get("title") or "차례", items)
+    st = ed.push(cfg, {"op": "insert", "ref": "%s.%d" % (base, at), "v": blk,
+                       "note": "목차 %d개" % len(items)})
+    return jsonify({"ok": True, "total": len(items),
+                    "ref": "%s.%d" % (base, at), "history": _hist(st)})
+
+
 @bp.route("/api/book-studio/parastyle", methods=["GET", "POST"])
 def api_parastyle():
     """단락 스타일 살림 — 목록 · 이름 바꾸기 · 지우기.

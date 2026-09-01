@@ -299,6 +299,27 @@
         </div>
       </details>
 
+      <details class="ide-pal"><summary>목차</summary>
+        <div class="ide-in" id="pal-toc">
+          <div class="ide-hint">스타일이 걸린 제목을 모아 <b>면 번호와 함께</b>
+            차례를 만듭니다. 번호는 <b>조판이 채웁니다</b> — 뒤에 글을 고쳐도
+            저절로 맞습니다.</div>
+          <div class="ide-row">
+            <label>모을 스타일</label>
+            <select id="toc-cls"></select>
+          </div>
+          <div class="ide-row">
+            <label>제목</label>
+            <input id="toc-title" value="차례">
+          </div>
+          <div class="ide-f">
+            <button class="ide-b" id="toc-scan">어디에 있나 보기</button>
+            <button class="ide-b" id="toc-make">고른 자리에 넣기</button>
+          </div>
+          <div class="ide-hist" id="toc-list"></div>
+        </div>
+      </details>
+
       <details class="ide-pal"><summary>레이어</summary>
         <div class="ide-in" id="pal-layer">
           <div class="ide-hint">지면의 갈래를 **끄고 켜며** 봅니다.</div>
@@ -3831,6 +3852,7 @@
     api('/api/book-studio/styles?b=' + encodeURIComponent(key))
       .then(function (d) {
         styles = d.styles || {}; styleNames = d.names || {};
+        drawTocPal();
       });
     loadImages();
     loadThumbs();
@@ -3887,6 +3909,73 @@
     msg('각주를 달았습니다 — ⌘↵ 로 저장하면 면 아래에 나옵니다');
   }
 
+  // ── 목차 ────────────────────────────────────────────────────────
+  //
+  // 인디자인의 목차다. **면 번호를 적지 않는다** — 조판이 끝나야 정해지므로
+  // 조판 엔진이 채운다(`target-counter`). 그래서 뒤에서 글을 고쳐도
+  // 번호가 저절로 맞는다.
+  //
+  // ⚠ 모을 스타일은 **이 책에 실제로 걸린 것**만 보여 준다. 없는 이름으로
+  //   만들면 빈 차례가 나가고, 그게 제일 나쁘다.
+  function drawTocPal() {
+    var pick = $('toc-cls'); if (!pick) return;
+    var was = pick.value;
+    pick.innerHTML = '';
+    var all = {};
+    Object.keys(styleNames).forEach(function (c) { all[c] = 1; });
+    Object.keys(styles).forEach(function (sl) {
+      var m = sl.match(/^\.([\w가-힣-]+)$/); if (m) all[m[1]] = 1;
+    });
+    if (curEl) classesOf(curEl).forEach(function (c) { all[c] = 1; });
+    var o0 = document.createElement('option');
+    o0.value = ''; o0.textContent = '(고르세요)';
+    pick.appendChild(o0);
+    Object.keys(all).sort().forEach(function (c) {
+      var o = document.createElement('option');
+      o.value = c; o.textContent = '.' + c + (styleNames[c] ? ' — ' + styleNames[c] : '');
+      pick.appendChild(o);
+    });
+    if (was) pick.value = was;
+  }
+
+  function tocScan() {
+    var cls = $('toc-cls').value;
+    if (!cls) { msg('모을 스타일을 고르세요'); return; }
+    api('/api/book-studio/toc', { b: key, cls: cls, action: 'scan' })
+      .then(function (d) {
+        var host = $('toc-list'); host.innerHTML = '';
+        if (d.error) { msg('✗ ' + d.error); return; }
+        if (!d.total) { host.innerHTML = '<div class="ide-hint">그 스타일이 걸린 자리가 없습니다.</div>'; return; }
+        (d.items || []).forEach(function (it, i) {
+          var r = document.createElement('div');
+          r.className = 'ide-hint';
+          r.textContent = (i + 1) + '. ' + it.label;
+          host.appendChild(r);
+        });
+        if (d.more) {
+          var m2 = document.createElement('div');
+          m2.className = 'ide-hint'; m2.textContent = '…외 ' + d.more + '곳';
+          host.appendChild(m2);
+        }
+        msg('✓ ' + d.total + '곳을 찾았습니다');
+      });
+  }
+
+  function tocMake() {
+    var cls = $('toc-cls').value;
+    if (!cls) { msg('모을 스타일을 고르세요'); return; }
+    if (!curRef) { msg('목차를 넣을 자리를 지면에서 고르세요'); return; }
+    api('/api/book-studio/toc',
+        { b: key, cls: cls, ref: curRef, title: $('toc-title').value })
+      .then(function (d) {
+        if (d.error) { msg('✗ ' + d.error); return; }
+        setHist(d.history);
+        rebuild('').then(function (ok) {
+          if (ok) msg('✓ 목차 ' + d.total + '줄을 넣었습니다 — 면 번호는 조판이 채웁니다');
+        });
+      });
+  }
+
   /** 링크 걸기 — 고른 글자에 주소를 매단다(인디자인의 하이퍼링크).
    *
    *  ⚠ 주소는 **서버가 다시 거른다**(`richtext.safe_link`). 여기서 막는 것은
@@ -3934,6 +4023,8 @@
     if (t && t.dataset && t.dataset.f === 'lk') { putLink(); return; }
     if (t && t.dataset && t.dataset.f) fmt(t.dataset.f);
   });
+  $('toc-scan').addEventListener('click', tocScan);
+  $('toc-make').addEventListener('click', tocMake);
   $('ide-commit').addEventListener('click', commit);
   $('ide-cancel').addEventListener('click', function () { closeEdit(true); msg(''); });
   $('ide-para').addEventListener('click', function (e) {

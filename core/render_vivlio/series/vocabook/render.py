@@ -22,6 +22,7 @@ from core.render_vivlio import box as _box
 from core.render_vivlio import refs as _refs
 from core.render_vivlio import richtext as _rtx
 from core.render_vivlio import table as _tbl
+from core.render_vivlio import blocks as _blk
 from core.render_vivlio import stage
 
 _RE_BRACKET = re.compile(r"\[([^\[\]]+)\]")
@@ -206,10 +207,9 @@ class Renderer(object):
     # ── Part 1 ──────────────────────────────────────────────────────────
     def word_block(self, no, b, with_def=True, with_num=True, anchor=""):
         # 작업대가 낱말 목록 안에 넣은 표·상자. 낱말이 아니므로 먼저 가른다.
-        if b.get("t") in ("table", "box"):
-            mod = _tbl if b["t"] == "table" else _box
-            return mod.html(b, ref=_refs.of(b), inl=lambda x: esc(str(x))
-                            if isinstance(x, str) else _rtx.to_html(x, blanks=False))
+        if _blk.is_block(b):
+            return _blk.html(b, ref=_refs.of(b), inl=lambda x: esc(str(x))
+                             if isinstance(x, str) else _rtx.to_html(x, blanks=False))
         if with_num:
             tag = f'<span class="w-anchor">{esc(anchor)}</span>' if anchor else ""
             top = (f'<div class="w-top"><span class="w-num">{no:04d}</span>'

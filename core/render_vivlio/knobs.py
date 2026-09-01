@@ -286,9 +286,16 @@ def write(cfg, series, build_dir, name="knobs.css"):
                            + page_rules_text(cfg)
                            + (table_css() if _has(cfg, "table") else "")
                            + (box_css() if _has(cfg, "box") else "")
+                           + (toc_css() if _has(cfg, "toc") else "")
                            # 각주는 **쓰는 책에만** 넣는다 — 안 쓰는 책의
                            # CSS 가 까닭 없이 달라지면 회귀 대조가 흐려진다.
                            + (foot_css() if _has(cfg, "fn") else ""))
+
+
+def toc_css():
+    """목차 모양 — 면 번호는 조판 엔진이 `target-counter` 로 채운다."""
+    from core.render_vivlio import toc as _toc
+    return _toc.CSS
 
 
 def foot_css():

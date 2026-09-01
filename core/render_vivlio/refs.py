@@ -225,6 +225,17 @@ def stamp(html_frag, ref):
                            html_frag[m.end():])
 
 
+def num(ref):
+    """그 자리의 `vrefN` 번호. **아직 안 그린 자리도** 미리 잡아 준다.
+
+    목차가 뒤쪽 제목을 가리키려면 그리기 전에 번호가 있어야 한다. `mark()` 가
+    나중에 같은 자리를 그릴 때 `setdefault` 로 **같은 번호**를 다시 쓴다.
+    """
+    if not ref:
+        return 0
+    return _SEQ.setdefault(ref, len(_SEQ) + 1)
+
+
 def table():
     return {str(n): r for r, n in _SEQ.items()}
 

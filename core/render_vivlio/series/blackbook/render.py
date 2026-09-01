@@ -128,6 +128,7 @@ from core.render_vivlio import refs as _refs
 from core.render_vivlio import richtext as _rt
 from core.render_vivlio import box as _box
 from core.render_vivlio import table as _tbl
+from core.render_vivlio import blocks as _blk
 
 REF_SPEC = ("lessons", ("vocab", "problems", "answers"))
 
@@ -165,10 +166,9 @@ def paras_html(paras, blank=False, cls='', ref=''):
         r = f'{ref}.{i}' if ref else ''
         # 작업대가 **단락 목록 안에** 넣은 표·상자. 문항 밖(어휘부 등)에서도
         # 넣을 수 있어야 해서 여기서도 받는다.
-        if isinstance(p, dict) and p.get('t') in ('table', 'box'):
+        if _blk.is_block(p):
             flush()
-            mod = _tbl if p['t'] == 'table' else _box
-            out.append(mod.html(p, ref=r, inl=lambda x: inl(x, blank)))
+            out.append(_blk.html(p, ref=r, inl=lambda x: inl(x, blank)))
             continue
         body = inl(p, blank)
         if is_dlg and RE_DLG.match(plain(p).strip()):
@@ -286,13 +286,10 @@ def render_question(item, style=''):
             for ln in b['lines']:
                 o.append(f'<p>{inl(ln)}</p>')
             o.append('</div>')
-        elif t == 'box':
-            # 좌표로 놓은 상자(자유 배치). 공용이라 계열은 한 줄이면 된다.
-            o.append(_box.html(b, ref=br, inl=lambda x: inl(x, blank=True)))
-        elif t == 'table':
-            # 작업대가 넣은 표. 자료 모양과 HTML 은 공용(`core/table.py`)이라
-            # 계열이 늘어도 여기 한 줄이면 된다.
-            o.append(_tbl.html(b, ref=br, inl=lambda x: inl(x, blank=True)))
+        elif _blk.is_block(b):
+            # 작업대가 넣은 덩어리(표·상자·목차). 가르는 자리가 한 곳이라
+            # (`core/blocks.py`) 덩어리가 늘어도 여기 한 줄이면 된다.
+            o.append(_blk.html(b, ref=br, inl=lambda x: inl(x, blank=True)))
         elif t == 'crit':
             o.append('<div class="crit">')
             o.append(f'<p>{esc1(b["title"])}</p>')
