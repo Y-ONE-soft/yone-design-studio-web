@@ -11,6 +11,7 @@
   모의고사 본가 · 부교재(수능만만·수특라이트·올포기출) · 교과서 · EBS 리딩파워
 """
 import os
+import shutil
 
 from core.render_vivlio import bleed as bleed_mod
 from core.render_vivlio import cli, probe, stage
@@ -88,57 +89,66 @@ class WorkbookSeries(Series):
         # ── 당겨붙이기 측정 패스 ──
         # 한두 줄만 넘긴 덩어리를 찾아 그것만 좁혀 다시 굽는다. 두 바퀴까지.
         if (cfg.section("options") or {}).get("fit", True) and not sample:
-            # 조판을 한 번 굽고 **실제 자리를 재서** 두 가지를 고친다.
-            #   ① 한두 줄만 넘긴 덩어리 → 그 덩어리만 좁혀 당겨 붙인다
-            #   ② 오른쪽 면에서 시작해 장을 넘기는 세트 → 통째로 다음 면으로 민다
-            # 둘은 서로 지면을 밀고 당기므로 **한 루프에서** 같이 돌린다.
-            # ⚠ 되풀이 조판은 발산할 수 있다(블랙북에서 10→8→7 을 겪었다).
-            #   그래서 세 바퀴로 묶고, 표시는 **쌓기만** 한다(빼면 진동한다).
-            seen_turns = set()
-            for _round in range(7):
+            # 조판을 한 번 굽고 **실제 자리를 재서** 세 가지를 고친다.
+            #   ① 한두 줄만 면을 넘긴 덩어리 → 그 덩어리만 좁혀 당겨 붙인다
+            #   ② 오른쪽 면에서 시작해 장을 넘기는 세트 → 통째로 왼쪽 면부터
+            #   ③ 장을 넘어 갈라진 문항 → 그 문항만 묶어 통째로 다음 자리로
+            # (단을 넘어 갈라지는 것은 손대지 않는다 — 완성본도 단의 22%가 선지로
+            #  시작한다. 다 묶으면 단이 40% 더 나온다.)
+            #
+            # ⚠ 셋은 서로 지면을 밀고 당겨 **한 방향으로 수렴하지 않는다**. 표시를
+            #   쌓기만 하면 지나간 바퀴의 군더더기가 남아 78면 책이 88면이 됐다.
+            #   그래서 바퀴마다 점수를 매겨 **가장 좋은 판을 남긴다**(결함 수가
+            #   먼저, 같으면 면 수가 적은 쪽).
+            snap = os.path.join(build_dir, "_fit_best.pdf")
+            best = None
+            for _round in range(6):
                 sp = fit_mod.spills(out)
                 tn = fit_mod.turns(out)
-                # 장을 넘어 **갈라진 문항**: 한두 줄이면 당기고(위), 그보다 크면
-                # 사용자 규칙대로 "문제 전체를 다음 면으로" — 그 문항만 묶는다.
-                # 장을 넘어 **갈라진 문항**: 한두 줄이면 먼저 당겨 보고(위), 두
-                # 바퀴 안에 안 당겨지면 사용자 규칙대로 "문제 전체를 다음 면으로".
-                lb = set() if os.environ.get("WB_NOKEEP") else set(fit_mod.leaf_breaks(out))
-                if _round < 2:
-                    lb -= {i for i, _a, _b, _t in sp}
+                lb = set(fit_mod.leaf_breaks(out))
+                pages_now = probe.page_count(out)
+                score = (len(tn) + len(lb), pages_now)
                 log(f"    · {_round + 1}바퀴 넘친덩어리 {len(sp)} · 장넘김세트 "
-                    f"{len(tn)} · 갈라진문항 {len(lb)}")
-                ids = {i for i, _a, _b, _t in sp}
-                # 미는 것은 면을 늘린다 — **당겨서 될 것 같으면 먼저 당겨 보고**
-                # 그러고도 남은 세트만 민다. 당길 거리(넘친 덩어리)가 아예 없으면
-                # 기다릴 이유가 없으니 그 바퀴에 바로 민다.
-                pend = set() if os.environ.get("WB_NOPUSH") else {i for i, _a, _b in tn}
-                pids = (pend & seen_turns) if ids else pend
-                seen_turns |= pend
-                if not sp and not tn and not (lb - render_mod.KEEP):
+                    f"{len(tn)} · 갈라진문항 {len(lb)} · {pages_now}면")
+                if best is None or score < best[0]:
+                    best = (score, _round + 1)
+                    shutil.copyfile(out, snap)
+                if not sp and not tn and not lb:
                     break
-                grow = ((ids - render_mod.TIGHT2) | (pids - render_mod.PUSH)
+                ids = {i for i, _a, _b, _t in sp}
+                # 면 머리에서 시작하는 세트를 밀면 그 오른쪽 면이 통째로 빈다
+                pend = {i for i, _a, _b, c, y in tn if not (c == 0 and y < 45.0)}
+                # 한두 줄이면 먼저 당겨 보고, 두 바퀴 안에 안 되면 문항을 묶는다
+                if _round < 2:
+                    lb -= ids
+                grow = ((ids - render_mod.TIGHT2) | (pend - render_mod.PUSH)
                         | (lb - render_mod.KEEP))
-                render_mod.KEEP |= lb
                 if not grow:
-                    if not tn:
-                        break
-                    continue   # 이번 바퀴는 표시만 — 다음 바퀴에 민다
-                # 한 바퀴 돌고도 남은 덩어리는 **한 단계 더** 좁힌다
+                    break
                 render_mod.TIGHT2 |= (ids & render_mod.TIGHT)
                 render_mod.TIGHT |= ids
-                render_mod.PUSH |= pids
+                render_mod.PUSH |= pend
+                render_mod.KEEP |= lb
                 html_path = render_mod.write(cfg, d, build_dir, log=lambda *a: None)
                 secs += cli.run_build(html_path, out, log=log, extra=["-f", "pdf"])
-            sp, tn = fit_mod.spills(out), fit_mod.turns(out)
-            lb = fit_mod.leaf_breaks(out)
+            # 마지막 바퀴가 가장 좋은 판이 아니면 되돌린다
+            if best and (fit_mod.turns(out), fit_mod.leaf_breaks(out),
+                         probe.page_count(out)) != ():
+                cur = (len(fit_mod.turns(out)) + len(fit_mod.leaf_breaks(out)),
+                       probe.page_count(out))
+                if cur > best[0]:
+                    shutil.copyfile(snap, out)
+                    log(f"  [마감] {best[1]}바퀴 판이 가장 좋아 그것으로 되돌렸다")
+            try:
+                os.remove(snap)
+            except OSError:
+                pass
+            tn, lb = fit_mod.turns(out), fit_mod.leaf_breaks(out)
+            log("  [장넘김] 장을 넘기는 세트 없음" if not tn else
+                f"  [장넘김] 못 없앤 세트 {len(tn)}개 — "
+                + ", ".join(f"p{a}→p{b}" for _i, a, b, _c, _y in tn[:6]))
             if lb:
                 log(f"  [장넘김] 장을 넘어 갈라진 문항 {len(lb)}개 남음 — {lb[:6]}")
-            log("  [당겨붙이기] 모두 당겨 붙였다" if not sp else
-                f"  [당겨붙이기] 네 바퀴로도 안 당겨진 덩어리 {len(sp)}개 — "
-                f"그대로 둔다 {[i for i, *_ in sp]}")
-            log("  [장넘김] 장을 넘기는 세트 없음" if not tn else
-                f"  [장넘김] 네 바퀴로도 못 없앤 세트 {len(tn)}개 — "
-                + ", ".join(f"p{a}→p{b}" for _i, a, b in tn[:6]))
             render_mod.TIGHT = set()
             render_mod.TIGHT2 = set()
             render_mod.PUSH = set()

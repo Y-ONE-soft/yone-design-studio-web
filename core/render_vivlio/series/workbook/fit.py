@@ -135,13 +135,13 @@ def turns(pdf):
             if op is not None:      # 끝 표식이 빠졌다 — 짝을 버리고 다시 연다
                 op = None
             idx += 1
-            op = (idx, page)
+            op = (idx, page, _col, _y)
         elif op is not None:
-            sidx, spage = op
+            sidx, spage, scol, sy = op
             # 한 펼침면(두 면)에 못 담기는 세트는 밀어도 장 넘김이 안 없어진다 —
             # 오른쪽 면만 통째로 비우는 헛수고라 손대지 않는다.
             if spage % 2 == 1 and spage < page <= spage + 1:
-                out.append((sidx, spage, page))
+                out.append((sidx, spage, page, scol, sy))
             op = None
     return out
 
@@ -151,7 +151,7 @@ def report_turns(t, log):
         log("  [장넘김] 오른쪽 면에서 장을 넘기는 세트 없음")
         return
     log(f"  [장넘김] 오른쪽 면에서 장을 넘기는 세트 {len(t)}개 — "
-        + ", ".join(f"#{i}(p{a}→p{b})" for i, a, b in t[:6]))
+        + ", ".join(f"#{i}(p{a}→p{b})" for i, a, b, _c, _y in t[:6]))
 
 
 def leaf_breaks(pdf):

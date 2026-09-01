@@ -265,7 +265,7 @@ def _check_turn(cfg, report):
         return
     if bad:
         report.fail(f"[장 넘김] 오른쪽 면에서 시작해 장을 넘기는 세트 {len(bad)}건 — "
-                    + ", ".join(f"p{a}→p{b}" for _i, a, b in bad[:6]))
+                    + ", ".join(f"p{a}→p{b}" for _i, a, b, _c, _y in bad[:6]))
     else:
         report.note(f"장 넘김 없음 (세트 {n_set}개 · 오른쪽에서 시작해 장을 "
                     f"넘기는 세트 0개)")
