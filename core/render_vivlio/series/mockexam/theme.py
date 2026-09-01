@@ -344,7 +344,9 @@ def build_css(spec):
     css.append(".choice-grid.g2 { grid-template-columns: repeat(2, 1fr); }")
     css.append(".choice-grid.g3 { grid-template-columns: repeat(3, 1fr); }")
     css.append(".choice-grid.g5 { grid-template-columns: repeat(5, 1fr); }")
-    css.append(".choice-row { display: flex; gap: 8pt; flex-wrap: wrap; "
+    # 한 줄 선지 간격 — 정본(명일2 26-1-기말 18번 `① ⓐ  ② ⓑ …`) 육안 대조로
+    # 맞췄다. 스캔 사진이라 mm 실측은 못 했다.
+    css.append(".choice-row { display: flex; gap: 16pt; flex-wrap: wrap; "
                "break-inside: avoid; }")
     css.append(".choice-row .choice { white-space: nowrap; }")
     css.append("")
