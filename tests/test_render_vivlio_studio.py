@@ -1475,3 +1475,41 @@ def test_guides_show_up_when_dragged_out():
                encoding="utf-8").read()
     i = src.index("guides.push({ axis: axis")
     assert "applyViews()" in src[i:i + 500]
+
+
+# ── 상자: 끌어서 옮기고, 모서리를 잡아 크기를 바꾼다 ────────────
+def test_box_drag_adds_to_written_values_not_a_guessed_origin():
+    """기준점을 찾으려 하면 틀린다 — **적힌 값에 움직인 만큼만** 더한다.
+
+    상자를 담고 있는 것이 면인지 본문 상자인지는 조판이 정한다.
+    `offsetParent` 는 그걸 그대로 알려 주지 않는다(실측: 면이라고 답하는데
+    실제 기준은 본문 상자였고, `left:20mm` 짜리를 잡으면 42.99mm 로 튀었다).
+    """
+    src = _studio_src()
+    i = src.index("function hookDrag")
+    body = src[i:i + 4200]
+    assert "mmOf(el, 'left'" in body, "지금 적힌 값에서 시작해야 한다"
+    assert "pxPerMm(pg)" in body, "1mm 가 몇 px 인지는 재서 안다"
+    assert "er.left - pr.left" not in body, "기준점을 다시 짐작하고 있다"
+
+
+def test_box_handles_respect_which_edge_is_anchored():
+    """오른쪽·아래에 붙여 둔 상자는 그 변을 지켜야 한다.
+
+    안 그러면 판형이 바뀔 때 상자가 딴 데로 간다.
+    """
+    src = _studio_src()
+    i = src.index("function hookDrag")
+    body = src[i:i + 4200]
+    assert "cur.useRight" in body and "cur.useBottom" in body
+    assert "HANDLES" in src and "ide-hd" in src
+
+
+def test_a_box_is_selected_as_an_object():
+    """상자는 글이 아니라 **물건**이다 — 한 번 누르면 상자가 잡혀야 한다.
+
+    바깥 덩어리가 잡히면 손잡이가 안 나와서 크기를 못 바꾼다(실제로 그랬다).
+    """
+    src = _studio_src()
+    i = src.index("st.addEventListener('click'")
+    assert "viv-box" in src[i:i + 900]
