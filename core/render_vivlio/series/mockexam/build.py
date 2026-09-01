@@ -43,7 +43,14 @@ def render(ir, key, out_pdf, log=print, build_dir=None, case=None,
         log(f"[배점] {n}")
 
     # ── HTML / CSS ──
-    html_text, warns = markup.build_html(ir, spec, case=case, scores=alloc)
+    imgs = []
+    html_text, warns = markup.build_html(ir, spec, case=case, scores=alloc,
+                                         images=imgs)
+    for name, data in imgs:
+        with open(os.path.join(build_dir, name), "wb") as f:
+            f.write(data)
+    if imgs:
+        log(f"[그림] 원고 도표 {len(imgs)}개 실었다")
     css = theme.build_css(spec)
     with open(os.path.join(build_dir, "index.html"), "w", encoding="utf-8") as f:
         f.write(html_text)

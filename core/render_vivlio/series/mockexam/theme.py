@@ -242,6 +242,10 @@ def build_css(spec):
         if rule:
             css.append(rule)
     css.append(".stem { break-after: avoid; }")
+    # 원고 도표 — 단 폭에 맞추고 가운데
+    css.append(".fig { margin: 2pt 0; text-align: center; "
+               "break-inside: avoid; }")
+    css.append(".fig img { max-width: 100%; height: auto; }")
     # 묶음 머리 — 정본 한영1: 둘째 줄이 지시문 첫 글자(`[10~13] ` 뒤)에 맞춰
     # 들여쓰기된다. 서답형 라벨과 반대 방향이다.
     gh = float(s.group_hang or 0.0)

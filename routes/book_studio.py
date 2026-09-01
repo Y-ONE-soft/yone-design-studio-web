@@ -977,18 +977,17 @@ def api_table():
         return jsonify({"error": "표가 아닙니다"}), 409
     b = json.loads(json.dumps(block))          # 사본
     rows = b.setdefault("rows", [])
-    ncol = len(b.get("head") or (rows[0] if rows else [])) or 1
-    if act == "addrow":
-        rows.append(["" for _ in range(ncol)])
-    elif act == "delrow":
-        if len(rows) <= 1:
-            return jsonify({"error": "마지막 줄은 지울 수 없습니다"}), 409
-        rows.pop()
-    elif act == "addcol":
-        if b.get("head") is not None:
-            b["head"].append("")
-        for r in rows:
-            r.append("")
+    # 줄·칸은 **그 자리에** 넣고 뺀다(인디자인의 "위에 넣기 / 이 줄 지우기").
+    # `at` 을 안 주면 예전처럼 맨 뒤다.
+    at = p.get("at")
+    at = None if at in (None, "") else int(at)
+    if act in ("addrow", "delrow", "addcol", "delcol"):
+        fn = {"addrow": tbl.add_row, "delrow": tbl.del_row,
+              "addcol": tbl.add_col, "delcol": tbl.del_col}[act]
+        try:
+            fn(b, at)
+        except ValueError as e:
+            return jsonify({"error": str(e)}), 409
     elif act == "widths":
         # 칸 너비 — 인디자인의 열 폭. 길이 값만 받는다.
         from core.render_vivlio import box as _bx
@@ -1002,14 +1001,6 @@ def api_table():
         if not al:
             return jsonify({"error": "정렬은 left·center·right 입니다"}), 400
         b["align"] = al
-    elif act == "delcol":
-        if ncol <= 1:
-            return jsonify({"error": "마지막 칸은 지울 수 없습니다"}), 409
-        if b.get("head"):
-            b["head"].pop()
-        for r in rows:
-            if r:
-                r.pop()
     elif act == "style":
         # 표 모양(괘선·안 여백·줄 높이·머리줄 바탕) — 인디자인의 표 스타일.
         st = dict(b.get("style") or {})

@@ -34,18 +34,108 @@ _RE_SOURCE = re.compile(r'\[(\d{2}년\s*\d{1,2}월\s*\d{1,3}번[^\]]*)\]')
 _RE_SCORE = re.compile(r'[\[(](\d+(?:\.\d+)?)\s*점[\])]')
 
 
+# ── 원고 그림 ──────────────────────────────────────────────────────────────
+# 도표 문항은 그림이 빠지면 문제가 성립하지 않는다(성덕1·성덕2·강동2 실증).
+# 공유 추출기는 텍스트만 넘기므로 여기서 따로 훑어 제자리에 꽂는다.
+_RE_HP_T = re.compile(r"<hp:t>(.*?)</hp:t>", re.S)
+_RE_HP_PIC = re.compile(r"<hp:pic\b")
+_RE_BIN_ID = re.compile(r'binaryItemIDRef="([^"]+)"')
+_RE_HP_SZ = re.compile(r'<hp:sz[^>]*width="(\d+)"[^>]*height="(\d+)"')
+
+
+def _hwpx_pictures(path):
+    """원고 안 그림 목록. [{"anchor", "data", "ext", "w_mm", "h_mm"}]
+
+    anchor = 그림 **직전** 텍스트(짧은 꼬리). 그 텍스트를 가진 단락 뒤에 꽂는다.
+    """
+    import zipfile
+    try:
+        z = zipfile.ZipFile(path)
+    except Exception:
+        return []
+    names = z.namelist()
+    bins = {}
+    for n in names:
+        if n.startswith("BinData/"):
+            bins[os.path.basename(n).split(".")[0].lower()] = n
+    if not bins:
+        return []
+    out = []
+    for sec in sorted(n for n in names if "section" in n.lower()):
+        try:
+            xml = z.read(sec).decode("utf-8", "ignore")
+        except Exception:
+            continue
+        for m in _RE_HP_PIC.finditer(xml):
+            head = xml[:m.start()]
+            texts = [t for t in (_unescape_xml(x) for x in _RE_HP_T.findall(head))
+                     if t.strip()]
+            anchor = texts[-1].strip() if texts else ""
+            tail = xml[m.start():m.start() + 1200]
+            bid = _RE_BIN_ID.search(tail)
+            key = (bid.group(1).lower() if bid else "")
+            path_in = bins.get(key) or bins.get(key.lstrip("0")) or \
+                (list(bins.values())[0] if len(bins) == 1 else None)
+            if not path_in:
+                continue
+            sz = _RE_HP_SZ.search(tail)
+            w = h = None
+            if sz:
+                w = round(int(sz.group(1)) / 7200 * 25.4, 1)
+                h = round(int(sz.group(2)) / 7200 * 25.4, 1)
+            out.append({"anchor": anchor, "data": z.read(path_in),
+                        "ext": os.path.splitext(path_in)[1].lower(),
+                        "w_mm": w, "h_mm": h})
+    return out
+
+
+def _unescape_xml(t):
+    return (t.replace("&lt;", "<").replace("&gt;", ">")
+            .replace("&amp;", "&").replace("&quot;", '"'))
+
+
+def _attach_pictures(paras, path):
+    """그림을 단락 목록의 제자리에 꽂는다(그림 전용 단락으로)."""
+    if os.path.splitext(path)[1].lower() not in (".hwpx", ".hwp"):
+        return paras
+    pics = _hwpx_pictures(path)
+    if not pics:
+        return paras
+    out = list(paras)
+    for pic in pics:
+        at = None
+        a = (pic.get("anchor") or "").strip()
+        if a:
+            for i, p in enumerate(out):
+                if a and a in (p.get("text") or ""):
+                    at = i + 1
+            # 마지막 일치 지점을 쓴다 — 같은 문구가 앞에도 나올 수 있다
+        if at is None:
+            # 앵커를 못 찾으면 도표를 묻는 발문 뒤에 둔다
+            for i, p in enumerate(out):
+                if "도표" in (p.get("text") or ""):
+                    at = i + 1
+                    break
+        if at is None:
+            continue
+        out.insert(at, {"text": "", "runs": [], "image": pic})
+    return out
+
+
 def extract_file_paragraphs(path):
     """파일 확장자별 core.extract 위임 (밑줄 포함)."""
     ext = os.path.splitext(path)[1].lower()
     if ext == ".docx":
         return _docx_extract_paragraphs(path, extract_underline=True)
     if ext == ".hwpx":
-        return _hwpx_extract_paragraphs(path, extract_underline=True,
-                                        exclude_footnotes=True)
+        return _attach_pictures(
+            _hwpx_extract_paragraphs(path, extract_underline=True,
+                                     exclude_footnotes=True), path)
     if ext == ".hwp":
         if _hwp_is_hwpx(path):
-            return _hwpx_extract_paragraphs(path, extract_underline=True,
-                                            exclude_footnotes=True)
+            return _attach_pictures(
+                _hwpx_extract_paragraphs(path, extract_underline=True,
+                                         exclude_footnotes=True), path)
         return _hwp_extract_paragraphs(path, extract_underline=True,
                                        exclude_footnotes=True)
     raise ValueError(f"지원하지 않는 형식: {ext}")
@@ -483,6 +573,17 @@ def build_ir(paras, meta=None, log=None):
 
     for r in annotated:
         kind, text = r["kind"], r["text"]
+        # 원고 그림(도표) — 텍스트가 없어 분류에서 빠지므로 여기서 먼저 챙긴다
+        para = r.get("para")
+        img = para.get("image") if isinstance(para, dict) else None
+        if img:
+            blk = {"kind": "image", "label": "Fig", "content": "",
+                   "image": img}
+            if cur is not None:
+                cur["stimulus"]["blocks"].append(blk)
+            else:
+                pending_stimulus.append(r)
+            continue
         # W59: 화살표(↓)는 지문과 요약문을 가르는 **구조 신호**다.
         # 통째로 버리면 요약문이 지문에 붙어 한 상자에 뭉친다(블랙북 실증).
         if kind == "Sym" and cur is not None:

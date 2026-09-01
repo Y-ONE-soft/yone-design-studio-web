@@ -1892,15 +1892,26 @@
       host.appendChild(row);
       return;
     }
-    [['addrow', '줄 늘리기'], ['delrow', '줄 줄이기'],
-     ['addcol', '칸 늘리기'], ['delcol', '칸 줄이기'],
-     ['delete', '표 지우기']].forEach(function (a) {
+    // 줄·칸은 **고른 칸을 기준으로** 넣고 뺀다(인디자인과 같다).
+    // 고른 칸이 없으면 예전처럼 맨 뒤에 붙는다.
+    var at = cellAt(curRef);          // [행, 칸] — 머리줄이 0행
+    var hasHead = !!(curRef && /\.head\.\d+$/.test(curRef));
+    var rowAt = at ? Math.max(0, at[0] - 1) : null;   // 몸(rows) 기준
+    var colAt = at ? at[1] : null;
+    [['addrow', at ? '이 줄 위에 넣기' : '줄 늘리기', rowAt],
+     ['addrow', at ? '이 줄 아래 넣기' : '', rowAt === null ? null : rowAt + 1],
+     ['delrow', at && !hasHead ? '이 줄 지우기' : '줄 줄이기', rowAt],
+     ['addcol', at ? '이 칸 왼쪽에 넣기' : '칸 늘리기', colAt],
+     ['addcol', at ? '이 칸 오른쪽에 넣기' : '', colAt === null ? null : colAt + 1],
+     ['delcol', at ? '이 칸 지우기' : '칸 줄이기', colAt],
+     ['delete', '표 지우기', null]].forEach(function (a) {
+      if (!a[1]) return;                       // 고른 칸이 없으면 안 보인다
       var b = document.createElement('button');
       b.className = 'ide-b'; b.style.margin = '2px 3px 0 0';
       b.textContent = a[1];
       b.onclick = function () {
         if (a[0] === 'delete' && !confirm('이 표를 지웁니다. 되돌리기로 살릴 수 있습니다.')) return;
-        tblApi({ action: a[0], ref: inTable });
+        tblApi({ action: a[0], ref: inTable, at: a[2] });
       };
       host.appendChild(b);
     });

@@ -214,6 +214,97 @@ def unmerge(block, r, c):
     return block
 
 
+def _cols(block):
+    head = block.get("head")
+    rows = block.get("rows") or []
+    return len(head or (rows[0] if rows else [])) or 1
+
+
+def _spans_row(block, r):
+    """`r` 번째 줄(머리줄이 0)을 **가로지르는 합친 칸**이 있나."""
+    grid, _ = _grid(block)
+    for i in range(0, min(r, len(grid))):
+        for v in grid[i]:
+            _c, rr, _v = span(v)
+            if rr > 1 and i + rr > r:
+                return True
+    return False
+
+
+def _spans_col(block, c):
+    grid, _ = _grid(block)
+    for row in grid:
+        for j in range(0, min(c, len(row))):
+            cc, _r, _v = span(row[j])
+            if cc > 1 and j + cc > c:
+                return True
+    return False
+
+
+def add_row(block, at=None):
+    """줄 하나를 **그 자리에** 넣는다(끝이면 맨 뒤).
+
+    ⚠ 합친 칸이 그 자리를 가로지르면 거절한다 — 넣으면 칸 수가 어긋나 표가
+      통째로 밀린다(되돌리기도 어렵다).
+    """
+    rows = block.setdefault("rows", [])
+    n = len(rows)
+    at = n if at is None else max(0, min(int(at), n))
+    if _spans_row(block, at + (1 if block.get("head") is not None else 0)):
+        raise ValueError("합친 칸이 걸립니다 — 먼저 나누세요")
+    rows.insert(at, ["" for _ in range(_cols(block))])
+    return block
+
+
+def del_row(block, at=None):
+    rows = block.get("rows") or []
+    if len(rows) <= 1:
+        raise ValueError("마지막 줄은 지울 수 없습니다")
+    at = len(rows) - 1 if at is None else max(0, min(int(at), len(rows) - 1))
+    off = 1 if block.get("head") is not None else 0
+    if _spans_row(block, at + off) or any(
+            span(v)[1] > 1 for v in rows[at]):
+        raise ValueError("합친 칸이 걸립니다 — 먼저 나누세요")
+    rows.pop(at)
+    return block
+
+
+def add_col(block, at=None):
+    n = _cols(block)
+    at = n if at is None else max(0, min(int(at), n))
+    if _spans_col(block, at):
+        raise ValueError("합친 칸이 걸립니다 — 먼저 나누세요")
+    if block.get("head") is not None:
+        block["head"].insert(at, "")
+    for r in block.get("rows") or []:
+        r.insert(at, "")
+    for key in ("align", "widths"):
+        if isinstance(block.get(key), list) and len(block[key]) >= at:
+            block[key].insert(at, block[key][min(at, len(block[key]) - 1)]
+                              if block[key] else "")
+    return block
+
+
+def del_col(block, at=None):
+    n = _cols(block)
+    if n <= 1:
+        raise ValueError("마지막 칸은 지울 수 없습니다")
+    at = n - 1 if at is None else max(0, min(int(at), n - 1))
+    grid, _ = _grid(block)
+    if _spans_col(block, at) or any(
+            len(row) > at and span(row[at])[0] > 1 for row in grid):
+        raise ValueError("합친 칸이 걸립니다 — 먼저 나누세요")
+    if block.get("head"):
+        block["head"].pop(at)
+    for r in block.get("rows") or []:
+        if len(r) > at:
+            r.pop(at)
+    for key in ("align", "widths"):
+        if isinstance(block.get(key), list) and len(block[key]) > at:
+            block[key].pop(at)
+    return block
+
+
 def new(cols=2, rows=2, head=True):
     """빈 표 하나. 작업대의 '표 넣기' 가 쓴다."""
     b = {"t": "table", "rows": [["" for _ in range(cols)] for _ in range(rows)]}

@@ -73,6 +73,17 @@ class Renderer(object):
         self.q_no = 0
         self.essay_no = 0
         self.warnings = []
+        self.images = []          # (파일명, 바이트) — build 가 빌드 폴더에 쓴다
+
+    def stash_image(self, img):
+        """원고 그림을 모아 두고 파일명을 돌려준다. 도표 문항은 그림이 빠지면
+        문제가 성립하지 않으므로 조판이 반드시 실어야 한다."""
+        data = img.get("data")
+        if not data:
+            return ""
+        name = f"fig{len(self.images) + 1}{img.get('ext') or '.png'}"
+        self.images.append((name, data))
+        return name
 
     # ── 인라인 ────────────────────────────────────────────────────────────
     def inline(self, text, marks=None, grep_bold=False):
@@ -334,6 +345,12 @@ class Renderer(object):
 
         in_summary = False
         for blk in blocks:
+            if blk.get("kind") == "image":
+                src = self.stash_image(blk.get("image") or {})
+                if src:
+                    out.append(f'<figure class="fig">'
+                               f'<img src="{esc(src)}" alt=""></figure>')
+                continue
             content = strip_source(blk.get("content") or "")
             if not content:
                 continue
@@ -348,6 +365,8 @@ class Renderer(object):
                 out.append(f'<p class="summary-arrow">{esc(arrow)}</p>')
                 in_summary = True      # 화살표 아래가 요약문이다
                 continue
+            if blk.get("kind") == "image":
+                continue        # 그림은 아래 별도 분기에서 처리한다
             cls = "passage"
             if blk.get("kind") == "para":
                 cls = "passage passage-context"
@@ -518,9 +537,12 @@ def _split_given_first(blocks, ordered, ab_slots=False):
     """
     if len(blocks) < 2:
         return None, blocks
-    # 출처 태그는 지문이 아니다 — 자리 계산에서 빼고 본문 앞에 그대로 남긴다
-    head = [b for b in blocks if b.get("label") == "UNKNOWN"]
-    core = [b for b in blocks if b.get("label") != "UNKNOWN"]
+    # 출처 태그와 그림은 지문 문장이 아니다 — 자리 계산에서 빼고 그대로 남긴다.
+    # (그림을 섞으면 도표가 '주어진 문장' 으로 뽑혀 통째로 사라진다.)
+    def _aside(b):
+        return b.get("label") == "UNKNOWN" or b.get("kind") == "image"
+    head = [b for b in blocks if _aside(b)]
+    core = [b for b in blocks if not _aside(b)]
     if len(core) < 2:
         return None, blocks
     texts = [(b.get("content") or "").strip() for b in core]
@@ -905,7 +927,7 @@ def build_body(doc, spec, case=None, scores=None):
             ctx = dict(ctx or {}, shared_passage=True)
         ctx = ctx or None
         out.append(r.item(it, ctx))
-    return "\n".join(out), r.warnings
+    return "\n".join(out), r.warnings, r.images
 
 
 def score_table(spec, scores):
@@ -961,8 +983,11 @@ def _fmt_cell(v, whole=False):
     return f"{f:.1f}"
 
 
-def build_html(doc, spec, case=None, css_href="theme.css", scores=None):
-    body, warns = build_body(doc, spec, case, scores)
+def build_html(doc, spec, case=None, css_href="theme.css", scores=None,
+               images=None):
+    body, warns, imgs = build_body(doc, spec, case, scores)
+    if images is not None:
+        images.extend(imgs)
     s = spec
     case = case or {}
     head_html = _running_header(s, case)

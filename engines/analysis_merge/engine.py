@@ -50,6 +50,15 @@ def _load_config():
     return resolve_config(cfg, _PATH_KEYS)
 
 
+# 월 폴더에 섞여 있을 수 있는 '분석본이 아닌' .indd 갈래 (3차 폴백용).
+# 리뷰테스트/워크북 등은 보통 하위 폴더에 있지만, 마스터 템플릿·변형 원고가
+# 월 폴더에 놓인 사례가 있어 이름으로 배제한다.
+_OTHER_KIND_RE = re.compile(
+    "리뷰테스트|리테|워크북|직전보충|포켓북|변형|정답|해설|"
+    "마스터|내지|템플릿|원본"
+)
+
+
 class AnalysisMergeEngine(BaseEngine):
 
     @property
@@ -290,8 +299,32 @@ class AnalysisMergeEngine(BaseEngine):
             if not results and any("분석" in p for p in patterns):
                 results = [full for nfc, full in entries
                            if "분석" in _ds(nfc)]
+        if not results:
+            # 3차 (2026-09-01): 명칭이 '분석본'으로 굳기 전(고1·고2 23년 이전)
+            # 회차는 같은 물건을 `고1 23년 6월 모의고사(New).indd` /
+            # `고1 23년 11월 짤지문.indd` 로 부른다. 파일명 화이트리스트 대신
+            # **구조**로 판정한다 — 월 폴더 바로 아래의 .indd 는 그 회차의
+            # 분석본이고, 리뷰테스트·워크북 등 다른 산출물은 하위 폴더에
+            # 따로 산다(비재귀 열거라 애초에 안 잡힌다). 폴더 안에 섞여 있는
+            # 다른 갈래만 이름으로 걸러낸다. 1·2차가 0건일 때만 진입하므로
+            # 지금 잘 도는 폴더(24년~)의 동작은 그대로다.
+            results = [full for nfc, full in entries
+                       if not _OTHER_KIND_RE.search(_ds(nfc))]
+        # '짤지문'(본편에서 잘려 나온 지문)본은 분석본 세트의 일부인데,
+        # 이름에 '분석본'이 없는 회차(`고1 25년 10월 짤지문.indd`)가 있어
+        # 1차에서 통째로 빠졌다. 항상 후보에 합류시키되 **맨 뒤**로 보내
+        # 본편이 먼저 매칭되게 한다(기존 폴더들은 이미 이 순서 — 무변경).
+        jjal = [full for nfc, full in entries if "짤" in nfc]
+        for f in jjal:
+            if f not in results:
+                results.append(f)
         # 짧은 파일명이 우선 (e.g., "분석본.indd" → "분석본 2.indd" → "분석본 짤지문.indd")
-        results.sort(key=lambda p: (len(os.path.basename(p)), os.path.basename(p)))
+        # GDrive 원본 경로는 NFD 라 basename 을 그대로 비교하면 한글이
+        # 안 맞는다 — 정렬 키도 NFC 로 정규화한 뒤 본다.
+        def _sk(p):
+            b = _nfc(os.path.basename(p))
+            return ("짤" in b, len(b), b)
+        results.sort(key=_sk)
         return results
 
     # ─── parse ─────────────────────────────────────────────────────

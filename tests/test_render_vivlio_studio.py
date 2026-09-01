@@ -1903,3 +1903,45 @@ def test_classes_survive_a_render_clear():
     refs.clear()
     assert refs.classes_of("a.0") == "ps-강조"
     refs.set_classes({})
+
+
+# ── 표 줄·칸을 그 자리에 넣고 뺀다 ──────────────────────────────
+def test_rows_and_cols_go_where_you_point():
+    from core.render_vivlio import table as T
+    b = T.new(3, 3)
+    b["head"] = ["가", "나", "다"]
+    b["rows"] = [["1", "2", "3"], ["4", "5", "6"], ["7", "8", "9"]]
+    T.add_row(b, 1)
+    assert b["rows"][1] == ["", "", ""] and len(b["rows"]) == 4
+    T.del_row(b, 0)
+    assert b["rows"][0] == ["", "", ""] and len(b["rows"]) == 3
+    T.add_col(b, 1)
+    assert b["head"][1] == "" and len(b["rows"][0]) == 4
+    T.del_col(b, 1)
+    assert b["head"] == ["가", "나", "다"]
+
+
+def test_row_ops_refuse_to_break_a_merged_cell():
+    """합친 칸을 가로지르면 칸 수가 어긋나 표가 통째로 밀린다."""
+    from core.render_vivlio import table as T
+    b = T.new(3, 3)
+    b["head"] = None
+    b["rows"] = [["1", "2", "3"], ["4", "5", "6"], ["7", "8", "9"]]
+    T.merge(b, 0, 0, 1, 1)
+    with pytest.raises(ValueError):
+        T.del_row(b, 0)
+    with pytest.raises(ValueError):
+        T.add_row(b, 1)
+    with pytest.raises(ValueError):
+        T.del_col(b, 0)
+
+
+def test_last_row_and_col_are_protected():
+    from core.render_vivlio import table as T
+    b = T.new(1, 1)
+    b["head"] = None
+    b["rows"] = [["하나"]]
+    with pytest.raises(ValueError):
+        T.del_row(b, 0)
+    with pytest.raises(ValueError):
+        T.del_col(b, 0)
