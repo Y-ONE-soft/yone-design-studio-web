@@ -63,6 +63,29 @@ def _len(v):
     return t if all(c in _OK for c in t.lower()) else ""
 
 
+# mm 로 재는 단위 — 묶어 옮길 때 "얼마나 움직였나" 를 셈하는 데 쓴다.
+_MM = {"mm": 1.0, "cm": 10.0, "pt": 25.4 / 72, "in": 25.4, "px": 25.4 / 96}
+
+
+def _mm(v):
+    """길이 → mm 값. **잴 수 없으면 None**(그 변은 안 건드린다).
+
+    ⚠ `%` 는 기준이 무엇인지 여기서 알 수 없다 — 그런 변은 묶어 옮길 때
+      건너뛴다(억지로 셈하면 조용히 어긋난다).
+    """
+    t = str(v or "").strip().lower()
+    for u, k in _MM.items():
+        if t.endswith(u):
+            try:
+                return float(t[:-len(u)]) * k
+            except ValueError:
+                return None
+    try:
+        return float(t)          # 단위 없는 숫자는 mm 로 본다(문서 단위)
+    except ValueError:
+        return None
+
+
 def html(block, ref="", inl=None):
     inl = inl or (lambda x: _rt.to_html(x, blanks=False))
     at = block.get("at") or {}
