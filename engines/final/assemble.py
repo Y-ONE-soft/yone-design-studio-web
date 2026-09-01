@@ -194,5 +194,28 @@ def vocab(school, grade, exam_period, scope=None, order=None,
     for t in (got.get("left_text", ""), got.get("right_text", "")):
         t = re.sub(r"\s*>>내용요약", "\n\n\n>>내용요약", t)
         t = re.sub("(?<=[\x21-\x7e])\\s+式\\s+(?=[\x21-\x7e])", " \u2500 ", t)
-        out.append(t)
+        out.append(_sort_vocab(t))
     return out[0], out[1]
+
+
+RE_VLAB = re.compile(r"^(올포 \d+강 \S+|리딩파워 \d+강 \S+|교과서\S+ \S+|"
+                     r"\d{6}\S*|\d+강 \d+|test\d+ \S+)$")
+
+
+def _sort_vocab(text):
+    """어휘 글을 **지문 차례**로 다시 엮는다.
+
+    시트가 적힌 차례를 그대로 쓰면 어휘만 순서가 달라진다 — 상일1 18강이
+    `분석→서술형→논술형→본문1` 로 나갔고 다른 섹션은 `분석→본문1→…` 이었다.
+    """
+    blocks, cur = [], None
+    for ln in (text or "").split("\n"):
+        if RE_VLAB.match(ln.strip()):
+            cur = [ln.strip()]
+            blocks.append(cur)
+        elif cur is not None:
+            cur.append(ln)
+    if len(blocks) < 2:
+        return text
+    blocks.sort(key=lambda b: S.label_order(b[0]))
+    return "\n".join("\n".join(b).rstrip() + "\n" for b in blocks)

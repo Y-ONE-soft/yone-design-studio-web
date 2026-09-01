@@ -713,5 +713,7 @@ def label_order(label):
     n = UNIT_TAIL.get(tail)
     if n is None:
         m = RE_TAIL_NO.search(tail)
-        n = 10 + (int(m.group(1)) if m else 0)
+        no = int(m.group(1)) if m else 0
+        # `Ex01`·`Ex02` 가 `01` 앞에 온다(완성본 차례) — 숫자만 보면 섞인다.
+        n = no if tail.lower().startswith("ex") else 10 + no
     return ({"test": 2}.get(tok[0], 1), tok[1], n, label)
