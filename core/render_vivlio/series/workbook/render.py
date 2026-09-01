@@ -409,6 +409,19 @@ def page_block(zones, cls=""):
     return f'<div class="pg {cls}">{"".join(zones)}</div>'
 
 
+OX_EXAMPLE = (
+    '<div class="ox-ex">'
+    '<p>All experimental equipment must be handled with care.'
+    '<span class="ox-mark"><b class="on">O</b><i>|</i><b>X</b></span></p>'
+    '<p>A warehouse is a large facility which products are storing before it is sold.'
+    '<span class="ox-mark" style="left:106.7mm"><b>O</b><i>|</i><b class="on">X</b></span></p>'
+    '<div class="ox-fix">'
+    '<span style="left:41.8mm">\u2934 where</span>'
+    '<span style="left:68.5mm">\u2934 stored</span>'
+    '<span style="left:89.1mm">\u2934 they are</span>'
+    '</div></div>')
+
+
 # ── 간지 ────────────────────────────────────────────────────────────
 
 DIV_LABELS = {1: "FRAME", 2: "BUILD UP", 3: "TEST"}
@@ -463,8 +476,10 @@ def fixed_section(st, idx):
         # ⚠ 여기는 **흘림**이다. 절대배치 칸에 가두면 넘친 내용이 잘려 사라진다
         #   (실물도 안 자른다 — 어법 선택 '본문' 20문장은 두 면에 걸친다: 실측
         #   기준 p30-31·p32-33). 지문 묶음마다 새 면에서 시작하고, 길면 이어진다.
-        for g in groups:
+        for gi, g in enumerate(groups):
             body = "".join(blocks_html(u, n, st["key"]) for u in g["units"])
+            if st["key"] == "step2_b1" and gi == 0:
+                body = OX_EXAMPLE + body      # 템플릿 고정 예시 (첫 면에만)
             head = ""
             if g.get("label"):
                 head = (f'<div class="pn-side"><span class="pnum">'
@@ -572,6 +587,7 @@ FONTS = [
     ("Montserrat", "Montserrat-Bold.otf", 700),
     ("LotteMartDream", "12롯데마트드림Bold.ttf", 700),
     ("TTMamablock", "TTMamablockB.ttf", 700),
+    ("Cafe24Supermagic", "Cafe24Supermagic-Bold-v1.0.otf", 700),
 ]
 
 

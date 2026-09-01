@@ -155,8 +155,12 @@ body {
 .topzone { min-height: 129.3mm; }   /* 실물 하단 발문 y=156.78mm 자리 맞춤 */
 
 /* 스텝 안내문 — 머리말 오른쪽 (어법 O/X 등) */
+.hdr .note::before {
+  content: "\25CF"; color: var(--s2); font-size: 5pt;
+  vertical-align: 0.25em; margin-right: 1.6mm;
+}
 .hdr .note {
-  position: absolute; left: 94.9mm; top: 16.99mm;
+  position: absolute; left: 91.5mm; top: 16.99mm;
   font-family: "Elice Baeum", sans-serif; font-size: 9pt; line-height: 1;
   color: var(--ink); letter-spacing: normal;
 }
@@ -478,8 +482,32 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 .box-orange p { font-size: 8.5pt; line-height: 7.06mm; text-align: justify; }
 
 /* ─────────────────────────────────────────────── STEP2 B1 어법 O/X */
+/* 첫 면 예시 상자 — 원고가 아니라 템플릿 고정물(완성본 3종 모두 있다).
+ * 실측: 상자 x=22.9 · 168×23.9mm · #eff0f0, 글 9pt, 빨간 교정은 Cafe24Supermagic */
+.ox-ex {
+  position: relative; background: #eff0f0;
+  margin: 3.9mm -0.1mm 0; padding: 2.5mm 3mm 3mm; height: 23.9mm;
+  box-sizing: border-box; font-size: 9pt; line-height: 11.2mm;
+}
+.ox-ex p { position: relative; }
+.ox-mark {
+  position: absolute; left: 83.4mm; top: 0; white-space: nowrap;
+  font-family: "Noto Sans CJK KR", sans-serif; font-weight: 500; color: var(--kr-gray);
+}
+.ox-mark i { font-style: normal; color: var(--num-blue); margin: 0 1.4mm;
+             font-family: "LotteMartDream", sans-serif; }
+.ox-mark b.on {
+  font-weight: 500; border: 0.6pt solid #d2232a; border-radius: 50%;
+  padding: 0 0.6mm; color: #d2232a;
+}
+.ox-fix { position: absolute; left: 3mm; top: 17.5mm; height: 5mm; width: 160mm; }
+.ox-fix span {
+  position: absolute; top: 0; white-space: nowrap;
+  font-family: "Cafe24Supermagic", "Noto Sans CJK KR", sans-serif;
+  font-weight: 700; font-size: 9pt; color: #d2232a;
+}
 .gox {
-  position: relative; margin-top: 6.2mm; padding-left: 7mm;
+  position: relative; margin-top: 8.77mm; padding-left: 7mm;   /* 실측 항목 간격 13.76mm */
   font-size: 9pt; line-height: 4.9mm; text-align: justify;
 }
 .gox .n {

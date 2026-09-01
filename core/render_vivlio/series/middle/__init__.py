@@ -52,7 +52,39 @@ def _repo():
         os.path.dirname(here))))
 
 
-def _run(script, bookkey, vol, log, extra=()):
+STUDIO_CSS = "studio.css"      # 다리가 뽑아 두는 것 — 손으로 고치지 말 것
+
+
+def studio_css(cfg):
+    """작업대가 정한 것(스타일·문서 설정·표·상자·덮어쓰기)을 한 장으로 뽑는다.
+
+    ⚠ automation 은 `palette.css` 와 `theme.css` 만 링크한다. 여기서 뽑아
+      두지 않으면 작업대의 스타일·문서 설정 패널이 **저장은 되는데 지면은
+      그대로**가 된다 — 다른 계열에서 `knobs.css` 가 하는 일이 여기엔 없다.
+
+    빈 내용이면 **파일을 지운다.** 남겨 두면 되돌린 스타일이 계속 먹는다.
+    """
+    txt = (knobs.styles_text(cfg) + knobs.page_rules_text(cfg)
+           + (knobs.table_css() if knobs.has_block(cfg, "table") else "")
+           + (knobs.box_css() if knobs.has_block(cfg, "box") else ""))
+    ov = cfg.path("overrides.css")
+    if os.path.exists(ov):
+        with open(ov, encoding="utf-8") as f:
+            body = f.read()
+        if body.strip():
+            txt += "\n/* overrides.css — 손잡이 밖 덮어쓰기 */\n" + body
+    p = cfg.path(STUDIO_CSS)
+    if not txt.strip():
+        if os.path.exists(p):
+            os.remove(p)
+        return None
+    with open(p, "w", encoding="utf-8") as f:
+        f.write("/* 자동 생성 — 내지 작업대가 쓴다. 손으로 고치면 다음 조판에 사라진다. */\n"
+                + txt)
+    return p
+
+
+def _run(script, bookkey, vol, log, extra=(), bookdir=None):
     a = _auto_dir()
     cmd = [sys.executable, "-u", os.path.join(a, script),
            "--book", bookkey, "--vol", str(vol)] + list(extra)
@@ -63,6 +95,11 @@ def _run(script, bookkey, vol, log, extra=()):
     env = dict(os.environ)
     pp = env.get("PYTHONPATH", "")
     env["PYTHONPATH"] = _repo() + (os.pathsep + pp if pp else "")
+    # 책 폴더 자리 — automation 이 작업대가 쌓아 둔 것(고친 글 `edits.json`,
+    # 뽑아 둔 `studio.css`)을 읽는다. 넘기지 않으면 **작업대에서 고쳐도
+    # 지면이 그대로**다(예전에 실제로 그랬다 — 저장은 되는데 안 바뀐다).
+    if bookdir:
+        env["VIV_BOOK_DIR"] = bookdir
     p = subprocess.Popen(cmd, cwd=a, stdout=subprocess.PIPE,
                          stderr=subprocess.STDOUT, text=True, env=env)
     for line in p.stdout:
@@ -113,8 +150,8 @@ class MiddleSeries(Series):
     # ── ① 원고 → data ──
     def gen_data(self, cfg, log):
         key, vol = self._pick(cfg)
-        _run("extract.py", key, vol, log)
-        _run("gen_data.py", key, vol, log)
+        _run("extract.py", key, vol, log, bookdir=cfg.root)
+        _run("gen_data.py", key, vol, log, bookdir=cfg.root)
         return self._paths(key, vol)["data"]
 
     # ── ③ 조판 ──
@@ -122,7 +159,8 @@ class MiddleSeries(Series):
         key, vol = self._pick(cfg)
         if sample:
             log("  [알림] 이 계열은 견본을 따로 만들지 않는다 — 전권을 조판한다")
-        _run("build.py", key, vol, log)
+        studio_css(cfg)
+        _run("build.py", key, vol, log, bookdir=cfg.root)
         return {"pdf": None, "pages": None}
 
     # ── 미리보기: HTML 까지만 ──
@@ -138,7 +176,9 @@ class MiddleSeries(Series):
         if not os.path.exists(p["data"]):
             raise FileNotFoundError(
                 f"{p['data']} 가 없다 — 먼저 `gen_data` 를 돌릴 것")
-        _run("build.py", key, vol, log, extra=["--htmlonly"])
+        studio_css(cfg)
+        _run("build.py", key, vol, log, extra=["--htmlonly"],
+             bookdir=cfg.root)
         html = os.path.join(p["build"], "index.html")
         if not os.path.exists(html):
             raise RuntimeError(f"조판할 HTML 이 없다: {html}")
@@ -158,7 +198,7 @@ class MiddleSeries(Series):
     def verify(self, cfg, log, report):
         key, vol = self._pick(cfg)
         try:
-            _run("verify.py", key, vol, log)
+            _run("verify.py", key, vol, log, bookdir=cfg.root)
         except RuntimeError as e:
             report.fail("G-중등 " + str(e))
         return report

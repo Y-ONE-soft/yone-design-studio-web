@@ -51,6 +51,24 @@ def extract_file_paragraphs(path):
     raise ValueError(f"지원하지 않는 형식: {ext}")
 
 
+
+# 원문자 정규화 ─────────────────────────────────────────────────────────────
+# 원고가 `➀`(U+2780 DINGBAT) 와 `①`(U+2460) 을 섞어 쓴다 — 같은 학교 원고 안에서도
+# 문항마다 갈린다(성덕·상일·명일2 실증). 눈에는 같아 보이지만 코드가 달라서
+# **딩벳 쪽 선지는 선지로 인식조차 안 되고 UNKNOWN 으로 남는다**(성덕1 2회:
+# 선지 5줄이 통째로 지문 취급). 분류 전에 한 벌로 접는다.
+_DINGBAT_MAP = {chr(0x2780 + i): chr(0x2460 + i) for i in range(10)}      # ➀~➉
+_DINGBAT_MAP.update({chr(0x2776 + i): chr(0x2460 + i) for i in range(10)})  # ❶~❿
+_RE_DINGBAT = re.compile("[" + "".join(_DINGBAT_MAP) + "]")
+
+
+def normalize_marks(text):
+    """원문자 이형(딩벳)을 표준 원문자로. 표시는 같고 코드만 다른 것들."""
+    if not text:
+        return text
+    return _RE_DINGBAT.sub(lambda m: _DINGBAT_MAP[m.group(0)], text)
+
+
 def _clean_question(text):
     """발문에서 머리 번호와 꼬리 출처 태그를 떼고 발문 본문만.
 
@@ -359,6 +377,12 @@ def _repair_orphan_choice_runs(annotated, warnings=None):
 def build_ir(paras, meta=None, log=None):
     """단락 목록 → content v2 문서. (단락종류 시퀀스 기반 문항 그룹핑)"""
     from engines._taxonomy import classify
+
+    # 딩벳 원문자를 표준 원문자로 접고 시작한다 — 안 접으면 그 선지들이
+    # 선지로 인식되지 않는다(성덕1 2회 실증).
+    paras = [dict(p, text=normalize_marks(p.get("text") or ""))
+             if isinstance(p, dict) else normalize_marks(str(p))
+             for p in paras]
 
     # 동형 원고는 서술형 답란을 괄호 기입란으로 준다("(1) (   )번",
     # "(2) (틀린 부분:      )"). 이 줄을 답란으로 잡아야 서술형 판정이 선다.

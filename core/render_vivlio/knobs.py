@@ -292,6 +292,15 @@ def _has(cfg, kind):
     return False
 
 
+def has_block(cfg, kind):
+    """작업대가 넣은 블록이 이 책에 있나 — **계열 밖에서도** 물어본다.
+
+    중등부는 조판 코드가 3계층 밖에 살아 `knobs.css` 를 안 쓴다. 그 다리가
+    표·상자 CSS 를 직접 뽑아야 해서 밖으로 연다.
+    """
+    return _has(cfg, kind)
+
+
 def _has_table(cfg):
     """이 책에 **표가 실제로 있나.**
 

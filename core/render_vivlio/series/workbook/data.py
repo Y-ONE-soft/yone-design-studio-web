@@ -313,7 +313,21 @@ def _inherit_labels(steps, log=print):
         for k, grp in enumerate(g[len(g) - n:]):
             grp["label"] = canon[k]
             grp["label_inherited"] = True
-        log(f"  [라벨 승계] {st['key']}: 뒤 {n}묶음에 {canon[0]}~{canon[-1]}")
+        # 앞쪽(지문이 아닌) 묶음은 **묶음 수가 같은 형제 스텝**의 라벨을 그대로
+        # 물려받는다 — 실물의 어법 O/X 앞 두 면이 `본문` 인 것이 그 예다.
+        lead = len(g) - n
+        if lead > 0:
+            for sib in steps:
+                if sib is st or len(sib["groups"]) != len(g):
+                    continue
+                src = [x.get("label") for x in sib["groups"][:lead]]
+                if all(src):
+                    for grp, lab in zip(g[:lead], src):
+                        grp["label"] = lab
+                        grp["label_inherited"] = True
+                    break
+        log(f"  [라벨 승계] {st['key']}: 뒤 {n}묶음에 {canon[0]}~{canon[-1]}"
+            + (f" · 앞 {lead}묶음 형제 스텝에서" if lead > 0 else ""))
 
 
 def build(cfg, log=print):
