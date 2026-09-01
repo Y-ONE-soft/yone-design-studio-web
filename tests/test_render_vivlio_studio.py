@@ -1448,7 +1448,7 @@ def test_page_never_goes_blank_while_retypesetting():
     i = src.index("viewer.addListener('error'")
     assert "veilOff()" in src[i:i + 260], "조판이 실패하면 가리개가 남는다"
     i = src.index("function show(extraCss)")
-    assert "veilOn()" in src[i - 400:i + 200]
+    assert "veilOn(" in src[i - 500:i + 400], "조판을 다시 시작할 때 덮어야 한다"
 
 
 def test_guides_are_dragged_not_typed():
@@ -1533,4 +1533,29 @@ def test_veil_is_lifted_even_if_the_engine_never_says_loaded():
     src = _studio_src()
     i = src.index("viewer.loadDocument(")
     assert "function watch()" in src[i:i + 900]
-    assert "tries > 120" in src[i:i + 900], "끝내 안 오면 걷어야 한다"
+    assert "tries > (renderAll ? 600 : 120)" in src[i:i + 1200], \
+        "끝내 안 오면 걷어야 한다"
+
+
+# ── 면 넘기기 ───────────────────────────────────────────────────
+def test_page_hop_rechecks_instead_of_counting_steps():
+    """몇 번 뛸지 미리 세면 안 된다 — 조판 중이면 넘기라는 말이 무시된다.
+
+    실측: 8면을 눌렀는데 4면에 섰다(세어 둔 횟수는 무시된 것도 한 번으로
+    친다). 그리고 반영을 안 기다리고 연달아 넘기면 이번엔 9면까지 갔다.
+    """
+    src = _studio_src()
+    i = src.index("function hopTo")
+    body = src[i:i + 2200]
+    assert "var left = Math.abs(step)" not in body, "아직도 횟수를 세고 있다"
+    assert "function settle" in body, "반영을 기다렸다가 다시 봐야 한다"
+    assert "++seeking" in body, "다른 이동과 겹치면 서로 넘긴다"
+
+
+def test_page_number_has_one_source():
+    """엔진의 자리와 `epage` 를 섞으면 면 번호가 널뛴다."""
+    src = _studio_src()
+    i = src.index("function pageNow")
+    assert "curPage = pp.pageIndex + 1" in src[i:i + 600]
+    j = src.index("viewer.addListener('nav'")
+    assert "pp.pageIndex != null" in src[j:j + 600], "nav 알림이 덮어쓰면 안 된다"

@@ -652,7 +652,9 @@
   /** 서버를 거치지 않고 지면만 다시 앉힌다(색·여백 미리보기). */
   function show(extraCss) {
     ready = false;                 // 새로 조판하는 동안은 면을 못 넘긴다
-    veilOn();                      // 지면이 빈 판이 되지 않게 덮어 둔다
+    // ⚠ **모두 그리기는 몇 분 걸린다**(견본 40면도 2분을 넘겼다). 그동안
+    //   아무 말도 없으면 고장 난 것처럼 보인다 — 무엇을 하는 중인지 적는다.
+    veilOn(renderAll ? '모든 면을 그리는 중 — 몇 분 걸립니다' : undefined);
     ensureViewer();
     if (!viewer) { msg('조판 엔진을 불러오지 못했다'); return; }
     var opts = {};
@@ -671,7 +673,9 @@
     (function watch() {
       if (!fdoc() || !fdoc().getElementById('ide-veil')) return;
       if (pageEl()) { veilOff(); return; }
-      if (++tries > 120) { veilOff(); return; }      // 1분이면 무슨 일이 나도 걷는다
+      // 모두 그리기는 오래 걸린다 — 그때는 더 기다린다(가리개는 지면만
+      // 덮을 뿐 도구는 그대로 쓸 수 있다).
+      if (++tries > (renderAll ? 600 : 120)) { veilOff(); return; }
       setTimeout(watch, 500);
     })();
   }
