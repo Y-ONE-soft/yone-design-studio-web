@@ -1847,3 +1847,59 @@ def test_workbook_runs_take_studio_formatting():
                                 {"t": "자", "st": {"letter-spacing": "-0.02em"}}]})
     assert "<u>밑</u>" in out and "<b>굵</b>" in out
     assert "letter-spacing:-0.02em" in out
+
+
+# ── 이름 붙인 단락 스타일 (인디자인의 단락 스타일) ─────────────
+def test_named_style_lands_on_the_page_for_every_series():
+    """"이 자리에만" 은 그 한 곳뿐이다 — 인디자인의 단락 스타일은 **이름을
+    고치면 걸린 곳이 전부** 바뀌는 것이다.
+
+    조판 결과의 class 는 계열 렌더러가 정하므로, 사람이 더 다는 이름은
+    `refs.mark()` 가 얹는다 — 계열 코드를 하나도 안 고쳐도 모든 계열에서 된다.
+    """
+    from core.render_vivlio import refs
+    refs.clear()
+    refs.set_classes({"a.0": "ps-강조"})
+    o = {"x": 1}
+    refs.put(o, "a.0")
+    assert "ps-강조" in refs.mark(refs.of(o), "head")
+    assert "ps-강조" in refs.stamp('<p class="t">글</p>', "a.0")
+    refs.set_classes({})
+
+
+def test_class_ops_are_collected_last_wins():
+    """같은 자리를 두 번 지정하면 마지막이 이긴다. 빈 값은 **뗀 것**이다."""
+    from core.render_vivlio import edits as ed
+    st = {"head": 3, "ops": [
+        {"op": "cls", "ref": "a.0", "v": "ps-하나"},
+        {"op": "cls", "ref": "a.0", "v": "ps-둘"},
+        {"op": "cls", "ref": "b.1", "v": ""},
+    ]}
+    assert ed.classes(st) == {"a.0": "ps-둘"}
+
+
+def test_class_ops_do_not_touch_the_manuscript():
+    """`cls` 는 글이 아니다 — `apply_all` 이 건드리면 안 된다."""
+    from core.render_vivlio import edits as ed
+    data = {"a": ["글"]}
+    ed.apply_all(data, {"head": 1, "ops": [{"op": "cls", "ref": "a.0",
+                                            "v": "ps-강조"}]})
+    assert data == {"a": ["글"]}
+
+
+def test_style_names_must_be_marked_as_ours():
+    """계열이 쓰는 클래스(`.q`·`.head`)와 섞이면 어느 쪽이 사람 것인지 모른다."""
+    src = open(os.path.join(_ROOT, "routes", "book_studio.py"),
+               encoding="utf-8").read()
+    i = src.index("def api_paraclass")
+    assert "^ps-" in src[i:i + 1600], "이름 규칙이 없다"
+
+
+def test_classes_survive_a_render_clear():
+    """자리표 표는 렌더할 때마다 새로 만든다 — 그때 스타일까지 지우면
+    **적용했는데 지면은 그대로**가 된다."""
+    from core.render_vivlio import refs
+    refs.set_classes({"a.0": "ps-강조"})
+    refs.clear()
+    assert refs.classes_of("a.0") == "ps-강조"
+    refs.set_classes({})

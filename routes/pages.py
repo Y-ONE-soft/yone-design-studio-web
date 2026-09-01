@@ -97,7 +97,7 @@ def typeset_page(material_id):
     # 파이널 엔진: 워크북 폴더에서 학교 목록 자동 스캔
     exam_periods = []
     current_period = ""
-    if material_id == "final":
+    if material_id in ("final", "final_viv"):
         from engines.final.engine import (
             _load_config as _load_final_config,
             scan_exam_periods, estimate_exam_period, resolve_exam_period,

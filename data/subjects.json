@@ -135,6 +135,11 @@
         "engine_id": "final"
       },
       {
+        "name": "파이널 직전보충 (Vivliostyle)",
+        "prefix": "파이널",
+        "engine_id": "final_viv"
+      },
+      {
         "name": "동형모의고사",
         "prefix": "동형",
         "engine_id": "mockexam",

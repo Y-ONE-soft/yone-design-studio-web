@@ -278,6 +278,10 @@ class Renderer(object):
     def item(self, it, group_ctx=None):
         s = self.s
         out = []
+        # 묶음의 **공유 지문은 묶음 머리 바로 뒤**, 첫 문항 발문 앞에 온다
+        # (정본 배재1 `【 8 – 9 】 다음 글을 읽고 물음에 답하시오.` → 대화 지문
+        # → `8. 윗글의 …`). 발문이 '윗글'을 가리키므로 순서가 뒤집히면 안 된다.
+        lead = bool(group_ctx and group_ctx.get("shared_passage"))
         is_essay = it.get("kind") == "서술형"
         score = (it.get("header") or {}).get("score")
         # 짝맞추기 선지 여부를 **지문보다 먼저** 안다 — 원고가 선지 바로 앞에
@@ -288,6 +292,7 @@ class Renderer(object):
         ab_head = None
 
         # 발문 — 번호(또는 서답형 라벨) + 본문 + 배점
+        stem_at = len(out)
         q = strip_source(it.get("question") or "")
         if is_essay:
             self.essay_no += 1
@@ -310,6 +315,7 @@ class Renderer(object):
                            f'{self.inline(q, it.get("question_marks"))}'
                            f'{self.score_str(score)}</p>')
 
+        stem_end = len(out)
         # 지문 — 순서·삽입 문항의 '주어진 글/문장' 은 정본에서 본문 **앞**에
         # 상자로 놓인다. 원고는 삽입 문장을 뒤에 주므로 여기서 앞으로 옮긴다.
         blocks = list((it.get("stimulus") or {}).get("blocks", []))
@@ -357,6 +363,10 @@ class Renderer(object):
                 out.append(f'<div class="{wrap}">{body}</div>')
                 continue
             out.append(body)
+
+        if lead and len(out) > stem_end:
+            # 묶음 첫 문항 — 공유 지문을 발문 위로 올린다
+            out = (out[:stem_at] + out[stem_end:] + out[stem_at:stem_end])
 
         # 보기
         given = it.get("given")
@@ -889,7 +899,11 @@ def build_body(doc, spec, case=None, scores=None):
                 out.append(head)
             elif g["intro"]:
                 out.append(f'<p class="group-intro">{esc(g["intro"])}</p>')
-        ctx = {"member_no_stem": True} if row.get("no_stem") else None
+        ctx = {"member_no_stem": True} if row.get("no_stem") else {}
+        if g and not g.get("common_stem") and g.get("n", 0) > 1:
+            # 개별발문형 묶음의 첫 문항: 지문을 공유하므로 발문 위로 올린다
+            ctx = dict(ctx or {}, shared_passage=True)
+        ctx = ctx or None
         out.append(r.item(it, ctx))
     return "\n".join(out), r.warnings
 

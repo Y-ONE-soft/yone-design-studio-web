@@ -464,6 +464,43 @@ def api_styles():
     return jsonify({"ok": True, "styles": styles, "history": _hist(st)})
 
 
+@bp.route("/api/book-studio/paraclass", methods=["POST"])
+def api_paraclass():
+    """고른 자리에 **이름 붙인 스타일**을 건다(인디자인의 단락 스타일 적용).
+
+    ## 왜 따로 있나
+
+    "이 자리에만" 은 `[data-ref="…"]` 선택자로 걸린다 — 그 한 곳만 바뀐다.
+    인디자인의 단락 스타일은 **이름을 고치면 걸린 곳이 전부** 바뀌는 것이다.
+    그러려면 그 문단이 **그 스타일 이름을 달고 있어야** 한다.
+
+    조판 결과의 class 는 계열 렌더러가 정하므로, 사람이 더 다는 이름은
+    편집 이력에 `cls` 연산으로 쌓고 `refs.mark()` 가 얹는다 — 계열 코드를
+    하나도 안 고쳐도 **아홉 계열 모두**에서 된다.
+
+    ⚠ 스타일 이름은 `ps-` 로 시작한다. 계열이 쓰는 클래스(`.q`·`.head`)와
+      섞이면 어느 쪽이 사람 것인지 알 수 없다.
+    """
+    from core.render_vivlio import book as bookmod
+    from core.render_vivlio import edits as ed
+    p = request.get_json(silent=True) or {}
+    d, meta = _book_dir(p.get("b"))
+    if not d:
+        return jsonify({"error": "모르는 책"}), 404
+    ref = (p.get("ref") or "").strip()
+    if not ref or any(c in ref for c in "/\\ \n") or ".." in ref:
+        return jsonify({"error": "이상한 자리표"}), 400
+    names = []
+    for n in str(p.get("cls") or "").replace(".", " ").split():
+        if not re.match(r"^ps-[0-9A-Za-z가-힣_-]{1,40}$", n):
+            return jsonify({"error": f"스타일 이름은 `ps-`로 시작합니다: {n}"}), 400
+        names.append(n)
+    cfg = bookmod.load(d)
+    st = ed.push(cfg, {"op": "cls", "ref": ref, "v": " ".join(names),
+                       "note": "단락 스타일"})
+    return jsonify({"ok": True, "cls": " ".join(names), "history": _hist(st)})
+
+
 IMG_OK = (".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp")
 IMG_MAX = 20 * 1024 * 1024
 

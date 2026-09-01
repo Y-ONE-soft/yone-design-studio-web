@@ -45,9 +45,12 @@ NAME = "edits.json"
 OLD = "errata.json"          # 예전 값 표 — 처음 읽을 때 연산으로 옮긴다
 # 글 연산 — `data` 를 읽을 때 얹는다
 TEXT_OPS = ("set", "split", "merge", "insert", "delete")
+# 자리에 **이름 붙인 스타일**을 건다(인디자인의 단락 스타일 적용).
+# 글도 파일도 안 고친다 — 조판할 때 그 자리의 class 에 얹힌다.
+CLASS_OPS = ("cls",)
 # 디자인 연산 — **파일을 직접** 고친다(`design_ops.py`). data 에는 안 얹는다.
 DESIGN_OPS = ("style", "knob", "css")
-OPS = TEXT_OPS + DESIGN_OPS
+OPS = TEXT_OPS + DESIGN_OPS + CLASS_OPS
 
 
 def path(cfg):
@@ -267,7 +270,7 @@ def apply_all(data, state, log=None):
     """
     ok = 0
     for op in (state.get("ops") or [])[:state.get("head", 0)]:
-        if op.get("op") in DESIGN_OPS:
+        if op.get("op") in DESIGN_OPS or op.get("op") in CLASS_OPS:
             continue
         if apply_op(data, op, log):
             ok += 1
@@ -296,6 +299,25 @@ def data_path(cfg):
     return cfg.path("data.json")
 
 
+def classes(state):
+    """`cls` 연산을 모아 `{자리표: "ps-강조 ps-큰글"}`.
+
+    나중 것이 이긴다(같은 자리를 두 번 지정하면 마지막이 그 자리의 스타일).
+    빈 값이면 **뗀 것**이다.
+    """
+    out = {}
+    for op in (state.get("ops") or [])[:state.get("head", 0)]:
+        if op.get("op") != "cls":
+            continue
+        ref = op.get("ref") or ""
+        v = " ".join(str(op.get("v") or "").split())
+        if v:
+            out[ref] = v
+        else:
+            out.pop(ref, None)
+    return out
+
+
 def load_data(cfg, log=None):
     """`data.json` + 편집 이력. 모든 계열의 `data.load()` 가 이걸 쓴다."""
     with open(data_path(cfg), encoding="utf-8") as f:
@@ -303,6 +325,10 @@ def load_data(cfg, log=None):
     st = read(cfg)
     if st["head"]:
         apply_all(data, st, log)
+    # ⚠ 스타일 지정은 **여기 한 곳**에서 넘긴다. 계열마다 부르게 하면 반드시
+    #   빠뜨린다 — 그러면 "적용했는데 지면은 그대로" 가 된다.
+    from core.render_vivlio import refs as _refs
+    _refs.set_classes(classes(st))
     return data
 
 

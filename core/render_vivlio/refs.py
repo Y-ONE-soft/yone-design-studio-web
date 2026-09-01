@@ -33,6 +33,21 @@ import re
 
 _PATH = {}      # id(객체) → 점 경로
 _SEQ = {}       # 점 경로 → 번호
+# 자리 → 사람이 **지정한 스타일 이름**(인디자인의 단락 스타일 적용).
+# ⚠ `clear()` 로 안 지운다 — 이건 원고를 읽을 때 정해지고, 자리표 표는
+#   렌더할 때마다 새로 만들기 때문이다(같이 지우면 스타일이 조용히 사라진다).
+_CLS = {}
+
+
+def set_classes(m):
+    """`{자리표: "ps-강조 ps-큰글"}`. 원고를 읽는 자리에서 한 번 넣는다."""
+    _CLS.clear()
+    _CLS.update({k: v for k, v in (m or {}).items() if v})
+    return _CLS
+
+
+def classes_of(ref):
+    return _CLS.get(ref, "")
 
 
 def clear():
@@ -164,6 +179,9 @@ def mark(ref, base=""):
         return ' class="%s"' % base if base else ""
     n = _SEQ.setdefault(ref, len(_SEQ) + 1)
     cls = (base + " " if base else "") + "vref%d" % n
+    extra = classes_of(ref)          # 사람이 이 자리에 건 스타일
+    if extra:
+        cls += " " + extra
     return ' class="%s" id="vref%d" data-ref="%s"' % (cls, n, ref)
 
 
@@ -194,12 +212,14 @@ def stamp(html_frag, ref):
     attrs = m.group(2) or ""
     if "data-ref=" in attrs:
         return html_frag                       # 이미 찍혔다
+    extra = classes_of(ref)
+    add = "vref%d" % n + ((" " + extra) if extra else "")
     cm = re.search(r'\bclass="([^"]*)"', attrs)
     if cm:
-        attrs = (attrs[:cm.start(1)] + cm.group(1) + " vref%d" % n
+        attrs = (attrs[:cm.start(1)] + cm.group(1) + " " + add
                  + attrs[cm.end(1):])
     else:
-        attrs += ' class="vref%d"' % n
+        attrs += ' class="%s"' % add
     attrs += ' id="vref%d" data-ref="%s"' % (n, ref)
     return "<%s%s%s>%s" % (m.group(1), attrs, m.group(3),
                            html_frag[m.end():])

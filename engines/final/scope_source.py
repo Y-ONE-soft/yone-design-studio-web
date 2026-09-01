@@ -614,3 +614,26 @@ def from_json(obj):
             "school": obj.get("school"), "grade_text": obj.get("grade_text"),
             "detail": {tuple(x["token"]): (x.get("detail") or {})
                        for x in obj.get("items", [])}}
+
+
+def from_sheet(school, exam_period, grade=0, log=lambda m: None):
+    """구글시트 시험범위 → Scope. **Y.OS 가 열리면 이 함수만 갈아 끼운다.**
+
+    시트의 학교 칸은 `광문고2`·`상일여고1` 인데 조판이 쓰는 이름은 `광문2`·
+    `상일1` 이다 — 그 짝짓기는 `vocab_fetcher._find_scope_row` 가 이미 안다.
+    """
+    from engines.final import vocab_fetcher as V
+    rows = V._fetch_csv(V.SCOPE_SHEET_ID, V.SCOPE_GID)
+    if not rows:
+        log("[범위] 시험범위 시트에 닿지 못했습니다")
+        return None
+    row = V._find_scope_row(rows, school, exam_period)
+    if not row:
+        log("[범위] 시트에서 %s(%s) 를 찾지 못했습니다" % (school, exam_period))
+        return None
+    # 교과서·모의고사·부교재·프린트 칸을 한 글로 잇는다(칸 차례가 곧 차례다)
+    text = " / ".join(x.strip().replace("\n", " ")
+                      for x in row[1:5] if x and x.strip())
+    sc = parse(text, grade=grade)
+    sc["school"], sc["source"] = school, "sheet"
+    return sc

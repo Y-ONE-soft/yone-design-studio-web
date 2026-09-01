@@ -6,6 +6,7 @@ from engines.cover_pocketbook.engine import CoverPocketbookEngine
 from engines.final_cover.engine import FinalCoverEngine
 from engines.pocketbook.engine import PocketbookEngine
 from engines.final.engine import FinalEngine
+from engines.final_viv.engine import FinalVivEngine
 from engines.workbook.engine import WorkbookEngine
 from engines.workbook_sero.engine import WorkbookSeroEngine
 from engines.workbook_supp.engine import WorkbookSuppEngine
@@ -52,6 +53,7 @@ _ENGINE_LIST = [
     FinalCoverEngine(),
     PocketbookEngine(),
     FinalEngine(),
+    FinalVivEngine(),
     WorkbookEngine(),
     WorkbookSeroEngine(),
     WorkbookSuppEngine(),
