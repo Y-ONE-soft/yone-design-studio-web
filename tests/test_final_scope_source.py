@@ -192,3 +192,15 @@ def test_plain_exclusions_attach_to_the_nearest_token():
     assert sc["detail"][("test", 2)]["exclude"] == [1, 8, 10, 11]
     assert sc["detail"].get(("teuk", 21), {}).get("exclude") is None
     assert not S.in_scope("test2 01", sc) and S.in_scope("test2 03", sc)
+
+
+def test_reading_power_carries_no_vocabulary():
+    """리딩파워는 중요어휘를 싣지 않는다(사용자 확정).
+
+    시트에는 데이터가 있어서 강 목록을 넘기면 딸려 온다 — 광문2 가 18→54
+    지문으로 부풀었다. 올포는 반대로 **싣는다**(상일1 완성본).
+    """
+    import inspect
+    from engines.final import assemble
+    src = inspect.getsource(assemble.vocab)
+    assert "rp_lectures=None" in src
