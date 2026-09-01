@@ -278,9 +278,9 @@ def box_css():
 def _has(cfg, kind):
     """이 책에 그 블록이 실제로 있나. 원고와 편집 이력을 **둘 다** 본다."""
     import os
+    from core.render_vivlio import edits as _ed
     needle = '"%s"' % kind
-    for name in ("data.json", "edits.json"):
-        p = cfg.path(name)
+    for p in (_ed.data_path(cfg), cfg.path("edits.json")):
         if not os.path.exists(p):
             continue
         try:

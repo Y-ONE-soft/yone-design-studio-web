@@ -147,6 +147,11 @@ class MiddleSeries(Series):
         key, vol = self._pick(cfg)
         return self._paths(key, vol)["build"]
 
+    def data_path(self, cfg):
+        """자료는 automation 안에 있다 — 책 폴더에는 `data.json` 이 없다."""
+        key, vol = self._pick(cfg)
+        return self._paths(key, vol)["data"]
+
     # ── ① 원고 → data ──
     def gen_data(self, cfg, log):
         key, vol = self._pick(cfg)

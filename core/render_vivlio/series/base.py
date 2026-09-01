@@ -67,6 +67,13 @@ class Series(object):
         return self.style_names.get(cls, "")
 
     # ── 조판 결과가 놓이는 폴더 ──
+    def data_path(self, cfg):
+        """이 계열의 `data` 파일 자리 — 책 폴더의 `data.json` 이 기본이다.
+
+        자료를 다른 데 두는 계열(중등부)만 이걸 바꾼다.
+        """
+        return cfg.path("data.json")
+
     def build_dir(self, cfg):
         """`build/index.html` 이 놓이는 곳. 대개 책 폴더 안이다.
 

@@ -189,29 +189,19 @@ def read_blocks(path):
 
 
 def read_arrange(path):
-    """`Step1 C1 문장배열` → [{no, label, items}].
+    """`Step1 C1 문장배열` 의 **상단 배열 카드** → [{no, label, items}].
 
-    머리글(교재명·`Q. …` 발문·챕터 표제)은 **첫 지문 머리 앞**에 있는 것으로
-    가른다 — 글자로 찾지 않는다.
+    ⚠ 중첩 표(하단 문제)는 빼야 한다 — 넣으면 한 지문이 두 배로 길어져
+      전부 '칸 넘침'이 된다(실증: 문장배열 25지문 전부 두 칸으로 튀었다).
+      하단 문제는 `read_insert` 가 따로 읽는다.
     """
-    rows = _docx_rows(path)
-    blocks, cur = [], None
-    for s in rows:
-        if is_block_head(s):
-            m = RE_ROW.match(s)
-            cur = {"no": int(m.group(1)), "raw": m.group(2),
-                   "label": parse_label(m.group(2)), "items": []}
-            blocks.append(cur)
-        elif cur is not None:
-            if RE_PROMPT.match(s):
-                continue                # 다음 묶음의 발문
-            cur["items"].append(s)
-    return blocks
+    return [{k: b[k] for k in ("no", "raw", "label", "items")}
+            for b in read_blocks(path)]
 
 
 def read_writing(path):
     """`Step2 C2 영작배열` → [{no, label, pairs:[{korean, choices}]}]."""
-    rows = _docx_rows(path)
+    rows = [t for d, t in _docx_rows(path, depth=True) if d == 0]
     blocks, cur, kor = [], None, None
     for s in rows:
         if is_block_head(s):
@@ -234,7 +224,7 @@ def read_writing(path):
 
 def read_vocab(path):
     """`Step1 C2 빈칸어휘` → [{no, label, lines}] (고3 중요어휘용)."""
-    rows = _docx_rows(path)
+    rows = [t for d, t in _docx_rows(path, depth=True) if d == 0]
     blocks, cur = [], None
     for s in rows:
         if is_block_head(s):

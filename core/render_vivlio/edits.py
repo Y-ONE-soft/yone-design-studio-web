@@ -276,9 +276,29 @@ def apply_all(data, state, log=None):
     return data
 
 
+def data_path(cfg):
+    """이 책의 `data` 파일 자리.
+
+    거의 모든 계열은 책 폴더의 `data.json` 이다. 중등부만 자료가 automation
+    안(`work/<교재>/data<권>.json`)에 있다 — 거기를 안 물어보면 **작업대에서
+    글을 클릭하는 순간 500** 이 난다(`data.json` 이 없다). 계열이 알려 주면
+    그걸 쓰고, 아니면 늘 하던 자리를 쓴다.
+    """
+    try:
+        from core.render_vivlio import book as _b
+        fn = getattr(_b._series(cfg), "data_path", None)
+        if fn:
+            p = fn(cfg)
+            if p:
+                return p
+    except Exception:
+        pass
+    return cfg.path("data.json")
+
+
 def load_data(cfg, log=None):
     """`data.json` + 편집 이력. 모든 계열의 `data.load()` 가 이걸 쓴다."""
-    with open(cfg.path("data.json"), encoding="utf-8") as f:
+    with open(data_path(cfg), encoding="utf-8") as f:
         data = json.load(f)
     st = read(cfg)
     if st["head"]:
@@ -288,6 +308,6 @@ def load_data(cfg, log=None):
 
 def preview(cfg, state=None):
     """이력을 얹은 data 사본 — 편집기가 '지금 값'을 물을 때."""
-    with open(cfg.path("data.json"), encoding="utf-8") as f:
+    with open(data_path(cfg), encoding="utf-8") as f:
         raw = json.load(f)
     return apply_all(copy.deepcopy(raw), state or read(cfg)), raw
