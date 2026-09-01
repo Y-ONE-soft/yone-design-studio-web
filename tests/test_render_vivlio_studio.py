@@ -2286,3 +2286,43 @@ def test_find_by_style_reads_the_built_html_not_the_screen():
     body = src[i:i + 2200]
     assert "index.html" in body and "data-ref=" in body
     assert "500" in body, "너무 많으면 끊어야 한다"
+
+
+def test_place_rules_outweigh_the_series_theme():
+    """`[data-ref="…"]` 은 클래스와 무게가 같다(0,1,0) — 테마의 `.pbox p`
+    (0,1,1) 하나에도 진다. 그러면 "반영했습니다" 만 뜨고 지면은 그대로다.
+
+    ⚠ `!important` 로 밀면 그 책에서 무엇으로도 못 덮는다 → **같은 선택자를
+      세 번 겹쳐** 무게만 올린다(뜻은 그대로).
+    """
+    from core.render_vivlio import knobs as kn
+    got = kn._strong('[data-ref="a.0"]')
+    assert got.count('[data-ref="a.0"]') == 3
+    assert kn._strong('[data-ref="a.0"]::after').endswith("::after")
+    assert kn._strong(".pbox") == ".pbox", "다른 선택자는 건드리지 않는다"
+
+
+def test_char_panel_covers_underline_kinds_and_emphasis():
+    """밑줄은 한 종류가 아니다(물결·점선·겹줄·취소선), 굵기·색·내림도 따로."""
+    ui = _studio_src()
+    i = ui.index("var CHAR_PROPS")
+    body = ui[i:i + 3000]
+    for k in ("underline wavy", "line-through", "text-decoration-thickness",
+              "text-underline-offset", "text-emphasis"):
+        assert k in body, k
+
+
+def test_para_panel_covers_korean_line_breaking():
+    """한글 조판은 금칙·낱말 자르기·마지막 줄 정렬을 자주 손댄다."""
+    ui = _studio_src()
+    i = ui.index("var PARA_PROPS")
+    body = ui[i:i + 2600]
+    for k in ("line-break", "word-break", "text-align-last", "text-justify"):
+        assert k in body, k
+
+
+def test_new_length_props_are_unit_checked():
+    """`text-underline-offset: 3` 은 CSS 가 통째로 무시한다 — 미리 잡는다."""
+    from routes.book_studio import _needs_unit
+    assert _needs_unit("text-underline-offset", "3")
+    assert not _needs_unit("text-underline-offset", "0.16em")

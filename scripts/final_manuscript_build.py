@@ -262,6 +262,15 @@ def build(content, log=print, keep_all=False, scope_text=None, yos=None):
     writing.sort(key=lambda b: order_key(b["header"]))
 
     out = json.loads(json.dumps(content, ensure_ascii=False))
+    # 원고에 하단 문제가 없는 지문을 **이름으로** 알린다 — 숫자만 보면
+    # 무엇이 비었는지 알 수 없고, 조용히 넘어가면 책이 얇아진 줄만 안다.
+    if yos or scope_text:
+        no_bottom = [b["header"] for b in arrange
+                     if b["header"] not in {x["header"] for x in insert}]
+        if no_bottom:
+            log("  [하단 문제 없음] %d지문 — %s"
+                % (len(no_bottom), ", ".join(no_bottom[:10])
+                   + (" …" if len(no_bottom) > 10 else "")))
     out["_from_manuscript"] = True
     out["vol1"]["문장배열"] = arrange
     out["vol1"]["문장삽입"] = insert
