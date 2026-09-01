@@ -213,15 +213,19 @@ def clipped(pdf, build_dir):
     marks = [m for m in _marks(doc) if m[3] in ("pgbeg", "zend")]
     doc.close()
     got = {}
+    over = set()
     idx = -1
-    for _page, _col, _y, kind in marks:
+    for _page, _col, y, kind in marks:
         if kind == "pgbeg":
             idx += 1
             got[idx] = 0
         elif idx >= 0:
             got[idx] = got.get(idx, 0) + 1
-    return [i for i in sorted(want)
-            if want[i] and got.get(i, 0) < want[i]]
+            # 표식이 **찍히긴 했는데 판면 바닥 아래**면 그 칸도 넘친 것이다
+            # (조금 넘치면 표식이 종이 안에 남는다 — 사라진 것만 세면 놓친다).
+            if y > 286.5:
+                over.add(idx)
+    return sorted({i for i in want if want[i] and got.get(i, 0) < want[i]} | over)
 
 
 def report_clipped(cl, log):
