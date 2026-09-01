@@ -235,6 +235,8 @@ class Spec(object):
         self.essay_pos = _first(p, ["numbering.essay.pos"], "inline")
         self.group_template = _str(_first(p, ["numbering.group.template"]))
         self.group_mixed = _str(_first(p, ["numbering.group.mixed_template"]))
+        self.group_hang = _num(_first(p, ["numbering.group.hang_mm"]), 0.0)
+        self.group_bold = bool(dig(p, "numbering.group.bold"))
         self.group_intro_same_line = bool(
             _first(p, ["numbering.group.intro_on_same_line"], True))
 

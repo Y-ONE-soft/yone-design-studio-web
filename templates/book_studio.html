@@ -318,6 +318,9 @@
             <b>그 바로 뒤에</b> 들어갑니다. 칸은 그 자리에서 고칩니다.</div>
         </div>
       </details>
+      <details class="ide-pal"><summary>특수문자</summary>
+        <div class="ide-in" id="pal-glyph"></div>
+      </details>
       <details class="ide-pal" id="pal-img-box"><summary>그림</summary>
         <div class="ide-in">
           <div class="ide-hint" style="margin-bottom:8px">
@@ -430,6 +433,7 @@
   var curEl = null, styles = {}, styleNames = {}, curPage = 1, ready = false;
   var bookFonts = [];      // 이 책이 **임베드한** 서체 (PDF 에 실제로 들어간다)
   var bookPageW = 216;     // 도련 포함 판형 가로(mm) — 화면 px ↔ mm 환산에 쓴다
+  var bookPageH = 303;     // 도련 포함 판형 세로(mm) — 상자를 면에 맞출 때
 
   // ── 인쇄 색(CMYK) ───────────────────────────────────────
   // 내지는 종이에 찍힌다. 화면의 `#908400` 이 인쇄에서 몇 %인지 모르면
@@ -1100,6 +1104,7 @@
     drawTable();
     drawBox();
     drawSwatches();
+    drawGlyphs();
   }
 
   function drawOne(hostId, props) {
@@ -1791,6 +1796,72 @@
       setHist(d.history);
       rebuild('').then(function (ok) { if (ok) { msg('✓ 표'); drawTable(); } });
     });
+  }
+
+  // ── 특수문자 (인디자인의 글리프 패널) ───────────────────
+  //
+  // 교재 조판은 기호를 많이 쓴다(① ㉠ ⓐ → ―). 자판으로 못 치는 것이라
+  // 예전에는 원고를 고쳐 다시 뽑거나 클로드를 불러야 했다.
+  //
+  // ⚠ **글 편집기가 열려 있어야** 넣을 수 있다(넣을 자리가 있어야 하니까).
+  //   안 열려 있으면 그 말을 한다 — 조용히 아무 일도 안 하면 고장으로 보인다.
+  var GLYPHS = [
+    ['번호', '①②③④⑤⑥⑦⑧⑨⑩'],
+    ['괄호 번호', '⑴⑵⑶⑷⑸'],
+    ['한글 기호', '㉠㉡㉢㉣㉤㉥'],
+    ['알파벳', 'ⓐⓑⓒⓓⓔⒶⒷⒸ'],
+    ['화살표', '→←↑↓⇒⇔↔'],
+    ['문장 부호', '―–—·…‘’“”'],
+    ['묶음', '「」『』〈〉《》【】'],
+    ['검사', '○●◎△▲□■✓✗'],
+    ['그 밖', '※★☆♪†‡°℃%']
+  ];
+
+  function drawGlyphs() {
+    var host = $('pal-glyph'); if (!host || host.__done) return;
+    host.__done = true;
+    var hint = document.createElement('div');
+    hint.className = 'ide-hint'; hint.style.marginBottom = '6px';
+    hint.innerHTML = '<b>글자 도구</b>로 고칠 줄을 연 뒤 누르면 '
+      + '커서 자리에 들어갑니다.';
+    host.appendChild(hint);
+    GLYPHS.forEach(function (g) {
+      var lab = document.createElement('div');
+      lab.className = 'ide-lab';
+      lab.innerHTML = '<span>' + g[0] + '</span>';
+      host.appendChild(lab);
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;flex-wrap:wrap;gap:3px;margin-bottom:7px';
+      g[1].split('').forEach(function (ch) {
+        var b = document.createElement('button');
+        b.className = 'ide-b'; b.textContent = ch;
+        b.style.cssText = 'min-width:26px;padding:3px 5px;font-size:14px';
+        b.onclick = function () { putGlyph(ch); };
+        row.appendChild(b);
+      });
+      host.appendChild(row);
+    });
+  }
+
+  function putGlyph(ch) {
+    if (!editEl) {
+      msg('먼저 **글자 도구(T)** 로 고칠 줄을 여세요 — 넣을 자리가 있어야 합니다');
+      return;
+    }
+    editEl.focus();
+    var d = fdoc();
+    try {
+      // 커서 자리에 넣는다. 실행 취소도 편집기 안에서 그대로 된다.
+      d.execCommand('insertText', false, ch);
+    } catch (e) {
+      var sel = d.getSelection();
+      if (sel && sel.rangeCount) {
+        var r = sel.getRangeAt(0);
+        r.deleteContents(); r.insertNode(d.createTextNode(ch));
+        r.collapse(false);
+      }
+    }
+    msg(ch + ' 넣었습니다 — ⌘↵ 로 저장');
   }
 
   // ── 레이어 ──────────────────────────────────────────────
@@ -2705,6 +2776,7 @@
       // 화면 px ↔ mm 환산에 쓸 판형(도련 포함). 책마다 다르다.
       var pg = d.book && d.book.page;
       if (pg && pg.width) bookPageW = pg.width + 2 * (pg.bleed || 0);
+      if (pg && pg.height) bookPageH = pg.height + 2 * (pg.bleed || 0);
       loadGuides();               // 이 책에 놓아 둔 안내선(이 브라우저에만 있다)
       drawPalettes();
       if (!keepView) rebuild('');

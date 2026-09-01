@@ -242,6 +242,17 @@ def build_css(spec):
         if rule:
             css.append(rule)
     css.append(".stem { break-after: avoid; }")
+    # 묶음 머리 — 정본 한영1: 둘째 줄이 지시문 첫 글자(`[10~13] ` 뒤)에 맞춰
+    # 들여쓰기된다. 서답형 라벨과 반대 방향이다.
+    gh = float(s.group_hang or 0.0)
+    grule = ["break-after: avoid;"]
+    if gh:
+        grule.append(f"padding-left: {round(gh, 2)}mm;")
+        grule.append(f"text-indent: -{round(gh, 2)}mm;")
+    if s.group_bold:
+        grule.append("font-weight: 700;")
+    css.append(".group { " + " ".join(grule) + " }")
+    css.append(".group-intro { break-after: avoid; }")
     # 배점 표기는 줄에서 갈리면 안 된다 — `[3.4` / `점]` 으로 쪼개진다
     css.append(".score { white-space: nowrap; }")
     if s.qnum_size:
