@@ -642,6 +642,31 @@ def _beg():
     return i, ('<span class="zbeg"></span>', cls)
 
 
+# 한 묶음 안에 지문이 둘 이상 들어오는 원고가 있다(교과서 워크북의
+# `[Further Reading]`, 올림포스 기출의 이어붙은 지문 — 실측 25묶음). 고정 칸은
+# 넘쳐도 다음 면으로 안 잇고 **잘려 사라진다**. 그래서 칸에 앉히기 전에 묶음을
+# **지문 단위로** 쪼갠다.
+#
+# 가르는 기준은 형식이 아니라 구조다 — 유닛 **안에 지문 블록이 있으면** 새 지문.
+# 한 줄짜리 `basic`(문장 삽입의 주어진 문장)은 지문이 아니라서 안 쪼개진다
+# (전수 확인: 2유닛 1820/1821 · 3유닛 75/78 이 그대로 한 면).
+_BODY_ROLES = ("box_body", "arr_line")
+
+
+def passage_slots(g):
+    """묶음 → [(라벨, 유닛들)] — 지문 하나가 한 자리."""
+    units = g.get("units") or []
+    if not units:
+        return [(g.get("label"), [])]
+    out = [[units[0]]]
+    for u in units[1:]:
+        if any(b.get("role") in _BODY_ROLES for b in u):
+            out.append([u])
+        else:
+            out[-1].append(u)
+    return [(g.get("label"), us) for us in out]
+
+
 def fixed_section(st, idx):
     """고정 시트 스텝 하나 → 섹션."""
     n = st["step"]
@@ -651,24 +676,25 @@ def fixed_section(st, idx):
     pages = []
 
     if lay == "a1":
-        for k in range(0, len(groups), 2):
+        slots = [sl for g in groups for sl in passage_slots(g)]
+        for k in range(0, len(slots), 2):
             zs = []
-            for j, g in enumerate(groups[k:k + 2]):
-                lbl = (f'<span class="pnum">{esc(g["label"])}</span>'
-                       if g.get("label") else "")
-                body = "".join(blocks_html(u, n, st["key"]) for u in g["units"])
+            for j, (label, us) in enumerate(slots[k:k + 2]):
+                lbl = (f'<span class="pnum">{esc(label)}</span>' if label else "")
+                body = "".join(blocks_html(u, n, st["key"]) for u in us)
                 zs.append(zone(lbl + body, "top" if j == 0 else "bottom", "z-a1"))
             pages.append(page_block(zs))
     elif lay == "pair":
         for g in groups:
-            us = g["units"]
-            lbl = (f'<span class="pnum">{esc(g["label"])}</span>'
-                   if g.get("label") else "")
-            zs = [zone(lbl + blocks_html(us[0], n, st["key"]), "top")]
-            if len(us) > 1:
-                zs.append(zone("".join(blocks_html(u, n, st["key"]) for u in us[1:]),
-                               "bottom"))
-            pages.append(page_block(zs))
+            for label, us in passage_slots(g):
+                if not us:
+                    continue
+                lbl = (f'<span class="pnum">{esc(label)}</span>' if label else "")
+                zs = [zone(lbl + blocks_html(us[0], n, st["key"]), "top")]
+                if len(us) > 1:
+                    zs.append(zone("".join(blocks_html(u, n, st["key"])
+                                           for u in us[1:]), "bottom"))
+                pages.append(page_block(zs))
     else:                                            # sheet
         # ⚠ 여기는 **흘림**이다. 절대배치 칸에 가두면 넘친 내용이 잘려 사라진다
         #   (실물도 안 자른다 — 어법 선택 '본문' 20문장은 두 면에 걸친다: 실측
