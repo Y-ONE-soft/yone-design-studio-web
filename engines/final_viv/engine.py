@@ -87,7 +87,46 @@ class FinalVivEngine(FinalEngine):
     def template_name(self):
         return "typeset_final_viv.html"
 
-    # parse()/upload_spec 는 부모 그대로 — 같은 원고, 같은 content.json.
+    # ── 1단계: **워크북 없이** 원고·시트만으로 content 만들기 ──────────
+    def parse(self, uploaded_files, job_dir, log):
+        """되수확본을 만들지 않는다 — 시험범위로 원고를 직접 읽는다.
+
+        워크북 `.indd` 업로드가 없어도 책이 선다. 원고에 없는 것(옛 모의 회차의
+        하단 문제 등)은 그냥 비고, 빌더가 무엇이 비었는지 말한다.
+
+        범위를 못 읽거나 한 지문도 못 만들면 **부모의 되수확 경로로 돌아간다** —
+        새 길이 막혔다고 조판이 멈추면 안 된다.
+        """
+        import unicodedata
+        school = unicodedata.normalize(
+            "NFC", self._get_meta(job_dir, "school", ""))
+        grade = self._get_meta(job_dir, "grade", "고1")
+        period = self._get_meta(job_dir, "exam_period", "")
+        try:
+            content = self._scratch(school, grade, period, log)
+            if content and content["vol1"]["문장배열"]:
+                out = os.path.join(job_dir, "content.json")
+                json.dump(content, open(out, "w", encoding="utf-8"),
+                          ensure_ascii=False, indent=1)
+                log("[원고직독] 워크북 없이 %d지문으로 세웠습니다"
+                    % len(content["vol1"]["문장배열"]))
+                return out
+            log("[원고직독] 원고에서 지문을 못 만들어 되수확 경로로 갑니다")
+        except Exception as e:
+            log("[원고직독] 실패 — 되수확 경로로 갑니다: %s" % e)
+        return FinalEngine.parse(self, uploaded_files, job_dir, log)
+
+    def _scratch(self, school, grade, period, log):
+        from engines.final import scope_source as S
+        spath = os.path.join(BASE_DIR, "scripts")
+        if spath not in sys.path:
+            sys.path.insert(0, spath)
+        from final_manuscript_build import build as mbuild, scratch
+        g = int("".join(c for c in grade if c.isdigit()) or 0)
+        sc = S.from_sheet(school, period, grade=g, log=log)
+        if not sc or not sc["tokens"]:
+            return None
+        return mbuild(scratch(school, grade, period), log=log, yos=sc)
 
     # ── 2단계: 원고 직독 + Vivliostyle 조판 ────────────────────────────
     def render_vivlio(self, json_path, job_dir, log):
@@ -102,7 +141,8 @@ class FinalVivEngine(FinalEngine):
         grade = content.get("grade", "")
         period = content.get("exam_period", "")
 
-        content = self._read_manuscripts(content, log)
+        if not content.get("_from_manuscript"):
+            content = self._read_manuscripts(content, log)
 
         base = os.path.join(BOOK_ROOT, grade, period, school)
         src = os.path.join(base, "원고")

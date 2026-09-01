@@ -262,6 +262,7 @@ def build(content, log=print, keep_all=False, scope_text=None, yos=None):
     writing.sort(key=lambda b: order_key(b["header"]))
 
     out = json.loads(json.dumps(content, ensure_ascii=False))
+    out["_from_manuscript"] = True
     out["vol1"]["문장배열"] = arrange
     out["vol1"]["문장삽입"] = insert
     pairs, det = [], []

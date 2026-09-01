@@ -70,11 +70,43 @@ def find_manuscript(workbook_dir, kind):
         if ext not in (".docx", ".hwpx", ".hwp"):
             continue
         rank = {".docx": 0, ".hwpx": 1, ".hwp": 2}[ext]
-        # 괄호가 붙은 변형본(`…(객관식)`·`…(서술형)`)은 뒤로
-        rank += 5 if "(" in n else 0
+        # 괄호가 붙은 변형본(`…(객관식)`·`…(서술형)`)은 뒤로. 단 `(1)`·`(2)`
+        # 처럼 **쪽 나눔**인 것은 변형본이 아니라 같은 원고의 뒷장이다.
+        rank += 0 if RE_PART.search(n) else (5 if "(" in n else 0)
         if best is None or rank < best[0]:
             best = (rank, os.path.join(workbook_dir, name))
     return best[1] if best else None
+
+
+RE_PART = re.compile(r"\((\d{1,2})\)")
+
+
+def find_manuscripts(workbook_dir, kind):
+    """같은 종류의 원고가 **여러 장**일 때 전부 — `7. 영작배열(1)(2)`.
+
+    ⚠ 한 장만 읽으면 뒷장이 통째로 사라진다. 고3 Test 1 의 영작 원고가
+      `(1)`·`(2)` 로 나뉘어 있어 20~25번 문항이 다 빠졌다(실증).
+      변형본(`(객관식)`·`(서술형)`)은 쪽 나눔이 아니므로 끼워 넣지 않는다.
+    """
+    first = find_manuscript(workbook_dir, kind)
+    if not first:
+        return []
+    base = _nfc(os.path.basename(first))
+    m = RE_PART.search(base)
+    if not m:
+        return [first]
+    stem = base[:m.start()]
+    out = []
+    for name in sorted(os.listdir(workbook_dir)):
+        n = _nfc(name)
+        if not n.startswith(stem) or not RE_PART.search(n):
+            continue
+        if any(a in n for a in ANSWER_WORDS):
+            continue
+        if os.path.splitext(n)[1].lower() != os.path.splitext(base)[1].lower():
+            continue
+        out.append(os.path.join(workbook_dir, name))
+    return out or [first]
 
 
 def find_workbook_dir(base):
@@ -347,9 +379,20 @@ READERS = {"arrange": read_arrange, "writing": read_writing,
 
 
 def read(workbook_dir, kind):
-    """워크북 원고 폴더 + 종류 → 블록 목록(없으면 빈 목록)."""
+    """워크북 원고 폴더 + 종류 → 블록 목록(없으면 빈 목록).
+
+    원고가 여러 장으로 나뉜 계열이 있어 **전부 읽어 잇는다**(라벨로 중복 제거).
+    """
     d = find_workbook_dir(workbook_dir)
-    p = find_manuscript(d, kind)
-    if not p:
+    paths = find_manuscripts(d, kind)
+    if not paths:
         return [], None
-    return READERS[kind](p), p
+    out, seen = [], set()
+    for p in paths:
+        for b in READERS[kind](p):
+            k = _nfc(b.get("raw", ""))
+            if k and k in seen:
+                continue
+            seen.add(k)
+            out.append(b)
+    return out, paths[0]

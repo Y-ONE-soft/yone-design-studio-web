@@ -46,7 +46,12 @@ AT_KEYS = ("top", "right", "bottom", "left", "width", "height")
 # ⚠ 아무 CSS 나 받으면 안 된다(조판이 통째로 흔들린다). 여기 적은 것만 받는다.
 STYLE_KEYS = ("background", "border", "border-radius", "box-shadow", "opacity",
               "transform", "padding", "color", "text-align", "font-size",
-              "line-height", "z-index", "writing-mode")
+              "line-height", "z-index", "writing-mode",
+              # 획을 변마다 따로 (인디자인의 획 패널)
+              "border-top", "border-right", "border-bottom", "border-left",
+              "border-color", "border-width", "border-style",
+              # 흐리기 — 인디자인의 페더에 가까운 것
+              "filter", "mix-blend-mode")
 _OK = "0123456789.-mmcmptinemrex% "
 
 
@@ -84,11 +89,31 @@ def html(block, ref="", inl=None):
     return "".join(o)
 
 
+# 도형 — 인디자인의 사각형·타원·선 도구. 상자 하나에 모양만 다르게 준다.
+# ⚠ 새 개념을 만들지 않는다. 도형도 **상자**라 옮기기·크기·정렬·되돌리기가
+#   전부 그대로 통한다(따로 만들면 그 모든 것을 또 만들어야 한다).
+SHAPES = {
+    "rect": {"width": "40mm", "height": "20mm",
+             "style": {"background": "#e8eeff", "border": "0.4pt solid #333"}},
+    "ellipse": {"width": "30mm", "height": "30mm",
+                "style": {"background": "#e8eeff", "border": "0.4pt solid #333",
+                          "border-radius": "50%"}},
+    "line": {"width": "60mm", "height": "0mm",
+             "style": {"border-top": "0.6pt solid #333"}},
+}
+
+
 def new(kind="text"):
     b = {"t": "box", "at": {"top": "20mm", "left": "20mm", "width": "50mm"},
          "style": {"border": "0.4pt solid", "padding": "1.5mm"}}
     if kind == "image":
         b["img"] = ""
+    elif kind in SHAPES:
+        sp = SHAPES[kind]
+        b["at"] = {"top": "20mm", "left": "20mm", "width": sp["width"],
+                   "height": sp["height"]}
+        b["style"] = dict(sp["style"])
+        b["shape"] = kind           # 무엇으로 그렸는지 남긴다(패널이 읽는다)
     else:
         b["paras"] = [""]
     return b

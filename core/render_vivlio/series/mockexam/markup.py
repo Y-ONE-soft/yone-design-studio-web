@@ -1198,15 +1198,17 @@ def header_table(s, case=None):
         return ""
     nrow = max(r + sp - 1 for r, _c, sp, _cs, _t, _o in grid)
     at, taken = {}, set()
-    # 열 번호가 있는 셀을 먼저 앉히고, 없는 셀(col=0)은 그 행에서 왼쪽부터
-    # 빈 자리를 찾아 채운다 — 열 이름이 없는 학교(한영3·강동)의 표기를 위해서다.
+    # 열 번호가 있는 셀을 먼저 앉힌다
     for r, c, sp, cs, text, role in grid:
         if c:
             at.setdefault((r, c), (sp, cs, text, role))
             for k in range(1, sp):
                 taken.add((r + k, c))
-    for r, c, sp, cs, text, role in grid:
-        if c:
+    # 전폭 병합 셀이 없는 행부터 왼쪽에서 채워 **열 수를 확정**한다.
+    wide_rows = {r for r, c, _sp, cs, _t, _o in grid if not c and not cs}
+    rest = [g for g in grid if not g[1]]
+    for r, c, sp, cs, text, role in rest:
+        if r in wide_rows:
             continue
         col = 1
         while (r, col) in at or (r, col) in taken:
@@ -1216,6 +1218,26 @@ def header_table(s, case=None):
             taken.add((r + k, col))
     ncol = max([c + (cs - 1 if cs else 0) for (_r, c), (_sp, cs, _t, _o)
                 in at.items()] or [1])
+    # 전폭 병합이 있는 행은 **오른쪽 끝에서부터** 나머지를 채우고 전폭 셀이
+    # 남은 왼쪽을 차지한다 — 정본 상일1 `상일여자고등학교 …`(좌) +
+    # `문항`·`선택형`·범위(우) 배치가 그렇다.
+    for r in sorted(wide_rows):
+        cells = [g for g in rest if g[0] == r]
+        wide = [g for g in cells if not g[3]]
+        side = [g for g in cells if g[3]]
+        col = ncol
+        for _r, _c, sp, cs, text, role in reversed(side):
+            while (r, col) in at or (r, col) in taken:
+                col -= 1
+            at[(r, col)] = (sp, cs, text, role)
+            for k in range(1, sp):
+                taken.add((r + k, col))
+            col -= 1
+        for _r, _c, sp, _cs, text, role in wide:
+            span = max(col, 1)
+            at[(r, 1)] = (sp, span, text, role)
+            for j in range(1, span):
+                taken.add((r, 1 + j))
     taken = set()
     rows_html = []
     for r in range(1, nrow + 1):
@@ -1229,9 +1251,7 @@ def header_table(s, case=None):
                 continue
             sp, cs, text, role = cell
             if not cs:
-                # 전폭 병합 — 같은 행에 다른 셀이 있으면 그만큼 비워 준다
-                rest = sum(1 for (rr, cc) in at if rr == r and cc > c)
-                cs = max(ncol - c + 1 - rest, 1)
+                cs = ncol - c + 1
             for k in range(1, sp):
                 for j in range(cs):
                     taken.add((r + k, c + j))

@@ -501,8 +501,11 @@ def api_paraclass():
             return jsonify({"error": f"이상한 자리표: {ref}"}), 400
     names = []
     for n in str(p.get("cls") or "").replace(".", " ").split():
-        if not re.match(r"^ps-[0-9A-Za-z가-힣_-]{1,40}$", n):
-            return jsonify({"error": f"스타일 이름은 `ps-`로 시작합니다: {n}"}), 400
+        # 단락 스타일은 `ps-`, 개체(상자) 스타일은 `os-`.
+        # ⚠ 계열이 쓰는 클래스(`.q`·`.head`)와 섞이면 사람 것을 못 가린다.
+        if not re.match(r"^(ps|os)-[0-9A-Za-z가-힣_-]{1,40}$", n):
+            return jsonify({"error":
+                            f"스타일 이름은 `ps-`(단락)·`os-`(개체)로 시작합니다: {n}"}), 400
         names.append(n)
     cfg = bookmod.load(d)
     v = " ".join(names)
@@ -541,15 +544,16 @@ def api_parastyle():
             count[n] = count.get(n, 0) + 1
     if get:
         names = sorted({n for sel in (cfg.section("styles") or {})
-                        for n in [sel[1:]] if sel.startswith(".ps-")}
+                        for n in [sel[1:]]
+                        if sel.startswith(".ps-") or sel.startswith(".os-")}
                        | set(count))
         return jsonify({"styles": [{"name": n, "count": count.get(n, 0)}
                                    for n in names]})
 
     act = p.get("action")
     name = str(p.get("name") or "").strip().lstrip(".")
-    if not re.match(r"^ps-[0-9A-Za-z가-힣_-]{1,40}$", name):
-        return jsonify({"error": "스타일 이름은 `ps-`로 시작합니다"}), 400
+    if not re.match(r"^(ps|os)-[0-9A-Za-z가-힣_-]{1,40}$", name):
+        return jsonify({"error": "스타일 이름은 `ps-`·`os-`로 시작합니다"}), 400
     if act == "delete":
         # ① 걸린 자리에서 뗀다 ② 스타일 규칙을 없앤다 — 순서가 바뀌면
         #    잠깐 "없는 이름이 걸린" 상태가 생긴다.
@@ -563,8 +567,8 @@ def api_parastyle():
         return jsonify({"ok": True, "history": _hist(stt)})
     if act == "rename":
         new = str(p.get("to") or "").strip().lstrip(".")
-        if not re.match(r"^ps-[0-9A-Za-z가-힣_-]{1,40}$", new):
-            return jsonify({"error": "새 이름도 `ps-`로 시작합니다"}), 400
+        if not re.match(r"^(ps|os)-[0-9A-Za-z가-힣_-]{1,40}$", new):
+            return jsonify({"error": "새 이름도 `ps-`·`os-`로 시작합니다"}), 400
         props = (cfg.section("styles") or {}).get("." + name)
         if props:
             ed.push(cfg, {"op": "style", "sel": "." + new, "v": props,
@@ -913,7 +917,10 @@ def api_box():
         if base is None:
             return jsonify({"error": "여기에는 넣을 수 없습니다 — "
                                      "지문·선지·본문 **한 줄**을 고르고 다시 해 보세요"}), 409
-        b = bx.new(p.get("kind") or "text")
+        kind = p.get("kind") or "text"
+        if kind not in ("text", "image") and kind not in bx.SHAPES:
+            return jsonify({"error": f"모르는 상자 종류: {kind}"}), 400
+        b = bx.new(kind)
         # 그림상자 — **자산 폴더의 그 그림**만 받는다(경로를 받으면 안 된다).
         img = os.path.basename(str(p.get("img") or "").strip())
         if img:

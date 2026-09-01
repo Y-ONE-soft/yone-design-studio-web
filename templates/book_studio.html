@@ -1519,7 +1519,9 @@
 
     if (!inBox) {
       [['text', '', '글상자(좌표)'], ['image', '', '그림상자(좌표)'],
-       ['text', 'left', '글상자(왼쪽 감싸기)'], ['text', 'right', '글상자(오른쪽 감싸기)']
+       ['text', 'left', '글상자(왼쪽 감싸기)'], ['text', 'right', '글상자(오른쪽 감싸기)'],
+       // 도형도 **상자**다 — 옮기기·크기·정렬·되돌리기가 그대로 통한다
+       ['rect', '', '■ 사각형'], ['ellipse', '', '● 타원'], ['line', '', '─ 선']
       ].forEach(function (a) {
         var b = document.createElement('button');
         b.className = 'ide-b'; b.style.cssText = 'display:block;width:100%;margin-bottom:3px';
