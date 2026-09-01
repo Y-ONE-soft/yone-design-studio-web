@@ -16,6 +16,9 @@
 import html
 import re
 
+from core.render_vivlio import refs as _refs
+from core.render_vivlio import richtext as _rtx
+
 # ──────────────────────────────────────────────────────── 인라인 마크업
 
 _RE_SEL_NUM = re.compile(r"(?<![A-Za-z])\d+(\[[^\[\]]*\])")   # 1[a / b] · (1)[…]
@@ -903,6 +906,9 @@ def font_css():
 
 
 def document(data, title="워크북"):
+    # ⚠ 자리표는 **렌더 직전에 한 번**. 안 만들면 작업대에서 지면을 눌러도
+    #   조용히 아무 일이 안 난다(이 계열이 그랬다).
+    index_refs(data)
     _BIDX[0] = 0
     parts = ['<section class="sec blank"><div class="pg"></div></section>']
     rows = []
@@ -939,6 +945,10 @@ def write(cfg, data, build_dir, log=print):
     p = os.path.join(build_dir, "index.html")
     with open(p, "w", encoding="utf-8") as f:
         f.write(text)
+    try:
+        _refs.dump(build_dir)     # 작업대가 vrefN → 원본 자리를 되짚는 표
+    except Exception:
+        pass
     for k, v in rows:
         log(f"    {k:<14} {v}면" if isinstance(v, int) else f"    {k:<14} {v}")
     return p
