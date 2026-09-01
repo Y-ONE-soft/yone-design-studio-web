@@ -112,7 +112,7 @@ class Renderer(object):
         return (f'<span class="essay-no">{esc(tpl.replace("{n}", str(n)))}</span>',
                 False)
 
-    def ab_table(self, items, cols, stem=""):
+    def ab_table(self, items, cols, stem="", heads=None):
         """(A)(B)(C) 짝맞추기 선지. 정본 대부분이 **열 표**다.
 
         원고는 짝을 탭으로만 준다(`However\tStill\tAlthough`). 표로 앉히지
@@ -122,7 +122,7 @@ class Renderer(object):
         """
         s = self.s
         n = len(cols[0])
-        heads = _ab_heads(stem, n)
+        heads = heads or _ab_heads(stem, n)
         sep = _ab_sep(s)
         if s.ab_layout == "inline_dash" or s.choice_layout == "inline":
             glue = f" {esc(sep)} " if sep else " "
@@ -206,6 +206,11 @@ class Renderer(object):
         out = []
         is_essay = it.get("kind") == "서술형"
         score = (it.get("header") or {}).get("score")
+        # 짝맞추기 선지 여부를 **지문보다 먼저** 안다 — 원고가 선지 바로 앞에
+        # 머리줄 `(A) (B) (C)` 를 지문처럼 주기 때문에, 표를 만들 문항이면
+        # 그 줄을 지문에서 빼야 머리행이 두 번 찍히지 않는다.
+        ab_cols = _ab_columns((it.get("choices") or {}).get("items") or [])
+        ab_head = None
 
         # 발문 — 번호(또는 서답형 라벨) + 본문 + 배점
         q = strip_source(it.get("question") or "")
@@ -232,6 +237,11 @@ class Renderer(object):
             content = strip_source(blk.get("content") or "")
             if not content:
                 continue
+            if ab_cols and ab_head is None:
+                h = _ab_head_line(content, len(ab_cols[0]))
+                if h:
+                    ab_head = h        # 표 머리행으로 옮긴다 — 지문 아님
+                    continue
             label = blk.get("label")
             if label == "Sym":
                 arrow = s.summary.get("arrow") or content
@@ -249,7 +259,16 @@ class Renderer(object):
         given = it.get("given")
         if given and given.get("content"):
             lines = [l for l in given["content"].split("\n") if l.strip()]
-            out.append(self.box("given", s.given, s.given.get("marker"), lines))
+            # 원고가 짝맞추기 선지의 머리줄 `(A) (B) (C)` 를 보기 상자로 준다.
+            # 그건 보기가 아니라 표의 머리행이다 — 상자로 그리면 실물과 다르고
+            # 머리행이 두 번 찍힌다.
+            h = (_ab_head_line(lines[0], len(ab_cols[0]))
+                 if ab_cols and len(lines) == 1 else None)
+            if h:
+                ab_head = h
+            else:
+                out.append(self.box("given", s.given, s.given.get("marker"),
+                                    lines))
 
         # 조건
         if it.get("constraints"):
@@ -260,9 +279,8 @@ class Renderer(object):
         ch = it.get("choices")
         if ch and ch.get("items"):
             items = ch["items"]
-            pair = _ab_columns(items)
-            if pair:
-                out.append(self.ab_table(items, pair, q))
+            if ab_cols:
+                out.append(self.ab_table(items, ab_cols, q, ab_head))
                 return "\n".join(x for x in out if x)
             layout = s.choice_layout or "one_per_line"
             cells = []
@@ -288,22 +306,56 @@ def _ab_columns(items, min_cols=2):
     원고는 탭으로 주고, 탭이 없으면 세 칸 이상 공백으로 준다.
     Returns: 열 리스트(선지마다) 또는 None.
     """
+    if len(items) < 2:
+        return None
     rows = []
     for c in items:
         t = (c.get("content") or "").strip() if isinstance(c, dict) else str(c)
-        parts = [x.strip() for x in t.split("\t") if x.strip()]
-        if len(parts) < min_cols:
-            parts = [x.strip() for x in re.split(r"\s{3,}", t) if x.strip()]
-        if len(parts) < min_cols:
+        parts = _ab_split(t, min_cols)
+        if not parts:
             return None
         rows.append(parts)
     n = len(rows[0])
     if any(len(r) != n for r in rows):
         return None
-    # 한 칸이 문장만큼 길면 짝이 아니라 그냥 긴 선지가 탭으로 접힌 것이다
+    # 한 칸이 문장만큼 길면 짝이 아니라 그냥 긴 선지가 갈린 것이다
     if max(len(x) for r in rows for x in r) > 40:
         return None
+    # 순서 배열 선지 `(A)-(C)-(B)` 는 짝맞추기가 아니다 — 칸이 레이블뿐이다
+    if all(re.fullmatch(r"\(?[A-Ea-e]\)?", x) for r in rows for x in r):
+        return None
     return rows
+
+
+# 원고가 짝을 주는 방식은 학교마다 다르다 — 탭, 여러 칸 공백, 또는 구분자.
+_AB_SEPS = (r"\t", r"\s{3,}", r"\s+[-–—]\s+", r"\s*[…⋯]+\s*",
+            r"\s*\.{3,}\s*", r"\s+~\s+")
+
+
+def _ab_split(text, min_cols):
+    """선지 한 줄을 짝의 칸들로 가른다. 가장 많이 갈리는 방식을 고른다."""
+    best = None
+    for pat in _AB_SEPS:
+        parts = [x.strip() for x in re.split(pat, text) if x.strip()]
+        if len(parts) >= min_cols and (best is None or len(parts) > len(best)):
+            best = parts
+    return best
+
+
+def _ab_head_line(text, n):
+    """선지 표의 머리줄인지 — `(A) (B) (C)` 처럼 괄호 레이블만 있는 줄.
+
+    원고가 선지 바로 앞에 지문처럼 끼워 준다. 열 수가 선지 칸 수와 같을
+    때만 머리줄로 본다(우연히 본문에 나온 `(A)` 를 삼키지 않도록).
+    """
+    t = (text or "").strip()
+    if len(t) > 40:
+        return None
+    parts = [x for x in re.split(r"[\s\t]+", t) if x]
+    if len(parts) != n or not all(re.fullmatch(r"\(?[A-Ea-e]\)?", x)
+                                  for x in parts):
+        return None
+    return [x if x.startswith("(") else f"({x})" for x in parts]
 
 
 def _ab_heads(stem, n):
