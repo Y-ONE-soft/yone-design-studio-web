@@ -336,6 +336,54 @@ def _inherit_labels(steps, log=print):
             + (f" · 앞 {lead}묶음 형제 스텝에서" if lead > 0 else ""))
 
 
+
+# ── 세로형(사이클 순서) ────────────────────────────────────────────────
+# 세로 워크북은 스텝이 아니라 **문제 한 개**가 한 사이클을 차지한다:
+# 지문 하나가 P+0~P+9 열 면을 돌고 실전 문제까지 끝난 뒤 다음 지문이 시작한다.
+# 지면 짜임·머리말·색은 가로형과 **같다** — 바뀌는 것은 순서뿐이라 데이터에서
+# 다시 엮는다(engines/workbook_sero_v2/plan.py 의 _SLOT_STEPS 와 같은 차례).
+#
+# P+0 만 두 스텝이 한 면에 얹힌다(위=어휘 선택 2단계, 아래=1단계). 그 면의
+# 머리말에는 한글 제목이 없다(완성본 실측 — `A1` 만 찍힌다).
+CYCLE_PAIR = ("step1_a1_2", "step1_a1")
+CYCLE_ORDER = ["step1_a2", "step1_b1", "step1_b2", "step1_c1", "step1_c2",
+               "step2_a1", "step2_b1", "step2_c1", "step2_c2", "step3"]
+
+
+def to_cycles(steps, log=print):
+    """스텝 차례 → **사이클 차례**. 지문 하나가 스텝을 다 돌고 다음 지문으로.
+
+    지문 수가 스텝마다 다를 수 있다(하단 문제가 없는 지문 등). 사이클 수는
+    **지문이 가장 많은 스텝**에 맞추고, 없는 스텝은 그 사이클에서 건너뛴다 —
+    빈 면을 만들지 않기 위해서다.
+    """
+    by = {st["key"]: st for st in steps}
+    n = max((len(st["groups"]) for st in steps), default=0)
+    if not n:
+        return steps
+    out = []
+    for i in range(n):
+        top, bot = by.get(CYCLE_PAIR[0]), by.get(CYCLE_PAIR[1])
+        pair = [g for st in (top, bot)
+                if st and i < len(st["groups"]) for g in [st["groups"][i]]]
+        if pair:
+            meta = dict(by.get(CYCLE_PAIR[1]) or by[CYCLE_PAIR[0]])
+            meta["groups"] = pair
+            meta["title"] = ""          # 두 단계가 한 면 — 한글 제목 없음(실측)
+            meta["cycle"] = i + 1
+            out.append(meta)
+        for k in CYCLE_ORDER:
+            st = by.get(k)
+            if not st or i >= len(st["groups"]):
+                continue
+            one = dict(st)
+            one["groups"] = [st["groups"][i]]
+            one["cycle"] = i + 1
+            out.append(one)
+    log(f"  [세로] 사이클 {n}벌 · 면 묶음 {len(out)}개")
+    return out
+
+
 def build(cfg, log=print):
     """책 config 의 `manuscript.plan`(렌더 플랜 경로) → data.json."""
     src = cfg.resolve((cfg.section("manuscript") or {}).get("plan"))
@@ -354,6 +402,11 @@ def build(cfg, log=print):
     if sel:
         data["steps"] = apply_select(data["steps"], sel, log)
         data["select"] = sel
+
+    # 세로형 — 스텝 차례를 **사이클 차례**로 다시 엮는다(순서만 바뀐다)
+    if (cfg.section("options") or {}).get("order") == "cycle":
+        data["steps"] = to_cycles(data["steps"], log)
+        data["order"] = "cycle"
 
     data["stats"] = {
         "steps": len(data["steps"]),
