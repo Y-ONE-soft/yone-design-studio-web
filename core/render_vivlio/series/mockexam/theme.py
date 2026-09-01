@@ -413,6 +413,17 @@ def build_css(spec):
     css.append(".aux-box { border: 0.24pt solid #000; padding: 1.2mm; "
                "margin: 0 0 2mm; break-inside: avoid; }")
     css.append(".aux-line { margin: 0; }")
+    # 마지막 쪽 확인 사항 — 되풀이 줄은 `※ ` 뒤로 내어쓴다(정본 실측)
+    nt = P_dig(s.raw, "running.notice_tail") or {}
+    if nt.get("on", True) and (nt.get("text") or nt.get("lines")):
+        bw = ((nt.get("border") or {}).get("width_pt")
+              if isinstance(nt.get("border"), dict) else None) or 0.4
+        css.append(f".tail-box {{ border: {bw}pt solid #000; padding: 1.4mm; "
+                   "margin: 3pt 0 0; break-inside: avoid; }")
+        css.append(".tail-line { padding-left: 4.2mm; text-indent: -4.2mm; "
+                   f"font-weight: {700 if nt.get('bold') else 400}; }}"
+                   .replace("}}", "}"))
+        css.append(".tail-plain { margin: 3pt 0 0; }")
     css.append(".exam-head .eh { display: block; }")
     css.append(".exam-head .eh-center { text-align: center; }")
     css.append(".exam-head .eh-right { text-align: right; }")

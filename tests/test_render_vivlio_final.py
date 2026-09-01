@@ -176,26 +176,35 @@ def test_grammar_keeps_brackets_bold():
 
 
 def test_fit_is_leading_then_two_slots_never_a_smaller_font():
-    """활자 크기는 책 전체에서 하나다 — 넘치면 행간, 더 넘치면 두 칸."""
+    """사다리 = ①행간 조임 ②두 칸 ③흘림. **활자 크기는 손대지 않는다.**
+
+    경계는 '몇 줄 넘쳤나'가 아니라 **행간 하한**이다 — 완성본도 그렇게 한다
+    (광문3 17강 05 는 26줄을 8.3% 조여 한 칸에 앉혔다). 줄 수로 끊으면
+    조이면 들어갈 지문이 두 칸으로 가 아래 칸이 빈다.
+    """
+    m = dict(R.DEFAULT_METRICS)
+    cap = m["slot"] - 1.0
+    line = R.LINE_MM["arrange"]
+
     assert 'class="blk tall"' in R._open_blk({"span": 2})
     assert '--lead:0.9600' in R._open_blk({"lead": 0.96})
     assert "font-size" not in R._open_blk({"lead": 0.96})
 
-    from core.render_vivlio.series.final import FinalSeries as F
-    m = R.DEFAULT_METRICS
-    cap = m["slot"] - 0.5
-    line = R.LINE_MM["arrange"]
-    # 한 줄 넘침 → 행간
-    assert "lead" in F._one_fit("arrange", cap + line, cap, m)
-    # 세 줄 넘침 → 두 칸
-    assert F._one_fit("arrange", cap + 3 * line, cap, m) == {"span": 2}
-    # 어휘(면당 한 지문)는 두 칸이 없다 → 흘림
+    # 하한 안이면 몇 줄이 넘치든 행간으로 앉힌다
+    got = F._one_fit("arrange", cap + 3 * line, cap, m)
+    assert "lead" in got and got["lead"] >= m["min_lead"]
+
+    # 하한을 넘으면 두 칸(사분면) — 활자를 줄이지 않는다
+    assert F._one_fit("arrange", cap * 1.4, cap, m) == {"span": 2}
+
+    # 어휘는 면당 한 지문이라 두 칸이 없다 → 하한을 넘으면 흘린다
     vcap = m["vocab_avail"] - m["vocab_safety"]
-    assert F._one_fit("vocab", vcap + 3 * R.LINE_MM["vocab"], vcap,
-                      m) == {"flow": True}
+    assert F._one_fit("vocab", vcap * 1.5, vcap, m) == {"flow": True}
 
+    # 어법·영작도 두 칸이 없다(완성본은 전폭 한 단을 쓰지 않는다)
+    gcap = m["body_h"] - 1.0
+    assert F._one_fit("grammar", gcap * 1.5, gcap, m) == {"flow": True}
 
-# ── 사분면 계약 ────────────────────────────────────────────────────────
 def test_expected_pages_accounts_for_two_slot_blocks():
     sec = {"kind": "arrange", "blocks": [{}] * 6}
     assert V.expected_pages(sec, {}) == [(0, 0)] * 4 + [(1, 1)] * 2

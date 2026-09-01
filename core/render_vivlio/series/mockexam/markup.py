@@ -1034,6 +1034,7 @@ def build_html(doc, spec, case=None, css_href="theme.css", scores=None,
     if s.ending_lines:
         ending = "".join(f'<p class="ending">{esc(l)}</p>' for l in s.ending_lines)
     ending += score_table(s, scores)
+    ending += notice_tail(s)
     title = esc(f"{s.school} {s.grade} {s.subject_title}")
     doc_html = f"""<!DOCTYPE html>
 <html lang="ko">
@@ -1119,6 +1120,25 @@ _AUX_KEYS = ("type_table", "qtype_box", "count_table", "notice_box",
              "score_box", "notice_mid")
 _RE_CNT = re.compile(r"[(（]?\s*(\d+)\s*[)）]?\s*문항")
 _RE_PNT = re.compile(r"[(（]?\s*(\d+(?:\.\d+)?)\s*[)）]?\s*점")
+
+
+def notice_tail(s):
+    """마지막 쪽 확인 사항 상자. 상일1·상일2·성덕2 정본의 고정 요소인데
+    프로파일에 적어 두고도 렌더러가 읽지 않아 통째로 빠져 있었다."""
+    nt = P.dig(s.raw, "running.notice_tail")
+    if not isinstance(nt, dict) or not nt.get("on", True):
+        return ""
+    lines = nt.get("lines")
+    if not isinstance(lines, list) or not lines:
+        t = nt.get("text")
+        lines = [t] if isinstance(t, str) and t.strip() else []
+    lines = [str(l) for l in lines if str(l).strip()]
+    if not lines:
+        return ""
+    boxed = str(nt.get("render") or "boxed").startswith("box")
+    body = "".join(f'<p class="tail-line">{esc(l)}</p>' for l in lines)
+    cls = "tail-box" if boxed else "tail-plain"
+    return f'<div class="{cls}">{body}</div>'
 
 
 def masthead(s, case=None):
