@@ -527,6 +527,25 @@ class PocketbookSeries(Series):
         log("■ 코퍼스에서 %d지문 선택" % len(out))
         return out
 
+    # ── 작업대가 읽을 자료 ──
+    STUDIO_DATA = "_studio_data.json"
+
+    def data_path(self, cfg):
+        """작업대가 글을 읽고 고칠 **자료 파일**.
+
+        이 계열은 원고(코퍼스)에서 바로 지면을 만들어 책 폴더에 `data.json` 이
+        없었다 — 그래서 작업대에서 글을 클릭하면 "원고에서 바로 조판해 글을
+        여기서 못 고칩니다" 였다.
+
+        조판할 때 **자리표가 가리키는 그 목록**(`prepare()` 를 지난 것)을
+        `build/_studio_data.json` 으로 남긴다. 자리표(`passages.3.…`)와 자리가
+        정확히 같으므로 그대로 고칠 수 있다.
+
+        ⚠ 이 파일은 **편집을 얹기 전** 것이다. 얹은 뒤를 남기면 다음 조판에서
+          또 얹혀 두 번 먹는다(넣기·지우기는 특히 티가 크다).
+        """
+        return os.path.join(cfg.build_dir, self.STUDIO_DATA)
+
     # ── ② 테마 ──
     def gen_theme(self, cfg, log):
         css = ptheme.build_css(cfg.section("palette"),
@@ -558,6 +577,18 @@ class PocketbookSeries(Series):
             illust_dirs=cfg.resolve(opt.get("illust_dirs") or []),
             category=opt.get("category", ""),
             grade=opt.get("grade") or _grade_of(opt.get("school", "")))
+        # 작업대가 볼 자료 = **자리표가 가리키는 그 목록**. 편집을 얹기 전에
+        # 남기고, 얹은 것으로 조판한다.
+        from core.render_vivlio import edits as _ed
+        with open(self.data_path(cfg), "w", encoding="utf-8") as f:
+            json.dump({"passages": rows}, f, ensure_ascii=False)
+        _st = _ed.read(cfg)
+        if _st["head"]:
+            # ⚠ 같은 목록 객체를 그대로 고친다(사본을 만들면 조판이 옛 글을 본다)
+            _ed.apply_all({"passages": rows}, _st, log)
+        from core.render_vivlio import refs as _refs2
+        _refs2.set_classes(_ed.classes(_st))     # 단락 스타일도 이 계열에서
+
         M = dict(ptheme.METRICS)
         M.update(cfg.section("metrics") or {})
 

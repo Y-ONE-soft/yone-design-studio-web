@@ -204,6 +204,52 @@ def read_arrange(path):
             for b in read_blocks(path)]
 
 
+RE_KO = re.compile(r"[가-힣]")
+
+
+def _hwp_choices(docx_path):
+    """같은 폴더의 `…(서술형).hwp` 에서 **보기 낱말**을 가져온다.
+
+    고3 수능특강은 `7. 영작배열.docx` 의 보기 칸이 `()` 로 **비어 있다**.
+    진짜 보기는 옆에 놓인 hwp 에 있다 — 없으면 학생이 배열할 낱말이 없는
+    책이 나간다(실제로 그렇게 조판됐다).
+
+    돌려주는 것: {한글 문장(정규화): 보기 글}
+    """
+    d = os.path.dirname(docx_path)
+    try:
+        names = [f for f in os.listdir(d)
+                 if _nfc(f).endswith(".hwp") and "서술형" in _nfc(f)]
+    except OSError:
+        return {}
+    if not names:
+        return {}
+    try:
+        from core.extract.extractors import _hwp_extract_paragraphs
+        paras = _hwp_extract_paragraphs(os.path.join(d, names[0]))
+    except Exception:
+        return {}
+    out, kor = {}, None
+    for x in paras:
+        t = (x.get("text") if isinstance(x, dict) else str(x) or "").strip()
+        if not t or t.startswith("["):
+            kor = None
+            continue
+        if RE_KO.search(t):
+            kor = t
+        elif kor is not None and "(" in t:      # 한글 바로 뒤의 보기만
+            out.setdefault(_kokey(kor), t)
+            kor = None
+        else:
+            kor = None                          # 정답 문장 — 짝이 없다
+    return out
+
+
+def _kokey(s):
+    """따옴표·공백 표기가 원고마다 달라 비교용으로 지운다."""
+    return re.sub(r"[\s'\"\u2018\u2019\u201c\u201d]", "", _nfc(s or ""))
+
+
 def read_writing(path):
     """`Step2 C2 영작배열` → [{no, label, pairs:[{korean, choices}]}]."""
     rows = [t for d, t in _docx_rows(path, depth=True) if d == 0]
@@ -224,6 +270,16 @@ def read_writing(path):
                     kor = None
             else:
                 kor = s
+    # 보기 칸이 비어 있으면(고3) 옆의 hwp 에서 채운다
+    if any(len(p["choices"].strip()) <= 2
+           for b in blocks for p in b["pairs"]):
+        bank = _hwp_choices(path)
+        for b in blocks:
+            for pr in b["pairs"]:
+                if len(pr["choices"].strip()) <= 2:
+                    got = bank.get(_kokey(pr["korean"]))
+                    if got:
+                        pr["choices"] = got
     return blocks
 
 
