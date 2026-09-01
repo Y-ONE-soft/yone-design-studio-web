@@ -49,8 +49,39 @@ def measure(html_path, out_pdf, keys, top, bottom, pad=0.0, log=None,
     `final=False` — 이건 산출물이 아니라 계측용 내부 조판이다(미리보기가
     조판을 건너뛸 때 여기서 멈추면 안 된다).
     """
+    _mute_page_effects(html_path)
     cli.run_build(html_path, out_pdf, log=log, timeout=timeout, final=False)
     return heights_from_pdf(out_pdf, keys, top, bottom, pad)
+
+
+_MUTE = ('<style>/* 측정 중에는 면을 만드는 효과를 끈다 */'
+         '[data-ref]::before,[data-ref]::after{'
+         'height:auto!important;min-height:0!important;'
+         'break-before:auto!important;break-after:auto!important;'
+         'page-break-before:auto!important;page-break-after:auto!important}'
+         '</style>')
+
+
+def _mute_page_effects(html_path):
+    """측정용 HTML 에서 **빈 면**을 잠시 끈다.
+
+    작업대의 '빈 면 넣기' 는 그 자리 앞에 한 면 높이(`100vh`)의 빈 칸을
+    세운다. 그런데 측정 조판은 **한 면에 한 항목**을 놓고 면을 세어 높이를
+    되찾는다 — 빈 면이 하나 끼면 항목 수와 면 수가 어긋나 통째로 멎는다
+    (실측: `항목 130 vs 측정 면 131`).
+
+    ⚠ 꾸밈용 `::before` 는 살린다(내용은 그대로 두고 **면을 만드는 성질만**
+      끈다). 측정값이 달라지면 안 되기 때문이다.
+    """
+    try:
+        with open(html_path, encoding="utf-8") as f:
+            t = f.read()
+    except OSError:
+        return
+    if _MUTE in t or "</head>" not in t:
+        return
+    with open(html_path, "w", encoding="utf-8") as f:
+        f.write(t.replace("</head>", _MUTE + "</head>", 1))
 
 
 def save(heights, path, log=None, label="높이"):

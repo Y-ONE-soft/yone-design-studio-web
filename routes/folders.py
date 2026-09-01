@@ -257,6 +257,23 @@ def api_mockexam_schools():
     return jsonify(schools)
 
 
+# ── 포켓북(Vivliostyle) — 학기·학교 목록 ────────────────────────────────────
+#   목록을 하드코딩하지 않는다. **분석본 IDML 이 나와 있는 것**만 보여 준다 —
+#   그래야 고를 수 있는 것과 실제로 조판되는 것이 어긋나지 않는다.
+
+@bp.route("/api/pocketbook-viv/terms")
+def api_pbviv_terms():
+    from engines.pocketbook_viv.engine import terms
+    return jsonify(terms())
+
+
+@bp.route("/api/pocketbook-viv/schools")
+def api_pbviv_schools():
+    from flask import request
+    from engines.pocketbook_viv.engine import schools_for
+    return jsonify(schools_for(request.args.get("term", "")))
+
+
 # ── 분석본 결합 v2 — 교과서/EBS 소스 탐색 API (W28-확장) ─────────────────────
 
 @bp.route("/api/analysis-merge/tb-subjects")

@@ -5,6 +5,7 @@ from engines.cover.engine import CoverEngine
 from engines.cover_pocketbook.engine import CoverPocketbookEngine
 from engines.final_cover.engine import FinalCoverEngine
 from engines.pocketbook.engine import PocketbookEngine
+from engines.pocketbook_viv.engine import PocketbookVivEngine
 from engines.final.engine import FinalEngine
 from engines.final_viv.engine import FinalVivEngine
 from engines.workbook.engine import WorkbookEngine
@@ -84,6 +85,7 @@ _ENGINE_LIST = [
     PassageRemoveEngine(),
     ConvertToVerticalEngine(),
     WorkbookSelectEngine(),
+    PocketbookVivEngine(),
     VivlioBookEngine(),
     MiddleBookEngine(),
 ]

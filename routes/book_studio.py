@@ -414,12 +414,13 @@ def api_blankpage():
     sel = '[data-ref="%s"]::before' % ref
     off = str(p.get("off") or "").lower() in ("1", "true", "on")
     st = ed.push(cfg, {"op": "style", "sel": sel,
+                       # ⚠ `break-before/after: page` 를 같이 주면 **두 면**이
+                       #   생긴다(그 자리가 이미 면 머리면 앞면이 통째로 빈다).
+                       #   한 면 높이의 빈 칸 하나면 조판이 알아서 면을 넘긴다.
                        "v": {} if off else {
                            "content": '""',
                            "display": "block",
-                           "break-before": "page",
-                           "break-after": "page",
-                           "height": "1mm"},
+                           "height": "100vh"},
                        "note": "빈 면 " + ("지우기" if off else "넣기")})
     return jsonify({"ok": True, "sel": sel, "history": _hist(st)})
 
