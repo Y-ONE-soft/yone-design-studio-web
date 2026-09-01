@@ -1085,7 +1085,7 @@ def repeating_head(s, case=None):
                                    case, cls="run-line")
     # ② 표 전체가 매 쪽 반복인 학교(한영1·한영2)
     if rep.startswith("every"):
-        return header_table(s, case, cls="head-table run-table")
+        return header_table(s, case, table_cls="head-table run-table")
     return ""
 
 
@@ -1291,7 +1291,7 @@ def _live_head_value(text, case, label=""):
 _RE_PAGENO = re.compile(r"\d+\s*/\s*\(?\s*\d+\s*\)?")
 
 
-def header_table(s, case=None, cls="head-table"):
+def header_table(s, case=None, table_cls="head-table"):
     """머리표가 **표**인 학교(16곳 중 14곳). 셀 방언을 정규화해 그린다."""
     hdr = P.dig(s.raw, "running.header") or {}
     grid = _header_cells_source(hdr)
@@ -1392,8 +1392,8 @@ def header_table(s, case=None, cls="head-table"):
         rows_html.append("<tr>" + "".join(tds) + "</tr>")
     # `column-span: all` 이 걸린 래퍼로 감싼다 — 감싸지 않으면 본문 단이
     # 머리표 위에서 시작해 글자가 겹친다.
-    if cls != "head-table":       # 러닝 머리 — 흐름 래퍼를 씌우지 않는다
-        return f'<table class="{cls}">' + "".join(rows_html) + "</table>"
+    if table_cls != "head-table":   # 러닝 머리 — 흐름 래퍼를 씌우지 않는다
+        return f'<table class="{table_cls}">' + "".join(rows_html) + "</table>"
     return ('<header class="exam-head"><table class="head-table">'
             + "".join(rows_html) + "</table></header>")
 

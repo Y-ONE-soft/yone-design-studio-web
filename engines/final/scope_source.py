@@ -64,6 +64,23 @@ def _uniq(tokens):
     return out
 
 
+# 책의 차례 — 교과서 → 강 → 회차 → 모의. 범위 글의 **적힌 순서**를 그대로
+# 따르면 안 된다: `17, 18, 21~30강` 은 범위가 먼저 풀려 21~30 이 앞에 오고,
+# 그러면 어법·어휘 섹션만 21강부터 시작해 문장배열과 어긋난다(실증: 광문3).
+_ORDER = {"lesson": 0, "olpo": 1, "rp": 1, "teuk": 1, "bare": 1,
+          "test": 2, "mock": 3}
+
+
+def order_key(t):
+    if t[0] == "mock":
+        return (3, t[1], t[2])
+    return (_ORDER.get(t[0], 9), t[1] if len(t) > 1 else 0, 0)
+
+
+def _ordered(tokens):
+    return sorted(_uniq(tokens), key=order_key)
+
+
 # ── 1. Y.OS(정본) ───────────────────────────────────────────────────────
 #
 # ⚠ 아직 붙이지 않았다. Y.OS 가 돌려주는 칸 이름을 확인하고 `_yos_tokens()`
@@ -218,7 +235,7 @@ def _scan(text):
     for t, nums in excl.items():
         if nums:
             meta.setdefault(t, {})["exclude"] = sorted(nums)
-    return _uniq(out), meta
+    return _ordered(out), meta
 
 
 def scope_text_tokens(text):

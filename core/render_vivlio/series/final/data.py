@@ -202,8 +202,16 @@ def _writing(pairs, detail, warn):
 
 # ------------------------------------------------------------------ 진입
 def _section(kind, no, blocks):
-    return {"kind": kind, "no": no, "title": SEC_TITLES[kind],
-            "toc": TOC_TITLES[kind], "blocks": blocks}
+    """섹션 하나. 제목은 **그 권에 실린 것**을 따른다.
+
+    ⚠ 고3은 요약문이 없다 — 완성본 제목도 `중요 어휘` 뿐이다. 없는 것을
+      제목에 남겨 두면 학생이 빠진 줄 안다(실측: 광문3 56면 전부).
+    """
+    title, toc = SEC_TITLES[kind], TOC_TITLES[kind]
+    if kind == "vocab" and blocks and not any(b.get("summary") for b in blocks):
+        title, toc = "중요 어휘", "중요어휘"
+    return {"kind": kind, "no": no, "title": title,
+            "toc": toc, "blocks": blocks}
 
 
 def from_content(content, warn=lambda m: None):

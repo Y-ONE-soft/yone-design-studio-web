@@ -213,6 +213,13 @@ def build_css(spec):
            "p { margin: 0; }", ""]
 
     # ── 지면 ──
+    # 머리표가 **매 쪽 반복**이면 그 표는 상단 여백 안에 들어간다.
+    # 여백이 표보다 얕으면 표가 지면 위로 넘친다(한영2 실측 y −8pt).
+    _hdr = P_dig(s.raw, "running.header") or {}
+    if str(_hdr.get("repeat") or "").startswith("every"):
+        _rect = _hdr.get("rect_mm") or []
+        if len(_rect) == 4:
+            top = max(top, mm(float(_rect[3]) + 1.5))
     css.append("@page {")
     css.append(f"  size: {mm(s.page_w)}mm {mm(s.page_h)}mm;")
     css.append(f"  margin: {top}mm {right}mm {bottom}mm {left}mm;")
