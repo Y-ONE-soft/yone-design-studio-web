@@ -129,3 +129,36 @@ def test_scope_is_the_union_of_all_sections():
     got = scope_labels(content)
     assert {"리딩파워 12강 01", "리딩파워 14강 01",
             "리딩파워 14강 02", "250320"} <= got
+
+
+def _nested_docx(path):
+    """상단 배열 카드 안에 하단 문제 표를 품은 원고 한 장을 만든다."""
+    from docx import Document
+    d = Document()
+    t = d.add_table(rows=3, cols=1)
+    t.cell(0, 0).text = "1. L4-본문1(p.94)"
+    t.cell(1, 0).text = "Rain fell all night on the roof of the old house."
+    inner = t.cell(2, 0).add_table(rows=2, cols=1)
+    inner.cell(0, 0).text = "① This trail is a favorite among tourists."
+    given = inner.cell(1, 0).add_table(rows=1, cols=1)
+    given.cell(0, 0).text = "The trail begins at the foot of the hill."
+    d.save(str(path))
+
+
+def test_arrange_ignores_the_nested_bottom_problem(tmp_path):
+    """중첩 표까지 상단 카드에 붙이면 지문이 두 배로 길어져 전부 칸을 넘친다."""
+    p = tmp_path / "Step1 C1 문장배열.docx"
+    _nested_docx(p)
+    (blk,) = M.read_arrange(str(p))
+    assert blk["raw"] == "L4-본문1(p.94)"
+    assert len(blk["items"]) == 1
+    assert "trail" not in blk["items"][0]
+
+
+def test_insert_reads_the_nested_bottom_problem(tmp_path):
+    p = tmp_path / "Step1 C1 문장배열.docx"
+    _nested_docx(p)
+    (blk,) = M.read_insert(str(p))
+    assert blk["raw"] == "L4-본문1(p.94)"
+    assert blk["given"].startswith("The trail begins")
+    assert blk["prompt"] == M.PROMPT_INSERT
