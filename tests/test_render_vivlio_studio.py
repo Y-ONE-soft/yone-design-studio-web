@@ -2026,3 +2026,14 @@ def test_no_button_is_bound_twice():
     n = collections.Counter(_re.findall(r"\$\('([\w-]+)'\)\.addEventListener", ui))
     dup = {k: v for k, v in n.items() if v > 1}
     assert not dup, f"두 번 걸린 단추: {dup}"
+
+
+def test_export_says_which_file_it_overwrites():
+    """PDF 단추는 책 폴더의 그 PDF 를 **그대로 갈아 끼운다**.
+
+    납품한 책이라면 그것이 바뀐다 — 무엇을 덮어쓰는지 이름을 말해야 한다.
+    """
+    ui = _studio_src()
+    i = ui.index("function exportPdf")
+    body = ui[i:i + 900]
+    assert "덮어쓸 파일" in body and "thumbInfo.pdf" in body

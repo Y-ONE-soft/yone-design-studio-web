@@ -3281,7 +3281,12 @@
   // ⚠ 전권 조판이라 수십 초가 든다. 무엇을 하고 있는지 계속 적는다.
   function exportPdf(kind) {
     var label = kind === 'press' ? '인쇄 원고(CMYK)' : 'PDF';
-    if (!confirm(label + ' 를 만듭니다. 전권을 조판하므로 수십 초 걸립니다.')) return;
+    // ⚠ **덮어쓰는 파일 이름을 말해 준다.** 이 단추는 책 폴더의 그 PDF 를
+    //   그대로 갈아 끼운다 — 납품한 책이라면 그것이 바뀐다.
+    var over = (thumbInfo && thumbInfo.pdf)
+      ? ('\n\n덮어쓸 파일: ' + thumbInfo.pdf) : '';
+    if (!confirm(label + ' 를 만듭니다. 전권을 조판하므로 수십 초 걸립니다.'
+                 + over)) return;
     $('ide-export').disabled = $('ide-press').disabled = true;
     msg(label + ' 만드는 중… (창을 닫지 마세요)');
     api('/api/book-studio/export', { b: key, kind: kind }).then(function (d) {
