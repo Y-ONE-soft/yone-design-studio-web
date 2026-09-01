@@ -198,6 +198,38 @@ def table_css():
     return _t.CSS
 
 
+def page_rules_text(cfg):
+    """`config.page_rules` → `@page` 규칙.
+
+    ## 인디자인의 마스터 페이지에 해당한다
+
+    머리말·꼬리말·여백처럼 **면에 걸리는 것**은 단락 스타일로는 못 건드린다.
+    CSS 조판에서는 `@page` 가 그 자리다 — 왼쪽 면·오른쪽 면·첫 면을 갈라
+    여백과 머리·꼬리를 정한다.
+
+        "page_rules": {
+          ":left":  {"margin-left": "23mm", "margin-right": "26mm"},
+          ":right": {"margin-left": "26mm", "margin-right": "23mm"},
+          "":       {"margin-top": "31.5mm"}
+        }
+
+    ⚠ 계열 테마의 `@page` **뒤에** 나가므로 여기 적은 것이 이긴다. 그래서
+      한 줄만 적어도 그 값만 바뀐다(테마를 통째로 베낄 필요가 없다).
+    """
+    rules = cfg.section("page_rules") or {}
+    if not rules:
+        return ""
+    out = ["\n/* 마스터 페이지(@page) — 작업대의 문서 설정이 쓴다. */"]
+    for sel, props in rules.items():
+        if not isinstance(props, dict) or not props:
+            continue
+        body = "\n".join("  %s: %s;" % (k, v) for k, v in props.items()
+                          if str(v).strip())
+        if body:
+            out.append("@page %s {\n%s\n}" % (str(sel).strip(), body))
+    return "\n".join(out) + "\n" if len(out) > 1 else ""
+
+
 def styles_text(cfg):
     """`config.styles` → CSS 규칙. **단락 스타일 패널**이 여기에 쓴다.
 
@@ -232,6 +264,7 @@ def write(cfg, series, build_dir, name="knobs.css"):
     from core.render_vivlio import stage
     return stage.write_css(build_dir, name,
                            css_text(cfg, series) + styles_text(cfg)
+                           + page_rules_text(cfg)
                            + (table_css() if _has(cfg, "table") else "")
                            + (box_css() if _has(cfg, "box") else ""))
 

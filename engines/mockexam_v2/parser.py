@@ -85,6 +85,41 @@ _RE_SUBITEM = re.compile(r'^\s*\(\d+\)\s')
 _MULTIPART_HINT = "물음에 답하"
 
 
+# ── 객관식/서술형은 **구조**로 가른다 ───────────────────────────────────────
+# 종전에는 taxonomy 발문 정규식이 물어온 코드의 접두(OBJ/SRV)로만 갈랐다.
+# 그래서 룰이 못 맞추면 kind 가 None 이 되고(원고 30부에서 미분류 다수),
+# 서술형은 선언 4~8문항인데 0~4개만 잡혔다. 발문 문구는 학교·출제자마다
+# 달라지지만 **문항의 구조는 안 변한다**:
+#   · 답 쓰는 자리(답란)가 있으면 서술형이다.
+#   · 고를 선지가 있으면 객관식이다.
+#   · 선지 단락이 없어도 지문 안에 ①~⑤ 자리표가 있으면 객관식이다(밑줄·삽입형).
+# 답란이 선지보다 우선한다 — 서술형이 <보기>로 ①~⑤ 목록을 주는 일이 흔해서
+# (배재1 서답형3: <보기> ①~⑤ 중 고른 뒤 고쳐 쓰는 문항) 선지를 먼저 보면 뒤집힌다.
+_RE_INLINE_CIRCLED = re.compile(r'[①-⑮]')
+_RE_SRV_ENDING = re.compile(r'(?:시오|쓰기|작성|완성|서술|영작|배열)\s*[.。]?\s*$')
+_RE_OBJ_ENDING = re.compile(r'(?:것은|것을|곳은|개수는|고르면|고른다면)\s*[?？]?\s*[.。]?\s*$')
+
+
+def _structural_kind(cur, taxonomy_kind):
+    """(kind, 근거) — 구조 신호로 객관식/서술형 판정."""
+    blocks = (cur.get("stimulus") or {}).get("blocks") or []
+    labels = {b.get("label") for b in blocks}
+    if labels & {"Ans", "AnsL"}:
+        return "서술형", "답란"
+    if (cur.get("choices") or {}).get("items"):
+        return "객관식", "선지"
+    if any(_RE_INLINE_CIRCLED.search(b.get("content") or "") for b in blocks):
+        return "객관식", "지문 안 자리표"
+    if taxonomy_kind:
+        return taxonomy_kind, "발문 유형"
+    q = cur.get("question") or ""
+    if _RE_SRV_ENDING.search(q):
+        return "서술형", "지시형 어미"
+    if _RE_OBJ_ENDING.search(q):
+        return "객관식", "의문형 어미"
+    return None, None
+
+
 def _flush_item(items, cur, warnings):
     if cur is None:
         return None
@@ -99,6 +134,15 @@ def _flush_item(items, cur, warnings):
         cur["given"] = None
     else:
         cur["given"]["content"] = cur["given"]["content"].strip()
+    kind, why = _structural_kind(cur, cur.get("kind"))
+    if kind and kind != cur.get("kind"):
+        cur["_kind_src"] = why
+        cur["kind"] = kind
+    elif kind:
+        cur["_kind_src"] = why
+    if cur.get("kind") is None:
+        warnings.append(f"객관식/서술형 미판정 (문항 {cur['id']}): "
+                        f"{(cur.get('question') or '')[:40]!r}")
     if cur["type"] is None:
         w = f"미분류 발문 (문항 {cur['id']}): {cur['question'][:50]!r}"
         warnings.append(w)

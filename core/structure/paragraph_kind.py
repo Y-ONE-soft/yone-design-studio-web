@@ -76,8 +76,12 @@ def _classify_question(text):
     for pi, pat in enumerate(R.Q_FALLBACK_PATTERNS):
         if pat.search(text) or pat.search(text_np):
             # 종결어미 단독 폴백(마지막 패턴)은 발문 시작 신호와 AND
+            # 2026-09-01: 시작 신호를 **위치 0에 못 박지 않는다.** 발문이
+            # 고유명사 서두를 달고 오는 원고가 있다(배재1 "Dalip Singh
+            # Saund에 대한 다음 글을 읽고 … 고치시오."). '지시 대상이 문두에
+            # 온다'는 구조는 머리 40자 창으로 유지한다.
             if pi == len(R.Q_FALLBACK_PATTERNS) - 1 \
-                    and not R.Q_START_HINT.search(text):
+                    and not R.Q_HEAD_HINT.search(text[:R.Q_HEAD_WINDOW]):
                 continue
             return "Q", None
     # 영어 지시문 발문 (W38 결함 5 — "10. Choose True or False (T/F) …"이
@@ -144,6 +148,10 @@ def _base_kind(text):
         return "AnsL", None
     if any(p.match(text) for p in R.ANS_PATTERNS):
         return "Ans", None
+    # 괄호 기입란형 답란 — "(1) (      )번" / "(2) (틀린 부분:        )".
+    # 배재1 실증: 이런 줄을 못 잡아 서술형이 객관식으로 뒤집혔다.
+    if R.is_blank_fill_row(text):
+        return "AnsL", None
     # 요약문 블록 마커 (W38 결함 4, W39 결함 1) — 대괄호형·꺾쇠형 모두
     # Sum. 일반 꺾쇠 마커(Box)가 <요약문>을 삼키지 않도록 Box보다 먼저.
     # W50: 괄호 이형(〈〉《》【】…)은 마커 판정 직전에 정규화 — 표기 보존.
@@ -155,7 +163,11 @@ def _base_kind(text):
         return bk, None
     if R.BOX_INLINE.match(bt):
         return "Box", None
-    if not _is_english_prose(text):
+    if not _is_english_prose(text) and not R.SUBITEM_LEAD.match(text):
+        # SUBITEM_LEAD: "(1) 정답은 각각 주어진 철자로 시작할 것" 같은 소문항·
+        # 조건 항목은 **상위 발문이 아니다**. taxonomy 가 "주어진 철자"를 보고
+        # SRV-WRD-START-LETTER 로 매칭해 발문으로 튀던 자리(배재1 실증).
+        # 묶음 머리 "(1~5)" 는 범위 기호가 있어 이 패턴에 안 걸린다.
         qk, code = _classify_question(text)
         if qk:
             return qk, code
@@ -172,6 +184,18 @@ def _base_kind(text):
 
 
 _RE_CHOICE_LEAD = re.compile(r'^\s*[①②③④⑤⑥⑦⑧⑨⑩]')
+_CHOICE_MARKS = "①②③④⑤⑥⑦⑧⑨⑩"
+# 선지 무리 탐색 창 — 선지 사이에 해석줄·화살표줄이 끼어도 형제를 찾는다.
+_CHOICE_RUN_WINDOW = 4
+
+
+def _choice_ord(text):
+    """줄 머리 원문자의 서수(①=1 …). 원문자로 시작하지 않으면 None."""
+    t = (text or "").lstrip()
+    if not t:
+        return None
+    i = _CHOICE_MARKS.find(t[0])
+    return i + 1 if i >= 0 else None
 
 
 def classify_paragraphs(paras):
@@ -190,14 +214,25 @@ def classify_paragraphs(paras):
     for i, item in enumerate(out):
         if item["kind"] != "Q" or not _RE_CHOICE_LEAD.match(item["text"]):
             continue
+        # 2026-09-01(배재1 실증): 이웃 '한 칸'만 보면 선지 사이에 다른 줄이
+        # 끼는 원고에서 뚫린다. 영작 문항은 `① 우리말 / → English` 가
+        # 번갈아 오는데 `→` 줄이 UNKNOWN 이라 형제 탐색이 끊겼고, ④ 줄
+        # 하나가 발문으로 튀어 문항이 하나 더 생겼다.
+        # 선지는 **번호가 이어지는 무리**로 온다 — 그 구조를 본다.
+        ord_i = _choice_ord(item["text"])
         sib = False
         for step in (-1, 1):
+            seen = 0
             j = i + step
-            while 0 <= j < len(out) and out[j]["kind"] == "BLANK":
+            while 0 <= j < len(out) and seen < _CHOICE_RUN_WINDOW:
+                o = _choice_ord(out[j]["text"])
+                if o is not None and abs(o - ord_i) <= _CHOICE_RUN_WINDOW:
+                    sib = True
+                    break
+                if out[j]["kind"] != "BLANK":
+                    seen += 1
                 j += step
-            if 0 <= j < len(out) and out[j]["kind"] == "C" \
-                    and _RE_CHOICE_LEAD.match(out[j]["text"]):
-                sib = True
+            if sib:
                 break
         if sib:
             item["kind"] = "C"

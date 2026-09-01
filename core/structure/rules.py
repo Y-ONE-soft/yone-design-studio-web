@@ -289,6 +289,25 @@ ANS_MARK_BLANK_ROW = re.compile(
 # "(1~5)" 와는 다르다(그쪽은 범위 기호가 있다).
 SUBITEM_LEAD = re.compile(r'^[\s\u00a0]*\(\s*\d{1,2}\s*\)\s*\S')
 
+
+# 괄호 기입란형 답란 — "(1) (       )번", "(2) (틀린 부분:            )",
+# "→ (고친 부분:            )". 2026-09-01 배재1 실증: 이런 줄이 답란으로
+# 안 잡혀 서술형 문항이 객관식으로 뒤집혔다(<보기> ①~⑤ 가 선지로 먼저 잡혀서).
+# 구조: 괄호 안이 **거의 빈칸**이고, 줄 전체의 실제 내용 글자가 아주 적다.
+ANS_BLANK_PAREN = re.compile(r'[(（][^)）]*?[ \u00a0]{3,}[^)）]*?[)）]')
+
+
+def is_blank_fill_row(text, max_content=14):
+    """괄호·밑줄이 대부분이고 내용 글자가 거의 없는 '기입 줄'인가."""
+    t = (text or "").strip()
+    if not t:
+        return False
+    if not (ANS_BLANK_PAREN.search(t) or re.search(r'_{3,}', t)):
+        return False
+    # 마커·구두점·괄호·밑줄·화살표를 뺀 '내용 글자' 수
+    content = re.sub(r'[\s\u00a0()（）\[\]_→⇒:：,.·0-9①-⑮ⓐ-ⓩ]', '', t)
+    return len(content) <= max_content
+
 # ── P 보조: 짧은 영어 완결문 (주어진 문장 등 — 종결부호 필수) ─────────────────
 P_SHORT_MIN_LEN = 30
 P_SENTENCE_END = re.compile(r'[.!?]["’”\')\]]?\s*$')

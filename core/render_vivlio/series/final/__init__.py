@@ -266,21 +266,21 @@ class FinalSeries(Series):
                              "fits": bool(f) and (
                                  nat <= cap * (((f.get("pt") or m["base_pt"])
                                                 / m["base_pt"]) ** -1)
-                                 if False else self._ok(nat, cap, f, m))})
+                                 if False else self._ok(nat, cap, f, m,
+                                                        sec["kind"]))})
         with open(cfg.path(f"fit{vol}.json"), "w", encoding="utf-8") as fh:
             json.dump(rows, fh, ensure_ascii=False, indent=1)
 
-    @staticmethod
-    def _ok(nat, cap, f, m):
-        """축소·두 칸을 적용하고 나면 정말 들어가는가."""
+    def _ok(self, nat, cap, f, m, kind="arrange"):
+        """행간 조임·두 칸을 적용하고 나면 정말 들어가는가."""
         if not f:
             return nat <= cap
         if f.get("flow"):
             return True                     # 흘리면 언제나 담긴다
-        cap2 = cap if f.get("span", 1) == 1 else 2 * m["slot"] - 0.5
+        lim = cap if f.get("span", 1) == 1 else (self._cap2(kind, m) or cap)
         fx = m["fixed_mm"]
         lead = f.get("lead") or 1.0
-        return fx + (nat - fx) * lead <= cap2 + 0.05
+        return fx + (nat - fx) * lead <= lim + 0.05
 
     # ── 배치 ──
     @staticmethod
