@@ -212,7 +212,8 @@ def blocks_html(blocks, step, ctx=None):
             if m:
                 body = body[len(m.group(0)):] if body.startswith(m.group(0)) else body
             out.append(f'<div class="ox"><span class="n">{num:02d}</span>'
-                       f'{body}{icon_html(b.get("icon") or "TF 버튼", step)}</div>')
+                       f'<span class="txt">{body}</span>'
+                       f'{icon_html(b.get("icon") or "TF 버튼", step)}</div>')
             i += 1
             continue
 
@@ -226,7 +227,7 @@ def blocks_html(blocks, step, ctx=None):
                 if body.startswith(m.group(0)):
                     body = body[len(m.group(0)):]
                 num = f'<span class="n">{int(m.group(1)):02d}.</span>'
-            out.append(f'<div class="gox">{num}{body}'
+            out.append(f'<div class="gox">{num}<span class="txt">{body}</span>'
                        f'{icon_html(b.get("icon") or "TF 버튼", step)}</div>')
             i += 1
             continue

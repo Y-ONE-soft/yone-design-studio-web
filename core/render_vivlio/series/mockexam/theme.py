@@ -161,7 +161,8 @@ def _confirm_svg(s, rect, rule):
     ry = rule if rule else (y0 + y1) / 2
     sw = round(s.confirm_rule_pt * 25.4 / 72, 3)      # pt → mm
     fs = round((s.confirm_size or 8.5) * 25.4 / 72, 2)
-    fam = (s.confirm_font or "Dotum").replace('"', "")
+    # 배경 SVG 는 페이지 CSS 의 @font-face 를 못 본다 — 로컬 설치명으로 건다
+    fam = font_family(s.confirm_font).replace('"', "")
     # 라벨은 라벨행 세로 가운데 — 기준선을 글자 높이의 0.36 만큼 내린다
     ty = round((y0 + ry) / 2 + fs * 0.36, 2)
     parts = [

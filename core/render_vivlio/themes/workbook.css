@@ -346,7 +346,7 @@ section.flow.onecol { break-before: auto; }
 .k-step1_a1 .zone.z-top, .k-step1_a1_2 .zone.z-top { top: 2.2mm !important; }
 .k-step1_a1 .zone.z-bottom, .k-step1_a1_2 .zone.z-bottom { top: 126.4mm !important; }
 .k-step1_b1 .zone { --body-gap: 9.0mm; }
-.k-step1_c1 .zone { --body-gap: 6.3mm; }
+.k-step1_c1 .zone { --body-gap: 11.34mm; }
 .k-step2_a1 .grp { --body-gap: 7.9mm; }
 /* 빈칸 계열은 지문번호가 판면 바깥 세로라 본문이 3mm 안으로 들어온다
  * (실측: 사이드 라벨 x=12.6 · 문항 번호 x=26.0 · 본문 x=29.1) */
@@ -370,7 +370,8 @@ u { text-underline-offset: 0.14em; text-decoration-thickness: 0.05em; }
 
 /* 아이콘 (전부 SVG — 래스터 자산 없음) */
 svg.ico { vertical-align: middle; }
-svg.tf { width: 21.08mm; height: 4.76mm; vertical-align: -1.3mm; margin-left: 1.8mm; }
+svg.tf { width: 21.08mm; height: 4.76mm; vertical-align: -1.3mm;
+         margin-left: 3mm; flex: 0 0 auto; }
 svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 .ansline { display: block; margin-top: 5.4mm; }
 .ansline svg { display: block; width: 94.91mm; height: 4.1mm; }
@@ -393,7 +394,9 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 .ox {
   position: relative; margin-top: 7.6mm; padding-left: 5.1mm;
   font-size: 9.5pt; line-height: 4.2mm;
+  display: flex; align-items: flex-end;   /* 버튼은 늘 마지막 줄 오른쪽에 */
 }
+.ox .txt { flex: 1 1 auto; text-align: justify; }
 .ox .n {
   position: absolute; left: 1mm; top: 0.2mm;
   font-family: "LotteMartDream", "Montserrat", sans-serif;
@@ -524,8 +527,10 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 }
 .gox {
   position: relative; margin-top: 8.77mm; padding-left: 7mm;   /* 실측 항목 간격 13.76mm */
-  font-size: 9pt; line-height: 4.9mm; text-align: justify;
+  font-size: 9pt; line-height: 4.9mm;
+  display: flex; align-items: flex-end;
 }
+.gox .txt { flex: 1 1 auto; text-align: justify; }
 .gox .n {
   position: absolute; left: 1mm; top: 0.5mm;
   font-family: "LotteMartDream", "Montserrat", sans-serif;
