@@ -120,16 +120,17 @@ def vocab(school, grade, exam_period, scope=None, order=None,
     if grade not in ("고1", "고2"):
         return "", ""
     from engines.final.vocab_fetcher import fetch_vocab_for_school
-    olpo = rp = None
+    # ⚠ **리딩파워는 중요어휘를 싣지 않는다**(사용자 확정). 시트에 데이터가
+    #   있어서 강 목록을 넘기면 딸려 온다 — 광문2 가 18→54 지문으로 부풀었다.
+    olpo = None
     if scope:
         olpo = sorted({t[1] for t in scope["tokens"] if t[0] == "olpo"}) or None
-        rp = sorted({t[1] for t in scope["tokens"] if t[0] == "rp"}) or None
         # 모의고사 차례 — 다른 섹션과 같은 오름차순(YYMM)
         if order is None:
             order = sorted({("%02d" % t[1], "%02d" % t[2])
                             for t in scope["tokens"] if t[0] == "mock"})
     got = fetch_vocab_for_school(school, grade, log=log,
-                                 olpo_lectures=olpo, rp_lectures=rp,
+                                 olpo_lectures=olpo, rp_lectures=None,
                                  workbook_order=order or None,
                                  exam_period=exam_period) or {}
     out = []

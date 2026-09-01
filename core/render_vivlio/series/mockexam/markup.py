@@ -1253,6 +1253,49 @@ def header_table(s, case=None):
             + "".join(rows_html) + "</table></header>")
 
 
+def _header_lines(hdr):
+    """줄형 머리표 — 표가 아니라 낱개 줄로 쌓는 학교(성덕1·성덕2·세종1).
+
+    `first_page.lines` 배열이기도 하고 `line1` `line2_left` 처럼 키별로
+    흩어져 있기도 하다. 실측자가 달라 표기가 갈렸을 뿐 내용은 같은 꼴이다.
+    """
+    fp = hdr.get("first_page") or {}
+    lines = fp.get("lines")
+    if isinstance(lines, list) and lines:
+        return [x for x in lines if isinstance(x, dict)]
+    out = []
+    side = {"left": 0, "center": 1, "right": 2}
+    for k in fp:
+        v = fp[k]
+        if not isinstance(v, dict):
+            continue
+        if v.get("text") or v.get("예") or v.get("template"):
+            out.append((k, dict(v, role=v.get("role") or k)))
+    if out:
+        def order(kv):
+            k = kv[0]
+            m = re.search(r"\d+", k)
+            ln = int(m.group(0)) if m else 99
+            pos = next((p for w, p in side.items() if w in k), 1)
+            return (ln, pos)
+        return [v for _k, v in sorted(out, key=order)]
+    ln = hdr.get("line")
+    if isinstance(ln, list) and ln:
+        return [x for x in ln if isinstance(x, dict)]
+    return []
+
+
+def _line_text(e):
+    """줄의 인쇄값. 템플릿만 있으면 실측 예시를 쓴다."""
+    t = e.get("text")
+    if t and "{" not in str(t):
+        return str(t)
+    for k in ("예", "예_25-1", "예_24-1"):
+        if e.get(k):
+            return str(e[k])
+    return "" if (t and "{" in str(t)) else str(t or "")
+
+
 def exam_head(s, case=None):
     """시험지 머리표 — 프로파일 running.header 를 그대로 옮긴다.
 
@@ -1264,11 +1307,16 @@ def exam_head(s, case=None):
     hdr = P.dig(s.raw, "running.header") or {}
     els = hdr.get("elements") or []
     if not els:
-        return header_table(s, case)
+        tbl = header_table(s, case)
+        if tbl:
+            return tbl
+        els = _header_lines(hdr)
+        if not els:
+            return ""
     rows = []
     for e in els:
         role = e.get("role")
-        text = case.get(role) or e.get("text") or ""
+        text = case.get(role) or _line_text(e)
         if not text and role == "code_value":
             # 과목 코드 값은 프로파일 subject_code 에서 온다 — 정본에 큰 숫자로
             # 인쇄되는데 요소에 text 가 없어 통째로 빠져 있었다.
@@ -1289,10 +1337,11 @@ def exam_head(s, case=None):
         # 정본에서 잰 자리에 그대로 앉힌다. 머리표는 표가 아니라 낱개 요소라
         # 흘려 보내면 과목 코드 값이 오른쪽 끝으로 튀는 등 배치가 어긋난다.
         m = e.get("실측_정본") or {}
-        if m.get("x") is not None and m.get("y") is not None and s.ref_scale:
+        mx, my = _num0(m.get("x")), _num0(m.get("y"))
+        if mx and my and s.ref_scale:
             cls.append("eh-abs")
-            st.append(f"left:{round(float(m['x']) * s.ref_scale, 2)}mm")
-            st.append(f"top:{round(float(m['y']) * s.ref_scale, 2)}mm")
+            st.append(f"left:{round(mx * s.ref_scale, 2)}mm")
+            st.append(f"top:{round(my * s.ref_scale, 2)}mm")
         style = f' style="{";".join(st)}"' if st else ""
         rows.append(f'<span class="{" ".join(cls)}"{style}>{esc(text)}</span>')
     if not rows:
@@ -1304,12 +1353,20 @@ def exam_head(s, case=None):
             + "</header>")
 
 
+def _num0(v):
+    """실측값이 dict/list 로 적힌 학교가 있다(세종1) — 숫자가 아니면 0."""
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return 0.0
+
+
 def _head_height(els, s):
     """절대 배치한 머리표가 차지할 높이 — 본문이 그 아래에서 시작하도록."""
-    ys = [float((e.get("실측_정본") or {}).get("y") or 0) for e in els]
+    ys = [_num0((e.get("실측_정본") or {}).get("y")) for e in els]
     if not any(ys) or not s.ref_scale:
         return 0
-    big = max(float((e.get("실측_정본") or {}).get("size_pt") or 0) for e in els)
+    big = max(_num0((e.get("실측_정본") or {}).get("size_pt")) for e in els)
     return round(max(ys) * s.ref_scale + big * 25.4 / 72 * s.ref_scale + 2, 1)
 
 
