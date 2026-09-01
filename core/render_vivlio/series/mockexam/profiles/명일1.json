@@ -435,6 +435,8 @@
     "roles": {
       "stem": {"font": "바탕(명조)", "size_pt": 12.2, "leading_pt": 18.8, "bold": false,
                "indent_mm": 0, "hang_mm": 0, "align": "justify", "space_before": "빈 줄 1줄",
+               "indent_mm": 0, "hang_mm": 0, "align": "justify", "space_before_pt": 18.8,
+               "indent_mm": 0, "hang_mm": 0, "align": "justify", "_space_before_pt_근거": "2026-09-02 산출물 대조 — 정본은 문항과 문항 사이가 눈에 띄게 비는데 서술(`빈 줄 1줄`)만 적혀 있어 profile.py 가 숫자로 못 읽었고 **문항이 앞 문항에 딱 붙어 조판되고 있었다**. 본문 행송 18.8pt = 1행 로 환산했다(같은 규약: 배재1 31.2 · 한영3 24.0 · 한영2 14.7 · 강동3 8.0).",
                "실측_정본_A4근사": {"size_pt": 10.0, "leading_pt": 15.4}},
       "passage": {"font": "바탕(명조)", "size_pt": 12.2, "leading_pt": 18.8,
                   "first_line_indent_mm": 3.9, "align": "justify",
