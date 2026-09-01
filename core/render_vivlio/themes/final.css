@@ -207,7 +207,7 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
  * (도련 뺀 판 좌표). 예전 값(-7.10/2.54)은 띠 전체를 4.1mm 왼쪽·0.6mm
  * 아래로 밀어 놓고 있었다. */
 .bandrun, .sechdr .band {
-  height: 29.57mm; white-space: nowrap; margin-left: -3.00mm;
+  height: 29.57mm; white-space: nowrap; margin-left: -4.13mm;
   padding-top: 1.94mm;
 }
 .band .n {
@@ -236,7 +236,7 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 .sechdr .band {
   /* 러닝 띠보다 0.032mm 오른쪽·아래로 앉는다(마진 박스와 기준이 달라서) —
    * 그만큼 되돌려 **자리를 정확히 포갠다**(실측 보정). */
-  position: absolute; left: -3.99mm;
+  position: absolute; left: -2.86mm;
   top: calc(-1 * var(--mtop) - 0.033mm);
   width: 190mm; margin-left: 0;
 }

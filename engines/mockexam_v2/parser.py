@@ -369,6 +369,30 @@ def _flush_item(items, cur, warnings):
 
 
 
+_RE_LATIN = re.compile(r"[A-Za-z]")
+
+
+def _rescue_long_unknown(annotated, warnings=None, limit=300):
+    """분류에 실패한 **긴 영어 단락**은 지문이다.
+
+    한영1 2회 `[19~21]` 공유 지문 998자가 UNKNOWN 으로 분류돼 조판에서 통째로
+    사라졌다(세 문항이 지문 없이 인쇄됐다). 길고 영문 비율이 높은 단락이
+    지문이 아닐 이유가 없다 — 정답·해설은 앞서 이미 걸러진다.
+    """
+    for r in annotated:
+        if r.get("kind") != "UNKNOWN":
+            continue
+        t = r.get("text") or ""
+        if len(t) < limit:
+            continue
+        if len(_RE_LATIN.findall(t)) < len(t) * 0.5:
+            continue
+        r["kind"] = "P"
+        if warnings is not None:
+            warnings.append(f"긴 미분류 단락을 지문으로 살렸다: {t[:36]}")
+    return annotated
+
+
 def _expand_range_groups(annotated, warnings=None):
     """범위 묶음 머리 하나가 문항 여럿을 삼키는 것을 편다.
 
@@ -583,6 +607,7 @@ def build_ir(paras, meta=None, log=None):
                                             "ko_interrogative": True,
                                             "strip_tail_note": True})
     _pre_warn = []
+    annotated = _rescue_long_unknown(annotated, _pre_warn)
     annotated = _repair_orphan_choice_runs(annotated, _pre_warn)
     annotated = _expand_range_groups(annotated, _pre_warn)
     items = []
