@@ -124,9 +124,15 @@ const found = await p.evaluate(async () => {
     const n = document.querySelectorAll('#find-out a[data-ref]').length;
     if (n > 0) return w + ':' + n;
   }
+  // 원고 자료가 없는 계열(포켓북)은 찾을 대상이 아예 없다 — 그건 결함이 아니다
+  const last = document.getElementById('ide-msg').innerText;
+  if (/원고 자료가 없습니다/.test(last)) return '원고자료없음';
   return (words[0] || '?') + ':0';
 });
-(parseInt(String(found).split(':')[1] || 0) > 0 ? ok : bad)('찾기 ' + found + '곳');
+(found === '원고자료없음'
+  ? ok : (parseInt(String(found).split(':')[1] || 0) > 0 ? ok : bad))(
+  '찾기 ' + (found === '원고자료없음'
+    ? '— 이 계열은 원고 자료가 없다(정상)' : found + '곳'));
 
 // ⑦ 색상 견본
 const sw = await p.evaluate(() => document.querySelectorAll('#pal-color button').length);

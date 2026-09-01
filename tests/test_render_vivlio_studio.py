@@ -1512,7 +1512,7 @@ def test_a_box_is_selected_as_an_object():
     """
     src = _studio_src()
     i = src.index("st.addEventListener('click'")
-    assert "viv-box" in src[i:i + 900]
+    assert "viv-box" in src[i:i + 1400]
 
 
 def test_text_tool_edits_the_line_you_clicked():

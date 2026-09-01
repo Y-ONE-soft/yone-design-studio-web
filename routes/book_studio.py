@@ -1206,6 +1206,13 @@ def api_find():
     q = p.get("q") or ""
     if not q:
         return jsonify({"error": "찾을 말이 없다"}), 400
+    cfg0 = bookmod.load(d)
+    # ⚠ 원고 자료 파일이 없는 계열(포켓북)은 찾을 대상이 없다. 조용히 0곳이
+    #   나오면 "없는 말" 인지 "못 찾는 책" 인지 알 수 없다.
+    if not os.path.exists(ed.data_path(cfg0)):
+        return jsonify({"error": "이 교재는 원고에서 바로 조판해 "
+                                 "여기서 찾을 원고 자료가 없습니다",
+                        "kind": "nodata"}), 409
     # 정규식(인디자인의 GREP). 틀린 식은 **무엇이 틀렸는지** 말해 준다 —
     # 조용히 0건이 나오면 글이 없는 건지 식이 틀린 건지 알 수 없다.
     rx = None
