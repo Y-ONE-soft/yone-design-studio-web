@@ -510,8 +510,8 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
   font-size: 9pt; line-height: 1;
 }
 .ox-ex .s1, .ox-ex .s2 { position: absolute; left: 3mm; white-space: nowrap; }
-.ox-ex .s1 { top: -3.32mm; }   /* 실측 보정: 글이 상자 안에서 4mm 내려앉는다 */
-.ox-ex .s2 { top: 7.93mm; }
+.ox-ex .s1 { top: -3.32mm; }
+.ox-ex .s2 { top: 7.83mm; }
 .ox-ex .mk {
   position: absolute; width: 20.16mm; height: 4.48mm; background: #f9fcf3;
   font-family: "Noto Sans CJK KR", sans-serif; font-weight: 500; color: var(--kr-gray);
@@ -525,14 +525,14 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
   border: 0.5pt solid #d2232a; border-radius: 50%;
 }
 .ox-ex .r1 { left: 83.25mm; top: 3.19mm; }
-.ox-ex .r2 { left: 118.72mm; top: 14.29mm; }
-.ox-ex .ul { position: absolute; top: 18.38mm; height: 0;
+.ox-ex .r2 { left: 115.3mm; top: 14.29mm; }
+.ox-ex .ul { position: absolute; top: 15.14mm; height: 0;
              border-top: 0.75pt solid #d2232a; }
 .ox-ex .u1 { left: 43.89mm; width: 8.26mm; }
 .ox-ex .u2 { left: 71.00mm; width: 9.43mm; }
 .ox-ex .u3 { left: 90.79mm; width: 4.68mm; }
 .ox-ex .fx {
-  position: absolute; top: 14.9mm; white-space: nowrap;
+  position: absolute; top: 14.28mm; white-space: nowrap;
   font-family: "Cafe24Supermagic", "Noto Sans CJK KR", sans-serif;
   font-weight: 700; font-size: 9pt; color: #d2232a; letter-spacing: normal;
 }

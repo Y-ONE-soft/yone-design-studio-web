@@ -27,7 +27,8 @@ _RE_OXNUM = re.compile(r"^\(?(\d+)\)?[.\s]\s*")
 _RE_LEADNUM = re.compile(r"^(\d+)\.\s*")
 _RE_BADGE = re.compile(r"^\{([^}]{1,6})\}\s*")
 _RE_ANSLEAK = re.compile(r"\s*[①②③④⑤⑥⑦⑧⑨⑩]\s*$")
-_RE_SRCCODE = re.compile(r"\s*\[\s*\d{2,6}\s*\]\s*$")   # 안내문 꼬리의 원고 코드
+_RE_SRCCODE = re.compile(r"\s*\[\s*\d{2,6}\s*\]\s*$")   # 발문 꼬리의 원고 코드 `[52]`
+_RE_LEADSEQ = re.compile(r"^\s*\d{1,4}\s*(?=[가-힣A-Z(])")  # 발문 앞 원고 일련번호
 _RE_CIRCLED = re.compile(r"^([①②③④⑤⑥⑦⑧⑨⑩])\s*")
 # 원고 부속물 — 번호 + 한글 구문명만 있는 줄(영어가 한 글자도 없다). 지면에 나가면
 # 출처처럼 보인다. 구조로 판정: 로마자가 전혀 없고, 숫자로 시작하며, 한글이 있다.
@@ -504,11 +505,13 @@ def fixed_section(st, idx):
         #   기준 p30-31·p32-33). 지문 묶음마다 새 면에서 시작하고, 길면 이어진다.
         for gi, g in enumerate(groups):
             body = "".join(blocks_html(u, n, st["key"]) for u in g["units"])
+            example = ""
             if st["key"] == "step2_b1" and gi == 0:
-                # 템플릿 고정 예시 + 안내문 — **첫 면에만** 붙는다(실측).
+                # 템플릿 고정 예시 + 안내문 — **첫 면에만**, 그리고 지문 라벨보다
+                # **위**에 온다(실측: 상자 y=31.41 · 라벨은 그 아래).
                 note = (f'<div class="note-once">{esc(st["note"])}</div>'
                         if st.get("note") else "")
-                body = note + OX_EXAMPLE + body
+                example = note + OX_EXAMPLE
             head = ""
             if g.get("label"):
                 head = (f'<div class="pn-side"><span class="pnum">'
@@ -526,7 +529,7 @@ def fixed_section(st, idx):
                 #   **없는** 지문이 있고 스텝마다 지문 수도 다르다(수능만만 실측).
                 #   못 박으면 없는 지문에서 빈 자리가 생긴다. 자리는 흐름이 정한다.
                 body = f'<div class="topzone">{body}</div>' 
-            pages.append(f'<div class="grp">{head}{body}{btm}'
+            pages.append(f'<div class="grp">{example}{head}{body}{btm}'
                          f'<span class="zend"></span></div>')
 
     run = running_head(n, st["logo"], st["title"], st["tag"])
@@ -581,8 +584,11 @@ def s3_blocks(blocks):
             if qn:
                 out.append("</div>")
             qn += 1
+            # 원고가 달고 온 일련번호(`141 다음 중…`)와 꼬리 코드(`…것은?[52]`)는
+            # 지면에 내지 않는다 — 번호는 배지가 붙인다(실물과 같다).
+            t = _RE_SRCCODE.sub("", _RE_LEADSEQ.sub("", runs_html(b)))
             out.append(f'<div class="q-block"><p class="q3">'
-                       f'<span class="qn">{qn:02d}</span>{runs_html(b)}</p>')
+                       f'<span class="qn">{qn:02d}</span>{t}</p>')
             prev = "q"
         elif r == "s3_passage":
             t = runs_html(b)

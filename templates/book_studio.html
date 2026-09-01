@@ -479,10 +479,17 @@
    *  안 된다 — `renderAllPages:false` 라 지금 보이는 두 장만 DOM 에 있다.
    *  그래서 뷰어가 들고 있는 **쪽 위치**를 직접 읽는다. 밑줄 붙은 내부 필드라
    *  판이 바뀌면 없어질 수 있으니 못 읽으면 조용히 `nav` 값으로 돌아간다. */
+  /** 지금 몇 면인가 — **한 가지 셈만** 쓴다.
+   *
+   *  ⚠ 예전엔 두 가지가 섞였다: 조판 엔진의 `pagePosition.pageIndex` 와
+   *    `nav` 알림의 `epage`. 둘이 어긋나면 "8면으로" 를 눌렀는데 7면에서
+   *    멈춘 것처럼 보인다(실제로 지면은 9면이었다). 엔진의 자리를 쓰고,
+   *    그 값을 `curPage` 에도 그대로 옮겨 둘이 갈라지지 않게 한다.
+   */
   function pageNow() {
     try {
       var pp = viewer.adaptViewer_.pagePosition;
-      if (pp && pp.pageIndex != null) return pp.pageIndex + 1;
+      if (pp && pp.pageIndex != null) { curPage = pp.pageIndex + 1; }
     } catch (e) {}
     return curPage;
   }
@@ -565,7 +572,13 @@
     });
     viewer.addListener('nav', function (p) {
       if (p && p.epageCount) { pageCount = p.epageCount; }
-      if (p && p.epage != null) curPage = Math.round(p.epage) + 1;
+      // ⚠ `epage` 는 엔진의 자리와 어긋날 수 있다 — 엔진의 자리를 못 읽을
+      //   때만 쓴다(둘을 섞으면 면 번호가 널뛴다).
+      var pp = null;
+      try { pp = viewer.adaptViewer_.pagePosition; } catch (e) {}
+      if (!(pp && pp.pageIndex != null) && p && p.epage != null) {
+        curPage = Math.round(p.epage) + 1;
+      }
       drawPageNo();
     });
     viewer.addListener('error', function (p) {
@@ -2411,22 +2424,32 @@
     // ⚠ 면 넘기기는 **한 번에 하나만** 돌아야 한다. 조판 직후의 "빈 간지
     //   지나가기" 가 아직 돌고 있는데 사람이 면을 고르면 둘이 서로 넘겨서
     //   엉뚱한 데 선다(실측: 8면을 눌렀는데 2면에서 맴돌았다).
+    // ⚠ **한 번 넘긴 것이 셈에 반영되기 전에 또 넘기면 안 된다.** 70ms 마다
+    //   넘겼더니 8면을 지나 9면까지 갔다 — 반영을 기다렸다가 다시 본다.
+    // ⚠ 몇 번 뛸지를 미리 세지도 않는다. 조판 중이면 넘기라는 말이 그냥
+    //   무시되는데 세어 둔 횟수는 그것도 한 번으로 친다(8→4면에 섰다).
     var mine = ++seeking;
     seekBusy = false;
     msg(n + '면으로 가는 중…');
-    var stuck = 0, guard = 0, last = -1;
+    var guard = 0;
     (function step() {
       if (mine !== seeking) return;               // 새 이동이 시작됐다
       var now = pageNow();
       if (now === n) { drawPageNo(); msg(n + '면'); return; }
-      if (now === last) { stuck++; } else { stuck = 0; last = now; }
-      if (stuck > 25 || guard++ > 600) {          // 더 못 간다
-        drawPageNo();
-        msg(now === n ? (n + '면') : ('여기까지 갑니다 — ' + now + '면'));
+      if (guard++ > 300) {                        // 더 못 간다
+        drawPageNo(); msg('여기까지 갑니다 — ' + now + '면');
         return;
       }
       viewer.navigateToPage(n > now ? V.Navigation.NEXT : V.Navigation.PREVIOUS);
-      setTimeout(step, 70);
+      (function settle(t) {
+        if (mine !== seeking) return;
+        if (pageNow() !== now) { drawPageNo(); return step(); }
+        if (t > 50) {                             // 3초를 기다려도 안 움직인다
+          drawPageNo(); msg('여기까지 갑니다 — ' + now + '면');
+          return;
+        }
+        setTimeout(function () { settle(t + 1); }, 60);
+      })(0);
     })();
   }
 

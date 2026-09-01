@@ -92,7 +92,7 @@ SERIES = (
 RE_UNIT_RUN = re.compile(r"((?:\d{1,2}\s*[,~\-]\s*)*\d{1,2})\s*강")
 RE_LESSON_RUN = re.compile(r"((?:\d{1,2}\s*[,~\-]\s*)*\d{1,2})\s*과")
 RE_MOCK_TXT = re.compile(r"(\d{2})\s*년\s*(\d{1,2})\s*월")
-RE_TEST_TXT = re.compile(r"[Tt]est\s*(\d)")
+RE_TEST_TXT = re.compile(r"[Tt][Ee][Ss][Tt]\s*(\d)")
 RE_SPLIT = re.compile(r"[/·\n;]+")
 
 
@@ -235,3 +235,111 @@ def describe(scope):
     return "%s: %s" % (scope.get("source", "?"),
                        ", ".join(token_text(t) for t in scope["tokens"])
                        or "(없음)")
+
+
+# ── 교과서: 과목·출판사도 범위 글이 말한다 ──────────────────────────────
+#
+# `공통영어1 능률(민) 3과` · `영어Ⅰ 미래엔(김) 4과` · `영어 독해와 작문 비상(황) 3과`
+# 지금까지는 엔진 config 의 학교↔교과서 표를 봐야 했다. 범위 글이 정본이면
+# 그 표가 필요 없다 — **학교마다 교과서를 따로 적어 두지 않아도 된다.**
+SUBJECTS = ("공통영어1", "공통영어2", "영어 독해와 작문", "영어독해와작문",
+            "영어Ⅰ", "영어Ⅱ", "영어1", "영어2", "실용영어", "진로영어")
+RE_PUB = re.compile(r"([가-힣A-Za-z]{2,6}\s*\([가-힣]\)|[가-힣A-Za-z]{2,6})"
+                    r"\s*(?:[\d,\s~\-]+)과")
+# 괄호 안 단서 — `(추가본문X)` `(Read More 제외)` `(MR만)` `(Practice 1만)`
+# `(Gateway 제외)` `(24-3, 27-3 제외)`. 여기서 다 풀지는 않는다.
+# **버리지 않고 토큰에 붙여 둔다** — 조용히 사라지는 것이 가장 나쁘다.
+RE_NOTE = re.compile(r"\(([^)]*(?:제외|만|X|포함|Practice|Gateway)[^)]*)\)")
+
+
+def _subject_of(seg):
+    for s0 in SUBJECTS:
+        if s0.replace(" ", "") in seg.replace(" ", ""):
+            return s0
+    return ""
+
+
+def _publisher_of(seg):
+    m = RE_PUB.search(seg)
+    if not m:
+        return ""
+    pub = re.sub(r"\s+", "", m.group(1))
+    return "" if pub in ("과", "본문") else pub
+
+
+def parse(text, grade=0):
+    """범위 글 → {"tokens", "detail", "raw"}.
+
+    `detail[token]` 에 그 토큰의 과목·출판사·단서(괄호 안 글)를 담는다.
+    """
+    tokens = scope_text_tokens(text)
+    detail = {}
+    for seg in RE_SPLIT.split(text or ""):
+        if not seg.strip():
+            continue
+        subj, pub = _subject_of(seg), _publisher_of(seg)
+        notes = RE_NOTE.findall(seg)
+        for t in scope_text_tokens(seg):
+            d = detail.setdefault(t, {})
+            if t[0] == "lesson":
+                if subj:
+                    d["subject"] = subj
+                if pub:
+                    d["publisher"] = pub
+            if notes:
+                d["notes"] = notes
+            if "deep learning" in seg.lower() or "DL" in seg:
+                d["deeplearning"] = True
+    return {"tokens": tokens, "detail": detail, "raw": text or "",
+            "grade": grade, "source": "text"}
+
+
+def folders(scope, base, grade=None, log=lambda m: None):
+    """범위 → [(원고 폴더, spec)]. 워크북 파일 **없이** 원고를 찾는다.
+
+    못 찾은 토큰은 조용히 넘기지 않고 `log` 로 알린다 — 범위에 있는데
+    원고가 없으면 지문이 통째로 빠진다.
+    """
+    g = grade if grade is not None else scope.get("grade") or 0
+    out, seen = [], set()
+    for t in scope["tokens"]:
+        d = scope.get("detail", {}).get(t, {})
+        kind = t[0]
+        path = spec = None
+        if kind == "lesson":
+            subj = d.get("subject") or ""
+            pub = d.get("publisher") or ""
+            if subj and pub:
+                path = L.textbook(base, subj, pub, t[1])
+                spec = {"kind": "lesson", "lesson": t[1],
+                        "subject": subj, "publisher": pub}
+                if d.get("deeplearning"):
+                    dl = L.textbook_deeplearning(base, subj, pub, t[1])
+                    if dl:
+                        out.append((dl, dict(spec, deeplearning=True)))
+        elif kind == "olpo":
+            path = L.olympos(base, t[1], book=1 if g == 1 else 2)
+            spec = {"kind": "olpo", "unit": t[1]}
+        elif kind == "rp":
+            ed = "기본" if "기본" in scope["raw"] else "완성"
+            path = L.reading_power(base, t[1], edition=ed)
+            spec = {"kind": "rp", "unit": t[1]}
+        elif kind in ("teuk", "bare"):
+            path = L.suneung_teukgang(base, t[1])
+            spec = {"kind": "teuk", "unit": t[1]}
+        elif kind == "test":
+            path = L.suneung_teukgang(base, t[1], test=True)
+            spec = {"kind": "teuk", "unit": t[1], "test": True}
+        elif kind == "mock":
+            path = L.mockexam(base, g, t[1], t[2])
+            spec = {"kind": "mock", "year": t[1], "month": t[2]}
+        if not path:
+            log("[범위] 원고를 못 찾음 — %s" % token_text(t))
+            continue
+        if path in seen:
+            continue
+        seen.add(path)
+        if d.get("notes"):
+            spec = dict(spec, notes=d["notes"])
+        out.append((path, spec))
+    return out
