@@ -39,6 +39,9 @@ _RE_NOISE = re.compile(r"^\s*\d+\s*[.\s][^A-Za-z]*$")
 
 
 def is_manuscript_noise(t):
+    # ⚠ 판정은 **글자**로 한다 — 작업대가 건 서식 조각이 오면 글만 꺼낸다.
+    if not isinstance(t, (str, type(None))):
+        t = _rtx.plain(t)
     t = (t or "").strip()
     if not t or len(t) > 40:
         return False
@@ -251,7 +254,7 @@ _BOXED = {
 def _p_arr(b):
     t = runs_html(b)
     mk = _bmark(b)
-    m = _RE_ALBL.match(b.get("text") or "") if isinstance(b.get("text"), str) else None
+    m = _RE_ALBL.match(_btext(b))
     if m:
         rest = t[len(m.group(0)):] if t.startswith(m.group(0)) else t
         return f'<p{mk}><span class="albl">({m.group(1)})</span> {rest}</p>'
@@ -274,6 +277,18 @@ def index_refs(data):
                             _refs.put(b, "steps.%d.groups.%d.%s.%d.%d"
                                       % (si, gi, key, ui, bi))
     return True
+
+
+def _btext(b):
+    """블록의 글 — **판정·정규식용 평문**.
+
+    ⚠ 작업대가 건 서식 조각이 오면 `.strip()`·정규식이 죽는다(실측).
+      그리는 것은 `runs_html` 이 하고, **재고 가르는 것은 이 평문**으로 한다.
+    """
+    t = b.get("text") if isinstance(b, dict) else b
+    if isinstance(t, str) or t is None:
+        return t or ""
+    return _rtx.plain(t)
 
 
 def _bref(b):
@@ -312,12 +327,12 @@ def blocks_html(blocks, step, ctx=None):
         b = blocks[i]
         role = b["role"]
         out.ref = _bref(b)                   # 이 블록에서 나오는 조각에 찍는다
-        if is_manuscript_noise(b.get("text")):
+        if is_manuscript_noise(_btext(b)):
             i += 1                       # 원고 부속물(구문명 줄) — 지면에 내지 않는다
             continue
 
         # ── 아이콘만 있는 블록 (답지 줄) ──
-        if not (b.get("text") or "").strip() and b.get("icon"):
+        if not _btext(b).strip() and b.get("icon"):
             out.append(icon_html(b["icon"], step))
             i += 1
             continue
@@ -327,7 +342,7 @@ def blocks_html(blocks, step, ctx=None):
             cls = _BOXED[role][0]
             body = []
             while i < n and blocks[i]["role"] == role:
-                if (blocks[i].get("text") or "").strip():
+                if _btext(blocks[i]).strip():
                     body.append(_p_arr(blocks[i]) if role == "arr_line"
                                 else f"<p{_bmark(blocks[i])}>"
                                      f"{runs_html(blocks[i])}</p>")
@@ -339,7 +354,7 @@ def blocks_html(blocks, step, ctx=None):
 
         # ── O/X 문항 ──
         if role == "ox_item":
-            t = b.get("text") or ""
+            t = _btext(b)
             m = _RE_OXNUM.match(t)
             num = int(m.group(1)) if m else 0
             body = runs_html(b)
@@ -355,7 +370,7 @@ def blocks_html(blocks, step, ctx=None):
 
         # ── 어법 O/X (번호가 본문에 들어 있다) ──
         if role == "gram_ox":
-            t = b.get("text") or ""
+            t = _btext(b)
             m = _RE_LEADNUM.match(t)
             body = runs_html(b)
             num = ""
@@ -374,14 +389,14 @@ def blocks_html(blocks, step, ctx=None):
         if role in ("sum_topic", "sum_title"):
             kind = "topic" if role == "sum_topic" else "title"
             t = runs_html(b)
-            m = _RE_BADGE.match(b.get("text") or "")
+            m = _RE_BADGE.match(_btext(b))
             badge = m.group(1) if m else ("주제" if kind == "topic" else "제목")
             if m and t.startswith(m.group(0)):
                 t = t[len(m.group(0)):]
             lines = [f"<p>{t}</p>"]
             i += 1
             while i < n and blocks[i]["role"] == "sum_line":
-                if (blocks[i].get("text") or "").strip():
+                if _btext(blocks[i]).strip():
                     lines.append(f"<p{_bmark(blocks[i])}>"
                                  f"{runs_html(blocks[i])}</p>")
                 i += 1
@@ -389,14 +404,14 @@ def blocks_html(blocks, step, ctx=None):
                        f'</span>{"".join(lines)}</div>')
             continue
         if role == "sum_line":            # 배지 없이 홀로 온 줄
-            if (b.get("text") or "").strip():
+            if _btext(b).strip():
                 out.append(f'<div class="sum"><p>{runs_html(b)}</p></div>')
             i += 1
             continue
 
         # ── 내용 종합 문항 ──
         if role == "b2_q":
-            t = b.get("text") or ""
+            t = _btext(b)
             m = _RE_OXNUM.match(t)
             num = int(m.group(1)) if m else 1
             body = runs_html(b)
@@ -405,7 +420,7 @@ def blocks_html(blocks, step, ctx=None):
             i += 1
             ch = []
             while i < n and blocks[i]["role"] == "b2_choice":
-                if (blocks[i].get("text") or "").strip():
+                if _btext(blocks[i]).strip():
                     ch.append(f"<p{_bmark(blocks[i])}>"
                               f"{runs_html(blocks[i])}</p>")
                 i += 1
@@ -416,7 +431,7 @@ def blocks_html(blocks, step, ctx=None):
 
         # ── 하단 문제 발문 ──
         if role in ("q_prompt", "intro"):
-            t = _RE_ANSLEAK.sub("", b.get("text") or "")   # 꼬리 정답 표시 제거
+            t = _RE_ANSLEAK.sub("", _btext(b))   # 꼬리 정답 표시 제거
             t = _RE_SRCCODE.sub("", t)                     # 꼬리 원고 코드 `[049]`
             cls = "q-head" if role == "q_prompt" else "s3-intro"
             ic = icon_html(b.get("icon") or "", step) if role == "q_prompt" else ""
@@ -428,7 +443,7 @@ def blocks_html(blocks, step, ctx=None):
         if role in ("q_choice", "s3_choice"):
             ch = []
             while i < n and blocks[i]["role"] == role:
-                if (blocks[i].get("text") or "").strip():
+                if _btext(blocks[i]).strip():
                     ch.append(f"<p>{runs_html(blocks[i])}</p>")
                 i += 1
             out.append(f'<div class="choices">{"".join(ch)}</div>')
@@ -436,7 +451,7 @@ def blocks_html(blocks, step, ctx=None):
 
         # ── 빈칸 (어휘·어법) ──
         if role in ("blank_vocab", "blank_gram"):
-            t = b.get("text") or ""
+            t = _btext(b)
             m = _RE_LEADNUM.match(t)
             # 어법은 앞 글자 힌트가 없다(실측) — 어휘만 첫 글자를 남긴다
             body = blank_markup(runs_html(b), hint=(role == "blank_vocab"))
@@ -446,7 +461,7 @@ def blocks_html(blocks, step, ctx=None):
             i += 1
             kr = ""
             if i < n and blocks[i]["role"] == "blank_kr":
-                kt = _RE_LEADNUM.sub("", blocks[i].get("text") or "")
+                kt = _RE_LEADNUM.sub("", _btext(blocks[i]))
                 kr = f'<div class="blk-kr">{esc(kt)}</div>'
                 i += 1
             # 본문과 해석은 **한 덩어리** — 면이 갈리면 짝이 떨어진다
@@ -454,7 +469,7 @@ def blocks_html(blocks, step, ctx=None):
                        f'<span class="n">{esc(num)}.</span>{body}</div>{kr}</div>')
             continue
         if role == "blank_kr":
-            t = _RE_LEADNUM.sub("", b.get("text") or "")
+            t = _RE_LEADNUM.sub("", _btext(b))
             out.append(f'<div class="blk-kr">{esc(t)}</div>')
             i += 1
             continue
@@ -473,16 +488,16 @@ def blocks_html(blocks, step, ctx=None):
 
         # ── 영작 배열 ──
         if role == "write_kr":
-            kr = esc(_RE_LEADNUM.sub("", b.get("text") or ""))
+            kr = esc(_RE_LEADNUM.sub("", _btext(b)))
             i += 1
             inner = []
             while i < n and blocks[i]["role"] in ("write_box", "basic"):
                 bb = blocks[i]
-                if bb["role"] == "write_box" and (bb.get("text") or "").strip():
+                if bb["role"] == "write_box" and _btext(bb).strip():
                     inner.append(f'<div class="box-write"><p>{runs_html(bb)}</p></div>')
                 elif bb.get("icon"):
                     inner.append(icon_html(bb["icon"], step))
-                elif (bb.get("text") or "").strip():
+                elif _btext(bb).strip():
                     break
                 i += 1
             no = _next_write_no(out)
@@ -491,7 +506,7 @@ def blocks_html(blocks, step, ctx=None):
             continue
 
         # ── 남은 것: 문단 그대로 ──
-        if (b.get("text") or "").strip():
+        if _btext(b).strip():
             out.append(f'<p class="en">{sel_markup(runs_html(b))}</p>')
         elif b.get("icon"):
             out.append(icon_html(b["icon"], step))
@@ -804,7 +819,7 @@ def s3_blocks(blocks, start_no=1):
             cls = _S3_BOX[r]
             grp = []
             while i < n and blocks[i]["role"] == r:
-                if (blocks[i].get("text") or "").strip():
+                if _btext(blocks[i]).strip():
                     grp.append(f"<p>{runs_html(blocks[i])}</p>")
                 i += 1
             out.append(f'<div class="wrap3"><div class="{cls}">'
@@ -815,7 +830,7 @@ def s3_blocks(blocks, start_no=1):
         if r == "intro":
             close_q()
             close_set()
-            t = _RE_SRCCODE.sub("", (b.get("text") or "").strip())
+            t = _RE_SRCCODE.sub("", _btext(b).strip())
             out.append('<div class="set-block" data-h="0">')
             set_mark = len(out) - 1
             set_idx = _SIDX[0]
@@ -864,7 +879,7 @@ def s3_blocks(blocks, start_no=1):
             out.append(f'<p class="ch3{" first" if prev != "ch" else ""}">{ct}</p>')
             q_h += _est_mm(ct, 8, 5.23, indent=3.6)
             prev = "ch"
-        elif (b.get("text") or "").strip():
+        elif _btext(b).strip():
             out.append(f'<p class="{"ans3" if r in ("s3_answer", "s3_word") else "p3"}">'
                        f'{runs_html(b)}</p>')
             prev = "a"

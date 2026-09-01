@@ -49,6 +49,13 @@ def _put(data, ref):
     if isinstance(cur, list) and cur and all(isinstance(x, str) for x in cur):
         holder[key] = [_rich(x) if x.strip() else x for x in cur]
         return True
+    # 이미 조각 목록인 자리(워크북 `runs`)는 **그 조각에 서식을 얹는다** —
+    # 작업대가 하는 일이 바로 그것이다.
+    if (isinstance(cur, list) and cur
+            and all(isinstance(x, dict) and "t" in x for x in cur)):
+        for x in cur:
+            x.setdefault("st", {})["letter-spacing"] = "-0.01em"
+        return True
     # ⚠ **덩어리(dict)는 건드리지 않는다.** 작업대도 못 고친다(409). 예전에
     #   그 안의 글자를 다 바꿨더니 `kind` 같은 **구조 열쇠**까지 서식 조각이
     #   되어, 없는 결함이 있는 것처럼 나왔다.
