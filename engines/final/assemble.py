@@ -12,6 +12,7 @@
 엔진과 **같은 함수**를 부른다(찾기·파싱·헤더 변환). 다른 것은 그 함수를
 무엇으로 몰아 주느냐뿐 — 워크북 파일 이름이 아니라 시험범위 토큰이다.
 """
+import json
 import os
 import re
 
@@ -106,6 +107,45 @@ def _token_of(spec):
     return (k, spec.get("unit"))
 
 
+def _vocab_g3(scope, base, log=lambda m: None):
+    """고3 중요어휘 — 원고의 **빈칸어휘 해설지**에서.
+
+    고3은 시트에 어휘가 없고 워크북 빈칸어휘에서 나온다(사용자 확정).
+    문제지(`4. 빈칸어휘.docx`)는 `18[i      ]` 처럼 답이 비어 있고,
+    **해설지**에 `18[immediate]` 로 들어 있다 — 렌더러가 대괄호를 보고
+    왼쪽은 빈칸, 오른쪽은 굵은 글씨로 가른다.
+    """
+    from engines.final import manuscript as M
+    out = []
+    for d, spec in S.folders(scope, base, grade=3, log=log):
+        if spec.get("kind") not in ("teuk", "test"):
+            continue
+        wd = M.find_workbook_dir(d) or d
+        try:
+            names = [f for f in os.listdir(wd)
+                     if M._nfc(f).endswith(".docx")
+                     and "빈칸어휘" in M._nfc(f) and "정답" in M._nfc(f)]
+        except OSError:
+            names = []
+        if not names:
+            log("  [중요어휘] 빈칸어휘 해설지 없음 — %s" % os.path.basename(d))
+            continue
+        rows = [t for dep, t in M._docx_rows(os.path.join(wd, names[0]),
+                                             depth=True) if dep == 0]
+        cur = None
+        for t in rows:
+            if M.is_block_head(t):
+                m = M.RE_ROW.match(t)
+                lab = L.to_final_label(spec, m.group(2))
+                cur = None
+                if lab and S.in_scope(lab, scope):
+                    cur = [lab]
+                    out.append(cur)
+            elif cur is not None and not M.RE_PROMPT.match(t):
+                cur.append(t)
+    return "\n\n".join("\n".join(b) for b in out if len(b) > 1)
+
+
 def vocab(school, grade, exam_period, scope=None, order=None,
           log=lambda m: None):
     """중요어휘(고1·고2) — 구글시트. 돌려주는 것: (왼쪽 글, 오른쪽 글).
@@ -118,6 +158,12 @@ def vocab(school, grade, exam_period, scope=None, order=None,
       · 영어 사이에 낀 `式` 는 `─` 가 깨진 것이다(낱말 뜻의 한자는 그대로)
     """
     if grade not in ("고1", "고2"):
+        if grade == "고3" and scope:
+            cfg = json.load(open(os.path.join(os.path.dirname(
+                os.path.abspath(__file__)), "config.json"), encoding="utf-8"))
+            t = _vocab_g3(scope, os.path.expanduser(cfg["gdrive_content_base"]),
+                          log)
+            return t, t
         return "", ""
     from engines.final.vocab_fetcher import fetch_vocab_for_school
     # ⚠ **리딩파워는 중요어휘를 싣지 않는다**(사용자 확정). 시트에 데이터가

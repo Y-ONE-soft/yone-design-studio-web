@@ -111,16 +111,16 @@ SCORE_EXPECT = {
 }
 
 
-def _profile_total(key):
+def _profile_totals(key):
+    """(선택형, 서답형, 합계). 없는 값은 None."""
     a = ((P.raw(key).get("score") or {}).get("allocation") or {})
     tot = a.get("총점") or {}
-    v = tot.get("합계")
-    if isinstance(v, (int, float)):
-        return float(v)
-    sel, ess = tot.get("선택형"), tot.get("서답형")
-    if isinstance(sel, (int, float)):
-        return float(sel) + (float(ess) if isinstance(ess, (int, float)) else 0.0)
-    return None
+    num = lambda v: float(v) if isinstance(v, (int, float)) else None
+    sel, ess, both = num(tot.get("선택형")), num(tot.get("서답형")), \
+        num(tot.get("합계"))
+    if both is None and sel is not None:
+        both = sel + (ess or 0.0)
+    return sel, ess, both
 
 
 _RE_HTML_GROUP = re.compile(r'<p class="group">(.*?)</p>', re.S)
@@ -181,23 +181,29 @@ def _score_table_sum(html, spec):
     if not picked:
         picked = rows[1::2]
     vals = [float(x) for r in picked for x in _RE_TABLE_CELL.findall(r)]
-    return round(sum(vals), 2) if vals else None
+    return (round(sum(vals), 2), len(vals)) if vals else None
 
 
 def check_score(key, spec, html, pdf_text, plan):
-    want = _profile_total(key)
+    sel_t, ess_t, want = _profile_totals(key)
     note = None
     if key in SCORE_EXPECT:
         want, note = SCORE_EXPECT[key]
+    n_sel = sum(1 for r in plan if not r["essay"])
+    n_ess = len(plan) - n_sel
     detail = {"기대": want}
+    extra = []
 
     table = _score_table_sum(html, spec)
     if spec.fmt_score(3.0) is None:
         # 문항 옆에 배점을 안 찍는 학교(세종1) — 마지막 쪽 배점표가 근거다
-        got = table
         detail["방식"] = "배점표"
-        if got is None:
+        if table is None:
             return FAIL, "배점표도 문항 배점도 없다", detail
+        got, cells = table
+        detail["배점표칸"] = cells
+        if cells not in (n_sel, n_sel + n_ess):
+            extra.append(f"배점표 칸 {cells}개 vs 문항 {n_sel}+{n_ess}")
     else:
         singles = [float(m.group(2)) for m in _RE_SCORE.finditer(pdf_text)
                    if not m.group(1)]
@@ -205,20 +211,28 @@ def check_score(key, spec, html, pdf_text, plan):
         got = round(sum(singles) + sum(v * n for v, n in mults), 2)
         detail.update({"방식": "문항 배점", "낱개": len(singles),
                        "묶음머리": [[v, n] for v, n in mults]})
-        if notes:
-            detail["주의"] = notes
-        # 배점표까지 있는 학교(강동 계열)는 두 곳이 같은 값을 말해야 한다
+        extra += notes
+        # 배점표까지 있는 학교(강동 계열)는 두 곳이 같은 값을 말해야 한다.
+        # 다만 강동 표는 **선택형 밴드만** 싣는다 — 표가 무엇을 덮는지는
+        # 프로파일이 정한다(`score_table.essay`). 통째로 비교하면 늘 어긋난다.
         if table is not None:
-            detail["배점표"] = table
-            if abs(table - got) >= 0.05:
-                return (FAIL, f"문항 배점 합 {got} vs 배점표 합 {table} 불일치",
-                        detail)
+            t_sum, t_cells = table
+            covers_essay = bool(spec.score_table_essay) and n_ess
+            t_want = (want if covers_essay else sel_t)
+            detail["배점표"] = [t_sum, t_cells,
+                              "선택형+서답형" if covers_essay else "선택형만"]
+            if t_want is not None and abs(t_sum - t_want) >= 0.05:
+                return (FAIL, f"배점표 합 {t_sum} ≠ {t_want}"
+                        f"({'전체' if covers_essay else '선택형'})", detail)
     detail["합"] = got
+    msg_extra = (" · " + "; ".join(extra)) if extra else ""
     if want is None:
-        return WARN, f"프로파일에 총점이 없다 (PDF 합 {got})", detail
-    if abs(got - want) < 0.05:
-        return (OK, f"{got}/{want}" + (f" — {note}" if note else ""), detail)
-    return FAIL, f"{got} ≠ {want}" + (f" ({note})" if note else ""), detail
+        return WARN, f"프로파일에 총점이 없다 (합 {got}){msg_extra}", detail
+    if abs(got - want) >= 0.05:
+        return (FAIL, f"{got} ≠ {want}" + (f" ({note})" if note else "")
+                + msg_extra, detail)
+    ok = f"{got}/{want}" + (f" — {note}" if note else "")
+    return (WARN, ok + msg_extra, detail) if extra else (OK, ok, detail)
 
 
 # ── 2. 발문 누락 ────────────────────────────────────────────────────────────

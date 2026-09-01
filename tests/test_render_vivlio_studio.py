@@ -2246,3 +2246,43 @@ def test_object_styles_ride_the_paragraph_style_road():
     i = ui.index("개체 스타일 (인디자인의 오브젝트 스타일)")
     body = ui[i:i + 3000]
     assert "os-" in body and "paraclass" in body
+
+
+# ── 스포이드 · 자 · 서식으로 찾기 ──────────────────────────────
+def test_eyedropper_puts_the_colour_at_the_front():
+    """집은 색은 **색상 견본 맨 앞**에 서야 바로 쓴다.
+
+    ⚠ 글자색이 먼저다 — 없으면 그 자리의 바탕을 집는다(둘 다 검정이면 사람이
+      무엇을 집었는지 알 수 없다).
+    """
+    ui = _studio_src()
+    assert "function pickColor" in ui and "var picked = []" in ui
+    i = ui.index("function swatches")
+    assert "picked.map" in ui[i:i + 300], "집은 색이 맨 앞에 안 선다"
+
+
+def test_ruler_measures_in_mm_not_pixels():
+    """확대·축소해도 값이 같아야 한다 — 화면 px 이 아니라 지면 mm."""
+    ui = _studio_src()
+    i = ui.index("function rulerClick")
+    body = ui[i:i + 900]
+    assert "pxPerMm(pg)" in body and "round2(" in body
+    assert "clientX" in body
+
+
+def test_tools_that_are_not_selectors_are_intercepted_first():
+    """스포이드·자는 고르는 도구가 아니다 — 클릭을 먼저 가로챈다."""
+    ui = _studio_src()
+    i = ui.index("st.addEventListener('click'")
+    body = ui[i:i + 500]
+    assert "tool === 'pick'" in body and "tool === 'ruler'" in body
+
+
+def test_find_by_style_reads_the_built_html_not_the_screen():
+    """지면에서 찾으면 **지금 그려진 면만** 본다 — 조판한 HTML 을 훑는다."""
+    src = open(os.path.join(_ROOT, "routes", "book_studio.py"),
+               encoding="utf-8").read()
+    i = src.index("def api_findstyle")
+    body = src[i:i + 2200]
+    assert "index.html" in body and "data-ref=" in body
+    assert "500" in body, "너무 많으면 끊어야 한다"
