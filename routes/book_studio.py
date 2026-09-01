@@ -653,6 +653,40 @@ def api_assist_undo():
     return jsonify({"ok": True, "restored": back})
 
 
+@bp.route("/api/book-studio/export", methods=["POST"])
+def api_export():
+    """PDF 로 내보내기 — 조판본(RGB) 또는 인쇄 원고(CMYK).
+
+    인디자인의 「내보내기」 자리다. 지금까지는 통합웹의 조판 카드에서만 됐는데,
+    작업대에서 고치고 곧바로 뽑아 볼 수 있어야 한다.
+
+    ⚠ **오래 걸린다**(전권 조판 20~50초, 인쇄 원고는 더). 그래서 진행 상황을
+      돌려주고, 화면은 기다리는 동안 무엇을 하고 있는지 적는다.
+    """
+    p = request.get_json(silent=True) or {}
+    d, meta = _book_dir(p.get("b"))
+    if not d:
+        return jsonify({"error": "모르는 책"}), 404
+    kind = p.get("kind") or "pdf"
+    if kind not in ("pdf", "press"):
+        return jsonify({"error": f"모르는 종류: {kind}"}), 400
+    steps = ["build"] if kind == "pdf" else ["build", "print"]
+    logs = []
+    for st in steps:
+        r = _run([d, st], timeout=1800)
+        logs.append(r.stdout[-4000:])
+        if r.returncode != 0:
+            return jsonify({"error": (r.stderr or r.stdout)[-1200:],
+                            "log": "\n".join(logs)}), 500
+    from core.render_vivlio import book as bookmod
+    cfg = bookmod.load(d)
+    out = _last_pdf(cfg, d)
+    return jsonify({"ok": True, "log": "\n".join(logs),
+                    "pdf": os.path.basename(out) if out else None,
+                    "note": ("인쇄 원고(CMYK)까지 만들었습니다"
+                             if kind == "press" else "조판본 PDF 를 만들었습니다")})
+
+
 @bp.route("/api/book-studio/table", methods=["POST"])
 def api_table():
     """표 넣기·행·열 늘리고 줄이기.
