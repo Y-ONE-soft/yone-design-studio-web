@@ -58,32 +58,42 @@ def auto_sources(content, log=print):
                 continue
             seen.add(tok)
             kind = tok[0]
-            d = None
+            d, spec = None, None
             if kind == "lesson" and tb:
                 d = L.textbook(base, tb.get("subject", ""),
                                tb.get("publisher", ""), tok[1])
+                spec = {"kind": "lesson", "lesson": tok[1]}
                 # 추가본문(Deep Learning)은 과 폴더 밖에 따로 있다
                 dl = L.textbook_deeplearning(base, tb.get("subject", ""),
                                              tb.get("publisher", ""), tok[1])
                 if dl:
-                    out.append(dl)
+                    out.append((dl, {"kind": "lesson", "lesson": tok[1],
+                                     "deeplearning": True}))
             elif kind == "olpo":
-                d = L.olympos(base, tok[1], 1 if grade == 1 else 1)
+                d = L.olympos(base, tok[1])
+                spec = {"kind": "olpo", "unit": tok[1]}
             elif kind == "rp":
                 d = (L.reading_power(base, tok[1], "완성" if grade == 2
                                      else "기본")
                      or L.reading_power(base, tok[1], "기본")
                      or L.reading_power(base, tok[1], "완성"))
+                spec = {"kind": "rp", "unit": tok[1]}
             elif kind == "mock":
                 d = L.mockexam(base, grade, tok[1], tok[2])
+                spec = {"kind": "mock", "year": tok[1], "month": tok[2]}
             elif kind in ("teuk", "bare"):
                 # 접두 없는 `18강` — 학년이 정한다(고3 = 수능특강)
-                d = (L.suneung_teukgang(base, tok[1]) if grade == 3
-                     else L.olympos(base, tok[1]))
+                if grade == 3:
+                    d = L.suneung_teukgang(base, tok[1])
+                    spec = {"kind": "teuk", "unit": tok[1]}
+                else:
+                    d = L.olympos(base, tok[1])
+                    spec = {"kind": "olpo", "unit": tok[1]}
             elif kind == "test":
                 d = L.suneung_teukgang(base, tok[1], test=True)
+                spec = {"kind": "test", "unit": tok[1]}
             if d:
-                out.append(d)
+                out.append((d, spec))
             else:
                 log(f"  [못 찾음] {tok} ← {n}")
     return out
@@ -148,9 +158,10 @@ def content_blocks(content, kind):
     raise SystemExit(f"모르는 종류: {kind}")
 
 
-def manuscript_blocks(dirs, kind):
+def manuscript_blocks(srcs, kind):
+    """[(폴더, 출처 스펙)] → [(원고 라벨, 항목, 폴더 이름, 파이널 라벨)]."""
     out = []
-    for d in dirs:
+    for d, spec in srcs:
         blocks, path = M.read(d, kind)
         if not blocks:
             print(f"  [원고 없음] {d}")
@@ -158,7 +169,8 @@ def manuscript_blocks(dirs, kind):
         for b in blocks:
             items = (b["items"] if kind == "arrange"
                      else [p["korean"] for p in b["pairs"]])
-            out.append((b["raw"], items, os.path.basename(d)))
+            want = L.to_final_label(spec, b["raw"]) if spec else None
+            out.append((b["raw"], items, os.path.basename(d), want))
     return out
 
 
@@ -182,7 +194,7 @@ def main():
     with open(p, encoding="utf-8") as f:
         content = json.load(f)
 
-    srcs = list(a.src)
+    srcs = [(x, None) for x in a.src]
     if a.auto or not srcs:
         srcs += auto_sources(content)
     cb = content_blocks(content, a.kind)
@@ -190,12 +202,12 @@ def main():
     print(f"■ 되수확 {len(cb)}지문 · 원고 {len(mb)}지문 ({a.kind})")
 
     csig = [(h, sig(i), i) for h, i in cb]
-    msig = [(r, sig(i), i, d) for r, i, d in mb]
+    msig = [(r, sig(i), i, d, w) for r, i, d, w in mb]
     # 짝은 **한 번씩만** — 좋은 짝부터 확정한다(그리디로 하면 한 원고 블록이
     # 두 헤더에 걸려 뒤쪽이 엉뚱한 것과 짝지어진다).
     cand = []
     for ci, (h, s, items) in enumerate(csig):
-        for k, (r, ms, mi, d) in enumerate(msig):
+        for k, (r, ms, mi, d, w) in enumerate(msig):
             v = jac(s, ms)
             if v >= 0.5:
                 cand.append((v, ci, k))
@@ -209,23 +221,30 @@ def main():
     rows, orphan = [], []
     for ci, (h, s, items) in enumerate(csig):
         if ci not in pair:
-            best = max((jac(s, ms) for _r, ms, _mi, _d in msig), default=0.0)
+            best = max((jac(s, ms) for _r, ms, *_x in msig), default=0.0)
             orphan.append((h, round(best, 2)))
             continue
         bi, best = pair[ci]
-        r, ms, mi, d = msig[bi]
+        r, ms, mi, d, want = msig[bi]
         same = norm(" ".join(items)) == norm(" ".join(mi))
-        rows.append((h, r, d, round(best, 3), same, items, mi))
+        rows.append((h, r, d, round(best, 3), same, items, mi, want))
 
     if a.labels:
-        for h, r, d, v, same, items, mi in rows:
-            print(f"{h}\t{r}\t{d}\t{v}\t{'=' if same else '~'}")
+        for h, r, d, v, same, items, mi, want in rows:
+            print(f"{h}\t{r}\t{d}\t{v}\t{'=' if same else '~'}\t{want or ''}")
         return 0
 
     exact = sum(1 for x in rows if x[4])
+    lab_ok = sum(1 for x in rows if x[7] and x[7] == x[0])
+    lab_bad = [(x[0], x[7]) for x in rows if x[7] and x[7] != x[0]]
+    lab_none = sum(1 for x in rows if not x[7])
     print(f"  짝 {len(rows)} · 글자까지 같음 {exact} · "
           f"짝 못 찾음 {len(orphan)} · 원고에만 {len(msig) - len(used)}")
-    for h, r, d, v, same, items, mi in rows:
+    print(f"  라벨 일치 {lab_ok}/{len(rows) - lab_none}"
+          + (f" · 규칙 없음 {lab_none}" if lab_none else ""))
+    for got, want in lab_bad[:12]:
+        print(f"   ≠ 라벨: 되수확 {got!r} ↔ 원고 규칙 {want!r}")
+    for h, r, d, v, same, items, mi, want in rows:
         mark = "=" if same else "~"
         if a.verbose or not same:
             print(f"   {mark} {h:<18} ← {r:<26} [{d[:22]}] jac {v}")
@@ -236,9 +255,10 @@ def main():
                     print(f"       원고  : {norm(y)[:96]}")
     for h, v in orphan:
         print(f"   ! 짝 못 찾음: {h} (최대 jac {v})")
-    for k, (r, ms, mi, d) in enumerate(msig):
+    for k, (r, ms, mi, d, want) in enumerate(msig):
         if k not in used:
-            print(f"   + 원고에만: {r} [{d[:26]}]")
+            print(f"   + 원고에만: {r} [{d[:26]}]"
+                  + (f" → {want}" if want else ""))
     return 0
 
 

@@ -208,3 +208,91 @@ def parse_tokens(text):
             seen.add(t)
             uniq.append(t)
     return uniq
+
+
+# ── 원고 라벨 → 파이널 라벨 ──────────────────────────────────────────────
+# 원고는 `p108-no.01` · `L4-본문1(p.94)` · `p106-Example 1` 처럼 **쪽 표시 +
+# 지문 이름**으로 적는다. 파이널 라벨은 출처(과·강·연월)를 앞에 붙인 것이다.
+# 아래 표는 다섯 학교 180지문을 **내용으로 짝지어** 읽어 낸 것이다.
+RE_NO = re.compile(r"^no\.?\s*(\d{1,2})(?:\s*[~\-]\s*(\d{1,2}))?$", re.I)
+RE_EXAMPLE = re.compile(r"^Example\s*(\d+)$", re.I)
+RE_BONMUN = re.compile(r"^본문\s*(\d{1,2})$")
+RE_LESSON_PREFIX = re.compile(r"^L\s*(\d{1,2})$", re.I)
+
+
+def parse_label(text):
+    """`manuscript.parse_label` 재수출 — 라벨 규칙과 같은 자리에 둔다."""
+    from engines.final.manuscript import parse_label as _p
+    return _p(text)
+
+
+def _no(key):
+    """`no.03` · `no.24~25` → ("03", "24~25") 꼴의 원문 숫자(자리수 보존)."""
+    m = RE_NO.match(key)
+    if not m:
+        return None
+    return m.group(1) if not m.group(2) else f"{m.group(1)}~{m.group(2)}"
+
+
+def to_final_label(src, raw_label):
+    """(출처, 원고 라벨) → 파이널 라벨. 모르면 None.
+
+    src = {"kind": …, "unit": N, "lesson": N, "year": YY, "month": M,
+           "deeplearning": bool}
+    """
+    lab = parse_label(raw_label) if isinstance(raw_label, str) else raw_label
+    key, page = lab["key"], lab["page"]
+    kind = src["kind"]
+
+    if kind == "lesson":
+        lesson = src.get("lesson")
+        m = RE_LESSON_PREFIX.match(page)
+        if m:
+            lesson = int(m.group(1))
+        if src.get("deeplearning"):
+            return f"교과서{lesson}과 딥러닝"
+        if RE_BONMUN.match(key):
+            return f"교과서{lesson}과 본문{int(RE_BONMUN.match(key).group(1))}"
+        if "Read More" in key:
+            return f"교과서{lesson}과 RM"
+        return None
+
+    if kind == "olpo":
+        u = src["unit"]
+        if "ANALYSIS" in key.upper():
+            return f"올포 {u}강 분석"
+        if "서술형" in key:
+            return f"올포 {u}강 서술형"
+        if "논술형" in key:
+            return f"올포 {u}강 논술형"
+        n = _no(key)
+        if not n:
+            return None
+        # 장문(1지문 2~3문항)은 원고가 `no.01~02` 로 적지만 파이널은 첫 번호를
+        # 쓴다(실측: 올포 17강 `no.01~02` → `올포 17강 본문1`).
+        return f"올포 {u}강 본문{int(n.split('~')[0])}"
+
+    if kind == "rp":
+        u = src["unit"]
+        m = RE_EXAMPLE.match(key)
+        if m:
+            return f"리딩파워 {u}강 Ex{int(m.group(1)):02d}"
+        n = _no(key)
+        return f"리딩파워 {u}강 {int(n):02d}" if n and "~" not in n else None
+
+    if kind == "mock":
+        n = _no(key)
+        if not n:
+            return None
+        yy, mm = src["year"] % 100, src["month"]
+        return f"{yy:02d}{mm:02d}{n}"
+
+    if kind in ("teuk", "test"):
+        n = _no(key)
+        if not n:
+            return None
+        head = (f"test{src['unit']}" if kind == "test"
+                else f"{src['unit']}강")
+        return f"{head} {n}"
+
+    return None
