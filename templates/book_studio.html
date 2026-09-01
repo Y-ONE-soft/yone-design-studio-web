@@ -871,10 +871,14 @@
       for (var b = 0; b < c.length; b++) {
         if (c[b].el.classList && c[b].el.classList.contains('viv-box')) {
           hit = c[b];
+          // ⇧ 를 누르고 있으면 **더 고른다**(인디자인과 같다).
+          if (ev.shiftKey) { addPick(hit.el, hit.ref); return; }
+          picks = [];
           pick(hit.el, hit.ref);
           return;
         }
       }
+      picks = [];                                   // 글을 고르면 묶음은 푼다
       if (curEl && c.length > 1) {
         // 이미 그 덩어리를 골라 둔 상태면 한 단계 안으로
         for (var i = c.length - 1; i > 0; i--) {
@@ -1628,6 +1632,26 @@
       wrap.appendChild(bt);
     });
     host.appendChild(wrap);
+
+    // ── 여러 개 고른 때: 서로 맞추기 · 고르게 벌리기 ──
+    if (picks.length > 1) {
+      var mlab2 = document.createElement('div');
+      mlab2.className = 'ide-lab'; mlab2.style.marginTop = '9px';
+      mlab2.innerHTML = '<span>고른 ' + picks.length + '개끼리</span>'
+        + '<span class="ide-val">⇧누르고 더 고름</span>';
+      host.appendChild(mlab2);
+      var w2 = document.createElement('div');
+      w2.style.cssText = 'display:flex;flex-wrap:wrap;gap:3px';
+      [['왼쪽 맞춤', 'l'], ['가운데 맞춤', 'c'], ['오른쪽 맞춤', 'r'],
+       ['위 맞춤', 't'], ['가운데(세로)', 'm'], ['아래 맞춤', 'b'],
+       ['가로로 고르게', 'h'], ['세로로 고르게', 'v']].forEach(function (a) {
+        var bt = document.createElement('button');
+        bt.className = 'ide-b'; bt.textContent = a[0];
+        bt.onclick = function () { alignPicks(a[1]); };
+        w2.appendChild(bt);
+      });
+      host.appendChild(w2);
+    }
     var mar = document.createElement('div');
     mar.className = 'ide-hint'; mar.style.marginTop = '4px';
     mar.textContent = '지면 가장자리(도련 포함) 기준으로 옮깁니다.';
@@ -1666,6 +1690,84 @@
     }
     if (!Object.keys(at).length) { msg('이미 그 자리입니다'); return; }
     boxApi({ action: 'move', ref: ref, at: at });
+  }
+
+  /** 고른 상자끼리 맞추거나 고르게 벌린다.
+   *
+   *  ⚠ 여기서도 **기준을 짐작하지 않는다** — 잰 자리에서 "이만큼 옮겨라" 로
+   *    푼다(상자마다 담고 있는 것이 다를 수 있다).
+   *  ⚠ 상자마다 저장을 따로 부르면 다시 조판이 그만큼 돈다 → **한 번만** 굽는다.
+   */
+  function alignPicks(how) {
+    if (picks.length < 2) { msg('⇧ 누르고 두 개 이상 고르세요'); return; }
+    var boxes = picks.map(function (x) {
+      var pg = pageBoxOf(x.el);
+      return { el: x.el, ref: x.ref, r: x.el.getBoundingClientRect(),
+               ppm: pxPerMm(pg) };
+    });
+    var xs = boxes.map(function (b) { return b.r.left; });
+    var rs = boxes.map(function (b) { return b.r.right; });
+    var ys = boxes.map(function (b) { return b.r.top; });
+    var bs = boxes.map(function (b) { return b.r.bottom; });
+    var L = Math.min.apply(null, xs), R = Math.max.apply(null, rs);
+    var T = Math.min.apply(null, ys), B = Math.max.apply(null, bs);
+    var moved = [];
+    if (how === 'h' || how === 'v') {
+      // 고르게 벌리기 — 양 끝은 그대로 두고 가운데를 나눈다
+      var key = how === 'h' ? 'left' : 'top';
+      var sorted = boxes.slice().sort(function (a, b2) {
+        return a.r[key] - b2.r[key];
+      });
+      var first = sorted[0].r[key];
+      var last = sorted[sorted.length - 1].r[key];
+      var step = (last - first) / (sorted.length - 1);
+      sorted.forEach(function (b2, i) {
+        var want = first + step * i;
+        var d = (want - b2.r[key]) / b2.ppm;
+        if (Math.abs(d) > 0.01) {
+          moved.push({ b: b2, dx: how === 'h' ? d : 0, dy: how === 'v' ? d : 0 });
+        }
+      });
+    } else {
+      boxes.forEach(function (b2) {
+        var dx = 0, dy = 0;
+        if (how === 'l') dx = (L - b2.r.left) / b2.ppm;
+        if (how === 'r') dx = (R - b2.r.right) / b2.ppm;
+        if (how === 'c') dx = ((L + R) / 2 - (b2.r.left + b2.r.right) / 2) / b2.ppm;
+        if (how === 't') dy = (T - b2.r.top) / b2.ppm;
+        if (how === 'b') dy = (B - b2.r.bottom) / b2.ppm;
+        if (how === 'm') dy = ((T + B) / 2 - (b2.r.top + b2.r.bottom) / 2) / b2.ppm;
+        if (Math.abs(dx) > 0.01 || Math.abs(dy) > 0.01) {
+          moved.push({ b: b2, dx: dx, dy: dy });
+        }
+      });
+    }
+    if (!moved.length) { msg('이미 맞춰져 있습니다'); return; }
+    msg(moved.length + '개를 옮기는 중…');
+    var left = moved.length;
+    moved.forEach(function (m) {
+      var el2 = m.b.el, at = {};
+      if (m.dx) {
+        if (el2.style.right) at.right = round2(mmOf(el2, 'right', m.b.ppm) - m.dx) + 'mm';
+        else at.left = round2(mmOf(el2, 'left', m.b.ppm) + m.dx) + 'mm';
+      }
+      if (m.dy) {
+        if (el2.style.bottom) at.bottom = round2(mmOf(el2, 'bottom', m.b.ppm) - m.dy) + 'mm';
+        else at.top = round2(mmOf(el2, 'top', m.b.ppm) + m.dy) + 'mm';
+      }
+      ['width', 'height'].forEach(function (k) {
+        if (el2.style[k]) at[k] = el2.style[k];
+      });
+      api('/api/book-studio/box',
+          { b: key, action: 'move', ref: m.b.ref, at: at }).then(function (d) {
+        if (d && d.history) setHist(d.history);
+        if (--left === 0) {           // **마지막 하나가 끝나면 한 번만** 굽는다
+          rebuild('').then(function (ok) {
+            if (ok) { msg('✓ ' + moved.length + '개를 맞췄습니다'); drawBox(); }
+          });
+        }
+      });
+    });
   }
 
   // ── 끌어서 옮기기 ───────────────────────────────────────
@@ -1797,6 +1899,31 @@
   //   와서 저절로 사라진다 — 인쇄에는 어떤 경우에도 안 나간다.
   var HANDLES = [['nw', 0, 0], ['n', .5, 0], ['ne', 1, 0], ['e', 1, .5],
                  ['se', 1, 1], ['s', .5, 1], ['sw', 0, 1], ['w', 0, .5]];
+
+  // 여러 개 고르기 — 인디자인처럼 ⇧누르면 더한다. 정렬·분배가 이걸 쓴다.
+  var picks = [];        // [{el, ref}]
+
+  function addPick(el, ref) {
+    var i = -1;
+    picks.forEach(function (x, k) { if (x.ref === ref) i = k; });
+    if (i >= 0) { picks.splice(i, 1); }
+    else { picks.push({ el: el, ref: ref }); }
+    if (picks.length) { pick(picks[picks.length - 1].el, picks[picks.length - 1].ref); }
+    markPicks();
+    msg(picks.length + '개 골랐습니다 — ⇧누르고 더 고르세요');
+  }
+
+  /** 묶음으로 고른 상자에 **엷은 테두리**를 둘러 무엇이 골렸는지 보인다. */
+  function markPicks() {
+    var st = stageEl(); if (!st) return;
+    Array.prototype.forEach.call(st.querySelectorAll('.viv-box'), function (b) {
+      b.style.outline = '';
+    });
+    if (picks.length < 2) return;
+    picks.forEach(function (x) {
+      if (x.el && x.el.style) x.el.style.outline = '0.3mm dashed rgba(50,110,255,.9)';
+    });
+  }
 
   function clearHandles() {
     var st = stageEl(); if (!st) return;
