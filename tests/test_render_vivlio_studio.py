@@ -692,8 +692,8 @@ def test_fonts_api_splits_used_and_available():
 def test_layers_are_view_only():
     """레이어는 **보기**다 — 끈 채로 PDF 를 구우면 그건 다른 책이다."""
     src = _studio_src()
-    assert "var LAYER_DEFS" in src and "function applyLayers()" in src
-    i = src.index("function applyLayers()")
+    assert "var LAYER_DEFS" in src and "function applyLayers(" in src
+    i = src.index("function applyLayers(")
     assert "visibility" in src[i:i + 900]
     assert "조판은 안 바뀝니다" in src or "조판을 바꾸지 않는다" in src
 
@@ -1559,3 +1559,54 @@ def test_page_number_has_one_source():
     assert "curPage = pp.pageIndex + 1" in src[i:i + 600]
     j = src.index("viewer.addListener('nav'")
     assert "pp.pageIndex != null" in src[j:j + 600], "nav 알림이 덮어쓰면 안 된다"
+
+
+def test_hop_waits_while_the_engine_is_still_composing():
+    """무거운 면은 몇 초씩 걸린다 — 3초 만에 포기하면 안 된다.
+
+    실측: 15면에서 "여기까지 갑니다" 하고 멈췄는데 실제로는 잘 가고 있었다.
+    """
+    src = _studio_src()
+    i = src.index("function hopTo")
+    body = src[i:i + 2600]
+    assert "readyState === 'loading'" in body, "조판 중인지 보고 기다려야 한다"
+
+
+def test_the_real_page_count_is_learned_from_the_end():
+    """`epageCount` 는 어림값이다 — 견본 15면을 40면이라 했다.
+
+    끝에 닿으면 그 자리를 참으로 삼는다(전권은 마지막 조판본 PDF 면수).
+    """
+    src = _studio_src()
+    i = src.index("function hopTo")
+    assert "pageCount = now" in src[i:i + 2600]
+    j = src.index("function drawPageNo")
+    assert "thumbInfo.pages" in src[j:j + 700], "전권은 PDF 면수가 참이다"
+
+
+def test_page_panel_is_not_rebuilt_on_every_hop():
+    """면마다 그림 116장을 새로 붙이면 넘기기가 느려진다 — 표시만 옮긴다."""
+    src = _studio_src()
+    assert "function markPage" in src
+    i = src.index("function drawPages")
+    assert "pagesDrawn" in src[i:i + 900]
+
+
+def test_layers_do_not_clear_the_message_on_every_page():
+    """면이 바뀔 때마다 부르는 것은 조용해야 한다 — 알림이 지워졌다."""
+    src = _studio_src()
+    i = src.index("function applyLayers")
+    assert "function applyLayers(quiet)" in src[i - 30:i + 40]
+    assert "applyLayers(true)" in src
+
+
+def test_far_jump_shows_the_printed_page_meanwhile():
+    """조판은 앞에서부터 흐른다 — 먼 면은 마지막 조판본 그림을 먼저 깐다.
+
+    ⚠ 견본을 보는 중이면 면 번호가 PDF 와 달라 **엉뚱한 면**이 된다.
+    """
+    src = _studio_src()
+    i = src.index("function hopTo")
+    body = src[i:i + 2600]
+    assert "/book-studio/thumb/" in body
+    assert "scope === 'full'" in body, "견본에서는 깔면 안 된다"
