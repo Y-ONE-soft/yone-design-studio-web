@@ -1018,6 +1018,7 @@ def build_html(doc, spec, case=None, css_href="theme.css", scores=None,
     cont_html = continue_mark(s, case)
     foot_html = _running_footer(s, case)
     head_block = exam_head(s, case)
+    aux_block = first_page_aux(s, case, scores)
     notice = ""
     if s.notice_head:
         notice = ('<div class="notice-wrap">'
@@ -1041,6 +1042,7 @@ def build_html(doc, spec, case=None, css_href="theme.css", scores=None,
 {cont_html}
 <section class="flow">
 {head_block}
+{aux_block}
 {notice}
 {body}
 {ending}
@@ -1102,6 +1104,128 @@ def _fill_marker(text, glyph):
     if glyph and glyph not in t and len(glyph) <= 2:
         t = f"{t} {glyph}".strip()
     return t
+
+
+# ── 1쪽 부속 표·상자 ────────────────────────────────────────────────────────
+# 문제유형 표(한영1·한영3), 문항수 표(성덕1), 문항수 안내 상자(세종1) …
+# 전부 프로파일에 모양이 적혀 있는데 렌더러가 읽지 않아 통째로 빠져 있었다.
+_AUX_KEYS = ("type_table", "qtype_box", "count_table", "notice_box",
+             "score_box", "notice_mid")
+_RE_CNT = re.compile(r"[(（]?\s*(\d+)\s*[)）]?\s*문항")
+_RE_PNT = re.compile(r"[(（]?\s*(\d+(?:\.\d+)?)\s*[)）]?\s*점")
+
+
+def first_page_aux(s, case=None, scores=None):
+    """1쪽 머리 아래 부속 블록. 정본에 있는데 조판에 없던 것들."""
+    out = []
+    run = P.dig(s.raw, "running") or {}
+    for key in _AUX_KEYS:
+        blk = run.get(key)
+        if not isinstance(blk, dict) or not blk.get("on", True):
+            continue
+        html = _aux_block(blk, key, case, scores)
+        if html:
+            out.append(html)
+    return "".join(out)
+
+
+def _aux_block(blk, key, case, scores):
+    rows = blk.get("cells")
+    if not isinstance(rows, list) or not rows or not isinstance(rows[0], list):
+        rows = blk.get("rows") if isinstance(blk.get("rows"), list) else None
+    if isinstance(rows, list) and rows and isinstance(rows[0], list):
+        return _aux_grid_html(rows, key, case, scores, blk)
+    lines = blk.get("lines")
+    if isinstance(lines, list) and lines:
+        al = blk.get("line_align") or []
+        body = "".join(
+            f'<p class="aux-line" style="text-align:'
+            f'{al[i] if i < len(al) else "left"}">'
+            f'{esc(_aux_fill(str(l), None, case, scores))}</p>'
+            for i, l in enumerate(lines) if str(l).strip())
+        return f'<div class="aux-box aux-{esc(key)}">{body}</div>' if body else ""
+    return ""
+
+
+def _aux_grid_html(rows, key, case, scores, blk):
+    """2차원 배열 표. 아래 행이 빈 칸이면 위 칸의 세로 병합으로 본다."""
+    nrow = len(rows)
+    ncol = max(len(r) for r in rows)
+    html = []
+    skip = set()
+    for ri, row in enumerate(rows):
+        tds = []
+        for ci in range(ncol):
+            if (ri, ci) in skip:
+                continue
+            v = str(row[ci]) if ci < len(row) else ""
+            span = 1
+            if v.strip():
+                for rj in range(ri + 1, nrow):
+                    nxt = rows[rj][ci] if ci < len(rows[rj]) else ""
+                    if str(nxt).strip():
+                        break
+                    skip.add((rj, ci))
+                    span += 1
+            # 마지막 칸이 모자라면 가로로 채운다(성덕1 3행 `서술형 답지에 작성`)
+            cs = ncol - ci if ci == len(row) - 1 and len(row) < ncol else 1
+            # 그 칸이 선택형인지 서답형인지는 **행 머리**(1열)나 **열 머리**
+            # (1행)가 알려 준다. 성덕1은 행 머리, 한영1·한영3은 열 머리다.
+            head_r = str(row[0]) if row else ""
+            head_c = str(rows[0][ci]) if ci < len(rows[0]) else ""
+            label = f"{head_r} {head_c}"
+            txt = _aux_fill(v, label, case, scores)
+            a = (f' rowspan="{span}"' if span > 1 else "") + \
+                (f' colspan="{cs}"' if cs > 1 else "")
+            tds.append(f"<td{a}>{esc(txt)}</td>")
+        html.append("<tr>" + "".join(tds) + "</tr>")
+    return (f'<table class="aux-table aux-{esc(key)}">'
+            + "".join(html) + "</table>")
+
+
+_RE_KIND = re.compile(r"(선\s*택\s*형|객관식|서\s*답\s*형|서\s*술\s*형)")
+
+
+def _aux_fill(text, label, case, scores):
+    """문항 수·배점을 **실제 조판값**으로. 표기 형식은 정본 그대로 둔다.
+
+    한 줄에 둘이 함께 오기도 한다(세종1 `*선택형 (24)문항 70점, 서답형 …`).
+    그럴 땐 구간을 갈라 각각 채운다.
+    """
+    if not case or not text:
+        return text
+    kinds = _RE_KIND.findall(text)
+    if len(kinds) >= 2:
+        out, pos = [], 0
+        for m in _RE_KIND.finditer(text):
+            out.append(text[pos:m.start()])
+            pos = m.start()
+            nxt = _RE_KIND.search(text, m.end())
+            seg = text[pos:nxt.start() if nxt else len(text)]
+            out.append(_fill_one(seg, m.group(0), case, scores))
+            pos = nxt.start() if nxt else len(text)
+        return "".join(out)
+    return _fill_one(text, f"{label or ''} {text}", case, scores)
+
+
+def _fill_one(text, tag, case, scores):
+    t = re.sub(r"\s+", "", str(tag or ""))
+    if "서답형" in t or "서술형" in t:
+        n, pts = case.get("n_ess"), (scores or {}).get("서답형")
+    elif "선택형" in t or "객관식" in t:
+        n, pts = case.get("n_sel"), (scores or {}).get("선택형")
+    else:
+        return text
+    out = text
+    if n:
+        out = _RE_CNT.sub(lambda m: m.group(0).replace(m.group(1), str(n)), out)
+        out = out.replace("{n}", str(n))
+    if pts:
+        tot = round(sum(pts), 1)
+        v = str(int(tot)) if float(tot) == int(tot) else str(tot)
+        out = _RE_PNT.sub(lambda m: m.group(0).replace(m.group(1), v), out)
+        out = out.replace("{p}", v)
+    return out
 
 
 def _running_header(s, case):

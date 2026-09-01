@@ -183,12 +183,16 @@ class FinalSeries(Series):
 
     @staticmethod
     def _one_fit(kind, nat, cap, m):
-        over = nat - cap
-        line = render_mod.LINE_MM[kind]
-        if over <= m["over_lines"] * line:
-            fx = m["fixed_mm"]
-            lead = (cap - fx) / max(1.0, nat - fx)
-            return {"lead": round(max(m["min_lead"], lead), 4)}
+        """한 칸에 앉히는 사다리 — ①행간 조임 ②두 칸 ③흘림.
+
+        ⚠ 경계는 '몇 줄 넘쳤나' 가 아니라 **행간 하한**이다. 완성본도 그렇게
+          한다(실측: 광문3 17강 05 는 26줄을 8.3% 조여 한 칸에 앉혔다).
+          줄 수로 끊으면 조이면 들어갈 지문이 두 칸으로 가 아래 칸이 빈다.
+        """
+        fx = m["fixed_mm"]
+        lead = (cap - fx) / max(1.0, nat - fx)
+        if lead >= m["min_lead"]:
+            return {"lead": round(lead, 4)}
         cap2 = FinalSeries._cap2(kind, m)
         if cap2 is None:
             return {"flow": True}               # 어휘는 흘리는 수밖에 없다

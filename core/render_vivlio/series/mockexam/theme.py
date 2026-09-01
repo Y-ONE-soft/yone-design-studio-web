@@ -394,6 +394,15 @@ def build_css(spec):
     css.append(".run-line .rl-center { flex: 1; text-align: center; }")
     css.append(".run-line .rl-right { text-align: right; }")
     css.append(".run-table { width: 100%; margin: 0 0 1mm; }")
+    # 1쪽 부속 표·상자(문제유형·문항수·안내)
+    css.append(".aux-table { border-collapse: collapse; margin: 0 0 2mm; "
+               "width: 100%; border: 0.96pt solid #000; "
+               "break-inside: avoid; }")
+    css.append(".aux-table td { border: 0.36pt solid #000; text-align: center; "
+               "padding: 0.7mm 1mm; vertical-align: middle; }")
+    css.append(".aux-box { border: 0.24pt solid #000; padding: 1.2mm; "
+               "margin: 0 0 2mm; break-inside: avoid; }")
+    css.append(".aux-line { margin: 0; }")
     css.append(".exam-head .eh { display: block; }")
     css.append(".exam-head .eh-center { text-align: center; }")
     css.append(".exam-head .eh-right { text-align: right; }")

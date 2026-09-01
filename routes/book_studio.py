@@ -413,14 +413,16 @@ def api_blankpage():
     cfg = bookmod.load(d)
     sel = '[data-ref="%s"]::before' % ref
     off = str(p.get("off") or "").lower() in ("1", "true", "on")
+    # ⚠ 그 자리가 **이미 면 머리**면 앞쪽 나눔을 주면 안 된다 — 앞면이 통째로
+    #   비어 **두 면**이 생긴다(실측: 116→118, 빈 면 둘). 지면에서 그 자리가
+    #   면 꼭대기인지는 **화면만 안다**(조판이 정한다) → 화면이 알려 준다.
+    at_top = str(p.get("attop") or "").lower() in ("1", "true", "on")
+    v = {"content": '""', "display": "block",
+         "break-after": "page", "height": "1mm"}
+    if not at_top:
+        v["break-before"] = "page"
     st = ed.push(cfg, {"op": "style", "sel": sel,
-                       # ⚠ `break-before/after: page` 를 같이 주면 **두 면**이
-                       #   생긴다(그 자리가 이미 면 머리면 앞면이 통째로 빈다).
-                       #   한 면 높이의 빈 칸 하나면 조판이 알아서 면을 넘긴다.
-                       "v": {} if off else {
-                           "content": '""',
-                           "display": "block",
-                           "height": "100vh"},
+                       "v": {} if off else v,
                        "note": "빈 면 " + ("지우기" if off else "넣기")})
     return jsonify({"ok": True, "sel": sel, "history": _hist(st)})
 
