@@ -299,6 +299,24 @@
         </div>
       </details>
 
+      <details class="ide-pal"><summary>정규식 스타일</summary>
+        <div class="ide-in" id="pal-grep">
+          <div class="ide-hint">인디자인의 <b>정규 표현식 스타일</b>입니다.
+            꼴이 맞는 글자마다 문자 스타일이 <b>조판할 때마다</b> 걸립니다 —
+            원고는 바뀌지 않습니다.</div>
+          <div class="ide-hist" id="grep-list"></div>
+          <div class="ide-row"><label>찾을 꼴</label>
+            <input id="grep-pat" placeholder="예) \d+% · \[[^\]]+\]"></div>
+          <div class="ide-row"><label>걸 스타일</label>
+            <input id="grep-cls" placeholder="예) 강조"></div>
+          <div class="ide-row"><label>범위(선택)</label>
+            <input id="grep-sel" placeholder="예) head — 비우면 어디서나"></div>
+          <div class="ide-f">
+            <button class="ide-b" id="grep-add">규칙 넣기</button>
+          </div>
+        </div>
+      </details>
+
       <details class="ide-pal"><summary>목차</summary>
         <div class="ide-in" id="pal-toc">
           <div class="ide-hint">스타일이 걸린 제목을 모아 <b>면 번호와 함께</b>
@@ -3711,6 +3729,11 @@
       + '</div>');
     h.push('<div style="margin-bottom:6px"><button class="ide-b" id="pg-blank">'
       + '빈 면 넣기</button> <span class="ide-hint">고른 자리 <b>앞에</b> 넣습니다</span></div>');
+    // 섹션 시작 번호 — 인디자인의 「페이지 번호 매기기 옵션」
+    h.push('<div style="margin-bottom:6px">'
+      + '<button class="ide-b" id="pg-renum">여기서 면 번호 다시</button> '
+      + '<input class="ide-t" id="pg-renum-n" value="1" style="width:52px"> '
+      + '<span class="ide-hint">고른 자리부터 그 번호로 셉니다</span></div>');
     h.push('<div style="display:flex;flex-wrap:wrap;gap:4px">');
     for (var i = 1; i <= total; i++) {
       var on = (i === curPage);
@@ -3734,6 +3757,8 @@
     host.innerHTML = h.join('');
     var bp = host.querySelector('#pg-blank');
     if (bp) bp.onclick = addBlankPage;
+    var rn = host.querySelector('#pg-renum');
+    if (rn) rn.onclick = renumberHere;
     var cur = host.querySelector('a[data-pg="' + curPage + '"]');
     if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'nearest' });
   }
@@ -4002,6 +4027,8 @@
       });
     loadImages();
     loadThumbs();
+    api('/api/book-studio/grep?b=' + encodeURIComponent(key))
+      .then(function (d) { grepRules = (d && d.rules) || []; drawGrep(); });
     api('/api/book-studio/pagerules?b=' + encodeURIComponent(key))
       .then(function (d) {
         pageRules = (d && d.rules) || {};
@@ -4057,6 +4084,46 @@
       editEl.appendChild(sp);
     }
     msg('각주를 달았습니다 — ⌘↵ 로 저장하면 면 아래에 나옵니다');
+  }
+
+  // ── 정규식 스타일 (인디자인의 GREP 스타일) ───────────────────────
+  //
+  // ⚠ 원고를 바꾸지 않는다 — 조판 직전 HTML 에만 건다. 그래서 규칙을 지우면
+  //   그 자리가 그대로 돌아온다.
+  var grepRules = [];
+
+  function drawGrep() {
+    var host = $('grep-list'); if (!host) return;
+    host.innerHTML = '';
+    if (!grepRules.length) {
+      host.innerHTML = '<div class="ide-hint">아직 규칙이 없습니다.</div>';
+      return;
+    }
+    grepRules.forEach(function (r, i) {
+      var row = document.createElement('div'); row.className = 'ide-row';
+      var t = document.createElement('div'); t.className = 'ide-hint';
+      t.textContent = (i + 1) + '. ' + r.pat + ' → .cs-' + r.cls
+        + (r.sel ? ' (.' + r.sel + ' 안에서만)' : '');
+      var x = document.createElement('button');
+      x.className = 'ide-b'; x.textContent = '지우기';
+      x.onclick = function () {
+        var next = grepRules.slice(); next.splice(i, 1); saveGrep(next);
+      };
+      row.appendChild(t); row.appendChild(x);
+      host.appendChild(row);
+    });
+  }
+
+  function saveGrep(next) {
+    api('/api/book-studio/grep', { b: key, rules: next }).then(function (d) {
+      if (d.error) { msg('✗ ' + d.error); return; }
+      grepRules = d.rules || [];
+      setHist(d.history);
+      drawGrep();
+      rebuild('').then(function (ok) {
+        if (ok) msg('✓ 정규식 스타일 ' + grepRules.length + '개');
+      });
+    });
   }
 
   // ── 목차 ────────────────────────────────────────────────────────
@@ -4172,6 +4239,34 @@
     if (t && t.dataset && t.dataset.f === 'fn') { putFootnote(); return; }
     if (t && t.dataset && t.dataset.f === 'lk') { putLink(); return; }
     if (t && t.dataset && t.dataset.f) fmt(t.dataset.f);
+  });
+  /** 면 번호 다시 매기기 — 인디자인의 「페이지 번호 매기기 옵션 · 시작 번호」.
+   *
+   *  ⚠ `counter-reset` 은 **@page 가 아니라 그 자리 요소**에 건다(실측: 셋째
+   *    면에 걸었더니 그 면부터 1 로 다시 셌다).
+   */
+  function renumberHere() {
+    if (!curRef) { msg('면 번호를 다시 셀 자리를 지면에서 고르세요'); return; }
+    var n = parseInt(($('pg-renum-n') || {}).value, 10);
+    if (!(n >= 0)) { msg('시작 번호를 숫자로 적으세요'); return; }
+    api('/api/book-studio/styles',
+        { b: key, selector: '[data-ref="' + curRef + '"]',
+          props: { 'counter-reset': 'page ' + n } }).then(function (d) {
+      if (d.error) { msg('✗ ' + d.error); return; }
+      styles = d.styles || styles;
+      rebuild('').then(function (ok) {
+        if (ok) msg('✓ 이 자리부터 면 번호를 ' + n + ' 로 셉니다');
+      });
+    });
+  }
+
+  $('grep-add').addEventListener('click', function () {
+    var pat = $('grep-pat').value.trim(), cls = $('grep-cls').value.trim();
+    if (!pat || !cls) { msg('찾을 꼴과 걸 스타일을 적으세요'); return; }
+    var r = { pat: pat, cls: cls };
+    var sel = $('grep-sel').value.trim(); if (sel) r.sel = sel;
+    saveGrep(grepRules.concat([r]));
+    $('grep-pat').value = '';
   });
   $('toc-scan').addEventListener('click', tocScan);
   $('toc-make').addEventListener('click', tocMake);

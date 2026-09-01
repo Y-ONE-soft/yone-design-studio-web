@@ -293,6 +293,9 @@ def write(cfg, series, build_dir, name="knobs.css"):
     달라져서 회귀 대조가 어려워진다.
     """
     from core.render_vivlio import stage
+    from core.render_vivlio import grepstyle as _gs
+    # 정규식 스타일은 CSS 가 아니라 **조판 직전에 HTML 에** 건다 → 옆에 내둔다
+    _gs.write(build_dir, cfg.section("grep_styles") or [])
     return stage.write_css(build_dir, name,
                            css_text(cfg, series) + styles_text(cfg)
                            + page_rules_text(cfg)

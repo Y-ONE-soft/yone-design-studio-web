@@ -611,6 +611,60 @@ def api_findstyle():
     return jsonify({"cls": cls, "total": len(hits), "hits": hits})
 
 
+@bp.route("/api/book-studio/grep", methods=["GET", "POST"])
+def api_grep():
+    """정규식 스타일 — **꼴이 맞는 글자마다** 문자 스타일을 건다.
+
+    인디자인의 「단락 스타일 > 정규 표현식 스타일」이다. 한 번 적어 두면
+    조판할 때마다 그 꼴을 찾아 입힌다 — 원고를 고쳐도 따라온다.
+
+    ⚠ 규칙은 **원고를 바꾸지 않는다.** 조판 직전 HTML 에만 건다(`grepstyle`).
+      그래서 지우면 그 자리 그대로 돌아온다.
+    """
+    from core.render_vivlio import book as bookmod
+    from core.render_vivlio import edits as ed
+    import re as _re
+    get = request.method == "GET"
+    p = {} if get else (request.get_json(silent=True) or {})
+    d, meta = _book_dir(request.args.get("b") if get else p.get("b"))
+    if not d:
+        return jsonify({"error": "모르는 책"}), 404
+    cfg = bookmod.load(d)
+    if get:
+        return jsonify({"rules": cfg.section("grep_styles") or []})
+    rules = p.get("rules")
+    if not isinstance(rules, list):
+        return jsonify({"error": "규칙 목록이 없습니다"}), 400
+    ok = []
+    for r in rules[:40]:
+        if not isinstance(r, dict):
+            continue
+        pat = str(r.get("pat") or "").strip()
+        cls = str(r.get("cls") or "").strip()
+        sel = str(r.get("sel") or "").strip()
+        if not pat or not cls:
+            continue
+        if len(pat) > 200:
+            return jsonify({"error": "규칙이 너무 깁니다(200자)"}), 400
+        try:
+            _re.compile(pat)
+        except _re.error as e:
+            return jsonify({"error": "못 알아들을 규칙입니다: %s" % e}), 400
+        if not _re.match(r"^[0-9A-Za-z가-힣_-]{1,40}$", cls):
+            return jsonify({"error": "스타일 이름이 이상합니다: %s" % cls}), 400
+        if sel and not _re.match(r"^[0-9A-Za-z가-힣_-]{1,40}$", sel):
+            return jsonify({"error": "적용 범위가 이상합니다: %s" % sel}), 400
+        item = {"pat": pat, "cls": cls}
+        if sel:
+            item["sel"] = sel
+        ok.append(item)
+    st = ed.push(cfg, {"op": "knob", "key": "grep_styles",
+                       "v": ok or None, "note": "정규식 스타일 %d개" % len(ok)})
+    cfg.reload()
+    return jsonify({"ok": True, "rules": cfg.section("grep_styles") or [],
+                    "history": _hist(st)})
+
+
 @bp.route("/api/book-studio/toc", methods=["POST"])
 def api_toc():
     """목차 — 제목을 모아 **면 번호와 함께** 세운다(인디자인의 목차).
