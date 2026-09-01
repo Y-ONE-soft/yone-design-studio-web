@@ -165,6 +165,14 @@ class Spec(object):
         # ── 지면 (제품 상수 B4, 프로파일 값은 B4 환산치) ──
         size = _first(p, ["page.size_mm"], self.dec["판형"]["값"])
         self.page_w, self.page_h = float(size[0]), float(size[1])
+        # 정본(대개 A4) → 제품 판형(B4) 환산 계수. 머리표처럼 낱개 요소를
+        # 실측 좌표로 앉힐 때 쓴다.
+        sheet = dig(p, "reference.sheet_mm") or []
+        try:
+            sw = float(sheet[0])
+        except Exception:
+            sw = 0.0
+        self.ref_scale = round(self.page_w / sw, 5) if sw > 50 else 1.0
         self.columns = int(_num(_first(p, ["page.columns"], 2)) or 2)
         # 필드명이 학교마다 다르다(사람이 쓴 관측이라). 후보를 넓게 잡는다.
         self.col_origin = _first(p, [

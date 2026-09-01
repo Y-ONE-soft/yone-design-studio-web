@@ -328,7 +328,15 @@ def build_css(spec):
 
     # ── 1쪽 머리표 (학교에 따라 1쪽만 / 매 쪽) ──
     css.append("/* 머리표 — 프로파일 running.header 실측 */")
-    css.append(".exam-head { column-span: all; margin-bottom: 4mm; }")
+    css.append(".exam-head { column-span: all; margin-bottom: 4mm; "
+               "position: relative; }")
+    # 실측 좌표가 있는 요소는 그 자리에 앉힌다. 기준점은 지면 왼쪽 위이므로
+    # 본문 여백만큼 빼 준다.
+    ml = s.text_left if s.text_left is not None else 20.0
+    mt = s.rule_top if s.rule_top is not None else 24.0
+    css.append(f".exam-head .eh-abs {{ position: absolute; "
+               f"margin-left: -{round(ml, 2)}mm; margin-top: -{round(mt, 2)}mm; "
+               "white-space: nowrap; }")
     css.append(".exam-head .eh { display: block; }")
     css.append(".exam-head .eh-center { text-align: center; }")
     css.append(".exam-head .eh-right { text-align: right; }")
@@ -337,8 +345,18 @@ def build_css(spec):
     if dr:
         thin = dr.get("thin_pt") or 0.24
         thick = dr.get("thick_pt") or 0.96
+        # 이중 가로선도 실측 자리에 앉힌다. 흐름에 두면 절대 배치된 머리표
+        # 요소들이 흐름에서 빠져 선이 제목 **위**로 올라간다(정본은 아래).
+        ty = dr.get("thin_y_mm")
+        by = dr.get("thick_y_mm")
+        pos = ""
+        if ty is not None:
+            h = round(float(by) - float(ty), 2) if by is not None else 1.6
+            pos = (f"position: absolute; left: -{round(ml, 2)}mm; "
+                   f"top: {round(float(ty) - mt, 2)}mm; "
+                   f"width: {round(s.page_w, 1)}mm; height: {h}mm;")
         css.append(f".exam-head .eh-rule {{ border-top: {thin}pt solid #000; "
-                   f"border-bottom: {thick}pt solid #000; height: 1.6mm; }}")
+                   f"border-bottom: {thick}pt solid #000; {pos or 'height: 1.6mm;'} }}")
     css.append(".notice { }")
     css.append(".notice-wrap { column-span: all; }")
     css.append("")

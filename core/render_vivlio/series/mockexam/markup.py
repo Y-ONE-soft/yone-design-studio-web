@@ -1020,13 +1020,35 @@ def exam_head(s, case=None):
             cls.append("eh-right")
         if e.get("underline"):
             cls.append("eh-underline")
+        st = []
         size = e.get("size_pt")
-        style = f' style="font-size:{size}pt"' if size else ""
+        if size:
+            st.append(f"font-size:{size}pt")
+        # 정본에서 잰 자리에 그대로 앉힌다. 머리표는 표가 아니라 낱개 요소라
+        # 흘려 보내면 과목 코드 값이 오른쪽 끝으로 튀는 등 배치가 어긋난다.
+        m = e.get("실측_정본") or {}
+        if m.get("x") is not None and m.get("y") is not None and s.ref_scale:
+            cls.append("eh-abs")
+            st.append(f"left:{round(float(m['x']) * s.ref_scale, 2)}mm")
+            st.append(f"top:{round(float(m['y']) * s.ref_scale, 2)}mm")
+        style = f' style="{";".join(st)}"' if st else ""
         rows.append(f'<span class="{" ".join(cls)}"{style}>{esc(text)}</span>')
     if not rows:
         return ""
     rule = '<div class="eh-rule"></div>' if hdr.get("double_rule") else ""
-    return '<header class="exam-head">' + "".join(rows) + rule + "</header>"
+    abs_h = _head_height(els, s)
+    style = f' style="height:{abs_h}mm"' if abs_h else ""
+    return (f'<header class="exam-head"{style}>' + "".join(rows) + rule
+            + "</header>")
+
+
+def _head_height(els, s):
+    """절대 배치한 머리표가 차지할 높이 — 본문이 그 아래에서 시작하도록."""
+    ys = [float((e.get("실측_정본") or {}).get("y") or 0) for e in els]
+    if not any(ys) or not s.ref_scale:
+        return 0
+    big = max(float((e.get("실측_정본") or {}).get("size_pt") or 0) for e in els)
+    return round(max(ys) * s.ref_scale + big * 25.4 / 72 * s.ref_scale + 2, 1)
 
 
 def _running_footer(s, case):

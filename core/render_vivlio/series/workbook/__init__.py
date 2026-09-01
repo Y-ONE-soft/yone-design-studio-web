@@ -94,17 +94,19 @@ class WorkbookSeries(Series):
             # ⚠ 되풀이 조판은 발산할 수 있다(블랙북에서 10→8→7 을 겪었다).
             #   그래서 세 바퀴로 묶고, 표시는 **쌓기만** 한다(빼면 진동한다).
             seen_turns = set()
-            for _round in range(3):
+            for _round in range(4):
                 sp = fit_mod.spills(out)
                 tn = fit_mod.turns(out)
                 if _round == 0:
                     fit_mod.report(sp, log)
                     fit_mod.report_turns(tn, log)
                 ids = {i for i, _a, _b, _t in sp}
-                # 미는 것은 면을 늘린다 — **먼저 당겨 보고**, 그러고도 남은
-                # 세트만 민다(한 바퀴 기다렸다 민다는 뜻).
-                pids = {i for i, _a, _b in tn} & seen_turns
-                seen_turns |= {i for i, _a, _b in tn}
+                # 미는 것은 면을 늘린다 — **당겨서 될 것 같으면 먼저 당겨 보고**
+                # 그러고도 남은 세트만 민다. 당길 거리(넘친 덩어리)가 아예 없으면
+                # 기다릴 이유가 없으니 그 바퀴에 바로 민다.
+                pend = {i for i, _a, _b in tn}
+                pids = (pend & seen_turns) if ids else pend
+                seen_turns |= pend
                 if not sp and not tn:
                     break
                 grow = (ids - render_mod.TIGHT2) | (pids - render_mod.PUSH)
@@ -120,10 +122,10 @@ class WorkbookSeries(Series):
                 secs += cli.run_build(html_path, out, log=log, extra=["-f", "pdf"])
             sp, tn = fit_mod.spills(out), fit_mod.turns(out)
             log("  [당겨붙이기] 모두 당겨 붙였다" if not sp else
-                f"  [당겨붙이기] 세 바퀴로도 안 당겨진 덩어리 {len(sp)}개 — "
+                f"  [당겨붙이기] 네 바퀴로도 안 당겨진 덩어리 {len(sp)}개 — "
                 f"그대로 둔다 {[i for i, *_ in sp]}")
             log("  [장넘김] 장을 넘기는 세트 없음" if not tn else
-                f"  [장넘김] 세 바퀴로도 못 없앤 세트 {len(tn)}개 — "
+                f"  [장넘김] 네 바퀴로도 못 없앤 세트 {len(tn)}개 — "
                 + ", ".join(f"p{a}→p{b}" for _i, a, b in tn[:6]))
             render_mod.TIGHT = set()
             render_mod.TIGHT2 = set()
