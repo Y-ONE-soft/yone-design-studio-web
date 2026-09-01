@@ -13,6 +13,8 @@
 """
 import os
 
+from core.render_vivlio.series.mockexam.profile import dig as P_dig
+
 # 학교 기출이 쓰는 서체 → 로컬 설치 파일. HWP/한컴 계열이라 대부분 있다.
 FONT_FILES = {
     "HANBatang":  "~/Library/Fonts/HANBatang.ttf",
@@ -95,9 +97,15 @@ def _role_css(cls, r, spec):
     elif indent:
         d.append(f"text-indent: {indent}mm;")
     if r.get("space_before_pt"):
-        # 2단 흘림에서 margin-top 이 소실되므로 padding 으로 준다
-        # (vivliostyle 파일럿 실증 — docs/vivliostyle_파일럿_보고.md)
-        d.append(f"padding-top: {r['space_before_pt']}pt;")
+        # rolemeasure 의 space_before 는 '앞 줄 시작 → 이 줄 시작' 거리라
+        # **행간이 이미 들어 있다.** 그대로 얹으면 여백이 두 배가 된다.
+        # 순 여백 = 잰 값 − 이 역할의 행간.
+        lead = r.get("leading_pt") or 0
+        net = round(max(r["space_before_pt"] - lead, 0), 2)
+        if net:
+            # 2단 흘림에서 margin-top 이 소실되므로 padding 으로 준다
+            # (vivliostyle 파일럿 실증 — docs/vivliostyle_파일럿_보고.md)
+            d.append(f"padding-top: {net}pt;")
     return f".{cls} {{ " + " ".join(d) + " }"
 
 
@@ -233,7 +241,39 @@ def build_css(spec):
     if s.copyright:
         css.append(".copyright { font-size: 8pt; }")
     if s.page_number:
-        css.append(".pgnum { }")
+        # `{p}/{n}` · `{p} / ( {n} )` 같은 학교별 형식을 counter 로 옮긴다
+        content = []
+        buf = ""
+        for tok, rep in (("{p}", "counter(page)"), ("{n}", "counter(pages)")):
+            pass
+        import re as _re
+        for part in _re.split(r"(\{p\}|\{n\})", s.page_number):
+            if part == "{p}":
+                content.append("counter(page)")
+            elif part == "{n}":
+                content.append("counter(pages)")
+            elif part:
+                content.append('"%s"' % part.replace('"', '\\"'))
+        css.append(".pgnum::after { content: " + " ".join(content) + "; }")
+        align = "center" if "center" in (s.page_number_pos or "") else "left"
+        css.append(f".pgnum {{ text-align: {align}; }}")
+    css.append("")
+
+    # ── 1쪽 머리표 (학교에 따라 1쪽만 / 매 쪽) ──
+    css.append("/* 머리표 — 프로파일 running.header 실측 */")
+    css.append(".exam-head { column-span: all; margin-bottom: 4mm; }")
+    css.append(".exam-head .eh { display: block; }")
+    css.append(".exam-head .eh-center { text-align: center; }")
+    css.append(".exam-head .eh-right { text-align: right; }")
+    css.append(".exam-head .eh-underline { text-decoration: underline; }")
+    dr = P_dig(s.raw, "running.header.double_rule") or {}
+    if dr:
+        thin = dr.get("thin_pt") or 0.24
+        thick = dr.get("thick_pt") or 0.96
+        css.append(f".exam-head .eh-rule {{ border-top: {thin}pt solid #000; "
+                   f"border-bottom: {thick}pt solid #000; height: 1.6mm; }}")
+    css.append(".notice { }")
+    css.append(".notice-wrap { column-span: all; }")
     css.append("")
 
     # ── 마무리 ──

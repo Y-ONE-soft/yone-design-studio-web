@@ -762,6 +762,59 @@ def test_table_ops_go_through_history():
     assert "ed.push" in src[i:i + 3000]
 
 
+# ── 면 이동 · 서체 기능 ───────────────────────────────────────
+def test_render_all_is_passed_at_load_time():
+    """`renderAllPages` 는 **문서를 실을 때** 주는 값이다.
+
+    만들 때만 주거나 `setOptions` 로 바꾸면 안 먹어, 그대로 두 면만 그렸다.
+    """
+    src = _studio_src()
+    i = src.index("viewer.loadDocument(")
+    assert "renderAllPages: renderAll" in src[i:i + 400]
+
+
+def test_ready_does_not_wait_only_for_loaded():
+    """`renderAllPages` 면 `loaded` 가 한참 뒤에 오거나 안 온다.
+
+    그동안 면을 못 넘기면 "아직 조판 중" 만 뜬다(실제로 그랬다).
+    """
+    src = _studio_src()
+    assert "readystatechange" in src and "'interactive'" in src
+
+
+def test_epage_jump_falls_back():
+    """`epage` 는 다 그리기 전에는 어림값이다(실측: epage 24 → 10면)."""
+    src = _studio_src()
+    assert "function jumpTo(" in src and "function hopTo(" in src
+    i = src.index("function jumpTo(")
+    assert "hopTo(n)" in src[i:i + 900], "빗나가면 옛 길로 마저 가야 한다"
+
+
+def test_page_panel_matches_the_scope():
+    """썸네일은 전권 PDF 것이라 견본을 보고 있으면 번호가 어긋난다.
+
+    실측: 견본(40면)에서 25번 썸네일을 눌렀더니 13면으로 갔다.
+    """
+    src = _studio_src()
+    assert "sampleNow" in src and "scope !== 'full'" in src
+
+
+def test_opentype_controls_exist():
+    src = _studio_src()
+    block = src.split("var CHAR_PROPS")[1][:3000]
+    for need in ("font-variant-caps", "font-variant-numeric",
+                 "font-variant-ligatures", "font-kerning",
+                 "font-feature-settings"):
+        assert need in block, f"문자 패널에 {need} 없음"
+
+
+def test_paragraph_typography_controls_exist():
+    src = _studio_src()
+    block = src.split("var PARA_PROPS")[1][:2000]
+    for need in ("hyphens", "text-wrap", "widows", "orphans", "break-after"):
+        assert need in block, f"단락 패널에 {need} 없음"
+
+
 # ── 클로드 칸 ─────────────────────────────────────────────────
 # 모델에게 리포를 통째로 열어 주면 안 된다 — 계열 코드를 고치면 그 계열 책이
 # 전부 흔들리고, 원고를 고치면 납품본과 글이 달라진다. 손댈 수 있는 곳은

@@ -226,35 +226,88 @@ class Renderer(object):
         return "\n".join(x for x in out if x)
 
 
-def build_body(doc, spec, case=None):
+def _number_items(doc):
+    """문항에 번호를 미리 매기고 묶음 범위를 계산한다.
+
+    원고는 번호도 묶음 범위도 주지 않는다(한영 계열 제외). 그래서 **먼저 전체를
+    훑어 번호를 확정한 뒤** 묶음 머리를 쓴다 — 그러지 않으면 묶음 첫 문항에서
+    범위 끝을 알 수 없어 `【 9 – 9 】` 같은 것이 나온다.
+    """
+    q = e = 0
+    plan = []
+    for it in doc.get("items", []):
+        if it.get("kind") == "서술형":
+            e += 1
+            plan.append({"item": it, "essay": True, "no": e})
+        else:
+            q += 1
+            plan.append({"item": it, "essay": False, "no": q})
+
+    # 묶음: 도입문이 나온 문항부터, 다음 도입문(또는 끝) 직전까지가 한 묶음이다.
+    starts = [i for i, r in enumerate(plan) if r["item"].get("_group_intro")]
+    for gi, i in enumerate(starts):
+        end = starts[gi + 1] - 1 if gi + 1 < len(starts) else len(plan) - 1
+        members = plan[i:end + 1]
+        sel = [m for m in members if not m["essay"]]
+        ess = [m for m in members if m["essay"]]
+        plan[i]["group"] = {
+            "a": sel[0]["no"] if sel else None,
+            "b": sel[-1]["no"] if sel else None,
+            "essay_ns": [m["no"] for m in ess],
+            "n": len(members),
+            "intro": r_intro(plan[i]["item"]),
+        }
+    return plan
+
+
+def r_intro(it):
+    return strip_source(it.get("_group_intro") or "")
+
+
+def build_body(doc, spec, case=None, scores=None):
     """IR 문서 → 본문 HTML + 경고."""
     r = Renderer(spec, case)
+    scores = scores or {}
+    sel_scores = list(scores.get("선택형") or [])
+    ess_scores = list(scores.get("서답형") or [])
     out = []
-    for it in doc.get("items", []):
-        intro = it.get("_group_intro")
-        if intro:
-            gid = (it.get("header") or {}).get("group_id") or ""
-            m = re.search(r"G-(\d+)-(\d+)", gid)
-            a, b = (int(m.group(1)), int(m.group(2))) if m else (r.q_no + 1, r.q_no + 1)
-            head = r.group_head(a, b, strip_source(intro))
+    for row in _number_items(doc):
+        it = row["item"]
+        g = row.get("group")
+        if g:
+            if g["a"] is not None and g["b"] is not None and g["b"] > g["a"]:
+                head = r.group_head(g["a"], g["b"], g["intro"], g["essay_ns"])
+            elif g["essay_ns"] and g["a"] is not None and spec.group_mixed:
+                head = r.group_head(g["a"], g["a"], g["intro"], g["essay_ns"])
+            else:
+                head = ""          # 묶음이 한 문항뿐 — 머리를 만들지 않는다
             if head:
                 out.append(head)
-            elif intro:
-                # 묶음 표기를 안 쓰는 학교 — 지시문만 발문 자리에 둔다
-                out.append(f'<p class="group-intro">{esc(strip_source(intro))}</p>')
+            elif g["intro"]:
+                out.append(f'<p class="group-intro">{esc(g["intro"])}</p>')
+        # 배점은 원고가 안 주므로 배분표에서 꺼내 얹는다
+        if row["essay"]:
+            if len(ess_scores) >= row["no"]:
+                it.setdefault("header", {})["score"] = ess_scores[row["no"] - 1]
+        else:
+            if len(sel_scores) >= row["no"]:
+                it.setdefault("header", {})["score"] = sel_scores[row["no"] - 1]
         out.append(r.item(it))
     return "\n".join(out), r.warnings
 
 
-def build_html(doc, spec, case=None, css_href="theme.css"):
-    body, warns = build_body(doc, spec, case)
+def build_html(doc, spec, case=None, css_href="theme.css", scores=None):
+    body, warns = build_body(doc, spec, case, scores)
     s = spec
     case = case or {}
     head_html = _running_header(s, case)
     foot_html = _running_footer(s, case)
+    head_block = exam_head(s, case)
     notice = ""
     if s.notice_head:
-        notice = "".join(f'<p class="notice">{esc(l)}</p>' for l in s.notice_head)
+        notice = ('<div class="notice-wrap">'
+                  + "".join(f'<p class="notice">{esc(l)}</p>' for l in s.notice_head)
+                  + "</div>")
     ending = ""
     if s.ending_lines:
         ending = "".join(f'<p class="ending">{esc(l)}</p>' for l in s.ending_lines)
@@ -270,6 +323,7 @@ def build_html(doc, spec, case=None, css_href="theme.css"):
 {head_html}
 {foot_html}
 <section class="flow">
+{head_block}
 {notice}
 {body}
 {ending}
@@ -287,6 +341,39 @@ def _running_header(s, case):
     if not bits:
         return '<div class="page-header"></div>'
     return '<div class="page-header">' + "".join(bits) + "</div>"
+
+
+def exam_head(s, case=None):
+    """시험지 머리표 — 프로파일 running.header 를 그대로 옮긴다.
+
+    학교마다 표이기도 하고(한영·명일·상일) 낱개 요소 + 이중선이기도 하다(배재).
+    프로파일이 적어 둔 elements 를 순서대로 놓고, 정렬·크기·서체만 CSS 로 준다.
+    프로파일에 머리표가 없으면 **아무것도 그리지 않는다**.
+    """
+    case = case or {}
+    hdr = P.dig(s.raw, "running.header") or {}
+    els = hdr.get("elements") or []
+    if not els:
+        return ""
+    rows = []
+    for e in els:
+        text = case.get(e.get("role")) or e.get("text") or ""
+        if not text:
+            continue
+        cls = ["eh"]
+        if e.get("align") == "center":
+            cls.append("eh-center")
+        elif e.get("align") == "right":
+            cls.append("eh-right")
+        if e.get("underline"):
+            cls.append("eh-underline")
+        size = e.get("size_pt")
+        style = f' style="font-size:{size}pt"' if size else ""
+        rows.append(f'<span class="{" ".join(cls)}"{style}>{esc(text)}</span>')
+    if not rows:
+        return ""
+    rule = '<div class="eh-rule"></div>' if hdr.get("double_rule") else ""
+    return '<header class="exam-head">' + "".join(rows) + rule + "</header>"
 
 
 def _running_footer(s, case):
