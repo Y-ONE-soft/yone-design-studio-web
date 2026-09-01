@@ -604,6 +604,13 @@ class PocketbookSeries(Series):
                 "passages": rows, "metrics": cfg.section("metrics"),
                 "folio_start": opt.get("folio_start", 2),
                 "cover": None}))
+        # ⚠ 자리표를 **파일로 내지 않으면** 지면에 표가 찍혀도 작업대는 그것을
+        #   못 되짚는다 — 눌러도 조용히 아무 일이 안 난다(실제로 그랬다).
+        try:
+            from core.render_vivlio import refs as _refs3
+            _refs3.dump(build_dir)
+        except Exception:
+            pass
         # 검수가 다시 계산하지 않도록 조판에 쓴 값을 그대로 남긴다.
         with open(os.path.join(build_dir, "_rows.json"), "w",
                   encoding="utf-8") as f:
