@@ -56,17 +56,26 @@ def sel_markup(s):
 
 
 def blank_markup(s):
-    """`N[word]` → 첫 글자 + 글자 수에 비례한 밑줄.
+    """`N[word]` → **첫 글자만 보이고 나머지는 감춘 채 밑줄**.
 
-    폭은 실물 실측 근사식(2.4 + 2.95×가린 글자수)mm — 상한을 둬 한 줄을 넘기지
-    않게 한다(W67 에서 밑줄이 줄을 삼킨 사고가 있었다).
+    실물이 쓰는 방법 그대로다: 해설지 원고를 넣고 정답 부분을 '색 없음' 으로
+    돌려, 인쇄본에서는 앞 글자 하나만 힌트로 남는다(완성본 실측 — 가려진 글자는
+    PDF 텍스트로도 뽑히지 않는다).
+
+    그래서 **밑줄 폭을 어림하지 않는다.** 가려진 글자가 제자리 폭을 그대로
+    차지하므로 밑줄이 저절로 그 단어 길이가 된다. 예전 근사식
+    (2.4 + 2.6×글자수)mm 은 원리적으로 틀린 자리를 만들었다.
+
+    `visibility: hidden` 을 쓰는 이유: `color: transparent` 는 글자가 PDF 에
+    그대로 남아 **정답이 복사된다.** 감춘 글자는 아예 그려지지 않아야 한다.
+    밑줄은 감춘 글자를 감싼 바깥 span 이 그린다(감춘 요소는 테두리도 안 그린다).
     """
     def rep(m):
         w = m.group(2)
-        first, hidden = w[:1], max(len(w) - 1, 2)
-        width = min(round(2.4 + hidden * 2.6, 1), 42.0)
-        return (f'<span class="bl"><b>{esc(first)}</b>'
-                f'<i style="width:{width}mm"></i></span>')
+        if len(w) < 2:
+            return f'<span class="bl"><b>{esc(w)}</b></span>'
+        return (f'<span class="bl"><b>{esc(w[:1])}</b>'
+                f'<span class="ln"><i>{esc(w[1:])}</i></span></span>')
     return _RE_BLANK.sub(rep, s)
 
 

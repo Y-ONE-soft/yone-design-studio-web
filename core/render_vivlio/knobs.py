@@ -226,7 +226,31 @@ def write(cfg, series, build_dir, name="knobs.css"):
     from core.render_vivlio import stage
     return stage.write_css(build_dir, name,
                            css_text(cfg, series) + styles_text(cfg)
-                           + (table_css() if _has_table(cfg) else ""))
+                           + (table_css() if _has(cfg, "table") else "")
+                           + (box_css() if _has(cfg, "box") else ""))
+
+
+def box_css():
+    """자유 배치 상자의 기본 모양 — 계열 테마가 덮어써도 된다."""
+    from core.render_vivlio import box as _b
+    return _b.CSS
+
+
+def _has(cfg, kind):
+    """이 책에 그 블록이 실제로 있나. 원고와 편집 이력을 **둘 다** 본다."""
+    import os
+    needle = '"%s"' % kind
+    for name in ("data.json", "edits.json"):
+        p = cfg.path(name)
+        if not os.path.exists(p):
+            continue
+        try:
+            with open(p, encoding="utf-8") as f:
+                if needle in f.read():
+                    return True
+        except OSError:
+            pass
+    return False
 
 
 def _has_table(cfg):

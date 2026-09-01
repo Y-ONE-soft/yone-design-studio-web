@@ -317,14 +317,13 @@ u { text-underline-offset: 0.14em; text-decoration-thickness: 0.05em; }
 /* 선택 괄호 [ ⓐ x / ⓑ y ] */
 .sel { font-weight: 700; color: var(--sel); }
 
-/* 빈칸 — 첫 글자 + 길이 비례 밑줄 */
+/* 빈칸 — 첫 글자만 보이고 나머지는 감춘 채 밑줄 (실물과 같은 방법)
+ * 감춘 글자가 제 폭을 차지하므로 밑줄이 저절로 그 단어 길이가 된다.
+ * `visibility: hidden` 이라 PDF 에 글자가 안 남는다 — 정답이 복사되지 않는다. */
 .bl { white-space: nowrap; }
 .bl b { font-weight: 700; color: var(--blank); }
-.bl i {
-  display: inline-block; font-style: normal;
-  border-bottom: 0.5pt solid var(--ink);
-  height: 0.95em; vertical-align: baseline;
-}
+.bl .ln { border-bottom: 0.5pt solid var(--ink); }
+.bl .ln i { visibility: hidden; font-style: normal; }
 
 /* 아이콘 (전부 SVG — 래스터 자산 없음) */
 svg.ico { vertical-align: middle; }
