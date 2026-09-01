@@ -13,7 +13,22 @@ const p = await b.newPage();
 await p.setViewport({ width: 1680, height: 1020 });
 const errs = [];
 p.on('pageerror', e => errs.push(String(e).slice(0, 120)));
+// 어느 책으로 점검할지 — `BOOK=광문보카 node audit.mjs`
+const WANT = process.env.BOOK || '';
 await p.goto('http://127.0.0.1:5099/book-studio', { waitUntil: 'networkidle2', timeout: 180000 });
+if (WANT) {
+  const picked = await p.evaluate((want) => {
+    const sel = document.getElementById('ide-book');
+    const o = [...sel.options].find(x => x.textContent.includes(want)
+      || x.value.normalize('NFC').includes(want));
+    if (!o) return '';
+    sel.value = o.value;
+    sel.dispatchEvent(new Event('change'));
+    return o.textContent;
+  }, WANT);
+  if (!picked) { console.log('  ✗ 그런 책이 없다: ' + WANT); process.exit(1); }
+  console.log('■ ' + picked);
+}
 
 const ready = () => p.waitForFunction(() => {
   const d = document.getElementById('ide-frame')?.contentDocument;
@@ -41,12 +56,15 @@ for (const [id, len] of Object.entries(panels)) {
 // ② 지면을 눌러 고른다
 const picked = await p.evaluate(async () => {
   const d = document.getElementById('ide-frame').contentDocument;
-  const el = [...d.querySelectorAll('[class*=vref]')].find(e => /Band United/.test(e.innerText || ''));
+  // 어느 책이든 되게 — **글이 있는 첫 자리표**를 누른다
+  const el = [...d.querySelectorAll('[class*=vref]')]
+    .find(e => (e.innerText || '').trim().length > 4);
+  if (!el) return 'no-ref';
   el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
   await new Promise(r => setTimeout(r, 500));
   return document.getElementById('pal-sel').innerText.replace(/\s+/g, ' ');
 });
-(/lessons\./.test(picked) ? ok : bad)('지면 클릭 → ' + picked.slice(0, 40));
+(/[a-z]+\.\d/.test(picked) ? ok : bad)('지면 클릭 → ' + picked.replace(/\n/g,' ').slice(0, 45));
 
 // ③ 문자 패널이 실제 값을 읽는다
 const charVals = await p.evaluate(() => {
