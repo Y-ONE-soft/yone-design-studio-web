@@ -552,7 +552,7 @@ FONTS = [
     ("Yeongdo", "YeongdoOTF.otf", 400),
     ("Montserrat", "Montserrat-Medium.otf", 500),
     ("Montserrat", "Montserrat-Bold.otf", 700),
-    ("LotteMartDream", "12LotteMartDreamBold.ttf", 700),
+    ("LotteMartDream", "12롯데마트드림Bold.ttf", 700),
     ("TTMamablock", "TTMamablockB.ttf", 700),
 ]
 

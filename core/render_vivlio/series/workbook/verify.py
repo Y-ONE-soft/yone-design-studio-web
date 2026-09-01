@@ -80,13 +80,16 @@ def check(cfg, log, report):
     # ── ④ 자리(상/하): pair 스텝의 하단 발문이 아래쪽에 있는가 ──
     _check_zones(pdf, d, report, cfg.build_dir)
 
-    # ── ⑤ 원고 퇴화: 빈칸 스텝이 '낱말 목록'이면 원고가 잘못 골렸다 ──
+    # ── ⑤ 머리말만 있고 본문이 빈 면 ──
+    _check_empty_body(cfg, report)
+
+    # ── ⑥ 원고 퇴화: 빈칸 스텝이 '낱말 목록'이면 원고가 잘못 골렸다 ──
     _check_degraded(d, report)
 
-    # ── ⑥ 서체 폴백: 스텝 로고가 대체 서체로 찍혔는가 ──
+    # ── ⑦ 서체 폴백: 스텝 로고가 대체 서체로 찍혔는가 ──
     _check_fonts(cfg, report)
 
-    # ── ⑦ 면 수 ──
+    # ── ⑧ 면 수 ──
     report.note(f"면 수 {probe.page_count(pdf)}p")
     return report
 
@@ -130,16 +133,47 @@ def _check_zones(pdf, d, report, cfg_build_dir=None):
         report.note(f"넘침 없음 (칸 끝 표식 {marks}/{want or marks}개 확인)")
 
 
+def _check_empty_body(cfg, report):
+    """머리말·꼬리말만 있고 **판면이 빈 면** — 보통 면 나눔이 새고 있다는 뜻.
+
+    `blank_pages` 는 이런 면을 못 잡는다(머리말 글자가 있어서 '빈 면'이 아니다).
+    실측으로 섹션마다 이런 면이 하나씩 새고 있었는데 게이트가 조용히 통과시켰다.
+    """
+    pdf = cfg.out_pdf()
+    doc = probe.open_pdf(pdf)
+    bad = []
+    for i in range(doc.page_count):
+        page = doc[i]
+        body = [1 for (x0, y0, x1, y1) in probe.text_blocks_mm(page)
+                if 30.0 < y0 < 280.0]
+        if body:
+            continue
+        # 간지는 색면이 판면을 덮는다 — 큰 색면이 있으면 간지로 본다
+        big = any((r[2] - r[0]) > 150 and (r[3] - r[1]) > 150
+                  for r, f, _c, _w in probe.drawings_mm(page) if f)
+        if not big and page.get_text().strip():
+            bad.append(i + 1)
+    doc.close()
+    allow = set((cfg.section("verify") or {}).get("blank_pages") or [])
+    bad = [p for p in bad if p not in allow]
+    if bad:
+        report.fail(f"[빈 지면] 머리말만 있고 본문이 없는 면 {len(bad)}개 — {bad[:10]}")
+    else:
+        report.note("빈 지면 없음 (머리말만 있는 면 0)")
+
+
 _RE_WORDLIST = re.compile(r"^\s*\d+\.\s*[A-Za-z][A-Za-z'\-]*\s*$")
 
 
 def _check_degraded(d, report):
-    """빈칸 스텝인데 **문장이 없고 낱말만** 있으면 원고가 퇴화본이다.
+    """빈칸 스텝에 **문장이 없고 낱말만** 있으면 세운다.
 
-    실측(고1 22년 6월 잡 a153f1d4): `1. encourage` 만 19줄 — 정답 낱말 목록이
-    빈칸 원고 자리에 들어와 있었다. InDesign 경로도 이 원고로는 못 만든다.
-    조판 실패가 아니라 **원고를 잘못 고른 것**이므로 이름을 붙여 세운다.
-    (같은 사고: `workbook_answer_sheet_degraded_pick`)
+    빈칸 지면의 정상 모양은 `1[Bad] 2[lighting] can 3[increase] …` 처럼 **문장**
+    안에 정답이 표시된 것이다(해설지 원고를 넣고 정답 부분을 감춘다). 문장이
+    없이 `1. encourage` 만 늘어서면 지면이 낱말 목록으로 인쇄된다.
+
+    ⚠ 원인은 단정하지 않는다 — 원고 선택일 수도, 파서가 문장을 못 살린 것일
+    수도 있다. 증상만 정확히 말하고 사람이 판단하게 둔다.
     """
     for st in d["steps"]:
         if st["key"] not in ("step1_c2", "step2_c1"):
@@ -153,8 +187,8 @@ def _check_degraded(d, report):
         if wordish > len(rows) * 0.8:
             report.fail(
                 f"[원고 퇴화] {st['key']} — {len(rows)}줄이 거의 다 '번호. 낱말' "
-                f"목록이다({wordish}줄). 빈칸 원고가 아니라 **정답 목록**을 "
-                f"집었을 가능성 — 원고를 다시 고를 것")
+                f"목록이다({wordish}줄) — 문장이 없어 지면이 낱말 목록으로 "
+                f"인쇄된다. 원고(문제지/해설지)를 확인할 것")
 
 
 def _check_fonts(cfg, report):

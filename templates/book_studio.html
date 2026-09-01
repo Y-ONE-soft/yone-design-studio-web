@@ -302,6 +302,12 @@
         </div>
       </details>
 
+      <details class="ide-pal"><summary>상자 (자유 배치)</summary>
+        <div class="ide-in" id="pal-box">
+          <div class="ide-hint">좌표로 놓는 글상자·그림상자입니다
+            (인디자인의 프레임).</div>
+        </div>
+      </details>
       <details class="ide-pal"><summary>표</summary>
         <div class="ide-in" id="pal-table">
           <div class="ide-hint">문항 안의 지문·선지를 고른 뒤 표를 넣으면
@@ -938,6 +944,7 @@
     drawCharStyles();
     drawParaOpts();
     drawTable();
+    drawBox();
   }
 
   function drawOne(hostId, props) {
@@ -1082,6 +1089,106 @@
           if (ok) msg('✓ 반영했습니다');
         });
       });
+  }
+
+  // ── 자유 배치 상자 ──────────────────────────────────────
+  //
+  // 인디자인의 "프레임을 좌표로 놓기". 흐름 한가운데 둔 상자가 **그 면을
+  // 기준으로** 앉는 것을 실측으로 확인하고 만들었다.
+  //
+  // ⚠ **어느 면에 앉는지는 넣은 자리가 정한다.** 앞 문단이 다음 면으로 밀리면
+  //   상자도 따라간다 — 좌표는 면 안에서의 자리일 뿐이다.
+  var BOX_AT = [['top', '위'], ['left', '왼쪽'], ['bottom', '아래'],
+                ['right', '오른쪽'], ['width', '너비'], ['height', '높이']];
+
+  function boxRefOf(ref) {
+    var m = (ref || '').match(/^(.*\.blocks\.\d+)(?:\.paras\.\d+)?$/);
+    if (!m) return '';
+    var el = curEl;
+    while (el && el.classList && !el.classList.contains('viv-box')) el = el.parentElement;
+    return el ? m[1] : '';
+  }
+
+  function drawBox() {
+    var host = $('pal-box'); if (!host) return;
+    host.innerHTML = '';
+    var inBox = boxRefOf(curRef);
+    var hint = document.createElement('div');
+    hint.className = 'ide-hint'; hint.style.marginBottom = '6px';
+    hint.innerHTML = inBox
+      ? '상자 안입니다. 좌표를 고치면 그 자리로 옮깁니다.<br>'
+        + '⚠ <b>어느 면</b>에 앉는지는 넣은 자리가 정합니다.'
+      : '문항 안의 <b>지문·선지</b>를 고른 뒤 넣으면 그 자리에 상자가 생깁니다.<br>'
+        + '<b>감싸기</b>는 본문이 상자를 피해 흐르고, <b>좌표</b>는 본문 위에 얹힙니다.';
+    host.appendChild(hint);
+
+    if (!inBox) {
+      [['text', '', '글상자(좌표)'], ['image', '', '그림상자(좌표)'],
+       ['text', 'left', '글상자(왼쪽 감싸기)'], ['text', 'right', '글상자(오른쪽 감싸기)']
+      ].forEach(function (a) {
+        var b = document.createElement('button');
+        b.className = 'ide-b'; b.style.cssText = 'display:block;width:100%;margin-bottom:3px';
+        b.textContent = a[2];
+        b.onclick = function () {
+          if (!curRef) { msg('먼저 지면에서 자리를 고르세요'); return; }
+          boxApi({ action: 'insert', ref: curRef, kind: a[0], wrap: a[1] });
+        };
+        host.appendChild(b);
+      });
+      return;
+    }
+    // 좌표 고치기
+    var cur = {};
+    var el = curEl;
+    while (el && el.classList && !el.classList.contains('viv-box')) el = el.parentElement;
+    if (el) {
+      BOX_AT.forEach(function (a) {
+        var v = el.style[a[0]];
+        if (v) cur[a[0]] = v;
+      });
+    }
+    var vals = {};
+    BOX_AT.forEach(function (a) {
+      var row = document.createElement('div'); row.className = 'ide-row';
+      var lab = document.createElement('div'); lab.className = 'ide-lab';
+      lab.innerHTML = '<span>' + a[1] + '</span><span class="ide-val">'
+        + (cur[a[0]] || '') + '</span>';
+      var f = document.createElement('div'); f.className = 'ide-f';
+      var t = document.createElement('input');
+      t.className = 'ide-t'; t.placeholder = cur[a[0]] || '(없음)';
+      t.value = ''; vals[a[0]] = t;
+      f.appendChild(t);
+      row.appendChild(lab); row.appendChild(f);
+      host.appendChild(row);
+    });
+    var go = document.createElement('button');
+    go.className = 'ide-b'; go.textContent = '옮기기';
+    go.onclick = function () {
+      var at = {};
+      BOX_AT.forEach(function (a) {
+        var v = vals[a[0]].value.trim();
+        if (v) at[a[0]] = v;
+      });
+      if (!Object.keys(at).length) { msg('바꿀 좌표를 적으세요'); return; }
+      boxApi({ action: 'move', ref: inBox, at: at });
+    };
+    var del = document.createElement('button');
+    del.className = 'ide-b'; del.style.marginLeft = '4px'; del.textContent = '상자 지우기';
+    del.onclick = function () {
+      if (!confirm('이 상자를 지웁니다. 되돌리기로 살릴 수 있습니다.')) return;
+      boxApi({ action: 'delete', ref: inBox });
+    };
+    host.appendChild(go); host.appendChild(del);
+  }
+
+  function boxApi(body) {
+    body.b = key;
+    msg('상자를 고치는 중…');
+    api('/api/book-studio/box', body).then(function (d) {
+      if (d.error) { msg('✗ ' + d.error); return; }
+      setHist(d.history);
+      rebuild('').then(function (ok) { if (ok) { msg('✓ 상자'); drawBox(); } });
+    });
   }
 
   // ── 표 ──────────────────────────────────────────────────

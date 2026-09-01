@@ -22,11 +22,11 @@ from core.render_vivlio.series.workbook import verify as verify_mod
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO_FONTS = os.path.join(HERE, "fonts")
 
-# 로컬에 설치돼 있지 않은 상용 서체 — 완성본 PDF 임베드 서브셋을 리포에 둔다.
-# ⚠ 라이선스 미해결(내부 검증 한정). 상용 전환 시 웹폰트 라이선스 확보 또는
-#   대체 서체 확정이 필요하다 — 아침 보고에 남길 것.
-BUNDLED = ("TTMamablockB.ttf", "TTMamablockL.ttf",
-           "12LotteMartDreamBold.ttf", "Cafe24Supermagic-Bold.ttf")
+# 이 맥에 **설치돼 있지 않은** 서체만 리포 동봉본(완성본 PDF 임베드본)을 쓴다.
+# 12롯데마트드림·Cafe24Supermagic 은 설치돼 있으므로 설치본을 쓴다
+# (파일명이 한글이라 `ls | grep LotteMart` 로는 안 잡힌다 — 서체 안쪽 이름으로
+#  찾을 것). TTMamablock 은 3,559개 설치 서체를 훑어도 없었다.
+BUNDLED = ("TTMamablockB.ttf", "TTMamablockL.ttf")
 
 
 class WorkbookSeries(Series):
@@ -49,12 +49,14 @@ class WorkbookSeries(Series):
 
     # ── 서체: 로컬 설치본 + 리포 동봉본 ──
     def _fonts(self, cfg):
+        """설치본을 먼저 쓰고, 없는 것만 리포 동봉본으로 채운다."""
+        from core.render_vivlio import stage as _stage
         names = []
         for _fam, fname, _w in render_mod.FONTS:
-            if fname in BUNDLED:
-                names.append(os.path.join(REPO_FONTS, fname))
+            if fname not in BUNDLED and _stage.find_font(fname):
+                names.append(fname)                       # 설치본
             else:
-                names.append(fname)
+                names.append(os.path.join(REPO_FONTS, os.path.basename(fname)))
         extra = cfg.section("fonts") or []
         return names + list(extra)
 

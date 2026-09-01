@@ -653,6 +653,74 @@ def api_assist_undo():
     return jsonify({"ok": True, "restored": back})
 
 
+@bp.route("/api/book-studio/box", methods=["POST"])
+def api_box():
+    """자유 배치 상자 — 넣기 · 옮기기 · 지우기.
+
+    인디자인의 "프레임을 좌표로 놓기" 다. 흐름 한가운데 둔 상자가 **그 면을
+    기준으로** 앉는다(실측 확인). 상자도 원고 자료라 편집 이력에 쌓인다.
+    """
+    from core.render_vivlio import book as bookmod
+    from core.render_vivlio import box as bx
+    from core.render_vivlio import edits as ed
+    p = request.get_json(silent=True) or {}
+    d, meta = _book_dir(p.get("b"))
+    if not d:
+        return jsonify({"error": "모르는 책"}), 404
+    ref = (p.get("ref") or "").strip()
+    if not ref or any(c in ref for c in "/\\ \n") or ".." in ref:
+        return jsonify({"error": "이상한 자리표"}), 400
+    act = p.get("action")
+    cfg = bookmod.load(d)
+    cur, _raw = ed.preview(cfg)
+
+    if act == "insert":
+        parts = ref.split(".")
+        while parts and not (len(parts) >= 2 and parts[-2] == "blocks"):
+            parts.pop()
+        if len(parts) < 2:
+            return jsonify({"error": "상자를 넣을 자리가 아닙니다 — "
+                                     "문항 안의 지문·선지를 고르고 다시 해 보세요"}), 409
+        at = int(parts[-1]) + 1
+        base = ".".join(parts[:-1])
+        b = bx.new(p.get("kind") or "text")
+        if p.get("wrap") in ("left", "right"):
+            b["wrap"] = p["wrap"]
+            b["at"] = {"width": b["at"].get("width", "40mm")}
+        st = ed.push(cfg, {"op": "insert", "ref": f"{base}.{at}", "v": b,
+                           "note": "상자 넣기"})
+        return jsonify({"ok": True, "ref": f"{base}.{at}",
+                        "history": {"head": st["head"], "total": len(st["ops"])}})
+
+    block = ed.get(cur, ref)
+    if not isinstance(block, dict) or block.get("t") != "box":
+        return jsonify({"error": "상자가 아닙니다"}), 409
+    if act == "delete":
+        st = ed.push(cfg, {"op": "delete", "ref": ref, "note": "상자 지우기"})
+        return jsonify({"ok": True,
+                        "history": {"head": st["head"], "total": len(st["ops"])}})
+    if act != "move":
+        return jsonify({"error": f"모르는 동작: {act}"}), 400
+    b = json.loads(json.dumps(block))
+    at = dict(b.get("at") or {})
+    for k in bx.AT_KEYS:
+        if k in (p.get("at") or {}):
+            v = bx._len(p["at"][k])
+            if v:
+                at[k] = v
+            else:
+                at.pop(k, None)
+    b["at"] = at
+    if "wrap" in p:
+        if p["wrap"] in ("left", "right"):
+            b["wrap"] = p["wrap"]
+        else:
+            b.pop("wrap", None)
+    st = ed.push(cfg, {"op": "set", "ref": ref, "v": b, "note": "상자 옮기기"})
+    return jsonify({"ok": True,
+                    "history": {"head": st["head"], "total": len(st["ops"])}})
+
+
 @bp.route("/api/book-studio/export", methods=["POST"])
 def api_export():
     """PDF 로 내보내기 — 조판본(RGB) 또는 인쇄 원고(CMYK).

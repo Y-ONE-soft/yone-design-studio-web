@@ -815,6 +815,53 @@ def test_paragraph_typography_controls_exist():
         assert need in block, f"단락 패널에 {need} 없음"
 
 
+# ── 자유 배치 상자 ────────────────────────────────────────────
+# "흐르는 조판이라 좌표 배치는 못 한다" 고 적었던 것을 실측으로 뒤집었다 —
+# 흐름 한가운데 둔 `position:absolute` 상자가 **그 면을 기준으로** 앉는다
+# (둘째 면 top 20mm·right 6mm 확인). 실제 책에 넣어 8면에 앉는 것도 봤다.
+def test_box_absolute_and_wrap():
+    from core.render_vivlio import box
+    a = box.html({"t": "box", "at": {"top": "20mm", "left": "8mm"},
+                  "paras": ["글"]})
+    assert "viv-box abs" in a and "top:20mm" in a and "left:8mm" in a
+    w = box.html({"t": "box", "wrap": "right", "at": {"width": "34mm"},
+                  "paras": ["글"]})
+    assert "wrapR" in w and "abs" not in w
+
+
+def test_box_rejects_junk_lengths():
+    """좌표 칸에 아무 CSS 나 들어가면 조판이 깨진다."""
+    from core.render_vivlio import box
+    assert box._len("4mm") == "4mm"
+    assert box._len("url(evil)") == ""
+    assert box._len("12pt") == "12pt"
+    assert box._len("") == ""
+
+
+def test_box_marks_its_paragraphs():
+    from core.render_vivlio import refs, box
+    refs.clear()
+    h = box.html({"t": "box", "paras": ["가", "나"]}, ref="a.blocks.5")
+    assert 'data-ref="a.blocks.5.paras.1"' in h
+
+
+def test_box_plain_for_verification():
+    from core.render_vivlio import box
+    assert box.plain({"paras": ["가", {"t": "나", "b": 1}]}) == "가 나"
+
+
+def test_series_renders_box_blocks():
+    src = io.open(os.path.join(_ROOT, "core", "render_vivlio", "series",
+                               "blackbook", "render.py"), encoding="utf-8").read()
+    assert "t == 'box'" in src and "_box.html(" in src
+
+
+def test_box_ops_go_through_history():
+    src = _routes_src()
+    i = src.index("def api_box")
+    assert "ed.push" in src[i:i + 2600]
+
+
 # ── 클로드 칸 ─────────────────────────────────────────────────
 # 모델에게 리포를 통째로 열어 주면 안 된다 — 계열 코드를 고치면 그 계열 책이
 # 전부 흔들리고, 원고를 고치면 납품본과 글이 달라진다. 손댈 수 있는 곳은

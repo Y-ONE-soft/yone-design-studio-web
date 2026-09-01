@@ -144,7 +144,10 @@ body {
 /* 지문 묶음 — 새 면에서 시작하고, 길면 다음 면으로 **이어진다**.
  * (실물도 그렇다: 어법 선택 '본문' 20문장은 두 면에 걸친다 — 실측 p30-31) */
 .grp { position: relative; break-before: page; padding-top: 1mm; }
-.sec.fixed > .grp:first-of-type { break-before: auto; }
+/* 섹션의 **첫** 지문 묶음은 이미 섹션이 연 면에서 시작한다 — 여기서 또 나누면
+ * 섹션마다 빈 면이 하나씩 샌다. `:first-of-type` 은 형제 중 첫 div 가 러닝 요소라
+ * 아무것도 안 잡혔다(실측: 빈 면이 그대로 남았다). 러닝 요소 바로 뒤로 짚는다. */
+.run + .grp { break-before: auto; }
 .attach { break-inside: avoid; margin-top: 8mm; }
 
 /* 스텝 안내문 — 머리말 오른쪽 (어법 O/X 등) */
