@@ -268,6 +268,8 @@ def from_plan(plan, cfg=None, log=print):
                 log(f"  {k2} → {key} 하단으로 {len(btm)}묶음")
         steps.append(st)
 
+    _inherit_labels(steps, log)
+
     if unknown:
         lines = "\n".join(f"    {v:>6}회  {k}" for k, v in
                           sorted(unknown.items(), key=lambda kv: -kv[1]))
@@ -284,6 +286,34 @@ def from_plan(plan, cfg=None, log=print):
         for k, v in soft.items():
             log(f"  [무름] 문장형 스타일 → 안내문으로 봄: {k} ({v}회)")
     return data
+
+
+def _inherit_labels(steps, log=print):
+    """라벨이 없는 스텝에 **지문 라벨을 물려준다.**
+
+    실물은 어법 O/X·빈칸 어휘·빈칸 어법 면에도 지문 번호를 찍는다(실측:
+    수능만만10강 p42-45·p49-52 = 실전01~04). 그런데 그 스텝들의 렌더 플랜에는
+    라벨 단락이 없다 — InDesign 쪽은 지문번호 프레임이 마스터에 따로 있어서
+    원고에 없어도 찍힌다.
+
+    규칙(구조): 이 책의 지문 라벨 N개를, 라벨이 하나도 없는 스텝의 **뒤에서
+    N개** 묶음에 순서대로 물려준다. 앞쪽 묶음(어법 O/X 의 '본문' 구역 등)은
+    지문 단위가 아니므로 비워 둔다 — 없는 것을 지어내지 않는다.
+    """
+    canon = canonical_passages(steps)
+    if not canon:
+        return
+    n = len(canon)
+    for st in steps:
+        if any(g.get("label") for g in st["groups"]):
+            continue
+        g = st["groups"]
+        if len(g) < n:
+            continue
+        for k, grp in enumerate(g[len(g) - n:]):
+            grp["label"] = canon[k]
+            grp["label_inherited"] = True
+        log(f"  [라벨 승계] {st['key']}: 뒤 {n}묶음에 {canon[0]}~{canon[-1]}")
 
 
 def build(cfg, log=print):

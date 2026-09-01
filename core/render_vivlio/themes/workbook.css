@@ -317,6 +317,9 @@ section.flow.onecol { break-before: auto; }
 .k-step1_b1 .zone { --body-gap: 5.9mm; }
 .k-step1_c1 .zone { --body-gap: 4.3mm; }
 .k-step2_a1 .grp { --body-gap: 5.9mm; }
+/* 빈칸 계열은 지문번호가 판면 바깥 세로라 본문이 3mm 안으로 들어온다
+ * (실측: 사이드 라벨 x=12.6 · 문항 번호 x=26.0 · 본문 x=29.1) */
+.k-step1_c2 .grp, .k-step2_c1 .grp { padding-left: 3mm; padding-top: 1.75mm; }
 .en { font-size: 8.5pt; line-height: 7.76mm; text-align: justify; }
 u { text-underline-offset: 0.14em; text-decoration-thickness: 0.05em; }
 

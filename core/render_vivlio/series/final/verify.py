@@ -232,21 +232,25 @@ def _check_fit(cfg, vol, report):
         return report.warn("높이 표 없음 — `build` 로 한 번 재 둘 것")
     with open(p, encoding="utf-8") as f:
         rows = json.load(f)
-    shrunk = [r for r in rows if r.get("pt")]
+    tight = [r for r in rows if r.get("lead")]
     wide = [r for r in rows if r.get("span", 1) > 1]
+    flow = [r for r in rows if r.get("flow")]
     hard = [r for r in rows if not r.get("fits", True)]
     if hard:
         report.fail(f"칸을 넘는데 담지 못한 지문 {len(hard)}건: "
                     f"{[(r['header'], r['natural_mm']) for r in hard][:5]}")
-    if shrunk:
-        report.note(f"활자 축소 {len(shrunk)}건 — "
-                    + ", ".join(f"{r['header']} {r['pt']}pt"
-                                for r in shrunk[:6]))
+    if tight:
+        report.note(f"행간 조임 {len(tight)}건 — "
+                    + ", ".join(f"{r['header']} {100 * (1 - r['lead']):.1f}%"
+                                for r in tight[:6]))
     if wide:
         report.note(f"두 칸 배치 {len(wide)}건 — "
                     + ", ".join(r["header"] for r in wide[:6]))
-    if not shrunk and not wide:
-        report.note("활자 축소 없음")
+    if flow:
+        report.note(f"흘림 배치 {len(flow)}건 — "
+                    + ", ".join(r["header"] for r in flow[:4]))
+    if not (tight or wide or flow):
+        report.note("맞춤 없음 — 전부 그대로 들어갔다")
     return hard
 
 
