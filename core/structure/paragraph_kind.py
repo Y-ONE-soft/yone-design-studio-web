@@ -79,6 +79,9 @@ def _classify_question(text, opts=None):
     for pat in R.Q_INTRO_FALLBACK:
         if pat.search(text):
             return "Q-INTRO", None
+    # 한국어 의문형 종결 — 낱말 화이트리스트보다 앞에서 본다(계열 opt-in).
+    if opts.get("ko_interrogative") and R.Q_KO_INTERROGATIVE.search(text):
+        return "Q", None
     for pi, pat in enumerate(R.Q_FALLBACK_PATTERNS):
         if pat.search(text) or pat.search(text_np):
             # 종결어미 단독 폴백(마지막 패턴)은 발문 시작 신호와 AND

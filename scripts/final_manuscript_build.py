@@ -28,7 +28,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from engines.final import manuscript as M          # noqa: E402
 from engines.final import manuscript_locate as L   # noqa: E402
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from final_manuscript_diff import auto_sources     # noqa: E402
+from final_manuscript_diff import auto_sources, words as _words  # noqa: E402
 
 
 # ── 차례(canonical) ─────────────────────────────────────────────────────
@@ -140,12 +140,31 @@ def build(content, log=print, keep_all=False):
 
     # 원고가 없는 지문(외부지문 업로드본 등)은 **되수확본을 그대로 데려온다** —
     # 갈아 끼우면서 잃는 것이 하나도 없어야 한다.
+    # ⚠ 다만 **내용이 이미 들어와 있으면** 데려오지 않는다. 되수확본에는 같은
+    #   글이 엉뚱한 라벨로 한 번 더 들어 있는 자리가 있어서(광문2 영작
+    #   `리딩파워 2강 02` 등 7건), 그대로 데려오면 중복이 된다.
+    def _covered(text, pool):
+        w = _words(text)
+        return bool(w) and len(w & pool) / len(w) > 0.6
+
     have = {b["header"] for b in arrange}
+    pool_a = set()
+    for b in arrange:
+        pool_a |= _words(" ".join([b.get("passage", "")] + b["items"]))
     for b in content["vol1"].get("문장배열") or []:
-        if b["header"] not in have:
-            arrange.append(dict(b, source=b.get("source", "") + " [되수확]"))
-            log(f"  [원고 없음 → 되수확 유지] 문장배열 {b['header']}")
+        if b["header"] in have:
+            continue
+        if _covered(" ".join([b.get("passage", "")] + (b.get("items") or [])),
+                    pool_a):
+            log(f"  [중복 — 버림] 문장배열 {b['header']}")
+            continue
+        arrange.append(dict(b, source=(b.get("source", "") + " [되수확]")))
+        log(f"  [원고 없음 → 되수확 유지] 문장배열 {b['header']}")
+
     havew = {b["header"] for b in writing}
+    pool_w = set()
+    for b in writing:
+        pool_w |= _words(" ".join(p["korean"] for p in b["pairs"]))
     old_pairs = content["vol2"].get("서술형영작") or []
     det = sorted(content["vol2"].get("영작_헤더_상세") or [],
                  key=lambda d: d["start_idx"])
@@ -154,9 +173,13 @@ def build(content, log=print, keep_all=False):
             continue
         e = det[k + 1]["start_idx"] if k + 1 < len(det) else len(old_pairs)
         chunk = old_pairs[d["start_idx"]:e]
-        if chunk:
-            writing.append({"header": d["header"], "pairs": chunk})
-            log(f"  [원고 없음 → 되수확 유지] 영작 {d['header']}")
+        if not chunk:
+            continue
+        if _covered(" ".join(p["korean"] for p in chunk), pool_w):
+            log(f"  [중복 — 버림] 영작 {d['header']}")
+            continue
+        writing.append({"header": d["header"], "pairs": chunk})
+        log(f"  [원고 없음 → 되수확 유지] 영작 {d['header']}")
 
     arrange.sort(key=lambda b: order_key(b["header"]))
     writing.sort(key=lambda b: order_key(b["header"]))

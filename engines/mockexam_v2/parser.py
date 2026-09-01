@@ -290,7 +290,8 @@ def build_ir(paras, meta=None, log=None):
     # 공용 기본값이 아니라 이 계열에서만 켠다 — 워크북 계열은 같은 모양을
     # 지문 스타일로 인쇄하는 관행이라 켜면 그쪽 산출물이 바뀐다.
     annotated = classify_paragraphs(paras, {"blank_fill_answer": True,
-                                            "strip_source_tag": True})
+                                            "strip_source_tag": True,
+                                            "ko_interrogative": True})
     _pre_warn = []
     annotated = _repair_orphan_choice_runs(annotated, _pre_warn)
     annotated = _expand_range_groups(annotated, _pre_warn)
