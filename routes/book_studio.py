@@ -1651,9 +1651,14 @@ html, body { margin: 0; padding: 0; background: #6b6b6b; }
 /* 고칠 수 있는 자리 — `vrefN` 은 우리 자리표라 교재 CSS 와 안 부딪힌다 */
 [class*="vref"] { cursor: default; }
 body.tool-text [class*="vref"], body.tool-para [class*="vref"] { cursor: text; }
-/* 스포이드·자는 지면 어디를 눌러도 되는 도구다 — 커서로 그 사실을 알린다. */
-body.tool-pick, body.tool-pick * { cursor: crosshair !important; }
-body.tool-ruler, body.tool-ruler * { cursor: crosshair !important; }
+/* 스포이드·자는 지면 어디를 눌러도 되는 도구다 — 커서로 그 사실을 알린다.
+   ⚠ `*` 로 쓰면 안 된다. 전칭 규칙 하나가 예전에 본문 단을 167mm → 118mm 로
+     망가뜨렸다(그래서 시험이 막는다). `cursor` 는 저절로 물려받으므로
+     판에 한 번만 주고, 제 커서를 가진 것들만 따로 덮는다. */
+body.tool-pick #viv, body.tool-ruler #viv { cursor: crosshair; }
+body.tool-pick .viv-box, body.tool-ruler .viv-box,
+body.tool-pick .ide-hd, body.tool-ruler .ide-hd,
+body.tool-pick .ide-gd, body.tool-ruler .ide-gd { cursor: crosshair; }
 body.tool-text [class*="vref"]:hover, body.tool-para [class*="vref"]:hover {
   outline: 1px dashed rgba(120,140,255,.6); outline-offset: 2px;
   background: rgba(120,140,255,.07);
