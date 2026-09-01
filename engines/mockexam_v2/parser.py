@@ -231,6 +231,56 @@ def _expand_range_groups(annotated, warnings=None):
     return out
 
 
+
+# 선지 무리는 있는데 그 앞에 발문이 없는 자리를 메운다 ─────────────────────
+# 선지 다섯 개가 붙어 있으면 그 앞 어딘가에 반드시 발문이 있다. 그런데 발문
+# 종결이 화이트리스트에 없으면(`…에세이 작문 원칙은?` `…문장의 개수는?`)
+# UNKNOWN 으로 남고, 그 선지 무리가 **앞 문항에 붙어** 문항 하나가 사라진다.
+# 표현을 계속 늘리는 대신 '고아 선지 무리' 라는 구조로 복구한다.
+_RE_KO_QEND = re.compile(r'(?:[?？]|시오\s*[.。]?|하시오|쓰시오)\s*$')
+_RE_HANGUL_ANY = re.compile(r'[가-힣]')
+
+
+def _repair_orphan_choice_runs(annotated, warnings=None):
+    """앞에 발문이 없는 선지 무리 앞의 한국어 지시문을 발문으로 승격."""
+    runs = [i for i, a in enumerate(annotated)
+            if a["kind"] == "C" and (i == 0 or annotated[i - 1]["kind"] != "C")]
+    prev_end = -1
+    fixed = 0
+    for start in runs:
+        end = start
+        while end + 1 < len(annotated) and annotated[end + 1]["kind"] == "C":
+            end += 1
+        gap = range(max(prev_end + 1, 0), start)
+        prev_end = end
+        if any(annotated[k]["kind"] in ("Q", "Q-INTRO") for k in gap):
+            continue                      # 이미 발문이 있다
+        # 간극에 지문이 있어야 '새 문항'이다 (짝 선지 열 나열과 구별)
+        if not any(annotated[k]["kind"] in ("P", "P-CONTEXT", "K") for k in gap):
+            continue
+        cand = None
+        for k in gap:
+            t = annotated[k]["text"]
+            if annotated[k]["kind"] in ("Q", "Q-INTRO", "C", "BLANK"):
+                continue
+            if len(t) < 15 or not _RE_HANGUL_ANY.search(t):
+                continue
+            if not _RE_KO_QEND.search(t):
+                continue
+            cand = k
+            break
+        if cand is None:
+            continue
+        annotated[cand]["kind"] = "Q"
+        annotated[cand]["q_code"] = None
+        fixed += 1
+        if warnings is not None:
+            warnings.append(
+                f"고아 선지 무리 앞의 지시문을 발문으로 세움: "
+                f"{annotated[cand]['text'][:40]!r}")
+    return annotated
+
+
 def build_ir(paras, meta=None, log=None):
     """단락 목록 → content v2 문서. (단락종류 시퀀스 기반 문항 그룹핑)"""
     from engines._taxonomy import classify
@@ -242,6 +292,7 @@ def build_ir(paras, meta=None, log=None):
     annotated = classify_paragraphs(paras, {"blank_fill_answer": True,
                                             "strip_source_tag": True})
     _pre_warn = []
+    annotated = _repair_orphan_choice_runs(annotated, _pre_warn)
     annotated = _expand_range_groups(annotated, _pre_warn)
     items = []
     warnings = list(_pre_warn)

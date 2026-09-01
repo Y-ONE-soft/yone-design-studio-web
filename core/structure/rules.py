@@ -243,7 +243,8 @@ SOURCE_TAG_BODY = (r'(?:\d{2,4}\s*년\s*\d{1,2}\s*월[^\[\]]{0,20}'
                    r'|\d{1,2}\s*강[^\[\]]{0,20}'
                    r'|[^\[\]]{0,30}수능특강[^\[\]]{0,30}'
                    r'|[^\[\]]{0,10}\d{1,2}\s*과(?:\s*[^\[\]]{0,12})?'
-                   r'|[^\[\]]{2,30}변형)')
+                   r'|[^\[\]]{2,30}변형'
+                   r'|\d{1,3}\s*번)')
 SOURCE_TAG_TRAIL = re.compile(r'\s*\[' + SOURCE_TAG_BODY + r'\]\s*$')
 SOURCE_TAG_ONLY = re.compile(r'^\s*\[' + SOURCE_TAG_BODY + r'\]\s*$')
 SRC_MARKER = re.compile(r'^\[[^\[\]]{2,}변형\]$')
