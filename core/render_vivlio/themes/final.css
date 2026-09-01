@@ -61,7 +61,7 @@
 @page :left {
   margin-left: 21mm; margin-right: 24.3mm;
   background:
-    linear-gradient(var(--ink), var(--ink)) no-repeat 13.90mm 0 / 12.75mm 23.26mm,
+    linear-gradient(var(--ink), var(--ink)) no-repeat 18.00mm 0 / 12.75mm 23.26mm,
     linear-gradient(var(--ink), var(--ink)) no-repeat 0 23.00mm / 216mm 0.265mm;
   @top-left { content: element(bandrun); width: 190mm; vertical-align: top; }
   @bottom-left { content: element(footL); width: 190mm; vertical-align: top; }
@@ -84,7 +84,7 @@
 @page vocab:left {
   background:
     linear-gradient(var(--panel), var(--panel)) no-repeat 108.00mm 30.00mm / 83mm 252mm,
-    linear-gradient(var(--ink), var(--ink)) no-repeat 13.90mm 0 / 12.75mm 23.26mm,
+    linear-gradient(var(--ink), var(--ink)) no-repeat 18.00mm 0 / 12.75mm 23.26mm,
     linear-gradient(var(--ink), var(--ink)) no-repeat 0 23.00mm / 216mm 0.265mm;
 }
 @page vocab:right {
@@ -101,7 +101,7 @@
 @page vocabns:left {
   background:
     linear-gradient(var(--panel), var(--panel)) no-repeat 108.00mm 30.00mm / 83mm 196mm,
-    linear-gradient(var(--ink), var(--ink)) no-repeat 13.90mm 0 / 12.75mm 23.26mm,
+    linear-gradient(var(--ink), var(--ink)) no-repeat 18.00mm 0 / 12.75mm 23.26mm,
     linear-gradient(var(--ink), var(--ink)) no-repeat 0 23.00mm / 216mm 0.265mm;
 }
 @page vocabns:right {
@@ -203,9 +203,12 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 /* --------------------------------------------------------- 러닝: 섹션 띠 */
 /* 짝수 면 배경이 검은 사각형을 그리고, 여기서는 글자만 얹는다. */
 .bandrun { position: running(bandrun); }
+/* 띠 자리는 완성본 실측: 검은 사각형 x=18.0mm, 숫자 y=4.72, 제목 y=10.30
+ * (도련 뺀 판 좌표). 예전 값(-7.10/2.54)은 띠 전체를 4.1mm 왼쪽·0.6mm
+ * 아래로 밀어 놓고 있었다. */
 .bandrun, .sechdr .band {
-  height: 29.57mm; white-space: nowrap; margin-left: -7.10mm;
-  padding-top: 2.54mm;
+  height: 29.57mm; white-space: nowrap; margin-left: -3.00mm;
+  padding-top: 1.94mm;
 }
 .band .n {
   display: inline-block; width: 12.75mm; text-align: center;
@@ -233,12 +236,12 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 .sechdr .band {
   /* 러닝 띠보다 0.032mm 오른쪽·아래로 앉는다(마진 박스와 기준이 달라서) —
    * 그만큼 되돌려 **자리를 정확히 포갠다**(실측 보정). */
-  position: absolute; left: -7.132mm;
+  position: absolute; left: -3.032mm;
   top: calc(-1 * var(--mtop) - 0.033mm);
   width: 190mm; margin-left: 0;
 }
 .sechdr .sq {                     /* 홀수 면에는 배경 사각형이 없다 */
-  position: absolute; left: -7.10mm; top: calc(-1 * var(--mtop));
+  position: absolute; left: -3.00mm; top: calc(-1 * var(--mtop));
   width: 12.75mm; height: 23.26mm; background: var(--ink);
 }
 

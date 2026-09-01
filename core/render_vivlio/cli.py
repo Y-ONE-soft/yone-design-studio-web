@@ -104,17 +104,6 @@ def run_preview(html_path, port=13000, host="127.0.0.1", log=None, timeout=90):
     """
     cli = require_cli()
     html_path = os.path.abspath(html_path)
-    # 정규식 스타일 — 꼴이 맞는 글자에 문자 스타일을 건다(인디자인의 GREP 스타일).
-    # ⚠ 계열마다 HTML 을 제 손으로 짜므로 **여기서 한 번** 한다. 측정 조판도
-    #   같은 길을 지나가니 잰 높이와 실제 조판이 어긋나지 않는다.
-    try:
-        from core.render_vivlio import grepstyle as _gs
-        n = _gs.apply_file(html_path)
-        if n and log:
-            log(f"  [정규식 스타일] {n}곳")
-    except Exception as e:                      # 조판을 막지는 않는다
-        if log:
-            log(f"  [정규식 스타일] 건너뜀 — {e}")
     cmd = [cli, "preview", os.path.basename(html_path),
            "--no-open-viewer", "--host", host, "--port", str(port),
            "--log-level", "info"]
@@ -169,6 +158,17 @@ def run_build(html_path, out_pdf, log=None, timeout=900, extra=(), final=True):
         raise RenderOnly(os.path.abspath(html_path))
     cli = require_cli()
     html_path = os.path.abspath(html_path)
+    # 정규식 스타일 — 꼴이 맞는 글자에 문자 스타일을 건다(인디자인의 GREP 스타일).
+    # ⚠ 계열마다 HTML 을 제 손으로 짜므로 **여기서 한 번** 한다. 측정 조판도
+    #   같은 길을 지나가니 잰 높이와 실제 조판이 어긋나지 않는다.
+    try:
+        from core.render_vivlio import grepstyle as _gs
+        n = _gs.apply_file(html_path)
+        if n and log:
+            log(f"  [정규식 스타일] {n}곳")
+    except Exception as e:                      # 조판을 막지는 않는다
+        if log:
+            log(f"  [정규식 스타일] 건너뜀 — {e}")
     cwd = os.path.dirname(html_path)
     cmd = [cli, "build", os.path.basename(html_path),
            "-o", os.path.abspath(out_pdf)] + list(extra)
