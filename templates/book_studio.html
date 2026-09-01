@@ -873,7 +873,10 @@
           hit = c[b];
           // ⇧ 를 누르고 있으면 **더 고른다**(인디자인과 같다).
           if (ev.shiftKey) { addPick(hit.el, hit.ref); return; }
-          picks = [];
+          // ⚠ 그냥 누른 것도 **묶음의 시작**이다. 안 담아 두면 ⇧로 하나를 더
+          //   골라도 "1개" 가 되어 정렬 단추가 안 나온다(실제로 그랬다).
+          picks = [{ el: hit.el, ref: hit.ref }];
+          markPicks();
           pick(hit.el, hit.ref);
           return;
         }

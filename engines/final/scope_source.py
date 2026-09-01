@@ -120,7 +120,7 @@ def _scan(text):
         한글이나 괄호가 오면 뜻이 달라 손대지 않는다
         (`14~16강 분석~3` · `21~30강(24-3 제외)`)
     """
-    out, only, meta = [], {}, {}
+    out, only, meta, excl = [], {}, {}, {}
     last_kind = "bare"
     for seg in RE_SPLIT.split(text or ""):
         if not seg.strip():
@@ -140,7 +140,7 @@ def _scan(text):
         subj, pub = _subject_of(seg), _publisher_of(seg)
         notes = RE_NOTE.findall(seg)
         deep = "deep learning" in low or "DL" in seg
-        here = []
+        here, _pos = [], {}
 
         runs = list(RE_UNIT_RUN.finditer(seg))
         for idx, m in enumerate(runs):
@@ -154,6 +154,8 @@ def _scan(text):
             nums = _nums(m.group(1))
             out += [(kind, u) for u in nums]
             here += [(kind, u) for u in nums]
+            for u in nums:
+                _pos.setdefault((kind, u), m.start())
             end = runs[idx + 1].start() if idx + 1 < len(runs) else len(seg)
             tail = seg[m.end():end]
             if re.match(r"^\s*\d", tail):
@@ -177,10 +179,27 @@ def _scan(text):
         for idx, m in enumerate(tests):
             t = ("test", int(m.group(1)))
             out.append(t); here.append(t)
+            _pos.setdefault(t, m.start())
             end = tests[idx + 1].start() if idx + 1 < len(tests) else len(seg)
             tail = seg[m.end():end]
             if re.match(r"^\s*\d", tail):
                 only[t] = _ranges(tail)
+
+        # `(24-3, 27-3 제외)` · `TEST 2 (1, 8, 10~11번 제외)` — 괄호 안의 '제외'.
+        #   `강-지문` 짝이면 그 강의 그 지문만, 맨 숫자면 **바로 앞 토큰**의 것.
+        for m in re.finditer(r"\(([^)]*제외[^)]*)\)", seg):
+            inner = m.group(1)
+            pairs = re.findall(r"(\d{1,2})\s*[-–]\s*(\d{1,2})", inner)
+            if pairs:
+                for a, b in pairs:
+                    for t0 in here:
+                        if t0[0] != "mock" and t0[1] == int(a):
+                            excl.setdefault(t0, set()).add(int(b))
+            else:
+                prev = [t0 for t0 in here if _pos.get(t0, -1) < m.start()]
+                if prev:
+                    excl.setdefault(prev[-1], set()).update(
+                        _ranges(re.sub(r"제외", "", inner)))
 
         for t in here:
             d = meta.setdefault(t, {})
@@ -196,6 +215,9 @@ def _scan(text):
     for t, nums in only.items():
         if nums:
             meta.setdefault(t, {})["only"] = nums
+    for t, nums in excl.items():
+        if nums:
+            meta.setdefault(t, {})["exclude"] = sorted(nums)
     return _uniq(out), meta
 
 
@@ -587,13 +609,17 @@ def in_scope(label, scope):
     t = keys.get(_key(tok))
     if t is None:
         return False
-    only = (scope.get("detail", {}).get(t) or {}).get("only")
-    if not only:
+    d = scope.get("detail", {}).get(t) or {}
+    only, excl = d.get("only"), d.get("exclude")
+    if not only and not excl:
         return True
     m = RE_LAB_NO.search(tail if tok[0] != "mock" else (label or "")[4:])
     if not m:
         return True                       # 번호 없는 꼬리 — 부속물
-    return int(m.group(1)) in only
+    no = int(m.group(1))
+    if excl and no in excl:
+        return False
+    return no in only if only else True
 
 
 # ── 파일로 오가기 ───────────────────────────────────────────────────────
