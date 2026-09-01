@@ -112,6 +112,48 @@ class Renderer(object):
         return (f'<span class="essay-no">{esc(tpl.replace("{n}", str(n)))}</span>',
                 False)
 
+    def ab_table(self, items, cols, stem=""):
+        """(A)(B)(C) 짝맞추기 선지. 정본 대부분이 **열 표**다.
+
+        원고는 짝을 탭으로만 준다(`However\tStill\tAlthough`). 표로 앉히지
+        않으면 열이 어긋나 실물과 전혀 달라진다. 열 수는 원고 구조에서 얻고
+        (발문의 `(A)~(C)` 가 아니라 실제 갈린 칸 수), 머리행 레이블만 발문에서
+        읽는다.
+        """
+        s = self.s
+        n = len(cols[0])
+        heads = _ab_heads(stem, n)
+        sep = _ab_sep(s)
+        if s.ab_layout == "inline_dash" or s.choice_layout == "inline":
+            glue = f" {esc(sep)} " if sep else " "
+            body = "".join(
+                f'<p class="choice">'
+                f'{self.inline((it.get("label") or "") + " ")}'
+                f'{glue.join(self.inline(c) for c in row)}</p>'
+                for it, row in zip(items, cols))
+            return body
+        def join(cells, tag="td", mark=True):
+            """구분자는 열 사이에 실제로 인쇄되는 문자다. 다만 **머리행에는
+            넣지 않는다** — 배재1·배재2·세종1 정본 전수에서 머리행 `(A) (B)`
+            에는 구분자가 없고 선지 행에만 있다. 열은 어긋나면 안 되므로
+            머리행에도 빈 칸을 같은 자리에 넣는다."""
+            if not sep:
+                return "".join(cells)
+            body = esc(sep) if mark else ""
+            gap = f'<{tag} class="ab-sep">{body}</{tag}>'
+            return gap.join(cells)
+
+        rows = []
+        if s.ab_header_row and heads:
+            cells = [f"<th>{esc(h)}</th>" for h in heads]
+            rows.append(f'<tr><th class="ab-mark"></th>'
+                        f'{join(cells, "th", mark=False)}</tr>')
+        for it, row in zip(items, cols):
+            cells = [f"<td>{self.inline(c)}</td>" for c in row]
+            rows.append(f'<tr><td class="ab-mark">'
+                        f'{esc(it.get("label") or "")}</td>{join(cells)}</tr>')
+        return f'<table class="ab-table">{"".join(rows)}</table>'
+
     def group_head(self, a, b, intro, essay_ns=None):
         """묶음 머리. 학교마다 괄호·구분자·혼합 표기가 다르다."""
         s = self.s
@@ -218,6 +260,10 @@ class Renderer(object):
         ch = it.get("choices")
         if ch and ch.get("items"):
             items = ch["items"]
+            pair = _ab_columns(items)
+            if pair:
+                out.append(self.ab_table(items, pair, q))
+                return "\n".join(x for x in out if x)
             layout = s.choice_layout or "one_per_line"
             cells = []
             for c in items:
@@ -230,6 +276,56 @@ class Renderer(object):
             else:
                 out.append("".join(cells))
         return "\n".join(x for x in out if x)
+
+
+_RE_AB_HEAD = re.compile(r"\(([A-Ea-e])\)")
+
+
+def _ab_columns(items, min_cols=2):
+    """선지가 (A)(B)(C) 짝인지 **구조로** 판정한다.
+
+    유형 이름이나 발문 문구가 아니라, 선지가 모두 같은 칸 수로 갈리는지를 본다.
+    원고는 탭으로 주고, 탭이 없으면 세 칸 이상 공백으로 준다.
+    Returns: 열 리스트(선지마다) 또는 None.
+    """
+    rows = []
+    for c in items:
+        t = (c.get("content") or "").strip() if isinstance(c, dict) else str(c)
+        parts = [x.strip() for x in t.split("\t") if x.strip()]
+        if len(parts) < min_cols:
+            parts = [x.strip() for x in re.split(r"\s{3,}", t) if x.strip()]
+        if len(parts) < min_cols:
+            return None
+        rows.append(parts)
+    n = len(rows[0])
+    if any(len(r) != n for r in rows):
+        return None
+    # 한 칸이 문장만큼 길면 짝이 아니라 그냥 긴 선지가 탭으로 접힌 것이다
+    if max(len(x) for r in rows for x in r) > 40:
+        return None
+    return rows
+
+
+def _ab_heads(stem, n):
+    """머리행 레이블 — 발문의 `(A)~(C)`·`(A), (B)` 에서 읽고, 없으면 자동."""
+    seen = []
+    for m in _RE_AB_HEAD.finditer(stem or ""):
+        u = m.group(1).upper()
+        if u not in seen:
+            seen.append(u)
+    if len(seen) < n:
+        seen = [chr(ord("A") + i) for i in range(n)]
+    return [f"({x})" for x in seen[:n]]
+
+
+def _ab_sep(spec):
+    """열 사이 구분자. 프로파일이 '없음(공백열)' 처럼 서술로 적어 둔 값도 있다."""
+    v = spec.ab_sep
+    if not v:
+        return ""
+    if any(w in v for w in ("없음", "공백", "탭", "정렬")):
+        return ""
+    return v if len(v) <= 8 else ""
 
 
 def _number_items(doc):

@@ -260,6 +260,10 @@ class Spec(object):
         self.choice_layout = _str(_first(p, ["choices.layout"]), "one_per_line") or "one_per_line"
         self.choice_marker = _first(p, ["choices.marker"], "①")
         self.ab_sep = _str(_first(p, ["choices.ab_pair.separator"]))
+        # (A)(B)(C) 짝맞추기 선지 — 정본은 대부분 열 표다.
+        self.ab_layout = _str(_first(p, ["choices.ab_pair.layout"]),
+                              "column_table") or "column_table"
+        self.ab_header_row = bool(dig(p, "choices.ab_pair.header_row"))
         self.insert_marker = _first(p, ["choices.insert_marker"], "( ① )")
 
         # ── 러닝 요소 ──

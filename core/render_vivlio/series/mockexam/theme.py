@@ -282,6 +282,19 @@ def build_css(spec):
                    f"font-weight: {700 if s.ending_bold else 400}; "
                    "margin-top: 6pt; }")
 
+    # ── (A)(B)(C) 짝맞추기 선지 표 ──
+    ch = s.role("choice")
+    csz = float(ch.get("size_pt") or 9.0)
+    css.append(".ab-table { border-collapse: collapse; margin: 1pt 0 0 0; "
+               "table-layout: auto; break-inside: avoid; }")
+    css.append(".ab-table td, .ab-table th { border: 0; text-align: left; "
+               f"padding: 0.2pt 6pt 0.2pt 0; font-size: {csz}pt; "
+               "vertical-align: baseline; white-space: nowrap; }")
+    css.append(".ab-table th { font-weight: 400; text-align: center; }")
+    css.append(".ab-table .ab-mark { padding-right: 2pt; width: 1em; }")
+    # 구분자는 열 사이에 **실제로 인쇄되는 문자**다(배재 `-----`, 성덕 `…`)
+    css.append(".ab-table .ab-sep { padding: 0 3pt; color: inherit; }")
+
     # ── 배점표(세종 계열) — 마무리 문구 아래, 같은 단 안 ──
     if getattr(s, "score_table", False):
         bw = s.score_table_border_pt

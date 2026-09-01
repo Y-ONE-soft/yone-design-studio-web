@@ -546,12 +546,14 @@
     viewer.addListener('readystatechange', function () {
       if (viewer && viewer.readyState === 'interactive' && !ready) {
         ready = true;
+        veilOff();
         $('ide-empty').style.display = 'none';
         hookStage(); applyViews(); drawPageNo();
       }
     });
     viewer.addListener('loaded', function () {
       ready = true;
+      veilOff();
       $('ide-empty').style.display = 'none';
       hookStage();
       hookDrag();
@@ -567,6 +569,7 @@
       drawPageNo();
     });
     viewer.addListener('error', function (p) {
+      veilOff();                   // 실패했는데 가리개가 남으면 못 만진다
       msg('✗ ' + JSON.stringify(p && p.content).slice(0, 160));
     });
     window.__viewer = viewer;   // 콘솔에서 상태를 보려고
@@ -580,6 +583,7 @@
   /** 서버에 다시 렌더시키고(원고·설정 반영) 지면을 새로 앉힌다. */
   function rebuild(note) {
     msg((note || '') + ' 다시 조판 중…');
+    veilOn((note || '') + ' 다시 조판 중…');
     return api('/api/book-studio/render', { b: key, full: scope === 'full' })
       .then(function (d) {
         if (d.error) { msg('✗ ' + d.error); return false; }
@@ -588,9 +592,54 @@
       });
   }
 
+  /** 다시 조판하는 동안 **직전 지면을 덮어 둔다.**
+   *
+   *  `loadDocument()` 는 지면을 통째로 비우고 다시 앉힌다 — 그 몇 초 동안
+   *  화면이 **회색 빈 판**이 된다. 인디자인은 무슨 짓을 해도 지면이 사라지지
+   *  않는다. 그래서 직전 면을 복제해 덮어 두고, 새 면이 서면 걷는다.
+   *
+   *  ⚠ 복제본은 **죽은 그림**이다(클릭도 스크롤도 안 먹는다). 새 면이 서면
+   *    반드시 걷어야 한다 — 안 걷으면 고칠 수 없는 화면이 남는다.
+   */
+  function veilOn(what) {
+    var d = fdoc(); if (!d || !d.body) return;
+    veilOff();
+    var v = d.createElement('div');
+    v.id = 'ide-veil';
+    v.style.cssText = 'position:fixed;inset:0;z-index:99998;background:#ececed;'
+      + 'overflow:hidden;pointer-events:none';
+    var pe = pageEl();
+    if (pe) {
+      // ⚠ 지면은 **확대·축소된 채**로 앉아 있다(화면 맞춤). 복제본에 크기만
+      //   주면 배율이 빠져 글자가 커진 채로 덮인다 — 실제로 그렇게 나왔다.
+      //   보이는 크기 ÷ 실제 크기 만큼 다시 줄여 준다.
+      var box = pe.getBoundingClientRect();
+      var sx = box.width / (pe.offsetWidth || box.width || 1);
+      var c = pe.cloneNode(true);
+      c.style.cssText += ';position:absolute;left:' + box.left + 'px;top:'
+        + box.top + 'px;transform:scale(' + sx + ');transform-origin:0 0;'
+        + 'opacity:.5;display:block;margin:0';
+      v.appendChild(c);
+    }
+    var chip = d.createElement('div');
+    chip.textContent = what || '다시 조판 중…';
+    chip.style.cssText = 'position:absolute;left:50%;top:50%;'
+      + 'transform:translate(-50%,-50%);background:rgba(18,18,26,.86);color:#fff;'
+      + 'font:13px/1.4 -apple-system,BlinkMacSystemFont,sans-serif;'
+      + 'padding:7px 15px;border-radius:999px';
+    v.appendChild(chip);
+    d.body.appendChild(v);
+  }
+
+  function veilOff() {
+    var d = fdoc(); var old = d && d.getElementById('ide-veil');
+    if (old && old.parentNode) { old.parentNode.removeChild(old); }
+  }
+
   /** 서버를 거치지 않고 지면만 다시 앉힌다(색·여백 미리보기). */
   function show(extraCss) {
     ready = false;                 // 새로 조판하는 동안은 면을 못 넘긴다
+    veilOn();                      // 지면이 빈 판이 되지 않게 덮어 둔다
     ensureViewer();
     if (!viewer) { msg('조판 엔진을 불러오지 못했다'); return; }
     var opts = {};
