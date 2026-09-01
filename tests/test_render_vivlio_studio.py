@@ -2497,3 +2497,69 @@ def test_넣을_자리는_목록_밖을_가리키지_않는다():
     data = {"a": {"paras": ["가", "나"]}}
     base, at = BS._list_slot("a.paras.9", data, None)
     assert (base, at) == ("a.paras", 2), (base, at)
+
+
+# ── 마스터 페이지(머리말·꼬리말) · 정규식 스타일 ──────────────────────────
+def test_머리말은_한겹_안쪽으로_나간다():
+    """`@page :right { @bottom-right { content: … } }` — 겹친 규칙이어야 한다."""
+    from core.render_vivlio import knobs
+
+    class C:
+        def section(self, k):
+            return {":right": {"margin-top": "20mm",
+                               "@bottom-right": {"content": "counter(page)"}}}
+    css = knobs.page_rules_text(C())
+    assert "@page :right {" in css
+    assert "@bottom-right {" in css and "content: counter(page);" in css
+
+
+def test_안바깥_마진박스는_안_받는다():
+    """`@bottom-outside` 는 조판이 무시한다(실측) — 받아 두면 조용히 안 나온다."""
+    import routes.book_studio as BS
+    assert "@bottom-outside" not in BS.MARGIN_BOXES
+    assert "@bottom-right" in BS.MARGIN_BOXES and "@top-center" in BS.MARGIN_BOXES
+
+
+def test_이름있는_면을_찾아_보여준다():
+    """이름 있는 면이 「모든 면」보다 세다 — 모르면 적어도 아무 일이 안 난다."""
+    src = open(os.path.join(_ROOT, "routes", "book_studio.py"),
+               encoding="utf-8").read()
+    i = src.index("def _page_names")
+    assert "@page" in src[i:i + 1200] and "theme.css" in src[i:i + 1200]
+    ui = _studio_src()
+    assert "pageNames" in ui and "마스터 " in ui
+
+
+def test_정규식_스타일은_태그를_안_건드린다():
+    """속성값에 스타일을 끼우면 HTML 이 깨진다 — 글자 자리만 바꾼다."""
+    from core.render_vivlio import grepstyle as gs
+    h = '<p class="head" title="30%">30% 올랐다</p>'
+    out, n = gs.apply_text(h, [{"pat": r"\d+%", "cls": "강조"}])
+    assert n == 1
+    assert 'title="30%"' in out                    # 속성은 그대로
+    assert '<span class="cs-강조">30%</span> 올랐다' in out
+
+
+def test_정규식_스타일은_범위를_지킨다():
+    from core.render_vivlio import grepstyle as gs
+    h = '<p class="head">30%</p><p>30%</p>'
+    out, n = gs.apply_text(h, [{"pat": r"\d+%", "cls": "강조", "sel": "head"}])
+    assert n == 1 and out.count("cs-강조") == 1
+    assert out.startswith('<p class="head"><span')
+
+
+def test_정규식_스타일은_조판_직전에_한_번():
+    """계열마다 HTML 을 제 손으로 짜므로 한 곳에서 건다 — `run_build`."""
+    src = open(os.path.join(_ROOT, "core", "render_vivlio", "cli.py"),
+               encoding="utf-8").read()
+    i = src.index("def run_build(")
+    j = src.index("cmd = [cli", i)
+    assert "grepstyle" in src[i:j], "run_build 안에서 걸어야 모든 계열에 통한다"
+    # 미리보기(run_preview)에서 또 걸면 두 번 걸린다
+    assert src.count("_gs.apply_file(") == 1
+
+
+def test_못알아들을_정규식은_조판을_막지_않는다():
+    from core.render_vivlio import grepstyle as gs
+    out, n = gs.apply_text("<p>가</p>", [{"pat": "[", "cls": "강조"}])
+    assert n == 0 and out == "<p>가</p>"

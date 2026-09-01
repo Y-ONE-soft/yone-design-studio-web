@@ -665,6 +665,61 @@ def api_grep():
                     "history": _hist(st)})
 
 
+def _toc_items(text, cls):
+    """조판한 HTML 에서 그 스타일이 걸린 자리를 **차례대로** 모은다."""
+    items, seen = [], set()
+    for m in re.finditer(r"<([a-zA-Z][\w-]*)([^<>]*)>", text):
+        attrs = m.group(2) or ""
+        cm = re.search(r'class="([^"]*)"', attrs)
+        if not cm or cls not in cm.group(1).split():
+            continue
+        rm = re.search(r'data-ref="([^"]*)"', attrs)
+        ref = rm.group(1) if rm else ""
+        if not ref or ref in seen:
+            continue
+        seen.add(ref)
+        # 제목 글은 **그 태그가 닫힐 때까지**만 — 뒤 문단이 딸려오면 안 된다
+        end = text.find("</%s>" % m.group(1), m.end())
+        raw = text[m.end():end if end > 0 else m.end() + 200]
+        label = " ".join(re.sub(r"<[^>]+>", " ", raw).split())[:80]
+        if label:
+            items.append({"ref": ref, "label": label})
+        if len(items) >= 400:
+            break
+
+    return items
+
+
+def _index_items(text, cls):
+    """색인 — 그 **문자 스타일**이 걸린 낱말을 모아 가나다순으로 묶는다.
+
+    한 낱말이 여러 면에 나오므로 자리표를 여러 개 들고 간다(면 번호는 조판이
+    채운다). 인디자인의 「색인」이다.
+
+    ⚠ 문자 스타일 자체에는 자리표가 없다 — **그 앞의 자리표**(감싸고 있는
+      문단)를 쓴다. 면 번호는 그 문단이 앉은 면이면 충분하다.
+    """
+    by = {}
+    ref = ""
+    for m in re.finditer(r"<[^<>]*>|[^<>]+", text):
+        chunk = m.group(0)
+        if chunk.startswith("<"):
+            rm = re.search(r'data-ref="([^"]*)"', chunk)
+            if rm:
+                ref = rm.group(1)
+            cm = re.search(r'class="([^"]*)"', chunk)
+            if cm and ("cs-" + cls) in cm.group(1).split():
+                nxt = text[m.end():text.find("<", m.end())]
+                word = " ".join(re.sub(r"<[^>]+>", " ", nxt).split())[:40]
+                if word and ref:
+                    by.setdefault(word, [])
+                    if ref not in by[word]:
+                        by[word].append(ref)
+    out = [{"label": w, "refs": rs[:30]} for w, rs in by.items()]
+    out.sort(key=lambda x: x["label"])
+    return out[:600]
+
+
 @bp.route("/api/book-studio/toc", methods=["POST"])
 def api_toc():
     """목차 — 제목을 모아 **면 번호와 함께** 세운다(인디자인의 목차).
@@ -692,25 +747,9 @@ def api_toc():
         return jsonify({"error": "먼저 다시 조판하세요"}), 409
     with open(html_p, encoding="utf-8") as f:
         text = f.read()
-    items, seen = [], set()
-    for m in re.finditer(r"<([a-zA-Z][\w-]*)([^<>]*)>", text):
-        attrs = m.group(2) or ""
-        cm = re.search(r'class="([^"]*)"', attrs)
-        if not cm or cls not in cm.group(1).split():
-            continue
-        rm = re.search(r'data-ref="([^"]*)"', attrs)
-        ref = rm.group(1) if rm else ""
-        if not ref or ref in seen:
-            continue
-        seen.add(ref)
-        # 제목 글은 **그 태그가 닫힐 때까지**만 — 뒤 문단이 딸려오면 안 된다
-        end = text.find("</%s>" % m.group(1), m.end())
-        raw = text[m.end():end if end > 0 else m.end() + 200]
-        label = " ".join(re.sub(r"<[^>]+>", " ", raw).split())[:80]
-        if label:
-            items.append({"ref": ref, "label": label})
-        if len(items) >= 400:
-            break
+    kind = p.get("kind") or "toc"
+    items = (_index_items(text, cls) if kind == "index"
+             else _toc_items(text, cls))
     if p.get("action") == "scan":
         return jsonify({"total": len(items), "items": items[:60],
                         "more": max(0, len(items) - 60)})
@@ -735,9 +774,11 @@ def api_toc():
     if base is None:
         return jsonify({"error": "여기에는 넣을 수 없습니다 — "
                                  "지문·선지·본문 **한 줄**을 고르세요"}), 409
-    blk = toc_mod.new(p.get("title") or "차례", items)
+    blk = toc_mod.new(p.get("title")
+                      or ("찾아보기" if kind == "index" else "차례"), items)
     st = ed.push(cfg, {"op": "insert", "ref": "%s.%d" % (base, at), "v": blk,
-                       "note": "목차 %d개" % len(items)})
+                       "note": "%s %d개" % (
+                           "색인" if kind == "index" else "목차", len(items))})
     return jsonify({"ok": True, "total": len(items),
                     "ref": "%s.%d" % (base, at), "history": _hist(st)})
 

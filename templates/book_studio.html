@@ -330,10 +330,19 @@
             <label>제목</label>
             <input id="toc-title" value="차례">
           </div>
+          <div class="ide-row">
+            <label>무엇을</label>
+            <select id="toc-kind">
+              <option value="toc">차례 (제목을 순서대로)</option>
+              <option value="index">색인 (낱말을 가나다순으로)</option>
+            </select>
+          </div>
           <div class="ide-f">
             <button class="ide-b" id="toc-scan">어디에 있나 보기</button>
             <button class="ide-b" id="toc-make">고른 자리에 넣기</button>
           </div>
+          <div class="ide-hint">색인은 <b>문자 스타일</b>이 걸린 낱말을 모읍니다
+            — 스타일 이름만 적으세요(<b>cs-</b> 는 빼고).</div>
           <div class="ide-hist" id="toc-list"></div>
         </div>
       </details>
@@ -4158,7 +4167,8 @@
   function tocScan() {
     var cls = $('toc-cls').value;
     if (!cls) { msg('모을 스타일을 고르세요'); return; }
-    api('/api/book-studio/toc', { b: key, cls: cls, action: 'scan' })
+    api('/api/book-studio/toc',
+        { b: key, cls: cls, kind: $('toc-kind').value, action: 'scan' })
       .then(function (d) {
         var host = $('toc-list'); host.innerHTML = '';
         if (d.error) { msg('✗ ' + d.error); return; }
@@ -4166,7 +4176,8 @@
         (d.items || []).forEach(function (it, i) {
           var r = document.createElement('div');
           r.className = 'ide-hint';
-          r.textContent = (i + 1) + '. ' + it.label;
+          r.textContent = (i + 1) + '. ' + it.label
+            + (it.refs ? ' (' + it.refs.length + '곳)' : '');
           host.appendChild(r);
         });
         if (d.more) {
@@ -4183,7 +4194,8 @@
     if (!cls) { msg('모을 스타일을 고르세요'); return; }
     if (!curRef) { msg('목차를 넣을 자리를 지면에서 고르세요'); return; }
     api('/api/book-studio/toc',
-        { b: key, cls: cls, ref: curRef, title: $('toc-title').value })
+        { b: key, cls: cls, ref: curRef, kind: $('toc-kind').value,
+          title: $('toc-title').value })
       .then(function (d) {
         if (d.error) { msg('✗ ' + d.error); return; }
         setHist(d.history);
