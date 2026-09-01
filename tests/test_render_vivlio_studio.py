@@ -1280,3 +1280,121 @@ def test_styles_accepts_ref_selector(client):
                           "selector": '[data-ref="lessons.0.problems.3"]::after',
                           "props": {"content": 'url("assets/g.png")'}})
     assert r.status_code == 404, "검사는 통과하고 책에서만 걸려야 한다"
+
+
+# ── 표 칸 합치기(인디자인의 셀 병합) ────────────────────────────
+def test_merge_spans_and_hides_covered_cells():
+    """합친 칸은 `colspan`/`rowspan` 으로 나가고, 먹힌 자리는 안 그린다.
+
+    ⚠ 먹힌 자리를 **지우면** 뒤 칸이 앞으로 밀려 표가 어긋난다 — 그래서
+      `null` 로 남겨 두고 그리지만 않는다.
+    """
+    from core.render_vivlio import table as T
+    b = T.new(3, 3)
+    b["head"] = ["가", "나", "다"]
+    b["rows"] = [["1", "2", "3"], ["4", "5", "6"], ["7", "8", "9"]]
+    T.merge(b, 1, 0, 2, 1)                 # 머리줄이 0행이다
+    assert b["rows"][0][1] is None and b["rows"][1][0] is None
+    assert [len(r) for r in b["rows"]] == [3, 3, 3], "칸 수가 줄면 안 된다"
+    h = T.html(b)
+    assert 'colspan="2" rowspan="2"' in h
+    assert h.count("<td") == 6, "3+2+1 — 먹힌 자리 둘은 안 그린다"
+
+
+def test_merge_keeps_text_and_refuses_overlap():
+    """먹히는 칸의 글을 버리지 않는다. 이미 합쳐진 자리에 또 합치면 거절한다."""
+    from core.render_vivlio import table as T
+    b = T.new(2, 2)
+    b["head"] = None
+    b["rows"] = [["앞", "뒤"], ["아래", "옆"]]
+    T.merge(b, 0, 0, 0, 1)
+    assert "앞" in T.plain(b) and "뒤" in T.plain(b), "합치며 글이 사라졌다"
+    with pytest.raises(ValueError):
+        T.merge(b, 0, 0, 1, 1)
+
+
+def test_merged_cell_is_not_mistaken_for_rich_segment():
+    """`{"v": …}`(합친 칸)와 `{"t": …}`(서식 조각)를 갈라야 한다.
+
+    헷갈리면 굵게 한 칸이 합쳐진 칸으로 읽혀 표가 통째로 어긋난다.
+    """
+    from core.render_vivlio import table as T
+    assert T.span({"t": "굵게", "b": 1}) == (1, 1, {"t": "굵게", "b": 1})
+    assert T.span({"v": "합친", "c": 2}) == (2, 1, "합친")
+
+
+def test_unmerge_restores_cells():
+    from core.render_vivlio import table as T
+    b = T.new(3, 2)
+    b["head"] = None
+    b["rows"] = [["1", "2", "3"], ["4", "5", "6"]]
+    T.merge(b, 0, 0, 1, 1)
+    T.unmerge(b, 0, 0)
+    assert all(x is not None for r in b["rows"] for x in r)
+
+
+def test_merged_cell_text_stays_editable():
+    """합치고 나면 그 칸을 못 고치게 되면 안 된다 — 안쪽 `…v` 로 내려간다."""
+    src = open(os.path.join(_ROOT, "routes", "book_studio.py"),
+               encoding="utf-8").read()
+    assert 'ref += ".v"' in src, "합친 칸을 열면 '덩어리' 라고만 뜬다"
+
+
+def test_table_ref_is_found_by_shape_not_by_name():
+    """표 자리표를 `…blocks.N` 으로 찾으면 **계열마다 다르다.**
+
+    단어장은 `head.3`, 중등부는 `parts.0.sections.0.blocks.3` 이다.
+    칸의 모양(`head.<칸>` · `rows.<줄>.<칸>`)으로 찾아야 한 도구가 된다.
+    """
+    src = open(os.path.join(_ROOT, "templates", "book_studio.html"),
+               encoding="utf-8").read()
+    i = src.index("function tableRefOf")
+    body = src[i:i + 500]
+    code = "\n".join(l for l in body.splitlines()
+                     if not l.strip().startswith("//"))
+    assert "rows\\.\\d+\\.\\d+" in code
+    assert "blocks" not in code, "계열 이름이 박혀 있다"
+
+
+# ── 중등부도 같은 도구로 고쳐진다 ───────────────────────────────
+def test_middle_data_lives_outside_the_book_folder():
+    """중등부 자료는 automation 안에 있다 — 계열에게 물어야 한다.
+
+    안 물으면 작업대에서 **글을 클릭하는 순간 500** 이다(`data.json` 이 없다).
+    """
+    from core.render_vivlio.series.middle import MiddleSeries
+    from core.render_vivlio.series.base import Series
+    assert MiddleSeries.data_path is not Series.data_path
+
+
+def test_middle_refuses_question_lists_but_takes_blocks():
+    """문항 목록(`items`)은 낱말 목록과 겉모양이 같아 공용 규칙을 통과한다.
+
+    그런데 `r_qitems` 가 `x['lines']` 를 바로 읽어 **조판이 죽는다.**
+    """
+    from core.render_vivlio.series.middle import MiddleSeries
+    from core.render_vivlio.series.base import para_like
+    s = MiddleSeries()
+    items = [{"no": "01", "text": "다음 뜻을 쓰시오", "lines": []}]
+    assert para_like(items), "공용 규칙으로는 통과한다(그래서 계열이 막아야 한다)"
+    assert not s.accepts_block("items", items)
+    assert s.accepts_block("blocks", [{"kind": "words", "items": []}])
+
+
+def test_middle_renderer_reads_the_studio_folder():
+    """automation 이 `VIV_BOOK_DIR` 를 안 읽으면 고쳐도 지면이 그대로다."""
+    from core.render_vivlio.series import middle
+    p = os.path.join(middle._auto_dir(), "render.py")
+    if not os.path.exists(p):
+        pytest.skip("automation 이 이 기계에 없다")
+    src = open(p, encoding="utf-8").read()
+    assert "VIV_BOOK_DIR" in src
+    assert "'table': r_table" in src and "'box': r_box" in src
+    assert "studio_apply" in src
+
+
+def test_middle_bridge_hands_over_the_book_folder():
+    from core.render_vivlio.series import middle
+    src = open(middle.__file__, encoding="utf-8").read()
+    assert 'env["VIV_BOOK_DIR"] = bookdir' in src
+    assert "studio_css(cfg)" in src, "스타일을 안 뽑으면 디자인 편집이 안 먹는다"
