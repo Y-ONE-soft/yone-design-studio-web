@@ -1717,16 +1717,18 @@
     var moved = [];
     if (how === 'h' || how === 'v') {
       // 고르게 벌리기 — 양 끝은 그대로 두고 가운데를 나눈다
-      var key = how === 'h' ? 'left' : 'top';
+      // ⚠ 여기서 `key` 라는 이름을 쓰면 **책 이름을 가린다**(var 는 함수
+      //   전체에 걸린다) — 저장이 통째로 "모르는 책" 이 됐다. 실측으로 잡았다.
+      var axis = how === 'h' ? 'left' : 'top';
       var sorted = boxes.slice().sort(function (a, b2) {
-        return a.r[key] - b2.r[key];
+        return a.r[axis] - b2.r[axis];
       });
-      var first = sorted[0].r[key];
-      var last = sorted[sorted.length - 1].r[key];
+      var first = sorted[0].r[axis];
+      var last = sorted[sorted.length - 1].r[axis];
       var step = (last - first) / (sorted.length - 1);
       sorted.forEach(function (b2, i) {
         var want = first + step * i;
-        var d = (want - b2.r[key]) / b2.ppm;
+        var d = (want - b2.r[axis]) / b2.ppm;
         if (Math.abs(d) > 0.01) {
           moved.push({ b: b2, dx: how === 'h' ? d : 0, dy: how === 'v' ? d : 0 });
         }

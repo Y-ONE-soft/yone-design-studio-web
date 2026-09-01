@@ -2056,3 +2056,27 @@ def test_deleting_a_style_takes_it_off_first():
     i = src.index('if act == "delete":', src.index("def api_parastyle"))
     body = src[i:i + 800]
     assert body.index('"op": "cls"') < body.index('"op": "style"')
+
+
+# ── 상자 여러 개 (인디자인의 다중 선택) ────────────────────────
+def test_shift_click_adds_to_the_selection():
+    """인디자인은 ⇧누르면 더 고른다. 그냥 누른 것도 **묶음의 시작**이다 —
+    안 담아 두면 ⇧로 하나 더 골라도 "1개" 가 되어 정렬 단추가 안 나온다."""
+    ui = _studio_src()
+    assert "function addPick" in ui and "var picks = []" in ui
+    i = ui.index("if (ev.shiftKey) { addPick")
+    assert "picks = [{ el: hit.el, ref: hit.ref }]" in ui[i:i + 400]
+
+
+def test_group_align_moves_relatively_and_bakes_once():
+    """묶음 정렬도 **기준을 짐작하지 않는다**(잰 자리에서 이만큼 옮겨라).
+
+    ⚠ 상자마다 저장을 부르면 다시 조판이 그만큼 돈다 — 마지막 하나가 끝나면
+      **한 번만** 굽는다.
+    """
+    ui = _studio_src()
+    i = ui.index("function alignPicks")
+    body = ui[i:i + 3000]
+    assert "getBoundingClientRect" in body and "pxPerMm" in body
+    assert "if (--left === 0)" in body, "상자마다 다시 굽고 있다"
+    assert "el2.style.right" in body, "붙여 둔 변을 지켜야 한다"
