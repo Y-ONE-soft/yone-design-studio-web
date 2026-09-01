@@ -682,6 +682,7 @@ def s3_blocks(blocks, start_no=1):
     q_open = False
     set_open = False
     q_mark = set_mark = 0
+    q_tight = ""
     q_h = set_h = 0.0
     head_open = False
     head_first = False
@@ -747,11 +748,12 @@ def s3_blocks(blocks, start_no=1):
             qn += 1
             t = _RE_SRCCODE.sub("", _RE_LEADSEQ.sub("", runs_html(b)))
             _i, (mark, tight) = _beg()
-            out.append(f'<div class="q-block first-of-set{tight}" data-h="0">'
-                       if head_first else f'<div class="q-block{tight}" data-h="0">')
+            out.append(f'<div class="q-block first-of-set{tight}">'
+                       if head_first else f'<div class="q-block{tight}">')
+            q_mark = len(out) - 1          # ⚠ 여는 태그 자리. 표식 뒤로 잡으면
+            q_tight = tight                #   close_q 가 표식을 덮어써 사라진다
             out.append(mark)
             head_first = False
-            q_mark = len(out) - 1
             q_h = _est_mm(t, 8, 4.94, indent=9.0) + 8.93
             out.append(f'<p class="q3"><span class="qn">{qn:02d}</span>{t}</p>')
             q_open = True

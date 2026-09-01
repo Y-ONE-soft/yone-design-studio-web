@@ -27,9 +27,43 @@ def esc(t):
     return html.escape(t or "", quote=False)
 
 
+# 출처로 **확신할 때만** 지운다. 발문 끝 괄호에는 출처와 작성 조건이 섞여
+# 오는데(`[리딩파워 유형편 14-2]` vs `[단, 어형 변형 없음]`), 조건을 잘못
+# 지우면 문제가 성립하지 않는다. 그래서 조건을 알아보려 하지 않고,
+# 출처임이 분명한 것만 지운다 — 정본 세종1 실측: 교재 출처는 인쇄되지 않고
+# `(단, …)` 조건은 인쇄된다.
+_RE_TAIL_TAG = re.compile(r"\s*[\[［]([^\[\]［］]{1,40})[\]］]\s*$")
+_RE_HANGUL = re.compile(r"[가-힣]")
+_RE_NUMBERISH = re.compile(r"^(?:\d+\s*(?:번|과|강|쪽)|\d{2}년\s*\d{1,2}월"
+                           r"|\d{4}\.[\d.]*)[^가-힣]*$")
+_SOURCE_WORDS = ("리딩파워", "유형편", "올림포스", "수능특강", "교과서", "EBS",
+                 "모의고사", "기출", "능률", "천재", "비상", "동아", "미래엔",
+                 "워크북", "부교재")
+
+
+def _is_source_tag(inner):
+    """대괄호 안이 출처인가. 아니면(=조건일 수 있으면) 건드리지 않는다."""
+    t = (inner or "").strip()
+    if not t:
+        return False
+    if any(w in t for w in _SOURCE_WORDS):
+        return True
+    if _RE_NUMBERISH.match(t):
+        return True
+    if not _RE_HANGUL.search(t):
+        # 한글이 한 자도 없는 꼬리 태그 — `[Further Reading]` `[TED]` `[14-E]`.
+        # 작성 조건은 전부 한국어 문장이라 여기 걸리지 않는다.
+        return True
+    return False
+
+
 def strip_source(text):
     """출처 태그 제거 — 시험지에 인쇄되면 안 된다(현행 결함 중 하나)."""
-    return _RE_SOURCE_TAG.sub(" ", text or "").strip()
+    t = _RE_SOURCE_TAG.sub(" ", text or "").strip()
+    m = _RE_TAIL_TAG.search(t)
+    if m and _is_source_tag(m.group(1)):
+        t = t[:m.start()].rstrip()
+    return t
 
 
 class Renderer(object):

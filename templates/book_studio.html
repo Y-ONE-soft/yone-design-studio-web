@@ -3470,6 +3470,12 @@
       }
       return;
     }
+    // ── 고른 상자를 화살표로 민다 (인디자인의 nudge) ──
+    //   ←↑→↓ 1mm · ⇧ 5mm · ⌥ 0.25mm, Delete 로 지운다.
+    // ⚠ 한 번 누를 때마다 다시 조판하면 못 쓴다 — **지면에서 먼저 움직이고**
+    //   손을 뗀 뒤(0.6초) 한 번만 저장한다.
+    var nudged = nudgeBox(e);
+    if (nudged) { e.preventDefault(); return; }
     if (e.altKey) return;
     if (e.key === 'ArrowRight' || e.key === 'PageDown') {
       e.preventDefault(); $('ide-next').click(); return;
@@ -3480,6 +3486,49 @@
     if (k === 'v') setTool('sel');
     else if (k === 't') setTool('text');
     else if (k === 'p') setTool('para');
+  }
+
+  /** 고른 상자를 화살표로 민다. 상자가 아니면 아무 일도 안 한다(false). */
+  var nudgeT = null;
+  function nudgeBox(e) {
+    var arrows = { ArrowLeft: [-1, 0], ArrowRight: [1, 0],
+                   ArrowUp: [0, -1], ArrowDown: [0, 1] };
+    var dir = arrows[e.key];
+    var del = (e.key === 'Delete' || e.key === 'Backspace');
+    if (!dir && !del) return false;
+    var ref = boxRefOf(curRef);
+    if (!ref) return false;                    // 상자를 고른 게 아니다
+    var el = curEl, st = stageEl();
+    while (el && el !== st && !(el.classList && el.classList.contains('viv-box')))
+      el = el.parentElement;
+    if (!el || el === st) return false;
+    if (del) {
+      if (!confirm('이 상자를 지웁니다. 되돌리기로 살릴 수 있습니다.')) return true;
+      boxApi({ action: 'delete', ref: ref });
+      return true;
+    }
+    var step = e.shiftKey ? 5 : (e.altKey ? 0.25 : 1);
+    var ppm = pxPerMm(pageBoxOf(el));
+    var dx = dir[0] * step, dy = dir[1] * step;
+    if (dx) {
+      if (el.style.right) el.style.right = round2(mmOf(el, 'right', ppm) - dx) + 'mm';
+      else el.style.left = round2(mmOf(el, 'left', ppm) + dx) + 'mm';
+    }
+    if (dy) {
+      if (el.style.bottom) el.style.bottom = round2(mmOf(el, 'bottom', ppm) - dy) + 'mm';
+      else el.style.top = round2(mmOf(el, 'top', ppm) + dy) + 'mm';
+    }
+    msg('상자 ' + (el.style.left || ('오른쪽 ' + el.style.right)) + ' · '
+        + (el.style.top || ('아래 ' + el.style.bottom)));
+    if (nudgeT) clearTimeout(nudgeT);
+    nudgeT = setTimeout(function () {
+      var at = {};
+      ['top', 'left', 'right', 'bottom', 'width', 'height'].forEach(function (k) {
+        if (el.style[k]) at[k] = el.style[k];
+      });
+      boxApi({ action: 'move', ref: ref, at: at });
+    }, 600);
+    return true;
   }
 
   // ⚠ 글을 고치는 동안 커서는 **지면 문서 안**에 있다. 화면 문서에만 걸면

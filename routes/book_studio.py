@@ -813,6 +813,29 @@ def api_box():
         st = ed.push(cfg, {"op": "delete", "ref": ref, "note": "상자 지우기"})
         return jsonify({"ok": True,
                         "history": _hist(st)})
+    if act == "style":
+        # 상자 모양(바탕·테두리·둥근 모서리·그림자·투명도·회전) —
+        # 인디자인의 개체 속성이다. **적은 것만** 받는다.
+        st = dict(b.get("style") or {})
+        props = p.get("props")
+        if not isinstance(props, dict) or not props:
+            return jsonify({"error": "바꿀 모양이 없습니다"}), 400
+        for k, v in props.items():
+            if k not in bx.STYLE_KEYS:
+                return jsonify({"error": f"모르는 항목: {k}"}), 400
+            v = str(v or "").strip()
+            if any(c in v for c in "{};<>\"'"):
+                return jsonify({"error": f"이상한 값: {k}: {v}"}), 400
+            if v:
+                st[k] = v
+            else:
+                st.pop(k, None)
+        if st:
+            b["style"] = st
+        else:
+            b.pop("style", None)
+        st2 = ed.push(cfg, {"op": "set", "ref": ref, "v": b, "note": "상자 모양"})
+        return jsonify({"ok": True, "history": _hist(st2)})
     if act != "move":
         return jsonify({"error": f"모르는 동작: {act}"}), 400
     b = json.loads(json.dumps(block))

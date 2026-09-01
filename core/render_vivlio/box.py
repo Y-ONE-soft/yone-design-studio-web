@@ -41,6 +41,12 @@ CSS = """
 
 # 좌표·크기로 받는 것 — 그 밖의 것은 `style` 로 받는다
 AT_KEYS = ("top", "right", "bottom", "left", "width", "height")
+
+# 모양으로 받는 것 — 인디자인의 **개체 속성**에 해당한다.
+# ⚠ 아무 CSS 나 받으면 안 된다(조판이 통째로 흔들린다). 여기 적은 것만 받는다.
+STYLE_KEYS = ("background", "border", "border-radius", "box-shadow", "opacity",
+              "transform", "padding", "color", "text-align", "font-size",
+              "line-height", "z-index", "writing-mode")
 _OK = "0123456789.-mmcmptinemrex% "
 
 
