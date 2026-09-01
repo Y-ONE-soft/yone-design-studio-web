@@ -138,12 +138,17 @@ def parse_label(text):
 
     형식이 아니라 자리로 읽는다 — `<쪽 표시>-<지문 이름>` 이고 뒤쪽 괄호는
     쪽 표시의 반복이라 버린다.
+
+    ⚠ 쪽 표시가 **앞이 아니라 이름 자리에** 오는 원고도 있다
+      (`L1-p. 17 본문 1`). 그것도 쪽 표시지 이름이 아니라 떼어 낸다 —
+      안 떼면 `본문1` 로 안 읽혀 그 과가 통째로 빠진다(실증).
     """
     t = re.sub(r"\((?:p\.?\s*\d+[^)]*)\)\s*$", "", text).strip()
     page, _, name = t.partition("-")
     if not name:
         page, name = "", t
-    return {"page": page.strip(), "key": name.strip()}
+    name = re.sub(r"^p\.?\s*\d+\s*", "", name.strip())
+    return {"page": page.strip(), "key": name}
 
 
 def is_block_head(text):

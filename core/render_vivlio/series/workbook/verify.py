@@ -109,11 +109,11 @@ def _check_zones(pdf, d, report, cfg_build_dir=None):
     for i in range(doc.page_count):
         for rect, fill, _c, _w in probe.drawings_mm(doc[i]):
             w, h = rect[2] - rect[0], rect[3] - rect[1]
-            if not (0.3 < w < 0.5 and 0.3 < h < 0.5):   # 세트 표식(0.6mm)과 구분
+            if not (0.25 < w < 0.6 and 0.25 < h < 0.6):
                 continue
             if not fill or len(fill) < 3:
                 continue
-            if not (fill[0] > 0.99 and fill[1] > 0.99 and 0.98 < fill[2] < 0.999):
+            if not (fill[0] > 0.99 and fill[1] > 0.99 and 0.994 < fill[2] < 1.001):
                 continue
             marks += 1
             if rect[3] > 286.5:
@@ -254,8 +254,8 @@ def _check_turn(cfg, report):
     """
     pdf = cfg.out_pdf()
     doc = probe.open_pdf(pdf)
-    starts = _mark_pages(doc, 0.5, 0.7, 0.985, 0.994)
-    ends = _mark_pages(doc, 0.7, 0.9, 0.975, 0.988)
+    starts = _mark_pages(doc, 0.25, 0.6, 0.9902, 0.9942)   # #fffffd
+    ends = _mark_pages(doc, 0.25, 0.6, 0.9863, 0.9902)     # #fffffc
     doc.close()
     if not starts:
         report.note("장 넘김 — 세트가 없어 검사 안 함")

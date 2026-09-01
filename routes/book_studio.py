@@ -791,6 +791,13 @@ def api_box():
             return jsonify({"error": "여기에는 넣을 수 없습니다 — "
                                      "지문·선지·본문 **한 줄**을 고르고 다시 해 보세요"}), 409
         b = bx.new(p.get("kind") or "text")
+        # 그림상자 — **자산 폴더의 그 그림**만 받는다(경로를 받으면 안 된다).
+        img = os.path.basename(str(p.get("img") or "").strip())
+        if img:
+            if not img.lower().endswith(IMG_OK) or "/" in img or ".." in img:
+                return jsonify({"error": "그림 이름이 이상합니다"}), 400
+            b["img"] = "assets/" + img
+            b.pop("paras", None)
         if p.get("wrap") in ("left", "right"):
             b["wrap"] = p["wrap"]
             b["at"] = {"width": b["at"].get("width", "40mm")}
@@ -936,6 +943,26 @@ def api_table():
         for r in rows:
             if r:
                 r.pop()
+    elif act == "style":
+        # 표 모양(괘선·안 여백·줄 높이·머리줄 바탕) — 인디자인의 표 스타일.
+        st = dict(b.get("style") or {})
+        props = p.get("props")
+        if not isinstance(props, dict) or not props:
+            return jsonify({"error": "바꿀 모양이 없습니다"}), 400
+        for k, v in props.items():
+            if k not in tbl.STYLE:
+                return jsonify({"error": f"모르는 항목: {k}"}), 400
+            v = str(v or "").strip()
+            if any(c in v for c in "{};<>\"'"):
+                return jsonify({"error": f"이상한 값: {k}: {v}"}), 400
+            if v:
+                st[k] = v
+            else:
+                st.pop(k, None)
+        if st:
+            b["style"] = st
+        else:
+            b.pop("style", None)
     elif act in ("merge", "unmerge"):
         # 인디자인의 셀 병합. 좌표는 **머리줄을 0행으로** 세는 화면과 같다.
         try:

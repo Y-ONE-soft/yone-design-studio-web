@@ -664,15 +664,32 @@ def _number_items(doc):
         _set_group(plan, idxs[0], members)
         used.update(idxs)
 
-    # id 가 없는 원고는 도입문 사이 거리로 잡는다(종전 방식).
+    # id 가 없는 원고는 도입문 사이 거리로 잡되, **지문 공유가 끝나는 곳**에서
+    # 끊는다. 묶음은 지문 하나를 여러 문항이 나눠 쓰는 구조이므로, 자기 지문을
+    # 다시 가진 문항은 그 묶음의 구성원이 아니다. 이 가름이 없으면 성덕2에서
+    # `[8~22]` 15문항, 배재1에서 `[13~23]` 이 나온다(정본은 전부 2문항).
     starts = [i for i, r in enumerate(plan)
               if r["item"].get("_group_intro") and i not in used]
     bounds = sorted(starts + [i for i in used])
     for i in starts:
         nxt = [b for b in bounds if b > i]
         end = (nxt[0] - 1) if nxt else len(plan) - 1
-        _set_group(plan, i, plan[i:end + 1])
+        members = plan[i:end + 1]
+        for j in range(1, len(members)):
+            if _own_passage(members[j]["item"]):
+                members = members[:j]
+                break
+        _set_group(plan, i, members)
     return plan
+
+
+_OWN_PASSAGE_MIN = 200
+
+
+def _own_passage(it, limit=_OWN_PASSAGE_MIN):
+    """이 문항이 **자기 지문**을 갖는가 — 묶음 구성원이 아니라는 신호."""
+    blocks = (it.get("stimulus") or {}).get("blocks") or []
+    return sum(len(b.get("content") or "") for b in blocks) > limit
 
 
 def _level_group_scores(plan, unit=0.1):

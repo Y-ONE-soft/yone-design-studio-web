@@ -609,7 +609,7 @@ def fixed_section(st, idx):
             _i, (mark, tight) = _beg()
             pages.append(f'<div class="grp{tight}">{mark}'
                          f'{example}{head}{body}{btm}'
-                         f'<span class="zend"></span></div>')
+                         f'<span class="bend"></span></div>')
 
     run = running_head(n, st["logo"], st["title"], st["tag"])
     return (f'<section class="sec fixed s{n} k-{st["key"]}" id="sec{idx}">'
@@ -689,7 +689,7 @@ def s3_blocks(blocks, start_no=1):
     def close_q():
         nonlocal q_open, set_h
         if q_open:
-            out.append('<span class="zend"></span></div>')
+            out.append('<span class="bend"></span></div>')
             first = "first-of-set" in out[q_mark]
             cls = "q-block" + (" first-of-set" if first else "")
             if q_h <= COL_H:

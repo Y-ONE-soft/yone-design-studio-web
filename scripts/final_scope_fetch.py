@@ -48,6 +48,8 @@ def main():
     ap.add_argument("--school", required=True)
     ap.add_argument("--grade", required=True, help="고1 · 고2 · 고3")
     ap.add_argument("-o", "--out", default="scope.json")
+    ap.add_argument("--check", action="store_true",
+                    help="원고 폴더까지 열어 범위 안 지문이 실제로 몇 개인지 센다")
     a = ap.parse_args()
 
     rows = json.load(open(a.rows, encoding="utf-8"))
@@ -73,9 +75,38 @@ def main():
                   % (b["book"], b["want"], b["got"]))
         sys.exit("[범위] 대조를 통과하지 못해 쓰지 않았습니다.")
 
-    json.dump(scope, open(a.out, "w", encoding="utf-8"),
+    json.dump(S.to_json(scope), open(a.out, "w", encoding="utf-8"),
               ensure_ascii=False, indent=1)
     print("■ 지문수 대조 통과 · %s" % a.out)
+
+    if a.check:
+        check(scope, g)
+
+
+def check(scope, grade):
+    """범위 안 지문이 원고에 실제로 몇 개 있는지 센다.
+
+    Y.OS 지문수와 다를 수 있고, 그게 곧 결함은 아니다 — 모의고사 15~18 은
+    듣기라 지문 원고가 없다. 다만 **다르다는 사실은 조판 전에 알아야** 한다.
+    """
+    from engines.final import manuscript as M, manuscript_locate as L
+    cfg = json.load(open(os.path.join(os.path.dirname(os.path.dirname(
+        os.path.abspath(__file__))), "engines", "final", "config.json"),
+        encoding="utf-8"))
+    base = os.path.expanduser(cfg["gdrive_content_base"])
+    total = 0
+    for d, spec in S.folders(scope, base, grade=grade, log=print):
+        blocks, _ = M.read(d, "arrange")
+        labs = [L.to_final_label(spec, b["raw"]) for b in blocks]
+        keep = [x for x in labs if x and S.in_scope(x, scope)]
+        total += len(keep)
+        print("  · %-28s 원고 %2d → 범위 안 %2d"
+              % (os.path.basename(d)[:28], len([x for x in labs if x]),
+                 len(keep)))
+    want = sum(len((scope.get("detail", {}).get(t) or {}).get("only") or [])
+               for t in scope["tokens"])
+    print("■ 범위 안 %d지문 (Y.OS 가 짚은 번호 %d개)%s"
+          % (total, want, "" if total == want else "  ← 차이 확인 필요"))
 
 
 if __name__ == "__main__":

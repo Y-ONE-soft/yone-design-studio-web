@@ -142,19 +142,24 @@ body {
 /* ── 표식 ──────────────────────────────────────────────────────────────
  * 흰 종이에 흰 0.4mm 사각. 인쇄에는 안 보이고 게이트·측정 패스가 이걸로 잰다.
  * **크기가 아니라 파랑 채널 값으로 구분**한다(크기로 나누면 서로 오인한다):
- *   .zbeg  #fffffb  지문 묶음 시작    .zend   #fffffe  지문 묶음 끝
- *   .setmark #fffffd 세트 시작        .setend #fffffc  세트 끝
+ *   .zend  #fffffe  **칸** 끝(넘침 게이트)   .zbeg #fffffb  덩어리 시작
+ *   .bend  #fffff9  덩어리 끝(당겨붙이기)    .setmark #fffffd / .setend #fffffc
  */
-.zbeg, .zend, .setmark, .setend {
-  display: inline-block; width: 0.4mm; height: 0.4mm;
-}
+/* ⚠ 표식이 **지면을 밀면 안 된다.** 인라인 블록으로 두면 줄 상자가 생겨
+ *   면 수가 늘어난다(실측: 81 → 83면). 시작 표식은 절대배치로 흐름에서 빼고,
+ *   끝 표식은 흐름에 남기되 제 높이만큼 음수 여백으로 되돌린다. */
+.zbeg, .zend, .bend, .setmark, .setend { width: 0.4mm; height: 0.4mm; }
+.zbeg, .setmark { position: absolute; top: 0; left: 0; display: block; }
+.zend, .bend, .setend { display: block; margin-bottom: -0.4mm; }
 .zbeg { background: #fffffb; }
+.bend { background: #fffff9; }
 
 /* 측정 패스가 "한두 줄만 넘겼다"고 짚은 덩어리 — 자간·행간을 한 단계만 좁혀
  * 당겨 붙인다. 한 단계 이상 쓰면 지면 밀도가 눈에 띄게 달라진다. */
+/* ⚠ 행간은 건드리지 않는다 — mm 로 박아 둔 값이라 em 으로 줄이면 지면이 통째로
+ *   달라진다. 자간만 한 단계(-0.028 → -0.045em) 좁혀 줄 수를 줄인다. */
 .tight { letter-spacing: -0.045em; }
-.tight .en, .tight .p3, .tight .ch3, .tight .box-body p, .tight .box-q p,
-.tight .gsel p, .tight .gox, .tight .blk, .tight .blk-kr { line-height: 0.97em; }
+.tight2 { letter-spacing: -0.062em; }
 .zend { display: block; background: #fffffe; }
 .setmark { background: #fffffd; }
 .setend { background: #fffffc; }
@@ -167,6 +172,7 @@ body {
 /* 지문 묶음 — 새 면에서 시작하고, 길면 다음 면으로 **이어진다**.
  * (실물도 그렇다: 어법 선택 '본문' 20문장은 두 면에 걸친다 — 실측 p30-31) */
 .grp { position: relative; break-before: page; padding-top: 1mm; }
+.q-block, .set-head { position: relative; }
 /* 섹션의 **첫** 지문 묶음은 이미 섹션이 연 면에서 시작한다 — 여기서 또 나누면
  * 섹션마다 빈 면이 하나씩 샌다. `:first-of-type` 은 형제 중 첫 div 가 러닝 요소라
  * 아무것도 안 잡혔다(실측: 빈 면이 그대로 남았다). 러닝 요소 바로 뒤로 짚는다. */

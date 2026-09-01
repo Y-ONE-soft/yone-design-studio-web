@@ -17,6 +17,7 @@ from core.render_vivlio import cli, probe, stage
 from core.render_vivlio.series.base import Series
 from core.render_vivlio.series.workbook import data as data_mod
 from core.render_vivlio.series.workbook import render as render_mod
+from core.render_vivlio.series.workbook import fit as fit_mod
 from core.render_vivlio.series.workbook import memo as memo_mod
 from core.render_vivlio.series.workbook import verify as verify_mod
 
@@ -74,11 +75,27 @@ class WorkbookSeries(Series):
             d = dict(d, steps=[dict(s, groups=s["groups"][:2])
                                for s in d["steps"]])
             log(f"[견본] 스텝마다 지문 2개")
+        render_mod.TIGHT = set()
         html_path = render_mod.write(cfg, d, build_dir, log=log)
         self._stage(cfg, build_dir, log)
 
         out = cfg.out_pdf("_견본" if sample else "")
         secs = cli.run_build(html_path, out, log=log, extra=["-f", "pdf"])
+
+        # ── 당겨붙이기 측정 패스 ──
+        # 한두 줄만 넘긴 덩어리를 찾아 그것만 좁혀 다시 굽는다. 두 바퀴까지.
+        if (cfg.section("options") or {}).get("fit", True) and not sample:
+            for _round in range(2):
+                sp = fit_mod.spills(out)
+                fit_mod.report(sp, log)
+                new = {i for i, _a, _b, _t in sp} - render_mod.TIGHT
+                if not new:
+                    break
+                render_mod.TIGHT |= new
+                html_path = render_mod.write(cfg, d, build_dir, log=lambda *a: None)
+                secs += cli.run_build(html_path, out, log=log, extra=["-f", "pdf"])
+            render_mod.TIGHT = set()
+
         pages = probe.page_count(out)
         log(f"OK  {secs:.1f}s · {pages}p → {out}")
 

@@ -1817,6 +1817,61 @@
       host.appendChild(b);
     });
 
+    // ── 표 모양 (인디자인의 표 스타일) ──
+    // 모양은 표마다 다를 수 있다 — 정한 것만 지면에 나가고, 안 정하면
+    // 예전 그대로다(계열 테마가 이겨도 된다).
+    var slab = document.createElement('div');
+    slab.className = 'ide-lab'; slab.style.marginTop = '9px';
+    slab.innerHTML = '<span>표 모양</span>';
+    host.appendChild(slab);
+    var TB_STYLE = [
+      ['line', '괘선', '0.4pt solid #333'],
+      ['pad', '칸 여백', '1mm 1.5mm'],
+      ['rowh', '줄 높이', '8mm'],
+      ['headbg', '머리줄 바탕', '#eef1f7'],
+      ['headfg', '머리줄 글자색', '#223'],
+      ['valign', '세로 맞춤', 'top · middle · bottom'],
+      ['font-size', '글자 크기', '9pt']
+    ];
+    var tbNow = {};
+    (function () {
+      var el2 = curEl, st2 = stageEl();
+      while (el2 && el2 !== st2 && el2.tagName !== 'TABLE') el2 = el2.parentElement;
+      if (el2 && el2.tagName === 'TABLE') {
+        TB_STYLE.forEach(function (a) {
+          var v = a[0] === 'font-size' || a[0] === 'line-height'
+            ? el2.style[a[0]] : el2.style.getPropertyValue('--tb-' + a[0]);
+          if (v) tbNow[a[0]] = v.trim();
+        });
+      }
+    })();
+    var tbIn = {};
+    TB_STYLE.forEach(function (a) {
+      var row = document.createElement('div'); row.className = 'ide-row';
+      var lab = document.createElement('div'); lab.className = 'ide-lab';
+      lab.innerHTML = '<span>' + a[1] + '</span><span class="ide-val">'
+        + (tbNow[a[0]] || '') + '</span>';
+      var f = document.createElement('div'); f.className = 'ide-f';
+      var t = document.createElement('input');
+      t.className = 'ide-t'; t.placeholder = tbNow[a[0]] || a[2];
+      tbIn[a[0]] = t; f.appendChild(t);
+      row.appendChild(lab); row.appendChild(f);
+      host.appendChild(row);
+    });
+    var sgo = document.createElement('button');
+    sgo.className = 'ide-b'; sgo.textContent = '표 모양 적용';
+    sgo.style.marginBottom = '6px';
+    sgo.onclick = function () {
+      var props = {};
+      TB_STYLE.forEach(function (a) {
+        var v = tbIn[a[0]].value.trim();
+        if (v) props[a[0]] = v;
+      });
+      if (!Object.keys(props).length) { msg('바꿀 값을 적으세요'); return; }
+      tblApi({ action: 'style', ref: inTable, props: props });
+    };
+    host.appendChild(sgo);
+
     // ── 칸 너비 · 정렬 ──
     var w = document.createElement('div'); w.className = 'ide-f';
     w.style.marginTop = '8px';

@@ -21,8 +21,8 @@
 MM = 72 / 25.4
 
 # 표식 구분 — 파랑 채널 값 (크기로 나누면 서로 오인한다)
-BEG_B = (0.978, 0.986)      # #fffffb
-END_B = (0.994, 1.001)      # #fffffe
+BEG_B = (0.9823, 0.9863)    # #fffffb (덩어리 시작)
+END_B = (0.9745, 0.9785)    # #fffff9 (덩어리 끝)
 
 BODY_TOP = 28.0
 TAIL_LIMIT = 12.0           # 넘어간 쪽이 이보다 짧으면 당긴다 (두 줄 남짓)
@@ -86,7 +86,8 @@ def spills(pdf, tail_limit=TAIL_LIMIT):
                 tail = max(0.0, y - BODY_TOP)
                 out.append((bidx, bpage, page, round(tail, 1)))
             open_beg = None
-    return [s for s in out if s[3] <= tail_limit]
+    # 꼬리가 거의 0 이면 **표식만** 넘어간 것이다 — 당길 내용이 없다
+    return [s for s in out if 2.0 <= s[3] <= tail_limit]
 
 
 def report(sp, log):

@@ -40,14 +40,35 @@ from core.render_vivlio import refs as _refs
 from core.render_vivlio import richtext as _rt
 
 CSS = """
-/* 표 — 작업대가 넣은 표(공용). 계열 테마가 덮어써도 된다. */
+/* 표 — 작업대가 넣은 표(공용). 계열 테마가 덮어써도 된다.
+   모양은 표마다 다를 수 있어 **변수**로 받는다 — 안 주면 아래 기본값이라,
+   모양을 안 정한 표는 예전과 한 글자도 다르지 않다. */
 table.viv-tbl { border-collapse: collapse; width: 100%; margin: 2mm 0; }
 table.viv-tbl th, table.viv-tbl td {
-  border: 0.4pt solid currentColor; padding: 1mm 1.5mm; vertical-align: top;
+  border: var(--tb-line, 0.4pt solid currentColor);
+  padding: var(--tb-pad, 1mm 1.5mm);
+  vertical-align: var(--tb-valign, top);
 }
 table.viv-tbl thead { display: table-header-group; }  /* 면 넘어가면 머리 반복 */
-table.viv-tbl th { font-weight: 700; }
+table.viv-tbl th {
+  font-weight: 700;
+  background: var(--tb-headbg, transparent);
+  color: var(--tb-headfg, inherit);
+}
+table.viv-tbl tr { height: var(--tb-rowh, auto); }
 """
+
+# 표 모양으로 받는 것 — 그 밖의 것은 무시한다(아무 CSS 나 받으면 안 된다)
+STYLE = {
+    "line": "--tb-line",        # 괘선 (`0.4pt solid #333`)
+    "pad": "--tb-pad",          # 칸 안 여백 (`1mm 1.5mm`)
+    "rowh": "--tb-rowh",        # 줄 높이 (`8mm`)
+    "headbg": "--tb-headbg",    # 머리줄 바탕
+    "headfg": "--tb-headfg",    # 머리줄 글자색
+    "valign": "--tb-valign",    # 칸 안 세로 맞춤 (top·middle·bottom)
+    "font-size": "font-size",   # 표 전체 글자 크기
+    "line-height": "line-height",
+}
 
 
 def html(block, ref="", inl=None, esc=None):
@@ -57,7 +78,7 @@ def html(block, ref="", inl=None, esc=None):
     안 주면 공용 것을 쓴다.
     """
     inl = inl or (lambda x: _rt.to_html(x, blanks=False))
-    o = ['<table class="viv-tbl">']
+    o = ['<table class="viv-tbl"%s>' % _style_attr(block)]
     widths = block.get("widths") or []
     if widths:
         o.append("<colgroup>")
@@ -92,6 +113,22 @@ def html(block, ref="", inl=None, esc=None):
         o.append("</tr>")
     o.append("</tbody></table>")
     return "".join(o)
+
+
+def _style_attr(block):
+    """표 모양 → `style="…"`. **정한 것이 없으면 빈 문자열**이다.
+
+    ⚠ 빈 `style=""` 도 남기면 안 된다 — 모양을 안 정한 표까지 HTML 이 달라져
+      회귀 대조가 시끄러워진다.
+    """
+    st = block.get("style") or {}
+    out = []
+    for k, css in STYLE.items():
+        v = str(st.get(k) or "").strip()
+        if not v or any(c in v for c in "{};<>\"'"):
+            continue
+        out.append("%s:%s" % (css, v))
+    return (' style="%s"' % ";".join(out)) if out else ""
 
 
 def span(v):

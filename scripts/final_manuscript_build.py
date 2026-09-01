@@ -131,12 +131,10 @@ def build(content, log=print, keep_all=False, scope_text=None, yos=None):
         cfg = json.load(open(os.path.join(os.path.dirname(
             os.path.dirname(os.path.abspath(__file__))),
             "engines", "final", "config.json"), encoding="utf-8"))
+        yos = S.from_json(yos) if "items" in yos else yos
         grade = yos.get("grade") or 0
         log("■ 시험범위(Y.OS): "
-            + ", ".join(S.token_text(tuple(t)) for t in yos["tokens"]))
-        yos = dict(yos, tokens=[tuple(t) for t in yos["tokens"]],
-                   detail={tuple(eval(k)) if isinstance(k, str) else tuple(k): v
-                           for k, v in (yos.get("detail") or {}).items()})
+            + ", ".join(S.token_text(t) for t in yos["tokens"]))
         srcs = S.folders(yos, os.path.expanduser(cfg["gdrive_content_base"]),
                          grade=grade, log=log)
     else:

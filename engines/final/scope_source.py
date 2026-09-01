@@ -587,3 +587,23 @@ def in_scope(label, scope):
     if not m:
         return True                       # 번호 없는 꼬리 — 부속물
     return int(m.group(1)) in only
+
+
+# ── 파일로 오가기 ───────────────────────────────────────────────────────
+def to_json(scope):
+    """토큰이 튜플이라 그대로는 JSON 이 안 된다 — 목록으로 편다."""
+    return {"source": scope.get("source"), "grade": scope.get("grade", 0),
+            "raw": scope.get("raw", ""),
+            "school": scope.get("school"), "grade_text": scope.get("grade_text"),
+            "items": [{"token": list(t),
+                       "detail": scope.get("detail", {}).get(t, {})}
+                      for t in scope.get("tokens", [])]}
+
+
+def from_json(obj):
+    toks = [tuple(x["token"]) for x in obj.get("items", [])]
+    return {"source": obj.get("source"), "grade": obj.get("grade", 0),
+            "raw": obj.get("raw", ""), "tokens": toks,
+            "school": obj.get("school"), "grade_text": obj.get("grade_text"),
+            "detail": {tuple(x["token"]): (x.get("detail") or {})
+                       for x in obj.get("items", [])}}
