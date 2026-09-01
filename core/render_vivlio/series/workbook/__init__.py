@@ -102,7 +102,7 @@ class WorkbookSeries(Series):
                 # 사용자 규칙대로 "문제 전체를 다음 면으로" — 그 문항만 묶는다.
                 # 장을 넘어 **갈라진 문항**: 한두 줄이면 먼저 당겨 보고(위), 두
                 # 바퀴 안에 안 당겨지면 사용자 규칙대로 "문제 전체를 다음 면으로".
-                lb = set(fit_mod.leaf_breaks(out))
+                lb = set() if os.environ.get("WB_NOKEEP") else set(fit_mod.leaf_breaks(out))
                 if _round < 2:
                     lb -= {i for i, _a, _b, _t in sp}
                 log(f"    · {_round + 1}바퀴 넘친덩어리 {len(sp)} · 장넘김세트 "
@@ -111,7 +111,7 @@ class WorkbookSeries(Series):
                 # 미는 것은 면을 늘린다 — **당겨서 될 것 같으면 먼저 당겨 보고**
                 # 그러고도 남은 세트만 민다. 당길 거리(넘친 덩어리)가 아예 없으면
                 # 기다릴 이유가 없으니 그 바퀴에 바로 민다.
-                pend = {i for i, _a, _b in tn}
+                pend = set() if os.environ.get("WB_NOPUSH") else {i for i, _a, _b in tn}
                 pids = (pend & seen_turns) if ids else pend
                 seen_turns |= pend
                 if not sp and not tn and not (lb - render_mod.KEEP):
