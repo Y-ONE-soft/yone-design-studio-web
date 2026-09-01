@@ -21,6 +21,9 @@
 
 판정은 **실패(✘)** 와 **경고(⚠)** 를 가른다. 경고는 원고 자체가 틀린 경우처럼
 조판이 고칠 수 없는 것들이다 — 실패로 세면 게이트가 늘 빨개서 아무도 안 본다.
+
+산출물(PDF·index.html)은 `_비블리오_시안/_게이트/` 에 남긴다(`-o` 로 옮길 수
+있다). 검수용이라 납품본과 섞이지 않는다. 실패가 하나라도 있으면 종료코드 1.
 """
 import argparse
 import glob
@@ -190,7 +193,7 @@ def _score_table_sum(html, spec):
 
 
 def check_score(key, spec, html, pdf_text, plan):
-    sel_t, ess_t, want = _profile_totals(key)
+    sel_t, _ess_t, want = _profile_totals(key)
     note = None
     if key in SCORE_EXPECT:
         want, note = SCORE_EXPECT[key]
