@@ -263,9 +263,17 @@ def _check_turn(cfg, report):
     if not n_set:
         report.note("장 넘김 — 세트가 없어 검사 안 함")
         return
-    if bad:
-        report.fail(f"[장 넘김] 오른쪽 면에서 시작해 장을 넘기는 세트 {len(bad)}건 — "
-                    + ", ".join(f"p{a}→p{b}" for _i, a, b, _c, _y in bad[:6]))
-    else:
+    # 세트가 **면 머리에서** 시작하는 것은 밀어 봐야 그 오른쪽 면이 통째로 빈다
+    # (실측: 77면 책이 88면). 고칠 수 없는 자리라 결함이 아니라 경고로 알린다.
+    top = [t for t in bad if t[3] == 0 and t[4] < 45.0]
+    real = [t for t in bad if t not in top]
+    if real:
+        report.fail(f"[장 넘김] 오른쪽 면에서 시작해 장을 넘기는 세트 {len(real)}건 — "
+                    + ", ".join(f"p{a}→p{b}" for _i, a, b, _c, _y in real[:6]))
+    if top:
+        report.warn(f"[장 넘김] 면 머리에서 시작해 장을 넘기는 세트 {len(top)}건 — "
+                    + ", ".join(f"p{a}→p{b}" for _i, a, b, _c, _y in top[:6])
+                    + " (밀면 그 오른쪽 면이 통째로 비어 그대로 뒀다 — 사람이 판단할 것)")
+    if not real:
         report.note(f"장 넘김 없음 (세트 {n_set}개 · 오른쪽에서 시작해 장을 "
-                    f"넘기는 세트 0개)")
+                    f"넘기는 세트 {len(top)}개는 면 머리라 그대로)")
