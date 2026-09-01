@@ -2532,7 +2532,16 @@
       (function settle(t) {
         if (mine !== seeking) return;
         if (pageNow() !== now) { drawPageNo(); return step(); }
-        if (t > 50) {                             // 3초를 기다려도 안 움직인다
+        // ⚠ **조판 중이면 기다린다.** 무거운 면은 몇 초씩 걸리는데, 3초 만에
+        //   포기했더니 15면에서 "여기까지 갑니다" 하고 멈췄다(실제로는 잘
+        //   가고 있었다). 엔진이 아직 그리는 중인지를 보고 판단한다.
+        var busy = false;
+        try { busy = (viewer.readyState === 'loading'); } catch (e) {}
+        if (!busy && t > 50) {                    // 다 그렸는데도 안 움직인다
+          veilOff(); drawPageNo(); msg('여기까지 갑니다 — ' + now + '면');
+          return;
+        }
+        if (t > 5000) {                           // 5분이면 무슨 일이 났다
           veilOff(); drawPageNo(); msg('여기까지 갑니다 — ' + now + '면');
           return;
         }

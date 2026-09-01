@@ -140,6 +140,10 @@ body {
  * 이 표식의 y 를 재서 "칸을 넘었는가"를 판정한다. 눈으로 못 잡는 사고라
  * 표식으로 재는 편이 낫다. */
 .zend { display: block; width: 0.4mm; height: 0.4mm; background: #fffffe; }
+/* 세트(안내문+지문) 시작 표식 — 흰 종이에 흰 0.6mm 사각(인쇄에 안 보인다).
+ * '위 글' 문항이 지문과 같은 펼침면에 있는지 게이트가 이걸로 잰다. */
+.setmark { display: inline-block; width: 0.6mm; height: 0.6mm; background: #fffffd; }
+.setend  { display: inline-block; width: 0.8mm; height: 0.8mm; background: #fffffc; }
 
 /* 섹션은 언제나 새 면에서 — ⚠ 이게 없으면 앞 섹션이 끝난 면 한복판에서
  * 다음 스텝이 시작해 지문 하나가 통째로 사라진다(실측). 반대로 `.pg` 마다

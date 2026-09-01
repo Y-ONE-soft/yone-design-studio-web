@@ -109,7 +109,7 @@ def _check_zones(pdf, d, report, cfg_build_dir=None):
     for i in range(doc.page_count):
         for rect, fill, _c, _w in probe.drawings_mm(doc[i]):
             w, h = rect[2] - rect[0], rect[3] - rect[1]
-            if not (0.2 < w < 0.8 and 0.2 < h < 0.8):
+            if not (0.3 < w < 0.5 and 0.3 < h < 0.5):   # 세트 표식(0.6mm)과 구분
                 continue
             if not fill or len(fill) < 3:
                 continue
@@ -225,32 +225,55 @@ def _check_fonts(cfg, report):
 _RE_REF = re.compile(r"^\s*(위 ?글|윗글|위의 글|In the above|위 그림)")
 
 
-def _check_turn(cfg, report):
-    """지문을 앞장에서 찾게 만드는 문항이 있는가.
+def _mark_pages(doc, lo, hi, blue_lo, blue_hi):
+    """흰 표식(크기로 구분)이 있는 면 번호들."""
+    out = []
+    for i in range(doc.page_count):
+        for rect, fill, _c, _w in probe.drawings_mm(doc[i]):
+            w, h = rect[2] - rect[0], rect[3] - rect[1]
+            if not (lo < w < hi and lo < h < hi):
+                continue
+            if not (fill and len(fill) >= 3 and fill[0] > 0.99 and fill[1] > 0.99
+                    and blue_lo < fill[2] < blue_hi):
+                continue
+            out.append(i + 1)
+            break
+    return out
 
-    펼침면은 (짝수 왼쪽, 홀수 오른쪽)이다. 내용이 **왼쪽→오른쪽**으로 이어지는
-    것은 괜찮지만 **오른쪽→다음 왼쪽**으로 넘어가면 학생이 장을 넘겨 가며 풀어야
-    한다. '위 글'로 시작하는 문항이 그런 자리에 있으면 세운다.
+
+def _check_turn(cfg, report):
+    """'위 글' 문항이 **장을 넘겨야** 보이는가.
+
+    펼침면은 (짝수 왼쪽, 홀수 오른쪽)이다. 세트(안내문+지문+딸린 문항)가
+    **홀수(오른쪽) 면에서 시작해 다음 면으로 넘어가면** 학생이 장을 넘겨 가며
+    풀어야 한다 — 그것만 잡는다(왼쪽→오른쪽은 같은 펼침면이라 괜찮다).
+
+    ⚠ 지문 유무를 글자 길이로 재려던 첫 판은 **헛돌았다** — 2단이라 줄이 다
+      짧아 완성본까지 0건으로 통과했다. 그래서 렌더러가 세트의 처음(0.6mm)과
+      끝(0.8mm)에 심어 둔 흰 표식으로 **면 구간**을 직접 잰다.
     """
     pdf = cfg.out_pdf()
     doc = probe.open_pdf(pdf)
-    bad = []
-    prev_had_passage = False
-    for i in range(doc.page_count):
-        txt = doc[i].get_text()
-        refs = [l for l in txt.split("\n") if _RE_REF.match(_norm(l))]
-        # 이 면에 지문(긴 영어 단락)이 있는가
-        has_passage = any(len(_norm(l)) > 90 for l in txt.split("\n"))
-        pno = i + 1
-        if refs and not has_passage and pno % 2 == 0 and prev_had_passage:
-            # 짝수(왼쪽) 면인데 지문이 없다 → 지문은 앞 홀수(오른쪽) 면에 있다
-            bad.append((pno, _norm(refs[0])[:40]))
-        prev_had_passage = has_passage
+    starts = _mark_pages(doc, 0.5, 0.7, 0.985, 0.994)
+    ends = _mark_pages(doc, 0.7, 0.9, 0.975, 0.988)
     doc.close()
+    if not starts:
+        report.note("장 넘김 — 세트가 없어 검사 안 함")
+        return
+    bad = []
+    for k, st in enumerate(starts):
+        en = None
+        for e in ends:
+            if e >= st:
+                en = e
+                break
+        if en is None:
+            continue
+        if st % 2 == 1 and en > st:
+            bad.append((st, en))
     if bad:
-        report.fail(f"[장 넘김] 지문을 앞장에서 찾아야 하는 문항 {len(bad)}건 — "
-                    + ", ".join(f"p{p}" for p, _t in bad[:8]))
-        for p, t in bad[:4]:
-            report.note(f"      · p{p} {t}")
+        report.fail(f"[장 넘김] 오른쪽 면에서 시작해 장을 넘기는 세트 {len(bad)}건 — "
+                    + ", ".join(f"p{a}→p{b}" for a, b in bad[:6]))
     else:
-        report.note("장 넘김 없음 ('위 글' 문항이 지문과 같은 면·펼침면에 있다)")
+        report.note(f"장 넘김 없음 (세트 {len(starts)}개 · 오른쪽 시작 "
+                    f"{sum(1 for s in starts if s % 2 == 1)}개가 모두 한 면 안)")

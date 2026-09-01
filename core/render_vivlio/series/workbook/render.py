@@ -688,7 +688,7 @@ def s3_blocks(blocks, start_no=1):
     def close_set():
         nonlocal set_open
         if set_open:
-            out.append("</div>")
+            out.append('<span class="setend"></span></div>')
             # 한 단에 들어갈 세트만 통째로 묶는다 — 넘치면 묶어 봐야 면만 빈다
             out[set_mark] = ('<div class="set-block keep">' if set_h <= COL_H
                              else '<div class="set-block">')
@@ -721,7 +721,7 @@ def s3_blocks(blocks, start_no=1):
             # 안내문 + 지문은 **첫 문항까지** 한 덩어리로 — 세트 전체가 한 단보다
             # 길면 통째로는 못 묶으니(다단에서 break-inside 는 단도 못 넘는다),
             # 적어도 '위 글'과 첫 문항이 갈리지 않게 한다.
-            out.append('<div class="set-head">')
+            out.append('<div class="set-head"><span class="setmark"></span>')
             head_open = True
             out.append(f'<p class="s3-intro">{esc(t)}</p>')
             prev = "i"
