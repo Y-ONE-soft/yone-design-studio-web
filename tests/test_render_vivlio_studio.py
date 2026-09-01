@@ -1610,3 +1610,46 @@ def test_far_jump_shows_the_printed_page_meanwhile():
     body = src[i:i + 2600]
     assert "/book-studio/thumb/" in body
     assert "scope === 'full'" in body, "견본에서는 깔면 안 된다"
+
+
+# ── 특수문자 · 상자 맞추기 ──────────────────────────────────────
+def test_glyph_panel_inserts_at_the_caret():
+    """교재는 기호를 많이 쓴다(① ㉠ ⓐ →) — 자판으로 못 치는 것들이다.
+
+    ⚠ 글 편집기가 열려 있어야 넣을 자리가 있다. 안 열려 있으면 **그 말을
+      한다** — 조용히 아무 일도 안 하면 고장으로 보인다.
+    """
+    src = _studio_src()
+    assert "var GLYPHS" in src and "function putGlyph" in src
+    i = src.index("function putGlyph")
+    body = src[i:i + 700]
+    assert "insertText" in body
+    assert "글자 도구" in body, "안 열렸을 때 무엇을 해야 하는지 알려야 한다"
+
+
+def test_align_moves_relative_instead_of_guessing_the_origin():
+    """"면 왼쪽에 붙여라" 를 **"이만큼 옮겨라"** 로 바꿔 푼다.
+
+    `left` 는 면이 아니라 조판이 만든 담고 있는 상자에서 잰 값이다 —
+    면 기준으로 좌표를 지어내면 어긋난다(실측 42.99mm).
+    """
+    src = _studio_src()
+    i = src.index("function alignBox")
+    body = src[i:i + 1500]
+    assert "getBoundingClientRect" in body and "pxPerMm" in body
+    assert "cur.left" not in body
+    assert "el.style.right" in body, "붙여 둔 변을 지켜야 한다"
+
+
+def test_box_ref_is_found_from_the_page_not_the_name():
+    """상자 자리표를 `…blocks.N` 으로 찾으면 계열마다 다르다.
+
+    상자는 낱말 목록에도 어휘부에도 들어간다(`lessons.0.vocab.0.paras.1`).
+    """
+    src = _studio_src()
+    i = src.index("function boxRefOf")
+    body = src[i:i + 700]
+    code = "\n".join(l for l in body.splitlines()
+                     if not l.strip().startswith("//"))
+    assert "blocks" not in code, "계열 이름이 박혀 있다"
+    assert "vref" in code
