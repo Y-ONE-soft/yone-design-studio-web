@@ -88,6 +88,27 @@ def _first(d, paths, default=None):
     return default
 
 
+def _str(v, default=None):
+    """문자열로 강제. 프로파일이 같은 자리에 dict 를 넣어 둔 경우가 있다
+    (명일2 `summary.render`, 명일3 `summary.arrow.glyph`) — 사람이 설명을
+    덧붙이려다 모양이 갈린 것이라, 값처럼 생긴 항목을 골라 준다."""
+    if v is None:
+        return default
+    if isinstance(v, str):
+        return v
+    if isinstance(v, dict):
+        for k in ("glyph", "value", "text", "render", "형태", "값", "표기"):
+            if isinstance(v.get(k), str):
+                return v[k]
+        for k, x in v.items():
+            if not str(k).startswith("_") and isinstance(x, str):
+                return x
+        return default
+    if isinstance(v, list) and v:
+        return _str(v[0], default)
+    return str(v)
+
+
 def _num(v, default=None):
     if isinstance(v, (int, float)):
         return float(v)
@@ -196,12 +217,12 @@ class Spec(object):
                 self.missing.append(f"typography.roles.{must} — 역할 수치가 없다")
 
         # ── 표기 ──
-        self.q_template = _first(p, ["numbering.question.template"], "{n}.")
+        self.q_template = _str(_first(p, ["numbering.question.template"]), "{n}.") or "{n}."
         self.qnum_size = _num(_first(p, ["numbering.question.marker_size_pt",
                                          "typography.roles.qnum.size_pt"]))
         self.essay_template = self._need(
             "numbering.essay.template",
-            _first(p, ["numbering.essay.template"]),
+            _str(_first(p, ["numbering.essay.template"])),
             "서답형 라벨 형식")
         self.essay_counter = _first(p, ["numbering.essay.counter"], "separate")
         # 상일 계열은 라벨이 문자열이 아니라 **표**다(반전 칩 + 유형칸).
@@ -212,13 +233,13 @@ class Spec(object):
                                               "numbering.essay.score_after_table.text"])
         self.essay_is_table = bool(self.essay_cells) or "chip" in (self.essay_render or "")
         self.essay_pos = _first(p, ["numbering.essay.pos"], "inline")
-        self.group_template = _first(p, ["numbering.group.template"])
-        self.group_mixed = _first(p, ["numbering.group.mixed_template"])
+        self.group_template = _str(_first(p, ["numbering.group.template"]))
+        self.group_mixed = _str(_first(p, ["numbering.group.mixed_template"]))
         self.group_intro_same_line = bool(
             _first(p, ["numbering.group.intro_on_same_line"], True))
 
         # ── 배점 ──
-        self.score_bracket = _first(p, ["score.bracket"])
+        self.score_bracket = _str(_first(p, ["score.bracket"]))
         self.score_attach = _first(p, ["score.attach"], "stem_end")
         self.score_space = _first(p, ["score.space_before"], "")
         self.score_decimals = int(_num(_first(p, ["score.decimals"], 1)) or 1)
@@ -229,22 +250,22 @@ class Spec(object):
         self.given = self._box(p, "given")
         self.cond = self._box(p, "cond")
         self.summary = {
-            "marker": _first(p, ["summary.marker"]),
-            "render": _first(p, ["summary.render"], "plain"),
-            "arrow": _first(p, ["summary.arrow.glyph", "summary.arrow"]),
+            "marker": _str(_first(p, ["summary.marker"])),
+            "render": _str(_first(p, ["summary.render"]), "plain") or "plain",
+            "arrow": _str(_first(p, ["summary.arrow.glyph", "summary.arrow"])),
         }
         self.given_sentence = self._box(p, "given_sentence")
 
         # ── 선지 ──
-        self.choice_layout = _first(p, ["choices.layout"], "one_per_line")
+        self.choice_layout = _str(_first(p, ["choices.layout"]), "one_per_line") or "one_per_line"
         self.choice_marker = _first(p, ["choices.marker"], "①")
-        self.ab_sep = _first(p, ["choices.ab_pair.separator"])
+        self.ab_sep = _str(_first(p, ["choices.ab_pair.separator"]))
         self.insert_marker = _first(p, ["choices.insert_marker"], "( ① )")
 
         # ── 러닝 요소 ──
-        self.copyright = _first(p, ["running.copyright.text"])
+        self.copyright = _str(_first(p, ["running.copyright.text"]))
         self.copyright_pos = _first(p, ["running.copyright.pos"], "bottom")
-        self.page_number = _first(p, ["running.page_number.template"])
+        self.page_number = _str(_first(p, ["running.page_number.template"]))
         self.page_number_pos = _first(p, ["running.page_number.pos"], "bottom_center")
         self.continue_marker = dig(p, "running.continue_marker") or {}
         self.notice_head = _first(p, ["running.notice_head.lines", "notice.head"], [])
@@ -262,9 +283,9 @@ class Spec(object):
         b = p.get(name) or {}
         border = b.get("border") or {}
         return {
-            "marker": b.get("marker"),
-            "render": b.get("render") or "plain_line",
-            "align": b.get("align") or "left",
+            "marker": _str(b.get("marker")),
+            "render": _str(b.get("render"), "plain_line") or "plain_line",
+            "align": _str(b.get("align"), "left") or "left",
             "border_pt": _num(border.get("width_pt"), 0.4),
             "pad_mm": _num(border.get("pad_mm"), 1.5),
             "item_marker": b.get("item_marker"),
