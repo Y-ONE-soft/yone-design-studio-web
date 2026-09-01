@@ -506,6 +506,16 @@
       //   두 번 실패한다. 안 주면 번들 안의 것을 바로 쓴다.
       { viewportElement: stageEl() },
       { renderAllPages: renderAll, pageViewMode: 'singlePage', fitToScreen: true });
+    // ⚠ `renderAllPages: true` 면 `loaded` 가 **한참 뒤에** 오거나 안 온다
+    //   (모든 면을 다 그릴 때까지 기다린다). 그동안 면을 못 넘기면 "아직
+    //   조판 중" 만 뜬다 — 실제로 그랬다. 지면이 하나라도 서면 쓸 수 있다.
+    viewer.addListener('readystatechange', function () {
+      if (viewer && viewer.readyState === 'interactive' && !ready) {
+        ready = true;
+        $('ide-empty').style.display = 'none';
+        hookStage(); applyViews(); drawPageNo();
+      }
+    });
     viewer.addListener('loaded', function () {
       ready = true;
       $('ide-empty').style.display = 'none';
@@ -550,7 +560,13 @@
     if (!viewer) { msg('조판 엔진을 불러오지 못했다'); return; }
     var opts = {};
     if (extraCss) opts.userStyleSheet = [{ text: extraCss }];
-    viewer.loadDocument({ url: docUrl() }, opts);
+    // ⚠ `renderAllPages` 는 **문서를 실을 때** 주는 값이다. 만들 때만 주거나
+    //   `setOptions` 로 바꾸면 안 먹는다(그대로 두 면만 그렸다).
+    viewer.loadDocument({ url: docUrl() }, opts, {
+      renderAllPages: renderAll,
+      pageViewMode: spread ? 'spread' : 'singlePage',
+      fitToScreen: true
+    });
   }
 
   /** 첫 면이 **빈 간지**면 내용이 있는 면까지 넘긴다.
@@ -1997,7 +2013,14 @@
     msg(renderAll
         ? '모든 면을 그립니다 — 오래 걸리지만 그다음 이동·찾기가 즉시입니다'
         : '보이는 면만 그립니다 — 여는 것이 빠릅니다');
-    if (viewer) { viewer.setOptions({ renderAllPages: renderAll }); show(); }
+    // ⚠ `renderAllPages` 는 **만들 때 주는 값**이라 `setOptions` 로는 안 바뀐다
+    //   (바꿔도 그대로 두 면만 그렸다). 뷰어를 다시 만든다.
+    if (viewer) {
+      try { viewer.unloadDocument && viewer.unloadDocument(); } catch (e) {}
+      viewer = null; ready = false;
+      var st = stageEl(); if (st) st.innerHTML = '';
+      show();
+    }
   });
   $('pg-single').addEventListener('click', function () { setSpread(false); });
   $('pg-spread').addEventListener('click', function () { setSpread(true); });
