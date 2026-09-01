@@ -15,6 +15,12 @@ const b = await puppeteer.launch({
   headless: 'new', args: ['--no-sandbox'] });
 const p = await b.newPage();
 await p.setViewport({ width: 1680, height: 1020 });
+// ⚠ `prompt()`·`confirm()` 이 뜨면 evaluate 가 **영영 안 돌아온다**. 점검은
+//   무엇이 떴는지 적고 지나간다(사람이 없는 자리이므로).
+p.on('dialog', async (dg) => {
+  console.log('  · 대화상자: ' + dg.message().slice(0, 60));
+  try { await dg.dismiss(); } catch (e) { /* 이미 닫혔다 */ }
+});
 const errs = [];
 p.on('pageerror', e => errs.push(String(e).slice(0, 140)));
 await p.goto('http://127.0.0.1:5099/book-studio', { waitUntil: 'networkidle2', timeout: 180000 });
@@ -46,7 +52,10 @@ const edited = await p.evaluate(async () => {
   const tn = [...e.childNodes].find(n => n.nodeType === 3 && n.length > 20);
   const rng = d.createRange(); rng.setStart(tn, 0); rng.setEnd(tn, 11);
   const sel = d.getSelection(); sel.removeAllRanges(); sel.addRange(rng);
-  document.querySelectorAll('#ide-fmt button')[0].click();
+  // ⚠ **차례로 세지 말 것.** 서식 단추가 늘 때마다 자리가 밀린다 —
+  //   각주(주)가 앞에 붙은 뒤로 이 줄이 `prompt()` 를 띄워 점검이 통째로
+  //   멎었다(15분을 기다리다 protocolTimeout). 무엇인지로 고른다.
+  document.querySelector('#ide-fmt [data-f="b"]').click();
   await new Promise(r => setTimeout(r, 300));
   const html = e.innerHTML.slice(0, 40);
   document.getElementById('ide-commit').click();
