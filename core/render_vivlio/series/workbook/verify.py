@@ -89,7 +89,10 @@ def check(cfg, log, report):
     # ── ⑦ 서체 폴백: 스텝 로고가 대체 서체로 찍혔는가 ──
     _check_fonts(cfg, report)
 
-    # ── ⑧ 면 수 ──
+    # ── ⑧ 장 넘김: '위 글' 문항이 앞장을 넘겨봐야 하는가 ──
+    _check_turn(cfg, report)
+
+    # ── ⑨ 면 수 ──
     report.note(f"면 수 {probe.page_count(pdf)}p")
     return report
 
@@ -217,3 +220,37 @@ def _check_fonts(cfg, report):
             report.note("스텝 로고 서체 정상 (TTMamablock 아웃라인 확인)")
     except Exception as e:
         report.warn(f"[서체] 확인 못 함: {e}")
+
+
+_RE_REF = re.compile(r"^\s*(위 ?글|윗글|위의 글|In the above|위 그림)")
+
+
+def _check_turn(cfg, report):
+    """지문을 앞장에서 찾게 만드는 문항이 있는가.
+
+    펼침면은 (짝수 왼쪽, 홀수 오른쪽)이다. 내용이 **왼쪽→오른쪽**으로 이어지는
+    것은 괜찮지만 **오른쪽→다음 왼쪽**으로 넘어가면 학생이 장을 넘겨 가며 풀어야
+    한다. '위 글'로 시작하는 문항이 그런 자리에 있으면 세운다.
+    """
+    pdf = cfg.out_pdf()
+    doc = probe.open_pdf(pdf)
+    bad = []
+    prev_had_passage = False
+    for i in range(doc.page_count):
+        txt = doc[i].get_text()
+        refs = [l for l in txt.split("\n") if _RE_REF.match(_norm(l))]
+        # 이 면에 지문(긴 영어 단락)이 있는가
+        has_passage = any(len(_norm(l)) > 90 for l in txt.split("\n"))
+        pno = i + 1
+        if refs and not has_passage and pno % 2 == 0 and prev_had_passage:
+            # 짝수(왼쪽) 면인데 지문이 없다 → 지문은 앞 홀수(오른쪽) 면에 있다
+            bad.append((pno, _norm(refs[0])[:40]))
+        prev_had_passage = has_passage
+    doc.close()
+    if bad:
+        report.fail(f"[장 넘김] 지문을 앞장에서 찾아야 하는 문항 {len(bad)}건 — "
+                    + ", ".join(f"p{p}" for p, _t in bad[:8]))
+        for p, t in bad[:4]:
+            report.note(f"      · p{p} {t}")
+    else:
+        report.note("장 넘김 없음 ('위 글' 문항이 지문과 같은 면·펼침면에 있다)")

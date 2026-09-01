@@ -145,7 +145,7 @@ class Renderer(object):
 
         rows = []
         if s.ab_header_row and heads:
-            cells = [f"<th>{esc(h)}</th>" for h in heads]
+            cells = [f"<th><u>{esc(h)}</u></th>" for h in heads]
             rows.append(f'<tr><th class="ab-mark"></th>'
                         f'{join(cells, "th", mark=False)}</tr>')
         for it, row in zip(items, cols):
@@ -311,6 +311,10 @@ class Renderer(object):
             layout = s.choice_layout or "one_per_line"
             if _is_order_choices(items):
                 layout = _order_layout(items, s)
+            elif _is_tiny_choices(items):
+                # 어법 `① ⓐ ② ⓑ ③ ⓒ ④ ⓓ ⑤ ⓔ` 처럼 아주 짧은 선지는
+                # 정본에서 한 줄에 늘어선다(명일2 26-1-기말 18번 실측).
+                layout = "inline_row"
             cells = []
             for c in items:
                 lab = c.get("label") or ""
@@ -468,6 +472,16 @@ def _summary_render(s, is_essay):
         key = "서답형_요약" if is_essay else "선택형_요약"
         return r.get(key) or next(iter(r.values()), "")
     return r or (s.summary or {}).get("render") or ""
+
+
+def _is_tiny_choices(items, limit=6):
+    """선지가 전부 낱글자 수준으로 짧은가 — 한 줄에 늘어놓을 감."""
+    if len(items) < 4:
+        return False
+    texts = [(c.get("content") or "").strip() for c in items]
+    if not any(texts):
+        return False        # 내용이 없으면 배치를 바꿀 근거도 없다
+    return all(len(t) <= limit for t in texts)
 
 
 def _order_layout(items, s):
