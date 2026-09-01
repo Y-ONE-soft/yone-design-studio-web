@@ -378,7 +378,7 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 
 /* ─────────────────────────────────────────────── STEP1 A1 어휘 선택 */
 .z-a1 { }
-.z-a1 .pnum { margin-bottom: 2.4mm; }
+.z-a1 .pnum { margin-bottom: var(--body-gap, 2.4mm); }   /* ⚠ 값을 박으면 --body-gap 을 덮어쓴다 */
 
 /* ─────────────────────────────────────────────── STEP1 A2 본문 O/X */
 .box-body {

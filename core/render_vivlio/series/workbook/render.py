@@ -118,9 +118,17 @@ def sel_markup(s):
     """선택 괄호를 파랑 볼드로. 앞에 붙은 번호는 감춘다(실물 GREP 과 같은 동작)."""
     s = _RE_SEL_PAREN.sub(lambda m: f'<span class="sel">{m.group(2).strip()}</span>', s)
     s = _RE_SEL_NUM.sub(lambda m: f'<span class="sel">{m.group(1)}</span>', s)
-    s = _RE_SEL_BARE.sub(lambda m: (m.group(1) if "sel" in m.group(1)
-                                    else f'<span class="sel">{m.group(1)}</span>'), s)
-    return s
+    # 이미 <span class="sel"> 로 감싼 자리를 또 감싸지 않게 — 태그 밖만 본다
+    out, last = [], 0
+    for m in _RE_SEL_BARE.finditer(s):
+        before = s[last:m.start()]
+        if before.rstrip().endswith('class="sel">'):
+            out.append(before + m.group(1))
+        else:
+            out.append(before + f'<span class="sel">{m.group(1)}</span>')
+        last = m.end()
+    out.append(s[last:])
+    return "".join(out)
 
 
 def blank_markup(s, hint=True):

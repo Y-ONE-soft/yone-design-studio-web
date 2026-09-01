@@ -242,6 +242,8 @@ def build_css(spec):
         if rule:
             css.append(rule)
     css.append(".stem { break-after: avoid; }")
+    # 배점 표기는 줄에서 갈리면 안 된다 — `[3.4` / `점]` 으로 쪼개진다
+    css.append(".score { white-space: nowrap; }")
     if s.qnum_size:
         qfam = font_family((s.roles.get("qnum") or {}).get("font")
                            or passage.get("font"))
