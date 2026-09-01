@@ -120,7 +120,7 @@ def _scan(text):
         한글이나 괄호가 오면 뜻이 달라 손대지 않는다
         (`14~16강 분석~3` · `21~30강(24-3 제외)`)
     """
-    out, only = [], {}
+    out, only, meta = [], {}, {}
     last_kind = "bare"
     for seg in RE_SPLIT.split(text or ""):
         if not seg.strip():
@@ -137,6 +137,10 @@ def _scan(text):
                     marks.append((i, k))
                     i += 1
         marks.sort()
+        subj, pub = _subject_of(seg), _publisher_of(seg)
+        notes = RE_NOTE.findall(seg)
+        deep = "deep learning" in low or "DL" in seg
+        here = []
 
         runs = list(RE_UNIT_RUN.finditer(seg))
         for idx, m in enumerate(runs):
@@ -149,6 +153,7 @@ def _scan(text):
             last_kind = kind
             nums = _nums(m.group(1))
             out += [(kind, u) for u in nums]
+            here += [(kind, u) for u in nums]
             end = runs[idx + 1].start() if idx + 1 < len(runs) else len(seg)
             tail = seg[m.end():end]
             if re.match(r"^\s*\d", tail):
@@ -157,11 +162,12 @@ def _scan(text):
 
         for m in RE_LESSON_RUN.finditer(seg):
             out += [("lesson", u) for u in _nums(m.group(1))]
+            here += [("lesson", u) for u in _nums(m.group(1))]
 
         mocks = list(RE_MOCK_TXT.finditer(seg))
         for idx, m in enumerate(mocks):
             t = ("mock", int(m.group(1)), int(m.group(2)))
-            out.append(t)
+            out.append(t); here.append(t)
             end = mocks[idx + 1].start() if idx + 1 < len(mocks) else len(seg)
             nums = _ranges(re.sub(r"\(([^)]*)\)", " ", seg[m.end():end]))
             if nums:
@@ -170,12 +176,27 @@ def _scan(text):
         tests = list(RE_TEST_TXT.finditer(seg))
         for idx, m in enumerate(tests):
             t = ("test", int(m.group(1)))
-            out.append(t)
+            out.append(t); here.append(t)
             end = tests[idx + 1].start() if idx + 1 < len(tests) else len(seg)
             tail = seg[m.end():end]
             if re.match(r"^\s*\d", tail):
                 only[t] = _ranges(tail)
-    return _uniq(out), only
+
+        for t in here:
+            d = meta.setdefault(t, {})
+            if t[0] == "lesson":
+                if subj:
+                    d["subject"] = subj
+                if pub:
+                    d["publisher"] = pub
+                if deep:
+                    d["deeplearning"] = True
+            if notes:
+                d["notes"] = notes
+    for t, nums in only.items():
+        if nums:
+            meta.setdefault(t, {})["only"] = nums
+    return _uniq(out), meta
 
 
 def scope_text_tokens(text):
@@ -216,28 +237,9 @@ def _publisher_of(seg):
 def parse(text, grade=0):
     """범위 글 → {"tokens", "detail", "raw"}.
 
-    `detail[token]` 에 그 토큰의 과목·출판사·단서(괄호 안 글)를 담는다.
+    `detail[token]` 에 그 토큰의 과목·출판사·지문 번호·괄호 단서를 담는다.
     """
-    tokens, only = _scan(text)
-    detail = {}
-    for seg in RE_SPLIT.split(text or ""):
-        if not seg.strip():
-            continue
-        subj, pub = _subject_of(seg), _publisher_of(seg)
-        notes = RE_NOTE.findall(seg)
-        for t in scope_text_tokens(seg):
-            d = detail.setdefault(t, {})
-            if only.get(t):
-                d["only"] = only[t]
-            if t[0] == "lesson":
-                if subj:
-                    d["subject"] = subj
-                if pub:
-                    d["publisher"] = pub
-            if notes:
-                d["notes"] = notes
-            if "deep learning" in seg.lower() or "DL" in seg:
-                d["deeplearning"] = True
+    tokens, detail = _scan(text)
     return {"tokens": tokens, "detail": detail, "raw": text or "",
             "grade": grade, "source": "text"}
 
@@ -481,6 +483,65 @@ def count_gate(entries, scope):
         if want and got != want:
             bad.append({"book": (e[1] or "").strip(), "want": want, "got": got})
     return bad
+
+
+# ── 다른 출처(폴백·교차검증) ────────────────────────────────────────
+def from_workbook_names(names):
+    out = []
+    for n in sorted(set(names or [])):
+        out += L.parse_tokens(n)
+    return {"tokens": _uniq(out), "raw": " / ".join(sorted(set(names or []))),
+            "source": "filename"}
+
+
+def from_labels(labels):
+    """파이널 라벨 목록 → 토큰. 조판된 결과가 실제로 어느 범위인지 되읽는다."""
+    out = []
+    for lab in labels or []:
+        m = RE_TB.match(lab)
+        if m:
+            out.append(("lesson", int(m.group(1))))
+            continue
+        m = RE_UNIT.match(lab)
+        if m:
+            out.append(("olpo" if m.group(1) == "올포" else "rp",
+                        int(m.group(2))))
+            continue
+        m = RE_MOCK.match(lab)
+        if m:
+            out.append(("mock", int(m.group(1)), int(m.group(2))))
+            continue
+        m = RE_G3.match(lab)
+        if m:
+            if m.group(1):
+                out.append(("bare", int(m.group(1))))
+            else:
+                out.append(("test", int(m.group(2))))
+    return {"tokens": _uniq(out), "raw": "", "source": "content"}
+
+
+_SAME = {"olpo": "unit", "rp": "unit", "teuk": "unit", "bare": "unit"}
+
+
+def _key(t):
+    """강 계열은 접두어가 출처마다 다르다 — 숫자로만 견준다."""
+    if t[0] in _SAME:
+        return ("unit", t[1])
+    return tuple(t)
+
+
+def cross_check(a, b):
+    """두 범위의 차이. {"only_a": [...], "only_b": [...]} — 빈 값이면 같다."""
+    ka = {_key(t): t for t in a.get("tokens", [])}
+    kb = {_key(t): t for t in b.get("tokens", [])}
+    return {"only_a": [ka[k] for k in ka if k not in kb],
+            "only_b": [kb[k] for k in kb if k not in ka]}
+
+
+def describe(scope):
+    return "%s: %s" % (scope.get("source", "?"),
+                       ", ".join(token_text(t) for t in scope["tokens"])
+                       or "(없음)")
 
 
 # ── 지문 수준 걸기 ──────────────────────────────────────────────────────

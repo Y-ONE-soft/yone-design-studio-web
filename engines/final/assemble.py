@@ -83,8 +83,11 @@ def grammar(scope, base, grade, log=lambda m: None):
                 if path in seen:
                     continue
                 seen.add(path)
-                for blk in parse_grammar_word(path, log=log) or []:
-                    blocks.append((blk.get("header", ""), blk.get("text", "")))
+                # 엔진의 파서 대신 **원고 리더 하나**로 읽는다 —
+                # 엔진 파서는 어떤 교과서 파일(YBM)에서 지문을 통째로
+                # 놓쳤다(블록 1개, 헤더 '본문'). 형태는 다 같은 꼴이다.
+                for blk in M.read_grammar(path):
+                    blocks.append((blk["raw"], blk["text"]))
         for raw, text in blocks:
             lab = L.to_final_label(spec, re.sub(r"^\s*\d+\.\s*", "", raw))
             if not lab or lab in headers or not S.in_scope(lab, scope):
