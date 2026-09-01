@@ -104,11 +104,13 @@ def svg_ansline(step, wide=False):
     """이중 화살표 + 밑줄. 실전 답 쓰는 자리."""
     col = "var(--s1)" if step == 1 else ("var(--s2)" if step == 2 else "var(--s3)")
     if wide:
+        # 실측(완성본 원본 이미지 474×32 = 167.13×11.34mm): 화살표는 위 4.5mm 왼쪽,
+        # 첫 괘선 y=4.8mm(굵게), 둘째 괘선 y=11.0mm(얇게). 답을 두 줄로 쓴다.
         return ('<div class="ansline wide">'
                 f'<svg viewBox="0 0 480 32" xmlns="http://www.w3.org/2000/svg">'
-                f'<path d="M2 2 L12 9 L2 16 Z M13 2 L23 9 L13 16 Z" fill="{col}"/>'
-                f'<rect x="2" y="21" width="476" height="2.2" fill="var(--rule)"/>'
-                f'<rect x="2" y="29" width="476" height="1.2" fill="var(--rule)"/>'
+                f'<path d="M1 1 L10 6.5 L1 12 Z M11 1 L20 6.5 L11 12 Z" fill="{col}"/>'
+                f'<rect x="1" y="13" width="478" height="2" fill="var(--rule)"/>'
+                f'<rect x="1" y="31" width="478" height="1" fill="var(--rule)"/>'
                 '</svg></div>')
     return ('<div class="ansline">'
             f'<svg viewBox="0 0 270 12" xmlns="http://www.w3.org/2000/svg">'
@@ -481,11 +483,16 @@ def flow_sec(st, idx):
     n = st["step"]
     two = st["layout"] == "s3"
     body = []
-    for g in st["groups"]:
+    for gi, g in enumerate(st["groups"]):
+        # 실물은 **지문 하나가 한 면**에서 시작한다(실측: 영작 배열 N049~N052 가
+        # 각각 새 면). 흘림이라도 묶음 경계에서는 면을 끊는다.
+        cls = "gstart" + (" first" if gi == 0 else "")
+        body.append(f'<div class="{cls}">')
         if g.get("label"):
             body.append(f'<p class="pnum flowlbl">{esc(g["label"])}</p>')
         for blocks in g["units"]:
             body.append(s3_blocks(blocks) if two else blocks_html(blocks, n, st["key"]))
+        body.append('</div>')
     run = running_head(n, st["logo"], st["title"], st["tag"], st.get("note"))
     cls = "twocol" if two else "onecol"
     return (f'<section class="sec flow {cls} s{n} k-{st["key"]}" id="sec{idx}">'

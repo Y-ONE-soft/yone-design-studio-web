@@ -497,6 +497,10 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 
 .flowbody p { margin: 0; }
 .flowbody { letter-spacing: -0.033em; }   /* 실전 2단 — 실물 진행폭 0.9151 */
+
+/* 흘림 안에서도 지문 묶음은 새 면에서 (실물 규칙) — 2단(실전)은 예외로 이어 흘린다 */
+.onecol .gstart { break-before: page; }
+.onecol .gstart.first { break-before: auto; }
 .s3-intro {
   font-family: "Elice Baeum", sans-serif; font-size: 8pt; line-height: 4.6mm;
   padding-top: 5mm; break-after: avoid;
