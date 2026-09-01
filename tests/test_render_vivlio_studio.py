@@ -1720,3 +1720,17 @@ def test_arrow_keys_nudge_the_selected_box():
     assert "e.shiftKey ? 5" in body and "0.25" in body
     assert "setTimeout" in body, "누를 때마다 저장하면 안 된다"
     assert "action: 'delete'" in body, "Delete 로 지울 수 있어야 한다"
+
+
+def test_swatches_also_come_from_the_page():
+    """색 손잡이가 없는 계열(포켓북·워크북)은 견본 칸이 텅 빈다.
+
+    그런데 색은 **지면에 이미 있다** — 조판된 면에서 모아 보여 준다.
+    ⚠ 손잡이 색과 달리 이름이 없다(그 자리에 칠할 뿐 책 전체가 안 바뀐다).
+    """
+    src = _studio_src()
+    assert "function usedColors" in src
+    i = src.index("function usedColors")
+    body = src[i:i + 1200]
+    assert "getComputedStyle" in body and "backgroundColor" in body
+    assert "pageEl()" in body, "지금 보는 면에서 모아야 한다"

@@ -1297,11 +1297,63 @@
     host.appendChild(grid);
     askCmyk(list.map(function (s2) { return s2.hex; }));
 
+    // ── 지면에서 쓰인 색 ──
+    // 계열에 색 손잡이가 없는 책(포켓북·워크북)은 위 칸이 텅 빈다. 그런데
+    // 색은 **지면에 이미 있다** — 조판된 면에서 모아 보여 준다.
+    // ⚠ 손잡이 색과 달리 **이름이 없다.** 여기서 누르면 그 자리에 그 색을
+    //   칠할 뿐, 책 전체가 바뀌지는 않는다(그건 손잡이·스타일의 일이다).
+    var used = usedColors();
+    if (used.length) {
+      var ul = document.createElement('div');
+      ul.className = 'ide-lab'; ul.style.marginTop = '2px';
+      ul.innerHTML = '<span>지면에서 쓰인 색</span>';
+      host.appendChild(ul);
+      var g2 = document.createElement('div');
+      g2.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px';
+      used.forEach(function (hex) {
+        var b2 = document.createElement('button');
+        b2.title = hex + (cmykText(hex) ? '\n' + cmykText(hex) : '');
+        b2.style.cssText = 'width:22px;height:22px;border-radius:4px;cursor:pointer;'
+          + 'border:1px solid #333a52;background:' + hex;
+        b2.onclick = function (e) { paintWith(hex, e.shiftKey); };
+        g2.appendChild(b2);
+      });
+      host.appendChild(g2);
+      askCmyk(used);
+    }
+
     // 값으로 고치는 자리는 그대로 둔다(손잡이 목록)
     var more = document.createElement('div');
     (spec || []).filter(function (k) { return k.kind === 'color'; })
       .forEach(function (k) { more.appendChild(knobRow(k)); });
     host.appendChild(more);
+  }
+
+  /** 지금 면에서 실제로 쓰인 색 — 많이 쓰인 순서로 최대 18개. */
+  function usedColors() {
+    var pg = pageEl(); if (!pg) return [];
+    var tally = {};
+    function add(v) {
+      if (!v) return;
+      var m = String(v).match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)$/);
+      if (!m) return;
+      if (m[4] !== undefined && parseFloat(m[4]) < 0.05) return;   // 투명
+      var hex = '#' + [m[1], m[2], m[3]].map(function (x) {
+        return ('0' + (+x).toString(16)).slice(-2);
+      }).join('');
+      tally[hex] = (tally[hex] || 0) + 1;
+    }
+    var els = pg.querySelectorAll('*');
+    var step = Math.max(1, Math.floor(els.length / 400));   // 너무 많으면 띄엄띄엄
+    for (var i = 0; i < els.length; i += step) {
+      var cs = getComputedStyle(els[i]);
+      add(cs.color);
+      add(cs.backgroundColor);
+      add(cs.borderTopColor);
+    }
+    return Object.keys(tally)
+      .sort(function (a, b) { return tally[b] - tally[a]; })
+      .slice(0, 18);
   }
 
   /** 고른 자리(또는 고른 글자)에 색을 칠한다. */
