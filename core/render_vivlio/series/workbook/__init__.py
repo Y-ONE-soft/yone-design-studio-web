@@ -77,6 +77,7 @@ class WorkbookSeries(Series):
             log(f"[견본] 스텝마다 지문 2개")
         render_mod.TIGHT = set()
         render_mod.TIGHT2 = set()
+        render_mod.PUSH = set()
         html_path = render_mod.write(cfg, d, build_dir, log=log)
         self._stage(cfg, build_dir, log)
 
@@ -86,27 +87,55 @@ class WorkbookSeries(Series):
         # ── 당겨붙이기 측정 패스 ──
         # 한두 줄만 넘긴 덩어리를 찾아 그것만 좁혀 다시 굽는다. 두 바퀴까지.
         if (cfg.section("options") or {}).get("fit", True) and not sample:
-            for _round in range(2):
+            # 조판을 한 번 굽고 **실제 자리를 재서** 두 가지를 고친다.
+            #   ① 한두 줄만 넘긴 덩어리 → 그 덩어리만 좁혀 당겨 붙인다
+            #   ② 오른쪽 면에서 시작해 장을 넘기는 세트 → 통째로 다음 면으로 민다
+            # 둘은 서로 지면을 밀고 당기므로 **한 루프에서** 같이 돌린다.
+            # ⚠ 되풀이 조판은 발산할 수 있다(블랙북에서 10→8→7 을 겪었다).
+            #   그래서 세 바퀴로 묶고, 표시는 **쌓기만** 한다(빼면 진동한다).
+            seen_turns = set()
+            for _round in range(3):
                 sp = fit_mod.spills(out)
-                fit_mod.report(sp, log)
+                tn = fit_mod.turns(out)
+                if _round == 0:
+                    fit_mod.report(sp, log)
+                    fit_mod.report_turns(tn, log)
                 ids = {i for i, _a, _b, _t in sp}
-                if not ids:
+                # 미는 것은 면을 늘린다 — **먼저 당겨 보고**, 그러고도 남은
+                # 세트만 민다(한 바퀴 기다렸다 민다는 뜻).
+                pids = {i for i, _a, _b in tn} & seen_turns
+                seen_turns |= {i for i, _a, _b in tn}
+                if not sp and not tn:
                     break
-                # 한 바퀴 돌고도 남은 것은 **한 단계 더** 좁힌다
+                grow = (ids - render_mod.TIGHT2) | (pids - render_mod.PUSH)
+                if not grow:
+                    if not tn:
+                        break
+                    continue   # 이번 바퀴는 표시만 — 다음 바퀴에 민다
+                # 한 바퀴 돌고도 남은 덩어리는 **한 단계 더** 좁힌다
                 render_mod.TIGHT2 |= (ids & render_mod.TIGHT)
                 render_mod.TIGHT |= ids
+                render_mod.PUSH |= pids
                 html_path = render_mod.write(cfg, d, build_dir, log=lambda *a: None)
                 secs += cli.run_build(html_path, out, log=log, extra=["-f", "pdf"])
-            sp = fit_mod.spills(out)
-            if sp:
-                log(f"  [당겨붙이기] 두 바퀴로도 안 당겨진 덩어리 {len(sp)}개 — "
-                    f"그대로 둔다 {[i for i, *_ in sp]}")
-            else:
-                log("  [당겨붙이기] 모두 당겨 붙였다")
+            sp, tn = fit_mod.spills(out), fit_mod.turns(out)
+            log("  [당겨붙이기] 모두 당겨 붙였다" if not sp else
+                f"  [당겨붙이기] 세 바퀴로도 안 당겨진 덩어리 {len(sp)}개 — "
+                f"그대로 둔다 {[i for i, *_ in sp]}")
+            log("  [장넘김] 장을 넘기는 세트 없음" if not tn else
+                f"  [장넘김] 세 바퀴로도 못 없앤 세트 {len(tn)}개 — "
+                + ", ".join(f"p{a}→p{b}" for _i, a, b in tn[:6]))
             render_mod.TIGHT = set()
             render_mod.TIGHT2 = set()
+            render_mod.PUSH = set()
 
+        # 인쇄물은 짝수 면으로 끝나야 한다 — 세트를 밀면서 홀수가 될 수 있다.
+        # 늘어난 빈 면은 바로 아래에서 MEMO 면이 된다.
         pages = probe.page_count(out)
+        if pages % 2 and not sample:
+            probe.pad_even(out)
+            pages = probe.page_count(out)
+            log(f"  [면 수] 홀수로 끝나 한 면을 보충했다 → {pages}p")
         log(f"OK  {secs:.1f}s · {pages}p → {out}")
 
         # 빈 지면 → MEMO 면 (면 수는 조판이 끝나야 알 수 있어 여기서 한다)

@@ -23,6 +23,8 @@ MM = 72 / 25.4
 # 표식 구분 — 파랑 채널 값 (크기로 나누면 서로 오인한다)
 BEG_B = (0.9823, 0.9863)    # #fffffb (덩어리 시작)
 END_B = (0.9745, 0.9785)    # #fffff9 (덩어리 끝)
+SBEG_B = (0.9902, 0.9942)   # #fffffd (세트 시작)
+SEND_B = (0.9863, 0.9902)   # #fffffc (세트 끝)
 
 BODY_TOP = 28.0
 TAIL_LIMIT = 12.0           # 넘어간 쪽이 이보다 짧으면 당긴다 (두 줄 남짓)
@@ -56,6 +58,10 @@ def _marks(doc):
                 kind = "beg"
             elif END_B[0] < f[2] < END_B[1]:
                 kind = "end"
+            elif SBEG_B[0] < f[2] < SBEG_B[1]:
+                kind = "sbeg"
+            elif SEND_B[0] < f[2] < SEND_B[1]:
+                kind = "send"
             if not kind:
                 continue
             x, y = r.x0 / MM, r.y0 / MM
@@ -77,6 +83,8 @@ def spills(pdf, tail_limit=TAIL_LIMIT):
     idx = -1
     open_beg = None
     for page, col, y, kind in marks:
+        if kind not in ("beg", "end"):
+            continue
         if kind == "beg":
             idx += 1
             open_beg = (idx, page, col)
@@ -96,3 +104,42 @@ def report(sp, log):
         return
     log(f"  [당겨붙이기] 한두 줄만 넘긴 덩어리 {len(sp)}개 — "
         + ", ".join(f"#{i}(p{a}→p{b}, {t}mm)" for i, a, b, t in sp[:6]))
+
+
+def turns(pdf):
+    """**장을 넘겨야 보이는** 세트 — [(세트 번호, 시작면, 끝면)]
+
+    펼침면은 (짝수 왼쪽, 홀수 오른쪽). 세트가 홀수(오른쪽) 면에서 시작해 그
+    면을 벗어나면 학생이 장을 넘겨 가며 풀어야 한다(사용자 금지 규칙).
+    왼쪽 → 오른쪽은 같은 펼침면이라 괜찮다.
+
+    ⚠ 짝은 **문서 순서로** 맺는다. 검수 게이트의 첫 판은 '시작면 이상인 첫 끝면'
+      으로 맺어서 표식 하나가 비면 p207→p215 같은 헛값이 나왔다.
+    """
+    fitz = _fitz()
+    doc = fitz.open(pdf)
+    marks = [m for m in _marks(doc) if m[3] in ("sbeg", "send")]
+    doc.close()
+    out = []
+    idx = -1
+    op = None
+    for page, _col, _y, kind in marks:
+        if kind == "sbeg":
+            if op is not None:      # 끝 표식이 빠졌다 — 짝을 버리고 다시 연다
+                op = None
+            idx += 1
+            op = (idx, page)
+        elif op is not None:
+            sidx, spage = op
+            if spage % 2 == 1 and page > spage:
+                out.append((sidx, spage, page))
+            op = None
+    return out
+
+
+def report_turns(t, log):
+    if not t:
+        log("  [장넘김] 오른쪽 면에서 장을 넘기는 세트 없음")
+        return
+    log(f"  [장넘김] 오른쪽 면에서 장을 넘기는 세트 {len(t)}개 — "
+        + ", ".join(f"#{i}(p{a}→p{b})" for i, a, b in t[:6]))

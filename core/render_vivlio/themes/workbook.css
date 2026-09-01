@@ -160,6 +160,9 @@ body {
  * (실측) 행간도 3%(2단계는 6%) 함께 좁힌다. 행간은 mm 로 박혀 있으므로 em 배율이
  * 아니라 **줄어든 mm 값을 그대로** 적는다. 두 단계까지만 — 더 쓰면 지면 밀도가
  * 눈에 띄게 달라진다. */
+/* 장 넘김 금지 — 오른쪽 면에서 시작해 장을 넘기던 세트는 통째로 다음 면부터 */
+.set-block.push { break-before: page; }
+
 .tight  { letter-spacing: -0.045em; }
 .tight2 { letter-spacing: -0.062em; }
 

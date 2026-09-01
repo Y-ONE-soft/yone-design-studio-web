@@ -540,6 +540,8 @@ def divider_section(step, line1, line2):
 
 TIGHT = set()          # 측정 패스가 채운다 — 한두 줄만 넘긴 덩어리 번호
 TIGHT2 = set()         # 한 단계로 안 당겨진 덩어리 (더 좁힌다)
+PUSH = set()           # 통째로 다음 면으로 밀 세트 번호 (장 넘김 금지)
+_SIDX = [0]            # 세트 일련번호 (문서 순서 — fit.turns 와 같은 셈)
 _BIDX = [0]            # 문서 순서 덩어리 번호 (document() 가 0 으로 되돌린다)
 
 
@@ -684,6 +686,7 @@ def s3_blocks(blocks, start_no=1):
     q_open = False
     set_open = False
     q_mark = set_mark = 0
+    set_idx = -1
     q_tight = ""
     q_h = set_h = 0.0
     head_open = False
@@ -706,8 +709,10 @@ def s3_blocks(blocks, start_no=1):
         if set_open:
             out.append('<span class="setend"></span></div>')
             # 한 단에 들어갈 세트만 통째로 묶는다 — 넘치면 묶어 봐야 면만 빈다
-            out[set_mark] = ('<div class="set-block keep">' if set_h <= COL_H
-                             else '<div class="set-block">')
+            cls = "set-block" + (" keep" if set_h <= COL_H else "")
+            if set_idx in PUSH:
+                cls += " push"     # 장 넘김 금지 — 세트 통째로 다음 면에서 시작
+            out[set_mark] = f'<div class="{cls}">'
             set_open = False
 
     while i < n:
@@ -732,6 +737,8 @@ def s3_blocks(blocks, start_no=1):
             t = _RE_SRCCODE.sub("", (b.get("text") or "").strip())
             out.append('<div class="set-block" data-h="0">')
             set_mark = len(out) - 1
+            set_idx = _SIDX[0]
+            _SIDX[0] += 1
             set_h = 0.0
             set_open = True
             # 안내문 + 지문은 **첫 문항까지** 한 덩어리로 — 세트 전체가 한 단보다
@@ -847,6 +854,7 @@ def document(data, title="워크북"):
 
 
 def write(cfg, data, build_dir, log=print):
+    _SIDX[0] = 0        # 세트 번호는 **문서 전체** 순서다 (측정 패스와 맞춘다)
     import os
     text, rows = document(data, (cfg.book or {}).get("title") or "워크북")
     os.makedirs(build_dir, exist_ok=True)

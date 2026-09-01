@@ -18,7 +18,8 @@ import re
 from engines.final import scope_source as S
 from engines.final import manuscript_locate as L
 from engines.final.grammar_word_parser import (
-    find_ebs_grammar_files, find_grammar_word_files,
+    find_deeplearning_grammar_files, find_ebs_grammar_files,
+    find_grammar_word_files,
     find_mockexam_grammar_files, parse_grammar_word,
 )
 
@@ -28,31 +29,7 @@ SCOPE_TYPE = {"lesson": "textbook", "olpo": "ebs_olympos",
               "bare": "ebs_olympos", "mock": "mockexam"}
 
 
-def _spec_for(token, detail, unit=None):
-    """토큰 → `manuscript_locate.to_final_label` 이 받는 출처.
-
-    ⚠ 라벨은 **한 규칙으로만** 만든다. 엔진에는 어법수정 전용 헤더 변환이
-      따로 있는데, 그것과 문장배열 쪽 규칙이 갈라지면 같은 지문이 두 섹션에서
-      다른 이름을 갖는다 — 되수확본의 '서술형영작 지문번호가 통째로 어긋남'
-      이 바로 그 부류였다.
-    """
-    k = token[0]
-    if k == "lesson":
-        return {"kind": "lesson", "lesson": token[1],
-                "subject": detail.get("subject"),
-                "publisher": detail.get("publisher")}
-    if k == "mock":
-        return {"kind": "mock", "year": token[1], "month": token[2]}
-    if k == "test":
-        return {"kind": "teuk", "unit": token[1], "test": True}
-    if k == "rp":
-        return {"kind": "rp", "unit": unit or token[1]}
-    if k == "olpo":
-        return {"kind": "olpo", "unit": unit or token[1]}
-    return {"kind": "teuk", "unit": unit or token[1]}
-
-
-def _files_for(token, detail, base, grade, raw, log):
+def _files_for(token, detail, base, grade, log):
     """이 토큰의 어법수정 docx 들 → [(경로, 강 번호 or None)]."""
     kind = token[0]
     if kind == "lesson":
@@ -60,6 +37,12 @@ def _files_for(token, detail, base, grade, raw, log):
         if not (subj and pub):
             log("  [어법] 과목·출판사를 몰라 건너뜀 — %s" % S.token_text(token))
             return []
+        # ⚠ 추가본문(딥러닝)은 **다른 파일**이다. 같은 찾기 함수를 쓰면 과 폴더의
+        #   파일이 딥러닝 몫으로 먼저 잡히고, 그 뒤 본디 과가 통째로 사라진다.
+        if detail.get("deeplearning"):
+            return [(f, None) for f in
+                    (find_deeplearning_grammar_files(base, subj, pub,
+                                                     log=log) or [])]
         return [(f, None) for f in
                 (find_grammar_word_files(base, subj, pub, [str(token[1])],
                                          log=log) or [])]
@@ -68,7 +51,7 @@ def _files_for(token, detail, base, grade, raw, log):
             base, "%d년%d월" % (token[1], token[2]), grade, log=log) or []
         return [(f[0], None) if isinstance(f, tuple) else (f, None)
                 for f in got]
-    if kind in ("olpo", "rp", "teuk", "bare"):
+    if kind in ("olpo", "rp", "bare"):
         name = {"olpo": "올림포스", "rp": "리딩파워"}.get(kind, "수능특강")
         got = find_ebs_grammar_files(base, "%s%d강" % (name, token[1]),
                                      log=log, grade=grade) or []
@@ -80,31 +63,44 @@ def grammar(scope, base, grade, log=lambda m: None):
     """시험범위 → (`어법수정` 평평한 목록, `어법_헤더`).
 
     `어법수정` 은 [헤더, 본문, 헤더, 본문, …] 꼴이다(엔진과 같은 모양).
-    범위 안인 지문만 남긴다 — 판정은 `scope_source.in_scope()` 하나로 한다.
+
+    고1·고2 는 어법수정 docx 가 폴더 밖에도 흩어져 있어 **엔진의 찾기 함수**를
+    그대로 쓰고, 고3 은 원고 폴더 안 `5. 어법선택` 한 장이라 그것을 읽는다.
+    라벨은 어느 쪽이든 `to_final_label` **한 규칙**으로만 만든다 — 규칙이
+    갈라지면 같은 지문이 섹션마다 다른 이름을 갖는다.
     """
+    from engines.final import manuscript as M
     lines, headers, seen = [], [], set()
-    for t in scope["tokens"]:
-        d = scope.get("detail", {}).get(t) or {}
-        stype = SCOPE_TYPE.get(t[0])
-        if not stype:
-            continue
-        stext = S.token_text(t)
-        for path, unit in _files_for(t, d, base, grade, scope.get("raw", ""),
-                                     log):
-            if path in seen:
+    g = int("".join(c for c in str(grade) if c.isdigit()) or 0)
+    for d, spec in S.folders(scope, base, grade=g, log=log):
+        kind = spec.get("kind")
+        blocks = []
+        if kind in ("teuk", "test"):
+            blocks = [(b["raw"], b["text"]) for b in M.read(d, "grammar")[0]]
+        else:
+            t = _token_of(spec)
+            for path, _unit in _files_for(t, spec, base, grade, log):
+                if path in seen:
+                    continue
+                seen.add(path)
+                for blk in parse_grammar_word(path, log=log) or []:
+                    blocks.append((blk.get("header", ""), blk.get("text", "")))
+        for raw, text in blocks:
+            lab = L.to_final_label(spec, re.sub(r"^\s*\d+\.\s*", "", raw))
+            if not lab or lab in headers or not S.in_scope(lab, scope):
                 continue
-            seen.add(path)
-            spec = _spec_for(t, d, unit)
-            for blk in parse_grammar_word(path, log=log) or []:
-                raw = re.sub(r"^\s*\d+\.\s*", "", blk.get("header", ""))
-                lab = L.to_final_label(spec, raw)
-                if not lab or lab in headers:
-                    continue
-                if not S.in_scope(lab, scope):
-                    continue
-                headers.append(lab)
-                lines += [lab, blk.get("text", "")]
+            headers.append(lab)
+            lines += [lab, text]
     return lines, headers
+
+
+def _token_of(spec):
+    k = spec.get("kind")
+    if k == "lesson":
+        return ("lesson", spec["lesson"])
+    if k == "mock":
+        return ("mock", spec["year"], spec["month"])
+    return (k, spec.get("unit"))
 
 
 def vocab(school, grade, exam_period, order=None, log=lambda m: None):

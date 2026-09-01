@@ -560,8 +560,11 @@ def _is_tiny_choices(items, limit=6):
 
 _RE_HANGUL_SENT = re.compile(r"[가-힣]{2,}.*[.?!]\s*$")
 _RE_EACH_SCORE = re.compile(r"[\[(（]\s*각\s*[\d.]+\s*점\s*씩?\s*[\])）]")
-_RE_RANGE_PREFIX = re.compile(r"^\s*[\[(（【〈]\s*\d+\s*[~\-–—]\s*\d+\s*"
-                              r"[\])）】〉]\s*")
+# `(1~3)` `[9~10]` `[선택형6~10]` — 학교마다 괄호도 접두도 다르다
+_RE_RANGE_PREFIX = re.compile(r"^\s*[\[(（【〈]\s*(?:[가-힣]+\s*)?\d+\s*"
+                              r"[~\-–—]\s*\d+\s*[\])）】〉]\s*")
+_RE_RANGE_IN_INTRO = re.compile(r"[\[(（【〈]\s*(?:[가-힣]+\s*)?(\d+)\s*"
+                                r"[~\-–—]\s*(\d+)\s*[\])）】〉]")
 
 
 def _strip_range_prefix(intro):
@@ -730,12 +733,30 @@ def _number_items(doc):
         nxt = [b for b in bounds if b > i]
         end = (nxt[0] - 1) if nxt else len(plan) - 1
         members = plan[i:end + 1]
-        for j in range(1, len(members)):
-            if _own_passage(members[j]["item"]):
-                members = members[:j]
-                break
+        # 원고가 도입문에 `(1~3)` 처럼 범위를 적어 줬으면 **그 개수를 믿는다**.
+        # 강동2·강동3 실증 — 어휘 묶음은 구성원마다 자기 예문을 갖는데, 지문
+        # 공유 규칙만 쓰면 첫 문항만 남고 나머지가 묶음에서 떨어져 나간다.
+        want = _declared_span(r_intro(plan[i]["item"]))
+        if want and 1 < want <= len(members):
+            members = members[:want]
+        else:
+            for j in range(1, len(members)):
+                if _own_passage(members[j]["item"]):
+                    members = members[:j]
+                    break
         _set_group(plan, i, members)
     return plan
+
+
+def _declared_span(intro):
+    """도입문이 밝힌 묶음 크기. 번호가 아니라 **개수**만 쓴다(원고 번호와
+    조판 번호가 어긋날 수 있다)."""
+    m = _RE_RANGE_IN_INTRO.search(intro or "")
+    if not m:
+        return 0
+    a, b = int(m.group(1)), int(m.group(2))
+    n = b - a + 1
+    return n if 1 < n <= 20 else 0
 
 
 _OWN_PASSAGE_MIN = 200

@@ -179,3 +179,13 @@ def boxes(page):
     def r(b):
         return (b.x0 / PT, b.y0 / PT, b.x1 / PT, b.y1 / PT) if b else None
     return r(page.mediabox), r(page.cropbox), r(page.trimbox)
+
+
+def pad_even(pdf):
+    """면 수가 홀수면 마지막 면과 같은 판형의 빈 면을 한 장 보탠다."""
+    doc = open_pdf(pdf)
+    if doc.page_count % 2:
+        r = doc[doc.page_count - 1].rect
+        doc.new_page(width=r.width, height=r.height)
+        doc.save(pdf, incremental=True, encryption=0)
+    doc.close()

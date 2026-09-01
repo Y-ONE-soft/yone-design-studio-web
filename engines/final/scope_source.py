@@ -108,26 +108,23 @@ def _nums(run):
     return out
 
 
-def scope_text_tokens(text):
-    """시험범위를 적은 **글**에서 토큰을 읽는다.
+def _scan(text):
+    """범위 글 → (토큰 목록, {토큰: 지문 번호들}).
 
-    파일 이름 파서를 그대로 쓸 수 없다 — 파일 이름은 괄호 안이 범위지만
-    글에서는 괄호가 출판사(`미래엔(김)`)나 군더더기(`(40지문)`)이고,
-    계열 이름과 숫자 사이에 교재 이름이 낀다(`올림포스 독해기본1 15~18강`).
-
-    그래서 형식이 아니라 **자리**로 읽는다:
-      · 계열은 토막(`/` 로 끊은 한 도막) 안에서 찾고,
+    형식이 아니라 **자리**로 읽는다:
+      · 계열은 토막 안에서 찾고, 없으면 앞 토막에서 승계한다
       · 강 번호는 **`강` 으로 끝나는 숫자 묶음**만 센다
-        (`독해기본1` 의 1 은 교재 이름이라 걸리지 않는다),
-      · 계열 이름이 없으면 `bare` — 고3 분석편 방언이다.
+        (`올림포스 독해기본1` 의 1 은 교재 이름이라 걸리지 않는다)
+      · 강·회차·모의 **바로 뒤에 숫자**가 오면 그건 지문/문항 번호다
+        (`18강 2, 4` · `Test1 20~25` · `고1 23년 9월 32, 34`).
+        한글이나 괄호가 오면 뜻이 달라 손대지 않는다
+        (`14~16강 분석~3` · `21~30강(24-3 제외)`)
     """
-    out = []
-    last_kind = "bare"   # 계열은 한 번만 적고 `/` 로 이어 쓰는 일이 잦다
+    out, only = [], {}
+    last_kind = "bare"
     for seg in RE_SPLIT.split(text or ""):
         if not seg.strip():
             continue
-        # 계열 표시가 나오는 자리를 적어 두고, 숫자 묶음마다 **바로 앞의**
-        # 계열을 준다. 한 도막에 두 계열이 겹쳐 적혀 있어도 갈라진다.
         marks = []
         low = seg.lower()
         for k, words in SERIES:
@@ -140,7 +137,9 @@ def scope_text_tokens(text):
                     marks.append((i, k))
                     i += 1
         marks.sort()
-        for m in RE_UNIT_RUN.finditer(seg):
+
+        runs = list(RE_UNIT_RUN.finditer(seg))
+        for idx, m in enumerate(runs):
             kind = last_kind
             for i, k in marks:
                 if i < m.start():
@@ -148,97 +147,40 @@ def scope_text_tokens(text):
                 else:
                     break
             last_kind = kind
-            out += [(kind, u) for u in _nums(m.group(1))]
+            nums = _nums(m.group(1))
+            out += [(kind, u) for u in nums]
+            end = runs[idx + 1].start() if idx + 1 < len(runs) else len(seg)
+            tail = seg[m.end():end]
+            if re.match(r"^\s*\d", tail):
+                for u in nums:
+                    only[(kind, u)] = _ranges(tail)
+
         for m in RE_LESSON_RUN.finditer(seg):
             out += [("lesson", u) for u in _nums(m.group(1))]
-        for yy, mm in RE_MOCK_TXT.findall(seg):
-            out.append(("mock", int(yy), int(mm)))
-        for t in RE_TEST_TXT.findall(seg):
-            out.append(("test", int(t)))
-    return _uniq(out)
+
+        mocks = list(RE_MOCK_TXT.finditer(seg))
+        for idx, m in enumerate(mocks):
+            t = ("mock", int(m.group(1)), int(m.group(2)))
+            out.append(t)
+            end = mocks[idx + 1].start() if idx + 1 < len(mocks) else len(seg)
+            nums = _ranges(re.sub(r"\(([^)]*)\)", " ", seg[m.end():end]))
+            if nums:
+                only[t] = nums
+
+        tests = list(RE_TEST_TXT.finditer(seg))
+        for idx, m in enumerate(tests):
+            t = ("test", int(m.group(1)))
+            out.append(t)
+            end = tests[idx + 1].start() if idx + 1 < len(tests) else len(seg)
+            tail = seg[m.end():end]
+            if re.match(r"^\s*\d", tail):
+                only[t] = _ranges(tail)
+    return _uniq(out), only
 
 
-def from_yos(school, grade, period, token=None, fetch=None):
-    """Y.OS 시험범위 → Scope. `fetch` 를 주면 그걸로 부른다(시험용).
-
-    돌려주는 것: {"tokens": […], "raw": 원문, "source": "yos"}
-    """
-    get = fetch or (lambda p: _yos_get(p, token))
-    rows = get("/api/exam-scopes?school=%s&grade=%s&period=%s"
-               % (school, grade, period))
-    if isinstance(rows, dict):
-        rows = rows.get("items") or rows.get("data") or [rows]
-    raw = " / ".join(
-        str(r.get("scope") or r.get("range") or r.get("text") or "")
-        for r in rows or [])
-    return {"tokens": scope_text_tokens(raw), "raw": raw, "source": "yos"}
-
-
-# ── 2. 워크북 파일 이름(폴백) ────────────────────────────────────────────
-def from_workbook_names(names):
-    out = []
-    for n in sorted(set(names or [])):
-        out += L.parse_tokens(n)
-    return {"tokens": _uniq(out), "raw": " / ".join(sorted(set(names or []))),
-            "source": "filename"}
-
-
-# ── 3. 이미 만든 content.json(교차검증) ─────────────────────────────────
-RE_TB = re.compile(r"^교과서(\d+)과")
-RE_UNIT = re.compile(r"^(올포|리딩파워)\s*(\d+)강")
-RE_MOCK = re.compile(r"^(\d{2})(\d{2})\d{2}")
-RE_G3 = re.compile(r"^(?:(\d+)강|test(\d+))")
-
-
-def from_labels(labels):
-    """파이널 라벨 목록 → 토큰. 조판된 결과가 실제로 어느 범위인지 되읽는다."""
-    out = []
-    for lab in labels or []:
-        m = RE_TB.match(lab)
-        if m:
-            out.append(("lesson", int(m.group(1))))
-            continue
-        m = RE_UNIT.match(lab)
-        if m:
-            out.append(("olpo" if m.group(1) == "올포" else "rp",
-                        int(m.group(2))))
-            continue
-        m = RE_MOCK.match(lab)
-        if m:
-            out.append(("mock", int(m.group(1)), int(m.group(2))))
-            continue
-        m = RE_G3.match(lab)
-        if m:
-            if m.group(1):
-                out.append(("bare", int(m.group(1))))
-            else:
-                out.append(("test", int(m.group(2))))
-    return {"tokens": _uniq(out), "raw": "", "source": "content"}
-
-
-# ── 교차검증 ────────────────────────────────────────────────────────────
-_SAME = {"olpo": "unit", "rp": "unit", "teuk": "unit", "bare": "unit"}
-
-
-def _key(t):
-    """강 계열은 접두어가 출처마다 다르다 — 숫자로만 견준다."""
-    if t[0] in _SAME:
-        return ("unit", t[1])
-    return tuple(t)
-
-
-def cross_check(a, b):
-    """두 범위의 차이. {"only_a": [...], "only_b": [...]} — 빈 값이면 같다."""
-    ka = {_key(t): t for t in a.get("tokens", [])}
-    kb = {_key(t): t for t in b.get("tokens", [])}
-    return {"only_a": [ka[k] for k in ka if k not in kb],
-            "only_b": [kb[k] for k in kb if k not in ka]}
-
-
-def describe(scope):
-    return "%s: %s" % (scope.get("source", "?"),
-                       ", ".join(token_text(t) for t in scope["tokens"])
-                       or "(없음)")
+def scope_text_tokens(text):
+    """범위 글 → 토큰 목록."""
+    return _scan(text)[0]
 
 
 # ── 교과서: 과목·출판사도 범위 글이 말한다 ──────────────────────────────
@@ -276,7 +218,7 @@ def parse(text, grade=0):
 
     `detail[token]` 에 그 토큰의 과목·출판사·단서(괄호 안 글)를 담는다.
     """
-    tokens = scope_text_tokens(text)
+    tokens, only = _scan(text)
     detail = {}
     for seg in RE_SPLIT.split(text or ""):
         if not seg.strip():
@@ -285,6 +227,8 @@ def parse(text, grade=0):
         notes = RE_NOTE.findall(seg)
         for t in scope_text_tokens(seg):
             d = detail.setdefault(t, {})
+            if only.get(t):
+                d["only"] = only[t]
             if t[0] == "lesson":
                 if subj:
                     d["subject"] = subj
@@ -317,10 +261,8 @@ def folders(scope, base, grade=None, log=lambda m: None):
                 path = L.textbook(base, subj, pub, t[1])
                 spec = {"kind": "lesson", "lesson": t[1],
                         "subject": subj, "publisher": pub}
-                if d.get("deeplearning"):
-                    dl = L.textbook_deeplearning(base, subj, pub, t[1])
-                    if dl:
-                        out.append((dl, dict(spec, deeplearning=True)))
+                dl = (L.textbook_deeplearning(base, subj, pub, t[1])
+                      if d.get("deeplearning") else None)
         elif kind == "olpo":
             path = L.olympos(base, t[1], book=1 if g == 1 else 2)
             spec = {"kind": "olpo", "unit": t[1]}
@@ -333,7 +275,7 @@ def folders(scope, base, grade=None, log=lambda m: None):
             spec = {"kind": "teuk", "unit": t[1]}
         elif kind == "test":
             path = L.suneung_teukgang(base, t[1], test=True)
-            spec = {"kind": "teuk", "unit": t[1], "test": True}
+            spec = {"kind": "test", "unit": t[1]}
         elif kind == "mock":
             # 회차의 학년은 반의 학년과 다를 수 있다 — 고2 반이 고1 회차를 쓴다.
             path = L.mockexam(base, d.get("grade") or g, t[1], t[2])
@@ -347,6 +289,10 @@ def folders(scope, base, grade=None, log=lambda m: None):
         if d.get("notes"):
             spec = dict(spec, notes=d["notes"])
         out.append((path, spec))
+        # 추가본문(딥러닝)은 본디 과 **뒤에** — 차례가 그렇고, 앞에 두면
+        # 같은 파일이 딥러닝 몫으로 먼저 잡힌다.
+        if kind == "lesson" and locals().get("dl"):
+            out.append((dl, dict(spec, deeplearning=True)))
     return out
 
 
