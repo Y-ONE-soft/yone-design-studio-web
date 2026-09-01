@@ -236,10 +236,9 @@ class Renderer(object):
         # 지문 — 순서·삽입 문항의 '주어진 글/문장' 은 정본에서 본문 **앞**에
         # 상자로 놓인다. 원고는 삽입 문장을 뒤에 주므로 여기서 앞으로 옮긴다.
         blocks = list((it.get("stimulus") or {}).get("blocks", []))
-        given_first, blocks = _split_given_first(blocks, ab_cols is not None
-                                                or _is_order_choices(
-                                                    (it.get("choices") or {})
-                                                    .get("items") or []))
+        _ch = (it.get("choices") or {}).get("items") or []
+        given_first, blocks = _split_given_first(
+            blocks, _is_order_choices(_ch), _is_slot_choices(_ch))
         if given_first:
             body = "".join(
                 f'<p class="passage">'
@@ -374,7 +373,8 @@ def _ab_split(text, min_cols):
     return best
 
 
-_RE_ORDER_SEP = re.compile(r"\s*[-–—~∼]\s*")
+# 구분자 방언이 넓다 — 반각/전각 하이픈, en/em 대시, 물결, 괘선 문자까지 쓴다
+_RE_ORDER_SEP = re.compile(r"\s*[-–—―─－~∼〜]\s*")
 
 
 def _is_order_choices(items, min_hit=3):
@@ -396,10 +396,25 @@ def _is_order_choices(items, min_hit=3):
 
 
 _RE_SLOT = re.compile(r"[(（]\s*[①-⑤]\s*[)）]|[①-⑤]")
-_RE_SEG_A = re.compile(r"^\(?A\)?[\s.]")
+# 자리표를 `(A)~(E)` 로 주고 선지를 `① (A) ② (B) …` 로 주는 원고가 있다.
+# 같은 삽입 유형인데 표기 방언이 둘이다 — 선지 모양으로 가른다.
+_RE_SLOT_AB = re.compile(r"[(（]\s*[A-E]\s*[)）]")
+_RE_LABEL_ONLY = re.compile(r"^[(（]?\s*[A-E]\s*[)）]?$")
 
 
-def _split_given_first(blocks, ordered):
+def _is_slot_choices(items, min_hit=4):
+    """선지가 `① (A) ② (B) …` 꼴 — 삽입 문항의 자리표 방언."""
+    if len(items) < 4:
+        return False
+    hit = sum(1 for c in items
+              if _RE_LABEL_ONLY.match((c.get("content") or "").strip()))
+    return hit >= max(min_hit, len(items) - 1)
+# 괄호는 **필수**다 — 없으면 본문 첫 낱말 `A month ago…` 가 조각 (A) 로 잡힌다
+_RE_SEG_A = re.compile(r"^[(（]\s*A\s*[)）]")
+_RE_FOOTNOTE = re.compile(r"^\s*[*※＊]")
+
+
+def _split_given_first(blocks, ordered, ab_slots=False):
     """순서·삽입 문항의 '주어진 글/문장' 을 본문에서 가려낸다.
 
     정본 실측(배재1·배재2 26-1): 둘 다 발문 바로 아래에 주어진 것이 오고
@@ -411,25 +426,39 @@ def _split_given_first(blocks, ordered):
     """
     if len(blocks) < 2:
         return None, blocks
-    texts = [(b.get("content") or "").strip() for b in blocks]
+    # 출처 태그는 지문이 아니다 — 자리 계산에서 빼고 본문 앞에 그대로 남긴다
+    head = [b for b in blocks if b.get("label") == "UNKNOWN"]
+    core = [b for b in blocks if b.get("label") != "UNKNOWN"]
+    if len(core) < 2:
+        return None, blocks
+    texts = [(b.get("content") or "").strip() for b in core]
+
     # 순서 — `(A)` 로 시작하는 조각 앞이 주어진 글
     if ordered:
         for i, t in enumerate(texts):
             if _RE_SEG_A.match(t):
-                return (blocks[:i] or None), blocks[i:]
+                return (core[:i] or None), head + core[i:]
+
     # 삽입 — 자리표가 두 개 이상 박힌 조각이 본문. 자리표 없는 짧은 조각 하나가
-    # 주어진 문장이고, 원고에서는 대개 맨 뒤에 온다.
-    slotted = [i for i, t in enumerate(texts) if len(_RE_SLOT.findall(t)) >= 2]
+    # 주어진 문장이다. 원고는 뒤에 주기도 하고 앞에 주기도 하는데, 정본은
+    # **언제나 본문 앞**이다(배재1·배재2 실측).
+    pat = _RE_SLOT_AB if ab_slots else _RE_SLOT
+    slotted = [i for i, t in enumerate(texts) if len(pat.findall(t)) >= 2]
     if not slotted:
         return None, blocks
+    # 각주(`*neurogenesis: …`)는 지문이 아니다 — 후보에서 뺀다
     plain = [i for i, t in enumerate(texts)
-             if i not in slotted and len(t) <= 300]
-    if len(plain) != 1:
+             if i not in slotted and len(t) <= 300 and not _RE_FOOTNOTE.match(t)]
+    if not plain:
         return None, blocks
+    if len(plain) > 1:
+        # 본문이 두 조각으로 갈려 자리표 없는 앞부분이 함께 남기도 한다.
+        # 주어진 문장은 한 문장이라 눈에 띄게 짧다 — 그럴 때만 고른다.
+        plain.sort(key=lambda i: len(texts[i]))
+        if len(texts[plain[0]]) * 2 > len(texts[plain[1]]):
+            return None, blocks
     j = plain[0]
-    if j < min(slotted):
-        return None, blocks      # 이미 앞에 있다 — 그대로 둔다
-    return [blocks[j]], [b for i, b in enumerate(blocks) if i != j]
+    return [core[j]], head + [b for i, b in enumerate(core) if i != j]
 
 
 def _summary_render(s, is_essay):
