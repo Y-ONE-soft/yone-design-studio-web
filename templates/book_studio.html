@@ -190,6 +190,8 @@
       <button class="ide-b ic" id="ide-zi" title="확대">＋</button>
       <button class="ide-b" id="ide-fit" title="화면에 맞추기">맞춤</button>
       <button class="ide-b" id="ide-spread" title="펼침 / 낱쪽">펼침</button>
+      <button class="ide-b" id="ide-all"
+              title="모든 면을 미리 그려 둡니다 — 열 때 오래 걸리지만 면 이동·찾기가 즉시입니다">모두 그리기</button>
     </div>
     <div class="ide-sep"></div>
 
@@ -398,6 +400,8 @@
   var spec = [], changed = {}, refs = {}, curRef = null, editEl = null, editHtml = null;
   var editPlain = false, msgExtra = '';
   var tool = 'sel', scope = 'sample', spread = false, zoom = 1, pageCount = 0;
+  // 모든 면을 미리 그려 둘 것인가. 켜면 여는 데 오래 걸리지만 그다음이 즉시다.
+  var renderAll = false;
   var curEl = null, styles = {}, styleNames = {}, curPage = 1, ready = false;
   var bookFonts = [];      // 이 책이 **임베드한** 서체 (PDF 에 실제로 들어간다)
 
@@ -501,7 +505,7 @@
       //   문자열로 들어 있다). 가리키면 404 → `data:` 폴백 → CSP 차단으로
       //   두 번 실패한다. 안 주면 번들 안의 것을 바로 쓴다.
       { viewportElement: stageEl() },
-      { renderAllPages: false, pageViewMode: 'singlePage', fitToScreen: true });
+      { renderAllPages: renderAll, pageViewMode: 'singlePage', fitToScreen: true });
     viewer.addListener('loaded', function () {
       ready = true;
       $('ide-empty').style.display = 'none';
@@ -1728,15 +1732,22 @@
     if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'nearest' });
   }
 
-  /** 그 면으로 **한 번에** 간다.
+  /** 그 면으로 간다.
    *
-   *  ⚠ 예전에는 차이만큼 한 면씩 넘겼다(10면 가려면 열 번, 20초). 뷰어에
-   *    `navigateToPage('epage', N)` 이 있는 것을 번들에서 찾았다 —
-   *    `sendCommand({a:'moveTo', epage:N})` 로 바로 간다. 번호는 **0부터**다.
+   *  ⚠ `navigateToPage('epage', N)` 은 **모든 면을 그리기 전에는 어림값**이다
+   *    (실측: epage 24 → 10면, epage 9 → 5면). 그래서 다 그려 둔 때만 쓰고,
+   *    아니면 한 면씩 넘긴다. 느린 것이 싫으면 도구줄의 **모두 그리기**를
+   *    켜면 된다 — 여는 데 오래 걸리는 대신 그다음이 즉시다.
    */
   function gotoPage(n) {
     if (!viewer || !ready) { msg('아직 조판 중입니다'); return; }
     if (n === pageNow()) return;
+    if (!renderAll) return hopTo(n);
+    return jumpTo(n);
+  }
+
+  /** 다 그려 둔 때의 빠른 길 — 한 번에 뛴다. */
+  function jumpTo(n) {
     try {
       viewer.navigateToPage('epage', n - 1);
     } catch (e) {                       // 판이 바뀌어 없어졌으면 옛 길로
@@ -1980,6 +1991,14 @@
       setTimeout(drawPageNo, 300);
     }
   }
+  $('ide-all').addEventListener('click', function () {
+    renderAll = !renderAll;
+    $('ide-all').classList.toggle('on', renderAll);
+    msg(renderAll
+        ? '모든 면을 그립니다 — 오래 걸리지만 그다음 이동·찾기가 즉시입니다'
+        : '보이는 면만 그립니다 — 여는 것이 빠릅니다');
+    if (viewer) { viewer.setOptions({ renderAllPages: renderAll }); show(); }
+  });
   $('pg-single').addEventListener('click', function () { setSpread(false); });
   $('pg-spread').addEventListener('click', function () { setSpread(true); });
   $('ide-spread').addEventListener('click', function () {
