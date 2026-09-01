@@ -109,6 +109,16 @@ def scope_labels(content):
 
 
 # ── 빌드 ────────────────────────────────────────────────────────────────
+def _tok_of(spec):
+    """폴더 spec → 범위 토큰(같은 것끼리 견주려고)."""
+    k = spec.get("kind")
+    if k == "lesson":
+        return ("lesson", spec["lesson"])
+    if k == "mock":
+        return ("mock", spec["year"], spec["month"])
+    return (k, spec.get("unit"))
+
+
 def sources_from_scope(content, scope_text, log=print):
     """시험범위 **글** 하나로 원고 폴더를 정한다 — 워크북이 필요 없다.
 
@@ -158,11 +168,14 @@ def build(content, log=print, keep_all=False, scope_text=None, yos=None):
     ok = (lambda lab: S.in_scope(lab, yos)) if yos else (
         lambda lab: scope is None or lab in scope)
     arrange, insert, writing, seen = [], [], [], set()
+    _seen_in_source = {}
     for d, spec in srcs:
         if not spec:
             continue
         name = os.path.basename(d)
         blocks, path = M.read(d, "arrange")
+        if spec:
+            _seen_in_source[S._key(_tok_of(spec))] = len(blocks)
         for b in blocks:
             lab = L.to_final_label(spec, b["raw"])
             if not lab:
@@ -262,11 +275,30 @@ def build(content, log=print, keep_all=False, scope_text=None, yos=None):
     writing.sort(key=lambda b: order_key(b["header"]))
 
     out = json.loads(json.dumps(content, ensure_ascii=False))
+    # 범위 글이 지문 하나만 짚었는데 원고엔 여럿 있으면 알린다.
+    # `Test2 3` 같은 표기가 '3번만'인지 '3번부터'인지 글로는 알 수 없다 —
+    # 좁게 읽으면 지문이 조용히 빠진다. 짐작하지 말고 말한다.
+    if yos:
+        for t in yos["tokens"]:
+            only = (yos.get("detail", {}).get(t) or {}).get("only") or []
+            if len(only) != 1:
+                continue
+            same = [b for b in arrange
+                    if S.label_token(b["header"])[0]
+                    and S._key(S.label_token(b["header"])[0]) == S._key(t)]
+            all_n = _seen_in_source.get(S._key(t), 0)
+            if all_n >= 3:
+                log("  [범위 확인] %s — 범위 글은 %d번 하나만 짚었는데 원고엔 "
+                    "%d지문이 있습니다(‘%d번부터’일 수 있습니다)"
+                    % (S.token_text(t), only[0], all_n, only[0]))
+
     # 원고에 하단 문제가 없는 지문을 **이름으로** 알린다 — 숫자만 보면
     # 무엇이 비었는지 알 수 없고, 조용히 넘어가면 책이 얇아진 줄만 안다.
     if yos or scope_text:
-        no_bottom = [b["header"] for b in arrange
-                     if b["header"] not in {x["header"] for x in insert}]
+        # 고3은 문장삽입 섹션 자체가 없다 — 그때는 '없다'고 말할 일이 아니다.
+        no_bottom = ([b["header"] for b in arrange
+                      if b["header"] not in {x["header"] for x in insert}]
+                     if insert else [])
         if no_bottom:
             log("  [하단 문제 없음] %d지문 — %s"
                 % (len(no_bottom), ", ".join(no_bottom[:10])
