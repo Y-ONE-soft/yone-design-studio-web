@@ -295,6 +295,11 @@ def blocks_html(blocks, step, ctx=None):
         if role in ("gram_sel", "vocab_sel"):
             cls = "gsel" if role == "gram_sel" else "en"
             body = sel_markup(runs_html(b))
+            if role == "gram_sel":
+                # 실물은 `[Check Up 1]` 같은 대괄호 라벨도 파랑 볼드다(실측 p30).
+                # 어법 선택 안에서만 — 다른 스텝의 대괄호까지 물들이지 않는다.
+                body = re.sub(r'(?<!>)(\[[^\[\]<>]+\])',
+                              r'<span class="sel">\1</span>', body)
             out.append(f'<div class="{cls}"><p>{body}</p></div>'
                        if role == "gram_sel" else f'<p class="en">{body}</p>')
             i += 1
@@ -469,6 +474,10 @@ def fixed_section(st, idx):
                 btm = (f'<div class="attach">{ph}'
                        + "".join(blocks_html(u, n, st["key"]) for u in g["attach"])
                        + "</div>")
+                # 실물 하단 문제는 y=164mm 고정 자리(마스터 프레임)다. 윗칸에
+                # 최소 높이를 줘 짧은 지문도 그 자리에 오게 하고, 긴 지문은
+                # 흘러 넘어가게 둔다(가두면 잘린다).
+                body = f'<div class="topzone">{body}</div>' 
             pages.append(f'<div class="grp">{head}{body}{btm}'
                          f'<span class="zend"></span></div>')
 

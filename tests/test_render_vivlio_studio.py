@@ -1018,6 +1018,22 @@ def test_drag_converts_px_to_mm_with_the_book_page():
     assert "bookPageW" in src and "pg.bleed" in src
 
 
+@pytest.mark.parametrize("name", ("blackbook", "vocabook", "vocaunit", "special"))
+def test_every_series_takes_tables_and_boxes(name):
+    """표·상자는 어느 계열에서나 들어가야 한다 — 한 책만 되면 도구가 아니다."""
+    p = os.path.join(_ROOT, "core", "render_vivlio", "series", name, "render.py")
+    src = io.open(p, encoding="utf-8").read()
+    assert "_tbl" in src and "_box" in src, f"{name}: 표·상자를 안 받는다"
+
+
+def test_word_lists_accept_boxes_but_chunks_do_not():
+    """단어장 낱말 목록에는 넣을 수 있고, 문항·단원 목록에는 못 넣는다."""
+    from routes.book_studio import _para_like
+    assert _para_like([{"day": 1, "word": "apple", "meaning": "사과"}])
+    assert not _para_like([{"lesson": 1, "vocab": [], "problems": []}])
+    assert not _para_like([{"no": 1, "stem": "발문", "blocks": []}])
+
+
 # ── 클로드 칸 ─────────────────────────────────────────────────
 # 모델에게 리포를 통째로 열어 주면 안 된다 — 계열 코드를 고치면 그 계열 책이
 # 전부 흔들리고, 원고를 고치면 납품본과 글이 달라진다. 손댈 수 있는 곳은

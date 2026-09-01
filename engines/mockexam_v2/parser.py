@@ -144,7 +144,14 @@ def _structural_kind(cur, taxonomy_kind):
     # 사용하며, 변형 금지)` 처럼 지시가 괄호로 이어지는 원고가 흔한데, 종결
     # 어미가 문장 끝이 아니게 되어 판정이 통째로 막혔다(강동·명일2·상일2 실증).
     from core.structure import rules as _R
-    q_np = _R.Q_TRAILING_PAREN.sub("", q).strip() or q
+    q_np = q
+    for _ in range(3):
+        t2 = _R.Q_TRAILING_ANGLE.sub("", q_np)
+        t2 = _R.Q_TRAILING_PAREN.sub("", t2)
+        if t2 == q_np:
+            break
+        q_np = t2
+    q_np = q_np.strip() or q
     # **객관식은 고를 것이 있어야 한다.** 선지 단락도 지문 안 자리표도 없는데
     # 발문이 지시형(~시오)으로 끝나면 서술형이다 — 이 구조가 taxonomy 룰보다
     # 강하다. (명일2 실증: `…쓰시오.` 발문 셋이 OBJ 룰에 걸려 객관식이 됐다.)
@@ -343,7 +350,8 @@ def build_ir(paras, meta=None, log=None):
     # 지문 스타일로 인쇄하는 관행이라 켜면 그쪽 산출물이 바뀐다.
     annotated = classify_paragraphs(paras, {"blank_fill_answer": True,
                                             "strip_source_tag": True,
-                                            "ko_interrogative": True})
+                                            "ko_interrogative": True,
+                                            "strip_tail_note": True})
     _pre_warn = []
     annotated = _repair_orphan_choice_runs(annotated, _pre_warn)
     annotated = _expand_range_groups(annotated, _pre_warn)

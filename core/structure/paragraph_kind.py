@@ -67,6 +67,13 @@ def _classify_question(text, opts=None):
         text = stripped
     # 판정용 보조 텍스트: 꼬리 괄호 주석 제거본 (원문 발문이 괄호로 끝나는 경우)
     text_np = R.Q_TRAILING_PAREN.sub("", text)
+    if opts.get("strip_tail_note"):
+        for _ in range(3):
+            t2 = R.Q_TRAILING_ANGLE.sub("", text_np)
+            t2 = R.Q_TRAILING_PAREN.sub("", t2)
+            if t2 == text_np:
+                break
+            text_np = t2
     try:
         from engines._taxonomy import classify
         code, _label, _kind = classify(text)
