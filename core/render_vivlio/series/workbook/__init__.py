@@ -108,7 +108,7 @@ class WorkbookSeries(Series):
             snap = os.path.join(build_dir, "_fit_best.pdf")
             best = None
             first = None
-            for _round in range(6):
+            for _round in range(10):
                 sp = fit_mod.spills(out)
                 tn = fit_mod.turns(out)
                 lb = set(fit_mod.leaf_breaks(out))
