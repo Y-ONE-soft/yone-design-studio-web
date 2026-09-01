@@ -117,6 +117,10 @@
 @page vocabns:nth(1),
 @page grammar:nth(1), @page writing:nth(1) {
   @top-right { content: none; }
+  /* ⚠ 섹션 첫 면에는 흐름에 심은 띠(`.sechdr .band`)가 이미 있다. 러닝 띠까지
+   *   찍으면 **같은 글자가 두 번** 나간다 — 0.1pt 만 어긋나도 눈에 띈다
+   *   (실측: 명일3·광문3 섹션 첫 면 전부). 러닝 쪽을 끈다. */
+  @top-left { content: none; }
 }
 @page arrange:nth(1):right, @page insert:nth(1):right,
 @page grammar:nth(1):right, @page writing:nth(1):right {
