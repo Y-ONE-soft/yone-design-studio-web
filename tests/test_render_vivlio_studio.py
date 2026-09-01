@@ -936,6 +936,27 @@ def test_page_rules_check_units(client):
     assert r.status_code == 400 and "단위" in r.get_json()["error"]
 
 
+# ── 색상 견본 ─────────────────────────────────────────────────
+def test_swatches_paint_the_selection():
+    """색을 누르면 고른 자리(또는 고른 글자)에 칠해져야 한다.
+
+    값 칸만 있으면 "이 색이 어디 쓰이나" 는 알아도 **칠할 수가 없다**.
+    """
+    src = _studio_src()
+    assert "function drawSwatches()" in src and "function paintWith(" in src
+    i = src.index("function paintWith(")
+    assert "hasCharSel()" in src[i:i + 500], "고른 글자에도 칠해져야 한다"
+
+
+def test_palette_does_not_overwrite_swatches():
+    """색 팔레트를 두 곳에서 그리면 나중 것이 견본을 지운다."""
+    src = _studio_src()
+    i = src.index("function drawPalettes()")
+    block = src[i:i + 700]
+    assert "drawSwatches()" in block
+    assert "kind !== 'color'" in block
+
+
 # ── 클로드 칸 ─────────────────────────────────────────────────
 # 모델에게 리포를 통째로 열어 주면 안 된다 — 계열 코드를 고치면 그 계열 책이
 # 전부 흔들리고, 원고를 고치면 납품본과 글이 달라진다. 손댈 수 있는 곳은

@@ -39,6 +39,9 @@ def auto_sources(content, log=print):
     파일 이름이 곧 시험범위다(`…(리딩파워12강,14강)…`). 교과서만 과목·출판사를
     알아야 하는데, 그건 엔진 config 의 학교↔교과서 표에 있다.
     """
+    # 원고 직독으로 만든 content.json 은 출처를 스스로 적어 둔다
+    if content.get("_manuscript_sources"):
+        return [(x["dir"], x["spec"]) for x in content["_manuscript_sources"]]
     cfg = _cfg()
     base = os.path.expanduser(cfg["gdrive_content_base"])
     school = content.get("school", "")
