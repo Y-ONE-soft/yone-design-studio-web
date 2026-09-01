@@ -290,13 +290,13 @@ def blk_writing(b, fit=None, mark=""):
 BLK = {"arrange": blk_arrange, "insert": blk_insert, "vocab": blk_vocab,
        "grammar": blk_grammar, "writing": blk_writing}
 # 섹션별 한 줄 높이(mm) — "한두 줄 넘침"을 재는 자
-LINE_MM = {"arrange": 4.235, "insert": 4.235, "vocab": 7.06,
+LINE_MM = {"arrange": 4.235, "insert": 5.29, "vocab": 7.06,
            "grammar": 9.52, "writing": 4.235}
 # 한 지문이 차지하는 칸 — 사분면(126mm)인가 한 단 통짜(253mm)인가
 SLOT_KIND = {"arrange": "slot", "insert": "slot", "vocab": "page",
              "grammar": "col", "writing": "col"}
 # 섹션별 한 줄 높이(mm) — "한두 줄 넘침"을 재는 자
-LINE_MM = {"arrange": 4.235, "insert": 4.235, "vocab": 7.06,
+LINE_MM = {"arrange": 4.235, "insert": 5.29, "vocab": 7.06,
            "grammar": 9.52, "writing": 4.235}
 
 

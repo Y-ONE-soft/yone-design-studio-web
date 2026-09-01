@@ -961,6 +961,9 @@ def score_table(spec, scores):
     달라도 표가 따라 늘어난다. 가로 밴드형은 12칸씩 끊어 (번호행, 배점행)
     한 쌍을 만들고, 서답형이 있으면 마지막 밴드로 붙인다.
     """
+    total = _total_table(spec, scores)
+    if total:
+        return total
     if not spec.score_table:
         return ""
     sel = list((scores or {}).get("선택형") or [])
@@ -993,6 +996,34 @@ def score_table(spec, scores):
                           for j in range(len(ess))], ess, span, whole=True))
     return ('<table class="score-table">'
             f'{"".join(rows)}</table>')
+
+
+def _total_table(spec, scores):
+    """마지막 쪽 **영역별 합계표**(강동 계열) — `◎선택형 / ◎서답형 / ◎합계`.
+
+    세종형 `번호/배점` 밴드표와 모양이 완전히 다르다. 밴드표 코드가 이걸
+    문항별 표로 잘못 그려 정본에 없는 39행짜리 표가 인쇄되고 있었다.
+    """
+    st = P.dig(spec.raw, "score_table") or {}
+    if not st.get("on", False):
+        return ""
+    rows = st.get("cells")
+    if not (isinstance(rows, list) and rows and isinstance(rows[0], list)):
+        head = st.get("header") or st.get("header_row")
+        body = st.get("body") or st.get("rows")
+        if isinstance(head, list) and isinstance(body, list) and body \
+                and isinstance(body[0], list):
+            rows = [head] + body
+        else:
+            rows = None
+    if not rows:
+        return ""
+    flat = " ".join(str(c) for r in rows for c in r)
+    if "합계" not in flat and "총계" not in flat:
+        return ""        # 합계표가 아니다(세종형 밴드표는 여기 오지 않는다)
+    case = {"n_sel": len(list((scores or {}).get("선택형") or [])),
+            "n_ess": len(list((scores or {}).get("서답형") or []))}
+    return _aux_grid_html(rows, "total-table", case, scores, st)
 
 
 def _fmt_cell(v, whole=False):
@@ -1298,21 +1329,37 @@ def _aux_fill(text, label, case, scores):
 
 def _fill_one(text, tag, case, scores):
     t = re.sub(r"\s+", "", str(tag or ""))
+    if "합계" in t or "총계" in t:
+        n = (case.get("n_sel") or 0) + (case.get("n_ess") or 0)
+        pts = (list((scores or {}).get("선택형") or [])
+               + list((scores or {}).get("서답형") or []))
+        return _sub_nums(text, n, pts, ("{합계}", "{합계N}", "{n}"),
+                         ("{합계점}", "{합계점수}", "{p}"))
     if "서답형" in t or "서술형" in t:
         n, pts = case.get("n_ess"), (scores or {}).get("서답형")
     elif "선택형" in t or "객관식" in t:
         n, pts = case.get("n_sel"), (scores or {}).get("선택형")
     else:
         return text
+    return _sub_nums(text, n, pts,
+                     ("{n}", "{선택형}", "{선택형N}", "{서답형}", "{서답형N}"),
+                     ("{p}", "{선택형점}", "{선택형점수}", "{서답형점}",
+                      "{서답형점수}"))
+
+
+def _sub_nums(text, n, pts, n_keys, p_keys):
+    """문항 수·배점 숫자를 갈아끼운다. 템플릿 이름도 학교마다 다르다."""
     out = text
     if n:
         out = _RE_CNT.sub(lambda m: m.group(0).replace(m.group(1), str(n)), out)
-        out = out.replace("{n}", str(n))
+        for k in n_keys:
+            out = out.replace(k, str(n))
     if pts:
         tot = round(sum(pts), 1)
         v = str(int(tot)) if float(tot) == int(tot) else str(tot)
         out = _RE_PNT.sub(lambda m: m.group(0).replace(m.group(1), v), out)
-        out = out.replace("{p}", v)
+        for k in p_keys:
+            out = out.replace(k, v)
     return out
 
 

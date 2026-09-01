@@ -321,7 +321,11 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 .prompt { margin-bottom: 1.79mm; }
 /* 삽입 섹션의 주어진 문장 상자는 배열보다 안쪽 여백이 1mm 좁다(완성본 실측) */
 .sec-insert .given { margin-bottom: 2.60mm; padding-left: 3.00mm; }
-.sec-insert .it { margin-top: 0; text-align: justify; }
+/* ⚠ 삽입 섹션은 **행간이 다르다** — 완성본 실측 15pt(1.7647em), 배열은 12pt.
+ *   같은 값으로 두면 그 섹션만 촘촘해진다(실측: 납품 5.29mm vs 4.23mm). */
+.sec-insert .it { margin-top: 0; text-align: justify;
+                  line-height: calc(1.7647 * var(--lead, 1)); }
+.sec-insert .given { line-height: calc(1.7647 * var(--lead, 1)); }
 
 /* ------------------------------------------------------- ③ 중요 어휘 */
 /* 왼(빈칸)·오(정답)이 **한 행**이라 짝이 어긋날 수 없다.
