@@ -284,14 +284,19 @@ class Renderer(object):
                 out.append(self.ab_table(items, ab_cols, q, ab_head))
                 return "\n".join(x for x in out if x)
             layout = s.choice_layout or "one_per_line"
+            if _is_order_choices(items):
+                layout = _order_layout(items, s)
             cells = []
             for c in items:
                 lab = c.get("label") or ""
                 cells.append(f'<p class="choice">'
                              f'{self.inline((lab + " " + c["content"]).strip())}</p>')
-            if layout in ("grid2", "grid3"):
-                n = 2 if layout == "grid2" else 3
-                out.append(f'<div class="choice-grid g{n}">' + "".join(cells) + "</div>")
+            if layout in ("grid2", "grid3", "grid5"):
+                n = int(layout[-1])
+                out.append(f'<div class="choice-grid g{n}">'
+                           + "".join(cells) + "</div>")
+            elif layout in ("inline_row", "inline"):
+                out.append('<div class="choice-row">' + "".join(cells) + "</div>")
             else:
                 out.append("".join(cells))
         return "\n".join(x for x in out if x)
@@ -341,6 +346,55 @@ def _ab_split(text, min_cols):
         if len(parts) >= min_cols and (best is None or len(parts) > len(best)):
             best = parts
     return best
+
+
+_RE_ORDER_SEP = re.compile(r"\s*[-–—~∼]\s*")
+
+
+def _is_order_choices(items, min_hit=3):
+    """선지가 순서 배열 `(A)-(C)-(B)` 꼴인가 — **구조로** 판정한다.
+
+    유형 이름이 아니라 선지 자체를 본다: 구분자로 가른 칸이 전부 `(A)` 류
+    레이블뿐이면 순서 배열이다. 학교마다 이 유형만 선지 배치가 갈린다.
+    """
+    if len(items) < 3:
+        return False
+    hit = 0
+    for c in items:
+        t = (c.get("content") or "").strip() if isinstance(c, dict) else str(c)
+        parts = [x.strip() for x in _RE_ORDER_SEP.split(t) if x.strip()]
+        if len(parts) >= 2 and all(re.fullmatch(r"\(?[A-Ea-e]\)?", x)
+                                   for x in parts):
+            hit += 1
+    return hit >= max(min_hit, len(items) - 1)
+
+
+def _order_layout(items, s):
+    """순서 배열 선지를 몇 열로 놓을까 — **단 폭에 들어가는 만큼**.
+
+    정본 실측: 배재1 26-1-기말은 `(A)-(C)-(B)` 3칸이라 한 줄에 세 개가
+    들어가고(①②③ / ④⑤), 26-1-중간은 5칸짜리라 한 줄에 하나씩 내려온다.
+    같은 학교·같은 유형인데 배치가 다른 이유는 유형이 아니라 **길이**다.
+    프로파일이 적어 둔 열 수를 상한으로 삼되, 폭이 모자라면 줄인다.
+    """
+    if s.order_layout in ("inline_row", "inline"):
+        return "inline_row"
+    if s.order_layout == "one_per_line":
+        return "one_per_line"
+    want = {"grid2": 2, "grid3": 3, "grid5": 5}.get(s.order_layout or "", 0)
+    if not want:
+        want = 3            # adaptive·auto·fit_per_line·미기재는 폭에 맡긴다
+    longest = max((len((c.get("content") or "")) + 2 for c in items),
+                  default=0)
+    ch = s.role("choice")
+    size = float(ch.get("size_pt") or 9.0)
+    # 라틴 반각 기준 글자폭 ≈ 0.5em, 열 사이 여백 2mm
+    per = longest * size * 0.5 * 25.4 / 72 + 2.0
+    col = float(s.col_width or 100.0)
+    n = want
+    while n > 1 and per * n > col:
+        n -= 1
+    return f"grid{n}" if n > 1 else "one_per_line"
 
 
 def _ab_labeled(it):

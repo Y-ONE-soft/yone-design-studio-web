@@ -431,17 +431,21 @@ def page_block(zones, cls=""):
     return f'<div class="pg {cls}">{"".join(zones)}</div>'
 
 
+# 어법 O/X 첫 면의 **템플릿 고정 예시**. 원고가 아니라 마스터에 박힌 그림이라
+# 좌표를 실측해 그대로 옮긴다(완성본 p38 기준, 상자 x=22.91 y=31.41 168×23.87).
+#   옅은 O|X 칸 #f9fcf3 · 빨간 동그라미/밑줄/교정 #d2232a
 OX_EXAMPLE = (
     '<div class="ox-ex">'
-    '<p>All experimental equipment must be handled with care.'
-    '<span class="ox-mark"><b class="on">O</b><i>|</i><b>X</b></span></p>'
-    '<p>A warehouse is a large facility which products are storing before it is sold.'
-    '<span class="ox-mark" style="left:106.7mm"><b>O</b><i>|</i><b class="on">X</b></span></p>'
-    '<div class="ox-fix">'
-    '<span style="left:41.8mm">\u2934 where</span>'
-    '<span style="left:68.5mm">\u2934 stored</span>'
-    '<span style="left:89.1mm">\u2934 they are</span>'
-    '</div></div>')
+    '<span class="s1">All experimental equipment must be handled with care.</span>'
+    '<span class="s2">A warehouse is a large facility which products are storing '
+    'before it is sold.</span>'
+    '<span class="mk m1">O<i>|</i>X</span><span class="ring r1"></span>'
+    '<span class="mk m2">O<i>|</i>X</span><span class="ring r2"></span>'
+    '<span class="ul u1"></span><span class="ul u2"></span><span class="ul u3"></span>'
+    '<span class="fx f1">\u21b3 where</span>'
+    '<span class="fx f2">\u21b3 stored</span>'
+    '<span class="fx f3">\u21b3 they are</span>'
+    '</div>')
 
 
 # ── 간지 ────────────────────────────────────────────────────────────

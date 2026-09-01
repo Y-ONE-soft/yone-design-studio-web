@@ -264,6 +264,9 @@ class Spec(object):
         self.ab_layout = _str(_first(p, ["choices.ab_pair.layout"]),
                               "column_table") or "column_table"
         self.ab_header_row = bool(dig(p, "choices.ab_pair.header_row"))
+        # 순서 배열 선지 `(A)-(C)-(B)` 는 유형별로 배치가 갈리는 몇 안 되는
+        # 지점이다(들여쓰기는 16개 학교 전부 유형 무관 균일로 실측됐다).
+        self.order_layout = _str(_first(p, ["choices.order_layout"]))
         self.insert_marker = _first(p, ["choices.insert_marker"], "( ① )")
 
         # ── 러닝 요소 ──

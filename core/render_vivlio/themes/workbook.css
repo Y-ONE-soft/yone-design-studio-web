@@ -501,6 +501,155 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 .box-orange p { font-size: 8.5pt; line-height: 7.06mm; text-align: justify; }
 
 /* ─────────────────────────────────────────────── STEP2 B1 어법 O/X */
+/* 첫 면 예시 상자 — 템플릿 고정물(완성본 3종 모두 있다). 전부 실측 좌표다:
+ * 상자 168×23.87mm #eff0f0 · O|X 칸 20.16×4.48 #f9fcf3 · 빨간 동그라미 4.32×4.46
+ * 밑줄 y=18.38 · 교정 글 y=18.27 (상자 왼쪽 위 모서리 기준) */
+.ox-ex {
+  position: relative; background: #eff0f0;
+  margin: 0 -0.1mm 0; height: 23.87mm;
+  font-size: 9pt; line-height: 1;
+}
+.ox-ex .s1, .ox-ex .s2 { position: absolute; left: 3mm; white-space: nowrap; }
+.ox-ex .s1 { top: -3.32mm; }   /* 실측 보정: 글이 상자 안에서 4mm 내려앉는다 */
+.ox-ex .s2 { top: 7.93mm; }
+.ox-ex .mk {
+  position: absolute; width: 20.16mm; height: 4.48mm; background: #f9fcf3;
+  font-family: "Noto Sans CJK KR", sans-serif; font-weight: 500; color: var(--kr-gray);
+  text-align: center; line-height: 4.48mm; letter-spacing: 0.5mm;
+}
+.ox-ex .mk i { font-style: normal; color: var(--num-blue); margin: 0 2.4mm; }
+.ox-ex .m1 { left: 80.19mm; top: 3.05mm; }
+.ox-ex .m2 { left: 103.58mm; top: 14.23mm; }
+.ox-ex .ring {
+  position: absolute; width: 4.32mm; height: 4.46mm;
+  border: 0.5pt solid #d2232a; border-radius: 50%;
+}
+.ox-ex .r1 { left: 83.25mm; top: 3.19mm; }
+.ox-ex .r2 { left: 118.72mm; top: 14.29mm; }
+.ox-ex .ul { position: absolute; top: 18.38mm; height: 0;
+             border-top: 0.75pt solid #d2232a; }
+.ox-ex .u1 { left: 43.89mm; width: 8.26mm; }
+.ox-ex .u2 { left: 71.00mm; width: 9.43mm; }
+.ox-ex .u3 { left: 90.79mm; width: 4.68mm; }
+.ox-ex .fx {
+  position: absolute; top: 14.9mm; white-space: nowrap;
+  font-family: "Cafe24Supermagic", "Noto Sans CJK KR", sans-serif;
+  font-weight: 700; font-size: 9pt; color: #d2232a; letter-spacing: normal;
+}
+.ox-ex .f1 { left: 41.81mm; }
+.ox-ex .f2 { left: 68.48mm; }
+.ox-ex .f3 { left: 89.11mm; }
+
+.ox {
+  position: relative; margin-top: 7.6mm; padding-left: 5.1mm;
+  font-size: 9.5pt; line-height: 4.2mm;
+  display: flex; align-items: flex-end;   /* 버튼은 늘 마지막 줄 오른쪽에 */
+}
+.ox .txt { flex: 1 1 auto; text-align: justify; }
+.ox .n {
+  position: absolute; left: 1mm; top: 0.2mm;
+  font-family: "LotteMartDream", "Montserrat", sans-serif;
+  font-size: 9pt; color: var(--num-blue); letter-spacing: normal;
+}
+
+/* ─────────────────────────────────────────────── STEP1 B1 본문 정리 */
+.sum { margin-top: 4.4mm; position: relative; padding-left: 8.3mm; }
+.sum .badge {
+  position: absolute; left: 0; top: 0.3mm;
+  width: 7.4mm; height: 3.4mm; border-radius: 0.5mm;
+  font-family: "Elice Baeum", sans-serif; font-weight: 700; font-size: 8pt;
+  line-height: 3.4mm; text-align: center; color: #fff; letter-spacing: normal;
+}
+.sum.topic .badge { background: var(--badge-topic); }
+.sum.title .badge { background: var(--badge-title); }
+.sum p { font-size: 9pt; font-weight: 700; line-height: 4.94mm; text-align: justify; }
+
+/* 하단 문제 (발문 + 지문 박스 + 선지) */
+.q-head {
+  position: relative; padding-left: 5.8mm;   /* 아이콘(4.1mm)과 글 사이를 띄운다 */
+  font-family: "Elice Baeum", sans-serif; font-size: 9pt; line-height: 4.1mm;
+}
+.box-q {
+  background: var(--box-q); border: 0.5pt solid var(--line-q);
+  margin: 3.7mm 3mm 0; padding: 1.9mm 3mm 2.2mm;
+}
+.box-q p { font-size: 8.5pt; line-height: 4.59mm; text-align: justify;
+            letter-spacing: -0.025em; }   /* 실물 진행폭 0.9355 */
+.choices { margin: 4.4mm 0 0 10mm; }
+.choices p { font-size: 8.5pt; line-height: 5.29mm; text-align: justify;
+             padding-left: 3.6mm; text-indent: -3.6mm; }
+
+/* ─────────────────────────────────────────────── STEP1 B2 내용 종합 */
+.b2q { position: relative; margin-top: 6.5mm; padding-left: 9mm; }
+.b2q .n {
+  position: absolute; left: 0; top: 0;
+  font-family: "Elice DX Neolli", sans-serif; font-weight: 700; font-size: 10pt;
+  color: var(--num-violet); letter-spacing: normal;
+}
+.b2q .qt {
+  font-family: "Elice DX Neolli", sans-serif; font-weight: 500; font-size: 7.5pt;
+  line-height: 4.3mm;
+}
+.b2q .choices { margin: 1.4mm 0 0 0.3mm; }
+.b2q .choices p { font-size: 8pt; line-height: 4.7mm; }
+
+/* ─────────────────────────────────────────────── STEP1 C1 문장 배열 */
+.box-arr {
+  background: var(--box-body);
+  margin: 1.5mm -2mm 0; padding: 2.6mm 6mm 3mm 7mm;   /* 실측 x=21 · 폭 172mm */
+}
+.box-arr p {
+  font-size: 8.5pt; line-height: 4.4mm; text-align: justify;
+  padding-left: 4.1mm; text-indent: -4.1mm; margin-top: 2.15mm;
+}
+.box-arr p:first-child { margin-top: 0; }
+.albl { font-weight: 700; color: var(--sel); }
+.box-given {
+  background: var(--box-given);
+  margin-top: 3.4mm; padding: 1.6mm 3mm 1.9mm;
+}
+.box-given p { font-size: 8.5pt; line-height: 4.59mm; text-align: justify; }
+.box-lined {
+  border: 0.5pt solid var(--line-q);
+  margin-top: 0.7mm; padding: 1.9mm 3mm 2.4mm;
+}
+.box-lined p { font-size: 8.5pt; line-height: 4.59mm; text-align: justify;
+               margin-top: 3.1mm; }
+.box-lined p:first-child { margin-top: 0; }
+
+/* ─────────────────────────────────────────────── 빈칸 (C2 어휘 / STEP2 C1 어법) */
+.pn-side {                     /* 지문 번호가 판면 왼쪽 바깥에 세로로 */
+  position: absolute; top: 3mm; left: -10.4mm; width: 9mm;
+}
+.pn-side .pnum { line-height: 5.3mm; }
+.blk {
+  position: relative; padding-left: 5.5mm; text-indent: 0;
+  font-size: 7.96pt; line-height: 7.0mm; text-align: justify;
+  margin-top: 2.2mm;              /* 실측 항목 간격 15.29mm 에 맞춘 값 */
+}
+.blk:first-child { margin-top: 0; }
+.blk .n {
+  position: absolute; left: 0; top: 0.35mm;
+  font-family: "LotteMartDream", "Montserrat", sans-serif;
+  font-size: 8.95pt; color: var(--num-blue); letter-spacing: normal;
+}
+.blk-item { break-inside: avoid; }   /* 본문과 해석이 면 갈려 떨어지지 않게 */
+.blk-kr {
+  padding-left: 5.5mm; margin-top: 1.9mm;
+  font-size: 8pt; font-weight: 500; line-height: 4.24mm; color: var(--kr-gray);
+  text-align: justify;
+}
+
+/* ─────────────────────────────────────────────── STEP2 A1 어법 선택 */
+.gsel p { font-size: 8.5pt; line-height: 7.76mm; text-align: justify;
+          padding-left: 4mm; text-indent: -4mm; }
+.box-orange {
+  border: 0.5pt solid var(--line-orange);
+  margin: 3.3mm -3mm 0; padding: 1.4mm 6mm 3.1mm;     /* 실측 x=20 · 폭 174mm */
+}
+.box-orange p { font-size: 8.5pt; line-height: 7.06mm; text-align: justify; }
+
+/* ─────────────────────────────────────────────── STEP2 B1 어법 O/X */
 /* 첫 면 예시 상자 — 원고가 아니라 템플릿 고정물(완성본 3종 모두 있다).
  * 실측: 상자 x=22.9 · 168×23.9mm · #eff0f0, 글 9pt, 빨간 교정은 Cafe24Supermagic */
 .ox-ex {

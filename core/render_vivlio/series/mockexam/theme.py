@@ -328,6 +328,19 @@ def build_css(spec):
                    f"font-weight: {700 if s.ending_bold else 400}; "
                    "margin-top: 6pt; }")
 
+    # ── 선지 격자 — 순서 배열처럼 짧은 선지를 한 줄에 여러 개 놓는다.
+    #    16개 학교 실측 결론: 들여쓰기는 유형 무관 균일이고, 유형이 바꾸는
+    #    것은 이 배치와 상자 유무뿐이다.
+    css.append(".choice-grid { display: grid; column-gap: 6pt; "
+               "break-inside: avoid; }")
+    css.append(".choice-grid.g2 { grid-template-columns: repeat(2, 1fr); }")
+    css.append(".choice-grid.g3 { grid-template-columns: repeat(3, 1fr); }")
+    css.append(".choice-grid.g5 { grid-template-columns: repeat(5, 1fr); }")
+    css.append(".choice-row { display: flex; gap: 8pt; flex-wrap: wrap; "
+               "break-inside: avoid; }")
+    css.append(".choice-row .choice { white-space: nowrap; }")
+    css.append("")
+
     # ── (A)(B)(C) 짝맞추기 선지 표 ──
     ch = s.role("choice")
     csz = float(ch.get("size_pt") or 9.0)

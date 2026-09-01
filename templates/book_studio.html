@@ -2381,6 +2381,7 @@
 
   /** 다 그려 둔 때의 빠른 길 — 한 번에 뛴다. */
   function jumpTo(n) {
+    stopSeek();                                   // 돌고 있던 찾기를 멈춘다
     try {
       viewer.navigateToPage('epage', n - 1);
     } catch (e) {                       // 판이 바뀌어 없어졌으면 옛 길로
@@ -2398,21 +2399,34 @@
     })();
   }
 
-  /** 옛 길 — 한 면씩. `epage` 가 안 통하는 판을 위해 남겨 둔다. */
+  /** 옛 길 — 한 면씩. `epage` 가 안 통하는 판을 위해 남겨 둔다.
+   *
+   *  ⚠ **몇 번 뛸지를 미리 세면 안 된다.** 조판이 아직 그리는 중이면 넘기라는
+   *    말이 그냥 무시되는데, 세어 둔 횟수는 그것도 한 번으로 친다 — 8면을
+   *    눌렀는데 4면에 섰다(실측). 그러지 말고 **닿을 때까지** 다시 본다.
+   *  ⚠ 끝을 넘어선 자리는 영영 안 닿는다. 제자리걸음이 이어지면 멈춘다.
+   */
   function hopTo(n) {
-    var step = n - pageNow();
-    if (!step) return;
-    var dir = step > 0 ? V.Navigation.NEXT : V.Navigation.PREVIOUS;
-    var left = Math.abs(step);
+    if (!viewer || !V) return;
+    // ⚠ 면 넘기기는 **한 번에 하나만** 돌아야 한다. 조판 직후의 "빈 간지
+    //   지나가기" 가 아직 돌고 있는데 사람이 면을 고르면 둘이 서로 넘겨서
+    //   엉뚱한 데 선다(실측: 8면을 눌렀는데 2면에서 맴돌았다).
+    var mine = ++seeking;
+    seekBusy = false;
     msg(n + '면으로 가는 중…');
-    (function hop() {
-      if (!left--) { drawPageNo(); msg(n + '면'); return; }
-      var before = pageNow();
-      viewer.navigateToPage(dir);
-      (function wait(t) {
-        if (pageNow() !== before || t > 40) { drawPageNo(); return hop(); }
-        setTimeout(function () { wait(t + 1); }, 60);
-      })(0);
+    var stuck = 0, guard = 0, last = -1;
+    (function step() {
+      if (mine !== seeking) return;               // 새 이동이 시작됐다
+      var now = pageNow();
+      if (now === n) { drawPageNo(); msg(n + '면'); return; }
+      if (now === last) { stuck++; } else { stuck = 0; last = now; }
+      if (stuck > 25 || guard++ > 600) {          // 더 못 간다
+        drawPageNo();
+        msg(now === n ? (n + '면') : ('여기까지 갑니다 — ' + now + '면'));
+        return;
+      }
+      viewer.navigateToPage(n > now ? V.Navigation.NEXT : V.Navigation.PREVIOUS);
+      setTimeout(step, 70);
     })();
   }
 
