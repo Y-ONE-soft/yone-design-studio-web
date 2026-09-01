@@ -285,7 +285,16 @@ def write(cfg, series, build_dir, name="knobs.css"):
                            css_text(cfg, series) + styles_text(cfg)
                            + page_rules_text(cfg)
                            + (table_css() if _has(cfg, "table") else "")
-                           + (box_css() if _has(cfg, "box") else ""))
+                           + (box_css() if _has(cfg, "box") else "")
+                           # 각주는 **쓰는 책에만** 넣는다 — 안 쓰는 책의
+                           # CSS 가 까닭 없이 달라지면 회귀 대조가 흐려진다.
+                           + (foot_css() if _has(cfg, "fn") else ""))
+
+
+def foot_css():
+    """각주 모양 — 조판 엔진이 면 아래로 내린다(`float: footnote`)."""
+    from core.render_vivlio import richtext as _rt
+    return _rt.FOOT_CSS
 
 
 def box_css():

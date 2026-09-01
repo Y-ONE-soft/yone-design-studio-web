@@ -109,7 +109,7 @@ def inl(x, blank=False):
             t = f'<b>{t}</b>'
         if x.get('i'):
             t = f'<i>{t}</i>'
-        return t
+        return t + _rt.foot_html(x)          # 각주(있으면)
     return ''.join(inl(i, blank) for i in x)
 
 

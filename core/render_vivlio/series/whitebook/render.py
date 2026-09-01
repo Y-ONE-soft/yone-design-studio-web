@@ -96,6 +96,7 @@ def inl(x):
             t = f"<b>{t}</b>"
         if x.get("i"):
             t = f"<i>{t}</i>"
+        t += _rt.foot_html(x)                # 각주(있으면)
         return t
     return "".join(inl(i) for i in x)
 

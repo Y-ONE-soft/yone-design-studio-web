@@ -136,7 +136,7 @@ def runs_html(block):
             t = f"<b>{t}</b>"
         if r.get("i"):
             t = f"<i>{t}</i>"
-        out.append(t)
+        out.append(t + _rtx.foot_html(r))    # 각주(있으면)
     return "".join(out)
 
 

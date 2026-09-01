@@ -175,7 +175,37 @@ def seg_html(seg, blanks=True):
         t = f"<i>{t}</i>"
     if seg.get("b"):
         t = f"<b>{t}</b>"
+    t += foot_html(seg)
     return t
+
+
+def foot_html(seg):
+    """각주 — 그 자리에 번호를 달고 글은 **면 아래**로 내린다.
+
+    조판 엔진이 `float: footnote` 로 한다(실측). 번호도 엔진이 센다 — 사람이
+    세면 문단을 옮길 때마다 어긋난다.
+
+        {"t": "출처가 붙는 글", "fn": "고교 영어 교과서, 2026"}
+
+    ⚠ 각주 글은 **원고에 있는 그대로** 나간다(빈칸 표시는 안 한다).
+      각주 안에서 또 각주를 달 수는 없다.
+    """
+    if not isinstance(seg, dict):
+        return ""
+    fn = seg.get("fn")
+    if not fn:
+        return ""
+    body = _html.escape(fn if isinstance(fn, str) else plain(fn))
+    return f'<span class="viv-fn">{body}</span>'
+
+
+# 각주 모양 — 계열 테마가 덮어써도 된다. 조판 엔진이 면 아래로 내린다.
+FOOT_CSS = """
+/* 각주 — `float: footnote` 는 조판 엔진의 일이다(브라우저 미리보기에서는
+   그냥 작은 글씨로 보인다). 번호는 엔진이 센다. */
+.viv-fn { float: footnote; font-size: 7.5pt; line-height: 1.35; }
+@page { @footnote { border-top: 0.4pt solid currentColor; padding-top: 1mm; } }
+"""
 
 
 def _blank_html(t):
