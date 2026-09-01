@@ -233,8 +233,25 @@ class Renderer(object):
                 out.append(f'<p class="stem">{num}{self.inline(q)}'
                            f'{self.score_str(score)}</p>')
 
-        # 지문
-        for blk in (it.get("stimulus") or {}).get("blocks", []):
+        # 지문 — 순서·삽입 문항의 '주어진 글/문장' 은 정본에서 본문 **앞**에
+        # 상자로 놓인다. 원고는 삽입 문장을 뒤에 주므로 여기서 앞으로 옮긴다.
+        blocks = list((it.get("stimulus") or {}).get("blocks", []))
+        given_first, blocks = _split_given_first(blocks, ab_cols is not None
+                                                or _is_order_choices(
+                                                    (it.get("choices") or {})
+                                                    .get("items") or []))
+        if given_first:
+            body = "".join(
+                f'<p class="passage">'
+                f'{self.inline(strip_source(b.get("content") or ""), b.get("marks"), grep_bold=True)}</p>'
+                for b in given_first)
+            gs = s.given_sentence or {}
+            cls = "givensent-box" if (gs.get("render") or "").startswith("box") \
+                else "givensent"
+            out.append(f'<div class="{cls}">{body}</div>')
+
+        in_summary = False
+        for blk in blocks:
             content = strip_source(blk.get("content") or "")
             if not content:
                 continue
@@ -247,14 +264,23 @@ class Renderer(object):
             if label == "Sym":
                 arrow = s.summary.get("arrow") or content
                 out.append(f'<p class="summary-arrow">{esc(arrow)}</p>')
+                in_summary = True      # 화살표 아래가 요약문이다
                 continue
             cls = "passage"
             if blk.get("kind") == "para":
                 cls = "passage passage-context"
             if label == "Ans":
                 cls = "answer"
-            out.append(f'<p class="{cls}">'
-                       f'{self.inline(content, blk.get("marks"), grep_bold=True)}</p>')
+            body = (f'<p class="{cls}">'
+                    f'{self.inline(content, blk.get("marks"), grep_bold=True)}</p>')
+            if label == "Sum" or in_summary:
+                in_summary = False
+                wrap = ("summary-box"
+                        if (_summary_render(s, is_essay) or "").startswith("box")
+                        else "summary")
+                out.append(f'<div class="{wrap}">{body}</div>')
+                continue
+            out.append(body)
 
         # 보기
         given = it.get("given")
@@ -367,6 +393,52 @@ def _is_order_choices(items, min_hit=3):
                                    for x in parts):
             hit += 1
     return hit >= max(min_hit, len(items) - 1)
+
+
+_RE_SLOT = re.compile(r"[(（]\s*[①-⑤]\s*[)）]|[①-⑤]")
+_RE_SEG_A = re.compile(r"^\(?A\)?[\s.]")
+
+
+def _split_given_first(blocks, ordered):
+    """순서·삽입 문항의 '주어진 글/문장' 을 본문에서 가려낸다.
+
+    정본 실측(배재1·배재2 26-1): 둘 다 발문 바로 아래에 주어진 것이 오고
+    그 뒤가 본문이다. 원고는 **삽입 문장을 맨 뒤에** 주므로 순서를 바로잡는다.
+    유형 이름이 아니라 구조로 가른다 — 순서는 `(A)` 로 시작하는 조각이 있고,
+    삽입은 본문에 `( ① )` 자리표가 박혀 있다.
+
+    Returns: (주어진 블록들 또는 None, 나머지 블록들)
+    """
+    if len(blocks) < 2:
+        return None, blocks
+    texts = [(b.get("content") or "").strip() for b in blocks]
+    # 순서 — `(A)` 로 시작하는 조각 앞이 주어진 글
+    if ordered:
+        for i, t in enumerate(texts):
+            if _RE_SEG_A.match(t):
+                return (blocks[:i] or None), blocks[i:]
+    # 삽입 — 자리표가 두 개 이상 박힌 조각이 본문. 자리표 없는 짧은 조각 하나가
+    # 주어진 문장이고, 원고에서는 대개 맨 뒤에 온다.
+    slotted = [i for i, t in enumerate(texts) if len(_RE_SLOT.findall(t)) >= 2]
+    if not slotted:
+        return None, blocks
+    plain = [i for i, t in enumerate(texts)
+             if i not in slotted and len(t) <= 300]
+    if len(plain) != 1:
+        return None, blocks
+    j = plain[0]
+    if j < min(slotted):
+        return None, blocks      # 이미 앞에 있다 — 그대로 둔다
+    return [blocks[j]], [b for i, b in enumerate(blocks) if i != j]
+
+
+def _summary_render(s, is_essay):
+    """요약문 상자 여부. 명일2 처럼 선택형·서답형이 갈리는 학교가 있다."""
+    r = P.dig(s.raw, "summary.render")
+    if isinstance(r, dict):
+        key = "서답형_요약" if is_essay else "선택형_요약"
+        return r.get(key) or next(iter(r.values()), "")
+    return r or (s.summary or {}).get("render") or ""
 
 
 def _order_layout(items, s):

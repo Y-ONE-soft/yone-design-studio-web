@@ -335,7 +335,8 @@ def folders(scope, base, grade=None, log=lambda m: None):
             path = L.suneung_teukgang(base, t[1], test=True)
             spec = {"kind": "teuk", "unit": t[1], "test": True}
         elif kind == "mock":
-            path = L.mockexam(base, g, t[1], t[2])
+            # 회차의 학년은 반의 학년과 다를 수 있다 — 고2 반이 고1 회차를 쓴다.
+            path = L.mockexam(base, d.get("grade") or g, t[1], t[2])
             spec = {"kind": "mock", "year": t[1], "month": t[2]}
         if not path:
             log("[범위] 원고를 못 찾음 — %s" % token_text(t))
@@ -347,3 +348,137 @@ def folders(scope, base, grade=None, log=lambda m: None):
             spec = dict(spec, notes=d["notes"])
         out.append((path, spec))
     return out
+
+
+# ── Y.OS 구조화 입력 ────────────────────────────────────────────────────
+#
+# Y.OS `/work/exam` 은 범위를 **글이 아니라 항목**으로 받는다:
+#
+#   교과서    공통영어2_NE능률민병천   Lesson 1. … 1~9, Lesson 2. … 1~12   21지문
+#   모의고사  고1_2024_09월(인천시)    15~18, 20~24                        9지문
+#   부교재    수능특강 Light 영어독해연습(2025.10)  08 1~5, 09 1~5         49지문
+#   프린트    EBS 연계 외부지문         1~20                               20지문
+#
+# **여기에 지문 수준 제한이 들어 있다** — 글로 받던 시절의 마지막 구멍이
+# 이걸로 막힌다. `직접 입력` 만 예전처럼 글이라 `parse()` 로 넘긴다.
+PUBLISHERS = ("능률", "미래엔", "비상", "천재", "동아", "지학사", "금성",
+              "YBM", "다락원", "케이", "教学")
+RE_YOS_MOCK = re.compile(r"고(\d)_(\d{4})_(\d{1,2})월")
+RE_LESSON_HEAD = re.compile(r"Lesson\s*(\d+)|(\d+)\s*과")
+
+
+def normalize_book(name):
+    """`공통영어2_NE능률민병천` → ("공통영어2", "능률(민)").
+
+    출판사 표기가 Y.OS 와 원고 폴더에서 다르다. 폴더는 `능률(민)` 처럼
+    **출판사(저자 성)** 이고 Y.OS 는 붙여 쓴다(`NE능률민병천`).
+    앞의 로마자(`NE`)는 상표라 버린다.
+    """
+    subj, _, rest = (name or "").partition("_")
+    subj = subj.replace("Ⅰ", "I").replace("Ⅱ", "II")
+    subj = {"영어I": "영어Ⅰ", "영어II": "영어Ⅱ"}.get(subj.strip(), subj.strip())
+    rest = (rest or "").strip()
+    # 가장 **앞에서** 걸리는 출판사가 진짜다 — `NE능률민병천` 의 `NE` 는
+    # 상표라 건너뛰지만 `YBM박준언` 의 `YBM` 은 출판사 그 자체다.
+    hit = min((( rest.find(p0), -len(p0), p0) for p0 in PUBLISHERS
+               if rest.find(p0) >= 0), default=None)
+    if hit:
+        i, _, pub = hit
+        author = rest[i + len(pub):].strip()
+        return subj, ("%s(%s)" % (pub, author[0]) if author else pub)
+    return subj, rest
+
+
+def _ranges(text):
+    """`15~18, 20~24` → [15,16,17,18,20,21,22,23,24]."""
+    out = []
+    for a, b in re.findall(r"(\d{1,3})\s*[~\-–]\s*(\d{1,3})", text or ""):
+        out += list(range(int(a), int(b) + 1))
+    rest = re.sub(r"\d{1,3}\s*[~\-–]\s*\d{1,3}", "", text or "")
+    out += [int(u) for u in re.findall(r"\d{1,3}", rest)]
+    return sorted(set(out))
+
+
+def lesson_ranges(text):
+    """`Lesson 1. … 1~9, Lesson 2. … 1~12` → {1: [1..9], 2: [1..12]}.
+
+    과 이름이 사이에 있어도 된다 — **과 머리에서 다음 과 머리까지**를
+    그 과의 몫으로 본다(자리로 읽는다).
+    """
+    heads = [(m.start(), int(m.group(1) or m.group(2)))
+             for m in RE_LESSON_HEAD.finditer(text or "")]
+    out = {}
+    for i, (pos, n) in enumerate(heads):
+        end = heads[i + 1][0] if i + 1 < len(heads) else len(text)
+        seg = re.sub(r"^\s*(?:Lesson\s*\d+|\d+\s*과)", "", text[pos:end])
+        out[n] = _ranges(seg)
+    return out
+
+
+def unit_ranges(text):
+    """`08 1~5, 09 1~5, Mini Test 1 2~5` → {8: [1..5], 9: [1..5]}.
+
+    `<강 번호> <지문 번호들>` 이 쉼표로 이어진다.
+    """
+    out, cur = {}, None
+    for chunk in (text or "").split(","):
+        c = chunk.strip()
+        if not c:
+            continue
+        m = re.match(r"^(\d{1,2})\s+([\d\s~\-–]+)$", c)
+        if m:                       # `08 1~5` — 강이 새로 열린다
+            cur = int(m.group(1))
+            out.setdefault(cur, [])
+            out[cur] = sorted(set(out[cur] + _ranges(m.group(2))))
+        elif cur is not None and re.match(r"^[\d\s~\-–]+$", c):
+            out[cur] = sorted(set(out[cur] + _ranges(c)))   # 같은 강의 뒷토막
+        else:
+            cur = None              # `Mini Test 1 2~5` 처럼 강이 아닌 것
+    return out
+
+
+def from_yos_entries(entries, grade=0):
+    """Y.OS 항목 목록 → Scope.
+
+    `entries` = [(구분, 교재, 범위, 지문수), …] — 화면에 보이는 그대로.
+    `직접 입력` 은 글이라 `parse()` 로 돌린다(예전 길).
+    """
+    tokens, detail, raw = [], {}, []
+    for e in entries or []:
+        kind = (e[0] or "").strip()
+        book = (e[1] or "").strip() if len(e) > 1 else ""
+        rng = (e[2] or "").strip() if len(e) > 2 else ""
+        raw.append(" ".join(x for x in (kind, book, rng) if x))
+        if kind == "직접 입력":
+            sub = parse(book, grade)      # 이 칸이 곧 글이다
+            for t in sub["tokens"]:
+                if t not in detail:
+                    tokens.append(t)
+                    detail[t] = sub["detail"].get(t, {})
+            continue
+        if kind == "교과서":
+            subj, pub = normalize_book(book)
+            for n, nums in lesson_ranges(rng).items():
+                t = ("lesson", n)
+                tokens.append(t)
+                detail[t] = {"subject": subj, "publisher": pub, "only": nums}
+        elif kind == "모의고사":
+            m = RE_YOS_MOCK.search(book)
+            if m:
+                t = ("mock", int(m.group(2)) % 100, int(m.group(3)))
+                tokens.append(t)
+                detail[t] = {"grade": int(m.group(1)), "only": _ranges(rng)}
+        elif kind == "부교재":
+            k = "teuk" if "수능특강" in book else (
+                "rp" if "Reading Power" in book or "리딩파워" in book else (
+                    "olpo" if "올림포스" in book else "bare"))
+            for n, nums in unit_ranges(rng).items():
+                t = (k, n)
+                tokens.append(t)
+                detail[t] = {"book": book, "only": nums}
+        elif kind == "프린트":
+            t = ("print", len(tokens))
+            tokens.append(t)
+            detail[t] = {"book": book, "only": _ranges(rng)}
+    return {"tokens": _uniq(tokens), "detail": detail,
+            "raw": " / ".join(raw), "grade": grade, "source": "yos"}

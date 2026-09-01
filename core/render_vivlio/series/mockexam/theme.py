@@ -263,9 +263,15 @@ def build_css(spec):
         css.append(".summary-arrow { text-align: center; font-size: "
                    f"{round(body_size * 1.25, 1)}pt; line-height: 1.2; "
                    "margin: 2pt 0; }")
-    if (s.summary.get("render") or "").startswith("box"):
-        css.append(".summary-box { border: 0.4pt solid #000; padding: 1.5mm; "
-                   "margin: 3pt 0; }")
+    # 요약문 상자 — 캡션이 테두리에 걸치는 학교(세종)까지 같은 규칙으로 그린다.
+    # 명일2 처럼 선택형은 평문·서답형만 상자인 학교가 있어 두 벌을 다 낸다.
+    sr = P_dig(s.raw, "summary.render")
+    modes = set(sr.values()) if isinstance(sr, dict) else {sr or ""}
+    for mode in modes:
+        if isinstance(mode, str) and mode.startswith("box"):
+            box = dict(s.summary or {})
+            box["render"] = mode
+            css.append(_box_css("summary", box, s))
     css.append("")
 
     # ── 러닝 요소 ──
