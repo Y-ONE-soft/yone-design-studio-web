@@ -153,9 +153,10 @@ class WorkbookSeries(Series):
             except OSError:
                 pass
             tn, lb = fit_mod.turns(out), fit_mod.leaf_breaks(out)
-            if first and best and first != best[0]:
+            fin = (len(tn) + len(lb), probe.page_count(out))
+            if first and first != fin:
                 log(f"  [마감] 장 넘김을 없애느라 결함 {first[0]}건 · {first[1]}면 "
-                    f"→ 결함 {best[0][0]}건 · {best[0][1]}면 "
+                    f"→ 결함 {fin[0]}건 · {fin[1]}면 "
                     f"(끄려면 config options.turn_push / leaf_keep = false)")
             log("  [장넘김] 장을 넘기는 세트 없음" if not tn else
                 f"  [장넘김] 못 없앤 세트 {len(tn)}개 — "
