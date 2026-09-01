@@ -581,9 +581,33 @@ def zone(body, pos="top", cls=""):
             f'<span class="zend"></span></div>')
 
 
-def page_block(zones, cls=""):
-    """고정 시트 한 면 — 판면 높이만큼의 블록. 안쪽은 절대배치."""
-    return f'<div class="pg {cls}">{"".join(zones)}</div>'
+def page_block(zones, cls="", step=""):
+    """고정 시트 한 면 — 판면 높이만큼의 블록. 안쪽은 절대배치.
+
+    머리 표식(`.pgbeg`)을 심어 **몇 번째 고정 면인지**를 PDF 에서 되짚을 수
+    있게 한다. 칸(`.zone`)마다 끝 표식이 있으니, 끝 표식이 모자란 면이
+    **칸을 넘겨 잘린 면**이다.
+    """
+    i = _PGI[0]
+    _PGI[0] += 1
+    PGMETA.append((i, step, len(zones)))
+    return (f'<div class="pg {cls}"><span class="pgbeg"></span>'
+            f'{"".join(zones)}</div>')
+
+
+def flowed_block(slots, n, key, step=""):
+    """칸에 안 들어간 고정 면 → **흘림**. 잘려 사라지느니 면을 늘린다."""
+    i = _PGI[0]
+    _PGI[0] += 1
+    PGMETA.append((i, step, 0))
+    out = [f'<span class="pgbeg"></span>']
+    for j, (label, us) in enumerate(slots):
+        lbl = (f'<span class="pnum">{esc(label)}</span>' if label else "")
+        body = "".join(blocks_html(u, n, key) for u in us)
+        cls = "grp" + (" nobreak" if j == 0 else "")
+        out.append(f'<div class="{cls}">{lbl}{body}'
+                   f'<span class="bend"></span></div>')
+    return "".join(out)
 
 
 # 어법 O/X 첫 면의 **템플릿 고정 예시**. 원고가 아니라 마스터에 박힌 그림이라
@@ -630,6 +654,9 @@ TIGHT = set()          # 측정 패스가 채운다 — 한두 줄만 넘긴 덩
 TIGHT2 = set()         # 한 단계로 안 당겨진 덩어리 (더 좁힌다)
 PUSH = set()           # 통째로 다음 면으로 밀 세트 번호 (장 넘김 금지)
 KEEP = set()           # 장을 넘어 갈라진 문항 번호 — 그것만 안 갈리게 묶는다
+FLOWED = set()         # 칸에 안 들어가 **흘림으로 내린** 고정 면 번호
+_PGI = [0]             # 고정 면 일련번호 (문서 순서)
+PGMETA = []            # [(면번호, 스텝, 있어야 할 칸끝 표식 수)]
 _SIDX = [0]            # 세트 일련번호 (문서 순서 — fit.turns 와 같은 셈)
 _BIDX = [0]            # 문서 순서 덩어리 번호 (document() 가 0 으로 되돌린다)
 
@@ -678,23 +705,31 @@ def fixed_section(st, idx):
     if lay == "a1":
         slots = [sl for g in groups for sl in passage_slots(g)]
         for k in range(0, len(slots), 2):
+            two = slots[k:k + 2]
+            if _PGI[0] in FLOWED:
+                pages.append(flowed_block(two, n, st["key"], st["key"]))
+                continue
             zs = []
-            for j, (label, us) in enumerate(slots[k:k + 2]):
+            for j, (label, us) in enumerate(two):
                 lbl = (f'<span class="pnum">{esc(label)}</span>' if label else "")
                 body = "".join(blocks_html(u, n, st["key"]) for u in us)
                 zs.append(zone(lbl + body, "top" if j == 0 else "bottom", "z-a1"))
-            pages.append(page_block(zs))
+            pages.append(page_block(zs, step=st["key"]))
     elif lay == "pair":
         for g in groups:
             for label, us in passage_slots(g):
                 if not us:
+                    continue
+                if _PGI[0] in FLOWED:
+                    pages.append(flowed_block([(label, us)], n, st["key"],
+                                              st["key"]))
                     continue
                 lbl = (f'<span class="pnum">{esc(label)}</span>' if label else "")
                 zs = [zone(lbl + blocks_html(us[0], n, st["key"]), "top")]
                 if len(us) > 1:
                     zs.append(zone("".join(blocks_html(u, n, st["key"])
                                            for u in us[1:]), "bottom"))
-                pages.append(page_block(zs))
+                pages.append(page_block(zs, step=st["key"]))
     else:                                            # sheet
         # ⚠ 여기는 **흘림**이다. 절대배치 칸에 가두면 넘친 내용이 잘려 사라진다
         #   (실물도 안 자른다 — 어법 선택 '본문' 20문장은 두 면에 걸친다: 실측
@@ -986,7 +1021,9 @@ def document(data, title="워크북"):
 
 
 def write(cfg, data, build_dir, log=print):
-    _SIDX[0] = 0        # 세트 번호는 **문서 전체** 순서다 (측정 패스와 맞춘다)
+    _SIDX[0] = 0
+    _PGI[0] = 0
+    del PGMETA[:]        # 세트 번호는 **문서 전체** 순서다 (측정 패스와 맞춘다)
     import os
     text, rows = document(data, (cfg.book or {}).get("title") or "워크북")
     os.makedirs(build_dir, exist_ok=True)
@@ -997,6 +1034,10 @@ def write(cfg, data, build_dir, log=print):
         _refs.dump(build_dir)     # 작업대가 vrefN → 원본 자리를 되짚는 표
     except Exception:
         pass
+    import json as _json
+    with open(os.path.join(build_dir, "pgmeta.json"), "w",
+              encoding="utf-8") as f:
+        _json.dump(PGMETA, f)
     for k, v in rows:
         log(f"    {k:<14} {v}면" if isinstance(v, int) else f"    {k:<14} {v}")
     return p

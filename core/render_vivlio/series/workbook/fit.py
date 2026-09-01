@@ -23,6 +23,8 @@ MM = 72 / 25.4
 # 표식 구분 — 파랑 채널 값 (크기로 나누면 서로 오인한다)
 BEG_B = (0.9823, 0.9863)    # #fffffb (덩어리 시작)
 END_B = (0.9745, 0.9785)    # #fffff9 (덩어리 끝)
+PGB_B  = (0.9666, 0.9706)   # #fffff7 (고정 면 머리)
+ZEND_B = (0.9941, 1.0010)   # #fffffe (칸 끝)
 SBEG_B = (0.9902, 0.9942)   # #fffffd (세트 시작)
 SEND_B = (0.9863, 0.9902)   # #fffffc (세트 끝)
 
@@ -63,6 +65,10 @@ def _marks(doc):
                 kind = "sbeg"
             elif SEND_B[0] < f[2] < SEND_B[1]:
                 kind = "send"
+            elif PGB_B[0] < f[2] < PGB_B[1]:
+                kind = "pgbeg"
+            elif ZEND_B[0] < f[2] < ZEND_B[1]:
+                kind = "zend"
             if not kind:
                 continue
             x, y = r.x0 / MM, r.y0 / MM
@@ -183,3 +189,42 @@ def leaf_breaks(pdf):
                 out.append(bidx)
             op = None
     return out
+
+
+def clipped(pdf, build_dir):
+    """**칸을 넘겨 잘린 고정 면** — [고정 면 번호]
+
+    고정 칸(`.zone`)은 절대배치라 넘쳐도 다음 면으로 안 잇고 **그 자리에서
+    잘린다**. 넘친 칸은 끝 표식(`.zend`)이 판면 밖으로 나가 아예 안 찍히므로,
+    면마다 '있어야 할 수'와 '찍힌 수'를 견주면 어느 면이 잘렸는지 나온다.
+    (글자가 판면 아래로 삐져나온 것을 재는 방법은 못 쓴다 — 면 밖 내용은
+     아예 그려지지 않아 흔적이 없다. 실측으로 확인했다.)
+    """
+    import json
+    import os
+    meta_p = os.path.join(build_dir, "pgmeta.json")
+    if not os.path.exists(meta_p):
+        return []
+    with open(meta_p, encoding="utf-8") as f:
+        meta = json.load(f)
+    want = {int(i): int(nz) for i, _s, nz in meta}
+    fitz = _fitz()
+    doc = fitz.open(pdf)
+    marks = [m for m in _marks(doc) if m[3] in ("pgbeg", "zend")]
+    doc.close()
+    got = {}
+    idx = -1
+    for _page, _col, _y, kind in marks:
+        if kind == "pgbeg":
+            idx += 1
+            got[idx] = 0
+        elif idx >= 0:
+            got[idx] = got.get(idx, 0) + 1
+    return [i for i in sorted(want)
+            if want[i] and got.get(i, 0) < want[i]]
+
+
+def report_clipped(cl, log):
+    if cl:
+        log(f"  [칸넘침] 칸에 안 들어가 잘린 고정 면 {len(cl)}개 — {cl[:8]} "
+            f"→ 흘림으로 내린다")

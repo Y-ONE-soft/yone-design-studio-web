@@ -148,6 +148,11 @@ body {
 /* ⚠ 표식이 **지면을 밀면 안 된다.** 인라인 블록으로 두면 줄 상자가 생겨
  *   면 수가 늘어난다(실측: 81 → 83면). 시작 표식은 절대배치로 흐름에서 빼고,
  *   끝 표식은 흐름에 남기되 제 높이만큼 음수 여백으로 되돌린다. */
+/* 고정 면의 머리 표식 — 면을 세는 자리표. 늘 판면 안이라 반드시 찍힌다.
+ * 이게 있어야 "몇 번째 고정 면이 넘쳤는지" 를 되짚을 수 있다. */
+.pgbeg { position: absolute; top: 0; left: 0; display: block;
+         width: 0.4mm; height: 0.4mm; background: #fffff7; }
+
 .zbeg, .zend, .bend, .setmark, .setend { width: 0.4mm; height: 0.4mm; }
 .zbeg, .setmark { position: absolute; top: 0; left: 0; display: block; }
 .zend, .bend, .setend { display: block; margin-bottom: -0.4mm; }
