@@ -790,7 +790,7 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 }
 .p3 { font-size: 8pt; line-height: 4.94mm; text-align: justify; padding-top: 1.4mm; }
 /* 실전 문항은 한 덩어리 — 면이 갈릴 때 통째로 넘어간다 */
-.q-block.keep { break-inside: avoid; }
+.q-block.keep, .grp.keep { break-inside: avoid; }
 /* 세트 문항(안내문 + 지문 + 딸린 문항)은 통째로 — '위 글'을 앞장에서 찾게 하면 안 된다 */
 .set-block.keep { break-inside: avoid; }
 /* 안내문 + 지문은 통째로, 그리고 첫 문항이 바로 뒤에 붙게 */
