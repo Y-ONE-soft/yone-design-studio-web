@@ -305,7 +305,7 @@ section.flow.onecol { break-before: auto; }
  * 본문 시작을 padding 으로 정하는 편이 정확하다. 값은 전부 완성본 실측이다. */
 .pnum {
   font-family: "Yeongdo", serif; font-size: 12pt; line-height: 1;
-  color: var(--pnum); letter-spacing: 0.04em; display: block;
+  color: var(--pnum); letter-spacing: 0; display: block;   /* 실측 폭 10.1mm */
 }
 /* 흐름은 건드리지 않고 **글리프만** 띄운다(relative) — 본문 시작 위치는 이미
  * 실물과 1mm 안쪽으로 맞아 있었고, 어긋난 것은 라벨 글리프뿐이었다. */

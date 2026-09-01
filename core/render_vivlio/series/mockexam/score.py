@@ -128,6 +128,34 @@ def _fit(dist, n, total, unit=0.1):
     return [round(v, 2) for v in vals]
 
 
+def from_allocation(prof):
+    """프로파일의 정규화 블록(score.allocation)을 읽는다. 없으면 None.
+
+    학교마다 배점을 적어 둔 키 이름이 제각각이라 값의 모양으로 더듬는 것보다
+    이 블록이 훨씬 정확하다. 여기 값이 있으면 휴리스틱은 쓰지 않는다.
+    """
+    a = (prof.get("score") or {}).get("allocation")
+    if not isinstance(a, dict):
+        return None
+    tot = a.get("총점") or {}
+    sel = tot.get("선택형")
+    ess = tot.get("서답형")
+    if not isinstance(sel, (int, float)):
+        return None
+    obs_sel = [float(x) for x in (a.get("정본_선택형") or [])
+               if isinstance(x, (int, float))]
+    obs_ess = [float(x) for x in (a.get("정본_서답형") or [])
+               if isinstance(x, (int, float))]
+    return {
+        "sel_total": float(sel),
+        "essay_total": float(ess) if isinstance(ess, (int, float)) else None,
+        "obs_sel": obs_sel, "obs_essay": obs_ess,
+        "unit": float(a.get("단위") or 0.1),
+        "confidence": a.get("확신도"),
+        "basis": a.get("근거"),
+    }
+
+
 def allocate(prof, n_select, n_essay):
     """원고 문항 수에 배점을 배분한다.
 
@@ -136,9 +164,19 @@ def allocate(prof, n_select, n_essay):
         총점을 못 찾으면 목록이 비어 있고 notes 에 사유가 남는다.
     """
     notes = []
-    sel_total, essay_total = totals(prof)
-    obs_sel = observed(prof, "선택형")
-    obs_essay = observed(prof, "서답형")
+    unit = 0.1
+    norm = from_allocation(prof)
+    if norm:
+        sel_total, essay_total = norm["sel_total"], norm["essay_total"]
+        obs_sel, obs_essay = norm["obs_sel"], norm["obs_essay"]
+        unit = norm["unit"]
+        notes.append(f"배점 근거: {norm['basis']} ({norm['confidence']})")
+    else:
+        sel_total, essay_total = totals(prof)
+        obs_sel = observed(prof, "선택형")
+        obs_essay = observed(prof, "서답형")
+        notes.append("score.allocation 블록이 없어 값의 모양으로 더듬었다 "
+                     "— 정확도가 떨어진다. 프로파일에 블록을 채울 것.")
 
     out = {"선택형": [], "서답형": [],
            "총점": (sel_total, essay_total), "notes": notes}
@@ -150,7 +188,7 @@ def allocate(prof, n_select, n_essay):
             out["선택형"] = list(obs_sel)
             notes.append(f"선택형 {n_select}문항: 정본 배점 그대로(문항 수 일치).")
         else:
-            out["선택형"] = _fit(obs_sel, n_select, sel_total)
+            out["선택형"] = _fit(obs_sel, n_select, sel_total, unit)
             notes.append(
                 f"선택형 {n_select}문항: 정본은 {len(obs_sel)}문항이라 "
                 f"분포 모양을 유지한 채 재배분했다(합 {sel_total}).")
@@ -162,7 +200,7 @@ def allocate(prof, n_select, n_essay):
             out["서답형"] = list(obs_essay)
             notes.append(f"서답형 {n_essay}문항: 정본 배점 그대로(문항 수 일치).")
         else:
-            out["서답형"] = _fit(obs_essay, n_essay, essay_total, unit=0.1)
+            out["서답형"] = _fit(obs_essay, n_essay, essay_total, unit)
             notes.append(
                 f"서답형 {n_essay}문항: 정본은 {len(obs_essay)}문항이라 "
                 f"분포 모양을 유지한 채 재배분했다(합 {essay_total}).")

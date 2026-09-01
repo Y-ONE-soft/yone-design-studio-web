@@ -268,6 +268,11 @@ def api_text():
     # ⚠ 덩어리 자리표(지문 상자·문항 전체)에는 **글이 없다** — 그건 상자지
     #   글이 아니다. 그냥 열면 빈 편집기가 떠서 무엇이 잘못됐는지 알 수 없다.
     val = ed.get(cur, ref)
+    # 합친 표 칸은 `{"v": …, "c": 2}` 라 겉보기에 덩어리다. 안쪽 글로 내려가지
+    # 않으면 **합치는 순간 그 칸을 못 고치게 된다**(합치기가 글을 가둔다).
+    if isinstance(val, dict) and "t" not in val and "v" in val:
+        ref += ".v"
+        val = ed.get(cur, ref)
     if isinstance(val, dict) and "t" not in val:
         return jsonify({"error": "덩어리라 글이 없습니다 — 두 번 눌러 안쪽 "
                                  "한 줄을 고르거나, 모양은 오른쪽 패널에서 바꾸세요",
@@ -899,6 +904,19 @@ def api_table():
             b["head"].append("")
         for r in rows:
             r.append("")
+    elif act == "widths":
+        # 칸 너비 — 인디자인의 열 폭. 길이 값만 받는다.
+        from core.render_vivlio import box as _bx
+        ws = [_bx._len(x) for x in (p.get("widths") or [])]
+        if not ws or any(not w for w in ws):
+            return jsonify({"error": "칸 너비는 `30%` · `24mm` 처럼 적습니다"}), 400
+        b["widths"] = ws
+    elif act == "align":
+        al = [x for x in (p.get("align") or [])
+              if x in ("left", "center", "right", "justify")]
+        if not al:
+            return jsonify({"error": "정렬은 left·center·right 입니다"}), 400
+        b["align"] = al
     elif act == "delcol":
         if ncol <= 1:
             return jsonify({"error": "마지막 칸은 지울 수 없습니다"}), 409
@@ -907,6 +925,15 @@ def api_table():
         for r in rows:
             if r:
                 r.pop()
+    elif act in ("merge", "unmerge"):
+        # 인디자인의 셀 병합. 좌표는 **머리줄을 0행으로** 세는 화면과 같다.
+        try:
+            if act == "merge":
+                tbl.merge(b, p.get("r0"), p.get("c0"), p.get("r1"), p.get("c1"))
+            else:
+                tbl.unmerge(b, p.get("r"), p.get("c"))
+        except (ValueError, TypeError, IndexError, KeyError) as e:
+            return jsonify({"error": str(e) or "합칠 수 없는 자리입니다"}), 409
     elif act == "delete":
         st = ed.push(cfg, {"op": "delete", "ref": ref, "note": "표 지우기"})
         return jsonify({"ok": True,
