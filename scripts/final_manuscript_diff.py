@@ -170,6 +170,8 @@ def main():
     ap.add_argument("--kind", default="arrange",
                     choices=["arrange", "writing"])
     ap.add_argument("-v", "--verbose", action="store_true")
+    ap.add_argument("--labels", action="store_true",
+                    help="짝지어진 라벨 표만 (파이널 라벨 <TAB> 원고 라벨 <TAB> 폴더)")
     ap.add_argument("--auto", action="store_true",
                     help="워크북 파일 이름에서 원고 폴더를 스스로 찾는다")
     a = ap.parse_args()
@@ -189,20 +191,36 @@ def main():
 
     csig = [(h, sig(i), i) for h, i in cb]
     msig = [(r, sig(i), i, d) for r, i, d in mb]
-    used, rows, orphan = set(), [], []
-    for h, s, items in csig:
-        best, bi = 0.0, None
+    # 짝은 **한 번씩만** — 좋은 짝부터 확정한다(그리디로 하면 한 원고 블록이
+    # 두 헤더에 걸려 뒤쪽이 엉뚱한 것과 짝지어진다).
+    cand = []
+    for ci, (h, s, items) in enumerate(csig):
         for k, (r, ms, mi, d) in enumerate(msig):
             v = jac(s, ms)
-            if v > best:
-                best, bi = v, k
-        if bi is None or best < 0.5:
+            if v >= 0.5:
+                cand.append((v, ci, k))
+    cand.sort(reverse=True)
+    pair, used = {}, set()
+    for v, ci, k in cand:
+        if ci in pair or k in used:
+            continue
+        pair[ci] = (k, v)
+        used.add(k)
+    rows, orphan = [], []
+    for ci, (h, s, items) in enumerate(csig):
+        if ci not in pair:
+            best = max((jac(s, ms) for _r, ms, _mi, _d in msig), default=0.0)
             orphan.append((h, round(best, 2)))
             continue
-        used.add(bi)
+        bi, best = pair[ci]
         r, ms, mi, d = msig[bi]
         same = norm(" ".join(items)) == norm(" ".join(mi))
         rows.append((h, r, d, round(best, 3), same, items, mi))
+
+    if a.labels:
+        for h, r, d, v, same, items, mi in rows:
+            print(f"{h}\t{r}\t{d}\t{v}\t{'=' if same else '~'}")
+        return 0
 
     exact = sum(1 for x in rows if x[4])
     print(f"  짝 {len(rows)} · 글자까지 같음 {exact} · "
