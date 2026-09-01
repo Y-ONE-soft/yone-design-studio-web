@@ -2037,3 +2037,22 @@ def test_export_says_which_file_it_overwrites():
     i = ui.index("function exportPdf")
     body = ui[i:i + 900]
     assert "덮어쓸 파일" in body and "thumbInfo.pdf" in body
+
+
+def test_renaming_a_style_carries_the_places_it_is_applied():
+    """스타일 이름만 바꾸고 걸린 자리를 안 바꾸면 **조용히 모양을 잃는다.**"""
+    src = open(os.path.join(_ROOT, "routes", "book_studio.py"),
+               encoding="utf-8").read()
+    i = src.index("def api_parastyle")
+    body = src[i:i + 3000]
+    assert 'act == "rename"' in body
+    assert 'ed.push(cfg, {"op": "cls"' in body, "걸린 자리를 안 따라간다"
+
+
+def test_deleting_a_style_takes_it_off_first():
+    """규칙부터 지우면 잠깐 "없는 이름이 걸린" 상태가 생긴다 — 떼고 지운다."""
+    src = open(os.path.join(_ROOT, "routes", "book_studio.py"),
+               encoding="utf-8").read()
+    i = src.index('if act == "delete":', src.index("def api_parastyle"))
+    body = src[i:i + 800]
+    assert body.index('"op": "cls"') < body.index('"op": "style"')

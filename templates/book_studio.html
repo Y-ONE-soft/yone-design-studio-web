@@ -2544,6 +2544,53 @@
       + '바뀝니다(인디자인의 단락 스타일).';
     host.appendChild(note);
 
+    // ── 만든 스타일 살림 (몇 곳에 걸렸나 · 이름 바꾸기 · 지우기) ──
+    // ⚠ 만들기만 되고 치우지 못하면 이름이 쌓여 어느 것이 쓰이는지 모른다.
+    var box = document.createElement('div');
+    box.style.marginTop = '6px';
+    host.appendChild(box);
+    api('/api/book-studio/parastyle?b=' + encodeURIComponent(key))
+      .then(function (d) {
+        var list = (d && d.styles) || [];
+        if (!list.length) { box.innerHTML = ''; return; }
+        box.innerHTML = '';
+        list.forEach(function (x) {
+          var r = document.createElement('div');
+          r.className = 'ide-f'; r.style.marginTop = '3px';
+          var nm = document.createElement('span');
+          nm.className = 'ide-hint'; nm.style.flex = '1';
+          nm.innerHTML = '<b>' + x.name + '</b> · ' + x.count + '곳';
+          var rn = document.createElement('button');
+          rn.className = 'ide-b'; rn.textContent = '이름';
+          rn.onclick = function () {
+            var to = prompt('새 이름 (ps- 없이)', x.name.replace(/^ps-/, ''));
+            if (!to) return;
+            api('/api/book-studio/parastyle',
+                { b: key, action: 'rename', name: x.name, to: 'ps-' + to.trim() })
+              .then(function (d2) {
+                if (d2.error) { msg('✗ ' + d2.error); return; }
+                loadBook(true);
+              });
+          };
+          var rm = document.createElement('button');
+          rm.className = 'ide-b'; rm.textContent = '지우기';
+          rm.onclick = function () {
+            if (!confirm(x.name + ' 을 지웁니다 (' + x.count
+                         + '곳에서 떨어집니다). 되돌리기로 살릴 수 있습니다.')) return;
+            api('/api/book-studio/parastyle',
+                { b: key, action: 'delete', name: x.name })
+              .then(function (d2) {
+                if (d2.error) { msg('✗ ' + d2.error); return; }
+                rebuild('').then(function (ok) {
+                  if (ok) { msg('✓ ' + x.name + ' 지움'); drawStyleList(); }
+                });
+              });
+          };
+          r.appendChild(nm); r.appendChild(rn); r.appendChild(rm);
+          box.appendChild(r);
+        });
+      });
+
     function tell() {
       if (styleTarget) {
         return '<b>' + styleTarget + '</b> 이 걸린 곳이 <b>전부</b> 바뀝니다. '

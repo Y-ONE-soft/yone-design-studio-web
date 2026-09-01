@@ -514,6 +514,73 @@ def api_paraclass():
                     "history": _hist(st)})
 
 
+@bp.route("/api/book-studio/parastyle", methods=["GET", "POST"])
+def api_parastyle():
+    """단락 스타일 살림 — 목록 · 이름 바꾸기 · 지우기.
+
+    만들기만 되고 치우지 못하면 이름이 쌓여 어느 것이 쓰이는지 알 수 없다.
+    인디자인의 단락 스타일 패널이 하는 일(어디에 몇 곳 걸렸나, 이름 바꾸기,
+    지우기)을 그대로 둔다.
+
+    ⚠ 이름을 바꾸면 **걸린 자리도 같이** 바꿔야 한다. 스타일만 바꾸면 걸린
+      곳은 없는 이름을 가리켜 조용히 모양을 잃는다.
+    """
+    from core.render_vivlio import book as bookmod
+    from core.render_vivlio import edits as ed
+    get = request.method == "GET"
+    p = {} if get else (request.get_json(silent=True) or {})
+    d, meta = _book_dir(request.args.get("b") if get else p.get("b"))
+    if not d:
+        return jsonify({"error": "모르는 책"}), 404
+    cfg = bookmod.load(d)
+    st = ed.read(cfg)
+    used = ed.classes(st)                      # {자리: "ps-가 ps-나"}
+    count = {}
+    for v in used.values():
+        for n in v.split():
+            count[n] = count.get(n, 0) + 1
+    if get:
+        names = sorted({n for sel in (cfg.section("styles") or {})
+                        for n in [sel[1:]] if sel.startswith(".ps-")}
+                       | set(count))
+        return jsonify({"styles": [{"name": n, "count": count.get(n, 0)}
+                                   for n in names]})
+
+    act = p.get("action")
+    name = str(p.get("name") or "").strip().lstrip(".")
+    if not re.match(r"^ps-[0-9A-Za-z가-힣_-]{1,40}$", name):
+        return jsonify({"error": "스타일 이름은 `ps-`로 시작합니다"}), 400
+    if act == "delete":
+        # ① 걸린 자리에서 뗀다 ② 스타일 규칙을 없앤다 — 순서가 바뀌면
+        #    잠깐 "없는 이름이 걸린" 상태가 생긴다.
+        for ref, v in used.items():
+            rest = " ".join(x for x in v.split() if x != name)
+            if rest != v:
+                ed.push(cfg, {"op": "cls", "ref": ref, "v": rest,
+                              "note": "단락 스타일 지우기"})
+        stt = ed.push(cfg, {"op": "style", "sel": "." + name, "v": None,
+                            "note": "단락 스타일 지우기"})
+        return jsonify({"ok": True, "history": _hist(stt)})
+    if act == "rename":
+        new = str(p.get("to") or "").strip().lstrip(".")
+        if not re.match(r"^ps-[0-9A-Za-z가-힣_-]{1,40}$", new):
+            return jsonify({"error": "새 이름도 `ps-`로 시작합니다"}), 400
+        props = (cfg.section("styles") or {}).get("." + name)
+        if props:
+            ed.push(cfg, {"op": "style", "sel": "." + new, "v": props,
+                          "note": "단락 스타일 이름 바꾸기"})
+            ed.push(cfg, {"op": "style", "sel": "." + name, "v": None,
+                          "note": "단락 스타일 이름 바꾸기"})
+        stt = st
+        for ref, v in used.items():
+            if name in v.split():
+                nv = " ".join(new if x == name else x for x in v.split())
+                stt = ed.push(cfg, {"op": "cls", "ref": ref, "v": nv,
+                                    "note": "단락 스타일 이름 바꾸기"})
+        return jsonify({"ok": True, "history": _hist(ed.read(cfg))})
+    return jsonify({"error": f"모르는 동작: {act}"}), 400
+
+
 IMG_OK = (".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp")
 IMG_MAX = 20 * 1024 * 1024
 
