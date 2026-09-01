@@ -2076,7 +2076,7 @@ def test_group_align_moves_relatively_and_bakes_once():
     """
     ui = _studio_src()
     i = ui.index("function alignPicks")
-    body = ui[i:i + 3000]
+    body = ui[i:i + 3400]
     assert "getBoundingClientRect" in body and "pxPerMm" in body
     assert "if (--left === 0)" in body, "상자마다 다시 굽고 있다"
     assert "el2.style.right" in body, "붙여 둔 변을 지켜야 한다"
