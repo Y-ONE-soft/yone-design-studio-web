@@ -184,7 +184,10 @@ class Renderer(object):
                 else marker
         text = _fill_group_score(text, score, s)
         text = re.sub(r"\s{2,}", " ", text).strip()
-        body = esc(text)
+        # `[각 2.8점씩]` 이 줄에서 갈리면 안 된다
+        body = _RE_EACH_SCORE.sub(
+            lambda m: f'<span class="score">{esc(m.group(0))}</span>',
+            esc(text))
         if not s.group_intro_same_line and intro and "{지시문}" not in \
                 (s.group_template or ""):
             body += f'</p><p class="group-intro">{esc(intro)}'
@@ -501,6 +504,7 @@ def _is_tiny_choices(items, limit=6):
     return all(len(t) <= limit for t in texts)
 
 
+_RE_EACH_SCORE = re.compile(r"[\[(（]\s*각\s*[\d.]+\s*점\s*씩?\s*[\])）]")
 _RE_RANGE_PREFIX = re.compile(r"^\s*[\[(（【〈]\s*\d+\s*[~\-–—]\s*\d+\s*"
                               r"[\])）】〉]\s*")
 
@@ -701,9 +705,12 @@ def build_body(doc, spec, case=None, scores=None):
             it.setdefault("header", {})["score"] = pool[row["no"] - 1]
 
     # 공통발문형 묶음은 배점을 머리에 한 번만 찍는다(정본 한영1 실측).
+    # 묶음 머리에 배점 자리가 있는 학교만 해당한다. 자리가 없는데 구성원
+    # 배점을 지우면 배점이 어디에도 안 찍힌다(강동2·강동3·한영2 실증).
+    head_takes_score = "{점수}" in (spec.group_template or "")
     for row in plan:
         g = row.get("group")
-        if not g or not g.get("common_stem"):
+        if not g or not g.get("common_stem") or not head_takes_score:
             continue
         vals = [((m["item"].get("header") or {}).get("score"))
                 for m in g["members"]]
