@@ -816,6 +816,7 @@ def api_box():
     if act == "style":
         # 상자 모양(바탕·테두리·둥근 모서리·그림자·투명도·회전) —
         # 인디자인의 개체 속성이다. **적은 것만** 받는다.
+        b = json.loads(json.dumps(block))      # 사본에 고친다
         st = dict(b.get("style") or {})
         props = p.get("props")
         if not isinstance(props, dict) or not props:

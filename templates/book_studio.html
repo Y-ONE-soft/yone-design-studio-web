@@ -1483,6 +1483,54 @@
     };
     host.appendChild(go); host.appendChild(del);
 
+    // ── 상자 모양 (인디자인의 개체 속성) ──
+    var mlab = document.createElement('div');
+    mlab.className = 'ide-lab'; mlab.style.marginTop = '9px';
+    mlab.innerHTML = '<span>상자 모양</span>';
+    host.appendChild(mlab);
+    var BOX_STYLE = [
+      ['background', '바탕', '#f4f6fb'],
+      ['border', '테두리', '0.4pt solid #333'],
+      ['border-radius', '둥근 모서리', '2mm'],
+      ['box-shadow', '그림자', '0 1mm 2mm rgba(0,0,0,.18)'],
+      ['opacity', '투명도', '0.85'],
+      ['transform', '회전', 'rotate(-4deg)'],
+      ['padding', '안 여백', '1.5mm'],
+      ['text-align', '글 맞춤', 'left · center · right'],
+      ['font-size', '글자 크기', '9pt']
+    ];
+    var bsNow = {}, bsIn = {};
+    if (el) {
+      BOX_STYLE.forEach(function (a) {
+        var v = el.style[a[0]] || el.style.getPropertyValue(a[0]);
+        if (v) bsNow[a[0]] = String(v).trim();
+      });
+    }
+    BOX_STYLE.forEach(function (a) {
+      var row = document.createElement('div'); row.className = 'ide-row';
+      var lab = document.createElement('div'); lab.className = 'ide-lab';
+      lab.innerHTML = '<span>' + a[1] + '</span><span class="ide-val">'
+        + (bsNow[a[0]] || '') + '</span>';
+      var f = document.createElement('div'); f.className = 'ide-f';
+      var t = document.createElement('input');
+      t.className = 'ide-t'; t.placeholder = bsNow[a[0]] || a[2];
+      bsIn[a[0]] = t; f.appendChild(t);
+      row.appendChild(lab); row.appendChild(f);
+      host.appendChild(row);
+    });
+    var bsGo = document.createElement('button');
+    bsGo.className = 'ide-b'; bsGo.textContent = '상자 모양 적용';
+    bsGo.onclick = function () {
+      var props = {};
+      BOX_STYLE.forEach(function (a) {
+        var v = bsIn[a[0]].value.trim();
+        if (v) props[a[0]] = v;
+      });
+      if (!Object.keys(props).length) { msg('바꿀 값을 적으세요'); return; }
+      boxApi({ action: 'style', ref: inBox, props: props });
+    };
+    host.appendChild(bsGo);
+
     // ── 면에 맞추기 (인디자인의 정렬) ──
     // ⚠ **어느 변에 붙였는지가 곧 뜻**이다. 왼쪽에 맞추면 `left` 로,
     //   오른쪽에 맞추면 `right` 로 붙인다 — 판형이 바뀌어도 그대로 따라간다.

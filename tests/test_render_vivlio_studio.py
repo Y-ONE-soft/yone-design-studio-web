@@ -1689,3 +1689,34 @@ def test_image_can_go_into_a_frame():
     j = rt.index('b = bx.new(p.get("kind")')
     assert 'b["img"] = "assets/" + img' in rt[j:j + 700]
     assert "os.path.basename" in rt[j:j + 700], "경로를 받으면 안 된다"
+
+
+def test_box_appearance_is_a_short_list_not_any_css():
+    """상자 모양(바탕·테두리·둥근 모서리·그림자·투명도·회전)은 개체 속성이다.
+
+    ⚠ 아무 CSS 나 받으면 조판이 통째로 흔들린다 — `position` 같은 것은 막는다.
+    """
+    from core.render_vivlio import box as B
+    assert "background" in B.STYLE_KEYS and "transform" in B.STYLE_KEYS
+    assert "position" not in B.STYLE_KEYS and "float" not in B.STYLE_KEYS
+    src = open(os.path.join(_ROOT, "routes", "book_studio.py"),
+               encoding="utf-8").read()
+    i = src.index('if act == "style":')
+    assert "bx.STYLE_KEYS" in src[i:i + 900]
+    assert "json.loads(json.dumps(block))" in src[i:i + 900], \
+        "원본을 그대로 고치면 안 된다(사본에 고친다)"
+
+
+def test_arrow_keys_nudge_the_selected_box():
+    """인디자인은 화살표로 민다 — 1mm · ⇧ 5mm · ⌥ 0.25mm.
+
+    ⚠ 한 번 누를 때마다 다시 조판하면 못 쓴다. 지면에서 먼저 움직이고
+      손을 뗀 뒤 **한 번만** 저장한다.
+    """
+    src = _studio_src()
+    assert "function nudgeBox" in src
+    i = src.index("function nudgeBox")
+    body = src[i:i + 1800]
+    assert "e.shiftKey ? 5" in body and "0.25" in body
+    assert "setTimeout" in body, "누를 때마다 저장하면 안 된다"
+    assert "action: 'delete'" in body, "Delete 로 지울 수 있어야 한다"
