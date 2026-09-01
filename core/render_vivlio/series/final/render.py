@@ -31,9 +31,10 @@ DEFAULT_METRICS = {
     "vocab_top": 30.0,    # 판면 위 (중요어휘)
     "vocab_avail": 252.57,   # 중요어휘 면이 실제로 주는 높이(303-30-20.43)
     "vocab_safety": 4.0,     # 잉크 바닥 ↔ 상자 바닥 차이만큼의 여유
-    "base_pt": 8.5,       # 본문 활자
-    "min_pt": 7.0,        # 축소 하한 — 여기까지 줄여도 안 들어가면 결함
-    "step_pt": 0.1,       # 축소 눈금
+    "base_pt": 8.5,       # 본문 활자 — **절대 줄이지 않는다**
+    "over_lines": 2.0,    # 이만큼까지 넘치면 행간으로 흡수, 넘으면 두 칸
+    "min_lead": 0.90,     # 행간 조임 하한(10%)
+    "fixed_mm": 12.0,     # 지문 상자에서 글줄이 아닌 부분(헤더·답란·상자 여백)
 }
 
 RE_ITEM = re.compile(r"^\((?P<m>[A-Z])\)\s*")
@@ -109,11 +110,15 @@ def _item(text):
 
 # ------------------------------------------------------------------ 조각
 def _open_blk(fit, base="blk"):
+    """지문 상자 여는 태그 — 맞춤(행간 조임·두 칸·흘림)을 얹는다.
+
+    활자 크기는 **건드리지 않는다**(사용자 확정): 한두 줄 넘치면 행간만
+    조금 조이고, 그보다 길면 두 칸을 준다.
+    """
     f = fit or {}
     cls = base + (" tall" if f.get("span") == 2 else "") \
                 + (" flow" if f.get("flow") else "")
-    st = (f' style="font-size:{fit["pt"]:.2f}pt"'
-          if fit and fit.get("pt") else "")
+    st = f' style="--lead:{f["lead"]:.4f}"' if f.get("lead") else ""
     return f'<div class="{cls}"{st}>'
 
 
@@ -262,9 +267,15 @@ def blk_writing(b, fit=None, mark=""):
 
 BLK = {"arrange": blk_arrange, "insert": blk_insert, "vocab": blk_vocab,
        "grammar": blk_grammar, "writing": blk_writing}
+# 섹션별 한 줄 높이(mm) — "한두 줄 넘침"을 재는 자
+LINE_MM = {"arrange": 4.235, "insert": 4.235, "vocab": 7.06,
+           "grammar": 9.52, "writing": 4.235}
 # 한 지문이 차지하는 칸 — 사분면(126mm)인가 한 단 통짜(253mm)인가
 SLOT_KIND = {"arrange": "slot", "insert": "slot", "vocab": "page",
              "grammar": "col", "writing": "col"}
+# 섹션별 한 줄 높이(mm) — "한두 줄 넘침"을 재는 자
+LINE_MM = {"arrange": 4.235, "insert": 4.235, "vocab": 7.06,
+           "grammar": 9.52, "writing": 4.235}
 
 
 # ------------------------------------------------------------- 클릭 편집 자리표

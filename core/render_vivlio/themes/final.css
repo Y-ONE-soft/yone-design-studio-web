@@ -127,8 +127,11 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 /* 자간 −40/1000 em. 완성본 55줄 최소제곱 실측(잔차 중앙 0.000mm) —
  * 인디자인 단락스타일의 트래킹이다. 장평 모델로 보면 잔차가 6배 커진다. */
-html { font: 8.5pt/1.4123 Noto, sans-serif; color: var(--ink);
-       letter-spacing: -0.04em; }
+html { font-family: Noto, sans-serif; font-size: 8.5pt; color: var(--ink);
+       line-height: calc(1.4123 * var(--lead, 1)); letter-spacing: -0.04em; }
+/* `--lead` = 행간 배수. 칸을 한두 줄 넘치는 지문만 빌드가 1보다 조금 작은 값을
+ * 꽂아 **활자 크기는 그대로 두고** 한 칸에 앉힌다(사용자 확정 정책). */
+.blk { --lead: 1; }
 body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 
 /* 간지 — 판면 밖 좌표를 그대로 쓰려고 흐름에서 뺀다(완성본 실측) */
@@ -296,9 +299,10 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 .vpair .r { width: 83mm; }          /* 회색 판과 같은 폭(면 배경이 칠한다) */
 .vpair .l .vcell { padding: 0 4.00mm 4.00mm 0; }
 .vpair .r .vcell { padding: 0 1.99mm 4.00mm 1.99mm; }
-.vp { text-align: justify; line-height: 2.3456; }
+.vp { text-align: justify; line-height: calc(2.3456 * var(--lead, 1)); }
 .vsum { margin-top: 5.60mm; }
-.vsum .hd { font: 700 8.5pt/2.3456 Noto; letter-spacing: 0.1em; }
+.vsum .hd { font: 700 8.5pt Noto; line-height: calc(2.3456 * var(--lead, 1));
+            letter-spacing: 0.1em; }
 .sec-vocab .grid { column-count: 1; }
 .blk-vocab { height: auto; }
 .blk-vocab + .blk-vocab { break-before: page; }
@@ -314,17 +318,20 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 .ansv { font-weight: 700; }
 
 /* ------------------------------------------------------- ④ 어법 수정 */
-.sec-grammar .body { text-align: justify; line-height: 3.1748; }
+.sec-grammar .body { text-align: justify;
+                     line-height: calc(3.1748 * var(--lead, 1)); }
 .sec-grammar .g { font-weight: 700; }
 
 /* ----------------------------------------------------- ⑤ 서술형 영작 */
 .wpair { margin-bottom: 19.98mm; }
 .wpair:last-child { margin-bottom: 0; }
 /* 영작 한글은 본문과 **같은 행간**(4.235mm)이다 — 8pt 라고 줄지 않는다 */
-.wkor { font: 400 8pt/1.504 Noto; text-align: justify; }
+.wkor { font: 400 8pt Noto; line-height: calc(1.504 * var(--lead, 1));
+        text-align: justify; }
 /* 보기 상자는 단보다 **좌우 1mm 씩 넓다**(완성본 실측 24.0→109.0 = 85mm). */
 .wcho {
   background: var(--choice); margin: 1.69mm -0.30mm 0 -1.00mm;
   padding: 1.30mm 1.32mm 2.02mm 2.00mm;
-  font: 500 8pt/1.4123 Noto; text-align: justify;
+  font: 500 8pt Noto; line-height: calc(1.4123 * var(--lead, 1));
+  text-align: justify;
 }

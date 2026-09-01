@@ -328,6 +328,15 @@
             <div class="ide-lab"><span>너비</span></div>
             <input class="ide-t" id="img-w" value="60mm">
           </div>
+          <div class="ide-row">
+            <div class="ide-lab"><span>본문과의 관계</span></div>
+            <select class="ide-sel" id="img-wrap" style="width:100%">
+              <option value="">아래에 한 줄로 (기본)</option>
+              <option value="left">왼쪽에 두고 글이 감싸기</option>
+              <option value="right">오른쪽에 두고 글이 감싸기</option>
+              <option value="round">원으로 두고 글이 둥글게 감싸기</option>
+            </select>
+          </div>
           <div class="ide-hist" id="img-list"></div>
         </div>
       </details>
@@ -779,7 +788,13 @@
       values: ['', 'auto', 'normal', 'none'] },
     { k: 'font-variant-position', l: '윗·아래 첨자', kind: 'enum',
       values: ['', 'normal', 'super', 'sub'] },
-    { k: 'font-feature-settings', l: '서체 기능(고급)', kind: 'text' }
+    { k: 'font-feature-settings', l: '서체 기능(고급)', kind: 'text' },
+    // 회전·기울이기 — 실측으로 조판에 되는 것을 확인했다
+    { k: 'transform', l: '회전 · 기울이기', kind: 'enum',
+      values: ['', 'none', 'rotate(-90deg)', 'rotate(90deg)',
+               'rotate(-45deg)', 'skewX(-12deg)', 'scaleX(0.9)'] },
+    { k: 'transform-origin', l: '회전 기준점', kind: 'enum',
+      values: ['', 'left top', 'center', 'right top', 'left bottom'] }
   ];
   var PARA_PROPS = [
     { k: 'text-align', l: '정렬', kind: 'enum',
@@ -1786,11 +1801,27 @@
   function placeImage(name) {
     if (!curRef) { msg('먼저 지면에서 자리를 클릭하세요'); return; }
     var w = ($('img-w').value || '60mm').trim();
+    var wrap = $('img-wrap') ? $('img-wrap').value : '';
+    // 글 감싸기 — `float` 로 두면 본문이 그림을 피해 흐른다.
+    // `round` 는 `shape-outside` 로 **둥글게** 감싼다(실측으로 되는 것 확인).
+    var props = { content: 'url("assets/' + name + '")',
+                  width: w, height: 'auto' };
+    if (!wrap) {
+      props.display = 'block'; props.margin = '3mm auto';
+      props.float = ''; props['shape-outside'] = ''; props['border-radius'] = '';
+    } else if (wrap === 'round') {
+      props.float = 'left'; props.display = 'block';
+      props.margin = '0 3mm 2mm 0';
+      props['shape-outside'] = 'circle(50%)';
+      props['border-radius'] = '50%';
+    } else {
+      props.float = wrap; props.display = 'block';
+      props.margin = wrap === 'left' ? '0 3mm 2mm 0' : '0 0 2mm 3mm';
+      props['shape-outside'] = ''; props['border-radius'] = '';
+    }
     api('/api/book-studio/styles', {
       b: key, selector: '[data-ref="' + curRef + '"]::after',
-      props: { content: 'url("assets/' + name + '")',
-               display: 'block', width: w, height: 'auto',
-               'margin': '3mm auto' }
+      props: props
     }).then(function (d) {
       if (d.error) { msg('✗ ' + d.error); return; }
       styles = d.styles || {};
