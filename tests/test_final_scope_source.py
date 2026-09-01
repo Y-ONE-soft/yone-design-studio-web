@@ -175,3 +175,20 @@ def test_count_gate_catches_a_misread_range():
 def test_count_gate_skips_freeform():
     """`직접 입력` 은 Y.OS 도 0지문이라 셀 수 없다 — 그것 자체가 신호다."""
     assert S.count_gate([("직접 입력", "교과서 1과", "0지문")], {}) == []
+
+
+def test_parenthesised_exclusions():
+    """`(24-3, 27-3 제외)` — 강-지문 짝. 실제 광문3 시험범위 글."""
+    sc = S.parse("* 수능특강 영어 17, 18, 21~30강(24-3, 27-3 제외), "
+                 "TEST 2 (1, 8, 10~11, 24~28번 제외)", grade=3)
+    assert sc["detail"][("teuk", 27)]["exclude"] == [3]
+    assert sc["detail"][("teuk", 26)].get("exclude") is None
+    assert S.in_scope("27강 02", sc) and not S.in_scope("27강 03", sc)
+
+
+def test_plain_exclusions_attach_to_the_nearest_token():
+    """맨 숫자 제외는 **바로 앞** 것(Test 2)의 몫이지 앞 강들의 것이 아니다."""
+    sc = S.parse("* 수능특강 영어 21~23강, TEST 2 (1, 8, 10~11번 제외)", grade=3)
+    assert sc["detail"][("test", 2)]["exclude"] == [1, 8, 10, 11]
+    assert sc["detail"].get(("teuk", 21), {}).get("exclude") is None
+    assert not S.in_scope("test2 01", sc) and S.in_scope("test2 03", sc)
