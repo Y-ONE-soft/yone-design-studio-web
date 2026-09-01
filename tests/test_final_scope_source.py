@@ -81,3 +81,57 @@ def test_workbook_filenames_still_work():
     got = S.from_workbook_names(
         ["광문2_워크북01(리딩파워12강,14강)_내지.indd"])
     assert got["tokens"] == [("rp", 12), ("rp", 14)]
+
+
+# ── Y.OS 구조화 입력 ────────────────────────────────────────────────────
+#
+# 아래 문자열은 Y.OS `/work/exam` 화면에서 그대로 가져온 실제 값이다.
+def test_yos_book_name_to_folder_name():
+    """`공통영어2_NE능률민병천` — Y.OS 는 붙여 쓰고 원고 폴더는 `능률(민)`."""
+    assert S.normalize_book("공통영어2_NE능률민병천") == ("공통영어2", "능률(민)")
+    assert S.normalize_book("공통영어1_NE능률오준일") == ("공통영어1", "능률(오)")
+
+
+def test_yos_latin_publisher_is_not_a_brand_prefix():
+    """`NE능률…` 의 NE 는 버리지만 `YBM박준언` 의 YBM 은 출판사다."""
+    assert S.normalize_book("영어II_YBM박준언") == ("영어Ⅱ", "YBM(박)")
+    assert S.normalize_book("공통영어2_YBM김은형") == ("공통영어2", "YBM(김)")
+
+
+def test_lesson_ranges_split_at_the_lesson_head():
+    got = S.lesson_ranges(
+        "Lesson 1. Bonding with Others 1~9, "
+        "Lesson 2. What Keeps Us Moving Forward 1~12")
+    assert got == {1: list(range(1, 10)), 2: list(range(1, 13))}
+
+
+def test_unit_ranges_do_not_bleed_across_the_comma():
+    """`08 1~5, 09 1~5` — 쉼표를 넘어가면 8강이 9,10 까지 삼킨다."""
+    got = S.unit_ranges("08 1~5, 09 1~5, 10 1~5, Mini Test 1 2~5, 12~17")
+    assert got == {8: [1, 2, 3, 4, 5], 9: [1, 2, 3, 4, 5], 10: [1, 2, 3, 4, 5]}
+
+
+def test_yos_entries_carry_the_passage_level_limit():
+    """글로 받던 시절의 마지막 구멍 — 지문 번호가 항목에 들어 있다."""
+    sc = S.from_yos_entries([
+        ("교과서", "공통영어2_NE능률민병천",
+         "Lesson 1. Bonding with Others 1~9, Lesson 2. X 1~12", "21지문"),
+        ("모의고사", "고1_2024_09월(인천시)", "15~18, 20~24", "9지문"),
+    ], grade=1)
+    assert sc["detail"][("lesson", 1)]["only"] == list(range(1, 10))
+    assert sc["detail"][("mock", 24, 9)]["only"] == [15, 16, 17, 18,
+                                                     20, 21, 22, 23, 24]
+
+
+def test_yos_mock_keeps_its_own_grade():
+    """고2 반이 고1 회차를 쓴다 — 회차의 학년은 반의 학년이 아니다."""
+    sc = S.from_yos_entries(
+        [("모의고사", "고1_2026_06월", "14~17", "4지문")], grade=2)
+    assert sc["detail"][("mock", 26, 6)]["grade"] == 1
+
+
+def test_yos_freeform_entry_falls_back_to_prose():
+    sc = S.from_yos_entries(
+        [("직접 입력", "* 영어Ⅰ 미래엔(김) 4과 / * 고2 25년 3월 18~45", "0지문")],
+        grade=2)
+    assert ("lesson", 4) in sc["tokens"] and ("mock", 25, 3) in sc["tokens"]

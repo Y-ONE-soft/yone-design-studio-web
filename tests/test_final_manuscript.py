@@ -162,3 +162,14 @@ def test_insert_reads_the_nested_bottom_problem(tmp_path):
     assert blk["raw"] == "L4-본문1(p.94)"
     assert blk["given"].startswith("The trail begins")
     assert blk["prompt"] == M.PROMPT_INSERT
+
+
+def test_lesson_number_is_the_one_attached_to_과(tmp_path):
+    """`공통영어2 능률(민) 1과` 에는 2 가 들어 있다 — 아무 숫자나 세면
+    2과를 찾다가 1과를 집는다(실제로 그랬다)."""
+    root = tmp_path / "교과서 작업" / "공통영어2" / "공통영어2 능률(민)"
+    for n in (1, 2, 3):
+        (root / ("공통영어2 능률(민) %d과" % n)).mkdir(parents=True)
+    for n in (1, 2, 3):
+        got = L.textbook(str(tmp_path), "공통영어2", "능률(민)", n)
+        assert os.path.basename(got) == "공통영어2 능률(민) %d과" % n

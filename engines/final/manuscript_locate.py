@@ -37,10 +37,14 @@ def _dirs(path):
             and not n.startswith((".", "_", "~"))]
 
 
-def _pick(root, want_num=None, words=(), avoid=()):
+def _pick(root, want_num=None, words=(), avoid=(), num_unit=None):
     """`root` 아래에서 숫자와 낱말로 폴더 하나를 고른다.
 
     숫자는 **낱말 경계로** 본다 — `1강` 을 찾을 때 `11강` 이 걸리면 안 된다.
+
+    `num_unit` 을 주면 그 단위에 **붙은** 숫자만 센다. 과목 이름에 숫자가
+    들어가는 교과서에서 꼭 필요하다 — `공통영어2 능률(민) 1과` 에는 2 가
+    들어 있어서, 아무 숫자나 세면 **2과를 찾다가 1과를 집는다**(실증).
     """
     best = None
     for name in _dirs(root):
@@ -51,7 +55,8 @@ def _pick(root, want_num=None, words=(), avoid=()):
         if words and not all(_squash(w) in sq for w in words):
             continue
         if want_num is not None:
-            nums = [int(x) for x in re.findall(r"\d+", n)]
+            pat = r"(\d+)\s*" + re.escape(num_unit) if num_unit else r"\d+"
+            nums = [int(x) for x in re.findall(pat, n)]
             if want_num not in nums:
                 continue
         score = len(sq)                      # 짧은 이름이 더 정확한 짝
@@ -73,7 +78,8 @@ def textbook(base, subject, publisher, lesson):
         pub = _pick(subj, words=(re.sub(r"[()]", "", publisher),))
     if not pub:
         return None
-    return _pick(pub, want_num=lesson, words=("과",), avoid=("추가본문",))
+    return _pick(pub, want_num=lesson, words=("과",), avoid=("추가본문",),
+                 num_unit="과")
 
 
 def textbook_deeplearning(base, subject, publisher, lesson):
