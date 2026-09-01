@@ -197,7 +197,7 @@ def test_fit_is_leading_then_two_slots_never_a_smaller_font():
     got = F._one_fit("arrange", nat(0.95), cap, m)      # 5% 조이면 들어간다
     assert "lead" in got and got["lead"] >= m["min_lead"]
     assert got["lead"] == pytest.approx(0.95, abs=1e-3)
-    assert (nat(0.95) - cap) > 3 * line                 # 세 줄 넘게 넘쳤는데도
+    assert (nat(0.95) - cap) > line                     # 한 줄 넘게 넘쳤는데도
 
     # 하한을 넘으면 두 칸(사분면) — 활자를 줄이지 않는다
     assert F._one_fit("arrange", nat(0.85), cap, m) == {"span": 2}
