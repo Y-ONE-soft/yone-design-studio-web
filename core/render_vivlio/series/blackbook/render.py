@@ -149,8 +149,15 @@ def paras_html(paras, blank=False, cls='', ref=''):
         dlg.clear()
 
     for i, p in enumerate(paras):
-        body = inl(p, blank)
         r = f'{ref}.{i}' if ref else ''
+        # 작업대가 **단락 목록 안에** 넣은 표·상자. 문항 밖(어휘부 등)에서도
+        # 넣을 수 있어야 해서 여기서도 받는다.
+        if isinstance(p, dict) and p.get('t') in ('table', 'box'):
+            flush()
+            mod = _tbl if p['t'] == 'table' else _box
+            out.append(mod.html(p, ref=r, inl=lambda x: inl(x, blank)))
+            continue
+        body = inl(p, blank)
         if is_dlg and RE_DLG.match(plain(p).strip()):
             # ⚠ 대화문 줄에는 **원래 클래스가 없다.** 자리표를 붙이면서 `cls` 를
             #   같이 얹었더니 `<보기>` 상자 안 대화문이 `.t` 를 물어 줄바꿈이

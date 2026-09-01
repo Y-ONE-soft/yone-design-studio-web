@@ -957,6 +957,67 @@ def test_palette_does_not_overwrite_swatches():
     assert "kind !== 'color'" in block
 
 
+# ── 어디에 넣을 수 있나 · 끌어서 옮기기 ───────────────────────
+def test_list_slot_accepts_paragraph_lists():
+    """표·상자는 `blocks` 뿐 아니라 **어느 단락 목록에나** 들어가야 한다.
+
+    예전에는 `blocks` 만 찾아서 어휘부에서는 "넣을 자리가 아니다" 만 떴다.
+    """
+    from routes.book_studio import _list_slot
+    d = {"lessons": [{"vocab": [{"paras": ["가", "나"]}],
+                      "problems": [{"no": 1, "stem": "발문",
+                                    "blocks": [{"t": "passage",
+                                                "paras": ["글"]}]}]}]}
+    assert _list_slot("lessons.0.vocab.0.paras.0", d)[0] == "lessons.0.vocab.0.paras"
+    assert _list_slot("lessons.0.problems.0.blocks.0", d)[0] \
+        == "lessons.0.problems.0.blocks"
+
+
+def test_list_slot_refuses_the_problem_list():
+    """`…problems.0.stem` 을 고르면 위로 올라가다 `problems` 를 만난다.
+
+    거기 상자를 끼우면 **문항 자리에 상자가 들어가** 조판이 깨진다.
+    이름이 아니라 **든 것**으로 가른다.
+    """
+    from routes.book_studio import _list_slot
+    d = {"lessons": [{"problems": [{"no": 1, "stem": "발문", "blocks": []}]}]}
+    assert _list_slot("lessons.0.problems.0.stem", d) == (None, 0)
+
+
+def test_para_like():
+    from routes.book_studio import _para_like
+    assert _para_like(["글", "글"])
+    assert _para_like([{"t": "passage"}])
+    assert _para_like([["앞", {"t": "굵게", "b": 1}]])
+    assert not _para_like([{"no": 1, "stem": "발문"}])
+
+
+def test_paras_render_tables_and_boxes():
+    """단락 목록 안에 든 표·상자도 조판돼야 한다."""
+    src = io.open(os.path.join(_ROOT, "core", "render_vivlio", "series",
+                               "blackbook", "render.py"), encoding="utf-8").read()
+    i = src.index("def paras_html")
+    assert "('table', 'box')" in src[i:i + 1200]
+
+
+def test_drag_keeps_the_anchor():
+    """오른쪽·아래에 붙인 상자를 끌었다고 왼쪽·위 기준으로 바꾸면 안 된다.
+
+    판형이 바뀔 때 딴 데로 간다.
+    """
+    src = _studio_src()
+    assert "function hookDrag()" in src
+    i = src.index("function hookDrag()")
+    block = src[i:i + 2600]
+    assert "useRight" in block and "useBottom" in block
+
+
+def test_drag_converts_px_to_mm_with_the_book_page():
+    """책마다 판형이 다르다 — 216mm 로 못 박으면 딴 책에서 어긋난다."""
+    src = _studio_src()
+    assert "bookPageW" in src and "pg.bleed" in src
+
+
 # ── 클로드 칸 ─────────────────────────────────────────────────
 # 모델에게 리포를 통째로 열어 주면 안 된다 — 계열 코드를 고치면 그 계열 책이
 # 전부 흔들리고, 원고를 고치면 납품본과 글이 달라진다. 손댈 수 있는 곳은

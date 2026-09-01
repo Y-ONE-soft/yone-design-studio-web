@@ -653,6 +653,46 @@ def api_assist_undo():
     return jsonify({"ok": True, "restored": back})
 
 
+def _list_slot(ref, data=None):
+    """이 자리표가 **어느 목록의 몇 번째**인가 → (목록 경로, 넣을 자리).
+
+    표·상자는 목록 안에 들어간다. 예전에는 `blocks` 목록만 찾아서 문항 안에서만
+    넣을 수 있었다 — 어휘부처럼 `paras` 목록만 있는 자리에서는 "넣을 자리가
+    아니다" 만 떴다. 어느 목록이든 받되, **아무 목록에나 넣으면 안 된다.**
+
+    ⚠ `…problems.0.stem` 을 고르면 위로 올라가다 `problems` 목록을 만난다.
+      거기 상자를 끼우면 **문항 자리에 상자가 들어가** 조판이 깨진다. 그래서
+      그 목록에 실제로 든 것이 **글·블록**인지 보고 정한다(이름이 아니라 내용).
+    """
+    from core.render_vivlio import edits as _ed
+    parts = ref.split(".")
+    while parts:
+        if parts[-1].isdigit() and len(parts) >= 2:
+            base = ".".join(parts[:-1])
+            if data is not None:
+                lst = _ed.get(data, base)
+                if not isinstance(lst, list) or not _para_like(lst):
+                    parts.pop()
+                    continue
+            return base, int(parts[-1]) + 1
+        parts.pop()
+    return None, 0
+
+
+def _para_like(lst):
+    """이 목록에 든 것이 **글이나 블록**인가(문항·단원 같은 것이 아니라)."""
+    for x in lst[:8]:
+        if isinstance(x, str):
+            return True
+        if isinstance(x, dict):
+            if "t" in x:
+                return True
+            return False           # `no`/`stem` 을 가진 문항 같은 것
+        if isinstance(x, list):
+            return True            # 서식 조각 목록
+    return not lst
+
+
 @bp.route("/api/book-studio/pagerules", methods=["GET", "POST"])
 def api_pagerules():
     """마스터 페이지(`@page`) — 면에 걸리는 것(여백·머리·꼬리).
@@ -726,14 +766,10 @@ def api_box():
     cur, _raw = ed.preview(cfg)
 
     if act == "insert":
-        parts = ref.split(".")
-        while parts and not (len(parts) >= 2 and parts[-2] == "blocks"):
-            parts.pop()
-        if len(parts) < 2:
-            return jsonify({"error": "상자를 넣을 자리가 아닙니다 — "
-                                     "문항 안의 지문·선지를 고르고 다시 해 보세요"}), 409
-        at = int(parts[-1]) + 1
-        base = ".".join(parts[:-1])
+        base, at = _list_slot(ref, cur)
+        if base is None:
+            return jsonify({"error": "여기에는 넣을 수 없습니다 — "
+                                     "지문·선지·본문 **한 줄**을 고르고 다시 해 보세요"}), 409
         b = bx.new(p.get("kind") or "text")
         if p.get("wrap") in ("left", "right"):
             b["wrap"] = p["wrap"]
@@ -829,16 +865,10 @@ def api_table():
 
     if act == "insert":
         # 고른 자리가 든 **블록 목록**을 찾아 그 뒤에 넣는다
-        parts = ref.split(".")
-        while parts and parts[-1] != "blocks":
-            if len(parts) >= 2 and parts[-2] == "blocks":
-                break
-            parts.pop()
-        if len(parts) < 2 or parts[-2] != "blocks":
-            return jsonify({"error": "표를 넣을 자리가 아닙니다 — "
-                                     "문항 안의 지문·선지를 고르고 다시 해 보세요"}), 409
-        at = int(parts[-1]) + 1
-        base = ".".join(parts[:-1])
+        base, at = _list_slot(ref, cur)
+        if base is None:
+            return jsonify({"error": "여기에는 넣을 수 없습니다 — "
+                                     "지문·선지·본문 **한 줄**을 고르고 다시 해 보세요"}), 409
         cols = max(1, min(int(p.get("cols") or 2), 12))
         rows = max(1, min(int(p.get("rows") or 2), 60))
         st = ed.push(cfg, {"op": "insert", "ref": f"{base}.{at}",

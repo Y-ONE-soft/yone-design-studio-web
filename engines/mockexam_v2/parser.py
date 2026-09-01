@@ -52,8 +52,15 @@ def extract_file_paragraphs(path):
 
 
 def _clean_question(text):
-    """발문에서 머리 번호를 떼고 발문 본문만."""
-    t = _RE_GROUP.sub("", text)
+    """발문에서 머리 번호와 꼬리 출처 태그를 떼고 발문 본문만.
+
+    출처 태그(`[23년 3월 20번]`)를 분류 단계에서만 떼고 저장은 그대로 두면
+    두 번 손해다 — 저장된 발문이 `…쓰시오. [23년 3월 20번]` 으로 끝나 어미
+    판정이 막히고(서술형이 미판정으로 남음), 시험지에도 태그가 인쇄된다.
+    """
+    from core.structure import rules as _R
+    t = _R.SOURCE_TAG_TRAIL.sub("", text or "")
+    t = _RE_GROUP.sub("", t)
     t = _RE_SRV_NUM.sub("", t)
     t = _RE_NUM.sub("", t)
     return t.strip()
@@ -125,12 +132,20 @@ def _structural_kind(cur, taxonomy_kind):
         return "객관식", "선지"
     if any(_RE_INLINE_CIRCLED.search(b.get("content") or "") for b in blocks):
         return "객관식", "지문 안 자리표"
+    q = cur.get("question") or ""
+    # 꼬리 괄호 단서를 떼고 본다 — `…배열하시오. (단, 주어진 표현만 한 번씩
+    # 사용하며, 변형 금지)` 처럼 지시가 괄호로 이어지는 원고가 흔한데, 종결
+    # 어미가 문장 끝이 아니게 되어 판정이 통째로 막혔다(강동·명일2·상일2 실증).
+    from core.structure import rules as _R
+    q_np = _R.Q_TRAILING_PAREN.sub("", q).strip() or q
+    # **객관식은 고를 것이 있어야 한다.** 선지 단락도 지문 안 자리표도 없는데
+    # 발문이 지시형(~시오)으로 끝나면 서술형이다 — 이 구조가 taxonomy 룰보다
+    # 강하다. (명일2 실증: `…쓰시오.` 발문 셋이 OBJ 룰에 걸려 객관식이 됐다.)
+    if _RE_SRV_ENDING.search(q) or _RE_SRV_ENDING.search(q_np):
+        return "서술형", "고를 것 없음 + 지시형 어미"
     if taxonomy_kind:
         return taxonomy_kind, "발문 유형"
-    q = cur.get("question") or ""
-    if _RE_SRV_ENDING.search(q):
-        return "서술형", "지시형 어미"
-    if _RE_OBJ_ENDING.search(q):
+    if _RE_OBJ_ENDING.search(q) or _RE_OBJ_ENDING.search(q_np):
         return "객관식", "의문형 어미"
     return None, None
 
