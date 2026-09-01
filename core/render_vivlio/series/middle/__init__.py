@@ -147,6 +147,17 @@ class MiddleSeries(Series):
         key, vol = self._pick(cfg)
         return self._paths(key, vol)["build"]
 
+    def accepts_block(self, key, lst):
+        """이 계열은 `blocks` 목록만 받는다.
+
+        ⚠ 문항 목록(`qitems.items`)은 낱말 목록과 겉모양이 같아(기록 dict)
+          공용 규칙으로는 통과한다. 그런데 `r_qitems` 는 `x['lines']` 를
+          바로 읽어 **조판이 죽는다.** 여기서 막으면 작업대가 한 겹 더 올라가
+          그 문항이 든 블록 **뒤에** 넣는다 — 사람이 기대하는 자리다.
+        """
+        from core.render_vivlio.series.base import para_like
+        return key == "blocks" and para_like(lst)
+
     def data_path(self, cfg):
         """자료는 automation 안에 있다 — 책 폴더에는 `data.json` 이 없다."""
         key, vol = self._pick(cfg)

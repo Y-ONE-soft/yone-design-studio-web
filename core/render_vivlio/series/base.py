@@ -67,6 +67,16 @@ class Series(object):
         return self.style_names.get(cls, "")
 
     # ── 조판 결과가 놓이는 폴더 ──
+    def accepts_block(self, key, lst):
+        """`<…>.<key>` 목록에 표·상자를 끼울 수 있나 — **계열이 안다.**
+
+        기본은 든 것으로 가른다. 하지만 렌더러가 자리마다 다른 계열은 그걸로
+        모자란다: 중등부 문항 목록(`items`)은 글도 블록도 아닌 **문항 기록**이라
+        (단어장 낱말과 겉모양이 같다) 끼우면 조판이 깨진다. 그런 계열은 이걸
+        좁히고, 작업대는 한 겹 더 올라가 블록 자리에 넣는다.
+        """
+        return para_like(lst)
+
     def data_path(self, cfg):
         """이 계열의 `data` 파일 자리 — 책 폴더의 `data.json` 이 기본이다.
 
@@ -102,3 +112,27 @@ class Series(object):
         raise RuntimeError(
             f"계열 {self.name} 의 build() 가 조판을 호출하지 않았다 — "
             f"render_only() 를 덮어쓸 것")
+
+
+# 이 열쇠들이 있으면 **덩어리**다 — 그 목록에 표·상자를 끼우면 조판이 깨진다
+CHUNK_KEYS = ("stem", "blocks", "problems", "vocab", "answers", "sections",
+              "lessons", "units", "parts")
+
+
+def para_like(lst):
+    """이 목록에 표·상자를 끼워도 되나 — **이름이 아니라 든 것으로** 가른다.
+
+    `…problems.0.stem` 을 고르면 위로 올라가다 `problems` 를 만나는데, 거기
+    끼우면 문항 자리에 상자가 들어가 조판이 깨진다.
+
+    낱말 목록(단어장)은 **된다** — 계열 렌더러가 낱말 자리에서 표·상자를
+    갈라 받도록 해 두었다.
+    """
+    for x in lst[:8]:
+        if isinstance(x, (str, list)):
+            return True
+        if isinstance(x, dict):
+            if "t" in x:
+                return True
+            return not any(k in x for k in CHUNK_KEYS)
+    return not lst

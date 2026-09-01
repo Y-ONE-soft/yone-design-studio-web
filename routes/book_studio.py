@@ -653,7 +653,7 @@ def api_assist_undo():
     return jsonify({"ok": True, "restored": back})
 
 
-def _list_slot(ref, data=None):
+def _list_slot(ref, data=None, cfg=None):
     """이 자리표가 **어느 목록의 몇 번째**인가 → (목록 경로, 넣을 자리).
 
     표·상자는 목록 안에 들어간다. 예전에는 `blocks` 목록만 찾아서 문항 안에서만
@@ -671,7 +671,8 @@ def _list_slot(ref, data=None):
             base = ".".join(parts[:-1])
             if data is not None:
                 lst = _ed.get(data, base)
-                if not isinstance(lst, list) or not _para_like(lst):
+                ok = isinstance(lst, list) and _accepts(cfg, base, lst)
+                if not ok:
                     parts.pop()
                     continue
             return base, int(parts[-1]) + 1
@@ -679,29 +680,21 @@ def _list_slot(ref, data=None):
     return None, 0
 
 
-# 이 열쇠들이 있으면 **덩어리**다 — 그 목록에 표·상자를 끼우면 조판이 깨진다
-_CHUNK_KEYS = ("stem", "blocks", "problems", "vocab", "answers", "sections",
-               "lessons", "units", "parts")
+def _accepts(cfg, base, lst):
+    """이 목록이 표·상자를 받나 — **계열에게 묻는다**(모르면 공용 규칙)."""
+    key = base.rsplit(".", 1)[-1]
+    if cfg is not None:
+        try:
+            from core.render_vivlio import book as _b
+            return bool(_b._series(cfg).accepts_block(key, lst))
+        except Exception:
+            pass
+    return _para_like(lst)
 
 
-def _para_like(lst):
-    """이 목록에 표·상자를 끼워도 되나.
-
-    ⚠ 이름이 아니라 **든 것**으로 가른다. `…problems.0.stem` 을 고르면 위로
-      올라가다 `problems` 를 만나는데, 거기 끼우면 문항 자리에 상자가 들어가
-      조판이 깨진다.
-
-    낱말 목록(단어장)은 **된다** — 계열 렌더러가 낱말 자리에서 표·상자를
-    갈라 받도록 해 두었다.
-    """
-    for x in lst[:8]:
-        if isinstance(x, str) or isinstance(x, list):
-            return True
-        if isinstance(x, dict):
-            if "t" in x:
-                return True
-            return not any(k in x for k in _CHUNK_KEYS)
-    return not lst
+# 판정은 `series/base.py` 한 곳에 있다 — 계열이 좁힐 수 있어야 해서 거기 산다.
+from core.render_vivlio.series.base import CHUNK_KEYS as _CHUNK_KEYS  # noqa: E402
+from core.render_vivlio.series.base import para_like as _para_like    # noqa: E402
 
 
 @bp.route("/api/book-studio/pagerules", methods=["GET", "POST"])
@@ -777,7 +770,7 @@ def api_box():
     cur, _raw = ed.preview(cfg)
 
     if act == "insert":
-        base, at = _list_slot(ref, cur)
+        base, at = _list_slot(ref, cur, cfg)
         if base is None:
             return jsonify({"error": "여기에는 넣을 수 없습니다 — "
                                      "지문·선지·본문 **한 줄**을 고르고 다시 해 보세요"}), 409
@@ -876,7 +869,7 @@ def api_table():
 
     if act == "insert":
         # 고른 자리가 든 **블록 목록**을 찾아 그 뒤에 넣는다
-        base, at = _list_slot(ref, cur)
+        base, at = _list_slot(ref, cur, cfg)
         if base is None:
             return jsonify({"error": "여기에는 넣을 수 없습니다 — "
                                      "지문·선지·본문 **한 줄**을 고르고 다시 해 보세요"}), 409
