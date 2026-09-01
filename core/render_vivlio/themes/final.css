@@ -61,7 +61,7 @@
 @page :left {
   margin-left: 21mm; margin-right: 24.3mm;
   background:
-    linear-gradient(var(--ink), var(--ink)) no-repeat 18.00mm 0 / 12.75mm 23.26mm,
+    linear-gradient(var(--ink), var(--ink)) no-repeat 16.90mm 0 / 12.75mm 23.26mm,
     linear-gradient(var(--ink), var(--ink)) no-repeat 0 23.00mm / 216mm 0.265mm;
   @top-left { content: element(bandrun); width: 190mm; vertical-align: top; }
   @bottom-left { content: element(footL); width: 190mm; vertical-align: top; }
@@ -84,7 +84,7 @@
 @page vocab:left {
   background:
     linear-gradient(var(--panel), var(--panel)) no-repeat 108.00mm 30.00mm / 83mm 252mm,
-    linear-gradient(var(--ink), var(--ink)) no-repeat 18.00mm 0 / 12.75mm 23.26mm,
+    linear-gradient(var(--ink), var(--ink)) no-repeat 16.90mm 0 / 12.75mm 23.26mm,
     linear-gradient(var(--ink), var(--ink)) no-repeat 0 23.00mm / 216mm 0.265mm;
 }
 @page vocab:right {
@@ -101,7 +101,7 @@
 @page vocabns:left {
   background:
     linear-gradient(var(--panel), var(--panel)) no-repeat 108.00mm 30.00mm / 83mm 196mm,
-    linear-gradient(var(--ink), var(--ink)) no-repeat 18.00mm 0 / 12.75mm 23.26mm,
+    linear-gradient(var(--ink), var(--ink)) no-repeat 16.90mm 0 / 12.75mm 23.26mm,
     linear-gradient(var(--ink), var(--ink)) no-repeat 0 23.00mm / 216mm 0.265mm;
 }
 @page vocabns:right {
@@ -236,12 +236,12 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 .sechdr .band {
   /* 러닝 띠보다 0.032mm 오른쪽·아래로 앉는다(마진 박스와 기준이 달라서) —
    * 그만큼 되돌려 **자리를 정확히 포갠다**(실측 보정). */
-  position: absolute; left: -3.032mm;
+  position: absolute; left: -3.99mm;
   top: calc(-1 * var(--mtop) - 0.033mm);
   width: 190mm; margin-left: 0;
 }
 .sechdr .sq {                     /* 홀수 면에는 배경 사각형이 없다 */
-  position: absolute; left: -3.00mm; top: calc(-1 * var(--mtop));
+  position: absolute; left: -3.96mm; top: calc(-1 * var(--mtop));
   width: 12.75mm; height: 23.26mm; background: var(--ink);
 }
 
