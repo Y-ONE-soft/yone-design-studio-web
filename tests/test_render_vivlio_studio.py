@@ -1513,3 +1513,24 @@ def test_a_box_is_selected_as_an_object():
     src = _studio_src()
     i = src.index("st.addEventListener('click'")
     assert "viv-box" in src[i:i + 900]
+
+
+def test_text_tool_edits_the_line_you_clicked():
+    """T 로 누르면 **그 줄**이 잡혀야 한다.
+
+    인디자인에서 T 로 누르면 그 자리에 커서가 선다. 예전엔 바깥 덩어리를
+    잡고 "덩어리라 글이 없다" 는 답을 받아 **엉뚱한 첫 줄**(라벨 칩)로
+    들어갔다 — 본문을 눌렀는데 제목이 열렸다.
+    """
+    src = _studio_src()
+    i = src.index("st.addEventListener('click'")
+    body = src[i:i + 1200]
+    assert "if (tool !== 'sel') { pick(c[0].el, c[0].ref); return; }" in body
+
+
+def test_veil_is_lifted_even_if_the_engine_never_says_loaded():
+    """`loaded` 가 늦거나 안 오는 경우가 실제로 있었다 — 그러면 못 만진다."""
+    src = _studio_src()
+    i = src.index("viewer.loadDocument(")
+    assert "function watch()" in src[i:i + 900]
+    assert "tries > 120" in src[i:i + 900], "끝내 안 오면 걷어야 한다"

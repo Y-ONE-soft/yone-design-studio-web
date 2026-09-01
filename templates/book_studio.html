@@ -651,6 +651,16 @@
       pageViewMode: spread ? 'spread' : 'singlePage',
       fitToScreen: true
     });
+    // ⚠ 가리개를 걷는 일을 조판 엔진의 알림에만 맡기면 **안 걷힐 때가 있다**
+    //   (`loaded` 가 늦거나 안 오는 경우가 실제로 있었다 — 지면은 새로 왔는데
+    //   덮개가 남아 못 만지는 화면이 됐다). 면이 서면 우리가 직접 걷는다.
+    var tries = 0;
+    (function watch() {
+      if (!fdoc() || !fdoc().getElementById('ide-veil')) return;
+      if (pageEl()) { veilOff(); return; }
+      if (++tries > 120) { veilOff(); return; }      // 1분이면 무슨 일이 나도 걷는다
+      setTimeout(watch, 500);
+    })();
   }
 
   /** 첫 면이 **빈 간지**면 내용이 있는 면까지 넘긴다.
