@@ -795,6 +795,7 @@
   function deselect() {
     closeEdit(true);
     curRef = null; curEl = null; styleTarget = '';
+    clearHandles();
     $('pal-sel').innerHTML =
       '<div class="ide-hint">지면에서 무언가를 클릭하면 여기 나옵니다.</div>';
     drawPanels();
@@ -819,6 +820,7 @@
          ? '<div class="ide-hint">조판이 만든 자리라 글은 없습니다 — 모양만 바꿉니다.</div>'
          : '');
     drawPanels();
+    drawHandles(el);               // 상자면 모서리 손잡이를 붙인다
     if (tool !== 'sel' && src !== 'fixed') openEdit(el, ref);
     else msg('고른 것: ' + kindName(ref));
   }
@@ -1425,6 +1427,7 @@
     var cur = null;
     st.addEventListener('mousedown', function (ev) {
       if (tool !== 'sel') return;
+      var hd = ev.target.closest && ev.target.closest('.ide-hd');
       var el = ev.target;
       while (el && el !== st && !(el.classList && el.classList.contains('viv-box')))
         el = el.parentElement;
@@ -1437,15 +1440,18 @@
         x0: ev.clientX, y0: ev.clientY,
         left: er.left - pr.left, top: er.top - pr.top,
         useRight: !!el.style.right, useBottom: !!el.style.bottom,
-        w: er.width, h: er.height
+        w: er.width, h: er.height,
+        hd: hd ? hd.dataset.h : ''      // 손잡이를 잡았으면 **크기**를 바꾼다
       };
-      ev.preventDefault();
-      msg('끌어서 옮기는 중 — 놓으면 저장합니다');
+      ev.preventDefault(); ev.stopPropagation();
+      msg(cur.hd ? '끌어서 크기 조절 — 놓으면 저장합니다'
+                 : '끌어서 옮기는 중 — 놓으면 저장합니다');
     }, true);
 
     st.addEventListener('mousemove', function (ev) {
       if (!cur) return;
       var dx = ev.clientX - cur.x0, dy = ev.clientY - cur.y0;
+      if (cur.hd) { resizeBy(cur, dx, dy); return; }
       var L = cur.left + dx, T = cur.top + dy;
       if (cur.useRight) {
         cur.el.style.right = round2((cur.pg.width - L - cur.w) / cur.mm) + 'mm';
@@ -1466,11 +1472,74 @@
       var ref = m && refs[m[1]];
       if (!ref) { msg('이 상자는 자리표가 없어 저장하지 못합니다'); return; }
       var at = {};
-      ['top', 'left', 'right', 'bottom'].forEach(function (k) {
+      ['top', 'left', 'right', 'bottom', 'width', 'height'].forEach(function (k) {
         if (el.style[k]) at[k] = el.style[k];
       });
       boxApi({ action: 'move', ref: ref, at: at });
     }, true);
+  }
+
+  /** 손잡이를 끈 만큼 상자 크기를 바꾼다.
+   *
+   *  ⚠ **어느 변에 붙여 두었는지**를 지킨다. 오른쪽에 붙인 상자의 왼쪽
+   *    모서리를 끌면 `right` 는 그대로 두고 폭만 바꿔야 한다 — 안 그러면
+   *    판형이 바뀔 때 상자가 딴 데로 간다(옮기기에서 이미 겪은 함정).
+   *  ⚠ 0 보다 작아지지 않게 막는다. 뒤집힌 상자는 조판이 안 그린다.
+   */
+  function resizeBy(cur, dx, dy) {
+    var el = cur.el, mm = cur.mm, h = cur.hd, MIN = 4 * mm;
+    var w = cur.w, ht = cur.h, L = cur.left, T = cur.top;
+    if (h.indexOf('e') >= 0) { w = Math.max(MIN, cur.w + dx); }
+    if (h.indexOf('w') >= 0) { w = Math.max(MIN, cur.w - dx); L = cur.left + (cur.w - w); }
+    if (h.indexOf('s') >= 0) { ht = Math.max(MIN, cur.h + dy); }
+    if (h.indexOf('n') >= 0) { ht = Math.max(MIN, cur.h - dy); T = cur.top + (cur.h - ht); }
+    el.style.width = round2(w / mm) + 'mm';
+    el.style.height = round2(ht / mm) + 'mm';
+    if (cur.useRight) {
+      el.style.right = round2((cur.pg.width - L - w) / mm) + 'mm';
+    } else {
+      el.style.left = round2(L / mm) + 'mm';
+    }
+    if (cur.useBottom) {
+      el.style.bottom = round2((cur.pg.height - T - ht) / mm) + 'mm';
+    } else {
+      el.style.top = round2(T / mm) + 'mm';
+    }
+    msg('폭 ' + round2(w / mm) + 'mm · 높이 ' + round2(ht / mm) + 'mm');
+  }
+
+  // ── 상자 크기 조절 손잡이 (인디자인의 프레임 핸들) ─────────
+  //
+  // 옮기기만 되고 크기는 **적어 넣어야** 했다. 인디자인은 모서리를 잡아
+  // 끈다. 좌표를 mm 로 정확히 되돌릴 수 있으니(끌어 옮기기가 이미 그렇다)
+  // 크기도 같은 방식이면 된다.
+  //
+  // ⚠ 손잡이는 **화면에만** 있는 것이다. 다시 조판하면 지면이 통째로 새로
+  //   와서 저절로 사라진다 — 인쇄에는 어떤 경우에도 안 나간다.
+  var HANDLES = [['nw', 0, 0], ['n', .5, 0], ['ne', 1, 0], ['e', 1, .5],
+                 ['se', 1, 1], ['s', .5, 1], ['sw', 0, 1], ['w', 0, .5]];
+
+  function clearHandles() {
+    var st = stageEl(); if (!st) return;
+    Array.prototype.forEach.call(st.querySelectorAll('.ide-hd'), function (h) {
+      h.parentNode.removeChild(h);
+    });
+  }
+
+  function drawHandles(el) {
+    clearHandles();
+    if (!el || !el.classList || !el.classList.contains('viv-box')) return;
+    if (!el.classList.contains('abs')) return;      // 감싸기 상자는 흐름이 정한다
+    HANDLES.forEach(function (h) {
+      var d = document.createElement('div');
+      d.className = 'ide-hd'; d.dataset.h = h[0];
+      d.style.cssText = 'position:absolute;width:2.4mm;height:2.4mm;'
+        + 'margin:-1.2mm 0 0 -1.2mm;background:#fff;'
+        + 'border:0.25mm solid rgba(50,110,255,.95);z-index:20;'
+        + 'left:' + (h[1] * 100) + '%;top:' + (h[2] * 100) + '%;'
+        + 'cursor:' + (h[0].length === 2 ? h[0] : h[0]) + '-resize';
+      el.appendChild(d);
+    });
   }
 
   function boxApi(body) {
