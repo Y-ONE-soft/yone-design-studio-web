@@ -1734,3 +1734,35 @@ def test_swatches_also_come_from_the_page():
     body = src[i:i + 1200]
     assert "getComputedStyle" in body and "backgroundColor" in body
     assert "pageEl()" in body, "지금 보는 면에서 모아야 한다"
+
+
+# ── 글자 서식이 조판을 죽이지 않는다 ────────────────────────────
+@pytest.mark.parametrize("mod,fn", [
+    ("blackbook", "esc1"), ("whitebook", "esc1"), ("pocketbook", "ESC"),
+    ("vocabook", "esc"), ("vocaunit", "esc"), ("special", "esc"),
+])
+def test_escaping_survives_rich_segments(mod, fn):
+    """작업대에서 글자에 서식을 걸면 그 값이 **서식 조각 목록**이 된다.
+
+    예전에는 그런 자리에 `html.escape()` 만 있어서 **조판이 통째로 죽었다**
+    (실측: 라벨 칩에 자간을 줬더니 `'list' object has no attribute 'replace'`
+    — 책 전체가 안 나왔다). 평문은 예전 그대로여야 한다.
+    """
+    import importlib
+    r = importlib.import_module("core.render_vivlio.series.%s.render" % mod)
+    esc = getattr(r, fn)
+    assert "&lt;" in esc("가 <나>"), "평문은 예전처럼 이스케이프한다"
+    out = esc([{"t": "AV", "st": {"letter-spacing": "-0.06em"}}, " ery"])
+    assert "AV" in out and "ery" in out
+
+
+def test_pair_kerning_is_possible_after_all():
+    """커닝 쌍은 **웹의 한계가 아니었다** — 두 글자만 골라 자간을 주면 된다.
+
+    글자 단위 서식이 `letter-spacing` 을 싣고, 조판본에 그대로 나간다.
+    """
+    from core.render_vivlio import richtext as rt
+    assert "letter-spacing" in rt.ST_PROPS
+    seg = [{"t": "AV", "st": {"letter-spacing": "-0.06em"}}, "ery"]
+    assert "letter-spacing:-0.06em" in rt.to_html(seg)
+    assert rt.from_html(rt.to_html(seg))[0]["st"]["letter-spacing"] == "-0.06em"
