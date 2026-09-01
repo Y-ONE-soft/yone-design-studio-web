@@ -54,8 +54,7 @@ def _load_config():
 # 리뷰테스트/워크북 등은 보통 하위 폴더에 있지만, 마스터 템플릿·변형 원고가
 # 월 폴더에 놓인 사례가 있어 이름으로 배제한다.
 _OTHER_KIND_RE = re.compile(
-    "리뷰테스트|리테|워크북|직전보충|포켓북|변형|정답|해설|"
-    "마스터|내지|템플릿|원본"
+    "리뷰테스트|리테|워크북|직전보충|포켓북|변형|마스터|템플릿|원본"
 )
 
 
@@ -269,9 +268,11 @@ class AnalysisMergeEngine(BaseEngine):
 
     @staticmethod
     def _find_analysis_files(month_folder, patterns=None):
-        """월 폴더 안에서 '분석본'이 들어간 모든 .indd 후보 반환.
+        """월 폴더 안의 분석본 .indd 후보 전부 반환.
 
-        반환 순서: 짧은 파일명이 먼저 (메인 → 보조 → 짤지문 등).
+        1차 패턴('분석본') → 2차 공백무시/'분석' 축약 → 3차 **구조**(월 폴더
+        바로 아래의 .indd = 그 회차의 분석본; 23년 이전 `모의고사(New)`).
+        반환 순서: 짧은 파일명이 먼저, '짤지문'본은 항상 맨 뒤.
         """
         if not month_folder:
             return []
@@ -285,6 +286,11 @@ class AnalysisMergeEngine(BaseEngine):
             # ~$ / lock files 제외
             and not nfc.startswith("~") and "idlk" not in nfc.lower()
         ]
+        # 분석본 소스가 아닌 갈래(리뷰테스트·워크북·마스터 템플릿 …)는
+        # 이름이 '분석본'을 포함하더라도 후보에서 뺀다 —
+        # `[원본]분석본_내지(마스터).indd` 가 소스로 열리는 일 방지.
+        entries = [(nfc, full) for nfc, full in entries
+                   if not _OTHER_KIND_RE.search(re.sub(r"[\s_]+", "", nfc))]
         results = [full for nfc, full in entries
                    if any(pat in nfc for pat in patterns)]
         if not results:
@@ -305,11 +311,10 @@ class AnalysisMergeEngine(BaseEngine):
             # `고1 23년 11월 짤지문.indd` 로 부른다. 파일명 화이트리스트 대신
             # **구조**로 판정한다 — 월 폴더 바로 아래의 .indd 는 그 회차의
             # 분석본이고, 리뷰테스트·워크북 등 다른 산출물은 하위 폴더에
-            # 따로 산다(비재귀 열거라 애초에 안 잡힌다). 폴더 안에 섞여 있는
-            # 다른 갈래만 이름으로 걸러낸다. 1·2차가 0건일 때만 진입하므로
-            # 지금 잘 도는 폴더(24년~)의 동작은 그대로다.
-            results = [full for nfc, full in entries
-                       if not _OTHER_KIND_RE.search(_ds(nfc))]
+            # 따로 산다(비재귀 열거라 애초에 안 잡힌다). 다른 갈래는 위에서
+            # 이미 걸러 뒀다. 1·2차가 0건일 때만 진입하므로 지금 잘 도는
+            # 폴더(24년~)의 동작은 그대로다.
+            results = [full for nfc, full in entries]
         # '짤지문'(본편에서 잘려 나온 지문)본은 분석본 세트의 일부인데,
         # 이름에 '분석본'이 없는 회차(`고1 25년 10월 짤지문.indd`)가 있어
         # 1차에서 통째로 빠졌다. 항상 후보에 합류시키되 **맨 뒤**로 보내

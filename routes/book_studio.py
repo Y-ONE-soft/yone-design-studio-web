@@ -487,18 +487,31 @@ def api_paraclass():
     d, meta = _book_dir(p.get("b"))
     if not d:
         return jsonify({"error": "모르는 책"}), 404
-    ref = (p.get("ref") or "").strip()
-    if not ref or any(c in ref for c in "/\\ \n") or ".." in ref:
+    # 한 자리(`ref`) 또는 **여러 자리**(`refs`) — 찾기 결과 전부에 거는 길.
+    raw = p.get("refs")
+    refs = [str(x).strip() for x in raw] if isinstance(raw, list) \
+        else [str(p.get("ref") or "").strip()]
+    refs = [r for r in refs if r]
+    if not refs:
         return jsonify({"error": "이상한 자리표"}), 400
+    if len(refs) > 3000:
+        return jsonify({"error": "한 번에 너무 많습니다"}), 400
+    for ref in refs:
+        if any(c in ref for c in "/\\ \n") or ".." in ref:
+            return jsonify({"error": f"이상한 자리표: {ref}"}), 400
     names = []
     for n in str(p.get("cls") or "").replace(".", " ").split():
         if not re.match(r"^ps-[0-9A-Za-z가-힣_-]{1,40}$", n):
             return jsonify({"error": f"스타일 이름은 `ps-`로 시작합니다: {n}"}), 400
         names.append(n)
     cfg = bookmod.load(d)
-    st = ed.push(cfg, {"op": "cls", "ref": ref, "v": " ".join(names),
-                       "note": "단락 스타일"})
-    return jsonify({"ok": True, "cls": " ".join(names), "history": _hist(st)})
+    v = " ".join(names)
+    st = ed.read(cfg)
+    for ref in refs:
+        st = ed.push(cfg, {"op": "cls", "ref": ref, "v": v,
+                           "note": "단락 스타일"})
+    return jsonify({"ok": True, "cls": v, "count": len(refs),
+                    "history": _hist(st)})
 
 
 IMG_OK = (".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp")
