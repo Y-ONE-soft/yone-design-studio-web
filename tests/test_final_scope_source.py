@@ -204,3 +204,23 @@ def test_reading_power_carries_no_vocabulary():
     from engines.final import assemble
     src = inspect.getsource(assemble.vocab)
     assert "rp_lectures=None" in src
+
+
+def test_tokens_come_out_in_book_order():
+    """범위 글의 **적힌 순서**를 그대로 따르면 안 된다.
+
+    `17, 18, 21~30강` 은 범위가 먼저 풀려 21~30 이 앞에 온다 — 그러면
+    어법·어휘 섹션만 21강부터 시작해 문장배열과 어긋난다(실증: 광문3).
+    """
+    got = S.scope_text_tokens(
+        "* 수능특강 영어 17, 18, 21~24강, TEST 2")
+    assert got == [("teuk", 17), ("teuk", 18), ("teuk", 21), ("teuk", 22),
+                   ("teuk", 23), ("teuk", 24), ("test", 2)]
+
+
+def test_book_order_is_textbook_then_units_then_mock():
+    got = S.scope_text_tokens(
+        "* 고2 25년 3월 / * Reading Power 유형편 완성 14~15, 12강 "
+        "/ * 영어Ⅰ 미래엔(김) 4과")
+    assert got == [("lesson", 4), ("rp", 12), ("rp", 14), ("rp", 15),
+                   ("mock", 25, 3)]
