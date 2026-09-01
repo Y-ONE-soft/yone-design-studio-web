@@ -2563,3 +2563,24 @@ def test_못알아들을_정규식은_조판을_막지_않는다():
     from core.render_vivlio import grepstyle as gs
     out, n = gs.apply_text("<p>가</p>", [{"pat": "[", "cls": "강조"}])
     assert n == 0 and out == "<p>가</p>"
+
+
+def test_색인은_한_낱말에_면번호_여럿():
+    """한 낱말이 여러 면에 나온다 — 면마다 번호를 하나씩 단다."""
+    from core.render_vivlio import toc, refs
+    refs.clear()
+    h = toc.html(toc.new("찾아보기", [{"label": "band", "refs": ["a.0", "a.5"]}]))
+    assert h.count("<a href=") == 2
+    assert "viv-toc-pp" in h
+    assert "target-counter" in toc.CSS
+
+
+def test_색인은_문자스타일을_모은다():
+    """색인은 **문자 스타일**이 걸린 낱말을 모으고, 자리표는 감싼 문단의 것."""
+    import routes.book_studio as BS
+    text = ('<p data-ref="a.0" class="t">앞 <span class="cs-낱말">band</span> 뒤</p>'
+            '<p data-ref="a.1" class="t"><span class="cs-낱말">band</span> 또</p>'
+            '<p data-ref="a.2" class="t"><span class="cs-낱말">apple</span></p>')
+    items = BS._index_items(text, "낱말")
+    assert [x["label"] for x in items] == ["apple", "band"], items   # 가나다순
+    assert items[1]["refs"] == ["a.0", "a.1"], items[1]
