@@ -13,18 +13,43 @@
 무엇으로 몰아 주느냐뿐 — 워크북 파일 이름이 아니라 시험범위 토큰이다.
 """
 import os
+import re
 
 from engines.final import scope_source as S
-from engines.final.engine import _convert_grammar_header
+from engines.final import manuscript_locate as L
 from engines.final.grammar_word_parser import (
     find_ebs_grammar_files, find_grammar_word_files,
     find_mockexam_grammar_files, parse_grammar_word,
 )
 
-# 토큰 종류 → 엔진이 쓰는 scope 유형(헤더 변환이 이걸 본다)
+# 토큰 종류 → 어법수정 docx 를 찾는 길
 SCOPE_TYPE = {"lesson": "textbook", "olpo": "ebs_olympos",
               "rp": "ebs_readingpower", "teuk": "ebs_olympos",
               "bare": "ebs_olympos", "mock": "mockexam"}
+
+
+def _spec_for(token, detail, unit=None):
+    """토큰 → `manuscript_locate.to_final_label` 이 받는 출처.
+
+    ⚠ 라벨은 **한 규칙으로만** 만든다. 엔진에는 어법수정 전용 헤더 변환이
+      따로 있는데, 그것과 문장배열 쪽 규칙이 갈라지면 같은 지문이 두 섹션에서
+      다른 이름을 갖는다 — 되수확본의 '서술형영작 지문번호가 통째로 어긋남'
+      이 바로 그 부류였다.
+    """
+    k = token[0]
+    if k == "lesson":
+        return {"kind": "lesson", "lesson": token[1],
+                "subject": detail.get("subject"),
+                "publisher": detail.get("publisher")}
+    if k == "mock":
+        return {"kind": "mock", "year": token[1], "month": token[2]}
+    if k == "test":
+        return {"kind": "teuk", "unit": token[1], "test": True}
+    if k == "rp":
+        return {"kind": "rp", "unit": unit or token[1]}
+    if k == "olpo":
+        return {"kind": "olpo", "unit": unit or token[1]}
+    return {"kind": "teuk", "unit": unit or token[1]}
 
 
 def _files_for(token, detail, base, grade, raw, log):
@@ -69,11 +94,10 @@ def grammar(scope, base, grade, log=lambda m: None):
             if path in seen:
                 continue
             seen.add(path)
+            spec = _spec_for(t, d, unit)
             for blk in parse_grammar_word(path, log=log) or []:
-                lab = _convert_grammar_header(
-                    blk.get("header", ""), stext, stype,
-                    ebs_lecture=(unit if unit is not None else t[1]
-                                 if len(t) > 1 else None))
+                raw = re.sub(r"^\s*\d+\.\s*", "", blk.get("header", ""))
+                lab = L.to_final_label(spec, raw)
                 if not lab or lab in headers:
                     continue
                 if not S.in_scope(lab, scope):

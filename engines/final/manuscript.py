@@ -266,8 +266,28 @@ def read_insert(path):
     return out
 
 
+def read_grammar(path):
+    """어법 원고(`5. 어법선택` · `Step2 A1 어법수정`) → [{no, raw, label, text}].
+
+    머리글(제목·`Q.`·`Exercises`)은 지문 머리 모양이 아니라 저절로 걸러진다 —
+    형식 목록을 두지 않고 **`N. <라벨>` 다음 줄이 본문**이라는 자리로 읽는다.
+    """
+    rows = [t for d, t in _docx_rows(path, depth=True) if d == 0]
+    out, cur = [], None
+    for s in rows:
+        if is_block_head(s):
+            m = RE_ROW.match(s)
+            cur = {"no": int(m.group(1)), "raw": m.group(2),
+                   "label": parse_label(m.group(2)), "text": ""}
+            out.append(cur)
+        elif cur is not None and not cur["text"]:
+            cur["text"] = s
+    return [b for b in out if b["text"]]
+
+
 READERS = {"arrange": read_arrange, "writing": read_writing,
-           "vocab": read_vocab, "insert": read_insert}
+           "vocab": read_vocab, "insert": read_insert,
+           "grammar": read_grammar}
 
 
 def read(workbook_dir, kind):

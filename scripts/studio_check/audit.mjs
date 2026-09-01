@@ -70,7 +70,7 @@ const picked = await p.evaluate(async () => {
   await new Promise(r => setTimeout(r, 600));
   return document.getElementById('pal-sel').innerText.replace(/\s+/g, ' ');
 });
-(/[a-z]+\.\d|#/.test(picked) ? ok : bad)('지면 클릭 → ' + picked.slice(0, 45));
+(/[a-z]+\.\d|book\.|#/.test(picked) ? ok : bad)('지면 클릭 → ' + picked.slice(0, 45));
 
 // ③ 문자 패널이 실제 값을 읽는다
 const charVals = await p.evaluate(() => {
@@ -108,14 +108,22 @@ const gd = await p.evaluate(async () => {
 // ⑥ 찾기 — **지면에 있는 낱말**로 찾는다(책마다 다르니까)
 const found = await p.evaluate(async () => {
   const d = document.getElementById('ide-frame').contentDocument;
-  const txt = (d.body.innerText || '').match(/[A-Za-z]{6,}|[가-힣]{3,}/g) || [];
+  // ⚠ **원고에서 온 글**로 찾아야 한다 — 머리말·꼬리말은 책 설정이라
+  //   지면에는 있어도 원고에는 없다(그래서 0곳이 나왔다).
+  // ⚠ 머리말·꼬리말은 **책 설정**이라 지면에는 있어도 원고에는 없다
+  //   (그래서 "GWANGMUN" 을 찾다가 0곳이 나왔다). 가장 긴 조각 = 본문이다.
+  const src = [...d.querySelectorAll('[class*=vref]')]
+    .map(e => (e.innerText || '').trim())
+    .sort((a, b2) => b2.length - a.length)[0] || '';
+  const txt = src.match(/[A-Za-z]{6,}|[가-힣]{3,}/g) || [];
   if (!txt.length) return -1;
-  document.getElementById('find-q').value = txt[Math.floor(txt.length / 2)];
+  const word = txt[Math.floor(txt.length / 2)];
+  document.getElementById('find-q').value = word;
   document.getElementById('find-go').click();
   await new Promise(r => setTimeout(r, 3500));
-  return document.querySelectorAll('#find-out a[data-ref]').length;
+  return word + ':' + document.querySelectorAll('#find-out a[data-ref]').length;
 });
-(found > 0 ? ok : bad)('찾기 ' + found + '곳');
+(parseInt(String(found).split(':')[1] || 0) > 0 ? ok : bad)('찾기 ' + found + '곳');
 
 // ⑦ 색상 견본
 const sw = await p.evaluate(() => document.querySelectorAll('#pal-color button').length);
