@@ -108,20 +108,23 @@ const gd = await p.evaluate(async () => {
 // ⑥ 찾기 — **지면에 있는 낱말**로 찾는다(책마다 다르니까)
 const found = await p.evaluate(async () => {
   const d = document.getElementById('ide-frame').contentDocument;
-  // ⚠ **원고에서 온 글**로 찾아야 한다 — 머리말·꼬리말은 책 설정이라
-  //   지면에는 있어도 원고에는 없다(그래서 0곳이 나왔다).
   // ⚠ 머리말·꼬리말은 **책 설정**이라 지면에는 있어도 원고에는 없다
-  //   (그래서 "GWANGMUN" 을 찾다가 0곳이 나왔다). 가장 긴 조각 = 본문이다.
-  const src = [...d.querySelectorAll('[class*=vref]')]
-    .map(e => (e.innerText || '').trim())
-    .sort((a, b2) => b2.length - a.length)[0] || '';
-  const txt = src.match(/[A-Za-z]{6,}|[가-힣]{3,}/g) || [];
-  if (!txt.length) return -1;
-  const word = txt[Math.floor(txt.length / 2)];
-  document.getElementById('find-q').value = word;
-  document.getElementById('find-go').click();
-  await new Promise(r => setTimeout(r, 3500));
-  return word + ':' + document.querySelectorAll('#find-out a[data-ref]').length;
+  //   (그래서 "GWANGMUN"·"SANGIL" 로 찾다가 0곳이 나왔다). 여러 개를 시도한다.
+  // ⚠ 지금 면에 **본문 자리표가 없을 수도 있다**(간지·표지는 머리말뿐이다).
+  //   그럴 때를 위해 아무 책에나 있는 낱말을 뒤에 붙인다.
+  const words = [...new Set(
+    ([...d.querySelectorAll('[class*=vref]')]
+      .map(e => (e.innerText || '')).join(' ')
+      .match(/[A-Za-z]{5,}|[가-힣]{2,}/g) || [])
+      .concat(['the', 'and', '의', '다']))].slice(0, 14);
+  for (const w of words) {
+    document.getElementById('find-q').value = w;
+    document.getElementById('find-go').click();
+    await new Promise(r => setTimeout(r, 2500));
+    const n = document.querySelectorAll('#find-out a[data-ref]').length;
+    if (n > 0) return w + ':' + n;
+  }
+  return (words[0] || '?') + ':0';
 });
 (parseInt(String(found).split(':')[1] || 0) > 0 ? ok : bad)('찾기 ' + found + '곳');
 

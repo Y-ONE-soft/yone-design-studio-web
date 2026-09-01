@@ -1005,10 +1005,15 @@ def exam_head(s, case=None):
         return ""
     rows = []
     for e in els:
-        text = case.get(e.get("role")) or e.get("text") or ""
+        role = e.get("role")
+        text = case.get(role) or e.get("text") or ""
+        if not text and role == "code_value":
+            # 과목 코드 값은 프로파일 subject_code 에서 온다 — 정본에 큰 숫자로
+            # 인쇄되는데 요소에 text 가 없어 통째로 빠져 있었다.
+            text = str(s.subject_code or "")
         if not text:
             continue
-        cls = ["eh"]
+        cls = ["eh", f"eh-{role}"] if role else ["eh"]
         if e.get("align") == "center":
             cls.append("eh-center")
         elif e.get("align") == "right":
