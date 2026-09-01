@@ -107,7 +107,17 @@ def inl_grammar(segs):
 
 
 def _item(text):
-    """`(A) …` 의 머리표만 굵게."""
+    """`(A) …` 의 머리표만 굵게.
+
+    ⚠ 작업대에서 글자 서식을 걸면 **서식 조각**으로 온다. 머리표는 글 앞머리를
+      보고 잡는 것이라, 그때는 첫 조각만 보고 나머지는 서식 그대로 잇는다.
+    """
+    if isinstance(text, dict):
+        return esc([text])
+    if isinstance(text, list):
+        if text and isinstance(text[0], str):
+            return _item(text[0]) + esc(text[1:])
+        return esc(text)
     m = RE_ITEM.match(text or "")
     if not m:
         return esc(text)

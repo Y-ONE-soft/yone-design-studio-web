@@ -45,6 +45,13 @@ def is_manuscript_noise(t):
 
 
 def esc(t):
+    """글 → HTML.
+
+    ⚠ 작업대에서 글자 서식을 걸면 **서식 조각 목록**으로 온다. 그때
+      `html.escape()` 는 죽고 **책 전체가 안 나온다**(다른 계열에서 겪었다).
+    """
+    if not isinstance(t, (str, type(None))):
+        return _rtx.to_html(t, blanks=False)
     return html.escape(t or "", quote=False)
 
 
@@ -109,8 +116,21 @@ def runs_html(block):
         return esc(block.get("text"))
     out = []
     for r in runs:
+        if not isinstance(r, dict):          # 평문 조각이 섞여 올 수 있다
+            out.append(esc(r))
+            continue
         t = esc(r.get("t"))
-        out.append(f"<u>{t}</u>" if r.get("ul") else t)
+        # 작업대가 건 **글자 단위 서식**. 없으면 빈 문자열이라 예전과 같다.
+        a = _rtx.seg_attr(r)
+        if a:
+            t = f"<span{a}>{t}</span>"
+        if r.get("ul") or r.get("u"):        # `ul` 은 원고, `u` 는 작업대
+            t = f"<u>{t}</u>"
+        if r.get("b"):
+            t = f"<b>{t}</b>"
+        if r.get("i"):
+            t = f"<i>{t}</i>"
+        out.append(t)
     return "".join(out)
 
 
@@ -227,21 +247,68 @@ _BOXED = {
 
 def _p_arr(b):
     t = runs_html(b)
-    m = _RE_ALBL.match(b.get("text") or "")
+    mk = _bmark(b)
+    m = _RE_ALBL.match(b.get("text") or "") if isinstance(b.get("text"), str) else None
     if m:
         rest = t[len(m.group(0)):] if t.startswith(m.group(0)) else t
-        return f'<p><span class="albl">({m.group(1)})</span> {rest}</p>'
-    return f"<p>{t}</p>"
+        return f'<p{mk}><span class="albl">({m.group(1)})</span> {rest}</p>'
+    return f"<p{mk}>{t}</p>"
+
+
+def index_refs(data):
+    """조판 직전에 한 번 — 지면 조각이 원고 어디서 왔는지 표를 만든다.
+
+    ⚠ `units` 가 **목록의 목록**이라 `index_paths()` 로는 못 닿는다.
+    ⚠ 자리표가 없으면 작업대에서 지면을 눌러도 조용히 아무 일이 안 난다.
+    """
+    _refs.clear()
+    for si, st in enumerate(data.get("steps") or []):
+        for gi, g in enumerate(st.get("groups") or []):
+            for key in ("units", "attach"):
+                for ui, unit in enumerate(g.get(key) or []):
+                    for bi, b in enumerate(unit or []):
+                        if isinstance(b, dict):
+                            _refs.put(b, "steps.%d.groups.%d.%s.%d.%d"
+                                      % (si, gi, key, ui, bi))
+    return True
+
+
+def _bref(b):
+    """그 블록의 **고칠 수 있는 자리**. 밑줄이 있으면 `runs`, 없으면 `text`.
+
+    ⚠ `runs` 가 있는데 `text` 를 가리키면 **고쳐도 지면이 그대로**다
+      (`runs_html` 이 runs 를 먼저 본다) — 조용해서 더 나쁘다.
+    """
+    if not isinstance(b, dict):
+        return ""
+    return _refs.of(b, "runs" if (b.get("runs") or []) else "text")
+
+
+def _bmark(b, base=""):
+    return _refs.mark(_bref(b), base)
+
+
+class _Out(list):
+    """조각이 지나가는 **한 곳**에서 자리표를 찍는다(특강과 같은 방법).
+
+    분기가 스무 개라 자리마다 손으로 넣으면 반드시 빠뜨린다.
+    """
+
+    ref = ""
+
+    def append(self, frag):
+        list.append(self, _refs.stamp(frag, self.ref) if self.ref else frag)
 
 
 def blocks_html(blocks, step, ctx=None):
     """유닛 블록 목록 → 지면 HTML. 연속 같은 역할은 한 상자로 묶는다."""
-    out = []
+    out = _Out()
     i = 0
     n = len(blocks)
     while i < n:
         b = blocks[i]
         role = b["role"]
+        out.ref = _bref(b)                   # 이 블록에서 나오는 조각에 찍는다
         if is_manuscript_noise(b.get("text")):
             i += 1                       # 원고 부속물(구문명 줄) — 지면에 내지 않는다
             continue
@@ -259,7 +326,8 @@ def blocks_html(blocks, step, ctx=None):
             while i < n and blocks[i]["role"] == role:
                 if (blocks[i].get("text") or "").strip():
                     body.append(_p_arr(blocks[i]) if role == "arr_line"
-                                else f"<p>{runs_html(blocks[i])}</p>")
+                                else f"<p{_bmark(blocks[i])}>"
+                                     f"{runs_html(blocks[i])}</p>")
                 i += 1
             if role == "box_body" and ctx in ("step1_b1",):
                 cls += " cream"      # B1 본문 정리만 크림 박스 (실측)
@@ -311,7 +379,8 @@ def blocks_html(blocks, step, ctx=None):
             i += 1
             while i < n and blocks[i]["role"] == "sum_line":
                 if (blocks[i].get("text") or "").strip():
-                    lines.append(f"<p>{runs_html(blocks[i])}</p>")
+                    lines.append(f"<p{_bmark(blocks[i])}>"
+                                 f"{runs_html(blocks[i])}</p>")
                 i += 1
             out.append(f'<div class="sum {kind}"><span class="badge">{esc(badge)}'
                        f'</span>{"".join(lines)}</div>')
@@ -334,7 +403,8 @@ def blocks_html(blocks, step, ctx=None):
             ch = []
             while i < n and blocks[i]["role"] == "b2_choice":
                 if (blocks[i].get("text") or "").strip():
-                    ch.append(f"<p>{runs_html(blocks[i])}</p>")
+                    ch.append(f"<p{_bmark(blocks[i])}>"
+                              f"{runs_html(blocks[i])}</p>")
                 i += 1
             chh = f'<div class="choices">{"".join(ch)}</div>' if ch else ""
             out.append(f'<div class="b2q"><span class="n">{num:02d} |</span>'

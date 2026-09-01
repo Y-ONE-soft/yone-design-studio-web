@@ -747,6 +747,7 @@ class PocketbookSeries(Series):
         지문과 달리 **줄 수가 적어** 행간만 줄이면 티가 나므로 글자와 함께 줄인다.
         """
         pas = [r for r in rows if r.get("kind") != "memtest"]
+        self._check_source_count(cfg, opt, len(pas), report, log)
         if not pas:
             return
         fl, tb = M["flow"], M["topic"]
@@ -944,6 +945,13 @@ class PocketbookSeries(Series):
                 report.fail("G-P8 암기 TEST 문제면과 정답면이 같다 %d지문 — %s"
                             % (len(twins), ", ".join(twins[:5])))
 
+        # G-P9 원본 대비 지문 수 — **읽는 쪽이 흘린 것**을 잡는다.
+        #   ⚠ 계열 게이트만으로는 절대 못 잡는다: 지문이 빠지면 행도 면도 같이
+        #     줄어 G-P1 이 "맞다"고 한다(완성본 광문2 에서 79 중 43이 조용히
+        #     빠진 채 전 게이트를 통과했다). 그래서 파서와 **무관하게** 원본
+        #     IDML 에서 '긴 영어 본문이 있는 스프레드'를 따로 센다.
+        #   소제목이 지문 머리로 옮겨지거나 지문이 스프레드를 넘으면 원본 쪽이
+        #   조금 더 세어진다 → 작은 차이는 알리기만 하고, **크게 빌 때만** 막는다.
         # G-P2 0개 항목 — 막지 않고 목록으로
         pas = [r for r in rows if r.get("kind") != "memtest"]
         no_syn = [r.get("key") or r.get("label") or "?" for r in pas
@@ -975,6 +983,40 @@ class PocketbookSeries(Series):
                 report.note("표지·마감 포함 최종 %d면 (추가 %d)"
                             % (n_final, (n_final or 0) - n_pages))
         return report
+
+    def _check_source_count(self, cfg, opt, n_rendered, report, log):
+        srcs = cfg.resolve(opt.get("analysis") or [])
+        if isinstance(srcs, str):
+            srcs = [srcs]
+        files = []
+        for sfile in srcs:
+            if os.path.isdir(sfile):
+                for root, _d, fs in os.walk(sfile):
+                    files += [os.path.join(root, f) for f in sorted(fs)
+                              if f.lower().endswith(".idml")]
+            elif os.path.exists(sfile):
+                files.append(sfile)
+        if not files:
+            return
+        files = _dedup_versions(files)
+        self._tools()
+        try:
+            import regress
+        except ImportError:
+            return
+        try:
+            n_src = sum(regress.source_passage_spreads(f) for f in files)
+        except Exception as e:
+            log("  [G-P9 건너뜀] 원본 계수 실패: %s" % str(e)[:80])
+            return
+        if not n_src:
+            return
+        if n_rendered < n_src * 0.85:
+            report.fail("G-P9 지문이 크게 빈다 — 원본 %d · 지면 %d (%.0f%%)"
+                        % (n_src, n_rendered, 100.0 * n_rendered / n_src))
+        elif n_rendered < n_src:
+            report.note("G-P9 원본 %d · 지면 %d (소제목 이동·스프레드 걸침이면 정상)"
+                        % (n_src, n_rendered))
 
     @staticmethod
     def _write_empty_report(cfg, no_syn, no_flow, rows=()):
