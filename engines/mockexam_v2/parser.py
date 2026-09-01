@@ -157,7 +157,11 @@ def build_ir(paras, meta=None, log=None):
     """단락 목록 → content v2 문서. (단락종류 시퀀스 기반 문항 그룹핑)"""
     from engines._taxonomy import classify
 
-    annotated = classify_paragraphs(paras)
+    # 동형 원고는 서술형 답란을 괄호 기입란으로 준다("(1) (   )번",
+    # "(2) (틀린 부분:      )"). 이 줄을 답란으로 잡아야 서술형 판정이 선다.
+    # 공용 기본값이 아니라 이 계열에서만 켠다 — 워크북 계열은 같은 모양을
+    # 지문 스타일로 인쇄하는 관행이라 켜면 그쪽 산출물이 바뀐다.
+    annotated = classify_paragraphs(paras, {"blank_fill_answer": True})
     items = []
     warnings = []
     cur = None

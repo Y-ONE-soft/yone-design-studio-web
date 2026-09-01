@@ -653,6 +653,57 @@ def api_assist_undo():
     return jsonify({"ok": True, "restored": back})
 
 
+@bp.route("/api/book-studio/pagerules", methods=["GET", "POST"])
+def api_pagerules():
+    """마스터 페이지(`@page`) — 면에 걸리는 것(여백·머리·꼬리).
+
+    단락 스타일로는 면을 못 건드린다. CSS 조판에서 `@page` 가 인디자인의
+    마스터 페이지 자리다. 여기 적은 것은 계열 테마 **뒤에** 나가므로
+    한 줄만 적어도 그 값만 바뀐다.
+    """
+    from core.render_vivlio import book as bookmod
+    from core.render_vivlio import edits as ed
+    get = request.method == "GET"
+    p = {} if get else (request.get_json(silent=True) or {})
+    if not get:
+        sel = str(p.get("sel") or "").strip()
+        if len(sel) > 60 or any(c in sel for c in "{};<>"):
+            return jsonify({"error": "이상한 면 이름"}), 400
+        props = p.get("props")
+        if not isinstance(props, dict):
+            return jsonify({"error": "규칙이 없다"}), 400
+        for k, v in props.items():
+            if any(c in str(k) + str(v) for c in "{};<>"):
+                return jsonify({"error": f"이상한 값: {k}: {v}"}), 400
+            bad = _needs_unit(str(k), str(v))
+            if bad:
+                return jsonify({"error": bad}), 400
+    d, meta = _book_dir(request.args.get("b") if get else p.get("b"))
+    if not d:
+        return jsonify({"error": "모르는 책"}), 404
+    cfg = bookmod.load(d)
+    if get:
+        return jsonify({"rules": cfg.section("page_rules") or {},
+                        "hint": "왼쪽 면은 `:left`, 오른쪽 면은 `:right`, "
+                                "빈칸은 모든 면입니다."})
+    rules = dict(cfg.section("page_rules") or {})
+    cur = dict(rules.get(sel) or {})
+    for k, v in props.items():
+        if v in ("", None):
+            cur.pop(k, None)
+        else:
+            cur[k] = v
+    if cur:
+        rules[sel] = cur
+    else:
+        rules.pop(sel, None)
+    # 같은 이력에 — ⌘Z 로 되돌아간다
+    ed.push(cfg, {"op": "knob", "key": "page_rules",
+                  "v": rules or None, "note": "마스터 페이지"})
+    cfg.reload()
+    return jsonify({"ok": True, "rules": cfg.section("page_rules") or {}})
+
+
 @bp.route("/api/book-studio/box", methods=["POST"])
 def api_box():
     """자유 배치 상자 — 넣기 · 옮기기 · 지우기.

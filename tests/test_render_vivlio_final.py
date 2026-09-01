@@ -175,9 +175,24 @@ def test_grammar_keeps_brackets_bold():
     assert '<span class="g">[looked]</span>' in out
 
 
-def test_tall_block_gets_two_slots():
+def test_fit_is_leading_then_two_slots_never_a_smaller_font():
+    """활자 크기는 책 전체에서 하나다 — 넘치면 행간, 더 넘치면 두 칸."""
     assert 'class="blk tall"' in R._open_blk({"span": 2})
-    assert 'font-size:7.20pt' in R._open_blk({"pt": 7.2})
+    assert '--lead:0.9600' in R._open_blk({"lead": 0.96})
+    assert "font-size" not in R._open_blk({"lead": 0.96})
+
+    from core.render_vivlio.series.final import FinalSeries as F
+    m = R.DEFAULT_METRICS
+    cap = m["slot"] - 0.5
+    line = R.LINE_MM["arrange"]
+    # 한 줄 넘침 → 행간
+    assert "lead" in F._one_fit("arrange", cap + line, cap, m)
+    # 세 줄 넘침 → 두 칸
+    assert F._one_fit("arrange", cap + 3 * line, cap, m) == {"span": 2}
+    # 어휘(면당 한 지문)는 두 칸이 없다 → 흘림
+    vcap = m["vocab_avail"] - m["vocab_safety"]
+    assert F._one_fit("vocab", vcap + 3 * R.LINE_MM["vocab"], vcap,
+                      m) == {"flow": True}
 
 
 # ── 사분면 계약 ────────────────────────────────────────────────────────
@@ -228,7 +243,7 @@ def test_grid_has_no_fixed_height():
 def test_blocks_are_not_clipped():
     """넘치는 내용을 자르면 유실이 조용해진다 — overflow:hidden 금지."""
     css = _css()
-    blk = re.search(r"\n\.blk \{[^}]*\}", css).group(0)
+    blk = re.search(r"\n\.blk \{ height:[^}]*\}", css).group(0)
     assert "overflow" not in blk
     assert "height: var(--slot)" in blk
 

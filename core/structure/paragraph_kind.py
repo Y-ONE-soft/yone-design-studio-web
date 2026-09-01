@@ -120,8 +120,13 @@ def _is_english_prose(text):
     return _korean_ratio(t) < _Q_KOR_MIN_RATIO
 
 
-def _base_kind(text):
-    """컨텍스트 없이 단락 하나의 1차 종류. (idx 무관 부분)"""
+def _base_kind(text, opts=None):
+    """컨텍스트 없이 단락 하나의 1차 종류. (idx 무관 부분)
+
+    opts: 계열별 opt-in 규칙. 기본값(None)은 **기존 동작 그대로** —
+        공용 모듈이라 한 계열을 고치다 다른 교재 산출물을 바꾸면 안 된다.
+    """
+    opts = opts or {}
     if not text:
         return "BLANK", None
     # 변형문제 출처 마커 — taxonomy보다 먼저 (마커 안의 유형명 "심경추론"
@@ -150,7 +155,10 @@ def _base_kind(text):
         return "Ans", None
     # 괄호 기입란형 답란 — "(1) (      )번" / "(2) (틀린 부분:        )".
     # 배재1 실증: 이런 줄을 못 잡아 서술형이 객관식으로 뒤집혔다.
-    if R.is_blank_fill_row(text):
+    # **opt-in**: 워크북/EBS 골든에서 같은 모양의 줄이 UNKNOWN 으로 인쇄되고
+    # 있어(그쪽은 지문 스타일이 관행) 켜면 다른 교재의 산출물이 바뀐다.
+    # 동형 계열만 켠다 — 다른 계열은 별도 판단 후 골든 승격이 필요하다.
+    if opts.get("blank_fill_answer") and R.is_blank_fill_row(text):
         return "AnsL", None
     # 요약문 블록 마커 (W38 결함 4, W39 결함 1) — 대괄호형·꺾쇠형 모두
     # Sum. 일반 꺾쇠 마커(Box)가 <요약문>을 삼키지 않도록 Box보다 먼저.
@@ -198,12 +206,16 @@ def _choice_ord(text):
     return i + 1 if i >= 0 else None
 
 
-def classify_paragraphs(paras):
-    """단락 목록 전체 판정 (2-pass: 1차 종류 → 컨텍스트 보정)."""
+def classify_paragraphs(paras, opts=None):
+    """단락 목록 전체 판정 (2-pass: 1차 종류 → 컨텍스트 보정).
+
+    opts: 계열별 opt-in 규칙 dict. 기본 None = 기존 동작 유지.
+        blank_fill_answer — 괄호 기입란형 줄("(1) (   )번")을 답란으로.
+    """
     out = []
     for p in paras:
         text = (p.get("text") or "").strip() if isinstance(p, dict) else str(p).strip()
-        kind, code = _base_kind(text)
+        kind, code = _base_kind(text, opts)
         out.append({"kind": kind, "q_code": code, "text": text, "para": p})
 
     # W61 (비상(황) 실증 — 사용자 지적 "선지에 왜 발문 단락스타일"):

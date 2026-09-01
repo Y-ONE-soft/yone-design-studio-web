@@ -902,6 +902,40 @@ def test_guides_take_mm_values():
     assert "'--gx1'" in src and "mm'" in src
 
 
+# ── 마스터 페이지 (@page) ─────────────────────────────────────
+# 단락 스타일로는 **면**을 못 건드린다. CSS 조판에서 `@page` 가 인디자인의
+# 마스터 페이지 자리다. 실측: `:left` 왼쪽 여백을 23→33mm 로 바꾸니 짝수 면
+# 본문이 33.0mm 에서 시작하고 면수가 116→122 로 늘었다.
+def test_page_rules_become_css():
+    class C:
+        def section(self, n):
+            return ({":left": {"margin-left": "23mm"}, "": {"margin-top": "30mm"}}
+                    if n == "page_rules" else None)
+    css = kn.page_rules_text(C())
+    assert "@page :left {" in css and "margin-left: 23mm;" in css
+    assert "@page  {" in css
+
+
+def test_no_page_rules_no_css():
+    """없으면 한 줄도 안 나가야 한다 — 빈 규칙도 판을 흔들 수 있다."""
+    class D:
+        def section(self, n):
+            return None
+    assert kn.page_rules_text(D()) == ""
+
+
+def test_page_rules_go_through_history():
+    src = _routes_src()
+    i = src.index("def api_pagerules")
+    assert "ed.push" in src[i:i + 2600]
+
+
+def test_page_rules_check_units(client):
+    r = client.post("/api/book-studio/pagerules",
+                    json={"b": "없는책", "sel": "", "props": {"margin-top": "20"}})
+    assert r.status_code == 400 and "단위" in r.get_json()["error"]
+
+
 # ── 클로드 칸 ─────────────────────────────────────────────────
 # 모델에게 리포를 통째로 열어 주면 안 된다 — 계열 코드를 고치면 그 계열 책이
 # 전부 흔들리고, 원고를 고치면 납품본과 글이 달라진다. 손댈 수 있는 곳은

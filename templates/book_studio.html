@@ -369,6 +369,12 @@
           (인디자인의 색상 견본과 같습니다 — 패널은 늘 여기, 색은 책마다 다릅니다).</div>
         <div class="ide-in" id="pal-color"></div>
       </details>
+      <details class="ide-pal"><summary>마스터 페이지</summary>
+        <div class="ide-in" id="pal-master">
+          <div class="ide-hint">면에 걸리는 것(여백·머리·꼬리)입니다 —
+            인디자인의 마스터 페이지 자리.</div>
+        </div>
+      </details>
       <details class="ide-pal"><summary>문서 설정</summary>
         <div class="ide-hint" style="padding:0 12px 6px">판면·간격처럼 책 전체에
           걸리는 값입니다.</div>
@@ -964,6 +970,7 @@
     drawParaOpts();
     drawTable();
     drawBox();
+    drawSwatches();
   }
 
   function drawOne(hostId, props) {
@@ -1108,6 +1115,143 @@
           if (ok) msg('✓ 반영했습니다');
         });
       });
+  }
+
+  // ── 색상 견본 (인디자인의 스와치) ───────────────────────
+  //
+  // 이 책이 쓰는 색을 한자리에 모아 두고, **고른 자리에 바로 칠한다.**
+  // 색은 계열 손잡이(`palette.*`)에서 오고, 여기서 만든 색은 문자 스타일처럼
+  // 이름을 가진다(`.sw-<이름>`) — 이름 하나를 고치면 칠한 곳이 전부 바뀐다.
+  function swatches() {
+    var out = [];
+    (spec || []).forEach(function (k) {
+      if (k.kind !== 'color') return;
+      var v = (k.value === null || k.value === undefined) ? k.default : k.value;
+      if (v) out.push({ name: k.label, hex: v, key: k.key });
+    });
+    for (var sel in styles) {
+      var m = sel.match(/^\.sw-(.+)$/);
+      if (m && styles[sel].color) {
+        out.push({ name: m[1], hex: styles[sel].color, mine: true });
+      }
+    }
+    return out;
+  }
+
+  function drawSwatches() {
+    var host = $('pal-color'); if (!host) return;
+    var list = swatches();
+    host.innerHTML = '';
+    var hint = document.createElement('div');
+    hint.className = 'ide-hint'; hint.style.marginBottom = '6px';
+    hint.innerHTML = '색을 누르면 <b>고른 자리(또는 고른 글자)</b>에 칠합니다. '
+      + '⇧누르면 <b>바탕색</b>으로.';
+    host.appendChild(hint);
+
+    var grid = document.createElement('div');
+    grid.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px';
+    list.forEach(function (sw) {
+      var b = document.createElement('button');
+      b.title = sw.name + '  ' + sw.hex + (cmykText(sw.hex) ? '\n' + cmykText(sw.hex) : '');
+      b.style.cssText = 'width:26px;height:26px;border-radius:5px;cursor:pointer;'
+        + 'border:1px solid #333a52;background:' + sw.hex;
+      b.onclick = function (e) { paintWith(sw.hex, e.shiftKey); };
+      grid.appendChild(b);
+    });
+    host.appendChild(grid);
+    askCmyk(list.map(function (s2) { return s2.hex; }));
+
+    // 값으로 고치는 자리는 그대로 둔다(손잡이 목록)
+    var more = document.createElement('div');
+    (spec || []).filter(function (k) { return k.kind === 'color'; })
+      .forEach(function (k) { more.appendChild(knobRow(k)); });
+    host.appendChild(more);
+  }
+
+  /** 고른 자리(또는 고른 글자)에 색을 칠한다. */
+  function paintWith(hex, bg) {
+    var prop = bg ? 'background-color' : 'color';
+    if (hasCharSel()) {
+      if (fmtStyle(prop, hex)) msg('고른 글자에 ' + hex + ' (⌘↵ 로 저장)');
+      return;
+    }
+    var sel = targetSel();
+    if (!sel) { msg('먼저 지면에서 자리를 고르세요'); return; }
+    var props = {}; props[prop] = hex;
+    api('/api/book-studio/styles', { b: key, selector: sel, props: props })
+      .then(function (d) {
+        if (d.error) { msg('✗ ' + d.error); return; }
+        styles = d.styles || {};
+        rebuild('').then(function (ok) { if (ok) msg('✓ ' + hex + ' 칠했습니다'); });
+      });
+  }
+
+  // ── 마스터 페이지 (@page) ───────────────────────────────
+  // 단락 스타일로는 **면**을 못 건드린다. CSS 조판에서 `@page` 가 인디자인의
+  // 마스터 페이지 자리다 — 왼쪽 면·오른쪽 면을 갈라 여백을 정한다.
+  var PAGE_SELS = [['', '모든 면'], [':left', '왼쪽(짝수) 면'],
+                   [':right', '오른쪽(홀수) 면'], [':first', '첫 면'],
+                   [':blank', '빈 면']];
+  var PAGE_PROPS = [
+    ['margin-top', '위 여백'], ['margin-bottom', '아래 여백'],
+    ['margin-left', '왼쪽 여백'], ['margin-right', '오른쪽 여백']
+  ];
+  var pageRules = {};
+
+  function drawMaster() {
+    var host = $('pal-master'); if (!host) return;
+    host.innerHTML = '';
+    var hint = document.createElement('div');
+    hint.className = 'ide-hint'; hint.style.marginBottom = '6px';
+    hint.innerHTML = '면에 걸리는 것(여백)입니다. 계열 테마 <b>뒤에</b> 나가므로 '
+      + '한 줄만 적어도 그 값만 바뀝니다.';
+    host.appendChild(hint);
+
+    var pick = document.createElement('select');
+    pick.className = 'ide-sel'; pick.style.width = '100%';
+    PAGE_SELS.forEach(function (a) {
+      var o = document.createElement('option');
+      o.value = a[0]; o.textContent = a[1];
+      pick.appendChild(o);
+    });
+    host.appendChild(pick);
+    var body = document.createElement('div');
+    host.appendChild(body);
+
+    function fill() {
+      var sel = pick.value;
+      var have = pageRules[sel] || {};
+      body.innerHTML = '';
+      var ins = {};
+      PAGE_PROPS.forEach(function (a) {
+        var row = document.createElement('div'); row.className = 'ide-row';
+        var lab = document.createElement('div'); lab.className = 'ide-lab';
+        lab.innerHTML = '<span>' + a[1] + '</span><span class="ide-val">'
+          + (have[a[0]] || '') + '</span>';
+        var f = document.createElement('div'); f.className = 'ide-f';
+        var t = document.createElement('input');
+        t.className = 'ide-t'; t.value = have[a[0]] || '';
+        t.placeholder = '예) 23mm'; ins[a[0]] = t;
+        f.appendChild(t);
+        row.appendChild(lab); row.appendChild(f);
+        body.appendChild(row);
+      });
+      var go = document.createElement('button');
+      go.className = 'ide-b'; go.textContent = '이 면에 적용';
+      go.onclick = function () {
+        var props = {};
+        PAGE_PROPS.forEach(function (a) { props[a[0]] = ins[a[0]].value.trim(); });
+        api('/api/book-studio/pagerules',
+            { b: key, sel: pick.value, props: props }).then(function (d) {
+          if (d.error) { msg('✗ ' + d.error); return; }
+          pageRules = d.rules || {};
+          rebuild('').then(function (ok) { if (ok) { msg('✓ 면 설정'); drawMaster(); } });
+        });
+      };
+      body.appendChild(go);
+    }
+    pick.addEventListener('change', fill);
+    fill();
   }
 
   // ── 자유 배치 상자 ──────────────────────────────────────
@@ -2047,17 +2191,19 @@
   }
 
   function drawPalettes() {
-    var c = $('pal-color'), s = $('pal-size');
-    c.innerHTML = ''; s.innerHTML = '';
+    var s = $('pal-size');
+    s.innerHTML = '';
+    // ⚠ 색은 `drawSwatches()` 가 그린다(견본 + 값). 여기서 또 그리면
+    //   덮어써서 견본이 사라진다.
+    drawSwatches();
     if (!spec.length) {
-      c.innerHTML = '<div class="ide-hint">이 교재는 바꿀 수 있는 값이 아직 없습니다.</div>';
+      s.innerHTML = '<div class="ide-hint">이 교재는 바꿀 수 있는 값이 아직 없습니다.</div>';
       return;
     }
-    spec.forEach(function (k) {
-      (k.kind === 'color' ? c : s).appendChild(knobRow(k));
-    });
-    [c, s].forEach(function (host) {
-      if (!host.children.length) return;
+    spec.filter(function (k) { return k.kind !== 'color'; })
+      .forEach(function (k) { s.appendChild(knobRow(k)); });
+    [$('pal-color'), s].forEach(function (host) {
+      if (!host || !host.children.length) return;
       var b = document.createElement('button');
       b.className = 'ide-b'; b.textContent = '값 저장';
       b.style.marginTop = '4px';
@@ -2096,6 +2242,8 @@
       });
     loadImages();
     loadThumbs();
+    api('/api/book-studio/pagerules?b=' + encodeURIComponent(key))
+      .then(function (d) { pageRules = (d && d.rules) || {}; drawMaster(); });
     api('/api/book-studio/fonts?b=' + encodeURIComponent(key)).then(function (d) {
       bookFonts = (d && d.used ? d.used : []).map(function (x) { return x.name; });
       if (d && (d.missing || []).length) {
