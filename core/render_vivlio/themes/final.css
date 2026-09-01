@@ -323,7 +323,9 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 .sec-insert .given { margin-bottom: 2.60mm; padding-left: 3.00mm; }
 /* ⚠ 삽입 섹션은 **행간이 다르다** — 완성본 실측 15pt(1.7647em), 배열은 12pt.
  *   같은 값으로 두면 그 섹션만 촘촘해진다(실측: 납품 5.29mm vs 4.23mm). */
-.sec-insert .it { margin-top: 0; text-align: justify;
+/* 삽입 섹션 항목은 단보다 **좌우 1mm 씩 안쪽**이다(완성본 실측:
+ * 단 22.0 인데 글은 23.0 에서 시작해 81.8mm 폭). */
+.sec-insert .it { margin: 0 0.9mm 0 1.0mm; text-align: justify;
                   line-height: calc(1.7647 * var(--lead, 1)); }
 .sec-insert .given { line-height: calc(1.7647 * var(--lead, 1)); }
 
@@ -371,6 +373,8 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 .wcho {
   background: var(--choice); margin: 1.69mm -0.30mm 0 -1.00mm;
   padding: 1.30mm 1.32mm 2.02mm 2.00mm;
-  font: 500 8pt Noto; line-height: calc(1.4123 * var(--lead, 1));
+  /* 보기 줄도 한글과 **같은 행간**(12pt)이다 — 8pt 라고 11.3pt 로 줄지
+   * 않는다(실측: 납품 4.23mm vs 3.97mm). */
+  font: 500 8pt Noto; line-height: calc(1.5 * var(--lead, 1));
   text-align: justify;
 }

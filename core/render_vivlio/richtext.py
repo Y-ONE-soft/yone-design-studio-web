@@ -140,7 +140,7 @@ import html as _html
 import re as _re
 
 # 편집기가 허용하는 태그 — 이 밖의 것은 글자만 남긴다(붙여넣기 오염 방지)
-_OK_TAGS = {"b", "strong", "u", "i", "em", "span", "br"}
+_OK_TAGS = {"b", "strong", "u", "i", "em", "span", "br", "a"}
 # 직접 서식으로 받는 CSS 속성 — 인쇄에 뜻이 있는 것만
 ST_PROPS = ("font-size", "font-weight", "font-style", "font-family",
             "letter-spacing", "color", "background-color",
@@ -175,8 +175,23 @@ def seg_html(seg, blanks=True):
         t = f"<i>{t}</i>"
     if seg.get("b"):
         t = f"<b>{t}</b>"
+    lk = safe_link(seg.get("lk"))
+    if lk:
+        t = f'<a class="viv-lk" href="{_html.escape(lk)}">{t}</a>'
     t += foot_html(seg)
     return t
+
+
+# 링크로 받아 주는 것 — **여기 없는 것은 버린다**.
+# ⚠ `javascript:` 같은 것을 그대로 실으면 그 HTML 을 여는 사람에게 그대로
+#   실행된다. 조판 결과는 사람이 브라우저로도 열어 보므로 막아 둔다.
+_LINK_OK = _re.compile(r'''^(https?://|mailto:|#)[^\s"'<>]*$''', _re.I)
+
+
+def safe_link(v):
+    """링크 주소를 걸러 낸다. 이상하면 **빈 문자열**(링크 없음)."""
+    u = (v or "").strip() if isinstance(v, str) else ""
+    return u if u and _LINK_OK.match(u) else ""
 
 
 def foot_html(seg):
@@ -256,6 +271,7 @@ def from_html(src, like=None):
         f = {}
         st = {}
         cs = ""
+        lk = ""
         for tag, attrs in stack:
             if tag in ("b", "strong"):
                 f["b"] = True
@@ -270,12 +286,14 @@ def from_html(src, like=None):
                         cs = c[3:]
                     elif c == "viv-fn":
                         fn[0] = True          # 이 조각은 **각주 글**이다
+            elif tag == "a":
+                lk = safe_link(attrs.get("href", "")) or lk
         if fn[0]:
             # 각주는 **글이 아니라 딸린 것**이다 — 빈 조각에 실어 둔다.
             # (그 자리에 번호만 서고 글은 면 아래로 내려간다.)
             segs.append({"t": "", "fn": t})
             return
-        if not (f or st or cs):
+        if not (f or st or cs or lk):
             segs.append(t)
             return
         d = {"t": t}
@@ -284,6 +302,8 @@ def from_html(src, like=None):
             d["st"] = st
         if cs:
             d["cs"] = cs
+        if lk:
+            d["lk"] = lk
         segs.append(d)
 
     i = 0

@@ -171,6 +171,8 @@
     <div class="ide-grp" id="ide-fmt">
       <button class="ide-b ic" data-f="fn"
               title="각주 — 커서 자리에 번호를 달고 글은 면 아래로 내립니다(조판 엔진이 번호를 셉니다).">주</button>
+      <button class="ide-b ic" data-f="lk"
+              title="링크 — 고른 글자에 주소를 겁니다(PDF 에서 눌러집니다). 비우면 링크가 풀립니다.">링</button>
       <button class="ide-b ic" data-f="b" title="굵게 ⌘B"><b>B</b></button>
       <button class="ide-b ic" data-f="u" title="밑줄 ⌘U"><u>U</u></button>
       <button class="ide-b ic" data-f="i" title="기울임 ⌘I"><i>I</i></button>
@@ -400,6 +402,14 @@
         <div class="ide-hint" style="padding:0 12px 6px">판면·간격처럼 책 전체에
           걸리는 값입니다.</div>
         <div class="ide-in" id="pal-size"></div>
+        <div class="ide-in">
+          <label class="ide-row" style="cursor:pointer">
+            <input type="checkbox" id="opt-spell" checked>
+            <span>맞춤법 밑줄 (고치는 동안만)</span>
+          </label>
+          <div class="ide-hint">인디자인의 동적 맞춤법입니다. 브라우저에 켜 둔
+            사전으로 검사하며, <b>조판에는 안 나갑니다</b>.</div>
+        </div>
       </details>
       <details class="ide-pal"><summary>편집 이력</summary>
         <div class="ide-in"><div class="ide-hist" id="pal-hist"></div></div>
@@ -450,6 +460,14 @@
   // 모든 면을 미리 그려 둘 것인가. 켜면 여는 데 오래 걸리지만 그다음이 즉시다.
   var renderAll = false;
   var curEl = null, styles = {}, styleNames = {}, curPage = 1, ready = false;
+  var spellOn = true;              // 맞춤법 밑줄(고치는 동안만)
+  document.addEventListener('DOMContentLoaded', function () {
+    var c = $('opt-spell'); if (!c) return;
+    c.onchange = function () {
+      spellOn = c.checked;
+      if (editEl) editEl.setAttribute('spellcheck', spellOn ? 'true' : 'false');
+    };
+  });
   var bookFonts = [];      // 이 책이 **임베드한** 서체 (PDF 에 실제로 들어간다)
   var bookPageW = 216;     // 도련 포함 판형 가로(mm) — 화면 px ↔ mm 환산에 쓴다
   var bookPageH = 303;     // 도련 포함 판형 세로(mm) — 상자를 면에 맞출 때
@@ -1101,7 +1119,7 @@
     { k: 'margin-top', l: '단락 앞 간격', kind: 'num', units: ['mm', 'pt'], u: 'mm' },
     { k: 'margin-bottom', l: '단락 뒤 간격', kind: 'num', units: ['mm', 'pt'], u: 'mm' },
     { k: 'break-before', l: '쪽 나눔(앞)', kind: 'enum',
-      values: ['', 'auto', 'page', 'left', 'right'] },
+      values: ['', 'auto', 'page', 'left', 'right', 'column'] },
     { k: 'break-inside', l: '덩어리 유지', kind: 'enum', values: ['', 'auto', 'avoid'] },
     { k: 'hyphens', l: '하이픈 넣기', kind: 'enum',
       values: ['', 'none', 'manual', 'auto'] },
@@ -1110,7 +1128,7 @@
     { k: 'widows', l: '외톨이 줄(아래)', kind: 'num', units: [''], u: '', step: 1 },
     { k: 'orphans', l: '외톨이 줄(위)', kind: 'num', units: [''], u: '', step: 1 },
     { k: 'break-after', l: '쪽 나눔(뒤)', kind: 'enum',
-      values: ['', 'auto', 'page', 'left', 'right'] },
+      values: ['', 'auto', 'page', 'left', 'right', 'column'] },
     // ── 한글 조판에서 자주 손대는 것들 ──
     // ⚠ `word-break: break-all` 은 낱말을 아무 데서나 자른다. 한글 금칙은
     //   `line-break: strict` 가 맡는다(조판 엔진이 한다).
@@ -3255,6 +3273,10 @@
       el.innerHTML = info.html;
       el.classList.add('ide-editing');
       el.setAttribute('contenteditable', 'true');
+      // 맞춤법 — 브라우저가 켜져 있는 사전으로 밑줄을 그어 준다(인디자인의
+      // 동적 맞춤법 검사). ⚠ 조판에는 안 나간다. 고치는 동안만 보인다.
+      el.setAttribute('spellcheck', spellOn ? 'true' : 'false');
+      el.setAttribute('lang', el.getAttribute('lang') || 'ko');
       el.focus();
       setHist(info.history);
       msg(kindName(ref) + ' 고치는 중 — ⌘↵ 저장 · Esc 취소');
@@ -3865,9 +3887,51 @@
     msg('각주를 달았습니다 — ⌘↵ 로 저장하면 면 아래에 나옵니다');
   }
 
+  /** 링크 걸기 — 고른 글자에 주소를 매단다(인디자인의 하이퍼링크).
+   *
+   *  ⚠ 주소는 **서버가 다시 거른다**(`richtext.safe_link`). 여기서 막는 것은
+   *    손이 미끄러진 경우고, 진짜 방어는 저장하는 쪽이다.
+   *  ⚠ 비워서 넣으면 링크를 **푼다** — 인디자인의 "하이퍼링크 삭제".
+   */
+  function putLink() {
+    if (!editEl) {
+      msg('먼저 **글자 도구(T)** 로 고칠 줄을 열고, 링크를 걸 글자를 고르세요');
+      return;
+    }
+    var d = fdoc(), sel = d.getSelection();
+    if (!sel || !sel.rangeCount || sel.isCollapsed) {
+      msg('링크를 걸 **글자를 골라** 주세요');
+      return;
+    }
+    var now = '';
+    var node = sel.anchorNode;
+    while (node && node !== editEl) {
+      if (node.tagName === 'A') { now = node.getAttribute('href') || ''; break; }
+      node = node.parentNode;
+    }
+    var u = prompt('링크 주소 (http://… · mailto:… · #자리표) — 비우면 링크를 풉니다', now);
+    if (u === null) return;
+    u = (u || '').trim();
+    editEl.focus();
+    try {
+      if (!u) { d.execCommand('unlink'); msg('링크를 풀었습니다'); return; }
+      if (!/^(https?:\/\/|mailto:|#)/i.test(u)) {
+        msg('✗ http://· https://· mailto:· # 로 시작해야 합니다');
+        return;
+      }
+      d.execCommand('createLink', false, u);
+      // execCommand 는 class 를 안 붙인다 — 되접을 때 쓰는 표시를 단다
+      Array.prototype.forEach.call(editEl.querySelectorAll('a'), function (a) {
+        a.className = 'viv-lk';
+      });
+      msg('링크를 걸었습니다 — ⌘↵ 로 저장하세요');
+    } catch (e) { msg('✗ ' + e.message); }
+  }
+
   $('ide-fmt').addEventListener('click', function (e) {
     var t = e.target; while (t && !t.dataset.f && t !== this) t = t.parentNode;
     if (t && t.dataset && t.dataset.f === 'fn') { putFootnote(); return; }
+    if (t && t.dataset && t.dataset.f === 'lk') { putLink(); return; }
     if (t && t.dataset && t.dataset.f) fmt(t.dataset.f);
   });
   $('ide-commit').addEventListener('click', commit);
