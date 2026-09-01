@@ -94,9 +94,27 @@
     linear-gradient(var(--ink), var(--ink)) no-repeat 0 23.00mm / 216mm 0.265mm;
 }
 
+/* 요약문이 없는 어휘 면(고3) — 회색 판이 **196mm** 로 짧다(완성본 실측
+ * 광문3 Vol1 p16~. 요약문 자리 56mm 만큼 짧다). 나머지는 어휘 면과 같다. */
+.sec-vocab.nosum { page: vocabns; }
+@page vocabns { margin-top: 30.00mm; margin-bottom: 20.43mm; }
+@page vocabns:left {
+  background:
+    linear-gradient(var(--panel), var(--panel)) no-repeat 108.00mm 30.00mm / 83mm 196mm,
+    linear-gradient(var(--ink), var(--ink)) no-repeat 13.90mm 0 / 12.75mm 23.26mm,
+    linear-gradient(var(--ink), var(--ink)) no-repeat 0 23.00mm / 216mm 0.265mm;
+}
+@page vocabns:right {
+  background:
+    linear-gradient(var(--panel), var(--panel)) no-repeat 112.00mm 30.00mm / 83mm 196mm,
+    linear-gradient(var(--ink), var(--ink)) no-repeat 155.00mm 0 / 43.40mm 13.00mm,
+    linear-gradient(var(--ink), var(--ink)) no-repeat 0 23.00mm / 216mm 0.265mm;
+}
+
 /* 섹션 **첫 면**은 홀수라도 장 탭·워드마크가 없고 섹션 띠만 있다(완성본 실측:
  * Vol1 15·21면). 이름 있는 면의 `:nth(1)` 은 그 섹션 묶음의 첫 면을 가리킨다. */
 @page arrange:nth(1), @page insert:nth(1), @page vocab:nth(1),
+@page vocabns:nth(1),
 @page grammar:nth(1), @page writing:nth(1) {
   @top-right { content: none; }
 }
@@ -108,6 +126,11 @@
 @page vocab:nth(1):right {
   background:
     linear-gradient(var(--panel), var(--panel)) no-repeat 112.00mm 30.00mm / 83mm 252mm,
+    linear-gradient(var(--ink), var(--ink)) no-repeat 0 23.00mm / 216mm 0.265mm;
+}
+@page vocabns:nth(1):right {
+  background:
+    linear-gradient(var(--panel), var(--panel)) no-repeat 112.00mm 30.00mm / 83mm 196mm,
     linear-gradient(var(--ink), var(--ink)) no-repeat 0 23.00mm / 216mm 0.265mm;
 }
 

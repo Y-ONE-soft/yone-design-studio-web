@@ -228,7 +228,14 @@ def build_css(spec):
         css.append("  padding: 3mm;")
     css.append("  @top-center { content: element(pageHeader); vertical-align: bottom; }")
     css.append("  @bottom-center { content: element(pageFooter); vertical-align: top; }")
+    if (P_dig(s.raw, "running.continue_marker") or {}).get("on"):
+        css.append("  @bottom-right { content: element(contOdd); "
+                   "vertical-align: top; }")
     css.append("}")
+    if (P_dig(s.raw, "running.continue_marker") or {}).get("on"):
+        # 양면 인쇄 — 짝수 쪽(왼쪽 면)은 문구가 다르다
+        css.append("@page :left { @bottom-right "
+                   "{ content: element(contEven); vertical-align: top; } }")
     css.append("")
 
     # ── 본문 흘림 ──
@@ -313,6 +320,14 @@ def build_css(spec):
         if first:
             css.append("@page :first { background: " + first + "; }")
         css.append("")
+    # '다음 쪽에 계속' — 홀·짝 문구가 다른 학교가 있어 두 벌을 올려 둔다.
+    cm = P_dig(s.raw, "running.continue_marker") or {}
+    if cm.get("on"):
+        css.append(".cm-odd { position: running(contOdd); }")
+        css.append(".cm-even { position: running(contEven); }")
+        al = "right" if "right" in str(cm.get("pos") or "right") else "center"
+        css.append(f".cont-mark {{ text-align: {al}; "
+                   f"font-weight: {700 if cm.get('bold') else 400}; }}")
     css.append(".page-header { position: running(pageHeader); }")
     css.append(".page-footer { position: running(pageFooter); }")
     css.append(".page-footer-last { position: running(pageFooterLast); }")

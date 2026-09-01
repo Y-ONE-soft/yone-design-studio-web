@@ -378,7 +378,10 @@ def document(cfg, data, vol, fits=None, mode=None):
 
     for sec in v["sections"]:
         kind = sec["kind"]
-        o.append(f'<section class="sec sec-{kind}">')
+        # 요약문이 없으면(고3) 회색 판이 짧다 — 완성본 실측 196mm.
+        ns = (" nosum" if kind == "vocab"
+              and not any(b.get("summary") for b in sec["blocks"]) else "")
+        o.append(f'<section class="sec sec-{kind}{ns}">')
         o.append(f'<div class="secmark">{esc(sec["title"])}</div>')
         o.append(feet(ch, sec["title"]))
         if mode != "measure":

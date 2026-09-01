@@ -1015,6 +1015,7 @@ def build_html(doc, spec, case=None, css_href="theme.css", scores=None,
     s = spec
     case = case or {}
     head_html = _running_header(s, case)
+    cont_html = continue_mark(s, case)
     foot_html = _running_footer(s, case)
     head_block = exam_head(s, case)
     notice = ""
@@ -1037,6 +1038,7 @@ def build_html(doc, spec, case=None, css_href="theme.css", scores=None,
 <body>
 {head_html}
 {foot_html}
+{cont_html}
 <section class="flow">
 {head_block}
 {notice}
@@ -1047,6 +1049,59 @@ def build_html(doc, spec, case=None, css_href="theme.css", scores=None,
 </html>
 """
     return doc_html, warns
+
+
+def continue_mark(s, case=None):
+    """'다음 쪽에 계속' 표시. **11개 학교에 있는데 아무도 그리지 않고 있었다.**
+
+    표기가 학교마다 다르다 —
+      · `text` 한 벌            (명일1·2·3, 배재2, 세종1)
+      · `odd_text`/`even_text`  (강동1)  · `odd_pages`/`even_pages` (강동2)
+      · `template_odd/even`     (성덕1)  · `parity_rule.{odd,even}`  (한영2)
+      · `templates` 여러 벌      (성덕2)
+    홀·짝이 갈리는 학교는 양면 인쇄라 문구가 다르다(같은 장 뒷면이냐 다음 장이냐).
+    """
+    cm = s.continue_marker or {}
+    if not cm.get("on"):
+        return ""
+    odd = _first_str(cm, ("odd_text", "odd_pages", "template_odd"))
+    even = _first_str(cm, ("even_text", "even_pages", "template_even"))
+    par = cm.get("parity_rule")
+    if isinstance(par, dict):
+        odd = odd or _first_str(par, ("odd",))
+        even = even or _first_str(par, ("even",))
+    one = _first_str(cm, ("text",))
+    if not one:
+        tpl = cm.get("templates")
+        if isinstance(tpl, dict):
+            one = next((v for v in tpl.values() if isinstance(v, str)), "")
+    odd = odd or one
+    even = even or one
+    if not odd and not even:
+        return ""
+    glyph = cm.get("glyph") or ""
+    def one_html(txt, cls):
+        t = _fill_marker(txt, glyph)
+        return f'<div class="cont-mark {cls}">{esc(t)}</div>' if t else ""
+    return one_html(odd, "cm-odd") + one_html(even, "cm-even")
+
+
+def _first_str(d, names):
+    for n in names:
+        v = d.get(n)
+        if isinstance(v, str) and v.strip():
+            return v
+    return ""
+
+
+def _fill_marker(text, glyph):
+    """`{유형}` 처럼 다음 쪽 내용에 달린 자리는 조판 시점에 못 채운다 —
+    지어내지 말고 그 자리만 지운다(성덕1 `☞ 뒷면에 {유형} 계속`)."""
+    t = re.sub(r"\{[^}]*\}", "", str(text or "")).strip()
+    t = re.sub(r"\s{2,}", " ", t)
+    if glyph and glyph not in t and len(glyph) <= 2:
+        t = f"{t} {glyph}".strip()
+    return t
 
 
 def _running_header(s, case):

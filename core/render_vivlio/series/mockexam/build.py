@@ -76,6 +76,19 @@ def render(ir, key, out_pdf, log=print, build_dir=None, case=None,
 
     from core.render_vivlio import probe
     pages = probe.page_count(out_pdf)
+
+    # '다음 쪽에 계속' 은 **마지막 쪽에는 없다**(정본 `on_last_page: false`).
+    # 쪽수는 조판해 봐야 아는 값이라 한 번 더 돌린다.
+    cm = P.dig(P.raw(key), "running.continue_marker") or {}
+    if cm.get("on") and not cm.get("on_last_page", False) and pages > 1:
+        with open(os.path.join(build_dir, "theme.css"), "a",
+                  encoding="utf-8") as f:
+            f.write(f"\n@page :nth({pages}) {{ @bottom-right "
+                    f"{{ content: none; }} }}\n")
+        secs2 = _cli.run_build(os.path.join(build_dir, "index.html"), out_pdf,
+                               log=lambda *a: None, timeout=timeout)
+        secs += secs2
+        pages = probe.page_count(out_pdf)
     log(f"[조판] 완료 {os.path.basename(out_pdf)} ({pages}쪽, {round(secs,1)}s)")
 
     # 프로파일이 못 채운 자리는 조용히 넘기지 않는다
