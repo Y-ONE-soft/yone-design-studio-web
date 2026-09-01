@@ -2080,3 +2080,30 @@ def test_group_align_moves_relatively_and_bakes_once():
     assert "getBoundingClientRect" in body and "pxPerMm" in body
     assert "if (--left === 0)" in body, "상자마다 다시 굽고 있다"
     assert "el2.style.right" in body, "붙여 둔 변을 지켜야 한다"
+
+
+def test_no_function_is_defined_twice():
+    """같은 함수가 두 번 정의돼 있으면 **어느 것이 도는지** 알 수 없다.
+
+    (실제로 클로드·찾기 묶음이 통째로 두 벌 있었다 — 단추도 두 번 걸렸다.)
+    """
+    import collections
+    import re as _re
+    names = _re.findall(r"\n  function (\w+)\(", _studio_src())
+    dup = {k: v for k, v in collections.Counter(names).items() if v > 1}
+    assert not dup, f"두 번 정의된 함수: {dup}"
+
+
+def test_no_call_swallows_a_server_error():
+    """실패를 삼키면 화면엔 "됐습니다" 만 뜨고 아무 일도 안 일어난다.
+
+    묶음 정렬이 그랬다(이름이 가려져 404 였는데 "맞췄습니다" 만 떴다).
+    """
+    import re as _re
+    ui = _studio_src()
+    bad = []
+    for m in _re.finditer(r"api\('(/api/book-studio/[a-z-]+)'[^\n]*", ui):
+        tail = ui[m.end():m.end() + 420]
+        if ".error" not in tail and "ready === false" not in tail:
+            bad.append(m.group(1))
+    assert not bad, f"응답의 error 를 안 보는 자리: {bad}"

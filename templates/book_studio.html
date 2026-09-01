@@ -3782,31 +3782,8 @@
       if (ok) gotoRef(refNum(ref), kindName(ref));
     });
   });
-  // ── 클로드에게 시키기 ───────────────────────────────────
-  // 고치는 곳은 서버가 셋으로 못 박는다(손잡이 · styles · overrides.css).
-  // 셋 다 이 책 폴더 안이라 다른 책은 어떤 경우에도 안 바뀐다.
-  api('/api/book-studio/assist').then(function (d) {
-    if (d && d.ready === false) {
-      $('ai-hint').innerHTML =
-        '클로드 키가 없어 아직 못 씁니다. 터미널에서 '
-        + '<code>export ANTHROPIC_API_KEY=…</code> 를 넣고 통합웹을 다시 띄우세요.';
-      $('ai-go').disabled = true;
-    }
-  });
 
   /** 지금 지면에 실제로 있는 스타일 이름들 — 모델이 없는 것을 지어내지 않게. */
-  function pageClasses() {
-    var out = {}, st = stageEl();
-    if (!st) return [];
-    st.querySelectorAll('*').forEach(function (e) {
-      var c = (typeof e.className === 'string') ? e.className : '';
-      c.split(/\s+/).forEach(function (x) {
-        if (x && !/^vref\d+$/.test(x)) out[x] = 1; });
-    });
-    return Object.keys(out);
-  }
-
-  function aiSay(html) { $('ai-out').innerHTML = html; }
 
   // ⚠ 클로드 단추도 **한 번만** 걸어야 한다. 두 번 걸려 있어서 한 번 누르면
   //   같은 부탁이 두 번 갔다(돈도 두 배, 고친 것도 두 벌).
