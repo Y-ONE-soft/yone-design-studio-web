@@ -394,6 +394,7 @@ def _expand_range_groups(annotated, warnings=None):
             continue
         a, b = int(m.group(1)), int(m.group(2))
         count = b - a + 1
+        by_passage = False
         # 머리 아래 ~ 다음 발문/묶음머리 전까지가 이 묶음의 몸통
         j = i + 1
         while j < n and annotated[j]["kind"] not in ("Q", "Q-INTRO"):
@@ -426,6 +427,7 @@ def _expand_range_groups(annotated, warnings=None):
                         break
                 if ok:
                     starts = p_starts
+                    by_passage = True
         if count < 2 or len(starts) != count:
             if count >= 2 and warnings is not None:
                 warnings.append(
@@ -452,12 +454,21 @@ def _expand_range_groups(annotated, warnings=None):
         out.append(head)
         # 각 문항 = 직전 무리 끝 다음 ~ 이번 무리 끝
         bounds = []
-        for si, st in enumerate(starts):
-            end = st
-            while end + 1 < len(body) and body[end + 1]["kind"] == "C":
-                end += 1
-            begin = 0 if si == 0 else bounds[-1][1] + 1
-            bounds.append((begin, end))
+        if by_passage:
+            # 지문 무리로 셌을 때 starts 는 문항의 **시작**이다. 선지 무리와
+            # 반대라, 끝으로 착각하면 마지막 지문이 어느 문항에도 안 담겨
+            # **통째로 사라진다**(한영1 2회 13번 지문 718자 유실).
+            for si, st in enumerate(starts):
+                end = (starts[si + 1] - 1) if si + 1 < len(starts) \
+                    else len(body) - 1
+                bounds.append((st, end))
+        else:
+            for si, st in enumerate(starts):
+                end = st
+                while end + 1 < len(body) and body[end + 1]["kind"] == "C":
+                    end += 1
+                begin = 0 if si == 0 else bounds[-1][1] + 1
+                bounds.append((begin, end))
         for begin, end in bounds:
             out.append({"kind": "Q", "q_code": None, "text": "",
                         "para": {"text": ""}, "_synth_group_member": True})
