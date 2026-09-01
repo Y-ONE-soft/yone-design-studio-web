@@ -128,7 +128,7 @@ _RE_TAG = re.compile(r"<[^>]+>")
 _RE_HEAD_RANGE = re.compile(r"(\d+)\s*[~\-–—]\s*(\d+)")
 
 
-def _group_multipliers(html, plan):
+def _group_multipliers(html, plan, spec):
     """묶음 머리 `[각 N점씩]` 하나가 문항 몇 개 몫인가.
 
     구성원 수는 조판이 만든 plan 이 정답이다(HTML 머리에 범위가 안 찍히는
@@ -138,10 +138,15 @@ def _group_multipliers(html, plan):
     heads = [_RE_TAG.sub("", h) for h in _RE_HTML_GROUP.findall(html)]
     heads = [h for h in heads if _RE_SCORE.search(h)
              and _RE_SCORE.search(h).group(1)]
+    notes = []
+    if not heads:
+        return [], notes       # 묶음 머리에 배점 자리가 없는 학교 — 곱할 게 없다
+    # 머리가 배점을 가져가는 학교에서만 구성원 배점이 사라진다
+    # (`{점수}` 자리가 없으면 markup 이 구성원 배점을 그대로 둔다).
     counts = [len(r["group"]["members"]) for r in plan
               if r.get("group") and r["group"].get("members")
-              and any(m.get("no_stem") for m in r["group"]["members"])]
-    notes = []
+              and r["group"].get("common_stem")
+              and "{점수}" in (spec.group_template or "")]
     if len(counts) != len(heads):
         notes.append(f"묶음 머리 {len(heads)}개 vs plan 공통발문 묶음 "
                      f"{len(counts)}개 — 머리에 적힌 범위로 되짚었다")
@@ -207,7 +212,7 @@ def check_score(key, spec, html, pdf_text, plan):
     else:
         singles = [float(m.group(2)) for m in _RE_SCORE.finditer(pdf_text)
                    if not m.group(1)]
-        mults, notes = _group_multipliers(html, plan)
+        mults, notes = _group_multipliers(html, plan, spec)
         got = round(sum(singles) + sum(v * n for v, n in mults), 2)
         detail.update({"방식": "문항 배점", "낱개": len(singles),
                        "묶음머리": [[v, n] for v, n in mults]})
@@ -262,7 +267,8 @@ def check_counts(paras, ir):
     n_sel = len(items) - n_srv
     detail = {"선언": [d_sel, d_srv], "파싱": [n_sel, n_srv]}
     if d_sel is None and d_srv is None:
-        return WARN, f"원고에 선언이 없다 (파싱 {n_sel}+{n_srv})", detail
+        # 선언을 안 하는 원고가 있다(강동1) — 대조할 게 없을 뿐 결함은 아니다
+        return OK, f"{n_sel}+{n_srv} (원고 선언 없음)", detail
     diff = []
     if d_sel is not None and d_sel != n_sel:
         diff.append(f"선택형 선언 {d_sel} vs 파싱 {n_sel}")
@@ -381,7 +387,7 @@ def check_overflow(doc):
 CHECKS = ["배점", "발문", "문항수", "출처", "머리표", "묶음", "그림", "밑줄", "지면"]
 
 
-def inspect(key, rnd, path, out_dir=OUT_DIR, keep=True):
+def inspect(key, rnd, path, out_dir=OUT_DIR):
     """원고 한 부 → 검사 결과 dict."""
     import fitz
     from engines.mockexam_v2.parser import build_ir, extract_file_paragraphs
@@ -433,19 +439,46 @@ def verdict(res):
     return OK
 
 
+def _short(name, mark, detail):
+    """한 줄 요약에 쓸 항목별 수치. 값이 없으면 물음표로 둔다."""
+    g = lambda k, d=None: detail.get(k, d)
+    if name == "배점":
+        return f"배점 {g('합')}/{g('기대')}"
+    if name == "발문":
+        return f"발문 {len(g('빈발문') or [])}"
+    if name == "문항수":
+        p = g("파싱") or ["?", "?"]
+        return f"문항 {p[0]}+{p[1]}"
+    if name == "출처":
+        return f"출처 {len(g('누출') or [])}"
+    if name == "머리표":
+        return "머리표 " + (OK if g("exam_head") else FAIL)
+    if name == "묶음":
+        return f"묶음 {len(g('묶음') or [])}"
+    if name == "그림":
+        return f"그림 {g('PDF')}/{g('원고')}"
+    if name == "밑줄":
+        return f"밑줄 {g('html_u')}"
+    if name == "지면":
+        return f"{g('쪽수')}쪽"
+    return name
+
+
 def line(res):
     v = verdict(res)
     head = f"{res['key']:5s} {res['round']}회 {v}"
     if res["error"]:
         return f"{head}  렌더 실패 — {res['error']}"
     c = res["checks"]
-    bits = []
+    bits, why = [], []
     for name in CHECKS:
-        mark, msg, _d = c[name]
-        if mark == OK and name in ("발문", "출처", "머리표", "묶음"):
-            continue          # 통과가 당연한 항목은 줄을 아끼고 실패만 적는다
-        bits.append(f"{name} {msg}" if mark == OK else f"{mark}{name} {msg}")
-    return f"{head}  " + " · ".join(bits)
+        mark, msg, d = c[name]
+        s = _short(name, mark, d)
+        bits.append(s if mark == OK else f"{mark}{s}")
+        if mark != OK:
+            why.append(f"{mark}{name} {msg}")
+    out = f"{head}  " + " · ".join(bits)
+    return out + ("\n" + " " * 13 + " ← " + " / ".join(why) if why else "")
 
 
 # ── 실행 ────────────────────────────────────────────────────────────────────

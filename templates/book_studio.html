@@ -1054,7 +1054,18 @@
     { k: 'font-weight', l: '굵기', kind: 'enum',
       values: ['', '300', '400', '500', '600', '700'] },
     { k: 'font-style', l: '기울임', kind: 'enum', values: ['', 'normal', 'italic'] },
-    { k: 'text-decoration', l: '밑줄', kind: 'enum', values: ['', 'none', 'underline'] },
+    { k: 'text-decoration', l: '밑줄·취소선', kind: 'enum',
+      values: ['', 'none', 'underline', 'underline dotted', 'underline wavy',
+               'underline double', 'line-through', 'overline'] },
+    { k: 'text-underline-offset', l: '밑줄 내림', kind: 'num',
+      units: ['em', 'pt', 'mm'], u: 'em', step: 0.02 },
+    { k: 'text-decoration-thickness', l: '밑줄 굵기', kind: 'num',
+      units: ['pt', 'mm', 'em'], u: 'pt', step: 0.1 },
+    { k: 'text-decoration-color', l: '밑줄 색', kind: 'color' },
+    // 세로쓰기 안에서 숫자를 눕히지 않는 것(인디자인의 '세로 안의 가로')
+    { k: 'text-combine-upright', l: '세로 안 가로쓰기', kind: 'enum',
+      values: ['', 'none', 'all'] },
+    { k: 'text-emphasis', l: '강조점(글자 위 점)', kind: 'text' },
     { k: 'color', l: '글자 색', kind: 'color' },
     { k: 'background-color', l: '바탕색', kind: 'color' },
     // ── 서체 기능(OpenType) — 인디자인 문자 패널의 아랫단 ──
@@ -1097,7 +1108,22 @@
     { k: 'widows', l: '외톨이 줄(아래)', kind: 'num', units: [''], u: '', step: 1 },
     { k: 'orphans', l: '외톨이 줄(위)', kind: 'num', units: [''], u: '', step: 1 },
     { k: 'break-after', l: '쪽 나눔(뒤)', kind: 'enum',
-      values: ['', 'auto', 'page', 'left', 'right'] }
+      values: ['', 'auto', 'page', 'left', 'right'] },
+    // ── 한글 조판에서 자주 손대는 것들 ──
+    // ⚠ `word-break: break-all` 은 낱말을 아무 데서나 자른다. 한글 금칙은
+    //   `line-break: strict` 가 맡는다(조판 엔진이 한다).
+    { k: 'line-break', l: '금칙 처리', kind: 'enum',
+      values: ['', 'auto', 'loose', 'normal', 'strict'] },
+    { k: 'word-break', l: '낱말 자르기', kind: 'enum',
+      values: ['', 'normal', 'keep-all', 'break-word'] },
+    { k: 'text-justify', l: '양끝 맞춤 방식', kind: 'enum',
+      values: ['', 'auto', 'inter-word', 'inter-character'] },
+    { k: 'text-align-last', l: '마지막 줄 정렬', kind: 'enum',
+      values: ['', 'auto', 'left', 'center', 'right', 'justify'] },
+    { k: 'padding-left', l: '안 여백(왼쪽)', kind: 'num', units: ['mm', 'pt'], u: 'mm' },
+    { k: 'padding-right', l: '안 여백(오른쪽)', kind: 'num', units: ['mm', 'pt'], u: 'mm' },
+    { k: 'vertical-align', l: '세로 맞춤', kind: 'enum',
+      values: ['', 'baseline', 'top', 'middle', 'bottom'] }
   ];
 
   /** 지금 고칠 대상. 스타일 목록에서 고른 것이 있으면 그것, 없으면 클릭한 자리. */

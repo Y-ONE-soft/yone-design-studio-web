@@ -384,6 +384,8 @@ _LEN_PROPS = {
     "padding", "padding-top", "padding-bottom", "padding-left", "padding-right",
     "width", "height", "min-height", "max-width", "top", "left", "right",
     "bottom", "border-width", "border-radius", "column-gap", "gap",
+    # 새로 연 밑줄·첨자 자리도 길이를 받는다
+    "text-underline-offset", "text-decoration-thickness",
 }
 _LEN_OK = re.compile(r"^-?(?:\d+\.?\d*|\.\d+)(pt|mm|cm|in|px|em|rem|%|q)$", re.I)
 
