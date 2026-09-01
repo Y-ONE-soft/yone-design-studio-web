@@ -43,7 +43,13 @@ def html(block, ref="", inl=None, esc=None):
         tgt = _refs.num(it.get("ref", ""))
         r = ("%s.items.%d" % (ref, i)) if ref else ""
         lvl = " lv%d" % int(it.get("level") or 1)
-        if tgt:
+        many = [x for x in (it.get("refs") or []) if x]
+        if many:
+            # 색인 — 한 낱말이 여러 면에 나온다. 면마다 번호를 하나씩 단다.
+            nums = [_refs.num(x) for x in many]
+            body = ink(label) + '<span class="viv-toc-pp">' + ", ".join(
+                '<a href="#vref%d"></a>' % n for n in nums if n) + '</span>'
+        elif tgt:
             body = '<a href="#vref%d">%s</a>' % (tgt, ink(label))
         else:
             # 가리킬 자리가 없으면 **번호 없이** 글만 — 조용히 빠뜨리지 않는다
@@ -76,4 +82,8 @@ CSS = """
 .viv-toc-i.lv3 { padding-left: 10mm; }
 .viv-toc-i a { text-decoration: none; color: inherit; }
 .viv-toc-i a::after { content: leader('.') target-counter(attr(href url), page); }
+
+/* 색인 — 한 낱말에 면 번호가 여럿. 점선 없이 번호만 늘어놓는다. */
+.viv-toc-pp { margin-left: 2mm; }
+.viv-toc-pp a::after { content: target-counter(attr(href url), page); }
 """
