@@ -84,29 +84,51 @@ def main():
 
 
 def check(scope, grade):
-    """범위 안 지문이 원고에 실제로 몇 개 있는지 센다.
+    """범위와 원고를 맞대 본다 — **어느 번호가 없는지**까지 짚는다.
 
-    Y.OS 지문수와 다를 수 있고, 그게 곧 결함은 아니다 — 모의고사 15~18 은
-    듣기라 지문 원고가 없다. 다만 **다르다는 사실은 조판 전에 알아야** 한다.
+    숫자만 세면 "13 vs 30" 이라 뭘 해야 할지 알 수 없다. 범위가 짚었는데
+    원고에 없는 번호를 그대로 늘어놓으면 그게 곧 할 일 목록이 된다.
+
+    다른 게 곧 결함은 아니다 — 모의고사 15~18 은 듣기라 지문 원고가 없다.
     """
     from engines.final import manuscript as M, manuscript_locate as L
     cfg = json.load(open(os.path.join(os.path.dirname(os.path.dirname(
         os.path.abspath(__file__))), "engines", "final", "config.json"),
         encoding="utf-8"))
     base = os.path.expanduser(cfg["gdrive_content_base"])
-    total = 0
+    total = want_all = 0
     for d, spec in S.folders(scope, base, grade=grade, log=print):
         blocks, _ = M.read(d, "arrange")
-        labs = [L.to_final_label(spec, b["raw"]) for b in blocks]
-        keep = [x for x in labs if x and S.in_scope(x, scope)]
+        labs = [x for x in (L.to_final_label(spec, b["raw"]) for b in blocks)
+                if x]
+        keep = [x for x in labs if S.in_scope(x, scope)]
         total += len(keep)
-        print("  · %-28s 원고 %2d → 범위 안 %2d"
-              % (os.path.basename(d)[:28], len([x for x in labs if x]),
-                 len(keep)))
-    want = sum(len((scope.get("detail", {}).get(t) or {}).get("only") or [])
-               for t in scope["tokens"])
-    print("■ 범위 안 %d지문 (Y.OS 가 짚은 번호 %d개)%s"
-          % (total, want, "" if total == want else "  ← 차이 확인 필요"))
+        # 이 폴더가 맡은 토큰이 짚은 번호 중, 원고 라벨로 안 나타난 것
+        missing = []
+        for t in scope["tokens"]:
+            only = (scope.get("detail", {}).get(t) or {}).get("only") or []
+            if not only:
+                continue
+            got = set()
+            for lab in labs:
+                tok, _tail = S.label_token(lab)
+                if tok is None or S._key(tok) != S._key(t):
+                    continue
+                m = S.RE_LAB_NO.search(
+                    lab[4:] if t[0] == "mock" else S.label_token(lab)[1])
+                if m:
+                    got.add(int(m.group(1)))
+            if got or any(S._key(S.label_token(x)[0] or ("?",)) == S._key(t)
+                          for x in labs):
+                want_all += len(only)
+                missing += [(t, n) for n in only if n not in got]
+        print("  · %-28s 원고 %2d → 범위 안 %2d%s"
+              % (os.path.basename(d)[:28], len(labs), len(keep),
+                 ("   원고에 없음: " + ", ".join(str(n) for _t, n in missing))
+                 if missing else ""))
+    print("■ 범위 안 %d지문 (범위가 짚은 번호 %d개)%s"
+          % (total, want_all,
+             "" if total == want_all else "  ← 위의 '원고에 없음' 확인"))
 
 
 if __name__ == "__main__":
