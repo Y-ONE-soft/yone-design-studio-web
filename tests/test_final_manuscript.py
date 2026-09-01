@@ -173,3 +173,30 @@ def test_lesson_number_is_the_one_attached_to_과(tmp_path):
     for n in (1, 2, 3):
         got = L.textbook(str(tmp_path), "공통영어2", "능률(민)", n)
         assert os.path.basename(got) == "공통영어2 능률(민) %d과" % n
+
+
+def test_writing_choices_come_from_the_hwp_when_the_docx_is_empty(tmp_path):
+    """고3 `7. 영작배열.docx` 는 보기 칸이 `()` 로 비어 있다 — 진짜 보기는
+    옆의 `…(서술형).hwp` 에 있다. 못 채우면 학생이 배열할 낱말이 없는 책이
+    나간다(실제로 그렇게 조판됐다)."""
+    from docx import Document
+    d = Document()
+    t = d.add_table(rows=3, cols=1)
+    t.cell(0, 0).text = "1. p102-no.01"
+    t.cell(1, 0).text = "그러나 많은 사람의 경우, 우리는 피상적인 작업을 한다."
+    t.cell(2, 0).text = "()"
+    p = tmp_path / "7. 영작배열.docx"
+    d.save(str(p))
+    (b,) = M.read_writing(str(p))
+    assert b["pairs"][0]["choices"] == "()"        # hwp 가 없으면 그대로
+
+    import engines.final.manuscript as MM
+    old = MM._hwp_choices
+    MM._hwp_choices = lambda _p: {
+        MM._kokey("그러나 많은 사람의 경우, 우리는 피상적인 작업을 한다."):
+        "For many people though, ( shallow work / doing / we )."}
+    try:
+        (b2,) = M.read_writing(str(p))
+    finally:
+        MM._hwp_choices = old
+    assert b2["pairs"][0]["choices"].startswith("For many people though")
