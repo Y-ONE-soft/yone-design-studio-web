@@ -415,26 +415,53 @@ def lesson_ranges(text):
     return out
 
 
-def unit_ranges(text):
-    """`08 1~5, 09 1~5, Mini Test 1 2~5` → {8: [1..5], 9: [1..5]}.
+RE_TAIL_NUMS = re.compile(r"([\d]+(?:\s*[~\-–]\s*\d+)?(?:\s*,\s*\d+(?:\s*[~\-–]\s*\d+)?)*)\s*$")
 
-    `<강 번호> <지문 번호들>` 이 쉼표로 이어진다.
+
+def unit_ranges(text):
+    """`08 1~5, 09 1~5, Mini Test 1 2~5, 12~17` → 강별 지문 번호.
+
+    돌려주는 것: [{"name": "", "no": 8, "nums": [1..5]}, …]
+
+    형식이 제각각이라(`08 1~5` · `(PART 01) 09 관계사 1~4` · `Mini Test 1 2~5`)
+    글자로 맞추지 않고 **자리로** 읽는다:
+      · 한 도막의 **맨 뒤 숫자 묶음**이 지문 번호다
+      · 그 앞에 남은 것 중 **마지막 숫자**가 강 번호,
+        그 앞의 글자가 이름이다(`Mini Test`, `PART`)
+      · 앞에 숫자가 없으면 **앞 강의 뒷토막**이다(`, 12~17`)
     """
-    out, cur = {}, None
+    out, cur = [], None
     for chunk in (text or "").split(","):
         c = chunk.strip()
         if not c:
             continue
-        m = re.match(r"^(\d{1,2})\s+([\d\s~\-–]+)$", c)
-        if m:                       # `08 1~5` — 강이 새로 열린다
-            cur = int(m.group(1))
-            out.setdefault(cur, [])
-            out[cur] = sorted(set(out[cur] + _ranges(m.group(2))))
-        elif cur is not None and re.match(r"^[\d\s~\-–]+$", c):
-            out[cur] = sorted(set(out[cur] + _ranges(c)))   # 같은 강의 뒷토막
+        m = RE_TAIL_NUMS.search(c)
+        if not m:
+            cur = None
+            continue
+        nums = _ranges(m.group(1))
+        head = c[:m.start()].strip()
+        hn = re.findall(r"\d+", head)
+        if not hn:
+            if cur is not None:            # `, 12~17` — 앞 강이 이어진다
+                cur["nums"] = sorted(set(cur["nums"] + nums))
+            continue
+        no = int(hn[-1])
+        # 이름 = 강 번호 앞의 글자(괄호 머리말은 버린다)
+        name = head[:head.rfind(hn[-1])]
+        name = re.sub(r"\([^)]*\)", " ", name)
+        name = re.sub(r"[\d.\-–~]+", " ", name).strip()
+        cur = {"name": name, "no": no, "nums": nums}
+        out.append(cur)
+    # 같은 이름·번호가 두 번 나오면 합친다
+    merged = {}
+    for u in out:
+        k = (u["name"].lower(), u["no"])
+        if k in merged:
+            merged[k]["nums"] = sorted(set(merged[k]["nums"] + u["nums"]))
         else:
-            cur = None              # `Mini Test 1 2~5` 처럼 강이 아닌 것
-    return out
+            merged[k] = u
+    return list(merged.values())
 
 
 def from_yos_entries(entries, grade=0):
@@ -472,10 +499,13 @@ def from_yos_entries(entries, grade=0):
             k = "teuk" if "수능특강" in book else (
                 "rp" if "Reading Power" in book or "리딩파워" in book else (
                     "olpo" if "올림포스" in book else "bare"))
-            for n, nums in unit_ranges(rng).items():
-                t = (k, n)
+            for u in unit_ranges(rng):
+                # `Mini Test 1` · `Test 2` 는 강이 아니라 실전 회차다
+                t = (("test", u["no"]) if "test" in u["name"].lower()
+                     else (k, u["no"]))
                 tokens.append(t)
-                detail[t] = {"book": book, "only": nums}
+                detail[t] = {"book": book, "only": u["nums"],
+                             "label": u["name"] or None}
         elif kind == "프린트":
             t = ("print", len(tokens))
             tokens.append(t)

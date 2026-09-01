@@ -107,8 +107,34 @@ def test_lesson_ranges_split_at_the_lesson_head():
 
 def test_unit_ranges_do_not_bleed_across_the_comma():
     """`08 1~5, 09 1~5` — 쉼표를 넘어가면 8강이 9,10 까지 삼킨다."""
-    got = S.unit_ranges("08 1~5, 09 1~5, 10 1~5, Mini Test 1 2~5, 12~17")
-    assert got == {8: [1, 2, 3, 4, 5], 9: [1, 2, 3, 4, 5], 10: [1, 2, 3, 4, 5]}
+    got = S.unit_ranges("08 1~5, 09 1~5, 10 1~5")
+    assert [(u["no"], u["nums"]) for u in got] == [
+        (8, [1, 2, 3, 4, 5]), (9, [1, 2, 3, 4, 5]), (10, [1, 2, 3, 4, 5])]
+
+
+def test_unit_ranges_read_by_position_not_by_shape():
+    """Y.OS 실제 값 — 맨 뒤 숫자 묶음이 지문, 그 앞 마지막 숫자가 강.
+
+    지문수(Y.OS 가 센 값)와 맞춰 본 것이라 숫자에 근거가 있다.
+    """
+    got = S.unit_ranges(
+        "08 1~5, 09 1~5, 10 1~5, 11 1~5, 12 1~5, "
+        "Mini Test 1 2~5, 12~17, 19~23, Mini Test 2 4~7, 12~16")
+    assert sum(len(u["nums"]) for u in got) == 49          # Y.OS: 49지문
+    assert [u["name"] for u in got][-2:] == ["Mini Test", "Mini Test"]
+
+    got2 = S.unit_ranges(
+        "(PART 01) 09 관계사 1~4, (PART 01) 10 형용사 · 부사 · 비교 구문 1~4, "
+        "(PART 01) 11 접속사와 전치사 1~4, (PART 01) 12 주의할 구문 1~4")
+    assert sum(len(u["nums"]) for u in got2) == 16         # Y.OS: 16지문
+    assert [u["no"] for u in got2] == [9, 10, 11, 12]      # PART 01 은 강이 아니다
+
+
+def test_mini_test_is_a_round_not_a_unit():
+    sc = S.from_yos_entries(
+        [("부교재", "수능특강 Light 영어독해연습(2025.10)",
+          "08 1~5, Mini Test 1 2~5", "9지문")], grade=2)
+    assert ("teuk", 8) in sc["tokens"] and ("test", 1) in sc["tokens"]
 
 
 def test_yos_entries_carry_the_passage_level_limit():

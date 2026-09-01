@@ -2537,8 +2537,14 @@
         //   가고 있었다). 엔진이 아직 그리는 중인지를 보고 판단한다.
         var busy = false;
         try { busy = (viewer.readyState === 'loading'); } catch (e) {}
-        if (!busy && t > 50) {                    // 다 그렸는데도 안 움직인다
-          veilOff(); drawPageNo(); msg('여기까지 갑니다 — ' + now + '면');
+        if (!busy && t > 50) {
+          // 다 그렸는데도 안 움직인다 = **여기가 판의 끝**이다.
+          // ⚠ 조판 엔진이 주는 `epageCount` 는 어림값이라 끝을 지나서도 남은
+          //   면이 있는 것처럼 보인다(견본 15면짜리를 40면이라 했고, 116면짜리
+          //   전권을 508 이라 했다). 실제로 닿은 끝을 **참으로 삼는다.**
+          if (n > now) { pageCount = now; pagesDrawn = ''; }
+          veilOff(); drawPageNo();
+          msg(n > now ? ('이 판은 ' + now + '면까지입니다') : (now + '면'));
           return;
         }
         if (t > 5000) {                           // 5분이면 무슨 일이 났다

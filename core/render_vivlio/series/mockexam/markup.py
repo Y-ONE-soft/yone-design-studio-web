@@ -154,22 +154,39 @@ class Renderer(object):
                         f'{esc(it.get("label") or "")}</td>{join(cells)}</tr>')
         return f'<table class="ab-table">{"".join(rows)}</table>'
 
-    def group_head(self, a, b, intro, essay_ns=None):
-        """묶음 머리. 학교마다 괄호·구분자·혼합 표기가 다르다."""
+    def group_head(self, a, b, intro, essay_ns=None, score=None):
+        """묶음 머리. 학교마다 괄호·구분자·혼합 표기가 다르다.
+
+        한영1 정본 실측: `[7~8] 다음 질문에 대한 답으로 … 고르시오. [각 3점씩]`
+        — 범위·지시문·배점이 **한 줄**에 들어가고, 구성원은 번호만 갖는다.
+        지시문은 원고가 `[9~10] 다음 글의 …` 처럼 범위를 달고 오므로 벗긴다.
+        """
         s = self.s
         if not s.group_template:
             # 묶음 표기를 안 쓰는 학교(상일1·광문2·세종1 일부) — 머리를 만들지 않는다
             return ""
+        intro = _strip_range_prefix(intro)
         if essay_ns and s.group_mixed:
             tpl = s.group_mixed
             marker = tpl.replace("{n}", str(a)).replace("{m}", str(essay_ns[0]))
         else:
             marker = s.group_template.replace("{a}", str(a)).replace("{b}", str(b))
-        marker = re.sub(r"\{지시문\}", "", marker).strip()
-        text = f"{marker} {intro}".strip() if s.group_intro_same_line and intro \
-            else marker
+        if "{지시문}" in marker:
+            # 템플릿이 지시문 자리를 정해 뒀으면 거기에 끼운다. 지시문이 이미
+            # 마침표로 끝나면 템플릿의 마침표를 겹쳐 찍지 않는다.
+            body_txt = (intro or "").rstrip()
+            marker = marker.replace("{지시문}.", body_txt) \
+                if body_txt.endswith((".", "?", "!")) \
+                else marker.replace("{지시문}", body_txt)
+            text = marker
+        else:
+            text = f"{marker} {intro}".strip() if s.group_intro_same_line and intro \
+                else marker
+        text = _fill_group_score(text, score, s)
+        text = re.sub(r"\s{2,}", " ", text).strip()
         body = esc(text)
-        if not s.group_intro_same_line and intro:
+        if not s.group_intro_same_line and intro and "{지시문}" not in \
+                (s.group_template or ""):
             body += f'</p><p class="group-intro">{esc(intro)}'
         return f'<p class="group">{body}</p>'
 
@@ -484,6 +501,38 @@ def _is_tiny_choices(items, limit=6):
     return all(len(t) <= limit for t in texts)
 
 
+_RE_RANGE_PREFIX = re.compile(r"^\s*[\[(（【〈]\s*\d+\s*[~\-–—]\s*\d+\s*"
+                              r"[\])）】〉]\s*")
+
+
+def _strip_range_prefix(intro):
+    """원고가 지시문 앞에 붙여 준 `[9~10]` 범위 표기를 벗긴다.
+
+    범위는 조판이 템플릿으로 다시 찍으므로, 그대로 두면 `[9~10] … [9~10] …`
+    으로 두 번 나온다.
+    """
+    return _RE_RANGE_PREFIX.sub("", intro or "").strip()
+
+
+def _fill_group_score(text, score, s):
+    """묶음 머리의 `{점수}` 를 채운다. 못 채우면 그 표기를 **지운다**.
+
+    정본은 `[각 3점씩]` 처럼 실제 값을 찍는다. 값을 모르는 채 `{점수}` 를
+    그대로 인쇄하면 안 된다.
+    """
+    if "{점수}" not in text:
+        return text
+    if score is None:
+        return re.sub(r"\s*[\[(（]\s*각?\s*\{점수\}[^\])）]*[\])）]", "",
+                      text).strip()
+    v = s.score_integer_form.replace("{n}", str(int(score))) \
+        if float(score) == int(score) and "{n}" in (s.score_integer_form or "") \
+        else None
+    num = str(int(score)) if float(score) == int(score) else \
+        f"{round(float(score), s.score_decimals)}"
+    return text.replace("{점수}", num)
+
+
 def _order_layout(items, s):
     """순서 배열 선지를 몇 열로 놓을까 — **단 폭에 들어가는 만큼**.
 
@@ -583,21 +632,52 @@ def _number_items(doc):
             q += 1
             plan.append({"item": it, "essay": False, "no": q})
 
-    # 묶음: 도입문이 나온 문항부터, 다음 도입문(또는 끝) 직전까지가 한 묶음이다.
-    starts = [i for i, r in enumerate(plan) if r["item"].get("_group_intro")]
-    for gi, i in enumerate(starts):
-        end = starts[gi + 1] - 1 if gi + 1 < len(starts) else len(plan) - 1
-        members = plan[i:end + 1]
-        sel = [m for m in members if not m["essay"]]
-        ess = [m for m in members if m["essay"]]
-        plan[i]["group"] = {
-            "a": sel[0]["no"] if sel else None,
-            "b": sel[-1]["no"] if sel else None,
-            "essay_ns": [m["no"] for m in ess],
-            "n": len(members),
-            "intro": r_intro(plan[i]["item"]),
-        }
+    # 묶음. **원고가 준 묶음 id 를 먼저 믿는다** — `[9~10]` 처럼 범위를 명시한
+    # 원고에서 도입문 사이 거리로 재면 다음 묶음까지 끌고 가 `[9~15]` 가 된다.
+    gid = {}
+    for i, r in enumerate(plan):
+        g = (r["item"].get("header") or {}).get("group_id")
+        if g:
+            gid.setdefault(g, []).append(i)
+    used = set()
+    for g, idxs in gid.items():
+        members = [plan[i] for i in idxs]
+        _set_group(plan, idxs[0], members)
+        used.update(idxs)
+
+    # id 가 없는 원고는 도입문 사이 거리로 잡는다(종전 방식).
+    starts = [i for i, r in enumerate(plan)
+              if r["item"].get("_group_intro") and i not in used]
+    bounds = sorted(starts + [i for i in used])
+    for i in starts:
+        nxt = [b for b in bounds if b > i]
+        end = (nxt[0] - 1) if nxt else len(plan) - 1
+        _set_group(plan, i, plan[i:end + 1])
     return plan
+
+
+def _set_group(plan, i, members):
+    sel = [m for m in members if not m["essay"]]
+    ess = [m for m in members if m["essay"]]
+    intro = r_intro(plan[i]["item"])
+    # 묶음 구성원이 저마다 발문을 갖는지 — 정본 한영1 규칙:
+    # `…물음에 답하시오.` 면 개별발문형, 그 밖(주제·어휘·빈칸 …)은 공통발문형.
+    common = bool(intro) and not _RE_GROUP_INDIV.search(intro)
+    plan[i]["group"] = {
+        "a": sel[0]["no"] if sel else None,
+        "b": sel[-1]["no"] if sel else None,
+        "essay_ns": [m["no"] for m in ess],
+        "n": len(members),
+        "intro": intro,
+        "common_stem": common,
+        "members": members,
+    }
+    if common:
+        for m in members:
+            m["no_stem"] = True
+
+
+_RE_GROUP_INDIV = re.compile(r"물음에\s*답하시오|각\s*물음")
 
 
 def r_intro(it):
@@ -610,29 +690,49 @@ def build_body(doc, spec, case=None, scores=None):
     scores = scores or {}
     sel_scores = list(scores.get("선택형") or [])
     ess_scores = list(scores.get("서답형") or [])
+    plan = _number_items(doc)
+
+    # 1패스 — 배점을 먼저 얹는다. 묶음 머리의 `[각 N점씩]` 이 구성원 배점을
+    # 알아야 하므로 렌더보다 앞서야 한다.
+    for row in plan:
+        it = row["item"]
+        pool = ess_scores if row["essay"] else sel_scores
+        if len(pool) >= row["no"]:
+            it.setdefault("header", {})["score"] = pool[row["no"] - 1]
+
+    # 공통발문형 묶음은 배점을 머리에 한 번만 찍는다(정본 한영1 실측).
+    for row in plan:
+        g = row.get("group")
+        if not g or not g.get("common_stem"):
+            continue
+        vals = [((m["item"].get("header") or {}).get("score"))
+                for m in g["members"]]
+        vals = [v for v in vals if v is not None]
+        g["score"] = vals[0] if vals and len(set(vals)) == 1 else None
+        if g["score"] is not None:
+            for m in g["members"]:
+                (m["item"].get("header") or {}).pop("score", None)
+
+    # 2패스 — 렌더
     out = []
-    for row in _number_items(doc):
+    for row in plan:
         it = row["item"]
         g = row.get("group")
         if g:
             if g["a"] is not None and g["b"] is not None and g["b"] > g["a"]:
-                head = r.group_head(g["a"], g["b"], g["intro"], g["essay_ns"])
+                head = r.group_head(g["a"], g["b"], g["intro"], g["essay_ns"],
+                                    g.get("score"))
             elif g["essay_ns"] and g["a"] is not None and spec.group_mixed:
-                head = r.group_head(g["a"], g["a"], g["intro"], g["essay_ns"])
+                head = r.group_head(g["a"], g["a"], g["intro"], g["essay_ns"],
+                                    g.get("score"))
             else:
                 head = ""          # 묶음이 한 문항뿐 — 머리를 만들지 않는다
             if head:
                 out.append(head)
             elif g["intro"]:
                 out.append(f'<p class="group-intro">{esc(g["intro"])}</p>')
-        # 배점은 원고가 안 주므로 배분표에서 꺼내 얹는다
-        if row["essay"]:
-            if len(ess_scores) >= row["no"]:
-                it.setdefault("header", {})["score"] = ess_scores[row["no"] - 1]
-        else:
-            if len(sel_scores) >= row["no"]:
-                it.setdefault("header", {})["score"] = sel_scores[row["no"] - 1]
-        out.append(r.item(it))
+        ctx = {"member_no_stem": True} if row.get("no_stem") else None
+        out.append(r.item(it, ctx))
     return "\n".join(out), r.warnings
 
 
