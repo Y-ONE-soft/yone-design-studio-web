@@ -49,6 +49,9 @@ def _put(data, ref):
     if isinstance(cur, list) and cur and all(isinstance(x, str) for x in cur):
         holder[key] = [_rich(x) if x.strip() else x for x in cur]
         return True
+    # ⚠ **덩어리(dict)는 건드리지 않는다.** 작업대도 못 고친다(409). 예전에
+    #   그 안의 글자를 다 바꿨더니 `kind` 같은 **구조 열쇠**까지 서식 조각이
+    #   되어, 없는 결함이 있는 것처럼 나왔다.
     return False
 
 
@@ -91,7 +94,7 @@ def main(only=None):
         except Exception as e:
             bad += 1
             print("%-11s ✗ %s: %s" % (s, type(e).__name__, str(e)[:80]))
-            for line in traceback.format_exc().strip().splitlines()[-4:]:
+            for line in traceback.format_exc().strip().splitlines()[-12:]:
                 print("            " + line.strip())
         finally:
             os.replace(bak, dp)

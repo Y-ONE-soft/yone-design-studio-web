@@ -39,6 +39,11 @@ PAGE_H = 179.0                   # 워크북 지면 세로(mm) — 문항 간격
 EN_CPL, KR_CPL = 93, 53          # 한 줄에 들어가는 글자 수(추정)
 
 
+def _s(x):
+    """앞뒤 공백만 턴다. **서식 조각이면 그대로** — `.strip()` 은 거기서 죽는다."""
+    return x.strip() if isinstance(x, str) else x
+
+
 def esc(s):
     # ⚠ 작업대에서 **글자 단위 서식**을 걸면 이 값이 서식 조각 목록이 된다.
     #   그때 `html.escape()` 는 죽고 **조판이 통째로 안 나온다**(실측: 라벨에
@@ -122,8 +127,12 @@ def _wcls(w):
 
 
 def _vw(t):
-    """시각 폭 — 한글 1, 나머지 0.5로 센다."""
-    return sum(1.0 if ord(ch) > 0x1100 else .5 for ch in t)
+    """시각 폭 — 한글 1, 나머지 0.5로 센다.
+
+    ⚠ 재는 것은 **글자**다. 작업대가 건 서식 조각이 오면 글만 꺼내 센다
+      (예전에는 `ord(dict)` 로 죽었다).
+    """
+    return sum(1.0 if ord(ch) > 0x1100 else .5 for ch in _rtx.plain(t))
 
 
 class Renderer(object):
@@ -396,7 +405,7 @@ class Renderer(object):
                 ir = _refs.of(it)
                 o.append(f'<div class="q"><span class="no">{int(it["no"]):02d}</span>'
                          f'<span{_refs.mark(ir and ir + ".text", "wd")}>'
-                         f'{esc(it["text"].strip())}</span>'
+                         f'{esc(_s(it["text"]))}</span>'
                          f'<span class="rule"></span></div>')
             o.append("</div>")
         elif L == "B":
@@ -459,7 +468,11 @@ class Renderer(object):
                         opened_items = True
                     seq += 1
                     no = seq if L == "C" else int(it["no"])
-                    txt = re.sub(r"\s*:?\s*_{3,}\s*$", "", it["text"])
+                    # ⚠ 이 줄은 **끝의 빈칸 표시를 떼고 마지막 낱말에 답칸을
+                    #   붙이는** 구조 작업이라 글 그대로여야 한다. 작업대가 건
+                    #   서식 조각이 오면 글만 꺼낸다(그 줄의 서식은 못 살린다).
+                    txt = re.sub(r"\s*:?\s*_{3,}\s*$", "",
+                                 _rtx.plain(it["text"]))
                     e = esc(txt)
                     head, _, tail = e.rpartition(" ")
                     body = ((head + " " if head else "")

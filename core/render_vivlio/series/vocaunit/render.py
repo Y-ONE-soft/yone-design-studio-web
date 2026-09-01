@@ -38,6 +38,11 @@ _RE_MULTISPACE = re.compile(r"\s{2,}")
 _CIRCLED = "①②③④⑤⑥⑦⑧⑨"
 
 
+def _s(x):
+    """앞뒤 공백만 턴다. **서식 조각이면 그대로** — `.strip()` 은 거기서 죽는다."""
+    return x.strip() if isinstance(x, str) else x
+
+
 def esc(s):
     # ⚠ 작업대에서 **글자 단위 서식**을 걸면 이 값이 서식 조각 목록이 된다.
     #   그때 `html.escape()` 는 죽고 **조판이 통째로 안 나온다**(실측: 라벨에
@@ -112,9 +117,24 @@ def _paren(s):
 
 
 def meaning(s, notes="small"):
-    """뜻 — 품사마다 한 줄. 품사는 네모 배지, 의미 번호는 보조색."""
+    """뜻 — 품사마다 한 줄. 품사는 네모 배지, 의미 번호는 보조색.
+
+    ⚠ 작업대에서 글자 서식을 걸면 **서식 조각**으로 온다. 조각마다 따로 훑고
+      서식을 다시 씌운다(배지가 조각 경계에 걸치면 그 조각은 배지를 못 잡는다).
+    """
     if notes == "drop":
         s = drop_notes(s)
+    if isinstance(s, dict):
+        inner = meaning(s.get("t", ""), notes)
+        a = _rtx.seg_attr(s)
+        if a:
+            inner = f"<span{a}>{inner}</span>"
+        for k, tag in (("u", "u"), ("b", "b"), ("i", "i")):
+            if s.get(k):
+                inner = f"<{tag}>{inner}</{tag}>"
+        return inner
+    if isinstance(s, list):
+        return "".join(meaning(x, notes) for x in s)
     hits = list(_RE_POS.finditer(s or ""))
     if not hits:
         return f"<p>{_paren(_sense(esc(s)))}</p>"
@@ -135,6 +155,8 @@ def deriv(line, notes="small"):
     """파생어 한 줄 — `단어 [품사] 뜻`. 품사만 네모 배지로."""
     if notes == "drop":
         line = drop_notes(line)
+    if not isinstance(line, str):
+        return meaning(line, notes)     # 서식 조각이면 뜻과 같은 길로
     s = _paren(_sense(esc(line)))
     return _RE_POS_SP.sub(lambda m: f'<b class="pos">{m.group(1)}</b>', s)
 
@@ -217,9 +239,12 @@ class TextWidth(object):
 
 
 def _w_em(t):
-    """Tab(잘난체) 기준 글자폭 합 — 한글 1em, 라틴 0.62em, 공백 0.3em."""
+    """Tab(잘난체) 기준 글자폭 합 — 한글 1em, 라틴 0.62em, 공백 0.3em.
+
+    ⚠ 재는 것은 **글자**다 — 서식 조각이 오면 글만 꺼내 센다.
+    """
     tot = 0.0
-    for ch in t or "":
+    for ch in _rtx.plain(t) or "":
         tot += 0.3 if ch == " " else (1.0 if ord(ch) > 0x2000 else 0.62)
     return tot
 
