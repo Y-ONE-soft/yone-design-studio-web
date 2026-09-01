@@ -3621,44 +3621,8 @@
 
   function aiSay(html) { $('ai-out').innerHTML = html; }
 
-  $('ai-go').addEventListener('click', function () {
-    var q = $('ai-q').value.trim();
-    if (!q) { msg('무엇을 고칠지 적어 주세요'); return; }
-    $('ai-go').disabled = true;
-    aiSay('<div class="ide-hint">클로드가 보는 중…</div>');
-    msg('클로드가 보는 중…');
-    api('/api/book-studio/assist',
-        { b: key, prompt: q, classes: pageClasses(), picked: curRef || '' })
-      .then(function (d) {
-        $('ai-go').disabled = false;
-        if (d.error) { aiSay('<div>✗ ' + d.error + '</div>'); msg('✗ ' + d.error); return; }
-        var h = '<div>' + (d.note || '') + '</div>';
-        var bits = [];
-        for (var k2 in (d.knobs || {})) bits.push(k2 + ' → ' + d.knobs[k2]);
-        for (var s2 in (d.styles || {})) bits.push(s2);
-        if (d.css_changed) bits.push('overrides.css');
-        if (bits.length) {
-          h += '<div class="ide-hint" style="margin-top:4px">고친 곳: '
-             + bits.join(' · ') + '</div>';
-        }
-        if ((d.refused || []).length) {
-          h += '<div class="ide-hint" style="margin-top:4px;color:#e0a06a">'
-             + '거른 것: ' + d.refused.join(' · ') + '</div>';
-        }
-        aiSay(h);
-        if (!d.changed) { msg('고친 것이 없습니다'); return; }
-        loadBook(false);            // 손잡이 값이 바뀌었으니 팔레트부터 다시
-      });
-  });
-
-  $('ai-undo').addEventListener('click', function () {
-    if (!confirm('직전 한 번을 되돌립니다.')) return;
-    api('/api/book-studio/assist-undo', { b: key }).then(function (d) {
-      if (d.error) { msg('✗ ' + d.error); return; }
-      aiSay('<div>되돌렸습니다 — ' + (d.restored || []).join(' · ') + '</div>');
-      loadBook(false);
-    });
-  });
+  // ⚠ 클로드 단추도 **한 번만** 걸어야 한다. 두 번 걸려 있어서 한 번 누르면
+  //   같은 부탁이 두 번 갔다(돈도 두 배, 고친 것도 두 벌).
 
   // ⚠ 찾기 단추는 **한 번만** 걸어야 한다. 두 번 걸려 있어서 "모두 바꾸기"
   //   가 확인 창을 두 번 띄우고 두 번 돌았다(두 번째는 바꿀 게 없어 조용했다).

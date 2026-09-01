@@ -2012,3 +2012,17 @@ def test_find_buttons_are_bound_once():
     ui = _studio_src()
     assert ui.count("$('find-all').addEventListener") == 1
     assert ui.count("$('find-go').addEventListener") == 1
+
+
+def test_no_button_is_bound_twice():
+    """두 번 걸린 단추는 **한 번 눌러도 두 번 돈다.**
+
+    실측: "모두 바꾸기" 가 확인 창을 두 번 띄웠고, 클로드 단추는 같은 부탁을
+    두 번 보냈다(돈도 두 배). 조용히 두 번 도는 것이라 여태 몰랐다.
+    """
+    import collections
+    import re as _re
+    ui = _studio_src()
+    n = collections.Counter(_re.findall(r"\$\('([\w-]+)'\)\.addEventListener", ui))
+    dup = {k: v for k, v in n.items() if v > 1}
+    assert not dup, f"두 번 걸린 단추: {dup}"

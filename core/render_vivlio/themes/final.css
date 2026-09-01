@@ -154,12 +154,16 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 }
 .art .toc { left: 108.80mm; top: 179.50mm; width: 60mm;
             font: 8.46pt/4.235mm Noto; }
-.art .toc p { white-space: nowrap; }
-.art .toc .g { font-weight: 900; margin-top: 2.82mm; }
+/* ⚠ 굵은 것은 **번호뿐**이다 — 완성본은 `1` 이 Black, `문장배열` 은 Medium.
+ *   묶음 줄 전체에 900 을 걸면 항목 이름까지 굵어진다(실측으로 잡았다). */
+.art .toc p { white-space: nowrap; font-weight: 500; }
+.art .toc .g { margin-top: 2.82mm; }
 .art .toc .g:first-child { margin-top: 0; }
-/* 이어지는 줄(문장 삽입…)은 뒤에 1.42mm 를 더 둔다(완성본 실측) */
-.art .toc .s { font-weight: 500; margin-bottom: 1.42mm; }
-.art .toc .n { display: inline-block; width: 4.60mm; }
+/* 이어지는 줄(문장 삽입…)은 뒤에 1.42mm 를 더 둔다(완성본 실측).
+ * ⚠ `margin-bottom` 으로 두면 다음 묶음의 `margin-top` 과 **붙어 버려**
+ *   큰 쪽(2.82mm)만 남는다 — 묶음 사이가 8.47mm 여야 하는데 7.08mm 가 됐다. */
+.art .toc .s { padding-bottom: 1.42mm; }
+.art .toc .n { display: inline-block; width: 3.96mm; font-weight: 900; }
 
 .sec { break-before: page; }
 .sec-arrange { page: arrange; }
