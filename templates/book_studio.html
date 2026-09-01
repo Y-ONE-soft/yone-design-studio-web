@@ -515,7 +515,15 @@
   function api(u, body) {
     return fetch(u, body ? { method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body) } : undefined).then(function (r) { return r.json(); });
+      body: JSON.stringify(body) } : undefined)
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        // ⚠ 고친 것을 알리는 응답은 **여기 한 곳에서** 이력에 반영한다.
+        //   자리마다 따로 부르면 반드시 빠뜨린다 — 스타일 패널이 그랬다:
+        //   지면은 바뀌는데 되돌리기 단추가 회색이라 ⌘Z 가 안 먹었다.
+        if (d && d.history) { setHist(d.history); }
+        return d;
+      });
   }
 
   // ── 지면 ────────────────────────────────────────────────

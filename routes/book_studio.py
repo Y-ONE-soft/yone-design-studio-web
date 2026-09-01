@@ -187,12 +187,12 @@ def api_save():
     from core.render_vivlio import book as bookmod
     from core.render_vivlio import edits as _ed
     cfg = bookmod.load(d)
-    done = []
+    done, st = [], _ed.read(cfg)
     for k, v in (p.get("changes") or {}).items():
-        _ed.push(cfg, {"op": "knob", "key": k,
-                       "v": None if v is None else _num(v)})
+        st = _ed.push(cfg, {"op": "knob", "key": k,
+                            "v": None if v is None else _num(v)})
         done.append(k)
-    return jsonify({"ok": True, "changed": done,
+    return jsonify({"ok": True, "changed": done, "history": _hist(st),
                     "log": "값 %d개를 이력에 쌓았습니다 — ⌘Z 로 되돌릴 수 있습니다"
                            % len(done)})
 
@@ -292,7 +292,7 @@ def api_text():
                         "html": rt.to_html(ed.get(cur, ref)),
                         "origin": rt.to_text(ed.get(raw, ref)),
                         "edited": touched,
-                        "history": {"head": st["head"], "total": len(st["ops"])}})
+                        "history": _hist(st)})
     text = p.get("text")
     src_html = p.get("html")
     if text is None and src_html is None:
@@ -311,7 +311,7 @@ def api_text():
         st = ed.push(cfg, {"op": "set", "ref": ref,
                            "v": rt.from_text(text, like=ed.get(raw, ref))})
     return jsonify({"ok": True, "entries": st["head"],
-                    "history": {"head": st["head"], "total": len(st["ops"])}})
+                    "history": _hist(st)})
 
 
 def _text_from_config(cfg, ref, p, get):
@@ -368,7 +368,7 @@ def api_op():
     st = ed.push(cfg, {k: v for k, v in p.items()
                        if k in ("op", "ref", "v", "at", "note")})
     return jsonify({"ok": True,
-                    "history": {"head": st["head"], "total": len(st["ops"])}})
+                    "history": _hist(st)})
 
 
 # 길이를 재는 속성 — 여기에 **맨 숫자**를 넣으면 CSS 가 통째로 무시된다.
@@ -452,10 +452,10 @@ def api_styles():
             cur.pop(k, None)
         else:
             cur[k] = v
-    _ed.push(cfg, {"op": "style", "sel": sel, "v": cur or None})
+    st = _ed.push(cfg, {"op": "style", "sel": sel, "v": cur or None})
     cfg.reload()
     styles = cfg.section("styles") or {}
-    return jsonify({"ok": True, "styles": styles})
+    return jsonify({"ok": True, "styles": styles, "history": _hist(st)})
 
 
 IMG_OK = (".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp")
@@ -658,6 +658,16 @@ def api_assist_undo():
     return jsonify({"ok": True, "restored": back})
 
 
+def _hist(st):
+    """이력 상태 한 줄 — **고친 것을 알린 모든 응답**에 실어야 한다.
+
+    ⚠ 안 실으면 화면의 되돌리기 단추가 **꺼진 채로 남는다.** 실제로 그랬다:
+      스타일을 바꿔 지면은 바뀌었는데 ⌘Z 가 회색이라 되돌릴 수가 없었다.
+      고친 것을 알리는 자리는 여기 하나로 모은다.
+    """
+    return {"head": st["head"], "total": len(st["ops"])}
+
+
 def _list_slot(ref, data=None, cfg=None):
     """이 자리표가 **어느 목록의 몇 번째**인가 → (목록 경로, 넣을 자리).
 
@@ -747,10 +757,11 @@ def api_pagerules():
     else:
         rules.pop(sel, None)
     # 같은 이력에 — ⌘Z 로 되돌아간다
-    ed.push(cfg, {"op": "knob", "key": "page_rules",
-                  "v": rules or None, "note": "마스터 페이지"})
+    st = ed.push(cfg, {"op": "knob", "key": "page_rules",
+                       "v": rules or None, "note": "마스터 페이지"})
     cfg.reload()
-    return jsonify({"ok": True, "rules": cfg.section("page_rules") or {}})
+    return jsonify({"ok": True, "rules": cfg.section("page_rules") or {},
+                    "history": _hist(st)})
 
 
 @bp.route("/api/book-studio/box", methods=["POST"])
@@ -786,7 +797,7 @@ def api_box():
         st = ed.push(cfg, {"op": "insert", "ref": f"{base}.{at}", "v": b,
                            "note": "상자 넣기"})
         return jsonify({"ok": True, "ref": f"{base}.{at}",
-                        "history": {"head": st["head"], "total": len(st["ops"])}})
+                        "history": _hist(st)})
 
     block = ed.get(cur, ref)
     if not isinstance(block, dict) or block.get("t") != "box":
@@ -794,7 +805,7 @@ def api_box():
     if act == "delete":
         st = ed.push(cfg, {"op": "delete", "ref": ref, "note": "상자 지우기"})
         return jsonify({"ok": True,
-                        "history": {"head": st["head"], "total": len(st["ops"])}})
+                        "history": _hist(st)})
     if act != "move":
         return jsonify({"error": f"모르는 동작: {act}"}), 400
     b = json.loads(json.dumps(block))
@@ -814,7 +825,7 @@ def api_box():
             b.pop("wrap", None)
     st = ed.push(cfg, {"op": "set", "ref": ref, "v": b, "note": "상자 옮기기"})
     return jsonify({"ok": True,
-                    "history": {"head": st["head"], "total": len(st["ops"])}})
+                    "history": _hist(st)})
 
 
 @bp.route("/api/book-studio/export", methods=["POST"])
@@ -884,7 +895,7 @@ def api_table():
                            "v": tbl.new(cols, rows, bool(p.get("head", True))),
                            "note": "표 넣기"})
         return jsonify({"ok": True, "ref": f"{base}.{at}",
-                        "history": {"head": st["head"], "total": len(st["ops"])}})
+                        "history": _hist(st)})
 
     # 행·열 늘리고 줄이기 — 표 블록 자체를 통째로 갈아 끼운다
     block = ed.get(cur, ref)
@@ -937,12 +948,12 @@ def api_table():
     elif act == "delete":
         st = ed.push(cfg, {"op": "delete", "ref": ref, "note": "표 지우기"})
         return jsonify({"ok": True,
-                        "history": {"head": st["head"], "total": len(st["ops"])}})
+                        "history": _hist(st)})
     else:
         return jsonify({"error": f"모르는 동작: {act}"}), 400
     st = ed.push(cfg, {"op": "set", "ref": ref, "v": b, "note": "표 " + act})
     return jsonify({"ok": True,
-                    "history": {"head": st["head"], "total": len(st["ops"])}})
+                    "history": _hist(st)})
 
 
 @bp.route("/api/book-studio/fonts")
@@ -1167,7 +1178,7 @@ def api_find():
         n += 1
     st = ed.read(cfg)
     return jsonify({"ok": True, "changed": n,
-                    "history": {"head": st["head"], "total": len(st["ops"])}})
+                    "history": _hist(st)})
 
 
 def _ireplace(s, a, b):

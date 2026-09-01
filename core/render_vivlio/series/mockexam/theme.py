@@ -282,6 +282,22 @@ def build_css(spec):
                    f"font-weight: {700 if s.ending_bold else 400}; "
                    "margin-top: 6pt; }")
 
+    # ── 배점표(세종 계열) — 마무리 문구 아래, 같은 단 안 ──
+    if getattr(s, "score_table", False):
+        bw = s.score_table_border_pt
+        base = s.role("passage")
+        size = float(base.get("size_pt") or 9.0)
+        css.append(f".score-table {{ border-collapse: collapse; "
+                   f"margin: 4pt auto 0; table-layout: fixed; width: 100%; "
+                   f"break-inside: avoid; }}")
+        css.append(f".score-table th, .score-table td {{ "
+                   f"border: {bw}pt solid #000; text-align: center; "
+                   f"vertical-align: middle; padding: 0.4pt 0; "
+                   f"font-size: {round(size - 0.5, 1)}pt; line-height: 1.15; "
+                   f"word-break: break-all; }}")
+        # 머리칸은 좁아 `번`/`호` 두 줄로 접힌다 — 실물 그대로
+        css.append(".score-table th { width: 6%; font-weight: 400; }")
+
     css.append("")
     css.append("u { text-underline-offset: 0.16em; text-decoration-thickness: 0.06em; }")
     return "\n".join(css)

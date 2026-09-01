@@ -277,7 +277,19 @@ class Spec(object):
         self.ending = self.ending_lines[0] if self.ending_lines else None
         self.ending_align = _first(p, ["ending.align"], "center")
         self.ending_bold = bool(dig(p, "ending.bold"))
-        self.score_table = bool(dig(p, "score_table.on"))
+        st = dig(p, "score_table") or {}
+        self.score_table = bool(st.get("on"))
+        # 배점표(세종 계열) — 마지막 쪽 마무리 문구 아래. 값은 배분표에서 오고
+        # 모양만 프로파일이 정한다. `cols` 는 머리칸을 포함한 수라 1을 뺀다.
+        self.score_table_layout = _str(st.get("layout"), "horizontal_bands")
+        self.score_table_band = max(int(_num(st.get("cols"), 13) or 13) - 1, 1)
+        self.score_table_essay = bool(st.get("includes_essay"))
+        self.score_table_essay_label = _str(st.get("essay_label_in_table"),
+                                            "서{n}")
+        self.score_table_border_pt = float(_num(st.get("border_pt"), 0.24)
+                                           or 0.24)
+        self.score_table_heads = (_str(st.get("head_no"), "번호"),
+                                  _str(st.get("head_score"), "배점"))
 
     def _box(self, p, name):
         b = p.get(name) or {}

@@ -302,6 +302,59 @@ def build_body(doc, spec, case=None, scores=None):
     return "\n".join(out), r.warnings
 
 
+def score_table(spec, scores):
+    """마지막 쪽 배점표(세종 계열).
+
+    값은 배분표에서 오고 모양만 프로파일이 정한다 — 원고 문항 수가 정본과
+    달라도 표가 따라 늘어난다. 가로 밴드형은 12칸씩 끊어 (번호행, 배점행)
+    한 쌍을 만들고, 서답형이 있으면 마지막 밴드로 붙인다.
+    """
+    if not spec.score_table:
+        return ""
+    sel = list((scores or {}).get("선택형") or [])
+    ess = list((scores or {}).get("서답형") or [])
+    if not sel and not ess:
+        return ""
+    h_no, h_sc = spec.score_table_heads
+    w = spec.score_table_band
+
+    def band(labels, vals, span=1, whole=False):
+        cells_n = "".join(f'<td colspan="{span}">{esc(str(x))}</td>'
+                          for x in labels)
+        cells_s = "".join(f'<td colspan="{span}">{esc(_fmt_cell(v, whole))}</td>'
+                          for v in vals)
+        pad = w - len(labels) * span
+        if pad > 0:
+            cells_n += f'<td colspan="{pad}"></td>'
+            cells_s += f'<td colspan="{pad}"></td>'
+        return (f'<tr><th>{esc(h_no)}</th>{cells_n}</tr>'
+                f'<tr><th>{esc(h_sc)}</th>{cells_s}</tr>')
+
+    rows = []
+    for i in range(0, len(sel), w):
+        chunk = sel[i:i + w]
+        rows.append(band([str(i + j + 1) for j in range(len(chunk))], chunk))
+    if ess and spec.score_table_essay:
+        tpl = spec.score_table_essay_label or "서{n}"
+        span = max(w // max(len(ess), 1), 1)
+        rows.append(band([tpl.replace("{n}", str(j + 1))
+                          for j in range(len(ess))], ess, span, whole=True))
+    return ('<table class="score-table">'
+            f'{"".join(rows)}</table>')
+
+
+def _fmt_cell(v, whole=False):
+    """표 안 표기 — **선택형은 항상 소수 한 자리**(`3.0`), 서답형만 정수(`5`).
+
+    정본 실측: 선택형 밴드는 2.7·3.0 처럼 자릿수가 고르고, 서답형 밴드만
+    `5` 로 적힌다. 값이 정수라고 선택형까지 `3` 으로 줄이면 실물과 어긋난다.
+    """
+    f = float(v)
+    if whole and abs(f - round(f)) < 1e-9:
+        return str(int(round(f)))
+    return f"{f:.1f}"
+
+
 def build_html(doc, spec, case=None, css_href="theme.css", scores=None):
     body, warns = build_body(doc, spec, case, scores)
     s = spec
@@ -317,6 +370,7 @@ def build_html(doc, spec, case=None, css_href="theme.css", scores=None):
     ending = ""
     if s.ending_lines:
         ending = "".join(f'<p class="ending">{esc(l)}</p>' for l in s.ending_lines)
+    ending += score_table(s, scores)
     title = esc(f"{s.school} {s.grade} {s.subject_title}")
     doc_html = f"""<!DOCTYPE html>
 <html lang="ko">
