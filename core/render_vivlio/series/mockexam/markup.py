@@ -1034,6 +1034,129 @@ def _running_header(s, case):
     return '<div class="page-header">' + "".join(bits) + "</div>"
 
 
+# ── 표형 머리표 ─────────────────────────────────────────────────────────────
+# 16개 학교가 저마다 다른 표기로 셀을 적어 두었다(실측자가 달랐다). 이름이
+# 아니라 **모양**으로 읽어 (행, 열, 병합, 글) 로 정규화한다.
+_RE_PLACEHOLDER = re.compile(r"^\s*[(（].*[)）]\s*$")
+
+
+def _cell_span(v):
+    """`1` → (1,1) · `"2-3"` → (2,2) · `"1-3"` → (1,3)"""
+    if isinstance(v, int):
+        return v, 1
+    m = re.match(r"\s*(\d+)\s*[-~]\s*(\d+)", str(v or "1"))
+    if m:
+        a, b = int(m.group(1)), int(m.group(2))
+        return a, max(b - a + 1, 1)
+    m = re.match(r"\s*(\d+)", str(v or "1"))
+    return (int(m.group(1)) if m else 1), 1
+
+
+def _header_grid(cells):
+    """학교별 셀 표기를 [(row, col, rowspan, text, role)] 로 정규화."""
+    out = []
+
+    def colno(c, fallback):
+        # 열 번호가 숫자면 그대로, 이름이면 **열이 아니라 셀 이름**이다
+        # (한영3 `c="코드값"`). 그럴 땐 0 을 돌려 배치 단계에서 행 안 순서로
+        # 왼쪽부터 빈 칸에 채운다.
+        return c if isinstance(c, int) else 0
+
+    for i, cell in enumerate(cells):
+        if not isinstance(cell, dict):
+            continue
+        col = colno(cell.get("c", cell.get("col")), i + 1)
+        # ① 라벨/값 두 줄짜리(명일·강동)
+        if "label" in cell and "value" in cell:
+            span = int(cell.get("rowspan") or 1)
+            lab = str(cell["label"])
+            # `(학교 배지)` 처럼 라벨 자체가 자리표면 그 칸은 통째로 비운다
+            if _RE_PLACEHOLDER.match(lab):
+                out.append((1, col, max(span, 2), "", "logo"))
+                continue
+            if span > 1:
+                out.append((1, col, span, str(cell.get("value") or ""), "logo"))
+            else:
+                out.append((1, col, 1, lab, "label"))
+                out.append((2, col, 1, str(cell["value"]), "value"))
+            continue
+        # ② row1 / row2 / row3 / row2_3 (한영1)
+        rowkeys = [k for k in cell if k.startswith("row") and k not in ("row",)]
+        if rowkeys:
+            if cell.get("rows"):
+                r, sp = _cell_span(cell["rows"])
+                out.append((r, col, max(sp, 3), str(cell.get("text") or ""),
+                            "title"))
+                continue
+            for k in rowkeys:
+                m = re.findall(r"\d+", k)
+                if not m:
+                    continue
+                r = int(m[0])
+                sp = (int(m[-1]) - r + 1) if len(m) > 1 else 1
+                out.append((r, col, sp, str(cell[k]), k))
+            continue
+        # ③ r/row + c/col (한영2·한영3)
+        r, sp = _cell_span(cell.get("r", cell.get("row", 1)))
+        sp = max(sp, int(cell.get("rowspan") or 1))
+        out.append((r, col, sp, str(cell.get("text") or ""),
+                    cell.get("role") or ""))
+    return out
+
+
+def header_table(s, case=None):
+    """머리표가 **표**인 학교(16곳 중 14곳). 셀 방언을 정규화해 그린다."""
+    hdr = P.dig(s.raw, "running.header") or {}
+    cells = hdr.get("cells") or []
+    if not cells:
+        return ""
+    grid = _header_grid(cells)
+    if not grid:
+        return ""
+    nrow = max(r + sp - 1 for r, _c, sp, _t, _o in grid)
+    at, taken = {}, set()
+    # 열 번호가 있는 셀을 먼저 앉히고, 없는 셀(col=0)은 그 행에서 왼쪽부터
+    # 빈 자리를 찾아 채운다 — 열 이름이 없는 학교(한영3)의 표기를 위해서다.
+    for r, c, sp, text, role in grid:
+        if c:
+            at.setdefault((r, c), (sp, text, role))
+            for k in range(1, sp):
+                taken.add((r + k, c))
+    for r, c, sp, text, role in grid:
+        if c:
+            continue
+        col = 1
+        while (r, col) in at or (r, col) in taken:
+            col += 1
+        at[(r, col)] = (sp, text, role)
+        for k in range(1, sp):
+            taken.add((r + k, col))
+    ncol = max(c for _r, c in at)
+    taken = set()
+    for r in range(1, nrow + 1):
+        tds = []
+        for c in range(1, ncol + 1):
+            if (r, c) in taken:
+                continue
+            cell = at.get((r, c))
+            if cell is None:
+                tds.append("<td></td>")
+                continue
+            sp, text, role = cell
+            for k in range(1, sp):
+                taken.add((r + k, c))
+            txt = (case or {}).get(role) or text
+            # `(결재 도장)` `(학교 배지)` 같은 자리표는 인쇄하지 않는다
+            if _RE_PLACEHOLDER.match(txt or ""):
+                txt = ""
+            attr = f' rowspan="{sp}"' if sp > 1 else ""
+            cls = f' class="hc-{esc(role)}"' if role else ""
+            body = esc(txt).replace("\n", "<br>")
+            tds.append(f"<td{attr}{cls}>{body}</td>")
+        rows_html.append("<tr>" + "".join(tds) + "</tr>")
+    return ('<table class="head-table">' + "".join(rows_html) + "</table>")
+
+
 def exam_head(s, case=None):
     """시험지 머리표 — 프로파일 running.header 를 그대로 옮긴다.
 
@@ -1045,7 +1168,7 @@ def exam_head(s, case=None):
     hdr = P.dig(s.raw, "running.header") or {}
     els = hdr.get("elements") or []
     if not els:
-        return ""
+        return header_table(s, case)
     rows = []
     for e in els:
         role = e.get("role")
