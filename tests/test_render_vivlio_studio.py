@@ -2150,3 +2150,37 @@ def test_thumbnails_refresh_after_a_rebuild_but_not_on_every_keystroke():
     assert "function freshenThumbs" in ui
     i = ui.index("function freshenThumbs")
     assert "setTimeout" in ui[i:i + 400] and "clearTimeout" in ui[i:i + 400]
+
+
+# ── 포켓북도 글을 고친다 ────────────────────────────────────────
+def test_pocketbook_has_a_studio_data_file():
+    """이 계열은 원고에서 바로 지면을 만들어 `data.json` 이 없었다 —
+    그래서 글을 클릭하면 "여기서 못 고칩니다" 였다.
+
+    조판할 때 **자리표가 가리키는 그 목록**을 남기면 그대로 고칠 수 있다.
+    """
+    from core.render_vivlio.series.pocketbook import PocketbookSeries
+    from core.render_vivlio.series.base import Series
+    assert PocketbookSeries.data_path is not Series.data_path
+    src = open(os.path.join(_ROOT, "core", "render_vivlio", "series",
+                            "pocketbook", "__init__.py"), encoding="utf-8").read()
+    assert "_studio_data.json" in src
+
+
+def test_pocketbook_saves_the_data_before_applying_edits():
+    """얹은 뒤를 남기면 다음 조판에서 **또 얹혀 두 번 먹는다**.
+
+    (넣기·지우기는 특히 티가 크다 — 같은 문단이 둘이 된다.)
+    """
+    src = open(os.path.join(_ROOT, "core", "render_vivlio", "series",
+                            "pocketbook", "__init__.py"), encoding="utf-8").read()
+    i = src.index('json.dump({"passages": rows}')
+    j = src.index("_ed.apply_all", i - 400 if i > 400 else 0)
+    assert i < j, "편집을 얹은 뒤에 저장하고 있다"
+
+
+def test_pocketbook_writes_the_ref_table():
+    """지면에 표를 찍어도 **파일로 내지 않으면** 작업대가 못 되짚는다."""
+    src = open(os.path.join(_ROOT, "core", "render_vivlio", "series",
+                            "pocketbook", "__init__.py"), encoding="utf-8").read()
+    assert "_refs3.dump(build_dir)" in src
