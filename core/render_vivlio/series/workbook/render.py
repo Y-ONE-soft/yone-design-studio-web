@@ -538,6 +538,17 @@ def divider_section(step, line1, line2):
 
 # ── 스텝 구간 ────────────────────────────────────────────────────────
 
+TIGHT = set()          # 측정 패스가 채운다 — 한두 줄만 넘긴 덩어리 번호
+_BIDX = [0]            # 문서 순서 덩어리 번호 (document() 가 0 으로 되돌린다)
+
+
+def _beg():
+    """덩어리 시작 표식 + 이 덩어리가 조여야 하는지."""
+    i = _BIDX[0]
+    _BIDX[0] += 1
+    return i, ('<span class="zbeg"></span>', " tight" if i in TIGHT else "")
+
+
 def fixed_section(st, idx):
     """고정 시트 스텝 하나 → 섹션."""
     n = st["step"]
@@ -595,7 +606,9 @@ def fixed_section(st, idx):
                 #   **없는** 지문이 있고 스텝마다 지문 수도 다르다(수능만만 실측).
                 #   못 박으면 없는 지문에서 빈 자리가 생긴다. 자리는 흐름이 정한다.
                 body = f'<div class="topzone">{body}</div>' 
-            pages.append(f'<div class="grp">{example}{head}{body}{btm}'
+            _i, (mark, tight) = _beg()
+            pages.append(f'<div class="grp{tight}">{mark}'
+                         f'{example}{head}{body}{btm}'
                          f'<span class="zend"></span></div>')
 
     run = running_head(n, st["logo"], st["title"], st["tag"])
@@ -676,7 +689,7 @@ def s3_blocks(blocks, start_no=1):
     def close_q():
         nonlocal q_open, set_h
         if q_open:
-            out.append("</div>")
+            out.append('<span class="zend"></span></div>')
             first = "first-of-set" in out[q_mark]
             cls = "q-block" + (" first-of-set" if first else "")
             if q_h <= COL_H:
@@ -733,8 +746,10 @@ def s3_blocks(blocks, start_no=1):
                 head_first = True
             qn += 1
             t = _RE_SRCCODE.sub("", _RE_LEADSEQ.sub("", runs_html(b)))
-            out.append('<div class="q-block first-of-set" data-h="0">'
-                       if head_first else '<div class="q-block" data-h="0">')
+            _i, (mark, tight) = _beg()
+            out.append(f'<div class="q-block first-of-set{tight}" data-h="0">'
+                       if head_first else f'<div class="q-block{tight}" data-h="0">')
+            out.append(mark)
             head_first = False
             q_mark = len(out) - 1
             q_h = _est_mm(t, 8, 4.94, indent=9.0) + 8.93
@@ -799,6 +814,7 @@ def font_css():
 
 
 def document(data, title="워크북"):
+    _BIDX[0] = 0
     parts = ['<section class="sec blank"><div class="pg"></div></section>']
     rows = []
     seen = set()

@@ -125,10 +125,29 @@ def sources_from_scope(content, scope_text, log=print):
     return S.folders(sc, base, grade=grade, log=log)
 
 
-def build(content, log=print, keep_all=False, scope_text=None):
-    srcs = (sources_from_scope(content, scope_text, log) if scope_text
-            else auto_sources(content, log))
-    scope = None if keep_all else scope_labels(content)
+def build(content, log=print, keep_all=False, scope_text=None, yos=None):
+    """`yos` 를 주면 시험범위의 정본이 그것이다 — 워크북도 되수확본도 안 본다."""
+    if yos:
+        cfg = json.load(open(os.path.join(os.path.dirname(
+            os.path.dirname(os.path.abspath(__file__))),
+            "engines", "final", "config.json"), encoding="utf-8"))
+        grade = yos.get("grade") or 0
+        log("■ 시험범위(Y.OS): "
+            + ", ".join(S.token_text(tuple(t)) for t in yos["tokens"]))
+        yos = dict(yos, tokens=[tuple(t) for t in yos["tokens"]],
+                   detail={tuple(eval(k)) if isinstance(k, str) else tuple(k): v
+                           for k, v in (yos.get("detail") or {}).items()})
+        srcs = S.folders(yos, os.path.expanduser(cfg["gdrive_content_base"]),
+                         grade=grade, log=log)
+    else:
+        srcs = (sources_from_scope(content, scope_text, log) if scope_text
+                else auto_sources(content, log))
+    if yos:
+        scope = None          # 라벨 목록이 아니라 판정 함수로 건다
+    else:
+        scope = None if keep_all else scope_labels(content)
+    ok = (lambda lab: S.in_scope(lab, yos)) if yos else (
+        lambda lab: scope is None or lab in scope)
     arrange, insert, writing, seen = [], [], [], set()
     for d, spec in srcs:
         if not spec:
@@ -140,7 +159,7 @@ def build(content, log=print, keep_all=False, scope_text=None):
             if not lab:
                 log(f"  [라벨 없음] {b['raw']} [{name}]")
                 continue
-            if lab in seen or (scope is not None and lab not in scope):
+            if lab in seen or not ok(lab):
                 continue
             seen.add(lab)
             items = list(b["items"])
@@ -153,7 +172,7 @@ def build(content, log=print, keep_all=False, scope_text=None):
                             **({"passage": given} if given else {})})
         for b in M.read(d, "insert")[0]:
             lab = L.to_final_label(spec, b["raw"])
-            if not lab or (scope is not None and lab not in scope):
+            if not lab or not ok(lab):
                 continue
             insert.append({"source": name, "header": lab, "paras": (
                 [{"style": "문장 배열 하단 문제", "text": b["prompt"]},
@@ -165,7 +184,7 @@ def build(content, log=print, keep_all=False, scope_text=None):
             lab = L.to_final_label(spec, b["raw"])
             if not lab or not b["pairs"]:
                 continue
-            if scope is not None and lab not in scope:
+            if not ok(lab):
                 continue
             writing.append({"header": lab, "pairs": b["pairs"]})
 
@@ -261,6 +280,8 @@ def main():
                     help="시험범위를 무시하고 그 강·과의 지문을 전부 싣는다")
     ap.add_argument("--scope-text",
                     help="시험범위 글(Y.OS/시트). 주면 워크북 파일 이름을 안 본다")
+    ap.add_argument("--scope-json",
+                    help="final_scope_fetch.py 가 만든 scope.json (정본)")
     a = ap.parse_args()
     p = a.job
     if os.path.isdir(p):
@@ -270,7 +291,8 @@ def main():
     old_a = {b["header"] for b in content["vol1"]["문장배열"]}
     old_i = {b["header"] for b in content["vol1"].get("문장삽입") or []}
     old_w = {d["header"] for d in content["vol2"]["영작_헤더_상세"]}
-    out = build(content, keep_all=a.all, scope_text=a.scope_text)
+    yos = json.load(open(a.scope_json, encoding="utf-8")) if a.scope_json else None
+    out = build(content, keep_all=a.all, scope_text=a.scope_text, yos=yos)
     new_a = {b["header"] for b in out["vol1"]["문장배열"]}
     new_w = {d["header"] for d in out["vol2"]["영작_헤더_상세"]}
     print(f"■ 문장배열 {len(old_a)} → {len(new_a)}"

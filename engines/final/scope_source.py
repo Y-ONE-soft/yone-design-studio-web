@@ -535,3 +535,55 @@ def count_gate(entries, scope):
         if want and got != want:
             bad.append({"book": (e[1] or "").strip(), "want": want, "got": got})
     return bad
+
+
+# ── 지문 수준 걸기 ──────────────────────────────────────────────────────
+RE_LAB_TB = re.compile(r"^교과서(\d+)과\s*(.*)$")
+RE_LAB_UNIT = re.compile(r"^(올포|리딩파워)\s*(\d+)강\s*(.*)$")
+RE_LAB_MOCK = re.compile(r"^(\d{2})(\d{2})(\d{2})")
+RE_LAB_G3 = re.compile(r"^(?:(\d+)강|[Tt]est\s*(\d))\s*(.*)$")
+RE_LAB_NO = re.compile(r"(\d+)")
+
+
+def label_token(label):
+    """파이널 라벨 → (토큰, 꼬리). 모르면 (None, "")."""
+    m = RE_LAB_TB.match(label or "")
+    if m:
+        return ("lesson", int(m.group(1))), m.group(2)
+    m = RE_LAB_UNIT.match(label or "")
+    if m:
+        return ((("olpo" if m.group(1) == "올포" else "rp"),
+                 int(m.group(2))), m.group(3))
+    m = RE_LAB_MOCK.match(label or "")
+    if m:
+        return (("mock", int(m.group(1)), int(m.group(2))), m.group(3))
+    m = RE_LAB_G3.match(label or "")
+    if m:
+        if m.group(1):
+            return ("teuk", int(m.group(1))), m.group(3)
+        return ("test", int(m.group(2))), m.group(3)
+    return None, ""
+
+
+def in_scope(label, scope):
+    """이 지문이 시험범위 안인가 — **지문 번호까지** 본다.
+
+    Y.OS 가 `Lesson 1 … 1~9` / `15~18, 20~24` 로 지문을 짚어 주므로 강·과가
+    아니라 지문 단위로 걸 수 있다. 다만 꼬리에 번호가 없는 것(`RM`, `분석`,
+    `서술형`, `딥러닝`)은 **거르지 않는다** — 부속물이라 번호로 셀 수 없고,
+    조용히 빼는 쪽이 훨씬 나쁘다.
+    """
+    tok, tail = label_token(label)
+    if tok is None:
+        return True                       # 못 알아본 라벨은 남긴다
+    keys = {_key(t): t for t in scope.get("tokens", [])}
+    t = keys.get(_key(tok))
+    if t is None:
+        return False
+    only = (scope.get("detail", {}).get(t) or {}).get("only")
+    if not only:
+        return True
+    m = RE_LAB_NO.search(tail if tok[0] != "mock" else (label or "")[4:])
+    if not m:
+        return True                       # 번호 없는 꼬리 — 부속물
+    return int(m.group(1)) in only

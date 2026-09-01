@@ -166,18 +166,32 @@ class Renderer(object):
             # 묶음 표기를 안 쓰는 학교(상일1·광문2·세종1 일부) — 머리를 만들지 않는다
             return ""
         intro = _strip_range_prefix(intro)
-        if essay_ns and s.group_mixed:
-            tpl = s.group_mixed
-            marker = tpl.replace("{n}", str(a)).replace("{m}", str(essay_ns[0]))
+        mixed = s.group_mixed
+        if mixed and mixed.strip() in ("없음", "None", "-"):
+            mixed = None       # 프로파일이 '없음' 이라 적어 둔 학교(한영3)
+        if essay_ns and mixed and a is None:
+            # 서답형만 있는 묶음 — 혼합 템플릿의 객관식 자리를 채울 수 없다.
+            # 없는 번호를 지어내느니 머리를 만들지 않는다.
+            return f'<p class="group-intro">{esc(intro)}</p>' if intro else ""
+        if essay_ns and mixed:
+            # 혼합 템플릿도 학교마다 자리가 다르다 — `{n}/{m}` 을 쓰는 곳도,
+            # `{a}~{b}, 서답형 {m}` 처럼 범위를 쓰는 곳도 있다.
+            marker = (mixed.replace("{a}", str(a)).replace("{b}", str(b))
+                      .replace("{n}", str(a)).replace("{m}", str(essay_ns[0])))
+            if "{지시문}" not in mixed and _RE_HANGUL_SENT.search(mixed):
+                # 혼합 템플릿이 지시문까지 품고 있는 학교(명일1) — 원고 지시문을
+                # 덧붙이면 같은 문장이 두 번 나온다.
+                intro = ""
         else:
             marker = s.group_template.replace("{a}", str(a)).replace("{b}", str(b))
         if "{지시문}" in marker:
             # 템플릿이 지시문 자리를 정해 뒀으면 거기에 끼운다. 지시문이 이미
             # 마침표로 끝나면 템플릿의 마침표를 겹쳐 찍지 않는다.
             body_txt = (intro or "").rstrip()
-            marker = marker.replace("{지시문}.", body_txt) \
-                if body_txt.endswith((".", "?", "!")) \
-                else marker.replace("{지시문}", body_txt)
+            if body_txt.endswith((".", "?", "!")) and "{지시문}." in marker:
+                marker = marker.replace("{지시문}.", body_txt)
+            else:
+                marker = marker.replace("{지시문}", body_txt)
             text = marker
         else:
             text = f"{marker} {intro}".strip() if s.group_intro_same_line and intro \
@@ -504,6 +518,7 @@ def _is_tiny_choices(items, limit=6):
     return all(len(t) <= limit for t in texts)
 
 
+_RE_HANGUL_SENT = re.compile(r"[가-힣]{2,}.*[.?!]\s*$")
 _RE_EACH_SCORE = re.compile(r"[\[(（]\s*각\s*[\d.]+\s*점\s*씩?\s*[\])）]")
 _RE_RANGE_PREFIX = re.compile(r"^\s*[\[(（【〈]\s*\d+\s*[~\-–—]\s*\d+\s*"
                               r"[\])）】〉]\s*")

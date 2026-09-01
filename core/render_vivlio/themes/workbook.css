@@ -139,11 +139,25 @@ body {
 /* 칸 끝 표식 — 흰 종이에 흰색 0.4mm 사각(인쇄에 안 보인다). 넘침 게이트가
  * 이 표식의 y 를 재서 "칸을 넘었는가"를 판정한다. 눈으로 못 잡는 사고라
  * 표식으로 재는 편이 낫다. */
-.zend { display: block; width: 0.4mm; height: 0.4mm; background: #fffffe; }
-/* 세트(안내문+지문) 시작 표식 — 흰 종이에 흰 0.6mm 사각(인쇄에 안 보인다).
- * '위 글' 문항이 지문과 같은 펼침면에 있는지 게이트가 이걸로 잰다. */
-.setmark { display: inline-block; width: 0.6mm; height: 0.6mm; background: #fffffd; }
-.setend  { display: inline-block; width: 0.8mm; height: 0.8mm; background: #fffffc; }
+/* ── 표식 ──────────────────────────────────────────────────────────────
+ * 흰 종이에 흰 0.4mm 사각. 인쇄에는 안 보이고 게이트·측정 패스가 이걸로 잰다.
+ * **크기가 아니라 파랑 채널 값으로 구분**한다(크기로 나누면 서로 오인한다):
+ *   .zbeg  #fffffb  지문 묶음 시작    .zend   #fffffe  지문 묶음 끝
+ *   .setmark #fffffd 세트 시작        .setend #fffffc  세트 끝
+ */
+.zbeg, .zend, .setmark, .setend {
+  display: inline-block; width: 0.4mm; height: 0.4mm;
+}
+.zbeg { background: #fffffb; }
+
+/* 측정 패스가 "한두 줄만 넘겼다"고 짚은 덩어리 — 자간·행간을 한 단계만 좁혀
+ * 당겨 붙인다. 한 단계 이상 쓰면 지면 밀도가 눈에 띄게 달라진다. */
+.tight { letter-spacing: -0.045em; }
+.tight .en, .tight .p3, .tight .ch3, .tight .box-body p, .tight .box-q p,
+.tight .gsel p, .tight .gox, .tight .blk, .tight .blk-kr { line-height: 0.97em; }
+.zend { display: block; background: #fffffe; }
+.setmark { background: #fffffd; }
+.setend { background: #fffffc; }
 
 /* 섹션은 언제나 새 면에서 — ⚠ 이게 없으면 앞 섹션이 끝난 면 한복판에서
  * 다음 스텝이 시작해 지문 하나가 통째로 사라진다(실측). 반대로 `.pg` 마다
