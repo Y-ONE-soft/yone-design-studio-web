@@ -59,6 +59,9 @@ class FinalSeries(Series):
         if not nomeasure:
             heights = self._measure(cfg, d, vol, build_dir, m, log)
             fits = self._fits(d, vol, heights, m, log)
+            if any(f.get("lead") for f in fits.values()):
+                fits, _h2 = self._refit(cfg, d, vol, build_dir, m, fits, log,
+                                        heights)
             self._save_fit_report(cfg, d, vol, heights, fits, m)
 
         html_path = render_mod.write(cfg, d, vol, build_dir, fits=fits, log=log)
@@ -117,15 +120,16 @@ class FinalSeries(Series):
                 out.append((render_mod.key_of(vol, sec, i, b), sec, b))
         return out
 
-    def _measure(self, cfg, d, vol, build_dir, m, log):
+    def _measure(self, cfg, d, vol, build_dir, m, log, fits=None,
+                 label="지문 높이"):
         keys = [k for k, _s, _b in self._keys(d, vol)]
-        html_m = render_mod.write(cfg, d, vol, build_dir, mode="measure",
-                                  log=log)
+        html_m = render_mod.write(cfg, d, vol, build_dir, fits=fits,
+                                  mode="measure", log=log)
         self._stage(cfg, build_dir, log)
         h = measure.measure(html_m, os.path.join(build_dir, "measure.pdf"),
                             keys, m["body_top"],
                             render_mod.MEASURE_PAGE_H - 20.0, pad=0.0, log=log)
-        measure.save(h, cfg.path(f"heights{vol}.json"), log, "지문 높이")
+        measure.save(h, cfg.path(f"heights{vol}.json"), log, label)
         return h
 
     # ── 축소율 ──
@@ -144,11 +148,14 @@ class FinalSeries(Series):
         return m["vocab_avail"] - m["vocab_safety"]
 
     def _fits(self, d, vol, heights, m, log):
-        """칸을 넘는 지문 처리 — ① 활자 축소, ② 그래도 안 되면 **두 칸**.
+        """칸을 넘는 지문 처리 — **활자 크기는 그대로 둔다**(사용자 확정).
 
-        인디자인 경로는 ①만 하고, 그래도 넘치면 지면 밖으로 흘려 보냈다
-        (완성본 광문2 Vol1 = 오버플로우 7건, 실제로 글이 잘려 나간다).
-        여기서는 ② 로 물러서서 **글을 잃지 않는다.**
+        ① 한두 줄 넘침 → **행간만 조금 조여** 한 칸에 앉힌다.
+        ② 그보다 길면 → **두 칸**(사분면), 한 단짜리 섹션은 **흘림**.
+
+        인디자인 경로는 활자를 7pt 까지 줄이고 그래도 넘치면 지면 밖으로
+        흘려 글을 잘라 냈다(완성본 광문2 Vol1 = 오버플로우 7건). 여기서는
+        글자 크기가 책 전체에서 하나로 유지되고, 글도 잃지 않는다.
         """
         fits = {}
         for key, sec, _b in self._keys(d, vol):
@@ -156,35 +163,80 @@ class FinalSeries(Series):
             cap = self._cap(sec["kind"], m)
             if not nat or nat <= cap:
                 continue
-            step, lo = m["step_pt"], m["min_pt"]
-            want = m["base_pt"] * cap / nat
-            if want >= lo:
-                fits[key] = {"pt": round(int(want / step) * step, 2)}
-                continue
-            if render_mod.SLOT_KIND[sec["kind"]] == "slot":
-                cap2 = 2 * m["slot"] - 0.5
-                if nat <= cap2:
-                    fits[key] = {"span": 2}
-                else:
-                    w2 = m["base_pt"] * cap2 / nat
-                    fits[key] = {"span": 2,
-                                 "pt": round(max(lo, int(w2 / step) * step), 2)}
-            else:
-                # 한 단(253mm)보다 긴 지문 — 줄여도 안 들어간다(어법 19강
-                # 07~08 = 321mm). 자르지 말고 **흘린다**: 다음 단·면으로
-                # 이어지고 글은 하나도 잃지 않는다.
-                fits[key] = {"flow": True}
-        if fits:
-            sh = [f["pt"] for f in fits.values() if f.get("pt")]
-            sp = sum(1 for f in fits.values() if f.get("span") == 2)
-            fl = sum(1 for f in fits.values() if f.get("flow"))
-            log(f"  [맞춤] 칸을 넘는 지문 {len(fits)}개 — 활자 축소 {len(sh)}"
-                + (f"(최소 {min(sh):.1f}pt)" if sh else "")
-                + (f" · 두 칸 {sp}" if sp else "")
-                + (f" · 흘림 {fl}" if fl else ""))
-        else:
-            log("  [맞춤] 넘치는 지문 없음")
+            fits[key] = self._one_fit(sec["kind"], nat, cap, m)
+        self._log_fits(fits, log)
         return fits
+
+    @staticmethod
+    def _one_fit(kind, nat, cap, m):
+        over = nat - cap
+        line = render_mod.LINE_MM[kind]
+        if over <= m["over_lines"] * line:
+            fx = m["fixed_mm"]
+            lead = (cap - fx) / max(1.0, nat - fx)
+            return {"lead": round(max(m["min_lead"], lead), 4)}
+        if render_mod.SLOT_KIND[kind] == "slot":
+            cap2 = 2 * m["slot"] - 0.5
+            if nat <= cap2:
+                return {"span": 2}
+            fx = m["fixed_mm"]
+            return {"span": 2,
+                    "lead": round(max(m["min_lead"],
+                                      (cap2 - fx) / max(1.0, nat - fx)), 4)}
+        return {"flow": True}          # 한 단보다 긴 지문은 흘린다
+
+    @staticmethod
+    def _log_fits(fits, log):
+        if not fits:
+            return log("  [맞춤] 넘치는 지문 없음")
+        ld = [f["lead"] for f in fits.values() if f.get("lead")]
+        sp = sum(1 for f in fits.values() if f.get("span") == 2)
+        fl = sum(1 for f in fits.values() if f.get("flow"))
+        log(f"  [맞춤] 칸을 넘는 지문 {len(fits)}개 — 행간 조임 {len(ld)}"
+            + (f"(최대 {100 * (1 - min(ld)):.1f}%)" if ld else "")
+            + (f" · 두 칸 {sp}" if sp else "")
+            + (f" · 흘림 {fl}" if fl else ""))
+
+    def _refit(self, cfg, d, vol, build_dir, m, fits, log, heights=None):
+        """조인 채로 **다시 재서** 정확한 행간을 푼다.
+
+        높이는 `H(L) = F + (H1 − F)·L` 꼴이다(F = 글줄이 아닌 부분 — 헤더·
+        답란·상자 여백). 두 점(L=1 과 첫 시도 L)이 있으면 F 와 목표 L 이
+        **정확히** 풀린다. 한 번에 못 맞추는 이유가 이 F 를 몰라서다.
+        하한(10%)에 닿으면 두 칸으로 물러선다 — 넘친 채로 내보내지 않는다.
+        """
+        h2 = self._measure(cfg, d, vol, build_dir, m, log, fits=fits,
+                           label="재측정")
+        h1 = heights or {}
+        changed = 0
+        for key, sec, _b in self._keys(d, vol):
+            f = fits.get(key)
+            if not f or not f.get("lead") or f.get("flow"):
+                continue
+            a, b = h1.get(key), h2.get(key)
+            L = f["lead"]
+            if not a or not b or abs(1.0 - L) < 1e-6:
+                continue
+            fixed = (b - L * a) / (1.0 - L)          # 글줄이 아닌 부분
+            fixed = min(max(fixed, 0.0), a - 1.0)
+            cap = self._cap(sec["kind"], m) - 0.3    # 여유 0.3mm
+            want = (cap - fixed) / max(1.0, a - fixed)
+            if want >= 1.0:
+                fits.pop(key)                        # 애초에 안 넘쳤다
+            elif want >= m["min_lead"]:
+                if abs(want - L) > 1e-4:
+                    fits[key] = dict(f, lead=round(want, 4))
+                    changed += 1
+                continue
+            else:
+                fits[key] = ({"span": 2}
+                             if render_mod.SLOT_KIND[sec["kind"]] == "slot"
+                             else {"flow": True})
+            changed += 1
+        if changed:
+            log(f"  [맞춤] 재측정으로 {changed}개 정정")
+            self._log_fits(fits, log)
+        return fits, h2
 
     def _save_fit_report(self, cfg, d, vol, heights, fits, m):
         import json
@@ -197,7 +249,7 @@ class FinalSeries(Series):
                 rows.append({"key": key, "section": sec["title"],
                              "header": b["header"], "natural_mm": nat,
                              "cap_mm": round(cap, 1),
-                             "pt": (f or {}).get("pt"),
+                             "lead": (f or {}).get("lead"),
                              "span": (f or {}).get("span", 1),
                              "flow": bool((f or {}).get("flow")),
                              "fits": bool(f) and (
@@ -215,8 +267,9 @@ class FinalSeries(Series):
         if f.get("flow"):
             return True                     # 흘리면 언제나 담긴다
         cap2 = cap if f.get("span", 1) == 1 else 2 * m["slot"] - 0.5
-        pt = f.get("pt") or m["base_pt"]
-        return nat * pt / m["base_pt"] <= cap2 + 0.05
+        fx = m["fixed_mm"]
+        lead = f.get("lead") or 1.0
+        return fx + (nat - fx) * lead <= cap2 + 0.05
 
     # ── 배치 ──
     @staticmethod
@@ -264,6 +317,10 @@ class FinalSeries(Series):
               group="치수"),
             K("metrics.base_pt", "pt", "본문 활자", default=8.5, min=7, max=11,
               step=0.1, unit="pt", affects="지문 글자 크기", group="치수"),
-            K("metrics.min_pt", "pt", "축소 하한", default=7.0, min=6, max=9,
-              step=0.1, unit="pt", affects="넘칠 때 줄이는 하한", group="치수"),
+            K("metrics.over_lines", "number", "행간으로 흡수", default=2.0,
+              min=0, max=6, step=0.5, unit="줄",
+              affects="이만큼 넘치면 행간만 조임(넘으면 두 칸)", group="치수"),
+            K("metrics.min_lead", "number", "행간 조임 하한", default=0.90,
+              min=0.8, max=1.0, step=0.01, unit="배",
+              affects="행간을 여기까지만 조인다", group="치수"),
         ]

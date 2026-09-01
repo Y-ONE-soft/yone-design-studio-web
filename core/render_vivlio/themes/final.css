@@ -130,8 +130,11 @@
 html { font-family: Noto, sans-serif; font-size: 8.5pt; color: var(--ink);
        line-height: calc(1.4123 * var(--lead, 1)); letter-spacing: -0.04em; }
 /* `--lead` = 행간 배수. 칸을 한두 줄 넘치는 지문만 빌드가 1보다 조금 작은 값을
- * 꽂아 **활자 크기는 그대로 두고** 한 칸에 앉힌다(사용자 확정 정책). */
-.blk { --lead: 1; }
+ * 꽂아 **활자 크기는 그대로 두고** 한 칸에 앉힌다(사용자 확정 정책).
+ * ⚠ `html` 의 line-height 는 거기서 `--lead` 가 이미 1 로 풀려 **숫자로**
+ *   내려온다 — 상자에 값을 꽂아도 안 먹는다(실측: 높이가 1mm 도 안 줄었다).
+ *   그래서 상자에서 한 번 더 선언한다. */
+.blk { --lead: 1; line-height: calc(1.4123 * var(--lead)); }
 body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 
 /* 간지 — 판면 밖 좌표를 그대로 쓰려고 흐름에서 뺀다(완성본 실측) */
