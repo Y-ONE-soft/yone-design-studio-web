@@ -51,3 +51,30 @@ def test_book_config_is_a_complete_book():
     assert c["print"]["gray_map"]["#ffffff"] == 0.0
     assert {f["family"] for f in c["fonts"]} == {"Noto", "Neolli", "Jalnan"}
     json.dumps(c)                              # 파일로 나갈 수 있어야 한다
+
+
+def test_card_builds_without_workbook_uploads(monkeypatch, tmp_path):
+    """카드는 워크북 업로드 없이 선다 — 학교·학년·시험기간 세 값뿐.
+
+    범위를 못 읽으면 **부모의 되수확 경로로 물러난다**(멈추지 않는다).
+    """
+    from engines.final_viv.engine import FinalVivEngine
+    e = FinalVivEngine()
+    for name, val in (("school", "광문2"), ("grade", "고2"),
+                      ("exam_period", "26-1-기말")):
+        (tmp_path / (name + ".txt")).write_text(val, encoding="utf-8")
+
+    made = {}
+    monkeypatch.setattr(e, "_scratch",
+                        lambda s, g, p, log: {"vol1": {"문장배열": [{"header": "x"}]},
+                                              "vol2": {}, "school": s})
+    out = e.parse({}, str(tmp_path), lambda m: made.setdefault("log", []) or
+                  made["log"].append(m))
+    assert out.endswith("content.json") and os.path.exists(out)
+
+    # 범위를 못 읽으면 부모 경로 — 여기서는 부모를 세워 두고 호출만 확인한다
+    monkeypatch.setattr(e, "_scratch", lambda *a, **k: None)
+    from engines.final.engine import FinalEngine
+    monkeypatch.setattr(FinalEngine, "parse",
+                        lambda self, u, j, log: "FELLBACK")
+    assert e.parse({}, str(tmp_path), lambda m: None) == "FELLBACK"
