@@ -93,7 +93,9 @@ RE_UNIT_RUN = re.compile(r"((?:\d{1,2}\s*[,~\-]\s*)*\d{1,2})\s*강")
 RE_LESSON_RUN = re.compile(r"((?:\d{1,2}\s*[,~\-]\s*)*\d{1,2})\s*과")
 RE_MOCK_TXT = re.compile(r"(\d{2})\s*년\s*(\d{1,2})\s*월")
 RE_TEST_TXT = re.compile(r"[Tt][Ee][Ss][Tt]\s*(\d)")
-RE_SPLIT = re.compile(r"[/·\n;]+")
+# `*` 는 항목의 머리다 — `* 공통영어1 능률(민) 3과 * 공통영어2 YBM(김) 4과`
+# 를 한 도막으로 보면 두 교과서가 뭉쳐 **뒤쪽 출판사를 잃는다**(명일1 실증).
+RE_SPLIT = re.compile(r"[/·*\n;]+")
 
 
 def _nums(run):
@@ -120,6 +122,7 @@ def scope_text_tokens(text):
       · 계열 이름이 없으면 `bare` — 고3 분석편 방언이다.
     """
     out = []
+    last_kind = "bare"   # 계열은 한 번만 적고 `/` 로 이어 쓰는 일이 잦다
     for seg in RE_SPLIT.split(text or ""):
         if not seg.strip():
             continue
@@ -138,12 +141,13 @@ def scope_text_tokens(text):
                     i += 1
         marks.sort()
         for m in RE_UNIT_RUN.finditer(seg):
-            kind = "bare"
+            kind = last_kind
             for i, k in marks:
                 if i < m.start():
                     kind = k
                 else:
                     break
+            last_kind = kind
             out += [(kind, u) for u in _nums(m.group(1))]
         for m in RE_LESSON_RUN.finditer(seg):
             out += [("lesson", u) for u in _nums(m.group(1))]

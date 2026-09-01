@@ -32,6 +32,7 @@ from engines.final import manuscript as M          # noqa: E402
 from engines.final import manuscript_locate as L   # noqa: E402
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from final_manuscript_diff import auto_sources, words as _words  # noqa: E402
+from engines.final import scope_source as S                       # noqa: E402
 
 
 # ── 차례(canonical) ─────────────────────────────────────────────────────
@@ -107,8 +108,26 @@ def scope_labels(content):
 
 
 # ── 빌드 ────────────────────────────────────────────────────────────────
-def build(content, log=print, keep_all=False):
-    srcs = auto_sources(content, log)
+def sources_from_scope(content, scope_text, log=print):
+    """시험범위 **글** 하나로 원고 폴더를 정한다 — 워크북이 필요 없다.
+
+    워크북 파일 이름을 읽던 자리를 대신한다. 이름은 범위의 대역일 뿐이라
+    빠뜨리는 게 있었다(명일1: 시트의 `공통영어2 YBM(김) 4과` 가 파일 이름에
+    없어 그 7지문이 '외부지문' 으로 들어왔다).
+    """
+    cfg = json.load(open(os.path.join(os.path.dirname(
+        os.path.dirname(os.path.abspath(__file__))),
+        "engines", "final", "config.json"), encoding="utf-8"))
+    base = os.path.expanduser(cfg["gdrive_content_base"])
+    grade = int(re.sub(r"\D", "", content.get("grade", "0")) or 0)
+    sc = S.parse(scope_text, grade=grade)
+    log("■ 시험범위: " + ", ".join(S.token_text(t) for t in sc["tokens"]))
+    return S.folders(sc, base, grade=grade, log=log)
+
+
+def build(content, log=print, keep_all=False, scope_text=None):
+    srcs = (sources_from_scope(content, scope_text, log) if scope_text
+            else auto_sources(content, log))
     scope = None if keep_all else scope_labels(content)
     arrange, insert, writing, seen = [], [], [], set()
     for d, spec in srcs:
@@ -240,6 +259,8 @@ def main():
     ap.add_argument("-o", "--out")
     ap.add_argument("--all", action="store_true",
                     help="시험범위를 무시하고 그 강·과의 지문을 전부 싣는다")
+    ap.add_argument("--scope-text",
+                    help="시험범위 글(Y.OS/시트). 주면 워크북 파일 이름을 안 본다")
     a = ap.parse_args()
     p = a.job
     if os.path.isdir(p):
@@ -249,7 +270,7 @@ def main():
     old_a = {b["header"] for b in content["vol1"]["문장배열"]}
     old_i = {b["header"] for b in content["vol1"].get("문장삽입") or []}
     old_w = {d["header"] for d in content["vol2"]["영작_헤더_상세"]}
-    out = build(content, keep_all=a.all)
+    out = build(content, keep_all=a.all, scope_text=a.scope_text)
     new_a = {b["header"] for b in out["vol1"]["문장배열"]}
     new_w = {d["header"] for d in out["vol2"]["영작_헤더_상세"]}
     print(f"■ 문장배열 {len(old_a)} → {len(new_a)}"
