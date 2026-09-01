@@ -19,6 +19,7 @@ import pytest
 from core.render_vivlio.series.final import data as D
 from core.render_vivlio.series.final import render as R
 from core.render_vivlio.series.final import verify as V
+from core.render_vivlio.series.final import FinalSeries as F
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CSS = os.path.join(os.path.dirname(HERE), "core", "render_vivlio",
