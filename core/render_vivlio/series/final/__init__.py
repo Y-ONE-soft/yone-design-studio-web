@@ -71,6 +71,20 @@ class FinalSeries(Series):
         self._stage(cfg, build_dir, log)
         out = cfg.out_pdf(self._suffix(cfg, sample))
         secs = cli.run_build(html_path, out, log=log, extra=["-f", "pdf"])
+
+        # 섹션 띠는 **짝수 면에만** 러닝으로 나온다. 섹션 첫 면이 홀수일 수도
+        # 있어 흐름에도 한 벌 심는데, 짝수면 그 자리에서 **글자가 두 번**
+        # 찍혀 굵어진다(실측: 완성본보다 확연히 굵었다). 어느 면에서 시작할지는
+        # 조판해 봐야 알므로, 한 번 짜고 **홀짝을 재서** 짝수인 섹션만 흐름
+        # 글자를 빼고 다시 짠다.
+        even = self._even_start_sections(out, d, vol)
+        if even and not sample:
+            log(f"  [띠] 섹션 {sorted(even)} 은 짝수 면에서 시작 — 흐름 띠 글자를 뺀다")
+            html_path = render_mod.write(cfg, d, vol, build_dir, fits=fits,
+                                         log=None, plain_band=even)
+            secs2 = cli.run_build(html_path, out, log=log, extra=["-f", "pdf"])
+            secs += secs2
+
         pages = probe.page_count(out)
         log(f"OK  {secs:.1f}s · {pages}p → {out}")
 
@@ -80,6 +94,34 @@ class FinalSeries(Series):
         if spec and not sample:
             res["final"] = bleed_mod.finish(out, spec, log)
         return res
+
+    @staticmethod
+    def _even_start_sections(pdf, d, vol):
+        """섹션 첫 면이 **짝수**인 섹션 이름들 — 띠가 두 번 찍히는 자리."""
+        import re
+        try:
+            import fitz
+        except Exception:
+            return set()
+        titles = {s["title"]: s["kind"]
+                  for s in d["vols"][str(vol)]["sections"]}
+        seen, even = set(), set()
+        try:
+            doc = fitz.open(pdf)
+        except Exception:
+            return set()
+        for i, pg in enumerate(doc):
+            m = re.search(r"CHAPTER\.\d+\s+([가-힣][가-힣/ ]*)", pg.get_text())
+            if not m:
+                continue
+            t = m.group(1).strip()
+            if t in seen or t not in titles:
+                continue
+            seen.add(t)
+            if (i + 1) % 2 == 0:
+                even.add(titles[t])
+        doc.close()
+        return even
 
     @staticmethod
     def series_asset(name=""):

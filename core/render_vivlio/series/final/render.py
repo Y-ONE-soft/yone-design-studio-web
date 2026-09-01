@@ -148,7 +148,7 @@ def _fit_attrs(fit):
     return cls + st
 
 
-def band(sec, flow=False):
+def band(sec, flow=False, plain=False):
     """섹션 띠 — 검은 사각형 + 번호 + 제목.
 
     러닝 띠는 **짝수 면에만** 나온다(`@page :left` 의 `@top-left`). 섹션 첫
@@ -164,9 +164,9 @@ def band(sec, flow=False):
              f'<span class="t">{esc(sec["title"])}</span>')
     if not flow:
         return f'<div class="bandrun band">{inner}</div>'
+    body = "" if plain else f'<div class="band">{inner}</div>'
     return (f'<div class="sechdr"><div class="mask"></div>'
-            f'<div class="sq"></div>'
-            f'<div class="band">{inner}</div></div>')
+            f'<div class="sq"></div>{body}</div>')
 
 
 def head_right(chapter):
@@ -350,7 +350,7 @@ def key_of(vol, sec, i, b):
     return f"{vol}-{sec['kind']}-{i}"
 
 
-def document(cfg, data, vol, fits=None, mode=None):
+def document(cfg, data, vol, fits=None, mode=None, plain_band=()):
     # ⚠ 자리표는 **렌더 직전에 한 번** 만든다. 안 만들면 작업대에서 지면을
     #   눌러도 조용히 아무 일이 안 난다(예전에 이 계열이 그랬다).
     index_refs(data)
@@ -391,7 +391,7 @@ def document(cfg, data, vol, fits=None, mode=None):
         o.append(feet(ch, sec["title"]))
         if mode != "measure":
             o.append(band(sec))
-            o.append(band(sec, flow=True))
+            o.append(band(sec, flow=True, plain=kind in plain_band))
         o.append('<div class="grid">')
         for i, b in enumerate(sec["blocks"]):
             o.append(BLK[kind](b, fits.get(key_of(vol, sec, i, b))))
@@ -403,8 +403,9 @@ def document(cfg, data, vol, fits=None, mode=None):
 MODE_FILE = {None: "index.html", "measure": "measure.html"}
 
 
-def write(cfg, data, vol, build_dir, fits=None, mode=None, log=None):
-    text = document(cfg, data, vol, fits, mode)
+def write(cfg, data, vol, build_dir, fits=None, mode=None, log=None,
+          plain_band=()):
+    text = document(cfg, data, vol, fits, mode, plain_band)
     os.makedirs(build_dir, exist_ok=True)
     if mode is None:
         # 작업대가 `vrefN` → 원본 자리를 되짚는 표. 측정용 판에는 안 낸다.
