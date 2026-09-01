@@ -303,8 +303,20 @@ section.flow.onecol { break-before: auto; }
 }
 /* 흐름은 건드리지 않고 **글리프만** 띄운다(relative) — 본문 시작 위치는 이미
  * 실물과 1mm 안쪽으로 맞아 있었고, 어긋난 것은 라벨 글리프뿐이었다. */
-.zone > .pnum, .grp > .pnum { position: relative; top: var(--pnum-lift, 0mm); }
-.k-step1_b2 .grp > .pnum { --pnum-lift: -2.1mm; }    /* 내용 종합 라벨 25.04 */
+/* ⚠ 스팬 bbox 로 맞추면 안 된다 — Yeongdo 는 글자 상자가 아주 커서 bbox 상단과
+ * 실제 잉크가 6mm 넘게 벌어진다. 아래 값은 **렌더 픽셀에서 잰 잉크 상단**을
+ * 완성본과 맞춘 것이다(기준: 어휘 선택 33.54 · 본문 O/X 33.54 · 본문 정리 33.71 ·
+ * 내용 종합 31.03 · 문장 배열 36.14 · 어법 선택 35.14 · 빈칸 사이드 35.5). */
+.zone > .pnum, .grp > .pnum, .pn-side > .pnum {
+  position: relative; top: var(--pnum-lift, 6.46mm);
+}
+.k-step1_a1 .zone > .pnum, .k-step1_a1_2 .zone > .pnum { --pnum-lift: 5.2mm; }
+.k-step1_b2 .grp > .pnum { --pnum-lift: 4.03mm; }
+.k-step1_c1 .zone > .pnum { --pnum-lift: 8.89mm; }
+.k-step2_a1 .grp > .pnum { --pnum-lift: 7.89mm; }
+.k-step2_b1 .grp > .pnum { --pnum-lift: 0mm; }
+.k-step1_c2 .pn-side > .pnum,
+.k-step2_c1 .pn-side > .pnum { --pnum-lift: 5.89mm; }
 
 
 /* 본문이 시작하는 자리 — 라벨 아래 간격. 스텝마다 실물이 다르다(실측 보정) */

@@ -116,6 +116,9 @@ _RE_SRV_ENDING = re.compile(
     r'(?<!고르)(?<!고를)시오\s*[.。]?\s*$'
     r'|(?:쓰기|작성|완성|서술|영작|배열|기술)\s*(?:하시오|하라)?\s*[.。]?\s*$')
 _RE_PICK_ENDING = re.compile(r'고르(?:시오|세요|면|십시오)\s*[.。?]?\s*$')
+# `물음에 답하시오` 는 **묶음 도입문**의 어미다. 서술형 지시가 아니다
+# (한영1 실증: `[20~21] … 글을 읽고 물음에 답하시오.` 가 서술형 문항이 됐다).
+_RE_GROUP_INTRO_END = re.compile(r'(?:물음|질문)에\s*답하(?:시오|세요|십시오)\s*[.。]?\s*$')
 # 고르다 계열은 객관식이다 — 어미가 `시오` 여도 시키는 일이 '고르기' 다.
 _RE_OBJ_ENDING = re.compile(
     r'(?:것은|것을|곳은|개수는|고르면|고른다면|고르시오|고르세요|고르십시오)'
@@ -137,8 +140,6 @@ def _structural_kind(cur, taxonomy_kind):
     labels = {b.get("label") for b in blocks}
     if labels & {"Ans", "AnsL"}:
         return "서술형", "답란"
-    if (cur.get("choices") or {}).get("items"):
-        return "객관식", "선지"
     q = cur.get("question") or ""
     # 꼬리 괄호 단서를 떼고 본다 — `…배열하시오. (단, 주어진 표현만 한 번씩
     # 사용하며, 변형 금지)` 처럼 지시가 괄호로 이어지는 원고가 흔한데, 종결
@@ -158,9 +159,13 @@ def _structural_kind(cur, taxonomy_kind):
     # 지시형 어미는 **지문 안 자리표보다 강하다.** 어법 고치기 서술형은
     # 지문에 ①~⑤ 자리표를 두고도 "바르게 고쳐 쓰시오" 라고 시킨다
     # (성덕2 실증: 자리표만 보고 객관식으로 뒤집혔다).
-    if not _RE_PICK_ENDING.search(q_np) and (
+    if (not _RE_PICK_ENDING.search(q_np)
+            and not _RE_GROUP_INTRO_END.search(q_np)
+            and not _RE_GROUP_INTRO_END.search(q)) and (
             _RE_SRV_ENDING.search(q) or _RE_SRV_ENDING.search(q_np)):
         return "서술형", "지시형 어미"
+    if (cur.get("choices") or {}).get("items"):
+        return "객관식", "선지"
     if any(_RE_INLINE_CIRCLED.search(b.get("content") or "") for b in blocks):
         return "객관식", "지문 안 자리표"
     if taxonomy_kind:
@@ -266,6 +271,11 @@ def _expand_range_groups(annotated, warnings=None):
                 warnings.append(
                     f"묶음 '{row['text'][:24]}' 은 {count}문항인데 선지 무리가 "
                     f"{len(starts)}개다 — 펼치지 않았다")
+            if _RE_GROUP_INTRO_END.search(row["text"] or ""):
+                # `…물음에 답하시오.` 형은 구성원이 저마다 발문을 갖는다.
+                # 못 폈다고 머리를 문항으로 세우면 유령 문항이 하나 생긴다.
+                row = dict(row)
+                row["kind"] = "Q-INTRO"
             out.append(row)
             out.extend(body)
             i = j
