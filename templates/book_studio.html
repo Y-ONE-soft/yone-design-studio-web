@@ -366,6 +366,11 @@
                    title="인디자인의 GREP 과 같습니다. 예) ^\d+\. · (가|나)다">
               <input type="checkbox" id="find-regex"> 정규식</label>
           </div>
+          <div class="ide-f" style="margin-bottom:8px">
+            <input class="ide-t" id="find-cls" style="flex:1"
+                   placeholder="찾은 곳 전부에 걸 단락 스타일 (예: ps-발문)">
+            <button class="ide-b" id="find-cls-go">스타일 걸기</button>
+          </div>
           <div class="ide-hist" id="find-out"></div>
         </div>
       </details>
@@ -3557,6 +3562,25 @@
   $('find-q').addEventListener('keydown', function (e) {
     if (e.key === 'Enter') find(false);
   });
+  // 찾은 곳 **전부**에 단락 스타일 걸기 — 인디자인의 "모두 바꾸기 + 스타일".
+  // ⚠ 되돌리기 한 번에 하나씩 풀린다(연산이 자리마다 쌓인다).
+  $('find-cls-go').addEventListener('click', function () {
+    var nm = ($('find-cls').value || '').trim();
+    if (!nm) { msg('걸 스타일 이름을 적으세요 (예: ps-발문)'); return; }
+    var refs = [].map.call(document.querySelectorAll('#find-out a[data-ref]'),
+                           function (a) { return a.dataset.ref; });
+    if (!refs.length) { msg('먼저 찾으세요 — 결과가 없습니다'); return; }
+    if (!confirm(refs.length + '곳에 「' + nm + '」 을 겁니다. '
+                 + '되돌리기로 풀 수 있습니다.')) return;
+    api('/api/book-studio/paraclass', { b: key, refs: refs, cls: nm })
+      .then(function (d) {
+        if (d.error) { msg('✗ ' + d.error); return; }
+        rebuild('').then(function (ok) {
+          if (ok) msg('✓ ' + d.count + '곳에 ' + nm);
+        });
+      });
+  });
+
   $('find-out').addEventListener('click', function (e) {
     var a = e.target.closest && e.target.closest('a[data-ref]');
     if (!a) return;
@@ -3636,14 +3660,8 @@
     });
   });
 
-  $('find-go').addEventListener('click', function () { find(false); });
-  $('find-all').addEventListener('click', function () {
-    if (!confirm('전권에서 모두 바꿉니다. 되돌리기로 살릴 수 있습니다.')) return;
-    find(true);
-  });
-  $('find-q').addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') find(false);
-  });
+  // ⚠ 찾기 단추는 **한 번만** 걸어야 한다. 두 번 걸려 있어서 "모두 바꾸기"
+  //   가 확인 창을 두 번 띄우고 두 번 돌았다(두 번째는 바꿀 게 없어 조용했다).
   $('ide-pal-t').addEventListener('click', function () {
     $('ide-right').classList.toggle('hide');
   });

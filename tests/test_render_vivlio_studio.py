@@ -1990,3 +1990,25 @@ def test_cell_style_refuses_a_covered_slot():
     T.merge(b, 0, 0, 0, 1)
     with pytest.raises(ValueError):
         T.set_cell_style(b, 0, 1, {"background": "#eef"})
+
+
+def test_style_can_be_applied_to_every_hit_at_once():
+    """찾은 곳 **전부**에 단락 스타일을 건다(인디자인의 "모두 바꾸기 + 스타일").
+
+    ⚠ 자리마다 연산이 쌓이므로 되돌리기도 한 곳씩 풀린다.
+    """
+    src = open(os.path.join(_ROOT, "routes", "book_studio.py"),
+               encoding="utf-8").read()
+    i = src.index("def api_paraclass")
+    body = src[i:i + 2600]
+    assert 'p.get("refs")' in body, "여러 자리를 못 받는다"
+    assert "3000" in body, "한 번에 너무 많으면 막아야 한다"
+    ui = _studio_src()
+    assert "find-cls-go" in ui and "refs: refs" in ui
+
+
+def test_find_buttons_are_bound_once():
+    """두 번 걸려 있어서 "모두 바꾸기" 가 확인 창을 **두 번** 띄우고 두 번 돌았다."""
+    ui = _studio_src()
+    assert ui.count("$('find-all').addEventListener") == 1
+    assert ui.count("$('find-go').addEventListener") == 1
