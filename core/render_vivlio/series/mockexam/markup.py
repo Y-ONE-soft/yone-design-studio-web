@@ -1021,9 +1021,15 @@ def build_html(doc, spec, case=None, css_href="theme.css", scores=None,
     aux_block = first_page_aux(s, case, scores)
     notice = ""
     if s.notice_head:
-        notice = ('<div class="notice-wrap">'
-                  + "".join(f'<p class="notice">{esc(l)}</p>' for l in s.notice_head)
-                  + "</div>")
+        # 같은 문구가 부속 상자로도 그려지는 학교가 있다(세종1 문항수 안내).
+        # 상자가 정본 모양이므로 맨줄 쪽을 뺀다.
+        seen = re.sub(r"\s+", "", re.sub(r"<[^>]+>", "", aux_block))
+        lines = [l for l in s.notice_head
+                 if re.sub(r"\s+", "", str(l)) not in seen]
+        if lines:
+            notice = ('<div class="notice-wrap">'
+                      + "".join(f'<p class="notice">{esc(l)}</p>' for l in lines)
+                      + "</div>")
     ending = ""
     if s.ending_lines:
         ending = "".join(f'<p class="ending">{esc(l)}</p>' for l in s.ending_lines)
