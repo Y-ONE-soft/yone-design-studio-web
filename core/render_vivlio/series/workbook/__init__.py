@@ -100,16 +100,22 @@ class WorkbookSeries(Series):
             #   쌓기만 하면 지나간 바퀴의 군더더기가 남아 78면 책이 88면이 됐다.
             #   그래서 바퀴마다 점수를 매겨 **가장 좋은 판을 남긴다**(결함 수가
             #   먼저, 같으면 면 수가 적은 쪽).
+            # 규칙을 다 지키면 면이 는다 — 수능만만 10강 실측 77면 → 86면.
+            # 학교·교재 사정에 따라 끌 수 있게 손잡이를 뒀다.
+            opt = cfg.section("options") or {}
+            do_push = opt.get("turn_push", True)
+            do_keep = opt.get("leaf_keep", True)
             snap = os.path.join(build_dir, "_fit_best.pdf")
             best = None
+            first = None
             for _round in range(6):
                 sp = fit_mod.spills(out)
                 tn = fit_mod.turns(out)
                 lb = set(fit_mod.leaf_breaks(out))
                 pages_now = probe.page_count(out)
                 score = (len(tn) + len(lb), pages_now)
-                log(f"    · {_round + 1}바퀴 넘친덩어리 {len(sp)} · 장넘김세트 "
-                    f"{len(tn)} · 갈라진문항 {len(lb)} · {pages_now}면")
+                if first is None:
+                    first = score
                 if best is None or score < best[0]:
                     best = (score, _round + 1)
                     shutil.copyfile(out, snap)
@@ -117,7 +123,10 @@ class WorkbookSeries(Series):
                     break
                 ids = {i for i, _a, _b, _t in sp}
                 # 면 머리에서 시작하는 세트를 밀면 그 오른쪽 면이 통째로 빈다
-                pend = {i for i, _a, _b, c, y in tn if not (c == 0 and y < 45.0)}
+                pend = ({i for i, _a, _b, c, y in tn if not (c == 0 and y < 45.0)}
+                        if do_push else set())
+                if not do_keep:
+                    lb = set()
                 # 한두 줄이면 먼저 당겨 보고, 두 바퀴 안에 안 되면 문항을 묶는다
                 if _round < 2:
                     lb -= ids
@@ -144,6 +153,10 @@ class WorkbookSeries(Series):
             except OSError:
                 pass
             tn, lb = fit_mod.turns(out), fit_mod.leaf_breaks(out)
+            if first and best and first != best[0]:
+                log(f"  [마감] 장 넘김을 없애느라 결함 {first[0]}건 · {first[1]}면 "
+                    f"→ 결함 {best[0][0]}건 · {best[0][1]}면 "
+                    f"(끄려면 config options.turn_push / leaf_keep = false)")
             log("  [장넘김] 장을 넘기는 세트 없음" if not tn else
                 f"  [장넘김] 못 없앤 세트 {len(tn)}개 — "
                 + ", ".join(f"p{a}→p{b}" for _i, a, b, _c, _y in tn[:6]))

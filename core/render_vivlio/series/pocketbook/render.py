@@ -13,7 +13,18 @@ import os
 from core.render_vivlio import refs as _refs
 from core.render_vivlio.series.pocketbook import theme as T
 
-ESC = html.escape
+def ESC(s):
+    """글을 HTML 로. 평문은 예전 그대로.
+    # ⚠ 작업대에서 **글자 단위 서식**을 걸면 이 값이 서식 조각 목록이 된다.
+    #   그때 `html.escape()` 는 죽고 **조판이 통째로 안 나온다**(실측: 라벨에
+    #   자간을 줬더니 `'list' object has no attribute 'replace'`).
+    """
+    if isinstance(s, str):
+        return html.escape(s)
+    if s is None:
+        return ""
+    from core.render_vivlio import richtext as _rt
+    return _rt.to_html(s, blanks=False)
 
 
 def _px(*parts):

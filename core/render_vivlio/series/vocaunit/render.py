@@ -39,6 +39,11 @@ _CIRCLED = "①②③④⑤⑥⑦⑧⑨"
 
 
 def esc(s):
+    # ⚠ 작업대에서 **글자 단위 서식**을 걸면 이 값이 서식 조각 목록이 된다.
+    #   그때 `html.escape()` 는 죽고 **조판이 통째로 안 나온다**(실측: 라벨에
+    #   자간을 줬더니 `'list' object has no attribute 'replace'`).
+    if not isinstance(s, (str, type(None))):
+        return _rtx.to_html(s, blanks=False)
     return html.escape(s or "", quote=False)
 
 

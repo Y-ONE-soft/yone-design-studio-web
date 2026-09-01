@@ -94,6 +94,11 @@ ROLE_CLASS = {"num": "r-num", "src": "r-src", "pos": "r-pos"}
 
 
 def esc(s):
+    # ⚠ 작업대에서 **글자 단위 서식**을 걸면 이 값이 서식 조각 목록이 된다.
+    #   그때 `html.escape()` 는 죽고 **조판이 통째로 안 나온다**(실측: 라벨에
+    #   자간을 줬더니 `'list' object has no attribute 'replace'`).
+    if not isinstance(s, (str, type(None))):
+        return inl(s)      # 특강은 자기 `inl` 이 서식 조각을 안다
     t = html.escape(s or "")
     return RE_GAP2.sub(lambda m: "&nbsp;" * (len(m.group(0)) - 1) + " ", t)
 

@@ -76,6 +76,19 @@ def esc_blank(s):
     return out
 
 
+def esc1(x):
+    """한 조각 — 평문은 **예전 그대로**, 작업대가 건 글자 서식은 살려서.
+
+    ⚠ 예전에는 이런 자리에 `html.escape()` 만 썼다. 그런데 작업대에서 그 자리
+      글자에 서식을 걸면 값이 **서식 조각 목록**이 되고, 그때 조판이 통째로
+      죽었다(실측: 라벨 칩에 자간을 줬더니 `'list' object has no attribute
+      'replace'` — 책 전체가 안 나온다).
+    """
+    if isinstance(x, str):
+        return html.escape(x)
+    return inl(x)
+
+
 def inl(x, blank=False):
     """rich 세그먼트 → HTML"""
     if x is None:
@@ -211,7 +224,7 @@ def render_vocab(unit):
     o = [f'<div{_mark(u, "vunit")}>']
     o.append('<div><span'
              + _mark(u and u + '.label', 'chip')
-             + f'>{html.escape(unit["label"])}</span></div>')
+             + f'>{esc1(unit["label"])}</span></div>')
     o.append('<div class="rule"></div>')
     o.append(f'<div{_mark(u and u + ".paras", "pbox")}>')
     if unit['title']:
@@ -227,8 +240,8 @@ def render_vocab(unit):
         o.append('<div class="vw">')
         # 표제어와 뜻은 한 줄에 붙어 있다 — 자리표는 **뜻**에 건다(고칠 것은 뜻이다)
         o.append(f'<p{_mark(wr and wr + ".mean", "wh")}>'
-                 f'<b>{html.escape(w["word"])}</b>'
-                 f'<span class="gap"></span> {html.escape(w["mean"])}</p>')
+                 f'<b>{esc1(w["word"])}</b>'
+                 f'<span class="gap"></span> {esc1(w["mean"])}</p>')
         for ri, r in enumerate(w['rel']):
             cls = 'rel ant' if r['kind'] == '반의어' else 'rel'
             o.append(f'<p{_mark(wr and f"{wr}.rel.{ri}.body", cls)}>'
@@ -282,7 +295,7 @@ def render_question(item, style=''):
             o.append(_tbl.html(b, ref=br, inl=lambda x: inl(x, blank=True)))
         elif t == 'crit':
             o.append('<div class="crit">')
-            o.append(f'<p>{html.escape(b["title"])}</p>')
+            o.append(f'<p>{esc1(b["title"])}</p>')
             for it in b['items']:
                 o.append(f'<p>{inl(it)}</p>')
             o.append('</div>')

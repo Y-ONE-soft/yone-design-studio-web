@@ -13,6 +13,8 @@
 지점이 달라진다).
 """
 import html
+
+from core.render_vivlio import richtext as _rt
 import os
 import re
 
@@ -64,6 +66,17 @@ def _wrap_gapx(s):
         lambda m: f'<span class="gapx">{m.group(0)}</span>', s)
 
 
+def esc1(x):
+    """한 조각 — 평문은 예전 그대로, 작업대가 건 글자 서식은 살려서.
+    # ⚠ 작업대에서 **글자 단위 서식**을 걸면 이 값이 서식 조각 목록이 된다.
+    #   그때 `html.escape()` 는 죽고 **조판이 통째로 안 나온다**(실측: 라벨에
+    #   자간을 줬더니 `'list' object has no attribute 'replace'`).
+    """
+    if isinstance(x, str):
+        return html.escape(x)
+    return inl(x)
+
+
 def inl(x):
     """rich 세그먼트 → HTML"""
     if x is None:
@@ -72,6 +85,11 @@ def inl(x):
         return _wrap_gapx(_wrap_kr(esc_gap(html.escape(x))))
     if isinstance(x, dict):
         t = _wrap_gapx(_wrap_kr(esc_gap(html.escape(x.get("t", "")))))
+        # 작업대에서 건 **글자 단위 서식**(크기·색·자간·이름 붙인 문자 스타일).
+        # ⚠ 안 받으면 저장은 되는데 지면은 그대로다 — 조용해서 더 나쁘다.
+        a = _rt.seg_attr(x)
+        if a:
+            t = f"<span{a}>{t}</span>"
         if x.get("u"):
             t = f"<u>{t}</u>"
         if x.get("b"):
