@@ -146,6 +146,47 @@ _RE_OBJ_ENDING = re.compile(
 _RE_SRV_MARKER = re.compile(r'^\s*[\[【〔<(]?\s*서[답술]형\s*\d')
 
 
+def _ul_spans(para):
+    """단락 runs 에서 밑줄 구간을 단락 전체 기준 [start, end) 로 뽑는다."""
+    if not isinstance(para, dict):
+        return []
+    out, pos = [], 0
+    for run in para.get("runs", []):
+        t = run.get("t", "")
+        if run.get("ul") and t.strip():
+            out.append((pos, pos + len(t)))
+        pos += len(t)
+    return out
+
+
+def _marks_for(spans, start, sub):
+    """단락 밑줄 구간을 부분문자열(start 위치, 길이 len(sub)) 기준으로 옮긴다.
+
+    선지는 한 단락에 `① … ② …` 로 붙어 오기도 해서, 조각마다 제 자리의
+    밑줄만 가져가야 한다. 밑줄이 없으면 빈 리스트.
+    """
+    end = start + len(sub)
+    out = []
+    for a, b in spans:
+        lo, hi = max(a, start), min(b, end)
+        if lo < hi:
+            out.append({"type": "underline", "id": None,
+                        "span": [lo - start, hi - start]})
+    return out
+
+
+def _q_marks(para, text):
+    """발문 밑줄. 발문은 `_clean_question` 이 앞뒤를 다듬으므로 그 뒤 좌표로
+    옮긴다 — `밑줄 친 … 알맞지 <u>않은</u> 것을 <u>2개</u> 고르면?` 처럼
+    부정어·개수에 밑줄이 붙는다."""
+    spans = _ul_spans(para)
+    if not spans:
+        return []
+    cleaned = _clean_question(text)
+    at = text.find(cleaned) if cleaned else -1
+    return _marks_for(spans, at if at >= 0 else 0, cleaned)
+
+
 def _structural_kind(cur, taxonomy_kind):
     """(kind, 근거) — 구조 신호로 객관식/서술형 판정."""
     # 원고가 대놓고 '서답형 3.' 이라고 적어 준 것보다 강한 신호는 없다.
@@ -502,6 +543,7 @@ def build_ir(paras, meta=None, log=None):
                 "label": label,
                 "header": header,
                 "question": _clean_question(text),
+                "question_marks": _q_marks(r.get("para"), text),
                 "stimulus": {"type": "passage", "blocks": []},
                 "given": {"type": None, "content": ""},
                 "choices": {"format": "circled", "items": []},
@@ -556,18 +598,9 @@ def build_ir(paras, meta=None, log=None):
         if kind in ("P", "P-CONTEXT"):
             block = {"kind": "para" if kind == "P-CONTEXT" else "text",
                      "label": None, "content": text}
-            para = r.get("para")
-            if isinstance(para, dict):
-                marks = []
-                pos = 0
-                for run in para.get("runs", []):
-                    t = run.get("t", "")
-                    if run.get("ul") and t.strip():
-                        marks.append({"type": "underline", "id": None,
-                                      "span": [pos, pos + len(t)]})
-                    pos += len(t)
-                if marks:
-                    block["marks"] = marks
+            marks = _marks_for(_ul_spans(r.get("para")), 0, text)
+            if marks:
+                block["marks"] = marks
             cur["stimulus"]["blocks"].append(block)
         elif kind == "C":
             if re.match(r'^\(A\)(?:\s{2,}|\t)', text):
@@ -576,13 +609,26 @@ def build_ir(paras, meta=None, log=None):
                 cur["given"]["content"] += ("\n" if cur["given"]["content"] else "") + text
                 continue
             parts = [t for t in _RE_CIRCLED_SPLIT.split(text) if t.strip()]
+            spans = _ul_spans(r.get("para"))
+            seek = 0
             for part in parts:
-                part = part.strip()
-                if part[:1] in "①②③④⑤":
-                    cur["choices"]["items"].append(
-                        {"label": part[:1], "content": part[1:].strip()})
+                at = text.find(part, seek)
+                if at < 0:
+                    at = seek
+                seek = at + len(part)
+                part_s = part.strip()
+                off = at + (len(part) - len(part.lstrip()))
+                if part_s[:1] in "①②③④⑤":
+                    body = part_s[1:].strip()
+                    boff = text.find(body, off) if body else off
+                    item = {"label": part_s[:1], "content": body}
+                    m = _marks_for(spans, boff if boff >= 0 else off, body)
                 else:
-                    cur["choices"]["items"].append({"label": "", "content": part})
+                    item = {"label": "", "content": part_s}
+                    m = _marks_for(spans, off, part_s)
+                if m:
+                    item["marks"] = m
+                cur["choices"]["items"].append(item)
         elif kind == "Cond":
             if not re.match(r'^\s*(?:<|\[)?\s*조\s*건', text):
                 cur["constraints"].append(text)

@@ -105,6 +105,18 @@ def index_paths(data, paths):
     return _PATH
 
 
+def put(obj, path):
+    """객체 하나를 **손으로** 등록한다.
+
+    `index_paths()` 는 목록만 따라간다. 그런데 자료가 **dict 로 갈라지는**
+    계열이 있다(파이널의 `vols` 는 `{"1": …, "2": …}` 다). 그런 자리는
+    계열이 직접 경로를 지어 등록한다.
+    """
+    if isinstance(obj, dict):
+        _PATH.setdefault(id(obj), path)
+    return path
+
+
 def of(obj, sub=""):
     """그 객체의 경로(+하위 항목). 표에 없으면 빈 문자열 = 자리표 없음."""
     r = _PATH.get(id(obj))

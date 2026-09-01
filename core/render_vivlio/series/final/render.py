@@ -20,6 +20,7 @@ import os
 import re
 
 from core.render_vivlio import refs as _refs
+from core.render_vivlio import richtext as _rtx
 from core.render_vivlio import stage
 from core.render_vivlio.series.final import data as data_mod
 
@@ -54,7 +55,13 @@ def metrics_of(cfg):
 
 # ------------------------------------------------------------------ 인라인
 def esc(s):
-    """HTML 이스케이프 + **연속 공백 보존**(원고의 의미 있는 간격)."""
+    """HTML 이스케이프 + **연속 공백 보존**(원고의 의미 있는 간격).
+
+    ⚠ 작업대에서 글자 서식을 걸면 이 값이 **서식 조각 목록**이 된다. 그때
+      `html.escape()` 는 죽고 **책 전체가 안 나온다**(다른 계열에서 겪었다).
+    """
+    if not isinstance(s, (str, type(None))):
+        return _rtx.to_html(s, blanks=False)
     s = html.escape(s or "")
     return re.sub(r" {2,}",
                   lambda m: NBSP * (len(m.group(0)) - 1) + " ", s)
@@ -204,8 +211,8 @@ def blk_arrange(b, fit=None, mark=""):
          f'<h3{mark}>{esc(b["header"])}</h3>']
     if b.get("given"):
         o.append(f'<div class="given">{esc(b["given"])}</div>')
-    for it in b["items"]:
-        o.append(f'<p class="it">{_item(it)}</p>')
+    for i, it in enumerate(b["items"]):
+        o.append(f'<p{_r(b, f"items.{i}", "it")}>{_item(it)}</p>')
     o.append(ANSLINE)
     o.append('</div>')
     return "".join(o)
@@ -218,8 +225,8 @@ def blk_insert(b, fit=None, mark=""):
         o.append(f'<p class="prompt">{esc(b["prompt"])}</p>')
     if b.get("given"):
         o.append(f'<div class="given">{esc(b["given"])}</div>')
-    for it in b["items"]:
-        o.append(f'<p class="it">{_item(it)}</p>')
+    for i, it in enumerate(b["items"]):
+        o.append(f'<p{_r(b, f"items.{i}", "it")}>{_item(it)}</p>')
     o.append('</div>')
     return "".join(o)
 
@@ -227,7 +234,11 @@ def blk_insert(b, fit=None, mark=""):
 def blk_vocab(b, fit=None, mark=""):
     """지문 행 + 요약 행. 두 행이라 좌우 `>>내용요약` 이 저절로 맞는다."""
     def cell(kind, paras, fn):
-        body = "".join(f'<p class="vp">{fn(p)}</p>' for p in paras)
+        # 왼쪽(빈칸)·오른쪽(정답) 두 벌이 같은 글을 그린다. 자리표는 **왼쪽에만**
+        # 단다 — 같은 자리표를 두 번 심으면 클릭이 어느 쪽인지 알 수 없다.
+        body = "".join(
+            f'<p{_r(b, f"passage.{i}", "vp") if kind == "l" else " class=\"vp\""}>'
+            f'{fn(p)}</p>' for i, p in enumerate(paras))
         return f'<div class="{kind}"><div class="vcell">{body}</div></div>'
 
     o = [_open_blk(fit, "blk blk-vocab"),
@@ -251,16 +262,17 @@ def blk_vocab(b, fit=None, mark=""):
 def blk_grammar(b, fit=None, mark=""):
     return (_open_blk(fit)
             + f'<h3{mark}>{esc(b["header"])}</h3>'
-            + f'<p class="body">{inl_grammar(b["body"])}</p></div>')
+            + f'<p{_r(b, "body", "body")}>{inl_grammar(b["body"])}</p></div>')
 
 
 def blk_writing(b, fit=None, mark=""):
     o = [_open_blk(fit),
          f'<h3{mark}>{esc(b["header"])}</h3>']
-    for p in b["pairs"]:
+    for i, p in enumerate(b["pairs"]):
         o.append('<div class="wpair">'
-                 f'<p class="wkor">{esc(p["korean"])}</p>'
-                 f'<p class="wcho">{esc(p["choices"])}</p></div>')
+                 f'<p{_r(b, f"pairs.{i}.korean", "wkor")}>{esc(p["korean"])}</p>'
+                 f'<p{_r(b, f"pairs.{i}.choices", "wcho")}>'
+                 f'{esc(p["choices"])}</p></div>')
     o.append('</div>')
     return "".join(o)
 
@@ -283,14 +295,39 @@ REF_SPEC = ("vols", ("sections",))
 
 
 def index_refs(data):
+    """조판 직전에 한 번 — 지면의 조각이 원고 어디서 왔는지 표를 만든다.
+
+    ⚠ `vols` 가 **dict**(`{"1": …, "2": …}`)라 목록만 따라가는
+      `index_paths()` 로는 못 닿는다. 경로를 지어 손으로 등록한다.
+    ⚠ 자리표가 없으면 작업대에서 지면을 눌러도 **조용히 아무 일이 안 난다**.
+    """
     try:
-        return _refs.index(data, REF_SPEC)
+        _refs.clear()
+        for vk, vol in (data.get("vols") or {}).items():
+            for si, sec in enumerate(vol.get("sections") or []):
+                base = f"vols.{vk}.sections.{si}"
+                _refs.put(sec, base)
+                for bi, blk in enumerate(sec.get("blocks") or []):
+                    _refs.put(blk, f"{base}.blocks.{bi}")
+        return True
     except Exception:
         return None
 
 
-def _mark(_b):
-    return ""
+def _mark(b):
+    """지문 머리(`<h3>`)에 붙는 자리표 — 그 글이 원고의 `header` 다."""
+    try:
+        return _refs.mark(_refs.of(b, "header"))
+    except Exception:
+        return ""
+
+
+def _r(b, sub, base=""):
+    """블록 안 한 칸(문항 줄·본문·영작)의 자리표. 없으면 원래 클래스만."""
+    try:
+        return _refs.mark(_refs.of(b, sub), base)
+    except Exception:
+        return f' class="{base}"' if base else ""
 
 
 # ------------------------------------------------------------------ 문서
@@ -299,6 +336,9 @@ def key_of(vol, sec, i, b):
 
 
 def document(cfg, data, vol, fits=None, mode=None):
+    # ⚠ 자리표는 **렌더 직전에 한 번** 만든다. 안 만들면 작업대에서 지면을
+    #   눌러도 조용히 아무 일이 안 난다(예전에 이 계열이 그랬다).
+    index_refs(data)
     v = data["vols"][str(vol)]
     ch = v["chapter"]
     fits = fits or {}
@@ -348,6 +388,12 @@ MODE_FILE = {None: "index.html", "measure": "measure.html"}
 def write(cfg, data, vol, build_dir, fits=None, mode=None, log=None):
     text = document(cfg, data, vol, fits, mode)
     os.makedirs(build_dir, exist_ok=True)
+    if mode is None:
+        # 작업대가 `vrefN` → 원본 자리를 되짚는 표. 측정용 판에는 안 낸다.
+        try:
+            _refs.dump(build_dir)
+        except Exception:
+            pass
     name = MODE_FILE[mode]
     if mode is None:
         name = "index.html"

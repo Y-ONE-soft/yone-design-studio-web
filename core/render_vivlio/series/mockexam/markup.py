@@ -293,18 +293,21 @@ class Renderer(object):
             self.essay_no += 1
             label, took = self.essay_label(self.essay_no, it.get("label"), score)
             tail = "" if took else self.score_str(score)
+            qm = it.get("question_marks")
             if s.essay_is_table or s.essay_pos == "own_line":
                 out.append(label)
-                out.append(f'<p class="stem srv">{self.inline(q)}{tail}</p>')
+                out.append(f'<p class="stem srv">{self.inline(q, qm)}{tail}</p>')
             else:
-                out.append(f'<p class="stem srv">{label} {self.inline(q)}{tail}</p>')
+                out.append(f'<p class="stem srv">{label} '
+                           f'{self.inline(q, qm)}{tail}</p>')
         else:
             self.q_no += 1
             num = f'<span class="qnum">{self.qnum(self.q_no)}</span> '
             if group_ctx and group_ctx.get("member_no_stem"):
                 out.append(f'<p class="stem">{num}{self.score_str(score)}</p>')
             else:
-                out.append(f'<p class="stem">{num}{self.inline(q)}'
+                out.append(f'<p class="stem">{num}'
+                           f'{self.inline(q, it.get("question_marks"))}'
                            f'{self.score_str(score)}</p>')
 
         # 지문 — 순서·삽입 문항의 '주어진 글/문장' 은 정본에서 본문 **앞**에
@@ -392,8 +395,9 @@ class Renderer(object):
             cells = []
             for c in items:
                 lab = c.get("label") or ""
-                cells.append(f'<p class="choice">'
-                             f'{self.inline((lab + " " + c["content"]).strip())}</p>')
+                head = (lab + " ") if lab else ""
+                cells.append(f'<p class="choice">{esc(head)}'
+                             f'{self.inline(c["content"], c.get("marks"))}</p>')
             if layout in ("grid2", "grid3", "grid5"):
                 n = int(layout[-1])
                 out.append(f'<div class="choice-grid g{n}">'
