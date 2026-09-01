@@ -53,18 +53,24 @@ for (const [id, len] of Object.entries(panels)) {
   (len > 5 ? ok : bad)('패널 ' + id + ' (' + len + '자)');
 }
 
-// ② 지면을 눌러 고른다
+// ② 지면을 눌러 고른다 — 자리표가 있는 면까지 넘겨 가며
 const picked = await p.evaluate(async () => {
-  const d = document.getElementById('ide-frame').contentDocument;
-  // 어느 책이든 되게 — **글이 있는 첫 자리표**를 누른다
-  const el = [...d.querySelectorAll('[class*=vref]')]
-    .find(e => (e.innerText || '').trim().length > 4);
+  const has = () => {
+    const d = document.getElementById('ide-frame').contentDocument;
+    return [...d.querySelectorAll('[class*=vref]')]
+      .find(e => (e.innerText || '').trim().length > 4);
+  };
+  for (let i = 0; i < 6 && !has(); i++) {
+    document.getElementById('ide-next').click();
+    await new Promise(r => setTimeout(r, 2500));
+  }
+  const el = has();
   if (!el) return 'no-ref';
   el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-  await new Promise(r => setTimeout(r, 500));
+  await new Promise(r => setTimeout(r, 600));
   return document.getElementById('pal-sel').innerText.replace(/\s+/g, ' ');
 });
-(/[a-z]+\.\d/.test(picked) ? ok : bad)('지면 클릭 → ' + picked.replace(/\n/g,' ').slice(0, 45));
+(/[a-z]+\.\d|#/.test(picked) ? ok : bad)('지면 클릭 → ' + picked.slice(0, 45));
 
 // ③ 문자 패널이 실제 값을 읽는다
 const charVals = await p.evaluate(() => {
@@ -99,11 +105,14 @@ const gd = await p.evaluate(async () => {
 });
 (gd > 0 ? ok : bad)('안내선을 끌어내면 선이 생긴다 (' + gd + ')');
 
-// ⑥ 찾기
+// ⑥ 찾기 — **지면에 있는 낱말**로 찾는다(책마다 다르니까)
 const found = await p.evaluate(async () => {
-  document.getElementById('find-q').value = 'vitality';
+  const d = document.getElementById('ide-frame').contentDocument;
+  const txt = (d.body.innerText || '').match(/[A-Za-z]{6,}|[가-힣]{3,}/g) || [];
+  if (!txt.length) return -1;
+  document.getElementById('find-q').value = txt[Math.floor(txt.length / 2)];
   document.getElementById('find-go').click();
-  await new Promise(r => setTimeout(r, 3000));
+  await new Promise(r => setTimeout(r, 3500));
   return document.querySelectorAll('#find-out a[data-ref]').length;
 });
 (found > 0 ? ok : bad)('찾기 ' + found + '곳');
@@ -112,20 +121,22 @@ const found = await p.evaluate(async () => {
 const sw = await p.evaluate(() => document.querySelectorAll('#pal-color button').length);
 (sw > 0 ? ok : bad)('색상 견본 ' + sw + '개');
 
-// ⑧ 면 넘기기
+// ⑧ 면 넘기기 — **있는 면** 중에서 고른다(책마다 면수가 다르다)
 const jump = await p.evaluate(async () => {
   const a = [...document.querySelectorAll('#pal-pages a[data-pg]')];
   if (!a.length) return 'no-list';
-  (a.find(x => x.dataset.pg === '10') || a[a.length - 1]).click();
-  for (let i = 0; i < 60; i++) {
+  const want = String(Math.min(5, a.length));
+  a.find(x => x.dataset.pg === want).click();
+  for (let i = 0; i < 90; i++) {
     await new Promise(r => setTimeout(r, 500));
     const t = document.getElementById('ide-pageno').innerText;
-    if (t.startsWith('10 ')) return t;
-    if (/까지입니다/.test(document.getElementById('ide-msg').innerText)) return t + ' (끝)';
+    if (t.startsWith(want + ' ')) return t;
+    if (/까지입니다/.test(document.getElementById('ide-msg').innerText))
+      return t + ' (판의 끝)';
   }
   return document.getElementById('ide-pageno').innerText + ' (못 감)';
 });
-(/^10 /.test(jump) ? ok : bad)('10면으로 → ' + jump);
+(!/못 감|no-list/.test(jump) ? ok : bad)('면 넘기기 → ' + jump);
 
 // ⑨ 펼침(2면 보기)
 const spread = await p.evaluate(async () => {

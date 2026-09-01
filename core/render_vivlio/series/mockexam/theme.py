@@ -264,6 +264,8 @@ def build_css(spec):
     # ── 상자 ──
     css.append("/* 보기·조건 — 학교마다 렌더 방식이 다르다 */")
     css.append(_box_css("given", s.given, s))
+    # 상자 안이 문단이면 정렬을 좌측 양끝으로 되돌린다(정본 강동2 실측)
+    css.append(".given-prose, .cond-prose { text-align: justify; }")
     css.append(_box_css("cond", s.cond, s))
     gs = s.given_sentence or {}
     if (gs.get("render") or "").startswith("boxed"):

@@ -248,7 +248,13 @@ class Renderer(object):
             return ""
         render = box_spec.get("render") or "plain_line"
         marker = label or box_spec.get("marker") or ""
-        body = "".join(f'<p class="{cls}">{self.inline(l)}</p>' for l in lines)
+        # 상자 안이 낱말 나열이냐 문단이냐에 따라 정렬이 달라진다.
+        # 정본 실측 — 강동1·상일2·명일2 는 낱말 나열을 가운데로 놓지만,
+        # 강동2 처럼 보기 안에 지문이 통째로 들어가면 양끝정렬이다. 문단을
+        # 가운데로 놓으면 줄마다 들쭉날쭉해져 실물과 전혀 달라진다.
+        prose = _is_prose_box(lines)
+        pcls = f"{cls} {cls}-prose" if prose else cls
+        body = "".join(f'<p class="{pcls}">{self.inline(l)}</p>' for l in lines)
 
         if render == "plain_line":
             head = (f'<p class="{cls}-label {cls}">{esc(marker)}</p>'
@@ -584,6 +590,21 @@ def _fill_group_score(text, score, s):
     num = str(int(score)) if float(score) == int(score) else \
         f"{round(float(score), s.score_decimals)}"
     return text.replace("{점수}", num)
+
+
+def _is_prose_box(lines, limit=90):
+    """상자 안이 문단인가(낱말 나열이 아니라) — 구조로 본다.
+
+    나열은 슬래시·쉼표로 끊긴 짧은 토막이고, 문단은 긴 줄에 마침표가 있다.
+    """
+    text = " ".join(l.strip() for l in lines if l and l.strip())
+    if not text:
+        return False
+    if len(text) < limit:
+        return False
+    # 슬래시·쉼표가 촘촘하면 나열이다
+    seps = text.count("/") + text.count(",")
+    return seps < max(3, len(text) // 60)
 
 
 def _order_layout(items, s):
