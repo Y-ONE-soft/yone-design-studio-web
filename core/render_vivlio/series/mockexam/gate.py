@@ -321,6 +321,25 @@ def check_answer_leak(text):
     return OK, "없다", {"leak": 0}
 
 
+# ── 4-c. 지문 유실 ──────────────────────────────────────────────────────────
+# 원고의 긴 지문이 조판에 안 실리면 문제가 성립하지 않는다. 한영1 2회에서
+# 지문 두 개가 통째로 사라진 적이 있다(묶음 경계 오산 + 미분류).
+def _norm_body(t):
+    import unicodedata as _u
+    t = _u.normalize("NFC", t or "")
+    t = re.sub(r"_{2,}", "", t)        # 빈칸은 조판에서 칸으로 바뀐다
+    return re.sub(r"\s+", "", t)
+
+
+def check_passage_loss(paras, html, limit=400):
+    body = _norm_body(re.sub(r"<[^>]+>", "", html or ""))
+    longs = [_norm_body(p.get("text") or "") for p in (paras or [])]
+    miss = [t for t in longs if len(t) >= limit and t[:120] not in body]
+    if miss:
+        return FAIL, f"지문 {len(miss)}개 유실: {miss[0][:40]}…", {"lost": len(miss)}
+    return OK, "없다", {"lost": 0}
+
+
 # ── 5. 머리표 ───────────────────────────────────────────────────────────────
 
 def check_head(html):
@@ -404,8 +423,8 @@ def check_overflow(doc):
 
 
 # ── 한 부 검사 ──────────────────────────────────────────────────────────────
-CHECKS = ["배점", "발문", "문항수", "출처", "정답", "머리표", "묶음",
-          "그림", "밑줄", "지면"]
+CHECKS = ["배점", "발문", "문항수", "출처", "정답", "지문", "머리표",
+          "묶음", "그림", "밑줄", "지면"]
 
 
 def inspect(key, rnd, path, out_dir=OUT_DIR):
@@ -439,6 +458,7 @@ def inspect(key, rnd, path, out_dir=OUT_DIR):
         c["문항수"] = check_counts(paras, ir)
         c["출처"] = check_leak(pdf_text)
         c["정답"] = check_answer_leak(pdf_text)
+        c["지문"] = check_passage_loss(paras, html)
         c["머리표"] = check_head(html)
         c["묶음"] = check_groups(plan)
         c["그림"] = check_images(paras, ir, n_img)
@@ -475,6 +495,8 @@ def _short(name, mark, detail):
         return f"출처 {len(g('누출') or [])}"
     if name == "정답":
         return f"정답누출 {g('leak')}"
+    if name == "지문":
+        return f"지문유실 {g('lost')}"
     if name == "머리표":
         return "머리표 " + (OK if g("exam_head") else FAIL)
     if name == "묶음":

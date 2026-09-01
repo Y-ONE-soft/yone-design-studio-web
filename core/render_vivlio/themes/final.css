@@ -236,7 +236,7 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 .sechdr .band {
   /* 러닝 띠보다 0.032mm 오른쪽·아래로 앉는다(마진 박스와 기준이 달라서) —
    * 그만큼 되돌려 **자리를 정확히 포갠다**(실측 보정). */
-  position: absolute; left: -2.86mm;
+  position: absolute; left: -3.97mm;
   top: calc(-1 * var(--mtop) - 0.033mm);
   width: 190mm; margin-left: 0;
 }
