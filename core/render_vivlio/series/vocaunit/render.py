@@ -16,7 +16,10 @@ import html
 import os
 import re
 
+from core.render_vivlio import box as _box
 from core.render_vivlio import refs as _refs
+from core.render_vivlio import richtext as _rtx
+from core.render_vivlio import table as _tbl
 from core.render_vivlio import stage
 from core.render_vivlio.series.vocaunit import theme
 
@@ -293,6 +296,11 @@ class Renderer(object):
 
     # ── 표제어 항목 ─────────────────────────────────────────────────────
     def word(self, w):
+        # 작업대가 낱말 목록 안에 넣은 표·상자
+        if w.get("t") in ("table", "box"):
+            mod = _tbl if w["t"] == "table" else _box
+            return mod.html(w, ref=_refs.of(w),
+                            inl=lambda x: _rtx.to_html(x, blanks=False))
         chk = '<span class="chk"><i></i><i></i><i></i></span>'
         wr = _refs.of(w)
         der = "".join(

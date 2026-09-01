@@ -30,7 +30,9 @@ import json
 import os
 import re
 
+from core.render_vivlio import box as _box
 from core.render_vivlio import refs as _refs
+from core.render_vivlio import table as _tbl
 from core.render_vivlio import richtext as _rt
 from core.render_vivlio import stage
 
@@ -537,7 +539,7 @@ def render_grammar(vol, out, vi=0):
                        + "".join(body) + "</div>"))
             i = j - 1
         else:
-            put(generic(b))
+            put(generic(b, _CUR.get('ref', '')))
         i += 1
     close_cpage()
     close_col()
@@ -803,7 +805,7 @@ def render_reading(vol, out, vi=0):
                 col_open = True
             k.body(ans_line(b["r"]))
         else:
-            put(generic(b))
+            put(generic(b, _CUR.get('ref', '')))
         i += 1
     flush_bg()
     close_cpage()
@@ -848,8 +850,14 @@ def ans_line(rich):
             f'<span class="l-ans">{esc(ans)}</span></div>')
 
 
-def generic(b):
-    return f'<div class="x-{b["t"]}">{inl(b.get("r"))}</div>'
+def generic(b, ref=""):
+    """모르는 블록의 마지막 자리. 작업대가 넣은 표·상자도 여기로 온다."""
+    t = b.get("t")
+    if t == "table":
+        return _tbl.html(b, ref=ref, inl=inl)
+    if t == "box":
+        return _box.html(b, ref=ref, inl=inl)
+    return f'<div class="x-{t}">{inl(b.get("r"))}</div>'
 
 
 # ─────────────────────────────────────────────────────── 표지 · 간지 · 목차

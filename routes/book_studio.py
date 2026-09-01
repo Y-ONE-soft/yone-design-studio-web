@@ -679,17 +679,28 @@ def _list_slot(ref, data=None):
     return None, 0
 
 
+# 이 열쇠들이 있으면 **덩어리**다 — 그 목록에 표·상자를 끼우면 조판이 깨진다
+_CHUNK_KEYS = ("stem", "blocks", "problems", "vocab", "answers", "sections",
+               "lessons", "units", "parts")
+
+
 def _para_like(lst):
-    """이 목록에 든 것이 **글이나 블록**인가(문항·단원 같은 것이 아니라)."""
+    """이 목록에 표·상자를 끼워도 되나.
+
+    ⚠ 이름이 아니라 **든 것**으로 가른다. `…problems.0.stem` 을 고르면 위로
+      올라가다 `problems` 를 만나는데, 거기 끼우면 문항 자리에 상자가 들어가
+      조판이 깨진다.
+
+    낱말 목록(단어장)은 **된다** — 계열 렌더러가 낱말 자리에서 표·상자를
+    갈라 받도록 해 두었다.
+    """
     for x in lst[:8]:
-        if isinstance(x, str):
+        if isinstance(x, str) or isinstance(x, list):
             return True
         if isinstance(x, dict):
             if "t" in x:
                 return True
-            return False           # `no`/`stem` 을 가진 문항 같은 것
-        if isinstance(x, list):
-            return True            # 서식 조각 목록
+            return not any(k in x for k in _CHUNK_KEYS)
     return not lst
 
 
