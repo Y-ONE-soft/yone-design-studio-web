@@ -738,7 +738,22 @@
     { k: 'font-style', l: '기울임', kind: 'enum', values: ['', 'normal', 'italic'] },
     { k: 'text-decoration', l: '밑줄', kind: 'enum', values: ['', 'none', 'underline'] },
     { k: 'color', l: '글자 색', kind: 'color' },
-    { k: 'background-color', l: '바탕색', kind: 'color' }
+    { k: 'background-color', l: '바탕색', kind: 'color' },
+    // ── 서체 기능(OpenType) — 인디자인 문자 패널의 아랫단 ──
+    // 조판 엔진이 이걸 다 해 내는지 실측으로 확인했다.
+    { k: 'font-variant-caps', l: '작은대문자', kind: 'enum',
+      values: ['', 'normal', 'small-caps', 'all-small-caps'] },
+    { k: 'font-variant-numeric', l: '숫자 꼴', kind: 'enum',
+      values: ['', 'normal', 'oldstyle-nums', 'lining-nums',
+               'tabular-nums', 'proportional-nums'] },
+    { k: 'font-variant-ligatures', l: '합자', kind: 'enum',
+      values: ['', 'normal', 'none', 'common-ligatures',
+               'discretionary-ligatures'] },
+    { k: 'font-kerning', l: '커닝', kind: 'enum',
+      values: ['', 'auto', 'normal', 'none'] },
+    { k: 'font-variant-position', l: '윗·아래 첨자', kind: 'enum',
+      values: ['', 'normal', 'super', 'sub'] },
+    { k: 'font-feature-settings', l: '서체 기능(고급)', kind: 'text' }
   ];
   var PARA_PROPS = [
     { k: 'text-align', l: '정렬', kind: 'enum',
@@ -750,7 +765,15 @@
     { k: 'margin-bottom', l: '단락 뒤 간격', kind: 'num', units: ['mm', 'pt'], u: 'mm' },
     { k: 'break-before', l: '쪽 나눔(앞)', kind: 'enum',
       values: ['', 'auto', 'page', 'left', 'right'] },
-    { k: 'break-inside', l: '덩어리 유지', kind: 'enum', values: ['', 'auto', 'avoid'] }
+    { k: 'break-inside', l: '덩어리 유지', kind: 'enum', values: ['', 'auto', 'avoid'] },
+    { k: 'hyphens', l: '하이픈 넣기', kind: 'enum',
+      values: ['', 'none', 'manual', 'auto'] },
+    { k: 'text-wrap', l: '줄바꿈 다듬기', kind: 'enum',
+      values: ['', 'wrap', 'balance', 'pretty'] },
+    { k: 'widows', l: '외톨이 줄(아래)', kind: 'num', units: [''], u: '', step: 1 },
+    { k: 'orphans', l: '외톨이 줄(위)', kind: 'num', units: [''], u: '', step: 1 },
+    { k: 'break-after', l: '쪽 나눔(뒤)', kind: 'enum',
+      values: ['', 'auto', 'page', 'left', 'right'] }
   ];
 
   /** 지금 고칠 대상. 스타일 목록에서 고른 것이 있으면 그것, 없으면 클릭한 자리. */
@@ -1699,16 +1722,36 @@
     if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'nearest' });
   }
 
-  /** 그 면으로 간다. 뷰어에는 '몇 면으로' 가 없어 **차이만큼 넘긴다.** */
+  /** 그 면으로 **한 번에** 간다.
+   *
+   *  ⚠ 예전에는 차이만큼 한 면씩 넘겼다(10면 가려면 열 번, 20초). 뷰어에
+   *    `navigateToPage('epage', N)` 이 있는 것을 번들에서 찾았다 —
+   *    `sendCommand({a:'moveTo', epage:N})` 로 바로 간다. 번호는 **0부터**다.
+   */
   function gotoPage(n) {
     if (!viewer || !ready) { msg('아직 조판 중입니다'); return; }
+    if (n === pageNow()) return;
+    try {
+      viewer.navigateToPage('epage', n - 1);
+    } catch (e) {                       // 판이 바뀌어 없어졌으면 옛 길로
+      return hopTo(n);
+    }
+    var tries = 0;
+    (function wait() {
+      if (pageNow() === n || tries++ > 60) { drawPageNo(); msg(n + '면'); return; }
+      setTimeout(wait, 60);
+    })();
+  }
+
+  /** 옛 길 — 한 면씩. `epage` 가 안 통하는 판을 위해 남겨 둔다. */
+  function hopTo(n) {
     var step = n - pageNow();
     if (!step) return;
     var dir = step > 0 ? V.Navigation.NEXT : V.Navigation.PREVIOUS;
     var left = Math.abs(step);
     msg(n + '면으로 가는 중…');
     (function hop() {
-      if (!left--) { drawPageNo(); drawPages(); msg(n + '면'); return; }
+      if (!left--) { drawPageNo(); msg(n + '면'); return; }
       var before = pageNow();
       viewer.navigateToPage(dir);
       (function wait(t) {
