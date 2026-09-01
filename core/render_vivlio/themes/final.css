@@ -338,7 +338,8 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 .vpair > div { display: table-cell; vertical-align: top; }
 .vpair .l { width: 87mm; }          /* 글 83mm + 단 사이 4mm */
 .vpair .r { width: 83mm; }          /* 회색 판과 같은 폭(면 배경이 칠한다) */
-.vpair .l .vcell { padding: 0 4.00mm 4.00mm 0; }
+/* 왼쪽 글 폭은 **83.79mm** 다(완성본 실측) — 4mm 를 빼면 83.0 이라 0.79 좁다 */
+.vpair .l .vcell { padding: 0 3.21mm 4.00mm 0; }
 .vpair .r .vcell { padding: 0 1.99mm 4.00mm 1.99mm; }
 .vp { text-align: justify; line-height: calc(2.3456 * var(--lead, 1)); }
 .vsum { margin-top: 5.60mm; }

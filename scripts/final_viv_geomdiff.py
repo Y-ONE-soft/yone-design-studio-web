@@ -46,7 +46,9 @@ def survey(path):
                     continue
                 x0, y0, x1 = MM(l["bbox"][0]) - bl, MM(l["bbox"][1]) - bl, MM(l["bbox"][2]) - bl
                 cols[round(x0 / 40)].append(y0)
-                rec["x"][round(x0, 1)] += 1
+                # 단이 둘이라 최빈값을 쓰면 '어느 단에 줄이 많은가' 만 보게
+                # 된다 — 단마다 **가장 왼쪽 잉크**를 따로 모은다.
+                rec["x"][(0 if x0 < 60 else 1, round(x0, 1))] += 1
                 rec["w"].append(round(x1 - x0, 2))
                 if l["spans"]:
                     rec["pt"][round(l["spans"][0]["size"], 2)] += 1
@@ -85,8 +87,9 @@ def main():
                 a, n = A[sec], N[sec]
                 la = a["lead"].most_common(1)[0][0] if a["lead"] else None
                 ln = n["lead"].most_common(1)[0][0] if n["lead"] else None
-                xa = a["x"].most_common(1)[0][0] if a["x"] else None
-                xn = n["x"].most_common(1)[0][0] if n["x"] else None
+                col_min = lambda r: {c: min(x for (cc, x) in r if cc == c)
+                                     for c in {cc for cc, _ in r}}
+                xa, xn = col_min(a["x"]), col_min(n["x"])
                 wa = max(a["w"]) if a["w"] else None
                 wn = max(n["w"]) if n["w"] else None
                 pa = a["pt"].most_common(1)[0][0] if a["pt"] else None
@@ -94,8 +97,10 @@ def main():
                 flags = []
                 if la and ln and abs(la - ln) > 0.1:
                     flags.append("행간 %s→%s" % (la, ln))
-                if xa and xn and abs(xa - xn) > 0.5:
-                    flags.append("시작x %s→%s" % (xa, xn))
+                for c in sorted(set(xa) & set(xn)):
+                    if abs(xa[c] - xn[c]) > 0.5:
+                        flags.append("%s단 시작x %s→%s"
+                                     % ("왼오"[c], xa[c], xn[c]))
                 if wa and wn and abs(wa - wn) > 0.5:
                     flags.append("단폭 %s→%s" % (wa, wn))
                 if pa and pn and abs(pa - pn) > 0.05:

@@ -218,6 +218,9 @@ SUP_SIZE = 5.5          # pt — theme.css `.n`(위첨자). 지문 배율을 안
 
 
 class PocketbookSeries(Series):
+    # 한 면에 하나씩 재는 목록 — 목차처럼 큰 것을 넣으면 측정이 멎는다
+    MEASURED = ("items", "problems", "words")
+
     name = "pocketbook"
     display = "포켓북"
     theme = ""              # 계열이 CSS 를 생성한다

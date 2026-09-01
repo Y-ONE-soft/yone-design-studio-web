@@ -22,6 +22,9 @@ from core.render_vivlio.series.whitebook import render as render_mod
 
 
 class WhitebookSeries(Series):
+    # 한 면에 하나씩 재는 목록 — 목차처럼 큰 것을 넣으면 측정이 멎는다
+    MEASURED = ("problems", "answers", "items")
+
 
     name = "whitebook"
     display = "프리미엄북 화이트북 (어휘 실전문제)"

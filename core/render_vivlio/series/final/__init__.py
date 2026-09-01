@@ -22,6 +22,9 @@ from core.render_vivlio.series.final import verify as verify_mod
 
 
 class FinalSeries(Series):
+    # 한 면에 하나씩 재는 목록 — 목차처럼 큰 것을 넣으면 측정이 멎는다
+    MEASURED = ("items", "problems")
+
 
     name = "final"
     display = "파이널 직전보충 (FINAL STEP)"

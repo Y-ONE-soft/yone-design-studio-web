@@ -24,6 +24,9 @@ RE_SPK = re.compile(r"^[A-Za-z][A-Za-z .'-]{0,22}:\s")
 
 
 class BlackbookSeries(Series):
+    # 한 면에 하나씩 재는 목록 — 목차처럼 큰 것을 넣으면 측정이 멎는다
+    MEASURED = ("problems", "answers")
+
 
     name = "blackbook"
     display = "프리미엄북 블랙북 (교과 단원)"

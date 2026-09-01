@@ -67,6 +67,14 @@ class Series(object):
         return self.style_names.get(cls, "")
 
     # ── 조판 결과가 놓이는 폴더 ──
+    # 한 면에 하나씩 **재는** 목록의 이름들. 여기에 목차처럼 **면을 넘길 만큼
+    # 큰 것**을 넣으면 측정 조판이 통째로 멎는다(항목 수 ≠ 면 수).
+    #   실측: 문항 안에 8줄짜리 목차를 넣었더니 `항목 130 vs 측정 면 133`.
+    MEASURED = ()
+
+    def measured_keys(self):
+        return tuple(self.MEASURED)
+
     def accepts_text(self, key, lst):
         """`<…>.<key>` 목록에 **글 한 줄**을 끼울 수 있나.
 
