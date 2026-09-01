@@ -430,6 +430,7 @@
   var spec = [], changed = {}, refs = {}, curRef = null, editEl = null, editHtml = null;
   var editPlain = false, msgExtra = '';
   var tool = 'sel', scope = 'sample', spread = false, zoom = 1, pageCount = 0;
+  var noRefs = false;      // 이 계열에 자리표가 없다(지면 클릭 편집 불가)
   // 모든 면을 미리 그려 둘 것인가. 켜면 여는 데 오래 걸리지만 그다음이 즉시다.
   var renderAll = false;
   var curEl = null, styles = {}, styleNames = {}, curPage = 1, ready = false;
@@ -612,7 +613,21 @@
       .then(function (d) {
         if (d.error) { msg('✗ ' + d.error); return false; }
         return api('/api/book-studio/refs?b=' + encodeURIComponent(key))
-          .then(function (t) { refs = t || {}; show(); return true; });
+          .then(function (t) {
+            refs = t || {};
+            // ⚠ 자리표가 없는 계열이 아직 있다(파이널·워크북·포켓북).
+            //   그런 책에서 지면을 눌러도 **아무 일도 안 일어난다** — 조용하면
+            //   고장으로 보인다. 무엇이 되고 무엇이 안 되는지 적어 준다.
+            noRefs = !Object.keys(refs).length;
+            if (noRefs) {
+              $('pal-sel').innerHTML =
+                '<div class="ide-hint">이 교재는 아직 <b>지면 클릭 편집</b>을 '
+                + '안 답니다(계열에 자리표가 없습니다).<br>'
+                + '색·여백·마스터 페이지·스타일·직접 손보기는 <b>그대로 됩니다</b>.'
+                + '</div>';
+            }
+            show(); return true;
+          });
       });
   }
 
@@ -831,7 +846,14 @@
     st.addEventListener('click', function (ev) {
       if (editEl && (editEl === ev.target || editEl.contains(ev.target))) return;
       var c = chain(ev.target, st);
-      if (!c.length) { deselect(); return; }        // 빈 곳
+      if (!c.length) {
+        if (noRefs) {
+          msg('이 교재는 아직 지면 클릭 편집을 안 답니다 — '
+              + '색·여백·스타일은 오른쪽에서 됩니다');
+          return;
+        }
+        deselect(); return;                          // 빈 곳
+      }
       ev.preventDefault();
       // ⚠ 글자·문단 도구로는 **누른 그 줄**을 잡아야 한다. 인디자인에서
       //   T 로 누르면 그 자리에 커서가 서지, 상자 전체가 잡히지 않는다.
