@@ -161,3 +161,17 @@ def test_yos_freeform_entry_falls_back_to_prose():
         [("직접 입력", "* 영어Ⅰ 미래엔(김) 4과 / * 고2 25년 3월 18~45", "0지문")],
         grade=2)
     assert ("lesson", 4) in sc["tokens"] and ("mock", 25, 3) in sc["tokens"]
+
+
+def test_count_gate_catches_a_misread_range():
+    """지문수 대조 — Y.OS 가 센 값과 내가 읽은 값이 다르면 잡는다."""
+    good = [("부교재", "수능특강 Light", "08 1~5, 09 1~5", "10지문")]
+    assert S.count_gate(good, {"grade": 2}) == []
+    bad = [("부교재", "수능특강 Light", "08 1~5", "49지문")]
+    assert S.count_gate(bad, {"grade": 2}) == [
+        {"book": "수능특강 Light", "want": 49, "got": 5}]
+
+
+def test_count_gate_skips_freeform():
+    """`직접 입력` 은 Y.OS 도 0지문이라 셀 수 없다 — 그것 자체가 신호다."""
+    assert S.count_gate([("직접 입력", "교과서 1과", "0지문")], {}) == []

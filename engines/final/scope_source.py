@@ -512,3 +512,26 @@ def from_yos_entries(entries, grade=0):
             detail[t] = {"book": book, "only": _ranges(rng)}
     return {"tokens": _uniq(tokens), "detail": detail,
             "raw": " / ".join(raw), "grade": grade, "source": "yos"}
+
+
+def count_gate(entries, scope):
+    """Y.OS 가 적어 둔 **지문수**와 내가 읽어 낸 개수를 맞대 본다.
+
+    그 숫자는 저장된 값이 아니라 Y.OS 가 범위 글에서 **직접 센** 값이다
+    (9+12=21 · 4+5=9 · 25+15+9=49 로 확인). 그러니 서로 다른 두 구현이
+    맞대 보는 진짜 대조다 — 실제로 이 대조가 `Mini Test` 누락(25 vs 49)과
+    `(PART 01) 09 …` 오독(8 vs 16)을 잡아냈다.
+
+    돌려주는 것: [{"book", "want", "got"}] — **빈 목록이면 통과**.
+    """
+    bad = []
+    for e in entries or []:
+        kind = (e[0] or "").strip()
+        if kind == "직접 입력":
+            continue                      # 글이라 Y.OS 도 세지 못한다(0지문)
+        want = _ranges(e[3])[-1] if len(e) > 3 and _ranges(e[3]) else 0
+        one = from_yos_entries([e], scope.get("grade") or 0)
+        got = sum(len(d.get("only") or []) for d in one["detail"].values())
+        if want and got != want:
+            bad.append({"book": (e[1] or "").strip(), "want": want, "got": got})
+    return bad
