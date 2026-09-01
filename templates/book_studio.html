@@ -1430,10 +1430,31 @@
   // 표도 **원고 자료**라 편집 이력에 쌓인다(⌘Z 로 되돌아간다).
   // 칸 하나하나에 자리표가 있어 그 칸만 고칠 수 있다.
   function tableRefOf(ref) {
-    // 지금 고른 자리가 표 안이면 그 표의 자리표를 준다
-    var m = (ref || '').match(/^(.*\.blocks\.\d+)(?:\.(?:head|rows)\..*)?$/);
-    if (!m) return '';
-    return /\.(head|rows)\./.test(ref || '') ? m[1] : '';
+    // 지금 고른 자리가 표 안이면 그 표의 자리표를 준다.
+    // ⚠ 자리 이름(`…blocks.N`)으로 찾으면 **계열마다 다르다** — 단어장은
+    //   `head.3`, 중등부는 `parts.0.sections.0.blocks.3` 이다. 표 칸의
+    //   **모양**(`…head.<칸>` · `…rows.<줄>.<칸>`)으로 찾는다.
+    var m = (ref || '').match(/^(.*)\.(?:head\.\d+|rows\.\d+\.\d+)(?:\.v)?$/);
+    return m ? m[1] : '';
+  }
+
+  // 표 칸 → 판 좌표. 머리줄이 0행이다(합치기가 머리줄을 넘나들 수 있어야 한다).
+  function cellAt(ref) {
+    var m = (ref || '').match(/\.head\.(\d+)(?:\.v)?$/);
+    if (m) return [0, +m[1]];
+    m = (ref || '').match(/\.rows\.(\d+)\.(\d+)(?:\.v)?$/);
+    return m ? [+m[1] + 1, +m[2]] : null;
+  }
+
+  // 합치기 선택 — 인디자인은 끌어서 고르지만, 우리 지면은 조판 결과라
+  // 칸을 끌어 고를 수가 없다. 그래서 **처음 칸과 마지막 칸**을 눌러 정한다.
+  var tblSel = { ref: '', a: null, b: null };
+
+  function tblTrack() {
+    var t = tableRefOf(curRef), c = cellAt(curRef);
+    if (!t || !c) return;
+    if (tblSel.ref !== t || !tblSel.a) { tblSel = { ref: t, a: c, b: c }; }
+    else { tblSel.b = c; }
   }
 
   function drawTable() {
@@ -1478,6 +1499,73 @@
       };
       host.appendChild(b);
     });
+
+    // ── 칸 합치기(인디자인의 셀 병합) ──
+    tblTrack();
+    var sel = document.createElement('div');
+    sel.className = 'ide-hint';
+    sel.style.cssText = 'margin:8px 0 4px;border-top:1px solid var(--ide-line);'
+      + 'padding-top:7px';
+    var a = tblSel.a, bb = tblSel.b;
+    sel.innerHTML = (a && bb && tblSel.ref === inTable)
+      ? ('고른 자리 <b>' + (a[0] + 1) + '행 ' + (a[1] + 1) + '칸</b> → <b>'
+         + (bb[0] + 1) + '행 ' + (bb[1] + 1) + '칸</b>'
+         + (a[0] === bb[0] && a[1] === bb[1]
+            ? ' <span style="opacity:.7">— 마지막 칸을 한 번 더 고르세요</span>' : ''))
+      : '칸을 눌러 <b>처음</b>을 정하고, 다른 칸을 눌러 <b>마지막</b>을 정합니다.';
+    host.appendChild(sel);
+
+    [['merge', '칸 합치기'], ['unmerge', '합친 칸 나누기'],
+     ['reset', '고른 자리 지우기']].forEach(function (x) {
+      var b = document.createElement('button');
+      b.className = 'ide-b'; b.style.margin = '2px 3px 0 0';
+      b.textContent = x[1];
+      b.onclick = function () {
+        if (x[0] === 'reset') { tblSel = { ref: '', a: null, b: null }; drawTable(); return; }
+        var c = cellAt(curRef);
+        if (!c) { msg('표 안의 칸을 먼저 고르세요'); return; }
+        if (x[0] === 'unmerge') {
+          tblApi({ action: 'unmerge', ref: inTable, r: c[0], c: c[1] });
+          return;
+        }
+        if (!tblSel.a || tblSel.ref !== inTable) { msg('처음 칸을 고르세요'); return; }
+        tblApi({ action: 'merge', ref: inTable,
+                 r0: tblSel.a[0], c0: tblSel.a[1], r1: c[0], c1: c[1] });
+        tblSel = { ref: '', a: null, b: null };
+      };
+      host.appendChild(b);
+    });
+
+    // ── 칸 너비 · 정렬 ──
+    var w = document.createElement('div'); w.className = 'ide-f';
+    w.style.marginTop = '8px';
+    var wi = document.createElement('input');
+    wi.className = 'ide-t'; wi.placeholder = '30%, 30%, 40%';
+    wi.style.flex = '1'; wi.title = '칸 너비 — 쉼표로 나눠 적습니다(`30%` · `24mm`)';
+    var wb = document.createElement('button');
+    wb.className = 'ide-b'; wb.textContent = '칸 너비';
+    wb.onclick = function () {
+      var ws = wi.value.split(',').map(function (x) { return x.trim(); })
+        .filter(Boolean);
+      if (!ws.length) { msg('`30%, 70%` 처럼 적으세요'); return; }
+      tblApi({ action: 'widths', ref: inTable, widths: ws });
+    };
+    w.appendChild(wi); w.appendChild(wb); host.appendChild(w);
+
+    var al = document.createElement('div'); al.className = 'ide-f';
+    al.style.marginTop = '4px';
+    var ai = document.createElement('input');
+    ai.className = 'ide-t'; ai.placeholder = 'left, center, right';
+    ai.style.flex = '1'; ai.title = '칸별 정렬 — 왼쪽부터 쉼표로';
+    var ab = document.createElement('button');
+    ab.className = 'ide-b'; ab.textContent = '칸 정렬';
+    ab.onclick = function () {
+      var xs = ai.value.split(',').map(function (x) { return x.trim(); })
+        .filter(Boolean);
+      if (!xs.length) { msg('`left, center` 처럼 적으세요'); return; }
+      tblApi({ action: 'align', ref: inTable, align: xs });
+    };
+    al.appendChild(ai); al.appendChild(ab); host.appendChild(al);
   }
 
   function tblApi(body) {
