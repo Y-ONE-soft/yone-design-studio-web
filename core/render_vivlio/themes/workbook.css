@@ -112,6 +112,8 @@ body {
 .r-folR { position: running(folR); }
 .r-hdrL, .r-hdrR { width: var(--content-w); height: var(--hdr-h); }
 .r-folL, .r-folR { width: var(--content-w); height: 16mm; }
+/* 흘림 면은 아래 여백이 더 넓다(실측) — 꼬리말은 같은 자리(286.62mm)에 */
+.sec.flow .folio { top: 13.79mm; }
 .r-folL .no::before, .r-folR .no::before { content: counter(page); }
 
 /* 고정 시트 한 면 = 판면 높이만큼의 블록 */
@@ -179,7 +181,7 @@ section.div .pg { width: var(--page-w); height: var(--page-h); }
 section.blank { page: divider; }
 
 /* 흘림 섹션 */
-@page flow { margin: 30mm 25mm 16.5mm 23mm; }
+@page flow { margin: 27.6mm 25mm 28mm 23mm; }   /* 실측: 첫 줄 28.46 · 마지막 줄 268 */
 @page flow:right { margin-left: 25mm; margin-right: 23mm; }
 section.flow { page: flow; break-before: verso; }
 section.flow.onecol { break-before: auto; }
@@ -324,19 +326,19 @@ section.flow.onecol { break-before: auto; }
 
 
 /* 본문이 시작하는 자리 — 라벨 아래 간격. 스텝마다 실물이 다르다(실측 보정) */
-.grp > .box-body { margin-top: 7.84mm; }
-.k-step1_b2 .grp > .box-body { margin-top: 5.31mm; }
+.grp > .box-body { margin-top: 7.0mm; }
+.k-step1_b2 .grp > .box-body { margin-top: 4.5mm; }
 .zone > .pnum, .grp > .pnum { margin-bottom: var(--body-gap, 0mm); }
 .k-step1_a1 .zone, .k-step1_a1_2 .zone { --body-gap: 0.6mm; }
 /* 어휘 선택은 상·하 칸 자리가 다른 스텝과 다르다 (실측: 위 27.54 / 아래 151.04) */
 .k-step1_a1 .zone.z-top, .k-step1_a1_2 .zone.z-top { top: 2.2mm !important; }
 .k-step1_a1 .zone.z-bottom, .k-step1_a1_2 .zone.z-bottom { top: 126.4mm !important; }
-.k-step1_b1 .zone { --body-gap: 5.9mm; }
+.k-step1_b1 .zone { --body-gap: 7.0mm; }
 .k-step1_c1 .zone { --body-gap: 4.3mm; }
 .k-step2_a1 .grp { --body-gap: 5.9mm; }
 /* 빈칸 계열은 지문번호가 판면 바깥 세로라 본문이 3mm 안으로 들어온다
  * (실측: 사이드 라벨 x=12.6 · 문항 번호 x=26.0 · 본문 x=29.1) */
-.k-step1_c2 .grp, .k-step2_c1 .grp { padding-left: 3mm; padding-top: 5.35mm; }
+.k-step1_c2 .grp, .k-step2_c1 .grp { padding-left: 3mm; padding-top: 1.45mm; }
 .en { font-size: 8.5pt; line-height: 7.76mm; text-align: justify; }
 u { text-underline-offset: 0.14em; text-decoration-thickness: 0.05em; }
 
@@ -374,6 +376,7 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 }
 .box-body.cream { background: var(--box-body); padding-left: 3mm;
                   padding-right: 3mm; }   /* 본문 정리는 3mm (실측 글 x=26) */
+.box-body.cream p { line-height: 4.94mm; }   /* 실측: B1 만 행간이 넓다 */
 .box-body p { font-size: 8.5pt; line-height: 4.59mm; text-align: justify; }
 .ox {
   position: relative; margin-top: 7.6mm; padding-left: 5.1mm;

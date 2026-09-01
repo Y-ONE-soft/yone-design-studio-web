@@ -7,12 +7,15 @@
 
 바꾸는 것 (원고에서 직접):
     · 문장배열      `Step1 C1 문장배열` — 라벨도 원고가 말한다
+    · 문장삽입      같은 파일의 **중첩 표**(하단 문제). 발문만 규칙으로 얹는다
     · 서술형영작    `Step2 C2 영작배열`
 
 그대로 두는 것 (원래 원고·시트가 정본이라 바꿀 게 없다):
     · 어법수정      이미 교과서작업/EBS작업의 2열 표 docx 를 읽는다
     · 중요어휘      구글시트(고1·고2) — 선생님이 고른 부분집합이라 유도 불가
-    · 문장삽입      **아직 되수확**. 원고 출처가 확정되지 않았다(§ 남은 것)
+
+원고에 하단 문제가 없는 출처(옛 모의 회차·리딩파워·고3 수특·외부지문)는
+되수확본을 그대로 데려온다.
 
 시험범위는 **워크북 파일 이름**이 말한다(`…(리딩파워12강,14강)…`). 그 강·과의
 지문은 전부 싣는다 — 되수확본이 흘린 것(리딩파워 14강 6지문)이 여기서 돌아온다.
@@ -107,7 +110,7 @@ def scope_labels(content):
 def build(content, log=print, keep_all=False):
     srcs = auto_sources(content, log)
     scope = None if keep_all else scope_labels(content)
-    arrange, writing, seen = [], [], set()
+    arrange, insert, writing, seen = [], [], [], set()
     for d, spec in srcs:
         if not spec:
             continue
@@ -129,6 +132,15 @@ def build(content, log=print, keep_all=False):
             arrange.append({"source": os.path.basename(path or name),
                             "header": lab, "items": items,
                             **({"passage": given} if given else {})})
+        for b in M.read(d, "insert")[0]:
+            lab = L.to_final_label(spec, b["raw"])
+            if not lab or (scope is not None and lab not in scope):
+                continue
+            insert.append({"source": name, "header": lab, "paras": (
+                [{"style": "문장 배열 하단 문제", "text": b["prompt"]},
+                 {"style": "문장 배열 하단", "text": b["given"]}]
+                + [{"style": "문장 배열 하단 문제", "text": x}
+                   for x in b["items"]])})
         wb, wpath = M.read(d, "writing")
         for b in wb:
             lab = L.to_final_label(spec, b["raw"])
@@ -169,6 +181,17 @@ def build(content, log=print, keep_all=False):
         arrange.append(dict(b, source=(b.get("source", "") + " [되수확]")))
         log(f"  [원고 없음 → 되수확 유지] 문장배열 {b['header']}")
 
+    havei = {b["header"] for b in insert}
+    pool_i = {_n(p["text"]) for b in insert for p in b["paras"]}
+    for b in content["vol1"].get("문장삽입") or []:
+        if b["header"] in havei:
+            continue
+        if _covered([p["text"] for p in b["paras"][1:]], pool_i):
+            log(f"  [중복 — 버림] 문장삽입 {b['header']}")
+            continue
+        insert.append(b)
+        log(f"  [원고 없음 → 되수확 유지] 문장삽입 {b['header']}")
+
     havew = {b["header"] for b in writing}
     pool_w = {_n(p["korean"]) for b in writing for p in b["pairs"]}
     old_pairs = content["vol2"].get("서술형영작") or []
@@ -188,10 +211,12 @@ def build(content, log=print, keep_all=False):
         log(f"  [원고 없음 → 되수확 유지] 영작 {d['header']}")
 
     arrange.sort(key=lambda b: order_key(b["header"]))
+    insert.sort(key=lambda b: order_key(b["header"]))
     writing.sort(key=lambda b: order_key(b["header"]))
 
     out = json.loads(json.dumps(content, ensure_ascii=False))
     out["vol1"]["문장배열"] = arrange
+    out["vol1"]["문장삽입"] = insert
     pairs, det = [], []
     for b in writing:
         det.append({"header": b["header"], "start_idx": len(pairs)})
@@ -200,6 +225,7 @@ def build(content, log=print, keep_all=False):
     out["vol2"]["영작_헤더_상세"] = det
     out["vol2"]["영작_헤더"] = [d["header"] for d in det]
     out["총_문장배열"] = sum(len(b["items"]) for b in arrange)
+    out["총_문장삽입"] = sum(len(b["paras"]) for b in insert)
     out["총_서술형영작"] = len(pairs)
     out["_source"] = "manuscript"
     # 어디서 읽었는지 남긴다 — 이 파일만으로 다시 대조·재빌드가 된다
@@ -221,6 +247,7 @@ def main():
     with open(p, encoding="utf-8") as f:
         content = json.load(f)
     old_a = {b["header"] for b in content["vol1"]["문장배열"]}
+    old_i = {b["header"] for b in content["vol1"].get("문장삽입") or []}
     old_w = {d["header"] for d in content["vol2"]["영작_헤더_상세"]}
     out = build(content, keep_all=a.all)
     new_a = {b["header"] for b in out["vol1"]["문장배열"]}
@@ -231,6 +258,9 @@ def main():
         print("   + " + ", ".join(sorted(new_a - old_a)[:12]))
     if old_a - new_a:
         print("   - " + ", ".join(sorted(old_a - new_a)[:12]))
+    new_i = {b["header"] for b in out["vol1"]["문장삽입"]}
+    print(f"■ 문장삽입 {len(old_i)} → {len(new_i)}"
+          f"  (되찾음 {len(new_i - old_i)} · 사라짐 {len(old_i - new_i)})")
     print(f"■ 서술형영작 {len(old_w)} → {len(new_w)}"
           f"  (되찾음 {len(new_w - old_w)} · 사라짐 {len(old_w - new_w)})")
     if old_w - new_w:

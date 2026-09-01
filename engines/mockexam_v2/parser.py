@@ -332,6 +332,10 @@ def _expand_range_groups(annotated, warnings=None):
 # 표현을 계속 늘리는 대신 '고아 선지 무리' 라는 구조로 복구한다.
 _RE_KO_QEND = re.compile(r'(?:[?？]|시오\s*[.。]?|하시오|쓰시오)\s*$')
 _RE_HANGUL_ANY = re.compile(r'[가-힣]')
+# 발문이 **영어**로 오는 원고가 있다 — 성덕1 실증:
+#   "What did Vincent van Gogh NOT draw inspiration from at the arena?"
+# 한글이 없다는 이유로 지문으로 처리돼 문항 하나가 통째로 사라졌다.
+_RE_EN_QEND = re.compile(r'[A-Za-z][^?]{8,}\?\s*$')
 
 
 def _repair_orphan_choice_runs(annotated, warnings=None):
@@ -346,7 +350,11 @@ def _repair_orphan_choice_runs(annotated, warnings=None):
             end += 1
         gap = range(max(prev_end + 1, 0), start)
         prev_end = end
-        if any(annotated[k]["kind"] in ("Q", "Q-INTRO") for k in gap):
+        # **Q-INTRO 는 발문이 아니다.** 묶음 도입문("다음 글을 읽고 물음에
+        # 답하시오.")은 문항의 발문 자리를 채워 주지 않는다 — 구성원은 자기
+        # 발문을 따로 갖는다. 종전에는 도입문을 발문으로 쳐서, 도입문 뒤
+        # 구성원의 발문이 인식 안 되면 그 문항이 통째로 사라졌다(성덕1 실증).
+        if any(annotated[k]["kind"] == "Q" for k in gap):
             continue                      # 이미 발문이 있다
         # 간극에 지문이 있어야 '새 문항'이다 (짝 선지 열 나열과 구별)
         if not any(annotated[k]["kind"] in ("P", "P-CONTEXT", "K") for k in gap):
@@ -356,9 +364,11 @@ def _repair_orphan_choice_runs(annotated, warnings=None):
             t = annotated[k]["text"]
             if annotated[k]["kind"] in ("Q", "Q-INTRO", "C", "BLANK"):
                 continue
-            if len(t) < 15 or not _RE_HANGUL_ANY.search(t):
+            if len(t) < 15:
                 continue
-            if not _RE_KO_QEND.search(t):
+            if not (_RE_HANGUL_ANY.search(t) or _RE_EN_QEND.search(t)):
+                continue
+            if not (_RE_KO_QEND.search(t) or _RE_EN_QEND.search(t)):
                 continue
             cand = k
             break
@@ -372,6 +382,33 @@ def _repair_orphan_choice_runs(annotated, warnings=None):
                 f"고아 선지 무리 앞의 지시문을 발문으로 세움: "
                 f"{annotated[cand]['text'][:40]!r}")
     return annotated
+
+
+
+# 원고 선언 문항수 대조 ──────────────────────────────────────────────────────
+# 원고 머리에 출제자가 적어 둔 문항수가 정답지다. 그런데 **원고 선언이 실제
+# 내용과 다른 원고가 있다**(명일3 1·2회: 서술형 6 선언, 실제 5. 한영1 2회도
+# 서술형 라벨이 5개뿐). 머리표 문항수는 원고 기준으로 찍기로 했으므로
+# (profiles/_결정.json), 선언이 틀리면 **시험지에 틀린 문항수가 인쇄된다.**
+# 조용히 넘어가지 말고 경고로 올린다.
+_RE_DECL_SEL = [re.compile(r"선택형\s*[::]?\s*(\d+)"),
+                re.compile(r"객관식\s*[::]?\s*(\d+)")]
+_RE_DECL_SRV = [re.compile(r"서[술답]형\s*[::]?\s*(\d+)"),
+                re.compile(r"서논술형\s*[::]?\s*(\d+)"),
+                re.compile(r"주관식\s*[::]?\s*(\d+)")]
+
+
+def declared_counts(paras, head_lines=5):
+    """원고 머리에 선언된 (선택형, 서답형) 문항수. 없으면 (None, None)."""
+    head = " ".join(
+        unicodedata.normalize("NFC", (p.get("text") if isinstance(p, dict)
+                                      else str(p)) or "")
+        for p in paras[:head_lines])
+    sel = next((int(m.group(1)) for r in _RE_DECL_SEL if (m := r.search(head))),
+               None)
+    srv = next((int(m.group(1)) for r in _RE_DECL_SRV if (m := r.search(head))),
+               None)
+    return sel, srv
 
 
 def build_ir(paras, meta=None, log=None):
@@ -559,6 +596,18 @@ def build_ir(paras, meta=None, log=None):
                 {"kind": "text", "label": kind, "content": text})
 
     _flush_item(items, cur, warnings)
+
+    # 원고 선언 문항수와 실제를 대조한다 — 머리표를 원고 기준으로 찍기로 했으니
+    # (profiles/_결정.json) 선언이 틀리면 시험지에 틀린 문항수가 인쇄된다.
+    _sel, _srv = declared_counts(paras)
+    n_obj = sum(1 for i in items if i.get("kind") == "객관식")
+    n_srv = sum(1 for i in items if i.get("kind") == "서술형")
+    if _sel is not None and n_obj != _sel:
+        warnings.append(f"원고 선언 선택형 {_sel}문항 ≠ 실제 {n_obj}문항 "
+                        f"— 머리표 문항수 확인 필요")
+    if _srv is not None and n_srv != _srv:
+        warnings.append(f"원고 선언 서답형 {_srv}문항 ≠ 실제 {n_srv}문항 "
+                        f"— 머리표 문항수 확인 필요")
 
     doc = {"version": 2, "meta": dict(meta or {}), "items": items}
     if warnings:
