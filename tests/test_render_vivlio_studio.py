@@ -2184,3 +2184,23 @@ def test_pocketbook_writes_the_ref_table():
     src = open(os.path.join(_ROOT, "core", "render_vivlio", "series",
                             "pocketbook", "__init__.py"), encoding="utf-8").read()
     assert "_refs3.dump(build_dir)" in src
+
+
+def test_render_all_is_not_described_as_minutes():
+    """"몇 분" 은 **틀린 관찰**이었다(숨은 창의 스로틀링).
+
+    보이는 창에서 재면 전권 116면 3.0초다 — 잘못된 설명은 사람을 막는다.
+    """
+    ui = _studio_src()
+    i = ui.index('id="ide-all"')
+    assert "몇 분" not in ui[i:i + 400]
+    j = ui.index("veilOn(renderAll ?")
+    assert "몇 분" not in ui[j:j + 200]
+
+
+def test_scope_switch_clears_the_old_thumbnails():
+    """견본과 전권은 면 수가 다르다 — 옛 그림이 남으면 번호가 거짓말을 한다
+    (전권으로 바꿨는데 "15 / 15" 였다)."""
+    ui = _studio_src()
+    i = ui.index("function setScope")
+    assert "thumbInfo = null" in ui[i:i + 500]
