@@ -180,7 +180,7 @@ def blocks_html(blocks, step, ctx=None):
     while i < n:
         b = blocks[i]
         role = b["role"]
-        if is_manuscript_noise(b.get("text")) and not b.get("icon"):
+        if is_manuscript_noise(b.get("text")):
             i += 1                       # 원고 부속물(구문명 줄) — 지면에 내지 않는다
             continue
 

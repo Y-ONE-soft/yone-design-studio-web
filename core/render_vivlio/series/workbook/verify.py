@@ -145,7 +145,7 @@ def _check_empty_body(cfg, report):
     for i in range(doc.page_count):
         page = doc[i]
         body = [1 for (x0, y0, x1, y1) in probe.text_blocks_mm(page)
-                if 30.0 < y0 < 280.0]
+                if 30.0 < y0 < 280.0 and x0 < 195.0]   # 사이드 탭 제외
         if body:
             continue
         # 간지는 색면이 판면을 덮는다 — 큰 색면이 있으면 간지로 본다

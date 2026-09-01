@@ -17,6 +17,7 @@ from core.render_vivlio import cli, probe, stage
 from core.render_vivlio.series.base import Series
 from core.render_vivlio.series.workbook import data as data_mod
 from core.render_vivlio.series.workbook import render as render_mod
+from core.render_vivlio.series.workbook import memo as memo_mod
 from core.render_vivlio.series.workbook import verify as verify_mod
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -80,6 +81,15 @@ class WorkbookSeries(Series):
         secs = cli.run_build(html_path, out, log=log, extra=["-f", "pdf"])
         pages = probe.page_count(out)
         log(f"OK  {secs:.1f}s · {pages}p → {out}")
+
+        # 빈 지면 → MEMO 면 (면 수는 조판이 끝나야 알 수 있어 여기서 한다)
+        if (cfg.section("finish") or {}).get("memo", True) and not sample:
+            blanks = [p for p in memo_mod.empty_body_pages(out) if p > 3]
+            if blanks:
+                fpath = os.path.join(cfg.build_dir, "fonts",
+                                     "Montserrat-Bold.otf")
+                memo_mod.apply(out, blanks, font=fpath, log=log)
+                pages = probe.page_count(out)
 
         res = {"pdf": out, "pages": pages, "seconds": round(secs, 1)}
         spec = cfg.finish_spec()

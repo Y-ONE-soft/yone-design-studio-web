@@ -79,7 +79,7 @@ body {
   word-break: keep-all;     /* 한글 낱말이 줄 끝에서 쪼개지지 않게 — 실물과 같다 */
   overflow-wrap: break-word;
   hyphens: none;
-  orphans: 1; widows: 1;
+  orphans: 2; widows: 2;   /* 한 줄만 남거나 넘어가지 않게 (당겨오는 건 아직 못 한다) */
   background: var(--paper);
 }
 
