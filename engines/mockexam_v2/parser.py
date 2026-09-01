@@ -106,8 +106,17 @@ _RE_SRV_ENDING = re.compile(r'(?:시오|쓰기|작성|완성|서술|영작|배�
 _RE_OBJ_ENDING = re.compile(r'(?:것은|것을|곳은|개수는|고르면|고른다면)\s*[?？]?\s*[.。]?\s*$')
 
 
+_RE_SRV_MARKER = re.compile(r'^\s*[\[【〔<(]?\s*서[답술]형\s*\d')
+
+
 def _structural_kind(cur, taxonomy_kind):
     """(kind, 근거) — 구조 신호로 객관식/서술형 판정."""
+    # 원고가 대놓고 '서답형 3.' 이라고 적어 준 것보다 강한 신호는 없다.
+    # (성덕1 실증: 이 라벨을 무시하고 발문 유형 룰을 먼저 봐서 서답형이
+    #  객관식으로 뒤집혔다 — "빈칸 (A), (B)에 들어갈" 이 OBJ 룰에 걸림.)
+    marker = ((cur.get("header") or {}).get("marker") or "")
+    if _RE_SRV_MARKER.match(marker) or _RE_SRV_MARKER.match(cur.get("question") or ""):
+        return "서술형", "원고 라벨"
     blocks = (cur.get("stimulus") or {}).get("blocks") or []
     labels = {b.get("label") for b in blocks}
     if labels & {"Ans", "AnsL"}:

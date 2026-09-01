@@ -23,6 +23,61 @@ import unicodedata
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from engines.final import manuscript as M  # noqa: E402
+from engines.final import manuscript_locate as L  # noqa: E402
+
+
+def _cfg():
+    with open(os.path.join(os.path.dirname(os.path.dirname(
+            os.path.abspath(__file__))), "engines", "final",
+            "config.json"), encoding="utf-8") as f:
+        return json.load(f)
+
+
+def auto_sources(content, log=print):
+    """`content.json` 의 워크북 파일 이름만으로 원고 폴더를 찾아낸다.
+
+    파일 이름이 곧 시험범위다(`…(리딩파워12강,14강)…`). 교과서만 과목·출판사를
+    알아야 하는데, 그건 엔진 config 의 학교↔교과서 표에 있다.
+    """
+    cfg = _cfg()
+    base = os.path.expanduser(cfg["gdrive_content_base"])
+    school = content.get("school", "")
+    period = content.get("exam_period", "")
+    grade = int(re.sub(r"\D", "", content.get("grade", "0")) or 0)
+    tb = ((cfg.get("school_textbook_map") or {}).get(period, {})
+          .get(school) or {})
+    names = set()
+    for sec in ("문장배열", "문장삽입"):
+        for b in content["vol1"].get(sec) or []:
+            if b.get("source"):
+                names.add(b["source"])
+    out, seen = [], set()
+    for n in sorted(names):
+        for tok in L.parse_tokens(n):
+            if tok in seen:
+                continue
+            seen.add(tok)
+            kind = tok[0]
+            d = None
+            if kind == "lesson" and tb:
+                d = L.textbook(base, tb.get("subject", ""),
+                               tb.get("publisher", ""), tok[1])
+            elif kind == "olpo":
+                d = L.olympos(base, tok[1], 1 if grade == 1 else 1)
+            elif kind == "rp":
+                d = (L.reading_power(base, tok[1], "완성" if grade == 2
+                                     else "기본")
+                     or L.reading_power(base, tok[1], "기본")
+                     or L.reading_power(base, tok[1], "완성"))
+            elif kind == "mock":
+                d = L.mockexam(base, grade, tok[1], tok[2])
+            elif kind == "teuk":
+                d = L.suneung_teukgang(base, tok[1])
+            if d:
+                out.append(d)
+            else:
+                log(f"  [못 찾음] {tok} ← {n}")
+    return out
 
 RE_WS = re.compile(r"\s+")
 RE_MARK = re.compile(r"^\s*\([A-Z]\)\s*")
@@ -96,6 +151,8 @@ def main():
     ap.add_argument("--kind", default="arrange",
                     choices=["arrange", "writing"])
     ap.add_argument("-v", "--verbose", action="store_true")
+    ap.add_argument("--auto", action="store_true",
+                    help="워크북 파일 이름에서 원고 폴더를 스스로 찾는다")
     a = ap.parse_args()
 
     p = a.job
@@ -104,8 +161,11 @@ def main():
     with open(p, encoding="utf-8") as f:
         content = json.load(f)
 
+    srcs = list(a.src)
+    if a.auto or not srcs:
+        srcs += auto_sources(content)
     cb = content_blocks(content, a.kind)
-    mb = manuscript_blocks(a.src, a.kind)
+    mb = manuscript_blocks(srcs, a.kind)
     print(f"■ 되수확 {len(cb)}지문 · 원고 {len(mb)}지문 ({a.kind})")
 
     csig = [(h, sig(i), i) for h, i in cb]
