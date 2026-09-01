@@ -1952,6 +1952,43 @@
       host.appendChild(b);
     });
 
+    // ── 이 칸의 모양 (인디자인의 셀 스타일) ──
+    if (at) {
+      var clab = document.createElement('div');
+      clab.className = 'ide-lab'; clab.style.marginTop = '9px';
+      clab.innerHTML = '<span>이 칸(' + (at[0] + 1) + '행 ' + (at[1] + 1)
+        + '칸)의 모양</span>';
+      host.appendChild(clab);
+      var CELL = [['background', '바탕', '#eef1f7'],
+                  ['color', '글자색', '#223'],
+                  ['text-align', '가로 맞춤', 'left · center · right'],
+                  ['vertical-align', '세로 맞춤', 'top · middle · bottom'],
+                  ['font-weight', '굵기', '700'],
+                  ['border', '이 칸 괘선', '0.6pt solid #333']];
+      var cin = {};
+      CELL.forEach(function (a) {
+        var row2 = document.createElement('div'); row2.className = 'ide-row';
+        var lb = document.createElement('div'); lb.className = 'ide-lab';
+        lb.innerHTML = '<span>' + a[1] + '</span>';
+        var f2 = document.createElement('div'); f2.className = 'ide-f';
+        var t2 = document.createElement('input');
+        t2.className = 'ide-t'; t2.placeholder = a[2];
+        cin[a[0]] = t2; f2.appendChild(t2);
+        row2.appendChild(lb); row2.appendChild(f2);
+        host.appendChild(row2);
+      });
+      var cgo = document.createElement('button');
+      cgo.className = 'ide-b'; cgo.textContent = '이 칸에 적용';
+      cgo.style.marginBottom = '6px';
+      cgo.onclick = function () {
+        var props = {};
+        CELL.forEach(function (a) { props[a[0]] = cin[a[0]].value.trim(); });
+        tblApi({ action: 'cellstyle', ref: inTable,
+                 r: at[0], c: at[1], props: props });
+      };
+      host.appendChild(cgo);
+    }
+
     // ── 표 모양 (인디자인의 표 스타일) ──
     // 모양은 표마다 다를 수 있다 — 정한 것만 지면에 나가고, 안 정하면
     // 예전 그대로다(계열 테마가 이겨도 된다).

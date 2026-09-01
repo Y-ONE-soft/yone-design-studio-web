@@ -89,7 +89,14 @@ def html(block, ref="", inl=None, esc=None):
 
     def cell(tag, v, i, cref):
         c, r, val = span(v)
-        st = (' style="text-align:%s"' % align[i]) if i < len(align) else ""
+        # 칸 모양(셀 스타일)이 **열 정렬보다 뒤**다 — 칸에 준 것이 이긴다.
+        parts = []
+        if i < len(align):
+            parts.append("text-align:%s" % align[i])
+        cs = cell_style(v)
+        if cs:
+            parts.append(cs)
+        st = (' style="%s"' % ";".join(parts)) if parts else ""
         sp = (' colspan="%d"' % c if c > 1 else "") + (' rowspan="%d"' % r
                                                         if r > 1 else "")
         mark = _refs.mark(cref) if cref else ""
@@ -131,11 +138,30 @@ def _style_attr(block):
     return (' style="%s"' % ";".join(out)) if out else ""
 
 
+# 칸 하나에 줄 수 있는 모양 — 인디자인의 **셀 스타일**에 해당한다.
+# ⚠ 아무 CSS 나 받으면 안 된다(표가 통째로 흔들린다).
+CELL_STYLE = ("background", "color", "text-align", "vertical-align",
+              "font-weight", "font-size", "border", "padding")
+
+
+def cell_style(v):
+    """그 칸에 걸린 모양 → `style="…"`. 없으면 빈 문자열."""
+    if not (isinstance(v, dict) and "v" in v and "t" not in v):
+        return ""
+    st = v.get("st") or {}
+    out = []
+    for k in CELL_STYLE:
+        val = str(st.get(k) or "").strip()
+        if val and not any(c in val for c in "{};<>\"'"):
+            out.append("%s:%s" % (k, val))
+    return (";".join(out)) if out else ""
+
+
 def span(v):
     """칸 하나 → (가로로 먹는 칸 수, 세로로 먹는 줄 수, 글).
 
     ⚠ 서식 조각(`{"t": "글", "b": 1}`)과 헷갈리면 안 된다. 합친 칸은 `v` 를
-      가진 dict 뿐이다.
+      가진 dict 뿐이다 — **모양만 준 칸**(`{"v": …, "st": …}`)도 여기 든다.
     """
     if isinstance(v, dict) and "v" in v and "t" not in v:
         try:
@@ -161,6 +187,43 @@ def _put(block, r, c, v, has_head):
             return
         r -= 1
     block["rows"][r][c] = v
+
+
+def set_cell_style(block, r, c, props):
+    """칸 하나에 모양을 준다(머리줄이 0행). 빈 값은 **뗀다**.
+
+    ⚠ 글을 잃지 않는다 — 모양만 주는 칸도 `{"v": 글}` 그릇에 담는다.
+    """
+    grid, has_head = _grid(block)
+    r, c = int(r), int(c)
+    if r < 0 or r >= len(grid) or c < 0 or c >= len(grid[r]):
+        raise ValueError("표 밖입니다")
+    cur = grid[r][c]
+    if cur is None:
+        raise ValueError("옆 칸에 먹힌 자리입니다 — 합친 칸을 고르세요")
+    cc, rr, val = span(cur)
+    st = dict((cur.get("st") or {}) if isinstance(cur, dict) and "v" in cur
+              else {})
+    for k, v in (props or {}).items():
+        if k not in CELL_STYLE:
+            raise ValueError("모르는 항목: %s" % k)
+        v = str(v or "").strip()
+        if v:
+            st[k] = v
+        else:
+            st.pop(k, None)
+    if not st and cc == 1 and rr == 1:
+        _put(block, r, c, val, has_head)          # 모양도 합침도 없으면 민 글로
+        return block
+    cell = {"v": val}
+    if cc > 1:
+        cell["c"] = cc
+    if rr > 1:
+        cell["r"] = rr
+    if st:
+        cell["st"] = st
+    _put(block, r, c, cell, has_head)
+    return block
 
 
 def merge(block, r0, c0, r1, c1):

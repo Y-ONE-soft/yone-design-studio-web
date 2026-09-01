@@ -1945,3 +1945,48 @@ def test_last_row_and_col_are_protected():
         T.del_row(b, 0)
     with pytest.raises(ValueError):
         T.del_col(b, 0)
+
+
+def test_cell_style_keeps_the_text_and_the_merge():
+    """칸 하나에 모양을 줘도 **글과 합침을 잃지 않는다**."""
+    from core.render_vivlio import table as T
+    b = T.new(2, 2)
+    b["head"] = None
+    b["rows"] = [["가", "나"], ["다", "라"]]
+    T.merge(b, 0, 0, 0, 1)
+    T.set_cell_style(b, 0, 0, {"background": "#eef"})
+    c, r, v = T.span(b["rows"][0][0])
+    assert c == 2 and "가" in v
+    assert "background:#eef" in T.html(b)
+
+
+def test_cell_style_comes_off_cleanly():
+    """모양도 합침도 없어지면 **민 글로** 돌아간다(찌꺼기가 남으면 안 된다)."""
+    from core.render_vivlio import table as T
+    b = T.new(2, 1)
+    b["head"] = None
+    b["rows"] = [["가", "나"]]
+    T.set_cell_style(b, 0, 0, {"background": "#eef"})
+    T.set_cell_style(b, 0, 0, {"background": ""})
+    assert b["rows"][0][0] == "가"
+
+
+def test_cell_style_is_a_short_list():
+    from core.render_vivlio import table as T
+    assert "position" not in T.CELL_STYLE and "background" in T.CELL_STYLE
+    b = T.new(1, 1)
+    b["head"] = None
+    b["rows"] = [["가"]]
+    with pytest.raises(ValueError):
+        T.set_cell_style(b, 0, 0, {"position": "fixed"})
+
+
+def test_cell_style_refuses_a_covered_slot():
+    """옆 칸에 먹힌 자리는 그릴 것이 없다 — 합친 칸을 골라야 한다."""
+    from core.render_vivlio import table as T
+    b = T.new(2, 1)
+    b["head"] = None
+    b["rows"] = [["가", "나"]]
+    T.merge(b, 0, 0, 0, 1)
+    with pytest.raises(ValueError):
+        T.set_cell_style(b, 0, 1, {"background": "#eef"})

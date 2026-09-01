@@ -1021,6 +1021,12 @@ def api_table():
             b["style"] = st
         else:
             b.pop("style", None)
+    elif act == "cellstyle":
+        # 칸 하나의 모양 — 인디자인의 셀 스타일. 좌표는 머리줄이 0행이다.
+        try:
+            tbl.set_cell_style(b, p.get("r"), p.get("c"), p.get("props") or {})
+        except (ValueError, TypeError, IndexError, KeyError) as e:
+            return jsonify({"error": str(e) or "칸을 못 찾았습니다"}), 409
     elif act in ("merge", "unmerge"):
         # 인디자인의 셀 병합. 좌표는 **머리줄을 0행으로** 세는 화면과 같다.
         try:
