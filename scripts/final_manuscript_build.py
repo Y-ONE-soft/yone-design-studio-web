@@ -33,6 +33,7 @@ from engines.final import manuscript_locate as L   # noqa: E402
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from final_manuscript_diff import auto_sources, words as _words  # noqa: E402
 from engines.final import scope_source as S                       # noqa: E402
+from engines.final import assemble as ASM                         # noqa: E402
 
 
 # ── 차례(canonical) ─────────────────────────────────────────────────────
@@ -257,6 +258,30 @@ def build(content, log=print, keep_all=False, scope_text=None, yos=None):
     for b in writing:
         det.append({"header": b["header"], "start_idx": len(pairs)})
         pairs += b["pairs"]
+    # 어법수정도 원고에서 직접 — 정본(Y.OS/시트)이 있을 때만.
+    # 되수확본에서 실어 오던 자리를 끊는다. 라벨 규칙이 문장배열과 같아지므로
+    # 섹션 사이 지문번호가 어긋날 수 없다(명일1 '외부지문 본문1~7' 이 사실
+    # 교과서4과였던 것도 여기서 제자리를 찾는다).
+    if yos or scope_text:
+        sc = yos or S.parse(scope_text, grade=int(
+            re.sub(r"\D", "", content.get("grade", "0")) or 0))
+        cfg2 = json.load(open(os.path.join(os.path.dirname(os.path.dirname(
+            os.path.abspath(__file__))), "engines", "final", "config.json"),
+            encoding="utf-8"))
+        glines, ghdrs = ASM.grammar(
+            sc, os.path.expanduser(cfg2["gdrive_content_base"]),
+            content.get("grade", ""), log=log)
+        if ghdrs:
+            old = out["vol2"].get("어법_헤더") or []
+            log("■ 어법수정 %d → %d  (되찾음 %d · 사라짐 %d)"
+                % (len(old), len(ghdrs),
+                   len([h for h in ghdrs if h not in old]),
+                   len([h for h in old if h not in ghdrs])))
+            out["vol2"]["어법수정"] = glines
+            out["vol2"]["어법_헤더"] = ghdrs
+        else:
+            log("  [어법] 원고에서 한 줄도 못 읽어 되수확본을 그대로 둡니다")
+
     out["vol2"]["서술형영작"] = pairs
     out["vol2"]["영작_헤더_상세"] = det
     out["vol2"]["영작_헤더"] = [d["header"] for d in det]

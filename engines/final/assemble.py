@@ -106,15 +106,35 @@ def _token_of(spec):
     return (k, spec.get("unit"))
 
 
-def vocab(school, grade, exam_period, order=None, log=lambda m: None):
+def vocab(school, grade, exam_period, scope=None, order=None,
+          log=lambda m: None):
     """중요어휘(고1·고2) — 구글시트. 돌려주는 것: (왼쪽 글, 오른쪽 글).
 
-    고3 은 시트에 없다(엔진과 같다) — 빈 글을 돌려준다.
+    시트가 정본이라 원고에서 유도할 수 없다(선생님이 고른 부분집합).
+    고3 은 시트에 없다 — 빈 글을 돌려준다(엔진과 같다).
+
+    ⚠ 시트에서 받은 그대로 쓰면 안 된다. 엔진이 하던 두 가지를 그대로 한다:
+      · `>>내용요약` 앞 빈 줄이 소스마다 제멋대로라 두 줄로 맞춘다
+      · 영어 사이에 낀 `式` 는 `─` 가 깨진 것이다(낱말 뜻의 한자는 그대로)
     """
     if grade not in ("고1", "고2"):
         return "", ""
     from engines.final.vocab_fetcher import fetch_vocab_for_school
+    olpo = rp = None
+    if scope:
+        olpo = sorted({t[1] for t in scope["tokens"] if t[0] == "olpo"}) or None
+        rp = sorted({t[1] for t in scope["tokens"] if t[0] == "rp"}) or None
+        # 모의고사 차례 — 다른 섹션과 같은 오름차순(YYMM)
+        if order is None:
+            order = sorted({("%02d" % t[1], "%02d" % t[2])
+                            for t in scope["tokens"] if t[0] == "mock"})
     got = fetch_vocab_for_school(school, grade, log=log,
-                                 workbook_order=order,
+                                 olpo_lectures=olpo, rp_lectures=rp,
+                                 workbook_order=order or None,
                                  exam_period=exam_period) or {}
-    return got.get("left_text", ""), got.get("right_text", "")
+    out = []
+    for t in (got.get("left_text", ""), got.get("right_text", "")):
+        t = re.sub(r"\s*>>내용요약", "\n\n\n>>내용요약", t)
+        t = re.sub("(?<=[\x21-\x7e])\\s+式\\s+(?=[\x21-\x7e])", " \u2500 ", t)
+        out.append(t)
+    return out[0], out[1]
