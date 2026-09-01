@@ -17,7 +17,7 @@ import re
 import os
 import shutil
 
-from core.render_vivlio import bleed, cli, measure, stage
+from core.render_vivlio import bleed, cli, knobs, measure, stage
 from core.render_vivlio.series.base import Series
 from core.render_vivlio.series.pocketbook import data as pdata
 from core.render_vivlio.series.pocketbook import memtest as pmemtest
@@ -221,6 +221,48 @@ class PocketbookSeries(Series):
     name = "pocketbook"
     display = "포켓북"
     theme = ""              # 계열이 CSS 를 생성한다
+
+    # 미리보기(작업대)는 **지면을 보는 자리**다. 실측 패스(면마다 한 번씩 조판)는
+    # 디자인을 보는 데 필요 없고 느리기만 하다 — 껐다.
+    render_opts = {"measure_pass": False}
+
+    # ── 손잡이 — 실제로 시안 왕복이 났던 자리만 ──
+    def knobs(self, cfg):
+        K = knobs.Knob
+        P, M = ptheme.PALETTE, ptheme.METRICS
+        col = lambda key, label, affects, g="색": K(          # noqa: E731
+            "palette." + key, "color", label, default=P[key],
+            affects=affects, group=g)
+        num = lambda key, label, lo, hi, unit, affects, step=0.1, g="치수": K(
+            "metrics." + key, "mm" if unit == "mm" else "pt", label,
+            default=M[key], min=lo, max=hi, step=step, unit=unit,
+            affects=affects, group=g)                          # noqa: E731
+        return [
+            col("navy", "지문번호 배지", "왼쪽 면 배지 · 쪽번호"),
+            col("band", "위·아래 띠", "모든 면 머리·발치 띠"),
+            col("chip", "PICTURE·TRANSLATION 칩", "왼쪽 면 칩 · 괘선"),
+            col("blue", "강조 파랑", "구문분석 파란 낱말"),
+            col("red", "강조 빨강", "구문분석 빨간 낱말"),
+            col("anno", "구문분석 주석", "낱말 위·아래 작은 글씨"),
+            col("trans", "한글 해석", "왼쪽 면 번역"),
+            col("card1", "동반의어 1열", "오른쪽 면 카드", "동반의어"),
+            col("card2", "동반의어 2열", "오른쪽 면 카드", "동반의어"),
+            col("card3", "동반의어 3열", "오른쪽 면 카드", "동반의어"),
+            col("syn_syn", "유의어 글자", "카드 `=` 줄", "동반의어"),
+            col("syn_ant", "반의어 글자", "카드 `↔` 줄", "동반의어"),
+            col("flow_arrow", "플로우 화살표 줄", "오른쪽 면 플로우노트", "플로우"),
+            num("passage_size", "지문 글자", 7.5, 10.5, "pt",
+                "구문분석 영어 지문", 0.25),
+            num("passage_lead", "지문 행간", 14, 30, "pt",
+                "지문 줄 간격 (주석 자리)", 0.5),
+            num("passage_track", "지문 자간", -0.05, 0.01, "em",
+                "지문 낱말 사이 · 행바꿈", 0.002),
+            num("trans_size", "번역 글자", 5, 8, "pt", "왼쪽 면 번역", 0.1),
+            num("card_size", "동반의어 글자", 6, 8, "pt",
+                "카드 글자", 0.1, "동반의어"),
+            num("flow_size", "플로우노트 글자", 6, 9, "pt",
+                "오른쪽 면 플로우노트", 0.1, "플로우"),
+        ]
 
     style_names = {
         "passage": "구문분석 영어 지문",

@@ -1197,47 +1197,60 @@ def header_table(s, case=None):
     if not grid:
         return ""
     nrow = max(r + sp - 1 for r, _c, sp, _cs, _t, _o in grid)
-    at, taken = {}, set()
-    # 열 번호가 있는 셀을 먼저 앉힌다
-    for r, c, sp, cs, text, role in grid:
-        if c:
-            at.setdefault((r, c), (sp, cs, text, role))
-            for k in range(1, sp):
-                taken.add((r + k, c))
-    # 전폭 병합 셀이 없는 행부터 왼쪽에서 채워 **열 수를 확정**한다.
     wide_rows = {r for r, c, _sp, cs, _t, _o in grid if not c and not cs}
-    rest = [g for g in grid if not g[1]]
-    for r, c, sp, cs, text, role in rest:
-        if r in wide_rows:
+
+    # ① 열 수 — (그 행 셀 수) + (다른 행 rowspan 이 그 행을 덮는 칸 수).
+    #    전폭 행의 세로 병합 칸(상일 `문항`)을 빼먹으면 아래 행이 한 칸 밀린다.
+    cover, need = {}, {}
+    for r, _c, sp, cs, _t, _o in grid:
+        for k in range(1, sp):
+            cover[r + k] = cover.get(r + k, 0) + 1
+        if r not in wide_rows:
+            need[r] = need.get(r, 0) + max(cs, 1)
+    fixed = [c + (cs - 1 if cs else 0) for _r, c, _sp, cs, _t, _o in grid if c]
+    ncol = max([n + cover.get(r, 0) for r, n in need.items()] + fixed + [1])
+
+    at, taken = {}, set()
+
+    def place(r, col, sp, cs, text, role):
+        at[(r, col)] = (sp, cs, text, role)
+        width = cs if cs else ncol - col + 1
+        for k in range(sp):
+            for j in range(width):
+                if (k, j) != (0, 0):
+                    taken.add((r + k, col + j))
+
+    # ② 열이 지정된 셀
+    for r, c, sp, cs, text, role in grid:
+        if c and (r, c) not in at:
+            place(r, c, sp, cs, text, role)
+    # ③ 전폭 행의 우측 셀 — 오른쪽 끝에서부터(정본 상일: 제목 좌, 문항·구분 우)
+    for r in sorted(wide_rows):
+        col = ncol
+        for _r, _c, sp, cs, text, role in reversed(
+                [g for g in grid if g[0] == r and not g[1] and g[3]]):
+            while (r, col) in at or (r, col) in taken:
+                col -= 1
+            place(r, col, sp, cs, text, role)
+            col -= max(cs, 1)
+    # ④ 나머지 행을 왼쪽부터
+    for r, c, sp, cs, text, role in grid:
+        if c or r in wide_rows:
             continue
         col = 1
         while (r, col) in at or (r, col) in taken:
             col += 1
-        at[(r, col)] = (sp, cs, text, role)
-        for k in range(1, sp):
-            taken.add((r + k, col))
-    ncol = max([c + (cs - 1 if cs else 0) for (_r, c), (_sp, cs, _t, _o)
-                in at.items()] or [1])
-    # 전폭 병합이 있는 행은 **오른쪽 끝에서부터** 나머지를 채우고 전폭 셀이
-    # 남은 왼쪽을 차지한다 — 정본 상일1 `상일여자고등학교 …`(좌) +
-    # `문항`·`선택형`·범위(우) 배치가 그렇다.
+        place(r, col, sp, cs, text, role)
+    # ⑤ 전폭 셀 — 그 행에 남은 왼쪽을 차지한다
     for r in sorted(wide_rows):
-        cells = [g for g in rest if g[0] == r]
-        wide = [g for g in cells if not g[3]]
-        side = [g for g in cells if g[3]]
-        col = ncol
-        for _r, _c, sp, cs, text, role in reversed(side):
-            while (r, col) in at or (r, col) in taken:
-                col -= 1
-            at[(r, col)] = (sp, cs, text, role)
-            for k in range(1, sp):
-                taken.add((r + k, col))
-            col -= 1
-        for _r, _c, sp, _cs, text, role in wide:
-            span = max(col, 1)
-            at[(r, 1)] = (sp, span, text, role)
-            for j in range(1, span):
-                taken.add((r, 1 + j))
+        for _r, _c, sp, _cs, text, role in [g for g in grid
+                                            if g[0] == r and not g[1] and not g[3]]:
+            width = 1
+            while width < ncol and (r, 1 + width) not in at \
+                    and (r, 1 + width) not in taken:
+                width += 1
+            place(r, 1, sp, width, text, role)
+
     taken = set()
     rows_html = []
     for r in range(1, nrow + 1):
