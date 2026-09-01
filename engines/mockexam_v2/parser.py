@@ -109,8 +109,17 @@ _MULTIPART_HINT = "물음에 답하"
 # 답란이 선지보다 우선한다 — 서술형이 <보기>로 ①~⑤ 목록을 주는 일이 흔해서
 # (배재1 서답형3: <보기> ①~⑤ 중 고른 뒤 고쳐 쓰는 문항) 선지를 먼저 보면 뒤집힌다.
 _RE_INLINE_CIRCLED = re.compile(r'[①-⑮]')
-_RE_SRV_ENDING = re.compile(r'(?:시오|쓰기|작성|완성|서술|영작|배열)\s*[.。]?\s*$')
-_RE_OBJ_ENDING = re.compile(r'(?:것은|것을|곳은|개수는|고르면|고른다면)\s*[?？]?\s*[.。]?\s*$')
+# `시오` 하나로는 못 가른다 — **고르시오는 객관식, 쓰시오는 서술형**이다.
+# 어미가 같아도 시키는 일이 다르다(고르다 vs 쓰다). 그래서 '고르-' 계열만
+# 빼고 지시형으로 본다.
+_RE_SRV_ENDING = re.compile(
+    r'(?<!고르)(?<!고를)시오\s*[.。]?\s*$'
+    r'|(?:쓰기|작성|완성|서술|영작|배열|기술)\s*(?:하시오|하라)?\s*[.。]?\s*$')
+_RE_PICK_ENDING = re.compile(r'고르(?:시오|세요|면|십시오)\s*[.。?]?\s*$')
+# 고르다 계열은 객관식이다 — 어미가 `시오` 여도 시키는 일이 '고르기' 다.
+_RE_OBJ_ENDING = re.compile(
+    r'(?:것은|것을|곳은|개수는|고르면|고른다면|고르시오|고르세요|고르십시오)'
+    r'\s*[?？]?\s*[.。]?\s*$')
 
 
 _RE_SRV_MARKER = re.compile(r'^\s*[\[【〔<(]?\s*서[답술]형\s*\d')
@@ -130,8 +139,6 @@ def _structural_kind(cur, taxonomy_kind):
         return "서술형", "답란"
     if (cur.get("choices") or {}).get("items"):
         return "객관식", "선지"
-    if any(_RE_INLINE_CIRCLED.search(b.get("content") or "") for b in blocks):
-        return "객관식", "지문 안 자리표"
     q = cur.get("question") or ""
     # 꼬리 괄호 단서를 떼고 본다 — `…배열하시오. (단, 주어진 표현만 한 번씩
     # 사용하며, 변형 금지)` 처럼 지시가 괄호로 이어지는 원고가 흔한데, 종결
@@ -141,8 +148,14 @@ def _structural_kind(cur, taxonomy_kind):
     # **객관식은 고를 것이 있어야 한다.** 선지 단락도 지문 안 자리표도 없는데
     # 발문이 지시형(~시오)으로 끝나면 서술형이다 — 이 구조가 taxonomy 룰보다
     # 강하다. (명일2 실증: `…쓰시오.` 발문 셋이 OBJ 룰에 걸려 객관식이 됐다.)
-    if _RE_SRV_ENDING.search(q) or _RE_SRV_ENDING.search(q_np):
-        return "서술형", "고를 것 없음 + 지시형 어미"
+    # 지시형 어미는 **지문 안 자리표보다 강하다.** 어법 고치기 서술형은
+    # 지문에 ①~⑤ 자리표를 두고도 "바르게 고쳐 쓰시오" 라고 시킨다
+    # (성덕2 실증: 자리표만 보고 객관식으로 뒤집혔다).
+    if not _RE_PICK_ENDING.search(q_np) and (
+            _RE_SRV_ENDING.search(q) or _RE_SRV_ENDING.search(q_np)):
+        return "서술형", "지시형 어미"
+    if any(_RE_INLINE_CIRCLED.search(b.get("content") or "") for b in blocks):
+        return "객관식", "지문 안 자리표"
     if taxonomy_kind:
         return taxonomy_kind, "발문 유형"
     if _RE_OBJ_ENDING.search(q) or _RE_OBJ_ENDING.search(q_np):
