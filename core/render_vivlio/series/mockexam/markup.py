@@ -1214,6 +1214,34 @@ def _header_cells_source(hdr):
     return []
 
 
+_RE_ITEM_RANGE = re.compile(r"(\d+)\s*번\s*~\s*(\d+)\s*번\s*"
+                            r"[(（]\s*(\d+)\s*문항\s*[)）]")
+
+
+def _live_head_value(text, case, label=""):
+    """머리표에 인쇄되는 **문항 범위**를 실제 조판값으로 갈아끼운다.
+
+    프로파일 값은 정본 실측 시점의 고정 문자열이라(명일1 `1번 ~ 23번 (23문항)`)
+    원고가 바뀌면 1쪽에 틀린 문항 수가 찍힌다. 표기 형식은 정본 그대로 두고
+    숫자만 바꾼다.
+    """
+    m = _RE_ITEM_RANGE.search(text or "")
+    if not m or not case:
+        return text
+    # 선택형이냐 서답형이냐는 **그 열의 라벨**로 가른다. 둘 다 1번부터라
+    # 숫자만으로는 못 고른다(명일1 정본 23문항/2문항).
+    tag = str(label or "")
+    if "서답" in tag or "서술" in tag:
+        n = case.get("n_ess")
+    elif "선택" in tag or "객관" in tag:
+        n = case.get("n_sel")
+    else:
+        return text
+    if not n:
+        return text
+    return text[:m.start()] + f"{m.group(1)}번 ~ {n}번 ({n}문항)" + text[m.end():]
+
+
 def header_table(s, case=None):
     """머리표가 **표**인 학교(16곳 중 14곳). 셀 방언을 정규화해 그린다."""
     hdr = P.dig(s.raw, "running.header") or {}
@@ -1295,6 +1323,15 @@ def header_table(s, case=None):
             for j in range(1, cs):
                 taken.add((r, c + j))
             txt = (case or {}).get(role) or text
+            # 같은 열에서 **자기 바로 위** 셀이 그 칸의 라벨이다. 라벨 행이
+            # 1행인 학교(명일2)도 있고 2행인 학교(명일1·명일3, 제목이 1행)도 있다.
+            label = role or ""
+            for rr in range(r - 1, 0, -1):
+                up = at.get((rr, c))
+                if up and up[2]:
+                    label = up[2]
+                    break
+            txt = _live_head_value(txt, case, label)
             # `(결재 도장)` `(학교 배지)` 같은 자리표는 인쇄하지 않는다
             if _RE_PLACEHOLDER.match(txt or ""):
                 txt = ""

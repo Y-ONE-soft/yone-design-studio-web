@@ -11,6 +11,7 @@
 """
 import json
 import os
+import re
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PROFILES = os.path.join(HERE, "profiles")
@@ -107,6 +108,55 @@ def _str(v, default=None):
     if isinstance(v, list) and v:
         return _str(v[0], default)
     return str(v)
+
+
+def _pick(d, names, default=None):
+    """같은 값을 여러 이름으로 적어 둔다 — `size_pt` `size_pt_b4` …
+
+    16명이 따로 실측해 쓴 프로파일이라 접미사가 제각각이다. 한 이름만 보면
+    **정본을 제대로 재고도 조판에 하나도 반영되지 않는다**(상일1 실증: 본문
+    수치가 전부 기본값이라 5쪽으로 나왔고, 이름을 맞추자 정본과 같은 7쪽).
+    """
+    for n in names:
+        v = _num(d.get(n))
+        if v is not None:
+            return v
+    # 근사값 표기(`size_pt_b4_근사`)까지 받는다 — 스캔 정본이라 근사인 것이지
+    # 값이 없는 게 아니다. 없는 것보다 근사가 정본에 가깝다.
+    for n in names:
+        for k, v in d.items():
+            if k.startswith(n) and _num(v) is not None:
+                return _num(v)
+    return default
+
+
+def _pick_str(d, names, default=None):
+    for n in names:
+        v = d.get(n)
+        if isinstance(v, str) and v.strip():
+            return v
+    return default
+
+
+_RE_EM = re.compile(r"([\d.]+)\s*em")
+
+
+def _em_of(v):
+    """`"한 글자(약 1em)"` 처럼 문장으로 적힌 상대값에서 em 을 뽑는다."""
+    if isinstance(v, (int, float)):
+        return float(v)
+    m = _RE_EM.search(str(v or ""))
+    if m:
+        return float(m.group(1))
+    return 1.0 if "한 글자" in str(v or "") else None
+
+
+def _em_mm(em, size_pt):
+    """`1.2em` 처럼 상대값으로 적힌 것을 mm 로. 크기를 모르면 0."""
+    e, sz = _num(em), _num(size_pt)
+    if not e or not sz:
+        return 0.0
+    return round(e * sz * 25.4 / 72, 2)
 
 
 def _num(v, default=None):
@@ -211,13 +261,21 @@ class Spec(object):
             if not isinstance(r, dict):
                 continue
             self.roles[name] = {
-                "font": r.get("font"),
-                "size_pt": _num(r.get("size_pt")),
-                "leading_pt": _num(r.get("leading_pt")),
+                "font": _pick_str(r, ("font", "서체", "font_b4")),
+                "size_pt": _pick(r, ("size_pt", "size_pt_b4", "size_pt_B4")),
+                "leading_pt": _pick(r, ("leading_pt", "leading_pt_b4",
+                                        "line_height_pt")),
                 "bold": bool(r.get("bold")),
-                "indent_mm": _num(r.get("first_line_indent_mm") or r.get("indent_mm"), 0.0),
-                "hang_mm": _num(r.get("hang_mm"), 0.0),
-                "space_before_pt": _num(r.get("space_before_pt"), 0.0),
+                "indent_mm": _pick(r, ("first_line_indent_mm", "indent_mm",
+                                       "first_line_indent_mm_b4",
+                                       "indent_mm_b4"), 0.0)
+                or _em_mm(_em_of(r.get("first_line_indent_em")
+                                 or r.get("first_line_indent")),
+                          _pick(r, ("size_pt", "size_pt_b4"))),
+                "hang_mm": _pick(r, ("hang_mm", "hang_mm_b4"), 0.0)
+                or _em_mm(r.get("hang_em"), _pick(r, ("size_pt", "size_pt_b4"))),
+                "space_before_pt": _pick(r, ("space_before_pt",
+                                             "space_before_pt_b4"), 0.0),
                 "align": r.get("align") or "justify",
             }
         for must in ("passage", "stem", "choice"):

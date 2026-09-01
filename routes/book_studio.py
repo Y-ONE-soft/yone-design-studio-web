@@ -505,9 +505,9 @@ def api_paraclass():
     for n in str(p.get("cls") or "").replace(".", " ").split():
         # 단락 스타일은 `ps-`, 개체(상자) 스타일은 `os-`.
         # ⚠ 계열이 쓰는 클래스(`.q`·`.head`)와 섞이면 사람 것을 못 가린다.
-        if not re.match(r"^(ps|os)-[0-9A-Za-z가-힣_-]{1,40}$", n):
+        if not re.match(r"^(ps|os|ts)-[0-9A-Za-z가-힣_-]{1,40}$", n):
             return jsonify({"error":
-                            f"스타일 이름은 `ps-`(단락)·`os-`(개체)로 시작합니다: {n}"}), 400
+                            f"스타일 이름은 `ps-`(단락)·`os-`(개체)·`ts-`(표)로 시작합니다: {n}"}), 400
         names.append(n)
     cfg = bookmod.load(d)
     v = " ".join(names)
@@ -589,15 +589,15 @@ def api_parastyle():
     if get:
         names = sorted({n for sel in (cfg.section("styles") or {})
                         for n in [sel[1:]]
-                        if sel.startswith(".ps-") or sel.startswith(".os-")}
+                        if sel[:4] in (".ps-", ".os-", ".ts-")}
                        | set(count))
         return jsonify({"styles": [{"name": n, "count": count.get(n, 0)}
                                    for n in names]})
 
     act = p.get("action")
     name = str(p.get("name") or "").strip().lstrip(".")
-    if not re.match(r"^(ps|os)-[0-9A-Za-z가-힣_-]{1,40}$", name):
-        return jsonify({"error": "스타일 이름은 `ps-`·`os-`로 시작합니다"}), 400
+    if not re.match(r"^(ps|os|ts)-[0-9A-Za-z가-힣_-]{1,40}$", name):
+        return jsonify({"error": "스타일 이름은 `ps-`·`os-`·`ts-`로 시작합니다"}), 400
     if act == "delete":
         # ① 걸린 자리에서 뗀다 ② 스타일 규칙을 없앤다 — 순서가 바뀌면
         #    잠깐 "없는 이름이 걸린" 상태가 생긴다.
@@ -611,8 +611,8 @@ def api_parastyle():
         return jsonify({"ok": True, "history": _hist(stt)})
     if act == "rename":
         new = str(p.get("to") or "").strip().lstrip(".")
-        if not re.match(r"^(ps|os)-[0-9A-Za-z가-힣_-]{1,40}$", new):
-            return jsonify({"error": "새 이름도 `ps-`·`os-`로 시작합니다"}), 400
+        if not re.match(r"^(ps|os|ts)-[0-9A-Za-z가-힣_-]{1,40}$", new):
+            return jsonify({"error": "새 이름도 `ps-`·`os-`·`ts-`로 시작합니다"}), 400
         props = (cfg.section("styles") or {}).get("." + name)
         if props:
             ed.push(cfg, {"op": "style", "sel": "." + new, "v": props,
@@ -983,10 +983,25 @@ def api_box():
     block = ed.get(cur, ref)
     if not isinstance(block, dict) or block.get("t") != "box":
         return jsonify({"error": "상자가 아닙니다"}), 409
+    # ⚠ 잠근 상자는 **서버가** 막는다. 화면에서만 막으면 끌기·화살표·정렬 중
+    #   하나만 빠뜨려도 조용히 움직인다.
+    if block.get("lock") and act in ("move", "delete", "style"):
+        return jsonify({"error": "잠근 상자입니다 — 상자 패널에서 잠금을 푸세요",
+                        "kind": "locked"}), 409
     if act == "delete":
         st = ed.push(cfg, {"op": "delete", "ref": ref, "note": "상자 지우기"})
         return jsonify({"ok": True,
                         "history": _hist(st)})
+    if act == "lock":
+        b = json.loads(json.dumps(block))
+        on = bool(p.get("on"))
+        if on:
+            b["lock"] = True
+        else:
+            b.pop("lock", None)
+        st2 = ed.push(cfg, {"op": "set", "ref": ref, "v": b,
+                            "note": "상자 잠금" if on else "상자 잠금 풀기"})
+        return jsonify({"ok": True, "lock": on, "history": _hist(st2)})
     if act == "style":
         # 상자 모양(바탕·테두리·둥근 모서리·그림자·투명도·회전) —
         # 인디자인의 개체 속성이다. **적은 것만** 받는다.

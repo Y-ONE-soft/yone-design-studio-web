@@ -1696,13 +1696,22 @@
       if (!Object.keys(at).length) { msg('바꿀 좌표를 적으세요'); return; }
       boxApi({ action: 'move', ref: inBox, at: at });
     };
+    var lockOn = !!(el && el.classList && el.classList.contains('locked'));
+    var lk = document.createElement('button');
+    lk.className = 'ide-b' + (lockOn ? ' on' : '');
+    lk.style.marginLeft = '4px';
+    lk.textContent = lockOn ? '🔒 잠금 풀기' : '🔓 잠그기';
+    lk.title = '잠그면 끌기·화살표·크기·정렬이 그 상자를 건드리지 않습니다';
+    lk.onclick = function () {
+      boxApi({ action: 'lock', ref: inBox, on: !lockOn });
+    };
     var del = document.createElement('button');
     del.className = 'ide-b'; del.style.marginLeft = '4px'; del.textContent = '상자 지우기';
     del.onclick = function () {
       if (!confirm('이 상자를 지웁니다. 되돌리기로 살릴 수 있습니다.')) return;
       boxApi({ action: 'delete', ref: inBox });
     };
-    host.appendChild(go); host.appendChild(del);
+    host.appendChild(go); host.appendChild(lk); host.appendChild(del);
 
     // ── 변형 (인디자인의 제어 막대 X·Y·W·H·회전·기울이기) ──
     //
@@ -2021,6 +2030,10 @@
    */
   function alignPicks(how) {
     if (picks.length < 2) { msg('⇧ 누르고 두 개 이상 고르세요'); return; }
+    picks = picks.filter(function (x) {
+      return !(x.el && x.el.classList && x.el.classList.contains('locked'));
+    });
+    if (picks.length < 2) { msg('잠근 상자를 빼면 두 개가 안 됩니다'); return; }
     var boxes = picks.map(function (x) {
       var pg = pageBoxOf(x.el);
       return { el: x.el, ref: x.ref, r: x.el.getBoundingClientRect(),
@@ -2147,6 +2160,10 @@
       while (el && el !== st && !(el.classList && el.classList.contains('viv-box')))
         el = el.parentElement;
       if (!el || el === st || !el.classList.contains('abs')) return;
+      if (el.classList.contains('locked')) {   // 잠근 상자는 안 끌린다
+        msg('잠근 상자입니다 — 상자 패널에서 잠금을 푸세요');
+        return;
+      }
       var pg = pageBoxOf(el); if (!pg) return;
       var ppm = pxPerMm(pg);
       var er = el.getBoundingClientRect();
@@ -2267,6 +2284,7 @@
       el = el.parentElement;
     if (!el || el === st || !el.classList) return;
     if (!el.classList.contains('abs')) return;      // 감싸기 상자는 흐름이 정한다
+    if (el.classList.contains('locked')) return;    // 잠근 상자엔 손잡이가 없다
     HANDLES.forEach(function (h) {
       var d = document.createElement('div');
       d.className = 'ide-hd'; d.dataset.h = h[0];
@@ -2446,6 +2464,71 @@
       };
       host.appendChild(cgo);
     }
+
+    // ── 표 스타일 (이름 붙여 여러 표에) ──
+    // 단락·개체 스타일과 **같은 길**이다 — 이름만 `ts-` 로 시작한다.
+    var tsNames = Object.keys(styles)
+      .map(function (sl) { var m = sl.match(/^\.(ts-[\w가-힣-]+)$/); return m && m[1]; })
+      .filter(Boolean).sort();
+    var tEl = curEl, tStage = stageEl();
+    while (tEl && tEl !== tStage && tEl.tagName !== 'TABLE') tEl = tEl.parentElement;
+    var tsApplied = (tEl && tEl.tagName === 'TABLE' ? classesOf(tEl) : [])
+      .filter(function (c) { return /^ts-/.test(c); });
+    var tslab = document.createElement('div');
+    tslab.className = 'ide-lab'; tslab.style.marginTop = '9px';
+    tslab.innerHTML = '<span>표 스타일</span><span class="ide-val">'
+      + (tsApplied.join(' ') || '없음') + '</span>';
+    host.appendChild(tslab);
+    var tsRow = document.createElement('div'); tsRow.className = 'ide-f';
+    var tsSel = document.createElement('select');
+    tsSel.className = 'ide-sel'; tsSel.style.flex = '1';
+    [''].concat(tsNames).forEach(function (c) {
+      var o = document.createElement('option');
+      o.value = c; o.textContent = c || '(없음 — 스타일 떼기)';
+      tsSel.appendChild(o);
+    });
+    tsSel.value = tsApplied[0] || '';
+    tsSel.addEventListener('change', function () {
+      api('/api/book-studio/paraclass', { b: key, ref: inTable, cls: tsSel.value })
+        .then(function (d) {
+          if (d.error) { msg('✗ ' + d.error); return; }
+          rebuild('').then(function (ok) {
+            if (ok) msg(tsSel.value ? ('✓ ' + tsSel.value) : '✓ 표 스타일을 뗐습니다');
+          });
+        });
+    });
+    var tsMk = document.createElement('button');
+    tsMk.className = 'ide-b'; tsMk.textContent = '＋ 새로';
+    tsMk.title = '이 표의 지금 모양으로 표 스타일을 만듭니다';
+    tsMk.onclick = function () {
+      var nm = prompt('새 표 스타일 이름 (ts- 없이)', '');
+      if (!nm) return;
+      var name3 = 'ts-' + nm.trim().replace(/\s+/g, '-');
+      // ⚠ 표 모양은 **변수**로 걸린다(`--tb-line` 등) — 그대로 옮겨 담는다.
+      var props = {};
+      if (tEl) {
+        ['--tb-line', '--tb-pad', '--tb-rowh', '--tb-headbg', '--tb-headfg',
+         '--tb-valign'].forEach(function (v) {
+          var got = tEl.style.getPropertyValue(v);
+          if (got) props[v] = got.trim();
+        });
+      }
+      if (!Object.keys(props).length) { props['--tb-line'] = '0.4pt solid currentColor'; }
+      api('/api/book-studio/styles', { b: key, selector: '.' + name3, props: props })
+        .then(function (d) {
+          if (d.error) { msg('✗ ' + d.error); return; }
+          styles = d.styles || {};
+          return api('/api/book-studio/paraclass',
+                     { b: key, ref: inTable, cls: name3 });
+        }).then(function (d2) {
+          if (!d2 || d2.error) { if (d2) msg('✗ ' + d2.error); return; }
+          rebuild('').then(function (ok) {
+            if (ok) { msg('✓ ' + name3 + ' 만들어 걸었습니다'); drawTable(); }
+          });
+        });
+    };
+    tsRow.appendChild(tsSel); tsRow.appendChild(tsMk);
+    host.appendChild(tsRow);
 
     // ── 표 모양 (인디자인의 표 스타일) ──
     // 모양은 표마다 다를 수 있다 — 정한 것만 지면에 나가고, 안 정하면
@@ -3372,6 +3455,29 @@
     if (now.scrollIntoView) now.scrollIntoView({ block: 'nearest' });
   }
 
+  /** 빈 면 넣기 — 고른 자리 **앞에** 빈 면을 하나 끼운다.
+   *
+   *  흐르는 조판에서 면은 내용이 만든다. 그래서 "면을 더한다" 는 곧
+   *  **거기서 면을 넘기고 빈 문단 하나를 둔다** 는 뜻이다.
+   *  ⚠ 빈 문단이 아무 것도 없으면 조판이 지나칠 수 있다 → 빈칸 한 글자를 둔다.
+   */
+  function addBlankPage() {
+    if (!curRef) { msg('먼저 지면에서 자리를 고르세요 — 그 앞에 넣습니다'); return; }
+    var ref = curRef;
+    api('/api/book-studio/op', { b: key, op: 'insert', ref: ref, v: '\u00a0' })
+      .then(function (d) {
+        if (d.error) { msg('✗ ' + d.error); return; }
+        return api('/api/book-studio/styles',
+                   { b: key, selector: '[data-ref="' + ref + '"]',
+                     props: { 'break-before': 'page', 'break-after': 'page',
+                              'min-height': '1mm' } });
+      }).then(function (d2) {
+        if (!d2 || d2.error) { if (d2) msg('✗ ' + d2.error); return; }
+        styles = d2.styles || styles;
+        rebuild('').then(function (ok) { if (ok) msg('✓ 빈 면을 넣었습니다'); });
+      });
+  }
+
   function drawPages() {
     var host = $('pal-pages');
     if (!host) return;
@@ -3405,6 +3511,8 @@
               + '그림에 나옵니다.')
          : '아직 그림이 없습니다 — 다시 조판하면 몇 초 뒤 나옵니다.')
       + '</div>');
+    h.push('<div style="margin-bottom:6px"><button class="ide-b" id="pg-blank">'
+      + '빈 면 넣기</button> <span class="ide-hint">고른 자리 <b>앞에</b> 넣습니다</span></div>');
     h.push('<div style="display:flex;flex-wrap:wrap;gap:4px">');
     for (var i = 1; i <= total; i++) {
       var on = (i === curPage);
@@ -3426,6 +3534,8 @@
     }
     h.push('</div>');
     host.innerHTML = h.join('');
+    var bp = host.querySelector('#pg-blank');
+    if (bp) bp.onclick = addBlankPage;
     var cur = host.querySelector('a[data-pg="' + curPage + '"]');
     if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'nearest' });
   }
@@ -4301,6 +4411,10 @@
     while (el && el !== st && !(el.classList && el.classList.contains('viv-box')))
       el = el.parentElement;
     if (!el || el === st) return false;
+    if (el.classList.contains('locked')) {
+      msg('잠근 상자입니다 — 상자 패널에서 잠금을 푸세요');
+      return true;
+    }
     if (del) {
       if (!confirm('이 상자를 지웁니다. 되돌리기로 살릴 수 있습니다.')) return true;
       boxApi({ action: 'delete', ref: ref });

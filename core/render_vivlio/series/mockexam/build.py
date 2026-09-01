@@ -44,6 +44,8 @@ def render(ir, key, out_pdf, log=print, build_dir=None, case=None,
 
     # ── HTML / CSS ──
     imgs = []
+    # 머리표에 인쇄되는 문항 수는 **원고 기준**이다(사용자 결정 `_결정.json`)
+    case = dict(case or {}, n_sel=n_sel, n_ess=n_ess)
     html_text, warns = markup.build_html(ir, spec, case=case, scores=alloc,
                                          images=imgs)
     for name, data in imgs:

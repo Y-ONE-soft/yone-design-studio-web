@@ -68,6 +68,8 @@ def html(block, ref="", inl=None):
     at = block.get("at") or {}
     wrap = block.get("wrap")
     cls = "viv-box " + ({"left": "wrapL", "right": "wrapR"}.get(wrap) or "abs")
+    if block.get("lock"):
+        cls += " locked"          # 작업대가 보고 안 끈다(인쇄에는 아무 뜻 없다)
     st = []
     for k in AT_KEYS:
         v = _len(at.get(k))

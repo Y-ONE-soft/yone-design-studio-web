@@ -78,7 +78,10 @@ def html(block, ref="", inl=None, esc=None):
     안 주면 공용 것을 쓴다.
     """
     inl = inl or (lambda x: _rt.to_html(x, blanks=False))
-    o = ['<table class="viv-tbl"%s>' % _style_attr(block)]
+    # ⚠ 표 **자신**에도 자리표를 단다. 예전에는 칸에만 있어서, 표에 이름 붙인
+    #   스타일(`ts-…`)을 걸어도 **얹힐 자리가 없었다**.
+    o = ['<table%s%s>' % (_refs.mark(ref, "viv-tbl") if ref
+                          else ' class="viv-tbl"', _style_attr(block))]
     widths = block.get("widths") or []
     if widths:
         o.append("<colgroup>")
