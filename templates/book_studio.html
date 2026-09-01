@@ -2451,6 +2451,7 @@
       // 화면 px ↔ mm 환산에 쓸 판형(도련 포함). 책마다 다르다.
       var pg = d.book && d.book.page;
       if (pg && pg.width) bookPageW = pg.width + 2 * (pg.bleed || 0);
+      loadGuides();               // 이 책에 놓아 둔 안내선(이 브라우저에만 있다)
       drawPalettes();
       if (!keepView) rebuild('');
     });
@@ -2677,31 +2678,150 @@
     ['margin', 'bleed', 'base', 'ruler', 'guide'].forEach(function (k) {
       st.classList.toggle('show-' + k, !!views[k]);
     });
+    hookGuides(); drawGuides();     // 면이 새로 왔으면 안내선도 다시 건다
   }
-  // ── 안내선 — 사람이 자리를 적어 놓는다 ─────────────────
-  // 인디자인은 눈금자에서 끌어다 놓지만, 조판 지면은 좌표계가 면마다라
-  // **mm 로 적는 편이 정확하다**(끌어 놓으면 배율에 따라 흔들린다).
-  $('ide-guide').addEventListener('click', function () {
-    var cur = views.guide;
-    if (cur) {
-      views.guide = false;
-      $('ide-guide').classList.remove('on');
-      applyViews(); msg('안내선 끔');
-      return;
-    }
-    var v = prompt('안내선 자리 — 세로 두 개, 가로 두 개를 mm 로\n'
-                   + '예) 23,187,31,277   (빈 자리는 비워 두세요)',
-                   '23,187,31,277');
-    if (v === null) return;
-    var a = v.split(',').map(function (x) { return x.trim(); });
+  // ── 안내선 — 인디자인처럼 **눈금자에서 끌어다 놓는다** ─────
+  //
+  // 예전에는 mm 를 적어 넣게 했다. "끌어 놓으면 배율에 따라 흔들린다" 고
+  // 적어 두었는데, 재 보니 면 상자에서 mm 로 정확히 되돌릴 수 있다 —
+  // 상자 끌기가 이미 그렇게 하고 있었다. 그래서 눈금자 띠를 잡아 끌면
+  // 선이 따라 나온다. 두 번 누르면 지운다.
+  //
+  // ⚠ 안내선은 **보기일 뿐** 조판에 안 들어간다. 그래서 책 폴더가 아니라
+  //   이 브라우저에 남긴다 — 남의 조판을 바꾸지 않는다.
+  // ⚠ 예전에는 눈금자와 안내선이 **같은 `::before`** 를 써서 둘을 같이 켜면
+  //   눈금자가 사라졌다. 안내선은 이제 진짜 요소라 겹치지 않는다.
+  var guides = [];                       // [{axis:'x'|'y', mm: 23}]
+  var GD_MAX = 40;
+
+  function guideKey() { return 'ide-guides:' + key; }
+
+  function loadGuides() {
+    try { guides = JSON.parse(localStorage.getItem(guideKey()) || '[]') || []; }
+    catch (e) { guides = []; }
+    if (!Array.isArray(guides)) guides = [];
+  }
+
+  function saveGuides() {
+    try { localStorage.setItem(guideKey(), JSON.stringify(guides.slice(0, GD_MAX))); }
+    catch (e) {}
+  }
+
+  /** 면 하나에 안내선을 다시 그린다. 면을 넘길 때마다 부른다. */
+  function drawGuides() {
     var st = stageEl(); if (!st) return;
-    ['--gx1', '--gx2', '--gy1', '--gy2'].forEach(function (k, i) {
-      st.style.setProperty(k, a[i] ? a[i] + 'mm' : '-999mm');
+    var pages = st.querySelectorAll('[data-vivliostyle-page-container]');
+    Array.prototype.forEach.call(pages, function (pg) {
+      Array.prototype.forEach.call(pg.querySelectorAll('.ide-gd'), function (g) {
+        g.parentNode.removeChild(g);
+      });
+      if (!views.guide) return;
+      guides.forEach(function (g, i) {
+        var d = document.createElement('div');
+        d.className = 'ide-gd';
+        d.dataset.i = i;
+        d.title = '끌어서 옮기고, 두 번 누르면 지웁니다 (' + g.mm + 'mm)';
+        var line = 'rgba(0,190,255,.85)';
+        d.style.cssText = g.axis === 'x'
+          ? ('position:absolute;top:0;height:100%;width:1.4mm;'
+             + 'margin-left:-0.7mm;left:' + g.mm + 'mm;z-index:9;'
+             + 'cursor:ew-resize;border-left:0.2mm solid ' + line
+             + ';border-left-offset:0')
+          : ('position:absolute;left:0;width:100%;height:1.4mm;'
+             + 'margin-top:-0.7mm;top:' + g.mm + 'mm;z-index:9;'
+             + 'cursor:ns-resize;border-top:0.2mm solid ' + line);
+        pg.appendChild(d);
+      });
     });
-    views.guide = true;
-    $('ide-guide').classList.add('on');
-    applyViews();
-    msg('안내선을 놓았습니다 (인쇄에는 안 나갑니다)');
+  }
+
+  /** 눈금자 띠에서 끌어내기 · 안내선 옮기기 · 두 번 눌러 지우기. */
+  function hookGuides() {
+    var st = stageEl();
+    if (!st || st.__gd) return;
+    st.__gd = true;
+    var cur = null;
+    var BAND = 4;                        // 눈금자 띠 너비(mm)
+
+    function ctx(ev) {
+      var pg = null, el = ev.target;
+      while (el && el !== st) {
+        if (el.hasAttribute && el.hasAttribute('data-vivliostyle-page-container')) {
+          pg = el; break;
+        }
+        el = el.parentElement;
+      }
+      if (!pg) {
+        // 지면 밖(작업판)에서 눌렀을 때도 가장 가까운 면을 쓴다
+        pg = pageEl();
+        if (!pg) return null;
+      }
+      var r = pg.getBoundingClientRect();
+      return { pg: pg, r: r, mm: r.width / (bookPageW || 216) };
+    }
+
+    st.addEventListener('mousedown', function (ev) {
+      if (!views.guide && !views.ruler) return;
+      var c = ctx(ev); if (!c) return;
+      var x = (ev.clientX - c.r.left) / c.mm, y = (ev.clientY - c.r.top) / c.mm;
+      var g = ev.target.closest && ev.target.closest('.ide-gd');
+      if (g) {                                   // 있는 것 옮기기
+        cur = { i: +g.dataset.i, c: c, made: false };
+      } else if (views.ruler && (x <= BAND || y <= BAND)) {
+        if (guides.length >= GD_MAX) { msg('안내선이 너무 많습니다'); return; }
+        // 위쪽 띠에서 끌면 **가로** 선, 왼쪽 띠에서 끌면 **세로** 선이다
+        var axis = (y <= BAND && x > BAND) ? 'y' : 'x';
+        guides.push({ axis: axis, mm: round2(axis === 'x' ? x : y) });
+        views.guide = true;
+        $('ide-guide').classList.add('on');
+        cur = { i: guides.length - 1, c: c, made: true };
+        drawGuides();
+      } else { return; }
+      ev.preventDefault(); ev.stopPropagation();
+      msg('안내선 — 끌어서 놓습니다 (두 번 누르면 지웁니다)');
+    }, true);
+
+    st.addEventListener('mousemove', function (ev) {
+      if (!cur) return;
+      var g = guides[cur.i]; if (!g) return;
+      var v = g.axis === 'x' ? (ev.clientX - cur.c.r.left) / cur.c.mm
+                             : (ev.clientY - cur.c.r.top) / cur.c.mm;
+      g.mm = round2(Math.max(0, v));
+      drawGuides();
+      msg('안내선 ' + g.mm + 'mm');
+    }, true);
+
+    st.addEventListener('mouseup', function () {
+      if (!cur) return;
+      var g = guides[cur.i];
+      // 지면 밖에 놓으면 없던 일로 — 인디자인도 그렇다
+      if (g && (g.mm < 0 || g.mm > (g.axis === 'x' ? bookPageW : 3000))) {
+        guides.splice(cur.i, 1);
+      }
+      cur = null; saveGuides(); drawGuides(); msg('');
+    }, true);
+
+    st.addEventListener('dblclick', function (ev) {
+      var g = ev.target.closest && ev.target.closest('.ide-gd');
+      if (!g) return;
+      ev.preventDefault(); ev.stopPropagation();
+      guides.splice(+g.dataset.i, 1);
+      saveGuides(); drawGuides(); msg('안내선을 지웠습니다');
+    }, true);
+  }
+
+  $('ide-guide').addEventListener('click', function () {
+    views.guide = !views.guide;
+    $('ide-guide').classList.toggle('on', views.guide);
+    if (views.guide && !guides.length) {
+      msg('눈금자를 켜고 위·왼쪽 띠에서 **끌어내면** 안내선이 놓입니다');
+      views.ruler = true;
+      var rb = document.querySelector('button[data-view="ruler"]');
+      if (rb) rb.classList.add('on');
+    } else {
+      msg(views.guide ? '안내선 보기 켬 (인쇄에는 안 나갑니다)' : '안내선 끔');
+    }
+    applyViews(); hookGuides(); drawGuides();
   });
 
   $('ide-view').addEventListener('click', function (e) {

@@ -1388,21 +1388,12 @@ body.tool-text [class*="vref"]:hover, body.tool-para [class*="vref"]:hover {
   background-repeat: no-repeat;
 }
 
-/* ── 안내선 (사람이 놓은 자리) ───────────────────────────────────
-   `--gx1..4` · `--gy1..4` 에 mm 값이 들어오면 그 자리에 선을 긋는다. */
-#viv.show-guide [data-vivliostyle-page-container]::before {
-  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 8;
-  background-image:
-    linear-gradient(to right, rgba(0,190,255,.75) 0 0.2mm, transparent 0.2mm),
-    linear-gradient(to right, rgba(0,190,255,.75) 0 0.2mm, transparent 0.2mm),
-    linear-gradient(to bottom, rgba(0,190,255,.75) 0 0.2mm, transparent 0.2mm),
-    linear-gradient(to bottom, rgba(0,190,255,.75) 0 0.2mm, transparent 0.2mm);
-  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%;
-  background-position:
-    var(--gx1, -999mm) 0, var(--gx2, -999mm) 0,
-    0 var(--gy1, -999mm), 0 var(--gy2, -999mm);
-  background-repeat: no-repeat;
-}
+/* ── 안내선 — **진짜 요소**로 그린다(`.ide-gd`) ─────────────────
+   ⚠ 예전에는 눈금자와 **같은 `::before`** 를 써서, 둘을 같이 켜면 눈금자가
+     통째로 사라졌다(나중 규칙이 이긴다). 그리고 배경 그림이라 잡아 끌 수가
+     없었다 — 인디자인은 눈금자에서 끌어다 놓는다. */
+#viv .ide-gd { display: none; }
+#viv.show-guide .ide-gd { display: block; }
 
 /* ── 보기 보조 (인디자인의 안내선·재단선 보기) ────────────────────
    ⚠ 이건 **보기 위한 것**이라 조판에 영향을 주면 안 된다. 그래서 지면 위에

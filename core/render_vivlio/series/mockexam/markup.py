@@ -209,7 +209,8 @@ class Renderer(object):
         # 짝맞추기 선지 여부를 **지문보다 먼저** 안다 — 원고가 선지 바로 앞에
         # 머리줄 `(A) (B) (C)` 를 지문처럼 주기 때문에, 표를 만들 문항이면
         # 그 줄을 지문에서 빼야 머리행이 두 번 찍히지 않는다.
-        ab_cols = _ab_columns((it.get("choices") or {}).get("items") or [])
+        ab_cols = (_ab_columns((it.get("choices") or {}).get("items") or [])
+                   if _ab_labeled(it) else None)
         ab_head = None
 
         # 발문 — 번호(또는 서답형 라벨) + 본문 + 배점
@@ -340,6 +341,22 @@ def _ab_split(text, min_cols):
         if len(parts) >= min_cols and (best is None or len(parts) > len(best)):
             best = parts
     return best
+
+
+def _ab_labeled(it):
+    """짝맞추기 표를 세울 근거가 있는가 — `(A)` `(B)` 레이블이 실제로 있는가.
+
+    선지가 두 낱말로 갈린다고 다 짝이 아니다. 상일1 '두 단어가 반의어 관계에
+    있지 않은 것은?' 은 어휘 쌍이라 표 머리행 `(A) (B)` 를 붙일 자리가 없다.
+    발문·지문·보기 어디에도 레이블이 없으면 그냥 선지로 둔다.
+    """
+    parts = [it.get("question") or ""]
+    parts += [b.get("content") or ""
+              for b in (it.get("stimulus") or {}).get("blocks", [])]
+    parts.append(((it.get("given") or {}) or {}).get("content") or "")
+    blob = " ".join(parts)
+    found = {m.group(1).upper() for m in _RE_AB_HEAD.finditer(blob)}
+    return len(found & set("ABCDE")) >= 2
 
 
 def _ab_head_line(text, n):
