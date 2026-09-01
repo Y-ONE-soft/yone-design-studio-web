@@ -157,14 +157,30 @@ def _group_multipliers(html, plan):
 
 
 _RE_TABLE_CELL = re.compile(r"<td[^>]*>\s*([\d]+(?:\.\d+)?)\s*</td>")
+_RE_TR = re.compile(r"<tr>(.*?)</tr>", re.S)
+_RE_TH = re.compile(r"<th[^>]*>(.*?)</th>", re.S)
 
 
-def _score_table_sum(html):
-    """배점표(세종 계열) 칸 값의 합. 표가 없으면 None."""
+def _score_table_sum(html, spec):
+    """배점표(세종 계열) 칸 값의 합. 표가 없으면 None.
+
+    표는 (번호행, 배점행) 이 한 쌍이라 **행을 가리지 않으면 문항 번호까지
+    더해진다**(세종1 이 400.0 으로 나왔다). 행 머리를 프로파일이 적어 둔
+    배점 라벨과 맞춰 고르고, 못 맞추면 짝수번째(배점) 행으로 되짚는다.
+    """
     m = re.search(r'<table class="score-table".*?</table>', html, re.S)
     if not m:
         return None
-    vals = [float(x) for x in _RE_TABLE_CELL.findall(m.group(0))]
+    rows = _RE_TR.findall(m.group(0))
+    if not rows:
+        return None
+    label = (spec.score_table_heads or ("번호", "배점"))[1]
+    picked = [r for r in rows
+              if any(_RE_TAG.sub("", h).strip() == str(label).strip()
+                     for h in _RE_TH.findall(r))]
+    if not picked:
+        picked = rows[1::2]
+    vals = [float(x) for r in picked for x in _RE_TABLE_CELL.findall(r)]
     return round(sum(vals), 2) if vals else None
 
 
@@ -175,9 +191,10 @@ def check_score(key, spec, html, pdf_text, plan):
         want, note = SCORE_EXPECT[key]
     detail = {"기대": want}
 
+    table = _score_table_sum(html, spec)
     if spec.fmt_score(3.0) is None:
         # 문항 옆에 배점을 안 찍는 학교(세종1) — 마지막 쪽 배점표가 근거다
-        got = _score_table_sum(html)
+        got = table
         detail["방식"] = "배점표"
         if got is None:
             return FAIL, "배점표도 문항 배점도 없다", detail
@@ -190,6 +207,12 @@ def check_score(key, spec, html, pdf_text, plan):
                        "묶음머리": [[v, n] for v, n in mults]})
         if notes:
             detail["주의"] = notes
+        # 배점표까지 있는 학교(강동 계열)는 두 곳이 같은 값을 말해야 한다
+        if table is not None:
+            detail["배점표"] = table
+            if abs(table - got) >= 0.05:
+                return (FAIL, f"문항 배점 합 {got} vs 배점표 합 {table} 불일치",
+                        detail)
     detail["합"] = got
     if want is None:
         return WARN, f"프로파일에 총점이 없다 (PDF 합 {got})", detail

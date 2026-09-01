@@ -517,6 +517,48 @@ def api_paraclass():
                     "history": _hist(st)})
 
 
+@bp.route("/api/book-studio/findstyle")
+def api_findstyle():
+    """**서식으로 찾기** — 그 스타일이 걸린 자리를 모두 준다.
+
+    인디자인의 「찾기/바꾸기 → 서식」 자리다. 글자가 아니라 **모양으로** 찾는다
+    ("발문 스타일이 걸린 곳 전부", "이 계열의 `.pbox` 전부").
+
+    ⚠ 지면(브라우저)에서 찾으면 **지금 그려진 면만** 보게 된다. 조판한 HTML 을
+      훑으면 전권이 대상이다 — 찾기·바꾸기가 원고를 훑는 것과 같은 이유다.
+    """
+    from core.render_vivlio import book as bookmod
+    d, meta = _book_dir(request.args.get("b"))
+    if not d:
+        return jsonify({"error": "모르는 책"}), 404
+    cls = (request.args.get("cls") or "").strip().lstrip(".")
+    if not cls or not re.match(r"^[0-9A-Za-z가-힣_-]{1,60}$", cls):
+        return jsonify({"error": "찾을 스타일 이름을 적으세요"}), 400
+    html = os.path.join(_build_dir(d), "index.html")
+    if not os.path.exists(html):
+        return jsonify({"error": "먼저 다시 조판하세요"}), 409
+    with open(html, encoding="utf-8") as f:
+        text = f.read()
+    hits, seen = [], set()
+    # 한 태그 안에서 class 와 data-ref 를 같이 본다(순서는 계열마다 다르다)
+    for m in re.finditer(r"<[a-zA-Z][^<>]*>", text):
+        tag = m.group(0)
+        cm = re.search(r'class="([^"]*)"', tag)
+        if not cm or cls not in cm.group(1).split():
+            continue
+        rm = re.search(r'data-ref="([^"]*)"', tag)
+        ref = rm.group(1) if rm else ""
+        if not ref or ref in seen:
+            continue
+        seen.add(ref)
+        # 그 태그 뒤의 글을 조금 — 무엇인지 알아볼 수 있게
+        body = re.sub(r"<[^>]+>", " ", text[m.end():m.end() + 220])
+        hits.append({"ref": ref, "text": " ".join(body.split())[:70]})
+        if len(hits) >= 500:
+            break
+    return jsonify({"cls": cls, "total": len(hits), "hits": hits})
+
+
 @bp.route("/api/book-studio/parastyle", methods=["GET", "POST"])
 def api_parastyle():
     """단락 스타일 살림 — 목록 · 이름 바꾸기 · 지우기.
@@ -1609,6 +1651,9 @@ html, body { margin: 0; padding: 0; background: #6b6b6b; }
 /* 고칠 수 있는 자리 — `vrefN` 은 우리 자리표라 교재 CSS 와 안 부딪힌다 */
 [class*="vref"] { cursor: default; }
 body.tool-text [class*="vref"], body.tool-para [class*="vref"] { cursor: text; }
+/* 스포이드·자는 지면 어디를 눌러도 되는 도구다 — 커서로 그 사실을 알린다. */
+body.tool-pick, body.tool-pick * { cursor: crosshair !important; }
+body.tool-ruler, body.tool-ruler * { cursor: crosshair !important; }
 body.tool-text [class*="vref"]:hover, body.tool-para [class*="vref"]:hover {
   outline: 1px dashed rgba(120,140,255,.6); outline-offset: 2px;
   background: rgba(120,140,255,.07);
