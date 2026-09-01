@@ -389,6 +389,7 @@ def build_css(spec):
                "text-orientation: upright; letter-spacing: 0.05em; "
                "padding: 0.6mm 0.4mm; }")
     # 매 쪽 반복되는 머리 — 좌·중·우 한 줄
+    css.append(".page-header, .page-footer { width: 100%; }")
     css.append(".run-line { display: flex; justify-content: space-between; "
                "align-items: baseline; width: 100%; }")
     css.append(".run-line .rl-center { flex: 1; text-align: center; }")
@@ -400,6 +401,15 @@ def build_css(spec):
                "break-inside: avoid; }")
     css.append(".aux-table td { border: 0.36pt solid #000; text-align: center; "
                "padding: 0.7mm 1mm; vertical-align: middle; }")
+    css.append(".masthead { position: relative; column-span: all; "
+               "margin: 0 0 2mm; }")
+    css.append(".masthead .mh-item { position: absolute; box-sizing: border-box; "
+               "text-align: center; }")
+    css.append(".masthead .mh-row { border-bottom: 0.24pt solid #000; "
+               "padding: 0.3mm 0; }")
+    css.append(".masthead .mh-row:last-child { border-bottom: 0; }")
+    css.append(".masthead .mh-title { letter-spacing: 0.12em; "
+               "font-weight: 400; }")
     css.append(".aux-box { border: 0.24pt solid #000; padding: 1.2mm; "
                "margin: 0 0 2mm; break-inside: avoid; }")
     css.append(".aux-line { margin: 0; }")

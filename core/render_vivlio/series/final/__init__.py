@@ -142,7 +142,9 @@ class FinalSeries(Series):
         """
         kind = render_mod.SLOT_KIND[kind]
         if kind == "slot":
-            return m["slot"] - 0.5
+            # 0.5 = 잉크 여유, 0.5 = 답줄과 다음 지문 제목 사이 숨(완성본은
+            # 최소 5.7pt 인데 여유가 없으면 4.4pt 까지 붙었다).
+            return m["slot"] - 1.0
         if kind == "col":
             return m["body_h"] - 1.0
         return m["vocab_avail"] - m["vocab_safety"]

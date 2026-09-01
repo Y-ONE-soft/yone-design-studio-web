@@ -1115,9 +1115,71 @@ _RE_CNT = re.compile(r"[(（]?\s*(\d+)\s*[)）]?\s*문항")
 _RE_PNT = re.compile(r"[(（]?\s*(\d+(?:\.\d+)?)\s*[)）]?\s*점")
 
 
+def masthead(s, case=None):
+    """1쪽 마스트헤드(세종 계열) — 좌 3행 표 · 중앙 대제목 · 우 2행 표 · 시험일.
+
+    프로파일에 B4 좌표까지 다 적혀 있는데 렌더러가 읽지 않아 **1쪽 위가
+    3cm 백지**였다. 좌표가 있으니 그 자리에 그대로 앉힌다.
+    """
+    mh = P.dig(s.raw, "running.header.masthead_first_page")
+    if not isinstance(mh, dict):
+        return ""
+    ml = s.text_left if s.text_left is not None else 20.0
+    mt = s.rule_top if s.rule_top is not None else 24.0
+    parts, bottom = [], 0.0
+
+    def at(rect, html, extra=""):
+        nonlocal bottom
+        if not rect or len(rect) != 4:
+            return
+        x0, y0, x1, y1 = [float(v) for v in rect]
+        bottom = max(bottom, y1)
+        parts.append(
+            f'<div class="mh-item" style="left:{round(x0 - ml, 2)}mm;'
+            f'top:{round(y0 - mt, 2)}mm;width:{round(x1 - x0, 2)}mm;'
+            f'height:{round(y1 - y0, 2)}mm;{extra}">{html}</div>')
+
+    for key in ("left_box", "right_box"):
+        box = mh.get(key)
+        if not isinstance(box, dict):
+            continue
+        rows = [str(r) for r in (box.get("rows") or []) if str(r).strip()]
+        if not rows:
+            continue
+        body = "".join(f'<div class="mh-row">{esc(r)}</div>' for r in rows)
+        at(box.get("rect_mm"), body,
+           f"border:{box.get('border_pt') or 0.24}pt solid #000;")
+
+    for key in ("title", "exam_date"):
+        el = mh.get(key)
+        if not isinstance(el, dict):
+            continue
+        txt = str(el.get("text") or "")
+        if not txt:
+            continue
+        size = _num0(el.get("size_pt")) or 12.0
+        m = el.get("실측_정본") or {}
+        x, y = _num0(m.get("x")), _num0(m.get("y"))
+        if x and y and s.ref_scale:
+            parts.append(
+                f'<div class="mh-item mh-{esc(key)}" '
+                f'style="left:{round(x * s.ref_scale - ml, 2)}mm;'
+                f'top:{round(y * s.ref_scale - mt, 2)}mm;'
+                f'font-size:{size}pt;white-space:nowrap">{esc(txt)}</div>')
+            bottom = max(bottom, y * s.ref_scale + size * 25.4 / 72)
+    if not parts:
+        return ""
+    return (f'<div class="masthead" style="height:'
+            f'{round(max(bottom - mt, 0) + 2, 1)}mm">' + "".join(parts)
+            + "</div>")
+
+
 def first_page_aux(s, case=None, scores=None):
     """1쪽 머리 아래 부속 블록. 정본에 있는데 조판에 없던 것들."""
     out = []
+    mh = masthead(s, case)
+    if mh:
+        out.append(mh)
     run = P.dig(s.raw, "running") or {}
     for key in _AUX_KEYS:
         blk = run.get(key)
@@ -1642,8 +1704,9 @@ def exam_head(s, case=None):
     hdr = P.dig(s.raw, "running.header") or {}
     els = hdr.get("elements") or []
     if str(hdr.get("repeat") or "").startswith("every") and not els:
-        # 표 전체가 매 쪽 반복이면 러닝이 찍는다 — 흐름에 또 넣지 않는다
-        if not (hdr.get("first_page") or hdr.get("masthead_first_page")):
+        # 매 쪽 반복분은 러닝이 찍는다 — 흐름에 또 넣지 않는다.
+        # 1쪽 전용 덧붙임(세종1 마스트헤드)은 first_page_aux 가 따로 그린다.
+        if not hdr.get("first_page") or hdr.get("masthead_first_page"):
             return ""
     if not els:
         tbl = header_table(s, case)
