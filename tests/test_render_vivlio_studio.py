@@ -1794,3 +1794,56 @@ def test_middle_escape_survives_rich_segments():
     assert "def E(s):" in src
     i = src.index("def fit_cls")
     assert "_rtx.plain" in src[i:i + 700], "폭을 잴 때는 글만 꺼내야 한다"
+
+
+# ── 아홉 계열 모두 지면을 눌러 고칠 수 있다 ────────────────────
+@pytest.mark.parametrize("mod", ["blackbook", "whitebook", "pocketbook",
+                                 "vocabook", "vocaunit", "special",
+                                 "final", "workbook"])
+def test_every_series_marks_the_page(mod):
+    """자리표가 없으면 지면을 눌러도 **조용히 아무 일이 안 난다.**
+
+    파이널·워크북은 실제로 그랬다(둘 다 `refs.json` 이 안 나왔다).
+    """
+    import importlib
+    r = importlib.import_module("core.render_vivlio.series.%s.render" % mod)
+    src = open(r.__file__, encoding="utf-8").read()
+    assert "refs" in src, f"{mod}: 자리표를 아예 안 쓴다"
+    assert "_refs.mark(" in src or "_refs.stamp(" in src, f"{mod}: 찍는 데가 없다"
+
+
+def test_refs_can_be_registered_by_hand():
+    """`vols` 는 dict, 워크북 `units` 는 목록의 목록 — 목록만 따라가는
+    `index_paths()` 로는 못 닿는다. 계열이 경로를 지어 등록한다."""
+    from core.render_vivlio import refs
+    refs.clear()
+    o = {"a": 1}
+    refs.put(o, "vols.1.sections.0")
+    assert refs.of(o) == "vols.1.sections.0"
+    assert refs.of(o, "header") == "vols.1.sections.0.header"
+
+
+def test_workbook_edits_the_field_that_is_actually_drawn():
+    """`runs` 가 있는데 `text` 를 가리키면 **고쳐도 지면이 그대로**다.
+
+    `runs_html` 이 runs 를 먼저 보기 때문이다 — 조용해서 더 나쁘다.
+    """
+    from core.render_vivlio.series.workbook import render as R
+    from core.render_vivlio import refs
+    refs.clear()
+    b = {"role": "x", "text": "가", "runs": [{"t": "가", "ul": 1}]}
+    refs.put(b, "steps.0.groups.0.units.0.0")
+    assert R._bref(b).endswith(".runs")
+    b2 = {"role": "x", "text": "가"}
+    refs.put(b2, "steps.0.groups.0.units.0.1")
+    assert R._bref(b2).endswith(".text")
+
+
+def test_workbook_runs_take_studio_formatting():
+    """원고의 `ul` 과 작업대의 `u`·`b`·`st` 를 **둘 다** 그려야 한다."""
+    from core.render_vivlio.series.workbook import render as R
+    out = R.runs_html({"runs": [{"t": "밑", "ul": 1},
+                                {"t": "굵", "b": 1},
+                                {"t": "자", "st": {"letter-spacing": "-0.02em"}}]})
+    assert "<u>밑</u>" in out and "<b>굵</b>" in out
+    assert "letter-spacing:-0.02em" in out

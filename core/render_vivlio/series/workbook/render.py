@@ -930,6 +930,13 @@ def document(data, title="워크북"):
     seen = set()
     idx = 0
     book = data.get("book") or {}
+    # 세로형(사이클)은 간지가 사이클을 가로막으면 안 된다 — 앞에 몰아서 낸다.
+    if data.get("order") == "cycle":
+        for n in sorted({st["step"] for st in data["steps"]}):
+            seen.add(n)
+            parts.append(divider_section(n, book.get("line1", ""),
+                                         book.get("line2", "")))
+            rows.append((f"STEP0{n} 간지", 2))
     for st in data["steps"]:
         n = st["step"]
         if n not in seen:

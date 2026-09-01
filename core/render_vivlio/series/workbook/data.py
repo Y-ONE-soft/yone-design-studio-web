@@ -361,6 +361,13 @@ def to_cycles(steps, log=print):
     n = max((len(st["groups"]) for st in steps), default=0)
     if not n:
         return steps
+    # 사이클 수만큼 지문이 없는 스텝(실전 문제는 묶음이 1개다)은 사이클 안에
+    # 넣지 않고 **뒤에 한 번** 낸다. 실전 세트와 지문의 대응은 렌더 플랜에
+    # 없다 — 짐작으로 쪼개지 않는다(w74 실측: 세트 35개 ↔ 지문 17개).
+    tail = [st for st in steps
+            if st["key"] not in (CYCLE_PAIR + tuple(CYCLE_ORDER))
+            or len(st["groups"]) < n]
+    tailk = {id(st) for st in tail}
     out = []
     for i in range(n):
         top, bot = by.get(CYCLE_PAIR[0]), by.get(CYCLE_PAIR[1])
@@ -374,12 +381,16 @@ def to_cycles(steps, log=print):
             out.append(meta)
         for k in CYCLE_ORDER:
             st = by.get(k)
-            if not st or i >= len(st["groups"]):
+            if not st or id(st) in tailk or i >= len(st["groups"]):
                 continue
             one = dict(st)
             one["groups"] = [st["groups"][i]]
             one["cycle"] = i + 1
             out.append(one)
+    out += tail
+    if tail:
+        log("  [세로] 사이클에 못 넣은 스텝 " + ", ".join(t["key"] for t in tail)
+            + " — 뒤에 한 번 낸다(지문 대응을 플랜이 안 준다)")
     log(f"  [세로] 사이클 {n}벌 · 면 묶음 {len(out)}개")
     return out
 
