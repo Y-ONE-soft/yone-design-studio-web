@@ -10,11 +10,16 @@ REPO = os.path.dirname(TESTS_DIR)
 
 
 # ── 백엔드 선택 계층 ─────────────────────────────────────────────────────
+# Vivliostyle 백엔드를 **일부러** 쓰는 카드들. 새 카드를 여기 적지 않으면
+# 이 검사가 막는다 — 기존 엔진이 슬그머니 백엔드를 바꾸는 것을 잡으려는 것이다.
+VIVLIO_OPT_IN = {"mockexam_v2_viv", "final_viv"}
+
+
 def test_base_engine_default_backend_is_indesign():
     """BaseEngine 기본 render_backend = 'indesign' — 기존 엔진 전부 무변경."""
     from engines import registry
     for e in registry.all_engines():
-        if e.material_id == "mockexam_v2_viv":
+        if e.material_id in VIVLIO_OPT_IN:
             continue
         assert getattr(e, "render_backend", "indesign") == "indesign", e.material_id
 
