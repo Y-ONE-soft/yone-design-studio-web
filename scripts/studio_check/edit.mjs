@@ -111,32 +111,42 @@ const resized = await p.evaluate(async () => {
 });
 (/^(69|70|71)(\.\d+)?mm \/ 20mm \/ 20mm/.test(resized) ? ok : bad)('상자 크기 조절(위·왼쪽 그대로) → ' + resized);
 
-// ③-2 상자를 면에 맞추기 + 특수문자 넣기
+// ③-2 상자를 면에 맞추기
 const aligned = await p.evaluate(async () => {
   const d = document.getElementById('ide-frame').contentDocument;
   const box = d.querySelector('.viv-box');
   if (!box) return 'no-box';
+  const was = box.style.left + '|' + box.style.right;
   box.dispatchEvent(new MouseEvent('click', { bubbles: true }));
   await new Promise(r => setTimeout(r, 500));
   const btn = [...document.querySelectorAll('#pal-box button')]
     .find(b => b.textContent === '가로 가운데');
   if (!btn) return 'no-button';
   btn.click();
-  await new Promise(r => setTimeout(r, 3500));
-  return 'clicked';
+  await new Promise(r => setTimeout(r, 400));
+  window.__alignMsg = document.getElementById('ide-msg').innerText;
+  // ⚠ **바뀔 때까지 기다린다.** 다시 조판이 끝나기 전에 재면 옛 자리를 잰다
+  //   (실제로 그래서 "105px 어긋남" 이 나왔다 — 계산은 맞았다).
+  for (let i = 0; i < 60; i++) {
+    await new Promise(r => setTimeout(r, 500));
+    const b2 = document.getElementById('ide-frame').contentDocument.querySelector('.viv-box');
+    if (b2 && (b2.style.left + '|' + b2.style.right) !== was) return 'moved';
+  }
+  return 'timeout: 직후=' + window.__alignMsg + ' 지금='
+    + document.getElementById('ide-msg').innerText
+    + ' / was=' + was;
 });
-await wait(2000); await ready();
 const centered = await p.evaluate(() => {
   const d = document.getElementById('ide-frame').contentDocument;
   const box = d.querySelector('.viv-box');
   if (!box) return 'gone';
-  // ⚠ **그 상자가 있는 면**과 재야 한다. 지나온 면이 DOM 에 남아 있어
-  //   "보이는 면" 과 비교하면 늘 어긋난 것처럼 나온다.
-  let pg = box; while (pg && !(pg.hasAttribute && pg.hasAttribute('data-vivliostyle-page-container'))) pg = pg.parentElement;
+  // ⚠ **그 상자가 있는 면**과 재야 한다(지나온 면이 DOM 에 남아 있다).
+  let pg = box;
+  while (pg && !(pg.hasAttribute && pg.hasAttribute('data-vivliostyle-page-container')))
+    pg = pg.parentElement;
   if (!pg) return 'no-page';
   const br = box.getBoundingClientRect(), pr = pg.getBoundingClientRect();
-  const off = Math.abs((br.left + br.right) / 2 - (pr.left + pr.right) / 2);
-  return off.toFixed(1) + 'px 어긋남';
+  return Math.abs((br.left + br.right) / 2 - (pr.left + pr.right) / 2).toFixed(1) + 'px 어긋남';
 });
 (parseFloat(centered) < 3 ? ok : bad)('상자를 면 가운데로 (' + aligned + ') → ' + centered);
 
