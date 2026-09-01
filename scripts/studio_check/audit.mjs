@@ -1,0 +1,124 @@
+// 작업대 전수 점검 — **보이는 창**에서 사람처럼 눌러 본다.
+// (브라우저 패널은 숨겨져 있으면 스로틀링에 걸려 성능·타이밍 관찰이 다 틀린다.)
+import puppeteer from '/Users/nhj/dev/yone-design-web/core/render_vivlio/node_modules/puppeteer-core/lib/puppeteer/puppeteer-core.js';
+
+const OK = [], BAD = [];
+const ok = (m) => { OK.push(m); console.log('  ✓ ' + m); };
+const bad = (m) => { BAD.push(m); console.log('  ✗ ' + m); };
+
+const b = await puppeteer.launch({
+  executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  headless: 'new', args: ['--no-sandbox'] });
+const p = await b.newPage();
+await p.setViewport({ width: 1680, height: 1020 });
+const errs = [];
+p.on('pageerror', e => errs.push(String(e).slice(0, 120)));
+await p.goto('http://127.0.0.1:5099/book-studio', { waitUntil: 'networkidle2', timeout: 180000 });
+
+const ready = () => p.waitForFunction(() => {
+  const d = document.getElementById('ide-frame')?.contentDocument;
+  return d && d.querySelectorAll('[data-vivliostyle-page-container]').length
+    && !d.getElementById('ide-veil');
+}, { timeout: 300000, polling: 800 });
+await ready();
+ok('첫 조판이 뜬다');
+
+// ① 모든 패널이 내용을 가진다
+const panels = await p.evaluate(async () => {
+  document.querySelectorAll('details').forEach(d => { d.open = true; d.dispatchEvent(new Event('toggle')); });
+  await new Promise(r => setTimeout(r, 2500));
+  const out = {};
+  document.querySelectorAll('[id^=pal-]').forEach(x => {
+    out[x.id] = (x.innerText || '').replace(/\s+/g, ' ').trim().length;
+  });
+  return out;
+});
+for (const [id, len] of Object.entries(panels)) {
+  if (id === 'pal-css' || id === 'pal-css-save') continue;
+  (len > 5 ? ok : bad)('패널 ' + id + ' (' + len + '자)');
+}
+
+// ② 지면을 눌러 고른다
+const picked = await p.evaluate(async () => {
+  const d = document.getElementById('ide-frame').contentDocument;
+  const el = [...d.querySelectorAll('[class*=vref]')].find(e => /Band United/.test(e.innerText || ''));
+  el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  await new Promise(r => setTimeout(r, 500));
+  return document.getElementById('pal-sel').innerText.replace(/\s+/g, ' ');
+});
+(/lessons\./.test(picked) ? ok : bad)('지면 클릭 → ' + picked.slice(0, 40));
+
+// ③ 문자 패널이 실제 값을 읽는다
+const charVals = await p.evaluate(() => {
+  const rows = [...document.getElementById('pal-char').querySelectorAll('.ide-row')];
+  return rows.slice(0, 4).map(r => r.querySelector('.ide-val')?.textContent || '');
+});
+(charVals.some(v => /pt|px/.test(v)) ? ok : bad)('문자 패널이 잰 값을 보여 준다 ' + JSON.stringify(charVals));
+
+// ④ 보기 보조
+for (const t of ['판면', '재단선', '기준선', '눈금자']) {
+  const on = await p.evaluate((t) => {
+    const btn = [...document.querySelectorAll('button')].find(b => (b.textContent || '').trim() === t);
+    btn.click();
+    const st = document.getElementById('ide-frame').contentDocument.getElementById('viv');
+    return btn.classList.contains('on') && /show-/.test(st.className);
+  }, t);
+  (on ? ok : bad)('보기 ' + t);
+}
+
+// ⑤ 안내선 끌어내기
+const gd = await p.evaluate(async () => {
+  const d = document.getElementById('ide-frame').contentDocument;
+  const st = d.getElementById('viv');
+  const pg = [...d.querySelectorAll('[data-vivliostyle-page-container]')]
+    .filter(x => getComputedStyle(x).display !== 'none').pop();
+  const r = pg.getBoundingClientRect(), mm = r.width / 216;
+  pg.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: r.left + 2 * mm, clientY: r.top + r.height / 2 }));
+  st.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: r.left + 25 * mm, clientY: r.top + r.height / 2 }));
+  st.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+  await new Promise(r2 => setTimeout(r2, 300));
+  return d.querySelectorAll('.ide-gd').length;
+});
+(gd > 0 ? ok : bad)('안내선을 끌어내면 선이 생긴다 (' + gd + ')');
+
+// ⑥ 찾기
+const found = await p.evaluate(async () => {
+  document.getElementById('find-q').value = 'vitality';
+  document.getElementById('find-go').click();
+  await new Promise(r => setTimeout(r, 3000));
+  return document.querySelectorAll('#find-out a[data-ref]').length;
+});
+(found > 0 ? ok : bad)('찾기 ' + found + '곳');
+
+// ⑦ 색상 견본
+const sw = await p.evaluate(() => document.querySelectorAll('#pal-color button').length);
+(sw > 0 ? ok : bad)('색상 견본 ' + sw + '개');
+
+// ⑧ 면 넘기기
+const jump = await p.evaluate(async () => {
+  const a = [...document.querySelectorAll('#pal-pages a[data-pg]')];
+  if (!a.length) return 'no-list';
+  (a.find(x => x.dataset.pg === '10') || a[a.length - 1]).click();
+  for (let i = 0; i < 60; i++) {
+    await new Promise(r => setTimeout(r, 500));
+    const t = document.getElementById('ide-pageno').innerText;
+    if (t.startsWith('10 ')) return t;
+    if (/까지입니다/.test(document.getElementById('ide-msg').innerText)) return t + ' (끝)';
+  }
+  return document.getElementById('ide-pageno').innerText + ' (못 감)';
+});
+(/^10 /.test(jump) ? ok : bad)('10면으로 → ' + jump);
+
+// ⑨ 펼침(2면 보기)
+const spread = await p.evaluate(async () => {
+  document.getElementById('ide-spread').click();
+  await new Promise(r => setTimeout(r, 6000));
+  const d = document.getElementById('ide-frame').contentDocument;
+  return [...d.querySelectorAll('[data-vivliostyle-page-container]')]
+    .filter(x => getComputedStyle(x).display !== 'none').length;
+});
+(spread >= 2 ? ok : bad)('펼침 보기 — 보이는 면 ' + spread);
+
+console.log('\n합계  ✓ ' + OK.length + '   ✗ ' + BAD.length);
+if (errs.length) console.log('자바스크립트 오류:', [...new Set(errs)].slice(0, 5));
+await b.close();
