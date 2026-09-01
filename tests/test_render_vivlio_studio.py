@@ -862,6 +862,46 @@ def test_box_ops_go_through_history():
     assert "ed.push" in src[i:i + 2600]
 
 
+# ── 문서 설정 · 눈금자 · 안내선 ───────────────────────────────
+@pytest.mark.parametrize("name", ("blackbook", "vocabook", "vocaunit",
+                                  "special", "middle"))
+def test_every_book_has_the_same_document_settings(name):
+    """판형·도련은 **어느 책에나** 있다.
+
+    계열이 저마다 선언하게 두면 인디자인의 「문서 설정」이 책마다 다른 꼴이 된다.
+    """
+    from core.render_vivlio import series as reg
+    ks = reg.get(name).base_knobs()
+    keys = {k.key for k in ks}
+    assert {"page.width", "page.height", "page.bleed"} <= keys
+
+
+def test_base_knobs_are_merged_first():
+    src = io.open(os.path.join(_ROOT, "core", "render_vivlio", "knobs.py"),
+                  encoding="utf-8").read()
+    i = src.index("def of(cfg, series)")
+    assert "base_knobs" in src[i:i + 900]
+
+
+def test_page_size_change_warns():
+    """판형을 바꾸면 책이 통째로 다시 흐른다."""
+    src = _studio_src()
+    assert "page.width" in src and "다시 흐릅니다" in src
+
+
+def test_ruler_and_guides_are_view_only():
+    src = _routes_src()
+    for k in ("show-ruler", "show-guide"):
+        i = src.index(k)
+        assert "pointer-events: none" in src[i:i + 500], f"{k} 가 조판을 건드린다"
+
+
+def test_guides_take_mm_values():
+    """지면 좌표계가 면마다라 끌어 놓기보다 **mm 로 적는 편이 정확하다.**"""
+    src = _studio_src()
+    assert "'--gx1'" in src and "mm'" in src
+
+
 # ── 클로드 칸 ─────────────────────────────────────────────────
 # 모델에게 리포를 통째로 열어 주면 안 된다 — 계열 코드를 고치면 그 계열 책이
 # 전부 흔들리고, 원고를 고치면 납품본과 글이 달라진다. 손댈 수 있는 곳은
