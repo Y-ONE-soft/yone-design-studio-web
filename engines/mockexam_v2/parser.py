@@ -21,6 +21,12 @@ from core.structure import classify_paragraphs
 _RE_NUM = re.compile(r'^\s*(\d+)\s*[.)]\s*')
 _RE_SRV_NUM = re.compile(r'^\s*서술형\s*(\d+)\s*[.)]?\s*')
 _RE_GROUP = re.compile(r'^\s*\[(\d+)\s*[~\-]\s*(\d+)\]\s*')
+# 묶음 머리는 **괄호 종류가 학교마다 다르다** — 대괄호만 보면 놓친다.
+#   배재 【 8 – 9 】 / 강동2 (1~3) / 한영3 <1~2> / 상일2 [1~5] / 명일1 ※ [2~3]
+# 표기가 아니라 '범위를 선언한 머리' 라는 구조로 잡는다.
+_RE_RANGE_HEAD = re.compile(
+    r'^\s*[※▶]?\s*[\[(<【〈]\s*(?:선택형|객관식)?\s*(\d{1,2})\s*[~\-–—]\s*'
+    r'(?:서답형|서술형)?\s*(\d{1,2})\s*[\])>】〉]')
 # 인라인 선지 분할: "① in    ② of    ③ to ..." 한 단락에 여러 선지
 _RE_CIRCLED_SPLIT = re.compile(r'(?=[①②③④⑤])')
 # 출처/배점: "[24년 10월 20번]" / "[3점]" / "(3점)"
@@ -153,6 +159,69 @@ def _flush_item(items, cur, warnings):
     return None
 
 
+
+def _expand_range_groups(annotated, warnings=None):
+    """범위 묶음 머리 하나가 문항 여럿을 삼키는 것을 편다.
+
+    `(1~3) 다음 해석을 보고 …고르시오.` 는 **세 문항의 공통 지시문**이지 한
+    문항이 아니다. 그런데 머리 아래 각 문항이 발문 없이 '내용 + 선지'로만
+    오기 때문에(원고 관행), 파서는 셋을 한 덩어리로 삼켜 문항 수가 준다
+    (강동고2 실증: 선언 35문항인데 23문항으로 파싱).
+
+    구조로 편다 — 머리가 선언한 범위 N 과 그 아래 **선지 무리 수**가 정확히
+    같을 때만, 각 무리 앞에 빈 발문을 하나씩 세워 N 문항으로 만든다.
+    수가 안 맞으면 **아무것도 하지 않는다**(추측으로 쪼개지 않는다).
+    """
+    out = []
+    i = 0
+    n = len(annotated)
+    while i < n:
+        row = annotated[i]
+        m = (_RE_RANGE_HEAD.match(row["text"])
+             if row["kind"] in ("Q", "Q-INTRO") else None)
+        if not m:
+            out.append(row)
+            i += 1
+            continue
+        a, b = int(m.group(1)), int(m.group(2))
+        count = b - a + 1
+        # 머리 아래 ~ 다음 발문/묶음머리 전까지가 이 묶음의 몸통
+        j = i + 1
+        while j < n and annotated[j]["kind"] not in ("Q", "Q-INTRO"):
+            j += 1
+        body = annotated[i + 1:j]
+        # 선지 무리(연속 C)의 시작 위치들
+        starts = [k for k, r in enumerate(body)
+                  if r["kind"] == "C" and (k == 0 or body[k - 1]["kind"] != "C")]
+        if count < 2 or len(starts) != count:
+            if count >= 2 and warnings is not None:
+                warnings.append(
+                    f"묶음 '{row['text'][:24]}' 은 {count}문항인데 선지 무리가 "
+                    f"{len(starts)}개다 — 펼치지 않았다")
+            out.append(row)
+            out.extend(body)
+            i = j
+            continue
+        # 머리는 그룹 도입문으로 내리고, 각 무리 앞에 빈 발문을 세운다
+        head = dict(row)
+        head["kind"] = "Q-INTRO"
+        out.append(head)
+        # 각 문항 = 직전 무리 끝 다음 ~ 이번 무리 끝
+        bounds = []
+        for si, st in enumerate(starts):
+            end = st
+            while end + 1 < len(body) and body[end + 1]["kind"] == "C":
+                end += 1
+            begin = 0 if si == 0 else bounds[-1][1] + 1
+            bounds.append((begin, end))
+        for begin, end in bounds:
+            out.append({"kind": "Q", "q_code": None, "text": "",
+                        "para": {"text": ""}, "_synth_group_member": True})
+            out.extend(body[begin:end + 1])
+        i = j
+    return out
+
+
 def build_ir(paras, meta=None, log=None):
     """단락 목록 → content v2 문서. (단락종류 시퀀스 기반 문항 그룹핑)"""
     from engines._taxonomy import classify
@@ -162,8 +231,10 @@ def build_ir(paras, meta=None, log=None):
     # 공용 기본값이 아니라 이 계열에서만 켠다 — 워크북 계열은 같은 모양을
     # 지문 스타일로 인쇄하는 관행이라 켜면 그쪽 산출물이 바뀐다.
     annotated = classify_paragraphs(paras, {"blank_fill_answer": True})
+    _pre_warn = []
+    annotated = _expand_range_groups(annotated, _pre_warn)
     items = []
-    warnings = []
+    warnings = list(_pre_warn)
     cur = None
     group_intro = None       # 직전 Q-INTRO의 group 정보 (묶음 문항 상속)
     pending_stimulus = []    # 발문보다 앞에 온 공유 지문 (묶음/서답형 배치)
