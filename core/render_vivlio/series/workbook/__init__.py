@@ -100,7 +100,11 @@ class WorkbookSeries(Series):
                 tn = fit_mod.turns(out)
                 # 장을 넘어 **갈라진 문항**: 한두 줄이면 당기고(위), 그보다 크면
                 # 사용자 규칙대로 "문제 전체를 다음 면으로" — 그 문항만 묶는다.
-                lb = set(fit_mod.leaf_breaks(out)) - {i for i, _a, _b, _t in sp}
+                # 장을 넘어 **갈라진 문항**: 한두 줄이면 먼저 당겨 보고(위), 두
+                # 바퀴 안에 안 당겨지면 사용자 규칙대로 "문제 전체를 다음 면으로".
+                lb = set(fit_mod.leaf_breaks(out))
+                if _round < 2:
+                    lb -= {i for i, _a, _b, _t in sp}
                 log(f"    · {_round + 1}바퀴 넘친덩어리 {len(sp)} · 장넘김세트 "
                     f"{len(tn)} · 갈라진문항 {len(lb)}")
                 ids = {i for i, _a, _b, _t in sp}

@@ -167,13 +167,15 @@ def leaf_breaks(pdf):
     out = []
     idx = -1
     op = None
-    for page, col, _y, kind in marks:
+    for page, _col, y, kind in marks:
         if kind == "beg":
             idx += 1
             op = (idx, page)
         elif op is not None:
             bidx, bpage = op
-            if bpage % 2 == 1 and page > bpage:
+            # 꼬리가 거의 0 이면 **표식만** 넘어간 것이다 — 갈라진 게 아니다.
+            # (이 걸름을 빼면 유령 결함을 쫓느라 판이 계속 흔들린다.)
+            if bpage % 2 == 1 and page > bpage and (y - BODY_TOP) > 2.0:
                 out.append(bidx)
             op = None
     return out
