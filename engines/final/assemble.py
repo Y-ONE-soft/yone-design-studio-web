@@ -142,8 +142,13 @@ def _vocab_g3(scope, base, log=lambda m: None):
                     cur = [lab]
                     out.append(cur)
             elif cur is not None and not M.RE_PROMPT.match(t):
-                cur.append(t)
-    return "\n\n".join("\n".join(b) for b in out if len(b) > 1)
+                # ⚠ 해설지는 영어 한 줄 · 한글 번역 한 줄이 번갈아 온다.
+                #   번역까지 실으면 지문이 두 배가 되어 한 면에 안 앉는다
+                #   (광문3 Vol1 이 71p → 167p 로 튀었다). 영어만 이어 붙인다.
+                if not M.RE_KO.search(t):
+                    cur.append(t)
+    return "\n\n".join(b[0] + "\n" + " ".join(b[1:])
+                        for b in out if len(b) > 1)
 
 
 def vocab(school, grade, exam_period, scope=None, order=None,

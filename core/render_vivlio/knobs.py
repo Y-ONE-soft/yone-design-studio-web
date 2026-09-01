@@ -230,6 +230,25 @@ def page_rules_text(cfg):
     return "\n".join(out) + "\n" if len(out) > 1 else ""
 
 
+def _strong(sel):
+    """`[data-ref="…"]` 은 **계열 테마를 이겨야** 한다.
+
+    ⚠ 속성 선택자는 클래스와 무게가 같다(0,1,0). 그래서 테마의 `.pbox p`
+      (0,1,1) 하나에도 진다 — 실측: 그 자리에 색을 줘도 지면이 그대로였고,
+      화면에는 "반영했습니다" 만 떴다.
+    ⚠ `!important` 로 밀면 나중에 그 책에서 무엇으로도 못 덮는다.
+      그래서 **같은 선택자를 세 번 겹쳐** 무게만 올린다(0,3,0) — 뜻은 그대로다.
+
+    사람이 보는 config 에는 깔끔한 선택자 한 벌만 남는다(여기서만 겹친다).
+    """
+    s = (sel or "").strip()
+    if s.startswith('[data-ref='):
+        head = s.split("]", 1)[0] + "]"
+        rest = s[len(head):]
+        return head + head + head + rest
+    return s
+
+
 def styles_text(cfg):
     """`config.styles` → CSS 규칙. **단락 스타일 패널**이 여기에 쓴다.
 
@@ -248,7 +267,7 @@ def styles_text(cfg):
             continue
         body = "\n".join("  %s: %s;" % (k, v) for k, v in props.items() if v != "")
         if body:
-            out.append("%s {\n%s\n}" % (sel, body))
+            out.append("%s {\n%s\n}" % (_strong(sel), body))
     if not out:
         return ""
     return ("\n/* 단락 스타일 — 작업대의 스타일 패널이 쓴다. 손으로 고쳐도 되지만\n"

@@ -441,6 +441,10 @@ def build_css(spec):
         css.append(".score-table th { width: 6%; font-weight: 400; }")
 
     css.append("")
+    # 답란·빈칸 — 밑줄 문자를 칸으로 바꿔 판면 밖으로 나가지 않게 한다
+    css.append(".blank { display: inline-block; max-width: 100%; "
+               "border-bottom: 0.4pt solid #000; vertical-align: baseline; "
+               "height: 0.9em; }")
     css.append("u { text-underline-offset: 0.16em; text-decoration-thickness: 0.06em; }")
     return "\n".join(css)
 

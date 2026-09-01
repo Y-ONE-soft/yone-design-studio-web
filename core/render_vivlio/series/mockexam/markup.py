@@ -17,6 +17,7 @@ from core.render_vivlio.series.mockexam import profile as P
 # **프로파일이 정한 글리프로** 바꾼다(고정 치환표가 아니다).
 PUA_ARROW = "\U000f003b"
 
+_RE_BLANK_RUN = re.compile(r"_{6,}")
 _RE_GREP_BOLD = re.compile(r"(\(\s*[A-Ea-e]\s*\)|\[[AB]\])")
 _RE_SOURCE_TAG = re.compile(
     r"\s*\[\s*(?:\d{2}년\s*\d{1,2}월[^\]]*|\d{4}\.[^\]]*번[^\]]*|"
@@ -111,6 +112,12 @@ class Renderer(object):
             s = esc(text)
         if grep_bold:
             s = _RE_GREP_BOLD.sub(r"<b>\1</b>", s)
+        # 답란·빈칸의 연속 밑줄은 한 낱말이라 줄바꿈이 안 돼 **지면 밖으로
+        # 나간다**(명일1 7쪽 실측 257.6mm > 지면 257mm). 폭이 제한되는 칸으로
+        # 바꿔 판면 안에 가둔다.
+        s = _RE_BLANK_RUN.sub(
+            lambda m: f'<span class="blank" style="min-width:'
+                      f'{min(len(m.group(0)) * 0.42, 78):.1f}mm"></span>', s)
         return s
 
     # ── 표기 생성 (원고가 안 주는 것들) ───────────────────────────────────
