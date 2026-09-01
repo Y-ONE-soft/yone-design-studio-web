@@ -1577,6 +1577,189 @@
     };
     host.appendChild(go); host.appendChild(del);
 
+    // ── 변형 (인디자인의 제어 막대 X·Y·W·H·회전·기울이기) ──
+    //
+    // 좌표 칸은 위에 있지만, **회전·기울이기**는 `transform` 한 줄에 섞여 있어
+    // 사람이 손으로 쓰기 어렵다. 숫자로 받아 우리가 조립한다.
+    var tlab = document.createElement('div');
+    tlab.className = 'ide-lab'; tlab.style.marginTop = '9px';
+    tlab.innerHTML = '<span>변형</span><span class="ide-val">'
+      + (el && el.style.transform ? el.style.transform : '없음') + '</span>';
+    host.appendChild(tlab);
+    var trNow = { rotate: '', skewX: '', scale: '' };
+    if (el && el.style.transform) {
+      var mR = el.style.transform.match(/rotate\(([-\d.]+)deg\)/);
+      var mS = el.style.transform.match(/skewX\(([-\d.]+)deg\)/);
+      var mZ = el.style.transform.match(/scale\(([\d.]+)\)/);
+      if (mR) trNow.rotate = mR[1];
+      if (mS) trNow.skewX = mS[1];
+      if (mZ) trNow.scale = mZ[1];
+    }
+    var trIn = {};
+    [['rotate', '회전(°)', '-4'], ['skewX', '기울이기(°)', '10'],
+     ['scale', '배율', '1.0']].forEach(function (a) {
+      var row3 = document.createElement('div'); row3.className = 'ide-row';
+      var lb3 = document.createElement('div'); lb3.className = 'ide-lab';
+      lb3.innerHTML = '<span>' + a[1] + '</span><span class="ide-val">'
+        + (trNow[a[0]] || '') + '</span>';
+      var f3 = document.createElement('div'); f3.className = 'ide-f';
+      var t3 = document.createElement('input');
+      t3.className = 'ide-t'; t3.type = 'number'; t3.step = '0.1';
+      t3.placeholder = a[2]; t3.value = trNow[a[0]];
+      trIn[a[0]] = t3; f3.appendChild(t3);
+      row3.appendChild(lb3); row3.appendChild(f3);
+      host.appendChild(row3);
+    });
+    var trGo = document.createElement('button');
+    trGo.className = 'ide-b'; trGo.textContent = '변형 적용';
+    trGo.style.marginBottom = '6px';
+    trGo.onclick = function () {
+      var bits = [];
+      var r = trIn.rotate.value.trim(), k = trIn.skewX.value.trim(),
+          z = trIn.scale.value.trim();
+      if (r) bits.push('rotate(' + r + 'deg)');
+      if (k) bits.push('skewX(' + k + 'deg)');
+      if (z && z !== '1' && z !== '1.0') bits.push('scale(' + z + ')');
+      // 빈 값이면 **뗀다**(찌꺼기를 남기면 나중에 무엇이 걸렸는지 모른다)
+      boxApi({ action: 'style', ref: inBox,
+               props: { transform: bits.join(' ') } });
+    };
+    host.appendChild(trGo);
+
+    // ── 획 (인디자인의 획 패널) ──
+    var slab2 = document.createElement('div');
+    slab2.className = 'ide-lab'; slab2.style.marginTop = '9px';
+    slab2.innerHTML = '<span>획</span>';
+    host.appendChild(slab2);
+    var stW = document.createElement('input');
+    stW.className = 'ide-t'; stW.type = 'number'; stW.step = '0.1';
+    stW.placeholder = '굵기 pt'; stW.style.width = '70px';
+    var stS = document.createElement('select'); stS.className = 'ide-sel';
+    ['solid', 'dashed', 'dotted', 'double', 'none'].forEach(function (v) {
+      var o = document.createElement('option'); o.value = v; o.textContent = v;
+      stS.appendChild(o);
+    });
+    var stC = document.createElement('input');
+    stC.className = 'ide-t'; stC.placeholder = '#333'; stC.style.width = '80px';
+    var stSide = document.createElement('select'); stSide.className = 'ide-sel';
+    [['border', '네 변'], ['border-top', '위'], ['border-right', '오른쪽'],
+     ['border-bottom', '아래'], ['border-left', '왼쪽']].forEach(function (a) {
+      var o = document.createElement('option'); o.value = a[0]; o.textContent = a[1];
+      stSide.appendChild(o);
+    });
+    var stGo = document.createElement('button');
+    stGo.className = 'ide-b'; stGo.textContent = '획 적용';
+    stGo.onclick = function () {
+      var w = stW.value.trim(), st2 = stS.value, c2 = stC.value.trim() || '#333';
+      var props = {};
+      props[stSide.value] = (st2 === 'none' || !w)
+        ? (st2 === 'none' ? 'none' : '')
+        : (w + 'pt ' + st2 + ' ' + c2);
+      boxApi({ action: 'style', ref: inBox, props: props });
+    };
+    var srow = document.createElement('div'); srow.className = 'ide-f';
+    srow.appendChild(stW); srow.appendChild(stS); srow.appendChild(stC);
+    var srow2 = document.createElement('div'); srow2.className = 'ide-f';
+    srow2.style.marginBottom = '6px';
+    srow2.appendChild(stSide); srow2.appendChild(stGo);
+    host.appendChild(srow); host.appendChild(srow2);
+
+    // ── 채우기 · 그라디언트 ──
+    var glab = document.createElement('div');
+    glab.className = 'ide-lab'; glab.style.marginTop = '9px';
+    glab.innerHTML = '<span>채우기</span>';
+    host.appendChild(glab);
+    var g1 = document.createElement('input');
+    g1.className = 'ide-t'; g1.placeholder = '#e8eeff'; g1.style.width = '80px';
+    var g2 = document.createElement('input');
+    g2.className = 'ide-t'; g2.placeholder = '두 번째 색(그라디언트)';
+    g2.style.flex = '1';
+    var gd = document.createElement('select'); gd.className = 'ide-sel';
+    [['to bottom', '↓ 아래로'], ['to right', '→ 오른쪽'],
+     ['135deg', '↘ 대각'], ['circle', '◎ 원형']].forEach(function (a) {
+      var o = document.createElement('option'); o.value = a[0]; o.textContent = a[1];
+      gd.appendChild(o);
+    });
+    var gGo = document.createElement('button');
+    gGo.className = 'ide-b'; gGo.textContent = '채우기 적용';
+    gGo.onclick = function () {
+      var a1 = g1.value.trim(), a2 = g2.value.trim();
+      if (!a1 && !a2) { boxApi({ action: 'style', ref: inBox,
+                                 props: { background: '' } }); return; }
+      var v = a2
+        ? (gd.value === 'circle'
+           ? ('radial-gradient(circle, ' + a1 + ', ' + a2 + ')')
+           : ('linear-gradient(' + gd.value + ', ' + a1 + ', ' + a2 + ')'))
+        : a1;
+      boxApi({ action: 'style', ref: inBox, props: { background: v } });
+    };
+    var grow = document.createElement('div'); grow.className = 'ide-f';
+    grow.appendChild(g1); grow.appendChild(g2);
+    var grow2 = document.createElement('div'); grow2.className = 'ide-f';
+    grow2.style.marginBottom = '6px';
+    grow2.appendChild(gd); grow2.appendChild(gGo);
+    host.appendChild(grow); host.appendChild(grow2);
+
+    // ── 개체 스타일 (인디자인의 오브젝트 스타일) ──
+    // 단락 스타일과 **같은 길**을 쓴다 — 이름만 `os-` 로 시작한다.
+    var olab = document.createElement('div');
+    olab.className = 'ide-lab'; olab.style.marginTop = '9px';
+    var oApplied = (el ? classesOf(el) : []).filter(function (c) {
+      return /^os-/.test(c);
+    });
+    olab.innerHTML = '<span>개체 스타일</span><span class="ide-val">'
+      + (oApplied.join(' ') || '없음') + '</span>';
+    host.appendChild(olab);
+    var orow = document.createElement('div'); orow.className = 'ide-f';
+    var osel = document.createElement('select');
+    osel.className = 'ide-sel'; osel.style.flex = '1';
+    var oNames = Object.keys(styles)
+      .map(function (sl) { var m = sl.match(/^\.(os-[\w가-힣-]+)$/); return m && m[1]; })
+      .filter(Boolean).sort();
+    [''].concat(oNames).forEach(function (c) {
+      var o = document.createElement('option');
+      o.value = c; o.textContent = c || '(없음 — 스타일 떼기)';
+      osel.appendChild(o);
+    });
+    osel.value = oApplied[0] || '';
+    osel.addEventListener('change', function () {
+      api('/api/book-studio/paraclass', { b: key, ref: inBox, cls: osel.value })
+        .then(function (d) {
+          if (d.error) { msg('✗ ' + d.error); return; }
+          rebuild('').then(function (ok) {
+            if (ok) msg(osel.value ? ('✓ ' + osel.value) : '✓ 스타일을 뗐습니다');
+          });
+        });
+    });
+    var omk = document.createElement('button');
+    omk.className = 'ide-b'; omk.textContent = '＋ 새로';
+    omk.title = '이 상자의 지금 모양으로 개체 스타일을 만듭니다';
+    omk.onclick = function () {
+      var nm = prompt('새 개체 스타일 이름 (os- 없이)', '');
+      if (!nm || !el) return;
+      var name2 = 'os-' + nm.trim().replace(/\s+/g, '-');
+      var props = {};
+      ['background', 'border', 'border-radius', 'box-shadow', 'opacity',
+       'padding', 'color'].forEach(function (k2) {
+        var v = el.style[k2] || el.style.getPropertyValue(k2);
+        if (v) props[k2] = String(v).trim();
+      });
+      api('/api/book-studio/styles', { b: key, selector: '.' + name2, props: props })
+        .then(function (d) {
+          if (d.error) { msg('✗ ' + d.error); return; }
+          styles = d.styles || {};
+          return api('/api/book-studio/paraclass',
+                     { b: key, ref: inBox, cls: name2 });
+        }).then(function (d2) {
+          if (!d2 || d2.error) { if (d2) msg('✗ ' + d2.error); return; }
+          rebuild('').then(function (ok) {
+            if (ok) { msg('✓ ' + name2 + ' 만들어 걸었습니다'); drawBox(); }
+          });
+        });
+    };
+    orow.appendChild(osel); orow.appendChild(omk);
+    host.appendChild(orow);
+
     // ── 상자 모양 (인디자인의 개체 속성) ──
     var mlab = document.createElement('div');
     mlab.className = 'ide-lab'; mlab.style.marginTop = '9px';

@@ -1686,7 +1686,7 @@ def test_image_can_go_into_a_frame():
     assert "kind: 'image'" in src[i:i + 400]
     rt = open(os.path.join(_ROOT, "routes", "book_studio.py"),
               encoding="utf-8").read()
-    j = rt.index('b = bx.new(p.get("kind")')
+    j = rt.index("b = bx.new(kind)")
     assert 'b["img"] = "assets/" + img' in rt[j:j + 700]
     assert "os.path.basename" in rt[j:j + 700], "경로를 받으면 안 된다"
 
@@ -1892,7 +1892,7 @@ def test_style_names_must_be_marked_as_ours():
     src = open(os.path.join(_ROOT, "routes", "book_studio.py"),
                encoding="utf-8").read()
     i = src.index("def api_paraclass")
-    assert "^ps-" in src[i:i + 1600], "이름 규칙이 없다"
+    assert "^(ps|os)-" in src[i:i + 1600], "이름 규칙이 없다"
 
 
 def test_classes_survive_a_render_clear():
@@ -2204,3 +2204,45 @@ def test_scope_switch_clears_the_old_thumbnails():
     ui = _studio_src()
     i = ui.index("function setScope")
     assert "thumbInfo = null" in ui[i:i + 500]
+
+
+# ── 도형 · 변형 · 획 · 채우기 · 개체 스타일 ─────────────────────
+def test_shapes_are_boxes_not_a_new_concept():
+    """도형을 따로 만들면 옮기기·크기·정렬·되돌리기를 **또** 만들어야 한다.
+
+    사각형·타원·선은 모양만 다른 **상자**다.
+    """
+    from core.render_vivlio import box as B
+    assert set(B.SHAPES) == {"rect", "ellipse", "line"}
+    e = B.new("ellipse")
+    assert e["style"]["border-radius"] == "50%" and e["t"] == "box"
+    ln = B.new("line")
+    assert ln["at"]["height"] == "0mm" and "border-top" in ln["style"]
+    assert B.new("text").get("shape") is None
+
+
+def test_unknown_shape_is_refused():
+    src = open(os.path.join(_ROOT, "routes", "book_studio.py"),
+               encoding="utf-8").read()
+    assert "모르는 상자 종류" in src
+
+
+def test_stroke_and_transform_keys_are_allowed():
+    """획을 변마다 따로, 회전·기울이기는 `transform` 한 줄에 조립한다."""
+    from core.render_vivlio import box as B
+    for k in ("border-top", "border-left", "transform", "filter"):
+        assert k in B.STYLE_KEYS
+    ui = _studio_src()
+    assert "skewX(" in ui and "rotate(" in ui
+    assert "linear-gradient(" in ui and "radial-gradient(" in ui
+
+
+def test_object_styles_ride_the_paragraph_style_road():
+    """개체 스타일도 **같은 길**이다 — 이름만 `os-` 로 시작한다."""
+    src = open(os.path.join(_ROOT, "routes", "book_studio.py"),
+               encoding="utf-8").read()
+    assert r"^(ps|os)-" in src
+    ui = _studio_src()
+    i = ui.index("개체 스타일 (인디자인의 오브젝트 스타일)")
+    body = ui[i:i + 3000]
+    assert "os-" in body and "paraclass" in body
