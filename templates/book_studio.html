@@ -1586,6 +1586,11 @@
   var PAGE_SELS = [['', '모든 면'], [':left', '왼쪽(짝수) 면'],
                    [':right', '오른쪽(홀수) 면'], [':first', '첫 면'],
                    [':blank', '빈 면']];
+  // 이름 있는 면 — **인디자인의 마스터 페이지 A·B·C 가 이것이다.**
+  // ⚠ 이름 있는 면이 「모든 면」보다 **세다**. 계열이 구역마다 이름을 갈라
+  //   쓰면(어휘부·문제부·정답부) 「모든 면」에 꼬리말을 적어도 아무 일도
+  //   안 일어난다(실측: 블랙북).
+  var pageNames = [];
   var PAGE_PROPS = [
     ['margin-top', '위 여백'], ['margin-bottom', '아래 여백'],
     ['margin-left', '왼쪽 여백'], ['margin-right', '오른쪽 여백']
@@ -1639,7 +1644,13 @@
 
     var pick = document.createElement('select');
     pick.className = 'ide-sel'; pick.style.width = '100%';
-    PAGE_SELS.forEach(function (a) {
+    var sels = PAGE_SELS.slice();
+    pageNames.forEach(function (n) {
+      sels.push([n, n + ' (이름 있는 면 · 마스터 ' + n + ')']);
+      sels.push([n + ':left', n + ' 왼쪽 면']);
+      sels.push([n + ':right', n + ' 오른쪽 면']);
+    });
+    sels.forEach(function (a) {
       var o = document.createElement('option');
       o.value = a[0]; o.textContent = a[1];
       pick.appendChild(o);
@@ -3992,7 +4003,11 @@
     loadImages();
     loadThumbs();
     api('/api/book-studio/pagerules?b=' + encodeURIComponent(key))
-      .then(function (d) { pageRules = (d && d.rules) || {}; drawMaster(); });
+      .then(function (d) {
+        pageRules = (d && d.rules) || {};
+        pageNames = (d && d.names) || [];
+        drawMaster();
+      });
     api('/api/book-studio/fonts?b=' + encodeURIComponent(key)).then(function (d) {
       bookFonts = (d && d.used ? d.used : []).map(function (x) { return x.name; });
       if (d && (d.missing || []).length) {

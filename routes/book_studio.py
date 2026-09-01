@@ -483,17 +483,6 @@ def api_styles():
         if not isinstance(props, dict):
             return jsonify({"error": "규칙이 없다"}), 400
         for k, v in props.items():
-            # 머리말·꼬리말은 **한 겹 안쪽**이다(`@top-center { … }`)
-            if str(k).startswith("@") and isinstance(v, dict):
-                if str(k) not in MARGIN_BOXES:
-                    return jsonify({"error": "모르는 자리: %s" % k}), 400
-                for k2, v2 in v.items():
-                    if any(c in str(k2) + str(v2) for c in "{};<>"):
-                        return jsonify({"error": f"이상한 값: {k2}: {v2}"}), 400
-                    bad = _needs_unit(str(k2), str(v2))
-                    if bad:
-                        return jsonify({"error": bad}), 400
-                continue
             if any(c in str(k) + str(v) for c in "{};<>"):
                 return jsonify({"error": f"이상한 값: {k}: {v}"}), 400
             bad = _needs_unit(str(k), str(v))
@@ -1042,6 +1031,29 @@ MARGIN_BOXES = ("@top-left", "@top-center", "@top-right",
                 "@bottom-left", "@bottom-center", "@bottom-right")
 
 
+def _page_names(d):
+    """이 책이 쓰는 **이름 있는 면**(`@page voca:left` 의 `voca`).
+
+    ## 인디자인의 마스터 페이지 A·B·C 가 이것이다
+
+    계열 테마가 구역마다 다른 면을 쓰면(어휘부·문제부·정답부) 이름을 붙여
+    가른다. 그걸 모르면 사람이 "모든 면" 에 꼬리말을 적어도 **아무 일도 안
+    일어난다** — 이름 있는 면이 더 세서 이긴다(실측: 블랙북에서 그랬다).
+    """
+    names = set()
+    for name in ("theme.css", "knobs.css"):
+        fp = os.path.join(_build_dir(d), name)
+        if not os.path.exists(fp):
+            continue
+        try:
+            with open(fp, encoding="utf-8") as f:
+                for m in re.finditer(r"@page\s+([A-Za-z][\w-]*)", f.read()):
+                    names.add(m.group(1))
+        except OSError:
+            pass
+    return sorted(names)
+
+
 @bp.route("/api/book-studio/pagerules", methods=["GET", "POST"])
 def api_pagerules():
     """마스터 페이지(`@page`) — 면에 걸리는 것(여백·머리·꼬리).
@@ -1062,6 +1074,17 @@ def api_pagerules():
         if not isinstance(props, dict):
             return jsonify({"error": "규칙이 없다"}), 400
         for k, v in props.items():
+            # 머리말·꼬리말은 **한 겹 안쪽**이다(`@top-center { … }`)
+            if str(k).startswith("@") and isinstance(v, dict):
+                if str(k) not in MARGIN_BOXES:
+                    return jsonify({"error": "모르는 자리: %s" % k}), 400
+                for k2, v2 in v.items():
+                    if any(c in str(k2) + str(v2) for c in "{};<>"):
+                        return jsonify({"error": f"이상한 값: {k2}: {v2}"}), 400
+                    bad = _needs_unit(str(k2), str(v2))
+                    if bad:
+                        return jsonify({"error": bad}), 400
+                continue
             if any(c in str(k) + str(v) for c in "{};<>"):
                 return jsonify({"error": f"이상한 값: {k}: {v}"}), 400
             bad = _needs_unit(str(k), str(v))
@@ -1073,6 +1096,7 @@ def api_pagerules():
     cfg = bookmod.load(d)
     if get:
         return jsonify({"rules": cfg.section("page_rules") or {},
+                        "names": _page_names(d),
                         "hint": "왼쪽 면은 `:left`, 오른쪽 면은 `:right`, "
                                 "빈칸은 모든 면입니다."})
     rules = dict(cfg.section("page_rules") or {})
