@@ -541,6 +541,7 @@ def divider_section(step, line1, line2):
 TIGHT = set()          # 측정 패스가 채운다 — 한두 줄만 넘긴 덩어리 번호
 TIGHT2 = set()         # 한 단계로 안 당겨진 덩어리 (더 좁힌다)
 PUSH = set()           # 통째로 다음 면으로 밀 세트 번호 (장 넘김 금지)
+KEEP = set()           # 장을 넘어 갈라진 문항 번호 — 그것만 안 갈리게 묶는다
 _SIDX = [0]            # 세트 일련번호 (문서 순서 — fit.turns 와 같은 셈)
 _BIDX = [0]            # 문서 순서 덩어리 번호 (document() 가 0 으로 되돌린다)
 
@@ -610,7 +611,7 @@ def fixed_section(st, idx):
                 #   **없는** 지문이 있고 스텝마다 지문 수도 다르다(수능만만 실측).
                 #   못 박으면 없는 지문에서 빈 자리가 생긴다. 자리는 흐름이 정한다.
                 body = f'<div class="topzone">{body}</div>' 
-            _i, (mark, tight) = _beg()
+            q_idx, (mark, tight) = _beg()
             pages.append(f'<div class="grp{tight}">{mark}'
                          f'{example}{head}{body}{btm}'
                          f'<span class="bend"></span></div>')
@@ -686,7 +687,7 @@ def s3_blocks(blocks, start_no=1):
     q_open = False
     set_open = False
     q_mark = set_mark = 0
-    set_idx = -1
+    set_idx = q_idx = -1
     q_tight = ""
     q_h = set_h = 0.0
     head_open = False
@@ -698,7 +699,11 @@ def s3_blocks(blocks, start_no=1):
             out.append('<span class="bend"></span></div>')
             first = "first-of-set" in out[q_mark]
             cls = "q-block" + (" first-of-set" if first else "")
-            if q_h <= COL_H:
+            # ⚠ 예전에는 한 단에 들어갈 문항을 **전부** 묶었다. 그러면 단 바닥이
+            #   통째로 비어 완성본보다 단이 40% 더 나온다(실측: 완성본 40단 /
+            #   이 판 57단, 완성본은 단의 22%가 선지로 시작한다 = 갈라도 된다).
+            #   장(오른쪽→다음 왼쪽)을 넘어 갈라진 문항만 측정해서 묶는다.
+            if q_idx in KEEP:
                 cls += " keep"
             out[q_mark] = f'<div class="{cls}">'
             set_h += q_h
@@ -709,7 +714,7 @@ def s3_blocks(blocks, start_no=1):
         if set_open:
             out.append('<span class="setend"></span></div>')
             # 한 단에 들어갈 세트만 통째로 묶는다 — 넘치면 묶어 봐야 면만 빈다
-            cls = "set-block" + (" keep" if set_h <= COL_H else "")
+            cls = "set-block"
             if set_idx in PUSH:
                 cls += " push"     # 장 넘김 금지 — 세트 통째로 다음 면에서 시작
             out[set_mark] = f'<div class="{cls}">'
@@ -756,7 +761,7 @@ def s3_blocks(blocks, start_no=1):
                 head_first = True
             qn += 1
             t = _RE_SRCCODE.sub("", _RE_LEADSEQ.sub("", runs_html(b)))
-            _i, (mark, tight) = _beg()
+            q_idx, (mark, tight) = _beg()
             out.append(f'<div class="q-block first-of-set{tight}">'
                        if head_first else f'<div class="q-block{tight}">')
             q_mark = len(out) - 1          # ⚠ 여는 태그 자리. 표식 뒤로 잡으면

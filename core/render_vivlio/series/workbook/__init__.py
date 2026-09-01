@@ -78,6 +78,7 @@ class WorkbookSeries(Series):
         render_mod.TIGHT = set()
         render_mod.TIGHT2 = set()
         render_mod.PUSH = set()
+        render_mod.KEEP = set()
         html_path = render_mod.write(cfg, d, build_dir, log=log)
         self._stage(cfg, build_dir, log)
 
@@ -97,6 +98,7 @@ class WorkbookSeries(Series):
             for _round in range(4):
                 sp = fit_mod.spills(out)
                 tn = fit_mod.turns(out)
+                lb = set(fit_mod.leaf_breaks(out))
                 if _round == 0:
                     fit_mod.report(sp, log)
                     fit_mod.report_turns(tn, log)
@@ -107,9 +109,11 @@ class WorkbookSeries(Series):
                 pend = {i for i, _a, _b in tn}
                 pids = (pend & seen_turns) if ids else pend
                 seen_turns |= pend
-                if not sp and not tn:
+                if not sp and not tn and not (lb - render_mod.KEEP):
                     break
-                grow = (ids - render_mod.TIGHT2) | (pids - render_mod.PUSH)
+                grow = ((ids - render_mod.TIGHT2) | (pids - render_mod.PUSH)
+                        | (lb - render_mod.KEEP))
+                render_mod.KEEP |= lb
                 if not grow:
                     if not tn:
                         break
@@ -130,6 +134,7 @@ class WorkbookSeries(Series):
             render_mod.TIGHT = set()
             render_mod.TIGHT2 = set()
             render_mod.PUSH = set()
+            render_mod.KEEP = set()
 
         # 인쇄물은 짝수 면으로 끝나야 한다 — 세트를 밀면서 홀수가 될 수 있다.
         # 늘어난 빈 면은 바로 아래에서 MEMO 면이 된다.

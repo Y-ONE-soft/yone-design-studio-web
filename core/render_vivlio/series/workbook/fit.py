@@ -136,7 +136,9 @@ def turns(pdf):
             op = (idx, page)
         elif op is not None:
             sidx, spage = op
-            if spage % 2 == 1 and page > spage:
+            # 한 펼침면(두 면)에 못 담기는 세트는 밀어도 장 넘김이 안 없어진다 —
+            # 오른쪽 면만 통째로 비우는 헛수고라 손대지 않는다.
+            if spage % 2 == 1 and spage < page <= spage + 1:
                 out.append((sidx, spage, page))
             op = None
     return out
@@ -148,3 +150,28 @@ def report_turns(t, log):
         return
     log(f"  [장넘김] 오른쪽 면에서 장을 넘기는 세트 {len(t)}개 — "
         + ", ".join(f"#{i}(p{a}→p{b})" for i, a, b in t[:6]))
+
+
+def leaf_breaks(pdf):
+    """**장을 넘어 갈라진 문항** — 오른쪽 면에서 시작해 다음 왼쪽 면으로 이어진다.
+
+    단(왼→오른쪽 면 포함)을 넘어 갈라지는 것은 완성본도 하는 일이라 그냥 둔다.
+    장을 넘어 갈라진 것만 묶어 통째로 다음 자리로 보낸다.
+    """
+    fitz = _fitz()
+    doc = fitz.open(pdf)
+    marks = [m for m in _marks(doc) if m[3] in ("beg", "end")]
+    doc.close()
+    out = []
+    idx = -1
+    op = None
+    for page, col, _y, kind in marks:
+        if kind == "beg":
+            idx += 1
+            op = (idx, page)
+        elif op is not None:
+            bidx, bpage = op
+            if bpage % 2 == 1 and page > bpage:
+                out.append(bidx)
+            op = None
+    return out
