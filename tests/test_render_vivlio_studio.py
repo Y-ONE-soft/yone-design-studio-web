@@ -896,10 +896,17 @@ def test_ruler_and_guides_are_view_only():
         assert "pointer-events: none" in src[i:i + 500], f"{k} 가 조판을 건드린다"
 
 
-def test_guides_take_mm_values():
-    """지면 좌표계가 면마다라 끌어 놓기보다 **mm 로 적는 편이 정확하다.**"""
+def test_guides_land_on_exact_mm():
+    """안내선은 **끌어다 놓되** 자리는 mm 로 딱 떨어져야 한다.
+
+    "지면 좌표계가 면마다라 끌어 놓으면 흔들린다" 고 적어 두었는데 틀렸다 —
+    면 상자에서 mm 로 정확히 되돌릴 수 있다(상자 끌기가 이미 그랬다).
+    """
     src = _studio_src()
-    assert "'--gx1'" in src and "mm'" in src
+    i = src.index("function hookGuides")
+    body = src[i:i + 3000]
+    assert "bookPageW" in body, "면 폭으로 px↔mm 를 환산해야 한다"
+    assert "round2(" in body, "자리를 0.01mm 로 떨어뜨린다"
 
 
 # ── 마스터 페이지 (@page) ─────────────────────────────────────
@@ -1442,3 +1449,29 @@ def test_page_never_goes_blank_while_retypesetting():
     assert "veilOff()" in src[i:i + 260], "조판이 실패하면 가리개가 남는다"
     i = src.index("function show(extraCss)")
     assert "veilOn()" in src[i - 400:i + 200]
+
+
+def test_guides_are_dragged_not_typed():
+    """인디자인은 눈금자에서 **끌어다 놓는다** — 자리를 적어 넣지 않는다.
+
+    ⚠ 예전 안내선은 눈금자와 **같은 `::before`** 를 써서, 둘을 같이 켜면
+      눈금자가 통째로 사라졌다(나중 규칙이 이긴다). 그리고 배경 그림이라
+      잡을 수가 없었다.
+    """
+    src = open(os.path.join(_ROOT, "templates", "book_studio.html"),
+               encoding="utf-8").read()
+    i = src.index("$('ide-guide').addEventListener")
+    assert "prompt(" not in src[i:i + 900], "아직도 적어 넣으라고 한다"
+    assert "function hookGuides" in src and "function drawGuides" in src
+    frame = open(os.path.join(_ROOT, "routes", "book_studio.py"),
+                 encoding="utf-8").read()
+    assert "#viv.show-guide .ide-gd" in frame
+    assert "--gx1" not in frame, "눈금자와 같은 자리를 다투는 옛 규칙이 남았다"
+
+
+def test_guides_show_up_when_dragged_out():
+    """그리기만 하면 안 보인다 — 보이고 안 보이고는 판의 클래스가 정한다."""
+    src = open(os.path.join(_ROOT, "templates", "book_studio.html"),
+               encoding="utf-8").read()
+    i = src.index("guides.push({ axis: axis")
+    assert "applyViews()" in src[i:i + 500]

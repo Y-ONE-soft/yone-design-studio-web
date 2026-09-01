@@ -2775,7 +2775,9 @@
         views.guide = true;
         $('ide-guide').classList.add('on');
         cur = { i: guides.length - 1, c: c, made: true };
-        drawGuides();
+        // ⚠ 그리기만 하면 안 보인다 — 보이고 안 보이고는 **판(stage)의 클래스**가
+        //   정한다. 처음 끌어냈을 때 실제로 아무 것도 안 나왔다.
+        applyViews();
       } else { return; }
       ev.preventDefault(); ev.stopPropagation();
       msg('안내선 — 끌어서 놓습니다 (두 번 누르면 지웁니다)');
