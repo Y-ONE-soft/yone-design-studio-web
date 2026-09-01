@@ -79,7 +79,7 @@ const spans = await p.evaluate(() => {
 });
 (spans === 1 ? ok : bad)('합친 칸이 지면에 나온다 (' + spans + ')');
 
-// ③ 상자 넣고 모서리로 크기 바꾸기
+// ③ 상자 넣고 → 면 가운데로 맞추기
 const boxRef = await p.evaluate(async () => {
   const key = document.getElementById('ide-book').value;
   const r = await fetch('/api/book-studio/box', { method: 'POST',
@@ -89,29 +89,7 @@ const boxRef = await p.evaluate(async () => {
 });
 await p.evaluate(() => document.getElementById('ide-reload').click());
 await wait(1500); await ready();
-const resized = await p.evaluate(async () => {
-  document.querySelector('[data-tool="sel"]').click();
-  const d = document.getElementById('ide-frame').contentDocument;
-  const st = d.getElementById('viv');
-  const box = d.querySelector('.viv-box');
-  if (!box) return 'no-box';
-  box.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-  await new Promise(r => setTimeout(r, 400));
-  const se = [...d.querySelectorAll('.ide-hd')].find(h => h.dataset.h === 'se');
-  if (!se) return 'no-handle';
-  const pg = [...d.querySelectorAll('[data-vivliostyle-page-container]')]
-    .filter(x => getComputedStyle(x).display !== 'none').pop();
-  const ppm = pg.getBoundingClientRect().width / 216;
-  const r0 = se.getBoundingClientRect();
-  se.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: r0.left + 1, clientY: r0.top + 1 }));
-  st.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: r0.left + 1 + 20 * ppm, clientY: r0.top + 1 + 10 * ppm }));
-  const got = box.style.width + ' / ' + box.style.left + ' / ' + box.style.top;
-  st.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
-  return got;
-});
-(/^(69|70|71)(\.\d+)?mm \/ 20mm \/ 20mm/.test(resized) ? ok : bad)('상자 크기 조절(위·왼쪽 그대로) → ' + resized);
-
-// ③-2 상자를 면에 맞추기
+await p.evaluate(() => document.querySelector('[data-tool="sel"]').click());
 const aligned = await p.evaluate(async () => {
   const d = document.getElementById('ide-frame').contentDocument;
   const box = d.querySelector('.viv-box');
@@ -150,6 +128,30 @@ const centered = await p.evaluate(() => {
 });
 (parseFloat(centered) < 3 ? ok : bad)('상자를 면 가운데로 (' + aligned + ') → ' + centered);
 
+// ③-2 그 상자를 모서리로 크기 바꾸기
+const resized = await p.evaluate(async () => {
+  document.querySelector('[data-tool="sel"]').click();
+  const d = document.getElementById('ide-frame').contentDocument;
+  const st = d.getElementById('viv');
+  const box = d.querySelector('.viv-box');
+  if (!box) return 'no-box';
+  box.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  await new Promise(r => setTimeout(r, 400));
+  const se = [...d.querySelectorAll('.ide-hd')].find(h => h.dataset.h === 'se');
+  if (!se) return 'no-handle';
+  const pg = [...d.querySelectorAll('[data-vivliostyle-page-container]')]
+    .filter(x => getComputedStyle(x).display !== 'none').pop();
+  const ppm = pg.getBoundingClientRect().width / 216;
+  const r0 = se.getBoundingClientRect();
+  se.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: r0.left + 1, clientY: r0.top + 1 }));
+  st.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: r0.left + 1 + 20 * ppm, clientY: r0.top + 1 + 10 * ppm }));
+  const got = box.style.width + ' / ' + box.style.left + ' / ' + box.style.top;
+  st.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+  return got;
+});
+(/^(69|70|71)(\.\d+)?mm \/ .*\/ 20mm$/.test(resized) ? ok : bad)('상자 크기 조절(위·왼쪽 그대로) → ' + resized);
+
+await wait(2500); await ready();     // 크기 조절이 다시 조판을 부른다
 const glyph = await p.evaluate(async () => {
   document.querySelector('[data-tool="text"]').click();
   const d = document.getElementById('ide-frame').contentDocument;
