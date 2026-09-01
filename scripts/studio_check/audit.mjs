@@ -7,6 +7,8 @@ const ok = (m) => { OK.push(m); console.log('  ✓ ' + m); };
 const bad = (m) => { BAD.push(m); console.log('  ✗ ' + m); };
 
 const b = await puppeteer.launch({
+  // ⚠ 조판을 기다리는 evaluate 가 기본 180초를 넘긴다 — 늘려 둔다
+  protocolTimeout: 900000,
   executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   headless: 'new', args: ['--no-sandbox'] });
 const p = await b.newPage();
