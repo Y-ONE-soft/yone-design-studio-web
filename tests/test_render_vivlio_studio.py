@@ -1653,3 +1653,39 @@ def test_box_ref_is_found_from_the_page_not_the_name():
                      if not l.strip().startswith("//"))
     assert "blocks" not in code, "계열 이름이 박혀 있다"
     assert "vref" in code
+
+
+# ── 표 모양 · 그림 상자 ─────────────────────────────────────────
+def test_table_style_is_variables_so_plain_tables_do_not_change():
+    """모양을 안 정한 표는 **한 글자도 달라지면 안 된다**(회귀 대조가 흐려진다).
+
+    그래서 모양은 CSS 변수로 받고, 정한 것이 없으면 `style` 속성 자체를 안 단다.
+    """
+    from core.render_vivlio import table as T
+    b = T.new(2, 2)
+    assert 'class="viv-tbl">' in T.html(b), "빈 style= 도 남기면 안 된다"
+    b["style"] = {"line": "0.7pt solid #333", "headbg": "#eef"}
+    h = T.html(b)
+    assert "--tb-line:0.7pt solid #333" in h and "--tb-headbg:#eef" in h
+    assert "var(--tb-line" in T.CSS and "var(--tb-headbg" in T.CSS
+
+
+def test_table_style_refuses_css_injection():
+    from core.render_vivlio import table as T
+    b = T.new(2, 2)
+    b["style"] = {"line": "red;}body{display:none", "pad": "1mm"}
+    h = T.html(b)
+    assert "display:none" not in h and "--tb-pad:1mm" in h
+
+
+def test_image_can_go_into_a_frame():
+    """문단에 붙이는 그림(`::after`)은 잡을 수가 없다 — 인디자인은 프레임에 담는다."""
+    src = _studio_src()
+    assert "function placeImageBox" in src
+    i = src.index("function placeImageBox")
+    assert "kind: 'image'" in src[i:i + 400]
+    rt = open(os.path.join(_ROOT, "routes", "book_studio.py"),
+              encoding="utf-8").read()
+    j = rt.index('b = bx.new(p.get("kind")')
+    assert 'b["img"] = "assets/" + img' in rt[j:j + 700]
+    assert "os.path.basename" in rt[j:j + 700], "경로를 받으면 안 된다"

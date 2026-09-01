@@ -324,9 +324,11 @@
       <details class="ide-pal" id="pal-img-box"><summary>그림</summary>
         <div class="ide-in">
           <div class="ide-hint" style="margin-bottom:8px">
-            지면에서 자리를 고른 뒤 그림을 누르면 <b>그 문단 아래</b>에 앉습니다.
-            원고에 없던 도표를 한 자리에만 넣을 때 씁니다.<br>
-            ⚠ <b>그 자리</b>에 거는 것이라 원고가 바뀌면 딴 곳에 갈 수 있습니다.</div>
+            지면에서 자리를 고른 뒤 <b>이름</b>을 누르면 그 문단 아래에 앉고,
+            <b>상자로</b>를 누르면 <b>끌어서 옮기고 크기도 바꿀 수 있는 상자</b>에
+            담깁니다(인디자인의 그림 프레임).<br>
+            ⚠ 둘 다 <b>그 자리</b>에 거는 것이라 원고가 바뀌면 딴 곳에 갈 수
+            있습니다.</div>
           <div class="ide-f" style="margin-bottom:8px">
             <input type="file" id="img-file" accept="image/*"
                    style="flex:1;font-size:11.5px;color:#98a0bd">
@@ -2523,8 +2525,20 @@
     host.innerHTML = list.map(function (im) {
       return '<div><a href="#" data-img="' + im.name + '" style="color:#8faaff">'
         + im.name + '</a> <span style="opacity:.5">'
-        + Math.round(im.size / 1024) + 'KB</span></div>';
+        + Math.round(im.size / 1024) + 'KB</span>'
+        + ' <a href="#" data-imgbox="' + im.name + '" style="color:#8faaff;'
+        + 'opacity:.85">상자로</a></div>';
     }).join('');
+  }
+
+  /** 그림을 **상자에 담아** 넣는다 — 그러면 끌어서 옮기고 크기도 바꾼다.
+   *
+   *  문단에 붙이는 방식(`::after`)은 글 흐름을 따라가지만 잡을 수가 없다.
+   *  인디자인은 그림을 프레임에 담아 놓고 그 프레임을 옮긴다 — 그 자리다.
+   */
+  function placeImageBox(name) {
+    if (!curRef) { msg('먼저 지면에서 자리를 고르세요'); return; }
+    boxApi({ action: 'insert', ref: curRef, kind: 'image', img: name });
   }
 
   function placeImage(name) {
@@ -3047,6 +3061,8 @@
       });
   });
   $('img-list').addEventListener('click', function (e) {
+    var box = e.target.closest && e.target.closest('a[data-imgbox]');
+    if (box) { e.preventDefault(); placeImageBox(box.dataset.imgbox); return; }
     var a = e.target.closest && e.target.closest('a[data-img]');
     if (!a) return; e.preventDefault(); placeImage(a.dataset.img);
   });
