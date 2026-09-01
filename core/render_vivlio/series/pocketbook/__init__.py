@@ -747,7 +747,6 @@ class PocketbookSeries(Series):
         지문과 달리 **줄 수가 적어** 행간만 줄이면 티가 나므로 글자와 함께 줄인다.
         """
         pas = [r for r in rows if r.get("kind") != "memtest"]
-        self._check_source_count(cfg, opt, len(pas), report, log)
         if not pas:
             return
         fl, tb = M["flow"], M["topic"]
@@ -954,6 +953,7 @@ class PocketbookSeries(Series):
         #   조금 더 세어진다 → 작은 차이는 알리기만 하고, **크게 빌 때만** 막는다.
         # G-P2 0개 항목 — 막지 않고 목록으로
         pas = [r for r in rows if r.get("kind") != "memtest"]
+        self._check_source_count(cfg, opt, len(pas), report, log)
         no_syn = [r.get("key") or r.get("label") or "?" for r in pas
                   if not r.get("synonyms")]
         no_flow = [r.get("key") or r.get("label") or "?" for r in pas
