@@ -62,6 +62,11 @@ def auto_sources(content, log=print):
             if kind == "lesson" and tb:
                 d = L.textbook(base, tb.get("subject", ""),
                                tb.get("publisher", ""), tok[1])
+                # 추가본문(Deep Learning)은 과 폴더 밖에 따로 있다
+                dl = L.textbook_deeplearning(base, tb.get("subject", ""),
+                                             tb.get("publisher", ""), tok[1])
+                if dl:
+                    out.append(dl)
             elif kind == "olpo":
                 d = L.olympos(base, tok[1], 1 if grade == 1 else 1)
             elif kind == "rp":
@@ -71,8 +76,12 @@ def auto_sources(content, log=print):
                      or L.reading_power(base, tok[1], "완성"))
             elif kind == "mock":
                 d = L.mockexam(base, grade, tok[1], tok[2])
-            elif kind == "teuk":
-                d = L.suneung_teukgang(base, tok[1])
+            elif kind in ("teuk", "bare"):
+                # 접두 없는 `18강` — 학년이 정한다(고3 = 수능특강)
+                d = (L.suneung_teukgang(base, tok[1]) if grade == 3
+                     else L.olympos(base, tok[1]))
+            elif kind == "test":
+                d = L.suneung_teukgang(base, tok[1], test=True)
             if d:
                 out.append(d)
             else:
@@ -89,7 +98,17 @@ def norm(s):
 
 
 def words(s):
-    return set(re.findall(r"[a-z']{3,}", norm(s).lower()))
+    """낱말 집합 — 로마자 낱말 + 한글 2글자 조각.
+
+    영작은 보기가 **뒤섞인 조각**이라 로마자만 보면 아무 지문이나 닮아 보인다
+    (실측: 엉뚱한 강과 jac 1.0). 한글 문장이 그 지문의 지문(指紋)이다.
+    """
+    t = norm(s).lower()
+    out = set(re.findall(r"[a-z']{3,}", t))
+    kr = re.sub(r"[^가-힣]", " ", t)
+    for w in kr.split():
+        out |= {w[i:i + 2] for i in range(max(1, len(w) - 1))}
+    return out
 
 
 def sig(items):
@@ -124,7 +143,7 @@ def content_blocks(content, kind):
             s = d["start_idx"]
             e = det[k + 1]["start_idx"] if k + 1 < len(det) else len(pairs)
             out.append((d["header"],
-                        [p["choices"] for p in pairs[s:e]]))
+                        [p["korean"] for p in pairs[s:e]]))
         return out
     raise SystemExit(f"모르는 종류: {kind}")
 
@@ -138,7 +157,7 @@ def manuscript_blocks(dirs, kind):
             continue
         for b in blocks:
             items = (b["items"] if kind == "arrange"
-                     else [p["choices"] for p in b["pairs"]])
+                     else [p["korean"] for p in b["pairs"]])
             out.append((b["raw"], items, os.path.basename(d)))
     return out
 

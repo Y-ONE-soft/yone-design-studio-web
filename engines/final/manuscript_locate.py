@@ -76,6 +76,24 @@ def textbook(base, subject, publisher, lesson):
     return _pick(pub, want_num=lesson, words=("과",), avoid=("추가본문",))
 
 
+def textbook_deeplearning(base, subject, publisher, lesson):
+    """교과서 추가본문(Deep Learning) — 과 폴더 **밖**에 따로 있다.
+
+    `공통영어1 미래엔(김)/공통영어1 미래엔 Deep Learning/3, 4과/… 워크북`
+    처럼 두 과를 묶어 두므로, 폴더 이름의 숫자에 그 과가 들어 있으면 맞다.
+    """
+    root = os.path.join(base, "교과서 작업")
+    subj = _pick(root, words=(subject,)) or _pick(root, words=(subject[:3],))
+    if not subj:
+        return None
+    pub = (_pick(subj, words=(publisher,))
+           or _pick(subj, words=(re.sub(r"[()]", "", publisher),)))
+    if not pub:
+        return None
+    dl = _pick(pub, words=("DeepLearning",))
+    return _pick(dl, want_num=lesson, words=("과",)) if dl else None
+
+
 def olympos(base, unit, book=1):
     """올림포스 독해기본 N — `EBS 작업/올림포스 독해기본{book}/… M강`."""
     root = _pick(os.path.join(base, "EBS 작업"),
@@ -90,27 +108,53 @@ def reading_power(base, unit, edition="완성"):
     return _pick(root, want_num=unit, words=("Unit",)) if root else None
 
 
-def mockexam(base, grade, year, month):
-    """모의고사 — `모의고사 작업/고N/고N YY년 M월`."""
-    root = _pick(os.path.join(base, "모의고사 작업"), words=("고%d" % grade,))
-    if not root:
-        return None
+def _month_dir(root, year, month):
     for name in _dirs(root):
         n = nfc(name)
-        m = re.match(r"^고\d\s*(\d{2})년\s*(\d{1,2})월", n)
+        m = re.match(r"^고?\d?\s*(\d{2})년\s*(\d{1,2})월", n)
         if m and int(m.group(1)) == year % 100 and int(m.group(2)) == month:
             return os.path.join(root, name)
     return None
 
 
-def suneung_teukgang(base, unit, year=2027):
-    """고3 수능특강 — `EBS 작업/<year> 수능특강 영어/워크북/N강 워크북`."""
+def mockexam(base, grade, year, month):
+    """모의고사 — `모의고사 작업/고N/고N YY년 M월`.
+
+    ⚠ 고1·고2 는 회차가 **연도 묶음** 아래로 한 단 내려가 있다
+      (`고1 23년(3,6,9,10,11월)/고1 23년 9월`). 묶음 이름의 '11월' 이
+      11월 회차로 오인되지 않도록, 묶음은 **연도만** 보고 고른다.
+    """
+    root = _pick(os.path.join(base, "모의고사 작업"), words=("고%d" % grade,))
+    if not root:
+        return None
+    d = _month_dir(root, year, month)
+    if d:
+        return d
+    for name in _dirs(root):
+        n = nfc(name)
+        m = re.match(r"^고?\d?\s*(\d{2})년\s*\(", n)
+        if m and int(m.group(1)) == year % 100:
+            d = _month_dir(os.path.join(root, name), year, month)
+            if d:
+                return d
+    return None
+
+
+def suneung_teukgang(base, unit, year=2027, test=False):
+    """고3 수능특강 — `EBS 작업/<year> 수능특강 영어/워크북/N강 워크북`.
+
+    실전 회차는 `Test 1 워크북` 처럼 '강' 이 아니라 'Test' 로 적힌다.
+    """
     root = _pick(os.path.join(base, "EBS 작업"),
                  words=("수능특강영어",), want_num=year)
     if not root:
         return None
     wb = _pick(root, words=("워크북",))
-    return _pick(wb, want_num=unit, words=("강",)) if wb else None
+    if not wb:
+        return None
+    if test:
+        return _pick(wb, want_num=unit, words=("Test",))
+    return _pick(wb, want_num=unit, words=("강",), avoid=("Test",))
 
 
 # ── 시험범위 토큰 읽기 ───────────────────────────────────────────────────
@@ -145,6 +189,16 @@ def parse_tokens(text):
                 out += [(kind, u) for u in range(int(a), int(b) + 1)]
             seg2 = re.sub(r"\d{1,2}\s*[~\-]\s*\d{1,2}", "", seg)
             out += [(kind, int(u)) for u in re.findall(r"\d{1,2}", seg2)]
+    # 접두 없는 `18,19,20,21강` — 고3 분석편 파일 이름이 이 꼴이다.
+    if not any(t[0] in ("rp", "olpo", "teuk") for t in out):
+        head = re.split(r"[가-힣]{2,}", inner)[0] if inner else ""
+        for seg in re.findall(r"((?:[\d,\s~\-]|강)+강)", inner):
+            for a, b in re.findall(r"(\d{1,2})\s*[~\-]\s*(\d{1,2})", seg):
+                out += [("bare", u) for u in range(int(a), int(b) + 1)]
+            seg2 = re.sub(r"\d{1,2}\s*[~\-]\s*\d{1,2}", "", seg)
+            out += [("bare", int(u)) for u in re.findall(r"\d{1,2}", seg2)]
+    for t in re.findall(r"[Tt]est\s*(\d)", inner):
+        out.append(("test", int(t)))
     # 교과서: `미래엔3,4과` · `능률민1과`
     for seg in re.findall(r"[가-힣()]+\s*([\d,\s]+)과", inner):
         out += [("lesson", int(u)) for u in re.findall(r"\d{1,2}", seg)]
