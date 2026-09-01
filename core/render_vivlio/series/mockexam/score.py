@@ -97,6 +97,22 @@ def observed(prof, kind):
     return sorted(best)
 
 
+def _unit_for(dist, total, default):
+    """배분 단위를 **분포의 모양**에서 정한다.
+
+    명일3 실증 — 서답형 정본이 2·3·4점 정수뿐인데 기본 단위 0.1 로 재배분하면
+    4.8·2.8 같은, 그 학교가 인쇄한 적 없는 값이 나온다. 정본 배점이 전부 정수이고
+    총점도 정수면 배분도 정수로 한다. 프로파일에 단위를 따로 적게 하지 않고
+    관측값의 구조로 판정한다.
+    """
+    if not dist or total is None:
+        return default
+    whole = all(abs(v - round(v)) < 1e-9 for v in dist)
+    if whole and abs(total - round(total)) < 1e-9:
+        return 1.0
+    return default
+
+
 def _fit(dist, n, total, unit=0.1):
     """분포 dist 의 모양을 유지한 채 n 개를 뽑아 합이 total 이 되게 한다."""
     if n <= 0:
@@ -188,7 +204,8 @@ def allocate(prof, n_select, n_essay):
             out["선택형"] = list(obs_sel)
             notes.append(f"선택형 {n_select}문항: 정본 배점 그대로(문항 수 일치).")
         else:
-            out["선택형"] = _fit(obs_sel, n_select, sel_total, unit)
+            out["선택형"] = _fit(obs_sel, n_select, sel_total,
+                                _unit_for(obs_sel, sel_total, unit))
             notes.append(
                 f"선택형 {n_select}문항: 정본은 {len(obs_sel)}문항이라 "
                 f"분포 모양을 유지한 채 재배분했다(합 {sel_total}).")
@@ -200,7 +217,8 @@ def allocate(prof, n_select, n_essay):
             out["서답형"] = list(obs_essay)
             notes.append(f"서답형 {n_essay}문항: 정본 배점 그대로(문항 수 일치).")
         else:
-            out["서답형"] = _fit(obs_essay, n_essay, essay_total, unit)
+            out["서답형"] = _fit(obs_essay, n_essay, essay_total,
+                                _unit_for(obs_essay, essay_total, unit))
             notes.append(
                 f"서답형 {n_essay}문항: 정본은 {len(obs_essay)}문항이라 "
                 f"분포 모양을 유지한 채 재배분했다(합 {essay_total}).")

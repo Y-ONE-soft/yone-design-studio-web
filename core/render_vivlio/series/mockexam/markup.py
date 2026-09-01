@@ -79,7 +79,13 @@ class Renderer(object):
         return esc(self.s.q_template.replace("{n}", str(n)))
 
     def essay_label(self, n, qtype=None, score=None):
-        """서답형 라벨. 학교에 따라 문자열이거나 **표**다(상일 계열)."""
+        """서답형 라벨. 학교에 따라 문자열이거나 **표**다(상일 계열).
+
+        Returns:
+            (html, took_score) — 라벨이 배점을 이미 인쇄했는지. 상일 계열은
+            배점이 라벨 표 오른쪽 `【X점】` 한 곳뿐이라, 여기서 찍었으면
+            발문 끝에 또 붙이면 안 된다(정본 실측).
+        """
         s = self.s
         if s.essay_is_table:
             cells = []
@@ -101,9 +107,10 @@ class Renderer(object):
                 tail = f'<span class="essay-score">{esc(body)}</span>'
             return (f'<div class="essay-label-row">'
                     f'<table class="essay-chip"><tr>{"".join(cells)}</tr></table>'
-                    f'{tail}</div>')
+                    f'{tail}</div>', bool(tail))
         tpl = s.essay_template or "[서답형 {n}]"
-        return f'<span class="essay-no">{esc(tpl.replace("{n}", str(n)))}</span>'
+        return (f'<span class="essay-no">{esc(tpl.replace("{n}", str(n)))}</span>',
+                False)
 
     def group_head(self, a, b, intro, essay_ns=None):
         """묶음 머리. 학교마다 괄호·구분자·혼합 표기가 다르다."""
@@ -162,14 +169,13 @@ class Renderer(object):
         q = strip_source(it.get("question") or "")
         if is_essay:
             self.essay_no += 1
-            label = self.essay_label(self.essay_no, it.get("label"), score)
+            label, took = self.essay_label(self.essay_no, it.get("label"), score)
+            tail = "" if took else self.score_str(score)
             if s.essay_is_table or s.essay_pos == "own_line":
                 out.append(label)
-                out.append(f'<p class="stem srv">{self.inline(q)}'
-                           f'{self.score_str(score)}</p>')
+                out.append(f'<p class="stem srv">{self.inline(q)}{tail}</p>')
             else:
-                out.append(f'<p class="stem srv">{label} {self.inline(q)}'
-                           f'{self.score_str(score)}</p>')
+                out.append(f'<p class="stem srv">{label} {self.inline(q)}{tail}</p>')
         else:
             self.q_no += 1
             num = f'<span class="qnum">{self.qnum(self.q_no)}</span> '
