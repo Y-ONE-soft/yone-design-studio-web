@@ -876,7 +876,9 @@
     "size_pt": 10.4,
     "leading_pt": 14.7,
     "indent_mm": 1.7,
-    "hang_mm": "마커 폭",
+    "hang_mm": 3.8,
+    "_hang_mm_옛값": "마커 폭",
+    "_hang_mm_근거": "2026-09-02 정본 26-1-기말 2쪽 8번 선지 ③④ 확대 실측 — 되풀이 줄('catch prey.' / 'provides energy.')이 마커 뒤 첫 글자에 맞는다. 본문 두 단 폭(109.2×2 + 4.16mm)을 자 삼아 환산하면 약 3.8mm. **숫자 자리에 글자('마커 폭')가 들어 있어 CSS 가 `padding-left: 마커 폭mm` 로 깨지고 내어쓰기가 0으로 조판되고 있었다.**",
     "bold": false
    },
    "given": {
