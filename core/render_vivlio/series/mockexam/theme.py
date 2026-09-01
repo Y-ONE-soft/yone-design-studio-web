@@ -347,7 +347,8 @@ def build_css(spec):
     outer = rules.get("outer_pt") or 1.0
     inner = rules.get("inner_thin_pt") or 0.3
     rect = hdr.get("rect_mm") or []
-    hw = ""
+    # 폭이 실측돼 있으면 그 폭, 아니면 본문 폭에 꽉 채운다(정본은 대개 꽉 찬다)
+    hw = "width: 100%; "
     if len(rect) == 4:
         hw = f"width: {round(float(rect[2]) - float(rect[0]), 1)}mm; "
     css.append(f".head-table {{ border-collapse: collapse; {hw}"
@@ -361,6 +362,10 @@ def build_css(spec):
                "{ font-size: 1.9em; letter-spacing: 0.02em; }")
     css.append(".head-table .hc-code, .head-table .hc-row2_3 "
                "{ font-size: 1.6em; }")
+    # 세로쓰기 라벨(상일 `문항`) — 한 글자씩 두 줄
+    css.append(".head-table .hc-count_label { writing-mode: vertical-rl; "
+               "text-orientation: upright; letter-spacing: 0.05em; "
+               "padding: 0.6mm 0.4mm; }")
     css.append(".exam-head .eh { display: block; }")
     css.append(".exam-head .eh-center { text-align: center; }")
     css.append(".exam-head .eh-right { text-align: right; }")
