@@ -191,12 +191,16 @@ def test_fit_is_leading_then_two_slots_never_a_smaller_font():
     assert '--lead:0.9600' in R._open_blk({"lead": 0.96})
     assert "font-size" not in R._open_blk({"lead": 0.96})
 
-    # 하한 안이면 몇 줄이 넘치든 행간으로 앉힌다
-    got = F._one_fit("arrange", cap + 3 * line, cap, m)
+    # 경계는 줄 수가 아니라 **행간 하한**이다. 목표 행간이 나오도록
+    # 자연 높이를 거꾸로 잡아 두 쪽을 다 확인한다.
+    nat = lambda L: m["fixed_mm"] + (cap - m["fixed_mm"]) / L
+    got = F._one_fit("arrange", nat(0.95), cap, m)      # 5% 조이면 들어간다
     assert "lead" in got and got["lead"] >= m["min_lead"]
+    assert got["lead"] == pytest.approx(0.95, abs=1e-3)
+    assert (nat(0.95) - cap) > 3 * line                 # 세 줄 넘게 넘쳤는데도
 
     # 하한을 넘으면 두 칸(사분면) — 활자를 줄이지 않는다
-    assert F._one_fit("arrange", cap * 1.4, cap, m) == {"span": 2}
+    assert F._one_fit("arrange", nat(0.85), cap, m) == {"span": 2}
 
     # 어휘는 면당 한 지문이라 두 칸이 없다 → 하한을 넘으면 흘린다
     vcap = m["vocab_avail"] - m["vocab_safety"]
