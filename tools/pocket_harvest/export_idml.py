@@ -77,64 +77,55 @@ def _copy(src, dst):
 
 
 _CLEAN_JSX = """
+// **우리가 연 작업 사본만** 닫는다. 남의 문서는 건드리지 않는다.
+var want = "%(work)s";
 try {
-  while (app.documents.length > 0) { app.documents[0].close(SaveOptions.NO); }
-} catch(e) {}
+  for (var i = app.documents.length - 1; i >= 0; i--) {
+    var d = app.documents[i], p = "";
+    try { p = d.fullName.fsName; } catch (e) { p = ""; }
+    if (p === want) { d.close(SaveOptions.NO); }
+  }
+} catch (e) {}
 """
 
 
-def restart_indesign(log=None):
-    """멎은 InDesign 을 되살린다.
-
-    ⚠ 모달 대화상자가 뜨면 `NEVER_INTERACT` 로도 안 막히는 경우가 있고(손상된
-      문서·글꼴 경고), 그러면 AppleEvent 가 통째로 무응답이 된다 — 262권 배치가
-      109번째에서 20분 넘게 멎었다. 프로세스를 죽이고 다시 띄운다.
-      **복구 폴더를 비우지 않으면 다시 켤 때 복구 대화상자가 떠서 또 멎는다.**
-    """
-    log = log or print
-    subprocess.run(["pkill", "-9", "-f", "Adobe InDesign 2026"],
-                   capture_output=True)
-    time.sleep(4)
-    import glob
-    for d in glob.glob(os.path.expanduser(
-            "~/Library/Caches/Adobe InDesign/Version */*/InDesign Recovery")):
-        for f in glob.glob(os.path.join(d, "*")):
-            try:
-                # 복구 파일은 작업 폴더에 두지 않는다 — InDesign 이 문서 폴더의
-                # 사이드카를 함께 보므로 섞이면 곤란하다.
-                shutil.move(f, os.path.join(
-                    "/private/tmp/claude-501",
-                    "_indd_recovery_" + os.path.basename(f)))
-            except Exception:
-                pass
-    subprocess.Popen(
-        ["open", "-a",
-         "/Applications/Adobe InDesign 2026/Adobe InDesign 2026.app"],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    for _ in range(20):
-        time.sleep(5)
-        if idrun.open_doc_count() >= 0:
-            log("  [InDesign 재시작]")
-            return True
-    log("  [InDesign 재시작 실패]")
-    return False
-
-
 def _cleanup_docs():
-    """열린 문서가 남아 있으면 저장 없이 닫는다.
+    """우리가 연 작업 사본이 남아 있으면 저장 없이 닫는다.
 
-    ⚠ 사용자가 쓰던 문서를 닫지 않기 위해, 이 배치를 돌리기 **전에** 열린 문서가
-      0개인지 확인하고 시작한다(`main` 이 검사한다). 여기서 닫는 것은 우리가 연 것뿐이다.
+    ⚠⚠ 예전에는 **열린 문서를 전부** 닫았다. 다른 세션이나 사용자가 InDesign 에
+      문서를 열어 두면 그것까지 닫힌다 — 실제로 다른 세션의
+      `성덕2_워크북03(26년6월)_내지.indd` 가 열려 있는 채로 이 배치가 돌 뻔했다.
+      **경로가 우리 작업 사본과 정확히 같은 문서만** 닫는다.
     """
     try:
-        if idrun.open_doc_count() <= 0:
-            return
+        work = os.path.join(TMP, "work.indd")
         p = os.path.join(TMP, "clean.jsx")
         with open(p, "w", encoding="utf-8") as f:
-            f.write(_CLEAN_JSX)
+            f.write(_CLEAN_JSX % {"work": work})
         idrun.run_file(p, timeout=300)
     except Exception:
         pass
+
+
+def _foreign_docs():
+    """우리 작업 사본이 **아닌** 열린 문서 수. 무응답이면 -1."""
+    js = os.path.join(TMP, "count.jsx")
+    out = os.path.join(TMP, "count.txt")
+    work = os.path.join(TMP, "work.indd")
+    try:
+        with open(js, "w", encoding="utf-8") as f:
+            f.write('var n=0, want="%s";\n'
+                    'for (var i=0;i<app.documents.length;i++){var p="";'
+                    'try{p=app.documents[i].fullName.fsName;}catch(e){p="";}'
+                    'if(p!==want) n++;}\n'
+                    'var o=new File("%s"); o.open("w"); o.write(String(n)); o.close();\n'
+                    % (work, out))
+        if os.path.exists(out):
+            os.remove(out)
+        idrun.run_file(js, timeout=120)
+        return int(open(out, encoding="utf-8").read().strip())
+    except Exception:
+        return -1
 
 
 def scan(kind):
@@ -227,14 +218,15 @@ def main(kind, limit=None, log_path=None, only=None):
         items = [x for x in items
                  if needle in _u.normalize("NFC", x[0])]
     os.makedirs(TMP, exist_ok=True)
-    n_open = idrun.open_doc_count()
-    if n_open < 0:                      # 무응답 — 앞 배치가 멎어 있다
+    os.makedirs(TMP, exist_ok=True)
+    if idrun.open_doc_count() < 0:      # 무응답 — 앞 배치가 멎어 있다
         restart_indesign()
-        n_open = idrun.open_doc_count()
+    n_open = _foreign_docs()
     if n_open > 0:
         raise SystemExit(
-            "InDesign 에 문서가 %d개 열려 있다 — 사용자의 작업물일 수 있으므로 "
-            "닫지 않고 중단한다." % n_open)
+            "InDesign 에 남의 문서가 %d개 열려 있다 — 사용자나 다른 세션의 "
+            "작업물일 수 있으므로 닫지 않고 중단한다.\n"
+            "  → 그 문서를 닫은 뒤 같은 명령을 다시 돌릴 것." % n_open)
     status = os.path.join(TMP, "status.txt")
     jsx = os.path.join(TMP, "one.jsx")
     log_path = log_path or os.path.join(OUT, "export_%s.log" % kind)
