@@ -187,7 +187,14 @@ def build_css(spec):
         css.append("  padding: 3mm;")
     css.append("  @top-center { content: element(pageHeader); vertical-align: bottom; }")
     css.append("  @bottom-center { content: element(pageFooter); vertical-align: top; }")
+    if s.confirm and s.confirm_rect_other:
+        css.append("  @top-right { content: element(confirmOther); }")
     css.append("}")
+    if s.confirm and s.confirm_rect_first:
+        # 1쪽은 위치·크기가 다르다 — 실물 그대로
+        css.append("@page :first {")
+        css.append("  @top-right { content: element(confirmFirst); }")
+        css.append("}")
     css.append("")
 
     # ── 본문 흘림 ──
@@ -235,6 +242,33 @@ def build_css(spec):
     css.append("")
 
     # ── 러닝 요소 ──
+    if s.confirm and s.confirm_rect_other:
+        css.append("/* 감독 확인란 — 배재 계열. 좌표는 정본 실측(B4 환산) */")
+        cfam = font_family(s.confirm_font)
+        css.append(".confirm-other { position: running(confirmOther); }")
+        css.append(".confirm-first { position: running(confirmFirst); }")
+        css.append(f".confirm {{ box-sizing: border-box; "
+                   f"border: {s.confirm_rule_pt}pt solid #000; "
+                   f"font-family: {cfam}; font-size: {s.confirm_size}pt; "
+                   "line-height: 1.1; }")
+        css.append(".confirm-label { text-align: center; }")
+        css.append(f".confirm-label {{ border-bottom: {s.confirm_rule_pt}pt "
+                   "solid #000; }")
+        for which, rect, rule in (("first", s.confirm_rect_first,
+                                   s.confirm_rule_first),
+                                  ("other", s.confirm_rect_other,
+                                   s.confirm_rule_other)):
+            if not rect:
+                continue
+            x0, y0, x1, y1 = rect
+            w, h = round(x1 - x0, 2), round(y1 - y0, 2)
+            lab_h = round((rule - y0) if rule else h / 2, 2)
+            # 마진 박스는 상단 여백 오른쪽에 놓인다. 거기서 실제 좌표까지
+            # 옮긴다 — 기준점은 지면 왼쪽 위(0,0).
+            css.append(f".confirm-{which} {{ width: {w}mm; height: {h}mm; }}")
+            css.append(f".confirm-{which} .confirm-label "
+                       f"{{ height: {lab_h}mm; }}")
+        css.append("")
     css.append(".page-header { position: running(pageHeader); }")
     css.append(".page-footer { position: running(pageFooter); }")
     css.append(".page-footer-last { position: running(pageFooterLast); }")

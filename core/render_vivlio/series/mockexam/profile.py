@@ -281,6 +281,28 @@ class Spec(object):
         self.ending = self.ending_lines[0] if self.ending_lines else None
         self.ending_align = _first(p, ["ending.align"], "center")
         self.ending_bold = bool(dig(p, "ending.bold"))
+        # 감독 확인란 — 배재 계열만 있다(나머지 14개 학교는 정본 전수에서 '없음').
+        cb = dig(p, "running.confirm_box") or {}
+        self.confirm = bool(cb.get("on"))
+        self.confirm_label = _str(cb.get("label"), "확인")
+        self.confirm_font = _str(cb.get("font"))
+        self.confirm_size = _num(cb.get("size_pt"), 8.5)
+        self.confirm_rect_first = [float(x) for x in
+                                   (cb.get("first_page_rect_mm") or [])] or None
+        self.confirm_rect_other = [float(x) for x in
+                                   (cb.get("other_page_rect_mm") or [])] or None
+        self.confirm_rule_pt = float(_num(cb.get("rule_width_pt"), 0.24) or 0.24)
+        # 라벨행과 기입행을 가르는 안쪽 가로선. 학교가 절대 y 로 적기도 하고
+        # 상자 위에서의 거리로 적기도 한다 — 둘 다 받아 거리로 바꾼다.
+        self.confirm_rule_first = _num(cb.get("first_page_inner_rule_y_mm"))
+        self.confirm_rule_other = _num(cb.get("other_page_inner_rule_y_mm"))
+        if self.confirm_rule_first is None:
+            off = _num(cb.get("inner_rule_offset_mm"))
+            if off is not None and self.confirm_rect_first:
+                self.confirm_rule_first = self.confirm_rect_first[1] + off
+                self.confirm_rule_other = (self.confirm_rect_other[1] + off
+                                           if self.confirm_rect_other else None)
+
         st = dig(p, "score_table") or {}
         self.score_table = bool(st.get("on"))
         # 배점표(세종 계열) — 마지막 쪽 마무리 문구 아래. 값은 배분표에서 오고

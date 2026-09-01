@@ -532,6 +532,7 @@ def build_html(doc, spec, case=None, css_href="theme.css", scores=None):
         notice = ('<div class="notice-wrap">'
                   + "".join(f'<p class="notice">{esc(l)}</p>' for l in s.notice_head)
                   + "</div>")
+    confirm = confirm_box(s)
     ending = ""
     if s.ending_lines:
         ending = "".join(f'<p class="ending">{esc(l)}</p>' for l in s.ending_lines)
@@ -547,6 +548,7 @@ def build_html(doc, spec, case=None, css_href="theme.css", scores=None):
 <body>
 {head_html}
 {foot_html}
+{confirm}
 <section class="flow">
 {head_block}
 {notice}
@@ -566,6 +568,26 @@ def _running_header(s, case):
     if not bits:
         return '<div class="page-header"></div>'
     return '<div class="page-header">' + "".join(bits) + "</div>"
+
+
+def confirm_box(s):
+    """감독 확인란. **배재 계열만** 있다(나머지 학교는 정본에서 '없음' 확인).
+
+    2행 1열 — 라벨행 `확인` + 빈 기입행. 매 쪽에 있고 1쪽과 2쪽 이후의
+    위치·크기가 다르다(실물 그대로). 쪽마다 반복해야 하므로 러닝 요소로
+    올리고, 실제 mm 좌표는 CSS 가 잡는다.
+    """
+    if not s.confirm or not s.confirm_rect_other:
+        return ""
+    lab = esc(s.confirm_label or "확인")
+    def one(which):
+        return (f'<div class="confirm confirm-{which}">'
+                f'<div class="confirm-label">{lab}</div>'
+                f'<div class="confirm-fill"></div></div>')
+    out = one("other")
+    if s.confirm_rect_first:
+        out += one("first")
+    return out
 
 
 def exam_head(s, case=None):

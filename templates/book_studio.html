@@ -1429,6 +1429,30 @@
     return p;
   }
 
+  /** 1mm 가 몇 px 인가 — **재서** 안다.
+   *
+   *  ⚠ 지면은 화면 맞춤으로 확대·축소돼 있어 `96dpi` 로 계산하면 어긋난다.
+   *    면 안에 100mm 짜리를 잠깐 넣어 재는 것이 가장 정확하다.
+   */
+  function pxPerMm(pg) {
+    if (!pg) return 3.7795;
+    var probe = document.createElement('div');
+    probe.style.cssText = 'position:absolute;left:0;top:0;width:100mm;'
+      + 'height:0;visibility:hidden';
+    pg.appendChild(probe);
+    var w = probe.getBoundingClientRect().width / 100;
+    probe.parentNode.removeChild(probe);
+    return w || 3.7795;
+  }
+
+  /** 상자에 적힌 값(mm). 없으면 잰 크기로 메운다. */
+  function mmOf(el, k, ppm, fallbackPx) {
+    var v = el.style[k];
+    if (v && /mm\s*$/.test(v)) return parseFloat(v);
+    if (v && /px\s*$/.test(v)) return parseFloat(v) / ppm;
+    return (fallbackPx || 0) / ppm;
+  }
+
   function hookDrag() {
     var st = stageEl();
     if (!st || st.__drag) return;
@@ -1442,19 +1466,20 @@
         el = el.parentElement;
       if (!el || el === st || !el.classList.contains('abs')) return;
       var pg = pageBoxOf(el); if (!pg) return;
-      // ⚠ 좌표의 **기준은 면이 아니라 담고 있는 상자**다(조판이 만든 본문
-      //   상자). 면을 기준으로 재면 여백·도련만큼 어긋난다 — 실측에서
-      //   `left:20mm` 짜리 상자를 잡아 끌었더니 42.99mm 로 튀었다.
-      var host = el.offsetParent || pg;
-      var pr = host.getBoundingClientRect();
+      var ppm = pxPerMm(pg);
       var er = el.getBoundingClientRect();
+      // ⚠ **기준점을 찾으려 하지 않는다.** 상자를 담고 있는 것이 면인지
+      //   본문 상자인지는 조판이 정하고, `offsetParent` 도 그걸 그대로
+      //   알려 주지 않는다(실측: 면이라고 답하는데 실제로는 본문 상자였고,
+      //   그래서 `left:20mm` 짜리를 잡으면 42.99mm 로 튀었다).
+      //   대신 **지금 적힌 값에 움직인 만큼만 더한다** — 기준이 무엇이든 맞다.
       cur = {
-        el: el, pg: pr,
-        mm: pg.getBoundingClientRect().width / (bookPageW || 216),
-        x0: ev.clientX, y0: ev.clientY,
-        left: er.left - pr.left, top: er.top - pr.top,
+        el: el, ppm: ppm, x0: ev.clientX, y0: ev.clientY,
+        L: mmOf(el, 'left', ppm), T: mmOf(el, 'top', ppm),
+        R: mmOf(el, 'right', ppm), B: mmOf(el, 'bottom', ppm),
+        W: mmOf(el, 'width', ppm, er.width),
+        H: mmOf(el, 'height', ppm, er.height),
         useRight: !!el.style.right, useBottom: !!el.style.bottom,
-        w: er.width, h: er.height,
         hd: hd ? hd.dataset.h : ''      // 손잡이를 잡았으면 **크기**를 바꾼다
       };
       ev.preventDefault(); ev.stopPropagation();
@@ -1464,19 +1489,36 @@
 
     st.addEventListener('mousemove', function (ev) {
       if (!cur) return;
-      var dx = ev.clientX - cur.x0, dy = ev.clientY - cur.y0;
-      if (cur.hd) { resizeBy(cur, dx, dy); return; }
-      var L = cur.left + dx, T = cur.top + dy;
-      if (cur.useRight) {
-        cur.el.style.right = round2((cur.pg.width - L - cur.w) / cur.mm) + 'mm';
-      } else {
-        cur.el.style.left = round2(L / cur.mm) + 'mm';
+      var dx = (ev.clientX - cur.x0) / cur.ppm;      // mm
+      var dy = (ev.clientY - cur.y0) / cur.ppm;
+      var el = cur.el, h = cur.hd, MIN = 4;
+      if (!h) {                                      // 옮기기
+        if (cur.useRight) el.style.right = round2(cur.R - dx) + 'mm';
+        else el.style.left = round2(cur.L + dx) + 'mm';
+        if (cur.useBottom) el.style.bottom = round2(cur.B - dy) + 'mm';
+        else el.style.top = round2(cur.T + dy) + 'mm';
+        return;
       }
-      if (cur.useBottom) {
-        cur.el.style.bottom = round2((cur.pg.height - T - cur.h) / cur.mm) + 'mm';
-      } else {
-        cur.el.style.top = round2(T / cur.mm) + 'mm';
+      // 크기 — **어느 변에 붙여 두었는지**를 지킨다. 오른쪽에 붙인 상자의
+      // 오른쪽 모서리를 끌면 `right` 가 움직이고, 왼쪽 모서리를 끌면 폭만
+      // 준다(왼쪽 끝은 폭이 정한다). 안 그러면 판형이 바뀔 때 딴 데로 간다.
+      if (h.indexOf('e') >= 0) {
+        el.style.width = round2(Math.max(MIN, cur.W + dx)) + 'mm';
+        if (cur.useRight) el.style.right = round2(cur.R - dx) + 'mm';
       }
+      if (h.indexOf('w') >= 0) {
+        el.style.width = round2(Math.max(MIN, cur.W - dx)) + 'mm';
+        if (!cur.useRight) el.style.left = round2(cur.L + dx) + 'mm';
+      }
+      if (h.indexOf('s') >= 0) {
+        el.style.height = round2(Math.max(MIN, cur.H + dy)) + 'mm';
+        if (cur.useBottom) el.style.bottom = round2(cur.B - dy) + 'mm';
+      }
+      if (h.indexOf('n') >= 0) {
+        el.style.height = round2(Math.max(MIN, cur.H - dy)) + 'mm';
+        if (!cur.useBottom) el.style.top = round2(cur.T + dy) + 'mm';
+      }
+      msg('폭 ' + el.style.width + ' · 높이 ' + el.style.height);
     }, true);
 
     st.addEventListener('mouseup', function () {
@@ -1493,40 +1535,9 @@
     }, true);
   }
 
-  /** 손잡이를 끈 만큼 상자 크기를 바꾼다.
-   *
-   *  ⚠ **어느 변에 붙여 두었는지**를 지킨다. 오른쪽에 붙인 상자의 왼쪽
-   *    모서리를 끌면 `right` 는 그대로 두고 폭만 바꿔야 한다 — 안 그러면
-   *    판형이 바뀔 때 상자가 딴 데로 간다(옮기기에서 이미 겪은 함정).
-   *  ⚠ 0 보다 작아지지 않게 막는다. 뒤집힌 상자는 조판이 안 그린다.
-   */
-  function resizeBy(cur, dx, dy) {
-    var el = cur.el, mm = cur.mm, h = cur.hd, MIN = 4 * mm;
-    var w = cur.w, ht = cur.h, L = cur.left, T = cur.top;
-    if (h.indexOf('e') >= 0) { w = Math.max(MIN, cur.w + dx); }
-    if (h.indexOf('w') >= 0) { w = Math.max(MIN, cur.w - dx); L = cur.left + (cur.w - w); }
-    if (h.indexOf('s') >= 0) { ht = Math.max(MIN, cur.h + dy); }
-    if (h.indexOf('n') >= 0) { ht = Math.max(MIN, cur.h - dy); T = cur.top + (cur.h - ht); }
-    el.style.width = round2(w / mm) + 'mm';
-    el.style.height = round2(ht / mm) + 'mm';
-    if (cur.useRight) {
-      el.style.right = round2((cur.pg.width - L - w) / mm) + 'mm';
-    } else {
-      el.style.left = round2(L / mm) + 'mm';
-    }
-    if (cur.useBottom) {
-      el.style.bottom = round2((cur.pg.height - T - ht) / mm) + 'mm';
-    } else {
-      el.style.top = round2(T / mm) + 'mm';
-    }
-    msg('폭 ' + round2(w / mm) + 'mm · 높이 ' + round2(ht / mm) + 'mm');
-  }
-
   // ── 상자 크기 조절 손잡이 (인디자인의 프레임 핸들) ─────────
   //
-  // 옮기기만 되고 크기는 **적어 넣어야** 했다. 인디자인은 모서리를 잡아
-  // 끈다. 좌표를 mm 로 정확히 되돌릴 수 있으니(끌어 옮기기가 이미 그렇다)
-  // 크기도 같은 방식이면 된다.
+  // 옮기기만 되고 크기는 **적어 넣어야** 했다. 인디자인은 모서리를 잡아 끈다.
   //
   // ⚠ 손잡이는 **화면에만** 있는 것이다. 다시 조판하면 지면이 통째로 새로
   //   와서 저절로 사라진다 — 인쇄에는 어떤 경우에도 안 나간다.
@@ -1543,8 +1554,7 @@
   function drawHandles(el) {
     clearHandles();
     // ⚠ 상자를 눌러도 **안쪽 문단**이 고를 수 있다(글이 거기 있으니 당연하다).
-    //   그때도 손잡이는 상자에 붙어야 한다 — 안 그러면 상자를 골랐는데
-    //   손잡이가 안 나온다(실제로 그랬다).
+    //   그때도 손잡이는 상자에 붙어야 한다.
     var st = stageEl();
     while (el && el !== st && !(el.classList && el.classList.contains('viv-box')))
       el = el.parentElement;
@@ -1557,7 +1567,7 @@
         + 'margin:-1.2mm 0 0 -1.2mm;background:#fff;'
         + 'border:0.25mm solid rgba(50,110,255,.95);z-index:20;'
         + 'left:' + (h[1] * 100) + '%;top:' + (h[2] * 100) + '%;'
-        + 'cursor:' + (h[0].length === 2 ? h[0] : h[0]) + '-resize';
+        + 'cursor:' + h[0] + '-resize';
       el.appendChild(d);
     });
   }
