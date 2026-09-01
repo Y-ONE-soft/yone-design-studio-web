@@ -1398,3 +1398,47 @@ def test_middle_bridge_hands_over_the_book_folder():
     src = open(middle.__file__, encoding="utf-8").read()
     assert 'env["VIV_BOOK_DIR"] = bookdir' in src
     assert "studio_css(cfg)" in src, "스타일을 안 뽑으면 디자인 편집이 안 먹는다"
+
+
+# ── 고친 것은 늘 되돌릴 수 있어야 한다 ──────────────────────────
+def test_every_mutating_route_reports_history():
+    """이력을 안 실으면 화면의 되돌리기 단추가 **꺼진 채로 남는다.**
+
+    실제로 그랬다: 스타일 패널로 글자 크기를 바꾸면 지면은 바뀌는데 ⌘Z 가
+    회색이라 되돌릴 수가 없었다. 고친 것을 알리는 응답은 모두 이력을 싣는다.
+    """
+    import re
+    src = open(os.path.join(_ROOT, "routes", "book_studio.py"),
+               encoding="utf-8").read()
+    bad = []
+    for m in re.finditer(r'@bp\.route\("(/api/book-studio/[a-z-]+)"[^)]*\)\s*\ndef (\w+)',
+                         src):
+        i = m.end()
+        j = src.find("@bp.route", i)
+        body = src[i:j if j > 0 else len(src)]
+        if ".push(cfg" in body and "_hist(" not in body:
+            bad.append(m.group(1))
+    assert not bad, f"이력을 안 싣는 곳: {bad}"
+
+
+def test_client_reads_history_in_one_place():
+    """자리마다 따로 부르면 반드시 빠뜨린다 — `api()` 한 곳에서 본다."""
+    src = open(os.path.join(_ROOT, "templates", "book_studio.html"),
+               encoding="utf-8").read()
+    i = src.index("function api(u, body)")
+    assert "d.history" in src[i:i + 700] and "setHist" in src[i:i + 700]
+
+
+def test_page_never_goes_blank_while_retypesetting():
+    """`loadDocument()` 는 지면을 비운다 — 그 몇 초가 **빈 회색 판**이었다.
+
+    인디자인은 무슨 짓을 해도 지면이 사라지지 않는다. 직전 면을 덮어 두고
+    새 면이 서면 걷는다. ⚠ 실패해도 걷어야 한다(안 걷으면 못 만진다).
+    """
+    src = open(os.path.join(_ROOT, "templates", "book_studio.html"),
+               encoding="utf-8").read()
+    assert "function veilOn" in src and "function veilOff" in src
+    i = src.index("viewer.addListener('error'")
+    assert "veilOff()" in src[i:i + 260], "조판이 실패하면 가리개가 남는다"
+    i = src.index("function show(extraCss)")
+    assert "veilOn()" in src[i - 400:i + 200]
