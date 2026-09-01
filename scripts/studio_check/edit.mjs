@@ -111,6 +111,57 @@ const resized = await p.evaluate(async () => {
 });
 (/^(69|70|71)(\.\d+)?mm \/ 20mm \/ 20mm/.test(resized) ? ok : bad)('상자 크기 조절(위·왼쪽 그대로) → ' + resized);
 
+// ③-2 상자를 면에 맞추기 + 특수문자 넣기
+const aligned = await p.evaluate(async () => {
+  const d = document.getElementById('ide-frame').contentDocument;
+  const box = d.querySelector('.viv-box');
+  if (!box) return 'no-box';
+  box.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  await new Promise(r => setTimeout(r, 500));
+  const btn = [...document.querySelectorAll('#pal-box button')]
+    .find(b => b.textContent === '가로 가운데');
+  if (!btn) return 'no-button';
+  btn.click();
+  await new Promise(r => setTimeout(r, 3500));
+  return 'clicked';
+});
+await wait(2000); await ready();
+const centered = await p.evaluate(() => {
+  const d = document.getElementById('ide-frame').contentDocument;
+  const box = d.querySelector('.viv-box');
+  if (!box) return 'gone';
+  // ⚠ **그 상자가 있는 면**과 재야 한다. 지나온 면이 DOM 에 남아 있어
+  //   "보이는 면" 과 비교하면 늘 어긋난 것처럼 나온다.
+  let pg = box; while (pg && !(pg.hasAttribute && pg.hasAttribute('data-vivliostyle-page-container'))) pg = pg.parentElement;
+  if (!pg) return 'no-page';
+  const br = box.getBoundingClientRect(), pr = pg.getBoundingClientRect();
+  const off = Math.abs((br.left + br.right) / 2 - (pr.left + pr.right) / 2);
+  return off.toFixed(1) + 'px 어긋남';
+});
+(parseFloat(centered) < 3 ? ok : bad)('상자를 면 가운데로 (' + aligned + ') → ' + centered);
+
+const glyph = await p.evaluate(async () => {
+  document.querySelector('[data-tool="text"]').click();
+  const d = document.getElementById('ide-frame').contentDocument;
+  const el = [...d.querySelectorAll('[class*=vref]')]
+    .find(e => /Growing up/.test(e.innerText || ''));
+  el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  await new Promise(r => setTimeout(r, 900));
+  const before = d.querySelector('.ide-editing');
+  if (!before) return 'editor-not-open';
+  const g = [...document.querySelectorAll('#pal-glyph button')].find(b => b.textContent === '①');
+  if (!g) return 'no-glyph';
+  const sel = d.getSelection(); const rng = d.createRange();
+  rng.setStart(before.firstChild, 0); rng.collapse(true);
+  sel.removeAllRanges(); sel.addRange(rng);
+  g.click();
+  await new Promise(r => setTimeout(r, 300));
+  const got = (before.innerText || '').slice(0, 3);
+  document.getElementById('ide-cancel').click();
+  return got;
+});
+(/①/.test(glyph) ? ok : bad)('특수문자 ① 넣기 → ' + JSON.stringify(glyph));
+
 // ④ 마스터 페이지 — 여백 한 줄
 await wait(2500); await ready();
 const master = await p.evaluate(async () => {

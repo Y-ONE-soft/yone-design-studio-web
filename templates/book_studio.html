@@ -1399,11 +1399,15 @@
                 ['right', '오른쪽'], ['width', '너비'], ['height', '높이']];
 
   function boxRefOf(ref) {
-    var m = (ref || '').match(/^(.*\.blocks\.\d+)(?:\.paras\.\d+)?$/);
-    if (!m) return '';
-    var el = curEl;
-    while (el && el.classList && !el.classList.contains('viv-box')) el = el.parentElement;
-    return el ? m[1] : '';
+    // ⚠ 자리 이름(`…blocks.N`)으로 찾으면 **계열마다 다르다** — 상자는 낱말
+    //   목록에도 어휘부에도 들어간다(블랙북 `lessons.0.vocab.0.paras.1`).
+    //   지면에서 **상자 자신의 자리표**를 되짚는다. 이름을 안 봐서 늘 맞는다.
+    var el = curEl, st = stageEl();
+    while (el && el !== st && !(el.classList && el.classList.contains('viv-box')))
+      el = el.parentElement;
+    if (!el || el === st || !el.classList) return '';
+    var m = (el.className || '').match(/(?:^|\s)vref(\d+)(?:\s|$)/);
+    return (m && refs[m[1]]) || '';
   }
 
   function drawBox() {
@@ -1476,6 +1480,63 @@
       boxApi({ action: 'delete', ref: inBox });
     };
     host.appendChild(go); host.appendChild(del);
+
+    // ── 면에 맞추기 (인디자인의 정렬) ──
+    // ⚠ **어느 변에 붙였는지가 곧 뜻**이다. 왼쪽에 맞추면 `left` 로,
+    //   오른쪽에 맞추면 `right` 로 붙인다 — 판형이 바뀌어도 그대로 따라간다.
+    //   가운데는 남는 자리를 반으로 나눠 `left` 로 준다(폭을 알아야 한다).
+    var alab = document.createElement('div');
+    alab.className = 'ide-lab'; alab.style.marginTop = '9px';
+    alab.innerHTML = '<span>면에 맞추기</span>';
+    host.appendChild(alab);
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:3px';
+    [['왼쪽', 'L'], ['가로 가운데', 'C'], ['오른쪽', 'R'],
+     ['위', 'T'], ['세로 가운데', 'M'], ['아래', 'B']].forEach(function (a) {
+      var bt = document.createElement('button');
+      bt.className = 'ide-b'; bt.textContent = a[0];
+      bt.onclick = function () { alignBox(inBox, el, a[1]); };
+      wrap.appendChild(bt);
+    });
+    host.appendChild(wrap);
+    var mar = document.createElement('div');
+    mar.className = 'ide-hint'; mar.style.marginTop = '4px';
+    mar.textContent = '지면 가장자리(도련 포함) 기준으로 옮깁니다.';
+    host.appendChild(mar);
+  }
+
+  /** 상자를 면에 맞춘다.
+   *
+   *  ⚠ **면을 기준으로 좌표를 지어내면 안 된다.** `left` 는 면이 아니라
+   *    조판이 만든 **담고 있는 상자**에서 잰 값이다(그래서 `left:20mm` 짜리가
+   *    면에서는 43mm 자리에 있었다). 그러니 "면 왼쪽에 붙이라" 를
+   *    **"지금 자리에서 이만큼 옮겨라"** 로 바꿔 푼다 — 기준이 무엇이든 맞다.
+   *  ⚠ 붙여 둔 변을 지킨다(오른쪽에 붙인 상자는 `right` 로 옮긴다).
+   */
+  function alignBox(ref, el, how) {
+    if (!ref || !el) { msg('상자를 먼저 고르세요'); return; }
+    var pg = pageBoxOf(el);
+    if (!pg) { msg('이 상자가 어느 면에 있는지 못 찾았습니다'); return; }
+    var ppm = pxPerMm(pg);
+    var pr = pg.getBoundingClientRect(), br = el.getBoundingClientRect();
+    var dx = 0, dy = 0;
+    if (how === 'L') dx = -(br.left - pr.left) / ppm;
+    if (how === 'R') dx = (pr.right - br.right) / ppm;
+    if (how === 'C') dx = ((pr.left + pr.right) / 2 - (br.left + br.right) / 2) / ppm;
+    if (how === 'T') dy = -(br.top - pr.top) / ppm;
+    if (how === 'B') dy = (pr.bottom - br.bottom) / ppm;
+    if (how === 'M') dy = ((pr.top + pr.bottom) / 2 - (br.top + br.bottom) / 2) / ppm;
+    var at = {};
+    if (dx) {
+      if (el.style.right) at.right = round2(mmOf(el, 'right', ppm) - dx) + 'mm';
+      else at.left = round2(mmOf(el, 'left', ppm) + dx) + 'mm';
+    }
+    if (dy) {
+      if (el.style.bottom) at.bottom = round2(mmOf(el, 'bottom', ppm) - dy) + 'mm';
+      else at.top = round2(mmOf(el, 'top', ppm) + dy) + 'mm';
+    }
+    if (!Object.keys(at).length) { msg('이미 그 자리입니다'); return; }
+    boxApi({ action: 'move', ref: ref, at: at });
   }
 
   // ── 끌어서 옮기기 ───────────────────────────────────────
