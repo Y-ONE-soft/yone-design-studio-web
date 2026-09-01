@@ -322,9 +322,27 @@ def build(content, log=print, keep_all=False, scope_text=None, yos=None):
     return out
 
 
+EMPTY = {"vol1": {"문장배열": [], "문장삽입": [], "중요어휘_왼": "",
+                  "중요어휘_오": ""},
+         "vol2": {"어법수정": [], "어법_헤더": [], "서술형영작": [],
+                  "영작_헤더_상세": [], "영작_헤더": []}}
+
+
+def scratch(school, grade, exam_period):
+    """**아무것도 없는 데서** 시작하는 껍데기 — 워크북을 아예 안 본다.
+
+    되수확본이 없으니 데려올 것도 없다. 원고에 없는 것은 그대로 비고,
+    빌더가 무엇이 비었는지 말한다.
+    """
+    import copy
+    out = copy.deepcopy(EMPTY)
+    out.update({"school": school, "grade": grade, "exam_period": exam_period})
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("job")
+    ap.add_argument("job", nargs="?")
     ap.add_argument("-o", "--out")
     ap.add_argument("--all", action="store_true",
                     help="시험범위를 무시하고 그 강·과의 지문을 전부 싣는다")
@@ -332,16 +350,37 @@ def main():
                     help="시험범위 글(Y.OS/시트). 주면 워크북 파일 이름을 안 본다")
     ap.add_argument("--scope-json",
                     help="final_scope_fetch.py 가 만든 scope.json (정본)")
+    ap.add_argument("--scratch", action="store_true",
+                    help="워크북 되수확본 없이 원고·시트만으로 만든다")
+    ap.add_argument("--school")
+    ap.add_argument("--grade")
+    ap.add_argument("--period")
     a = ap.parse_args()
-    p = a.job
-    if os.path.isdir(p):
-        p = os.path.join(p, "content.json")
-    with open(p, encoding="utf-8") as f:
-        content = json.load(f)
+    if a.scratch:
+        if not (a.school and a.grade and a.period):
+            ap.error("--scratch 에는 --school/--grade/--period 가 필요합니다")
+        content = scratch(a.school, a.grade, a.period)
+        p = a.out or "content_원고.json"
+        if not a.scope_text and not a.scope_json:
+            g = int("".join(c for c in a.grade if c.isdigit()) or 0)
+            sc = S.from_sheet(a.school, a.period, grade=g, log=print)
+            if not sc:
+                sys.exit("[범위] 시험범위를 찾지 못했습니다")
+            a.scope_json = None
+            globals()["_SCRATCH_SCOPE"] = sc
+    else:
+        p = a.job
+        if not p:
+            ap.error("job 폴더가 필요합니다 (또는 --scratch)")
+        if os.path.isdir(p):
+            p = os.path.join(p, "content.json")
+        with open(p, encoding="utf-8") as f:
+            content = json.load(f)
     old_a = {b["header"] for b in content["vol1"]["문장배열"]}
     old_i = {b["header"] for b in content["vol1"].get("문장삽입") or []}
     old_w = {d["header"] for d in content["vol2"]["영작_헤더_상세"]}
-    yos = json.load(open(a.scope_json, encoding="utf-8")) if a.scope_json else None
+    yos = (json.load(open(a.scope_json, encoding="utf-8"))
+           if a.scope_json else globals().get("_SCRATCH_SCOPE"))
     out = build(content, keep_all=a.all, scope_text=a.scope_text, yos=yos)
     new_a = {b["header"] for b in out["vol1"]["문장배열"]}
     new_w = {d["header"] for d in out["vol2"]["영작_헤더_상세"]}
@@ -358,7 +397,8 @@ def main():
           f"  (되찾음 {len(new_w - old_w)} · 사라짐 {len(old_w - new_w)})")
     if old_w - new_w:
         print("   - " + ", ".join(sorted(old_w - new_w)[:12]))
-    dest = a.out or os.path.join(os.path.dirname(p), "content_원고.json")
+    dest = a.out or (p if a.scratch
+                     else os.path.join(os.path.dirname(p), "content_원고.json"))
     with open(dest, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=1)
     print("→", dest)
