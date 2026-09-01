@@ -722,7 +722,9 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
   padding-top: 8.93mm;           /* 실측 문항 간격 8.02mm (컬럼 흐름은 margin 소실) */
   break-after: avoid;
 }
-.flowbody .q3:first-child, .flowbody > .q3:first-of-type { padding-top: 0; }
+.flowbody > .q-block:first-child > .q3,
+.flowbody > .set-block:first-child > .q-block:first-child > .q3 { padding-top: 0; }
+.set-block > .q-block:first-of-type > .q3 { padding-top: 4.4mm; }
 .q3 .qn {
   display: inline-block; min-width: var(--qn-w, 9mm); text-indent: 0;
   padding-right: 2.9mm; box-sizing: border-box;   /* 세 자리 번호도 글과 안 붙는다 */
@@ -731,9 +733,12 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 }
 .p3 { font-size: 8pt; line-height: 4.94mm; text-align: justify; padding-top: 1.4mm; }
 /* 실전 문항은 한 덩어리 — 면이 갈릴 때 통째로 넘어간다 */
-.q-block { break-inside: avoid; }
+.q-block.keep { break-inside: avoid; }
 /* 세트 문항(안내문 + 지문 + 딸린 문항)은 통째로 — '위 글'을 앞장에서 찾게 하면 안 된다 */
-.set-block { break-inside: avoid; }
+.set-block.keep { break-inside: avoid; }
+/* 안내문 + 지문은 통째로, 그리고 첫 문항이 바로 뒤에 붙게 */
+.set-head { break-inside: avoid; break-after: avoid; }
+.q-block.first-of-set { break-before: avoid; }
 .ch3 { font-size: 8pt; line-height: 5.23mm; text-align: justify;
        padding-left: 3.6mm; text-indent: -3.6mm; }
 .ch3.first { padding-top: 3.2mm; }        /* 지문과 선지를 눈에 띄게 띄운다 */

@@ -495,7 +495,12 @@
   }
   function drawPageNo() {
     curPage = pageNow();
-    $('ide-pageno').textContent = curPage + ' / ' + (pageCount || '–');
+    // ⚠ 조판 엔진이 주는 `epageCount` 는 **다 그리기 전에는 어림값**이다
+    //   (116면짜리 블랙북이 508 로 나왔다). 마지막 조판본(PDF)의 면수를
+    //   알면 그걸 쓴다 — 그게 실제로 인쇄될 면수다.
+    var total = (scope === 'full' && thumbInfo && thumbInfo.pages)
+      ? thumbInfo.pages : pageCount;
+    $('ide-pageno').textContent = curPage + ' / ' + (total || '–');
     if (typeof drawPages === 'function') drawPages();
     // ⚠ 면마다 든 갈래가 다르다. 조판 직후 한 번만 보면 그때 DOM 에 있던
     //   것(간지)만 잡힌다 — 면이 바뀔 때마다 다시 잡고, 감춘 것도 다시 건다.

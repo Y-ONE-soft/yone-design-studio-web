@@ -600,6 +600,7 @@ def flow_sec(st, idx):
     n = st["step"]
     two = st["layout"] == "s3"
     body = []
+    qseq = 1
     for gi, g in enumerate(st["groups"]):
         # 실물은 **지문 하나가 한 면**에서 시작한다(실측: 영작 배열 N049~N052 가
         # 각각 새 면). 흘림이라도 묶음 경계에서는 면을 끊는다.
@@ -608,7 +609,12 @@ def flow_sec(st, idx):
         if g.get("label"):
             body.append(f'<p class="pnum flowlbl">{esc(g["label"])}</p>')
         for blocks in g["units"]:
-            body.append(s3_blocks(blocks) if two else blocks_html(blocks, n, st["key"]))
+            if two:
+                html_s, qseq2 = s3_blocks(blocks, qseq)
+                qseq = qseq2 + 1
+                body.append(html_s)
+            else:
+                body.append(blocks_html(blocks, n, st["key"]))
         body.append('</div>')
     run = running_head(n, st["logo"], st["title"], st["tag"], st.get("note"))
     cls = "twocol" if two else "onecol"
@@ -619,13 +625,71 @@ def flow_sec(st, idx):
 _S3_BOX = {"s3_bg": "bg3", "s3_cond": "cond3", "s3_bogi": "bogi3"}
 
 
-def s3_blocks(blocks):
-    out, i, n, qn = [], 0, len(blocks), 0
+COL_W = 81.5      # 실전 2단 한 단 폭(mm)
+COL_H = 240.0     # 한 단 높이(mm) — 이보다 큰 덩어리는 묶어 봐야 면만 비운다
+
+
+def _est_mm(html_or_text, pt, lh, width=COL_W, indent=0.0):
+    """이 글이 차지할 높이(mm) 어림 — 덩어리를 묶을지 정하는 데만 쓴다."""
+    t = re.sub(r"<[^>]+>", "", html_or_text)
+    w = text_mm(t, pt)
+    if w is None:
+        return lh
+    import math
+    return max(1, math.ceil((w + indent) / max(width, 1))) * lh
+
+
+def _block_h(chunks):
+    return sum(chunks)
+
+
+def s3_blocks(blocks, start_no=1):
+    """실전(STEP3) 유닛 → 2단 흘림 HTML.
+
+    두 겹으로 묶는다:
+      **문항 덩어리**(`.q-block`) — 발문 + 지문 + 선지. 면이 갈릴 때 통째로 넘어간다.
+      **세트 덩어리**(`.set-block`) — 안내문(`다음 글을 읽고…`) + 지문 + 딸린 문항들.
+        '위 글'을 앞장에서 찾게 하면 안 되므로 세트도 통째로 넘긴다.
+
+    문항 번호는 **책 전체에서 이어진다**(실물 실측: 01~159 연속). 세트가 열려도
+    돌아가지 않는다.
+    """
+    out = []
+    qn = start_no - 1
+    i, n = 0, len(blocks)
     prev = None
-    setopen = False
+    q_open = False
+    set_open = False
+    q_mark = set_mark = 0
+    q_h = set_h = 0.0
+    head_open = False
+    head_first = False
+
+    def close_q():
+        nonlocal q_open, set_h
+        if q_open:
+            out.append("</div>")
+            first = "first-of-set" in out[q_mark]
+            cls = "q-block" + (" first-of-set" if first else "")
+            if q_h <= COL_H:
+                cls += " keep"
+            out[q_mark] = f'<div class="{cls}">'
+            set_h += q_h
+            q_open = False
+
+    def close_set():
+        nonlocal set_open
+        if set_open:
+            out.append("</div>")
+            # 한 단에 들어갈 세트만 통째로 묶는다 — 넘치면 묶어 봐야 면만 빈다
+            out[set_mark] = ('<div class="set-block keep">' if set_h <= COL_H
+                             else '<div class="set-block">')
+            set_open = False
+
     while i < n:
         b = blocks[i]
         r = b["role"]
+
         if r in _S3_BOX:
             cls = _S3_BOX[r]
             grp = []
@@ -637,22 +701,40 @@ def s3_blocks(blocks):
                        f'{"".join(grp)}</div></div>')
             prev = "box"
             continue
-        if r == "s3_q":
-            # 새 문항이 열리면 앞 문항 덩어리를 닫는다 — 문항 단위로 묶어야
-            # 면이 갈릴 때 통째로 넘어간다(앞장·뒷장 오가며 풀지 않게).
-            if qn:
-                out.append("</div>")
+
+        if r == "intro":
+            close_q()
+            close_set()
+            t = _RE_SRCCODE.sub("", (b.get("text") or "").strip())
+            out.append('<div class="set-block" data-h="0">')
+            set_mark = len(out) - 1
+            set_h = 0.0
+            set_open = True
+            # 안내문 + 지문은 **첫 문항까지** 한 덩어리로 — 세트 전체가 한 단보다
+            # 길면 통째로는 못 묶으니(다단에서 break-inside 는 단도 못 넘는다),
+            # 적어도 '위 글'과 첫 문항이 갈리지 않게 한다.
+            out.append('<div class="set-head">')
+            head_open = True
+            out.append(f'<p class="s3-intro">{esc(t)}</p>')
+            prev = "i"
+        elif r == "s3_q":
+            close_q()
+            if head_open:
+                out.append("</div>")     # 지문 묶음을 닫고 첫 문항이 이어 붙는다
+                head_open = False
+                head_first = True
             qn += 1
-            # 원고가 달고 온 일련번호(`141 다음 중…`)와 꼬리 코드(`…것은?[52]`)는
-            # 지면에 내지 않는다 — 번호는 배지가 붙인다(실물과 같다).
             t = _RE_SRCCODE.sub("", _RE_LEADSEQ.sub("", runs_html(b)))
-            out.append(f'<div class="q-block"><p class="q3">'
-                       f'<span class="qn">{qn:02d}</span>{t}</p>')
+            out.append('<div class="q-block first-of-set" data-h="0">'
+                       if head_first else '<div class="q-block" data-h="0">')
+            head_first = False
+            q_mark = len(out) - 1
+            q_h = _est_mm(t, 8, 4.94, indent=9.0) + 8.93
+            out.append(f'<p class="q3"><span class="qn">{qn:02d}</span>{t}</p>')
+            q_open = True
             prev = "q"
         elif r == "s3_passage":
             t = runs_html(b)
-            # (A) (B) (C) 로 이어 붙은 순서배열 지문은 **줄을 갈라** 놓는다 —
-            # 붙여 놓으면 어디가 (A)이고 (B)인지 눈으로 안 갈린다.
             parts = re.split(r"(?=\((?:[A-C])\)\s)", t)
             if len(parts) > 2 and all(len(x) > 12 for x in parts[1:]):
                 for k, seg in enumerate([x for x in parts if x.strip()]):
@@ -660,32 +742,24 @@ def s3_blocks(blocks):
                     out.append(f'<p class="{cls}">{seg.strip()}</p>')
             else:
                 out.append(f'<p class="p3">{t}</p>')
+            q_h += _est_mm(t, 8, 4.94)
             prev = "p"
         elif r == "s3_choice":
-            out.append(f'<p class="ch3{" first" if prev != "ch" else ""}">'
-                       f'{runs_html(b)}</p>')
+            ct = runs_html(b)
+            out.append(f'<p class="ch3{" first" if prev != "ch" else ""}">{ct}</p>')
+            q_h += _est_mm(ct, 8, 5.23, indent=3.6)
             prev = "ch"
-        elif r == "intro":
-            # 새 세트가 열린다 — 앞 문항 덩어리를 닫고 세트 덩어리를 연다.
-            if qn:
-                out.append("</div>")
-                qn = 0
-            t = _RE_SRCCODE.sub("", (b.get("text") or "").strip())
-            out.append(f'</div><div class="set-block">'
-                       if setopen else '<div class="set-block">')
-            setopen = True
-            out.append(f'<p class="s3-intro">{esc(t)}</p>')
-            prev = "i"
         elif (b.get("text") or "").strip():
             out.append(f'<p class="{"ans3" if r in ("s3_answer", "s3_word") else "p3"}">'
                        f'{runs_html(b)}</p>')
             prev = "a"
         i += 1
-    if qn:
+
+    if head_open:
         out.append("</div>")
-    if setopen:
-        out.append("</div>")
-    return "".join(out)
+    close_q()
+    close_set()
+    return "".join(out), qn
 
 
 # ── 문서 ────────────────────────────────────────────────────────────
