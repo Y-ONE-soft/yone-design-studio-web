@@ -116,8 +116,8 @@ class Renderer(object):
         # 나간다**(명일1 7쪽 실측 257.6mm > 지면 257mm). 폭이 제한되는 칸으로
         # 바꿔 판면 안에 가둔다.
         s = _RE_BLANK_RUN.sub(
-            lambda m: f'<span class="blank" style="min-width:'
-                      f'{min(len(m.group(0)) * 0.42, 78):.1f}mm"></span>', s)
+            lambda m: f'<span class="blank" style="width:'
+                      f'{len(m.group(0)) * 0.5:.1f}em"></span>', s)
         return s
 
     # ── 표기 생성 (원고가 안 주는 것들) ───────────────────────────────────
@@ -300,6 +300,10 @@ class Renderer(object):
         # (정본 배재1 `【 8 – 9 】 다음 글을 읽고 물음에 답하시오.` → 대화 지문
         # → `8. 윗글의 …`). 발문이 '윗글'을 가리키므로 순서가 뒤집히면 안 된다.
         lead = bool(group_ctx and group_ctx.get("shared_passage"))
+        # 원고가 지문 첫머리에 문항 번호를 달아 두면 조판 번호와 겹쳐 두 번
+        # 나온다(강동2 `10. 10 아래 문장의 …`, 강동3 `2.` + `2. Some …`).
+        # **그 문항의 번호와 같을 때만** 뗀다 — 본문 안 숫자는 건드리지 않는다.
+        qno = (group_ctx or {}).get("qno")
         is_essay = it.get("kind") == "서술형"
         score = (it.get("header") or {}).get("score")
         # 짝맞추기 선지 여부를 **지문보다 먼저** 안다 — 원고가 선지 바로 앞에
@@ -361,6 +365,10 @@ class Renderer(object):
             content = strip_source(blk.get("content") or "")
             if not content:
                 continue
+            if qno:
+                content = _strip_leading_no(content, qno)
+                if not content:
+                    continue
             if ab_cols and ab_head is None:
                 h = _ab_head_line(content, len(ab_cols[0]))
                 if h:
@@ -636,6 +644,14 @@ def _fill_group_score(text, score, s):
     num = str(int(score)) if float(score) == int(score) else \
         f"{round(float(score), s.score_decimals)}"
     return text.replace("{점수}", num)
+
+
+def _strip_leading_no(text, qno):
+    """지문 머리의 원고 문항 번호를 뗀다. 번호가 그 문항 것일 때만."""
+    m = re.match(r"\s*(\d{1,2})\s*[.)]?\s+", text)
+    if m and int(m.group(1)) == int(qno):
+        return text[m.end():]
+    return text
 
 
 def _is_prose_box(lines, limit=90):
@@ -929,6 +945,7 @@ def build_body(doc, spec, case=None, scores=None):
             elif g["intro"]:
                 out.append(f'<p class="group-intro">{esc(g["intro"])}</p>')
         ctx = {"member_no_stem": True} if row.get("no_stem") else {}
+        ctx = dict(ctx, qno=row["no"])
         if g and not g.get("common_stem") and g.get("n", 0) > 1:
             # 개별발문형 묶음의 첫 문항: 지문을 공유하므로 발문 위로 올린다
             ctx = dict(ctx or {}, shared_passage=True)

@@ -168,6 +168,9 @@ def build(content, log=print, keep_all=False, scope_text=None, yos=None):
     ok = (lambda lab: S.in_scope(lab, yos)) if yos else (
         lambda lab: scope is None or lab in scope)
     arrange, insert, writing, seen = [], [], [], set()
+    # 같은 지문이 두 벌 들어가지 않게 — 배열만이 아니라 **섹션마다** 막는다.
+    # 추가본문 폴더가 두 과에 걸쳐 있어 실제로 두 번 실렸다(상일1 딥러닝).
+    seen_i, seen_w = set(), set()
     _seen_in_source = {}
     for d, spec in srcs:
         if not spec:
@@ -196,6 +199,9 @@ def build(content, log=print, keep_all=False, scope_text=None, yos=None):
             lab = L.to_final_label(spec, b["raw"])
             if not lab or not ok(lab):
                 continue
+            if lab in seen_i:
+                continue
+            seen_i.add(lab)
             insert.append({"source": name, "header": lab, "paras": (
                 [{"style": "문장 배열 하단 문제", "text": b["prompt"]},
                  {"style": "문장 배열 하단", "text": b["given"]}]
@@ -208,6 +214,9 @@ def build(content, log=print, keep_all=False, scope_text=None, yos=None):
                 continue
             if not ok(lab):
                 continue
+            if lab in seen_w:
+                continue
+            seen_w.add(lab)
             writing.append({"header": lab, "pairs": b["pairs"]})
 
     # 원고가 없는 지문(외부지문 업로드본 등)은 **되수확본을 그대로 데려온다** —

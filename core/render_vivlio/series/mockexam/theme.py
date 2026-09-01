@@ -442,9 +442,12 @@ def build_css(spec):
 
     css.append("")
     # 답란·빈칸 — 밑줄 문자를 칸으로 바꿔 판면 밖으로 나가지 않게 한다
+    # 빈칸·답란 — 밑줄 문자 하나를 0.5em 으로 보고 그 폭만큼 칸을 잡는다.
+    # 판면을 넘지 않게 max-width 로 가두되(명일1 답란이 재단선 밖으로 나갔다),
+    # 폭 자체는 원고가 준 밑줄 길이를 따른다.
     css.append(".blank { display: inline-block; max-width: 100%; "
                "border-bottom: 0.4pt solid #000; vertical-align: baseline; "
-               "height: 0.9em; }")
+               "height: 0.85em; margin-bottom: -0.1em; }")
     css.append("u { text-underline-offset: 0.16em; text-decoration-thickness: 0.06em; }")
     return "\n".join(css)
 

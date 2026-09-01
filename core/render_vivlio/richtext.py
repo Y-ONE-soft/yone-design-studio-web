@@ -252,6 +252,7 @@ def from_html(src, like=None):
         del buf[:]
         if not t:
             return
+        fn = [False]                          # 이 덩어리가 각주 글인가
         f = {}
         st = {}
         cs = ""
@@ -267,6 +268,13 @@ def from_html(src, like=None):
                 for c in (attrs.get("class") or "").split():
                     if c.startswith("cs-"):
                         cs = c[3:]
+                    elif c == "viv-fn":
+                        fn[0] = True          # 이 조각은 **각주 글**이다
+        if fn[0]:
+            # 각주는 **글이 아니라 딸린 것**이다 — 빈 조각에 실어 둔다.
+            # (그 자리에 번호만 서고 글은 면 아래로 내려간다.)
+            segs.append({"t": "", "fn": t})
+            return
         if not (f or st or cs):
             segs.append(t)
             return

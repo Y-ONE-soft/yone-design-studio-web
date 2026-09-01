@@ -210,11 +210,24 @@ def read_blocks(path):
         elif cur is None or RE_PROMPT.match(s):
             continue
         elif d == 0:
+            # ⚠ 항목이 시작된 **뒤에** 오는 `(X)` 아닌 줄은 항목이 아니라
+            #   구역 표시다(`Appendix_Deep Learning`). 붙이면 (J) 뒤에
+            #   원고 라벨이 그대로 인쇄된다(실증).
+            #   맨 앞의 표기 없는 줄은 '주어진 문장' 이므로 그대로 둔다.
+            if cur["items"] and not RE_ITEM.match(s):
+                continue
             cur["items"].append(s)
         else:
             cur["nested"].append((d, s))
     for b in blocks:
         nested = b.pop("nested")
+        if not nested:
+            b["bottom"] = None
+            continue
+        # ⚠ 중첩 표가 지문 머리를 **한 번 더** 적어 두는 원고가 있다
+        #   (`5. p85-서술형 Practice`). 그대로 두면 그 줄이 하단 문제의
+        #   첫 항목으로 인쇄된다(실증: 올포 12강 서술형).
+        nested = [(d, s) for d, s in nested if not is_block_head(s)]
         if not nested:
             b["bottom"] = None
             continue

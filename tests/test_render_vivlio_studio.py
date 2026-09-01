@@ -460,8 +460,8 @@ def test_containers_are_marked():
 def test_editing_keeps_the_page_looking_the_same():
     """누를 때마다 바탕이 노래지고 글꼴이 바뀌면 조판을 보는 눈이 흐트러진다."""
     src = _routes_src()
-    i = src.index(".ide-editing")
-    block = src[i:i + 300]
+    i = src.index(".ide-editing {")
+    block = src[i:src.index("}", i)]        # ⚠ **그 규칙 한 벌만** 본다
     assert "background" not in block and "font-family" not in block
     assert "caret-color" in block
 
@@ -2326,3 +2326,41 @@ def test_new_length_props_are_unit_checked():
     from routes.book_studio import _needs_unit
     assert _needs_unit("text-underline-offset", "3")
     assert not _needs_unit("text-underline-offset", "0.16em")
+
+
+# ── 각주 (인디자인의 각주) ──────────────────────────────────────
+def test_footnote_rides_the_segment_and_comes_back():
+    """각주는 **글이 아니라 딸린 것**이다 — 빈 조각에 실어 둔다.
+
+    그 자리에는 번호만 서고 글은 면 아래로 내려간다(번호는 조판 엔진이 센다).
+    """
+    from core.render_vivlio import richtext as rt
+    seg = [{"t": "본문 "}, {"t": "", "fn": "출처: 교과서"}, {"t": "이어서"}]
+    h = rt.to_html(seg)
+    assert 'class="viv-fn"' in h
+    back = rt.from_html(h)
+    assert back[1]["fn"] == "출처: 교과서"
+    assert "출처" not in rt.plain(back), "각주는 본문 글이 아니다"
+
+
+def test_footnote_css_only_for_books_that_use_it():
+    """안 쓰는 책의 CSS 가 까닭 없이 달라지면 회귀 대조가 흐려진다."""
+    src = open(os.path.join(_ROOT, "core", "render_vivlio", "knobs.py"),
+               encoding="utf-8").read()
+    assert 'foot_css() if _has(cfg, "fn")' in src
+    from core.render_vivlio import richtext as rt
+    assert "float: footnote" in rt.FOOT_CSS
+
+
+@pytest.mark.parametrize("mod,fn", [("blackbook", "inl"), ("whitebook", "inl")])
+def test_series_render_footnotes_too(mod, fn):
+    """계열이 제 손으로 조각을 그리면 각주도 제 손으로 붙여야 한다."""
+    import importlib
+    r = importlib.import_module("core.render_vivlio.series.%s.render" % mod)
+    out = getattr(r, fn)([{"t": "글", "fn": "출처"}])
+    assert "viv-fn" in out
+
+
+def test_workbook_runs_render_footnotes():
+    from core.render_vivlio.series.workbook import render as R
+    assert "viv-fn" in R.runs_html({"runs": [{"t": "글", "fn": "출처"}]})

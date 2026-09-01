@@ -315,7 +315,10 @@ def folders(scope, base, grade=None, log=lambda m: None):
         out.append((path, spec))
         # 추가본문(딥러닝)은 본디 과 **뒤에** — 차례가 그렇고, 앞에 두면
         # 같은 파일이 딥러닝 몫으로 먼저 잡힌다.
-        if kind == "lesson" and locals().get("dl"):
+        # ⚠ 추가본문 폴더는 `3, 4과` 처럼 **두 과가 한 폴더**다 — 과마다 한 번씩
+        #   넣으면 같은 폴더를 두 번 읽어 지문이 두 벌 들어간다(실증).
+        if kind == "lesson" and locals().get("dl") and dl not in seen:
+            seen.add(dl)
             out.append((dl, dict(spec, deeplearning=True)))
     return out
 

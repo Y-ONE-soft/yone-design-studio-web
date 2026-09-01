@@ -1715,6 +1715,13 @@ body.tool-text [class*="vref"]:hover, body.tool-para [class*="vref"]:hover {
   outline: 1px solid rgba(108,140,255,.85); outline-offset: 1px;
   caret-color: #2b62ff;
 }
+/* 편집기 안에서 각주는 **작게 옆에** 보인다 — 조판하면 면 아래로 내려간다.
+   ⚠ 편집 중에 `float: footnote` 를 주면 글이 갑자기 사라진 것처럼 보인다. */
+.ide-editing .viv-fn {
+  float: none; font-size: 7.5pt; color: #2b62ff; background: #eef2ff;
+  border-radius: 2px; padding: 0 2px; margin: 0 1px;
+}
+
 </style>
 <script src="/book-studio/core/vivlio-core.js"></script>
 </head><body><div id="viv"></div></body></html>

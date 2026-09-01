@@ -169,6 +169,8 @@
     <div class="ide-sep"></div>
 
     <div class="ide-grp" id="ide-fmt">
+      <button class="ide-b ic" data-f="fn"
+              title="각주 — 커서 자리에 번호를 달고 글은 면 아래로 내립니다(조판 엔진이 번호를 셉니다).">주</button>
       <button class="ide-b ic" data-f="b" title="굵게 ⌘B"><b>B</b></button>
       <button class="ide-b ic" data-f="u" title="밑줄 ⌘U"><u>U</u></button>
       <button class="ide-b ic" data-f="i" title="기울임 ⌘I"><i>I</i></button>
@@ -3713,8 +3715,40 @@
   $('ide-redo').addEventListener('click', function () {
     loadHist('redo').then(function (h) { if (h) rebuild('').then(function () { msg('↷ 다시 실행'); }); });
   });
+  /** 각주 달기 — 커서 자리에 각주 글을 심는다.
+   *
+   *  ⚠ 각주는 **글이 아니라 딸린 것**이다. 그 자리에는 번호만 서고 글은 면
+   *    아래로 내려간다 — 번호는 조판 엔진이 센다(사람이 세면 문단을 옮길
+   *    때마다 어긋난다).
+   */
+  function putFootnote() {
+    if (!editEl) {
+      msg('먼저 **글자 도구(T)** 로 고칠 줄을 여세요 — 각주를 달 자리가 있어야 합니다');
+      return;
+    }
+    var t = prompt('각주에 넣을 글 (예: 출처, 낱말 뜻)', '');
+    if (!t) return;
+    editEl.focus();
+    var d = fdoc();
+    var sp = d.createElement('span');
+    sp.className = 'viv-fn';
+    sp.textContent = t;
+    var sel = d.getSelection();
+    if (sel && sel.rangeCount) {
+      var r = sel.getRangeAt(0);
+      r.collapse(false);              // 고른 글 **뒤에** 단다
+      r.insertNode(sp);
+      r.setStartAfter(sp); r.collapse(true);
+      sel.removeAllRanges(); sel.addRange(r);
+    } else {
+      editEl.appendChild(sp);
+    }
+    msg('각주를 달았습니다 — ⌘↵ 로 저장하면 면 아래에 나옵니다');
+  }
+
   $('ide-fmt').addEventListener('click', function (e) {
     var t = e.target; while (t && !t.dataset.f && t !== this) t = t.parentNode;
+    if (t && t.dataset && t.dataset.f === 'fn') { putFootnote(); return; }
     if (t && t.dataset && t.dataset.f) fmt(t.dataset.f);
   });
   $('ide-commit').addEventListener('click', commit);
