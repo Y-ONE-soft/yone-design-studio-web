@@ -76,6 +76,7 @@ class WorkbookSeries(Series):
                                for s in d["steps"]])
             log(f"[견본] 스텝마다 지문 2개")
         render_mod.TIGHT = set()
+        render_mod.TIGHT2 = set()
         html_path = render_mod.write(cfg, d, build_dir, log=log)
         self._stage(cfg, build_dir, log)
 
@@ -88,13 +89,22 @@ class WorkbookSeries(Series):
             for _round in range(2):
                 sp = fit_mod.spills(out)
                 fit_mod.report(sp, log)
-                new = {i for i, _a, _b, _t in sp} - render_mod.TIGHT
-                if not new:
+                ids = {i for i, _a, _b, _t in sp}
+                if not ids:
                     break
-                render_mod.TIGHT |= new
+                # 한 바퀴 돌고도 남은 것은 **한 단계 더** 좁힌다
+                render_mod.TIGHT2 |= (ids & render_mod.TIGHT)
+                render_mod.TIGHT |= ids
                 html_path = render_mod.write(cfg, d, build_dir, log=lambda *a: None)
                 secs += cli.run_build(html_path, out, log=log, extra=["-f", "pdf"])
+            sp = fit_mod.spills(out)
+            if sp:
+                log(f"  [당겨붙이기] 두 바퀴로도 안 당겨진 덩어리 {len(sp)}개 — "
+                    f"그대로 둔다 {[i for i, *_ in sp]}")
+            else:
+                log("  [당겨붙이기] 모두 당겨 붙였다")
             render_mod.TIGHT = set()
+            render_mod.TIGHT2 = set()
 
         pages = probe.page_count(out)
         log(f"OK  {secs:.1f}s · {pages}p → {out}")

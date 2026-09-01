@@ -156,10 +156,37 @@ body {
 
 /* 측정 패스가 "한두 줄만 넘겼다"고 짚은 덩어리 — 자간·행간을 한 단계만 좁혀
  * 당겨 붙인다. 한 단계 이상 쓰면 지면 밀도가 눈에 띄게 달라진다. */
-/* ⚠ 행간은 건드리지 않는다 — mm 로 박아 둔 값이라 em 으로 줄이면 지면이 통째로
- *   달라진다. 자간만 한 단계(-0.028 → -0.045em) 좁혀 줄 수를 줄인다. */
-.tight { letter-spacing: -0.045em; }
+/* 한두 줄만 넘긴 덩어리를 **당겨 붙이는** 조임. 자간만으로는 한 줄이 안 당겨져서
+ * (실측) 행간도 3%(2단계는 6%) 함께 좁힌다. 행간은 mm 로 박혀 있으므로 em 배율이
+ * 아니라 **줄어든 mm 값을 그대로** 적는다. 두 단계까지만 — 더 쓰면 지면 밀도가
+ * 눈에 띄게 달라진다. */
+.tight  { letter-spacing: -0.045em; }
 .tight2 { letter-spacing: -0.062em; }
+
+.tight  .en { line-height: 7.53mm; }
+.tight2 .en { line-height: 7.29mm; }
+.tight  .box-body p, .tight  .box-q p, .tight  .box-given p,
+.tight  .box-lined p, .tight  .box-arr p { line-height: 4.45mm; }
+.tight2 .box-body p, .tight2 .box-q p, .tight2 .box-given p,
+.tight2 .box-lined p, .tight2 .box-arr p { line-height: 4.31mm; }
+.tight  .gsel p, .tight  .box-orange p { line-height: 7.53mm; }
+.tight2 .gsel p, .tight2 .box-orange p { line-height: 7.29mm; }
+.tight  .choices p, .tight  .b2q .choices p { line-height: 5.13mm; }
+.tight2 .choices p, .tight2 .b2q .choices p { line-height: 4.97mm; }
+.tight  .gox { line-height: 4.75mm; margin-top: 8.2mm; }
+.tight2 .gox { line-height: 4.61mm; margin-top: 7.6mm; }
+.tight  .ox { margin-top: 7.0mm; }
+.tight2 .ox { margin-top: 6.4mm; }
+.tight  .blk { line-height: 6.79mm; margin-top: 2.0mm; }
+.tight2 .blk { line-height: 6.58mm; margin-top: 1.8mm; }
+.tight  .blk-kr { line-height: 4.11mm; }
+.tight2 .blk-kr { line-height: 3.99mm; }
+.tight  .p3, .tight  .q3 { line-height: 4.79mm; }
+.tight2 .p3, .tight2 .q3 { line-height: 4.64mm; }
+.tight  .ch3 { line-height: 5.07mm; }
+.tight2 .ch3 { line-height: 4.92mm; }
+.tight  .wr .kr, .tight  .box-write p { line-height: 4.17mm; }
+.tight2 .wr .kr, .tight2 .box-write p { line-height: 4.05mm; }
 .zend { display: block; background: #fffffe; }
 .setmark { background: #fffffd; }
 .setend { background: #fffffc; }

@@ -539,6 +539,7 @@ def divider_section(step, line1, line2):
 # ── 스텝 구간 ────────────────────────────────────────────────────────
 
 TIGHT = set()          # 측정 패스가 채운다 — 한두 줄만 넘긴 덩어리 번호
+TIGHT2 = set()         # 한 단계로 안 당겨진 덩어리 (더 좁힌다)
 _BIDX = [0]            # 문서 순서 덩어리 번호 (document() 가 0 으로 되돌린다)
 
 
@@ -546,7 +547,8 @@ def _beg():
     """덩어리 시작 표식 + 이 덩어리가 조여야 하는지."""
     i = _BIDX[0]
     _BIDX[0] += 1
-    return i, ('<span class="zbeg"></span>', " tight" if i in TIGHT else "")
+    cls = " tight2" if i in TIGHT2 else (" tight" if i in TIGHT else "")
+    return i, ('<span class="zbeg"></span>', cls)
 
 
 def fixed_section(st, idx):
