@@ -1765,6 +1765,9 @@
       });
       api('/api/book-studio/box',
           { b: key, action: 'move', ref: m.b.ref, at: at }).then(function (d) {
+        // ⚠ 실패를 삼키면 안 된다 — 화면엔 "맞췄습니다" 만 뜨고 아무 일도
+        //   안 일어난다(실제로 그랬다: 이름이 가려져 404 였다).
+        if (d && d.error) { msg('✗ ' + d.error); }
         if (d && d.history) setHist(d.history);
         if (--left === 0) {           // **마지막 하나가 끝나면 한 번만** 굽는다
           rebuild('').then(function (ok) {
