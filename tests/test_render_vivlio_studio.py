@@ -2107,3 +2107,46 @@ def test_no_call_swallows_a_server_error():
         if ".error" not in tail and "ready === false" not in tail:
             bad.append(m.group(1))
     assert not bad, f"응답의 error 를 안 보는 자리: {bad}"
+
+
+# ── 썸네일이 **지금 보고 있는 판**을 따라온다 ──────────────────
+def test_thumbnails_prefer_the_live_build():
+    """예전엔 책 폴더의 납품 PDF 만 봤다 — 방금 고친 것이 안 나오고,
+    견본일 때는 면 번호까지 어긋나(견본 15면 vs 전권 116면) 그림을 아예
+    못 보여 줬다. 지금 판(`build/_thumbs.pdf`)이 있으면 그걸 먼저 본다.
+    """
+    src = open(os.path.join(_ROOT, "routes", "book_studio.py"),
+               encoding="utf-8").read()
+    assert "def _thumb_pdf" in src and "def _bake_thumbs" in src
+    i = src.index("def _thumb_pdf")
+    body = src[i:i + 1400]
+    assert "_thumbs.pdf" in body and "getmtime" in body, "낡았는지 봐야 한다"
+    j = src.index("def _bake_thumbs")
+    assert "build/index.html" in src[j:j + 900] or "index.html" in src[j:j + 900]
+    assert "cli.run_build" in src[j:j + 900]
+
+
+def test_thumbnail_bake_never_touches_the_delivered_pdf():
+    """썸네일 때문에 납품본이 바뀌면 안 된다 — `build/` 안에만 쓴다."""
+    src = open(os.path.join(_ROOT, "routes", "book_studio.py"),
+               encoding="utf-8").read()
+    j = src.index("def _bake_thumbs")
+    body = src[j:j + 900]
+    assert "out_pdf" not in body and "_build_dir(d)" in body
+
+
+def test_sample_mode_shows_thumbnails_when_they_match():
+    """지금 판에서 구운 그림이면 **견본이어도** 번호가 맞는다."""
+    ui = _studio_src()
+    i = ui.index("var sampleNow = (scope !== 'full')")
+    assert "thumbInfo.live" in ui[i:i + 400]
+    j = ui.index("function drawPageNo")
+    assert "thumbInfo.live" in ui[j:j + 700], "면수도 지금 판을 따라야 한다"
+
+
+def test_thumbnails_refresh_after_a_rebuild_but_not_on_every_keystroke():
+    """고칠 때마다 구우면 못 쓴다 — 손을 뗀 뒤 한 번만."""
+    ui = _studio_src()
+    assert "function freshenThumbs" in ui
+    i = ui.index("function freshenThumbs")
+    assert "setTimeout" in ui[i:i + 400] and "clearTimeout" in ui[i:i + 400]

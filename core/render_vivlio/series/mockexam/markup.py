@@ -1052,8 +1052,25 @@ def _cell_span(v):
     return (int(m.group(1)) if m else 1), 1
 
 
+_RE_SPAN_KO = re.compile(r"(\d+)\s*[~·,\-]\s*(\d+)\s*([열행])")
+
+
+def _span_words(v):
+    """`"1~6열 병합"` `"1·2행 병합"` `"좌측 전폭 병합"` → (rowspan, colspan)"""
+    t = str(v or "")
+    if not t:
+        return 1, 1
+    m = _RE_SPAN_KO.search(t)
+    if m:
+        n = int(m.group(2)) - int(m.group(1)) + 1
+        return (n, 1) if m.group(3) == "행" else (1, n)
+    if "전폭" in t or "전체" in t:
+        return 1, 0            # 0 = 그 행 전체
+    return 1, 1
+
+
 def _header_grid(cells):
-    """학교별 셀 표기를 [(row, col, rowspan, text, role)] 로 정규화."""
+    """학교별 셀 표기를 [(row, col, rowspan, colspan, text, role)] 로 정규화."""
     out = []
 
     def colno(c, fallback):
@@ -1072,13 +1089,13 @@ def _header_grid(cells):
             lab = str(cell["label"])
             # `(학교 배지)` 처럼 라벨 자체가 자리표면 그 칸은 통째로 비운다
             if _RE_PLACEHOLDER.match(lab):
-                out.append((1, col, max(span, 2), "", "logo"))
+                out.append((1, col, max(span, 2), 1, "", "logo"))
                 continue
             if span > 1:
-                out.append((1, col, span, str(cell.get("value") or ""), "logo"))
+                out.append((1, col, span, 1, str(cell.get("value") or ""), "logo"))
             else:
-                out.append((1, col, 1, lab, "label"))
-                out.append((2, col, 1, str(cell["value"]), "value"))
+                out.append((1, col, 1, 1, lab, "label"))
+                out.append((2, col, 1, 1, str(cell["value"]), "value"))
             continue
         # ② row1 / row2 / row3 / row2_3 (한영1)
         rowkeys = [k for k in cell
@@ -1086,8 +1103,8 @@ def _header_grid(cells):
         if rowkeys:
             if cell.get("rows"):
                 r, sp = _cell_span(cell["rows"])
-                out.append((r, col, max(sp, 3), str(cell.get("text") or ""),
-                            "title"))
+                out.append((r, col, max(sp, 3), 1,
+                            str(cell.get("text") or ""), "title"))
                 continue
             for k in rowkeys:
                 m = re.findall(r"\d+", k)
@@ -1095,44 +1112,110 @@ def _header_grid(cells):
                     continue
                 r = int(m[0])
                 sp = (int(m[-1]) - r + 1) if len(m) > 1 else 1
-                out.append((r, col, sp, str(cell[k]), k))
+                out.append((r, col, sp, 1, str(cell[k]), k))
             continue
         # ③ r/row + c/col (한영2·한영3)
         r, sp = _cell_span(cell.get("r", cell.get("row", 1)))
         sp = max(sp, int(cell.get("rowspan") or 1))
-        out.append((r, col, sp, str(cell.get("text") or ""),
+        rs, cs = _span_words(cell.get("span"))
+        out.append((r, col, max(sp, rs), cs, str(cell.get("text") or ""),
                     cell.get("role") or ""))
     return out
+
+
+def _grid_from_rows(rows):
+    """행 배열형 — 강동1·강동3(`rows:[{role,text|cells|labels}]`)과
+    상일1·상일2(`rows|layout:[{row, cells:[{...}]}]`)를 함께 받는다."""
+    out = []
+    for ri, row in enumerate(rows, 1):
+        if not isinstance(row, dict):
+            continue
+        r = int(row.get("row") or ri)
+        cells = row.get("cells")
+        if not isinstance(cells, list):
+            cells = row.get("labels")
+        # ① 전폭 제목 행 (`merged`, `cells: 1`)
+        if row.get("merged") or row.get("cells") in (1, "1"):
+            txt = str(row.get("예") or row.get("text") or "")
+            if "{" in txt:      # 템플릿만 있으면 실제 예시값을 쓴다
+                txt = str(row.get("예") or "")
+            out.append((r, 0, 1, 0, txt, row.get("role") or "title"))
+            continue
+        if isinstance(cells, list) and cells and isinstance(cells[0], str):
+            for c in cells:
+                out.append((r, 0, 1, 1, str(c), row.get("role") or "meta"))
+            continue
+        if isinstance(cells, list):
+            for cell in cells:
+                if not isinstance(cell, dict):
+                    continue
+                rs, cs = _span_words(cell.get("span"))
+                rs = max(rs, int(cell.get("rowspan") or 1))
+                out.append((r, 0, rs, cs, str(cell.get("text") or ""),
+                            cell.get("role") or ""))
+    return out
+
+
+def _grid_from_rowkeys(hdr):
+    """행별 키형 — 명일3(`row1`, `row2_labels`, `row3_values_예_*`)."""
+    out = []
+    r1 = hdr.get("row1")
+    if isinstance(r1, dict):
+        txt = r1.get("예_25-1") or r1.get("예") or r1.get("text") or ""
+        if txt:
+            out.append((1, 0, 1, 0, str(txt), "title"))
+    labs = hdr.get("row2_labels") or []
+    vals = None
+    for k in sorted(hdr):
+        if k.startswith("row3_values"):
+            vals = hdr[k]
+            break
+    for c in labs:
+        out.append((2, 0, 1, 1, str(c), "label"))
+    for c in (vals or []):
+        out.append((3, 0, 1, 1, str(c), "value"))
+    return out
+
+
+def _header_cells_source(hdr):
+    """머리표 내용이 어느 키에 있든 grid 로 바꾼다. 학교마다 표기가 다르다."""
+    if hdr.get("cells"):
+        return _header_grid(hdr["cells"])
+    for key in ("rows", "layout"):
+        v = hdr.get(key)
+        if isinstance(v, list) and v:
+            return _grid_from_rows(v)
+    if hdr.get("row2_labels"):
+        return _grid_from_rowkeys(hdr)
+    return []
 
 
 def header_table(s, case=None):
     """머리표가 **표**인 학교(16곳 중 14곳). 셀 방언을 정규화해 그린다."""
     hdr = P.dig(s.raw, "running.header") or {}
-    cells = hdr.get("cells") or []
-    if not cells:
-        return ""
-    grid = _header_grid(cells)
+    grid = _header_cells_source(hdr)
     if not grid:
         return ""
-    nrow = max(r + sp - 1 for r, _c, sp, _t, _o in grid)
+    nrow = max(r + sp - 1 for r, _c, sp, _cs, _t, _o in grid)
     at, taken = {}, set()
     # 열 번호가 있는 셀을 먼저 앉히고, 없는 셀(col=0)은 그 행에서 왼쪽부터
-    # 빈 자리를 찾아 채운다 — 열 이름이 없는 학교(한영3)의 표기를 위해서다.
-    for r, c, sp, text, role in grid:
+    # 빈 자리를 찾아 채운다 — 열 이름이 없는 학교(한영3·강동)의 표기를 위해서다.
+    for r, c, sp, cs, text, role in grid:
         if c:
-            at.setdefault((r, c), (sp, text, role))
+            at.setdefault((r, c), (sp, cs, text, role))
             for k in range(1, sp):
                 taken.add((r + k, c))
-    for r, c, sp, text, role in grid:
+    for r, c, sp, cs, text, role in grid:
         if c:
             continue
         col = 1
         while (r, col) in at or (r, col) in taken:
             col += 1
-        at[(r, col)] = (sp, text, role)
+        at[(r, col)] = (sp, cs, text, role)
         for k in range(1, sp):
             taken.add((r + k, col))
-    ncol = max(c for _r, c in at)
+    ncol = max([c + (cs - 1 if cs else 0) for (_r, c), (_sp, cs, _t, _o)
+                in at.items()] or [1])
     taken = set()
     rows_html = []
     for r in range(1, nrow + 1):
@@ -1144,14 +1227,22 @@ def header_table(s, case=None):
             if cell is None:
                 tds.append("<td></td>")
                 continue
-            sp, text, role = cell
+            sp, cs, text, role = cell
+            if not cs:
+                # 전폭 병합 — 같은 행에 다른 셀이 있으면 그만큼 비워 준다
+                rest = sum(1 for (rr, cc) in at if rr == r and cc > c)
+                cs = max(ncol - c + 1 - rest, 1)
             for k in range(1, sp):
-                taken.add((r + k, c))
+                for j in range(cs):
+                    taken.add((r + k, c + j))
+            for j in range(1, cs):
+                taken.add((r, c + j))
             txt = (case or {}).get(role) or text
             # `(결재 도장)` `(학교 배지)` 같은 자리표는 인쇄하지 않는다
             if _RE_PLACEHOLDER.match(txt or ""):
                 txt = ""
-            attr = f' rowspan="{sp}"' if sp > 1 else ""
+            attr = (f' rowspan="{sp}"' if sp > 1 else "") + \
+                   (f' colspan="{cs}"' if cs > 1 else "")
             cls = f' class="hc-{esc(role)}"' if role else ""
             body = esc(txt).replace("\n", "<br>")
             tds.append(f"<td{attr}{cls}>{body}</td>")
