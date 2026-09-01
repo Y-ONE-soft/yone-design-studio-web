@@ -277,6 +277,17 @@ def _q_marks(para, text):
     return _marks_for(spans, at if at >= 0 else 0, cleaned)
 
 
+# 원고에는 정답이 함께 온다. **시험지에 인쇄되면 안 된다.**
+# `[정답 작성 안내]`(작성 조건)·`정답 및 해설의 저작권`(저작권 문구)은 정본에
+# 인쇄되는 정상 요소라 건드리지 않는다 — 대괄호 안이 정확히 `정답` 이거나
+# 줄이 `정답:` 으로 시작할 때만 답으로 본다.
+_RE_ANSWER_LEAK = re.compile(r"^\s*(?:[\[［]\s*정답\s*[\]］]|정답\s*[:：])")
+
+
+def _is_answer_leak(text):
+    return bool(_RE_ANSWER_LEAK.match(str(text or "")))
+
+
 def _structural_kind(cur, taxonomy_kind):
     """(kind, 근거) — 구조 신호로 객관식/서술형 판정."""
     # 원고가 대놓고 '서답형 3.' 이라고 적어 준 것보다 강한 신호는 없다.
@@ -573,6 +584,9 @@ def build_ir(paras, meta=None, log=None):
 
     for r in annotated:
         kind, text = r["kind"], r["text"]
+        if _is_answer_leak(text):
+            warnings.append(f"정답 줄을 버렸다: {str(text)[:40]}")
+            continue
         # 원고 그림(도표) — 텍스트가 없어 분류에서 빠지므로 여기서 먼저 챙긴다
         para = r.get("para")
         img = para.get("image") if isinstance(para, dict) else None
