@@ -95,13 +95,14 @@ class WorkbookSeries(Series):
             # ⚠ 되풀이 조판은 발산할 수 있다(블랙북에서 10→8→7 을 겪었다).
             #   그래서 세 바퀴로 묶고, 표시는 **쌓기만** 한다(빼면 진동한다).
             seen_turns = set()
-            for _round in range(4):
+            for _round in range(7):
                 sp = fit_mod.spills(out)
                 tn = fit_mod.turns(out)
-                lb = set(fit_mod.leaf_breaks(out))
-                if _round == 0:
-                    fit_mod.report(sp, log)
-                    fit_mod.report_turns(tn, log)
+                # 장을 넘어 **갈라진 문항**: 한두 줄이면 당기고(위), 그보다 크면
+                # 사용자 규칙대로 "문제 전체를 다음 면으로" — 그 문항만 묶는다.
+                lb = set(fit_mod.leaf_breaks(out)) - {i for i, _a, _b, _t in sp}
+                log(f"    · {_round + 1}바퀴 넘친덩어리 {len(sp)} · 장넘김세트 "
+                    f"{len(tn)} · 갈라진문항 {len(lb)}")
                 ids = {i for i, _a, _b, _t in sp}
                 # 미는 것은 면을 늘린다 — **당겨서 될 것 같으면 먼저 당겨 보고**
                 # 그러고도 남은 세트만 민다. 당길 거리(넘친 덩어리)가 아예 없으면
@@ -125,6 +126,9 @@ class WorkbookSeries(Series):
                 html_path = render_mod.write(cfg, d, build_dir, log=lambda *a: None)
                 secs += cli.run_build(html_path, out, log=log, extra=["-f", "pdf"])
             sp, tn = fit_mod.spills(out), fit_mod.turns(out)
+            lb = fit_mod.leaf_breaks(out)
+            if lb:
+                log(f"  [장넘김] 장을 넘어 갈라진 문항 {len(lb)}개 남음 — {lb[:6]}")
             log("  [당겨붙이기] 모두 당겨 붙였다" if not sp else
                 f"  [당겨붙이기] 네 바퀴로도 안 당겨진 덩어리 {len(sp)}개 — "
                 f"그대로 둔다 {[i for i, *_ in sp]}")

@@ -94,8 +94,10 @@ def spills(pdf, tail_limit=TAIL_LIMIT):
             idx += 1
             open_beg = (idx, page, col)
         elif open_beg is not None:
-            bidx, bpage, bcol = open_beg
-            if (page, col) != (bpage, bcol):
+            bidx, bpage, _bcol = open_beg
+            # ⚠ **면**을 넘긴 것만 당긴다. 단을 넘는 것은 정상 흐름이다
+            #   (완성본도 단의 22%가 선지로 시작한다).
+            if page != bpage:
                 tail = max(0.0, y - BODY_TOP)
                 out.append((bidx, bpage, page, round(tail, 1)))
             open_beg = None
