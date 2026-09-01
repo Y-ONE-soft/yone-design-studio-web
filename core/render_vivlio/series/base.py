@@ -37,6 +37,26 @@ class Series(object):
     # "지면을 보는 데는 필요 없고 느리기만 한" 것을 끄는 자리다.
     render_opts = {}
 
+    # ── 어느 계열에나 있는 문서 설정 ──
+    #
+    # 판형·도련은 **어느 책에나** 있다(config `page`). 계열이 저마다 선언하게
+    # 두면 어떤 책에서는 없고 어떤 책에서는 있어, 인디자인의 「문서 설정」이
+    # 책마다 다른 꼴이 된다. 그래서 여기서 한 번 준다.
+    #
+    # ⚠ 판형을 바꾸면 **책이 통째로 다시 흐른다.** 이미 납품한 책에서는
+    #   함부로 만질 것이 아니라, 화면이 그 사실을 말해 준다.
+    def base_knobs(self):
+        from core.render_vivlio import knobs as _kn
+        K = _kn.Knob
+        mm = lambda key, label, lo, hi, affects: K(        # noqa: E731
+            "page." + key, "mm", label, min=lo, max=hi, step=0.5, unit="mm",
+            affects=affects, group="치수", resettable=False)
+        return [
+            mm("width", "판형 가로", 60, 420, "책 전체가 다시 흐른다"),
+            mm("height", "판형 세로", 80, 594, "책 전체가 다시 흐른다"),
+            mm("bleed", "도련", 0, 10, "재단선 바깥 여유 — 인쇄소가 정한다"),
+        ]
+
     # ── 스타일 이름표 ──
     # 작업대의 단락 스타일 목록에 `.pbox`·`.vunit` 같은 **CSS 이름**이 그대로
     # 나오면 무엇을 고르는 건지 알 수 없다(실제로 그랬다). 계열이 사람 말을

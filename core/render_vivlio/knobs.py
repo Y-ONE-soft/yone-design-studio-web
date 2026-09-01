@@ -141,10 +141,16 @@ def of(cfg, series):
     """
     if isinstance(series, type):
         series = series()
+    # 판형·도련처럼 **어느 책에나 있는 것**은 계열이 저마다 선언하게 두지
+    # 않는다 — 그러면 인디자인의 「문서 설정」이 책마다 다른 꼴이 된다.
+    base = []
+    bf = getattr(series, "base_knobs", None)
+    if bf is not None:
+        base = list(bf()) or []
     fn = getattr(series, "knobs", None)
     if fn is None:
-        return []
-    return list(fn(cfg)) or []
+        return base
+    return base + (list(fn(cfg)) or [])
 
 
 def describe(cfg, series):

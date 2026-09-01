@@ -168,6 +168,16 @@ class FinalSeries(Series):
         return fits
 
     @staticmethod
+    def _cap2(kind, m):
+        """두 칸을 줬을 때의 높이. 어휘(면당 한 지문)는 두 칸이 없다."""
+        k = render_mod.SLOT_KIND[kind]
+        if k == "slot":
+            return 2 * m["slot"] - 0.5          # 사분면 두 칸 = 한 단
+        if k == "col":
+            return 2 * m["body_h"] - 1.0        # 한 면 두 단
+        return None
+
+    @staticmethod
     def _one_fit(kind, nat, cap, m):
         over = nat - cap
         line = render_mod.LINE_MM[kind]
@@ -175,15 +185,16 @@ class FinalSeries(Series):
             fx = m["fixed_mm"]
             lead = (cap - fx) / max(1.0, nat - fx)
             return {"lead": round(max(m["min_lead"], lead), 4)}
-        if render_mod.SLOT_KIND[kind] == "slot":
-            cap2 = 2 * m["slot"] - 0.5
-            if nat <= cap2:
-                return {"span": 2}
-            fx = m["fixed_mm"]
-            return {"span": 2,
-                    "lead": round(max(m["min_lead"],
-                                      (cap2 - fx) / max(1.0, nat - fx)), 4)}
-        return {"flow": True}          # 한 단보다 긴 지문은 흘린다
+        cap2 = FinalSeries._cap2(kind, m)
+        if cap2 is None:
+            return {"flow": True}               # 어휘는 흘리는 수밖에 없다
+        if nat <= cap2:
+            return {"span": 2}
+        fx = m["fixed_mm"]
+        lead = (cap2 - fx) / max(1.0, nat - fx)
+        if lead >= m["min_lead"]:
+            return {"span": 2, "lead": round(lead, 4)}
+        return {"flow": True}          # 두 칸으로도 안 되면 흘린다
 
     @staticmethod
     def _log_fits(fits, log):
@@ -230,7 +241,7 @@ class FinalSeries(Series):
                 continue
             else:
                 fits[key] = ({"span": 2}
-                             if render_mod.SLOT_KIND[sec["kind"]] == "slot"
+                             if self._cap2(sec["kind"], m) is not None
                              else {"flow": True})
             changed += 1
         if changed:

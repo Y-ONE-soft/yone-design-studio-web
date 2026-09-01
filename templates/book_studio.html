@@ -202,6 +202,10 @@
               title="재단선(도련 3mm)을 점선으로">재단선</button>
       <button class="ide-b" data-view="base"
               title="기준선 격자 — 줄이 서로 맞는지 보는 데 씁니다">기준선</button>
+      <button class="ide-b" data-view="ruler"
+              title="눈금자 — 5mm·10mm 눈금 (인쇄에는 안 나갑니다)">눈금자</button>
+      <button class="ide-b" id="ide-guide"
+              title="안내선을 놓습니다 — 세로·가로 자리를 mm 로 적습니다">안내선</button>
     </div>
     <div class="ide-sep"></div>
 
@@ -2000,7 +2004,14 @@
       input.addEventListener('change', function () { sync(input.value); });
       t.addEventListener('change', function () { sync(t.value.trim()); });
     } else {
+      // ⚠ 판형은 책을 통째로 다시 흐르게 한다 — 만지려 할 때 알려 준다
       input = document.createElement('input'); input.type = 'number';
+      if (k.key === 'page.width' || k.key === 'page.height') {
+        input.addEventListener('focus', function () {
+          msg('⚠ 판형을 바꾸면 책이 통째로 다시 흐릅니다 — '
+              + '이미 납품한 책은 조심하세요');
+        });
+      }
       input.className = 'ide-t'; input.step = k.step || 0.1;
       if (k.min !== undefined) input.min = k.min;
       if (k.max !== undefined) input.max = k.max;
@@ -2295,10 +2306,36 @@
   var views = {};
   function applyViews() {
     var st = stageEl(); if (!st) return;
-    ['margin', 'bleed', 'base'].forEach(function (k) {
+    ['margin', 'bleed', 'base', 'ruler', 'guide'].forEach(function (k) {
       st.classList.toggle('show-' + k, !!views[k]);
     });
   }
+  // ── 안내선 — 사람이 자리를 적어 놓는다 ─────────────────
+  // 인디자인은 눈금자에서 끌어다 놓지만, 조판 지면은 좌표계가 면마다라
+  // **mm 로 적는 편이 정확하다**(끌어 놓으면 배율에 따라 흔들린다).
+  $('ide-guide').addEventListener('click', function () {
+    var cur = views.guide;
+    if (cur) {
+      views.guide = false;
+      $('ide-guide').classList.remove('on');
+      applyViews(); msg('안내선 끔');
+      return;
+    }
+    var v = prompt('안내선 자리 — 세로 두 개, 가로 두 개를 mm 로\n'
+                   + '예) 23,187,31,277   (빈 자리는 비워 두세요)',
+                   '23,187,31,277');
+    if (v === null) return;
+    var a = v.split(',').map(function (x) { return x.trim(); });
+    var st = stageEl(); if (!st) return;
+    ['--gx1', '--gx2', '--gy1', '--gy2'].forEach(function (k, i) {
+      st.style.setProperty(k, a[i] ? a[i] + 'mm' : '-999mm');
+    });
+    views.guide = true;
+    $('ide-guide').classList.add('on');
+    applyViews();
+    msg('안내선을 놓았습니다 (인쇄에는 안 나갑니다)');
+  });
+
   $('ide-view').addEventListener('click', function (e) {
     var b = e.target.closest && e.target.closest('button[data-view]');
     if (!b) return;

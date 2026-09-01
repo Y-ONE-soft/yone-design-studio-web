@@ -331,8 +331,11 @@ u { text-underline-offset: 0.14em; text-decoration-thickness: 0.05em; }
  * `visibility: hidden` 이라 PDF 에 글자가 안 남는다 — 정답이 복사되지 않는다. */
 .bl { white-space: nowrap; }
 .bl b { font-weight: 700; color: var(--blank); }
-.bl .ln { border-bottom: 0.5pt solid var(--ink); }
-.bl .ln i { visibility: hidden; font-style: normal; }
+.bl i {
+  display: inline-block; font-style: normal;
+  border-bottom: 0.5pt solid var(--ink);
+  height: 0.92em; vertical-align: baseline;
+}
 
 /* 아이콘 (전부 SVG — 래스터 자산 없음) */
 svg.ico { vertical-align: middle; }

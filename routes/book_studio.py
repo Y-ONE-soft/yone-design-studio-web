@@ -1246,6 +1246,41 @@ body.tool-text [class*="vref"]:hover, body.tool-para [class*="vref"]:hover {
 /* 고치는 중 — **겉모습은 그대로 두고** 여기라는 것만 알린다.
    예전에는 바탕을 노랗게 칠하고 글꼴을 고정폭으로 바꿨는데, 그러면 누를 때마다
    글이 딴것처럼 보여서 조판을 보는 눈이 흐트러진다. 인디자인은 커서만 깜빡인다. */
+/* ── 눈금자 (인디자인의 상단·좌측 눈금자) ─────────────────────────
+   지면 위에 덧그린다. mm 단위로 5mm 마다 눈금, 10mm 마다 굵은 눈금.
+   ⚠ 조판에 영향을 주면 안 되므로 `pointer-events:none` 이고 인쇄에 안 나간다. */
+#viv.show-ruler [data-vivliostyle-page-container]::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 8;
+  background-image:
+    repeating-linear-gradient(to right,
+      rgba(0,0,0,.30) 0 0.2mm, transparent 0.2mm 10mm),
+    repeating-linear-gradient(to right,
+      rgba(0,0,0,.16) 0 0.15mm, transparent 0.15mm 5mm),
+    repeating-linear-gradient(to bottom,
+      rgba(0,0,0,.30) 0 0.2mm, transparent 0.2mm 10mm),
+    repeating-linear-gradient(to bottom,
+      rgba(0,0,0,.16) 0 0.15mm, transparent 0.15mm 5mm);
+  background-size: 100% 4mm, 100% 2.5mm, 4mm 100%, 2.5mm 100%;
+  background-position: left top, left top, left top, left top;
+  background-repeat: no-repeat;
+}
+
+/* ── 안내선 (사람이 놓은 자리) ───────────────────────────────────
+   `--gx1..4` · `--gy1..4` 에 mm 값이 들어오면 그 자리에 선을 긋는다. */
+#viv.show-guide [data-vivliostyle-page-container]::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 8;
+  background-image:
+    linear-gradient(to right, rgba(0,190,255,.75) 0 0.2mm, transparent 0.2mm),
+    linear-gradient(to right, rgba(0,190,255,.75) 0 0.2mm, transparent 0.2mm),
+    linear-gradient(to bottom, rgba(0,190,255,.75) 0 0.2mm, transparent 0.2mm),
+    linear-gradient(to bottom, rgba(0,190,255,.75) 0 0.2mm, transparent 0.2mm);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+  background-position:
+    var(--gx1, -999mm) 0, var(--gx2, -999mm) 0,
+    0 var(--gy1, -999mm), 0 var(--gy2, -999mm);
+  background-repeat: no-repeat;
+}
+
 /* ── 보기 보조 (인디자인의 안내선·재단선 보기) ────────────────────
    ⚠ 이건 **보기 위한 것**이라 조판에 영향을 주면 안 된다. 그래서 지면 위에
      덧그리기만 하고(`pointer-events:none`), 인쇄에는 안 나간다. */
