@@ -61,6 +61,14 @@ def drop_notes(s):
     (`(= judg(e)ment)` · `(↔ uncertainty … 불확실(성))`). 여는 괄호부터 깊이를
     세어 닫는 자리를 찾는다.
     """
+    # ⚠ 작업대에서 글자 서식을 걸면 이 값이 **서식 조각**으로 온다. 그때
+    #   정규식이 죽어 조판이 통째로 안 나왔다. 모양을 지키며 글만 훑는다.
+    if isinstance(s, list):
+        return [drop_notes(x) for x in s]
+    if isinstance(s, dict):
+        d = dict(s)
+        d["t"] = drop_notes(s.get("t", ""))
+        return d
     src = s or ""
     out, i = [], 0
     while i < len(src):

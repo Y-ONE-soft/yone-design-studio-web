@@ -62,7 +62,27 @@ ex_kr = ex_en
 
 
 def meaning(s):
-    """뜻 — 품사는 글리프 배지로, 품사가 바뀌면 줄바꿈, 의미번호는 보조색."""
+    """뜻 — 품사는 글리프 배지로, 품사가 바뀌면 줄바꿈, 의미번호는 보조색.
+
+    ⚠ 작업대에서 글자 서식을 걸면 이 값이 **서식 조각**으로 온다(예전에는
+      정규식이 죽어 조판이 통째로 안 나왔다). 조각마다 따로 훑고 서식을
+      다시 씌운다 — 품사 배지·의미번호가 **조각 경계에 걸치면** 그 조각에서는
+      배지가 안 잡힌다. 낱말 하나에 서식을 거는 정도는 그대로 나온다.
+    """
+    if isinstance(s, dict):
+        inner = meaning(s.get("t", ""))
+        a = _rtx.seg_attr(s)
+        if a:
+            inner = f"<span{a}>{inner}</span>"
+        if s.get("u"):
+            inner = f"<u>{inner}</u>"
+        if s.get("b"):
+            inner = f"<b>{inner}</b>"
+        if s.get("i"):
+            inner = f"<i>{inner}</i>"
+        return inner
+    if isinstance(s, list):
+        return "".join(meaning(x) for x in s)
     hits = [(m.start(), m.end(), m.group(1)) for m in _RE_POS_ANY.finditer(s)]
     if not hits:
         return _RE_SENSE.sub(lambda m: f"<i>{m.group(1)}.</i>", esc_gap(s))
