@@ -67,6 +67,13 @@ class Series(object):
         return self.style_names.get(cls, "")
 
     # ── 조판 결과가 놓이는 폴더 ──
+    def accepts_text(self, key, lst):
+        """`<…>.<key>` 목록에 **글 한 줄**을 끼울 수 있나.
+
+        블록(표·상자)보다 좁다 — 기록을 담는 목록은 글을 못 받는다.
+        """
+        return text_like(lst)
+
     def accepts_block(self, key, lst):
         """`<…>.<key>` 목록에 표·상자를 끼울 수 있나 — **계열이 안다.**
 
@@ -117,6 +124,25 @@ class Series(object):
 # 이 열쇠들이 있으면 **덩어리**다 — 그 목록에 표·상자를 끼우면 조판이 깨진다
 CHUNK_KEYS = ("stem", "blocks", "problems", "vocab", "answers", "sections",
               "lessons", "units", "parts")
+
+
+def text_like(lst):
+    """이 목록에 **글 한 줄**을 끼워도 되나 — 블록(표·상자)과는 다른 질문이다.
+
+    ⚠ 낱말 목록·문항 목록은 **블록은 받아도 글은 못 받는다.** 계열 렌더러가
+      그 자리에서 `it["en"]`·`unit["label"]` 처럼 **기록으로** 읽기 때문이다.
+      실측: `lessons.0.vocab` 에 빈칸 한 글자를 넣었더니 조판이 통째로 멎었다.
+
+    받는 것은 **글 목록**뿐이다 — 글자열, 서식 조각 목록, `{"t": …}` 조각.
+    """
+    for x in lst[:8]:
+        if isinstance(x, str):
+            return True
+        if isinstance(x, list):
+            return True                     # 서식 조각 목록
+        if isinstance(x, dict):
+            return "t" in x                 # 서식 조각이면 글이다
+    return not lst
 
 
 def para_like(lst):

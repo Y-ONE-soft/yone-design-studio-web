@@ -169,12 +169,16 @@ class FinalSeries(Series):
 
     @staticmethod
     def _cap2(kind, m):
-        """두 칸을 줬을 때의 높이. 어휘(면당 한 지문)는 두 칸이 없다."""
+        """두 칸을 줬을 때의 높이.
+
+        ⚠ 어법·영작(면당 두 단)에는 **두 칸이 없다.** 완성본은 긴 지문도
+          한 단에 두고 넘치면 이어 흘린다 — 전폭 한 단으로 깔면 그 면만
+          글줄이 두 배로 길어지고 한 면을 통째로 쓴다(실증: 명일3 3면).
+        어휘(면당 한 지문)도 두 칸이 없다.
+        """
         k = render_mod.SLOT_KIND[kind]
         if k == "slot":
             return 2 * m["slot"] - 0.5          # 사분면 두 칸 = 한 단
-        if k == "col":
-            return 2 * m["body_h"] - 1.0        # 한 면 두 단
         return None
 
     @staticmethod

@@ -13,7 +13,7 @@
   2 발문 누락   발문이 빈 문항 중 묶음 구성원이 아닌 것
   3 문항 수    원고 머리 선언 vs 파싱 결과
   4 출처 누출   교재명·기출 출처가 시험지에 남았는가
-  5 머리표     `exam-head` 가 있는가
+  5 머리표     1쪽 흐름(`exam-head`) 또는 러닝(`run-table`/`run-line`)에 있는가
   6 묶음 크기   6문항 넘는 묶음(대개 오탐)
   7 원고 그림   원고에 도표가 있는데 PDF 에 그림이 없는가
   8 밑줄       원고 run 의 밑줄이 HTML 로 넘어왔는가
@@ -310,7 +310,10 @@ def check_leak(pdf_text):
 # ── 5. 머리표 ───────────────────────────────────────────────────────────────
 
 def check_head(html):
-    n = html.count('class="exam-head"')
+    # 머리표는 1쪽 흐름(`exam-head`)에 오기도 하고, 매 쪽 반복이면 러닝
+    # 요소(`run-table`·`run-line`)로 간다. 둘 중 하나면 있는 것이다.
+    n = (html.count('class="exam-head"') + html.count("run-table")
+         + html.count("run-line"))
     if n:
         return OK, "있다", {"exam_head": n}
     return FAIL, "exam-head 없다", {"exam_head": 0}

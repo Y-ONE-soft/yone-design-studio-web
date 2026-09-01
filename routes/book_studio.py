@@ -378,7 +378,7 @@ def api_op():
         cur, _raw = ed.preview(cfg)
         base = ref.rsplit(".", 1)[0]
         lst = ed.get(cur, base)
-        if not isinstance(lst, list) or not _accepts(cfg, base, lst):
+        if not isinstance(lst, list) or not _accepts(cfg, base, lst, "text"):
             return jsonify({"error": "여기에는 넣을 수 없습니다 — "
                                      "지문·선지·본문 **한 줄**을 고르세요"}), 409
     st = ed.push(cfg, {k: v for k, v in p.items()
@@ -408,7 +408,7 @@ def api_blankpage():
         return jsonify({"error": "이상한 자리표"}), 400
     cfg = bookmod.load(d)
     cur, _raw = ed.preview(cfg)
-    base, at = _list_slot(ref, cur, cfg)
+    base, at = _list_slot(ref, cur, cfg, kind="text")
     if base is None:
         return jsonify({"error": "여기에는 넣을 수 없습니다 — "
                                  "지문·선지·본문 **한 줄**을 고르세요"}), 409
@@ -887,7 +887,7 @@ def _hist(st):
     return {"head": st["head"], "total": len(st["ops"])}
 
 
-def _list_slot(ref, data=None, cfg=None):
+def _list_slot(ref, data=None, cfg=None, kind="block"):
     """이 자리표가 **어느 목록의 몇 번째**인가 → (목록 경로, 넣을 자리).
 
     표·상자는 목록 안에 들어간다. 예전에는 `blocks` 목록만 찾아서 문항 안에서만
@@ -905,7 +905,7 @@ def _list_slot(ref, data=None, cfg=None):
             base = ".".join(parts[:-1])
             if data is not None:
                 lst = _ed.get(data, base)
-                ok = isinstance(lst, list) and _accepts(cfg, base, lst)
+                ok = isinstance(lst, list) and _accepts(cfg, base, lst, kind)
                 if not ok:
                     parts.pop()
                     continue
@@ -914,16 +914,24 @@ def _list_slot(ref, data=None, cfg=None):
     return None, 0
 
 
-def _accepts(cfg, base, lst):
-    """이 목록이 표·상자를 받나 — **계열에게 묻는다**(모르면 공용 규칙)."""
+def _accepts(cfg, base, lst, kind="block"):
+    """이 목록이 그것을 받나 — **계열에게 묻는다**(모르면 공용 규칙).
+
+    ⚠ **글 한 줄**과 **블록(표·상자)** 은 다른 질문이다. 낱말·문항 목록은
+      블록은 받아도 글은 못 받는다(렌더러가 기록으로 읽기 때문). 실측:
+      `lessons.0.vocab` 에 빈칸 한 글자를 넣었더니 조판이 통째로 멎었다.
+    """
     key = base.rsplit(".", 1)[-1]
     if cfg is not None:
         try:
             from core.render_vivlio import book as _b
-            return bool(_b._series(cfg).accepts_block(key, lst))
+            sr = _b._series(cfg)
+            fn = sr.accepts_text if kind == "text" else sr.accepts_block
+            return bool(fn(key, lst))
         except Exception:
             pass
-    return _para_like(lst)
+    from core.render_vivlio.series.base import text_like as _text_like
+    return _text_like(lst) if kind == "text" else _para_like(lst)
 
 
 # 판정은 `series/base.py` 한 곳에 있다 — 계열이 좁힐 수 있어야 해서 거기 산다.

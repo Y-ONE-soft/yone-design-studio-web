@@ -250,8 +250,8 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
  * (인디자인 경로는 여기서 지면 밖으로 흘려 글을 잘라 냈다.) */
 .blk.tall { height: calc(var(--slot) * 2); }
 /* 한 단 한 지문 섹션에서 두 칸 = **두 단**(한 면 통짜) */
-.sec-grammar .blk.tall, .sec-writing .blk.tall { height: auto;
-  column-span: all; break-before: page; break-after: page; }
+/* ⚠ 어법·영작에는 두 칸이 없다(`_cap2` 가 None). 이 규칙이 살아 있으면
+ *   전폭 한 단이 되어 완성본과 달라진다 — 남겨 두되 쓰이지 않는다. */
 /* 한 단보다 긴 지문 — 칸을 포기하고 **흘린다**(글을 잃지 않는 쪽을 고른다) */
 .blk.flow { height: auto; break-inside: auto; }
 /* 한 단 한 지문. ⚠ 칸 높이를 단 높이와 **똑같이** 주면 반올림 때문에 가끔
