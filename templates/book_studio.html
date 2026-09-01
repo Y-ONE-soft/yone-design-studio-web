@@ -614,7 +614,7 @@
    *  ⚠ 복제본은 **죽은 그림**이다(클릭도 스크롤도 안 먹는다). 새 면이 서면
    *    반드시 걷어야 한다 — 안 걷으면 고칠 수 없는 화면이 남는다.
    */
-  function veilOn(what) {
+  function veilOn(what, imgUrl) {
     var d = fdoc(); if (!d || !d.body) return;
     veilOff();
     var v = d.createElement('div');
@@ -622,6 +622,28 @@
     v.style.cssText = 'position:fixed;inset:0;z-index:99998;background:#ececed;'
       + 'overflow:hidden;pointer-events:none';
     var pe = pageEl();
+    if (imgUrl && pe) {
+      // 먼 면으로 뛸 때 — **마지막 조판본(PDF)의 그 면**을 깔아 둔다.
+      // 조판 엔진은 1면부터 차례로 그려야 그 면에 닿는다(웹이든 설치형이든
+      // 조판은 앞에서부터 흐른다). 그동안 빈 판을 보여 주지 않는다.
+      var box0 = pe.getBoundingClientRect();
+      var im = d.createElement('img');
+      im.src = imgUrl;
+      im.style.cssText = 'position:absolute;left:' + box0.left + 'px;top:'
+        + box0.top + 'px;width:' + box0.width + 'px;height:' + box0.height
+        + 'px;object-fit:contain;background:#fff;'
+        + 'box-shadow:0 1px 6px rgba(0,0,0,.25)';
+      v.appendChild(im);
+      var tag = d.createElement('div');
+      tag.textContent = (what || '') + ' — 마지막 조판본 그림입니다';
+      tag.style.cssText = 'position:absolute;left:50%;bottom:6%;'
+        + 'transform:translateX(-50%);background:rgba(18,18,26,.86);color:#fff;'
+        + 'font:12px/1.4 -apple-system,BlinkMacSystemFont,sans-serif;'
+        + 'padding:6px 13px;border-radius:999px';
+      v.appendChild(tag);
+      d.body.appendChild(v);
+      return;
+    }
     if (pe) {
       // ⚠ 지면은 **확대·축소된 채**로 앉아 있다(화면 맞춤). 복제본에 크기만
       //   주면 배율이 빠져 글자가 커진 채로 덮인다 — 실제로 그렇게 나왔다.
@@ -2441,13 +2463,23 @@
     var mine = ++seeking;
     seekBusy = false;
     msg(n + '면으로 가는 중…');
+    // 세 면 넘게 뛰면 **먼 걸음**이다 — 그동안 지면이 멈춰 보이지 않게
+    // 마지막 조판본의 그 면을 깔아 둔다(있을 때만).
+    // ⚠ **견본을 보는 중이면 안 된다.** 견본은 앞부분만 조판한 판이라 면
+    //   번호가 PDF 와 다르다 — 그림을 깔면 **엉뚱한 면**을 보여 준다.
+    if (scope === 'full' && Math.abs(n - pageNow()) > 3
+        && thumbInfo && thumbInfo.pages >= n) {
+      veilOn(n + '면으로 가는 중',
+             '/book-studio/thumb/' + (thumbInfo.bid || bid) + '/' + n
+             + '.png?dpi=140&v=' + (thumbInfo.at || 0));
+    }
     var guard = 0;
     (function step() {
       if (mine !== seeking) return;               // 새 이동이 시작됐다
       var now = pageNow();
-      if (now === n) { drawPageNo(); msg(n + '면'); return; }
+      if (now === n) { veilOff(); drawPageNo(); msg(n + '면'); return; }
       if (guard++ > 300) {                        // 더 못 간다
-        drawPageNo(); msg('여기까지 갑니다 — ' + now + '면');
+        veilOff(); drawPageNo(); msg('여기까지 갑니다 — ' + now + '면');
         return;
       }
       viewer.navigateToPage(n > now ? V.Navigation.NEXT : V.Navigation.PREVIOUS);
@@ -2455,7 +2487,7 @@
         if (mine !== seeking) return;
         if (pageNow() !== now) { drawPageNo(); return step(); }
         if (t > 50) {                             // 3초를 기다려도 안 움직인다
-          drawPageNo(); msg('여기까지 갑니다 — ' + now + '면');
+          veilOff(); drawPageNo(); msg('여기까지 갑니다 — ' + now + '면');
           return;
         }
         setTimeout(function () { settle(t + 1); }, 60);

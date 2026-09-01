@@ -347,7 +347,7 @@ section.flow.onecol { break-before: auto; }
 .k-step1_a1 .zone.z-bottom, .k-step1_a1_2 .zone.z-bottom { top: 126.4mm !important; }
 .k-step1_b1 .zone { --body-gap: 9.0mm; }
 .k-step1_c1 .zone { --body-gap: 11.34mm; }
-.k-step2_a1 .grp { --body-gap: 7.9mm; }
+.k-step2_a1 .grp { --body-gap: 11.69mm; }   /* 실측 라벨↔본문 10.44mm */
 /* 빈칸 계열은 지문번호가 판면 바깥 세로라 본문이 3mm 안으로 들어온다
  * (실측: 사이드 라벨 x=12.6 · 문항 번호 x=26.0 · 본문 x=29.1) */
 .k-step1_c2 .grp, .k-step2_c1 .grp { padding-left: 3mm; padding-top: 3.45mm; }
@@ -370,8 +370,7 @@ u { text-underline-offset: 0.14em; text-decoration-thickness: 0.05em; }
 
 /* 아이콘 (전부 SVG — 래스터 자산 없음) */
 svg.ico { vertical-align: middle; }
-svg.tf { width: 21.08mm; height: 4.76mm; vertical-align: -1.3mm;
-         margin-left: 3mm; flex: 0 0 auto; }
+svg.tf { width: 21.08mm; height: 4.76mm; vertical-align: -1.3mm; margin-left: 3mm; }
 svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 .ansline { display: block; margin-top: 5.4mm; }
 .ansline svg { display: block; width: 94.91mm; height: 4.1mm; }
@@ -391,14 +390,15 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
                   padding-right: 3mm; }   /* 본문 정리는 3mm (실측 글 x=26) */
 .box-body.cream p { line-height: 4.94mm; }   /* 실측: B1 만 행간이 넓다 */
 .box-body p { font-size: 8.5pt; line-height: 4.59mm; text-align: justify; }
+/* 버튼은 글 뒤에 그대로 붙는다. 다만 **줄을 넘겨 혼자 내려가는 경우**(.drop)에만
+ * 마지막 줄을 오른쪽으로 몰아 문제에 붙어 보이게 한다(파이썬이 미리 판별). */
 .ox {
-  position: relative; margin-top: 7.6mm; padding-left: 5.1mm;
-  font-size: 9.5pt; line-height: 4.2mm;
-  display: flex; align-items: flex-end;   /* 버튼은 늘 마지막 줄 오른쪽에 */
+  position: relative; margin-top: 7.6mm; padding-left: 7.2mm;
+  font-size: 9.5pt; line-height: 4.2mm; text-align: justify;
 }
-.ox .txt { flex: 1 1 auto; text-align: justify; }
+.ox.drop { text-align-last: right; }
 .ox .n {
-  position: absolute; left: 1mm; top: 0.2mm;
+  position: absolute; left: 1.2mm; top: 0.2mm;   /* 실측: 번호 24.0 · 글 30.0 */
   font-family: "LotteMartDream", "Montserrat", sans-serif;
   font-size: 9pt; color: var(--num-blue); letter-spacing: normal;
 }
@@ -540,14 +540,15 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 .ox-ex .f2 { left: 68.48mm; }
 .ox-ex .f3 { left: 89.11mm; }
 
+/* 버튼은 글 뒤에 그대로 붙는다. 다만 **줄을 넘겨 혼자 내려가는 경우**(.drop)에만
+ * 마지막 줄을 오른쪽으로 몰아 문제에 붙어 보이게 한다(파이썬이 미리 판별). */
 .ox {
-  position: relative; margin-top: 7.6mm; padding-left: 5.1mm;
-  font-size: 9.5pt; line-height: 4.2mm;
-  display: flex; align-items: flex-end;   /* 버튼은 늘 마지막 줄 오른쪽에 */
+  position: relative; margin-top: 7.6mm; padding-left: 7.2mm;
+  font-size: 9.5pt; line-height: 4.2mm; text-align: justify;
 }
-.ox .txt { flex: 1 1 auto; text-align: justify; }
+.ox.drop { text-align-last: right; }
 .ox .n {
-  position: absolute; left: 1mm; top: 0.2mm;
+  position: absolute; left: 1.2mm; top: 0.2mm;   /* 실측: 번호 24.0 · 글 30.0 */
   font-family: "LotteMartDream", "Montserrat", sans-serif;
   font-size: 9pt; color: var(--num-blue); letter-spacing: normal;
 }
@@ -676,10 +677,9 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 }
 .gox {
   position: relative; margin-top: 8.77mm; padding-left: 7mm;   /* 실측 항목 간격 13.76mm */
-  font-size: 9pt; line-height: 4.9mm;
-  display: flex; align-items: flex-end;
+  font-size: 9pt; line-height: 4.9mm; text-align: justify;
 }
-.gox .txt { flex: 1 1 auto; text-align: justify; }
+.gox.drop { text-align-last: right; }
 .gox .n {
   position: absolute; left: 1mm; top: 0.5mm;
   font-family: "LotteMartDream", "Montserrat", sans-serif;
@@ -717,20 +717,23 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
   padding-top: 5mm; break-after: avoid;
 }
 .q3 {
-  padding-left: 9mm; text-indent: -9mm;
+  padding-left: var(--qn-w, 9mm); text-indent: calc(-1 * var(--qn-w, 9mm));
   font-size: 8pt; line-height: 4.94mm; text-align: justify;
-  padding-top: 5.6mm;            /* 컬럼 흐름에서 margin-top 이 소실된다(실측) */
+  padding-top: 8.93mm;           /* 실측 문항 간격 8.02mm (컬럼 흐름은 margin 소실) */
   break-after: avoid;
 }
 .flowbody .q3:first-child, .flowbody > .q3:first-of-type { padding-top: 0; }
 .q3 .qn {
-  display: inline-block; width: 9mm; text-indent: 0;
+  display: inline-block; min-width: var(--qn-w, 9mm); text-indent: 0;
+  padding-right: 2.9mm; box-sizing: border-box;   /* 세 자리 번호도 글과 안 붙는다 */
   font-family: "Elice DX Neolli", sans-serif; font-weight: 700; font-size: 12pt;
   color: var(--sel); letter-spacing: 0.02em; line-height: 0; vertical-align: -0.55mm;
 }
 .p3 { font-size: 8pt; line-height: 4.94mm; text-align: justify; padding-top: 1.4mm; }
 /* 실전 문항은 한 덩어리 — 면이 갈릴 때 통째로 넘어간다 */
 .q-block { break-inside: avoid; }
+/* 세트 문항(안내문 + 지문 + 딸린 문항)은 통째로 — '위 글'을 앞장에서 찾게 하면 안 된다 */
+.set-block { break-inside: avoid; }
 .ch3 { font-size: 8pt; line-height: 5.23mm; text-align: justify;
        padding-left: 3.6mm; text-indent: -3.6mm; }
 .ch3.first { padding-top: 3.2mm; }        /* 지문과 선지를 눈에 띄게 띄운다 */

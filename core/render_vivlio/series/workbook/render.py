@@ -48,6 +48,60 @@ def esc(t):
     return html.escape(t or "", quote=False)
 
 
+# ── 글자 폭 재기 ──────────────────────────────────────────────────────
+# O|X 버튼이 마지막 줄에 붙는지, 아니면 줄을 넘겨 혼자 내려가는지 **미리** 알아야
+# 한다(CSS 로는 판별이 안 된다). 넘어갈 때만 오른쪽 정렬로 돌린다.
+_METRICS = {}
+
+
+def _metrics():
+    if "w" not in _METRICS:
+        import os
+        from fontTools.ttLib import TTFont
+        fp = os.path.expanduser("~/Library/Fonts/NotoSansCJKkr-Regular.otf")
+        try:
+            f = TTFont(fp, lazy=True)
+            _METRICS["upm"] = f["head"].unitsPerEm
+            _METRICS["cmap"] = f.getBestCmap()
+            _METRICS["hmtx"] = f["hmtx"]
+            _METRICS["w"] = True
+        except Exception:
+            _METRICS["w"] = False
+    return _METRICS.get("w")
+
+
+def text_mm(t, pt, track_em=-0.028):
+    """글자 폭(mm) — 자간 보정 포함. 서체를 못 읽으면 None."""
+    if not _metrics():
+        return None
+    upm, cmap, hmtx = _METRICS["upm"], _METRICS["cmap"], _METRICS["hmtx"]
+    total = 0
+    n = 0
+    for ch in t:
+        g = cmap.get(ord(ch))
+        if g is None:
+            g = cmap.get(ord("x"))
+        if g is None:
+            continue
+        total += hmtx[g][0]
+        n += 1
+    mm = total / upm * pt * 25.4 / 72.0
+    return mm + n * track_em * pt * 25.4 / 72.0
+
+
+def button_drops(plain, pt, width_mm, btn_mm=24.1):
+    """마지막 줄에 버튼이 못 붙는가 — 줄 용량을 재서 어림한다."""
+    w = text_mm(plain, pt)
+    if w is None or width_mm <= 0:
+        return False
+    if w <= width_mm - btn_mm:
+        return False                      # 한 줄에 글 + 버튼이 다 들어간다
+    import math
+    lines = max(1, math.ceil(w / width_mm))
+    last = w - (lines - 1) * width_mm
+    return last > width_mm - btn_mm
+
+
 def runs_html(block):
     """runs 를 살려 밑줄을 반영한다. runs 가 없으면 본문 그대로."""
     runs = block.get("runs") or []
@@ -212,8 +266,10 @@ def blocks_html(blocks, step, ctx=None):
             body = runs_html(b)
             if m:
                 body = body[len(m.group(0)):] if body.startswith(m.group(0)) else body
-            out.append(f'<div class="ox"><span class="n">{num:02d}</span>'
-                       f'<span class="txt">{body}</span>'
+            plain = re.sub(r"<[^>]+>", "", body)
+            drop = button_drops(plain, 9.5, 160.8)
+            out.append(f'<div class="ox{" drop" if drop else ""}">'
+                       f'<span class="n">{num:02d}</span>{body}'
                        f'{icon_html(b.get("icon") or "TF 버튼", step)}</div>')
             i += 1
             continue
@@ -228,7 +284,9 @@ def blocks_html(blocks, step, ctx=None):
                 if body.startswith(m.group(0)):
                     body = body[len(m.group(0)):]
                 num = f'<span class="n">{int(m.group(1)):02d}.</span>'
-            out.append(f'<div class="gox">{num}<span class="txt">{body}</span>'
+            plain = re.sub(r"<[^>]+>", "", body)
+            drop = button_drops(plain, 9.0, 158.9)
+            out.append(f'<div class="gox{" drop" if drop else ""}">{num}{body}'
                        f'{icon_html(b.get("icon") or "TF 버튼", step)}</div>')
             i += 1
             continue
@@ -564,6 +622,7 @@ _S3_BOX = {"s3_bg": "bg3", "s3_cond": "cond3", "s3_bogi": "bogi3"}
 def s3_blocks(blocks):
     out, i, n, qn = [], 0, len(blocks), 0
     prev = None
+    setopen = False
     while i < n:
         b = blocks[i]
         r = b["role"]
@@ -607,7 +666,15 @@ def s3_blocks(blocks):
                        f'{runs_html(b)}</p>')
             prev = "ch"
         elif r == "intro":
-            out.append(f'<p class="s3-intro">{esc(b.get("text"))}</p>')
+            # 새 세트가 열린다 — 앞 문항 덩어리를 닫고 세트 덩어리를 연다.
+            if qn:
+                out.append("</div>")
+                qn = 0
+            t = _RE_SRCCODE.sub("", (b.get("text") or "").strip())
+            out.append(f'</div><div class="set-block">'
+                       if setopen else '<div class="set-block">')
+            setopen = True
+            out.append(f'<p class="s3-intro">{esc(t)}</p>')
             prev = "i"
         elif (b.get("text") or "").strip():
             out.append(f'<p class="{"ans3" if r in ("s3_answer", "s3_word") else "p3"}">'
@@ -615,6 +682,8 @@ def s3_blocks(blocks):
             prev = "a"
         i += 1
     if qn:
+        out.append("</div>")
+    if setopen:
         out.append("</div>")
     return "".join(out)
 

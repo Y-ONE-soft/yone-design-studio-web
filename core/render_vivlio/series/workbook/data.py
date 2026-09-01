@@ -262,10 +262,16 @@ def from_plan(plan, cfg=None, log=print):
         for k2, m2 in STEP_META.items():
             if m2["layout"] == "attach" and m2.get("attach_to") == key and k2 in flows:
                 btm = _groups(flows[k2].get("units"), unknown, soft)
+                # ⚠ 앞에서부터 짝지으면 **하단 문제가 없는 지문**(수능만만의 '본문'
+                #   구역)이 남의 문제를 달고 나온다. 하단은 뒤쪽 지문부터 붙으므로
+                #   **뒤에서부터** 짝짓는다(실측).
+                lead = max(0, len(st["groups"]) - len(btm))
                 for i, g in enumerate(st["groups"]):
-                    if i < len(btm):
-                        g["attach"] = btm[i]["units"]
-                log(f"  {k2} → {key} 하단으로 {len(btm)}묶음")
+                    j = i - lead
+                    if 0 <= j < len(btm):
+                        g["attach"] = btm[j]["units"]
+                log(f"  {k2} → {key} 하단으로 {len(btm)}묶음 "
+                    f"(앞 {lead}묶음은 하단 없음)")
         steps.append(st)
 
     _inherit_labels(steps, log)

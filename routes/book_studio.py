@@ -1044,7 +1044,12 @@ def _last_pdf(cfg, d):
 
 @bp.route("/book-studio/thumb/<bid>/<int:n>.png")
 def thumb(bid, n):
-    """면 하나의 썸네일. 만든 것은 `build/thumbs/` 에 둔다(다시 안 그린다)."""
+    """면 하나의 그림. 만든 것은 `build/thumbs/` 에 둔다(다시 안 그린다).
+
+    `?dpi=` 로 크기를 고른다(24~160). 페이지 패널은 작은 것(24)을 쓰고,
+    **먼 면으로 뛸 때**는 큰 것을 지면 자리에 잠깐 깔아 둔다 — 조판 엔진이
+    그 면까지 그리는 데 시간이 걸려서, 그동안 빈 판을 보여 주지 않으려고.
+    """
     from core.render_vivlio import book as bookmod
     d, meta = _book_dir(bid)
     if not d:
@@ -1055,15 +1060,19 @@ def thumb(bid, n):
         return abort(404)
     tdir = os.path.join(_build_dir(d), "thumbs")
     os.makedirs(tdir, exist_ok=True)
+    try:
+        dpi = max(24, min(int(request.args.get("dpi") or 24), 160))
+    except ValueError:
+        dpi = 24
     stamp = int(os.path.getmtime(pdf))
-    out = os.path.join(tdir, f"{stamp}_{n}.png")
+    out = os.path.join(tdir, f"{stamp}_{n}_{dpi}.png")
     if not os.path.exists(out):
         try:
             import fitz
             doc = fitz.open(pdf)
             if n > doc.page_count:
                 return abort(404)
-            doc[n - 1].get_pixmap(dpi=24).save(out)
+            doc[n - 1].get_pixmap(dpi=dpi).save(out)
             doc.close()
         except Exception:
             return abort(500)
