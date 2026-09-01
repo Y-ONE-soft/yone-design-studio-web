@@ -154,9 +154,20 @@ body {
  * 아무것도 안 잡혔다(실측: 빈 면이 그대로 남았다). 러닝 요소 바로 뒤로 짚는다. */
 .run + .grp { break-before: auto; }
 .attach { break-inside: avoid; margin-top: 0; }
-.topzone { min-height: 129.3mm; }   /* 실물 하단 발문 y=156.78mm 자리 맞춤 */
+.topzone { }   /* 하단 문제를 고정 자리에 못 박지 않는다 (⑧ 참조) */
 
-/* 스텝 안내문 — 머리말 오른쪽 (어법 O/X 등) */
+/* 스텝 안내문 — 예시가 붙는 **첫 면에만**. 머리말 띠(y=16.99mm) 자리에 앉힌다. */
+.note-once {
+  position: absolute; left: 68.5mm; top: -9.51mm;
+  font-family: "Elice Baeum", sans-serif; font-size: 9pt; line-height: 1;
+  color: var(--ink); letter-spacing: normal;
+}
+.note-once::before {
+  content: "\25CF"; color: var(--s2); font-size: 5pt;
+  vertical-align: 0.25em; margin-right: 1.6mm;
+}
+
+/* 스텝 안내문 — 머리말 오른쪽 (옛 자리, 지금은 안 쓴다) */
 .hdr .note::before {
   content: "\25CF"; color: var(--s2); font-size: 5pt;
   vertical-align: 0.25em; margin-right: 1.6mm;
@@ -268,17 +279,18 @@ section.flow.onecol { break-before: auto; }
 }
 /* 오른쪽 사이드 탭 */
 .tabs { position: absolute; left: 204.5mm; top: 0; width: 11.5mm; height: var(--page-h); }
-.r-hdrR .tabs { left: 179.5mm; }   /* 마진 박스(왼쪽 25mm) 기준으로 되돌림 */
+.r-hdrR .tabs { left: 181mm; }     /* 실측: 탭 x=204.5~216 (도련까지) */
 .tabs b {
   position: absolute; right: 0; width: 11.5mm; height: 26mm;
+  white-space: nowrap;                     /* 'STEP 01' 이 두 줄로 쪼개지지 않게 */
   font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 6.5pt;
   letter-spacing: 0.08em;
   writing-mode: vertical-rl; text-orientation: mixed;
   display: flex; align-items: center; justify-content: center;
 }
-.tabs b:nth-child(1) { top: 63mm; }
-.tabs b:nth-child(2) { top: 93mm; }
-.tabs b:nth-child(3) { top: 123mm; }
+.tabs b:nth-child(1) { top: 63.5mm; }
+.tabs b:nth-child(2) { top: 93.5mm; }
+.tabs b:nth-child(3) { top: 123.5mm; }
 .tabs b.t1 { background: var(--s1-tab); color: var(--s1); }
 .tabs b.t2 { background: var(--s2-tab); color: var(--s2); }
 .tabs b.t3 { background: var(--s3-tab); color: var(--s3); }
@@ -326,19 +338,19 @@ section.flow.onecol { break-before: auto; }
 
 
 /* 본문이 시작하는 자리 — 라벨 아래 간격. 스텝마다 실물이 다르다(실측 보정) */
-.grp > .box-body { margin-top: 7.0mm; }
-.k-step1_b2 .grp > .box-body { margin-top: 4.5mm; }
+.grp > .box-body { margin-top: 9.0mm; }
+.k-step1_b2 .grp > .box-body { margin-top: 6.5mm; }
 .zone > .pnum, .grp > .pnum { margin-bottom: var(--body-gap, 0mm); }
-.k-step1_a1 .zone, .k-step1_a1_2 .zone { --body-gap: 0.6mm; }
+.k-step1_a1 .zone, .k-step1_a1_2 .zone { --body-gap: 2.6mm; }
 /* 어휘 선택은 상·하 칸 자리가 다른 스텝과 다르다 (실측: 위 27.54 / 아래 151.04) */
 .k-step1_a1 .zone.z-top, .k-step1_a1_2 .zone.z-top { top: 2.2mm !important; }
 .k-step1_a1 .zone.z-bottom, .k-step1_a1_2 .zone.z-bottom { top: 126.4mm !important; }
-.k-step1_b1 .zone { --body-gap: 7.0mm; }
-.k-step1_c1 .zone { --body-gap: 4.3mm; }
-.k-step2_a1 .grp { --body-gap: 5.9mm; }
+.k-step1_b1 .zone { --body-gap: 9.0mm; }
+.k-step1_c1 .zone { --body-gap: 6.3mm; }
+.k-step2_a1 .grp { --body-gap: 7.9mm; }
 /* 빈칸 계열은 지문번호가 판면 바깥 세로라 본문이 3mm 안으로 들어온다
  * (실측: 사이드 라벨 x=12.6 · 문항 번호 x=26.0 · 본문 x=29.1) */
-.k-step1_c2 .grp, .k-step2_c1 .grp { padding-left: 3mm; padding-top: 1.45mm; }
+.k-step1_c2 .grp, .k-step2_c1 .grp { padding-left: 3mm; padding-top: 3.45mm; }
 .en { font-size: 8.5pt; line-height: 7.76mm; text-align: justify; }
 u { text-underline-offset: 0.14em; text-decoration-thickness: 0.05em; }
 
@@ -392,7 +404,7 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 .sum { margin-top: 4.4mm; position: relative; padding-left: 8.3mm; }
 .sum .badge {
   position: absolute; left: 0; top: 0.3mm;
-  width: 7.4mm; height: 3.4mm; border-radius: 1.7mm;
+  width: 7.4mm; height: 3.4mm; border-radius: 0.5mm;
   font-family: "Elice Baeum", sans-serif; font-weight: 700; font-size: 8pt;
   line-height: 3.4mm; text-align: center; color: #fff; letter-spacing: normal;
 }
@@ -402,7 +414,7 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 
 /* 하단 문제 (발문 + 지문 박스 + 선지) */
 .q-head {
-  position: relative; padding-left: 4mm;
+  position: relative; padding-left: 5.8mm;   /* 아이콘(4.1mm)과 글 사이를 띄운다 */
   font-family: "Elice Baeum", sans-serif; font-size: 9pt; line-height: 4.1mm;
 }
 .box-q {
@@ -469,6 +481,7 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
   font-family: "LotteMartDream", "Montserrat", sans-serif;
   font-size: 8.95pt; color: var(--num-blue); letter-spacing: normal;
 }
+.blk-item { break-inside: avoid; }   /* 본문과 해석이 면 갈려 떨어지지 않게 */
 .blk-kr {
   padding-left: 5.5mm; margin-top: 1.9mm;
   font-size: 8pt; font-weight: 500; line-height: 4.24mm; color: var(--kr-gray);
@@ -559,12 +572,16 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 .q3 .qn {
   display: inline-block; width: 9mm; text-indent: 0;
   font-family: "Elice DX Neolli", sans-serif; font-weight: 700; font-size: 12pt;
-  color: var(--s3); letter-spacing: 0.02em; line-height: 0; vertical-align: -0.55mm;
+  color: var(--sel); letter-spacing: 0.02em; line-height: 0; vertical-align: -0.55mm;
 }
 .p3 { font-size: 8pt; line-height: 4.94mm; text-align: justify; padding-top: 1.4mm; }
+/* 실전 문항은 한 덩어리 — 면이 갈릴 때 통째로 넘어간다 */
+.q-block { break-inside: avoid; }
 .ch3 { font-size: 8pt; line-height: 5.23mm; text-align: justify;
-       padding-left: 3.4mm; text-indent: -3.4mm; }
-.ch3.first { padding-top: 1.4mm; }
+       padding-left: 3.6mm; text-indent: -3.6mm; }
+.ch3.first { padding-top: 3.2mm; }        /* 지문과 선지를 눈에 띄게 띄운다 */
+.p3.seq { padding-top: 2.4mm; }           /* 순서배열 (A)(B)(C) 사이 */
+.p3.seq.first { padding-top: 1.4mm; }
 .wrap3 { padding-top: 2.2mm; }
 .bg3 { background: var(--box-s3); padding: 1.1mm 3mm; }
 .bg3 p { font-size: 8pt; line-height: 4.94mm; text-align: justify; }

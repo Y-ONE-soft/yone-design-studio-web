@@ -12,6 +12,7 @@
     폴백으로 내려가되 **무엇이 폴백됐는지 남긴다**.
 """
 import os
+from urllib.parse import quote
 
 from core.render_vivlio.series.mockexam.profile import dig as P_dig
 
@@ -148,6 +149,38 @@ def _box_css(cls, box, spec):
     return "\n".join(out)
 
 
+def _confirm_svg(s, rect, rule):
+    """감독 확인란을 지면 배경 SVG 로 그린다 — 2행 1열(라벨 + 빈 기입행).
+
+    좌표는 지면 왼쪽 위(0,0) 기준 mm 다. 배경은 `no-repeat` 과 크기를 반드시
+    함께 적는다(중복 선언하면 통째로 무시된다).
+    """
+    if not rect:
+        return ""
+    x0, y0, x1, y1 = rect
+    ry = rule if rule else (y0 + y1) / 2
+    sw = round(s.confirm_rule_pt * 25.4 / 72, 3)      # pt → mm
+    fs = round((s.confirm_size or 8.5) * 25.4 / 72, 2)
+    fam = (s.confirm_font or "Dotum").replace('"', "")
+    # 라벨은 라벨행 세로 가운데 — 기준선을 글자 높이의 0.36 만큼 내린다
+    ty = round((y0 + ry) / 2 + fs * 0.36, 2)
+    parts = [
+        f'<rect x="{x0}" y="{y0}" width="{round(x1 - x0, 2)}" '
+        f'height="{round(y1 - y0, 2)}" fill="none" stroke="black" '
+        f'stroke-width="{sw}"/>',
+        f'<line x1="{x0}" y1="{round(ry, 2)}" x2="{x1}" y2="{round(ry, 2)}" '
+        f'stroke="black" stroke-width="{sw}"/>',
+        f'<text x="{round((x0 + x1) / 2, 2)}" y="{ty}" text-anchor="middle" '
+        f'font-family="{fam}" font-size="{fs}">{s.confirm_label}</text>',
+    ]
+    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" '
+           f'viewBox="0 0 {s.page_w} {s.page_h}" '
+           f'width="{s.page_w}mm" height="{s.page_h}mm">'
+           + "".join(parts) + "</svg>")
+    return (f'url("data:image/svg+xml;utf8,{quote(svg, safe="")}") '
+            f'no-repeat 0 0 / {s.page_w}mm {s.page_h}mm')
+
+
 def build_css(spec):
     """Spec → 이 학교 전용 CSS 한 벌."""
     s = spec
@@ -187,14 +220,7 @@ def build_css(spec):
         css.append("  padding: 3mm;")
     css.append("  @top-center { content: element(pageHeader); vertical-align: bottom; }")
     css.append("  @bottom-center { content: element(pageFooter); vertical-align: top; }")
-    if s.confirm and s.confirm_rect_other:
-        css.append("  @top-right { content: element(confirmOther); }")
     css.append("}")
-    if s.confirm and s.confirm_rect_first:
-        # 1쪽은 위치·크기가 다르다 — 실물 그대로
-        css.append("@page :first {")
-        css.append("  @top-right { content: element(confirmFirst); }")
-        css.append("}")
     css.append("")
 
     # ── 본문 흘림 ──
@@ -243,31 +269,16 @@ def build_css(spec):
 
     # ── 러닝 요소 ──
     if s.confirm and s.confirm_rect_other:
-        css.append("/* 감독 확인란 — 배재 계열. 좌표는 정본 실측(B4 환산) */")
-        cfam = font_family(s.confirm_font)
-        css.append(".confirm-other { position: running(confirmOther); }")
-        css.append(".confirm-first { position: running(confirmFirst); }")
-        css.append(f".confirm {{ box-sizing: border-box; "
-                   f"border: {s.confirm_rule_pt}pt solid #000; "
-                   f"font-family: {cfam}; font-size: {s.confirm_size}pt; "
-                   "line-height: 1.1; }")
-        css.append(".confirm-label { text-align: center; }")
-        css.append(f".confirm-label {{ border-bottom: {s.confirm_rule_pt}pt "
-                   "solid #000; }")
-        for which, rect, rule in (("first", s.confirm_rect_first,
-                                   s.confirm_rule_first),
-                                  ("other", s.confirm_rect_other,
-                                   s.confirm_rule_other)):
-            if not rect:
-                continue
-            x0, y0, x1, y1 = rect
-            w, h = round(x1 - x0, 2), round(y1 - y0, 2)
-            lab_h = round((rule - y0) if rule else h / 2, 2)
-            # 마진 박스는 상단 여백 오른쪽에 놓인다. 거기서 실제 좌표까지
-            # 옮긴다 — 기준점은 지면 왼쪽 위(0,0).
-            css.append(f".confirm-{which} {{ width: {w}mm; height: {h}mm; }}")
-            css.append(f".confirm-{which} .confirm-label "
-                       f"{{ height: {lab_h}mm; }}")
+        # 감독 확인란(배재 계열). 마진 박스로는 상단 여백에 갇혀 잘린다
+        # (배재1 −7.9mm, 배재2는 통째로 사라짐). 지면 배경 SVG 로 그리면
+        # 여백과 무관하게 정본 좌표에 정확히 앉는다.
+        first = _confirm_svg(s, s.confirm_rect_first, s.confirm_rule_first)
+        other = _confirm_svg(s, s.confirm_rect_other, s.confirm_rule_other)
+        if other:
+            css.append("/* 감독 확인란 — 정본 실측 좌표(B4 환산) */")
+            css.append("@page { background: " + other + "; }")
+        if first:
+            css.append("@page :first { background: " + first + "; }")
         css.append("")
     css.append(".page-header { position: running(pageHeader); }")
     css.append(".page-footer { position: running(pageFooter); }")

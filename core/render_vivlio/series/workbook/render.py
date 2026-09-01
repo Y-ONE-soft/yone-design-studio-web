@@ -27,7 +27,20 @@ _RE_OXNUM = re.compile(r"^\(?(\d+)\)?[.\s]\s*")
 _RE_LEADNUM = re.compile(r"^(\d+)\.\s*")
 _RE_BADGE = re.compile(r"^\{([^}]{1,6})\}\s*")
 _RE_ANSLEAK = re.compile(r"\s*[①②③④⑤⑥⑦⑧⑨⑩]\s*$")
+_RE_SRCCODE = re.compile(r"\s*\[\s*\d{2,6}\s*\]\s*$")   # 안내문 꼬리의 원고 코드
 _RE_CIRCLED = re.compile(r"^([①②③④⑤⑥⑦⑧⑨⑩])\s*")
+# 원고 부속물 — 번호 + 한글 구문명만 있는 줄(영어가 한 글자도 없다). 지면에 나가면
+# 출처처럼 보인다. 구조로 판정: 로마자가 전혀 없고, 숫자로 시작하며, 한글이 있다.
+_RE_NOISE = re.compile(r"^\s*\d+\s*[.\s][^A-Za-z]*$")
+
+
+def is_manuscript_noise(t):
+    t = (t or "").strip()
+    if not t or len(t) > 40:
+        return False
+    if re.search(r"[A-Za-z]", t):
+        return False
+    return bool(_RE_NOISE.match(t) and re.search(r"[가-힣]", t))
 
 
 def esc(t):
@@ -97,9 +110,9 @@ def svg_chk(step):
     col = "var(--s1)" if step == 1 else ("var(--s2)" if step == 2 else "var(--s3)")
     return (f'<svg class="ico chk" viewBox="0 0 44 44" '
             f'xmlns="http://www.w3.org/2000/svg">'
-            f'<rect width="44" height="44" rx="3" fill="{col}"/>'
-            f'<rect x="7" y="7" width="30" height="30" rx="9" fill="#fff"/>'
-            f'<path d="M13 23 L19 30 L32 13" stroke="{col}" stroke-width="4.5" '
+            f'<rect width="44" height="44" rx="8" fill="{col}"/>'
+            f'<rect x="8" y="8" width="28" height="28" rx="8" fill="#fff"/>'
+            f'<path d="M14 23 L20 29 L31 14" stroke="{col}" stroke-width="3.4" '
             f'fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>')
 
 
@@ -166,6 +179,9 @@ def blocks_html(blocks, step, ctx=None):
     while i < n:
         b = blocks[i]
         role = b["role"]
+        if is_manuscript_noise(b.get("text")) and not b.get("icon"):
+            i += 1                       # 원고 부속물(구문명 줄) — 지면에 내지 않는다
+            continue
 
         # ── 아이콘만 있는 블록 (답지 줄) ──
         if not (b.get("text") or "").strip() and b.get("icon"):
@@ -260,6 +276,7 @@ def blocks_html(blocks, step, ctx=None):
         # ── 하단 문제 발문 ──
         if role in ("q_prompt", "intro"):
             t = _RE_ANSLEAK.sub("", b.get("text") or "")   # 꼬리 정답 표시 제거
+            t = _RE_SRCCODE.sub("", t)                     # 꼬리 원고 코드 `[049]`
             cls = "q-head" if role == "q_prompt" else "s3-intro"
             ic = icon_html(b.get("icon") or "", step) if role == "q_prompt" else ""
             out.append(f'<div class="{cls}">{ic}{esc(t)}</div>')
@@ -285,9 +302,15 @@ def blocks_html(blocks, step, ctx=None):
             if m and body.startswith(m.group(0)):
                 body = body[len(m.group(0)):]
             num = m.group(1) if m else str(_next_blank_no(out))
-            out.append(f'<div class="blk"><span class="n">{esc(num)}.</span>'
-                       f'{body}</div>')
             i += 1
+            kr = ""
+            if i < n and blocks[i]["role"] == "blank_kr":
+                kt = _RE_LEADNUM.sub("", blocks[i].get("text") or "")
+                kr = f'<div class="blk-kr">{esc(kt)}</div>'
+                i += 1
+            # 본문과 해석은 **한 덩어리** — 면이 갈리면 짝이 떨어진다
+            out.append(f'<div class="blk-item"><div class="blk">'
+                       f'<span class="n">{esc(num)}.</span>{body}</div>{kr}</div>')
             continue
         if role == "blank_kr":
             t = _RE_LEADNUM.sub("", b.get("text") or "")
@@ -299,11 +322,9 @@ def blocks_html(blocks, step, ctx=None):
         if role in ("gram_sel", "vocab_sel"):
             cls = "gsel" if role == "gram_sel" else "en"
             body = sel_markup(runs_html(b))
-            if role == "gram_sel":
-                # 실물은 `[Check Up 1]` 같은 대괄호 라벨도 파랑 볼드다(실측 p30).
-                # 어법 선택 안에서만 — 다른 스텝의 대괄호까지 물들이지 않는다.
-                body = re.sub(r'(?<!>)(\[[^\[\]<>]+\])',
-                              r'<span class="sel">\1</span>', body)
+            # ⚠ `[Check Up 1]` 같은 대괄호 **라벨**은 선택지가 아니라 지문 번호다.
+            #   파랑 볼드로 물들이지 않는다(완성본은 파랑이지만 그건 고쳐야 할 쪽).
+            #   선택 괄호는 `/` 나 ⓐ 가 들어 있어 sel_markup 이 이미 가려낸다.
             out.append(f'<div class="{cls}"><p>{body}</p></div>'
                        if role == "gram_sel" else f'<p class="en">{body}</p>')
             i += 1
@@ -479,7 +500,10 @@ def fixed_section(st, idx):
         for gi, g in enumerate(groups):
             body = "".join(blocks_html(u, n, st["key"]) for u in g["units"])
             if st["key"] == "step2_b1" and gi == 0:
-                body = OX_EXAMPLE + body      # 템플릿 고정 예시 (첫 면에만)
+                # 템플릿 고정 예시 + 안내문 — **첫 면에만** 붙는다(실측).
+                note = (f'<div class="note-once">{esc(st["note"])}</div>'
+                        if st.get("note") else "")
+                body = note + OX_EXAMPLE + body
             head = ""
             if g.get("label"):
                 head = (f'<div class="pn-side"><span class="pnum">'
@@ -493,15 +517,14 @@ def fixed_section(st, idx):
                 btm = (f'<div class="attach">{ph}'
                        + "".join(blocks_html(u, n, st["key"]) for u in g["attach"])
                        + "</div>")
-                # 실물 하단 문제는 y=164mm 고정 자리(마스터 프레임)다. 윗칸에
-                # 최소 높이를 줘 짧은 지문도 그 자리에 오게 하고, 긴 지문은
-                # 흘러 넘어가게 둔다(가두면 잘린다).
+                # ⚠ 하단 문제를 고정 자리(y=164)에 못 박지 않는다 — 하단 문제가
+                #   **없는** 지문이 있고 스텝마다 지문 수도 다르다(수능만만 실측).
+                #   못 박으면 없는 지문에서 빈 자리가 생긴다. 자리는 흐름이 정한다.
                 body = f'<div class="topzone">{body}</div>' 
             pages.append(f'<div class="grp">{head}{body}{btm}'
                          f'<span class="zend"></span></div>')
 
-    run = running_head(n, st["logo"], st["title"], st["tag"],
-                       note=st.get("note"))
+    run = running_head(n, st["logo"], st["title"], st["tag"])
     return (f'<section class="sec fixed s{n} k-{st["key"]}" id="sec{idx}">'
             f'{run}{"".join(pages)}</section>'), len(pages)
 
@@ -548,12 +571,25 @@ def s3_blocks(blocks):
             prev = "box"
             continue
         if r == "s3_q":
+            # 새 문항이 열리면 앞 문항 덩어리를 닫는다 — 문항 단위로 묶어야
+            # 면이 갈릴 때 통째로 넘어간다(앞장·뒷장 오가며 풀지 않게).
+            if qn:
+                out.append("</div>")
             qn += 1
-            out.append(f'<p class="q3"><span class="qn">{qn:02d}</span>'
-                       f'{runs_html(b)}</p>')
+            out.append(f'<div class="q-block"><p class="q3">'
+                       f'<span class="qn">{qn:02d}</span>{runs_html(b)}</p>')
             prev = "q"
         elif r == "s3_passage":
-            out.append(f'<p class="p3">{runs_html(b)}</p>')
+            t = runs_html(b)
+            # (A) (B) (C) 로 이어 붙은 순서배열 지문은 **줄을 갈라** 놓는다 —
+            # 붙여 놓으면 어디가 (A)이고 (B)인지 눈으로 안 갈린다.
+            parts = re.split(r"(?=\((?:[A-C])\)\s)", t)
+            if len(parts) > 2 and all(len(x) > 12 for x in parts[1:]):
+                for k, seg in enumerate([x for x in parts if x.strip()]):
+                    cls = "p3 seq" + (" first" if k == 0 else "")
+                    out.append(f'<p class="{cls}">{seg.strip()}</p>')
+            else:
+                out.append(f'<p class="p3">{t}</p>')
             prev = "p"
         elif r == "s3_choice":
             out.append(f'<p class="ch3{" first" if prev != "ch" else ""}">'
@@ -567,6 +603,8 @@ def s3_blocks(blocks):
                        f'{runs_html(b)}</p>')
             prev = "a"
         i += 1
+    if qn:
+        out.append("</div>")
     return "".join(out)
 
 
