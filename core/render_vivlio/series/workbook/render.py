@@ -55,25 +55,28 @@ def sel_markup(s):
     return s
 
 
-def blank_markup(s):
-    """`N[word]` → **첫 글자만 보이고 나머지는 밑줄 빈칸**.
+def blank_markup(s, hint=True):
+    """`N[word]` → 밑줄 빈칸. 스텝에 따라 **앞 글자 힌트가 있고 없다.**
 
-    빈칸 폭은 가린 단어의 폭이 아니다 — **손으로 답을 쓰는 자리**라 그보다 넓다.
-    완성본 실측(수능만만10강 p24, 8pt): 가린 글자 2·3·4·5·7자 빈칸이 각각
-    8.95 · 11.0 · 11.4 · 15.05 · 19.15mm → `4.9mm + 2.04mm × 글자수`.
-    글자 크기에 따라가도록 em 으로 옮기면 `1.74em + 0.72em × 글자수`.
+    실측(완성본):
+      · 빈칸 **어휘**  — 앞 글자 하나를 남긴다 (`B____ l______ can i____`)
+      · 빈칸 **어법**  — 앞 글자도 없이 통째로 가린다 (`1. This is the ____ reason.`)
 
-    가린 글자는 **넣지 않는다.** 넣으면 PDF 에서 정답이 복사된다(완성본도 안
-    뽑힌다). 폭은 위 식이 정하므로 글자가 없어도 자리가 맞는다.
+    빈칸 폭은 가린 단어의 폭이 아니라 **손으로 답을 쓰는 자리**다. 실측(8pt):
+    가린 글자 수 n 에 대해 `4.9mm + 2.04mm × n` — 어휘는 n=글자수-1(앞 글자를
+    빼므로), 어법은 n=글자수. em 으로 옮기면 `1.74em + 0.72em × n`.
+
+    가린 글자는 HTML 에 **넣지 않는다** — 넣으면 PDF 에서 정답이 복사된다
+    (완성본도 안 뽑힌다).
     """
     def rep(m):
         w = m.group(2)
-        if len(w) < 2:
+        n = min(len(w) - 1 if hint else len(w), 15)      # 상한 15칸(실물 관행)
+        em = round(1.74 + 0.72 * max(n, 1), 2)
+        head = f'<b>{esc(w[:1])}</b>' if hint and len(w) > 1 else ""
+        if hint and len(w) < 2:
             return f'<span class="bl"><b>{esc(w)}</b></span>'
-        n = min(len(w) - 1, 15)              # 상한 15칸 (실물 관행)
-        em = round(1.74 + 0.72 * n, 2)
-        return (f'<span class="bl"><b>{esc(w[:1])}</b>'
-                f'<i style="width:{em}em"></i></span>')
+        return f'<span class="bl">{head}<i style="width:{em}em"></i></span>'
     return _RE_BLANK.sub(rep, s)
 
 
@@ -277,7 +280,8 @@ def blocks_html(blocks, step, ctx=None):
         if role in ("blank_vocab", "blank_gram"):
             t = b.get("text") or ""
             m = _RE_LEADNUM.match(t)
-            body = blank_markup(runs_html(b))
+            # 어법은 앞 글자 힌트가 없다(실측) — 어휘만 첫 글자를 남긴다
+            body = blank_markup(runs_html(b), hint=(role == "blank_vocab"))
             if m and body.startswith(m.group(0)):
                 body = body[len(m.group(0)):]
             num = m.group(1) if m else str(_next_blank_no(out))

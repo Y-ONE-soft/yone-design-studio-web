@@ -271,7 +271,13 @@ def _expand_range_groups(annotated, warnings=None):
                 warnings.append(
                     f"묶음 '{row['text'][:24]}' 은 {count}문항인데 선지 무리가 "
                     f"{len(starts)}개다 — 펼치지 않았다")
-            if _RE_GROUP_INTRO_END.search(row["text"] or ""):
+            from core.structure import rules as _R2
+            _head_txt = _R2.SOURCE_TAG_TRAIL.sub("", row["text"] or "").strip()
+            # 몸통에 선지 무리가 **하나도 없다** = 구성원이 저마다 자기 발문을
+            # 갖고 머리 뒤에 따로 온다는 뜻이다(강동3 실증: `[선택형6~10]` 뒤에
+            # `6. 빈칸 (a)에…` `7. …` 가 이어진다). 이런 머리는 문항이 아니라
+            # 도입문이다 — 문항으로 세우면 유령이 하나 생긴다.
+            if not starts or _RE_GROUP_INTRO_END.search(_head_txt):
                 # `…물음에 답하시오.` 형은 구성원이 저마다 발문을 갖는다.
                 # 못 폈다고 머리를 문항으로 세우면 유령 문항이 하나 생긴다.
                 row = dict(row)
