@@ -80,6 +80,7 @@ class WorkbookSeries(Series):
         render_mod.TIGHT2 = set()
         render_mod.PUSH = set()
         render_mod.KEEP = set()
+        render_mod.FLOWED = set()
         html_path = render_mod.write(cfg, d, build_dir, log=log)
         self._stage(cfg, build_dir, log)
 
@@ -111,15 +112,20 @@ class WorkbookSeries(Series):
             for _round in range(10):
                 sp = fit_mod.spills(out)
                 tn = fit_mod.turns(out)
+                # 고정 칸을 넘겨 **잘린** 면 — 내용이 사라지는 사고라 먼저 고친다
+                cl = set(fit_mod.clipped(out, build_dir)) - render_mod.FLOWED
                 lb = set(fit_mod.leaf_breaks(out))
                 pages_now = probe.page_count(out)
-                score = (len(tn) + len(lb), pages_now)
+                # 잘린 면은 **내용이 사라지는** 사고라 가장 무겁게 센다
+                score = (len(cl) * 100 + len(tn) + len(lb), pages_now)
                 if first is None:
                     first = score
+                if _round == 0:
+                    fit_mod.report_clipped(sorted(cl), log)
                 if best is None or score < best[0]:
                     best = (score, _round + 1)
                     shutil.copyfile(out, snap)
-                if not sp and not tn and not lb:
+                if not sp and not tn and not lb and not cl:
                     break
                 ids = {i for i, _a, _b, _t in sp}
                 # 면 머리에서 시작하는 세트를 밀면 그 오른쪽 면이 통째로 빈다
@@ -131,19 +137,21 @@ class WorkbookSeries(Series):
                 if _round < 2:
                     lb -= ids
                 grow = ((ids - render_mod.TIGHT2) | (pend - render_mod.PUSH)
-                        | (lb - render_mod.KEEP))
+                        | (lb - render_mod.KEEP) | cl)
                 if not grow:
                     break
                 render_mod.TIGHT2 |= (ids & render_mod.TIGHT)
                 render_mod.TIGHT |= ids
                 render_mod.PUSH |= pend
                 render_mod.KEEP |= lb
+                render_mod.FLOWED |= cl
                 html_path = render_mod.write(cfg, d, build_dir, log=lambda *a: None)
                 secs += cli.run_build(html_path, out, log=log, extra=["-f", "pdf"])
             # 마지막 바퀴가 가장 좋은 판이 아니면 되돌린다
             if best and (fit_mod.turns(out), fit_mod.leaf_breaks(out),
                          probe.page_count(out)) != ():
-                cur = (len(fit_mod.turns(out)) + len(fit_mod.leaf_breaks(out)),
+                cur = (len(fit_mod.clipped(out, build_dir)) * 100
+                       + len(fit_mod.turns(out)) + len(fit_mod.leaf_breaks(out)),
                        probe.page_count(out))
                 if cur > best[0]:
                     shutil.copyfile(snap, out)
@@ -167,6 +175,7 @@ class WorkbookSeries(Series):
             render_mod.TIGHT2 = set()
             render_mod.PUSH = set()
             render_mod.KEEP = set()
+            render_mod.FLOWED = set()
 
         # 인쇄물은 짝수 면으로 끝나야 한다 — 세트를 밀면서 홀수가 될 수 있다.
         # 늘어난 빈 면은 바로 아래에서 MEMO 면이 된다.

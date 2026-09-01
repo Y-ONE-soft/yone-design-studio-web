@@ -600,12 +600,14 @@ def flowed_block(slots, n, key, step=""):
     i = _PGI[0]
     _PGI[0] += 1
     PGMETA.append((i, step, 0))
-    out = [f'<span class="pgbeg"></span>']
+    out = []
     for j, (label, us) in enumerate(slots):
         lbl = (f'<span class="pnum">{esc(label)}</span>' if label else "")
         body = "".join(blocks_html(u, n, key) for u in us)
-        cls = "grp" + (" nobreak" if j == 0 else "")
-        out.append(f'<div class="{cls}">{lbl}{body}'
+        # ⚠ 머리 표식은 **첫 묶음 안에** 넣는다. 밖에 두면 `.run + .grp` 인접이
+        #   끊겨 섹션 첫 면 앞에 빈 면이 하나 샌다(예전에 겪은 자리다).
+        mark = '<span class="pgbeg"></span>' if j == 0 else ""
+        out.append(f'<div class="grp">{mark}{lbl}{body}'
                    f'<span class="bend"></span></div>')
     return "".join(out)
 
