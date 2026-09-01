@@ -262,6 +262,12 @@ def api_text():
     if src == "config":
         return _text_from_config(cfg, ref, p, get)
 
+    # ⚠ 계열에 따라 **원고 자료 파일이 아예 없다**(포켓북은 원고에서 바로
+    #   지면을 만든다). 그냥 열면 500 이 난다 — 무엇이 되고 안 되는지 말한다.
+    if not os.path.exists(ed.data_path(cfg)):
+        return jsonify({"error": "이 교재는 원고에서 바로 조판해 글을 여기서 "
+                                 "못 고칩니다 — 모양(스타일·색·여백)은 됩니다",
+                        "kind": "nodata"}), 409
     cur, raw = ed.preview(cfg)
     if not ed.exists(cur, ref):
         return jsonify({"error": f"원본에 없는 자리: {ref}"}), 404

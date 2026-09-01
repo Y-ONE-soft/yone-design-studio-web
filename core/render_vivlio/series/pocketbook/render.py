@@ -10,6 +10,7 @@
 import html
 import os
 
+from core.render_vivlio import refs as _refs
 from core.render_vivlio.series.pocketbook import theme as T
 
 ESC = html.escape
@@ -156,9 +157,12 @@ def left_page(p, M, folio):
         sc = ";font-size:%gpt;line-height:%gpt" % (
             M["passage_size"] * scale, p.get("lead") or M["passage_lead"])
     lead = p.get("lead") or M["passage_lead"]
-    parts.append('<div class="passage" style="left:%gmm;top:%s;width:%gmm;'
+    # ⚠ 자리표는 **원래 클래스 그대로** 얹는다(`refs.mark` 이 합쳐 준다).
+    #   뜻 있는 클래스를 같이 넣으면 지면이 달라진다.
+    parts.append('<div%s style="left:%gmm;top:%s;width:%gmm;'
                  'height:%gmm%s">%s</div>'
-                 % (ps[0], passage_top(M, lead), ps[2], ps[3], sc,
+                 % (_refs.mark(_refs.of(p, "passage_runs"), "passage"),
+                    ps[0], passage_top(M, lead), ps[2], ps[3], sc,
                     runs_html(p["passage_runs"])))
     if L.get("rule"):
         parts.append('<div class="rule" style="%s"></div>'
@@ -174,8 +178,9 @@ def left_page(p, M, folio):
         ts = p.get("trans_scale", 1.0)
         st = "" if ts == 1.0 else ";font-size:%gpt;line-height:%gmm" % (
             M["trans_size"] * ts, M["trans_lead"] * ts)
-        parts.append('<div class="translation" style="%s%s"><p>%s</p></div>'
-                     % (_box(tr[0], tr[1], tr[2]), st, ESC(p["translation"])))
+        parts.append('<div%s style="%s%s"><p>%s</p></div>'
+                     % (_refs.mark(_refs.of(p, "translation"), "translation"),
+                        _box(tr[0], tr[1], tr[2]), st, ESC(p["translation"])))
     parts.append('<div class="folio" style="%s"><b>%s</b> POCKET BOOK</div>'
                  % (_box(12.9, M["folio_y"]), folio))
     return '<section class="pg"><div class="trim">%s</div></section>' % "".join(parts)
@@ -258,7 +263,9 @@ def right_page(p, M, folio, category=""):
         body, fit = "", ""
         if i < len(cards):
             c = cards[i]
-            body = '<p class="w1">%s %s</p>' % (ESC(c["w"]), ESC(c.get("ko", "")))
+            body = '<p%s>%s %s</p>' % (
+                _refs.mark(_refs.of(c, "w"), "w1"), ESC(c["w"]),
+                ESC(c.get("ko", "")))
             if c.get("syn"):
                 body += '<p class="s1">= %s</p>' % ESC(", ".join(c["syn"]))
             if c.get("ant"):
@@ -307,6 +314,9 @@ def memtest_page(p, M, folio, answer, category=""):
 
 
 def build_html(data, css_name="pocket.css"):
+    # 작업대에서 지면을 눌러 그 자리를 고칠 수 있게 — **렌더 직전에 한 번**.
+    # ⚠ 안 하면 클릭해도 조용히 아무 일도 안 일어난다(자리표가 없으니까).
+    _refs.index_paths(data, [("passages",), ("passages", "cards")])
     M = dict(T.METRICS)
     M.update(data.get("metrics") or {})
     pages = []

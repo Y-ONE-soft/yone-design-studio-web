@@ -65,9 +65,14 @@ def _marks(doc):
             if not kind:
                 continue
             x, y = r.x0 / MM, r.y0 / MM
-            out.append((i + 1, 0 if x < 106 else 1, y, kind))
+            # ⚠ 같은 자리(y 동일)에 앞 덩어리의 **끝**과 다음 덩어리의 **시작**이
+            #   겹친다. 종류 문자열로 정렬하면 'sbeg' < 'send' 라 시작이 앞서고,
+            #   짝이 어긋나 세트 하나가 통째로 사라진다(실측: 한영1 p303).
+            #   끝(0)을 시작(1)보다 앞에 둔다.
+            rank = 0 if kind in ("end", "send") else 1
+            out.append((i + 1, 0 if x < 106 else 1, y, rank, kind))
     out.sort()
-    return out
+    return [(p, c, y, k) for p, c, y, _r, k in out]
 
 
 def spills(pdf, tail_limit=TAIL_LIMIT):

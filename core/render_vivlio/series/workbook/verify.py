@@ -252,28 +252,20 @@ def _check_turn(cfg, report):
       짧아 완성본까지 0건으로 통과했다. 그래서 렌더러가 세트의 처음(0.6mm)과
       끝(0.8mm)에 심어 둔 흰 표식으로 **면 구간**을 직접 잰다.
     """
+    # 짝 맺기는 **당겨붙이기 패스와 같은 코드**를 쓴다 — 게이트와 고치는 쪽이
+    # 다른 셈을 하면, 고쳤다고 나온 판이 게이트에서 걸린다(실제로 걸렸다).
+    from core.render_vivlio.series.workbook import fit as _fit
     pdf = cfg.out_pdf()
+    bad = _fit.turns(pdf)
     doc = probe.open_pdf(pdf)
-    starts = _mark_pages(doc, 0.25, 0.6, 0.9902, 0.9942)   # #fffffd
-    ends = _mark_pages(doc, 0.25, 0.6, 0.9863, 0.9902)     # #fffffc
+    n_set = sum(1 for m in _fit._marks(doc) if m[3] == "sbeg")
     doc.close()
-    if not starts:
+    if not n_set:
         report.note("장 넘김 — 세트가 없어 검사 안 함")
         return
-    bad = []
-    for k, st in enumerate(starts):
-        en = None
-        for e in ends:
-            if e >= st:
-                en = e
-                break
-        if en is None:
-            continue
-        if st % 2 == 1 and en > st:
-            bad.append((st, en))
     if bad:
         report.fail(f"[장 넘김] 오른쪽 면에서 시작해 장을 넘기는 세트 {len(bad)}건 — "
-                    + ", ".join(f"p{a}→p{b}" for a, b in bad[:6]))
+                    + ", ".join(f"p{a}→p{b}" for _i, a, b in bad[:6]))
     else:
-        report.note(f"장 넘김 없음 (세트 {len(starts)}개 · 오른쪽 시작 "
-                    f"{sum(1 for s in starts if s % 2 == 1)}개가 모두 한 면 안)")
+        report.note(f"장 넘김 없음 (세트 {n_set}개 · 오른쪽에서 시작해 장을 "
+                    f"넘기는 세트 0개)")
