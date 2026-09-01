@@ -774,6 +774,15 @@
       if (!c.length) { deselect(); return; }        // 빈 곳
       ev.preventDefault();
       var hit = c[c.length - 1];                    // 가장 바깥
+      // ⚠ 상자는 **글이 아니라 물건**이다. 한 번 누르면 상자를 고른다 —
+      //   바깥 덩어리를 고르면 손잡이가 안 나와서 크기를 못 바꾼다.
+      for (var b = 0; b < c.length; b++) {
+        if (c[b].el.classList && c[b].el.classList.contains('viv-box')) {
+          hit = c[b];
+          pick(hit.el, hit.ref);
+          return;
+        }
+      }
       if (curEl && c.length > 1) {
         // 이미 그 덩어리를 골라 둔 상태면 한 단계 안으로
         for (var i = c.length - 1; i > 0; i--) {
@@ -1433,10 +1442,15 @@
         el = el.parentElement;
       if (!el || el === st || !el.classList.contains('abs')) return;
       var pg = pageBoxOf(el); if (!pg) return;
-      var pr = pg.getBoundingClientRect();
+      // ⚠ 좌표의 **기준은 면이 아니라 담고 있는 상자**다(조판이 만든 본문
+      //   상자). 면을 기준으로 재면 여백·도련만큼 어긋난다 — 실측에서
+      //   `left:20mm` 짜리 상자를 잡아 끌었더니 42.99mm 로 튀었다.
+      var host = el.offsetParent || pg;
+      var pr = host.getBoundingClientRect();
       var er = el.getBoundingClientRect();
       cur = {
-        el: el, pg: pr, mm: pr.width / (bookPageW || 216),
+        el: el, pg: pr,
+        mm: pg.getBoundingClientRect().width / (bookPageW || 216),
         x0: ev.clientX, y0: ev.clientY,
         left: er.left - pr.left, top: er.top - pr.top,
         useRight: !!el.style.right, useBottom: !!el.style.bottom,
@@ -1528,7 +1542,13 @@
 
   function drawHandles(el) {
     clearHandles();
-    if (!el || !el.classList || !el.classList.contains('viv-box')) return;
+    // ⚠ 상자를 눌러도 **안쪽 문단**이 고를 수 있다(글이 거기 있으니 당연하다).
+    //   그때도 손잡이는 상자에 붙어야 한다 — 안 그러면 상자를 골랐는데
+    //   손잡이가 안 나온다(실제로 그랬다).
+    var st = stageEl();
+    while (el && el !== st && !(el.classList && el.classList.contains('viv-box')))
+      el = el.parentElement;
+    if (!el || el === st || !el.classList) return;
     if (!el.classList.contains('abs')) return;      // 감싸기 상자는 흐름이 정한다
     HANDLES.forEach(function (h) {
       var d = document.createElement('div');
