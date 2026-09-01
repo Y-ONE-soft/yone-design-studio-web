@@ -126,6 +126,16 @@ def sources_from_scope(content, scope_text, log=print):
     return S.folders(sc, base, grade=grade, log=log)
 
 
+RE_VOCAB_LAB = re.compile(
+    r"^(?:\d{6}(?:~\d{2})?|올포 \d+강 .+|리딩파워 \d+강 .+|교과서\d+과 .+)$")
+
+
+def _vocab_labels(text):
+    """중요어휘 글에서 지문 라벨만 — 늘고 준 것을 말하려고."""
+    return [l.strip() for l in (text or "").split("\n")
+            if RE_VOCAB_LAB.match(l.strip())]
+
+
 def build(content, log=print, keep_all=False, scope_text=None, yos=None):
     """`yos` 를 주면 시험범위의 정본이 그것이다 — 워크북도 되수확본도 안 본다."""
     if yos:
@@ -281,6 +291,23 @@ def build(content, log=print, keep_all=False, scope_text=None, yos=None):
             out["vol2"]["어법_헤더"] = ghdrs
         else:
             log("  [어법] 원고에서 한 줄도 못 읽어 되수확본을 그대로 둡니다")
+
+        # 중요어휘 — 시트가 정본이다(원고에서 유도할 수 없다).
+        # 고3 은 시트에 없고 워크북 빈칸어휘에서 나오므로 그대로 둔다.
+        vl, vr = ASM.vocab(content.get("school", ""), content.get("grade", ""),
+                           content.get("exam_period", ""), scope=sc, log=log)
+        if vl:
+            oldv = _vocab_labels(out["vol1"].get("중요어휘_왼", ""))
+            newv = _vocab_labels(vl)
+            log("■ 중요어휘 %d → %d  (되찾음 %d · 사라짐 %d)"
+                % (len(oldv), len(newv),
+                   len([x for x in newv if x not in oldv]),
+                   len([x for x in oldv if x not in newv])))
+            for x in oldv:
+                if x not in newv:
+                    log("    [중요어휘] 시트에 없어짐 — %s" % x)
+            out["vol1"]["중요어휘_왼"] = vl
+            out["vol1"]["중요어휘_오"] = vr
 
     out["vol2"]["서술형영작"] = pairs
     out["vol2"]["영작_헤더_상세"] = det
