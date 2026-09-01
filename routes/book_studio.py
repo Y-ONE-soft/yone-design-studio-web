@@ -483,6 +483,17 @@ def api_styles():
         if not isinstance(props, dict):
             return jsonify({"error": "규칙이 없다"}), 400
         for k, v in props.items():
+            # 머리말·꼬리말은 **한 겹 안쪽**이다(`@top-center { … }`)
+            if str(k).startswith("@") and isinstance(v, dict):
+                if str(k) not in MARGIN_BOXES:
+                    return jsonify({"error": "모르는 자리: %s" % k}), 400
+                for k2, v2 in v.items():
+                    if any(c in str(k2) + str(v2) for c in "{};<>"):
+                        return jsonify({"error": f"이상한 값: {k2}: {v2}"}), 400
+                    bad = _needs_unit(str(k2), str(v2))
+                    if bad:
+                        return jsonify({"error": bad}), 400
+                continue
             if any(c in str(k) + str(v) for c in "{};<>"):
                 return jsonify({"error": f"이상한 값: {k}: {v}"}), 400
             bad = _needs_unit(str(k), str(v))
@@ -1024,6 +1035,13 @@ from core.render_vivlio.series.base import CHUNK_KEYS as _CHUNK_KEYS  # noqa: E4
 from core.render_vivlio.series.base import para_like as _para_like    # noqa: E402
 
 
+# 머리말·꼬리말이 앉을 수 있는 자리 — **실측으로 확인한 것만** 둔다.
+# ⚠ `@top-outside` · `@bottom-outside`(안/바깥)는 **안 나온다**. 좌우를
+#   가르려면 `@page :left` · `:right` 로 나눠 적어야 한다.
+MARGIN_BOXES = ("@top-left", "@top-center", "@top-right",
+                "@bottom-left", "@bottom-center", "@bottom-right")
+
+
 @bp.route("/api/book-studio/pagerules", methods=["GET", "POST"])
 def api_pagerules():
     """마스터 페이지(`@page`) — 면에 걸리는 것(여백·머리·꼬리).
@@ -1060,7 +1078,13 @@ def api_pagerules():
     rules = dict(cfg.section("page_rules") or {})
     cur = dict(rules.get(sel) or {})
     for k, v in props.items():
-        if v in ("", None):
+        if isinstance(v, dict):
+            inner = {k2: v2 for k2, v2 in v.items() if str(v2).strip()}
+            if inner:
+                cur[k] = inner
+            else:
+                cur.pop(k, None)       # 비우면 그 머리말을 **지운다**
+        elif v in ("", None):
             cur.pop(k, None)
         else:
             cur[k] = v

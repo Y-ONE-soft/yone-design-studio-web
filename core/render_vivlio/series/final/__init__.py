@@ -105,21 +105,30 @@ class FinalSeries(Series):
             return set()
         titles = {s["title"]: s["kind"]
                   for s in d["vols"][str(vol)]["sections"]}
+        # ⚠ 꼬리말(`CHAPTER.01 문장 배열`)로 찾으면 안 된다 — 섹션 첫 면에는
+        #   아직 안 나오고 그 다음 면부터 나온다(실측: 띠는 p2 인데 꼬리는 p3).
+        #   **띠 자체**를 찾는다 — 판면 맨 위(25mm 안)에 큰 글자로 있는 제목.
         seen, even = set(), set()
         try:
             doc = fitz.open(pdf)
         except Exception:
             return set()
         for i, pg in enumerate(doc):
-            m = re.search(r"CHAPTER\.\d+\s+([가-힣][가-힣/ ]*)", pg.get_text())
-            if not m:
-                continue
-            t = m.group(1).strip()
-            if t in seen or t not in titles:
-                continue
-            seen.add(t)
-            if (i + 1) % 2 == 0:
-                even.add(titles[t])
+            top = ""
+            for b in pg.get_text("dict")["blocks"]:
+                for l in b.get("lines", []):
+                    for sp in l["spans"]:
+                        if sp["bbox"][1] * 25.4 / 72 < 25 and sp["size"] > 15:
+                            top += sp["text"]
+            top = top.strip()
+            for t in titles:
+                if t.replace(" ", "") and t.replace(" ", "") in top.replace(" ", ""):
+                    if t in seen:
+                        break
+                    seen.add(t)
+                    if (i + 1) % 2 == 0:
+                        even.add(titles[t])
+                    break
         doc.close()
         return even
 

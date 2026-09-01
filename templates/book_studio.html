@@ -1590,7 +1590,43 @@
     ['margin-top', '위 여백'], ['margin-bottom', '아래 여백'],
     ['margin-left', '왼쪽 여백'], ['margin-right', '오른쪽 여백']
   ];
+  // 머리말·꼬리말이 앉는 자리. ⚠ 안/바깥(`-outside`)은 **조판이 무시한다**
+  // (실측). 좌우를 가르려면 왼쪽 면·오른쪽 면 규칙으로 나눠 적는다.
+  var MARGIN_BOXES = [['@top-left', '머리말 왼쪽'], ['@top-center', '머리말 가운데'],
+                      ['@top-right', '머리말 오른쪽'],
+                      ['@bottom-left', '꼬리말 왼쪽'], ['@bottom-center', '꼬리말 가운데'],
+                      ['@bottom-right', '꼬리말 오른쪽']];
   var pageRules = {};
+
+  /** 사람 말 → CSS `content`. `#`=면 번호, `##`=전체 면수, `@장`=그 장 제목.
+   *
+   *  ⚠ 따옴표를 그대로 실으면 CSS 가 깨진다 — 글자는 늘 따옴표 안에 넣고
+   *    안의 따옴표는 지운다.
+   */
+  function toContent(v) {
+    var out = [], buf = '';
+    var flush = function () {
+      if (buf) { out.push('"' + buf.replace(/["\\]/g, '') + '"'); buf = ''; }
+    };
+    for (var i = 0; i < v.length; i++) {
+      if (v[i] === '#' && v[i + 1] === '#') { flush(); out.push('counter(pages)'); i++; }
+      else if (v[i] === '#') { flush(); out.push('counter(page)'); }
+      else if (v.slice(i, i + 2) === '@장') { flush(); out.push('string(chap)'); i++; }
+      else buf += v[i];
+    }
+    flush();
+    return out.join(' ') || '""';
+  }
+
+  /** CSS `content` → 사람 말(위의 반대). 적어 둔 것을 다시 보여 주려고. */
+  function fromContent(c) {
+    return String(c || '')
+      .replace(/counter\(pages\)/g, '##')
+      .replace(/counter\(page\)/g, '#')
+      .replace(/string\(chap\)/g, '@장')
+      .replace(/"([^"]*)"/g, '$1')
+      .replace(/\s+/g, ' ').trim();
+  }
 
   function drawMaster() {
     var host = $('pal-master'); if (!host) return;
@@ -1630,11 +1666,74 @@
         row.appendChild(lab); row.appendChild(f);
         body.appendChild(row);
       });
+      // ── 머리말·꼬리말 (인디자인의 마스터 페이지 글상자) ──
+      var hl = document.createElement('div');
+      hl.className = 'ide-lab'; hl.style.marginTop = '8px';
+      hl.innerHTML = '<span>머리말 · 꼬리말</span>'
+        + '<span class="ide-val">면번호 · 전체면수 · 장 제목</span>';
+      body.appendChild(hl);
+      var hint2 = document.createElement('div');
+      hint2.className = 'ide-hint';
+      hint2.innerHTML = '글자 그대로 적거나 <b>#</b>(면 번호) · <b>##</b>(전체 면수)'
+        + ' · <b>@장</b>(그 면의 장 제목)을 쓰세요. 안/바깥 자리는 조판이 '
+        + '받지 않으므로 <b>왼쪽 면 · 오른쪽 면</b>으로 갈라 적습니다.';
+      body.appendChild(hint2);
+      var mins = {};
+      MARGIN_BOXES.forEach(function (a) {
+        var have = (pageRules[sel] || {})[a[0]] || {};
+        var row = document.createElement('div'); row.className = 'ide-row';
+        var lab = document.createElement('div'); lab.className = 'ide-lab';
+        lab.innerHTML = '<span>' + a[1] + '</span>';
+        var f = document.createElement('div'); f.className = 'ide-f';
+        var t = document.createElement('input');
+        t.className = 'ide-t'; t.value = fromContent(have.content || '');
+        t.placeholder = '예) #  ·  1과 —  @장';
+        mins[a[0]] = t; f.appendChild(t);
+        row.appendChild(lab); row.appendChild(f);
+        body.appendChild(row);
+      });
+
+      // `@장` 이 무엇을 가리킬지 — 그 스타일의 글이 머리말로 따라 온다.
+      // (인디자인의 **텍스트 변수 · 러닝 헤더**)
+      var cr = document.createElement('div'); cr.className = 'ide-row';
+      var cl = document.createElement('div'); cl.className = 'ide-lab';
+      cl.innerHTML = '<span>@장 은 이 스타일</span>';
+      var cs = document.createElement('select'); cs.className = 'ide-sel';
+      var o0 = document.createElement('option');
+      o0.value = ''; o0.textContent = '(고르세요)'; cs.appendChild(o0);
+      Object.keys(styleNames).concat(Object.keys(styles).map(function (x) {
+        var m = x.match(/^\.([\w가-힣-]+)$/); return m ? m[1] : '';
+      })).filter(Boolean).sort().forEach(function (c, i, arr) {
+        if (arr.indexOf(c) !== i) return;              // 겹치는 이름은 한 번만
+        var o = document.createElement('option');
+        o.value = c; o.textContent = '.' + c;
+        if ((styles['.' + c] || {})['string-set']) { o.selected = true; }
+        cs.appendChild(o);
+      });
+      cs.onchange = function () {
+        if (!cs.value) return;
+        api('/api/book-studio/styles',
+            { b: key, selector: '.' + cs.value,
+              props: { 'string-set': 'chap content()' } }).then(function (d) {
+          if (d.error) { msg('✗ ' + d.error); return; }
+          styles = d.styles || styles;
+          rebuild('').then(function (ok) {
+            if (ok) msg('✓ 머리말이 .' + cs.value + ' 을 따라갑니다');
+          });
+        });
+      };
+      cr.appendChild(cl); cr.appendChild(cs);
+      body.appendChild(cr);
+
       var go = document.createElement('button');
       go.className = 'ide-b'; go.textContent = '이 면에 적용';
       go.onclick = function () {
         var props = {};
         PAGE_PROPS.forEach(function (a) { props[a[0]] = ins[a[0]].value.trim(); });
+        MARGIN_BOXES.forEach(function (a) {
+          var v = mins[a[0]].value.trim();
+          props[a[0]] = v ? { content: toContent(v), 'font-size': '8pt' } : {};
+        });
         api('/api/book-studio/pagerules',
             { b: key, sel: pick.value, props: props }).then(function (d) {
           if (d.error) { msg('✗ ' + d.error); return; }

@@ -223,10 +223,22 @@ def page_rules_text(cfg):
     for sel, props in rules.items():
         if not isinstance(props, dict) or not props:
             continue
-        body = "\n".join("  %s: %s;" % (k, v) for k, v in props.items()
-                          if str(v).strip())
-        if body:
-            out.append("@page %s {\n%s\n}" % (str(sel).strip(), body))
+        lines = []
+        for k, v in props.items():
+            k = str(k).strip()
+            if k.startswith("@") and isinstance(v, dict):
+                # 머리말·꼬리말 — 인디자인의 마스터 페이지 글상자다.
+                # ⚠ `@top-outside` 류(안/바깥)는 **안 먹는다**(실측). 좌우를
+                #   가르려면 `@page :left` · `:right` 로 나눠 적는다.
+                inner = "\n".join("    %s: %s;" % (k2, v2)
+                                   for k2, v2 in v.items() if str(v2).strip())
+                if inner:
+                    lines.append("  %s {\n%s\n  }" % (k, inner))
+            elif str(v).strip():
+                lines.append("  %s: %s;" % (k, v))
+        if lines:
+            out.append("@page %s {\n%s\n}" % (str(sel).strip(),
+                                               "\n".join(lines)))
     return "\n".join(out) + "\n" if len(out) > 1 else ""
 
 
