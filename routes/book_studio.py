@@ -1184,7 +1184,13 @@ def api_thumbs():
     if not d:
         return jsonify({"error": "모르는 책"}), 404
     cfg = bookmod.load(d)
-    pdf = _last_pdf(cfg, d)
+    if request.args.get("refresh"):
+        # 지금 보고 있는 판을 구워 둔다 — 몇 초. 납품 PDF 는 **안 건드린다**.
+        made = _bake_thumbs(d)
+        if made is None:
+            return jsonify({"pages": 0,
+                            "note": "아직 미리보기를 안 만들었습니다"}), 409
+    pdf = _thumb_pdf(cfg, d)
     if not pdf:
         return jsonify({"pages": 0, "note": "아직 조판한 PDF 가 없습니다"})
     try:
@@ -1196,7 +1202,34 @@ def api_thumbs():
         return jsonify({"error": f"PDF 를 못 열었습니다: {e}"}), 500
     return jsonify({"pages": n, "pdf": os.path.basename(pdf),
                     "at": int(os.path.getmtime(pdf)),
+                    # 지금 보는 판에서 구운 것인가(그러면 견본이어도 번호가 맞다)
+                    "live": os.path.basename(pdf) == "_thumbs.pdf",
                     "bid": meta["bid"]})
+
+
+def _thumb_pdf(cfg, d):
+    """썸네일이 볼 PDF — **지금 보고 있는 판**이 먼저다.
+
+    ## 왜 두 가지인가
+
+    예전에는 책 폴더의 납품 PDF 만 봤다. 그래서 방금 고친 것이 썸네일에 안
+    나왔고("마지막 조판본 기준입니다"), 견본을 볼 때는 면 번호까지 어긋나
+    (견본 15면 vs 전권 116면) 그림을 아예 못 보여 줬다.
+
+    이제 미리보기가 만든 `build/index.html` 을 그대로 구운 `build/_thumbs.pdf`
+    를 먼저 본다 — 지금 화면과 **같은 판**이라 번호도 내용도 맞는다.
+    없거나 낡았으면(HTML 이 더 새것) 납품 PDF 로 물러선다.
+    """
+    try:
+        bd = _build_dir(d)
+        t = os.path.join(bd, "_thumbs.pdf")
+        h = os.path.join(bd, "index.html")
+        if os.path.exists(t) and os.path.exists(h) \
+                and os.path.getmtime(t) >= os.path.getmtime(h):
+            return t
+    except Exception:
+        pass
+    return _last_pdf(cfg, d)
 
 
 def _last_pdf(cfg, d):
@@ -1213,6 +1246,26 @@ def _last_pdf(cfg, d):
     return max(cands, key=os.path.getmtime) if cands else None
 
 
+def _bake_thumbs(d):
+    """미리보기 판(`build/index.html`) → `build/_thumbs.pdf`.
+
+    ⚠ **책 폴더의 PDF 는 건드리지 않는다.** 썸네일 때문에 납품본이 바뀌면 안 된다.
+    ⚠ 재는 패스도 안 돈다 — 지금 화면에 뜬 그 HTML 을 그대로 굽는다(몇 초).
+    """
+    from core.render_vivlio import cli
+    bd = _build_dir(d)
+    html = os.path.join(bd, "index.html")
+    if not os.path.exists(html):
+        return None
+    out = os.path.join(bd, "_thumbs.pdf")
+    try:
+        cli.run_build(html, out, log=lambda *a: None, timeout=900)
+    except Exception:
+        return None
+    # 낡은 그림은 버린다(파일 이름에 만든 시각이 들어 있어 저절로 갈린다)
+    return out if os.path.exists(out) else None
+
+
 @bp.route("/book-studio/thumb/<bid>/<int:n>.png")
 def thumb(bid, n):
     """면 하나의 그림. 만든 것은 `build/thumbs/` 에 둔다(다시 안 그린다).
@@ -1226,7 +1279,7 @@ def thumb(bid, n):
     if not d:
         return abort(404)
     cfg = bookmod.load(d)
-    pdf = _last_pdf(cfg, d)
+    pdf = _thumb_pdf(cfg, d)
     if not pdf or n < 1:
         return abort(404)
     tdir = os.path.join(_build_dir(d), "thumbs")
