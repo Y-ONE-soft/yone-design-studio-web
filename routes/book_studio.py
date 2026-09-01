@@ -389,13 +389,17 @@ def api_op():
 
 @bp.route("/api/book-studio/blankpage", methods=["POST"])
 def api_blankpage():
-    """빈 면 넣기 — 고른 자리 **앞에** 면을 하나 끼운다.
+    """빈 면 넣기 — 고른 자리 **앞에** 아무것도 없는 면을 하나 세운다.
 
-    흐르는 조판에서 면은 내용이 만든다. 그래서 "면을 더한다" 는 곧 **거기서
-    면을 넘기고 빈 문단 하나를 둔다** 는 뜻이다.
+    ## 원고를 건드리지 않는다
 
-    ⚠ 넣을 자리는 표·상자와 **같은 규칙**으로 고른다(문항·단원 목록은 안 된다).
-      raw 연산으로 아무 데나 끼우면 조판이 죽는다.
+    처음엔 자리 앞에 빈 글줄을 하나 끼워 넣었다. 그런데 지면에서 고르는 자리는
+    글줄이 아니라 **덩어리**일 때가 많고(단원·문항 하나가 통째로 잡힌다),
+    그 목록은 렌더러가 기록으로 읽는다 — 빈칸 한 글자를 넣었더니 조판이 통째로
+    멎었다(`unit["label"]`).
+
+    그래서 원고가 아니라 **그 자리 앞에 붙는 빈 칸**(`::before`)으로 면을
+    만든다. 어떤 자리에서도 되고, 원고는 한 글자도 안 바뀌고, ⌘Z 로 지운다.
     """
     from core.render_vivlio import book as bookmod
     from core.render_vivlio import edits as ed
@@ -404,57 +408,20 @@ def api_blankpage():
     if not d:
         return jsonify({"error": "모르는 책"}), 404
     ref = (p.get("ref") or "").strip()
-    if not ref or any(c in ref for c in "/\\ \n") or ".." in ref:
+    if not ref or '"' in ref or any(c in ref for c in "/\\ \n") or ".." in ref:
         return jsonify({"error": "이상한 자리표"}), 400
     cfg = bookmod.load(d)
-    cur, _raw = ed.preview(cfg)
-    base, at = _list_slot(ref, cur, cfg, kind="text")
-    if base is None:
-        return jsonify({"error": "여기에는 넣을 수 없습니다 — "
-                                 "지문·선지·본문 **한 줄**을 고르세요"}), 409
-    # 앞에 넣는다(`_list_slot` 은 '뒤' 자리를 준다)
-    at = max(0, at - 1)
-    new_ref = "%s.%d" % (base, at)
-    ed.push(cfg, {"op": "insert", "ref": new_ref, "v": "\u00a0",
-                  "note": "빈 면"})
-    st = ed.push(cfg, {"op": "style",
-                       "sel": '[data-ref="%s"]' % new_ref,
-                       "v": {"break-before": "page", "break-after": "page",
-                             "min-height": "1mm"},
-                       "note": "빈 면"})
-    return jsonify({"ok": True, "ref": new_ref, "history": _hist(st)})
-
-
-# 길이를 재는 속성 — 여기에 **맨 숫자**를 넣으면 CSS 가 통째로 무시된다.
-_LEN_PROPS = {
-    "font-size", "letter-spacing", "word-spacing", "text-indent",
-    "margin", "margin-top", "margin-bottom", "margin-left", "margin-right",
-    "padding", "padding-top", "padding-bottom", "padding-left", "padding-right",
-    "width", "height", "min-height", "max-width", "top", "left", "right",
-    "bottom", "border-width", "border-radius", "column-gap", "gap",
-    # 새로 연 밑줄·첨자 자리도 길이를 받는다
-    "text-underline-offset", "text-decoration-thickness",
-}
-_LEN_OK = re.compile(r"^-?(?:\d+\.?\d*|\.\d+)(pt|mm|cm|in|px|em|rem|%|q)$", re.I)
-
-
-def _needs_unit(prop, val):
-    """`font-size: 20` 처럼 단위 없는 값을 **미리** 잡는다.
-
-    ⚠ 이게 없어서 화면에서 20 을 넣으면 CSS 가 통째로 무시되고, 그런데도
-      "저장했습니다" 가 떴다. 조용히 아무 일도 안 하는 것이 제일 나쁘다.
-    """
-    v = (val or "").strip()
-    if not v or prop.lower() not in _LEN_PROPS:
-        return ""
-    if v in ("0", "auto", "inherit", "initial", "unset", "normal"):
-        return ""
-    if _LEN_OK.match(v):
-        return ""
-    if re.match(r"^-?[\d.]+$", v):
-        return (f"{prop}: {v} — 단위가 없습니다. "
-                f"pt·mm 을 붙여 주세요(예: {v}pt).")
-    return ""
+    sel = '[data-ref="%s"]::before' % ref
+    off = str(p.get("off") or "").lower() in ("1", "true", "on")
+    st = ed.push(cfg, {"op": "style", "sel": sel,
+                       "v": {} if off else {
+                           "content": '""',
+                           "display": "block",
+                           "break-before": "page",
+                           "break-after": "page",
+                           "height": "1mm"},
+                       "note": "빈 면 " + ("지우기" if off else "넣기")})
+    return jsonify({"ok": True, "sel": sel, "history": _hist(st)})
 
 
 @bp.route("/api/book-studio/styles", methods=["GET", "POST"])
