@@ -427,6 +427,38 @@ def api_blankpage():
     return jsonify({"ok": True, "sel": sel, "history": _hist(st)})
 
 
+# 길이를 재는 속성 — 여기에 **맨 숫자**를 넣으면 CSS 가 통째로 무시된다.
+_LEN_PROPS = {
+    "font-size", "letter-spacing", "word-spacing", "text-indent",
+    "margin", "margin-top", "margin-bottom", "margin-left", "margin-right",
+    "padding", "padding-top", "padding-bottom", "padding-left", "padding-right",
+    "width", "height", "min-height", "max-width", "top", "left", "right",
+    "bottom", "border-width", "border-radius", "column-gap", "gap",
+    # 새로 연 밑줄·첨자 자리도 길이를 받는다
+    "text-underline-offset", "text-decoration-thickness",
+}
+_LEN_OK = re.compile(r"^-?(?:\d+\.?\d*|\.\d+)(pt|mm|cm|in|px|em|rem|%|q)$", re.I)
+
+
+def _needs_unit(prop, val):
+    """`font-size: 20` 처럼 단위 없는 값을 **미리** 잡는다.
+
+    ⚠ 이게 없어서 화면에서 20 을 넣으면 CSS 가 통째로 무시되고, 그런데도
+      "저장했습니다" 가 떴다. 조용히 아무 일도 안 하는 것이 제일 나쁘다.
+    """
+    v = (val or "").strip()
+    if not v or prop.lower() not in _LEN_PROPS:
+        return ""
+    if v in ("0", "auto", "inherit", "initial", "unset", "normal"):
+        return ""
+    if _LEN_OK.match(v):
+        return ""
+    if re.match(r"^-?[\d.]+$", v):
+        return (f"{prop}: {v} — 단위가 없습니다. "
+                f"pt·mm 을 붙여 주세요(예: {v}pt).")
+    return ""
+
+
 @bp.route("/api/book-studio/styles", methods=["GET", "POST"])
 def api_styles():
     """단락 스타일 — 선택자 하나에 걸린 규칙을 읽고 쓴다.

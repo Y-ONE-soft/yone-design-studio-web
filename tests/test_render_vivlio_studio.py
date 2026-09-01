@@ -1892,7 +1892,7 @@ def test_style_names_must_be_marked_as_ours():
     src = open(os.path.join(_ROOT, "routes", "book_studio.py"),
                encoding="utf-8").read()
     i = src.index("def api_paraclass")
-    assert "^(ps|os)-" in src[i:i + 1600], "이름 규칙이 없다"
+    assert "^(ps|os|ts)-" in src[i:i + 1600], "이름 규칙이 없다"
 
 
 def test_classes_survive_a_render_clear():
@@ -2241,7 +2241,7 @@ def test_object_styles_ride_the_paragraph_style_road():
     """개체 스타일도 **같은 길**이다 — 이름만 `os-` 로 시작한다."""
     src = open(os.path.join(_ROOT, "routes", "book_studio.py"),
                encoding="utf-8").read()
-    assert r"^(ps|os)-" in src
+    assert r"^(ps|os|ts)-" in src
     ui = _studio_src()
     i = ui.index("개체 스타일 (인디자인의 오브젝트 스타일)")
     body = ui[i:i + 3000]
@@ -2364,3 +2364,54 @@ def test_series_render_footnotes_too(mod, fn):
 def test_workbook_runs_render_footnotes():
     from core.render_vivlio.series.workbook import render as R
     assert "viv-fn" in R.runs_html({"runs": [{"t": "글", "fn": "출처"}]})
+
+
+# ── 빈 면 넣기 ────────────────────────────────────────────────────────────
+def test_글목록과_블록목록을_다르게_본다():
+    """낱말 기록 목록은 **블록은 받아도 글은 못 받는다**.
+
+    실측: `lessons.0.vocab` 에 빈칸 한 글자를 넣었더니 렌더러가
+    `unit["label"]` 에서 통째로 멎었다.
+    """
+    from core.render_vivlio.series.base import text_like, para_like
+    rec = [{"en": "band", "kr": "밴드"}]
+    assert para_like(rec) is True          # 표·상자는 끼울 수 있다
+    assert text_like(rec) is False         # 글은 안 된다
+    assert text_like(["가", "나"]) is True
+    assert text_like([{"t": "가", "b": 1}]) is True   # 서식 조각도 글이다
+
+
+def test_빈면은_원고를_안_건드린다():
+    """빈 면은 `::before` 한 줄이다 — data 는 한 글자도 안 바뀐다."""
+    src = open(os.path.join(_ROOT, "routes", "book_studio.py"),
+               encoding="utf-8").read()
+    i = src.index("def api_blankpage")
+    body = src[i:i + 2500]
+    assert '"op": "style"' in body
+    assert "::before" in body
+    assert '"op": "insert"' not in body, "빈 면이 원고에 글을 끼우면 안 된다"
+
+
+def test_빈면_면머리면_앞나눔을_안_준다():
+    """이미 면 꼭대기인 자리에 앞쪽 나눔을 주면 **두 면**이 생긴다(실측)."""
+    src = open(os.path.join(_ROOT, "routes", "book_studio.py"),
+               encoding="utf-8").read()
+    i = src.index("def api_blankpage")
+    body = src[i:i + 2500]
+    assert "attop" in body
+    j = body.index("if not at_top")
+    assert "break-before" in body[j:j + 120]
+    assert "break-after" in body[:j], "뒤쪽 나눔은 늘 준다"
+
+
+def test_측정조판은_빈면을_끈다():
+    """측정은 한 면에 한 항목 — 빈 면이 끼면 항목 수와 면 수가 어긋난다."""
+    from core.render_vivlio import measure
+    src = open(os.path.join(_ROOT, "core", "render_vivlio", "measure.py"),
+               encoding="utf-8").read()
+    assert "_mute_page_effects(html_path)" in src
+    assert src.index("_mute_page_effects(html_path)") < src.index("cli.run_build")
+    # 꾸밈은 살리고 **면을 만드는 성질만** 끈다
+    assert "content:none" not in measure._MUTE
+    for k in ("break-before:auto", "break-after:auto", "height:auto"):
+        assert k in measure._MUTE
