@@ -186,14 +186,25 @@ def matches(row, scope):
     return False
 
 
+BIG = 10 ** 6
+
+
 def sort_key(row, scope):
-    """범위가 적힌 차례를 따른다 — 범위가 곧 책의 차례다."""
+    """범위가 적힌 차례를 따른다 — 범위가 곧 책의 차례다.
+
+    ⚠ 범위 **밖** 지문은 (BIG, BIG) 을 돌려준다. 여기서 번호를 섞어 내보내면
+      범위와 무관한 지문들이 번호순으로 재배열돼 원래 차례가 무너진다
+      (실측: 한영1 은 범위 안 지문이 하나도 없어 52지문이 통째로 뒤섞였다).
+      부르는 쪽이 원래 자리를 마지막 열쇠로 붙여 안정 정렬을 만든다.
+    """
+    if not scope:
+        return (BIG, BIG)
     cands, no = token_of(row)
-    order = {_key(t): i for i, t in enumerate(scope.get("tokens", []))} \
-        if scope else {}
-    pos = min([order.get(_key(c), 10 ** 6) for c in cands] or [10 ** 6])
-    return (pos, no if no is not None else 10 ** 6,
-            str(row.get("label") or row.get("key") or ""))
+    order = {_key(t): i for i, t in enumerate(scope.get("tokens", []))}
+    pos = min([order.get(_key(c), BIG) for c in cands] or [BIG])
+    if pos >= BIG:
+        return (BIG, BIG)
+    return (pos, no if no is not None else BIG)
 
 
 def missing(scope, rows):

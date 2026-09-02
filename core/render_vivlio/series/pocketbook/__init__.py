@@ -430,7 +430,9 @@ class PocketbookSeries(Series):
         if not scope:
             return merged, []
         pscope.annotate(merged)         # 머리말 이어받기 (라벨은 안 건드린다)
-        merged.sort(key=lambda r: pscope.sort_key(r, scope))
+        for i, r in enumerate(merged):
+            r["_ord"] = i               # 원래 자리 — 범위 밖 지문은 이대로 둔다
+        merged.sort(key=lambda r: pscope.sort_key(r, scope) + (r["_ord"],))
         out = [_label_of(r) for r in merged if not pscope.matches(r, scope)]
         if out:
             log("■ 범위 밖 %d지문 — 뒤에 그대로 둔다 (시험범위 표가 덜 찼을 수 "
@@ -440,6 +442,7 @@ class PocketbookSeries(Series):
             log("■ [범위]%s %s" % ("" if g["hard"] else "(확인)", g["text"]))
         for r in merged:
             r.pop("_tok", None)         # 범위 셈에만 쓰는 것 — 자료에 안 남긴다
+            r.pop("_ord", None)
         return merged, gaps
 
     # ── 새 지문: 분석본에서 ──
