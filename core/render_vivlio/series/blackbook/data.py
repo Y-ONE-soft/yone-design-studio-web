@@ -205,7 +205,9 @@ def parse_problems(path):
         elif t.startswith('[채점 기준]') or t.startswith('[답안 작성 안내]'):
             B.append({'t': 'crit', 'title': t, 'items': []})
             mode = 'crit'
-        elif t[0] in CIRCLED:
+        elif t[0] in CIRCLED and sum(t.count(c) for c in CIRCLED) == 1:
+            # ①로 **시작하는 지문**이 있다(어법 문제 — `①When writing a novel …`).
+            # 선지는 원문자가 하나, 밑줄 친 지문은 ①~⑤가 한 단락 안에 다 있다.
             B.append({'t': 'choice', 'mark': t[0],
                       'body': rich(strip_lead(p['segs'], 1))})
             mode = None

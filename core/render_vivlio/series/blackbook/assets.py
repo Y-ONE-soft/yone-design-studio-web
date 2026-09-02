@@ -57,8 +57,15 @@ def build(cfg, log=print):
         raise FileNotFoundError(f'아트워크 원본 없음: {src}')
     os.makedirs(out, exist_ok=True)
     doc = fitz.open(src)
+    docs = {src: doc}
     for job in spec.get('jobs') or []:
         name, page = job['name'], job['page']
+        jsrc = cfg.resolve(job['src']) if job.get('src') else src
+        if jsrc not in docs:
+            if not os.path.exists(jsrc):
+                raise FileNotFoundError(f'아트워크 원본 없음: {jsrc}')
+            docs[jsrc] = fitz.open(jsrc)
+        jdoc = docs[jsrc]
         x0, y0, x1, y1 = job['rect']
         um = job.get('unmix')
         key = None
@@ -66,12 +73,13 @@ def build(cfg, log=print):
             key = (tuple(um['bg']),
                    [(lim, tuple(c)) for lim, c in um['zones']])
         dpi = DPI if not key else job.get('dpi', 800)
-        pix = doc[page].get_pixmap(
+        pix = jdoc[page].get_pixmap(
             dpi=dpi, clip=fitz.Rect(x0 * PT, y0 * PT, x1 * PT, y1 * PT),
             alpha=True)
         im, (mx, my, mw, mh) = trim(pix, x0, y0, dpi, key)
         im.save(os.path.join(out, f'{name}.png'))
         log(f'{name}.png  {im.width}×{im.height}px  '
             f'→ no-repeat {mx:.2f}mm {my:.2f}mm / {mw:.2f}mm {mh:.2f}mm')
-    doc.close()
+    for d in docs.values():
+        d.close()
     return out
