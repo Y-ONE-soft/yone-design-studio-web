@@ -141,6 +141,22 @@ def _derive_pno(p):
     return p
 
 
+def _label_of(r):
+    return str(r.get("pno") or r.get("label") or r.get("key") or "?")
+
+
+def _dup_key(r):
+    """같은 지문인가. 학년이 다르면 다른 지문이다(고1 231124 ≠ 고2 231124)."""
+    g = "".join(c for c in str(r.get("grade") or "") if c.isdigit())
+    return (g, re.sub(r"\s+", "", _label_of(r)))
+
+
+def _fill_score(r):
+    """속이 얼마나 찼나 — 플로우노트·동반의어·주제. 많은 쪽이 이긴다."""
+    return (len(r.get("flownote") or []) + len(r.get("synonyms") or [])
+            + (1 if r.get("topic") else 0) + (1 if r.get("topic_ko") else 0))
+
+
 _RE_LEC = re.compile(r"(\d{1,2})\s*강")
 _RE_ONLY_NO = re.compile(r"^\s*(\d{1,2})\s*번\s*$")
 
@@ -277,23 +293,39 @@ class PocketbookSeries(Series):
         "memtest": "암기 TEST",
     }
 
-    # ── ① 코퍼스 → data.json ──
-    def gen_data(self, cfg, log):
-        """코퍼스에서 수록 지문을 고른다.
+    SCOPE_FILE = "_scope.json"
 
-        키를 손으로 나열해도 되고(`options.passages`), 학교·학기로 골라도 된다
-        (`options.school`·`options.term`). 뒤쪽이 실제 작업에 가깝다 —
-        "상일2 26-2 중간 포켓북" 이라고 말하지 지문 키를 외우지 않는다.
+    # ── ① 시험 범위 → data.json ──
+    def gen_data(self, cfg, log):
+        """**시험 범위(Y.OS)** 의 지문을 전부 모은다.
+
+        포켓북의 수록 범위는 고르는 게 아니라 **정해져 있다** — 그 학교 그 시험의
+        범위다. 지문이 코퍼스에서 오든 분석본에서 오든 그건 안쪽 사정이다.
+        (왜 이렇게 바뀌었는지는 `scope.py` 첫머리에 적어 두었다.)
+
+        범위를 못 읽으면 예전 방식(`options.passages` · `school`/`term`)으로
+        내려가되, **범위 없이 갔다고 말한다** — 조용히 다른 책을 만들지 않는다.
         """
         opt = cfg.section("options") or {}
         corpus = cfg.resolve(opt.get("corpus")
                              or "${STUDIO}/조판/교재/포켓북/_corpus")
+        school = opt.get("school") or ""
+        # ⚠ 학기는 `options` 보다 **책 폴더**가 정본이다. 예전엔 코퍼스가
+        #   딸려 오는 걸 막으려고 `term` 을 일부러 비워 둔 책이 22권 있었다 —
+        #   그 회피가 지금 없어진 것이므로 폴더에서 되찾는다.
+        term = opt.get("term") or self._term_of(cfg)
+        grade = opt.get("grade") or _grade_of(school)
+        scope = pscope.load(school, term, grade, log)
+        if scope:
+            log("■ 시험범위 %s %s — %s" % (school, term, scope["_text"]))
+        elif school:
+            log("■ [범위없음] %s %s 의 시험범위를 못 읽었다 — 있는 지문으로 조판한다"
+                % (school, term))
+
         keys = list(opt.get("passages") or [])
-        # ⚠ `school` 만으로 코퍼스를 고르면 **모든 학기**가 딸려 온다.
-        #   학교 이름은 학년(삽화 폴더)에도 쓰이므로, 코퍼스 선택은 `term` 이
-        #   있을 때만 한다. 신규 지문만 조판하는 책은 term 을 비워 두면 된다.
-        if not keys and (opt.get("term") or opt.get("units")):
-            keys = self._pick(corpus, opt, log)
+        if not keys and (scope or opt.get("term") or opt.get("units")):
+            keys = self._pick(corpus, opt, log, scope=scope, term=term,
+                              grade=grade)
         rows, missing = [], []
         rows += self._from_analysis(cfg, opt, log)
         for k in keys:
@@ -316,14 +348,78 @@ class PocketbookSeries(Series):
             raise ValueError(
                 "수록할 지문이 없다 — options 에 passages·school/term·analysis "
                 "중 하나는 있어야 한다")
+        rows, gaps = self._to_scope(rows, scope, log)
         self._apply_manuscript(cfg, opt, rows, log)
         rows = self._apply_memtest(cfg, opt, rows, log)
         out = os.path.join(cfg.build_dir, "data.json")
         os.makedirs(cfg.build_dir, exist_ok=True)
         with open(out, "w", encoding="utf-8") as fh:
             json.dump({"passages": rows}, fh, ensure_ascii=False)
+        # ⚠ 검수는 따로 돌 수 있다(`book.py verify`). 범위 결과를 인스턴스에만
+        #   담아 두면 그때 사라져 G-P10 이 조용히 통과한다 — 파일로 남긴다.
+        with open(os.path.join(cfg.build_dir, self.SCOPE_FILE), "w",
+                  encoding="utf-8") as fh:
+            json.dump({"text": (scope or {}).get("_text", ""),
+                       "known": bool(scope), "gaps": gaps},
+                      fh, ensure_ascii=False)
         log("■ 지문 %d개" % sum(1 for r in rows if r.get("kind") != "memtest"))
         return out
+
+    # ── 범위 ──
+    @staticmethod
+    def _term_of(cfg):
+        """책 폴더에서 학기를 되찾는다 — `…/포켓북/26-2-중간/광성1/`."""
+        parent = os.path.basename(os.path.dirname(os.path.normpath(cfg.root)))
+        return parent if re.match(r"^\d{2}-\d-", parent) else ""
+
+    @staticmethod
+    def _to_scope(rows, scope, log):
+        """모아 온 지문을 **범위대로** 추린다 → (지문들, 빠진 것 목록).
+
+        하는 일이 셋이다.
+
+          ① 겹친 것 하나로  같은 지문이 분석본과 코퍼스 양쪽에서 온다.
+             이때 **속이 찬 쪽**(플로우노트·동반의어가 있는 쪽)을 남긴다 —
+             예전에 사람이 "완성본에서 가져오기"로 하던 일이 바로 이거다.
+             글(지문·해석)은 이번 학기 분석본 것을 쓴다(원문이 손질됐을 수 있다).
+          ② 범위 밖 버리기
+          ③ 범위 차례로 세우기  범위가 곧 책의 차례다.
+
+        ⚠ 범위를 모르면 **아무것도 하지 않는다**. 순서를 함부로 바꾸면 이미
+          나간 책과 달라진다(예전 방식으로 도는 책이 그렇다).
+        """
+        if not scope:
+            return rows, []
+        best = {}
+        order = []
+        for r in rows:
+            k = _dup_key(r)
+            if k not in best:
+                best[k] = r
+                order.append(k)
+                continue
+            keep, drop = best[k], r
+            if _fill_score(drop) > _fill_score(keep):
+                # 속이 찬 쪽을 남기되, 글은 이번 학기 것으로 덮는다
+                for f in ("passage", "passage_text", "translation",
+                          "translation_text", "parts", "pair"):
+                    if keep.get(f) is not None:
+                        drop[f] = keep[f]
+                best[k] = drop
+        merged = [best[k] for k in order]
+        if len(merged) < len(rows):
+            log("■ 겹친 지문 %d개를 하나로 (속이 찬 쪽을 남김)"
+                % (len(rows) - len(merged)))
+        keep = [r for r in merged if pscope.matches(r, scope)]
+        if len(keep) < len(merged):
+            out = [_label_of(r) for r in merged if not pscope.matches(r, scope)]
+            log("■ 범위 밖 %d지문 제외 — %s"
+                % (len(out), ", ".join(out[:12])))
+        keep.sort(key=lambda r: pscope.sort_key(r, scope))
+        gaps = pscope.missing(scope, keep)
+        for g in gaps:
+            log("■ [범위] %s" % g)
+        return keep, gaps
 
     # ── 새 지문: 분석본에서 ──
     @staticmethod
@@ -492,8 +588,18 @@ class PocketbookSeries(Series):
                             "_cache", "memtest.json")
 
     @staticmethod
-    def _pick(corpus, opt, log):
-        """학교·학기(·단원)로 코퍼스에서 지문 키를 고른다. 순서는 인덱스 순."""
+    def _pick(corpus, opt, log, scope=None, term=None, grade=""):
+        """수록할 지문을 코퍼스에서 고른다.
+
+        **범위를 알면 범위가 고른다.** 그 학교 책에 있던 것이든 다른 학교 책에서
+        수확한 것이든 상관없다 — 다만 갈래는 가린다:
+
+          교과서(`N과`)   학교마다 출판사가 다르다 → **이 학교 것만**
+          모의고사·EBS    전국 공통 → 어느 책에서 왔든 쓴다
+                          (단 **학년**은 맞아야 한다. 고1 231124 ≠ 고2 231124)
+
+        범위를 모르면 예전처럼 학교·학기로 고른다.
+        """
         idx_path = os.path.join(corpus, "_index.json")
         if not os.path.exists(idx_path):
             raise ValueError("코퍼스 인덱스가 없다: %s\n"
@@ -507,8 +613,9 @@ class PocketbookSeries(Series):
         #   되어 지문 차례가 통째로 뒤섞인다(교과서와 모의고사가 섞여 나온다).
         #   숫자로 정렬한다. 쪽을 모르면 맨 뒤로.
         school = opt.get("school")
-        term = opt.get("term")
+        term = term if term is not None else opt.get("term")
         units = set(opt.get("units") or [])
+        gd = "".join(c for c in str(grade or "") if c.isdigit())
 
         # ⚠ 같은 지문이 여러 학교에 나오면 코퍼스는 **하나로 병합**한다(원문 동일
         #   병합 402건). 그런데 `school`·`term` 은 **먼저 만난 책 것만** 남는다 —
@@ -548,9 +655,23 @@ class PocketbookSeries(Series):
                     best = v
             return best if best is not None else 10 ** 6
 
+        def mine(r):
+            """이 학교 책에 실렸던 지문인가."""
+            return any(sc == school for _t, sc in places(r))
+
         out = []
         for r in rows:
-            if school or term:
+            if scope:
+                cands, _no = pscope.token_of(r)
+                if not cands:
+                    continue          # 범위로 셈할 수 없는 것은 안 끌어온다
+                if not pscope.matches(r, scope):
+                    continue
+                if not pscope.is_shared(cands) and not mine(r):
+                    continue          # 교과서는 남의 학교 것을 쓰면 안 된다
+                if gd and r.get("grade") and gd not in str(r["grade"]):
+                    continue
+            elif school or term:
                 ok = False
                 for t, sc in places(r):
                     if school and sc != school:
@@ -567,6 +688,11 @@ class PocketbookSeries(Series):
         out.sort(key=page_of)
         out = [r.get("file") or (r["key"] + ".json") for r in out]
         if not out:
+            # ⚠ 범위가 있는데 코퍼스가 비는 건 **정상**이다(전부 새 지문).
+            #   분석본이 채운다. 여기서 멈추면 새 학기 첫 책이 안 나온다.
+            if scope:
+                log("■ 코퍼스에 범위 안 지문이 없다 — 분석본으로 간다")
+                return []
             raise ValueError(
                 "고른 지문이 없다 (school=%s term=%s units=%s)"
                 % (school, term, sorted(units)))
@@ -1038,6 +1164,7 @@ class PocketbookSeries(Series):
         # G-P2 0개 항목 — 막지 않고 목록으로
         pas = [r for r in rows if r.get("kind") != "memtest"]
         self._check_source_count(cfg, opt, len(pas), report, log)
+        self._check_scope(cfg, report, log)
         no_syn = [r.get("key") or r.get("label") or "?" for r in pas
                   if not r.get("synonyms")]
         no_flow = [r.get("key") or r.get("label") or "?" for r in pas
@@ -1067,6 +1194,31 @@ class PocketbookSeries(Series):
                 report.note("표지·마감 포함 최종 %d면 (추가 %d)"
                             % (n_final, (n_final or 0) - n_pages))
         return report
+
+    def _check_scope(self, cfg, report, log):
+        """G-P10 — **범위가 부르는데 없는 지문**.
+
+        범위를 정본으로 삼으면서 새로 생긴, 그리고 가장 중요한 실패 모습이다:
+        지문이 빠져도 면 수·글자 수는 그만큼 줄어 **다른 게이트가 전부
+        통과한다**(G-P9 는 분석본을 기준으로 삼으니 분석본에 없으면 못 잡는다).
+        범위와 대 보는 이 자리에서만 잡힌다.
+
+        범위를 못 읽었으면 **막지 않고 알린다** — 시험범위 표가 아직 안 찼거나
+        예전 학기 책일 수 있다. 다만 조용히 넘어가지는 않는다.
+        """
+        f = os.path.join(cfg.build_dir, self.SCOPE_FILE)
+        if not os.path.exists(f):
+            return
+        with open(f, encoding="utf-8") as fh:
+            sc = json.load(fh)
+        if not sc.get("known"):
+            report.warn("G-P10 시험범위를 못 읽어 범위 대조를 못 했다")
+            return
+        gaps = sc.get("gaps") or []
+        if gaps:
+            report.fail("G-P10 범위에 있는데 없는 지문 — %s" % " / ".join(gaps))
+        else:
+            report.note("G-P10 시험범위 %s — 빠진 지문 없음" % sc.get("text", ""))
 
     def _check_source_count(self, cfg, opt, n_rendered, report, log):
         srcs = cfg.resolve(opt.get("analysis") or [])

@@ -62,13 +62,19 @@ def _grade_num(grade):
 
 # ── 지문 → (토큰 후보, 번호) ────────────────────────────────────────
 def token_of(row):
-    """포켓북 지문 → (토큰 후보 목록, 지문 번호). 모르면 ([], None)."""
-    pno = str(row.get("pno") or row.get("no") or "")
-    m = RE_PNO.match(pno)
-    if m:
-        yy, mm, nn = int(m.group(1)), int(m.group(2)), int(m.group(3))
-        return [("mock", yy, mm)], nn
+    """포켓북 지문 → (토큰 후보 목록, 지문 번호). 모르면 ([], None).
+
+    ⚠ 모의고사 번호는 자리에 따라 `pno` 로도 오고 `label` 로도 온다
+      (분석본은 `pno='260620'`, 코퍼스는 `label='231124'`). 둘 다 본다 —
+      한쪽만 보면 모의고사가 통째로 "라벨을 못 알아본 지문"이 되어 범위를
+      그냥 통과한다.
+    """
     label = str(row.get("label") or row.get("key") or "")
+    for cand in (str(row.get("pno") or row.get("no") or ""), label):
+        m = RE_PNO.fullmatch(cand.strip())
+        if m:
+            yy, mm, nn = int(m.group(1)), int(m.group(2)), int(m.group(3))
+            return [("mock", yy, mm)], nn
     m = RE_LESSON.search(label)
     if m:
         return [("lesson", int(m.group(1)))], _int(m.group(2))
@@ -77,6 +83,14 @@ def token_of(row):
         n = int(m.group(1))
         return [(k, n) for k in _UNIT_KINDS], _int(m.group(2))
     return [], None
+
+
+def is_shared(cands):
+    """전국 공통 교재인가(모의고사·EBS). 교과서는 학교마다 출판사가 다르다.
+
+    다른 학교 책에서 수확한 지문을 끌어다 써도 되는지 가르는 자리다.
+    """
+    return bool(cands) and all(c[0] != "lesson" for c in cands)
 
 
 def _int(v):
