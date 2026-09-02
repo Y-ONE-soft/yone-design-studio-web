@@ -210,7 +210,7 @@ def parse_problems(path):
 
     for p in paras:
         t = p['text'].strip()
-        if not t:
+        if not t and 'rows' not in p:      # 표는 text 가 비어 있다
             continue
         m = RE_ITEM.match(t)
         n = int(m.group(1)) if m else None
@@ -456,6 +456,19 @@ def build(cfg, log=print):
                  f"{lab} {it['no']}번 지문 없음")
         for a in ans:
             gate(plain(a['answer']).strip(), f"{lab} {a['no']}번 정답 없음")
+        for it in items:
+            # 선지가 표로 들어온 원고에서 표를 놓치면 선지 다섯 줄이 통째로
+            # 사라진다(2권 요약 문항). 원문자가 지문 안에 있는 어법·영영풀이
+            # 문항은 선지 줄이 없는 게 정상이므로 그것만 빼고 본다.
+            if any(b['t'] == 'choice' for b in it['blocks']):
+                continue
+            body = ' '.join(plain(b.get('paras') or b.get('items') or [])
+                            for b in it['blocks']
+                            if b['t'] in ('passage', 'summary', 'bogi'))
+            if any(c in body for c in CIRCLED):
+                continue
+            gate('것은?' not in plain(it['stem']) and '고르면' not in plain(it['stem']),
+                 f"{lab} {it['no']}번 선지 없음 (선택형 발문인데 선지를 못 찾았다)")
 
         book['lessons'].append({
             'lesson': L, 'label': lab, 'unit': f'{i + 1:02d}',

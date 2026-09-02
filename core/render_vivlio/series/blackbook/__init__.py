@@ -20,7 +20,9 @@ from core.render_vivlio.series.blackbook import assets as assets_mod
 from core.render_vivlio.series.blackbook import data as data_mod
 from core.render_vivlio.series.blackbook import render as render_mod
 
-RE_SPK = re.compile(r"^[A-Za-z][A-Za-z .'-]{0,22}:\s")
+# 화자 줄 — **대문자로 시작**해야 한다. 소문자로 시작하면 접힌 본문 줄이다
+# (`… a higher level of` / `detail: crime fiction, …` 이 화자로 잡혔다).
+RE_SPK = re.compile(r"^[A-Z][A-Za-z .'-]{0,22}:\s")
 
 
 class BlackbookSeries(Series):
@@ -317,8 +319,10 @@ class BlackbookSeries(Series):
             for i in range(first, len(doc)):
                 for mm in re.finditer(r"§A(\d+)§", texts[i]):
                     en[int(mm.group(1))] = i
-                for t, size, _bbox in probe.spans_mm(doc[i]):
-                    if size < 12:
+                for t, size, bbox in probe.spans_mm(doc[i]):
+                    # 머리 띠에도 큰 글자가 있다 — 2권 머리말 "…11월…" 의 11 이
+                    # 항목 번호로 잡혀 없는 넘김을 신고했다. 판면 안만 본다.
+                    if size < 12 or bbox[1] < 30:
                         continue
                     t = t.strip().rstrip(".")
                     if t.isdigit() and int(t) not in st:
