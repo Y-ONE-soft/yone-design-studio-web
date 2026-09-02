@@ -226,8 +226,7 @@ def missing(scope, rows):
         name = lambda t: str(t)            # noqa: E731
     have = {}
     for r in rows:
-        cands, no = token_of(r)
-        for c in cands:
+        for c, no in pairs_of(r):
             have.setdefault(_key(c), set()).add(no)
     out = []
     detail = scope.get("detail") or {}

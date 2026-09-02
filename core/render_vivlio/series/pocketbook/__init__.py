@@ -689,15 +689,16 @@ class PocketbookSeries(Series):
         out = []
         for r in rows:
             if scope:
-                cands, _no = pscope.token_of(r)
-                if not cands:
-                    continue          # 범위로 셈할 수 없는 것은 안 끌어온다
-                if not pscope.matches(r, scope):
-                    continue
+                tok = pscope.match(r, scope)
+                if tok is None:
+                    continue          # 범위 밖이거나 셈할 수 없는 것
                 if gd and r.get("grade") and gd not in str(r["grade"]):
                     continue
-                if not pscope.is_shared(cands):
-                    # 교과서·EBS 는 이 학교 **이 학기** 것만
+                if tok[0] != "mock":
+                    # ⚠ 범위에 **어느 이름으로 들었는지**가 가른다. 모의고사
+                    #   이름으로 들었으면 그 지문은 세상에 하나뿐이라 어느
+                    #   학교 책에서 왔든 같다. 교과서·EBS 이름으로 들었으면
+                    #   해마다 다른 글이므로 이 학교 이 학기 것만 쓴다.
                     if not any(sc == school and (not term or t == term)
                                for t, sc in places(r)):
                         continue
