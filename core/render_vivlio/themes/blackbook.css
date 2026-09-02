@@ -34,6 +34,7 @@
 
 /* ------------------------------------------------------------------ 색 */
 :root {
+  --brand-w:  43.59mm;   /* 브랜드 아트워크 폭 — VOL.2 는 조금 넓다 */
   --ink:      #231f20;   /* 본문 먹 */
   --gray:     #404041;   /* 탭 · 해설 본문 */
   --gold:     #908400;   /* 강조(번호·Date) */
@@ -67,7 +68,7 @@
 @page :left {
   margin-left: 23mm; margin-right: 26mm;
   background:
-    url(assets/brand.png) no-repeat 18.5mm 12.04mm / 43.59mm 3.43mm,
+    url(assets/brand.png) no-repeat 18.5mm 12.04mm / var(--brand-w) 3.43mm,
     url(assets/footL.png) no-repeat 20.75mm 286.1mm / 20.96mm 2.78mm;
 
   @bottom-left-corner {
@@ -102,7 +103,7 @@
 /* 섹션별 머리 띠 — 이름있는 페이지(섹션 사이엔 어차피 강제 개면) */
 @page voca:left {
   background:
-    url(assets/brand.png) no-repeat 18.5mm 12.04mm / 43.59mm 3.43mm,
+    url(assets/brand.png) no-repeat 18.5mm 12.04mm / var(--brand-w) 3.43mm,
     url(assets/footL.png) no-repeat 20.75mm 286.1mm / 20.96mm 2.78mm,
     linear-gradient(var(--ink), var(--ink)) no-repeat 0 20.25mm / 216mm 0.353mm;
 }
@@ -114,7 +115,7 @@
 }
 @page exer:left {
   background:
-    url(assets/brand.png) no-repeat 18.5mm 12.04mm / 43.59mm 3.43mm,
+    url(assets/brand.png) no-repeat 18.5mm 12.04mm / var(--brand-w) 3.43mm,
     url(assets/footL.png) no-repeat 20.75mm 286.1mm / 20.96mm 2.78mm,
     linear-gradient(var(--ink), var(--ink)) no-repeat 0 20.25mm / 216mm 0.353mm,
     linear-gradient(var(--band), var(--band)) no-repeat 0 0 / 216mm 23mm;
