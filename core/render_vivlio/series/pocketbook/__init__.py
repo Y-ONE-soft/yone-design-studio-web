@@ -718,14 +718,14 @@ class PocketbookSeries(Series):
         out.sort(key=page_of)
         out = [r.get("file") or (r["key"] + ".json") for r in out]
         if not out:
-            # ⚠ 범위가 있는데 코퍼스가 비는 건 **정상**이다(전부 새 지문).
-            #   분석본이 채운다. 여기서 멈추면 새 학기 첫 책이 안 나온다.
-            if scope:
-                log("■ 코퍼스에 범위 안 지문이 없다 — 분석본으로 간다")
-                return []
-            raise ValueError(
-                "고른 지문이 없다 (school=%s term=%s units=%s)"
-                % (school, term, sorted(units)))
+            # ⚠ 코퍼스가 비는 건 **정상**이다 — 새 학기 첫 책은 지문이 전부
+            #   분석본에서 온다. 예전엔 여기서 멈췄는데, 이제 카드가 학기를
+            #   **언제나** 적으므로(범위를 찾는 열쇠라서) 그대로 두면 아직
+            #   코퍼스에 없는 학교가 통째로 조판 실패한다. 정말로 아무 데서도
+            #   지문이 안 오면 `gen_data` 가 잡는다.
+            log("■ 코퍼스에 고를 지문이 없다 (school=%s term=%s) — 분석본으로 간다"
+                % (school, term))
+            return []
         log("■ 코퍼스에서 %d지문 선택" % len(out))
         return out
 

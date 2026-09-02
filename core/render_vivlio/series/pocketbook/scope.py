@@ -151,10 +151,6 @@ def is_shared(cands):
     return bool(cands) and all(c[0] == "mock" for c in cands)
 
 
-def _int(v):
-    return int(v) if v and str(v).isdigit() else None
-
-
 def _key(t):
     return tuple(t)
 
