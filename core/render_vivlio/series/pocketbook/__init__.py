@@ -22,6 +22,7 @@ from core.render_vivlio.series.base import Series
 from core.render_vivlio.series.pocketbook import data as pdata
 from core.render_vivlio.series.pocketbook import memtest as pmemtest
 from core.render_vivlio.series.pocketbook import render as prender
+from core.render_vivlio.series.pocketbook import scope as pscope
 from core.render_vivlio.series.pocketbook import theme as ptheme
 
 FONTS = [
