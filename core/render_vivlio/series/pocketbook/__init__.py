@@ -429,6 +429,7 @@ class PocketbookSeries(Series):
                 % (len(rows) - len(merged)))
         if not scope:
             return merged, []
+        pscope.annotate(merged)         # 머리말 이어받기 (라벨은 안 건드린다)
         merged.sort(key=lambda r: pscope.sort_key(r, scope))
         out = [_label_of(r) for r in merged if not pscope.matches(r, scope)]
         if out:
@@ -436,7 +437,9 @@ class PocketbookSeries(Series):
                 "있다): %s" % (len(out), ", ".join(out[:12])))
         gaps = pscope.missing(scope, merged)
         for g in gaps:
-            log("■ [범위] %s" % g)
+            log("■ [범위]%s %s" % ("" if g["hard"] else "(확인)", g["text"]))
+        for r in merged:
+            r.pop("_tok", None)         # 범위 셈에만 쓰는 것 — 자료에 안 남긴다
         return merged, gaps
 
     # ── 새 지문: 분석본에서 ──
@@ -1238,9 +1241,14 @@ class PocketbookSeries(Series):
             report.warn("G-P10 시험범위를 못 읽어 범위 대조를 못 했다")
             return
         gaps = sc.get("gaps") or []
-        if gaps:
-            report.fail("G-P10 범위에 있는데 없는 지문 — %s" % " / ".join(gaps))
-        else:
+        hard = [g["text"] for g in gaps if g.get("hard")]
+        soft = [g["text"] for g in gaps if not g.get("hard")]
+        if hard:
+            report.fail("G-P10 범위에 있는데 없는 지문 — %s" % " / ".join(hard))
+        if soft:
+            report.warn("G-P10 범위와 번호가 어긋난다(시험범위 표 확인) — %s"
+                        % " / ".join(soft))
+        if not gaps:
             report.note("G-P10 시험범위 %s — 빠진 지문 없음" % sc.get("text", ""))
 
     def _check_source_count(self, cfg, opt, n_rendered, report, log):
