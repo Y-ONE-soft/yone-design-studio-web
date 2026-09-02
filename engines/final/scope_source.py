@@ -107,8 +107,23 @@ SERIES = (
 # `18,19,21강` · `15~18강` · `3,6,7,11강` — **`강` 으로 끝나는 숫자 묶음**만
 # 강 번호다. `독해기본1`·`유형편(40지문)` 의 숫자는 교재 이름이라 걸리지 않는다.
 RE_UNIT_RUN = re.compile(r"((?:\d{1,2}\s*[,~\-]\s*)*\d{1,2})\s*강")
+# 같은 것을 영어로 적기도 한다 — `올림포스 … Unit 1, 3~5, 8~10` · `Unit 1-8`.
+# ⚠ 반드시 `Unit` 이 **앞에** 붙은 숫자만 본다. 교재 이름의 숫자(`독해의 기본 2`)를
+#   강 번호로 읽으면 범위가 통째로 틀어진다.
+RE_UNIT_RUN_EN = re.compile(
+    r"\bunits?\s*((?:\d{1,2}\s*[,~\-]\s*)*\d{1,2})", re.I)
+# `8강 3번~12강` — **강에서 강까지**. 사이에 지문 번호가 끼어 있어 낱개 규칙으로는
+# 8강과 12강 두 점만 잡히고 9·10·11강이 통째로 샌다(이의2 실측).
+# ⚠ 사이에 올 수 있는 건 **지문 번호 하나**뿐이다. 아무거나 끼워 주면
+#   `7강(2,4),  11~17강` 을 7~17강으로 읽어 8·9·10강을 없는 범위로 만든다
+#   (명일3 실측 — 회귀에서 잡혔다).
+RE_UNIT_SPAN = re.compile(
+    r"(\d{1,2})\s*강\s*(?:\d{1,3}\s*번)?\s*[~\-–]\s*(\d{1,2})\s*강")
 RE_LESSON_RUN = re.compile(r"((?:\d{1,2}\s*[,~\-]\s*)*\d{1,2})\s*과")
 RE_MOCK_TXT = re.compile(r"(\d{2})\s*년\s*(\d{1,2})\s*월")
+# `23-25년 9월` — 세 해의 같은 달. 낱개 규칙은 **한 해만** 잡는다(한영2 실측).
+RE_MOCK_SPAN = re.compile(
+    r"(\d{2})\s*[~\-–]\s*(\d{2})\s*년\s*(\d{1,2})\s*월")
 RE_TEST_TXT = re.compile(r"[Tt][Ee][Ss][Tt]\s*(\d)")
 # `*` 는 항목의 머리다 — `* 공통영어1 능률(민) 3과 * 공통영어2 YBM(김) 4과`
 # 를 한 도막으로 보면 두 교과서가 뭉쳐 **뒤쪽 출판사를 잃는다**(명일1 실증).
@@ -159,7 +174,17 @@ def _scan(text):
         deep = "deep learning" in low or "DL" in seg
         here, _pos = [], {}
 
-        runs = list(RE_UNIT_RUN.finditer(seg))
+        # 강에서 강까지(`8강 3번~12강`) — 사이 강을 먼저 채운다. 낱개 규칙이
+        # 양 끝 두 점만 잡고 가운데를 흘리기 때문이다.
+        span_units = set()
+        for m in RE_UNIT_SPAN.finditer(seg):
+            a, b = int(m.group(1)), int(m.group(2))
+            if a < b <= a + 20:
+                span_units.update(range(a, b + 1))
+
+        runs = list(RE_UNIT_RUN.finditer(seg)) + list(
+            RE_UNIT_RUN_EN.finditer(seg))
+        runs.sort(key=lambda m: m.start())
         for idx, m in enumerate(runs):
             kind = last_kind
             for i, k in marks:
@@ -175,13 +200,35 @@ def _scan(text):
                 _pos.setdefault((kind, u), m.start())
             end = runs[idx + 1].start() if idx + 1 < len(runs) else len(seg)
             tail = seg[m.end():end]
-            if re.match(r"^\s*\d", tail):
+            # ⚠ 구간을 **여는** 강(`8강 3번~12강` 의 8강)의 꼬리는 다음 강
+            #   이름이지 지문 번호가 아니다. 그대로 읽으면 `8강 only=[3..12]`
+            #   라는 헛것이 나온다. 다만 같은 도막의 **다른** 강까지 함께
+            #   막으면 안 된다 — `unit 1강~11강 (11강 2번지문까지)` 의
+            #   `11강 only=[2]` 를 잃는다(회귀에서 잡혔다).
+            opens_span = re.match(
+                r"^\s*\d{1,3}\s*번?\s*[~\-–]\s*\d{1,2}\s*강", tail)
+            if re.match(r"^\s*\d", tail) and not opens_span:
                 for u in nums:
                     only[(kind, u)] = _ranges(tail)
+
+        if span_units:
+            kind = last_kind
+            for i, k in marks:
+                if i < len(seg):
+                    kind = k
+            out += [(kind, u) for u in sorted(span_units)]
+            here += [(kind, u) for u in sorted(span_units)]
 
         for m in RE_LESSON_RUN.finditer(seg):
             out += [("lesson", u) for u in _nums(m.group(1))]
             here += [("lesson", u) for u in _nums(m.group(1))]
+
+        # `23-25년 9월` — 해가 구간이면 그 해를 다 편다
+        span_mocks = []
+        for m in RE_MOCK_SPAN.finditer(seg):
+            a, b, mm = int(m.group(1)), int(m.group(2)), int(m.group(3))
+            if a < b <= a + 10:
+                span_mocks += [("mock", y, mm) for y in range(a, b + 1)]
 
         mocks = list(RE_MOCK_TXT.finditer(seg))
         for idx, m in enumerate(mocks):
@@ -191,6 +238,16 @@ def _scan(text):
             nums = _ranges(re.sub(r"\(([^)]*)\)", " ", seg[m.end():end]))
             if nums:
                 only[t] = nums
+        # 해 구간의 나머지 해는 같은 문항 몫을 받는다 — `23-25년 9월 21-24, 29-40`
+        # 은 세 해 모두 그 번호들이다.
+        for t in span_mocks:
+            if t not in here:
+                out.append(t); here.append(t)
+            base = ("mock", int(t[1]), int(t[2]))
+            src = next((only[x] for x in only
+                        if x[0] == "mock" and x[2] == base[2]), None)
+            if src and t not in only:
+                only[t] = src
 
         tests = list(RE_TEST_TXT.finditer(seg))
         for idx, m in enumerate(tests):
