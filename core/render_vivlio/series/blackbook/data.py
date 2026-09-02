@@ -153,6 +153,23 @@ RE_BOGI = re.compile(r'^\s*[<〈]\s*보\s*기\s*[>〉]\s*$')
 RE_BLANK = re.compile(r'_{4,}')
 
 
+def _is_choice_line(t):
+    """원문자로 시작하는 줄 — 선지인가, ①이 박힌 지문인가.
+
+    어법·영영풀이 문제의 지문은 `①When writing a novel …` 처럼 **원문자로
+    시작**한다. 선지로 오인하면 그 문항은 지문을 잃는다(2권 30번에서 게이트가
+    잡았다). 가르는 것은 형식이 아니라 **간격** — 선지는 원문자 사이가 짧고
+    (`① (a)   ② (b) …` 한 줄 선지 포함), 지문은 원문자 사이에 문장이 있다.
+    """
+    pos = [i for i, ch in enumerate(t) if ch in CIRCLED]
+    if len(t) > 200:                     # 선지 한 줄이 이만큼 길지 않다
+        return False
+    if len(pos) >= 2:
+        gap = max(pos[i + 1] - pos[i] for i in range(len(pos) - 1))
+        return gap <= 30                 # 짧으면 한 줄에 늘어놓은 선지
+    return True
+
+
 def _is_ansline(t, style):
     """답란인가 — 밑줄이 있고 밑줄 뺀 글자가 20자 이하이거나 전용 스타일"""
     return style == 'aa' or (
@@ -205,9 +222,7 @@ def parse_problems(path):
         elif t.startswith('[채점 기준]') or t.startswith('[답안 작성 안내]'):
             B.append({'t': 'crit', 'title': t, 'items': []})
             mode = 'crit'
-        elif t[0] in CIRCLED and sum(t.count(c) for c in CIRCLED) == 1:
-            # ①로 **시작하는 지문**이 있다(어법 문제 — `①When writing a novel …`).
-            # 선지는 원문자가 하나, 밑줄 친 지문은 ①~⑤가 한 단락 안에 다 있다.
+        elif t[0] in CIRCLED and _is_choice_line(t):
             B.append({'t': 'choice', 'mark': t[0],
                       'body': rich(strip_lead(p['segs'], 1))})
             mode = None
