@@ -278,12 +278,26 @@ def parse_answers(path):
 
 # ---------------------------------------------------------------- 연관어휘 파서
 
-RE_UNIT = re.compile(r'^\s*[<〈]\s*(\d+)\s*과\s*본문\s*(\d+)\s*[>〉]\s*$')
+# 지문 마커는 책마다 말이 다르다 — 교과서본은 `<1과 본문1>`, 모의고사본은 `<18번>`.
+# 형식을 나열하지 말고 **꺾쇠 안에 숫자가 있는 한 줄**을 마커로 본다.
+# 라벨은 원고가 쓴 말 그대로(꺾쇠만 벗겨) 쓴다 — 칩에 그대로 인쇄된다.
+RE_UNIT = re.compile(r'^\s*[<〈]\s*((?=[^>〉]*\d)[^>〉]{1,20})\s*[>〉]\s*$')
 RE_VOCA_HEAD = re.compile(r'^\s*[<〈]\s*연관\s*어휘\s*[>〉]\s*$')
 RE_SYN = re.compile(r'^(동의어|반의어|유의어|참고)\s*:\s*')
+# 표제어와 뜻의 경계 — 원고가 두 칸을 띄우기도, 한 칸만 띄우기도, 붙여 쓰기도 한다
+# (`impressive  인상적인` / `appreciate 높이 평가하다` / `apply지원하다`).
+RE_HEAD_SPLIT = re.compile(r'\s{2,}|(?=[가-힣])')
 
 
-def parse_vocab(path):
+def _split_headword(t):
+    """표제어 / 뜻 — 두 칸 띄움이 먼저면 그것, 아니면 첫 한글 앞에서 자른다."""
+    m = RE_HEAD_SPLIT.search(t)
+    if not m:
+        return t.strip(), ''
+    return t[:m.start()].strip(), t[m.end():].strip()
+
+
+def parse_vocab(path, has_title=True):
     paras = read_paras(path)
     units, cur, state = [], None, None
     for p in paras:
@@ -292,13 +306,13 @@ def parse_vocab(path):
             if not t:
                 continue
             m = RE_UNIT.match(t)
-            if m:
+            if m and not RE_VOCA_HEAD.match(t):
                 if cur:
                     units.append(cur)
-                cur = {'lesson': int(m.group(1)), 'idx': int(m.group(2)),
-                       'label': f'{m.group(1)}과 본문{m.group(2)}',
+                label = re.sub(r'\s+', ' ', m.group(1)).strip()
+                cur = {'label': label,
                        'title': '', 'paras': [], 'words': []}
-                state = 'title'
+                state = 'title' if has_title else 'body'
                 continue
             if cur is None:
                 continue
@@ -319,12 +333,9 @@ def parse_vocab(path):
                 elif ms:
                     continue
                 else:
-                    parts = re.split(r'\s{2,}', t, maxsplit=1)
-                    head = parts[0].strip()
+                    head, mean = _split_headword(t)
                     cur['words'].append(
-                        {'word': head,
-                         'mean': parts[1].strip() if len(parts) > 1 else '',
-                         'rel': []})
+                        {'word': head, 'mean': mean, 'rel': []})
     if cur:
         units.append(cur)
     return units
@@ -363,38 +374,44 @@ def build(cfg, log=print):
     """원고 → data.json. 게이트를 통과하지 못하면 조판하지 않고 중단한다."""
     m = cfg.section("manuscript") or {}
     lessons = m.get("lessons") or [1, 2]
+    # 묶음 이름은 책마다 다르다 — 교과서본은 "1과", 모의고사본은 "18 ~ 22번".
+    # `labels` 가 없으면 예전처럼 "{lesson}과".
+    labels = m.get("labels") or [f"{L}과" for L in lessons]
+    has_title = m.get("vocab_title", True)
     kinds = m.get("kinds") or {"problems": "문제", "vocab": "연관어휘",
                                "answers": "해설"}
     book = {"title": cfg.book.get("brand", ""), "lessons": []}
     n_prob = n_ans = 0
-    for L in lessons:
+    for i, L in enumerate(lessons):
+        lab = labels[i] if i < len(labels) else f"{L}과"
         hdr, items = parse_problems(find(cfg, kinds["problems"], L))
-        vunits = parse_vocab(find(cfg, kinds["vocab"], L))
+        vunits = parse_vocab(find(cfg, kinds["vocab"], L), has_title)
         ans = parse_answers(find(cfg, kinds["answers"], L))
 
         mt = re.search(r'Lesson\s*(\d+)\s*(.*)$', hdr)
         title = mt.group(2).strip() if mt else ''
 
-        gate(len(items) >= 10, f'{L}과 문항 인식 실패({len(items)})')
+        gate(len(items) >= 10, f'{lab} 문항 인식 실패({len(items)})')
         gate(len(ans) == len(items),
-             f'{L}과 문항 {len(items)} vs 해설 {len(ans)} 불일치')
-        nos_p = [i['no'] for i in items]
+             f'{lab} 문항 {len(items)} vs 해설 {len(ans)} 불일치')
+        nos_p = [i2['no'] for i2 in items]
         nos_a = [a['no'] for a in ans]
-        gate(nos_p == nos_a, f'{L}과 문항 번호 불일치: {nos_p[:5]} vs {nos_a[:5]}')
+        gate(nos_p == nos_a, f'{lab} 문항 번호 불일치: {nos_p[:5]} vs {nos_a[:5]}')
         gate(nos_p == list(range(nos_p[0], nos_p[0] + len(nos_p))),
-             f'{L}과 문항 번호 비연속')
-        gate(len(vunits) >= 1, f'{L}과 연관어휘 본문 인식 실패')
+             f'{lab} 문항 번호 비연속')
+        gate(len(vunits) >= 1, f'{lab} 연관어휘 본문 인식 실패')
         for u in vunits:
             gate(u['words'], f"{u['label']} 어휘 0개")
             gate(u['paras'], f"{u['label']} 지문 0개")
         for it in items:
             gate(any(b['t'] == 'passage' for b in it['blocks']),
-                 f"{L}과 {it['no']}번 지문 없음")
+                 f"{lab} {it['no']}번 지문 없음")
         for a in ans:
-            gate(plain(a['answer']).strip(), f"{L}과 {a['no']}번 정답 없음")
+            gate(plain(a['answer']).strip(), f"{lab} {a['no']}번 정답 없음")
 
         book['lessons'].append({
-            'lesson': L, 'header': hdr, 'title': title,
+            'lesson': L, 'label': lab, 'unit': f'{i + 1:02d}',
+            'header': hdr, 'title': title,
             'vocab': vunits, 'problems': items, 'answers': ans,
         })
         n_prob += len(items)
@@ -406,7 +423,7 @@ def build(cfg, log=print):
 
     log('■ 인식 결과')
     for L in book['lessons']:
-        log(f"  {L['lesson']}과  {L['title']}")
+        log(f"  {L.get('label') or str(L['lesson']) + '과'}  {L['title']}")
         log(f"    연관어휘 본문 {len(L['vocab'])}개 / 표제어 "
             f"{sum(len(u['words']) for u in L['vocab'])}개")
         log(f"    문항 {len(L['problems'])}개 "

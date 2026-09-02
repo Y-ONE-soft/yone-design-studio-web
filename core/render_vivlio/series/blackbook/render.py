@@ -410,18 +410,19 @@ def document(cfg, data, heights=None, aheights=None, mode=None):
         o.append('</section></body></html>')
     else:
         o.append('<div class="divider"><span style="color:#fff">§DIV1§</span></div>')
-        for L in data['lessons']:
-            n = L['lesson']
-            mark = f'{subject} {n}과'   # 꼬리말 라벨 — 머리 제목 전체와 같은 말로
-            unit = f'{n:02d}'
+        for i, L in enumerate(data['lessons']):
+            # 묶음 이름은 책이 정한다 — "1과" 또는 "18 ~ 22번"
+            lab = L.get('label') or f"{L['lesson']}과"
+            mark = f'{subject} {lab}'   # 꼬리말 라벨 — 머리 제목 전체와 같은 말로
+            unit = L.get('unit') or f'{i + 1:02d}'
             o.append(sec_open('sec-voca', mark))
-            o.append(hdr_unit(unit, f'{subject}&nbsp; {n}과 연관어휘'))
+            o.append(hdr_unit(unit, f'{subject}&nbsp; {lab} 연관어휘'))
             for u in L['vocab']:
                 o.append(render_vocab(u))
             o.append('</section>')
 
             o.append(sec_open('sec-exer', mark))
-            o.append(hdr_exer(f'{subject}&nbsp; {n}과'))
+            o.append(hdr_exer(f'{subject}&nbsp; {lab}'))
             for it, slot, brk in layout_pages(L['problems'], heights, m):
                 st = []
                 if slot:
@@ -434,10 +435,11 @@ def document(cfg, data, heights=None, aheights=None, mode=None):
 
         o.append('<div class="divider left">'
                  '<span style="color:#fff">§DIV2§</span></div>')
-        for L in data['lessons']:
-            n = L['lesson']
+        for i, L in enumerate(data['lessons']):
+            lab = L.get('label') or f"{L['lesson']}과"
+            unit = L.get('unit') or f'{i + 1:02d}'
             o.append(sec_open('sec-ans', '정답 및 해설'))
-            o.append(hdr_ans(f'{n:02d}', f'{subject} {n}과'))
+            o.append(hdr_ans(unit, f'{subject} {lab}'))
             o.append('<div class="answers">')
             for a, brk in layout_answers(L['answers'], aheights, m):
                 o.append(render_answer(a, brk))
