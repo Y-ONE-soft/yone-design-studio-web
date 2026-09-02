@@ -366,7 +366,7 @@ class PocketbookSeries(Series):
             raise ValueError(
                 "수록할 지문이 없다 — options 에 passages·school/term·analysis "
                 "중 하나는 있어야 한다")
-        rows, gaps = self._to_scope(rows, scope, log)
+        rows, gaps, n_merged = self._to_scope(rows, scope, log)
         self._apply_manuscript(cfg, opt, rows, log)
         rows = self._apply_memtest(cfg, opt, rows, log)
         out = os.path.join(cfg.build_dir, "data.json")
@@ -378,8 +378,8 @@ class PocketbookSeries(Series):
         with open(os.path.join(cfg.build_dir, self.SCOPE_FILE), "w",
                   encoding="utf-8") as fh:
             json.dump({"text": (scope or {}).get("_text", ""),
-                       "known": bool(scope), "gaps": gaps},
-                      fh, ensure_ascii=False)
+                       "known": bool(scope), "gaps": gaps,
+                       "merged": n_merged}, fh, ensure_ascii=False)
         log("■ 지문 %d개" % sum(1 for r in rows if r.get("kind") != "memtest"))
         return out
 
@@ -415,6 +415,7 @@ class PocketbookSeries(Series):
           `13강 01` 로 달리 불린다(리딩파워). 글로 보면 둘 다 맞다.
         """
         best, order = {}, []
+        n_merged = 0
         for r in rows:
             k = _dup_key(r)
             if k is None or k not in best:
@@ -423,12 +424,12 @@ class PocketbookSeries(Series):
                 order.append(r)
                 continue
             _fill_from(best[k], r)          # 바탕은 그대로, 빈 곳만 채운다
+            n_merged += 1
         merged = order
-        if len(merged) < len(rows):
-            log("■ 겹친 지문 %d개를 하나로 (빈 곳은 채워 넣음)"
-                % (len(rows) - len(merged)))
+        if n_merged:
+            log("■ 겹친 지문 %d개를 하나로 (빈 곳은 채워 넣음)" % n_merged)
         if not scope:
-            return merged, []
+            return merged, [], n_merged
         pscope.annotate(merged)         # 머리말 이어받기 (라벨은 안 건드린다)
         for i, r in enumerate(merged):
             r["_ord"] = i               # 원래 자리 — 범위 밖 지문은 이대로 둔다
@@ -443,7 +444,7 @@ class PocketbookSeries(Series):
         for r in merged:
             r.pop("_tok", None)         # 범위 셈에만 쓰는 것 — 자료에 안 남긴다
             r.pop("_ord", None)
-        return merged, gaps
+        return merged, gaps, n_merged
 
     # ── 새 지문: 분석본에서 ──
     @staticmethod
@@ -1224,6 +1225,13 @@ class PocketbookSeries(Series):
                             % (n_final, (n_final or 0) - n_pages))
         return report
 
+    def _scope_info(self, cfg):
+        f = os.path.join(cfg.build_dir, self.SCOPE_FILE)
+        if not os.path.exists(f):
+            return {}
+        with open(f, encoding="utf-8") as fh:
+            return json.load(fh)
+
     def _check_scope(self, cfg, report, log):
         """G-P10 — **범위가 부르는데 없는 지문**.
 
@@ -1235,11 +1243,9 @@ class PocketbookSeries(Series):
         범위를 못 읽었으면 **막지 않고 알린다** — 시험범위 표가 아직 안 찼거나
         예전 학기 책일 수 있다. 다만 조용히 넘어가지는 않는다.
         """
-        f = os.path.join(cfg.build_dir, self.SCOPE_FILE)
-        if not os.path.exists(f):
+        sc = self._scope_info(cfg)
+        if not sc:
             return
-        with open(f, encoding="utf-8") as fh:
-            sc = json.load(fh)
         if not sc.get("known"):
             report.warn("G-P10 시험범위를 못 읽어 범위 대조를 못 했다")
             return
@@ -1281,10 +1287,15 @@ class PocketbookSeries(Series):
             return
         if not n_src:
             return
-        if n_rendered < n_src * 0.85:
+        # ⚠ 겹친 지문을 하나로 합친 만큼은 **빠진 게 아니다**. 되돌려 놓고 센다 —
+        #   안 그러면 같은 분석본이 두 벌 들어온 책(창현1: 원본 + 학교본, 글이
+        #   글자까지 같다)이 "지문 8개 유실"로 잡힌다. 원본 쪽 수는 그대로 두고
+        #   지면 쪽에 합친 수를 더해 견준다.
+        n_eff = n_rendered + self._scope_info(cfg).get("merged", 0)
+        if n_eff < n_src * 0.85:
             report.fail("G-P9 지문이 크게 빈다 — 원본 %d · 지면 %d (%.0f%%)"
-                        % (n_src, n_rendered, 100.0 * n_rendered / n_src))
-        elif n_rendered < n_src:
+                        % (n_src, n_rendered, 100.0 * n_eff / n_src))
+        elif n_eff < n_src:
             report.note("G-P9 원본 %d · 지면 %d (소제목 이동·스프레드 걸침이면 정상)"
                         % (n_src, n_rendered))
 

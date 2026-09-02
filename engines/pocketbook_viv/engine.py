@@ -121,8 +121,6 @@ class PocketbookVivEngine(BaseEngine):
             {"key": "school", "label": "학교", "type": "text", "required": True},
             {"key": "term", "label": "학기 (예: 26-2-중간)", "type": "text",
              "required": True},
-            {"key": "use_corpus", "label": "기존 지문도 넣기(코퍼스)",
-             "type": "text", "required": False},
             {"key": "m1", "label": "교재팀 원고 (hwpx · 플로우노트+동반의어)",
              "required": False},
             {"key": "m2", "label": "교재팀 원고 2", "required": False},
@@ -143,13 +141,14 @@ class PocketbookVivEngine(BaseEngine):
         cfg_path = os.path.join(book_dir, "config.json")
 
         analysis = self._analysis_dir(root, term, school)
-        if not analysis and not self._meta(job_dir, "use_corpus"):
+        scope = self._scope(school, term, log)
+        if not analysis and not scope:
             raise ValueError(
-                "이 학교의 분석본 IDML 이 없다: %s/%s\n"
-                "  → 먼저 내보내기를 돌릴 것 (InDesign 필요):\n"
+                "이 학교의 분석본 IDML 도, 시험범위도 없다: %s/%s\n"
+                "  → 분석본 내보내기 (InDesign 필요):\n"
                 "     python3 tools/pocket_harvest/export_idml.py analysis "
                 "--only=%s\n"
-                "  → 또는 '기존 지문도 넣기'를 켜서 코퍼스만으로 조판할 것"
+                "  → 또는 Y.OS 에 이 학교 시험범위를 채울 것"
                 % (term, school, term))
 
         created = False
@@ -172,10 +171,11 @@ class PocketbookVivEngine(BaseEngine):
         opt["school"] = school
         opt["grade"] = self._grade_of(school)
         opt["analysis"] = [analysis] if analysis else []
-        if self._meta(job_dir, "use_corpus"):
-            opt["term"] = term
-        else:
-            opt.pop("term", None)
+        # ⚠ 학기는 **언제나** 적는다. 예전엔 코퍼스가 통째로 딸려 오는 걸 막으려고
+        #   일부러 비워 뒀는데(그래서 카드에 "기존 지문도 넣기" 라는 선택이
+        #   있었다), 이제 수록 범위는 시험범위가 정한다 — 학기는 그 범위를 찾는
+        #   열쇠이지 지문을 끌어오는 스위치가 아니다.
+        opt["term"] = term
         opt["manuscript"] = self._save_manuscripts(uploaded, job_dir, book_dir,
                                                    log)
         with open(cfg_path, "w", encoding="utf-8") as f:
@@ -186,6 +186,7 @@ class PocketbookVivEngine(BaseEngine):
                "새로 만듦" if created else "기존 설정 유지"))
         log("■ 분석본 %s" % (os.path.relpath(analysis, root) if analysis
                              else "없음 — 코퍼스만"))
+        log("■ 시험범위 %s" % (scope or "못 읽음 (Y.OS 확인 필요)"))
         log("■ 교재팀 원고 %d개" % len(opt["manuscript"]))
 
         out = os.path.join(job_dir, "content.json")
@@ -193,6 +194,18 @@ class PocketbookVivEngine(BaseEngine):
             json.dump({"book_dir": book_dir, "school": school, "term": term},
                       f, ensure_ascii=False)
         return out
+
+    @staticmethod
+    def _scope(school, term, log):
+        """Y.OS 시험범위를 사람이 읽는 한 줄로. 못 읽으면 빈 문자열."""
+        try:
+            from core.render_vivlio.series.pocketbook import scope as ps
+            sc = ps.load(school, term, PocketbookVivEngine._grade_of(school),
+                         lambda m: None)
+            return sc["_text"] if sc else ""
+        except Exception as e:
+            log("■ 시험범위를 못 읽었다: %s" % str(e)[:80])
+            return ""
 
     def prepare_jsx(self, json_path, job_dir, log):
         """InDesign 경로는 쓰지 않는다 — 파이프라인이 백엔드를 보고 갈라간다."""
@@ -245,6 +258,20 @@ class PocketbookVivEngine(BaseEngine):
         warns = []
         if not ok:
             warns.append("산출 PDF 가 없다: %s" % pdf)
+        # ⚠ 화면에 **범위 결과**가 안 보이면 이 카드를 바꾼 뜻이 없다 —
+        #   "범위에 있는데 못 찾은 지문"이 이 일에서 가장 중요한 실패다.
+        scp = os.path.join(st.get("book_dir") or "", "build", "_scope.json")
+        if os.path.exists(scp):
+            with open(scp, encoding="utf-8") as f:
+                sc = json.load(f)
+            if not sc.get("known"):
+                warns.append("시험범위를 못 읽어 범위 대조를 못 했다 "
+                             "(Y.OS 확인)")
+            for g in (sc.get("gaps") or []):
+                warns.append(("[범위 빠짐] " if g.get("hard")
+                              else "[범위 확인] ") + g.get("text", ""))
+            if sc.get("known") and not sc.get("gaps"):
+                log("■ 시험범위 %s — 빠진 지문 없음" % sc.get("text", ""))
         rep = st.get("empty_report")
         if rep and os.path.exists(rep):
             with open(rep, encoding="utf-8") as f:

@@ -26,15 +26,13 @@
     <p class="drop-hint" id="src-hint" style="margin-top:8px;">&mdash;</p>
   </div>
 
-  <!-- 수록 범위 -->
+  <!-- 수록 범위 (고르는 게 아니라 보여 주는 자리다) -->
   <div class="school-section">
-    <div class="section-label">수록 범위</div>
-    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-      <input type="checkbox" name="use_corpus" id="use-corpus" value="1">
-      <span>기존 지문도 넣기 (지문 코퍼스에서 이 학교·학기 것을 함께 수록)</span>
-    </label>
+    <div class="section-label">수록 범위 (시험범위)</div>
+    <div id="scope-box" class="filename-preview">학교를 고르면 시험범위를 읽어 옵니다</div>
     <p class="drop-hint" style="margin-top:6px;">
-      끄면 <b>이번 학기 분석본의 새 지문만</b> 조판합니다.
+      이 범위의 지문이 <b>전부</b> 수록됩니다. 분석본에 없는 지문은 지문 코퍼스에서
+      찾아 채우고, 그래도 없으면 <b>검수에서 빠진 지문으로 알려 줍니다</b>.
     </p>
   </div>
 
@@ -112,9 +110,24 @@
         : '<option value="">(이 학기에 분석본이 없음)</option>';
       document.getElementById('src-hint').textContent = list.length
         ? `분석본 IDML 이 준비된 학교 ${list.length}곳`
-        : '이 학기에는 분석본 IDML 이 없습니다 — 먼저 내보내기를 돌리거나 “기존 지문도 넣기”를 켜세요';
+        : '이 학기에는 분석본 IDML 이 없습니다 — 먼저 내보내기를 돌리세요';
     } catch (e) { sel.innerHTML = '<option value="">(불러오기 실패)</option>'; }
     updateFilename();
+    loadScope();
+  }
+
+  // 시험범위는 **읽어서 보여 준다**. 고르는 게 아니다 — 범위는 정해져 있다.
+  async function loadScope() {
+    const box = document.getElementById('scope-box');
+    const t = document.getElementById('term-select').value;
+    const s = document.getElementById('school-select').value;
+    if (!t || !s) { box.textContent = '학교를 고르면 시험범위를 읽어 옵니다'; return; }
+    box.textContent = '읽는 중…';
+    try {
+      const r = await (await fetch('/api/pocketbook-viv/scope?term=' +
+        encodeURIComponent(t) + '&school=' + encodeURIComponent(s))).json();
+      box.textContent = r.text || '시험범위를 못 읽었습니다 — Y.OS 를 확인하세요';
+    } catch (e) { box.textContent = '(불러오기 실패)'; }
   }
 
   function updateFilename() {
@@ -125,7 +138,9 @@
   }
 
   document.getElementById('term-select').addEventListener('change', loadSchools);
-  document.getElementById('school-select').addEventListener('change', updateFilename);
+  document.getElementById('school-select').addEventListener('change', () => {
+    updateFilename(); loadScope();
+  });
 
   // 파일 칩
   document.getElementById('manuscripts-input').addEventListener('change', function () {

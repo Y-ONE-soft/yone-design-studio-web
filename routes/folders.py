@@ -274,6 +274,16 @@ def api_pbviv_schools():
     return jsonify(schools_for(request.args.get("term", "")))
 
 
+@bp.route("/api/pocketbook-viv/scope")
+def api_pbviv_scope():
+    """그 학교·학기의 **시험범위**. 카드에 보여 주기만 한다(고르는 게 아니다)."""
+    from flask import request
+    from engines.pocketbook_viv.engine import PocketbookVivEngine as E
+    school = request.args.get("school", "")
+    term = request.args.get("term", "")
+    return jsonify({"text": E._scope(school, term, lambda m: None)})
+
+
 # ── 분석본 결합 v2 — 교과서/EBS 소스 탐색 API (W28-확장) ─────────────────────
 
 @bp.route("/api/analysis-merge/tb-subjects")
