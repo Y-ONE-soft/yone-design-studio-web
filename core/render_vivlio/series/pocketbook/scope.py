@@ -31,9 +31,15 @@
 """
 import re
 
-RE_LESSON = re.compile(r"^\s*(\d{1,2})\s*과\s*(\d{1,3})?")
-RE_UNIT = re.compile(r"^\s*(\d{1,2})\s*강\s*(\d{1,3})?")
-RE_PNO = re.compile(r"^(\d{2})(\d{2})(\d{2})")
+# 라벨 방언은 학교마다 다르다 — 코퍼스 실측 기준(1,352지문):
+#   교과서  `4과 01` `1과 본문2` `2과 FR` `3과 RC1` `1과 DL` `2과 추가`
+#   강      `11강 02` `11강 분석` `올포 15강 1` `마더텅 5강 3번` `올림포스 9강`
+#   리딩파워 `Unit 13 - 2` `Unit 13 Ex 1` `Unit 13 Example 1` `Unit 14 01`
+#   모의고사 `231124`(6자리)
+RE_LESSON = re.compile(r"(\d{1,2})\s*과")
+RE_UNIT = re.compile(r"(?:(\d{1,2})\s*강|\bUnit\s*(\d{1,2}))", re.I)
+RE_PNO = re.compile(r"(\d{2})(\d{2})(\d{2})")
+RE_FIRST_NO = re.compile(r"\d{1,3}")
 _UNIT_KINDS = ("olpo", "rp", "teuk", "bare")
 
 
@@ -75,22 +81,34 @@ def token_of(row):
         if m:
             yy, mm, nn = int(m.group(1)), int(m.group(2)), int(m.group(3))
             return [("mock", yy, mm)], nn
+    m = RE_UNIT.search(label)          # 강이 먼저다 — `올포 15강` 은 과가 아니다
+    if m:
+        n = int(m.group(1) or m.group(2))
+        return [(k, n) for k in _UNIT_KINDS], _tail_no(label, m.end())
     m = RE_LESSON.search(label)
     if m:
-        return [("lesson", int(m.group(1)))], _int(m.group(2))
-    m = RE_UNIT.search(label)
-    if m:
-        n = int(m.group(1))
-        return [(k, n) for k in _UNIT_KINDS], _int(m.group(2))
+        return [("lesson", int(m.group(1)))], _tail_no(label, m.end())
     return [], None
 
 
-def is_shared(cands):
-    """전국 공통 교재인가(모의고사·EBS). 교과서는 학교마다 출판사가 다르다.
+def _tail_no(label, at):
+    """단원 표기 **뒤에** 처음 나오는 수 = 지문 번호.
 
+    사이에 무엇이 끼든(`- 2` `Ex 1` `본문2` `RC1` `01`) 상관없이 잡힌다.
+    뒤에 수가 없으면(`11강 분석` `Unit 13 Ex`) 번호 없는 지문이다.
+    """
+    m = RE_FIRST_NO.search(label, at)
+    return int(m.group(0)) if m else None
+
+
+def is_shared(cands):
+    """이름만으로 **세상에 하나뿐**이라고 말할 수 있는 지문인가.
+
+    모의고사뿐이다 — `260620` 은 회차(26년 6월)와 번호(20)로 못 박힌다.
+    교과서·EBS 는 `1과 01`·`13강 01` 이 해마다 다른 글이라(실측) 안 된다.
     다른 학교 책에서 수확한 지문을 끌어다 써도 되는지 가르는 자리다.
     """
-    return bool(cands) and all(c[0] != "lesson" for c in cands)
+    return bool(cands) and all(c[0] == "mock" for c in cands)
 
 
 def _int(v):

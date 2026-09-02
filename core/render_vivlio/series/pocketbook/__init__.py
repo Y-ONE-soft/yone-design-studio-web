@@ -145,16 +145,34 @@ def _label_of(r):
     return str(r.get("pno") or r.get("label") or r.get("key") or "?")
 
 
+def _passage_text(r):
+    t = r.get("passage_text")
+    if not t:
+        t = "".join(x.get("t", "") for p in (r.get("passage") or [])
+                    for x in p.get("runs", []))
+    return re.sub(r"[^a-z]", "", str(t).lower())
+
+
 def _dup_key(r):
-    """같은 지문인가. 학년이 다르면 다른 지문이다(고1 231124 ≠ 고2 231124)."""
-    g = "".join(c for c in str(r.get("grade") or "") if c.isdigit())
-    return (g, re.sub(r"\s+", "", _label_of(r)))
+    """같은 지문인가 — **글로** 본다. 글이 없으면 판정하지 않는다(None).
+
+    라벨로 보면 두 쪽으로 틀린다: 같은 `1과 01` 이 학교가 다르면 다른 글이고,
+    같은 글이 `Unit 13 01`·`13강 01` 로 달리 불린다. 글은 어느 쪽도 안 틀린다.
+    앞 300자면 충분하다(뒤가 잘린 판본도 같은 것으로 본다).
+    """
+    t = _passage_text(r)
+    return t[:300] if len(t) >= 60 else None
 
 
-def _fill_score(r):
-    """속이 얼마나 찼나 — 플로우노트·동반의어·주제. 많은 쪽이 이긴다."""
-    return (len(r.get("flownote") or []) + len(r.get("synonyms") or [])
-            + (1 if r.get("topic") else 0) + (1 if r.get("topic_ko") else 0))
+_FILL = ("flownote", "synonyms", "topic", "topic_ko", "summary", "memtest",
+         "illust", "translation", "translation_text")
+
+
+def _fill_from(base, other):
+    """바탕 지문의 **빈 곳만** 채운다. 있는 것은 절대 덮지 않는다."""
+    for f in _FILL:
+        if not base.get(f) and other.get(f):
+            base[f] = other[f]
 
 
 _RE_LEC = re.compile(r"(\d{1,2})\s*강")
@@ -374,52 +392,52 @@ class PocketbookSeries(Series):
 
     @staticmethod
     def _to_scope(rows, scope, log):
-        """모아 온 지문을 **범위대로** 추린다 → (지문들, 빠진 것 목록).
+        """모아 온 지문을 **범위대로** 추스른다 → (지문들, 빠진 것 목록).
 
-        하는 일이 셋이다.
+        ## 범위는 넣는 데 쓰고, **빼는 데는 쓰지 않는다**
 
-          ① 겹친 것 하나로  같은 지문이 분석본과 코퍼스 양쪽에서 온다.
-             이때 **속이 찬 쪽**(플로우노트·동반의어가 있는 쪽)을 남긴다 —
-             예전에 사람이 "완성본에서 가져오기"로 하던 일이 바로 이거다.
-             글(지문·해석)은 이번 학기 분석본 것을 쓴다(원문이 손질됐을 수 있다).
-          ② 범위 밖 버리기
-          ③ 범위 차례로 세우기  범위가 곧 책의 차례다.
+        처음엔 범위 밖 지문을 버리게 했다가 크게 틀렸다 — 한영1 이 72지문에서
+        12지문이 됐다. 분석본은 **그 시험을 위해 만든 원고**다. 시험범위 표에
+        안 적힌 회차가 분석본에 있다면 표가 덜 찬 것이지 지문이 군더더기인 게
+        아니다. 사용자가 요구한 것도 "범위 안 지문이 **다 들어가는 것**"이지
+        "범위 밖을 빼는 것"이 아니었다. 그래서 여기서 하는 일은 셋뿐이다.
 
-        ⚠ 범위를 모르면 **아무것도 하지 않는다**. 순서를 함부로 바꾸면 이미
-          나간 책과 달라진다(예전 방식으로 도는 책이 그렇다).
+          ① 겹친 것 하나로   같은 지문이 분석본과 코퍼스 양쪽에서 온다.
+             **분석본 것을 바탕으로 두고**(글·라벨·차례가 그 학교 것이다)
+             비어 있는 속(플로우노트·동반의어·주제)만 코퍼스에서 채운다 —
+             사람이 "완성본에서 가져오기"로 하던 일이 이것이다.
+          ② 범위 차례로     범위를 아는 지문끼리 범위 차례로 세운다. 범위 밖은
+             **원래 차례 그대로 뒤에** 붙는다(안정 정렬).
+          ③ 빠진 것 알리기  범위가 부르는데 없는 지문 → G-P10.
+
+        ⚠ 겹침은 **글로** 판정한다. 라벨로만 보면 위험하다 — 같은 `1과 01` 이
+          서로 다른 지문일 수 있고, 반대로 같은 지문이 학교마다 `Unit 13 01`·
+          `13강 01` 로 달리 불린다(리딩파워). 글로 보면 둘 다 맞다.
         """
-        if not scope:
-            return rows, []
-        best = {}
-        order = []
+        best, order = {}, []
         for r in rows:
             k = _dup_key(r)
-            if k not in best:
-                best[k] = r
-                order.append(k)
+            if k is None or k not in best:
+                if k is not None:
+                    best[k] = r
+                order.append(r)
                 continue
-            keep, drop = best[k], r
-            if _fill_score(drop) > _fill_score(keep):
-                # 속이 찬 쪽을 남기되, 글은 이번 학기 것으로 덮는다
-                for f in ("passage", "passage_text", "translation",
-                          "translation_text", "parts", "pair"):
-                    if keep.get(f) is not None:
-                        drop[f] = keep[f]
-                best[k] = drop
-        merged = [best[k] for k in order]
+            _fill_from(best[k], r)          # 바탕은 그대로, 빈 곳만 채운다
+        merged = order
         if len(merged) < len(rows):
-            log("■ 겹친 지문 %d개를 하나로 (속이 찬 쪽을 남김)"
+            log("■ 겹친 지문 %d개를 하나로 (빈 곳은 채워 넣음)"
                 % (len(rows) - len(merged)))
-        keep = [r for r in merged if pscope.matches(r, scope)]
-        if len(keep) < len(merged):
-            out = [_label_of(r) for r in merged if not pscope.matches(r, scope)]
-            log("■ 범위 밖 %d지문 제외 — %s"
-                % (len(out), ", ".join(out[:12])))
-        keep.sort(key=lambda r: pscope.sort_key(r, scope))
-        gaps = pscope.missing(scope, keep)
+        if not scope:
+            return merged, []
+        merged.sort(key=lambda r: pscope.sort_key(r, scope))
+        out = [_label_of(r) for r in merged if not pscope.matches(r, scope)]
+        if out:
+            log("■ 범위 밖 %d지문 — 뒤에 그대로 둔다 (시험범위 표가 덜 찼을 수 "
+                "있다): %s" % (len(out), ", ".join(out[:12])))
+        gaps = pscope.missing(scope, merged)
         for g in gaps:
             log("■ [범위] %s" % g)
-        return keep, gaps
+        return merged, gaps
 
     # ── 새 지문: 분석본에서 ──
     @staticmethod
@@ -591,12 +609,18 @@ class PocketbookSeries(Series):
     def _pick(corpus, opt, log, scope=None, term=None, grade=""):
         """수록할 지문을 코퍼스에서 고른다.
 
-        **범위를 알면 범위가 고른다.** 그 학교 책에 있던 것이든 다른 학교 책에서
-        수확한 것이든 상관없다 — 다만 갈래는 가린다:
+        **범위를 알면 범위가 고른다.** 다만 "같은 이름 = 같은 지문"인 것만
+        남의 책에서 끌어올 수 있다:
 
-          교과서(`N과`)   학교마다 출판사가 다르다 → **이 학교 것만**
-          모의고사·EBS    전국 공통 → 어느 책에서 왔든 쓴다
-                          (단 **학년**은 맞아야 한다. 고1 231124 ≠ 고2 231124)
+          모의고사   `260620` 은 **회차와 번호로 세상에 하나뿐**이다 →
+                     어느 학교 책에서 수확했든 쓴다(학년만 맞으면 된다.
+                     고1 231124 ≠ 고2 231124). 사람이 "완성본에서 가져오기"로
+                     하던 일이 바로 이 자리다 — 플로우노트·동반의어가 딸려 온다.
+          교과서·EBS `1과 01`·`13강 01` 은 **해마다·학교마다 다른 글**이다
+                     (실측: 광문1 `13강 01` 이 25-2-기말과 26-1-기말에 각각
+                     있고 서로 다른 지문, 강동2 `1과 01` 은 1학기 영어Ⅰ).
+                     → **이 학교 이 학기 것만**. 이걸 번호만 보고 끌어오면
+                     남의 지문이 조용히 실린다.
 
         범위를 모르면 예전처럼 학교·학기로 고른다.
         """
@@ -655,10 +679,6 @@ class PocketbookSeries(Series):
                     best = v
             return best if best is not None else 10 ** 6
 
-        def mine(r):
-            """이 학교 책에 실렸던 지문인가."""
-            return any(sc == school for _t, sc in places(r))
-
         out = []
         for r in rows:
             if scope:
@@ -667,10 +687,13 @@ class PocketbookSeries(Series):
                     continue          # 범위로 셈할 수 없는 것은 안 끌어온다
                 if not pscope.matches(r, scope):
                     continue
-                if not pscope.is_shared(cands) and not mine(r):
-                    continue          # 교과서는 남의 학교 것을 쓰면 안 된다
                 if gd and r.get("grade") and gd not in str(r["grade"]):
                     continue
+                if not pscope.is_shared(cands):
+                    # 교과서·EBS 는 이 학교 **이 학기** 것만
+                    if not any(sc == school and (not term or t == term)
+                               for t, sc in places(r)):
+                        continue
             elif school or term:
                 ok = False
                 for t, sc in places(r):
