@@ -61,16 +61,32 @@ def _runs(p):
     return segs
 
 
+def _para(p):
+    st = p.find(f'{W}pPr/{W}pStyle')
+    segs = _runs(p)
+    return {'style': st.get(W + 'val') if st is not None else '',
+            'segs': segs, 'text': ''.join(s for s, _ in segs)}
+
+
 def read_paras(path):
+    """문서 순서대로 단락과 **표**를 읽는다.
+
+    표를 `iter(w:p)` 로 훑으면 칸이 낱낱의 줄로 흩어진다 — 2권의 요약 문항 선지가
+    `(A)` `(B)` `①` `weary` `betrays` … 로 쏟아져 조판이 무너졌다. 표는 표로 읽고,
+    쓰는 쪽에서 줄로 합친다.
+    """
     z = zipfile.ZipFile(path)
     root = ET.fromstring(z.read('word/document.xml'))
     out = []
-    for p in root.find(W + 'body').iter(W + 'p'):
-        st = p.find(f'{W}pPr/{W}pStyle')
-        segs = _runs(p)
-        out.append({'style': st.get(W + 'val') if st is not None else '',
-                    'segs': segs,
-                    'text': ''.join(s for s, _ in segs)})
+    for el in root.find(W + 'body'):
+        if el.tag == W + 'p':
+            out.append(_para(el))
+        elif el.tag == W + 'tbl':
+            rows = []
+            for tr in el.findall(W + 'tr'):
+                rows.append([[_para(q) for q in tc.findall(W + 'p')]
+                             for tc in tr.findall(W + 'tc')])
+            out.append({'style': '', 'segs': [], 'text': '', 'rows': rows})
     return out
 
 
@@ -149,6 +165,7 @@ def strip_lead(segs, n):
 
 RE_ITEM = re.compile(r'^\s*(\d+)\.\s')
 RE_CRIT = re.compile(r'^\s*(\d+)\.\s')
+RE_ARROW = re.compile(r'^[↓⇓⬇▼🡇]+$')
 RE_BOGI = re.compile(r'^\s*[<〈]\s*보\s*기\s*[>〉]\s*$')
 RE_BLANK = re.compile(r'_{4,}')
 
@@ -213,7 +230,21 @@ def parse_problems(path):
             continue  # 헤더 영역
 
         B = cur['blocks']
-        if t == '↓':
+        if 'rows' in p:
+            # 선지 표 — 한 행이 선지 한 줄 (`① weary  ―  betrays`).
+            # 첫 칸이 빈 머리 행((A)/(B) 라벨)은 요약문 빈칸이 이미 들고 있다.
+            for row in p['rows']:
+                cells = [''.join(x['text'] for x in c).strip() for c in row]
+                if not cells or not cells[0]:
+                    continue
+                body = '  ―  '.join(c for c in cells[1:] if c)
+                mark = cells[0][0]
+                B.append({'t': 'choice', 'mark': mark,
+                          'body': (cells[0][1:] + ' ' + body).strip()
+                          if len(cells[0]) > 1 else body})
+            mode = None
+            continue
+        if RE_ARROW.match(t):
             B.append({'t': 'arrow'})
             mode = None
         elif RE_BOGI.match(t):

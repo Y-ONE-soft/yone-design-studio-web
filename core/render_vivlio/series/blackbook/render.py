@@ -48,7 +48,10 @@ def metrics_of(cfg):
 # 화자: 이름은 두세 낱말까지 (American Sam:, Singaporean Sam:, 이름:)
 RE_DLG = re.compile(r'^(?:[A-Z][A-Za-z.\'-]*(?: [A-Z][A-Za-z.\'-]*){0,2}'
                     r'|[가-힣]{1,6})\s*:\s')
-RE_GAP = re.compile(r' {3,}')
+# 빈칸은 반각 공백 3칸 이상 **또는 전각 공백(U+3000) 2칸 이상**.
+# 2권 원고가 전각으로 띄워 놓아 빈칸이 밑줄도 못 받고 줄바꿈도 못 해
+# 판면을 넘었다.
+RE_GAP = re.compile(r'(?:[ ]{3,}|[\u3000]{2,}|[ \u3000]{3,})')
 RE_BLKJOIN = re.compile(r'</span>((?:&nbsp;| )*\(?[A-Za-z0-9]{1,3}\)?'
                         r'(?:&nbsp;| )*)<span class="blk">')
 
@@ -57,7 +60,8 @@ RE_BLKJOIN = re.compile(r'</span>((?:&nbsp;| )*\(?[A-Za-z0-9]{1,3}\)?'
 
 def esc_gap(s):
     """연속 공백(의미 있는 간격)을 보존."""
-    return re.sub(r' {2,}', lambda m: '&nbsp;' * (len(m.group(0)) - 1) + ' ', s)
+    return re.sub(r'[ \u3000]{2,}',
+                  lambda m: '&nbsp;' * (len(m.group(0)) - 1) + ' ', s)
 
 
 def esc_blank(s):
