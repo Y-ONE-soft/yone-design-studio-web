@@ -68,46 +68,53 @@ def _grade_num(grade):
     return int(d) if d else 0
 
 
-# ── 지문 → (토큰 후보, 번호) ────────────────────────────────────────
-def token_of(row):
-    """포켓북 지문 → (토큰 후보 목록, 지문 번호). 모르면 ([], None).
-
-    ⚠ 자리마다 표기가 다르다. 넷을 다 본다:
-        `pno='260620'`            분석본이 합쳐 준 것
-        `label='231124'`          코퍼스
-        `label='고2 24년 9월 21번'`  분석본 첫 지문(풀어 적음)
-        `label='Exercise 02'` + `chapter='11강'`   번호는 라벨, 단원은 머리말
-      한쪽만 보면 그 지문은 "라벨을 못 알아본 것"이 되어 범위 셈에서 빠진다.
-    """
+# ── 지문 → [(토큰, 번호), …] ─────────────────────────────────────
+#
+# ⚠ 한 지문이 **두 군데 소속**일 수 있다. 마더텅 11강 2번은 동시에 고1 23년
+#   11월 33번 기출이다(한영1 실측: `label='고1 23년 11월 33번'` +
+#   `chapter='11강 2번'`). 하나만 고르면 나머지 하나로 적힌 시험범위와 못 만나
+#   멀쩡히 있는 지문이 "없다"고 나온다. 그래서 짝을 **여러 개** 돌려준다.
+def pairs_of(row):
+    """포켓북 지문 → [(토큰, 지문 번호), …]. 못 알아보면 []."""
     if row.get("_tok") is not None:
         return row["_tok"]
-    return own_token(row)
+    return own_pairs(row)
 
 
-def own_token(row):
+def own_pairs(row):
+    out = []
     label = str(row.get("label") or row.get("key") or "")
     for cand in (str(row.get("pno") or row.get("no") or ""), label):
         m = RE_PNO.fullmatch(cand.strip())
         if m:
-            return ([("mock", int(m.group(1)), int(m.group(2)))],
-                    int(m.group(3)))
-    for src in (label, str(row.get("chapter") or "")):
-        ym, no = RE_YM.search(src), RE_NO.search(label)
-        if ym and no:
-            return ([("mock", int(ym.group(1)), int(ym.group(2)))],
-                    int(no.group(1)))
+            out.append((("mock", int(m.group(1)), int(m.group(2))),
+                        int(m.group(3))))
+            break
+    if not out:                       # 회차를 풀어 적은 꼴 — `고1 23년 11월 33번`
+        for src in (label, str(row.get("chapter") or "")):
+            ym, no = RE_YM.search(src), RE_NO.search(label)
+            if ym and no:
+                out.append((("mock", int(ym.group(1)), int(ym.group(2))),
+                            int(no.group(1))))
+                break
     for i, src in enumerate((label, str(row.get("chapter") or ""),
                              str(row.get("unit") or ""))):
         m = RE_UNIT.search(src)       # 강이 먼저다 — `올포 15강` 은 과가 아니다
         if m:
             n = int(m.group(1) or m.group(2))
-            return ([(k, n) for k in _UNIT_KINDS],
-                    _tail_no(src, m.end()) if i == 0 else _tail_no(label, 0))
+            no = _tail_no(src, m.end())
+            if no is None and i:
+                no = _tail_no(label, 0)
+            out += [((k, n), no) for k in _UNIT_KINDS]
+            break
         m = RE_LESSON.search(src)
         if m:
-            return ([("lesson", int(m.group(1)))],
-                    _tail_no(src, m.end()) if i == 0 else _tail_no(label, 0))
-    return [], None
+            no = _tail_no(src, m.end())
+            if no is None and i:
+                no = _tail_no(label, 0)
+            out.append((("lesson", int(m.group(1))), no))
+            break
+    return out
 
 
 def annotate(rows):
@@ -123,12 +130,13 @@ def annotate(rows):
     """
     last = None
     for r in rows:
-        cands, no = own_token(r)
-        if cands:
-            last = cands
+        got = own_pairs(r)
+        if got:
+            last = [t for t, _n in got]
         elif last:
-            cands, no = last, _tail_no(str(r.get("label") or ""), 0)
-        r["_tok"] = (cands, no)
+            no = _tail_no(str(r.get("label") or ""), 0)
+            got = [(t, no) for t in last]
+        r["_tok"] = got
 
 
 def _tail_no(label, at):
@@ -141,18 +149,30 @@ def _tail_no(label, at):
     return int(m.group(0)) if m else None
 
 
-def is_shared(cands):
-    """이름만으로 **세상에 하나뿐**이라고 말할 수 있는 지문인가.
-
-    모의고사뿐이다 — `260620` 은 회차(26년 6월)와 번호(20)로 못 박힌다.
-    교과서·EBS 는 `1과 01`·`13강 01` 이 해마다 다른 글이라(실측) 안 된다.
-    다른 학교 책에서 수확한 지문을 끌어다 써도 되는지 가르는 자리다.
-    """
-    return bool(cands) and all(c[0] == "mock" for c in cands)
-
-
 def _key(t):
     return tuple(t)
+
+
+def match(row, scope):
+    """이 지문이 **어느 이름으로** 범위에 드는가 → 토큰, 아니면 None."""
+    if not scope:
+        return None
+    detail = scope.get("detail") or {}
+    keys = {_key(t): t for t in scope.get("tokens", [])}
+    for c, no in pairs_of(row):
+        t = keys.get(_key(c))
+        if t is None:
+            continue
+        d = detail.get(t) or {}
+        only, excl = d.get("only"), d.get("exclude")
+        if no is None:                   # 번호 없는 지문 — 부속물, 남긴다
+            return t
+        if excl and no in excl:
+            continue
+        if only and no not in only:
+            continue
+        return t
+    return None
 
 
 def matches(row, scope):
@@ -161,25 +181,9 @@ def matches(row, scope):
     ⚠ 못 알아본 라벨은 **남긴다**. 조용히 빼는 쪽이 훨씬 나쁘기 때문이다
       (부속물·외부지문은 라벨 규칙 밖에 있다).
     """
-    if not scope:
+    if not scope or not pairs_of(row):
         return True
-    cands, no = token_of(row)
-    if not cands:
-        return True
-    detail = scope.get("detail") or {}
-    keys = {_key(t): t for t in scope.get("tokens", [])}
-    for c in cands:
-        t = keys.get(_key(c))
-        if t is None:
-            continue
-        d = detail.get(t) or {}
-        only, excl = d.get("only"), d.get("exclude")
-        if no is None:                       # 번호 없는 지문 — 부속물, 남긴다
-            return True
-        if excl and no in excl:
-            return False
-        return (no in only) if only else True
-    return False
+    return match(row, scope) is not None
 
 
 BIG = 10 ** 6
@@ -193,14 +197,12 @@ def sort_key(row, scope):
       (실측: 한영1 은 범위 안 지문이 하나도 없어 52지문이 통째로 뒤섞였다).
       부르는 쪽이 원래 자리를 마지막 열쇠로 붙여 안정 정렬을 만든다.
     """
-    if not scope:
+    t = match(row, scope)
+    if t is None:
         return (BIG, BIG)
-    cands, no = token_of(row)
-    order = {_key(t): i for i, t in enumerate(scope.get("tokens", []))}
-    pos = min([order.get(_key(c), BIG) for c in cands] or [BIG])
-    if pos >= BIG:
-        return (BIG, BIG)
-    return (pos, no if no is not None else BIG)
+    order = {_key(x): i for i, x in enumerate(scope.get("tokens", []))}
+    no = next((n for c, n in pairs_of(row) if _key(c) == _key(t)), None)
+    return (order.get(_key(t), BIG), no if no is not None else BIG)
 
 
 def missing(scope, rows):
