@@ -149,6 +149,35 @@ def _derive_pno(p):
     return p
 
 
+_HAN = re.compile(r"[가-힣]")
+
+
+def _korean_topic(rows, log):
+    """주제·요약문은 **한글만** 싣는다.
+
+    분석본의 주제/요약은 영어다. 그대로 두면 오른쪽 면에 영어 주제가 찍힌다
+    (사용자 지적). 영어면 지운다 — 한글 한 줄(`topic_ko`)이 있으면 주제로
+    올리고, 없으면 **비운 채로 두고 빈항목에 올린다**. 영어를 남기는 것보다
+    비는 쪽이 낫다: 비면 원고팀이 채워야 할 자리로 보이지만, 영어가 남으면
+    아무도 모른다.
+    """
+    fixed = swapped = 0
+    for r in rows:
+        if r.get("kind") == "memtest":
+            continue
+        for f in ("topic", "summary"):
+            v = r.get(f) or ""
+            if v and not _HAN.search(v):
+                r[f] = ""
+                fixed += 1
+        if not r.get("topic") and r.get("topic_ko"):
+            r["topic"] = r["topic_ko"]
+            swapped += 1
+    if fixed:
+        log("■ 영어 주제/요약 %d칸을 비웠다 (포켓북은 한글) — 한글 주제로 %d칸 채움"
+            % (fixed, swapped))
+
+
 def _label_of(r):
     return str(r.get("pno") or r.get("label") or r.get("key") or "?")
 
@@ -376,6 +405,7 @@ class PocketbookSeries(Series):
                 "중 하나는 있어야 한다")
         rows, gaps, n_merged = self._to_scope(rows, scope, log)
         self._apply_manuscript(cfg, opt, rows, log)
+        _korean_topic(rows, log)
         rows = self._apply_memtest(cfg, opt, rows, log)
         out = os.path.join(cfg.build_dir, "data.json")
         os.makedirs(cfg.build_dir, exist_ok=True)
@@ -572,9 +602,13 @@ class PocketbookSeries(Series):
                 r["flownote"] = fr["flow"]
             if fr.get("synonyms") and not r.get("synonyms"):
                 r["synonyms"] = fr["synonyms"]
-            if fr.get("topic") and not r.get("topic"):
+            # ⚠ 주제·요약문은 **원고가 이긴다**. 분석본에도 주제/요약이 있지만
+            #   그건 **영어**다 — 포켓북은 한글이라 그대로 쓰면 영어가 인쇄된다
+            #   (실측: 광문1 25-2 는 영어, 26-1 부터 한글). "먼저 온 것을 지킨다"
+            #   규칙을 여기에 그대로 두면 원고의 한글이 영영 못 들어온다.
+            if fr.get("topic"):
                 r["topic"] = fr["topic"]
-            if fr.get("summary") and not r.get("summary"):
+            if fr.get("summary"):
                 r["summary"] = fr["summary"]
         orphan = [f["key_raw"] for f in frags if id(f) not in used]
         log("■ 원고 %d블록 중 %d개가 지문에 붙었다" % (len(frags), hit))

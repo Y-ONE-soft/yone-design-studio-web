@@ -304,6 +304,8 @@ html,body{margin:0;padding:0;background:#fff}
 .syntitle{position:absolute;background:#fff;font-family:PBJalnan;font-size:5pt;
   color:var(--navy);display:flex;align-items:center;justify-content:center;
   gap:.6mm}
+/* 표식 도형 — 글자 높이에 맞춰 세운다(원본 4.8×4.7mm 묶음) */
+.synmark{height:1.7mm;width:auto;display:block;overflow:visible}
 .card{position:absolute;box-sizing:border-box;padding:__cardpad__mm;
   font-size:__card_size__pt;line-height:__card_lead__mm;overflow:hidden}
 .card .w1{color:var(--syn-word)}
@@ -326,6 +328,9 @@ html,body{margin:0;padding:0;background:#fff}
 /* 문제면의 빈칸 — 원본은 정답 글자에 '칠하지 않음' 스와치를 줘서 자리만 남긴다.
    글자를 지우면 자리가 좁아져 정답면과 줄이 달라진다. 투명하게만 만든다. */
 .memtest .blank{color:transparent;letter-spacing:.06em}
+/* 암기 TEST 의 구문분석 주석은 지문면과 **다른 서체·색**이다
+   (원본 단락 스타일: RubyFont=강원교육현옥샘, RubyFill=CMYK 41/59/73/52) */
+.memtest i{font-family:PBRubyT;color:var(--flow-sym2)}
 .n{font-size:5.5pt;vertical-align:super;color:var(--mt-no)}
 /* 원본 B-마스터: 문제면은 베이지 바탕에 같은 색 테두리, 정답면은 연파랑
    바탕에 파란 테두리(0.5pt). 두 면을 같은 색으로 두면 어느 쪽인지 안 보인다. */

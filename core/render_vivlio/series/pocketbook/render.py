@@ -9,6 +9,7 @@
 """
 import html
 import os
+import re
 
 from core.render_vivlio import refs as _refs
 from core.render_vivlio.series.pocketbook import theme as T
@@ -197,7 +198,32 @@ def left_page(p, M, folio):
     return '<section class="pg"><div class="trim">%s</div></section>' % "".join(parts)
 
 
-_ARROW = ("→", "⇒", "▶")
+# 플로우노트에서 **색이 붙는 것은 기호 글자뿐**이다.
+# ⚠ 줄이 화살표로 시작한다고 **줄 전체를 칠하면 안 된다** — 원본은 글자 단위다
+#   (완성본 6권 실측: 본문은 한 색, 기호 스타일만 따로 있다).
+_SYM = set("→⇒⟶⇨➔➜⟹←⟵↑↓↔⇔▶▸►◀‣")
+_MD_BOLD = re.compile(r"\*\*(.+?)\*\*")
+
+
+def flow_html(line):
+    """플로우노트 한 줄 → HTML. 기호 글자만 색을 입힌다.
+
+    ⚠ 원고에 `**굵게**` 같은 표시가 오면 **별표가 그대로 인쇄된다**(실측:
+      `**구식(outdated)**`). 조판이 벗겨 준다 — 원고 양식에도 쓰지 말라고 적었다.
+    """
+    line = _MD_BOLD.sub(r"\1", line)
+    out, buf = [], []
+    for ch in line:
+        if ch in _SYM:
+            if buf:
+                out.append(ESC("".join(buf)))
+                del buf[:]
+            out.append('<span class="sym">%s</span>' % ESC(ch))
+        else:
+            buf.append(ch)
+    if buf:
+        out.append(ESC("".join(buf)))
+    return "".join(out)
 
 
 def _card_fit(c, M):
@@ -222,6 +248,22 @@ def _card_fit(c, M):
         M["card_size"] * sc, M["card_lead"] * sc)
 
 
+# 동반의어 제목 앞의 표식은 **글자가 아니라 도형 셋**이다(원본: 제목 프레임에
+# 앵커된 Group — 둥근 사각형 3개, 남색 0.5pt 테두리, 하나는 축에 맞고 둘은
+# 11°·13° 기울어 있다). `Ⓐ Ⓑ Ⓒ` 글리프로 대신하면 서체마다 모양이 달라지고
+# 원본과 아예 다른 그림이 된다. 좌표·색은 IDML 실측이다.
+SYN_MARK = (
+    '<svg class="synmark" viewBox="0 0 13.6 13.3" aria-hidden="true">'
+    '<g fill-rule="evenodd" stroke="#54669F" stroke-width=".5">'
+    '<rect x=".6" y="6.1" width="5.7" height="5.7" rx="1" fill="#ED9DBC"'
+    ' transform="rotate(-13.2 3.45 8.95)"/>'
+    '<rect x="4.6" y=".5" width="5.6" height="5.6" rx=".9" fill="#FCBB70"'
+    ' transform="rotate(10.9 7.4 3.3)"/>'
+    '<rect x="7.6" y="6.4" width="5.4" height="5.4" rx="1.05" fill="#86C3B8"/>'
+    '</g></svg>'
+)
+
+
 def right_page(p, M, folio, category=""):
     fl = M["flow"]
     fc = M["flow_chip"]
@@ -233,10 +275,8 @@ def right_page(p, M, folio, category=""):
     # 플로우노트
     parts.append('<div class="flowchip" style="%s">💡 FLOW NOTE</div>'
                  % _box(fc[0], fc[1], fc[2], fc[3]))
-    rows = []
-    for line in p.get("flownote") or []:
-        cls = ' class="arrow"' if line.lstrip().startswith(_ARROW) else ""
-        rows.append("<p%s>%s</p>" % (cls, ESC(line)))
+    rows = ["<p>%s</p>" % flow_html(line)
+            for line in (p.get("flownote") or [])]
     fsc = p.get("flow_scale", 1.0)
     fst = "" if fsc == 1.0 else ";font-size:%gpt;line-height:%gmm" % (
         M["flow_size"] * fsc, M["flow_lead"] * fsc)
@@ -245,9 +285,11 @@ def right_page(p, M, folio, category=""):
     # 주제 / 요약문
     parts.append('<div class="topicband" style="%s"></div>'
                  % _box(tb[0], tb[1], tb[2], tb[3]))
-    parts.append('<div class="tbadge" style="%s">주제</div>'
+    # ⚠ 두 딱지는 **색이 다르다**(원본: 주제 CMYK 66/52/0/19, 요약문 0/32/48/9).
+    #   같은 색이면 어디까지가 주제고 어디부터 요약문인지 안 보인다.
+    parts.append('<div class="tbadge t" style="%s">주제</div>'
                  % _box(tb[0] + 2.4, tb[1] + 1.4))
-    parts.append('<div class="tbadge" style="%s">요약문</div>'
+    parts.append('<div class="tbadge s" style="%s">요약문</div>'
                  % _box(tb[0] + 2.0, tb[1] + 6.5))
     tt = []
     if p.get("topic"):
@@ -264,8 +306,8 @@ def right_page(p, M, folio, category=""):
     # 동반의어
     parts.append('<div class="synpanel" style="%s"></div>'
                  % _box(sp[0], sp[1], sp[2], sp[3]))
-    parts.append('<div class="syntitle" style="%s">Ⓐ Ⓑ Ⓒ 동반의어</div>'
-                 % _box(st[0], st[1], st[2], st[3]))
+    parts.append('<div class="syntitle" style="%s">%s동반의어</div>'
+                 % (_box(st[0], st[1], st[2], st[3]), SYN_MARK))
     cards = (p.get("synonyms") or [])[:9]
     for i in range(9):
         col, row = i % 3, i // 3
@@ -304,10 +346,14 @@ def memtest_page(p, M, folio, answer, category=""):
     if p.get("mt_scale"):
         fit += ";font-size:%gpt" % (M["memtest_size"] * p["mt_scale"])
     label = "암기 TEST 정답" if answer else "암기 TEST"
-    parts = ['<div class="mtchip" style="%s">📝 %s</div>'
-             % (_box(mt[0], 12.4, 30.0, 6.0), label),
-             '<div class="mtbox" style="%s"></div>'
-             % _box(mt[0], mt[1], mt[2], mt[3]),
+    # ⚠ 문제면과 정답면은 **색이 다르다**(원본 B-마스터: 문제=베이지 바탕에
+    #   같은 색 테두리, 정답=연파랑 바탕에 파란 테두리). 같은 색으로 두면
+    #   펼쳐 놓고 어느 쪽이 정답인지 알 수 없다.
+    a = " a" if answer else ""
+    parts = ['<div class="mtchip%s" style="%s">📝 %s</div>'
+             % (a, _box(mt[0], 12.4, 30.0, 6.0), label),
+             '<div class="mtbox%s" style="%s"></div>'
+             % (a, _box(mt[0], mt[1], mt[2], mt[3])),
              '<div class="memtest" style="%s%s">%s</div>'
              % (_box(mt[0] + 3.0, mt[1] + 3.0, mt[2] - 6.0), fit,
                 runs_html(runs))]
