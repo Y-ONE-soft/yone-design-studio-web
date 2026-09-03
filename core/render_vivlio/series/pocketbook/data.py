@@ -155,14 +155,18 @@ def prepare(items, build_dir, illust_dirs=(), category="", grade=""):
     assets = os.path.join(build_dir, "img")
     os.makedirs(assets, exist_ok=True)
     out = []
+    last_cat = ""          # 암기 TEST 는 그 지문 뒤에 오므로 단원을 물려받는다
     for i, p in enumerate(items):
         if p.get("kind") == "memtest":
             ans = bool(p.get("answer"))
             src = p.get("body_runs") or _flatten(p.get("body"))
+            # ⚠ 암기 TEST 항목에는 `unit` 이 없다. 그대로 두면 정답면 꼬리말에
+            #   쪽번호만 나가고 **단원이 빈다**(사용자 지적). 앞 지문 것을 쓴다.
             out.append({"kind": "memtest", "answer": ans,
                         "key": p.get("key") or "",
                         "runs": format_memtest(src, ans),
-                        "category": p.get("category") or category})
+                        "category": (p.get("category") or p.get("unit")
+                                     or last_cat or category)})
             continue
         illust = None
         # ① 완성본에서 수확한 지문은 링크가 있다.
@@ -185,6 +189,7 @@ def prepare(items, build_dir, illust_dirs=(), category="", grade=""):
             except OSError:
                 illust = None
         mt = p.get("memtest") or {}
+        last_cat = p.get("category") or p.get("unit") or category
         out.append({
             "kind": "passage",
             "key": p.get("key") or p.get("pno") or p.get("label") or "",
@@ -192,7 +197,7 @@ def prepare(items, build_dir, illust_dirs=(), category="", grade=""):
             "label": p.get("label") or "",
             # 오른쪽 면 꼬리말은 단원 이름이다(`모의고사`·`교과서 4과`).
             # 코퍼스가 `unit` 으로 들고 있으므로 config 기본값보다 먼저 본다.
-            "category": p.get("category") or p.get("unit") or category,
+            "category": last_cat,
             "passage_runs": _flatten(p.get("passage")),
             "translation": _plain(p.get("translation")),
             "flownote": p.get("flownote") or [],
