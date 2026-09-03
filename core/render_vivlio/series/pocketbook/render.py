@@ -60,6 +60,35 @@ _MARK_CLS = {"blue": "blue", "red": "red", "wave": "wave",
              "num": "n", "blank": "blank"}
 
 
+# 구문분석 주석이 **문장 하나**로 오는 경우가 있다(분석본 실측: 낱말 `T` 에
+# 50자, `bother` 에 70자). 7pt 로 한 줄에 늘어놓으면 단(115mm)을 넘어 지면 밖으로
+# 나가고 **통째로 잘려 사라진다**(세종1 260633·한영1 241036). 단 안에 들어오도록
+# 그것만 글자를 줄인다 — 보통 주석(10자 안팎)은 손대지 않는다.
+_RUBY_MAX_MM = 112.0
+_RUBY_EM_MM = 7.0 / 72.0 * 25.4       # 7pt
+
+
+_RUBY_CENTER_MM = 40.0
+
+
+def _ruby_fit(rb):
+    """긴 주석이 지면 밖으로 나가지 않게 잡는다.
+
+    보통 주석은 낱말 **가운데**에 건다. 그런데 긴 주석을 가운데 걸면 절반이
+    왼쪽으로 뻗어 나가, 줄 첫 낱말에 걸린 순간 지면 밖이 되어 통째로 잘린다
+    (실측: 53자 108.7mm 짜리가 첫 낱말 `T` 에 걸려 사라졌다 — 폭만 봐서는
+    단 안이라 안 걸린다). 넓은 것은 **낱말 왼쪽에 붙여 오른쪽으로** 흐르게 한다.
+    단보다도 넓으면 그것만 글자를 줄인다.
+    """
+    w = sum(_RUBY_EM_MM if ord(c) > 0x2000 else _RUBY_EM_MM * 0.5 for c in rb)
+    if w <= _RUBY_CENTER_MM:
+        return ""
+    st = "left:0;transform:none"
+    if w > _RUBY_MAX_MM:
+        st += ";font-size:%.2fpt" % max(4.0, 7.0 * _RUBY_MAX_MM / w)
+    return st
+
+
 def _run_html(r):
     cls = []
     m = r.get("mark")
@@ -68,8 +97,10 @@ def _run_html(r):
     inner = ESC(r["t"])
     if r.get("ruby"):
         slot = r.get("slot") or "dn"
-        inner = '<span class="w%s">%s<i class="%s">%s</i></span>' % (
-            (" " + " ".join(cls)) if cls else "", inner, slot, ESC(r["ruby"]))
+        fit = _ruby_fit(r["ruby"])
+        inner = '<span class="w%s">%s<i class="%s"%s>%s</i></span>' % (
+            (" " + " ".join(cls)) if cls else "", inner, slot,
+            (' style="%s"' % fit) if fit else "", ESC(r["ruby"]))
         return inner
     if cls:
         return '<span class="%s">%s</span>' % (" ".join(cls), inner)
