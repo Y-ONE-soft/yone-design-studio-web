@@ -29,6 +29,13 @@ def _wcls(w):
 
 class Renderer(VocabookRenderer):
 
+    def cover_placeholder(self):
+        """vocabook 버전은 `class="cover s-head"` 를 박아 둔다 — 이 계열엔 s-head
+        가 없어(s-text/s-supp/s-mock) :root 기본값(첫 섹션)에 우연히 얹혀 있었다.
+        실제로 쓰는 첫 섹션 클래스로 바꿔 명시적으로 맞춘다."""
+        html = super().cover_placeholder()
+        return html.replace('class="cover s-head"', 'class="cover s-text"', 1)
+
     def word_card(self, it):
         no = it["no"]
         top = (f'<div class="w-top"><span class="w-num">{no:04d}</span>'

@@ -235,13 +235,18 @@ def test_w3_styles_and_units_corpus():
 def test_w3_content_conservation_corpus():
     """내용 보존 — 의도 삭제 룰 반영 후 단어 전량 보존."""
     from engines.workbook_v2.plan import (_is_blank, _RE_C2_SOLO_NUM,
-                                          is_header_line)
+                                          is_header_line,
+                                          _STEP1_A2_OX_INTRO)
     for case in _W3_UNITS:
         steps = _load(case)["steps"]
         plan = steps_to_plan(steps)
-        # 1A2: 삭제는 빈 단락뿐 — ❮T/F❯ 토큰 제거는 단어(2자+)에 영향 없음
+        # 1A2: 삭제는 빈 단락뿐 — ❮T/F❯ 토큰 제거는 단어(2자+)에 영향 없음.
+        # W87: 원고엔 없는 O/X 발문을 유닛마다 엔진이 심는다 — 그 낱말만
+        # 추가분으로 허용하고, 나머지는 그대로 전량 보존.
         raw = [p["text"] for p in steps["step1_a2"]["paragraphs"]]
-        assert _plan_words(_flow(plan, "step1_a2")) == _words(raw), case
+        added = _plan_words(_flow(plan, "step1_a2")) - _words(raw)
+        assert added <= _words([_STEP1_A2_OX_INTRO]), case
+        assert _words(raw) <= _plan_words(_flow(plan, "step1_a2")), case
         # 1B1: 삭제 없음 ({주제}/{제목} 병합·정규화만)
         raw = [p["text"] for p in steps["step1_b1"]["paragraphs"]]
         assert _plan_words(_flow(plan, "step1_b1")) == _words(raw), case
@@ -277,9 +282,13 @@ def test_w3_step1_a2_semantics():
     unit = flow["units"][0]
     assert unit[0]["t"] == "[20]" and unit[0]["s"] == _BASIC
     assert unit[1]["s"] == "STEP 01 > A2_본문 박스"
+    # W87: 지문 뒤·첫 문항 앞에 O/X 발문을 엔진이 심는다 (원고엔 없음 —
+    # 실물 완성본 역참조로 확정한 스타일. B2 내용 종합 번호 재사용)
+    assert unit[2]["t"] == "다음 글의 내용과 일치하면 O, 일치하지 않으면 X를 고르시오."
+    assert unit[2]["s"] == "STEP 01 > B2_내용 종합 번호"
     # 토큰만 제거되고 앞 본문은 보존 (v1: range.remove()와 동일)
-    assert unit[2]["t"].startswith("(1) People usually learn")
-    assert "T / F" not in unit[2]["t"]
+    assert unit[3]["t"].startswith("(1) People usually learn")
+    assert "T / F" not in unit[3]["t"]
 
 
 def test_w3_step1_b1_semantics():

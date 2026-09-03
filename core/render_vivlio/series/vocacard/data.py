@@ -17,8 +17,11 @@
 """
 import json
 import os
+import re
 
 import openpyxl
+
+_RE_NOTE_LABEL = re.compile(r"^(주의|혼동)\.\s*")
 
 SHEET = "단어장 원고"
 PART_TITLE = {"text": "교과서", "supp": "부교재", "mock": "모의고사"}
@@ -65,7 +68,12 @@ def parse(path):
         if _t(deriv) and _t(deriv) != "없음":
             rows.append({"label": "파생어", "lines": _lines(deriv)})
         if _t(note):
-            rows.append({"label": "주의", "lines": _lines(note)})
+            note_lines = _lines(note)
+            # 원고 줄 자체가 '주의.'/'혼동.' 로 시작 — 그 접두어를 행 라벨로
+            # 쓰고(둘을 구분해 보이게) 줄 안에서는 중복이라 지운다.
+            lab = "혼동" if note_lines and note_lines[0].startswith("혼동") else "주의"
+            note_lines = [_RE_NOTE_LABEL.sub("", ln) for ln in note_lines]
+            rows.append({"label": lab, "lines": note_lines})
         if _t(defn):
             rows.append({"label": "영영풀이", "lines": [_t(defn)]})
         items.append({
