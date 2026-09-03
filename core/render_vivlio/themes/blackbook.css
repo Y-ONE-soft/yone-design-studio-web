@@ -260,6 +260,10 @@ u { text-decoration: underline; text-decoration-thickness: 0.5pt;
 .q .summary {
   background: var(--cream); padding: 1.6mm 2mm; text-align: justify;
 }
+/* 상자 안 라벨(`< 보 기 1 >` · `< 요 약 문 >` · `< conversation >`) — 원고 말 그대로 */
+.q .summary .lab { font: 8.63pt/4.585mm Noto; margin-bottom: 0.8mm; }
+.q .ch .cgap    { display: inline-block; width: 7mm; }   /* 한 줄 선지 사이 */
+
 .q .bogi {
   display: table; margin-top: 3.2mm; padding: 1.4mm 2.6mm;
   border: 0.5pt solid var(--chip-v);

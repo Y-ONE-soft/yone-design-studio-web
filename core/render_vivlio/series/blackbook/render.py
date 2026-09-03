@@ -24,6 +24,8 @@
 """
 import html, json, os, re
 
+CIRCLED = '①②③④⑤⑥⑦⑧⑨⑩'
+
 from core.render_vivlio import stage
 
 # 판면 기본값(mm) — 인디자인 완성본 실측. 책이 필요하면 config.metrics 로 덮는다.
@@ -273,18 +275,26 @@ def render_question(item, style=''):
         elif t == 'arrow':
             o.append('<div class="arrow">↓</div>')
         elif t == 'summary':
+            lab = b.get('label')
             o.append('<div class="summary">'
+                     + (f'<p class="lab">&lt; {esc1(lab)} &gt;</p>' if lab else '')
                      + paras_html(b['paras'], blank=True,
                                   ref=br and br + '.paras') + '</div>')
         elif t == 'bogi':
-            o.append('<div class="bogi"><p class="t">&lt; 보 기 &gt;</p>'
+            lab = b.get('label') or '보 기'
+            o.append(f'<div class="bogi"><p class="t lab">&lt; {esc1(lab)} &gt;</p>'
                      + paras_html(b['items'], blank=True, cls='t',
                                   ref=br and br + '.items')
                      + '</div>')
         elif t == 'choice':
+            body = inl(b['body'])
+            if sum(body.count(c) for c in CIRCLED) >= 1:
+                # `① (a)   ② (b) …` 한 줄 선지 — 사이를 넉넉히 벌린다
+                body = re.sub(r'(?:&nbsp;)+\s*', '<span class="cgap"></span>',
+                              body)
             o.append(f'<p{_mark(br and br + ".body", "ch")}>'
                      f'<span class="m">{b["mark"]}</span> '
-                     f'{inl(b["body"], blank=True)}</p>')
+                     f'{body}</p>')
         elif t == 'ansline':
             o.append('<div class="ansline">')
             for ln in b['lines']:

@@ -166,7 +166,10 @@ def strip_lead(segs, n):
 RE_ITEM = re.compile(r'^\s*(\d+)\.\s')
 RE_CRIT = re.compile(r'^\s*(\d+)\.\s')
 RE_ARROW = re.compile(r'^[↓⇓⬇▼🡇]+$')
-RE_BOGI = re.compile(r'^\s*[<〈]\s*보\s*기\s*[>〉]\s*$')
+# 꺾쇠 라벨 한 줄 — `< 보 기 >` 하나가 아니다. 2권 원고는 `< 보 기 1 >`,
+# `< 보 기 2 >`, `< 요 약 문 >`, `< conversation >` 을 쓴다. 라벨이 여는 것은
+# **블록**이고, 라벨 글자는 원고 말 그대로 상자에 인쇄한다.
+RE_LABEL = re.compile(r'^\s*[<〈]\s*([^>〉]{1,24}?)\s*[>〉]\s*$')
 RE_BLANK = re.compile(r'_{4,}')
 
 
@@ -247,9 +250,14 @@ def parse_problems(path):
         if RE_ARROW.match(t):
             B.append({'t': 'arrow'})
             mode = None
-        elif RE_BOGI.match(t):
-            B.append({'t': 'bogi', 'items': []})
-            mode = 'bogi'
+        elif RE_LABEL.match(t):
+            lab = RE_LABEL.match(t).group(1).strip()
+            if '요약' in lab.replace(' ', ''):
+                B.append({'t': 'summary', 'label': lab, 'paras': []})
+                mode = 'summary'
+            else:
+                B.append({'t': 'bogi', 'label': lab, 'items': []})
+                mode = 'bogi'
         elif t.startswith('[채점 기준]') or t.startswith('[답안 작성 안내]'):
             B.append({'t': 'crit', 'title': t, 'items': []})
             mode = 'crit'
@@ -261,6 +269,8 @@ def parse_problems(path):
             # 보기 상자는 ①/답란/채점기준/다음 문항 전까지 이어진다
             # (빈칸이 든 마무리 줄·단어 묶음도 보기 안에 든다)
             B[-1]['items'].append(rich(p['segs']))
+        elif mode == 'summary' and not _is_ansline(t, p['style']):
+            B[-1]['paras'].append(rich(p['segs']))
         elif mode == 'crit' and RE_CRIT.match(t):
             B[-1]['items'].append(rich(p['segs']))
         elif B and B[-1]['t'] == 'arrow':
