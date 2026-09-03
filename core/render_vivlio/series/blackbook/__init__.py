@@ -218,7 +218,10 @@ class BlackbookSeries(Series):
                     if b["t"] in ("passage", "summary", "bogi"):
                         src += " " + _plain(b.get("paras") or b.get("items"))
                     elif b["t"] == "choice":
-                        src += " " + _plain(b["body"])
+                        # 선지의 공백은 **빈칸이 아니라 사이 간격**이다
+                        # (`① (a)   ② (b) …` 한 줄 선지). 밑줄 빈칸만 센다.
+                        src += " " + re.sub(r"[ \u3000]{2,}", " ",
+                                            _plain(b["body"]))
                 items.append((it["no"], src, _plain(it["stem"])[:28]))
         gate.check_gaps(items, texts, report)
 
