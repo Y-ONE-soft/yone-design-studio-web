@@ -22,6 +22,10 @@ from core.render_vivlio.series.base import Series
 from core.render_vivlio.series.pocketbook import data as pdata
 from core.render_vivlio.series.pocketbook import memtest as pmemtest
 from core.render_vivlio.series.pocketbook import render as prender
+
+# 주석이 이보다 넓으면 낱말 가운데에 걸었을 때 지면 밖으로 나갈 수 있다
+# (여백이 가장 좁은 자리에서 한쪽 18mm). 41,510개 중 127개(0.31%).
+WIDE_RUBY_MM = 36.0
 from core.render_vivlio.series.pocketbook import scope as pscope
 from core.render_vivlio.series.pocketbook import theme as ptheme
 
@@ -1173,6 +1177,7 @@ class PocketbookSeries(Series):
 
             # G-P3 주석 보존 · G-P6 넘침
             idx, lost, over, wrong = start, [], [], []
+            wide_cut = []           # 넓은 주석이라 잘렸을 수 있는 지문
             mt_ink = []             # (키, 정답면인가, 그 면에 쓰인 글자색들)
             for r, step in zip(rows, per):
                 if idx >= n_pages:
@@ -1187,13 +1192,23 @@ class PocketbookSeries(Series):
                 #   붙거나 갈라져 조각 수가 오르내린다 — 멀쩡한 책이 떨어지고
                 #   진짜 유실이 숫자가 맞아떨어져 통과한다(휴먼범석체로 바꿨을
                 #   때 실측). G-P7 과 같은 방식으로 **글자**로 견준다.
+                # ⚠ 넓은 주석(문장 하나가 통째로 루비인 것)은 낱말 가운데에
+                #   걸면 지면 밖으로 나갈 수 있다 — 인디자인도 프레임에서 똑같이
+                #   자른다. 자리를 옮기면 원본과 달라지므로(왼쪽에 붙여 봤더니
+                #   오른쪽으로 더 잘렸다: 한영1 178→156) 막지 않고 따로 센다.
+                rubies = [x["ruby"] for x in r["passage_runs"] if x.get("ruby")]
+                page_bag = _page_bag(page, M["anno_size"])
                 want_bag = _bag("".join(
-                    x["ruby"] for x in r["passage_runs"] if x.get("ruby")))
+                    x for x in rubies if prender.ruby_mm(x) <= WIDE_RUBY_MM))
                 want_ruby = sum(want_bag.values())
-                lost_n = sum((want_bag - _page_bag(page, M["anno_size"])).values())
+                lost_n = sum((want_bag - page_bag).values())
                 if lost_n:
                     lost.append((r.get("key") or r.get("label"),
                                  want_ruby, want_ruby - lost_n))
+                wide = _bag("".join(
+                    x for x in rubies if prender.ruby_mm(x) > WIDE_RUBY_MM))
+                if sum((wide - page_bag).values()):
+                    wide_cut.append(r.get("key") or r.get("label"))
                 # G-P7 — 원고 글자가 지면에 다 있는가.
                 #   순서로 비교하면 안 된다: 루비 낱말이 inline-block 이라 PDF
                 #   추출 순서가 뒤섞이고, 인접 span 이 붙어 낱말이 엉킨다.
@@ -1221,6 +1236,11 @@ class PocketbookSeries(Series):
                 report.fail("G-P7 원문 글자 유실 %d지문 — %s"
                             % (len(wrong), ", ".join(
                                 "%s(%d자)" % x for x in wrong[:5])))
+            if wide_cut:
+                report.warn(
+                    "G-P3 넓은 주석(문장형)이 잘렸을 수 있다 %d지문 — %s "
+                    "(원본도 프레임에서 잘린다 — 원고를 줄이는 게 맞다)"
+                    % (len(wide_cut), ", ".join(str(x) for x in wide_cut[:6])))
             if lost:
                 report.fail("G-P3 구문분석 주석 유실 %d지문 — %s"
                             % (len(lost), ", ".join(

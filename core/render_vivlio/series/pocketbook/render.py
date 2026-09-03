@@ -74,19 +74,24 @@ _RUBY_CENTER_MM = 40.0
 def _ruby_fit(rb):
     """긴 주석이 지면 밖으로 나가지 않게 잡는다.
 
-    보통 주석은 낱말 **가운데**에 건다. 그런데 긴 주석을 가운데 걸면 절반이
-    왼쪽으로 뻗어 나가, 줄 첫 낱말에 걸린 순간 지면 밖이 되어 통째로 잘린다
-    (실측: 53자 108.7mm 짜리가 첫 낱말 `T` 에 걸려 사라졌다 — 폭만 봐서는
-    단 안이라 안 걸린다). 넓은 것은 **낱말 왼쪽에 붙여 오른쪽으로** 흐르게 한다.
-    단보다도 넓으면 그것만 글자를 줄인다.
+    주석은 낱말 **가운데**에 건다(인디자인과 같다). 문장 하나가 통째로 루비로
+    오는 경우가 있어(41,510개 중 127개, 0.31% 가 36mm 초과) 줄 끝 낱말에 걸리면
+    절반이 지면 밖으로 나가 잘린다. 인디자인도 텍스트 프레임에서 똑같이 잘린다 —
+    **여기서 자리를 옮기면 원본과 달라진다.** 왼쪽에 붙여 봤더니 이번엔 오른쪽으로
+    더 많이 잘렸다(한영1 178→156 실측). 그래서 자리는 그대로 두고, **단보다 넓어
+    어디에 놔도 안 들어가는 것만** 글자를 줄인다. 잘릴 수 있는 것은 검수가
+    목록으로 알린다(G-P3 경고).
     """
-    w = sum(_RUBY_EM_MM if ord(c) > 0x2000 else _RUBY_EM_MM * 0.5 for c in rb)
-    if w <= _RUBY_CENTER_MM:
+    w = ruby_mm(rb)
+    if w <= _RUBY_MAX_MM:
         return ""
-    st = "left:0;transform:none"
-    if w > _RUBY_MAX_MM:
-        st += ";font-size:%.2fpt" % max(4.0, 7.0 * _RUBY_MAX_MM / w)
-    return st
+    return ";font-size:%.2fpt" % max(4.0, 7.0 * _RUBY_MAX_MM / w)
+
+
+def ruby_mm(rb):
+    """주석을 한 줄로 늘어놓았을 때의 폭(mm) 어림."""
+    return sum(_RUBY_EM_MM if ord(c) > 0x2000 else _RUBY_EM_MM * 0.5
+               for c in rb)
 
 
 def _run_html(r):
