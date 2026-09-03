@@ -354,8 +354,7 @@ class WorkbookV2Engine(BaseEngine):
                                               ensure_step3_kinds,
                                               question_keep_op,
                                               choice_tabs_op,
-                                              normalize_choice_tabs,
-                                              section_prompts_op)
+                                              normalize_choice_tabs)
 
         cfg = self._load_cfg()
         grade = self._read_meta(job_dir, "grade", 1)
@@ -414,14 +413,6 @@ class WorkbookV2Engine(BaseEngine):
         nz = normalize_choice_tabs(plan)
         if nz:
             log(f"[v2] 선지탭정규화: {nz}단락 (연속탭/선행공백 접기)")
-        # W86 (사용자 지적): 본문 O/X 섹션 지시문 — 내지 템플릿에 그 프레임이
-        # 아예 없어 발문이 통째로 빠져 있었다. 같은 책의 지시문 프레임(어법
-        # O/X)을 복제해 같은 자리에 놓는다 (위치·스타일은 디자인이므로
-        # 조판이 새로 정하지 않는다). 본보기가 없으면 실행기가 무접촉.
-        sp = section_prompts_op(plan)
-        if sp:
-            plan["section_prompts"] = sp
-            log("[v2] 섹션 지시문: " + ", ".join(x["step"] for x in sp))
         ct = choice_tabs_op(plan)
         if ct:
             plan["choice_tabs"] = ct

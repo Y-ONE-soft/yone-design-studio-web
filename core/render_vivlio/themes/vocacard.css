@@ -1,0 +1,333 @@
+/* 단어장 계열(vocacard) 스타일시트 — 이의고2. `vocabook.css`(상일·배재보카)의
+ * 사본이다 — Day/워크북 없이 구간별 낱말카드로 흐르는 이 계열은 그 파일 대부분을
+ * 그대로 쓰지만, 텍스트 치환(build_css)이 파일 단위라 한 파일을 공유하면 색을
+ * 바꿀 때마다 상일보카 쪽도 흔들린다. **그래서 파일을 나눴다** — 원본과 벌어지는
+ * 부분(①헤더는 PART 3개뿐, ②이어지는 오른쪽 면의 큰 밴드/부제는 안 씀, 낱말카드에
+ * 테두리 상자 추가)은 파일 맨 끝 "vocacard 전용" 구획에만 있다.
+ *
+ * 이 파일에는 **책마다 달라지지 않는 것만** 둔다. 판형·여백·팔레트·서체·배경 SVG는
+ * 책 config(③)에서 `series/vocacard/theme.py` 가 만들어 아래 두 자리에 끼운다:
+ *   @PRELUDE@    서체 · 공통색상/치수 · 섹션 팔레트 · @page 지오메트리 · MEMO 면
+ *   @GENERATED@  4mm 띠 · ①시작면 밴드 · 마름모 태그 · 탭 (전부 배경 SVG)
+ *
+ * 4면 체계: ①PART 시작(왼쪽)=인플로우 큰 헤더+마름모 ②이어지는 오른쪽=상단 밴드
+ * ③이후 왼쪽=4mm 띠+마름모 탭 ④이후 오른쪽=4mm 띠. 라벨(측면 인덱스)은 오른쪽만.
+ * PART 가 3개뿐이라 **2패스를 쓰지 않는다** — `running()` 은 다음 호출까지 값이
+ * 유지되는 GCPM 성질대로, PART 시작에서 한 번만 얹으면 이어지는 면에 저절로 따라온다.
+ *
+ * 색 체계 = 공통색상(--c-*) + 주색상(--main*) + 보조색상(--sub).
+ *   공통색상은 :root 한 곳에만 두고 어디서도 재정의하지 않는다.
+ *   주/보조색상은 섹션 클래스(.s-*)가 덮어써서 파트마다 톤이 달라진다.
+ */
+
+/*@PRELUDE@*/
+
+/* ---------- 러닝 요소 ---------- */
+.tab-l   { position: running(tabL); }
+.idx     { position: running(idx); }
+.hdr-big { position: running(hdrBig); }
+.foot-l  { position: running(footL); }
+.foot-r  { position: running(footR); }
+
+/* ③ 이후 왼쪽 면 — 마름모 탭 (시작 면의 큰 마름모와 같은 둥근 마름모) */
+.tab-l {
+    width: 17mm; height: 22mm; color: var(--main);   /* 꼬리까지 담는 폭 */
+    margin: 0 0 0 calc(-1 * var(--mgn-x) + 6mm);
+}
+.tab-l i { display: block; width: 14.8mm; padding-left: 4.2mm;
+    box-sizing: border-box; font: 700 10pt/23.4mm "Disp";   /* 태그 중심(10.85mm) 정렬 */
+    text-align: center; letter-spacing: 0; font-style: normal; }
+
+/* ② 이어지는 오른쪽 면 — 상단 밴드(둥근 모서리는 바깥쪽=오른쪽) + 부제 */
+.hdr-big {                       /* 밴드는 페이지 배경, 여기는 글자만 */
+    width: 148mm; box-sizing: border-box;
+    margin: 0 calc(-1 * var(--mgn-x));
+    padding: 7.8mm 18.7mm 0 0; text-align: right;
+    font: 700 6.4pt "Elice"; color: #fff; letter-spacing: .28em;
+}
+
+
+/* 헤더 배경 장식(인플로우 밴드용) — 흰 헤어라인 2줄 + 보조색 블록 */
+.bd-l1, .bd-sq { position: absolute; }
+.bd-l1 { left: 0; right: 0; top: 5.6mm; height: .35mm; background: #fff; opacity: .9; }
+.bd-sq { left: 0; top: 0; width: 46mm; height: 100%; background: var(--sub);
+         opacity: .2; }
+
+/* 오른쪽 면 측면 라벨 — 위에서 시작해 Day 마다 아래로(--idx-step) */
+.idx {
+    writing-mode: vertical-rl; text-orientation: mixed;
+    background: var(--main); color: #fff; font: 700 6.2pt "Elice";
+    letter-spacing: .1em;
+    padding: 4.6mm calc(1.8mm + var(--bleed)) 4.6mm 1.6mm;   /* 오른쪽 = 도련 */
+    margin-left: auto; border-radius: 1.2mm 0 0 1.2mm;
+    margin-top: var(--idx-step, 0mm); border-top: .9mm solid var(--sub);
+}
+/* 간지·정답 등 Day 표식이 없는 면 — 탭/라벨 감춤 */
+.tab-l.off, .idx.off, .foot-l.off, .foot-r.off {
+    background: none !important; color: transparent; border-color: transparent;
+    box-shadow: none; }
+.tab-l.off i, .idx.off *, .foot-l.off *, .foot-r.off * { color: transparent; }
+
+.foot-l, .foot-r {
+    font: 500 6pt "Elice"; color: var(--c-ink); letter-spacing: .02em; padding-top: 3.2mm;
+}
+.foot-l .pg, .foot-r .pg { color: var(--main); font-weight: 700; }
+.foot-l .sep, .foot-r .sep { color: var(--sub); font-weight: 300; font-size: 7pt; padding: 0 1.4mm; }
+.foot-l.off .sep, .foot-r.off .sep, .foot-l.off .pg, .foot-r.off .pg
+    { color: transparent; }
+.foot-l .pg::before { content: counter(page); }
+.foot-r .pg::after  { content: counter(page); }
+
+html, body { margin: 0; padding: 0; }
+p { margin: 0; }            /* 기본 문단 여백 제거 — 간격은 전부 명시값으로만 */
+body {
+    font: 400 6pt/8pt "Noto"; color: var(--c-ink); letter-spacing: var(--tight);
+    line-break: strict; hyphens: none; orphans: 2; widows: 2;
+    word-break: keep-all; overflow-wrap: break-word;
+}
+em { font-style: normal; font-weight: 500; color: var(--c-hl); }
+
+/* 품사 글리프 */
+.pos {
+    display: inline-block; font: 500 5pt/1 "Noto"; color: var(--main);
+    background: var(--c-pos-bg); border-radius: .7mm; padding: .7mm .8mm .5mm;
+    margin-right: 1.2mm; vertical-align: .4mm; letter-spacing: 0;
+}
+
+/* ---------- ① DAY 시작 면 (왼쪽) ---------- */
+/* 2패스 빌드가 이 면을 찾는 표식 — 보이지 않지만 PDF 텍스트로는 추출된다 */
+.mk { position: absolute; font-size: .5pt; color: transparent; }
+.day-open { break-before: left; }
+.s-wb .day-open { break-before: page; }
+.day-head {
+    position: relative; height: 30mm;
+    margin: -23mm calc(-1 * var(--mgn-x)) 4mm calc(-1 * var(--mgn-x));
+}
+.day-head .band { position: absolute; left: 0; right: 0; top: 0; height: 18.27mm; }
+.day-head .dia  { position: absolute; left: 0; top: 0; width: 43mm; height: 29mm; }
+/* 오른쪽에서 시작하는 면 — 밴드만 좌우 반전(둥근 모서리 바깥쪽).
+   DAY 태그와 섹션 제목은 왼쪽 시작면과 같은 자리(본문 열 기준). */
+.s-ans .day-head { margin-top: -12mm; }
+.day-head .dh-title { position: absolute; left: 44mm; top: 12.2mm;
+    font: 700 12pt "Elice"; color: var(--main); letter-spacing: -.01em; }
+.day-head .dia i { display: flex; flex-direction: column; align-items: center;
+    justify-content: center; width: 36.22mm; height: 27.29mm; font-style: normal;
+    padding: 11mm 0 0 19.44mm; box-sizing: border-box; }
+.day-head .dia s { text-decoration: none; font: 700 5.6pt "Elice"; color: var(--sub);
+    letter-spacing: .18em; margin-bottom: .3mm; }
+.day-head .dia b { font: 700 21pt/1 "Disp"; color: var(--main); letter-spacing: -.01em; }
+.day-head .dia b.ko { font: 700 13pt/1 "Elice"; color: var(--main); }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ---------- 1쪽: 표지 간지 자리(임시) ---------- */
+.cover { margin: -23mm calc(-1 * var(--mgn-x)) -14mm; height: 216mm;
+    padding: 0 var(--mgn-x); background: var(--main); color: #fff;
+    display: flex; flex-direction: column; justify-content: center; }
+.cover .cv-k { font: 700 7pt "Elice"; color: var(--main-pale); letter-spacing: .28em; }
+.cover .cv-t { font: 700 30pt "Elice"; margin-top: 4mm; letter-spacing: -.01em; }
+.cover .cv-s { font: 400 8pt "Noto"; color: var(--main-pale); margin-top: 3mm; }
+.cover .cv-note { position: absolute; bottom: 18mm; font: 400 6pt "Noto";
+    color: rgba(255,255,255,.55); }
+
+
+
+
+/*@GENERATED@*/
+
+/* ---------- 파트/섹션 간지 ---------- */
+.divider { break-before: left; height: 168mm; display: flex;
+           flex-direction: column; justify-content: center; }
+.divider.part, .divider.part2 { margin: -23mm calc(-1 * var(--mgn-x)) -14mm; height: 216mm;
+    padding: 0 var(--mgn-x); background: var(--main); color: #fff; }
+.divider.part2 { break-before: page; }
+.divider.part .kicker { color: var(--main-pale); }
+.divider.part .ttl, .divider.part2 .ttl { color: #fff; font-size: 26pt; }
+.divider.part2 .kicker { color: var(--main-pale); }
+.divider.part2 .sub { color: var(--main-pale); }
+.divider.part2 .bar { background: var(--sub); width: 30mm; }
+.toc { margin-top: 9mm; }
+.toc li { list-style: none; font: 500 8pt "Noto"; color: #fff;
+          padding: 2.6mm 0; border-top: .3pt solid rgba(255,255,255,.35); }
+.toc li span { font: 400 6pt "Noto"; color: var(--main-pale);
+               margin-left: 3mm; }
+.divider.part .sub { color: var(--main-pale); }
+.divider.part .bar { background: var(--sub); width: 30mm; }
+.divider .kicker { font: 700 7pt "Elice"; color: var(--sub); letter-spacing: .16em; }
+.divider .ttl    { font: 700 20pt "Elice"; color: var(--main); margin-top: 3mm;
+                   letter-spacing: -.01em; }
+.divider .sub    { font: 400 7.5pt "Noto"; color: var(--c-gray); margin-top: 2.4mm; }
+.divider .bar    { width: 22mm; height: 1.2mm; background: var(--sub); margin-top: 6mm; }
+
+/* ---------- 단어 블록 (Part1 (1)(2)) ---------- */
+.w { break-inside: avoid; margin: 0; padding-bottom: 5pt; }
+.gap { display: inline-block; width: 1.9mm; }   /* 원고의 연속 공백 = 의미 구분 간격 */
+.w-top { display: flex; align-items: flex-end; }
+.w-num { font: 700 6pt "Noto"; color: var(--main); line-height: 1;
+         width: 7.5mm; flex: none; letter-spacing: 0; }
+.w-rule { flex: 1 1 auto; border-top: .3pt solid var(--main); height: 0; margin-bottom: .8pt; }
+.w-anchor { flex: none; font: 500 5pt "Noto"; color: var(--c-label);
+            letter-spacing: 0; padding-left: 1.6mm; line-height: 1; }
+.s-head .w, .s-mw .w, .s-vs .w { margin-bottom: 5pt; }
+.w-lead { display: grid; grid-template-columns: var(--lab-w) 1fr; padding-top: 2.4pt; }
+.w-word { font: 700 10pt/12pt "Noto"; color: var(--c-ink); letter-spacing: -.02em; }
+.w-word.long  { font-size: 8.4pt; line-height: 10.4pt; }
+.w-word.xlong { font-size: 7pt; line-height: 9pt; }
+.w-mean { font: 500 7pt/9.6pt "Noto"; color: var(--c-ink); padding-top: 2.4pt; }
+.w-mean i { font-style: normal; color: var(--sub); }
+.w-mean .ln { display: block; }                 /* 품사 단위 줄바꿈 */
+.w-mean .ln + .ln { margin-top: 1.2pt; }
+.w-row { display: grid; grid-template-columns: var(--lab-w) 1fr; margin-top: 4.2pt;
+         line-height: 7.7pt; }
+.w-row .lab { font: 500 5.5pt/8pt "Elice"; color: var(--c-label); letter-spacing: 0; }
+.w-row .val > p { margin: 0; }
+.w-row .val .kr { color: var(--c-gray); margin-top: 1.2pt; }
+.w-row.r-syn .val, .w-row.r-syn .val p { color: var(--c-gray); }
+.w-row .val .pair + .pair { margin-top: 2.6pt; }
+
+/* (2) 파생어&연관어휘 — 같은 표제어에서 나온 항목끼리 묶어 보이게 */
+.s-deriv { --lab-w: 34mm; }
+.wg { break-inside: avoid; margin-bottom: 5pt; }
+.wg .w + .w .w-lead { border-top: .3pt dotted var(--c-rule); padding-top: 5pt; }
+.wg .w-word { font-size: 8.4pt; line-height: 10.4pt; }
+.wg .w-word.long  { font-size: 7.4pt; line-height: 9.4pt; }
+.wg .w-word.xlong { font-size: 6.6pt; line-height: 8.6pt; }
+
+/* ---------- more with ---------- */
+.mw {
+    break-inside: avoid; margin-bottom: 4.5mm; padding: 3.4mm 4mm;
+    border: .4pt solid var(--c-rule); border-radius: 2.4mm; background: #fbfcfd;
+    display: grid; grid-template-columns: 30mm 1fr; column-gap: 4mm; align-items: center;
+}
+.mw-root { text-align: center; }
+.mw-pill { display: inline-block; font: 500 5.4pt "Elice"; color: var(--main);
+           border: .4pt solid var(--main); border-radius: 3mm; padding: .6mm 2.2mm; }
+.mw-word { display: block; font: 700 13pt "Noto"; color: var(--c-ink); margin-top: 1.6mm;
+           letter-spacing: -.02em; }
+.mw-items { margin: 0; padding: 0; list-style: none; }
+.mw-items li { margin: 0 0 1.6mm 0; font: 400 6pt/8.4pt "Noto"; }
+.mw-items li:last-child { margin-bottom: 0; }
+.mw-items .wd b { font-weight: 700; }
+.mw-items .mean { color: var(--c-gray); }
+
+/* ---------- VOCA vs. VOCA ---------- */
+.vs { break-inside: avoid; margin-bottom: 5mm; padding: 3.2mm 4mm 3.6mm;
+      border: .4pt solid var(--c-rule); border-radius: 2.4mm; }
+.vs-head { display: flex; align-items: center; gap: 3mm; margin-bottom: 2.6mm; }
+.vs-pill { font: 700 7pt "Elice"; color: #fff; background: var(--main);
+           padding: 1mm 2.4mm; border-radius: 1mm; letter-spacing: .01em; }
+.vs-title { font: 700 7pt "Noto"; color: var(--sub); }
+.vs-items { margin: 0; padding: 0; list-style: none; }
+.vs-item { break-inside: avoid; margin-bottom: 2.6mm; }
+.vs-item:last-child { margin-bottom: 0; }
+.vs-item .hd { text-indent: -2.6mm; padding-left: 2.6mm; }
+.vs-item .hd::before { content: "· "; color: var(--main); font-weight: 700; }
+.vs-word { font: 700 7pt "Noto"; letter-spacing: -.02em; }
+.vs-mean { font: 400 6pt "Noto"; color: var(--c-gray); }
+.vs-item .ex-en { margin: .8mm 0 0 2.6mm; }
+.vs-item .ex-kr { margin: .2mm 0 0 2.6mm; color: var(--c-gray); }
+
+/* ---------- Part2 워크북 ---------- */
+.sec { break-before: page; }               /* A·B·C·D 는 각각 새 페이지에서 시작 */
+.sec.first { break-before: avoid; }
+.sec-head { display: flex; align-items: baseline; gap: 2mm; break-after: avoid; }
+.sec-badge { flex: none; width: 4.2mm; height: 4.2mm; border-radius: 50%;
+             background: var(--main); color: #fff; font: 700 5.6pt/4.2mm "Noto";
+             text-align: center; letter-spacing: 0; }
+.sec-badge.A { background: #12604e; }
+.sec-badge.B { background: #1d7a9c; }
+.sec-badge.C { background: #b0762a; }
+.sec-badge.D { background: #8b4a86; }
+.sec-prompt { font: 500 7pt "Noto"; color: var(--c-ink); }
+
+.qa { columns: 2; column-gap: 6mm; margin-top: 3mm; }
+.qa .q { break-inside: avoid; display: grid; grid-template-columns: 5mm 1fr;
+         margin-bottom: calc(2.2mm + var(--gap, 0mm)); }
+.qa .no { font: 700 5.6pt "Noto"; color: var(--sub); padding-top: .5mm; letter-spacing: 0; }
+.qa .wd { font: 400 6.4pt "Noto"; }
+.qa .rule { grid-column: 2; border-bottom: .4pt solid var(--c-line); height: 3mm; }
+
+.qb { margin-top: 3mm; }
+.qb .q { break-inside: avoid; display: grid; grid-template-columns: 5mm 1fr;
+         margin-bottom: calc(1.1mm + var(--gap, 0mm)); }
+.qb .no { font: 700 5.6pt/8.2pt "Noto"; color: var(--sub); letter-spacing: 0; }
+.qb .en { font: 400 6.4pt/8.2pt "Noto"; }
+.qb .kr { font: 400 5.6pt/7.4pt "Noto"; color: var(--c-gray); margin-top: .2mm; }
+.blank { font-weight: 700; color: var(--c-blank); }
+.bl { white-space: nowrap; }
+.ul { display: inline-block; width: 21mm; border-bottom: .4pt solid var(--c-ink);
+      margin: 0 .4mm; vertical-align: -.2mm; }
+
+.bogi { background: var(--c-band); border-radius: 1mm; padding: 1.3mm 3mm;
+        margin: 2.6mm 0 4mm; font: 500 6.2pt/8.4pt "Noto"; break-inside: avoid; }
+.bogi.opts { display: grid; grid-template-columns: repeat(4, 1fr);
+             column-gap: 3mm; row-gap: 1.4mm; padding: 2mm 3mm; }
+.bogi .opt { white-space: nowrap; }        /* 글리프와 단어가 갈라지지 않게 */
+.bogi .tag { font: 700 6pt "Elice"; color: var(--main); margin-right: 2mm; }
+
+.qc .q, .qd .q { break-inside: avoid; display: grid; grid-template-columns: 5mm 1fr;
+                 margin-bottom: calc(1.4mm + var(--gap, 0mm)); }
+.nb { white-space: nowrap; }      /* 마지막 낱말+답란이 갈라지지 않게 */
+.qc .grp { break-inside: avoid; }  /* 보기 띠 + 그 문항들은 한 면에 */
+.qc .no, .qd .no { font: 700 5.6pt/8pt "Noto"; color: var(--sub); letter-spacing: 0; }
+.qc .df { font: 400 6.2pt/9.2pt "Noto"; }
+.qd .df { font: 400 6.4pt/9.2pt "Noto"; }
+.qd .q { margin-bottom: calc(2.4mm + var(--gap, 0mm)); }
+.qd .items { columns: 2; column-gap: 6mm; }
+.ansbox { display: inline-block; width: 24mm; height: 3.2mm; background: var(--c-ans);
+          border-radius: .6mm; vertical-align: -.8mm; }
+
+/* ---------- 정답 ---------- */
+.ans-day { margin-bottom: 3mm; }   /* avoid-page 를 걸면 첫 면이 헤더만 남고 빈다 */
+.a-day { font: 700 7pt "Elice"; color: var(--main); margin: 0 0 1.2mm;
+         padding-top: 1.2mm; border-top: .6pt solid var(--main);
+         break-after: avoid; }
+.ans-day > .ans { break-before: avoid; }
+.ans { font: 400 5.6pt/8.2pt "Noto"; letter-spacing: -.03em; }
+.a-body { column-gap: 5mm; }
+.a-sec.sA .a-body { columns: 1; }
+.a-sec.sB .a-body, .a-sec.sC .a-body, .a-sec.sD .a-body { columns: 3; }
+.ans .a-sec { margin-bottom: 2mm; break-inside: avoid; }
+.ans .a-sec.sD { break-inside: auto; }
+.ans .a-sec + .a-sec { border-top: .3pt dotted var(--c-rule);
+                       padding-top: 1.2mm; }
+.ans .a-hd { font: 700 6pt "Noto"; color: var(--main); margin: 0 0 1.2mm;
+             letter-spacing: 0; break-after: avoid; }
+.ans .a-it { display: grid; grid-template-columns: 4mm 1fr; }
+.ans .a-it .n { color: var(--sub); font-weight: 500; letter-spacing: 0; }
+.ans .a-it .t { color: var(--c-gray); }
+.ans .a-it .t b { color: var(--c-ink); font-weight: 500; }
+
+/* ================= vocacard 전용 — 위 규칙은 vocabook.css 원본과 동일 ================= */
+
+/* 낱말 카드 — 원고 한 행 = 카드 하나. 예문·유반의어·파생어·주의·영영풀이까지
+ * 실어 상일보카 표제어 카드보다 훨씬 무거워, 테두리 상자로 낱말 사이를 분리한다
+ * (.mw/.vs 상자와 같은 어법 — border+radius+padding). 안쪽은 vocabook 의
+ * .w-top/.w-lead/.w-row 그대로 재사용. */
+.vc {
+    break-inside: avoid; margin: 0 0 4mm; padding: 3mm 3.6mm 3.4mm;
+    border: .4pt solid var(--c-rule); border-radius: 2.2mm;
+}
+.vc .w-top { margin-bottom: .8mm; }
+.vc .w-lead { padding-top: 0; }
+
+/* 영영풀이 — 사전 정의 톤으로 이탤릭 */
+.r-def.r-eng .val, .r-def.r-eng .val p { font-style: italic; color: var(--c-gray); }
+
+/* 구간 소제목 — 워크북 섹션 머리(.sec-head/.sec-badge)를 그대로 빌린다.
+ * 배지는 A/B/C/D 같은 글자 대신 가운뎃점만 찍어 '구분 표시'로만 쓴다. */
+.sec-head { margin: 5.5mm 0 2.6mm; }
+.sec-badge { width: 3mm; height: 3mm; font-size: 5pt; line-height: 3mm; }

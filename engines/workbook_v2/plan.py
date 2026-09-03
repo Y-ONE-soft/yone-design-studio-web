@@ -2526,6 +2526,15 @@ def _cut_span(text, runs, start, end):
 _RE_A2_CHOICE = re.compile(r"[①-⑩]")
 _RE_A2_QUESTION = re.compile(r"\d+\s*[.)]\s*(?:윗글|다음)")
 
+# W87 (사용자 지적 2026-08-31): O/X 발문은 원고에 없다 — 이 섹션의 어느
+# 원고에도 이 문장이 없다(코퍼스 전수 확인). 완제품은 유닛마다 이 문장을
+# 엔진이 심어 인쇄한다("다음 글을 읽고 물음에 답하시오."류 Step3 안내문과
+# 같은 관행 — _STEP3_SET_INTRO). 실물 완성본(명일2_워크북04) 역참조로 확정:
+# 지문(A2_본문 박스) 다음, 첫 O/X 문항 앞에 정확히 한 번 — 스타일은 새로 만든
+# 게 아니라 B2(내용 종합) 섹션의 번호 스타일을 그대로 재사용한다(원본 실측:
+# 두 섹션이 지문 박스 스타일도 공유한다 — STEP1B2.P == STEP1A2.P).
+_STEP1_A2_OX_INTRO = "다음 글의 내용과 일치하면 O, 일치하지 않으면 X를 고르시오."
+
 
 # 전체 기본 단락 → bracket 뒤 영어 본문 = A2_본문 박스, ❮T/F❯ 토큰 단락 =
 # A2_OX문제 + 토큰 제거 + TF 버튼 duplicate 삽입. bracket 위 빈 단락 제거(≤5),
@@ -2534,6 +2543,7 @@ _RE_A2_QUESTION = re.compile(r"\d+\s*[.)]\s*(?:윗글|다음)")
 def build_step1_a2(step_data):
     st_box = _style("STEP1A2", "P")
     st_ox = _style("STEP1A2", "OX")
+    st_q = _style("STEP1A2", "Q")
     # 5지선다 선지 전용 (템플릿 실측: STEP 01 > 하단 문제_선지)
     st_choice = "STEP 01 > 하단 문제_선지"
     units = []
@@ -2541,6 +2551,7 @@ def build_step1_a2(step_data):
     cur = []
     seen_bracket = False
     in_choice = False
+    need_intro = False        # W87: 이번 유닛에 O/X 발문을 아직 안 심었다
     _fb = _bracket_fallback_idx(step_data.get("paragraphs"))    # W59
     _ab = _absorbed_idx(step_data.get("paragraphs"))            # W61 출처
     for _i, p in enumerate(step_data.get("paragraphs", []) or []):
@@ -2558,6 +2569,7 @@ def build_step1_a2(step_data):
                 units.append(cur)
                 cur = []
             seen_bracket = True
+            need_intro = True          # W87: 새 유닛 — 발문 아직 안 심음
             if _i in _fb:          # W62: 평문 헤더 → [라벨] 정규화
                 text = _bracket_label_text(text)
                 runs = [{"t": text, "ul": False}]
@@ -2571,6 +2583,10 @@ def build_step1_a2(step_data):
             text, runs = _cut_span(text, runs, m.start(), m.end())
             n_tok += 1
         if n_tok > 0:
+            if need_intro:
+                # W87: 지문 뒤, 첫 O/X 문항 앞에 발문 삽입 (유닛당 1회)
+                cur.append(_mk(_STEP1_A2_OX_INTRO, st_q, []))
+                need_intro = False
             item = _mk(text, st_ox, runs)
             item["icon"] = dict(_ICON_TF_DUP)
             if n_tok > 1:
@@ -4061,27 +4077,6 @@ _RE_LABEL_BRACKET = re.compile(r"^\s*\[([^\]]+)\]\s*$")
 
 # 라벨 소스 우선순위: 헤더 기반 스텝(독립 번호 프레임 섹션과 동일 원고 계열)
 _LABEL_STEPS = ("step1_c2", "step2_c1", "step2_b1", "step2_a1", "step1_a1")
-
-
-# W86 (사용자 지적 2026-08-31): 섹션 머리 띠 지시문(발문)이 있어야 하는데
-# 내지 템플릿에 프레임 자체가 없는 섹션. 문구는 이 책의 관행 그대로.
-#   from_step = 문구·위치·스타일을 빌려올 같은 책의 지시문 프레임
-SECTION_PROMPTS = [
-    {"step": "step1_a2", "from_step": "step2_b1",
-     "text": "다음 글의 내용과 일치하면 O, 일치하지 않으면 X를 고르시오."},
-]
-
-
-def section_prompts_op(plan, specs=None):
-    """섹션 지시문 op — 대상/본보기 스텝이 **둘 다** 배치될 때만 계약 발행.
-
-    본보기(어법 O/X)가 없는 원고에서는 아무것도 만들지 않는다 (실행기도
-    본보기 프레임이 없으면 무접촉 — 조판이 디자인을 새로 정하지 않는다).
-    """
-    placed = {fl.get("step") for fl in plan.get("flows", []) or []}
-    out = [dict(sp) for sp in (specs or SECTION_PROMPTS)
-           if sp["step"] in placed and sp["from_step"] in placed]
-    return out
 
 
 def passage_labels(steps):

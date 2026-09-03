@@ -1203,15 +1203,9 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
     # 시오/세요-체 종결(꼬리 [출처] 태그 제거 후)이 발문 계열 스타일이
     # 아니면 검출 — 해요체("쓰세요") 발문이 지문 스타일로 인쇄되는 결함.
     q_style_miss = []
-    # W86: 섹션 머리 띠 지시문은 **엔진이 심은 디자인 요소**다 (발문 계열
-    # 스타일이 아니라 머리 띠 스타일이 맞다 — 어법 O/X의 지시문과 같은 층).
-    # 플랜이 넣은 문구만 면제한다 (원고에서 온 발문은 그대로 검출).
-    _band_prompts = {_clean(x.get("text") or "")
-                     for x in (plan.get("section_prompts") or [])}
-    _band_prompts.discard("")
     for t, s in _dump_paras(dump):
         tt = _clean(t)
-        if not tt or tt in _band_prompts:
+        if not tt:
             continue
         if not _RE_HANGUL.search(tt):
             # W38 확장: 영어 지시문 발문 시그니처 (번호 + 명령형/WH-의문 —
