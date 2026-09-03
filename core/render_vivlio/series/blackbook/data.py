@@ -170,7 +170,9 @@ RE_ARROW = re.compile(r'^[↓⇓⬇▼🡇]+$')
 # `< 보 기 2 >`, `< 요 약 문 >`, `< conversation >` 을 쓴다. 라벨이 여는 것은
 # **블록**이고, 라벨 글자는 원고 말 그대로 상자에 인쇄한다.
 RE_LABEL = re.compile(r'^\s*[<〈]\s*([^>〉]{1,24}?)\s*[>〉]\s*$')
-RE_BLANK = re.compile(r'_{4,}')
+# 밑줄은 반각 `_` 만이 아니다 — 2권 원고는 **전각 밑줄(＿ U+FF3F)** 을 쓴다.
+# 반각만 보면 `답 : ＿＿＿` 이 답란으로 안 잡혀 보기 상자 안에 끌려 들어간다.
+RE_BLANK = re.compile(r'[_\uff3f]{4,}')
 
 
 def _is_choice_line(t):

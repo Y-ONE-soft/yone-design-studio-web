@@ -194,9 +194,14 @@ def check_bleed_coverage(pdf, report, bleed=3.0, tol=0.3, min_len=20.0,
 
 # ── ⑤ 빈칸 유실 ─────────────────────────────────────────────────────────
 def count_gaps(t):
-    """원고/PDF 의 빈칸 수 — 밑줄형(`___`)과 공백형(3칸 이상) 둘 다."""
-    return (len(re.findall(r"_{3,}", t))
-            + len(re.findall(r"[  ]{3,}", t)))
+    """원고/PDF 의 빈칸 수 — 밑줄형(`___`·전각 `＿＿＿`)과 공백형(3칸 이상).
+
+    줄 맨 앞 공백은 **들여쓰기**라 빈칸이 아니다(전각 두 칸으로 들여 쓴
+    원고에서 "Long" 앞에 밑줄이 하나 그어졌다).
+    """
+    body = re.sub(r"(?m)^[ \u3000 ]+", "", t)
+    return (len(re.findall(r"[_\uff3f]{3,}", body))
+            + len(re.findall(r"[  ]{3,}", body)))
 
 
 def check_gaps(items, texts, report, limit=10):

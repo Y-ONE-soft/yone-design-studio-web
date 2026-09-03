@@ -72,6 +72,9 @@ def esc_blank(s):
     공백-라벨-공백은 **한 줄로 이어진** 밑줄이어야 한다 → 사이의 (A) 를 흡수한다.
     """
     def rep(m):
+        if m.start() == 0 or m.end() == len(s):
+            # 줄 맨 앞(들여쓰기)·맨 끝의 공백은 빈칸이 아니다
+            return '&nbsp;' * len(m.group(0))
         n = len(m.group(0))
         return f'<span class="blk">{"&nbsp;" * n}</span>'
     out = RE_GAP.sub(rep, s)
