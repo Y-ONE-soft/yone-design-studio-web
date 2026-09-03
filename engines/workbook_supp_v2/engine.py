@@ -250,6 +250,7 @@ class WorkbookSuppV2Engine(WorkbookV2Engine):
         # W40 결함 6 — 밑줄 빈칸 라인 프레임 넘침 자간 보정 (한도 -50,
         # 초과 필요 시 [경고] — 과도 축소 금지, 사용자 확정 스펙)
         deco["blank_fit"] = {"max_tracking": -50}
+
         try:
             content = json.load(open(os.path.join(job_dir, "content.json"),
                                      encoding="utf-8"))

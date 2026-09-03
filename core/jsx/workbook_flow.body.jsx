@@ -971,6 +971,59 @@ function updatePassageNumbers(doc, flowStories, op) {
     wlog("지문번호 프레임 갱신 합계: " + total + "개 (" + labels.join(", ") + ")");
 }
 
+// ── W86 op: 섹션 지시문(발문) 프레임 (plan.section_prompts가 있을 때만) ─────
+// 섹션 머리 띠의 지시문("각 문장에서 어법상 틀린 곳이 있다면 …")은 내지
+// 템플릿이 갖고 있는 디자인 요소인데, 본문 O/X 섹션에는 그 프레임이 아예
+// 없다 (템플릿 인벤토리 실측: 어법 O/X p132에는 있고 본문 O/X p22에는 없다).
+// 그래서 조판물에 발문이 통째로 빠졌다 (사용자 지적 2026-08-31).
+// 문구만 새로 쓰는 게 아니라 **같은 책의 지시문 프레임을 복제**해 옮긴다 —
+// 위치·크기·단락스타일이 디자인이라 조판이 새로 정하면 안 된다.
+var PROMPT_BAND_BOTTOM = 30;   // 머리 띠 영역 (mm) — 이 아래는 본문
+var PROMPT_MIN_LEN = 10;
+
+function findSectionPromptFrame(page) {
+    var tfs = page.textFrames;
+    for (var i = 0; i < tfs.length; i++) {
+        var tf = tfs[i];
+        try {
+            if (tf.parentStory.textContainers.length !== 1) { continue; }
+            var gb = tf.geometricBounds;
+            if (gb[0] >= PROMPT_BAND_BOTTOM) { continue; }   // 머리 띠 밖
+            var t = String(tf.contents || "").replace(/^\s+|\s+$/g, "");
+            if (t.length < PROMPT_MIN_LEN) { continue; }     // 마커/쪽번호
+            if (!/[가-힣]/.test(t)) { continue; }
+            return tf;
+        } catch (e) {}
+    }
+    return null;
+}
+
+function applySectionPrompts(doc, flowStories, ops) {
+    var made = 0;
+    for (var i = 0; i < ops.length; i++) {
+        var op = ops[i];
+        var tgt = flowStories[op.step];
+        var src = flowStories[op.from_step];
+        if (!tgt || !src) { continue; }
+        var tPages = storyPagesInOrder(tgt.story);
+        var sPages = storyPagesInOrder(src.story);
+        if (tPages.length === 0 || sPages.length === 0) { continue; }
+        if (findSectionPromptFrame(tPages[0])) { continue; }   // 이미 있음
+        var srcTf = findSectionPromptFrame(sPages[0]);
+        if (!srcTf) { continue; }              // 본보기 없음 — 무접촉
+        try {
+            var dup = srcTf.duplicate(tPages[0]);
+            dup.geometricBounds = srcTf.geometricBounds;
+            dup.contents = op.text;
+            made++;
+        } catch (e) {
+            wlog("[경고] 섹션 지시문 복제 실패(" + op.step + "): " + e);
+        }
+    }
+    if (made > 0) { wlog("섹션 지시문 프레임: " + made + "개 생성"); }
+}
+
+
 // ── W11 op: 페이지 정리 (plan.page_cleanup이 있을 때만) ─────────────────────
 // 원고에 없는 스텝/남는 사이클의 페이지 삭제 + 빈 STEP3 페이지 M 마스터.
 // v1 run.jsx 16.5(빈 페이지 삭제)의 완제품 확장: 판정 기준을 '다중 프레임
@@ -3252,6 +3305,12 @@ try {
             updatePassageNumbers(doc, flowStories, plan.passage_numbers);
         }, ScriptLanguage.JAVASCRIPT, undefined,
            UndoModes.ENTIRE_SCRIPT, "wb_v2 passage_numbers");
+    }
+    if (plan.section_prompts && plan.section_prompts.length) {
+        app.doScript(function () {
+            applySectionPrompts(doc, flowStories, plan.section_prompts);
+        }, ScriptLanguage.JAVASCRIPT, undefined,
+           UndoModes.ENTIRE_SCRIPT, "wb_v2 section_prompts");
     }
     if (plan.page_cleanup) {
         app.doScript(function () {

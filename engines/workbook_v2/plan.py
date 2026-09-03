@@ -4063,6 +4063,27 @@ _RE_LABEL_BRACKET = re.compile(r"^\s*\[([^\]]+)\]\s*$")
 _LABEL_STEPS = ("step1_c2", "step2_c1", "step2_b1", "step2_a1", "step1_a1")
 
 
+# W86 (사용자 지적 2026-08-31): 섹션 머리 띠 지시문(발문)이 있어야 하는데
+# 내지 템플릿에 프레임 자체가 없는 섹션. 문구는 이 책의 관행 그대로.
+#   from_step = 문구·위치·스타일을 빌려올 같은 책의 지시문 프레임
+SECTION_PROMPTS = [
+    {"step": "step1_a2", "from_step": "step2_b1",
+     "text": "다음 글의 내용과 일치하면 O, 일치하지 않으면 X를 고르시오."},
+]
+
+
+def section_prompts_op(plan, specs=None):
+    """섹션 지시문 op — 대상/본보기 스텝이 **둘 다** 배치될 때만 계약 발행.
+
+    본보기(어법 O/X)가 없는 원고에서는 아무것도 만들지 않는다 (실행기도
+    본보기 프레임이 없으면 무접촉 — 조판이 디자인을 새로 정하지 않는다).
+    """
+    placed = {fl.get("step") for fl in plan.get("flows", []) or []}
+    out = [dict(sp) for sp in (specs or SECTION_PROMPTS)
+           if sp["step"] in placed and sp["from_step"] in placed]
+    return out
+
+
 def passage_labels(steps):
     """원고 지문번호 라벨을 순서대로 추출 (중복 제거, 첫 유효 스텝 채택).
 
