@@ -1183,11 +1183,17 @@ class PocketbookSeries(Series):
                     idx += step
                     continue
                 page = doc[idx]
-                want_ruby = sum(1 for x in r["passage_runs"] if x.get("ruby"))
-                got_ruby = _count_size(page, M["anno_size"])
-                if want_ruby and got_ruby < want_ruby:
+                # ⚠ **조각 수로 세면 안 된다.** 서체를 바꾸면 이웃한 주석이
+                #   붙거나 갈라져 조각 수가 오르내린다 — 멀쩡한 책이 떨어지고
+                #   진짜 유실이 숫자가 맞아떨어져 통과한다(휴먼범석체로 바꿨을
+                #   때 실측). G-P7 과 같은 방식으로 **글자**로 견준다.
+                want_bag = _bag("".join(
+                    x["ruby"] for x in r["passage_runs"] if x.get("ruby")))
+                want_ruby = sum(want_bag.values())
+                lost_n = sum((want_bag - _page_bag(page, M["anno_size"])).values())
+                if lost_n:
                     lost.append((r.get("key") or r.get("label"),
-                                 want_ruby, got_ruby))
+                                 want_ruby, want_ruby - lost_n))
                 # G-P7 — 원고 글자가 지면에 다 있는가.
                 #   순서로 비교하면 안 된다: 루비 낱말이 inline-block 이라 PDF
                 #   추출 순서가 뒤섞이고, 인접 span 이 붙어 낱말이 엉킨다.

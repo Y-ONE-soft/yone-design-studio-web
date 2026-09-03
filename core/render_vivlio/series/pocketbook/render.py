@@ -92,6 +92,17 @@ def _cluster(runs):
             groups.append([r])
             continue
         t = r["t"]
+        # ⚠ **공백 한 칸에 주석이 붙는 경우가 있다**(`' or what size '` 의 빈칸에
+        #   `복합관계형용사`). 아래 공백 쪼개기에 그냥 넘기면 조각이 빈 글자가 돼
+        #   **주석이 통째로 버려진다**(광문2 3과 MR2·MR6 실측). 낱말처럼 따로
+        #   세우되 줄바꿈 자리는 남긴다. 공백은 접히므로 NBSP 로 세운다.
+        if r.get("ruby") and not t.strip():
+            if cur:
+                groups.append(cur)
+                cur = []
+            groups.append([dict(r, t="\u00a0")])
+            groups.append(None)
+            continue
         if " " not in t and "\u00a0" not in t:
             cur.append(r)
             continue
