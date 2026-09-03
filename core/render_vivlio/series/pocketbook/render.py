@@ -109,6 +109,12 @@ def _cluster(runs):
     return groups
 
 
+# 노란 형광펜에는 **'서술형' 손글씨 표식**이 딸려 온다(원본: 형광펜_노랑 문자
+# 범위 안에 앵커된 벡터, 바닥중앙 기준 8.5pt 위). 벡터는 22KB 라 지문마다 심으면
+# 문서가 부는다 — 파일 하나로 두고 가리킨다.
+_ICON = '<span class="ico"><img src="img/seosul.svg" alt=""></span>'
+
+
 def runs_html(runs):
     """형광펜은 **연속 구간**이다 — 낱말마다 칠하면 어절 사이가 비어 줄무늬가 된다."""
     out, cur_hl, buf = [], None, []
@@ -117,7 +123,11 @@ def runs_html(runs):
         if not buf:
             return
         s = "".join(buf)
-        out.append('<mark class="hl-%s">%s</mark>' % (cur_hl, s) if cur_hl else s)
+        if cur_hl:
+            ico = _ICON if cur_hl == "yellow" else ""
+            out.append('<mark class="hl-%s">%s%s</mark>' % (cur_hl, ico, s))
+        else:
+            out.append(s)
         del buf[:]
 
     for grp in _cluster(runs):

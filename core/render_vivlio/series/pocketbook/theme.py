@@ -64,6 +64,8 @@ METRICS = {
     # **획 중심이 기준선 3pt 위**다. CSS 는 밑줄의 **윗변**을 offset 으로 잡으므로
     # offset = −(중심 + 두께/2) = −7.5pt 가 되어야 글자 위에 얹힌다.
     "hl_weight": 9.0, "hl_center": 2.75,
+    # '서술형' 표식 — 원본 실측 9.06×5.64pt, 바닥중앙 기준 8.5pt 위
+    "icon_h": 5.64, "icon_dy": 8.5,
     "rule_y": 148.0,
     "chip": [16.0, 2.71], "chip_pic_x": 56.5, "chip_trn_x": 114.0,
     "chip_y": 145.2,
@@ -158,6 +160,7 @@ def build_css(palette=None, metrics=None, highlight=None):
         "cardpad": "%g" % M["card_pad"],
         "mt_size": "%g" % M["memtest_size"], "mt_lead": "%g" % M["memtest_lead"],
         "flow_grid_alpha": "%g" % M["flow_grid_alpha"],
+        "ico_h": "%g" % M["icon_h"], "ico_dy": "%g" % M["icon_dy"],
         "blank": "8",
     })
     css = CSS_TMPL
@@ -238,6 +241,17 @@ html,body{margin:0;padding:0;background:#fff}
   text-decoration:underline;text-decoration-color:var(--hl);
   text-decoration-thickness:__hlw__pt;text-underline-offset:-__hlo2__pt;
   text-decoration-skip-ink:none}
+/* ⚠ 구문분석 주석이 붙은 낱말(`.w`)은 **inline-block** 이라 CSS 규칙상 조상의
+   밑줄이 그려지지 않는다 — 그래서 형광펜이 낱말마다 뚝뚝 끊겨 나왔다.
+   같은 밑줄을 낱말 자신에게도 준다(`--hl` 은 mark 에서 물려받는다). */
+.passage mark .w,.passage .hl .w{text-decoration:underline;
+  text-decoration-color:var(--hl);text-decoration-thickness:__hlw__pt;
+  text-underline-offset:-__hlo2__pt;text-decoration-skip-ink:none}
+/* '서술형' 표식 — 폭 0 으로 심어 줄 흐름을 건드리지 않고 글 위에 띄운다 */
+.passage .ico{position:relative;display:inline-block;width:0;height:0;
+  vertical-align:baseline;text-decoration:none}
+.passage .ico img{position:absolute;left:0;bottom:__ico_dy__pt;
+  height:__ico_h__pt;width:auto;max-width:none}
 .passage i{position:absolute;left:50%;transform:translateX(-50%);
   font-family:PBRuby;font-size:__anno_size__pt;line-height:1;color:var(--anno);
   white-space:nowrap;font-style:normal}
