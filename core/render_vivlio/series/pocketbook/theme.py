@@ -60,6 +60,7 @@ METRICS = {
     "band_h": 5.5,                 # 위·아래 띠 (도련까지 8.5)
     "margin_l": 15.0, "margin_r": 18.0,
     "badge": [15.0, 15.0, 18.0, 5.5],       # x y w h
+    "badge_size": 9.5, "badge_radius": 1.0,
     "passage": [15.0, 24.0, 115.0, 118.0],  # x y w h
     "passage_size": 9.0, "passage_lead": 24.0,
     "passage_track": -0.022,       # em — 이 값에서 원본과 행바꿈이 일치한다
@@ -70,7 +71,7 @@ METRICS = {
     # offset = −(중심 + 두께/2) = −7.5pt 가 되어야 글자 위에 얹힌다.
     "hl_weight": 9.0, "hl_center": 2.75,
     # '서술형' 표식 — 원본 실측 9.06×5.64pt, 바닥중앙 기준 8.5pt 위
-    "icon_h": 5.64, "icon_dy": 8.5,
+    "icon_h": 7.23, "icon_dy": 8.5,
     "rule_y": 148.0,
     "chip": [16.0, 2.71], "chip_pic_x": 56.5, "chip_trn_x": 114.0,
     "chip_y": 145.2,
@@ -101,17 +102,17 @@ METRICS = {
 #   E = EBS 변형:              A 와 같되 지문이 더 길다
 # ⚠ TRANSLATION 딱지 **아래 선은 어느 마스터에나 있다**(A·C·E·G·H·I 전수 실측:
 #   0.5pt, CMYK 48/33/0/0, 단 너비 전체). A·E 에 없다고 둔 것이 결함이었다.
-#   자리 관계도 원본이 정한다 — 선 = 딱지 아래 2.9mm, 해석 = 선 아래 3.0mm
-#   (실측: 딱지 156.5 / 선 159.3 / 해석 162.3mm).
+#   선은 **딱지에 붙는다**(딱지 아래 2.71mm = 딱지 높이). 원본은 0.19mm 떠 있는데
+#   지면에서 끊겨 보여 붙이기로 했다(사용자 지적). 해석은 선 아래 3.0mm.
 LAYOUTS = {
-    "A": {"passage_h": 127.0, "rule": 155.6,
+    "A": {"passage_h": 127.0, "rule": 155.41,
           "chip_y": 152.7, "chip_trn_x": 114.0, "illust": None,
           "trans": [15.0, 158.6, 115.0]},
-    "C": {"passage_h": 118.0, "rule": 148.1,
+    "C": {"passage_h": 118.0, "rule": 147.91,
           "chip_y": 145.2, "chip_trn_x": 114.0, "chip_pic_x": 56.5,
           "illust": [12.88, 149.1, 59.62, 45.9],
           "trans": [74.0, 151.1, 56.0]},
-    "E": {"passage_h": 131.0, "rule": 160.9,
+    "E": {"passage_h": 131.0, "rule": 160.71,
           "chip_y": 158.0, "chip_trn_x": 114.0, "illust": None,
           "trans": [15.0, 163.9, 115.0]},
 }
@@ -165,6 +166,8 @@ def build_css(palette=None, metrics=None, highlight=None):
         "cardpad": "%g" % M["card_pad"],
         "mt_size": "%g" % M["memtest_size"], "mt_lead": "%g" % M["memtest_lead"],
         "flow_grid_alpha": "%g" % M["flow_grid_alpha"],
+        "badge_size": "%g" % M["badge_size"],
+        "badge_r": "%g" % M["badge_radius"],
         "ico_h": "%g" % M["icon_h"], "ico_dy": "%g" % M["icon_dy"],
         "blank": "8",
     })
@@ -227,8 +230,9 @@ html,body{margin:0;padding:0;background:#fff}
 /* 배지는 폭이 고정이다(18mm). padding 을 주면 상자가 그만큼 넓어져 원본과
    어긋난다(실측 20mm) → box-sizing 으로 안쪽에서 먹게 한다. */
 .badge{position:absolute;background:var(--navy);color:#fff;font-family:PBBadge;
-  font-size:8pt;display:flex;align-items:center;justify-content:center;
-  letter-spacing:.02em;padding:0 1mm;white-space:nowrap;box-sizing:border-box}
+  font-size:__badge_size__pt;display:flex;align-items:center;
+  justify-content:center;letter-spacing:.02em;padding:0 1mm;white-space:nowrap;
+  box-sizing:border-box;border-radius:__badge_r__mm}
 .passage{position:absolute;font-size:__pass_size__pt;line-height:var(--lead);
   text-align:justify;letter-spacing:__track__em;hyphens:none}
 /* ⚠ .w 에 line-height 를 다시 주면 안 된다 — 낱말마다 24pt 로 되돌아가서
@@ -265,8 +269,10 @@ html,body{margin:0;padding:0;background:#fff}
 /* 물결 밑줄 — 원본은 `영어 지문 물결`(Wavy 1.5pt, offset 2, CMYK 0/85/0/0).
    currentColor 로 두면 글자색을 따라가 검은 물결이 되고, 두께를 안 주면
    브라우저 기본값이라 굵은 점선처럼 보인다. */
+/* ⚠ 두께를 크게 주면 브라우저가 **굵은 지그재그**로 그려 체크무늬처럼 보인다
+   (1.5pt 로 했다가 지적받았다). 원본은 가는 물결이다. */
 .wave{text-decoration:underline wavy var(--wave);
-  text-decoration-thickness:1.5pt;text-underline-offset:2pt;
+  text-decoration-thickness:.5pt;text-underline-offset:1.5pt;
   text-decoration-skip-ink:none}
 
 .rule{position:absolute;height:0;border-top:.5pt solid var(--chip)}
@@ -290,18 +296,23 @@ html,body{margin:0;padding:0;background:#fff}
 .flowchip{position:absolute;background:var(--band);display:flex;
   align-items:center;justify-content:center;gap:1mm;
   font-family:PBHand;font-size:8pt;color:var(--navy)}
+/* 딱지 아이콘 — 원본 벡터를 그대로 심는다(이모지 아님) */
+.ic-chip_flow{height:3.2mm;width:auto;flex:none}
+.ic-chip_memtest{height:3.4mm;width:auto;flex:none}
+.ic-synmark{height:2.2mm;width:auto;flex:none;overflow:visible}
 /* 모눈은 원본에서 뽑은 이미지를 쓴다. CSS 그라디언트는 뷰어 반올림 때문에
    1.44mm 격자가 뭉쳐 굵은 격자무늬로 나온다(실측). */
 /* 모눈은 **깔개를 따로 깐다** — 원본이 배경 이미지에 불투명도 55% 를 줬다.
    배경 레이어에는 CSS 로 불투명도를 못 주므로 밑에 한 겹 깔고 글을 그 위에
    올린다(글자까지 흐려지면 안 된다). */
-.flow{position:absolute;overflow:hidden;background:var(--flow-bg);
-  font-family:PBDodam;font-size:__flow_size__pt;line-height:__flow_lead__mm;
-  padding:2.5mm 3mm;box-sizing:border-box;columns:2;column-gap:3mm}
+.flow{position:absolute;overflow:hidden;background:var(--flow-bg)}
 .flow::before{content:"";position:absolute;left:0;top:0;right:0;bottom:0;
   background:url("img/flownote_grid.png") 0 0/100% 100% no-repeat;
   opacity:__flow_grid_alpha__;pointer-events:none}
-.flow p{margin:0;break-inside:avoid;position:relative}
+.flowin{position:absolute;left:0;top:0;right:0;bottom:0;
+  font-family:PBDodam;font-size:__flow_size__pt;line-height:__flow_lead__mm;
+  padding:2.5mm 3mm;box-sizing:border-box;columns:2;column-gap:3mm}
+.flow p{margin:0;break-inside:avoid}
 /* 색은 **기호에만**. 원본 문자 스타일 4종이 글자 단위로 붙어 있다. */
 .flow .sym{color:var(--flow-arrow)}
 .flow .sym2{color:var(--flow-sym2)}
@@ -323,8 +334,7 @@ html,body{margin:0;padding:0;background:#fff}
 .syntitle{position:absolute;background:#fff;font-family:PBJalnan;font-size:5pt;
   color:var(--navy);display:flex;align-items:center;justify-content:center;
   gap:.6mm}
-/* 표식 도형 — 글자 높이에 맞춰 세운다(원본 4.8×4.7mm 묶음) */
-.synmark{height:1.7mm;width:auto;display:block;overflow:visible}
+
 .card{position:absolute;box-sizing:border-box;padding:__cardpad__mm;
   font-size:__card_size__pt;line-height:__card_lead__mm;overflow:hidden}
 .card .w1{color:var(--syn-word)}
@@ -351,10 +361,9 @@ html,body{margin:0;padding:0;background:#fff}
    (원본 단락 스타일: RubyFont=강원교육현옥샘, RubyFill=CMYK 41/59/73/52) */
 .memtest i{font-family:PBRubyT;color:var(--flow-sym2)}
 .n{font-size:5.5pt;vertical-align:super;color:var(--mt-no)}
-/* 원본 B-마스터: 문제면은 베이지 바탕에 같은 색 테두리, 정답면은 연파랑
-   바탕에 파란 테두리(0.5pt). 두 면을 같은 색으로 두면 어느 쪽인지 안 보인다. */
-.mtbox{position:absolute;border:.5pt solid var(--mt-q-bg);
-  background:var(--mt-q-bg);border-radius:1mm}
-.mtbox.a{border-color:var(--mt-line);background:var(--mt-a-bg)}
+/* ⚠ 색면을 깔지 않는다. 마스터의 프레임 채움을 보고 베이지·연파랑을 깔았다가
+   "왜 배경색이 들어갔냐" 는 지적을 받았다 — 그 채움은 지면에 안 나오는 값이다.
+   두 면은 **딱지 글자**로 가른다. */
+.mtbox{position:absolute;border:.5pt solid var(--band);border-radius:1mm}
 .mtchip.a{background:var(--mt-line);color:#fff}
 """

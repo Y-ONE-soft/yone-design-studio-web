@@ -154,6 +154,48 @@ def _derive_pno(p):
 
 
 _HAN = re.compile(r"[가-힣]")
+_RE_U_LESSON = re.compile(r"(\d{1,2})\s*과")
+_RE_U_UNIT = re.compile(r"(?:(\d{1,2})\s*강|\bUnit\s*(\d{1,2}))", re.I)
+
+
+def _fill_units(rows, scope, log):
+    """오른쪽 면 꼬리말의 **단원**을 채운다 — `교과서 1과`·`올림포스 9강`·`모의고사`.
+
+    완성본 꼬리말이 쓰는 말 그대로다(`마스터페이지:레슨` 실측). 코퍼스에서 온
+    지문은 `unit` 이 비어 있어 그대로 두면 쪽번호만 나가고 단원이 빈다
+    (사용자 지적: "오른쪽엔 단원 넣어줘 누락인 곳이 있어").
+
+    시험범위를 알면 **범위가 붙여 준 이름**을 쓴다(`올림포스`인지 `리딩파워`인지는
+    라벨만 봐서는 모른다). 모르면 라벨에서 만든다.
+    """
+    try:
+        from engines.final import scope_source as S
+        name = S.token_text
+    except ImportError:
+        name = None
+    n = 0
+    for r in rows:
+        if r.get("unit") or r.get("kind") == "memtest":
+            continue
+        t = pscope.match(r, scope) if scope else None
+        if t is not None and name:
+            r["unit"] = "모의고사" if t[0] == "mock" else name(t)
+        else:
+            lab = str(r.get("label") or "")
+            if str(r.get("pno") or "").isdigit():
+                r["unit"] = "모의고사"
+            else:
+                m = _RE_U_UNIT.search(lab)
+                if m:
+                    r["unit"] = "%s강" % (m.group(1) or m.group(2))
+                else:
+                    m = _RE_U_LESSON.search(lab)
+                    if m:
+                        r["unit"] = "교과서 %s과" % m.group(1)
+        if r.get("unit"):
+            n += 1
+    if n:
+        log("■ 꼬리말 단원 %d지문 채움" % n)
 
 
 def _korean_topic(rows, log):
@@ -410,6 +452,7 @@ class PocketbookSeries(Series):
         rows, gaps, n_merged = self._to_scope(rows, scope, log)
         self._apply_manuscript(cfg, opt, rows, log)
         _korean_topic(rows, log)
+        _fill_units(rows, scope, log)
         rows = self._apply_memtest(cfg, opt, rows, log)
         out = os.path.join(cfg.build_dir, "data.json")
         os.makedirs(cfg.build_dir, exist_ok=True)

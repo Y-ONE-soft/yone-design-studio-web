@@ -161,6 +161,19 @@ def _cluster(runs):
 # 문서가 부는다 — 파일 하나로 두고 가리킨다.
 _ICON = '<span class="ico"><img src="img/seosul.svg" alt=""></span>'
 
+_ASSETS = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__)))), "assets", "pocketbook")
+
+
+def _svg(name):
+    """계열 아이콘을 **HTML 안에 그대로** 심는다.
+
+    ⚠ `<img>` 로 두면 그 SVG 안에서 지면 서체(`PBJalnan`)를 못 써서 동반의어
+      표식의 A·B·C 가 엉뚱한 글꼴로 나온다. 딱지 아이콘도 같은 방식으로 맞춘다.
+    """
+    with open(os.path.join(_ASSETS, name + ".svg"), encoding="utf-8") as f:
+        return f.read().replace("<svg ", '<svg class="ic-%s" ' % name, 1)
+
 
 def runs_html(runs):
     """형광펜은 **연속 구간**이다 — 낱말마다 칠하면 어절 사이가 비어 줄무늬가 된다."""
@@ -283,6 +296,15 @@ def flow_html(line):
     return "".join(out)
 
 
+def _line_est(txt, width_mm, size_pt):
+    """글이 몇 줄이 될지 어림. 한글은 한 자 1em, 영문은 0.5em 로 본다."""
+    if not txt:
+        return 0
+    em = size_pt / 72.0 * 25.4
+    w = sum(em if ord(c) > 0x2000 else em * 0.5 for c in txt)
+    return max(1, int(w / max(width_mm, 1.0)) + (1 if w % width_mm else 0))
+
+
 def _card_fit(c, M):
     """카드가 넘칠 것 같으면 미리 줄인다.
 
@@ -305,22 +327,6 @@ def _card_fit(c, M):
         M["card_size"] * sc, M["card_lead"] * sc)
 
 
-# 동반의어 제목 앞의 표식은 **글자가 아니라 도형 셋**이다(원본: 제목 프레임에
-# 앵커된 Group — 둥근 사각형 3개, 남색 0.5pt 테두리, 하나는 축에 맞고 둘은
-# 11°·13° 기울어 있다). `Ⓐ Ⓑ Ⓒ` 글리프로 대신하면 서체마다 모양이 달라지고
-# 원본과 아예 다른 그림이 된다. 좌표·색은 IDML 실측이다.
-SYN_MARK = (
-    '<svg class="synmark" viewBox="0 0 13.6 13.3" aria-hidden="true">'
-    '<g fill-rule="evenodd" stroke="#54669F" stroke-width=".5">'
-    '<rect x=".6" y="6.1" width="5.7" height="5.7" rx="1" fill="#ED9DBC"'
-    ' transform="rotate(-13.2 3.45 8.95)"/>'
-    '<rect x="4.6" y=".5" width="5.6" height="5.6" rx=".9" fill="#FCBB70"'
-    ' transform="rotate(10.9 7.4 3.3)"/>'
-    '<rect x="7.6" y="6.4" width="5.4" height="5.4" rx="1.05" fill="#86C3B8"/>'
-    '</g></svg>'
-)
-
-
 def right_page(p, M, folio, category=""):
     fl = M["flow"]
     fc = M["flow_chip"]
@@ -330,15 +336,19 @@ def right_page(p, M, folio, category=""):
     cd = M["card"]
     parts = []
     # 플로우노트
-    parts.append('<div class="flowchip" style="%s">💡 FLOW NOTE</div>'
-                 % _box(fc[0], fc[1], fc[2], fc[3]))
+    parts.append('<div class="flowchip" style="%s">%sFLOW NOTE</div>'
+                 % (_box(fc[0], fc[1], fc[2], fc[3]), _svg("chip_flow")))
     rows = ["<p>%s</p>" % flow_html(line)
             for line in (p.get("flownote") or [])]
     fsc = p.get("flow_scale", 1.0)
     fst = "" if fsc == 1.0 else ";font-size:%gpt;line-height:%gmm" % (
         M["flow_size"] * fsc, M["flow_lead"] * fsc)
-    parts.append('<div class="flow" style="%s%s">%s</div>'
-                 % (_box(fl[0], fl[1], fl[2], fl[3]), fst, "".join(rows)))
+    # ⚠ 모눈 깔개를 `.flow::before` 로 두면 **단(column) 흐름에 끼어** 깔리지
+    #   않는다(불투명도가 하나도 안 먹은 것처럼 보였다). 상자와 단을 나눈다.
+    parts.append('<div class="flow" style="%s">'
+                 '<div class="flowin" style="%s">%s</div></div>'
+                 % (_box(fl[0], fl[1], fl[2], fl[3]), fst.lstrip(";"),
+                    "".join(rows)))
     # 주제 / 요약문
     parts.append('<div class="topicband" style="%s"></div>'
                  % _box(tb[0], tb[1], tb[2], tb[3]))
@@ -346,8 +356,13 @@ def right_page(p, M, folio, category=""):
     #   같은 색이면 어디까지가 주제고 어디부터 요약문인지 안 보인다.
     parts.append('<div class="tbadge t" style="%s">주제</div>'
                  % _box(tb[0] + 2.4, tb[1] + 1.4))
+    # ⚠ 주제가 두 줄이면 요약문은 셋째 줄에서 시작한다. 딱지를 붙박아 두면
+    #   요약문 딱지 옆에 **주제 둘째 줄**이 오게 된다(사용자 지적).
+    tw = tb[0] + tb[2] - M["topic_text_x"] - 2.0
+    lines = _line_est(p.get("topic") or "", tw, M["topic_size"])
     parts.append('<div class="tbadge s" style="%s">요약문</div>'
-                 % _box(tb[0] + 2.0, tb[1] + 6.5))
+                 % _box(tb[0] + 2.0,
+                        tb[1] + 1.4 + max(1, lines) * M["topic_lead"] + 1.6))
     tt = []
     if p.get("topic"):
         tt.append("<p>%s</p>" % ESC(p["topic"]))
@@ -364,7 +379,7 @@ def right_page(p, M, folio, category=""):
     parts.append('<div class="synpanel" style="%s"></div>'
                  % _box(sp[0], sp[1], sp[2], sp[3]))
     parts.append('<div class="syntitle" style="%s">%s동반의어</div>'
-                 % (_box(st[0], st[1], st[2], st[3]), SYN_MARK))
+                 % (_box(st[0], st[1], st[2], st[3]), _svg("synmark")))
     cards = (p.get("synonyms") or [])[:9]
     for i in range(9):
         col, row = i % 3, i // 3
@@ -407,8 +422,8 @@ def memtest_page(p, M, folio, answer, category=""):
     #   같은 색 테두리, 정답=연파랑 바탕에 파란 테두리). 같은 색으로 두면
     #   펼쳐 놓고 어느 쪽이 정답인지 알 수 없다.
     a = " a" if answer else ""
-    parts = ['<div class="mtchip%s" style="%s">📝 %s</div>'
-             % (a, _box(mt[0], 12.4, 30.0, 6.0), label),
+    parts = ['<div class="mtchip%s" style="%s">%s%s</div>'
+             % (a, _box(mt[0], 12.4, 30.0, 6.0), _svg("chip_memtest"), label),
              '<div class="mtbox%s" style="%s"></div>'
              % (a, _box(mt[0], mt[1], mt[2], mt[3])),
              '<div class="memtest" style="%s%s">%s</div>'

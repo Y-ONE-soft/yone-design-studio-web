@@ -166,6 +166,32 @@ def from_highlight(path):
     return None
 
 
+def _with_abc(svg, vb):
+    """동반의어 표식의 **A·B·C**.
+
+    원본에서 글자는 `EPSText`(아웃라인 EPS)라 패스를 못 꺼낸다. 색면 세 개의
+    가운데를 잡아 글자를 얹는다 — 색·자리는 원본 그대로이고 글꼴만 우리 것이다.
+    ⚠ 그래서 이 표식은 `<img>` 가 아니라 **HTML 안에 그대로 심어야** 한다
+      (외부 SVG 는 지면 서체를 못 쓴다).
+    """
+    boxes = []
+    for m in re.finditer(r'd="([^"]+)"', svg):
+        xs, ys = [], []
+        for q in re.finditer(r"(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)", m.group(1)):
+            xs.append(float(q.group(1)))
+            ys.append(float(q.group(2)))
+        boxes.append(((min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2,
+                      max(xs) - min(xs)))
+    boxes.sort(key=lambda b: b[0])
+    size = (sum(b[2] for b in boxes) / max(len(boxes), 1)) * 0.62
+    txt = "".join(
+        '<text x="%.2f" y="%.2f" font-size="%.2f" fill="#54669F" '
+        'font-family="PBJalnan,sans-serif" text-anchor="middle" '
+        'dominant-baseline="central">%s</text>'
+        % (b[0], b[1], size, ch) for b, ch in zip(boxes, "ABC"))
+    return svg.replace("</svg>", txt + "</svg>"), vb
+
+
 def main(out=None):
     out = out or OUT
     os.makedirs(out, exist_ok=True)
@@ -177,6 +203,8 @@ def main(out=None):
     seosul = from_highlight(BOOK_HL)
     if seosul:
         got["seosul"] = seosul
+    if "synmark" in got:
+        got["synmark"] = _with_abc(*got["synmark"])
     for name, (svg, vb) in sorted(got.items()):
         p = os.path.join(out, name + ".svg")
         with open(p, "w", encoding="utf-8") as f:
