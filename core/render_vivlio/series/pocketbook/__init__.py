@@ -29,8 +29,16 @@ FONTS = [
     "NotoSansCJKkr-Regular.otf", "NotoSansCJKkr-Medium.otf",
     "NotoSansCJKkr-Bold.otf", "EliceDXNeolliOTF-Bold.otf",
     "EliceDXNeolliOTF-Medium.otf", "HakgyoansimUndongjangOTFL.otf",
-    "KCCDodamdodam_OTF.otf", "JalnanOTF.otf",
+    "KCCDodamdodam_OTF.otf", "JalnanOTF.otf", "YeongdoOTF.otf",
 ]
+
+# ⚠ 파일 이름이 한글인 서체는 **ASCII 이름으로 복사해** 쓴다. macOS 파일 이름은
+#   NFD 인데 CSS 안의 글자는 NFC 라 `url("fonts/휴먼범석체.otf")` 가 조용히 404 가
+#   되고, 서체가 빠진 채 대체 글꼴로 조판된다(눈으로만 잡힌다).
+FONT_ALIAS = {
+    "휴먼범석체.otf": "PBRuby.otf",          # 구문분석 주석 (원본 RubyFont)
+    "강원교육현옥샘.otf": "PBRubyT.otf",      # 암기 TEST 루비
+}
 
 _SPAN_CACHE = {}
 
@@ -832,8 +840,21 @@ class PocketbookSeries(Series):
 
     @staticmethod
     def _stage_assets(build_dir):
-        """계열 자산(플로우노트 모눈)을 build/img 로."""
+        """계열 자산(플로우노트 모눈)을 build/img 로 · 한글 이름 서체는 별칭으로."""
         import shutil
+        from core.render_vivlio import stage as _stage
+        fdir = os.path.join(build_dir, "fonts")
+        os.makedirs(fdir, exist_ok=True)
+        for src_name, alias in FONT_ALIAS.items():
+            src_p = _stage.find_font(src_name)
+            if src_p is None:
+                raise ValueError(
+                    "서체가 없다: %s — 원본이 쓰는 글꼴이라 빠지면 판면이 달라진다"
+                    % src_name)
+            dst_p = os.path.join(fdir, alias)
+            if (not os.path.exists(dst_p)
+                    or os.path.getmtime(src_p) > os.path.getmtime(dst_p)):
+                shutil.copy2(src_p, dst_p)
         src = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
             os.path.abspath(__file__)))), "assets", "pocketbook")
         dst = os.path.join(build_dir, "img")

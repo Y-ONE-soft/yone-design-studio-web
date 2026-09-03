@@ -21,7 +21,20 @@ PALETTE = {
     "topic_bg":  "#FAFAF8",   # 주제/요약 띠
     "flow_bg":   "#EAECD8",   # 플로우노트 모눈 바탕
     "flow_line": "#BFC3C9",   # 모눈 선
-    "flow_arrow": "#F39857",  # 플로우 화살표 줄
+    "flow_arrow": "#F39857",  # 플로우 기호 (CMYK 2/48/73/0)
+    # 플로우노트는 **기호마다 색이 다르다**(원본 문자 스타일 4종). 줄 전체가
+    # 아니라 기호 글자에만 칠한다 — 줄을 통째로 칠하면 원본과 완전히 달라진다.
+    "flow_sym2": "#5B412E",   # 기호2 (41/59/73/52)
+    "flow_brk":  "#0068B4",   # [대괄호] (100/59/0/0)
+    "flow_par":  "#23B096",   # (소괄호) (75/5/52/0)
+    "topic_chip": "#54669F",  # 주제 딱지 (66/52/0/19)
+    "sum_chip":  "#E5A97E",   # 요약문 딱지 (0/32/48/9) — 주제와 **다른 색**이다
+    "wave":      "#EE4C9B",   # 물결 밑줄 (0/85/0/0)
+    "mt_q_bg":   "#EAE6DC",   # 암기 문제면 바탕 (2/3/8/6)
+    "mt_a_bg":   "#D6E3EF",   # 암기 정답면 바탕 (11/3/0/4)
+    "mt_line":   "#869CD0",   # 암기 정답면 테두리·칩 (48/33/0/0)
+    "mt_ans":    "#FDBB63",   # 암기 정답 낱말 (0/30/70/0)
+    "mt_no":     "#808285",   # 암기 번호 (K60)
     "syn_word":  "#231F20",
     "syn_syn":   "#224E8E",   # `=` 유의어
     "syn_ant":   "#E14E6B",   # `↔` 반의어
@@ -60,6 +73,9 @@ METRICS = {
     # 오른쪽 면
     "flow": [18.0, 18.31, 115.0, 41.0], "flow_size": 7.0, "flow_lead": 2.85,
     "flow_grid": 1.44, "flow_chip": [104.0, 12.86, 29.0, 5.45],
+    # 모눈 배경은 원본에서 **불투명도 55%** 로 깔려 있다(마스터 실측).
+    # 100% 로 깔면 글자보다 모눈이 세 보인다.
+    "flow_grid_alpha": 0.55,
     "topic": [18.0, 59.31, 115.0, 23.09], "topic_size": 8.0,
     "topic_lead": 3.5, "topic_text_x": 29.8,
     "syn_panel": [18.09, 88.11, 114.82, 106.89],
@@ -76,17 +92,21 @@ METRICS = {
 #   A = 교과서·EBS(삽화 없음): 지문이 길고 번역이 아래 전폭 띠
 #   C = 모의고사(삽화 있음):   지문이 짧고 삽화 옆에 번역
 #   E = EBS 변형:              A 와 같되 지문이 더 길다
+# ⚠ TRANSLATION 딱지 **아래 선은 어느 마스터에나 있다**(A·C·E·G·H·I 전수 실측:
+#   0.5pt, CMYK 48/33/0/0, 단 너비 전체). A·E 에 없다고 둔 것이 결함이었다.
+#   자리 관계도 원본이 정한다 — 선 = 딱지 아래 2.9mm, 해석 = 선 아래 3.0mm
+#   (실측: 딱지 156.5 / 선 159.3 / 해석 162.3mm).
 LAYOUTS = {
-    "A": {"passage_h": 127.0, "rule": None,
+    "A": {"passage_h": 127.0, "rule": 155.6,
           "chip_y": 152.7, "chip_trn_x": 114.0, "illust": None,
-          "trans": [15.0, 155.5, 115.0]},
-    "C": {"passage_h": 118.0, "rule": 148.0,
+          "trans": [15.0, 158.6, 115.0]},
+    "C": {"passage_h": 118.0, "rule": 148.1,
           "chip_y": 145.2, "chip_trn_x": 114.0, "chip_pic_x": 56.5,
           "illust": [12.88, 149.1, 59.62, 45.9],
-          "trans": [74.0, 150.0, 56.0]},
-    "E": {"passage_h": 131.0, "rule": None,
+          "trans": [74.0, 151.1, 56.0]},
+    "E": {"passage_h": 131.0, "rule": 160.9,
           "chip_y": 158.0, "chip_trn_x": 114.0, "illust": None,
-          "trans": [15.0, 161.0, 115.0]},
+          "trans": [15.0, 163.9, 115.0]},
 }
 
 
@@ -137,6 +157,7 @@ def build_css(palette=None, metrics=None, highlight=None):
         "card_size": "%g" % M["card_size"], "card_lead": "%g" % M["card_lead"],
         "cardpad": "%g" % M["card_pad"],
         "mt_size": "%g" % M["memtest_size"], "mt_lead": "%g" % M["memtest_lead"],
+        "flow_grid_alpha": "%g" % M["flow_grid_alpha"],
         "blank": "8",
     })
     css = CSS_TMPL
@@ -159,12 +180,22 @@ CSS_TMPL = """
 @font-face{font-family:PBElice;src:url("fonts/EliceDXNeolliOTF-Medium.otf");font-weight:500}
 @font-face{font-family:PBDodam;src:url("fonts/KCCDodamdodam_OTF.otf")}
 @font-face{font-family:PBJalnan;src:url("fonts/JalnanOTF.otf")}
+/* 구문분석 주석 = **휴먼범석체**(원본 RubyFont). 암기 TEST 만 강원교육현옥샘.
+   지문번호 배지는 **영도체**(마스터페이지:지문 번호). 셋 다 손글씨체라
+   비슷해 보이지만 글자 폭이 달라 줄바꿈까지 어긋난다. */
+@font-face{font-family:PBRuby;src:url("fonts/PBRuby.otf")}
+@font-face{font-family:PBRubyT;src:url("fonts/PBRubyT.otf")}
+@font-face{font-family:PBBadge;src:url("fonts/YeongdoOTF.otf")}
 
 :root{
   --band:__band__; --navy:__navy__; --chip:__chip__; --ink:__ink__;
   --blue:__blue__; --red:__red__; --anno:__anno__; --trans:__trans__;
   --topic-bg:__topic_bg__; --flow-bg:__flow_bg__; --flow-line:__flow_line__;
-  --flow-arrow:__flow_arrow__;
+  --flow-arrow:__flow_arrow__; --flow-sym2:__flow_sym2__;
+  --flow-brk:__flow_brk__; --flow-par:__flow_par__;
+  --topic-chip:__topic_chip__; --sum-chip:__sum_chip__; --wave:__wave__;
+  --mt-q-bg:__mt_q_bg__; --mt-a-bg:__mt_a_bg__; --mt-line:__mt_line__;
+  --mt-ans:__mt_ans__; --mt-no:__mt_no__;
   --syn-word:__syn_word__; --syn-syn:__syn_syn__; --syn-ant:__syn_ant__;
   --card1:__card1__; --card2:__card2__; --card3:__card3__;
   --lead:__lead__pt; --up-dy:__up_dy__pt; --dn-dy:__dn_dy__pt;
@@ -187,7 +218,7 @@ html,body{margin:0;padding:0;background:#fff}
 /* ── 왼쪽 면 ─────────────────────────────────── */
 /* 배지는 폭이 고정이다(18mm). padding 을 주면 상자가 그만큼 넓어져 원본과
    어긋난다(실측 20mm) → box-sizing 으로 안쪽에서 먹게 한다. */
-.badge{position:absolute;background:var(--navy);color:#fff;font-family:PBDodam;
+.badge{position:absolute;background:var(--navy);color:#fff;font-family:PBBadge;
   font-size:8pt;display:flex;align-items:center;justify-content:center;
   letter-spacing:.02em;padding:0 1mm;white-space:nowrap;box-sizing:border-box}
 .passage{position:absolute;font-size:__pass_size__pt;line-height:var(--lead);
@@ -208,11 +239,16 @@ html,body{margin:0;padding:0;background:#fff}
   text-decoration-thickness:__hlw__pt;text-underline-offset:-__hlo2__pt;
   text-decoration-skip-ink:none}
 .passage i{position:absolute;left:50%;transform:translateX(-50%);
-  font-family:PBHand;font-size:__anno_size__pt;line-height:1;color:var(--anno);
+  font-family:PBRuby;font-size:__anno_size__pt;line-height:1;color:var(--anno);
   white-space:nowrap;font-style:normal}
 .passage i.up{bottom:calc(50% + var(--up-dy))}
 .passage i.dn{top:calc(50% + var(--dn-dy))}
-.wave{text-decoration:underline wavy currentColor;text-underline-offset:2pt}
+/* 물결 밑줄 — 원본은 `영어 지문 물결`(Wavy 1.5pt, offset 2, CMYK 0/85/0/0).
+   currentColor 로 두면 글자색을 따라가 검은 물결이 되고, 두께를 안 주면
+   브라우저 기본값이라 굵은 점선처럼 보인다. */
+.wave{text-decoration:underline wavy var(--wave);
+  text-decoration-thickness:1.5pt;text-underline-offset:2pt;
+  text-decoration-skip-ink:none}
 
 .rule{position:absolute;height:0;border-top:.5pt solid var(--chip)}
 .chip{position:absolute;background:var(--chip);color:var(--band);
@@ -237,17 +273,28 @@ html,body{margin:0;padding:0;background:#fff}
   font-family:PBHand;font-size:8pt;color:var(--navy)}
 /* 모눈은 원본에서 뽑은 이미지를 쓴다. CSS 그라디언트는 뷰어 반올림 때문에
    1.44mm 격자가 뭉쳐 굵은 격자무늬로 나온다(실측). */
-.flow{position:absolute;overflow:hidden;
-  background:url("img/flownote_grid.png") 0 0/100% 100% no-repeat,var(--flow-bg);
+/* 모눈은 **깔개를 따로 깐다** — 원본이 배경 이미지에 불투명도 55% 를 줬다.
+   배경 레이어에는 CSS 로 불투명도를 못 주므로 밑에 한 겹 깔고 글을 그 위에
+   올린다(글자까지 흐려지면 안 된다). */
+.flow{position:absolute;overflow:hidden;background:var(--flow-bg);
   font-family:PBDodam;font-size:__flow_size__pt;line-height:__flow_lead__mm;
   padding:2.5mm 3mm;box-sizing:border-box;columns:2;column-gap:3mm}
-.flow p{margin:0;break-inside:avoid}
-.flow p.arrow{color:var(--flow-arrow)}
+.flow::before{content:"";position:absolute;left:0;top:0;right:0;bottom:0;
+  background:url("img/flownote_grid.png") 0 0/100% 100% no-repeat;
+  opacity:__flow_grid_alpha__;pointer-events:none}
+.flow p{margin:0;break-inside:avoid;position:relative}
+/* 색은 **기호에만**. 원본 문자 스타일 4종이 글자 단위로 붙어 있다. */
+.flow .sym{color:var(--flow-arrow)}
+.flow .sym2{color:var(--flow-sym2)}
+.flow .brk{color:var(--flow-brk)}
+.flow .par{color:var(--flow-par)}
 
 .topicband{position:absolute;background:var(--topic-bg);box-sizing:border-box;
   padding:1.6mm 2mm}
 .tbadge{position:absolute;font-family:PBDodam;font-size:9pt;color:#fff;
-  background:var(--navy);border-radius:.8mm;padding:0 1mm;line-height:1.4}
+  border-radius:.8mm;padding:0 1mm;line-height:1.4}
+.tbadge.t{background:var(--topic-chip)}
+.tbadge.s{background:var(--sum-chip)}
 .topictext{position:absolute;font-size:__topic_size__pt;
   line-height:__topic_lead__mm}
 .topictext p{margin:0}
@@ -274,12 +321,16 @@ html,body{margin:0;padding:0;background:#fff}
   padding:0 2mm}
 .memtest{position:absolute;font-size:__mt_size__pt;line-height:__mt_lead__pt;
   text-align:justify;letter-spacing:__track__em}
-.memtest .n{font-size:5.5pt;vertical-align:super;color:var(--anno)}
-.memtest .red{color:#E8963C}          /* 정답 — 원본 실측 주황 */
+.memtest .n{font-size:5.5pt;vertical-align:super;color:var(--mt-no)}
+.memtest .red{color:var(--mt-ans)}    /* 정답 (CMYK 0/30/70/0) */
 /* 문제면의 빈칸 — 원본은 정답 글자에 '칠하지 않음' 스와치를 줘서 자리만 남긴다.
    글자를 지우면 자리가 좁아져 정답면과 줄이 달라진다. 투명하게만 만든다. */
 .memtest .blank{color:transparent;letter-spacing:.06em}
-.n{font-size:5.5pt;vertical-align:super;color:var(--anno)}
-.mtbox{position:absolute;border:.4pt solid #E4E0D6;background:#FCFBF7;
-  border-radius:1mm}
+.n{font-size:5.5pt;vertical-align:super;color:var(--mt-no)}
+/* 원본 B-마스터: 문제면은 베이지 바탕에 같은 색 테두리, 정답면은 연파랑
+   바탕에 파란 테두리(0.5pt). 두 면을 같은 색으로 두면 어느 쪽인지 안 보인다. */
+.mtbox{position:absolute;border:.5pt solid var(--mt-q-bg);
+  background:var(--mt-q-bg);border-radius:1mm}
+.mtbox.a{border-color:var(--mt-line);background:var(--mt-a-bg)}
+.mtchip.a{background:var(--mt-line);color:#fff}
 """
