@@ -2533,17 +2533,27 @@ _RE_A2_QUESTION = re.compile(r"\d+\s*[.)]\s*(?:윗글|다음)")
 # 지문(A2_본문 박스) 다음, 첫 O/X 문항 앞에 정확히 한 번 — 스타일은 새로 만든
 # 게 아니라 B2(내용 종합) 섹션의 번호 스타일을 그대로 재사용한다(원본 실측:
 # 두 섹션이 지문 박스 스타일도 공유한다 — STEP1B2.P == STEP1A2.P).
+#
+# style_map.json 공용(workbook) 등록이 아니라 여기 **직접 하드코딩**한다 —
+# 이 스타일은 모의고사(워크북_C) 계열 원본에만 실측 확인됐다. EBS/수능특강/
+# 교과서 파생 엔진은 다른 내지 원본을 쓰고 그 인벤토리엔 이 스타일이 없다
+# (test_gdrive_workbook_v2_templates_inventory 실측 — 수능특강 분석 내지
+# 인벤토리에 없음). 공용 맵에 얹으면 모든 파생 엔진에 스타일 참조가 새고,
+# 아래 workbook_type 게이트로 모의고사 계열에만 한정한다.
 _STEP1_A2_OX_INTRO = "다음 글의 내용과 일치하면 O, 일치하지 않으면 X를 고르시오."
+_STEP1_A2_OX_INTRO_STYLE = "STEP 01 > B2_내용 종합 번호"
 
 
 # 전체 기본 단락 → bracket 뒤 영어 본문 = A2_본문 박스, ❮T/F❯ 토큰 단락 =
 # A2_OX문제 + 토큰 제거 + TF 버튼 duplicate 삽입. bracket 위 빈 단락 제거(≤5),
 # bracket 기준 유닛 분할(=프레임브레이크). bracket/빈 단락은 [기본 단락] 유지.
 
-def build_step1_a2(step_data):
+def build_step1_a2(step_data, workbook_type="모의고사"):
     st_box = _style("STEP1A2", "P")
     st_ox = _style("STEP1A2", "OX")
-    st_q = _style("STEP1A2", "Q")
+    # W87: EBS/수능특강/교과서 내지는 이 스타일이 없다 — 모의고사(워크북_C)
+    # 계열에서만 발문을 심는다.
+    st_q = _STEP1_A2_OX_INTRO_STYLE if workbook_type == "모의고사" else None
     # 5지선다 선지 전용 (템플릿 실측: STEP 01 > 하단 문제_선지)
     st_choice = "STEP 01 > 하단 문제_선지"
     units = []
@@ -2583,7 +2593,7 @@ def build_step1_a2(step_data):
             text, runs = _cut_span(text, runs, m.start(), m.end())
             n_tok += 1
         if n_tok > 0:
-            if need_intro:
+            if need_intro and st_q:
                 # W87: 지문 뒤, 첫 O/X 문항 앞에 발문 삽입 (유닛당 1회)
                 cur.append(_mk(_STEP1_A2_OX_INTRO, st_q, []))
                 need_intro = False
@@ -4045,7 +4055,7 @@ STEP_BUILDERS = {
 
 # 원고 유형(EBS/교과서/모의고사) 분기가 필요한 빌더 — v1은 settings의
 # workbook_type으로 분기 (workbook 엔진은 미전달 = "" → 非EBS 처리).
-_CTX_BUILDERS = {"step1_c1", "step2_c2"}
+_CTX_BUILDERS = {"step1_c1", "step2_c2", "step1_a2"}
 
 
 # ── 지문번호 라벨 추출 (W11 — 독립 번호 프레임 갱신 op + 검수 게이트용) ──────
