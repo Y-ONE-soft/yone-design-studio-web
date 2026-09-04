@@ -1524,17 +1524,7 @@ def _strip_step3_type_labels(paras, log=None):
         if re.search(r'[,，.。0-9_~／/]', t):
             continue
         nxt = _next_real(i)
-        # W88: 라벨이 새 문항 앞이 아니라 **이미 나온 발문 바로 뒤**에 낄
-        # 수도 있다 (여러 변형 섹션을 이어붙인 원고 — 발문 → 라벨 → 그
-        # 발문의 선지/재인쇄 지문/답란). 뒤가 뭐든(선지·지문·표) 상관없이
-        # 앞줄이 실제로 발문(물음표/…시오 종결)이면 그 자체로 충분한 신호다
-        # — 진짜 발문 끝에 곧장 무관한 한글 구가 오는 경우는 없다.
-        # (조건 부연설명 등 꼬리가 붙어 _RE_S3_PROMPT_END의 끝-고정 조건을
-        # 못 맞추는 서술형 발문 대응 — "…쓰시오. (단, …말 것)")
-        prv_is_prompt = bool(prv) and bool(
-            re.search(r'[?？]|시오|세요|십시오', prv))
-        if not (_RE_S3_ITEM_HEAD.match(nxt) or _RE_S3_QINTRO.search(nxt)
-               or prv_is_prompt):
+        if not (_RE_S3_ITEM_HEAD.match(nxt) or _RE_S3_QINTRO.search(nxt)):
             continue
         (drop if _RE_S3_HANGUL_ANY.search(t) else maybe).add(i)
     # 영문만인 줄은 한글 유형 라벨이 이미 둘 이상 확인된 문서에서만 라벨로
@@ -1683,6 +1673,10 @@ def _strip_step3_section_markers(paras, log=None):
     return [p for k, p in enumerate(paras) if k not in drop]
 
 
+def _s3_own_item_number_pat(item_num):
+    return re.compile(r'^\s*0*' + re.escape(str(int(item_num))) + r'\s*번\s*$')
+
+
 def _strip_step3_own_item_number_tag(paras, item_num=None, log=None):
     """문항 자신의 파일 번호가 본문 중간에 태그로 반복된 단독 줄 제거
     ('19번' — 원본 파일명 '…19번.hwp'와 같은 번호).
@@ -1693,11 +1687,55 @@ def _strip_step3_own_item_number_tag(paras, item_num=None, log=None):
     """
     if not item_num:
         return paras
-    pat = re.compile(r'^\s*0*' + re.escape(str(int(item_num))) + r'\s*번\s*$')
+    pat = _s3_own_item_number_pat(item_num)
     drop = {i for i, p in enumerate(paras) if pat.match(_s3_text(p))}
     if drop and callable(log):
         log(f"[파서] step3 문항번호 태그 제거({item_num}번): {len(drop)}줄")
     return [p for k, p in enumerate(paras) if k not in drop]
+
+
+def _strip_step3_variant_type_tag(paras, item_num=None, log=None):
+    """자기 번호 태그와 Section 마커 **사이에 낀** 짧은 유형 표기 한 줄 제거
+    ('심경'/'도표'/'안내문' 등 — 원고마다 문항 갈래를 나타내는 말이 달라
+    낱말로는 못 잡는다).
+
+    W83 유형 라벨 제거(발문 바로 앞/뒤)와 자리가 달라 그 규칙에 안 걸린다 —
+    여기서는 낱말이 아니라 **두 확실한 이웃**(자기 문항 번호 태그, Section
+    마커)으로 감싸인 자리만 본다. 이 두 이웃 자체가 이미 안전하게 확정된
+    노이즈라, 그 사이에 남는 짧은 한글 단독 줄은 무엇이 와도 같은 편집용
+    표기다 — 실제 문항 내용이 이 자리(자기 번호와 Section 마커 사이)에
+    올 일은 없다. 반드시 _strip_step3_section_markers/_strip_step3_own_
+    item_number_tag **이전**에 불러 두 이웃이 아직 남아 있어야 한다.
+    """
+    if not item_num:
+        return paras
+    num_pat = _s3_own_item_number_pat(item_num)
+    n = len(paras)
+
+    def _next_real_idx(i):
+        j = i + 1
+        while j < n and not _s3_text(paras[j]):
+            j += 1
+        return j
+
+    drop = set()
+    for i in range(n):
+        if not num_pat.match(_s3_text(paras[i])):
+            continue
+        j = _next_real_idx(i)
+        if j >= n:
+            continue
+        cand = _s3_text(paras[j])
+        if (len(cand) > 10 or not _RE_S3_HANGUL_ANY.search(cand)
+                or re.search(r'[,，.。0-9_~／/①-⑳]', cand)):
+            continue
+        k = _next_real_idx(j)
+        if k >= n or not _RE_S3_SECTION_MARKER.match(_s3_text(paras[k])):
+            continue
+        drop.add(j)
+    if drop and callable(log):
+        log(f"[파서] step3 변형 유형 표기 제거: {len(drop)}줄")
+    return [p for x, p in enumerate(paras) if x not in drop]
 
 
 def _strip_step3_exam_source_line(paras, log=None):
@@ -1726,8 +1764,14 @@ def _strip_step3_exam_source_line(paras, log=None):
 
 def _normalize_step3_manuscript(paras, item_num=None, log=None):
     """Step3 원고 정규화 1단계 — 권리 고지/책 표제 + 변형 섹션 잔재
-    (보존 스냅샷 전에)."""
+    (보존 스냅샷 전에).
+
+    순서 중요: 유형 표기 제거(_strip_step3_variant_type_tag)는 자기 번호
+    태그·Section 마커를 **이웃**으로 삼아 자리를 잡으므로, 그 둘을 실제로
+    지우는 함수보다 반드시 먼저 불러야 한다.
+    """
     paras = _strip_step3_rights_and_title(paras, log)
+    paras = _strip_step3_variant_type_tag(paras, item_num, log)
     paras = _strip_step3_section_markers(paras, log)
     paras = _strip_step3_own_item_number_tag(paras, item_num, log)
     paras = _strip_step3_exam_source_line(paras, log)
