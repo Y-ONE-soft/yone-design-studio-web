@@ -11,14 +11,20 @@ Day 도, Part2 워크북도 없이 원고 표 한 행이 곧 카드 하나다 �
 치환하는 방식이라 계열마다 스타일시트가 한 벌 필요해서다(vocabook.css 를 건드리면
 상일보카가 흔들린다 — 파일을 나눠 원천적으로 막는다).
 
-Day 가 없으므로 **2패스가 아니라 1패스**다: PART 시작 면(3개뿐)에 큰 헤더를 인플로우로
-얹고, 이어지는 면은 CSS `position: running()` 이 자동으로 4mm 띠+작은 탭을 이어 보여준다
-(호출 시점에 덮어쓸 때까지 유지되는 것이 GCPM running() 의 성질이라 별도 규칙이 필요 없다).
+빌드는 vocabook 과 같은 **2패스**지만 하는 일이 하나뿐이다: 1패스로 PART 시작 면
+(3개)을 찾아 그 면의 4mm 띠와 작은 마름모 탭을 끈다. 시작면에는 큰 마름모가
+인플로우로 들어가는데 마진 박스의 작은 탭이 같이 나오면 **둘이 겹쳐 보인다.**
+이어지는 면은 CSS `position: running()` 이 알아서 이어 준다(다음 호출까지 값이
+유지되는 GCPM 성질) — vocabook 의 ②밴드(시작면 짝면에 큰 밴드)는 쓰지 않는다.
+
+낱말 카드에는 테두리를 두르지 않는다(머리 괘선으로만 가른다). **구간마다 새 면**
+에서 시작한다 — 구간이 3~6낱말이라 면 하나에 딱 맞고, 이어 붙이면 어디서 끊기는지
+알 수 없다는 지적을 받았다.
 """
 import os
 
 from core.render_vivlio import bleed as bleed_mod
-from core.render_vivlio import cli, knobs, probe, stage
+from core.render_vivlio import cli, knobs, paged, probe, stage
 from core.render_vivlio.series.base import Series
 from core.render_vivlio.series.vocacard import data as data_mod
 from core.render_vivlio.series.vocacard import render as render_mod
@@ -45,8 +51,12 @@ class VocacardSeries(Series):
     def gen_theme(self, cfg, log):
         return theme_mod.write(cfg, os.path.join(cfg.build_dir, "theme.css"), log)
 
-    # ── ③ 조판 (1패스 — Day 가 없어 2패스 덧칠이 필요 없다) ──
+    # ── ③ 조판 (2패스) ──
     def build(self, cfg, log, sample=False, **_):
+        """2패스 — 1패스로 PART 시작 면 번호를 알아내고, 그 면에서만 **4mm 띠와
+        작은 마름모 탭을 끈다**. 시작면에는 큰 마름모(day-head)가 인플로우로
+        들어가는데 마진 박스의 작은 탭이 같이 나오면 **둘이 겹쳐 보인다**(실측).
+        마진 박스 내용과 배경만 바꾸므로 페이지 나눔은 1패스와 같다."""
         sample = bool(sample)
         build_dir = cfg.build_dir
         os.makedirs(build_dir, exist_ok=True)
@@ -59,17 +69,27 @@ class VocacardSeries(Series):
                           log, required=False)
         theme_mod.write(cfg, os.path.join(build_dir, "theme.css"), log)
 
-        stage.write_css(build_dir, "pages.css")   # 자리만 — 이 계열은 2패스가 없다
+        pages_css = stage.write_css(build_dir, "pages.css")   # 1패스는 빈 파일
         knobs.write(cfg, VocacardSeries(), build_dir)
         stage.stage_overrides(cfg, build_dir)
         stage.stage_book_assets(cfg, build_dir)
         html_path = render_mod.write(cfg, d, build_dir, sample=sample, log=log)
-        t = cli.run_build(html_path, out, log=log)
+        t1 = cli.run_build(html_path, out, log=log)
+
+        opens = paged.find_open_pages(probe.page_texts(out))
+        page_names = [p for _c, p, *_ in theme_mod.sections_of(cfg)]
+        rules = paged.PageRules(page_names)
+        for p in opens:
+            rules.nth(p, "background: none; @top-left { content: none; }")
+        rules.write(pages_css)
+        t2 = cli.run_build(html_path, out, log=log)
 
         npages = probe.page_count(out)
-        log(f"OK  {t:.1f}s (1패스) · {npages}p → {out}")
+        log(f"OK  {t1 + t2:.1f}s (2패스) · {npages}p · "
+            f"PART 시작면 {len(opens)}개 → {out}")
 
-        res = {"pdf": out, "pages": npages, "seconds": round(t, 1), "passes": 1}
+        res = {"pdf": out, "pages": npages, "opens": len(opens),
+               "seconds": round(t1 + t2, 1), "passes": 2}
         if not sample:
             spec = cfg.finish_spec()
             if spec:

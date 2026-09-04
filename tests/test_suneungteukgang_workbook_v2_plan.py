@@ -40,7 +40,11 @@ def _content(case):
 def _stage_plan(steps, stage):
     smap = _STAGE_MAPS[stage]
     sub = {k: v for k, v in steps.items() if k in smap}
-    return steps_to_plan(sub, workbook_type="EBS", step_map=smap)
+    # W87: 실제 엔진(SuneungteukgangWorkbookV2Engine.prepare_jsx)은 이 내지에
+    # 없는 B2류 번호 스타일을 요구하는 O/X 발문 삽입을 명시적으로 끈다 —
+    # 테스트 helper도 실제 호출부와 같은 인자로 맞춘다.
+    return steps_to_plan(sub, workbook_type="EBS", step_map=smap,
+                         a2_ox_intro=False)
 
 
 def test_stage_maps_match_v1_literals():

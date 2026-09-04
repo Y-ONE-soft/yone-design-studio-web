@@ -289,8 +289,16 @@ class SuneungteukgangWorkbookV2Engine(WorkbookV2Engine):
         for stage_label, stage_kor, name_tok, orig_key in _STAGES:
             stage_map = _STAGE_MAPS[stage_label]
             stage_steps = {k: v for k, v in steps.items() if k in stage_map}
+            # W87: 본문 O/X 발문("다음 글의 내용과 일치하면 O, …") 자동
+            # 삽입은 이 내지에서 끈다 — 수능특강 분석/문제 템플릿은 다른
+            # EBS 계열(EBS 리딩파워)과 달리 B1/B2류 번호 스타일 자체가
+            # 없다(스타일 인벤토리 실측: template_spec_suneungteukgang_
+            # analysis/problem 어디에도 "…내용 종합 번호"가 없음). 같은
+            # workbook_type="EBS" 값을 쓰는 ebs_workbook_v2(EBS 리딩파워)는
+            # 그 스타일이 있어 기본값(True)을 그대로 받는다.
             plan = steps_to_plan(stage_steps, exclude=exclude,
-                                 workbook_type="EBS", step_map=stage_map)
+                                 workbook_type="EBS", step_map=stage_map,
+                                 a2_ox_intro=False)
             if stage_label == "analysis":
                 # 완제품 op (W15 c08_ref 실증 → W24 r14 delete 확산):
                 # 분석 내지의 B-마스터 여분 페이지 + 지문번호 잔재 프레임
