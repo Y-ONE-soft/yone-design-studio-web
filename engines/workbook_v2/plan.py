@@ -1719,6 +1719,10 @@ def _s3_assign_slots(pre, BG):
 _RE_BLANK = re.compile(
     "^[\\s\u00a0\u1680\u180e\u2000-\u200b\u202f\u205f\u3000]*$")
 _RE_BRACKET = re.compile(r"^\s*\[[^\]]+\]\s*$")
+# W-e6202014: 지문번호를 대괄호 대신 꺾쇠 숫자("<1>")로 적는 원고 방언.
+# 숫자만 허용 — step1_c1/c2의 "<제목 고르기>" 선택지(꺾쇠+영문 제목 텍스트,
+# 코퍼스 전수 실증)와 셰이프가 겹치지 않도록 범위를 좁힌다.
+_RE_ANGLE_NUM = re.compile(r"^\s*<\s*\d+\s*>\s*$")
 _RE_HARD = re.compile(r"^\s*2\.\s*어휘\s*2단계_Hard\s*$")   # 1A1 삭제 대상
 _RE_KOR2 = re.compile(r"[가-힣][\s\S]*[가-힣]")             # v1 hasKorean2
 _RE_B2_QNUM = re.compile(r"^\s*\(\d+\)")                    # v1 reNumStart
@@ -1962,8 +1966,13 @@ def _bracket_fallback_idx(paragraphs):
 
 
 def _is_bracket_para(text):
-    """v1 isBracketPara: [XX] 단독 단락 (내용 없는 [  ]는 제외)."""
-    if not _RE_BRACKET.match(text or ""):
+    """v1 isBracketPara: [XX] 단독 단락 (내용 없는 [  ]는 제외).
+
+    "<N>" 꺾쇠 숫자형도 동급 대접 — 위 _RE_ANGLE_NUM 주석 참조."""
+    t = text or ""
+    if _RE_ANGLE_NUM.match(t):
+        return True
+    if not _RE_BRACKET.match(t):
         return False
     inner = re.sub(r"\]\s*$", "", re.sub(r"^\s*\[", "", text))
     return len(re.sub(r"\s", "", inner)) > 0
