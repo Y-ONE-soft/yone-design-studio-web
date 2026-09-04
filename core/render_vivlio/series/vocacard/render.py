@@ -22,9 +22,33 @@ PART_CLASS = {"text": "s-text", "supp": "s-supp", "mock": "s-mock"}
 PART_PAGE = {"text": "p-text", "supp": "p-supp", "mock": "p-mock"}
 
 
+PAGE_CAP = 4          # 한 면에 담는 낱말 카드 수(실측: 3장 138mm · 4장 154mm < 가용 170mm)
+
+
 def _wcls(w):
     """표제어 길이별 축소 — 라벨 열 폭 대응(vocabook._wcls 와 동일 기준)."""
     return " xlong" if len(w) >= 18 else (" long" if len(w) >= 13 else "")
+
+
+def _chunks(items, cap=PAGE_CAP):
+    """구간을 면 단위로 **고르게** 쪼갠다 — 6낱말이면 4+2 가 아니라 3+3.
+
+    구간마다 새 면에서 시작하므로, 한 면에 최대한 채우고 넘기면 뒷면이 거의
+    백지가 된다(실측: 155mm 가 비었다). 카드 높이는 들쭉날쭉하지만 3장 묶음이
+    최대 138mm, 4장이 154mm 로 가용 170mm 안이라 **낱말 수만으로 나눠도** 된다.
+    그래도 넘치면 `.vc { break-inside: avoid }` 가 다음 면으로 밀어 준다.
+    """
+    n = len(items)
+    k = -(-n // cap)
+    if k <= 1:
+        return [items]
+    base, rem = divmod(n, k)
+    out, i = [], 0
+    for j in range(k):
+        size = base + (1 if j < rem else 0)
+        out.append(items[i:i + size])
+        i += size
+    return out
 
 
 class Renderer(VocabookRenderer):
@@ -70,13 +94,15 @@ class Renderer(VocabookRenderer):
         o.append("</article>")
         return "".join(o)
 
-    def kicker(self, group, n, first=False):
+    def kicker(self, group, n, first=False, cont=False):
         """구간 소제목 — 구간마다 **새 면에서 시작**한다(.gsec 의 break-before).
-        PART 시작면의 첫 구간만 예외(헤더 바로 아래에 붙는다)."""
-        k = " first" if first else ""
+        PART 시작면의 첫 구간만 예외(헤더 바로 아래에 붙는다).
+        cont=True 는 한 면에 다 못 담아 넘어온 뒷장(같은 구간)."""
+        k = (" first" if first else "") + (" cont" if cont else "")
+        tail = "이어서" if cont else f"{n} words"
         return (f'<div{_refs.mark("#구간 소제목", "gsec" + k)}>'
                f'<span class="t">{esc(group)}</span>'
-               f'<span class="n">{n} words</span></div>')
+               f'<span class="n">{tail}</span></div>')
 
     def part_flow(self, key, items):
         cls, page, title = PART_CLASS[key], PART_PAGE[key], PART_TITLE[key]
@@ -84,19 +110,19 @@ class Renderer(VocabookRenderer):
         out = [f'<section class="{cls} day-open{self._op_cls()}" style="page:{page}">'
               f'{self.running(title, str(n), 0)}'
               f'{self.day_head(n, label="PART", title=title)}']
-        # 구간별 낱말 수 — 소제목 오른쪽에 적는다(면마다 분량이 보인다)
-        size, order = {}, []
+        groups, order = {}, []
         for it in items:
-            if it["group"] not in size:
-                size[it["group"]] = 0
+            if it["group"] not in groups:
+                groups[it["group"]] = []
                 order.append(it["group"])
-            size[it["group"]] += 1
-        cur = object()
-        for it in items:
-            if it["group"] != cur:
-                cur = it["group"]
-                out.append(self.kicker(cur, size[cur], first=(cur == order[0])))
-            out.append(self.word_card(it))
+            groups[it["group"]].append(it)
+        for gi, g in enumerate(order):
+            lot = groups[g]
+            for ci, chunk in enumerate(_chunks(lot)):
+                out.append(self.kicker(g, len(lot),
+                                       first=(gi == 0 and ci == 0),
+                                       cont=(ci > 0)))
+                out.extend(self.word_card(it) for it in chunk)
         out.append("</section>")
         return "".join(out)
 

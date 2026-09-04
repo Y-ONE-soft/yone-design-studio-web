@@ -336,3 +336,7 @@ em { font-style: normal; font-weight: 500; color: var(--c-hl); }
 .gsec .t { font: 700 7.6pt "Elice"; color: var(--main); letter-spacing: -.01em; }
 .gsec .n { margin-left: auto; font: 500 5.4pt "Elice"; color: var(--sub);
            letter-spacing: .04em; }
+/* 한 면에 다 못 담아 넘어온 뒷장 — 같은 구간이라는 표시만, 무게는 낮춘다 */
+.gsec.cont { background: none; border-left-color: var(--sub);
+             padding-top: 1.4mm; padding-bottom: 1.4mm; }
+.gsec.cont .t { font-size: 7pt; color: var(--sub); }
