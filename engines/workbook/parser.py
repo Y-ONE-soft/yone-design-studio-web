@@ -1677,9 +1677,19 @@ def _s3_own_item_number_pat(item_num):
     return re.compile(r'^\s*0*' + re.escape(str(int(item_num))) + r'\s*번\s*$')
 
 
+def _s3_own_item_number_merged_pat(item_num):
+    """섹션 경계의 **끝** 태그는 'N번'과 유형 표기가 파이프로 한 줄에
+    합쳐지기도 한다('19번｜심경' — 시작 태그는 3줄로 흩어져 있는데 끝
+    태그는 왜 한 줄인지는 원고 편집자 재량, 구조만 본다). 파이프 뒤는
+    숫자/문장부호 없는 짧은 이름씨 마디여야 한다(유형 표기 형태)."""
+    return re.compile(r'^\s*0*' + re.escape(str(int(item_num)))
+                      + r'\s*번\s*[|｜]\s*[가-힣]{1,10}\s*$')
+
+
 def _strip_step3_own_item_number_tag(paras, item_num=None, log=None):
     """문항 자신의 파일 번호가 본문 중간에 태그로 반복된 단독 줄 제거
-    ('19번' — 원본 파일명 '…19번.hwp'와 같은 번호).
+    ('19번' 또는 유형 표기와 합쳐진 '19번｜심경' — 원본 파일명
+    '…19번.hwp'와 같은 번호).
 
     item_num과 **정확히 일치할 때만** 지운다 — 다른 문항을 가리키는 진짜
     본문 숫자('1번 사진처럼')까지 건드리지 않기 위한 안전장치. item_num이
@@ -1688,7 +1698,9 @@ def _strip_step3_own_item_number_tag(paras, item_num=None, log=None):
     if not item_num:
         return paras
     pat = _s3_own_item_number_pat(item_num)
-    drop = {i for i, p in enumerate(paras) if pat.match(_s3_text(p))}
+    pat_merged = _s3_own_item_number_merged_pat(item_num)
+    drop = {i for i, p in enumerate(paras)
+           if pat.match(_s3_text(p)) or pat_merged.match(_s3_text(p))}
     if drop and callable(log):
         log(f"[파서] step3 문항번호 태그 제거({item_num}번): {len(drop)}줄")
     return [p for k, p in enumerate(paras) if k not in drop]
