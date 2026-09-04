@@ -1524,7 +1524,14 @@ def _strip_step3_type_labels(paras, log=None):
         if re.search(r'[,，.。0-9_~／/]', t):
             continue
         nxt = _next_real(i)
-        if not (_RE_S3_ITEM_HEAD.match(nxt) or _RE_S3_QINTRO.search(nxt)):
+        # W88: 라벨이 새 문항 앞이 아니라 **이미 나온 발문의 선지 앞**에
+        # 낄 수도 있다 (여러 변형 섹션을 이어붙인 원고 — 발문 → 라벨 →
+        # 그 발문의 ①~⑤). 앞줄이 실제로 발문(물음표/…시오 종결)이어야만
+        # 인정 — 지문 문장 끝에 우연히 선지형 나열이 오는 경우와 구분.
+        nxt_is_choice = (_RE_S3_ANY_MARKER.match(nxt)
+                         and prv and _RE_S3_PROMPT_END.search(prv))
+        if not (_RE_S3_ITEM_HEAD.match(nxt) or _RE_S3_QINTRO.search(nxt)
+               or nxt_is_choice):
             continue
         (drop if _RE_S3_HANGUL_ANY.search(t) else maybe).add(i)
     # 영문만인 줄은 한글 유형 라벨이 이미 둘 이상 확인된 문서에서만 라벨로
@@ -1646,9 +1653,82 @@ def _strip_step3_footnote_refs(paras, log=None):
     return paras
 
 
-def _normalize_step3_manuscript(paras, log=None):
-    """Step3 원고 정규화 1단계 — 권리 고지/책 표제 (보존 스냅샷 전에)."""
-    return _strip_step3_rights_and_title(paras, log)
+# W88 (사용자 지적 2026-09-04, 고2 26년 6월 부산 모의고사): 여러 변형
+# 섹션을 한 파일에 이어붙인 원고는 섹션 경계마다 편집용 태그 묶음이
+# 반복된다 — "19번"(문항 자기 번호) / "심경"(유형 표기, W83과 같은 부류지만
+# 자리가 다르다) / "Section ❶"(변형 구획 표시). 그리고 정답 시작 직전에는
+# 시험 출처 헤더("고2 2026년 6월 부산광역시 교육청")가 반복된다. 넷 다
+# 원고 편집 관행이고 완제품에 인쇄될 자리가 없다.
+_RE_S3_SECTION_MARKER = re.compile(
+    r'^Section\s*[①-⑳❶-❿⓵-⓾㉠-㉭]\s*$', re.I)
+# 시험 출처(교육청/평가원 등) 키워드 — engines/workbook_v2/plan.py K3와
+# 같은 어휘 계열(모듈이 달라 직접 import 대신 국소 복제 — 기존 관행).
+_RE_S3_EXAM_ORIGIN_KW = re.compile(
+    r'교육청|학력평가|평가원|수능특강|수능완성|학평|모평')
+
+
+def _strip_step3_section_markers(paras, log=None):
+    """변형 섹션 구획 표시("Section ❶/❷/…") 단독 줄 제거.
+
+    어떤 형태로도 발문·지문·선지가 될 수 없는 고정 서식이라 위치 무관하게
+    안전하게 지운다(코퍼스 실측: 이 정확한 형태로 등장한 자리 전부가 노이즈).
+    """
+    drop = {i for i, p in enumerate(paras)
+           if _RE_S3_SECTION_MARKER.match(_s3_text(p))}
+    if drop and callable(log):
+        log(f"[파서] step3 변형 섹션 마커 제거: {len(drop)}줄")
+    return [p for k, p in enumerate(paras) if k not in drop]
+
+
+def _strip_step3_own_item_number_tag(paras, item_num=None, log=None):
+    """문항 자신의 파일 번호가 본문 중간에 태그로 반복된 단독 줄 제거
+    ('19번' — 원본 파일명 '…19번.hwp'와 같은 번호).
+
+    item_num과 **정확히 일치할 때만** 지운다 — 다른 문항을 가리키는 진짜
+    본문 숫자('1번 사진처럼')까지 건드리지 않기 위한 안전장치. item_num이
+    없으면(번호 매칭이 확정 안 된 경로) 아무것도 하지 않는다.
+    """
+    if not item_num:
+        return paras
+    pat = re.compile(r'^\s*0*' + re.escape(str(int(item_num))) + r'\s*번\s*$')
+    drop = {i for i, p in enumerate(paras) if pat.match(_s3_text(p))}
+    if drop and callable(log):
+        log(f"[파서] step3 문항번호 태그 제거({item_num}번): {len(drop)}줄")
+    return [p for k, p in enumerate(paras) if k not in drop]
+
+
+def _strip_step3_exam_source_line(paras, log=None):
+    """시험 출처 헤더 단독 줄 제거('고2 2026년 6월 부산광역시 교육청').
+
+    정답/해설 시작 직전 등 경계마다 반복 인쇄된다. 문장이 아니고(종결부호
+    없음) 연도 표기와 출처 키워드가 함께 있어야만 걸린다 — 실제 발문/지문
+    문장은 이 조합을 갖지 않는다.
+    """
+    drop = set()
+    for i, p in enumerate(paras):
+        t = _s3_text(p)
+        if not t or len(t) > 40:
+            continue
+        if _RE_S3_SENT_END.search(t) or _RE_S3_UNIT_HEAD.match(t):
+            continue
+        if not re.search(r'\d{4}\s*년', t):
+            continue
+        if not _RE_S3_EXAM_ORIGIN_KW.search(t):
+            continue
+        drop.add(i)
+    if drop and callable(log):
+        log(f"[파서] step3 시험 출처 헤더 제거: {len(drop)}줄")
+    return [p for k, p in enumerate(paras) if k not in drop]
+
+
+def _normalize_step3_manuscript(paras, item_num=None, log=None):
+    """Step3 원고 정규화 1단계 — 권리 고지/책 표제 + 변형 섹션 잔재
+    (보존 스냅샷 전에)."""
+    paras = _strip_step3_rights_and_title(paras, log)
+    paras = _strip_step3_section_markers(paras, log)
+    paras = _strip_step3_own_item_number_tag(paras, item_num, log)
+    paras = _strip_step3_exam_source_line(paras, log)
+    return paras
 
 
 def _normalize_step3_lines(paras, log=None):
@@ -2536,7 +2616,7 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
                                             strip_inline_answers=True,
                                             image_dir=image_dir)
         paras = _strip_step3_decorative_images(paras, str(file_key), log)  # W77
-        paras = _normalize_step3_manuscript(paras, log)                   # W83
+        paras = _normalize_step3_manuscript(paras, q_num, log)            # W83/W88
         # 보존 가드 스냅샷 — 책 헤더(변형문제/수능특강)는 의도적 제거이므로
         # 스냅샷에서도 제외해 허위 "내용 손실" 경고를 막는다(헤더 외 손실은 그대로 감지).
         paras = _strip_step3_item_numbers(paras)        # W75
@@ -2689,8 +2769,10 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
             # 선두/꼬리 표제·워터마크 제거 (W17 c16/c11 — 스냅샷 전에)
             paras = _strip_step3_leading_junk(paras)
             paras = _strip_step3_trailing_junk(paras)
-            # W83: 원고 워크시트 잔재 + 줄 단위 쪼개짐 + 발문 각주 번호
-            paras = _normalize_step3_manuscript(paras, log)
+            # W83: 원고 워크시트 잔재 + 줄 단위 쪼개짐 + 발문 각주 번호.
+            # item_num 없음 — 번호 매칭이 확정 안 된 경로라 '자기 번호' 태그
+            # 제거(W88)는 안전하게 생략된다.
+            paras = _normalize_step3_manuscript(paras, log=log)
             # W75: 원고 문항 번호 줄 제거 — 스냅샷 **앞**에서 (조판이
             # 번호를 매기므로 의도된 제거. 책 헤더 제거와 같은 취급)
             paras = _strip_step3_item_numbers(paras)
