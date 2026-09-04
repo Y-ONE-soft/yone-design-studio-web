@@ -2,18 +2,18 @@
  * 사본이다 — Day/워크북 없이 구간별 낱말카드로 흐르는 이 계열은 그 파일 대부분을
  * 그대로 쓰지만, 텍스트 치환(build_css)이 파일 단위라 한 파일을 공유하면 색을
  * 바꿀 때마다 상일보카 쪽도 흔들린다. **그래서 파일을 나눴다** — 원본과 벌어지는
- * 부분(①헤더는 PART 3개뿐, ②이어지는 오른쪽 면의 큰 밴드/부제는 안 씀, 낱말카드에
- * 테두리 상자 추가)은 파일 맨 끝 "vocacard 전용" 구획에만 있다.
+ * 부분(①헤더는 PART 3개뿐, ②이어지는 오른쪽 면의 큰 밴드/부제는 안 씀, 구간
+ * 소제목·간지)은 파일 맨 끝 "vocacard 전용" 구획에만 있다.
  *
  * 이 파일에는 **책마다 달라지지 않는 것만** 둔다. 판형·여백·팔레트·서체·배경 SVG는
  * 책 config(③)에서 `series/vocacard/theme.py` 가 만들어 아래 두 자리에 끼운다:
  *   @PRELUDE@    서체 · 공통색상/치수 · 섹션 팔레트 · @page 지오메트리 · MEMO 면
  *   @GENERATED@  4mm 띠 · ①시작면 밴드 · 마름모 태그 · 탭 (전부 배경 SVG)
  *
- * 4면 체계: ①PART 시작(왼쪽)=인플로우 큰 헤더+마름모 ②이어지는 오른쪽=상단 밴드
- * ③이후 왼쪽=4mm 띠+마름모 탭 ④이후 오른쪽=4mm 띠. 라벨(측면 인덱스)은 오른쪽만.
- * PART 가 3개뿐이라 **2패스를 쓰지 않는다** — `running()` 은 다음 호출까지 값이
- * 유지되는 GCPM 성질대로, PART 시작에서 한 번만 얹으면 이어지는 면에 저절로 따라온다.
+ * ①PART 시작(왼쪽)=인플로우 큰 헤더+마름모 ②이후=4mm 띠(+왼쪽 면은 마름모 탭).
+ * 라벨(측면 인덱스)은 오른쪽 면만. vocabook 의 '②이어지는 오른쪽 면 큰 밴드'는 안 쓴다.
+ * **시작 면에서는 2패스가 4mm 띠와 작은 탭을 끈다** — 큰 마름모와 겹쳐 보이기 때문.
+ * 이어지는 면은 `running()` 이 다음 호출까지 값을 유지하는 GCPM 성질대로 따라온다.
  *
  * 색 체계 = 공통색상(--c-*) + 주색상(--main*) + 보조색상(--sub).
  *   공통색상은 :root 한 곳에만 두고 어디서도 재정의하지 않는다.
@@ -351,7 +351,8 @@ em { font-style: normal; font-weight: 500; color: var(--c-hl); }
     text-align: center;
     background: linear-gradient(#fedae7 0%, #fdc5d7 46%, #fdc5d7 100%);
 }
-.sheet.back { break-before: page; justify-content: center; }
+.sheet.front, .sheet.back { justify-content: center; }
+.sheet.back { break-before: page; }
 .sheet .wm { font: 900 15pt "Logo", "Elice"; color: var(--main);
              letter-spacing: .04em; }
 .sheet .wm.ink { color: var(--c-ink); }
@@ -367,6 +368,7 @@ em { font-style: normal; font-weight: 500; color: var(--c-hl); }
 .sheet .tag { margin-top: 2mm; font: 700 7pt "Elice"; color: #7b5966;
               letter-spacing: .12em; }
 .sheet .tag:first-of-type { margin-top: 4mm; }
-.sheet .by { margin-top: auto; font: 900 7.4pt "Logo", "Elice";
+.sheet .by { font: 900 7.4pt "Logo", "Elice";
              color: var(--c-ink); letter-spacing: .06em; }
+.sheet.front .by { margin-top: 26mm; }
 .sheet.back .by { margin-top: 14mm; }
