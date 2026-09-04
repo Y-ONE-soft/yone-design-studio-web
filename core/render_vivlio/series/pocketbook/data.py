@@ -142,6 +142,60 @@ def find_illust(pno, grade, bases):
     return None
 
 
+def _copy_wo_credit(src, dst):
+    """삽화의 **그린이 표기**를 잘라 낸다. 잘랐으면 True.
+
+    삽화 아래에는 캡션(주제 한 줄)이 구워져 있고 그건 지면에 나와야 한다.
+    그런데 어떤 삽화에는 그 **아래에 또 한 줄**, 그린이 표기가 들어 있다
+    (`위메북 X 바카 (인스타 bakahodu)` — 강동1 28면). 그건 나오면 안 된다.
+
+    둘은 생김새가 다르다(실측):
+
+        캡션      가운데 정렬(잉크 중심 x≈0.48) · 진함(밝기 98)
+        그린이    오른쪽 정렬(x≈0.80)          · 연함(밝기 170) · 맨 아래(0.96↑)
+
+    그래서 **맨 아래 잉크 덩이가 오른쪽으로 몰리고 연하면** 그 위에서 자른다.
+    가운데 있거나 진하면 캡션이므로 손대지 않는다 — 캡션을 자르는 쪽이 훨씬 나쁘다.
+    """
+    try:
+        from PIL import Image
+        import numpy as np
+    except ImportError:
+        return False
+    try:
+        im = Image.open(src)
+    except Exception:
+        return False
+    a = np.asarray(im.convert("L").resize((400, 400))).astype(float)
+    mask = a < 215
+    rows = [i for i in range(300, 400) if mask[i].sum() > 3]
+    if not rows:
+        return False
+    groups, cur = [], [rows[0]]
+    for i in rows[1:]:
+        if i - cur[-1] <= 2:
+            cur.append(i)
+        else:
+            groups.append(cur)
+            cur = [i]
+    groups.append(cur)
+    if len(groups) < 2:
+        return False
+    g = groups[-1]
+    if g[0] < 380:                       # 맨 아래가 아니면 캡션이다
+        return False
+    sub = mask[g[0]:g[-1] + 1]
+    if not sub.any():
+        return False
+    xc = np.where(sub)[1].mean() / 400.0
+    dark = a[g[0]:g[-1] + 1][sub].mean()
+    if xc < 0.62 or dark < 140:          # 가운데거나 진하면 캡션
+        return False
+    cut = int(im.height * (groups[-2][-1] + g[0]) / 2.0 / 400.0)
+    im.crop((0, 0, im.width, cut)).save(dst, quality=95)
+    return True
+
+
 def prepare(items, build_dir, illust_dirs=(), category="", grade=""):
     """수확 결과 → 지면 항목. 그림은 build 로 복사한다.
 
@@ -184,7 +238,8 @@ def prepare(items, build_dir, illust_dirs=(), category="", grade=""):
         if src:
             dst = os.path.join(assets, "p%03d%s" % (i, os.path.splitext(src)[1]))
             try:
-                shutil.copyfile(src, dst)
+                if not _copy_wo_credit(src, dst):
+                    shutil.copyfile(src, dst)
                 illust = "img/" + os.path.basename(dst)
             except OSError:
                 illust = None
