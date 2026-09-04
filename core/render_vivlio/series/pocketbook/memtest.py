@@ -365,14 +365,17 @@ def _stamp(files):
     return hashlib.sha1("\n".join(rows).encode("utf-8")).hexdigest()
 
 
-def _cache_load(path, stamp):
-    """캐시 → 지문 목록. 원고가 그대로일 때만 돌려준다."""
+def _cache_load(path, stamp=None):
+    """캐시 → 지문 목록. `stamp` 를 주면 원고가 그대로일 때만 돌려준다.
+
+    `stamp=None` 은 **원고를 못 읽을 때의 구명줄**이다(아래 `read` 참고).
+    """
     try:
         with open(path, encoding="utf-8") as f:
             got = json.load(f)
     except (OSError, ValueError):
         return None
-    if got.get("stamp") != stamp:
+    if stamp is not None and got.get("stamp") != stamp:
         return None
     out = []
     for e in got.get("entries") or ():
@@ -411,6 +414,19 @@ def read(paths, log=None, cache=None):
     """
     log = log or (lambda _m: None)
     files = _files(paths)
+    # ⚠ 원고 폴더는 **구글드라이브**다. 안 잡히는 순간 파일이 0개가 되고,
+    #   그러면 지문(指紋)이 달라져 캐시까지 버리고 **암기 TEST 가 통째로 빠진
+    #   책이 조용히 나간다**(실측: 세종1 204면 → 106면, 게이트는 전부 통과).
+    #   폴더를 못 읽었는데 캐시가 있으면 캐시를 쓴다 — 그리고 크게 말한다.
+    if paths and not files:
+        got = _cache_load(cache) if cache else None
+        if got:
+            log("  [리테] ⚠ 원고 폴더를 못 읽었다(구글드라이브?) — **지난번에 "
+                "읽어 둔 지문 %d개**로 간다. 원고가 바뀌었다면 다시 돌릴 것" % len(got))
+            return got
+        log("  [리테] ⚠ 원고 폴더를 못 읽었고 캐시도 없다 — 암기 TEST 가 "
+            "통째로 빠진다: %s" % ", ".join(str(x) for x in paths[:2]))
+        return []
     stamp = _stamp(files)
     if cache:
         got = _cache_load(cache, stamp)

@@ -1326,6 +1326,14 @@ class PocketbookSeries(Series):
         pas = [r for r in rows if r.get("kind") != "memtest"]
         self._check_source_count(cfg, opt, len(pas), report, log)
         self._check_scope(cfg, report, log)
+        # G-P11 — 암기 TEST 를 쓰기로 한 책인데 한 면도 안 붙었다.
+        # ⚠ 이걸 안 세우면 원고 폴더가 안 잡힌 날 **면 수가 반으로 준 책이
+        #   전 게이트를 통과한다**(세종1 204→106면 실측). 면 수 게이트는 남은
+        #   지문으로 다시 셈해서 "맞다"고 한다.
+        if (cfg.section("options") or {}).get("review_tests") and \
+                not any(r.get("kind") == "memtest" for r in rows):
+            report.fail("G-P11 암기 TEST 가 한 면도 없다 — 리테 원고 폴더를 "
+                        "못 읽었을 수 있다(구글드라이브 확인)")
         no_syn = [r.get("key") or r.get("label") or "?" for r in pas
                   if not r.get("synonyms")]
         no_flow = [r.get("key") or r.get("label") or "?" for r in pas
