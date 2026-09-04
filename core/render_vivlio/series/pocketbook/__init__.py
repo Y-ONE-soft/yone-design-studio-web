@@ -1116,25 +1116,31 @@ class PocketbookSeries(Series):
                                 [str(i) for i in range(len(subset))], 10.0,
                                 690.0, log=log)
             n = 0
+            # ⚠ 플로우노트는 **8pt → 7pt 두 단**이다(사용자 지시). 넘치면 먼저
+            #   7pt 로 내리고, 7pt 로도 안 되면 그때만 더 줄인다. 연속으로 줄이면
+            #   지문마다 글자 크기가 제각각이 되어 펼침면이 들쭉날쭉해 보인다.
+            step = M["flow_min_size"] / M["flow_size"] if kind == "flow" else 0
             for i, r in enumerate(subset):
                 got = h.get(str(i), 0.0)
                 if got > box_h - 1.0:
-                    r[kind + "_scale"] = max(0.72,
-                                             round((box_h - 1.0) / got, 3))
+                    need = round((box_h - 1.0) / got, 3)
+                    if step and need >= step:
+                        need = step
+                    r[kind + "_scale"] = max(0.72, need)
                     n += 1
             log("■ %s 조정 %d/%d" % ("플로우노트" if kind == "flow" else "주제/요약",
                                      n, len(subset)))
 
     @staticmethod
     def _flow_probe(r, M):
-        rows = []
-        for line in r.get("flownote") or []:
-            cls = ' class="arrow"' if line.lstrip().startswith(("→", "⇒", "▶")) else ""
-            rows.append("<p%s>%s</p>" % (cls, prender.ESC(line)))
+        # ⚠ 재는 판과 찍는 판의 **짜임이 같아야** 한다. 예전엔 여기만 옛 markup
+        #   (`class="arrow"`, 단 감싸개 없음)이라 잰 높이가 실제와 달랐다.
         return ('<section class="pg"><div class="trim">'
                 '<div class="flow" style="left:%gmm;top:10mm;width:%gmm;'
-                'background:none">%s</div></div></section>'
-                % (M["flow"][0], M["flow"][2], "".join(rows)))
+                'background:none"><div class="flowin">%s</div></div>'
+                '</div></section>'
+                % (M["flow"][0], M["flow"][2],
+                   "".join(prender.flow_rows(r.get("flownote") or []))))
 
     @staticmethod
     def _topic_probe(r, M):

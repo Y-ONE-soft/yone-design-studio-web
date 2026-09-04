@@ -272,6 +272,8 @@ def left_page(p, M, folio):
 # ⚠ 줄이 화살표로 시작한다고 **줄 전체를 칠하면 안 된다** — 원본은 글자 단위다
 #   (완성본 6권 실측: 본문은 한 색, 기호 스타일만 따로 있다).
 _SYM = set("→⇒⟶⇨➔➜⟹←⟵↑↓↔⇔▶▸►◀‣")
+# ①②③… 로 시작하는 줄은 **묶음의 머리**다. 앞에 한 숨 띄워야 ①-② 가 눈에 갈린다.
+_SEC = set("①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳❶❷❸❹❺")
 _MD_BOLD = re.compile(r"\*\*(.+?)\*\*")
 
 
@@ -294,6 +296,16 @@ def flow_html(line):
     if buf:
         out.append(ESC("".join(buf)))
     return "".join(out)
+
+
+def flow_rows(lines):
+    """플로우노트 줄들 → `<p>` 목록. 묶음 머리 앞은 띄운다."""
+    out = []
+    for i, line in enumerate(lines):
+        head = line.lstrip()[:1] in _SEC
+        out.append('<p%s>%s</p>' % (' class="sec"' if head and i else "",
+                                    flow_html(line)))
+    return out
 
 
 def _line_est(txt, width_mm, size_pt):
@@ -338,8 +350,7 @@ def right_page(p, M, folio, category=""):
     # 플로우노트
     parts.append('<div class="flowchip" style="%s">%sFLOW NOTE</div>'
                  % (_box(fc[0], fc[1], fc[2], fc[3]), _svg("chip_flow")))
-    rows = ["<p>%s</p>" % flow_html(line)
-            for line in (p.get("flownote") or [])]
+    rows = flow_rows(p.get("flownote") or [])
     fsc = p.get("flow_scale", 1.0)
     fst = "" if fsc == 1.0 else ";font-size:%gpt;line-height:%gmm" % (
         M["flow_size"] * fsc, M["flow_lead"] * fsc)

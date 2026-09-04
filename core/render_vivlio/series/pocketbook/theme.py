@@ -79,11 +79,14 @@ METRICS = {
     "trans": [74.0, 150.0, 56.0], "trans_size": 5.9, "trans_lead": 3.2,
     "folio_y": 196.5, "folio_size": 6.0,
     # 오른쪽 면
-    "flow": [18.0, 18.31, 115.0, 41.0], "flow_size": 7.0, "flow_lead": 2.85,
+    # 플로우노트는 **8pt 가 기본**이고, 넘칠 때만 7pt 로 내린다(사용자 지시).
+    "flow": [18.0, 18.31, 115.0, 41.0], "flow_size": 8.0, "flow_lead": 3.2,
+    "flow_min_size": 7.0,           # 넘칠 때 내려가는 자리
+    "flow_sec_gap": 1.2,            # ①②③ 묶음 사이 띄움(mm)
     "flow_grid": 1.44, "flow_chip": [104.0, 12.86, 29.0, 5.45],
     # 모눈 배경은 원본에서 **불투명도 55%** 로 깔려 있다(마스터 실측).
     # 100% 로 깔면 글자보다 모눈이 세 보인다.
-    "flow_grid_alpha": 0.55,
+    "flow_grid_alpha": 0.3,
     "topic": [18.0, 59.31, 115.0, 23.09], "topic_size": 8.0,
     "topic_lead": 3.5, "topic_text_x": 29.8,
     "syn_panel": [18.09, 88.11, 114.82, 106.89],
@@ -166,6 +169,7 @@ def build_css(palette=None, metrics=None, highlight=None):
         "cardpad": "%g" % M["card_pad"],
         "mt_size": "%g" % M["memtest_size"], "mt_lead": "%g" % M["memtest_lead"],
         "flow_grid_alpha": "%g" % M["flow_grid_alpha"],
+        "flow_sec_gap": "%g" % M["flow_sec_gap"],
         "badge_size": "%g" % M["badge_size"],
         "badge_r": "%g" % M["badge_radius"],
         "ico_h": "%g" % M["icon_h"], "ico_dy": "%g" % M["icon_dy"],
@@ -313,6 +317,7 @@ html,body{margin:0;padding:0;background:#fff}
   font-family:PBDodam;font-size:__flow_size__pt;line-height:__flow_lead__mm;
   padding:2.5mm 3mm;box-sizing:border-box;columns:2;column-gap:3mm}
 .flow p{margin:0;break-inside:avoid}
+.flow p.sec{margin-top:__flow_sec_gap__mm}
 /* 색은 **기호에만**. 원본 문자 스타일 4종이 글자 단위로 붙어 있다. */
 .flow .sym{color:var(--flow-arrow)}
 .flow .sym2{color:var(--flow-sym2)}
