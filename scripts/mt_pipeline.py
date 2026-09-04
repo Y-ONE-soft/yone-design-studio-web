@@ -326,24 +326,39 @@ def _warn_glued_words(jd, log):
     for m in re.findall(r"[A-Za-z]+\.[A-Z][a-z]{2,}", blob):
         dot[m] = dot.get(m, 0) + 1
 
-    # 2) 붙어버린 긴 영단어 — 원고를 사전 삼아 분해되는 것만
+    # 2) 붙어버린 영단어 — **같은 문맥이 띄어쓴 형태로도 있으면** 붙은 것이다.
     #
-    # ⚠ 접미사가 그대로 단어인 낱말은 오탐이 된다
-    #   (2026-08-30 실측: `Predictability` → predict + ability 로 쪼개져 걸렸다).
-    #   뒷조각이 접미사류면 버리고, 소문자만으로 붙은 것은 양쪽 5자 이상만 본다.
-    # 단어 중간의 대문자(`PhysicalWarmth`)는 산문에서 거의 언제나 붙은 것이다.
-    _SUFFIX = set("""ability ability able ible ness ment ing ion tion sion less
-                     ful ship hood ward wards wise like ism ist ity ive ize
-                     ate ance ence ent ant age ary ory""".split())
+    # 길이 기준은 못 쓴다 (2026-09-04 실측: `feelsad` 7자, `expressedin` 11자가
+    # 14자 기준을 통과해 지면에 그대로 찍혔다). 그렇다고 낮추면
+    # `anymore`, `Lunchtime` 처럼 **띄어쓴 형태도 정상인 합성어**가 오탐이 된다.
+    #
+    # 그래서 단어만 보지 않고 **앞뒤 문맥까지** 본다. 마더텅 교재는 같은 지문이
+    # 20번 넘게 반복되므로, 붙은 곳이 있으면 같은 문장이 성한 형태로 다른
+    # 섹션에 거의 반드시 존재한다.
+    #   · "when we feelsad we move" → "when we feel sad we move" 가 있다 → 붙음
+    #   · "not anymore, because"    → "not any more, because" 는 없다 → 정상
+    # 단어 중간의 대문자는 산문에서 거의 언제나 붙은 것이다 (`PhysicalWarmth`).
+    CTX = 14
     glued = {}
-    for w in set(re.findall(r"[A-Za-z]{14,}", blob)):
-        if re.search(r"[a-z][A-Z]", w):        # 중간 대문자 — 붙은 것으로 본다
+    for w in set(re.findall(r"[A-Za-z]{6,}", blob)):
+        if re.search(r"[a-z][A-Z]", w):
             glued[w] = blob.count(w)
             continue
         lw = w.lower()
-        for i in range(5, len(lw) - 4):
-            head, tail = lw[:i], lw[i:]
-            if head in vocab and tail in vocab and tail not in _SUFFIX:
+        splits = []
+        for i in range(3, len(lw) - 2):
+            if lw[:i] in vocab and lw[i:] in vocab:
+                splits.append(i)
+        if not splits:
+            continue
+        at = blob.find(w)
+        if at < 0:
+            continue
+        pre = blob[max(0, at - CTX):at]
+        post = blob[at + len(w):at + len(w) + CTX]
+        for i in splits:
+            probe = pre + w[:i] + " " + w[i:] + post
+            if blob.find(probe) >= 0:
                 glued[w] = blob.count(w)
                 break
 
