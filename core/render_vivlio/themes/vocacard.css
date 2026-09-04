@@ -340,3 +340,33 @@ em { font-style: normal; font-weight: 500; color: var(--c-hl); }
 .gsec.cont { background: none; border-left-color: var(--sub);
              padding-top: 1.4mm; padding-bottom: 1.4mm; }
 .gsec.cont .t { font-size: 7pt; color: var(--sub); }
+
+/* ---------- 간지(앞·뒤) ----------
+ * 표지를 축소해 끼우지 않는다 — 재료(워드마크·UP 3D·분홍 바탕·초록)만 빌려
+ * 여백을 크게 둔 간지로 새로 그린다. 바탕은 도련까지 채운다. */
+.sheet {
+    margin: -23mm calc(-1 * var(--mgn-x)) -14mm; height: 216mm;
+    padding: 26mm 22mm 20mm; box-sizing: border-box;
+    display: flex; flex-direction: column; align-items: center;
+    text-align: center;
+    background: linear-gradient(#fedae7 0%, #fdc5d7 46%, #fdc5d7 100%);
+}
+.sheet.back { break-before: page; justify-content: center; }
+.sheet .wm { font: 900 15pt "Logo", "Elice"; color: var(--main);
+             letter-spacing: .04em; }
+.sheet .wm.ink { color: var(--c-ink); }
+.sheet .art { width: 62mm; margin: 16mm 0 14mm; }
+.sheet .art.sm { width: 34mm; margin: 0 0 10mm; }
+.sheet .rule { width: 14mm; height: .8mm; background: var(--main);
+               border-radius: .4mm; }
+.sheet .ln { margin-top: 6mm; font: 700 9pt "Elice"; color: var(--c-ink);
+             letter-spacing: -.01em; }
+.sheet .ln .bdg { display: inline-block; margin-left: 2.4mm;
+                  padding: .9mm 2.4mm .7mm; border-radius: 1.2mm;
+                  background: var(--main); color: #fff; font-size: 7.4pt; }
+.sheet .tag { margin-top: 2mm; font: 700 7pt "Elice"; color: #7b5966;
+              letter-spacing: .12em; }
+.sheet .tag:first-of-type { margin-top: 4mm; }
+.sheet .by { margin-top: auto; font: 900 7.4pt "Logo", "Elice";
+             color: var(--c-ink); letter-spacing: .06em; }
+.sheet.back .by { margin-top: 14mm; }

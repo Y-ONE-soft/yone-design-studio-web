@@ -53,12 +53,37 @@ def _chunks(items, cap=PAGE_CAP):
 
 class Renderer(VocabookRenderer):
 
-    def cover_placeholder(self):
-        """vocabook 버전은 `class="cover s-head"` 를 박아 둔다 — 이 계열엔 s-head
-        가 없어(s-text/s-supp/s-mock) :root 기본값(첫 섹션)에 우연히 얹혀 있었다.
-        실제로 쓰는 첫 섹션 클래스로 바꿔 명시적으로 맞춘다."""
-        html = super().cover_placeholder()
-        return html.replace('class="cover s-head"', 'class="cover s-text"', 1)
+    # ── 간지 ────────────────────────────────────────────────────────────
+    def sheet(self, kind):
+        """앞·뒤 간지 — **표지를 그대로 넣지 않는다.**
+
+        표지 PDF 를 축소해 끼웠더니 표지가 두 번 나오는 꼴이었다(지적). 표지의
+        재료(워드마크·UP 3D·분홍 바탕·초록)만 가져와 여백을 크게 둔 간지로 새로
+        그린다. 3D 그림은 표지 PDF 에서 뽑아 둔 `assets/up3d.png`.
+        """
+        o = self.o
+        brand = self.brand or "EEGOEEGO"
+        line = o.get("cover_line") or ""          # "이의고2 2학기 중간"
+        badge = o.get("cover_badge") or ""        # "어휘"
+        tag = o.get("cover_tagline") or []        # 영문 두 줄
+        by = o.get("author") or ""
+        run = self.running("", off=True, foot_off=True)
+        if kind == "front":
+            return (f'<section class="sheet front s-text" style="page:p-sheet">'
+                    f'{run}'
+                    f'<p class="wm">{esc(brand)}</p>'
+                    f'<img class="art" src="assets/up3d.png" alt="">'
+                    f'<div class="rule"></div>'
+                    f'<p class="ln">{esc(line)}'
+                    + (f'<span class="bdg">{esc(badge)}</span>' if badge else "")
+                    + f'</p>'
+                    f'<p class="by">{esc(by)}</p></section>')
+        return (f'<section class="sheet back s-text" style="page:p-sheet">'
+                f'{run}'
+                f'<img class="art sm" src="assets/up3d.png" alt="">'
+                f'<p class="wm ink">{esc(brand)}</p>'
+                + "".join(f'<p class="tag">{esc(t)}</p>' for t in tag)
+                + f'<p class="by">{esc(by)}</p></section>')
 
     def word_card(self, it):
         no = it["no"]
@@ -99,10 +124,11 @@ class Renderer(VocabookRenderer):
         PART 시작면의 첫 구간만 예외(헤더 바로 아래에 붙는다).
         cont=True 는 한 면에 다 못 담아 넘어온 뒷장(같은 구간)."""
         k = (" first" if first else "") + (" cont" if cont else "")
-        tail = "이어서" if cont else f"{n} words"
+        # 넘어온 장에는 낱말 수를 다시 적지 않는다(같은 구간이라 중복이고,
+        # "이어서" 같은 군더더기는 빼는 편이 낫다는 지적).
+        tail = "" if cont else f'<span class="n">{n} words</span>'
         return (f'<div{_refs.mark("#구간 소제목", "gsec" + k)}>'
-               f'<span class="t">{esc(group)}</span>'
-               f'<span class="n">{tail}</span></div>')
+               f'<span class="t">{esc(group)}</span>{tail}</div>')
 
     def part_flow(self, key, items):
         cls, page, title = PART_CLASS[key], PART_PAGE[key], PART_TITLE[key]
@@ -135,10 +161,11 @@ class Renderer(VocabookRenderer):
             items = [it for it in items if it["part"] == part][:s.get("n", 6)]
 
         by_part = {k: [it for it in items if it["part"] == k] for k in PART_ORDER}
-        body = [self.cover_placeholder()]
+        body = [self.sheet("front")]
         for k in PART_ORDER:
             if by_part[k]:
                 body.append(self.part_flow(k, by_part[k]))
+        body.append(self.sheet("back"))
 
         return ('<!doctype html><html lang="ko"><head><meta charset="utf-8">'
                 f"<title>{esc(self.title)}</title>"
