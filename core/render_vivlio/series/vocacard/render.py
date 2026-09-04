@@ -133,8 +133,11 @@ class Renderer(VocabookRenderer):
     def part_flow(self, key, items):
         cls, page, title = PART_CLASS[key], PART_PAGE[key], PART_TITLE[key]
         n = PART_ORDER.index(key) + 1
+        # 측면 라벨은 파트마다 한 칸씩 내려 단다 — 책을 넘길수록 아래로 가서
+        # 옆면에서 파트 위치가 보인다(상일보카가 Day 마다 하던 것을 파트 단위로).
+        step = (n - 1) * self.idx_step
         out = [f'<section class="{cls} day-open{self._op_cls()}" style="page:{page}">'
-              f'{self.running(title, str(n), 0)}'
+              f'{self.running(title, str(n), step)}'
               f'{self.day_head(n, label="PART", title=title)}']
         groups, order = {}, []
         for it in items:
