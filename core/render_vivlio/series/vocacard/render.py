@@ -70,22 +70,32 @@ class Renderer(VocabookRenderer):
         o.append("</article>")
         return "".join(o)
 
-    def kicker(self, group):
-        return (f'<div{_refs.mark("#구간 소제목", "sec-head")}>'
-               f'<span class="sec-badge">&middot;</span>'
-               f'<span class="sec-prompt">{esc(group)}</span></div>')
+    def kicker(self, group, n, first=False):
+        """구간 소제목 — 구간마다 **새 면에서 시작**한다(.gsec 의 break-before).
+        PART 시작면의 첫 구간만 예외(헤더 바로 아래에 붙는다)."""
+        k = " first" if first else ""
+        return (f'<div{_refs.mark("#구간 소제목", "gsec" + k)}>'
+               f'<span class="t">{esc(group)}</span>'
+               f'<span class="n">{n} words</span></div>')
 
     def part_flow(self, key, items):
         cls, page, title = PART_CLASS[key], PART_PAGE[key], PART_TITLE[key]
         n = PART_ORDER.index(key) + 1
         out = [f'<section class="{cls} day-open{self._op_cls()}" style="page:{page}">'
               f'{self.running(title, str(n), 0)}'
-              f'{self.day_head(n, label="PART", title=title, mark=False)}']
+              f'{self.day_head(n, label="PART", title=title)}']
+        # 구간별 낱말 수 — 소제목 오른쪽에 적는다(면마다 분량이 보인다)
+        size, order = {}, []
+        for it in items:
+            if it["group"] not in size:
+                size[it["group"]] = 0
+                order.append(it["group"])
+            size[it["group"]] += 1
         cur = object()
         for it in items:
             if it["group"] != cur:
                 cur = it["group"]
-                out.append(self.kicker(cur))
+                out.append(self.kicker(cur, size[cur], first=(cur == order[0])))
             out.append(self.word_card(it))
         out.append("</section>")
         return "".join(out)

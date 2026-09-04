@@ -60,28 +60,43 @@ def body_rect(doc):
     return _fitz().Rect(0, 0, w, h)
 
 
-def insert_page(doc, art, art_page, at, rect=None):
+def insert_page(doc, art, art_page, at, rect=None, fit=None, crop=None):
     """아트워크 한 장을 `at`(0-based) 자리에 끼운다.
 
     ⚠ **완성본이 도련 없이 뽑혀 있는 경우가 흔하다**(A4 210×297 vs 판형 216×303).
       그대로 끼우면 그 면만 작아지고, 뒤에 찍는 TrimBox 가 재단선을 3mm 안쪽으로
       잡아 **간지 가장자리가 잘린다.** 크기가 다르면 판형 한가운데 놓는다.
+
+    fit="cover"  판형과 **크기가 다른** 아트워크를 비율 유지로 확대·축소해 판형을
+                 덮는다(넘치는 쪽은 잘린다). 표지 원본(216×303)을 A5 내지 간지
+                 (154×216)로 쓰는 것처럼 **비율이 같고 크기만 다를 때** 쓴다.
+    crop=[x0,y0,x1,y1]  원본에서 이 영역(mm)만 가져온다. 펼침면 PDF 에서 뒤표지
+                 절반만 떼어 오는 자리.
     """
+    fitz = _fitz()
     r = art[art_page].rect
-    if rect is None or (abs(r.width - rect.width) < 0.1
-                        and abs(r.height - rect.height) < 0.1):
+    if crop:
+        r = fitz.Rect(crop[0] * PT, crop[1] * PT, crop[2] * PT, crop[3] * PT)
+    if not crop and not fit and (
+            rect is None or (abs(r.width - rect.width) < 0.1
+                             and abs(r.height - rect.height) < 0.1)):
         doc.insert_pdf(art, from_page=art_page, to_page=art_page, start_at=at)
         return
     pg = doc.new_page(pno=at, width=rect.width, height=rect.height)
-    x = (rect.width - r.width) / 2.0
-    y = (rect.height - r.height) / 2.0
-    pg.show_pdf_page(_fitz().Rect(x, y, x + r.width, y + r.height),
-                     art, art_page)
+    if fit == "cover":
+        s = max(rect.width / r.width, rect.height / r.height)
+        w, h = r.width * s, r.height * s
+    else:
+        w, h = r.width, r.height
+    x = (rect.width - w) / 2.0
+    y = (rect.height - h) / 2.0
+    pg.show_pdf_page(fitz.Rect(x, y, x + w, y + h), art, art_page,
+                     clip=r if crop else None)
 
 
-def replace_page(doc, art, art_page, at, rect=None):
+def replace_page(doc, art, art_page, at, rect=None, fit=None, crop=None):
     """`at`(0-based) 자리를 아트워크 한 장으로 교체."""
-    insert_page(doc, art, art_page, at, rect)
+    insert_page(doc, art, art_page, at, rect, fit=fit, crop=crop)
     doc.delete_page(at + 1)
 
 
@@ -124,12 +139,15 @@ def finish(pdf, spec, log=None, out=None):
 
     spec 키(전부 선택):
       art_pdf        아트워크 원본 PDF (간지·MEMO 면이 들어 있는 인디자인 완성본)
-      inserts        [{marker|at, pdf?, page, mode:"replace"|"insert"}]
+      inserts        [{marker|at, pdf?, page, mode:"replace"|"insert",
+                       fit?, crop?}]
                      marker = 렌더러가 심어둔 자리표시 텍스트(§DIV1§ 등)
                      at     = 1-based 쪽번호(마커 없이 위치로 지정)
+                     fit    = "cover" 면 판형에 맞춰 비율 유지 확대·축소
+                     crop   = [x0,y0,x1,y1] mm, 원본에서 그 영역만
       blank_fill     {"pdf"?, "page", "ignore"?}  빈 면 → MEMO 면
       end_on_left    {"pdf"?, "page"}  마지막 면이 왼쪽(짝수)이 되도록 한 장 보충
-      append         [{"pdf"?, "page", "redact"?}]  맨 뒤에 붙일 면
+      append         [{"pdf"?, "page", "redact"?, "fit"?, "crop"?}]  맨 뒤에 붙일 면
       trim           {"bleed": 3}  또는 {"rect": [x0,y0,x1,y1]}
       suffix         산출 파일명 접미사(예: "_최종"). 없으면 제자리 갱신.
     Returns: {"pdf": 경로, "pages": n, "marks": {...}}
@@ -165,10 +183,10 @@ def finish(pdf, spec, log=None, out=None):
         if art is None:
             log(f"[경고] 간지 원본 없음 — 건너뜀: {it}")
             continue
-        if it.get("mode", "replace") == "insert":
-            insert_page(doc, art, it.get("page", 0), at, body)
-        else:
-            replace_page(doc, art, it.get("page", 0), at, body)
+        fn = (insert_page if it.get("mode", "replace") == "insert"
+              else replace_page)
+        fn(doc, art, it.get("page", 0), at, body,
+           fit=it.get("fit"), crop=it.get("crop"))
         marks[it.get("marker") or f"@{at + 1}"] = at + 1
 
     # ② 빈 면 → MEMO
@@ -199,7 +217,8 @@ def finish(pdf, spec, log=None, out=None):
         if art is None:
             log(f"[경고] 뒤 간지 원본 없음 — 건너뜀: {ap}")
             continue
-        insert_page(doc, art, ap.get("page", 0), doc.page_count, body)
+        insert_page(doc, art, ap.get("page", 0), doc.page_count, body,
+                    fit=ap.get("fit"), crop=ap.get("crop"))
         if ap.get("redact"):
             redact(doc[-1], ap["redact"])
         marks["back"] = doc.page_count

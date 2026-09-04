@@ -2548,12 +2548,12 @@ _STEP1_A2_OX_INTRO_STYLE = "STEP 01 > B2_내용 종합 번호"
 # A2_OX문제 + 토큰 제거 + TF 버튼 duplicate 삽입. bracket 위 빈 단락 제거(≤5),
 # bracket 기준 유닛 분할(=프레임브레이크). bracket/빈 단락은 [기본 단락] 유지.
 
-def build_step1_a2(step_data, workbook_type="모의고사"):
+def build_step1_a2(step_data, ox_intro=True):
     st_box = _style("STEP1A2", "P")
     st_ox = _style("STEP1A2", "OX")
-    # W87: EBS/수능특강/교과서 내지는 이 스타일이 없다 — 모의고사(워크북_C)
-    # 계열에서만 발문을 심는다.
-    st_q = _STEP1_A2_OX_INTRO_STYLE if workbook_type == "모의고사" else None
+    # W87: 호출부가 명시적으로 끈 경우만 생략 (내지에 이 스타일 자체가
+    # 없는 계열 — steps_to_plan의 a2_ox_intro 문서 참조)
+    st_q = _STEP1_A2_OX_INTRO_STYLE if ox_intro else None
     # 5지선다 선지 전용 (템플릿 실측: STEP 01 > 하단 문제_선지)
     st_choice = "STEP 01 > 하단 문제_선지"
     units = []
@@ -4055,7 +4055,7 @@ STEP_BUILDERS = {
 
 # 원고 유형(EBS/교과서/모의고사) 분기가 필요한 빌더 — v1은 settings의
 # workbook_type으로 분기 (workbook 엔진은 미전달 = "" → 非EBS 처리).
-_CTX_BUILDERS = {"step1_c1", "step2_c2", "step1_a2"}
+_CTX_BUILDERS = {"step1_c1", "step2_c2"}
 
 
 # ── 지문번호 라벨 추출 (W11 — 독립 번호 프레임 갱신 op + 검수 게이트용) ──────
@@ -4290,7 +4290,7 @@ def ensure_step3_kinds(step3_data, log=None):
 
 
 def steps_to_plan(steps, exclude=None, workbook_type="모의고사",
-                  step_map=None):
+                  step_map=None, a2_ox_intro=True):
     """v1 content steps → {"format": "wb-flows-v1", "flows": [...],
     "unsupported": [스텝키]} — 미지원 스텝은 커버리지 리포트용으로 기록.
 
@@ -4299,6 +4299,12 @@ def steps_to_plan(steps, exclude=None, workbook_type="모의고사",
     step_map: 스텝→스토리 매핑 override (None = 모의고사 기본 STEP_MAP).
         지정 시 매핑에 없는 스텝은 배치 불가 → unsupported로 보고
         (EBS/수능특강 내지는 스텝 페이지 구성이 다르다).
+    a2_ox_intro: W87 O/X 발문("다음 글의 내용과 일치하면 O, …") 삽입 여부.
+        기본 True — 모의고사(워크북_C)·교과서(동일 내지)·EBS 리딩파워 전부
+        스타일 실측 확인됨. 내지가 아예 다른 계열(수능특강 분석/문제 —
+        B1/B2류 번호 스타일 자체가 없음, 스타일 인벤토리 실측)만 호출부에서
+        명시적으로 False를 넘긴다 — workbook_type만으로는 "EBS" 값이
+        EBS리딩파워/수능특강 두 계열에 겹쳐 못 가른다.
     """
     global _LABEL_ABBREV
     _LABEL_ABBREV = _detect_label_abbrev(steps)
@@ -4322,6 +4328,8 @@ def steps_to_plan(steps, exclude=None, workbook_type="모의고사",
         if step_key == "step1_c1":
             built = builder(step_data, workbook_type=workbook_type,
                             exclude_btm=("step1_c1_btm" in exclude))
+        elif step_key == "step1_a2":
+            built = builder(step_data, ox_intro=a2_ox_intro)
         elif step_key in _CTX_BUILDERS:
             built = builder(step_data, workbook_type=workbook_type)
         else:
