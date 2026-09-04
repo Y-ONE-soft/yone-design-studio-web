@@ -1524,14 +1524,17 @@ def _strip_step3_type_labels(paras, log=None):
         if re.search(r'[,，.。0-9_~／/]', t):
             continue
         nxt = _next_real(i)
-        # W88: 라벨이 새 문항 앞이 아니라 **이미 나온 발문의 선지 앞**에
-        # 낄 수도 있다 (여러 변형 섹션을 이어붙인 원고 — 발문 → 라벨 →
-        # 그 발문의 ①~⑤). 앞줄이 실제로 발문(물음표/…시오 종결)이어야만
-        # 인정 — 지문 문장 끝에 우연히 선지형 나열이 오는 경우와 구분.
-        nxt_is_choice = (_RE_S3_ANY_MARKER.match(nxt)
-                         and prv and _RE_S3_PROMPT_END.search(prv))
+        # W88: 라벨이 새 문항 앞이 아니라 **이미 나온 발문 바로 뒤**에 낄
+        # 수도 있다 (여러 변형 섹션을 이어붙인 원고 — 발문 → 라벨 → 그
+        # 발문의 선지/재인쇄 지문/답란). 뒤가 뭐든(선지·지문·표) 상관없이
+        # 앞줄이 실제로 발문(물음표/…시오 종결)이면 그 자체로 충분한 신호다
+        # — 진짜 발문 끝에 곧장 무관한 한글 구가 오는 경우는 없다.
+        # (조건 부연설명 등 꼬리가 붙어 _RE_S3_PROMPT_END의 끝-고정 조건을
+        # 못 맞추는 서술형 발문 대응 — "…쓰시오. (단, …말 것)")
+        prv_is_prompt = bool(prv) and bool(
+            re.search(r'[?？]|시오|세요|십시오', prv))
         if not (_RE_S3_ITEM_HEAD.match(nxt) or _RE_S3_QINTRO.search(nxt)
-               or nxt_is_choice):
+               or prv_is_prompt):
             continue
         (drop if _RE_S3_HANGUL_ANY.search(t) else maybe).add(i)
     # 영문만인 줄은 한글 유형 라벨이 이미 둘 이상 확인된 문서에서만 라벨로
