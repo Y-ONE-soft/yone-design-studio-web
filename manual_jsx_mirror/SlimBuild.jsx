@@ -16,6 +16,8 @@
 
 (function () {
 
+    var SCRIPT_VERSION = "2026-09-04 19:38";
+
     // ───────────────────────────────────────────────────────────────
     // settings.json 로드 + 로그 헬퍼
     // ───────────────────────────────────────────────────────────────
@@ -88,7 +90,8 @@
             if (!picked) { return; }
             target = app.documents[pickIdx];
         }
-        var msg = "아래 문서를 슬림버전으로 변환합니다." + NL + NL +
+        var msg = "슬림 변환 (스크립트 " + SCRIPT_VERSION + ")" + NL + NL +
+                  "아래 문서를 슬림버전으로 변환합니다." + NL + NL +
                   target.fullName.fsName + NL + NL +
                   "· 어휘 선택 2 / 본문 정리 / 내용 종합 / 어법 O/X / 빈칸 어법 삭제" + NL +
                   "· 본문 O/X 반쪽 병합, 문장 배열 적층 병합" + NL +
@@ -909,7 +912,7 @@
     writeLog("===== 완료 =====");
 
     if (MANUAL) {
-        alert("슬림 변환 완료" + NL + NL +
+        alert("슬림 변환 완료 (스크립트 " + SCRIPT_VERSION + ")" + NL + NL +
               "페이지: " + pagesBefore + "p → " + doc.pages.length + "p" + NL +
               "처리 섹션: " + actionCount + "개" + NL +
               "오버셋: " + overset + "건 / 누락 링크: " + missLink + "건" + NL + NL +
