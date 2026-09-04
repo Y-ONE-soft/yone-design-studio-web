@@ -312,8 +312,13 @@ html,body{margin:0;padding:0;background:#fff}
 .flow{position:absolute;overflow:hidden;background:var(--flow-bg)}
 .flow::before{content:"";position:absolute;left:0;top:0;right:0;bottom:0;
   background:url("img/flownote_grid.png") 0 0/100% 100% no-repeat;
-  opacity:__flow_grid_alpha__;pointer-events:none}
-.flowin{position:absolute;left:0;top:0;right:0;bottom:0;
+  opacity:__flow_grid_alpha__;pointer-events:none;z-index:0}
+/* ⚠ 단 감싸개는 **흐름 안에** 둬야 한다. 절대배치로 두면 높이를 안 정한 판
+   (실측용 판)에서 높이가 0 이 되어 **잉크가 하나도 안 나오고 측정이 통째로
+   실패한다**(`항목 52 vs 측정 면 0`). `height:100%` 는 부모가 높이를 안 주면
+   저절로 auto 라 실측 판에서도 자연 높이가 나온다.
+   z-index 는 깔개(::before)보다 위에 서려고 준다 — 안 주면 모눈이 글을 덮는다. */
+.flowin{position:relative;z-index:1;width:100%;height:100%;
   font-family:PBDodam;font-size:__flow_size__pt;line-height:__flow_lead__mm;
   padding:2.5mm 3mm;box-sizing:border-box;columns:2;column-gap:3mm}
 .flow p{margin:0;break-inside:avoid}
