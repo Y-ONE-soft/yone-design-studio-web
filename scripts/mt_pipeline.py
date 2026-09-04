@@ -327,11 +327,23 @@ def _warn_glued_words(jd, log):
         dot[m] = dot.get(m, 0) + 1
 
     # 2) 붙어버린 긴 영단어 — 원고를 사전 삼아 분해되는 것만
+    #
+    # ⚠ 접미사가 그대로 단어인 낱말은 오탐이 된다
+    #   (2026-08-30 실측: `Predictability` → predict + ability 로 쪼개져 걸렸다).
+    #   뒷조각이 접미사류면 버리고, 소문자만으로 붙은 것은 양쪽 5자 이상만 본다.
+    # 단어 중간의 대문자(`PhysicalWarmth`)는 산문에서 거의 언제나 붙은 것이다.
+    _SUFFIX = set("""ability ability able ible ness ment ing ion tion sion less
+                     ful ship hood ward wards wise like ism ist ity ive ize
+                     ate ance ence ent ant age ary ory""".split())
     glued = {}
     for w in set(re.findall(r"[A-Za-z]{14,}", blob)):
+        if re.search(r"[a-z][A-Z]", w):        # 중간 대문자 — 붙은 것으로 본다
+            glued[w] = blob.count(w)
+            continue
         lw = w.lower()
-        for i in range(4, len(lw) - 3):
-            if lw[:i] in vocab and lw[i:] in vocab:
+        for i in range(5, len(lw) - 4):
+            head, tail = lw[:i], lw[i:]
+            if head in vocab and tail in vocab and tail not in _SUFFIX:
                 glued[w] = blob.count(w)
                 break
 
