@@ -319,7 +319,8 @@ def _warn_glued_words(jd, log):
 
     walk(data)
     blob = "\n".join(texts)
-    vocab = set(w.lower() for w in re.findall(r"[A-Za-z]{3,}", blob))
+    # 두 글자 낱말(in, of, to …)이 빠지면 `expressedin` 을 못 잡는다.
+    vocab = set(w.lower() for w in re.findall(r"[A-Za-z]{2,}", blob))
 
     # 1) 마침표 뒤 공백 없이 대문자 — "relationship.The"
     dot = {}
@@ -346,7 +347,7 @@ def _warn_glued_words(jd, log):
             continue
         lw = w.lower()
         splits = []
-        for i in range(3, len(lw) - 2):
+        for i in range(2, len(lw) - 1):
             if lw[:i] in vocab and lw[i:] in vocab:
                 splits.append(i)
         if not splits:
@@ -364,11 +365,14 @@ def _warn_glued_words(jd, log):
 
     if not dot and not glued:
         return
-    log("[원고경고] 공백이 빠져 붙은 표현이 있습니다 — 원고 수정이 근본 해결입니다")
-    for k in sorted(dot, key=lambda x: -dot[x])[:12]:
-        log("           · %s (%d회)" % (k, dot[k]))
-    for k in sorted(glued, key=lambda x: -glued[x])[:12]:
-        log("           · %s (%d회)" % (k, glued[k]))
+    log("[원고경고] 공백이 빠져 붙은 표현 %d종 — 원고 수정이 근본 해결입니다"
+        % (len(dot) + len(glued)))
+    both = sorted(dot.items(), key=lambda kv: -kv[1]) \
+        + sorted(glued.items(), key=lambda kv: -kv[1])
+    for k, n in both[:25]:
+        log("           · %s (%d회)" % (k, n))
+    if len(both) > 25:
+        log("           … 그 밖 %d종" % (len(both) - 25))
 
 
 def stage_sero_new(st, log, run_dir):
