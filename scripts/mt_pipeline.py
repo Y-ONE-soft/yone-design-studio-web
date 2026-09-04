@@ -235,27 +235,53 @@ def sero_new_plan(st, log):
     for m in missing:
         groups.setdefault((m["year"], m["month"]), []).append(m["code"])
 
+    # 보충 폴더가 **코드를 파일명에 달고** 원고를 갖고 있으면 그쪽이 우선이다.
+    # 회차 폴더가 있어도 그 회차의 다른 문항만 들어있을 수 있다
+    # (2026-08-30 실측: 15강 210940 은 40번인데 "고1 21년 9월/워크북" 아래엔
+    #  "36-37번 워크북" 뿐이다. 원고는 "15강 문단 요약/워크북/Step3 15강 16번
+    #  210940.docx" 에 있다. 회차 폴더를 그대로 쓰면 엉뚱한 지문이 조판된다).
+    # 13강 보충은 파일명이 "고1 16년 6월 36번.hwpx" 식이라 코드가 없어
+    # 이 규칙에 걸리지 않는다 — 기존 동작 그대로다.
+    gang_dirs, _gerr = WorkbookSelectEngine._find_gang_manuscript_dirs(
+        ms_base, grade_num, st["gang"])
+    gang_codes = set()
+    if gang_dirs:
+        for root, _dirs, files in os.walk(gang_dirs[0]):
+            for fn in files:
+                if fn.startswith("~$"):
+                    continue
+                for c in re.findall(r"\d{6}", fn):
+                    gang_codes.add(c)
+
     plan = []
     orphan = []     # 회차 폴더가 없는 옛 기출 — 마더텅 N강 보충 폴더로
     for (yy, mm), codes in sorted(groups.items()):
+        here, moved = [], []
+        for c in codes:
+            (moved if c in gang_codes else here).append(c)
+        if moved:
+            log("[신규조판] %s년 %s월 중 %s — 보충 폴더에 코드별 원고가 있어 그쪽을 씁니다"
+                % (yy, int(mm), ", ".join(moved)))
+            orphan.extend(moved)
+        if not here:
+            continue
         d, err = WorkbookSelectEngine._find_manuscript_dir(
             ms_base, grade_num, int(yy), int(mm))
         if d:
-            plan.append((d, int(yy), int(mm), codes,
+            plan.append((d, int(yy), int(mm), here,
                          "%s년 %s월" % (yy, int(mm))))
         else:
             log("[신규조판] %s년 %s월 회차 폴더 없음 (%s) — 보충 원고로 넘김"
                 % (yy, int(mm), err))
-            orphan.extend(codes)
+            orphan.extend(here)
 
     if orphan:
-        dirs, err = WorkbookSelectEngine._find_gang_manuscript_dirs(
-            ms_base, grade_num, st["gang"])
-        if not dirs:
+        if not gang_dirs:
             raise RuntimeError(
                 "보충 원고 폴더를 찾지 못했습니다 (%s강): %s\n대상 코드: %s"
-                % (st["gang"], err, ", ".join(orphan)))
-        plan.append((dirs[0], 0, 0, orphan, "%s강 보충" % st["gang"]))
+                % (st["gang"], _gerr, ", ".join(orphan)))
+        plan.append((gang_dirs[0], 0, 0, sorted(set(orphan)),
+                     "%s강 보충" % st["gang"]))
     return plan
 
 
