@@ -48,6 +48,18 @@ def test_own_item_number_tag_requires_exact_match():
     assert _texts(_strip_step3_own_item_number_tag(rows)) == _texts(rows)
 
 
+def test_own_item_number_tag_merged_pipe_form():
+    """섹션 경계의 끝 태그는 번호+유형표기가 한 줄로 합쳐지기도 한다
+    ('19번｜심경') — 시작 태그(3줄)와 다른 모양이지만 같은 이웃 문항의
+    같은 편집용 표기다."""
+    from engines.workbook.parser import _strip_step3_own_item_number_tag
+    rows = _p("① a", "19번｜심경", "고2｜2026년 6월 부산광역시 교육청")
+    out = _texts(_strip_step3_own_item_number_tag(rows, item_num="19"))
+    assert out == ["① a", "고2｜2026년 6월 부산광역시 교육청"]
+    same = _texts(_strip_step3_own_item_number_tag(rows, item_num="20"))
+    assert same == _texts(rows)
+
+
 def test_exam_source_line_needs_year_and_origin_keyword():
     from engines.workbook.parser import _strip_step3_exam_source_line
     rows = _p("고2 2026년 6월 부산광역시 교육청",
