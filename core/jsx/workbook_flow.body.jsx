@@ -2431,18 +2431,27 @@ function _applyChoiceTabsOnce(doc, flowStories, op) {
         if (!rec) { continue; }
         var story = rec.story;
         try { story.recompose(); } catch (e0) {}
-        var texts = [], styles = [], paras = null;
+        // W89 재발 방지: texts(everyItem().contents)와 styles
+        // (everyItem().appliedParagraphStyle)를 **따로** 벌크 조회하면,
+        // 큰 스토리(스텝3 전체가 한 스토리)에서 드물게 두 배열의 항목이
+        // 서로 다른 단락을 가리키는 어긋남이 실측됐다(같은 원문자 짝
+        // 선택지에서 일부 행만 열 폭이 좁게 계산됨 — 폭 자체는 그
+        // 행 혼자 계산한 값과 일치해, 그룹으로 안 묶이고 홀로 처리된
+        // 정황). paras(getElements)를 먼저 확정하고 texts/스타일을
+        // **그 요소에서 직접** 뽑아 1:1 어긋남 가능성을 원천 차단한다.
+        var texts = [], paras = null;
         try {
-            texts = story.paragraphs.everyItem().contents;
-            styles = story.paragraphs.everyItem().appliedParagraphStyle;
-            if (!(texts instanceof Array)) { texts = [texts]; }
-            if (!(styles instanceof Array)) { styles = [styles]; }
+            paras = story.paragraphs.everyItem().getElements();
         } catch (e1) { continue; }
+        for (var pti = 0; pti < paras.length; pti++) {
+            try { texts.push(paras[pti].contents); }
+            catch (eTxt) { texts.push(""); }
+        }
 
         function isTabRow(x) {
             if (String(texts[x]).indexOf("\t") < 0) { return false; }
             var nm = "";
-            try { nm = styles[x].name; } catch (e) {}
+            try { nm = paras[x].appliedParagraphStyle.name; } catch (e) {}
             return nm.indexOf(styleTok) >= 0;
         }
 
