@@ -121,6 +121,21 @@ def api_ebs_files():
     return jsonify(EbsWorkbookEngine.list_files(unit_folder))
 
 
+# ── 리딩파워(기본) 워크북 폴더 탐색 API ──────────────────────────────────────
+
+@bp.route("/api/ebs-workbook-basic/units")
+def api_ebs_basic_units():
+    from engines.ebs_workbook_basic.engine import EbsWorkbookBasicEngine
+    return jsonify(EbsWorkbookBasicEngine.list_units())
+
+
+@bp.route("/api/ebs-workbook-basic/files")
+def api_ebs_basic_files():
+    from engines.ebs_workbook_basic.engine import EbsWorkbookBasicEngine
+    unit_folder = request.args.get("unit_folder", "")
+    return jsonify(EbsWorkbookBasicEngine.list_files(unit_folder))
+
+
 # ── 수능특강 워크북 폴더 탐색 API ─────────────────────────────────────────────
 
 @bp.route("/api/suneungteukgang-workbook/units")

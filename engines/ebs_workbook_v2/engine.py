@@ -76,58 +76,9 @@ class EbsWorkbookV2Engine(WorkbookV2Engine):
     # ── 1단계: parse — v1 위임 + 변형문제 문제모음 Step3 선라우팅 (W12) ─────
 
     def parse(self, uploaded_files, job_dir, log):
-        """v1 파서 위임 전에 Step3 원고 업로드를 공용 라우터로 선라우팅.
-
-        v1의 추가 업로드 Step3 판정은 파일명 "step3/스텝3/N번"만 인식해
-        "…123문제 [변형문제]….hwp" 류 문제모음이 일반 폴더로 들어가 어느
-        스텝에도 매핑되지 않고 조용히 유실된다 (W12 실증 — 게이트 G7).
-        배치 A (W33): 판정을 공용 라우터(workbook_v2/routing.py)로 확장 —
-        'STEP 03'·'177 문제'·'변형 문항' 토씨 변형 수용 + 정답/답지류가
-        'N번.<ext>' 표기로 v1의 Step3 라우팅('번.hwp' in)에 오라우팅되는
-        것 차단(루트 스테이징 — W18 D3 부류). 파싱 후 Step3 쌍방 대조로
-        침묵 누락 [오류] 차단. v1 무변경.
-        """
-        import unicodedata
-        from core.base import safe_copy
         from engines.ebs_workbook.engine import EbsWorkbookEngine
-        from engines.workbook_v2 import routing as _routing
-
-        manuscripts = uploaded_files.get("manuscripts")
-        if isinstance(manuscripts, list):
-            rest = []
-            uploads_dir = os.path.join(job_dir, "uploads")
-            step3_dir = os.path.join(uploads_dir, "Step3")
-            for fpath in manuscripts:
-                fname = os.path.basename(fpath)
-                if fname.startswith("manuscripts_"):
-                    fname = fname[len("manuscripts_"):]
-                fname_nfc = unicodedata.normalize("NFC", fname).strip()
-                if _routing.route_step3(fname_nfc):
-                    os.makedirs(step3_dir, exist_ok=True)
-                    staged = _routing.stage_step3_name(step3_dir, fname_nfc,
-                                                       log)
-                    safe_copy(fpath, os.path.join(step3_dir, staged))
-                    log(f"[v2] Step3 원고 선라우팅: {fname_nfc}")
-                elif (_routing.RE_QNUM.search(fname_nfc)
-                      and _routing.RE_ANSWER_TOKEN.search(fname_nfc)):
-                    # 'NN번_정답.hwp' — v1 추가 업로드 라우팅('번.hwp' in)이
-                    # Step3로 오라우팅하는 것 차단: 루트에 스테이징 (미사용
-                    # 정답본은 G9 stats로 보고)
-                    os.makedirs(uploads_dir, exist_ok=True)
-                    safe_copy(fpath, os.path.join(uploads_dir, fname_nfc))
-                    log(f"[v2] 정답/답지류 루트 스테이징 (Step3 오라우팅 "
-                        f"차단): {fname_nfc}")
-                else:
-                    rest.append(fpath)
-            if len(rest) != len(manuscripts):
-                uploaded_files = dict(uploaded_files, manuscripts=rest)
-        json_path = EbsWorkbookEngine().parse(uploaded_files, job_dir, log)
-        content = json.load(open(json_path, encoding="utf-8"))
-        _routing.reconcile_step3(
-            os.path.join(job_dir, "uploads", "Step3"),
-            (content.get("steps") or {}).get("step3"), log,
-            number_matching=False)
-        return json_path
+        return parse_with_step3_routing(EbsWorkbookEngine(), uploaded_files,
+                                        job_dir, log)
 
     # ── WorkbookV2Engine 훅 오버라이드 ──────────────────────────────────────
 
@@ -186,3 +137,59 @@ class EbsWorkbookV2Engine(WorkbookV2Engine):
         if not src or not os.path.exists(src):
             raise FileNotFoundError(f"내지 원본 없음: {src}")
         return src
+
+
+def parse_with_step3_routing(v1_engine, uploaded_files, job_dir, log):
+    """v1 파서 위임 전에 Step3 원고 업로드를 공용 라우터로 선라우팅.
+
+    v1의 추가 업로드 Step3 판정은 파일명 "step3/스텝3/N번"만 인식해
+    "…123문제 [변형문제]….hwp" 류 문제모음이 일반 폴더로 들어가 어느
+    스텝에도 매핑되지 않고 조용히 유실된다 (W12 실증 — 게이트 G7).
+    배치 A (W33): 판정을 공용 라우터(workbook_v2/routing.py)로 확장 —
+    'STEP 03'·'177 문제'·'변형 문항' 토씨 변형 수용 + 정답/답지류가
+    'N번.<ext>' 표기로 v1의 Step3 라우팅('번.hwp' in)에 오라우팅되는
+    것 차단(루트 스테이징 — W18 D3 부류). 파싱 후 Step3 쌍방 대조로
+    침묵 누락 [오류] 차단. v1 무변경.
+
+    v1_engine: 원고 수집을 위임할 v1 엔진 인스턴스 (완성=EbsWorkbookEngine,
+    기본=EbsWorkbookBasicEngine) — 시리즈가 달라도 선라우팅은 같다.
+    """
+    import unicodedata
+    from core.base import safe_copy
+    from engines.workbook_v2 import routing as _routing
+
+    manuscripts = uploaded_files.get("manuscripts")
+    if isinstance(manuscripts, list):
+        rest = []
+        uploads_dir = os.path.join(job_dir, "uploads")
+        step3_dir = os.path.join(uploads_dir, "Step3")
+        for fpath in manuscripts:
+            fname = os.path.basename(fpath)
+            if fname.startswith("manuscripts_"):
+                fname = fname[len("manuscripts_"):]
+            fname_nfc = unicodedata.normalize("NFC", fname).strip()
+            if _routing.route_step3(fname_nfc):
+                os.makedirs(step3_dir, exist_ok=True)
+                staged = _routing.stage_step3_name(step3_dir, fname_nfc, log)
+                safe_copy(fpath, os.path.join(step3_dir, staged))
+                log(f"[v2] Step3 원고 선라우팅: {fname_nfc}")
+            elif (_routing.RE_QNUM.search(fname_nfc)
+                  and _routing.RE_ANSWER_TOKEN.search(fname_nfc)):
+                # 'NN번_정답.hwp' — v1 추가 업로드 라우팅('번.hwp' in)이
+                # Step3로 오라우팅하는 것 차단: 루트에 스테이징 (미사용
+                # 정답본은 G9 stats로 보고)
+                os.makedirs(uploads_dir, exist_ok=True)
+                safe_copy(fpath, os.path.join(uploads_dir, fname_nfc))
+                log(f"[v2] 정답/답지류 루트 스테이징 (Step3 오라우팅 "
+                    f"차단): {fname_nfc}")
+            else:
+                rest.append(fpath)
+        if len(rest) != len(manuscripts):
+            uploaded_files = dict(uploaded_files, manuscripts=rest)
+    json_path = v1_engine.parse(uploaded_files, job_dir, log)
+    content = json.load(open(json_path, encoding="utf-8"))
+    _routing.reconcile_step3(
+        os.path.join(job_dir, "uploads", "Step3"),
+        (content.get("steps") or {}).get("step3"), log,
+        number_matching=False)
+    return json_path

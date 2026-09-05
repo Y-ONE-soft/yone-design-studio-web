@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% block title %}{{ engine.display_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <a href="/" class="back-link">교재 선택</a>
+  <h1>{{ engine.display_name }}</h1>
+</div>
+
+<form id="typeset-form" class="upload-form" enctype="multipart/form-data">
+
+  <!-- ── 단원 선택 + 파일명 미리보기 ───────────────────────── -->
+  <div class="issue-row">
+    <div class="issue-input-wrap">
+      <label class="section-label">단원 <span class="required">*</span></label>
+      <select name="lesson" id="unit-select" class="issue-input u-w-240"
+              onchange="onUnitChange()">
+        <option value="">불러오는 중...</option>
+      </select>
+      <input type="hidden" name="lesson_folder" id="unit-folder-hidden">
+    </div>
+    <div class="issue-input-wrap u-ml-12">
+      <label class="section-label">파일명 (워크북 뒤 &mdash; 선택)</label>
+      <input type="text" name="filename_stem" id="filename-stem" class="issue-input u-w-200"
+             placeholder="미입력 시 (리딩파워N강)"
+             oninput="updateFilenamePreview()">
+    </div>
+    <div class="filename-preview-wrap u-ml-20">
+      <label class="section-label">생성될 파일명</label>
+      <div class="filename-preview" id="filename-preview">&mdash;</div>
+    </div>
+  </div>
+
+  <!-- ── 간지 문구 두 줄 (선택 — 미입력 시 '리딩파워 / N강') ────────── -->
+  <div class="issue-row">
+    <div class="issue-input-wrap">
+      <label class="section-label">간지 첫 줄 (선택)</label>
+      <input type="text" name="divider_line1" id="divider-line1" class="issue-input u-w-200"
+             placeholder="미입력 시 리딩파워">
+    </div>
+    <div class="issue-input-wrap u-ml-12">
+      <label class="section-label">간지 둘째 줄 (선택)</label>
+      <input type="text" name="divider_line2" id="divider-line2" class="issue-input u-w-200"
+             placeholder="미입력 시 N강">
+    </div>
+  </div>
+
+  <!-- ── 원고 파일 (자동 수집) ──────────────────────────────── -->
+  <div id="auto-files-section" class="hidden">
+    <div class="section-label u-mb-4">단원 폴더 원고 (Reading Power 유형편(기본) / 단원 / 워크북)</div>
+    <div class="file-list info-box" id="auto-file-list">
+      <span class="info-box-empty">단원을 선택하면 자동으로 파일 목록이 표시됩니다</span>
+    </div>
+    <input type="hidden" name="manuscript_folder" id="manuscript-folder-hidden">
+  </div>
+
+  <!-- ── 추가 원고 업로드 ──────────────────────────────────── -->
+  <div class="section-label u-mb-4">추가 원고 파일 (선택)</div>
+  <div class="slot-grid">
+    <div class="slot u-grid-full" id="slot-manuscripts" data-key="manuscripts">
+      <label>추가 업로드 (단원 폴더에 없는 파일)</label>
+      <div class="drop-zone" ondragover="event.preventDefault()"
+           ondrop="handleDrop(event, 'manuscripts')">
+        <input type="file" name="manuscripts"
+               id="input-manuscripts" multiple
+               onchange="handleFileSelect(this, 'manuscripts')">
+        <div class="drop-label">
+          <span class="drop-icon">+</span>
+          <span class="drop-text">드래그하거나 클릭해서 추가 (여러 파일 가능)</span>
+          <span class="file-name" id="name-manuscripts"></span>
+        </div>
+      </div>
+      <div id="file-list-manuscripts" class="file-list"></div>
+    </div>
+  </div>
+
+  {% include "_slim_opt.html" %}
+
+  {% include "_review_agent_opt.html" %}
+
+  <button type="submit" class="run-btn" id="run-btn">
+    <span class="btn-icon">&#9654;</span> 조판 실행
+  </button>
+</form>
+
+<!-- ── 진행 상태 ──────────────────────────────────────────── -->
+<div id="progress-area" class="progress-area hidden">
+  <div class="progress-header">
+    <h2>진행 상태</h2>
+    <button type="button" id="cancel-btn" class="cancel-btn hidden" onclick="cancelJob()">
+      취소
+    </button>
+    <div class="step-indicators">
+      <span class="step" id="step-parse">&#9312; 파싱</span>
+      <span class="step-sep">&rarr;</span>
+      <span class="step" id="step-typeset">&#9313; 조판</span>
+      <span class="step-sep">&rarr;</span>
+      <span class="step" id="step-verify">&#9314; 검수</span>
+    </div>
+  </div>
+  <pre id="log-area" class="log-area"></pre>
+</div>
+
+<!-- ── 결과 ─────────────────────────────────────────────────── -->
+<div id="result-area" class="result-area hidden"></div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  var _unitFolders = {};  // label -> folder
+
+  // ── 단원 목록 로드 ───────────────────────────────────────
+  function loadUnits() {
+    var unitSel = document.getElementById('unit-select');
+    fetch('/api/ebs-workbook-basic/units')
+      .then(function(r) { return r.json(); })
+      .then(function(units) {
+        _unitFolders = {};
+        unitSel.innerHTML = '<option value="">선택</option>';
+        units.forEach(function(u) {
+          _unitFolders[u.label] = u.folder;
+          var opt = document.createElement('option');
+          opt.value = u.label;
+          opt.textContent = u.label;
+          unitSel.appendChild(opt);
+        });
+      })
+      .catch(function(e) {
+        console.error('단원 로드 실패:', e);
+        unitSel.innerHTML = '<option value="">로드 실패</option>';
+      });
+  }
+  loadUnits();
+
+  function onUnitChange() {
+    var unitLabel = document.getElementById('unit-select').value;
+    var unitFolder = _unitFolders[unitLabel] || '';
+    document.getElementById('unit-folder-hidden').value = unitFolder;
+
+    clearAutoFiles();
+    updateFilenamePreview();
+
+    if (!unitLabel || !unitFolder) return;
+
+    fetch('/api/ebs-workbook-basic/files?unit_folder=' + encodeURIComponent(unitFolder))
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var section = document.getElementById('auto-files-section');
+        var listEl = document.getElementById('auto-file-list');
+        section.classList.remove('hidden');
+
+        if (data.workbook_dir) {
+          document.getElementById('manuscript-folder-hidden').value = data.workbook_dir;
+        }
+
+        if (!data.files || data.files.length === 0) {
+          listEl.innerHTML = '<span class="status-text status-text--err">단원 폴더에 원고 파일이 없습니다</span>';
+          return;
+        }
+
+        var usedCount = 0;
+        var html = '';
+        data.files.forEach(function(f) {
+          if (f.used) {
+            usedCount++;
+            html += '<div class="info-box-row info-box-row--ok">&#9989; ' + f.name + '</div>';
+          } else {
+            html += '<div class="info-box-row info-box-row--off">&#10060; ' + f.name + ' <span class="off-tag">(미사용)</span></div>';
+          }
+        });
+        html = '<div class="info-box-summary">사용 ' + usedCount + '개 / 전체 ' + data.files.length + '개</div>' + html;
+        listEl.innerHTML = html;
+      });
+  }
+
+  function clearAutoFiles() {
+    document.getElementById('auto-files-section').classList.add('hidden');
+    document.getElementById('auto-file-list').innerHTML =
+      '<span class="info-box-empty">단원을 선택하면 자동으로 파일 목록이 표시됩니다</span>';
+    document.getElementById('manuscript-folder-hidden').value = '';
+  }
+
+  // 단원 라벨 → 강 번호 ('Unit 20 Example, 1, 2' → '20',
+  // 'Chapter1 Unit1 Practice 3,4' → '1'). 엔진 unit_number()와 같은 규칙.
+  function unitNumber(label) {
+    var m = /Unit\s*\.?\s*(\d+)/i.exec(label);
+    if (m) return m[1];
+    m = /\d+/.exec(label);
+    return m ? m[0] : '';
+  }
+
+  function updateFilenamePreview() {
+    var unit = document.getElementById('unit-select').value || '';
+    var stem = (document.getElementById('filename-stem').value || '').trim();
+    if (!unit && !stem) {
+      document.getElementById('filename-preview').textContent = '—';
+      return;
+    }
+    if (!stem) {
+      var num = unitNumber(unit);
+      stem = num ? '(리딩파워' + num + '강)' : '(리딩파워)';
+    }
+    document.getElementById('filename-preview').textContent =
+      '세종1_워크북' + stem + '_내지_v2.indd';
+  }
+</script>
+<script src="{{ url_for('static', filename='js/review_agent_ui.js') }}"></script>
+<script src="{{ url_for('static', filename='js/typeset.js') }}"
+        data-material="{{ engine.material_id }}"></script>
+{% endblock %}

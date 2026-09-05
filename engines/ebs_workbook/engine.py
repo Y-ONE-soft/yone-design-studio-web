@@ -61,6 +61,23 @@ class EbsWorkbookEngine(BaseEngine):
             cfg = json.load(f)
         return resolve_config(cfg, _PATH_KEYS)
 
+    @staticmethod
+    def _alt_target(alternatives: dict, name_nfc: str):
+        """대체 파일명 매핑 조회 — 공백/대소문자 차이를 무시한다.
+
+        실물 원고는 같은 뜻의 파일명이 토씨만 다르게 온다
+        (' Step2 A1 어법선택(문법 기본 문제).docx' 앞 공백, 'Step2 B1
+        어법 OX 정답지.docx' 중간 공백). 정확 일치로만 보면 매핑이 조용히
+        빗나가 그 스텝 원고가 통째로 빠진다.
+        """
+        def _key(n):
+            return _nfc(n).replace(" ", "").lower()
+        want = _key(name_nfc)
+        for alt_name, target in alternatives.items():
+            if _key(alt_name) == want:
+                return target
+        return None
+
     @classmethod
     def _is_step3_manuscript(cls, name_nfc: str) -> bool:
         """단원 폴더의 이 파일이 Step3(실전문제) 원고인가 — 이름 모양만
@@ -201,9 +218,10 @@ class EbsWorkbookEngine(BaseEngine):
                 used_files.add(matched)
 
         alternatives = cfg.get("manuscript_file_alternatives", {})
-        for alt_name, target_name in alternatives.items():
-            if target_name not in used_files and alt_name in all_names:
-                used_files.add(alt_name)
+        for fn in all_names:
+            target_name = cls._alt_target(alternatives, fn)
+            if target_name and target_name not in used_files:
+                used_files.add(fn)
 
         files = []
         for raw in sorted(os.listdir(unit_path)):
@@ -294,8 +312,8 @@ class EbsWorkbookEngine(BaseEngine):
                         # 그 외 일반 파일은 모두 복사 (C2 정답지 같이 풀이용 답지 포함).
                         # 대체 파일명 매핑은 기대 파일명이 없는 경우에만 발동.
                         dest_name = name
-                        if name in alternatives:
-                            target = alternatives[name]
+                        target = self._alt_target(alternatives, name)
+                        if target:
                             target_path = os.path.join(manuscript_dir, target)
                             # 원본 폴더 존재 여부는 합집합 목록으로 판정
                             # (미러/GDrive 어느 쪽에 있어도 '있음')

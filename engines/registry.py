@@ -33,6 +33,8 @@ from engines.whitebook_v2.engine import WhitebookV2Engine
 from engines.seseospecial_v2.engine import SeseoSpecialV2Engine
 from engines.textbook_workbook_v2.engine import TextbookWorkbookV2Engine
 from engines.ebs_workbook_v2.engine import EbsWorkbookV2Engine
+from engines.ebs_workbook_basic_v2.engine import (
+    EbsWorkbookBasicV2Engine)
 from engines.suneungteukgang_workbook_v2.engine import (
     SuneungteukgangWorkbookV2Engine)
 from engines.slim_merge.engine import SlimMergeEngine
@@ -79,6 +81,7 @@ _ENGINE_LIST = [
     SeseoSpecialV2Engine(),
     TextbookWorkbookV2Engine(),
     EbsWorkbookV2Engine(),
+    EbsWorkbookBasicV2Engine(),
     SuneungteukgangWorkbookV2Engine(),
     SlimMergeEngine(),
     MockexamHorizMergeEngine(),

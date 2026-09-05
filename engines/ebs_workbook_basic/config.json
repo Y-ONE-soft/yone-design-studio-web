@@ -41,11 +41,13 @@
     "step2_c2_alt": "Step2 C2 영작배열.docx"
   },
   "manuscript_file_alternatives": {
+    "_doc": "실측 방언 → 기대 파일명 (공백/대소문자 무시 매칭이라 앞뒤 공백·중간 띄어쓰기 변형은 여기 안 적어도 잡힌다)",
     "Step1 C2 빈칸어휘 해설지.docx": "Step1 C2 빈칸어휘 정답지.docx",
     "Step1 C2 빈칸어휘 정답.docx": "Step1 C2 빈칸어휘 정답지.docx",
     "Step2 C1 빈칸어법 해설지.docx": "Step2 C1 빈칸어법 정답지.docx",
     "Step2 C1 빈칸어법 정답.docx": "Step2 C1 빈칸어법 정답지.docx",
     "Step2 A1 어법 객관식.docx": "Step2 A1 어법선택(객관식).docx",
+    "Step2 A1 어법 객관식 문제.docx": "Step2 A1 어법선택(객관식).docx",
     "Step2 A1 어법선택(문법 기본 문제).docx": "Step2 A1 어법선택(객관식).docx"
   },
   "needs_underline": [
