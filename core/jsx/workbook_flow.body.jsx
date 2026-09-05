@@ -2388,13 +2388,6 @@ function dropStandalonePrompts(doc, flowStories) {
 // 넘치면 비그리드 최소 간격으로 폴백, 그래도 넘치면 [경고].
 function _applyChoiceTabsOnce(doc, flowStories, op) {
     try { doc.recompose(); } catch (eRecomposeAll) {}
-    // W89: recompose()가 반환된 뒤에도 방금 페이지 배치 라운드가 옮긴
-    // 일부 단락의 문자 기하(chars[].horizontalOffset)가 즉시 갱신되지
-    // 않는 경우가 실측됐다(진단: 이 스크립트 실행이 끝난 뒤 별도
-    // do script로 같은 계산을 다시 돌리면 항상 정상 — 계산 로직은
-    // 정확, InDesign 내부 컴포지션이 유휴 시간을 필요로 한다는 뜻).
-    // 짧게 대기해 실측 전에 확정시킨다(ExtendScript 통상 관행).
-    try { $.sleep(300); } catch (eSleep) {}
     var grid = op.grid || 12.7;
     var minGap = (op.min_gap === undefined || op.min_gap === null)
         ? 2 : op.min_gap;
@@ -2461,15 +2454,6 @@ function _applyChoiceTabsOnce(doc, flowStories, op) {
             var j = i;
             while (j < texts.length && isTabRow(j)) { j++; }
             // ── 그룹 [i, j) 처리 ──
-            // W89 재발 방지: 문서 전체 recompose 한 번으로는 다열 선지가
-            // 여러 개일 때 뒤쪽 그룹(예: 'habit'/'intelligence' 짝)까지
-            // 전부 안정화되지 않는 경우가 실측됐다(같은 그룹 안 일부 행만
-            // 다른 열2 폭) — 그룹마다 측정 직전에 다시 recompose한다.
-            try { doc.recompose(); } catch (eRecomposeGroup) {}
-            if (paras === null) {
-                try { paras = story.paragraphs.everyItem().getElements(); }
-                catch (e2) { break; }
-            }
             var rows = [];
             var maxTabs = 0;
             for (var r = i; r < j; r++) {
@@ -2608,14 +2592,15 @@ function _applyChoiceTabsOnce(doc, flowStories, op) {
 
 // W89 (고1 26년 9월 학평 변형 실증 — 사용자 지적 "정렬이 왜 이렇게
 // 엉망이야"): 같은 그룹 안에서 일부 행만 다른(더 좁은) 열2 탭스톱을 받는
-// 결함 실측 — 앞선 페이지 배치 라운드(문제단위킵/발문고아킵)가 방금 옮긴
-// 단락 중 일부의 기하가, doc.recompose() 한 번(또는 그룹마다 recompose)
-// 으로도 이 실행 안에서는 완전히 갱신되지 않을 때가 있었다(같은 문서를
-// 저장 후 다시 열어 같은 함수를 재실행하면 즉시 균일해짐 — 계산 로직
-// 자체는 정확, 측정 시점만 이르다). 페이지 배치도 라운드를 여러 번
-// 돌려 수렴시키는 이 코드베이스 관행과 같은 방식으로 — 한 번 더
-// 실행해 자체 교정한다(멱등 — 이미 맞은 값은 그대로 재계산될 뿐이라
-// 두 번째 패스가 다른 그룹을 깨뜨리지 않는다).
+// 결함의 진짜 원인은 _applyChoiceTabsOnce 안에서 texts/styles를
+// everyItem().contents / everyItem().appliedParagraphStyle로 **따로**
+// 벌크 조회하던 것 — 스텝3 전체가 한 스토리라 단락 수가 많은 문서에서
+// 두 배열이 서로 다른 단락을 가리키는 어긋남이 실측됐다(고쳤음: 이제
+// 단일 getElements() 배열에서 직접 뽑는다). 페이지 배치도 라운드를
+// 여러 번 돌려 수렴시키는 이 코드베이스 관행과 같은 방식으로 — 혹시
+// 남은 미세한 어긋남까지 잡도록 한 번 더 실행해 자체 교정한다(멱등 —
+// 이미 맞은 값은 그대로 재계산될 뿐이라 두 번째 패스가 다른 그룹을
+// 깨뜨리지 않는다).
 function applyChoiceTabs(doc, flowStories, op) {
     _applyChoiceTabsOnce(doc, flowStories, op);
     _applyChoiceTabsOnce(doc, flowStories, op);
