@@ -44,7 +44,28 @@ def _is_answer_or_explanation(name_nfc: str) -> bool:
 
 
 class EbsWorkbookEngine(BaseEngine):
-    """EBS 리딩파워(유형편 완성) 등 EBS 시리즈 워크북 조판 엔진."""
+    """EBS 리딩파워(유형편 완성) 등 EBS 시리즈 워크북 조판 엔진.
+
+    config/단원 폴더 구조는 클래스 훅으로 열어 둔다 — 같은 원고 수집
+    로직을 다른 EBS 시리즈(리딩파워 유형편 기본)가 재사용한다:
+      · CONFIG_PATH        : 엔진별 config.json
+      · _resolve_workbook_dir: 단원 폴더 → 실제 원고 폴더
+        (완성=단원 폴더 자신, 기본=그 아래 '워크북' 폴더)
+    """
+
+    CONFIG_PATH = _CONFIG_PATH
+
+    @classmethod
+    def _cfg(cls) -> dict:
+        with open(cls.CONFIG_PATH, encoding="utf-8") as f:
+            cfg = json.load(f)
+        return resolve_config(cfg, _PATH_KEYS)
+
+    @classmethod
+    def _resolve_workbook_dir(cls, unit_path: str) -> str:
+        """단원 폴더 안에서 원고가 실제로 놓인 폴더. 완성 시리즈는 단원
+        폴더 자신 ('Unit 15 워크북/Step1 …')."""
+        return unit_path
 
     @property
     def material_id(self) -> str:
@@ -82,16 +103,16 @@ class EbsWorkbookEngine(BaseEngine):
 
     # ── 폴더 탐색 API용 헬퍼 ────────────────────────────────────────────
 
-    @staticmethod
-    def _series_path():
-        cfg = _load_config()
+    @classmethod
+    def _series_path(cls):
+        cfg = cls._cfg()
         return os.path.join(cfg["ebs_base"], cfg["fixed_series"])
 
-    @staticmethod
-    def list_units():
+    @classmethod
+    def list_units(cls):
         """리딩파워(고정 시리즈) 안의 워크북 단원 목록."""
-        cfg = _load_config()
-        base = EbsWorkbookEngine._series_path()
+        cfg = cls._cfg()
+        base = cls._series_path()
         # 미러 ∪ GDrive 합집합 — 미러 단독 listdir 금지 (2026-08-07 사고).
         # 새로 만든 단원 폴더가 미러 동기화 전이면 UI 목록에서 통째로 사라진다.
         from engines.final.extractor import list_manuscript_entries
@@ -117,11 +138,12 @@ class EbsWorkbookEngine(BaseEngine):
         result.sort(key=lambda x: _unit_sort_key(x["folder"]))
         return result
 
-    @staticmethod
-    def list_files(unit_folder):
+    @classmethod
+    def list_files(cls, unit_folder):
         """단원 폴더 안의 원고 파일 목록 + 사용 여부 표시."""
-        cfg = _load_config()
-        unit_path = os.path.join(EbsWorkbookEngine._series_path(), unit_folder)
+        cfg = cls._cfg()
+        unit_path = cls._resolve_workbook_dir(
+            os.path.join(cls._series_path(), unit_folder))
         # 미러 redirect — Drive zombie 시 GDrive listdir EDEADLK 회피
         from engines.final.extractor import _resolve_local_mirror as _rlm
         unit_path = _rlm(unit_path, None)
@@ -204,7 +226,7 @@ class EbsWorkbookEngine(BaseEngine):
     # ── 1단계: 원고 폴더 → content.json ─────────────────────────────────
 
     def parse(self, uploaded_files: dict, job_dir: str, log) -> str:
-        cfg = _load_config()
+        cfg = self._cfg()
 
         # 시리즈는 고정 (Reading Power 유형편(완성)). UI에서는 단원만 선택.
         series = cfg.get("fixed_series", "")
@@ -342,7 +364,7 @@ class EbsWorkbookEngine(BaseEngine):
     # ── 2단계: JSX 준비 ─────────────────────────────────────────────────
 
     def prepare_jsx(self, json_path: str, job_dir: str, log) -> str:
-        cfg = _load_config()
+        cfg = self._cfg()
 
         series = cfg.get("fixed_series", "")
         unit = self._read_meta_str(job_dir, "lesson", "")
@@ -422,7 +444,7 @@ class EbsWorkbookEngine(BaseEngine):
     # ── 3단계: 검수 ─────────────────────────────────────────────────────
 
     def verify(self, job_dir: str, log) -> dict:
-        cfg = _load_config()
+        cfg = self._cfg()
         max_overflow = cfg["verify"]["max_overflow"]
 
         log_path = os.path.join(job_dir, cfg["log_filename"])
