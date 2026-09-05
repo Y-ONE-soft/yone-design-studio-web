@@ -1697,6 +1697,12 @@ def _s3_assign_slots(pre, BG):
                           or _RE_ANS_PAREN_COLON.match(t)
                           or R.ANS_MARK_BLANK_ROW.match(t)  # ⓐ __ ⓑ __
                           or R.ANS_UL_ROW.match(t))    # W57: 밑줄런 답란
+        if not is_row and _RE_ANS_NUM_LABEL_ROW.match(t):
+            # W89: 맨 괄호숫자("(1)")는 위치 신호로만 — 답표 행으로 이미
+            # 확정된 줄 바로 뒤일 때만 같은 표의 다음 행으로 인정한다.
+            prev = meaningful[x - 1] if x > 0 else None
+            if prev and prev["eff"] == "AnsL":
+                is_row = True
         if not (is_head or is_row):
             continue
         # 열 머리는 바로 뒤에 기입 줄이 와야 한다 (오검출 차단)
@@ -1705,6 +1711,7 @@ def _s3_assign_slots(pre, BG):
             if not (nxt and (_RE_ANS_ARROW_ROW.match(nxt["tclean"])
                              or _RE_ANS_BLANK_ROW.match(nxt["tclean"])
                              or _RE_ANS_PAREN_COLON.match(nxt["tclean"])
+                             or _RE_ANS_NUM_LABEL_ROW.match(nxt["tclean"])
                              or _is_anslabel_head(nxt["tclean"]))):
                 continue
         row["eff"] = "AnsL"

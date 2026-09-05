@@ -1834,6 +1834,131 @@ def _split_step3_inline_cond_marker(paras, log=None):
     return out
 
 
+def _s3_join_cells(cell_paras, sep="\t"):
+    """표 셀이 낱개 단락으로 쪼개진 것을 탭으로 이어붙여 한 단락으로."""
+    texts = [_s3_text(p) for p in cell_paras]
+    runs = []
+    for k, p in enumerate(cell_paras):
+        if k:
+            runs.append({"t": sep, "ul": False})
+        p_runs = p.get('runs') if isinstance(p, dict) else None
+        runs.extend(p_runs or [{"t": texts[k], "ul": False}])
+    return {"text": sep.join(texts), "runs": runs}
+
+
+# W89 (같은 잡 — 사용자 지적 "선지 정렬 엉망"/"이건 뭐야"): docx 표로 만든
+# (A)/(B) 짝단어 선택지("① memory\tsharpens" 형태)가 표 추출에서 행/열
+# 구조를 잃고 원문자·단어1·단어2가 각각 낱개 단락이 됐다 — 분류기는
+# "① 텍스트" 한 줄이어야 선지로 알아본다(골든 r5c04mock211 관행: 같은
+# 내용이 한 줄이면 정상 인식). 원문자 단독 줄 + 뒤따르는 짧은 무구두점
+# 셀들을 다시 한 줄로 잇는다. 우연한 단독 원문자 줄 오탐 방지 — **같은
+# 열 수의 행이 연속 2개 이상**일 때만 표로 인정(반복이 신뢰 신호).
+_RE_S3_LONE_CIRCLED = re.compile(r'^[①-⑩]$')
+_RE_S3_TABLE_CELL = re.compile(r'^[^.!?~。！？_]{1,40}$')
+_RE_S3_COL_LABEL_CELL = re.compile(r'^\(?[A-Za-z0-9]{1,2}\)?$')
+
+
+def _merge_step3_table_choice_cells(paras, log=None):
+    """원문자 단독 줄 + 셀 n개 (연속 2행+) → '①\\t셀1\\t셀2' 한 줄로 재결합.
+    바로 앞의 열 라벨 줄(n개, 예 '(A)' '(B)')도 함께 이어붙인다."""
+    n = len(paras)
+
+    def _t(i):
+        return _s3_text(paras[i]) if 0 <= i < n else None
+
+    def _row_cells(start):
+        cells = []
+        k = start + 1
+        while k < n:
+            ct = _t(k)
+            if not ct or _RE_S3_LONE_CIRCLED.match(ct) \
+                    or not _RE_S3_TABLE_CELL.match(ct):
+                break
+            cells.append(k)
+            k += 1
+        return cells
+
+    out = []
+    merged_rows = 0
+    i = 0
+    while i < n:
+        ti = _t(i)
+        if ti and _RE_S3_LONE_CIRCLED.match(ti):
+            cells = _row_cells(i)
+            nxt_start = cells[-1] + 1 if cells else i + 1
+            nxt_t = _t(nxt_start)
+            nxt_cells = (_row_cells(nxt_start)
+                        if nxt_t and _RE_S3_LONE_CIRCLED.match(nxt_t) else [])
+            if len(cells) >= 2 and len(nxt_cells) == len(cells):
+                n_cols = len(cells)
+                if (len(out) >= n_cols and all(
+                        _RE_S3_COL_LABEL_CELL.match(_s3_text(p) or '')
+                        for p in out[-n_cols:])):
+                    header_paras = out[-n_cols:]
+                    del out[-n_cols:]
+                    out.append(_s3_join_cells(header_paras))
+                pos = i
+                while True:
+                    row_cells = _row_cells(pos)
+                    if len(row_cells) != n_cols:
+                        break
+                    out.append(_s3_join_cells(
+                        [paras[pos]] + [paras[c] for c in row_cells]))
+                    merged_rows += 1
+                    pos = row_cells[-1] + 1
+                    pt = _t(pos)
+                    if not (pt and _RE_S3_LONE_CIRCLED.match(pt)):
+                        break
+                i = pos
+                continue
+        out.append(paras[i])
+        i += 1
+    if merged_rows and callable(log):
+        log(f"[파서] step3 표 선지 셀 재결합: {merged_rows}행")
+    return out
+
+
+# W89: 답표(정답 기입 표) 열 머리('기호'/'고친 표현' 등)도 같은 이유로
+# 셀마다 쪼개진다. engines/workbook_v2/plan.py의 답표 열 머리 승격
+# (_is_anslabel_head)은 두 라벨이 **한 줄**에 있어야 인식하므로 미리
+# 합친다 — 닫힌 어휘(rules.ANS_TABLE_HEAD_WORDS, plan.py와 공유 관행)로
+# 최소 한 셀이 답표 라벨임을 확인한 후에만 합쳐 오탐을 막는다.
+_RE_S3_SHORT_LABEL_CELL = re.compile(r'^[가-힣A-Za-z][가-힣A-Za-z ]{0,14}$')
+
+
+def _merge_step3_ans_table_header_cells(paras, log=None):
+    """'기호' + '고친 표현' 같은 답표 열 머리 셀들을 한 줄로 재결합."""
+    from core.structure import rules as R
+    n = len(paras)
+    out = []
+    merged = 0
+    i = 0
+    while i < n:
+        t = _s3_text(paras[i])
+        if t and _RE_S3_SHORT_LABEL_CELL.match(t):
+            j = i + 1
+            run = [i]
+            while j < n:
+                tj = _s3_text(paras[j])
+                if tj and _RE_S3_SHORT_LABEL_CELL.match(tj):
+                    run.append(j)
+                    j += 1
+                    continue
+                break
+            if len(run) >= 2 and any(
+                    R.is_ans_table_header_line(_s3_text(paras[k]))
+                    for k in run):
+                out.append(_s3_join_cells([paras[k] for k in run]))
+                merged += 1
+                i = j
+                continue
+        out.append(paras[i])
+        i += 1
+    if merged and callable(log):
+        log(f"[파서] step3 답표 열 머리 셀 재결합: {merged}건")
+    return out
+
+
 def _normalize_step3_manuscript(paras, item_num=None, log=None):
     """Step3 원고 정규화 1단계 — 권리 고지/책 표제 + 변형 섹션 잔재
     (보존 스냅샷 전에).
@@ -1849,6 +1974,8 @@ def _normalize_step3_manuscript(paras, item_num=None, log=None):
     paras = _strip_step3_section_markers(paras, log)
     paras = _strip_step3_own_item_number_tag(paras, item_num, log)
     paras = _strip_step3_exam_source_line(paras, log)
+    paras = _merge_step3_table_choice_cells(paras, log)
+    paras = _merge_step3_ans_table_header_cells(paras, log)
     return paras
 
 
