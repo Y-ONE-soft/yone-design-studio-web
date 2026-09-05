@@ -1797,6 +1797,43 @@ def _strip_step3_practice_set_header(paras, log=None):
     return [p for k, p in enumerate(paras) if k not in drop]
 
 
+# W89 (같은 잡 — 사용자 지적 "여긴 조건인데 조건 안입혀지고"): core.structure의
+# Cond 마커 판정(BOX_MARKERS["Cond"])은 "＜조건＞"만 있는 **단독** 줄이어야
+# 조건 블록을 연다. 이 원고는 마커와 조건 문구가 한 줄에 붙어 있어
+# ("＜조건＞ 글에 쓰인 형태 그대로 쓸 것.") 마커로 인식되지 못하고 그냥
+# 본문처럼 지나갔다. 공용 분류기 정규식을 넓히는 대신(다른 모든 계열에
+# 영향) — W73(_split_bracket_title_headers)과 같은 방식으로 **원고 단계에서
+# 두 단락으로 쪼갠다**: 마커는 이미 검증된 단독-줄 규약을 그대로 타고,
+# 남은 조건 문구는 그다음 줄로 분류기에 들어간다.
+_RE_S3_INLINE_COND = re.compile(
+    r'^\s*(?P<marker><\s*조\s*건\s*>|＜\s*조\s*건\s*＞|〈\s*조\s*건\s*〉'
+    r'|《\s*조\s*건\s*》|\[\s*조\s*건\s*\])\s*(?P<rest>\S.*)$')
+
+
+def _split_step3_inline_cond_marker(paras, log=None):
+    """'＜조건＞ 조건 문구' 한 줄 → '＜조건＞' + '조건 문구' 두 줄로 분리."""
+    out = []
+    split_n = 0
+    for p in paras:
+        t = _s3_text(p)
+        m = _RE_S3_INLINE_COND.match(t) if t else None
+        if not m:
+            out.append(p)
+            continue
+        marker, rest = m.group('marker'), m.group('rest')
+        mi = t.index(marker)
+        ri = t.index(rest, mi + len(marker))
+        runs = p.get('runs') if isinstance(p, dict) else None
+        out.append({"text": marker,
+                   "runs": _slice_runs(runs, t, mi, mi + len(marker))})
+        out.append({"text": rest,
+                   "runs": _slice_runs(runs, t, ri, ri + len(rest))})
+        split_n += 1
+    if split_n and callable(log):
+        log(f"[파서] step3 인라인 ＜조건＞ 마커 분리: {split_n}줄")
+    return out
+
+
 def _normalize_step3_manuscript(paras, item_num=None, log=None):
     """Step3 원고 정규화 1단계 — 권리 고지/책 표제 + 변형 섹션 잔재
     (보존 스냅샷 전에).
@@ -1807,6 +1844,7 @@ def _normalize_step3_manuscript(paras, item_num=None, log=None):
     """
     paras = _strip_step3_rights_and_title(paras, log)
     paras = _strip_step3_practice_set_header(paras, log)
+    paras = _split_step3_inline_cond_marker(paras, log)
     paras = _strip_step3_variant_type_tag(paras, item_num, log)
     paras = _strip_step3_section_markers(paras, log)
     paras = _strip_step3_own_item_number_tag(paras, item_num, log)

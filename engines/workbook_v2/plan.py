@@ -2359,6 +2359,12 @@ _RE_ANS_HEAD_WORDS = re.compile(
 _RE_ANS_PAREN_COLON = re.compile(r"^\s*\(\s*\)\s*:\s*_*\s*$")
 _RE_ANS_BLANK_ROW = re.compile(
     r"^\s*[㉠-㉭①-⑮ⓐ-ⓞ]\s*_{3,}\s*$")
+# W89 (고1 26년 9월 학평 변형 실증): docx 표가 평탄화되며 답표 행 번호
+# 라벨("(1)"/"(2)")이 빈 기입 칸과 따로 떨어진 단락이 된다 — 콜론도
+# 밑줄도 없는 맨 괄호숫자라 위 규칙 어디에도 안 걸린다. 답표 열 머리로
+# 이미 확정된 줄 바로 뒤에서만 행으로 인정한다(자리 신호 — 괄호숫자
+# 단독은 원고 다른 곳의 소문항 번호일 수 있어 낱말/형태만으론 못 가른다).
+_RE_ANS_NUM_LABEL_ROW = re.compile(r"^\s*\(\s*\d{1,2}\s*\)\s*$")
 
 
 def _is_anslabel_head(t):
