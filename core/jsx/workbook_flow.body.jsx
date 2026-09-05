@@ -2454,6 +2454,11 @@ function applyChoiceTabs(doc, flowStories, op) {
             var j = i;
             while (j < texts.length && isTabRow(j)) { j++; }
             // ── 그룹 [i, j) 처리 ──
+            // W89 재발 방지: 문서 전체 recompose 한 번으로는 다열 선지가
+            // 여러 개일 때 뒤쪽 그룹(예: 'habit'/'intelligence' 짝)까지
+            // 전부 안정화되지 않는 경우가 실측됐다(같은 그룹 안 일부 행만
+            // 다른 열2 폭) — 그룹마다 측정 직전에 다시 recompose한다.
+            try { doc.recompose(); } catch (eRecomposeGroup) {}
             if (paras === null) {
                 try { paras = story.paragraphs.everyItem().getElements(); }
                 catch (e2) { break; }
