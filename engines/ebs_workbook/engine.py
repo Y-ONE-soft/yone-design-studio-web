@@ -294,6 +294,7 @@ class EbsWorkbookEngine(BaseEngine):
             log(f"[파서] 단원 폴더: {os.path.basename(unit_dir)}")
             unit_entries = list_manuscript_entries(unit_dir, log)
             unit_names = {n for n, _ in unit_entries}
+            step3_dirs = []     # 단원 폴더에서 본 Step3 하위폴더 이름
             for name, src in unit_entries:
                 if name.startswith("."):
                     continue
@@ -325,7 +326,18 @@ class EbsWorkbookEngine(BaseEngine):
                 elif os.path.isdir(src):
                     lower = name.lower()
                     if "step3" in lower or "스텝3" in _nfc(lower):
-                        for name2, src2 in list_manuscript_entries(src, log):
+                        step3_dirs.append(name)
+                        # 하위 폴더 목록은 **GDrive(정본)** 로 연다. src는
+                        # 같은 이름이 미러에 있으면 미러 경로인데, 미러가
+                        # 동기화 도중이면 그 폴더가 비어 보인다 —
+                        # 2026-09-05 실사고(job 52fecafe): 미러
+                        # 'Unit 4 …/워크북/Step3'에 .rsync-partial만 있어
+                        # STEP3 원고가 0개로 수집되고 '0단락 배치'로 조용히
+                        # 조판됐다. 미러는 GDrive를 못 읽을 때만 폴백.
+                        sub = os.path.join(unit_dir, name)
+                        if not os.path.isdir(sub):
+                            sub = src
+                        for name2, src2 in list_manuscript_entries(sub, log):
                             if name2.startswith(".") or not os.path.isfile(src2):
                                 continue
                             ext2 = os.path.splitext(name2)[1].lower()
@@ -334,8 +346,17 @@ class EbsWorkbookEngine(BaseEngine):
                                     continue
                                 _safe_copy(src2, os.path.join(step3_dir, name2))
             log(f"[파서] 원고 복사 완료")
-        else:
-            log(f"[파서] 단원 폴더 없음, 업로드 파일만 사용")
+            # 침묵 유실 금지: Step3 폴더가 있는데 원고를 하나도 못 담았으면
+            # 여기서 멈춘다. 그냥 두면 '0단락 배치'로 STEP3만 빠진 완제품이
+            # 성공으로 남는다 (2026-09-05 job 52fecafe 실사고).
+            if step3_dirs and not [
+                    f for f in os.listdir(step3_dir)
+                    if not f.startswith(".")]:
+                raise RuntimeError(
+                    f"STEP3 원고 0개 — 단원 폴더의 '{step3_dirs[0]}' 폴더에서 "
+                    f"원고를 읽지 못했습니다. 구글 드라이브 동기화가 끝났는지 "
+                    f"확인하고 다시 실행하거나, STEP3 원고를 '추가 원고 파일'로 "
+                    f"직접 올려 주세요.")
 
         # 2) 추가 업로드 파일 처리
         extra_files = uploaded_files.get("manuscripts", [])
