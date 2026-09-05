@@ -144,7 +144,7 @@ def test_ans_table_header_cells_merged():
     from engines.workbook.parser import _merge_step3_ans_table_header_cells
     rows = _p("기호", "고친 표현", "(1)")
     out = _texts(_merge_step3_ans_table_header_cells(rows))
-    assert out == ["기호\t고친 표현", "(1)"]
+    assert out == ["기호        고친 표현", "(1)"]
 
 
 def test_cond_block_stops_before_ans_table_header_after_merge():
@@ -163,7 +163,7 @@ def test_cond_block_stops_before_ans_table_header_after_merge():
     result = classify_paragraphs(out)
     by_text = {r["text"]: r["kind"] for r in result if r["text"]}
     assert by_text["＜조건＞"] == "Cond"
-    assert by_text["기호\t고친 표현"] == "UNKNOWN"      # Cond에 안 먹힘
+    assert by_text["기호        고친 표현"] == "UNKNOWN"      # Cond에 안 먹힘
     assert by_text["(1)"] == "UNKNOWN"
     assert by_text["(2)"] == "UNKNOWN"
 
@@ -174,4 +174,4 @@ def test_cond_item_mentioning_vocab_word_not_falsely_ended():
     끊는다 — 답표 헤더는 항상 라벨 2개 이상이 한 줄에 온다."""
     from core.structure import rules as R
     assert not R.is_ans_table_header_line("3. 철자 오류 1건 당 1점씩 감점")
-    assert R.is_ans_table_header_line("기호\t고친 표현")
+    assert R.is_ans_table_header_line("기호        고친 표현")

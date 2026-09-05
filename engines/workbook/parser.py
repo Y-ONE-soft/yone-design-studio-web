@@ -1948,7 +1948,10 @@ def _merge_step3_ans_table_header_cells(paras, log=None):
             if len(run) >= 2 and any(
                     R.ANS_TABLE_HEAD_WORDS.search(_s3_text(paras[k]) or '')
                     for k in run):
-                out.append(_s3_join_cells([paras[k] for k in run]))
+                # S_답란 스타일엔 탭스톱이 없다(다열 선지 스타일과 달리) —
+                # 탭은 폭 0으로 붙어버려 골든 관행처럼 여러 칸 공백으로 잇는다.
+                out.append(_s3_join_cells([paras[k] for k in run],
+                                          sep="        "))
                 merged += 1
                 i = j
                 continue
