@@ -1923,7 +1923,14 @@ def _merge_step3_table_choice_cells(paras, log=None):
 # (_is_anslabel_head)은 두 라벨이 **한 줄**에 있어야 인식하므로 미리
 # 합친다 — 닫힌 어휘(rules.ANS_TABLE_HEAD_WORDS, plan.py와 공유 관행)로
 # 최소 한 셀이 답표 라벨임을 확인한 후에만 합쳐 오탐을 막는다.
+#
+# 오탐 실증(af602035 고2 25년 6월 18번): 표 헤더 바로 앞에 편지 맺음말
+# "James Martin" / "Principal" 이 짧은 영문 단독 줄로 연달아 와서, 예전
+# 구현(어휘 매치 지점과 무관하게 **뒤로도** 이어붙임)이 이 무관한 두 줄까지
+# 통째로 삼켰다. 그래서 지금은 어휘가 실제로 걸린 셀에서만 시작해
+# **앞으로는 절대 확장하지 않고 뒤로만**(열 개수 상한 있음) 잇는다.
 _RE_S3_SHORT_LABEL_CELL = re.compile(r'^[가-힣A-Za-z][가-힣A-Za-z ]{0,14}$')
+_S3_ANS_TABLE_HEAD_MAX_COLS = 3
 
 
 def _merge_step3_ans_table_header_cells(paras, log=None):
@@ -1935,19 +1942,18 @@ def _merge_step3_ans_table_header_cells(paras, log=None):
     i = 0
     while i < n:
         t = _s3_text(paras[i])
-        if t and _RE_S3_SHORT_LABEL_CELL.match(t):
-            j = i + 1
+        if (t and _RE_S3_SHORT_LABEL_CELL.match(t)
+                and R.ANS_TABLE_HEAD_WORDS.search(t)):
             run = [i]
-            while j < n:
+            j = i + 1
+            while j < n and len(run) < _S3_ANS_TABLE_HEAD_MAX_COLS:
                 tj = _s3_text(paras[j])
                 if tj and _RE_S3_SHORT_LABEL_CELL.match(tj):
                     run.append(j)
                     j += 1
                     continue
                 break
-            if len(run) >= 2 and any(
-                    R.ANS_TABLE_HEAD_WORDS.search(_s3_text(paras[k]) or '')
-                    for k in run):
+            if len(run) >= 2:
                 # S_답란 스타일엔 탭스톱이 없다(다열 선지 스타일과 달리) —
                 # 탭은 폭 0으로 붙어버려 골든 관행처럼 여러 칸 공백으로 잇는다.
                 out.append(_s3_join_cells([paras[k] for k in run],

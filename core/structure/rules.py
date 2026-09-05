@@ -109,7 +109,8 @@ COND_BLOCK_END = re.compile(r'_{6,}\s*[.,)]?\s*$|^\s*(?:정답|→|우리말)')
 # 쓰는 낱말 집합을 그대로 공유한다(국소 복제 — 모듈이 달라 직접 import
 # 대신 기존 관행).
 ANS_TABLE_HEAD_WORDS = re.compile(
-    r"기호|어색한\s*표현|고친\s*표현|알맞게\s*고친|번호|수정안|오류|수정")
+    r"기호|어색한\s*표현|고친\s*표현|알맞게\s*고친|틀린\s*부분|번호|수정안"
+    r"|오류|수정")
 
 
 def is_ans_table_header_line(text):
