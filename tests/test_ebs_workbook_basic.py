@@ -280,3 +280,23 @@ def test_empty_step3_folder_stops_instead_of_silent_loss(tmp_path,
                         lambda *a, **k: {"steps": {}})
     with pytest.raises(RuntimeError, match="STEP3 원고 0개"):
         EbsWorkbookBasicEngine().parse({}, str(job), lambda m: None)
+
+
+# ── 6. 게이트 오탐 (내지 마스터 러닝헤드) ──────────────────────────────────
+
+def test_master_page_running_head_is_not_manuscript_noise():
+    """마스터 페이지의 러닝헤드는 내지 디자인 — 원고 잔재가 아니다.
+
+    세종 워크북 내지 실측(2026-09-05): 마스터 A/B/C/D/O에 찍힌
+    'STEP 01 | FRAME' 류 7줄이 G47 [원고잔재] critical로 잡혀 조판이
+    멀쩡한데도 검수가 ok=False로 떨어졌다.
+    """
+    from engines.workbook_v2.gate import _master_only_story
+    page_names = {"1", "2", "3"}
+    master = {"pg": ["A"], "paragraphs": [{"t": "STEP 01     |     FRAME"}]}
+    content = {"pg": ["2", "3"], "paragraphs": [{"t": "본문"}]}
+    overset = {"pg": [], "paragraphs": [{"t": "넘친 본문"}]}
+    assert _master_only_story(master, page_names) is True
+    assert _master_only_story(content, page_names) is False
+    # 페이지 밖(넘침) 스토리는 제외하지 않는다 — 진짜 유실을 가릴 수 있다
+    assert _master_only_story(overset, page_names) is False

@@ -500,6 +500,19 @@ def _clean(t):
     return _norm_header(t)
 
 
+def _master_only_story(story, page_names):
+    """이 스토리가 **마스터 페이지에만** 얹혀 있는가.
+
+    덤프의 story.pg는 프레임이 놓인 페이지 이름이고, 마스터 페이지 프레임은
+    문서 페이지 이름 집합(dump["pages"])에 없는 이름(A/B/C/D/M/O …)으로
+    온다. 마스터 텍스트는 **내지 디자인 자체**(러닝헤드 'STEP 01 | FRAME'
+    같은)이지 원고에서 흘러든 잔재가 아니다 — 세종 워크북 내지 실측
+    (2026-09-05): 마스터 러닝헤드 7줄이 G47 [원고잔재]로 잘못 잡혔다.
+    """
+    pgs = [str(x) for x in (story.get("pg") or []) if str(x)]
+    return bool(pgs) and not (set(pgs) & page_names)
+
+
 def _dump_paras(dump):
     for story in dump.get("stories", []):
         for p in story.get("paragraphs", []):
@@ -794,7 +807,11 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         if _st is not None:
             _c1_story_ids.add(id(_st))
     noise = {}
+    _page_names = {str(pg.get("p")) for pg in (dump.get("pages") or [])
+                   if isinstance(pg, dict)}
     for story in dump.get("stories", []):
+        if _master_only_story(story, _page_names):
+            continue        # 내지 마스터의 러닝헤드/장식 — 원고 잔재 아님
         in_c1 = id(story) in _c1_story_ids
         for para in story.get("paragraphs", []):
             tt = _clean(para.get("t", ""))
