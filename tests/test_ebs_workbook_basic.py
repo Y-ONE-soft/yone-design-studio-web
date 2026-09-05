@@ -216,3 +216,67 @@ def test_engine_registered_and_page_wired():
     ids = [it.get("engine_id") for cat in subjects
            for it in cat.get("items", [])]
     assert "ebs_workbook_basic_v2" in ids
+
+
+# ── 5. STEP3 수집 (2026-09-05 실사고 회귀) ─────────────────────────────────
+
+def _unit_with_step3(tmp_path, step3_files=("Step3.hwpx",)):
+    wb = tmp_path / "gdrive" / "Unit 4 Practice 3, 4" / "워크북"
+    (wb / "Step3").mkdir(parents=True)
+    (wb / "Step1 A1 어휘선택.docx").write_bytes(b"x")
+    for f in step3_files:
+        (wb / "Step3" / f).write_bytes(b"x")
+    return wb
+
+
+def test_step3_subdir_read_from_gdrive_not_stale_mirror(tmp_path,
+                                                        monkeypatch):
+    """Step3 하위폴더도 GDrive(정본)에서 읽는다.
+
+    실사고(job 52fecafe): 미러의 '워크북/Step3'가 동기화 도중이라
+    .rsync-partial만 있었고, 파서가 그 경로를 열어 STEP3 원고 0개로
+    'step3: 0단락 배치' 완제품이 성공으로 남았다.
+    """
+    wb = _unit_with_step3(tmp_path)
+    mirror_step3 = tmp_path / "mirror" / "워크북" / "Step3"
+    mirror_step3.mkdir(parents=True)        # 미러는 비어 있음
+
+    import engines.final.extractor as ex
+    real = ex.list_manuscript_entries
+
+    def fake(folder, log=None):
+        if os.path.basename(str(folder)) == "워크북":
+            return [("Step1 A1 어휘선택.docx",
+                     str(wb / "Step1 A1 어휘선택.docx")),
+                    ("Step3", str(mirror_step3))]   # ← 미러 경로를 준다
+        return real(folder, log)
+
+    monkeypatch.setattr(ex, "list_manuscript_entries", fake)
+
+    job = tmp_path / "job"
+    job.mkdir()
+    (job / "manuscript_folder.txt").write_text(str(wb), encoding="utf-8")
+    from engines.workbook import parser as wb_parser
+    monkeypatch.setattr(wb_parser, "parse_manuscript_folder",
+                        lambda *a, **k: {"steps": {}})
+    import engines.ebs_workbook.engine as ebs_mod
+    monkeypatch.setattr(ebs_mod, "parse_manuscript_folder",
+                        lambda *a, **k: {"steps": {}})
+
+    EbsWorkbookBasicEngine().parse({}, str(job), lambda m: None)
+    staged = os.listdir(os.path.join(str(job), "uploads", "Step3"))
+    assert "Step3.hwpx" in staged      # 미러가 비어도 GDrive에서 담긴다
+
+
+def test_empty_step3_folder_stops_instead_of_silent_loss(tmp_path,
+                                                         monkeypatch):
+    """Step3 폴더가 있는데 원고 0개면 조용히 넘어가지 않고 멈춘다."""
+    wb = _unit_with_step3(tmp_path, step3_files=())
+    job = tmp_path / "job"
+    job.mkdir()
+    (job / "manuscript_folder.txt").write_text(str(wb), encoding="utf-8")
+    import engines.ebs_workbook.engine as ebs_mod
+    monkeypatch.setattr(ebs_mod, "parse_manuscript_folder",
+                        lambda *a, **k: {"steps": {}})
+    with pytest.raises(RuntimeError, match="STEP3 원고 0개"):
+        EbsWorkbookBasicEngine().parse({}, str(job), lambda m: None)
