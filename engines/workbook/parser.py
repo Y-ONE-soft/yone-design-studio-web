@@ -1774,6 +1774,29 @@ def _strip_step3_exam_source_line(paras, log=None):
     return [p for k, p in enumerate(paras) if k not in drop]
 
 
+# W89 (사용자 지적 2026-09-05, 고1 26년 9월 "학평 변형" 연습용 원고): 지문별
+# 문제 파일(예: '지문33_문제.docx')마다 맨 앞에 표제·설명 두 줄이 반복된다
+# — "고1 2026년 9월 학평 변형 — 지문 33 (모방론과 폴록) 【문제】" /
+# "연습용 · 독립 문항 15개. …정답·해설: 지문33_정답해설.docx". 낱말로는
+# 원고마다(제목·지문 번호·정답 파일명) 다 달라 못 잡지만, 둘 다 진짜
+# 발문/지문 문장에는 나올 수 없는 표식을 갖는다 — 표제 줄은 전각 괄호
+# 【문제】로 끝나고, 설명 줄은 파일명(.docx)을 그대로 노출한다. 각각
+# 단독으로도 안전해 위치 무관하게 지운다.
+_RE_S3_PRACTICE_SET_TITLE = re.compile(r'【문제】\s*$')
+_RE_S3_DOCX_FILENAME = re.compile(r'\.docx\b', re.I)
+
+
+def _strip_step3_practice_set_header(paras, log=None):
+    """연습용 문제 세트 표제/설명 줄 제거('…【문제】' / '…정답·해설: *.docx')."""
+    drop = {i for i, p in enumerate(paras)
+           if (lambda t: bool(t) and (_RE_S3_PRACTICE_SET_TITLE.search(t)
+                                       or _RE_S3_DOCX_FILENAME.search(t)))(
+               _s3_text(p))}
+    if drop and callable(log):
+        log(f"[파서] step3 연습용 문제 세트 표제/설명 제거: {len(drop)}줄")
+    return [p for k, p in enumerate(paras) if k not in drop]
+
+
 def _normalize_step3_manuscript(paras, item_num=None, log=None):
     """Step3 원고 정규화 1단계 — 권리 고지/책 표제 + 변형 섹션 잔재
     (보존 스냅샷 전에).
@@ -1783,6 +1806,7 @@ def _normalize_step3_manuscript(paras, item_num=None, log=None):
     지우는 함수보다 반드시 먼저 불러야 한다.
     """
     paras = _strip_step3_rights_and_title(paras, log)
+    paras = _strip_step3_practice_set_header(paras, log)
     paras = _strip_step3_variant_type_tag(paras, item_num, log)
     paras = _strip_step3_section_markers(paras, log)
     paras = _strip_step3_own_item_number_tag(paras, item_num, log)
