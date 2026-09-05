@@ -1358,6 +1358,19 @@ _RE_S3_HANGUL_ANY = re.compile(r'[가-힣]')
 # 문장삽입 발문 — 바로 다음 단락이 '주어진 문장' 상자다
 _RE_S3_INSERT_PROMPT = re.compile(r'주어진\s*문장이\s*들어가기')
 _RE_S3_JOSA_HEAD = re.compile(r'^[은는이가을를의에로와과도만][\s?.,]|^[은는이가을를의에로와과도만]$')
+# ── W90: 생성 원고(LLM 변형문제)의 문항 머리 부속물 ────────────────────────
+# 사용자 지적 2026-09-05 (수능만만 09~10강 어법Practice 40제): 완제품이
+# 자기 디자인으로 매기는 문항 번호("01") 위에 원고의 '문항 1' 줄과 출처·
+# 난이도 막대가 그대로 인쇄되고, 문항 사이 괘선("──…")이 단 폭을 넘어
+# 석 줄로 흘렀다. 셋 다 워크시트 편집용 부속물이라 지면에 올 것이 아니다.
+_RE_S3_GEN_ITEM_LABEL = re.compile(r'^\s*문\s*(?:항|제)\s*0*\d{1,3}\s*$')
+# 괘선 한 줄 — 괘선/대시/등호만으로 이루어진 단독 줄. 밑줄(_)은 답 기입란
+# 이므로 제외한다 (본문의 빈칸 '____'을 지우면 안 된다).
+_RE_S3_RULE_LINE = re.compile(
+    r'^[\s\u2500-\u257f\u2010-\u2015\u2212=~·•∙]{3,}$')
+# 머리 안내문의 합쇼체 종결 — 교재 본문은 이 종결형을 쓰지 않는다
+# (해석은 '…다.', 발문은 '…것은?/…쓰시오.').
+_RE_S3_POLITE_END = re.compile(r'(?:습니다|합니다|입니다|됩니다)\s*[.!]?\s*$')
 _S3_ONE_SYLLABLE_WORDS = set(
     "위 글 것 수 말 등 및 안 밖 앞 뒤 옆 내 각 두 세 네 그 이 저 나 너 때 곳 "
     "점 줄 중 후 전 년 월 일 시 분 초 개 명 장 쪽 면 문 답 반 별 술 물 불".split())
@@ -1436,9 +1449,16 @@ def _is_step3_head_junk(text):
             return True
     except Exception:                                          # noqa: BLE001
         pass
-    return (len(t) <= 80 and "?" not in t
+    if (len(t) <= 80 and "?" not in t
             and not _RE_S3_SENT_END.search(t)
-            and not _RE_S3_UNIT_HEAD.match(t))
+            and not _RE_S3_UNIT_HEAD.match(t)):
+        return True
+    # W90: 머리 블록의 편집 안내문 한 줄 ('원문을 보존하고 … 적용했습니다.').
+    # 종결부호가 있어 표제 규칙에는 안 걸리지만 본문이 아니다 — 합쇼체는
+    # 원고 편집자가 사람에게 하는 말이라 교재 지면 문장에는 쓰이지 않는다.
+    # 머리 블록 스캔(첫 콘텐츠 줄에서 중단)에서만 쓰이므로 본문 중간의
+    # 존댓말 대화 지문에는 닿지 않는다.
+    return bool(len(t) <= 80 and _RE_S3_POLITE_END.search(t))
 
 
 def _strip_step3_rights_and_title(paras, log=None):
@@ -1658,6 +1678,48 @@ _RE_S3_SECTION_MARKER = re.compile(
 # 같은 어휘 계열(모듈이 달라 직접 import 대신 국소 복제 — 기존 관행).
 _RE_S3_EXAM_ORIGIN_KW = re.compile(
     r'교육청|학력평가|평가원|수능특강|수능완성|학평|모평')
+
+
+def _strip_step3_generated_item_meta(paras, log=None):
+    """W90 — 생성 원고의 문항 머리 부속물 3종 (괘선 / '문항 N' / 메타 막대).
+
+    완제품은 문항 번호를 자기 스타일로 매기고(S_실전문제 번호), 문항 사이는
+    지면 디자인으로 나눈다. 원고의 다음 셋은 그 자리를 두 번 채운다:
+      · 괘선 구분줄 '──────…' — 단 폭을 넘어 석 줄로 흐른다 (실측)
+      · 문항 머리 '문항 1'     — 완제품 자동 번호 '01'과 중복
+      · 메타 막대 '09강 A | 난이도 상' — 출처·난이도는 편집용 정보
+
+    메타 막대는 **'문항 N' 바로 뒤 자리**에서만 지운다 (머리글 막대 판정은
+    manuscript_noise 재사용). 문서 어디서나 지우면 파이프가 든 본문 표를
+    건드릴 수 있다 — 이 자리는 이미 확정된 노이즈의 이웃이라 안전하다.
+    """
+    try:
+        from core.structure import manuscript_noise as _MN
+    except Exception:                                          # noqa: BLE001
+        _MN = None
+    n = len(paras)
+    drop = set()
+    rules = 0
+    for i in range(n):
+        t = _s3_text(paras[i])
+        if not t:
+            continue
+        if _RE_S3_RULE_LINE.match(t):
+            drop.add(i)
+            rules += 1
+            continue
+        if not _RE_S3_GEN_ITEM_LABEL.match(t):
+            continue
+        drop.add(i)
+        j = i + 1
+        while j < n and not _s3_text(paras[j]):
+            j += 1
+        if j < n and _MN is not None and _MN.is_running_head(_s3_text(paras[j])):
+            drop.add(j)
+    if drop and callable(log):
+        log("[파서] step3 생성 원고 문항 머리 제거: %d줄 (괘선 %d)"
+            % (len(drop), rules))
+    return [p for k, p in enumerate(paras) if k not in drop]
 
 
 def _strip_step3_section_markers(paras, log=None):
@@ -1996,6 +2058,7 @@ def _normalize_step3_manuscript(paras, item_num=None, log=None):
     지우는 함수보다 반드시 먼저 불러야 한다.
     """
     paras = _strip_step3_rights_and_title(paras, log)
+    paras = _strip_step3_generated_item_meta(paras, log)
     paras = _strip_step3_practice_set_header(paras, log)
     paras = _split_step3_inline_cond_marker(paras, log)
     paras = _strip_step3_variant_type_tag(paras, item_num, log)
