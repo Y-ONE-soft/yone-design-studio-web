@@ -80,18 +80,16 @@ def test_v1_workbook_v2_output_name_unchanged(tmp_path):
         == "고1_25년_10월_전체_v2.indd"
 
 
-# ── 세종고 전용 내지 ────────────────────────────────────────────────────────
+# ── 세종(세종1) 전용 내지 ───────────────────────────────────────────────────
 
-def test_config_has_sejong_school_key():
-    """'세종고' 학교 키 → 세종 전용 내지 (부교재 supp는 학교명 bare 키 lookup).
-
-    UI(typeset_workbook_supp_v2.html)의 옵션 값과 config 키가 어긋나면
-    조용히 기본(모의고사) 내지로 조판된다 — 그 정합을 고정한다.
-    """
+def test_config_sejong_key_resolves_to_sejong_template():
+    """'세종1'(= 세종고) 학교 키 → 세종 전용 내지. supp는 학교명 bare 키
+    lookup이라 UI 드롭다운 값과 config 키가 어긋나면 조용히 기본(모의고사)
+    내지로 조판된다 — 그 정합과 경로 유효성을 고정한다."""
     from engines.workbook.engine import _load_config
     indd_map = _load_config()["indd_original"]
-    assert "세종고" in indd_map
-    assert "워크북(세종)" in os.path.basename(indd_map["세종고"])
+    assert "세종1" in indd_map
+    assert "워크북(세종)" in os.path.basename(indd_map["세종1"])
 
 
 def test_sejong_school_selects_sejong_template(engine, tmp_path):
@@ -99,22 +97,22 @@ def test_sejong_school_selects_sejong_template(engine, tmp_path):
     default = tmp_path / "[원본]워크북(모의고사)_내지.indd"
     sejong.write_bytes(b"x")
     default.write_bytes(b"x")
-    cfg = {"indd_original": {"세종고": str(sejong), "_default": str(default)}}
+    cfg = {"indd_original": {"세종1": str(sejong), "_default": str(default)}}
 
-    assert engine._select_template(cfg, "모의고사", "세종고", print) == str(sejong)
+    assert engine._select_template(cfg, "모의고사", "세종1", print) == str(sejong)
 
-    # 세종 내지는 '내용 종합'(step1_b2)이 실물에 없다 (W19) — 학교 토큰
-    # 판정이 step_map까지 이어지는지 확인
-    engine._plan_ctx = {"cfg": cfg, "school": "세종고",
+    # 세종 내지는 '내용 종합'(step1_b2)이 실물에 없다 (W19) — 학교 선택이
+    # step_map까지 이어지는지 확인
+    engine._plan_ctx = {"cfg": cfg, "school": "세종1",
                         "workbook_type": "모의고사"}
     assert engine._template_token() == "세종"
     assert "step1_b2" not in engine._step_map()
 
 
 def test_supp_v2_template_offers_sejong_option():
-    """UI 드롭다운에 '세종고'가 있어야 학교 키가 조판까지 전달된다."""
+    """UI 드롭다운의 학교 값이 config 키와 같아야 조판까지 전달된다."""
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     html = open(os.path.join(root, "templates",
                              "typeset_workbook_supp_v2.html"),
                 encoding="utf-8").read()
-    assert "'세종고'" in html
+    assert "'세종1'" in html

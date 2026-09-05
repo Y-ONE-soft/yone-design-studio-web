@@ -155,11 +155,11 @@
 {% block scripts %}
 <script>
   // schools.json 기반 학교 목록 + 학년별 추가 학교
-  // '세종고' — 전용 내지([원본]워크북(세종)_내지.indd) 키. config.json
-  // indd_original의 학교명 키와 그대로 일치해야 조판에 그 내지가 쓰인다.
+  // 학교명은 config.json indd_original의 키와 그대로 일치해야 전용 내지가
+  // 쓰인다 ('세종1' = 세종고 → [원본]워크북(세종)_내지.indd).
   const EXTRA_SCHOOLS_BY_GRADE = {
-    '고1': ['세종1', '세종고'],
-    '고2': ['세종고'],
+    '고1': ['세종1'],
+    '고2': [],
   };
   let SCHOOLS_BY_GRADE = {};
 
