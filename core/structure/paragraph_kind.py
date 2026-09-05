@@ -553,6 +553,11 @@ def classify_paragraphs(paras, opts=None):
                 break
             if R.COND_BLOCK_END.search(t):
                 break
+            # W89: 답표(정답 기입 표) 열 머리 — 조건 항목 흡수보다 먼저
+            # 확인해 블록을 끝낸다 (아래로 내려가면 한글 비율만 보고
+            # 조건으로 삼킨다).
+            if R.is_ans_table_header_line(t):
+                break
             # W39 결함 3: 조건 블록 안 단어 나열은 조건 내용물 (v1 '지문
             # 유지' 관행 폐기 — 사용자 확정). 나열 뒤 괄호 부연("(필요시
             # …)")의 인접 흡수는 계속되므로 skipped를 세우지 않는다.
