@@ -1946,7 +1946,7 @@ def _merge_step3_ans_table_header_cells(paras, log=None):
                     continue
                 break
             if len(run) >= 2 and any(
-                    R.is_ans_table_header_line(_s3_text(paras[k]))
+                    R.ANS_TABLE_HEAD_WORDS.search(_s3_text(paras[k]) or '')
                     for k in run):
                 out.append(_s3_join_cells([paras[k] for k in run]))
                 merged += 1

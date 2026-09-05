@@ -113,11 +113,18 @@ ANS_TABLE_HEAD_WORDS = re.compile(
 
 
 def is_ans_table_header_line(text):
-    """답표 열 머리 후보 한 줄인가 (짧고 밑줄 없는 줄에 답표 열 어휘)."""
+    """답표 열 머리 **확정** 줄인가 — plan.py `_is_anslabel_head`와 동일
+    문턱(어휘 2개 이상)을 요구한다. 실증(r7c11oldwb): 조건 항목 문장이
+    우연히 어휘 하나("…철자 오류 1건 당 1점씩 감점")를 담을 수 있어
+    1개 매치만으로는 진짜 조건 항목을 오탐한다 — 답표 열 머리는 항상
+    라벨 2개 이상이 한 줄에 온다("기호  고친 표현"), 조건 문장은 아니다.
+    번호/불릿으로 시작하는 조건 항목도 배제(형태로 이중 방어)."""
     t = (text or "").strip()
-    if not t or len(t) > 40 or "_" in t:
+    if not t or len(t) > 40 or "_" in t or re.search(r'\d', t):
         return False
-    return bool(ANS_TABLE_HEAD_WORDS.search(t))
+    if COND_ITEM_START.match(t):
+        return False
+    return len(ANS_TABLE_HEAD_WORDS.findall(t)) >= 2
 BOX_WORDLIST = re.compile(r'/|(?:,[^,]*){3,}')   # 슬래시 또는 쉼표 3개+ 나열
 # W57: 밑줄런 답란 행 — 선택적 화살표/불릿 접두 + 밑줄(3+)만으로 구성된
 # 기입 줄 ("▶ ______" / "______"). 같은 답란이 보기 블록 뒤에선 무한글
