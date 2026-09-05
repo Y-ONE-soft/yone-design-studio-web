@@ -190,34 +190,35 @@ def test_ans_table_header_merge_does_not_absorb_preceding_unrelated_lines():
                    "다음 글의 빈칸에 들어갈 알맞은 단어를 쓰시오."]
 
 
-# ── 서답형 라벨 줄 재결합 (사용자 지적 "13/14 두 번호가 붙는다") ──────────
+# ── 서답형 라벨 줄 제거 (사용자 지적 "13/14 두 번호가 붙는다" →
+#    "서답형2. 서답형3. 이런 거 발문에서 삭제해") ──────────────────────────
 
-def test_subjective_label_merged_with_following_prompt():
-    from engines.workbook.parser import _merge_step3_subjective_label_line
+def test_subjective_label_line_stripped():
+    from engines.workbook.parser import _strip_step3_subjective_label_line
     rows = _p("서답형 1.",
              "다음 글의 밑줄 친 ⓐ~ⓕ 중 어법상 틀린 곳 2개를 찾아 기호를 "
              "쓰고, 각각 바르게 고쳐 쓰시오.")
-    out = _texts(_merge_step3_subjective_label_line(rows))
-    assert out == ["서답형 1. 다음 글의 밑줄 친 ⓐ~ⓕ 중 어법상 틀린 곳 2개를 "
-                  "찾아 기호를 쓰고, 각각 바르게 고쳐 쓰시오."]
+    out = _texts(_strip_step3_subjective_label_line(rows))
+    assert out == ["다음 글의 밑줄 친 ⓐ~ⓕ 중 어법상 틀린 곳 2개를 찾아 "
+                  "기호를 쓰고, 각각 바르게 고쳐 쓰시오."]
 
 
-def test_subjective_label_alone_at_end_untouched():
-    """뒤에 발문이 없으면(원고 끝 등) 절대 건드리지 않는다."""
-    from engines.workbook.parser import _merge_step3_subjective_label_line
+def test_subjective_label_alone_at_end_also_stripped():
+    from engines.workbook.parser import _strip_step3_subjective_label_line
     rows = _p("서답형 3.")
-    assert _texts(_merge_step3_subjective_label_line(rows)) == ["서답형 3."]
+    assert _texts(_strip_step3_subjective_label_line(rows)) == []
 
 
-def test_normalize_pipeline_merged_subjective_label_gets_single_question_kind():
-    """핵심 회귀 방지: 합친 뒤 core.structure가 한 단락으로만 Q 판정한다
-    — 라벨과 발문이 각각 번호 스타일을 받아 번호가 두 번 매겨지던 결함."""
-    from engines.workbook.parser import _normalize_step3_manuscript
+def test_normalize_pipeline_strips_label_and_question_still_gets_single_number():
+    """핵심 회귀 방지: 라벨 제거 후 발문 단락 하나만 남아 Q 판정 한 번만
+    — 라벨이 각자 번호 스타일을 받아 번호가 두 번 매겨지던 결함."""
+    from engines.workbook.parser import _normalize_step3_manuscript, _s3_text
     from core.structure import classify_paragraphs
     rows = _p("서답형 2.",
              "다음 글을 읽고, 아래 요약문의 빈칸 (A), (B)에 들어갈 말을 "
              "글에서 찾아 각각 한 단어로 그대로 쓰시오.")
     out = _normalize_step3_manuscript(rows, item_num=None)
     assert len(out) == 1
+    assert not any("서답형" in (_s3_text(p) or "") for p in out)
     result = classify_paragraphs(out)
     assert result[0]["kind"] == "Q"

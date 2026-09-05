@@ -2387,6 +2387,16 @@ function dropStandalonePrompts(doc, flowStories) {
 // 각 열 중앙에 라벨이 오도록 자체 스톱/들여쓰기 부여. 그리드로 프레임을
 // 넘치면 비그리드 최소 간격으로 폴백, 그래도 넘치면 [경고].
 function applyChoiceTabs(doc, flowStories, op) {
+    // W89 (고1 26년 9월 학평 변형 실증 — 사용자 지적 "정렬이 왜 이렇게
+    // 엉망이야"): 같은 그룹 안에서 일부 행만 다른(더 좁은) 탭스톱을 받는
+    // 결함 재현 — story.recompose()만으로는 앞선 페이지 배치 라운드
+    // (문제단위킵/발문고아킵)가 방금 옮긴 단락의 기하가 완전히 갱신되기
+    // 전에 cellWidths가 셀 폭을 실측해 일부 행 폭을 실제보다 좁게 읽었다.
+    // 진단(같은 문서를 저장 뒤 이 함수만 다시 실행하면 전 행이 동일한
+    // 스톱으로 즉시 정상화됨 — 계산 로직 자체는 정확, 측정 시점만 이름)
+    // — doc.recompose()로 문서 전체 기하를 먼저 확정한다 (다른 JSX
+    // 파일에서 이미 쓰는 관행, core/jsx/baenje_flow.body.jsx 등).
+    try { doc.recompose(); } catch (eRecomposeAll) {}
     var grid = op.grid || 12.7;
     var minGap = (op.min_gap === undefined || op.min_gap === null)
         ? 2 : op.min_gap;

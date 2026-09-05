@@ -1968,34 +1968,23 @@ def _merge_step3_ans_table_header_cells(paras, log=None):
     return out
 
 
-# W89 (같은 잡 — 사용자 지적 "13/14 두 번호가 붙는다", 서답형 2/3도 동일):
-# "서답형 N." 이 발문과 따로 떨어진 단독 줄이면, 자동 채번 스타일이 둘 다에
-# 붙어 한 문항인데 번호가 두 개(13/14, 15/16, 17/18) 매겨졌다. 객관식
-# 문항은 원고에 이미 "1. 발문…"처럼 번호와 발문이 한 줄이라 이 문제가
-# 없다 — 서답형만 라벨과 발문이 원고에서 갈라져 있다. 라벨을 발문과
-# 한 줄로 합쳐 번호가 한 번만 매겨지게 한다(내용은 그대로 보존).
+# W89 (같은 잡 — 사용자 지적 "13/14 두 번호가 붙는다" → 이어서 "서답형2.
+# 서답형3. 이런 거 발문에서 삭제해"): "서답형 N." 이 발문과 따로 떨어진
+# 단독 줄이면, 자동 채번 스타일이 둘 다에 붙어 한 문항인데 번호가 두 개
+# (13/14, 15/16, 17/18) 매겨졌다. 객관식 문항은 원고에 이미 "1. 발문…"
+# 처럼 번호와 발문이 한 줄이라 이 문제가 없다 — 서답형만 라벨과 발문이
+# 원고에서 갈라져 있다. 완제품에 "서답형 N."이 인쇄될 자리가 없다는
+# 사용자 확정 스펙 — 발문과 합치지 않고 라벨 줄 자체를 지운다.
 _RE_S3_SUBJECTIVE_LABEL = re.compile(r'^서답형\s*\d+\s*\.?\s*$')
 
 
-def _merge_step3_subjective_label_line(paras, log=None):
-    """'서답형 N.' 단독 줄 + 바로 다음 발문 줄 → 한 줄로 재결합."""
-    out = []
-    merged = 0
-    n = len(paras)
-    i = 0
-    while i < n:
-        t = _s3_text(paras[i])
-        if (t and _RE_S3_SUBJECTIVE_LABEL.match(t)
-                and i + 1 < n and _s3_text(paras[i + 1])):
-            out.append(_s3_join_cells([paras[i], paras[i + 1]], sep=" "))
-            merged += 1
-            i += 2
-            continue
-        out.append(paras[i])
-        i += 1
-    if merged and callable(log):
-        log(f"[파서] step3 서답형 라벨 줄 재결합: {merged}건")
-    return out
+def _strip_step3_subjective_label_line(paras, log=None):
+    """'서답형 N.' 단독 줄 제거 — 발문/번호와 무관하게 완제품엔 없다."""
+    drop = {i for i, p in enumerate(paras)
+           if _RE_S3_SUBJECTIVE_LABEL.match(_s3_text(p))}
+    if drop and callable(log):
+        log(f"[파서] step3 서답형 라벨 줄 제거: {len(drop)}건")
+    return [p for k, p in enumerate(paras) if k not in drop]
 
 
 def _normalize_step3_manuscript(paras, item_num=None, log=None):
@@ -2015,7 +2004,7 @@ def _normalize_step3_manuscript(paras, item_num=None, log=None):
     paras = _strip_step3_exam_source_line(paras, log)
     paras = _merge_step3_table_choice_cells(paras, log)
     paras = _merge_step3_ans_table_header_cells(paras, log)
-    paras = _merge_step3_subjective_label_line(paras, log)
+    paras = _strip_step3_subjective_label_line(paras, log)
     return paras
 
 
