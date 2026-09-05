@@ -175,3 +175,49 @@ def test_cond_item_mentioning_vocab_word_not_falsely_ended():
     from core.structure import rules as R
     assert not R.is_ans_table_header_line("3. 철자 오류 1건 당 1점씩 감점")
     assert R.is_ans_table_header_line("기호        고친 표현")
+
+
+def test_ans_table_header_merge_does_not_absorb_preceding_unrelated_lines():
+    """회귀 재현(af602035 고2 25년 6월 18번 실증): 편지 맺음말 "James
+    Martin"/"Principal"이 답표 헤더("틀린 부분"/"수정") 바로 앞에 짧은
+    단독 줄로 와도 함께 삼키지 않는다 — 어휘가 실제로 걸린 셀에서만
+    시작해 뒤로만(앞으로는 안) 이어붙인다."""
+    from engines.workbook.parser import _merge_step3_ans_table_header_cells
+    rows = _p("James Martin", "Principal", "틀린 부분", "수정",
+             "다음 글의 빈칸에 들어갈 알맞은 단어를 쓰시오.")
+    out = _texts(_merge_step3_ans_table_header_cells(rows))
+    assert out == ["James Martin", "Principal", "틀린 부분        수정",
+                   "다음 글의 빈칸에 들어갈 알맞은 단어를 쓰시오."]
+
+
+# ── 서답형 라벨 줄 재결합 (사용자 지적 "13/14 두 번호가 붙는다") ──────────
+
+def test_subjective_label_merged_with_following_prompt():
+    from engines.workbook.parser import _merge_step3_subjective_label_line
+    rows = _p("서답형 1.",
+             "다음 글의 밑줄 친 ⓐ~ⓕ 중 어법상 틀린 곳 2개를 찾아 기호를 "
+             "쓰고, 각각 바르게 고쳐 쓰시오.")
+    out = _texts(_merge_step3_subjective_label_line(rows))
+    assert out == ["서답형 1. 다음 글의 밑줄 친 ⓐ~ⓕ 중 어법상 틀린 곳 2개를 "
+                  "찾아 기호를 쓰고, 각각 바르게 고쳐 쓰시오."]
+
+
+def test_subjective_label_alone_at_end_untouched():
+    """뒤에 발문이 없으면(원고 끝 등) 절대 건드리지 않는다."""
+    from engines.workbook.parser import _merge_step3_subjective_label_line
+    rows = _p("서답형 3.")
+    assert _texts(_merge_step3_subjective_label_line(rows)) == ["서답형 3."]
+
+
+def test_normalize_pipeline_merged_subjective_label_gets_single_question_kind():
+    """핵심 회귀 방지: 합친 뒤 core.structure가 한 단락으로만 Q 판정한다
+    — 라벨과 발문이 각각 번호 스타일을 받아 번호가 두 번 매겨지던 결함."""
+    from engines.workbook.parser import _normalize_step3_manuscript
+    from core.structure import classify_paragraphs
+    rows = _p("서답형 2.",
+             "다음 글을 읽고, 아래 요약문의 빈칸 (A), (B)에 들어갈 말을 "
+             "글에서 찾아 각각 한 단어로 그대로 쓰시오.")
+    out = _normalize_step3_manuscript(rows, item_num=None)
+    assert len(out) == 1
+    result = classify_paragraphs(out)
+    assert result[0]["kind"] == "Q"
