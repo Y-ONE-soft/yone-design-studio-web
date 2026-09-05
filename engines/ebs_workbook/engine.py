@@ -62,6 +62,12 @@ class EbsWorkbookEngine(BaseEngine):
         return resolve_config(cfg, _PATH_KEYS)
 
     @classmethod
+    def _is_step3_manuscript(cls, name_nfc: str) -> bool:
+        """단원 폴더의 이 파일이 Step3(실전문제) 원고인가 — 이름 모양만
+        본다 (정답/해설 여부는 호출부가 따로 판정). 파생 시리즈 확장점."""
+        return _is_step3_name(name_nfc)
+
+    @classmethod
     def _resolve_workbook_dir(cls, unit_path: str) -> str:
         """단원 폴더 안에서 원고가 실제로 놓인 폴더. 완성 시리즈는 단원
         폴더 자신 ('Unit 15 워크북/Step1 …')."""
@@ -134,7 +140,10 @@ class EbsWorkbookEngine(BaseEngine):
                 continue
             m = re.match(r'(.+?)\s*워크북\s*$', stripped)
             label = m.group(1).strip() if m else stripped
-            result.append({"folder": stripped, "label": label})
+            # folder는 **실제 폴더명 그대로** (trim 금지) — GDrive에 끝에
+            # 공백이 붙은 폴더가 있다('Unit 3 워크북 '). trim한 이름으로
+            # 경로를 만들면 list_files가 폴더를 못 찾아 '원고 0개'가 된다.
+            result.append({"folder": name, "label": label})
         result.sort(key=lambda x: _unit_sort_key(x["folder"]))
         return result
 
@@ -206,7 +215,8 @@ class EbsWorkbookEngine(BaseEngine):
                 ext = os.path.splitext(name)[1].lower()
                 if ext in (".docx", ".hwp", ".hwpx"):
                     used = (name in used_files) or (
-                        _is_step3_name(name) and not _is_answer_or_explanation(name)
+                        cls._is_step3_manuscript(name)
+                        and not _is_answer_or_explanation(name)
                     )
                     files.append({"name": name, "used": used})
             elif os.path.isdir(full):
@@ -273,11 +283,13 @@ class EbsWorkbookEngine(BaseEngine):
                     ext = os.path.splitext(name)[1].lower()
                     if ext in (".docx", ".hwp", ".hwpx"):
                         # Step3 원고 (정답/해설/답지가 아닌 본문만 Step3 폴더로)
-                        if _is_step3_name(name) and not _is_answer_or_explanation(name):
+                        if self._is_step3_manuscript(name) \
+                                and not _is_answer_or_explanation(name):
                             _safe_copy(src, os.path.join(step3_dir, name))
                             continue
                         # Step3 정답지/해설지는 사용하지 않음 (Step3 본문에 endnote로 합쳐져 있음)
-                        if _is_step3_name(name) and _is_answer_or_explanation(name):
+                        if self._is_step3_manuscript(name) \
+                                and _is_answer_or_explanation(name):
                             continue
                         # 그 외 일반 파일은 모두 복사 (C2 정답지 같이 풀이용 답지 포함).
                         # 대체 파일명 매핑은 기대 파일명이 없는 경우에만 발동.
@@ -316,7 +328,8 @@ class EbsWorkbookEngine(BaseEngine):
                     fname = fname[len("manuscripts_"):]
                 fname_nfc = _nfc(fname)
                 is_step3 = (
-                    (_is_step3_name(fname_nfc) and not _is_answer_or_explanation(fname_nfc))
+                    (self._is_step3_manuscript(fname_nfc)
+                     and not _is_answer_or_explanation(fname_nfc))
                     or "번.hwp" in fname_nfc or "번.hwpx" in fname_nfc
                     or "번.docx" in fname_nfc
                 )
