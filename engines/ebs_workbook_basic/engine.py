@@ -81,11 +81,21 @@ class EbsWorkbookBasicEngine(EbsWorkbookEngine):
             entries = list_manuscript_entries(unit_path, None)
         except OSError:
             return unit_path
-        for name, full in sorted(entries):
-            if name.startswith(".") or not os.path.isdir(full):
+        for name, src in sorted(entries):
+            if name.startswith(".") or not _RE_WORKBOOK_DIR.search(_nfc(name)):
                 continue
-            if _RE_WORKBOOK_DIR.search(_nfc(name)):
-                return full
+            # **목록은 GDrive(정본)에서** — list_manuscript_entries가 주는
+            # src는 같은 이름이 미러에 있으면 미러 경로다. 그 경로를 그대로
+            # 돌려주면 이 폴더를 listdir하는 쪽(list_files/파서)이 30분 주기
+            # 스냅샷을 정본으로 착각한다. 실제 사고: 미러 동기화가 도중이라
+            # 'Unit 10 …/워크북'에 Step3와 .rsync-partial만 들어와 있어
+            # 원고 19개가 통째로 '없음'으로 보였다 (2026-09-05).
+            # 미러 경로는 GDrive를 못 읽을 때(좀비 Drive)만 폴백으로 쓴다.
+            gdrive = os.path.join(unit_path, name)
+            if os.path.isdir(gdrive):
+                return gdrive
+            if os.path.isdir(src):
+                return src
         return unit_path
 
     @classmethod

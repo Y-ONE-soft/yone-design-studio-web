@@ -38,6 +38,41 @@ def test_workbook_subdir_is_manuscript_dir(tmp_path):
         == str(u2 / "Unit 20 Example, 1, 2 워크북")
 
 
+def test_workbook_dir_is_gdrive_not_mirror(tmp_path, monkeypatch):
+    """워크북 폴더 경로는 **항상 GDrive(정본)** — 미러를 돌려주면 안 된다.
+
+    2026-09-05 실사고: 미러 동기화가 도중이라 미러의 'Unit 10 …/워크북'에
+    Step3와 .rsync-partial만 들어와 있었고, 그 경로를 목록 열거에 쓰는 바람에
+    원고 19개가 통째로 '단원 폴더에 원고 파일이 없습니다'로 보였다.
+    """
+    unit = tmp_path / "gdrive" / "Unit 10 Practice 3, 4"
+    (unit / "워크북").mkdir(parents=True)
+    (unit / "워크북" / "Step1 A1 어휘선택.docx").write_bytes(b"x")
+    mirror_wb = tmp_path / "mirror" / "Unit 10 Practice 3, 4" / "워크북"
+    mirror_wb.mkdir(parents=True)          # 미러는 동기화 도중 = 비어 있음
+
+    import engines.final.extractor as ex
+    monkeypatch.setattr(ex, "list_manuscript_entries",
+                        lambda folder, log=None: [("워크북", str(mirror_wb))])
+    got = EbsWorkbookBasicEngine._resolve_workbook_dir(str(unit))
+    assert got == str(unit / "워크북")
+
+
+def test_workbook_dir_falls_back_to_mirror_when_gdrive_gone(tmp_path,
+                                                            monkeypatch):
+    """GDrive를 못 읽는 상황(좀비 Drive)에서는 미러 폴백은 유지한다."""
+    unit = tmp_path / "gdrive" / "Unit 10 Practice 3, 4"
+    unit.mkdir(parents=True)               # 워크북 폴더가 GDrive에 안 보임
+    mirror_wb = tmp_path / "mirror" / "Unit 10 Practice 3, 4" / "워크북"
+    mirror_wb.mkdir(parents=True)
+
+    import engines.final.extractor as ex
+    monkeypatch.setattr(ex, "list_manuscript_entries",
+                        lambda folder, log=None: [("워크북", str(mirror_wb))])
+    assert EbsWorkbookBasicEngine._resolve_workbook_dir(str(unit)) \
+        == str(mirror_wb)
+
+
 def test_unit_without_workbook_dir_is_not_a_unit(tmp_path):
     """워크북 폴더가 없으면 원고 미작업 단원 — 목록에서 제외된다."""
     u = tmp_path / "Unit 7 Practice 1, 2"
