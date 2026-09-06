@@ -9,6 +9,7 @@ settings 로드부만 '수동 모드(열린 문서를 골라 진행)'로 바꿔 
 진짜 줄바꿈이 들어가고, InDesign이 Unterminated string constant 로
 죽는다 (2026-08-25 실사고). 개행은 NL 변수(String.fromCharCode)로 만든다.
 """
+import datetime
 import os
 import re
 import sys
@@ -83,7 +84,8 @@ NEW_LOAD = '''    var NL = String.fromCharCode(10);
             if (!picked) { return; }
             target = app.documents[pickIdx];
         }
-        var msg = "아래 문서를 슬림버전으로 변환합니다." + NL + NL +
+        var msg = "슬림 변환 (스크립트 " + SCRIPT_VERSION + ")" + NL + NL +
+                  "아래 문서를 슬림버전으로 변환합니다." + NL + NL +
                   target.fullName.fsName + NL + NL +
                   "· 어휘 선택 2 / 본문 정리 / 내용 종합 / 어법 O/X / 빈칸 어법 삭제" + NL +
                   "· 본문 O/X 반쪽 병합, 문장 배열 적층 병합" + NL +
@@ -118,7 +120,7 @@ TAIL_NEW = '''    if (!MANUAL) {
     writeLog("===== 완료 =====");
 
     if (MANUAL) {
-        alert("슬림 변환 완료" + NL + NL +
+        alert("슬림 변환 완료 (스크립트 " + SCRIPT_VERSION + ")" + NL + NL +
               "페이지: " + pagesBefore + "p → " + doc.pages.length + "p" + NL +
               "처리 섹션: " + actionCount + "개" + NL +
               "오버셋: " + overset + "건 / 누락 링크: " + missLink + "건" + NL + NL +
@@ -129,7 +131,13 @@ TAIL_NEW = '''    if (!MANUAL) {
 
 def build():
     s = open(SRC, encoding="utf-8").read()
+    stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     s = NEW_HEAD + s[s.index("#target indesign"):]
+    # 실행한 것이 최신본인지 사용자가 바로 알 수 있게 버전을 심는다
+    # (수정본이 안 닿아 같은 지적을 반복한 사고 방지)
+    s = s.replace("(function () {",
+                  '(function () {\n\n    var SCRIPT_VERSION = "'
+                  + stamp + '";', 1)
     old_load = s[s.index("    // settings 로드 실패 시에도"):
                  s.index("    var LOG_PATH  = settings.log_path;")]
     s = s.replace(old_load, NEW_LOAD, 1)
@@ -173,6 +181,36 @@ def check(s):
     return problems
 
 
+def deploy(src):
+    """InDesign Scripts 패널 폴더에 배포.
+
+    ★ 한글판 InDesign 의 실제 스크립트 폴더는 'Version NN.0-J' 다
+    ('Version NN.0' 이 아니다). 원본만 고치고 배포를 빼먹으면 수정본이
+    사용자에게 영영 닿지 않는다 (2026-08-25 실사고: 구버전 사본이 계속
+    실행돼 같은 오류를 반복). 기존에 SlimBuild.jsx 가 있는 패널 폴더는
+    전부 갱신하고, 최신 버전 폴더에는 없더라도 새로 깔아 둔다.
+    """
+    import glob
+    base = os.path.expanduser("~/Library/Preferences/Adobe InDesign")
+    panels = sorted(glob.glob(os.path.join(base, "Version *", "*", "Scripts",
+                                           "Scripts Panel")))
+    if not panels:
+        print("  [경고] Scripts 패널 폴더를 찾지 못했습니다 — 배포 생략")
+        return []
+    newest = panels[-1]
+    done = []
+    for d in panels:
+        dst = os.path.join(d, "SlimBuild.jsx")
+        if os.path.exists(dst) or d == newest:
+            try:
+                with open(dst, "w", encoding="utf-8") as f:
+                    f.write(src)
+                done.append(dst)
+            except OSError as e:
+                print(f"  [경고] 배포 실패: {dst} ({e})")
+    return done
+
+
 if __name__ == "__main__":
     src = build()
     probs = check(src)
@@ -183,3 +221,5 @@ if __name__ == "__main__":
             print("  -", p)
         sys.exit(1)
     print("[검증] 문자열·스코프·ES3·필수 함수 이상 없음")
+    for d in deploy(src):
+        print("[배포]", d)
