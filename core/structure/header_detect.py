@@ -465,6 +465,30 @@ def _absorb_meta_after_header(det, stripped):
                     c["via"] = None
 
 
+# W92: 단원 제목 줄 — "10 형용사.부사.비교 구문 - 비교 구문"
+_RE_UNIT_TITLE_HEAD = re.compile(r"^\d{1,2}\s+[가-힣]")
+_RE_UNIT_TITLE_SEP = re.compile(r"[-–—]|[가-힣]\.[가-힣]")
+_UNIT_TITLE_ENG_MAX = 2          # "vs." 같은 약어까지만 허용
+
+
+def _is_unit_title(text):
+    """지문 헤더 직전의 단원 제목 줄인가 (형태 판정 — W92)."""
+    t = _norm(text)
+    if not t or len(t) > _SHORT_MAX:
+        return False
+    if t.endswith((".", "?", "!")):
+        return False
+    if not _RE_UNIT_TITLE_HEAD.match(t):
+        return False
+    if not _RE_UNIT_TITLE_SEP.search(t):
+        return False
+    if _eng_words(t) > _UNIT_TITLE_ENG_MAX:
+        return False
+    sig = line_signals(t)
+    return not (sig["stem"] or sig["answerish"] or sig["circled_row"]
+                or sig["numbered"])
+
+
 def _absorb_title_lines(det, stripped):
     """인식된 헤더 직전의 섹션 타이틀 줄을 헤더 블록으로 흡수 (W50).
 
@@ -512,6 +536,27 @@ def _absorb_title_lines(det, stripped):
     for t, idxs in prevs.items():
         if len(idxs) >= 2:
             det.absorbed_idx.update(idxs)
+
+    # W92 (사용자 지적 2026-09-06, 수능만만 10~12강): 헤더 직전의 **단원
+    # 제목** 줄("10 형용사.부사.비교 구문 - 비교 구문")은 문서에 한 번만
+    # 나와 위의 '반복' 규칙에 안 걸리고, 헤더("2. P67-본문")와 글자가
+    # 겹치지 않아 '내용-포함' 규칙에도 안 걸린다 → 어법선택·어법O/X·빈칸
+    # 어법 세 지면에 그대로 인쇄됐다 (어법 O/X에서는 문항 번호와 O|X
+    # 버튼까지 받았다).
+    # 1회성이라 반복으로는 못 가르므로 제목의 **꼴**로 판정한다: 강 번호로
+    # 시작하는 짧은 비문장 한글 줄이면서, 제목 구분자(하이픈 또는 낱말
+    # 구분 마침표)를 가진 줄. 지문 본문·해석 문장은 종결부호로 끝나고,
+    # 발문·선지는 앞의 신호(stem/circled_row)에서 이미 배제된다.
+    for h in sorted(det.header_idx):
+        j = h - 1
+        while j >= 0 and not stripped[j]:
+            j -= 1
+        if j < 0 or j in det.header_idx or j in det.absorbed_idx:
+            continue
+        t = stripped[j]
+        if not _is_unit_title(t):
+            continue
+        det.absorbed_idx.add(j)
 
 
 def detect_from_candidates(cands, legacy=None):
