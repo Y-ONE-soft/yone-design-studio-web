@@ -17,6 +17,12 @@
       <select id="volume" class="form-select"></select>
     </div>
     <div class="calc-result" id="cur-info">→ 불러오는 중…</div>
+    <div class="calc-row u-mt-2" id="newvol-row" hidden>
+      <label class="section-label" for="newvol" style="margin:0;align-self:center">새 권 번호</label>
+      <input type="text" id="newvol" class="calc-input" maxlength="2" inputmode="numeric"
+             style="max-width:90px" placeholder="04">
+      <span class="calc-hint" id="newvol-hint"></span>
+    </div>
   </div>
 
   <div class="cover-calc-section">
@@ -66,7 +72,8 @@ function cur() { return DATA.schools.find(s => s.id === document.getElementById(
 function onSchool() {
   const s = cur(); const vsel = document.getElementById('volume');
   const vols = s.volumes.length ? s.volumes : [{vol: '01', pages: null, spine: null}];
-  vsel.innerHTML = vols.map(v => `<option value="${v.vol}">${v.vol}권</option>`).join('')
+  vsel.innerHTML = vols.map(v =>
+      `<option value="${v.vol}">${v.vol}권${v.binding === '중철' ? ' (중철)' : ''}</option>`).join('')
                  + `<option value="__new">+ 새 권 추가</option>`;
   onVolume();
 }
@@ -74,10 +81,17 @@ function onSchool() {
 function onVolume() {
   const s = cur(); const v = document.getElementById('volume').value;
   const info = document.getElementById('cur-info');
+  const row = document.getElementById('newvol-row');
+  const nv = document.getElementById('newvol');
+  if (v !== '__new') row.hidden = true;
   if (v === '__new') {
-    const next = String(s.volumes.length + 1).padStart(2, '0');
-    info.textContent = `→ 새 권 ${next} 를 만듭니다. 쪽수를 입력하세요.`;
+    // 번호는 서버가 준 next_vol 을 쓴다. 여기서 volumes.length+1 로 세면 안 된다 —
+    // 중철 권이나 비어 있는 권 번호가 있으면 이미 있는 권을 가리켜 그 권을 덮어쓴다.
+    row.hidden = false;
+    nv.value = s.next_vol || '01';
+    info.textContent = '→ 새 권을 만듭니다. 번호를 확인하고 쪽수를 입력하세요.';
     document.getElementById('pages').value = '';
+    checkNewVol();
   } else {
     const hit = s.volumes.find(x => x.vol === v);
     if (hit) {
@@ -86,6 +100,26 @@ function onVolume() {
     } else { info.textContent = '→ 아직 쪽수가 정해지지 않았습니다 (기본 4mm)'; }
   }
   calc();
+}
+
+// 손으로 넣은 권 번호를 검사한다. 이미 있는 권이면 새로 만드는 게 아니라 **덮어쓴다** —
+// 조용히 넘어가면 남의 주차를 지우게 되므로 눈에 보이게 말한다.
+function checkNewVol() {
+  const s = cur(); const nv = document.getElementById('newvol');
+  const hint = document.getElementById('newvol-hint');
+  let t = (nv.value || '').replace(/[^0-9]/g, '').slice(0, 2);
+  if (t.length === 1) t = '0' + t;
+  const hit = s.volumes.find(x => x.vol === t);
+  if (!t || t === '00') {
+    hint.textContent = '01~99 사이의 번호를 넣으세요'; hint.style.color = '#c0392b'; return false;
+  }
+  if (hit) {
+    hint.textContent = `⚠ ${t}권은 이미 있습니다 (${hit.binding}${hit.pages ? ' · ' + hit.pages + 'p' : ''}) — 덮어씁니다`;
+    hint.style.color = '#c0392b';
+  } else {
+    hint.textContent = `${t}권을 새로 만듭니다`; hint.style.color = '';
+  }
+  return true;
 }
 
 function calc() {
@@ -113,7 +147,10 @@ async function runSpine() {
   const s = cur();
   if (!s) { fatal('학교를 선택해 주세요.'); return; }
   let vol = document.getElementById('volume').value;
-  if (vol === '__new') vol = String(s.volumes.length + 1).padStart(2, '0');
+  if (vol === '__new') {
+    if (!checkNewVol()) { fatal('새 권 번호를 확인해 주세요.'); return; }
+    vol = document.getElementById('newvol').value.replace(/[^0-9]/g, '').padStart(2, '0');
+  }
   const pages = parseInt(document.getElementById('pages').value, 10);
   if (!pages) { alert('쪽수를 입력하세요'); return; }
   btn.disabled = true; btn.textContent = '만드는 중… (15~40초)';
@@ -166,6 +203,13 @@ document.getElementById('volume').addEventListener('change', onVolume);
 document.getElementById('pages').addEventListener('input', calc);
 document.getElementById('btn-calc').addEventListener('click', calc);
 document.getElementById('btn-run').addEventListener('click', runSpine);
+document.getElementById('newvol').addEventListener('input', checkNewVol);
+document.getElementById('newvol').addEventListener('blur', () => {
+  const nv = document.getElementById('newvol');
+  let t = (nv.value || '').replace(/[^0-9]/g, '').slice(0, 2);
+  if (t.length === 1) t = '0' + t;
+  nv.value = t; checkNewVol();
+});
 
 boot().catch(e => fatal('초기화 실패: ' + e));
 </script>

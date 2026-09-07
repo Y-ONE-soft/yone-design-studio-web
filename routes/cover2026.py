@@ -95,18 +95,32 @@ def schools():
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 400
     vols = cfg.get("워크북쪽수", {})
+    binds = cfg.get("제본", {})
     out = []
     for s in cfg["학교"]:
         for g in s["학년"]:
             vid = f"{s['id']}{g}"
             v = vols.get(vid, {})
+            b = binds.get(vid, {})
+            # 권 목록은 **쪽수 ∪ 제본** 이다. 중철 권은 세네카가 없어 쪽수를 적지 않으므로
+            # 쪽수 표만 보면 목록에서 빠지고, 그러면 "다음 권" 번호가 이미 있는 권을
+            # 가리켜 그 권을 덮어쓴다(2026-09-07: 명일2·강동2 가 실제로 03 으로 떴다).
+            keys = sorted(set(v) | set(b))
+            vl = []
+            for k in keys:
+                saddle = b.get(k) == "중철"
+                vl.append({"vol": k,
+                           "pages": None if saddle else v.get(k),
+                           "spine": None if (saddle or k not in v)
+                                    else _spine_mm(v[k], cfg["용지계수"]["newplus"]),
+                           "binding": b.get(k, "무선")})
+            nums = [int(k) for k in keys if k.isdigit()]
             out.append({
                 "id": vid,
                 "label": f"{s['표기']} {g}",
                 "branch": s["관"],
-                "volumes": [{"vol": k, "pages": v[k],
-                             "spine": _spine_mm(v[k], cfg["용지계수"]["newplus"])}
-                            for k in sorted(v)],
+                "volumes": vl,
+                "next_vol": f"{(max(nums) + 1) if nums else 1:02d}",
             })
     return jsonify({"ok": True, "project": meta["표기"],
                     "paper": cfg["용지계수"], "schools": out})
