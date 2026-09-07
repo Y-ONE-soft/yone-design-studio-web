@@ -456,8 +456,10 @@ class PocketbookSeries(Series):
         #   뒤집으면 분석본의 영어가 자리를 차지한 채로 남아 우리 글이 안
         #   들어가고, 그 뒤에 영어가 지워져 **그 자리가 빈다**(실측: 광성1).
         _korean_topic(rows, log)
-        self._apply_authored(cfg, rows, log)
+        # ⚠ 저술물 이름에는 단원이 들어간다. 단원은 `_fill_units` 가 채우므로
+        #   **그 뒤에** 얹어야 이름이 맞는다(먼저 부르면 16지문이 조용히 빈다).
         _fill_units(rows, scope, log)
+        self._apply_authored(cfg, rows, log)
         rows = self._apply_memtest(cfg, opt, rows, log)
         out = os.path.join(cfg.build_dir, "data.json")
         os.makedirs(cfg.build_dir, exist_ok=True)
@@ -602,7 +604,7 @@ class PocketbookSeries(Series):
         book = "/".join(bd.split(os.sep)[-2:])
         n, cat = 0, ""
         for r in rows:
-            cat = (r.get("category") or "").strip() or cat
+            cat = (r.get("category") or r.get("unit") or "").strip() or cat
             if r.get("kind") == "memtest":
                 continue
             got = rightpage.load(r.get("key") or r.get("no") or r.get("label"),
