@@ -59,6 +59,19 @@
   --box-s3: #f9fbf2;                      /* 실전 요약 배경 */
   --cond-fill: #dbecf2; --cond-line: #6ab3c7;
 
+  /* ── 서체 ── 지금까지는 규칙마다 글꼴 이름이 박혀 있어(30곳) 서체 하나를
+   * 바꾸려면 사람이 CSS 를 열어야 했다. 역할별 토큰으로 뺀다 — 값은 박혀 있던
+   * 스택 **그대로**라 이 토큰을 안 건드리면 지면이 한 픽셀도 안 바뀐다. */
+  --f-kr: "Noto Sans CJK KR", sans-serif;                     /* 한글 본문·해석 */
+  --f-body: "Elice Baeum", sans-serif;                        /* 문항 본문·보기·요약 */
+  --f-label: "Elice DX Neolli", sans-serif;                   /* 문항 번호·배지·탭 */
+  --f-num: "Montserrat", sans-serif;                          /* 숫자·영문 라벨 */
+  --f-disp: "LotteMartDream", "Montserrat", sans-serif;       /* 발문·지시문 */
+  --f-sub: "Gmarket Sans", sans-serif;                        /* 간지 STEP 글자 */
+  --f-hand: "Cafe24Supermagic", "Noto Sans CJK KR", sans-serif; /* 손글씨 표시 */
+  --f-pnum: "Yeongdo", serif;                                 /* 지문 번호 */
+  --f-deco: "TTMamablock", "Gmarket Sans", sans-serif;         /* 머리말 장식 */
+
   /* ── 자간 ── 실물은 **장평을 쓰지 않는다.** PDF 명령을 뜯어보니 Tz(장평)는
    * 한 곳도 없고 전부 Tc(자간)다: 본문 -0.04em · 하단 지문 상자 -0.025em ·
    * 실전 2단은 양끝정렬로 줄마다 -0.038~-0.074em.
@@ -72,7 +85,7 @@
 html, body { margin: 0; padding: 0; }
 p { margin: 0; }          /* 기본 p 마진이 붕괴/비붕괴를 오가며 ±3mm 를 만든다 */
 body {
-  font-family: "Noto Sans CJK KR", sans-serif;
+  font-family: var(--f-kr);
   color: var(--ink);
   letter-spacing: var(--track);
   line-break: strict;
@@ -221,7 +234,7 @@ body {
 /* 스텝 안내문 — 예시가 붙는 **첫 면에만**. 머리말 띠(y=16.99mm) 자리에 앉힌다. */
 .note-once {
   position: absolute; left: 68.5mm; top: -9.51mm;
-  font-family: "Elice Baeum", sans-serif; font-size: 9pt; line-height: 1;
+  font-family: var(--f-body); font-size: 9pt; line-height: 1;
   color: var(--ink); letter-spacing: normal;
 }
 .note-once::before {
@@ -236,7 +249,7 @@ body {
 }
 .hdr .note {
   position: absolute; left: 91.5mm; top: 16.99mm;
-  font-family: "Elice Baeum", sans-serif; font-size: 9pt; line-height: 1;
+  font-family: var(--f-body); font-size: 9pt; line-height: 1;
   color: var(--ink); letter-spacing: normal;
 }
 
@@ -286,13 +299,13 @@ section.flow.onecol { break-before: auto; }
 }
 .hdr .logo {
   position: absolute; left: 23mm; top: 15.18mm;
-  font-family: "TTMamablock", "Gmarket Sans", sans-serif;
+  font-family: var(--f-deco);
   font-size: 25pt; line-height: 1; color: var(--step);
 }
 .hdr .title {
   position: absolute; left: 23mm; top: 16.7mm;
   padding-left: var(--title-dx, 11mm);
-  font-family: "Gmarket Sans", sans-serif; font-weight: 500;
+  font-family: var(--f-sub); font-weight: 500;
   font-size: 13pt; line-height: 1; color: var(--ink);
   letter-spacing: -0.02em;
 }
@@ -302,7 +315,7 @@ section.flow.onecol { break-before: auto; }
   position: absolute; top: 0; width: 5.4mm; height: 5.4mm;
   border-radius: 50%; box-sizing: border-box;
   border: 0.8pt solid var(--rule);
-  font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 6pt;
+  font-family: var(--f-num); font-weight: 700; font-size: 6pt;
   line-height: 5.2mm; text-align: center; color: var(--rule);
   font-style: normal;
 }
@@ -327,7 +340,7 @@ section.flow.onecol { break-before: auto; }
 }
 .hdr-r .biglogo {
   position: absolute; right: 21mm; top: 4.4mm;
-  font-family: "Montserrat", sans-serif; font-weight: 500; font-size: 36pt;
+  font-family: var(--f-num); font-weight: 500; font-size: 36pt;
   line-height: 1; color: var(--step); opacity: 0.75;
 }
 .hdr-r .brand {
@@ -335,7 +348,7 @@ section.flow.onecol { break-before: auto; }
   width: 36.5mm; height: 4.79mm;
   background: var(--brand-bar);
   clip-path: polygon(3.2mm 0, 100% 0, 100% 100%, 0 100%);
-  font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 6pt;
+  font-family: var(--f-num); font-weight: 700; font-size: 6pt;
   line-height: 4.79mm; color: #fff; text-align: center;
   letter-spacing: 0.06em; padding-left: 2mm; box-sizing: border-box;
 }
@@ -345,7 +358,7 @@ section.flow.onecol { break-before: auto; }
 .tabs b {
   position: absolute; right: 0; width: 11.5mm; height: 26mm;
   white-space: nowrap;                     /* 'STEP 01' 이 두 줄로 쪼개지지 않게 */
-  font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 6.5pt;
+  font-family: var(--f-num); font-weight: 700; font-size: 6.5pt;
   letter-spacing: 0.08em;
   writing-mode: vertical-rl; text-orientation: mixed;
   display: flex; align-items: center; justify-content: center;
@@ -363,7 +376,7 @@ section.flow.onecol { break-before: auto; }
 /* ─────────────────────────────────────────────── 푸터 */
 .folio {
   position: absolute; top: 2.29mm;              /* 실측 보정: 꼬리말 286.62mm */
-  font-family: "Elice DX Neolli", sans-serif; font-weight: 700; font-size: 6pt;
+  font-family: var(--f-label); font-weight: 700; font-size: 6pt;
   line-height: 1; letter-spacing: normal; color: var(--ink);
 }
 .folio .no { color: var(--folio-no); }
@@ -378,7 +391,7 @@ section.flow.onecol { break-before: auto; }
  * 두면 글리프가 8mm 넘게 내려앉는다. 자리를 눈으로 맞추려면 **띄워서** 앉히고
  * 본문 시작을 padding 으로 정하는 편이 정확하다. 값은 전부 완성본 실측이다. */
 .pnum {
-  font-family: "Yeongdo", serif; font-size: 12pt; line-height: 1;
+  font-family: var(--f-pnum); font-size: 12pt; line-height: 1;
   color: var(--pnum); letter-spacing: 0; display: block;   /* 실측 폭 10.1mm */
 }
 /* 흐름은 건드리지 않고 **글리프만** 띄운다(relative) — 본문 시작 위치는 이미
@@ -461,7 +474,7 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 .ox.drop { text-align-last: right; }
 .ox .n {
   position: absolute; left: 1.2mm; top: 0.2mm;   /* 실측: 번호 24.0 · 글 30.0 */
-  font-family: "LotteMartDream", "Montserrat", sans-serif;
+  font-family: var(--f-disp);
   font-size: 9pt; color: var(--num-blue); letter-spacing: normal;
 }
 
@@ -470,7 +483,7 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 .sum .badge {
   position: absolute; left: 0; top: 0.3mm;
   width: 7.4mm; height: 3.4mm; border-radius: 0.5mm;
-  font-family: "Elice Baeum", sans-serif; font-weight: 700; font-size: 8pt;
+  font-family: var(--f-body); font-weight: 700; font-size: 8pt;
   line-height: 3.4mm; text-align: center; color: #fff; letter-spacing: normal;
 }
 .sum.topic .badge { background: var(--badge-topic); }
@@ -480,7 +493,7 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 /* 하단 문제 (발문 + 지문 박스 + 선지) */
 .q-head {
   position: relative; padding-left: 5.8mm;   /* 아이콘(4.1mm)과 글 사이를 띄운다 */
-  font-family: "Elice Baeum", sans-serif; font-size: 9pt; line-height: 4.1mm;
+  font-family: var(--f-body); font-size: 9pt; line-height: 4.1mm;
 }
 .box-q {
   background: var(--box-q); border: 0.5pt solid var(--line-q);
@@ -496,11 +509,11 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 .b2q { position: relative; margin-top: 6.5mm; padding-left: 9mm; }
 .b2q .n {
   position: absolute; left: 0; top: 0;
-  font-family: "Elice DX Neolli", sans-serif; font-weight: 700; font-size: 10pt;
+  font-family: var(--f-label); font-weight: 700; font-size: 10pt;
   color: var(--num-violet); letter-spacing: normal;
 }
 .b2q .qt {
-  font-family: "Elice DX Neolli", sans-serif; font-weight: 500; font-size: 7.5pt;
+  font-family: var(--f-label); font-weight: 500; font-size: 7.5pt;
   line-height: 4.3mm;
 }
 .b2q .choices { margin: 1.4mm 0 0 0.3mm; }
@@ -543,7 +556,7 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 .blk:first-child { margin-top: 0; }
 .blk .n {
   position: absolute; left: 0; top: 0.35mm;
-  font-family: "LotteMartDream", "Montserrat", sans-serif;
+  font-family: var(--f-disp);
   font-size: 8.95pt; color: var(--num-blue); letter-spacing: normal;
 }
 .blk-item { break-inside: avoid; }   /* 본문과 해석이 면 갈려 떨어지지 않게 */
@@ -576,7 +589,7 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 .ox-ex .s2 { top: 7.83mm; }
 .ox-ex .mk {
   position: absolute; width: 20.16mm; height: 4.48mm; background: #f9fcf3;
-  font-family: "Noto Sans CJK KR", sans-serif; font-weight: 500; color: var(--kr-gray);
+  font-family: var(--f-kr); font-weight: 500; color: var(--kr-gray);
   text-align: center; line-height: 4.48mm; letter-spacing: 0.5mm;
 }
 .ox-ex .mk i { font-style: normal; color: var(--num-blue); margin: 0 2.4mm; }
@@ -595,7 +608,7 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 .ox-ex .u3 { left: 90.79mm; width: 4.68mm; }
 .ox-ex .fx {
   position: absolute; top: 14.28mm; white-space: nowrap;
-  font-family: "Cafe24Supermagic", "Noto Sans CJK KR", sans-serif;
+  font-family: var(--f-hand);
   font-weight: 700; font-size: 9pt; color: #d2232a; letter-spacing: normal;
 }
 .ox-ex .f1 { left: 41.81mm; }
@@ -611,7 +624,7 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 .ox.drop { text-align-last: right; }
 .ox .n {
   position: absolute; left: 1.2mm; top: 0.2mm;   /* 실측: 번호 24.0 · 글 30.0 */
-  font-family: "LotteMartDream", "Montserrat", sans-serif;
+  font-family: var(--f-disp);
   font-size: 9pt; color: var(--num-blue); letter-spacing: normal;
 }
 
@@ -620,7 +633,7 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 .sum .badge {
   position: absolute; left: 0; top: 0.3mm;
   width: 7.4mm; height: 3.4mm; border-radius: 0.5mm;
-  font-family: "Elice Baeum", sans-serif; font-weight: 700; font-size: 8pt;
+  font-family: var(--f-body); font-weight: 700; font-size: 8pt;
   line-height: 3.4mm; text-align: center; color: #fff; letter-spacing: normal;
 }
 .sum.topic .badge { background: var(--badge-topic); }
@@ -630,7 +643,7 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 /* 하단 문제 (발문 + 지문 박스 + 선지) */
 .q-head {
   position: relative; padding-left: 5.8mm;   /* 아이콘(4.1mm)과 글 사이를 띄운다 */
-  font-family: "Elice Baeum", sans-serif; font-size: 9pt; line-height: 4.1mm;
+  font-family: var(--f-body); font-size: 9pt; line-height: 4.1mm;
 }
 .box-q {
   background: var(--box-q); border: 0.5pt solid var(--line-q);
@@ -646,11 +659,11 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 .b2q { position: relative; margin-top: 6.5mm; padding-left: 9mm; }
 .b2q .n {
   position: absolute; left: 0; top: 0;
-  font-family: "Elice DX Neolli", sans-serif; font-weight: 700; font-size: 10pt;
+  font-family: var(--f-label); font-weight: 700; font-size: 10pt;
   color: var(--num-violet); letter-spacing: normal;
 }
 .b2q .qt {
-  font-family: "Elice DX Neolli", sans-serif; font-weight: 500; font-size: 7.5pt;
+  font-family: var(--f-label); font-weight: 500; font-size: 7.5pt;
   line-height: 4.3mm;
 }
 .b2q .choices { margin: 1.4mm 0 0 0.3mm; }
@@ -693,7 +706,7 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 .blk:first-child { margin-top: 0; }
 .blk .n {
   position: absolute; left: 0; top: 0.35mm;
-  font-family: "LotteMartDream", "Montserrat", sans-serif;
+  font-family: var(--f-disp);
   font-size: 8.95pt; color: var(--num-blue); letter-spacing: normal;
 }
 .blk-item { break-inside: avoid; }   /* 본문과 해석이 면 갈려 떨어지지 않게 */
@@ -723,10 +736,10 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 .ox-ex p { position: relative; }
 .ox-mark {
   position: absolute; left: 83.4mm; top: 0; white-space: nowrap;
-  font-family: "Noto Sans CJK KR", sans-serif; font-weight: 500; color: var(--kr-gray);
+  font-family: var(--f-kr); font-weight: 500; color: var(--kr-gray);
 }
 .ox-mark i { font-style: normal; color: var(--num-blue); margin: 0 1.4mm;
-             font-family: "LotteMartDream", sans-serif; }
+             font-family: var(--f-disp); }
 .ox-mark b.on {
   font-weight: 500; border: 0.6pt solid #d2232a; border-radius: 50%;
   padding: 0 0.6mm; color: #d2232a;
@@ -734,7 +747,7 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 .ox-fix { position: absolute; left: 3mm; top: 17.5mm; height: 5mm; width: 160mm; }
 .ox-fix span {
   position: absolute; top: 0; white-space: nowrap;
-  font-family: "Cafe24Supermagic", "Noto Sans CJK KR", sans-serif;
+  font-family: var(--f-hand);
   font-weight: 700; font-size: 9pt; color: #d2232a;
 }
 .gox {
@@ -744,7 +757,7 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 .gox.drop { text-align-last: right; }
 .gox .n {
   position: absolute; left: 1mm; top: 0.5mm;
-  font-family: "LotteMartDream", "Montserrat", sans-serif;
+  font-family: var(--f-disp);
   font-size: 9pt; color: var(--num-teal); letter-spacing: normal;
 }
 
@@ -753,7 +766,7 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 .wr:first-child { padding-top: 0; }
 .wr .n {
   position: absolute; left: 0.6mm; top: 6.6mm;
-  font-family: "LotteMartDream", "Montserrat", sans-serif;
+  font-family: var(--f-disp);
   font-size: 8.5pt; color: var(--num-blue); letter-spacing: normal;
 }
 .wr:first-child .n { top: 0.2mm; }
@@ -775,7 +788,7 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 .onecol .gstart { break-before: page; }
 .onecol .gstart.first { break-before: auto; }
 .s3-intro {
-  font-family: "Elice Baeum", sans-serif; font-size: 8pt; line-height: 4.6mm;
+  font-family: var(--f-body); font-size: 8pt; line-height: 4.6mm;
   padding-top: 5mm; break-after: avoid;
 }
 .q3 {
@@ -790,7 +803,7 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 .q3 .qn {
   display: inline-block; min-width: var(--qn-w, 9mm); text-indent: 0;
   padding-right: 2.9mm; box-sizing: border-box;   /* 세 자리 번호도 글과 안 붙는다 */
-  font-family: "Elice DX Neolli", sans-serif; font-weight: 700; font-size: 12pt;
+  font-family: var(--f-label); font-weight: 700; font-size: 12pt;
   color: var(--sel); letter-spacing: 0.02em; line-height: 0; vertical-align: -0.55mm;
 }
 .p3 { font-size: 8pt; line-height: 4.94mm; text-align: justify; padding-top: 1.4mm; }
@@ -828,12 +841,12 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 }
 .divider .kick {   /* 실측 y 34.6 · 글자 폭 17.6mm */
   position: absolute; left: 25.4mm; top: 34.6mm;
-  font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 11pt;
+  font-family: var(--f-num); font-weight: 700; font-size: 11pt;
   color: #fff; letter-spacing: 0.55em; line-height: 1;
 }
 .divider .big {    /* 실측 글리프 45.2~75.9mm (높이 30.7mm) */
   position: absolute; left: 24.5mm; top: 40mm;
-  font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 124pt;
+  font-family: var(--f-num); font-weight: 700; font-size: 124pt;
   line-height: 1; color: #fff; letter-spacing: -0.02em;
 }
 .divider .flow {   /* 실측 원 지름 10.6mm · 중심 32.5 / 76.6 / 120.4mm */
@@ -842,7 +855,7 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 .divider .flow i {
   position: absolute; top: 0; width: 10.6mm; height: 10.6mm; border-radius: 50%;
   border: 0.8pt solid #fff; box-sizing: border-box;
-  font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 8pt;
+  font-family: var(--f-num); font-weight: 700; font-size: 8pt;
   line-height: 10.2mm; text-align: center; color: #fff; font-style: normal;
 }
 .divider .flow i.on { background: #fff; color: var(--step); }
@@ -857,7 +870,7 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 .divider .flow u:nth-of-type(2) { left: 55.5mm; width: 31.4mm; }
 .divider .flow s {
   position: absolute; top: 13.4mm;   /* 실측 라벨 y 235.7mm */ text-decoration: none;
-  font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 5.5pt;
+  font-family: var(--f-num); font-weight: 700; font-size: 5.5pt;
   color: #fff; letter-spacing: 0.1em;
 }
 .divider .flow s:nth-of-type(1) { left: 0; }
@@ -865,22 +878,22 @@ svg.chk { width: 4.1mm; height: 4.1mm; position: absolute; left: 0; top: 0; }
 .divider .flow s:nth-of-type(3) { left: 87.9mm; }
 .divider .mark {   /* 실측 x 25.4~139mm · y 270.0mm */
   position: absolute; left: 25.4mm; top: 270mm;
-  font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 27pt;
+  font-family: var(--f-num); font-weight: 700; font-size: 27pt;
   line-height: 1; color: #fff; letter-spacing: 0.42em;
 }
 /* 간지 뒷면 */
 .divider.back .l1 {
   position: absolute; right: 44mm; top: 79mm; text-align: right;   /* 실측 78.40 */
-  font-family: "Gmarket Sans", sans-serif; font-weight: 500; font-size: 36pt;
+  font-family: var(--f-sub); font-weight: 500; font-size: 36pt;
   line-height: 1; color: #fff;
 }
 .divider.back .l2 {
   position: absolute; right: 44mm; top: 101mm; text-align: right;  /* 실측 100.75 */
-  font-family: "Gmarket Sans", sans-serif; font-weight: 700; font-size: 60pt;
+  font-family: var(--f-sub); font-weight: 700; font-size: 60pt;
   line-height: 1; color: #fff;
 }
 .divider.back .ghost {
   position: absolute; right: 20mm; top: 194mm;
-  font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 128pt;
+  font-family: var(--f-num); font-weight: 700; font-size: 128pt;
   line-height: 1; color: #fff; opacity: 0.18;
 }

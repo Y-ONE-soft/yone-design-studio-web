@@ -131,6 +131,60 @@ class WorkbookSeries(Series):
                      default=float(tr[:-2]) if tr and tr.endswith("em") else None,
                      min=-0.06, max=0.0, step=0.002, unit="em",
                      affects="본문 전체 글자 사이", group="치수"))
+
+        # ── 치수 ── 테마가 이미 토큰으로 들고 있던 값들이다. 선언이 없어서
+        # 여백 하나 옮기려면 사람이 CSS 를 열어야 했다.
+        # 판형·도련은 공통 손잡이(page.*)에 이미 있으므로 여기서 또 열지 않는다.
+        def mm(key, css, label, affects, lo, hi):
+            v = T.get(css)
+            return K("metrics." + key, "mm", label, css=css,
+                     default=float(v[:-2]) if v and v.endswith("mm") else None,
+                     min=lo, max=hi, step=0.1, unit="mm",
+                     affects=affects, group="치수")
+
+        out += [
+            mm("m_out", "--m-out", "왼쪽 면 여백",
+               "짝수 쪽 글이 시작하는 자리", 5, 60),
+            mm("m_in", "--m-in", "오른쪽 면 여백",
+               "홀수 쪽 글이 시작하는 자리", 5, 60),
+            mm("content_w", "--content-w", "판면 가로",
+               "한 줄의 길이 — 줄바꿈이 전부 달라진다", 80, 200),
+            mm("hdr_h", "--hdr-h", "머리말 높이",
+               "크림 패널 아래 경계선 자리", 10, 60),
+            mm("body_top", "--body-top", "본문 시작선",
+               "머리말 아래 본문이 시작하는 높이", 10, 80),
+            mm("zone_top", "--zone-top", "상단 프레임",
+               "위쪽 문항 틀이 시작하는 높이", 10, 100),
+            mm("zone_btm", "--zone-btm", "하단 프레임",
+               "아래쪽 문항 틀이 시작하는 높이 (고정 자리)", 80, 250),
+            mm("folio_y", "--folio-y", "쪽번호 자리",
+               "면 아래 쪽번호 높이", 200, 295),
+        ]
+
+        # ── 서체 ── 규칙마다 글꼴 이름이 박혀 있던 40곳을 역할 토큰으로 뺐다.
+        # 고를 수 있는 것은 **이 책이 실어 나르는 글꼴**뿐이다 — 안 실린 이름을
+        # 적으면 인쇄에서 조용히 대체 글꼴로 떨어지므로 자유 입력을 두지 않는다.
+        FACES = [T.get(c) for c in ("--f-kr", "--f-body", "--f-label", "--f-num",
+                                    "--f-disp", "--f-sub", "--f-hand",
+                                    "--f-pnum", "--f-deco")]
+        FACES = [f for f in FACES if f]
+
+        def face(key, css, label, affects):
+            return K("fonts." + key, "enum", label, css=css,
+                     default=T.get(css), values=FACES,
+                     affects=affects, group="서체")
+
+        out += [
+            face("kr", "--f-kr", "한글 본문", "본문 한글·해석 전체"),
+            face("body", "--f-body", "문항 본문", "문항 본문 · 보기 · 요약"),
+            face("label", "--f-label", "번호·배지", "문항 번호 · 배지 · 탭"),
+            face("num", "--f-num", "숫자·영문 라벨", "머리말 STEP · 간지 큰 숫자"),
+            face("disp", "--f-disp", "발문·지시문", "문제 발문 · 지시문"),
+            face("sub", "--f-sub", "간지 STEP 글자", "간지의 STEP 글자"),
+            face("hand", "--f-hand", "손글씨 표시", "O/X 예시의 손글씨 느낌 글자"),
+            face("pnum", "--f-pnum", "지문 번호", "지문마다 붙는 번호"),
+            face("deco", "--f-deco", "머리말 장식", "머리말 장식 글자"),
+        ]
         return out
 
     def build(self, cfg, log, sample=False, **_):
