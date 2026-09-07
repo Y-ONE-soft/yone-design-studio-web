@@ -169,8 +169,11 @@ class WorkbookSeries(Series):
                                     "--f-pnum", "--f-deco")]
         FACES = [f for f in FACES if f]
 
+        # ⚠ 이름을 `fonts.*` 로 두면 안 된다 — config 의 `fonts` 는 이미
+        # **책이 더 실어 나를 글꼴 파일 목록**이라 사전을 넣는 순간 빌드가
+        # `[서체 없음] body` 로 죽는다 (실제로 여기서 걸렸다).
         def face(key, css, label, affects):
-            return K("fonts." + key, "enum", label, css=css,
+            return K("typeface." + key, "enum", label, css=css,
                      default=T.get(css), values=FACES,
                      affects=affects, group="서체")
 
