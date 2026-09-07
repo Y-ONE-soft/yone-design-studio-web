@@ -14,7 +14,7 @@ import os
 import shutil
 
 from core.render_vivlio import bleed as bleed_mod
-from core.render_vivlio import cli, probe, stage
+from core.render_vivlio import cli, knobs, probe, stage
 from core.render_vivlio.series.base import Series
 from core.render_vivlio.series.workbook import data as data_mod
 from core.render_vivlio.series.workbook import render as render_mod
@@ -30,6 +30,29 @@ REPO_FONTS = os.path.join(HERE, "fonts")
 # (파일명이 한글이라 `ls | grep LotteMart` 로는 안 잡힌다 — 서체 안쪽 이름으로
 #  찾을 것). TTMamablock 은 3,559개 설치 서체를 훑어도 없었다.
 BUNDLED = ("TTMamablockB.ttf", "TTMamablockL.ttf")
+
+# ── 손잡이 기본값 — 테마에서 읽는다 ────────────────────────────────
+# 손으로 옮겨 적으면 테마를 고쳤을 때 여기만 옛값으로 남는다. 그러면 편집기의
+# 「되돌리기」가 **지금 테마에 없는 색**으로 돌려놓는다.
+_THEME_CACHE = {}
+
+
+def _theme_defaults():
+    """themes/workbook.css 의 :root 값들. 못 읽으면 빈 사전(기본값 없음)."""
+    if _THEME_CACHE:
+        return _THEME_CACHE
+    import re
+    path = os.path.join(os.path.dirname(os.path.dirname(HERE)),
+                        "themes", "workbook.css")
+    try:
+        with open(path, encoding="utf-8") as f:
+            css = f.read()
+    except OSError:
+        return {}
+    for block in re.findall(r":root\s*\{([\s\S]*?)\n\}", css):
+        for name, val in re.findall(r"(--[a-z0-9-]+)\s*:\s*([^;]+);", block):
+            _THEME_CACHE.setdefault(name, val.strip())
+    return _THEME_CACHE
 
 
 class WorkbookSeries(Series):
@@ -66,7 +89,49 @@ class WorkbookSeries(Series):
     def _stage(self, cfg, build_dir, log):
         stage.stage_fonts(build_dir, self._fonts(cfg), log=log, required=True)
         stage.stage_theme(build_dir, self.theme, log=log)
+        # 손잡이(config 가 정한 값)와 책 전용 덮어쓰기. 둘 다 **없으면 빈 파일**이라
+        # config 를 안 건드린 책은 지면이 한 획도 안 바뀐다.
+        knobs.write(cfg, WorkbookSeries(), build_dir)
+        stage.stage_overrides(cfg, build_dir)
         stage.stage_book_assets(cfg, build_dir)
+
+    # ── 손잡이 ────────────────────────────────────────────────────
+    # 고르는 기준은 「실제로 시안 왕복이 났던 자리」다 — 46개를 다 열면 아무도
+    # 안 쓴다(knobs.py 의 기준: 계열당 8~15개).
+    #
+    # ⚠ 기본값은 **테마에서 읽는다.** 손으로 적으면 테마를 고쳤을 때 기본값만
+    #   옛것으로 남아, 되돌리기가 엉뚱한 색으로 돌아간다.
+    #
+    # 연한색(--s1-pale 등)은 열지 않는다 — 주색에서 나오는 짝이라 따로 열면
+    # 주색만 바꿨을 때 둘이 어긋난다.
+    def knobs(self, cfg):
+        T = _theme_defaults()
+        K = knobs.Knob
+
+        def c(key, css, label, affects):
+            return K("palette." + key, "color", label, css=css,
+                     default=T.get(css), affects=affects, group="색")
+
+        out = [
+            c("s1", "--s1", "STEP1 주색", "STEP1 간지 · 머리말 배지 · 번호"),
+            c("s2", "--s2", "STEP2 주색", "STEP2 간지 · 머리말 배지"),
+            c("s3", "--s3", "STEP3 주색", "실전(STEP3) 간지 · 머리말"),
+            c("hdr_bg", "--hdr-bg", "머리말 크림 패널", "모든 면 머리말 바탕"),
+            c("rule", "--rule", "머리말 경계선", "머리말 아래 선 · 비활성 표시"),
+            c("sel", "--sel", "선택지 파랑", "[ⓐ / ⓑ] 고르는 자리"),
+            c("blank", "--blank", "빈칸 글자", "빈칸 문항의 첫 글자"),
+            c("pnum", "--pnum", "지문 번호", "지문마다 붙는 번호"),
+            c("box_body", "--box-body", "본문 상자(크림)", "본문 정리 · 문장 배열"),
+            c("box_sky", "--box-sky", "본문 상자(하늘)", "본문 O/X · 내용 종합"),
+            c("badge_topic", "--badge-topic", "주제 배지", "본문 정리의 {주제}"),
+            c("badge_title", "--badge-title", "제목 배지", "본문 정리의 {제목}"),
+        ]
+        tr = T.get("--track")
+        out.append(K("metrics.track", "number", "자간", css="--track",
+                     default=float(tr[:-2]) if tr and tr.endswith("em") else None,
+                     min=-0.06, max=0.0, step=0.002, unit="em",
+                     affects="본문 전체 글자 사이", group="치수"))
+        return out
 
     def build(self, cfg, log, sample=False, **_):
         build_dir = cfg.build_dir

@@ -17,6 +17,7 @@ import html
 import re
 
 from core.render_vivlio import refs as _refs
+from core.render_vivlio import stage
 from core.render_vivlio import richtext as _rtx
 
 # ──────────────────────────────────────────────────────── 인라인 마크업
@@ -1017,7 +1018,10 @@ def document(data, title="워크북"):
             rows.append((st["key"], npages))
     doc = ("<!DOCTYPE html>\n<html lang=\"ko\">\n<head>\n<meta charset=\"utf-8\">\n"
            f"<title>{esc(title)}</title>\n<style>\n{font_css()}\n</style>\n"
-           "<link rel=\"stylesheet\" href=\"theme.css\">\n</head>\n<body>\n"
+           "<link rel=\"stylesheet\" href=\"theme.css\">"
+           # 손잡이(knobs.css)와 책 전용 덮어쓰기(overrides.css) — 차례가 곧
+           # 우선순위다. 둘 다 없으면 빈 파일이라 지면은 그대로다.
+           + stage.BOOK_CSS_LINKS + "\n</head>\n<body>\n"
            + "\n".join(parts) + "\n</body>\n</html>\n")
     return doc, rows
 
