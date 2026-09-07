@@ -976,8 +976,10 @@ class PocketbookSeries(Series):
         if not pdf:
             return spec
         spec = dict(spec or {})
-        spec["inserts"] = [{"pdf": pdf, "page": 1, "at": 1, "mode": "insert"}]
-        spec["append"] = [{"pdf": pdf, "page": 2}]
+        # ⚠ `page` 는 **0부터**다(`bleed.finish` 규약). 1·2 로 적었다가
+        #   "page 2 not in document" 로 마감이 통째로 건너뛰어졌다.
+        spec["inserts"] = [{"pdf": pdf, "page": 0, "at": 1, "mode": "insert"}]
+        spec["append"] = [{"pdf": pdf, "page": 1}]
         return spec
 
     def gen_cover(self, cfg, build_dir, log):
