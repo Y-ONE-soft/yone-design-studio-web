@@ -87,9 +87,20 @@ def test_css_knob_default_matches_theme(name, series):
                       f":root 를 못 읽었다")
         assert k.css in root, f"{name}: 테마에 {k.css} 가 없다 ({k.key})"
         assert k.default is not None, f"{name}: {k.key} 기본값 미선언"
-        assert str(k.default).lower() == root[k.css].lower(), (
+        # 단위를 밝힌 숫자 손잡이(자간 -0.028em)는 선언이 숫자, 테마가 문자열이다.
+        # 단위를 떼고 값으로 견준다 — 단위까지 문자열로 적게 하면 편집기가
+        # 숫자 칸으로 못 그린다.
+        want = root[k.css].strip()
+        got = str(k.default)
+        if k.unit and want.lower().endswith(k.unit.lower()):
+            want_num = want[: -len(k.unit)].strip()
+            assert abs(float(want_num) - float(k.default)) < 1e-9, (
+                f"{name}: {k.key} 기본값이 테마와 다르다 — "
+                f"선언 {k.default}{k.unit} vs 테마 {want}")
+            continue
+        assert got.lower() == want.lower(), (
             f"{name}: {k.key} 기본값이 테마와 다르다 — "
-            f"선언 {k.default} vs 테마 {root[k.css]}")
+            f"선언 {k.default} vs 테마 {want}")
 
 
 def test_blackbook_metric_defaults():

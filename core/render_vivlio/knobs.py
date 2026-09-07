@@ -180,6 +180,10 @@ def css_text(cfg, series):
             continue
         if k.kind in ("mm", "pt") and isinstance(v, (int, float)):
             v = "%g%s" % (v, k.kind)
+        elif k.unit and isinstance(v, (int, float)):
+            # 단위를 밝힌 숫자 손잡이(자간 -0.028em 처럼)는 단위를 붙여야
+            # 유효한 CSS 가 된다. 단위 없이 나가면 그 줄이 통째로 무시된다.
+            v = "%g%s" % (v, k.unit)
         lines.append("  %s: %s;   /* %s */" % (k.css, v, k.label))
     if not lines:
         return ""
