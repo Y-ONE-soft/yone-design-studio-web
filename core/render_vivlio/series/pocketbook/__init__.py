@@ -42,6 +42,7 @@ FONTS = [
 FONT_ALIAS = {
     "휴먼범석체.otf": "PBRuby.otf",          # 구문분석 주석 (원본 RubyFont)
     "강원교육현옥샘.otf": "PBRubyT.otf",      # 암기 TEST 루비
+    "BodoniModa-VariableFont_opsz,wght.ttf": "BodoniModa.ttf",   # 간지 제목
 }
 
 _SPAN_CACHE = {}
@@ -951,10 +952,65 @@ class PocketbookSeries(Series):
         # 표지를 끼우면 면 번호가 밀려 지문면 검사가 통째로 어긋난다(그렇게 됐다).
         body_pdf = os.path.join(build_dir, "_body.pdf")
         shutil.copyfile(out, body_pdf)
-        spec = cfg.finish_spec()
+        spec = self._cover_spec(cfg, build_dir, log)
         if spec:
             bleed.finish(out, spec, log=log)
         log("■ 산출 %s" % out)
+        return out
+
+    def _cover_spec(self, cfg, build_dir, log):
+        """마감 스펙 — 간지를 **우리가 구워** 끼운다.
+
+        예전엔 `C버전/포켓북_1P.ai` 를 그대로 끼웠다. 표지가 2026 리뉴얼로
+        바뀌었으니 간지도 그 공기로 새로 만든다(`cover.py`). 학교·시험 이름이
+        들어가므로 책마다 다르다 — 파일 하나를 돌려 쓸 수 없다.
+
+        ⚠ `options.cover="keep"` 이면 예전 `.ai` 를 그대로 쓴다. 이미 넘긴 책을
+          다시 굽는 자리라 되돌릴 길은 남겨 둔다.
+        """
+        spec = cfg.finish_spec()
+        opt = cfg.section("options") or {}
+        if opt.get("cover") == "keep":
+            return spec
+        pdf = self.gen_cover(cfg, build_dir, log)
+        if not pdf:
+            return spec
+        spec = dict(spec or {})
+        spec["inserts"] = [{"pdf": pdf, "page": 1, "at": 1, "mode": "insert"}]
+        spec["append"] = [{"pdf": pdf, "page": 2}]
+        return spec
+
+    def gen_cover(self, cfg, build_dir, log):
+        """간지 두 면(첫 면·마지막 면)을 굽는다 → PDF 경로."""
+        from core.render_vivlio.series.pocketbook import cover as pcover
+        opt = cfg.section("options") or {}
+        M = dict(ptheme.METRICS, **(cfg.section("metrics") or {}))
+        school = opt.get("school") or ""
+        term = pcover.term_text(opt.get("term") or self._term_of(cfg))
+        html = os.path.join(build_dir, "_cover.html")
+        with open(html, "w", encoding="utf-8") as f:
+            f.write('<!doctype html><html><head><meta charset="utf-8">'
+                    '<style>@page{size:%gmm %gmm;margin:0}'
+                    'html,body{margin:0;padding:0}'
+                    '@font-face{font-family:PBBody;'
+                    'src:url("fonts/NotoSansCJKkr-Regular.otf");font-weight:400}'
+                    '@font-face{font-family:PBBody;'
+                    'src:url("fonts/NotoSansCJKkr-Bold.otf");font-weight:700}'
+                    '@font-face{font-family:PBTitle;'
+                    'src:url("fonts/BodoniModa.ttf")}'
+                    '%s</style></head><body>%s%s</body></html>'
+                    % (M["page_w"] + 2 * M["bleed"],
+                       M["page_h"] + 2 * M["bleed"],
+                       pcover.css(M),
+                       pcover.first_page(school, term),
+                       pcover.last_page(school, term)))
+        out = os.path.join(build_dir, "_cover.pdf")
+        try:
+            cli.run_build(html, out, log=log, final=False)
+        except Exception as e:
+            log("■ [간지] 굽기 실패 — 예전 간지를 쓴다: %s" % str(e)[:70])
+            return None
+        log("■ 간지 2면 (%s · %s)" % (school, term))
         return out
 
     @staticmethod

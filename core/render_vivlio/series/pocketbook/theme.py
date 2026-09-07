@@ -24,7 +24,7 @@ PALETTE = {
     #   불투명도로 옅게 만들었는데, 옅기를 맞추라는 지적을 몇 번 받고도 계속
     #   빗나갔다(불투명도는 바탕과 섞인 결과라 눈으로 겨냥이 안 된다).
     #   이제 모눈 그림을 **이 색으로 직접 그린다** — 보이는 색 = 적은 색.
-    "flow_line": "#E3E5D6",   # 모눈 선
+    "flow_line": "#E7E9DC",   # 모눈 선 (바탕 #EAECD8 과 거의 붙는다)
     "flow_arrow": "#F39857",  # 플로우 기호 (CMYK 2/48/73/0)
     # 플로우노트는 **기호마다 색이 다르다**(원본 문자 스타일 4종). 줄 전체가
     # 아니라 기호 글자에만 칠한다 — 줄을 통째로 칠하면 원본과 완전히 달라진다.
@@ -52,11 +52,17 @@ PALETTE = {
     "card3":     "#D6E3EF",   # 3열
 }
 
-# 형광펜 — 인디자인 문자 스타일 이름 그대로 쓴다(`형광펜_노랑` …)
-HIGHLIGHT = {
-    "yellow": "#FDF598", "mint": "#E8F5F0", "pink": "#FBEEF2",
-    "sky": "#E9F1FA", "violet": "#F0EDF8", "orange": "#FDF0E4",
+# 형광펜 — 이름은 인디자인 문자 스타일 그대로(`형광펜_노랑` …).
+#
+# ⚠ 값은 **잉크 원색**이고, 실제로 찍히는 색은 `hl_tint` 농도로 정해진다.
+#   인디자인에서도 그렇게 쓴다 — 스타일에 진한 잉크를 걸어 두고 `UnderlineTint`
+#   로 낮춘다(현장 기준 **5%**). 옅은 색을 직접 적어 두면 "더 여리게" 를 맞출
+#   때마다 여섯 색을 따로 손봐야 하고 서로 어긋난다.
+HIGHLIGHT_INK = {
+    "yellow": "#FCED00", "mint": "#13B899", "pink": "#977DB9",
+    "sky": "#86B2DF", "violet": "#9D87BF", "orange": "#F39857",
 }
+HIGHLIGHT = {}                       # `build_css` 가 농도를 먹여 채운다
 
 # ── 치수 mm/pt (실측) ─────────────────────────────────────
 METRICS = {
@@ -74,6 +80,7 @@ METRICS = {
     # **획 중심이 기준선 3pt 위**다. CSS 는 밑줄의 **윗변**을 offset 으로 잡으므로
     # offset = −(중심 + 두께/2) = −7.5pt 가 되어야 글자 위에 얹힌다.
     "hl_weight": 9.0, "hl_center": 2.75,
+    "hl_tint": 5.0,                 # 형광펜 농도(%) — 인디자인 현장값
     # '서술형' 표식 — 원본 실측 9.06×5.64pt, 바닥중앙 기준 8.5pt 위
     "icon_h": 7.23, "icon_dy": 8.5,
     "rule_y": 148.0,
@@ -84,8 +91,9 @@ METRICS = {
     "folio_y": 196.5, "folio_size": 6.0,
     # 오른쪽 면
     # 플로우노트는 **8pt 가 기본**이고, 넘칠 때만 7pt 로 내린다(사용자 지시).
-    "flow": [18.0, 18.31, 115.0, 41.0], "flow_size": 8.0, "flow_lead": 3.2,
-    "flow_min_size": 7.0,           # 넘칠 때 내려가는 자리
+    "flow": [18.0, 18.31, 115.0, 41.0], "flow_size": 9.0, "flow_lead": 3.4,
+    "flow_min_size": 8.0,           # 넘칠 때 내려가는 자리
+    "flow_track": -0.05,            # 자간 (원본 문자 스타일 Tracking=-50)
     "flow_sec_gap": 1.2,            # ①②③ 묶음 사이 띄움(mm)
     "flow_grid": 1.44, "flow_chip": [104.0, 12.86, 29.0, 5.45],
     # 모눈 배경은 원본에서 **불투명도 55%** 로 깔려 있다(마스터 실측).
@@ -147,7 +155,16 @@ def build_css(palette=None, metrics=None, highlight=None):
     """
     P = dict(PALETTE); P.update(palette or {})
     M = dict(METRICS); M.update(metrics or {})
-    H = dict(HIGHLIGHT); H.update(highlight or {})
+    # 형광펜 = 잉크에 농도를 먹인 색. `highlight` 로 색을 직접 주면 그게 이긴다.
+    t = M.get("hl_tint", 5.0) / 100.0
+
+    def _tint(hexs):
+        r, g, b = (int(hexs[i:i + 2], 16) for i in (1, 3, 5))
+        return "#%02X%02X%02X" % tuple(
+            round(255 - (255 - c) * t) for c in (r, g, b))
+
+    H = {k: _tint(v) for k, v in HIGHLIGHT_INK.items()}
+    H.update(highlight or {})
 
     bl = M["bleed"]
     tok = {}
@@ -176,6 +193,7 @@ def build_css(palette=None, metrics=None, highlight=None):
         "cardpad": "%g" % M["card_pad"],
         "mt_size": "%g" % M["memtest_size"], "mt_lead": "%g" % M["memtest_lead"],
         "flow_sec_gap": "%g" % M["flow_sec_gap"],
+        "flow_track": "%g" % M["flow_track"],
         "badge_size": "%g" % M["badge_size"],
         "badge_r": "%g" % M["badge_radius"],
         "badge_w": "%g" % M["badge"][2],
@@ -335,6 +353,7 @@ html,body{margin:0;padding:0;background:#fff}
    z-index 는 깔개(::before)보다 위에 서려고 준다 — 안 주면 모눈이 글을 덮는다. */
 .flowin{position:relative;z-index:1;width:100%;height:100%;
   font-family:PBDodam;font-size:__flow_size__pt;line-height:__flow_lead__mm;
+  letter-spacing:__flow_track__em;
   padding:2.5mm 3mm;box-sizing:border-box;columns:2;column-gap:3mm}
 .flow p{margin:0;break-inside:avoid}
 .flow p.sec{margin-top:__flow_sec_gap__mm}
