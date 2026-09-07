@@ -92,12 +92,14 @@ def group_svg(z, group, sw, base=(0.0, 0.0), fallback="#000000"):
                 walk(ch, x, y)
                 continue
             fill = _rgb(sw.get(ch.get("FillColor")), fallback)
+            stroke = _rgb(sw.get(ch.get("StrokeColor")), None) \
+                if ch.get("StrokeColor") else None
             for d in _paths(ch, x, y):
-                parts.append((fill, d))
+                parts.append((fill, d, stroke))
 
     walk(group, base[0], base[1])
     xs, ys = [], []
-    for _f, d in parts:
+    for _f, d, _s in parts:
         for m in re.finditer(r"(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)", d):
             xs.append(float(m.group(1)))
             ys.append(float(m.group(2)))
@@ -105,8 +107,10 @@ def group_svg(z, group, sw, base=(0.0, 0.0), fallback="#000000"):
         return None
     vb = (min(xs) - .2, min(ys) - .2,
           max(xs) - min(xs) + .4, max(ys) - min(ys) + .4)
-    body = "".join('<path fill="%s" fill-rule="evenodd" d="%s"/>' % (f, d)
-                   for f, d in parts)
+    body = "".join(
+        '<path fill="%s" fill-rule="evenodd"%s d="%s"/>'
+        % (f, (' stroke="%s" stroke-width=".5"' % st) if st else "", d)
+        for f, d, st in parts)
     return ('<svg xmlns="http://www.w3.org/2000/svg" '
             'viewBox="%.2f %.2f %.2f %.2f">%s</svg>' % (vb + (body,))), vb
 
@@ -194,14 +198,20 @@ def _with_abc(svg, vb):
             ang += 90
         boxes.append(((min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2,
                       max(xs) - min(xs), ang))
-    boxes.sort(key=lambda b: b[0])
-    size = (sum(b[2] for b in boxes) / max(len(boxes), 1)) * 0.62
+    # ⚠ 글자 차례는 **자리**가 정한다 — 위 칸이 A, 그다음 왼쪽이 B, 오른쪽이 C
+    #   (원본 그림 실측). x 만 보고 순서를 매기면 A 와 B 가 뒤바뀐다.
+    top = min(boxes, key=lambda b: b[1])
+    rest = sorted((b for b in boxes if b is not top), key=lambda b: b[0])
+    ordered = [top] + rest
+    size = (sum(b[2] for b in boxes) / max(len(boxes), 1)) * 0.72
     txt = "".join(
         '<text x="%.2f" y="%.2f" font-size="%.2f" fill="#54669F" '
-        'font-family="PBJalnan,sans-serif" text-anchor="middle" '
+        'font-family="PBJalnan,sans-serif" font-weight="700" text-anchor="middle" '
         'dominant-baseline="central" transform="rotate(%.1f %.2f %.2f)">%s</text>'
         % (b[0], b[1], size, b[3], b[0], b[1], ch)
-        for b, ch in zip(boxes, "ABC"))
+        for b, ch in zip(ordered, "ABC"))
+    # 원본은 테두리가 굵다 — 얇게 두면 색면 세 개가 붕 뜬 것처럼 보인다
+    svg = svg.replace('stroke-width=".5"', 'stroke-width="1.1"')
     return svg.replace("</svg>", txt + "</svg>"), vb
 
 
