@@ -15,10 +15,20 @@
 맞는 말이고, 실측이 그걸 뒷받침한다. 완성본 1,216지문을 해석과 나란히 놓고
 재 보니 **내용 쪽 규칙이 따로 있었다**:
 
-    표제      평균 **5.0자**이고 35% 가 **그 지문에 나온 말**을 쓴다
-              — `[중고 옷을 구매하는 이유 ①]` `[지구에서의 빛]` `[말도 안 되는 개념]`
-              ✘ `[상황]` `[본론]` `[맺음]` 처럼 **어느 지문에나 붙는 두 글자 딱지**
-                (내가 처음 쓴 것이 평균 2.2자였다 — 읽어도 이 지문이 뭔지 모른다)
+    표제      **`[역할] 그 지문의 내용`** 꼴이다. 대괄호 안은 이 대목이 글의
+              어느 부분인지 말하는 **역할 딱지**(`결론`·`예시`·`도입`·`그러나`)이고,
+              그 지문의 내용은 **딱지 옆**에 붙는다.
+
+                  ○ `[결론] 예술가가 하는 일`
+                       `→ 남이 버린 물건을 재료로 삼아…`
+                  ✘ `[예술가가 하는 일]`   ← 내용이 무슨 부분인지 모른다
+                  ✘ `[상황]` `[맺음]`      ← 어느 지문에나 붙어 내용이 없다
+
+              완성본 표제가 중앙 3자인 것은 대괄호 안이 **딱지**이기 때문이다
+              (`결론` 205회 · `예시` 171회 · `도입` 46회). 내용을 대괄호 안에
+              넣으면 색과 간격은 붙지만 **읽는 사람이 갈피를 못 잡는다.**
+              대괄호 안이 지문의 말이어야 하는 게 아니라, **딱지 옆 글**이
+              지문의 말이어야 한다.
     고르기    줄 수 = 해석 문장 수의 **1.0~1.9배(중앙 1.4)**, 짚는 문장은 **67%**.
               모든 문장을 옮기지 않는다. 주장·근거·수치·대조·결론을 남기고
               꾸밈은 버린다. 전부 옮기면 해석을 한 번 더 쓴 것이지 노트가 아니다.
@@ -71,7 +81,6 @@ AUTHORED = os.path.join(ROOT, "_authored")
 # 완성본 실측에서 뽑은 규격. 벗어나면 `check` 가 말한다.
 SPEC = {
     "flow_lines": (5, 20),        # 줄 수
-    "flow_len": 44,               # 한 줄 최대 글자
     "topic_len": (18, 80),
     "summary_len": (70, 260),
     # ⚠ 전수 실측(1,220지문): 8장 23% · 9장 22% · 6장 19% · 7장 15%.
@@ -85,8 +94,14 @@ SPEC = {
     #   을 46번 쓴다 — 논리 딱지 자체가 틀린 게 아니다. 틀린 것은 표제가
     #   **전부** 그런 딱지여서 이 지문이 무슨 글인지 하나도 안 남는 경우다.
     "head_own": 0.30,             # 표제 중 지문의 말을 쓴 비율 (완성본 35%)
+    "head_max": 8,                # 대괄호 안은 **역할 딱지**다 — 짧아야 한다
+    "head_bare": 0.5,             # 딱지만 있고 옆에 글이 없는 줄의 최대 비율
     "line_ratio": (0.8, 2.1),     # 줄 수 ÷ 해석 문장 수 (완성본 중앙 1.4)
     "keep_num": True,             # 해석의 숫자는 살린다 (완성본 84%)
+    # ⚠ 44자가 아니다. 플로우노트는 **두 단**이고 한 단이 53mm 다 —
+    #   9pt 도담도담으로 한글 24자 남짓이면 꽉 찬다(완성본 줄 길이 중앙 23자와
+    #   정확히 같은 이유다). 44자로 두면 모든 줄이 두 줄로 접힌다.
+    "flow_len": 26,
 }
 # 완성본 표제 3,155개에 **한 번도(또는 한 번)** 안 나온 말. 내가 쓰던 것들이
 # 여기 몰려 있었다 — `맺음` `인식` `안내` `바람` `방침` `내용` `물음` 은 0회,
@@ -96,6 +111,11 @@ FLAT_HEADS = {
     "서두", "끝맺음", "총평", "개요",
 }
 _HAN = re.compile(r"[가-힣]")
+
+
+def _wlen(s):
+    """한글 자 수로 잰 줄 길이. 영문·숫자는 폭이 절반쯤이라 그렇게 센다."""
+    return sum(1.0 if ord(c) > 0x2000 else 0.55 for c in s)
 _HEAD = re.compile(r"^\s*[\[［]([^\]］]+)[\]］]")
 _NUM = re.compile(r"\d[\d,.]*")
 
@@ -198,9 +218,9 @@ def check(data, key="", src=""):
     lo, hi = SPEC["flow_lines"]
     if fl and not (lo <= len(fl) <= hi):
         bad.append("플로우 %d줄 (규격 %d~%d)" % (len(fl), lo, hi))
-    long = [l for l in fl if len(l) > SPEC["flow_len"]]
+    long = [l for l in fl if _wlen(l) > SPEC["flow_len"]]
     if long:
-        bad.append("플로우 %d줄이 %d자 넘음 — 끊어야 함: %r"
+        bad.append("플로우 %d줄이 한 단(한글 %d자)을 넘음 — 끊어야 함: %r"
                    % (len(long), SPEC["flow_len"], long[0][:30]))
     if fl and not any(re.match(r"^\s*\[", l) for l in fl):
         bad.append("표제 대괄호가 하나도 없음 (완성본은 22%가 표제 줄)")
@@ -210,18 +230,34 @@ def check(data, key="", src=""):
     heads = [m.group(1).strip() for l in fl
              for m in [_HEAD.match(l)] if m]
     body_ = re.sub(r"\s+", " ", src or "")
+    # 대괄호 안이 길다 = 내용을 딱지 안에 넣었다는 뜻이다
+    long_h = [h for h in heads if len(h) > SPEC["head_max"]]
+    if long_h:
+        bad.append("표제 %d개가 딱지가 아니라 내용 — `[역할] 내용` 꼴로 "
+                   "바꿔야 한다: %s" % (len(long_h), ", ".join(long_h[:3])))
+    # 딱지만 있고 옆에 글이 없으면 그 딱지는 아무것도 말해 주지 않는다
+    bare = [l for l in fl for m in [_HEAD.match(l)]
+            if m and not l[m.end():].strip()]
+    if heads and len(bare) > len(heads) * SPEC["head_bare"]:
+        bad.append("딱지만 있고 옆에 내용이 없는 줄 %d/%d — `[결론] 예술가가 "
+                   "하는 일` 처럼 붙여야 한다" % (len(bare), len(heads)))
     flat = [h for h in heads if h in FLAT_HEADS]
     if flat:
         bad.append("표제 %d개가 어느 지문에나 붙는 말 — 이 지문의 내용을 넣어야 "
                    "한다: %s" % (len(flat), ", ".join(flat[:5])))
     if src:
         body = body_
-        if heads:
-            own = sum(1 for h in heads
-                      if any(w in body for w in re.findall(r"[가-힣]{2,}", h)))
-            if own / len(heads) < SPEC["head_own"]:
-                bad.append("표제 %d개 중 지문의 말을 쓴 것이 %d개뿐 (완성본 35%%)"
-                           % (len(heads), own))
+        # ⚠ 지문의 말이 있어야 하는 곳은 **대괄호 안이 아니라 딱지 옆**이다.
+        #   `[결론] 예술가가 하는 일` 에서 `결론` 은 역할이고 내용은 그 옆이다.
+        side = [l[m.end():].strip() for l in fl
+                for m in [_HEAD.match(l)] if m and l[m.end():].strip()]
+        if side:
+            own = sum(1 for x in side
+                      if any(w in body for w in re.findall(r"[가-힣]{2,}", x)))
+            if own / len(side) < SPEC["head_own"]:
+                bad.append("딱지 옆 글 %d개 중 지문의 말을 쓴 것이 %d개뿐 — "
+                           "딱지 옆에는 이 지문의 내용이 와야 한다"
+                           % (len(side), own))
         ns = _sents(body)
         if ns and fl:
             r = len(fl) / len(ns)
