@@ -27,6 +27,7 @@
 계열별 옵션은 `--키` / `--키=값` 으로 그대로 흘려보낸다(예: `--sample`, `--nomemo`).
 """
 import os
+import re
 import sys
 
 from core.render_vivlio import config as bookconfig
@@ -373,7 +374,12 @@ def main(argv=None):
                 var_mod.run(cfg, _series(cfg), kkey, vals, log,
                             pages=int(opts.get("pages", 4)))
         elif st == "knobs":
-            sets = [x for x in str(opts.get("set", "")).split(",") if x.strip()]
+            # ⚠ 그냥 콤마로 자르면 **값 안의 콤마가 잘린다.** 서체 손잡이 값은
+            #   `"Gmarket Sans", sans-serif` 라 `sans-serif` 가 따로 떨어져
+            #   「모르는 손잡이: sans-serif」로 죽었다(실측). 다음 `키=` 가
+            #   시작되는 콤마에서만 자른다.
+            sets = [x for x in re.split(r",(?=\s*[a-z_]+\.[a-z0-9_]+\s*=)",
+                                        str(opts.get("set", ""))) if x.strip()]
             resets = [x for x in str(opts.get("reset", "")).split(",") if x.strip()]
             if sets or resets:
                 set_knobs(cfg, log, sets, resets)
