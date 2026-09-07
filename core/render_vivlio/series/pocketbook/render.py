@@ -94,6 +94,33 @@ def ruby_mm(rb):
                for c in rb)
 
 
+# ── 주석 자리 재기 ──────────────────────────────────────────────────
+#
+# 구문분석 주석은 낱말 **가운데**에 걸린다. 줄 끝 낱말에 긴 주석이 걸리면
+# 판면을 넘어 **제본 안전 영역까지 침범한다**(광문1 실측: 54면 `consciousness
+# fluctuates continuously` 가 148.9mm — 재단선 밖이다). 스프링 제본이라 그
+# 자리는 구멍이 뚫려 아예 안 보인다.
+#
+# 어디까지 나가는지는 **줄바꿈이 끝나야** 알 수 있어서 글자 수로는 못 잡는다.
+# 그래서 측정용 조판에서 주석마다 **번호를 색으로 새겨** 오른쪽 끝을 재고,
+# 본 조판에서 그만큼 왼쪽으로 민다. 옮기는 것은 **넘친 것만**이다 — 예전에
+# 전부 왼쪽에 붙였다가 오히려 더 잘렸다(한영1 178→156).
+MARK_RUBY = False        # 측정용 조판에서만 켠다
+_RIDX = [0]              # 이 지문에서 몇 번째 주석인가
+_RDX = {}                # {주석 차례: 왼쪽으로 밀 mm}
+
+
+def ruby_reset(dx=None):
+    """지문 하나를 그리기 전에 부른다. `dx` 는 이 지문의 밀기 표."""
+    _RIDX[0] = 0
+    _RDX.clear()
+    _RDX.update(dx or {})
+
+
+def ruby_count():
+    return _RIDX[0]
+
+
 def _run_html(r):
     cls = []
     m = r.get("mark")
@@ -102,10 +129,16 @@ def _run_html(r):
     inner = ESC(r["t"])
     if r.get("ruby"):
         slot = r.get("slot") or "dn"
-        fit = _ruby_fit(r["ruby"])
+        st = _ruby_fit(r["ruby"])
+        k = _RIDX[0]
+        _RIDX[0] += 1
+        if MARK_RUBY:                       # 번호를 색으로 새긴다(측정용)
+            st += ";color:rgb(2,%d,%d)" % (k // 256, k % 256)
+        elif _RDX.get(k):
+            st += ";margin-left:%.2fmm" % (-_RDX[k])
         inner = '<span class="w%s">%s<i class="%s"%s>%s</i></span>' % (
             (" " + " ".join(cls)) if cls else "", inner, slot,
-            (' style="%s"' % fit) if fit else "", ESC(r["ruby"]))
+            (' style="%s"' % st.lstrip(";")) if st else "", ESC(r["ruby"]))
         return inner
     if cls:
         return '<span class="%s">%s</span>' % (" ".join(cls), inner)
@@ -258,6 +291,7 @@ def left_page(p, M, folio):
     lead = p.get("lead") or M["passage_lead"]
     # ⚠ 자리표는 **원래 클래스 그대로** 얹는다(`refs.mark` 이 합쳐 준다).
     #   뜻 있는 클래스를 같이 넣으면 지면이 달라진다.
+    ruby_reset(p.get("_rdx"))
     parts.append('<div%s style="left:%gmm;top:%s;width:%gmm;'
                  'height:%gmm%s">%s</div>'
                  % (_refs.mark(_refs.of(p, "passage_runs"), "passage"),
@@ -374,8 +408,15 @@ def flow_html(line):
     out, i = [], 0
     m = _LEAD_BRK.match(line)
     if m:                       # 줄머리 `[핵심]` — 표제라 색을 달리한다
-        out.append('<span class="brk">%s</span>' % ESC(m.group(0)))
+        # ⚠ 딱지와 그 뒤 글은 **떨어지면 안 된다**(사용자 지적). 딱지만 앞줄에
+        #   남고 글이 다음 줄로 넘어가면 `[결론]` 이 무엇의 결론인지 안 보인다.
+        #   딱지 자체는 통째로 묶고, 뒤 빈칸은 NBSP 로 붙여 둔다.
+        out.append('<span class="brk">%s</span>' % ESC(m.group(0).strip()))
         i = m.end()
+        while i < len(line) and line[i] == " ":
+            i += 1
+        if i < len(line):
+            out.append("\u00a0")
     buf = []
     for ch in line[i:]:
         if ch in _SYM:
@@ -390,14 +431,45 @@ def flow_html(line):
     return "".join(out)
 
 
-def flow_rows(lines):
-    """플로우노트 줄들 → `<p>` 목록. 묶음 머리 앞은 띄운다."""
+# 한 글자만 넘쳐 다음 줄로 떨어지는 줄은 **자간을 조여 한 줄에 앉힌다**
+# (사용자 지시). 넘침이 이만큼 이내일 때만 손댄다 — 두 줄이 마땅한 줄까지
+# 억지로 붙이면 글자가 뭉개진다.
+_TIGHT_MAX = 1.12          # 단 폭 대비
+_TIGHT_FLOOR = -0.16       # em, 자간 하한
+
+
+def _tight(line, col_mm, size_pt, track_em):
+    """이 줄이 조금 넘치면 한 줄에 앉힐 자간(em), 아니면 None."""
+    if not col_mm or not line.strip():
+        return None
+    w = flow_width_mm(line, size_pt, track_em)
+    if w <= col_mm or w > col_mm * _TIGHT_MAX:
+        return None
+    em = size_pt / 72.0 * 25.4
+    # 글자 사이마다 자간이 한 번씩 들어간다 — 필요한 만큼만 더 조인다
+    need = track_em - (w - col_mm + 0.15) / (len(line) * em)
+    return None if need < _TIGHT_FLOOR else need
+
+
+def flow_rows(lines, col_mm=0.0, size_pt=9.0, track_em=-0.05):
+    """플로우노트 줄들 → `<p>` 목록. 묶음 머리 앞은 띄운다.
+
+    `col_mm` 을 주면 **한 글자만 넘치는 줄의 자간을 조여** 한 줄로 앉힌다.
+    글자 수로 어림하면 안 되고(자폭이 제각각) 실제 자폭으로 재야 한다.
+    """
     out = []
     for i, line in enumerate(lines):
         head = (line.lstrip()[:1] in _SEC) or bool(_LEAD_BRK.match(line))
-        out.append('<p%s>%s</p>' % (' class="sec"' if head and i else "",
-                                    flow_html(line)))
+        cls = ' class="sec"' if head and i else ""
+        tr = _tight(_MD_BOLD.sub(r"\1", line), col_mm, size_pt, track_em)
+        st = "" if tr is None else ' style="letter-spacing:%.4fem"' % tr
+        out.append('<p%s%s>%s</p>' % (cls, st, flow_html(line)))
     return out
+
+
+def flow_col_mm(M):
+    """플로우노트 **한 단**의 폭(mm) — 상자 − 좌우 여백 − 단 사이."""
+    return (M["flow"][2] - 6.0 - 3.0) / 2.0
 
 
 # 배지는 **어느 교재의 몇 강인지**가 보여야 한다. `1강 01` 만으로는 올림포스인지
@@ -467,8 +539,9 @@ def right_page(p, M, folio, category=""):
     # 플로우노트
     parts.append('<div class="flowchip" style="%s">%sFLOW NOTE</div>'
                  % (_box(fc[0], fc[1], fc[2], fc[3]), _svg("chip_flow")))
-    rows = flow_rows(p.get("flownote") or [])
     fsc = p.get("flow_scale", 1.0)
+    rows = flow_rows(p.get("flownote") or [], flow_col_mm(M),
+                     M["flow_size"] * fsc, M["flow_track"])
     fst = "" if fsc == 1.0 else ";font-size:%gpt;line-height:%gmm" % (
         M["flow_size"] * fsc, M["flow_lead"] * fsc)
     # ⚠ 모눈 깔개를 `.flow::before` 로 두면 **단(column) 흐름에 끼어** 깔리지

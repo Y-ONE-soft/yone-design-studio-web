@@ -933,6 +933,9 @@ class PocketbookSeries(Series):
 
         if measure_pass:
             self._fit(rows, M, build_dir, log)
+            # ⚠ 주석 밀기는 지문 크기·행간이 **다 정해진 뒤**여야 한다 —
+            #   글자를 줄이면 줄바꿈이 바뀌어 주석 자리가 달라진다.
+            self._fit_ruby(rows, M, build_dir, log)
             self._fit_memtest(rows, M, build_dir, log)
             self._fit_right(rows, M, build_dir, log)
 
@@ -1089,6 +1092,47 @@ class PocketbookSeries(Series):
                 shutil.copy2(os.path.join(src, f), d)
 
     # ── 실측 후 맞춤 ──
+    def _fit_ruby(self, rows, M, build_dir, log):
+        """구문분석 주석이 **제본 안전 영역**을 넘지 않게 왼쪽으로 민다.
+
+        주석은 낱말 가운데에 걸리므로 줄 끝 낱말에 긴 주석이 오면 판면 밖으로
+        나간다. 포켓북은 **스프링 제본**이라 안쪽 여백은 구멍이 뚫려 아예 안
+        보인다 — 잘리기 전에 옮겨야 한다(사용자 지시).
+
+        어디까지 나가는지는 줄바꿈이 끝나야 알 수 있다. 그래서 측정용 조판에서
+        주석마다 번호를 **색으로 새겨** 오른쪽 끝을 재고, 넘친 것만 그만큼 민다.
+        이 단계는 지문 크기·행간이 **다 정해진 뒤**에 돌아야 한다(글자를 줄이면
+        줄바꿈이 바뀌어 주석 자리도 바뀐다).
+        """
+        rows = [r for r in rows if r.get("kind") != "memtest"
+                and r.get("passage_runs")]
+        if not rows:
+            return
+        limit = M["page_w"] - M.get("bind_safe", 12.0)
+        prender.MARK_RUBY = True
+        try:
+            html = self._probe_html(rows, M, build_dir, "_measure_ruby.html")
+        finally:
+            prender.MARK_RUBY = False
+        pdf = os.path.join(build_dir, "_measure_ruby.pdf")
+        try:
+            cli.run_build(html, pdf, log=log, final=False)
+            hit = _ruby_edges(pdf, M["bleed"])
+        except Exception as e:                       # 못 재면 조판은 계속한다
+            log("[주석] 자리를 못 쟀다 (%s) — 밀지 않고 간다" % str(e)[:60])
+            return
+        n = 0
+        for i, r in enumerate(rows):
+            dx = {}
+            for k, x1 in (hit.get(i) or {}).items():
+                if x1 > limit:
+                    dx[k] = round(x1 - limit, 2)
+            if dx:
+                r["_rdx"] = dx
+                n += len(dx)
+        if n:
+            log("■ 주석 %d개를 제본 안전 영역(%gmm) 안으로 밀었다" % (n, limit))
+
     def _probe_html(self, rows, M, build_dir, name):
         """한 면에 지문 하나만 — 바닥 잉크를 재기 위한 조판용 HTML."""
         pages = []
@@ -1099,6 +1143,7 @@ class PocketbookSeries(Series):
                     M["passage_size"] * r.get("scale", 1.0),
                     r.get("lead", M["passage_lead"]))
             lead = r.get("lead") or M["passage_lead"]
+            prender.ruby_reset(r.get("_rdx"))
             pages.append(
                 '<section class="pg"><div class="trim">'
                 '<div class="passage" style="left:%gmm;top:%s;width:%gmm%s">'
@@ -1280,7 +1325,9 @@ class PocketbookSeries(Series):
                 'background:none"><div class="flowin">%s</div></div>'
                 '</div></section>'
                 % (M["flow"][0], M["flow"][2],
-                   "".join(prender.flow_rows(r.get("flownote") or []))))
+                   "".join(prender.flow_rows(
+                       r.get("flownote") or [], prender.flow_col_mm(M),
+                       M["flow_size"], M["flow_track"]))))
 
     @staticmethod
     def _topic_probe(r, M):
@@ -1610,3 +1657,28 @@ class PocketbookSeries(Series):
                 t = (r.get("topic") or "").strip()
                 f.write("- **%s**%s\n" % (k, ("  · 주제: " + t[:60]) if t else ""))
         return p
+
+
+def _ruby_edges(pdf, bleed):
+    """측정용 PDF → {지문 차례: {주석 차례: 오른쪽 끝mm}}.
+
+    주석마다 `rgb(2, hi, lo)` 로 번호를 새겨 뒀다. 한 주석이 서체 대체로 여러
+    조각이 될 수 있어 **가장 오른쪽**을 취한다. 면 하나 = 지문 하나다.
+    """
+    from core.render_vivlio import probe
+    PT = 25.4 / 72.0
+    out = {}
+    with probe.open_pdf(pdf) as doc:
+        for pno, page in enumerate(doc):
+            got = out.setdefault(pno, {})
+            for b in page.get_text("dict")["blocks"]:
+                for line in b.get("lines", []):
+                    for sp in line["spans"]:
+                        c = sp.get("color", 0)
+                        if (c >> 16) & 0xFF != 2:
+                            continue
+                        k = ((c >> 8) & 0xFF) * 256 + (c & 0xFF)
+                        x1 = sp["bbox"][2] * PT - bleed
+                        if x1 > got.get(k, -1e9):
+                            got[k] = x1
+    return out
