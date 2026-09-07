@@ -183,12 +183,36 @@ def canonical_passages(steps):
     return best
 
 
+def _limit_slots(limit, groups, canon_n):
+    """스텝별 개수 제한 → 남길 지문 **순번 집합**. 제한이 없으면 빈 집합.
+
+    `{"passages": 4}`  앞에서 4개          (「문항 수만 줄이기」)
+    `{"passages": [1,3]}`  그 순번만
+    """
+    if not isinstance(limit, dict):
+        return set()
+    n = limit.get("passages")
+    if isinstance(n, bool) or n is None:
+        return set()
+    if isinstance(n, (list, tuple, set)):
+        return set(int(x) for x in n)
+    have = [s for s in _passage_slots(groups, canon_n) if s is not None]
+    return set(sorted(have)[: max(0, int(n))])
+
+
 def apply_select(steps, select, log=print):
     """`select` 로 **만들 것만** 남긴다 — 지운 게 아니라 안 만든 것이다.
 
-    passages : 지문 **순번**(1부터). 예 [2,4,6]
+    passages : 지문 **순번**(1부터). 예 [2,4,6] — 전 스텝 공통
     labels   : 지문 **라벨**로 고르기. 예 ["실전02","실전04"] (순번과 합집합)
-    steps    : 스텝 키 목록. 예 ["step1_a1","step1_c1","step3"]
+    steps    : **넣을** 스텝 키 목록. 예 ["step1_a1","step1_c1","step3"]
+    exclude  : **뺄** 스텝 키 목록. 학교 프리셋이 쓰는 자리다 —
+               원고에 없는 키를 적어도 그냥 넘어간다(있으면 빼고 없으면 그만).
+    include  : `exclude` 를 **이 책에서만 되돌린다**. 「이 학교는 빈칸 어휘를
+               빼지만 이 부교재는 넣어주세요」가 여기서 된다.
+    limits   : 스텝마다 남길 지문. {"step1_c2": {"passages": 4}} 는 앞에서 4개,
+               {"passages": [1,3]} 은 그 순번만. 전 스텝 공통인 `passages` 와
+               달리 **그 스텝에만** 걸린다 (「빈칸 어휘만 문항 수 줄이기」).
     renumber : 남은 지문의 라벨 숫자를 1..N 으로 다시 매김
 
     지문이 아닌 묶음(어법 선택의 `본문`, 실전 문제 통째)은 **거르지 않는다** —
@@ -196,6 +220,9 @@ def apply_select(steps, select, log=print):
     """
     select = select or {}
     want_steps = select.get("steps")
+    # 뺄 목록 − 되돌린 것 = 실제로 뺄 것. 되돌리기가 이긴다(교재 개별 예외).
+    drop_steps = set(select.get("exclude") or []) - set(select.get("include") or [])
+    limits = select.get("limits") or {}
     pas = set(select.get("passages") or [])
     labs = set(str(x) for x in (select.get("labels") or []))
     renumber = bool(select.get("renumber"))
@@ -211,12 +238,17 @@ def apply_select(steps, select, log=print):
         if want_steps and st["key"] not in want_steps:
             log(f"  [선택] 스텝 제외 {st['key']}")
             continue
+        if st["key"] in drop_steps:
+            log(f"  [선택] 스텝 뺌 {st['key']}")
+            continue
         groups = st["groups"]
-        if pas:
+        # 이 스텝에만 걸리는 개수 제한이 있으면 그것이 전 스텝 공통보다 우선한다
+        want = _limit_slots(limits.get(st["key"]), groups, canon_n) or pas
+        if want:
             slots = _passage_slots(groups, canon_n)
             keep, dropped = [], 0
             for g, slot in zip(groups, slots):
-                if slot is None or slot in pas:
+                if slot is None or slot in want:
                     keep.append(g)
                 else:
                     dropped += 1

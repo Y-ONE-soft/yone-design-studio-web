@@ -187,6 +187,24 @@ class WorkbookSeries(Series):
         ]
         return out
 
+    # ── 섹션(스텝) 목록 ──
+    # 「무엇을 넣고 뺄 수 있는가」를 계열이 **선언**한다 — 손잡이와 같은 방식이다.
+    # 화면이 목록을 또 적으면 스텝이 늘었을 때 그 화면만 옛 목록을 보게 된다
+    # (ADR-055). 여기 하나만 늘리면 화면에도 저절로 는다.
+    def sections(self, cfg=None):
+        out = []
+        for key, m in data_mod.STEP_META.items():
+            out.append({
+                "key": key,
+                "label": m.get("title") or key,
+                "step": m.get("step"),
+                "tag": m.get("tag"),
+                "logo": m.get("logo"),
+                # 앞 스텝에 딸린 조각이다 — 따로 켜고 끄는 것이 아니다
+                "attach_to": m.get("attach_to"),
+            })
+        return out
+
     def build(self, cfg, log, sample=False, **_):
         build_dir = cfg.build_dir
         os.makedirs(build_dir, exist_ok=True)

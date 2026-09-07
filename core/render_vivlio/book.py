@@ -91,6 +91,37 @@ def show_knobs(cfg, log=print, as_json=False, book=None, **_):
     return items
 
 
+def show_sections(cfg, log=print, as_json=False, book=None, **_):
+    """이 계열에서 **무엇을 넣고 뺄 수 있는지** 보여 준다.
+
+    손잡이(`knobs`)가 「무엇을 만질 수 있는가」라면 이것은 「무엇을 넣고 뺄 수
+    있는가」다. 학교 프리셋이 `layout.exclude` 로 고르는 목록이 바로 이것이라,
+    화면이 목록을 또 적지 않도록 계열에서 받아 간다.
+
+    선언이 없으면 「아직 안 뚫린 계열」이라고 분명히 말한다 — 조용히 빈 목록을
+    내면 '섹션이 없다'와 '선언을 안 했다'를 구분할 수 없다.
+    """
+    series = _series(cfg)
+    fn = getattr(series, "sections", None)
+    items = list(fn(cfg) or []) if fn is not None else []
+    if as_json:
+        import json as _json
+        log(_json.dumps(items, ensure_ascii=False, indent=1))
+        return items
+    if not items:
+        log(f"  계열 {cfg.series} 는 아직 섹션을 선언하지 않았다 "
+            f"(series 의 sections() 를 채울 것)")
+        return items
+    who = book or cfg.book.get("title") or cfg.series
+    log(f"  섹션 {len(items)}개 — 빼려면 config 의 select.exclude 에 키를 적는다:")
+    log(f"    bin/viv {who} select --exclude={items[0]['key']}")
+    for it in items:
+        tail = f"  ← {it['attach_to']} 에 딸림" if it.get("attach_to") else ""
+        log("   %-16s %-12s STEP%s %s%s"
+            % (it["key"], it["label"], it.get("step"), it.get("logo") or "", tail))
+    return items
+
+
 def set_knobs(cfg, log=print, assignments=(), reset=(), backup=True):
     """손잡이 값을 config.json 에 쓴다. `reset` 은 기본값으로 되돌린다(키 삭제).
 
@@ -385,6 +416,8 @@ def main(argv=None):
                 set_knobs(cfg, log, sets, resets)
                 cfg = load(book)                    # 바꾼 값으로 다시 읽어 보여 준다
             show_knobs(cfg, log, as_json=bool(opts.get("json")), book=book)
+        elif st == "sections":
+            show_sections(cfg, log, as_json=bool(opts.get("json")), book=book)
         elif st == "build":
             build(cfg, log, **opts)
         elif st == "print":
