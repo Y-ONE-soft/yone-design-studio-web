@@ -10,7 +10,13 @@ import re
 
 # ── 색 (실측) ─────────────────────────────────────────────
 PALETTE = {
-    "band":      "#EAE6DC",   # 위·아래 띠
+    "band":      "#EAE6DC",   # 위·아래 띠 (기본 = 모의고사)
+    # ⚠ 띠 색은 **교재 성격을 가르는 표시**다. 원본은 마스터를 나눠 그렇게 쓴다
+    #   (A·F 마스터 CMYK 32/0/4/14 · I·H 43/55/0/0 · 나머지 2/3/8/6 실측).
+    #   펼쳐 놓고 어느 교재인지 색으로 알아보라는 뜻이라 한 색으로 통일하면 안 된다.
+    "band_lesson": "#92C3D4",   # 교과서 — 하늘
+    "band_unit":   "#D5CBE3",   # 부교재(올림포스·수특·리딩파워) — 연보라
+    "band_mock":   "#EAE6DC",   # 모의고사 — 베이지
     "navy":      "#54669E",   # 지문번호 배지 · 쪽번호
     "chip":      "#869CD0",   # PICTURE / TRANSLATION 칩
     "ink":       "#231F20",   # 본문
@@ -107,7 +113,8 @@ METRICS = {
     "syn_panel": [18.09, 88.11, 114.82, 106.89],
     # 동반의어 제목 — 표식(A·B·C 색면)이 너무 작아 글자가 안 보인다는 지적.
     "syn_title": [20.7, 84.6, 30.0, 6.2],
-    "syntitle_size": 7.0, "synmark_h": 4.2,
+    "syntitle_size": 7.0, "synmark_h": 5.4,
+    "syntitle_dot": 1.5,            # 제목 옆 괘선 시작·끝의 동그라미(mm)
     "tbadge_w": 9.6, "tbadge_gap": 1.2,
     "card": [21.2, 90.83, 34.6, 32.0],
     "card_gap_x": 37.25, "card_gap_y": 34.72,
@@ -197,6 +204,7 @@ def build_css(palette=None, metrics=None, highlight=None):
         "mt_size": "%g" % M["memtest_size"], "mt_lead": "%g" % M["memtest_lead"],
         "flow_sec_gap": "%g" % M["flow_sec_gap"],
         "flow_track": "%g" % M["flow_track"],
+        "syntitle_dot": "%g" % M["syntitle_dot"],
         "badge_size": "%g" % M["badge_size"],
         "badge_r": "%g" % M["badge_radius"],
         "badge_w": "%g" % M["badge"][2],
@@ -258,7 +266,10 @@ html,body{margin:0;padding:0;background:#fff}
       width:__page_w__;height:__page_h__}
 /* 띠는 재단선 밖 3mm 까지 — 판면 기준으로 두면 가장자리에 흰 줄이 생긴다 */
 .pg::before,.pg::after{content:"";position:absolute;left:0;width:__media_w__;
-    background:var(--band)}
+    background:var(--pgband,var(--band))}
+.pg.k-lesson{--pgband:__band_lesson__}
+.pg.k-unit{--pgband:__band_unit__}
+.pg.k-mock{--pgband:__band_mock__}
 .pg::before{top:0;height:__band_bleed__}
 .pg::after{bottom:0;height:__band_bleed__}
 
@@ -309,9 +320,15 @@ html,body{margin:0;padding:0;background:#fff}
    브라우저 기본값이라 굵은 점선처럼 보인다. */
 /* ⚠ 두께를 크게 주면 브라우저가 **굵은 지그재그**로 그려 체크무늬처럼 보인다
    (1.5pt 로 했다가 지적받았다). 원본은 가는 물결이다. */
-.wave{text-decoration:underline wavy var(--wave);
-  text-decoration-thickness:.5pt;text-underline-offset:1.5pt;
-  text-decoration-skip-ink:none}
+/* ⚠ 브라우저의 `wavy` 는 두께에 따라 굵은 지그재그(1.5pt)나 점선(0.5pt)으로
+   제멋대로 그려진다 — 두 번 다 지적받았다. 물결을 **직접 그려** 붙인다. */
+.wave{text-decoration:none;
+  background-image:url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' width='6' height='3' viewBox='0 0 6 3'>\
+<path d='M0 2.2 Q1.5 0.3 3 2.2 T6 2.2' fill='none' stroke='__wave__' \
+stroke-width='0.7' stroke-linecap='round'/></svg>");
+  background-repeat:repeat-x;background-position:left calc(100% + 1.2pt);
+  background-size:6px 3px;padding-bottom:1pt}
 
 .rule{position:absolute;height:0;border-top:.5pt solid var(--chip)}
 .chip{position:absolute;background:var(--chip);color:var(--band);
@@ -384,6 +401,9 @@ html,body{margin:0;padding:0;background:#fff}
 
 .synpanel{position:absolute;border:1pt solid var(--band);border-radius:2mm;
   box-sizing:border-box}
+/* 제목 옆 괘선이 시작·끝나는 자리의 동그라미 — 원본 장식 */
+.syndot{position:absolute;width:__syntitle_dot__mm;height:__syntitle_dot__mm;
+  border-radius:50%;background:var(--card3)}
 .syntitle{position:absolute;background:#fff;font-family:PBJalnan;
   font-size:__syntitle_size__pt;color:var(--navy);display:flex;
   align-items:center;justify-content:center;gap:.8mm}

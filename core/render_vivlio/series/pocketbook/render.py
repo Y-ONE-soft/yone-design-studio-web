@@ -160,6 +160,7 @@ def _cluster(runs):
 # 범위 안에 앵커된 벡터, 바닥중앙 기준 8.5pt 위). 벡터는 22KB 라 지문마다 심으면
 # 문서가 부는다 — 파일 하나로 두고 가리킨다.
 _ICON = '<span class="ico"><img src="img/seosul.svg" alt=""></span>'
+_SENT_END = re.compile(r'[.!?][\'"\u2019\u201d)\]]*\s')
 
 _ASSETS = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.abspath(__file__)))), "assets", "pocketbook")
@@ -179,14 +180,23 @@ def runs_html(runs):
     """형광펜은 **연속 구간**이다 — 낱말마다 칠하면 어절 사이가 비어 줄무늬가 된다."""
     out, cur_hl, buf = [], None, []
 
+    seen_yellow = [False]        # 이 문장에서 '서술형' 표식을 이미 달았는가
+
     def flush():
         if not buf:
             return
         s = "".join(buf)
         if cur_hl:
-            ico = _ICON if cur_hl == "yellow" else ""
+            # ⚠ 표식은 **문장 하나에 하나**다. 노란 형광펜이 여러 토막으로
+            #   끊긴 것은 사이에 다른 설명이 낀 것일 뿐 서술형이 여럿인 게
+            #   아니다(사용자 지적). 문장이 끝날 때까지 한 번만 단다.
+            ico = _ICON if (cur_hl == "yellow" and not seen_yellow[0]) else ""
+            if ico:
+                seen_yellow[0] = True
             out.append('<mark class="hl-%s">%s%s</mark>' % (cur_hl, ico, s))
         else:
+            if _SENT_END.search(s):       # 문장이 끝나면 다음 문장을 위해 연다
+                seen_yellow[0] = False
             out.append(s)
         del buf[:]
 
@@ -230,7 +240,7 @@ def left_page(p, M, folio):
     tr = L["trans"]
     scale = p.get("scale", 1.0)
     parts = []
-    tag = p.get("no") or p.get("label") or ""
+    tag = _badge_text(p)
     if tag:
         # ⚠ 배지 폭은 18mm 고정이었다. 분석본에서 오는 긴 라벨
         #   (`3과 MR1 Brain Insights`)이 **양옆으로 잘려 나갔다**. 최소 폭은
@@ -269,7 +279,22 @@ def left_page(p, M, folio):
                         _box(tr[0], tr[1], tr[2]), st, ESC(p["translation"])))
     parts.append('<div class="folio" style="%s"><b>%s</b> POCKET BOOK</div>'
                  % (_box(12.9, M["folio_y"]), folio))
-    return '<section class="pg"><div class="trim">%s</div></section>' % "".join(parts)
+    return ('<section class="pg %s"><div class="trim">%s</div></section>'
+            % (page_kind(p), "".join(parts)))
+
+
+def page_kind(p):
+    """지문 성격 → 면 클래스. 위·아래 띠 색이 여기서 갈린다.
+
+    원본은 마스터를 나눠 띠 색으로 교재를 구분한다(교과서 하늘 · 부교재 연보라
+    · 모의고사 베이지). 한 색으로 통일하면 펼쳐 놓고 어느 교재인지 알 수 없다.
+    """
+    unit = str(p.get("category") or p.get("unit") or "")
+    if unit.startswith("교과서"):
+        return "k-lesson"
+    if "모의고사" in unit:
+        return "k-mock"
+    return "k-unit" if unit else ""
 
 
 # 플로우노트에서 **색이 붙는 것은 기호 글자뿐**이다.
@@ -318,6 +343,21 @@ def flow_rows(lines):
         out.append('<p%s>%s</p>' % (' class="sec"' if head and i else "",
                                     flow_html(line)))
     return out
+
+
+# 배지는 **어느 교재의 몇 강인지**가 보여야 한다. `1강 01` 만으로는 올림포스인지
+# 수특인지 알 수 없다(사용자 지적). 꼬리말이 쓰는 단원 이름에서 교재만 떼어 앞에
+# 붙인다 — 길게 쓰지 않고 `올림포스 1강 01` 처럼 짧게.
+_BOOK_SHORT = {"수능특강": "수특"}
+
+
+def _badge_text(p):
+    tag = str(p.get("no") or p.get("label") or "")
+    unit = str(p.get("category") or p.get("unit") or "")
+    head = unit.split()[0] if unit.split() else ""
+    if not tag or head in ("", "교과서", "모의고사") or head in tag:
+        return tag
+    return "%s %s" % (_BOOK_SHORT.get(head, head), tag)
 
 
 def _badge_fit(tag, M):
@@ -407,6 +447,10 @@ def right_page(p, M, folio, category=""):
                  % _box(sp[0], sp[1], sp[2], sp[3]))
     parts.append('<div class="syntitle" style="%s">%s동반의어</div>'
                  % (_box(st[0], st[1], st[2], st[3]), _svg("synmark")))
+    dot = M["syntitle_dot"]
+    for x in (sp[0] - dot / 2.0, sp[0] + sp[2] - dot / 2.0):
+        parts.append('<div class="syndot" style="%s"></div>'
+                     % _box(x, st[1] + st[3] / 2.0 - dot / 2.0))
     cards = (p.get("synonyms") or [])[:9]
     for i in range(9):
         col, row = i % 3, i // 3
