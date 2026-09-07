@@ -451,6 +451,7 @@ class PocketbookSeries(Series):
                 "중 하나는 있어야 한다")
         rows, gaps, n_merged = self._to_scope(rows, scope, log)
         self._apply_manuscript(cfg, opt, rows, log)
+        self._apply_authored(rows, log)
         _korean_topic(rows, log)
         _fill_units(rows, scope, log)
         rows = self._apply_memtest(cfg, opt, rows, log)
@@ -575,6 +576,37 @@ class PocketbookSeries(Series):
             out += got
             log("■ 분석본 %s — 지문 %d" % (os.path.basename(f), len(got)))
         return out
+
+    @staticmethod
+    def _apply_authored(rows, log):
+        """우리가 쓴 오른쪽 면(`_authored/<키>.json`)을 **빈 칸에만** 얹는다.
+
+        차례는 **교재팀 원고 > 우리가 쓴 것 > 코퍼스**다. 사람이 쓴 것을 기계가
+        덮지 않는다 — 원고가 온 지문은 원고가 이긴다.
+        """
+        try:
+            import rightpage
+        except ImportError:
+            PocketbookSeries._tools()
+            try:
+                import rightpage
+            except ImportError:
+                return
+        n = 0
+        for r in rows:
+            if r.get("kind") == "memtest":
+                continue
+            got = rightpage.load(r.get("key") or r.get("no") or r.get("label"))
+            if not got:
+                continue
+            hit = False
+            for f in ("flownote", "topic", "summary", "synonyms"):
+                if got.get(f) and not r.get(f):
+                    r[f] = got[f]
+                    hit = True
+            n += hit
+        if n:
+            log("■ 우리가 쓴 오른쪽 면 %d지문 적용" % n)
 
     # ── 플로우노트·동반의어: 교재팀 원고에서 ──
     def _apply_manuscript(self, cfg, opt, rows, log):
