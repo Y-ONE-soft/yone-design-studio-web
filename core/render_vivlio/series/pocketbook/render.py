@@ -195,9 +195,12 @@ def runs_html(runs):
                 seen_yellow[0] = True
             out.append('<mark class="hl-%s">%s%s</mark>' % (cur_hl, ico, s))
         else:
-            if _SENT_END.search(s):       # 문장이 끝나면 다음 문장을 위해 연다
-                seen_yellow[0] = False
             out.append(s)
+        # ⚠ 문장 끝은 **형광펜 안쪽에도** 있다. 바깥 글만 보면 문장이 형광펜
+        #   안에서 끝났을 때 다음 문장이 열리지 않아, 여러 문장에 표식이 하나만
+        #   붙는다(사용자 지적).
+        if _SENT_END.search(s):
+            seen_yellow[0] = False
         del buf[:]
 
     for grp in _cluster(runs):
@@ -447,8 +450,11 @@ def right_page(p, M, folio, category=""):
                  % _box(sp[0], sp[1], sp[2], sp[3]))
     parts.append('<div class="syntitle" style="%s">%s동반의어</div>'
                  % (_box(st[0], st[1], st[2], st[3]), _svg("synmark")))
+    # ⚠ 동그라미는 **제목 바로 양옆** — 괘선이 제목 때문에 끊기는 그 자리다.
+    #   판면 모서리에 두면 엉뚱한 데 점이 찍힌다(사용자 지적).
     dot = M["syntitle_dot"]
-    for x in (sp[0] - dot / 2.0, sp[0] + sp[2] - dot / 2.0):
+    for x in (st[0] - M["syntitle_dot_gap"] - dot,
+              st[0] + st[2] + M["syntitle_dot_gap"]):
         parts.append('<div class="syndot" style="%s"></div>'
                      % _box(x, st[1] + st[3] / 2.0 - dot / 2.0))
     cards = (p.get("synonyms") or [])[:9]

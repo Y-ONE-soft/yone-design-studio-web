@@ -100,7 +100,7 @@ METRICS = {
     "folio_y": 196.5, "folio_size": 6.0,
     # 오른쪽 면
     # 플로우노트는 **8pt 가 기본**이고, 넘칠 때만 7pt 로 내린다(사용자 지시).
-    "flow": [18.0, 18.31, 115.0, 41.0], "flow_size": 9.0, "flow_lead": 3.4,
+    "flow": [18.0, 18.31, 115.0, 41.0], "flow_size": 9.0, "flow_lead": 4.1,
     "flow_min_size": 8.0,           # 넘칠 때 내려가는 자리
     "flow_track": -0.05,            # 자간 (원본 문자 스타일 Tracking=-50)
     "flow_sec_gap": 2.4,            # 묶음 사이 띄움(mm) — 한눈에 갈리게
@@ -114,7 +114,8 @@ METRICS = {
     # 동반의어 제목 — 표식(A·B·C 색면)이 너무 작아 글자가 안 보인다는 지적.
     "syn_title": [20.7, 84.6, 30.0, 6.2],
     "syntitle_size": 7.0, "synmark_h": 5.4,
-    "syntitle_dot": 1.5,            # 제목 옆 괘선 시작·끝의 동그라미(mm)
+    "syntitle_dot": 1.5,            # 제목 옆 괘선이 끊기는 자리의 동그라미(mm)
+    "syntitle_dot_gap": 1.6,        # 제목과 동그라미 사이
     "tbadge_w": 9.6, "tbadge_gap": 1.2,
     "card": [21.2, 90.83, 34.6, 32.0],
     "card_gap_x": 37.25, "card_gap_y": 34.72,
@@ -205,6 +206,7 @@ def build_css(palette=None, metrics=None, highlight=None):
         "flow_sec_gap": "%g" % M["flow_sec_gap"],
         "flow_track": "%g" % M["flow_track"],
         "syntitle_dot": "%g" % M["syntitle_dot"],
+        "syntitle_dot_gap": "%g" % M["syntitle_dot_gap"],
         "badge_size": "%g" % M["badge_size"],
         "badge_r": "%g" % M["badge_radius"],
         "badge_w": "%g" % M["badge"][2],
