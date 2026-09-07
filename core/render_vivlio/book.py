@@ -91,6 +91,79 @@ def show_knobs(cfg, log=print, as_json=False, book=None, **_):
     return items
 
 
+def set_select(cfg, log=print, exclude=None, include=None, limits=None,
+               clear=False, backup=True):
+    """`config.json` 의 `select` 를 쓴다 — 「무엇을 빼고 몇 문항만 남길지」.
+
+    손잡이(`set_knobs`)가 **값**을 쓴다면 이것은 **구성**을 쓴다.
+    학교 프리셋이 정한 것을 그 책에 내려 주는 창구다(docs/25).
+
+    exclude : 뺄 스텝 키. 쉼표로 여럿.
+    include : 그중 이 책에서만 되돌릴 키 (exclude 를 이긴다).
+    limits  : `step1_c2=4` 처럼 스텝마다 남길 지문 수. 쉼표로 여럿.
+    clear   : select 를 통째로 지운다 (원고 그대로로 돌아간다).
+
+    ⚠ 아는 스텝 키인지 먼저 본다 — 오타를 그대로 저장하면 **조용히 아무 일도
+      안 일어난다.** 그게 가장 나쁜 실패다.
+    """
+    import json as _json
+    import shutil
+    series = _series(cfg)
+    fn_sec = getattr(series, "sections", None)
+    known = {d["key"] for d in (fn_sec(cfg) or [])} if fn_sec else set()
+
+    def _keys(raw):
+        out = [x.strip() for x in str(raw or "").split(",") if x.strip()]
+        bad = [k for k in out if known and k not in known]
+        if bad:
+            raise SystemExit(f"모르는 섹션: {', '.join(bad)}\n"
+                             f"  → `sections` 로 목록을 볼 것")
+        return out
+
+    sel = dict(cfg.section("select") or {}) if not clear else {}
+    if clear:
+        sel = None
+    else:
+        ex = _keys(exclude)
+        inc = _keys(include)
+        if ex:
+            sel["exclude"] = ex
+        if inc:
+            sel["include"] = inc
+        if limits:
+            lim = dict(sel.get("limits") or {})
+            for part in str(limits).split(","):
+                if not part.strip():
+                    continue
+                k, _, n = part.partition("=")
+                k = k.strip()
+                if known and k not in known:
+                    raise SystemExit(f"모르는 섹션: {k}")
+                try:
+                    lim[k] = {"passages": int(n)}
+                except ValueError:
+                    raise SystemExit(f"문항 수가 숫자가 아니다: {part}")
+            sel["limits"] = lim
+
+    path = cfg.path("config.json")
+    with open(path, encoding="utf-8") as f:
+        data = _json.loads(f.read())
+    if sel is None:
+        data.pop("select", None)
+    else:
+        data["select"] = sel
+    if backup:
+        shutil.copy2(path, path + ".bak")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(_json.dumps(data, ensure_ascii=False, indent=1) + "\n")
+    if sel is None:
+        log("  select 를 지웠다 — 원고 그대로 나온다")
+    else:
+        log("  select → " + _json.dumps(sel, ensure_ascii=False))
+    log("  → 지면에 반영하려면 `data build` (build 만으로는 구성이 안 바뀐다)")
+    return sel
+
+
 def show_sections(cfg, log=print, as_json=False, book=None, **_):
     """이 계열에서 **무엇을 넣고 뺄 수 있는지** 보여 준다.
 
@@ -416,6 +489,10 @@ def main(argv=None):
                 set_knobs(cfg, log, sets, resets)
                 cfg = load(book)                    # 바꾼 값으로 다시 읽어 보여 준다
             show_knobs(cfg, log, as_json=bool(opts.get("json")), book=book)
+        elif st == "select":
+            set_select(cfg, log,
+                       exclude=opts.get("exclude"), include=opts.get("include"),
+                       limits=opts.get("limits"), clear=bool(opts.get("clear")))
         elif st == "sections":
             show_sections(cfg, log, as_json=bool(opts.get("json")), book=book)
         elif st == "build":

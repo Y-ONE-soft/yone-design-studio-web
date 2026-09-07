@@ -451,8 +451,11 @@ class PocketbookSeries(Series):
                 "중 하나는 있어야 한다")
         rows, gaps, n_merged = self._to_scope(rows, scope, log)
         self._apply_manuscript(cfg, opt, rows, log)
-        self._apply_authored(rows, log)
+        # ⚠ **영어 주제/요약을 먼저 비우고** 우리가 쓴 것을 얹는다. 순서를
+        #   뒤집으면 분석본의 영어가 자리를 차지한 채로 남아 우리 글이 안
+        #   들어가고, 그 뒤에 영어가 지워져 **그 자리가 빈다**(실측: 광성1).
         _korean_topic(rows, log)
+        self._apply_authored(rows, log)
         _fill_units(rows, scope, log)
         rows = self._apply_memtest(cfg, opt, rows, log)
         out = os.path.join(cfg.build_dir, "data.json")
