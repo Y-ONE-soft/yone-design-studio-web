@@ -456,7 +456,7 @@ class PocketbookSeries(Series):
         #   뒤집으면 분석본의 영어가 자리를 차지한 채로 남아 우리 글이 안
         #   들어가고, 그 뒤에 영어가 지워져 **그 자리가 빈다**(실측: 광성1).
         _korean_topic(rows, log)
-        self._apply_authored(rows, log)
+        self._apply_authored(cfg, rows, log)
         _fill_units(rows, scope, log)
         rows = self._apply_memtest(cfg, opt, rows, log)
         out = os.path.join(cfg.build_dir, "data.json")
@@ -582,7 +582,7 @@ class PocketbookSeries(Series):
         return out
 
     @staticmethod
-    def _apply_authored(rows, log):
+    def _apply_authored(cfg, rows, log):
         """우리가 쓴 오른쪽 면(`_authored/<키>.json`)을 **빈 칸에만** 얹는다.
 
         차례는 **교재팀 원고 > 우리가 쓴 것 > 코퍼스**다. 사람이 쓴 것을 기계가
@@ -596,11 +596,17 @@ class PocketbookSeries(Series):
                 import rightpage
             except ImportError:
                 return
-        n = 0
+        # 저술물 이름은 **책 + 단원 + 키**다. 키만 보면 `본문2`·`서술형
+        # Practice` 처럼 흔한 이름이 다른 지문의 글을 끌어온다(광문1 실측).
+        bd = os.path.dirname(os.path.normpath(cfg.build_dir))
+        book = "/".join(bd.split(os.sep)[-2:])
+        n, cat = 0, ""
         for r in rows:
+            cat = (r.get("category") or "").strip() or cat
             if r.get("kind") == "memtest":
                 continue
-            got = rightpage.load(r.get("key") or r.get("no") or r.get("label"))
+            got = rightpage.load(r.get("key") or r.get("no") or r.get("label"),
+                                 book, cat)
             if not got:
                 continue
             hit = False

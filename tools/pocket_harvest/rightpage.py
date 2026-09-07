@@ -112,19 +112,23 @@ def todo(books=None, out=None):
         if not os.path.exists(f):
             continue
         tag = "/".join(os.path.normpath(b).split(os.sep)[-2:])
+        cat = ""
         for r in json.load(open(f, encoding="utf-8"))["passages"]:
+            cat = (r.get("category") or "").strip() or cat
             if r.get("kind") == "memtest":
                 continue
             key = r.get("key") or r.get("no") or r.get("label")
-            if not key or key in seen:
+            uid = (tag, key, cat)
+            if not key or uid in seen:
                 continue
             need = [k for k in ("flownote", "topic", "summary", "synonyms")
                     if not r.get(k)]
             if not need:
                 continue
-            seen.add(key)
+            seen.add(uid)
             got.append({
-                "key": key, "book": tag,
+                "key": key, "book": tag, "file": fname(key, tag, cat),
+                "category": cat,
                 "label": r.get("no") or r.get("label") or "",
                 "need": need,
                 "passage": _plain(r.get("passage_runs") and
@@ -139,24 +143,52 @@ def todo(books=None, out=None):
     return got
 
 
-def load(key):
-    p = os.path.join(AUTHORED, "%s.json" % re.sub(r"[/\\]", "_", key))
-    if not os.path.exists(p):
-        return None
-    with open(p, encoding="utf-8") as f:
-        return json.load(f)
+def fname(key, book="", cat=""):
+    """저술물 파일 이름 = **책 + 지문 키**.
+
+    ⚠ 키만 쓰면 조용히 엉뚱한 글이 붙는다. `본문2`·`서술형 Practice` 는 학교가
+      달라도, 심지어 **한 책 안에서도** 겹치는 이름이다(광문1 실측: 5강 뒤와
+      7강 뒤에 `서술형 Practice` 가 각각 있다). 겹치면 두 지문에 같은
+      플로우노트가 인쇄되는데, 게이트로도 안 잡힌다 — 둘 다 채워져 있으니까.
+      그래서 **단원(`cat`)까지** 이름에 넣는다. 단원이 빈 지문은 부르는 쪽에서
+      앞 지문의 단원을 이어받아 넘겨 준다(`_cat_run`).
+    """
+    key = str(key)
+    cat = str(cat or "").strip()
+    if cat and not key.startswith(cat):
+        key = "%s %s" % (cat, key)
+    stem = "%s__%s" % (book, key) if book else key
+    return re.sub(r"[/\\]", "_", stem)
 
 
-def save(key, data):
+def load(key, book="", cat=""):
+    for stem in [fname(key, book, cat), fname(key, book), fname(key)]:
+        p = os.path.join(AUTHORED, "%s.json" % stem)
+        if os.path.exists(p):
+            with open(p, encoding="utf-8") as f:
+                return json.load(f)
+    return None
+
+
+def save(key, data, book="", cat=""):
     os.makedirs(AUTHORED, exist_ok=True)
-    p = os.path.join(AUTHORED, "%s.json" % re.sub(r"[/\\]", "_", key))
+    p = os.path.join(AUTHORED, "%s.json" % fname(key, book, cat))
     with open(p, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=1)
     return p
 
 
-def check(data, key=""):
-    """규격 검사 → 어긋난 것 목록(사람이 읽는 말)."""
+def _sents(t):
+    return [x for x in re.split(r"(?<=[.?!다])\s+", re.sub(r"\s+", " ", t or ""))
+            if len(x) > 6]
+
+
+def check(data, key="", src=""):
+    """규격 검사 → 어긋난 것 목록(사람이 읽는 말).
+
+    `src` 는 그 지문의 **한글 해석**이다. 주면 모양뿐 아니라 **내용**까지 본다
+    — 표제가 이 지문의 말인지, 해석의 숫자를 살렸는지, 문장을 골랐는지.
+    """
     bad = []
     fl = data.get("flownote") or []
     lo, hi = SPEC["flow_lines"]
@@ -167,7 +199,46 @@ def check(data, key=""):
         bad.append("플로우 %d줄이 %d자 넘음 — 끊어야 함: %r"
                    % (len(long), SPEC["flow_len"], long[0][:30]))
     if fl and not any(re.match(r"^\s*\[", l) for l in fl):
-        bad.append("표제 대괄호가 하나도 없음 (완성본은 21%가 표제 줄)")
+        bad.append("표제 대괄호가 하나도 없음 (완성본은 22%가 표제 줄)")
+    if any("**" in l for l in fl):
+        bad.append("`**굵게**` 가 있음 — 별표가 그대로 인쇄된다")
+    # ── 내용 ─────────────────────────────────────────────
+    heads = [m.group(1).strip() for l in fl
+             for m in [_HEAD.match(l)] if m]
+    # ⚠ 짧다고 다 나쁜 표제가 아니다 — `[케냐]` `[미국]` 은 두 글자여도 그
+    #   지문의 말이다. 지문에 없는 말이면서 짧을 때만 '어디에나 붙는 딱지'다.
+    body_ = re.sub(r"\s+", " ", src or "")
+    flat = [h for h in heads
+            if h in FLAT_HEADS
+            or (len(h) < SPEC["head_len"]
+                and not any(w in body_ for w in re.findall(r"[가-힣]{2,}", h)))]
+    if flat:
+        bad.append("표제 %d개가 어느 지문에나 붙는 말 — 이 지문의 내용을 넣어야 "
+                   "한다: %s" % (len(flat), ", ".join(flat[:5])))
+    if src:
+        body = body_
+        if heads:
+            own = sum(1 for h in heads
+                      if any(w in body for w in re.findall(r"[가-힣]{2,}", h)))
+            if own / len(heads) < SPEC["head_own"]:
+                bad.append("표제 %d개 중 지문의 말을 쓴 것이 %d개뿐 (완성본 35%%)"
+                           % (len(heads), own))
+        ns = _sents(body)
+        if ns and fl:
+            r = len(fl) / len(ns)
+            lo2, hi2 = SPEC["line_ratio"]
+            if r > hi2:
+                bad.append("해석 %d문장에 플로우 %d줄 — 문장을 다 옮겼다. "
+                           "고르지 않으면 노트가 아니다 (완성본 1.4배)"
+                           % (len(ns), len(fl)))
+            elif r < lo2:
+                bad.append("해석 %d문장에 플로우 %d줄뿐 — 내용이 빠졌다"
+                           % (len(ns), len(fl)))
+        nums = [n for n in dict.fromkeys(_NUM.findall(body)) if len(n) > 1]
+        gone = [n for n in nums if n not in " ".join(fl)]
+        if nums and len(gone) > len(nums) / 2:
+            bad.append("해석의 수치 %s 가 플로우에 없음 — 시험에 나오는 건 "
+                       "그 숫자다 (완성본 84%%가 살린다)" % ", ".join(gone[:4]))
     for name, key_ in (("주제", "topic"), ("요약문", "summary")):
         v = (data.get(key_) or "").strip()
         if not v:
@@ -192,14 +263,35 @@ def check(data, key=""):
     return ["[%s] %s" % (key, b) if key else b for b in bad]
 
 
+def _srcs():
+    """`todo` 가 뽑아 둔 해석 — 내용 검사의 잣대."""
+    p = os.path.join(AUTHORED, "_todo.json")
+    if not os.path.exists(p):
+        return {}
+    with open(p, encoding="utf-8") as f:
+        return {d.get("file") or d["key"]: _plain_tr(d.get("translation"))
+                for d in json.load(f)}
+
+
+def _plain_tr(t):
+    if isinstance(t, str):
+        return t
+    if isinstance(t, list):
+        return " ".join(_plain_tr(x) for x in t)
+    if isinstance(t, dict):
+        return _plain_tr(t.get("t") or t.get("runs") or "")
+    return ""
+
+
 def check_all():
     bad = 0
+    src = _srcs()
     for p in sorted(glob.glob(os.path.join(AUTHORED, "*.json"))):
         if os.path.basename(p).startswith("_"):
             continue
         key = os.path.splitext(os.path.basename(p))[0]
         with open(p, encoding="utf-8") as f:
-            msgs = check(json.load(f), key)
+            msgs = check(json.load(f), key, src.get(key, ""))
         for m in msgs:
             print("  ", m)
         bad += bool(msgs)
