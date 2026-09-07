@@ -315,6 +315,55 @@ _LEAD_BRK = re.compile(r"^\s*\[[^\]]{1,30}\]")
 _MD_BOLD = re.compile(r"\*\*(.+?)\*\*")
 
 
+# ── 플로우노트 한 줄 폭 ─────────────────────────────────────────────
+#
+# 글자 수로 어림하면 안 된다. 플로우 글꼴(KCC 도담도담)은 한글 자폭이 제각각이라
+# (`가` 0.760em · `음` 0.670em) 같은 글자 수라도 3mm 넘게 차이 난다. 한 글자만
+# 넘쳐 다음 줄로 떨어지는 일(사용자 지적)을 잡으려면 **자폭을 실제로 재야** 한다.
+_FLOW_FONT = "KCCDodamdodam_OTF.otf"
+_ADV = {}
+
+
+def _adv(ch):
+    """글자 하나의 자폭(em). 글꼴을 못 읽으면 한글 0.76 / 나머지 0.5 로 본다."""
+    if ch in _ADV:
+        return _ADV[ch]
+    if _ADV.get("_") is None and "_" not in _ADV:
+        _load_adv()
+    if _ADV.get("_bad"):
+        return 0.76 if ord(ch) > 0x2000 else 0.5
+    _ADV[ch] = 0.76 if ord(ch) > 0x2000 else 0.5
+    return _ADV[ch]
+
+
+def _load_adv():
+    import glob
+    try:
+        from fontTools.ttLib import TTFont
+        here = os.path.dirname(os.path.abspath(__file__))
+        root = os.path.dirname(os.path.dirname(os.path.dirname(here)))
+        hit = glob.glob(os.path.join(root, "**", _FLOW_FONT), recursive=True)
+        f = TTFont(hit[0])
+        em, hm, cm = f["head"].unitsPerEm, f["hmtx"], f.getBestCmap()
+        for code, g in cm.items():
+            _ADV[chr(code)] = hm[g][0] / em
+    except Exception:
+        _ADV["_bad"] = True
+    _ADV["_"] = None
+
+
+def flow_width_mm(line, size_pt, track_em):
+    """이 줄을 한 줄로 늘어놓았을 때의 폭(mm)."""
+    _load_adv() if "_" not in _ADV else None
+    em = size_pt / 72.0 * 25.4
+    bad = _ADV.get("_bad")
+    w = 0.0
+    for ch in line:
+        a = (0.76 if ord(ch) > 0x2000 else 0.5) if bad else _ADV.get(ch, 0.5)
+        w += (a + track_em) * em
+    return w
+
+
 def flow_html(line):
     """플로우노트 한 줄 → HTML. 기호 글자만 색을 입힌다.
 
