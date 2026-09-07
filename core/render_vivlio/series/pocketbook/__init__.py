@@ -855,6 +855,9 @@ class PocketbookSeries(Series):
         os.makedirs(build_dir, exist_ok=True)
         stage.stage_fonts(build_dir, cfg.get("fonts") or FONTS, required=True)
         self._stage_assets(build_dir)
+        self._draw_grid(build_dir,
+                        dict(ptheme.PALETTE, **(cfg.section("palette") or {})),
+                        dict(ptheme.METRICS, **(cfg.section("metrics") or {})))
         self.gen_theme(cfg, log)
 
         data_path = os.path.join(build_dir, "data.json")
@@ -920,6 +923,41 @@ class PocketbookSeries(Series):
         return out
 
     @staticmethod
+    def _draw_grid(build_dir, P, M):
+        """모눈 그림을 **팔레트 색으로 직접 그린다**.
+
+        예전엔 진한 선이 구워진 PNG 를 깔고 CSS 불투명도로 옅게 만들었다.
+        옅기를 맞추라는 지적을 여러 번 받고도 계속 빗나갔다 — 불투명도는
+        바탕과 섞인 **결과**라 눈으로 겨냥이 안 되고, 값을 바꿔도 어디까지
+        옅어지는지 알 수가 없다. 이제 `palette.flow_line` 이 곧 인쇄색이다.
+
+        ⚠ CSS 그라디언트로 그리면 1.44mm 격자가 뷰어 반올림에 뭉쳐 굵은
+          체크무늬가 된다(실측). 그래서 그림으로 굽되, **색만 우리가 정한다.**
+        """
+        try:
+            from PIL import Image, ImageDraw
+        except ImportError:
+            return
+        w_mm, h_mm = M["flow"][2], M["flow"][3]
+        px = 12.0                                   # mm 당 화소
+        W, H = int(w_mm * px), int(h_mm * px)
+        im = Image.new("RGB", (W, H), P.get("flow_bg", "#EAECD8"))
+        d = ImageDraw.Draw(im)
+        step = M["flow_grid"] * px
+        line = P.get("flow_line", "#E3E5D6")
+        x = 0.0
+        while x < W:
+            d.line([(int(x), 0), (int(x), H)], fill=line, width=1)
+            x += step
+        y = 0.0
+        while y < H:
+            d.line([(0, int(y)), (W, int(y))], fill=line, width=1)
+            y += step
+        out = os.path.join(build_dir, "img", "flownote_grid.png")
+        os.makedirs(os.path.dirname(out), exist_ok=True)
+        im.save(out)
+
+    @staticmethod
     def _stage_assets(build_dir):
         """계열 자산(플로우노트 모눈)을 build/img 로 · 한글 이름 서체는 별칭으로."""
         import shutil
@@ -944,9 +982,10 @@ class PocketbookSeries(Series):
             for f in os.listdir(src):
                 if f.startswith("."):
                     continue
+                if f == "flownote_grid.png":
+                    continue          # 모눈은 `_draw_grid` 가 색을 보고 그린다
                 d = os.path.join(dst, f)
-                if not os.path.exists(d):
-                    shutil.copy2(os.path.join(src, f), d)
+                shutil.copy2(os.path.join(src, f), d)
 
     # ── 실측 후 맞춤 ──
     def _probe_html(self, rows, M, build_dir, name):

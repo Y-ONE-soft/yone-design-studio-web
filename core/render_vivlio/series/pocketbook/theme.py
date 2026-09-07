@@ -20,7 +20,11 @@ PALETTE = {
     "trans":     "#58595B",   # 번역
     "topic_bg":  "#FAFAF8",   # 주제/요약 띠
     "flow_bg":   "#EAECD8",   # 플로우노트 모눈 바탕
-    "flow_line": "#BFC3C9",   # 모눈 선
+    # ⚠ 모눈 색은 **이 값이 곧 인쇄색**이다. 예전엔 진한 선(#BFC3C9)을 깔고
+    #   불투명도로 옅게 만들었는데, 옅기를 맞추라는 지적을 몇 번 받고도 계속
+    #   빗나갔다(불투명도는 바탕과 섞인 결과라 눈으로 겨냥이 안 된다).
+    #   이제 모눈 그림을 **이 색으로 직접 그린다** — 보이는 색 = 적은 색.
+    "flow_line": "#E3E5D6",   # 모눈 선
     "flow_arrow": "#F39857",  # 플로우 기호 (CMYK 2/48/73/0)
     # 플로우노트는 **기호마다 색이 다르다**(원본 문자 스타일 4종). 줄 전체가
     # 아니라 기호 글자에만 칠한다 — 줄을 통째로 칠하면 원본과 완전히 달라진다.
@@ -90,7 +94,10 @@ METRICS = {
     "topic": [18.0, 59.31, 115.0, 23.09], "topic_size": 8.0,
     "topic_lead": 3.5, "topic_text_x": 29.8,
     "syn_panel": [18.09, 88.11, 114.82, 106.89],
-    "syn_title": [20.7, 85.1, 22.6, 5.17],
+    # 동반의어 제목 — 표식(A·B·C 색면)이 너무 작아 글자가 안 보인다는 지적.
+    "syn_title": [20.7, 84.6, 30.0, 6.2],
+    "syntitle_size": 7.0, "synmark_h": 4.2,
+    "tbadge_w": 9.6, "tbadge_gap": 1.2,
     "card": [21.2, 90.83, 34.6, 32.0],
     "card_gap_x": 37.25, "card_gap_y": 34.72,
     "card_size": 7.0, "card_lead": 4.2, "card_pad": 2.0,
@@ -168,10 +175,14 @@ def build_css(palette=None, metrics=None, highlight=None):
         "card_size": "%g" % M["card_size"], "card_lead": "%g" % M["card_lead"],
         "cardpad": "%g" % M["card_pad"],
         "mt_size": "%g" % M["memtest_size"], "mt_lead": "%g" % M["memtest_lead"],
-        "flow_grid_alpha": "%g" % M["flow_grid_alpha"],
         "flow_sec_gap": "%g" % M["flow_sec_gap"],
         "badge_size": "%g" % M["badge_size"],
         "badge_r": "%g" % M["badge_radius"],
+        "badge_w": "%g" % M["badge"][2],
+        "tbadge_w": "%g" % M["tbadge_w"],
+        "tbadge_gap": "%g" % M["tbadge_gap"],
+        "syntitle_size": "%g" % M["syntitle_size"],
+        "synmark_h": "%g" % M["synmark_h"],
         "ico_h": "%g" % M["icon_h"], "ico_dy": "%g" % M["icon_dy"],
         "blank": "8",
     })
@@ -233,10 +244,12 @@ html,body{margin:0;padding:0;background:#fff}
 /* ── 왼쪽 면 ─────────────────────────────────── */
 /* 배지는 폭이 고정이다(18mm). padding 을 주면 상자가 그만큼 넓어져 원본과
    어긋난다(실측 20mm) → box-sizing 으로 안쪽에서 먹게 한다. */
+/* 배지는 **글에 맞춰 늘어난다**. 폭을 18mm 로 못 박아 뒀더니 분석본에서 오는
+   긴 라벨이 양옆으로 잘렸다(사용자 지적). 최소 폭만 지킨다. */
 .badge{position:absolute;background:var(--navy);color:#fff;font-family:PBBadge;
-  font-size:__badge_size__pt;display:flex;align-items:center;
-  justify-content:center;letter-spacing:.02em;padding:0 1mm;white-space:nowrap;
-  box-sizing:border-box;border-radius:__badge_r__mm}
+  font-size:__badge_size__pt;display:inline-flex;align-items:center;
+  justify-content:center;letter-spacing:.02em;padding:0 2mm;white-space:nowrap;
+  box-sizing:border-box;border-radius:__badge_r__mm;min-width:__badge_w__mm}
 .passage{position:absolute;font-size:__pass_size__pt;line-height:var(--lead);
   text-align:justify;letter-spacing:__track__em;hyphens:none}
 /* ⚠ .w 에 line-height 를 다시 주면 안 된다 — 낱말마다 24pt 로 되돌아가서
@@ -303,16 +316,18 @@ html,body{margin:0;padding:0;background:#fff}
 /* 딱지 아이콘 — 원본 벡터를 그대로 심는다(이모지 아님) */
 .ic-chip_flow{height:3.2mm;width:auto;flex:none}
 .ic-chip_memtest{height:3.4mm;width:auto;flex:none}
-.ic-synmark{height:2.2mm;width:auto;flex:none;overflow:visible}
+.ic-synmark{height:__synmark_h__mm;width:auto;flex:none;overflow:visible}
 /* 모눈은 원본에서 뽑은 이미지를 쓴다. CSS 그라디언트는 뷰어 반올림 때문에
    1.44mm 격자가 뭉쳐 굵은 격자무늬로 나온다(실측). */
 /* 모눈은 **깔개를 따로 깐다** — 원본이 배경 이미지에 불투명도 55% 를 줬다.
    배경 레이어에는 CSS 로 불투명도를 못 주므로 밑에 한 겹 깔고 글을 그 위에
    올린다(글자까지 흐려지면 안 된다). */
+/* 모눈은 조판할 때 **팔레트 색으로 그려 낸다**(`_stage_assets`). 불투명도로
+   옅게 만들지 않는다 — 적은 색이 그대로 인쇄색이라야 겨냥이 된다. */
 .flow{position:absolute;overflow:hidden;background:var(--flow-bg)}
 .flow::before{content:"";position:absolute;left:0;top:0;right:0;bottom:0;
   background:url("img/flownote_grid.png") 0 0/100% 100% no-repeat;
-  opacity:__flow_grid_alpha__;pointer-events:none;z-index:0}
+  pointer-events:none;z-index:0}
 /* ⚠ 단 감싸개는 **흐름 안에** 둬야 한다. 절대배치로 두면 높이를 안 정한 판
    (실측용 판)에서 높이가 0 이 되어 **잉크가 하나도 안 나오고 측정이 통째로
    실패한다**(`항목 52 vs 측정 면 0`). `height:100%` 는 부모가 높이를 안 주면
@@ -326,24 +341,30 @@ html,body{margin:0;padding:0;background:#fff}
 /* 색은 **기호에만**. 원본 문자 스타일 4종이 글자 단위로 붙어 있다. */
 .flow .sym{color:var(--flow-arrow)}
 .flow .sym2{color:var(--flow-sym2)}
-.flow .brk{color:var(--flow-brk)}
+.flow .brk{color:var(--flow-brk);font-weight:600}
 .flow .par{color:var(--flow-par)}
 
 .topicband{position:absolute;background:var(--topic-bg);box-sizing:border-box;
   padding:1.6mm 2mm}
-.tbadge{position:absolute;font-family:PBDodam;font-size:9pt;color:#fff;
-  border-radius:.8mm;padding:0 1mm;line-height:1.4}
+/* 주제·요약문은 **딱지와 글이 한 줄로 묶인다**. 딱지를 따로 앉히고 자리를
+   어림하면 주제가 두 줄일 때 요약문 딱지 옆에 주제가 온다(두 번 지적받았다). */
+.tbadge{font-family:PBDodam;font-size:9pt;color:#fff;border-radius:.8mm;
+  padding:0 1mm;line-height:1.35;flex:none;text-align:center;
+  min-width:__tbadge_w__mm;align-self:flex-start}
 .tbadge.t{background:var(--topic-chip)}
 .tbadge.s{background:var(--sum-chip)}
 .topictext{position:absolute;font-size:__topic_size__pt;
   line-height:__topic_lead__mm}
+.trow{display:flex;align-items:flex-start;gap:__tbadge_gap__mm}
+.trow+.trow{margin-top:__tbadge_gap__mm}
+.ttext{flex:1;min-width:0}
 .topictext p{margin:0}
 
 .synpanel{position:absolute;border:1pt solid var(--band);border-radius:2mm;
   box-sizing:border-box}
-.syntitle{position:absolute;background:#fff;font-family:PBJalnan;font-size:5pt;
-  color:var(--navy);display:flex;align-items:center;justify-content:center;
-  gap:.6mm}
+.syntitle{position:absolute;background:#fff;font-family:PBJalnan;
+  font-size:__syntitle_size__pt;color:var(--navy);display:flex;
+  align-items:center;justify-content:center;gap:.8mm}
 
 .card{position:absolute;box-sizing:border-box;padding:__cardpad__mm;
   font-size:__card_size__pt;line-height:__card_lead__mm;overflow:hidden}

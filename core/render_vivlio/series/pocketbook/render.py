@@ -232,8 +232,12 @@ def left_page(p, M, folio):
     parts = []
     tag = p.get("no") or p.get("label") or ""
     if tag:
-        parts.append('<div class="badge" style="%s">%s</div>'
-                     % (_box(b[0], b[1], b[2], b[3]), ESC(tag)))
+        # ⚠ 배지 폭은 18mm 고정이었다. 분석본에서 오는 긴 라벨
+        #   (`3과 MR1 Brain Insights`)이 **양옆으로 잘려 나갔다**. 최소 폭은
+        #   지키고 글에 맞춰 늘리되, 너무 길면 글자를 줄여 판면을 안 넘긴다.
+        parts.append('<div class="badge" style="%s%s">%s</div>'
+                     % (_box(b[0], b[1], None, b[3]), _badge_fit(tag, M),
+                        ESC(tag)))
     sc = ""
     if scale != 1.0 or p.get("lead"):
         sc = ";font-size:%gpt;line-height:%gpt" % (
@@ -274,6 +278,9 @@ def left_page(p, M, folio):
 _SYM = set("→⇒⟶⇨➔➜⟹←⟵↑↓↔⇔▶▸►◀‣")
 # ①②③… 로 시작하는 줄은 **묶음의 머리**다. 앞에 한 숨 띄워야 ①-② 가 눈에 갈린다.
 _SEC = set("①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳❶❷❸❹❺")
+# 줄머리 대괄호 표제 — `[핵심]` `[인용]` `[결론]`. 묶음의 머리라 색을 달리하고
+# 앞을 띄운다(사용자 지적: "이렇게 구분되는 대괄호는 다른 색으로").
+_LEAD_BRK = re.compile(r"^\s*\[[^\]]{1,12}\]")
 _MD_BOLD = re.compile(r"\*\*(.+?)\*\*")
 
 
@@ -284,8 +291,13 @@ def flow_html(line):
       `**구식(outdated)**`). 조판이 벗겨 준다 — 원고 양식에도 쓰지 말라고 적었다.
     """
     line = _MD_BOLD.sub(r"\1", line)
-    out, buf = [], []
-    for ch in line:
+    out, i = [], 0
+    m = _LEAD_BRK.match(line)
+    if m:                       # 줄머리 `[핵심]` — 표제라 색을 달리한다
+        out.append('<span class="brk">%s</span>' % ESC(m.group(0)))
+        i = m.end()
+    buf = []
+    for ch in line[i:]:
         if ch in _SYM:
             if buf:
                 out.append(ESC("".join(buf)))
@@ -302,10 +314,20 @@ def flow_rows(lines):
     """플로우노트 줄들 → `<p>` 목록. 묶음 머리 앞은 띄운다."""
     out = []
     for i, line in enumerate(lines):
-        head = line.lstrip()[:1] in _SEC
+        head = (line.lstrip()[:1] in _SEC) or bool(_LEAD_BRK.match(line))
         out.append('<p%s>%s</p>' % (' class="sec"' if head and i else "",
                                     flow_html(line)))
     return out
+
+
+def _badge_fit(tag, M):
+    """배지 글자 크기 — 라벨이 길면 줄여서 판면 안에 둔다."""
+    room = M["page_w"] - M["badge"][0] - M["margin_r"]      # 15→130mm
+    em = M["badge_size"] / 72.0 * 25.4
+    w = sum(em if ord(c) > 0x2000 else em * 0.55 for c in tag) + 2.0
+    if w <= room:
+        return ""
+    return ";font-size:%.2fpt" % max(6.0, M["badge_size"] * room / w)
 
 
 def _line_est(txt, width_mm, size_pt):
@@ -363,28 +385,22 @@ def right_page(p, M, folio, category=""):
     # 주제 / 요약문
     parts.append('<div class="topicband" style="%s"></div>'
                  % _box(tb[0], tb[1], tb[2], tb[3]))
-    # ⚠ 두 딱지는 **색이 다르다**(원본: 주제 CMYK 66/52/0/19, 요약문 0/32/48/9).
-    #   같은 색이면 어디까지가 주제고 어디부터 요약문인지 안 보인다.
-    parts.append('<div class="tbadge t" style="%s">주제</div>'
-                 % _box(tb[0] + 2.4, tb[1] + 1.4))
-    # ⚠ 주제가 두 줄이면 요약문은 셋째 줄에서 시작한다. 딱지를 붙박아 두면
-    #   요약문 딱지 옆에 **주제 둘째 줄**이 오게 된다(사용자 지적).
-    tw = tb[0] + tb[2] - M["topic_text_x"] - 2.0
-    lines = _line_est(p.get("topic") or "", tw, M["topic_size"])
-    parts.append('<div class="tbadge s" style="%s">요약문</div>'
-                 % _box(tb[0] + 2.0,
-                        tb[1] + 1.4 + max(1, lines) * M["topic_lead"] + 1.6))
-    tt = []
-    if p.get("topic"):
-        tt.append("<p>%s</p>" % ESC(p["topic"]))
-    if p.get("summary"):
-        tt.append("<p>%s</p>" % ESC(p["summary"]))
+    # ⚠ 딱지 자리를 **줄 수로 어림해 놓으면** 주제가 두 줄일 때 요약문 딱지
+    #   옆에 주제 둘째 줄이 온다(사용자 지적, 두 번). 어림을 버리고 딱지와 글을
+    #   **한 줄로 묶는다** — 브라우저가 알아서 맞추므로 어긋날 수가 없다.
     tsc = p.get("topic_scale", 1.0)
     tst = "" if tsc == 1.0 else ";font-size:%gpt;line-height:%gmm" % (
         M["topic_size"] * tsc, M["topic_lead"] * tsc)
+    tt = []
+    for cls, lab, key in (("t", "주제", "topic"), ("s", "요약문", "summary")):
+        if not p.get(key):
+            continue
+        tt.append('<div class="trow"><span class="tbadge %s">%s</span>'
+                  '<span class="ttext">%s</span></div>'
+                  % (cls, lab, ESC(p[key])))
     parts.append('<div class="topictext" style="%s%s">%s</div>'
-                 % (_box(M["topic_text_x"], tb[1] + 1.0,
-                         tb[0] + tb[2] - M["topic_text_x"] - 2.0),
+                 % (_box(tb[0] + 2.0, tb[1] + 1.2,
+                         tb[2] - 4.0),
                     tst, "".join(tt)))
     # 동반의어
     parts.append('<div class="synpanel" style="%s"></div>'
