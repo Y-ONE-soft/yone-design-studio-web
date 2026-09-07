@@ -29,8 +29,15 @@ def _root_vars(theme):
     if not os.path.exists(p):
         return {}
     css = open(p, encoding="utf-8").read()
-    m = re.search(r":root\s*\{(.*?)\}", css, re.S)
-    return {k: v.strip() for k, v in RE_VAR.findall(m.group(1))} if m else {}
+    # ⚠ 닫는 괄호를 그냥 찾으면 **주석 안의 `}` 에서 끊긴다** — 워크북 테마의
+    #   `/* {주제} 배지 */` 뒤 변수들이 통째로 안 보였다(그래서 뒤쪽 손잡이가
+    #   "테마에 없다"고 거짓 실패했다). 줄머리에 오는 닫는 괄호까지 읽는다.
+    #   :root 가 여러 번 나오는 테마도 있으므로 전부 모은다.
+    out = {}
+    for block in re.findall(r":root\s*\{(.*?)\n\}", css, re.S):
+        for k, v in RE_VAR.findall(block):
+            out.setdefault(k, v.strip())
+    return out
 
 
 def _series_objs():
