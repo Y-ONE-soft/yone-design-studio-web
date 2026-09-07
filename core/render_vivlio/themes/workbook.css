@@ -24,10 +24,10 @@
   --m-in: 25mm;                           /* 홀수(오른)쪽 안쪽 여백 (실측: 라벨 x=25.0) */
   --content-w: 168mm;
   --hdr-h: 26.5mm;                        /* 크림 패널 아래 경계선 */
-  --body-top: 27.5mm;                     /* 본문이 시작하는 자리 */
-  --zone-top: 30.6mm;                     /* 상단 프레임 */
-  --zone-btm: 156.5mm;                    /* 하단 프레임 (고정) */
-  --folio-y: 286.62mm;
+  --body-top: 27.5mm;                     /* 본문이 시작하는 자리 — ⚠ 아무 데서도 var() 로 안 읽는다(기록용). 실제 자리는 .zone.z-* */
+  --zone-top: 30.6mm;                     /* 상단 프레임 — ⚠ 아무 데서도 var() 로 안 읽는다(기록용). 실제 자리는 .zone.z-* */
+  --zone-btm: 156.5mm;                    /* 하단 프레임 (고정) — ⚠ 아무 데서도 var() 로 안 읽는다(기록용). 실제 자리는 .zone.z-* */
+  --folio-y: 286.62mm;   /* ⚠ 기록용 — 실제 자리는 .r-fol* 의 top */
 
   /* ── 색 (실측) ── */
   --ink: #231f20;
@@ -104,15 +104,15 @@ body {
  */
 @page {
   size: 216mm 303mm;
-  margin: 26.5mm 25mm 16.5mm 23mm;
+  margin: var(--hdr-h) var(--m-in) 16.5mm var(--m-out);
 }
 @page :left {
-  margin-left: 23mm; margin-right: 25mm;
+  margin-left: var(--m-out); margin-right: var(--m-in);
   @top-left { content: element(hdrL); vertical-align: top; }
   @bottom-left { content: element(folL); vertical-align: top; }
 }
 @page :right {
-  margin-left: 25mm; margin-right: 23mm;
+  margin-left: var(--m-in); margin-right: var(--m-out);
   @top-left { content: element(hdrR); vertical-align: top; }
   @bottom-right { content: element(folR); vertical-align: top; }
 }
@@ -267,8 +267,8 @@ section.div .pg { width: var(--page-w); height: var(--page-h); }
 section.blank { page: divider; }
 
 /* 흘림 섹션 */
-@page flow { margin: 27.6mm 25mm 28mm 23mm; }   /* 실측: 첫 줄 28.46 · 마지막 줄 268 */
-@page flow:right { margin-left: 25mm; margin-right: 23mm; }
+@page flow { margin: 27.6mm var(--m-in) 28mm var(--m-out); }   /* 실측: 첫 줄 28.46 · 마지막 줄 268 */
+@page flow:right { margin-left: var(--m-in); margin-right: var(--m-out); }
 section.flow { page: flow; break-before: verso; }
 section.flow.onecol { break-before: auto; }
 .flowbody { }
