@@ -119,7 +119,8 @@ METRICS = {
     "flow_grid_alpha": 0.3,
     # 어휘 파트 (26-1-기말 광문1 완성본 실측: 상자 115×177mm · 한 면 15낱말)
     "voca": [15.0, 20.0, 115.0, 177.0],
-    "voca_word": 10.0, "voca_mean": 7.0, "voca_mean_lead": 12.0,
+    "voca_word": 10.0, "voca_word_lead": 12.5, "voca_mean": 7.0,
+    "voca_mean_lead": 10.0,
     "voca_ex": 6.0, "voca_ex_lead": 7.0, "voca_gap": 1.4,
     "voca_track": -0.025, "voca_ex_track": -0.03,
     "topic": [18.0, 59.31, 115.0, 23.09], "topic_size": 8.0,
@@ -232,6 +233,7 @@ def build_css(palette=None, metrics=None, highlight=None):
         "voca_word": "%g" % M["voca_word"],
         "voca_mean": "%g" % M["voca_mean"],
         "voca_mean_lead": "%g" % M["voca_mean_lead"],
+        "voca_word_lead": "%g" % M["voca_word_lead"],
         "voca_ex": "%g" % M["voca_ex"],
         "voca_ex_lead": "%g" % M["voca_ex_lead"],
         "voca_gap": "%g" % M["voca_gap"],
@@ -412,11 +414,15 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
 /* ── 어휘 파트 ─────────────────────────────────────────────
    완성본 문단 스타일 그대로: 표제어 10pt · 뜻 7pt(행간 12) · 예문 6pt(행간 7).
    `[…]` 로 감싼 자리가 그 낱말이 쓰인 곳이라 색이 붙는다(`뜻 빨간색`). */
+/* ⚠ 행간은 **mm 로 못 박는다.** 배수(`1.18`)로 두면 Noto Sans CJK 의 큰
+   글꼴 메트릭 때문에 표제어 줄만 8mm 넘게 벌어진다(실측: 뜻·예문 줄은
+   맞는데 표제어 줄만 2.3배). 그러면 한 면에 낱말이 5개밖에 안 들어간다. */
 .voca{position:absolute;font-family:PBBody,sans-serif;color:var(--ink);
-  letter-spacing:__voca_track__em}
+  letter-spacing:__voca_track__em;line-height:__voca_ex_lead__pt}
 .voca .e{margin:0 0 __voca_gap__mm}
 .voca .e:last-child{margin-bottom:0}
-.voca .w{font-size:__voca_word__pt;font-weight:500;line-height:1.18}
+.voca .w{font-size:__voca_word__pt;font-weight:500;
+  line-height:__voca_word_lead__pt;margin:0}
 .voca .w b{font-weight:500}
 .voca .w i{font-style:normal;font-size:__voca_ex__pt;color:var(--voca-ipa);
   font-weight:400;margin-left:1.2mm}
