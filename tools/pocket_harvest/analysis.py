@@ -650,7 +650,44 @@ def read_book(path):
     out = []
     for u in units:
         out.append(_build(u, base, chs, nums, notes))
+    for d in out:
+        _cut_extras(d)
     return _drop_summary_pages(out)
+
+
+# 26-2 분석본은 지문 뒤에 **영어 요약과 문장삽입 문제**를 같은 글에 이어 붙인다
+# (`… ( ① ) … ( ⑤ ) 답: ③`). 문자 스타일이 지문과 **똑같아서** 스타일로는 못
+# 가른다 — 그대로 두면 문제와 정답까지 본문에 인쇄된다(광문1 2강 02 실측).
+_RE_EXTRA = re.compile(r"\(\s*[①②③④⑤⑥]\s*\)|답\s*[:：]")
+_SENT_TAIL = ('.', '?', '!', '\u201d', '"', "'")
+
+
+def _cut_extras(d):
+    """지문 뒤에 붙은 요약·문제를 잘라 낸다 — **마지막 번호 문장까지**만 남긴다.
+
+    가르는 것은 **문장 번호**(`지문분석:지문 번호`)다. 진짜 지문은 문장마다
+    번호가 붙어 오고, 뒤에 붙은 요약과 문제에는 하나도 없다.
+    """
+    for key in ("passage", "translation"):
+        paras = d.get(key)
+        if not paras:
+            continue
+        runs = paras[0].get("runs") or []
+        txt = "".join(r.get("t", "") for r in runs)
+        if not _RE_EXTRA.search(txt):
+            continue
+        nums = [i for i, r in enumerate(runs) if r.get("mark") == "snum"]
+        if not nums:
+            continue
+        end = len(runs)
+        for j in range(nums[-1], len(runs)):
+            if runs[j].get("t", "").rstrip().endswith(_SENT_TAIL):
+                end = j + 1
+                break
+        if end < len(runs):
+            paras[0]["runs"] = runs[:end]
+            d.setdefault("notes", []).append(
+                "지문 뒤 요약·문제 %d런을 잘라 냄" % (len(runs) - end))
 
 
 def _has_snum(p):
