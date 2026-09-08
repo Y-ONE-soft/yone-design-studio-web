@@ -1328,7 +1328,7 @@ class PocketbookSeries(Series):
             f.write('<!doctype html><html><head><meta charset="utf-8">'
                     '<link rel="stylesheet" href="pocket.css">'
                     '<style>@page{size:%gmm 400mm}.pg{height:400mm}'
-                    '.badge,.folio{display:none}</style>'
+                    '.badge,.folio,.vhead{display:none}</style>'
                     '</head><body>%s</body></html>'
                     % (M["page_w"] + 2 * M["bleed"], "".join(pages)))
         pdf = os.path.join(build_dir, "_measure_voca.pdf")

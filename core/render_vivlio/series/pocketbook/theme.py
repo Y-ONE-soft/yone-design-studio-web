@@ -57,6 +57,7 @@ PALETTE = {
     # 어휘 파트 — 완성본 문자 스타일 `뜻 빨간색` CMYK 10/85/57/0
     "voca_hit":  "#DB4D5D",
     "voca_ipa":  "#7B7B7B",
+    "voca_rule": "#ECE9E1",     # 낱말 사이 가는 선 (완성본 실측)
     "voca_no":   "#A7A9AC",
     "syn_word":  "#231F20",
     "syn_syn":   "#224E8E",   # `=` 유의어
@@ -282,7 +283,8 @@ CSS_TMPL = """
   --band:__band__; --navy:__navy__; --chip:__chip__; --ink:__ink__;
   --blue:__blue__; --red:__red__; --anno:__anno__; --trans:__trans__;
   --topic-bg:__topic_bg__; --flow-bg:__flow_bg__; --flow-line:__flow_line__;
-  --voca-hit:__voca_hit__; --voca-ipa:__voca_ipa__; --voca-no:__voca_no__;
+  --voca-hit:__voca_hit__; --voca-ipa:__voca_ipa__;
+  --voca-rule:__voca_rule__; --voca-chip:__band_mock__;
   --flow-arrow:__flow_arrow__; --flow-sym2:__flow_sym2__;
   --flow-brk:__flow_brk__; --flow-par:__flow_par__;
   --topic-chip:__topic_chip__; --sum-chip:__sum_chip__; --wave:__wave__;
@@ -457,7 +459,7 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
 .voca .hit{color:var(--voca-hit)}
 .voca .pos{color:var(--trans)}
 /* 머리말 딱지 — 완성본은 베이지 바탕에 남색 글씨다(지문 배지와 다르다). */
-.vhead{position:absolute;background:var(--band-mock);color:var(--navy);
+.vhead{position:absolute;background:var(--voca-chip);color:var(--navy);
   font-size:__voca_head__pt;font-weight:500;display:flex;align-items:center;
   padding:0 2mm;box-sizing:border-box;letter-spacing:-.02em}
 
