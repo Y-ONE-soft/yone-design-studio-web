@@ -382,3 +382,21 @@ def prepare(items, build_dir, illust_dirs=(), category="", grade=""):
             "memtest": {k: _flatten(v) for k, v in mt.items() if v} or None,
         })
     return out
+
+
+def plain_passage(row):
+    """지문 원문 한 덩이 — 수확기·조판 어느 모양이든 받는다."""
+    for key in ("passage_text", "passage_runs", "passage"):
+        v = row.get(key)
+        if not v:
+            continue
+        if isinstance(v, str):
+            return v
+        out = []
+        for x in v:
+            if isinstance(x, dict) and "runs" in x:
+                out.append("".join(r.get("t", "") for r in x["runs"]))
+            elif isinstance(x, dict):
+                out.append(x.get("t", ""))
+        return " ".join(out)
+    return ""

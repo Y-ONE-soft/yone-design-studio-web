@@ -345,6 +345,60 @@ def _order_by_kind(rows, log):
     return pas + [r for r in rows if r.get("kind") == "memtest"]
 
 
+def _letters(t):
+    return "".join(c for c in (t or "").lower() if c.isalpha())
+
+
+def _fill_from_pocketbook(rows, cfg, opt, log):
+    """오른쪽 면을 **기존 포켓북에서** 가져온다 — 있으면 그것이 정본이다.
+
+    같은 지문이 지난 학기 포켓북에 이미 있으면 플로우노트·주제·요약문·동반의어가
+    거기 있다. 교재팀이 만든 것이므로 우리가 새로 지을 이유가 없다(사용자 지시).
+    맞대는 것은 **글**이다 — 라벨은 학교마다 달라도 지문은 같다.
+
+    가져온 지문에는 `_from_book` 을 남긴다. 신규 작업분만 골라 검수하도록
+    지면에 표시할 때 쓴다.
+    """
+    corpus = cfg.resolve(opt.get("corpus")
+                         or "${STUDIO}/조판/교재/포켓북/_corpus")
+    if isinstance(corpus, (list, tuple)):
+        corpus = corpus[0] if corpus else ""
+    if not corpus or not os.path.isdir(corpus):
+        return
+    import glob as _g
+    idx = []
+    for f in _g.glob(os.path.join(corpus, "*.json")):
+        if f.endswith("_index.json"):
+            continue
+        try:
+            r = json.load(open(f, encoding="utf-8"))
+        except Exception:
+            continue
+        t = r.get("passage_text") or ""
+        if len(t) > 200 and (r.get("synonyms") or r.get("flownote")):
+            idx.append((_letters(t)[:400], r))
+    n = 0
+    for row in rows:
+        if row.get("kind") == "memtest":
+            continue
+        need = _letters(pdata.plain_passage(row))
+        if len(need) < 200:
+            continue
+        got = next((r for k, r in idx if need[:120] in k), None)
+        if got is None:
+            continue
+        row["_from_book"] = got.get("key") or ""
+        hit = False
+        for a, b in (("flownote", "flownote"), ("topic", "topic_ko"),
+                     ("summary", "summary"), ("synonyms", "synonyms")):
+            if got.get(b) and not row.get(a):
+                row[a] = got[b]
+                hit = True
+        n += hit
+    if n:
+        log("■ 기존 포켓북에서 오른쪽 면 %d지문 가져옴" % n)
+
+
 def _korean_topic(rows, log):
     """주제·요약문은 **한글만** 싣는다.
 
@@ -604,6 +658,7 @@ class PocketbookSeries(Series):
         _korean_topic(rows, log)
         # ⚠ 저술물 이름에는 단원이 들어간다. 단원은 `_fill_units` 가 채우므로
         #   **그 뒤에** 얹어야 이름이 맞는다(먼저 부르면 16지문이 조용히 빈다).
+        _fill_from_pocketbook(rows, cfg, opt, log)   # 기존 포켓북이 먼저다
         rows = _order_by_kind(rows, log)   # 갈래를 먼저 정하고
         _fill_units(rows, scope, log)      # 그 위에 단원 이름을 얹는다
         self._apply_authored(cfg, rows, log)
@@ -1120,6 +1175,7 @@ class PocketbookSeries(Series):
         spec = self._cover_spec(cfg, build_dir, log)
         if spec:
             bleed.finish(out, spec, log=log)
+        _mark_new(out, rows, voca_pages, spec, log)
         log("■ 산출 %s" % out)
         return out
 
@@ -1998,3 +2054,52 @@ def _ink_spans(pdf):
                   for l in b.get("lines", []) for v in (l["bbox"][1], l["bbox"][3])]
             out.append((max(ys) - min(ys)) * PT if ys else 0.0)
     return out
+
+
+# ── 신규 작업분 표시 ───────────────────────────────────────────────
+#
+# 오른쪽 면이 **기존 포켓북에서 온 것**과 **우리가 새로 쓴 것**은 검수 무게가
+# 다르다. 연구원이 신규분만 골라 보게 지면에 표시하되, **인쇄에는 나오면 안
+# 된다**(사용자 지시). PDF 주석(annotation)은 화면에서는 보이고 인쇄에는 기본
+# 적으로 안 찍히므로 그 성질을 그대로 쓴다 — 지면 위에 잉크를 얹지 않는다.
+_NEW_RGB = (0.90, 0.29, 0.36)
+
+
+def _mark_new(pdf, rows, voca_pages, spec, log):
+    try:
+        import fitz
+    except ImportError:
+        return
+    pas = [r for r in rows if r.get("kind") != "memtest"]
+    front = 1 if spec else 0          # 간지 한 면이 앞에 끼면 면이 밀린다
+    new = [(i, r) for i, r in enumerate(pas) if not r.get("_from_book")]
+    if not new:
+        return
+    try:
+        doc = fitz.open(pdf)
+    except Exception:
+        return
+    n = 0
+    for i, r in new:
+        k = front + 2 * i + 1                      # 오른쪽 면
+        if k >= doc.page_count:
+            continue
+        page = doc[k]
+        w, h = page.rect.width, page.rect.height
+        note = page.add_text_annot(
+            fitz.Point(w - 26, 20), "신규 작업분 — 오른쪽 면(플로우노트·주제/요약문·"
+            "동반의어)을 새로 썼습니다. 검수 바랍니다.\n지문: %s"
+            % (r.get("label") or r.get("no") or ""), icon="Note")
+        note.set_colors(stroke=_NEW_RGB)
+        note.set_info(title="신규")
+        note.update()
+        # 화면에서 한눈에 보이도록 오른쪽 면 가장자리에 띠 하나(주석이라 인쇄 X)
+        band = page.add_square_annot(fitz.Rect(w - 12, 0, w - 6, h))
+        band.set_colors(stroke=_NEW_RGB, fill=_NEW_RGB)
+        band.set_opacity(0.55)
+        band.set_info(title="신규", content="신규 작업분")
+        band.update()
+        n += 1
+    doc.saveIncr()
+    doc.close()
+    log("■ 신규 작업분 %d지문에 검수 표시(주석 — 인쇄에는 안 나옴)" % n)
