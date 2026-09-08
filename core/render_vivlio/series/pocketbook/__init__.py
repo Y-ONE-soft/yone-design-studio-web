@@ -22,6 +22,7 @@ from core.render_vivlio.series.base import Series
 from core.render_vivlio.series.pocketbook import data as pdata
 from core.render_vivlio.series.pocketbook import memtest as pmemtest
 from core.render_vivlio.series.pocketbook import render as prender
+from core.render_vivlio.series.pocketbook import voca as pvoca
 
 # 주석이 이보다 넓으면 낱말 가운데에 걸었을 때 지면 밖으로 나갈 수 있다
 # (여백이 가장 좁은 자리에서 한쪽 18mm). 41,510개 중 127개(0.31%).
@@ -1091,6 +1092,7 @@ class PocketbookSeries(Series):
                 "title": (cfg.book or {}).get("title", "포켓북"),
                 "passages": rows, "metrics": cfg.section("metrics"),
                 "folio_start": opt.get("folio_start", 2),
+                "voca": self._voca(cfg, opt, log),
                 "cover": None}))
         # ⚠ 자리표를 **파일로 내지 않으면** 지면에 표가 찍혀도 작업대는 그것을
         #   못 되짚는다 — 눌러도 조용히 아무 일이 안 난다(실제로 그랬다).
@@ -1278,6 +1280,26 @@ class PocketbookSeries(Series):
                 n += len(dx)
         if n:
             log("■ 주석 %d개를 제본 안전 영역(%gmm) 안으로 밀었다" % (n, limit))
+
+    @staticmethod
+    def _voca(cfg, opt, log):
+        """어휘 파트 — `options.voca` 가 가리키는 단어장 원고(xlsx).
+
+        학교에 따라 포켓북 뒤에 어휘(또는 듣기)가 붙는다. 없으면 빈 목록이라
+        지면이 하나도 안 늘어난다.
+        """
+        src = opt.get("voca")
+        if not src:
+            return []
+        paths = cfg.resolve(src if isinstance(src, (list, tuple)) else [src])
+        items = []
+        for pth in paths:
+            items += pvoca.read(pth, log)
+        pgs = pvoca.pages(items)
+        if pgs:
+            log("■ 어휘 파트 %d면 (%s ~ %s)"
+                % (len(pgs), pgs[0]["day"], pgs[-1]["day"]))
+        return pgs
 
     def _probe_html(self, rows, M, build_dir, name):
         """한 면에 지문 하나만 — 바닥 잉크를 재기 위한 조판용 HTML."""

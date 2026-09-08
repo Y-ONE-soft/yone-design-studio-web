@@ -17,6 +17,7 @@ PALETTE = {
     "band_lesson": "#92C3D4",   # 교과서 — 하늘
     "band_unit":   "#D5CBE3",   # 부교재(올림포스·수특·리딩파워) — 연보라
     "band_mock":   "#EAE6DC",   # 모의고사 — 베이지
+    "band_voca":   "#F2DCC9",   # 어휘 파트 — 살구
     "navy":      "#54669E",   # 지문번호 배지 · 쪽번호
     "chip":      "#869CD0",   # PICTURE / TRANSLATION 칩
     "ink":       "#231F20",   # 본문
@@ -53,6 +54,10 @@ PALETTE = {
     #   IDML 근거가 확실해 바꿨다(B-마스터 TextFrame 채움).
     "mt_ans":    "#E8963C",   # 암기 정답 낱말 (완성본 실측)
     "mt_no":     "#A7A9AC",   # 암기 번호 (완성본 실측)
+    # 어휘 파트 — 완성본 문자 스타일 `뜻 빨간색` CMYK 10/85/57/0
+    "voca_hit":  "#DB4D5D",
+    "voca_ipa":  "#7B7B7B",
+    "voca_no":   "#A7A9AC",
     "syn_word":  "#231F20",
     "syn_syn":   "#224E8E",   # `=` 유의어
     "syn_ant":   "#E14E6B",   # `↔` 반의어
@@ -112,6 +117,11 @@ METRICS = {
     # 모눈 배경은 원본에서 **불투명도 55%** 로 깔려 있다(마스터 실측).
     # 100% 로 깔면 글자보다 모눈이 세 보인다.
     "flow_grid_alpha": 0.3,
+    # 어휘 파트 (26-1-기말 광문1 완성본 실측: 상자 115×177mm · 한 면 15낱말)
+    "voca": [15.0, 20.0, 115.0, 177.0],
+    "voca_word": 10.0, "voca_mean": 7.0, "voca_mean_lead": 12.0,
+    "voca_ex": 6.0, "voca_ex_lead": 7.0, "voca_gap": 1.4,
+    "voca_track": -0.025, "voca_ex_track": -0.03,
     "topic": [18.0, 59.31, 115.0, 23.09], "topic_size": 8.0,
     "topic_lead": 3.5, "topic_text_x": 29.8,
     "syn_panel": [18.09, 88.11, 114.82, 106.89],
@@ -219,6 +229,14 @@ def build_css(palette=None, metrics=None, highlight=None):
         "syntitle_size": "%g" % M["syntitle_size"],
         "synmark_h": "%g" % M["synmark_h"],
         "ico_h": "%g" % M["icon_h"], "ico_dy": "%g" % M["icon_dy"],
+        "voca_word": "%g" % M["voca_word"],
+        "voca_mean": "%g" % M["voca_mean"],
+        "voca_mean_lead": "%g" % M["voca_mean_lead"],
+        "voca_ex": "%g" % M["voca_ex"],
+        "voca_ex_lead": "%g" % M["voca_ex_lead"],
+        "voca_gap": "%g" % M["voca_gap"],
+        "voca_track": "%g" % M["voca_track"],
+        "voca_ex_track": "%g" % M["voca_ex_track"],
         "blank": "8",
     })
     css = CSS_TMPL
@@ -252,6 +270,7 @@ CSS_TMPL = """
   --band:__band__; --navy:__navy__; --chip:__chip__; --ink:__ink__;
   --blue:__blue__; --red:__red__; --anno:__anno__; --trans:__trans__;
   --topic-bg:__topic_bg__; --flow-bg:__flow_bg__; --flow-line:__flow_line__;
+  --voca-hit:__voca_hit__; --voca-ipa:__voca_ipa__; --voca-no:__voca_no__;
   --flow-arrow:__flow_arrow__; --flow-sym2:__flow_sym2__;
   --flow-brk:__flow_brk__; --flow-par:__flow_par__;
   --topic-chip:__topic_chip__; --sum-chip:__sum_chip__; --wave:__wave__;
@@ -276,6 +295,7 @@ html,body{margin:0;padding:0;background:#fff}
 .pg.k-lesson{--pgband:__band_lesson__}
 .pg.k-unit{--pgband:__band_unit__}
 .pg.k-mock{--pgband:__band_mock__}
+.pg.k-voca{--pgband:__band_voca__}
 .pg::before{top:0;height:__band_bleed__}
 .pg::after{bottom:0;height:__band_bleed__}
 
@@ -388,6 +408,30 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
 .flow .sym2{color:var(--flow-sym2)}
 .flow .brk{color:var(--flow-brk);font-weight:600}
 .flow .par{color:var(--flow-par)}
+
+/* ── 어휘 파트 ─────────────────────────────────────────────
+   완성본 문단 스타일 그대로: 표제어 10pt · 뜻 7pt(행간 12) · 예문 6pt(행간 7).
+   `[…]` 로 감싼 자리가 그 낱말이 쓰인 곳이라 색이 붙는다(`뜻 빨간색`). */
+.voca{position:absolute;font-family:PBBody,sans-serif;color:var(--ink);
+  letter-spacing:__voca_track__em}
+.voca .e{margin:0 0 __voca_gap__mm}
+.voca .e:last-child{margin-bottom:0}
+.voca .w{font-size:__voca_word__pt;font-weight:500;line-height:1.18}
+.voca .w b{font-weight:500}
+.voca .w i{font-style:normal;font-size:__voca_ex__pt;color:var(--voca-ipa);
+  font-weight:400;margin-left:1.2mm}
+.voca .w em{font-style:normal;font-size:__voca_ex__pt;color:var(--voca-no);
+  font-weight:500;margin-right:1.2mm}
+.voca .m{font-size:__voca_mean__pt;font-weight:500;
+  line-height:__voca_mean_lead__pt;margin:0}
+.voca .d{font-size:__voca_ex__pt;color:var(--trans);
+  line-height:__voca_ex_lead__pt;margin:.3mm 0 0}
+.voca .x{font-size:__voca_ex__pt;line-height:__voca_ex_lead__pt;margin:.3mm 0 0;
+  letter-spacing:__voca_ex_track__em}
+.voca .xk{font-size:__voca_ex__pt;line-height:__voca_ex_lead__pt;margin:0;
+  color:var(--trans);letter-spacing:__voca_ex_track__em}
+.voca .hit{color:var(--voca-hit);font-weight:500}
+.voca .pos{font-size:__voca_ex__pt;color:var(--trans);font-weight:400}
 
 .topicband{position:absolute;background:var(--topic-bg);box-sizing:border-box;
   padding:1.6mm 2mm}

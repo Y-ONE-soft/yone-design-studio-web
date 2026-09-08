@@ -323,6 +323,69 @@ def left_page(p, M, folio):
 _RE_UNIT_KIND = re.compile(r"\d{1,2}\s*강|Unit\s*\d{1,2}", re.I)
 
 
+# ── 어휘 파트 ───────────────────────────────────────────────────────
+# 원고는 그 낱말이 쓰인 자리를 `[…]` 로 감싸 온다. 지면에서는 대괄호를 지우고
+# **그 말에만 색**을 준다(완성본 문자 스타일 `뜻 빨간색`·`예문_뜻 빨간색`).
+_HIT = re.compile(r"\[([^\[\]]+)\]")
+
+
+# ⚠ 뜻 칸의 `[형]`·`[명]` 은 **품사 표시**지 강조가 아니다. 예문의 대괄호와
+#   같은 규칙으로 칠하면 뜻이 온통 빨개진다(완성본은 `표제어 뜻 괄호` 6pt).
+_POS = re.compile(r"^(명|대|동|형|부|전|접|감|조|수)\d?$")
+
+
+def _hit(t, pos_only=False):
+    out, i = [], 0
+    for m in _HIT.finditer(t):
+        out.append(ESC(t[i:m.start()]))
+        inner = m.group(1)
+        if _POS.match(inner.strip()):
+            out.append('<span class="pos">[%s]</span>' % ESC(inner))
+        elif pos_only:
+            out.append(ESC(m.group(0)))
+        else:
+            out.append('<span class="hit">%s</span>' % ESC(inner))
+        i = m.end()
+    out.append(ESC(t[i:]))
+    return "".join(out)
+
+
+def voca_page(pg, M, folio, side="l"):
+    """어휘 한 면. 왼쪽·오른쪽 면은 안쪽 여백이 달라 시작 x 가 다르다."""
+    v = M["voca"]
+    x = v[0] if side == "l" else M["margin_r"]
+    parts = []
+    for e in pg["items"]:
+        b = ['<p class="w"><em>%02d</em><b>%s</b>%s</p>'
+             % (e["no"], ESC(e["word"]),
+                ('<i>%s</i>' % ESC(e["ipa"])) if e.get("ipa") else "")]
+        if e.get("mean"):
+            b.append('<p class="m">%s</p>' % _hit(e["mean"], True))
+        if e.get("derived"):
+            b.append('<p class="d">%s</p>' % _hit(e["derived"], True))
+        for en, ko in e.get("ex") or ():
+            b.append('<p class="x">%s</p>' % _hit(en))
+            if ko:
+                b.append('<p class="xk">%s</p>' % _hit(ko))
+        parts.append('<div class="e">%s</div>' % "".join(b))
+    head = ('<div class="badge" style="%s%s">%s</div>'
+            % (_box(x, M["badge"][1], None, M["badge"][3]),
+               _badge_fit(pg["day"], M), ESC(pg["day"])))
+    body = ('<div class="voca" style="%s">%s</div>'
+            % (_box(x, v[1], v[2], v[3]), "".join(parts)))
+    if side == "l":
+        foot = ('<div class="folio" style="%s"><b>%s</b> POCKET BOOK</div>'
+                % (_box(12.9, M["folio_y"]), folio))
+    else:
+        foot = ('<div class="folio r" style="%s">'
+                '<span style="color:var(--ink)">%s</span> <b>%s</b></div>'
+                % (_box(M["margin_l"], M["folio_y"],
+                        M["page_w"] - M["margin_l"] - 15.0),
+                   ESC(pg["day"]), folio))
+    return ('<section class="pg k-voca"><div class="trim">%s%s%s</div></section>'
+            % (head, body, foot))
+
+
 def page_kind(p):
     """지문 성격 → 면 클래스. 위·아래 띠 색이 여기서 갈린다.
 
@@ -692,6 +755,15 @@ def build_html(data, css_name="pocket.css"):
             continue
         pages.append(left_page(p, M, folio)); folio += 1
         pages.append(right_page(p, M, folio, cat)); folio += 1
+    # 어휘 파트는 **맨 뒤**다(26-1-기말 완성본과 같은 자리). 한 DAY 가 펼침면
+    # 하나이므로 왼쪽 면부터 시작해야 짝이 맞는다.
+    for i, vp in enumerate(data.get("voca") or ()):
+        if i == 0 and folio % 2:
+            pages.append('<section class="pg k-voca"><div class="trim">'
+                         '</div></section>')
+            folio += 1
+        pages.append(voca_page(vp, M, folio, "l" if folio % 2 == 0 else "r"))
+        folio += 1
     return ('<!doctype html><html lang="ko"><head><meta charset="utf-8">'
             '<title>%s</title><link rel="stylesheet" href="%s"></head><body>'
             '%s</body></html>'
