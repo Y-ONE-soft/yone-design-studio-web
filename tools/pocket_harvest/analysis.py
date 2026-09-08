@@ -659,6 +659,12 @@ def read_book(path):
 # (`… ( ① ) … ( ⑤ ) 답: ③`). 문자 스타일이 지문과 **똑같아서** 스타일로는 못
 # 가른다 — 그대로 두면 문제와 정답까지 본문에 인쇄된다(광문1 2강 02 실측).
 _RE_EXTRA = re.compile(r"\(\s*[①②③④⑤⑥]\s*\)|답\s*[:：]")
+# 해석 쪽에는 문장 번호가 없어서 번호로 못 자른다 — **발문**을 알아본다.
+# (`글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은?`)
+# 발문은 늘 정해진 말로 시작한다 — 그 자리에서 자른다. 끝에서만 찾으면
+# `Becky Bloom 드림` 같은 맺음말까지 함께 잘린다(실측).
+_RE_PROMPT = re.compile(
+    r"(?:다음 글|윗글|글의 흐름으로 보아|주어진 문장|위 글)[^?]*\?\s*$")
 _SENT_TAIL = ('.', '?', '!', '\u201d', '"', "'")
 
 
@@ -675,9 +681,11 @@ def _cut_extras(d):
         runs = paras[0].get("runs") or []
         txt = "".join(r.get("t", "") for r in runs)
         if not _RE_EXTRA.search(txt):
+            _cut_prompt(paras[0])       # 발문만 붙은 경우도 있다(해석 쪽)
             continue
         nums = [i for i, r in enumerate(runs) if r.get("mark") == "snum"]
         if not nums:
+            _cut_prompt(paras[0])
             continue
         end = len(runs)
         for j in range(nums[-1], len(runs)):
@@ -686,6 +694,8 @@ def _cut_extras(d):
                 break
         if end < len(runs):
             paras[0]["runs"] = runs[:end]
+        else:
+            _cut_prompt(paras[0])
             d.setdefault("notes", []).append(
                 "지문 뒤 요약·문제 %d런을 잘라 냄" % (len(runs) - end))
 
@@ -932,3 +942,21 @@ if __name__ == "__main__":
                       for pp in p["passage"] for r in pp["runs"]
                       if r["ruby"]][:6])
         print("VOCA:", p["voca"][:4], "| 문장정렬", len(p["sentences"]))
+
+
+def _cut_prompt(para):
+    """문단 끝의 **발문 한 문장**을 잘라 낸다(해석 쪽)."""
+    runs = para.get("runs") or []
+    txt = "".join(r.get("t", "") for r in runs)
+    m = _RE_PROMPT.search(txt)
+    if not m or m.start() == 0:
+        return
+    cut, keep, seen = m.start(), [], 0
+    for r in runs:
+        t = r.get("t", "")
+        if seen + len(t) <= cut:
+            keep.append(r)
+        elif seen < cut:
+            keep.append(dict(r, t=t[:cut - seen]))
+        seen += len(t)
+    para["runs"] = keep
