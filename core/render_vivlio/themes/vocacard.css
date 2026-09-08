@@ -320,6 +320,10 @@ em { font-style: normal; font-weight: 500; color: var(--c-hl); }
 .vc:last-child { margin-bottom: 0; }
 .vc .w-top { margin-bottom: .6mm; }
 
+/* 예문 속 표제어 — 파트 주색으로 짚어 준다. 공통 강조색(--c-hl 로즈)을 쓰면
+ * 모의고사 파트의 주색(로즈)과 겹쳐 구분이 사라진다. */
+.r-ex em { color: var(--main); font-weight: 500; }
+
 /* 유반의어 분류 태그 — `유. [유의어] downturn` 의 대괄호 부분.
  * 원고가 뜻의 범위를 가르는 표시라 지우지 않고, 낱말보다 뒤로 물린다. */
 .tg { color: var(--c-label); font-size: .92em; margin: 0 .4mm; }

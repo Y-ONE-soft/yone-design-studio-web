@@ -41,6 +41,66 @@ def syn_line(s):
     return _RE_TAG.sub(one, esc_gap(s))
 
 
+# ── 예문 속 표제어 찾기 ──────────────────────────────────────────────────
+# 원고는 예문에 강조 표시를 달아 주지 않는다(상일보카는 `[낱말]` 로 왔다). 그래서
+# 표제어와 그 **굴절형**을 직접 찾아 표시한다. 표제어를 그대로 찾는 것만으로는
+# 96%(521/542)에 그쳐, 아래 세 갈래를 더 본다 — 실측 후 98%(531/542).
+#   · 어간   abandoned→abandon+ed · realities→realit(y)+ies  (어간 4자 이상일 때만
+#            — 짧은 어간으로 앞을 맞추면 엉뚱한 낱말이 걸린다)
+#   · 접미사 aim→aims, fix→fixed, ban→banned (자음 겹침)  — 짧은 표제어용, 오탐 없다
+#   · be     `be about to` → `was about to`
+# 남는 것은 불규칙(overcome→overcame · freeze→frozen · crisis→crises)과 **예문에
+# 표제어가 아예 안 나오는 낱말**이라 그대로 둔다(억지로 잡으면 오탐이 는다).
+_RE_WORD = re.compile(r"[A-Za-z][A-Za-z'\u2019\-]*")
+_BE = {"be", "is", "are", "am", "was", "were", "been", "being"}
+_SUFFIX = ("s", "es", "ed", "d", "ing", "ies", "ied")
+
+
+def _stems(w):
+    w = w.lower()
+    out = {w}
+    for suf in ("ies", "ied", "ing", "ed", "es", "s", "e"):
+        if len(w) - len(suf) >= 4 and w.endswith(suf):
+            out.add(w[:-len(suf)])
+    if w.endswith("y") and len(w) - 1 >= 4:
+        out.add(w[:-1])
+    return {x for x in out if len(x) >= 4}
+
+
+def _same_word(tok, word):
+    t, w = tok.lower(), word.lower()
+    if w == "be":
+        return t in _BE
+    if t == w:
+        return True
+    if any(t == w + suf for suf in _SUFFIX):
+        return True
+    if len(w) >= 3 and any(t == w + w[-1] + suf for suf in ("ed", "ing")):
+        return True
+    return any(t.startswith(st) for st in _stems(w))
+
+
+def mark_head(en, head):
+    """예문에서 표제어를 `[…]` 로 감싼다 — `ex_en()` 이 그걸 `<em>` 으로 만든다.
+
+    원고가 이미 대괄호로 표시해 온 예문은 그대로 둔다(두 번 감싸지 않는다).
+    """
+    if not en or not head or "[" in en:
+        return en
+    words = _RE_WORD.findall(head)
+    if not words:
+        return en
+    toks = list(_RE_WORD.finditer(en))
+    hits = []
+    for i in range(len(toks)):
+        if all(i + k < len(toks) and _same_word(toks[i + k].group(0), w)
+               for k, w in enumerate(words)):
+            hits.append((toks[i].start(), toks[i + len(words) - 1].end()))
+    for a, b in reversed(hits):          # 뒤에서부터 넣어야 자리가 안 밀린다
+        en = en[:a] + "[" + en[a:b] + "]" + en[b:]
+    return en
+
+
 def _wcls(w):
     """표제어 길이별 축소 — 라벨 열 폭 대응(vocabook._wcls 와 동일 기준)."""
     return " xlong" if len(w) >= 18 else (" long" if len(w) >= 13 else "")
@@ -194,7 +254,7 @@ class Renderer(VocabookRenderer):
             if lab == "예문":
                 en, kr = (row["lines"] + [""])[:2]
                 body = ('<div class="pair">'
-                       f'<p class="en">{ex_en(en)}</p>'
+                       f'<p class="en">{ex_en(mark_head(en, it["word"]))}</p>'
                        + (f'<p class="kr">{ex_kr(kr)}</p>' if kr else "")
                        + "</div>")
                 cls = "r-ex"
