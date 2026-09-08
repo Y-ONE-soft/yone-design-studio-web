@@ -650,7 +650,33 @@ def read_book(path):
     out = []
     for u in units:
         out.append(_build(u, base, chs, nums, notes))
-    return out
+    return _drop_summary_pages(out)
+
+
+def _has_snum(p):
+    """문장 번호(`지문분석:지문 번호`)가 하나라도 있는가."""
+    for para in (p.get("passage") or []):
+        for r in para.get("runs") or []:
+            if r.get("mark") == "snum":
+                return True
+    return False
+
+
+def _drop_summary_pages(items):
+    """지문이 아닌 **영어 요약 면**을 버린다.
+
+    26-2 중간부터 분석본에 강마다 영어 요약 면이 한 장씩 붙었다(광문1
+    분석본03 이 9/2 에 그렇게 바뀌었다). 겉모양이 지문과 같아서 그대로 두면
+    지문 수가 부풀고 오른쪽 면이 빈 채로 인쇄된다.
+
+    가르는 것은 **문장 번호**다 — 진짜 지문은 `1 Dear valued players,` 처럼
+    번호가 붙어 오고, 요약 면에는 하나도 없다. 책 전체에 번호가 아예 없는
+    옛 분석본도 있으므로 **번호를 쓰는 책에서만** 걸러 낸다.
+    """
+    if not items or not any(_has_snum(p) for p in items):
+        return items
+    keep = [p for p in items if _has_snum(p)]
+    return keep if keep else items
 
 
 def _header_pile(doc):
