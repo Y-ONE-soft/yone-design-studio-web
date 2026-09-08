@@ -1343,8 +1343,11 @@ class PocketbookSeries(Series):
             return pgs
         # ⚠ 상자 위에서 재면 **첫 줄 위 여백이 낱말마다 한 번씩 더해진다**
         #   (270낱말 × 3.5mm ≈ 다섯 면). 잉크의 위·아래를 직접 재야 한다.
+        # ⚠ 낱말 사이 여백(`.ent` 위 padding + 아래 margin)도 높이다. 빼먹으면
+        #   면마다 3mm 씩 새서 아래 낱말이 꼬리말 자리까지 내려온다.
+        pad = M["voca_pad"] + M["voca_gap"]
         for e, h in zip(items, hs):
-            e["_h"] = h + pvoca._GAP
+            e["_h"] = h + pad
         out = pvoca.pages(items, M["voca"][3], M["voca"][2])
         log("■ 어휘 %d낱말 실측 → %d면 (낱말 높이 %.1f~%.1fmm)"
             % (len(items), len(out),
