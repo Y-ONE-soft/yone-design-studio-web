@@ -54,8 +54,9 @@ CSS = """
   letter-spacing:.05em;color:__slate__;font-weight:700}
 /* 마지막 면 — 만든 사람들. 표지와 같은 공기에서 조용히 */
 .cvr .credit{position:absolute;left:0;right:0;top:__cred_y__;
-  display:flex;flex-wrap:wrap;gap:0 __cred_gap__}
-.cvr .credit section{min-width:__cred_col__}
+  display:flex;flex-wrap:wrap;gap:__cred_row__ __cred_gap__;
+  align-items:flex-start}
+.cvr .credit section{width:__cred_col__}
 .cvr .credit h4{margin:0 0 1.2mm;font-family:PBTitle,serif;font-size:9pt;
   color:__forest__;font-weight:700}
 .cvr .credit p{margin:0 0 .6mm;font-size:7.5pt;color:__slate__}
@@ -94,7 +95,7 @@ def css(M):
                 bar_h="8.5mm",
                 logo_y="%gmm" % (bl + 12.0),
                 cred_y="%gmm" % (bl + 96.0),
-                cred_gap="9mm",
+                cred_gap="9mm", cred_row="7mm",
                 cred_col="34mm",
                 **INK)
 
