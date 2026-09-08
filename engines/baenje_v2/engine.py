@@ -406,6 +406,11 @@ class BaenjeV2Engine(BaseEngine):
         of = result.get("oneline_failed") or []
         if of:
             warnings.append(f"⚠️ B9 답란 한 줄 맞춤 실패 {len(of)}건: {of[:2]}")
+        tails = result.get("orphan_tail_left") or []
+        if tails:
+            warnings.append(
+                f"⚠️ B9 발문 꼬리 고아 줄 잔존 {len(tails)}건(닫힘기호만 남은 "
+                f"마지막 줄): {tails[:4]}")
         if not result.get("credit_placed"):
             warnings.append("⚠️ B9 마지막 페이지 크레딧 미배치")
         # 뒤쪽 빈 페이지가 2쪽 이상 남으면 낭비 (짝수 유지분 1쪽까지만 허용)
@@ -415,7 +420,8 @@ class BaenjeV2Engine(BaseEngine):
         log(f"[검수] B9 답란-지문 {len(alp)} / 서식불균일 {len(mixed)} / "
             f"한줄맞춤 {result.get('oneline_fitted')} / 크레딧 "
             f"{len(result.get('credit_placed') or [])} / 고아블록 {len(orphan)} / "
-            f"빈페이지정리 {trimmed} / 색정합 {result.get('recolored')}")
+            f"빈페이지정리 {trimmed} / 색정합 {result.get('recolored')} / "
+            f"발문꼬리 {result.get('orphan_tail_pulled')}")
 
         # B7 레이아웃 후 발문 단락 수 = 문항 수 (자동번호 밀림 감지)
         cl = result.get("choice_layout") or {}

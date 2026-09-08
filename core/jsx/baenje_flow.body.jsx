@@ -24,6 +24,7 @@ var RESULTS = {
     memo_pages: [], wide_space_fixed: 0, blanks_underlined: 0,
     frames_grown: [], choice_layout: {}, mixed_format: [],
     oneline_fitted: 0, oneline_failed: [], credit_placed: [],
+    orphan_tail_pulled: 0, orphan_tail_left: [],
     answer_line_as_passage: [], trimmed_pages: 0, orphan_moved: [],
     recolored: 0, orphan_remaining: [], story_len_drift: [],
     stale_unit_purged: [], unit_label_sources: 0, warnings: []
@@ -527,12 +528,40 @@ function countStyle(story, styleName) {
     return n;
 }
 
+// 마지막 줄에 닫힘기호 한두 자만 남는 '고아 꼬리'는 자간을 줄여 당겨 올린다
+var RE_ORPHAN_TAIL = /^[\s]*[>\uFF1E\u3009\u00BB\)\]\u3011.,\u00B7]{1,2}[\s]*$/;
+function pullOrphanTail(story, idx, label) {
+    var p, lines;
+    try { p = story.paragraphs[idx]; lines = p.lines; } catch (e) { return 0; }
+    if (!lines || lines.length < 2) return 0;
+    var tail = "";
+    try { tail = String(lines[lines.length - 1].contents); } catch (e) { return 0; }
+    if (!RE_ORPHAN_TAIL.test(tail)) return 0;
+    var base = 0;
+    try { base = p.tracking || 0; } catch (e) {}
+    var steps = [-10, -20, -30, -40];
+    for (var s = 0; s < steps.length; s++) {
+        try { p.tracking = base + steps[s]; } catch (e) { break; }
+        try { doc.recompose(); } catch (e) {}
+        var n = 0, t2 = "";
+        try { n = p.lines.length; t2 = String(p.lines[n - 1].contents); }
+        catch (e) { break; }
+        if (!RE_ORPHAN_TAIL.test(t2)) return 1;
+    }
+    try { p.tracking = base; } catch (e) {}
+    try { doc.recompose(); } catch (e) {}
+    RESULTS.orphan_tail_left.push(label);
+    return 0;
+}
+
 function applyChoiceLayout(story, flow, starts) {
-    var aligned = 0, packed = 0, grown = 0;
+    var aligned = 0, packed = 0, grown = 0, pulled = 0;
     // 인덱스 변동을 피해 뒤 유닛부터 처리
     for (var u = flow.units.length - 1; u >= 0; u--) {
         var unit = flow.units[u];
         var base = starts[u] + (unit.unit_label ? 1 : 0);
+        // 발문 꼬리에 '>' 한 자만 남는 줄바꿈 정리
+        pulled += pullOrphanTail(story, base, unit.no + "번");
         if (unit.ab_header !== undefined && unit.ab_header !== null) {
             alignAbOptions(story, base + unit.ab_header);
             if (alignAbHeader(story, base + unit.ab_header)) aligned++;
@@ -554,7 +583,8 @@ function applyChoiceLayout(story, flow, starts) {
         }
     }
     wlog("선지 레이아웃: 머리행 정렬 " + aligned + " / 3열 묶기 " + packed +
-         " / 프레임 확장 " + grown);
+         " / 프레임 확장 " + grown + " / 발문 꼬리 당김 " + pulled);
+    RESULTS.orphan_tail_pulled = pulled;
     var stems = countStyle(story, "문제");
     RESULTS.choice_layout = { aligned: aligned, packed: packed, grown: grown,
                               stems: stems, units: flow.units.length };
@@ -583,6 +613,11 @@ function underlineBlanks(story, label) {
         }
         app.findGrepPreferences = NothingEnum.NOTHING;
         for (var k = 0; k < found.length; k++) {
+            // 선지를 한 줄에 늘어놓은 단락(① (a)  ② (b) …)의 넓은 공백은
+            // 빈칸이 아니라 항목 사이 간격이다 — 밑줄을 그으면 안 된다
+            var host = "";
+            try { host = String(found[k].paragraphs[0].contents); } catch (e) {}
+            if (host.replace(/[^\u2460-\u2473]/g, "").length >= 2) continue;
             try { found[k].underline = true; total++; } catch (e) {}
             // 밑줄 높이/두께를 명시해 폰트가 섞여도 한 줄로 이어지게
             try { found[k].underlineOffset = 1.2; } catch (e) {}

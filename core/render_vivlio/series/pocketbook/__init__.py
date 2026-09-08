@@ -241,7 +241,11 @@ def _name_units(rows, scope, name, log):
             if m:                          # 교과서 갈래 — `능률(민) SL2 본문2`
                 head = m.group(1).strip()
                 if head:
+                    # ⚠ 교재 이름을 **들고 있는 지문 자신도** 단원이 비어 있다.
+                    #   안 채우면 그 면만 띠 색이 빠진다(광문1 본문1 실측).
                     tb_book = head
+                    r["unit"] = head
+                    n += 1
                 elif tb_book:
                     r["unit"] = tb_book
                     n += 1
