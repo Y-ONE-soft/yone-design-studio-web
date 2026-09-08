@@ -322,7 +322,7 @@ em { font-style: normal; font-weight: 500; color: var(--c-hl); }
 
 /* 유반의어 분류 태그 — `유. [유의어] downturn` 의 대괄호 부분.
  * 원고가 뜻의 범위를 가르는 표시라 지우지 않고, 낱말보다 뒤로 물린다. */
-.tg { color: var(--c-label); font-size: .92em; }
+.tg { color: var(--c-label); font-size: .92em; margin: 0 .4mm; }
 
 /* 영영풀이 — 사전 정의 톤으로 이탤릭 */
 .r-def.r-eng .val, .r-def.r-eng .val p { font-style: italic; color: var(--c-gray); }

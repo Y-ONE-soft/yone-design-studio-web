@@ -58,6 +58,7 @@ PALETTE = {
     "voca_hit":  "#DB4D5D",
     "voca_ipa":  "#7B7B7B",
     "voca_rule": "#ECE9E1",     # 낱말 사이 가는 선 (완성본 실측)
+    "syn_dot":   "#C9D1EA",     # 동반의어 괘선이 끊기는 점 (완성본 실측)
     "voca_no":   "#A7A9AC",
     "syn_word":  "#231F20",
     "syn_syn":   "#224E8E",   # `=` 유의어
@@ -137,7 +138,7 @@ METRICS = {
     # 동반의어 제목 — 표식(A·B·C 색면)이 너무 작아 글자가 안 보인다는 지적.
     "syn_title": [20.7, 84.6, 30.0, 6.2],
     "syntitle_size": 7.0, "synmark_h": 5.4,
-    "syntitle_dot": 1.5,            # 제목 옆 괘선이 끊기는 자리의 동그라미(mm)
+    "syntitle_dot": 1.05,           # 괘선이 끊기는 자리의 동그라미(mm·실측)
     "syntitle_dot_gap": 1.6,        # 제목과 동그라미 사이
     "tbadge_w": 9.6, "tbadge_gap": 1.2,
     "card": [21.2, 90.83, 34.6, 32.0],
@@ -288,6 +289,7 @@ CSS_TMPL = """
   --topic-bg:__topic_bg__; --flow-bg:__flow_bg__; --flow-line:__flow_line__;
   --voca-hit:__voca_hit__; --voca-ipa:__voca_ipa__;
   --voca-rule:__voca_rule__; --voca-chip:__band_mock__;
+  --syn-dot:__syn_dot__;
   --flow-arrow:__flow_arrow__; --flow-sym2:__flow_sym2__;
   --flow-brk:__flow_brk__; --flow-par:__flow_par__;
   --topic-chip:__topic_chip__; --sum-chip:__sum_chip__; --wave:__wave__;
@@ -498,7 +500,7 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
   box-sizing:border-box}
 /* 제목 옆 괘선이 시작·끝나는 자리의 동그라미 — 원본 장식 */
 .syndot{position:absolute;width:__syntitle_dot__mm;height:__syntitle_dot__mm;
-  border-radius:50%;background:var(--card3)}
+  border-radius:50%;background:var(--syn-dot)}
 .syntitle{position:absolute;background:#fff;font-family:PBJalnan;
   font-size:__syntitle_size__pt;color:var(--navy);display:flex;
   align-items:center;justify-content:center;gap:.8mm}

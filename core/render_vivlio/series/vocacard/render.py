@@ -30,12 +30,15 @@ PAGE_CAP = 4          # 한 면에 담는 낱말 카드 수 — 책 config `opti
 #   대괄호는 뜻의 범위를 가르는 **의미 있는 분류**다(원고 '범위 및 표기' 시트가
 #   [문맥상 유사어]는 따로 센다고 명시). 벗기면 태그와 낱말이 뒤섞이므로
 #   그대로 두고 **색만 뒤로 물린다.**
-_RE_TAG = re.compile(r"\[([^\[\]]+)\]")
+# 워드 원고는 **얇은 공백**(U+2009)으로, 엑셀 원고는 대괄호로 태그를 감싼다.
+# 둘 다 받아 같은 모양으로 낸다(원고 표기 그대로 두고 색만 뒤로).
+_RE_TAG = re.compile("\u2009([^\u2009]+)\u2009|\\[([^\\[\\]]+)\\]")
 
 
 def syn_line(s):
-    return _RE_TAG.sub(
-        lambda m: f'<span class="tg">[{esc(m.group(1))}]</span>', esc_gap(s))
+    def one(m):
+        return f'<span class="tg">{esc(m.group(1) or m.group(2))}</span>'
+    return _RE_TAG.sub(one, esc_gap(s))
 
 
 def _wcls(w):

@@ -698,13 +698,14 @@ def right_page(p, M, folio, category=""):
                  % _box(sp[0], sp[1], sp[2], sp[3]))
     parts.append('<div class="syntitle" style="%s">%s동반의어</div>'
                  % (_box(st[0], st[1], st[2], st[3]), _svg("synmark")))
-    # ⚠ 동그라미는 **제목 바로 양옆** — 괘선이 제목 때문에 끊기는 그 자리다.
-    #   판면 모서리에 두면 엉뚱한 데 점이 찍힌다(사용자 지적).
+    # ⚠ 동그라미는 괘선이 **끊기는 바로 그 점**에 앉는다 — 제목 덮개의 좌·우
+    #   끝이고, 높이는 괘선 자체(패널 윗변)다. 완성본 실측: 지름 1.05mm,
+    #   중심 x = 20.70 / 43.33(덮개 양끝), y = 88.11(패널 윗변). 옆에 띄워 두면
+    #   선과 어긋나 엉뚱한 데 점이 찍힌 것처럼 보인다(사용자 지적).
     dot = M["syntitle_dot"]
-    for x in (st[0] - M["syntitle_dot_gap"] - dot,
-              st[0] + st[2] + M["syntitle_dot_gap"]):
+    for cx in (st[0], st[0] + st[2]):
         parts.append('<div class="syndot" style="%s"></div>'
-                     % _box(x, st[1] + st[3] / 2.0 - dot / 2.0))
+                     % _box(cx - dot / 2.0, sp[1] - dot / 2.0))
     cards = (p.get("synonyms") or [])[:9]
     for i in range(9):
         col, row = i % 3, i // 3
