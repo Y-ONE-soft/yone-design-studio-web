@@ -183,7 +183,10 @@ def illust_for(row, index):
                 keys = [(u, str(v)), (u, "%02d" % v)]
         want = unit.split()[0] if unit.split() else None
     else:                                     # 교과서 — `본문2` → `SL과 02`
-        n = _RE_L_NO.search(lab)
+        # ⚠ 라벨의 **첫 숫자**를 쓰면 안 된다. `능률(민) SL2 본문1` 에서는
+        #   교재 이름의 `2` 가 먼저 잡혀 본문1 과 본문2 가 같은 그림을 받는다.
+        n = re.search(r"(?:본문|RC|Reading)\s*(\d{1,2})", lab) or \
+            re.search(r"(\d{1,2})\s*$", lab)
         les = "sl과" if re.search(r"SL", unit, re.I) else None
         if les is None:
             k = re.search(r"(\d{1,2})\s*과", unit + " " + lab)

@@ -1083,6 +1083,7 @@ class PocketbookSeries(Series):
             # ⚠ 주석 밀기는 지문 크기·행간이 **다 정해진 뒤**여야 한다 —
             #   글자를 줄이면 줄바꿈이 바뀌어 주석 자리가 달라진다.
             self._fit_ruby(rows, M, build_dir, log)
+            self._fit_trans(rows, M, build_dir, log)
             self._fit_memtest(rows, M, build_dir, log)
             self._fit_right(rows, M, build_dir, log)
 
@@ -1330,6 +1331,65 @@ class PocketbookSeries(Series):
             log("■ 어휘 파트 %d면 (%s ~ %s)"
                 % (len(pgs), pgs[0]["day"], pgs[-1]["day"]))
         return pgs
+
+    @staticmethod
+    def _fit_trans(rows, M, build_dir, log):
+        """한글 해석이 상자를 넘으면 **행간 → 자간 → 글자 크기** 로 조인다.
+
+        해석 상자는 배치마다 폭이 다르다(삽화가 있는 면은 56mm 로 좁다).
+        긴 해석은 그 좁은 단에서 판면 밖으로 흘러 나간다 — 실측: 광문1 교과서
+        본문3 이 꼬리말을 지나 잘렸다. 지문·플로우노트와 같은 방법으로 **재고**
+        맞춘다.
+        """
+        pas = [r for r in rows if r.get("kind") != "memtest" and r.get("translation")]
+        if not pas:
+            return
+        pages = []
+        for r in pas:
+            L = ptheme.LAYOUTS[ptheme.layout_for(r)]
+            pages.append(
+                '<section class="pg"><div class="trim">'
+                '<div class="translation" style="left:%gmm;top:10mm;width:%gmm">'
+                '<p>%s</p></div></div></section>'
+                % (L["trans"][0], L["trans"][2],
+                   prender.ESC(r["translation"])))
+        path = os.path.join(build_dir, "_measure_trans.html")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write('<!doctype html><html><head><meta charset="utf-8">'
+                    '<link rel="stylesheet" href="pocket.css">'
+                    '<style>@page{size:%gmm 400mm}.pg{height:400mm}</style>'
+                    '</head><body>%s</body></html>'
+                    % (M["page_w"] + 2 * M["bleed"], "".join(pages)))
+        try:
+            h = measure.measure(path,
+                                os.path.join(build_dir, "_measure_trans.pdf"),
+                                [str(i) for i in range(len(pas))], 10.0,
+                                390.0, log=log)
+        except Exception as e:
+            log("[해석] 높이를 못 쟀다 (%s) — 그대로 간다" % str(e)[:60])
+            return
+        lead0 = M["trans_lead"]
+        n = 0
+        for i, r in enumerate(pas):
+            L = ptheme.LAYOUTS[ptheme.layout_for(r)]
+            room = M["folio_y"] - L["trans"][1] - 2.0
+            got = h.get(str(i), 0.0)
+            if got <= room:
+                continue
+            need = room / got
+            # ① 행간부터 — 0.78 까지
+            r["trans_lead"] = round(max(lead0 * 0.78, lead0 * need), 2)
+            done = r["trans_lead"] / lead0
+            if need < done - 1e-6:
+                # ② 자간 — 줄이 줄어드는 만큼만
+                r["trans_track"] = -0.03
+                done *= 0.97
+            if need < done - 1e-6:
+                # ③ 그래도 모자라면 글자 크기
+                r["trans_scale"] = round(max(0.86, need / done), 3)
+            n += 1
+        if n:
+            log("■ 해석 조정 %d/%d" % (n, len(pas)))
 
     @staticmethod
     def _fit_voca(pgs, M, build_dir, log):

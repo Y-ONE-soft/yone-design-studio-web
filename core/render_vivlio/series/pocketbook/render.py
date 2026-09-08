@@ -332,9 +332,17 @@ def left_page(p, M, folio):
     parts.append('<div class="chip" style="%s">TRANSLATION</div>'
                  % _box(L["chip_trn_x"], L["chip_y"], ch[0], ch[1]))
     if p.get("translation"):
+        # 넘칠 때는 **행간 → 자간 → 글자 크기** 차례로 조인다(사용자 지시).
+        #   행간만으로 되면 글자 크기는 건드리지 않는다 — 지문마다 글자가
+        #   제각각이면 펼침면이 들쭉날쭉해 보인다.
+        st = ""
+        if p.get("trans_lead"):
+            st += ";line-height:%gmm" % p["trans_lead"]
+        if p.get("trans_track"):
+            st += ";letter-spacing:%.3fem" % p["trans_track"]
         ts = p.get("trans_scale", 1.0)
-        st = "" if ts == 1.0 else ";font-size:%gpt;line-height:%gmm" % (
-            M["trans_size"] * ts, M["trans_lead"] * ts)
+        if ts != 1.0:
+            st += ";font-size:%gpt" % (M["trans_size"] * ts)
         parts.append('<div%s style="%s%s"><p>%s</p></div>'
                      % (_refs.mark(_refs.of(p, "translation"), "translation"),
                         _box(tr[0], tr[1], tr[2]), st, ESC(p["translation"])))
