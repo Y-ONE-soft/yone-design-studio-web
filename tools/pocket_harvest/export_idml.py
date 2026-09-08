@@ -144,9 +144,24 @@ def scan(kind):
     return items
 
 
+# 사용자가 InDesign 에 문서를 열어 둔 채로 몇 권만 다시 내보낼 때 켠다.
+# 켜면 **InDesign 을 절대 재시작하지 않는다** — 재시작은 열려 있는 남의 문서를
+# 통째로 날린다. 우리 작업 사본만 열고 닫으므로 그것 말고는 손대지 않는다.
+KEEP_OPEN = False
+
+
 def export_one(src, dst, status_path, jsx_path, timeout=240):
+    # ⚠ **있다고 건너뛰면 안 된다.** 원본이 나중에 바뀌면 옛 내보내기를 그대로
+    #   쓰게 되고, 조판은 "그 지문이 원래 없다"고 말한다 — 원본에는 멀쩡히
+    #   있는데도(실측: 광문1 분석본04 가 9/7 에 갱신됐는데 9/1 내보내기를 써서
+    #   올림포스 6강이 통째로 빠졌고, 게이트는 "범위에 있는데 없는 지문"으로만
+    #   알렸다). **원본보다 새 것일 때만** 건너뛴다.
     if os.path.exists(dst) and os.path.getsize(dst) > 10000:
-        return "SKIP", 0
+        try:
+            if os.path.getmtime(dst) >= os.path.getmtime(src):
+                return "SKIP", 0
+        except OSError:
+            return "SKIP", 0
     os.makedirs(os.path.dirname(dst), exist_ok=True)
     tmp = os.path.join(TMP, "work.indd")
     if os.path.exists(tmp):
@@ -186,12 +201,13 @@ def export_one(src, dst, status_path, jsx_path, timeout=240):
             break
         except subprocess.TimeoutExpired:
             err = "시간 초과(%ds)" % timeout
-            restart_indesign()
+            if not KEEP_OPEN:
+                restart_indesign()
         except Exception as e:
             err = str(e)[:200]
             # 실패본이 열린 채 남으면 **다음 파일까지 연달아 죽는다**(실측).
             _cleanup_docs()
-            if idrun.open_doc_count() < 0:
+            if idrun.open_doc_count() < 0 and not KEEP_OPEN:
                 restart_indesign()
     if err is None:
         _cleanup_docs()
@@ -219,10 +235,10 @@ def main(kind, limit=None, log_path=None, only=None):
                  if needle in _u.normalize("NFC", x[0])]
     os.makedirs(TMP, exist_ok=True)
     os.makedirs(TMP, exist_ok=True)
-    if idrun.open_doc_count() < 0:      # 무응답 — 앞 배치가 멎어 있다
+    if idrun.open_doc_count() < 0 and not KEEP_OPEN:   # 무응답 — 앞 배치가 멎어 있다
         restart_indesign()
     n_open = _foreign_docs()
-    if n_open > 0:
+    if n_open > 0 and not KEEP_OPEN:
         raise SystemExit(
             "InDesign 에 남의 문서가 %d개 열려 있다 — 사용자나 다른 세션의 "
             "작업물일 수 있으므로 닫지 않고 중단한다.\n"
@@ -265,6 +281,8 @@ if __name__ == "__main__":
     for a in sys.argv[2:]:
         if a.startswith("--only="):
             only = a.split("=", 1)[1]
+        elif a == "--keep-open":
+            globals()["KEEP_OPEN"] = True
         else:
             lim = int(a)
     main(kind, lim, only=only)
