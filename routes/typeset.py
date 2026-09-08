@@ -131,8 +131,20 @@ def api_run(material_id):
                 return jsonify({"job_id": job_id, "error": f"필수 입력 누락: {slot['label']}"}), 400
         elif slot.get("multiple"):
             files = request.files.getlist(key)
+            # 폴더째 업로드 — 프런트가 input.files 순서와 1:1로 상대경로를
+            # 보낸다. '폴더 = 원고 한 세트'를 엔진이 복원하는 근거이며,
+            # 없으면(낱개 파일 업로드) 빈 값이다.
+            try:
+                rel_paths = json.loads(request.form.get(f"{key}_relpaths", "")
+                                       or "[]")
+                if not isinstance(rel_paths, list):
+                    rel_paths = []
+            except (ValueError, TypeError):
+                rel_paths = []
             paths = []
-            for f in files:
+            manifest = []
+            used_names = set()
+            for _i, f in enumerate(files):
                 if f and f.filename:
                     # (C1-3) 확장자 화이트리스트 — 슬롯 accept가 진실
                     if not allowed_by_accept(f.filename, slot.get("accept", "")):
@@ -140,12 +152,32 @@ def api_run(material_id):
                                f"(허용: {slot.get('accept')})")
                         jm.fail(job_id, msg)
                         return jsonify({"job_id": job_id, "error": msg}), 400
-                    safe_name = f"{key}_{sanitize_filename(f.filename)}"
+                    base = f"{key}_{sanitize_filename(f.filename)}"
+                    # 같은 이름이 여러 개 오면 덮어쓰지 않는다 — 원고가 여러
+                    # 폴더로 나뉜 교재는 'Step1 A1 어휘선택.docx'가 폴더마다
+                    # 있어서, 종전 규칙이면 마지막 하나만 남고 나머지가
+                    # 조용히 사라졌다 (2026-09-08 사용자 실증).
+                    safe_name = base
+                    if safe_name in used_names:
+                        stem, ext = os.path.splitext(base)
+                        n = 2
+                        while f"{stem}__{n}{ext}" in used_names:
+                            n += 1
+                        safe_name = f"{stem}__{n}{ext}"
+                    used_names.add(safe_name)
                     path = os.path.join(upload_dir, safe_name)
                     f.save(path)
                     paths.append(path)
+                    rel = rel_paths[_i] if _i < len(rel_paths) else ""
+                    manifest.append({"saved": safe_name,
+                                     "rel": rel if isinstance(rel, str) else "",
+                                     "name": f.filename})
             if paths:
                 uploaded[key] = paths
+                if any(m["rel"] for m in manifest):
+                    with open(os.path.join(job_dir, f"{key}_manifest.json"),
+                              "w", encoding="utf-8") as _mf:
+                        json.dump(manifest, _mf, ensure_ascii=False, indent=1)
             elif slot.get("required"):
                 jm.fail(job_id, f"필수 파일 누락: {slot['label']}")
                 return jsonify({"job_id": job_id, "error": f"필수 파일 누락: {slot['label']}"}), 400

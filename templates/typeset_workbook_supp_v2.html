@@ -52,6 +52,11 @@
       <input type="text" name="divider_line2" id="divider-line2" class="issue-input u-w-200"
              placeholder="예: Unit.3 / 3과 추가지문">
     </div>
+    <div class="issue-input-wrap u-ml-12">
+      <label class="section-label">지문 범위 (선택)</label>
+      <input type="text" name="passage_range" id="passage-range" class="issue-input u-w-200"
+             placeholder="예: 6~17, 19">
+    </div>
   </div>
 
   <!-- ── 원고 업로드 ────────────────────────────────────────── -->
@@ -67,6 +72,10 @@
         <div class="drop-label">
           <span class="drop-icon">📄</span>
           <span class="drop-text">드래그하거나 클릭해서 선택 (여러 파일 가능)</span>
+          <span class="drop-text" style="opacity:.6;font-size:.9em">
+            원고가 여러 벌이면 <b>폴더를 통째로</b> 끌어놓으세요 — 폴더 하나가 원고 한 세트,
+            지문번호 순서로 이어서 조판합니다
+          </span>
           <span class="file-name" id="name-manuscripts"></span>
         </div>
       </div>

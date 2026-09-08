@@ -18,7 +18,10 @@ import os
 import re
 import unicodedata
 
-from engines.workbook_v2.engine import WorkbookV2Engine
+from core.base import safe_copy
+from engines.workbook_v2 import routing as _routing
+from engines.workbook_v2.engine import (WorkbookV2Engine, _load_v1_config,
+                                        _nfc, _routes_to_step3)
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
 _STEP_MAP = json.load(open(os.path.join(_DIR, "step_map.json"),
@@ -100,6 +103,11 @@ class WorkbookSuppV2Engine(WorkbookV2Engine):
             "type": "text",
             "required": False,
         }, {
+            "key": "passage_range",
+            "label": "지문 범위 (선택 — 예: 6~17, 19)",
+            "type": "text",
+            "required": False,
+        }, {
             # W22 단일 입력 하위호환 (구 폼/캐시 페이지가 divider_text로
             # 보내면 line1로 소비 — UI에는 노출하지 않는다)
             "key": "divider_text",
@@ -108,6 +116,130 @@ class WorkbookSuppV2Engine(WorkbookV2Engine):
             "required": False,
         }]
         return spec
+
+    # ── 다세트 원고 병합 + 지문 범위 (2026-09-08 사용자 지시) ──────────────
+
+    def parse(self, uploaded_files, job_dir, log):
+        """원고가 여러 폴더(세트)로 올라오면 세트별로 파싱해 지문번호 순서로
+        병합한다. 세트가 하나면 종전 경로 그대로 (기존 잡 동작 무변경).
+
+        폴더 = 세트. routes/typeset.py 가 남긴 manuscripts_manifest.json 의
+        상대경로로 복원한다. 여러 폴더의 같은 이름 원고를 한 폴더에 풀면
+        서로 덮어써지므로(침묵 유실), 세트마다 별도 스테이징 폴더에 **원래
+        파일명 그대로** 풀어 파서의 파일명 매칭을 그대로 살린다.
+        """
+        import glob as _glob
+        from engines.workbook.parser import parse_manuscript_folder
+        from engines.workbook_supp_v2 import multiset as _ms
+
+        want = _ms.parse_passage_range(
+            self._read_meta_str(job_dir, "passage_range", ""))
+        manifest = self._read_manifest(job_dir)
+        names = set()
+        mans = uploaded_files.get("manuscripts")
+        if isinstance(mans, list):
+            for fp in mans:
+                b = _nfc(os.path.basename(fp))
+                if b.startswith("manuscripts_"):
+                    b = b[len("manuscripts_"):]
+                names.add(b)
+        sets = _ms.group_sets(manifest, names) if manifest else []
+
+        if len(sets) < 2:
+            json_path = super().parse(uploaded_files, job_dir, log)
+            if want:
+                self._apply_range(json_path, want, log)
+            return json_path
+
+        log(f"[다세트] 원고 세트 {len(sets)}개: "
+            + " | ".join(k for k, _ in sets))
+        by_saved = {m.get("name"): m for m in manifest}
+        upload_dir = os.path.join(job_dir, "uploads")
+        cfg = self._parse_config(_load_v1_config(), log)
+        grade = self._read_meta(job_dir, "grade", 1)
+        year = self._read_meta(job_dir, "year", 25)
+        month = self._read_meta(job_dir, "month", 10)
+        sets_root = os.path.join(job_dir, "sets")
+
+        datas = []
+        for si, (key, members) in enumerate(sets, 1):
+            sdir = os.path.join(sets_root, "%02d" % si)
+            os.makedirs(os.path.join(sdir, "Step3"), exist_ok=True)
+            for m in manifest:
+                nm = _nfc(m.get("name") or "")
+                if nm not in members:
+                    continue
+                src = os.path.join(upload_dir, m.get("saved") or "")
+                if not os.path.exists(src):
+                    continue
+                if _routes_to_step3(nm):
+                    dst_name = _routing.stage_step3_name(
+                        os.path.join(sdir, "Step3"), nm, log)
+                    dst = os.path.join(sdir, "Step3", dst_name)
+                else:
+                    dst = os.path.join(sdir, nm)
+                safe_copy(src, dst)
+            n_files = len([f for f in _glob.glob(os.path.join(sdir, "*.*"))])
+            log(f"[다세트] ({si}/{len(sets)}) '{key}' 파싱 — 원고 {n_files}개")
+            data = parse_manuscript_folder(
+                sdir, cfg, grade, year, month, log,
+                image_dir=os.path.join(job_dir, "assets"))
+            mock = cfg.get("mockexam") or {}
+            _routing.reconcile_step3(
+                os.path.join(sdir, "Step3"),
+                (data.get("steps") or {}).get("step3"), log,
+                number_matching=bool(mock.get("normal_questions")
+                                     or mock.get("short_questions")))
+            datas.append(data)
+
+        merged, report = _ms.merge_step_contents(datas, want, log)
+        for k, r in report.items():
+            if r["missing"]:
+                log(f"⚠️ [다세트] {k}: 요청한 지문 {r['missing']} 없음")
+            log(f"[다세트] {k}: 지문 {r['got']}"
+                + (f" (제외 {r['dropped']})" if r["dropped"] else ""))
+        out = {"grade": datas[0].get("grade"), "year": datas[0].get("year"),
+               "month": datas[0].get("month"), "steps": merged}
+        json_path = os.path.join(job_dir, "content.json")
+        with open(json_path, "w", encoding="utf-8") as f:
+            json.dump(out, f, ensure_ascii=False, indent=2)
+        log(f"[다세트] 병합 완료: {len(merged)}개 STEP")
+        try:
+            from engines.workbook_v2.gate import (
+                inspect_manuscript_consistency)
+            inspect_manuscript_consistency(out, log=log)
+        except Exception as e:                                 # noqa: BLE001
+            log(f"[교차검증] 원고 검사 실패(무시하고 진행): {e}")
+        return json_path
+
+    def _read_manifest(self, job_dir):
+        p = os.path.join(job_dir, "manuscripts_manifest.json")
+        if not os.path.exists(p):
+            return []
+        try:
+            with open(p, encoding="utf-8") as f:
+                m = json.load(f)
+            return m if isinstance(m, list) else []
+        except (OSError, ValueError):
+            return []
+
+    def _apply_range(self, json_path, want, log):
+        """세트가 하나여도 지문 범위가 오면 그 번호만 순서대로 남긴다."""
+        from engines.workbook_supp_v2 import multiset as _ms
+        with open(json_path, encoding="utf-8") as f:
+            data = json.load(f)
+        merged, report = _ms.merge_step_contents([data], want, log)
+        step3 = (data.get("steps") or {}).get("step3")
+        if step3 and "step3" not in merged:
+            merged["step3"] = step3
+        data["steps"] = merged
+        with open(json_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        for k, r in report.items():
+            if r["missing"]:
+                log(f"⚠️ [지문범위] {k}: 요청한 지문 {r['missing']} 없음")
+            if r["dropped"]:
+                log(f"[지문범위] {k}: 지문 {r['got']} (제외 {r['dropped']})")
 
     def _parse_config(self, cfg, log):
         """부교재 파싱 config — 모의고사 '짤지문' 문항번호 필터를 끈다.
