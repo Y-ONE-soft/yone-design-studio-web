@@ -1299,6 +1299,10 @@ class PocketbookSeries(Series):
         items = []
         for pth in paths:
             items += pvoca.read(pth, log)
+        pvoca.number(items)
+        book = opt.get("voca_book", "고교기본")
+        for e in items:
+            e["day"] = pvoca.label(book, e["day"])
         pgs = pvoca.pages(items)
         if pgs:
             log("■ 어휘 파트 %d면 (%s ~ %s)"
@@ -1341,7 +1345,7 @@ class PocketbookSeries(Series):
         #   (270낱말 × 3.5mm ≈ 다섯 면). 잉크의 위·아래를 직접 재야 한다.
         for e, h in zip(items, hs):
             e["_h"] = h + pvoca._GAP
-        out = pvoca.pages(items, M["voca"][3])
+        out = pvoca.pages(items, M["voca"][3], M["voca"][2])
         log("■ 어휘 %d낱말 실측 → %d면 (낱말 높이 %.1f~%.1fmm)"
             % (len(items), len(out),
                min(e["_h"] for e in items), max(e["_h"] for e in items)))

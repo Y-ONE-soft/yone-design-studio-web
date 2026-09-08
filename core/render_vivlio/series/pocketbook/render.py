@@ -351,37 +351,43 @@ def _hit(t, pos_only=False):
 
 
 def voca_page(pg, M, folio, side="l"):
-    """어휘 한 면. 왼쪽·오른쪽 면은 안쪽 여백이 달라 시작 x 가 다르다."""
-    v = M["voca"]
-    x = v[0] if side == "l" else M["margin_r"]   # 안쪽 여백이 좌우로 다르다
-    parts = []
+    """어휘 한 면 — 26-1-기말 완성본 그대로.
+
+    왼쪽 단에 **번호 · 회독칸 3개 · 표제어**, 오른쪽 단에 **뜻 · 예문 · 해석**.
+    낱말 사이에는 가는 선이 있고, 머리말은 지문 배지가 아니라 **베이지 딱지**다.
+    ⚠ 완성본에는 발음기호·파생어가 없다. 26-2 원고에 새로 들어왔으므로
+      발음기호는 표제어 옆에, 파생어는 뜻 아래에 작게 얹는다.
+    """
+    v, hd = M["voca"], M["voca_head"]
+    x = v[0] if side == "l" else M["margin_r"]
+    ck = ('<span class="ck"></span>' * 3)
+    ents = []
     for e in pg["items"]:
-        b = ['<p class="w"><em>%02d</em><b>%s</b>%s</p>'
-             % (e["no"], ESC(e["word"]),
-                ('<i>%s</i>' % ESC(e["ipa"])) if e.get("ipa") else "")]
-        if e.get("mean"):
-            b.append('<p class="m">%s</p>' % _hit(e["mean"], True))
+        r = ['<p class="mn">%s</p>' % _hit(e.get("mean", ""), True)]
         if e.get("derived"):
-            b.append('<p class="d">%s</p>' % _hit(e["derived"], True))
+            r.append('<p class="dv">%s</p>' % _hit(e["derived"], True))
         for en, ko in e.get("ex") or ():
-            b.append('<p class="x">%s</p>' % _hit(en))
+            r.append('<p class="ex">%s</p>' % _hit(en))
             if ko:
-                b.append('<p class="xk">%s</p>' % _hit(ko))
-        parts.append('<div class="e">%s</div>' % "".join(b))
-    head = ('<div class="badge" style="%s%s">%s</div>'
-            % (_box(x, M["badge"][1], None, M["badge"][3]),
-               _badge_fit(pg["day"], M), ESC(pg["day"])))
+                r.append('<p class="exk">%s</p>' % _hit(ko))
+        ents.append(
+            '<div class="ent"><div class="l"><span class="no">%03d</span>%s'
+            '<span class="hw">%s</span>%s</div><div class="r">%s</div></div>'
+            % (e.get("seq") or e["no"], ck, ESC(e["word"]),
+               ('<span class="ipa">%s</span>' % ESC(e["ipa"]))
+               if e.get("ipa") else "", "".join(r)))
+    head = ('<div class="vhead" style="%s">%s</div>'
+            % (_box(x, hd[1], hd[2], hd[3]), ESC(pg["day"])))
     body = ('<div class="voca" style="%s">%s</div>'
-            % (_box(x, v[1], v[2], v[3]), "".join(parts)))
+            % (_box(x, v[1], v[2], v[3]), "".join(ents)))
     if side == "l":
         foot = ('<div class="folio" style="%s"><b>%s</b> POCKET BOOK</div>'
                 % (_box(12.9, M["folio_y"]), folio))
     else:
         foot = ('<div class="folio r" style="%s">'
-                '<span style="color:var(--ink)">%s</span> <b>%s</b></div>'
+                '<span style="color:var(--ink)">VOCA</span> <b>%s</b></div>'
                 % (_box(M["margin_l"], M["folio_y"],
-                        M["page_w"] - M["margin_l"] - 15.0),
-                   ESC(pg["day"]), folio))
+                        M["page_w"] - M["margin_l"] - 15.0), folio))
     return ('<section class="pg k-voca"><div class="trim">%s%s%s</div></section>'
             % (head, body, foot))
 

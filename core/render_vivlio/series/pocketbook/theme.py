@@ -118,10 +118,16 @@ METRICS = {
     # 100% 로 깔면 글자보다 모눈이 세 보인다.
     "flow_grid_alpha": 0.3,
     # 어휘 파트 (26-1-기말 광문1 완성본 실측: 상자 115×177mm · 한 면 15낱말)
-    "voca": [15.0, 20.0, 115.0, 177.0],
-    "voca_word": 10.0, "voca_word_lead": 12.5, "voca_mean": 7.0,
-    "voca_mean_lead": 10.0,
-    "voca_ex": 6.0, "voca_ex_lead": 7.0, "voca_gap": 1.4,
+    # 어휘 파트 — 26-1-기말 광문1 완성본 124~125면 실측
+    "voca": [15.0, 12.6, 114.8, 175.0],     # 상자 x y w h
+    "voca_head": [15.0, 6.5, 37.0, 5.45],   # 머리말 딱지
+    "voca_head_size": 8.0,
+    "voca_col": 41.0,          # 왼쪽 단(번호·회독·표제어) 폭 = 56.0 − 15.0
+    "voca_word": 10.0, "voca_no": 5.0,
+    "voca_ck": 2.87, "voca_ck_gap": 0.45, "voca_hw_gap": 1.6,
+    "voca_mean": 7.0, "voca_mean_lead": 2.9,
+    "voca_ex": 6.0, "voca_ex_lead": 2.47, "voca_ex_gap": 1.5,
+    "voca_pad": 1.6, "voca_gap": 1.5,
     "voca_track": -0.025, "voca_ex_track": -0.03,
     "topic": [18.0, 59.31, 115.0, 23.09], "topic_size": 8.0,
     "topic_lead": 3.5, "topic_text_x": 29.8,
@@ -230,13 +236,17 @@ def build_css(palette=None, metrics=None, highlight=None):
         "syntitle_size": "%g" % M["syntitle_size"],
         "synmark_h": "%g" % M["synmark_h"],
         "ico_h": "%g" % M["icon_h"], "ico_dy": "%g" % M["icon_dy"],
-        "voca_word": "%g" % M["voca_word"],
+        "voca_word": "%g" % M["voca_word"], "voca_no": "%g" % M["voca_no"],
         "voca_mean": "%g" % M["voca_mean"],
         "voca_mean_lead": "%g" % M["voca_mean_lead"],
-        "voca_word_lead": "%g" % M["voca_word_lead"],
         "voca_ex": "%g" % M["voca_ex"],
         "voca_ex_lead": "%g" % M["voca_ex_lead"],
-        "voca_gap": "%g" % M["voca_gap"],
+        "voca_ex_gap": "%g" % M["voca_ex_gap"],
+        "voca_gap": "%g" % M["voca_gap"], "voca_pad": "%g" % M["voca_pad"],
+        "voca_col": "%g" % M["voca_col"], "voca_ck": "%g" % M["voca_ck"],
+        "voca_ck_gap": "%g" % M["voca_ck_gap"],
+        "voca_hw_gap": "%g" % M["voca_hw_gap"],
+        "voca_head": "%g" % M["voca_head_size"],
         "voca_track": "%g" % M["voca_track"],
         "voca_ex_track": "%g" % M["voca_ex_track"],
         "blank": "8",
@@ -414,30 +424,42 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
 /* ── 어휘 파트 ─────────────────────────────────────────────
    완성본 문단 스타일 그대로: 표제어 10pt · 뜻 7pt(행간 12) · 예문 6pt(행간 7).
    `[…]` 로 감싼 자리가 그 낱말이 쓰인 곳이라 색이 붙는다(`뜻 빨간색`). */
-/* ⚠ 행간은 **mm 로 못 박는다.** 배수(`1.18`)로 두면 Noto Sans CJK 의 큰
-   글꼴 메트릭 때문에 표제어 줄만 8mm 넘게 벌어진다(실측: 뜻·예문 줄은
-   맞는데 표제어 줄만 2.3배). 그러면 한 면에 낱말이 5개밖에 안 들어간다. */
+/* ── 어휘 파트 ─────────────────────────────────────────────
+   26-1-기말 광문1 완성본(`광문1_포켓북_내지2.pdf` 124~125면) 실측 그대로다.
+   **두 단**이다 — 왼쪽에 번호·회독칸·표제어, 오른쪽에 뜻·예문.
+     번호 x15.5(5pt 남색) · 회독 ○ 2.87mm 3개(19.2/22.4/25.7) · 표제어 x30.4(10pt)
+     오른쪽 단 x56.0 폭73.7 · 뜻 7pt #58595B · 예문·해석 6pt · 강조 #DB4D5D
+     낱말 사이 가는 선 #ECE9E1 */
 .voca{position:absolute;font-family:PBBody,sans-serif;color:var(--ink);
-  letter-spacing:__voca_track__em;line-height:__voca_ex_lead__pt}
-.voca .e{margin:0 0 __voca_gap__mm}
-.voca .e:last-child{margin-bottom:0}
-.voca .w{font-size:__voca_word__pt;font-weight:500;
-  line-height:__voca_word_lead__pt;margin:0}
-.voca .w b{font-weight:500}
-.voca .w i{font-style:normal;font-size:__voca_ex__pt;color:var(--voca-ipa);
-  font-weight:400;margin-left:1.2mm}
-.voca .w em{font-style:normal;font-size:__voca_ex__pt;color:var(--voca-no);
-  font-weight:500;margin-right:1.2mm}
-.voca .m{font-size:__voca_mean__pt;font-weight:500;
-  line-height:__voca_mean_lead__pt;margin:0}
-.voca .d{font-size:__voca_ex__pt;color:var(--trans);
-  line-height:__voca_ex_lead__pt;margin:.3mm 0 0}
-.voca .x{font-size:__voca_ex__pt;line-height:__voca_ex_lead__pt;margin:.3mm 0 0;
+  letter-spacing:__voca_track__em}
+.voca .ent{display:table;width:100%;table-layout:fixed;
+  border-top:.25pt solid var(--voca-rule);padding-top:__voca_pad__mm;
+  margin-bottom:__voca_gap__mm;break-inside:avoid}
+.voca .ent:first-child{border-top:0}
+.voca .l{display:table-cell;width:__voca_col__mm;vertical-align:top;
+  white-space:nowrap}
+.voca .r{display:table-cell;vertical-align:top}
+.voca .no{font-size:__voca_no__pt;color:var(--navy);font-weight:500;
+  vertical-align:.9mm}
+.voca .ck{display:inline-block;width:__voca_ck__mm;height:__voca_ck__mm;
+  border:.25pt solid var(--trans);border-radius:50%;
+  margin-left:__voca_ck_gap__mm;vertical-align:.2mm}
+.voca .hw{font-size:__voca_word__pt;line-height:1;margin-left:__voca_hw_gap__mm}
+.voca .ipa{font-size:__voca_no__pt;color:var(--voca-ipa);margin-left:1mm}
+.voca .mn{font-size:__voca_mean__pt;color:var(--trans);margin:0;
+  line-height:__voca_mean_lead__mm}
+.voca .dv{font-size:__voca_ex__pt;color:var(--voca-ipa);margin:.6mm 0 0;
+  line-height:__voca_ex_lead__mm}
+.voca .ex{font-size:__voca_ex__pt;margin:__voca_ex_gap__mm 0 0;
+  line-height:__voca_ex_lead__mm;letter-spacing:__voca_ex_track__em}
+.voca .exk{font-size:__voca_ex__pt;margin:0;line-height:__voca_ex_lead__mm;
   letter-spacing:__voca_ex_track__em}
-.voca .xk{font-size:__voca_ex__pt;line-height:__voca_ex_lead__pt;margin:0;
-  color:var(--trans);letter-spacing:__voca_ex_track__em}
-.voca .hit{color:var(--voca-hit);font-weight:500}
-.voca .pos{font-size:__voca_ex__pt;color:var(--trans);font-weight:400}
+.voca .hit{color:var(--voca-hit)}
+.voca .pos{color:var(--trans)}
+/* 머리말 딱지 — 완성본은 베이지 바탕에 남색 글씨다(지문 배지와 다르다). */
+.vhead{position:absolute;background:var(--band-mock);color:var(--navy);
+  font-size:__voca_head__pt;font-weight:500;display:flex;align-items:center;
+  padding:0 2mm;box-sizing:border-box;letter-spacing:-.02em}
 
 .topicband{position:absolute;background:var(--topic-bg);box-sizing:border-box;
   padding:1.6mm 2mm}

@@ -162,7 +162,21 @@ def height_mm(e, width_mm=115.0):
     return h + _GAP
 
 
-def pages(entries, box_h=177.0, width_mm=115.0):
+def label(book, day):
+    """머리말 — 완성본이 쓰는 말(`어휘 고교기본 Unit 6`)."""
+    import re as _re
+    m = _re.search(r"(\d+)", day or "")
+    return "어휘 %s Unit %s" % (book, m.group(1) if m else day)
+
+
+def number(entries):
+    """번호는 **어휘 파트 전체에 이어지는 일련번호**다(001, 002 …)."""
+    for i, e in enumerate(entries, 1):
+        e["seq"] = i
+    return entries
+
+
+def pages(entries, box_h=175.0, width_mm=114.8):
     """낱말 목록 → 면 목록.
 
     ⚠ **면당 개수를 정해 놓으면 안 된다.** 낱말마다 뜻 길이도, 예문 수도(하나
