@@ -353,7 +353,7 @@ def _hit(t, pos_only=False):
 def voca_page(pg, M, folio, side="l"):
     """어휘 한 면. 왼쪽·오른쪽 면은 안쪽 여백이 달라 시작 x 가 다르다."""
     v = M["voca"]
-    x = v[0] if side == "l" else M["margin_r"]
+    x = v[0] if side == "l" else M["margin_r"]   # 안쪽 여백이 좌우로 다르다
     parts = []
     for e in pg["items"]:
         b = ['<p class="w"><em>%02d</em><b>%s</b>%s</p>'

@@ -98,19 +98,77 @@ def _sheet(rows, sheet):
     return out
 
 
-def pages(entries, per=15):
-    """낱말 목록 → 면 목록. **DAY 가 바뀌면 면을 새로 연다.**
+# 낱말 하나가 차지하는 높이(mm) 어림. 지면 규격 그대로다.
+_W_LEAD = 3.9          # 표제어 줄
+_M_LEAD = 3.4          # 뜻 한 줄
+_X_LEAD = 2.35         # 예문·예문뜻 한 줄
+_GAP = 1.1             # 낱말 사이
 
-    완성본은 한 DAY(30낱말)가 펼침면 하나다. 이어 붙이면 DAY 가 면 가운데서
-    갈려 학생이 어디까지가 오늘 몫인지 알 수 없다.
+
+def _lines(txt, width_mm, size_pt):
+    """이 글이 몇 줄이 될지 어림(한글 1em · 영문 0.5em)."""
+    if not txt:
+        return 0
+    em = size_pt / 72.0 * 25.4
+    w = sum(em if ord(c) > 0x2000 else em * 0.5 for c in txt)
+    return max(1, int(w // width_mm) + (1 if w % width_mm else 0))
+
+
+def height_mm(e, width_mm=115.0):
+    """낱말 하나의 높이(mm) 어림."""
+    h = _W_LEAD + _lines(e.get("mean", ""), width_mm, 7.0) * _M_LEAD
+    if e.get("derived"):
+        h += _lines(e["derived"], width_mm, 6.0) * _X_LEAD
+    for en, ko in e.get("ex") or ():
+        h += _lines(en, width_mm, 6.0) * _X_LEAD
+        if ko:
+            h += _lines(ko, width_mm, 6.0) * _X_LEAD
+    return h + _GAP
+
+
+def pages(entries, box_h=177.0, width_mm=115.0):
+    """낱말 목록 → 면 목록.
+
+    ⚠ **면당 개수를 정해 놓으면 안 된다.** 낱말마다 뜻 길이도, 예문 수도(하나
+      또는 둘), 파생어 유무도 달라서 같은 15개라도 높이가 40mm 넘게 차이 난다.
+      개수로 끊었더니 아래쪽 낱말이 판면 밖으로 밀려 나갔다. **높이로 채운다.**
+
+    ⚠ **DAY 가 바뀌면 면을 새로 연다.** 이어 붙이면 오늘 몫이 어디까지인지
+      학생이 알 수 없다(완성본도 DAY 단위로 면을 끊는다).
     """
-    out, cur, day = [], [], None
-    for e in entries:
-        if day is not None and (e["day"] != day or len(cur) >= per):
+    out = []
+    for day, group in _by_day(entries):
+        hs = [height_mm(e, width_mm) for e in group]
+        tot = sum(hs)
+        # 어림에는 오차가 있다 — 딱 맞게 잡으면 마지막에 한 낱말이 넘쳐
+        # **낱말 하나짜리 면**이 생긴다. 92% 로 잡아 여유를 둔다.
+        room = box_h * 0.92
+        n = max(1, int(tot // room) + (1 if tot % room else 0))
+        # ⚠ 꽉 채우고 남은 것을 뒷면에 밀면 **낱말 한두 개짜리 면**이 생긴다.
+        #   DAY 가 쓸 면 수를 먼저 정하고 그만큼으로 **고르게** 나눈다.
+        target = tot / n
+        cur, used, made = [], 0.0, 0
+        for e, h in zip(group, hs):
+            over = used + h > box_h                    # 상자를 넘는다
+            fair = used >= target - h / 2 and made < n - 1   # 제 몫을 채웠다
+            if cur and (over or fair):
+                out.append({"day": day, "items": cur})
+                made += 1
+                cur, used = [], 0.0
+            cur.append(e)
+            used += h
+        if cur:
             out.append({"day": day, "items": cur})
-            cur = []
-        day = e["day"]
-        cur.append(e)
-    if cur:
-        out.append({"day": day, "items": cur})
     return out
+
+
+def _by_day(entries):
+    day, group = None, []
+    for e in entries:
+        if day is not None and e["day"] != day:
+            yield day, group
+            group = []
+        day = e["day"]
+        group.append(e)
+    if group:
+        yield day, group
