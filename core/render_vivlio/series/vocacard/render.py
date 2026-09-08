@@ -43,13 +43,17 @@ def _wcls(w):
     return " xlong" if len(w) >= 18 else (" long" if len(w) >= 13 else "")
 
 
+FILL_MM = 165.0       # 한 면이 낱말 카드에 내주는 높이 — 책 config `options.page_fill_mm`
+                      # (판면 179mm - 구간 소제목 ~9mm - 여유 5mm)
+
+
 def _chunks(items, cap=PAGE_CAP):
-    """구간을 면 단위로 **고르게** 쪼갠다 — 6낱말이면 4+2 가 아니라 3+3.
+    """낱말 **수**로 고르게 쪼갠다 — 높이 실측이 없을 때의 폴백.
 
     구간마다 새 면에서 시작하므로, 한 면에 최대한 채우고 넘기면 뒷면이 거의
-    백지가 된다(실측: 155mm 가 비었다). 카드 높이는 들쭉날쭉하지만 3장 묶음이
-    최대 138mm, 4장이 154mm 로 가용 170mm 안이라 **낱말 수만으로 나눠도** 된다.
-    그래도 넘치면 `.vc { break-inside: avoid }` 가 다음 면으로 밀어 준다.
+    백지가 된다(실측: 155mm 가 비었다). 그래도 넘치면 `.vc {break-inside:avoid}`
+    가 다음 면으로 밀어 준다 — 다만 그렇게 밀린 자리가 곧 빈 면이 되므로,
+    높이를 잴 수 있으면 `_pack()` 을 쓴다.
     """
     n = len(items)
     k = -(-n // cap)
@@ -64,7 +68,62 @@ def _chunks(items, cap=PAGE_CAP):
     return out
 
 
+def _need(hs, limit):
+    """높이 `hs` 를 `limit` 씩 그리디로 담으면 몇 면이 드는가."""
+    n, cur = 1, 0.0
+    for h in hs:
+        if cur and cur + h > limit + 1e-9:
+            n += 1
+            cur = h
+        else:
+            cur += h
+    return n
+
+
+def _pack(items, heights, fill):
+    """**실측 높이**로 면을 나눈다 — 면 수는 최소로, 그 안에서 가장 고르게.
+
+    낱말 수로 나누면(`_chunks`) 카드가 유난히 큰 낱말이 몰린 구간에서 마지막
+    한 장이 면 밖으로 밀려 아래가 통째로 빈다(실측: 199p 중 15면). 카드 높이는
+    **면에 어디 놓이든 같은 값**(열 폭이 같다)이라, 1패스에서 재어 두면 그대로 쓸
+    수 있다 — 되먹임이 없어 수렴을 걱정하지 않아도 된다.
+
+    면 수 k 는 그리디로 정하고(더 줄일 수 없다), 그 k 를 유지하는 **가장 낮은
+    한 면 높이**를 이분법으로 찾아 거기에 맞춰 담는다.
+    """
+    hs = [float(heights.get(it["no"]) or 0) for it in items]
+    if not hs or min(hs) <= 0:
+        return None                      # 잰 값이 빠졌다 — 부르는 쪽이 폴백
+    k = _need(hs, fill)
+    lo, hi = max(hs), sum(hs)
+    for _ in range(40):                  # 0.01mm 아래로 좁혀진다
+        if hi - lo < 0.01:
+            break
+        mid = (lo + hi) / 2
+        if _need(hs, mid) <= k:
+            hi = mid
+        else:
+            lo = mid
+    limit = hi
+    out, cur, acc = [], [], 0.0
+    for it, h in zip(items, hs):
+        if cur and acc + h > limit + 1e-9:
+            out.append(cur)
+            cur, acc = [], 0.0
+        cur.append(it)
+        acc += h
+    if cur:
+        out.append(cur)
+    return out
+
+
 class Renderer(VocabookRenderer):
+
+    def __init__(self, cfg, heights=None, **kw):
+        super(Renderer, self).__init__(cfg, **kw)
+        # 1패스에서 잰 낱말 카드 높이 {번호: mm} — 없으면 낱말 수로 나눈다
+        self.heights = heights or {}
+        self.fill = float((self.o.get("page_fill_mm") or FILL_MM))
 
     # ── 간지 ────────────────────────────────────────────────────────────
     def sheet(self, kind):
@@ -161,7 +220,8 @@ class Renderer(VocabookRenderer):
         for gi, g in enumerate(order):
             lot = groups[g]
             cap = int(self.o.get("page_cap") or PAGE_CAP)
-            for ci, chunk in enumerate(_chunks(lot, cap)):
+            lots = _pack(lot, self.heights, self.fill) if self.heights else None
+            for ci, chunk in enumerate(lots or _chunks(lot, cap)):
                 out.append(self.kicker(g, len(lot),
                                        first=(gi == 0 and ci == 0),
                                        cont=(ci > 0)))
@@ -192,9 +252,9 @@ class Renderer(VocabookRenderer):
                 + "".join(body) + "</body></html>")
 
 
-def write(cfg, data, build_dir, sample=False, log=None):
+def write(cfg, data, build_dir, sample=False, heights=None, log=None):
     _refs.index_paths(data, [("items",)])
-    r = Renderer(cfg, sample=sample)
+    r = Renderer(cfg, sample=sample, heights=heights)
     text = r.document(data)
     os.makedirs(build_dir, exist_ok=True)
     out = os.path.join(build_dir, "index.html")

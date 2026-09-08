@@ -22,6 +22,7 @@ Day 도, Part2 워크북도 없이 원고 표 한 행이 곧 카드 하나다 �
 알 수 없다는 지적을 받았다.
 """
 import os
+import re
 
 from core.render_vivlio import bleed as bleed_mod
 from core.render_vivlio import cli, knobs, paged, probe, stage
@@ -51,12 +52,49 @@ class VocacardSeries(Series):
     def gen_theme(self, cfg, log):
         return theme_mod.write(cfg, os.path.join(cfg.build_dir, "theme.css"), log)
 
-    # ── ③ 조판 (2패스) ──
+    # ── 낱말 카드 높이 재기 ──
+    @staticmethod
+    def _card_heights(pdf, gap=5.4):
+        """조판된 면에서 낱말 카드 높이를 잰다 — {번호: mm}.
+
+        카드 머리의 네 자리 번호(`0001`)가 카드 시작이고, 다음 번호까지가 그
+        카드의 높이다. 면의 마지막 카드는 다음 번호가 없으니 **그 면의 잉크 끝**
+        까지로 재고 카드 사이 여백(`gap`)을 더한다.
+
+        ⚠ 네 자리 숫자는 예문 속 연도(2026 …)에도 있다 → 판면 **왼쪽 끝**에서
+          시작하는 것만 번호로 본다(`w-num` 은 x≈22mm, 예문은 47mm 부터).
+        """
+        import fitz
+        k = 25.4 / 72
+        out = {}
+        with fitz.open(pdf) as doc:
+            for pg in doc:
+                marks, ink = [], 0.0
+                for b in pg.get_text("dict")["blocks"]:
+                    x0, y0, x1, y1 = [v * k for v in b["bbox"]]
+                    if x1 > 134 or x0 < 18 or y0 > 203:
+                        continue                      # 러닝 요소·꼬리말 제외
+                    ink = max(ink, y1)
+                    for ln in b.get("lines", []):
+                        t = "".join(sp["text"] for sp in ln["spans"]).strip()
+                        if re.fullmatch(r"\d{4}", t) and ln["bbox"][0] * k < 30:
+                            marks.append((ln["bbox"][1] * k, int(t)))
+                marks.sort()
+                for i, (y, no) in enumerate(marks):
+                    end = marks[i + 1][0] if i + 1 < len(marks) else ink + gap
+                    out[no] = round(end - y, 2)
+        return out
+
+    # ── ③ 조판 (3패스) ──
     def build(self, cfg, log, sample=False, **_):
-        """2패스 — 1패스로 PART 시작 면 번호를 알아내고, 그 면에서만 **4mm 띠와
-        작은 마름모 탭을 끈다**. 시작면에는 큰 마름모(day-head)가 인플로우로
-        들어가는데 마진 박스의 작은 탭이 같이 나오면 **둘이 겹쳐 보인다**(실측).
-        마진 박스 내용과 배경만 바꾸므로 페이지 나눔은 1패스와 같다."""
+        """3패스.
+
+        1패스  낱말 수로 나눈 판을 한 번 조판해 **낱말 카드 높이를 잰다.**
+        2패스  그 높이로 면을 다시 나눠(`_pack`) 조판한다 — 페이지 나눔 확정.
+               카드 높이는 놓이는 면과 무관한 값이라 되먹임이 없다(수렴 걱정 없음).
+        3패스  PART 시작 면을 찾아 그 면의 4mm 띠와 작은 마름모 탭을 끈다
+               (시작면에는 큰 마름모가 인플로우로 들어가 **둘이 겹쳐 보인다**).
+               마진 박스 내용과 배경만 바꾸므로 페이지 나눔은 2패스와 같다."""
         sample = bool(sample)
         build_dir = cfg.build_dir
         os.makedirs(build_dir, exist_ok=True)
@@ -76,20 +114,32 @@ class VocacardSeries(Series):
         html_path = render_mod.write(cfg, d, build_dir, sample=sample, log=log)
         t1 = cli.run_build(html_path, out, log=log)
 
+        # ② 잰 높이로 면을 다시 나눈다
+        heights = self._card_heights(out)
+        t2 = 0.0
+        if heights:
+            log(f"[계측] 낱말 카드 {len(heights)}장 "
+                f"(중앙 {sorted(heights.values())[len(heights) // 2]:.0f}mm · "
+                f"최대 {max(heights.values()):.0f}mm)")
+            html_path = render_mod.write(cfg, d, build_dir, sample=sample,
+                                         heights=heights, log=log)
+            t2 = cli.run_build(html_path, out, log=log)
+
         opens = paged.find_open_pages(probe.page_texts(out))
         page_names = [p for _c, p, *_ in theme_mod.sections_of(cfg)]
         rules = paged.PageRules(page_names)
         for p in opens:
             rules.nth(p, "background: none; @top-left { content: none; }")
         rules.write(pages_css)
-        t2 = cli.run_build(html_path, out, log=log)
+        t3 = cli.run_build(html_path, out, log=log)
 
         npages = probe.page_count(out)
-        log(f"OK  {t1 + t2:.1f}s (2패스) · {npages}p · "
+        passes = 3 if heights else 2
+        log(f"OK  {t1 + t2 + t3:.1f}s ({passes}패스) · {npages}p · "
             f"PART 시작면 {len(opens)}개 → {out}")
 
         res = {"pdf": out, "pages": npages, "opens": len(opens),
-               "seconds": round(t1 + t2, 1), "passes": 2}
+               "seconds": round(t1 + t2 + t3, 1), "passes": passes}
         if not sample:
             spec = cfg.finish_spec()
             if spec:
