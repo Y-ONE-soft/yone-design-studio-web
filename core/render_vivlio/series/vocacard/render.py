@@ -10,11 +10,12 @@
 직접 붙이고, 라벨이 5종(예문/유반의어/파생어/주의/영영풀이)으로 늘었다.
 """
 import os
+import re
 
 from core.render_vivlio import refs as _refs
 from core.render_vivlio import stage
 from core.render_vivlio.series.vocabook.render import (
-    Renderer as VocabookRenderer, esc, esc_gap, ex_en, ex_kr, syn,
+    Renderer as VocabookRenderer, esc, esc_gap, ex_en, ex_kr,
 )
 from core.render_vivlio.series.vocacard.data import PART_ORDER, PART_TITLE
 
@@ -22,7 +23,19 @@ PART_CLASS = {"text": "s-text", "supp": "s-supp", "mock": "s-mock"}
 PART_PAGE = {"text": "p-text", "supp": "p-supp", "mock": "p-mock"}
 
 
-PAGE_CAP = 4          # 한 면에 담는 낱말 카드 수(실측: 3장 138mm · 4장 154mm < 가용 170mm)
+PAGE_CAP = 4          # 한 면에 담는 낱말 카드 수 — 책 config `options.page_cap` 으로 덮는다
+
+# 유반의어 줄의 분류 태그 — `유. [유의어] downturn n. 경기 침체`
+# ⚠ vocabook 의 `syn()` 은 바깥 대괄호를 **묶음 표시로 보고 벗긴다.** 이 원고에서
+#   대괄호는 뜻의 범위를 가르는 **의미 있는 분류**다(원고 '범위 및 표기' 시트가
+#   [문맥상 유사어]는 따로 센다고 명시). 벗기면 태그와 낱말이 뒤섞이므로
+#   그대로 두고 **색만 뒤로 물린다.**
+_RE_TAG = re.compile(r"\[([^\[\]]+)\]")
+
+
+def syn_line(s):
+    return _RE_TAG.sub(
+        lambda m: f'<span class="tg">[{esc(m.group(1))}]</span>', esc_gap(s))
 
 
 def _wcls(w):
@@ -106,7 +119,7 @@ class Renderer(VocabookRenderer):
                        + "</div>")
                 cls = "r-ex"
             elif lab == "유반의어":
-                body = "".join(f"<p>{syn(x)}</p>" for x in row["lines"])
+                body = "".join(f"<p>{syn_line(x)}</p>" for x in row["lines"])
                 cls = "r-syn"
             elif lab == "영영풀이":
                 body = "".join(f"<p>{esc_gap(x)}</p>" for x in row["lines"])
@@ -147,7 +160,8 @@ class Renderer(VocabookRenderer):
             groups[it["group"]].append(it)
         for gi, g in enumerate(order):
             lot = groups[g]
-            for ci, chunk in enumerate(_chunks(lot)):
+            cap = int(self.o.get("page_cap") or PAGE_CAP)
+            for ci, chunk in enumerate(_chunks(lot, cap)):
                 out.append(self.kicker(g, len(lot),
                                        first=(gi == 0 and ci == 0),
                                        cont=(ci > 0)))
