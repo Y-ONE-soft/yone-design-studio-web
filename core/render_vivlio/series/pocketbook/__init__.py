@@ -281,6 +281,41 @@ def _dedupe_badges(rows, log):
         log("■ 배지가 겹쳐 %d지문은 원래 라벨로 두었다" % n)
 
 
+# 책에 담는 차례는 **교과서 → 부교재 → 모의고사**다(사용자 지시: 따로 말하지
+# 않는 한 언제나 이 순서). 시험범위가 이 차례를 알지만, 범위에 안 적힌 갈래가
+# 있으면(광문1 은 시트에 올림포스만 적혀 있었다) 그 갈래가 통째로 뒤로 밀린다.
+# 그래서 **지문 자신이 어느 갈래인지**로 한 번 더 세운다.
+_KIND_RANK = {"lesson": 0, "olpo": 1, "rp": 1, "teuk": 1, "bare": 1,
+              "test": 1, "mock": 2}
+
+
+def _kind_rank(r):
+    ranks = [_KIND_RANK.get(t[0], 1) for t, _n in pscope.pairs_of(r)]
+    if ranks:
+        return max(ranks) if 2 in ranks else min(ranks)
+    unit = str(r.get("category") or r.get("unit") or "")
+    if "모의고사" in unit or str(r.get("no") or "").isdigit():
+        return 2
+    if _RE_HAS_NO.search(unit):
+        return 1
+    return 0
+
+
+def _order_by_kind(rows, log):
+    """교과서 → 부교재 → 모의고사. 갈래 안의 차례는 **그대로 둔다**(안정 정렬)."""
+    pas = [r for r in rows if r.get("kind") != "memtest"]
+    if len(pas) < 2:
+        return rows
+    before = [id(r) for r in pas]
+    pas.sort(key=lambda r: _kind_rank(r))
+    if [id(r) for r in pas] != before:
+        n = [_kind_rank(r) for r in pas]
+        log("■ 차례를 교과서(%d) → 부교재(%d) → 모의고사(%d) 로 세웠다"
+            % (n.count(0), n.count(1), n.count(2)))
+    # 암기 TEST 는 지문 뒤에 붙는 별개 면이라 지문 차례만 갈아 끼운다
+    return pas + [r for r in rows if r.get("kind") == "memtest"]
+
+
 def _korean_topic(rows, log):
     """주제·요약문은 **한글만** 싣는다.
 
@@ -541,6 +576,7 @@ class PocketbookSeries(Series):
         # ⚠ 저술물 이름에는 단원이 들어간다. 단원은 `_fill_units` 가 채우므로
         #   **그 뒤에** 얹어야 이름이 맞는다(먼저 부르면 16지문이 조용히 빈다).
         _fill_units(rows, scope, log)
+        rows = _order_by_kind(rows, log)
         self._apply_authored(cfg, rows, log)
         rows = self._apply_memtest(cfg, opt, rows, log)
         out = os.path.join(cfg.build_dir, "data.json")

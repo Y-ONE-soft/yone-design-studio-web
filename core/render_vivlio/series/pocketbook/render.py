@@ -320,18 +320,25 @@ def left_page(p, M, folio):
             % (page_kind(p), "".join(parts)))
 
 
+_RE_UNIT_KIND = re.compile(r"\d{1,2}\s*강|Unit\s*\d{1,2}", re.I)
+
+
 def page_kind(p):
     """지문 성격 → 면 클래스. 위·아래 띠 색이 여기서 갈린다.
 
     원본은 마스터를 나눠 띠 색으로 교재를 구분한다(교과서 하늘 · 부교재 연보라
     · 모의고사 베이지). 한 색으로 통일하면 펼쳐 놓고 어느 교재인지 알 수 없다.
+
+    ⚠ `교과서` 로 시작하는지만 봤더니 **교과서 이름이 그대로 온 책**(광문1 의
+      `능률(민) SL2`)이 부교재 색으로 나갔다. 갈림길은 이름이 아니라 **강이
+      붙었는지**다 — 부교재만 `N강`·`Unit N` 을 쓴다.
     """
     unit = str(p.get("category") or p.get("unit") or "")
-    if unit.startswith("교과서"):
-        return "k-lesson"
-    if "모의고사" in unit:
+    if "모의고사" in unit or str(p.get("no") or "").isdigit():
         return "k-mock"
-    return "k-unit" if unit else ""
+    if _RE_UNIT_KIND.search(unit):
+        return "k-unit"
+    return "k-lesson" if unit else ""
 
 
 # 플로우노트에서 **색이 붙는 것은 기호 글자뿐**이다.
@@ -621,7 +628,10 @@ def right_page(p, M, folio, category=""):
     parts.append('<div class="folio r" style="%s">%s</div>'
                  % (_box(M["margin_l"], M["folio_y"],
                          M["page_w"] - M["margin_l"] - 15.0), foot))
-    return '<section class="pg"><div class="trim">%s</div></section>' % "".join(parts)
+    # ⚠ 띠 색은 **펼침면 단위**다. 왼쪽 면에만 주면 한 지문의 두 면이 다른
+    #   색으로 나간다(사용자 지적).
+    return ('<section class="pg %s"><div class="trim">%s</div></section>'
+            % (page_kind(p), "".join(parts)))
 
 
 def memtest_page(p, M, folio, answer, category=""):
