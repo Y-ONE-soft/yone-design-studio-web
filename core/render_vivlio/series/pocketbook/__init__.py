@@ -1160,7 +1160,9 @@ class PocketbookSeries(Series):
             self._fit_right(rows, M, build_dir, log)
 
         voca_pages = self._voca(cfg, opt, log)
+        n_rows0 = len(rows)
         rows = self._drop_memtest_if_thick(rows, voca_pages, opt, log)
+        mt_dropped = len(rows) != n_rows0
         if voca_pages and measure_pass:
             voca_pages = self._fit_voca(voca_pages, M, build_dir, log)
 
@@ -1183,6 +1185,12 @@ class PocketbookSeries(Series):
         with open(os.path.join(build_dir, "_rows.json"), "w",
                   encoding="utf-8") as f:
             json.dump(rows, f, ensure_ascii=False)
+        # ⚠ 검수는 `_rows.json` 만 봐서 **어휘 파트와 150면 규칙을 몰랐다** —
+        #   G-P1(면 수)·G-P11(암기 TEST 없음)이 멀쩡한 책에서 늘 울렸다.
+        with open(os.path.join(build_dir, "_build.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump({"voca_pages": len(voca_pages or []),
+                       "memtest_dropped": mt_dropped}, f)
         out = cfg.out_pdf()
         cli.run_build(html, out, log=log)
         # 마감(표지 삽입) 전 상태를 남긴다 — 검수는 **우리가 조판한 면만** 본다.
@@ -1777,15 +1785,25 @@ class PocketbookSeries(Series):
         M.update(cfg.section("metrics") or {})
         opt = cfg.section("options") or {}
         start = 0        # `_body.pdf` 는 표지 전이라 첫 면이 곧 첫 지문면이다
+        meta = {}
+        try:
+            with open(os.path.join(cfg.build_dir, "_build.json"),
+                      encoding="utf-8") as f:
+                meta = json.load(f)
+        except Exception:
+            pass
 
         _SPAN_CACHE.clear()          # 앞 책의 계측이 남아 있으면 안 된다
         with probe.open_pdf(pdf) as doc:
             n_pages = len(doc)
             per = [1 if r.get("kind") == "memtest" else 2 for r in rows]
-            want = start + sum(per)
+            # 어휘 파트는 지문이 아니라 `rows` 에 없다 — 따로 더해 준다.
+            want = start + sum(per) + int(meta.get("voca_pages") or 0)
             if n_pages != want:
-                report.fail("G-P1 면 수 %d ≠ 예상 %d (지문 %d개)"
-                            % (n_pages, want, len(rows)))
+                report.fail("G-P1 면 수 %d ≠ 예상 %d (지문 %d개%s)"
+                            % (n_pages, want, len(rows),
+                               " + 어휘 %d면" % meta["voca_pages"]
+                               if meta.get("voca_pages") else ""))
 
             # G-P3 주석 보존 · G-P6 넘침
             idx, lost, over, wrong = start, [], [], []
@@ -1893,7 +1911,9 @@ class PocketbookSeries(Series):
         # ⚠ 이걸 안 세우면 원고 폴더가 안 잡힌 날 **면 수가 반으로 준 책이
         #   전 게이트를 통과한다**(세종1 204→106면 실측). 면 수 게이트는 남은
         #   지문으로 다시 셈해서 "맞다"고 한다.
+        # ⚠ 150면 규칙으로 **일부러 뺀** 책은 결함이 아니다.
         if (cfg.section("options") or {}).get("review_tests") and \
+                not meta.get("memtest_dropped") and \
                 not any(r.get("kind") == "memtest" for r in rows):
             report.fail("G-P11 암기 TEST 가 한 면도 없다 — 리테 원고 폴더를 "
                         "못 읽었을 수 있다(구글드라이브 확인)")
@@ -2102,7 +2122,7 @@ def _mark_new(pdf, rows, voca_pages, spec, log):
         if k >= doc.page_count:
             continue
         page = doc[k]
-        w, h = page.rect.width, page.rect.height
+        w = page.rect.width
         note = page.add_text_annot(
             fitz.Point(w - 26, 20), "신규 작업분 — 오른쪽 면(플로우노트·주제/요약문·"
             "동반의어)을 새로 썼습니다. 검수 바랍니다.\n지문: %s"
@@ -2110,12 +2130,9 @@ def _mark_new(pdf, rows, voca_pages, spec, log):
         note.set_colors(stroke=_NEW_RGB)
         note.set_info(title="신규")
         note.update()
-        # 화면에서 한눈에 보이도록 오른쪽 면 가장자리에 띠 하나(주석이라 인쇄 X)
-        band = page.add_rect_annot(fitz.Rect(w - 12, 0, w - 6, h))
-        band.set_colors(stroke=_NEW_RGB, fill=_NEW_RGB)
-        band.set_opacity(0.55)
-        band.set_info(title="신규", content="신규 작업분")
-        band.update()
+        # ⚠ 예전엔 가장자리 띠(`add_rect_annot`)를 함께 달았다. 눈에는 잘
+        #   띄지만 주석 목록에 **한 면당 두 줄**이 뜬다 — 연구원이 검수할 때
+        #   빈 항목을 계속 넘겨야 했다. 쪽지 하나만 남긴다.
         n += 1
     doc.saveIncr()
     doc.close()
