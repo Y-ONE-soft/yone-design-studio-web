@@ -135,15 +135,7 @@ class WorkbookSuppV2Engine(WorkbookV2Engine):
         want = _ms.parse_passage_range(
             self._read_meta_str(job_dir, "passage_range", ""))
         manifest = self._read_manifest(job_dir)
-        names = set()
-        mans = uploaded_files.get("manuscripts")
-        if isinstance(mans, list):
-            for fp in mans:
-                b = _nfc(os.path.basename(fp))
-                if b.startswith("manuscripts_"):
-                    b = b[len("manuscripts_"):]
-                names.add(b)
-        sets = _ms.group_sets(manifest, names) if manifest else []
+        sets = _ms.group_sets(manifest) if manifest else []
 
         if len(sets) < 2:
             json_path = super().parse(uploaded_files, job_dir, log)
@@ -153,7 +145,6 @@ class WorkbookSuppV2Engine(WorkbookV2Engine):
 
         log(f"[다세트] 원고 세트 {len(sets)}개: "
             + " | ".join(k for k, _ in sets))
-        by_saved = {m.get("name"): m for m in manifest}
         upload_dir = os.path.join(job_dir, "uploads")
         cfg = self._parse_config(_load_v1_config(), log)
         grade = self._read_meta(job_dir, "grade", 1)
@@ -165,14 +156,12 @@ class WorkbookSuppV2Engine(WorkbookV2Engine):
         for si, (key, members) in enumerate(sets, 1):
             sdir = os.path.join(sets_root, "%02d" % si)
             os.makedirs(os.path.join(sdir, "Step3"), exist_ok=True)
-            for m in manifest:
+            for m in members:
                 nm = _nfc(m.get("name") or "")
-                if nm not in members:
-                    continue
                 src = os.path.join(upload_dir, m.get("saved") or "")
                 if not os.path.exists(src):
                     continue
-                if _routes_to_step3(nm):
+                if _ms.is_step3_path(m.get("rel")) or _routes_to_step3(nm):
                     dst_name = _routing.stage_step3_name(
                         os.path.join(sdir, "Step3"), nm, log)
                     dst = os.path.join(sdir, "Step3", dst_name)
@@ -184,6 +173,17 @@ class WorkbookSuppV2Engine(WorkbookV2Engine):
             data = parse_manuscript_folder(
                 sdir, cfg, grade, year, month, log,
                 image_dir=os.path.join(job_dir, "assets"))
+            # W82 구제 — 스텝1/2 어디에도 안 실린 원고를 '문항 모음' 구조로
+            # 재판정해 Step3로 옮기고 재파싱 (폴더 없이 올린 세트 대비).
+            rescued = _routing.rescue_unrouted_step3(
+                sdir, data, log,
+                candidates={f for f in os.listdir(sdir)
+                            if os.path.isfile(os.path.join(sdir, f))})
+            if rescued:
+                data = parse_manuscript_folder(
+                    sdir, cfg, grade, year, month, log,
+                    image_dir=os.path.join(job_dir, "assets"))
+                log(f"[다세트] Step3 구제 후 재파싱: {len(rescued)}개")
             mock = cfg.get("mockexam") or {}
             _routing.reconcile_step3(
                 os.path.join(sdir, "Step3"),

@@ -22,6 +22,22 @@ from engines.workbook.parser import (_RE_BRACKET_NUM, _RE_HEADER_NUM,
 
 _RE_RANGE = re.compile(r"(\d+)\s*(?:~|-|–|—|부터)\s*(\d+)")
 _RE_NUM = re.compile(r"\d+")
+# 원고 폴더 안의 **스텝 하위 폴더** — 세트 구분이 아니다. 세트 키를 구할 때
+# 벗겨내지 않으면 'Step3' 가 그 자체로 한 세트가 되어버린다 (2026-09-08
+# E2E 실증: 세트가 '워크북 | Step3' 두 개로 잡혀 구간 폴더가 통째로 뭉갬).
+_RE_STEP_SUBDIR = re.compile(r"^step\s*[_\-]?\s*[123]$", re.I)
+_RE_STEP3_SUBDIR = re.compile(r"^step\s*[_\-]?\s*3$", re.I)
+
+
+def is_step3_path(rel):
+    """업로드 상대경로가 Step3 하위 폴더인가.
+
+    파일명 라우터(_routes_to_step3)는 '…60문항_학생용.docx' 같은 이름을
+    못 잡는다 — 평탄화 업로드에서는 W82 구제가 사후에 살려내지만, 폴더째
+    올린 경우엔 **폴더 구조라는 더 확실한 근거**가 있으므로 그것을 먼저
+    쓴다 (안 쓰면 Step3 원고가 통째로 0유닛이 된다)."""
+    parts = (rel or "").replace("\\", "/").split("/")[:-1]
+    return any(_RE_STEP3_SUBDIR.match(x.strip()) for x in parts if x)
 
 
 def parse_passage_range(text):
@@ -173,15 +189,19 @@ def merge_step_contents(datas, want=None, log=None):
     return merged, report
 
 
-def group_sets(manifest, staged_names):
-    """업로드 매니페스트 → [(세트 이름, {스테이징 파일명})] (폴더 순서 유지).
+def group_sets(manifest):
+    """업로드 매니페스트 → [(세트 이름, [매니페스트 행])] (폴더 순서 유지).
 
     manifest: routes/typeset.py 가 남긴 [{saved, rel, name}].
-    staged_names: 엔진이 uploads/ 에 실제로 스테이징한 파일명 집합.
 
     세트 키 = 상대경로에서 파일명을 뺀 마지막 폴더. 원고가
     '<구간>/워크북/파일.docx' 처럼 한 단계 더 들어가는 관행이 있어,
-    같은 꼬리 폴더('워크북')만 나오면 그 위 단계를 쓴다.
+    꼬리 폴더가 전부 같으면('워크북') 갈릴 때까지 위 단계를 붙인다.
+
+    ⚠ 멤버는 반드시 **행**으로 담는다. 파일 **이름**으로 담으면 세 폴더의
+    동명 원고('Step1 A1 어휘선택.docx')가 모든 세트에 다 걸려 세트마다
+    같은 파일을 스테이징하게 된다 (2026-09-08 E2E에서 실제로 겪음 —
+    세 세트가 전부 마지막 폴더의 원고로 채워졌다).
     """
     rows = []
     for m in manifest or []:
@@ -189,6 +209,8 @@ def group_sets(manifest, staged_names):
         if "/" not in rel:
             continue
         parts = [x for x in rel.split("/")[:-1] if x]
+        while parts and _RE_STEP_SUBDIR.match(parts[-1].strip()):
+            parts.pop()
         if not parts:
             continue
         rows.append((parts, m))
@@ -203,11 +225,10 @@ def group_sets(manifest, staged_names):
         depth += 1
     groups, order = {}, []
     for parts, m in rows:
-        key = "/".join(parts[-depth:]) if len(parts) >= depth else "/".join(parts)
+        key = ("/".join(parts[-depth:]) if len(parts) >= depth
+               else "/".join(parts))
         if key not in groups:
-            groups[key] = set()
+            groups[key] = []
             order.append(key)
-        name = unicodedata.normalize("NFC", m.get("name") or "")
-        if name in staged_names:
-            groups[key].add(name)
+        groups[key].append(m)
     return [(k, groups[k]) for k in order if groups[k]]

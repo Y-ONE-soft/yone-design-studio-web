@@ -166,6 +166,32 @@ def set_select(cfg, log=print, exclude=None, include=None, limits=None,
     return sel
 
 
+def set_css(cfg, log=print, text=None, file=None, clear=False, **_):
+    """그 책의 `overrides.css` 를 쓴다 — **뼈대 위에 얹는 모양**이다.
+
+    조판은 이 파일을 **맨 마지막에** 물리므로 무엇이든 이긴다(stage.py).
+    뼈대(어떤 요소가 있는지)는 계열 코드가 만들고, 자리·크기·색은 여기서 얹는다.
+    디자인 화면이 「지면에서 고르기」로 만든 규칙이 이리로 온다.
+    """
+    from core.render_vivlio import design_ops as ops
+    if clear:
+        ops.put(cfg, {"op": "css"}, None)
+        log("  overrides.css 를 지웠다")
+        return ""
+    if file:
+        with open(file, encoding="utf-8") as f:
+            text = f.read()
+    if text is None:
+        cur = ops.get(cfg, {"op": "css"})
+        log("  overrides.css %s" % ("없음" if cur is None else "%d자" % len(cur)))
+        return cur
+    ops.put(cfg, {"op": "css"}, text)
+    log("  overrides.css ← %d자 · 규칙 %d개"
+        % (len(text), text.count("{")))
+    log("  → 지면에 반영하려면 `build`")
+    return text
+
+
 def show_sections(cfg, log=print, as_json=False, book=None, **_):
     """이 계열에서 **무엇을 넣고 뺄 수 있는지** 보여 준다.
 
@@ -496,6 +522,9 @@ def main(argv=None):
                        exclude=opts.get("exclude"), include=opts.get("include"),
                        limits=opts.get("limits"), order=opts.get("order"),
                        clear=bool(opts.get("clear")))
+        elif st == "css":
+            set_css(cfg, log, text=(opts.get("text") if isinstance(opts.get("text"), str) else None),
+                    file=opts.get("file"), clear=bool(opts.get("clear")))
         elif st == "sections":
             show_sections(cfg, log, as_json=bool(opts.get("json")), book=book)
         elif st == "build":
