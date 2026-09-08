@@ -491,7 +491,7 @@ def _badge_text(p):
     """
     tag = str(p.get("no") or p.get("label") or "")
     unit = str(p.get("category") or p.get("unit") or "").strip()
-    if not tag or not unit or unit in ("교과서", "모의고사"):
+    if p.get("_badge_raw") or not tag or not unit or unit in ("교과서", "모의고사"):
         return tag
     # 라벨이 강·과 번호를 들고 있을 때만 단원의 번호를 뗀다. `서술형 Practice`
     # 처럼 번호가 없는 라벨에서 떼면 **몇 강인지가 사라진다**.

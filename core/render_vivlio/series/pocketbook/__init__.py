@@ -219,28 +219,66 @@ def _name_units(rows, scope, name, log):
         교재 이름을 떼어 **같은 갈래 안에서만** 이어받는다(`능률(민) SL2`).
         갈래를 안 가르면 사이에 낀 `3강 03` 때문에 `본문3` 이 올림포스가 된다.
     """
-    tb_book, n = "", 0
+    tb_book, last_unit, n = "", "", 0
     for r in rows:
         if r.get("kind") == "memtest":
             continue
         u = str(r.get("unit") or "")
+        lab = str(r.get("label") or "")
         if scope and name and _RE_BARE_UNIT.match(u):
             t = pscope.match(r, scope)
             if t is not None and t[0] != "mock" and name(t) != u:
                 r["unit"] = name(t)
                 n += 1
-                continue
-        m = _RE_TB_LABEL.match(str(r.get("label") or ""))
-        if not m:
-            continue
-        head = m.group(1).strip()
-        if head:                      # 이 지문이 교재 이름을 들고 있다
-            tb_book = head
-        elif tb_book and not u:       # 뒤따르는 `본문2` — 앞의 교재를 이어받는다
-            r["unit"] = tb_book
-            n += 1
+        elif not u:
+            m = _RE_TB_LABEL.match(lab)
+            if m:                          # 교과서 갈래 — `능률(민) SL2 본문2`
+                head = m.group(1).strip()
+                if head:
+                    tb_book = head
+                elif tb_book:
+                    r["unit"] = tb_book
+                    n += 1
+            elif last_unit:                # `서술형 Practice` — 앞 단원에 딸린 것
+                r["unit"] = last_unit
+                n += 1
+        got = str(r.get("unit") or "")
+        # ⚠ 이어받는 것은 **강·과 계열**뿐이다. 교재 이름(`능률(민) SL2`)을
+        #   이어받으면 뒤따르는 `서술형 Practice` 가 엉뚱한 교재로 간다.
+        if got and _RE_HAS_NO.search(got):
+            last_unit = got
+    _dedupe_badges(rows, log)
     if n:
         log("■ 단원에 교재 이름 %d지문 채움" % n)
+
+
+_RE_HAS_NO = re.compile(r"\d{1,2}\s*(?:강|과)|Unit\s*\d{1,2}", re.I)
+
+
+def _dedupe_badges(rows, log):
+    """교재 이름을 붙였더니 **배지가 겹치는** 경우를 되돌린다.
+
+    `3강 분석` 과 `올림포스 3강 분석` 은 원본이 서로 다르게 적어 둔 두 지문인데,
+    앞엣것에 교재 이름을 붙이면 **둘이 똑같아진다**. 그러면 읽는 사람이 두 면을
+    구별할 수 없다. 겹치는 무리 안에서 **원래 라벨이 서로 다르면** 원래 라벨로
+    되돌린다(같은 라벨끼리는 되돌려도 여전히 겹치므로 그대로 둔다).
+    """
+    pas = [r for r in rows if r.get("kind") != "memtest"]
+    seen = {}
+    for r in pas:
+        seen.setdefault(prender._badge_text(r), []).append(r)
+    n = 0
+    for txt, group in seen.items():
+        if len(group) < 2:
+            continue
+        labs = [str(r.get("no") or r.get("label") or "") for r in group]
+        if len(set(labs)) < len(labs):
+            continue                        # 라벨까지 같으면 되돌려도 소용없다
+        for r in group:
+            r["_badge_raw"] = True
+            n += 1
+    if n:
+        log("■ 배지가 겹쳐 %d지문은 원래 라벨로 두었다" % n)
 
 
 def _korean_topic(rows, log):
