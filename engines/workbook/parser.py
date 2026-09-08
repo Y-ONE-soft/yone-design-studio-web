@@ -1870,15 +1870,77 @@ def _strip_step3_practice_set_header(paras, log=None):
 _RE_S3_INLINE_COND = re.compile(
     r'^\s*(?P<marker><\s*조\s*건\s*>|＜\s*조\s*건\s*＞|〈\s*조\s*건\s*〉'
     r'|《\s*조\s*건\s*》|\[\s*조\s*건\s*\])\s*(?P<rest>\S.*)$')
+# W90 (2026-09-08 성덕2 EBS 외부지문 — 사용자 지적 "요약문/조건인데 단락
+# 스타일이 안 입혀졌다"): 마커와 내용이 **한 줄**인 원고는 마커 규칙
+# (core/structure/rules.py BOX_MARKERS — `^…마커…$` 단독 줄 전제)에 안 걸려
+# kind=UNKNOWN → 지문 스타일로 인쇄된다. 위 조건 마커는 이미 분리하고
+# 있었으나 ①요약문 ②괄호 없는 맨 '조건' 두 갈래가 빠져 있었다.
+# 코퍼스 실측(step3 있는 잡 203개): 단독 줄이 표준이고(요약문 434줄/52잡,
+# 조건 2056줄/170잡) 인라인은 소수 변형(요약문 4줄/2잡, 조건 16줄/14잡)이라
+# **인라인을 단독 줄로 정규화**하면 다수 경로에 그대로 합류한다.
+_RE_S3_INLINE_SUM = re.compile(
+    r'^\s*(?P<marker>[<＜〈《\[]\s*요\s*약\s*문?\s*[>＞〉》\]])'
+    r'\s*(?P<rest>\S.*)$')
+# 괄호 없는 맨 '조건'. 공백 **2칸 이상**일 때만 — 한 칸까지 허용하면
+# '조건 반사는 …' 같은 평범한 문장을 쪼갠다 (원고 관행은 탭/여러 칸).
+_RE_S3_INLINE_BARE_COND = re.compile(
+    r'^\s*(?P<marker>조\s?건)\s{2,}(?P<rest>\S.*)$')
+
+
+# W90 — 요약문 본문의 (A)/(B) 빈칸. 코퍼스 실측: 요약문 본문 434줄 중
+# 431줄이 원고에 이미 밑줄을 갖고 있다(`(A)__________`, 힌트 첨자형
+# `(A)h________` 포함) — **원고에 있는 것이 표준**이라 엔진은 빠진 것만
+# 채운다. 성덕2 EBS 외부지문 원고가 맨 `(A)`로 와서 빈칸으로 안 보였다.
+_RE_S3_SUM_MARK = re.compile(
+    r'^\s*[<＜〈《\[]\s*요\s*약\s*문?\s*[>＞〉》\]]\s*$')
+# 이미 빈칸인 표기는 무접촉 — (A) 뒤 짧은 힌트 글자까지 허용해서 본다.
+_RE_S3_SUM_SLOT = re.compile(r'\((A|B)\)(?!\s*[A-Za-z]?\s*_{3,})')
+_S3_SUM_BLANK = "_" * 10
+
+
+def _fill_step3_summary_blanks(paras, log=None):
+    """요약문 마커 바로 뒤 본문의 (A)/(B)를 빈칸 표기로 채운다."""
+    filled = 0
+    for i, p in enumerate(paras):
+        if i == 0 or not _RE_S3_SUM_MARK.match(_s3_text(paras[i - 1]) or ""):
+            continue
+        t = _s3_text(p)
+        if not t or not _RE_S3_SUM_SLOT.search(t):
+            continue
+        rep = lambda m: "(%s)%s" % (m.group(1), _S3_SUM_BLANK)
+        new_t = _RE_S3_SUM_SLOT.sub(rep, t)
+        runs = p.get("runs") if isinstance(p, dict) else None
+        new_runs = None
+        if runs:
+            cand = [dict(r, t=_RE_S3_SUM_SLOT.sub(rep, r.get("t") or ""))
+                    for r in runs]
+            if "".join(r["t"] for r in cand) == new_t:
+                new_runs = cand          # 런 경계를 안 넘은 경우만 서식 보존
+        p["text"] = new_t
+        p["runs"] = new_runs or [{"t": new_t, "ul": False}]
+        filled += 1
+    if filled and callable(log):
+        log(f"[파서] step3 요약문 (A)/(B) 빈칸 표기 보완: {filled}줄")
+    return paras
 
 
 def _split_step3_inline_cond_marker(paras, log=None):
-    """'＜조건＞ 조건 문구' 한 줄 → '＜조건＞' + '조건 문구' 두 줄로 분리."""
+    """'＜조건＞ 조건 문구' 한 줄 → '＜조건＞' + '조건 문구' 두 줄로 분리.
+
+    W90: 요약문('<요약문> 본문…')과 괄호 없는 맨 '조건'도 같은 처리.
+    항목 불릿(·/-)은 원고가 가진 것이므로 **주입하지 않는다** (코퍼스
+    확인: 조건 항목의 불릿은 전부 원고 표기).
+    """
     out = []
     split_n = 0
     for p in paras:
         t = _s3_text(p)
-        m = _RE_S3_INLINE_COND.match(t) if t else None
+        m = bare = None
+        if t:
+            m = (_RE_S3_INLINE_COND.match(t) or _RE_S3_INLINE_SUM.match(t))
+            if not m:
+                bare = _RE_S3_INLINE_BARE_COND.match(t)
+                m = bare
         if not m:
             out.append(p)
             continue
@@ -1886,13 +1948,19 @@ def _split_step3_inline_cond_marker(paras, log=None):
         mi = t.index(marker)
         ri = t.index(rest, mi + len(marker))
         runs = p.get('runs') if isinstance(p, dict) else None
-        out.append({"text": marker,
-                   "runs": _slice_runs(runs, t, mi, mi + len(marker))})
+        if bare:
+            # 맨 '조건'은 꺾쇠 표기로 통일 — 엔진 표준형(_S3_GREPS 가
+            # '[조건]'도 '<조건>'으로 맞춘다)이자 완성본 관행이다.
+            out.append({"text": "<조건>",
+                        "runs": [{"t": "<조건>", "ul": False}]})
+        else:
+            out.append({"text": marker,
+                        "runs": _slice_runs(runs, t, mi, mi + len(marker))})
         out.append({"text": rest,
                    "runs": _slice_runs(runs, t, ri, ri + len(rest))})
         split_n += 1
     if split_n and callable(log):
-        log(f"[파서] step3 인라인 ＜조건＞ 마커 분리: {split_n}줄")
+        log(f"[파서] step3 인라인 마커 분리(조건/요약문): {split_n}줄")
     return out
 
 
@@ -2061,6 +2129,7 @@ def _normalize_step3_manuscript(paras, item_num=None, log=None):
     paras = _strip_step3_generated_item_meta(paras, log)
     paras = _strip_step3_practice_set_header(paras, log)
     paras = _split_step3_inline_cond_marker(paras, log)
+    paras = _fill_step3_summary_blanks(paras, log)
     paras = _strip_step3_variant_type_tag(paras, item_num, log)
     paras = _strip_step3_section_markers(paras, log)
     paras = _strip_step3_own_item_number_tag(paras, item_num, log)
