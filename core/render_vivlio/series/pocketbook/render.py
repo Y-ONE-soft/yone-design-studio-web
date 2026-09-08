@@ -714,8 +714,10 @@ def right_page(p, M, folio, category=""):
     for cx in (st[0], st[0] + st[2]):
         parts.append('<div class="syndot" style="%s"></div>'
                      % _box(cx - dot / 2.0, sp[1] - dot / 2.0))
+    # ⚠ 카드가 9장이 안 되면 **빈 상자를 그리지 않는다**. 색면만 남으면 덜 만든
+    #   것처럼 보인다(기존 포켓북에서 온 지문은 6장짜리도 있다).
     cards = (p.get("synonyms") or [])[:9]
-    for i in range(9):
+    for i in range(len(cards)):
         col, row = i % 3, i // 3
         x = cd[0] + col * M["card_gap_x"]
         y = cd[1] + row * M["card_gap_y"]
