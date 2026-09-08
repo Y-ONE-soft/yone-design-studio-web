@@ -193,7 +193,7 @@ class WorkbookV2Engine(BaseEngine):
         grade = self._read_meta(job_dir, "grade", 1)
         year = self._read_meta(job_dir, "year", 25)
         month = self._read_meta(job_dir, "month", 10)
-        cfg = _load_v1_config()
+        cfg = self._parse_config(_load_v1_config(), log)
 
         log(f"[v2 파서] 시작 (v1 파서 재사용): 고{grade} {year}년 {month}월")
         # W77 (사용자 지시 2026-08-27): 원고 본문 그림(도표/그래프) 추출.
@@ -278,6 +278,17 @@ class WorkbookV2Engine(BaseEngine):
     def _load_cfg(self):
         """엔진 config 로드 — 파생 엔진(교과서/EBS/수능특강)이 오버라이드."""
         return _load_v1_config()
+
+    def _parse_config(self, cfg, log):
+        """파싱에 쓸 config — 파생 엔진이 조정할 수 있는 훅 (기본 무변경).
+
+        parse()는 종전부터 _load_v1_config()(모의고사 config)를 직접 써
+        왔고 _load_cfg 훅을 타지 않는다. 그 규칙 자체는 유지하되(파생
+        엔진의 파싱 동작을 통째로 바꾸면 회귀 범위가 너무 넓다), 계열별로
+        분명히 틀린 항목만 이 훅에서 좁게 고칠 수 있게 한다.
+        부교재(workbook_supp_v2)가 mockexam.short_questions를 비우는 것이
+        첫 사용처 — 2026-09-08 사용자 실증."""
+        return cfg
 
     def _workbook_type(self, job_dir):
         """원고 유형 — 기본은 v1 워크북 메타 규칙. 파생 엔진은 고정값."""

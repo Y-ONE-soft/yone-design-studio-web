@@ -8,25 +8,62 @@ const materialId = (document.currentScript && document.currentScript.dataset.mat
 
 // 슬롯별 누적 파일 저장소 (브라우저가 input.files를 매번 교체하므로 별도 보관)
 const _fileStore = {};
+// 슬롯별 상대경로 저장소 — store.files와 같은 순서. 폴더를 통째로 끌어놓으면
+// 'EBS 20지문/6~10/워크북/Step1 A1 어휘선택.docx' 처럼 폴더 경로가 남는다.
+// 원고가 여러 폴더로 나뉜 교재(부교재 워크북)에서 폴더 = 원고 한 세트다.
+const _relStore = {};
 
 function _getStore(key) {
   if (!_fileStore[key]) _fileStore[key] = new DataTransfer();
+  if (!_relStore[key]) _relStore[key] = [];
   return _fileStore[key];
 }
 
-function _addFiles(key, fileList) {
+function _addFiles(key, fileList, relPaths) {
   const store = _getStore(key);
+  const rels = _relStore[key];
   const existing = new Set();
   for (let i = 0; i < store.files.length; i++) {
-    existing.add(store.files[i].name + '|' + store.files[i].size);
+    existing.add((rels[i] || '') + '|' + store.files[i].name + '|' + store.files[i].size);
   }
   for (let i = 0; i < fileList.length; i++) {
-    const id = fileList[i].name + '|' + fileList[i].size;
+    const rel = (relPaths && relPaths[i]) || fileList[i].webkitRelativePath || '';
+    const id = rel + '|' + fileList[i].name + '|' + fileList[i].size;
     if (!existing.has(id)) {
       store.items.add(fileList[i]);
+      rels.push(rel);
       existing.add(id);
     }
   }
+}
+
+// 드롭된 항목(파일/폴더)을 재귀 순회해 {file, rel} 목록으로 편다.
+function _readEntry(entry, prefix) {
+  return new Promise((resolve) => {
+    if (!entry) { resolve([]); return; }
+    if (entry.isFile) {
+      entry.file(
+        (f) => resolve([{ file: f, rel: prefix + entry.name }]),
+        () => resolve([])
+      );
+      return;
+    }
+    if (!entry.isDirectory) { resolve([]); return; }
+    const reader = entry.createReader();
+    const all = [];
+    const readBatch = () => {
+      reader.readEntries((entries) => {
+        if (!entries.length) {
+          Promise.all(all.map((e) => _readEntry(e, prefix + entry.name + '/')))
+            .then((lists) => resolve([].concat.apply([], lists)));
+          return;
+        }
+        for (let i = 0; i < entries.length; i++) all.push(entries[i]);
+        readBatch();          // readEntries는 한 번에 일부만 준다 — 소진까지 반복
+      }, () => resolve([]));
+    };
+    readBatch();
+  });
 }
 
 function _syncInput(key) {
@@ -40,12 +77,16 @@ function _syncInput(key) {
     if (store.files.length === 0) {
       listEl.innerHTML = '';
     } else {
-      listEl.innerHTML = Array.from(store.files).map((f, i) =>
-        `<div class="file-list-item">
-          <span class="file-list-name">${f.name}</span>
+      const rels = _relStore[key] || [];
+      listEl.innerHTML = Array.from(store.files).map((f, i) => {
+        const rel = rels[i] || '';
+        const dir = rel.indexOf('/') >= 0
+          ? rel.slice(0, rel.lastIndexOf('/')) + '/' : '';
+        return `<div class="file-list-item">
+          <span class="file-list-name">${dir ? `<span style="opacity:.55">${dir}</span>` : ''}${f.name}</span>
           <button type="button" class="file-list-del" onclick="removeFile('${key}', ${i})" title="삭제">✕</button>
-        </div>`
-      ).join('');
+        </div>`;
+      }).join('');
     }
   }
 
@@ -63,9 +104,14 @@ function _syncInput(key) {
 function removeFile(key, idx) {
   const store = _getStore(key);
   const files = Array.from(store.files);
+  const rels = _relStore[key] || [];
   const newDt = new DataTransfer();
-  files.forEach((f, i) => { if (i !== idx) newDt.items.add(f); });
+  const newRels = [];
+  files.forEach((f, i) => {
+    if (i !== idx) { newDt.items.add(f); newRels.push(rels[i] || ''); }
+  });
   _fileStore[key] = newDt;
+  _relStore[key] = newRels;
   _syncInput(key);
 }
 
@@ -82,8 +128,29 @@ function handleFileSelect(input, key) {
 function handleDrop(event, key) {
   event.preventDefault();
   const dropped = event.dataTransfer.files;
-  if (!dropped.length) return;
   const input = document.getElementById(`input-${key}`);
+
+  // 폴더 드롭 — DataTransferItem.webkitGetAsEntry()로 재귀 수집.
+  // (dataTransfer.files 는 폴더를 0바이트 항목으로만 준다)
+  const items = event.dataTransfer.items;
+  if (input.multiple && items && items.length) {
+    const entries = [];
+    for (let i = 0; i < items.length; i++) {
+      const en = items[i].webkitGetAsEntry && items[i].webkitGetAsEntry();
+      if (en) entries.push(en);
+    }
+    if (entries.some((en) => en.isDirectory)) {
+      Promise.all(entries.map((en) => _readEntry(en, ''))).then((lists) => {
+        const flat = [].concat.apply([], lists);
+        if (!flat.length) return;
+        _addFiles(key, flat.map((x) => x.file), flat.map((x) => x.rel));
+        _syncInput(key);
+      });
+      return;
+    }
+  }
+
+  if (!dropped.length) return;
   if (input.multiple) {
     _addFiles(key, dropped);
     _syncInput(key);
@@ -146,6 +213,15 @@ document.getElementById('typeset-form').addEventListener('submit', async (e) => 
 
   const form = e.target;
   const formData = new FormData(form);
+  // 폴더째 업로드한 슬롯은 상대경로를 함께 보낸다 (input.files 순서와 1:1).
+  // 서버가 이걸로 '폴더 = 원고 한 세트'를 복원한다 — 파일명만 보내면
+  // 여러 폴더의 같은 이름 원고가 서로 덮어써져 침묵 유실된다.
+  Object.keys(_relStore).forEach((k) => {
+    const rels = _relStore[k] || [];
+    if (rels.some((r) => r && r.indexOf('/') >= 0)) {
+      formData.append(k + '_relpaths', JSON.stringify(rels));
+    }
+  });
   const runBtn = document.getElementById('run-btn');
 
   runBtn.disabled = true;

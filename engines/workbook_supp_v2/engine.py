@@ -109,6 +109,34 @@ class WorkbookSuppV2Engine(WorkbookV2Engine):
         }]
         return spec
 
+    def _parse_config(self, cfg, log):
+        """부교재 파싱 config — 모의고사 '짤지문' 문항번호 필터를 끈다.
+
+        v1 파서의 _filter_short_questions 는 config.json 의
+        mockexam.short_questions(18,19,25~28,43~45)에 해당하는 **지문번호**를
+        통째로 버린다. 모의고사 워크북에서는 그 번호가 실제 짤지문(목적/
+        심경/도표/실용문)이라 맞지만, 부교재의 지문번호는 모의고사 문항번호가
+        아니다 — 강 안의 일련번호이거나 외부지문 번호다.
+
+        2026-09-08 실증(job 29446802, 성덕2 EBS 연계 외부지문): 16~20번 원고
+        5지문 중 18·19번이 조용히 사라지고 16·17·20번만 조판됐다. 로그에는
+        '지문 3개'만 남아 침묵 유실이었다.
+
+        코퍼스 확인: 이 필터가 실제로 지문을 지운 부교재 잡은 위 1건뿐이라
+        (지문번호 구간 안에서 짤지문 번호만 빠진 서명으로 전수 검사) 기존
+        부교재 조판 결과는 바뀌지 않는다. 모의고사 본가(workbook_v2)는
+        이 훅을 오버라이드하지 않으므로 무변경 — 거기서는 25~28 제외가
+        올바른 동작이다(job a153f1d4 확인).
+        """
+        mock = dict(cfg.get("mockexam") or {})
+        if mock.get("short_questions"):
+            cfg = dict(cfg)
+            mock["short_questions"] = []
+            cfg["mockexam"] = mock
+            log("[부교재] 모의고사 짤지문 번호 필터 비활성 "
+                "(부교재 지문번호는 모의고사 문항번호가 아님)")
+        return cfg
+
     # ── W11 훅: 스토리 매핑 + 완제품 후처리 op ──────────────────────────────
 
     def _template_token(self):
