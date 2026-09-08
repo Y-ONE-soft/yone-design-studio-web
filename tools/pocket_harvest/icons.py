@@ -94,8 +94,12 @@ def group_svg(z, group, sw, base=(0.0, 0.0), fallback="#000000"):
             fill = _rgb(sw.get(ch.get("FillColor")), fallback)
             stroke = _rgb(sw.get(ch.get("StrokeColor")), None) \
                 if ch.get("StrokeColor") else None
-            for d in _paths(ch, x, y):
-                parts.append((fill, d, stroke))
+            # ⚠ 한 도형의 **여러 하위 패스는 한 `<path>` 로 합쳐야** 한다.
+            #   따로 그리면 `evenodd` 가 못 먹혀 구멍이 메워진다 — 펼친 책
+            #   아이콘이 남색 덩어리로 나왔다(어휘 머리말 실측).
+            ds = _paths(ch, x, y)
+            if ds:
+                parts.append((fill, " ".join(ds), stroke))
 
     walk(group, base[0], base[1])
     xs, ys = [], []

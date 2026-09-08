@@ -402,8 +402,9 @@ def voca_page(pg, M, folio, side="l"):
                if e.get("ipa") else "", "".join(r)))
     # 머리말 딱지는 **왼쪽 면에만** 있다(완성본 실측: 오른쪽 면은 꼬리말 `VOCA`).
     # 머리말 딱지는 **왼쪽 면에만** 있다(완성본 실측: 오른쪽 면은 꼬리말 `VOCA`).
-    head = ('<div class="vhead" style="%s">%s%s</div>'
-            % (_box(x, hd[1], hd[2], hd[3]), _svg("chip_voca"),
+    # 딱지 폭은 **글에 맞춰 늘어난다** — 못 박으면 `Unit 15` 가 두 줄로 접힌다.
+    head = ('<div class="vhead" style="left:%gmm;top:%gmm;height:%gmm">%s%s</div>'
+            % (x, hd[1], hd[3], _svg("chip_voca"),
                ESC(pg["day"]))) if side == "l" else ""
     body = ('<div class="voca" style="%s">%s</div>'
             % (_box(x, v[1], v[2], v[3]), "".join(ents)))

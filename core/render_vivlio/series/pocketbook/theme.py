@@ -17,7 +17,7 @@ PALETTE = {
     "band_lesson": "#92C3D4",   # 교과서 — 하늘
     "band_unit":   "#D5CBE3",   # 부교재(올림포스·수특·리딩파워) — 연보라
     "band_mock":   "#EAE6DC",   # 모의고사 — 베이지
-    "band_voca":   "#F2DCC9",   # 어휘 파트 — 살구
+    "band_voca":   "#CAC1DB",   # 어휘 파트 — 연보라(완성본 124면 실측)
     "navy":      "#54669E",   # 지문번호 배지 · 쪽번호
     "chip":      "#869CD0",   # PICTURE / TRANSLATION 칩
     "ink":       "#231F20",   # 본문
@@ -473,9 +473,9 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
    글은 학교안심 운동장(PBHand) 8pt 남색이다. 네모 딱지에 본문 글꼴로 두면
    완성본과 아예 다른 물건이 된다(사용자 지적). */
 .vhead{position:absolute;background:var(--voca-chip);color:var(--navy);
-  font-family:PBHand;font-size:__voca_head__pt;display:flex;
+  font-family:PBHand;font-size:__voca_head__pt;display:inline-flex;
   align-items:center;gap:1.2mm;padding:0 2.4mm;box-sizing:border-box;
-  border-radius:1.5mm;letter-spacing:-.025em}
+  border-radius:1.5mm;letter-spacing:-.025em;white-space:nowrap;width:auto}
 .vhead svg{height:__voca_icon__mm;width:auto;flex:none}
 
 .topicband{position:absolute;background:var(--topic-bg);box-sizing:border-box;
