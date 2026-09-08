@@ -349,7 +349,7 @@ def _letters(t):
     return "".join(c for c in (t or "").lower() if c.isalpha())
 
 
-def _fill_from_pocketbook(rows, cfg, opt, log):
+def _fill_from_pocketbook(rows, cfg, opt, log, own=(), fill=()):
     """오른쪽 면을 **기존 포켓북에서** 가져온다 — 있으면 그것이 정본이다.
 
     같은 지문이 지난 학기 포켓북에 이미 있으면 플로우노트·주제·요약문·동반의어가
@@ -389,12 +389,20 @@ def _fill_from_pocketbook(rows, cfg, opt, log):
             continue
         row["_from_book"] = got.get("key") or ""
         hit = False
+        # `own` 은 **기존 포켓북이 정본**인 자리 — 덮어쓴다(동반의어가 그렇다.
+        # 교재팀이 고른 낱말이 정본이므로 우리가 지은 것으로 덮으면 안 된다).
+        # `fill` 은 **빈 곳만** 채우는 자리.
         # ⚠ `summary` 는 **영어**다(완성본이 영어 요약을 따로 들고 있다).
-        #   포켓북 요약문은 한글이므로 가져오지 않는다 — 가져오면 영어가 찍힌다.
-        for a, b in (("flownote", "flownote"), ("topic", "topic_ko"),
-                     ("synonyms", "synonyms")):
-            if got.get(b) and not row.get(a):
-                row[a] = got[b]
+        #   포켓북 요약문은 한글이므로 가져오지 않는다.
+        _MAP = {"flownote": "flownote", "topic": "topic_ko",
+                "synonyms": "synonyms"}
+        for a in own:
+            if got.get(_MAP[a]):
+                row[a] = got[_MAP[a]]
+                hit = True
+        for a in fill:
+            if got.get(_MAP[a]) and not row.get(a):
+                row[a] = got[_MAP[a]]
                 hit = True
         n += hit
     if n:
@@ -660,13 +668,17 @@ class PocketbookSeries(Series):
         _korean_topic(rows, log)
         # ⚠ 저술물 이름에는 단원이 들어간다. 단원은 `_fill_units` 가 채우므로
         #   **그 뒤에** 얹어야 이름이 맞는다(먼저 부르면 16지문이 조용히 빈다).
+        # 동반의어는 **기존 포켓북 것이 정본**이다 — 우리가 쓴 것보다 먼저 얹는다.
+        _fill_from_pocketbook(rows, cfg, opt, log, own=("synonyms",))
         rows = _order_by_kind(rows, log)   # 갈래를 먼저 정하고
         _fill_units(rows, scope, log)      # 그 위에 단원 이름을 얹는다
         # ⚠ **정리한 것이 먼저**다. 기존 포켓북 글을 그대로 얹으면 우리가 꼴을
         #   맞춰 둔 플로우노트가 옛 모양으로 되돌아간다(내용은 같고 꼴만 다르다).
         #   기존 포켓북은 아직 손대지 않은 자리를 채우는 데 쓴다.
         self._apply_authored(cfg, rows, log)
-        _fill_from_pocketbook(rows, cfg, opt, log)
+        # 우리가 아직 안 쓴 자리는 기존 포켓북에서 채운다
+        _fill_from_pocketbook(rows, cfg, opt, log,
+                              fill=("flownote", "topic"))
         rows = self._apply_memtest(cfg, opt, rows, log)
         out = os.path.join(cfg.build_dir, "data.json")
         os.makedirs(cfg.build_dir, exist_ok=True)
