@@ -176,7 +176,7 @@ def number(entries):
     return entries
 
 
-def pages(entries, box_h=175.0, width_mm=114.8):
+def pages(entries, box_h=181.0, width_mm=114.8):
     """낱말 목록 → 면 목록.
 
     ⚠ **면당 개수를 정해 놓으면 안 된다.** 낱말마다 뜻 길이도, 예문 수도(하나
@@ -188,21 +188,14 @@ def pages(entries, box_h=175.0, width_mm=114.8):
     """
     out = []
     for day, group in _by_day(entries):
-        hs = [height_mm(e, width_mm) for e in group]
-        tot = sum(hs)
-        # ⚠ 여유(92%)를 두면 면이 40% 씩 빈 채로 나간다. 높이를 **실측**하므로
-        #   상자 그대로 잡고, 넘침은 아래 `over` 가 막는다.
-        n = max(1, int(tot // box_h) + (1 if tot % box_h else 0))
-        # ⚠ 꽉 채우고 남은 것을 뒷면에 밀면 **낱말 한두 개짜리 면**이 생긴다.
-        #   DAY 가 쓸 면 수를 먼저 정하고 그만큼으로 **고르게** 나눈다.
-        target = tot / n
-        cur, used, made = [], 0.0, 0
-        for e, h in zip(group, hs):
-            over = used + h > box_h                    # 상자를 넘는다
-            fair = used >= target - h / 2 and made < n - 1   # 제 몫을 채웠다
-            if cur and (over or fair):
+        # ⚠ 고르게 나누면(총높이÷면수) 면마다 55mm 씩 비어 **실수처럼 보인다**.
+        #   완성본은 면을 **꽉 채우고**(끝 180~194mm) 단원의 마지막 면만 짧게
+        #   둔다(실측: 136면 50mm). 그대로 채운다.
+        cur, used = [], 0.0
+        for e in group:
+            h = height_mm(e, width_mm)
+            if cur and used + h > box_h:
                 out.append({"day": day, "items": cur})
-                made += 1
                 cur, used = [], 0.0
             cur.append(e)
             used += h

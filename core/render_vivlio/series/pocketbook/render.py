@@ -376,8 +376,9 @@ def voca_page(pg, M, folio, side="l"):
             % (e.get("seq") or e["no"], ck, ESC(e["word"]),
                ('<span class="ipa">%s</span>' % ESC(e["ipa"]))
                if e.get("ipa") else "", "".join(r)))
+    # 머리말 딱지는 **왼쪽 면에만** 있다(완성본 실측: 오른쪽 면은 꼬리말 `VOCA`).
     head = ('<div class="vhead" style="%s">%s</div>'
-            % (_box(x, hd[1], hd[2], hd[3]), ESC(pg["day"])))
+            % (_box(x, hd[1], hd[2], hd[3]), ESC(pg["day"]))) if side == "l" else ""
     body = ('<div class="voca" style="%s">%s</div>'
             % (_box(x, v[1], v[2], v[3]), "".join(ents)))
     if side == "l":
