@@ -33,13 +33,19 @@ def key_of(text):
     return hashlib.sha1(s.encode()).hexdigest()[:16] if len(s) >= 200 else ""
 
 
+DEFAULT = "${STUDIO}/조판/교재/포켓북/_store"
+# ⚠ `cfg` 없이 부를 때가 있다(주석 회수 같은 딸림 연장). 빈 문자열을 돌려
+#   주면 조용히 아무 데도 안 쓴다 — 실제로 그랬다. 기본 자리를 못 박는다.
+_HOME = os.path.expanduser(
+    "~/Documents/작업/Y.ONE STUDIO/조판/교재/포켓북/_store")
+
+
 def root(cfg=None, opt=None):
     p = (opt or {}).get("store") if opt else None
-    p = (cfg.resolve(p or "${STUDIO}/조판/교재/포켓북/_store")
-         if cfg else p or "")
+    p = cfg.resolve(p or DEFAULT) if cfg else (p or _HOME)
     if isinstance(p, (list, tuple)):
         p = p[0] if p else ""
-    return p
+    return p or _HOME
 
 
 FIELDS = ("flownote", "topic", "summary", "synonyms")
