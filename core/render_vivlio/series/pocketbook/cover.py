@@ -94,7 +94,9 @@ def css(M):
                 bar_y="%gmm" % (bl + 24.0),
                 bar_h="8.5mm",
                 logo_y="%gmm" % (bl + 12.0),
-                cred_y="%gmm" % (bl + 96.0),
+                # 명단이 다섯 갈래(20명)라 두 단으로 세 줄이 된다 —
+                # 96mm 에서 시작하면 마지막 줄이 아래 띠에 닿았다.
+                cred_y="%gmm" % (bl + 82.0),
                 cred_gap="9mm", cred_row="7mm",
                 cred_col="34mm",
                 **INK)
