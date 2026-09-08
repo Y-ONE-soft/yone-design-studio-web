@@ -201,7 +201,33 @@ def pages(entries, box_h=181.0, width_mm=114.8):
             used += h
         if cur:
             out.append({"day": day, "items": cur})
+        _even_tail(out, box_h, width_mm)
     return out
+
+
+def _even_tail(out, box_h, width_mm):
+    """단원 마지막 면이 **너무 얇으면** 앞 면과 둘로 고르게 나눈다.
+
+    완성본도 단원 끝은 짧다(실측 50mm). 그래도 낱말 하나만 덩그러니 남으면
+    빠뜨린 것처럼 보인다 — 앞 면과 합쳐 반씩 가른다.
+    """
+    if len(out) < 2:
+        return
+    last, prev = out[-1], out[-2]
+    if last["day"] != prev["day"]:
+        return
+    hs = [height_mm(e, width_mm) for e in last["items"]]
+    if sum(hs) > box_h * 0.25:
+        return
+    both = prev["items"] + last["items"]
+    hh = [height_mm(e, width_mm) for e in both]
+    half, cur, used = sum(hh) / 2.0, [], 0.0
+    for e, h in zip(both, hh):
+        if cur and used + h / 2 > half:
+            break
+        cur.append(e)
+        used += h
+    prev["items"], last["items"] = cur, both[len(cur):]
 
 
 def _by_day(entries):
