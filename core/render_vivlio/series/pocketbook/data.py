@@ -253,6 +253,9 @@ def prepare(items, build_dir, illust_dirs=(), category="", grade=""):
             # 오른쪽 면 꼬리말은 단원 이름이다(`모의고사`·`교과서 4과`).
             # 코퍼스가 `unit` 으로 들고 있으므로 config 기본값보다 먼저 본다.
             "category": last_cat,
+            # ⚠ 여기서 항목을 **새로 만들기** 때문에 적어 두지 않은 열쇠는
+            #   조용히 사라진다. 배지 표시 지시가 그렇게 한 번 사라졌다.
+            "_badge_raw": bool(p.get("_badge_raw")),
             "passage_runs": _flatten(p.get("passage")),
             "translation": _plain(p.get("translation")),
             "flownote": p.get("flownote") or [],
