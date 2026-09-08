@@ -197,6 +197,50 @@ def _fill_units(rows, scope, log):
             n += 1
     if n:
         log("■ 꼬리말 단원 %d지문 채움" % n)
+    _name_units(rows, scope, name, log)
+
+
+# `1강` 처럼 **교재 이름이 없는** 단원 표기
+_RE_BARE_UNIT = re.compile(r"^\s*(?:\d{1,2}\s*(?:강|과)|Unit\s*\d{1,2})\s*$",
+                           re.I)
+# 라벨에서 교재 이름을 떼는 자리 — `능률(민) SL2 본문1` → `능률(민) SL2`
+_RE_TB_LABEL = re.compile(r"^(.*?)\s*(본문\s*\d+|RC\s*\d+|FR|DL|추가)\s*$")
+
+
+def _name_units(rows, scope, name, log):
+    """**무슨** 1강인지 적는다.
+
+    `1강 01` 만으로는 올림포스인지 수특인지 알 수 없다(사용자 지적). 분석본은
+    교재 이름을 묶음 **첫 지문에만** 적어서 뒤 지문은 `1강 01` 로만 온다.
+    두 갈래로 채운다:
+
+      · 강 계열 — 시험범위가 이름을 안다(`올림포스 1강`). 그걸 쓴다.
+      · 교과서 — 범위에 과 번호가 없어 범위로는 못 푼다. 앞 지문의 라벨에서
+        교재 이름을 떼어 **같은 갈래 안에서만** 이어받는다(`능률(민) SL2`).
+        갈래를 안 가르면 사이에 낀 `3강 03` 때문에 `본문3` 이 올림포스가 된다.
+    """
+    tb_book, n = "", 0
+    for r in rows:
+        if r.get("kind") == "memtest":
+            continue
+        u = str(r.get("unit") or "")
+        if scope and name and _RE_BARE_UNIT.match(u):
+            t = pscope.match(r, scope)
+            if t is not None and t[0] != "mock" and name(t) != u:
+                r["unit"] = name(t)
+                n += 1
+                continue
+        m = _RE_TB_LABEL.match(str(r.get("label") or ""))
+        if not m:
+            continue
+        head = m.group(1).strip()
+        if head:                      # 이 지문이 교재 이름을 들고 있다
+            tb_book = head
+        elif tb_book and not u:       # 뒤따르는 `본문2` — 앞의 교재를 이어받는다
+            r["unit"] = tb_book
+            n += 1
+    if n:
+        log("■ 단원에 교재 이름 %d지문 채움" % n)
 
 
 def _korean_topic(rows, log):

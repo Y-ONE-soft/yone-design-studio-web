@@ -478,13 +478,25 @@ def flow_col_mm(M):
 _BOOK_SHORT = {"수능특강": "수특"}
 
 
+_RE_UNIT_TAIL = re.compile(r"\s*(?:\d{1,2}\s*(?:강|과)|Unit\s*\d{1,2})\s*$", re.I)
+
+
 def _badge_text(p):
+    """배지 글 — `올림포스 1강 01` · `능률(민) SL2 본문2`.
+
+    라벨이 `1강 01` 이면 **무슨 1강인지** 안 보인다(사용자 지적). 단원에서
+    교재 이름을 떼어 앞에 붙인다. 라벨이 이미 강·과 번호를 들고 있으면
+    단원의 번호는 빼고 **교재 이름만** 붙인다 — 안 그러면 `올림포스 1강 1강 01`.
+    """
     tag = str(p.get("no") or p.get("label") or "")
-    unit = str(p.get("category") or p.get("unit") or "")
-    head = unit.split()[0] if unit.split() else ""
-    if not tag or head in ("", "교과서", "모의고사") or head in tag:
+    unit = str(p.get("category") or p.get("unit") or "").strip()
+    if not tag or not unit or unit in ("교과서", "모의고사"):
         return tag
-    return "%s %s" % (_BOOK_SHORT.get(head, head), tag)
+    head = _RE_UNIT_TAIL.sub("", unit).strip() or unit
+    head = _BOOK_SHORT.get(head, head)
+    if not head or head in tag:
+        return tag
+    return "%s %s" % (head, tag)
 
 
 def _badge_fit(tag, M):
