@@ -478,6 +478,7 @@ def flow_col_mm(M):
 _BOOK_SHORT = {"수능특강": "수특"}
 
 
+_RE_TAG_NO = re.compile(r"\d{1,2}\s*(?:강|과)|Unit\s*\d{1,2}", re.I)
 _RE_UNIT_TAIL = re.compile(r"\s*(?:\d{1,2}\s*(?:강|과)|Unit\s*\d{1,2})\s*$", re.I)
 
 
@@ -492,7 +493,10 @@ def _badge_text(p):
     unit = str(p.get("category") or p.get("unit") or "").strip()
     if not tag or not unit or unit in ("교과서", "모의고사"):
         return tag
-    head = _RE_UNIT_TAIL.sub("", unit).strip() or unit
+    # 라벨이 강·과 번호를 들고 있을 때만 단원의 번호를 뗀다. `서술형 Practice`
+    # 처럼 번호가 없는 라벨에서 떼면 **몇 강인지가 사라진다**.
+    head = (_RE_UNIT_TAIL.sub("", unit).strip() or unit) \
+        if _RE_TAG_NO.search(tag) else unit
     head = _BOOK_SHORT.get(head, head)
     if not head or head in tag:
         return tag
