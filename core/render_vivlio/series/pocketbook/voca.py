@@ -176,7 +176,7 @@ def number(entries):
     return entries
 
 
-def pages(entries, box_h=181.0, width_mm=114.8):
+def pages(entries, box_h=178.0, width_mm=114.8):
     """낱말 목록 → 면 목록.
 
     ⚠ **면당 개수를 정해 놓으면 안 된다.** 낱말마다 뜻 길이도, 예문 수도(하나
