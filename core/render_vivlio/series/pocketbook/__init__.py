@@ -2094,7 +2094,7 @@ def _mark_new(pdf, rows, voca_pages, spec, log):
         note.set_info(title="신규")
         note.update()
         # 화면에서 한눈에 보이도록 오른쪽 면 가장자리에 띠 하나(주석이라 인쇄 X)
-        band = page.add_square_annot(fitz.Rect(w - 12, 0, w - 6, h))
+        band = page.add_rect_annot(fitz.Rect(w - 12, 0, w - 6, h))
         band.set_colors(stroke=_NEW_RGB, fill=_NEW_RGB)
         band.set_opacity(0.55)
         band.set_info(title="신규", content="신규 작업분")

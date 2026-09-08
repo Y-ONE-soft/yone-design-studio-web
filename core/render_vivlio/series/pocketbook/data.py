@@ -369,6 +369,8 @@ def prepare(items, build_dir, illust_dirs=(), category="", grade=""):
             # ⚠ 여기서 항목을 **새로 만들기** 때문에 적어 두지 않은 열쇠는
             #   조용히 사라진다. 배지 표시 지시가 그렇게 한 번 사라졌다.
             "_badge_raw": bool(p.get("_badge_raw")),
+            # 기존 포켓북에서 온 지문인가 — 신규 검수 표시가 이걸 본다
+            "_from_book": p.get("_from_book") or "",
             "passage_runs": _flatten(p.get("passage")),
             "translation": _plain(p.get("translation")),
             "flownote": p.get("flownote") or [],
