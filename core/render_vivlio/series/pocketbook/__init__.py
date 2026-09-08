@@ -1327,17 +1327,20 @@ class PocketbookSeries(Series):
                     '.badge,.folio{display:none}</style>'
                     '</head><body>%s</body></html>'
                     % (M["page_w"] + 2 * M["bleed"], "".join(pages)))
-        top = M["voca"][1]
+        pdf = os.path.join(build_dir, "_measure_voca.pdf")
         try:
-            h = measure.measure(path,
-                                os.path.join(build_dir, "_measure_voca.pdf"),
-                                [str(i) for i in range(len(items))], top,
-                                390.0, log=log)
+            cli.run_build(path, pdf, log=log, final=False)
+            hs = _ink_spans(pdf)
         except Exception as e:
             log("[어휘] 높이를 못 쟀다 (%s) — 어림으로 간다" % str(e)[:60])
             return pgs
-        for i, e in enumerate(items):
-            e["_h"] = h.get(str(i), 0.0) + pvoca._GAP
+        if len(hs) != len(items):
+            log("[어휘] 잰 면 %d ≠ 낱말 %d — 어림으로 간다" % (len(hs), len(items)))
+            return pgs
+        # ⚠ 상자 위에서 재면 **첫 줄 위 여백이 낱말마다 한 번씩 더해진다**
+        #   (270낱말 × 3.5mm ≈ 다섯 면). 잉크의 위·아래를 직접 재야 한다.
+        for e, h in zip(items, hs):
+            e["_h"] = h + pvoca._GAP
         out = pvoca.pages(items, M["voca"][3])
         log("■ 어휘 %d낱말 실측 → %d면 (낱말 높이 %.1f~%.1fmm)"
             % (len(items), len(out),
@@ -1892,4 +1895,17 @@ def _ruby_edges(pdf, bleed):
                         x1 = sp["bbox"][2] * PT - bleed
                         if x1 > got.get(k, -1e9):
                             got[k] = x1
+    return out
+
+
+def _ink_spans(pdf):
+    """측정용 PDF → 면마다 [잉크 아래 − 잉크 위] mm."""
+    from core.render_vivlio import probe
+    PT = 25.4 / 72.0
+    out = []
+    with probe.open_pdf(pdf) as doc:
+        for page in doc:
+            ys = [v for b in page.get_text("dict")["blocks"]
+                  for l in b.get("lines", []) for v in (l["bbox"][1], l["bbox"][3])]
+            out.append((max(ys) - min(ys)) * PT if ys else 0.0)
     return out
