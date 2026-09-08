@@ -730,7 +730,21 @@ def _drop_summary_pages(items):
     """
     if not items or not any(_has_snum(p) for p in items):
         return items
-    keep = [p for p in items if _has_snum(p)]
+    # ⚠ 버리는 면에 **중요어휘 표**가 얹혀 있는 책이 있다(광문1 분석본03: 한
+    #   스프레드에 표가 하나인데 그것이 요약 면 쪽에 있다). 그냥 버리면 어휘표가
+    #   같이 사라져 동반의어를 뽑을 근거가 없어진다 — 옆 지문에 넘긴다.
+    keep = []
+    carry = []
+    for p in items:
+        if _has_snum(p):
+            if carry and not p.get("voca"):
+                p["voca"] = carry.pop(0)
+            keep.append(p)
+        elif p.get("voca"):
+            if keep and not keep[-1].get("voca"):
+                keep[-1]["voca"] = p["voca"]
+            else:
+                carry.append(p["voca"])
     return keep if keep else items
 
 

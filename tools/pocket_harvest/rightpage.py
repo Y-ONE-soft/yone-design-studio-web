@@ -366,3 +366,47 @@ if __name__ == "__main__":
         sys.exit(1 if check_all() else 0)
     else:
         print(__doc__)
+
+
+# ── 동반의어 후보 뽑기 ─────────────────────────────────────────────
+_PHRASE = re.compile(r"\s")
+
+
+def pick_voca(voca, n=9):
+    """분석본 **중요어휘 표** → 동반의어 표제어 후보 n개.
+
+    실측한 규칙 그대로다(윗글 참고):
+      · 표에서 고른다 — 지문을 읽고 짓지 않는다
+      · **한 낱말**을 먼저 고른다(구·숙어는 뒤로)
+      · 표의 **앞·가운데·뒤에 걸쳐** 고른다 — 앞에서만 끊지 않는다
+      · 뜻은 표의 것을 그대로 쓴다
+    돌려주는 것은 `[{"w":…, "ko":…}]` 이고 유의어·반의어는 사람이 채운다.
+    """
+    items = [(i, (v.get("w") or "").strip(), (v.get("ko") or v.get("mean") or "").strip())
+             for i, v in enumerate(voca or [])]
+    items = [(i, w, k) for i, w, k in items if w and k]
+    if not items:
+        return []
+    single = [x for x in items if not _PHRASE.search(x[1])]
+    rest = [x for x in items if _PHRASE.search(x[1])]
+    take = single if len(single) >= n else single + rest
+    if len(take) <= n:
+        chosen = take
+    else:
+        # 표 전체에 걸치도록 고르게 뽑는다
+        step = (len(take) - 1) / float(n - 1)
+        chosen = [take[int(round(i * step))] for i in range(n)]
+        seen, out = set(), []
+        for c in chosen:
+            if c[0] in seen:
+                continue
+            seen.add(c[0])
+            out.append(c)
+        for c in take:                     # 겹쳐서 모자라면 채운다
+            if len(out) >= n:
+                break
+            if c[0] not in seen:
+                seen.add(c[0])
+                out.append(c)
+        chosen = sorted(out)
+    return [{"w": w, "ko": k} for _i, w, k in chosen[:n]]
