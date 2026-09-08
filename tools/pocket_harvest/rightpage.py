@@ -369,44 +369,65 @@ if __name__ == "__main__":
 
 
 # ── 동반의어 후보 뽑기 ─────────────────────────────────────────────
+#
+# 어디서 뽑나: **분석본 오른쪽 아래 중요어휘 표**. 지문을 읽고 짓지 않는다.
+#
+# 무엇을 뽑나: 완성본 동반의어와 분석본 어휘표가 **둘 다 있는 277지문**을
+# 맞대어(어휘표 낱말 6,849개 · 그중 카드가 된 것 1,601개) 갈리는 축을 쟀다.
+#
+#     낱말 수(구인가)      뽑힘 1.17   안 뽑힘 1.34   ← **한 낱말**을 고른다
+#     파생 접미사가 붙음   뽑힘  34%   안 뽑힘  23%   ← **파생어**를 고른다
+#     뜻 길이              뽑힘  5.2   안 뽑힘  4.8
+#     표 안의 자리         뽑힘 0.49   안 뽑힘 0.50   ← 자리는 **상관없다**
+#     형광펜 안            뽑힘  37%   안 뽑힘  33%   ← 거의 차이 없다
+#     주석 붙은 낱말       뽑힘  44%   안 뽑힘  37%   ← 거의 차이 없다
+#
+# 어휘표는 지문당 중앙 22낱말이고 그중 **31%**(중앙 7장)가 카드가 된다.
+# 뜻(한국어)은 어휘표의 것을 그대로 쓴다.
 _PHRASE = re.compile(r"\s")
+_DERIV = re.compile(r"(tion|sion|ity|ous|ate|ance|ence|ment|ify|ize|ise|ive|"
+                    r"able|ible|ical|ism|ist|ness|less|ful)$", re.I)
+# 뜻만 보고도 버릴 수 있는 것 — 기능어·고유명사·너무 쉬운 말은 카드가 안 된다
+_TOO_EASY = {"song", "work", "step", "right", "thing", "people", "time",
+             "day", "year", "man", "woman", "place", "part", "kind", "way",
+             "service", "delicious", "thus", "simply", "quite", "even",
+             "both", "stand", "keep", "meet", "stop", "understand", "toward"}
+
+
+def _score(i, n, w, ko):
+    """실측한 축으로 매기는 점수. 높을수록 카드가 될 만하다."""
+    head = w.split()[-1].lower()
+    s = 0.0
+    s += 1.0 if not _PHRASE.search(w) else 0.0        # 한 낱말
+    s += 0.8 if _DERIV.search(head) else 0.0          # 파생어
+    s += min(len(ko), 12) / 24.0                      # 뜻이 있는 말
+    s -= 1.5 if head in _TOO_EASY else 0.0
+    s -= 0.6 if len(head) <= 4 else 0.0
+    return s
 
 
 def pick_voca(voca, n=9):
     """분석본 **중요어휘 표** → 동반의어 표제어 후보 n개.
 
-    실측한 규칙 그대로다(윗글 참고):
-      · 표에서 고른다 — 지문을 읽고 짓지 않는다
-      · **한 낱말**을 먼저 고른다(구·숙어는 뒤로)
-      · 표의 **앞·가운데·뒤에 걸쳐** 고른다 — 앞에서만 끊지 않는다
-      · 뜻은 표의 것을 그대로 쓴다
-    돌려주는 것은 `[{"w":…, "ko":…}]` 이고 유의어·반의어는 사람이 채운다.
+    점수로 고르되 표 **전체에 걸치도록** 앞·가운데·뒤에서 고르게 가져온다
+    (실측: 뽑힌 자리의 평균이 0.49 로 자리 편향이 없다).
     """
-    items = [(i, (v.get("w") or "").strip(), (v.get("ko") or v.get("mean") or "").strip())
+    items = [(i, (v.get("w") or "").strip(),
+              (v.get("ko") or v.get("mean") or "").strip())
              for i, v in enumerate(voca or [])]
     items = [(i, w, k) for i, w, k in items if w and k]
     if not items:
         return []
-    single = [x for x in items if not _PHRASE.search(x[1])]
-    rest = [x for x in items if _PHRASE.search(x[1])]
-    take = single if len(single) >= n else single + rest
-    if len(take) <= n:
-        chosen = take
-    else:
-        # 표 전체에 걸치도록 고르게 뽑는다
-        step = (len(take) - 1) / float(n - 1)
-        chosen = [take[int(round(i * step))] for i in range(n)]
-        seen, out = set(), []
-        for c in chosen:
-            if c[0] in seen:
-                continue
-            seen.add(c[0])
-            out.append(c)
-        for c in take:                     # 겹쳐서 모자라면 채운다
-            if len(out) >= n:
-                break
-            if c[0] not in seen:
-                seen.add(c[0])
-                out.append(c)
-        chosen = sorted(out)
-    return [{"w": w, "ko": k} for _i, w, k in chosen[:n]]
+    m = len(items)
+    bands, per = [], max(1, m // 3)
+    for b in range(3):
+        lo, hi = b * per, (m if b == 2 else (b + 1) * per)
+        band = sorted(items[lo:hi], key=lambda x: -_score(x[0], m, x[1], x[2]))
+        bands.append(band)
+    out, k = [], 0
+    while len(out) < n and any(bands):
+        band = bands[k % 3]
+        k += 1
+        if band:
+            out.append(band.pop(0))
+    return [{"w": w, "ko": ko} for _i, w, ko in sorted(out)[:n]]
