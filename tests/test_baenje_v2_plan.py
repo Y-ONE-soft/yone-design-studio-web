@@ -191,3 +191,60 @@ def test_cross_file_renumbering():
     # 이미 통번호면 그대로
     chunks2 = [("a", [{"no": 1, "paras": []}]), ("b", [{"no": 2, "paras": []}])]
     assert [x["no"] for x in _renumber_sequential(chunks2, warns, "문제")] == [1, 2]
+
+
+def test_inline_circled_passage_is_not_choice():
+    """어법형 지문은 ①로 시작하고 원문자를 인라인으로 품는다 — 선지가 아니다.
+
+    실측 근거: 정상 선지 최장 162자 vs 어법 지문 955~1172자.
+    """
+    from engines.baenje_v2.parser import classify_problem_paragraphs
+    warns = []
+    passage = ("①Mental development consists of individuals mastering social "
+               "codes, ②which they can make their own, ③and the process is "
+               "gradual. ④It never stops, ⑤even in adulthood. ") * 4
+    got = classify_problem_paragraphs(_rows(
+        "1. 다음 글의 밑줄 친 부분 중, 어법상 틀린 것을 모두(2개) 고르면?",
+        passage,
+        "2. 다음 글의 (a)~(e) 중 맥락과 일치하지 않는 것을 모두(2개) 고르면?",
+        "The phrase names a benefit that arrives in the middle of a loss.",
+        "① (a)        ② (b)        ③ (c)        ④ (d)        ⑤ (e)",
+    ), warns)
+    assert [p["kind"] for p in got[0]["paras"]] == ["stem", "passage"]
+    # 한 줄에 원문자가 여럿이어도 짧으면 선지 그대로
+    assert [p["kind"] for p in got[1]["paras"]] == ["stem", "passage", "choice"]
+    assert any("선지가 아님" in w for w in warns)
+
+
+def test_answer_lines_outrank_item_markers():
+    """(A):____ / (1)영영풀이:____ / 답:____ 는 라벨이 뭐든 답란이다."""
+    from engines.baenje_v2.parser import classify_problem_paragraphs
+    warns = []
+    got = classify_problem_paragraphs(_rows(
+        "1. 다음 글을 읽고, 요약문의 빈칸에 들어갈 말을 찾아 쓰시오.",
+        "It is often said that those who can not do, teach.",
+        "〔요약문〕 As people approach (A)________, the fundamentals slip out "
+        "of (B)________ ________, so those who perform a skill best are not "
+        "always the ones who can explain it to a beginner.",
+        "(A) : _____________________",
+        "(B) : _____________________ _____________________",
+        "[조건]",
+        "① (A)는 한 단어, (B)는 연이은 두 단어로 쓸 것",
+        "2. 다음 영영풀이에 해당하는 단어를 본문에서 찾아 쓰시오.",
+        "Mental development consists of individuals mastering social codes.",
+        "(1) best or most favourable in a particular set of circumstance:  "
+        "_____________________________",
+        "3. 다음 글을 읽고, <보기>의 표현을 모두 사용하여 완성하시오.",
+        "The first human beings probably evolved in tropical regions.",
+        "<보기>",
+        "of / more / it / to / early hominids / mattered",
+        "[조건]",
+        "① 위에 주어진 표현을 한 번씩만 모두 사용할 것",
+        "답: _______________________________________________",
+    ), warns)
+    # 요약문 본문은 요약문으로 남고, 기입란만 답란
+    assert [p["kind"] for p in got[0]["paras"]] == [
+        "stem", "passage", "summary", "answer_line", "answer_line",
+        "cond", "cond"]
+    assert got[1]["paras"][2]["kind"] == "answer_line"
+    assert got[2]["paras"][-1]["kind"] == "answer_line"

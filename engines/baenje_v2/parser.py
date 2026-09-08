@@ -51,7 +51,12 @@ RE_END_MARK = re.compile(r"^[\s\-–—]*끝[\s\-–—]*$")
 RE_BLANKS_ONLY = re.compile(r"^[\s＿_（）()　\-－–—.．ㅡ]+$")
 # 긴 빈칸이 들어간 짧은 문장 = 학생이 답을 쓰는 답란 (지문 박스가 아니다)
 RE_LONG_BLANK = re.compile(r"[＿_]{5,}")
+# 빈칸으로 끝나는 줄 = 기입란((A) : ____ / 답 : ____ / (1) 영영풀이 : ____)
+RE_ENDS_BLANK = re.compile(r"[＿_]{5,}[\s.．:：]*$")
 _ANSWER_LINE_MAX = 200
+# 선지 한 줄의 길이 상한 — 실측(배N제01 최장 선지 162자, 어법 지문 955~1172자).
+# 원문자로 시작해도 이보다 길면 선지가 아니라 밑줄이 인라인으로 박힌 지문이다.
+_CHOICE_MAX = 250
 # 요약형 문항: 발문이 '요약'을 지시하고 선지가 있으면, 선지 직전 본문 단락이 요약문
 RE_SUMMARY_STEM = re.compile(r"요약")
 RE_ANS_NUM = re.compile(r"^\s*(\d{1,3})\s*$")
@@ -128,6 +133,22 @@ def _is_stem(t):
     return bool(RE_STEM_SIGNAL.search(t))
 
 
+def _is_answer_line(t, state):
+    """학생이 답을 쓰는 칸 — 긴 빈칸을 품은 짧은 단락.
+
+    같은 '빈칸 품은 짧은 줄'이라도 요약문 본문은 문장이 이어지므로, 요약
+    블록 안에서는 '빈칸으로 끝나는 줄'만 기입란으로 본다((A) : ____ 등).
+    선지·조건 항목(원문자로 시작)은 답란 판정 대상이 아니다.
+    """
+    if len(t) > _ANSWER_LINE_MAX or not RE_LONG_BLANK.search(t):
+        return False
+    if RE_CHOICE.match(t):
+        return False
+    if state == "summary" and not RE_ENDS_BLANK.search(t):
+        return False
+    return True
+
+
 def classify_problem_paragraphs(rows, warnings, src=""):
     """문제 원고 단락열 → [{"no", "paras":[{t,kind,runs}]}].
 
@@ -189,10 +210,14 @@ def classify_problem_paragraphs(rows, warnings, src=""):
             state, kind = "summary", "summary"
         elif RE_BOGI.match(t):
             state, kind = "bogi", "bogi"
+        elif _is_answer_line(t, state):
+            # 기입란은 어떤 라벨로 시작하든((A)/(1)/답:) 답란이다 —
+            # 마커 분기보다 앞서야 선지·조건으로 새지 않는다
+            kind = "answer_line"
         elif state == "cond":
             # v1 파리티: <조건> 안에서는 ①②… 항목도 조건 스타일이다
             kind = "cond"
-        elif RE_CHOICE.match(t):
+        elif RE_CHOICE.match(t) and len(t) <= _CHOICE_MAX:
             state, kind = None, "choice"
         elif state == "bogi" and (
                 RE_LETTER_ITEM.match(t) or RE_CIRCLED_LETTER.match(t)
@@ -212,15 +237,16 @@ def classify_problem_paragraphs(rows, warnings, src=""):
             kind = "dialogue"
         elif RE_BLANKS_ONLY.match(t):
             kind = "choice"
-        elif RE_LONG_BLANK.search(t) and len(t) <= _ANSWER_LINE_MAX:
-            # 서술형 답란 — 지문(긴 영문)과 길이·빈칸 구조로 구분
-            kind = "answer_line"
         elif re.match(r"^[A-Za-z\"“‘(]", t):
             kind = "passage"
         elif " / " in t:
             kind = "bogi"
         else:
             kind = "passage"
+            if RE_CHOICE.match(t):
+                warnings.append(
+                    f"[파서] 원문자로 시작하지만 선지가 아님({src}, {cur['no']}번, "
+                    f"{len(t)}자) → 지문: {t[:40]}")
             if not re.search(r"[A-Za-z]", t):
                 kind = "unknown"
                 warnings.append(

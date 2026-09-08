@@ -55,8 +55,22 @@ def _ensure_local_template():
     return local
 
 
+def _split_manuscripts(paths):
+    """문제/해설 원고 분류 — GDrive 파일명은 NFD라 정규화 후 매칭."""
+    def _nfc(x):
+        return unicodedata.normalize("NFC", x)
+    problems = [p for p in paths if "문제" in _nfc(os.path.basename(p))]
+    # 해설 원고 파일명은 '해설' 또는 '정답'으로 온다
+    answers = [p for p in paths if ("해설" in _nfc(os.path.basename(p))
+                                    or "정답" in _nfc(os.path.basename(p)))]
+    return problems, answers
+
+
 def main():
-    src_dir = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_SRC
+    args = sys.argv[1:]
+    # 인자가 원고 파일들이면 그 파일만 조판한다(한 폴더에 여러 호가 섞여 있을 때)
+    explicit = [a for a in args if os.path.isfile(a)]
+    src_dir = next((a for a in args if os.path.isdir(a)), DEFAULT_SRC)
     import engines.baenje_v2.engine as eng_mod
 
     template = _ensure_local_template()
@@ -74,23 +88,33 @@ def main():
     if os.path.isdir(job_dir):
         shutil.rmtree(job_dir)
     os.makedirs(job_dir)
-    for key, val in (("school", "배재2"), ("issue_num", "01"),
-                     ("subject", "영어Ⅱ YBM(박)")):
+    for key, val in (("school", os.environ.get("BJ_SCHOOL", "배재2")),
+                     ("issue_num", os.environ.get("BJ_ISSUE", "01")),
+                     ("subject", os.environ.get("BJ_SUBJECT", "영어Ⅱ YBM(박)"))):
         with open(os.path.join(job_dir, f"{key}.txt"), "w",
                   encoding="utf-8") as f:
             f.write(val)
 
-    # macOS 파일명은 NFD로 오므로 정규화 후 매칭 (GDrive 경로 필수)
-    files = sorted(os.listdir(src_dir))
-    def _nfc(x):
-        return unicodedata.normalize("NFC", x)
-    problems = [os.path.join(src_dir, f) for f in files
-                if "문제" in _nfc(f) and f.lower().endswith((".docx", ".hwpx"))]
-    # 해설 원고 파일명은 '해설' 또는 '정답'으로 온다
-    answers = [os.path.join(src_dir, f) for f in files
-               if ("해설" in _nfc(f) or "정답" in _nfc(f))
-               and f.lower().endswith((".docx", ".hwpx"))]
+    # 유닛(머리말) 라벨을 직접 줄 때 — 파일명에 'N과'가 없는 원고(모의고사 변형 등)
+    labels = os.environ.get("BJ_LABELS")
+    if labels:
+        with open(os.path.join(job_dir, "unit_labels.json"), "w",
+                  encoding="utf-8") as f:
+            f.write(labels)
+        print(f"유닛 라벨 지정: {labels}")
+
+    if explicit:
+        problems, answers = _split_manuscripts(explicit)
+        src_dir = os.path.dirname(explicit[0])
+    else:
+        files = sorted(os.listdir(src_dir))
+        cand = [os.path.join(src_dir, f) for f in files
+                if f.lower().endswith((".docx", ".hwpx"))]
+        problems, answers = _split_manuscripts(cand)
+    problems, answers = sorted(problems), sorted(answers)
     print(f"원고: 문제 {len(problems)} / 해설 {len(answers)}  ({src_dir})")
+    for f in problems + answers:
+        print("   " + os.path.basename(f))
     if not problems:
         print("문제 원고 없음 — 중단")
         return 1

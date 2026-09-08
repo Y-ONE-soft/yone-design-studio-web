@@ -174,6 +174,24 @@ def mark_of(style_name):
     return _I.mark_of(style_name)
 
 
+def _join_head(have, add):
+    """머리말을 잇되 **같은 말은 두 번 넣지 않는다**.
+
+    교재팀이 머리말 프레임을 복제해 두는 일이 있다(광문1 분석본03 실측: 한
+    스프레드에 `1강`·`분석` 이 두 벌씩 있고 `<< 여기서 변경` 메모가 붙어 있다).
+    그대로 이으면 라벨이 `1강 1강`·`분석 분석` 이 되어 배지와 저술물 이름이
+    통째로 어긋난다.
+    """
+    add = _sq(add)
+    if not add:
+        return have
+    if not have:
+        return add
+    if add == have or add in have.split():
+        return have
+    return _sq(have + " " + add)
+
+
 def _sq(s):
     return _WS.sub(" ", nfc(s or "")).strip()
 
@@ -557,12 +575,12 @@ def read_book(path):
                 continue
             for k, l in lines:
                 if k == "head_ch":
-                    b["head_ch"] = _sq(b["head_ch"] + " " +
-                                       "".join(r["t"] for r in l))
+                    b["head_ch"] = _join_head(b["head_ch"],
+                                              "".join(r["t"] for r in l))
                     b["nhead"] += 1
                 elif k == "head_num":
-                    b["head_num"] = _sq(b["head_num"] + " " +
-                                        "".join(r["t"] for r in l))
+                    b["head_num"] = _join_head(b["head_num"],
+                                               "".join(r["t"] for r in l))
                 elif k:
                     b["lines"].append((k, l, sid, trs))
         for b in bucket:
