@@ -537,18 +537,29 @@ function pullOrphanTail(story, idx, label) {
     var tail = "";
     try { tail = String(lines[lines.length - 1].contents); } catch (e) { return 0; }
     if (!RE_ORPHAN_TAIL.test(tail)) return 0;
-    var base = 0;
-    try { base = p.tracking || 0; } catch (e) {}
-    var steps = [-10, -20, -30, -40];
-    for (var s = 0; s < steps.length; s++) {
-        try { p.tracking = base + steps[s]; } catch (e) { break; }
+    // 발문 앞머리(원고 번호)는 0.1pt·자간 -500으로 숨겨져 있다(자동번호가 대신
+    // 찍힌다). 단락 전체에 자간을 걸면 그 -500을 본문 크기로 되읽어 글자가
+    // 겹친다 → 보이는 글자 범위만 조인다.
+    var cs, k = 0, base = 0, vis = null;
+    try {
+        cs = p.characters;
+        while (k < cs.length && cs[k].pointSize < 1) k++;
+        if (k >= cs.length) return 0;
+        base = cs[k].tracking || 0;
+        vis = p.characters.itemByRange(k, cs.length - 1);
+    } catch (e) { return 0; }
+    if (!vis) return 0;
+    for (var s = 1; s <= 4; s++) {
+        var v = base - s * 10;
+        if (v < -100) break;                       // 가독성 하한
+        try { vis.tracking = v; } catch (e) { break; }
         try { doc.recompose(); } catch (e) {}
         var n = 0, t2 = "";
         try { n = p.lines.length; t2 = String(p.lines[n - 1].contents); }
         catch (e) { break; }
         if (!RE_ORPHAN_TAIL.test(t2)) return 1;
     }
-    try { p.tracking = base; } catch (e) {}
+    try { vis.tracking = base; } catch (e) {}
     try { doc.recompose(); } catch (e) {}
     RESULTS.orphan_tail_left.push(label);
     return 0;
