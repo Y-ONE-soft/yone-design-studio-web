@@ -190,10 +190,9 @@ def pages(entries, box_h=175.0, width_mm=114.8):
     for day, group in _by_day(entries):
         hs = [height_mm(e, width_mm) for e in group]
         tot = sum(hs)
-        # 어림에는 오차가 있다 — 딱 맞게 잡으면 마지막에 한 낱말이 넘쳐
-        # **낱말 하나짜리 면**이 생긴다. 92% 로 잡아 여유를 둔다.
-        room = box_h * 0.92
-        n = max(1, int(tot // room) + (1 if tot % room else 0))
+        # ⚠ 여유(92%)를 두면 면이 40% 씩 빈 채로 나간다. 높이를 **실측**하므로
+        #   상자 그대로 잡고, 넘침은 아래 `over` 가 막는다.
+        n = max(1, int(tot // box_h) + (1 if tot % box_h else 0))
         # ⚠ 꽉 채우고 남은 것을 뒷면에 밀면 **낱말 한두 개짜리 면**이 생긴다.
         #   DAY 가 쓸 면 수를 먼저 정하고 그만큼으로 **고르게** 나눈다.
         target = tot / n

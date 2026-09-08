@@ -126,6 +126,7 @@ METRICS = {
     "voca_col": 41.0,          # 왼쪽 단(번호·회독·표제어) 폭 = 56.0 − 15.0
     "voca_word": 10.0, "voca_no": 5.0,
     "voca_ck": 2.87, "voca_ck_gap": 0.45, "voca_hw_gap": 1.6,
+    "voca_ipa_x": 15.4,        # 표제어 x(30.4) − 단 시작(15.0)
     "voca_mean": 7.0, "voca_mean_lead": 2.9,
     "voca_ex": 6.0, "voca_ex_lead": 2.47, "voca_ex_gap": 1.5,
     "voca_pad": 1.6, "voca_gap": 1.5,
@@ -247,6 +248,7 @@ def build_css(palette=None, metrics=None, highlight=None):
         "voca_col": "%g" % M["voca_col"], "voca_ck": "%g" % M["voca_ck"],
         "voca_ck_gap": "%g" % M["voca_ck_gap"],
         "voca_hw_gap": "%g" % M["voca_hw_gap"],
+        "voca_ipa_x": "%g" % M["voca_ipa_x"],
         "voca_head": "%g" % M["voca_head_size"],
         "voca_track": "%g" % M["voca_track"],
         "voca_ex_track": "%g" % M["voca_ex_track"],
@@ -447,7 +449,10 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
   border:.25pt solid var(--trans);border-radius:50%;
   margin-left:__voca_ck_gap__mm;vertical-align:.2mm}
 .voca .hw{font-size:__voca_word__pt;line-height:1;margin-left:__voca_hw_gap__mm}
-.voca .ipa{font-size:__voca_no__pt;color:var(--voca-ipa);margin-left:1mm}
+/* ⚠ 발음기호는 완성본에 없던 것(26-2 원고에 새로 들어왔다). 표제어 옆에 두면
+   긴 것이 왼쪽 단(41mm)을 넘어 오른쪽 단 글과 겹친다 — **아랫줄**에 앉힌다. */
+.voca .ipa{display:block;font-size:__voca_no__pt;color:var(--voca-ipa);
+  margin:.5mm 0 0 __voca_ipa_x__mm;line-height:1}
 .voca .mn{font-size:__voca_mean__pt;color:var(--trans);margin:0;
   line-height:__voca_mean_lead__mm}
 .voca .dv{font-size:__voca_ex__pt;color:var(--voca-ipa);margin:.6mm 0 0;
