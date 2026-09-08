@@ -85,3 +85,21 @@ def test_전_스텝_공통_passages_는_그대로_동작한다():
     out = apply_select(_steps(), {"passages": [2, 4]}, log=lambda *a: None)
     assert _ns(out, "step1_a1") == [2, 4]
     assert _ns(out, "step1_c2") == [2, 4]
+
+
+def test_order_는_적은_것을_앞으로_보낸다():
+    """학교마다 푸는 차례가 다를 수 있다."""
+    out = apply_select(_steps(), {"order": ["step3", "step1_c2"]},
+                       log=lambda *a: None)
+    assert _keys(out) == ["step3", "step1_c2", "step1_a1"]
+
+
+def test_order_에_없는_것은_뒤에_원래_순서대로():
+    out = apply_select(_steps(), {"order": ["step1_c2"]}, log=lambda *a: None)
+    assert _keys(out) == ["step1_c2", "step1_a1", "step3"]
+
+
+def test_order_와_exclude_를_같이_쓴다():
+    out = apply_select(_steps(), {"order": ["step3"], "exclude": ["step1_a1"]},
+                       log=lambda *a: None)
+    assert _keys(out) == ["step3", "step1_c2"]

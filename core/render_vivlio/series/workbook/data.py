@@ -210,6 +210,8 @@ def apply_select(steps, select, log=print):
                원고에 없는 키를 적어도 그냥 넘어간다(있으면 빼고 없으면 그만).
     include  : `exclude` 를 **이 책에서만 되돌린다**. 「이 학교는 빈칸 어휘를
                빼지만 이 부교재는 넣어주세요」가 여기서 된다.
+    order    : 스텝을 놓을 **순서**. 적은 것이 먼저, 안 적은 것은 뒤에
+               원래 순서대로. 학교마다 푸는 차례가 다를 수 있다.
     limits   : 스텝마다 남길 지문. {"step1_c2": {"passages": 4}} 는 앞에서 4개,
                {"passages": [1,3]} 은 그 순번만. 전 스텝 공통인 `passages` 와
                달리 **그 스텝에만** 걸린다 (「빈칸 어휘만 문항 수 줄이기」).
@@ -262,6 +264,16 @@ def apply_select(steps, select, log=print):
                 if slot is not None and g.get("label") is not None:
                     g["label"] = _renumbered(g["label"], slot)
         out.append(dict(st, groups=groups))
+
+    # ── 순서 ── 적은 것이 먼저, 안 적은 것은 뒤에 원래 순서대로.
+    want_order = [str(x) for x in (select.get("order") or [])]
+    if want_order:
+        rank = {k: i for i, k in enumerate(want_order)}
+        before = [st["key"] for st in out]
+        out.sort(key=lambda st: (rank.get(st["key"], len(rank)),
+                                 before.index(st["key"])))
+        if [st["key"] for st in out] != before:
+            log("  [선택] 순서 → " + " · ".join(st["key"] for st in out))
     return out
 
 

@@ -92,7 +92,7 @@ def show_knobs(cfg, log=print, as_json=False, book=None, **_):
 
 
 def set_select(cfg, log=print, exclude=None, include=None, limits=None,
-               clear=False, backup=True):
+               order=None, clear=False, backup=True):
     """`config.json` 의 `select` 를 쓴다 — 「무엇을 빼고 몇 문항만 남길지」.
 
     손잡이(`set_knobs`)가 **값**을 쓴다면 이것은 **구성**을 쓴다.
@@ -130,6 +130,8 @@ def set_select(cfg, log=print, exclude=None, include=None, limits=None,
             sel["exclude"] = ex
         if inc:
             sel["include"] = inc
+        if order:
+            sel["order"] = _keys(order)
         if limits:
             lim = dict(sel.get("limits") or {})
             for part in str(limits).split(","):
@@ -492,7 +494,8 @@ def main(argv=None):
         elif st == "select":
             set_select(cfg, log,
                        exclude=opts.get("exclude"), include=opts.get("include"),
-                       limits=opts.get("limits"), clear=bool(opts.get("clear")))
+                       limits=opts.get("limits"), order=opts.get("order"),
+                       clear=bool(opts.get("clear")))
         elif st == "sections":
             show_sections(cfg, log, as_json=bool(opts.get("json")), book=book)
         elif st == "build":
