@@ -230,6 +230,12 @@ def _name_units(rows, scope, name, log):
             if t is not None and t[0] != "mock" and name(t) != u:
                 r["unit"] = name(t)
                 n += 1
+        elif not u and r.get("_rank") == 2:
+            # ⚠ 이어받기보다 **제 갈래가 먼저**다. 모의고사 지문은 머리말이
+            #   첫 지문에만 있어 단원이 비는데, 그대로 이어받게 두면 앞 부교재
+            #   단원(`올림포스 8강`)을 통째로 뒤집어쓴다(광문1 실측 23지문).
+            r["unit"] = "모의고사"
+            n += 1
         elif not u:
             m = _RE_TB_LABEL.match(lab)
             if m:                          # 교과서 갈래 — `능률(민) SL2 본문2`
@@ -285,34 +291,52 @@ def _dedupe_badges(rows, log):
 # 않는 한 언제나 이 순서). 시험범위가 이 차례를 알지만, 범위에 안 적힌 갈래가
 # 있으면(광문1 은 시트에 올림포스만 적혀 있었다) 그 갈래가 통째로 뒤로 밀린다.
 # 그래서 **지문 자신이 어느 갈래인지**로 한 번 더 세운다.
-_KIND_RANK = {"lesson": 0, "olpo": 1, "rp": 1, "teuk": 1, "bare": 1,
-              "test": 1, "mock": 2}
+_RE_YM_ANY = re.compile(r"\d{2}\s*년\s*\d{1,2}\s*월")
+_RE_TB_ANY = re.compile(r"\d{1,2}\s*과|본문\s*\d|RC\s*\d|\bFR\b|\bDL\b")
 
 
-def _kind_rank(r):
-    ranks = [_KIND_RANK.get(t[0], 1) for t, _n in pscope.pairs_of(r)]
-    if ranks:
-        return max(ranks) if 2 in ranks else min(ranks)
+def _kind_of(r):
+    """이 지문이 **제 힘으로** 밝히는 갈래. 못 밝히면 None(앞엣것을 따른다).
+
+    0 교과서 · 1 부교재 · 2 모의고사
+    """
     unit = str(r.get("category") or r.get("unit") or "")
-    if "모의고사" in unit or str(r.get("no") or "").isdigit():
+    lab = str(r.get("label") or "")
+    ch = str(r.get("chapter") or "")
+    if ("모의고사" in unit or str(r.get("no") or r.get("pno") or "").isdigit()
+            or _RE_YM_ANY.search(ch) or _RE_YM_ANY.search(lab)):
         return 2
-    if _RE_HAS_NO.search(unit):
+    if _RE_HAS_NO.search(unit) or _RE_HAS_NO.search(lab) or _RE_HAS_NO.search(ch):
         return 1
-    return 0
+    if _RE_TB_ANY.search(unit) or _RE_TB_ANY.search(lab):
+        return 0
+    return None
 
 
 def _order_by_kind(rows, log):
-    """교과서 → 부교재 → 모의고사. 갈래 안의 차례는 **그대로 둔다**(안정 정렬)."""
+    """교과서 → 부교재 → 모의고사. 갈래 안의 차례는 **그대로 둔다**(안정 정렬).
+
+    갈래를 못 밝히는 지문이 많다 — 분석본은 회차·단원을 묶음 **첫 지문에만**
+    적어서 `19번` 같은 라벨만 남는다. 그런 지문은 **앞 지문의 갈래를 따른다.**
+    ⚠ 이어받기를 단원 이름으로 하면 안 된다. 모의고사 23지문이 앞 부교재
+      단원(`올림포스 8강`)을 뒤집어썼다(광문1 실측).
+    """
     pas = [r for r in rows if r.get("kind") != "memtest"]
     if len(pas) < 2:
         return rows
+    last = 0
+    for r in pas:
+        k = _kind_of(r)
+        if k is None:
+            k = last
+        last = k
+        r["_rank"] = k
     before = [id(r) for r in pas]
-    pas.sort(key=lambda r: _kind_rank(r))
+    pas.sort(key=lambda r: r["_rank"])
     if [id(r) for r in pas] != before:
-        n = [_kind_rank(r) for r in pas]
+        n = [r["_rank"] for r in pas]
         log("■ 차례를 교과서(%d) → 부교재(%d) → 모의고사(%d) 로 세웠다"
             % (n.count(0), n.count(1), n.count(2)))
-    # 암기 TEST 는 지문 뒤에 붙는 별개 면이라 지문 차례만 갈아 끼운다
     return pas + [r for r in rows if r.get("kind") == "memtest"]
 
 
@@ -575,8 +599,8 @@ class PocketbookSeries(Series):
         _korean_topic(rows, log)
         # ⚠ 저술물 이름에는 단원이 들어간다. 단원은 `_fill_units` 가 채우므로
         #   **그 뒤에** 얹어야 이름이 맞는다(먼저 부르면 16지문이 조용히 빈다).
-        _fill_units(rows, scope, log)
-        rows = _order_by_kind(rows, log)
+        rows = _order_by_kind(rows, log)   # 갈래를 먼저 정하고
+        _fill_units(rows, scope, log)      # 그 위에 단원 이름을 얹는다
         self._apply_authored(cfg, rows, log)
         rows = self._apply_memtest(cfg, opt, rows, log)
         out = os.path.join(cfg.build_dir, "data.json")
