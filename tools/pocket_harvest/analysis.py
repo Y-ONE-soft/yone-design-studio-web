@@ -760,6 +760,16 @@ def _header_pile(doc):
     return nums, chs
 
 
+# 머리말을 `[01]` 처럼 대괄호로 적어 둔 분석본이 있다(광문1 올포 6강). 그대로
+# 두면 배지가 `올림포스 6강 [01]` 로 찍혀 다른 강(`올림포스 6강 01`)과 어긋난다.
+_RE_BRACKET_NO = re.compile(r"^[\[［]\s*(\d{1,3})\s*[\]］]$")
+
+
+def _tidy_label(label):
+    m = _RE_BRACKET_NO.match((label or "").strip())
+    return m.group(1) if m else label
+
+
 def _label_of(u, chs, nums):
     """라벨은 **변별력**으로 고른다 — 학교마다 어느 칸이 지문을 가리키는지 다르다.
 
@@ -867,6 +877,7 @@ def _build(u, base, chs, nums, notes):
     topic, summary, how = _split_topic(topic_items)
 
     label, chapter = _label_of(u, chs, nums)
+    label = _tidy_label(label)
     pno = passage_no(label) or passage_no(u["head_ch"]) or passage_no(
         u["head_num"])
 
