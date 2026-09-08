@@ -122,7 +122,7 @@ METRICS = {
     # 어휘 파트 — 26-1-기말 광문1 완성본 124~125면 실측
     "voca": [15.0, 12.6, 114.8, 178.0],     # 상자 x y w h (끝 190.6mm)
     "voca_head": [15.0, 6.5, 37.0, 5.45],   # 머리말 딱지
-    "voca_head_size": 8.0,
+    "voca_head_size": 8.0, "voca_icon": 4.1,
     "voca_col": 41.0,          # 왼쪽 단(번호·회독·표제어) 폭 = 56.0 − 15.0
     "voca_word": 10.0, "voca_no": 5.0,
     "voca_ck": 2.87, "voca_ck_gap": 0.45, "voca_hw_gap": 1.6,
@@ -250,6 +250,7 @@ def build_css(palette=None, metrics=None, highlight=None):
         "voca_hw_gap": "%g" % M["voca_hw_gap"],
         "voca_ipa_x": "%g" % M["voca_ipa_x"],
         "voca_head": "%g" % M["voca_head_size"],
+        "voca_icon": "%g" % M["voca_icon"],
         "voca_track": "%g" % M["voca_track"],
         "voca_ex_track": "%g" % M["voca_ex_track"],
         "blank": "8",
@@ -348,6 +349,8 @@ html,body{margin:0;padding:0;background:#fff}
   text-decoration-color:var(--hl);text-decoration-thickness:__hlw__pt;
   text-underline-offset:-__hlo2__pt;text-decoration-skip-ink:none}
 /* '서술형' 표식 — 폭 0 으로 심어 줄 흐름을 건드리지 않고 글 위에 띄운다 */
+/* 표식 + 첫 낱말은 한 덩이 — 사이에서 줄이 바뀌면 별표만 줄 끝에 남는다. */
+.passage .nb{white-space:nowrap}
 .passage .ico{position:relative;display:inline-block;width:0;height:0;
   vertical-align:baseline;text-decoration:none}
 .passage .ico img{position:absolute;left:0;bottom:__ico_dy__pt;
@@ -386,6 +389,9 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
 .translation p{margin:0}
 .folio{position:absolute;font-family:PBElice;font-size:__folio__pt;
   font-weight:700}
+/* 쪽번호 **옆에 붙는 말**(단원·VOCA)은 완성본이 Medium 이다 — Bold 로 두면
+   쪽번호보다 세 보인다(사용자 지적). */
+.folio span{font-weight:500}
 .folio b{color:var(--navy)}
 .folio.r{text-align:right}
 
@@ -463,10 +469,14 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
   letter-spacing:__voca_ex_track__em}
 .voca .hit{color:var(--voca-hit)}
 .voca .pos{color:var(--trans)}
-/* 머리말 딱지 — 완성본은 베이지 바탕에 남색 글씨다(지문 배지와 다르다). */
+/* 머리말 딱지 — 완성본 실측: **둥근 베이지 딱지 + 책·돋보기 아이콘**,
+   글은 학교안심 운동장(PBHand) 8pt 남색이다. 네모 딱지에 본문 글꼴로 두면
+   완성본과 아예 다른 물건이 된다(사용자 지적). */
 .vhead{position:absolute;background:var(--voca-chip);color:var(--navy);
-  font-size:__voca_head__pt;font-weight:500;display:flex;align-items:center;
-  padding:0 2mm;box-sizing:border-box;letter-spacing:-.02em}
+  font-family:PBHand;font-size:__voca_head__pt;display:flex;
+  align-items:center;gap:1.2mm;padding:0 2.4mm;box-sizing:border-box;
+  border-radius:1.5mm;letter-spacing:-.025em}
+.vhead svg{height:__voca_icon__mm;width:auto;flex:none}
 
 .topicband{position:absolute;background:var(--topic-bg);box-sizing:border-box;
   padding:1.6mm 2mm}

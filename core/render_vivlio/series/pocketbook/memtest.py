@@ -546,10 +546,17 @@ def _runs(rows):
     코퍼스는 지문마다 `mock`(모의고사) / `label`(교과서·EBS)을 달고 있고,
     완성 포켓북은 그 경계에서 **암기 TEST 번호를 1부터 다시** 매긴다(실측:
     강동1 교과서 1~154 · 모의고사 1~1093).
+
+    ⚠ `kind` 로 묶으면 안 된다 — 지문은 전부 `passage` 라서 책 전체가 한 묶음이
+      되고, 그러면 모의고사 암기 TEST 까지 책 끝으로 몰린다. 갈래(교과서·부교재·
+      모의고사)와 **단원**으로 묶는다.
     """
     out = []
     for r in rows:
-        k = r.get("kind") or ""
+        if r.get("kind") == "memtest":
+            k = ("memtest",)
+        else:
+            k = (r.get("_rank"), r.get("category") or r.get("unit") or "")
         if out and out[-1][0] == k:
             out[-1][1].append(r)
         else:
@@ -582,7 +589,8 @@ def attach(rows, sources, log=None, place="auto", cache=None):
     # 같은 단원이 여러 토막으로 갈려 번호가 여러 번 1로 돌아간다.
     seq = {}
     for kind, group in _runs(rows):
-        no, sect_tail = seq.get(kind, 1), []
+        rank = kind[0]
+        no, sect_tail = seq.get(rank, 1), []
         for row in group:
             out.append(row)
             if kind == "memtest":
@@ -597,12 +605,13 @@ def attach(rows, sources, log=None, place="auto", cache=None):
             hit += 1
             if place == "end":
                 book_tail += pages
-            elif place == "after" or (place == "auto" and kind == "mock"):
+            elif place == "after" or (
+                    place == "auto" and kind[0] == 2):   # 모의고사만 지문 바로 뒤
                 out += pages
             else:
                 sect_tail += pages
-        total += no - seq.get(kind, 1)
-        seq[kind] = no
+        total += no - seq.get(rank, 1)
+        seq[rank] = no
         out += sect_tail
     out += book_tail
     log("■ 암기 TEST — 지문 %d개에 붙였다(빈칸 %d개, 원고 %d지문)"

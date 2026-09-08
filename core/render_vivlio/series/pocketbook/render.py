@@ -209,6 +209,29 @@ def _svg(name):
         return f.read().replace("<svg ", '<svg class="ic-%s" ' % name, 1)
 
 
+def _glue_icon(ico, html):
+    """서술형 표식을 **첫 낱말에 붙여** 준다.
+
+    표식은 폭 0 인 인라인 상자라 브라우저가 그 **뒤에서 줄을 바꿔** 버린다 —
+    그러면 줄 끝에 별표만 덩그러니 남고 문장은 다음 줄에서 시작한다(사용자가
+    두 번 지적했다). 표식과 첫 낱말을 한 덩이로 묶어 그 자리를 막는다.
+    """
+    out, i, depth, cut = [], 0, 0, None
+    while i < len(html):
+        c = html[i]
+        if c == "<":
+            depth += 1
+        elif c == ">":
+            depth -= 1
+        elif depth == 0 and c in " \u00a0":
+            cut = i
+            break
+        i += 1
+    if cut is None:
+        return '<span class="nb">%s%s</span>' % (ico, html)
+    return '<span class="nb">%s%s</span>%s' % (ico, html[:cut], html[cut:])
+
+
 def runs_html(runs):
     """형광펜은 **연속 구간**이다 — 낱말마다 칠하면 어절 사이가 비어 줄무늬가 된다."""
     out, cur_hl, buf = [], None, []
@@ -226,7 +249,8 @@ def runs_html(runs):
             ico = _ICON if (cur_hl == "yellow" and not seen_yellow[0]) else ""
             if ico:
                 seen_yellow[0] = True
-            out.append('<mark class="hl-%s">%s%s</mark>' % (cur_hl, ico, s))
+            out.append('<mark class="hl-%s">%s</mark>'
+                       % (cur_hl, _glue_icon(ico, s) if ico else s))
         else:
             out.append(s)
         # ⚠ 문장 끝은 **형광펜 안쪽에도** 있다. 바깥 글만 보면 문장이 형광펜
@@ -377,8 +401,10 @@ def voca_page(pg, M, folio, side="l"):
                ('<span class="ipa">%s</span>' % ESC(e["ipa"]))
                if e.get("ipa") else "", "".join(r)))
     # 머리말 딱지는 **왼쪽 면에만** 있다(완성본 실측: 오른쪽 면은 꼬리말 `VOCA`).
-    head = ('<div class="vhead" style="%s">%s</div>'
-            % (_box(x, hd[1], hd[2], hd[3]), ESC(pg["day"]))) if side == "l" else ""
+    # 머리말 딱지는 **왼쪽 면에만** 있다(완성본 실측: 오른쪽 면은 꼬리말 `VOCA`).
+    head = ('<div class="vhead" style="%s">%s%s</div>'
+            % (_box(x, hd[1], hd[2], hd[3]), _svg("chip_voca"),
+               ESC(pg["day"]))) if side == "l" else ""
     body = ('<div class="voca" style="%s">%s</div>'
             % (_box(x, v[1], v[2], v[3]), "".join(ents)))
     if side == "l":

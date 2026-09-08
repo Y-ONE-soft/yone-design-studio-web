@@ -43,8 +43,13 @@ def _wcls(w):
     return " xlong" if len(w) >= 18 else (" long" if len(w) >= 13 else "")
 
 
-FILL_MM = 165.0       # 한 면이 낱말 카드에 내주는 높이 — 책 config `options.page_fill_mm`
-                      # (판면 179mm - 구간 소제목 ~9mm - 여유 5mm)
+# 한 면이 낱말 카드에 내주는 높이 — 책 config `options.page_fill_mm` 으로 덮는다.
+# 판면 179mm - 구간 소제목 8.9mm(실측) = 170.1mm 가 실제 자리인데, 재어 둔 카드
+# 높이에는 **카드 뒤 여백 5.4mm 가 이미 들어 있다**(다음 카드 머리까지 재므로).
+# 면의 마지막 카드는 그 여백을 쓰지 않으니 합계를 그만큼 후하게 봐 준다.
+#   판정: Σ높이 ≤ 170.1 + 5.4 ≈ 175
+# 실측 스윕: 175 → 한 장짜리 면 0개 · 가장 꽉 찬 면 169.0mm(판면 170.1 안).
+FILL_MM = 175.0
 
 
 def _chunks(items, cap=PAGE_CAP):

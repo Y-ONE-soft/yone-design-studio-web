@@ -1087,6 +1087,7 @@ class PocketbookSeries(Series):
             self._fit_right(rows, M, build_dir, log)
 
         voca_pages = self._voca(cfg, opt, log)
+        rows = self._drop_memtest_if_thick(rows, voca_pages, opt, log)
         if voca_pages and measure_pass:
             voca_pages = self._fit_voca(voca_pages, M, build_dir, log)
 
@@ -1284,6 +1285,27 @@ class PocketbookSeries(Series):
                 n += len(dx)
         if n:
             log("■ 주석 %d개를 제본 안전 영역(%gmm) 안으로 밀었다" % (n, limit))
+
+    @staticmethod
+    def _drop_memtest_if_thick(rows, voca_pages, opt, log):
+        """**150면을 넘으면 암기 TEST 를 뺀다**(사용자 규칙).
+
+        포켓북은 들고 다니는 책이라 두께가 곧 쓸모다. 넘칠 때 먼저 빠지는 것이
+        암기 TEST 다 — 지문·어휘는 시험범위라 뺄 수 없다.
+        `options.memtest` 로 강제할 수 있다(true = 넘쳐도 넣는다 / false = 늘 뺀다).
+        """
+        want = opt.get("memtest", "auto")
+        mts = [r for r in rows if r.get("kind") == "memtest"]
+        if want is True or not mts:
+            return rows
+        cap = int(opt.get("max_pages", 150))
+        body = sum(2 for r in rows if r.get("kind") != "memtest")
+        total = body + len(mts) + len(voca_pages or []) + 2      # 간지 2면
+        if want is not False and total <= cap:
+            return rows
+        log("■ %d면(암기 TEST %d면 포함)이라 %d면을 넘는다 — 암기 TEST 를 뺀다"
+            % (total, len(mts), cap))
+        return [r for r in rows if r.get("kind") != "memtest"]
 
     @staticmethod
     def _voca(cfg, opt, log):
