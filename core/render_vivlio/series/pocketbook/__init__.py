@@ -29,6 +29,7 @@ from core.render_vivlio.series.pocketbook import voca as pvoca
 WIDE_RUBY_MM = 36.0
 from core.render_vivlio.series.pocketbook import scope as pscope
 from core.render_vivlio.series.pocketbook import theme as ptheme
+from core.render_vivlio.series.pocketbook import store as pstore
 
 FONTS = [
     "NotoSansCJKkr-Regular.otf", "NotoSansCJKkr-Medium.otf",
@@ -347,6 +348,48 @@ def _order_by_kind(rows, log):
 
 def _letters(t):
     return "".join(c for c in (t or "").lower() if c.isalpha())
+
+
+def _fill_from_store(rows, cfg, opt, log):
+    """오른쪽 면 **창고**에서 가져온다 — 학교를 넘어 사는 자료다.
+
+    `_authored/` 는 책마다 따로였다. 연구원이 고쳐 놓아도 다음 학교에서 같은
+    지문이 나오면 못 찾고 처음부터 다시 나왔다(사용자 지적). 창고는 라벨이
+    아니라 **글**로 찾으니 학교가 달라도 같은 칸을 연다.
+
+    `fixed` 에 적힌 자리는 사람이 손본 자리다 — **덮어쓴다**. 나머지는 빈 곳만
+    채운다(기계가 지은 것이라 원고·완성본이 이긴다).
+    """
+    path = pstore.root(cfg, opt)
+    idx = pstore.index(path)
+    if not idx:
+        return
+    n = m = 0
+    for row in rows:
+        if row.get("kind") == "memtest":
+            continue
+        got = pstore.find(idx, pdata.plain_passage(row))
+        if not got:
+            continue
+        fixed = set(got.get("fixed") or [])
+        hit = fix = False
+        for f in pstore.FIELDS:
+            if not got.get(f):
+                continue
+            if f in fixed:
+                row[f] = got[f]
+                hit = fix = True
+            elif not row.get(f):
+                row[f] = got[f]
+                hit = True
+        row["_store"] = got.get("label") or ""
+        if fix:
+            row["_fixed"] = sorted(fixed)
+        n += hit
+        m += fix
+    if n:
+        log("■ 창고에서 오른쪽 면 %d지문 가져옴%s"
+            % (n, " (사람이 손본 %d지문 포함)" % m if m else ""))
 
 
 def _fill_from_pocketbook(rows, cfg, opt, log, own=(), fill=()):
@@ -679,6 +722,8 @@ class PocketbookSeries(Series):
         # 우리가 아직 안 쓴 자리는 기존 포켓북에서 채운다
         _fill_from_pocketbook(rows, cfg, opt, log,
                               fill=("flownote", "topic"))
+        # 창고가 **맨 마지막**이다 — 사람이 손본 자리는 아무것도 못 덮는다.
+        _fill_from_store(rows, cfg, opt, log)
         rows = self._apply_memtest(cfg, opt, rows, log)
         out = os.path.join(cfg.build_dir, "data.json")
         os.makedirs(cfg.build_dir, exist_ok=True)
