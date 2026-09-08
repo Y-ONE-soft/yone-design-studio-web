@@ -63,8 +63,14 @@ def plain(parts):
 
 
 def letters(text):
-    """알파벳·숫자만 남긴 지문(指紋). 서식·공백·구두점이 달라도 같아진다."""
-    return "".join(_LETTERS.findall(text.lower()))
+    """**알파벳만** 남긴 지문(指紋). 서식·공백·구두점이 달라도 같아진다.
+
+    ⚠ 숫자를 남기면 안 된다. 분석본 지문에는 **문장 번호**(`1 Dear valued
+      players, 2 Recently, …`)가 섞여 있는데 리테 원고에는 없다 — 숫자를 세면
+      두 글이 영영 안 만난다(광문1 실측: 교과서·부교재 33지문이 통째로 못
+      붙었다). 양쪽에서 똑같이 버리므로 견주는 데는 지장이 없다.
+    """
+    return "".join(c for c in _LETTERS.findall(text.lower()) if not c.isdigit())
 
 
 def render(parts, start=1):
