@@ -1086,13 +1086,17 @@ class PocketbookSeries(Series):
             self._fit_memtest(rows, M, build_dir, log)
             self._fit_right(rows, M, build_dir, log)
 
+        voca_pages = self._voca(cfg, opt, log)
+        if voca_pages and measure_pass:
+            voca_pages = self._fit_voca(voca_pages, M, build_dir, log)
+
         html = os.path.join(build_dir, "index.html")
         with open(html, "w", encoding="utf-8") as f:
             f.write(prender.build_html({
                 "title": (cfg.book or {}).get("title", "포켓북"),
                 "passages": rows, "metrics": cfg.section("metrics"),
                 "folio_start": opt.get("folio_start", 2),
-                "voca": self._voca(cfg, opt, log),
+                "voca": voca_pages,
                 "cover": None}))
         # ⚠ 자리표를 **파일로 내지 않으면** 지면에 표가 찍혀도 작업대는 그것을
         #   못 되짚는다 — 눌러도 조용히 아무 일이 안 난다(실제로 그랬다).
@@ -1300,6 +1304,45 @@ class PocketbookSeries(Series):
             log("■ 어휘 파트 %d면 (%s ~ %s)"
                 % (len(pgs), pgs[0]["day"], pgs[-1]["day"]))
         return pgs
+
+    @staticmethod
+    def _fit_voca(pgs, M, build_dir, log):
+        """어휘 낱말의 **진짜 높이**를 재서 면을 다시 나눈다.
+
+        ⚠ 글자 수로도, 자폭으로도 어림이 안 맞았다(같은 면이 1.12~1.52배로
+          흔들려 35면이 전부 판면 밖으로 밀렸다). 뜻·파생어·예문이 낱말마다
+          제각각이라 줄 수를 미리 알 수 없다. **한 면에 한 낱말씩 조판해 재고**
+          그 값으로 나눈다 — 지문·플로우노트가 이미 쓰는 방법이다.
+        """
+        items = [e for pg in pgs for e in pg["items"]]
+        pages = []
+        for e in items:
+            pages.append(prender.voca_page({"day": e["day"], "items": [e]},
+                                           M, 0, "l"))
+        path = os.path.join(build_dir, "_measure_voca.html")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write('<!doctype html><html><head><meta charset="utf-8">'
+                    '<link rel="stylesheet" href="pocket.css">'
+                    '<style>@page{size:%gmm 400mm}.pg{height:400mm}'
+                    '.badge,.folio{display:none}</style>'
+                    '</head><body>%s</body></html>'
+                    % (M["page_w"] + 2 * M["bleed"], "".join(pages)))
+        top = M["voca"][1]
+        try:
+            h = measure.measure(path,
+                                os.path.join(build_dir, "_measure_voca.pdf"),
+                                [str(i) for i in range(len(items))], top,
+                                390.0, log=log)
+        except Exception as e:
+            log("[어휘] 높이를 못 쟀다 (%s) — 어림으로 간다" % str(e)[:60])
+            return pgs
+        for i, e in enumerate(items):
+            e["_h"] = h.get(str(i), 0.0) + pvoca._GAP
+        out = pvoca.pages(items, M["voca"][3])
+        log("■ 어휘 %d낱말 실측 → %d면 (낱말 높이 %.1f~%.1fmm)"
+            % (len(items), len(out),
+               min(e["_h"] for e in items), max(e["_h"] for e in items)))
+        return out
 
     def _probe_html(self, rows, M, build_dir, name):
         """한 면에 지문 하나만 — 바닥 잉크를 재기 위한 조판용 HTML."""

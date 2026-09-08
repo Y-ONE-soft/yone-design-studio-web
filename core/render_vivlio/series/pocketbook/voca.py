@@ -149,7 +149,9 @@ def _lines(txt, width_mm, size_pt, track_em=-0.025):
 
 
 def height_mm(e, width_mm=115.0):
-    """낱말 하나의 높이(mm) 어림."""
+    """낱말 하나의 높이(mm). **실측값(`_h`)이 있으면 그것이 이긴다.**"""
+    if e.get("_h"):
+        return e["_h"]
     h = _W_LEAD + _lines(e.get("mean", ""), width_mm, 7.0) * _M_LEAD
     if e.get("derived"):
         h += _lines(e["derived"], width_mm, 6.0) * _X_LEAD
