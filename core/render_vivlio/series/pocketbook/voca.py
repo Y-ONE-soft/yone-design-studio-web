@@ -98,11 +98,12 @@ def _sheet(rows, sheet):
     return out
 
 
-# 낱말 하나가 차지하는 높이(mm) 어림. 지면 규격 그대로다.
-_W_LEAD = 3.9          # 표제어 줄
-_M_LEAD = 3.4          # 뜻 한 줄
-_X_LEAD = 2.35         # 예문·예문뜻 한 줄
-_GAP = 1.1             # 낱말 사이
+# 낱말 하나가 차지하는 높이(mm) 어림 — **CSS 행간 그대로**여야 한다.
+# 처음엔 눈대중으로 잡았다가 35면이 전부 판면 밖으로 15mm 씩 넘쳤다.
+_W_LEAD = 10.0 * 1.18 / 72.0 * 25.4     # 표제어 10pt · line-height 1.18
+_M_LEAD = 12.0 / 72.0 * 25.4            # 뜻 행간 12pt
+_X_LEAD = 7.0 / 72.0 * 25.4             # 예문·예문뜻 행간 7pt
+_GAP = 1.4                              # 낱말 사이(.e margin)
 
 
 def _lines(txt, width_mm, size_pt):
