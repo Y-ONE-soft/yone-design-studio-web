@@ -101,6 +101,110 @@ def _resolve_link(uri, search_dirs):
 _PNO6 = re.compile(r"^(\d{2})(\d{2})(\d{2})")
 
 
+# ── 삽화 찾기 ───────────────────────────────────────────────────────
+#
+# 삽화 폴더는 갈래마다 이름 규칙이 다르다(실측):
+#     고1/24년 9월/18.jpg · 41-42.jpg
+#     고1/올림포스 영어독해 기본2/올독기2 1강 1.png · 올독기2 1강 분석.png
+#     고1/올림포스 영어독해 기본1/11-1.jpg · 11-analysis.jpg
+#     교과서/공통영어2 능률(민)/공영2 능률(민) SL과 02.png
+#     ebs/수능특강 Light 영어독해연습(개정판)/1강 01.png · 4강 05~06.png
+# 규칙을 하나로 못 묶으므로 **파일 이름의 뒤쪽 두 토막**을 열쇠로 삼는다 —
+# 교재 이름(앞머리)은 폴더가 이미 말해 주고, 뒤쪽이 `1강 분석`·`SL과 02` 처럼
+# 지문을 가리키기 때문이다.
+_TOK = re.compile(r"\d+\s*[강과]|SL과|\d+[-~]\d+|\d+|분석|analysis|gateway",
+                  re.I)
+
+
+def _key_of(stem):
+    t = [x.replace(" ", "").lower() for x in _TOK.findall(stem)]
+    return tuple(t[-2:]) if len(t) >= 2 else tuple(t)
+
+
+_IDX = []
+
+
+def illust_index(bases):
+    """삽화 폴더 → [(폴더이름, {열쇠: 경로})]. 한 번만 훑는다."""
+    out = []
+    for base in bases or ():
+        base = os.path.expanduser(base)
+        if not os.path.isdir(base):
+            continue
+        for root, dirs, files in os.walk(base):
+            dirs[:] = [d for d in dirs if not d.startswith(".")]
+            idx = {}
+            for f in files:
+                if f.startswith(".") or os.path.splitext(f)[1].lower() not in (
+                        ".jpg", ".jpeg", ".png"):
+                    continue
+                stem = unicodedata.normalize("NFC", os.path.splitext(f)[0])
+                idx.setdefault(_key_of(stem), os.path.join(root, f))
+            if idx:
+                out.append((unicodedata.normalize(
+                    "NFC", os.path.relpath(root, base)), idx))
+    return out
+
+
+_RE_L_UNIT = re.compile(r"(\d{1,2})\s*강")
+_RE_L_NO = re.compile(r"(\d{1,3})")
+
+
+def illust_for(row, index):
+    """지문 → 삽화 경로. 라벨·단원으로 찾는다(지문번호가 없어도 된다)."""
+    lab = unicodedata.normalize("NFC", str(row.get("label") or ""))
+    unit = unicodedata.normalize(
+        "NFC", str(row.get("category") or row.get("unit") or ""))
+    ch = unicodedata.normalize("NFC", str(row.get("chapter") or ""))
+    keys, want = [], None
+    m = _RE_L_UNIT.search(unit) or _RE_L_UNIT.search(lab)
+    ym = re.search(r"(\d{2})\s*년\s*(\d{1,2})\s*월", ch or unit)
+    if "모의고사" in unit or ym:
+        want = "%s년 %d월" % (ym.group(1), int(ym.group(2))) if ym else None
+        n = re.match(r"\s*(\d{1,3})(?:\s*[-~]\s*(\d{1,3}))?", lab)
+        if n:
+            a, b = n.group(1), n.group(2)
+            keys = [("%s-%s" % (a, b),), ("%s~%s" % (a, b),)] if b else []
+            keys += [(a,), (a.zfill(2),)]
+    elif m:                                   # 부교재 — `1강 01` · `1강 분석`
+        u = "%s강" % int(m.group(1))
+        # ⚠ 꼬리는 **라벨에서** 떼야 한다. 단원(`올림포스 1강`)에서 잰 자리로
+        #   라벨을 자르면 엉뚱한 데를 잘라 번호를 통째로 잃는다.
+        ml = _RE_L_UNIT.search(lab)
+        tail = lab[ml.end():] if ml else lab
+        # 라벨이 `7강` 처럼 **강만** 있으면 그 단원의 분석 지문이다(분석본02 실측:
+        # `7강, 1번, 2번, 3번, …` 에서 맨 앞이 분석이다).
+        if "분석" in lab or "분석" in tail or not tail.strip():
+            keys = [(u, "분석"), (u, "analysis")]
+        else:
+            n = _RE_L_NO.search(tail)
+            if n:
+                v = int(n.group(1))
+                keys = [(u, str(v)), (u, "%02d" % v)]
+        want = unit.split()[0] if unit.split() else None
+    else:                                     # 교과서 — `본문2` → `SL과 02`
+        n = _RE_L_NO.search(lab)
+        les = "sl과" if re.search(r"SL", unit, re.I) else None
+        if les is None:
+            k = re.search(r"(\d{1,2})\s*과", unit + " " + lab)
+            les = "%d과" % int(k.group(1)) if k else None
+        if les and n:
+            v = int(n.group(1))
+            keys = [(les, "%02d" % v), (les, str(v))]
+        want = "교과서"
+    for folder, idx in index:
+        if want and want not in folder and want != "교과서":
+            continue
+        for k in keys:
+            if k in idx:
+                return idx[k]
+    for folder, idx in index:                 # 폴더를 못 좁히면 전체에서
+        for k in keys:
+            if k in idx:
+                return idx[k]
+    return None
+
+
 def find_illust(pno, grade, bases):
     """지문번호(YYMMNN) → 삽화 파일.
 
@@ -206,6 +310,8 @@ def prepare(items, build_dir, illust_dirs=(), category="", grade=""):
     # 글자가 통째로 사라진다(G-P7 이 배재2에서 3지문 잡았다).
     from core.render_vivlio.series.pocketbook import longsplit
     items = longsplit.split_all(items, log=None)
+    global _IDX
+    _IDX = illust_index(illust_dirs)
     assets = os.path.join(build_dir, "img")
     os.makedirs(assets, exist_ok=True)
     out = []
@@ -235,6 +341,10 @@ def prepare(items, build_dir, illust_dirs=(), category="", grade=""):
         if src is None:
             src = find_illust(p.get("pno") or p.get("key"),
                               p.get("grade") or grade, illust_dirs)
+        if src is None:
+            # ⚠ 지문번호로만 찾으면 **모의고사 말고는 하나도 안 붙는다**. 부교재·
+            #   교과서는 번호가 없고 라벨(`1강 01`·`본문2`)뿐이다 — 라벨로 찾는다.
+            src = illust_for(p, _IDX)
         if src:
             dst = os.path.join(assets, "p%03d%s" % (i, os.path.splitext(src)[1]))
             try:
