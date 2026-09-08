@@ -679,20 +679,28 @@ def _cut_extras(d):
         if not paras:
             continue
         runs = paras[0].get("runs") or []
-        txt = "".join(r.get("t", "") for r in runs)
-        if not _RE_EXTRA.search(txt):
-            _cut_prompt(paras[0])       # 발문만 붙은 경우도 있다(해석 쪽)
-            continue
+        runs = paras[0].get("runs") or []
         nums = [i for i, r in enumerate(runs) if r.get("mark") == "snum"]
         if not nums:
-            _cut_prompt(paras[0])
+            _cut_prompt(paras[0])       # 번호가 없으면 발문만 떼어 낸다(해석 쪽)
             continue
-        end = len(runs)
-        for j in range(nums[-1], len(runs)):
-            if runs[j].get("t", "").rstrip().endswith(_SENT_TAIL):
+        end, seen = len(runs), 0
+        for j in range(nums[-1] + 1, len(runs)):
+            t = runs[j].get("t", "")
+            if t.rstrip().endswith(_SENT_TAIL):
                 end = j + 1
                 break
-        if end < len(runs):
+            # ⚠ 마지막 문장이 마침표로 안 끝나는 글도 있다(`Warm regards, Becky
+            #   Bloom`). 그럴 땐 **빈 런 다음에 긴 글이 오는 자리**가 경계다.
+            if seen and not t.strip() and j + 1 < len(runs) \
+                    and len(runs[j + 1].get("t", "")) >= 25:
+                end = j
+                break
+            if t.strip():
+                seen += 1
+        tail = "".join(r.get("t", "") for r in runs[end:]).strip()
+        # 문제(`( ① )`)가 없고 **요약문만** 붙는 경우도 있다(광문1 1강 분석).
+        if end < len(runs) and (len(tail) >= 40 or _RE_EXTRA.search(tail)):
             paras[0]["runs"] = runs[:end]
         else:
             _cut_prompt(paras[0])
