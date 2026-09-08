@@ -445,7 +445,10 @@ def _load_adv():
     try:
         from fontTools.ttLib import TTFont
         here = os.path.dirname(os.path.abspath(__file__))
-        root = os.path.dirname(os.path.dirname(os.path.dirname(here)))
+        # …/core/render_vivlio/series/pocketbook → 저장소 뿌리까지 네 단계다.
+        root = here
+        for _ in range(4):
+            root = os.path.dirname(root)
         hit = glob.glob(os.path.join(root, "**", _FLOW_FONT), recursive=True)
         f = TTFont(hit[0])
         em, hm, cm = f["head"].unitsPerEm, f["hmtx"], f.getBestCmap()

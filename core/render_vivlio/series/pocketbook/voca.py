@@ -106,12 +106,45 @@ _X_LEAD = 7.0 / 72.0 * 25.4             # 예문·예문뜻 행간 7pt
 _GAP = 1.4                              # 낱말 사이(.e margin)
 
 
-def _lines(txt, width_mm, size_pt):
-    """이 글이 몇 줄이 될지 어림(한글 1em · 영문 0.5em)."""
+# ⚠ 줄 수는 **실제 자폭으로** 재야 한다. 한글 1em·영문 0.5em 으로 어림했더니
+#   같은 면이 어떤 곳은 1.12배, 어떤 곳은 1.52배로 어긋나 35면이 전부 판면
+#   밖으로 밀렸다. 지면 글꼴(Noto Sans CJK KR)의 자폭을 그대로 읽는다.
+_FONT = "NotoSansCJKkr-Medium.otf"
+_ADV = {}
+
+
+def _load_adv():
+    import glob
+    try:
+        from fontTools.ttLib import TTFont
+        here = os.path.dirname(os.path.abspath(__file__))
+        # …/core/render_vivlio/series/pocketbook → 저장소 뿌리까지 네 단계다.
+        root = here
+        for _ in range(4):
+            root = os.path.dirname(root)
+        hit = glob.glob(os.path.join(root, "**", _FONT), recursive=True)
+        f = TTFont(hit[0])
+        em, hm, cm = f["head"].unitsPerEm, f["hmtx"], f.getBestCmap()
+        for code, g in cm.items():
+            _ADV[chr(code)] = hm[g][0] / em
+    except Exception:
+        pass
+    _ADV["_"] = None
+
+
+def _lines(txt, width_mm, size_pt, track_em=-0.025):
+    """이 글이 몇 줄이 될지 — 글꼴 자폭으로 잰다."""
     if not txt:
         return 0
+    if "_" not in _ADV:
+        _load_adv()
     em = size_pt / 72.0 * 25.4
-    w = sum(em if ord(c) > 0x2000 else em * 0.5 for c in txt)
+    w = 0.0
+    for ch in txt:
+        a = _ADV.get(ch)
+        if a is None:
+            a = 1.0 if ord(ch) > 0x2000 else 0.55
+        w += (a + track_em) * em
     return max(1, int(w // width_mm) + (1 if w % width_mm else 0))
 
 
