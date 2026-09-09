@@ -894,13 +894,17 @@ def right_page(p, M, folio, category=""):
     #   줄어서(48mm 에서도 대부분 한 줄에 든다) **글이 많은 지문은 안 들어간다**.
     #   들어가는 지문만 한 단으로 놓고, 넘치는 지문은 두 단을 그대로 쓴다 —
     #   글자를 줄여 가며 한 단을 고집할 이유가 없다.
+    # `flow3` 손잡이 — 3덩어리 짜임새를 골라 본다(auto/one/two/three).
+    mode = str(M.get("flow3") or "auto")
     col1 = None
-    if len(ch) == 3:
+    if len(ch) == 3 and mode == "two":
+        pass
+    elif len(ch) == 3:
         wcol = M["flow"][2] - 2 * M["fbox_inset"] - 2 * M["fbox_pad"]
         need = [_flow_need(c, wcol, M, M["flow_size"]) + 2 * M["fbox_pad"]
                 for c in ch]
         room = M["flow"][3] - 2 * M["fbox_inset"] - 2 * M["fbox_gap"]
-        if sum(need) <= room:
+        if mode == "one" or (mode == "auto" and sum(need) <= room):
             col1 = need
     tall = len(ch) == 3 and not col1 and len(ch[0]) > len(ch[2])
     w2 = (1, 1)
@@ -912,7 +916,7 @@ def right_page(p, M, folio, category=""):
         pair = (ch[1], ch[2]) if tall else (ch[0], ch[1])
         w2 = tuple(_flow_need(c, cwv, M, M["flow_size"]) + ov for c in pair)
     boxes, conns = flow_boxes(M, len(ch), tall, w2, col1,
-                              bool(M.get("flow_col3")))
+                              mode == "three")
     for n, (c, (bx, by, bw, bh)) in enumerate(zip(ch, boxes)):
         col = bw - 2 * M["fbox_pad"]
         fsc, lsc = flow_fit(c, col, bh, M, not col1)

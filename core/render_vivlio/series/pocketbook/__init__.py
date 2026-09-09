@@ -1894,7 +1894,13 @@ class PocketbookSeries(Series):
             plan = prender.page_plan(rows, opt.get("folio_start", 2))
             per = [lead + step for lead, step in plan]
             # 어휘 파트는 지문이 아니라 `rows` 에 없다 — 따로 더해 준다.
-            want = start + sum(per) + int(meta.get("voca_pages") or 0)
+            # ⚠ 어휘는 **왼쪽 면부터** 시작하므로 앞이 홀수로 끝나면 조판이 빈
+            #   면을 한 장 끼운다(`build_html`). 그것까지 세야 한 면 어긋나지
+            #   않는다.
+            nv = int(meta.get("voca_pages") or 0)
+            fs0 = int(opt.get("folio_start", 2))
+            gap = 1 if (nv and (fs0 + sum(per)) % 2) else 0
+            want = start + sum(per) + gap + nv
             if n_pages != want:
                 report.fail("G-P1 면 수 %d ≠ 예상 %d (지문 %d개%s)"
                             % (n_pages, want, len(rows),
