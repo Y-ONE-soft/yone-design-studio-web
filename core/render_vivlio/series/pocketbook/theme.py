@@ -459,12 +459,15 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
 /* 잇는 표식 — 글리프가 아니라 테두리로 그린 갈매기다 */
 .fconn{position:absolute;border-radius:50%;background:var(--flow-arrow);
   display:flex;align-items:center;justify-content:center;z-index:2}
-.fconn i{display:block;width:1.05mm;height:1.05mm;
-  border-right:.3mm solid #fff;border-bottom:.3mm solid #fff;
-  transform:rotate(-45deg);margin-left:-.3mm}
-.fconn.d i{transform:rotate(45deg);margin:-.3mm 0 0}
-/* 대각선 — 왼쪽 단 아래에서 오른쪽 단 위로 */
-.fconn.x i{transform:rotate(-90deg);margin:0}
+/* ⚠ 두 변으로 그린 꺾쇠는 45도에서만 화살촉으로 보인다 — 대각선(90도)에서는
+   ㄱ 자 직각으로 나왔다(사용자 지적). 셋 다 **속 찬 삼각형**으로 그린다.
+   위를 향한 삼각형 하나를 돌려 쓴다: 아래 180도 · 옆 90도 · 대각선 45도. */
+.fconn i{display:block;width:0;height:0;
+  border-left:.75mm solid transparent;border-right:.75mm solid transparent;
+  border-bottom:1.15mm solid #fff}
+.fconn.d i{transform:rotate(180deg)}
+.fconn.x i{transform:rotate(45deg)}
+.fconn:not(.d):not(.x) i{transform:rotate(90deg)}
 .fbi p{margin:0}
 .fbi p.sec{margin-top:__flow_sec_gap__mm}
 /* 색은 **기호에만**. 원본 문자 스타일 4종이 글자 단위로 붙어 있다. */
