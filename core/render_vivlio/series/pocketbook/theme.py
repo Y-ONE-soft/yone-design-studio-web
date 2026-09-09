@@ -123,7 +123,9 @@ METRICS = {
     "fbox_pad": 2.0,
     "fbox_head": 4.6,           # 머리말 딱지가 먹는 높이
     "fconn": 3.6,               # 잇는 표식 지름
-    "flow_size": 9.0, "flow_lead": 4.1,
+    # 상자가 넓어진 만큼 글도 키웠다(9→9.5pt). 10pt 부터는 넘치는 덩어리가
+    # 2%→12% 로 뛴다(광문1 251덩어리 실측) — 9.5 가 한계다.
+    "flow_size": 9.5, "flow_lead": 4.35,
     "flow_min_size": 8.0,           # 넘칠 때 내려가는 자리
     "flow_track": -0.05,            # 자간 (원본 문자 스타일 Tracking=-50)
     "flow_sec_gap": 2.4,            # 묶음 사이 띄움(mm) — 한눈에 갈리게
@@ -439,6 +441,7 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
    ⚠ 상자 안 글은 `columns` 를 쓰지 않는다. 두 단으로 흘리면 왼쪽을 다 읽고
      오른쪽으로 건너뛰어야 해 흐름이 안 보인다(그래서 갈아엎었다). */
 .fbox{position:absolute;box-sizing:border-box;overflow:hidden;
+  display:flex;flex-direction:column;justify-content:center;
   background:url("img/flownote_grid.png") 0 0/100% 100% no-repeat,#fff;
   border:.25pt solid var(--flow-line);
   border-radius:1.6mm;padding:__fbox_pad__mm;z-index:1}
