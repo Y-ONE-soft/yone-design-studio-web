@@ -661,6 +661,9 @@ def _wrap_n(txt, col_mm, size_pt, track_em):
     return n
 
 
+_FLOW_FLOOR = 0.76      # 9.5pt → 7.2pt. 이 아래로는 읽히지 않는다
+
+
 def _flow_need(chunk, col_mm, M, size):
     """이 덩어리가 그 크기에서 먹는 높이(mm)."""
     lead = M["flow_lead"] * (size / M["flow_size"])
@@ -684,13 +687,15 @@ def flow_fit(chunk, col_mm, M):
     ⚠ 줄인 뒤에는 줄바꿈 자리가 달라져 줄 수가 도로 늘 수 있다. 한 번 셈해서
       끝내지 말고 **들어갈 때까지 한 눈금씩 내린다**.
     """
-    room = _fbox_size(M)[1] - 2 * M["fbox_pad"] - M["fbox_head"]
+    # ⚠ 딱지 아래 여백(0.3mm)과 마지막 줄 글자의 내려긋기가 셈에 안 잡힌다 —
+    #   그만큼 미리 뺀다. 안 빼면 7줄짜리 덩어리가 1.3mm 씩 삐져나왔다(실측).
+    room = _fbox_size(M)[1] - 2 * M["fbox_pad"] - M["fbox_head"] - 1.2
     sc = 1.0
-    while sc > 0.80:
+    while sc > _FLOW_FLOOR:
         if _flow_need(chunk, col_mm, M, M["flow_size"] * sc) <= room:
             return sc
         sc = round(sc - 0.02, 2)
-    return 0.80
+    return _FLOW_FLOOR
 
 
 def flow_rows(lines, col_mm=0.0, size_pt=9.0, track_em=-0.05):
