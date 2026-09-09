@@ -550,13 +550,20 @@ def flow_html(line):
 # (사용자 지시). 넘침이 이만큼 이내일 때만 손댄다 — 두 줄이 마땅한 줄까지
 # 억지로 붙이면 글자가 뭉개진다.
 _TIGHT_MAX = 1.12          # 단 폭 대비
-_TIGHT_FLOOR = -0.16       # em, 자간 하한
+_TIGHT_FLOOR = -0.19       # em, 자간 하한
+
+
+# 조판기가 실제로 그린 폭은 우리 어림보다 조금 넓다(광문1 771줄 실측: 중앙
+# 1.005 · 95% 1.014). 그 몫을 안 빼서 `애착`·`생김` 처럼 **한 글자가 다음 줄로**
+# 떨어졌다(사용자 지적, 11곳). 단을 그만큼 좁게 보고 미리 조인다.
+_WIDTH_SAFE = 0.985
 
 
 def _tight(line, col_mm, size_pt, track_em):
     """이 줄이 조금 넘치면 한 줄에 앉힐 자간(em), 아니면 None."""
     if not col_mm or not line.strip():
         return None
+    col_mm *= _WIDTH_SAFE
     w = flow_width_mm(line, size_pt, track_em)
     if w <= col_mm or w > col_mm * _TIGHT_MAX:
         return None
@@ -685,6 +692,7 @@ def _wrap_n(txt, col_mm, size_pt, track_em):
     ⚠ 예전엔 `전체 폭 ÷ 단 폭` 으로 어림했다. 낱말이 통째로 넘어가는 몫을
       못 세어 늘 낙관적이었고, 40개 상자에서 글이 아래로 삐져나왔다(실측).
     """
+    col_mm *= _WIDTH_SAFE
     n, cur = 1, 0.0
     for tok in re.split(r"(\s+)", txt):
         if not tok:
@@ -915,6 +923,20 @@ def right_page(p, M, folio, category=""):
                      '%s</div></div>'
                      % (_box(bx, by, bw, bh), bg, head, fst, "".join(rows)))
     for cx, cy, kind in conns:
+        if kind == "d":
+            # ⚠ 동그라미 표식은 **잇는 것처럼 안 보인다**(사용자 지적).
+            #   두 상자를 실제로 잇는 선을 긋고 끝에 작은 화살촉을 단다.
+            lw = M["fconn"]
+            parts.append(
+                '<div class="fline" style="%s">'
+                '<svg viewBox="0 0 24 100" preserveAspectRatio="none">'
+                '<path d="M12 0 L12 74" stroke="currentColor" stroke-width="4"'
+                ' fill="none"/>'
+                '<path d="M12 100 L3 70 L21 70 Z" fill="currentColor"/>'
+                '</svg></div>'
+                % _box(cx + M["fconn"] / 2 - lw / 4, cy - M["fbox_gap"] * 0.28,
+                       lw / 2, M["fbox_gap"] * 1.56))
+            continue
         if kind == "x":
             # ⚠ 네 상자가 만나는 자리에 동그라미만 띄우면 **어디서 어디로**
             #   가는지 안 보인다(사용자 지적). 두 모서리를 실제로 잇는 선을

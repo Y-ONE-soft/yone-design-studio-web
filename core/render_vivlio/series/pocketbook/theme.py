@@ -415,7 +415,11 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
 .illust img{width:100%;height:100%;object-fit:contain;object-position:top center;
   display:block}
 .translation{position:absolute;font-size:__trans_size__pt;
-  line-height:__trans_lead__mm;color:var(--trans);text-align:justify}
+  line-height:__trans_lead__mm;color:var(--trans);
+  /* ⚠ 양끝 맞추기(justify)를 걸었더니 **한 문장짜리 문단의 첫 줄**만 낱말
+     사이가 확 벌어졌다(사용자 지적). 완성본 `한글` 단락은 왼쪽 정렬에
+     자간 -30(=-0.03em)이다 — 그대로 맞춘다. */
+  text-align:left;letter-spacing:-.03em;word-break:keep-all}
 .translation p{margin:0}
 .folio{position:absolute;font-family:PBElice;font-size:__folio__pt;
   font-weight:700}
@@ -479,7 +483,8 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
   border-left:.75mm solid transparent;border-right:.75mm solid transparent;
   border-bottom:1.15mm solid #fff}
 .fconn.d i{transform:rotate(180deg)}
-.fdiag{position:absolute;z-index:2;color:var(--flow-arrow)}
+.fdiag,.fline{position:absolute;z-index:2;color:var(--flow-arrow)}
+.fline svg{width:100%;height:100%;display:block}
 .fdiag svg{width:100%;height:100%;display:block;overflow:visible}
 .fconn:not(.d):not(.x) i{transform:rotate(90deg)}
 .fbi p{margin:0}
