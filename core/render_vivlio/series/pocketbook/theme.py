@@ -539,7 +539,8 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
 .voca .no{font-size:__voca_no__pt;color:var(--navy);font-weight:500;
   vertical-align:.9mm}
 .voca .ck{display:inline-block;width:__voca_ck__mm;height:__voca_ck__mm;
-  border:.25pt solid var(--trans);border-radius:50%;
+  /* ⚠ 완성본은 **모서리 둥근 네모**다 — 동그라미로 두면 딴 물건이 된다. */
+  border:.25pt solid var(--trans);border-radius:.55mm;
   margin-left:__voca_ck_gap__mm;vertical-align:.2mm}
 .voca .hw{font-size:__voca_word__pt;line-height:1;margin-left:__voca_hw_gap__mm}
 /* ⚠ 발음기호는 완성본에 없던 것(26-2 원고에 새로 들어왔다). 표제어 옆에 두면
@@ -562,7 +563,10 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
 .vhead{position:absolute;background:var(--voca-chip);color:var(--navy);
   font-family:PBHand;font-size:__voca_head__pt;display:inline-flex;
   align-items:center;gap:1.2mm;padding:0 2.4mm;box-sizing:border-box;
-  border-radius:1.5mm;letter-spacing:-.025em;white-space:nowrap;width:auto}
+  /* ⚠ 딱지는 표 위에 **얹혀 이어진다** — 위만 둥글고 아래는 네모다.
+     그리고 표 윗선과 같은 선을 밑에 깔아 표와 한 덩어리로 보이게 한다. */
+  border-radius:1.5mm 1.5mm 0 0;border-bottom:.5pt solid var(--voca-rule);
+  letter-spacing:-.025em;white-space:nowrap;width:auto}
 .vhead svg{height:__voca_icon__mm;width:auto;flex:none}
 
 .topicband{position:absolute;background:var(--topic-bg);box-sizing:border-box;
