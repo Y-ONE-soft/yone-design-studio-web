@@ -618,30 +618,33 @@ def _fbox_size(M):
 def flow_boxes(M, n):
     """덩어리 상자 자리 → `[(x, y, w, h)]` · 잇는 표식 자리 → `[(x, y, 세로냐)]`.
 
-    넷이면 2×2, 셋이면 위 둘 + 아래 하나(가로로 꽉). 읽는 차례는 왼→오,
-    위→아래다 — 가로로 잇는 표식은 짝 사이에, 세로 표식은 두 줄 사이 가운데.
+    읽는 차례는 **세로**다 — 왼쪽 단을 위에서 아래로 읽고 오른쪽 단으로 넘어간다.
+
+        1  3
+        2  4
+
+    ⚠ 예전엔 가로로(1 2 / 3 4) 놓고 두 단 사이 한가운데에 아래 화살표를 뒀다.
+      화살표가 어디서 어디로 가는지 안 보였다(사용자 지적). 이제 화살표는
+      **그 단 안**, 제 상자 두 개 사이에만 놓는다. 셋이면 왼쪽 단에 둘을 쌓고
+      오른쪽 단은 한 칸을 통으로 쓴다.
     """
     fl, ins, gap = M["flow"], M["fbox_inset"], M["fbox_gap"]
     x0, y0 = fl[0] + ins, fl[1] + ins
     w, h = fl[2] - 2 * ins, fl[3] - 2 * ins
     cw, chh = (w - gap) / 2.0, (h - gap) / 2.0
     d = M["fconn"]
-    if n <= 2:
-        box = [(x0, y0, w, chh), (x0, y0 + chh + gap, w, chh)][:n]
-        conn = [(x0 + w / 2 - d / 2, y0 + chh + gap / 2 - d / 2, True)] \
-            if n == 2 else []
-        return box, conn
-    box = [(x0, y0, cw, chh), (x0 + cw + gap, y0, cw, chh)]
-    conn = [(x0 + cw + gap / 2 - d / 2, y0 + chh / 2 - d / 2, False)]
+    xr, yb = x0 + cw + gap, y0 + chh + gap
+    down = lambda cx: (cx + cw / 2 - d / 2, y0 + chh + gap / 2 - d / 2, True)
+    if n <= 1:
+        return [(x0, y0, w, h)][:n], []
+    if n == 2:
+        return [(x0, y0, cw, h), (xr, y0, cw, h)], []
     if n == 3:
-        box.append((x0, y0 + chh + gap, w, chh))
-    else:
-        box.append((x0, y0 + chh + gap, cw, chh))
-        box.append((x0 + cw + gap, y0 + chh + gap, cw, chh))
-        conn.append((x0 + cw + gap / 2, y0 + chh + gap + chh / 2 - d / 2,
-                     False))
-    conn.append((x0 + w / 2 - d / 2, y0 + chh + gap / 2 - d / 2, True))
-    return box, conn
+        return ([(x0, y0, cw, chh), (x0, yb, cw, chh), (xr, y0, cw, h)],
+                [down(x0)])
+    return ([(x0, y0, cw, chh), (x0, yb, cw, chh),
+             (xr, y0, cw, chh), (xr, yb, cw, chh)],
+            [down(x0), down(xr)])
 
 
 def _wrap_n(txt, col_mm, size_pt, track_em):
@@ -688,7 +691,7 @@ def _flow_need(chunk, col_mm, M, size):
     return need
 
 
-def flow_fit(chunk, col_mm, M):
+def flow_fit(chunk, col_mm, box_h, M):
     """이 덩어리가 상자에 안 들어가면 줄일 배율.
 
     ⚠ 줄인 뒤에는 줄바꿈 자리가 달라져 줄 수가 도로 늘 수 있다. 한 번 셈해서
@@ -696,7 +699,7 @@ def flow_fit(chunk, col_mm, M):
     """
     # ⚠ 딱지 아래 여백(0.3mm)과 마지막 줄 글자의 내려긋기가 셈에 안 잡힌다 —
     #   그만큼 미리 뺀다. 안 빼면 7줄짜리 덩어리가 1.3mm 씩 삐져나왔다(실측).
-    room = _fbox_size(M)[1] - 2 * M["fbox_pad"] - M["fbox_head"] - 1.2
+    room = box_h - 2 * M["fbox_pad"] - M["fbox_head"] - 1.2
     sc = 1.0
     while sc > _FLOW_FLOOR:
         if _flow_need(chunk, col_mm, M, M["flow_size"] * sc) <= room:
@@ -818,12 +821,9 @@ def right_page(p, M, folio, category=""):
                  % _box(fl[0], fl[1], fl[2], fl[3]))
     ch = flow_chunks(p.get("flownote") or [])
     boxes, conns = flow_boxes(M, len(ch))
-    cw = _fbox_size(M)[0] - 2 * M["fbox_pad"]
     for c, (bx, by, bw, bh) in zip(ch, boxes):
-        # 아래 한 줄짜리 넓은 상자는 글 폭이 두 배다
-        col = cw if bw < M["flow"][2] - 2 * M["fbox_inset"] - 1 \
-            else bw - 2 * M["fbox_pad"]
-        fsc = flow_fit(c, col, M)
+        col = bw - 2 * M["fbox_pad"]
+        fsc = flow_fit(c, col, bh, M)
         fst = "" if fsc == 1.0 else \
             ' style="font-size:%gpt;line-height:%gmm"' % (
                 M["flow_size"] * fsc, M["flow_lead"] * fsc)

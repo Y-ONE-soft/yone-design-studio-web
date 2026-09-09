@@ -444,7 +444,7 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
    ⚠ 상자 안 글은 `columns` 를 쓰지 않는다. 두 단으로 흘리면 왼쪽을 다 읽고
      오른쪽으로 건너뛰어야 해 흐름이 안 보인다(그래서 갈아엎었다). */
 .fbox{position:absolute;box-sizing:border-box;overflow:hidden;
-  display:flex;flex-direction:column;justify-content:center;
+  display:flex;flex-direction:column;justify-content:flex-start;
   background:url("img/flownote_grid.png") 0 0/100% 100% no-repeat,#fff;
   border:.25pt solid var(--flow-line);
   border-radius:1.6mm;padding:__fbox_pad__mm;z-index:1}
