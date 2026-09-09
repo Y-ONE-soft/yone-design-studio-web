@@ -637,20 +637,53 @@ def flow_boxes(M, n):
     return box, conn
 
 
-def flow_fit(chunk, col_mm, M):
-    """이 덩어리가 상자에 안 들어가면 줄일 배율. 줄 수를 **자폭으로** 센다."""
-    room = (_fbox_size(M)[1] - 2 * M["fbox_pad"] - M["fbox_head"]) \
-        / M["flow_lead"]
-    n = 0
+def _wrap_n(txt, col_mm, size_pt, track_em):
+    """이 글이 폭 `col_mm` 안에서 **몇 줄이 되는지**. 낱말 단위로 접는다.
+
+    ⚠ 예전엔 `전체 폭 ÷ 단 폭` 으로 어림했다. 낱말이 통째로 넘어가는 몫을
+      못 세어 늘 낙관적이었고, 40개 상자에서 글이 아래로 삐져나왔다(실측).
+    """
+    n, cur = 1, 0.0
+    for tok in re.split(r"(\s+)", txt):
+        if not tok:
+            continue
+        w = flow_width_mm(tok, size_pt, track_em)
+        if cur and cur + w > col_mm:
+            if tok.strip():
+                n += 1
+                cur = 0.0
+            else:
+                continue
+        while w > col_mm:               # 한 낱말이 한 줄보다 길면 글자로 끊긴다
+            n += 1
+            w -= col_mm
+        cur += w
+    return n
+
+
+def flow_fit(chunk, col_mm, M, size_pt=None):
+    """이 덩어리가 상자에 안 들어가면 줄일 배율."""
+    size = size_pt or M["flow_size"]
+    lead = M["flow_lead"] * (size / M["flow_size"])
+    room = _fbox_size(M)[1] - 2 * M["fbox_pad"] - M["fbox_head"]
+    need = 0.0
     for i, ln in enumerate(chunk):
         txt = _MD_BOLD.sub(r"\1", ln)
         if not i:
             txt = _FHEAD.sub("", txt)      # 머리말은 딱지로 빠진다
         if not txt.strip():
             continue
-        w = flow_width_mm(txt, M["flow_size"], M["flow_track"])
-        n += max(1, int(w / col_mm) + (1 if w % col_mm else 0))
-    return 1.0 if n <= room else max(0.80, round(room / n, 2))
+        # 덩어리 안에 또 머리말이 있으면(합친 덩어리다) 그 앞이 벌어진다
+        if i and _FHEAD.match(ln):
+            need += M["flow_sec_gap"]
+        need += _wrap_n(txt, col_mm, size, M["flow_track"]) * lead
+    if need <= room:
+        return 1.0
+    sc = round(room / need, 2)
+    # 줄인 뒤엔 줄바꿈이 달라진다 — 한 번 더 재서 모자라면 조금씩 더 줄인다
+    while sc > 0.80 and flow_fit(chunk, col_mm, M, M["flow_size"] * sc) < 1.0:
+        sc = round(sc - 0.02, 2)
+    return max(0.80, sc)
 
 
 def flow_rows(lines, col_mm=0.0, size_pt=9.0, track_em=-0.05):
