@@ -615,7 +615,7 @@ def _fbox_size(M):
     return ((fl[2] - 2 * ins - gap) / 2.0, (fl[3] - 2 * ins - gap) / 2.0)
 
 
-def flow_boxes(M, n, tall_first=False):
+def flow_boxes(M, n, tall_first=False, w2=(1, 1)):
     """덩어리 상자 자리 → `[(x, y, w, h)]` · 잇는 표식 자리 → `[(x, y, 세로냐)]`.
 
     읽는 차례는 **세로**다 — 왼쪽 단을 위에서 아래로 읽고 오른쪽 단으로 넘어간다.
@@ -641,12 +641,19 @@ def flow_boxes(M, n, tall_first=False):
         return [(x0, y0, cw, h), (xr, y0, cw, h)], []
     if n == 3:
         # ⚠ 통 칸을 늘 오른쪽에 두면 거기 든 덩어리가 짧을 때 칸이 텅 빈다.
-        #   **가장 긴 덩어리가 통 칸에 가도록** 좌우를 뒤집는다.
+        #   **c1 과 c3 중 긴 쪽**이 통 칸을 갖고, 쌓이는 쪽은 두 덩어리의
+        #   길이대로 나눈다(반씩 자르면 긴 덩어리만 글자가 줄었다).
+        a, b = (w2[0], w2[1]) if tall_first else (w2[0], w2[1])
+        f = min(0.68, max(0.32, a / float(a + b))) if a + b else 0.5
+        ha = (h - gap) * f
+        hb = h - gap - ha
         if tall_first:
-            return ([(x0, y0, cw, h), (xr, y0, cw, chh), (xr, yb, cw, chh)],
-                    [down(xr)])
-        return ([(x0, y0, cw, chh), (x0, yb, cw, chh), (xr, y0, cw, h)],
-                [down(x0)])
+            return ([(x0, y0, cw, h), (xr, y0, cw, ha),
+                     (xr, y0 + ha + gap, cw, hb)],
+                    [(xr + cw / 2 - d / 2, y0 + ha + gap / 2 - d / 2, True)])
+        return ([(x0, y0, cw, ha), (x0, y0 + ha + gap, cw, hb),
+                 (xr, y0, cw, h)],
+                [(x0 + cw / 2 - d / 2, y0 + ha + gap / 2 - d / 2, True)])
     return ([(x0, y0, cw, chh), (x0, yb, cw, chh),
              (xr, y0, cw, chh), (xr, yb, cw, chh)],
             [down(x0), down(xr)])
@@ -826,8 +833,11 @@ def right_page(p, M, folio, category=""):
                  % _box(fl[0], fl[1], fl[2], fl[3]))
     ch = flow_chunks(p.get("flownote") or [])
     # 셋이면 어느 쪽이 통 칸인지는 **덩어리 길이**가 정한다
-    tall = len(ch) == 3 and len(ch[0]) >= max(len(ch[1]), len(ch[2]))
-    boxes, conns = flow_boxes(M, len(ch), tall)
+    tall = len(ch) == 3 and len(ch[0]) > len(ch[2])
+    w2 = (1, 1)
+    if len(ch) == 3:
+        w2 = (len(ch[1]), len(ch[2])) if tall else (len(ch[0]), len(ch[1]))
+    boxes, conns = flow_boxes(M, len(ch), tall, w2)
     for c, (bx, by, bw, bh) in zip(ch, boxes):
         col = bw - 2 * M["fbox_pad"]
         fsc = flow_fit(c, col, bh, M)
