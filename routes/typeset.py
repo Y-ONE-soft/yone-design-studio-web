@@ -141,6 +141,17 @@ def api_run(material_id):
                     rel_paths = []
             except (ValueError, TypeError):
                 rel_paths = []
+            # 원고의 원래 수정시각(브라우저 lastModified, ms) — 저장 파일의
+            # mtime 으로 복원한다. 파서의 '같은 단계 원고 중 최신본' 규칙이
+            # 이 시각을 본다 (없으면 저장 시각 = 전부 동률 → 개정 표기로만
+            # 판정).
+            try:
+                mtimes = json.loads(request.form.get(f"{key}_mtimes", "")
+                                    or "[]")
+                if not isinstance(mtimes, list):
+                    mtimes = []
+            except (ValueError, TypeError):
+                mtimes = []
             paths = []
             manifest = []
             used_names = set()
@@ -168,6 +179,12 @@ def api_run(material_id):
                     path = os.path.join(upload_dir, safe_name)
                     f.save(path)
                     paths.append(path)
+                    _mt = mtimes[_i] if _i < len(mtimes) else 0
+                    if isinstance(_mt, (int, float)) and _mt > 0:
+                        try:
+                            os.utime(path, (_mt / 1000.0, _mt / 1000.0))
+                        except OSError:
+                            pass
                     rel = rel_paths[_i] if _i < len(rel_paths) else ""
                     manifest.append({"saved": safe_name,
                                      "rel": rel if isinstance(rel, str) else "",

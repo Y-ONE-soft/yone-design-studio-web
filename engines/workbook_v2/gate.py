@@ -625,6 +625,10 @@ def find_unused_uploads(content, uploads_dir):
     for sd in steps.values():
         if isinstance(sd, dict) and sd.get("filename"):
             used.add(_norm_fname(sd["filename"]))
+    # 파서가 '같은 단계 최신본' 규칙으로 밀어낸 구판(개정본 짝) — 의도된 제외
+    superseded = {_norm_fname(n)
+                  for n in ((content or {}).get("superseded_manuscripts")
+                            or [])}
     st3 = steps.get("step3") or {}
     st3_items = ((st3.get("normal") or []) + (st3.get("short") or [])
                  if isinstance(st3, dict) else [])
@@ -655,6 +659,9 @@ def find_unused_uploads(content, uploads_dir):
             nf = unicodedata.normalize("NFC", f)
             key = _norm_fname(nf)
             if key in used:
+                continue
+            if key in superseded:
+                expected.append(nf)
                 continue
             # 업로드 슬롯 접두 사본("manuscripts_X")과 스테이징 사본(X)이
             # 같은 uploads 디렉터리에 공존 (W18 sero 실증: 26개 오탐) —

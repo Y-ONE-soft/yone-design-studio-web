@@ -3685,6 +3685,112 @@ def _find_manuscript_file_by_content(manuscript_dir, step_key, used_files,
 _LAST_PICK = {}
 
 
+# ── 같은 단계 원고가 여럿일 때 최신본 채택 (사용자 지시 2026-09-10) ──────────
+# 'Step1 C2 빈칸어휘 정답지.docx' 와 'Step1 C2 빈칸어휘 정답지(개정).docx' 처럼
+# 같은 슬롯의 변형본이 폴더에 함께 있으면 **더 최근에 올라온(수정시각이 늦은)**
+# 파일로 조판한다. 종전에는 config 파일명과 정확히 같은 파일이 있으면 그것을
+# 그대로 써서, 개정본이 옆에 있어도 그대로 구판이 조판됐다 (2026-09-10 실측:
+# 모의고사 워크북 26개 회차의 빈칸어휘가 전부 구판 — (개정) 파일은 한 번도
+# 채택된 적이 없다).
+# 가족 판정은 파일명 구조로 — 개정 표기 토큰(개정/수정/최신/최종/rev/new/v2…)
+# 만 벗기고, 슬롯을 가르는 말(정답지/객관식/서술형 등)은 그대로 둔다. 그래서
+# '어법선택.docx' 와 '어법선택(객관식).docx' 는 가족이 아니다(상·하단 슬롯).
+_RE_REVISION_TOKEN = re.compile(
+    r"(?<![A-Za-z0-9가-힣])"
+    r"(?:재|\d+\s*차\s*)?"
+    r"(?:개정판?|수정본?|최신본?|최종본?|revised|rev|new|final|v\d+|ver\d+)"
+    r"\s*\d*"
+    r"(?![A-Za-z가-힣])", re.I)
+
+
+def _manu_family_key(filename):
+    """'Step1 C2 빈칸어휘 정답지(개정).docx' → 'step1c2빈칸어휘정답지'.
+    개정 표기·공백·괄호·업로드 접두(manuscripts_)만 제거. 확장자 제외."""
+    nfc = unicodedata.normalize("NFC", filename or "")
+    stem = os.path.splitext(nfc)[0]
+    if stem.startswith("manuscripts_"):
+        stem = stem[len("manuscripts_"):]
+    stem = _RE_REVISION_TOKEN.sub(" ", stem)
+    return re.sub(r"[^A-Za-z0-9가-힣]", "", stem).lower()
+
+
+def _has_revision_token(filename):
+    stem = os.path.splitext(unicodedata.normalize("NFC", filename or ""))[0]
+    return bool(_RE_REVISION_TOKEN.search(stem))
+
+
+def _prefer_latest_variant(manuscript_dir, chosen_path, used_files, log=None,
+                           step_key=""):
+    """chosen_path 와 같은 가족(개정 표기만 다른 파일)이 폴더에 더 있으면
+    가장 최근에 수정된 파일을 고른다. → (채택 경로, 밀려난 경로 목록)
+
+    - 후보: 같은 폴더·같은 확장자의 원고 파일 중 가족 키가 같고, 아직 다른
+      슬롯에 쓰이지 않은 것. Office 잠금 파일('~$…')·숨김 파일 제외.
+      확장자가 다른 쌍(hwp↔docx 재수출)은 밑줄 추출 등 형식 의존 동작이
+      바뀔 수 있어 가족으로 보지 않는다 — 종전 동작 유지.
+    - 수정시각(mtime)이 가장 늦은 파일 채택. 폴더째 업로드처럼 2초 이내
+      동률이면 개정 표기가 있는 쪽, 그래도 같으면 원래 채택본 유지.
+    - 밀려난 파일은 호출부가 used_files 에 넣는다 — A1 보충흡수·대체 탐색이
+      구판을 다시 먹어 지문이 2배가 되는 사고(W67 변형) 방지.
+    """
+    import time
+    _n = lambda p: unicodedata.normalize("NFC", p)
+    used_n = {_n(u) for u in (used_files or set())}
+    chosen_n = _n(chosen_path)
+    key = _manu_family_key(os.path.basename(chosen_path))
+    ext = os.path.splitext(chosen_path)[1].lower()
+    if len(key) < 4:
+        return chosen_path, []
+    try:
+        names = os.listdir(manuscript_dir)
+    except OSError:
+        return chosen_path, []
+    fam = []
+    for name in names:
+        if name.startswith(".") or name.startswith("~$"):
+            continue
+        if os.path.splitext(name)[1].lower() != ext:
+            continue
+        fp = os.path.join(manuscript_dir, name)
+        if not os.path.isfile(fp):
+            continue
+        if _manu_family_key(name) != key:
+            continue
+        if _n(fp) != chosen_n and _n(fp) in used_n:
+            continue
+        try:
+            mt = os.stat(fp).st_mtime
+        except OSError:
+            continue
+        fam.append((fp, mt))
+    if len(fam) <= 1 or not any(_n(fp) == chosen_n for fp, _ in fam):
+        return chosen_path, []
+    newest = max(mt for _, mt in fam)
+    top = [fp for fp, mt in fam if newest - mt <= 2.0]
+    if len(top) > 1:
+        marked = [fp for fp in top
+                  if _has_revision_token(os.path.basename(fp))]
+        if marked:
+            top = marked
+    if any(_n(fp) == chosen_n for fp in top):
+        pick = chosen_path
+    else:
+        pick = sorted(top)[0]
+    losers = [fp for fp, _ in fam if _n(fp) != _n(pick)]
+    if log:
+        def _d(fp):
+            try:
+                return time.strftime("%Y-%m-%d %H:%M",
+                                     time.localtime(os.stat(fp).st_mtime))
+            except OSError:
+                return "?"
+        log("[선택] %s: 같은 단계 원고 %d개 → 최신 '%s'(%s) 채택 / 제외: %s"
+            % (step_key, len(fam), os.path.basename(pick), _d(pick),
+               ", ".join("'%s'(%s)" % (os.path.basename(x), _d(x))
+                         for x in losers)))
+    return pick, losers
+
+
 def _find_manuscript_file(manuscript_dir, expected_filename, used_files=None):
     """config에 지정된 파일명이 없을 때 유사 파일을 찾는 fallback.
 
@@ -3953,6 +4059,19 @@ def parse_manuscript_folder(manuscript_dir, config, grade, year, month, log=None
                 log(f"[파서] 파일 없음, 건너뜀: {filename} "
                     f"(기대 파일명 기준 매칭 후보 0개)")
                 continue
+
+        # 같은 단계 원고가 여럿(개정본 등)이면 최신본으로 — 사용자 지시
+        # 2026-09-10. 밀려난 구판은 used 에 넣어 뒤 단계(보충흡수·대체
+        # 탐색)가 다시 먹지 못하게 하고, 게이트가 '미사용 원고'로 오인하지
+        # 않도록 content 에 기록한다.
+        fpath, superseded = _prefer_latest_variant(
+            manuscript_dir, fpath, used_files, log, step_key)
+        filename = os.path.basename(fpath)
+        used_files.add(fpath)
+        for _sp in superseded:
+            used_files.add(_sp)
+            result.setdefault("superseded_manuscripts", []).append(
+                os.path.basename(_sp))
 
         extract_ul = step_key in needs_ul
         ext = os.path.splitext(filename)[1].lower()

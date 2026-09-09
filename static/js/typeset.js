@@ -222,6 +222,17 @@ document.getElementById('typeset-form').addEventListener('submit', async (e) => 
       formData.append(k + '_relpaths', JSON.stringify(rels));
     }
   });
+  // 원고 파일의 원래 수정시각(lastModified, ms)을 input.files 순서와 1:1로
+  // 보낸다. 서버가 저장 파일의 mtime 으로 되돌려, 같은 단계 원고가 둘일 때
+  // (예: '(개정)') 파서가 '더 최근에 올라온 것'을 고를 수 있게 한다 —
+  // 업로드 저장 시각은 전부 같아서 이 정보 없이는 최신 판정이 불가능하다.
+  Object.keys(_fileStore).forEach((k) => {
+    const files = Array.from((_fileStore[k] && _fileStore[k].files) || []);
+    if (files.length) {
+      formData.append(k + '_mtimes',
+        JSON.stringify(files.map((f) => Number(f.lastModified) || 0)));
+    }
+  });
   const runBtn = document.getElementById('run-btn');
 
   runBtn.disabled = true;
