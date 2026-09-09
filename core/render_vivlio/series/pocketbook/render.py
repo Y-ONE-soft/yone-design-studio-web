@@ -591,8 +591,15 @@ def flow_chunks(lines, cap=4):
     if not ch:
         return []
     want = 3 if len(lines) <= 9 else cap
+    # ⚠ 그냥 **가장 짧은 짝**부터 붙이면 한 덩어리만 일곱 줄로 부풀어 그 상자만
+    #   글이 7.2pt 까지 줄어든다(본문2·41~42번 실측). 붙인 뒤 **가장 큰 덩어리가
+    #   제일 작아지는** 짝을 고른다 — 넷이 고르게 나뉜다.
     while len(ch) > want:
-        i = min(range(len(ch) - 1), key=lambda k: len(ch[k]) + len(ch[k + 1]))
+        i = min(range(len(ch) - 1),
+                key=lambda k: (max([len(ch[k]) + len(ch[k + 1])]
+                                   + [len(c) for j, c in enumerate(ch)
+                                      if j not in (k, k + 1)]),
+                               len(ch[k]) + len(ch[k + 1])))
         ch[i] = ch[i] + ch.pop(i + 1)
     while len(ch) < 3 and max(len(c) for c in ch) >= 4:
         i = max(range(len(ch)), key=lambda k: len(ch[k]))
@@ -661,7 +668,7 @@ def _wrap_n(txt, col_mm, size_pt, track_em):
     return n
 
 
-_FLOW_FLOOR = 0.76      # 9.5pt → 7.2pt. 이 아래로는 읽히지 않는다
+_FLOW_FLOOR = 0.72      # 9.5pt → 6.8pt. 일곱 줄짜리 덩어리 둘만 여기까지 간다
 
 
 def _flow_need(chunk, col_mm, M, size):
