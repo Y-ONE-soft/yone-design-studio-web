@@ -1238,11 +1238,26 @@ class PocketbookSeries(Series):
         if voca_pages and measure_pass:
             voca_pages = self._fit_voca(voca_pages, M, build_dir, log)
 
+        # 「주제 :」 써 보는 칸은 **광문 완성본에만** 있다(사용자 지시).
+        #   학교 이름으로 켜되 `options.topic_box` 로 강제할 수 있다.
+        school = os.path.basename(os.path.normpath(cfg.book_dir)) \
+            if hasattr(cfg, "book_dir") else \
+            os.path.basename(os.path.dirname(os.path.normpath(build_dir)))
+        want_tb = opt.get("topic_box")
+        if want_tb is None:
+            want_tb = school.startswith("광문")
+        if want_tb:
+            M = dict(M, topic_box=1)
+            cfg.section("metrics")
+            log("■ 「주제 :」 써 보는 칸 넣음(광문)")
+
         html = os.path.join(build_dir, "index.html")
         with open(html, "w", encoding="utf-8") as f:
             f.write(prender.build_html({
                 "title": (cfg.book or {}).get("title", "포켓북"),
-                "passages": rows, "metrics": cfg.section("metrics"),
+                "passages": rows,
+                "metrics": dict(cfg.section("metrics") or {},
+                                **({"topic_box": 1} if want_tb else {})),
                 "folio_start": opt.get("folio_start", 2),
                 "voca": voca_pages,
                 "cover": None}))

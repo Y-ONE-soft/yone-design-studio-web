@@ -95,7 +95,13 @@ METRICS = {
     # 구멍이 뚫려 아예 안 보인다. 지문면(왼쪽 면)은 오른쪽이 안쪽이다.
     # 판면은 이미 130mm 에서 끝나므로, 주석이 그보다 나가더라도 여기까지다.
     "bind_safe": 12.0,
-    "badge": [15.0, 15.0, 18.0, 5.5],       # x y w h
+    "badge": [15.0, 15.0, 18.0, 5.5],
+    # 「주제 :」 직접 써 보는 칸 — 26-1-기말 광문1 완성본(`내지2`) 실측.
+    #   지문번호 딱지 오른쪽에 붙어 오른쪽 여백선까지 간다. 광문만 쓴다.
+    "topicbox": [36.05, 10.44, 93.90, 10.82],
+    "topicbox_r": 0.5,                       # 모서리
+    "topicbox_lab": [37.30, 11.50],          # 「주제 :」 자리
+    "topicbox_pen": [126.36, 8.25, 3.72, 3.32],       # x y w h
     "badge_size": 9.5, "badge_radius": 1.0,
     "passage": [15.0, 24.0, 115.0, 118.0],  # x y w h
     "passage_size": 9.0, "passage_lead": 24.0,
@@ -254,6 +260,7 @@ def build_css(palette=None, metrics=None, highlight=None):
         "mt_size": "%g" % M["memtest_size"], "mt_lead": "%g" % M["memtest_lead"],
         "flow_sec_gap": "%g" % M["flow_sec_gap"],
         "flow_track": "%g" % M["flow_track"],
+        "topicbox_r": "%g" % M["topicbox_r"],
         "syntitle_dot": "%g" % M["syntitle_dot"],
         "syntitle_dot_gap": "%g" % M["syntitle_dot_gap"],
         "badge_size": "%g" % M["badge_size"],
@@ -419,6 +426,13 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
      자간 -30(=-0.03em)이다 — 그대로 맞춘다. */
   text-align:left;letter-spacing:-.03em;word-break:keep-all}
 .translation p{margin:0}
+/* 「주제 :」 써 보는 칸 — 완성본대로 남색 테두리에 도담도담 9pt(자간 -0.1em) */
+.tbox{position:absolute;border:.5pt solid var(--navy);
+  border-radius:__topicbox_r__mm}
+.tboxlab{position:absolute;font-family:PBDodam;font-size:9pt;
+  letter-spacing:-.1em;color:var(--navy);white-space:nowrap}
+.tboxpen{position:absolute}
+.tboxpen svg{width:100%;height:100%;display:block}
 .folio{position:absolute;font-family:PBElice;font-size:__folio__pt;
   font-weight:700}
 /* 쪽번호 **옆에 붙는 말**(단원·VOCA)은 완성본이 Medium 이다 — Bold 로 두면
@@ -437,6 +451,7 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
 /* 딱지 아이콘 — 원본 벡터를 그대로 심는다(이모지 아님) */
 .ic-chip_flow{height:3.2mm;width:auto;flex:none}
 .ic-chip_memtest{height:3.4mm;width:auto;flex:none}
+.ic-pen{width:100%;height:100%;display:block}
 .ic-synmark{height:__synmark_h__mm;width:auto;flex:none;overflow:visible}
 /* 모눈은 원본에서 뽑은 이미지를 쓴다. CSS 그라디언트는 뷰어 반올림 때문에
    1.44mm 격자가 뭉쳐 굵은 격자무늬로 나온다(실측). */

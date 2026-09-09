@@ -346,6 +346,15 @@ def left_page(p, M, folio):
         parts.append('<div%s style="%s%s"><p>%s</p></div>'
                      % (_refs.mark(_refs.of(p, "translation"), "translation"),
                         _box(tr[0], tr[1], tr[2]), st, ESC(p["translation"])))
+    # 「주제 :」 써 보는 칸 — 광문 완성본에만 있다(`options.topic_box`).
+    if M.get("topic_box"):
+        tb2 = M["topicbox"]; tl = M["topicbox_lab"]; tp = M["topicbox_pen"]
+        parts.append('<div class="tbox" style="%s"></div>'
+                     % _box(tb2[0], tb2[1], tb2[2], tb2[3]))
+        parts.append('<div class="tboxlab" style="%s">주제 :</div>'
+                     % _box(tl[0], tl[1]))
+        parts.append('<div class="tboxpen" style="%s">%s</div>'
+                     % (_box(tp[0], tp[1], tp[2], tp[3]), _svg("pen")))
     parts.append('<div class="folio" style="%s"><b>%s</b> POCKET BOOK</div>'
                  % (_box(12.9, M["folio_y"]), folio))
     return ('<section class="pg %s"><div class="trim">%s</div></section>'
