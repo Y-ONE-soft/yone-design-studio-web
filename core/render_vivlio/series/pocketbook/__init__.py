@@ -1944,7 +1944,13 @@ class PocketbookSeries(Series):
                 #   자른다. 자리를 옮기면 원본과 달라지므로(왼쪽에 붙여 봤더니
                 #   오른쪽으로 더 잘렸다: 한영1 178→156) 막지 않고 따로 센다.
                 rubies = [x["ruby"] for x in r["passage_runs"] if x.get("ruby")]
+                # ⚠ 장문은 지문이 **두 면에 걸쳐** 있다(`split`). 한 면만 보면
+                #   나머지 절반이 통째로 "유실"로 잡힌다(43~45번 실측).
+                more = [doc[idx + k] for k in range(1, step)
+                        if r.get("split") and idx + k < n_pages]
                 page_bag = _page_bag(page, M["anno_size"])
+                for q in more:
+                    page_bag += _page_bag(q, M["anno_size"])
                 want_bag = _bag("".join(
                     x for x in rubies if prender.ruby_mm(x) <= WIDE_RUBY_MM))
                 want_ruby = sum(want_bag.values())
@@ -1967,6 +1973,9 @@ class PocketbookSeries(Series):
                 sc = r.get("scale", 1.0)
                 got_bag = _page_bag(page, M["passage_size"] * sc)
                 got_bag += _page_bag(page, SUP_SIZE, tol=0.25)
+                for q in more:
+                    got_bag += _page_bag(q, M["passage_size"] * sc)
+                    got_bag += _page_bag(q, SUP_SIZE, tol=0.25)
                 miss = _bag(_text(r["passage_runs"])) - got_bag
                 if sum(miss.values()):
                     wrong.append((r.get("key") or r.get("label"),
