@@ -466,8 +466,10 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
 /* ⚠ 한 단에서는 머리말이 첫 줄에 붙는다. 색을 줄 전체에 주면 **본문까지
    파래진다**(실측) — 색은 머리말 딱지에만. */
 .fbl{color:inherit}
-.fbl .fbn{margin-right:1.1mm;vertical-align:-.55mm}
-.fbl .fbt{margin-right:1.4mm}
+/* ⚠ 첫 줄에 붙는 머리말은 본문 크기(9.5pt)를 물려받아 **네 덩어리짜리보다
+   커 보였다**(사용자 지적). 딱지와 같은 7pt 로 못 박는다. */
+.fbl .fbn{margin-right:1.1mm;vertical-align:-.5mm}
+.fbl .fbt{margin-right:1.4mm;font-size:7pt}
 .fbn{display:inline-flex;align-items:center;justify-content:center;
   width:3.2mm;height:3.2mm;border-radius:50%;flex:none;
   background:var(--flow-brk);color:#fff;font-size:5.5pt;line-height:1}
