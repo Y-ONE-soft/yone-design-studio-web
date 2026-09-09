@@ -99,6 +99,9 @@ METRICS = {
     # 「주제 :」 직접 써 보는 칸 — 26-1-기말 광문1 완성본(`내지2`) 실측.
     #   지문번호 딱지 오른쪽에 붙어 오른쪽 여백선까지 간다. 광문만 쓴다.
     "topicbox": [36.05, 10.44, 93.90, 10.82],
+    # 두 줄 배지 — 「주제 :」 칸 왼쪽에 세워 둔다(광문). 칸과 위·아래를 맞춘다.
+    "badge2": [15.0, 10.44, 19.05, 10.82],
+    "badge2_pad": 1.2, "badge2_lead": 3.9,
     "topicbox_r": 0.5,                       # 모서리
     "topicbox_lab": [37.30, 11.50],          # 「주제 :」 자리
     "topicbox_pen": [126.36, 8.25, 3.72, 3.32],       # x y w h
@@ -261,6 +264,7 @@ def build_css(palette=None, metrics=None, highlight=None):
         "flow_sec_gap": "%g" % M["flow_sec_gap"],
         "flow_track": "%g" % M["flow_track"],
         "topicbox_r": "%g" % M["topicbox_r"],
+        "badge2_pad": "%g" % M["badge2_pad"],
         "syntitle_dot": "%g" % M["syntitle_dot"],
         "syntitle_dot_gap": "%g" % M["syntitle_dot_gap"],
         "badge_size": "%g" % M["badge_size"],
@@ -360,6 +364,10 @@ html,body{margin:0;padding:0;background:#fff}
   font-size:__badge_size__pt;display:inline-flex;align-items:center;
   justify-content:center;letter-spacing:.02em;padding:0 2mm;white-space:nowrap;
   box-sizing:border-box;border-radius:__badge_r__mm;min-width:__badge_w__mm}
+/* 두 줄 배지 — 위 칸 교재명, 아래 칸 지문번호 */
+.badge.two{flex-direction:column;justify-content:center;white-space:normal;
+  padding:__badge2_pad__mm .8mm;text-align:center;letter-spacing:0}
+.badge.two .bh{opacity:.82;font-size:.86em}
 .passage{position:absolute;font-size:__pass_size__pt;line-height:var(--lead);
   text-align:justify;letter-spacing:__track__em;hyphens:none}
 /* ⚠ .w 에 line-height 를 다시 주면 안 된다 — 낱말마다 24pt 로 되돌아가서

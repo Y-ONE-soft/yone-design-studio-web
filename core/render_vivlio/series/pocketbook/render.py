@@ -301,7 +301,19 @@ def left_page(p, M, folio):
     scale = p.get("scale", 1.0)
     parts = []
     tag = _badge_text(p)
-    if tag:
+    if tag and M.get("topic_box"):
+        # ⚠ 「주제 :」 칸을 넣으면 한 줄짜리 긴 배지가 그 칸을 **덮는다**
+        #   (`능률(민) SL2 본문2`, 사용자 지적). 광문은 배지를 세로로 세워
+        #   위 칸에 교재명, 아래 칸에 지문번호를 넣는다.
+        b2 = M["badge2"]
+        head, no = _badge_parts(p)
+        sz, ld = _badge2_fit((head, no), b2[2], b2[3], M)
+        parts.append('<div class="badge two" style="%s;font-size:%.2fpt;'
+                     'line-height:%gmm">%s<span>%s</span></div>'
+                     % (_box(b2[0], b2[1], b2[2], b2[3]), sz, ld,
+                        ('<span class="bh">%s</span>' % ESC(head))
+                        if head else "", ESC(no)))
+    elif tag:
         # ⚠ 배지 폭은 18mm 고정이었다. 분석본에서 오는 긴 라벨
         #   (`3과 MR1 Brain Insights`)이 **양옆으로 잘려 나갔다**. 최소 폭은
         #   지키고 글에 맞춰 늘리되, 너무 길면 글자를 줄여 판면을 안 넘긴다.
@@ -821,6 +833,34 @@ def _badge_text(p):
     if not head or head in tag:
         return tag
     return "%s %s" % (head, tag)
+
+
+def _badge_parts(p):
+    """배지를 **교재명 / 지문번호** 두 도막으로. 두 줄 배지가 쓴다."""
+    tag = str(p.get("no") or p.get("label") or "")
+    full = _badge_text(p)
+    if full != tag and full.endswith(tag):
+        return full[:-len(tag)].strip(), tag
+    # ⚠ 라벨 자체가 `능률(민) SL2 본문1` 처럼 통짜로 올 때가 있다(`_badge_raw`).
+    #   그대로 두면 한 줄이 길어 칸을 넘는다 — 뒤쪽 번호 토막에서 가른다.
+    m = re.search(r"\s((?:본문|Reading|RC)\s*\d+|\d+\s*강\s*\d+|\d+번|"
+                  r"\d+~\d+번|[^\s]{1,8})$", full)
+    if m and m.start():
+        return full[:m.start()].strip(), m.group(1).strip()
+    return "", full
+
+
+def _badge2_fit(lines, w_mm, h_mm, M):
+    """두 줄 배지 글자 크기 — 긴 줄이 폭 안에 들도록 줄인다."""
+    base = M["badge_size"] * 0.86
+    room = w_mm - 2 * M["badge2_pad"]
+    em = base / 72.0 * 25.4
+    w = max(sum(em if ord(c) > 0x2000 else em * 0.55 for c in t)
+            for t in lines if t)
+    sz = base if w <= room else max(5.2, base * room / w)
+    # 두 줄이 상자 높이를 넘지 않게
+    lead = min(M["badge2_lead"], (h_mm - 2 * M["badge2_pad"]) / 2.0)
+    return sz, lead
 
 
 def _badge_fit(tag, M):
