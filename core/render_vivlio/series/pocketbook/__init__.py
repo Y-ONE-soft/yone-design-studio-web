@@ -623,6 +623,18 @@ def _lowest(page, size, tol=0.6):
 
 MIN_SCALE = 0.834       # 9pt → 7.5pt. 원본 resolveOverflow 하한과 같다
 MIN_LEAD = 14.0         # pt. 원본 하한
+
+
+def _avail_h(r):
+    """이 지문이 쓸 수 있는 세로 높이(mm).
+
+    ⚠ 장문(`split`)은 지면 **두 장**에 나뉜다. 한 상자에 맞추려 들면 행간이
+      17pt 까지 조여진다(43~45번 실측: 1,573자를 118mm 에 욱여넣었다) — 다른
+      지문이 24pt 인데 혼자 빽빽해 보인다(사용자 지적).
+      갈리는 자리가 정확히 반은 아니므로 두 배를 다 잡지는 않는다.
+    """
+    h = ptheme.LAYOUTS[ptheme.layout_for(r)]["passage_h"]
+    return h * 1.92 if r.get("split") else h
 SUP_SIZE = 5.5          # pt — theme.css `.n`(위첨자). 지문 배율을 안 따라간다
 
 
@@ -1679,7 +1691,7 @@ class PocketbookSeries(Series):
         #   광문2 250343-45 · 성덕2 210943-45 실측).
         need_2nd = []
         for i, r in enumerate(rows):
-            avail = ptheme.LAYOUTS[ptheme.layout_for(r)]["passage_h"]
+            avail = _avail_h(r)
             got = h.get(str(i), 0.0)
             if got <= avail:
                 continue
@@ -1714,7 +1726,7 @@ class PocketbookSeries(Series):
             still = []
             for k, i in enumerate(need_2nd):
                 r = rows[i]
-                avail = ptheme.LAYOUTS[ptheme.layout_for(r)]["passage_h"]
+                avail = _avail_h(r)
                 got = h2.get(str(k), 0.0)
                 lead = r.get("lead", lead0)
                 r["_pts"].append((lead, got))
