@@ -792,7 +792,8 @@ def _card_fit(c, M):
                 ("↔ " + ", ".join(c.get("ant") or [])) if c.get("ant") else ""):
         if txt:
             lines += max(1, int(len(txt) / per) + (1 if len(txt) % per else 0))
-    room = int((M["card"][3] - 2 * M["card_pad"]) / M["card_lead"])
+    # 마지막 줄의 내려긋기가 상자 밑선을 0.5mm 넘어선다 — 그만큼 미리 뺀다.
+    room = int((M["card"][3] - 2 * M["card_pad"] - 0.6) / M["card_lead"])
     if lines <= room:
         return ""
     sc = max(0.78, round(room / float(lines), 2))
