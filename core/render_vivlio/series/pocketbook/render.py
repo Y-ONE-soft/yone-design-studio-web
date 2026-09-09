@@ -661,11 +661,9 @@ def _wrap_n(txt, col_mm, size_pt, track_em):
     return n
 
 
-def flow_fit(chunk, col_mm, M, size_pt=None):
-    """이 덩어리가 상자에 안 들어가면 줄일 배율."""
-    size = size_pt or M["flow_size"]
+def _flow_need(chunk, col_mm, M, size):
+    """이 덩어리가 그 크기에서 먹는 높이(mm)."""
     lead = M["flow_lead"] * (size / M["flow_size"])
-    room = _fbox_size(M)[1] - 2 * M["fbox_pad"] - M["fbox_head"]
     need = 0.0
     for i, ln in enumerate(chunk):
         txt = _MD_BOLD.sub(r"\1", ln)
@@ -677,13 +675,22 @@ def flow_fit(chunk, col_mm, M, size_pt=None):
         if i and _FHEAD.match(ln):
             need += M["flow_sec_gap"]
         need += _wrap_n(txt, col_mm, size, M["flow_track"]) * lead
-    if need <= room:
-        return 1.0
-    sc = round(room / need, 2)
-    # 줄인 뒤엔 줄바꿈이 달라진다 — 한 번 더 재서 모자라면 조금씩 더 줄인다
-    while sc > 0.80 and flow_fit(chunk, col_mm, M, M["flow_size"] * sc) < 1.0:
+    return need
+
+
+def flow_fit(chunk, col_mm, M):
+    """이 덩어리가 상자에 안 들어가면 줄일 배율.
+
+    ⚠ 줄인 뒤에는 줄바꿈 자리가 달라져 줄 수가 도로 늘 수 있다. 한 번 셈해서
+      끝내지 말고 **들어갈 때까지 한 눈금씩 내린다**.
+    """
+    room = _fbox_size(M)[1] - 2 * M["fbox_pad"] - M["fbox_head"]
+    sc = 1.0
+    while sc > 0.80:
+        if _flow_need(chunk, col_mm, M, M["flow_size"] * sc) <= room:
+            return sc
         sc = round(sc - 0.02, 2)
-    return max(0.80, sc)
+    return 0.80
 
 
 def flow_rows(lines, col_mm=0.0, size_pt=9.0, track_em=-0.05):
