@@ -99,6 +99,12 @@ def _latin_plural(w):
             yield w[:-len(suf)] + rep
 
 
+# `compare A with B` 의 A·B 처럼 **자리를 가리키는 대문자**. 예문에서는 실제
+# 목적어가 들어가고 길이가 제각각이라(A = "the view in Compean's picture"),
+# 자리표시자 앞의 **실질 낱말까지만** 짚는다.
+_PLACEHOLDER = re.compile(r"^(?:[ABONSV]|V-ing|N\d?)$")
+
+
 def _stems(w):
     w = w.lower()
     out = {w}
@@ -108,6 +114,17 @@ def _stems(w):
     if w.endswith("y") and len(w) - 1 >= 4:
         out.add(w[:-1])
     return {x for x in out if len(x) >= 4}
+
+
+def _variants(w):
+    """규칙적인 철자 변화 — 짧은 낱말도 놓치지 않게 **만들어서** 맞춰 본다.
+    have→having(끝 e 탈락) · bury→buried · body→bodies(y→i)."""
+    out = set()
+    if w.endswith("e") and len(w) >= 3:
+        out |= {w[:-1] + "ing", w[:-1] + "ed", w[:-1] + "es"}
+    if w.endswith("y") and len(w) >= 3:
+        out |= {w[:-1] + "ies", w[:-1] + "ied", w[:-1] + "ier", w[:-1] + "iest"}
+    return out
 
 
 def _same_word(tok, word):
@@ -123,6 +140,8 @@ def _same_word(tok, word):
     if t in _latin_plural(w):            # crisis→crises
         return True
     if any(t == w + suf for suf in _SUFFIX):
+        return True
+    if t in _variants(w):                # have→having · bury→buried · body→bodies
         return True
     if len(w) >= 3 and any(t == w + w[-1] + suf for suf in ("ed", "ing")):
         return True
@@ -169,6 +188,9 @@ def mark_head(en, head):
     if not en or not head or "[" in en:
         return en
     words = _RE_WORD.findall(head)
+    cut = next((i for i, w in enumerate(words) if _PLACEHOLDER.match(w)), None)
+    if cut is not None:                  # `have no choice but to V` → `…but to`
+        words = words[:cut]
     if not words:
         return en
     toks = list(_RE_WORD.finditer(en))
