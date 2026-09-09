@@ -703,12 +703,15 @@ def _wrap_n(txt, col_mm, size_pt, track_em):
     return n
 
 
-_FLOW_FLOOR = 0.72      # 9.5pt → 6.8pt. 일곱 줄짜리 덩어리 둘만 여기까지 간다
+# 글자는 **1pt 안에서만** 줄인다(9.5→8.5). 2pt 씩 뛰면 잘못 들어간 것처럼
+# 보인다(사용자 지적) — 모자란 몫은 행간으로 메운다.
+_FLOW_FLOOR = 0.895
+_LEAD_FLOOR = 0.78
 
 
-def _flow_need(chunk, col_mm, M, size):
-    """이 덩어리가 그 크기에서 먹는 높이(mm)."""
-    lead = M["flow_lead"] * (size / M["flow_size"])
+def _flow_need(chunk, col_mm, M, size, lead_sc=1.0):
+    """이 덩어리가 그 크기·행간에서 먹는 높이(mm)."""
+    lead = M["flow_lead"] * (size / M["flow_size"]) * lead_sc
     need = 0.0
     for i, ln in enumerate(chunk):
         txt = _MD_BOLD.sub(r"\1", ln)
@@ -716,29 +719,29 @@ def _flow_need(chunk, col_mm, M, size):
             txt = _FHEAD.sub("", txt)      # 머리말은 딱지로 빠진다
         if not txt.strip():
             continue
-        # 덩어리 안에 또 머리말이 있으면(합친 덩어리다) 그 앞이 벌어진다
-        if i and _FHEAD.match(ln):
-            need += M["flow_sec_gap"]
         need += _wrap_n(txt, col_mm, size, M["flow_track"]) * lead
     return need
 
 
 def flow_fit(chunk, col_mm, box_h, M, head=True):
-    """이 덩어리가 상자에 안 들어가면 줄일 배율.
+    """안 들어가면 줄일 배율 → `(글자, 행간)`.
 
-    ⚠ 줄인 뒤에는 줄바꿈 자리가 달라져 줄 수가 도로 늘 수 있다. 한 번 셈해서
-      끝내지 말고 **들어갈 때까지 한 눈금씩 내린다**.
+    ⚠ 예전엔 글자와 행간을 한꺼번에 줄여 9.5pt 옆에 7pt 가 앉았다 — 잘못 들어간
+      것처럼 보인다(사용자 지적). **행간을 먼저** 조이고, 그래도 모자랄 때만
+      글자를 1pt 안에서 내린다.
     """
-    # ⚠ 딱지 아래 여백(0.3mm)과 마지막 줄 글자의 내려긋기가 셈에 안 잡힌다 —
-    #   그만큼 미리 뺀다. 안 빼면 7줄짜리 덩어리가 1.3mm 씩 삐져나왔다(실측).
     room = box_h - 2 * M["fbox_pad"] - 1.2 \
         - (M["fbox_head"] if head else 0.0)
-    sc = 1.0
-    while sc > _FLOW_FLOOR:
-        if _flow_need(chunk, col_mm, M, M["flow_size"] * sc) <= room:
-            return sc
-        sc = round(sc - 0.02, 2)
-    return _FLOW_FLOOR
+    fsc = 1.0
+    while True:
+        lsc = 1.0
+        while lsc >= _LEAD_FLOOR:
+            if _flow_need(chunk, col_mm, M, M["flow_size"] * fsc, lsc) <= room:
+                return fsc, round(lsc, 2)
+            lsc = round(lsc - 0.03, 2)
+        if fsc <= _FLOW_FLOOR:
+            return _FLOW_FLOOR, _LEAD_FLOOR
+        fsc = max(_FLOW_FLOOR, round(fsc - 0.035, 3))
 
 
 def flow_rows(lines, col_mm=0.0, size_pt=9.0, track_em=-0.05):
@@ -750,7 +753,9 @@ def flow_rows(lines, col_mm=0.0, size_pt=9.0, track_em=-0.05):
     out = []
     for i, line in enumerate(lines):
         head = (line.lstrip()[:1] in _SEC) or bool(_LEAD_BRK.match(line))
-        cls = ' class="sec"' if head and i else ""
+        # ⚠ 덩어리 상자가 이미 갈래를 갈라 준다. 상자 **안**에서 또 벌리면
+        #   이어지는 내용이 끊긴 것처럼 보인다(사용자 지적).
+        cls = ""
         tr = _tight(_MD_BOLD.sub(r"\1", line), col_mm, size_pt, track_em)
         st = "" if tr is None else ' style="letter-spacing:%.4fem"' % tr
         out.append('<p%s%s>%s</p>' % (cls, st, flow_html(line)))
@@ -878,10 +883,11 @@ def right_page(p, M, folio, category=""):
     boxes, conns = flow_boxes(M, len(ch), tall, w2, col1)
     for n, (c, (bx, by, bw, bh)) in enumerate(zip(ch, boxes)):
         col = bw - 2 * M["fbox_pad"]
-        fsc = flow_fit(c, col, bh, M, not col1)
-        fst = "" if fsc == 1.0 else \
+        fsc, lsc = flow_fit(c, col, bh, M, not col1)
+        fst = "" if (fsc, lsc) == (1.0, 1.0) else \
             ' style="font-size:%gpt;line-height:%gmm"' % (
-                M["flow_size"] * fsc, M["flow_lead"] * fsc)
+                round(M["flow_size"] * fsc, 2),
+                round(M["flow_lead"] * fsc * lsc, 2))
         # ⚠ 화살표만으로는 칸을 가로로 읽을 여지가 남는다(사용자 지적).
         #   머리말 앞에 **차례 번호**를 박아 흐름을 못 박는다.
         m = _FHEAD.match(c[0])
@@ -909,6 +915,21 @@ def right_page(p, M, folio, category=""):
                      '%s</div></div>'
                      % (_box(bx, by, bw, bh), bg, head, fst, "".join(rows)))
     for cx, cy, kind in conns:
+        if kind == "x":
+            # ⚠ 네 상자가 만나는 자리에 동그라미만 띄우면 **어디서 어디로**
+            #   가는지 안 보인다(사용자 지적). 두 모서리를 실제로 잇는 선을
+            #   긋고 그 끝에 화살촉을 단다.
+            r = M["fdiag"]
+            parts.append(
+                '<div class="fdiag" style="%s">'
+                '<svg viewBox="0 0 100 100" preserveAspectRatio="none">'
+                '<path d="M8 92 L70 30" stroke="currentColor" stroke-width="7"'
+                ' stroke-linecap="round" fill="none"/>'
+                '<path d="M96 4 L58 14 L86 42 Z" fill="currentColor"/>'
+                '</svg></div>'
+                % _box(cx + M["fconn"] / 2 - r / 2,
+                       cy + M["fconn"] / 2 - r / 2, r, r))
+            continue
         parts.append('<div class="fconn%s" style="%s"><i></i></div>'
                      % ((" " + kind) if kind else "",
                         _box(cx, cy, M["fconn"], M["fconn"])))

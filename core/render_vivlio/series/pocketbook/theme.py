@@ -32,7 +32,10 @@ PALETTE = {
     # ⚠ **바탕과 선은 다른 문제다.** "플로우노트가 진하다" 는 지적을 선 색으로
     #   알아듣고 선만 계속 옅게 만들었다가 여러 번 헛돌았다. 진한 것은 **바탕
     #   색면**이고, 모눈 선은 오히려 잘 보여야 한다.
-    "flow_bg":   "#FAFBF4",   # 플로우노트 바탕 — 거의 흰빛
+    # ⚠ 판과 상자가 같은 색이라 블록이 안 보였다(사용자 지적). 판을 한 단
+    #   짙게 깔고 상자를 희게 띄운다.
+    "flow_bg": "#EDEFE1", "flow_box": "#FFFFFF",
+    "flow_edge": "#BFC8A8",   # 플로우노트 바탕 — 거의 흰빛
     # ⚠ 모눈 색은 **이 값이 곧 인쇄색**이다. 예전엔 진한 선(#BFC3C9)을 깔고
     #   불투명도로 옅게 만들었는데, 옅기를 맞추라는 지적을 몇 번 받고도 계속
     #   빗나갔다(불투명도는 바탕과 섞인 결과라 눈으로 겨냥이 안 된다).
@@ -123,6 +126,7 @@ METRICS = {
     "fbox_pad": 2.0,
     "fbox_head": 4.6,           # 머리말 딱지가 먹는 높이
     "fconn": 3.6,               # 잇는 표식 지름
+    "fdiag": 11.0,              # 단을 건너뛰는 대각선 길이
     # 상자가 넓어진 만큼 글도 키웠다(9→9.5pt). 10pt 부터는 넘치는 덩어리가
     # 2%→12% 로 뛴다(광문1 251덩어리 실측) — 9.5 가 한계다.
     "flow_size": 9.5, "flow_lead": 4.35,
@@ -446,7 +450,7 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
 .fbox{position:absolute;box-sizing:border-box;overflow:hidden;
   display:flex;flex-direction:column;justify-content:flex-start;
   background:url("img/flownote_grid.png") no-repeat,#fff;
-  border:.25pt solid var(--flow-line);
+  border:.5pt solid var(--flow-edge);
   border-radius:1.6mm;padding:__fbox_pad__mm;z-index:1}
 .fbh{font-family:PBJalnan;font-size:7pt;color:var(--flow-brk);
   line-height:__fbox_head__mm;margin:0 0 .3mm;
@@ -472,7 +476,8 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
   border-left:.75mm solid transparent;border-right:.75mm solid transparent;
   border-bottom:1.15mm solid #fff}
 .fconn.d i{transform:rotate(180deg)}
-.fconn.x i{transform:rotate(45deg)}
+.fdiag{position:absolute;z-index:2;color:var(--flow-arrow)}
+.fdiag svg{width:100%;height:100%;display:block;overflow:visible}
 .fconn:not(.d):not(.x) i{transform:rotate(90deg)}
 .fbi p{margin:0}
 .fbi p.sec{margin-top:__flow_sec_gap__mm}
