@@ -445,7 +445,7 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
      오른쪽으로 건너뛰어야 해 흐름이 안 보인다(그래서 갈아엎었다). */
 .fbox{position:absolute;box-sizing:border-box;overflow:hidden;
   display:flex;flex-direction:column;justify-content:flex-start;
-  background:url("img/flownote_grid.png") 0 0/100% 100% no-repeat,#fff;
+  background:url("img/flownote_grid.png") no-repeat,#fff;
   border:.25pt solid var(--flow-line);
   border-radius:1.6mm;padding:__fbox_pad__mm;z-index:1}
 .fbh{font-family:PBJalnan;font-size:7pt;color:var(--flow-brk);

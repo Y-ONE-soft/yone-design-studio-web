@@ -1322,9 +1322,11 @@ class PocketbookSeries(Series):
             from PIL import Image, ImageDraw
         except ImportError:
             return
-        # ⚠ 모눈은 이제 판 전체가 아니라 **덩어리 상자 한 칸**에 깔린다.
-        #   판에 깔면 상자 사이 틈으로만 비쳐 흘린 선처럼 보였다.
-        w_mm, h_mm = prender._fbox_size(M)
+        # ⚠ 상자 한 칸 크기로 구워 칸마다 늘려 넣었더니, 통 칸(세로로 두 배)
+        #   에서 모눈이 홀쭉하게 늘어났다(사용자 지적). **판 한 장으로 굽고**
+        #   상자는 제 자리만큼 밀어서 들여다본다 — 칸이 네모로 남고 상자끼리
+        #   모눈 줄도 맞는다.
+        w_mm, h_mm = M["flow"][2], M["flow"][3]
         px = 12.0                                   # mm 당 화소
         W, H = int(w_mm * px), int(h_mm * px)
         im = Image.new("RGB", (W, H), P.get("flow_bg", "#EAECD8"))

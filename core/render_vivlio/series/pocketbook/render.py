@@ -637,8 +637,9 @@ def flow_boxes(M, n, tall_first=False, w2=(1, 1)):
     down = lambda cx: (cx + cw / 2 - d / 2, y0 + chh + gap / 2 - d / 2, True)
     if n <= 1:
         return [(x0, y0, w, h)][:n], []
+    across = (x0 + cw + gap / 2 - d / 2, y0 + h / 2 - d / 2, False)
     if n == 2:
-        return [(x0, y0, cw, h), (xr, y0, cw, h)], []
+        return [(x0, y0, cw, h), (xr, y0, cw, h)], [across]
     if n == 3:
         # ⚠ 통 칸을 늘 오른쪽에 두면 거기 든 덩어리가 짧을 때 칸이 텅 빈다.
         #   **c1 과 c3 중 긴 쪽**이 통 칸을 갖고, 쌓이는 쪽은 두 덩어리의
@@ -650,13 +651,17 @@ def flow_boxes(M, n, tall_first=False, w2=(1, 1)):
         if tall_first:
             return ([(x0, y0, cw, h), (xr, y0, cw, ha),
                      (xr, y0 + ha + gap, cw, hb)],
-                    [(xr + cw / 2 - d / 2, y0 + ha + gap / 2 - d / 2, True)])
+                    [across,
+                     (xr + cw / 2 - d / 2, y0 + ha + gap / 2 - d / 2, True)])
         return ([(x0, y0, cw, ha), (x0, y0 + ha + gap, cw, hb),
                  (xr, y0, cw, h)],
-                [(x0 + cw / 2 - d / 2, y0 + ha + gap / 2 - d / 2, True)])
+                [(x0 + cw / 2 - d / 2, y0 + ha + gap / 2 - d / 2, True),
+                 across])
+    # ⚠ 2→3(단을 건너뛰는 자리)을 안 이으면 흐름이 끊겨 보인다(사용자 지적).
+    #   세 표식이 한 줄로 서서 `아래 → 옆 → 아래` 로 읽힌다.
     return ([(x0, y0, cw, chh), (x0, yb, cw, chh),
              (xr, y0, cw, chh), (xr, yb, cw, chh)],
-            [down(x0), down(xr)])
+            [down(x0), across, down(xr)])
 
 
 def _wrap_n(txt, col_mm, size_pt, track_em):
@@ -851,9 +856,12 @@ def right_page(p, M, folio, category=""):
             body[0] = c[0][m.end():]
         rows = flow_rows([x for x in body if x.strip()], col,
                          M["flow_size"] * fsc, M["flow_track"])
-        parts.append('<div class="fbox" style="%s">%s<div class="fbi"%s>'
+        # 모눈은 판 한 장이다 — 이 상자가 판 안에서 놓인 만큼 밀어 본다
+        bg = ";background-size:%gmm %gmm;background-position:%gmm %gmm" % (
+            fl[2], fl[3], -(bx - fl[0]), -(by - fl[1]))
+        parts.append('<div class="fbox" style="%s%s">%s<div class="fbi"%s>'
                      '%s</div></div>'
-                     % (_box(bx, by, bw, bh), head, fst, "".join(rows)))
+                     % (_box(bx, by, bw, bh), bg, head, fst, "".join(rows)))
     for cx, cy, down in conns:
         parts.append('<div class="fconn%s" style="%s"><i></i></div>'
                      % (" d" if down else "",
