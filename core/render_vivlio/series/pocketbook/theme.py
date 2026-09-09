@@ -453,7 +453,7 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
   display:flex;align-items:center;gap:1.1mm}
 .fbn{display:inline-flex;align-items:center;justify-content:center;
   width:3.2mm;height:3.2mm;border-radius:50%;flex:none;
-  background:var(--flow-arrow);color:#fff;font-size:5.5pt;line-height:1}
+  background:var(--flow-brk);color:#fff;font-size:5.5pt;line-height:1}
 .fbi{font-family:PBDodam;font-size:__flow_size__pt;
   line-height:__flow_lead__mm;letter-spacing:__flow_track__em}
 /* 잇는 표식 — 글리프가 아니라 테두리로 그린 갈매기다 */
@@ -463,6 +463,8 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
   border-right:.3mm solid #fff;border-bottom:.3mm solid #fff;
   transform:rotate(-45deg);margin-left:-.3mm}
 .fconn.d i{transform:rotate(45deg);margin:-.3mm 0 0}
+/* 대각선 — 왼쪽 단 아래에서 오른쪽 단 위로 */
+.fconn.x i{transform:rotate(-90deg);margin:0}
 .fbi p{margin:0}
 .fbi p.sec{margin-top:__flow_sec_gap__mm}
 /* 색은 **기호에만**. 원본 문자 스타일 4종이 글자 단위로 붙어 있다. */

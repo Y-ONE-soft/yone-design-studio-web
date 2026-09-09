@@ -634,10 +634,13 @@ def flow_boxes(M, n, tall_first=False, w2=(1, 1)):
     cw, chh = (w - gap) / 2.0, (h - gap) / 2.0
     d = M["fconn"]
     xr, yb = x0 + cw + gap, y0 + chh + gap
-    down = lambda cx: (cx + cw / 2 - d / 2, y0 + chh + gap / 2 - d / 2, True)
+    down = lambda cx, yy: (cx + cw / 2 - d / 2, yy - d / 2, "d")
     if n <= 1:
         return [(x0, y0, w, h)][:n], []
-    across = (x0 + cw + gap / 2 - d / 2, y0 + h / 2 - d / 2, False)
+    # ⚠ 단을 건너뛰는 자리는 **대각선**이다 — 왼쪽 단 아래 상자에서 오른쪽 단
+    #   위 상자로 간다. 옆으로 곧게 뻗은 표식을 두면 위 칸 둘을 가로로 읽으라는
+    #   말처럼 보인다(사용자 지적).
+    across = (x0 + cw + gap / 2 - d / 2, y0 + h / 2 - d / 2, "x")
     if n == 2:
         return [(x0, y0, cw, h), (xr, y0, cw, h)], [across]
     if n == 3:
@@ -651,17 +654,16 @@ def flow_boxes(M, n, tall_first=False, w2=(1, 1)):
         if tall_first:
             return ([(x0, y0, cw, h), (xr, y0, cw, ha),
                      (xr, y0 + ha + gap, cw, hb)],
-                    [across,
-                     (xr + cw / 2 - d / 2, y0 + ha + gap / 2 - d / 2, True)])
+                    [across, down(xr, y0 + ha + gap / 2)])
         return ([(x0, y0, cw, ha), (x0, y0 + ha + gap, cw, hb),
                  (xr, y0, cw, h)],
-                [(x0 + cw / 2 - d / 2, y0 + ha + gap / 2 - d / 2, True),
-                 across])
+                [down(x0, y0 + ha + gap / 2), across])
     # ⚠ 2→3(단을 건너뛰는 자리)을 안 이으면 흐름이 끊겨 보인다(사용자 지적).
     #   세 표식이 한 줄로 서서 `아래 → 옆 → 아래` 로 읽힌다.
     return ([(x0, y0, cw, chh), (x0, yb, cw, chh),
              (xr, y0, cw, chh), (xr, yb, cw, chh)],
-            [down(x0), across, down(xr)])
+            [down(x0, y0 + chh + gap / 2), across,
+             down(xr, y0 + chh + gap / 2)])
 
 
 def _wrap_n(txt, col_mm, size_pt, track_em):
@@ -871,9 +873,9 @@ def right_page(p, M, folio, category=""):
         parts.append('<div class="fbox" style="%s%s">%s<div class="fbi"%s>'
                      '%s</div></div>'
                      % (_box(bx, by, bw, bh), bg, head, fst, "".join(rows)))
-    for cx, cy, down in conns:
+    for cx, cy, kind in conns:
         parts.append('<div class="fconn%s" style="%s"><i></i></div>'
-                     % (" d" if down else "",
+                     % ((" " + kind) if kind else "",
                         _box(cx, cy, M["fconn"], M["fconn"])))
     # 주제 / 요약문
     parts.append('<div class="topicband" style="%s"></div>'
