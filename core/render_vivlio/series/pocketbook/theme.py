@@ -539,6 +539,8 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
      오른쪽 단 x56.0 폭73.7 · 뜻 7pt #58595B · 예문·해석 6pt · 강조 #DB4D5D
      낱말 사이 가는 선 #ECE9E1 */
 .voca{position:absolute;font-family:PBBody,sans-serif;color:var(--ink);
+  /* 딱지 밑선과 이어지는 표 윗선 — 딱지가 표에 얹힌 꼴이 된다(완성본) */
+  border-top:.5pt solid var(--voca-rule);
   letter-spacing:__voca_track__em}
 .voca .ent{display:table;width:100%;table-layout:fixed;
   border-top:.25pt solid var(--voca-rule);padding-top:__voca_pad__mm;

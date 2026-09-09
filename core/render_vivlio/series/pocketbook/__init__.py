@@ -1511,7 +1511,10 @@ class PocketbookSeries(Series):
         book = opt.get("voca_book", "고교기본")
         for e in items:
             e["day"] = pvoca.label(book, e["day"])
-        pgs = pvoca.pages(items)
+        # ⚠ 상자 높이를 손보면 여기도 같이 봐야 한다 — 안 그러면 마지막 낱말이
+        #   표 밖으로 밀린다. 기본값(178)을 그대로 두지 않는다.
+        MV = dict(ptheme.METRICS, **(cfg.section("metrics") or {}))["voca"]
+        pgs = pvoca.pages(items, MV[3], MV[2])
         if pgs:
             log("■ 어휘 파트 %d면 (%s ~ %s)"
                 % (len(pgs), pgs[0]["day"], pgs[-1]["day"]))
