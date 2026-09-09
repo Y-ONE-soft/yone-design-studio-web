@@ -2247,8 +2247,15 @@ def _mark_new(pdf, rows, voca_pages, spec, log):
         return
     pas = [r for r in rows if r.get("kind") != "memtest"]
     front = 1 if spec else 0          # 간지 한 면이 앞에 끼면 면이 밀린다
-    new = [(i, r) for i, r in enumerate(pas) if not r.get("_from_book")]
+    # ⚠ 예전엔 `기존 포켓북에서 왔는가` 만 봤다. 연구원이 이미 검수해서 고쳐
+    #   놓은 지문도 다음 학교에서 **또 `신규`** 로 표시돼, 본 것을 또 보게
+    #   된다(사용자 지적). 창고에 손본 자국(`_fixed`)이 있으면 뺀다.
+    new = [(i, r) for i, r in enumerate(pas)
+           if not r.get("_from_book") and not r.get("_fixed")]
+    done = sum(1 for r in pas if not r.get("_from_book") and r.get("_fixed"))
     if not new:
+        if done:
+            log("■ 신규 작업분이 모두 검수를 거쳤다 — 표시할 것 없음")
         return
     try:
         doc = fitz.open(pdf)
@@ -2274,4 +2281,5 @@ def _mark_new(pdf, rows, voca_pages, spec, log):
         n += 1
     doc.saveIncr()
     doc.close()
-    log("■ 신규 작업분 %d지문에 검수 표시(주석 — 인쇄에는 안 나옴)" % n)
+    log("■ 신규 작업분 %d지문에 검수 표시(주석 — 인쇄에는 안 나옴)%s"
+        % (n, " · 이미 검수한 %d지문은 뺐다" % done if done else ""))
