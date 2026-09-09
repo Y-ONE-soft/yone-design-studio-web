@@ -948,10 +948,14 @@ def right_page(p, M, folio, category=""):
             parts.append('<div class="fconn x" style="%s">%s</div>'
                          % (_box(cx - ln / 2, cy - ln / 2, ln, ln),
                             _CONN % (6, 94, 78, 22, "M96 4 L74 10 L90 26 Z")))
-        else:
+        elif kind == "d":
             parts.append('<div class="fconn" style="%s">%s</div>'
                          % (_box(cx - ln / 2, cy - ln / 2, ln, ln),
                             _CONN % (50, 4, 50, 78, "M50 96 L40 72 L60 72 Z")))
+        else:                       # 옆으로
+            parts.append('<div class="fconn" style="%s">%s</div>'
+                         % (_box(cx - ln / 2, cy - ln / 2, ln, ln),
+                            _CONN % (4, 50, 78, 50, "M96 50 L72 40 L72 60 Z")))
     # 주제 / 요약문
     parts.append('<div class="topicband" style="%s"></div>'
                  % _box(tb[0], tb[1], tb[2], tb[3]))
