@@ -54,7 +54,7 @@ class VocacardSeries(Series):
 
     # ── 낱말 카드 높이 재기 ──
     @staticmethod
-    def _card_heights(pdf, gap=5.4, last_fudge=2.5):
+    def _card_heights(pdf, gap=5.4):
         """조판된 면에서 낱말 카드 높이를 잰다 — {번호: mm}.
 
         카드 머리의 네 자리 번호(`0001`)가 카드 시작이고, 다음 번호까지가 그
@@ -82,14 +82,27 @@ class VocacardSeries(Series):
                 marks.sort()
                 for i, (y, no) in enumerate(marks):
                     if i + 1 < len(marks):
-                        end = marks[i + 1][0]           # 다음 카드 머리까지 = 정확
+                        # 다음 카드 머리까지 — 줄 상자까지 포함된 **정확한** 값
+                        out[no] = (round(marks[i + 1][0] - y, 2), True)
                     else:
-                        # 면의 **마지막** 카드는 다음 머리가 없어 잉크 끝까지만 잰다.
-                        # 글자 잉크는 줄 상자보다 작아 그만큼 **작게** 잡히고, 그 카드가
-                        # 든 묶음이 실제로는 면을 넘쳐 밀린다(실측: 3mm 부족).
-                        end = ink + gap + last_fudge
-                    out[no] = round(end - y, 2)
+                        # 면의 마지막 카드는 다음 머리가 없어 **잉크 끝**까지만 잰다.
+                        # 글자 잉크는 줄 상자보다 작아 3mm 가량 작게 잡히고, 이 값을
+                        # 믿고 묶으면 실제로는 면을 넘쳐 한 장이 밀린다(실측).
+                        # 그래서 '어림값'으로 표시해 두고, 다음 패스에서 그 카드가
+                        # 면 중간으로 가면 정확한 값으로 갈아 끼운다.
+                        out[no] = (round(ink + gap - y, 2), False)
         return out
+
+    @staticmethod
+    def _merge_heights(base, more):
+        """어림값(정확=False)을 다음 패스의 정확한 값으로 갈아 끼운다."""
+        changed = 0
+        for no, (h, exact) in more.items():
+            old = base.get(no)
+            if old is None or (exact and not old[1]):
+                base[no] = (h, exact)
+                changed += 1
+        return changed
 
     # ── ③ 조판 (3패스) ──
     def build(self, cfg, log, sample=False, **_):
@@ -120,16 +133,25 @@ class VocacardSeries(Series):
         html_path = render_mod.write(cfg, d, build_dir, sample=sample, log=log)
         t1 = cli.run_build(html_path, out, log=log)
 
-        # ② 잰 높이로 면을 다시 나눈다
-        heights = self._card_heights(out)
+        # ② 잰 높이로 면을 다시 나눈다. 면 마지막 카드는 어림값이라, 한 번 더
+        #    조판해 그 카드들이 면 중간으로 간 자리에서 정확한 값을 얻는다.
+        meas = self._card_heights(out)
         t2 = 0.0
-        if heights:
-            log(f"[계측] 낱말 카드 {len(heights)}장 "
-                f"(중앙 {sorted(heights.values())[len(heights) // 2]:.0f}mm · "
-                f"최대 {max(heights.values()):.0f}mm)")
+        for round_no in (1, 2):
+            if not meas:
+                break
+            hs = {no: h for no, (h, _e) in meas.items()}
+            rough = sum(1 for _h, e in meas.values() if not e)
+            log(f"[계측] 낱말 카드 {len(hs)}장 "
+                f"(중앙 {sorted(hs.values())[len(hs) // 2]:.0f}mm · "
+                f"최대 {max(hs.values()):.0f}mm · 어림 {rough}장)")
             html_path = render_mod.write(cfg, d, build_dir, sample=sample,
-                                         heights=heights, log=log)
-            t2 = cli.run_build(html_path, out, log=log)
+                                         heights=hs, log=log)
+            t2 += cli.run_build(html_path, out, log=log)
+            if round_no == 2 or not rough:
+                break
+            if not self._merge_heights(meas, self._card_heights(out)):
+                break
 
         opens = paged.find_open_pages(probe.page_texts(out))
         page_names = [p for _c, p, *_ in theme_mod.sections_of(cfg)]
@@ -140,7 +162,7 @@ class VocacardSeries(Series):
         t3 = cli.run_build(html_path, out, log=log)
 
         npages = probe.page_count(out)
-        passes = 3 if heights else 2
+        passes = 3 if meas else 2
         log(f"OK  {t1 + t2 + t3:.1f}s ({passes}패스) · {npages}p · "
             f"PART 시작면 {len(opens)}개 → {out}")
 
