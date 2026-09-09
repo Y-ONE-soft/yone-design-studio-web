@@ -715,14 +715,32 @@ def flow_boxes(M, n, tall_first=False, w2=(1, 1), col1=None,
              down(xr, y0 + chh + gap / 2)])
 
 
-def _wrap_n(txt, col_mm, size_pt, track_em):
+_MARK = re.compile(r"^\s*(\[[^\]]{1,12}\]|→|·|-|=)[\s\u00a0]*")
+
+
+def _hang_mm(txt, size_pt, track_em):
+    """이 줄의 **줄머리 표식 폭**(mm). 표식이 없으면 0.
+
+    ⚠ 모든 줄에 같은 값을 주면 표식 없는 줄까지 들여쓰기가 붙는다(사용자 지적).
+      그리고 `→` 와 `·` 는 폭이 다르므로 값도 달라야 한다 — 실제 자폭으로 잰다.
+    """
+    m = _MARK.match(txt)
+    if not m:
+        return 0.0
+    return flow_width_mm(m.group(0).replace("\u00a0", " "), size_pt, track_em)
+
+
+def _wrap_n(txt, col_mm, size_pt, track_em, hang=0.0):
     """이 글이 폭 `col_mm` 안에서 **몇 줄이 되는지**. 낱말 단위로 접는다.
 
     ⚠ 예전엔 `전체 폭 ÷ 단 폭` 으로 어림했다. 낱말이 통째로 넘어가는 몫을
       못 세어 늘 낙관적이었고, 40개 상자에서 글이 아래로 삐져나왔다(실측).
     """
     col_mm *= _WIDTH_SAFE
+    # 이어지는 줄은 표식만큼 좁다
+    wide, narrow = col_mm, max(col_mm - hang, col_mm * 0.5)
     n, cur = 1, 0.0
+    col_mm = wide
     for tok in re.split(r"(\s+)", txt):
         if not tok:
             continue
@@ -731,11 +749,13 @@ def _wrap_n(txt, col_mm, size_pt, track_em):
             if tok.strip():
                 n += 1
                 cur = 0.0
+                col_mm = narrow
             else:
                 continue
         while w > col_mm:               # 한 낱말이 한 줄보다 길면 글자로 끊긴다
             n += 1
             w -= col_mm
+            col_mm = narrow
         cur += w
     return n
 
@@ -756,7 +776,8 @@ def _flow_need(chunk, col_mm, M, size, lead_sc=1.0):
             txt = _FHEAD.sub("", txt)      # 머리말은 딱지로 빠진다
         if not txt.strip():
             continue
-        need += _wrap_n(txt, col_mm, size, M["flow_track"]) * lead
+        need += _wrap_n(txt, col_mm, size, M["flow_track"],
+                        _hang_mm(txt, size, M["flow_track"])) * lead
     return need
 
 
@@ -793,8 +814,14 @@ def flow_rows(lines, col_mm=0.0, size_pt=9.0, track_em=-0.05):
         # ⚠ 덩어리 상자가 이미 갈래를 갈라 준다. 상자 **안**에서 또 벌리면
         #   이어지는 내용이 끊긴 것처럼 보인다(사용자 지적).
         cls = ""
-        tr = _tight(_MD_BOLD.sub(r"\1", line), col_mm, size_pt, track_em)
-        st = "" if tr is None else ' style="letter-spacing:%.4fem"' % tr
+        plain = _MD_BOLD.sub(r"\1", line)
+        tr = _tight(plain, col_mm, size_pt, track_em)
+        sty = [] if tr is None else ["letter-spacing:%.4fem" % tr]
+        hang = _hang_mm(plain, size_pt, track_em)
+        if hang:
+            sty.append("padding-left:%.2fmm;text-indent:-%.2fmm"
+                       % (hang, hang))
+        st = (' style="%s"' % ";".join(sty)) if sty else ""
         out.append('<p%s%s>%s</p>' % (cls, st, flow_html(line)))
     return out
 

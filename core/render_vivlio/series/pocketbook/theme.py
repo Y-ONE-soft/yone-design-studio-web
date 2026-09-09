@@ -507,9 +507,10 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
    (주황은 상자 안 `→` 몫이라 겹치면 어느 게 큰 흐름인지 안 보인다). */
 .fconn{position:absolute;z-index:2;color:var(--flow-edge)}
 .fconn svg{width:100%;height:100%;display:block}
-/* 좁은 단에서는 한 줄이 두 줄로 접힌다 — 이어지는 줄을 들여 써서 새 항목과
-   구분한다(`→` 는 줄머리에만 서고 이어지는 글은 그 아래로 붙는다). */
-.fbi p{margin:0;padding-left:3.2mm;text-indent:-3.2mm}
+/* ⚠ 들여쓰기는 **줄마다 제 표식 폭만큼** 준다(`flow_rows` 가 인라인으로).
+   여기서 한 값으로 주면 표식 없는 줄까지 들여쓰이고, `→` 와 `·` 가 같은
+   값으로 들어간다(사용자 지적). */
+.fbi p{margin:0}
 .fbi p.sec{margin-top:__flow_sec_gap__mm}
 /* 색은 **기호에만**. 원본 문자 스타일 4종이 글자 단위로 붙어 있다. */
 .fbi .sym{color:var(--flow-arrow)}
