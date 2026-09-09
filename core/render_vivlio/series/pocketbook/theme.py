@@ -451,9 +451,10 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
 .fbh{font-family:PBJalnan;font-size:7pt;color:var(--flow-brk);
   line-height:__fbox_head__mm;margin:0 0 .3mm;
   display:flex;align-items:center;gap:1.1mm}
-.fbt{font-family:PBJalnan}
-/* 한 단 3칸 — 머리말이 첫 줄에 붙는다 */
-.fbl{color:var(--flow-brk)}
+.fbt{font-family:PBJalnan;color:var(--flow-brk)}
+/* ⚠ 한 단에서는 머리말이 첫 줄에 붙는다. 색을 줄 전체에 주면 **본문까지
+   파래진다**(실측) — 색은 머리말 딱지에만. */
+.fbl{color:inherit}
 .fbl .fbn{margin-right:1.1mm;vertical-align:-.55mm}
 .fbl .fbt{margin-right:1.4mm}
 .fbn{display:inline-flex;align-items:center;justify-content:center;
