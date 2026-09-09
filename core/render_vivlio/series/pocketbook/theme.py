@@ -126,9 +126,7 @@ METRICS = {
     "fbox_pad": 2.0,
     "fbox_head": 4.6,           # 머리말 딱지가 먹는 높이
     "fconn": 3.6,               # 잇는 표식 지름
-    # ⚠ 11mm 는 화살촉이 상자 테두리를 넘어 글자에 닿았다(실측). 모서리가
-    #   둥근 만큼만 물리도록 줄인다.
-    "fdiag": 8.2,               # 단을 건너뛰는 대각선 길이
+    "fconn_len": 7.4,           # 잇는 점선 길이 — 세로·대각선 모두 같다
     # 상자가 넓어진 만큼 글도 키웠다(9→9.5pt). 10pt 부터는 넘치는 덩어리가
     # 2%→12% 로 뛴다(광문1 251덩어리 실측) — 9.5 가 한계다.
     "flow_size": 9.5, "flow_lead": 4.35,
@@ -430,8 +428,11 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
 .folio.r{text-align:right}
 
 /* ── 오른쪽 면 ───────────────────────────────── */
-.flowchip{position:absolute;background:var(--band);display:flex;
+/* ⚠ 딱지가 베이지(`--band`)라 플로우 판과 따로 놀았다(사용자 지적).
+   판과 같은 색으로 이어 붙이고, 판 위에 얹힌 꼴이므로 **위쪽만** 둥글게. */
+.flowchip{position:absolute;background:var(--flow-bg);display:flex;
   align-items:center;justify-content:center;gap:1mm;
+  border-radius:1.6mm 1.6mm 0 0;
   font-family:PBHand;font-size:8pt;color:var(--navy)}
 /* 딱지 아이콘 — 원본 벡터를 그대로 심는다(이모지 아님) */
 .ic-chip_flow{height:3.2mm;width:auto;flex:none}
@@ -444,8 +445,7 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
    올린다(글자까지 흐려지면 안 된다). */
 /* 모눈은 조판할 때 **팔레트 색으로 그려 낸다**(`_stage_assets`). 불투명도로
    옅게 만들지 않는다 — 적은 색이 그대로 인쇄색이라야 겨냥이 된다. */
-.flow{position:absolute;overflow:hidden;background:var(--flow-bg);
-  border-radius:2mm}
+.flow{position:absolute;overflow:hidden;background:var(--flow-bg)}
 /* ⚠ 단 감싸개는 **흐름 안에** 둬야 한다. 절대배치로 두면 높이를 안 정한 판
    (실측용 판)에서 높이가 0 이 되어 **잉크가 하나도 안 나오고 측정이 통째로
    실패한다**(`항목 52 vs 측정 면 0`). `height:100%` 는 부모가 높이를 안 주면
@@ -473,20 +473,11 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
   background:var(--flow-brk);color:#fff;font-size:5.5pt;line-height:1}
 .fbi{font-family:PBDodam;font-size:__flow_size__pt;
   line-height:__flow_lead__mm;letter-spacing:__flow_track__em}
-/* 잇는 표식 — 글리프가 아니라 테두리로 그린 갈매기다 */
-.fconn{position:absolute;border-radius:50%;background:var(--flow-arrow);
-  display:flex;align-items:center;justify-content:center;z-index:2}
-/* ⚠ 두 변으로 그린 꺾쇠는 45도에서만 화살촉으로 보인다 — 대각선(90도)에서는
-   ㄱ 자 직각으로 나왔다(사용자 지적). 셋 다 **속 찬 삼각형**으로 그린다.
-   위를 향한 삼각형 하나를 돌려 쓴다: 아래 180도 · 옆 90도 · 대각선 45도. */
-.fconn i{display:block;width:0;height:0;
-  border-left:.75mm solid transparent;border-right:.75mm solid transparent;
-  border-bottom:1.15mm solid #fff}
-.fconn.d i{transform:rotate(180deg)}
-.fdiag,.fline{position:absolute;z-index:2;color:var(--flow-arrow)}
-.fline svg{width:100%;height:100%;display:block}
-.fdiag svg{width:100%;height:100%;display:block;overflow:visible}
-.fconn:not(.d):not(.x) i{transform:rotate(90deg)}
+/* 잇는 점선 — 방향만 알려 주면 되므로 화살촉은 아주 작다. 세로와 대각선이
+   같은 규격이고, 색은 주황이 아니라 **상자 테두리와 같은 색**이다
+   (주황은 상자 안 `→` 몫이라 겹치면 어느 게 큰 흐름인지 안 보인다). */
+.fconn{position:absolute;z-index:2;color:var(--flow-edge)}
+.fconn svg{width:100%;height:100%;display:block}
 .fbi p{margin:0}
 .fbi p.sec{margin-top:__flow_sec_gap__mm}
 /* 색은 **기호에만**. 원본 문자 스타일 4종이 글자 단위로 붙어 있다. */

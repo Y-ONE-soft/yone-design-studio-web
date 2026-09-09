@@ -849,6 +849,12 @@ def _card_fit(c, M):
         M["card_size"] * sc, M["card_lead"] * sc)
 
 
+_CONN = ('<svg viewBox="0 0 100 100" preserveAspectRatio="none">'
+         '<path d="M%g %g L%g %g" stroke="currentColor" stroke-width="4"'
+         ' stroke-dasharray="9 8" stroke-linecap="round" fill="none"/>'
+         '<path d="%s" fill="currentColor"/></svg>')
+
+
 def right_page(p, M, folio, category=""):
     fl = M["flow"]
     fc = M["flow_chip"]
@@ -922,39 +928,21 @@ def right_page(p, M, folio, category=""):
         parts.append('<div class="fbox" style="%s%s">%s<div class="fbi"%s>'
                      '%s</div></div>'
                      % (_box(bx, by, bw, bh), bg, head, fst, "".join(rows)))
+    # 잇는 표식 — **점선 한 줄에 아주 작은 화살촉**. 방향만 알려 주면 된다.
+    #   ⚠ 예전엔 대각선만 커서 눈에 튀었다(사용자 지적) — 셋 다 같은 규격이다.
+    #   색도 주황이 아니라 상자 테두리와 같은 색을 쓴다.
     for cx, cy, kind in conns:
-        if kind == "d":
-            # ⚠ 동그라미 표식은 **잇는 것처럼 안 보인다**(사용자 지적).
-            #   두 상자를 실제로 잇는 선을 긋고 끝에 작은 화살촉을 단다.
-            lw = M["fconn"]
-            parts.append(
-                '<div class="fline" style="%s">'
-                '<svg viewBox="0 0 24 100" preserveAspectRatio="none">'
-                '<path d="M12 0 L12 74" stroke="currentColor" stroke-width="4"'
-                ' fill="none"/>'
-                '<path d="M12 100 L3 70 L21 70 Z" fill="currentColor"/>'
-                '</svg></div>'
-                % _box(cx + M["fconn"] / 2 - lw / 4, cy - M["fbox_gap"] * 0.28,
-                       lw / 2, M["fbox_gap"] * 1.56))
-            continue
+        ln = M["fconn_len"]
+        cx += M["fconn"] / 2
+        cy += M["fconn"] / 2
         if kind == "x":
-            # ⚠ 네 상자가 만나는 자리에 동그라미만 띄우면 **어디서 어디로**
-            #   가는지 안 보인다(사용자 지적). 두 모서리를 실제로 잇는 선을
-            #   긋고 그 끝에 화살촉을 단다.
-            r = M["fdiag"]
-            parts.append(
-                '<div class="fdiag" style="%s">'
-                '<svg viewBox="0 0 100 100" preserveAspectRatio="none">'
-                '<path d="M8 92 L70 30" stroke="currentColor" stroke-width="7"'
-                ' stroke-linecap="round" fill="none"/>'
-                '<path d="M96 4 L58 14 L86 42 Z" fill="currentColor"/>'
-                '</svg></div>'
-                % _box(cx + M["fconn"] / 2 - r / 2,
-                       cy + M["fconn"] / 2 - r / 2, r, r))
-            continue
-        parts.append('<div class="fconn%s" style="%s"><i></i></div>'
-                     % ((" " + kind) if kind else "",
-                        _box(cx, cy, M["fconn"], M["fconn"])))
+            parts.append('<div class="fconn x" style="%s">%s</div>'
+                         % (_box(cx - ln / 2, cy - ln / 2, ln, ln),
+                            _CONN % (6, 94, 78, 22, "M96 4 L74 10 L90 26 Z")))
+        else:
+            parts.append('<div class="fconn" style="%s">%s</div>'
+                         % (_box(cx - ln / 2, cy - ln / 2, ln, ln),
+                            _CONN % (50, 4, 50, 78, "M50 96 L40 72 L60 72 Z")))
     # 주제 / 요약문
     parts.append('<div class="topicband" style="%s"></div>'
                  % _box(tb[0], tb[1], tb[2], tb[3]))
