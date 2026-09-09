@@ -35,7 +35,7 @@ PALETTE = {
     # ⚠ 판과 상자가 같은 색이라 블록이 안 보였다(사용자 지적). 판을 한 단
     #   짙게 깔고 상자를 희게 띄운다.
     "flow_bg": "#EDEFE1", "flow_box": "#FFFFFF",
-    "flow_edge": "#BFC8A8",   # 플로우노트 바탕 — 거의 흰빛
+    "flow_edge": "#BFC8A8",   # 덩어리 상자 테두리
     # ⚠ 모눈 색은 **이 값이 곧 인쇄색**이다. 예전엔 진한 선(#BFC3C9)을 깔고
     #   불투명도로 옅게 만들었는데, 옅기를 맞추라는 지적을 몇 번 받고도 계속
     #   빗나갔다(불투명도는 바탕과 섞인 결과라 눈으로 겨냥이 안 된다).
@@ -312,6 +312,7 @@ CSS_TMPL = """
   --band:__band__; --navy:__navy__; --chip:__chip__; --ink:__ink__;
   --blue:__blue__; --red:__red__; --anno:__anno__; --trans:__trans__;
   --topic-bg:__topic_bg__; --flow-bg:__flow_bg__; --flow-line:__flow_line__;
+  --flow-edge:__flow_edge__;
   --voca-hit:__voca_hit__; --voca-ipa:__voca_ipa__;
   --voca-rule:__voca_rule__; --voca-chip:__band_mock__;
   --syn-dot:__syn_dot__;

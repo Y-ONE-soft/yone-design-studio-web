@@ -1329,7 +1329,9 @@ class PocketbookSeries(Series):
         w_mm, h_mm = M["flow"][2], M["flow"][3]
         px = 12.0                                   # mm 당 화소
         W, H = int(w_mm * px), int(h_mm * px)
-        im = Image.new("RGB", (W, H), P.get("flow_bg", "#EAECD8"))
+        # ⚠ 모눈 그림의 바탕이 곧 **상자 바탕**이다. 판 색(`flow_bg`)을
+        #   쓰면 상자와 판이 같은 색이 되어 블록이 안 보인다.
+        im = Image.new("RGB", (W, H), P.get("flow_box", "#FFFFFF"))
         d = ImageDraw.Draw(im)
         step = M["flow_grid"] * px
         line = P.get("flow_line", "#E3E5D6")
