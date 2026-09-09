@@ -67,12 +67,54 @@ PROJECTS = {
 }
 
 
+SF_DATALESS = 0x40000000        # macOS 파일 플래그
+
+
+def _materialize(path):
+    """iCloud 가 껍데기(dataless)로 비운 파일을 실물로 되받는다.
+
+    ~/Documents 는 iCloud 동기화 영역이라 표지설정.json 이 오래 안 쓰이면 비워진다.
+    그 상태로 open() 하면 [Errno 11] Resource deadlock avoided 가 나서 학교 목록이
+    통째로 안 뜬다(2026-09-08 실제 발생). 읽기 한 번이 다운로드를 유발하므로,
+    실패하면 몇 번 다시 시도한다.
+    """
+    import time
+    for i in range(4):
+        try:
+            if not (os.stat(path).st_flags & SF_DATALESS):
+                return
+        except OSError:
+            pass
+        try:
+            with open(path, "rb") as f:
+                f.read()
+            return
+        except OSError:
+            time.sleep(1 + i * 2)
+
+
 def _settings(project):
     p = PROJECTS.get(project)
     if not p:
         raise KeyError(f"모르는 프로젝트: {project}")
-    with open(p["설정"], encoding="utf-8") as f:
-        return p, json.load(f)
+    try:
+        with open(p["설정"], encoding="utf-8") as f:
+            return p, json.load(f)
+    except OSError as e:
+        if getattr(e, "errno", None) != 11:      # EDEADLK 외에는 그대로 올린다
+            raise
+        _log(f"설정 파일이 iCloud 껍데기 상태 — 되받는 중: {p['설정']}")
+        _materialize(p["설정"])
+        try:
+            with open(p["설정"], encoding="utf-8") as f:
+                return p, json.load(f)
+        except OSError:
+            raise RuntimeError(
+                "설정 파일이 iCloud 때문에 껍데기 상태입니다. 터미널에서 아래를 돌린 뒤 "
+                "새로고침하세요:\n"
+                "find ~/Documents/작업/Y.ONE\\ STUDIO/디자인/표지/2026_리뉴얼_1차시안 "
+                "-type f -flags +dataless -print0 | "
+                "xargs -0 -P4 -n1 sh -c 'cat \"$1\">/dev/null' _")
 
 
 def _spine_mm(pages, mult):
